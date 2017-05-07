@@ -32,7 +32,7 @@ Init()
 
 	local returncode=0
 	local SCRIPT_FILE="sherpa.sh"
-	local SCRIPT_VERSION="2017.05.07b"
+	local SCRIPT_VERSION="2017.05.07.01b"
 
 	# cherry-pick required binaries
 	CAT_CMD="/bin/cat"
@@ -611,6 +611,57 @@ InstallCP()
 	DebugFuncEntry
 
 	! QPKGIsInstalled "CouchPotato2" && LoadQPKGDownloadDetails "CouchPotato2" && InstallQPKG && LoadQPKGVars "CouchPotato2" && CreateWaiter
+
+	DebugFuncExit
+	return 0
+
+	}
+
+InstallNG()
+	{
+
+	DebugFuncEntry
+
+	! IPKIsInstalled "nzbget" && {
+		local returncode=0
+		local msgs=""
+		local result=""
+		local packages=""
+		local package_desc=""
+
+		if [ ! -z "$IPK_PATH" ] && [ -d "$IPK_PATH" ]; then
+			packages="nzbget"
+			package_desc="nzbget"
+
+			ShowProc "downloading & installing IPK ($package_desc)"
+
+			cd "$IPK_PATH"
+			msgs=$($OPKG_CMD install --force-overwrite $packages --cache . 2>&1)
+			result=$?
+			echo -e "${msgs}\nresult=[$result]" >> "${IPK_PATH}/ipk.$INSTALL_LOG_FILE"
+
+			if [ "$result" -eq "0" ]; then
+				ShowDone "downloaded & installed IPK ($package_desc)"
+				ShowProc "modifying NZBGet"
+
+				sed -i 's|ConfigTemplate=.*|ConfigTemplate=/opt/share/nzbget/nzbget.conf.template|g' "/opt/share/nzbget/nzbget.conf"
+				ShowDone "modified NZBGet"
+				/opt/etc/init.d/S75nzbget start
+				cat /opt/share/nzbget/nzbget.conf | grep ControlPassword=
+				#Go to default router ip address and port 6789 192.168.1.1:6789 and now you should see NZBget interface
+			else
+				ShowError "Download & install IPK failed ($package_desc) [$result]"
+				errorcode=15
+				returncode=1
+			fi
+
+			cd "$WORKING_PATH"
+		else
+			ShowError "IPK path does not exist [$IPK_PATH]"
+			errorcode=16
+			returncode=1
+		fi
+	} #&& LoadIPKVars "nzbget"
 
 	DebugFuncExit
 	return 0
@@ -1808,6 +1859,35 @@ QPKGIsInstalled()
 				DebugQPKG "'$1'" "not installed"
 				returncode=1
 			fi
+		else
+			DebugQPKG "'$1'" "not installed"
+			returncode=1
+		fi
+	fi
+
+	return $returncode
+
+	}
+
+IPKIsInstalled()
+	{
+
+	# If not installed, return 1
+
+	# $1 = package name to check
+
+	local returncode=0
+
+	if [ -z "$1" ]; then
+		DebugError "IPK name not specified"
+		errorcode=58
+		returncode=1
+	else
+		$OPKG_CMD list-installed | $GREP_CMD -q -F "$1"
+		result=$?
+
+		if [ "$result" -eq "0" ]; then
+			DebugQPKG "'$1'" "installed"
 		else
 			DebugQPKG "'$1'" "not installed"
 			returncode=1
