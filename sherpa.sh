@@ -32,7 +32,7 @@ Init()
 
 	local returncode=0
 	local SCRIPT_FILE="sherpa.sh"
-	local SCRIPT_VERSION="2017.05.07.01b"
+	local SCRIPT_VERSION="2017.05.08b"
 
 	# cherry-pick required binaries
 	CAT_CMD="/bin/cat"
@@ -498,6 +498,7 @@ InstallIPKs()
 	local result=""
 	local packages=""
 	local package_desc=""
+	local log_pathfile="${IPK_PATH}/ipks.$INSTALL_LOG_FILE"
 
 	if [ ! -z "$IPK_PATH" ] && [ -d "$IPK_PATH" ]; then
 		packages="gcc python python-pip python-cffi python-pyopenssl ca-certificates nano git git-http"
@@ -515,7 +516,7 @@ InstallIPKs()
 		cd "$IPK_PATH"
 		msgs=$($OPKG_CMD install --force-overwrite $packages --cache . 2>&1)
 		result=$?
-		echo -e "${msgs}\nresult=[$result]" > "${IPK_PATH}/ipks.$INSTALL_LOG_FILE"
+		echo -e "${msgs}\nresult=[$result]" > "$log_pathfile"
 
 		if [ "$result" -eq "0" ]; then
 			ShowDone "downloaded & installed IPKs ($package_desc)"
@@ -527,17 +528,27 @@ InstallIPKs()
 			msgs=$($OPKG_CMD install --force-overwrite $packages --cache . 2>&1)
 			result=$?
 
-			echo -e "${msgs}\nresult=[$result]" >> "${IPK_PATH}/ipks.$INSTALL_LOG_FILE"
+			echo -e "${msgs}\nresult=[$result]" >> "$log_pathfile"
 
 			if [ "$result" -eq "0" ]; then
 				ShowDone "downloaded & installed IPK ($package_desc)"
 			else
 				ShowError "Download & install IPK failed ($package_desc) [$result]"
+				if [ "$debug" == "true" ]; then
+					DebugThickSeparator
+					$CAT_CMD "$log_pathfile"
+					DebugThickSeparator
+				fi
 				errorcode=14
 				returncode=1
 			fi
 		else
 			ShowError "Download & install IPKs failed ($package_desc) [$result]"
+			if [ "$debug" == "true" ]; then
+				DebugThickSeparator
+				$CAT_CMD "$log_pathfile"
+				DebugThickSeparator
+			fi
 			errorcode=15
 			returncode=1
 		fi
@@ -561,17 +572,23 @@ InstallPIPs()
 	local msgs=""
 	local returncode=0
 	local op="pip modules"
+	local log_pathfile="${WORKING_PATH}/$(echo "$op" | $TR_CMD " " "_").$INSTALL_LOG_FILE"
 
 	ShowProc "downloading & installing ($op)"
 
 	msgs=$(pip install --upgrade pip setuptools && pip install sabyenc --upgrade cheetah 2>&1)
 	result=$?
-	echo -e "${msgs}\nresult=[$result]" > "${WORKING_PATH}/$(echo "$op" | $TR_CMD " " "_").$INSTALL_LOG_FILE"
+	echo -e "${msgs}\nresult=[$result]" > "$log_pathfile"
 
 	if [ "$result" -eq "0" ]; then
 		ShowDone "installed ($op)"
 	else
 		ShowError "Download & install failed ($op) [$result]"
+		if [ "$debug" == "true" ]; then
+			DebugThickSeparator
+			$CAT_CMD "$log_pathfile"
+			DebugThickSeparator
+		fi
 		errorcode=17
 		returncode=1
 	fi
@@ -651,14 +668,14 @@ InstallNG()
 				#Go to default router ip address and port 6789 192.168.1.1:6789 and now you should see NZBget interface
 			else
 				ShowError "Download & install IPK failed ($package_desc) [$result]"
-				errorcode=15
+				errorcode=18
 				returncode=1
 			fi
 
 			cd "$WORKING_PATH"
 		else
 			ShowError "IPK path does not exist [$IPK_PATH]"
-			errorcode=16
+			errorcode=19
 			returncode=1
 		fi
 	} #&& LoadIPKVars "nzbget"
@@ -715,7 +732,7 @@ InstallFakeQPKG()
 
 	if [ -z "$1" ]; then
 		DebugError "QPKG name not specified"
-		errorcode=18
+		errorcode=20
 		returncode=1
 	else
 		if ! QPKGIsInstalled "$1" ; then
@@ -744,12 +761,13 @@ InstallQPKG()
 		qpkg_pathfile="${qpkg_pathfile%.*}"
 	fi
 
+	local log_pathfile="$qpkg_pathfile.$INSTALL_LOG_FILE"
 	target_file=$($BASENAME_CMD "$qpkg_pathfile")
 	ShowProc "installing QPKG ($target_file)"
 	msgs=$(eval sh "$qpkg_pathfile" 2>&1)
 	result=$?
 
-	echo -e "${msgs}\nresult=[$result]" > "$qpkg_pathfile.$INSTALL_LOG_FILE"
+	echo -e "${msgs}\nresult=[$result]" > "$log_pathfile"
 
 	if [ "$result" -eq "0" ] || [ "$result" -eq "10" ]; then
 		ShowDone "installed QPKG ($target_file)"
@@ -758,11 +776,11 @@ InstallQPKG()
 
 		if [ "$debug" == "true" ]; then
 			DebugThickSeparator
-			$CAT_CMD "$qpkg_pathfile.$INSTALL_LOG_FILE"
+			$CAT_CMD "$log_pathfile"
 			DebugThickSeparator
 		fi
 
-		errorcode=19
+		errorcode=21
 		returncode=1
 	fi
 
@@ -798,7 +816,7 @@ BackupSabConfig()
 					DebugDone "backup directory created ($BACKUP_PATH)"
 				else
 					ShowError "Unable to create backup directory ($BACKUP_PATH) [$result]"
-					errorcode=20
+					errorcode=22
 					returncode=1
 				fi
 			fi
@@ -814,7 +832,7 @@ BackupSabConfig()
 						ConvertSabSettings
 					else
 						ShowError "Could not create settings backup of ($sab_config_path) [$result]"
-						errorcode=21
+						errorcode=23
 						returncode=1
 					fi
  				else
@@ -945,17 +963,17 @@ EOF
 				DebugDone "set waiter executable"
 			else
 				ShowError "Unable to set waiter as executable ($WAITER_PATHFILE) [$result]"
-				errorcode=22
+				errorcode=24
 				returncode=1
 			fi
 		else
 			ShowError "waiter not found ($WAITER_PATHFILE) [$result]"
-			errorcode=23
+			errorcode=25
 			returncode=1
 		fi
 	else
 		ShowError "Unable to create waiter ($WAITER_PATHFILE) [$result]"
-		errorcode=24
+		errorcode=26
 		returncode=1
 	fi
 
@@ -975,11 +993,11 @@ AddWaiter()
 
 	if [ -z "$1" ]; then
 		DebugError "init script not specified"
-		errorcode=25
+		errorcode=27
 		returncode=1
 	elif [ ! -e "$1" ]; then
 		DebugError "init script not found [$1]"
-		errorcode=26
+		errorcode=28
 		returncode=1
 	else
 		findtext='#!/bin/sh'
@@ -1001,11 +1019,11 @@ SwitchPython()
 
 	if [ -z "$1" ]; then
 		DebugError "init script not specified"
-		errorcode=27
+		errorcode=29
 		returncode=1
 	elif [ ! -e "$1" ]; then
 		DebugError "init script not found [$1]"
-		errorcode=28
+		errorcode=30
 		returncode=1
 	else
 		$SED_CMD -i 's|/usr/bin/python2.7|/opt/bin/python|' "$1"
@@ -1026,11 +1044,11 @@ DisableQPKGChecks()
 
 	if [ -z "$1" ]; then
 		DebugError "init script not specified"
-		errorcode=29
+		errorcode=31
 		returncode=1
 	elif [ ! -e "$1" ]; then
 		DebugError "init script not found [$1]"
-		errorcode=30
+		errorcode=32
 		returncode=1
 	else
 		# disable these as not needed
@@ -1061,11 +1079,11 @@ DisableQPKGModeChanges()
 
 	if [ -z "$1" ]; then
 		DebugError "init script not specified"
-		errorcode=31
+		errorcode=33
 		returncode=1
 	elif [ ! -e "$1" ]; then
 		DebugError "init script not found [$1]"
-		errorcode=32
+		errorcode=34
 		returncode=1
 	else
 		# disable these as not needed
@@ -1088,11 +1106,11 @@ Add64bSupport()
 
 	if [ -z "$1" ]; then
 		DebugError "init script not specified"
-		errorcode=33
+		errorcode=35
 		returncode=1
 	elif [ ! -e "$1" ]; then
 		DebugError "init script not found [$1]"
-		errorcode=34
+		errorcode=36
 		returncode=1
 	else
  		if [ "$CLINTON_QPKG_ARCH" == "x64" ]; then
@@ -1121,11 +1139,11 @@ RemoveAppsPath()
 
 	if [ -z "$1" ]; then
 		DebugError "init script not specified"
-		errorcode=35
+		errorcode=37
 		returncode=1
 	elif [ ! -e "$1" ]; then
 		DebugError "init script not found [$1]"
-		errorcode=36
+		errorcode=38
 		returncode=1
 	else
 		# remove additions to $PATH
@@ -1152,7 +1170,7 @@ PatchSabInit()
 		DisableQPKGChecks "$sab_init_pathfile"
 	else
 		DebugError "init script not found [$sab_init_pathfile]"
-		errorcode=37
+		errorcode=39
 		returncode=1
 	fi
 
@@ -1172,7 +1190,7 @@ PatchCharTranslator()
 		DebugDone "patch: switch Python"
 	else
 		DebugError "Python script not found [$sab_chartranslator_pathfile]"
-		errorcode=38
+		errorcode=40
 		returncode=1
 	fi
 
@@ -1197,7 +1215,7 @@ CreateX64Link()
 			DebugDone "x64 symlink created"
 		else
 			DebugError "no sab installed path"
-			errorcode=39
+			errorcode=41
 			returncode=1
 		fi
 	fi
@@ -1219,7 +1237,7 @@ ChangeARMLink()
 			DebugDone "arm symlink created"
 		else
 			DebugError "no sab installed path"
-			errorcode=40
+			errorcode=42
 			returncode=1
 		fi
 	fi
@@ -1251,14 +1269,14 @@ RestoreSabConfig()
 				$SETCFG_CMD "SABnzbdplus" Web_Port $sab_port -f "$QPKG_CONFIG_PATHFILE"
 			else
 				ShowError "Could not restore settings backup to ($sab_config_path) [$result]"
-				errorcode=41
+				errorcode=43
 				returncode=1
 			fi
 		fi
 
 	else
 		ShowError "SABnzbd is NOT installed so can't restore backups"
-		errorcode=42
+		errorcode=44
 		returncode=1
 	fi
 
@@ -1289,7 +1307,7 @@ DownloadQPKG()
 			fi
 		else
 			ShowError "Problem creating checksum from existing QPKG ($qpkg_file) [$result]"
-			errorcode=43
+			errorcode=45
 			returncode=1
 		fi
 	fi
@@ -1316,12 +1334,12 @@ DownloadQPKG()
 					ShowDone "downloaded QPKG ($qpkg_file)"
 				else
 					ShowError "Downloaded QPKG checksum incorrect ($qpkg_file) [$result]"
-					errorcode=44
+					errorcode=46
 					returncode=1
 				fi
 			else
 				ShowError "Problem creating checksum from downloaded QPKG [$result]"
-				errorcode=45
+				errorcode=47
 				returncode=1
 			fi
 		else
@@ -1333,7 +1351,7 @@ DownloadQPKG()
 				DebugThickSeparator
 			fi
 
-			errorcode=46
+			errorcode=48
 			returncode=1
 		fi
 	fi
@@ -1360,7 +1378,7 @@ CalcClintonQPKGArch()
 
 	if [ -z "$CLINTON_QPKG_ARCH" ]; then
 		ShowError "Could not determine suitable ARCH for Clinton's QPKG ($NAS_ARCH)"
-		errorcode=47
+		errorcode=49
 		returncode=1
 	else
 		DebugInfo "found a suitable ARCH for Clinton's QPKG ($CLINTON_QPKG_ARCH)"
@@ -1390,7 +1408,7 @@ CalcStephaneQPKGArch()
 
 	if [ -z "$STEPHANE_QPKG_ARCH" ]; then
 		ShowError "Could not determine suitable ARCH for Stephane's QPKG ($NAS_ARCH)"
-		errorcode=48
+		errorcode=50
 		returncode=1
 	else
 		DebugInfo "found a suitable ARCH for Stephane's QPKG ($STEPHANE_QPKG_ARCH)"
@@ -1425,7 +1443,7 @@ LoadQPKGVars()
 
 	if [ -z "$package_name" ]; then
 		DebugError "QPKG name not specified"
-		errorcode=49
+		errorcode=51
 		returncode=1
 	else
 
@@ -1508,7 +1526,7 @@ LoadQPKGDownloadDetails()
 
 	if [ -z "$1" ]; then
 		DebugError "QPKG name not specified"
-		errorcode=50
+		errorcode=52
 		returncode=1
 	else
 		qpkg_name="$1"
@@ -1559,7 +1577,7 @@ LoadQPKGDownloadDetails()
 			fi
 		else
 			DebugError "QPKG name not found"
-			errorcode=51
+			errorcode=53
 			returncode=1
 		fi
 
@@ -1580,7 +1598,7 @@ UninstallQPKG()
 
 	if [ -z "$1" ]; then
 		DebugError "QPKG name not specified"
-		errorcode=52
+		errorcode=54
 		returncode=1
 	else
 		qpkg_installed_path="$($GETCFG_CMD "$1" Install_Path -f "$QPKG_CONFIG_PATHFILE")"
@@ -1599,7 +1617,7 @@ UninstallQPKG()
 					ShowDone "uninstalled QPKG '$1'"
 				else
 					ShowError "Unable to uninstall QPKG \"$1\" [$result]"
-					errorcode=53
+					errorcode=55
 					returncode=1
 				fi
 			fi
@@ -1673,12 +1691,12 @@ DaemonControl()
 
 	if [ -z "$1" ]; then
 		DebugError "daemon not specified"
-		errorcode=54
+		errorcode=56
 		returncode=1
 
 	elif [ ! -e "$1" ]; then
 		DebugError "daemon init not found [$1]"
-		errorcode=55
+		errorcode=57
 		returncode=1
 
 	else
@@ -1702,7 +1720,7 @@ DaemonControl()
 						$CAT_CMD "$qpkg_pathfile.$START_LOG_FILE"
 						DebugThickSeparator
 					fi
-					errorcode=56
+					errorcode=58
 					returncode=1
 				fi
 				;;
@@ -1728,7 +1746,7 @@ DaemonControl()
 				;;
 			*)
 				DebugError "action unrecognised [$2]"
-				errorcode=57
+				errorcode=59
 				returncode=1
 				;;
 		esac
@@ -1845,7 +1863,7 @@ QPKGIsInstalled()
 
 	if [ -z "$1" ]; then
 		DebugError "QPKG name not specified"
-		errorcode=58
+		errorcode=60
 		returncode=1
 	else
 		$GREP_CMD -q -F "[$1]" "$QPKG_CONFIG_PATHFILE"
@@ -1880,7 +1898,7 @@ IPKIsInstalled()
 
 	if [ -z "$1" ]; then
 		DebugError "IPK name not specified"
-		errorcode=58
+		errorcode=61
 		returncode=1
 	else
 		$OPKG_CMD list-installed | $GREP_CMD -q -F "$1"
@@ -1907,7 +1925,7 @@ SysFilePresent()
 
 	if [ ! -e "$1" ]; then
 		ShowError "A required NAS system file is missing [$1]"
-		errorcode=59
+		errorcode=62
 		return 1
 	else
 		return 0
@@ -1924,7 +1942,7 @@ SysSharePresent()
 
 	if [ ! -L "$1" ]; then
 		ShowError "A required NAS system share is missing [$1]. Please re-create it via QNAP Control Panel -> Privilege Settings -> Shared Folders."
-		errorcode=60
+		errorcode=63
 		return 1
 	else
 		return 0
