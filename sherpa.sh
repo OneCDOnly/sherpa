@@ -7,7 +7,7 @@
 # So, blame OneCD if it all goes horribly wrong. ;)
 #
 # for more info:
-# https://forum.qnap.com/viewtopic.php?f=133&t=129696
+#	https://forum.qnap.com/viewtopic.php?f=320&t=132373
 #
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -1447,7 +1447,7 @@ LoadQPKGDownloadDetails()
 
 	local returncode=0
 	local target_file=""
-	local OneCD_urlprefix="https://github.com/OneCDOnly/nzb-multi-installer/blob/master/QPKGs"
+	local OneCD_urlprefix="https://github.com/OneCDOnly/sherpa/blob/master/QPKGs"
 	local Stephane_urlprefix="http://www.qoolbox.fr/Par2cmdline-MT_0.6.14-MT"
 
 	qpkg_url=""
@@ -1475,6 +1475,11 @@ LoadQPKGDownloadDetails()
 			qpkg_file="SABnzbdplus_170131.qpkg"
 			qpkg_md5="03077bc11289b944d9e3a58927c269fe"
 			qpkg_url="http://bit.ly/2jPntF9"
+
+# 			target_file="SABnzbdplus_17.05.07.qpkg"
+# 			qpkg_md5="f8974ef42d46a5001220286756f87d8c"
+# 			qpkg_url="${OneCD_urlprefix}/${target_file}?raw=true"
+# 			qpkg_file=$target_file
 
 		elif [ "$1" == "SickRage" ]; then
 			target_file="SickRage_17.05.06.qpkg"
