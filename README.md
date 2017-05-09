@@ -15,23 +15,26 @@ If you have an existing SABnzbd but want SickRage too, then you only need to ins
 
 ## Installation
 
-1. SSH / PuTTY into your NAS as the 'admin' user,
+1) SSH / PuTTY into your NAS as the 'admin' user,
 
-2. Change to the Public share directory:
+2) Change to the Public share directory:
 
 ```cd /share/Public```
 
-3. Download & extract the archive file (copy and paste at the command line):
+3) Download & extract the archive file (copy and paste at the command line):
 
 ```/usr/bin/wget https://goo.gl/Qot9QK -qO sherpa.tar.gz && tar -zxvf sherpa.tar.gz```
 
-4. Then, to (re)install SABnzbd+:
+4) Then, to (re)install SABnzbd+:
 
-```./SABnzbdplus```
+```
+./SABnzbdplus
+```
 
 Or to install a new SickRage or CouchPotato:
 
 ```
 ./SickRage
+
 ./CouchPotato2
 ```
