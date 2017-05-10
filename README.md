@@ -19,11 +19,15 @@ If you have an existing SABnzbd but want SickRage too, then you only need to ins
 
 2) Change to the Public share directory:
 
-```cd /share/Public```
+```
+cd /share/Public
+```
 
 3) Download & extract the archive file (copy and paste at the command line):
 
-```/usr/bin/wget https://goo.gl/Qot9QK -qO sherpa.tar.gz && tar -zxvf sherpa.tar.gz```
+```
+/usr/bin/wget https://goo.gl/Qot9QK -qO sherpa.tar.gz && tar -zxvf sherpa.tar.gz
+```
 
 4) Then, to (re)install SABnzbd+:
 
