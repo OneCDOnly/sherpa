@@ -32,7 +32,7 @@ Init()
 
 	local returncode=0
 	local SCRIPT_FILE="sherpa.sh"
-	local SCRIPT_VERSION="2017.05.08b"
+	local SCRIPT_VERSION="2017.05.14b"
 
 	# cherry-pick required binaries
 	CAT_CMD="/bin/cat"
@@ -1547,19 +1547,19 @@ LoadQPKGDownloadDetails()
 
 # 			target_file="SABnzbdplus_17.05.07.qpkg"
 # 			qpkg_md5="f8974ef42d46a5001220286756f87d8c"
-# 			qpkg_url="${OneCD_urlprefix}/${target_file}?raw=true"
+# 			qpkg_url="${OneCD_urlprefix}/SABnzbd/build/${target_file}?raw=true"
 # 			qpkg_file=$target_file
 
 		elif [ "$1" == "SickRage" ]; then
 			target_file="SickRage_17.05.06.qpkg"
 			qpkg_md5="dc13389031b18fc943b498682b6e4d38"
-			qpkg_url="${OneCD_urlprefix}/${target_file}?raw=true"
+			qpkg_url="${OneCD_urlprefix}/SickRage/build/${target_file}?raw=true"
 			qpkg_file=$target_file
 
 		elif [ "$1" == "CouchPotato2" ]; then
 			target_file="CouchPotato2_17.05.06.qpkg"
 			qpkg_md5="83a77b7d76e0501bd928b945186dfec7"
-			qpkg_url="${OneCD_urlprefix}/${target_file}?raw=true"
+			qpkg_url="${OneCD_urlprefix}/CouchPotato2/build/${target_file}?raw=true"
 			qpkg_file=$target_file
 
 		elif [ "$1" == "Par2cmdline-MT" ]; then
