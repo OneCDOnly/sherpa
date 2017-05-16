@@ -32,7 +32,7 @@ Init()
 
 	local returncode=0
 	local SCRIPT_FILE="sherpa.sh"
-	local SCRIPT_VERSION="2017.05.14b"
+	local SCRIPT_VERSION="2017.05.17b"
 
 	# cherry-pick required binaries
 	CAT_CMD="/bin/cat"
@@ -510,7 +510,7 @@ InstallIPKs()
 		ReloadProfile
 		ShowProc "downloading & installing IPKs ($package_desc)"
 
-		# this can happen due to incompatible IPKs (tried installing Entware-3x, then Entware-ng), so delete them and try again.
+		# errors can occur due to incompatible IPKs (tried installing Entware-3x, then Entware-ng), so delete them and try again.
 		rm -f "$IPK_PATH"/*.ipk
 
 		cd "$IPK_PATH"
@@ -895,12 +895,16 @@ MakeSabMods()
 ReloadProfile()
 	{
 
-	. /etc/profile > /dev/null
-	. /root/.profile > /dev/null
+	#. /etc/profile > /dev/null
+	#. /root/.profile > /dev/null
 
-	cd "$WORKING_PATH"
+ 	QPKGIsInstalled "$PREF_ENTWARE" && export PATH="/opt/bin:/opt/sbin:$PATH"
 
-	DebugDone "reloaded environment"
+	#cd "$WORKING_PATH"
+
+	#DebugDone "reloaded environment"
+	DebugDone "adjusted \$PATH"
+	DebugVar "PATH"
 
 	return 0
 

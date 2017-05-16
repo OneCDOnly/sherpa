@@ -90,9 +90,6 @@ StartQPKG()
 		return 1
 	fi
 
-
-
-
 	echo "OK" | tee -a "$LOG_PATHFILE"
 
 	}
