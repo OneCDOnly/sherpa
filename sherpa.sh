@@ -507,7 +507,7 @@ InstallIPKs()
 		package_desc="various"
 
 		UpdateEntware
-		ReloadProfile
+# 		ReloadProfile
 		ShowProc "downloading & installing IPKs ($package_desc)"
 
 		# errors can occur due to incompatible IPKs (tried installing Entware-3x, then Entware-ng), so delete them and try again.
