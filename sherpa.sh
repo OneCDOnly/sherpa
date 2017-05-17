@@ -32,7 +32,7 @@ Init()
 
 	local returncode=0
 	local SCRIPT_FILE="sherpa.sh"
-	local SCRIPT_VERSION="2017.05.17b"
+	local SCRIPT_VERSION="2017.05.18b"
 
 	# cherry-pick required binaries
 	CAT_CMD="/bin/cat"
@@ -44,6 +44,7 @@ Init()
 	MD5SUM_CMD="/bin/md5sum"
 	MKDIR_CMD="/bin/mkdir"
 	MV_CMD="/bin/mv"
+	CP_CMD="/bin/cp"
 	RM_CMD="/bin/rm"
 	SED_CMD="/bin/sed"
 	TOUCH_CMD="/bin/touch"
@@ -113,6 +114,7 @@ Init()
 	SysFilePresent "$MD5SUM_CMD" || return
 	SysFilePresent "$MKDIR_CMD" || return
 	SysFilePresent "$MV_CMD" || return
+	SysFilePresent "$CP_CMD" || return
 	SysFilePresent "$RM_CMD" || return
 	SysFilePresent "$SED_CMD" || return
 	SysFilePresent "$TOUCH_CMD" || return
@@ -375,7 +377,7 @@ InstallEntware()
 		LoadQPKGDownloadDetails "$PREF_ENTWARE" && InstallQPKG && ReloadProfile
 
 		# shift all files in old /opt into new /opt
-		[ -L "$opt_path" ] && [ -d "$opt_backup_path" ] && $MV_CMD "$opt_backup_path"/* "$opt_path" && $RM_CMD -r "$opt_backup_path"
+		[ -L "$opt_path" ] && [ -d "$opt_backup_path" ] && $CP_CMD --recursive "$opt_backup_path"/* --target-directory "$opt_path" && $RM_CMD -r "$opt_backup_path"
 
 	else
 		if [ "$PREF_ENTWARE" == "Entware-3x" ]; then
