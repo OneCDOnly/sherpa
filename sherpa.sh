@@ -21,7 +21,6 @@
 #
 # You should have received a copy of the GNU General Public License along with
 # this program. If not, see http://www.gnu.org/licenses/.
-#
 ############################################################################
 
 LAUNCHED_AS="$0"
@@ -369,14 +368,14 @@ InstallEntware()
 	local returncode=0
 
 	if ! QPKGIsInstalled "$PREF_ENTWARE"; then
-		# save old /opt
+		# rename original [/opt]
 		opt_path="/opt"
 		opt_backup_path="/opt.orig"
 		[ -d "$opt_path" ] && [ ! -L "$opt_path" ] && [ ! -e "$opt_backup_path" ] && $MV_CMD "$opt_path" "$opt_backup_path"
 
 		LoadQPKGDownloadDetails "$PREF_ENTWARE" && InstallQPKG && ReloadProfile
 
-		# shift all files in old /opt into new /opt
+		# copy all files from original [/opt] into new [/opt]
 		[ -L "$opt_path" ] && [ -d "$opt_backup_path" ] && $CP_CMD --recursive "$opt_backup_path"/* --target-directory "$opt_path" && $RM_CMD -r "$opt_backup_path"
 
 	else
@@ -424,7 +423,7 @@ PatchEntwareInit()
 			$SED_CMD -i "s|$findtext|$inserttext\n$findtext|" "$ent_init_pathfile"
 
 			findtext='/bin/ln -sf $QPKG_DIR /opt'
-			inserttext=$(echo -e "\t")'[ -L "$opt_path" ] \&\& [ -d "$opt_backup_path" ] \&\& mv "$opt_backup_path"/* "$opt_path" \&\& rm -r "$opt_backup_path"'
+			inserttext=$(echo -e "\t")'[ -L "$opt_path" ] \&\& [ -d "$opt_backup_path" ] \&\& cp "$opt_backup_path"/* --target-directory "$opt_path" \&\& rm -r "$opt_backup_path"'
 			$SED_CMD -i "s|$findtext|$findtext\n$inserttext\n|" "$ent_init_pathfile"
 
 			DebugDone "patch: do the \"opt shuffle\""
