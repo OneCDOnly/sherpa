@@ -31,7 +31,7 @@ Init()
 
 	local returncode=0
 	local SCRIPT_FILE="sherpa.sh"
-	local SCRIPT_VERSION="2017.05.20b"
+	local SCRIPT_VERSION="2017.05.21b"
 
 	# cherry-pick required binaries
 	CAT_CMD="/bin/cat"
@@ -470,6 +470,7 @@ InstallOther()
 	[ "$TARGET_APP" == "SABnzbdplus" ] && [ "$STEPHANE_QPKG_ARCH" != "none" ] && ! QPKGIsInstalled "Par2cmdline-MT" && LoadQPKGDownloadDetails "Par2cmdline-MT" && InstallQPKG
 	[ "$errorcode" -eq "0" ] && InstallIPKs
 	[ "$errorcode" -eq "0" ] && InstallPIPs
+	[ "$errorcode" -eq "0" ] && CreateWaiter
 
 	DebugFuncExit
 	return 0
@@ -686,7 +687,7 @@ InstallQPKG()
 
 	local log_pathfile="$qpkg_pathfile.$INSTALL_LOG_FILE"
 	target_file=$($BASENAME_CMD "$qpkg_pathfile")
-	ShowProc "installing QPKG ($target_file)"
+	ShowProc "installing QPKG ($target_file) - this can take a while"
 	msgs=$(eval sh "$qpkg_pathfile" 2>&1)
 	result=$?
 
@@ -899,9 +900,9 @@ RestoreSabConfig()
 	local returncode=0
 
 	if [ "$sab_is_installed" == "true" ]; then
- 		StopSab
-
 		if [ -d "$SETTINGS_BACKUP_PATH" ]; then
+			StopSab
+
 			if [ ! -d "$sab_config_path" ]; then
 				$MKDIR_CMD -p "$($DIRNAME_CMD "$sab_config_path")" 2> /dev/null
 			else
@@ -1407,6 +1408,8 @@ Cleanup()
 
 	cd "$SHARE_PUBLIC_PATH"
 
+	[ "$errorcode" -eq "0" ] && [ "$debug" != "true" ] && [ -d "$WORKING_PATH" ] && $RM_CMD -rf "$WORKING_PATH"
+
 	if [ "$queuepaused" == "true" ]; then
 		if QPKGIsInstalled "SABnzbdplus"; then
 			LoadQPKGVars "SABnzbdplus"
@@ -1855,7 +1858,6 @@ Init
 [ "$errorcode" -eq "0" ] && RemovePackageInstallers
 [ "$errorcode" -eq "0" ] && InstallEntware
 [ "$errorcode" -eq "0" ] && InstallOther
-[ "$errorcode" -eq "0" ] && CreateWaiter
 
 if [ "$errorcode" -eq "0" ]; then
 	[ "$TARGET_APP" == "SABnzbdplus" ] && ReinstallSab
