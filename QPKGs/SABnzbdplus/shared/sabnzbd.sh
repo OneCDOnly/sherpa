@@ -44,7 +44,6 @@ QPKGIsActive()
 	fi
 
 	echo "$msg" | tee -a "$LOG_PATHFILE"
-
 	return $returncode
 
 	}
@@ -53,6 +52,7 @@ UpdateQpkg()
 	{
 
 	local returncode=0
+	local msg=""
 
 	echo -n "Updating ($QPKG_NAME): " | tee -a "$LOG_PATHFILE"
 	messages=$({
@@ -64,15 +64,15 @@ UpdateQpkg()
 	result=$?
 
 	if [ "$result" == "0" ]; then
-		echo "OK" | tee -a "$LOG_PATHFILE"
-		echo -e "$(OutputSeparator start)\n${messages}\n$(OutputSeparator end)" >> "$LOG_PATHFILE"
+		msg="OK"
 		returncode=0
 	else
-		echo -e "failed\nresult=[$result]" | tee -a "$LOG_PATHFILE"
-		echo -e "$(OutputSeparator start)\n${messages}\n$(OutputSeparator end)" >> "$LOG_PATHFILE"
+		msg="failed\nresult=[$result]"
 		returncode=1
 	fi
 
+	echo -e "$(OutputSeparator start)\n${messages}\n$(OutputSeparator end)" >> "$LOG_PATHFILE"
+	echo -e "$msg" | tee -a "$LOG_PATHFILE"
 	return $returncode
 
 	}
@@ -81,6 +81,7 @@ StartQPKG()
 	{
 
 	local returncode=0
+	local msg=""
 
 	cd "$QPKG_GIT_PATH"
 
@@ -89,17 +90,14 @@ StartQPKG()
 	result=$?
 
 	if [ "$result" == "0" ]; then
-		echo "OK" | tee -a "$LOG_PATHFILE"
-		echo -e "$(OutputSeparator start)\n${messages}\n$(OutputSeparator end)" >> "$LOG_PATHFILE"
-		returncode=0
+		msg="OK"
 	else
-		echo -e "failed\nresult=[$result]" | tee -a "$LOG_PATHFILE"
-		echo -e "$(OutputSeparator start)\n${messages}\n$(OutputSeparator end)" >> "$LOG_PATHFILE"
-		returncode=1
+		msg="failed\nresult=[$result]"
+		errorcode=1
 	fi
 
-	echo "OK" | tee -a "$LOG_PATHFILE"
-
+	echo -e "$(OutputSeparator start)\n${messages}\n$(OutputSeparator end)" >> "$LOG_PATHFILE"
+	echo -e "$msg" | tee -a "$LOG_PATHFILE"
 	return $returncode
 
 	}
@@ -108,7 +106,6 @@ StopQPKG()
 	{
 
 	local maxwait=60
-	local returncode=0
 
 	PID=$(cat "$STORED_PID_PATHFILE"); i=0
 
@@ -126,7 +123,7 @@ StopQPKG()
 				kill -9 $PID
 				echo -n "Sent SIGKILL. " | tee -a "$LOG_PATHFILE"
 				rm -f "$STORED_PID_PATHFILE"
-				returncode=1
+				errorcode=1
 				break 2
 			fi
 		done
@@ -135,8 +132,6 @@ StopQPKG()
 		echo "OK"; echo "stopped OK in $i seconds " >> "$LOG_PATHFILE"
 		break
 	done
-
-	return $returncode
 
 	}
 
@@ -161,12 +156,12 @@ OutputSeparator()
 case "$1" in
 	start)
 		echo -e "$(SessionSeparator "start requested")\n$(date)" >> "$LOG_PATHFILE"
-		! QPKGIsActive && { UpdateQpkg; StartQPKG ;}
+		! QPKGIsActive && { UpdateQpkg; StartQPKG ;} || errorcode=1
 		;;
 
 	stop)
 		echo -e "$(SessionSeparator "stop requested")\n$(date)" >> "$LOG_PATHFILE"
-		QPKGIsActive && StopQPKG
+		QPKGIsActive && StopQPKG || errorcode=1
 		;;
 
 	restart)
@@ -179,4 +174,4 @@ case "$1" in
 		;;
 esac
 
-[ "$errorcode" -ne "0" ] && echo "A problem occurred, please check the log ($LOG_PATHFILE) for more details."
+exit $errorcode

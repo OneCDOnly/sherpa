@@ -711,7 +711,7 @@ InstallQPKG()
 			DebugThickSeparator
 		fi
 
-		errorcode=21
+		errorcode=20
 		returncode=1
 	fi
 
@@ -747,7 +747,7 @@ BackupSabConfig()
 					DebugDone "backup directory created ($BACKUP_PATH)"
 				else
 					ShowError "Unable to create backup directory ($BACKUP_PATH) [$result]"
-					errorcode=22
+					errorcode=21
 					returncode=1
 				fi
 			fi
@@ -761,7 +761,7 @@ BackupSabConfig()
 						ShowDone "created SABnzbd settings backup"
 					else
 						ShowError "Could not create settings backup of ($sab_config_path) [$result]"
-						errorcode=23
+						errorcode=22
 						returncode=1
 					fi
  				else
@@ -881,17 +881,17 @@ EOF
 				DebugDone "set waiter executable"
 			else
 				ShowError "Unable to set waiter as executable ($WAITER_PATHFILE) [$result]"
-				errorcode=24
+				errorcode=23
 				returncode=1
 			fi
 		else
 			ShowError "waiter not found ($WAITER_PATHFILE) [$result]"
-			errorcode=25
+			errorcode=24
 			returncode=1
 		fi
 	else
 		ShowError "Unable to create waiter ($WAITER_PATHFILE) [$result]"
-		errorcode=26
+		errorcode=25
 		returncode=1
 	fi
 
@@ -926,14 +926,14 @@ RestoreSabConfig()
 				$SETCFG_CMD "SABnzbdplus" Web_Port $sab_port -f "$QPKG_CONFIG_PATHFILE"
 			else
 				ShowError "Could not restore settings backup to ($sab_config_path) [$result]"
-				errorcode=43
+				errorcode=26
 				returncode=1
 			fi
 		fi
 
 	else
 		ShowError "SABnzbd is NOT installed so can't restore backups"
-		errorcode=44
+		errorcode=27
 		returncode=1
 	fi
 
@@ -964,7 +964,7 @@ DownloadQPKG()
 			fi
 		else
 			ShowError "Problem creating checksum from existing QPKG ($qpkg_file) [$result]"
-			errorcode=45
+			errorcode=28
 			returncode=1
 		fi
 	fi
@@ -994,12 +994,12 @@ DownloadQPKG()
 					ShowDone "downloaded QPKG ($qpkg_file)"
 				else
 					ShowError "Downloaded QPKG checksum incorrect ($qpkg_file) [$result]"
-					errorcode=46
+					errorcode=29
 					returncode=1
 				fi
 			else
 				ShowError "Problem creating checksum from downloaded QPKG [$result]"
-				errorcode=47
+				errorcode=30
 				returncode=1
 			fi
 		else
@@ -1011,7 +1011,7 @@ DownloadQPKG()
 				DebugThickSeparator
 			fi
 
-			errorcode=48
+			errorcode=31
 			returncode=1
 		fi
 	fi
@@ -1041,7 +1041,7 @@ CalcStephaneQPKGArch()
 
 	if [ -z "$STEPHANE_QPKG_ARCH" ]; then
 		ShowError "Could not determine suitable ARCH for Stephane's QPKG ($NAS_ARCH)"
-		errorcode=50
+		errorcode=32
 		returncode=1
 	else
 		DebugInfo "found a suitable ARCH for Stephane's QPKG ($STEPHANE_QPKG_ARCH)"
@@ -1076,7 +1076,7 @@ LoadQPKGVars()
 
 	if [ -z "$package_name" ]; then
 		DebugError "QPKG name not specified"
-		errorcode=51
+		errorcode=33
 		returncode=1
 	else
 
@@ -1167,7 +1167,7 @@ LoadQPKGDownloadDetails()
 
 	if [ -z "$1" ]; then
 		DebugError "QPKG name not specified"
-		errorcode=52
+		errorcode=34
 		returncode=1
 	else
 		qpkg_name="$1"
@@ -1187,7 +1187,7 @@ LoadQPKGDownloadDetails()
 # 			qpkg_url="http://bit.ly/2jPntF9"
 
  			target_file="SABnzbdplus_170520.qpkg"
- 			qpkg_md5="f9cb5a668f6aa4397775c07249cb2c37"
+ 			qpkg_md5="f49ba97e240c836cb3f01c409c0f5053"
  			qpkg_url="${OneCD_urlprefix}/SABnzbdplus/build/${target_file}?raw=true"
  			qpkg_file=$target_file
 
@@ -1218,7 +1218,7 @@ LoadQPKGDownloadDetails()
 			fi
 		else
 			DebugError "QPKG name not found"
-			errorcode=53
+			errorcode=35
 			returncode=1
 		fi
 
@@ -1239,7 +1239,7 @@ UninstallQPKG()
 
 	if [ -z "$1" ]; then
 		DebugError "QPKG name not specified"
-		errorcode=54
+		errorcode=36
 		returncode=1
 	else
 		qpkg_installed_path="$($GETCFG_CMD "$1" Install_Path -f "$QPKG_CONFIG_PATHFILE")"
@@ -1258,7 +1258,7 @@ UninstallQPKG()
 					ShowDone "uninstalled QPKG '$1'"
 				else
 					ShowError "Unable to uninstall QPKG \"$1\" [$result]"
-					errorcode=55
+					errorcode=37
 					returncode=1
 				fi
 			fi
@@ -1332,12 +1332,12 @@ DaemonControl()
 
 	if [ -z "$1" ]; then
 		DebugError "daemon not specified"
-		errorcode=56
+		errorcode=38
 		returncode=1
 
 	elif [ ! -e "$1" ]; then
 		DebugError "daemon init not found [$1]"
-		errorcode=57
+		errorcode=39
 		returncode=1
 
 	else
@@ -1361,7 +1361,7 @@ DaemonControl()
 						$CAT_CMD "$qpkg_pathfile.$START_LOG_FILE"
 						DebugThickSeparator
 					fi
-					errorcode=58
+					errorcode=40
 					returncode=1
 				fi
 				;;
@@ -1387,7 +1387,7 @@ DaemonControl()
 				;;
 			*)
 				DebugError "action unrecognised [$2]"
-				errorcode=59
+				errorcode=41
 				returncode=1
 				;;
 		esac
@@ -1504,7 +1504,7 @@ QPKGIsInstalled()
 
 	if [ -z "$1" ]; then
 		DebugError "QPKG name not specified"
-		errorcode=60
+		errorcode=42
 		returncode=1
 	else
 		$GREP_CMD -q -F "[$1]" "$QPKG_CONFIG_PATHFILE"
@@ -1539,7 +1539,7 @@ IPKIsInstalled()
 
 	if [ -z "$1" ]; then
 		DebugError "IPK name not specified"
-		errorcode=61
+		errorcode=43
 		returncode=1
 	else
 		$OPKG_CMD list-installed | $GREP_CMD -q -F "$1"
@@ -1566,7 +1566,7 @@ SysFilePresent()
 
 	if [ ! -e "$1" ]; then
 		ShowError "A required NAS system file is missing [$1]"
-		errorcode=62
+		errorcode=44
 		return 1
 	else
 		return 0
@@ -1583,7 +1583,7 @@ SysSharePresent()
 
 	if [ ! -L "$1" ]; then
 		ShowError "A required NAS system share is missing [$1]. Please re-create it via QNAP Control Panel -> Privilege Settings -> Shared Folders."
-		errorcode=63
+		errorcode=45
 		return 1
 	else
 		return 0
