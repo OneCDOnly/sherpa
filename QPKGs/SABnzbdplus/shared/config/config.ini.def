@@ -1,7 +1,7 @@
 __version__ = 19
 __encoding__ = utf-8
 [misc]
-port = 8810
+port = 8800
 https_port = 9095
 enable_https = 0
 queue_complete = ""
@@ -154,9 +154,9 @@ warn_dupl_jobs = 1
 rating_filter_abort_spam_confirm = 0
 no_series_dupes = 0
 propagation_delay = 0
-download_dir = Downloads/incomplete
+download_dir = /share/Download/incomplete
 new_nzb_on_failure = 0
-complete_dir = Downloads/complete
+complete_dir = /share/Download/complete
 rating_filter_pause_downvoted = 0
 rating_filter_abort_audio = 0
 nomedia_marker = ""

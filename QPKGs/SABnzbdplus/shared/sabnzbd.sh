@@ -11,6 +11,7 @@ URL_HTTP="http://github.com/sabnzbd/sabnzbd.git"
 # followup
 QPKG_PATH="$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)"
 SETTINGS_PATHFILE="${QPKG_PATH}/config/config.ini"
+SETTINGS_DEFAULT_PATHFILE="${SETTINGS_PATHFILE}.def"
 SETTINGS="--daemon --browser 0 --config-file $SETTINGS_PATHFILE"
 
 # boilerplate
@@ -21,7 +22,7 @@ LOG_PATHFILE="/var/log/${QPKG_NAME}.log"
 DAEMON="/opt/bin/python2.7"
 URL_GIT=${URL_HTTP/http/git}
 errorcode=0
-[ ! -f "$SETTINGS_PATHFILE" ] && cp "${SETTINGS_PATHFILE}.def" "$SETTINGS_PATHFILE"
+[ ! -f "$SETTINGS_PATHFILE" ] && [ -f "$SETTINGS_DEFAULT_PATHFILE" ] && cp "$SETTINGS_DEFAULT_PATHFILE" "$SETTINGS_PATHFILE"
 
 QPKGIsActive()
 	{

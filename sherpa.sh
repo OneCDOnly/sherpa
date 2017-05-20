@@ -31,7 +31,7 @@ Init()
 
 	local returncode=0
 	local SCRIPT_FILE="sherpa.sh"
-	local SCRIPT_VERSION="2017.05.18b"
+	local SCRIPT_VERSION="2017.05.20b"
 
 	# cherry-pick required binaries
 	CAT_CMD="/bin/cat"
@@ -85,6 +85,7 @@ Init()
 	SHARE_PUBLIC_PATH="/share/$($GETCFG_CMD SHARE_DEF defPublic -d Qpublic -f "$DEFAULT_SHARES_PATHFILE")"
 	WORKING_PATH="${SHARE_PUBLIC_PATH}/${SCRIPT_FILE%.*}.tmp"
 	BACKUP_PATH="${WORKING_PATH}/backup"
+	SETTINGS_BACKUP_PATH="${BACKUP_PATH}/config"
 	QPKG_PATH="${WORKING_PATH}/qpkg-downloads"
 	IPK_PATH="${WORKING_PATH}/ipk-downloads"
 	DEBUG_LOG_PATHFILE="${SHARE_PUBLIC_PATH}/${DEBUG_LOG_FILE}"
@@ -97,11 +98,10 @@ Init()
 	FAKE_PYTHON_PATHFILE="${FAKE_PYTHON_PATH}/python2.7"
 	FAKE_GIT_PATHFILE="${FAKE_GIT_PATH}/git"
 
-	# for converting from Stephane's QPKG to Clinton's QPKG
+	# for converting from Stephane's QPKG and from previous version SAB QPKGs
 	FR_BACKUP_PATH="${BACKUP_PATH}/SAB_CONFIG"
-	AU_BACKUP_PATH="${BACKUP_PATH}/Config"
-	FR_BACKUP_PATHFILE="${AU_BACKUP_PATH}/config.ini"
-	AU_BACKUP_PATHFILE="${AU_BACKUP_PATH}/sabnzbd.ini"
+	SETTINGS_PREV_BACKUP_PATHFILE="${SETTINGS_BACKUP_PATH}/sabnzbd.ini"
+	SETTINGS_BACKUP_PATHFILE="${SETTINGS_BACKUP_PATH}/config.ini"
 
 	# check required binaries are present
 	SysFilePresent "$CAT_CMD" || return
@@ -481,7 +481,7 @@ InstallOther()
 	DebugFuncEntry
 
 	[ "$TARGET_APP" == "SABnzbdplus" ] && [ "$STEPHANE_QPKG_ARCH" != "none" ] && ! QPKGIsInstalled "Par2cmdline-MT" && LoadQPKGDownloadDetails "Par2cmdline-MT" && InstallQPKG
-	[ "$errorcode" -eq "0" ] && InstallFakeQPKGs
+# 	[ "$errorcode" -eq "0" ] && InstallFakeQPKGs
 	[ "$errorcode" -eq "0" ] && InstallIPKs
 	[ "$errorcode" -eq "0" ] && InstallPIPs
 
@@ -604,7 +604,7 @@ InstallSab()
 
 	DebugFuncEntry
 
-	! QPKGIsInstalled "SABnzbdplus" && LoadQPKGDownloadDetails "SABnzbdplus" && InstallQPKG && LoadQPKGVars "SABnzbdplus" && StopSab && MakeSabMods
+	! QPKGIsInstalled "SABnzbdplus" && LoadQPKGDownloadDetails "SABnzbdplus" && InstallQPKG && LoadQPKGVars "SABnzbdplus" #&& StopSab #&& MakeSabMods
 
 	DebugFuncExit
 	return 0
@@ -802,14 +802,14 @@ BackupSabConfig()
 
 	elif QPKGIsInstalled "SABnzbdplus"; then
 		LoadQPKGVars "SABnzbdplus"
-		StopSab
+# 		StopSab
 	fi
 
 	SAB_WAS_INSTALLED=$sab_is_installed
 
 	if [ "$sab_is_installed" == "true" ]; then
 		if [ -d "$sab_config_path" ]; then
-			if [ ! -d "${BACKUP_PATH}/Config" ]; then
+			if [ ! -d "${BACKUP_PATH}/config" ]; then
 				$MKDIR_CMD -p "$BACKUP_PATH" 2> /dev/null
 				result=$?
 
@@ -823,7 +823,7 @@ BackupSabConfig()
 			fi
 
 			if [ "$errorcode" -eq "0" ]; then
-				if [ ! -d "${BACKUP_PATH}/Config" ]; then
+				if [ ! -d "${BACKUP_PATH}/config" ]; then
 					$MV_CMD "$sab_config_path" "$BACKUP_PATH"
 					result=$?
 
@@ -851,24 +851,23 @@ BackupSabConfig()
 ConvertSabSettings()
 	{
 
-	# convert filenames from QSabNZBdPlus -> SABnzbdplus (why can't we all agree on filenames?)
-	# and change SABnzbdplus web port to match the port for QSabNZBdPlus
+	# change SABnzbdplus web port to match the port for QSabNZBdPlus
 
 	DebugFuncEntry
 
-	[ -d "$FR_BACKUP_PATH" ] && { $MV_CMD "$FR_BACKUP_PATH" "$AU_BACKUP_PATH"; DebugDone "renamed backup config path" ;}
-	[ -f "$FR_BACKUP_PATHFILE" ] && { $MV_CMD "$FR_BACKUP_PATHFILE" "$AU_BACKUP_PATHFILE"; DebugDone "renamed backup config file" ;}
+	[ -d "$FR_BACKUP_PATH" ] && { $MV_CMD "$FR_BACKUP_PATH" "$SETTINGS_BACKUP_PATH"; DebugDone "renamed backup config path" ;}
+	[ -f "$SETTINGS_PREV_BACKUP_PATHFILE" ] && { $MV_CMD "$SETTINGS_PREV_BACKUP_PATHFILE" "$SETTINGS_BACKUP_PATHFILE"; DebugDone "renamed backup config file" ;}
 
-	if [ -f "$AU_BACKUP_PATHFILE" ]; then
- 		$SED_CMD -i "s|log_dir = logs|log_dir = ${SHARE_DOWNLOAD_PATH}/sabnzbd/logs|" "$AU_BACKUP_PATHFILE"
-		$SED_CMD -i "s|download_dir = Downloads/incomplete|download_dir = ${SHARE_DOWNLOAD_PATH}/incomplete|" "$AU_BACKUP_PATHFILE"
-		$SED_CMD -i "s|complete_dir = Downloads/complete|complete_dir = ${SHARE_DOWNLOAD_PATH}/complete|" "$AU_BACKUP_PATHFILE"
+	if [ -f "$SETTINGS_BACKUP_PATHFILE" ]; then
+ 		$SED_CMD -i "s|log_dir = logs|log_dir = ${SHARE_DOWNLOAD_PATH}/sabnzbd/logs|" "$SETTINGS_BACKUP_PATHFILE"
+		$SED_CMD -i "s|download_dir = Downloads/incomplete|download_dir = ${SHARE_DOWNLOAD_PATH}/incomplete|" "$SETTINGS_BACKUP_PATHFILE"
+		$SED_CMD -i "s|complete_dir = Downloads/complete|complete_dir = ${SHARE_DOWNLOAD_PATH}/complete|" "$SETTINGS_BACKUP_PATHFILE"
 
-		if ($GREP_CMD -q '^enable_https = 1' "$AU_BACKUP_PATHFILE"); then
-			sab_port=$($GREP_CMD '^https_port = ' "$AU_BACKUP_PATHFILE" | $HEAD_CMD -n1 | $CUT_CMD -f3 -d' ')
+		if ($GREP_CMD -q '^enable_https = 1' "$SETTINGS_BACKUP_PATHFILE"); then
+			sab_port=$($GREP_CMD '^https_port = ' "$SETTINGS_BACKUP_PATHFILE" | $HEAD_CMD -n1 | $CUT_CMD -f3 -d' ')
 			secure_web_login=true
 		else
-			sab_port=$($GREP_CMD '^port = ' "$AU_BACKUP_PATHFILE" | $HEAD_CMD -n1 | $CUT_CMD -f3 -d' ')
+			sab_port=$($GREP_CMD '^port = ' "$SETTINGS_BACKUP_PATHFILE" | $HEAD_CMD -n1 | $CUT_CMD -f3 -d' ')
 		fi
 	fi
 
@@ -1258,14 +1257,14 @@ RestoreSabConfig()
 	local returncode=0
 
 	if [ "$sab_is_installed" == "true" ]; then
-		if [ -d "$AU_BACKUP_PATH" ]; then
+		if [ -d "$SETTINGS_BACKUP_PATH" ]; then
 			if [ ! -d "$sab_config_path" ]; then
 				$MKDIR_CMD -p "$($DIRNAME_CMD "$sab_config_path")" 2> /dev/null
 			else
 				$RM_CMD -r "$sab_config_path" 2> /dev/null
 			fi
 
-			$MV_CMD "$AU_BACKUP_PATH" "$($DIRNAME_CMD "$sab_config_path")"
+			$MV_CMD "$SETTINGS_BACKUP_PATH" "$($DIRNAME_CMD "$sab_config_path")"
 			result=$?
 
 			if [ "$result" -eq "0" ]; then
@@ -1319,16 +1318,19 @@ DownloadQPKG()
 
 	if [ "$errorcode" -eq "0" ] && [ ! -e "$qpkg_pathfile" ]; then
 		ShowProc "downloading QPKG ($qpkg_file)"
+		local log_pathfile="$qpkg_pathfile.$DOWNLOAD_LOG_FILE"
+
+		[ -e "$log_pathfile" ] && rm -f "$log_pathfile"
 
 		if [ "$debug" == "true" ]; then
 			$WGET_CMD --no-check-certificate -q --show-progress "$qpkg_url" --output-document "$qpkg_pathfile"
 		else
-			$WGET_CMD --no-check-certificate --output-file "$qpkg_pathfile.$DOWNLOAD_LOG_FILE" "$qpkg_url" --output-document "$qpkg_pathfile"
+			$WGET_CMD --no-check-certificate --output-file "$log_pathfile" "$qpkg_url" --output-document "$qpkg_pathfile"
 		fi
 
 		result=$?
 
-		echo -e "\nresult=[$result]" >> "$qpkg_pathfile.$DOWNLOAD_LOG_FILE"
+		echo -e "\nresult=[$result]" >> "$log_pathfile"
 
 		if [ "$result" -eq "0" ]; then
 			file_md5=$($MD5SUM_CMD "$qpkg_pathfile" | $CUT_CMD -f1 -d' ')
@@ -1461,20 +1463,28 @@ LoadQPKGVars()
 				sab_init_pathfile="$($GETCFG_CMD "$package_name" Shell -f "$QPKG_CONFIG_PATHFILE")"
 
 				if [ "$package_name" == "SABnzbdplus" ]; then
-					sab_config_path="${sab_installed_path}/Config"
+					if [ -d "${sab_installed_path}/Config" ]; then
+						sab_config_path="${sab_installed_path}/Config"
+					else
+						sab_config_path="${sab_installed_path}/config"
+					fi
 
 				elif [ "$package_name" == "QSabNZBdPlus" ]; then
 					sab_config_path="${sab_installed_path}/SAB_CONFIG"
 				fi
 
-				sab_settings_pathfile="${sab_config_path}/sabnzbd.ini"
+				if [ -f "${sab_config_path}/sabnzbd.ini" ]; then
+					sab_settings_pathfile="${sab_config_path}/sabnzbd.ini"
+				else
+					sab_settings_pathfile="${sab_config_path}/config.ini"
+				fi
 
-				if [ -e "$AU_BACKUP_PATHFILE" ]; then
-					if ($GREP_CMD -q '^enable_https = 1' "$AU_BACKUP_PATHFILE"); then
-						sab_port=$($GREP_CMD '^https_port = ' "$AU_BACKUP_PATHFILE" | $HEAD_CMD -n1 | $CUT_CMD -f3 -d' ')
+				if [ -e "$SETTINGS_BACKUP_PATHFILE" ]; then
+					if ($GREP_CMD -q '^enable_https = 1' "$SETTINGS_BACKUP_PATHFILE"); then
+						sab_port=$($GREP_CMD '^https_port = ' "$SETTINGS_BACKUP_PATHFILE" | $HEAD_CMD -n1 | $CUT_CMD -f3 -d' ')
 						secure_web_login=true
 					else
-						sab_port=$($GREP_CMD '^port = ' "$AU_BACKUP_PATHFILE" | $HEAD_CMD -n1 | $CUT_CMD -f3 -d' ')
+						sab_port=$($GREP_CMD '^port = ' "$SETTINGS_BACKUP_PATHFILE" | $HEAD_CMD -n1 | $CUT_CMD -f3 -d' ')
 					fi
 				else
 					sab_port="$($GETCFG_CMD "$package_name" Web_Port -f "$QPKG_CONFIG_PATHFILE")"
@@ -1546,14 +1556,14 @@ LoadQPKGDownloadDetails()
 			qpkg_url="http://entware.zyxmon.org/binaries/other/Entware-ng_0.97.qpkg"
 
 		elif [ "$1" == "SABnzbdplus" ]; then
-			qpkg_file="SABnzbdplus_170131.qpkg"
-			qpkg_md5="03077bc11289b944d9e3a58927c269fe"
-			qpkg_url="http://bit.ly/2jPntF9"
+# 			qpkg_file="SABnzbdplus_170131.qpkg"
+# 			qpkg_md5="03077bc11289b944d9e3a58927c269fe"
+# 			qpkg_url="http://bit.ly/2jPntF9"
 
-# 			target_file="SABnzbdplus_17.05.07.qpkg"
-# 			qpkg_md5="f8974ef42d46a5001220286756f87d8c"
-# 			qpkg_url="${OneCD_urlprefix}/SABnzbd/build/${target_file}?raw=true"
-# 			qpkg_file=$target_file
+ 			target_file="SABnzbdplus_170520.qpkg"
+ 			qpkg_md5="a267fc2b5ed19aae8741850eadb4b7cf"
+ 			qpkg_url="${OneCD_urlprefix}/SABnzbdplus/build/${target_file}?raw=true"
+ 			qpkg_file=$target_file
 
 		elif [ "$1" == "SickRage" ]; then
 			target_file="SickRage_17.05.06.qpkg"
@@ -1643,10 +1653,10 @@ ReinstallSab()
 	DebugFuncEntry
 
 	[ "$errorcode" -eq "0" ] && BackupSabConfig
-	[ "$errorcode" -eq "0" ] && RemoveSabs
-	[ "$errorcode" -eq "0" ] && InstallSab
-	[ "$errorcode" -eq "0" ] && RestoreSabConfig
-	[ "$errorcode" -eq "0" ] && StartSab
+# 	[ "$errorcode" -eq "0" ] && RemoveSabs
+# 	[ "$errorcode" -eq "0" ] && InstallSab
+# 	[ "$errorcode" -eq "0" ] && RestoreSabConfig
+# 	[ "$errorcode" -eq "0" ] && StartSab
 
 	DebugFuncExit
 	return 0
@@ -1784,10 +1794,10 @@ Cleanup()
 
 	cd "$SHARE_PUBLIC_PATH"
 
-	[ "$fakeQPKG_python" == "true" ] && $RMCFG_CMD "Python" -f "$QPKG_CONFIG_PATHFILE"
-	[ "$fakebin_python" == "true" ] && $RM_CMD -f "$FAKE_PYTHON_PATHFILE"
-	[ "$fakeQPKG_git" == "true" ] && $RMCFG_CMD "git" -f "$QPKG_CONFIG_PATHFILE"
-	[ "$fakebin_git" == "true" ] && $RM_CMD -f "$FAKE_GIT_PATHFILE"
+# 	[ "$fakeQPKG_python" == "true" ] && $RMCFG_CMD "Python" -f "$QPKG_CONFIG_PATHFILE"
+# 	[ "$fakebin_python" == "true" ] && $RM_CMD -f "$FAKE_PYTHON_PATHFILE"
+# 	[ "$fakeQPKG_git" == "true" ] && $RMCFG_CMD "git" -f "$QPKG_CONFIG_PATHFILE"
+# 	[ "$fakebin_git" == "true" ] && $RM_CMD -f "$FAKE_GIT_PATHFILE"
 
 	if [ "$queuepaused" == "true" ]; then
 		if QPKGIsInstalled "SABnzbdplus"; then
