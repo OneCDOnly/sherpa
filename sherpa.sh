@@ -257,7 +257,7 @@ DisplayHelp()
 
 	}
 
-PauseSabs()
+PauseDownloaders()
 	{
 
 	DebugFuncEntry
@@ -1185,7 +1185,7 @@ LoadQPKGDownloadDetails()
 # 			qpkg_url="http://bit.ly/2jPntF9"
 
  			target_file="SABnzbdplus_170520.qpkg"
- 			qpkg_md5="e174b60a686875f57e59cb612a42dbda"
+ 			qpkg_md5="c28768788d606476b2d03389300983ec"
  			qpkg_url="${OneCD_urlprefix}/SABnzbdplus/build/${target_file}?raw=true"
  			qpkg_file=$target_file
 
@@ -1277,9 +1277,9 @@ ReinstallSab()
 	DebugFuncEntry
 
 	[ "$errorcode" -eq "0" ] && BackupSabConfig
- 	[ "$errorcode" -eq "0" ] && RemoveSabs
- 	[ "$errorcode" -eq "0" ] && InstallSab
- 	[ "$errorcode" -eq "0" ] && RestoreSabConfig
+#  	[ "$errorcode" -eq "0" ] && RemoveSabs
+#  	[ "$errorcode" -eq "0" ] && InstallSab
+#  	[ "$errorcode" -eq "0" ] && RestoreSabConfig
  	[ "$errorcode" -eq "0" ] && StartSab
 
 	DebugFuncExit
@@ -1866,7 +1866,7 @@ PrintResetColours()
 	}
 
 Init
-[ "$errorcode" -eq "0" ] && PauseSabs
+[ "$errorcode" -eq "0" ] && PauseDownloaders
 [ "$errorcode" -eq "0" ] && DownloadQPKGs
 [ "$errorcode" -eq "0" ] && RemovePackageInstallers
 [ "$errorcode" -eq "0" ] && InstallEntware
