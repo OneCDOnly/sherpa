@@ -1,4 +1,4 @@
-#!/opt/bin/python2.7 -OO
+#!/usr/bin/env python2
 #-*- coding: iso-8859-15 -*-
 #
 # If a file has been archieved under an ISO-8859 environment and unarchived
@@ -17,11 +17,11 @@
 # unpack in CP437 format (DOS).
 # NB: in all cases, files will be readable through samba, even if the detection
 # failed. But converted characters will not be good, ex: Î? instead é
-# 
+#
 # Remark: I guess it should work for any other encoding style. Just replace
-# ISO-8859-15 (Western Europe) by the one coresponding to your country:  
+# ISO-8859-15 (Western Europe) by the one coresponding to your country:
 # http://en.wikipedia.org/wiki/Character_encoding#Common_character_encodings
-# 
+#
 # Done by LapinFou
 #   date   | version |     comment
 #--------------------------------------
@@ -45,7 +45,7 @@ import shutil
 
 # If empty, then no move
 # Format must be synology full path (case sensitive). For ex: /volume1/video/News
-# mv -rf srcFolder destFolder 
+# mv -rf srcFolder destFolder
 # By default disabled
 MoveToThisFolder = ''
 

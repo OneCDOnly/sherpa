@@ -236,7 +236,6 @@ Init()
 	fi
 
 	if [ "$errorcode" -eq "0" ]; then
-		CalcClintonQPKGArch
 		CalcStephaneQPKGArch
 		CalcEntwareQPKG
 	fi
@@ -502,13 +501,11 @@ InstallIPKs()
 	local log_pathfile="${IPK_PATH}/ipks.$INSTALL_LOG_FILE"
 
 	if [ ! -z "$IPK_PATH" ] && [ -d "$IPK_PATH" ]; then
-		packages="gcc python python-pip python-cffi python-pyopenssl ca-certificates nano git git-http"
-		[ "$CLINTON_QPKG_ARCH" == "x64" ] || [ "$CLINTON_QPKG_ARCH" == "arm" ] && packages+=" unrar p7zip ionice"
+		packages="gcc python python-pip python-cffi python-pyopenssl ca-certificates nano git git-http unrar p7zip ionice"
 		[ "$STEPHANE_QPKG_ARCH" == "none" ] && packages+=" par2cmdline"
 		package_desc="various"
 
 		UpdateEntware
-# 		ReloadProfile
 		ShowProc "downloading & installing IPKs ($package_desc)"
 
 		# errors can occur due to incompatible IPKs (tried installing Entware-3x, then Entware-ng), so delete them and try again.
@@ -604,7 +601,7 @@ InstallSab()
 
 	DebugFuncEntry
 
-	! QPKGIsInstalled "SABnzbdplus" && LoadQPKGDownloadDetails "SABnzbdplus" && InstallQPKG && LoadQPKGVars "SABnzbdplus" #&& StopSab #&& MakeSabMods
+	! QPKGIsInstalled "SABnzbdplus" && LoadQPKGDownloadDetails "SABnzbdplus" && InstallQPKG
 
 	DebugFuncExit
 	return 0
@@ -616,7 +613,7 @@ InstallSR()
 
 	DebugFuncEntry
 
-	! QPKGIsInstalled "SickRage" && LoadQPKGDownloadDetails "SickRage" && InstallQPKG && LoadQPKGVars "SickRage" && CreateWaiter
+	! QPKGIsInstalled "SickRage" && LoadQPKGDownloadDetails "SickRage" && InstallQPKG
 
 	DebugFuncExit
 	return 0
@@ -686,69 +683,6 @@ InstallNG()
 
 	}
 
-InstallFakeQPKGs()
-	{
-
-	DebugFuncEntry
-
-	InstallFakeQPKG "Python" && fakeQPKG_python=true || fakeQPKG_python=false
-
-	if [ -f "$FAKE_PYTHON_PATHFILE" ] && [ -s "$FAKE_PYTHON_PATHFILE" ]; then
-		fakebin_python=false
-	else
-		$MKDIR_CMD -p "$FAKE_PYTHON_PATH"
-		$TOUCH_CMD "$FAKE_PYTHON_PATHFILE"
-		$CHMOD_CMD +x "$FAKE_PYTHON_PATHFILE"
-		fakebin_python=true
-	fi
-
-	InstallFakeQPKG "git" && fakeQPKG_git=true || fakeQPKG_git=false
-
-	if [ -f "$FAKE_GIT_PATHFILE" ] && [ -s "$FAKE_GIT_PATHFILE" ]; then
-		fakebin_git=false
-	else
-		$MKDIR_CMD -p "$FAKE_GIT_PATH"
-		$TOUCH_CMD "$FAKE_GIT_PATHFILE"
-		$CHMOD_CMD +x "$FAKE_GIT_PATHFILE"
-		fakebin_git=true
-	fi
-
-	DebugVar "fakeQPKG_python"
-	DebugVar "fakebin_python"
-	DebugVar "fakeQPKG_git"
-	DebugVar "fakebin_git"
-
-	DebugFuncExit
-	return 0
-
-	}
-
-InstallFakeQPKG()
-	{
-
-	# So the SABnzbd QPKG installer thinks the specified QPKG is installed
-	# $1 = QPKG name
-
-	local returncode=0
-
-	if [ -z "$1" ]; then
-		DebugError "QPKG name not specified"
-		errorcode=20
-		returncode=1
-	else
-		if ! QPKGIsInstalled "$1" ; then
-			$TOUCH_CMD "$QPKG_CONFIG_PATHFILE"
-			$SETCFG_CMD "$1" Enable TRUE -f "$QPKG_CONFIG_PATHFILE"
-			returncode=0
-		else
-			returncode=2
-		fi
-	fi
-
-	return $returncode
-
-	}
-
 InstallQPKG()
 	{
 
@@ -802,7 +736,7 @@ BackupSabConfig()
 
 	elif QPKGIsInstalled "SABnzbdplus"; then
 		LoadQPKGVars "SABnzbdplus"
-# 		StopSab
+ 		StopSab
 	fi
 
 	SAB_WAS_INSTALLED=$sab_is_installed
@@ -876,33 +810,11 @@ ConvertSabSettings()
 
 	}
 
-MakeSabMods()
-	{
-
-	DebugFuncEntry
-
-	[ "$errorcode" -eq "0" ] && CreateWaiter
-	[ "$errorcode" -eq "0" ] && CreateX64Link
-	[ "$errorcode" -eq "0" ] && ChangeARMLink
-	[ "$errorcode" -eq "0" ] && PatchSabInit
-	[ "$errorcode" -eq "0" ] && PatchCharTranslator
-
-	DebugFuncExit
-	return 0
-
-	}
-
 ReloadProfile()
 	{
 
-	#. /etc/profile > /dev/null
-	#. /root/.profile > /dev/null
-
  	QPKGIsInstalled "$PREF_ENTWARE" && export PATH="/opt/bin:/opt/sbin:$PATH"
 
-	#cd "$WORKING_PATH"
-
-	#DebugDone "reloaded environment"
 	DebugDone "adjusted \$PATH"
 	DebugVar "PATH"
 
@@ -986,270 +898,6 @@ EOF
 
 	}
 
-AddWaiter()
-	{
-
-	# $1 = init script pathfile to patch
-
-	local returncode=0
-	local findtext=""
-	local inserttext=""
-
-	if [ -z "$1" ]; then
-		DebugError "init script not specified"
-		errorcode=27
-		returncode=1
-	elif [ ! -e "$1" ]; then
-		DebugError "init script not found [$1]"
-		errorcode=28
-		returncode=1
-	else
-		findtext='#!/bin/sh'
-		inserttext=". $($DIRNAME_CMD "$sab_installed_path")/wait-for-Entware.sh 300"
-		($GREP_CMD -q "$inserttext" "$1") || $SED_CMD -i "s|$findtext|$findtext\n\n$inserttext|" "$1"
-		DebugDone "patch: add call to Entware waiter"
-	fi
-
-	return $returncode
-
-	}
-
-SwitchPython()
-	{
-
-	# $1 = init script pathfile to patch
-
-	local returncode=0
-
-	if [ -z "$1" ]; then
-		DebugError "init script not specified"
-		errorcode=29
-		returncode=1
-	elif [ ! -e "$1" ]; then
-		DebugError "init script not found [$1]"
-		errorcode=30
-		returncode=1
-	else
-		$SED_CMD -i 's|/usr/bin/python2.7|/opt/bin/python|' "$1"
-		DebugDone "patch: switch Python"
-	fi
-
-	return $returncode
-
-	}
-
-DisableQPKGChecks()
-	{
-
-	# $1 = init script pathfile to patch
-
-	local returncode=0
-	local inserttext=""
-
-	if [ -z "$1" ]; then
-		DebugError "init script not specified"
-		errorcode=31
-		returncode=1
-	elif [ ! -e "$1" ]; then
-		DebugError "init script not found [$1]"
-		errorcode=32
-		returncode=1
-	else
-		# disable these as not needed
-		inserttext="CheckQpkgEnabled "
-		($GREP_CMD -q "#$inserttext" "$1") || $SED_CMD -i "s|$inserttext|#$inserttext|" "$1"
-		DebugDone "patch: don't check QPKGs are enabled"
-
-		inserttext="CheckForGit "
-		($GREP_CMD -q "#$inserttext" "$1") || $SED_CMD -i "s|$inserttext|#$inserttext|" "$1"
-		DebugDone "patch: don't check Git QPKG is present"
-
-		inserttext="ConfigPython"
-		($GREP_CMD -q "#$inserttext" "$1") || $SED_CMD -i "s|$inserttext$|#$inserttext|" "$1"
-		DebugDone "patch: don't (re)config Python"
-	fi
-
-	return $returncode
-
-	}
-
-DisableQPKGModeChanges()
-	{
-
-	# $1 = init script pathfile to patch
-
-	local returncode=0
-	local inserttext=""
-
-	if [ -z "$1" ]; then
-		DebugError "init script not specified"
-		errorcode=33
-		returncode=1
-	elif [ ! -e "$1" ]; then
-		DebugError "init script not found [$1]"
-		errorcode=34
-		returncode=1
-	else
-		# disable these as not needed
-		$SED_CMD -i "s|/bin/chmod 777 \${QPKG_DIR}|#/bin/chmod 777 \${QPKG_DIR}|" "$1"
-		DebugDone "patch: don't chmod utils"
-	fi
-
-	return $returncode
-
-	}
-
-Add64bSupport()
-	{
-
-	# $1 = init script pathfile to patch
-
-	local returncode=0
-	local findtext=""
-	local inserttext=""
-
-	if [ -z "$1" ]; then
-		DebugError "init script not specified"
-		errorcode=35
-		returncode=1
-	elif [ ! -e "$1" ]; then
-		DebugError "init script not found [$1]"
-		errorcode=36
-		returncode=1
-	else
- 		if [ "$CLINTON_QPKG_ARCH" == "x64" ]; then
-			# modify check for x64 arch
-			$SED_CMD -i 's|grep "x86_64"; then ver="x86"; fi|grep "x86_64"; then ver="x64"; fi|' "$1"
-			DebugDone "patch: modified x86_64 arch support"
-
-			# add check for true x64 arch
- 			findtext='grep "x86_64"; then ver="x64"; fi'
- 			inserttext="if /bin/uname -m \| grep \"x64\"; then ver=\"x64\"; fi"
- 			($GREP_CMD -q "grep \"x64\"" "$1") || $SED_CMD -i "s|$findtext|$findtext\n$inserttext|" "$1"
- 			DebugDone "patch: add x64 arch support"
-		fi
-	fi
-
-	return $returncode
-
-	}
-
-RemoveAppsPath()
-	{
-
-	# $1 = init script pathfile to patch
-
-	local returncode=0
-
-	if [ -z "$1" ]; then
-		DebugError "init script not specified"
-		errorcode=37
-		returncode=1
-	elif [ ! -e "$1" ]; then
-		DebugError "init script not found [$1]"
-		errorcode=38
-		returncode=1
-	else
-		# remove additions to $PATH
-		$SED_CMD -i 's|:/Apps/bin:|:|;s|:/Apps/lib:|:|' "$1"
-		DebugDone "patch: disable Git PATH mods"
-	fi
-
-	return $returncode
-
-	}
-
-PatchSabInit()
-	{
-
-	DebugFuncEntry
-	local returncode=0
-
-	if [ -f "$sab_init_pathfile" ]; then
-		SwitchPython "$sab_init_pathfile"
-		AddWaiter "$sab_init_pathfile"
-		RemoveAppsPath "$sab_init_pathfile"
-		Add64bSupport "$sab_init_pathfile"
-		DisableQPKGModeChanges "$sab_init_pathfile"
-		DisableQPKGChecks "$sab_init_pathfile"
-	else
-		DebugError "init script not found [$sab_init_pathfile]"
-		errorcode=39
-		returncode=1
-	fi
-
-	DebugFuncExit
-	return $returncode
-
-	}
-
-PatchCharTranslator()
-	{
-
-	DebugFuncEntry
-	local returncode=0
-
-	if [ -f "$sab_chartranslator_pathfile" ]; then
-		$SED_CMD -i 's|/opt/bin/python2.7 -OO|/usr/bin/env python2|' "$sab_chartranslator_pathfile"
-		DebugDone "patch: switch Python"
-	else
-		DebugError "Python script not found [$sab_chartranslator_pathfile]"
-		errorcode=40
-		returncode=1
-	fi
-
-	DebugFuncExit
-	return $returncode
-
-	}
-
-CreateX64Link()
-	{
-
-	local returncode=0
-
-	if [ "$CLINTON_QPKG_ARCH" == "x64" ]; then
-		if [ ! -z "$sab_installed_path" ]; then
-			$MKDIR_CMD -p "${sab_installed_path}/x64"
-			$LN_CMD -s "${sab_installed_path}/x86/bin" "${sab_installed_path}/x64/bin"
-			$LN_CMD -s "${sab_installed_path}/x86/lib" "${sab_installed_path}/x64/lib"
-			$LN_CMD -s "${sab_installed_path}/x86/python" "${sab_installed_path}/x64/python"
-			$LN_CMD -fs "/opt/bin" "${sab_installed_path}/x64/bin-utils"
-
-			DebugDone "x64 symlink created"
-		else
-			DebugError "no sab installed path"
-			errorcode=41
-			returncode=1
-		fi
-	fi
-
-	return $returncode
-
-	}
-
-ChangeARMLink()
-	{
-
-	local returncode=0
-
-	if [ "$CLINTON_QPKG_ARCH" == "arm" ]; then
-		if [ ! -z "$sab_installed_path" ]; then
-			$MV_CMD "${sab_installed_path}/arm/bin-utils" "${sab_installed_path}/arm/bin-utils.bak"
-			$LN_CMD -fs "/opt/bin" "${sab_installed_path}/arm/bin-utils"
-
-			DebugDone "arm symlink created"
-		else
-			DebugError "no sab installed path"
-			errorcode=42
-			returncode=1
-		fi
-	fi
-
-	return $returncode
-
-	}
-
 RestoreSabConfig()
 	{
 
@@ -1257,6 +905,9 @@ RestoreSabConfig()
 	local returncode=0
 
 	if [ "$sab_is_installed" == "true" ]; then
+		LoadQPKGVars "SABnzbdplus"
+ 		StopSab
+
 		if [ -d "$SETTINGS_BACKUP_PATH" ]; then
 			if [ ! -d "$sab_config_path" ]; then
 				$MKDIR_CMD -p "$($DIRNAME_CMD "$sab_config_path")" 2> /dev/null
@@ -1364,33 +1015,6 @@ DownloadQPKG()
 	fi
 
 	DebugFuncExit
-	return $returncode
-
-	}
-
-CalcClintonQPKGArch()
-	{
-
-	# a "reimagining" of Clinton Hall's arch detection code ;)
-	# reduce NAS architecture down to 4 possibilities
-
-	local returncode=0
-	CLINTON_QPKG_ARCH=""
-
-	[ "$NAS_ARCH" == "armv5tejl" ] && CLINTON_QPKG_ARCH="arm"
-	[ "$NAS_ARCH" == "armv5tel" ] && CLINTON_QPKG_ARCH="arm"
-	[ "$NAS_ARCH" == "i686" ] && CLINTON_QPKG_ARCH="x86"
-	[ "$NAS_ARCH" == "x86_64" ] && CLINTON_QPKG_ARCH="x64"
-	[ "$NAS_ARCH" == "armv7l" ] && CLINTON_QPKG_ARCH="x31"
-
-	if [ -z "$CLINTON_QPKG_ARCH" ]; then
-		ShowError "Could not determine suitable ARCH for Clinton's QPKG ($NAS_ARCH)"
-		errorcode=49
-		returncode=1
-	else
-		DebugInfo "found a suitable ARCH for Clinton's QPKG ($CLINTON_QPKG_ARCH)"
-	fi
-
 	return $returncode
 
 	}
@@ -1561,7 +1185,7 @@ LoadQPKGDownloadDetails()
 # 			qpkg_url="http://bit.ly/2jPntF9"
 
  			target_file="SABnzbdplus_170520.qpkg"
- 			qpkg_md5="a267fc2b5ed19aae8741850eadb4b7cf"
+ 			qpkg_md5="e174b60a686875f57e59cb612a42dbda"
  			qpkg_url="${OneCD_urlprefix}/SABnzbdplus/build/${target_file}?raw=true"
  			qpkg_file=$target_file
 
@@ -1653,10 +1277,10 @@ ReinstallSab()
 	DebugFuncEntry
 
 	[ "$errorcode" -eq "0" ] && BackupSabConfig
-# 	[ "$errorcode" -eq "0" ] && RemoveSabs
-# 	[ "$errorcode" -eq "0" ] && InstallSab
-# 	[ "$errorcode" -eq "0" ] && RestoreSabConfig
-# 	[ "$errorcode" -eq "0" ] && StartSab
+ 	[ "$errorcode" -eq "0" ] && RemoveSabs
+ 	[ "$errorcode" -eq "0" ] && InstallSab
+ 	[ "$errorcode" -eq "0" ] && RestoreSabConfig
+ 	[ "$errorcode" -eq "0" ] && StartSab
 
 	DebugFuncExit
 	return 0
@@ -2247,6 +1871,7 @@ Init
 [ "$errorcode" -eq "0" ] && RemovePackageInstallers
 [ "$errorcode" -eq "0" ] && InstallEntware
 [ "$errorcode" -eq "0" ] && InstallOther
+[ "$errorcode" -eq "0" ] && CreateWaiter
 
 if [ "$errorcode" -eq "0" ]; then
 	[ "$TARGET_APP" == "SABnzbdplus" ] && ReinstallSab

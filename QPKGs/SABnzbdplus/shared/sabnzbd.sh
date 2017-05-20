@@ -99,7 +99,7 @@ StartQPKG()
 StopQPKG()
 	{
 
-	local maxwait=45
+	local maxwait=60
 	local returncode=0
 
 	PID=$(cat "$STORED_PID_PATHFILE"); i=0
