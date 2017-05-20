@@ -1,6 +1,6 @@
 #!/bin/bash
 ############################################################################
-# sabnzbd-installer.sh
+# sherpa.sh
 #
 # (C)opyright 2017 OneCD
 #
@@ -436,7 +436,6 @@ UpdateEntware()
 		errorcode=13
 		returncode=1
 	else
-		# check last modified time of
 		# if Entware package list was updated less that 1 hour ago, don't run another update
 
 		[ -e "$FIND_CMD" ] && result=$($FIND_CMD "$package_list_file" -mmin +$package_list_age)
@@ -496,7 +495,7 @@ InstallIPKs()
 		UpdateEntware
 		ShowProc "downloading & installing IPKs ($package_desc)"
 
-		# errors can occur due to incompatible IPKs (tried installing Entware-3x, then Entware-ng), so delete them and try again.
+		# errors can occur due to incompatible IPKs (tried installing Entware-3x, then Entware-ng), so delete them first
 		rm -f "$IPK_PATH"/*.ipk
 
 		cd "$IPK_PATH"
@@ -589,7 +588,8 @@ InstallSab()
 
 	DebugFuncEntry
 
-	! QPKGIsInstalled "SABnzbdplus" && LoadQPKGDownloadDetails "SABnzbdplus" && InstallQPKG
+	! QPKGIsInstalled "SABnzbdplus" && LoadQPKGDownloadDetails "SABnzbdplus" && InstallQPKG && LoadQPKGVars "SABnzbdplus"
+
 
 	DebugFuncExit
 	return 0
@@ -601,7 +601,7 @@ InstallSR()
 
 	DebugFuncEntry
 
-	! QPKGIsInstalled "SickRage" && LoadQPKGDownloadDetails "SickRage" && InstallQPKG
+	! QPKGIsInstalled "SickRage" && LoadQPKGDownloadDetails "SickRage" && InstallQPKG && LoadQPKGVars "SickRage"
 
 	DebugFuncExit
 	return 0
@@ -613,7 +613,7 @@ InstallCP()
 
 	DebugFuncEntry
 
-	! QPKGIsInstalled "CouchPotato2" && LoadQPKGDownloadDetails "CouchPotato2" && InstallQPKG && LoadQPKGVars "CouchPotato2" && CreateWaiter
+	! QPKGIsInstalled "CouchPotato2" && LoadQPKGDownloadDetails "CouchPotato2" && InstallQPKG && LoadQPKGVars "CouchPotato2"
 
 	DebugFuncExit
 	return 0
@@ -899,7 +899,6 @@ RestoreSabConfig()
 	local returncode=0
 
 	if [ "$sab_is_installed" == "true" ]; then
-		LoadQPKGVars "SABnzbdplus"
  		StopSab
 
 		if [ -d "$SETTINGS_BACKUP_PATH" ]; then
