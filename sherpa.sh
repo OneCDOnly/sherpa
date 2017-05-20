@@ -86,6 +86,7 @@ Init()
 	WORKING_PATH="${SHARE_PUBLIC_PATH}/${SCRIPT_FILE%.*}.tmp"
 	BACKUP_PATH="${WORKING_PATH}/backup"
 	SETTINGS_BACKUP_PATH="${BACKUP_PATH}/config"
+	SETTINGS_BACKUP_PATHFILE="${SETTINGS_BACKUP_PATH}/config.ini"
 	QPKG_PATH="${WORKING_PATH}/qpkg-downloads"
 	IPK_PATH="${WORKING_PATH}/ipk-downloads"
 	DEBUG_LOG_PATHFILE="${SHARE_PUBLIC_PATH}/${DEBUG_LOG_FILE}"
@@ -97,11 +98,6 @@ Init()
 	FAKE_GIT_PATH="/Apps/bin"
 	FAKE_PYTHON_PATHFILE="${FAKE_PYTHON_PATH}/python2.7"
 	FAKE_GIT_PATHFILE="${FAKE_GIT_PATH}/git"
-
-	# for converting from Stephane's QPKG and from previous version SAB QPKGs
-	FR_BACKUP_PATH="${BACKUP_PATH}/SAB_CONFIG"
-	SETTINGS_PREV_BACKUP_PATHFILE="${SETTINGS_BACKUP_PATH}/sabnzbd.ini"
-	SETTINGS_BACKUP_PATHFILE="${SETTINGS_BACKUP_PATH}/config.ini"
 
 	# check required binaries are present
 	SysFilePresent "$CAT_CMD" || return
@@ -763,8 +759,6 @@ BackupSabConfig()
 
 					if [ "$result" -eq "0" ]; then
 						ShowDone "created SABnzbd settings backup"
-
-						ConvertSabSettings
 					else
 						ShowError "Could not create settings backup of ($sab_config_path) [$result]"
 						errorcode=23
@@ -774,6 +768,8 @@ BackupSabConfig()
  					DebugInfo "a backup set already exists [$BACKUP_PATH]"
  				fi
 			fi
+
+			ConvertSabSettings
 		fi
 	fi
 
@@ -785,11 +781,17 @@ BackupSabConfig()
 ConvertSabSettings()
 	{
 
-	# change SABnzbdplus web port to match the port for QSabNZBdPlus
-
 	DebugFuncEntry
 
-	[ -d "$FR_BACKUP_PATH" ] && { $MV_CMD "$FR_BACKUP_PATH" "$SETTINGS_BACKUP_PATH"; DebugDone "renamed backup config path" ;}
+	local OLD_BACKUP_PATH="${BACKUP_PATH}/SAB_CONFIG"
+	[ -d "$OLD_BACKUP_PATH" ] && { $MV_CMD "$OLD_BACKUP_PATH" "$SETTINGS_BACKUP_PATH"; DebugDone "renamed backup config path" ;}
+
+	OLD_BACKUP_PATH="${BACKUP_PATH}/Config"
+	[ -d "$OLD_BACKUP_PATH" ] && { $MV_CMD "$OLD_BACKUP_PATH" "$SETTINGS_BACKUP_PATH"; DebugDone "renamed backup config path" ;}
+
+	# for converting from Stephane's QPKG and from previous version SAB QPKGs
+	local SETTINGS_PREV_BACKUP_PATHFILE="${SETTINGS_BACKUP_PATH}/sabnzbd.ini"
+
 	[ -f "$SETTINGS_PREV_BACKUP_PATHFILE" ] && { $MV_CMD "$SETTINGS_PREV_BACKUP_PATHFILE" "$SETTINGS_BACKUP_PATHFILE"; DebugDone "renamed backup config file" ;}
 
 	if [ -f "$SETTINGS_BACKUP_PATHFILE" ]; then
@@ -1185,7 +1187,7 @@ LoadQPKGDownloadDetails()
 # 			qpkg_url="http://bit.ly/2jPntF9"
 
  			target_file="SABnzbdplus_170520.qpkg"
- 			qpkg_md5="c28768788d606476b2d03389300983ec"
+ 			qpkg_md5="f9cb5a668f6aa4397775c07249cb2c37"
  			qpkg_url="${OneCD_urlprefix}/SABnzbdplus/build/${target_file}?raw=true"
  			qpkg_file=$target_file
 
@@ -1277,9 +1279,9 @@ ReinstallSab()
 	DebugFuncEntry
 
 	[ "$errorcode" -eq "0" ] && BackupSabConfig
-#  	[ "$errorcode" -eq "0" ] && RemoveSabs
-#  	[ "$errorcode" -eq "0" ] && InstallSab
-#  	[ "$errorcode" -eq "0" ] && RestoreSabConfig
+  	[ "$errorcode" -eq "0" ] && RemoveSabs
+  	[ "$errorcode" -eq "0" ] && InstallSab
+  	[ "$errorcode" -eq "0" ] && RestoreSabConfig
  	[ "$errorcode" -eq "0" ] && StartSab
 
 	DebugFuncExit

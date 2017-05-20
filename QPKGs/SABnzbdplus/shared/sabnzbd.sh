@@ -52,6 +52,8 @@ QPKGIsActive()
 UpdateQpkg()
 	{
 
+	local returncode=0
+
 	echo -n "Updating ($QPKG_NAME): " | tee -a "$LOG_PATHFILE"
 	messages=$({
 
@@ -64,17 +66,21 @@ UpdateQpkg()
 	if [ "$result" == "0" ]; then
 		echo "OK" | tee -a "$LOG_PATHFILE"
 		echo -e "$(OutputSeparator start)\n${messages}\n$(OutputSeparator end)" >> "$LOG_PATHFILE"
-		return 0
+		returncode=0
 	else
 		echo -e "failed\nresult=[$result]" | tee -a "$LOG_PATHFILE"
 		echo -e "$(OutputSeparator start)\n${messages}\n$(OutputSeparator end)" >> "$LOG_PATHFILE"
-		return 1
+		returncode=1
 	fi
+
+	return $returncode
 
 	}
 
 StartQPKG()
 	{
+
+	local returncode=0
 
 	cd "$QPKG_GIT_PATH"
 
@@ -85,14 +91,16 @@ StartQPKG()
 	if [ "$result" == "0" ]; then
 		echo "OK" | tee -a "$LOG_PATHFILE"
 		echo -e "$(OutputSeparator start)\n${messages}\n$(OutputSeparator end)" >> "$LOG_PATHFILE"
-		return 0
+		returncode=0
 	else
 		echo -e "failed\nresult=[$result]" | tee -a "$LOG_PATHFILE"
 		echo -e "$(OutputSeparator start)\n${messages}\n$(OutputSeparator end)" >> "$LOG_PATHFILE"
-		return 1
+		returncode=1
 	fi
 
 	echo "OK" | tee -a "$LOG_PATHFILE"
+
+	return $returncode
 
 	}
 
