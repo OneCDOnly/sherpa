@@ -3,26 +3,35 @@
 WAITER_PATHFILE="$(getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg/wait-for-Entware.sh"
 [ -e "$WAITER_PATHFILE" ] && . "$WAITER_PATHFILE" 300
 
-# package specific
-QPKG_NAME="SABnzbdplus"
-TARGET_SCRIPT="SABnzbd.py"
-URL_HTTP="http://github.com/sabnzbd/sabnzbd.git"
+Init()
+	{
 
-# followup
-QPKG_PATH="$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)"
-SETTINGS_PATHFILE="${QPKG_PATH}/config/config.ini"
-SETTINGS_DEFAULT_PATHFILE="${SETTINGS_PATHFILE}.def"
-SETTINGS="--daemon --browser 0 --config-file $SETTINGS_PATHFILE"
+	# package specific
+	QPKG_NAME="SABnzbdplus"
+	TARGET_SCRIPT="SABnzbd.py"
+	GIT_HTTP_URL="http://github.com/sabnzbd/sabnzbd.git"
 
-# boilerplate
-STORED_PID_PATHFILE="/tmp/${QPKG_NAME}.pid"
-DAEMON_OPTS="$TARGET_SCRIPT $SETTINGS --pidfile $STORED_PID_PATHFILE"
-QPKG_GIT_PATH="${QPKG_PATH}/${QPKG_NAME}"
-LOG_PATHFILE="/var/log/${QPKG_NAME}.log"
-DAEMON="/opt/bin/python2.7"
-URL_GIT=${URL_HTTP/http/git}
-errorcode=0
-[ ! -f "$SETTINGS_PATHFILE" ] && [ -f "$SETTINGS_DEFAULT_PATHFILE" ] && cp "$SETTINGS_DEFAULT_PATHFILE" "$SETTINGS_PATHFILE"
+	# dependants
+	QPKG_PATH="$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)"
+	SETTINGS_PATHFILE="${QPKG_PATH}/config/config.ini"
+	SETTINGS_DEFAULT_PATHFILE="${SETTINGS_PATHFILE}.def"
+	SETTINGS="--daemon --browser 0 --config-file $SETTINGS_PATHFILE"
+
+	# generic
+	STORED_PID_PATHFILE="/tmp/${QPKG_NAME}.pid"
+	DAEMON_OPTS="$TARGET_SCRIPT $SETTINGS --pidfile $STORED_PID_PATHFILE"
+	QPKG_GIT_PATH="${QPKG_PATH}/${QPKG_NAME}"
+	LOG_PATHFILE="/var/log/${QPKG_NAME}.log"
+	DAEMON="/opt/bin/python2.7"
+	GIT_HTTPS_URL=${GIT_HTTP_URL/http/git}
+	GIT_CMD="/opt/bin/git"
+	errorcode=0
+
+	[ ! -f "$SETTINGS_PATHFILE" ] && [ -f "$SETTINGS_DEFAULT_PATHFILE" ] && cp "$SETTINGS_DEFAULT_PATHFILE" "$SETTINGS_PATHFILE"
+
+	return 0
+
+	}
 
 QPKGIsActive()
 	{
@@ -53,12 +62,13 @@ UpdateQpkg()
 
 	local returncode=0
 	local msg=""
+	SysFilePresent "$GIT_CMD" || { errorcode=1; return 1 ;}
 
 	echo -n "Updating ($QPKG_NAME): " | tee -a "$LOG_PATHFILE"
 	messages=$({
 
-	[ -d "${QPKG_GIT_PATH}/.git" ] || git clone "$URL_GIT" "$QPKG_GIT_PATH" || git clone "$URL_HTTP" "$QPKG_GIT_PATH"
-	cd "$QPKG_GIT_PATH" && git checkout master && git pull && /bin/sync
+	[ -d "${QPKG_GIT_PATH}/.git" ] || $GIT_CMD clone "$GIT_HTTPS_URL" "$QPKG_GIT_PATH" || $GIT_CMD clone "$GIT_HTTP_URL" "$QPKG_GIT_PATH"
+	cd "$QPKG_GIT_PATH" && $GIT_CMD checkout master && $GIT_CMD pull && /bin/sync
 
 	} 2>&1 )
 	result=$?
@@ -153,25 +163,46 @@ OutputSeparator()
 
 	}
 
-case "$1" in
-	start)
-		echo -e "$(SessionSeparator "start requested")\n$(date)" >> "$LOG_PATHFILE"
-		! QPKGIsActive && { UpdateQpkg; StartQPKG ;} || errorcode=1
-		;;
+SysFilePresent()
+	{
 
-	stop)
-		echo -e "$(SessionSeparator "stop requested")\n$(date)" >> "$LOG_PATHFILE"
-		QPKGIsActive && StopQPKG || errorcode=1
-		;;
+	# $1 = pathfile to check
 
-	restart)
-		$0 stop
-		$0 start
-		;;
+	[ -z "$1" ] && return 1
 
-	*)
-		echo "Usage: $0 {start|stop|restart}"
-		;;
-esac
+	if [ ! -e "$1" ]; then
+		echo "A required NAS system file is missing [$1]"
+		errorcode=1
+		return 1
+	else
+		return 0
+	fi
+
+	}
+
+Init
+
+if [ "$errorcode" -eq "0" ]; then
+	case "$1" in
+		start)
+			echo -e "$(SessionSeparator "start requested")\n$(date)" >> "$LOG_PATHFILE"
+			! QPKGIsActive && { UpdateQpkg ; StartQPKG ;} || errorcode=1
+			;;
+
+		stop)
+			echo -e "$(SessionSeparator "stop requested")\n$(date)" >> "$LOG_PATHFILE"
+			QPKGIsActive && StopQPKG || errorcode=1
+			;;
+
+		restart)
+			$0 stop
+			$0 start
+			;;
+
+		*)
+			echo "Usage: $0 {start|stop|restart}"
+			;;
+	esac
+fi
 
 exit $errorcode

@@ -92,13 +92,6 @@ Init()
 	DEBUG_LOG_PATHFILE="${SHARE_PUBLIC_PATH}/${DEBUG_LOG_FILE}"
 	QPKG_BASE_PATH="${DEFAULT_VOLUME}/.qpkg"
 
-	# create the temporary illusion of QNAP's Python 2.7.3 QPKG and Clinton's Git QPKG being installed.
-	# this is only needed so the first run of the newly installed SAB doesn't create system log errors about missing QPKGs.
-	FAKE_PYTHON_PATH="/usr/bin"
-	FAKE_GIT_PATH="/Apps/bin"
-	FAKE_PYTHON_PATHFILE="${FAKE_PYTHON_PATH}/python2.7"
-	FAKE_GIT_PATHFILE="${FAKE_GIT_PATH}/git"
-
 	# check required binaries are present
 	SysFilePresent "$CAT_CMD" || return
 	SysFilePresent "$CHMOD_CMD" || return
@@ -476,7 +469,6 @@ InstallOther()
 	DebugFuncEntry
 
 	[ "$TARGET_APP" == "SABnzbdplus" ] && [ "$STEPHANE_QPKG_ARCH" != "none" ] && ! QPKGIsInstalled "Par2cmdline-MT" && LoadQPKGDownloadDetails "Par2cmdline-MT" && InstallQPKG
-# 	[ "$errorcode" -eq "0" ] && InstallFakeQPKGs
 	[ "$errorcode" -eq "0" ] && InstallIPKs
 	[ "$errorcode" -eq "0" ] && InstallPIPs
 
@@ -1182,12 +1174,8 @@ LoadQPKGDownloadDetails()
 			qpkg_url="http://entware.zyxmon.org/binaries/other/Entware-ng_0.97.qpkg"
 
 		elif [ "$1" == "SABnzbdplus" ]; then
-# 			qpkg_file="SABnzbdplus_170131.qpkg"
-# 			qpkg_md5="03077bc11289b944d9e3a58927c269fe"
-# 			qpkg_url="http://bit.ly/2jPntF9"
-
  			target_file="SABnzbdplus_170520.qpkg"
- 			qpkg_md5="f49ba97e240c836cb3f01c409c0f5053"
+ 			qpkg_md5="70871cfaa39ebe3127a3c28f7a1dfbf3"
  			qpkg_url="${OneCD_urlprefix}/SABnzbdplus/build/${target_file}?raw=true"
  			qpkg_file=$target_file
 
@@ -1419,11 +1407,6 @@ Cleanup()
 	DebugFuncEntry
 
 	cd "$SHARE_PUBLIC_PATH"
-
-# 	[ "$fakeQPKG_python" == "true" ] && $RMCFG_CMD "Python" -f "$QPKG_CONFIG_PATHFILE"
-# 	[ "$fakebin_python" == "true" ] && $RM_CMD -f "$FAKE_PYTHON_PATHFILE"
-# 	[ "$fakeQPKG_git" == "true" ] && $RMCFG_CMD "git" -f "$QPKG_CONFIG_PATHFILE"
-# 	[ "$fakebin_git" == "true" ] && $RM_CMD -f "$FAKE_GIT_PATHFILE"
 
 	if [ "$queuepaused" == "true" ]; then
 		if QPKGIsInstalled "SABnzbdplus"; then
