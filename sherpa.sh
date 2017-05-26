@@ -31,7 +31,7 @@ Init()
 
 	local returncode=0
 	local SCRIPT_FILE="sherpa.sh"
-	local SCRIPT_VERSION="2017.05.21b"
+	local SCRIPT_VERSION="2017.05.27b"
 
 	# cherry-pick required binaries
 	CAT_CMD="/bin/cat"
@@ -489,7 +489,7 @@ InstallIPKs()
 	local log_pathfile="${IPK_PATH}/ipks.$INSTALL_LOG_FILE"
 
 	if [ ! -z "$IPK_PATH" ] && [ -d "$IPK_PATH" ]; then
-		packages="gcc python python-pip python-cffi python-pyopenssl ca-certificates nano git git-http unrar p7zip ionice"
+		packages="gcc python python-pip python-cffi python-pyopenssl ca-certificates nano git git-http unrar p7zip ionice ffprobe"
 		[ "$STEPHANE_QPKG_ARCH" == "none" ] && packages+=" par2cmdline"
 		package_desc="various"
 

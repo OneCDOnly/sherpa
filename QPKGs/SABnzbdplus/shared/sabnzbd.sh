@@ -195,8 +195,9 @@ if [ "$errorcode" -eq "0" ]; then
 			;;
 
 		restart)
-			$0 stop
-			$0 start
+			echo -e "$(SessionSeparator "restart requested")\n$(date)" >> "$LOG_PATHFILE"
+			QPKGIsActive && StopQPKG || errorcode=1
+			! QPKGIsActive && { UpdateQpkg ; StartQPKG ;} || errorcode=1
 			;;
 
 		*)
