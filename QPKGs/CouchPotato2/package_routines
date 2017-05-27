@@ -140,10 +140,10 @@
 pkg_post_install()
 	{
 
-	sab_config_pathfile="$($CMD_GETCFG SABnzbdplus Install_Path -f $SYS_QPKG_CONFIG_FILE)/config/sabnzbd.ini"
+	sab_config_pathfile="$($CMD_GETCFG SABnzbdplus Install_Path -f $SYS_QPKG_CONFIG_FILE)/config/config.ini"
 	cp_config_path="$($CMD_GETCFG CouchPotato2 Install_Path -f $SYS_QPKG_CONFIG_FILE)/config"
 	cp_config_pathfile="${cp_config_path}/settings.conf"
-	[ ! -d "$cp_config_path" ] && mkdir -p "$cp_config_path" &&	touch "$cp_config_pathfile"
+	[ ! -d "$cp_config_path" ] && mkdir -p "$cp_config_path" && touch "$cp_config_pathfile"
 
 	sab_api="$($CMD_GETCFG misc api_key -f $sab_config_pathfile)"
 	[ "$($CMD_GETCFG misc enable_https -f $sab_config_pathfile)" == "1" ] && sab_port="$($CMD_GETCFG misc https_port -f $sab_config_pathfile)" || sab_port="$($CMD_GETCFG misc port -f $sab_config_pathfile)"

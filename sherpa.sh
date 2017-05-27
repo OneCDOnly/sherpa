@@ -1200,7 +1200,7 @@ LoadQPKGDownloadDetails()
 
 		elif [ "$1" == "CouchPotato2" ]; then
 			target_file="CouchPotato2_170528.qpkg"
-			qpkg_md5="ead4cc844036111f8dcc50762fbf80bf"
+			qpkg_md5="b1c77dae1809b790d5719c50a3e45138"
 			qpkg_url="${OneCD_urlprefix}/CouchPotato2/build/${target_file}?raw=true"
 			qpkg_file=$target_file
 
