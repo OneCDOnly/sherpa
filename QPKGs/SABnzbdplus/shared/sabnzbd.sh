@@ -8,19 +8,20 @@ Init()
 
 	# package specific
 	QPKG_NAME="SABnzbdplus"
-	TARGET_SCRIPT="SABnzbd.py"
+	local TARGET_SCRIPT="SABnzbd.py"
 	GIT_HTTP_URL="http://github.com/sabnzbd/sabnzbd.git"
 
-	# dependants
 	QPKG_PATH="$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)"
 	SETTINGS_PATH="${QPKG_PATH}/config"
-	SETTINGS_PATHFILE="${SETTINGS_PATH}/config.ini"
-	SETTINGS_DEFAULT_PATHFILE="${SETTINGS_PATHFILE}.def"
-	SETTINGS="--daemon --config-file $SETTINGS_PATHFILE --browser 0"
+	local SETTINGS_PATHFILE="${SETTINGS_PATH}/config.ini"
+	local SETTINGS_DEFAULT_PATHFILE="${SETTINGS_PATHFILE}.def"
+	STORED_PID_PATHFILE="/tmp/${QPKG_NAME}.pid"
+
+	local SETTINGS="--config-file $SETTINGS_PATHFILE --browser 0"
+	local PIDS="--pidfile $STORED_PID_PATHFILE"
 
 	# generic
-	STORED_PID_PATHFILE="/tmp/${QPKG_NAME}.pid"
-	DAEMON_OPTS="$TARGET_SCRIPT $SETTINGS --pidfile $STORED_PID_PATHFILE"
+	DAEMON_OPTS="$TARGET_SCRIPT --daemon $SETTINGS $PIDS"
 	QPKG_GIT_PATH="${QPKG_PATH}/${QPKG_NAME}"
 	LOG_PATHFILE="/var/log/${QPKG_NAME}.log"
 	DAEMON="/opt/bin/python2.7"
@@ -132,7 +133,7 @@ StopQPKG()
 			if [ "$i" -ge "$maxwait" ]; then
 				echo -n "failed! " | tee -a "$LOG_PATHFILE"
 				kill -9 $PID
-				echo -n "sent SIGKILL. " | tee -a "$LOG_PATHFILE"
+				echo "sent SIGKILL." | tee -a "$LOG_PATHFILE"
 				rm -f "$STORED_PID_PATHFILE"
 				break 2
 			fi

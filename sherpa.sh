@@ -1188,19 +1188,19 @@ LoadQPKGDownloadDetails()
 
 		elif [ "$1" == "SABnzbdplus" ]; then
  			target_file="SABnzbdplus_170528.qpkg"
- 			qpkg_md5="867163dd3f71a8b7dbcca7526db1ea86"
+ 			qpkg_md5="60c08f635cdd1390e05cb193366384de"
  			qpkg_url="${OneCD_urlprefix}/SABnzbdplus/build/${target_file}?raw=true"
  			qpkg_file=$target_file
 
 		elif [ "$1" == "SickRage" ]; then
 			target_file="SickRage_170528.qpkg"
-			qpkg_md5="620a3bbf15ead1ab4722c27100489ce2"
+			qpkg_md5="9211e0bb0c16cc83347c537cbcab8b94"
 			qpkg_url="${OneCD_urlprefix}/SickRage/build/${target_file}?raw=true"
 			qpkg_file=$target_file
 
 		elif [ "$1" == "CouchPotato2" ]; then
-			target_file="CouchPotato2_17.05.06.qpkg"
-			qpkg_md5="83a77b7d76e0501bd928b945186dfec7"
+			target_file="CouchPotato2_170528.qpkg"
+			qpkg_md5="ead4cc844036111f8dcc50762fbf80bf"
 			qpkg_url="${OneCD_urlprefix}/CouchPotato2/build/${target_file}?raw=true"
 			qpkg_file=$target_file
 

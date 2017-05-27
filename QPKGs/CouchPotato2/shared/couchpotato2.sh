@@ -7,9 +7,9 @@ Init()
 	{
 
 	# package specific
-	QPKG_NAME="SickRage"
-	local TARGET_SCRIPT="SickBeard.py"
-	GIT_HTTP_URL="http://github.com/sickrage/sickrage.git"
+	QPKG_NAME="CouchPotato2"
+	local TARGET_SCRIPT="CouchPotato.py"
+	GIT_HTTP_URL="http://github.com/CouchPotato/CouchPotatoServer.git"
 
 	QPKG_PATH="$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)"
 	SETTINGS_PATH="${QPKG_PATH}/config"
@@ -17,8 +17,8 @@ Init()
 	local SETTINGS_DEFAULT_PATHFILE="${SETTINGS_PATHFILE}.def"
 	STORED_PID_PATHFILE="/tmp/${QPKG_NAME}.pid"
 
-	local SETTINGS="--datadir $SETTINGS_PATH"
-	local PIDS="--pidfile $STORED_PID_PATHFILE"
+	local SETTINGS="--data_dir $SETTINGS_PATH"
+	local PIDS="--pid_file $STORED_PID_PATHFILE"
 
 	# generic
 	DAEMON_OPTS="$TARGET_SCRIPT --daemon $SETTINGS $PIDS"
@@ -45,7 +45,7 @@ QPKGIsActive()
 	local active=false
 	local msg=""
 
-	[ -f "$STORED_PID_PATHFILE" ] && { PID=$(cat "$STORED_PID_PATHFILE"); [ -d "/proc/$PID" ] && active=true ;}
+	[ -f "$STORED_PID_PATHFILE" ] && { active_pid=$(cat "$STORED_PID_PATHFILE"); [ -d "/proc/$active_pid" ] && active=true ;}
 
 	if [ "$active" == "true" ]; then
 		msg="= ($QPKG_NAME) is active"
@@ -120,19 +120,19 @@ StopQPKG()
 
 	local maxwait=60
 
-	PID=$(cat "$STORED_PID_PATHFILE"); i=0
+	active_pid=$(cat "$STORED_PID_PATHFILE"); i=0
 
-	kill $PID
+	kill $active_pid
 	echo -n "* stopping ($QPKG_NAME) with SIGTERM: " | tee -a "$LOG_PATHFILE"; echo -n "waiting for upto $maxwait seconds: "
 
 	while true; do
-		while [ -d /proc/$PID ]; do
+		while [ -d /proc/$active_pid ]; do
 			sleep 1
 			let i+=1
 			echo -n "$i, "
 			if [ "$i" -ge "$maxwait" ]; then
 				echo -n "failed! " | tee -a "$LOG_PATHFILE"
-				kill -9 $PID
+				kill -9 $active_pid
 				echo "sent SIGKILL." | tee -a "$LOG_PATHFILE"
 				rm -f "$STORED_PID_PATHFILE"
 				break 2

@@ -150,7 +150,7 @@ pkg_pre_install()
 pkg_post_install()
 	{
 
-	sab_config_pathfile="$($CMD_GETCFG SABnzbdplus Install_Path -f $SYS_QPKG_CONFIG_FILE)/Config/sabnzbd.ini"
+	sab_config_pathfile="$($CMD_GETCFG SABnzbdplus Install_Path -f $SYS_QPKG_CONFIG_FILE)/config/sabnzbd.ini"
 	sr_config_pathfile="${SYS_QPKG_DIR}/config/config.ini"
 	sab_api="$($CMD_GETCFG misc api_key -f $sab_config_pathfile)"
 
