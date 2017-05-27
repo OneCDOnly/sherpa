@@ -3,17 +3,36 @@
 WAITER_PATHFILE="$(getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg/wait-for-Entware.sh"
 [ -e "$WAITER_PATHFILE" ] && . "$WAITER_PATHFILE" 300
 
-QPKG_NAME="SickRage"
-TARGET_SCRIPT="SickBeard.py"
+Init()
+	{
 
-QPKG_PATH="$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)"
-STORED_PID_PATHFILE="/tmp/${QPKG_NAME}.pid"
-DAEMON_OPTS="$TARGET_SCRIPT --daemon --datadir ${QPKG_PATH}/config --pidfile $STORED_PID_PATHFILE"
-QPKG_GIT_PATH="${QPKG_PATH}/${QPKG_NAME}"
-LOG_PATHFILE="/var/log/$QPKG_NAME.log"
-DAEMON="/opt/bin/python2.7"
-REPO_PATHFILE="${QPKG_PATH}/config/repo.txt"
-errorcode=0
+	# package specific
+	QPKG_NAME="SickRage"
+	TARGET_SCRIPT="SickBeard.py"
+	GIT_HTTP_URL="http://github.com/sickrage/sickrage.git"
+
+	# dependants
+	QPKG_PATH="$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)"
+	SETTINGS_PATH="${QPKG_PATH}/config"
+	SETTINGS_PATHFILE="${SETTINGS_PATH}/config.ini"
+	SETTINGS_DEFAULT_PATHFILE="${SETTINGS_PATHFILE}.def"
+	SETTINGS="--daemon --datadir ${SETTINGS_PATH}"
+
+	# generic
+	STORED_PID_PATHFILE="/tmp/${QPKG_NAME}.pid"
+	DAEMON_OPTS="$TARGET_SCRIPT $SETTINGS --pidfile $STORED_PID_PATHFILE"
+	QPKG_GIT_PATH="${QPKG_PATH}/${QPKG_NAME}"
+	LOG_PATHFILE="/var/log/${QPKG_NAME}.log"
+	DAEMON="/opt/bin/python2.7"
+	GIT_HTTPS_URL=${GIT_HTTP_URL/http/git}
+	GIT_CMD="/opt/bin/git"
+	errorcode=0
+
+	[ ! -f "$SETTINGS_PATHFILE" ] && [ -f "$SETTINGS_DEFAULT_PATHFILE" ] && cp "$SETTINGS_DEFAULT_PATHFILE" "$SETTINGS_PATHFILE"
+
+	return 0
+
+	}
 
 QPKGIsActive()
 	{
@@ -28,14 +47,13 @@ QPKGIsActive()
 	[ -f "$STORED_PID_PATHFILE" ] && { PID=$(cat "$STORED_PID_PATHFILE"); [ -d "/proc/$PID" ] && active=true ;}
 
 	if [ "$active" == "true" ]; then
-		msg="($QPKG_NAME) is active"
+		msg="= ($QPKG_NAME) is active"
 	else
-		msg="($QPKG_NAME) is not active"
+		msg="= ($QPKG_NAME) is not active"
 		returncode=1
 	fi
 
 	echo "$msg" | tee -a "$LOG_PATHFILE"
-
 	return $returncode
 
 	}
@@ -43,68 +61,68 @@ QPKGIsActive()
 UpdateQpkg()
 	{
 
-	if [ -e "$REPO_PATHFILE" ]; then
-		URL_HTTP=$(cat "$REPO_PATHFILE")
-		URL_GIT=${URL_HTTP/http/git}
+	local returncode=0
+	local msg=""
+	SysFilePresent "$GIT_CMD" || { errorcode=1; return 1 ;}
 
-		echo -n "Updating ($QPKG_NAME): " | tee -a "$LOG_PATHFILE"
-		messages=$({
+	echo -n "* updating ($QPKG_NAME): " | tee -a "$LOG_PATHFILE"
+	messages="$({
 
-		[ -d "${QPKG_GIT_PATH}/.git" ] || git clone "$URL_GIT" "$QPKG_GIT_PATH" || git clone "$URL_HTTP" "$QPKG_GIT_PATH"
-		cd "$QPKG_GIT_PATH" && git reset --hard HEAD && git pull && /bin/sync
+	[ -d "${QPKG_GIT_PATH}/.git" ] || $GIT_CMD clone "$GIT_HTTPS_URL" "$QPKG_GIT_PATH" || $GIT_CMD clone "$GIT_HTTP_URL" "$QPKG_GIT_PATH"
+	cd "$QPKG_GIT_PATH" && $GIT_CMD checkout master && $GIT_CMD pull && /bin/sync
 
-		})
-		result=$?
+	} 2>&1)"
+	result=$?
 
-		if [ "$result" == "0" ]; then
-			echo "OK" | tee -a "$LOG_PATHFILE"
-			echo -e "$(OutputSeparator start)\n${messages}\n$(OutputSeparator end)" >> "$LOG_PATHFILE"
-			return 0
-		else
-			echo -e "failed\nresult=[$result]" | tee -a "$LOG_PATHFILE"
-			echo -e "$(OutputSeparator start)\n${messages}\n$(OutputSeparator end)" >> "$LOG_PATHFILE"
-			return 1
-		fi
+	if [ "$result" == "0" ]; then
+		msg="OK"
+		echo -e "$msg" | tee -a "$LOG_PATHFILE"
+		echo -e "${messages}" >> "$LOG_PATHFILE"
 	else
-		return 1
+		msg="failed!\nresult=[$result]"
+		echo -e "$msg\n${messages}" | tee -a "$LOG_PATHFILE"
+		returncode=1
 	fi
+
+	return $returncode
 
 	}
 
 StartQPKG()
 	{
 
+	local returncode=0
+	local msg=""
+
 	cd "$QPKG_GIT_PATH"
 
-	echo -n "Starting ($QPKG_NAME): " | tee -a "$LOG_PATHFILE"
-	messages="$(PATH=${PATH} ${DAEMON} ${DAEMON_OPTS} >> "$LOG_PATHFILE")"
+	echo -n "* starting ($QPKG_NAME): " | tee -a "$LOG_PATHFILE"
+	messages="$(PATH=${PATH} ${DAEMON} ${DAEMON_OPTS} 2>&1)"
 	result=$?
 
 	if [ "$result" == "0" ]; then
-		echo "OK" | tee -a "$LOG_PATHFILE"
-		echo -e "$(OutputSeparator start)\n${messages}\n$(OutputSeparator end)" >> "$LOG_PATHFILE"
-		return 0
+		msg="OK"
+		echo -e "$msg" | tee -a "$LOG_PATHFILE"
+		echo -e "${messages}" >> "$LOG_PATHFILE"
 	else
-		echo -e "failed\nresult=[$result]" | tee -a "$LOG_PATHFILE"
-		echo -e "$(OutputSeparator start)\n${messages}\n$(OutputSeparator end)" >> "$LOG_PATHFILE"
-		return 1
+		msg="failed!\nresult=[$result]"
+		echo -e "$msg\n${messages}" | tee -a "$LOG_PATHFILE"
+		returncode=1
 	fi
 
-	echo "OK" | tee -a "$LOG_PATHFILE"
+	return $returncode
 
 	}
 
 StopQPKG()
 	{
 
-	local maxwait=45
-	local returncode=0
+	local maxwait=60
 
 	PID=$(cat "$STORED_PID_PATHFILE"); i=0
 
 	kill $PID
-	echo -n "Stopping ($QPKG_NAME) with SIGTERM: " | tee -a "$LOG_PATHFILE"
-	echo -n "waiting for up to $maxwait seconds: "
+	echo -n "* stopping ($QPKG_NAME) with SIGTERM: " | tee -a "$LOG_PATHFILE"; echo -n "waiting for upto $maxwait seconds: "
 
 	while true; do
 		while [ -d /proc/$PID ]; do
@@ -114,19 +132,16 @@ StopQPKG()
 			if [ "$i" -ge "$maxwait" ]; then
 				echo -n "failed! " | tee -a "$LOG_PATHFILE"
 				kill -9 $PID
-				echo -n "Sent SIGKILL. " | tee -a "$LOG_PATHFILE"
+				echo -n "sent SIGKILL. " | tee -a "$LOG_PATHFILE"
 				rm -f "$STORED_PID_PATHFILE"
-				returncode=1
 				break 2
 			fi
 		done
 
 		rm -f "$STORED_PID_PATHFILE"
-		echo "OK"; echo "stopped OK in $i seconds " >> "$LOG_PATHFILE"
+		echo "OK"; echo "stopped OK in $i seconds" >> "$LOG_PATHFILE"
 		break
 	done
-
-	return $returncode
 
 	}
 
@@ -139,34 +154,46 @@ SessionSeparator()
 
 	}
 
-OutputSeparator()
+SysFilePresent()
 	{
 
-	# $1 = message
+	# $1 = pathfile to check
 
-	printf '%0.s-' {1..20}; echo -n " stdout $1 "; printf '%0.s-' {1..20}
+	[ -z "$1" ] && return 1
+
+	if [ ! -e "$1" ]; then
+		echo "! A required NAS system file is missing [$1]"
+		errorcode=1
+		return 1
+	else
+		return 0
+	fi
 
 	}
 
-case "$1" in
-	start)
-		echo -e "$(SessionSeparator "start requested")\n$(date)" >> "$LOG_PATHFILE"
-		! QPKGIsActive && { UpdateQpkg; StartQPKG ;}
-		;;
+Init
 
-	stop)
-		echo -e "$(SessionSeparator "stop requested")\n$(date)" >> "$LOG_PATHFILE"
-		QPKGIsActive && StopQPKG
-		;;
+if [ "$errorcode" -eq "0" ]; then
+	case "$1" in
+		start)
+			echo -e "$(SessionSeparator "start requested")\n= $(date)" >> "$LOG_PATHFILE"
+			! QPKGIsActive && UpdateQpkg; StartQPKG || errorcode=1
+			;;
 
-	restart)
-		$0 stop
-		$0 start
-		;;
+		stop)
+			echo -e "$(SessionSeparator "stop requested")\n= $(date)" >> "$LOG_PATHFILE"
+			QPKGIsActive && StopQPKG || errorcode=1
+			;;
 
-	*)
-		echo "Usage: $0 {start|stop|restart}"
-		;;
-esac
+		restart)
+			echo -e "$(SessionSeparator "restart requested")\n= $(date)" >> "$LOG_PATHFILE"
+			QPKGIsActive && StopQPKG; UpdateQpkg; StartQPKG || errorcode=1
+			;;
 
-[ "$errorcode" -ne "0" ] && echo "A problem occurred, please check the log ($LOG_PATHFILE) for more details."
+		*)
+			echo "Usage: $0 {start|stop|restart}"
+			;;
+	esac
+fi
+
+exit $errorcode

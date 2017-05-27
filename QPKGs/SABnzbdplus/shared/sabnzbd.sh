@@ -13,9 +13,10 @@ Init()
 
 	# dependants
 	QPKG_PATH="$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)"
-	SETTINGS_PATHFILE="${QPKG_PATH}/config/config.ini"
+	SETTINGS_PATH="${QPKG_PATH}/config"
+	SETTINGS_PATHFILE="${SETTINGS_PATH}/config.ini"
 	SETTINGS_DEFAULT_PATHFILE="${SETTINGS_PATHFILE}.def"
-	SETTINGS="--daemon --browser 0 --config-file $SETTINGS_PATHFILE"
+	SETTINGS="--daemon --config-file $SETTINGS_PATHFILE --browser 0"
 
 	# generic
 	STORED_PID_PATHFILE="/tmp/${QPKG_NAME}.pid"
@@ -65,23 +66,24 @@ UpdateQpkg()
 	SysFilePresent "$GIT_CMD" || { errorcode=1; return 1 ;}
 
 	echo -n "* updating ($QPKG_NAME): " | tee -a "$LOG_PATHFILE"
-	messages=$({
+	messages="$({
 
 	[ -d "${QPKG_GIT_PATH}/.git" ] || $GIT_CMD clone "$GIT_HTTPS_URL" "$QPKG_GIT_PATH" || $GIT_CMD clone "$GIT_HTTP_URL" "$QPKG_GIT_PATH"
 	cd "$QPKG_GIT_PATH" && $GIT_CMD checkout master && $GIT_CMD pull && /bin/sync
 
-	} 2>&1 )
+	} 2>&1)"
 	result=$?
 
 	if [ "$result" == "0" ]; then
 		msg="OK"
-		returncode=0
+		echo -e "$msg" | tee -a "$LOG_PATHFILE"
+		echo -e "${messages}" >> "$LOG_PATHFILE"
 	else
-		msg="failed\nresult=[$result]"
+		msg="failed!\nresult=[$result]"
+		echo -e "$msg\n${messages}" | tee -a "$LOG_PATHFILE"
 		returncode=1
 	fi
 
-	echo "$msg"; echo -e "$msg\n${messages}" >> "$LOG_PATHFILE"
 	return $returncode
 
 	}
@@ -95,17 +97,19 @@ StartQPKG()
 	cd "$QPKG_GIT_PATH"
 
 	echo -n "* starting ($QPKG_NAME): " | tee -a "$LOG_PATHFILE"
-	messages="$(PATH=${PATH} ${DAEMON} ${DAEMON_OPTS} >> "$LOG_PATHFILE")"
+	messages="$(PATH=${PATH} ${DAEMON} ${DAEMON_OPTS} 2>&1)"
 	result=$?
 
 	if [ "$result" == "0" ]; then
 		msg="OK"
+		echo -e "$msg" | tee -a "$LOG_PATHFILE"
+		echo -e "${messages}" >> "$LOG_PATHFILE"
 	else
-		msg="failed\nresult=[$result]"
-		errorcode=1
+		msg="failed!\nresult=[$result]"
+		echo -e "$msg\n${messages}" | tee -a "$LOG_PATHFILE"
+		returncode=1
 	fi
 
-	echo "$msg"; echo -e "$msg\n${messages}" >> "$LOG_PATHFILE"
 	return $returncode
 
 	}
@@ -130,13 +134,12 @@ StopQPKG()
 				kill -9 $PID
 				echo -n "sent SIGKILL. " | tee -a "$LOG_PATHFILE"
 				rm -f "$STORED_PID_PATHFILE"
-				errorcode=1
 				break 2
 			fi
 		done
 
 		rm -f "$STORED_PID_PATHFILE"
-		echo "OK"; echo "stopped OK in $i seconds " >> "$LOG_PATHFILE"
+		echo "OK"; echo "stopped OK in $i seconds" >> "$LOG_PATHFILE"
 		break
 	done
 
@@ -174,7 +177,7 @@ if [ "$errorcode" -eq "0" ]; then
 	case "$1" in
 		start)
 			echo -e "$(SessionSeparator "start requested")\n= $(date)" >> "$LOG_PATHFILE"
-			! QPKGIsActive && { UpdateQpkg ; StartQPKG ;} || errorcode=1
+			! QPKGIsActive && UpdateQpkg; StartQPKG || errorcode=1
 			;;
 
 		stop)
@@ -184,8 +187,7 @@ if [ "$errorcode" -eq "0" ]; then
 
 		restart)
 			echo -e "$(SessionSeparator "restart requested")\n= $(date)" >> "$LOG_PATHFILE"
-			QPKGIsActive && StopQPKG || errorcode=1
-			! QPKGIsActive && { UpdateQpkg ; StartQPKG ;} || errorcode=1
+			QPKGIsActive && StopQPKG; UpdateQpkg; StartQPKG || errorcode=1
 			;;
 
 		*)

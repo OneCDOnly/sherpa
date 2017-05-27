@@ -1188,13 +1188,13 @@ LoadQPKGDownloadDetails()
 
 		elif [ "$1" == "SABnzbdplus" ]; then
  			target_file="SABnzbdplus_170528.qpkg"
- 			qpkg_md5="bba1552243e9817a077cd9f69b489998"
+ 			qpkg_md5="867163dd3f71a8b7dbcca7526db1ea86"
  			qpkg_url="${OneCD_urlprefix}/SABnzbdplus/build/${target_file}?raw=true"
  			qpkg_file=$target_file
 
 		elif [ "$1" == "SickRage" ]; then
-			target_file="SickRage_17.05.06.qpkg"
-			qpkg_md5="dc13389031b18fc943b498682b6e4d38"
+			target_file="SickRage_170528.qpkg"
+			qpkg_md5="620a3bbf15ead1ab4722c27100489ce2"
 			qpkg_url="${OneCD_urlprefix}/SickRage/build/${target_file}?raw=true"
 			qpkg_file=$target_file
 

@@ -145,9 +145,6 @@ pkg_pre_install()
 
 	$CMD_MKDIR -p $SYS_QPKG_DIR/config
 
-	#feed some important stuff to the config file
-	$CMD_TOUCH $SYS_QPKG_DIR/config/config.ini
-
 	}
 
 pkg_post_install()
