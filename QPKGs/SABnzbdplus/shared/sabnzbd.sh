@@ -46,9 +46,9 @@ QPKGIsActive()
 	[ -f "$STORED_PID_PATHFILE" ] && { PID=$(cat "$STORED_PID_PATHFILE"); [ -d "/proc/$PID" ] && active=true ;}
 
 	if [ "$active" == "true" ]; then
-		msg="($QPKG_NAME) is active"
+		msg="= ($QPKG_NAME) is active"
 	else
-		msg="($QPKG_NAME) is not active"
+		msg="= ($QPKG_NAME) is not active"
 		returncode=1
 	fi
 
@@ -64,7 +64,7 @@ UpdateQpkg()
 	local msg=""
 	SysFilePresent "$GIT_CMD" || { errorcode=1; return 1 ;}
 
-	echo -n "Updating ($QPKG_NAME): " | tee -a "$LOG_PATHFILE"
+	echo -n "* updating ($QPKG_NAME): " | tee -a "$LOG_PATHFILE"
 	messages=$({
 
 	[ -d "${QPKG_GIT_PATH}/.git" ] || $GIT_CMD clone "$GIT_HTTPS_URL" "$QPKG_GIT_PATH" || $GIT_CMD clone "$GIT_HTTP_URL" "$QPKG_GIT_PATH"
@@ -81,8 +81,7 @@ UpdateQpkg()
 		returncode=1
 	fi
 
-	echo -e "$(OutputSeparator start)\n${messages}\n$(OutputSeparator end)" >> "$LOG_PATHFILE"
-	echo -e "$msg" | tee -a "$LOG_PATHFILE"
+	echo "$msg"; echo -e "$msg\n${messages}" >> "$LOG_PATHFILE"
 	return $returncode
 
 	}
@@ -95,7 +94,7 @@ StartQPKG()
 
 	cd "$QPKG_GIT_PATH"
 
-	echo -n "Starting ($QPKG_NAME): " | tee -a "$LOG_PATHFILE"
+	echo -n "* starting ($QPKG_NAME): " | tee -a "$LOG_PATHFILE"
 	messages="$(PATH=${PATH} ${DAEMON} ${DAEMON_OPTS} >> "$LOG_PATHFILE")"
 	result=$?
 
@@ -106,8 +105,7 @@ StartQPKG()
 		errorcode=1
 	fi
 
-	echo -e "$(OutputSeparator start)\n${messages}\n$(OutputSeparator end)" >> "$LOG_PATHFILE"
-	echo -e "$msg" | tee -a "$LOG_PATHFILE"
+	echo "$msg"; echo -e "$msg\n${messages}" >> "$LOG_PATHFILE"
 	return $returncode
 
 	}
@@ -120,8 +118,7 @@ StopQPKG()
 	PID=$(cat "$STORED_PID_PATHFILE"); i=0
 
 	kill $PID
-	echo -n "Stopping ($QPKG_NAME) with SIGTERM: " | tee -a "$LOG_PATHFILE"
-	echo -n "waiting for up to $maxwait seconds: "
+	echo -n "* stopping ($QPKG_NAME) with SIGTERM: " | tee -a "$LOG_PATHFILE"; echo -n "waiting for upto $maxwait seconds: "
 
 	while true; do
 		while [ -d /proc/$PID ]; do
@@ -131,7 +128,7 @@ StopQPKG()
 			if [ "$i" -ge "$maxwait" ]; then
 				echo -n "failed! " | tee -a "$LOG_PATHFILE"
 				kill -9 $PID
-				echo -n "Sent SIGKILL. " | tee -a "$LOG_PATHFILE"
+				echo -n "sent SIGKILL. " | tee -a "$LOG_PATHFILE"
 				rm -f "$STORED_PID_PATHFILE"
 				errorcode=1
 				break 2
@@ -154,15 +151,6 @@ SessionSeparator()
 
 	}
 
-OutputSeparator()
-	{
-
-	# $1 = message
-
-	printf '%0.s-' {1..20}; echo -n " stdout $1 "; printf '%0.s-' {1..20}
-
-	}
-
 SysFilePresent()
 	{
 
@@ -171,7 +159,7 @@ SysFilePresent()
 	[ -z "$1" ] && return 1
 
 	if [ ! -e "$1" ]; then
-		echo "A required NAS system file is missing [$1]"
+		echo "! A required NAS system file is missing [$1]"
 		errorcode=1
 		return 1
 	else
@@ -185,17 +173,17 @@ Init
 if [ "$errorcode" -eq "0" ]; then
 	case "$1" in
 		start)
-			echo -e "$(SessionSeparator "start requested")\n$(date)" >> "$LOG_PATHFILE"
+			echo -e "$(SessionSeparator "start requested")\n= $(date)" >> "$LOG_PATHFILE"
 			! QPKGIsActive && { UpdateQpkg ; StartQPKG ;} || errorcode=1
 			;;
 
 		stop)
-			echo -e "$(SessionSeparator "stop requested")\n$(date)" >> "$LOG_PATHFILE"
+			echo -e "$(SessionSeparator "stop requested")\n= $(date)" >> "$LOG_PATHFILE"
 			QPKGIsActive && StopQPKG || errorcode=1
 			;;
 
 		restart)
-			echo -e "$(SessionSeparator "restart requested")\n$(date)" >> "$LOG_PATHFILE"
+			echo -e "$(SessionSeparator "restart requested")\n= $(date)" >> "$LOG_PATHFILE"
 			QPKGIsActive && StopQPKG || errorcode=1
 			! QPKGIsActive && { UpdateQpkg ; StartQPKG ;} || errorcode=1
 			;;
