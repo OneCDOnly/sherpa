@@ -31,7 +31,7 @@ Init()
 
 	local returncode=0
 	local SCRIPT_FILE="sherpa.sh"
-	local SCRIPT_VERSION="2017.05.27b"
+	local SCRIPT_VERSION="2017.05.28b"
 
 	# cherry-pick required binaries
 	CAT_CMD="/bin/cat"
@@ -80,9 +80,22 @@ Init()
 	STOP_LOG_FILE="stop.log"
 	DEBUG_LOG_FILE="${SCRIPT_FILE%.*}.debug.log"
 
+	local DEFAULT_SHARE_DOWNLOAD_PATH="/share/Download"
+	local DEFAULT_SHARE_PUBLIC_PATH="/share/Public"
 	local DEFAULT_VOLUME="$($GETCFG_CMD SHARE_DEF defVolMP -f "$DEFAULT_SHARES_PATHFILE")"
-	SHARE_DOWNLOAD_PATH="/share/$($GETCFG_CMD SHARE_DEF defDownload -d Qdownload -f "$DEFAULT_SHARES_PATHFILE")"
-	SHARE_PUBLIC_PATH="/share/$($GETCFG_CMD SHARE_DEF defPublic -d Qpublic -f "$DEFAULT_SHARES_PATHFILE")"
+
+	if [ -L "$DEFAULT_SHARE_DOWNLOAD_PATH" ]; then
+		SHARE_DOWNLOAD_PATH="$DEFAULT_SHARE_DOWNLOAD_PATH"
+	else
+		SHARE_DOWNLOAD_PATH="/share/$($GETCFG_CMD SHARE_DEF defDownload -d Qdownload -f "$DEFAULT_SHARES_PATHFILE")"
+	fi
+
+	if [ -L "$DEFAULT_SHARE_PUBLIC_PATH" ]; then
+		SHARE_PUBLIC_PATH="$DEFAULT_SHARE_PUBLIC_PATH"
+	else
+		SHARE_PUBLIC_PATH="/share/$($GETCFG_CMD SHARE_DEF defPublic -d Qpublic -f "$DEFAULT_SHARES_PATHFILE")"
+	fi
+
 	WORKING_PATH="${SHARE_PUBLIC_PATH}/${SCRIPT_FILE%.*}.tmp"
 	BACKUP_PATH="${WORKING_PATH}/backup"
 	SETTINGS_BACKUP_PATH="${BACKUP_PATH}/config"
