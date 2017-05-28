@@ -85,6 +85,25 @@ UpdateQpkg()
 		returncode=1
 	fi
 
+####################### very rough insert from Clinton's SAB init 170131 ###################################################
+	QDOWNLOAD=$(/sbin/getcfg SHARE_DEF defDownload -d Qdownload -f /etc/config/def_share.info)
+	#The url to the git repository we're going to install
+	GIT_URL=git://github.com/clinton-hall/nzbToMedia.git
+	GIT_URL1=http://github.com/clinton-hall/nzbToMedia.git
+
+	cd /share/$QDOWNLOAD/nzbToMedia
+	if [ ! -d /share/$QDOWNLOAD/nzbToMedia/.git ]; then
+		#git clone the qpkg in a temp dir ($$ returns the pid we are running under, should be random enough)
+		git clone $GIT_URL /share/$QDOWNLOAD/nzbToMedia || git clone $GIT_URL1 /share/$QDOWNLOAD/nzbToMedia
+	fi
+	#check for success else log error and breakoff install
+	if [ ! -d /share/$QDOWNLOAD/nzbToMedia/.git ]; then
+		/bin/echo "Could not git clone $GIT_URL"
+	fi
+	git reset --hard
+	git pull
+######################## this will get a tidy-up shortly ###################################################################
+
 	return $returncode
 
 	}
