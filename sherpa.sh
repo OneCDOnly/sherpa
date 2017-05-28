@@ -1194,7 +1194,7 @@ LoadQPKGDownloadDetails()
 
 		elif [ "$1" == "SickRage" ]; then
 			target_file="SickRage_170528.qpkg"
-			qpkg_md5="9211e0bb0c16cc83347c537cbcab8b94"
+			qpkg_md5="9f42396f4da687abcb69d85de702b94a"
 			qpkg_url="${OneCD_urlprefix}/SickRage/build/${target_file}?raw=true"
 			qpkg_file=$target_file
 
