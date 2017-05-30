@@ -31,7 +31,7 @@ Init()
 
 	local returncode=0
 	local SCRIPT_FILE="sherpa.sh"
-	local SCRIPT_VERSION="2017.05.29b"
+	local SCRIPT_VERSION="2017.05.30b"
 
 	# cherry-pick required binaries
 	CAT_CMD="/bin/cat"
@@ -570,12 +570,13 @@ InstallPIPs()
 	DebugFuncEntry
 	local msgs=""
 	local returncode=0
-	local op="pip modules"
+
+	local op="pip setuptools"
 	local log_pathfile="${WORKING_PATH}/$(echo "$op" | $TR_CMD " " "_").$INSTALL_LOG_FILE"
 
 	ShowProc "downloading & installing ($op)"
 
-	msgs=$(pip install --upgrade pip setuptools && pip install sabyenc --upgrade cheetah 2>&1)
+	msgs=$(pip install --upgrade pip setuptools 2>&1)
 	result=$?
 	echo -e "${msgs}\nresult=[$result]" > "$log_pathfile"
 
@@ -590,6 +591,30 @@ InstallPIPs()
 		fi
 		errorcode=17
 		returncode=1
+	fi
+
+	if [ "$returncode" == "0" ]; then
+		local op="pip sabyenc"
+		local log_pathfile="${WORKING_PATH}/$(echo "$op" | $TR_CMD " " "_").$INSTALL_LOG_FILE"
+
+		ShowProc "downloading & installing ($op)"
+
+		msgs=$(pip install sabyenc --upgrade cheetah 2>&1)
+		result=$?
+		echo -e "${msgs}\nresult=[$result]" > "$log_pathfile"
+
+		if [ "$result" -eq "0" ]; then
+			ShowDone "installed ($op)"
+		else
+			ShowError "Download & install failed ($op) [$result]"
+			if [ "$debug" == "true" ]; then
+				DebugThickSeparator
+				$CAT_CMD "$log_pathfile"
+				DebugThickSeparator
+			fi
+			errorcode=17
+			returncode=1
+		fi
 	fi
 
 	DebugFuncExit
