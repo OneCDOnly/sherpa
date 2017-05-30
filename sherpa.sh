@@ -584,11 +584,11 @@ InstallPIPs()
 		ShowDone "installed ($op)"
 	else
 		ShowError "Download & install failed ($op) [$result]"
-		if [ "$debug" == "true" ]; then
+# 		if [ "$debug" == "true" ]; then
 			DebugThickSeparator
 			$CAT_CMD "$log_pathfile"
 			DebugThickSeparator
-		fi
+# 		fi
 		errorcode=17
 		returncode=1
 	fi
@@ -607,12 +607,12 @@ InstallPIPs()
 			ShowDone "installed ($op)"
 		else
 			ShowError "Download & install failed ($op) [$result]"
-			if [ "$debug" == "true" ]; then
+# 			if [ "$debug" == "true" ]; then
 				DebugThickSeparator
 				$CAT_CMD "$log_pathfile"
 				DebugThickSeparator
-			fi
-			errorcode=17
+# 			fi
+			errorcode=18
 			returncode=1
 		fi
 	fi
@@ -693,14 +693,14 @@ InstallNG()
 				#Go to default router ip address and port 6789 192.168.1.1:6789 and now you should see NZBget interface
 			else
 				ShowError "Download & install IPK failed ($package_desc) [$result]"
-				errorcode=18
+				errorcode=19
 				returncode=1
 			fi
 
 			cd "$WORKING_PATH"
 		else
 			ShowError "IPK path does not exist [$IPK_PATH]"
-			errorcode=19
+			errorcode=20
 			returncode=1
 		fi
 	} #&& LoadIPKVars "nzbget"
@@ -742,7 +742,7 @@ InstallQPKG()
 			DebugThickSeparator
 		fi
 
-		errorcode=20
+		errorcode=21
 		returncode=1
 	fi
 
@@ -778,7 +778,7 @@ BackupSabConfig()
 					DebugDone "backup directory created ($BACKUP_PATH)"
 				else
 					ShowError "Unable to create backup directory ($BACKUP_PATH) [$result]"
-					errorcode=21
+					errorcode=22
 					returncode=1
 				fi
 			fi
@@ -792,7 +792,7 @@ BackupSabConfig()
 						ShowDone "created SABnzbd settings backup"
 					else
 						ShowError "Could not create settings backup of ($sab_config_path) [$result]"
-						errorcode=22
+						errorcode=23
 						returncode=1
 					fi
  				else
@@ -912,17 +912,17 @@ EOF
 				DebugDone "set waiter executable"
 			else
 				ShowError "Unable to set waiter as executable ($WAITER_PATHFILE) [$result]"
-				errorcode=23
+				errorcode=24
 				returncode=1
 			fi
 		else
 			ShowError "waiter not found ($WAITER_PATHFILE) [$result]"
-			errorcode=24
+			errorcode=25
 			returncode=1
 		fi
 	else
 		ShowError "Unable to create waiter ($WAITER_PATHFILE) [$result]"
-		errorcode=25
+		errorcode=26
 		returncode=1
 	fi
 
@@ -956,14 +956,14 @@ RestoreSabConfig()
 				$SETCFG_CMD "SABnzbdplus" Web_Port $sab_port -f "$QPKG_CONFIG_PATHFILE"
 			else
 				ShowError "Could not restore settings backup to ($sab_config_path) [$result]"
-				errorcode=26
+				errorcode=27
 				returncode=1
 			fi
 		fi
 
 	else
 		ShowError "SABnzbd is NOT installed so can't restore backups"
-		errorcode=27
+		errorcode=28
 		returncode=1
 	fi
 
@@ -994,7 +994,7 @@ DownloadQPKG()
 			fi
 		else
 			ShowError "Problem creating checksum from existing QPKG ($qpkg_file) [$result]"
-			errorcode=28
+			errorcode=29
 			returncode=1
 		fi
 	fi
@@ -1024,12 +1024,12 @@ DownloadQPKG()
 					ShowDone "downloaded QPKG ($qpkg_file)"
 				else
 					ShowError "Downloaded QPKG checksum incorrect ($qpkg_file) [$result]"
-					errorcode=29
+					errorcode=30
 					returncode=1
 				fi
 			else
 				ShowError "Problem creating checksum from downloaded QPKG [$result]"
-				errorcode=30
+				errorcode=31
 				returncode=1
 			fi
 		else
@@ -1041,7 +1041,7 @@ DownloadQPKG()
 				DebugThickSeparator
 			fi
 
-			errorcode=31
+			errorcode=32
 			returncode=1
 		fi
 	fi
@@ -1071,7 +1071,7 @@ CalcStephaneQPKGArch()
 
 	if [ -z "$STEPHANE_QPKG_ARCH" ]; then
 		ShowError "Could not determine suitable ARCH for Stephane's QPKG ($NAS_ARCH)"
-		errorcode=32
+		errorcode=33
 		returncode=1
 	else
 		DebugInfo "found a suitable ARCH for Stephane's QPKG ($STEPHANE_QPKG_ARCH)"
@@ -1106,7 +1106,7 @@ LoadQPKGVars()
 
 	if [ -z "$package_name" ]; then
 		DebugError "QPKG name not specified"
-		errorcode=33
+		errorcode=34
 		returncode=1
 	else
 
@@ -1197,7 +1197,7 @@ LoadQPKGDownloadDetails()
 
 	if [ -z "$1" ]; then
 		DebugError "QPKG name not specified"
-		errorcode=34
+		errorcode=35
 		returncode=1
 	else
 		qpkg_name="$1"
@@ -1244,7 +1244,7 @@ LoadQPKGDownloadDetails()
 			fi
 		else
 			DebugError "QPKG name not found"
-			errorcode=35
+			errorcode=36
 			returncode=1
 		fi
 
@@ -1265,7 +1265,7 @@ UninstallQPKG()
 
 	if [ -z "$1" ]; then
 		DebugError "QPKG name not specified"
-		errorcode=36
+		errorcode=37
 		returncode=1
 	else
 		qpkg_installed_path="$($GETCFG_CMD "$1" Install_Path -f "$QPKG_CONFIG_PATHFILE")"
@@ -1284,7 +1284,7 @@ UninstallQPKG()
 					ShowDone "uninstalled QPKG '$1'"
 				else
 					ShowError "Unable to uninstall QPKG \"$1\" [$result]"
-					errorcode=37
+					errorcode=38
 					returncode=1
 				fi
 			fi
@@ -1358,12 +1358,12 @@ DaemonControl()
 
 	if [ -z "$1" ]; then
 		DebugError "daemon not specified"
-		errorcode=38
+		errorcode=39
 		returncode=1
 
 	elif [ ! -e "$1" ]; then
 		DebugError "daemon init not found [$1]"
-		errorcode=39
+		errorcode=40
 		returncode=1
 
 	else
@@ -1387,7 +1387,7 @@ DaemonControl()
 						$CAT_CMD "$qpkg_pathfile.$START_LOG_FILE"
 						DebugThickSeparator
 					fi
-					errorcode=40
+					errorcode=41
 					returncode=1
 				fi
 				;;
@@ -1413,7 +1413,7 @@ DaemonControl()
 				;;
 			*)
 				DebugError "action unrecognised [$2]"
-				errorcode=41
+				errorcode=42
 				returncode=1
 				;;
 		esac
@@ -1527,7 +1527,7 @@ QPKGIsInstalled()
 
 	if [ -z "$1" ]; then
 		DebugError "QPKG name not specified"
-		errorcode=42
+		errorcode=43
 		returncode=1
 	else
 		$GREP_CMD -q -F "[$1]" "$QPKG_CONFIG_PATHFILE"
@@ -1562,7 +1562,7 @@ IPKIsInstalled()
 
 	if [ -z "$1" ]; then
 		DebugError "IPK name not specified"
-		errorcode=43
+		errorcode=44
 		returncode=1
 	else
 		$OPKG_CMD list-installed | $GREP_CMD -q -F "$1"
@@ -1589,7 +1589,7 @@ SysFilePresent()
 
 	if [ ! -e "$1" ]; then
 		ShowError "A required NAS system file is missing [$1]"
-		errorcode=44
+		errorcode=45
 		return 1
 	else
 		return 0
@@ -1606,7 +1606,7 @@ SysSharePresent()
 
 	if [ ! -L "$1" ]; then
 		ShowError "A required NAS system share is missing [$1]. Please re-create it via QNAP Control Panel -> Privilege Settings -> Shared Folders."
-		errorcode=45
+		errorcode=46
 		return 1
 	else
 		return 0
