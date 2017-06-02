@@ -31,7 +31,7 @@ Init()
 
 	local returncode=0
 	local SCRIPT_FILE="sherpa.sh"
-	local SCRIPT_VERSION="2017.05.30b"
+	local SCRIPT_VERSION="2017.06.03b"
 
 	# cherry-pick required binaries
 	CAT_CMD="/bin/cat"
@@ -1239,7 +1239,7 @@ LoadQPKGDownloadDetails()
 				qpkg_url="${Stephane_urlprefix}_x86_64.qpkg.zip"
 
 			elif [ "$STEPHANE_QPKG_ARCH" == "x41" ]; then
-				qpkg_md5="df23ebaf626a6899ff2ffa112f9bd0a1"
+				qpkg_md5="1701b188115758c151f19956388b90cb"
 				qpkg_url="${Stephane_urlprefix}_arm-x41.qpkg.zip"
 			fi
 		else
