@@ -480,6 +480,9 @@ InstallOther()
 
 	DebugFuncEntry
 
+	# cruft - remove previous x41 Par2cmdline-MT package due to wrong arch - this was corrected on 2017-06-03
+	[ "$STEPHANE_QPKG_ARCH" == "x41" ] && QPKGIsInstalled "Par2cmdline-MT" && UninstallQPKG "Par2cmdline-MT"
+
 	[ "$TARGET_APP" == "SABnzbdplus" ] && [ "$STEPHANE_QPKG_ARCH" != "none" ] && ! QPKGIsInstalled "Par2cmdline-MT" && LoadQPKGDownloadDetails "Par2cmdline-MT" && InstallQPKG
 	[ "$errorcode" -eq "0" ] && InstallIPKs
 	[ "$errorcode" -eq "0" ] && InstallPIPs
