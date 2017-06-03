@@ -31,7 +31,7 @@ Init()
 
 	local returncode=0
 	local SCRIPT_FILE="sherpa.sh"
-	local SCRIPT_VERSION="2017.06.03b"
+	local SCRIPT_VERSION="2017.06.04b"
 
 	# cherry-pick required binaries
 	CAT_CMD="/bin/cat"
@@ -1215,8 +1215,8 @@ LoadQPKGDownloadDetails()
 			qpkg_url="http://entware.zyxmon.org/binaries/other/Entware-ng_0.97.qpkg"
 
 		elif [ "$1" == "SABnzbdplus" ]; then
- 			target_file="SABnzbdplus_170529.qpkg"
- 			qpkg_md5="35407e14e3955dc98f5cd2bea8fc591e"
+ 			target_file="SABnzbdplus_170604.qpkg"
+ 			qpkg_md5="ddd3bf36bec34ca65fd12ece0b6b0cd0"
  			qpkg_url="${OneCD_urlprefix}/SABnzbdplus/build/${target_file}?raw=true"
  			qpkg_file=$target_file
 

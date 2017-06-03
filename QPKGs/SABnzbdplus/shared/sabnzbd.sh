@@ -27,6 +27,14 @@ Init()
 	DAEMON="/opt/bin/python2.7"
 	GIT_HTTPS_URL=${GIT_HTTP_URL/http/git}
 	GIT_CMD="/opt/bin/git"
+	export PYTHONPATH=$DAEMON
+
+	if [ -z "$LANG" ]; then
+		export LANG="en_US.UTF-8"
+		export LC_ALL="en_US.UTF-8"
+		export LC_CTYPE="en_US.UTF-8"
+	fi
+
 	errorcode=0
 
 	[ ! -f "$SETTINGS_PATHFILE" ] && [ -f "$SETTINGS_DEFAULT_PATHFILE" ] && cp "$SETTINGS_DEFAULT_PATHFILE" "$SETTINGS_PATHFILE"
