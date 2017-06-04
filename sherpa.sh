@@ -31,7 +31,7 @@ Init()
 
 	local returncode=0
 	local SCRIPT_FILE="sherpa.sh"
-	local SCRIPT_VERSION="2017.06.04b"
+	local SCRIPT_VERSION="2017.06.05b"
 
 	# cherry-pick required binaries
 	CAT_CMD="/bin/cat"
@@ -342,7 +342,20 @@ RemovePackageInstallers()
 	DebugFuncEntry
 
 	[ "$PREF_ENTWARE" == "Entware-3x" ] && UninstallQPKG "Entware-ng"
-	[ "$errorcode" -eq "0" ] && { UninstallQPKG "Optware" || errorcode=0 ;} 	# ignore Optware uninstall errors
+	[ "$errorcode" -eq "0" ] && { UninstallQPKG "Optware" || errorcode="0" ;} 	# ignore Optware uninstall errors
+
+	DebugFuncExit
+	return 0
+
+	}
+
+RemoveOther()
+	{
+
+	DebugFuncEntry
+
+	# cruft - remove previous x41 Par2cmdline-MT package due to wrong arch - this was corrected on 2017-06-03
+	[ "$STEPHANE_QPKG_ARCH" == "x41" ] && QPKGIsInstalled "Par2cmdline-MT" && UninstallQPKG "Par2cmdline-MT"
 
 	DebugFuncExit
 	return 0
@@ -479,9 +492,6 @@ InstallOther()
 	{
 
 	DebugFuncEntry
-
-	# cruft - remove previous x41 Par2cmdline-MT package due to wrong arch - this was corrected on 2017-06-03
-	[ "$STEPHANE_QPKG_ARCH" == "x41" ] && QPKGIsInstalled "Par2cmdline-MT" && UninstallQPKG "Par2cmdline-MT"
 
 	[ "$TARGET_APP" == "SABnzbdplus" ] && [ "$STEPHANE_QPKG_ARCH" != "none" ] && ! QPKGIsInstalled "Par2cmdline-MT" && LoadQPKGDownloadDetails "Par2cmdline-MT" && InstallQPKG
 	[ "$errorcode" -eq "0" ] && InstallIPKs
@@ -1895,6 +1905,7 @@ PrintResetColours()
 
 Init
 [ "$errorcode" -eq "0" ] && PauseDownloaders
+[ "$errorcode" -eq "0" ] && RemoveOther
 [ "$errorcode" -eq "0" ] && DownloadQPKGs
 [ "$errorcode" -eq "0" ] && RemovePackageInstallers
 [ "$errorcode" -eq "0" ] && InstallEntware
