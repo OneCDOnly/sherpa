@@ -31,7 +31,7 @@ Init()
 
 	local returncode=0
 	local SCRIPT_FILE="sherpa.sh"
-	local SCRIPT_VERSION="2017.06.05b"
+	local SCRIPT_VERSION="2017.06.07b"
 
 	# cherry-pick required binaries
 	CAT_CMD="/bin/cat"
@@ -1225,8 +1225,8 @@ LoadQPKGDownloadDetails()
 			qpkg_url="http://entware.zyxmon.org/binaries/other/Entware-ng_0.97.qpkg"
 
 		elif [ "$1" == "SABnzbdplus" ]; then
- 			target_file="SABnzbdplus_170604.qpkg"
- 			qpkg_md5="ddd3bf36bec34ca65fd12ece0b6b0cd0"
+ 			target_file="SABnzbdplus_170607.qpkg"
+ 			qpkg_md5="82a2c4da0a1778fbdc4e053ce2711dec"
  			qpkg_url="${OneCD_urlprefix}/SABnzbdplus/build/${target_file}?raw=true"
  			qpkg_file=$target_file
 
@@ -1312,7 +1312,7 @@ UninstallQPKG()
 
 	}
 
-ReinstallSab()
+ReinstallSAB()
 	{
 
 	DebugFuncEntry
@@ -1912,10 +1912,11 @@ Init
 [ "$errorcode" -eq "0" ] && InstallOther
 
 if [ "$errorcode" -eq "0" ]; then
-	[ "$TARGET_APP" == "SABnzbdplus" ] && ReinstallSab
+	[ "$TARGET_APP" == "SABnzbdplus" ] && ReinstallSAB
  	[ "$TARGET_APP" == "SickRage" ] && ReinstallSR
 	[ "$TARGET_APP" == "CouchPotato2" ] && ReinstallCP
 	#[ "$TARGET_APP" == "NZBGet" ] && ReinstallNG
+	#[ "$TARGET_APP" == "HeadPhones" ] && ReinstallHP
 fi
 
 Cleanup
