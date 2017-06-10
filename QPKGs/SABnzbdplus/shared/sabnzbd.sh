@@ -84,7 +84,7 @@ UpdateQpkg()
 	messages="$({
 
 	[ -d "${QPKG_GIT_PATH}/.git" ] || $GIT_CMD clone --depth 1 "$GIT_HTTPS_URL" "$QPKG_GIT_PATH" || $GIT_CMD clone --depth 1 "$GIT_HTTP_URL" "$QPKG_GIT_PATH"
-	cd "$QPKG_GIT_PATH" && $GIT_CMD checkout master && $GIT_CMD pull && /bin/sync
+	cd "$QPKG_GIT_PATH" && $GIT_CMD pull && /bin/sync
 
 	} 2>&1)"
 	result=$?
