@@ -1,7 +1,12 @@
 #!/bin/sh
 
 WAITER_PATHFILE="$(getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg/wait-for-Entware.sh"
-[ -e "$WAITER_PATHFILE" ] && . "$WAITER_PATHFILE" 300
+if [ -e "$WAITER_PATHFILE" ]; then
+	. "$WAITER_PATHFILE" 300
+else
+	echo "waiter not found - can't continue"
+	exit 1
+fi
 
 Init()
 	{
@@ -28,6 +33,7 @@ Init()
 	GIT_HTTPS_URL=${GIT_HTTP_URL/http/git}
 	GIT_CMD="/opt/bin/git"
 	export PYTHONPATH=$DAEMON
+	export PATH="/opt/bin:/opt/sbin:${PATH}"
 
 	if [ -z "$LANG" ]; then
 		export LANG="en_US.UTF-8"
@@ -37,7 +43,7 @@ Init()
 
 	errorcode=0
 
-	[ ! -f "$SETTINGS_PATHFILE" ] && [ -f "$SETTINGS_DEFAULT_PATHFILE" ] && cp "$SETTINGS_DEFAULT_PATHFILE" "$SETTINGS_PATHFILE"
+	[ ! -f "$SETTINGS_PATHFILE" ] && [ -f "$SETTINGS_DEFAULT_PATHFILE" ] && { echo "! no settings file found - using default"; cp "$SETTINGS_DEFAULT_PATHFILE" "$SETTINGS_PATHFILE" ;}
 
 	return 0
 
@@ -125,7 +131,7 @@ StartQPKG()
 	cd "$QPKG_GIT_PATH"
 
 	echo -n "* starting ($QPKG_NAME): " | tee -a "$LOG_PATHFILE"
-	messages="$(PATH=${PATH} ${DAEMON} ${DAEMON_OPTS} 2>&1)"
+	messages="$(${DAEMON} ${DAEMON_OPTS} 2>&1)"
 	result=$?
 
 	if [ "$result" == "0" ]; then

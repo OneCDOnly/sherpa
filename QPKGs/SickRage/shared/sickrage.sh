@@ -1,7 +1,12 @@
 #!/bin/sh
 
 WAITER_PATHFILE="$(getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg/wait-for-Entware.sh"
-[ -e "$WAITER_PATHFILE" ] && . "$WAITER_PATHFILE" 300
+if [ -e "$WAITER_PATHFILE" ]; then
+	. "$WAITER_PATHFILE" 300
+else
+	echo "waiter not found - can't continue"
+	exit 1
+fi
 
 Init()
 	{
@@ -27,6 +32,15 @@ Init()
 	DAEMON="/opt/bin/python2.7"
 	GIT_HTTPS_URL=${GIT_HTTP_URL/http/git}
 	GIT_CMD="/opt/bin/git"
+	export PYTHONPATH=$DAEMON
+	export PATH="/opt/bin:/opt/sbin:${PATH}"
+
+	if [ -z "$LANG" ]; then
+		export LANG="en_US.UTF-8"
+		export LC_ALL="en_US.UTF-8"
+		export LC_CTYPE="en_US.UTF-8"
+	fi
+
 	errorcode=0
 
 	[ ! -f "$SETTINGS_PATHFILE" ] && [ -f "$SETTINGS_DEFAULT_PATHFILE" ] && { echo "! no settings file found - using default"; cp "$SETTINGS_DEFAULT_PATHFILE" "$SETTINGS_PATHFILE" ;}
@@ -69,7 +83,7 @@ UpdateQpkg()
 	echo -n "* updating ($QPKG_NAME): " | tee -a "$LOG_PATHFILE"
 	messages="$({
 
-	[ -d "${QPKG_GIT_PATH}/.git" ] || $GIT_CMD clone "$GIT_HTTPS_URL" "$QPKG_GIT_PATH" || $GIT_CMD clone "$GIT_HTTP_URL" "$QPKG_GIT_PATH"
+	[ -d "${QPKG_GIT_PATH}/.git" ] || $GIT_CMD clone --depth 1 "$GIT_HTTPS_URL" "$QPKG_GIT_PATH" || $GIT_CMD clone --depth 1 "$GIT_HTTP_URL" "$QPKG_GIT_PATH"
 	cd "$QPKG_GIT_PATH" && $GIT_CMD checkout master && $GIT_CMD pull && /bin/sync
 
 	} 2>&1)"
@@ -98,7 +112,7 @@ StartQPKG()
 	cd "$QPKG_GIT_PATH"
 
 	echo -n "* starting ($QPKG_NAME): " | tee -a "$LOG_PATHFILE"
-	messages="$(PATH=${PATH} ${DAEMON} ${DAEMON_OPTS} 2>&1)"
+	messages="$(${DAEMON} ${DAEMON_OPTS} 2>&1)"
 	result=$?
 
 	if [ "$result" == "0" ]; then
@@ -118,7 +132,7 @@ StartQPKG()
 StopQPKG()
 	{
 
-	local maxwait=60
+	local maxwait=100
 
 	PID=$(cat "$STORED_PID_PATHFILE"); i=0
 

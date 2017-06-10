@@ -31,7 +31,7 @@ Init()
 
 	local returncode=0
 	local SCRIPT_FILE="sherpa.sh"
-	local SCRIPT_VERSION="2017.06.07b"
+	local SCRIPT_VERSION="2017.06.10b"
 
 	# cherry-pick required binaries
 	CAT_CMD="/bin/cat"
@@ -1225,20 +1225,20 @@ LoadQPKGDownloadDetails()
 			qpkg_url="http://entware.zyxmon.org/binaries/other/Entware-ng_0.97.qpkg"
 
 		elif [ "$1" == "SABnzbdplus" ]; then
- 			target_file="SABnzbdplus_170607.qpkg"
- 			qpkg_md5="82a2c4da0a1778fbdc4e053ce2711dec"
+ 			target_file="SABnzbdplus_170610.qpkg"
+ 			qpkg_md5="1b59bf8cde96417e51af661d20569225"
  			qpkg_url="${OneCD_urlprefix}/SABnzbdplus/build/${target_file}?raw=true"
  			qpkg_file=$target_file
 
 		elif [ "$1" == "SickRage" ]; then
-			target_file="SickRage_170528.qpkg"
-			qpkg_md5="9f42396f4da687abcb69d85de702b94a"
+			target_file="SickRage_170610.qpkg"
+			qpkg_md5="d1f295d01bc6e39fd59dff24d2b36a3f"
 			qpkg_url="${OneCD_urlprefix}/SickRage/build/${target_file}?raw=true"
 			qpkg_file=$target_file
 
 		elif [ "$1" == "CouchPotato2" ]; then
-			target_file="CouchPotato2_170528.qpkg"
-			qpkg_md5="b1c77dae1809b790d5719c50a3e45138"
+			target_file="CouchPotato2_170610.qpkg"
+			qpkg_md5="5c6e2ff53e45cb2f3b8eba4e34a8900e"
 			qpkg_url="${OneCD_urlprefix}/CouchPotato2/build/${target_file}?raw=true"
 			qpkg_file=$target_file
 
