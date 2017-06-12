@@ -1,13 +1,13 @@
-#!/bin/bash
-############################################################################
+#!/usr/bin/env bash
+###############################################################################
 # sherpa.sh
 #
 # (C)opyright 2017 OneCD
 #
 # So, blame OneCD if it all goes horribly wrong. ;)
+#   one.cd.only@gmail.com
 #
-# for more info:
-#	https://forum.qnap.com/viewtopic.php?f=320&t=132373
+# For more info [https://forum.qnap.com/viewtopic.php?f=320&t=132373]
 #
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -21,7 +21,7 @@
 #
 # You should have received a copy of the GNU General Public License along with
 # this program. If not, see http://www.gnu.org/licenses/.
-############################################################################
+###############################################################################
 
 LAUNCHED_AS="$0"
 debug=false; [ ! -z "$1" ] && [ "$1" == "--debug" ] && debug=true
@@ -1225,8 +1225,8 @@ LoadQPKGDownloadDetails()
 			qpkg_url="http://entware.zyxmon.org/binaries/other/Entware-ng_0.97.qpkg"
 
 		elif [ "$1" == "SABnzbdplus" ]; then
- 			target_file="SABnzbdplus_170611.qpkg"
- 			qpkg_md5="a056164fb15f7a936bbd67f83b0a156a"
+ 			target_file="SABnzbdplus_170612.qpkg"
+ 			qpkg_md5="d38ce90be1f880b85e9b002c5731f94f"
  			qpkg_url="${OneCD_urlprefix}/SABnzbdplus/build/${target_file}?raw=true"
  			qpkg_file=$target_file
 

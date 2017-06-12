@@ -84,9 +84,9 @@ UpdateQpkg()
 	echo -n "* updating ($QPKG_NAME): " | tee -a "$LOG_PATHFILE"
 	messages="$({
 
-	[ -d "${QPKG_GIT_PATH}/.git" ] || $GIT_CMD clone --depth 1 "$GIT_HTTPS_URL" "$QPKG_GIT_PATH" || $GIT_CMD clone --depth 1 "$GIT_HTTP_URL" "$QPKG_GIT_PATH"
+	[ -d "${QPKG_GIT_PATH}/.git" ] || $GIT_CMD clone -b master --depth 1 "$GIT_HTTPS_URL" "$QPKG_GIT_PATH" || $GIT_CMD clone -b master --depth 1 "$GIT_HTTP_URL" "$QPKG_GIT_PATH"
 	cd "$QPKG_GIT_PATH"
-	$GIT_CMD fetch && $SED_CMD -i 's|develop|master|g' "$QPKG_GIT_PATH/.git/config" && $GIT_CMD pull && $GIT_CMD checkout master &&	/bin/sync
+	$GIT_CMD pull
 
 	} 2>&1)"
 	result=$?
