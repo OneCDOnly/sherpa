@@ -14,9 +14,9 @@ Init()
 	# package specific
 	QPKG_NAME="SABnzbdplus"
 	local TARGET_SCRIPT="SABnzbd.py"
-	GIT_HTTP_URL="http://github.com/sabnzbd/sabnzbd.git"
 
 	QPKG_PATH="$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)"
+	NZBMEDIA_PATH=$(/sbin/getcfg SHARE_DEF defDownload -d Qdownload -f /etc/config/def_share.info)
 	SETTINGS_PATH="${QPKG_PATH}/config"
 	local SETTINGS_PATHFILE="${SETTINGS_PATH}/config.ini"
 	local SETTINGS_DEFAULT_PATHFILE="${SETTINGS_PATHFILE}.def"
@@ -27,11 +27,8 @@ Init()
 
 	# generic
 	DAEMON_OPTS="$TARGET_SCRIPT --daemon $SETTINGS $PIDS"
-	QPKG_GIT_PATH="${QPKG_PATH}/${QPKG_NAME}"
 	LOG_PATHFILE="/var/log/${QPKG_NAME}.log"
 	DAEMON="/opt/bin/python2.7"
-	GIT_HTTPS_URL=${GIT_HTTP_URL/http/git}
-	GIT_CMD="/opt/bin/git"
 	SED_CMD="/opt/bin/sed"
 	export PYTHONPATH=$DAEMON
 	export PATH="/opt/bin:/opt/sbin:${PATH}"
@@ -77,48 +74,48 @@ QPKGIsActive()
 UpdateQpkg()
 	{
 
+	PullGitRepo "SABnzbdplus" "http://github.com/sabnzbd/sabnzbd.git" "$QPKG_PATH"
+	[ "$?" == "0" ] && PullGitRepo "nzbToMedia" "http://github.com/clinton-hall/nzbToMedia.git" "$NZBMEDIA_PATH"
+
+	}
+
+PullGitRepo()
+	{
+
+	# $1 = package name
+	# $2 = URL to pull/clone from
+	# $3 = path to clone into
+
 	local returncode=0
 	local msg=""
-	SysFilePresent "$GIT_CMD" || { errorcode=1; return 1 ;}
+	local GIT_CMD="/opt/bin/git"
 
-	echo -n "* updating ($QPKG_NAME): " | tee -a "$LOG_PATHFILE"
-	messages="$({
+	[ -z "$1" ] && returncode=1; [ -z "$2" ] && returncode=1; [ -z "$3" ] && returncode=1
+	SysFilePresent "$GIT_CMD" || { errorcode=1; returncode=1 ;}
 
-	[ -d "${QPKG_GIT_PATH}/.git" ] || $GIT_CMD clone -b master --depth 1 "$GIT_HTTPS_URL" "$QPKG_GIT_PATH" || $GIT_CMD clone -b master --depth 1 "$GIT_HTTP_URL" "$QPKG_GIT_PATH"
-	cd "$QPKG_GIT_PATH"
-	$GIT_CMD pull
+	local QPKG_GIT_PATH="$3/$1"
 
-	} 2>&1)"
-	result=$?
+	if [ "$returncode" == "0" ]; then
+		local GIT_HTTP_URL="$2"
+		local GIT_HTTPS_URL=${GIT_HTTP_URL/http/git}
 
-	if [ "$result" == "0" ]; then
-		msg="OK"
-		echo -e "$msg" | tee -a "$LOG_PATHFILE"
-		echo -e "${messages}" >> "$LOG_PATHFILE"
-	else
-		msg="failed!\nresult=[$result]"
-		echo -e "$msg\n${messages}" | tee -a "$LOG_PATHFILE"
-		returncode=1
+		echo -n "* updating ($1): " | tee -a "$LOG_PATHFILE"
+		messages="$({
+		[ ! -d "${QPKG_GIT_PATH}/.git" ] && { $GIT_CMD clone -b master --depth 1 "$GIT_HTTPS_URL" "$QPKG_GIT_PATH" || $GIT_CMD clone -b master --depth 1 "$GIT_HTTP_URL" "$QPKG_GIT_PATH" ;}
+		cd "$QPKG_GIT_PATH" && $GIT_CMD pull
+		} 2>&1)"
+		result=$?
+
+		if [ "$result" == "0" ]; then
+			msg="OK"
+			echo -e "$msg" | tee -a "$LOG_PATHFILE"
+			echo -e "${messages}" >> "$LOG_PATHFILE"
+		else
+			msg="failed!\nresult=[$result]"
+			echo -e "$msg\n${messages}" | tee -a "$LOG_PATHFILE"
+			returncode=1
+		fi
 	fi
-
-####################### very rough insert from Clinton's SAB init 170131 ###################################################
-	QDOWNLOAD=$(/sbin/getcfg SHARE_DEF defDownload -d Qdownload -f /etc/config/def_share.info)
-	#The url to the git repository we're going to install
-	GIT_URL=git://github.com/clinton-hall/nzbToMedia.git
-	GIT_URL1=http://github.com/clinton-hall/nzbToMedia.git
-
-	cd /share/$QDOWNLOAD/nzbToMedia
-	if [ ! -d /share/$QDOWNLOAD/nzbToMedia/.git ]; then
-		#git clone the qpkg in a temp dir ($$ returns the pid we are running under, should be random enough)
-		git clone $GIT_URL /share/$QDOWNLOAD/nzbToMedia || git clone $GIT_URL1 /share/$QDOWNLOAD/nzbToMedia
-	fi
-	#check for success else log error and breakoff install
-	if [ ! -d /share/$QDOWNLOAD/nzbToMedia/.git ]; then
-		/bin/echo "Could not git clone $GIT_URL"
-	fi
-	git reset --hard
-	git pull
-######################## this will get a tidy-up shortly ###################################################################
 
 	return $returncode
 

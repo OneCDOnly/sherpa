@@ -1225,8 +1225,8 @@ LoadQPKGDownloadDetails()
 			qpkg_url="http://entware.zyxmon.org/binaries/other/Entware-ng_0.97.qpkg"
 
 		elif [ "$1" == "SABnzbdplus" ]; then
- 			target_file="SABnzbdplus_170612.qpkg"
- 			qpkg_md5="d38ce90be1f880b85e9b002c5731f94f"
+ 			target_file="SABnzbdplus_170618.qpkg"
+ 			qpkg_md5="9d45eb4654f318092c20c0a4de399357"
  			qpkg_url="${OneCD_urlprefix}/SABnzbdplus/build/${target_file}?raw=true"
  			qpkg_file=$target_file
 
