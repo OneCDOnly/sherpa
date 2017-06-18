@@ -11,13 +11,13 @@ fi
 Init()
 	{
 
-	# package specific
 	QPKG_NAME="SABnzbdplus"
 	local TARGET_SCRIPT="SABnzbd.py"
 
-	QPKG_PATH="$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)"
+	SAB_PATH="$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)"
 	NZBMEDIA_PATH=$(/sbin/getcfg SHARE_DEF defDownload -d Qdownload -f /etc/config/def_share.info)
-	SETTINGS_PATH="${QPKG_PATH}/config"
+	SAB_GIT_PATH="${SAB_PATH}/${QPKG_NAME}"
+	SETTINGS_PATH="${SAB_PATH}/config"
 	local SETTINGS_PATHFILE="${SETTINGS_PATH}/config.ini"
 	local SETTINGS_DEFAULT_PATHFILE="${SETTINGS_PATHFILE}.def"
 	STORED_PID_PATHFILE="/tmp/${QPKG_NAME}.pid"
@@ -25,7 +25,6 @@ Init()
 	local SETTINGS="--config-file $SETTINGS_PATHFILE --browser 0"
 	local PIDS="--pidfile $STORED_PID_PATHFILE"
 
-	# generic
 	DAEMON_OPTS="$TARGET_SCRIPT --daemon $SETTINGS $PIDS"
 	LOG_PATHFILE="/var/log/${QPKG_NAME}.log"
 	DAEMON="/opt/bin/python2.7"
@@ -74,7 +73,7 @@ QPKGIsActive()
 UpdateQpkg()
 	{
 
-	PullGitRepo "SABnzbdplus" "http://github.com/sabnzbd/sabnzbd.git" "$QPKG_PATH"
+	PullGitRepo "SABnzbdplus" "http://github.com/sabnzbd/sabnzbd.git" "$SAB_PATH"
 	[ "$?" == "0" ] && PullGitRepo "nzbToMedia" "http://github.com/clinton-hall/nzbToMedia.git" "$NZBMEDIA_PATH"
 
 	}
@@ -127,7 +126,7 @@ StartQPKG()
 	local returncode=0
 	local msg=""
 
-	cd "$QPKG_GIT_PATH"
+	cd "$SAB_GIT_PATH"
 
 	echo -n "* starting ($QPKG_NAME): " | tee -a "$LOG_PATHFILE"
 	messages="$(${DAEMON} ${DAEMON_OPTS} 2>&1)"

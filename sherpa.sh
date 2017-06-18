@@ -31,7 +31,7 @@ Init()
 
 	local returncode=0
 	local SCRIPT_FILE="sherpa.sh"
-	local SCRIPT_VERSION="2017.06.11b"
+	local SCRIPT_VERSION="2017.06.18b"
 
 	# cherry-pick required binaries
 	CAT_CMD="/bin/cat"
@@ -1226,7 +1226,7 @@ LoadQPKGDownloadDetails()
 
 		elif [ "$1" == "SABnzbdplus" ]; then
  			target_file="SABnzbdplus_170618.qpkg"
- 			qpkg_md5="9d45eb4654f318092c20c0a4de399357"
+ 			qpkg_md5="559098fdf253faf8515450f5b05b34d0"
  			qpkg_url="${OneCD_urlprefix}/SABnzbdplus/build/${target_file}?raw=true"
  			qpkg_file=$target_file
 
