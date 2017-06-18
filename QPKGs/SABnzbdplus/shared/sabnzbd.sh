@@ -15,8 +15,7 @@ Init()
 	local TARGET_SCRIPT="SABnzbd.py"
 
 	SAB_PATH="$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)"
-	NZBMEDIA_PATH=$(/sbin/getcfg SHARE_DEF defDownload -d Qdownload -f /etc/config/def_share.info)
-	SAB_GIT_PATH="${SAB_PATH}/${QPKG_NAME}"
+	NZBMEDIA_PATH="/share/$(/sbin/getcfg SHARE_DEF defDownload -d Qdownload -f /etc/config/def_share.info)"
 	SETTINGS_PATH="${SAB_PATH}/config"
 	local SETTINGS_PATHFILE="${SETTINGS_PATH}/config.ini"
 	local SETTINGS_DEFAULT_PATHFILE="${SETTINGS_PATHFILE}.def"
@@ -126,7 +125,7 @@ StartQPKG()
 	local returncode=0
 	local msg=""
 
-	cd "$SAB_GIT_PATH"
+	cd "${SAB_PATH}/${QPKG_NAME}"
 
 	echo -n "* starting ($QPKG_NAME): " | tee -a "$LOG_PATHFILE"
 	messages="$(${DAEMON} ${DAEMON_OPTS} 2>&1)"
