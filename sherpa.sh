@@ -31,7 +31,7 @@ Init()
 
 	local returncode=0
 	local SCRIPT_FILE="sherpa.sh"
-	local SCRIPT_VERSION="2017.06.18b"
+	local SCRIPT_VERSION="2017.10.05b"
 
 	# cherry-pick required binaries
 	CAT_CMD="/bin/cat"
@@ -308,7 +308,16 @@ DownloadQPKGs()
 	# now choose package(s) to download
 	if [ "$errorcode" -eq "0" ]; then
 		if [ "$TARGET_APP" == "SABnzbdplus" ]; then
-			[ "$STEPHANE_QPKG_ARCH" != "none" ] && ! QPKGIsInstalled "Par2cmdline-MT" && LoadQPKGDownloadDetails "Par2cmdline-MT" && DownloadQPKG
+			case "$STEPHANE_QPKG_ARCH" in
+				x86)
+					! QPKGIsInstalled "Par2cmdline-MT" && LoadQPKGDownloadDetails "Par2cmdline-MT" && DownloadQPKG
+					;;
+				none)
+					;;
+				*)
+					! QPKGIsInstalled "Par2" && LoadQPKGDownloadDetails "Par2" && DownloadQPKG
+					;;
+			esac
 			[ "$errorcode" -eq "0" ] && LoadQPKGDownloadDetails "SABnzbdplus" && DownloadQPKG
 
 		elif [ "$TARGET_APP" == "SickRage" ]; then
@@ -355,7 +364,10 @@ RemoveOther()
 	DebugFuncEntry
 
 	# cruft - remove previous x41 Par2cmdline-MT package due to wrong arch - this was corrected on 2017-06-03
-	[ "$STEPHANE_QPKG_ARCH" == "x41" ] && QPKGIsInstalled "Par2cmdline-MT" && UninstallQPKG "Par2cmdline-MT"
+	#[ "$STEPHANE_QPKG_ARCH" == "x41" ] && QPKGIsInstalled "Par2cmdline-MT" && UninstallQPKG "Par2cmdline-MT"
+
+	# no longer using Par2cmdline-MT as multi-thread changes have been merged upstream into Par2cmdline and Par2cmdline-MT has been discontinued
+	QPKGIsInstalled "Par2cmdline-MT" && UninstallQPKG "Par2cmdline-MT"
 
 	DebugFuncExit
 	return 0
@@ -493,7 +505,18 @@ InstallOther()
 
 	DebugFuncEntry
 
-	[ "$TARGET_APP" == "SABnzbdplus" ] && [ "$STEPHANE_QPKG_ARCH" != "none" ] && ! QPKGIsInstalled "Par2cmdline-MT" && LoadQPKGDownloadDetails "Par2cmdline-MT" && InstallQPKG
+	if [ "$TARGET_APP" == "SABnzbdplus" ]; then
+		case "$STEPHANE_QPKG_ARCH" in
+			x86)
+				! QPKGIsInstalled "Par2cmdline-MT" && LoadQPKGDownloadDetails "Par2cmdline-MT" && InstallQPKG
+				;;
+			none)
+				;;
+			*)
+				! QPKGIsInstalled "Par2" && LoadQPKGDownloadDetails "Par2" && InstallQPKG
+				;;
+		esac
+	fi
 	[ "$errorcode" -eq "0" ] && InstallIPKs
 	[ "$errorcode" -eq "0" ] && InstallPIPs
 	[ "$errorcode" -eq "0" ] && CreateWaiter
@@ -597,11 +620,9 @@ InstallPIPs()
 		ShowDone "installed ($op)"
 	else
 		ShowError "Download & install failed ($op) [$result]"
-# 		if [ "$debug" == "true" ]; then
-			DebugThickSeparator
-			$CAT_CMD "$log_pathfile"
-			DebugThickSeparator
-# 		fi
+		DebugThickSeparator
+		$CAT_CMD "$log_pathfile"
+		DebugThickSeparator
 		errorcode=17
 		returncode=1
 	fi
@@ -620,11 +641,9 @@ InstallPIPs()
 			ShowDone "installed ($op)"
 		else
 			ShowError "Download & install failed ($op) [$result]"
-# 			if [ "$debug" == "true" ]; then
-				DebugThickSeparator
-				$CAT_CMD "$log_pathfile"
-				DebugThickSeparator
-# 			fi
+			DebugThickSeparator
+			$CAT_CMD "$log_pathfile"
+			DebugThickSeparator
 			errorcode=18
 			returncode=1
 		fi
@@ -1201,7 +1220,7 @@ LoadQPKGDownloadDetails()
 	local returncode=0
 	local target_file=""
 	local OneCD_urlprefix="https://github.com/OneCDOnly/sherpa/blob/master/QPKGs"
-	local Stephane_urlprefix="http://www.qoolbox.fr/Par2cmdline-MT_0.6.14-MT"
+	local Stephane_urlprefix="http://www.qoolbox.fr"
 
 	qpkg_url=""
 	qpkg_md5=""
@@ -1245,15 +1264,24 @@ LoadQPKGDownloadDetails()
 		elif [ "$1" == "Par2cmdline-MT" ]; then
 			if [ "$STEPHANE_QPKG_ARCH" == "x86" ]; then
 				qpkg_md5="531832a39576e399f646890cc18969bb"
-				qpkg_url="${Stephane_urlprefix}_x86.qpkg.zip"
+				qpkg_url="${Stephane_urlprefix}/Par2cmdline-MT_0.6.14-MT_x86.qpkg.zip"
 
 			elif [ "$STEPHANE_QPKG_ARCH" == "x64" ]; then
 				qpkg_md5="f3b3dd496289510ec0383cf083a50f8e"
-				qpkg_url="${Stephane_urlprefix}_x86_64.qpkg.zip"
+				qpkg_url="${Stephane_urlprefix}/Par2cmdline-MT_0.6.14-MT_x86_64.qpkg.zip"
 
 			elif [ "$STEPHANE_QPKG_ARCH" == "x41" ]; then
 				qpkg_md5="1701b188115758c151f19956388b90cb"
-				qpkg_url="${Stephane_urlprefix}_arm-x41.qpkg.zip"
+				qpkg_url="${Stephane_urlprefix}/Par2cmdline-MT_0.6.14-MT_arm-x41.qpkg.zip"
+			fi
+		elif [ "$1" == "Par2" ]; then
+			if [ "$STEPHANE_QPKG_ARCH" == "x64" ]; then
+				qpkg_md5="660882474ab00d4793a674d4b48f89be"
+				qpkg_url="${Stephane_urlprefix}/Par2_0.7.4.0_x86_64.qpkg.zip"
+
+			elif [ "$STEPHANE_QPKG_ARCH" == "x41" ]; then
+				qpkg_md5="9c0c9d3e8512f403f183856fb80091a4"
+				qpkg_url="${Stephane_urlprefix}/Par2_0.7.4.0_arm-x41.qpkg.zip"
 			fi
 		else
 			DebugError "QPKG name not found"
@@ -1261,8 +1289,14 @@ LoadQPKGDownloadDetails()
 			returncode=1
 		fi
 
-		[ -z "$qpkg_file" ] && [ ! -z "$qpkg_url" ] && qpkg_file=$($BASENAME_CMD "$qpkg_url")
-		qpkg_pathfile="${QPKG_PATH}/${qpkg_file}"
+		if [ -z "$qpkg_url" ] || [ -z "$qpkg_md5" ]; then
+			DebugError "QPKG details not found"
+			errorcode=37
+			returncode=1
+		else
+			[ -z "$qpkg_file" ] && qpkg_file=$($BASENAME_CMD "$qpkg_url")
+			qpkg_pathfile="${QPKG_PATH}/${qpkg_file}"
+		fi
 	fi
 
 	return $returncode
@@ -1278,7 +1312,7 @@ UninstallQPKG()
 
 	if [ -z "$1" ]; then
 		DebugError "QPKG name not specified"
-		errorcode=37
+		errorcode=38
 		returncode=1
 	else
 		qpkg_installed_path="$($GETCFG_CMD "$1" Install_Path -f "$QPKG_CONFIG_PATHFILE")"
@@ -1297,7 +1331,7 @@ UninstallQPKG()
 					ShowDone "uninstalled QPKG '$1'"
 				else
 					ShowError "Unable to uninstall QPKG \"$1\" [$result]"
-					errorcode=38
+					errorcode=39
 					returncode=1
 				fi
 			fi
@@ -1371,12 +1405,12 @@ DaemonControl()
 
 	if [ -z "$1" ]; then
 		DebugError "daemon not specified"
-		errorcode=39
+		errorcode=40
 		returncode=1
 
 	elif [ ! -e "$1" ]; then
 		DebugError "daemon init not found [$1]"
-		errorcode=40
+		errorcode=41
 		returncode=1
 
 	else
@@ -1400,7 +1434,7 @@ DaemonControl()
 						$CAT_CMD "$qpkg_pathfile.$START_LOG_FILE"
 						DebugThickSeparator
 					fi
-					errorcode=41
+					errorcode=42
 					returncode=1
 				fi
 				;;
@@ -1426,7 +1460,7 @@ DaemonControl()
 				;;
 			*)
 				DebugError "action unrecognised [$2]"
-				errorcode=42
+				errorcode=43
 				returncode=1
 				;;
 		esac
@@ -1540,7 +1574,7 @@ QPKGIsInstalled()
 
 	if [ -z "$1" ]; then
 		DebugError "QPKG name not specified"
-		errorcode=43
+		errorcode=44
 		returncode=1
 	else
 		$GREP_CMD -q -F "[$1]" "$QPKG_CONFIG_PATHFILE"
@@ -1575,7 +1609,7 @@ IPKIsInstalled()
 
 	if [ -z "$1" ]; then
 		DebugError "IPK name not specified"
-		errorcode=44
+		errorcode=45
 		returncode=1
 	else
 		$OPKG_CMD list-installed | $GREP_CMD -q -F "$1"
@@ -1602,7 +1636,7 @@ SysFilePresent()
 
 	if [ ! -e "$1" ]; then
 		ShowError "A required NAS system file is missing [$1]"
-		errorcode=45
+		errorcode=46
 		return 1
 	else
 		return 0
@@ -1619,7 +1653,7 @@ SysSharePresent()
 
 	if [ ! -L "$1" ]; then
 		ShowError "A required NAS system share is missing [$1]. Please re-create it via QNAP Control Panel -> Privilege Settings -> Shared Folders."
-		errorcode=46
+		errorcode=47
 		return 1
 	else
 		return 0
