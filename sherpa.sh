@@ -364,10 +364,18 @@ RemoveOther()
 	DebugFuncEntry
 
 	# cruft - remove previous x41 Par2cmdline-MT package due to wrong arch - this was corrected on 2017-06-03
-	#[ "$STEPHANE_QPKG_ARCH" == "x41" ] && QPKGIsInstalled "Par2cmdline-MT" && UninstallQPKG "Par2cmdline-MT"
 
-	# no longer using Par2cmdline-MT as multi-thread changes have been merged upstream into Par2cmdline and Par2cmdline-MT has been discontinued
-	QPKGIsInstalled "Par2cmdline-MT" && UninstallQPKG "Par2cmdline-MT"
+	# no longer use Par2cmdline-MT for x86_64 as multi-thread changes have been merged upstream into Par2cmdline and Par2cmdline-MT has been discontinued
+	case "$STEPHANE_QPKG_ARCH" in
+		x86)
+			QPKGIsInstalled "Par2" && UninstallQPKG "Par2"
+			;;
+		none)
+			;;
+		*)
+			QPKGIsInstalled "Par2cmdline-MT" && UninstallQPKG "Par2cmdline-MT"
+			;;
+	esac
 
 	DebugFuncExit
 	return 0
