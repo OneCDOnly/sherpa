@@ -1245,7 +1245,7 @@ LoadQPKGDownloadDetails()
 
 		elif [ "$1" == "SABnzbdplus" ]; then
  			target_file="SABnzbdplus_171005.qpkg"
- 			qpkg_md5="cee9bb582ae5e1f3de3f88211824d675"
+ 			qpkg_md5="7317ee8fa2659be47f98e51e3767d9cd"
  			qpkg_url="${OneCD_urlprefix}/SABnzbdplus/build/${target_file}?raw=true"
  			qpkg_file=$target_file
 

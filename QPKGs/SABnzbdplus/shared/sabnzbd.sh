@@ -131,7 +131,7 @@ StartQPKG()
 	messages="$(${DAEMON} ${DAEMON_OPTS} 2>&1)"
 	result=$?
 
-	if [ "$result" == "0" ] || [ "$result" == "2"]; then
+	if [ "$result" == "0" ] || [ "$result" == "2" ]; then
 		msg="OK"
 		echo -e "$msg" | tee -a "$LOG_PATHFILE"
 		echo -e "${messages}" >> "$LOG_PATHFILE"
