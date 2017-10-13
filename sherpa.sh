@@ -31,7 +31,7 @@ Init()
 
 	local returncode=0
 	local SCRIPT_FILE="sherpa.sh"
-	local SCRIPT_VERSION="2017.10.05b"
+	local SCRIPT_VERSION="2017.10.13b"
 
 	# cherry-pick required binaries
 	CAT_CMD="/bin/cat"
@@ -250,11 +250,21 @@ Init()
 DisplayHelp()
 	{
 
+	EnsureExecLinkExists()
+		{
+
+		# $1 = name of symlink to check for/create
+
+		[ ! -L "$(dirname $0)/$1" ] && ln -s $0 $(dirname $0)/$1
+		echo "./$1"
+
+		}
+
 	echo -e "\nUse one of the following symlinks to call this script:\n"
-	echo "./SABnzbdplus"
-	#echo "./NZBGet"
-	echo "./SickRage"
-	echo "./CouchPotato2"
+	EnsureExecLinkExists "SABnzbdplus"
+	#EnsureExecLinkExists "NZBGet"
+	EnsureExecLinkExists "SickRage"
+	EnsureExecLinkExists "CouchPotato2"
 	echo
 
 	}
@@ -516,12 +526,26 @@ InstallOther()
 	if [ "$TARGET_APP" == "SABnzbdplus" ]; then
 		case "$STEPHANE_QPKG_ARCH" in
 			x86)
-				! QPKGIsInstalled "Par2cmdline-MT" && LoadQPKGDownloadDetails "Par2cmdline-MT" && InstallQPKG
+				! QPKGIsInstalled "Par2cmdline-MT" && LoadQPKGDownloadDetails "Par2cmdline-MT" && {
+					InstallQPKG
+					if [ "$errorcode" -gt "0" ]; then
+						ShowWarning "Par2cmdline-MT installation failed - but it's not essential so I'm continuing"
+						errorcode=0
+						DebugVar "errorcode"
+					fi
+					}
 				;;
 			none)
 				;;
 			*)
-				! QPKGIsInstalled "Par2" && LoadQPKGDownloadDetails "Par2" && InstallQPKG
+				! QPKGIsInstalled "Par2" && LoadQPKGDownloadDetails "Par2" && {
+					InstallQPKG
+					if [ $"errorcode" -gt "0" ]; then
+						ShowWarning "Par2 installation failed - but it's not essential so I'm continuing"
+						errorcode=0
+						DebugVar "errorcode"
+					fi
+					}
 				;;
 		esac
 	fi
