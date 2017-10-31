@@ -31,7 +31,7 @@ Init()
 
 	local returncode=0
 	local SCRIPT_FILE="sherpa.sh"
-	local SCRIPT_VERSION="2017.10.13b"
+	local SCRIPT_VERSION="2017.11.01b"
 
 	# cherry-pick required binaries
 	CAT_CMD="/bin/cat"
@@ -540,7 +540,7 @@ InstallOther()
 			*)
 				! QPKGIsInstalled "Par2" && LoadQPKGDownloadDetails "Par2" && {
 					InstallQPKG
-					if [ $"errorcode" -gt "0" ]; then
+					if [ "$errorcode" -gt "0" ]; then
 						ShowWarning "Par2 installation failed - but it's not essential so I'm continuing"
 						errorcode=0
 						DebugVar "errorcode"
