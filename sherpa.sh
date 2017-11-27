@@ -658,12 +658,15 @@ InstallPIPs()
 	fi
 
 	if [[ $returncode = 0 ]]; then
-		local op='pip sabyenc'
+		local op='pip sabyenc cheetah'
 		local log_pathfile="${WORKING_PATH}/$(echo "$op" | $TR_CMD " " "_").$INSTALL_LOG_FILE"
 
 		ShowProc "downloading & installing ($op)"
 
-		msgs=$(pip install sabyenc --upgrade cheetah 2>&1)
+		#msgs=$(pip install sabyenc --upgrade cheetah 2>&1)
+
+		# only use the next line until SAB 2.3.2 is master. Less strict version checking is on it's way.
+		msgs=$(pip install sabyenc==3.3.1 --upgrade cheetah 2>&1)
 		result=$?
 		echo -e "${msgs}\nresult=[$result]" > "$log_pathfile"
 
