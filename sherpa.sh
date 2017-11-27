@@ -24,7 +24,7 @@
 ###############################################################################
 
 LAUNCHED_AS="$0"
-debug=false; [ ! -z "$1" ] && [ "$1" == "--debug" ] && debug=true
+debug=false; [[ ! -z $1 ]] && [[ $1 = '--debug' ]] && debug=true
 
 Init()
 	{
@@ -84,13 +84,13 @@ Init()
 	local DEFAULT_SHARE_PUBLIC_PATH="/share/Public"
 	local DEFAULT_VOLUME="$($GETCFG_CMD SHARE_DEF defVolMP -f "$DEFAULT_SHARES_PATHFILE")"
 
-	if [ -L "$DEFAULT_SHARE_DOWNLOAD_PATH" ]; then
+	if [[ -L $DEFAULT_SHARE_DOWNLOAD_PATH ]]; then
 		SHARE_DOWNLOAD_PATH="$DEFAULT_SHARE_DOWNLOAD_PATH"
 	else
 		SHARE_DOWNLOAD_PATH="/share/$($GETCFG_CMD SHARE_DEF defDownload -d Qdownload -f "$DEFAULT_SHARES_PATHFILE")"
 	fi
 
-	if [ -L "$DEFAULT_SHARE_PUBLIC_PATH" ]; then
+	if [[ -L $DEFAULT_SHARE_PUBLIC_PATH ]]; then
 		SHARE_PUBLIC_PATH="$DEFAULT_SHARE_PUBLIC_PATH"
 	else
 		SHARE_PUBLIC_PATH="/share/$($GETCFG_CMD SHARE_DEF defPublic -d Qpublic -f "$DEFAULT_SHARES_PATHFILE")"
@@ -155,14 +155,14 @@ Init()
 	previous_length=0
 	previous_msg=""
 
-	[ "$TARGET_APP" == "$SCRIPT_FILE" ] && DisplayHelp && errorcode=1
+	[[ $TARGET_APP = $SCRIPT_FILE ]] && DisplayHelp && errorcode=1
 
-	if [ "$errorcode" -eq "0" ]; then
+	if [[ $errorcode -eq 0 ]]; then
 		DebugFuncEntry
 		DebugThickSeparator
 		DebugScript "started" "$($DATE_CMD | $TR_CMD -s ' ')"
 
-		[ "$debug" == "false" ] && echo -e "$(ColourTextBrightWhite "$SCRIPT_FILE") ($SCRIPT_VERSION)\n"
+		[[ $debug = false ]] && echo -e "$(ColourTextBrightWhite "$SCRIPT_FILE") ($SCRIPT_VERSION)\n"
 
 		DebugScript "file" "$SCRIPT_FILE"
 		DebugScript "version" "$SCRIPT_VERSION"
@@ -181,16 +181,16 @@ Init()
 		DebugNAS "system load" "$($UPTIME_CMD | $SED_CMD 's|.*load average: ||' | $AWK_CMD -F', ' '{print "1 min="$1 ", 5 min="$2 ", 15 min="$3}')"
 		DebugNAS "default volume" "$DEFAULT_VOLUME"
 		DebugNAS "\$PATH" "${PATH:0:42}"
-		DebugNAS "/opt" "$([ -L "/opt" ] && $READLINK_CMD "/opt" || echo "not present")"
-		DebugNAS "$SHARE_DOWNLOAD_PATH" "$([ -L "$SHARE_DOWNLOAD_PATH" ] && $READLINK_CMD "$SHARE_DOWNLOAD_PATH" || echo "not present!")"
+		DebugNAS "/opt" "$([[ -L '/opt' ]] && $READLINK_CMD "/opt" || echo "not present")"
+		DebugNAS "$SHARE_DOWNLOAD_PATH" "$([[ -L $SHARE_DOWNLOAD_PATH ]] && $READLINK_CMD "$SHARE_DOWNLOAD_PATH" || echo "not present!")"
 		DebugThinSeparator
 	fi
 
-	if [ "$errorcode" -eq "0" ]; then
+	if [[ $errorcode -eq 0 ]]; then
 		$MKDIR_CMD -p "$WORKING_PATH" 2> /dev/null
 		result=$?
 
-		if [ "$result" -ne "0" ]; then
+		if [[ $result -ne 0 ]]; then
 			ShowError "Unable to create working directory ($WORKING_PATH) [$result]"
 			errorcode=2
 			returncode=1
@@ -199,37 +199,37 @@ Init()
 		fi
 	fi
 
-	if [ "$errorcode" -eq "0" ]; then
+	if [[ $errorcode -eq 0 ]]; then
 		$MKDIR_CMD -p "$QPKG_PATH" 2> /dev/null
 		result=$?
 
-		if [ "$result" -ne "0" ]; then
+		if [[ $result -ne 0 ]]; then
 			ShowError "Unable to create QPKG download directory ($QPKG_PATH) [$result]"
 			errorcode=3
 			returncode=1
 		fi
 	fi
 
-	if [ "$errorcode" -eq "0" ]; then
+	if [[ $errorcode -eq 0 ]]; then
 		$MKDIR_CMD -p "$IPK_PATH" 2> /dev/null
 		result=$?
 
-		if [ "$result" -ne "0" ]; then
+		if [[ $result -ne 0 ]]; then
 			ShowError "Unable to create IPK download directory ($IPK_PATH) [$result]"
 			errorcode=4
 			returncode=1
 		fi
 	fi
 
-	if [ "$errorcode" -eq "0" ]; then
-		if [ "$TARGET_APP" == "SABnzbdplus" ] && QPKGIsInstalled "QSabNZBdPlus" && QPKGIsInstalled "SABnzbdplus"; then
+	if [[ $errorcode -eq 0 ]]; then
+		if [[ $TARGET_APP = 'SABnzbdplus' ]] && QPKGIsInstalled "QSabNZBdPlus" && QPKGIsInstalled "SABnzbdplus"; then
 			ShowError "Both (SABnzbdplus) and (QSabNZBdPlus) are installed. This is an unsupported configuration. Please manually uninstall the unused one via the QNAP App Center then re-run this installer."
 			errorcode=5
 			returncode=1
 		fi
 	fi
 
-	if [ "$errorcode" -eq "0" ]; then
+	if [[ $errorcode -eq 0 ]]; then
 		if QPKGIsInstalled "Entware-ng" && QPKGIsInstalled "Entware-3x"; then
 			ShowError "Both (Entware-ng) and (Entware-3x) are installed. This is an unsupported configuration. Please manually uninstall both of them via the QNAP App Center then re-run this installer."
 			errorcode=6
@@ -237,7 +237,7 @@ Init()
 		fi
 	fi
 
-	if [ "$errorcode" -eq "0" ]; then
+	if [[ $errorcode -eq 0 ]]; then
 		CalcStephaneQPKGArch
 		CalcEntwareQPKG
 	fi
@@ -255,7 +255,7 @@ DisplayHelp()
 
 		# $1 = name of symlink to check for/create
 
-		[ ! -L "$(dirname $0)/$1" ] && ln -s $0 $(dirname $0)/$1
+		[[ ! -L $(dirname $0)/$1 ]] && ln -s $0 $(dirname $0)/$1
 		echo "./$1"
 
 		}
@@ -299,16 +299,16 @@ DownloadQPKGs()
  	if ! QPKGIsInstalled "$PREF_ENTWARE"; then
 		LoadQPKGDownloadDetails "$PREF_ENTWARE" && DownloadQPKG
 
-	elif [ "$PREF_ENTWARE" == "Entware-3x" ]; then
+	elif [[ $PREF_ENTWARE = 'Entware-3x' ]]; then
 		local testfile="/opt/etc/passwd"
-		[ -e "$testfile" ] && { [ -L "$testfile" ] && ENTWARE_VER="std" || ENTWARE_VER="alt" ;} || ENTWARE_VER="none"
+		[[ -e $testfile ]] && { [[ -L $testfile ]] && ENTWARE_VER="std" || ENTWARE_VER="alt" ;} || ENTWARE_VER="none"
 
-		if [ "$ENTWARE_VER" == "alt" ]; then
+		if [[ $ENTWARE_VER = 'alt' ]]; then
 			ShowError "Entware-3x (alt) is installed. This configuration has not been tested."
 			errorcode=7
 			returncode=1
 
-		elif [ "$ENTWARE_VER" == "none" ]; then
+		elif [[ $ENTWARE_VER = 'none' ]]; then
 			ShowError "Entware appears to be installed but is not visible."
 			errorcode=8
 			returncode=1
@@ -316,8 +316,8 @@ DownloadQPKGs()
 	fi
 
 	# now choose package(s) to download
-	if [ "$errorcode" -eq "0" ]; then
-		if [ "$TARGET_APP" == "SABnzbdplus" ]; then
+	if [[ $errorcode -eq 0 ]]; then
+		if [[ $TARGET_APP = 'SABnzbdplus' ]]; then
 			case "$STEPHANE_QPKG_ARCH" in
 				x86)
 					! QPKGIsInstalled "Par2cmdline-MT" && LoadQPKGDownloadDetails "Par2cmdline-MT" && DownloadQPKG
@@ -328,9 +328,9 @@ DownloadQPKGs()
 					! QPKGIsInstalled "Par2" && LoadQPKGDownloadDetails "Par2" && DownloadQPKG
 					;;
 			esac
-			[ "$errorcode" -eq "0" ] && LoadQPKGDownloadDetails "SABnzbdplus" && DownloadQPKG
+			[[ $errorcode -eq 0 ]] && LoadQPKGDownloadDetails "SABnzbdplus" && DownloadQPKG
 
-		elif [ "$TARGET_APP" == "SickRage" ]; then
+		elif [[ $TARGET_APP = 'SickRage' ]]; then
 			if QPKGIsInstalled "SickRage"; then
 				ShowError "Sorry! This installer lacks the ability to re-install SickRage at present. It can only perform a new install."
 				errorcode=9
@@ -339,7 +339,7 @@ DownloadQPKGs()
 				LoadQPKGDownloadDetails "SickRage" && DownloadQPKG
 			fi
 
-		elif [ "$TARGET_APP" == "CouchPotato2" ]; then
+		elif [[ $TARGET_APP = 'CouchPotato2' ]]; then
 			if QPKGIsInstalled "CouchPotato2"; then
 				ShowError "Sorry! This installer lacks the ability to re-install CouchPotato2 at present. It can only perform a new install."
 				errorcode=10
@@ -360,8 +360,8 @@ RemovePackageInstallers()
 
 	DebugFuncEntry
 
-	[ "$PREF_ENTWARE" == "Entware-3x" ] && UninstallQPKG "Entware-ng"
-	[ "$errorcode" -eq "0" ] && { UninstallQPKG "Optware" || errorcode="0" ;} 	# ignore Optware uninstall errors
+	[[ $PREF_ENTWARE = 'Entware-3x' ]] && UninstallQPKG "Entware-ng"
+	[[ $errorcode -eq 0 ]] && { UninstallQPKG "Optware" || errorcode="0" ;} 	# ignore Optware uninstall errors
 
 	DebugFuncExit
 	return 0
@@ -397,8 +397,8 @@ RemoveSabs()
 
 	DebugFuncEntry
 
-	[ "$errorcode" -eq "0" ] && UninstallQPKG "SABnzbdplus"
-	[ "$errorcode" -eq "0" ] && UninstallQPKG "QSabNZBdPlus"
+	[[ $errorcode -eq 0 ]] && UninstallQPKG "SABnzbdplus"
+	[[ $errorcode -eq 0 ]] && UninstallQPKG "QSabNZBdPlus"
 
 	DebugFuncExit
 	return 0
@@ -415,29 +415,29 @@ InstallEntware()
 		# rename original [/opt]
 		opt_path="/opt"
 		opt_backup_path="/opt.orig"
-		[ -d "$opt_path" ] && [ ! -L "$opt_path" ] && [ ! -e "$opt_backup_path" ] && $MV_CMD "$opt_path" "$opt_backup_path"
+		[[ -d $opt_path ]] && [[ ! -L $opt_path ]] && [[ ! -e $opt_backup_path ]] && $MV_CMD "$opt_path" "$opt_backup_path"
 
 		LoadQPKGDownloadDetails "$PREF_ENTWARE" && InstallQPKG && ReloadProfile
 
 		# copy all files from original [/opt] into new [/opt]
-		[ -L "$opt_path" ] && [ -d "$opt_backup_path" ] && $CP_CMD --recursive "$opt_backup_path"/* --target-directory "$opt_path" && $RM_CMD -r "$opt_backup_path"
+		[[ -L $opt_path ]] && [[ -d $opt_backup_path ]] && $CP_CMD --recursive "$opt_backup_path"/* --target-directory "$opt_path" && $RM_CMD -r "$opt_backup_path"
 
 	else
-		if [ "$PREF_ENTWARE" == "Entware-3x" ]; then
+		if [[ $PREF_ENTWARE = Entware-3x ]]; then
 			local testfile="/opt/etc/passwd"
-			[ -e "$testfile" ] && { [ -L "$testfile" ] && ENTWARE_VER="std" || ENTWARE_VER="alt" ;} || ENTWARE_VER="none"
+			[[ -e $testfile ]] && { [[ -L $testfile ]] && ENTWARE_VER="std" || ENTWARE_VER="alt" ;} || ENTWARE_VER="none"
 
 			DebugQPKG "version" "$ENTWARE_VER"
 			ReloadProfile
 
-			if [ "$ENTWARE_VER" == "alt" ]; then
+			if [[ $ENTWARE_VER = alt ]]; then
 				ShowError "Entware-3x (alt) is installed. This config has not been tested. Can't continue."
 				errorcode=11
 				returncode=1
 			fi
 		fi
 
-		[ "$STEPHANE_QPKG_ARCH" != "none" ] && ($OPKG_CMD list-installed | $GREP_CMD -q "par2cmdline") && $OPKG_CMD remove "par2cmdline" >> /dev/null
+		[[ $STEPHANE_QPKG_ARCH != 'none' ]] && ($OPKG_CMD list-installed | $GREP_CMD -q "par2cmdline") && $OPKG_CMD remove "par2cmdline" >> /dev/null
 	fi
 
 	LoadQPKGVars "$PREF_ENTWARE" && PatchEntwareInit
@@ -454,7 +454,7 @@ PatchEntwareInit()
 	local findtext=""
 	local inserttext=""
 
-	if [ ! -e "$ent_init_pathfile" ]; then
+	if [[ ! -e $ent_init_pathfile ]]; then
 		ShowError "No init file found [$ent_init_pathfile]"
 		errorcode=12
 		returncode=1
@@ -487,22 +487,22 @@ UpdateEntware()
 	local package_list_age="60"
 	local result=""
 
-	if [ ! -f "$OPKG_CMD" ]; then
+	if [[ ! -f $OPKG_CMD ]]; then
 		ShowError "Entware opkg binary is missing. [$OPKG_CMD]"
 		errorcode=13
 		returncode=1
 	else
 		# if Entware package list was updated less that 1 hour ago, don't run another update
 
-		[ -e "$FIND_CMD" ] && result=$($FIND_CMD "$package_list_file" -mmin +$package_list_age)
+		[[ -e $FIND_CMD ]] && result=$($FIND_CMD "$package_list_file" -mmin +$package_list_age)
 
-		if [ "$result" != "" ] ; then
+		if [[ -n $result ]] ; then
 			ShowProc "updating 'Entware'"
 
 			$OPKG_CMD update > /dev/null
 			result=$?
 
-			if [ "$result" -eq "0" ]; then
+			if [[ $result -eq 0 ]]; then
 				ShowDone "updated 'Entware'"
 			else
 				ShowWarning "'Entware' update failed [$result]"
@@ -527,7 +527,7 @@ InstallOther()
 		x86)
 			! QPKGIsInstalled "Par2cmdline-MT" && LoadQPKGDownloadDetails "Par2cmdline-MT" && {
 				InstallQPKG
-				if [ "$errorcode" -gt "0" ]; then
+				if [[ $errorcode -gt 0 ]]; then
 					ShowWarning "Par2cmdline-MT installation failed - but it's not essential so I'm continuing"
 					errorcode=0
 					DebugVar "errorcode"
@@ -539,7 +539,7 @@ InstallOther()
 		*)
 			! QPKGIsInstalled "Par2" && LoadQPKGDownloadDetails "Par2" && {
 				InstallQPKG
-				if [ "$errorcode" -gt "0" ]; then
+				if [[ $errorcode -gt 0 ]]; then
 					ShowWarning "Par2 installation failed - but it's not essential so I'm continuing"
 					errorcode=0
 					DebugVar "errorcode"
@@ -547,9 +547,9 @@ InstallOther()
 				}
 			;;
 	esac
-	[ "$errorcode" -eq "0" ] && InstallIPKs
-	[ "$errorcode" -eq "0" ] && InstallPIPs
-	[ "$errorcode" -eq "0" ] && CreateWaiter
+	[[ $errorcode -eq 0 ]] && InstallIPKs
+	[[ $errorcode -eq 0 ]] && InstallPIPs
+	[[ $errorcode -eq 0 ]] && CreateWaiter
 
 	DebugFuncExit
 	return 0
@@ -567,9 +567,9 @@ InstallIPKs()
 	local package_desc=""
 	local log_pathfile="${IPK_PATH}/ipks.$INSTALL_LOG_FILE"
 
-	if [ ! -z "$IPK_PATH" ] && [ -d "$IPK_PATH" ]; then
+	if [[ ! -z $IPK_PATH ]] && [[ -d $IPK_PATH ]]; then
 		packages="gcc python python-pip python-cffi python-pyopenssl ca-certificates nano git git-http unrar p7zip ionice ffprobe"
-		[ "$STEPHANE_QPKG_ARCH" == "none" ] && packages+=" par2cmdline"
+		[[ $STEPHANE_QPKG_ARCH = 'none' ]] && packages+=" par2cmdline"
 		package_desc="various"
 
 		UpdateEntware
@@ -583,7 +583,7 @@ InstallIPKs()
 		result=$?
 		echo -e "${msgs}\nresult=[$result]" > "$log_pathfile"
 
-		if [ "$result" -eq "0" ]; then
+		if [[ $result -eq 0 ]]; then
 			ShowDone "downloaded & installed IPKs ($package_desc)"
 
 			packages="python-dev"
@@ -595,11 +595,11 @@ InstallIPKs()
 
 			echo -e "${msgs}\nresult=[$result]" >> "$log_pathfile"
 
-			if [ "$result" -eq "0" ]; then
+			if [[ $result -eq 0 ]]; then
 				ShowDone "downloaded & installed IPK ($package_desc)"
 			else
 				ShowError "Download & install IPK failed ($package_desc) [$result]"
-				if [ "$debug" == "true" ]; then
+				if [[ $debug = true ]]; then
 					DebugThickSeparator
 					$CAT_CMD "$log_pathfile"
 					DebugThickSeparator
@@ -609,7 +609,7 @@ InstallIPKs()
 			fi
 		else
 			ShowError "Download & install IPKs failed ($package_desc) [$result]"
-			if [ "$debug" == "true" ]; then
+			if [[ $debug = true ]]; then
 				DebugThickSeparator
 				$CAT_CMD "$log_pathfile"
 				DebugThickSeparator
@@ -646,7 +646,7 @@ InstallPIPs()
 	result=$?
 	echo -e "${msgs}\nresult=[$result]" > "$log_pathfile"
 
-	if [ "$result" -eq "0" ]; then
+	if [[ $result -eq 0 ]]; then
 		ShowDone "installed ($op)"
 	else
 		ShowError "Download & install failed ($op) [$result]"
@@ -657,7 +657,7 @@ InstallPIPs()
 		returncode=1
 	fi
 
-	if [ "$returncode" == "0" ]; then
+	if [[ $returncode = 0 ]]; then
 		local op="pip sabyenc"
 		local log_pathfile="${WORKING_PATH}/$(echo "$op" | $TR_CMD " " "_").$INSTALL_LOG_FILE"
 
@@ -667,7 +667,7 @@ InstallPIPs()
 		result=$?
 		echo -e "${msgs}\nresult=[$result]" > "$log_pathfile"
 
-		if [ "$result" -eq "0" ]; then
+		if [[ $result -eq 0 ]]; then
 			ShowDone "installed ($op)"
 		else
 			ShowError "Download & install failed ($op) [$result]"
@@ -733,7 +733,7 @@ InstallNG()
 		local packages=""
 		local package_desc=""
 
-		if [ ! -z "$IPK_PATH" ] && [ -d "$IPK_PATH" ]; then
+		if [[ ! -z $IPK_PATH ]] && [[ -d $IPK_PATH ]]; then
 			packages="nzbget"
 			package_desc="nzbget"
 
@@ -744,7 +744,7 @@ InstallNG()
 			result=$?
 			echo -e "${msgs}\nresult=[$result]" >> "${IPK_PATH}/ipk.$INSTALL_LOG_FILE"
 
-			if [ "$result" -eq "0" ]; then
+			if [[ $result -eq 0 ]]; then
 				ShowDone "downloaded & installed IPK ($package_desc)"
 				ShowProc "modifying NZBGet"
 
@@ -780,7 +780,7 @@ InstallQPKG()
 	local returncode=0
 	local target_file=""
 
-	if [ "${qpkg_pathfile##*.}" == "zip" ]; then
+	if [[ ${qpkg_pathfile##*.} = 'zip' ]]; then
 		$UNZIP_CMD -nq "$qpkg_pathfile" -d "$QPKG_PATH"
 		qpkg_pathfile="${qpkg_pathfile%.*}"
 	fi
@@ -793,12 +793,12 @@ InstallQPKG()
 
 	echo -e "${msgs}\nresult=[$result]" > "$log_pathfile"
 
-	if [ "$result" -eq "0" ] || [ "$result" -eq "10" ]; then
+	if [[ $result -eq 0 ]] || [[ $result -eq 10 ]]; then
 		ShowDone "installed QPKG ($target_file)"
 	else
 		ShowError "QPKG installation failed ($target_file) [$result]"
 
-		if [ "$debug" == "true" ]; then
+		if [[ $debug = true ]]; then
 			DebugThickSeparator
 			$CAT_CMD "$log_pathfile"
 			DebugThickSeparator
@@ -830,13 +830,13 @@ BackupSabConfig()
 
 	SAB_WAS_INSTALLED=$sab_is_installed
 
-	if [ "$sab_is_installed" == "true" ]; then
-		if [ -d "$sab_config_path" ]; then
-			if [ ! -d "${BACKUP_PATH}/config" ]; then
+	if [[ $sab_is_installed = true ]]; then
+		if [[ -d $sab_config_path ]]; then
+			if [[ ! -d ${BACKUP_PATH}/config ]]; then
 				$MKDIR_CMD -p "$BACKUP_PATH" 2> /dev/null
 				result=$?
 
-				if [ "$result" -eq "0" ]; then
+				if [[ $result -eq 0 ]]; then
 					DebugDone "backup directory created ($BACKUP_PATH)"
 				else
 					ShowError "Unable to create backup directory ($BACKUP_PATH) [$result]"
@@ -845,12 +845,12 @@ BackupSabConfig()
 				fi
 			fi
 
-			if [ "$errorcode" -eq "0" ]; then
-				if [ ! -d "${BACKUP_PATH}/config" ]; then
+			if [[ $errorcode -eq 0 ]]; then
+				if [[ ! -d ${BACKUP_PATH}/config ]]; then
 					$MV_CMD "$sab_config_path" "$BACKUP_PATH"
 					result=$?
 
-					if [ "$result" -eq "0" ]; then
+					if [[ $result -eq 0 ]]; then
 						ShowDone "created SABnzbd settings backup"
 					else
 						ShowError "Could not create settings backup of ($sab_config_path) [$result]"
@@ -877,17 +877,17 @@ ConvertSabSettings()
 	DebugFuncEntry
 
 	local OLD_BACKUP_PATH="${BACKUP_PATH}/SAB_CONFIG"
-	[ -d "$OLD_BACKUP_PATH" ] && { $MV_CMD "$OLD_BACKUP_PATH" "$SETTINGS_BACKUP_PATH"; DebugDone "renamed backup config path" ;}
+	[[ -d $OLD_BACKUP_PATH ]] && { $MV_CMD "$OLD_BACKUP_PATH" "$SETTINGS_BACKUP_PATH"; DebugDone "renamed backup config path" ;}
 
 	OLD_BACKUP_PATH="${BACKUP_PATH}/Config"
-	[ -d "$OLD_BACKUP_PATH" ] && { $MV_CMD "$OLD_BACKUP_PATH" "$SETTINGS_BACKUP_PATH"; DebugDone "renamed backup config path" ;}
+	[[ -d $OLD_BACKUP_PATH ]] && { $MV_CMD "$OLD_BACKUP_PATH" "$SETTINGS_BACKUP_PATH"; DebugDone "renamed backup config path" ;}
 
 	# for converting from Stephane's QPKG and from previous version SAB QPKGs
 	local SETTINGS_PREV_BACKUP_PATHFILE="${SETTINGS_BACKUP_PATH}/sabnzbd.ini"
 
-	[ -f "$SETTINGS_PREV_BACKUP_PATHFILE" ] && { $MV_CMD "$SETTINGS_PREV_BACKUP_PATHFILE" "$SETTINGS_BACKUP_PATHFILE"; DebugDone "renamed backup config file" ;}
+	[[ -f $SETTINGS_PREV_BACKUP_PATHFILE ]] && { $MV_CMD "$SETTINGS_PREV_BACKUP_PATHFILE" "$SETTINGS_BACKUP_PATHFILE"; DebugDone "renamed backup config file" ;}
 
-	if [ -f "$SETTINGS_BACKUP_PATHFILE" ]; then
+	if [[ -f $SETTINGS_BACKUP_PATHFILE ]]; then
  		$SED_CMD -i "s|log_dir = logs|log_dir = ${SHARE_DOWNLOAD_PATH}/sabnzbd/logs|" "$SETTINGS_BACKUP_PATHFILE"
 		$SED_CMD -i "s|download_dir = Downloads/incomplete|download_dir = ${SHARE_DOWNLOAD_PATH}/incomplete|" "$SETTINGS_BACKUP_PATHFILE"
 		$SED_CMD -i "s|complete_dir = Downloads/complete|complete_dir = ${SHARE_DOWNLOAD_PATH}/complete|" "$SETTINGS_BACKUP_PATHFILE"
@@ -963,14 +963,14 @@ EOF
 
 	result=$?
 
-	if [ "$result" -eq "0" ]; then
+	if [[ $result -eq 0 ]]; then
 		DebugDone "waiter created"
 
-		if [ -f "$WAITER_PATHFILE" ]; then
+		if [[ -f $WAITER_PATHFILE ]]; then
 			$CHMOD_CMD +x "$WAITER_PATHFILE"
 			result=$?
 
-			if [ "$result" -eq "0" ]; then
+			if [[ $result -eq 0 ]]; then
 				DebugDone "set waiter executable"
 			else
 				ShowError "Unable to set waiter as executable ($WAITER_PATHFILE) [$result]"
@@ -999,11 +999,11 @@ RestoreSabConfig()
 	DebugFuncEntry
 	local returncode=0
 
-	if [ "$sab_is_installed" == "true" ]; then
-		if [ -d "$SETTINGS_BACKUP_PATH" ]; then
+	if [[ $sab_is_installed = true ]]; then
+		if [[ -d $SETTINGS_BACKUP_PATH ]]; then
 			StopSab
 
-			if [ ! -d "$sab_config_path" ]; then
+			if [[ ! -d $sab_config_path ]]; then
 				$MKDIR_CMD -p "$($DIRNAME_CMD "$sab_config_path")" 2> /dev/null
 			else
 				$RM_CMD -r "$sab_config_path" 2> /dev/null
@@ -1012,7 +1012,7 @@ RestoreSabConfig()
 			$MV_CMD "$SETTINGS_BACKUP_PATH" "$($DIRNAME_CMD "$sab_config_path")"
 			result=$?
 
-			if [ "$result" -eq "0" ]; then
+			if [[ $result -eq 0 ]]; then
 				ShowDone "restored SABnzbd settings backup"
 
 				$SETCFG_CMD "SABnzbdplus" Web_Port $sab_port -f "$QPKG_CONFIG_PATHFILE"
@@ -1040,14 +1040,14 @@ DownloadQPKG()
 	DebugFuncEntry
 	local returncode=0
 
-	[ "$errorcode" -gt "0" ] && { DebugFuncExit; return 1;}
+	[[ $errorcode -gt 0 ]] && { DebugFuncExit; return 1;}
 
-	if [ -e "$qpkg_pathfile" ]; then
+	if [[ -e $qpkg_pathfile ]]; then
 		file_md5=$($MD5SUM_CMD "$qpkg_pathfile" | $CUT_CMD -f1 -d' ')
 		result=$?
 
-		if [ "$result" -eq "0" ]; then
-			if [ "$file_md5" == "$qpkg_md5" ]; then
+		if [[ $result -eq 0 ]]; then
+			if [[ $file_md5 = $qpkg_md5 ]]; then
 				DebugInfo "existing QPKG checksum correct ($qpkg_file)"
 			else
 				DebugWarning "existing QPKG checksum incorrect ($qpkg_file) [$result]"
@@ -1061,13 +1061,13 @@ DownloadQPKG()
 		fi
 	fi
 
-	if [ "$errorcode" -eq "0" ] && [ ! -e "$qpkg_pathfile" ]; then
+	if [[ $errorcode -eq 0 ]] && [[ ! -e $qpkg_pathfile ]]; then
 		ShowProc "downloading QPKG ($qpkg_file)"
 		local log_pathfile="$qpkg_pathfile.$DOWNLOAD_LOG_FILE"
 
-		[ -e "$log_pathfile" ] && rm -f "$log_pathfile"
+		[[ -e $log_pathfile ]] && rm -f "$log_pathfile"
 
-		if [ "$debug" == "true" ]; then
+		if [[ $debug = true ]]; then
 			$WGET_CMD --no-check-certificate -q --show-progress "$qpkg_url" --output-document "$qpkg_pathfile"
 		else
 			$WGET_CMD --no-check-certificate --output-file "$log_pathfile" "$qpkg_url" --output-document "$qpkg_pathfile"
@@ -1077,12 +1077,12 @@ DownloadQPKG()
 
 		echo -e "\nresult=[$result]" >> "$log_pathfile"
 
-		if [ "$result" -eq "0" ]; then
+		if [[ $result -eq 0 ]]; then
 			file_md5=$($MD5SUM_CMD "$qpkg_pathfile" | $CUT_CMD -f1 -d' ')
 			result=$?
 
-			if [ "$result" -eq "0" ]; then
-				if [ "$file_md5" == "$qpkg_md5" ]; then
+			if [[ $result -eq 0 ]]; then
+				if [[ $file_md5 = $qpkg_md5 ]]; then
 					ShowDone "downloaded QPKG ($qpkg_file)"
 				else
 					ShowError "Downloaded QPKG checksum incorrect ($qpkg_file) [$result]"
@@ -1097,7 +1097,7 @@ DownloadQPKG()
 		else
 			ShowError "Download failed ($qpkg_pathfile) [$result]"
 
-			if [ "$debug" == "true" ]; then
+			if [[ $debug = true ]]; then
 				DebugThickSeparator
 				$CAT_CMD "$qpkg_pathfile.$DOWNLOAD_LOG_FILE"
 				DebugThickSeparator
@@ -1121,17 +1121,17 @@ CalcStephaneQPKGArch()
 	local returncode=0
 	STEPHANE_QPKG_ARCH=""
 
-	[ "$NAS_ARCH" == "i686" ] && STEPHANE_QPKG_ARCH="x86"
+	[[ $NAS_ARCH = 'i686' ]] && STEPHANE_QPKG_ARCH="x86"
 
-	if [ "$NAS_ARCH" == "x86_64" ]; then
+	if [[ $NAS_ARCH = 'x86_64' ]]; then
 		echo $FIRMWARE_VERSION | $GREP_CMD -q "4.3." && STEPHANE_QPKG_ARCH="x64" || STEPHANE_QPKG_ARCH="x86"
 	fi
 
-	[ "$NAS_ARCH" == "armv7l" ] && STEPHANE_QPKG_ARCH="x41"
-	[ "$NAS_ARCH" == "armv5tejl" ] && STEPHANE_QPKG_ARCH="none"
-	[ "$NAS_ARCH" == "armv5tel" ] && STEPHANE_QPKG_ARCH="none"
+	[[ $NAS_ARCH = 'armv7l' ]] && STEPHANE_QPKG_ARCH="x41"
+	[[ $NAS_ARCH = 'armv5tejl' ]] && STEPHANE_QPKG_ARCH="none"
+	[[ $NAS_ARCH = 'armv5tel' ]] && STEPHANE_QPKG_ARCH="none"
 
-	if [ -z "$STEPHANE_QPKG_ARCH" ]; then
+	if [[ -z $STEPHANE_QPKG_ARCH ]]; then
 		ShowError "Could not determine suitable ARCH for Stephane's QPKG ($NAS_ARCH)"
 		errorcode=33
 		returncode=1
@@ -1149,7 +1149,7 @@ CalcEntwareQPKG()
 	# decide which Entware is suitable for this NAS.
 	PREF_ENTWARE="Entware-3x"
 
-	[ "$NAS_ARCH" == "i686" ] && PREF_ENTWARE="Entware-ng"
+	[[ $NAS_ARCH = 'i686' ]] && PREF_ENTWARE="Entware-ng"
  	QPKGIsInstalled "Entware-ng" && PREF_ENTWARE="Entware-ng"
 
 	DebugInfo "found a suitable Entware package ($PREF_ENTWARE)"
@@ -1166,38 +1166,38 @@ LoadQPKGVars()
 	local returncode=0
 	local package_name="$1"
 
-	if [ -z "$package_name" ]; then
+	if [[ -z $package_name ]]; then
 		DebugError "QPKG name not specified"
 		errorcode=34
 		returncode=1
 	else
 
-		if [ "$package_name" == "SABnzbdplus" ] || [ "$package_name" == "QSabNZBdPlus" ]; then
+		if [[ $package_name = 'SABnzbdplus' ]] || [[ $package_name = 'QSabNZBdPlus' ]]; then
 			sab_installed_path="$($GETCFG_CMD "$package_name" Install_Path -f "$QPKG_CONFIG_PATHFILE")"
 			result=$?
 
-			if [ "$result" -eq "0" ]; then
+			if [[ $result -eq 0 ]]; then
 				sab_is_installed=true
 				sab_init_pathfile="$($GETCFG_CMD "$package_name" Shell -f "$QPKG_CONFIG_PATHFILE")"
 
-				if [ "$package_name" == "SABnzbdplus" ]; then
-					if [ -d "${sab_installed_path}/Config" ]; then
+				if [[ $package_name = 'SABnzbdplus' ]]; then
+					if [[ -d ${sab_installed_path}/Config ]]; then
 						sab_config_path="${sab_installed_path}/Config"
 					else
 						sab_config_path="${sab_installed_path}/config"
 					fi
 
-				elif [ "$package_name" == "QSabNZBdPlus" ]; then
+				elif [[ $package_name = 'QSabNZBdPlus' ]]; then
 					sab_config_path="${sab_installed_path}/SAB_CONFIG"
 				fi
 
-				if [ -f "${sab_config_path}/sabnzbd.ini" ]; then
+				if [[ -f ${sab_config_path}/sabnzbd.ini ]]; then
 					sab_settings_pathfile="${sab_config_path}/sabnzbd.ini"
 				else
 					sab_settings_pathfile="${sab_config_path}/config.ini"
 				fi
 
-				if [ -e "$SETTINGS_BACKUP_PATHFILE" ]; then
+				if [[ -e $SETTINGS_BACKUP_PATHFILE ]]; then
 					if ($GREP_CMD -q '^enable_https = 1' "$SETTINGS_BACKUP_PATHFILE"); then
 						sab_port=$($GREP_CMD '^https_port = ' "$SETTINGS_BACKUP_PATHFILE" | $HEAD_CMD -n1 | $CUT_CMD -f3 -d' ')
 						secure_web_login=true
@@ -1208,7 +1208,7 @@ LoadQPKGVars()
 					sab_port="$($GETCFG_CMD "$package_name" Web_Port -f "$QPKG_CONFIG_PATHFILE")"
 				fi
 
-				[ -e "$sab_settings_pathfile" ] && sab_api=$($GREP_CMD -e "^api_key" "$sab_settings_pathfile" | $SED_CMD 's|api_key = ||')
+				[[ -e $sab_settings_pathfile ]] && sab_api=$($GREP_CMD -e "^api_key" "$sab_settings_pathfile" | $SED_CMD 's|api_key = ||')
 				sab_chartranslator_pathfile="$sab_installed_path/Repository/scripts/CharTranslator.py"
 			else
 				sab_is_installed=false
@@ -1222,11 +1222,11 @@ LoadQPKGVars()
 				returncode=1
 			fi
 
-		elif [ "$package_name" == "Entware-3x" ] || [ "$package_name" == "Entware-ng" ]; then
+		elif [[ $package_name = 'Entware-3x' ]] || [[ $package_name = 'Entware-ng' ]]; then
 			ent_installed_path="$($GETCFG_CMD "$package_name" Install_Path -f "$QPKG_CONFIG_PATHFILE")"
 			result=$?
 
-			if [ "$result" -eq "0" ]; then
+			if [[ $result -eq 0 ]]; then
 				ent_is_installed=true
 				ent_init_pathfile="$($GETCFG_CMD "$package_name" Shell -f "$QPKG_CONFIG_PATHFILE")"
 			else
@@ -1257,7 +1257,7 @@ LoadQPKGDownloadDetails()
 	qpkg_file=""
 	qpkg_pathfile=""
 
-	if [ -z "$1" ]; then
+	if [[ -z $1 ]]; then
 		DebugError "QPKG name not specified"
 		errorcode=35
 		returncode=1
@@ -1265,51 +1265,51 @@ LoadQPKGDownloadDetails()
 		qpkg_name="$1"
 		local base_url=""
 
-		if [ "$1" == "Entware-3x" ]; then
+		if [[ $1 = 'Entware-3x' ]]; then
 			qpkg_md5="3663c9e4323e694fb25897e276f55623"
 			qpkg_url="http://entware-3x.zyxmon.org/binaries/other/Entware-3x_0.99std.qpkg"
 
-		elif [ "$1" == "Entware-ng" ]; then
+		elif [[ $1 = 'Entware-ng' ]]; then
 			qpkg_md5="6c81cc37cbadd85adfb2751dc06a238f"
 			qpkg_url="http://entware.zyxmon.org/binaries/other/Entware-ng_0.97.qpkg"
 
-		elif [ "$1" == "SABnzbdplus" ]; then
+		elif [[ $1 = 'SABnzbdplus' ]]; then
  			target_file="SABnzbdplus_171005.qpkg"
  			qpkg_md5="7317ee8fa2659be47f98e51e3767d9cd"
  			qpkg_url="${OneCD_urlprefix}/SABnzbdplus/build/${target_file}?raw=true"
  			qpkg_file=$target_file
 
-		elif [ "$1" == "SickRage" ]; then
+		elif [[ $1 = 'SickRage' ]]; then
 			target_file="SickRage_170610.qpkg"
 			qpkg_md5="d1f295d01bc6e39fd59dff24d2b36a3f"
 			qpkg_url="${OneCD_urlprefix}/SickRage/build/${target_file}?raw=true"
 			qpkg_file=$target_file
 
-		elif [ "$1" == "CouchPotato2" ]; then
+		elif [[ $1 = 'CouchPotato2' ]]; then
 			target_file="CouchPotato2_170610.qpkg"
 			qpkg_md5="5c6e2ff53e45cb2f3b8eba4e34a8900e"
 			qpkg_url="${OneCD_urlprefix}/CouchPotato2/build/${target_file}?raw=true"
 			qpkg_file=$target_file
 
-		elif [ "$1" == "Par2cmdline-MT" ]; then
-			if [ "$STEPHANE_QPKG_ARCH" == "x86" ]; then
+		elif [[ $1 = 'Par2cmdline-MT' ]]; then
+			if [[ $STEPHANE_QPKG_ARCH = 'x86' ]]; then
 				qpkg_md5="531832a39576e399f646890cc18969bb"
 				qpkg_url="${Stephane_urlprefix}/Par2cmdline-MT_0.6.14-MT_x86.qpkg.zip"
 
-			elif [ "$STEPHANE_QPKG_ARCH" == "x64" ]; then
+			elif [[ $STEPHANE_QPKG_ARCH = 'x64' ]]; then
 				qpkg_md5="f3b3dd496289510ec0383cf083a50f8e"
 				qpkg_url="${Stephane_urlprefix}/Par2cmdline-MT_0.6.14-MT_x86_64.qpkg.zip"
 
-			elif [ "$STEPHANE_QPKG_ARCH" == "x41" ]; then
+			elif [[ $STEPHANE_QPKG_ARCH = 'x41' ]]; then
 				qpkg_md5="1701b188115758c151f19956388b90cb"
 				qpkg_url="${Stephane_urlprefix}/Par2cmdline-MT_0.6.14-MT_arm-x41.qpkg.zip"
 			fi
-		elif [ "$1" == "Par2" ]; then
-			if [ "$STEPHANE_QPKG_ARCH" == "x64" ]; then
+		elif [[ $1 = 'Par2' ]]; then
+			if [[ $STEPHANE_QPKG_ARCH = 'x64' ]]; then
 				qpkg_md5="660882474ab00d4793a674d4b48f89be"
 				qpkg_url="${Stephane_urlprefix}/Par2_0.7.4.0_x86_64.qpkg.zip"
 
-			elif [ "$STEPHANE_QPKG_ARCH" == "x41" ]; then
+			elif [[ $STEPHANE_QPKG_ARCH = 'x41' ]]; then
 				qpkg_md5="9c0c9d3e8512f403f183856fb80091a4"
 				qpkg_url="${Stephane_urlprefix}/Par2_0.7.4.0_arm-x41.qpkg.zip"
 			fi
@@ -1319,12 +1319,12 @@ LoadQPKGDownloadDetails()
 			returncode=1
 		fi
 
-		if [ -z "$qpkg_url" ] || [ -z "$qpkg_md5" ]; then
+		if [[ -z $qpkg_url ]] || [[ -z $qpkg_md5 ]]; then
 			DebugError "QPKG details not found"
 			errorcode=37
 			returncode=1
 		else
-			[ -z "$qpkg_file" ] && qpkg_file=$($BASENAME_CMD "$qpkg_url")
+			[[ -z $qpkg_file ]] && qpkg_file=$($BASENAME_CMD "$qpkg_url")
 			qpkg_pathfile="${QPKG_PATH}/${qpkg_file}"
 		fi
 	fi
@@ -1340,7 +1340,7 @@ UninstallQPKG()
 
 	local returncode=0
 
-	if [ -z "$1" ]; then
+	if [[ -z $1 ]]; then
 		DebugError "QPKG name not specified"
 		errorcode=38
 		returncode=1
@@ -1348,16 +1348,16 @@ UninstallQPKG()
 		qpkg_installed_path="$($GETCFG_CMD "$1" Install_Path -f "$QPKG_CONFIG_PATHFILE")"
 		result=$?
 
-		if [ "$result" -eq "0" ]; then
+		if [[ $result -eq 0 ]]; then
 			qpkg_installed_path="$($GETCFG_CMD "$1" Install_Path -f "$QPKG_CONFIG_PATHFILE")"
 
-			if [ -e "${qpkg_installed_path}/.uninstall.sh" ]; then
+			if [[ -e ${qpkg_installed_path}/.uninstall.sh ]]; then
 				ShowProc "uninstalling QPKG '$1'"
 
 				${qpkg_installed_path}/.uninstall.sh > /dev/null
 				result=$?
 
-				if [ "$result" -eq "0" ]; then
+				if [[ $result -eq 0 ]]; then
 					ShowDone "uninstalled QPKG '$1'"
 				else
 					ShowError "Unable to uninstall QPKG \"$1\" [$result]"
@@ -1381,11 +1381,11 @@ ReinstallSAB()
 
 	DebugFuncEntry
 
-	[ "$errorcode" -eq "0" ] && BackupSabConfig
-  	[ "$errorcode" -eq "0" ] && RemoveSabs
-  	[ "$errorcode" -eq "0" ] && InstallSab
-  	[ "$errorcode" -eq "0" ] && RestoreSabConfig
- 	[ "$errorcode" -eq "0" ] && StartSab
+	[[ $errorcode -eq 0 ]] && BackupSabConfig
+  	[[ $errorcode -eq 0 ]] && RemoveSabs
+  	[[ $errorcode -eq 0 ]] && InstallSab
+  	[[ $errorcode -eq 0 ]] && RestoreSabConfig
+ 	[[ $errorcode -eq 0 ]] && StartSab
 
 	DebugFuncExit
 	return 0
@@ -1397,10 +1397,10 @@ ReinstallSR()
 
 	DebugFuncEntry
 
-	#[ "$errorcode" -eq "0" ] && BackupSRConfig
-	#[ "$errorcode" -eq "0" ] && RemoveSR
-	[ "$errorcode" -eq "0" ] && InstallSR
-	#[ "$errorcode" -eq "0" ] && RestoreSRConfig
+	#[[ $errorcode -eq 0 ]] && BackupSRConfig
+	#[[ $errorcode -eq 0 ]] && RemoveSR
+	[[ $errorcode -eq 0 ]] && InstallSR
+	#[[ $errorcode -eq 0 ]] && RestoreSRConfig
 
 	DebugFuncExit
 	return 0
@@ -1412,10 +1412,10 @@ ReinstallCP()
 
 	DebugFuncEntry
 
-	#[ "$errorcode" -eq "0" ] && BackupCPConfig
-	#[ "$errorcode" -eq "0" ] && RemoveCP
-	[ "$errorcode" -eq "0" ] && InstallCP
-	#[ "$errorcode" -eq "0" ] && RestoreCPConfig
+	#[[ $errorcode -eq 0 ]] && BackupCPConfig
+	#[[ $errorcode -eq 0 ]] && RemoveCP
+	[[ $errorcode -eq 0 ]] && InstallCP
+	#[[ $errorcode -eq 0 ]] && RestoreCPConfig
 
 	DebugFuncExit
 	return 0
@@ -1433,12 +1433,12 @@ DaemonControl()
 	local target_init_pathfile=""
 	local init_file=""
 
-	if [ -z "$1" ]; then
+	if [[ -z $1 ]]; then
 		DebugError "daemon not specified"
 		errorcode=40
 		returncode=1
 
-	elif [ ! -e "$1" ]; then
+	elif [[ ! -e $1 ]]; then
 		DebugError "daemon init not found [$1]"
 		errorcode=41
 		returncode=1
@@ -1454,12 +1454,12 @@ DaemonControl()
 				result=$?
 				echo -e "${msgs}\nresult=[$result]" >> "$qpkg_pathfile.$START_LOG_FILE"
 
-				if [ "$result" -eq "0" ]; then
+				if [[ $result -eq 0 ]]; then
 					ShowDone "daemon started ($target_init_file)"
 
 				else
 					ShowWarning "could not start daemon ($target_init_file) [$result]"
-					if [ "$debug" == "true" ]; then
+					if [[ $debug = true ]]; then
 						DebugThickSeparator
 						$CAT_CMD "$qpkg_pathfile.$START_LOG_FILE"
 						DebugThickSeparator
@@ -1474,12 +1474,12 @@ DaemonControl()
 				result=$?
 				echo -e "${msgs}\nresult=[$result]" >> "$qpkg_pathfile.$STOP_LOG_FILE"
 
-				if [ "$result" -eq "0" ]; then
+				if [[ $result -eq 0 ]]; then
 					ShowDone "daemon stopped ($target_init_file)"
 
 				else
 					ShowWarning "could not stop daemon ($target_init_file) [$result]"
-					if [ "$debug" == "true" ]; then
+					if [[ $debug = true ]]; then
 						DebugThickSeparator
 						$CAT_CMD "$qpkg_pathfile.$STOP_LOG_FILE"
 						DebugThickSeparator
@@ -1523,9 +1523,9 @@ Cleanup()
 
 	cd "$SHARE_PUBLIC_PATH"
 
-	[ "$errorcode" -eq "0" ] && [ "$debug" != "true" ] && [ -d "$WORKING_PATH" ] && $RM_CMD -rf "$WORKING_PATH"
+	[[ $errorcode -eq 0 ]] && [[ $debug != true ]] && [[ -d $WORKING_PATH ]] && $RM_CMD -rf "$WORKING_PATH"
 
-	if [ "$queuepaused" == "true" ]; then
+	if [[ $queuepaused = true ]]; then
 		if QPKGIsInstalled "SABnzbdplus"; then
 			LoadQPKGVars "SABnzbdplus"
 			SabQueueControl resume
@@ -1547,17 +1547,17 @@ DisplayResult()
 	local RE=""
 	local SL=""
 
-	[ "$SAB_WAS_INSTALLED" == "true" ] && RE="re" || RE=""
-	[ "$secure_web_login" == "true" ] && SL="s" || SL=""
-	[ "$debug" == "false" ] && echo
+	[[ $SAB_WAS_INSTALLED = true ]] && RE="re" || RE=""
+	[[ $secure_web_login = true ]] && SL="s" || SL=""
+	[[ $debug = false ]] && echo
 
-	if [ "$errorcode" -eq "0" ]; then
-		[ "$debug" == "true" ] && emoticon=":DD" || emoticon=""
+	if [[ $errorcode -eq 0 ]]; then
+		[[ $debug = true ]] && emoticon=":DD" || emoticon=""
 		ShowDone "$TARGET_APP has been successfully ${RE}installed! $emoticon"
-		[ "$debug" == "false" ] && echo
+		[[ $debug = false ]] && echo
 		#ShowInfo "It should now be accessible on your LAN @ $(ColourTextUnderlinedBlue "http${SL}://$($HOSTNAME_CMD -i | $TR_CMD -d ' '):$sab_port")"
 	else
-		[ "$debug" == "true" ] && emoticon=":S" || emoticon=""
+		[[ $debug = true ]] && emoticon=":S" || emoticon=""
 		ShowError "$TARGET_APP ${RE}install failed! $emoticon [$errorcode]"
 	fi
 
@@ -1576,14 +1576,14 @@ SabQueueControl()
 
 	local returncode=0
 
-	if [ -z "$1" ]; then
+	if [[ -z $1 ]]; then
 		returncode=1
-	elif [ "$1" != "pause" ] && [ "$1" != "resume" ]; then
+	elif [[ $1 != 'pause' ]] && [[ $1 != 'resume' ]]; then
 		returncode=1
 	else
-		[ "$secure_web_login" == "true" ] && SL="s" || SL=""
+		[[ $secure_web_login = true ]] && SL="s" || SL=""
 		$WGET_CMD --no-check-certificate --quiet "http${SL}://127.0.0.1:${sab_port}/sabnzbd/api?mode=${1}&apikey=${sab_api}" -O - 2>&1 >/dev/null &
-		[ "$1" == "pause" ] && queuepaused=true || queuepaused=false
+		[[ $1 = 'pause' ]] && queuepaused=true || queuepaused=false
 		DebugDone "${1}d existing SABnzbd queue"
 	fi
 
@@ -1602,7 +1602,7 @@ QPKGIsInstalled()
 
 	local returncode=0
 
-	if [ -z "$1" ]; then
+	if [[ -z $1 ]]; then
 		DebugError "QPKG name not specified"
 		errorcode=44
 		returncode=1
@@ -1610,10 +1610,10 @@ QPKGIsInstalled()
 		$GREP_CMD -q -F "[$1]" "$QPKG_CONFIG_PATHFILE"
 		result=$?
 
-		if [ "$result" -eq "0" ]; then
-			if [ "$($GETCFG_CMD "$1" RC_Number -d 0 -f "$QPKG_CONFIG_PATHFILE")" != "0" ]; then
+		if [[ $result -eq 0 ]]; then
+			if [[ $($GETCFG_CMD "$1" RC_Number -d 0 -f "$QPKG_CONFIG_PATHFILE") -ne 0 ]]; then
 				DebugQPKG "'$1'" "installed"
-				[ "$($GETCFG_CMD "$1" Enable -u -f "$QPKG_CONFIG_PATHFILE")" != "TRUE" ] && $SETCFG_CMD "$1" Enable TRUE -f "$QPKG_CONFIG_PATHFILE"
+				[[ $($GETCFG_CMD "$1" Enable -u -f "$QPKG_CONFIG_PATHFILE") != 'TRUE' ]] && $SETCFG_CMD "$1" Enable TRUE -f "$QPKG_CONFIG_PATHFILE"
 			else
 				DebugQPKG "'$1'" "not installed"
 				returncode=1
@@ -1637,7 +1637,7 @@ IPKIsInstalled()
 
 	local returncode=0
 
-	if [ -z "$1" ]; then
+	if [[ -z $1 ]]; then
 		DebugError "IPK name not specified"
 		errorcode=45
 		returncode=1
@@ -1645,7 +1645,7 @@ IPKIsInstalled()
 		$OPKG_CMD list-installed | $GREP_CMD -q -F "$1"
 		result=$?
 
-		if [ "$result" -eq "0" ]; then
+		if [[ $result -eq 0 ]]; then
 			DebugQPKG "'$1'" "installed"
 		else
 			DebugQPKG "'$1'" "not installed"
@@ -1662,9 +1662,9 @@ SysFilePresent()
 
 	# $1 = pathfile to check
 
-	[ -z "$1" ] && return 1
+	[[ -z $1 ]] && return 1
 
-	if [ ! -e "$1" ]; then
+	if [[ ! -e $1 ]]; then
 		ShowError "A required NAS system file is missing [$1]"
 		errorcode=46
 		return 1
@@ -1679,9 +1679,9 @@ SysSharePresent()
 
 	# $1 = symlink path to check
 
-	[ -z "$1" ] && return 1
+	[[ -z $1 ]] && return 1
 
-	if [ ! -L "$1" ]; then
+	if [[ ! -L $1 ]]; then
 		ShowError "A required NAS system share is missing [$1]. Please re-create it via QNAP Control Panel -> Privilege Settings -> Shared Folders."
 		errorcode=47
 		return 1
@@ -1806,7 +1806,7 @@ DebugVar()
 DebugThis()
 	{
 
-	[ "$debug" == "true" ] && ShowDebug "$1"
+	[[ $debug = true ]] && ShowDebug "$1"
 	SaveDebug "$1"
 
 	}
@@ -1875,7 +1875,7 @@ ShowLogLine_write()
 
 	previous_msg=$(printf "[ %-10s ] %s" "$1" "$2")
 
-	echo -n "$previous_msg"; [ "$debug" == "true" ] && echo
+	echo -n "$previous_msg"; [[ $debug = true ]] && echo
 
 	return 0
 
@@ -1891,7 +1891,7 @@ ShowLogLine_update()
 
 	new_message=$(printf "[ %-10s ] %s" "$1" "$2")
 
-	if [ "$new_message" != "$previous_msg" ] ; then
+	if [[ $new_message != $previous_msg ]]; then
 		previous_length=$((${#previous_msg}+1))
 		new_length=$((${#new_message}+1))
 
@@ -1899,7 +1899,7 @@ ShowLogLine_update()
 		strbuffer=$(echo -en "\r$new_message ")
 
 		# if new msg is shorter then add spaces to end to cover previous msg
-		[ "$new_length" -lt "$previous_length" ] && { appended_length=$(($new_length-$previous_length)); strbuffer+=$(printf "%${appended_length}s") ;}
+		[[ $new_length -lt $previous_length ]] && { appended_length=$(($new_length-$previous_length)); strbuffer+=$(printf "%${appended_length}s") ;}
 
 		echo "$strbuffer"
 	fi
@@ -1968,22 +1968,22 @@ PrintResetColours()
 	}
 
 Init
-[ "$errorcode" -eq "0" ] && PauseDownloaders
-[ "$errorcode" -eq "0" ] && RemoveOther
-[ "$errorcode" -eq "0" ] && DownloadQPKGs
-[ "$errorcode" -eq "0" ] && RemovePackageInstallers
-[ "$errorcode" -eq "0" ] && InstallEntware
-[ "$errorcode" -eq "0" ] && InstallOther
+[[ $errorcode -eq 0 ]] && PauseDownloaders
+[[ $errorcode -eq 0 ]] && RemoveOther
+[[ $errorcode -eq 0 ]] && DownloadQPKGs
+[[ $errorcode -eq 0 ]] && RemovePackageInstallers
+[[ $errorcode -eq 0 ]] && InstallEntware
+[[ $errorcode -eq 0 ]] && InstallOther
 
-if [ "$errorcode" -eq "0" ]; then
-	[ "$TARGET_APP" == "SABnzbdplus" ] && ReinstallSAB
- 	[ "$TARGET_APP" == "SickRage" ] && ReinstallSR
-	[ "$TARGET_APP" == "CouchPotato2" ] && ReinstallCP
-	#[ "$TARGET_APP" == "NZBGet" ] && ReinstallNG
-	#[ "$TARGET_APP" == "HeadPhones" ] && ReinstallHP
+if [[ $errorcode -eq 0 ]]; then
+	[[ $TARGET_APP = 'SABnzbdplus' ]] && ReinstallSAB
+ 	[[ $TARGET_APP = 'SickRage' ]] && ReinstallSR
+	[[ $TARGET_APP = 'CouchPotato2' ]] && ReinstallCP
+	#[[ $TARGET_APP = 'NZBGet' ]] && ReinstallNG
+	#[[ $TARGET_APP = 'HeadPhones' ]] && ReinstallHP
 fi
 
 Cleanup
-[ "$errorcode" -ne "1" ] && DisplayResult
+[[ $errorcode -ne 1 ]] && DisplayResult
 
 exit "$errorcode"
