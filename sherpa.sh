@@ -317,37 +317,40 @@ DownloadQPKGs()
 
 	# now choose package(s) to download
 	if [[ $errorcode -eq 0 ]]; then
-		if [[ $TARGET_APP = 'SABnzbdplus' ]]; then
-			case "$STEPHANE_QPKG_ARCH" in
-				x86)
-					! QPKGIsInstalled 'Par2cmdline-MT' && LoadQPKGDownloadDetails 'Par2cmdline-MT' && DownloadQPKG
-					;;
-				none)
-					;;
-				*)
-					! QPKGIsInstalled 'Par2' && LoadQPKGDownloadDetails 'Par2' && DownloadQPKG
-					;;
-			esac
-			[[ $errorcode -eq 0 ]] && LoadQPKGDownloadDetails 'SABnzbdplus' && DownloadQPKG
+		case "$STEPHANE_QPKG_ARCH" in
+			x86)
+				! QPKGIsInstalled 'Par2cmdline-MT' && LoadQPKGDownloadDetails 'Par2cmdline-MT' && DownloadQPKG
+				;;
+			none)
+				;;
+			*)
+				! QPKGIsInstalled 'Par2' && LoadQPKGDownloadDetails 'Par2' && DownloadQPKG
+				;;
+		esac
 
-		elif [[ $TARGET_APP = 'SickRage' ]]; then
-			if QPKGIsInstalled "SickRage"; then
-				ShowError 'Sorry! This installer lacks the ability to re-install SickRage at present. It can only perform a new install.'
-				errorcode=9
-				returncode=1
-			else
-				LoadQPKGDownloadDetails 'SickRage' && DownloadQPKG
-			fi
-
-		elif [[ $TARGET_APP = 'CouchPotato2' ]]; then
-			if QPKGIsInstalled 'CouchPotato2'; then
-				ShowError 'Sorry! This installer lacks the ability to re-install CouchPotato2 at present. It can only perform a new install.'
-				errorcode=10
-				returncode=1
-			else
-				LoadQPKGDownloadDetails 'CouchPotato2' && DownloadQPKG
-			fi
-		fi
+		case "$TARGET_APP" in
+			SABnzbdplus)
+				LoadQPKGDownloadDetails 'SABnzbdplus' && DownloadQPKG
+				;;
+			SickRage)
+				if QPKGIsInstalled 'SickRage'; then
+					ShowError 'Sorry! This installer lacks the ability to re-install SickRage at present. It can only perform a new install.'
+					errorcode=9
+					returncode=1
+				else
+					LoadQPKGDownloadDetails 'SickRage' && DownloadQPKG
+				fi
+				;;
+			CouchPotato2)
+				if QPKGIsInstalled 'CouchPotato2'; then
+					ShowError 'Sorry! This installer lacks the ability to re-install CouchPotato2 at present. It can only perform a new install.'
+					errorcode=10
+					returncode=1
+				else
+					LoadQPKGDownloadDetails 'CouchPotato2' && DownloadQPKG
+				fi
+			;;
+		esac
 	fi
 
 	DebugFuncExit
