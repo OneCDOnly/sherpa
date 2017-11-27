@@ -31,7 +31,7 @@ Init()
 
 	local returncode=0
 	local SCRIPT_FILE="sherpa.sh"
-	local SCRIPT_VERSION="2017.11.01b"
+	local SCRIPT_VERSION="2017.11.27b"
 
 	# cherry-pick required binaries
 	CAT_CMD="/bin/cat"
@@ -523,32 +523,30 @@ InstallOther()
 
 	DebugFuncEntry
 
-	if [ "$TARGET_APP" == "SABnzbdplus" ]; then
-		case "$STEPHANE_QPKG_ARCH" in
-			x86)
-				! QPKGIsInstalled "Par2cmdline-MT" && LoadQPKGDownloadDetails "Par2cmdline-MT" && {
-					InstallQPKG
-					if [ "$errorcode" -gt "0" ]; then
-						ShowWarning "Par2cmdline-MT installation failed - but it's not essential so I'm continuing"
-						errorcode=0
-						DebugVar "errorcode"
-					fi
-					}
-				;;
-			none)
-				;;
-			*)
-				! QPKGIsInstalled "Par2" && LoadQPKGDownloadDetails "Par2" && {
-					InstallQPKG
-					if [ "$errorcode" -gt "0" ]; then
-						ShowWarning "Par2 installation failed - but it's not essential so I'm continuing"
-						errorcode=0
-						DebugVar "errorcode"
-					fi
-					}
-				;;
-		esac
-	fi
+	case "$STEPHANE_QPKG_ARCH" in
+		x86)
+			! QPKGIsInstalled "Par2cmdline-MT" && LoadQPKGDownloadDetails "Par2cmdline-MT" && {
+				InstallQPKG
+				if [ "$errorcode" -gt "0" ]; then
+					ShowWarning "Par2cmdline-MT installation failed - but it's not essential so I'm continuing"
+					errorcode=0
+					DebugVar "errorcode"
+				fi
+				}
+			;;
+		none)
+			;;
+		*)
+			! QPKGIsInstalled "Par2" && LoadQPKGDownloadDetails "Par2" && {
+				InstallQPKG
+				if [ "$errorcode" -gt "0" ]; then
+					ShowWarning "Par2 installation failed - but it's not essential so I'm continuing"
+					errorcode=0
+					DebugVar "errorcode"
+				fi
+				}
+			;;
+	esac
 	[ "$errorcode" -eq "0" ] && InstallIPKs
 	[ "$errorcode" -eq "0" ] && InstallPIPs
 	[ "$errorcode" -eq "0" ] && CreateWaiter
