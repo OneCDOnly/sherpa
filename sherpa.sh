@@ -307,7 +307,6 @@ DownloadQPKGs()
 			ShowError 'Entware-3x (alt) is installed. This configuration has not been tested.'
 			errorcode=7
 			returncode=1
-
 		elif [[ $ENTWARE_VER = 'none' ]]; then
 			ShowError 'Entware appears to be installed but is not visible.'
 			errorcode=8
@@ -328,29 +327,15 @@ DownloadQPKGs()
 				;;
 		esac
 
-		case "$TARGET_APP" in
-			SABnzbdplus)
-				LoadQPKGDownloadDetails 'SABnzbdplus' && DownloadQPKG
-				;;
-			SickRage)
-				if QPKGIsInstalled 'SickRage'; then
-					ShowError 'Sorry! This installer lacks the ability to re-install SickRage at present. It can only perform a new install.'
-					errorcode=9
-					returncode=1
-				else
-					LoadQPKGDownloadDetails 'SickRage' && DownloadQPKG
-				fi
-				;;
-			CouchPotato2)
-				if QPKGIsInstalled 'CouchPotato2'; then
-					ShowError 'Sorry! This installer lacks the ability to re-install CouchPotato2 at present. It can only perform a new install.'
-					errorcode=10
-					returncode=1
-				else
-					LoadQPKGDownloadDetails 'CouchPotato2' && DownloadQPKG
-				fi
-			;;
-		esac
+		if [[ $TARGET_APP = 'SickRage' || $TARGET_APP = 'CouchPotato2' ]]; then
+			if QPKGIsInstalled "$TARGET_APP"; then
+				ShowError "Sorry! This installer lacks the ability to re-install $TARGET_APP at present. It can only perform a new install."
+				errorcode=9
+				returncode=1
+			fi
+		fi
+
+		[[ $errorcode -eq 0 ]] && LoadQPKGDownloadDetails "$TARGET_APP" && DownloadQPKG
 	fi
 
 	DebugFuncExit
