@@ -24,14 +24,14 @@
 ###############################################################################
 
 LAUNCHED_AS="$0"
-debug=false; [[ ! -z $1 ]] && [[ $1 = '--debug' ]] && debug=true
+debug=false; [[ ! -z $1 && $1 = '--debug' ]] && debug=true
 
 Init()
 	{
 
 	local returncode=0
 	local SCRIPT_FILE='sherpa.sh'
-	local SCRIPT_VERSION='2017.11.27b'
+	local SCRIPT_VERSION='2017.11.28b'
 
 	# cherry-pick required binaries
 	CAT_CMD='/bin/cat'
@@ -415,12 +415,12 @@ InstallEntware()
 		# rename original [/opt]
 		opt_path='/opt'
 		opt_backup_path='/opt.orig'
-		[[ -d $opt_path ]] && [[ ! -L $opt_path ]] && [[ ! -e $opt_backup_path ]] && $MV_CMD "$opt_path" "$opt_backup_path"
+		[[ -d $opt_path && ! -L $opt_path && ! -e $opt_backup_path ]] && $MV_CMD "$opt_path" "$opt_backup_path"
 
 		LoadQPKGDownloadDetails "$PREF_ENTWARE" && InstallQPKG && ReloadProfile
 
 		# copy all files from original [/opt] into new [/opt]
-		[[ -L $opt_path ]] && [[ -d $opt_backup_path ]] && $CP_CMD --recursive "$opt_backup_path"/* --target-directory "$opt_path" && $RM_CMD -r "$opt_backup_path"
+		[[ -L $opt_path && -d $opt_backup_path ]] && $CP_CMD --recursive "$opt_backup_path"/* --target-directory "$opt_path" && $RM_CMD -r "$opt_backup_path"
 
 	else
 		if [[ $PREF_ENTWARE = Entware-3x ]]; then
@@ -567,7 +567,7 @@ InstallIPKs()
 	local package_desc=''
 	local log_pathfile="${IPK_PATH}/ipks.$INSTALL_LOG_FILE"
 
-	if [[ ! -z $IPK_PATH ]] && [[ -d $IPK_PATH ]]; then
+	if [[ ! -z $IPK_PATH && -d $IPK_PATH ]]; then
 		packages='gcc python python-pip python-cffi python-pyopenssl ca-certificates nano git git-http unrar p7zip ionice ffprobe'
 		[[ $STEPHANE_QPKG_ARCH = 'none' ]] && packages+=' par2cmdline'
 		package_desc='various'
@@ -736,7 +736,7 @@ InstallNG()
 		local packages=''
 		local package_desc=''
 
-		if [[ ! -z $IPK_PATH ]] && [[ -d $IPK_PATH ]]; then
+		if [[ ! -z $IPK_PATH && -d $IPK_PATH ]]; then
 			packages='nzbget'
 			package_desc='nzbget'
 
@@ -1064,7 +1064,7 @@ DownloadQPKG()
 		fi
 	fi
 
-	if [[ $errorcode -eq 0 ]] && [[ ! -e $qpkg_pathfile ]]; then
+	if [[ $errorcode -eq 0 && ! -e $qpkg_pathfile ]]; then
 		ShowProc "downloading QPKG ($qpkg_file)"
 		local log_pathfile="$qpkg_pathfile.$DOWNLOAD_LOG_FILE"
 
@@ -1119,30 +1119,23 @@ DownloadQPKG()
 CalcStephaneQPKGArch()
 	{
 
-	# reduce NAS architecture down to 3+1 possibilities
+	case "$NAS_ARCH" in
+		x86_64)
+			[[ $FIRMWARE_VERSION =~ '4.3.' ]] && STEPHANE_QPKG_ARCH='x64' || STEPHANE_QPKG_ARCH='x86'
+			;;
+		i686)
+			STEPHANE_QPKG_ARCH='x86'
+			;;
+		armv7l)
+			STEPHANE_QPKG_ARCH='x41'
+			;;
+		*)
+			STEPHANE_QPKG_ARCH='none'
+			;;
+	esac
 
-	local returncode=0
-	STEPHANE_QPKG_ARCH=''
-
-	[[ $NAS_ARCH = 'i686' ]] && STEPHANE_QPKG_ARCH='x86'
-
-	if [[ $NAS_ARCH = 'x86_64' ]]; then
-		echo $FIRMWARE_VERSION | $GREP_CMD -q '4.3.' && STEPHANE_QPKG_ARCH='x64' || STEPHANE_QPKG_ARCH='x86'
-	fi
-
-	[[ $NAS_ARCH = 'armv7l' ]] && STEPHANE_QPKG_ARCH='x41'
-	[[ $NAS_ARCH = 'armv5tejl' ]] && STEPHANE_QPKG_ARCH='none'
-	[[ $NAS_ARCH = 'armv5tel' ]] && STEPHANE_QPKG_ARCH='none'
-
-	if [[ -z $STEPHANE_QPKG_ARCH ]]; then
-		ShowError "Could not determine suitable ARCH for Stephane's QPKG ($NAS_ARCH)"
-		errorcode=33
-		returncode=1
-	else
-		DebugInfo "found a suitable ARCH for Stephane's QPKG ($STEPHANE_QPKG_ARCH)"
-	fi
-
-	return $returncode
+	DebugVar 'STEPHANE_QPKG_ARCH'
+	return 0
 
 	}
 
@@ -1155,8 +1148,7 @@ CalcEntwareQPKG()
 	[[ $NAS_ARCH = 'i686' ]] && PREF_ENTWARE='Entware-ng'
  	QPKGIsInstalled 'Entware-ng' && PREF_ENTWARE='Entware-ng'
 
-	DebugInfo "found a suitable Entware package ($PREF_ENTWARE)"
-
+	DebugVar 'PREF_ENTWARE'
 	return 0
 
 	}
@@ -1268,59 +1260,67 @@ LoadQPKGDownloadDetails()
 		qpkg_name="$1"
 		local base_url=''
 
-		if [[ $1 = 'Entware-3x' ]]; then
-			qpkg_md5='3663c9e4323e694fb25897e276f55623'
-			qpkg_url='http://entware-3x.zyxmon.org/binaries/other/Entware-3x_0.99std.qpkg'
-
-		elif [[ $1 = 'Entware-ng' ]]; then
-			qpkg_md5='6c81cc37cbadd85adfb2751dc06a238f'
-			qpkg_url='http://entware.zyxmon.org/binaries/other/Entware-ng_0.97.qpkg'
-
-		elif [[ $1 = 'SABnzbdplus' ]]; then
- 			target_file='SABnzbdplus_171005.qpkg'
- 			qpkg_md5='7317ee8fa2659be47f98e51e3767d9cd'
- 			qpkg_url="${OneCD_urlprefix}/SABnzbdplus/build/${target_file}?raw=true"
- 			qpkg_file=$target_file
-
-		elif [[ $1 = 'SickRage' ]]; then
-			target_file='SickRage_170610.qpkg'
-			qpkg_md5='d1f295d01bc6e39fd59dff24d2b36a3f'
-			qpkg_url="${OneCD_urlprefix}/SickRage/build/${target_file}?raw=true"
-			qpkg_file=$target_file
-
-		elif [[ $1 = 'CouchPotato2' ]]; then
-			target_file='CouchPotato2_170610.qpkg'
-			qpkg_md5='5c6e2ff53e45cb2f3b8eba4e34a8900e'
-			qpkg_url="${OneCD_urlprefix}/CouchPotato2/build/${target_file}?raw=true"
-			qpkg_file=$target_file
-
-		elif [[ $1 = 'Par2cmdline-MT' ]]; then
-			if [[ $STEPHANE_QPKG_ARCH = 'x86' ]]; then
-				qpkg_md5='531832a39576e399f646890cc18969bb'
-				qpkg_url="${Stephane_urlprefix}/Par2cmdline-MT_0.6.14-MT_x86.qpkg.zip"
-
-			elif [[ $STEPHANE_QPKG_ARCH = 'x64' ]]; then
-				qpkg_md5='f3b3dd496289510ec0383cf083a50f8e'
-				qpkg_url="${Stephane_urlprefix}/Par2cmdline-MT_0.6.14-MT_x86_64.qpkg.zip"
-
-			elif [[ $STEPHANE_QPKG_ARCH = 'x41' ]]; then
-				qpkg_md5='1701b188115758c151f19956388b90cb'
-				qpkg_url="${Stephane_urlprefix}/Par2cmdline-MT_0.6.14-MT_arm-x41.qpkg.zip"
-			fi
-		elif [[ $1 = 'Par2' ]]; then
-			if [[ $STEPHANE_QPKG_ARCH = 'x64' ]]; then
-				qpkg_md5='660882474ab00d4793a674d4b48f89be'
-				qpkg_url="${Stephane_urlprefix}/Par2_0.7.4.0_x86_64.qpkg.zip"
-
-			elif [[ $STEPHANE_QPKG_ARCH = 'x41' ]]; then
-				qpkg_md5='9c0c9d3e8512f403f183856fb80091a4'
-				qpkg_url="${Stephane_urlprefix}/Par2_0.7.4.0_arm-x41.qpkg.zip"
-			fi
-		else
-			DebugError 'QPKG name not found'
-			errorcode=36
-			returncode=1
-		fi
+		case "$1" in
+			Entware-3x)
+				qpkg_md5='3663c9e4323e694fb25897e276f55623'
+				qpkg_url='http://entware-3x.zyxmon.org/binaries/other/Entware-3x_0.99std.qpkg'
+				;;
+			Entware-ng)
+				qpkg_md5='6c81cc37cbadd85adfb2751dc06a238f'
+				qpkg_url='http://entware.zyxmon.org/binaries/other/Entware-ng_0.97.qpkg'
+				;;
+			SABnzbdplus)
+				target_file='SABnzbdplus_171005.qpkg'
+				qpkg_md5='7317ee8fa2659be47f98e51e3767d9cd'
+				qpkg_url="${OneCD_urlprefix}/SABnzbdplus/build/${target_file}?raw=true"
+				qpkg_file=$target_file
+				;;
+			SickRage)
+				target_file='SickRage_170610.qpkg'
+				qpkg_md5='d1f295d01bc6e39fd59dff24d2b36a3f'
+				qpkg_url="${OneCD_urlprefix}/SickRage/build/${target_file}?raw=true"
+				qpkg_file=$target_file
+				;;
+			CouchPotato2)
+				target_file='CouchPotato2_170610.qpkg'
+				qpkg_md5='5c6e2ff53e45cb2f3b8eba4e34a8900e'
+				qpkg_url="${OneCD_urlprefix}/CouchPotato2/build/${target_file}?raw=true"
+				qpkg_file=$target_file
+				;;
+			Par2cmdline-MT)
+				case "$STEPHANE_QPKG_ARCH" in
+					x86)
+						qpkg_md5='531832a39576e399f646890cc18969bb'
+						qpkg_url="${Stephane_urlprefix}/Par2cmdline-MT_0.6.14-MT_x86.qpkg.zip"
+						;;
+					x64)
+						qpkg_md5='f3b3dd496289510ec0383cf083a50f8e'
+						qpkg_url="${Stephane_urlprefix}/Par2cmdline-MT_0.6.14-MT_x86_64.qpkg.zip"
+						;;
+					x41)
+						qpkg_md5='1701b188115758c151f19956388b90cb'
+						qpkg_url="${Stephane_urlprefix}/Par2cmdline-MT_0.6.14-MT_arm-x41.qpkg.zip"
+						;;
+				esac
+				;;
+			Par2)
+				case "$STEPHANE_QPKG_ARCH" in
+					x64)
+						qpkg_md5='660882474ab00d4793a674d4b48f89be'
+						qpkg_url="${Stephane_urlprefix}/Par2_0.7.4.0_x86_64.qpkg.zip"
+						;;
+					x41)
+						qpkg_md5='9c0c9d3e8512f403f183856fb80091a4'
+						qpkg_url="${Stephane_urlprefix}/Par2_0.7.4.0_arm-x41.qpkg.zip"
+						;;
+				esac
+				;;
+			*)
+				DebugError 'QPKG name not found'
+				errorcode=36
+				returncode=1
+				;;
+		esac
 
 		if [[ -z $qpkg_url ]] || [[ -z $qpkg_md5 ]]; then
 			DebugError 'QPKG details not found'
