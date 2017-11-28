@@ -24,7 +24,7 @@
 ###############################################################################
 
 LAUNCHED_AS="$0"
-debug=false; [[ ! -z $1 && $1 = '--debug' ]] && debug=true
+[[ ! -z $1 && $1 = '--debug' ]] && debug=true || debug=false
 
 Init()
 	{
@@ -293,7 +293,7 @@ DownloadQPKGs()
 
 	DebugFuncEntry
 	local returncode=0
-	local SL=""
+	local SL=''
 
 	# Entware is always required
  	if ! QPKGIsInstalled "$PREF_ENTWARE"; then
@@ -383,6 +383,8 @@ RemoveOther()
 RemoveSabs()
 	{
 
+	[[ $errorcode -gt 0 ]] && return
+
 	DebugFuncEntry
 
 	[[ $errorcode -eq 0 ]] && UninstallQPKG 'SABnzbdplus'
@@ -439,8 +441,8 @@ PatchEntwareInit()
 	{
 
 	local returncode=0
-	local findtext=""
-	local inserttext=""
+	local findtext=''
+	local inserttext=''
 
 	if [[ ! -e $ent_init_pathfile ]]; then
 		ShowError "No init file found [$ent_init_pathfile]"
@@ -448,7 +450,7 @@ PatchEntwareInit()
 		returncode=1
 	else
  		if ($GREP_CMD -q 'opt.orig' "$ent_init_pathfile"); then
-			DebugInfo "patch: do the \"opt shuffle\" - already done"
+			DebugInfo 'patch: do the "opt shuffle" - already done'
 		else
 			findtext='/bin/rm -rf /opt'
 			inserttext='opt_path="/opt"; opt_backup_path="/opt.orig"; [ -d "$opt_path" ] \&\& [ ! -L "$opt_path" ] \&\& [ ! -e "$opt_backup_path" ] \&\& mv "$opt_path" "$opt_backup_path"'
@@ -458,7 +460,7 @@ PatchEntwareInit()
 			inserttext=$(echo -e "\t")'[ -L "$opt_path" ] \&\& [ -d "$opt_backup_path" ] \&\& cp "$opt_backup_path"/* --target-directory "$opt_path" \&\& rm -r "$opt_backup_path"'
 			$SED_CMD -i "s|$findtext|$findtext\n$inserttext\n|" "$ent_init_pathfile"
 
-			DebugDone "patch: do the \"opt shuffle\""
+			DebugDone 'patch: do the "opt shuffle"'
 		fi
 	fi
 
@@ -481,7 +483,6 @@ UpdateEntware()
 		returncode=1
 	else
 		# if Entware package list was updated less that 1 hour ago, don't run another update
-
 		[[ -e $FIND_CMD ]] && result=$($FIND_CMD "$package_list_file" -mmin +$package_list_age)
 
 		if [[ -n $result ]] ; then
@@ -622,7 +623,7 @@ InstallPIPs()
 	{
 
 	DebugFuncEntry
-	local msgs=""
+	local msgs=''
 	local returncode=0
 
 	local op='pip setuptools'
@@ -678,10 +679,11 @@ InstallPIPs()
 InstallSab()
 	{
 
+	[[ $errorcode -gt 0 ]] && return
+
 	DebugFuncEntry
 
 	! QPKGIsInstalled 'SABnzbdplus' && LoadQPKGDownloadDetails 'SABnzbdplus' && InstallQPKG && LoadQPKGVars 'SABnzbdplus'
-
 
 	DebugFuncExit
 	return 0
@@ -690,6 +692,8 @@ InstallSab()
 
 InstallSR()
 	{
+
+	[[ $errorcode -gt 0 ]] && return
 
 	DebugFuncEntry
 
@@ -703,6 +707,8 @@ InstallSR()
 InstallCP()
 	{
 
+	[[ $errorcode -gt 0 ]] && return
+
 	DebugFuncEntry
 
 	! QPKGIsInstalled 'CouchPotato2' && LoadQPKGDownloadDetails 'CouchPotato2' && InstallQPKG && LoadQPKGVars 'CouchPotato2'
@@ -714,6 +720,8 @@ InstallCP()
 
 InstallNG()
 	{
+
+	[[ $errorcode -gt 0 ]] && return
 
 	DebugFuncEntry
 
@@ -784,7 +792,7 @@ InstallQPKG()
 
 	echo -e "${msgs}\nresult=[$result]" > "$log_pathfile"
 
-	if [[ $result -eq 0 ]] || [[ $result -eq 10 ]]; then
+	if [[ $result -eq 0 || $result -eq 10 ]]; then
 		ShowDone "installed QPKG ($target_file)"
 	else
 		ShowError "QPKG installation failed ($target_file) [$result]"
@@ -806,6 +814,8 @@ InstallQPKG()
 
 BackupSabConfig()
 	{
+
+	[[ $errorcode -gt 0 ]] && return
 
 	DebugFuncEntry
 	local returncode=0
@@ -987,6 +997,8 @@ EOF
 RestoreSabConfig()
 	{
 
+	[[ $errorcode -gt 0 ]] && return
+
 	DebugFuncEntry
 	local returncode=0
 
@@ -1155,7 +1167,7 @@ LoadQPKGVars()
 		returncode=1
 	else
 
-		if [[ $package_name = 'SABnzbdplus' ]] || [[ $package_name = 'QSabNZBdPlus' ]]; then
+		if [[ $package_name = 'SABnzbdplus' || $package_name = 'QSabNZBdPlus' ]]; then
 			sab_installed_path="$($GETCFG_CMD "$package_name" Install_Path -f "$QPKG_CONFIG_PATHFILE")"
 			result=$?
 
@@ -1205,7 +1217,7 @@ LoadQPKGVars()
 				returncode=1
 			fi
 
-		elif [[ $package_name = 'Entware-3x' ]] || [[ $package_name = 'Entware-ng' ]]; then
+		elif [[ $package_name = 'Entware-3x' || $package_name = 'Entware-ng' ]]; then
 			ent_installed_path="$($GETCFG_CMD "$package_name" Install_Path -f "$QPKG_CONFIG_PATHFILE")"
 			result=$?
 
@@ -1310,7 +1322,7 @@ LoadQPKGDownloadDetails()
 				;;
 		esac
 
-		if [[ -z $qpkg_url ]] || [[ -z $qpkg_md5 ]]; then
+		if [[ -z $qpkg_url || -z $qpkg_md5 ]]; then
 			DebugError 'QPKG details not found'
 			errorcode=37
 			returncode=1
@@ -1372,11 +1384,11 @@ ReinstallSAB()
 
 	DebugFuncEntry
 
-	[[ $errorcode -eq 0 ]] && BackupSabConfig
-  	[[ $errorcode -eq 0 ]] && RemoveSabs
-  	[[ $errorcode -eq 0 ]] && InstallSab
-  	[[ $errorcode -eq 0 ]] && RestoreSabConfig
- 	[[ $errorcode -eq 0 ]] && StartSab
+	BackupSabConfig
+  	RemoveSabs
+  	InstallSab
+  	RestoreSabConfig
+ 	StartSab
 
 	DebugFuncExit
 	return 0
@@ -1388,10 +1400,10 @@ ReinstallSR()
 
 	DebugFuncEntry
 
-	#[[ $errorcode -eq 0 ]] && BackupSRConfig
-	#[[ $errorcode -eq 0 ]] && RemoveSR
-	[[ $errorcode -eq 0 ]] && InstallSR
-	#[[ $errorcode -eq 0 ]] && RestoreSRConfig
+	#BackupSRConfig
+	#RemoveSR
+	InstallSR
+	#RestoreSRConfig
 
 	DebugFuncExit
 	return 0
@@ -1403,10 +1415,10 @@ ReinstallCP()
 
 	DebugFuncEntry
 
-	#[[ $errorcode -eq 0 ]] && BackupCPConfig
-	#[[ $errorcode -eq 0 ]] && RemoveCP
-	[[ $errorcode -eq 0 ]] && InstallCP
-	#[[ $errorcode -eq 0 ]] && RestoreCPConfig
+	#BackupCPConfig
+	#RemoveCP
+	InstallCP
+	#RestoreCPConfig
 
 	DebugFuncExit
 	return 0
@@ -1502,6 +1514,8 @@ StopSab()
 StartSab()
 	{
 
+	[[ $errorcode -gt 0 ]] && return
+
 	DaemonControl "$sab_init_pathfile" start
 	return $?
 
@@ -1514,7 +1528,7 @@ Cleanup()
 
 	cd "$SHARE_PUBLIC_PATH"
 
-	[[ $errorcode -eq 0 ]] && [[ $debug != true ]] && [[ -d $WORKING_PATH ]] && $RM_CMD -rf "$WORKING_PATH"
+	[[ $errorcode -eq 0 && $debug != true && -d $WORKING_PATH ]] && $RM_CMD -rf "$WORKING_PATH"
 
 	if [[ $queuepaused = true ]]; then
 		if QPKGIsInstalled 'SABnzbdplus'; then
@@ -1569,7 +1583,7 @@ SabQueueControl()
 
 	if [[ -z $1 ]]; then
 		returncode=1
-	elif [[ $1 != 'pause' ]] && [[ $1 != 'resume' ]]; then
+	elif [[ $1 != 'pause' && $1 != 'resume' ]]; then
 		returncode=1
 	else
 		[[ $secure_web_login = true ]] && SL='s' || SL=''
