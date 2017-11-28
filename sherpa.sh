@@ -31,7 +31,7 @@ Init()
 
 	local returncode=0
 	local SCRIPT_FILE='sherpa.sh'
-	local SCRIPT_VERSION='2017.11.28b'
+	local SCRIPT_VERSION='2017.11.29b'
 
 	# cherry-pick required binaries
 	CAT_CMD='/bin/cat'
@@ -550,7 +550,7 @@ InstallIPKs()
 
 	DebugFuncEntry
 	local returncode=0
-	local msgs=''
+	local install_msgs=''
 	local result=''
 	local packages=''
 	local package_desc=''
@@ -568,9 +568,9 @@ InstallIPKs()
 		rm -f "$IPK_PATH"/*.ipk
 
 		cd "$IPK_PATH"
-		msgs=$($OPKG_CMD install --force-overwrite $packages --cache . 2>&1)
+		install_msgs=$($OPKG_CMD install --force-overwrite $packages --cache . 2>&1)
 		result=$?
-		echo -e "${msgs}\nresult=[$result]" > "$log_pathfile"
+		echo -e "${install_msgs}\nresult=[$result]" > "$log_pathfile"
 
 		if [[ $result -eq 0 ]]; then
 			ShowDone "downloaded & installed IPKs ($package_desc)"
@@ -579,10 +579,10 @@ InstallIPKs()
 			package_desc='python-dev'
 
 			ShowProc "downloading & installing IPK ($package_desc)"
-			msgs=$($OPKG_CMD install --force-overwrite $packages --cache . 2>&1)
+			install_msgs=$($OPKG_CMD install --force-overwrite $packages --cache . 2>&1)
 			result=$?
 
-			echo -e "${msgs}\nresult=[$result]" >> "$log_pathfile"
+			echo -e "${install_msgs}\nresult=[$result]" >> "$log_pathfile"
 
 			if [[ $result -eq 0 ]]; then
 				ShowDone "downloaded & installed IPK ($package_desc)"
@@ -593,7 +593,7 @@ InstallIPKs()
 					$CAT_CMD "$log_pathfile"
 					DebugThickSeparator
 				fi
-				errorcode=14
+				errorcode=16
 				returncode=1
 			fi
 		else
@@ -603,14 +603,14 @@ InstallIPKs()
 				$CAT_CMD "$log_pathfile"
 				DebugThickSeparator
 			fi
-			errorcode=15
+			errorcode=17
 			returncode=1
 		fi
 
 		cd "$WORKING_PATH"
 	else
 		ShowError "IPK path does not exist [$IPK_PATH]"
-		errorcode=16
+		errorcode=18
 		returncode=1
 	fi
 
@@ -623,52 +623,28 @@ InstallPIPs()
 	{
 
 	DebugFuncEntry
-	local msgs=''
+	local install_msgs=''
 	local returncode=0
 
-	local op='pip setuptools'
+	local op='pip packages'
 	local log_pathfile="${WORKING_PATH}/$(echo "$op" | $TR_CMD " " "_").$INSTALL_LOG_FILE"
 
 	ShowProc "downloading & installing ($op)"
 
-	msgs=$(pip install --upgrade pip setuptools 2>&1)
+	# only use sabyenc==3.3.1 until SAB 2.3.2 is master. Less strict version checking is on it's way.
+	install_msgs=$(pip install setuptools pip && pip install sabyenc==3.3.1 cheetah 2>&1)
 	result=$?
-	echo -e "${msgs}\nresult=[$result]" > "$log_pathfile"
+	echo -e "${install_msgs}\nresult=[$result]" > "$log_pathfile"
 
 	if [[ $result -eq 0 ]]; then
-		ShowDone "installed ($op)"
+		ShowDone "downloaded & installed ($op)"
 	else
 		ShowError "Download & install failed ($op) [$result]"
 		DebugThickSeparator
 		$CAT_CMD "$log_pathfile"
 		DebugThickSeparator
-		errorcode=17
+		errorcode=19
 		returncode=1
-	fi
-
-	if [[ $returncode = 0 ]]; then
-		local op='pip sabyenc cheetah'
-		local log_pathfile="${WORKING_PATH}/$(echo "$op" | $TR_CMD " " "_").$INSTALL_LOG_FILE"
-
-		ShowProc "downloading & installing ($op)"
-
-		#msgs=$(pip install sabyenc --upgrade cheetah 2>&1)
-
-		# only use the next line until SAB 2.3.2 is master. Less strict version checking is on it's way.
-		msgs=$(pip install sabyenc==3.3.1 --upgrade cheetah 2>&1)
-		result=$?
-		echo -e "${msgs}\nresult=[$result]" > "$log_pathfile"
-
-		if [[ $result -eq 0 ]]; then
-			ShowDone "installed ($op)"
-		else
-			ShowError "Download & install failed ($op) [$result]"
-			DebugThickSeparator
-			$CAT_CMD "$log_pathfile"
-			DebugThickSeparator
-			errorcode=18
-			returncode=1
-		fi
 	fi
 
 	DebugFuncExit
@@ -727,7 +703,7 @@ InstallNG()
 
 	! IPKIsInstalled 'nzbget' && {
 		local returncode=0
-		local msgs=''
+		local install_msgs=''
 		local result=''
 		local packages=''
 		local package_desc=''
@@ -739,9 +715,9 @@ InstallNG()
 			ShowProc "downloading & installing IPK ($package_desc)"
 
 			cd "$IPK_PATH"
-			msgs=$($OPKG_CMD install --force-overwrite $packages --cache . 2>&1)
+			install_msgs=$($OPKG_CMD install --force-overwrite $packages --cache . 2>&1)
 			result=$?
-			echo -e "${msgs}\nresult=[$result]" >> "${IPK_PATH}/ipk.$INSTALL_LOG_FILE"
+			echo -e "${install_msgs}\nresult=[$result]" >> "${IPK_PATH}/ipk.$INSTALL_LOG_FILE"
 
 			if [[ $result -eq 0 ]]; then
 				ShowDone "downloaded & installed IPK ($package_desc)"
@@ -754,14 +730,14 @@ InstallNG()
 				#Go to default router ip address and port 6789 192.168.1.1:6789 and now you should see NZBget interface
 			else
 				ShowError "Download & install IPK failed ($package_desc) [$result]"
-				errorcode=19
+				errorcode=20
 				returncode=1
 			fi
 
 			cd "$WORKING_PATH"
 		else
 			ShowError "IPK path does not exist [$IPK_PATH]"
-			errorcode=20
+			errorcode=21
 			returncode=1
 		fi
 	} #&& LoadIPKVars "nzbget"
@@ -775,7 +751,7 @@ InstallQPKG()
 	{
 
 	DebugFuncEntry
-	local msgs=''
+	local install_msgs=''
 	local returncode=0
 	local target_file=''
 
@@ -787,10 +763,10 @@ InstallQPKG()
 	local log_pathfile="$qpkg_pathfile.$INSTALL_LOG_FILE"
 	target_file=$($BASENAME_CMD "$qpkg_pathfile")
 	ShowProc "installing QPKG ($target_file) - this can take a while"
-	msgs=$(eval sh "$qpkg_pathfile" 2>&1)
+	install_msgs=$(eval sh "$qpkg_pathfile" 2>&1)
 	result=$?
 
-	echo -e "${msgs}\nresult=[$result]" > "$log_pathfile"
+	echo -e "${install_msgs}\nresult=[$result]" > "$log_pathfile"
 
 	if [[ $result -eq 0 || $result -eq 10 ]]; then
 		ShowDone "installed QPKG ($target_file)"
@@ -803,7 +779,7 @@ InstallQPKG()
 			DebugThickSeparator
 		fi
 
-		errorcode=21
+		errorcode=22
 		returncode=1
 	fi
 
@@ -841,7 +817,7 @@ BackupSabConfig()
 					DebugDone "backup directory created ($BACKUP_PATH)"
 				else
 					ShowError "Unable to create backup directory ($BACKUP_PATH) [$result]"
-					errorcode=22
+					errorcode=23
 					returncode=1
 				fi
 			fi
@@ -855,7 +831,7 @@ BackupSabConfig()
 						ShowDone 'created SABnzbd settings backup'
 					else
 						ShowError "Could not create settings backup of ($sab_config_path) [$result]"
-						errorcode=23
+						errorcode=24
 						returncode=1
 					fi
  				else
@@ -975,17 +951,17 @@ EOF
 				DebugDone 'set waiter executable'
 			else
 				ShowError "Unable to set waiter as executable ($WAITER_PATHFILE) [$result]"
-				errorcode=24
+				errorcode=25
 				returncode=1
 			fi
 		else
 			ShowError "waiter not found ($WAITER_PATHFILE) [$result]"
-			errorcode=25
+			errorcode=26
 			returncode=1
 		fi
 	else
 		ShowError "Unable to create waiter ($WAITER_PATHFILE) [$result]"
-		errorcode=26
+		errorcode=27
 		returncode=1
 	fi
 
@@ -1021,14 +997,14 @@ RestoreSabConfig()
 				$SETCFG_CMD "SABnzbdplus" Web_Port $sab_port -f "$QPKG_CONFIG_PATHFILE"
 			else
 				ShowError "Could not restore settings backup to ($sab_config_path) [$result]"
-				errorcode=27
+				errorcode=28
 				returncode=1
 			fi
 		fi
 
 	else
 		ShowError "SABnzbd is NOT installed so can't restore backups"
-		errorcode=28
+		errorcode=29
 		returncode=1
 	fi
 
@@ -1059,7 +1035,7 @@ DownloadQPKG()
 			fi
 		else
 			ShowError "Problem creating checksum from existing QPKG ($qpkg_file) [$result]"
-			errorcode=29
+			errorcode=30
 			returncode=1
 		fi
 	fi
@@ -1089,12 +1065,12 @@ DownloadQPKG()
 					ShowDone "downloaded QPKG ($qpkg_file)"
 				else
 					ShowError "Downloaded QPKG checksum incorrect ($qpkg_file) [$result]"
-					errorcode=30
+					errorcode=31
 					returncode=1
 				fi
 			else
 				ShowError "Problem creating checksum from downloaded QPKG [$result]"
-				errorcode=31
+				errorcode=32
 				returncode=1
 			fi
 		else
@@ -1106,7 +1082,7 @@ DownloadQPKG()
 				DebugThickSeparator
 			fi
 
-			errorcode=32
+			errorcode=33
 			returncode=1
 		fi
 	fi
