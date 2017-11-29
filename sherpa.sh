@@ -80,31 +80,6 @@ Init()
 	STOP_LOG_FILE='stop.log'
 	DEBUG_LOG_FILE="${SCRIPT_FILE%.*}.debug.log"
 
-	local DEFAULT_SHARE_DOWNLOAD_PATH='/share/Download'
-	local DEFAULT_SHARE_PUBLIC_PATH='/share/Public'
-	local DEFAULT_VOLUME="$($GETCFG_CMD SHARE_DEF defVolMP -f "$DEFAULT_SHARES_PATHFILE")"
-
-	if [[ -L $DEFAULT_SHARE_DOWNLOAD_PATH ]]; then
-		SHARE_DOWNLOAD_PATH="$DEFAULT_SHARE_DOWNLOAD_PATH"
-	else
-		SHARE_DOWNLOAD_PATH="/share/$($GETCFG_CMD SHARE_DEF defDownload -d Qdownload -f "$DEFAULT_SHARES_PATHFILE")"
-	fi
-
-	if [[ -L $DEFAULT_SHARE_PUBLIC_PATH ]]; then
-		SHARE_PUBLIC_PATH="$DEFAULT_SHARE_PUBLIC_PATH"
-	else
-		SHARE_PUBLIC_PATH="/share/$($GETCFG_CMD SHARE_DEF defPublic -d Qpublic -f "$DEFAULT_SHARES_PATHFILE")"
-	fi
-
-	WORKING_PATH="${SHARE_PUBLIC_PATH}/${SCRIPT_FILE%.*}.tmp"
-	BACKUP_PATH="${WORKING_PATH}/backup"
-	SETTINGS_BACKUP_PATH="${BACKUP_PATH}/config"
-	SETTINGS_BACKUP_PATHFILE="${SETTINGS_BACKUP_PATH}/config.ini"
-	QPKG_PATH="${WORKING_PATH}/qpkg-downloads"
-	IPK_PATH="${WORKING_PATH}/ipk-downloads"
-	DEBUG_LOG_PATHFILE="${SHARE_PUBLIC_PATH}/${DEBUG_LOG_FILE}"
-	QPKG_BASE_PATH="${DEFAULT_VOLUME}/.qpkg"
-
 	# check required binaries are present
 	SysFilePresent "$CAT_CMD" || return
 	SysFilePresent "$CHMOD_CMD" || return
@@ -138,9 +113,34 @@ Init()
 	SysFilePresent "$WC_CMD" || return
 	SysFilePresent "$WGET_CMD" || return
 
+	local DEFAULT_SHARE_DOWNLOAD_PATH='/share/Download'
+	local DEFAULT_SHARE_PUBLIC_PATH='/share/Public'
+	local DEFAULT_VOLUME="$($GETCFG_CMD SHARE_DEF defVolMP -f "$DEFAULT_SHARES_PATHFILE")"
+
+	if [[ -L $DEFAULT_SHARE_DOWNLOAD_PATH ]]; then
+		SHARE_DOWNLOAD_PATH="$DEFAULT_SHARE_DOWNLOAD_PATH"
+	else
+		SHARE_DOWNLOAD_PATH="/share/$($GETCFG_CMD SHARE_DEF defDownload -d Qdownload -f "$DEFAULT_SHARES_PATHFILE")"
+	fi
+
+	if [[ -L $DEFAULT_SHARE_PUBLIC_PATH ]]; then
+		SHARE_PUBLIC_PATH="$DEFAULT_SHARE_PUBLIC_PATH"
+	else
+		SHARE_PUBLIC_PATH="/share/$($GETCFG_CMD SHARE_DEF defPublic -d Qpublic -f "$DEFAULT_SHARES_PATHFILE")"
+	fi
+
 	# check required system paths are present
 	SysSharePresent "$SHARE_DOWNLOAD_PATH" || return
 	SysSharePresent "$SHARE_PUBLIC_PATH" || return
+
+	WORKING_PATH="${SHARE_PUBLIC_PATH}/${SCRIPT_FILE%.*}.tmp"
+	BACKUP_PATH="${WORKING_PATH}/backup"
+	SETTINGS_BACKUP_PATH="${BACKUP_PATH}/config"
+	SETTINGS_BACKUP_PATHFILE="${SETTINGS_BACKUP_PATH}/config.ini"
+	QPKG_PATH="${WORKING_PATH}/qpkg-downloads"
+	IPK_PATH="${WORKING_PATH}/ipk-downloads"
+	DEBUG_LOG_PATHFILE="${SHARE_PUBLIC_PATH}/${DEBUG_LOG_FILE}"
+	QPKG_BASE_PATH="${DEFAULT_VOLUME}/.qpkg"
 
 	# internals
 	secure_web_login=false
@@ -1543,7 +1543,7 @@ DisplayResult()
 	fi
 
 	DebugScript 'finished' "$($DATE_CMD)"
-	DebugScript 'elapsed time' "$(ConvertSecs "$(($($DATE_CMD +%s)-$SCRIPT_STARTSECONDS))")"
+	DebugScript 'elapsed time' "$(ConvertSecs "$(($($DATE_CMD +%s)-$([[ -n $SCRIPT_STARTSECONDS ]] && echo $SCRIPT_STARTSECONDS || echo "1")))")"
 	DebugThickSeparator
 	DebugFuncExit
 	return 0
@@ -1895,7 +1895,7 @@ SaveLogLine()
 	# $1 = pass/fail
 	# $2 = message
 
-	printf "[ %-4s ] %s\n" "$1" "$2" >> "$DEBUG_LOG_PATHFILE"
+	[[ -n $DEBUG_LOG_PATHFILE ]] && touch "$DEBUG_LOG_PATHFILE" && printf "[ %-4s ] %s\n" "$1" "$2" >> "$DEBUG_LOG_PATHFILE"
 
 	}
 
