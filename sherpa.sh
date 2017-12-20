@@ -31,7 +31,7 @@ Init()
 
 	local returncode=0
 	local SCRIPT_FILE='sherpa.sh'
-	local SCRIPT_VERSION='2017.11.29b'
+	local SCRIPT_VERSION=2017.12.21b
 
 	# cherry-pick required binaries
 	CAT_CMD='/bin/cat'
@@ -71,14 +71,14 @@ Init()
 
 	# paths and files
 	QPKG_CONFIG_PATHFILE='/etc/config/qpkg.conf'
-	DEFAULT_SHARES_PATHFILE='/etc/config/def_share.info'
-	ULINUX_PATHFILE='/etc/config/uLinux.conf'
-	ISSUE_PATHFILE='/etc/issue'
+	local DEFAULT_SHARES_PATHFILE='/etc/config/def_share.info'
+	local ULINUX_PATHFILE='/etc/config/uLinux.conf'
+	local ISSUE_PATHFILE='/etc/issue'
 	INSTALL_LOG_FILE='install.log'
 	DOWNLOAD_LOG_FILE='download.log'
 	START_LOG_FILE='start.log'
 	STOP_LOG_FILE='stop.log'
-	DEBUG_LOG_FILE="${SCRIPT_FILE%.*}.debug.log"
+	local DEBUG_LOG_FILE="${SCRIPT_FILE%.*}.debug.log"
 
 	# check required binaries are present
 	SysFilePresent "$CAT_CMD" || return
@@ -1238,8 +1238,8 @@ LoadQPKGDownloadDetails()
 
 		case "$1" in
 			Entware-3x)
-				qpkg_md5='3663c9e4323e694fb25897e276f55623'
-				qpkg_url='http://entware-3x.zyxmon.org/binaries/other/Entware-3x_0.99std.qpkg'
+				qpkg_md5='4b6fb5c57f8d6b045643e4e836f0ffaa'
+				qpkg_url='http://entware-3x.zyxmon.org/binaries/other/Entware-3x_0.999std.qpkg'
 				;;
 			Entware-ng)
 				qpkg_md5='6c81cc37cbadd85adfb2751dc06a238f'
