@@ -260,7 +260,7 @@ DisplayHelp()
 
 		}
 
-	echo -e "\nUse one of the following symlinks to call this script:\n"
+	echo -e "\nUse the following commands to install each application:\n"
 	EnsureExecLinkExists 'SABnzbdplus'
 	#EnsureExecLinkExists 'NZBGet'
 	EnsureExecLinkExists 'SickRage'
