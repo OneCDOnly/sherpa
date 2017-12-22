@@ -31,7 +31,7 @@ Init()
 
 	local returncode=0
 	local SCRIPT_FILE='sherpa.sh'
-	local SCRIPT_VERSION=2017.12.21b
+	local SCRIPT_VERSION=2017.12.23b
 
 	# cherry-pick required binaries
 	CAT_CMD='/bin/cat'
@@ -631,8 +631,7 @@ InstallPIPs()
 
 	ShowProc "downloading & installing ($op)"
 
-	# only use sabyenc==3.3.1 until SAB 2.3.2 is master. Less strict version checking is on it's way.
-	install_msgs=$(pip install setuptools pip && pip install sabyenc==3.3.1 cheetah 2>&1)
+	install_msgs=$(pip install setuptools pip && pip install sabyenc cheetah 2>&1)
 	result=$?
 	echo -e "${install_msgs}\nresult=[$result]" > "$log_pathfile"
 
