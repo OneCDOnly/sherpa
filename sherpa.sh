@@ -1965,5 +1965,6 @@ fi
 
 Cleanup
 [[ $errorcode -ne 1 ]] && DisplayResult
+[[ -e $DEBUG_LOG_PATHFILE ]] && echo -e "\nTo display the debug log, use:\ncat $DEBUG_LOG_PATHFILE"
 
 exit "$errorcode"
