@@ -31,7 +31,7 @@ Init()
 
 	local returncode=0
 	local SCRIPT_FILE='sherpa.sh'
-	local SCRIPT_VERSION=2017.12.23b
+	local SCRIPT_VERSION=2017.12.24b
 
 	# cherry-pick required binaries
 	CAT_CMD='/bin/cat'
@@ -1965,6 +1965,6 @@ fi
 
 Cleanup
 [[ $errorcode -ne 1 ]] && DisplayResult
-[[ -e $DEBUG_LOG_PATHFILE ]] && echo -e "\nTo display the debug log, use:\ncat $DEBUG_LOG_PATHFILE"
+[[ -e $DEBUG_LOG_PATHFILE ]] && echo -e "To display the debug log, use:\ncat $DEBUG_LOG_PATHFILE\n"
 
 exit "$errorcode"
