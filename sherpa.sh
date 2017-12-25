@@ -31,7 +31,7 @@ Init()
 
 	local returncode=0
 	local SCRIPT_FILE='sherpa.sh'
-	local SCRIPT_VERSION=2017.12.24b
+	local SCRIPT_VERSION=2017.12.26b
 
 	# cherry-pick required binaries
 	CAT_CMD='/bin/cat'
@@ -272,6 +272,8 @@ DisplayHelp()
 PauseDownloaders()
 	{
 
+	[[ $errorcode -gt 0 ]] && return 1
+
 	DebugFuncEntry
 
 	# pause local SAB queue so installer downloads will finish faster
@@ -290,6 +292,8 @@ PauseDownloaders()
 
 DownloadQPKGs()
 	{
+
+	[[ $errorcode -gt 0 ]] && return 1
 
 	DebugFuncEntry
 	local returncode=0
@@ -346,6 +350,8 @@ DownloadQPKGs()
 RemovePackageInstallers()
 	{
 
+	[[ $errorcode -gt 0 ]] && return 1
+
 	DebugFuncEntry
 
 	[[ $PREF_ENTWARE = 'Entware-3x' ]] && UninstallQPKG 'Entware-ng'
@@ -358,6 +364,8 @@ RemovePackageInstallers()
 
 RemoveOther()
 	{
+
+	[[ $errorcode -gt 0 ]] && return 1
 
 	DebugFuncEntry
 
@@ -397,6 +405,8 @@ RemoveSabs()
 
 InstallEntware()
 	{
+
+	[[ $errorcode -gt 0 ]] && return 1
 
 	DebugFuncEntry
 	local returncode=0
@@ -509,6 +519,8 @@ UpdateEntware()
 
 InstallOther()
 	{
+
+	[[ $errorcode -gt 0 ]] && return 1
 
 	DebugFuncEntry
 
@@ -1523,6 +1535,8 @@ Cleanup()
 DisplayResult()
 	{
 
+	[[ $errorcode -eq 1 ]] && return 1
+
 	DebugFuncEntry
 	local RE=''
 	local SL=''
@@ -1948,23 +1962,38 @@ PrintResetColours()
 	}
 
 Init
-[[ $errorcode -eq 0 ]] && PauseDownloaders
-[[ $errorcode -eq 0 ]] && RemoveOther
-[[ $errorcode -eq 0 ]] && DownloadQPKGs
-[[ $errorcode -eq 0 ]] && RemovePackageInstallers
-[[ $errorcode -eq 0 ]] && InstallEntware
-[[ $errorcode -eq 0 ]] && InstallOther
+PauseDownloaders
+RemoveOther
+DownloadQPKGs
+RemovePackageInstallers
+InstallEntware
+InstallOther
 
 if [[ $errorcode -eq 0 ]]; then
-	[[ $TARGET_APP = 'SABnzbdplus' ]] && ReinstallSAB
- 	[[ $TARGET_APP = 'SickRage' ]] && ReinstallSR
-	[[ $TARGET_APP = 'CouchPotato2' ]] && ReinstallCP
-	#[[ $TARGET_APP = 'NZBGet' ]] && ReinstallNG
-	#[[ $TARGET_APP = 'HeadPhones' ]] && ReinstallHP
+	case "$TARGET_APP" in
+		SABnzbdplus)
+			ReinstallSAB
+			;;
+		SickRage)
+			ReinstallSR
+			;;
+		CouchPotato2)
+			ReinstallCP
+			;;
+		#NZBGet)
+		#	ReinstallNG
+		#	;;
+		#HeadPhones)
+		#	ReinstallHP
+		#	;;
+		*)
+			ShowError "Can't install specified app: [$TARGET_APP] - unknown!"
+			;;
+	esac
 fi
 
 Cleanup
-[[ $errorcode -ne 1 ]] && DisplayResult
+DisplayResult
 [[ -e $DEBUG_LOG_PATHFILE ]] && echo -e "To display the debug log, use:\ncat $DEBUG_LOG_PATHFILE\n"
 
 exit "$errorcode"
