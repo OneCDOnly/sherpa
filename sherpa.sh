@@ -264,6 +264,7 @@ DisplayHelp()
 	#EnsureExecLinkExists 'NZBGet'
 	EnsureExecLinkExists 'SickRage'
 	EnsureExecLinkExists 'CouchPotato2'
+	EnsureExecLinkExists 'LazyLibrarian'
 	echo
 
 	}
@@ -682,8 +683,9 @@ InstallSab()
 	[[ $errorcode -gt 0 ]] && return 1
 
 	DebugFuncEntry
+	local package='SABnzbdplus'
 
-	! QPKGIsInstalled 'SABnzbdplus' && LoadQPKGDownloadDetails 'SABnzbdplus' && InstallQPKG && LoadQPKGVars 'SABnzbdplus' && InstallSABLanguages
+	! QPKGIsInstalled $package && LoadQPKGDownloadDetails $package && InstallQPKG && LoadQPKGVars $package && InstallSABLanguages
 
 	DebugFuncExit
 	return 0
@@ -696,8 +698,9 @@ InstallSR()
 	[[ $errorcode -gt 0 ]] && return 1
 
 	DebugFuncEntry
+	local package='SickRage'
 
-	! QPKGIsInstalled 'SickRage' && LoadQPKGDownloadDetails 'SickRage' && InstallQPKG && LoadQPKGVars 'SickRage'
+	! QPKGIsInstalled $package && LoadQPKGDownloadDetails $package && InstallQPKG && LoadQPKGVars $package
 
 	DebugFuncExit
 	return 0
@@ -710,8 +713,9 @@ InstallCP()
 	[[ $errorcode -gt 0 ]] && return 1
 
 	DebugFuncEntry
+	local package='CouchPotato2'
 
-	! QPKGIsInstalled 'CouchPotato2' && LoadQPKGDownloadDetails 'CouchPotato2' && InstallQPKG && LoadQPKGVars 'CouchPotato2'
+	! QPKGIsInstalled $package && LoadQPKGDownloadDetails $package && InstallQPKG && LoadQPKGVars $package
 
 	DebugFuncExit
 	return 0
@@ -765,6 +769,21 @@ InstallNG()
 			returncode=1
 		fi
 	} #&& LoadIPKVars "nzbget"
+
+	DebugFuncExit
+	return 0
+
+	}
+
+InstallLL()
+	{
+
+	[[ $errorcode -gt 0 ]] && return 1
+
+	DebugFuncEntry
+	local package='LazyLibrarian'
+
+	! QPKGIsInstalled $package && LoadQPKGDownloadDetails $package && InstallQPKG && LoadQPKGVars $package
 
 	DebugFuncExit
 	return 0
@@ -1303,6 +1322,17 @@ LoadQPKGVars()
 					returncode=1
 				fi
 				;;
+			LazyLibrarian)
+				package_installed_path="$($GETCFG_CMD "$package_name" Install_Path -f "$QPKG_CONFIG_PATHFILE")"
+				result=$?
+
+				if [[ $result -eq 0 ]]; then
+					package_is_installed=true
+					package_init_pathfile="$($GETCFG_CMD "$package_name" Shell -f "$QPKG_CONFIG_PATHFILE")"
+				else
+					returncode=1
+				fi
+				;;
 			*)
 				ShowError "Can't load details of specified app: [$package_name] - unknown!"
 				;;
@@ -1362,6 +1392,12 @@ LoadQPKGDownloadDetails()
 				target_file='CouchPotato2_170610.qpkg'
 				qpkg_md5='5c6e2ff53e45cb2f3b8eba4e34a8900e'
 				qpkg_url="${OneCD_urlprefix}/CouchPotato2/build/${target_file}?raw=true"
+				qpkg_file=$target_file
+				;;
+			LazyLibrarian)
+				target_file='LazyLibrarian_171217.qpkg'
+				qpkg_md5='810f0592b1d126e3768bc842be8c258a'
+				qpkg_url="${OneCD_urlprefix}/LazyLibrarian/build/${target_file}?raw=true"
 				qpkg_file=$target_file
 				;;
 			Par2cmdline-MT)
@@ -1497,6 +1533,21 @@ ReinstallCP()
 	#RemoveCP
 	InstallCP
 	#RestoreCPConfig
+
+	DebugFuncExit
+	return 0
+
+	}
+
+ReinstallLL()
+	{
+
+	DebugFuncEntry
+
+	#BackupConfig
+	#RemoveLL
+	InstallLL
+	#RestoreSRConfig
 
 	DebugFuncExit
 	return 0
@@ -2055,6 +2106,9 @@ if [[ $errorcode -eq 0 ]]; then
 			;;
 		CouchPotato2)
 			ReinstallCP
+			;;
+		LazyLibrarian)
+			ReinstallLL
 			;;
 		#NZBGet)
 		#	ReinstallNG
