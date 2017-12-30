@@ -259,7 +259,7 @@ DisplayHelp()
 
 		}
 
-	echo -e "\nUse the following commands to install each application:\n"
+	echo -e "\nUse one the following commands to install each application:\n"
 	EnsureExecLinkExists 'SABnzbdplus'
 	#EnsureExecLinkExists 'NZBGet'
 	EnsureExecLinkExists 'SickRage'
@@ -331,7 +331,7 @@ DownloadQPKGs()
 				;;
 		esac
 
-		if [[ $TARGET_APP = 'SickRage' || $TARGET_APP = 'CouchPotato2' ]]; then
+		if [[ $TARGET_APP = 'SickRage' || $TARGET_APP = 'CouchPotato2' || $TARGET_APP = 'LazyLibrarian' ]]; then
 			if QPKGIsInstalled "$TARGET_APP"; then
 				ShowError "Sorry! This installer lacks the ability to re-install $TARGET_APP at present. It can only perform a new install."
 				errorcode=9
@@ -1672,18 +1672,22 @@ DisplayResult()
 	if [[ $errorcode -eq 0 ]]; then
 		[[ $debug = true ]] && emoticon=':DD' || emoticon=''
 		ShowDone "$TARGET_APP has been successfully ${RE}installed! $emoticon"
-		[[ $debug = false ]] && echo
+		#[[ $debug = false ]] && echo
 		#ShowInfo "It should now be accessible on your LAN @ $(ColourTextUnderlinedBlue "http${SL}://$($HOSTNAME_CMD -i | $TR_CMD -d ' '):$sab_port")"
 	else
-		[[ $debug = true ]] && emoticon=':S' || emoticon=''
-		ShowError "$TARGET_APP ${RE}install failed! $emoticon [$errorcode]"
+		[[ $debug = true ]] && emoticon=':S ' || emoticon=''
+		ShowError "$TARGET_APP ${RE}install failed! ${emoticon}[$errorcode]"
 	fi
 
 	DebugScript 'finished' "$($DATE_CMD)"
 	DebugScript 'elapsed time' "$(ConvertSecs "$(($($DATE_CMD +%s)-$([[ -n $SCRIPT_STARTSECONDS ]] && echo $SCRIPT_STARTSECONDS || echo "1")))")"
 	DebugThickSeparator
 
-	[[ -e $DEBUG_LOG_PATHFILE ]] && echo -e "To display the debug log, use:\ncat $DEBUG_LOG_PATHFILE\n"
+	if [[ -e $DEBUG_LOG_PATHFILE ]]; then
+		[[ $debug = false ]] && echo
+		echo -e "- To display the debug log, use:\ncat $DEBUG_LOG_PATHFILE"
+		[[ $debug = false ]] && echo
+	fi
 
 	DebugFuncExit
 	return 0
