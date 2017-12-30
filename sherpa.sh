@@ -2,10 +2,9 @@
 ###############################################################################
 # sherpa.sh
 #
-# (C)opyright 2017 OneCD
+# (C)opyright 2017 OneCD - one.cd.only@gmail.com
 #
 # So, blame OneCD if it all goes horribly wrong. ;)
-#   one.cd.only@gmail.com
 #
 # For more info [https://forum.qnap.com/viewtopic.php?f=320&t=132373]
 #
@@ -31,7 +30,7 @@ Init()
 
 	local returncode=0
 	local SCRIPT_FILE='sherpa.sh'
-	local SCRIPT_VERSION=2017.12.26b
+	local SCRIPT_VERSION=2017.12.30b
 
 	# cherry-pick required binaries
 	CAT_CMD='/bin/cat'
@@ -391,7 +390,7 @@ RemoveOther()
 RemoveSabs()
 	{
 
-	[[ $errorcode -gt 0 ]] && return
+	[[ $errorcode -gt 0 ]] && return 1
 
 	DebugFuncEntry
 
@@ -454,21 +453,21 @@ PatchEntwareInit()
 	local findtext=''
 	local inserttext=''
 
-	if [[ ! -e $ent_init_pathfile ]]; then
-		ShowError "No init file found [$ent_init_pathfile]"
+	if [[ ! -e $package_init_pathfile ]]; then
+		ShowError "No init file found [$package_init_pathfile]"
 		errorcode=12
 		returncode=1
 	else
- 		if ($GREP_CMD -q 'opt.orig' "$ent_init_pathfile"); then
+ 		if ($GREP_CMD -q 'opt.orig' "$package_init_pathfile"); then
 			DebugInfo 'patch: do the "opt shuffle" - already done'
 		else
 			findtext='/bin/rm -rf /opt'
 			inserttext='opt_path="/opt"; opt_backup_path="/opt.orig"; [ -d "$opt_path" ] \&\& [ ! -L "$opt_path" ] \&\& [ ! -e "$opt_backup_path" ] \&\& mv "$opt_path" "$opt_backup_path"'
-			$SED_CMD -i "s|$findtext|$inserttext\n$findtext|" "$ent_init_pathfile"
+			$SED_CMD -i "s|$findtext|$inserttext\n$findtext|" "$package_init_pathfile"
 
 			findtext='/bin/ln -sf $QPKG_DIR /opt'
 			inserttext=$(echo -e "\t")'[ -L "$opt_path" ] \&\& [ -d "$opt_backup_path" ] \&\& cp "$opt_backup_path"/* --target-directory "$opt_path" \&\& rm -r "$opt_backup_path"'
-			$SED_CMD -i "s|$findtext|$findtext\n$inserttext\n|" "$ent_init_pathfile"
+			$SED_CMD -i "s|$findtext|$findtext\n$inserttext\n|" "$package_init_pathfile"
 
 			DebugDone 'patch: do the "opt shuffle"'
 		fi
@@ -663,14 +662,28 @@ InstallPIPs()
 
 	}
 
+InstallSABLanguages()
+	{
+
+	ShowProc "creating SABnzbd lanugage files"
+
+	local olddir=$PWD
+	cd "$package_installed_path/SABnzbdplus"
+	python tools/make_mo.py >/dev/null
+	cd $olddir
+
+	ShowDone "created SABnzbd language files"
+
+	}
+
 InstallSab()
 	{
 
-	[[ $errorcode -gt 0 ]] && return
+	[[ $errorcode -gt 0 ]] && return 1
 
 	DebugFuncEntry
 
-	! QPKGIsInstalled 'SABnzbdplus' && LoadQPKGDownloadDetails 'SABnzbdplus' && InstallQPKG && LoadQPKGVars 'SABnzbdplus'
+	! QPKGIsInstalled 'SABnzbdplus' && LoadQPKGDownloadDetails 'SABnzbdplus' && InstallQPKG && LoadQPKGVars 'SABnzbdplus' && InstallSABLanguages
 
 	DebugFuncExit
 	return 0
@@ -680,7 +693,7 @@ InstallSab()
 InstallSR()
 	{
 
-	[[ $errorcode -gt 0 ]] && return
+	[[ $errorcode -gt 0 ]] && return 1
 
 	DebugFuncEntry
 
@@ -694,7 +707,7 @@ InstallSR()
 InstallCP()
 	{
 
-	[[ $errorcode -gt 0 ]] && return
+	[[ $errorcode -gt 0 ]] && return 1
 
 	DebugFuncEntry
 
@@ -708,7 +721,7 @@ InstallCP()
 InstallNG()
 	{
 
-	[[ $errorcode -gt 0 ]] && return
+	[[ $errorcode -gt 0 ]] && return 1
 
 	DebugFuncEntry
 
@@ -799,94 +812,157 @@ InstallQPKG()
 
 	}
 
-BackupSabConfig()
+BackupConfig()
 	{
 
-	[[ $errorcode -gt 0 ]] && return
+	[[ $errorcode -gt 0 ]] && return 1
 
 	DebugFuncEntry
 	local returncode=0
 
-	if QPKGIsInstalled 'QSabNZBdPlus'; then
-		LoadQPKGVars 'QSabNZBdPlus'
-		StopSab
+	case "$TARGET_APP" in
+		SABnzbdplus)
+			if QPKGIsInstalled 'QSabNZBdPlus'; then
+				LoadQPKGVars 'QSabNZBdPlus'
+				DaemonCtl stop "$package_init_pathfile"
 
-	elif QPKGIsInstalled 'SABnzbdplus'; then
-		LoadQPKGVars 'SABnzbdplus'
- 		StopSab
-	fi
+			elif QPKGIsInstalled 'SABnzbdplus'; then
+				LoadQPKGVars 'SABnzbdplus'
+				DaemonCtl stop "$package_init_pathfile"
+			fi
 
-	SAB_WAS_INSTALLED=$sab_is_installed
+			REINSTALL_FLAG=$package_is_installed
 
-	if [[ $sab_is_installed = true ]]; then
-		if [[ -d $sab_config_path ]]; then
-			if [[ ! -d ${BACKUP_PATH}/config ]]; then
-				$MKDIR_CMD -p "$BACKUP_PATH" 2> /dev/null
-				result=$?
+			if [[ $package_is_installed = true ]]; then
+				if [[ -d $package_config_path ]]; then
+					if [[ ! -d ${BACKUP_PATH}/config ]]; then
+						$MKDIR_CMD -p "$BACKUP_PATH" 2> /dev/null
+						result=$?
 
-				if [[ $result -eq 0 ]]; then
-					DebugDone "backup directory created ($BACKUP_PATH)"
-				else
-					ShowError "Unable to create backup directory ($BACKUP_PATH) [$result]"
-					errorcode=23
-					returncode=1
+						if [[ $result -eq 0 ]]; then
+							DebugDone "backup directory created ($BACKUP_PATH)"
+						else
+							ShowError "Unable to create backup directory ($BACKUP_PATH) [$result]"
+							errorcode=23
+							returncode=1
+						fi
+					fi
+
+					if [[ $errorcode -eq 0 ]]; then
+						if [[ ! -d ${BACKUP_PATH}/config ]]; then
+							$MV_CMD "$package_config_path" "$BACKUP_PATH"
+							result=$?
+
+							if [[ $result -eq 0 ]]; then
+								ShowDone "created ($TARGET_APP) settings backup"
+							else
+								ShowError "Could not create settings backup of ($package_config_path) [$result]"
+								errorcode=24
+								returncode=1
+							fi
+						else
+							DebugInfo "a backup set already exists ($BACKUP_PATH)"
+						fi
+					fi
+
+					ConvertSettings
 				fi
 			fi
+			;;
+		CouchPotato2)
+			if QPKGIsInstalled 'QCouchPotato'; then
+				LoadQPKGVars 'QCouchPotato'
 
-			if [[ $errorcode -eq 0 ]]; then
-				if [[ ! -d ${BACKUP_PATH}/config ]]; then
-					$MV_CMD "$sab_config_path" "$BACKUP_PATH"
-					result=$?
-
-					if [[ $result -eq 0 ]]; then
-						ShowDone 'created SABnzbd settings backup'
-					else
-						ShowError "Could not create settings backup of ($sab_config_path) [$result]"
-						errorcode=24
-						returncode=1
-					fi
- 				else
- 					DebugInfo "a backup set already exists [$BACKUP_PATH]"
- 				fi
+			elif QPKGIsInstalled 'CouchPotato2'; then
+				LoadQPKGVars 'CouchPotato2'
 			fi
 
-			ConvertSabSettings
-		fi
-	fi
+			REINSTALL_FLAG=$package_is_installed
+
+			if [[ $package_is_installed = true ]]; then
+				if [[ -d $package_config_path ]]; then
+					if [[ ! -d ${BACKUP_PATH}/config ]]; then
+						$MKDIR_CMD -p "$BACKUP_PATH" 2> /dev/null
+						result=$?
+
+						if [[ $result -eq 0 ]]; then
+							DebugDone "backup directory created ($BACKUP_PATH)"
+						else
+							ShowError "Unable to create backup directory ($BACKUP_PATH) [$result]"
+							errorcode=23
+							returncode=1
+						fi
+					fi
+
+					if [[ $errorcode -eq 0 ]]; then
+						if [[ ! -d ${BACKUP_PATH}/config ]]; then
+							$MV_CMD "$package_config_path" "$BACKUP_PATH"
+							result=$?
+
+							if [[ $result -eq 0 ]]; then
+								ShowDone "created ($TARGET_APP) settings backup"
+							else
+								ShowError "Could not create settings backup of ($package_config_path) [$result]"
+								errorcode=24
+								returncode=1
+							fi
+						else
+							DebugInfo "a backup set already exists ($BACKUP_PATH)"
+						fi
+					fi
+
+					#ConvertSettings
+				fi
+			fi
+			;;
+		*)
+			ShowError "Can't backup specified app: ($TARGET_APP) - unknown!"
+			;;
+	esac
 
 	DebugFuncExit
 	return $returncode
 
 	}
 
-ConvertSabSettings()
+ConvertSettings()
 	{
 
 	DebugFuncEntry
 
-	local OLD_BACKUP_PATH="${BACKUP_PATH}/SAB_CONFIG"
-	[[ -d $OLD_BACKUP_PATH ]] && { $MV_CMD "$OLD_BACKUP_PATH" "$SETTINGS_BACKUP_PATH"; DebugDone 'renamed backup config path' ;}
+	case "$TARGET_APP" in
+		SABnzbdplus)
+			local OLD_BACKUP_PATH="${BACKUP_PATH}/SAB_CONFIG"
+			[[ -d $OLD_BACKUP_PATH ]] && { $MV_CMD "$OLD_BACKUP_PATH" "$SETTINGS_BACKUP_PATH"; DebugDone 'renamed backup config path' ;}
 
-	OLD_BACKUP_PATH="${BACKUP_PATH}/Config"
-	[[ -d $OLD_BACKUP_PATH ]] && { $MV_CMD "$OLD_BACKUP_PATH" "$SETTINGS_BACKUP_PATH"; DebugDone 'renamed backup config path' ;}
+			OLD_BACKUP_PATH="${BACKUP_PATH}/Config"
+			[[ -d $OLD_BACKUP_PATH ]] && { $MV_CMD "$OLD_BACKUP_PATH" "$SETTINGS_BACKUP_PATH"; DebugDone 'renamed backup config path' ;}
 
-	# for converting from Stephane's QPKG and from previous version SAB QPKGs
-	local SETTINGS_PREV_BACKUP_PATHFILE="${SETTINGS_BACKUP_PATH}/sabnzbd.ini"
+			# for converting from Stephane's QPKG and from previous version SAB QPKGs
+			local SETTINGS_PREV_BACKUP_PATHFILE="${SETTINGS_BACKUP_PATH}/sabnzbd.ini"
 
-	[[ -f $SETTINGS_PREV_BACKUP_PATHFILE ]] && { $MV_CMD "$SETTINGS_PREV_BACKUP_PATHFILE" "$SETTINGS_BACKUP_PATHFILE"; DebugDone 'renamed backup config file' ;}
+			[[ -f $SETTINGS_PREV_BACKUP_PATHFILE ]] && { $MV_CMD "$SETTINGS_PREV_BACKUP_PATHFILE" "$SETTINGS_BACKUP_PATHFILE"; DebugDone 'renamed backup config file' ;}
 
-	if [[ -f $SETTINGS_BACKUP_PATHFILE ]]; then
- 		$SED_CMD -i "s|log_dir = logs|log_dir = ${SHARE_DOWNLOAD_PATH}/sabnzbd/logs|" "$SETTINGS_BACKUP_PATHFILE"
-		$SED_CMD -i "s|download_dir = Downloads/incomplete|download_dir = ${SHARE_DOWNLOAD_PATH}/incomplete|" "$SETTINGS_BACKUP_PATHFILE"
-		$SED_CMD -i "s|complete_dir = Downloads/complete|complete_dir = ${SHARE_DOWNLOAD_PATH}/complete|" "$SETTINGS_BACKUP_PATHFILE"
+			if [[ -f $SETTINGS_BACKUP_PATHFILE ]]; then
+				$SED_CMD -i "s|log_dir = logs|log_dir = ${SHARE_DOWNLOAD_PATH}/sabnzbd/logs|" "$SETTINGS_BACKUP_PATHFILE"
+				$SED_CMD -i "s|download_dir = Downloads/incomplete|download_dir = ${SHARE_DOWNLOAD_PATH}/incomplete|" "$SETTINGS_BACKUP_PATHFILE"
+				$SED_CMD -i "s|complete_dir = Downloads/complete|complete_dir = ${SHARE_DOWNLOAD_PATH}/complete|" "$SETTINGS_BACKUP_PATHFILE"
 
-		if ($GREP_CMD -q '^enable_https = 1' "$SETTINGS_BACKUP_PATHFILE"); then
-			sab_port=$($GREP_CMD '^https_port = ' "$SETTINGS_BACKUP_PATHFILE" | $HEAD_CMD -n1 | $CUT_CMD -f3 -d' ')
-			secure_web_login=true
-		else
-			sab_port=$($GREP_CMD '^port = ' "$SETTINGS_BACKUP_PATHFILE" | $HEAD_CMD -n1 | $CUT_CMD -f3 -d' ')
-		fi
-	fi
+				if ($GREP_CMD -q '^enable_https = 1' "$SETTINGS_BACKUP_PATHFILE"); then
+					sab_port=$($GREP_CMD '^https_port = ' "$SETTINGS_BACKUP_PATHFILE" | $HEAD_CMD -n1 | $CUT_CMD -f3 -d' ')
+					secure_web_login=true
+				else
+					sab_port=$($GREP_CMD '^port = ' "$SETTINGS_BACKUP_PATHFILE" | $HEAD_CMD -n1 | $CUT_CMD -f3 -d' ')
+				fi
+			fi
+			;;
+		CouchPotato2)
+			ShowError "Can't convert settings for ($TARGET_APP) yet!"
+			;;
+		*)
+			ShowError "Can't convert settings for ($TARGET_APP) - unsupport app!"
+			;;
+	esac
 
 	DebugFuncExit
 	return 0
@@ -984,22 +1060,22 @@ EOF
 RestoreSabConfig()
 	{
 
-	[[ $errorcode -gt 0 ]] && return
+	[[ $errorcode -gt 0 ]] && return 1
 
 	DebugFuncEntry
 	local returncode=0
 
-	if [[ $sab_is_installed = true ]]; then
+	if [[ $package_is_installed = true ]]; then
 		if [[ -d $SETTINGS_BACKUP_PATH ]]; then
-			StopSab
+			DaemonCtl stop "$package_init_pathfile"
 
-			if [[ ! -d $sab_config_path ]]; then
-				$MKDIR_CMD -p "$($DIRNAME_CMD "$sab_config_path")" 2> /dev/null
+			if [[ ! -d $package_config_path ]]; then
+				$MKDIR_CMD -p "$($DIRNAME_CMD "$package_config_path")" 2> /dev/null
 			else
-				$RM_CMD -r "$sab_config_path" 2> /dev/null
+				$RM_CMD -r "$package_config_path" 2> /dev/null
 			fi
 
-			$MV_CMD "$SETTINGS_BACKUP_PATH" "$($DIRNAME_CMD "$sab_config_path")"
+			$MV_CMD "$SETTINGS_BACKUP_PATH" "$($DIRNAME_CMD "$package_config_path")"
 			result=$?
 
 			if [[ $result -eq 0 ]]; then
@@ -1007,7 +1083,7 @@ RestoreSabConfig()
 
 				$SETCFG_CMD "SABnzbdplus" Web_Port $sab_port -f "$QPKG_CONFIG_PATHFILE"
 			else
-				ShowError "Could not restore settings backup to ($sab_config_path) [$result]"
+				ShowError "Could not restore settings backup to ($package_config_path) [$result]"
 				errorcode=28
 				returncode=1
 			fi
@@ -1027,10 +1103,10 @@ RestoreSabConfig()
 DownloadQPKG()
 	{
 
+	[[ $errorcode -gt 0 ]] && return 1
+
 	DebugFuncEntry
 	local returncode=0
-
-	[[ $errorcode -gt 0 ]] && { DebugFuncExit; return 1;}
 
 	if [[ -e $qpkg_pathfile ]]; then
 		file_md5=$($MD5SUM_CMD "$qpkg_pathfile" | $CUT_CMD -f1 -d' ')
@@ -1153,71 +1229,85 @@ LoadQPKGVars()
 		errorcode=34
 		returncode=1
 	else
+		package_is_installed=false
+		package_installed_path=''
+		package_init_pathfile=''
+		package_config_path=''
+		sab_settings_pathfile=''
+		sab_port=''
+		sab_api=''
+		sab_chartranslator_pathfile=''
 
-		if [[ $package_name = 'SABnzbdplus' || $package_name = 'QSabNZBdPlus' ]]; then
-			sab_installed_path="$($GETCFG_CMD "$package_name" Install_Path -f "$QPKG_CONFIG_PATHFILE")"
-			result=$?
+		case "$package_name" in
+			SABnzbdplus|QSabNZBdPlus)
+				package_installed_path="$($GETCFG_CMD "$package_name" Install_Path -f "$QPKG_CONFIG_PATHFILE")"
+				result=$?
 
-			if [[ $result -eq 0 ]]; then
-				sab_is_installed=true
-				sab_init_pathfile="$($GETCFG_CMD "$package_name" Shell -f "$QPKG_CONFIG_PATHFILE")"
+				if [[ $result -eq 0 ]]; then
+					package_is_installed=true
+					package_init_pathfile="$($GETCFG_CMD "$package_name" Shell -f "$QPKG_CONFIG_PATHFILE")"
 
-				if [[ $package_name = 'SABnzbdplus' ]]; then
-					if [[ -d ${sab_installed_path}/Config ]]; then
-						sab_config_path="${sab_installed_path}/Config"
-					else
-						sab_config_path="${sab_installed_path}/config"
+					if [[ $package_name = 'SABnzbdplus' ]]; then
+						if [[ -d ${package_installed_path}/Config ]]; then
+							package_config_path="${package_installed_path}/Config"
+						else
+							package_config_path="${package_installed_path}/config"
+						fi
+
+					elif [[ $package_name = 'QSabNZBdPlus' ]]; then
+						package_config_path="${package_installed_path}/SAB_CONFIG"
 					fi
 
-				elif [[ $package_name = 'QSabNZBdPlus' ]]; then
-					sab_config_path="${sab_installed_path}/SAB_CONFIG"
-				fi
-
-				if [[ -f ${sab_config_path}/sabnzbd.ini ]]; then
-					sab_settings_pathfile="${sab_config_path}/sabnzbd.ini"
-				else
-					sab_settings_pathfile="${sab_config_path}/config.ini"
-				fi
-
-				if [[ -e $SETTINGS_BACKUP_PATHFILE ]]; then
-					if ($GREP_CMD -q '^enable_https = 1' "$SETTINGS_BACKUP_PATHFILE"); then
-						sab_port=$($GREP_CMD '^https_port = ' "$SETTINGS_BACKUP_PATHFILE" | $HEAD_CMD -n1 | $CUT_CMD -f3 -d' ')
-						secure_web_login=true
+					if [[ -f ${package_config_path}/sabnzbd.ini ]]; then
+						sab_settings_pathfile="${package_config_path}/sabnzbd.ini"
 					else
-						sab_port=$($GREP_CMD '^port = ' "$SETTINGS_BACKUP_PATHFILE" | $HEAD_CMD -n1 | $CUT_CMD -f3 -d' ')
+						sab_settings_pathfile="${package_config_path}/config.ini"
 					fi
+
+					if [[ -e $SETTINGS_BACKUP_PATHFILE ]]; then
+						if ($GREP_CMD -q '^enable_https = 1' "$SETTINGS_BACKUP_PATHFILE"); then
+							sab_port=$($GREP_CMD '^https_port = ' "$SETTINGS_BACKUP_PATHFILE" | $HEAD_CMD -n1 | $CUT_CMD -f3 -d' ')
+							secure_web_login=true
+						else
+							sab_port=$($GREP_CMD '^port = ' "$SETTINGS_BACKUP_PATHFILE" | $HEAD_CMD -n1 | $CUT_CMD -f3 -d' ')
+						fi
+					else
+						sab_port="$($GETCFG_CMD "$package_name" Web_Port -f "$QPKG_CONFIG_PATHFILE")"
+					fi
+
+					[[ -e $sab_settings_pathfile ]] && sab_api=$($GREP_CMD -e "^api_key" "$sab_settings_pathfile" | $SED_CMD 's|api_key = ||')
+					sab_chartranslator_pathfile="$package_installed_path/Repository/scripts/CharTranslator.py"
 				else
-					sab_port="$($GETCFG_CMD "$package_name" Web_Port -f "$QPKG_CONFIG_PATHFILE")"
+					returncode=1
 				fi
+				;;
+			Entware-3x|Entware-ng)
+				package_installed_path="$($GETCFG_CMD "$package_name" Install_Path -f "$QPKG_CONFIG_PATHFILE")"
+				result=$?
 
-				[[ -e $sab_settings_pathfile ]] && sab_api=$($GREP_CMD -e "^api_key" "$sab_settings_pathfile" | $SED_CMD 's|api_key = ||')
-				sab_chartranslator_pathfile="$sab_installed_path/Repository/scripts/CharTranslator.py"
-			else
-				sab_is_installed=false
-				sab_installed_path=''
-				sab_init_pathfile=''
-				sab_config_path=''
-				sab_settings_pathfile=''
-				sab_port=''
-				sab_api=''
-				sab_chartranslator_pathfile=''
-				returncode=1
-			fi
+				if [[ $result -eq 0 ]]; then
+					package_is_installed=true
+					package_init_pathfile="$($GETCFG_CMD "$package_name" Shell -f "$QPKG_CONFIG_PATHFILE")"
+				else
+					returncode=1
+				fi
+				;;
+			CouchPotato2|QCouchPotato)
+				package_installed_path="$($GETCFG_CMD "$package_name" Install_Path -f "$QPKG_CONFIG_PATHFILE")"
+				result=$?
 
-		elif [[ $package_name = 'Entware-3x' || $package_name = 'Entware-ng' ]]; then
-			ent_installed_path="$($GETCFG_CMD "$package_name" Install_Path -f "$QPKG_CONFIG_PATHFILE")"
-			result=$?
+				if [[ $result -eq 0 ]]; then
+					package_is_installed=true
+					package_init_pathfile="$($GETCFG_CMD "$package_name" Shell -f "$QPKG_CONFIG_PATHFILE")"
+				else
+					returncode=1
+				fi
+				;;
+			*)
+				ShowError "Can't load details of specified app: [$package_name] - unknown!"
+				;;
 
-			if [[ $result -eq 0 ]]; then
-				ent_is_installed=true
-				ent_init_pathfile="$($GETCFG_CMD "$package_name" Shell -f "$QPKG_CONFIG_PATHFILE")"
-			else
-				ent_is_installed=false
-				ent_installed_path=''
-				ent_init_pathfile=''
-				returncode=1
-			fi
-		fi
+		esac
 	fi
 
 	return $returncode
@@ -1371,11 +1461,12 @@ ReinstallSAB()
 
 	DebugFuncEntry
 
-	BackupSabConfig
+	BackupConfig
   	RemoveSabs
   	InstallSab
   	RestoreSabConfig
- 	StartSab
+	[[ $errorcode -eq 0 ]] && DaemonCtl start "$package_init_pathfile"
+
 
 	DebugFuncExit
 	return 0
@@ -1387,7 +1478,7 @@ ReinstallSR()
 
 	DebugFuncEntry
 
-	#BackupSRConfig
+	#BackupConfig
 	#RemoveSR
 	InstallSR
 	#RestoreSRConfig
@@ -1402,7 +1493,7 @@ ReinstallCP()
 
 	DebugFuncEntry
 
-	#BackupCPConfig
+	BackupConfig
 	#RemoveCP
 	InstallCP
 	#RestoreCPConfig
@@ -1412,32 +1503,32 @@ ReinstallCP()
 
 	}
 
-DaemonControl()
+DaemonCtl()
 	{
 
-	# $1 = pathfile of init script
-	# $2 = action (start|stop)
+	# $1 = action (start|stop)
+	# $2 = pathfile of daemon init
 
 	local returncode=0
 	local msgs=''
 	local target_init_pathfile=''
 	local init_file=''
 
-	if [[ -z $1 ]]; then
-		DebugError 'daemon not specified'
+	if [[ -z $2 ]]; then
+		DebugError 'daemon unspecified'
 		errorcode=40
 		returncode=1
 
-	elif [[ ! -e $1 ]]; then
-		DebugError "daemon init not found [$1]"
+	elif [[ ! -e $2 ]]; then
+		DebugError "daemon ($2) not found"
 		errorcode=41
 		returncode=1
 
 	else
-		target_init_pathfile="$1"
+		target_init_pathfile="$2"
 		target_init_file=$($BASENAME_CMD "$target_init_pathfile")
 
-		case "$2" in
+		case "$1" in
 			start)
 				ShowProc "starting daemon ($target_init_file) - this can take a while"
 				msgs=$("$target_init_pathfile" start)
@@ -1479,7 +1570,7 @@ DaemonControl()
 				fi
 				;;
 			*)
-				DebugError "action unrecognised [$2]"
+				DebugError "action unrecognised ($1)"
 				errorcode=43
 				returncode=1
 				;;
@@ -1487,24 +1578,6 @@ DaemonControl()
 	fi
 
 	return $returncode
-
-	}
-
-StopSab()
-	{
-
-	DaemonControl "$sab_init_pathfile" stop
-	return $?
-
-	}
-
-StartSab()
-	{
-
-	[[ $errorcode -gt 0 ]] && return
-
-	DaemonControl "$sab_init_pathfile" start
-	return $?
 
 	}
 
@@ -1541,7 +1614,7 @@ DisplayResult()
 	local RE=''
 	local SL=''
 
-	[[ $SAB_WAS_INSTALLED = true ]] && RE='re' || RE=''
+	[[ $REINSTALL_FLAG = true ]] && RE='re' || RE=''
 	[[ $secure_web_login = true ]] && SL='s' || SL=''
 	[[ $debug = false ]] && echo
 
@@ -1558,6 +1631,9 @@ DisplayResult()
 	DebugScript 'finished' "$($DATE_CMD)"
 	DebugScript 'elapsed time' "$(ConvertSecs "$(($($DATE_CMD +%s)-$([[ -n $SCRIPT_STARTSECONDS ]] && echo $SCRIPT_STARTSECONDS || echo "1")))")"
 	DebugThickSeparator
+
+	[[ -e $DEBUG_LOG_PATHFILE ]] && echo -e "To display the debug log, use:\ncat $DEBUG_LOG_PATHFILE\n"
+
 	DebugFuncExit
 	return 0
 
@@ -1994,6 +2070,5 @@ fi
 
 Cleanup
 DisplayResult
-[[ -e $DEBUG_LOG_PATHFILE ]] && echo -e "To display the debug log, use:\ncat $DEBUG_LOG_PATHFILE\n"
 
 exit "$errorcode"
