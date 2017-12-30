@@ -971,7 +971,7 @@ ConvertSettings()
 			fi
 			;;
 		CouchPotato2|LazyLibrarian)
-			ShowError "Can't convert settings for ($TARGET_APP) yet!"
+			ShowWarning "Can't convert settings for ($TARGET_APP) yet!"
 			;;
 		*)
 			ShowError "Can't convert settings for ($TARGET_APP) - unsupported app!"
@@ -1083,7 +1083,7 @@ RestoreConfig()
 		SABnzbdplus)
 			if [[ $package_is_installed = true ]]; then
 				if [[ -d $SETTINGS_BACKUP_PATH ]]; then
-					DaemonCtl stop "$package_init_pathfile"
+					#DaemonCtl stop "$package_init_pathfile"
 
 					if [[ ! -d $package_config_path ]]; then
 						$MKDIR_CMD -p "$($DIRNAME_CMD "$package_config_path")" 2> /dev/null
@@ -1114,7 +1114,7 @@ RestoreConfig()
 		LazyLibrarian)
 			if [[ $package_is_installed = true ]]; then
 				if [[ -d $SETTINGS_BACKUP_PATH ]]; then
-					DaemonCtl stop "$package_init_pathfile"
+					#DaemonCtl stop "$package_init_pathfile"
 
 					if [[ ! -d $package_config_path ]]; then
 						$MKDIR_CMD -p "$($DIRNAME_CMD "$package_config_path")" 2> /dev/null
@@ -1435,7 +1435,7 @@ LoadQPKGDownloadDetails()
 				;;
 			LazyLibrarian)
 				target_file='LazyLibrarian_171230.qpkg'
-				qpkg_md5='6c12574e196b21c698b901df6d84d164'
+				qpkg_md5='9e27cf29064f640c6881bb77d10fe976'
 				qpkg_url="${OneCD_urlprefix}/LazyLibrarian/build/${target_file}?raw=true"
 				qpkg_file=$target_file
 				;;

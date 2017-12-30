@@ -126,8 +126,9 @@ StartQPKG()
 StopQPKG()
 	{
 
-	local maxwait=100
+	[[ ! -e $STORED_PID_PATHFILE ]] && return
 
+	local maxwait=100
 	PID=$(<"$STORED_PID_PATHFILE"); i=0
 
 	kill $PID
@@ -142,15 +143,15 @@ StopQPKG()
 				echo -n "failed! " | tee -a "$LOG_PATHFILE"
 				kill -9 $PID
 				echo "sent SIGKILL." | tee -a "$LOG_PATHFILE"
-				rm -f "$STORED_PID_PATHFILE"
 				break 2
 			fi
 		done
 
-		rm -f "$STORED_PID_PATHFILE"
 		echo "OK"; echo "stopped OK in $i seconds" >> "$LOG_PATHFILE"
 		break
 	done
+
+	rm -f "$STORED_PID_PATHFILE"
 
 	}
 
