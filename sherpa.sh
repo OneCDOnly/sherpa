@@ -1395,8 +1395,8 @@ LoadQPKGDownloadDetails()
 				qpkg_file=$target_file
 				;;
 			LazyLibrarian)
-				target_file='LazyLibrarian_171217.qpkg'
-				qpkg_md5='810f0592b1d126e3768bc842be8c258a'
+				target_file='LazyLibrarian_171230.qpkg'
+				qpkg_md5='af27e22de642feaf039e47a9a217904c'
 				qpkg_url="${OneCD_urlprefix}/LazyLibrarian/build/${target_file}?raw=true"
 				qpkg_file=$target_file
 				;;

@@ -22,7 +22,7 @@ Init()
 	local PIDS="--pidfile $STORED_PID_PATHFILE"
 
 	# generic
-	DAEMON_OPTS="$TARGET_SCRIPT --daemon $PIDS"
+	DAEMON_OPTS="$TARGET_SCRIPT -d $PIDS --datadir $QPKG_PATH/config"
 	QPKG_GIT_PATH="${QPKG_PATH}/${QPKG_NAME}"
 	LOG_PATHFILE="/var/log/${QPKG_NAME}.log"
 	DAEMON=/opt/bin/python2.7
@@ -105,8 +105,7 @@ StartQPKG()
 	cd "$QPKG_GIT_PATH"
 
 	echo -n "* starting ($QPKG_NAME): " | tee -a "$LOG_PATHFILE"
-	#messages="$(${DAEMON} ${DAEMON_OPTS} 2>&1)"
-	messages="$(${DAEMON} ${DAEMON_OPTS})"
+	messages="$(${DAEMON} ${DAEMON_OPTS} &>/dev/null)"
 	result=$?
 
 	if [[ $result -eq 0 ]]; then
