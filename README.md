@@ -10,13 +10,27 @@ If you have an existing SABnzbd installed through one of Clinton Hall's wrapper 
 
 The information contained therein was constructed from the efforts of many community members, both here and on the SABnzbd forum. Thank you to everyone who has contributed.
 
-Parts relating to the re-installation of SickRage, CouchPotato and LazyLibrarian are in 'beta' state. However, the SABnzbd re-install has been well-tested and is considered stable.
+
+## Current status
+
+STABLE
+
+Initial installation of each app is OK. The SABnzbd re-install has been well-tested and is considered stable.
+
+TESTING
+
+The LazyLibrarian re-install is fairly new and seems to work properly, but could do with some further testing by the community.
+    
+
+BETA
+
+The re-installs for SickRage and CouchPotato are in 'beta' state and should not be relied upon at the moment.
+
 
 ## Known issues
 
 1) If there is an existing installation of Entware-ng, sometimes the Sherpa installer will fail to complete. If this happens, suggest you uninstall Entware-ng and allow Sherpa to reinstall Entware and configure it.
 
-2) Cannot re-install SickRage, CouchPotato or LazyLibrarian at present.
 
 ## Installation
 
