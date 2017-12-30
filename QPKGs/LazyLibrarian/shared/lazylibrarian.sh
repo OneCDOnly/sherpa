@@ -18,11 +18,10 @@ Init()
 
 	QPKG_PATH="$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)"
 	STORED_PID_PATHFILE="/tmp/${QPKG_NAME}.pid"
-
-	local PIDS="--pidfile $STORED_PID_PATHFILE"
+	DATA_PATH="$QPKG_PATH/config"
 
 	# generic
-	DAEMON_OPTS="$TARGET_SCRIPT -d $PIDS --datadir $QPKG_PATH/config"
+	DAEMON_OPTS="$TARGET_SCRIPT -d --pidfile $STORED_PID_PATHFILE --datadir $DATA_PATH"
 	QPKG_GIT_PATH="${QPKG_PATH}/${QPKG_NAME}"
 	LOG_PATHFILE="/var/log/${QPKG_NAME}.log"
 	DAEMON=/opt/bin/python2.7
@@ -101,6 +100,8 @@ StartQPKG()
 
 	local returncode=0
 	local msg=''
+
+	[[ -e $STORED_PID_PATHFILE ]] && StopQPKG
 
 	cd "$QPKG_GIT_PATH"
 

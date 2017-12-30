@@ -136,14 +136,14 @@ Init()
 	BACKUP_PATH="${WORKING_PATH}/backup"
 	SETTINGS_BACKUP_PATH="${BACKUP_PATH}/config"
 	SETTINGS_BACKUP_PATHFILE="${SETTINGS_BACKUP_PATH}/config.ini"
-	QPKG_PATH="${WORKING_PATH}/qpkg-downloads"
+	QPKG_DL_PATH="${WORKING_PATH}/qpkg-downloads"
 	IPK_PATH="${WORKING_PATH}/ipk-downloads"
 	DEBUG_LOG_PATHFILE="${SHARE_PUBLIC_PATH}/${DEBUG_LOG_FILE}"
 	QPKG_BASE_PATH="${DEFAULT_VOLUME}/.qpkg"
 
 	# internals
 	secure_web_login=false
-	sab_port=0
+	package_port=0
 	SCRIPT_STARTSECONDS=$($DATE_CMD +%s)
 	errorcode=0
 	queuepaused=false
@@ -199,11 +199,11 @@ Init()
 	fi
 
 	if [[ $errorcode -eq 0 ]]; then
-		$MKDIR_CMD -p "$QPKG_PATH" 2> /dev/null
+		$MKDIR_CMD -p "$QPKG_DL_PATH" 2> /dev/null
 		result=$?
 
 		if [[ $result -ne 0 ]]; then
-			ShowError "Unable to create QPKG download directory ($QPKG_PATH) [$result]"
+			ShowError "Unable to create QPKG download directory ($QPKG_DL_PATH) [$result]"
 			errorcode=3
 			returncode=1
 		fi
@@ -331,7 +331,8 @@ DownloadQPKGs()
 				;;
 		esac
 
-		if [[ $TARGET_APP = 'SickRage' || $TARGET_APP = 'CouchPotato2' || $TARGET_APP = 'LazyLibrarian' ]]; then
+		#if [[ $TARGET_APP = 'SickRage' || $TARGET_APP = 'CouchPotato2' || $TARGET_APP = 'LazyLibrarian' ]]; then
+		if [[ $TARGET_APP = 'SickRage' || $TARGET_APP = 'CouchPotato2' ]]; then
 			if QPKGIsInstalled "$TARGET_APP"; then
 				ShowError "Sorry! This installer lacks the ability to re-install $TARGET_APP at present. It can only perform a new install."
 				errorcode=9
@@ -388,7 +389,7 @@ RemoveOther()
 
 	}
 
-RemoveSabs()
+RemoveSABs()
 	{
 
 	[[ $errorcode -gt 0 ]] && return 1
@@ -397,6 +398,20 @@ RemoveSabs()
 
 	[[ $errorcode -eq 0 ]] && UninstallQPKG 'SABnzbdplus'
 	[[ $errorcode -eq 0 ]] && UninstallQPKG 'QSabNZBdPlus'
+
+	DebugFuncExit
+	return 0
+
+	}
+
+RemoveLL()
+	{
+
+	[[ $errorcode -gt 0 ]] && return 1
+
+	DebugFuncEntry
+
+	[[ $errorcode -eq 0 ]] && UninstallQPKG 'LazyLibrarian'
 
 	DebugFuncExit
 	return 0
@@ -677,7 +692,7 @@ InstallSABLanguages()
 
 	}
 
-InstallSab()
+InstallSAB()
 	{
 
 	[[ $errorcode -gt 0 ]] && return 1
@@ -799,7 +814,7 @@ InstallQPKG()
 	local target_file=''
 
 	if [[ ${qpkg_pathfile##*.} = 'zip' ]]; then
-		$UNZIP_CMD -nq "$qpkg_pathfile" -d "$QPKG_PATH"
+		$UNZIP_CMD -nq "$qpkg_pathfile" -d "$QPKG_DL_PATH"
 		qpkg_pathfile="${qpkg_pathfile%.*}"
 	fi
 
@@ -834,6 +849,45 @@ InstallQPKG()
 BackupConfig()
 	{
 
+	_BackupThisPackage()
+		{
+
+		if [[ -d $package_config_path ]]; then
+			if [[ ! -d ${BACKUP_PATH}/config ]]; then
+				$MKDIR_CMD -p "$BACKUP_PATH" 2> /dev/null
+				result=$?
+
+				if [[ $result -eq 0 ]]; then
+					DebugDone "backup directory created ($BACKUP_PATH)"
+				else
+					ShowError "Unable to create backup directory ($BACKUP_PATH) [$result]"
+					errorcode=23
+					returncode=1
+				fi
+			fi
+
+			if [[ $errorcode -eq 0 ]]; then
+				if [[ ! -d ${BACKUP_PATH}/config ]]; then
+					$MV_CMD "$package_config_path" "$BACKUP_PATH"
+					result=$?
+
+					if [[ $result -eq 0 ]]; then
+						ShowDone "created ($TARGET_APP) settings backup"
+					else
+						ShowError "Could not create settings backup of ($package_config_path) [$result]"
+						errorcode=24
+						returncode=1
+					fi
+				else
+					DebugInfo "a backup set already exists ($BACKUP_PATH)"
+				fi
+			fi
+
+			ConvertSettings
+		fi
+
+		}
+
 	[[ $errorcode -gt 0 ]] && return 1
 
 	DebugFuncEntry
@@ -851,88 +905,29 @@ BackupConfig()
 			fi
 
 			REINSTALL_FLAG=$package_is_installed
-
-			if [[ $package_is_installed = true ]]; then
-				if [[ -d $package_config_path ]]; then
-					if [[ ! -d ${BACKUP_PATH}/config ]]; then
-						$MKDIR_CMD -p "$BACKUP_PATH" 2> /dev/null
-						result=$?
-
-						if [[ $result -eq 0 ]]; then
-							DebugDone "backup directory created ($BACKUP_PATH)"
-						else
-							ShowError "Unable to create backup directory ($BACKUP_PATH) [$result]"
-							errorcode=23
-							returncode=1
-						fi
-					fi
-
-					if [[ $errorcode -eq 0 ]]; then
-						if [[ ! -d ${BACKUP_PATH}/config ]]; then
-							$MV_CMD "$package_config_path" "$BACKUP_PATH"
-							result=$?
-
-							if [[ $result -eq 0 ]]; then
-								ShowDone "created ($TARGET_APP) settings backup"
-							else
-								ShowError "Could not create settings backup of ($package_config_path) [$result]"
-								errorcode=24
-								returncode=1
-							fi
-						else
-							DebugInfo "a backup set already exists ($BACKUP_PATH)"
-						fi
-					fi
-
-					ConvertSettings
-				fi
-			fi
+			[[ $package_is_installed = true ]] && _BackupThisPackage
 			;;
 		CouchPotato2)
 			if QPKGIsInstalled 'QCouchPotato'; then
 				LoadQPKGVars 'QCouchPotato'
+				DaemonCtl stop "$package_init_pathfile"
 
 			elif QPKGIsInstalled 'CouchPotato2'; then
 				LoadQPKGVars 'CouchPotato2'
+				DaemonCtl stop "$package_init_pathfile"
 			fi
 
 			REINSTALL_FLAG=$package_is_installed
-
-			if [[ $package_is_installed = true ]]; then
-				if [[ -d $package_config_path ]]; then
-					if [[ ! -d ${BACKUP_PATH}/config ]]; then
-						$MKDIR_CMD -p "$BACKUP_PATH" 2> /dev/null
-						result=$?
-
-						if [[ $result -eq 0 ]]; then
-							DebugDone "backup directory created ($BACKUP_PATH)"
-						else
-							ShowError "Unable to create backup directory ($BACKUP_PATH) [$result]"
-							errorcode=23
-							returncode=1
-						fi
-					fi
-
-					if [[ $errorcode -eq 0 ]]; then
-						if [[ ! -d ${BACKUP_PATH}/config ]]; then
-							$MV_CMD "$package_config_path" "$BACKUP_PATH"
-							result=$?
-
-							if [[ $result -eq 0 ]]; then
-								ShowDone "created ($TARGET_APP) settings backup"
-							else
-								ShowError "Could not create settings backup of ($package_config_path) [$result]"
-								errorcode=24
-								returncode=1
-							fi
-						else
-							DebugInfo "a backup set already exists ($BACKUP_PATH)"
-						fi
-					fi
-
-					#ConvertSettings
-				fi
+			[[ $package_is_installed = true ]] && _BackupThisPackage
+			;;
+		LazyLibrarian)
+			if QPKGIsInstalled 'LazyLibrarian'; then
+				LoadQPKGVars 'LazyLibrarian'
+				DaemonCtl stop "$package_init_pathfile"
 			fi
+
+			REINSTALL_FLAG=$package_is_installed
+			[[ $package_is_installed = true ]] && _BackupThisPackage
 			;;
 		*)
 			ShowError "Can't backup specified app: ($TARGET_APP) - unknown!"
@@ -968,18 +963,18 @@ ConvertSettings()
 				$SED_CMD -i "s|complete_dir = Downloads/complete|complete_dir = ${SHARE_DOWNLOAD_PATH}/complete|" "$SETTINGS_BACKUP_PATHFILE"
 
 				if ($GREP_CMD -q '^enable_https = 1' "$SETTINGS_BACKUP_PATHFILE"); then
-					sab_port=$($GREP_CMD '^https_port = ' "$SETTINGS_BACKUP_PATHFILE" | $HEAD_CMD -n1 | $CUT_CMD -f3 -d' ')
+					package_port=$($GREP_CMD '^https_port = ' "$SETTINGS_BACKUP_PATHFILE" | $HEAD_CMD -n1 | $CUT_CMD -f3 -d' ')
 					secure_web_login=true
 				else
-					sab_port=$($GREP_CMD '^port = ' "$SETTINGS_BACKUP_PATHFILE" | $HEAD_CMD -n1 | $CUT_CMD -f3 -d' ')
+					package_port=$($GREP_CMD '^port = ' "$SETTINGS_BACKUP_PATHFILE" | $HEAD_CMD -n1 | $CUT_CMD -f3 -d' ')
 				fi
 			fi
 			;;
-		CouchPotato2)
+		CouchPotato2|LazyLibrarian)
 			ShowError "Can't convert settings for ($TARGET_APP) yet!"
 			;;
 		*)
-			ShowError "Can't convert settings for ($TARGET_APP) - unsupport app!"
+			ShowError "Can't convert settings for ($TARGET_APP) - unsupported app!"
 			;;
 	esac
 
@@ -1076,7 +1071,7 @@ EOF
 
 	}
 
-RestoreSabConfig()
+RestoreConfig()
 	{
 
 	[[ $errorcode -gt 0 ]] && return 1
@@ -1084,35 +1079,71 @@ RestoreSabConfig()
 	DebugFuncEntry
 	local returncode=0
 
-	if [[ $package_is_installed = true ]]; then
-		if [[ -d $SETTINGS_BACKUP_PATH ]]; then
-			DaemonCtl stop "$package_init_pathfile"
+	case "$TARGET_APP" in
+		SABnzbdplus)
+			if [[ $package_is_installed = true ]]; then
+				if [[ -d $SETTINGS_BACKUP_PATH ]]; then
+					DaemonCtl stop "$package_init_pathfile"
 
-			if [[ ! -d $package_config_path ]]; then
-				$MKDIR_CMD -p "$($DIRNAME_CMD "$package_config_path")" 2> /dev/null
+					if [[ ! -d $package_config_path ]]; then
+						$MKDIR_CMD -p "$($DIRNAME_CMD "$package_config_path")" 2> /dev/null
+					else
+						$RM_CMD -r "$package_config_path" 2> /dev/null
+					fi
+
+					$MV_CMD "$SETTINGS_BACKUP_PATH" "$($DIRNAME_CMD "$package_config_path")"
+					result=$?
+
+					if [[ $result -eq 0 ]]; then
+						ShowDone 'restored SABnzbd settings backup'
+
+						$SETCFG_CMD "SABnzbdplus" Web_Port $package_port -f "$QPKG_CONFIG_PATHFILE"
+					else
+						ShowError "Could not restore settings backup to ($package_config_path) [$result]"
+						errorcode=28
+						returncode=1
+					fi
+				fi
+
 			else
-				$RM_CMD -r "$package_config_path" 2> /dev/null
-			fi
-
-			$MV_CMD "$SETTINGS_BACKUP_PATH" "$($DIRNAME_CMD "$package_config_path")"
-			result=$?
-
-			if [[ $result -eq 0 ]]; then
-				ShowDone 'restored SABnzbd settings backup'
-
-				$SETCFG_CMD "SABnzbdplus" Web_Port $sab_port -f "$QPKG_CONFIG_PATHFILE"
-			else
-				ShowError "Could not restore settings backup to ($package_config_path) [$result]"
-				errorcode=28
+				ShowError "SABnzbd is NOT installed so can't restore backups"
+				errorcode=29
 				returncode=1
 			fi
-		fi
+			;;
+		LazyLibrarian)
+			if [[ $package_is_installed = true ]]; then
+				if [[ -d $SETTINGS_BACKUP_PATH ]]; then
+					DaemonCtl stop "$package_init_pathfile"
 
-	else
-		ShowError "SABnzbd is NOT installed so can't restore backups"
-		errorcode=29
-		returncode=1
-	fi
+					if [[ ! -d $package_config_path ]]; then
+						$MKDIR_CMD -p "$($DIRNAME_CMD "$package_config_path")" 2> /dev/null
+					else
+						$RM_CMD -r "$package_config_path" 2> /dev/null
+					fi
+
+					$MV_CMD "$SETTINGS_BACKUP_PATH" "$($DIRNAME_CMD "$package_config_path")"
+					result=$?
+
+					if [[ $result -eq 0 ]]; then
+						ShowDone 'restored LazyLibrarian settings backup'
+
+						#$SETCFG_CMD "SABnzbdplus" Web_Port $package_port -f "$QPKG_CONFIG_PATHFILE"
+					else
+						ShowError "Could not restore settings backup to ($package_config_path) [$result]"
+						errorcode=28
+						returncode=1
+					fi
+				fi
+
+			else
+				ShowError "LazyLibrarian is NOT installed so can't restore backups"
+				errorcode=29
+				returncode=1
+			fi
+			;;
+		*)
+	esac
 
 	DebugFuncExit
 	return $returncode
@@ -1252,9 +1283,9 @@ LoadQPKGVars()
 		package_installed_path=''
 		package_init_pathfile=''
 		package_config_path=''
-		sab_settings_pathfile=''
-		sab_port=''
-		sab_api=''
+		local package_settings_pathfile=''
+		package_port=''
+		package_api=''
 		sab_chartranslator_pathfile=''
 
 		case "$package_name" in
@@ -1278,23 +1309,23 @@ LoadQPKGVars()
 					fi
 
 					if [[ -f ${package_config_path}/sabnzbd.ini ]]; then
-						sab_settings_pathfile="${package_config_path}/sabnzbd.ini"
+						package_settings_pathfile="${package_config_path}/sabnzbd.ini"
 					else
-						sab_settings_pathfile="${package_config_path}/config.ini"
+						package_settings_pathfile="${package_config_path}/config.ini"
 					fi
 
 					if [[ -e $SETTINGS_BACKUP_PATHFILE ]]; then
 						if ($GREP_CMD -q '^enable_https = 1' "$SETTINGS_BACKUP_PATHFILE"); then
-							sab_port=$($GREP_CMD '^https_port = ' "$SETTINGS_BACKUP_PATHFILE" | $HEAD_CMD -n1 | $CUT_CMD -f3 -d' ')
+							package_port=$($GREP_CMD '^https_port = ' "$SETTINGS_BACKUP_PATHFILE" | $HEAD_CMD -n1 | $CUT_CMD -f3 -d' ')
 							secure_web_login=true
 						else
-							sab_port=$($GREP_CMD '^port = ' "$SETTINGS_BACKUP_PATHFILE" | $HEAD_CMD -n1 | $CUT_CMD -f3 -d' ')
+							package_port=$($GREP_CMD '^port = ' "$SETTINGS_BACKUP_PATHFILE" | $HEAD_CMD -n1 | $CUT_CMD -f3 -d' ')
 						fi
 					else
-						sab_port="$($GETCFG_CMD "$package_name" Web_Port -f "$QPKG_CONFIG_PATHFILE")"
+						package_port="$($GETCFG_CMD "$package_name" Web_Port -f "$QPKG_CONFIG_PATHFILE")"
 					fi
 
-					[[ -e $sab_settings_pathfile ]] && sab_api=$($GREP_CMD -e "^api_key" "$sab_settings_pathfile" | $SED_CMD 's|api_key = ||')
+					[[ -e $package_settings_pathfile ]] && package_api=$($GREP_CMD -e "^api_key" "$package_settings_pathfile" | $SED_CMD 's|api_key = ||')
 					sab_chartranslator_pathfile="$package_installed_path/Repository/scripts/CharTranslator.py"
 				else
 					returncode=1
@@ -1329,6 +1360,14 @@ LoadQPKGVars()
 				if [[ $result -eq 0 ]]; then
 					package_is_installed=true
 					package_init_pathfile="$($GETCFG_CMD "$package_name" Shell -f "$QPKG_CONFIG_PATHFILE")"
+
+					if [[ -d ${package_installed_path}/Config ]]; then
+						package_config_path="${package_installed_path}/Config"
+					else
+						package_config_path="${package_installed_path}/config"
+					fi
+
+
 				else
 					returncode=1
 				fi
@@ -1396,7 +1435,7 @@ LoadQPKGDownloadDetails()
 				;;
 			LazyLibrarian)
 				target_file='LazyLibrarian_171230.qpkg'
-				qpkg_md5='af27e22de642feaf039e47a9a217904c'
+				qpkg_md5='6c12574e196b21c698b901df6d84d164'
 				qpkg_url="${OneCD_urlprefix}/LazyLibrarian/build/${target_file}?raw=true"
 				qpkg_file=$target_file
 				;;
@@ -1441,7 +1480,7 @@ LoadQPKGDownloadDetails()
 			returncode=1
 		else
 			[[ -z $qpkg_file ]] && qpkg_file=$($BASENAME_CMD "$qpkg_url")
-			qpkg_pathfile="${QPKG_PATH}/${qpkg_file}"
+			qpkg_pathfile="${QPKG_DL_PATH}/${qpkg_file}"
 		fi
 	fi
 
@@ -1498,9 +1537,9 @@ ReinstallSAB()
 	DebugFuncEntry
 
 	BackupConfig
-  	RemoveSabs
-  	InstallSab
-  	RestoreSabConfig
+  	RemoveSABs
+  	InstallSAB
+  	RestoreConfig
 	[[ $errorcode -eq 0 ]] && DaemonCtl start "$package_init_pathfile"
 
 
@@ -1544,10 +1583,11 @@ ReinstallLL()
 
 	DebugFuncEntry
 
-	#BackupConfig
-	#RemoveLL
+	BackupConfig
+	RemoveLL
 	InstallLL
-	#RestoreSRConfig
+	RestoreConfig
+	[[ $errorcode -eq 0 ]] && DaemonCtl start "$package_init_pathfile"
 
 	DebugFuncExit
 	return 0
@@ -1673,7 +1713,7 @@ DisplayResult()
 		[[ $debug = true ]] && emoticon=':DD' || emoticon=''
 		ShowDone "$TARGET_APP has been successfully ${RE}installed! $emoticon"
 		#[[ $debug = false ]] && echo
-		#ShowInfo "It should now be accessible on your LAN @ $(ColourTextUnderlinedBlue "http${SL}://$($HOSTNAME_CMD -i | $TR_CMD -d ' '):$sab_port")"
+		#ShowInfo "It should now be accessible on your LAN @ $(ColourTextUnderlinedBlue "http${SL}://$($HOSTNAME_CMD -i | $TR_CMD -d ' '):$package_port")"
 	else
 		[[ $debug = true ]] && emoticon=':S ' || emoticon=''
 		ShowError "$TARGET_APP ${RE}install failed! ${emoticon}[$errorcode]"
@@ -1707,7 +1747,7 @@ SabQueueControl()
 		returncode=1
 	else
 		[[ $secure_web_login = true ]] && SL='s' || SL=''
-		$WGET_CMD --no-check-certificate --quiet "http${SL}://127.0.0.1:${sab_port}/sabnzbd/api?mode=${1}&apikey=${sab_api}" -O - 2>&1 >/dev/null &
+		$WGET_CMD --no-check-certificate --quiet "http${SL}://127.0.0.1:${package_port}/sabnzbd/api?mode=${1}&apikey=${package_api}" -O - 2>&1 >/dev/null &
 		[[ $1 = 'pause' ]] && queuepaused=true || queuepaused=false
 		DebugDone "${1}d existing SABnzbd queue"
 	fi
