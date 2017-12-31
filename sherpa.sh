@@ -2,7 +2,7 @@
 ###############################################################################
 # sherpa.sh
 #
-# (C)opyright 2017 OneCD - one.cd.only@gmail.com
+# (C)opyright 2017-2018 OneCD - one.cd.only@gmail.com
 #
 # So, blame OneCD if it all goes horribly wrong. ;)
 #
@@ -30,7 +30,7 @@ Init()
 
 	local returncode=0
 	local SCRIPT_FILE='sherpa.sh'
-	local SCRIPT_VERSION=2017.12.31b
+	local SCRIPT_VERSION=2018.01.01b
 
 	# cherry-pick required binaries
 	CAT_CMD='/bin/cat'
@@ -332,7 +332,7 @@ DownloadQPKGs()
 		esac
 
 		#if [[ $TARGET_APP = 'SickRage' || $TARGET_APP = 'CouchPotato2' || $TARGET_APP = 'LazyLibrarian' ]]; then
-		if [[ $TARGET_APP = 'SickRage' ]]; then
+		if [[ $TARGET_APP = 'SickRage' || $TARGET_APP = 'CouchPotato2' ]]; then
 			if QPKGIsInstalled "$TARGET_APP"; then
 				ShowError "Sorry! This installer lacks the ability to re-install $TARGET_APP at present. It can only perform a new install."
 				errorcode=9
