@@ -30,7 +30,7 @@ Init()
 
 	local returncode=0
 	local SCRIPT_FILE='sherpa.sh'
-	local SCRIPT_VERSION=2017.12.30b
+	local SCRIPT_VERSION=2017.12.31b
 
 	# cherry-pick required binaries
 	CAT_CMD='/bin/cat'
@@ -356,7 +356,7 @@ RemovePackageInstallers()
 	DebugFuncEntry
 
 	[[ $PREF_ENTWARE = 'Entware-3x' ]] && UninstallQPKG 'Entware-ng'
-	[[ $errorcode -eq 0 ]] && { UninstallQPKG 'Optware' || errorcode=0 ;} 	# ignore Optware uninstall errors
+	UninstallQPKG 'Optware' || errorcode=0 	# ignore Optware uninstall errors
 
 	DebugFuncExit
 	return 0
@@ -383,35 +383,6 @@ RemoveOther()
 			QPKGIsInstalled 'Par2cmdline-MT' && UninstallQPKG 'Par2cmdline-MT'
 			;;
 	esac
-
-	DebugFuncExit
-	return 0
-
-	}
-
-RemoveSABs()
-	{
-
-	[[ $errorcode -gt 0 ]] && return 1
-
-	DebugFuncEntry
-
-	[[ $errorcode -eq 0 ]] && UninstallQPKG 'SABnzbdplus'
-	[[ $errorcode -eq 0 ]] && UninstallQPKG 'QSabNZBdPlus'
-
-	DebugFuncExit
-	return 0
-
-	}
-
-RemoveLL()
-	{
-
-	[[ $errorcode -gt 0 ]] && return 1
-
-	DebugFuncEntry
-
-	[[ $errorcode -eq 0 ]] && UninstallQPKG 'LazyLibrarian'
 
 	DebugFuncExit
 	return 0
@@ -532,7 +503,7 @@ UpdateEntware()
 
 	}
 
-InstallOther()
+InstallExtras()
 	{
 
 	[[ $errorcode -gt 0 ]] && return 1
@@ -692,51 +663,6 @@ InstallSABLanguages()
 
 	}
 
-InstallSAB()
-	{
-
-	[[ $errorcode -gt 0 ]] && return 1
-
-	DebugFuncEntry
-	local package='SABnzbdplus'
-
-	! QPKGIsInstalled $package && LoadQPKGDownloadDetails $package && InstallQPKG && LoadQPKGVars $package && InstallSABLanguages
-
-	DebugFuncExit
-	return 0
-
-	}
-
-InstallSR()
-	{
-
-	[[ $errorcode -gt 0 ]] && return 1
-
-	DebugFuncEntry
-	local package='SickRage'
-
-	! QPKGIsInstalled $package && LoadQPKGDownloadDetails $package && InstallQPKG && LoadQPKGVars $package
-
-	DebugFuncExit
-	return 0
-
-	}
-
-InstallCP()
-	{
-
-	[[ $errorcode -gt 0 ]] && return 1
-
-	DebugFuncEntry
-	local package='CouchPotato2'
-
-	! QPKGIsInstalled $package && LoadQPKGDownloadDetails $package && InstallQPKG && LoadQPKGVars $package
-
-	DebugFuncExit
-	return 0
-
-	}
-
 InstallNG()
 	{
 
@@ -790,21 +716,6 @@ InstallNG()
 
 	}
 
-InstallLL()
-	{
-
-	[[ $errorcode -gt 0 ]] && return 1
-
-	DebugFuncEntry
-	local package='LazyLibrarian'
-
-	! QPKGIsInstalled $package && LoadQPKGDownloadDetails $package && InstallQPKG && LoadQPKGVars $package
-
-	DebugFuncExit
-	return 0
-
-	}
-
 InstallQPKG()
 	{
 
@@ -846,47 +757,47 @@ InstallQPKG()
 
 	}
 
-BackupConfig()
+BackupThisPackage()
 	{
 
-	_BackupThisPackage()
-		{
+	if [[ -d $package_config_path ]]; then
+		if [[ ! -d ${BACKUP_PATH}/config ]]; then
+			$MKDIR_CMD -p "$BACKUP_PATH" 2> /dev/null
+			result=$?
 
-		if [[ -d $package_config_path ]]; then
+			if [[ $result -eq 0 ]]; then
+				DebugDone "backup directory created ($BACKUP_PATH)"
+			else
+				ShowError "Unable to create backup directory ($BACKUP_PATH) [$result]"
+				errorcode=23
+				returncode=1
+			fi
+		fi
+
+		if [[ $errorcode -eq 0 ]]; then
 			if [[ ! -d ${BACKUP_PATH}/config ]]; then
-				$MKDIR_CMD -p "$BACKUP_PATH" 2> /dev/null
+				$MV_CMD "$package_config_path" "$BACKUP_PATH"
 				result=$?
 
 				if [[ $result -eq 0 ]]; then
-					DebugDone "backup directory created ($BACKUP_PATH)"
+					ShowDone "created ($TARGET_APP) settings backup"
 				else
-					ShowError "Unable to create backup directory ($BACKUP_PATH) [$result]"
-					errorcode=23
+					ShowError "Could not create settings backup of ($package_config_path) [$result]"
+					errorcode=24
 					returncode=1
 				fi
+			else
+				DebugInfo "a backup set already exists ($BACKUP_PATH)"
 			fi
-
-			if [[ $errorcode -eq 0 ]]; then
-				if [[ ! -d ${BACKUP_PATH}/config ]]; then
-					$MV_CMD "$package_config_path" "$BACKUP_PATH"
-					result=$?
-
-					if [[ $result -eq 0 ]]; then
-						ShowDone "created ($TARGET_APP) settings backup"
-					else
-						ShowError "Could not create settings backup of ($package_config_path) [$result]"
-						errorcode=24
-						returncode=1
-					fi
-				else
-					DebugInfo "a backup set already exists ($BACKUP_PATH)"
-				fi
-			fi
-
-			ConvertSettings
 		fi
 
-		}
+		ConvertSettings
+	fi
+
+	}
+
+BackupConfig()
+	{
 
 	[[ $errorcode -gt 0 ]] && return 1
 
@@ -905,7 +816,7 @@ BackupConfig()
 			fi
 
 			REINSTALL_FLAG=$package_is_installed
-			[[ $package_is_installed = true ]] && _BackupThisPackage
+			[[ $package_is_installed = true ]] && BackupThisPackage
 			;;
 		CouchPotato2)
 			if QPKGIsInstalled 'QCouchPotato'; then
@@ -918,7 +829,7 @@ BackupConfig()
 			fi
 
 			REINSTALL_FLAG=$package_is_installed
-			[[ $package_is_installed = true ]] && _BackupThisPackage
+			[[ $package_is_installed = true ]] && BackupThisPackage
 			;;
 		LazyLibrarian)
 			if QPKGIsInstalled 'LazyLibrarian'; then
@@ -927,7 +838,7 @@ BackupConfig()
 			fi
 
 			REINSTALL_FLAG=$package_is_installed
-			[[ $package_is_installed = true ]] && _BackupThisPackage
+			[[ $package_is_installed = true ]] && BackupThisPackage
 			;;
 		*)
 			ShowError "Can't backup specified app: ($TARGET_APP) - unknown!"
@@ -1083,7 +994,7 @@ RestoreConfig()
 		SABnzbdplus)
 			if [[ $package_is_installed = true ]]; then
 				if [[ -d $SETTINGS_BACKUP_PATH ]]; then
-					#DaemonCtl stop "$package_init_pathfile"
+					DaemonCtl stop "$package_init_pathfile"
 
 					if [[ ! -d $package_config_path ]]; then
 						$MKDIR_CMD -p "$($DIRNAME_CMD "$package_config_path")" 2> /dev/null
@@ -1142,7 +1053,40 @@ RestoreConfig()
 				returncode=1
 			fi
 			;;
+		CouchPotato2)
+			if [[ $package_is_installed = true ]]; then
+				if [[ -d $SETTINGS_BACKUP_PATH ]]; then
+					#DaemonCtl stop "$package_init_pathfile"
+
+					if [[ ! -d $package_config_path ]]; then
+						$MKDIR_CMD -p "$($DIRNAME_CMD "$package_config_path")" 2> /dev/null
+					else
+						$RM_CMD -r "$package_config_path" 2> /dev/null
+					fi
+
+					$MV_CMD "$SETTINGS_BACKUP_PATH" "$($DIRNAME_CMD "$package_config_path")"
+					result=$?
+
+					if [[ $result -eq 0 ]]; then
+						ShowDone 'restored CouchPotato2 settings backup'
+
+						#$SETCFG_CMD "SABnzbdplus" Web_Port $package_port -f "$QPKG_CONFIG_PATHFILE"
+					else
+						ShowError "Could not restore settings backup to ($package_config_path) [$result]"
+						errorcode=28
+						returncode=1
+					fi
+				fi
+
+			else
+				ShowError "CouchPotato2 is NOT installed so can't restore backups"
+				errorcode=29
+				returncode=1
+			fi
+			;;
 		*)
+			ShowError "Can't restore settings for ($TARGET_APP) - unsupported app!"
+			;;
 	esac
 
 	DebugFuncExit
@@ -1269,7 +1213,7 @@ CalcEntwareQPKG()
 LoadQPKGVars()
 	{
 
-	# $1 = installed package name to read variables for
+	# $1 = installed package name to load variables for
 
 	local returncode=0
 	local package_name="$1"
@@ -1342,7 +1286,7 @@ LoadQPKGVars()
 					returncode=1
 				fi
 				;;
-			CouchPotato2|QCouchPotato)
+			QCouchPotato)
 				package_installed_path="$($GETCFG_CMD "$package_name" Install_Path -f "$QPKG_CONFIG_PATHFILE")"
 				result=$?
 
@@ -1353,7 +1297,7 @@ LoadQPKGVars()
 					returncode=1
 				fi
 				;;
-			LazyLibrarian)
+			LazyLibrarian|CouchPotato2)
 				package_installed_path="$($GETCFG_CMD "$package_name" Install_Path -f "$QPKG_CONFIG_PATHFILE")"
 				result=$?
 
@@ -1366,8 +1310,6 @@ LoadQPKGVars()
 					else
 						package_config_path="${package_installed_path}/config"
 					fi
-
-
 				else
 					returncode=1
 				fi
@@ -1434,8 +1376,8 @@ LoadQPKGDownloadDetails()
 				qpkg_file=$target_file
 				;;
 			LazyLibrarian)
-				target_file='LazyLibrarian_171230.qpkg'
-				qpkg_md5='9e27cf29064f640c6881bb77d10fe976'
+				target_file='LazyLibrarian_171231.qpkg'
+				qpkg_md5='2d41a7ac11a113aafb65d8ec16e09c07'
 				qpkg_url="${OneCD_urlprefix}/LazyLibrarian/build/${target_file}?raw=true"
 				qpkg_file=$target_file
 				;;
@@ -1493,6 +1435,8 @@ UninstallQPKG()
 
 	# $1 = QPKG name
 
+	[[ $errorcode -gt 0 ]] && return 1
+
 	local returncode=0
 
 	if [[ -z $1 ]]; then
@@ -1528,69 +1472,6 @@ UninstallQPKG()
 	fi
 
 	return $returncode
-
-	}
-
-ReinstallSAB()
-	{
-
-	DebugFuncEntry
-
-	BackupConfig
-  	RemoveSABs
-  	InstallSAB
-  	RestoreConfig
-	[[ $errorcode -eq 0 ]] && DaemonCtl start "$package_init_pathfile"
-
-
-	DebugFuncExit
-	return 0
-
-	}
-
-ReinstallSR()
-	{
-
-	DebugFuncEntry
-
-	#BackupConfig
-	#RemoveSR
-	InstallSR
-	#RestoreSRConfig
-
-	DebugFuncExit
-	return 0
-
-	}
-
-ReinstallCP()
-	{
-
-	DebugFuncEntry
-
-	BackupConfig
-	#RemoveCP
-	InstallCP
-	#RestoreCPConfig
-
-	DebugFuncExit
-	return 0
-
-	}
-
-ReinstallLL()
-	{
-
-	DebugFuncEntry
-
-	BackupConfig
-	RemoveLL
-	InstallLL
-	RestoreConfig
-	[[ $errorcode -eq 0 ]] && DaemonCtl start "$package_init_pathfile"
-
-	DebugFuncExit
-	return 0
 
 	}
 
@@ -2138,27 +2019,43 @@ RemoveOther
 DownloadQPKGs
 RemovePackageInstallers
 InstallEntware
-InstallOther
+InstallExtras
 
 if [[ $errorcode -eq 0 ]]; then
 	case "$TARGET_APP" in
 		SABnzbdplus)
-			ReinstallSAB
-			;;
-		SickRage)
-			ReinstallSR
-			;;
-		CouchPotato2)
-			ReinstallCP
+			BackupConfig
+			UninstallQPKG $TARGET_APP
+			UninstallQPKG 'QSabNZBdPlus'
+			! QPKGIsInstalled $TARGET_APP && LoadQPKGDownloadDetails $TARGET_APP && InstallQPKG && LoadQPKGVars $TARGET_APP && InstallSABLanguages
+			RestoreConfig
+			[[ $errorcode -eq 0 ]] && DaemonCtl start "$package_init_pathfile"
 			;;
 		LazyLibrarian)
-			ReinstallLL
+			BackupConfig
+			UninstallQPKG $TARGET_APP
+			! QPKGIsInstalled $TARGET_APP && LoadQPKGDownloadDetails $TARGET_APP && InstallQPKG && LoadQPKGVars $TARGET_APP
+			RestoreConfig
+			[[ $errorcode -eq 0 ]] && DaemonCtl start "$package_init_pathfile"
+			;;
+		SickRage)
+			#BackupConfig
+			#UninstallQPKG $TARGET_APP
+			! QPKGIsInstalled $TARGET_APP && LoadQPKGDownloadDetails $TARGET_APP && InstallQPKG && LoadQPKGVars $TARGET_APP
+			#RestoreConfig
+			[[ $errorcode -eq 0 ]] && DaemonCtl start "$package_init_pathfile"
+			;;
+		CouchPotato2)
+			BackupConfig
+			UninstallQPKG $TARGET_APP
+			UninstallQPKG 'QCouchPotato'
+			! QPKGIsInstalled $TARGET_APP && LoadQPKGDownloadDetails $TARGET_APP && InstallQPKG && LoadQPKGVars $TARGET_APP
+			RestoreConfig
+			[[ $errorcode -eq 0 ]] && DaemonCtl start "$package_init_pathfile"
 			;;
 		#NZBGet)
-		#	ReinstallNG
 		#	;;
 		#HeadPhones)
-		#	ReinstallHP
 		#	;;
 		*)
 			ShowError "Can't install specified app: [$TARGET_APP] - unknown!"
