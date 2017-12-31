@@ -332,7 +332,7 @@ DownloadQPKGs()
 		esac
 
 		#if [[ $TARGET_APP = 'SickRage' || $TARGET_APP = 'CouchPotato2' || $TARGET_APP = 'LazyLibrarian' ]]; then
-		if [[ $TARGET_APP = 'SickRage' || $TARGET_APP = 'CouchPotato2' ]]; then
+		if [[ $TARGET_APP = 'SickRage' ]]; then
 			if QPKGIsInstalled "$TARGET_APP"; then
 				ShowError "Sorry! This installer lacks the ability to re-install $TARGET_APP at present. It can only perform a new install."
 				errorcode=9
@@ -994,6 +994,7 @@ RestoreConfig()
 		SABnzbdplus)
 			if [[ $package_is_installed = true ]]; then
 				if [[ -d $SETTINGS_BACKUP_PATH ]]; then
+					#sleep 10; DaemonCtl stop "$package_init_pathfile"	# allow time for new package init to complete so PID is accurate
 					DaemonCtl stop "$package_init_pathfile"
 
 					if [[ ! -d $package_config_path ]]; then
@@ -1025,7 +1026,8 @@ RestoreConfig()
 		LazyLibrarian)
 			if [[ $package_is_installed = true ]]; then
 				if [[ -d $SETTINGS_BACKUP_PATH ]]; then
-					#DaemonCtl stop "$package_init_pathfile"
+					#sleep 10; DaemonCtl stop "$package_init_pathfile"	# allow time for new package init to complete so PID is accurate
+					DaemonCtl stop "$package_init_pathfile"
 
 					if [[ ! -d $package_config_path ]]; then
 						$MKDIR_CMD -p "$($DIRNAME_CMD "$package_config_path")" 2> /dev/null
@@ -1056,7 +1058,8 @@ RestoreConfig()
 		CouchPotato2)
 			if [[ $package_is_installed = true ]]; then
 				if [[ -d $SETTINGS_BACKUP_PATH ]]; then
-					#DaemonCtl stop "$package_init_pathfile"
+					#sleep 10; DaemonCtl stop "$package_init_pathfile"	# allow time for new package init to complete so PID is accurate
+					DaemonCtl stop "$package_init_pathfile"
 
 					if [[ ! -d $package_config_path ]]; then
 						$MKDIR_CMD -p "$($DIRNAME_CMD "$package_config_path")" 2> /dev/null
@@ -2027,21 +2030,21 @@ if [[ $errorcode -eq 0 ]]; then
 			BackupConfig
 			UninstallQPKG $TARGET_APP
 			UninstallQPKG 'QSabNZBdPlus'
-			! QPKGIsInstalled $TARGET_APP && LoadQPKGDownloadDetails $TARGET_APP && InstallQPKG && LoadQPKGVars $TARGET_APP && InstallSABLanguages
+			! QPKGIsInstalled $TARGET_APP && LoadQPKGDownloadDetails $TARGET_APP && InstallQPKG && sleep 10 && LoadQPKGVars $TARGET_APP && InstallSABLanguages
 			RestoreConfig
 			[[ $errorcode -eq 0 ]] && DaemonCtl start "$package_init_pathfile"
 			;;
 		LazyLibrarian)
 			BackupConfig
 			UninstallQPKG $TARGET_APP
-			! QPKGIsInstalled $TARGET_APP && LoadQPKGDownloadDetails $TARGET_APP && InstallQPKG && LoadQPKGVars $TARGET_APP
+			! QPKGIsInstalled $TARGET_APP && LoadQPKGDownloadDetails $TARGET_APP && InstallQPKG && sleep 10 && LoadQPKGVars $TARGET_APP
 			RestoreConfig
 			[[ $errorcode -eq 0 ]] && DaemonCtl start "$package_init_pathfile"
 			;;
 		SickRage)
 			#BackupConfig
 			#UninstallQPKG $TARGET_APP
-			! QPKGIsInstalled $TARGET_APP && LoadQPKGDownloadDetails $TARGET_APP && InstallQPKG && LoadQPKGVars $TARGET_APP
+			! QPKGIsInstalled $TARGET_APP && LoadQPKGDownloadDetails $TARGET_APP && InstallQPKG && sleep 10 && LoadQPKGVars $TARGET_APP
 			#RestoreConfig
 			[[ $errorcode -eq 0 ]] && DaemonCtl start "$package_init_pathfile"
 			;;
@@ -2049,7 +2052,7 @@ if [[ $errorcode -eq 0 ]]; then
 			BackupConfig
 			UninstallQPKG $TARGET_APP
 			UninstallQPKG 'QCouchPotato'
-			! QPKGIsInstalled $TARGET_APP && LoadQPKGDownloadDetails $TARGET_APP && InstallQPKG && LoadQPKGVars $TARGET_APP
+			! QPKGIsInstalled $TARGET_APP && LoadQPKGDownloadDetails $TARGET_APP && InstallQPKG && sleep 10 && LoadQPKGVars $TARGET_APP
 			RestoreConfig
 			[[ $errorcode -eq 0 ]] && DaemonCtl start "$package_init_pathfile"
 			;;
