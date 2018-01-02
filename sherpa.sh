@@ -30,7 +30,7 @@ Init()
 
 	local returncode=0
 	local SCRIPT_FILE='sherpa.sh'
-	local SCRIPT_VERSION=2018.01.01b
+	local SCRIPT_VERSION=2018.01.02b
 
 	# cherry-pick required binaries
 	CAT_CMD='/bin/cat'
@@ -1519,6 +1519,8 @@ DaemonCtl()
 						DebugThickSeparator
 						$CAT_CMD "$qpkg_pathfile.$START_LOG_FILE"
 						DebugThickSeparator
+					else
+						$CAT_CMD "$qpkg_pathfile.$START_LOG_FILE" >> "$DEBUG_LOG_PATHFILE"
 					fi
 					errorcode=42
 					returncode=1
@@ -1539,6 +1541,8 @@ DaemonCtl()
 						DebugThickSeparator
 						$CAT_CMD "$qpkg_pathfile.$STOP_LOG_FILE"
 						DebugThickSeparator
+					else
+						$CAT_CMD "$qpkg_pathfile.$STOP_LOG_FILE" >> "$DEBUG_LOG_PATHFILE"
 					fi
 					# meh, continue anyway...
 					returncode=1
