@@ -1,13 +1,5 @@
 #!/usr/bin/env bash
 
-WAITER_PATHFILE="$(getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg/wait-for-Entware.sh"
-if [[ -e $WAITER_PATHFILE ]]; then
-	. "$WAITER_PATHFILE" 300
-else
-	echo "waiter not found - can't continue"
-	exit 1
-fi
-
 Init()
 	{
 
@@ -36,6 +28,8 @@ Init()
 		export LC_ALL='en_US.UTF-8'
 		export LC_CTYPE='en_US.UTF-8'
 	fi
+
+	WaitForEntware
 
 	errorcode=0
 
@@ -198,6 +192,34 @@ SysFilePresent()
 		return 1
 	else
 		return 0
+	fi
+
+	}
+
+WaitForEntware()
+	{
+
+	local TIMEOUT=300
+
+	if [[ ! -e /opt/Entware-3x.sh && ! -e /opt/Entware-ng.sh ]]; then
+		(
+			for ((count=1; count<=TIMEOUT; count++)); do
+				sleep 1
+				[[ -e /opt/Entware-3x.sh || -e /opt/Entware-ng.sh ]] && { echo "waited for Entware for $count seconds" >> "$LOG_PATHFILE"; true; exit ;}
+			done
+			false
+		)
+
+		if [[ $? -ne 0 ]]; then
+			echo "Entware not found! [TIMEOUT = $TIMEOUT seconds]" | tee -a "$LOG_PATHFILE"
+			write_log "[$(basename $0)] Can't continue: Entware not found! (timeout)" 1
+			false
+			exit
+		fi
+
+		# if here, then testfile has appeared, so reload environment
+		. /etc/profile &>/dev/null
+		. /root/.profile &>/dev/null
 	fi
 
 	}

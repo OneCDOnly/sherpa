@@ -30,7 +30,7 @@ Init()
 
 	local returncode=0
 	local SCRIPT_FILE='sherpa.sh'
-	local SCRIPT_VERSION=2018.01.02b
+	local SCRIPT_VERSION=2018.01.21b
 
 	# cherry-pick required binaries
 	CAT_CMD='/bin/cat'
@@ -560,12 +560,25 @@ InstallIPKs()
 		package_desc='various'
 
 		UpdateEntware
+
+		# get size of all packages - e.g. 'opkg info $packages'
+
+
+
+
+
 		ShowProc "downloading & installing IPKs ($package_desc)"
 
 		# errors can occur due to incompatible IPKs (tried installing Entware-3x, then Entware-ng), so delete them first
 		rm -f "$IPK_PATH"/*.ipk
 
 		cd "$IPK_PATH"
+
+		# As it seems we can't get opkg to display a progress bar, maybe show cache path size to indicate progress? Might need to spawn a process just for this.
+		# du -cb * | tail -n1 | cut -f1
+		# while true; do [[ -e /tmp/sizer.txt ]] && { sleep 1; du -cb /tmp/* 2>/dev/null | tail -n1 | cut -f1 ;} || break; done
+
+
 		install_msgs=$($OPKG_CMD install --force-overwrite $packages --cache . 2>&1)
 		result=$?
 		echo -e "${install_msgs}\nresult=[$result]" > "$log_pathfile"
@@ -1361,8 +1374,8 @@ LoadQPKGDownloadDetails()
 				qpkg_url='http://entware.zyxmon.org/binaries/other/Entware-ng_0.97.qpkg'
 				;;
 			SABnzbdplus)
-				target_file='SABnzbdplus_171129.qpkg'
-				qpkg_md5='9a7aa196c41b87f2c3b7dcaa61790580'
+				target_file='SABnzbdplus_180121.qpkg'
+				qpkg_md5='6386d0fbccba8c2dc20ffe4ee7e58192'
 				qpkg_url="${OneCD_urlprefix}/SABnzbdplus/build/${target_file}?raw=true"
 				qpkg_file=$target_file
 				;;
