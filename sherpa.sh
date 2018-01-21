@@ -153,6 +153,7 @@ Init()
 	progress_message=''
 	previous_length=0
 	previous_msg=''
+	REINSTALL_FLAG=false
 
 	[[ $TARGET_APP = $SCRIPT_FILE ]] && DisplayHelp && errorcode=1
 
@@ -902,7 +903,10 @@ ConvertSettings()
 				fi
 			fi
 			;;
-		CouchPotato2|LazyLibrarian)
+		LazyLibrarian|SickRage)
+			# do nothing - don't need to convert from older versions for these QPKGs as sherpa is the only installer for them.
+			;;
+		CouchPotato2)
 			ShowWarning "Can't convert settings for ($TARGET_APP) yet!"
 			;;
 		*)
@@ -935,9 +939,9 @@ RestoreConfig()
 	DebugFuncEntry
 	local returncode=0
 
-	case "$TARGET_APP" in
-		SABnzbdplus)
-			if [[ $package_is_installed = true ]]; then
+	if QPKGIsInstalled "$TARGET_APP"; then
+		case "$TARGET_APP" in
+			SABnzbdplus)
 				if [[ -d $SETTINGS_BACKUP_PATH ]]; then
 					#sleep 10; DaemonCtl stop "$package_init_pathfile"	# allow time for new package init to complete so PID is accurate
 					DaemonCtl stop "$package_init_pathfile"
@@ -961,15 +965,8 @@ RestoreConfig()
 						returncode=1
 					fi
 				fi
-
-			else
-				ShowError "($TARGET_APP) is NOT installed so can't restore backups"
-				errorcode=29
-				returncode=1
-			fi
-			;;
-		LazyLibrarian|SickRage|CouchPotato2)
-			if [[ $package_is_installed = true ]]; then
+				;;
+			LazyLibrarian|SickRage|CouchPotato2)
 				if [[ -d $SETTINGS_BACKUP_PATH ]]; then
 					#sleep 10; DaemonCtl stop "$package_init_pathfile"	# allow time for new package init to complete so PID is accurate
 					DaemonCtl stop "$package_init_pathfile"
@@ -993,17 +990,16 @@ RestoreConfig()
 						returncode=1
 					fi
 				fi
-
-			else
-				ShowError "($TARGET_APP) is NOT installed so can't restore backups"
-				errorcode=29
-				returncode=1
-			fi
-			;;
-		*)
-			ShowError "Can't restore settings for ($TARGET_APP) - unsupported app!"
-			;;
-	esac
+				;;
+			*)
+				ShowError "Can't restore settings for ($TARGET_APP) - unsupported app!"
+				;;
+		esac
+	else
+		ShowError "($TARGET_APP) is NOT installed so can't restore backups"
+		errorcode=29
+		returncode=1
+	fi
 
 	DebugFuncExit
 	return $returncode
@@ -1139,7 +1135,6 @@ LoadQPKGVars()
 		errorcode=34
 		returncode=1
 	else
-		package_is_installed=false
 		package_installed_path=''
 		package_init_pathfile=''
 		package_config_path=''
@@ -1154,7 +1149,6 @@ LoadQPKGVars()
 				result=$?
 
 				if [[ $result -eq 0 ]]; then
-					package_is_installed=true
 					package_init_pathfile=$($GETCFG_CMD $package_name Shell -f $QPKG_CONFIG_PATHFILE)
 
 					if [[ $package_name = SABnzbdplus ]]; then
@@ -1196,7 +1190,6 @@ LoadQPKGVars()
 				result=$?
 
 				if [[ $result -eq 0 ]]; then
-					package_is_installed=true
 					package_init_pathfile=$($GETCFG_CMD $package_name Shell -f $QPKG_CONFIG_PATHFILE)
 				else
 					returncode=1
@@ -1207,7 +1200,6 @@ LoadQPKGVars()
 				result=$?
 
 				if [[ $result -eq 0 ]]; then
-					package_is_installed=true
 					package_init_pathfile=$($GETCFG_CMD $package_name Shell -f $QPKG_CONFIG_PATHFILE)
 				else
 					returncode=1
@@ -1218,7 +1210,6 @@ LoadQPKGVars()
 				result=$?
 
 				if [[ $result -eq 0 ]]; then
-					package_is_installed=true
 					package_init_pathfile=$($GETCFG_CMD $package_name Shell -f $QPKG_CONFIG_PATHFILE)
 
 					if [[ -d ${package_installed_path}/Config ]]; then
@@ -1293,7 +1284,7 @@ LoadQPKGDownloadDetails()
 				;;
 			LazyLibrarian)
 				target_file='LazyLibrarian_180121.qpkg'
-				qpkg_md5='6705d22a648caaf6bedf64bc0e9352b8'
+				qpkg_md5='7bef6afcb8ba564638fb29c60594577d'
 				qpkg_url="${OneCD_urlprefix}/LazyLibrarian/build/${target_file}?raw=true"
 				qpkg_file=$target_file
 				;;
@@ -1567,6 +1558,7 @@ QPKGIsInstalled()
 	# $1 = package name to check/enable
 
 	local returncode=0
+	package_is_installed=false
 
 	if [[ -z $1 ]]; then
 		DebugError 'QPKG name not specified'
@@ -1580,6 +1572,7 @@ QPKGIsInstalled()
 			if [[ $($GETCFG_CMD "$1" RC_Number -d 0 -f "$QPKG_CONFIG_PATHFILE") -ne 0 ]]; then
 				DebugQPKG "'$1'" 'installed'
 				[[ $($GETCFG_CMD "$1" Enable -u -f "$QPKG_CONFIG_PATHFILE") != 'TRUE' ]] && $SETCFG_CMD "$1" Enable TRUE -f "$QPKG_CONFIG_PATHFILE"
+				package_is_installed=true
 			else
 				DebugQPKG "'$1'" 'not installed'
 				returncode=1

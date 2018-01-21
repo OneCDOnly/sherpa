@@ -3,29 +3,33 @@
 Init()
 	{
 
+	# package specific
 	QPKG_NAME=LazyLibrarian
 	local TARGET_SCRIPT=LazyLibrarian.py
+	GIT_HTTP_URL='http://github.com/DobyTang/LazyLibrarian.git'
 
-	QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
-	STORED_PID_PATHFILE=/tmp/${QPKG_NAME}.pid
-	DATA_PATH=$QPKG_PATH/config
+	QPKG_PATH="$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)"
+	STORED_PID_PATHFILE="/tmp/${QPKG_NAME}.pid"
+	DATA_PATH="$QPKG_PATH/config"
+
+	# generic
 	DAEMON_OPTS="$TARGET_SCRIPT -d --pidfile $STORED_PID_PATHFILE --datadir $DATA_PATH"
-	QPKG_GIT_PATH=${QPKG_PATH}/${QPKG_NAME}
-	LOG_PATHFILE=/var/log/${QPKG_NAME}.log
+	QPKG_GIT_PATH="${QPKG_PATH}/${QPKG_NAME}"
+	LOG_PATHFILE="/var/log/${QPKG_NAME}.log"
 	DAEMON=/opt/bin/python2.7
+	GIT_HTTPS_URL=${GIT_HTTP_URL/http/git}
+	GIT_CMD=/opt/bin/git
 	export PYTHONPATH=$DAEMON
-	export PATH=/opt/bin:/opt/sbin:${PATH}
+	export PATH="/opt/bin:/opt/sbin:${PATH}"
 
 	if [[ -z $LANG ]]; then
-		export LANG='en_US.UTF-8'
-		export LC_ALL='en_US.UTF-8'
-		export LC_CTYPE='en_US.UTF-8'
+		export LANG=en_US.UTF-8
+		export LC_ALL=en_US.UTF-8
+		export LC_CTYPE=en_US.UTF-8
 	fi
 
 	WaitForEntware
 	errorcode=0
-	# this package does not ship with a default settings file (yet)
-	#[[ ! -f $SETTINGS_PATHFILE && -f $SETTINGS_DEFAULT_PATHFILE ]] && { echo "! no settings file found - using default"; cp "$SETTINGS_DEFAULT_PATHFILE" "$SETTINGS_PATHFILE" ;}
 	return 0
 
 	}
@@ -57,46 +61,27 @@ QPKGIsActive()
 UpdateQpkg()
 	{
 
-	PullGitRepo $QPKG_NAME 'http://github.com/DobyTang/LazyLibrarian.git' "$QPKG_PATH"
-
-	}
-
-PullGitRepo()
-	{
-
-	# $1 = package name
-	# $2 = URL to pull/clone from
-	# $3 = path to clone into
-
 	local returncode=0
 	local msg=''
-	local GIT_CMD=/opt/bin/git
+	SysFilePresent "$GIT_CMD" || { errorcode=1; return 1 ;}
 
-	[[ -z $1 ]] && returncode=1; [[ -z $2 ]] && returncode=1; [[ -z $3 ]] && returncode=1
-	SysFilePresent "$GIT_CMD" || { errorcode=1; returncode=1 ;}
+	echo -n "* updating ($QPKG_NAME): " | tee -a "$LOG_PATHFILE"
+	messages="$({
 
-	local QPKG_GIT_PATH="$3/$1"
+	[[ -d ${QPKG_GIT_PATH}/.git ]] || $GIT_CMD clone --depth 1 "$GIT_HTTPS_URL" "$QPKG_GIT_PATH" || $GIT_CMD clone --depth 1 "$GIT_HTTP_URL" "$QPKG_GIT_PATH"
+	cd "$QPKG_GIT_PATH" && $GIT_CMD checkout master && $GIT_CMD pull && /bin/sync
 
-	if [[ $returncode = 0 ]]; then
-		local GIT_HTTP_URL="$2"
-		local GIT_HTTPS_URL=${GIT_HTTP_URL/http/git}
+	} 2>&1)"
+	result=$?
 
-		echo -n "* updating ($1): " | tee -a "$LOG_PATHFILE"
-		exec_msgs="$({
-		[[ ! -d ${QPKG_GIT_PATH}/.git ]] && { $GIT_CMD clone -b master --depth 1 "$GIT_HTTPS_URL" "$QPKG_GIT_PATH" || $GIT_CMD clone -b master --depth 1 "$GIT_HTTP_URL" "$QPKG_GIT_PATH" ;}
-		cd "$QPKG_GIT_PATH" && $GIT_CMD pull
-		} 2>&1)"
-		result=$?
-
-		if [[ $result = 0 ]]; then
-			msg='OK'
-			echo -e "$msg" | tee -a "$LOG_PATHFILE"
-			echo -e "${exec_msgs}" >> "$LOG_PATHFILE"
-		else
-			msg="failed!\nresult=[$result]"
-			echo -e "$msg\n${exec_msgs}" | tee -a "$LOG_PATHFILE"
-			returncode=1
-		fi
+	if [[ $result -eq 0 ]]; then
+		msg='OK'
+		echo -e "$msg" | tee -a "$LOG_PATHFILE"
+		echo -e "${messages}" >> "$LOG_PATHFILE"
+	else
+		msg="failed!\nresult=[$result]"
+		echo -e "$msg\n${messages}" | tee -a "$LOG_PATHFILE"
+		returncode=1
 	fi
 
 	return $returncode
@@ -111,19 +96,19 @@ StartQPKG()
 
 	[[ -e $STORED_PID_PATHFILE ]] && StopQPKG
 
-	cd "${QPKG_PATH}/${QPKG_NAME}"
+	cd "$QPKG_GIT_PATH"
 
 	echo -n "* starting ($QPKG_NAME): " | tee -a "$LOG_PATHFILE"
-	exec_msgs="$(${DAEMON} ${DAEMON_OPTS} 2>&1)"
+	messages="$(${DAEMON} ${DAEMON_OPTS} &>/dev/null)"
 	result=$?
 
-	if [[ $result = 0 ]]; then
+	if [[ $result -eq 0 ]]; then
 		msg='OK'
 		echo -e "$msg" | tee -a "$LOG_PATHFILE"
-		echo -e "${exec_msgs}" >> "$LOG_PATHFILE"
+		echo -e "${messages}" >> "$LOG_PATHFILE"
 	else
 		msg="failed!\nresult=[$result]"
-		echo -e "${msg}\n${exec_msgs}" | tee -a "$LOG_PATHFILE"
+		echo -e "$msg\n${messages}" | tee -a "$LOG_PATHFILE"
 		returncode=1
 	fi
 
@@ -134,9 +119,10 @@ StartQPKG()
 StopQPKG()
 	{
 
-	local maxwait=100
+	[[ ! -e $STORED_PID_PATHFILE ]] && return
 
-	PID=$(cat "$STORED_PID_PATHFILE"); acc=0
+	local maxwait=100
+	PID=$(<"$STORED_PID_PATHFILE"); i=0
 
 	kill $PID
 	echo -n "* stopping ($QPKG_NAME) with SIGTERM: " | tee -a "$LOG_PATHFILE"; echo -n "waiting for upto $maxwait seconds: "
@@ -144,22 +130,21 @@ StopQPKG()
 	while true; do
 		while [[ -d /proc/$PID ]]; do
 			sleep 1
-			((acc++))
-			echo -n "$acc, "
-
-			if [[ $acc -ge $maxwait ]]; then
+			let i+=1
+			echo -n "$i, "
+			if [[ $i -ge $maxwait ]]; then
 				echo -n "failed! " | tee -a "$LOG_PATHFILE"
 				kill -9 $PID
 				echo "sent SIGKILL." | tee -a "$LOG_PATHFILE"
-				rm -f "$STORED_PID_PATHFILE"
 				break 2
 			fi
 		done
 
-		rm -f "$STORED_PID_PATHFILE"
-		echo "OK"; echo "stopped OK in $acc seconds" >> "$LOG_PATHFILE"
+		echo "OK"; echo "stopped OK in $i seconds" >> "$LOG_PATHFILE"
 		break
 	done
+
+	rm -f "$STORED_PID_PATHFILE"
 
 	}
 
@@ -243,3 +228,4 @@ if [[ $errorcode -eq 0 ]]; then
 fi
 
 exit $errorcode
+
