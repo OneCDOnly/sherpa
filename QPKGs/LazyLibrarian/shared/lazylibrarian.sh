@@ -57,7 +57,7 @@ QPKGIsActive()
 UpdateQpkg()
 	{
 
-	PullGitRepo $QPKG_NAME 'http://github.com/DobyTang/LazyLibrarian.git' "$SAB_PATH"
+	PullGitRepo $QPKG_NAME 'http://github.com/DobyTang/LazyLibrarian.git' "$QPKG_PATH"
 
 	}
 

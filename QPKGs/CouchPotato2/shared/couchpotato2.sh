@@ -59,7 +59,7 @@ QPKGIsActive()
 UpdateQpkg()
 	{
 
-	PullGitRepo $QPKG_NAME 'http://github.com/CouchPotato/CouchPotatoServer.git' "$SAB_PATH"
+	PullGitRepo $QPKG_NAME 'http://github.com/CouchPotato/CouchPotatoServer.git' "$QPKG_PATH"
 
 	}
 

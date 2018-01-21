@@ -59,7 +59,7 @@ QPKGIsActive()
 UpdateQpkg()
 	{
 
-	PullGitRepo $QPKG_NAME 'http://github.com/sickrage/sickrage.git' "$SAB_PATH"
+	PullGitRepo $QPKG_NAME 'http://github.com/sickrage/sickrage.git' "$QPKG_PATH"
 
 	}
 

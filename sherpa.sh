@@ -332,13 +332,13 @@ DownloadQPKGs()
 		esac
 
 		#if [[ $TARGET_APP = 'SickRage' || $TARGET_APP = 'CouchPotato2' || $TARGET_APP = 'LazyLibrarian' ]]; then
-		if [[ $TARGET_APP = 'SickRage' || $TARGET_APP = 'CouchPotato2' ]]; then
-			if QPKGIsInstalled "$TARGET_APP"; then
-				ShowError "Sorry! This installer lacks the ability to re-install $TARGET_APP at present. It can only perform a new install."
-				errorcode=9
-				returncode=1
-			fi
-		fi
+		#if [[ $TARGET_APP = 'SickRage' || $TARGET_APP = 'CouchPotato2' ]]; then
+		#	if QPKGIsInstalled "$TARGET_APP"; then
+		#		ShowError "Sorry! This installer lacks the ability to re-install $TARGET_APP at present. It can only perform a new install."
+		#		errorcode=9
+		#		returncode=1
+		#	fi
+		#fi
 
 		[[ $errorcode -eq 0 ]] && LoadQPKGDownloadDetails "$TARGET_APP" && DownloadQPKG
 	fi
@@ -852,6 +852,15 @@ BackupConfig()
 			REINSTALL_FLAG=$package_is_installed
 			[[ $package_is_installed = true ]] && BackupThisPackage
 			;;
+		SickRage)
+			if QPKGIsInstalled 'SickRage'; then
+				LoadQPKGVars 'SickRage'
+				DaemonCtl stop "$package_init_pathfile"
+			fi
+
+			REINSTALL_FLAG=$package_is_installed
+			[[ $package_is_installed = true ]] && BackupThisPackage
+			;;
 		*)
 			ShowError "Can't backup specified app: ($TARGET_APP) - unknown!"
 			;;
@@ -943,7 +952,7 @@ RestoreConfig()
 					result=$?
 
 					if [[ $result -eq 0 ]]; then
-						ShowDone 'restored SABnzbd settings backup'
+						ShowDone "restored ($TARGET_APP) settings backup"
 
 						$SETCFG_CMD "SABnzbdplus" Web_Port $package_port -f "$QPKG_CONFIG_PATHFILE"
 					else
@@ -954,12 +963,12 @@ RestoreConfig()
 				fi
 
 			else
-				ShowError "SABnzbd is NOT installed so can't restore backups"
+				ShowError "($TARGET_APP) is NOT installed so can't restore backups"
 				errorcode=29
 				returncode=1
 			fi
 			;;
-		LazyLibrarian)
+		LazyLibrarian|SickRage|CouchPotato2)
 			if [[ $package_is_installed = true ]]; then
 				if [[ -d $SETTINGS_BACKUP_PATH ]]; then
 					#sleep 10; DaemonCtl stop "$package_init_pathfile"	# allow time for new package init to complete so PID is accurate
@@ -975,7 +984,7 @@ RestoreConfig()
 					result=$?
 
 					if [[ $result -eq 0 ]]; then
-						ShowDone 'restored LazyLibrarian settings backup'
+						ShowDone "restored ($TARGET_APP) settings backup"
 
 						#$SETCFG_CMD "SABnzbdplus" Web_Port $package_port -f "$QPKG_CONFIG_PATHFILE"
 					else
@@ -986,39 +995,7 @@ RestoreConfig()
 				fi
 
 			else
-				ShowError "LazyLibrarian is NOT installed so can't restore backups"
-				errorcode=29
-				returncode=1
-			fi
-			;;
-		CouchPotato2)
-			if [[ $package_is_installed = true ]]; then
-				if [[ -d $SETTINGS_BACKUP_PATH ]]; then
-					#sleep 10; DaemonCtl stop "$package_init_pathfile"	# allow time for new package init to complete so PID is accurate
-					DaemonCtl stop "$package_init_pathfile"
-
-					if [[ ! -d $package_config_path ]]; then
-						$MKDIR_CMD -p "$($DIRNAME_CMD "$package_config_path")" 2> /dev/null
-					else
-						$RM_CMD -r "$package_config_path" 2> /dev/null
-					fi
-
-					$MV_CMD "$SETTINGS_BACKUP_PATH" "$($DIRNAME_CMD "$package_config_path")"
-					result=$?
-
-					if [[ $result -eq 0 ]]; then
-						ShowDone 'restored CouchPotato2 settings backup'
-
-						#$SETCFG_CMD "SABnzbdplus" Web_Port $package_port -f "$QPKG_CONFIG_PATHFILE"
-					else
-						ShowError "Could not restore settings backup to ($package_config_path) [$result]"
-						errorcode=28
-						returncode=1
-					fi
-				fi
-
-			else
-				ShowError "CouchPotato2 is NOT installed so can't restore backups"
+				ShowError "($TARGET_APP) is NOT installed so can't restore backups"
 				errorcode=29
 				returncode=1
 			fi
@@ -1173,28 +1150,28 @@ LoadQPKGVars()
 
 		case "$package_name" in
 			SABnzbdplus|QSabNZBdPlus)
-				package_installed_path="$($GETCFG_CMD "$package_name" Install_Path -f "$QPKG_CONFIG_PATHFILE")"
+				package_installed_path=$($GETCFG_CMD $package_name Install_Path -f $QPKG_CONFIG_PATHFILE)
 				result=$?
 
 				if [[ $result -eq 0 ]]; then
 					package_is_installed=true
-					package_init_pathfile="$($GETCFG_CMD "$package_name" Shell -f "$QPKG_CONFIG_PATHFILE")"
+					package_init_pathfile=$($GETCFG_CMD $package_name Shell -f $QPKG_CONFIG_PATHFILE)
 
-					if [[ $package_name = 'SABnzbdplus' ]]; then
+					if [[ $package_name = SABnzbdplus ]]; then
 						if [[ -d ${package_installed_path}/Config ]]; then
-							package_config_path="${package_installed_path}/Config"
+							package_config_path=${package_installed_path}/Config
 						else
-							package_config_path="${package_installed_path}/config"
+							package_config_path=${package_installed_path}/config
 						fi
 
-					elif [[ $package_name = 'QSabNZBdPlus' ]]; then
-						package_config_path="${package_installed_path}/SAB_CONFIG"
+					elif [[ $package_name = QSabNZBdPlus ]]; then
+						package_config_path=${package_installed_path}/SAB_CONFIG
 					fi
 
 					if [[ -f ${package_config_path}/sabnzbd.ini ]]; then
-						package_settings_pathfile="${package_config_path}/sabnzbd.ini"
+						package_settings_pathfile=${package_config_path}/sabnzbd.ini
 					else
-						package_settings_pathfile="${package_config_path}/config.ini"
+						package_settings_pathfile=${package_config_path}/config.ini
 					fi
 
 					if [[ -e $SETTINGS_BACKUP_PATHFILE ]]; then
@@ -1205,49 +1182,49 @@ LoadQPKGVars()
 							package_port=$($GREP_CMD '^port = ' "$SETTINGS_BACKUP_PATHFILE" | $HEAD_CMD -n1 | $CUT_CMD -f3 -d' ')
 						fi
 					else
-						package_port="$($GETCFG_CMD "$package_name" Web_Port -f "$QPKG_CONFIG_PATHFILE")"
+						package_port=$($GETCFG_CMD $package_name Web_Port -f $QPKG_CONFIG_PATHFILE)
 					fi
 
 					[[ -e $package_settings_pathfile ]] && package_api=$($GREP_CMD -e "^api_key" "$package_settings_pathfile" | $SED_CMD 's|api_key = ||')
-					sab_chartranslator_pathfile="$package_installed_path/Repository/scripts/CharTranslator.py"
+					sab_chartranslator_pathfile=$package_installed_path/Repository/scripts/CharTranslator.py
 				else
 					returncode=1
 				fi
 				;;
 			Entware-3x|Entware-ng)
-				package_installed_path="$($GETCFG_CMD "$package_name" Install_Path -f "$QPKG_CONFIG_PATHFILE")"
+				package_installed_path=$($GETCFG_CMD $package_name Install_Path -f $QPKG_CONFIG_PATHFILE)
 				result=$?
 
 				if [[ $result -eq 0 ]]; then
 					package_is_installed=true
-					package_init_pathfile="$($GETCFG_CMD "$package_name" Shell -f "$QPKG_CONFIG_PATHFILE")"
+					package_init_pathfile=$($GETCFG_CMD $package_name Shell -f $QPKG_CONFIG_PATHFILE)
 				else
 					returncode=1
 				fi
 				;;
 			QCouchPotato)
-				package_installed_path="$($GETCFG_CMD "$package_name" Install_Path -f "$QPKG_CONFIG_PATHFILE")"
+				package_installed_path=$($GETCFG_CMD $package_name Install_Path -f $QPKG_CONFIG_PATHFILE)
 				result=$?
 
 				if [[ $result -eq 0 ]]; then
 					package_is_installed=true
-					package_init_pathfile="$($GETCFG_CMD "$package_name" Shell -f "$QPKG_CONFIG_PATHFILE")"
+					package_init_pathfile=$($GETCFG_CMD $package_name Shell -f $QPKG_CONFIG_PATHFILE)
 				else
 					returncode=1
 				fi
 				;;
-			LazyLibrarian|CouchPotato2)
-				package_installed_path="$($GETCFG_CMD "$package_name" Install_Path -f "$QPKG_CONFIG_PATHFILE")"
+			LazyLibrarian|CouchPotato2|SickRage)
+				package_installed_path=$($GETCFG_CMD $package_name Install_Path -f $QPKG_CONFIG_PATHFILE)
 				result=$?
 
 				if [[ $result -eq 0 ]]; then
 					package_is_installed=true
-					package_init_pathfile="$($GETCFG_CMD "$package_name" Shell -f "$QPKG_CONFIG_PATHFILE")"
+					package_init_pathfile=$($GETCFG_CMD $package_name Shell -f $QPKG_CONFIG_PATHFILE)
 
 					if [[ -d ${package_installed_path}/Config ]]; then
-						package_config_path="${package_installed_path}/Config"
+						package_config_path=${package_installed_path}/Config
 					else
-						package_config_path="${package_installed_path}/config"
+						package_config_path=${package_installed_path}/config
 					fi
 				else
 					returncode=1
@@ -1974,24 +1951,9 @@ if [[ $errorcode -eq 0 ]]; then
 			RestoreConfig
 			[[ $errorcode -eq 0 ]] && DaemonCtl start "$package_init_pathfile"
 			;;
-		LazyLibrarian)
+		LazyLibrarian|SickRage|CouchPotato2)
 			BackupConfig
 			UninstallQPKG $TARGET_APP
-			! QPKGIsInstalled $TARGET_APP && LoadQPKGDownloadDetails $TARGET_APP && InstallQPKG && sleep 10 && LoadQPKGVars $TARGET_APP
-			RestoreConfig
-			[[ $errorcode -eq 0 ]] && DaemonCtl start "$package_init_pathfile"
-			;;
-		SickRage)
-			#BackupConfig
-			#UninstallQPKG $TARGET_APP
-			! QPKGIsInstalled $TARGET_APP && LoadQPKGDownloadDetails $TARGET_APP && InstallQPKG && sleep 10 && LoadQPKGVars $TARGET_APP
-			#RestoreConfig
-			[[ $errorcode -eq 0 ]] && DaemonCtl start "$package_init_pathfile"
-			;;
-		CouchPotato2)
-			BackupConfig
-			UninstallQPKG $TARGET_APP
-			UninstallQPKG 'QCouchPotato'
 			! QPKGIsInstalled $TARGET_APP && LoadQPKGDownloadDetails $TARGET_APP && InstallQPKG && sleep 10 && LoadQPKGVars $TARGET_APP
 			RestoreConfig
 			[[ $errorcode -eq 0 ]] && DaemonCtl start "$package_init_pathfile"
