@@ -536,7 +536,6 @@ InstallExtras()
 	esac
 	[[ $errorcode -eq 0 ]] && InstallIPKs
 	[[ $errorcode -eq 0 ]] && InstallPIPs
-	[[ $errorcode -eq 0 ]] && CreateWaiter
 
 	DebugFuncExit
 	return 0
@@ -916,82 +915,6 @@ ReloadProfile()
 	DebugVar 'PATH'
 
 	return 0
-
-	}
-
-CreateWaiter()
-	{
-
-	DebugFuncEntry
-	local returncode=0
-	local WAITER_PATHFILE="${QPKG_BASE_PATH}/wait-for-Entware.sh"
-	WAIT_FOR_PATH="/opt/${PREF_ENTWARE}.sh"
-
-	$CAT_CMD > "$WAITER_PATHFILE" << EOF
-#!/bin/sh
-
-[ ! -z "\$1" ] && timeout="\$1" || timeout=600
-[ ! -z "\$2" ] && testfile="\$2" || testfile="$WAIT_FOR_PATH"
-scriptname="\$(/usr/bin/basename \$0)"
-waitlog="/var/log/wait-counter-\${scriptname}.log"
-
-if [ ! -e "\$testfile" ]; then
-	(
-		for ((count=1; count<=timeout; count++)); do
-			sleep 1
-			[ -e "\$testfile" ] &&
-				{
-				echo "waited for \$count seconds" >> "\$waitlog"
-				true
-				exit
-				}
-
-		done
-		false
-	)
-
-	if [ "\$?" -ne "0" ]; then
-		echo "timeout exceeded!" >> "\$waitlog"
-		/sbin/write_log "[\$scriptname] Could not continue: timeout exceeded." 1
-		false
-		exit
-	fi
-
-	# if here, then testfile has appeared, so reload environment
-	. /etc/profile
-	. /root/.profile
-fi
-EOF
-
-	result=$?
-
-	if [[ $result -eq 0 ]]; then
-		DebugDone 'waiter created'
-
-		if [[ -f $WAITER_PATHFILE ]]; then
-			$CHMOD_CMD +x "$WAITER_PATHFILE"
-			result=$?
-
-			if [[ $result -eq 0 ]]; then
-				DebugDone 'set waiter executable'
-			else
-				ShowError "Unable to set waiter as executable ($WAITER_PATHFILE) [$result]"
-				errorcode=25
-				returncode=1
-			fi
-		else
-			ShowError "waiter not found ($WAITER_PATHFILE) [$result]"
-			errorcode=26
-			returncode=1
-		fi
-	else
-		ShowError "Unable to create waiter ($WAITER_PATHFILE) [$result]"
-		errorcode=27
-		returncode=1
-	fi
-
-	DebugFuncExit
-	return $returncode
 
 	}
 
@@ -1375,25 +1298,25 @@ LoadQPKGDownloadDetails()
 				;;
 			SABnzbdplus)
 				target_file='SABnzbdplus_180121.qpkg'
-				qpkg_md5='6386d0fbccba8c2dc20ffe4ee7e58192'
+				qpkg_md5='6dfd20ad062c165ed02dde12f90cc7fc'
 				qpkg_url="${OneCD_urlprefix}/SABnzbdplus/build/${target_file}?raw=true"
 				qpkg_file=$target_file
 				;;
 			SickRage)
-				target_file='SickRage_170610.qpkg'
-				qpkg_md5='d1f295d01bc6e39fd59dff24d2b36a3f'
+				target_file='SickRage_180121.qpkg'
+				qpkg_md5='7963d14064c8182df64a99c1d61b720e'
 				qpkg_url="${OneCD_urlprefix}/SickRage/build/${target_file}?raw=true"
 				qpkg_file=$target_file
 				;;
 			CouchPotato2)
-				target_file='CouchPotato2_170610.qpkg'
-				qpkg_md5='5c6e2ff53e45cb2f3b8eba4e34a8900e'
+				target_file='CouchPotato2_180121.qpkg'
+				qpkg_md5='18ee0555470827643fc5cc579e430461'
 				qpkg_url="${OneCD_urlprefix}/CouchPotato2/build/${target_file}?raw=true"
 				qpkg_file=$target_file
 				;;
 			LazyLibrarian)
-				target_file='LazyLibrarian_171231.qpkg'
-				qpkg_md5='2d41a7ac11a113aafb65d8ec16e09c07'
+				target_file='LazyLibrarian_180121.qpkg'
+				qpkg_md5='2ee285e48a994bafb7b82c893b3823f8'
 				qpkg_url="${OneCD_urlprefix}/LazyLibrarian/build/${target_file}?raw=true"
 				qpkg_file=$target_file
 				;;

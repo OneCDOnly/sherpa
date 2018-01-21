@@ -1,18 +1,17 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 Init()
 	{
 
-	QPKG_NAME=SABnzbdplus
-	local TARGET_SCRIPT=SABnzbd.py
+	QPKG_NAME=Medusa
+	local TARGET_SCRIPT=SickBeard.py
 
 	QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
-	NZBMEDIA_PATH=/share/$(/sbin/getcfg SHARE_DEF defDownload -d Qdownload -f /etc/config/def_share.info)
 	SETTINGS_PATH=${QPKG_PATH}/config
 	local SETTINGS_PATHFILE=${SETTINGS_PATH}/config.ini
 	local SETTINGS_DEFAULT_PATHFILE=${SETTINGS_PATHFILE}.def
 	STORED_PID_PATHFILE=/tmp/${QPKG_NAME}.pid
-	local SETTINGS="--config-file $SETTINGS_PATHFILE --browser 0"
+	local SETTINGS="--datadir $SETTINGS_PATH"
 	local PIDS="--pidfile $STORED_PID_PATHFILE"
 	DAEMON_OPTS="$TARGET_SCRIPT --daemon $SETTINGS $PIDS"
 	LOG_PATHFILE=/var/log/${QPKG_NAME}.log
@@ -60,7 +59,7 @@ QPKGIsActive()
 UpdateQpkg()
 	{
 
-	PullGitRepo $QPKG_NAME 'http://github.com/sabnzbd/sabnzbd.git' "$QPKG_PATH" && PullGitRepo 'nzbToMedia' 'http://github.com/clinton-hall/nzbToMedia.git' "$NZBMEDIA_PATH"
+	PullGitRepo $QPKG_NAME 'http://github.com/pymedusa/Medusa.git' "$SAB_PATH"
 
 	}
 
@@ -120,7 +119,7 @@ StartQPKG()
 	exec_msgs="$(${DAEMON} ${DAEMON_OPTS} 2>&1)"
 	result=$?
 
-	if [[ $result = 0 || $result = 2 ]]; then
+	if [[ $result = 0 ]]; then
 		msg='OK'
 		echo -e "$msg" | tee -a "$LOG_PATHFILE"
 		echo -e "${exec_msgs}" >> "$LOG_PATHFILE"
@@ -225,17 +224,17 @@ Init
 if [[ $errorcode -eq 0 ]]; then
 	case "$1" in
 		start)
-			echo -e "$(SessionSeparator 'start requested')\n= $(date)" >> "$LOG_PATHFILE"
+			echo -e "$(SessionSeparator "start requested")\n= $(date)" >> "$LOG_PATHFILE"
 			! QPKGIsActive && UpdateQpkg; StartQPKG || errorcode=1
 			;;
 
 		stop)
-			echo -e "$(SessionSeparator 'stop requested')\n= $(date)" >> "$LOG_PATHFILE"
+			echo -e "$(SessionSeparator "stop requested")\n= $(date)" >> "$LOG_PATHFILE"
 			QPKGIsActive && StopQPKG || errorcode=1
 			;;
 
 		restart)
-			echo -e "$(SessionSeparator 'restart requested')\n= $(date)" >> "$LOG_PATHFILE"
+			echo -e "$(SessionSeparator "restart requested")\n= $(date)" >> "$LOG_PATHFILE"
 			QPKGIsActive && StopQPKG; UpdateQpkg; StartQPKG || errorcode=1
 			;;
 
