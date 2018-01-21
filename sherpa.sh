@@ -1275,25 +1275,25 @@ LoadQPKGDownloadDetails()
 				;;
 			SABnzbdplus)
 				target_file='SABnzbdplus_180121.qpkg'
-				qpkg_md5='6dfd20ad062c165ed02dde12f90cc7fc'
+				qpkg_md5='b0f1522bace87b0bc973b47aaf82f9ab'
 				qpkg_url="${OneCD_urlprefix}/SABnzbdplus/build/${target_file}?raw=true"
 				qpkg_file=$target_file
 				;;
 			SickRage)
 				target_file='SickRage_180121.qpkg'
-				qpkg_md5='7963d14064c8182df64a99c1d61b720e'
+				qpkg_md5='2c99665d8fd0a423afbf9b4eae3a427d'
 				qpkg_url="${OneCD_urlprefix}/SickRage/build/${target_file}?raw=true"
 				qpkg_file=$target_file
 				;;
 			CouchPotato2)
 				target_file='CouchPotato2_180121.qpkg'
-				qpkg_md5='18ee0555470827643fc5cc579e430461'
+				qpkg_md5='0dc85000a8fe2c921e6265a19b13c3e0'
 				qpkg_url="${OneCD_urlprefix}/CouchPotato2/build/${target_file}?raw=true"
 				qpkg_file=$target_file
 				;;
 			LazyLibrarian)
 				target_file='LazyLibrarian_180121.qpkg'
-				qpkg_md5='2ee285e48a994bafb7b82c893b3823f8'
+				qpkg_md5='6705d22a648caaf6bedf64bc0e9352b8'
 				qpkg_url="${OneCD_urlprefix}/LazyLibrarian/build/${target_file}?raw=true"
 				qpkg_file=$target_file
 				;;
