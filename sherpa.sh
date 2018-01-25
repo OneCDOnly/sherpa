@@ -22,15 +22,15 @@
 # this program. If not, see http://www.gnu.org/licenses/.
 ###############################################################################
 
-LAUNCHED_AS="$0"
-[[ ! -z $1 && $1 = '--debug' ]] && debug=true || debug=false
+user_parameters_raw="$@"
 
 Init()
     {
 
     local returncode=0
     local SCRIPT_FILE='sherpa.sh'
-    local SCRIPT_VERSION=2018.01.21b
+    local SCRIPT_VERSION=2018.01.26b
+    debug=false
 
     # cherry-pick required binaries
     CAT_CMD='/bin/cat'
@@ -149,13 +149,12 @@ Init()
     queuepaused=false
     FIRMWARE_VERSION="$($GETCFG_CMD System Version -f "$ULINUX_PATHFILE")"
     NAS_ARCH="$($UNAME_CMD -m)"
-    TARGET_APP="$($BASENAME_CMD $LAUNCHED_AS)"
     progress_message=''
     previous_length=0
     previous_msg=''
     REINSTALL_FLAG=false
 
-    [[ $TARGET_APP = $SCRIPT_FILE ]] && DisplayHelp && errorcode=1
+    ParseArgs
 
     if [[ $errorcode -eq 0 ]]; then
         DebugFuncEntry
@@ -164,10 +163,7 @@ Init()
 
         [[ $debug = false ]] && echo -e "$(ColourTextBrightWhite "$SCRIPT_FILE") ($SCRIPT_VERSION)\n"
 
-        DebugScript 'file' "$SCRIPT_FILE"
         DebugScript 'version' "$SCRIPT_VERSION"
-        DebugScript 'launched as' "$LAUNCHED_AS"
-        DebugScript 'target app' "$TARGET_APP"
         DebugThinSeparator
         DebugInfo 'Markers: (**) detected, (II) information, (WW) warning, (EE) error,'
         DebugInfo '         (--) done, (>>) function entry, (<<) function exit,'
@@ -183,6 +179,8 @@ Init()
         DebugNAS '$PATH' "${PATH:0:42}"
         DebugNAS '/opt' "$([[ -L '/opt' ]] && $READLINK_CMD '/opt' || echo "not present")"
         DebugNAS "$SHARE_DOWNLOAD_PATH" "$([[ -L $SHARE_DOWNLOAD_PATH ]] && $READLINK_CMD "$SHARE_DOWNLOAD_PATH" || echo "not present!")"
+        DebugScript 'user parameters' "$user_parameters_raw"
+        DebugScript 'target app' "$TARGET_APP"
         DebugThinSeparator
     fi
 
@@ -247,25 +245,52 @@ Init()
 
     }
 
+ParseArgs()
+	{
+
+	if [[ ! -n $user_parameters_raw ]]; then
+		DisplayHelp
+		errorcode=1
+		return 1
+	else
+		user_parameters=( $(echo "$user_parameters_raw" | tr '[A-Z]' '[a-z]') )
+	fi
+
+	for arg in "${user_parameters[@]}"; do
+		case $arg in
+			sab|sabnzbd|sabnzbdplus)
+				TARGET_APP=SABnzbdplus
+				;;
+			sr|sickrage)
+				TARGET_APP=SickRage
+				;;
+			cp|couchpotato|couchpotato2|couchpotatoserver)
+				TARGET_APP=CouchPotato2
+				;;
+			ll|lazylibrarian)
+				TARGET_APP=LazyLibrarian
+				;;
+			-d|--debug)
+				debug=true
+				;;
+			*)
+				break
+				;;
+		esac
+	done
+
+	return 0
+
+	}
+
 DisplayHelp()
     {
 
-    EnsureExecLinkExists()
-        {
-
-        # $1 = name of symlink to check for/create
-
-        [[ ! -L $(dirname $0)/$1 ]] && ln -s $0 $(dirname $0)/$1
-        echo "./$1"
-
-        }
-
-    echo -e "\nUse one the following commands to install each application:\n"
-    EnsureExecLinkExists 'SABnzbdplus'
-    #EnsureExecLinkExists 'NZBGet'
-    EnsureExecLinkExists 'SickRage'
-    EnsureExecLinkExists 'CouchPotato2'
-    EnsureExecLinkExists 'LazyLibrarian'
+    echo -e "\nEach application can be installed by calling $0 with the name of the required app as a parameter.\n\nfor example:"
+    echo "$0 SABnzbd"
+    echo "$0 SickRage"
+    echo "$0 CouchPotato2"
+    echo "$0 LazyLibrarian"
     echo
 
     }

@@ -42,21 +42,21 @@ cd /share/Public
 3) Download & extract the archive file (copy and paste at the command line):
 
 ```
-curl -O https://raw.githubusercontent.com/onecdonly/sherpa/master/sherpa.tar.gz && tar -zxvf sherpa.tar.gz
+curl -O https://raw.githubusercontent.com/onecdonly/sherpa/master/sherpa.sh && chmod +x sherpa.sh
 ```
 
 4) Then, to (re)install SABnzbd+:
 
 ```
-./SABnzbdplus
+./sherpa.sh SABnzbdplus
 ```
 
 Or:
 
 ```
-./SickRage
+./sherpa.sh SickRage
 
-./CouchPotato2
+./sherpa.sh CouchPotato2
 
-./LazyLibrarian
+./sherpa.sh LazyLibrarian
 ```
