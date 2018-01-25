@@ -22,14 +22,14 @@
 # this program. If not, see http://www.gnu.org/licenses/.
 ###############################################################################
 
-user_parameters_raw="$@"
+user_args_raw="$@"
 
 Init()
     {
 
     local returncode=0
     local SCRIPT_FILE='sherpa.sh'
-    local SCRIPT_VERSION=2018.01.26b
+    local SCRIPT_VERSION=18012601b
     debug=false
 
     # cherry-pick required binaries
@@ -179,7 +179,7 @@ Init()
         DebugNAS '$PATH' "${PATH:0:42}"
         DebugNAS '/opt' "$([[ -L '/opt' ]] && $READLINK_CMD '/opt' || echo "not present")"
         DebugNAS "$SHARE_DOWNLOAD_PATH" "$([[ -L $SHARE_DOWNLOAD_PATH ]] && $READLINK_CMD "$SHARE_DOWNLOAD_PATH" || echo "not present!")"
-        DebugScript 'user parameters' "$user_parameters_raw"
+        DebugScript 'user arguments' "$user_args_raw"
         DebugScript 'target app' "$TARGET_APP"
         DebugThinSeparator
     fi
@@ -248,15 +248,15 @@ Init()
 ParseArgs()
 	{
 
-	if [[ ! -n $user_parameters_raw ]]; then
+	if [[ ! -n $user_args_raw ]]; then
 		DisplayHelp
 		errorcode=1
 		return 1
 	else
-		user_parameters=( $(echo "$user_parameters_raw" | tr '[A-Z]' '[a-z]') )
+		user_args=( $(echo "$user_args_raw" | tr '[A-Z]' '[a-z]') )
 	fi
 
-	for arg in "${user_parameters[@]}"; do
+	for arg in "${user_args[@]}"; do
 		case $arg in
 			sab|sabnzbd|sabnzbdplus)
 				TARGET_APP=SABnzbdplus
@@ -286,7 +286,7 @@ ParseArgs()
 DisplayHelp()
     {
 
-    echo -e "\nEach application can be installed by calling $0 with the name of the required app as a parameter.\n\nfor example:"
+    echo -e "\nEach application can be installed by calling $0 with the name of the required app as an argument.\n\nfor example:"
     echo "$0 SABnzbd"
     echo "$0 SickRage"
     echo "$0 CouchPotato2"
