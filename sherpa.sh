@@ -22,7 +22,7 @@
 # this program. If not, see http://www.gnu.org/licenses/.
 ###############################################################################
 
-user_args_raw="$@"
+USER_ARGS_RAW="$@"
 
 Init()
     {
@@ -179,7 +179,7 @@ Init()
         DebugNAS '$PATH' "${PATH:0:42}"
         DebugNAS '/opt' "$([[ -L '/opt' ]] && $READLINK_CMD '/opt' || echo "not present")"
         DebugNAS "$SHARE_DOWNLOAD_PATH" "$([[ -L $SHARE_DOWNLOAD_PATH ]] && $READLINK_CMD "$SHARE_DOWNLOAD_PATH" || echo "not present!")"
-        DebugScript 'user arguments' "$user_args_raw"
+        DebugScript 'user arguments' "$USER_ARGS_RAW"
         DebugScript 'target app' "$TARGET_APP"
         DebugThinSeparator
     fi
@@ -248,12 +248,12 @@ Init()
 ParseArgs()
 	{
 
-	if [[ ! -n $user_args_raw ]]; then
+	if [[ ! -n $USER_ARGS_RAW ]]; then
 		DisplayHelp
 		errorcode=1
 		return 1
 	else
-		user_args=( $(echo "$user_args_raw" | tr '[A-Z]' '[a-z]') )
+		local user_args=( $(echo "$USER_ARGS_RAW" | tr '[A-Z]' '[a-z]') )
 	fi
 
 	for arg in "${user_args[@]}"; do
@@ -1290,8 +1290,8 @@ LoadQPKGDownloadDetails()
                 qpkg_url='http://entware.zyxmon.org/binaries/other/Entware-ng_0.97.qpkg'
                 ;;
             SABnzbdplus)
-                target_file='SABnzbdplus_180121.qpkg'
-                qpkg_md5='b0f1522bace87b0bc973b47aaf82f9ab'
+                target_file='SABnzbdplus_180126.qpkg'
+                qpkg_md5='92e3bd61ae4acdef88f618b0795cb91c'
                 qpkg_url="${OneCD_urlprefix}/SABnzbdplus/build/${target_file}?raw=true"
                 qpkg_file=$target_file
                 ;;
