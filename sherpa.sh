@@ -29,7 +29,7 @@ Init()
 
     local returncode=0
     local SCRIPT_FILE='sherpa.sh'
-    local SCRIPT_VERSION=18012601b
+    local SCRIPT_VERSION=18012602b
     debug=false
 
     # cherry-pick required binaries
@@ -1951,6 +1951,19 @@ PrintResetColours()
 
     }
 
+PauseHere()
+	{
+
+	# wait here temporarily
+
+	local waittime=10
+
+	ShowProc "waiting for $waittime seconds"
+	sleep 10
+	ShowDone "wait complete"
+
+	}
+
 Init
 PauseDownloaders
 RemoveOther
@@ -1965,14 +1978,14 @@ if [[ $errorcode -eq 0 ]]; then
             BackupConfig
             UninstallQPKG $TARGET_APP
             UninstallQPKG 'QSabNZBdPlus'
-            ! QPKGIsInstalled $TARGET_APP && LoadQPKGDownloadDetails $TARGET_APP && InstallQPKG && sleep 10 && LoadQPKGVars $TARGET_APP && InstallSABLanguages
+            ! QPKGIsInstalled $TARGET_APP && LoadQPKGDownloadDetails $TARGET_APP && InstallQPKG && PauseHere && LoadQPKGVars $TARGET_APP && InstallSABLanguages
             RestoreConfig
             [[ $errorcode -eq 0 ]] && DaemonCtl start "$package_init_pathfile"
             ;;
         LazyLibrarian|SickRage|CouchPotato2)
             BackupConfig
             UninstallQPKG $TARGET_APP
-            ! QPKGIsInstalled $TARGET_APP && LoadQPKGDownloadDetails $TARGET_APP && InstallQPKG && sleep 10 && LoadQPKGVars $TARGET_APP
+            ! QPKGIsInstalled $TARGET_APP && LoadQPKGDownloadDetails $TARGET_APP && InstallQPKG && PauseHere && LoadQPKGVars $TARGET_APP
             RestoreConfig
             [[ $errorcode -eq 0 ]] && DaemonCtl start "$package_init_pathfile"
             ;;
