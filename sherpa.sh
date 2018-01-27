@@ -294,6 +294,7 @@ DisplayHelp()
     echo "$0 SickRage"
     echo "$0 CouchPotato2"
     echo "$0 LazyLibrarian"
+    echo "$0 OMedusa"
     echo
 
     }
@@ -890,8 +891,18 @@ BackupConfig()
             REINSTALL_FLAG=$package_is_installed
             [[ $package_is_installed = true ]] && BackupThisPackage
             ;;
+        OMedusa)
+            if QPKGIsInstalled 'OMedusa'; then
+                LoadQPKGVars 'OMedusa'
+                DaemonCtl stop "$package_init_pathfile"
+            fi
+
+            REINSTALL_FLAG=$package_is_installed
+            [[ $package_is_installed = true ]] && BackupThisPackage
+            ;;
         *)
             ShowError "Can't backup specified app: ($TARGET_APP) - unknown!"
+            returncode=1
             ;;
     esac
 
@@ -904,6 +915,7 @@ ConvertSettings()
     {
 
     DebugFuncEntry
+    local returncode=0
 
     case "$TARGET_APP" in
         SABnzbdplus)
@@ -931,7 +943,7 @@ ConvertSettings()
                 fi
             fi
             ;;
-        LazyLibrarian|SickRage)
+        LazyLibrarian|SickRage|OMedusa)
             # do nothing - don't need to convert from older versions for these QPKGs as sherpa is the only installer for them.
             ;;
         CouchPotato2)
@@ -939,11 +951,12 @@ ConvertSettings()
             ;;
         *)
             ShowError "Can't convert settings for ($TARGET_APP) - unsupported app!"
+            returncode=1
             ;;
     esac
 
     DebugFuncExit
-    return 0
+    return $returncode
 
     }
 
@@ -994,7 +1007,7 @@ RestoreConfig()
                     fi
                 fi
                 ;;
-            LazyLibrarian|SickRage|CouchPotato2)
+            LazyLibrarian|SickRage|CouchPotato2|OMedusa)
                 if [[ -d $SETTINGS_BACKUP_PATH ]]; then
                     #sleep 10; DaemonCtl stop "$package_init_pathfile"  # allow time for new package init to complete so PID is accurate
                     DaemonCtl stop "$package_init_pathfile"
@@ -1021,6 +1034,7 @@ RestoreConfig()
                 ;;
             *)
                 ShowError "Can't restore settings for ($TARGET_APP) - unsupported app!"
+                returncode=1
                 ;;
         esac
     else
@@ -1233,7 +1247,7 @@ LoadQPKGVars()
                     returncode=1
                 fi
                 ;;
-            LazyLibrarian|CouchPotato2|SickRage)
+            LazyLibrarian|CouchPotato2|SickRage|OMedusa)
                 package_installed_path=$($GETCFG_CMD $package_name Install_Path -f $QPKG_CONFIG_PATHFILE)
                 result=$?
 
