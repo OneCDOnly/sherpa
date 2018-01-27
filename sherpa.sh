@@ -29,7 +29,7 @@ Init()
 
     local returncode=0
     local SCRIPT_FILE='sherpa.sh'
-    local SCRIPT_VERSION=18012602b
+    local SCRIPT_VERSION=180128b
     debug=false
 
     # cherry-pick required binaries
@@ -269,6 +269,9 @@ ParseArgs()
 				;;
 			ll|lazylibrarian)
 				TARGET_APP=LazyLibrarian
+				;;
+			med|medusa|omedusa)
+				TARGET_APP=OMedusa
 				;;
 			-d|--debug)
 				debug=true
@@ -1313,6 +1316,12 @@ LoadQPKGDownloadDetails()
                 qpkg_url="${OneCD_urlprefix}/LazyLibrarian/build/${target_file}?raw=true"
                 qpkg_file=$target_file
                 ;;
+            OMedusa)
+                target_file='OMedusa_180128.qpkg'
+                qpkg_md5='bdbd33bf1148a9e12f1bfe0aa4f3dcc3'
+                qpkg_url="${OneCD_urlprefix}/OMedusa/build/${target_file}?raw=true"
+                qpkg_file=$target_file
+                ;;
             Par2cmdline-MT)
                 case "$STEPHANE_QPKG_ARCH" in
                     x86)
@@ -1710,13 +1719,6 @@ DebugScript()
 
     }
 
-DebugSAB()
-    {
-
-    DebugDetected 'SAB' "$1" "$2"
-
-    }
-
 DebugNAS()
     {
 
@@ -1982,7 +1984,7 @@ if [[ $errorcode -eq 0 ]]; then
             RestoreConfig
             [[ $errorcode -eq 0 ]] && DaemonCtl start "$package_init_pathfile"
             ;;
-        LazyLibrarian|SickRage|CouchPotato2)
+        LazyLibrarian|SickRage|CouchPotato2|OMedusa)
             BackupConfig
             UninstallQPKG $TARGET_APP
             ! QPKGIsInstalled $TARGET_APP && LoadQPKGDownloadDetails $TARGET_APP && InstallQPKG && PauseHere && LoadQPKGVars $TARGET_APP

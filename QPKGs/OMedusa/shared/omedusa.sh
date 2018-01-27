@@ -3,17 +3,17 @@
 Init()
 	{
 
-	QPKG_NAME=Medusa
-	local TARGET_SCRIPT=SickBeard.py
+	QPKG_NAME=OMedusa
+	local TARGET_SCRIPT=start.py
 
 	QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
 	SETTINGS_PATH=${QPKG_PATH}/config
 	local SETTINGS_PATHFILE=${SETTINGS_PATH}/config.ini
 	local SETTINGS_DEFAULT_PATHFILE=${SETTINGS_PATHFILE}.def
 	STORED_PID_PATHFILE=/tmp/${QPKG_NAME}.pid
-	local SETTINGS="--datadir $SETTINGS_PATH"
+	local SETTINGS="--datadir $SETTINGS_PATH --config $SETTINGS_PATHFILE"
 	local PIDS="--pidfile $STORED_PID_PATHFILE"
-	DAEMON_OPTS="$TARGET_SCRIPT --daemon $SETTINGS $PIDS"
+	DAEMON_OPTS="$TARGET_SCRIPT --daemon --nolaunch $SETTINGS $PIDS"
 	LOG_PATHFILE=/var/log/${QPKG_NAME}.log
 	DAEMON=/opt/bin/python2.7
 	export PYTHONPATH=$DAEMON
@@ -59,7 +59,7 @@ QPKGIsActive()
 UpdateQpkg()
 	{
 
-	PullGitRepo $QPKG_NAME 'http://github.com/pymedusa/Medusa.git' "$SAB_PATH"
+	PullGitRepo $QPKG_NAME 'http://github.com/pymedusa/Medusa.git' "$QPKG_PATH"
 
 	}
 
