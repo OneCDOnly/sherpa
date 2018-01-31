@@ -691,20 +691,6 @@ InstallPIPs()
 
     }
 
-InstallSABLanguages()
-    {
-
-    ShowProc "creating SABnzbd lanugage files"
-
-    local olddir=$PWD
-    cd "$package_installed_path/SABnzbdplus"
-    python tools/make_mo.py >/dev/null
-    cd $olddir
-
-    ShowDone "created SABnzbd language files"
-
-    }
-
 InstallNG()
     {
 
@@ -1307,8 +1293,8 @@ LoadQPKGDownloadDetails()
                 qpkg_url='http://entware.zyxmon.org/binaries/other/Entware-ng_0.97.qpkg'
                 ;;
             SABnzbdplus)
-                target_file='SABnzbdplus_180126.qpkg'
-                qpkg_md5='92e3bd61ae4acdef88f618b0795cb91c'
+                target_file='SABnzbdplus_180131.qpkg'
+                qpkg_md5='3db999cd8c5598d804ad3954d7a0629c'
                 qpkg_url="${OneCD_urlprefix}/SABnzbdplus/build/${target_file}?raw=true"
                 qpkg_file=$target_file
                 ;;
@@ -1994,7 +1980,7 @@ if [[ $errorcode -eq 0 ]]; then
             BackupConfig
             UninstallQPKG $TARGET_APP
             UninstallQPKG 'QSabNZBdPlus'
-            ! QPKGIsInstalled $TARGET_APP && LoadQPKGDownloadDetails $TARGET_APP && InstallQPKG && PauseHere && LoadQPKGVars $TARGET_APP && InstallSABLanguages
+            ! QPKGIsInstalled $TARGET_APP && LoadQPKGDownloadDetails $TARGET_APP && InstallQPKG && PauseHere && LoadQPKGVars $TARGET_APP
             RestoreConfig
             [[ $errorcode -eq 0 ]] && DaemonCtl start "$package_init_pathfile"
             ;;

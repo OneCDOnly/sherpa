@@ -60,7 +60,41 @@ QPKGIsActive()
 UpdateQpkg()
 	{
 
-	PullGitRepo $QPKG_NAME 'http://github.com/sabnzbd/sabnzbd.git' "$QPKG_PATH" && PullGitRepo 'nzbToMedia' 'http://github.com/clinton-hall/nzbToMedia.git' "$NZBMEDIA_PATH"
+	PullGitRepo $QPKG_NAME 'http://github.com/sabnzbd/sabnzbd.git' "$QPKG_PATH" && UpdateLanguages
+	PullGitRepo 'nzbToMedia' 'http://github.com/clinton-hall/nzbToMedia.git' "$NZBMEDIA_PATH"
+
+	}
+
+UpdateLanguages()
+	{
+
+	# run [tools/make_mo.py] if SABnzbd version number has changed since last run
+
+	local msg=''
+	local exec_msgs=''
+	local olddir=$PWD
+	local version_current_pathfile=${QPKG_PATH}/SABnzbdplus/sabnzbd/version.py
+	local version_store_pathfile=$(dirname $version_current_pathfile)/version.stored
+	local version_current_number=$(grep '__version__ =' $version_current_pathfile | sed 's|^.*"\(.*\)"|\1|')
+
+	[[ -e $version_store_pathfile ]] && [[ $version_current_number = $(<$version_store_pathfile) ]] && return 0
+
+	echo -n "* updating language support ($QPKG_NAME): " | tee -a "$LOG_PATHFILE"
+	cd $QPKG_PATH/SABnzbdplus
+
+	exec_msgs="$(python tools/make_mo.py)"
+	result=$?
+
+	if [[ $result -eq 0 ]]; then
+		echo "$version_current_number" > $version_store_pathfile
+		msg='OK'
+		echo -e "$msg" | tee -a "$LOG_PATHFILE"
+	else
+		msg="failed!\nresult=[$result]"
+		echo -e "${msg}\n${exec_msgs}" | tee -a "$LOG_PATHFILE"
+	fi
+
+	cd $olddir
 
 	}
 
@@ -73,6 +107,7 @@ PullGitRepo()
 
 	local returncode=0
 	local msg=''
+	local exec_msgs=''
 	local GIT_CMD=/opt/bin/git
 
 	[[ -z $1 ]] && returncode=1; [[ -z $2 ]] && returncode=1; [[ -z $3 ]] && returncode=1
@@ -111,6 +146,7 @@ StartQPKG()
 
 	local returncode=0
 	local msg=''
+	local exec_msgs=''
 
 	[[ -e $STORED_PID_PATHFILE ]] && StopQPKG
 
