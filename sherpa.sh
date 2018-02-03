@@ -29,7 +29,7 @@ Init()
 
     local returncode=0
     local SCRIPT_FILE='sherpa.sh'
-    local SCRIPT_VERSION=180131b
+    local SCRIPT_VERSION=180203b
     debug=false
 
     # cherry-pick required binaries
@@ -289,7 +289,7 @@ ParseArgs()
 DisplayHelp()
     {
 
-    echo -e "\nEach application can be installed by calling $0 with the name of the required app as an argument.\n\nfor example:"
+    echo -e "\nEach application is (re)installed by calling $0 with the name of the required app as an argument.\n\nSome examples are:"
     echo "$0 SABnzbd"
     echo "$0 SickRage"
     echo "$0 CouchPotato2"
@@ -1285,8 +1285,8 @@ LoadQPKGDownloadDetails()
 
         case "$1" in
             Entware-3x)
-                qpkg_md5='4b6fb5c57f8d6b045643e4e836f0ffaa'
-                qpkg_url='http://entware-3x.zyxmon.org/binaries/other/Entware-3x_0.999std.qpkg'
+                qpkg_md5='fa5719ab2138c96530287da8e6812746'
+                qpkg_url='http://entware-3x.zyxmon.org/binaries/other/Entware-3x_1.00std.qpkg'
                 ;;
             Entware-ng)
                 qpkg_md5='6c81cc37cbadd85adfb2751dc06a238f'
