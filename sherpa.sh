@@ -29,7 +29,7 @@ Init()
 
     local returncode=0
     local SCRIPT_FILE='sherpa.sh'
-    local SCRIPT_VERSION=180203b
+    local SCRIPT_VERSION=180204b
     debug=false
 
     # cherry-pick required binaries
@@ -1549,11 +1549,7 @@ DisplayResult()
     DebugScript 'elapsed time' "$(ConvertSecs "$(($($DATE_CMD +%s)-$([[ -n $SCRIPT_STARTSECONDS ]] && echo $SCRIPT_STARTSECONDS || echo "1")))")"
     DebugThickSeparator
 
-    if [[ -e $DEBUG_LOG_PATHFILE ]]; then
-        [[ $debug = false ]] && echo
-        echo -e "- To display the debug log, use:\ncat $DEBUG_LOG_PATHFILE"
-        [[ $debug = false ]] && echo
-    fi
+    [[ -e $DEBUG_LOG_PATHFILE && $debug = false ]] && echo -e "\n- To display the debug log, use:\ncat ${DEBUG_LOG_PATHFILE}\n"
 
     DebugFuncExit
     return 0
