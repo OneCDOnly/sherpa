@@ -29,7 +29,7 @@ Init()
 
     local returncode=0
     local SCRIPT_FILE='sherpa.sh'
-    local SCRIPT_VERSION=180219b
+    local SCRIPT_VERSION=180223b
     debug=false
 
     # cherry-pick required binaries
@@ -53,6 +53,7 @@ Init()
     GETCFG_CMD='/sbin/getcfg'
     RMCFG_CMD='/sbin/rmcfg'
     SETCFG_CMD='/sbin/setcfg'
+    CURL_CMD='/sbin/curl'
 
     BASENAME_CMD='/usr/bin/basename'
     CUT_CMD='/usr/bin/cut'
@@ -100,6 +101,7 @@ Init()
     SysFilePresent "$GETCFG_CMD" || return
     SysFilePresent "$RMCFG_CMD" || return
     SysFilePresent "$SETCFG_CMD" || return
+    SysFilePresent "$CURL_CMD" || return
 
     SysFilePresent "$BASENAME_CMD" || return
     SysFilePresent "$CUT_CMD" || return
@@ -110,7 +112,6 @@ Init()
     SysFilePresent "$UNZIP_CMD" || return
     SysFilePresent "$UPTIME_CMD" || return
     SysFilePresent "$WC_CMD" || return
-    SysFilePresent "$WGET_CMD" || return
 
     local DEFAULT_SHARE_DOWNLOAD_PATH='/share/Download'
     local DEFAULT_SHARE_PUBLIC_PATH='/share/Public'
@@ -1068,9 +1069,9 @@ DownloadQPKG()
         [[ -e $log_pathfile ]] && rm -f "$log_pathfile"
 
         if [[ $debug = true ]]; then
-            $WGET_CMD --no-check-certificate -q --show-progress "$qpkg_url" --output-document "$qpkg_pathfile"
+            $CURL_CMD --output "$qpkg_pathfile" "$qpkg_url"
         else
-            $WGET_CMD --no-check-certificate --output-file "$log_pathfile" "$qpkg_url" --output-document "$qpkg_pathfile"
+            $CURL_CMD --silent --output "$qpkg_pathfile" "$qpkg_url"
         fi
 
         result=$?
@@ -1267,7 +1268,7 @@ LoadQPKGDownloadDetails()
 
     local returncode=0
     local target_file=''
-    local OneCD_urlprefix='https://github.com/OneCDOnly/sherpa/blob/master/QPKGs'
+    local OneCD_urlprefix='https://raw.githubusercontent.com/onecdonly/sherpa/master/QPKGs'
     local Stephane_urlprefix='http://www.qoolbox.fr'
 
     qpkg_url=''
