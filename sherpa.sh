@@ -112,6 +112,7 @@ Init()
     SysFilePresent "$UNZIP_CMD" || return
     SysFilePresent "$UPTIME_CMD" || return
     SysFilePresent "$WC_CMD" || return
+    SysFilePresent "$WGET_CMD" || return
 
     local DEFAULT_SHARE_DOWNLOAD_PATH='/share/Download'
     local DEFAULT_SHARE_PUBLIC_PATH='/share/Public'
@@ -1069,9 +1070,9 @@ DownloadQPKG()
         [[ -e $log_pathfile ]] && rm -f "$log_pathfile"
 
         if [[ $debug = true ]]; then
-            $CURL_CMD --output "$qpkg_pathfile" "$qpkg_url"
+            $CURL_CMD --output "$qpkg_pathfile" "$qpkg_url" 2>&1 | tee -a "$log_pathfile"
         else
-            $CURL_CMD --silent --output "$qpkg_pathfile" "$qpkg_url"
+            $CURL_CMD --output "$qpkg_pathfile" "$qpkg_url" >> "$log_pathfile" 2>&1
         fi
 
         result=$?
@@ -1100,7 +1101,7 @@ DownloadQPKG()
 
             if [[ $debug = true ]]; then
                 DebugThickSeparator
-                $CAT_CMD "$qpkg_pathfile.$DOWNLOAD_LOG_FILE"
+                $CAT_CMD "$log_pathfile"
                 DebugThickSeparator
             fi
 
