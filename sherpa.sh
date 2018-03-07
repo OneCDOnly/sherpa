@@ -29,7 +29,7 @@ Init()
 
     local returncode=0
     local SCRIPT_FILE='sherpa.sh'
-    local SCRIPT_VERSION=180223b
+    local SCRIPT_VERSION=180308b
     debug=false
 
     # cherry-pick required binaries
@@ -513,10 +513,14 @@ UpdateEntware()
         # if Entware package list was updated less that 1 hour ago, don't run another update
         [[ -e $FIND_CMD ]] && result=$($FIND_CMD "$package_list_file" -mmin +$package_list_age)
 
+        # temporarily force update until new combined Entware QPKG is available
+		result='x'
+
         if [[ -n $result ]] ; then
             ShowProc "updating 'Entware'"
 
-            $OPKG_CMD update > /dev/null
+            #$OPKG_CMD update > /dev/null
+            ($OPKG_CMD update; $OPKG_CMD upgrade; $OPKG_CMD update; $OPKG_CMD upgrade > /dev/null)
             result=$?
 
             if [[ $result -eq 0 ]]; then
