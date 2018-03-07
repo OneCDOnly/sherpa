@@ -510,7 +510,7 @@ UpdateEntware()
         errorcode=13
         returncode=1
     else
-        # if Entware package list was updated less that 1 hour ago, don't run another update
+        # if Entware package list was updated only recently, don't run another update
         [[ -e $FIND_CMD ]] && result=$($FIND_CMD "$package_list_file" -mmin +$package_list_age)
 
         # temporarily force update until new combined Entware QPKG is available
