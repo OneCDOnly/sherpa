@@ -248,45 +248,45 @@ Init()
     }
 
 ParseArgs()
-	{
+    {
 
-	if [[ ! -n $USER_ARGS_RAW ]]; then
-		DisplayHelp
-		errorcode=1
-		return 1
-	else
-		local user_args=( $(echo "$USER_ARGS_RAW" | tr '[A-Z]' '[a-z]') )
-	fi
+    if [[ ! -n $USER_ARGS_RAW ]]; then
+        DisplayHelp
+        errorcode=1
+        return 1
+    else
+        local user_args=( $(echo "$USER_ARGS_RAW" | tr '[A-Z]' '[a-z]') )
+    fi
 
-	for arg in "${user_args[@]}"; do
-		case $arg in
-			sab|sabnzbd|sabnzbdplus)
-				TARGET_APP=SABnzbdplus
-				;;
-			sr|sickrage)
-				TARGET_APP=SickRage
-				;;
-			cp|couchpotato|couchpotato2|couchpotatoserver)
-				TARGET_APP=CouchPotato2
-				;;
-			ll|lazylibrarian)
-				TARGET_APP=LazyLibrarian
-				;;
-			med|medusa|omedusa)
-				TARGET_APP=OMedusa
-				;;
-			-d|--debug)
-				debug=true
-				;;
-			*)
-				break
-				;;
-		esac
-	done
+    for arg in "${user_args[@]}"; do
+        case $arg in
+            sab|sabnzbd|sabnzbdplus)
+                TARGET_APP=SABnzbdplus
+                ;;
+            sr|sickrage)
+                TARGET_APP=SickRage
+                ;;
+            cp|couchpotato|couchpotato2|couchpotatoserver)
+                TARGET_APP=CouchPotato2
+                ;;
+            ll|lazylibrarian)
+                TARGET_APP=LazyLibrarian
+                ;;
+            med|medusa|omedusa)
+                TARGET_APP=OMedusa
+                ;;
+            -d|--debug)
+                debug=true
+                ;;
+            *)
+                break
+                ;;
+        esac
+    done
 
-	return 0
+    return 0
 
-	}
+    }
 
 DisplayHelp()
     {
@@ -506,7 +506,7 @@ UpdateEntware()
         [[ -e $FIND_CMD ]] && result=$($FIND_CMD "$package_list_file" -mmin +$package_list_age)
 
         # temporarily force update until new combined Entware QPKG is available
-		result='x'
+        result='x'
 
         if [[ -n $result ]] ; then
             ShowProc "updating 'Entware'"
@@ -1946,17 +1946,17 @@ PrintResetColours()
     }
 
 PauseHere()
-	{
+    {
 
-	# wait here temporarily
+    # wait here temporarily
 
-	local waittime=10
+    local waittime=10
 
-	ShowProc "waiting for $waittime seconds"
-	sleep 10
-	ShowDone "wait complete"
+    ShowProc "waiting for $waittime seconds"
+    sleep 10
+    ShowDone "wait complete"
 
-	}
+    }
 
 Init
 PauseDownloaders
