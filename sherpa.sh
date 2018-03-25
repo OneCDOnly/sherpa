@@ -29,7 +29,7 @@ Init()
 
     local returncode=0
     local SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=180325b
+    local SCRIPT_VERSION=180326b
     debug=false
 
     # cherry-pick required binaries
@@ -155,6 +155,7 @@ Init()
     previous_length=0
     previous_msg=''
     REINSTALL_FLAG=false
+    [[ ${FIRMWARE_VERSION//.} -lt 426 ]] && CURL_CMD+=' --insecure'
 
     ParseArgs
 
