@@ -29,7 +29,7 @@ Init()
 
     local returncode=0
     local SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=180326b
+    local SCRIPT_VERSION=180402
     debug=false
 
     # cherry-pick required binaries
@@ -49,6 +49,7 @@ Init()
     TR_CMD=/bin/tr
     UNAME_CMD=/bin/uname
     AWK_CMD=/bin/awk
+    MKTEMP_CMD=/bin/mktemp
 
     GETCFG_CMD=/sbin/getcfg
     RMCFG_CMD=/sbin/rmcfg
@@ -65,6 +66,7 @@ Init()
     UPTIME_CMD=/usr/bin/uptime
     WC_CMD=/usr/bin/wc
     WGET_CMD=/usr/bin/wget
+    DU_CMD=/usr/bin/du
 
     OPKG_CMD=/opt/bin/opkg
     FIND_CMD=/opt/bin/find
@@ -97,6 +99,7 @@ Init()
     SysFilePresent "$TR_CMD" || return
     SysFilePresent "$UNAME_CMD" || return
     SysFilePresent "$AWK_CMD" || return
+    SysFilePresent "$MKTEMP_CMD" || return
 
     SysFilePresent "$GETCFG_CMD" || return
     SysFilePresent "$RMCFG_CMD" || return
@@ -113,6 +116,7 @@ Init()
     SysFilePresent "$UPTIME_CMD" || return
     SysFilePresent "$WC_CMD" || return
     SysFilePresent "$WGET_CMD" || return
+    SysFilePresent "$DU_CMD" || return
 
     local DEFAULT_SHARE_DOWNLOAD_PATH=/share/Download
     local DEFAULT_SHARE_PUBLIC_PATH=/share/Public
@@ -139,7 +143,8 @@ Init()
     SETTINGS_BACKUP_PATH="${BACKUP_PATH}/config"
     SETTINGS_BACKUP_PATHFILE="${SETTINGS_BACKUP_PATH}/config.ini"
     QPKG_DL_PATH="${WORKING_PATH}/qpkg-downloads"
-    IPK_PATH="${WORKING_PATH}/ipk-downloads"
+    IPKG_DL_PATH="${WORKING_PATH}/ipkg-downloads"
+    IPKG_CACHE_PATH="${WORKING_PATH}/ipkg-cache"
     DEBUG_LOG_PATHFILE="${SHARE_PUBLIC_PATH}/${DEBUG_LOG_FILE}"
     QPKG_BASE_PATH="${DEFAULT_VOLUME}/.qpkg"
 
@@ -212,11 +217,25 @@ Init()
     fi
 
     if [[ $errorcode -eq 0 ]]; then
-        $MKDIR_CMD -p "$IPK_PATH" 2> /dev/null
+        [[ -d $IPKG_DL_PATH ]] && rm -r "$IPKG_DL_PATH"
+        $MKDIR_CMD -p "$IPKG_DL_PATH" 2> /dev/null
         result=$?
 
         if [[ $result -ne 0 ]]; then
-            ShowError "Unable to create IPK download directory ($IPK_PATH) [$result]"
+            ShowError "Unable to create IPKG download directory ($IPKG_DL_PATH) [$result]"
+            errorcode=4
+            returncode=1
+        else
+            monitor_flag="$IPKG_DL_PATH/.monitor"
+        fi
+    fi
+
+    if [[ $errorcode -eq 0 ]]; then
+        $MKDIR_CMD -p "$IPKG_CACHE_PATH" 2> /dev/null
+        result=$?
+
+        if [[ $result -ne 0 ]]; then
+            ShowError "Unable to create IPKG cache directory ($IPKG_CACHE_PATH) [$result]"
             errorcode=4
             returncode=1
         fi
@@ -496,7 +515,7 @@ UpdateEntware()
     local package_list_file=/opt/var/opkg-lists/packages
     local package_list_age=60
     local result=''
-    local log_pathfile="${IPK_PATH}/entware-update.log"
+    local log_pathfile="${IPKG_DL_PATH}/entware-update.log"
 
     if [[ ! -f $OPKG_CMD ]]; then
         ShowError "Entware opkg binary is missing. [$OPKG_CMD]"
@@ -512,10 +531,8 @@ UpdateEntware()
         if [[ -n $result ]] ; then
             ShowProc "updating 'Entware'"
 
-            #$OPKG_CMD update > /dev/null
             install_msgs=$($OPKG_CMD update; $OPKG_CMD upgrade; $OPKG_CMD update; $OPKG_CMD upgrade 2>&1)
             result=$?
-
             echo -e "${install_msgs}\nresult=[$result]" >> "$log_pathfile"
 
             if [[ $result -eq 0 ]]; then
@@ -582,49 +599,51 @@ InstallIPKs()
     local result=''
     local packages=''
     local package_desc=''
-    local log_pathfile="${IPK_PATH}/ipks.$INSTALL_LOG_FILE"
+    local log_pathfile="${IPKG_DL_PATH}/ipks.$INSTALL_LOG_FILE"
 
-    if [[ ! -z $IPK_PATH && -d $IPK_PATH ]]; then
+    if [[ ! -z $IPKG_DL_PATH && -d $IPKG_DL_PATH ]]; then
+        UpdateEntware
+
+        # errors can occur due to incompatible IPKs (tried installing Entware-3x, then Entware-ng), so delete them first
+        rm -f "$IPKG_DL_PATH"/*.ipk
+
         packages='gcc python python-pip python-cffi python-pyopenssl ca-certificates nano git git-http unrar p7zip ionice ffprobe'
         [[ $STEPHANE_QPKG_ARCH = none ]] && packages+=' par2cmdline'
         package_desc=various
-
-        UpdateEntware
-
-        # get size of all packages - e.g. 'opkg info $packages'
-
+        GetInstallablePackageSize
+        ipk_download_startseconds=$($DATE_CMD +%s)
         ShowProc "downloading & installing IPKs ($package_desc)"
-
-        # errors can occur due to incompatible IPKs (tried installing Entware-3x, then Entware-ng), so delete them first
-        rm -f "$IPK_PATH"/*.ipk
-
-        cd "$IPK_PATH"
-
-        # As it seems we can't get opkg to display a progress bar, maybe show cache path size to indicate progress? Might need to spawn a process just for this.
-        # du -cb * | tail -n1 | cut -f1
-        # while true; do [[ -e /tmp/sizer.txt ]] && { sleep 1; du -cb /tmp/* 2>/dev/null | tail -n1 | cut -f1 ;} || break; done
-
-
-        install_msgs=$($OPKG_CMD install --force-overwrite $packages --cache . 2>&1)
+        touch "$monitor_flag"
+        trap CTRL_C_Captured INT
+        PathSizeMonitor $download_size &
+        install_msgs=$($OPKG_CMD install --force-overwrite $packages --cache "$IPKG_CACHE_PATH" --tmp-dir "$IPKG_DL_PATH" 2>&1)
         result=$?
+        [[ -e $monitor_flag ]] && { rm "$monitor_flag"; sleep 1 ;}
+        trap - INT
         echo -e "${install_msgs}\nresult=[$result]" > "$log_pathfile"
 
         if [[ $result -eq 0 ]]; then
             ShowDone "downloaded & installed IPKs ($package_desc)"
+            DebugStage 'elapsed time' "$(ConvertSecs "$(($($DATE_CMD +%s)-$([[ -n $ipk_download_startseconds ]] && echo $ipk_download_startseconds || echo "1")))")"
 
             packages='python-dev'
             package_desc=python-dev
-
-            ShowProc "downloading & installing IPK ($package_desc)"
-            install_msgs=$($OPKG_CMD install --force-overwrite $packages --cache . 2>&1)
+            GetInstallablePackageSize
+            ipk_download_startseconds=$($DATE_CMD +%s)
+            ShowProc "downloading & installing IPKG ($package_desc)"
+            touch "$monitor_flag"
+            trap CTRL_C_Captured INT
+            PathSizeMonitor $download_size &
+            install_msgs=$($OPKG_CMD install --force-overwrite $packages --cache "$IPKG_CACHE_PATH" --tmp-dir "$IPKG_DL_PATH" 2>&1)
             result=$?
-
+            [[ -e $monitor_flag ]] && { rm "$monitor_flag"; sleep 1 ;}
+            trap - INT
             echo -e "${install_msgs}\nresult=[$result]" >> "$log_pathfile"
 
             if [[ $result -eq 0 ]]; then
-                ShowDone "downloaded & installed IPK ($package_desc)"
+                ShowDone "downloaded & installed IPKG ($package_desc)"
             else
-                ShowError "Download & install IPK failed ($package_desc) [$result]"
+                ShowError "Download & install IPKG failed ($package_desc) [$result]"
                 if [[ $debug = true ]]; then
                     DebugThickSeparator
                     $CAT_CMD "$log_pathfile"
@@ -633,8 +652,9 @@ InstallIPKs()
                 errorcode=16
                 returncode=1
             fi
+            DebugStage 'elapsed time' "$(ConvertSecs "$(($($DATE_CMD +%s)-$([[ -n $ipk_download_startseconds ]] && echo $ipk_download_startseconds || echo "1")))")"
         else
-            ShowError "Download & install IPKs failed ($package_desc) [$result]"
+            ShowError "Download & install IPKGs failed ($package_desc) [$result]"
             if [[ $debug = true ]]; then
                 DebugThickSeparator
                 $CAT_CMD "$log_pathfile"
@@ -642,11 +662,10 @@ InstallIPKs()
             fi
             errorcode=17
             returncode=1
+            DebugStage 'elapsed time' "$(ConvertSecs "$(($($DATE_CMD +%s)-$([[ -n $ipk_download_startseconds ]] && echo $ipk_download_startseconds || echo "1")))")"
         fi
-
-        cd "$WORKING_PATH"
     else
-        ShowError "IPK path does not exist [$IPK_PATH]"
+        ShowError "IPKG path does not exist [$IPKG_DL_PATH]"
         errorcode=18
         returncode=1
     fi
@@ -702,19 +721,19 @@ InstallNG()
         local packages=''
         local package_desc=''
 
-        if [[ ! -z $IPK_PATH && -d $IPK_PATH ]]; then
+        if [[ ! -z $IPKG_DL_PATH && -d $IPKG_DL_PATH ]]; then
             packages='nzbget'
             package_desc=nzbget
 
-            ShowProc "downloading & installing IPK ($package_desc)"
+            ShowProc "downloading & installing IPKG ($package_desc)"
 
-            cd "$IPK_PATH"
+            cd "$IPKG_DL_PATH"
             install_msgs=$($OPKG_CMD install --force-overwrite $packages --cache . 2>&1)
             result=$?
-            echo -e "${install_msgs}\nresult=[$result]" >> "${IPK_PATH}/ipk.$INSTALL_LOG_FILE"
+            echo -e "${install_msgs}\nresult=[$result]" >> "${IPKG_DL_PATH}/ipk.$INSTALL_LOG_FILE"
 
             if [[ $result -eq 0 ]]; then
-                ShowDone "downloaded & installed IPK ($package_desc)"
+                ShowDone "downloaded & installed IPKG ($package_desc)"
                 ShowProc "modifying NZBGet"
 
                 sed -i 's|ConfigTemplate=.*|ConfigTemplate=/opt/share/nzbget/nzbget.conf.template|g' "/opt/share/nzbget/nzbget.conf"
@@ -723,14 +742,14 @@ InstallNG()
                 cat /opt/share/nzbget/nzbget.conf | grep ControlPassword=
                 #Go to default router ip address and port 6789 192.168.1.1:6789 and now you should see NZBget interface
             else
-                ShowError "Download & install IPK failed ($package_desc) [$result]"
+                ShowError "Download & install IPKG failed ($package_desc) [$result]"
                 errorcode=20
                 returncode=1
             fi
 
             cd "$WORKING_PATH"
         else
-            ShowError "IPK path does not exist [$IPK_PATH]"
+            ShowError "IPKG path does not exist [$IPKG_DL_PATH]"
             errorcode=21
             returncode=1
         fi
@@ -1495,6 +1514,17 @@ DaemonCtl()
 
     }
 
+CTRL_C_Captured()
+    {
+
+    [[ -e $monitor_flag ]] && rm "$monitor_flag"
+
+    sleep 1
+
+    exit
+
+    }
+
 Cleanup()
     {
 
@@ -1546,10 +1576,96 @@ DisplayResult()
     DebugScript 'elapsed time' "$(ConvertSecs "$(($($DATE_CMD +%s)-$([[ -n $SCRIPT_STARTSECONDS ]] && echo $SCRIPT_STARTSECONDS || echo "1")))")"
     DebugThickSeparator
 
-    [[ -e $DEBUG_LOG_PATHFILE && $debug = false ]] && echo -e "\n- To display the debug log, use:\ncat ${DEBUG_LOG_PATHFILE}\n"
+    [[ -e $DEBUG_LOG_PATHFILE && $debug = false ]] && echo -e "\n- To display the debug log, use:\nless ${DEBUG_LOG_PATHFILE}\n"
 
     DebugFuncExit
     return 0
+
+    }
+
+GetInstallablePackageSize()
+    {
+
+    download_size=0
+    local download_packages=()
+    local new="$packages"
+    local old=''
+    local iterations=0
+    local iteration_limit=10
+    local complete=false
+
+    ShowProc "calculating number and size of IPKGs required"
+
+    while [[ $iterations -lt $iteration_limit ]]; do
+        ((iterations++))
+        old="$new"
+        new="$($OPKG_CMD depends -A $old | sed 's|^[[:blank:]]*||;s|depends on:$||;s|[[:blank:]]*$||' | sort | uniq)"
+        [[ $old = $new ]] && { complete=true; break ;}
+    done
+
+    if [[ $complete = true ]]; then
+        DebugInfo "found all dependencies in $iterations iterations"
+    else
+        DebugError "Dependency list is incomplete! Consider raising \$iteration_limit [$iteration_limit]."
+    fi
+
+    all_raw_packages="$new"
+    read -r -a all_required_packages_array <<< $all_raw_packages
+    all_required_packages=($(printf '%s\n' "${all_required_packages_array[@]}"))
+
+    # exclude packages already installed
+    for element in ${all_required_packages[@]}; do
+        ($OPKG_CMD info $element | LC_ALL=C grep 'Status: ' | LC_ALL=C grep -q 'not-installed') && download_packages+=($element)
+    done
+
+    DebugInfo "IPKG names: ${download_packages[*]}"
+
+    for element in ${download_packages[@]}; do
+        result_size=$($OPKG_CMD info $element | grep 'Size:' | sed 's|^Size: ||')
+        ((download_size+=result_size))
+    done
+
+    [[ -z $download_size ]] && download_size=0
+
+    DebugVar 'download_size'
+    ShowDone "${#download_packages[@]} IPKGs ($(Convert2ISO $download_size)) are required"
+
+    }
+
+PathSizeMonitor()
+    {
+
+    [[ -z $1 || $1 -eq 0 ]] && return 1
+
+    local total_bytes=$1
+    local last_bytes=0
+    local stall_seconds=0
+    local stall_seconds_threshold=4
+    local current_bytes=0
+    local percent=''
+
+    InitProgress
+
+    while [[ -e $monitor_flag ]]; do
+        sleep 1
+        current_bytes=$($FIND_CMD $IPKG_DL_PATH -type f -name '*.ipk' -exec $DU_CMD --bytes --total --apparent-size {} + | $GREP_CMD total$ | $CUT_CMD -f1)
+        [[ -z $current_bytes ]] && current_bytes=0
+        percent="$((200*($current_bytes)/($total_bytes) % 2 + 100*($current_bytes)/($total_bytes)))%"
+
+        if [[ $last_bytes -ne $current_bytes ]]; then
+            last_bytes=$current_bytes
+            stall_seconds=0
+        else
+            ((stall_seconds++))
+        fi
+
+        progress_message=" $percent ($(Convert2ISO $current_bytes)/$(Convert2ISO $total_bytes))"
+        [[ $stall_seconds -ge $stall_seconds_threshold ]] && progress_message+=" stalled for $stall_seconds seconds"
+
+        ProgressUpdater "$progress_message"
+    done
+
+    [[ -n $progress_message ]] && ProgressUpdater " done!"
 
     }
 
@@ -1624,7 +1740,7 @@ IPKIsInstalled()
     local returncode=0
 
     if [[ -z $1 ]]; then
-        DebugError 'IPK name not specified'
+        DebugError 'IPKG name not specified'
         errorcode=45
         returncode=1
     else
@@ -1677,6 +1793,41 @@ SysSharePresent()
 
     }
 
+InitProgress()
+    {
+
+    # needs to be called prior to first call of ProgressUpdater
+
+    progress_message=''
+    previous_length=0
+    previous_msg=''
+
+    }
+
+ProgressUpdater()
+    {
+
+    # $1 = message to display
+
+    if [[ $1 != $previous_msg ]]; then
+        temp="$1"
+        current_length=$((${#temp}+1))
+
+        if [[ $current_length -lt $previous_length ]]; then
+            appended_length=$(($current_length-$previous_length))
+            # backspace to start of previous msg, print new msg, add additional spaces, then backspace to end of msg
+            printf "%${previous_length}s" | tr ' ' '\b' ; echo -n "$1 " ; printf "%${appended_length}s" ; printf "%${appended_length}s" | tr ' ' '\b'
+        else
+            # backspace to start of previous msg, print new msg
+            printf "%${previous_length}s" | tr ' ' '\b' ; echo -n "$1 "
+        fi
+
+        previous_length=$current_length
+        previous_msg="$1"
+    fi
+
+    }
+
 ConvertSecs()
     {
 
@@ -1688,6 +1839,13 @@ ConvertSecs()
     ((s=${1}%60))
 
     printf "%02dh:%02dm:%02ds\n" $h $m $s
+
+    }
+
+Convert2ISO()
+    {
+
+    echo $1 | awk 'BEGIN{ u[0]="B"; u[1]="kB"; u[2]="MB"; u[3]="GB"} { n = $1; i = 0; while(n > 1000) { i+=1; n= int((n/1000)+0.5) } print n u[i] } '
 
     }
 
@@ -1709,6 +1867,13 @@ DebugScript()
     {
 
     DebugDetected 'SCRIPT' "$1" "$2"
+
+    }
+
+DebugStage()
+    {
+
+    DebugDetected 'STAGE' "$1" "$2"
 
     }
 
