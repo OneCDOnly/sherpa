@@ -91,7 +91,6 @@ Init()
     TR_CMD=/bin/tr
     UNAME_CMD=/bin/uname
     AWK_CMD=/bin/awk
-    MKTEMP_CMD=/bin/mktemp
     PING_CMD=/bin/ping
 
     GETCFG_CMD=/sbin/getcfg
@@ -142,7 +141,6 @@ Init()
     SysFilePresent "$TR_CMD" || return
     SysFilePresent "$UNAME_CMD" || return
     SysFilePresent "$AWK_CMD" || return
-    SysFilePresent "$MKTEMP_CMD" || return
     SysFilePresent "$PING_CMD" || return
 
     SysFilePresent "$GETCFG_CMD" || return
@@ -306,7 +304,7 @@ Init()
         ShowProc "testing network access"
 
         if ($PING_CMD -c 1 -q google.com > /dev/null 2>&1); then
-            ShowDone "OK"
+            ShowDone "network access tested OK"
         else
             ShowError "No network access"
             errorcode=7
@@ -1859,7 +1857,7 @@ ConvertSecs()
 Convert2ISO()
     {
 
-    echo $1 | awk 'BEGIN{ u[0]="B"; u[1]="kB"; u[2]="MB"; u[3]="GB"} { n = $1; i = 0; while(n > 1000) { i+=1; n= int((n/1000)+0.5) } print n u[i] } '
+    echo $1 | $AWK_CMD 'BEGIN{ u[0]="B"; u[1]="kB"; u[2]="MB"; u[3]="GB"} { n = $1; i = 0; while(n > 1000) { i+=1; n= int((n/1000)+0.5) } print n u[i] } '
 
     }
 
