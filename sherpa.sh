@@ -92,6 +92,7 @@ Init()
     UNAME_CMD=/bin/uname
     AWK_CMD=/bin/awk
     MKTEMP_CMD=/bin/mktemp
+    PING_CMD=/bin/ping
 
     GETCFG_CMD=/sbin/getcfg
     RMCFG_CMD=/sbin/rmcfg
@@ -142,6 +143,7 @@ Init()
     SysFilePresent "$UNAME_CMD" || return
     SysFilePresent "$AWK_CMD" || return
     SysFilePresent "$MKTEMP_CMD" || return
+    SysFilePresent "$PING_CMD" || return
 
     SysFilePresent "$GETCFG_CMD" || return
     SysFilePresent "$RMCFG_CMD" || return
@@ -301,6 +303,15 @@ Init()
     if [[ $errorcode -eq 0 ]]; then
         CalcStephaneQPKGArch
         CalcEntwareQPKG
+        ShowProc "testing network access"
+
+        if ($PING_CMD -c 1 -q google.com > /dev/null 2>&1); then
+            ShowDone "OK"
+        else
+            ShowError "No network access"
+            errorcode=7
+            returncode=1
+        fi
     fi
 
     DebugFuncExit
@@ -1083,13 +1094,16 @@ DownloadQPKG()
 
         [[ -e $log_pathfile ]] && rm -f "$log_pathfile"
 
+        # keep this one handy for SOCKS5
+        # curl http://entware-3x.zyxmon.org/binaries/other/Entware-3x_1.00std.qpkg --socks5 IP:PORT --output target.qpkg
+
         if [[ $debug = true ]]; then
             $CURL_CMD --output "$qpkg_pathfile" "$qpkg_url" 2>&1 | tee -a "$log_pathfile"
+            result=$?
         else
             $CURL_CMD --output "$qpkg_pathfile" "$qpkg_url" >> "$log_pathfile" 2>&1
+            result=$?
         fi
-
-        result=$?
 
         echo -e "\nresult=[$result]" >> "$log_pathfile"
 
