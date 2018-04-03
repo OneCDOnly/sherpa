@@ -2166,18 +2166,11 @@ InstallEntware
 InstallExtras
 
 if [[ $errorcode -eq 0 ]]; then
-    case "$TARGET_APP" in
-        SABnzbdplus)
+    case $TARGET_APP in
+        SABnzbdplus|SickRage|CouchPotato2|LazyLibrarian|OMedusa)
             BackupConfig
             UninstallQPKG $TARGET_APP
-            UninstallQPKG QSabNZBdPlus
-            ! QPKGIsInstalled $TARGET_APP && LoadQPKGDownloadDetails $TARGET_APP && InstallQPKG && PauseHere && LoadQPKGVars $TARGET_APP
-            RestoreConfig
-            [[ $errorcode -eq 0 ]] && DaemonCtl start "$package_init_pathfile"
-            ;;
-        LazyLibrarian|SickRage|CouchPotato2|OMedusa)
-            BackupConfig
-            UninstallQPKG $TARGET_APP
+            [[ $TARGET_APP = SABnzbdplus ]] && UninstallQPKG QSabNZBdPlus
             ! QPKGIsInstalled $TARGET_APP && LoadQPKGDownloadDetails $TARGET_APP && InstallQPKG && PauseHere && LoadQPKGVars $TARGET_APP
             RestoreConfig
             [[ $errorcode -eq 0 ]] && DaemonCtl start "$package_init_pathfile"
