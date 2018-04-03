@@ -71,7 +71,7 @@ Init()
 
     local returncode=0
     local SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=180402
+    local SCRIPT_VERSION=180403
     debug=false
 
     # cherry-pick required binaries
@@ -224,6 +224,7 @@ Init()
         DebugNAS 'kernel' "$($UNAME_CMD -mr)"
         DebugNAS 'OS uptime' "$($UPTIME_CMD | $SED_CMD 's|.*up.||;s|,.*load.*||;s|^\ *||')"
         DebugNAS 'system load' "$($UPTIME_CMD | $SED_CMD 's|.*load average: ||' | $AWK_CMD -F', ' '{print "1 min="$1 ", 5 min="$2 ", 15 min="$3}')"
+        DebugNAS 'EUID' "$EUID"
         DebugNAS 'default volume' "$DEFAULT_VOLUME"
         DebugNAS '$PATH' "${PATH:0:42}"
         DebugNAS '/opt' "$([[ -L '/opt' ]] && $READLINK_CMD '/opt' || echo "not present")"
@@ -231,6 +232,14 @@ Init()
         DebugScript 'user arguments' "$USER_ARGS_RAW"
         DebugScript 'target app' "$TARGET_APP"
         DebugThinSeparator
+    fi
+
+    if [[ $errorcode -eq 0 ]]; then
+        if [[ $EUID -ne 0 ]]; then
+            ShowError "This script must be run as the 'admin' user. Please login via SSH as 'admin' and try again."
+            errorcode=2
+            returncode=1
+        fi
     fi
 
     if [[ $errorcode -eq 0 ]]; then
