@@ -71,7 +71,7 @@ Init()
 
     local returncode=0
     local SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=180403
+    local SCRIPT_VERSION=180404
     debug=false
 
     # cherry-pick required binaries
@@ -92,6 +92,7 @@ Init()
     UNAME_CMD=/bin/uname
     AWK_CMD=/bin/awk
     PING_CMD=/bin/ping
+    UNIQ_CMD=/bin/uniq
 
     GETCFG_CMD=/sbin/getcfg
     RMCFG_CMD=/sbin/rmcfg
@@ -109,6 +110,7 @@ Init()
     WC_CMD=/usr/bin/wc
     WGET_CMD=/usr/bin/wget
     DU_CMD=/usr/bin/du
+    SORT_CMD=/usr/bin/sort
 
     OPKG_CMD=/opt/bin/opkg
     FIND_CMD=/opt/bin/find
@@ -142,6 +144,7 @@ Init()
     SysFilePresent "$UNAME_CMD" || return
     SysFilePresent "$AWK_CMD" || return
     SysFilePresent "$PING_CMD" || return
+    SysFilePresent "$UNIQ_CMD" || return
 
     SysFilePresent "$GETCFG_CMD" || return
     SysFilePresent "$RMCFG_CMD" || return
@@ -159,6 +162,7 @@ Init()
     SysFilePresent "$WC_CMD" || return
     SysFilePresent "$WGET_CMD" || return
     SysFilePresent "$DU_CMD" || return
+    SysFilePresent "$SORT_CMD" || return
 
     local DEFAULT_SHARE_DOWNLOAD_PATH=/share/Download
     local DEFAULT_SHARE_PUBLIC_PATH=/share/Public
@@ -613,75 +617,71 @@ InstallIPKs()
     local install_msgs=''
     local result=''
     local packages=''
-    local package_desc=''
     local log_pathfile="${IPKG_DL_PATH}/ipks.$INSTALL_LOG_FILE"
 
     if [[ ! -z $IPKG_DL_PATH && -d $IPKG_DL_PATH ]]; then
         UpdateEntware
 
-        # errors can occur due to incompatible IPKs (tried installing Entware-3x, then Entware-ng), so delete them first
-        rm -f "$IPKG_DL_PATH"/*.ipk
-
         packages='gcc python python-pip python-cffi python-pyopenssl ca-certificates nano git git-http unrar p7zip ionice ffprobe'
         [[ $STEPHANE_QPKG_ARCH = none ]] && packages+=' par2cmdline'
-        package_desc=various
-        GetInstallablePackageSize
-        ipk_download_startseconds=$($DATE_CMD +%s)
-        ShowProc "downloading & installing IPKs ($package_desc)"
-        touch "$monitor_flag"
-        trap CTRL_C_Captured INT
-        PathSizeMonitor $download_size &
-        install_msgs=$($OPKG_CMD install --force-overwrite $packages --cache "$IPKG_CACHE_PATH" --tmp-dir "$IPKG_DL_PATH" 2>&1)
-        result=$?
-        [[ -e $monitor_flag ]] && { rm "$monitor_flag"; sleep 1 ;}
-        trap - INT
-        echo -e "${install_msgs}\nresult=[$result]" > "$log_pathfile"
+        InstallIPKGBatch "$packages" 'Git, Python, UnRAR and a few more'
 
-        if [[ $result -eq 0 ]]; then
-            ShowDone "downloaded & installed IPKs ($package_desc)"
-            DebugStage 'elapsed time' "$(ConvertSecs "$(($($DATE_CMD +%s)-$([[ -n $ipk_download_startseconds ]] && echo $ipk_download_startseconds || echo "1")))")"
-
-            packages='python-dev'
-            package_desc=python-dev
-            GetInstallablePackageSize
-            ipk_download_startseconds=$($DATE_CMD +%s)
-            ShowProc "downloading & installing IPKG ($package_desc)"
-            touch "$monitor_flag"
-            trap CTRL_C_Captured INT
-            PathSizeMonitor $download_size &
-            install_msgs=$($OPKG_CMD install --force-overwrite $packages --cache "$IPKG_CACHE_PATH" --tmp-dir "$IPKG_DL_PATH" 2>&1)
-            result=$?
-            [[ -e $monitor_flag ]] && { rm "$monitor_flag"; sleep 1 ;}
-            trap - INT
-            echo -e "${install_msgs}\nresult=[$result]" >> "$log_pathfile"
-
-            if [[ $result -eq 0 ]]; then
-                ShowDone "downloaded & installed IPKG ($package_desc)"
-            else
-                ShowError "Download & install IPKG failed ($package_desc) [$result]"
-                if [[ $debug = true ]]; then
-                    DebugThickSeparator
-                    $CAT_CMD "$log_pathfile"
-                    DebugThickSeparator
-                fi
-                errorcode=18
-                returncode=1
-            fi
-            DebugStage 'elapsed time' "$(ConvertSecs "$(($($DATE_CMD +%s)-$([[ -n $ipk_download_startseconds ]] && echo $ipk_download_startseconds || echo "1")))")"
-        else
-            ShowError "Download & install IPKGs failed ($package_desc) [$result]"
-            if [[ $debug = true ]]; then
-                DebugThickSeparator
-                $CAT_CMD "$log_pathfile"
-                DebugThickSeparator
-            fi
-            errorcode=19
-            returncode=1
-            DebugStage 'elapsed time' "$(ConvertSecs "$(($($DATE_CMD +%s)-$([[ -n $ipk_download_startseconds ]] && echo $ipk_download_startseconds || echo "1")))")"
+        if [[ $returncode -eq 0 ]]; then
+            InstallIPKGBatch 'python-dev' 'Python headers'
         fi
+
+        DebugStage 'elapsed time' "$(ConvertSecs "$(($($DATE_CMD +%s)-$([[ -n $IPKG_download_startseconds ]] && echo $IPKG_download_startseconds || echo "1")))")"
     else
         ShowError "IPKG path does not exist [$IPKG_DL_PATH]"
         errorcode=20
+        returncode=1
+    fi
+
+    DebugFuncExit
+    return $returncode
+
+    }
+
+InstallIPKGBatch()
+    {
+
+    # $1 = IPKG names to download and install
+    # $2 = on-screen description of this package batch
+
+    DebugFuncEntry
+    local returncode=0
+    local requested_IPKGs=''
+    local IPKG_batch_desc=''
+
+    [[ -n $1 ]] && requested_IPKGs="$1" || return 1
+    [[ -n $2 ]] && IPKG_batch_desc="$2" || IPKG_batch_desc="$1"
+
+    # errors can occur due to incompatible IPKGs (tried installing Entware-3x, then Entware-ng), so delete them first
+    rm -f "$IPKG_DL_PATH"/*.ipk
+
+    FindAllIPKGDependencies "$requested_IPKGs"
+    IPKG_download_startseconds=$($DATE_CMD +%s)
+    ShowProc "downloading & installing $IPKG_download_count IPKGs ($IPKG_batch_desc)"
+    touch "$monitor_flag"
+    trap CTRL_C_Captured INT
+    PathSizeMonitor $IPKG_download_size &
+    install_msgs=$($OPKG_CMD install --force-overwrite ${IPKG_download_list[*]} --cache "$IPKG_CACHE_PATH" --tmp-dir "$IPKG_DL_PATH" 2>&1)
+    result=$?
+    [[ -e $monitor_flag ]] && { rm "$monitor_flag"; sleep 1 ;}
+    trap - INT
+    echo -e "${install_msgs}\nresult=[$result]" > "$log_pathfile"
+
+    if [[ $result -eq 0 ]]; then
+        ShowDone "downloaded & installed $IPKG_download_count IPKGs ($IPKG_batch_desc)"
+        DebugStage 'elapsed time' "$(ConvertSecs "$(($($DATE_CMD +%s)-$([[ -n $IPKG_download_startseconds ]] && echo $IPKG_download_startseconds || echo "1")))")"
+    else
+        ShowError "Download & install IPKGs failed ($IPKG_batch_desc) [$result]"
+        if [[ $debug = true ]]; then
+            DebugThickSeparator
+            $CAT_CMD "$log_pathfile"
+            DebugThickSeparator
+        fi
+        errorcode=18
         returncode=1
     fi
 
@@ -1601,23 +1601,37 @@ DisplayResult()
 
     }
 
-GetInstallablePackageSize()
+FindAllIPKGDependencies()
     {
 
-    download_size=0
-    local download_packages=()
-    local new="$packages"
+    # From a specified list of IPKG names, find all dependent IPKGs, exclude those already installed,then generate a total qty to download and a total download byte-size.
+    # input:
+    #   $1 = initial IPKG names
+    # output:
+    #   $IPKG_download_list = a complete list of all IPKGs including those originally specified
+    #   $IPKG_download_count = number of packages needing download
+    #   $IPKG_download_size = byte-count of all these packages
+
+    IPKG_download_size=0
+    IPKG_download_count=0
+    IPKG_download_list=()
+    local all_raw_packages=''
+    local all_required_packages=()
+    local new=''
     local old=''
     local iterations=0
     local iteration_limit=10
     local complete=false
 
+    [[ -n $1 ]] && new="$1" || return 1
+
     ShowProc "calculating number and size of IPKGs required"
+    DebugInfo "requested IPKG names: $new"
 
     while [[ $iterations -lt $iteration_limit ]]; do
         ((iterations++))
         old="$new"
-        new="$($OPKG_CMD depends -A $old | sed 's|^[[:blank:]]*||;s|depends on:$||;s|[[:blank:]]*$||' | sort | uniq)"
+        new="$($OPKG_CMD depends -A $old | $SED_CMD 's|^[[:blank:]]*||;s|depends on:$||;s|[[:blank:]]*$||' | $SORT_CMD | $UNIQ_CMD)"
         [[ $old = $new ]] && { complete=true; break ;}
     done
 
@@ -1633,20 +1647,21 @@ GetInstallablePackageSize()
 
     # exclude packages already installed
     for element in ${all_required_packages[@]}; do
-        ($OPKG_CMD info $element | LC_ALL=C grep 'Status: ' | LC_ALL=C grep -q 'not-installed') && download_packages+=($element)
+        ($OPKG_CMD info $element | LC_ALL=C $GREP_CMD 'Status: ' | LC_ALL=C $GREP_CMD -q 'not-installed') && IPKG_download_list+=($element)
     done
 
-    DebugInfo "IPKG names: ${download_packages[*]}"
+    DebugInfo "required IPKG names: ${IPKG_download_list[*]}"
+    IPKG_download_count=${#IPKG_download_list[@]}
 
-    for element in ${download_packages[@]}; do
-        result_size=$($OPKG_CMD info $element | grep 'Size:' | sed 's|^Size: ||')
-        ((download_size+=result_size))
+    for element in ${IPKG_download_list[@]}; do
+        result_size=$($OPKG_CMD info $element | $GREP_CMD 'Size:' | $SED_CMD 's|^Size: ||')
+        ((IPKG_download_size+=result_size))
     done
 
-    [[ -z $download_size ]] && download_size=0
+    [[ -z $IPKG_download_size ]] && IPKG_download_size=0
 
-    DebugVar 'download_size'
-    ShowDone "${#download_packages[@]} IPKGs ($(Convert2ISO $download_size)) are required"
+    DebugVar 'IPKG_download_size'
+    ShowDone "$IPKG_download_count IPKGs ($(Convert2ISO $IPKG_download_size)) need to be downloaded"
 
     }
 
