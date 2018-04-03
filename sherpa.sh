@@ -543,9 +543,6 @@ UpdateEntware()
         # if Entware package list was updated only recently, don't run another update
         [[ -e $FIND_CMD ]] && result=$($FIND_CMD "$package_list_file" -mmin +$package_list_age)
 
-        # temporarily force update until new combined Entware QPKG is available
-        result='x'
-
         if [[ -n $result ]] ; then
             ShowProc "updating 'Entware'"
 
