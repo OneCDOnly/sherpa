@@ -41,13 +41,13 @@ ParseArgs()
             sab|sabnzbd|sabnzbdplus)
                 TARGET_APP=SABnzbdplus
                 ;;
-            sr|sickrage)
+            sr|sick|sickrage)
                 TARGET_APP=SickRage
                 ;;
-            cp|couchpotato|couchpotato2|couchpotatoserver)
+            cp|cp2|couch|couchpotato|couchpotato2|couchpotatoserver)
                 TARGET_APP=CouchPotato2
                 ;;
-            ll|lazylibrarian)
+            ll|lazy|lazylibrarian)
                 TARGET_APP=LazyLibrarian
                 ;;
             med|medusa|omedusa)
