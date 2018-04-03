@@ -533,7 +533,7 @@ UpdateEntware()
     local package_list_file=/opt/var/opkg-lists/packages
     local package_list_age=60
     local result=''
-    local log_pathfile="${IPKG_DL_PATH}/entware-update.log"
+    local log_pathfile="${QPKG_DL_PATH}/entware-update.log"
 
     if [[ ! -f $OPKG_CMD ]]; then
         ShowError "Entware opkg binary is missing. [$OPKG_CMD]"
