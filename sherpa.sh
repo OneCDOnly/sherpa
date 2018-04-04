@@ -624,7 +624,7 @@ InstallIPKs()
 
         packages='gcc python python-pip python-cffi python-pyopenssl ca-certificates nano git git-http unrar p7zip ionice ffprobe'
         [[ $STEPHANE_QPKG_ARCH = none ]] && packages+=' par2cmdline'
-        InstallIPKGBatch "$packages" 'Git, Python, UnRAR and a few more'
+        InstallIPKGBatch "$packages" 'Git, Python, UnRAR and others'
 
         if [[ $returncode -eq 0 ]]; then
             InstallIPKGBatch 'python-dev' 'Python headers'
@@ -1615,34 +1615,32 @@ FindAllIPKGDependencies()
     IPKG_download_size=0
     IPKG_download_count=0
     IPKG_download_list=()
-    local all_raw_packages=''
     local all_required_packages=()
-    local new=''
-    local old=''
+    local current_list=''
+    local last_list=''
     local iterations=0
     local iteration_limit=10
     local complete=false
 
-    [[ -n $1 ]] && new="$1" || return 1
+    [[ -n $1 ]] && current_list="$1" || { DebugError "No IPKGs were requested"; return 1 ;}
 
     ShowProc "calculating number and size of IPKGs required"
-    DebugInfo "requested IPKG names: $new"
+    DebugInfo "requested IPKG names: $current_list"
 
     while [[ $iterations -lt $iteration_limit ]]; do
         ((iterations++))
-        old="$new"
-        new="$($OPKG_CMD depends -A $old | $SED_CMD 's|^[[:blank:]]*||;s|depends on:$||;s|[[:blank:]]*$||' | $SORT_CMD | $UNIQ_CMD)"
-        [[ $old = $new ]] && { complete=true; break ;}
+        last_list="$current_list"
+        current_list="$($OPKG_CMD depends -A $last_list | $SED_CMD 's|^[[:blank:]]*||;s|depends on:$||;s|[[:blank:]]*$||' | $SORT_CMD | $UNIQ_CMD)"
+        if [[ $current_list = $last_list ]]; then
+            DebugInfo "found all IPKG dependencies in $iterations iterations"
+            complete=true
+            break
+        fi
     done
 
-    if [[ $complete = true ]]; then
-        DebugInfo "found all dependencies in $iterations iterations"
-    else
-        DebugError "Dependency list is incomplete! Consider raising \$iteration_limit [$iteration_limit]."
-    fi
+    [[ $complete = false ]] && DebugError "IPKG dependency list incomplete! Consider raising \$iteration_limit [$iteration_limit]."
 
-    all_raw_packages="$new"
-    read -r -a all_required_packages_array <<< $all_raw_packages
+    read -r -a all_required_packages_array <<< $current_list
     all_required_packages=($(printf '%s\n' "${all_required_packages_array[@]}"))
 
     # exclude packages already installed
