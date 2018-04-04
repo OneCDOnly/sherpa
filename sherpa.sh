@@ -629,8 +629,6 @@ InstallIPKs()
         if [[ $returncode -eq 0 ]]; then
             InstallIPKGBatch 'python-dev' 'Python headers'
         fi
-
-        DebugStage 'elapsed time' "$(ConvertSecs "$(($($DATE_CMD +%s)-$([[ -n $IPKG_download_startseconds ]] && echo $IPKG_download_startseconds || echo "1")))")"
     else
         ShowError "IPKG path does not exist [$IPKG_DL_PATH]"
         errorcode=20
