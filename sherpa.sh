@@ -71,7 +71,7 @@ Init()
 
     local returncode=0
     local SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=180404
+    local SCRIPT_VERSION=180405
     debug=false
 
     # cherry-pick required binaries
@@ -219,7 +219,7 @@ Init()
         DebugScript 'version' "$SCRIPT_VERSION"
         DebugThinSeparator
         DebugInfo 'Markers: (**) detected, (II) information, (WW) warning, (EE) error,'
-        DebugInfo '         (--) done, (>>) function entry, (<<) function exit,'
+        DebugInfo '         (==) processing, (--) done, (>>) function entry, (<<) function exit,'
         DebugInfo '         (vv) variable name & value, ($1) positional argument value.'
         DebugThinSeparator
         DebugNAS 'model' "$($GREP_CMD -v "^$" "$ISSUE_PATHFILE" | $SED_CMD 's|^Welcome to ||;s|(.*||')"
@@ -534,7 +534,7 @@ UpdateEntware()
 
     DebugFuncEntry
     local returncode=0
-    local package_list_file=/opt/var/opkg-lists/packages
+    local package_list_file=/opt/var/opkg-lists/entware
     local package_list_age=60
     local result=''
     local log_pathfile="${QPKG_DL_PATH}/entware-update.log"
@@ -1616,22 +1616,30 @@ FindAllIPKGDependencies()
     IPKG_download_count=0
     IPKG_download_list=()
     local all_required_packages=()
-    local current_list=''
+    local original_list=''
+    local all_list_sorted=''
+    local dependency_list=''
     local last_list=''
     local iterations=0
-    local iteration_limit=10
+    local iteration_limit=20
     local complete=false
 
-    [[ -n $1 ]] && current_list="$1" || { DebugError "No IPKGs were requested"; return 1 ;}
+    [[ -n $1 ]] && original_list="$1" || { DebugError "No IPKGs were requested"; return 1 ;}
 
     ShowProc "calculating number and size of IPKGs required"
-    DebugInfo "requested IPKG names: $current_list"
+    DebugInfo "requested IPKG names: $original_list"
 
+    last_list="$original_list"
+
+    DebugProc 'finding all IPKG dependencies'
     while [[ $iterations -lt $iteration_limit ]]; do
         ((iterations++))
-        last_list="$current_list"
-        current_list="$($OPKG_CMD depends -A $last_list | $SED_CMD 's|^[[:blank:]]*||;s|depends on:$||;s|[[:blank:]]*$||' | $SORT_CMD | $UNIQ_CMD)"
-        if [[ $current_list = $last_list ]]; then
+        last_list="$($OPKG_CMD depends -A $last_list | $GREP_CMD -v 'depends on:' | $SED_CMD 's|^[[:blank:]]*||;s|[[:blank:]]*$||' | $TR_CMD ' ' '\n' | $SORT_CMD | $UNIQ_CMD)"
+
+        if [[ -n $last_list ]]; then
+            [[ -n $dependency_list ]] && dependency_list+="$(echo -e "\n$last_list")" || dependency_list="$last_list"
+        else
+            DebugDone 'complete'
             DebugInfo "found all IPKG dependencies in $iterations iterations"
             complete=true
             break
@@ -1640,21 +1648,24 @@ FindAllIPKGDependencies()
 
     [[ $complete = false ]] && DebugError "IPKG dependency list incomplete! Consider raising \$iteration_limit [$iteration_limit]."
 
-    read -r -a all_required_packages_array <<< $current_list
+    all_list_sorted="$(echo "$original_list $dependency_list" | $TR_CMD ' ' '\n' | $SORT_CMD | $UNIQ_CMD)"
+    read -r -a all_required_packages_array <<< $all_list_sorted
     all_required_packages=($(printf '%s\n' "${all_required_packages_array[@]}"))
 
-    # exclude packages already installed
+    DebugProc 'excluding packages already installed'
     for element in ${all_required_packages[@]}; do
         ($OPKG_CMD info $element | LC_ALL=C $GREP_CMD 'Status: ' | LC_ALL=C $GREP_CMD -q 'not-installed') && IPKG_download_list+=($element)
     done
-
+    DebugDone 'complete'
     DebugInfo "required IPKG names: ${IPKG_download_list[*]}"
     IPKG_download_count=${#IPKG_download_list[@]}
 
+    DebugProc 'calculating size of required IPKGs'
     for element in ${IPKG_download_list[@]}; do
         result_size=$($OPKG_CMD info $element | $GREP_CMD 'Size:' | $SED_CMD 's|^Size: ||')
         ((IPKG_download_size+=result_size))
     done
+    DebugDone 'complete'
 
     [[ -z $IPKG_download_size ]] && IPKG_download_size=0
 
@@ -1933,6 +1944,13 @@ DebugFuncExit()
     {
 
     DebugThis "(<<) <${FUNCNAME[1]}> [$errorcode]"
+
+    }
+
+DebugProc()
+    {
+
+    DebugThis "(==) $1 ..."
 
     }
 
