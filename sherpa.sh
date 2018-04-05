@@ -28,7 +28,7 @@ errorcode=0
 ParseArgs()
     {
 
-    if [[ ! -n $USER_ARGS_RAW ]]; then
+    if [[ -z $USER_ARGS_RAW ]]; then
         DisplayHelp
         errorcode=1
         return 1
@@ -69,9 +69,8 @@ ParseArgs()
 Init()
     {
 
-    local returncode=0
     local SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=180405
+    local SCRIPT_VERSION=180406
     debug=false
 
     # cherry-pick required binaries
@@ -111,58 +110,60 @@ Init()
     WGET_CMD=/usr/bin/wget
     DU_CMD=/usr/bin/du
     SORT_CMD=/usr/bin/sort
+    TEE_CMD=/usr/bin/tee
 
     OPKG_CMD=/opt/bin/opkg
     FIND_CMD=/opt/bin/find
 
     # paths and files
     QPKG_CONFIG_PATHFILE=/etc/config/qpkg.conf
-    local DEFAULT_SHARES_PATHFILE=/etc/config/def_share.info
-    local ULINUX_PATHFILE=/etc/config/uLinux.conf
-    local ISSUE_PATHFILE=/etc/issue
     INSTALL_LOG_FILE=install.log
     DOWNLOAD_LOG_FILE=download.log
     START_LOG_FILE=start.log
     STOP_LOG_FILE=stop.log
+    local DEFAULT_SHARES_PATHFILE=/etc/config/def_share.info
+    local ULINUX_PATHFILE=/etc/config/uLinux.conf
+    local ISSUE_PATHFILE=/etc/issue
     local DEBUG_LOG_FILE="${SCRIPT_FILE%.*}.debug.log"
 
     # check required binaries are present
-    SysFilePresent "$CAT_CMD" || return
-    SysFilePresent "$CHMOD_CMD" || return
-    SysFilePresent "$DATE_CMD" || return
-    SysFilePresent "$GREP_CMD" || return
-    SysFilePresent "$HOSTNAME_CMD" || return
-    SysFilePresent "$LN_CMD" || return
-    SysFilePresent "$MD5SUM_CMD" || return
-    SysFilePresent "$MKDIR_CMD" || return
-    SysFilePresent "$MV_CMD" || return
-    SysFilePresent "$CP_CMD" || return
-    SysFilePresent "$RM_CMD" || return
-    SysFilePresent "$SED_CMD" || return
-    SysFilePresent "$TOUCH_CMD" || return
-    SysFilePresent "$TR_CMD" || return
-    SysFilePresent "$UNAME_CMD" || return
-    SysFilePresent "$AWK_CMD" || return
-    SysFilePresent "$PING_CMD" || return
-    SysFilePresent "$UNIQ_CMD" || return
+    SysFilePresent $CAT_CMD || return
+    SysFilePresent $CHMOD_CMD || return
+    SysFilePresent $DATE_CMD || return
+    SysFilePresent $GREP_CMD || return
+    SysFilePresent $HOSTNAME_CMD || return
+    SysFilePresent $LN_CMD || return
+    SysFilePresent $MD5SUM_CMD || return
+    SysFilePresent $MKDIR_CMD || return
+    SysFilePresent $MV_CMD || return
+    SysFilePresent $CP_CMD || return
+    SysFilePresent $RM_CMD || return
+    SysFilePresent $SED_CMD || return
+    SysFilePresent $TOUCH_CMD || return
+    SysFilePresent $TR_CMD || return
+    SysFilePresent $UNAME_CMD || return
+    SysFilePresent $AWK_CMD || return
+    SysFilePresent $PING_CMD || return
+    SysFilePresent $UNIQ_CMD || return
 
-    SysFilePresent "$GETCFG_CMD" || return
-    SysFilePresent "$RMCFG_CMD" || return
-    SysFilePresent "$SETCFG_CMD" || return
-    SysFilePresent "$CURL_CMD" || return
+    SysFilePresent $GETCFG_CMD || return
+    SysFilePresent $RMCFG_CMD || return
+    SysFilePresent $SETCFG_CMD || return
+    SysFilePresent $CURL_CMD || return
 
-    SysFilePresent "$BASENAME_CMD" || return
-    SysFilePresent "$CUT_CMD" || return
-    SysFilePresent "$DIRNAME_CMD" || return
-    SysFilePresent "$HEAD_CMD" || return
-    SysFilePresent "$READLINK_CMD" || return
-    SysFilePresent "$TAIL_CMD" || return
-    SysFilePresent "$UNZIP_CMD" || return
-    SysFilePresent "$UPTIME_CMD" || return
-    SysFilePresent "$WC_CMD" || return
-    SysFilePresent "$WGET_CMD" || return
-    SysFilePresent "$DU_CMD" || return
-    SysFilePresent "$SORT_CMD" || return
+    SysFilePresent $BASENAME_CMD || return
+    SysFilePresent $CUT_CMD || return
+    SysFilePresent $DIRNAME_CMD || return
+    SysFilePresent $HEAD_CMD || return
+    SysFilePresent $READLINK_CMD || return
+    SysFilePresent $TAIL_CMD || return
+    SysFilePresent $UNZIP_CMD || return
+    SysFilePresent $UPTIME_CMD || return
+    SysFilePresent $WC_CMD || return
+    SysFilePresent $WGET_CMD || return
+    SysFilePresent $DU_CMD || return
+    SysFilePresent $SORT_CMD || return
+    SysFilePresent $TEE_CMD || return
 
     local DEFAULT_SHARE_DOWNLOAD_PATH=/share/Download
     local DEFAULT_SHARE_PUBLIC_PATH=/share/Public
@@ -206,6 +207,8 @@ Init()
     previous_msg=''
     REINSTALL_FLAG=false
     [[ ${FIRMWARE_VERSION//.} -lt 426 ]] && CURL_CMD+=' --insecure'
+    local result=0
+    local returncode=0
 
     ParseArgs
 
@@ -238,12 +241,10 @@ Init()
         DebugThinSeparator
     fi
 
-    if [[ $errorcode -eq 0 ]]; then
-        if [[ $EUID -ne 0 ]]; then
-            ShowError "This script must be run as the 'admin' user. Please login via SSH as 'admin' and try again."
-            errorcode=2
-            returncode=1
-        fi
+    if [[ $errorcode -eq 0 && $EUID -ne 0 ]]; then
+        ShowError "This script must be run as the 'admin' user. Please login via SSH as 'admin' and try again."
+        errorcode=2
+        returncode=1
     fi
 
     if [[ $errorcode -eq 0 ]]; then
@@ -317,7 +318,7 @@ Init()
         ShowProc "checking for Internet access"
 
         if ($PING_CMD -c 1 -q google.com > /dev/null 2>&1); then
-            ShowDone "Internet access OK"
+            ShowDone "Internet is accessible"
         else
             ShowError "No Internet access"
             errorcode=9
@@ -374,14 +375,14 @@ DownloadQPKGs()
     local SL=''
 
     # Entware is always required
-    if ! QPKGIsInstalled "$PREF_ENTWARE"; then
-        LoadQPKGDownloadDetails "$PREF_ENTWARE" && DownloadQPKG
+    if ! QPKGIsInstalled $PREF_ENTWARE; then
+        LoadQPKGDownloadDetails $PREF_ENTWARE && DownloadQPKG
 
-    elif [[ $PREF_ENTWARE = Entware-3x ]]; then
+    elif [[ $PREF_ENTWARE = Entware-3x || $PREF_ENTWARE = Entware ]]; then
         local testfile=/opt/etc/passwd
         [[ -e $testfile ]] && { [[ -L $testfile ]] && ENTWARE_VER=std || ENTWARE_VER=alt ;} || ENTWARE_VER=none
 
-        if [[ $ENTWARE_VER = alt ]]; then
+        if [[ $PREF_ENTWARE = Entware-3x && $ENTWARE_VER = alt ]]; then
             ShowError 'Entware-3x (alt) is installed. This configuration has not been tested.'
             errorcode=10
             returncode=1
@@ -394,7 +395,7 @@ DownloadQPKGs()
 
     # now choose package(s) to download
     if [[ $errorcode -eq 0 ]]; then
-        case "$STEPHANE_QPKG_ARCH" in
+        case $STEPHANE_QPKG_ARCH in
             x86)
                 ! QPKGIsInstalled Par2cmdline-MT && LoadQPKGDownloadDetails Par2cmdline-MT && DownloadQPKG
                 ;;
@@ -405,7 +406,7 @@ DownloadQPKGs()
                 ;;
         esac
 
-        [[ $errorcode -eq 0 ]] && LoadQPKGDownloadDetails "$TARGET_APP" && DownloadQPKG
+        [[ $errorcode -eq 0 ]] && LoadQPKGDownloadDetails $TARGET_APP && DownloadQPKG
     fi
 
     DebugFuncExit
@@ -420,7 +421,7 @@ RemovePackageInstallers()
 
     DebugFuncEntry
 
-    [[ $PREF_ENTWARE = Entware-3x ]] && UninstallQPKG Entware-ng
+    [[ $PREF_ENTWARE = Entware-3x || $PREF_ENTWARE = Entware ]] && UninstallQPKG Entware-ng
     UninstallQPKG Optware || errorcode=0  # ignore Optware uninstall errors
 
     DebugFuncExit
@@ -438,7 +439,7 @@ RemoveOther()
     # cruft - remove previous x41 Par2cmdline-MT package due to wrong arch - this was corrected on 2017-06-03
 
     # no longer use Par2cmdline-MT for x86_64 as multi-thread changes have been merged upstream into Par2cmdline and Par2cmdline-MT has been discontinued
-    case "$STEPHANE_QPKG_ARCH" in
+    case $STEPHANE_QPKG_ARCH in
         x86)
             QPKGIsInstalled Par2 && UninstallQPKG Par2
             ;;
@@ -462,36 +463,36 @@ InstallEntware()
     DebugFuncEntry
     local returncode=0
 
-    if ! QPKGIsInstalled "$PREF_ENTWARE"; then
+    if ! QPKGIsInstalled $PREF_ENTWARE; then
         # rename original [/opt]
         opt_path=/opt
         opt_backup_path=/opt.orig
         [[ -d $opt_path && ! -L $opt_path && ! -e $opt_backup_path ]] && $MV_CMD "$opt_path" "$opt_backup_path"
 
-        LoadQPKGDownloadDetails "$PREF_ENTWARE" && InstallQPKG && ReloadProfile
+        LoadQPKGDownloadDetails $PREF_ENTWARE && InstallQPKG && ReloadProfile
 
         # copy all files from original [/opt] into new [/opt]
         [[ -L $opt_path && -d $opt_backup_path ]] && $CP_CMD --recursive "$opt_backup_path"/* --target-directory "$opt_path" && $RM_CMD -r "$opt_backup_path"
 
     else
-        if [[ $PREF_ENTWARE = Entware-3x ]]; then
+        if [[ $PREF_ENTWARE = Entware-3x || $PREF_ENTWARE = Entware ]]; then
             local testfile=/opt/etc/passwd
             [[ -e $testfile ]] && { [[ -L $testfile ]] && ENTWARE_VER=std || ENTWARE_VER=alt ;} || ENTWARE_VER=none
 
-            DebugQPKG version "$ENTWARE_VER"
+            DebugQPKG version $ENTWARE_VER
             ReloadProfile
 
-            if [[ $ENTWARE_VER = alt ]]; then
+            if [[ $PREF_ENTWARE = Entware-3x && $ENTWARE_VER = alt ]]; then
                 ShowError "Entware-3x (alt) is installed. This config has not been tested. Can't continue."
                 errorcode=13
                 returncode=1
             fi
         fi
 
-        [[ $STEPHANE_QPKG_ARCH != none ]] && ($OPKG_CMD list-installed | $GREP_CMD -q par2cmdline) && $OPKG_CMD remove par2cmdline >> /dev/null
+        [[ $STEPHANE_QPKG_ARCH != none ]] && ($OPKG_CMD list-installed | $GREP_CMD -q par2cmdline) && $OPKG_CMD remove par2cmdline > /dev/null 2>&1
     fi
 
-    LoadQPKGVars "$PREF_ENTWARE" && PatchEntwareInit
+    LoadQPKGVars $PREF_ENTWARE && PatchEntwareInit
 
     DebugFuncExit
     return $returncode
@@ -501,6 +502,7 @@ InstallEntware()
 PatchEntwareInit()
     {
 
+    DebugFuncEntry
     local returncode=0
     local findtext=''
     local inserttext=''
@@ -525,6 +527,7 @@ PatchEntwareInit()
         fi
     fi
 
+    DebugFuncExit
     return $returncode
 
     }
@@ -536,32 +539,42 @@ UpdateEntware()
     local returncode=0
     local package_list_file=/opt/var/opkg-lists/entware
     local package_list_age=60
-    local result=''
-    local log_pathfile="${QPKG_DL_PATH}/entware-update.log"
+    local result=0
+    local log_pathfile="${WORKING_PATH}/entware-update.log"
 
     if [[ ! -f $OPKG_CMD ]]; then
-        ShowError "Entware opkg binary is missing. [$OPKG_CMD]"
+        ShowError "Entware opkg binary is missing [$OPKG_CMD]"
         errorcode=15
         returncode=1
     else
         # if Entware package list was updated only recently, don't run another update
-        [[ -e $FIND_CMD ]] && result=$($FIND_CMD "$package_list_file" -mmin +$package_list_age)
+        [[ -e $FIND_CMD && -e $package_list_file ]] && result=$($FIND_CMD "$package_list_file" -mmin +$package_list_age) || result='new install'
 
-        if [[ -n $result ]] ; then
-            ShowProc "updating 'Entware'"
+        if [[ -n $result ]]; then
+            ShowProc "updating local Entware package list"
 
-            install_msgs=$($OPKG_CMD update; $OPKG_CMD upgrade; $OPKG_CMD update; $OPKG_CMD upgrade 2>&1)
+            #install_msgs=$($OPKG_CMD update)
+            DebugProc 'performing Entware upgrade x 2'
+            install_msgs=$($OPKG_CMD update; $OPKG_CMD upgrade; $OPKG_CMD update; $OPKG_CMD upgrade)
             result=$?
             echo -e "${install_msgs}\nresult=[$result]" >> "$log_pathfile"
 
+            #if ($GREP_CMD -q 'Please run opkg update + opkg upgrade once more' <<< "$install_msgs"); then
+            #   DebugProc 'performing Entware upgrade x 2'
+            #   install_msgs=$($OPKG_CMD upgrade; $OPKG_CMD update; $OPKG_CMD upgrade)
+            #   result=$?
+            #   echo -e "${install_msgs}\nresult=[$result]" >> "$log_pathfile"
+            #   DebugDone 'complete'
+            #fi
+
             if [[ $result -eq 0 ]]; then
-                ShowDone "updated 'Entware'"
+                ShowDone "updated local Entware package list"
             else
-                ShowWarning "'Entware' update failed [$result]"
+                ShowWarning "Unable to update local Entware package list [$result]"
                 # meh, continue anyway...
             fi
         else
-            DebugInfo "'Entware' package list was updated less than $package_list_age minutes ago"
+            DebugInfo "local Entware package list was updated less than $package_list_age minutes ago"
         fi
     fi
 
@@ -577,28 +590,28 @@ InstallExtras()
 
     DebugFuncEntry
 
-    case "$STEPHANE_QPKG_ARCH" in
+    case $STEPHANE_QPKG_ARCH in
         x86)
-            ! QPKGIsInstalled Par2cmdline-MT && LoadQPKGDownloadDetails Par2cmdline-MT && {
+            if ! QPKGIsInstalled Par2cmdline-MT && LoadQPKGDownloadDetails Par2cmdline-MT; then
                 InstallQPKG
                 if [[ $errorcode -gt 0 ]]; then
                     ShowWarning "Par2cmdline-MT installation failed - but it's not essential so I'm continuing"
                     errorcode=0
                     DebugVar errorcode
                 fi
-                }
+            fi
             ;;
         none)
             ;;
         *)
-            ! QPKGIsInstalled Par2 && LoadQPKGDownloadDetails Par2 && {
+            if ! QPKGIsInstalled Par2 && LoadQPKGDownloadDetails Par2; then
                 InstallQPKG
                 if [[ $errorcode -gt 0 ]]; then
                     ShowWarning "Par2 installation failed - but it's not essential so I'm continuing"
                     errorcode=0
                     DebugVar errorcode
                 fi
-                }
+            fi
             ;;
     esac
     [[ $errorcode -eq 0 ]] && InstallIPKs
@@ -615,11 +628,10 @@ InstallIPKs()
     DebugFuncEntry
     local returncode=0
     local install_msgs=''
-    local result=''
     local packages=''
     local log_pathfile="${IPKG_DL_PATH}/ipks.$INSTALL_LOG_FILE"
 
-    if [[ ! -z $IPKG_DL_PATH && -d $IPKG_DL_PATH ]]; then
+    if [[ -n $IPKG_DL_PATH && -d $IPKG_DL_PATH ]]; then
         UpdateEntware
         packages='gcc python python-pip python-cffi python-pyopenssl ca-certificates nano git git-http unrar p7zip ionice ffprobe'
         [[ $STEPHANE_QPKG_ARCH = none ]] && packages+=' par2cmdline'
@@ -642,6 +654,7 @@ InstallIPKGBatch()
     # $2 = on-screen description of this package batch
 
     DebugFuncEntry
+    local result=0
     local returncode=0
     local requested_IPKGs=''
     local IPKG_batch_desc=''
@@ -688,8 +701,8 @@ InstallPIPs()
 
     DebugFuncEntry
     local install_msgs=''
+    local result=0
     local returncode=0
-
     local op='pip packages'
     local log_pathfile="${WORKING_PATH}/$(echo "$op" | $TR_CMD " " "_").$INSTALL_LOG_FILE"
 
@@ -722,14 +735,14 @@ InstallNG()
 
     DebugFuncEntry
 
-    ! IPKIsInstalled nzbget && {
-        local returncode=0
+    if ! IPKIsInstalled nzbget; then
         local install_msgs=''
-        local result=''
+        local result=0
         local packages=''
         local package_desc=''
+        local returncode=0
 
-        if [[ ! -z $IPKG_DL_PATH && -d $IPKG_DL_PATH ]]; then
+        if [[ -n $IPKG_DL_PATH && -d $IPKG_DL_PATH ]]; then
             packages='nzbget'
             package_desc=nzbget
 
@@ -744,10 +757,10 @@ InstallNG()
                 ShowDone "downloaded & installed IPKG ($package_desc)"
                 ShowProc "modifying NZBGet"
 
-                sed -i 's|ConfigTemplate=.*|ConfigTemplate=/opt/share/nzbget/nzbget.conf.template|g' "/opt/share/nzbget/nzbget.conf"
+                $SED_CMD -i 's|ConfigTemplate=.*|ConfigTemplate=/opt/share/nzbget/nzbget.conf.template|g' "/opt/share/nzbget/nzbget.conf"
                 ShowDone "modified NZBGet"
                 /opt/etc/init.d/S75nzbget start
-                cat /opt/share/nzbget/nzbget.conf | grep ControlPassword=
+                $CAT_CMD /opt/share/nzbget/nzbget.conf | $GREP_CMD ControlPassword=
                 #Go to default router ip address and port 6789 192.168.1.1:6789 and now you should see NZBget interface
             else
                 ShowError "Download & install IPKG failed ($package_desc) [$result]"
@@ -761,7 +774,7 @@ InstallNG()
             errorcode=23
             returncode=1
         fi
-    } #&& LoadIPKVars "nzbget"
+    fi
 
     DebugFuncExit
     return 0
@@ -772,11 +785,12 @@ InstallQPKG()
     {
 
     DebugFuncEntry
-    local install_msgs=''
-    local returncode=0
     local target_file=''
+    local install_msgs=''
+    local result=0
+    local returncode=0
 
-    if [[ ${qpkg_pathfile##*.} = 'zip' ]]; then
+    if [[ ${qpkg_pathfile##*.} = zip ]]; then
         $UNZIP_CMD -nq "$qpkg_pathfile" -d "$QPKG_DL_PATH"
         qpkg_pathfile="${qpkg_pathfile%.*}"
     fi
@@ -811,6 +825,8 @@ InstallQPKG()
 
 BackupThisPackage()
     {
+
+    local result=0
 
     if [[ -d $package_config_path ]]; then
         if [[ ! -d ${BACKUP_PATH}/config ]]; then
@@ -856,12 +872,11 @@ BackupConfig()
     DebugFuncEntry
     local returncode=0
 
-    case "$TARGET_APP" in
+    case $TARGET_APP in
         SABnzbdplus)
             if QPKGIsInstalled QSabNZBdPlus; then
                 LoadQPKGVars QSabNZBdPlus
                 DaemonCtl stop "$package_init_pathfile"
-
             elif QPKGIsInstalled SABnzbdplus; then
                 LoadQPKGVars SABnzbdplus
                 DaemonCtl stop "$package_init_pathfile"
@@ -874,7 +889,6 @@ BackupConfig()
             if QPKGIsInstalled QCouchPotato; then
                 LoadQPKGVars QCouchPotato
                 DaemonCtl stop "$package_init_pathfile"
-
             elif QPKGIsInstalled CouchPotato2; then
                 LoadQPKGVars CouchPotato2
                 DaemonCtl stop "$package_init_pathfile"
@@ -927,7 +941,7 @@ ConvertSettings()
     DebugFuncEntry
     local returncode=0
 
-    case "$TARGET_APP" in
+    case $TARGET_APP in
         SABnzbdplus)
             local OLD_BACKUP_PATH="${BACKUP_PATH}/SAB_CONFIG"
             [[ -d $OLD_BACKUP_PATH ]] && { $MV_CMD "$OLD_BACKUP_PATH" "$SETTINGS_BACKUP_PATH"; DebugDone 'renamed backup config path' ;}
@@ -973,7 +987,7 @@ ConvertSettings()
 ReloadProfile()
     {
 
-    QPKGIsInstalled "$PREF_ENTWARE" && export PATH="/opt/bin:/opt/sbin:$PATH"
+    QPKGIsInstalled $PREF_ENTWARE && export PATH="/opt/bin:/opt/sbin:$PATH"
 
     DebugDone 'adjusted $PATH'
     DebugVar PATH
@@ -988,10 +1002,11 @@ RestoreConfig()
     [[ $errorcode -gt 0 ]] && return 1
 
     DebugFuncEntry
+    local result=0
     local returncode=0
 
-    if QPKGIsInstalled "$TARGET_APP"; then
-        case "$TARGET_APP" in
+    if QPKGIsInstalled $TARGET_APP; then
+        case $TARGET_APP in
             SABnzbdplus)
                 if [[ -d $SETTINGS_BACKUP_PATH ]]; then
                     #sleep 10; DaemonCtl stop "$package_init_pathfile"  # allow time for new package init to complete so PID is accurate
@@ -1064,6 +1079,7 @@ DownloadQPKG()
     [[ $errorcode -gt 0 ]] && return 1
 
     DebugFuncEntry
+    local result=0
     local returncode=0
 
     if [[ -e $qpkg_pathfile ]]; then
@@ -1095,7 +1111,7 @@ DownloadQPKG()
         # curl http://entware-3x.zyxmon.org/binaries/other/Entware-3x_1.00std.qpkg --socks5 IP:PORT --output target.qpkg
 
         if [[ $debug = true ]]; then
-            $CURL_CMD --output "$qpkg_pathfile" "$qpkg_url" 2>&1 | tee -a "$log_pathfile"
+            $CURL_CMD --output "$qpkg_pathfile" "$qpkg_url" 2>&1 | $TEE_CMD -a "$log_pathfile"
             result=$?
         else
             $CURL_CMD --output "$qpkg_pathfile" "$qpkg_url" >> "$log_pathfile" 2>&1
@@ -1143,7 +1159,7 @@ DownloadQPKG()
 CalcStephaneQPKGArch()
     {
 
-    case "$NAS_ARCH" in
+    case $NAS_ARCH in
         x86_64)
             [[ $FIRMWARE_VERSION =~ '4.3.' ]] && STEPHANE_QPKG_ARCH=x64 || STEPHANE_QPKG_ARCH=x86
             ;;
@@ -1171,6 +1187,7 @@ CalcEntwareQPKG()
 
     [[ $NAS_ARCH = i686 ]] && PREF_ENTWARE=Entware-ng
     QPKGIsInstalled Entware-ng && PREF_ENTWARE=Entware-ng
+    QPKGIsInstalled Entware && PREF_ENTWARE=Entware
 
     DebugVar PREF_ENTWARE
     return 0
@@ -1182,8 +1199,9 @@ LoadQPKGVars()
 
     # $1 = installed package name to load variables for
 
+    local package_name=$1
+    local result=0
     local returncode=0
-    local package_name="$1"
 
     if [[ -z $package_name ]]; then
         DebugError 'QPKG name not specified'
@@ -1198,7 +1216,7 @@ LoadQPKGVars()
         package_api=''
         sab_chartranslator_pathfile=''
 
-        case "$package_name" in
+        case $package_name in
             SABnzbdplus|QSabNZBdPlus)
                 package_installed_path=$($GETCFG_CMD $package_name Install_Path -f $QPKG_CONFIG_PATHFILE)
                 result=$?
@@ -1292,25 +1310,24 @@ LoadQPKGDownloadDetails()
 
     # $1 = QPKG name
 
-    local returncode=0
-    local target_file=''
-    local OneCD_urlprefix='https://raw.githubusercontent.com/onecdonly/sherpa/master/QPKGs'
-    local Stephane_urlprefix='http://www.qoolbox.fr'
-
     qpkg_url=''
     qpkg_md5=''
     qpkg_file=''
     qpkg_pathfile=''
+    local returncode=0
+    local target_file=''
+    local OneCD_urlprefix='https://raw.githubusercontent.com/onecdonly/sherpa/master/QPKGs'
+    local Stephane_urlprefix='http://www.qoolbox.fr'
 
     if [[ -z $1 ]]; then
         DebugError 'QPKG name not specified'
         errorcode=35
         returncode=1
     else
-        qpkg_name="$1"
+        qpkg_name=$1
         local base_url=''
 
-        case "$1" in
+        case $1 in
             Entware-3x)
                 qpkg_md5='fa5719ab2138c96530287da8e6812746'
                 qpkg_url='http://entware-3x.zyxmon.org/binaries/other/Entware-3x_1.00std.qpkg'
@@ -1350,7 +1367,7 @@ LoadQPKGDownloadDetails()
                 qpkg_file=$target_file
                 ;;
             Par2cmdline-MT)
-                case "$STEPHANE_QPKG_ARCH" in
+                case $STEPHANE_QPKG_ARCH in
                     x86)
                         qpkg_md5='531832a39576e399f646890cc18969bb'
                         qpkg_url="${Stephane_urlprefix}/Par2cmdline-MT_0.6.14-MT_x86.qpkg.zip"
@@ -1366,7 +1383,7 @@ LoadQPKGDownloadDetails()
                 esac
                 ;;
             Par2)
-                case "$STEPHANE_QPKG_ARCH" in
+                case $STEPHANE_QPKG_ARCH in
                     x64)
                         qpkg_md5='660882474ab00d4793a674d4b48f89be'
                         qpkg_url="${Stephane_urlprefix}/Par2_0.7.4.0_x86_64.qpkg.zip"
@@ -1405,6 +1422,7 @@ UninstallQPKG()
 
     [[ $errorcode -gt 0 ]] && return 1
 
+    local result=0
     local returncode=0
 
     if [[ -z $1 ]]; then
@@ -1449,26 +1467,25 @@ DaemonCtl()
     # $1 = action (start|stop)
     # $2 = pathfile of daemon init
 
-    local returncode=0
     local msgs=''
+    local result=0
     local target_init_pathfile=''
     local init_file=''
+    local returncode=0
 
     if [[ -z $2 ]]; then
         DebugError 'daemon unspecified'
         errorcode=40
         returncode=1
-
     elif [[ ! -e $2 ]]; then
         DebugError "daemon ($2) not found"
         errorcode=41
         returncode=1
-
     else
         target_init_pathfile="$2"
         target_init_file=$($BASENAME_CMD "$target_init_pathfile")
 
-        case "$1" in
+        case $1 in
             start)
                 ShowProc "starting daemon ($target_init_file) - this can take a while"
                 msgs=$("$target_init_pathfile" start)
@@ -1477,7 +1494,6 @@ DaemonCtl()
 
                 if [[ $result -eq 0 ]]; then
                     ShowDone "daemon started ($target_init_file)"
-
                 else
                     ShowWarning "could not start daemon ($target_init_file) [$result]"
                     if [[ $debug = true ]]; then
@@ -1499,7 +1515,6 @@ DaemonCtl()
 
                 if [[ $result -eq 0 ]]; then
                     ShowDone "daemon stopped ($target_init_file)"
-
                 else
                     ShowWarning "could not stop daemon ($target_init_file) [$result]"
                     if [[ $debug = true ]]; then
@@ -1599,9 +1614,9 @@ FindAllIPKGDependencies()
 
     # From a specified list of IPKG names, find all dependent IPKGs, exclude those already installed,then generate a total qty to download and a total download byte-size.
     # input:
-    #   $1 = initial IPKG names
+    #   $1 = string with space-separated initial IPKG names
     # output:
-    #   $IPKG_download_list = a complete list of all IPKGs including those originally specified
+    #   $IPKG_download_list = array with complete list of all IPKGs including those originally specified
     #   $IPKG_download_count = number of packages needing download
     #   $IPKG_download_size = byte-count of all these packages
 
@@ -1662,7 +1677,7 @@ FindAllIPKGDependencies()
 
     [[ -z $IPKG_download_size ]] && IPKG_download_size=0
 
-    DebugVar 'IPKG_download_size'
+    DebugVar IPKG_download_size
     ShowDone "$IPKG_download_count IPKGs ($(Convert2ISO $IPKG_download_size)) need to be downloaded"
 
     }
@@ -1733,10 +1748,14 @@ QPKGIsInstalled()
     # If not enabled, then enable it.
     # If not installed, return 1
 
-    # $1 = package name to check/enable
+    # input:
+    #   $1 = package name to check & enable
+    # output:
+    #   $package_is_installed = true / false
 
-    local returncode=0
     package_is_installed=false
+    local result=0
+    local returncode=0
 
     if [[ -z $1 ]]; then
         DebugError 'QPKG name not specified'
@@ -1772,6 +1791,7 @@ IPKIsInstalled()
 
     # $1 = package name to check
 
+    local result=0
     local returncode=0
 
     if [[ -z $1 ]]; then
@@ -2161,7 +2181,7 @@ PauseHere()
     local waittime=10
 
     ShowProc "waiting for $waittime seconds"
-    sleep 10
+    sleep $waittime
     ShowDone "wait complete"
 
     }
