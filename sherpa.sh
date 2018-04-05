@@ -296,7 +296,7 @@ Init()
     fi
 
     if [[ $errorcode -eq 0 ]]; then
-        if [[ $TARGET_APP = 'SABnzbdplus' ]] && QPKGIsInstalled 'QSabNZBdPlus' && QPKGIsInstalled 'SABnzbdplus'; then
+        if [[ $TARGET_APP = SABnzbdplus ]] && QPKGIsInstalled QSabNZBdPlus && QPKGIsInstalled SABnzbdplus; then
             ShowError 'Both (SABnzbdplus) and (QSabNZBdPlus) are installed. This is an unsupported configuration. Please manually uninstall the unused one via the QNAP App Center then re-run this installer.'
             errorcode=7
             returncode=1
@@ -304,7 +304,7 @@ Init()
     fi
 
     if [[ $errorcode -eq 0 ]]; then
-        if QPKGIsInstalled 'Entware-ng' && QPKGIsInstalled 'Entware-3x'; then
+        if QPKGIsInstalled Entware-ng && QPKGIsInstalled Entware-3x; then
             ShowError 'Both (Entware-ng) and (Entware-3x) are installed. This is an unsupported configuration. Please manually uninstall both of them via the QNAP App Center then re-run this installer.'
             errorcode=8
             returncode=1
@@ -621,14 +621,9 @@ InstallIPKs()
 
     if [[ ! -z $IPKG_DL_PATH && -d $IPKG_DL_PATH ]]; then
         UpdateEntware
-
         packages='gcc python python-pip python-cffi python-pyopenssl ca-certificates nano git git-http unrar p7zip ionice ffprobe'
         [[ $STEPHANE_QPKG_ARCH = none ]] && packages+=' par2cmdline'
-        InstallIPKGBatch "$packages" 'Git, Python, UnRAR and others'
-
-        if [[ $returncode -eq 0 ]]; then
-            InstallIPKGBatch 'python-dev' 'Python headers'
-        fi
+        InstallIPKGBatch "$packages" 'Git, Python, UnRAR and others' && InstallIPKGBatch 'python-dev' 'Python headers'
     else
         ShowError "IPKG path does not exist [$IPKG_DL_PATH]"
         errorcode=20
@@ -2189,10 +2184,6 @@ if [[ $errorcode -eq 0 ]]; then
             RestoreConfig
             [[ $errorcode -eq 0 ]] && DaemonCtl start "$package_init_pathfile"
             ;;
-        #NZBGet)
-        #   ;;
-        #HeadPhones)
-        #   ;;
         *)
             ShowError "Can't install specified app: [$TARGET_APP] - unknown!"
             ;;
