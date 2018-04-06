@@ -539,6 +539,7 @@ UpdateEntware()
     local returncode=0
     local package_list_file=/opt/var/opkg-lists/entware
     local package_list_age=60
+    local release_file=/opt/etc/entware_release
     local result=0
     local log_pathfile="${WORKING_PATH}/entware-update.log"
 
@@ -553,19 +554,16 @@ UpdateEntware()
         if [[ -n $result ]]; then
             ShowProc "updating local Entware package list"
 
-            #install_msgs=$($OPKG_CMD update)
-            DebugProc 'performing Entware upgrade x 2'
-            install_msgs=$($OPKG_CMD update; $OPKG_CMD upgrade; $OPKG_CMD update; $OPKG_CMD upgrade)
+            install_msgs=$($OPKG_CMD update)
             result=$?
             echo -e "${install_msgs}\nresult=[$result]" >> "$log_pathfile"
 
-            #if ($GREP_CMD -q 'Please run opkg update + opkg upgrade once more' <<< "$install_msgs"); then
-            #   DebugProc 'performing Entware upgrade x 2'
-            #   install_msgs=$($OPKG_CMD upgrade; $OPKG_CMD update; $OPKG_CMD upgrade)
-            #   result=$?
-            #   echo -e "${install_msgs}\nresult=[$result]" >> "$log_pathfile"
-            #   DebugDone 'complete'
-            #fi
+            if [[ $PREF_ENTWARE = Entware-3x && ! -e $release_file ]]; then
+               DebugProc 'performing Entware-3x upgrade x 2'
+               install_msgs=$($OPKG_CMD upgrade; $OPKG_CMD update; $OPKG_CMD upgrade)
+               result=$?
+               echo -e "${install_msgs}\nresult=[$result]" >> "$log_pathfile"
+            fi
 
             if [[ $result -eq 0 ]]; then
                 ShowDone "updated local Entware package list"
@@ -574,6 +572,7 @@ UpdateEntware()
                 # meh, continue anyway...
             fi
         else
+            ShowDone "local Entware package list is up-to-date"
             DebugInfo "local Entware package list was updated less than $package_list_age minutes ago"
         fi
     fi
@@ -632,9 +631,9 @@ InstallIPKGs()
 
     if [[ -n $IPKG_DL_PATH && -d $IPKG_DL_PATH ]]; then
         UpdateEntware
-        packages='gcc python python-pip python-cffi python-pyopenssl ca-certificates nano git git-http unrar p7zip ionice ffprobe'
+        packages='gcc python python-pip python-cffi python-pyopenssl python-dev ca-certificates nano git git-http unrar p7zip ionice ffprobe'
         [[ $STEPHANE_QPKG_ARCH = none ]] && packages+=' par2cmdline'
-        InstallIPKGBatch "$packages" 'Git, Python, UnRAR and others' && InstallIPKGBatch 'python-dev' 'Python headers'
+        InstallIPKGBatch "$packages" 'Git, Python, UnRAR and others'
     else
         ShowError "IPKG path does not exist [$IPKG_DL_PATH]"
         errorcode=20
@@ -1663,7 +1662,11 @@ FindAllIPKGDependencies()
     [[ -z $IPKG_download_size ]] && IPKG_download_size=0
 
     DebugVar IPKG_download_size
-    ShowDone "$IPKG_download_count IPKGs ($(Convert2ISO $IPKG_download_size)) need to be downloaded"
+    if [[ $IPKG_download_count -gt 0 ]]; then
+        ShowDone "$IPKG_download_count IPKGs ($(Convert2ISO $IPKG_download_size)) are required"
+    else
+        ShowDone "no IPKGs are required"
+    fi
 
     }
 
