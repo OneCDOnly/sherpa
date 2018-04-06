@@ -614,7 +614,7 @@ InstallExtras()
             fi
             ;;
     esac
-    [[ $errorcode -eq 0 ]] && InstallIPKs
+    [[ $errorcode -eq 0 ]] && InstallIPKGs
     [[ $errorcode -eq 0 ]] && InstallPIPs
 
     DebugFuncExit
@@ -622,7 +622,7 @@ InstallExtras()
 
     }
 
-InstallIPKs()
+InstallIPKGs()
     {
 
     DebugFuncEntry
@@ -657,7 +657,7 @@ InstallIPKGBatch()
     local returncode=0
     local requested_IPKGs=''
     local IPKG_batch_desc=''
-    local log_pathfile="${IPKG_DL_PATH}/ipks.$INSTALL_LOG_FILE"
+    local log_pathfile="${IPKG_DL_PATH}/ipkgs.$INSTALL_LOG_FILE"
 
     [[ -n $1 ]] && requested_IPKGs="$1" || return 1
     [[ -n $2 ]] && IPKG_batch_desc="$2" || IPKG_batch_desc="$1"
