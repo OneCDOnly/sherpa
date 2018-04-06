@@ -127,43 +127,43 @@ Init()
     local DEBUG_LOG_FILE="${SCRIPT_FILE%.*}.debug.log"
 
     # check required binaries are present
-    SysFilePresent $CAT_CMD || return
-    SysFilePresent $CHMOD_CMD || return
-    SysFilePresent $DATE_CMD || return
-    SysFilePresent $GREP_CMD || return
-    SysFilePresent $HOSTNAME_CMD || return
-    SysFilePresent $LN_CMD || return
-    SysFilePresent $MD5SUM_CMD || return
-    SysFilePresent $MKDIR_CMD || return
-    SysFilePresent $MV_CMD || return
-    SysFilePresent $CP_CMD || return
-    SysFilePresent $RM_CMD || return
-    SysFilePresent $SED_CMD || return
-    SysFilePresent $TOUCH_CMD || return
-    SysFilePresent $TR_CMD || return
-    SysFilePresent $UNAME_CMD || return
-    SysFilePresent $AWK_CMD || return
-    SysFilePresent $PING_CMD || return
-    SysFilePresent $UNIQ_CMD || return
+    IsSysFilePresent $CAT_CMD || return
+    IsSysFilePresent $CHMOD_CMD || return
+    IsSysFilePresent $DATE_CMD || return
+    IsSysFilePresent $GREP_CMD || return
+    IsSysFilePresent $HOSTNAME_CMD || return
+    IsSysFilePresent $LN_CMD || return
+    IsSysFilePresent $MD5SUM_CMD || return
+    IsSysFilePresent $MKDIR_CMD || return
+    IsSysFilePresent $MV_CMD || return
+    IsSysFilePresent $CP_CMD || return
+    IsSysFilePresent $RM_CMD || return
+    IsSysFilePresent $SED_CMD || return
+    IsSysFilePresent $TOUCH_CMD || return
+    IsSysFilePresent $TR_CMD || return
+    IsSysFilePresent $UNAME_CMD || return
+    IsSysFilePresent $AWK_CMD || return
+    IsSysFilePresent $PING_CMD || return
+    IsSysFilePresent $UNIQ_CMD || return
 
-    SysFilePresent $GETCFG_CMD || return
-    SysFilePresent $RMCFG_CMD || return
-    SysFilePresent $SETCFG_CMD || return
-    SysFilePresent $CURL_CMD || return
+    IsSysFilePresent $GETCFG_CMD || return
+    IsSysFilePresent $RMCFG_CMD || return
+    IsSysFilePresent $SETCFG_CMD || return
+    IsSysFilePresent $CURL_CMD || return
 
-    SysFilePresent $BASENAME_CMD || return
-    SysFilePresent $CUT_CMD || return
-    SysFilePresent $DIRNAME_CMD || return
-    SysFilePresent $HEAD_CMD || return
-    SysFilePresent $READLINK_CMD || return
-    SysFilePresent $TAIL_CMD || return
-    SysFilePresent $UNZIP_CMD || return
-    SysFilePresent $UPTIME_CMD || return
-    SysFilePresent $WC_CMD || return
-    SysFilePresent $WGET_CMD || return
-    SysFilePresent $DU_CMD || return
-    SysFilePresent $SORT_CMD || return
-    SysFilePresent $TEE_CMD || return
+    IsSysFilePresent $BASENAME_CMD || return
+    IsSysFilePresent $CUT_CMD || return
+    IsSysFilePresent $DIRNAME_CMD || return
+    IsSysFilePresent $HEAD_CMD || return
+    IsSysFilePresent $READLINK_CMD || return
+    IsSysFilePresent $TAIL_CMD || return
+    IsSysFilePresent $UNZIP_CMD || return
+    IsSysFilePresent $UPTIME_CMD || return
+    IsSysFilePresent $WC_CMD || return
+    IsSysFilePresent $WGET_CMD || return
+    IsSysFilePresent $DU_CMD || return
+    IsSysFilePresent $SORT_CMD || return
+    IsSysFilePresent $TEE_CMD || return
 
     local DEFAULT_SHARE_DOWNLOAD_PATH=/share/Download
     local DEFAULT_SHARE_PUBLIC_PATH=/share/Public
@@ -182,8 +182,8 @@ Init()
     fi
 
     # check required system paths are present
-    SysSharePresent "$SHARE_DOWNLOAD_PATH" || return
-    SysSharePresent "$SHARE_PUBLIC_PATH" || return
+    IsSysSharePresent "$SHARE_DOWNLOAD_PATH" || return
+    IsSysSharePresent "$SHARE_PUBLIC_PATH" || return
 
     WORKING_PATH="${SHARE_PUBLIC_PATH}/${SCRIPT_FILE%.*}.tmp"
     BACKUP_PATH="${WORKING_PATH}/backup"
@@ -297,7 +297,7 @@ Init()
     fi
 
     if [[ $errorcode -eq 0 ]]; then
-        if [[ $TARGET_APP = SABnzbdplus ]] && QPKGIsInstalled QSabNZBdPlus && QPKGIsInstalled SABnzbdplus; then
+        if [[ $TARGET_APP = SABnzbdplus ]] && IsQPKGInstalled QSabNZBdPlus && IsQPKGInstalled SABnzbdplus; then
             ShowError 'Both (SABnzbdplus) and (QSabNZBdPlus) are installed. This is an unsupported configuration. Please manually uninstall the unused one via the QNAP App Center then re-run this installer.'
             errorcode=7
             returncode=1
@@ -305,7 +305,7 @@ Init()
     fi
 
     if [[ $errorcode -eq 0 ]]; then
-        if QPKGIsInstalled Entware-ng && QPKGIsInstalled Entware-3x; then
+        if IsQPKGInstalled Entware-ng && IsQPKGInstalled Entware-3x; then
             ShowError 'Both (Entware-ng) and (Entware-3x) are installed. This is an unsupported configuration. Please manually uninstall both of them via the QNAP App Center then re-run this installer.'
             errorcode=8
             returncode=1
@@ -352,10 +352,10 @@ PauseDownloaders()
     DebugFuncEntry
 
     # pause local SAB queue so installer downloads will finish faster
-    if QPKGIsInstalled SABnzbdplus; then
+    if IsQPKGInstalled SABnzbdplus; then
         LoadQPKGVars SABnzbdplus
         SabQueueControl pause
-    elif QPKGIsInstalled QSabNZBdPlus; then
+    elif IsQPKGInstalled QSabNZBdPlus; then
         LoadQPKGVars QSabNZBdPlus
         SabQueueControl pause
     fi
@@ -375,7 +375,7 @@ DownloadQPKGs()
     local SL=''
 
     # Entware is always required
-    if ! QPKGIsInstalled $PREF_ENTWARE; then
+    if ! IsQPKGInstalled $PREF_ENTWARE; then
         LoadQPKGDownloadDetails $PREF_ENTWARE && DownloadQPKG
 
     elif [[ $PREF_ENTWARE = Entware-3x || $PREF_ENTWARE = Entware ]]; then
@@ -397,12 +397,12 @@ DownloadQPKGs()
     if [[ $errorcode -eq 0 ]]; then
         case $STEPHANE_QPKG_ARCH in
             x86)
-                ! QPKGIsInstalled Par2cmdline-MT && LoadQPKGDownloadDetails Par2cmdline-MT && DownloadQPKG
+                ! IsQPKGInstalled Par2cmdline-MT && LoadQPKGDownloadDetails Par2cmdline-MT && DownloadQPKG
                 ;;
             none)
                 ;;
             *)
-                ! QPKGIsInstalled Par2 && LoadQPKGDownloadDetails Par2 && DownloadQPKG
+                ! IsQPKGInstalled Par2 && LoadQPKGDownloadDetails Par2 && DownloadQPKG
                 ;;
         esac
 
@@ -441,12 +441,12 @@ RemoveOther()
     # no longer use Par2cmdline-MT for x86_64 as multi-thread changes have been merged upstream into Par2cmdline and Par2cmdline-MT has been discontinued
     case $STEPHANE_QPKG_ARCH in
         x86)
-            QPKGIsInstalled Par2 && UninstallQPKG Par2
+            IsQPKGInstalled Par2 && UninstallQPKG Par2
             ;;
         none)
             ;;
         *)
-            QPKGIsInstalled Par2cmdline-MT && UninstallQPKG Par2cmdline-MT
+            IsQPKGInstalled Par2cmdline-MT && UninstallQPKG Par2cmdline-MT
             ;;
     esac
 
@@ -463,7 +463,7 @@ InstallEntware()
     DebugFuncEntry
     local returncode=0
 
-    if ! QPKGIsInstalled $PREF_ENTWARE; then
+    if ! IsQPKGInstalled $PREF_ENTWARE; then
         # rename original [/opt]
         opt_path=/opt
         opt_backup_path=/opt.orig
@@ -569,11 +569,11 @@ UpdateEntware()
                 ShowDone "updated local Entware package list"
             else
                 ShowWarning "Unable to update local Entware package list [$result]"
-                # meh, continue anyway...
+                # meh, continue anyway with old list ...
             fi
         else
-            ShowDone "local Entware package list is up-to-date"
             DebugInfo "local Entware package list was updated less than $package_list_age minutes ago"
+            ShowDone "local Entware package list is up-to-date"
         fi
     fi
 
@@ -591,7 +591,7 @@ InstallExtras()
 
     case $STEPHANE_QPKG_ARCH in
         x86)
-            if ! QPKGIsInstalled Par2cmdline-MT && LoadQPKGDownloadDetails Par2cmdline-MT; then
+            if ! IsQPKGInstalled Par2cmdline-MT && LoadQPKGDownloadDetails Par2cmdline-MT; then
                 InstallQPKG
                 if [[ $errorcode -gt 0 ]]; then
                     ShowWarning "Par2cmdline-MT installation failed - but it's not essential so I'm continuing"
@@ -603,7 +603,7 @@ InstallExtras()
         none)
             ;;
         *)
-            if ! QPKGIsInstalled Par2 && LoadQPKGDownloadDetails Par2; then
+            if ! IsQPKGInstalled Par2 && LoadQPKGDownloadDetails Par2; then
                 InstallQPKG
                 if [[ $errorcode -gt 0 ]]; then
                     ShowWarning "Par2 installation failed - but it's not essential so I'm continuing"
@@ -736,7 +736,7 @@ InstallNG()
 
     DebugFuncEntry
 
-    if ! IPKIsInstalled nzbget; then
+    if ! IsIPKInstalled nzbget; then
         local install_msgs=''
         local result=0
         local packages=''
@@ -858,10 +858,10 @@ BackupConfig()
 
     case $TARGET_APP in
         SABnzbdplus)
-            if QPKGIsInstalled QSabNZBdPlus; then
+            if IsQPKGInstalled QSabNZBdPlus; then
                 LoadQPKGVars QSabNZBdPlus
                 DaemonCtl stop "$package_init_pathfile"
-            elif QPKGIsInstalled SABnzbdplus; then
+            elif IsQPKGInstalled SABnzbdplus; then
                 LoadQPKGVars SABnzbdplus
                 DaemonCtl stop "$package_init_pathfile"
             fi
@@ -870,10 +870,10 @@ BackupConfig()
             [[ $package_is_installed = true ]] && BackupThisPackage
             ;;
         CouchPotato2)
-            if QPKGIsInstalled QCouchPotato; then
+            if IsQPKGInstalled QCouchPotato; then
                 LoadQPKGVars QCouchPotato
                 DaemonCtl stop "$package_init_pathfile"
-            elif QPKGIsInstalled CouchPotato2; then
+            elif IsQPKGInstalled CouchPotato2; then
                 LoadQPKGVars CouchPotato2
                 DaemonCtl stop "$package_init_pathfile"
             fi
@@ -882,7 +882,7 @@ BackupConfig()
             [[ $package_is_installed = true ]] && BackupThisPackage
             ;;
         LazyLibrarian)
-            if QPKGIsInstalled LazyLibrarian; then
+            if IsQPKGInstalled LazyLibrarian; then
                 LoadQPKGVars LazyLibrarian
                 DaemonCtl stop "$package_init_pathfile"
             fi
@@ -891,7 +891,7 @@ BackupConfig()
             [[ $package_is_installed = true ]] && BackupThisPackage
             ;;
         SickRage)
-            if QPKGIsInstalled SickRage; then
+            if IsQPKGInstalled SickRage; then
                 LoadQPKGVars SickRage
                 DaemonCtl stop "$package_init_pathfile"
             fi
@@ -900,7 +900,7 @@ BackupConfig()
             [[ $package_is_installed = true ]] && BackupThisPackage
             ;;
         OMedusa)
-            if QPKGIsInstalled OMedusa; then
+            if IsQPKGInstalled OMedusa; then
                 LoadQPKGVars OMedusa
                 DaemonCtl stop "$package_init_pathfile"
             fi
@@ -971,7 +971,7 @@ ConvertSettings()
 ReloadProfile()
     {
 
-    QPKGIsInstalled $PREF_ENTWARE && export PATH="/opt/bin:/opt/sbin:$PATH"
+    IsQPKGInstalled $PREF_ENTWARE && export PATH="/opt/bin:/opt/sbin:$PATH"
 
     DebugDone 'adjusted $PATH'
     DebugVar PATH
@@ -989,7 +989,7 @@ RestoreConfig()
     local result=0
     local returncode=0
 
-    if QPKGIsInstalled $TARGET_APP; then
+    if IsQPKGInstalled $TARGET_APP; then
         case $TARGET_APP in
             SABnzbdplus)
                 if [[ -d $SETTINGS_BACKUP_PATH ]]; then
@@ -1166,12 +1166,13 @@ CalcStephaneQPKGArch()
 CalcEntwareQPKG()
     {
 
-    # decide which Entware is suitable for this NAS.
+    # decide which Entware is suitable for this NAS
+
     PREF_ENTWARE=Entware-3x
 
     [[ $NAS_ARCH = i686 ]] && PREF_ENTWARE=Entware-ng
-    QPKGIsInstalled Entware-ng && PREF_ENTWARE=Entware-ng
-    QPKGIsInstalled Entware && PREF_ENTWARE=Entware
+    IsQPKGInstalled Entware-ng && PREF_ENTWARE=Entware-ng
+    IsQPKGInstalled Entware && PREF_ENTWARE=Entware
 
     DebugVar PREF_ENTWARE
     return 0
@@ -1545,10 +1546,10 @@ Cleanup()
     [[ $errorcode -eq 0 && $debug != true && -d $WORKING_PATH ]] && $RM_CMD -rf "$WORKING_PATH"
 
     if [[ $queuepaused = true ]]; then
-        if QPKGIsInstalled SABnzbdplus; then
+        if IsQPKGInstalled SABnzbdplus; then
             LoadQPKGVars SABnzbdplus
             SabQueueControl resume
-        elif QPKGIsInstalled QSabNZBdPlus; then
+        elif IsQPKGInstalled QSabNZBdPlus; then
             LoadQPKGVars QSabNZBdPlus
             SabQueueControl resume
         fi
@@ -1729,7 +1730,7 @@ SabQueueControl()
 
     }
 
-QPKGIsInstalled()
+IsQPKGInstalled()
     {
 
     # If package has been installed, check that it has also been enabled.
@@ -1772,7 +1773,7 @@ QPKGIsInstalled()
 
     }
 
-IPKIsInstalled()
+IsIPKInstalled()
     {
 
     # If not installed, return 1
@@ -1802,7 +1803,7 @@ IPKIsInstalled()
 
     }
 
-SysFilePresent()
+IsSysFilePresent()
     {
 
     # $1 = pathfile to check
@@ -1819,7 +1820,7 @@ SysFilePresent()
 
     }
 
-SysSharePresent()
+IsSysSharePresent()
     {
 
     # $1 = symlink path to check
@@ -2188,7 +2189,7 @@ if [[ $errorcode -eq 0 ]]; then
             BackupConfig
             UninstallQPKG $TARGET_APP
             [[ $TARGET_APP = SABnzbdplus ]] && UninstallQPKG QSabNZBdPlus
-            ! QPKGIsInstalled $TARGET_APP && LoadQPKGDownloadDetails $TARGET_APP && InstallQPKG && PauseHere && LoadQPKGVars $TARGET_APP
+            ! IsQPKGInstalled $TARGET_APP && LoadQPKGDownloadDetails $TARGET_APP && InstallQPKG && PauseHere && LoadQPKGVars $TARGET_APP
             RestoreConfig
             [[ $errorcode -eq 0 ]] && DaemonCtl start "$package_init_pathfile"
             ;;
