@@ -421,7 +421,6 @@ RemovePackageInstallers()
 
     DebugFuncEntry
 
-    [[ $PREF_ENTWARE = Entware-3x || $PREF_ENTWARE = Entware ]] && UninstallQPKG Entware-ng
     UninstallQPKG Optware || errorcode=0  # ignore Optware uninstall errors
 
     DebugFuncExit
