@@ -70,7 +70,7 @@ Init()
     {
 
     local SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=180406
+    local SCRIPT_VERSION=180407
     debug=false
 
     # cherry-pick required binaries
@@ -629,7 +629,6 @@ InstallIPKs()
     local returncode=0
     local install_msgs=''
     local packages=''
-    local log_pathfile="${IPKG_DL_PATH}/ipks.$INSTALL_LOG_FILE"
 
     if [[ -n $IPKG_DL_PATH && -d $IPKG_DL_PATH ]]; then
         UpdateEntware
@@ -658,6 +657,7 @@ InstallIPKGBatch()
     local returncode=0
     local requested_IPKGs=''
     local IPKG_batch_desc=''
+    local log_pathfile="${IPKG_DL_PATH}/ipks.$INSTALL_LOG_FILE"
 
     [[ -n $1 ]] && requested_IPKGs="$1" || return 1
     [[ -n $2 ]] && IPKG_batch_desc="$2" || IPKG_batch_desc="$1"
@@ -666,29 +666,31 @@ InstallIPKGBatch()
     rm -f "$IPKG_DL_PATH"/*.ipk
 
     FindAllIPKGDependencies "$requested_IPKGs"
-    IPKG_download_startseconds=$($DATE_CMD +%s)
-    ShowProc "downloading & installing $IPKG_download_count IPKGs ($IPKG_batch_desc)"
-    touch "$monitor_flag"
-    trap CTRL_C_Captured INT
-    PathSizeMonitor $IPKG_download_size &
-    install_msgs=$($OPKG_CMD install --force-overwrite ${IPKG_download_list[*]} --cache "$IPKG_CACHE_PATH" --tmp-dir "$IPKG_DL_PATH" 2>&1)
-    result=$?
-    [[ -e $monitor_flag ]] && { rm "$monitor_flag"; sleep 1 ;}
-    trap - INT
-    echo -e "${install_msgs}\nresult=[$result]" > "$log_pathfile"
+    if [[ $IPKG_download_count -gt 0 ]]; then
+        IPKG_download_startseconds=$($DATE_CMD +%s)
+        ShowProc "downloading & installing $IPKG_download_count IPKGs ($IPKG_batch_desc)"
+        touch "$monitor_flag"
+        trap CTRL_C_Captured INT
+        PathSizeMonitor $IPKG_download_size &
+        install_msgs=$($OPKG_CMD install --force-overwrite ${IPKG_download_list[*]} --cache "$IPKG_CACHE_PATH" --tmp-dir "$IPKG_DL_PATH" 2>&1)
+        result=$?
+        [[ -e $monitor_flag ]] && { rm "$monitor_flag"; sleep 1 ;}
+        trap - INT
+        echo -e "${install_msgs}\nresult=[$result]" > "$log_pathfile"
 
-    if [[ $result -eq 0 ]]; then
-        ShowDone "downloaded & installed $IPKG_download_count IPKGs ($IPKG_batch_desc)"
-        DebugStage 'elapsed time' "$(ConvertSecs "$(($($DATE_CMD +%s)-$([[ -n $IPKG_download_startseconds ]] && echo $IPKG_download_startseconds || echo "1")))")"
-    else
-        ShowError "Download & install IPKGs failed ($IPKG_batch_desc) [$result]"
-        if [[ $debug = true ]]; then
-            DebugThickSeparator
-            $CAT_CMD "$log_pathfile"
-            DebugThickSeparator
+        if [[ $result -eq 0 ]]; then
+            ShowDone "downloaded & installed $IPKG_download_count IPKGs ($IPKG_batch_desc)"
+            DebugStage 'elapsed time' "$(ConvertSecs "$(($($DATE_CMD +%s)-$([[ -n $IPKG_download_startseconds ]] && echo $IPKG_download_startseconds || echo "1")))")"
+        else
+            ShowError "Download & install IPKGs failed ($IPKG_batch_desc) [$result]"
+            if [[ $debug = true ]]; then
+                DebugThickSeparator
+                $CAT_CMD "$log_pathfile"
+                DebugThickSeparator
+            fi
+            errorcode=18
+            returncode=1
         fi
-        errorcode=18
-        returncode=1
     fi
 
     DebugFuncExit
@@ -742,36 +744,19 @@ InstallNG()
         local package_desc=''
         local returncode=0
 
-        if [[ -n $IPKG_DL_PATH && -d $IPKG_DL_PATH ]]; then
-            packages='nzbget'
-            package_desc=nzbget
+        InstallIPKGBatch 'nzbget' 'NZBGet'
 
-            ShowProc "downloading & installing IPKG ($package_desc)"
+        if [[ $? -eq 0 ]]; then
+            ShowProc "modifying NZBGet"
 
-            cd "$IPKG_DL_PATH"
-            install_msgs=$($OPKG_CMD install --force-overwrite $packages --cache . 2>&1)
-            result=$?
-            echo -e "${install_msgs}\nresult=[$result]" >> "${IPKG_DL_PATH}/ipk.$INSTALL_LOG_FILE"
-
-            if [[ $result -eq 0 ]]; then
-                ShowDone "downloaded & installed IPKG ($package_desc)"
-                ShowProc "modifying NZBGet"
-
-                $SED_CMD -i 's|ConfigTemplate=.*|ConfigTemplate=/opt/share/nzbget/nzbget.conf.template|g' "/opt/share/nzbget/nzbget.conf"
-                ShowDone "modified NZBGet"
-                /opt/etc/init.d/S75nzbget start
-                $CAT_CMD /opt/share/nzbget/nzbget.conf | $GREP_CMD ControlPassword=
-                #Go to default router ip address and port 6789 192.168.1.1:6789 and now you should see NZBget interface
-            else
-                ShowError "Download & install IPKG failed ($package_desc) [$result]"
-                errorcode=22
-                returncode=1
-            fi
-
-            cd "$WORKING_PATH"
+            $SED_CMD -i 's|ConfigTemplate=.*|ConfigTemplate=/opt/share/nzbget/nzbget.conf.template|g' "/opt/share/nzbget/nzbget.conf"
+            ShowDone "modified NZBGet"
+            /opt/etc/init.d/S75nzbget start
+            $CAT_CMD /opt/share/nzbget/nzbget.conf | $GREP_CMD ControlPassword=
+            #Go to default router ip address and port 6789 192.168.1.1:6789 and now you should see NZBget interface
         else
-            ShowError "IPKG path does not exist [$IPKG_DL_PATH]"
-            errorcode=23
+            ShowError "Download & install IPKG failed ($package_desc) [$result]"
+            errorcode=22
             returncode=1
         fi
     fi
