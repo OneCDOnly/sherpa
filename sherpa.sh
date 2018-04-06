@@ -704,7 +704,7 @@ InstallPIPs()
     local install_msgs=''
     local result=0
     local returncode=0
-    local op='pip packages'
+    local op='PIP packages'
     local log_pathfile="${WORKING_PATH}/$(echo "$op" | $TR_CMD " " "_").$INSTALL_LOG_FILE"
 
     ShowProc "downloading & installing ($op)"
