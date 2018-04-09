@@ -74,8 +74,10 @@ Init()
     debug=false
 
     # cherry-pick required binaries
+    AWK_CMD=/bin/awk
     CAT_CMD=/bin/cat
     CHMOD_CMD=/bin/chmod
+    CP_CMD=/bin/cp
     DATE_CMD=/bin/date
     GREP_CMD=/bin/grep
     HOSTNAME_CMD=/bin/hostname
@@ -83,37 +85,35 @@ Init()
     MD5SUM_CMD=/bin/md5sum
     MKDIR_CMD=/bin/mkdir
     MV_CMD=/bin/mv
-    CP_CMD=/bin/cp
+    PING_CMD=/bin/ping
     RM_CMD=/bin/rm
     SED_CMD=/bin/sed
     TOUCH_CMD=/bin/touch
     TR_CMD=/bin/tr
     UNAME_CMD=/bin/uname
-    AWK_CMD=/bin/awk
-    PING_CMD=/bin/ping
     UNIQ_CMD=/bin/uniq
 
+    CURL_CMD=/sbin/curl
     GETCFG_CMD=/sbin/getcfg
     RMCFG_CMD=/sbin/rmcfg
     SETCFG_CMD=/sbin/setcfg
-    CURL_CMD=/sbin/curl
 
     BASENAME_CMD=/usr/bin/basename
     CUT_CMD=/usr/bin/cut
     DIRNAME_CMD=/usr/bin/dirname
+    DU_CMD=/usr/bin/du
     HEAD_CMD=/usr/bin/head
     READLINK_CMD=/usr/bin/readlink
+    SORT_CMD=/usr/bin/sort
     TAIL_CMD=/usr/bin/tail
+    TEE_CMD=/usr/bin/tee
     UNZIP_CMD=/usr/bin/unzip
     UPTIME_CMD=/usr/bin/uptime
     WC_CMD=/usr/bin/wc
     WGET_CMD=/usr/bin/wget
-    DU_CMD=/usr/bin/du
-    SORT_CMD=/usr/bin/sort
-    TEE_CMD=/usr/bin/tee
 
-    OPKG_CMD=/opt/bin/opkg
     FIND_CMD=/opt/bin/find
+    OPKG_CMD=/opt/bin/opkg
 
     # paths and files
     QPKG_CONFIG_PATHFILE=/etc/config/qpkg.conf
@@ -127,8 +127,10 @@ Init()
     local DEBUG_LOG_FILE="${SCRIPT_FILE%.*}.debug.log"
 
     # check required binaries are present
+    IsSysFilePresent $AWK_CMD || return
     IsSysFilePresent $CAT_CMD || return
     IsSysFilePresent $CHMOD_CMD || return
+    IsSysFilePresent $CP_CMD || return
     IsSysFilePresent $DATE_CMD || return
     IsSysFilePresent $GREP_CMD || return
     IsSysFilePresent $HOSTNAME_CMD || return
@@ -136,34 +138,32 @@ Init()
     IsSysFilePresent $MD5SUM_CMD || return
     IsSysFilePresent $MKDIR_CMD || return
     IsSysFilePresent $MV_CMD || return
-    IsSysFilePresent $CP_CMD || return
+    IsSysFilePresent $PING_CMD || return
     IsSysFilePresent $RM_CMD || return
     IsSysFilePresent $SED_CMD || return
     IsSysFilePresent $TOUCH_CMD || return
     IsSysFilePresent $TR_CMD || return
     IsSysFilePresent $UNAME_CMD || return
-    IsSysFilePresent $AWK_CMD || return
-    IsSysFilePresent $PING_CMD || return
     IsSysFilePresent $UNIQ_CMD || return
 
+    IsSysFilePresent $CURL_CMD || return
     IsSysFilePresent $GETCFG_CMD || return
     IsSysFilePresent $RMCFG_CMD || return
     IsSysFilePresent $SETCFG_CMD || return
-    IsSysFilePresent $CURL_CMD || return
 
     IsSysFilePresent $BASENAME_CMD || return
     IsSysFilePresent $CUT_CMD || return
     IsSysFilePresent $DIRNAME_CMD || return
+    IsSysFilePresent $DU_CMD || return
     IsSysFilePresent $HEAD_CMD || return
     IsSysFilePresent $READLINK_CMD || return
+    IsSysFilePresent $SORT_CMD || return
     IsSysFilePresent $TAIL_CMD || return
+    IsSysFilePresent $TEE_CMD || return
     IsSysFilePresent $UNZIP_CMD || return
     IsSysFilePresent $UPTIME_CMD || return
     IsSysFilePresent $WC_CMD || return
     IsSysFilePresent $WGET_CMD || return
-    IsSysFilePresent $DU_CMD || return
-    IsSysFilePresent $SORT_CMD || return
-    IsSysFilePresent $TEE_CMD || return
 
     local DEFAULT_SHARE_DOWNLOAD_PATH=/share/Download
     local DEFAULT_SHARE_PUBLIC_PATH=/share/Public
