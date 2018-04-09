@@ -542,39 +542,36 @@ UpdateEntware()
     local result=0
     local log_pathfile="${WORKING_PATH}/entware-update.log"
 
-    if [[ ! -f $OPKG_CMD ]]; then
-        ShowError "Entware opkg binary is missing [$OPKG_CMD]"
-        errorcode=15
-        returncode=1
-    else
-        # if Entware package list was updated only recently, don't run another update
-        [[ -e $FIND_CMD && -e $package_list_file ]] && result=$($FIND_CMD "$package_list_file" -mmin +$package_list_age) || result='new install'
+    IsSysFilePresent $OPKG_CMD || return
+    IsSysFilePresent $FIND_CMD || return
 
-        if [[ -n $result ]]; then
-            ShowProc "updating local Entware package list"
+	# if Entware package list was updated only recently, don't run another update
+	[[ -e $FIND_CMD && -e $package_list_file ]] && result=$($FIND_CMD "$package_list_file" -mmin +$package_list_age) || result='new install'
 
-            install_msgs=$($OPKG_CMD update)
-            result=$?
-            echo -e "${install_msgs}\nresult=[$result]" >> "$log_pathfile"
+	if [[ -n $result ]]; then
+		ShowProc "updating local Entware package list"
 
-            if [[ $PREF_ENTWARE = Entware-3x && ! -e $release_file ]]; then
-               DebugProc 'performing Entware-3x upgrade x 2'
-               install_msgs=$($OPKG_CMD upgrade; $OPKG_CMD update; $OPKG_CMD upgrade)
-               result=$?
-               echo -e "${install_msgs}\nresult=[$result]" >> "$log_pathfile"
-            fi
+		install_msgs=$($OPKG_CMD update)
+		result=$?
+		echo -e "${install_msgs}\nresult=[$result]" >> "$log_pathfile"
 
-            if [[ $result -eq 0 ]]; then
-                ShowDone "updated local Entware package list"
-            else
-                ShowWarning "Unable to update local Entware package list [$result]"
-                # meh, continue anyway with old list ...
-            fi
-        else
-            DebugInfo "local Entware package list was updated less than $package_list_age minutes ago"
-            ShowDone "local Entware package list is up-to-date"
-        fi
-    fi
+		if [[ $PREF_ENTWARE = Entware-3x && ! -e $release_file ]]; then
+			DebugProc 'performing Entware-3x upgrade x 2'
+			install_msgs=$($OPKG_CMD upgrade; $OPKG_CMD update; $OPKG_CMD upgrade)
+			result=$?
+			echo -e "${install_msgs}\nresult=[$result]" >> "$log_pathfile"
+		fi
+
+		if [[ $result -eq 0 ]]; then
+			ShowDone "updated local Entware package list"
+		else
+			ShowWarning "Unable to update local Entware package list [$result]"
+			# meh, continue anyway with old list ...
+		fi
+	else
+		DebugInfo "local Entware package list was updated less than $package_list_age minutes ago"
+		ShowDone "local Entware package list is up-to-date"
+	fi
 
     DebugFuncExit
     return $returncode
@@ -1622,6 +1619,8 @@ FindAllIPKGDependencies()
 
     [[ -n $1 ]] && original_list="$1" || { DebugError "No IPKGs were requested"; return 1 ;}
 
+    IsSysFilePresent $OPKG_CMD || return
+
     ShowProc "calculating number and size of IPKGs required"
     DebugInfo "requested IPKG names: $original_list"
 
@@ -1685,6 +1684,8 @@ PathSizeMonitor()
     local stall_seconds_threshold=4
     local current_bytes=0
     local percent=''
+
+    IsSysFilePresent $FIND_CMD || return
 
     InitProgress
 
