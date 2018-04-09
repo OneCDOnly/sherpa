@@ -70,7 +70,7 @@ Init()
     {
 
     local SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=180407
+    local SCRIPT_VERSION=180410
     debug=false
 
     # cherry-pick required binaries
@@ -1312,6 +1312,10 @@ LoadQPKGDownloadDetails()
         local base_url=''
 
         case $1 in
+            Entware)
+                qpkg_md5='0c99cf2cf8ef61c7a18b42651a37da74'
+                qpkg_url='http://bin.entware.net/other/Entware_1.00std.qpkg'
+                ;;
             Entware-3x)
                 qpkg_md5='fa5719ab2138c96530287da8e6812746'
                 qpkg_url='http://entware-3x.zyxmon.org/binaries/other/Entware-3x_1.00std.qpkg'
