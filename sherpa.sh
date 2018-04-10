@@ -70,7 +70,7 @@ Init()
     {
 
     local SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=180410
+    local SCRIPT_VERSION=180411
     debug=false
 
     # cherry-pick required binaries
@@ -222,8 +222,8 @@ Init()
         DebugScript 'version' "$SCRIPT_VERSION"
         DebugThinSeparator
         DebugInfo 'Markers: (**) detected, (II) information, (WW) warning, (EE) error,'
-        DebugInfo '         (==) processing, (--) done, (>>) function entry, (<<) function exit,'
-        DebugInfo '         (vv) variable name & value, ($1) positional argument value.'
+        DebugInfo ' (==) processing, (--) done, (>>) function entry, (<<) function exit,'
+        DebugInfo ' (vv) variable name & value, ($1) positional argument value.'
         DebugThinSeparator
         DebugNAS 'model' "$($GREP_CMD -v "^$" "$ISSUE_PATHFILE" | $SED_CMD 's|^Welcome to ||;s|(.*||')"
         DebugNAS 'firmware version' "$FIRMWARE_VERSION"
@@ -545,33 +545,33 @@ UpdateEntware()
     IsSysFilePresent $OPKG_CMD || return
     IsSysFilePresent $FIND_CMD || return
 
-	# if Entware package list was updated only recently, don't run another update
-	[[ -e $FIND_CMD && -e $package_list_file ]] && result=$($FIND_CMD "$package_list_file" -mmin +$package_list_age) || result='new install'
+    # if Entware package list was updated only recently, don't run another update
+    [[ -e $FIND_CMD && -e $package_list_file ]] && result=$($FIND_CMD "$package_list_file" -mmin +$package_list_age) || result='new install'
 
-	if [[ -n $result ]]; then
-		ShowProc "updating local Entware package list"
+    if [[ -n $result ]]; then
+        ShowProc "updating local Entware package list"
 
-		install_msgs=$($OPKG_CMD update)
-		result=$?
-		echo -e "${install_msgs}\nresult=[$result]" >> "$log_pathfile"
+        install_msgs=$($OPKG_CMD update)
+        result=$?
+        echo -e "${install_msgs}\nresult=[$result]" >> "$log_pathfile"
 
-		if [[ $PREF_ENTWARE = Entware-3x && ! -e $release_file ]]; then
-			DebugProc 'performing Entware-3x upgrade x 2'
-			install_msgs=$($OPKG_CMD upgrade; $OPKG_CMD update; $OPKG_CMD upgrade)
-			result=$?
-			echo -e "${install_msgs}\nresult=[$result]" >> "$log_pathfile"
-		fi
+        if [[ $PREF_ENTWARE = Entware-3x && ! -e $release_file ]]; then
+            DebugProc 'performing Entware-3x upgrade x 2'
+            install_msgs=$($OPKG_CMD upgrade; $OPKG_CMD update; $OPKG_CMD upgrade)
+            result=$?
+            echo -e "${install_msgs}\nresult=[$result]" >> "$log_pathfile"
+        fi
 
-		if [[ $result -eq 0 ]]; then
-			ShowDone "updated local Entware package list"
-		else
-			ShowWarning "Unable to update local Entware package list [$result]"
-			# meh, continue anyway with old list ...
-		fi
-	else
-		DebugInfo "local Entware package list was updated less than $package_list_age minutes ago"
-		ShowDone "local Entware package list is up-to-date"
-	fi
+        if [[ $result -eq 0 ]]; then
+            ShowDone "updated local Entware package list"
+        else
+            ShowWarning "Unable to update local Entware package list [$result]"
+            # meh, continue anyway with old list ...
+        fi
+    else
+        DebugInfo "local Entware package list was updated less than $package_list_age minutes ago"
+        ShowDone "local Entware package list is up-to-date"
+    fi
 
     DebugFuncExit
     return $returncode
@@ -1760,15 +1760,12 @@ IsQPKGInstalled()
 
         if [[ $result -eq 0 ]]; then
             if [[ $($GETCFG_CMD "$1" RC_Number -d 0 -f "$QPKG_CONFIG_PATHFILE") -ne 0 ]]; then
-                DebugQPKG "'$1'" 'installed'
                 [[ $($GETCFG_CMD "$1" Enable -u -f "$QPKG_CONFIG_PATHFILE") != 'TRUE' ]] && $SETCFG_CMD "$1" Enable TRUE -f "$QPKG_CONFIG_PATHFILE"
                 package_is_installed=true
             else
-                DebugQPKG "'$1'" 'not installed'
                 returncode=1
             fi
         else
-            DebugQPKG "'$1'" 'not installed'
             returncode=1
         fi
     fi
@@ -1900,14 +1897,14 @@ Convert2ISO()
 DebugThickSeparator()
     {
 
-    DebugInfo "$(printf '%0.s=' {1..68})"
+    DebugInfo "$(printf '%0.s=' {1..69})"
 
     }
 
 DebugThinSeparator()
     {
 
-    DebugInfo "$(printf '%0.s-' {1..68})"
+    DebugInfo "$(printf '%0.s-' {1..69})"
 
     }
 
