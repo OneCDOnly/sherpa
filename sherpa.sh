@@ -666,7 +666,7 @@ InstallIPKGBatch()
         ShowProc "downloading & installing $IPKG_download_count IPKGs ($IPKG_batch_desc)"
         touch "$monitor_flag"
         trap CTRL_C_Captured INT
-        PathSizeMonitor $IPKG_download_size &
+        MonitorDirSize $IPKG_download_size &
         install_msgs=$($OPKG_CMD install --force-overwrite ${IPKG_download_list[*]} --cache "$IPKG_CACHE_PATH" --tmp-dir "$IPKG_DL_PATH" 2>&1)
         result=$?
         [[ -e $monitor_flag ]] && { rm "$monitor_flag"; sleep 1 ;}
@@ -1673,7 +1673,7 @@ FindAllIPKGDependencies()
 
     }
 
-PathSizeMonitor()
+MonitorDirSize()
     {
 
     [[ -z $1 || $1 -eq 0 ]] && return 1
@@ -1695,15 +1695,22 @@ PathSizeMonitor()
         [[ -z $current_bytes ]] && current_bytes=0
         percent="$((200*($current_bytes)/($total_bytes) % 2 + 100*($current_bytes)/($total_bytes)))%"
 
-        if [[ $last_bytes -ne $current_bytes ]]; then
-            last_bytes=$current_bytes
+        if [[ $current_bytes -ne $last_bytes ]]; then
             stall_seconds=0
+            last_bytes=$current_bytes
         else
             ((stall_seconds++))
         fi
 
         progress_message=" $percent ($(Convert2ISO $current_bytes)/$(Convert2ISO $total_bytes))"
-        [[ $stall_seconds -ge $stall_seconds_threshold ]] && progress_message+=" stalled for $stall_seconds seconds"
+
+        if [[ $stall_seconds -ge $stall_seconds_threshold ]]; then
+            if [[ $stall_seconds -lt 60 ]];
+                progress_message+=" stalled for $stall_seconds seconds"
+            else
+                progress_message+=" stalled for $(ConvertSecs $stall_seconds)"
+            fi
+        fi
 
         ProgressUpdater "$progress_message"
     done
