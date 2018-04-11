@@ -1694,7 +1694,7 @@ MonitorDirSize()
     InitProgress
 
     while [[ -e $monitor_flag ]]; do
-        current_bytes=$($FIND_CMD $target_dir -type f -name '*.ipk' -exec $DU_CMD --bytes --total --apparent-size {} + | $GREP_CMD total$ | $CUT_CMD -f1)
+        current_bytes=$($FIND_CMD $target_dir -type f -name '*.ipk' -exec $DU_CMD --bytes --total --apparent-size {} + | $GREP_CMD total$ | $CUT_CMD -f1 2> /dev/null)
         [[ -z $current_bytes ]] && current_bytes=0
 
         if [[ $current_bytes -ne $last_bytes ]]; then
