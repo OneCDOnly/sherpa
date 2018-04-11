@@ -658,7 +658,7 @@ InstallIPKGBatch()
     [[ -n $2 ]] && IPKG_batch_desc="$2" || IPKG_batch_desc="$1"
 
     # errors can occur due to incompatible IPKGs (tried installing Entware-3x, then Entware-ng), so delete them first
-    rm -f "$IPKG_DL_PATH"/*.ipk
+    [[ -d $IPKG_DL_PATH ]] && rm -f "$IPKG_DL_PATH"/*.ipk
 
     FindAllIPKGDependencies "$requested_IPKGs"
     if [[ $IPKG_download_count -gt 0 ]]; then
@@ -666,7 +666,7 @@ InstallIPKGBatch()
         ShowProc "downloading & installing $IPKG_download_count IPKGs ($IPKG_batch_desc)"
         touch "$monitor_flag"
         trap CTRL_C_Captured INT
-        MonitorDirSize $IPKG_DL_PATH $IPKG_download_size &
+        _MonitorDirSize_ "$IPKG_DL_PATH" $IPKG_download_size &
         install_msgs=$($OPKG_CMD install --force-overwrite ${IPKG_download_list[*]} --cache "$IPKG_CACHE_PATH" --tmp-dir "$IPKG_DL_PATH" 2>&1)
         result=$?
         [[ -e $monitor_flag ]] && { rm "$monitor_flag"; sleep 1 ;}
@@ -966,7 +966,7 @@ ConvertSettings()
 ReloadProfile()
     {
 
-    IsQPKGInstalled $PREF_ENTWARE && export PATH="/opt/bin:/opt/sbin:$PATH"
+    IsQPKGInstalled $PREF_ENTWARE && PATH="/opt/bin:/opt/sbin:$PATH"
 
     DebugDone 'adjusted $PATH'
     DebugVar PATH
@@ -1586,7 +1586,7 @@ DisplayResult()
     DebugScript 'elapsed time' "$(ConvertSecs "$(($($DATE_CMD +%s)-$([[ -n $SCRIPT_STARTSECONDS ]] && echo $SCRIPT_STARTSECONDS || echo "1")))")"
     DebugThickSeparator
 
-    [[ -e $DEBUG_LOG_PATHFILE && $debug = false ]] && echo -e "\n- To display the debug log, use:\n$($WHICH_CMD less > /dev/null && echo 'less' || echo 'cat') $DEBUG_LOG_PATHFILE}\n"
+    [[ -e $DEBUG_LOG_PATHFILE && $debug = false ]] && echo -e "\n- To display the debug log, use:\ncat $DEBUG_LOG_PATHFILE}\n"
 
     DebugFuncExit
     return 0
@@ -1672,8 +1672,12 @@ FindAllIPKGDependencies()
 
     }
 
-MonitorDirSize()
+_MonitorDirSize_()
     {
+
+    # * This function runs autonomously *
+    # It watches for the existence of the pathfile set in $monitor_flag
+    # If this file is removed, this function dies gracefully.
 
     # $1 = directory to monitor the size of.
     # $2 = total target bytes for $1 directory.
