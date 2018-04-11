@@ -1705,7 +1705,7 @@ MonitorDirSize()
         progress_message=" $percent ($(Convert2ISO $current_bytes)/$(Convert2ISO $total_bytes))"
 
         if [[ $stall_seconds -ge $stall_seconds_threshold ]]; then
-            if [[ $stall_seconds -lt 60 ]];
+            if [[ $stall_seconds -lt 60 ]]; then
                 progress_message+=" stalled for $stall_seconds seconds"
             else
                 progress_message+=" stalled for $(ConvertSecs $stall_seconds)"
