@@ -111,6 +111,7 @@ Init()
     UPTIME_CMD=/usr/bin/uptime
     WC_CMD=/usr/bin/wc
     WGET_CMD=/usr/bin/wget
+    WHICH_CMD=/usr/bin/which
 
     FIND_CMD=/opt/bin/find
     OPKG_CMD=/opt/bin/opkg
@@ -1585,7 +1586,7 @@ DisplayResult()
     DebugScript 'elapsed time' "$(ConvertSecs "$(($($DATE_CMD +%s)-$([[ -n $SCRIPT_STARTSECONDS ]] && echo $SCRIPT_STARTSECONDS || echo "1")))")"
     DebugThickSeparator
 
-    [[ -e $DEBUG_LOG_PATHFILE && $debug = false ]] && echo -e "\n- To display the debug log, use:\nless ${DEBUG_LOG_PATHFILE}\n"
+    [[ -e $DEBUG_LOG_PATHFILE && $debug = false ]] && echo -e "\n- To display the debug log, use:\n$($WHICH_CMD less > /dev/null && echo 'less' || echo 'cat') $DEBUG_LOG_PATHFILE}\n"
 
     DebugFuncExit
     return 0
