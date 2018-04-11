@@ -70,7 +70,7 @@ Init()
     {
 
     local SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=180411
+    local SCRIPT_VERSION=180412
     debug=false
 
     # cherry-pick required binaries
@@ -644,10 +644,9 @@ InstallIPKGs()
 InstallIPKGBatch()
     {
 
-    # $1 = IPKG names to download and install
+    # $1 = space-separated string containing list of IPKG names to download and install
     # $2 = on-screen description of this package batch
 
-    DebugFuncEntry
     local result=0
     local returncode=0
     local requested_IPKGs=''
@@ -666,7 +665,7 @@ InstallIPKGBatch()
         ShowProc "downloading & installing $IPKG_download_count IPKGs ($IPKG_batch_desc)"
         touch "$monitor_flag"
         trap CTRL_C_Captured INT
-        MonitorDirSize $IPKG_download_size &
+        MonitorDirSize $IPKG_DL_PATH $IPKG_download_size &
         install_msgs=$($OPKG_CMD install --force-overwrite ${IPKG_download_list[*]} --cache "$IPKG_CACHE_PATH" --tmp-dir "$IPKG_DL_PATH" 2>&1)
         result=$?
         [[ -e $monitor_flag ]] && { rm "$monitor_flag"; sleep 1 ;}
@@ -688,7 +687,6 @@ InstallIPKGBatch()
         fi
     fi
 
-    DebugFuncExit
     return $returncode
 
     }
@@ -1676,9 +1674,14 @@ FindAllIPKGDependencies()
 MonitorDirSize()
     {
 
-    [[ -z $1 || $1 -eq 0 ]] && return 1
+    # $1 = directory to monitor the size of.
+    # $2 = total target bytes for $1 directory.
 
-    local total_bytes=$1
+    [[ -z $1 || ! -d $1 ]] && return 1
+    [[ -z $2 || $2 -eq 0 ]] && return 1
+
+    local target_dir="$1"
+    local total_bytes=$2
     local last_bytes=0
     local stall_seconds=0
     local stall_seconds_threshold=4
@@ -1690,10 +1693,8 @@ MonitorDirSize()
     InitProgress
 
     while [[ -e $monitor_flag ]]; do
-        sleep 1
-        current_bytes=$($FIND_CMD $IPKG_DL_PATH -type f -name '*.ipk' -exec $DU_CMD --bytes --total --apparent-size {} + | $GREP_CMD total$ | $CUT_CMD -f1)
+        current_bytes=$($FIND_CMD $target_dir -type f -name '*.ipk' -exec $DU_CMD --bytes --total --apparent-size {} + | $GREP_CMD total$ | $CUT_CMD -f1)
         [[ -z $current_bytes ]] && current_bytes=0
-        percent="$((200*($current_bytes)/($total_bytes) % 2 + 100*($current_bytes)/($total_bytes)))%"
 
         if [[ $current_bytes -ne $last_bytes ]]; then
             stall_seconds=0
@@ -1702,10 +1703,11 @@ MonitorDirSize()
             ((stall_seconds++))
         fi
 
+        percent="$((200*($current_bytes)/($total_bytes) % 2 + 100*($current_bytes)/($total_bytes)))%"
         progress_message=" $percent ($(Convert2ISO $current_bytes)/$(Convert2ISO $total_bytes))"
 
         if [[ $stall_seconds -ge $stall_seconds_threshold ]]; then
-            if [[ $stall_seconds -lt 60 ]];
+            if [[ $stall_seconds -lt 60 ]]; then
                 progress_message+=" stalled for $stall_seconds seconds"
             else
                 progress_message+=" stalled for $(ConvertSecs $stall_seconds)"
@@ -1713,6 +1715,7 @@ MonitorDirSize()
         fi
 
         ProgressUpdater "$progress_message"
+        sleep 1
     done
 
     [[ -n $progress_message ]] && ProgressUpdater " done!"
