@@ -33,7 +33,7 @@ ParseArgs()
         errorcode=1
         return 1
     else
-        local user_args=( $(echo "$USER_ARGS_RAW" | tr '[A-Z]' '[a-z]') )
+        local user_args=( $(echo "$USER_ARGS_RAW" | $TR_CMD '[A-Z]' '[a-z]') )
     fi
 
     for arg in "${user_args[@]}"; do
