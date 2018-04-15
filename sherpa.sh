@@ -70,7 +70,7 @@ Init()
     {
 
     local SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=180412
+    local SCRIPT_VERSION=180416
     debug=false
 
     # cherry-pick required binaries
@@ -1826,7 +1826,7 @@ IsSysFilePresent()
 
     [[ -z $1 ]] && return 1
 
-    if [[ ! -e $1 ]]; then
+    if ! [[ -f $1 || -L $1 ]]; then
         ShowError "A required NAS system file is missing [$1]"
         errorcode=46
         return 1
