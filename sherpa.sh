@@ -70,7 +70,7 @@ Init()
     {
 
     local SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=180416
+    local SCRIPT_VERSION=180423
     debug=false
 
     # cherry-pick required binaries
@@ -704,7 +704,7 @@ InstallPIPs()
 
     ShowProc "downloading & installing ($op)"
 
-    install_msgs=$(pip install setuptools --upgrade pip && pip install sabyenc==3.3.2 cheetah 2>&1)
+    install_msgs=$(pip install setuptools --upgrade pip && pip install sabyenc==3.3.5 cheetah 2>&1)
     result=$?
     echo -e "${install_msgs}\nresult=[$result]" > "$log_pathfile"
 
