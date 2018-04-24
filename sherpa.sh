@@ -70,7 +70,7 @@ Init()
     {
 
     local SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=180423
+    local SCRIPT_VERSION=180425
     debug=false
 
     # cherry-pick required binaries
@@ -396,16 +396,18 @@ DownloadQPKGs()
 
     # now choose package(s) to download
     if [[ $errorcode -eq 0 ]]; then
-        case $STEPHANE_QPKG_ARCH in
-            x86)
-                ! IsQPKGInstalled Par2cmdline-MT && LoadQPKGDownloadDetails Par2cmdline-MT && DownloadQPKG
-                ;;
-            none)
-                ;;
-            *)
-                ! IsQPKGInstalled Par2 && LoadQPKGDownloadDetails Par2 && DownloadQPKG
-                ;;
-        esac
+        if [[ $TARGET_APP = SABnzbdplus ]]; then
+            case $STEPHANE_QPKG_ARCH in
+                x86)
+                    ! IsQPKGInstalled Par2cmdline-MT && LoadQPKGDownloadDetails Par2cmdline-MT && DownloadQPKG
+                    ;;
+                none)
+                    ;;
+                *)
+                    ! IsQPKGInstalled Par2 && LoadQPKGDownloadDetails Par2 && DownloadQPKG
+                    ;;
+            esac
+        fi
 
         [[ $errorcode -eq 0 ]] && LoadQPKGDownloadDetails $TARGET_APP && DownloadQPKG
     fi
@@ -586,32 +588,35 @@ InstallExtras()
 
     DebugFuncEntry
 
-    case $STEPHANE_QPKG_ARCH in
-        x86)
-            if ! IsQPKGInstalled Par2cmdline-MT && LoadQPKGDownloadDetails Par2cmdline-MT; then
-                InstallQPKG
-                if [[ $errorcode -gt 0 ]]; then
-                    ShowWarning "Par2cmdline-MT installation failed - but it's not essential so I'm continuing"
-                    errorcode=0
-                    DebugVar errorcode
+    if [[ $TARGET_APP = SABnzbdplus ]]; then
+        case $STEPHANE_QPKG_ARCH in
+            x86)
+                if ! IsQPKGInstalled Par2cmdline-MT && LoadQPKGDownloadDetails Par2cmdline-MT; then
+                    InstallQPKG
+                    if [[ $errorcode -gt 0 ]]; then
+                        ShowWarning "Par2cmdline-MT installation failed - but it's not essential so I'm continuing"
+                        errorcode=0
+                        DebugVar errorcode
+                    fi
                 fi
-            fi
-            ;;
-        none)
-            ;;
-        *)
-            if ! IsQPKGInstalled Par2 && LoadQPKGDownloadDetails Par2; then
-                InstallQPKG
-                if [[ $errorcode -gt 0 ]]; then
-                    ShowWarning "Par2 installation failed - but it's not essential so I'm continuing"
-                    errorcode=0
-                    DebugVar errorcode
+                ;;
+            none)
+                ;;
+            *)
+                if ! IsQPKGInstalled Par2 && LoadQPKGDownloadDetails Par2; then
+                    InstallQPKG
+                    if [[ $errorcode -gt 0 ]]; then
+                        ShowWarning "Par2 installation failed - but it's not essential so I'm continuing"
+                        errorcode=0
+                        DebugVar errorcode
+                    fi
                 fi
-            fi
-            ;;
-    esac
+                ;;
+        esac
+    fi
+
     [[ $errorcode -eq 0 ]] && InstallIPKGs
-    [[ $errorcode -eq 0 ]] && InstallPIPs
+    [[ $errorcode -eq 0 && $TARGET_APP = SABnzbdplus ]] && InstallPIPs
 
     DebugFuncExit
     return 0
@@ -628,9 +633,21 @@ InstallIPKGs()
 
     if [[ -n $IPKG_DL_PATH && -d $IPKG_DL_PATH ]]; then
         UpdateEntware
-        packages='gcc python python-pip python-cffi python-pyopenssl python-dev ca-certificates nano git git-http unrar p7zip ionice ffprobe'
-        [[ $STEPHANE_QPKG_ARCH = none ]] && packages+=' par2cmdline'
-        InstallIPKGBatch "$packages" 'Git, Python, UnRAR and others'
+        packages='python git git-http nano'
+
+        case $TARGET_APP in
+            SABnzbdplus)
+                packages+=' python-pip python-pyopenssl python-dev python-cheetah gcc unrar p7zip ionice ffprobe'
+                [[ $STEPHANE_QPKG_ARCH = none ]] && packages+=' par2cmdline'
+                ;;
+            CouchPotato2)
+                packages+=' python-pyopenssl python-lxml'
+                ;;
+            OMedusa)
+                packages+=' python-lib2to3'
+                ;;
+        esac
+        InstallIPKGBatch "$packages" 'Python, Git and others'
     else
         ShowError "IPKG path does not exist [$IPKG_DL_PATH]"
         errorcode=20
@@ -704,7 +721,7 @@ InstallPIPs()
 
     ShowProc "downloading & installing ($op)"
 
-    install_msgs=$(pip install setuptools --upgrade pip && pip install sabyenc==3.3.5 cheetah 2>&1)
+    install_msgs=$(pip install setuptools --upgrade pip && pip install sabyenc==3.3.5 2>&1)
     result=$?
     echo -e "${install_msgs}\nresult=[$result]" > "$log_pathfile"
 
