@@ -35,7 +35,7 @@ Init()
     {
 
     local SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=180426
+    local SCRIPT_VERSION=180427
     debug=false
     ResetErrorcode
 
@@ -1367,23 +1367,23 @@ LoadQPKGFileDetails()
                 ;;
             SABnzbdplus)
                 qpkg_url="${OneCD_urlprefix}/SABnzbdplus/build/SABnzbdplus_180427.qpkg"
-                qpkg_md5='4f61480850f6264a8dfa620ff171428b'
+                qpkg_md5='d474979fb41304c9c39d855c59547ff4'
                 ;;
             SickRage)
                 qpkg_url="${OneCD_urlprefix}/SickRage/build/SickRage_180427.qpkg"
-                qpkg_md5='e901ba971fc9c5ea638c39f3f0913b15'
+                qpkg_md5='0fd4ffc7d00ad0f9a1e475e7a784d6df'
                 ;;
             CouchPotato2)
                 qpkg_url="${OneCD_urlprefix}/CouchPotato2/build/CouchPotato2_180427.qpkg"
-                qpkg_md5='96c67c762a17b88ab7d10314e8176d13'
+                qpkg_md5='395ffdb9c25d0bc07eb24987cc722cdb'
                 ;;
             LazyLibrarian)
                 qpkg_url="${OneCD_urlprefix}/LazyLibrarian/build/LazyLibrarian_180427.qpkg"
-                qpkg_md5='1afafc00167f69a4003843e94a2e3418'
+                qpkg_md5='fdb4595f2970a498b9ef73a8b5f3a4b4'
                 ;;
             OMedusa)
                 qpkg_url="${OneCD_urlprefix}/OMedusa/build/OMedusa_180427.qpkg"
-                qpkg_md5='3646eafca4c14e556a982f9a29f23756'
+                qpkg_md5='ec3b193c7931a100067cfaa334caf883'
                 ;;
             Par2cmdline-MT)
                 case $STEPHANE_QPKG_ARCH in
