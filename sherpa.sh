@@ -649,11 +649,11 @@ InstallIPKGs()
 
     if [[ -n $IPKG_DL_PATH && -d $IPKG_DL_PATH ]]; then
         UpdateEntware
-        packages='python git git-http'
+        packages='python git git-http nano less'
 
         case $TARGET_APP in
             SABnzbdplus)
-                packages+=' python-pip python-pyopenssl python-dev gcc unrar p7zip ionice ffprobe'
+                packages+=' python-pip python-pyopenssl python-dev gcc unrar p7zip coreutils-nice ionice ffprobe'
                 [[ $STEPHANE_QPKG_ARCH = none ]] && packages+=' par2cmdline'
                 ;;
             CouchPotato2)
