@@ -1367,7 +1367,7 @@ LoadQPKGFileDetails()
                 ;;
             SABnzbdplus)
                 qpkg_url="${OneCD_urlprefix}/SABnzbdplus/build/SABnzbdplus_180427.qpkg"
-                qpkg_md5='d474979fb41304c9c39d855c59547ff4'
+                qpkg_md5='fe25532df893ef2227f5efa28c3f38af'
                 ;;
             SickRage)
                 qpkg_url="${OneCD_urlprefix}/SickRage/build/SickRage_180427.qpkg"
