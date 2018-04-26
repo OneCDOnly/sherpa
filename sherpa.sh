@@ -355,7 +355,7 @@ DisplayHelp()
 PauseDownloaders()
     {
 
-    [[ $errorcode -gt 0 ]] && return 1
+    [[ $errorcode -gt 0 ]] && return
 
     DebugFuncEntry
 
@@ -373,16 +373,38 @@ PauseDownloaders()
 
     }
 
+RemoveOther()
+    {
+
+    [[ $errorcode -gt 0 ]] && return
+
+    # cruft: remove previous x41 Par2cmdline-MT package due to wrong arch - this was corrected on 2017-06-03 - remove this code on 2018-06-03
+        # don't use Par2cmdline-MT for x86_64 as multi-thread changes have been merged upstream into Par2cmdline and Par2cmdline-MT has been discontinued
+        case $STEPHANE_QPKG_ARCH in
+            x86)
+                UninstallQPKG Par2
+                ;;
+            none)
+                ;;
+            *)
+                UninstallQPKG Par2cmdline-MT
+                ;;
+        esac
+    # end cruft
+
+    UninstallQPKG Optware || ResetErrorcode  # ignore Optware uninstall errors
+
+    }
+
 DownloadQPKGs()
     {
 
-    [[ $errorcode -gt 0 ]] && return 1
+    [[ $errorcode -gt 0 ]] && return
 
     DebugFuncEntry
     local returncode=0
     local SL=''
 
-    # Entware is always required
     if ! IsQPKGInstalled $PREF_ENTWARE; then
         DownloadQPKG $PREF_ENTWARE
 
@@ -394,14 +416,17 @@ DownloadQPKGs()
             ShowError 'Entware-3x (alt) is installed. This configuration has not been tested.'
             errorcode=10
             returncode=1
+        elif [[ $PREF_ENTWARE = Entware && $ENTWARE_VER = alt ]]; then
+            ShowError 'Entware (alt) is installed. This configuration has not been tested.'
+            errorcode=11
+            returncode=1
         elif [[ $ENTWARE_VER = none ]]; then
             ShowError 'Entware appears to be installed but is not visible.'
-            errorcode=11
+            errorcode=12
             returncode=1
         fi
     fi
 
-    # now choose package(s) to download
     if [[ $TARGET_APP = SABnzbdplus ]]; then
         case $STEPHANE_QPKG_ARCH in
             x86)
@@ -422,40 +447,10 @@ DownloadQPKGs()
 
     }
 
-RemovePackageInstallers()
-    {
-
-    [[ $errorcode -gt 0 ]] && return 1
-
-    UninstallQPKG Optware || ResetErrorcode  # ignore Optware uninstall errors
-
-    }
-
-RemoveOther()
-    {
-
-    [[ $errorcode -gt 0 ]] && return 1
-
-    # cruft - remove previous x41 Par2cmdline-MT package due to wrong arch - this was corrected on 2017-06-03
-
-    # don't use Par2cmdline-MT for x86_64 as multi-thread changes have been merged upstream into Par2cmdline and Par2cmdline-MT has been discontinued
-    case $STEPHANE_QPKG_ARCH in
-        x86)
-            UninstallQPKG Par2
-            ;;
-        none)
-            ;;
-        *)
-            UninstallQPKG Par2cmdline-MT
-            ;;
-    esac
-
-    }
-
 InstallEntware()
     {
 
-    [[ $errorcode -gt 0 ]] && return 1
+    [[ $errorcode -gt 0 ]] && return
 
     DebugFuncEntry
     local returncode=0
@@ -481,7 +476,7 @@ InstallEntware()
 
             if [[ $PREF_ENTWARE = Entware-3x && $ENTWARE_VER = alt ]]; then
                 ShowError "Entware-3x (alt) is installed. This config has not been tested. Can't continue."
-                errorcode=12
+                errorcode=13
                 returncode=1
             fi
         fi
@@ -508,7 +503,7 @@ PatchEntwareInit()
 
     if [[ ! -e $package_init_pathfile ]]; then
         ShowError "No init file found [$package_init_pathfile]"
-        errorcode=13
+        errorcode=14
         returncode=1
     else
         if ($GREP_CMD -q 'opt.orig' "$package_init_pathfile"); then
@@ -581,7 +576,7 @@ UpdateEntware()
 InstallExtras()
     {
 
-    [[ $errorcode -gt 0 ]] && return 1
+    [[ $errorcode -gt 0 ]] && return
 
     DebugFuncEntry
 
@@ -619,7 +614,7 @@ InstallExtras()
 InstallTargetApp()
     {
 
-    [[ $errorcode -gt 0 ]] && return 1
+    [[ $errorcode -gt 0 ]] && return
 
     DebugFuncEntry
 
@@ -645,7 +640,7 @@ InstallTargetApp()
 InstallIPKGs()
     {
 
-    [[ $errorcode -gt 0 ]] && return 1
+    [[ $errorcode -gt 0 ]] && return
 
     DebugFuncEntry
     local returncode=0
@@ -671,7 +666,7 @@ InstallIPKGs()
         InstallIPKGBatch "$packages" 'Python, Git and others'
     else
         ShowError "IPKG path does not exist [$IPKG_DL_PATH]"
-        errorcode=14
+        errorcode=15
         returncode=1
     fi
 
@@ -721,7 +716,7 @@ InstallIPKGBatch()
                 $CAT_CMD "$log_pathfile"
                 DebugThickSeparator
             fi
-            errorcode=15
+            errorcode=16
             returncode=1
         fi
     fi
@@ -733,7 +728,7 @@ InstallIPKGBatch()
 InstallPIPs()
     {
 
-    [[ $errorcode -gt 0 ]] && return 1
+    [[ $errorcode -gt 0 ]] && return
 
     DebugFuncEntry
     local install_msgs=''
@@ -755,7 +750,7 @@ InstallPIPs()
         DebugThickSeparator
         $CAT_CMD "$log_pathfile"
         DebugThickSeparator
-        errorcode=16
+        errorcode=17
         returncode=1
     fi
 
@@ -767,7 +762,7 @@ InstallPIPs()
 InstallNG()
     {
 
-    [[ $errorcode -gt 0 ]] && return 1
+    [[ $errorcode -gt 0 ]] && return
 
     DebugFuncEntry
 
@@ -790,7 +785,7 @@ InstallNG()
             #Go to default router ip address and port 6789 192.168.1.1:6789 and now you should see NZBget interface
         else
             ShowError "Download & install IPKG failed ($package_desc) [$result]"
-            errorcode=17
+            errorcode=18
             returncode=1
         fi
     fi
@@ -810,7 +805,7 @@ InstallQPKG()
 
     if [[ -z $1 ]]; then
         DebugError 'QPKG name not specified'
-        errorcode=18
+        errorcode=19
         return 1
     fi
 
@@ -845,7 +840,7 @@ InstallQPKG()
             DebugThickSeparator
         fi
 
-        errorcode=19
+        errorcode=20
         returncode=1
     fi
 
@@ -867,7 +862,7 @@ BackupThisPackage()
                 DebugDone "backup directory created ($BACKUP_PATH)"
             else
                 ShowError "Unable to create backup directory ($BACKUP_PATH) [$result]"
-                errorcode=20
+                errorcode=21
                 returncode=1
             fi
         fi
@@ -881,7 +876,7 @@ BackupThisPackage()
                     ShowDone "created ($TARGET_APP) settings backup"
                 else
                     ShowError "Could not create settings backup of ($package_config_path) [$result]"
-                    errorcode=21
+                    errorcode=22
                     returncode=1
                 fi
             else
@@ -897,7 +892,7 @@ BackupThisPackage()
 BackupConfig()
     {
 
-    [[ $errorcode -gt 0 ]] && return 1
+    [[ $errorcode -gt 0 ]] && return
 
     DebugFuncEntry
     local returncode=0
@@ -1029,7 +1024,7 @@ ReloadProfile()
 RestoreConfig()
     {
 
-    [[ $errorcode -gt 0 ]] && return 1
+    [[ $errorcode -gt 0 ]] && return
 
     DebugFuncEntry
     local result=0
@@ -1057,7 +1052,7 @@ RestoreConfig()
                         $SETCFG_CMD "SABnzbdplus" Web_Port $package_port -f "$QPKG_CONFIG_PATHFILE"
                     else
                         ShowError "Could not restore settings backup to ($package_config_path) [$result]"
-                        errorcode=22
+                        errorcode=23
                         returncode=1
                     fi
                 fi
@@ -1082,7 +1077,7 @@ RestoreConfig()
                         #$SETCFG_CMD "SABnzbdplus" Web_Port $package_port -f "$QPKG_CONFIG_PATHFILE"
                     else
                         ShowError "Could not restore settings backup to ($package_config_path) [$result]"
-                        errorcode=23
+                        errorcode=24
                         returncode=1
                     fi
                 fi
@@ -1094,7 +1089,7 @@ RestoreConfig()
         esac
     else
         ShowError "($TARGET_APP) is NOT installed so can't restore backups"
-        errorcode=24
+        errorcode=25
         returncode=1
     fi
 
@@ -1106,11 +1101,11 @@ RestoreConfig()
 DownloadQPKG()
     {
 
-    [[ $errorcode -gt 0 ]] && return 1
+    [[ $errorcode -gt 0 ]] && return
 
     if [[ -z $1 ]]; then
         DebugError 'QPKG name not specified'
-        errorcode=25
+        errorcode=26
         return 1
     fi
 
@@ -1134,7 +1129,7 @@ DownloadQPKG()
             fi
         else
             ShowError "Problem creating checksum from existing QPKG ($qpkg_file) [$result]"
-            errorcode=26
+            errorcode=27
             returncode=1
         fi
     fi
@@ -1167,12 +1162,12 @@ DownloadQPKG()
                     ShowDone "downloaded QPKG ($qpkg_file)"
                 else
                     ShowError "Downloaded QPKG checksum incorrect ($qpkg_file) [$result]"
-                    errorcode=27
+                    errorcode=28
                     returncode=1
                 fi
             else
                 ShowError "Problem creating checksum from downloaded QPKG [$result]"
-                errorcode=28
+                errorcode=29
                 returncode=1
             fi
         else
@@ -1184,7 +1179,7 @@ DownloadQPKG()
                 DebugThickSeparator
             fi
 
-            errorcode=29
+            errorcode=30
             returncode=1
         fi
     fi
@@ -1244,7 +1239,7 @@ LoadQPKGVars()
 
     if [[ -z $package_name ]]; then
         DebugError 'QPKG name not specified'
-        errorcode=30
+        errorcode=31
         returncode=1
     else
         package_installed_path=''
@@ -1360,7 +1355,7 @@ LoadQPKGFileDetails()
 
     if [[ -z $1 ]]; then
         DebugError 'QPKG name not specified'
-        errorcode=31
+        errorcode=32
         returncode=1
     else
         qpkg_name=$1
@@ -1439,14 +1434,14 @@ LoadQPKGFileDetails()
                 ;;
             *)
                 DebugError 'QPKG name not found'
-                errorcode=32
+                errorcode=33
                 returncode=1
                 ;;
         esac
 
         if [[ -z $qpkg_url || -z $qpkg_md5 ]]; then
             DebugError 'QPKG details not found'
-            errorcode=33
+            errorcode=34
             returncode=1
         else
             [[ -z $qpkg_file ]] && qpkg_file=$($BASENAME_CMD "$qpkg_url")
@@ -1463,14 +1458,14 @@ UninstallQPKG()
 
     # $1 = QPKG name
 
-    [[ $errorcode -gt 0 ]] && return 1
+    [[ $errorcode -gt 0 ]] && return
 
     local result=0
     local returncode=0
 
     if [[ -z $1 ]]; then
         DebugError 'QPKG name not specified'
-        errorcode=34
+        errorcode=35
         returncode=1
     else
         qpkg_installed_path="$($GETCFG_CMD "$1" Install_Path -f "$QPKG_CONFIG_PATHFILE")"
@@ -1489,7 +1484,7 @@ UninstallQPKG()
                     ShowDone "uninstalled QPKG '$1'"
                 else
                     ShowError "Unable to uninstall QPKG \"$1\" [$result]"
-                    errorcode=35
+                    errorcode=36
                     returncode=1
                 fi
             fi
@@ -1518,11 +1513,11 @@ DaemonCtl()
 
     if [[ -z $2 ]]; then
         DebugError 'daemon unspecified'
-        errorcode=36
+        errorcode=37
         returncode=1
     elif [[ ! -e $2 ]]; then
         DebugError "daemon ($2) not found"
-        errorcode=37
+        errorcode=38
         returncode=1
     else
         target_init_pathfile="$2"
@@ -1546,7 +1541,7 @@ DaemonCtl()
                     else
                         $CAT_CMD "$qpkg_pathfile.$START_LOG_FILE" >> "$DEBUG_LOG_PATHFILE"
                     fi
-                    errorcode=38
+                    errorcode=39
                     returncode=1
                 fi
                 ;;
@@ -1573,7 +1568,7 @@ DaemonCtl()
                 ;;
             *)
                 DebugError "action unrecognised ($1)"
-                errorcode=39
+                errorcode=40
                 returncode=1
                 ;;
         esac
@@ -1826,7 +1821,7 @@ IsQPKGInstalled()
 
     if [[ -z $1 ]]; then
         DebugError 'QPKG name not specified'
-        errorcode=40
+        errorcode=41
         returncode=1
     else
         $GREP_CMD -q -F "[$1]" "$QPKG_CONFIG_PATHFILE"
@@ -1860,7 +1855,7 @@ IsIPKGInstalled()
 
     if [[ -z $1 ]]; then
         DebugError 'IPKG name not specified'
-        errorcode=41
+        errorcode=42
         returncode=1
     else
         $OPKG_CMD list-installed | $GREP_CMD -q -F "$1"
@@ -1887,7 +1882,7 @@ IsSysFilePresent()
 
     if ! [[ -f $1 || -L $1 ]]; then
         ShowError "A required NAS system file is missing [$1]"
-        errorcode=42
+        errorcode=43
         return 1
     else
         return 0
@@ -1904,7 +1899,7 @@ IsSysSharePresent()
 
     if [[ ! -L $1 ]]; then
         ShowError "A required NAS system share is missing [$1]. Please re-create it via QNAP Control Panel -> Privilege Settings -> Shared Folders."
-        errorcode=43
+        errorcode=44
         return 1
     else
         return 0
@@ -2254,7 +2249,6 @@ Init
 PauseDownloaders
 RemoveOther
 DownloadQPKGs
-RemovePackageInstallers
 InstallEntware
 InstallExtras
 InstallTargetApp
