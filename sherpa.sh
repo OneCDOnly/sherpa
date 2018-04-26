@@ -1702,7 +1702,7 @@ FindAllIPKGDependencies()
 
     DebugProc 'excluding packages already installed'
     for element in ${all_required_packages[@]}; do
-        ($OPKG_CMD info $element | LC_ALL=C $GREP_CMD 'Status: ' | LC_ALL=C $GREP_CMD -q 'not-installed') && IPKG_download_list+=($element)
+        $OPKG_CMD status "$element" | $GREP_CMD -q "Status:.*installed" || IPKG_download_list+=($element)
     done
     DebugDone 'complete'
     DebugInfo "required IPKG names: ${IPKG_download_list[*]}"
@@ -1710,7 +1710,7 @@ FindAllIPKGDependencies()
 
     DebugProc 'calculating size of required IPKGs'
     for element in ${IPKG_download_list[@]}; do
-        result_size=$($OPKG_CMD info $element | $GREP_CMD 'Size:' | $SED_CMD 's|^Size: ||')
+        result_size=$($OPKG_CMD info $element | $GREP_CMD -F 'Size:' | $SED_CMD 's|^Size: ||')
         ((IPKG_download_size+=result_size))
     done
     DebugDone 'complete'
