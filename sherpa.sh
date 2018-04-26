@@ -1034,7 +1034,6 @@ RestoreConfig()
         case $TARGET_APP in
             SABnzbdplus)
                 if [[ -d $SETTINGS_BACKUP_PATH ]]; then
-                    #sleep 10; DaemonCtl stop "$package_init_pathfile"  # allow time for new package init to complete so PID is accurate
                     DaemonCtl stop "$package_init_pathfile"
 
                     if [[ ! -d $package_config_path ]]; then
@@ -1292,17 +1291,7 @@ LoadQPKGVars()
                     returncode=1
                 fi
                 ;;
-            Entware-3x|Entware-ng)
-                package_installed_path=$($GETCFG_CMD $package_name Install_Path -f $QPKG_CONFIG_PATHFILE)
-                result=$?
-
-                if [[ $result -eq 0 ]]; then
-                    package_init_pathfile=$($GETCFG_CMD $package_name Shell -f $QPKG_CONFIG_PATHFILE)
-                else
-                    returncode=1
-                fi
-                ;;
-            QCouchPotato)
+            Entware|Entware-3x|Entware-ng|QCouchPotato)
                 package_installed_path=$($GETCFG_CMD $package_name Install_Path -f $QPKG_CONFIG_PATHFILE)
                 result=$?
 
@@ -1363,72 +1352,62 @@ LoadQPKGFileDetails()
 
         case $1 in
             Entware)
-                qpkg_md5='0c99cf2cf8ef61c7a18b42651a37da74'
                 qpkg_url='http://bin.entware.net/other/Entware_1.00std.qpkg'
+                qpkg_md5='0c99cf2cf8ef61c7a18b42651a37da74'
                 ;;
             Entware-3x)
-                qpkg_md5='fa5719ab2138c96530287da8e6812746'
                 qpkg_url='http://entware-3x.zyxmon.org/binaries/other/Entware-3x_1.00std.qpkg'
+                qpkg_md5='fa5719ab2138c96530287da8e6812746'
                 ;;
             Entware-ng)
-                qpkg_md5='6c81cc37cbadd85adfb2751dc06a238f'
                 qpkg_url='http://entware.zyxmon.org/binaries/other/Entware-ng_0.97.qpkg'
+                qpkg_md5='6c81cc37cbadd85adfb2751dc06a238f'
                 ;;
             SABnzbdplus)
-                target_file='SABnzbdplus_180131.qpkg'
+                qpkg_url="${OneCD_urlprefix}/SABnzbdplus/build/SABnzbdplus_180131.qpkg"
                 qpkg_md5='3db999cd8c5598d804ad3954d7a0629c'
-                qpkg_url="${OneCD_urlprefix}/SABnzbdplus/build/${target_file}"
-                qpkg_file=$target_file
                 ;;
             SickRage)
-                target_file='SickRage_180121.qpkg'
+                qpkg_url="${OneCD_urlprefix}/SickRage/build/SickRage_180121.qpkg"
                 qpkg_md5='2c99665d8fd0a423afbf9b4eae3a427d'
-                qpkg_url="${OneCD_urlprefix}/SickRage/build/${target_file}"
-                qpkg_file=$target_file
                 ;;
             CouchPotato2)
-                target_file='CouchPotato2_180121.qpkg'
+                qpkg_url="${OneCD_urlprefix}/CouchPotato2/build/CouchPotato2_180121.qpkg"
                 qpkg_md5='0dc85000a8fe2c921e6265a19b13c3e0'
-                qpkg_url="${OneCD_urlprefix}/CouchPotato2/build/${target_file}"
-                qpkg_file=$target_file
                 ;;
             LazyLibrarian)
-                target_file='LazyLibrarian_180121.qpkg'
+                qpkg_url="${OneCD_urlprefix}/LazyLibrarian/build/LazyLibrarian_180121.qpkg"
                 qpkg_md5='7bef6afcb8ba564638fb29c60594577d'
-                qpkg_url="${OneCD_urlprefix}/LazyLibrarian/build/${target_file}"
-                qpkg_file=$target_file
                 ;;
             OMedusa)
-                target_file='OMedusa_180128.qpkg'
+                qpkg_url="${OneCD_urlprefix}/OMedusa/build/OMedusa_180128.qpkg"
                 qpkg_md5='bdbd33bf1148a9e12f1bfe0aa4f3dcc3'
-                qpkg_url="${OneCD_urlprefix}/OMedusa/build/${target_file}"
-                qpkg_file=$target_file
                 ;;
             Par2cmdline-MT)
                 case $STEPHANE_QPKG_ARCH in
                     x86)
-                        qpkg_md5='531832a39576e399f646890cc18969bb'
                         qpkg_url="${Stephane_urlprefix}/Par2cmdline-MT_0.6.14-MT_x86.qpkg.zip"
+                        qpkg_md5='531832a39576e399f646890cc18969bb'
                         ;;
                     x64)
-                        qpkg_md5='f3b3dd496289510ec0383cf083a50f8e'
                         qpkg_url="${Stephane_urlprefix}/Par2cmdline-MT_0.6.14-MT_x86_64.qpkg.zip"
+                        qpkg_md5='f3b3dd496289510ec0383cf083a50f8e'
                         ;;
                     x41)
-                        qpkg_md5='1701b188115758c151f19956388b90cb'
                         qpkg_url="${Stephane_urlprefix}/Par2cmdline-MT_0.6.14-MT_arm-x41.qpkg.zip"
+                        qpkg_md5='1701b188115758c151f19956388b90cb'
                         ;;
                 esac
                 ;;
             Par2)
                 case $STEPHANE_QPKG_ARCH in
                     x64)
-                        qpkg_md5='660882474ab00d4793a674d4b48f89be'
                         qpkg_url="${Stephane_urlprefix}/Par2_0.7.4.0_x86_64.qpkg.zip"
+                        qpkg_md5='660882474ab00d4793a674d4b48f89be'
                         ;;
                     x41)
-                        qpkg_md5='9c0c9d3e8512f403f183856fb80091a4'
                         qpkg_url="${Stephane_urlprefix}/Par2_0.7.4.0_arm-x41.qpkg.zip"
+                        qpkg_md5='9c0c9d3e8512f403f183856fb80091a4'
                         ;;
                 esac
                 ;;
