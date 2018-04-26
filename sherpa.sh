@@ -70,7 +70,7 @@ Init()
     {
 
     local SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=180425
+    local SCRIPT_VERSION=180426
     debug=false
 
     # cherry-pick required binaries
@@ -377,7 +377,7 @@ DownloadQPKGs()
 
     # Entware is always required
     if ! IsQPKGInstalled $PREF_ENTWARE; then
-        LoadQPKGDownloadDetails $PREF_ENTWARE && DownloadQPKG
+        LoadQPKGFileDetails $PREF_ENTWARE && DownloadQPKG
 
     elif [[ $PREF_ENTWARE = Entware-3x || $PREF_ENTWARE = Entware ]]; then
         local testfile=/opt/etc/passwd
@@ -399,17 +399,17 @@ DownloadQPKGs()
         if [[ $TARGET_APP = SABnzbdplus ]]; then
             case $STEPHANE_QPKG_ARCH in
                 x86)
-                    ! IsQPKGInstalled Par2cmdline-MT && LoadQPKGDownloadDetails Par2cmdline-MT && DownloadQPKG
+                    ! IsQPKGInstalled Par2cmdline-MT && LoadQPKGFileDetails Par2cmdline-MT && DownloadQPKG
                     ;;
                 none)
                     ;;
                 *)
-                    ! IsQPKGInstalled Par2 && LoadQPKGDownloadDetails Par2 && DownloadQPKG
+                    ! IsQPKGInstalled Par2 && LoadQPKGFileDetails Par2 && DownloadQPKG
                     ;;
             esac
         fi
 
-        [[ $errorcode -eq 0 ]] && LoadQPKGDownloadDetails $TARGET_APP && DownloadQPKG
+        [[ $errorcode -eq 0 ]] && LoadQPKGFileDetails $TARGET_APP && DownloadQPKG
     fi
 
     DebugFuncExit
@@ -422,12 +422,7 @@ RemovePackageInstallers()
 
     [[ $errorcode -gt 0 ]] && return 1
 
-    DebugFuncEntry
-
     UninstallQPKG Optware || errorcode=0  # ignore Optware uninstall errors
-
-    DebugFuncExit
-    return 0
 
     }
 
@@ -436,24 +431,19 @@ RemoveOther()
 
     [[ $errorcode -gt 0 ]] && return 1
 
-    DebugFuncEntry
-
     # cruft - remove previous x41 Par2cmdline-MT package due to wrong arch - this was corrected on 2017-06-03
 
-    # no longer use Par2cmdline-MT for x86_64 as multi-thread changes have been merged upstream into Par2cmdline and Par2cmdline-MT has been discontinued
+    # don't use Par2cmdline-MT for x86_64 as multi-thread changes have been merged upstream into Par2cmdline and Par2cmdline-MT has been discontinued
     case $STEPHANE_QPKG_ARCH in
         x86)
-            IsQPKGInstalled Par2 && UninstallQPKG Par2
+            UninstallQPKG Par2
             ;;
         none)
             ;;
         *)
-            IsQPKGInstalled Par2cmdline-MT && UninstallQPKG Par2cmdline-MT
+            UninstallQPKG Par2cmdline-MT
             ;;
     esac
-
-    DebugFuncExit
-    return 0
 
     }
 
@@ -471,7 +461,7 @@ InstallEntware()
         opt_backup_path=/opt.orig
         [[ -d $opt_path && ! -L $opt_path && ! -e $opt_backup_path ]] && $MV_CMD "$opt_path" "$opt_backup_path"
 
-        LoadQPKGDownloadDetails $PREF_ENTWARE && InstallQPKG && ReloadProfile
+        InstallQPKG $PREF_ENTWARE && ReloadProfile
 
         # copy all files from original [/opt] into new [/opt]
         [[ -L $opt_path && -d $opt_backup_path ]] && $CP_CMD --recursive "$opt_backup_path"/* --target-directory "$opt_path" && $RM_CMD -r "$opt_backup_path"
@@ -494,7 +484,7 @@ InstallEntware()
         [[ $STEPHANE_QPKG_ARCH != none ]] && ($OPKG_CMD list-installed | $GREP_CMD -q par2cmdline) && $OPKG_CMD remove par2cmdline > /dev/null 2>&1
     fi
 
-    LoadQPKGVars $PREF_ENTWARE && PatchEntwareInit
+    PatchEntwareInit
 
     DebugFuncExit
     return $returncode
@@ -508,6 +498,8 @@ PatchEntwareInit()
     local returncode=0
     local findtext=''
     local inserttext=''
+
+    LoadQPKGVars $PREF_ENTWARE
 
     if [[ ! -e $package_init_pathfile ]]; then
         ShowError "No init file found [$package_init_pathfile]"
@@ -591,32 +583,54 @@ InstallExtras()
     if [[ $TARGET_APP = SABnzbdplus ]]; then
         case $STEPHANE_QPKG_ARCH in
             x86)
-                if ! IsQPKGInstalled Par2cmdline-MT && LoadQPKGDownloadDetails Par2cmdline-MT; then
-                    InstallQPKG
-                    if [[ $errorcode -gt 0 ]]; then
-                        ShowWarning "Par2cmdline-MT installation failed - but it's not essential so I'm continuing"
-                        errorcode=0
-                        DebugVar errorcode
-                    fi
+                InstallQPKG Par2cmdline-MT
+                if [[ $errorcode -gt 0 ]]; then
+                    ShowWarning "Par2cmdline-MT installation failed - but it's not essential so I'm continuing"
+                    errorcode=0
+                    DebugVar errorcode
                 fi
                 ;;
             none)
                 ;;
             *)
-                if ! IsQPKGInstalled Par2 && LoadQPKGDownloadDetails Par2; then
-                    InstallQPKG
-                    if [[ $errorcode -gt 0 ]]; then
-                        ShowWarning "Par2 installation failed - but it's not essential so I'm continuing"
-                        errorcode=0
-                        DebugVar errorcode
-                    fi
+                InstallQPKG Par2
+                if [[ $errorcode -gt 0 ]]; then
+                    ShowWarning "Par2 installation failed - but it's not essential so I'm continuing"
+                    errorcode=0
+                    DebugVar errorcode
                 fi
                 ;;
         esac
     fi
 
-    [[ $errorcode -eq 0 ]] && InstallIPKGs
-    [[ $errorcode -eq 0 && $TARGET_APP = SABnzbdplus ]] && InstallPIPs
+    InstallIPKGs
+    [[ $TARGET_APP = SABnzbdplus ]] && InstallPIPs
+
+    DebugFuncExit
+    return 0
+
+    }
+
+InstallTargetApp()
+    {
+
+    [[ $errorcode -gt 0 ]] && return 1
+
+    DebugFuncEntry
+
+    case $TARGET_APP in
+        SABnzbdplus|SickRage|CouchPotato2|LazyLibrarian|OMedusa)
+            BackupConfig
+            UninstallQPKG $TARGET_APP
+            [[ $TARGET_APP = SABnzbdplus ]] && UninstallQPKG QSabNZBdPlus
+            ! IsQPKGInstalled $TARGET_APP && InstallQPKG $TARGET_APP && PauseHere && LoadQPKGVars $TARGET_APP
+            RestoreConfig
+            [[ $errorcode -eq 0 ]] && DaemonCtl start "$package_init_pathfile"
+            ;;
+        *)
+            ShowError "Can't install specified app: [$TARGET_APP] - unknown!"
+            ;;
+    esac
 
     DebugFuncExit
     return 0
@@ -625,6 +639,8 @@ InstallExtras()
 
 InstallIPKGs()
     {
+
+    [[ $errorcode -gt 0 ]] && return 1
 
     DebugFuncEntry
     local returncode=0
@@ -637,7 +653,7 @@ InstallIPKGs()
 
         case $TARGET_APP in
             SABnzbdplus)
-                packages+=' python-pip python-pyopenssl python-dev python-cheetah gcc unrar p7zip ionice ffprobe'
+                packages+=' python-pip python-pyopenssl python-dev gcc unrar p7zip ionice ffprobe'
                 [[ $STEPHANE_QPKG_ARCH = none ]] && packages+=' par2cmdline'
                 ;;
             CouchPotato2)
@@ -712,6 +728,8 @@ InstallIPKGBatch()
 InstallPIPs()
     {
 
+    [[ $errorcode -gt 0 ]] && return 1
+
     DebugFuncEntry
     local install_msgs=''
     local result=0
@@ -721,7 +739,7 @@ InstallPIPs()
 
     ShowProc "downloading & installing ($op)"
 
-    install_msgs=$(pip install setuptools --upgrade pip && pip install sabyenc==3.3.5 2>&1)
+    install_msgs=$(pip install setuptools --upgrade pip 2>&1 && pip install sabyenc==3.3.5 cheetah 2>&1)
     result=$?
     echo -e "${install_msgs}\nresult=[$result]" > "$log_pathfile"
 
@@ -748,7 +766,7 @@ InstallNG()
 
     DebugFuncEntry
 
-    if ! IsIPKInstalled nzbget; then
+    if ! IsIPKGInstalled nzbget; then
         local install_msgs=''
         local result=0
         local packages=''
@@ -780,11 +798,23 @@ InstallNG()
 InstallQPKG()
     {
 
-    DebugFuncEntry
     local target_file=''
     local install_msgs=''
     local result=0
     local returncode=0
+
+    if [[ -z $1 ]]; then
+        DebugError 'QPKG name not specified'
+        errorcode=35
+        return 1
+    fi
+
+    if IsQPKGInstalled $1; then
+        DebugWarning 'QPKG is already installed'
+        return 0
+    fi
+
+    LoadQPKGFileDetails $1
 
     if [[ ${qpkg_pathfile##*.} = zip ]]; then
         $UNZIP_CMD -nq "$qpkg_pathfile" -d "$QPKG_DL_PATH"
@@ -814,7 +844,6 @@ InstallQPKG()
         returncode=1
     fi
 
-    DebugFuncExit
     return $returncode
 
     }
@@ -1302,7 +1331,7 @@ LoadQPKGVars()
 
     }
 
-LoadQPKGDownloadDetails()
+LoadQPKGFileDetails()
     {
 
     # $1 = QPKG name
@@ -1340,31 +1369,31 @@ LoadQPKGDownloadDetails()
             SABnzbdplus)
                 target_file='SABnzbdplus_180131.qpkg'
                 qpkg_md5='3db999cd8c5598d804ad3954d7a0629c'
-                qpkg_url="${OneCD_urlprefix}/SABnzbdplus/build/${target_file}?raw=true"
+                qpkg_url="${OneCD_urlprefix}/SABnzbdplus/build/${target_file}"
                 qpkg_file=$target_file
                 ;;
             SickRage)
                 target_file='SickRage_180121.qpkg'
                 qpkg_md5='2c99665d8fd0a423afbf9b4eae3a427d'
-                qpkg_url="${OneCD_urlprefix}/SickRage/build/${target_file}?raw=true"
+                qpkg_url="${OneCD_urlprefix}/SickRage/build/${target_file}"
                 qpkg_file=$target_file
                 ;;
             CouchPotato2)
                 target_file='CouchPotato2_180121.qpkg'
                 qpkg_md5='0dc85000a8fe2c921e6265a19b13c3e0'
-                qpkg_url="${OneCD_urlprefix}/CouchPotato2/build/${target_file}?raw=true"
+                qpkg_url="${OneCD_urlprefix}/CouchPotato2/build/${target_file}"
                 qpkg_file=$target_file
                 ;;
             LazyLibrarian)
                 target_file='LazyLibrarian_180121.qpkg'
                 qpkg_md5='7bef6afcb8ba564638fb29c60594577d'
-                qpkg_url="${OneCD_urlprefix}/LazyLibrarian/build/${target_file}?raw=true"
+                qpkg_url="${OneCD_urlprefix}/LazyLibrarian/build/${target_file}"
                 qpkg_file=$target_file
                 ;;
             OMedusa)
                 target_file='OMedusa_180128.qpkg'
                 qpkg_md5='bdbd33bf1148a9e12f1bfe0aa4f3dcc3'
-                qpkg_url="${OneCD_urlprefix}/OMedusa/build/${target_file}?raw=true"
+                qpkg_url="${OneCD_urlprefix}/OMedusa/build/${target_file}"
                 qpkg_file=$target_file
                 ;;
             Par2cmdline-MT)
@@ -1806,7 +1835,7 @@ IsQPKGInstalled()
 
     }
 
-IsIPKInstalled()
+IsIPKGInstalled()
     {
 
     # If not installed, return 1
@@ -2215,23 +2244,7 @@ DownloadQPKGs
 RemovePackageInstallers
 InstallEntware
 InstallExtras
-
-if [[ $errorcode -eq 0 ]]; then
-    case $TARGET_APP in
-        SABnzbdplus|SickRage|CouchPotato2|LazyLibrarian|OMedusa)
-            BackupConfig
-            UninstallQPKG $TARGET_APP
-            [[ $TARGET_APP = SABnzbdplus ]] && UninstallQPKG QSabNZBdPlus
-            ! IsQPKGInstalled $TARGET_APP && LoadQPKGDownloadDetails $TARGET_APP && InstallQPKG && PauseHere && LoadQPKGVars $TARGET_APP
-            RestoreConfig
-            [[ $errorcode -eq 0 ]] && DaemonCtl start "$package_init_pathfile"
-            ;;
-        *)
-            ShowError "Can't install specified app: [$TARGET_APP] - unknown!"
-            ;;
-    esac
-fi
-
+InstallTargetApp
 Cleanup
 DisplayResult
 
