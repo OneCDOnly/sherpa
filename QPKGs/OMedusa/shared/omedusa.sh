@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 Init()
 	{
@@ -196,11 +196,11 @@ WaitForEntware()
 
 	local TIMEOUT=300
 
-	if [[ ! -e /opt/Entware-3x.sh && ! -e /opt/Entware-ng.sh ]]; then
+	if [[ ! -e /opt/Entware.sh && ! -e /opt/Entware-3x.sh && ! -e /opt/Entware-ng.sh ]]; then
 		(
 			for ((count=1; count<=TIMEOUT; count++)); do
 				sleep 1
-				[[ -e /opt/Entware-3x.sh || -e /opt/Entware-ng.sh ]] && { echo "waited for Entware for $count seconds" >> "$LOG_PATHFILE"; true; exit ;}
+				[[ -e /opt/Entware.sh || -e /opt/Entware-3x.sh || -e /opt/Entware-ng.sh ]] && { echo "waited for Entware for $count seconds" >> "$LOG_PATHFILE"; true; exit ;}
 			done
 			false
 		)

@@ -281,7 +281,7 @@ Init()
 
     if [[ $errorcode -eq 0 ]]; then
         CalcStephaneQPKGArch
-        CalcEntwareQPKG
+        CalcPrefEntware
         ShowProc "checking for Internet access"
 
         if ($PING_CMD -c 1 -q google.com > /dev/null 2>&1); then
@@ -1211,16 +1211,18 @@ CalcStephaneQPKGArch()
 
     }
 
-CalcEntwareQPKG()
+CalcPrefEntware()
     {
 
     # decide which Entware is suitable for this NAS
 
-    PREF_ENTWARE=Entware-3x
+    # start with the default preferred variant
+    PREF_ENTWARE=Entware
 
+    # then modify according to local environment
     [[ $NAS_ARCH = i686 ]] && PREF_ENTWARE=Entware-ng
     IsQPKGInstalled Entware-ng && PREF_ENTWARE=Entware-ng
-    IsQPKGInstalled Entware && PREF_ENTWARE=Entware
+    IsQPKGInstalled Entware-3x && PREF_ENTWARE=Entware-3x
 
     DebugVar PREF_ENTWARE
     return 0
@@ -1364,24 +1366,24 @@ LoadQPKGFileDetails()
                 qpkg_md5='6c81cc37cbadd85adfb2751dc06a238f'
                 ;;
             SABnzbdplus)
-                qpkg_url="${OneCD_urlprefix}/SABnzbdplus/build/SABnzbdplus_180131.qpkg"
-                qpkg_md5='3db999cd8c5598d804ad3954d7a0629c'
+                qpkg_url="${OneCD_urlprefix}/SABnzbdplus/build/SABnzbdplus_180427.qpkg"
+                qpkg_md5='4f61480850f6264a8dfa620ff171428b'
                 ;;
             SickRage)
-                qpkg_url="${OneCD_urlprefix}/SickRage/build/SickRage_180121.qpkg"
-                qpkg_md5='2c99665d8fd0a423afbf9b4eae3a427d'
+                qpkg_url="${OneCD_urlprefix}/SickRage/build/SickRage_180427.qpkg"
+                qpkg_md5='e901ba971fc9c5ea638c39f3f0913b15'
                 ;;
             CouchPotato2)
-                qpkg_url="${OneCD_urlprefix}/CouchPotato2/build/CouchPotato2_180121.qpkg"
-                qpkg_md5='0dc85000a8fe2c921e6265a19b13c3e0'
+                qpkg_url="${OneCD_urlprefix}/CouchPotato2/build/CouchPotato2_180427.qpkg"
+                qpkg_md5='96c67c762a17b88ab7d10314e8176d13'
                 ;;
             LazyLibrarian)
-                qpkg_url="${OneCD_urlprefix}/LazyLibrarian/build/LazyLibrarian_180121.qpkg"
-                qpkg_md5='7bef6afcb8ba564638fb29c60594577d'
+                qpkg_url="${OneCD_urlprefix}/LazyLibrarian/build/LazyLibrarian_180427.qpkg"
+                qpkg_md5='1afafc00167f69a4003843e94a2e3418'
                 ;;
             OMedusa)
-                qpkg_url="${OneCD_urlprefix}/OMedusa/build/OMedusa_180128.qpkg"
-                qpkg_md5='bdbd33bf1148a9e12f1bfe0aa4f3dcc3'
+                qpkg_url="${OneCD_urlprefix}/OMedusa/build/OMedusa_180427.qpkg"
+                qpkg_md5='3646eafca4c14e556a982f9a29f23756'
                 ;;
             Par2cmdline-MT)
                 case $STEPHANE_QPKG_ARCH in
