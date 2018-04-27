@@ -21,6 +21,12 @@
 # You should have received a copy of the GNU General Public License along with
 # this program. If not, see http://www.gnu.org/licenses/.
 ###############################################################################
+# * Style Guide *
+# function names: CamelCase
+# variable names: lowercase_with_underscores (except for 'returncode' & 'errorcode')
+# constants: UPPERCASE_WITH_UNDERSCORES
+# indents: 4 spaces (only to format correctly on GitHub - tabs are preferred locally)
+###############################################################################
 
 USER_ARGS_RAW="$@"
 
@@ -35,7 +41,7 @@ Init()
     {
 
     local SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=180427
+    local SCRIPT_VERSION=180428
     debug=false
     ResetErrorcode
 
@@ -162,7 +168,7 @@ Init()
     secure_web_login=false
     package_port=0
     SCRIPT_STARTSECONDS=$($DATE_CMD +%s)
-    queuepaused=false
+    queue_paused=false
     FIRMWARE_VERSION="$($GETCFG_CMD System Version -f "$ULINUX_PATHFILE")"
     NAS_ARCH="$($UNAME_CMD -m)"
     progress_message=''
@@ -405,8 +411,8 @@ DownloadQPKGs()
         DownloadQPKG $PREF_ENTWARE
 
     elif [[ $PREF_ENTWARE = Entware-3x || $PREF_ENTWARE = Entware ]]; then
-        local testfile=/opt/etc/passwd
-        [[ -e $testfile ]] && { [[ -L $testfile ]] && ENTWARE_VER=std || ENTWARE_VER=alt ;} || ENTWARE_VER=none
+        local test_pathfile=/opt/etc/passwd
+        [[ -e $test_pathfile ]] && { [[ -L $test_pathfile ]] && ENTWARE_VER=std || ENTWARE_VER=alt ;} || ENTWARE_VER=none
 
         if [[ $PREF_ENTWARE = Entware-3x && $ENTWARE_VER = alt ]]; then
             ShowError 'Entware-3x (alt) is installed. This configuration has not been tested.'
@@ -464,8 +470,8 @@ InstallEntware()
 
     else
         if [[ $PREF_ENTWARE = Entware-3x || $PREF_ENTWARE = Entware ]]; then
-            local testfile=/opt/etc/passwd
-            [[ -e $testfile ]] && { [[ -L $testfile ]] && ENTWARE_VER=std || ENTWARE_VER=alt ;} || ENTWARE_VER=none
+            local test_pathfile=/opt/etc/passwd
+            [[ -e $test_pathfile ]] && { [[ -L $test_pathfile ]] && ENTWARE_VER=std || ENTWARE_VER=alt ;} || ENTWARE_VER=none
 
             DebugQPKG version $ENTWARE_VER
             ReloadProfile
@@ -496,8 +502,8 @@ PatchEntwareInit()
 
     DebugFuncEntry
     local returncode=0
-    local findtext=''
-    local inserttext=''
+    local find_text=''
+    local insert_text=''
 
     LoadQPKGVars $PREF_ENTWARE
 
@@ -509,13 +515,13 @@ PatchEntwareInit()
         if ($GREP_CMD -q 'opt.orig' "$package_init_pathfile"); then
             DebugInfo 'patch: do the "opt shuffle" - already done'
         else
-            findtext='/bin/rm -rf /opt'
-            inserttext='opt_path="/opt"; opt_backup_path="/opt.orig"; [ -d "$opt_path" ] \&\& [ ! -L "$opt_path" ] \&\& [ ! -e "$opt_backup_path" ] \&\& mv "$opt_path" "$opt_backup_path"'
-            $SED_CMD -i "s|$findtext|$inserttext\n$findtext|" "$package_init_pathfile"
+            find_text='/bin/rm -rf /opt'
+            insert_text='opt_path="/opt"; opt_backup_path="/opt.orig"; [ -d "$opt_path" ] \&\& [ ! -L "$opt_path" ] \&\& [ ! -e "$opt_backup_path" ] \&\& mv "$opt_path" "$opt_backup_path"'
+            $SED_CMD -i "s|$find_text|$insert_text\n$find_text|" "$package_init_pathfile"
 
-            findtext='/bin/ln -sf $QPKG_DIR /opt'
-            inserttext=$(echo -e "\t")'[ -L "$opt_path" ] \&\& [ -d "$opt_backup_path" ] \&\& cp "$opt_backup_path"/* --target-directory "$opt_path" \&\& rm -r "$opt_backup_path"'
-            $SED_CMD -i "s|$findtext|$findtext\n$inserttext\n|" "$package_init_pathfile"
+            find_text='/bin/ln -sf $QPKG_DIR /opt'
+            insert_text=$(echo -e "\t")'[ -L "$opt_path" ] \&\& [ -d "$opt_backup_path" ] \&\& cp "$opt_backup_path"/* --target-directory "$opt_path" \&\& rm -r "$opt_backup_path"'
+            $SED_CMD -i "s|$find_text|$find_text\n$insert_text\n|" "$package_init_pathfile"
 
             DebugDone 'patch: do the "opt shuffle"'
         fi
@@ -1343,8 +1349,8 @@ LoadQPKGFileDetails()
     qpkg_pathfile=''
     local returncode=0
     local target_file=''
-    local OneCD_urlprefix='https://raw.githubusercontent.com/onecdonly/sherpa/master/QPKGs'
-    local Stephane_urlprefix='http://www.qoolbox.fr'
+    local OneCD_url_prefix='https://raw.githubusercontent.com/onecdonly/sherpa/master/QPKGs'
+    local Stephane_url_prefix='http://www.qoolbox.fr'
 
     if [[ -z $1 ]]; then
         DebugError 'QPKG name not specified'
@@ -1368,37 +1374,37 @@ LoadQPKGFileDetails()
                 qpkg_md5='6c81cc37cbadd85adfb2751dc06a238f'
                 ;;
             SABnzbdplus)
-                qpkg_url="${OneCD_urlprefix}/SABnzbdplus/build/SABnzbdplus_180427.qpkg"
+                qpkg_url="${OneCD_url_prefix}/SABnzbdplus/build/SABnzbdplus_180427.qpkg"
                 qpkg_md5='fe25532df893ef2227f5efa28c3f38af'
                 ;;
             SickRage)
-                qpkg_url="${OneCD_urlprefix}/SickRage/build/SickRage_180427.qpkg"
+                qpkg_url="${OneCD_url_prefix}/SickRage/build/SickRage_180427.qpkg"
                 qpkg_md5='0fd4ffc7d00ad0f9a1e475e7a784d6df'
                 ;;
             CouchPotato2)
-                qpkg_url="${OneCD_urlprefix}/CouchPotato2/build/CouchPotato2_180427.qpkg"
+                qpkg_url="${OneCD_url_prefix}/CouchPotato2/build/CouchPotato2_180427.qpkg"
                 qpkg_md5='395ffdb9c25d0bc07eb24987cc722cdb'
                 ;;
             LazyLibrarian)
-                qpkg_url="${OneCD_urlprefix}/LazyLibrarian/build/LazyLibrarian_180427.qpkg"
+                qpkg_url="${OneCD_url_prefix}/LazyLibrarian/build/LazyLibrarian_180427.qpkg"
                 qpkg_md5='fdb4595f2970a498b9ef73a8b5f3a4b4'
                 ;;
             OMedusa)
-                qpkg_url="${OneCD_urlprefix}/OMedusa/build/OMedusa_180427.qpkg"
+                qpkg_url="${OneCD_url_prefix}/OMedusa/build/OMedusa_180427.qpkg"
                 qpkg_md5='ec3b193c7931a100067cfaa334caf883'
                 ;;
             Par2cmdline-MT)
                 case $STEPHANE_QPKG_ARCH in
                     x86)
-                        qpkg_url="${Stephane_urlprefix}/Par2cmdline-MT_0.6.14-MT_x86.qpkg.zip"
+                        qpkg_url="${Stephane_url_prefix}/Par2cmdline-MT_0.6.14-MT_x86.qpkg.zip"
                         qpkg_md5='531832a39576e399f646890cc18969bb'
                         ;;
                     x64)
-                        qpkg_url="${Stephane_urlprefix}/Par2cmdline-MT_0.6.14-MT_x86_64.qpkg.zip"
+                        qpkg_url="${Stephane_url_prefix}/Par2cmdline-MT_0.6.14-MT_x86_64.qpkg.zip"
                         qpkg_md5='f3b3dd496289510ec0383cf083a50f8e'
                         ;;
                     x41)
-                        qpkg_url="${Stephane_urlprefix}/Par2cmdline-MT_0.6.14-MT_arm-x41.qpkg.zip"
+                        qpkg_url="${Stephane_url_prefix}/Par2cmdline-MT_0.6.14-MT_arm-x41.qpkg.zip"
                         qpkg_md5='1701b188115758c151f19956388b90cb'
                         ;;
                 esac
@@ -1406,11 +1412,11 @@ LoadQPKGFileDetails()
             Par2)
                 case $STEPHANE_QPKG_ARCH in
                     x64)
-                        qpkg_url="${Stephane_urlprefix}/Par2_0.7.4.0_x86_64.qpkg.zip"
+                        qpkg_url="${Stephane_url_prefix}/Par2_0.7.4.0_x86_64.qpkg.zip"
                         qpkg_md5='660882474ab00d4793a674d4b48f89be'
                         ;;
                     x41)
-                        qpkg_url="${Stephane_urlprefix}/Par2_0.7.4.0_arm-x41.qpkg.zip"
+                        qpkg_url="${Stephane_url_prefix}/Par2_0.7.4.0_arm-x41.qpkg.zip"
                         qpkg_md5='9c0c9d3e8512f403f183856fb80091a4'
                         ;;
                 esac
@@ -1581,7 +1587,7 @@ Cleanup()
 
     [[ $errorcode -eq 0 && $debug != true && -d $WORKING_PATH ]] && rm -rf "$WORKING_PATH"
 
-    if [[ $queuepaused = true ]]; then
+    if [[ $queue_paused = true ]]; then
         if IsQPKGInstalled SABnzbdplus; then
             LoadQPKGVars SABnzbdplus
             SabQueueControl resume
@@ -1780,7 +1786,7 @@ SabQueueControl()
     else
         [[ $secure_web_login = true ]] && SL='s' || SL=''
         $WGET_CMD --no-check-certificate --quiet "http${SL}://127.0.0.1:${package_port}/sabnzbd/api?mode=${1}&apikey=${package_api}" -O - 2>&1 >/dev/null &
-        [[ $1 = pause ]] && queuepaused=true || queuepaused=false
+        [[ $1 = pause ]] && queue_paused=true || queue_paused=false
         DebugDone "${1}d existing SABnzbd queue"
     fi
 
@@ -2222,10 +2228,10 @@ PauseHere()
 
     # wait here temporarily
 
-    local waittime=10
+    local wait_seconds=10
 
-    ShowProc "waiting for $waittime seconds"
-    $SLEEP_CMD $waittime
+    ShowProc "waiting for $wait_seconds seconds"
+    $SLEEP_CMD $wait_seconds
     ShowDone "wait complete"
 
     }
