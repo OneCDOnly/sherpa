@@ -344,7 +344,7 @@ DisplayHelp()
 
 	DebugFuncEntry
 
-	echo -e "Each application is (re)installed by calling $0 with the name of the required app as an argument.\n\nSome examples are:"
+	echo -e "- Each application can be (re)installed by running $0 with the name of a single app as an argument.\n\nSome examples are:"
 	echo "$0 SABnzbd"
 	echo "$0 SickRage"
 	echo "$0 CouchPotato2"
