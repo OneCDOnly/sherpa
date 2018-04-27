@@ -37,6 +37,47 @@ ResetErrorcode()
 
     }
 
+ParseArgs()
+    {
+
+    if [[ -z $USER_ARGS_RAW ]]; then
+        DisplayHelp
+        errorcode=1
+        return 1
+    else
+        local user_args=($(echo "$USER_ARGS_RAW" | $TR_CMD '[A-Z]' '[a-z]'))
+    fi
+
+    for arg in "${user_args[@]}"; do
+        case $arg in
+            sab|sabnzbd|sabnzbdplus)
+                TARGET_APP=SABnzbdplus
+                ;;
+            sr|sick|sickrage)
+                TARGET_APP=SickRage
+                ;;
+            cp|cp2|couch|couchpotato|couchpotato2|couchpotatoserver)
+                TARGET_APP=CouchPotato2
+                ;;
+            ll|lazy|lazylibrarian)
+                TARGET_APP=LazyLibrarian
+                ;;
+            med|medusa|omedusa)
+                TARGET_APP=OMedusa
+                ;;
+            -d|--debug)
+                debug=true
+                ;;
+            *)
+                break
+                ;;
+        esac
+    done
+
+    return 0
+
+    }
+
 Init()
     {
 
@@ -212,7 +253,7 @@ Init()
 
     if [[ $errorcode -eq 0 && $EUID -ne 0 ]]; then
         ShowError "This script must be run as the 'admin' user. Please login via SSH as 'admin' and try again."
-        errorcode=1
+        errorcode=2
         returncode=1
     fi
 
@@ -222,7 +263,7 @@ Init()
 
         if [[ $result -ne 0 ]]; then
             ShowError "Unable to create working directory ($WORKING_PATH) [$result]"
-            errorcode=2
+            errorcode=3
             returncode=1
         else
             cd "$WORKING_PATH"
@@ -235,7 +276,7 @@ Init()
 
         if [[ $result -ne 0 ]]; then
             ShowError "Unable to create QPKG download directory ($QPKG_DL_PATH) [$result]"
-            errorcode=3
+            errorcode=4
             returncode=1
         fi
     fi
@@ -247,7 +288,7 @@ Init()
 
         if [[ $result -ne 0 ]]; then
             ShowError "Unable to create IPKG download directory ($IPKG_DL_PATH) [$result]"
-            errorcode=4
+            errorcode=5
             returncode=1
         else
             monitor_flag="$IPKG_DL_PATH/.monitor"
@@ -260,7 +301,7 @@ Init()
 
         if [[ $result -ne 0 ]]; then
             ShowError "Unable to create IPKG cache directory ($IPKG_CACHE_PATH) [$result]"
-            errorcode=5
+            errorcode=6
             returncode=1
         fi
     fi
@@ -268,7 +309,7 @@ Init()
     if [[ $errorcode -eq 0 ]]; then
         if [[ $TARGET_APP = SABnzbdplus ]] && IsQPKGInstalled QSabNZBdPlus && IsQPKGInstalled SABnzbdplus; then
             ShowError 'Both (SABnzbdplus) and (QSabNZBdPlus) are installed. This is an unsupported configuration. Please manually uninstall the unused one via the QNAP App Center then re-run this installer.'
-            errorcode=6
+            errorcode=7
             returncode=1
         fi
     fi
@@ -276,7 +317,7 @@ Init()
     if [[ $errorcode -eq 0 ]]; then
         if IsQPKGInstalled Entware-ng && IsQPKGInstalled Entware-3x; then
             ShowError 'Both (Entware-ng) and (Entware-3x) are installed. This is an unsupported configuration. Please manually uninstall both of them via the QNAP App Center then re-run this installer.'
-            errorcode=7
+            errorcode=8
             returncode=1
         fi
     fi
@@ -290,54 +331,13 @@ Init()
             ShowDone "Internet is accessible"
         else
             ShowError "No Internet access"
-            errorcode=8
+            errorcode=9
             returncode=1
         fi
     fi
 
     DebugFuncExit
     return $returncode
-
-    }
-
-ParseArgs()
-    {
-
-    if [[ -z $USER_ARGS_RAW ]]; then
-        DisplayHelp
-        errorcode=9
-        return 1
-    else
-        local user_args=($(echo "$USER_ARGS_RAW" | $TR_CMD '[A-Z]' '[a-z]'))
-    fi
-
-    for arg in "${user_args[@]}"; do
-        case $arg in
-            sab|sabnzbd|sabnzbdplus)
-                TARGET_APP=SABnzbdplus
-                ;;
-            sr|sick|sickrage)
-                TARGET_APP=SickRage
-                ;;
-            cp|cp2|couch|couchpotato|couchpotato2|couchpotatoserver)
-                TARGET_APP=CouchPotato2
-                ;;
-            ll|lazy|lazylibrarian)
-                TARGET_APP=LazyLibrarian
-                ;;
-            med|medusa|omedusa)
-                TARGET_APP=OMedusa
-                ;;
-            -d|--debug)
-                debug=true
-                ;;
-            *)
-                break
-                ;;
-        esac
-    done
-
-    return 0
 
     }
 
@@ -482,7 +482,7 @@ InstallEntware()
                 returncode=1
             elif [[ $PREF_ENTWARE = Entware && $ENTWARE_VER = alt ]]; then
                 ShowError 'Entware (alt) is installed. This configuration has not been tested.'
-                errorcode=11
+                errorcode=14
                 returncode=1
             fi
         fi
@@ -509,7 +509,7 @@ PatchEntwareInit()
 
     if [[ ! -e $package_init_pathfile ]]; then
         ShowError "No init file found [$package_init_pathfile]"
-        errorcode=14
+        errorcode=15
         returncode=1
     else
         if ($GREP_CMD -q 'opt.orig' "$package_init_pathfile"); then
@@ -672,7 +672,7 @@ InstallIPKGs()
         InstallIPKGBatch "$packages" 'Python, Git and others'
     else
         ShowError "IPKG path does not exist [$IPKG_DL_PATH]"
-        errorcode=15
+        errorcode=16
         returncode=1
     fi
 
@@ -722,7 +722,7 @@ InstallIPKGBatch()
                 $CAT_CMD "$log_pathfile"
                 DebugThickSeparator
             fi
-            errorcode=16
+            errorcode=17
             returncode=1
         fi
     fi
@@ -756,7 +756,7 @@ InstallPIPs()
         DebugThickSeparator
         $CAT_CMD "$log_pathfile"
         DebugThickSeparator
-        errorcode=17
+        errorcode=18
         returncode=1
     fi
 
@@ -791,7 +791,7 @@ InstallNG()
             #Go to default router ip address and port 6789 192.168.1.1:6789 and now you should see NZBget interface
         else
             ShowError "Download & install IPKG failed ($package_desc) [$result]"
-            errorcode=18
+            errorcode=19
             returncode=1
         fi
     fi
@@ -811,7 +811,7 @@ InstallQPKG()
 
     if [[ -z $1 ]]; then
         DebugError 'QPKG name not specified'
-        errorcode=19
+        errorcode=20
         return 1
     fi
 
@@ -846,7 +846,7 @@ InstallQPKG()
             DebugThickSeparator
         fi
 
-        errorcode=20
+        errorcode=21
         returncode=1
     fi
 
@@ -868,7 +868,7 @@ BackupThisPackage()
                 DebugDone "backup directory created ($BACKUP_PATH)"
             else
                 ShowError "Unable to create backup directory ($BACKUP_PATH) [$result]"
-                errorcode=21
+                errorcode=22
                 returncode=1
             fi
         fi
@@ -882,7 +882,7 @@ BackupThisPackage()
                     ShowDone "created ($TARGET_APP) settings backup"
                 else
                     ShowError "Could not create settings backup of ($package_config_path) [$result]"
-                    errorcode=22
+                    errorcode=23
                     returncode=1
                 fi
             else
@@ -1057,7 +1057,7 @@ RestoreConfig()
                         $SETCFG_CMD "SABnzbdplus" Web_Port $package_port -f "$QPKG_CONFIG_PATHFILE"
                     else
                         ShowError "Could not restore settings backup to ($package_config_path) [$result]"
-                        errorcode=23
+                        errorcode=24
                         returncode=1
                     fi
                 fi
@@ -1082,7 +1082,7 @@ RestoreConfig()
                         #$SETCFG_CMD "SABnzbdplus" Web_Port $package_port -f "$QPKG_CONFIG_PATHFILE"
                     else
                         ShowError "Could not restore settings backup to ($package_config_path) [$result]"
-                        errorcode=24
+                        errorcode=25
                         returncode=1
                     fi
                 fi
@@ -1094,7 +1094,7 @@ RestoreConfig()
         esac
     else
         ShowError "($TARGET_APP) is NOT installed so can't restore backups"
-        errorcode=25
+        errorcode=26
         returncode=1
     fi
 
@@ -1110,7 +1110,7 @@ DownloadQPKG()
 
     if [[ -z $1 ]]; then
         DebugError 'QPKG name not specified'
-        errorcode=26
+        errorcode=27
         return 1
     fi
 
@@ -1134,7 +1134,7 @@ DownloadQPKG()
             fi
         else
             ShowError "Problem creating checksum from existing QPKG ($qpkg_file) [$result]"
-            errorcode=27
+            errorcode=28
             returncode=1
         fi
     fi
@@ -1167,12 +1167,12 @@ DownloadQPKG()
                     ShowDone "downloaded QPKG ($qpkg_file)"
                 else
                     ShowError "Downloaded QPKG checksum incorrect ($qpkg_file) [$result]"
-                    errorcode=28
+                    errorcode=29
                     returncode=1
                 fi
             else
                 ShowError "Problem creating checksum from downloaded QPKG [$result]"
-                errorcode=29
+                errorcode=30
                 returncode=1
             fi
         else
@@ -1184,7 +1184,7 @@ DownloadQPKG()
                 DebugThickSeparator
             fi
 
-            errorcode=30
+            errorcode=31
             returncode=1
         fi
     fi
@@ -1248,7 +1248,7 @@ LoadQPKGVars()
 
     if [[ -z $package_name ]]; then
         DebugError 'QPKG name not specified'
-        errorcode=31
+        errorcode=32
         returncode=1
     else
         package_installed_path=''
@@ -1354,7 +1354,7 @@ LoadQPKGFileDetails()
 
     if [[ -z $1 ]]; then
         DebugError 'QPKG name not specified'
-        errorcode=32
+        errorcode=33
         returncode=1
     else
         qpkg_name=$1
@@ -1423,14 +1423,14 @@ LoadQPKGFileDetails()
                 ;;
             *)
                 DebugError 'QPKG name not found'
-                errorcode=33
+                errorcode=34
                 returncode=1
                 ;;
         esac
 
         if [[ -z $qpkg_url || -z $qpkg_md5 ]]; then
             DebugError 'QPKG details not found'
-            errorcode=34
+            errorcode=35
             returncode=1
         else
             [[ -z $qpkg_file ]] && qpkg_file=$($BASENAME_CMD "$qpkg_url")
@@ -1454,7 +1454,7 @@ UninstallQPKG()
 
     if [[ -z $1 ]]; then
         DebugError 'QPKG name not specified'
-        errorcode=35
+        errorcode=36
         returncode=1
     else
         qpkg_installed_path="$($GETCFG_CMD "$1" Install_Path -f "$QPKG_CONFIG_PATHFILE")"
@@ -1473,7 +1473,7 @@ UninstallQPKG()
                     ShowDone "uninstalled QPKG '$1'"
                 else
                     ShowError "Unable to uninstall QPKG \"$1\" [$result]"
-                    errorcode=36
+                    errorcode=37
                     returncode=1
                 fi
             fi
@@ -1502,11 +1502,11 @@ DaemonCtl()
 
     if [[ -z $2 ]]; then
         DebugError 'daemon unspecified'
-        errorcode=37
+        errorcode=38
         returncode=1
     elif [[ ! -e $2 ]]; then
         DebugError "daemon ($2) not found"
-        errorcode=38
+        errorcode=39
         returncode=1
     else
         target_init_pathfile="$2"
@@ -1530,7 +1530,7 @@ DaemonCtl()
                     else
                         $CAT_CMD "$qpkg_pathfile.$START_LOG_FILE" >> "$DEBUG_LOG_PATHFILE"
                     fi
-                    errorcode=39
+                    errorcode=40
                     returncode=1
                 fi
                 ;;
@@ -1557,7 +1557,7 @@ DaemonCtl()
                 ;;
             *)
                 DebugError "action unrecognised ($1)"
-                errorcode=40
+                errorcode=41
                 returncode=1
                 ;;
         esac
@@ -1812,7 +1812,7 @@ IsQPKGInstalled()
 
     if [[ -z $1 ]]; then
         DebugError 'QPKG name not specified'
-        errorcode=41
+        errorcode=42
         returncode=1
     else
         $GREP_CMD -q -F "[$1]" "$QPKG_CONFIG_PATHFILE"
@@ -1846,7 +1846,7 @@ IsIPKGInstalled()
 
     if [[ -z $1 ]]; then
         DebugError 'IPKG name not specified'
-        errorcode=42
+        errorcode=43
         returncode=1
     else
         $OPKG_CMD list-installed | $GREP_CMD -q -F "$1"
@@ -1873,7 +1873,7 @@ IsSysFilePresent()
 
     if ! [[ -f $1 || -L $1 ]]; then
         ShowError "A required NAS system file is missing [$1]"
-        errorcode=43
+        errorcode=44
         return 1
     else
         return 0
@@ -1890,7 +1890,7 @@ IsSysSharePresent()
 
     if [[ ! -L $1 ]]; then
         ShowError "A required NAS system share is missing [$1]. Please re-create it via QNAP Control Panel -> Privilege Settings -> Shared Folders."
-        errorcode=44
+        errorcode=45
         return 1
     else
         return 0
