@@ -636,7 +636,7 @@ InstallTargetApp()
 			[[ $errorcode -eq 0 ]] && DaemonCtl start "$package_init_pathfile"
 			;;
 		*)
-			ShowError "Can't install specified app: [$TARGET_APP] - unknown!"
+			ShowError "Can't install app [$TARGET_APP] as it's unknown"
 			;;
 	esac
 
@@ -673,7 +673,7 @@ InstallIPKGs()
 		esac
 		InstallIPKGBatch "$packages" 'Python, Git and others'
 	else
-		ShowError "IPKG path does not exist [$IPKG_DL_PATH]"
+		ShowError "IPKG download path [$IPKG_DL_PATH] does not exist"
 		errorcode=16
 		returncode=1
 	fi
@@ -812,7 +812,7 @@ InstallQPKG()
 	local returncode=0
 
 	if [[ -z $1 ]]; then
-		DebugError 'QPKG name not specified'
+		DebugError 'QPKG name unspecified'
 		errorcode=20
 		return 1
 	fi
@@ -1111,7 +1111,7 @@ DownloadQPKG()
 	[[ $errorcode -gt 0 ]] && return
 
 	if [[ -z $1 ]]; then
-		DebugError 'QPKG name not specified'
+		DebugError 'QPKG name unspecified'
 		errorcode=27
 		return 1
 	fi
@@ -1173,7 +1173,7 @@ DownloadQPKG()
 					returncode=1
 				fi
 			else
-				ShowError "Problem creating checksum from downloaded QPKG [$result]"
+				ShowError "Problem creating checksum from downloaded QPKG ($qpkg_pathfile) [$result]"
 				errorcode=30
 				returncode=1
 			fi
@@ -1203,7 +1203,7 @@ CalcStephaneQPKGArch()
 
 	case $NAS_ARCH in
 		x86_64)
-			[[ $FIRMWARE_VERSION =~ '4.3.' ]] && STEPHANE_QPKG_ARCH=x64 || STEPHANE_QPKG_ARCH=x86
+			[[ ${FIRMWARE_VERSION//.} -ge 430 ]] && STEPHANE_QPKG_ARCH=x64 || STEPHANE_QPKG_ARCH=x86
 			;;
 		i686)
 			STEPHANE_QPKG_ARCH=x86
@@ -1249,7 +1249,7 @@ LoadQPKGVars()
 	local returncode=0
 
 	if [[ -z $package_name ]]; then
-		DebugError 'QPKG name not specified'
+		DebugError 'QPKG name unspecified'
 		errorcode=32
 		returncode=1
 	else
@@ -1330,7 +1330,7 @@ LoadQPKGVars()
 				fi
 				;;
 			*)
-				ShowError "Can't load details of specified app: [$package_name] - unknown!"
+				ShowError "Can't load details of specified app [$package_name] as it's unknown"
 				;;
 
 		esac
@@ -1355,7 +1355,7 @@ LoadQPKGFileDetails()
 	local Stephane_url_prefix='http://www.qoolbox.fr'
 
 	if [[ -z $1 ]]; then
-		DebugError 'QPKG name not specified'
+		DebugError 'QPKG name unspecified'
 		errorcode=33
 		returncode=1
 	else
@@ -1455,7 +1455,7 @@ UninstallQPKG()
 	local returncode=0
 
 	if [[ -z $1 ]]; then
-		DebugError 'QPKG name not specified'
+		DebugError 'QPKG name unspecified'
 		errorcode=36
 		returncode=1
 	else
@@ -1494,7 +1494,7 @@ DaemonCtl()
 	{
 
 	# $1 = action (start|stop)
-	# $2 = pathfile of daemon init
+	# $2 = pathfile of daemon init script
 
 	local msgs=''
 	local result=0
@@ -1811,7 +1811,7 @@ IsQPKGInstalled()
 	local returncode=0
 
 	if [[ -z $1 ]]; then
-		DebugError 'QPKG name not specified'
+		DebugError 'QPKG name unspecified'
 		errorcode=42
 		returncode=1
 	else
@@ -1845,7 +1845,7 @@ IsIPKGInstalled()
 	local returncode=0
 
 	if [[ -z $1 ]]; then
-		DebugError 'IPKG name not specified'
+		DebugError 'IPKG name unspecified'
 		errorcode=43
 		returncode=1
 	else
