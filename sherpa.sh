@@ -43,17 +43,15 @@ Init()
     AWK_CMD=/bin/awk
     CAT_CMD=/bin/cat
     CHMOD_CMD=/bin/chmod
-    CP_CMD=/bin/cp
     DATE_CMD=/bin/date
     GREP_CMD=/bin/grep
     HOSTNAME_CMD=/bin/hostname
     LN_CMD=/bin/ln
     MD5SUM_CMD=/bin/md5sum
     MKDIR_CMD=/bin/mkdir
-    MV_CMD=/bin/mv
     PING_CMD=/bin/ping
-    RM_CMD=/bin/rm
     SED_CMD=/bin/sed
+    SLEEP_CMD=/bin/sleep
     TOUCH_CMD=/bin/touch
     TR_CMD=/bin/tr
     UNAME_CMD=/bin/uname
@@ -97,17 +95,15 @@ Init()
     IsSysFilePresent $AWK_CMD || return
     IsSysFilePresent $CAT_CMD || return
     IsSysFilePresent $CHMOD_CMD || return
-    IsSysFilePresent $CP_CMD || return
     IsSysFilePresent $DATE_CMD || return
     IsSysFilePresent $GREP_CMD || return
     IsSysFilePresent $HOSTNAME_CMD || return
     IsSysFilePresent $LN_CMD || return
     IsSysFilePresent $MD5SUM_CMD || return
     IsSysFilePresent $MKDIR_CMD || return
-    IsSysFilePresent $MV_CMD || return
     IsSysFilePresent $PING_CMD || return
-    IsSysFilePresent $RM_CMD || return
     IsSysFilePresent $SED_CMD || return
+    IsSysFilePresent $SLEEP_CMD || return
     IsSysFilePresent $TOUCH_CMD || return
     IsSysFilePresent $TR_CMD || return
     IsSysFilePresent $UNAME_CMD || return
@@ -459,12 +455,12 @@ InstallEntware()
         # rename original [/opt]
         opt_path=/opt
         opt_backup_path=/opt.orig
-        [[ -d $opt_path && ! -L $opt_path && ! -e $opt_backup_path ]] && $MV_CMD "$opt_path" "$opt_backup_path"
+        [[ -d $opt_path && ! -L $opt_path && ! -e $opt_backup_path ]] && mv "$opt_path" "$opt_backup_path"
 
         InstallQPKG $PREF_ENTWARE && ReloadProfile
 
         # copy all files from original [/opt] into new [/opt]
-        [[ -L $opt_path && -d $opt_backup_path ]] && $CP_CMD --recursive "$opt_backup_path"/* --target-directory "$opt_path" && $RM_CMD -r "$opt_backup_path"
+        [[ -L $opt_path && -d $opt_backup_path ]] && cp --recursive "$opt_backup_path"/* --target-directory "$opt_path" && rm -r "$opt_backup_path"
 
     else
         if [[ $PREF_ENTWARE = Entware-3x || $PREF_ENTWARE = Entware ]]; then
@@ -701,12 +697,12 @@ InstallIPKGBatch()
     if [[ $IPKG_download_count -gt 0 ]]; then
         IPKG_download_startseconds=$($DATE_CMD +%s)
         ShowProc "downloading & installing $IPKG_download_count IPKGs ($IPKG_batch_desc)"
-        touch "$monitor_flag"
+        $TOUCH_CMD "$monitor_flag"
         trap CTRL_C_Captured INT
         _MonitorDirSize_ "$IPKG_DL_PATH" $IPKG_download_size &
         install_msgs=$($OPKG_CMD install --force-overwrite ${IPKG_download_list[*]} --cache "$IPKG_CACHE_PATH" --tmp-dir "$IPKG_DL_PATH" 2>&1)
         result=$?
-        [[ -e $monitor_flag ]] && { rm "$monitor_flag"; sleep 1 ;}
+        [[ -e $monitor_flag ]] && { rm "$monitor_flag"; $SLEEP_CMD 1 ;}
         trap - INT
         echo -e "${install_msgs}\nresult=[$result]" > "$log_pathfile"
 
@@ -873,7 +869,7 @@ BackupThisPackage()
 
         if [[ $errorcode -eq 0 ]]; then
             if [[ ! -d ${BACKUP_PATH}/config ]]; then
-                $MV_CMD "$package_config_path" "$BACKUP_PATH"
+                mv "$package_config_path" "$BACKUP_PATH"
                 result=$?
 
                 if [[ $result -eq 0 ]]; then
@@ -973,15 +969,15 @@ ConvertSettings()
     case $TARGET_APP in
         SABnzbdplus)
             local OLD_BACKUP_PATH="${BACKUP_PATH}/SAB_CONFIG"
-            [[ -d $OLD_BACKUP_PATH ]] && { $MV_CMD "$OLD_BACKUP_PATH" "$SETTINGS_BACKUP_PATH"; DebugDone 'renamed backup config path' ;}
+            [[ -d $OLD_BACKUP_PATH ]] && { mv "$OLD_BACKUP_PATH" "$SETTINGS_BACKUP_PATH"; DebugDone 'renamed backup config path' ;}
 
             OLD_BACKUP_PATH="${BACKUP_PATH}/Config"
-            [[ -d $OLD_BACKUP_PATH ]] && { $MV_CMD "$OLD_BACKUP_PATH" "$SETTINGS_BACKUP_PATH"; DebugDone 'renamed backup config path' ;}
+            [[ -d $OLD_BACKUP_PATH ]] && { mv "$OLD_BACKUP_PATH" "$SETTINGS_BACKUP_PATH"; DebugDone 'renamed backup config path' ;}
 
             # for converting from Stephane's QPKG and from previous version SAB QPKGs
             local SETTINGS_PREV_BACKUP_PATHFILE="${SETTINGS_BACKUP_PATH}/sabnzbd.ini"
 
-            [[ -f $SETTINGS_PREV_BACKUP_PATHFILE ]] && { $MV_CMD "$SETTINGS_PREV_BACKUP_PATHFILE" "$SETTINGS_BACKUP_PATHFILE"; DebugDone 'renamed backup config file' ;}
+            [[ -f $SETTINGS_PREV_BACKUP_PATHFILE ]] && { mv "$SETTINGS_PREV_BACKUP_PATHFILE" "$SETTINGS_BACKUP_PATHFILE"; DebugDone 'renamed backup config file' ;}
 
             if [[ -f $SETTINGS_BACKUP_PATHFILE ]]; then
                 $SED_CMD -i "s|log_dir = logs|log_dir = ${SHARE_DOWNLOAD_PATH}/sabnzbd/logs|" "$SETTINGS_BACKUP_PATHFILE"
@@ -1043,10 +1039,10 @@ RestoreConfig()
                     if [[ ! -d $package_config_path ]]; then
                         $MKDIR_CMD -p "$($DIRNAME_CMD "$package_config_path")" 2> /dev/null
                     else
-                        $RM_CMD -r "$package_config_path" 2> /dev/null
+                        rm -r "$package_config_path" 2> /dev/null
                     fi
 
-                    $MV_CMD "$SETTINGS_BACKUP_PATH" "$($DIRNAME_CMD "$package_config_path")"
+                    mv "$SETTINGS_BACKUP_PATH" "$($DIRNAME_CMD "$package_config_path")"
                     result=$?
 
                     if [[ $result -eq 0 ]]; then
@@ -1062,16 +1058,16 @@ RestoreConfig()
                 ;;
             LazyLibrarian|SickRage|CouchPotato2|OMedusa)
                 if [[ -d $SETTINGS_BACKUP_PATH ]]; then
-                    #sleep 10; DaemonCtl stop "$package_init_pathfile"  # allow time for new package init to complete so PID is accurate
+                    #$SLEEP_CMD 10; DaemonCtl stop "$package_init_pathfile"  # allow time for new package init to complete so PID is accurate
                     DaemonCtl stop "$package_init_pathfile"
 
                     if [[ ! -d $package_config_path ]]; then
                         $MKDIR_CMD -p "$($DIRNAME_CMD "$package_config_path")" 2> /dev/null
                     else
-                        $RM_CMD -r "$package_config_path" 2> /dev/null
+                        rm -r "$package_config_path" 2> /dev/null
                     fi
 
-                    $MV_CMD "$SETTINGS_BACKUP_PATH" "$($DIRNAME_CMD "$package_config_path")"
+                    mv "$SETTINGS_BACKUP_PATH" "$($DIRNAME_CMD "$package_config_path")"
                     result=$?
 
                     if [[ $result -eq 0 ]]; then
@@ -1128,7 +1124,7 @@ DownloadQPKG()
             else
                 DebugWarning "existing QPKG checksum incorrect ($qpkg_file) [$result]"
                 DebugInfo "deleting ($qpkg_pathfile) [$result]"
-                $RM_CMD -f "$qpkg_pathfile"
+                rm -f "$qpkg_pathfile"
             fi
         else
             ShowError "Problem creating checksum from existing QPKG ($qpkg_file) [$result]"
@@ -1570,7 +1566,7 @@ CTRL_C_Captured()
 
     [[ -e $monitor_flag ]] && rm "$monitor_flag"
 
-    sleep 1
+    $SLEEP_CMD 1
 
     exit
 
@@ -1583,7 +1579,7 @@ Cleanup()
 
     cd "$SHARE_PUBLIC_PATH"
 
-    [[ $errorcode -eq 0 && $debug != true && -d $WORKING_PATH ]] && $RM_CMD -rf "$WORKING_PATH"
+    [[ $errorcode -eq 0 && $debug != true && -d $WORKING_PATH ]] && rm -rf "$WORKING_PATH"
 
     if [[ $queuepaused = true ]]; then
         if IsQPKGInstalled SABnzbdplus; then
@@ -1763,7 +1759,7 @@ _MonitorDirSize_()
         fi
 
         ProgressUpdater "$progress_message"
-        sleep 1
+        $SLEEP_CMD 1
     done
 
     [[ -n $progress_message ]] && ProgressUpdater " done!"
@@ -1919,10 +1915,10 @@ ProgressUpdater()
         if [[ $current_length -lt $previous_length ]]; then
             appended_length=$(($current_length-$previous_length))
             # backspace to start of previous msg, print new msg, add additional spaces, then backspace to end of msg
-            printf "%${previous_length}s" | tr ' ' '\b' ; echo -n "$1 " ; printf "%${appended_length}s" ; printf "%${appended_length}s" | tr ' ' '\b'
+            printf "%${previous_length}s" | $TR_CMD ' ' '\b' ; echo -n "$1 " ; printf "%${appended_length}s" ; printf "%${appended_length}s" | $TR_CMD ' ' '\b'
         else
             # backspace to start of previous msg, print new msg
-            printf "%${previous_length}s" | tr ' ' '\b' ; echo -n "$1 "
+            printf "%${previous_length}s" | $TR_CMD ' ' '\b' ; echo -n "$1 "
         fi
 
         previous_length=$current_length
@@ -2168,7 +2164,7 @@ SaveLogLine()
     # $1 = pass/fail
     # $2 = message
 
-    [[ -n $DEBUG_LOG_PATHFILE ]] && touch "$DEBUG_LOG_PATHFILE" && printf "[ %-4s ] %s\n" "$1" "$2" >> "$DEBUG_LOG_PATHFILE"
+    [[ -n $DEBUG_LOG_PATHFILE ]] && $TOUCH_CMD "$DEBUG_LOG_PATHFILE" && printf "[ %-4s ] %s\n" "$1" "$2" >> "$DEBUG_LOG_PATHFILE"
 
     }
 
@@ -2229,7 +2225,7 @@ PauseHere()
     local waittime=10
 
     ShowProc "waiting for $waittime seconds"
-    sleep $waittime
+    $SLEEP_CMD $waittime
     ShowDone "wait complete"
 
     }
