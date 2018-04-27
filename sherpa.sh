@@ -40,40 +40,44 @@ ResetErrorcode()
 ParseArgs()
     {
 
+    DebugFuncEntry
+
     if [[ -z $USER_ARGS_RAW ]]; then
         DisplayHelp
         errorcode=1
-        return 1
     else
         local user_args=($(echo "$USER_ARGS_RAW" | $TR_CMD '[A-Z]' '[a-z]'))
     fi
 
-    for arg in "${user_args[@]}"; do
-        case $arg in
-            sab|sabnzbd|sabnzbdplus)
-                TARGET_APP=SABnzbdplus
-                ;;
-            sr|sick|sickrage)
-                TARGET_APP=SickRage
-                ;;
-            cp|cp2|couch|couchpotato|couchpotato2|couchpotatoserver)
-                TARGET_APP=CouchPotato2
-                ;;
-            ll|lazy|lazylibrarian)
-                TARGET_APP=LazyLibrarian
-                ;;
-            med|medusa|omedusa)
-                TARGET_APP=OMedusa
-                ;;
-            -d|--debug)
-                debug=true
-                ;;
-            *)
-                break
-                ;;
-        esac
-    done
+    if [[ $errorcode -eq 0 ]]; then
+        for arg in "${user_args[@]}"; do
+            case $arg in
+                sab|sabnzbd|sabnzbdplus)
+                    TARGET_APP=SABnzbdplus
+                    ;;
+                sr|sick|sickrage)
+                    TARGET_APP=SickRage
+                    ;;
+                cp|cp2|couch|couchpotato|couchpotato2|couchpotatoserver)
+                    TARGET_APP=CouchPotato2
+                    ;;
+                ll|lazy|lazylibrarian)
+                    TARGET_APP=LazyLibrarian
+                    ;;
+                med|medusa|omedusa)
+                    TARGET_APP=OMedusa
+                    ;;
+                -d|--debug)
+                    debug=true
+                    ;;
+                *)
+                    break
+                    ;;
+            esac
+        done
+    fi
 
+    DebugFuncExit
     return 0
 
     }
@@ -344,6 +348,8 @@ Init()
 DisplayHelp()
     {
 
+    DebugFuncEntry
+
     echo -e "\nEach application is (re)installed by calling $0 with the name of the required app as an argument.\n\nSome examples are:"
     echo "$0 SABnzbd"
     echo "$0 SickRage"
@@ -351,6 +357,9 @@ DisplayHelp()
     echo "$0 LazyLibrarian"
     echo "$0 OMedusa"
     echo
+
+    DebugFuncExit
+    return 0
 
     }
 
