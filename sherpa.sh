@@ -359,7 +359,7 @@ PauseDownloaders()
 
     DebugFuncEntry
 
-    # pause local SAB queue so installer downloads will finish faster
+    # pause local SABnzbd queue so installer downloads will finish faster
     if IsQPKGInstalled SABnzbdplus; then
         LoadQPKGVars SABnzbdplus
         SabQueueControl pause
@@ -378,7 +378,7 @@ RemoveOther()
 
     [[ $errorcode -gt 0 ]] && return
 
-    # cruft: remove previous x41 Par2cmdline-MT package due to wrong arch - this was corrected on 2017-06-03 - remove this code on 2018-06-03
+    # cruft: remove previous x41 Par2cmdline-MT package due to wrong arch - this was corrected on 2017-06-03 - remove this code after 2018-06-03
         # don't use Par2cmdline-MT for x86_64 as multi-thread changes have been merged upstream into Par2cmdline and Par2cmdline-MT has been discontinued
         case $STEPHANE_QPKG_ARCH in
             x86)
@@ -475,8 +475,12 @@ InstallEntware()
             ReloadProfile
 
             if [[ $PREF_ENTWARE = Entware-3x && $ENTWARE_VER = alt ]]; then
-                ShowError "Entware-3x (alt) is installed. This config has not been tested. Can't continue."
+                ShowError "Entware-3x (alt) is installed. This configuration has not been tested. Can't continue."
                 errorcode=13
+                returncode=1
+            elif [[ $PREF_ENTWARE = Entware && $ENTWARE_VER = alt ]]; then
+                ShowError 'Entware (alt) is installed. This configuration has not been tested.'
+                errorcode=11
                 returncode=1
             fi
         fi
@@ -778,7 +782,7 @@ InstallNG()
         if [[ $? -eq 0 ]]; then
             ShowProc "modifying NZBGet"
 
-            $SED_CMD -i 's|ConfigTemplate=.*|ConfigTemplate=/opt/share/nzbget/nzbget.conf.template|g' "/opt/share/nzbget/nzbget.conf"
+            $SED_CMD -i 's|ConfigTemplate=.*|ConfigTemplate=/opt/share/nzbget/nzbget.conf.template|g' /opt/share/nzbget/nzbget.conf
             ShowDone "modified NZBGet"
             /opt/etc/init.d/S75nzbget start
             $CAT_CMD /opt/share/nzbget/nzbget.conf | $GREP_CMD ControlPassword=
@@ -1190,6 +1194,8 @@ DownloadQPKG()
 
 CalcStephaneQPKGArch()
     {
+
+    # decide which package arch is suitable for this NAS
 
     case $NAS_ARCH in
         x86_64)
@@ -1689,12 +1695,14 @@ FindAllIPKGDependencies()
     DebugInfo "required IPKG names: ${IPKG_download_list[*]}"
     IPKG_download_count=${#IPKG_download_list[@]}
 
-    DebugProc 'calculating size of required IPKGs'
-    for element in ${IPKG_download_list[@]}; do
-        result_size=$($OPKG_CMD info $element | $GREP_CMD -F 'Size:' | $SED_CMD 's|^Size: ||')
-        ((IPKG_download_size+=result_size))
-    done
-    DebugDone 'complete'
+    if [[ $IPKG_download_count -gt 0 ]]; then
+        DebugProc 'calculating size of required IPKGs'
+        for element in ${IPKG_download_list[@]}; do
+            result_size=$($OPKG_CMD info $element | $GREP_CMD -F 'Size:' | $SED_CMD 's|^Size: ||')
+            ((IPKG_download_size+=result_size))
+        done
+        DebugDone 'complete'
+    fi
 
     [[ -z $IPKG_download_size ]] && IPKG_download_size=0
 
