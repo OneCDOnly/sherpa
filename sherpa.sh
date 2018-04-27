@@ -40,45 +40,39 @@ ResetErrorcode()
 ParseArgs()
     {
 
-    DebugFuncEntry
-
     if [[ -z $USER_ARGS_RAW ]]; then
-        DisplayHelp
         errorcode=1
+        return
     else
         local user_args=($(echo "$USER_ARGS_RAW" | $TR_CMD '[A-Z]' '[a-z]'))
     fi
 
-    if [[ $errorcode -eq 0 ]]; then
-        for arg in "${user_args[@]}"; do
-            case $arg in
-                sab|sabnzbd|sabnzbdplus)
-                    TARGET_APP=SABnzbdplus
-                    ;;
-                sr|sick|sickrage)
-                    TARGET_APP=SickRage
-                    ;;
-                cp|cp2|couch|couchpotato|couchpotato2|couchpotatoserver)
-                    TARGET_APP=CouchPotato2
-                    ;;
-                ll|lazy|lazylibrarian)
-                    TARGET_APP=LazyLibrarian
-                    ;;
-                med|medusa|omedusa)
-                    TARGET_APP=OMedusa
-                    ;;
-                -d|--debug)
-                    debug=true
-                    ;;
-                *)
-                    break
-                    ;;
-            esac
-        done
-    fi
-
-    DebugFuncExit
-    return 0
+    for arg in "${user_args[@]}"; do
+        case $arg in
+            sab|sabnzbd|sabnzbdplus)
+                TARGET_APP=SABnzbdplus
+                ;;
+            sr|sick|sickrage)
+                TARGET_APP=SickRage
+                ;;
+            cp|cp2|couch|couchpotato|couchpotato2|couchpotatoserver)
+                TARGET_APP=CouchPotato2
+                ;;
+            ll|lazy|lazylibrarian)
+                TARGET_APP=LazyLibrarian
+                ;;
+            med|medusa|omedusa)
+                TARGET_APP=OMedusa
+                ;;
+            -d|--debug)
+                debug=true
+                DebugVar debug
+                ;;
+            *)
+                break
+                ;;
+        esac
+    done
 
     }
 
@@ -226,34 +220,34 @@ Init()
 
     ParseArgs
 
-    if [[ $errorcode -eq 0 ]]; then
-        DebugFuncEntry
-        DebugThickSeparator
-        DebugScript 'started' "$($DATE_CMD | $TR_CMD -s ' ')"
+    DebugFuncEntry
+    DebugThickSeparator
+    DebugScript 'started' "$($DATE_CMD | $TR_CMD -s ' ')"
 
-        [[ $debug = false ]] && echo -e "$(ColourTextBrightWhite "$SCRIPT_FILE") ($SCRIPT_VERSION)\n"
+    [[ $debug = false ]] && echo -e "$(ColourTextBrightWhite "$SCRIPT_FILE") ($SCRIPT_VERSION)\n"
 
-        DebugScript 'version' "$SCRIPT_VERSION"
-        DebugThinSeparator
-        DebugInfo 'Markers: (**) detected, (II) information, (WW) warning, (EE) error,'
-        DebugInfo ' (==) processing, (--) done, (>>) function entry, (<<) function exit,'
-        DebugInfo ' (vv) variable name & value, ($1) positional argument value.'
-        DebugThinSeparator
-        DebugNAS 'model' "$($GREP_CMD -v "^$" "$ISSUE_PATHFILE" | $SED_CMD 's|^Welcome to ||;s|(.*||')"
-        DebugNAS 'firmware version' "$FIRMWARE_VERSION"
-        DebugNAS 'firmware build' "$($GETCFG_CMD System 'Build Number' -f "$ULINUX_PATHFILE")"
-        DebugNAS 'kernel' "$($UNAME_CMD -mr)"
-        DebugNAS 'OS uptime' "$($UPTIME_CMD | $SED_CMD 's|.*up.||;s|,.*load.*||;s|^\ *||')"
-        DebugNAS 'system load' "$($UPTIME_CMD | $SED_CMD 's|.*load average: ||' | $AWK_CMD -F', ' '{print "1 min="$1 ", 5 min="$2 ", 15 min="$3}')"
-        DebugNAS 'EUID' "$EUID"
-        DebugNAS 'default volume' "$DEFAULT_VOLUME"
-        DebugNAS '$PATH' "${PATH:0:42}"
-        DebugNAS '/opt' "$([[ -L '/opt' ]] && $READLINK_CMD '/opt' || echo "not present")"
-        DebugNAS "$SHARE_DOWNLOAD_PATH" "$([[ -L $SHARE_DOWNLOAD_PATH ]] && $READLINK_CMD "$SHARE_DOWNLOAD_PATH" || echo "not present!")"
-        DebugScript 'user arguments' "$USER_ARGS_RAW"
-        DebugScript 'target app' "$TARGET_APP"
-        DebugThinSeparator
-    fi
+    DebugScript 'version' "$SCRIPT_VERSION"
+    DebugThinSeparator
+    DebugInfo 'Markers: (**) detected, (II) information, (WW) warning, (EE) error,'
+    DebugInfo ' (==) processing, (--) done, (>>) function entry, (<<) function exit,'
+    DebugInfo ' (vv) variable name & value, ($1) positional argument value.'
+    DebugThinSeparator
+    DebugNAS 'model' "$($GREP_CMD -v "^$" "$ISSUE_PATHFILE" | $SED_CMD 's|^Welcome to ||;s|(.*||')"
+    DebugNAS 'firmware version' "$FIRMWARE_VERSION"
+    DebugNAS 'firmware build' "$($GETCFG_CMD System 'Build Number' -f "$ULINUX_PATHFILE")"
+    DebugNAS 'kernel' "$($UNAME_CMD -mr)"
+    DebugNAS 'OS uptime' "$($UPTIME_CMD | $SED_CMD 's|.*up.||;s|,.*load.*||;s|^\ *||')"
+    DebugNAS 'system load' "$($UPTIME_CMD | $SED_CMD 's|.*load average: ||' | $AWK_CMD -F', ' '{print "1 min="$1 ", 5 min="$2 ", 15 min="$3}')"
+    DebugNAS 'EUID' "$EUID"
+    DebugNAS 'default volume' "$DEFAULT_VOLUME"
+    DebugNAS '$PATH' "${PATH:0:42}"
+    DebugNAS '/opt' "$([[ -L '/opt' ]] && $READLINK_CMD '/opt' || echo "not present")"
+    DebugNAS "$SHARE_DOWNLOAD_PATH" "$([[ -L $SHARE_DOWNLOAD_PATH ]] && $READLINK_CMD "$SHARE_DOWNLOAD_PATH" || echo "not present!")"
+    DebugScript 'user arguments' "$USER_ARGS_RAW"
+    DebugScript 'target app' "$TARGET_APP"
+    DebugThinSeparator
+
+    [[ $errorcode -eq 1 ]] && DisplayHelp
 
     if [[ $errorcode -eq 0 && $EUID -ne 0 ]]; then
         ShowError "This script must be run as the 'admin' user. Please login via SSH as 'admin' and try again."
@@ -350,13 +344,12 @@ DisplayHelp()
 
     DebugFuncEntry
 
-    echo -e "\nEach application is (re)installed by calling $0 with the name of the required app as an argument.\n\nSome examples are:"
+    echo -e "Each application is (re)installed by calling $0 with the name of the required app as an argument.\n\nSome examples are:"
     echo "$0 SABnzbd"
     echo "$0 SickRage"
     echo "$0 CouchPotato2"
     echo "$0 LazyLibrarian"
     echo "$0 OMedusa"
-    echo
 
     DebugFuncExit
     return 0
@@ -1614,22 +1607,20 @@ Cleanup()
 DisplayResult()
     {
 
-    [[ $errorcode -eq 1 ]] && return 1
-
     DebugFuncEntry
     local RE=''
     local SL=''
 
     [[ $REINSTALL_FLAG = true ]] && RE='re' || RE=''
     [[ $secure_web_login = true ]] && SL='s' || SL=''
-    [[ $debug = false ]] && echo
 
     if [[ $errorcode -eq 0 ]]; then
         [[ $debug = true ]] && emoticon=':DD' || emoticon=''
+        [[ $debug = false ]] && echo
         ShowDone "$TARGET_APP has been successfully ${RE}installed! $emoticon"
         #[[ $debug = false ]] && echo
         #ShowInfo "It should now be accessible on your LAN @ $(ColourTextUnderlinedBlue "http${SL}://$($HOSTNAME_CMD -i | $TR_CMD -d ' '):$package_port")"
-    else
+    elif [[ $errorcode -gt 1 ]]; then       # don't display 'failed' when only showing help
         [[ $debug = true ]] && emoticon=':S ' || emoticon=''
         ShowError "$TARGET_APP ${RE}install failed! ${emoticon}[$errorcode]"
     fi
