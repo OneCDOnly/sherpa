@@ -102,7 +102,7 @@ Init()
 	UNAME_CMD=/bin/uname
 	UNIQ_CMD=/bin/uniq
 
-	CURL_CMD=/sbin/curl
+	curl_cmd=/sbin/curl			# this will change if QTS firmware is old
 	GETCFG_CMD=/sbin/getcfg
 	RMCFG_CMD=/sbin/rmcfg
 	SETCFG_CMD=/sbin/setcfg
@@ -123,7 +123,7 @@ Init()
 	WHICH_CMD=/usr/bin/which
 
 	FIND_CMD=/opt/bin/find
-	OPKG_CMD=/opt/bin/opkg
+	opkg_cmd=/opt/bin/opkg		# this may change if Optware-NG is installed
 
 	# paths and files
 	QPKG_CONFIG_PATHFILE=/etc/config/qpkg.conf
@@ -154,7 +154,7 @@ Init()
 	IsSysFilePresent $UNAME_CMD || return
 	IsSysFilePresent $UNIQ_CMD || return
 
-	IsSysFilePresent $CURL_CMD || return
+	IsSysFilePresent $curl_cmd || return
 	IsSysFilePresent $GETCFG_CMD || return
 	IsSysFilePresent $RMCFG_CMD || return
 	IsSysFilePresent $SETCFG_CMD || return
@@ -214,7 +214,7 @@ Init()
 	previous_length=0
 	previous_msg=''
 	REINSTALL_FLAG=false
-	[[ ${FIRMWARE_VERSION//.} -lt 426 ]] && CURL_CMD+=' --insecure'
+	[[ ${FIRMWARE_VERSION//.} -lt 426 ]] && curl_cmd+=' --insecure'
 	local result=0
 	local returncode=0
 
@@ -308,6 +308,15 @@ Init()
 		if [[ $TARGET_APP = SABnzbdplus ]] && IsQPKGInstalled QSabNZBdPlus && IsQPKGInstalled SABnzbdplus; then
 			ShowError 'Both (SABnzbdplus) and (QSabNZBdPlus) are installed. This is an unsupported configuration. Please manually uninstall the unused one via the QNAP App Center then re-run this installer.'
 			errorcode=7
+			returncode=1
+		fi
+	fi
+
+	if [[ $errorcode -eq 0 ]]; then
+		if IsQPKGInstalled Optware-NG; then
+			opkg_cmd=/opt/bin/ipkg
+			ShowError "(Optware-NG) is installed. For now, this is an unsupported configuration. I'm currently working on support for it."
+			errorcode=8
 			returncode=1
 		fi
 	fi
@@ -489,7 +498,7 @@ InstallEntware()
 			fi
 		fi
 
-		[[ $STEPHANE_QPKG_ARCH != none ]] && ($OPKG_CMD list-installed | $GREP_CMD -q par2cmdline) && $OPKG_CMD remove par2cmdline > /dev/null 2>&1
+		[[ $STEPHANE_QPKG_ARCH != none ]] && ($opkg_cmd list-installed | $GREP_CMD -q par2cmdline) && $opkg_cmd remove par2cmdline > /dev/null 2>&1
 	fi
 
 	PatchEntwareInit
@@ -545,7 +554,7 @@ UpdateEntware()
 	local result=0
 	local log_pathfile="${WORKING_PATH}/entware-update.log"
 
-	IsSysFilePresent $OPKG_CMD || return
+	IsSysFilePresent $opkg_cmd || return
 	IsSysFilePresent $FIND_CMD || return
 
 	# if Entware package list was updated only recently, don't run another update
@@ -554,13 +563,13 @@ UpdateEntware()
 	if [[ -n $result ]]; then
 		ShowProc "updating local Entware package list"
 
-		install_msgs=$($OPKG_CMD update)
+		install_msgs=$($opkg_cmd update)
 		result=$?
 		echo -e "${install_msgs}\nresult=[$result]" >> "$log_pathfile"
 
 		if [[ $PREF_ENTWARE = Entware-3x && ! -e $release_file ]]; then
 			DebugProc 'performing Entware-3x upgrade x 2'
-			install_msgs=$($OPKG_CMD upgrade; $OPKG_CMD update; $OPKG_CMD upgrade)
+			install_msgs=$($opkg_cmd upgrade; $opkg_cmd update; $opkg_cmd upgrade)
 			result=$?
 			echo -e "${install_msgs}\nresult=[$result]" >> "$log_pathfile"
 		fi
@@ -708,7 +717,7 @@ InstallIPKGBatch()
 		$TOUCH_CMD "$monitor_flag"
 		trap CTRL_C_Captured INT
 		_MonitorDirSize_ "$IPKG_DL_PATH" $IPKG_download_size &
-		install_msgs=$($OPKG_CMD install --force-overwrite ${IPKG_download_list[*]} --cache "$IPKG_CACHE_PATH" --tmp-dir "$IPKG_DL_PATH" 2>&1)
+		install_msgs=$($opkg_cmd install --force-overwrite ${IPKG_download_list[*]} --cache "$IPKG_CACHE_PATH" --tmp-dir "$IPKG_DL_PATH" 2>&1)
 		result=$?
 		[[ -e $monitor_flag ]] && { rm "$monitor_flag"; $SLEEP_CMD 1 ;}
 		trap - INT
@@ -1151,10 +1160,10 @@ DownloadQPKG()
 		# curl http://entware-3x.zyxmon.org/binaries/other/Entware-3x_1.00std.qpkg --socks5 IP:PORT --output target.qpkg
 
 		if [[ $debug = true ]]; then
-			$CURL_CMD --output "$qpkg_pathfile" "$qpkg_url" 2>&1 | $TEE_CMD -a "$log_pathfile"
+			$curl_cmd --output "$qpkg_pathfile" "$qpkg_url" 2>&1 | $TEE_CMD -a "$log_pathfile"
 			result=$?
 		else
-			$CURL_CMD --output "$qpkg_pathfile" "$qpkg_url" >> "$log_pathfile" 2>&1
+			$curl_cmd --output "$qpkg_pathfile" "$qpkg_url" >> "$log_pathfile" 2>&1
 			result=$?
 		fi
 
@@ -1661,7 +1670,7 @@ FindAllIPKGDependencies()
 
 	[[ -n $1 ]] && original_list="$1" || { DebugError "No IPKGs were requested"; return 1 ;}
 
-	IsSysFilePresent $OPKG_CMD || return
+	IsSysFilePresent $opkg_cmd || return
 
 	ShowProc "calculating number and size of IPKGs required"
 	DebugInfo "requested IPKG names: $original_list"
@@ -1671,7 +1680,7 @@ FindAllIPKGDependencies()
 	DebugProc 'finding all IPKG dependencies'
 	while [[ $iterations -lt $iteration_limit ]]; do
 		((iterations++))
-		last_list="$($OPKG_CMD depends -A $last_list | $GREP_CMD -v 'depends on:' | $SED_CMD 's|^[[:blank:]]*||;s|[[:blank:]]*$||' | $TR_CMD ' ' '\n' | $SORT_CMD | $UNIQ_CMD)"
+		last_list="$($opkg_cmd depends -A $last_list | $GREP_CMD -v 'depends on:' | $SED_CMD 's|^[[:blank:]]*||;s|[[:blank:]]*$||' | $TR_CMD ' ' '\n' | $SORT_CMD | $UNIQ_CMD)"
 
 		if [[ -n $last_list ]]; then
 			[[ -n $dependency_list ]] && dependency_list+="$(echo -e "\n$last_list")" || dependency_list="$last_list"
@@ -1691,7 +1700,7 @@ FindAllIPKGDependencies()
 
 	DebugProc 'excluding packages already installed'
 	for element in ${all_required_packages[@]}; do
-		$OPKG_CMD status "$element" | $GREP_CMD -q "Status:.*installed" || IPKG_download_list+=($element)
+		$opkg_cmd status "$element" | $GREP_CMD -q "Status:.*installed" || IPKG_download_list+=($element)
 	done
 	DebugDone 'complete'
 	DebugInfo "required IPKG names: ${IPKG_download_list[*]}"
@@ -1700,7 +1709,7 @@ FindAllIPKGDependencies()
 	if [[ $IPKG_download_count -gt 0 ]]; then
 		DebugProc 'calculating size of required IPKGs'
 		for element in ${IPKG_download_list[@]}; do
-			result_size=$($OPKG_CMD info $element | $GREP_CMD -F 'Size:' | $SED_CMD 's|^Size: ||')
+			result_size=$($opkg_cmd info $element | $GREP_CMD -F 'Size:' | $SED_CMD 's|^Size: ||')
 			((IPKG_download_size+=result_size))
 		done
 		DebugDone 'complete'
@@ -1849,7 +1858,7 @@ IsIPKGInstalled()
 		errorcode=43
 		returncode=1
 	else
-		$OPKG_CMD list-installed | $GREP_CMD -q -F "$1"
+		$opkg_cmd list-installed | $GREP_CMD -q -F "$1"
 		result=$?
 
 		if [[ $result -eq 0 ]]; then
