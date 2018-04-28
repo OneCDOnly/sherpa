@@ -341,9 +341,7 @@ Init()
 			[[ -e $test_pathfile ]] && { [[ -L $test_pathfile ]] && ENTWARE_VER=std || ENTWARE_VER=alt ;} || ENTWARE_VER=none
 			DebugQPKG 'Entware installer' $ENTWARE_VER
 
-			if [[ $PREF_ENTWARE = Entware-3x && $ENTWARE_VER = alt ]]; then
-				ShowWarning "'Entware-3x' (alternative) is installed. This configuration has not been tested."
-			elif [[ $ENTWARE_VER = none ]]; then
+			if [[ $ENTWARE_VER = none ]]; then
 				ShowError 'Entware appears to be installed but is not visible.'
 				errorcode=11
 			fi
