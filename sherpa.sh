@@ -307,6 +307,7 @@ Init()
 	if [[ $errorcode -eq 0 ]]; then
 		if (IsQPKGInstalled $TARGET_APP && ! IsQPKGEnabled $TARGET_APP); then
 			ShowError "'$TARGET_APP' is already installed but is disabled. You'll need to enable it first to allow re-installation."
+			REINSTALL_FLAG=true
 			errorcode=7
 			returncode=1
 		fi
@@ -315,6 +316,7 @@ Init()
 	if [[ $errorcode -eq 0 ]]; then
 		if [[ $TARGET_APP = SABnzbdplus ]] && IsQPKGEnabled QSabNZBdPlus && IsQPKGEnabled SABnzbdplus; then
 			ShowError "Both 'SABnzbdplus' and 'QSabNZBdPlus' are installed. This is an unsupported configuration. Please manually uninstall the unused one via the QNAP App Center then re-run this installer."
+			REINSTALL_FLAG=true
 			errorcode=8
 			returncode=1
 		fi
@@ -1626,13 +1628,11 @@ DisplayResult()
 	[[ $secure_web_login = true ]] && SL='s' || SL=''
 
 	if [[ $errorcode -eq 0 ]]; then
-		[[ $debug = true ]] && emoticon=':DD' || emoticon=''
-		[[ $debug = false ]] && echo
+		[[ $debug = true ]] && emoticon=':DD' || { emoticon=''; echo ;}
 		ShowDone "'$TARGET_APP' has been successfully ${RE}installed! $emoticon"
-		#[[ $debug = false ]] && echo
 		#ShowInfo "It should now be accessible on your LAN @ $(ColourTextUnderlinedBlue "http${SL}://$($HOSTNAME_CMD -i | $TR_CMD -d ' '):$package_port")"
 	elif [[ $errorcode -gt 1 ]]; then       # don't display 'failed' when only showing help
-		[[ $debug = true ]] && emoticon=':S ' || emoticon=''
+		[[ $debug = true ]] && emoticon=':S ' || { emoticon=''; echo ;}
 		ShowError "'$TARGET_APP' ${RE}install failed! ${emoticon}[$errorcode]"
 	fi
 
