@@ -223,17 +223,17 @@ Init()
 
 	DebugFuncEntry
 
-	DebugThickSeparator
+	DebugInfoThickSeparator
 	DebugScript 'started' "$($DATE_CMD | $TR_CMD -s ' ')"
 
 	[[ $debug = false ]] && echo -e "$(ColourTextBrightWhite "$SCRIPT_FILE") ($SCRIPT_VERSION)\n"
 
 	DebugScript 'version' "$SCRIPT_VERSION"
-	DebugThinSeparator
+	DebugInfoThinSeparator
 	DebugInfo 'Markers: (**) detected, (II) information, (WW) warning, (EE) error,'
 	DebugInfo ' (==) processing, (--) done, (>>) function entry, (<<) function exit,'
 	DebugInfo ' (vv) variable name & value, ($1) positional argument value.'
-	DebugThinSeparator
+	DebugInfoThinSeparator
 	DebugNAS 'model' "$($GREP_CMD -v "^$" "$ISSUE_PATHFILE" | $SED_CMD 's|^Welcome to ||;s|(.*||')"
 	DebugNAS 'firmware version' "$FIRMWARE_VERSION"
 	DebugNAS 'firmware build' "$($GETCFG_CMD System 'Build Number' -f "$ULINUX_PATHFILE")"
@@ -247,7 +247,7 @@ Init()
 	DebugNAS "$SHARE_DOWNLOAD_PATH" "$([[ -L $SHARE_DOWNLOAD_PATH ]] && $READLINK_CMD "$SHARE_DOWNLOAD_PATH" || echo "not present!")"
 	DebugScript 'user arguments' "$USER_ARGS_RAW"
 	DebugScript 'target app' "$TARGET_APP"
-	DebugThinSeparator
+	DebugInfoThinSeparator
 
 	[[ $errorcode -eq 1 ]] && DisplayHelp
 
@@ -747,12 +747,8 @@ InstallIPKGBatch()
 			DebugStage 'elapsed time' "$(ConvertSecs "$(($($DATE_CMD +%s)-$([[ -n $IPKG_download_startseconds ]] && echo $IPKG_download_startseconds || echo "1")))")"
 		else
 			ShowError "Download & install IPKGs failed ($IPKG_batch_desc) [$result]"
+			DebugErrorFile "$log_pathfile"
 
-			if [[ $debug = true ]]; then
-				DebugThickSeparator
-				$CAT_CMD "$log_pathfile"
-				DebugThickSeparator
-			fi
 			errorcode=19
 			returncode=1
 		fi
@@ -786,9 +782,8 @@ InstallPIPs()
 		ShowDone "downloaded & installed ($op)"
 	else
 		ShowError "Download & install failed ($op) [$result]"
-		DebugThickSeparator
-		$CAT_CMD "$log_pathfile"
-		DebugThickSeparator
+		DebugErrorFile "$log_pathfile"
+
 		errorcode=20
 		returncode=1
 	fi
@@ -877,12 +872,7 @@ InstallQPKG()
 		ShowDone "installed QPKG ($target_file)"
 	else
 		ShowError "QPKG installation failed ($target_file) [$result]"
-
-		if [[ $debug = true ]]; then
-			DebugThickSeparator
-			$CAT_CMD "$log_pathfile"
-			DebugThickSeparator
-		fi
+		DebugErrorFile "$log_pathfile"
 
 		errorcode=23
 		returncode=1
@@ -1201,12 +1191,7 @@ DownloadQPKG()
 			fi
 		else
 			ShowError "Download failed ($qpkg_pathfile) [$result]"
-
-			if [[ $debug = true ]]; then
-				DebugThickSeparator
-				$CAT_CMD "$log_pathfile"
-				DebugThickSeparator
-			fi
+			DebugErrorFile "$log_pathfile"
 
 			errorcode=33
 			returncode=1
@@ -1548,9 +1533,9 @@ DaemonCtl()
 				else
 					ShowWarning "could not start daemon ($target_init_file) [$result]"
 					if [[ $debug = true ]]; then
-						DebugThickSeparator
+						DebugInfoThickSeparator
 						$CAT_CMD "$qpkg_pathfile.$START_LOG_FILE"
-						DebugThickSeparator
+						DebugInfoThickSeparator
 					else
 						$CAT_CMD "$qpkg_pathfile.$START_LOG_FILE" >> "$DEBUG_LOG_PATHFILE"
 					fi
@@ -1569,9 +1554,9 @@ DaemonCtl()
 				else
 					ShowWarning "could not stop daemon ($target_init_file) [$result]"
 					if [[ $debug = true ]]; then
-						DebugThickSeparator
+						DebugInfoThickSeparator
 						$CAT_CMD "$qpkg_pathfile.$STOP_LOG_FILE"
-						DebugThickSeparator
+						DebugInfoThickSeparator
 					else
 						$CAT_CMD "$qpkg_pathfile.$STOP_LOG_FILE" >> "$DEBUG_LOG_PATHFILE"
 					fi
@@ -1648,7 +1633,7 @@ DisplayResult()
 
 	DebugScript 'finished' "$($DATE_CMD)"
 	DebugScript 'elapsed time' "$(ConvertSecs "$(($($DATE_CMD +%s)-$([[ -n $SCRIPT_STARTSECONDS ]] && echo $SCRIPT_STARTSECONDS || echo "1")))")"
-	DebugThickSeparator
+	DebugInfoThickSeparator
 
 	[[ -e $DEBUG_LOG_PATHFILE && $debug = false ]] && echo -e "\n- To display the debug log:\ncat ${DEBUG_LOG_PATHFILE}\n"
 
@@ -1964,17 +1949,24 @@ Convert2ISO()
 
 	}
 
-DebugThickSeparator()
+DebugInfoThickSeparator()
 	{
 
 	DebugInfo "$(printf '%0.s=' {1..69})"
 
 	}
 
-DebugThinSeparator()
+DebugInfoThinSeparator()
 	{
 
 	DebugInfo "$(printf '%0.s-' {1..69})"
+
+	}
+
+DebugErrorThinSeparator()
+	{
+
+	DebugError "$(printf '%0.s-' {1..69})"
 
 	}
 
@@ -2065,7 +2057,7 @@ DebugWarning()
 DebugError()
 	{
 
-	DebugThis "(EE) $1!"
+	DebugThis "(EE) $1"
 
 	}
 
@@ -2081,6 +2073,26 @@ DebugThis()
 
 	[[ $debug = true ]] && ShowDebug "$1"
 	SaveDebug "$1"
+
+	}
+
+DebugErrorFile()
+	{
+
+	# add the contents of specified pathfile $1 to the main runtime log
+
+	[[ -z $1 || ! -e $1 ]] && return 1
+	local linebuff=''
+
+	DebugErrorThinSeparator
+	DebugError "[$1]"
+	DebugErrorThinSeparator
+
+	while read linebuff; do
+		DebugError "$linebuff"
+	done < "$1"
+
+	DebugErrorThinSeparator
 
 	}
 
