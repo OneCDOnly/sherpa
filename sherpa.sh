@@ -223,6 +223,9 @@ Init()
 
 	DebugFuncEntry
 
+	CalcStephaneQPKGArch
+	CalcPrefEntware
+
 	DebugInfoThickSeparator
 	DebugScript 'started' "$($DATE_CMD | $TR_CMD -s ' ')"
 
@@ -319,8 +322,8 @@ Init()
 
 	if [[ $errorcode -eq 0 ]]; then
 		if IsQPKGEnabled Optware-NG; then
+			ShowError "'Optware-NG' is enabled. This is an unsupported configuration."
 			#opkg_cmd=/opt/bin/ipkg
-			ShowError "'Optware-NG' is enabled. For now, this is an unsupported configuration. I'm currently working on support for it."
 			errorcode=9
 		fi
 	fi
@@ -333,15 +336,28 @@ Init()
 	fi
 
 	if [[ $errorcode -eq 0 ]]; then
-		CalcStephaneQPKGArch
-		CalcPrefEntware
+		if IsQPKGInstalled $PREF_ENTWARE && [[ $PREF_ENTWARE = Entware-3x || $PREF_ENTWARE = Entware ]]; then
+			local test_pathfile=/opt/etc/passwd
+			[[ -e $test_pathfile ]] && { [[ -L $test_pathfile ]] && ENTWARE_VER=std || ENTWARE_VER=alt ;} || ENTWARE_VER=none
+			DebugQPKG 'Entware installer' $ENTWARE_VER
+
+			if [[ $PREF_ENTWARE = Entware-3x && $ENTWARE_VER = alt ]]; then
+				ShowWarning "'Entware-3x' (alternative) is installed. This configuration has not been tested."
+			elif [[ $ENTWARE_VER = none ]]; then
+				ShowError 'Entware appears to be installed but is not visible.'
+				errorcode=11
+			fi
+		fi
+	fi
+
+	if [[ $errorcode -eq 0 ]]; then
 		ShowProc "checking for Internet access"
 
 		if ($PING_CMD -c 1 -q google.com > /dev/null 2>&1); then
 			ShowDone "Internet is accessible"
 		else
 			ShowError "No Internet access"
-			errorcode=11
+			errorcode=12
 		fi
 	fi
 
@@ -426,27 +442,7 @@ DownloadQPKGs()
 	local returncode=0
 	local SL=''
 
-	if ! IsQPKGInstalled $PREF_ENTWARE; then
-		DownloadQPKG $PREF_ENTWARE
-
-	elif [[ $PREF_ENTWARE = Entware-3x || $PREF_ENTWARE = Entware ]]; then
-		local test_pathfile=/opt/etc/passwd
-		[[ -e $test_pathfile ]] && { [[ -L $test_pathfile ]] && ENTWARE_VER=std || ENTWARE_VER=alt ;} || ENTWARE_VER=none
-
-		if [[ $PREF_ENTWARE = Entware-3x && $ENTWARE_VER = alt ]]; then
-			ShowError 'Entware-3x (alt) is installed. This configuration has not been tested.'
-			errorcode=12
-			returncode=1
-		elif [[ $PREF_ENTWARE = Entware && $ENTWARE_VER = alt ]]; then
-			ShowError 'Entware (alt) is installed. This configuration has not been tested.'
-			errorcode=13
-			returncode=1
-		elif [[ $ENTWARE_VER = none ]]; then
-			ShowError 'Entware appears to be installed but is not visible.'
-			errorcode=14
-			returncode=1
-		fi
-	fi
+	! IsQPKGInstalled $PREF_ENTWARE && DownloadQPKG $PREF_ENTWARE
 
 	if [[ $TARGET_APP = SABnzbdplus ]]; then
 		case $STEPHANE_QPKG_ARCH in
@@ -487,27 +483,8 @@ InstallEntware()
 
 		# copy all files from original [/opt] into new [/opt]
 		[[ -L $opt_path && -d $opt_backup_path ]] && cp --recursive "$opt_backup_path"/* --target-directory "$opt_path" && rm -r "$opt_backup_path"
-
 	else
-		! IsQPKGEnabled $PREF_ENTWARE && EnableQPKG $PREF_ENTWARE
-
-		if [[ $PREF_ENTWARE = Entware-3x || $PREF_ENTWARE = Entware ]]; then
-			local test_pathfile=/opt/etc/passwd
-			[[ -e $test_pathfile ]] && { [[ -L $test_pathfile ]] && ENTWARE_VER=std || ENTWARE_VER=alt ;} || ENTWARE_VER=none
-
-			DebugQPKG version $ENTWARE_VER
-			ReloadProfile
-
-			if [[ $PREF_ENTWARE = Entware-3x && $ENTWARE_VER = alt ]]; then
-				ShowError "Entware-3x (alt) is installed. This configuration has not been tested. Can't continue."
-				errorcode=15
-				returncode=1
-			elif [[ $PREF_ENTWARE = Entware && $ENTWARE_VER = alt ]]; then
-				ShowError 'Entware (alt) is installed. This configuration has not been tested.'
-				errorcode=16
-				returncode=1
-			fi
-		fi
+		! IsQPKGEnabled $PREF_ENTWARE && EnableQPKG $PREF_ENTWARE && ReloadProfile
 
 		[[ $STEPHANE_QPKG_ARCH != none ]] && ($opkg_cmd list-installed | $GREP_CMD -q par2cmdline) && $opkg_cmd remove par2cmdline > /dev/null 2>&1
 	fi
@@ -532,7 +509,7 @@ PatchEntwareInit()
 
 	if [[ ! -e $package_init_pathfile ]]; then
 		ShowError "No init file found [$package_init_pathfile]"
-		errorcode=17
+		errorcode=13
 		returncode=1
 	else
 		if ($GREP_CMD -q 'opt.orig' "$package_init_pathfile"); then
@@ -697,7 +674,7 @@ InstallIPKGs()
 		InstallIPKGBatch "$packages" 'Python, Git and others'
 	else
 		ShowError "IPKG download path [$IPKG_DL_PATH] does not exist"
-		errorcode=18
+		errorcode=14
 		returncode=1
 	fi
 
@@ -749,7 +726,7 @@ InstallIPKGBatch()
 			ShowError "Download & install IPKGs failed ($IPKG_batch_desc) [$result]"
 			DebugErrorFile "$log_pathfile"
 
-			errorcode=19
+			errorcode=15
 			returncode=1
 		fi
 	fi
@@ -784,7 +761,7 @@ InstallPIPs()
 		ShowError "Download & install failed ($op) [$result]"
 		DebugErrorFile "$log_pathfile"
 
-		errorcode=20
+		errorcode=16
 		returncode=1
 	fi
 
@@ -819,7 +796,7 @@ InstallNG()
 			#Go to default router ip address and port 6789 192.168.1.1:6789 and now you should see NZBget interface
 		else
 			ShowError "Download & install IPKG failed ($package_desc) [$result]"
-			errorcode=21
+			errorcode=17
 			returncode=1
 		fi
 	fi
@@ -839,7 +816,7 @@ InstallQPKG()
 
 	if [[ -z $1 ]]; then
 		DebugError 'QPKG name unspecified'
-		errorcode=22
+		errorcode=18
 		return 1
 	fi
 
@@ -874,7 +851,7 @@ InstallQPKG()
 		ShowError "QPKG installation failed ($target_file) [$result]"
 		DebugErrorFile "$log_pathfile"
 
-		errorcode=23
+		errorcode=19
 		returncode=1
 	fi
 
@@ -896,7 +873,7 @@ BackupThisPackage()
 				DebugDone "backup directory created ($BACKUP_PATH)"
 			else
 				ShowError "Unable to create backup directory ($BACKUP_PATH) [$result]"
-				errorcode=24
+				errorcode=20
 				return 1
 			fi
 		fi
@@ -909,7 +886,7 @@ BackupThisPackage()
 				ShowDone "created '$TARGET_APP' settings backup"
 			else
 				ShowError "Could not create settings backup of ($package_config_path) [$result]"
-				errorcode=25
+				errorcode=21
 				return 1
 			fi
 		else
@@ -1070,7 +1047,7 @@ RestoreConfig()
 						$SETCFG_CMD "SABnzbdplus" Web_Port $package_port -f "$QPKG_CONFIG_PATHFILE"
 					else
 						ShowError "Could not restore settings backup to ($package_config_path) [$result]"
-						errorcode=26
+						errorcode=22
 						returncode=1
 					fi
 				fi
@@ -1095,7 +1072,7 @@ RestoreConfig()
 						#$SETCFG_CMD "SABnzbdplus" Web_Port $package_port -f "$QPKG_CONFIG_PATHFILE"
 					else
 						ShowError "Could not restore settings backup to ($package_config_path) [$result]"
-						errorcode=27
+						errorcode=23
 						returncode=1
 					fi
 				fi
@@ -1107,7 +1084,7 @@ RestoreConfig()
 		esac
 	else
 		ShowError "'$TARGET_APP' is NOT installed so can't restore backups"
-		errorcode=28
+		errorcode=24
 		returncode=1
 	fi
 
@@ -1123,7 +1100,7 @@ DownloadQPKG()
 
 	if [[ -z $1 ]]; then
 		DebugError 'QPKG name unspecified'
-		errorcode=29
+		errorcode=25
 		return 1
 	fi
 
@@ -1148,7 +1125,7 @@ DownloadQPKG()
 			fi
 		else
 			ShowError "Problem creating checksum from existing QPKG ($qpkg_file) [$result]"
-			errorcode=30
+			errorcode=26
 			returncode=1
 		fi
 	fi
@@ -1181,19 +1158,19 @@ DownloadQPKG()
 					ShowDone "downloaded QPKG ($qpkg_file)"
 				else
 					ShowError "Downloaded QPKG checksum incorrect ($qpkg_file) [$result]"
-					errorcode=31
+					errorcode=27
 					returncode=1
 				fi
 			else
 				ShowError "Problem creating checksum from downloaded QPKG ($qpkg_pathfile) [$result]"
-				errorcode=32
+				errorcode=28
 				returncode=1
 			fi
 		else
 			ShowError "Download failed ($qpkg_pathfile) [$result]"
 			DebugErrorFile "$log_pathfile"
 
-			errorcode=33
+			errorcode=29
 			returncode=1
 		fi
 	fi
@@ -1257,7 +1234,7 @@ LoadQPKGVars()
 
 	if [[ -z $package_name ]]; then
 		DebugError 'QPKG name unspecified'
-		errorcode=34
+		errorcode=30
 		returncode=1
 	else
 		package_installed_path=''
@@ -1363,7 +1340,7 @@ LoadQPKGFileDetails()
 
 	if [[ -z $1 ]]; then
 		DebugError 'QPKG name unspecified'
-		errorcode=35
+		errorcode=31
 		returncode=1
 	else
 		qpkg_name=$1
@@ -1432,14 +1409,14 @@ LoadQPKGFileDetails()
 				;;
 			*)
 				DebugError 'QPKG name not found'
-				errorcode=36
+				errorcode=32
 				returncode=1
 				;;
 		esac
 
 		if [[ -z $qpkg_url || -z $qpkg_md5 ]]; then
 			DebugError 'QPKG details not found'
-			errorcode=37
+			errorcode=33
 			returncode=1
 		else
 			[[ -z $qpkg_file ]] && qpkg_file=$($BASENAME_CMD "$qpkg_url")
@@ -1463,7 +1440,7 @@ UninstallQPKG()
 
 	if [[ -z $1 ]]; then
 		DebugError 'QPKG name unspecified'
-		errorcode=38
+		errorcode=34
 		returncode=1
 	else
 		qpkg_installed_path="$($GETCFG_CMD "$1" Install_Path -f "$QPKG_CONFIG_PATHFILE")"
@@ -1482,7 +1459,7 @@ UninstallQPKG()
 					ShowDone "uninstalled QPKG '$1'"
 				else
 					ShowError "Unable to uninstall QPKG \"$1\" [$result]"
-					errorcode=39
+					errorcode=35
 					returncode=1
 				fi
 			fi
@@ -1511,11 +1488,11 @@ DaemonCtl()
 
 	if [[ -z $2 ]]; then
 		DebugError 'daemon unspecified'
-		errorcode=40
+		errorcode=36
 		returncode=1
 	elif [[ ! -e $2 ]]; then
 		DebugError "daemon ($2) not found"
-		errorcode=41
+		errorcode=37
 		returncode=1
 	else
 		target_init_pathfile="$2"
@@ -1539,7 +1516,7 @@ DaemonCtl()
 					else
 						$CAT_CMD "$qpkg_pathfile.$START_LOG_FILE" >> "$DEBUG_LOG_PATHFILE"
 					fi
-					errorcode=42
+					errorcode=38
 					returncode=1
 				fi
 				;;
@@ -1566,7 +1543,7 @@ DaemonCtl()
 				;;
 			*)
 				DebugError "action unrecognised ($1)"
-				errorcode=43
+				errorcode=39
 				returncode=1
 				;;
 		esac
@@ -1749,7 +1726,7 @@ _MonitorDirSize_()
 	InitProgress
 
 	while [[ -e $monitor_flag ]]; do
-		current_bytes=$($FIND_CMD $target_dir -type f -name '*.ipk' -exec $DU_CMD --bytes --total --apparent-size {} + | $GREP_CMD total$ | $CUT_CMD -f1 2> /dev/null)
+		current_bytes=$($FIND_CMD $target_dir -type f -name '*.ipk' -exec $DU_CMD --bytes --total --apparent-size {} + 2> /dev/null | $GREP_CMD total$ | $CUT_CMD -f1)
 		[[ -z $current_bytes ]] && current_bytes=0
 
 		if [[ $current_bytes -ne $last_bytes ]]; then
@@ -1868,7 +1845,7 @@ IsSysFilePresent()
 
 	if ! [[ -f $1 || -L $1 ]]; then
 		ShowError "A required NAS system file is missing [$1]"
-		errorcode=44
+		errorcode=40
 		return 1
 	else
 		return 0
@@ -1885,7 +1862,7 @@ IsSysSharePresent()
 
 	if [[ ! -L $1 ]]; then
 		ShowError "A required NAS system share is missing [$1]. Please re-create it via QNAP Control Panel -> Privilege Settings -> Shared Folders."
-		errorcode=45
+		errorcode=41
 		return 1
 	else
 		return 0
