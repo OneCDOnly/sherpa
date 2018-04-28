@@ -652,8 +652,7 @@ InstallTargetApp()
 				UninstallQPKG $TARGET_APP
 				[[ $TARGET_APP = SABnzbdplus ]] && IsQPKGEnabled QSabNZBdPlus && UninstallQPKG QSabNZBdPlus
 			fi
-			! IsQPKGInstalled $TARGET_APP && InstallQPKG $TARGET_APP && PauseHere && LoadQPKGVars $TARGET_APP
-			RestoreConfig
+			! IsQPKGInstalled $TARGET_APP && InstallQPKG $TARGET_APP && PauseHere && RestoreConfig
 			[[ $errorcode -eq 0 ]] && DaemonCtl start "$package_init_pathfile"
 			;;
 		*)
@@ -723,14 +722,17 @@ InstallIPKGBatch()
 	[[ -d $IPKG_DL_PATH ]] && rm -f "$IPKG_DL_PATH"/*.ipk
 
 	FindAllIPKGDependencies "$requested_IPKGs"
+
 	if [[ $IPKG_download_count -gt 0 ]]; then
 		IPKG_download_startseconds=$($DATE_CMD +%s)
 		ShowProc "downloading & installing $IPKG_download_count IPKGs ($IPKG_batch_desc)"
 		$TOUCH_CMD "$monitor_flag"
 		trap CTRL_C_Captured INT
+
 		_MonitorDirSize_ "$IPKG_DL_PATH" $IPKG_download_size &
 		install_msgs=$($opkg_cmd install --force-overwrite ${IPKG_download_list[*]} --cache "$IPKG_CACHE_PATH" --tmp-dir "$IPKG_DL_PATH" 2>&1)
 		result=$?
+
 		[[ -e $monitor_flag ]] && { rm "$monitor_flag"; $SLEEP_CMD 1 ;}
 		trap - INT
 		echo -e "${install_msgs}\nresult=[$result]" > "$log_pathfile"
@@ -740,6 +742,7 @@ InstallIPKGBatch()
 			DebugStage 'elapsed time' "$(ConvertSecs "$(($($DATE_CMD +%s)-$([[ -n $IPKG_download_startseconds ]] && echo $IPKG_download_startseconds || echo "1")))")"
 		else
 			ShowError "Download & install IPKGs failed ($IPKG_batch_desc) [$result]"
+
 			if [[ $debug = true ]]; then
 				DebugThickSeparator
 				$CAT_CMD "$log_pathfile"
@@ -839,9 +842,9 @@ InstallQPKG()
 	fi
 
 	if IsQPKGInstalled $1; then
-		DebugWarning 'QPKG is already installed'
+		DebugInfo "QPKG '$1' is already installed"
 		if IsQPKGEnabled $1; then
-			DebugWarning 'QPKG is already enabled'
+			DebugInfo "QPKG '$1' is already enabled"
 		else
 			EnableQPKG $1
 		fi
@@ -897,25 +900,23 @@ BackupThisPackage()
 			else
 				ShowError "Unable to create backup directory ($BACKUP_PATH) [$result]"
 				errorcode=22
-				returncode=1
+				return 1
 			fi
 		fi
 
-		if [[ $errorcode -eq 0 ]]; then
-			if [[ ! -d ${BACKUP_PATH}/config ]]; then
-				mv "$package_config_path" "$BACKUP_PATH"
-				result=$?
+		if [[ ! -d ${BACKUP_PATH}/config ]]; then
+			mv "$package_config_path" "$BACKUP_PATH"
+			result=$?
 
-				if [[ $result -eq 0 ]]; then
-					ShowDone "created '$TARGET_APP' settings backup"
-				else
-					ShowError "Could not create settings backup of ($package_config_path) [$result]"
-					errorcode=23
-					returncode=1
-				fi
+			if [[ $result -eq 0 ]]; then
+				ShowDone "created '$TARGET_APP' settings backup"
 			else
-				DebugInfo "a backup set already exists ($BACKUP_PATH)"
+				ShowError "Could not create settings backup of ($package_config_path) [$result]"
+				errorcode=23
+				return 1
 			fi
+		else
+			DebugInfo "a backup set already exists ($BACKUP_PATH)"
 		fi
 
 		ConvertSettings
@@ -936,8 +937,8 @@ BackupConfig()
 			if IsQPKGEnabled QSabNZBdPlus; then
 				LoadQPKGVars QSabNZBdPlus
 				DaemonCtl stop "$package_init_pathfile"
-			elif IsQPKGEnabled SABnzbdplus; then
-				LoadQPKGVars SABnzbdplus
+			elif IsQPKGEnabled $TARGET_APP; then
+				LoadQPKGVars $TARGET_APP
 				DaemonCtl stop "$package_init_pathfile"
 			fi
 
@@ -948,35 +949,17 @@ BackupConfig()
 			if IsQPKGEnabled QCouchPotato; then
 				LoadQPKGVars QCouchPotato
 				DaemonCtl stop "$package_init_pathfile"
-			elif IsQPKGEnabled CouchPotato2; then
-				LoadQPKGVars CouchPotato2
+			elif IsQPKGEnabled $TARGET_APP; then
+				LoadQPKGVars $TARGET_APP
 				DaemonCtl stop "$package_init_pathfile"
 			fi
 
 			REINSTALL_FLAG=$package_is_installed
 			[[ $package_is_installed = true ]] && BackupThisPackage
 			;;
-		LazyLibrarian)
-			if IsQPKGEnabled LazyLibrarian; then
-				LoadQPKGVars LazyLibrarian
-				DaemonCtl stop "$package_init_pathfile"
-			fi
-
-			REINSTALL_FLAG=$package_is_installed
-			[[ $package_is_installed = true ]] && BackupThisPackage
-			;;
-		SickRage)
-			if IsQPKGEnabled SickRage; then
-				LoadQPKGVars SickRage
-				DaemonCtl stop "$package_init_pathfile"
-			fi
-
-			REINSTALL_FLAG=$package_is_installed
-			[[ $package_is_installed = true ]] && BackupThisPackage
-			;;
-		OMedusa)
-			if IsQPKGEnabled OMedusa; then
-				LoadQPKGVars OMedusa
+		LazyLibrarian|SickRage|OMedusa)
+			if IsQPKGEnabled $TARGET_APP; then
+				LoadQPKGVars $TARGET_APP
 				DaemonCtl stop "$package_init_pathfile"
 			fi
 
@@ -1065,6 +1048,8 @@ RestoreConfig()
 	local returncode=0
 
 	if IsQPKGInstalled $TARGET_APP; then
+		LoadQPKGVars $TARGET_APP
+
 		case $TARGET_APP in
 			SABnzbdplus)
 				if [[ -d $SETTINGS_BACKUP_PATH ]]; then
