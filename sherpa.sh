@@ -307,7 +307,7 @@ Init()
 	if [[ $errorcode -eq 0 ]]; then
 		if (IsQPKGInstalled $TARGET_APP && ! IsQPKGEnabled $TARGET_APP); then
 			ShowError "'$TARGET_APP' is already installed but is disabled. You'll need to enable it first to allow re-installation."
-			errorcode=8
+			errorcode=7
 			returncode=1
 		fi
 	fi
@@ -315,7 +315,7 @@ Init()
 	if [[ $errorcode -eq 0 ]]; then
 		if [[ $TARGET_APP = SABnzbdplus ]] && IsQPKGEnabled QSabNZBdPlus && IsQPKGEnabled SABnzbdplus; then
 			ShowError "Both 'SABnzbdplus' and 'QSabNZBdPlus' are installed. This is an unsupported configuration. Please manually uninstall the unused one via the QNAP App Center then re-run this installer."
-			errorcode=7
+			errorcode=8
 			returncode=1
 		fi
 	fi
@@ -324,7 +324,7 @@ Init()
 		if IsQPKGEnabled Optware-NG; then
 			#opkg_cmd=/opt/bin/ipkg
 			ShowError "'Optware-NG' is enabled. For now, this is an unsupported configuration. I'm currently working on support for it."
-			errorcode=8
+			errorcode=9
 			returncode=1
 		fi
 	fi
@@ -332,7 +332,7 @@ Init()
 	if [[ $errorcode -eq 0 ]]; then
 		if IsQPKGEnabled Entware-ng && IsQPKGEnabled Entware-3x; then
 			ShowError "Both 'Entware-ng' and 'Entware-3x' are enabled. This is an unsupported configuration. Please manually disable (or uninstall) one or both of them via the QNAP App Center then re-run this installer."
-			errorcode=8
+			errorcode=10
 			returncode=1
 		fi
 	fi
@@ -346,7 +346,7 @@ Init()
 			ShowDone "Internet is accessible"
 		else
 			ShowError "No Internet access"
-			errorcode=9
+			errorcode=11
 			returncode=1
 		fi
 	fi
@@ -435,15 +435,15 @@ DownloadQPKGs()
 
 		if [[ $PREF_ENTWARE = Entware-3x && $ENTWARE_VER = alt ]]; then
 			ShowError 'Entware-3x (alt) is installed. This configuration has not been tested.'
-			errorcode=10
+			errorcode=12
 			returncode=1
 		elif [[ $PREF_ENTWARE = Entware && $ENTWARE_VER = alt ]]; then
 			ShowError 'Entware (alt) is installed. This configuration has not been tested.'
-			errorcode=11
+			errorcode=13
 			returncode=1
 		elif [[ $ENTWARE_VER = none ]]; then
 			ShowError 'Entware appears to be installed but is not visible.'
-			errorcode=12
+			errorcode=14
 			returncode=1
 		fi
 	fi
@@ -499,11 +499,11 @@ InstallEntware()
 
 			if [[ $PREF_ENTWARE = Entware-3x && $ENTWARE_VER = alt ]]; then
 				ShowError "Entware-3x (alt) is installed. This configuration has not been tested. Can't continue."
-				errorcode=13
+				errorcode=15
 				returncode=1
 			elif [[ $PREF_ENTWARE = Entware && $ENTWARE_VER = alt ]]; then
 				ShowError 'Entware (alt) is installed. This configuration has not been tested.'
-				errorcode=14
+				errorcode=16
 				returncode=1
 			fi
 		fi
@@ -530,7 +530,7 @@ PatchEntwareInit()
 
 	if [[ ! -e $package_init_pathfile ]]; then
 		ShowError "No init file found [$package_init_pathfile]"
-		errorcode=15
+		errorcode=17
 		returncode=1
 	else
 		if ($GREP_CMD -q 'opt.orig' "$package_init_pathfile"); then
@@ -694,7 +694,7 @@ InstallIPKGs()
 		InstallIPKGBatch "$packages" 'Python, Git and others'
 	else
 		ShowError "IPKG download path [$IPKG_DL_PATH] does not exist"
-		errorcode=16
+		errorcode=18
 		returncode=1
 	fi
 
@@ -748,7 +748,7 @@ InstallIPKGBatch()
 				$CAT_CMD "$log_pathfile"
 				DebugThickSeparator
 			fi
-			errorcode=17
+			errorcode=19
 			returncode=1
 		fi
 	fi
@@ -782,7 +782,7 @@ InstallPIPs()
 		DebugThickSeparator
 		$CAT_CMD "$log_pathfile"
 		DebugThickSeparator
-		errorcode=18
+		errorcode=20
 		returncode=1
 	fi
 
@@ -817,7 +817,7 @@ InstallNG()
 			#Go to default router ip address and port 6789 192.168.1.1:6789 and now you should see NZBget interface
 		else
 			ShowError "Download & install IPKG failed ($package_desc) [$result]"
-			errorcode=19
+			errorcode=21
 			returncode=1
 		fi
 	fi
@@ -837,7 +837,7 @@ InstallQPKG()
 
 	if [[ -z $1 ]]; then
 		DebugError 'QPKG name unspecified'
-		errorcode=20
+		errorcode=22
 		return 1
 	fi
 
@@ -877,7 +877,7 @@ InstallQPKG()
 			DebugThickSeparator
 		fi
 
-		errorcode=21
+		errorcode=23
 		returncode=1
 	fi
 
@@ -899,7 +899,7 @@ BackupThisPackage()
 				DebugDone "backup directory created ($BACKUP_PATH)"
 			else
 				ShowError "Unable to create backup directory ($BACKUP_PATH) [$result]"
-				errorcode=22
+				errorcode=24
 				return 1
 			fi
 		fi
@@ -912,7 +912,7 @@ BackupThisPackage()
 				ShowDone "created '$TARGET_APP' settings backup"
 			else
 				ShowError "Could not create settings backup of ($package_config_path) [$result]"
-				errorcode=23
+				errorcode=25
 				return 1
 			fi
 		else
@@ -1070,7 +1070,7 @@ RestoreConfig()
 						$SETCFG_CMD "SABnzbdplus" Web_Port $package_port -f "$QPKG_CONFIG_PATHFILE"
 					else
 						ShowError "Could not restore settings backup to ($package_config_path) [$result]"
-						errorcode=24
+						errorcode=26
 						returncode=1
 					fi
 				fi
@@ -1095,7 +1095,7 @@ RestoreConfig()
 						#$SETCFG_CMD "SABnzbdplus" Web_Port $package_port -f "$QPKG_CONFIG_PATHFILE"
 					else
 						ShowError "Could not restore settings backup to ($package_config_path) [$result]"
-						errorcode=25
+						errorcode=27
 						returncode=1
 					fi
 				fi
@@ -1107,7 +1107,7 @@ RestoreConfig()
 		esac
 	else
 		ShowError "'$TARGET_APP' is NOT installed so can't restore backups"
-		errorcode=26
+		errorcode=28
 		returncode=1
 	fi
 
@@ -1123,7 +1123,7 @@ DownloadQPKG()
 
 	if [[ -z $1 ]]; then
 		DebugError 'QPKG name unspecified'
-		errorcode=27
+		errorcode=29
 		return 1
 	fi
 
@@ -1147,7 +1147,7 @@ DownloadQPKG()
 			fi
 		else
 			ShowError "Problem creating checksum from existing QPKG ($qpkg_file) [$result]"
-			errorcode=28
+			errorcode=30
 			returncode=1
 		fi
 	fi
@@ -1180,12 +1180,12 @@ DownloadQPKG()
 					ShowDone "downloaded QPKG ($qpkg_file)"
 				else
 					ShowError "Downloaded QPKG checksum incorrect ($qpkg_file) [$result]"
-					errorcode=29
+					errorcode=31
 					returncode=1
 				fi
 			else
 				ShowError "Problem creating checksum from downloaded QPKG ($qpkg_pathfile) [$result]"
-				errorcode=30
+				errorcode=32
 				returncode=1
 			fi
 		else
@@ -1197,7 +1197,7 @@ DownloadQPKG()
 				DebugThickSeparator
 			fi
 
-			errorcode=31
+			errorcode=33
 			returncode=1
 		fi
 	fi
@@ -1261,7 +1261,7 @@ LoadQPKGVars()
 
 	if [[ -z $package_name ]]; then
 		DebugError 'QPKG name unspecified'
-		errorcode=32
+		errorcode=34
 		returncode=1
 	else
 		package_installed_path=''
@@ -1367,7 +1367,7 @@ LoadQPKGFileDetails()
 
 	if [[ -z $1 ]]; then
 		DebugError 'QPKG name unspecified'
-		errorcode=33
+		errorcode=35
 		returncode=1
 	else
 		qpkg_name=$1
@@ -1436,14 +1436,14 @@ LoadQPKGFileDetails()
 				;;
 			*)
 				DebugError 'QPKG name not found'
-				errorcode=34
+				errorcode=36
 				returncode=1
 				;;
 		esac
 
 		if [[ -z $qpkg_url || -z $qpkg_md5 ]]; then
 			DebugError 'QPKG details not found'
-			errorcode=35
+			errorcode=37
 			returncode=1
 		else
 			[[ -z $qpkg_file ]] && qpkg_file=$($BASENAME_CMD "$qpkg_url")
@@ -1467,7 +1467,7 @@ UninstallQPKG()
 
 	if [[ -z $1 ]]; then
 		DebugError 'QPKG name unspecified'
-		errorcode=36
+		errorcode=38
 		returncode=1
 	else
 		qpkg_installed_path="$($GETCFG_CMD "$1" Install_Path -f "$QPKG_CONFIG_PATHFILE")"
@@ -1486,7 +1486,7 @@ UninstallQPKG()
 					ShowDone "uninstalled QPKG '$1'"
 				else
 					ShowError "Unable to uninstall QPKG \"$1\" [$result]"
-					errorcode=37
+					errorcode=39
 					returncode=1
 				fi
 			fi
@@ -1515,11 +1515,11 @@ DaemonCtl()
 
 	if [[ -z $2 ]]; then
 		DebugError 'daemon unspecified'
-		errorcode=38
+		errorcode=40
 		returncode=1
 	elif [[ ! -e $2 ]]; then
 		DebugError "daemon ($2) not found"
-		errorcode=39
+		errorcode=41
 		returncode=1
 	else
 		target_init_pathfile="$2"
@@ -1543,7 +1543,7 @@ DaemonCtl()
 					else
 						$CAT_CMD "$qpkg_pathfile.$START_LOG_FILE" >> "$DEBUG_LOG_PATHFILE"
 					fi
-					errorcode=40
+					errorcode=42
 					returncode=1
 				fi
 				;;
@@ -1570,7 +1570,7 @@ DaemonCtl()
 				;;
 			*)
 				DebugError "action unrecognised ($1)"
-				errorcode=41
+				errorcode=43
 				returncode=1
 				;;
 		esac
@@ -1808,32 +1808,15 @@ SabQueueControl()
 EnableQPKG()
 	{
 
-	# If package is not enabled, enable it
+	# $1 = package name to enable
 
-	# input:
-	#   $1 = package name
+	[[ -z $1 ]] && return 1
 
-	local result=0
-	local returncode=0
-
-	if [[ -z $1 ]]; then
-		DebugError 'QPKG name unspecified'
-		errorcode=42
-		returncode=1
-	else
-		$GREP_CMD -q -F "[$1]" "$QPKG_CONFIG_PATHFILE"
-		result=$?
-
-		if [[ $result -eq 0 ]]; then
-			DebugProc 'enabling QPKG [$1]'
-			[[ $($GETCFG_CMD "$1" Enable -u -f "$QPKG_CONFIG_PATHFILE") != 'TRUE' ]] && $SETCFG_CMD "$1" Enable TRUE -f "$QPKG_CONFIG_PATHFILE"
-			DebugDone 'QPKG [$1] enabled'
-		else
-			returncode=1
-		fi
+	if [[ $($GETCFG_CMD "$1" Enable -u -f "$QPKG_CONFIG_PATHFILE") != 'TRUE' ]]; then
+		DebugProc "enabling QPKG [$1]"
+		$SETCFG_CMD "$1" Enable TRUE -f "$QPKG_CONFIG_PATHFILE"
+		DebugDone "QPKG [$1] enabled"
 	fi
-
-	return $returncode
 
 	}
 
@@ -1846,80 +1829,38 @@ IsQPKGInstalled()
 	#   $package_is_installed = true / false
 
 	package_is_installed=false
-	local result=0
-	local returncode=0
 
-	if [[ -z $1 ]]; then
-		DebugError 'QPKG name unspecified'
-		errorcode=42
-		returncode=1
-	else
-		$GREP_CMD -q -F "[$1]" "$QPKG_CONFIG_PATHFILE"
-		result=$?
+	[[ -z $1 ]] && return 1
+	[[ $($GETCFG_CMD "$1" RC_Number -d 0 -f "$QPKG_CONFIG_PATHFILE") -eq 0 ]] && return 1
 
-		if [[ $result -eq 0 ]]; then
-			if [[ $($GETCFG_CMD "$1" RC_Number -d 0 -f "$QPKG_CONFIG_PATHFILE") -ne 0 ]]; then
-				package_is_installed=true
-			else
-				returncode=1
-			fi
-		else
-			returncode=1
-		fi
-	fi
-
-	return $returncode
+	package_is_installed=true
 
 	}
 
 IsQPKGEnabled()
 	{
 
-	# input:
-	#   $1 = package name to check
+	# $1 = package name to check
 
-	local result=0
-	local returncode=0
-
-	if [[ -z $1 ]]; then
-		DebugError 'QPKG name unspecified'
-		errorcode=42
-		returncode=1
-	else
-		[[ $($GETCFG_CMD "$1" Enable -u -f "$QPKG_CONFIG_PATHFILE") != 'TRUE' ]] && returncode=1
-	fi
-
-	return $returncode
+	[[ -z $1 ]] && return 1
+	[[ $($GETCFG_CMD "$1" Enable -u -f "$QPKG_CONFIG_PATHFILE") = 'TRUE' ]]
 
 	}
 
 IsIPKGInstalled()
 	{
 
-	# If not installed, return 1
-
 	# $1 = package name to check
 
-	local result=0
-	local returncode=0
+	[[ -z $1 ]] && return 1
 
-	if [[ -z $1 ]]; then
-		DebugError 'IPKG name unspecified'
-		errorcode=43
-		returncode=1
+	if ! ($opkg_cmd list-installed | $GREP_CMD -q -F "$1"); then
+		DebugQPKG "'$1'" 'not installed'
+		return 1
 	else
-		$opkg_cmd list-installed | $GREP_CMD -q -F "$1"
-		result=$?
-
-		if [[ $result -eq 0 ]]; then
-			DebugQPKG "'$1'" 'installed'
-		else
-			DebugQPKG "'$1'" 'not installed'
-			returncode=1
-		fi
+		DebugQPKG "'$1'" 'installed'
+		return 0
 	fi
-
-	return $returncode
 
 	}
 
