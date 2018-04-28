@@ -42,7 +42,7 @@ ParseArgs()
 
 	if [[ -z $USER_ARGS_RAW ]]; then
 		errorcode=1
-		return
+		return 1
 	else
 		local user_args=($(echo "$USER_ARGS_RAW" | $TR_CMD '[A-Z]' '[a-z]'))
 	fi
@@ -74,13 +74,15 @@ ParseArgs()
 		esac
 	done
 
+	return 0
+
 	}
 
 Init()
 	{
 
 	local SCRIPT_FILE=sherpa.sh
-	local SCRIPT_VERSION=180428
+	local SCRIPT_VERSION=180429
 	debug=false
 	ResetErrorcode
 
@@ -102,7 +104,7 @@ Init()
 	UNAME_CMD=/bin/uname
 	UNIQ_CMD=/bin/uniq
 
-	curl_cmd=/sbin/curl			# this will change if QTS firmware is old
+	curl_cmd=/sbin/curl			# this will be changed if QTS firmware is old
 	GETCFG_CMD=/sbin/getcfg
 	RMCFG_CMD=/sbin/rmcfg
 	SETCFG_CMD=/sbin/setcfg
@@ -216,11 +218,11 @@ Init()
 	REINSTALL_FLAG=false
 	[[ ${FIRMWARE_VERSION//.} -lt 426 ]] && curl_cmd+=' --insecure'
 	local result=0
-	local returncode=0
 
 	ParseArgs
 
 	DebugFuncEntry
+
 	DebugThickSeparator
 	DebugScript 'started' "$($DATE_CMD | $TR_CMD -s ' ')"
 
@@ -252,7 +254,6 @@ Init()
 	if [[ $errorcode -eq 0 && $EUID -ne 0 ]]; then
 		ShowError "This script must be run as the 'admin' user. Please login via SSH as 'admin' and try again."
 		errorcode=2
-		returncode=1
 	fi
 
 	if [[ $errorcode -eq 0 ]]; then
@@ -262,7 +263,6 @@ Init()
 		if [[ $result -ne 0 ]]; then
 			ShowError "Unable to create working directory ($WORKING_PATH) [$result]"
 			errorcode=3
-			returncode=1
 		else
 			cd "$WORKING_PATH"
 		fi
@@ -275,7 +275,6 @@ Init()
 		if [[ $result -ne 0 ]]; then
 			ShowError "Unable to create QPKG download directory ($QPKG_DL_PATH) [$result]"
 			errorcode=4
-			returncode=1
 		fi
 	fi
 
@@ -287,7 +286,6 @@ Init()
 		if [[ $result -ne 0 ]]; then
 			ShowError "Unable to create IPKG download directory ($IPKG_DL_PATH) [$result]"
 			errorcode=5
-			returncode=1
 		else
 			monitor_flag="$IPKG_DL_PATH/.monitor"
 		fi
@@ -300,7 +298,6 @@ Init()
 		if [[ $result -ne 0 ]]; then
 			ShowError "Unable to create IPKG cache directory ($IPKG_CACHE_PATH) [$result]"
 			errorcode=6
-			returncode=1
 		fi
 	fi
 
@@ -309,7 +306,6 @@ Init()
 			ShowError "'$TARGET_APP' is already installed but is disabled. You'll need to enable it first to allow re-installation."
 			REINSTALL_FLAG=true
 			errorcode=7
-			returncode=1
 		fi
 	fi
 
@@ -318,7 +314,6 @@ Init()
 			ShowError "Both 'SABnzbdplus' and 'QSabNZBdPlus' are installed. This is an unsupported configuration. Please manually uninstall the unused one via the QNAP App Center then re-run this installer."
 			REINSTALL_FLAG=true
 			errorcode=8
-			returncode=1
 		fi
 	fi
 
@@ -327,7 +322,6 @@ Init()
 			#opkg_cmd=/opt/bin/ipkg
 			ShowError "'Optware-NG' is enabled. For now, this is an unsupported configuration. I'm currently working on support for it."
 			errorcode=9
-			returncode=1
 		fi
 	fi
 
@@ -335,7 +329,6 @@ Init()
 		if IsQPKGEnabled Entware-ng && IsQPKGEnabled Entware-3x; then
 			ShowError "Both 'Entware-ng' and 'Entware-3x' are enabled. This is an unsupported configuration. Please manually disable (or uninstall) one or both of them via the QNAP App Center then re-run this installer."
 			errorcode=10
-			returncode=1
 		fi
 	fi
 
@@ -349,12 +342,11 @@ Init()
 		else
 			ShowError "No Internet access"
 			errorcode=11
-			returncode=1
 		fi
 	fi
 
 	DebugFuncExit
-	return $returncode
+	return 0
 
 	}
 
@@ -401,6 +393,8 @@ RemoveOther()
 
 	[[ $errorcode -gt 0 ]] && return
 
+	DebugFuncEntry
+
 	# cruft: remove previous x41 Par2cmdline-MT package due to wrong arch - this was corrected on 2017-06-03 - remove this code after 2018-06-03
 		# don't use Par2cmdline-MT for x86_64 as multi-thread changes have been merged upstream into Par2cmdline and Par2cmdline-MT has been discontinued
 		case $STEPHANE_QPKG_ARCH in
@@ -417,6 +411,9 @@ RemoveOther()
 
 	UninstallQPKG Optware || ResetErrorcode  # ignore Optware uninstall errors
 
+	DebugFuncExit
+	return 0
+
 	}
 
 DownloadQPKGs()
@@ -425,6 +422,7 @@ DownloadQPKGs()
 	[[ $errorcode -gt 0 ]] && return
 
 	DebugFuncEntry
+
 	local returncode=0
 	local SL=''
 
@@ -476,6 +474,7 @@ InstallEntware()
 	[[ $errorcode -gt 0 ]] && return
 
 	DebugFuncEntry
+
 	local returncode=0
 
 	if ! IsQPKGInstalled $PREF_ENTWARE; then
@@ -524,6 +523,7 @@ PatchEntwareInit()
 	{
 
 	DebugFuncEntry
+
 	local returncode=0
 	local find_text=''
 	local insert_text=''
@@ -559,7 +559,7 @@ UpdateEntware()
 	{
 
 	DebugFuncEntry
-	local returncode=0
+
 	local package_list_file=/opt/var/opkg-lists/entware
 	local package_list_age=60
 	local release_file=/opt/etc/entware_release
@@ -598,7 +598,7 @@ UpdateEntware()
 	fi
 
 	DebugFuncExit
-	return $returncode
+	return 0
 
 	}
 
@@ -673,6 +673,7 @@ InstallIPKGs()
 	[[ $errorcode -gt 0 ]] && return
 
 	DebugFuncEntry
+
 	local returncode=0
 	local install_msgs=''
 	local packages=''
@@ -710,6 +711,8 @@ InstallIPKGBatch()
 
 	# $1 = space-separated string containing list of IPKG names to download and install
 	# $2 = on-screen description of this package batch
+
+	DebugFuncEntry
 
 	local result=0
 	local returncode=0
@@ -755,6 +758,7 @@ InstallIPKGBatch()
 		fi
 	fi
 
+	DebugFuncExit
 	return $returncode
 
 	}
@@ -765,6 +769,7 @@ InstallPIPs()
 	[[ $errorcode -gt 0 ]] && return
 
 	DebugFuncEntry
+
 	local install_msgs=''
 	local result=0
 	local returncode=0
@@ -932,6 +937,7 @@ BackupConfig()
 	[[ $errorcode -gt 0 ]] && return
 
 	DebugFuncEntry
+
 	local returncode=0
 
 	case $TARGET_APP in
@@ -983,6 +989,7 @@ ConvertSettings()
 	{
 
 	DebugFuncEntry
+
 	local returncode=0
 
 	case $TARGET_APP in
@@ -1046,6 +1053,7 @@ RestoreConfig()
 	[[ $errorcode -gt 0 ]] && return
 
 	DebugFuncEntry
+
 	local result=0
 	local returncode=0
 
@@ -1130,6 +1138,7 @@ DownloadQPKG()
 	fi
 
 	DebugFuncEntry
+
 	local result=0
 	local returncode=0
 
@@ -1621,6 +1630,7 @@ DisplayResult()
 	{
 
 	DebugFuncEntry
+
 	local RE=''
 	local SL=''
 
@@ -1640,7 +1650,7 @@ DisplayResult()
 	DebugScript 'elapsed time' "$(ConvertSecs "$(($($DATE_CMD +%s)-$([[ -n $SCRIPT_STARTSECONDS ]] && echo $SCRIPT_STARTSECONDS || echo "1")))")"
 	DebugThickSeparator
 
-	[[ -e $DEBUG_LOG_PATHFILE && $debug = false ]] && echo -e "\n- To display the debug log, use:\ncat ${DEBUG_LOG_PATHFILE}\n"
+	[[ -e $DEBUG_LOG_PATHFILE && $debug = false ]] && echo -e "\n- To display the debug log:\ncat ${DEBUG_LOG_PATHFILE}\n"
 
 	DebugFuncExit
 	return 0
@@ -1855,10 +1865,10 @@ IsIPKGInstalled()
 	[[ -z $1 ]] && return 1
 
 	if ! ($opkg_cmd list-installed | $GREP_CMD -q -F "$1"); then
-		DebugQPKG "'$1'" 'not installed'
+		DebugIPKG "'$1'" 'not installed'
 		return 1
 	else
-		DebugQPKG "'$1'" 'installed'
+		DebugIPKG "'$1'" 'installed'
 		return 0
 	fi
 
@@ -1993,6 +2003,13 @@ DebugQPKG()
 	{
 
 	DebugDetected 'QPKG' "$1" "$2"
+
+	}
+
+DebugIPKG()
+	{
+
+	DebugDetected 'IPKG' "$1" "$2"
 
 	}
 
