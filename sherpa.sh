@@ -305,25 +305,33 @@ Init()
 	fi
 
 	if [[ $errorcode -eq 0 ]]; then
-		if [[ $TARGET_APP = SABnzbdplus ]] && IsQPKGInstalled QSabNZBdPlus && IsQPKGInstalled SABnzbdplus; then
-			ShowError 'Both (SABnzbdplus) and (QSabNZBdPlus) are installed. This is an unsupported configuration. Please manually uninstall the unused one via the QNAP App Center then re-run this installer.'
-			errorcode=7
-			returncode=1
-		fi
-	fi
-
-	if [[ $errorcode -eq 0 ]]; then
-		if IsQPKGInstalled Optware-NG; then
-			opkg_cmd=/opt/bin/ipkg
-			ShowError "(Optware-NG) is installed. For now, this is an unsupported configuration. I'm currently working on support for it."
+		if (IsQPKGInstalled $TARGET_APP && ! IsQPKGEnabled $TARGET_APP); then
+			ShowError "'$TARGET_APP' is already installed but is disabled. You'll need to enable it first to allow re-installation."
 			errorcode=8
 			returncode=1
 		fi
 	fi
 
 	if [[ $errorcode -eq 0 ]]; then
-		if IsQPKGInstalled Entware-ng && IsQPKGInstalled Entware-3x; then
-			ShowError 'Both (Entware-ng) and (Entware-3x) are installed. This is an unsupported configuration. Please manually uninstall both of them via the QNAP App Center then re-run this installer.'
+		if [[ $TARGET_APP = SABnzbdplus ]] && IsQPKGEnabled QSabNZBdPlus && IsQPKGEnabled SABnzbdplus; then
+			ShowError "Both 'SABnzbdplus' and 'QSabNZBdPlus' are installed. This is an unsupported configuration. Please manually uninstall the unused one via the QNAP App Center then re-run this installer."
+			errorcode=7
+			returncode=1
+		fi
+	fi
+
+	if [[ $errorcode -eq 0 ]]; then
+		if IsQPKGEnabled Optware-NG; then
+			#opkg_cmd=/opt/bin/ipkg
+			ShowError "'Optware-NG' is enabled. For now, this is an unsupported configuration. I'm currently working on support for it."
+			errorcode=8
+			returncode=1
+		fi
+	fi
+
+	if [[ $errorcode -eq 0 ]]; then
+		if IsQPKGEnabled Entware-ng && IsQPKGEnabled Entware-3x; then
+			ShowError "Both 'Entware-ng' and 'Entware-3x' are enabled. This is an unsupported configuration. Please manually disable (or uninstall) one or both of them via the QNAP App Center then re-run this installer."
 			errorcode=8
 			returncode=1
 		fi
@@ -373,10 +381,10 @@ PauseDownloaders()
 	DebugFuncEntry
 
 	# pause local SABnzbd queue so installer downloads will finish faster
-	if IsQPKGInstalled SABnzbdplus; then
+	if IsQPKGEnabled SABnzbdplus; then
 		LoadQPKGVars SABnzbdplus
 		SabQueueControl pause
-	elif IsQPKGInstalled QSabNZBdPlus; then
+	elif IsQPKGEnabled QSabNZBdPlus; then
 		LoadQPKGVars QSabNZBdPlus
 		SabQueueControl pause
 	fi
@@ -480,6 +488,8 @@ InstallEntware()
 		[[ -L $opt_path && -d $opt_backup_path ]] && cp --recursive "$opt_backup_path"/* --target-directory "$opt_path" && rm -r "$opt_backup_path"
 
 	else
+		! IsQPKGEnabled $PREF_ENTWARE && EnableQPKG $PREF_ENTWARE
+
 		if [[ $PREF_ENTWARE = Entware-3x || $PREF_ENTWARE = Entware ]]; then
 			local test_pathfile=/opt/etc/passwd
 			[[ -e $test_pathfile ]] && { [[ -L $test_pathfile ]] && ENTWARE_VER=std || ENTWARE_VER=alt ;} || ENTWARE_VER=none
@@ -637,15 +647,17 @@ InstallTargetApp()
 
 	case $TARGET_APP in
 		SABnzbdplus|SickRage|CouchPotato2|LazyLibrarian|OMedusa)
-			BackupConfig
-			UninstallQPKG $TARGET_APP
-			[[ $TARGET_APP = SABnzbdplus ]] && UninstallQPKG QSabNZBdPlus
+			if IsQPKGEnabled $TARGET_APP; then
+				BackupConfig
+				UninstallQPKG $TARGET_APP
+				[[ $TARGET_APP = SABnzbdplus ]] && IsQPKGEnabled QSabNZBdPlus && UninstallQPKG QSabNZBdPlus
+			fi
 			! IsQPKGInstalled $TARGET_APP && InstallQPKG $TARGET_APP && PauseHere && LoadQPKGVars $TARGET_APP
 			RestoreConfig
 			[[ $errorcode -eq 0 ]] && DaemonCtl start "$package_init_pathfile"
 			;;
 		*)
-			ShowError "Can't install app [$TARGET_APP] as it's unknown"
+			ShowError "Can't install app '$TARGET_APP' as it's unknown"
 			;;
 	esac
 
@@ -828,6 +840,11 @@ InstallQPKG()
 
 	if IsQPKGInstalled $1; then
 		DebugWarning 'QPKG is already installed'
+		if IsQPKGEnabled $1; then
+			DebugWarning 'QPKG is already enabled'
+		else
+			EnableQPKG $1
+		fi
 		return 0
 	fi
 
@@ -890,7 +907,7 @@ BackupThisPackage()
 				result=$?
 
 				if [[ $result -eq 0 ]]; then
-					ShowDone "created ($TARGET_APP) settings backup"
+					ShowDone "created '$TARGET_APP' settings backup"
 				else
 					ShowError "Could not create settings backup of ($package_config_path) [$result]"
 					errorcode=23
@@ -916,10 +933,10 @@ BackupConfig()
 
 	case $TARGET_APP in
 		SABnzbdplus)
-			if IsQPKGInstalled QSabNZBdPlus; then
+			if IsQPKGEnabled QSabNZBdPlus; then
 				LoadQPKGVars QSabNZBdPlus
 				DaemonCtl stop "$package_init_pathfile"
-			elif IsQPKGInstalled SABnzbdplus; then
+			elif IsQPKGEnabled SABnzbdplus; then
 				LoadQPKGVars SABnzbdplus
 				DaemonCtl stop "$package_init_pathfile"
 			fi
@@ -928,10 +945,10 @@ BackupConfig()
 			[[ $package_is_installed = true ]] && BackupThisPackage
 			;;
 		CouchPotato2)
-			if IsQPKGInstalled QCouchPotato; then
+			if IsQPKGEnabled QCouchPotato; then
 				LoadQPKGVars QCouchPotato
 				DaemonCtl stop "$package_init_pathfile"
-			elif IsQPKGInstalled CouchPotato2; then
+			elif IsQPKGEnabled CouchPotato2; then
 				LoadQPKGVars CouchPotato2
 				DaemonCtl stop "$package_init_pathfile"
 			fi
@@ -940,7 +957,7 @@ BackupConfig()
 			[[ $package_is_installed = true ]] && BackupThisPackage
 			;;
 		LazyLibrarian)
-			if IsQPKGInstalled LazyLibrarian; then
+			if IsQPKGEnabled LazyLibrarian; then
 				LoadQPKGVars LazyLibrarian
 				DaemonCtl stop "$package_init_pathfile"
 			fi
@@ -949,7 +966,7 @@ BackupConfig()
 			[[ $package_is_installed = true ]] && BackupThisPackage
 			;;
 		SickRage)
-			if IsQPKGInstalled SickRage; then
+			if IsQPKGEnabled SickRage; then
 				LoadQPKGVars SickRage
 				DaemonCtl stop "$package_init_pathfile"
 			fi
@@ -958,7 +975,7 @@ BackupConfig()
 			[[ $package_is_installed = true ]] && BackupThisPackage
 			;;
 		OMedusa)
-			if IsQPKGInstalled OMedusa; then
+			if IsQPKGEnabled OMedusa; then
 				LoadQPKGVars OMedusa
 				DaemonCtl stop "$package_init_pathfile"
 			fi
@@ -967,7 +984,7 @@ BackupConfig()
 			[[ $package_is_installed = true ]] && BackupThisPackage
 			;;
 		*)
-			ShowError "Can't backup specified app: ($TARGET_APP) - unknown!"
+			ShowError "Can't backup specified app '$TARGET_APP' - unknown!"
 			returncode=1
 			;;
 	esac
@@ -1013,10 +1030,10 @@ ConvertSettings()
 			# do nothing - don't need to convert from older versions for these QPKGs as sherpa is the only installer for them.
 			;;
 		CouchPotato2)
-			ShowWarning "Can't convert settings for ($TARGET_APP) yet!"
+			ShowWarning "Can't convert settings for '$TARGET_APP' yet!"
 			;;
 		*)
-			ShowError "Can't convert settings for ($TARGET_APP) - unsupported app!"
+			ShowError "Can't convert settings for '$TARGET_APP' - unsupported app!"
 			returncode=1
 			;;
 	esac
@@ -1063,7 +1080,7 @@ RestoreConfig()
 					result=$?
 
 					if [[ $result -eq 0 ]]; then
-						ShowDone "restored ($TARGET_APP) settings backup"
+						ShowDone "restored '$TARGET_APP' settings backup"
 
 						$SETCFG_CMD "SABnzbdplus" Web_Port $package_port -f "$QPKG_CONFIG_PATHFILE"
 					else
@@ -1088,7 +1105,7 @@ RestoreConfig()
 					result=$?
 
 					if [[ $result -eq 0 ]]; then
-						ShowDone "restored ($TARGET_APP) settings backup"
+						ShowDone "restored '$TARGET_APP' settings backup"
 
 						#$SETCFG_CMD "SABnzbdplus" Web_Port $package_port -f "$QPKG_CONFIG_PATHFILE"
 					else
@@ -1099,12 +1116,12 @@ RestoreConfig()
 				fi
 				;;
 			*)
-				ShowError "Can't restore settings for ($TARGET_APP) - unsupported app!"
+				ShowError "Can't restore settings for '$TARGET_APP' - unsupported app!"
 				returncode=1
 				;;
 		esac
 	else
-		ShowError "($TARGET_APP) is NOT installed so can't restore backups"
+		ShowError "'$TARGET_APP' is NOT installed so can't restore backups"
 		errorcode=26
 		returncode=1
 	fi
@@ -1626,12 +1643,12 @@ DisplayResult()
 	if [[ $errorcode -eq 0 ]]; then
 		[[ $debug = true ]] && emoticon=':DD' || emoticon=''
 		[[ $debug = false ]] && echo
-		ShowDone "$TARGET_APP has been successfully ${RE}installed! $emoticon"
+		ShowDone "'$TARGET_APP' has been successfully ${RE}installed! $emoticon"
 		#[[ $debug = false ]] && echo
 		#ShowInfo "It should now be accessible on your LAN @ $(ColourTextUnderlinedBlue "http${SL}://$($HOSTNAME_CMD -i | $TR_CMD -d ' '):$package_port")"
 	elif [[ $errorcode -gt 1 ]]; then       # don't display 'failed' when only showing help
 		[[ $debug = true ]] && emoticon=':S ' || emoticon=''
-		ShowError "$TARGET_APP ${RE}install failed! ${emoticon}[$errorcode]"
+		ShowError "'$TARGET_APP' ${RE}install failed! ${emoticon}[$errorcode]"
 	fi
 
 	DebugScript 'finished' "$($DATE_CMD)"
@@ -1803,15 +1820,43 @@ SabQueueControl()
 
 	}
 
+EnableQPKG()
+	{
+
+	# If package is not enabled, enable it
+
+	# input:
+	#   $1 = package name
+
+	local result=0
+	local returncode=0
+
+	if [[ -z $1 ]]; then
+		DebugError 'QPKG name unspecified'
+		errorcode=42
+		returncode=1
+	else
+		$GREP_CMD -q -F "[$1]" "$QPKG_CONFIG_PATHFILE"
+		result=$?
+
+		if [[ $result -eq 0 ]]; then
+			DebugProc 'enabling QPKG [$1]'
+			[[ $($GETCFG_CMD "$1" Enable -u -f "$QPKG_CONFIG_PATHFILE") != 'TRUE' ]] && $SETCFG_CMD "$1" Enable TRUE -f "$QPKG_CONFIG_PATHFILE"
+			DebugDone 'QPKG [$1] enabled'
+		else
+			returncode=1
+		fi
+	fi
+
+	return $returncode
+
+	}
+
 IsQPKGInstalled()
 	{
 
-	# If package has been installed, check that it has also been enabled.
-	# If not enabled, then enable it.
-	# If not installed, return 1
-
 	# input:
-	#   $1 = package name to check & enable
+	#   $1 = package name to check
 	# output:
 	#   $package_is_installed = true / false
 
@@ -1829,7 +1874,6 @@ IsQPKGInstalled()
 
 		if [[ $result -eq 0 ]]; then
 			if [[ $($GETCFG_CMD "$1" RC_Number -d 0 -f "$QPKG_CONFIG_PATHFILE") -ne 0 ]]; then
-				[[ $($GETCFG_CMD "$1" Enable -u -f "$QPKG_CONFIG_PATHFILE") != 'TRUE' ]] && $SETCFG_CMD "$1" Enable TRUE -f "$QPKG_CONFIG_PATHFILE"
 				package_is_installed=true
 			else
 				returncode=1
@@ -1837,6 +1881,27 @@ IsQPKGInstalled()
 		else
 			returncode=1
 		fi
+	fi
+
+	return $returncode
+
+	}
+
+IsQPKGEnabled()
+	{
+
+	# input:
+	#   $1 = package name to check
+
+	local result=0
+	local returncode=0
+
+	if [[ -z $1 ]]; then
+		DebugError 'QPKG name unspecified'
+		errorcode=42
+		returncode=1
+	else
+		[[ $($GETCFG_CMD "$1" Enable -u -f "$QPKG_CONFIG_PATHFILE") != 'TRUE' ]] && returncode=1
 	fi
 
 	return $returncode
