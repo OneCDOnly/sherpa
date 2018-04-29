@@ -1299,7 +1299,7 @@ LoadQPKGVars()
 					returncode=1
 				fi
 				;;
-			LazyLibrarian|CouchPotato2|SickRage|OMedusa)
+			LazyLibrarian|CouchPotato2|SickRage|OMedusa|Headphones)
 				package_installed_path=$($GETCFG_CMD $package_name Install_Path -f $QPKG_CONFIG_PATHFILE)
 				result=$?
 
