@@ -2,11 +2,11 @@
 
 ## Description
 
-With this, you can install **SABnzbd+**, **SickRage**, **CouchPotato**, **LazyLibrarian**, **Medusa** or **Headphones** on your QNAP NAS.
+A BASH script to install various Usenet apps into a QNAP NAS.
 
 **sherpa** is able to install several Usenet-related search and download apps but will only install **ONE app** at a time. If you elect to install an app that is already installed, the app will be fully reinstalled. This means the app configuration and settings are saved, the old app is uninstalled, a new version is installed, then the original settings are restored.
 
-To install additional apps, run it again. 
+To install additional apps, run it again.
 
 After running the installer, you'll have several new packages. Any existing installation of Entware will be used automatically. If Entware is not installed, a version appropriate to your NAS will be installed.
 
@@ -28,7 +28,7 @@ Headphones installer/reinstaller is very new, so I'll be tweaking it for a while
 
 1) If there is an existing installation of Entware-ng, sometimes the sherpa installer will fail to complete. If this occurs, suggest you uninstall Entware-ng and allow sherpa to install a current Entware.
 
-2) Sherpa is incompatible with existing installs of Optware-NG as various required packages cannot be installed through it.
+2) **sherpa** is incompatible with existing installs of Optware-NG as various required packages cannot be installed through it.
 
 ## Installation
 
