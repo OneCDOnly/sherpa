@@ -4,24 +4,31 @@
 
 With this, you can install **SABnzbd+**, **SickRage**, **CouchPotato**, **LazyLibrarian**, **Medusa** or **Headphones** on your QNAP NAS.
 
-**sherpa** is able to install each of the apps shown above but will only install **ONE app** at a time. If you elect to install an app that is already installed, the app will be fully reinstalled. This means the app configuration and settings are saved, the old app is uninstalled, a new version is installed, then the original settings are restored.
+**sherpa** is able to install several Usenet-related search and download apps but will only install **ONE app** at a time. If you elect to install an app that is already installed, the app will be fully reinstalled. This means the app configuration and settings are saved, the old app is uninstalled, a new version is installed, then the original settings are restored.
+
+To install additional apps, run it again. 
+
+After running the installer, you'll have several new packages. Any existing installation of Entware will be used automatically. If Entware is not installed, a version appropriate to your NAS will be installed.
 
 
 ## Current status
 
 STABLE
 
-Initial installation of each app is OK. The SABnzbd re-install has been well-tested and is considered stable.
+Initial installation of each app is OK. Re-installation of each is also OK except as shown in Testing.
 
 TESTING
 
-The re-installs for LazyLibrarian, SickRage, CouchPotato and Medusa are fairly new and seems to work properly, but could do with some further testing by the community.
+I've recently added a basic download progress display for IPKGs. Please advise if you see it doing anything weird. Screenshots are very helpful.
+
+Headphones installer/reinstaller is very new, so I'll be tweaking it for a while to integrate it with SABnzbd.
 
 
 ## Known issues
 
-1) If there is an existing installation of Entware-ng, sometimes the Sherpa installer will fail to complete. If this occurs, suggest you uninstall Entware-ng and allow Sherpa to reinstall Entware and configure it.
+1) If there is an existing installation of Entware-ng, sometimes the sherpa installer will fail to complete. If this occurs, suggest you uninstall Entware-ng and allow sherpa to install a current Entware.
 
+2) Sherpa is incompatible with existing installs of Optware-NG as various required packages cannot be installed through it.
 
 ## Installation
 
