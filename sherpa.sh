@@ -85,7 +85,7 @@ Init()
 	{
 
 	local SCRIPT_FILE=sherpa.sh
-	local SCRIPT_VERSION=180429
+	local SCRIPT_VERSION=180430
 	debug=false
 	ResetErrorcode
 
@@ -107,7 +107,7 @@ Init()
 	UNAME_CMD=/bin/uname
 	UNIQ_CMD=/bin/uniq
 
-	curl_cmd=/sbin/curl			# this will be changed if QTS firmware is old
+	curl_cmd=/sbin/curl			# this will change if QTS firmware is old
 	GETCFG_CMD=/sbin/getcfg
 	RMCFG_CMD=/sbin/rmcfg
 	SETCFG_CMD=/sbin/setcfg
@@ -128,7 +128,7 @@ Init()
 	WHICH_CMD=/usr/bin/which
 
 	FIND_CMD=/opt/bin/find
-	opkg_cmd=/opt/bin/opkg		# this may change if Optware-NG is installed
+	OPKG_CMD=/opt/bin/opkg
 
 	# paths and files
 	QPKG_CONFIG_PATHFILE=/etc/config/qpkg.conf
@@ -326,7 +326,7 @@ Init()
 	if [[ $errorcode -eq 0 ]]; then
 		if IsQPKGEnabled Optware-NG; then
 			ShowError "'Optware-NG' is enabled. This is an unsupported configuration."
-			#opkg_cmd=/opt/bin/ipkg
+			#OPKG_CMD=/opt/bin/ipkg
 			errorcode=9
 		fi
 	fi
@@ -488,7 +488,7 @@ InstallEntware()
 	else
 		! IsQPKGEnabled $PREF_ENTWARE && EnableQPKG $PREF_ENTWARE && ReloadProfile
 
-		[[ $STEPHANE_QPKG_ARCH != none ]] && ($opkg_cmd list-installed | $GREP_CMD -q par2cmdline) && $opkg_cmd remove par2cmdline > /dev/null 2>&1
+		[[ $STEPHANE_QPKG_ARCH != none ]] && ($OPKG_CMD list-installed | $GREP_CMD -q par2cmdline) && $OPKG_CMD remove par2cmdline > /dev/null 2>&1
 	fi
 
 	PatchEntwareInit
@@ -545,7 +545,7 @@ UpdateEntware()
 	local result=0
 	local log_pathfile="${WORKING_PATH}/entware-update.log"
 
-	IsSysFilePresent $opkg_cmd || return
+	IsSysFilePresent $OPKG_CMD || return
 	IsSysFilePresent $FIND_CMD || return
 
 	# if Entware package list was updated only recently, don't run another update
@@ -554,13 +554,13 @@ UpdateEntware()
 	if [[ -n $result ]]; then
 		ShowProc "updating local Entware package list"
 
-		install_msgs=$($opkg_cmd update)
+		install_msgs=$($OPKG_CMD update)
 		result=$?
 		echo -e "${install_msgs}\nresult=[$result]" >> "$log_pathfile"
 
 		if [[ $PREF_ENTWARE = Entware-3x && ! -e $release_file ]]; then
 			DebugProc 'performing Entware-3x upgrade x 2'
-			install_msgs=$($opkg_cmd upgrade; $opkg_cmd update; $opkg_cmd upgrade)
+			install_msgs=$($OPKG_CMD upgrade; $OPKG_CMD update; $OPKG_CMD upgrade)
 			result=$?
 			echo -e "${install_msgs}\nresult=[$result]" >> "$log_pathfile"
 		fi
@@ -714,7 +714,7 @@ InstallIPKGBatch()
 		trap CTRL_C_Captured INT
 
 		_MonitorDirSize_ "$IPKG_DL_PATH" $IPKG_download_size &
-		install_msgs=$($opkg_cmd install --force-overwrite ${IPKG_download_list[*]} --cache "$IPKG_CACHE_PATH" --tmp-dir "$IPKG_DL_PATH" 2>&1)
+		install_msgs=$($OPKG_CMD install --force-overwrite ${IPKG_download_list[*]} --cache "$IPKG_CACHE_PATH" --tmp-dir "$IPKG_DL_PATH" 2>&1)
 		result=$?
 
 		[[ -e $monitor_flag ]] && { rm "$monitor_flag"; $SLEEP_CMD 1 ;}
@@ -1615,7 +1615,7 @@ FindAllIPKGDependencies()
 
 	[[ -n $1 ]] && original_list="$1" || { DebugError "No IPKGs were requested"; return 1 ;}
 
-	IsSysFilePresent $opkg_cmd || return
+	IsSysFilePresent $OPKG_CMD || return
 
 	ShowProc "calculating number and size of IPKGs required"
 	DebugInfo "requested IPKG names: $original_list"
@@ -1625,7 +1625,7 @@ FindAllIPKGDependencies()
 	DebugProc 'finding all IPKG dependencies'
 	while [[ $iterations -lt $iteration_limit ]]; do
 		((iterations++))
-		last_list="$($opkg_cmd depends -A $last_list | $GREP_CMD -v 'depends on:' | $SED_CMD 's|^[[:blank:]]*||;s|[[:blank:]]*$||' | $TR_CMD ' ' '\n' | $SORT_CMD | $UNIQ_CMD)"
+		last_list="$($OPKG_CMD depends -A $last_list | $GREP_CMD -v 'depends on:' | $SED_CMD 's|^[[:blank:]]*||;s|[[:blank:]]*$||' | $TR_CMD ' ' '\n' | $SORT_CMD | $UNIQ_CMD)"
 
 		if [[ -n $last_list ]]; then
 			[[ -n $dependency_list ]] && dependency_list+="$(echo -e "\n$last_list")" || dependency_list="$last_list"
@@ -1645,7 +1645,7 @@ FindAllIPKGDependencies()
 
 	DebugProc 'excluding packages already installed'
 	for element in ${all_required_packages[@]}; do
-		$opkg_cmd status "$element" | $GREP_CMD -q "Status:.*installed" || IPKG_download_list+=($element)
+		$OPKG_CMD status "$element" | $GREP_CMD -q "Status:.*installed" || IPKG_download_list+=($element)
 	done
 	DebugDone 'complete'
 	DebugInfo "required IPKG names: ${IPKG_download_list[*]}"
@@ -1654,7 +1654,7 @@ FindAllIPKGDependencies()
 	if [[ $IPKG_download_count -gt 0 ]]; then
 		DebugProc 'calculating size of required IPKGs'
 		for element in ${IPKG_download_list[@]}; do
-			result_size=$($opkg_cmd info $element | $GREP_CMD -F 'Size:' | $SED_CMD 's|^Size: ||')
+			result_size=$($OPKG_CMD info $element | $GREP_CMD -F 'Size:' | $SED_CMD 's|^Size: ||')
 			((IPKG_download_size+=result_size))
 		done
 		DebugDone 'complete'
@@ -1797,7 +1797,7 @@ IsIPKGInstalled()
 
 	[[ -z $1 ]] && return 1
 
-	if ! ($opkg_cmd list-installed | $GREP_CMD -q -F "$1"); then
+	if ! ($OPKG_CMD list-installed | $GREP_CMD -q -F "$1"); then
 		DebugIPKG "'$1'" 'not installed'
 		return 1
 	else
