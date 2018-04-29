@@ -2,7 +2,7 @@
 
 ## Description
 
-With this, you can install **SABnzbd+**, **SickRage**, **CouchPotato**, **LazyLibrarian** or **Medusa** on your QNAP NAS.
+With this, you can install **SABnzbd+**, **SickRage**, **CouchPotato**, **LazyLibrarian**, **Medusa** or **Headphones** on your QNAP NAS.
 
 **sherpa** is able to install each of the apps shown above but will only install **ONE app** at a time. If you elect to install an app that is already installed, the app will be fully reinstalled. This means the app configuration and settings are saved, the old app is uninstalled, a new version is installed, then the original settings are restored.
 
@@ -57,6 +57,8 @@ Or:
 ./sherpa.sh LazyLibrarian
 
 ./sherpa.sh Medusa
+
+./sherpa.sh Headphones
 ```
 
 ## Problems?

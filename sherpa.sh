@@ -64,6 +64,9 @@ ParseArgs()
 			med|medusa|omedusa)
 				TARGET_APP=OMedusa
 				;;
+			hp|head|phones|headphones)
+				TARGET_APP=Headphones
+				;;
 			-d|--debug)
 				debug=true
 				DebugVar debug
@@ -375,6 +378,7 @@ DisplayHelp()
 	echo "$0 CouchPotato2"
 	echo "$0 LazyLibrarian"
 	echo "$0 OMedusa"
+	echo "$0 Headphones"
 
 	DebugFuncExit
 	return 0
@@ -623,7 +627,7 @@ InstallTargetApp()
 	DebugFuncEntry
 
 	case $TARGET_APP in
-		SABnzbdplus|SickRage|CouchPotato2|LazyLibrarian|OMedusa)
+		SABnzbdplus|SickRage|CouchPotato2|LazyLibrarian|OMedusa|Headphones)
 			if IsQPKGEnabled $TARGET_APP; then
 				BackupConfig
 				UninstallQPKG $TARGET_APP
@@ -930,7 +934,7 @@ BackupConfig()
 			REINSTALL_FLAG=$package_is_installed
 			[[ $package_is_installed = true ]] && BackupThisPackage
 			;;
-		LazyLibrarian|SickRage|OMedusa)
+		LazyLibrarian|SickRage|OMedusa|Headphones)
 			if IsQPKGEnabled $TARGET_APP; then
 				LoadQPKGVars $TARGET_APP
 				DaemonCtl stop "$package_init_pathfile"
@@ -983,7 +987,7 @@ ConvertSettings()
 				fi
 			fi
 			;;
-		LazyLibrarian|SickRage|OMedusa)
+		LazyLibrarian|SickRage|OMedusa|Headphones)
 			# do nothing - don't need to convert from older versions for these QPKGs as sherpa is the only installer for them.
 			;;
 		CouchPotato2)
@@ -1050,7 +1054,7 @@ RestoreConfig()
 					fi
 				fi
 				;;
-			LazyLibrarian|SickRage|CouchPotato2|OMedusa)
+			LazyLibrarian|SickRage|CouchPotato2|OMedusa|Headphones)
 				if [[ -d $SETTINGS_BACKUP_PATH ]]; then
 					#$SLEEP_CMD 10; DaemonCtl stop "$package_init_pathfile"  # allow time for new package init to complete so PID is accurate
 					DaemonCtl stop "$package_init_pathfile"
@@ -1376,6 +1380,10 @@ LoadQPKGFileDetails()
 			OMedusa)
 				qpkg_url="${OneCD_url_prefix}/OMedusa/build/OMedusa_180427.qpkg"
 				qpkg_md5='ec3b193c7931a100067cfaa334caf883'
+				;;
+			Headphones)
+				qpkg_url="${OneCD_url_prefix}/Headphones/build/Headphones_180429.qpkg"
+				qpkg_md5='c1b5ba10f5636b4e951eb57fb2bb1ed5'
 				;;
 			Par2cmdline-MT)
 				case $STEPHANE_QPKG_ARCH in
