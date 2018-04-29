@@ -1030,7 +1030,7 @@ RestoreConfig()
 		LoadQPKGVars $TARGET_APP
 
 		case $TARGET_APP in
-			SABnzbdplus)
+			SABnzbdplus|LazyLibrarian|SickRage|CouchPotato2|OMedusa|Headphones)
 				if [[ -d $SETTINGS_BACKUP_PATH ]]; then
 					DaemonCtl stop "$package_init_pathfile"
 
@@ -1046,35 +1046,10 @@ RestoreConfig()
 					if [[ $result -eq 0 ]]; then
 						ShowDone "restored '$TARGET_APP' settings backup"
 
-						$SETCFG_CMD "SABnzbdplus" Web_Port $package_port -f "$QPKG_CONFIG_PATHFILE"
+						[[ -n $package_port ]] && $SETCFG_CMD "$TARGET_APP" Web_Port $package_port -f "$QPKG_CONFIG_PATHFILE"
 					else
 						ShowError "Could not restore settings backup to ($package_config_path) [$result]"
 						errorcode=22
-						returncode=1
-					fi
-				fi
-				;;
-			LazyLibrarian|SickRage|CouchPotato2|OMedusa|Headphones)
-				if [[ -d $SETTINGS_BACKUP_PATH ]]; then
-					#$SLEEP_CMD 10; DaemonCtl stop "$package_init_pathfile"  # allow time for new package init to complete so PID is accurate
-					DaemonCtl stop "$package_init_pathfile"
-
-					if [[ ! -d $package_config_path ]]; then
-						$MKDIR_CMD -p "$($DIRNAME_CMD "$package_config_path")" 2> /dev/null
-					else
-						rm -r "$package_config_path" 2> /dev/null
-					fi
-
-					mv "$SETTINGS_BACKUP_PATH" "$($DIRNAME_CMD "$package_config_path")"
-					result=$?
-
-					if [[ $result -eq 0 ]]; then
-						ShowDone "restored '$TARGET_APP' settings backup"
-
-						#$SETCFG_CMD "SABnzbdplus" Web_Port $package_port -f "$QPKG_CONFIG_PATHFILE"
-					else
-						ShowError "Could not restore settings backup to ($package_config_path) [$result]"
-						errorcode=23
 						returncode=1
 					fi
 				fi
@@ -1284,22 +1259,12 @@ LoadQPKGVars()
 					fi
 
 					[[ -e $package_settings_pathfile ]] && package_api=$($GREP_CMD -e "^api_key" "$package_settings_pathfile" | $SED_CMD 's|api_key = ||')
-					sab_chartranslator_pathfile=$package_installed_path/Repository/scripts/CharTranslator.py
+					sab_chartranslator_pathfile=$package_installed_path/scripts/CharTranslator.py
 				else
 					returncode=1
 				fi
 				;;
-			Entware|Entware-3x|Entware-ng|QCouchPotato)
-				package_installed_path=$($GETCFG_CMD $package_name Install_Path -f $QPKG_CONFIG_PATHFILE)
-				result=$?
-
-				if [[ $result -eq 0 ]]; then
-					package_init_pathfile=$($GETCFG_CMD $package_name Shell -f $QPKG_CONFIG_PATHFILE)
-				else
-					returncode=1
-				fi
-				;;
-			LazyLibrarian|CouchPotato2|SickRage|OMedusa|Headphones)
+			Entware|Entware-3x|Entware-ng|LazyLibrarian|CouchPotato2|QCouchPotato|SickRage|OMedusa|Headphones)
 				package_installed_path=$($GETCFG_CMD $package_name Install_Path -f $QPKG_CONFIG_PATHFILE)
 				result=$?
 
