@@ -85,7 +85,7 @@ Init()
 	{
 
 	local SCRIPT_FILE=sherpa.sh
-	local SCRIPT_VERSION=180430
+	local SCRIPT_VERSION=180501
 	debug=false
 	ResetErrorcode
 
@@ -207,6 +207,7 @@ Init()
 	IPKG_CACHE_PATH="${WORKING_PATH}/ipkg-cache"
 	DEBUG_LOG_PATHFILE="${SHARE_PUBLIC_PATH}/${DEBUG_LOG_FILE}"
 	QPKG_BASE_PATH="${DEFAULT_VOLUME}/.qpkg"
+	PACKAGES_PATHFILE="${WORKING_PATH}/.packages.conf"
 
 	# internals
 	secure_web_login=false
@@ -352,10 +353,10 @@ Init()
 	fi
 
 	if [[ $errorcode -eq 0 ]]; then
-		ShowProc "checking for Internet access"
+		ShowProc "downloading sherpa package list"
 
-		if ($PING_CMD -c 1 -q google.com > /dev/null 2>&1); then
-			ShowDone "Internet is accessible"
+		if ($curl_cmd --silent --fail https://raw.githubusercontent.com/onecdonly/sherpa/master/packages.conf -o $PACKAGES_PATHFILE); then
+			ShowDone "downloaded sherpa package list"
 		else
 			ShowError "No Internet access"
 			errorcode=12
@@ -1191,7 +1192,6 @@ CalcPrefEntware()
 	PREF_ENTWARE=Entware
 
 	# then modify according to local environment
-	[[ $NAS_ARCH = i686 ]] && PREF_ENTWARE=Entware-ng
 	IsQPKGInstalled Entware-ng && PREF_ENTWARE=Entware-ng
 	IsQPKGInstalled Entware-3x && PREF_ENTWARE=Entware-3x
 
@@ -1317,14 +1317,6 @@ LoadQPKGFileDetails()
 			Entware)
 				qpkg_url='http://bin.entware.net/other/Entware_1.00std.qpkg'
 				qpkg_md5='0c99cf2cf8ef61c7a18b42651a37da74'
-				;;
-			Entware-3x)
-				qpkg_url='http://entware-3x.zyxmon.org/binaries/other/Entware-3x_1.00std.qpkg'
-				qpkg_md5='fa5719ab2138c96530287da8e6812746'
-				;;
-			Entware-ng)
-				qpkg_url='http://entware.zyxmon.org/binaries/other/Entware-ng_0.97.qpkg'
-				qpkg_md5='6c81cc37cbadd85adfb2751dc06a238f'
 				;;
 			SABnzbdplus)
 				qpkg_url="${OneCD_url_prefix}/SABnzbdplus/build/SABnzbdplus_180427.qpkg"
