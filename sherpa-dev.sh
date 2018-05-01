@@ -50,7 +50,7 @@ Init()
 CalcQPKGArch()
 	{
 
-	# decide which package arch is suitable for this NAS
+	# adapt package arch depending on NAS arch
 
 	case $NAS_ARCH in
 		x86_64)
@@ -60,7 +60,7 @@ CalcQPKGArch()
 			QPKG_ARCH=x86
 			;;
 		*)
-			QPKG_ARCH=none
+			QPKG_ARCH=$NAS_ARCH
 			;;
 	esac
 
@@ -415,7 +415,7 @@ ShowPackagesAliases()
 	local acc=0
 
 	printf '%0.s-' {1..80}; echo
-	printf " %-20s: %s\n" "package name" "aliases"
+	printf " %-20s: %s\n" "package name" "acceptable aliases"
 	printf '%0.s-' {1..80}; echo
 	for label in $(grep '^\[' $PACKAGES_PATHFILE); do
         name_arch=${label//[\[\]]}; name=${name_arch%@*}; arch=${name_arch#$name@}

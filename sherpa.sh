@@ -1187,7 +1187,7 @@ CalcStephaneQPKGArch()
 CalcQPKGArch()
 	{
 
-	# decide which package arch is suitable for this NAS
+	# adapt package arch depending on NAS arch
 
 	case $NAS_ARCH in
 		x86_64)
@@ -1197,7 +1197,7 @@ CalcQPKGArch()
 			QPKG_ARCH=x86
 			;;
 		*)
-			QPKG_ARCH=none
+			QPKG_ARCH=$NAS_ARCH
 			;;
 	esac
 
