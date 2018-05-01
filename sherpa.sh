@@ -227,6 +227,7 @@ Init()
 
 	DebugFuncEntry
 
+	CalcQPKGArch
 	CalcStephaneQPKGArch
 	CalcPrefEntware
 
@@ -1179,6 +1180,28 @@ CalcStephaneQPKGArch()
 	esac
 
 	DebugVar STEPHANE_QPKG_ARCH
+	return 0
+
+	}
+
+CalcQPKGArch()
+	{
+
+	# decide which package arch is suitable for this NAS
+
+	case $NAS_ARCH in
+		x86_64)
+			[[ ${FIRMWARE_VERSION//.} -ge 430 ]] && QPKG_ARCH=x64 || QPKG_ARCH=x86
+			;;
+		i686)
+			QPKG_ARCH=x86
+			;;
+		*)
+			QPKG_ARCH=none
+			;;
+	esac
+
+	DebugVar QPKG_ARCH
 	return 0
 
 	}

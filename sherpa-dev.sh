@@ -38,33 +38,33 @@ Init()
 
 	debug=true
 
+	local ULINUX_PATHFILE=/etc/config/uLinux.conf
 	PACKAGES_PATHFILE=packages.conf
+
+	FIRMWARE_VERSION="$($GETCFG_CMD System Version -f "$ULINUX_PATHFILE")"
 	NAS_ARCH="$($UNAME_CMD -m)"
-	CalcStephaneQPKGArch
+	CalcQPKGArch
 
 	}
 
-CalcStephaneQPKGArch()
+CalcQPKGArch()
 	{
 
 	# decide which package arch is suitable for this NAS
 
 	case $NAS_ARCH in
 		x86_64)
-			[[ ${FIRMWARE_VERSION//.} -ge 430 ]] && STEPHANE_QPKG_ARCH=x64 || STEPHANE_QPKG_ARCH=x86
+			[[ ${FIRMWARE_VERSION//.} -ge 430 ]] && QPKG_ARCH=x64 || QPKG_ARCH=x86
 			;;
 		i686)
-			STEPHANE_QPKG_ARCH=x86
-			;;
-		armv7l)
-			STEPHANE_QPKG_ARCH=x41
+			QPKG_ARCH=x86
 			;;
 		*)
-			STEPHANE_QPKG_ARCH=none
+			QPKG_ARCH=none
 			;;
 	esac
 
-	DebugVar STEPHANE_QPKG_ARCH
+	DebugVar QPKG_ARCH
 	return 0
 
 	}
@@ -409,6 +409,7 @@ ShowPackagesAliases()
 	{
 
 	local label=''
+	local name_arch=''
 	local name=''
 	local arch=''
 	local acc=0
