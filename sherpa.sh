@@ -85,7 +85,7 @@ Init()
 	{
 
 	local SCRIPT_FILE=sherpa.sh
-	local SCRIPT_VERSION=180501
+	local SCRIPT_VERSION=180502
 	debug=false
 	ResetErrorcode
 
@@ -107,7 +107,7 @@ Init()
 	UNAME_CMD=/bin/uname
 	UNIQ_CMD=/bin/uniq
 
-	curl_cmd=/sbin/curl			# this will change if QTS firmware is old
+	curl_cmd=/sbin/curl			# this will change depending on QTS version
 	GETCFG_CMD=/sbin/getcfg
 	RMCFG_CMD=/sbin/rmcfg
 	SETCFG_CMD=/sbin/setcfg
@@ -554,7 +554,7 @@ UpdateEntware()
 	[[ -e $FIND_CMD && -e $package_list_file ]] && result=$($FIND_CMD "$package_list_file" -mmin +$package_list_age) || result='new install'
 
 	if [[ -n $result ]]; then
-		ShowProc "updating local Entware package list"
+		ShowProc "updating Entware package list"
 
 		install_msgs=$($OPKG_CMD update)
 		result=$?
@@ -568,14 +568,14 @@ UpdateEntware()
 		fi
 
 		if [[ $result -eq 0 ]]; then
-			ShowDone "updated local Entware package list"
+			ShowDone "updated Entware package list"
 		else
-			ShowWarning "Unable to update local Entware package list [$result]"
+			ShowWarning "Unable to update Entware package list [$result]"
 			# meh, continue anyway with old list ...
 		fi
 	else
-		DebugInfo "local Entware package list was updated less than $package_list_age minutes ago"
-		ShowDone "local Entware package list is up-to-date"
+		DebugInfo "Entware package list was updated less than $package_list_age minutes ago"
+		ShowDone "Entware package list is up-to-date"
 	fi
 
 	DebugFuncExit
