@@ -207,7 +207,7 @@ Init()
 	IPKG_CACHE_PATH="${WORKING_PATH}/ipkg-cache"
 	DEBUG_LOG_PATHFILE="${SHARE_PUBLIC_PATH}/${DEBUG_LOG_FILE}"
 	QPKG_BASE_PATH="${DEFAULT_VOLUME}/.qpkg"
-	PACKAGES_PATHFILE="${WORKING_PATH}/.packages.conf"
+	PACKAGES_PATHFILE="${WORKING_PATH}/packages.conf"
 
 	# internals
 	secure_web_login=false
@@ -226,10 +226,6 @@ Init()
 	ParseArgs
 
 	DebugFuncEntry
-
-	CalcQPKGArch
-	CalcStephaneQPKGArch
-	CalcPrefEntware
 
 	DebugInfoThickSeparator
 	DebugScript 'started' "$($DATE_CMD | $TR_CMD -s ' ')"
@@ -258,6 +254,10 @@ Init()
 	DebugInfoThinSeparator
 
 	[[ $errorcode -eq 1 ]] && DisplayHelp
+
+	CalcQPKGArch
+	CalcStephaneQPKGArch
+	CalcPrefEntware
 
 	if [[ $errorcode -eq 0 && $EUID -ne 0 ]]; then
 		ShowError "This script must be run as the 'admin' user. Please login via SSH as 'admin' and try again."
