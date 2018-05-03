@@ -902,7 +902,7 @@ BackupThisPackage()
 		ConvertSettings
 	else
 		ShowError "Could not find existing package configuration path. Can't safely continue with backup. Aborting."
-		errorcode=10
+		errorcode=22
 	fi
 
 	}
@@ -1056,7 +1056,7 @@ RestoreConfig()
 						[[ -n $package_port ]] && $SETCFG_CMD "$TARGET_APP" Web_Port $package_port -f "$QPKG_CONFIG_PATHFILE"
 					else
 						ShowError "Could not restore settings backup to ($package_config_path) [$result]"
-						errorcode=22
+						errorcode=23
 						returncode=1
 					fi
 				fi
