@@ -85,7 +85,7 @@ Init()
 	{
 
 	local SCRIPT_FILE=sherpa.sh
-	local SCRIPT_VERSION=180502
+	local SCRIPT_VERSION=180503
 	debug=false
 	ResetErrorcode
 
@@ -868,6 +868,8 @@ BackupThisPackage()
 
 	local result=0
 
+	DebugVar package_config_path
+
 	if [[ -d $package_config_path ]]; then
 		if [[ ! -d ${BACKUP_PATH}/config ]]; then
 			$MKDIR_CMD -p "$BACKUP_PATH" 2> /dev/null
@@ -898,6 +900,9 @@ BackupThisPackage()
 		fi
 
 		ConvertSettings
+	else
+		ShowError "Could not find existing package configuration path. Can't safely continue with backup. Aborting."
+		errorcode=10
 	fi
 
 	}
