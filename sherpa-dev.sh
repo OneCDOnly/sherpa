@@ -35,6 +35,8 @@ Init()
 
 	GETCFG_CMD=/sbin/getcfg
 	UNAME_CMD=/bin/uname
+	TR_CMD=/bin/tr
+	GREP_CMD=/bin/grep
 
 	debug=true
 
@@ -417,7 +419,7 @@ ShowPackagesAliases()
 	printf '%0.s-' {1..80}; echo
 	printf " %-20s: %s\n" "package name" "acceptable aliases"
 	printf '%0.s-' {1..80}; echo
-	for label in $(grep '^\[' $PACKAGES_PATHFILE); do
+	for label in $($GREP_CMD '^\[' $PACKAGES_PATHFILE); do
         name_arch=${label//[\[\]]}; name=${name_arch%@*}; arch=${name_arch#$name@}
         if [[ $arch = $NAS_ARCH || $arch = all ]]; then
 			if ($GETCFG_CMD $name_arch aliases -f $PACKAGES_PATHFILE > /dev/null 2>&1); then
@@ -441,13 +443,15 @@ MatchAliasToPackage()
 	qpkg_url=''
 	qpkg_md5=''
 
-	for label in $(grep '^\[' $PACKAGES_PATHFILE); do
+	request=$(echo "$USER_ARGS_RAW" | $TR_CMD '[A-Z]' '[a-z]')
+
+	for label in $($GREP_CMD '^\[' $PACKAGES_PATHFILE); do
         name_arch=${label//[\[\]]}; name=${name_arch%@*}; arch=${name_arch#$name@}
         if [[ $arch = $NAS_ARCH || $arch = all ]]; then
 			if ($GETCFG_CMD $name_arch aliases -f $PACKAGES_PATHFILE > /dev/null 2>&1); then
-				aliases=( $($GETCFG_CMD $name_arch aliases -f $PACKAGES_PATHFILE | tr ',' ' ') )
+				aliases=( $($GETCFG_CMD $name_arch aliases -f $PACKAGES_PATHFILE | $TR_CMD ',' ' ') )
 				for alias in "${aliases[@]}"; do
-					if [[ $alias = $1 ]]; then
+					if [[ $alias = $request ]]; then
 						echo "package match found: $name"
 						TARGET_APP=$name
 						qpkg_url=$($GETCFG_CMD "$name_arch" url -f $PACKAGES_PATHFILE)
@@ -618,8 +622,8 @@ LoadQPKGFileDetails()
 	}
 
 Init
-ShowPackagesAliases
-MatchAliasToPackage head
+#ShowPackagesAliases
+MatchAliasToPackage "$USER_ARGS_RAW"
 
 echo "target app: $TARGET_APP"
 echo "url: $qpkg_url"
