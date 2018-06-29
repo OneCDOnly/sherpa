@@ -85,7 +85,7 @@ Init()
 	{
 
 	local SCRIPT_FILE=sherpa.sh
-	local SCRIPT_VERSION=180503
+	local SCRIPT_VERSION=180630
 	debug=false
 	ResetErrorcode
 
@@ -661,11 +661,11 @@ InstallIPKGs()
 
 	if [[ -n $IPKG_DL_PATH && -d $IPKG_DL_PATH ]]; then
 		UpdateEntware
-		packages='python git git-http nano less'
+		packages='python python-pip git git-http nano less'
 
 		case $TARGET_APP in
 			SABnzbdplus)
-				packages+=' python-pip python-pyopenssl python-dev gcc unrar p7zip coreutils-nice ionice ffprobe'
+				packages+=' python-pyopenssl python-dev gcc unrar p7zip coreutils-nice ionice ffprobe'
 				[[ $STEPHANE_QPKG_ARCH = none ]] && packages+=' par2cmdline'
 				;;
 			CouchPotato2)
@@ -673,6 +673,9 @@ InstallIPKGs()
 				;;
 			OMedusa)
 				packages+=' python-lib2to3'
+				;;
+			LazyLibrarian)
+				packages+=' python-magic'
 				;;
 		esac
 		InstallIPKGBatch "$packages" 'Python, Git and others'
