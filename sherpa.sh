@@ -614,7 +614,7 @@ InstallExtras()
 	fi
 
 	InstallIPKGs
-	[[ $TARGET_APP = SABnzbdplus ]] && InstallPIPs
+	InstallPIPs
 
 	DebugFuncExit
 	return 0
@@ -673,9 +673,6 @@ InstallIPKGs()
 				;;
 			OMedusa)
 				packages+=' python-lib2to3'
-				;;
-			LazyLibrarian)
-				packages+=' python-magic'
 				;;
 		esac
 		InstallIPKGBatch "$packages" 'Python, Git and others'
@@ -754,22 +751,34 @@ InstallPIPs()
 	local result=0
 	local returncode=0
 	local op='PIP packages'
+	local pip_cmd=''
 	local log_pathfile="${WORKING_PATH}/$(echo "$op" | $TR_CMD " " "_").$INSTALL_LOG_FILE"
 
-	ShowProc "downloading & installing ($op)"
+	case $TARGET_APP in
+		SABnzbdplus)
+			pip_cmd='pip install setuptools --upgrade pip 2>&1 && pip install sabyenc==3.3.5 cheetah 2>&1'
+			;;
+		LazyLibrarian)
+			pip_cmd='pip install setuptools --upgrade pip 2>&1 && pip install python-magic 2>&1'
+			;;
+	esac
 
-	install_msgs=$(pip install setuptools --upgrade pip 2>&1 && pip install sabyenc==3.3.5 cheetah 2>&1)
-	result=$?
-	echo -e "${install_msgs}\nresult=[$result]" > "$log_pathfile"
+	if [[ -n $pip_cmd ]]; then
+		ShowProc "downloading & installing ($op)"
 
-	if [[ $result -eq 0 ]]; then
-		ShowDone "downloaded & installed ($op)"
-	else
-		ShowError "Download & install failed ($op) [$result]"
-		DebugErrorFile "$log_pathfile"
+		install_msgs=$(eval $pip_cmd)
+		result=$?
+		echo -e "${install_msgs}\nresult=[$result]" > "$log_pathfile"
 
-		errorcode=16
-		returncode=1
+		if [[ $result -eq 0 ]]; then
+			ShowDone "downloaded & installed ($op)"
+		else
+			ShowError "Download & install failed ($op) [$result]"
+			DebugErrorFile "$log_pathfile"
+
+			errorcode=16
+			returncode=1
+		fi
 	fi
 
 	DebugFuncExit
