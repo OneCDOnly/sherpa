@@ -752,34 +752,32 @@ InstallPIPs()
 	local result=0
 	local returncode=0
 	local op='PIP packages'
-	local pip_cmd=''
+	local pip_cmd='pip install setuptools'
 	local log_pathfile="${WORKING_PATH}/$(echo "$op" | $TR_CMD " " "_").$INSTALL_LOG_FILE"
+
+	ShowProc "downloading & installing ($op)"
 
 	case $TARGET_APP in
 		SABnzbdplus)
-			pip_cmd='pip install setuptools --upgrade pip 2>&1 && pip install sabyenc==3.3.5 cheetah 2>&1'
+			pip_cmd+=' && pip install sabyenc==3.3.5 cheetah'
 			;;
 		LazyLibrarian)
-			pip_cmd='pip install setuptools --upgrade pip 2>&1 && pip install python-magic 2>&1'
+			pip_cmd+=' && pip install python-magic'
 			;;
 	esac
 
-	if [[ -n $pip_cmd ]]; then
-		ShowProc "downloading & installing ($op)"
+	install_msgs=$({ eval $pip_cmd ;} 2>&1)
+	result=$?
+	echo -e "${install_msgs}\nresult=[$result]" > "$log_pathfile"
 
-		install_msgs=$(eval $pip_cmd)
-		result=$?
-		echo -e "${install_msgs}\nresult=[$result]" > "$log_pathfile"
+	if [[ $result -eq 0 ]]; then
+		ShowDone "downloaded & installed ($op)"
+	else
+		ShowError "Download & install failed ($op) [$result]"
+		DebugErrorFile "$log_pathfile"
 
-		if [[ $result -eq 0 ]]; then
-			ShowDone "downloaded & installed ($op)"
-		else
-			ShowError "Download & install failed ($op) [$result]"
-			DebugErrorFile "$log_pathfile"
-
-			errorcode=16
-			returncode=1
-		fi
+		errorcode=16
+		returncode=1
 	fi
 
 	DebugFuncExit
