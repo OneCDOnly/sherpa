@@ -63,10 +63,11 @@ UpdateQpkg()
 
     local returncode=0
     local msg=''
+    local exec_msgs=''
     SysFilePresent "$GIT_CMD" || { errorcode=1; return 1 ;}
 
     echo -n "* updating ($QPKG_NAME): " | tee -a "$LOG_PATHFILE"
-    messages="$({
+    exec_messages="$({
 
     [[ -d ${QPKG_GIT_PATH}/.git ]] || $GIT_CMD clone --depth 1 "$GIT_HTTPS_URL" "$QPKG_GIT_PATH" || $GIT_CMD clone --depth 1 "$GIT_HTTP_URL" "$QPKG_GIT_PATH"
     cd "$QPKG_GIT_PATH" && $GIT_CMD checkout master && $GIT_CMD pull && /bin/sync
@@ -77,10 +78,10 @@ UpdateQpkg()
     if [[ $result -eq 0 ]]; then
         msg='OK'
         echo -e "$msg" | tee -a "$LOG_PATHFILE"
-        echo -e "${messages}" >> "$LOG_PATHFILE"
+        echo -e "${exec_messages}" >> "$LOG_PATHFILE"
     else
         msg="failed!\nresult=[$result]"
-        echo -e "$msg\n${messages}" | tee -a "$LOG_PATHFILE"
+        echo -e "$msg\n${exec_messages}" | tee -a "$LOG_PATHFILE"
         returncode=1
     fi
 
@@ -93,22 +94,23 @@ StartQPKG()
 
     local returncode=0
     local msg=''
+    local exec_msgs=''
 
     [[ -e $STORED_PID_PATHFILE ]] && StopQPKG
 
     cd "$QPKG_GIT_PATH"
 
     echo -n "* starting ($QPKG_NAME): " | tee -a "$LOG_PATHFILE"
-    messages="$(${DAEMON} ${DAEMON_OPTS} &>/dev/null)"
+    exec_messages="$(${DAEMON} ${DAEMON_OPTS} 2>&1)"
     result=$?
 
     if [[ $result -eq 0 ]]; then
         msg='OK'
         echo -e "$msg" | tee -a "$LOG_PATHFILE"
-        echo -e "${messages}" >> "$LOG_PATHFILE"
+        echo -e "${exec_messages}" >> "$LOG_PATHFILE"
     else
         msg="failed!\nresult=[$result]"
-        echo -e "$msg\n${messages}" | tee -a "$LOG_PATHFILE"
+        echo -e "$msg\n${exec_messages}" | tee -a "$LOG_PATHFILE"
         returncode=1
     fi
 
