@@ -488,7 +488,8 @@ InstallEntware()
 		# copy all files from original [/opt] into new [/opt]
 		[[ -L $opt_path && -d $opt_backup_path ]] && cp --recursive "$opt_backup_path"/* --target-directory "$opt_path" && rm -r "$opt_backup_path"
 	else
-		! IsQPKGEnabled $PREF_ENTWARE && EnableQPKG $PREF_ENTWARE && ReloadProfile
+		! IsQPKGEnabled $PREF_ENTWARE && EnableQPKG $PREF_ENTWARE
+		ReloadProfile
 
 		[[ $STEPHANE_QPKG_ARCH != none ]] && ($OPKG_CMD list-installed | $GREP_CMD -q par2cmdline) && $OPKG_CMD remove par2cmdline > /dev/null 2>&1
 	fi
