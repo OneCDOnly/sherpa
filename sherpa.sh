@@ -85,7 +85,7 @@ Init()
 	{
 
 	local SCRIPT_FILE=sherpa.sh
-	local SCRIPT_VERSION=180630
+	local SCRIPT_VERSION=180701
 	debug=false
 	ResetErrorcode
 
@@ -751,7 +751,7 @@ InstallPIPs()
 	local install_msgs=''
 	local result=0
 	local returncode=0
-	local op='PIP packages'
+	local op='PIP modules'
 	local pip_cmd='pip install setuptools'
 	local log_pathfile="${WORKING_PATH}/$(echo "$op" | $TR_CMD " " "_").$INSTALL_LOG_FILE"
 
@@ -760,9 +760,6 @@ InstallPIPs()
 	case $TARGET_APP in
 		SABnzbdplus)
 			pip_cmd+=' && pip install sabyenc==3.3.5 cheetah'
-			;;
-		LazyLibrarian)
-			pip_cmd+=' && pip install python-magic'
 			;;
 	esac
 
