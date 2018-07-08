@@ -85,7 +85,7 @@ Init()
     {
 
     local SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=180701
+    local SCRIPT_VERSION=180709
     debug=false
     ResetErrorcode
 
@@ -753,7 +753,7 @@ InstallPIPs()
     local returncode=0
     local op='PIP modules'
     local pip_cmd='pip install setuptools'
-    local log_pathfile="${WORKING_PATH}/$(echo "$op" | $TR_CMD " " "_").$INSTALL_LOG_FILE"
+    local log_pathfile="${WORKING_PATH}/$(echo "$op" | $TR_CMD ' ' '_').$INSTALL_LOG_FILE"
 
     ShowProc "downloading & installing ($op)"
 
@@ -1359,8 +1359,8 @@ LoadQPKGFileDetails()
                 qpkg_md5='fe25532df893ef2227f5efa28c3f38af'
                 ;;
             SickRage)
-                qpkg_url="${OneCD_url_prefix}/SickRage/build/SickRage_180427.qpkg"
-                qpkg_md5='0fd4ffc7d00ad0f9a1e475e7a784d6df'
+                qpkg_url="${OneCD_url_prefix}/SickRage/build/SickRage_180709.qpkg"
+                qpkg_md5='465139467dfa7bf48cfeadf0d019c609'
                 ;;
             CouchPotato2)
                 qpkg_url="${OneCD_url_prefix}/CouchPotato2/build/CouchPotato2_180427.qpkg"

@@ -13,7 +13,7 @@ Init()
     STORED_PID_PATHFILE=/tmp/${QPKG_NAME}.pid
     local SETTINGS="--datadir $SETTINGS_PATH"
     local PIDS="--pidfile $STORED_PID_PATHFILE"
-    DAEMON_OPTS="$TARGET_SCRIPT --daemon $SETTINGS $PIDS"
+    DAEMON_OPTS="$TARGET_SCRIPT --daemon $SETTINGS --nolaunch $PIDS"
     LOG_PATHFILE=/var/log/${QPKG_NAME}.log
     DAEMON=/opt/bin/python2.7
     export PYTHONPATH=$DAEMON
@@ -72,9 +72,10 @@ PullGitRepo()
 
     local returncode=0
     local msg=''
+    local raw_tag=''
     local GIT_CMD=/opt/bin/git
 
-    [[ -z $1 ]] && returncode=1; [[ -z $2 ]] && returncode=1; [[ -z $3 ]] && returncode=1
+    [[ -z $1 || -z $2 || -z $3 ]] && returncode=1
     SysFilePresent "$GIT_CMD" || { errorcode=1; returncode=1 ;}
 
     local QPKG_GIT_PATH="$3/$1"
@@ -85,8 +86,17 @@ PullGitRepo()
 
         echo -n "* updating ($1): " | tee -a "$LOG_PATHFILE"
         exec_msgs="$({
-        [[ ! -d ${QPKG_GIT_PATH}/.git ]] && { $GIT_CMD clone -b master --depth 1 "$GIT_HTTPS_URL" "$QPKG_GIT_PATH" || $GIT_CMD clone -b master --depth 1 "$GIT_HTTP_URL" "$QPKG_GIT_PATH" ;}
-        cd "$QPKG_GIT_PATH" && $GIT_CMD pull
+        if [[ ! -d ${QPKG_GIT_PATH}/.git ]]; then
+            raw_tag=$($GIT_CMD ls-remote --tags "$GIT_HTTP_URL" | tail -n1 | sed 's|^.*tags/||;s|\^.*$||')
+            $GIT_CMD clone --no-checkout -b "$raw_tag" --depth 1 "$GIT_HTTP_URL" "$QPKG_GIT_PATH"
+            cd "$QPKG_GIT_PATH"
+            $GIT_CMD remote set-branches --add origin master
+            $GIT_CMD fetch
+            $GIT_CMD checkout master
+        else
+            cd "$QPKG_GIT_PATH"
+            $GIT_CMD pull
+        fi
         } 2>&1)"
         result=$?
 
