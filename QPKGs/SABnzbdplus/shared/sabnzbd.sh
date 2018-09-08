@@ -61,11 +61,6 @@ UpdateQpkg()
     {
 
     PullGitRepo $QPKG_NAME 'http://github.com/sabnzbd/sabnzbd.git' "$QPKG_PATH" && UpdateLanguages
-
-    # temporary patch to fix hostname whitelist in SABnzbd 2.3.3 - this has already been fixed with https://github.com/sabnzbd/sabnzbd/commit/ecc334360add7f8504b389377b51ab73cdb1d263
-    # remove this line once SABnzbd 2.3.4 is merged into 'master' branch
-    [[ -e ${QPKG_PATH}/SABnzbdplus/sabnzbd/__init__.py ]] && /bin/sed -i 's|cfg.host_whitelist.set(socket.gethostname())|cfg.host_whitelist.set(socket.gethostname().lower())|' "${QPKG_PATH}/SABnzbdplus/sabnzbd/__init__.py"
-
     PullGitRepo 'nzbToMedia' 'http://github.com/clinton-hall/nzbToMedia.git' "$NZBMEDIA_PATH"
 
     }

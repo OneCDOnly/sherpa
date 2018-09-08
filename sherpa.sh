@@ -85,7 +85,7 @@ Init()
     {
 
     local SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=180709
+    local SCRIPT_VERSION=180909
     debug=false
     ResetErrorcode
 
@@ -1355,8 +1355,8 @@ LoadQPKGFileDetails()
                 qpkg_md5='0c99cf2cf8ef61c7a18b42651a37da74'
                 ;;
             SABnzbdplus)
-                qpkg_url="${OneCD_url_prefix}/SABnzbdplus/build/SABnzbdplus_180427.qpkg"
-                qpkg_md5='fe25532df893ef2227f5efa28c3f38af'
+                qpkg_url="${OneCD_url_prefix}/SABnzbdplus/build/SABnzbdplus_180909.qpkg"
+                qpkg_md5='56dbba3f5fa53b25c70ff5f822499ddb'
                 ;;
             SickRage)
                 qpkg_url="${OneCD_url_prefix}/SickRage/build/SickRage_180709.qpkg"
