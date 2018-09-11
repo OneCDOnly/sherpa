@@ -85,7 +85,7 @@ Init()
     {
 
     local SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=180909
+    local SCRIPT_VERSION=180912
     debug=false
     ResetErrorcode
 
@@ -234,8 +234,8 @@ Init()
 
     DebugScript 'version' "$SCRIPT_VERSION"
     DebugInfoThinSeparator
-    DebugInfo 'Markers: (**) detected, (II) information, (WW) warning, (EE) error,'
-    DebugInfo ' (==) processing, (--) done, (>>) function entry, (<<) function exit,'
+    DebugInfo 'Markers: (**) detected, (II) information, (WW) warning, (LL) log file,'
+    DebugInfo ' (EE) error, (==) processing, (--) done, (>>) function entry, (<<) function exit,'
     DebugInfo ' (vv) variable name & value, ($1) positional argument value.'
     DebugInfoThinSeparator
     DebugNAS 'model' "$($GREP_CMD -v "^$" "$ISSUE_PATHFILE" | $SED_CMD 's|^Welcome to ||;s|(.*||')"
@@ -1946,6 +1946,13 @@ DebugErrorThinSeparator()
 
     }
 
+DebugLogThinSeparator()
+    {
+
+    DebugLog "$(printf '%0.s-' {1..69})"
+
+    }
+
 DebugScript()
     {
 
@@ -2037,6 +2044,13 @@ DebugError()
 
     }
 
+DebugLog()
+    {
+
+    DebugThis "(LL) $1"
+
+    }
+
 DebugVar()
     {
 
@@ -2060,15 +2074,15 @@ DebugErrorFile()
     [[ -z $1 || ! -e $1 ]] && return 1
     local linebuff=''
 
-    DebugErrorThinSeparator
-    DebugError "[$1]"
-    DebugErrorThinSeparator
+    DebugLogThinSeparator
+    DebugLog "[$1]"
+    DebugLogThinSeparator
 
     while read linebuff; do
-        DebugError "$linebuff"
+        DebugLog "$linebuff"
     done < "$1"
 
-    DebugErrorThinSeparator
+    DebugLogThinSeparator
 
     }
 
