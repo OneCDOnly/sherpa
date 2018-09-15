@@ -85,7 +85,7 @@ Init()
     {
 
     local SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=180912
+    local SCRIPT_VERSION=180915
     debug=false
     ResetErrorcode
 
@@ -235,7 +235,7 @@ Init()
     DebugScript 'version' "$SCRIPT_VERSION"
     DebugInfoThinSeparator
     DebugInfo 'Markers: (**) detected, (II) information, (WW) warning, (LL) log file,'
-    DebugInfo ' (EE) error, (==) processing, (--) done, (>>) function entry, (<<) function exit,'
+    DebugInfo ' (EE) error, (==) processing, (--) done, (>>) f entry, (<<) f exit,'
     DebugInfo ' (vv) variable name & value, ($1) positional argument value.'
     DebugInfoThinSeparator
     DebugNAS 'model' "$($GREP_CMD -v "^$" "$ISSUE_PATHFILE" | $SED_CMD 's|^Welcome to ||;s|(.*||')"
@@ -246,7 +246,7 @@ Init()
     DebugNAS 'system load' "$($UPTIME_CMD | $SED_CMD 's|.*load average: ||' | $AWK_CMD -F', ' '{print "1 min="$1 ", 5 min="$2 ", 15 min="$3}')"
     DebugNAS 'EUID' "$EUID"
     DebugNAS 'default volume' "$DEFAULT_VOLUME"
-    DebugNAS '$PATH' "${PATH:0:42}"
+    DebugNAS '$PATH' "${PATH:0:44}"
     DebugNAS '/opt' "$([[ -L '/opt' ]] && $READLINK_CMD '/opt' || echo "not present")"
     DebugNAS "$SHARE_DOWNLOAD_PATH" "$([[ -L $SHARE_DOWNLOAD_PATH ]] && $READLINK_CMD "$SHARE_DOWNLOAD_PATH" || echo "not present!")"
     DebugScript 'user arguments' "$USER_ARGS_RAW"
@@ -1928,28 +1928,28 @@ Convert2ISO()
 DebugInfoThickSeparator()
     {
 
-    DebugInfo "$(printf '%0.s=' {1..69})"
+    DebugInfo "$(printf '%0.s=' {1..70})"
 
     }
 
 DebugInfoThinSeparator()
     {
 
-    DebugInfo "$(printf '%0.s-' {1..69})"
+    DebugInfo "$(printf '%0.s-' {1..70})"
 
     }
 
 DebugErrorThinSeparator()
     {
 
-    DebugError "$(printf '%0.s-' {1..69})"
+    DebugError "$(printf '%0.s-' {1..70})"
 
     }
 
 DebugLogThinSeparator()
     {
 
-    DebugLog "$(printf '%0.s-' {1..69})"
+    DebugLog "$(printf '%0.s-' {1..70})"
 
     }
 
