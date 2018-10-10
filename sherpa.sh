@@ -52,8 +52,11 @@ ParseArgs()
             sab|sabnzbd|sabnzbdplus)
                 TARGET_APP=SABnzbdplus
                 ;;
-            sr|sick|sickrage)
-                TARGET_APP=SickRage
+            #sr|sick|sickrage)
+            #    TARGET_APP=SickRage
+            #    ;;
+            sc|sickc|sickchill)
+                TARGET_APP=SickChill
                 ;;
             cp|cp2|couch|couchpotato|couchpotato2|couchpotatoserver)
                 TARGET_APP=CouchPotato2
@@ -85,7 +88,7 @@ Init()
     {
 
     local SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=180915
+    local SCRIPT_VERSION=181011
     debug=false
     ResetErrorcode
 
@@ -376,7 +379,8 @@ DisplayHelp()
 
     echo -e "- Each application can be (re)installed by running $0 with the name of a single app as an argument.\n\nSome examples are:"
     echo "$0 SABnzbd"
-    echo "$0 SickRage"
+    #echo "$0 SickRage"
+    echo "$0 SickChill"
     echo "$0 CouchPotato2"
     echo "$0 LazyLibrarian"
     echo "$0 OMedusa"
@@ -630,11 +634,12 @@ InstallTargetApp()
     DebugFuncEntry
 
     case $TARGET_APP in
-        SABnzbdplus|SickRage|CouchPotato2|LazyLibrarian|OMedusa|Headphones)
+        SABnzbdplus|SickRage|SickChill|CouchPotato2|LazyLibrarian|OMedusa|Headphones)
             if IsQPKGEnabled $TARGET_APP; then
                 BackupConfig
                 UninstallQPKG $TARGET_APP
                 [[ $TARGET_APP = SABnzbdplus ]] && IsQPKGEnabled QSabNZBdPlus && UninstallQPKG QSabNZBdPlus
+                [[ $TARGET_APP = SickChill ]] && IsQPKGEnabled SickRage && UninstallQPKG SickRage
             fi
             ! IsQPKGInstalled $TARGET_APP && InstallQPKG $TARGET_APP && PauseHere && RestoreConfig
             [[ $errorcode -eq 0 ]] && DaemonCtl start "$package_init_pathfile"
@@ -937,6 +942,18 @@ BackupConfig()
             REINSTALL_FLAG=$package_is_installed
             [[ $package_is_installed = true ]] && BackupThisPackage
             ;;
+        SickChill)
+            if IsQPKGEnabled SickRage; then
+                LoadQPKGVars SickRage
+                DaemonCtl stop "$package_init_pathfile"
+            elif IsQPKGEnabled $TARGET_APP; then
+                LoadQPKGVars $TARGET_APP
+                DaemonCtl stop "$package_init_pathfile"
+            fi
+
+            REINSTALL_FLAG=$package_is_installed
+            [[ $package_is_installed = true ]] && BackupThisPackage
+            ;;
         CouchPotato2)
             if IsQPKGEnabled QCouchPotato; then
                 LoadQPKGVars QCouchPotato
@@ -950,7 +967,7 @@ BackupConfig()
             [[ $package_is_installed = true ]] && BackupThisPackage
             ;;
         LazyLibrarian|SickRage|OMedusa|Headphones)
-            if IsQPKGEnabled $TARGET_APP; then
+			if IsQPKGEnabled $TARGET_APP; then
                 LoadQPKGVars $TARGET_APP
                 DaemonCtl stop "$package_init_pathfile"
             fi
@@ -1002,7 +1019,7 @@ ConvertSettings()
                 fi
             fi
             ;;
-        LazyLibrarian|SickRage|OMedusa|Headphones)
+        LazyLibrarian|SickRage|SickChill|OMedusa|Headphones)
             # do nothing - don't need to convert from older versions for these QPKGs as sherpa is the only installer for them.
             ;;
         CouchPotato2)
@@ -1300,7 +1317,7 @@ LoadQPKGVars()
                     returncode=1
                 fi
                 ;;
-            Entware|Entware-3x|Entware-ng|LazyLibrarian|CouchPotato2|QCouchPotato|SickRage|OMedusa|Headphones)
+            Entware|Entware-3x|Entware-ng|LazyLibrarian|CouchPotato2|QCouchPotato|SickRage|SickChill|OMedusa|Headphones)
                 package_installed_path=$($GETCFG_CMD $package_name Install_Path -f $QPKG_CONFIG_PATHFILE)
                 result=$?
 
@@ -1358,9 +1375,13 @@ LoadQPKGFileDetails()
                 qpkg_url="${OneCD_url_prefix}/SABnzbdplus/build/SABnzbdplus_180909.qpkg"
                 qpkg_md5='56dbba3f5fa53b25c70ff5f822499ddb'
                 ;;
-            SickRage)
-                qpkg_url="${OneCD_url_prefix}/SickRage/build/SickRage_180709.qpkg"
-                qpkg_md5='465139467dfa7bf48cfeadf0d019c609'
+            #SickRage)
+            #    qpkg_url="${OneCD_url_prefix}/SickRage/build/SickRage_180709.qpkg"
+            #    qpkg_md5='465139467dfa7bf48cfeadf0d019c609'
+            #    ;;
+            SickChill)
+                qpkg_url="${OneCD_url_prefix}/SickChill/build/SickChill_181011.qpkg"
+                qpkg_md5='6c536cd3eb24645d79fad0f9f671fc42'
                 ;;
             CouchPotato2)
                 qpkg_url="${OneCD_url_prefix}/CouchPotato2/build/CouchPotato2_180427.qpkg"
