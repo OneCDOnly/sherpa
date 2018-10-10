@@ -129,6 +129,7 @@ Init()
     WC_CMD=/usr/bin/wc
     WGET_CMD=/usr/bin/wget
     WHICH_CMD=/usr/bin/which
+    ZIP_CMD=/usr/local/sbin/zip
 
     FIND_CMD=/opt/bin/find
     OPKG_CMD=/opt/bin/opkg
@@ -180,6 +181,7 @@ Init()
     IsSysFilePresent $UPTIME_CMD || return
     IsSysFilePresent $WC_CMD || return
     IsSysFilePresent $WGET_CMD || return
+    IsSysFilePresent $ZIP_CMD || return
 
     local DEFAULT_SHARE_DOWNLOAD_PATH=/share/Download
     local DEFAULT_SHARE_PUBLIC_PATH=/share/Public
@@ -634,14 +636,11 @@ InstallTargetApp()
     DebugFuncEntry
 
     case $TARGET_APP in
-        SABnzbdplus|SickRage|SickChill|CouchPotato2|LazyLibrarian|OMedusa|Headphones)
-            if IsQPKGEnabled $TARGET_APP; then
-                BackupConfig
-                UninstallQPKG $TARGET_APP
-                [[ $TARGET_APP = SABnzbdplus ]] && IsQPKGEnabled QSabNZBdPlus && UninstallQPKG QSabNZBdPlus
-                [[ $TARGET_APP = SickChill ]] && IsQPKGEnabled SickRage && UninstallQPKG SickRage
-            fi
-            ! IsQPKGInstalled $TARGET_APP && InstallQPKG $TARGET_APP && PauseHere && RestoreConfig
+        SABnzbdplus|SickChill|CouchPotato2|LazyLibrarian|OMedusa|Headphones)
+            IsQPKGEnabled $TARGET_APP && BackupConfig && UninstallQPKG $TARGET_APP
+			[[ $TARGET_APP = SABnzbdplus ]] && IsQPKGEnabled QSabNZBdPlus && BackupConfig && UninstallQPKG QSabNZBdPlus
+			[[ $TARGET_APP = SickChill ]] && IsQPKGEnabled SickRage && BackupConfig && UninstallQPKG SickRage
+			! IsQPKGInstalled $TARGET_APP && InstallQPKG $TARGET_APP && PauseHere && RestoreConfig
             [[ $errorcode -eq 0 ]] && DaemonCtl start "$package_init_pathfile"
             ;;
         *)
@@ -899,9 +898,12 @@ BackupThisPackage()
 
         if [[ ! -d ${BACKUP_PATH}/config ]]; then
             mv "$package_config_path" "$BACKUP_PATH"
-            result=$?
+            mvresult=$?
 
-            if [[ $result -eq 0 ]]; then
+            $ZIP_CMD "$package_config_path"/config.backup.zip "$BACKUP_PATH"/*
+            zipresult=$?
+
+            if [[ $mvresult -eq 0 && $zipresult -eq 0 ]]; then
                 ShowDone "created '$TARGET_APP' settings backup"
             else
                 ShowError "Could not create settings backup of ($package_config_path) [$result]"
@@ -1062,7 +1064,7 @@ RestoreConfig()
         LoadQPKGVars $TARGET_APP
 
         case $TARGET_APP in
-            SABnzbdplus|LazyLibrarian|SickRage|CouchPotato2|OMedusa|Headphones)
+            SABnzbdplus|LazyLibrarian|SickChill|CouchPotato2|OMedusa|Headphones)
                 if [[ -d $SETTINGS_BACKUP_PATH ]]; then
                     DaemonCtl stop "$package_init_pathfile"
 
@@ -1317,7 +1319,7 @@ LoadQPKGVars()
                     returncode=1
                 fi
                 ;;
-            Entware|Entware-3x|Entware-ng|LazyLibrarian|CouchPotato2|QCouchPotato|SickRage|SickChill|OMedusa|Headphones)
+            Entware|Entware-3x|Entware-ng|LazyLibrarian|CouchPotato2|QCouchPotato|OMedusa|Headphones|SickChill|SickRage)
                 package_installed_path=$($GETCFG_CMD $package_name Install_Path -f $QPKG_CONFIG_PATHFILE)
                 result=$?
 
