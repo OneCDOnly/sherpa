@@ -43,7 +43,7 @@ cd /share/Public
 3) Download & extract the archive file (copy and paste at the command line):
 
 ```
-curl -O https://raw.githubusercontent.com/onecdonly/sherpa/master/sherpa.sh && chmod +x sherpa.sh
+curl -ksO https://raw.githubusercontent.com/onecdonly/sherpa/master/sherpa.sh && chmod +x sherpa.sh
 ```
 
 4) Then, to (re)install an app, run **sherpa.sh** with the name of your required app as an argument.
@@ -57,7 +57,7 @@ So, to reinstall SABnzbd:
 Or:
 
 ```
-./sherpa.sh SickRage
+./sherpa.sh SickChill
 
 ./sherpa.sh CouchPotato
 
@@ -95,7 +95,9 @@ Or run the installer in debug-mode to see it realtime. e.g.:
 
 * The information contained therein was constructed from the efforts of many community members, both here and on the [SABnzbd forum](https://forums.sabnzbd.org/). Thank you to everyone who has contributed.
 
-* If you have an existing SABnzbd (like Clinton Hall's **SABnzbdplus** or Stephane's **QSabNZBdPlus** package and you choose to install the SABnzbd package via sherpa, your existing settings, queue & history will be converted to suit this new package, and the original SAB will be uninstalled.
+* Existing installations of Clinton Hall's **SABnzbdplus** or QNAP_Stephane's **QSabNZBdPlus** will be replaced with **SABnzbdplus**. Configuration will be retained.
+
+* Existing active installations of **SickRage** will be replaced with **SickChill**. Configuration will be retained.
 
 * Each of these packages continues the idea of 'self-update-on-launch' that was used in Clinton Hall's wrapper scripts. These scripts are my own version and require a few packages to be installed via Entware (this is what **sherpa** does). Updating an app is easy - just restart the app via its init script. Each app is updated from GitHub and from that application's current 'master' branch.
 
