@@ -52,9 +52,6 @@ ParseArgs()
             sab|sabnzbd|sabnzbdplus)
                 TARGET_APP=SABnzbdplus
                 ;;
-            #sr|sick|sickrage)
-            #    TARGET_APP=SickRage
-            #    ;;
             sc|sickc|sickchill)
                 TARGET_APP=SickChill
                 ;;
@@ -381,7 +378,6 @@ DisplayHelp()
 
     echo -e "- Each application can be (re)installed by running $0 with the name of a single app as an argument.\n\nSome examples are:"
     echo "$0 SABnzbd"
-    #echo "$0 SickRage"
     echo "$0 SickChill"
     echo "$0 CouchPotato2"
     echo "$0 LazyLibrarian"
@@ -638,9 +634,9 @@ InstallTargetApp()
     case $TARGET_APP in
         SABnzbdplus|SickChill|CouchPotato2|LazyLibrarian|OMedusa|Headphones)
             IsQPKGEnabled $TARGET_APP && BackupConfig && UninstallQPKG $TARGET_APP
-			[[ $TARGET_APP = SABnzbdplus ]] && IsQPKGEnabled QSabNZBdPlus && BackupConfig && UninstallQPKG QSabNZBdPlus
-			[[ $TARGET_APP = SickChill ]] && IsQPKGEnabled SickRage && BackupConfig && UninstallQPKG SickRage
-			! IsQPKGInstalled $TARGET_APP && InstallQPKG $TARGET_APP && PauseHere && RestoreConfig
+            [[ $TARGET_APP = SABnzbdplus ]] && IsQPKGEnabled QSabNZBdPlus && BackupConfig && UninstallQPKG QSabNZBdPlus
+            [[ $TARGET_APP = SickChill ]] && IsQPKGEnabled SickRage && BackupConfig && UninstallQPKG SickRage
+            ! IsQPKGInstalled $TARGET_APP && InstallQPKG $TARGET_APP && PauseHere && RestoreConfig
             [[ $errorcode -eq 0 ]] && DaemonCtl start "$package_init_pathfile"
             ;;
         *)
@@ -973,7 +969,7 @@ BackupConfig()
             [[ $package_is_installed = true ]] && BackupThisPackage
             ;;
         LazyLibrarian|SickRage|OMedusa|Headphones)
-			if IsQPKGEnabled $TARGET_APP; then
+            if IsQPKGEnabled $TARGET_APP; then
                 LoadQPKGVars $TARGET_APP
                 DaemonCtl stop "$package_init_pathfile"
             fi
