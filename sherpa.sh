@@ -222,6 +222,7 @@ Init()
     previous_length=0
     previous_msg=''
     REINSTALL_FLAG=false
+    OLD_APP=''
     [[ ${FIRMWARE_VERSION//.} -lt 426 ]] && curl_cmd+=' --insecure'
     local result=0
 
@@ -935,6 +936,7 @@ BackupConfig()
         SABnzbdplus)
             if IsQPKGEnabled QSabNZBdPlus; then
                 LoadQPKGVars QSabNZBdPlus
+                OLD_APP=QSabNZBdPlus
                 DaemonCtl stop "$package_init_pathfile"
             elif IsQPKGEnabled $TARGET_APP; then
                 LoadQPKGVars $TARGET_APP
@@ -947,6 +949,7 @@ BackupConfig()
         SickChill)
             if IsQPKGEnabled SickRage; then
                 LoadQPKGVars SickRage
+                OLD_APP=SickRage
                 DaemonCtl stop "$package_init_pathfile"
             elif IsQPKGEnabled $TARGET_APP; then
                 LoadQPKGVars $TARGET_APP
@@ -959,6 +962,7 @@ BackupConfig()
         CouchPotato2)
             if IsQPKGEnabled QCouchPotato; then
                 LoadQPKGVars QCouchPotato
+                OLD_APP=QCouchPotato
                 DaemonCtl stop "$package_init_pathfile"
             elif IsQPKGEnabled $TARGET_APP; then
                 LoadQPKGVars $TARGET_APP
@@ -1627,8 +1631,14 @@ DisplayResult()
 
     if [[ $errorcode -eq 0 ]]; then
         [[ $debug = true ]] && emoticon=':DD' || { emoticon=''; echo ;}
-        ShowDone "'$TARGET_APP' has been successfully ${RE}installed! $emoticon"
+
+        if [[ -n $OLD_APP ]]; then
+            ShowDone "'$OLD_APP' has been successfully replaced with '$TARGET_APP'! $emoticon"
+        else
+            ShowDone "'$TARGET_APP' has been successfully ${RE}installed! $emoticon"
+        fi
         #ShowInfo "It should now be accessible on your LAN @ $(ColourTextUnderlinedBlue "http${SL}://$($HOSTNAME_CMD -i | $TR_CMD -d ' '):$package_port")"
+
     elif [[ $errorcode -gt 1 ]]; then       # don't display 'failed' when only showing help
         [[ $debug = true ]] && emoticon=':S ' || { emoticon=''; echo ;}
         ShowError "'$TARGET_APP' ${RE}install failed! ${emoticon}[$errorcode]"
