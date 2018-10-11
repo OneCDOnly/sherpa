@@ -881,6 +881,8 @@ BackupThisPackage()
     local result=0
 
     DebugVar package_config_path
+    backup_pathfile="${BACKUP_PATH}/config/sherpa.config.backup.zip"
+    DebugVar backup_pathfile
 
     if [[ -d $package_config_path ]]; then
         if [[ ! -d ${BACKUP_PATH}/config ]]; then
@@ -900,7 +902,9 @@ BackupThisPackage()
             mv "$package_config_path" "$BACKUP_PATH"
             mvresult=$?
 
-            $ZIP_CMD -q "${BACKUP_PATH}/config/sherpa.config.backup.zip" "${BACKUP_PATH}/config/"*
+            [[ -e $backup_pathfile ]] && rm "$backup_pathfile"
+
+            $ZIP_CMD -q "$backup_pathfile" "${BACKUP_PATH}/config/"*
             zipresult=$?
 
             if [[ $mvresult -eq 0 && $zipresult -eq 0 ]]; then
