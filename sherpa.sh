@@ -1021,7 +1021,11 @@ ConvertSettings()
                 fi
             fi
             ;;
-        LazyLibrarian|SickRage|SickChill|OMedusa|Headphones)
+        SickChill)
+            # temporary patch - ensure user's config file is patched with the new SickChill URL
+            [[ -f $SETTINGS_BACKUP_PATHFILE ]] && setcfg General git_remote_url 'http://github.com/sickchill/sickchill.git' -f  "$SETTINGS_BACKUP_PATHFILE"
+            ;;
+        LazyLibrarian|OMedusa|Headphones)
             # do nothing - don't need to convert from older versions for these QPKGs as sherpa is the only installer for them.
             ;;
         CouchPotato2)
@@ -1383,7 +1387,7 @@ LoadQPKGFileDetails()
             #    ;;
             SickChill)
                 qpkg_url="${OneCD_url_prefix}/SickChill/build/SickChill_181011.qpkg"
-                qpkg_md5='6c536cd3eb24645d79fad0f9f671fc42'
+                qpkg_md5='552d3c1fc5ddd832fc8f70327fbcb11f'
                 ;;
             CouchPotato2)
                 qpkg_url="${OneCD_url_prefix}/CouchPotato2/build/CouchPotato2_180427.qpkg"

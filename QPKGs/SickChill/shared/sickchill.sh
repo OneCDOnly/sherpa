@@ -87,8 +87,8 @@ PullGitRepo()
         echo -n "* updating ($1): " | tee -a "$LOG_PATHFILE"
         exec_msgs="$({
         if [[ ! -d ${QPKG_GIT_PATH}/.git ]]; then
-            #raw_tag=$($GIT_CMD ls-remote --tags "$GIT_HTTP_URL" | tail -n1 | sed 's|^.*tags/||;s|\^.*$||')
-            $GIT_CMD clone --no-checkout -b master --depth 1 "$GIT_HTTP_URL" "$QPKG_GIT_PATH"
+            raw_tag=$($GIT_CMD ls-remote --tags "$GIT_HTTP_URL" | tail -n1 | sed 's|^.*tags/||;s|\^.*$||')
+            $GIT_CMD clone -b "$raw_tag" --depth 1 "$GIT_HTTP_URL" "$QPKG_GIT_PATH"
             cd "$QPKG_GIT_PATH"
             $GIT_CMD remote set-branches --add origin master
             $GIT_CMD fetch
