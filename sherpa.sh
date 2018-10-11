@@ -900,7 +900,7 @@ BackupThisPackage()
             mv "$package_config_path" "$BACKUP_PATH"
             mvresult=$?
 
-            $ZIP_CMD "$package_config_path"/config.backup.zip "$BACKUP_PATH"/*
+            $ZIP_CMD -q "${BACKUP_PATH}/config/sherpa.config.backup.zip" "${BACKUP_PATH}/config/"*
             zipresult=$?
 
             if [[ $mvresult -eq 0 && $zipresult -eq 0 ]]; then
