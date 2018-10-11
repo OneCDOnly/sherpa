@@ -2056,7 +2056,7 @@ DebugDone()
 DebugDetected()
     {
 
-    DebugThis "(**) $(printf "%-7s %17s %-s\n" "$1:" "$2:" "$3")"
+    DebugThis "(**) $(printf "%-6s: %17s: %-s\n" "$1" "$2" "$3")"
 
     }
 
