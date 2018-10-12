@@ -85,7 +85,7 @@ Init()
     {
 
     local SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=181011
+    local SCRIPT_VERSION=181013
     debug=false
     ResetErrorcode
 
@@ -972,7 +972,7 @@ BackupConfig()
             REINSTALL_FLAG=$package_is_installed
             [[ $package_is_installed = true ]] && BackupThisPackage
             ;;
-        LazyLibrarian|SickRage|OMedusa|Headphones)
+        LazyLibrarian|OMedusa|Headphones)
             if IsQPKGEnabled $TARGET_APP; then
                 LoadQPKGVars $TARGET_APP
                 DaemonCtl stop "$package_init_pathfile"
@@ -1027,7 +1027,7 @@ ConvertSettings()
             ;;
         SickChill)
             # temporary patch - ensure user's config file is patched with the new SickChill URL
-            [[ -f $SETTINGS_BACKUP_PATHFILE ]] && setcfg General git_remote_url 'http://github.com/sickchill/sickchill.git' -f  "$SETTINGS_BACKUP_PATHFILE"
+            [[ -f $SETTINGS_BACKUP_PATHFILE ]] && $SETCFG_CMD General git_remote_url 'http://github.com/sickchill/sickchill.git' -f  "$SETTINGS_BACKUP_PATHFILE"
             ;;
         LazyLibrarian|OMedusa|Headphones)
             # do nothing - don't need to convert from older versions for these QPKGs as sherpa is the only installer for them.
@@ -1385,10 +1385,6 @@ LoadQPKGFileDetails()
                 qpkg_url="${OneCD_url_prefix}/SABnzbdplus/build/SABnzbdplus_180909.qpkg"
                 qpkg_md5='56dbba3f5fa53b25c70ff5f822499ddb'
                 ;;
-            #SickRage)
-            #    qpkg_url="${OneCD_url_prefix}/SickRage/build/SickRage_180709.qpkg"
-            #    qpkg_md5='465139467dfa7bf48cfeadf0d019c609'
-            #    ;;
             SickChill)
                 qpkg_url="${OneCD_url_prefix}/SickChill/build/SickChill_181011.qpkg"
                 qpkg_md5='552d3c1fc5ddd832fc8f70327fbcb11f'
