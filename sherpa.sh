@@ -118,6 +118,7 @@ Init()
     DU_CMD=/usr/bin/du
     HEAD_CMD=/usr/bin/head
     READLINK_CMD=/usr/bin/readlink
+    SERVICE_CMD=/sbin/qpkg_service
     SORT_CMD=/usr/bin/sort
     TAIL_CMD=/usr/bin/tail
     TEE_CMD=/usr/bin/tee
@@ -171,6 +172,7 @@ Init()
     IsSysFilePresent $DU_CMD || return
     IsSysFilePresent $HEAD_CMD || return
     IsSysFilePresent $READLINK_CMD || return
+    IsSysFilePresent $SERVICE_CMD || return
     IsSysFilePresent $SORT_CMD || return
     IsSysFilePresent $TAIL_CMD || return
     IsSysFilePresent $TEE_CMD || return
@@ -644,7 +646,7 @@ InstallTargetApp()
             IsQPKGEnabled $TARGET_APP && BackupConfig && UninstallQPKG $TARGET_APP
             [[ $TARGET_APP = SABnzbdplus ]] && IsQPKGEnabled QSabNZBdPlus && BackupConfig && UninstallQPKG QSabNZBdPlus
             [[ $TARGET_APP = SickChill ]] && IsQPKGEnabled SickRage && BackupConfig && UninstallQPKG SickRage
-            [[ $TARGET_APP = SickChill ]] && IsQPKGEnabled QSickRage && BackupConfig && UninstallQPKG QSickRage
+            [[ $TARGET_APP = SickChill ]] && IsQPKGEnabled QSickRage && BackupConfig && $SERVICE_CMD stop QSickRage && $SERVICE_CMD disable QSickRage
             ! IsQPKGInstalled $TARGET_APP && InstallQPKG $TARGET_APP && PauseHere && RestoreConfig
             [[ $errorcode -eq 0 ]] && DaemonCtl start "$package_init_pathfile"
             ;;
