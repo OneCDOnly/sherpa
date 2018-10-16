@@ -85,7 +85,7 @@ Init()
     {
 
     local SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=181014
+    local SCRIPT_VERSION=181016
     debug=false
     ResetErrorcode
 
@@ -644,6 +644,7 @@ InstallTargetApp()
             IsQPKGEnabled $TARGET_APP && BackupConfig && UninstallQPKG $TARGET_APP
             [[ $TARGET_APP = SABnzbdplus ]] && IsQPKGEnabled QSabNZBdPlus && BackupConfig && UninstallQPKG QSabNZBdPlus
             [[ $TARGET_APP = SickChill ]] && IsQPKGEnabled SickRage && BackupConfig && UninstallQPKG SickRage
+            [[ $TARGET_APP = SickChill ]] && IsQPKGEnabled QSickRage && BackupConfig && UninstallQPKG QSickRage
             ! IsQPKGInstalled $TARGET_APP && InstallQPKG $TARGET_APP && PauseHere && RestoreConfig
             [[ $errorcode -eq 0 ]] && DaemonCtl start "$package_init_pathfile"
             ;;
@@ -954,7 +955,11 @@ BackupConfig()
             [[ $package_is_installed = true ]] && BackupThisPackage
             ;;
         SickChill)
-            if IsQPKGEnabled SickRage; then
+            if IsQPKGEnabled QSickRage; then
+                LoadQPKGVars QSickRage
+                OLD_APP=QSickRage
+                DaemonCtl stop "$package_init_pathfile"
+            elif IsQPKGEnabled SickRage; then
                 LoadQPKGVars SickRage
                 OLD_APP=SickRage
                 DaemonCtl stop "$package_init_pathfile"
@@ -1033,7 +1038,6 @@ ConvertSettings()
             fi
             ;;
         SickChill)
-            # temporary patch - ensure user's config file is patched with the new SickChill URL
             [[ -f $SETTINGS_BACKUP_PATHFILE ]] && $SETCFG_CMD General git_remote_url 'http://github.com/sickchill/sickchill.git' -f  "$SETTINGS_BACKUP_PATHFILE"
             ;;
         LazyLibrarian|OMedusa|Headphones)
@@ -1292,69 +1296,44 @@ LoadQPKGVars()
         package_api=''
         sab_chartranslator_pathfile=''
 
-        case $package_name in
-            SABnzbdplus|QSabNZBdPlus)
-                package_installed_path=$($GETCFG_CMD $package_name Install_Path -f $QPKG_CONFIG_PATHFILE)
-                result=$?
+        package_installed_path=$($GETCFG_CMD $package_name Install_Path -f $QPKG_CONFIG_PATHFILE)
+        result=$?
 
-                if [[ $result -eq 0 ]]; then
-                    package_init_pathfile=$($GETCFG_CMD $package_name Shell -f $QPKG_CONFIG_PATHFILE)
+        if [[ $result -eq 0 ]]; then
+            package_init_pathfile=$($GETCFG_CMD $package_name Shell -f $QPKG_CONFIG_PATHFILE)
 
-                    if [[ $package_name = SABnzbdplus ]]; then
-                        if [[ -d ${package_installed_path}/Config ]]; then
-                            package_config_path=${package_installed_path}/Config
-                        else
-                            package_config_path=${package_installed_path}/config
-                        fi
+            if [[ -d ${package_installed_path}/SAB_CONFIG ]]; then
+                package_config_path=${package_installed_path}/SAB_CONFIG
+            elif [[ -d ${package_installed_path}/CONFIG ]]; then
+                package_config_path=${package_installed_path}/CONFIG
+            elif [[ -d ${package_installed_path}/Config ]]; then
+                package_config_path=${package_installed_path}/Config
+            else
+                package_config_path=${package_installed_path}/config
+            fi
 
-                    elif [[ $package_name = QSabNZBdPlus ]]; then
-                        package_config_path=${package_installed_path}/SAB_CONFIG
-                    fi
+            if [[ -f ${package_config_path}/sabnzbd.ini ]]; then
+                package_settings_pathfile=${package_config_path}/sabnzbd.ini
+            else
+                package_settings_pathfile=${package_config_path}/config.ini
+            fi
 
-                    if [[ -f ${package_config_path}/sabnzbd.ini ]]; then
-                        package_settings_pathfile=${package_config_path}/sabnzbd.ini
-                    else
-                        package_settings_pathfile=${package_config_path}/config.ini
-                    fi
-
-                    if [[ -e $SETTINGS_BACKUP_PATHFILE ]]; then
-                        if ($GREP_CMD -q '^enable_https = 1' "$SETTINGS_BACKUP_PATHFILE"); then
-                            package_port=$($GREP_CMD '^https_port = ' "$SETTINGS_BACKUP_PATHFILE" | $HEAD_CMD -n1 | $CUT_CMD -f3 -d' ')
-                            secure_web_login=true
-                        else
-                            package_port=$($GREP_CMD '^port = ' "$SETTINGS_BACKUP_PATHFILE" | $HEAD_CMD -n1 | $CUT_CMD -f3 -d' ')
-                        fi
-                    else
-                        package_port=$($GETCFG_CMD $package_name Web_Port -f $QPKG_CONFIG_PATHFILE)
-                    fi
-
-                    [[ -e $package_settings_pathfile ]] && package_api=$($GREP_CMD -e "^api_key" "$package_settings_pathfile" | $SED_CMD 's|api_key = ||')
-                    sab_chartranslator_pathfile=$package_installed_path/scripts/CharTranslator.py
+            if [[ -e $SETTINGS_BACKUP_PATHFILE ]]; then
+                if [[ $($GETCFG_CMD misc enable_https -d 0 -f "$SETTINGS_BACKUP_PATHFILE") -eq 1 ]]; then
+                    package_port=$($GETCFG_CMD misc https_port -f "$SETTINGS_BACKUP_PATHFILE")
+                    secure_web_login=true
                 else
-                    returncode=1
+                    package_port=$($GETCFG_CMD misc port -f "$SETTINGS_BACKUP_PATHFILE")
                 fi
-                ;;
-            Entware|Entware-3x|Entware-ng|LazyLibrarian|CouchPotato2|QCouchPotato|OMedusa|Headphones|SickChill|SickRage)
-                package_installed_path=$($GETCFG_CMD $package_name Install_Path -f $QPKG_CONFIG_PATHFILE)
-                result=$?
+            else
+                package_port=$($GETCFG_CMD $package_name Web_Port -f $QPKG_CONFIG_PATHFILE)
+            fi
 
-                if [[ $result -eq 0 ]]; then
-                    package_init_pathfile=$($GETCFG_CMD $package_name Shell -f $QPKG_CONFIG_PATHFILE)
-
-                    if [[ -d ${package_installed_path}/Config ]]; then
-                        package_config_path=${package_installed_path}/Config
-                    else
-                        package_config_path=${package_installed_path}/config
-                    fi
-                else
-                    returncode=1
-                fi
-                ;;
-            *)
-                ShowError "Can't load details of specified app [$package_name] as it's unknown"
-                ;;
-
-        esac
+            [[ -e $package_settings_pathfile ]] && package_api=$($GETCFG_CMD api_key -f "$package_settings_pathfile")
+            sab_chartranslator_pathfile=$package_installed_path/scripts/CharTranslator.py
+        else
+            returncode=1
+        fi
     fi
 
     return $returncode
