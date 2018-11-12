@@ -85,7 +85,7 @@ Init()
     {
 
     local SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=181016
+    local SCRIPT_VERSION=181112
     debug=false
     ResetErrorcode
 
