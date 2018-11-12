@@ -21,9 +21,9 @@ Init()
     export PATH=/opt/bin:/opt/sbin:${PATH}
 
     if [[ -z $LANG ]]; then
-        export LANG='en_US.UTF-8'
-        export LC_ALL='en_US.UTF-8'
-        export LC_CTYPE='en_US.UTF-8'
+        export LANG=en_US.UTF-8
+        export LC_ALL=en_US.UTF-8
+        export LC_CTYPE=en_US.UTF-8
     fi
 
     WaitForEntware

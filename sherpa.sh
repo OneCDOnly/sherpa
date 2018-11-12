@@ -687,6 +687,9 @@ InstallIPKGs()
             OMedusa)
                 packages+=' python-lib2to3'
                 ;;
+            LazyLibrarian)
+                packages+=' python-urllib3'
+                ;;
         esac
         InstallIPKGBatch "$packages" 'Python, Git and others'
     else
@@ -1384,7 +1387,7 @@ LoadQPKGFileDetails()
                 ;;
             LazyLibrarian)
                 qpkg_url="${OneCD_url_prefix}/LazyLibrarian/build/LazyLibrarian_181112.qpkg"
-                qpkg_md5='dfd72c293ca1564993afdab749bc89e8'
+                qpkg_md5='8f3aae17aba2cbdef5d06b432d3d8015'
                 ;;
             OMedusa)
                 qpkg_url="${OneCD_url_prefix}/OMedusa/build/OMedusa_180427.qpkg"

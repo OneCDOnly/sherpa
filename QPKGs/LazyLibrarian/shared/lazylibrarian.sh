@@ -8,18 +8,17 @@ Init()
     local TARGET_SCRIPT=LazyLibrarian.py
     GIT_HTTP_URL='https://gitlab.com/LazyLibrarian/LazyLibrarian.git'
 
-    QPKG_PATH="$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)"
-    STORED_PID_PATHFILE="/tmp/${QPKG_NAME}.pid"
-    DATA_PATH="$QPKG_PATH/config"
+    QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
+    STORED_PID_PATHFILE=/tmp/${QPKG_NAME}.pid
+    DATA_PATH=${QPKG_PATH}/config
 
-    # generic
     DAEMON_OPTS="$TARGET_SCRIPT -d --pidfile $STORED_PID_PATHFILE --datadir $DATA_PATH"
     QPKG_GIT_PATH="${QPKG_PATH}/${QPKG_NAME}"
-    LOG_PATHFILE="/var/log/${QPKG_NAME}.log"
+    LOG_PATHFILE=/var/log/${QPKG_NAME}.log
     DAEMON=/opt/bin/python2.7
     GIT_CMD=/opt/bin/git
     export PYTHONPATH=$DAEMON
-    export PATH="/opt/bin:/opt/sbin:${PATH}"
+    export PATH=/opt/bin:/opt/sbin:${PATH}
 
     if [[ -z $LANG ]]; then
         export LANG=en_US.UTF-8
