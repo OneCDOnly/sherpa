@@ -647,6 +647,7 @@ InstallTargetApp()
             [[ $TARGET_APP = SABnzbdplus ]] && IsQPKGEnabled QSabNZBdPlus && BackupConfig && UninstallQPKG QSabNZBdPlus
             [[ $TARGET_APP = SickChill ]] && IsQPKGEnabled SickRage && BackupConfig && UninstallQPKG SickRage
             [[ $TARGET_APP = SickChill ]] && IsQPKGEnabled QSickRage && BackupConfig && $SERVICE_CMD stop QSickRage && $SERVICE_CMD disable QSickRage
+
             ! IsQPKGInstalled $TARGET_APP && InstallQPKG $TARGET_APP && PauseHere && RestoreConfig
             [[ $errorcode -eq 0 ]] && DaemonCtl start "$package_init_pathfile"
             ;;
@@ -1382,8 +1383,8 @@ LoadQPKGFileDetails()
                 qpkg_md5='395ffdb9c25d0bc07eb24987cc722cdb'
                 ;;
             LazyLibrarian)
-                qpkg_url="${OneCD_url_prefix}/LazyLibrarian/build/LazyLibrarian_180630.qpkg"
-                qpkg_md5='a5f29c2f2d5e5d313104d5e518a60be1'
+                qpkg_url="${OneCD_url_prefix}/LazyLibrarian/build/LazyLibrarian_181112.qpkg"
+                qpkg_md5='dfd72c293ca1564993afdab749bc89e8'
                 ;;
             OMedusa)
                 qpkg_url="${OneCD_url_prefix}/OMedusa/build/OMedusa_180427.qpkg"

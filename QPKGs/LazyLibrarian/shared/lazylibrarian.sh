@@ -6,7 +6,7 @@ Init()
     # package specific
     QPKG_NAME=LazyLibrarian
     local TARGET_SCRIPT=LazyLibrarian.py
-    GIT_HTTP_URL='http://github.com/DobyTang/LazyLibrarian.git'
+    GIT_HTTP_URL='https://gitlab.com/LazyLibrarian/LazyLibrarian.git'
 
     QPKG_PATH="$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)"
     STORED_PID_PATHFILE="/tmp/${QPKG_NAME}.pid"
@@ -17,7 +17,6 @@ Init()
     QPKG_GIT_PATH="${QPKG_PATH}/${QPKG_NAME}"
     LOG_PATHFILE="/var/log/${QPKG_NAME}.log"
     DAEMON=/opt/bin/python2.7
-    GIT_HTTPS_URL=${GIT_HTTP_URL/http/git}
     GIT_CMD=/opt/bin/git
     export PYTHONPATH=$DAEMON
     export PATH="/opt/bin:/opt/sbin:${PATH}"
@@ -69,7 +68,7 @@ UpdateQpkg()
     echo -n "* updating ($QPKG_NAME): " | tee -a "$LOG_PATHFILE"
     exec_messages="$({
 
-    [[ -d ${QPKG_GIT_PATH}/.git ]] || $GIT_CMD clone --depth 1 "$GIT_HTTPS_URL" "$QPKG_GIT_PATH" || $GIT_CMD clone --depth 1 "$GIT_HTTP_URL" "$QPKG_GIT_PATH"
+    [[ -d ${QPKG_GIT_PATH}/.git ]] || $GIT_CMD clone --depth 1 "$GIT_HTTP_URL" "$QPKG_GIT_PATH"
     cd "$QPKG_GIT_PATH" && $GIT_CMD checkout master && $GIT_CMD pull && /bin/sync
 
     } 2>&1)"
