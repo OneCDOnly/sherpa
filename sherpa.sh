@@ -251,7 +251,7 @@ Init()
     DebugNAS 'system load' "$($UPTIME_CMD | $SED_CMD 's|.*load average: ||' | $AWK_CMD -F', ' '{print "1 min="$1 ", 5 min="$2 ", 15 min="$3}')"
     DebugNAS 'EUID' "$EUID"
     DebugNAS 'default volume' "$DEFAULT_VOLUME"
-    DebugNAS '$PATH' "${PATH:0:44}"
+    DebugNAS '$PATH' "${PATH:0:43}"
     DebugNAS '/opt' "$([[ -L '/opt' ]] && $READLINK_CMD '/opt' || echo "not present")"
     DebugNAS "$SHARE_DOWNLOAD_PATH" "$([[ -L $SHARE_DOWNLOAD_PATH ]] && $READLINK_CMD "$SHARE_DOWNLOAD_PATH" || echo "not present!")"
     DebugScript 'user arguments' "$USER_ARGS_RAW"
