@@ -85,7 +85,7 @@ Init()
     {
 
     local SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=181112
+    local SCRIPT_VERSION=181116
     debug=false
     ResetErrorcode
 
@@ -676,21 +676,23 @@ InstallIPKGs()
         UpdateEntware
         packages='python python-pip git git-http nano less'
 
-        case $TARGET_APP in
-            SABnzbdplus)
-                packages+=' python-pyopenssl python-dev gcc unrar p7zip coreutils-nice ionice ffprobe'
-                [[ $STEPHANE_QPKG_ARCH = none ]] && packages+=' par2cmdline'
-                ;;
-            CouchPotato2)
-                packages+=' python-pyopenssl python-lxml'
-                ;;
-            OMedusa)
-                packages+=' python-lib2to3'
-                ;;
-            LazyLibrarian)
-                packages+=' python-urllib3'
-                ;;
-        esac
+        if (IsQPKGInstalled SABnzbdplus) || [[ $TARGET_APP = SABnzbdplus ]]; then
+            packages+=' python-pyopenssl python-dev gcc unrar p7zip coreutils-nice ionice ffprobe'
+            [[ $STEPHANE_QPKG_ARCH = none ]] && packages+=' par2cmdline'
+        fi
+
+        if (IsQPKGInstalled CouchPotato2) || [[ $TARGET_APP = CouchPotato2 ]]; then
+            packages+=' python-pyopenssl python-lxml'
+        fi
+
+        if (IsQPKGInstalled OMedusa) || [[ $TARGET_APP = OMedusa ]]; then
+            packages+=' python-lib2to3'
+        fi
+
+        if (IsQPKGInstalled LazyLibrarian) || [[ $TARGET_APP = LazyLibrarian ]]; then
+            packages+=' python-urllib3'
+        fi
+
         InstallIPKGBatch "$packages" 'Python, Git and others'
     else
         ShowError "IPKG download path [$IPKG_DL_PATH] does not exist"
