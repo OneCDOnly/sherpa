@@ -85,7 +85,7 @@ Init()
     {
 
     local SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=181116
+    local SCRIPT_VERSION=181128
     debug=false
     ResetErrorcode
 
@@ -129,7 +129,7 @@ Init()
     WHICH_CMD=/usr/bin/which
     ZIP_CMD=/usr/local/sbin/zip
 
-    FIND_CMD=/opt/bin/find
+    find_cmd=/opt/bin/find      # this will change depending on QTS version
     OPKG_CMD=/opt/bin/opkg
 
     # paths and files
@@ -226,6 +226,7 @@ Init()
     REINSTALL_FLAG=false
     OLD_APP=''
     [[ ${FIRMWARE_VERSION//.} -lt 426 ]] && curl_cmd+=' --insecure'
+    [[ ${FIRMWARE_VERSION//.} -ge 435 ]] && find_cmd=/usr/bin/find      # 4.3.5 has a much better BusyBox 'find'
     local result=0
 
     ParseArgs
@@ -561,10 +562,10 @@ UpdateEntware()
     local log_pathfile="${WORKING_PATH}/entware-update.log"
 
     IsSysFilePresent $OPKG_CMD || return
-    IsSysFilePresent $FIND_CMD || return
+    IsSysFilePresent $find_cmd || return
 
     # if Entware package list was updated only recently, don't run another update
-    [[ -e $FIND_CMD && -e $package_list_file ]] && result=$($FIND_CMD "$package_list_file" -mmin +$package_list_age) || result='new install'
+    [[ -e $find_cmd && -e $package_list_file ]] && result=$($find_cmd "$package_list_file" -mmin +$package_list_age) || result='new install'
 
     if [[ -n $result ]]; then
         ShowProc "updating Entware package list"
@@ -1747,12 +1748,12 @@ _MonitorDirSize_()
     local current_bytes=0
     local percent=''
 
-    IsSysFilePresent $FIND_CMD || return
+    IsSysFilePresent $find_cmd || return
 
     InitProgress
 
     while [[ -e $monitor_flag ]]; do
-        current_bytes=$($FIND_CMD $target_dir -type f -name '*.ipk' -exec $DU_CMD --bytes --total --apparent-size {} + 2> /dev/null | $GREP_CMD total$ | $CUT_CMD -f1)
+        current_bytes=$($find_cmd $target_dir -type f -name '*.ipk' -exec $DU_CMD --bytes --total --apparent-size {} + 2> /dev/null | $GREP_CMD total$ | $CUT_CMD -f1)
         [[ -z $current_bytes ]] && current_bytes=0
 
         if [[ $current_bytes -ne $last_bytes ]]; then
