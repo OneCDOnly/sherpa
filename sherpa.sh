@@ -1846,7 +1846,7 @@ IsQPKGEnabled()
     package_is_enabled=false
 
     [[ -z $1 ]] && return 1
-    [[ $($GETCFG_CMD "$1" Enable -u -f "$QPKG_CONFIG_PATHFILE") = 'TRUE' ]]
+    [[ $($GETCFG_CMD "$1" Enable -u -f "$QPKG_CONFIG_PATHFILE") = 'FALSE' ]] && return 1
 
     package_is_enabled=true
 
