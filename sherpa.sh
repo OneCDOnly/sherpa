@@ -960,8 +960,8 @@ BackupConfig()
                 DaemonCtl stop "$package_init_pathfile"
             fi
 
-            REINSTALL_FLAG=$package_is_installed
-            [[ $package_is_installed = true ]] && BackupThisPackage
+            REINSTALL_FLAG=$package_is_enabled
+            [[ $package_is_enabled = true ]] && BackupThisPackage
             ;;
         SickChill)
             if IsQPKGEnabled QSickRage; then
@@ -977,8 +977,8 @@ BackupConfig()
                 DaemonCtl stop "$package_init_pathfile"
             fi
 
-            REINSTALL_FLAG=$package_is_installed
-            [[ $package_is_installed = true ]] && BackupThisPackage
+            REINSTALL_FLAG=$package_is_enabled
+            [[ $package_is_enabled = true ]] && BackupThisPackage
             ;;
         CouchPotato2)
             if IsQPKGEnabled QCouchPotato; then
@@ -990,8 +990,8 @@ BackupConfig()
                 DaemonCtl stop "$package_init_pathfile"
             fi
 
-            REINSTALL_FLAG=$package_is_installed
-            [[ $package_is_installed = true ]] && BackupThisPackage
+            REINSTALL_FLAG=$package_is_enabled
+            [[ $package_is_enabled = true ]] && BackupThisPackage
             ;;
         LazyLibrarian|OMedusa|Headphones)
             if IsQPKGEnabled $TARGET_APP; then
@@ -999,8 +999,8 @@ BackupConfig()
                 DaemonCtl stop "$package_init_pathfile"
             fi
 
-            REINSTALL_FLAG=$package_is_installed
-            [[ $package_is_installed = true ]] && BackupThisPackage
+            REINSTALL_FLAG=$package_is_enabled
+            [[ $package_is_enabled = true ]] && BackupThisPackage
             ;;
         *)
             ShowError "Can't backup specified app '$TARGET_APP' - unknown!"
@@ -1840,9 +1840,15 @@ IsQPKGEnabled()
     {
 
     # $1 = package name to check
+    # output:
+    #   $package_is_enabled = true / false
+
+    package_is_enabled=false
 
     [[ -z $1 ]] && return 1
     [[ $($GETCFG_CMD "$1" Enable -u -f "$QPKG_CONFIG_PATHFILE") = 'TRUE' ]]
+
+    package_is_enabled=true
 
     }
 
