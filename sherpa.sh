@@ -913,7 +913,7 @@ BackupThisPackage()
         fi
 
         if [[ ! -d ${BACKUP_PATH}/config ]]; then
-            mv "$package_config_path" "$BACKUP_PATH"
+            mv "$package_config_path" "$BACKUP_PATH/config/"
             mvresult=$?
 
             [[ -e $backup_pathfile ]] && rm "$backup_pathfile"
