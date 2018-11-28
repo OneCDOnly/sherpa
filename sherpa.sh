@@ -85,7 +85,7 @@ Init()
     {
 
     local SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=181128
+    local SCRIPT_VERSION=181128.1
     debug=false
     ResetErrorcode
 
@@ -325,7 +325,7 @@ Init()
 
     if [[ $errorcode -eq 0 ]]; then
         if [[ $TARGET_APP = SABnzbdplus ]] && IsQPKGEnabled QSabNZBdPlus && IsQPKGEnabled SABnzbdplus; then
-            ShowError "Both 'SABnzbdplus' and 'QSabNZBdPlus' are installed. This is an unsupported configuration. Please manually uninstall the unused one via the QNAP App Center then re-run this installer."
+            ShowError "Both 'SABnzbdplus' and 'QSabNZBdPlus' are enabled. This is an unsupported configuration. Please disable the unused one via the QNAP App Center then re-run this installer."
             REINSTALL_FLAG=true
             errorcode=8
         fi
@@ -333,7 +333,7 @@ Init()
 
     if [[ $errorcode -eq 0 ]]; then
         if [[ $TARGET_APP = SickChill ]] && IsQPKGEnabled SickRage && IsQPKGEnabled SickChill; then
-            ShowError "Both 'SickChill' and 'SickRage' are installed. This is an unsupported configuration. Please manually uninstall the unused one via the QNAP App Center then re-run this installer."
+            ShowError "Both 'SickChill' and 'SickRage' are enabled. This is an unsupported configuration. Please disable the unused one via the QNAP App Center then re-run this installer."
             REINSTALL_FLAG=true
             errorcode=9
         fi
@@ -1826,36 +1826,50 @@ IsQPKGInstalled()
     #   $1 = package name to check
     # output:
     #   $package_is_installed = true / false
+    #   $? = 0 (true) or 1 (false)
 
     package_is_installed=false
 
     [[ -z $1 ]] && return 1
-    [[ $($GETCFG_CMD "$1" RC_Number -d 0 -f "$QPKG_CONFIG_PATHFILE") -eq 0 ]] && return 1
 
-    package_is_installed=true
+    if [[ $($GETCFG_CMD "$1" RC_Number -d 0 -f "$QPKG_CONFIG_PATHFILE") -eq 0 ]]; then
+        return 1
+    else
+        package_is_installed=true
+        return 0
+    fi
 
     }
 
 IsQPKGEnabled()
     {
 
-    # $1 = package name to check
+    # input:
+    #   $1 = package name to check
     # output:
     #   $package_is_enabled = true / false
+    #   $? = 0 (true) or 1 (false)
 
     package_is_enabled=false
 
     [[ -z $1 ]] && return 1
-    [[ $($GETCFG_CMD "$1" Enable -u -f "$QPKG_CONFIG_PATHFILE") = 'FALSE' ]] && return 1
 
-    package_is_enabled=true
+    if [[ $($GETCFG_CMD "$1" Enable -u -f "$QPKG_CONFIG_PATHFILE") != 'TRUE' ]]; then
+        return 1
+    else
+        package_is_enabled=true
+        return 0
+    fi
 
     }
 
 IsIPKGInstalled()
     {
 
-    # $1 = package name to check
+    # input:
+    #   $1 = package name to check
+    # output:
+    #   $? = 0 (true) or 1 (false)
 
     [[ -z $1 ]] && return 1
 
@@ -1872,7 +1886,10 @@ IsIPKGInstalled()
 IsSysFilePresent()
     {
 
-    # $1 = pathfile to check
+    # input:
+    #   $1 = pathfile to check
+    # output:
+    #   $? = 0 (true) or 1 (false)
 
     [[ -z $1 ]] && return 1
 
@@ -1889,7 +1906,10 @@ IsSysFilePresent()
 IsSysSharePresent()
     {
 
-    # $1 = symlink path to check
+    # input:
+    #   $1 = symlink path to check
+    # output:
+    #   $? = 0 (true) or 1 (false)
 
     [[ -z $1 ]] && return 1
 
