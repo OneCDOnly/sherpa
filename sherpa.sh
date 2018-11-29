@@ -1361,7 +1361,6 @@ LoadQPKGFileDetails()
     local returncode=0
     local target_file=''
     local OneCD_url_prefix='https://raw.githubusercontent.com/onecdonly/sherpa/master/QPKGs'
-    local Stephane_url_prefix='http://www.qoolbox.fr'
 
     if [[ -z $1 ]]; then
         DebugError 'QPKG name unspecified'
@@ -1403,28 +1402,36 @@ LoadQPKGFileDetails()
             Par2cmdline-MT)
                 case $STEPHANE_QPKG_ARCH in
                     x86)
-                        qpkg_url="${Stephane_url_prefix}/Par2cmdline-MT_0.6.14-MT_x86.qpkg.zip"
-                        qpkg_md5='531832a39576e399f646890cc18969bb'
+                        qpkg_url="${OneCD_url_prefix}/Par2cmdline-MT/Par2cmdline-MT_0.6.14-MT_x86.qpkg"
+                        qpkg_md5='e5157c10b32c71079129640877eaa11e'
                         ;;
                     x64)
-                        qpkg_url="${Stephane_url_prefix}/Par2cmdline-MT_0.6.14-MT_x86_64.qpkg.zip"
-                        qpkg_md5='f3b3dd496289510ec0383cf083a50f8e'
+                        qpkg_url="${OneCD_url_prefix}/Par2cmdline-MT/Par2cmdline-MT_0.6.14-MT_x86_64.qpkg"
+                        qpkg_md5='b77346b9cceae3a155ee477eca3757a2'
                         ;;
                     x41)
-                        qpkg_url="${Stephane_url_prefix}/Par2cmdline-MT_0.6.14-MT_arm-x41.qpkg.zip"
-                        qpkg_md5='1701b188115758c151f19956388b90cb'
+                        qpkg_url="${OneCD_url_prefix}/Par2cmdline-MT/Par2cmdline-MT_0.6.14-MT_arm-x41.qpkg"
+                        qpkg_md5='52b8e93704d0d3515fa94f189763b89d'
+                        ;;
+                    a64)
+                        qpkg_url="${OneCD_url_prefix}/Par2cmdline-MT/Par2cmdline-MT_0.6.14-MT_arm-64.qpkg"
+                        qpkg_md5='9fcc39160c958a094e963236aca5e08d'
                         ;;
                 esac
                 ;;
             Par2)
                 case $STEPHANE_QPKG_ARCH in
                     x64)
-                        qpkg_url="${Stephane_url_prefix}/Par2_0.7.4.0_x86_64.qpkg.zip"
-                        qpkg_md5='660882474ab00d4793a674d4b48f89be'
+                        qpkg_url="${OneCD_url_prefix}/Par2/Par2_0.7.4.0_x86_64.qpkg"
+                        qpkg_md5='f3a183e1f25831db6beac5fa2853689d'
                         ;;
                     x41)
-                        qpkg_url="${Stephane_url_prefix}/Par2_0.7.4.0_arm-x41.qpkg.zip"
-                        qpkg_md5='9c0c9d3e8512f403f183856fb80091a4'
+                        qpkg_url="${OneCD_url_prefix}/Par2/Par2_0.7.4.0_arm-x41.qpkg"
+                        qpkg_md5='e1684e903f93f9a45b6aea4a388b43fb'
+                        ;;
+                    x31)
+                        qpkg_url="${OneCD_url_prefix}/Par2/Par2_0.7.4.0_arm-x31.qpkg"
+                        qpkg_md5='95c54a62c0a10bdcd66b945d627cac9e'
                         ;;
                 esac
                 ;;
