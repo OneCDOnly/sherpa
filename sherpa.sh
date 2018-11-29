@@ -85,7 +85,7 @@ Init()
     {
 
     local SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=181128.1
+    local SCRIPT_VERSION=181130
     debug=false
     ResetErrorcode
 
@@ -895,11 +895,11 @@ BackupThisPackage()
     local result=0
 
     DebugVar package_config_path
-    backup_pathfile="${BACKUP_PATH}/config/sherpa.config.backup.zip"
+    backup_pathfile="${SETTINGS_BACKUP_PATH}/sherpa.config.backup.zip"
     DebugVar backup_pathfile
 
     if [[ -d $package_config_path ]]; then
-        if [[ ! -d ${BACKUP_PATH}/config ]]; then
+        if [[ ! -d $SETTINGS_BACKUP_PATH ]]; then
             $MKDIR_CMD -p "$BACKUP_PATH" 2> /dev/null
             result=$?
 
@@ -912,13 +912,13 @@ BackupThisPackage()
             fi
         fi
 
-        if [[ ! -d ${BACKUP_PATH}/config ]]; then
+        if [[ ! -d $SETTINGS_BACKUP_PATH ]]; then
             mv "$package_config_path" "$BACKUP_PATH"
             mvresult=$?
 
             [[ -e $backup_pathfile ]] && rm "$backup_pathfile"
 
-            $ZIP_CMD -q "$backup_pathfile" "${BACKUP_PATH}/config/"*
+            $ZIP_CMD -q "$backup_pathfile" "${SETTINGS_BACKUP_PATH}/"*
             zipresult=$?
 
             if [[ $mvresult -eq 0 && $zipresult -eq 0 ]]; then
