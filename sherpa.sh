@@ -85,7 +85,7 @@ Init()
     {
 
     local SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=181130
+    local SCRIPT_VERSION=181202
     debug=false
     ResetErrorcode
 
@@ -1231,8 +1231,14 @@ CalcStephaneQPKGArch()
         i686)
             STEPHANE_QPKG_ARCH=x86
             ;;
-        armv7l)
+        armv7h)
             STEPHANE_QPKG_ARCH=x41
+            ;;
+        armv7l)
+            STEPHANE_QPKG_ARCH=x31
+            ;;
+        aarch64)
+            STEPHANE_QPKG_ARCH=a64
             ;;
         *)
             STEPHANE_QPKG_ARCH=none
