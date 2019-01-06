@@ -262,6 +262,7 @@ Init()
     DebugScript 'target app' "$TARGET_APP"
     DebugInfoThinSeparator
 
+    [[ -z $TARGET_APP ]] && errorcode=1
     [[ $errorcode -eq 1 ]] && DisplayHelp
 
     CalcQPKGArch
