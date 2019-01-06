@@ -8,7 +8,7 @@ A BASH script to install various Usenet apps into a QNAP NAS.
 
 To install additional apps, run it again.
 
-After running the installer, you'll have several new packages. Any existing installation of Entware will be used automatically. If Entware is not installed, a version appropriate to your NAS will be installed.
+If the installer script is successful, your requested package and any required packages will be installed. Any existing installation of Entware will be used automatically. If Entware is not installed, a version appropriate to your NAS will be installed.
 
 
 ## Current status
@@ -17,11 +17,6 @@ STABLE
 
 Initial installation of each app is OK. Re-installation of each is also OK except as shown in Testing.
 
-TESTING
-
-I've recently added a basic download progress display for IPKGs. Please advise if you see it doing anything weird. Screenshots are very helpful.
-
-Headphones installer/reinstaller is very new, so I'll be tweaking it for a while to integrate it with SABnzbd.
 
 
 ## Known issues
@@ -30,7 +25,7 @@ Headphones installer/reinstaller is very new, so I'll be tweaking it for a while
 
 2) **sherpa** is incompatible with existing installs of Optware-NG as various required packages cannot be installed through it.
 
-## Installation
+## Usage
 
 1) [SSH](https://wiki.qnap.com/wiki/How_to_SSH_into_your_QNAP_device) / [PuTTY](http://www.putty.org/) into your NAS as the 'admin' user,
 
@@ -107,6 +102,6 @@ Or run the installer in debug-mode to see it realtime. e.g.:
 
 * For those looking to setup a new NAS, suggest you start with SABnzbd+ first, then install a TV show finder like SickChill or Medusa. This will allow SickRage to be properly configured with the API details from SABnzbd.
 
-* Medusa is named 'OMedusa' in the App Center to avoid conflict with the existing Medusa package available in the Qnapclub Store.
+* **Medusa** will appear as 'OMedusa' in your App Center to avoid conflict with the existing **Medusa** package available in the Qnapclub Store.
 
-* Watcher3 is named 'OWatcher3' in the App Center to avoid conflict with the existing Watcher3 package available in the Qnapclub Store.
+* **Watcher3** will appear as 'OWatcher3' in your App Center to avoid conflict with the existing **Watcher3** package available in the Qnapclub Store.
