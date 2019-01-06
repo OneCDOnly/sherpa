@@ -2,7 +2,7 @@
 ###############################################################################
 # sherpa.sh
 #
-# (C)opyright 2017-2018 OneCD - one.cd.only@gmail.com
+# (C)opyright 2017-2019 OneCD - one.cd.only@gmail.com
 #
 # So, blame OneCD if it all goes horribly wrong. ;)
 #
@@ -61,8 +61,11 @@ ParseArgs()
             ll|lazy|lazylibrarian)
                 TARGET_APP=LazyLibrarian
                 ;;
-            med|medusa|omedusa)
+            med|omed|medusa|omedusa)
                 TARGET_APP=OMedusa
+                ;;
+            wat|watcher|owatcher|watcher3|owatcher3)
+                TARGET_APP=OWatcher3
                 ;;
             hp|head|phones|headphones)
                 TARGET_APP=Headphones
@@ -85,7 +88,7 @@ Init()
     {
 
     local SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=181202
+    local SCRIPT_VERSION=190106
     debug=false
     ResetErrorcode
 
@@ -393,6 +396,7 @@ DisplayHelp()
     echo "$0 CouchPotato2"
     echo "$0 LazyLibrarian"
     echo "$0 OMedusa"
+    echo "$0 OWatcher3"
     echo "$0 Headphones"
 
     DebugFuncExit
@@ -643,7 +647,7 @@ InstallTargetApp()
     DebugFuncEntry
 
     case $TARGET_APP in
-        SABnzbdplus|SickChill|CouchPotato2|LazyLibrarian|OMedusa|Headphones)
+        SABnzbdplus|SickChill|CouchPotato2|LazyLibrarian|OMedusa|OWatcher3|Headphones)
             IsQPKGEnabled $TARGET_APP && BackupConfig && UninstallQPKG $TARGET_APP
             [[ $TARGET_APP = SABnzbdplus ]] && IsQPKGEnabled QSabNZBdPlus && BackupConfig && UninstallQPKG QSabNZBdPlus
             [[ $TARGET_APP = SickChill ]] && IsQPKGEnabled SickRage && BackupConfig && UninstallQPKG SickRage
@@ -675,23 +679,27 @@ InstallIPKGs()
 
     if [[ -n $IPKG_DL_PATH && -d $IPKG_DL_PATH ]]; then
         UpdateEntware
-        packages='python python-pip git git-http nano less'
+        packages='git git-http nano less'
 
         if (IsQPKGInstalled SABnzbdplus) || [[ $TARGET_APP = SABnzbdplus ]]; then
-            packages+=' python-pyopenssl python-dev gcc unrar p7zip coreutils-nice ionice ffprobe'
+            packages+=' python python-pip python-pyopenssl python-dev gcc unrar p7zip coreutils-nice ionice ffprobe'
             [[ $STEPHANE_QPKG_ARCH = none ]] && packages+=' par2cmdline'
         fi
 
         if (IsQPKGInstalled CouchPotato2) || [[ $TARGET_APP = CouchPotato2 ]]; then
-            packages+=' python-pyopenssl python-lxml'
+            packages+=' python python-pip python-pyopenssl python-lxml'
+        fi
+
+        if (IsQPKGInstalled OWatcher3) || [[ $TARGET_APP = OWatcher3 ]]; then
+            packages+=' python3'
         fi
 
         if (IsQPKGInstalled OMedusa) || [[ $TARGET_APP = OMedusa ]]; then
-            packages+=' python-lib2to3'
+            packages+=' python python-pip python-lib2to3'
         fi
 
         if (IsQPKGInstalled LazyLibrarian) || [[ $TARGET_APP = LazyLibrarian ]]; then
-            packages+=' python-urllib3'
+            packages+=' python python-pip python-urllib3'
         fi
 
         InstallIPKGBatch "$packages" 'Python, Git and others'
@@ -993,7 +1001,7 @@ BackupConfig()
             REINSTALL_FLAG=$package_is_enabled
             [[ $package_is_enabled = true ]] && BackupThisPackage
             ;;
-        LazyLibrarian|OMedusa|Headphones)
+        LazyLibrarian|OMedusa|OWatcher3|Headphones)
             if IsQPKGEnabled $TARGET_APP; then
                 LoadQPKGVars $TARGET_APP
                 DaemonCtl stop "$package_init_pathfile"
@@ -1049,7 +1057,7 @@ ConvertSettings()
         SickChill)
             [[ -f $SETTINGS_BACKUP_PATHFILE ]] && $SETCFG_CMD General git_remote_url 'http://github.com/sickchill/sickchill.git' -f  "$SETTINGS_BACKUP_PATHFILE"
             ;;
-        LazyLibrarian|OMedusa|Headphones)
+        LazyLibrarian|OMedusa|OWatcher3|Headphones)
             # do nothing - don't need to convert from older versions for these QPKGs as sherpa is the only installer for them.
             ;;
         CouchPotato2)
@@ -1092,7 +1100,7 @@ RestoreConfig()
         LoadQPKGVars $TARGET_APP
 
         case $TARGET_APP in
-            SABnzbdplus|LazyLibrarian|SickChill|CouchPotato2|OMedusa|Headphones)
+            SABnzbdplus|LazyLibrarian|SickChill|CouchPotato2|OMedusa|OWatcher3|Headphones)
                 if [[ -d $SETTINGS_BACKUP_PATH ]]; then
                     DaemonCtl stop "$package_init_pathfile"
 
@@ -1400,6 +1408,10 @@ LoadQPKGFileDetails()
             OMedusa)
                 qpkg_url="${OneCD_url_prefix}/OMedusa/build/OMedusa_180427.qpkg"
                 qpkg_md5='ec3b193c7931a100067cfaa334caf883'
+                ;;
+            OWatcher3)
+                qpkg_url="${OneCD_url_prefix}/OWatcher3/build/OWatcher3_190106.qpkg"
+                qpkg_md5='45145a005a8b0622790a735087c2699f'
                 ;;
             Headphones)
                 qpkg_url="${OneCD_url_prefix}/Headphones/build/Headphones_180429.qpkg"
