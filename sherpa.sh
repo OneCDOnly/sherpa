@@ -134,6 +134,8 @@ Init()
 
     find_cmd=/opt/bin/find      # this will change depending on QTS version
     OPKG_CMD=/opt/bin/opkg
+    PIP_CMD=/opt/bin/pip
+    PIP3_CMD=/opt/bin/pip3
 
     # paths and files
     QPKG_CONFIG_PATHFILE=/etc/config/qpkg.conf
@@ -692,7 +694,7 @@ InstallIPKGs()
         fi
 
         if (IsQPKGInstalled OWatcher3) || [[ $TARGET_APP = OWatcher3 ]]; then
-            packages+=' python3'
+            packages+=' python3 python3-pip'
         fi
 
         if (IsQPKGInstalled OMedusa) || [[ $TARGET_APP = OMedusa ]]; then
@@ -779,29 +781,31 @@ InstallPIPs()
     local result=0
     local returncode=0
     local op='PIP modules'
-    local pip_cmd='pip install setuptools'
+    local pip_install='pip install setuptools'
     local log_pathfile="${WORKING_PATH}/${op// /_}.$INSTALL_LOG_FILE"
 
-    ShowProc "downloading & installing ($op)"
+    if [[ -f $PIP_CMD ]]; then
+        ShowProc "downloading & installing ($op)"
 
-    case $TARGET_APP in
-        SABnzbdplus)
-            pip_cmd+=' && pip install sabyenc==3.3.5 cheetah'
-            ;;
-    esac
+        case $TARGET_APP in
+            SABnzbdplus)
+                pip_install+=' && pip install sabyenc==3.3.5 cheetah'
+                ;;
+        esac
 
-    install_msgs=$({ eval $pip_cmd ;} 2>&1)
-    result=$?
-    echo -e "${install_msgs}\nresult=[$result]" > "$log_pathfile"
+        install_msgs=$({ eval $pip_install ;} 2>&1)
+        result=$?
+        echo -e "${install_msgs}\nresult=[$result]" > "$log_pathfile"
 
-    if [[ $result -eq 0 ]]; then
-        ShowDone "downloaded & installed ($op)"
-    else
-        ShowError "Download & install failed ($op) [$result]"
-        DebugErrorFile "$log_pathfile"
+        if [[ $result -eq 0 ]]; then
+            ShowDone "downloaded & installed ($op)"
+        else
+            ShowError "Download & install failed ($op) [$result]"
+            DebugErrorFile "$log_pathfile"
 
-        errorcode=17
-        returncode=1
+            errorcode=17
+            returncode=1
+        fi
     fi
 
     DebugFuncExit
