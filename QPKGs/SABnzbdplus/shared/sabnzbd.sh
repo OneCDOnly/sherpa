@@ -155,7 +155,7 @@ StartQPKG()
     local msg=''
     local exec_msgs=''
 
-    QPKGIsActive && return 1
+    QPKGIsActive && return
 
     UpdateQpkg
 
@@ -184,7 +184,7 @@ StopQPKG()
 
     local maxwait=100
 
-    ! QPKGIsActive && return 1
+    ! QPKGIsActive && return
 
     PID=$(<"$STORED_PID_PATHFILE"); acc=0
 

@@ -1396,7 +1396,7 @@ LoadQPKGFileDetails()
                 ;;
             SABnzbdplus)
                 qpkg_url="${OneCD_url_prefix}/SABnzbdplus/build/SABnzbdplus_190109.qpkg"
-                qpkg_md5='bf9818310ecec5ca8b2b2598d9ec622f'
+                qpkg_md5='370dcef60a04a356772707b9902b1874'
                 ;;
             SickChill)
                 qpkg_url="${OneCD_url_prefix}/SickChill/build/SickChill_181011.qpkg"
