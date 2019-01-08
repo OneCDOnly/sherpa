@@ -682,7 +682,7 @@ InstallIPKGs()
 
     if [[ -n $IPKG_DL_PATH && -d $IPKG_DL_PATH ]]; then
         UpdateEntware
-        packages='git git-http nano less'
+        packages='git git-http nano less ca-certificates'
 
         if (IsQPKGInstalled SABnzbdplus) || [[ $TARGET_APP = SABnzbdplus ]]; then
             packages+=' python python-pip python-pyopenssl python-dev gcc unrar p7zip coreutils-nice ionice ffprobe'
