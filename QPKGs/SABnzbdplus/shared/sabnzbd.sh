@@ -43,7 +43,14 @@ QPKGIsActive()
     local active=false
     local msg=''
 
-    [[ -f $STORED_PID_PATHFILE ]] && { PID=$(cat "$STORED_PID_PATHFILE"); [[ -d /proc/$PID ]] && active=true ;}
+    if [[ -f $STORED_PID_PATHFILE ]]; then
+        PID=$(<"$STORED_PID_PATHFILE")
+        if [[ -d /proc/$PID ]]; then
+            active=true
+        else
+            rm "$STORED_PID_PATHFILE"
+        fi
+    fi
 
     if [[ $active = true ]]; then
         msg="= ($QPKG_NAME) is active"
@@ -148,7 +155,9 @@ StartQPKG()
     local msg=''
     local exec_msgs=''
 
-    [[ -e $STORED_PID_PATHFILE ]] && StopQPKG
+    QPKGIsActive && return 1
+
+    UpdateQpkg
 
     cd "${QPKG_PATH}/${QPKG_NAME}"
 
@@ -175,7 +184,9 @@ StopQPKG()
 
     local maxwait=100
 
-    PID=$(cat "$STORED_PID_PATHFILE"); acc=0
+    ! QPKGIsActive && return 1
+
+    PID=$(<"$STORED_PID_PATHFILE"); acc=0
 
     kill $PID
     echo -n "* stopping ($QPKG_NAME) with SIGTERM: " | tee -a "$LOG_PATHFILE"; echo -n "waiting for upto $maxwait seconds: "
@@ -262,19 +273,16 @@ if [[ $errorcode -eq 0 ]]; then
     case "$1" in
         start)
             echo -e "$(SessionSeparator 'start requested')\n= $(date)" >> "$LOG_PATHFILE"
-            ! QPKGIsActive && UpdateQpkg; StartQPKG || errorcode=1
+            StartQPKG || errorcode=1
             ;;
-
         stop)
             echo -e "$(SessionSeparator 'stop requested')\n= $(date)" >> "$LOG_PATHFILE"
-            QPKGIsActive && StopQPKG || errorcode=1
+            StopQPKG || errorcode=1
             ;;
-
         restart)
             echo -e "$(SessionSeparator 'restart requested')\n= $(date)" >> "$LOG_PATHFILE"
-            QPKGIsActive && StopQPKG; UpdateQpkg; StartQPKG || errorcode=1
+            StopQPKG; StartQPKG || errorcode=1
             ;;
-
         *)
             echo "Usage: $0 {start|stop|restart}"
             ;;
