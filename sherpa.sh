@@ -392,6 +392,7 @@ DisplayHelp()
 
     DebugFuncEntry
 
+    echo -e "A BASH script to install various Usenet apps into a QNAP NAS.\n"
     echo -e "- Each application can be (re)installed by running $0 with the name of a single app as an argument.\n\nSome examples are:"
     echo "$0 SABnzbd"
     echo "$0 SickChill"
