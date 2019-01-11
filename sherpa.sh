@@ -1372,6 +1372,10 @@ LoadQPKGFileDetails()
                 qpkg_url='http://bin.entware.net/other/Entware_1.00std.qpkg'
                 qpkg_md5='0c99cf2cf8ef61c7a18b42651a37da74'
                 ;;
+            Entware-ng)
+                qpkg_url='http://entware.zyxmon.org/binaries/other/Entware-ng_0.97.qpkg'
+                qpkg_md5='6c81cc37cbadd85adfb2751dc06a238f'
+                ;;
             SABnzbdplus)
                 qpkg_url="${OneCD_url_prefix}/SABnzbdplus/build/SABnzbdplus_190109.qpkg"
                 qpkg_md5='370dcef60a04a356772707b9902b1874'
