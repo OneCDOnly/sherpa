@@ -267,7 +267,6 @@ Init()
     [[ -z $TARGET_APP ]] && errorcode=1
     [[ $errorcode -eq 1 ]] && DisplayHelp
 
-    CalcQPKGArch
     CalcStephaneQPKGArch
     CalcPrefEntware
 
@@ -1259,28 +1258,6 @@ CalcStephaneQPKGArch()
     esac
 
     DebugVar STEPHANE_QPKG_ARCH
-    return 0
-
-    }
-
-CalcQPKGArch()
-    {
-
-    # adapt package arch depending on NAS arch
-
-    case $NAS_ARCH in
-        x86_64)
-            [[ ${FIRMWARE_VERSION//.} -ge 430 ]] && QPKG_ARCH=x64 || QPKG_ARCH=x86
-            ;;
-        i686)
-            QPKG_ARCH=x86
-            ;;
-        *)
-            QPKG_ARCH=$NAS_ARCH
-            ;;
-    esac
-
-    DebugVar QPKG_ARCH
     return 0
 
     }
