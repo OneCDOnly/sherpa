@@ -88,7 +88,7 @@ Init()
     {
 
     local SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=190109
+    local SCRIPT_VERSION=190112
     debug=false
     ResetErrorcode
 
@@ -1294,6 +1294,7 @@ CalcPrefEntware()
     PREF_ENTWARE=Entware
 
     # then modify according to local environment
+    [[ $NAS_ARCH = i686 ]] && PREF_ENTWARE=Entware-ng
     IsQPKGInstalled Entware-ng && PREF_ENTWARE=Entware-ng
     IsQPKGInstalled Entware-3x && PREF_ENTWARE=Entware-3x
 
