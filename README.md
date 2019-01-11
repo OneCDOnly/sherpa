@@ -38,7 +38,7 @@ cd /share/Public
 3) Download & extract the archive file (copy and paste at the command line):
 
 ```
-curl -ksO https://raw.githubusercontent.com/onecdonly/sherpa/master/sherpa.sh && chmod +x sherpa.sh
+curl -skLO https://git.io/sherpa.sh && chmod +x sherpa.sh
 ```
 
 4) Then, to (re)install an app, run **sherpa.sh** with the name of your required app as an argument.
