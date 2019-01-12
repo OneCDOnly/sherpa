@@ -35,21 +35,21 @@ Initial installation of each app is OK. Re-installation of each is also OK excep
 cd /share/Public
 ```
 
-3) Download & extract the archive file (copy and paste at the command line):
+3) Download the installer script and make it executable:
 
 ```
 curl -skLO https://git.io/sherpa.sh && chmod +x sherpa.sh
 ```
 
-4) Then, to (re)install an app, run **sherpa.sh** with the name of your required app as an argument.
+4) Then, to install (or reinstall) an app, run **sherpa.sh** with the name of your required app as an argument.
 
-So, to reinstall SABnzbd:
+So, to install SABnzbd:
 
 ```
 ./sherpa.sh SABnzbd
 ```
 
-Or:
+... and then/or:
 
 ```
 ./sherpa.sh SickChill
