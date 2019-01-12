@@ -88,7 +88,7 @@ Init()
     {
 
     local SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=190112
+    local SCRIPT_VERSION=190113
     debug=false
     ResetErrorcode
 
@@ -2263,49 +2263,49 @@ SaveLogLine()
 ColourTextBrightGreen()
     {
 
-    echo -en '\E[1;32m'"$(PrintResetColours "$1")"
+    echo -en '\033[1;32m'"$(PrintResetColours "$1")"
 
     }
 
 ColourTextBrightOrange()
     {
 
-    echo -en '\E[1;38;5;214m'"$(PrintResetColours "$1")"
+    echo -en '\033[1;38;5;214m'"$(PrintResetColours "$1")"
 
     }
 
 ColourTextBrightRed()
     {
 
-    echo -en '\E[1;31m'"$(PrintResetColours "$1")"
+    echo -en '\033[1;31m'"$(PrintResetColours "$1")"
 
     }
 
 ColourTextUnderlinedBlue()
     {
 
-    echo -en '\E[4;94m'"$(PrintResetColours "$1")"
+    echo -en '\033[4;94m'"$(PrintResetColours "$1")"
 
     }
 
 ColourTextBlackOnCyan()
     {
 
-    echo -en '\E[30;46m'"$(PrintResetColours "$1")"
+    echo -en '\033[30;46m'"$(PrintResetColours "$1")"
 
     }
 
 ColourTextBrightWhite()
     {
 
-    echo -en '\E[1;97m'"$(PrintResetColours "$1")"
+    echo -en '\033[1;97m'"$(PrintResetColours "$1")"
 
     }
 
 PrintResetColours()
     {
 
-    echo -en "$1"'\E[0m'
+    echo -en "$1"'\033[0m'
 
     }
 
