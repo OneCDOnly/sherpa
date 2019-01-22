@@ -74,6 +74,10 @@ ParseArgs()
                 debug=true
                 DebugVar debug
                 ;;
+            --force-entware-reinstall)
+                force_entare_reinstall=true
+                DebugVar force_entare_reinstall
+                ;;
             *)
                 break
                 ;;
@@ -88,7 +92,7 @@ Init()
     {
 
     local SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=190113
+    local SCRIPT_VERSION=190123
     debug=false
     ResetErrorcode
 
@@ -230,6 +234,7 @@ Init()
     previous_msg=''
     REINSTALL_FLAG=false
     OLD_APP=''
+    force_entare_reinstall=false
     [[ ${FIRMWARE_VERSION//.} -lt 426 ]] && curl_cmd+=' --insecure'
     [[ ${FIRMWARE_VERSION//.} -ge 435 ]] && find_cmd=/usr/bin/find      # 4.3.5 has a much better BusyBox 'find'
     local result=0
@@ -450,6 +455,8 @@ RemoveOther()
     # end cruft
 
     UninstallQPKG Optware || ResetErrorcode  # ignore Optware uninstall errors
+
+    [[ $force_entare_reinstall = true ]] && { UninstallQPKG $PREF_ENTWARE; CalcPrefEntware ;}
 
     DebugFuncExit
     return 0
