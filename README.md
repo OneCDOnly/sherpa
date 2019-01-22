@@ -10,21 +10,27 @@ To install additional apps, run it again.
 
 If the installer script is successful, your requested package and any required packages will be installed. Any existing installation of Entware will be used automatically. If Entware is not installed, a version appropriate to your NAS will be installed.
 
-
+---
 ## Current status
 
 STABLE
 
-Initial installation of each app is OK. Re-installation of each is also OK except as shown in Testing.
 
-
-
+---
 ## Known issues
 
-1) If there is an existing installation of Entware-ng, sometimes the sherpa installer will fail to complete. If this occurs, suggest you uninstall Entware-ng and allow sherpa to install a current Entware.
+1) Sometimes, it seems existing installations of Entware can become "difficult" to work with. So, I've included an option to re-install Entware, but this should only be used as a last resort. Using:
+
+```
+./sherpa.sh sab --force-entware-reinstall
+```
+
+... will force **sherpa** to uninstall your existing Entware QPKG, then install a new one. Please note: Entware will be reverted back to default, and only the IPKGs required to support your installed **sherpa** apps will be installed.
+
 
 2) **sherpa** is incompatible with existing installs of Optware-NG as various required packages cannot be installed through it.
 
+---
 ## Usage
 
 1) [SSH](https://wiki.qnap.com/wiki/How_to_SSH_into_your_QNAP_device) / [PuTTY](http://www.putty.org/) into your NAS as the 'admin' user,
@@ -65,6 +71,7 @@ So, to install SABnzbd:
 ./sherpa.sh Headphones
 ```
 
+---
 ## Problems?
 
 This will happen from time-to-time as the environment changes. If it's not shown above in '**Known issues**' then you may have found something new, so please add to this thread with the details of the problem you encountered. Diagnose where you can and provide a solution if you're able. The functions in this script are a community effort. ;)
@@ -81,13 +88,14 @@ Or run the installer in debug-mode to see it realtime. e.g.:
 ./sherpa.sh SABnzbd --debug
 ```
 
+---
 ## Firmware compatibility
 
 * QTS 4.3.x - **OK**
 * QTS 4.2.x - **OK**
 * QTS 4.1.x or earlier - **Unknown** (let me know if it works)
 
-
+---
 ## Notes
 
 * The information contained therein was constructed from the efforts of many community members, both here and on the [SABnzbd forum](https://forums.sabnzbd.org/). Thank you to everyone who has contributed.
