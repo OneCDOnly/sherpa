@@ -92,7 +92,7 @@ Init()
     {
 
     local SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=190123
+    local SCRIPT_VERSION=190124
     debug=false
     ResetErrorcode
 
@@ -2153,7 +2153,7 @@ DebugErrorFile()
     local linebuff=''
 
     DebugLogThinSeparator
-    DebugLog "[$1]"
+    DebugLog "$1"
     DebugLogThinSeparator
 
     while read linebuff; do
