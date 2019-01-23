@@ -708,6 +708,10 @@ InstallIPKGs()
             packages+=' python python-pip python-lib2to3'
         fi
 
+        if (IsQPKGInstalled SickChill) || [[ $TARGET_APP = SickChill ]]; then
+            packages+=' python python-pip python-lib2to3 python-pyopenssl'
+        fi
+
         if (IsQPKGInstalled LazyLibrarian) || [[ $TARGET_APP = LazyLibrarian ]]; then
             packages+=' python python-pip python-urllib3'
         fi
