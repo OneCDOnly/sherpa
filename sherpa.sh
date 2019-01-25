@@ -92,7 +92,7 @@ Init()
     {
 
     local SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=190124
+    local SCRIPT_VERSION=190126
     debug=false
     ResetErrorcode
 
@@ -709,7 +709,7 @@ InstallIPKGs()
         fi
 
         if (IsQPKGInstalled SickChill) || [[ $TARGET_APP = SickChill ]]; then
-            packages+=' python python-pip python-lib2to3 python-pyopenssl'
+            packages+=' python'
         fi
 
         if (IsQPKGInstalled LazyLibrarian) || [[ $TARGET_APP = LazyLibrarian ]]; then
