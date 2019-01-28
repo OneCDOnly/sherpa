@@ -92,7 +92,7 @@ Init()
     {
 
     local SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=190126
+    local SCRIPT_VERSION=190128d
     debug=false
     ResetErrorcode
 
@@ -1379,6 +1379,8 @@ LoadQPKGFileDetails()
         qpkg_name=$1
         local base_url=''
 
+DebugVar qpkg_name
+
         case $1 in
             Entware)
                 qpkg_url='http://bin.entware.net/other/Entware_1.00std.qpkg'
@@ -1458,6 +1460,9 @@ LoadQPKGFileDetails()
                 returncode=1
                 ;;
         esac
+
+DebugVar qpkg_url
+DebugVar qpkg_md5
 
         if [[ -z $qpkg_url || -z $qpkg_md5 ]]; then
             DebugError 'QPKG details not found'
