@@ -92,7 +92,7 @@ Init()
     {
 
     local SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=190128d
+    local SCRIPT_VERSION=190128
     debug=false
     ResetErrorcode
 
@@ -1444,7 +1444,7 @@ DebugVar qpkg_name
                         qpkg_url="${OneCD_url_prefix}/Par2/Par2_0.7.4.0_x86_64.qpkg"
                         qpkg_md5='f3a183e1f25831db6beac5fa2853689d'
                         ;;
-                    x41)
+                    x41|a64)
                         qpkg_url="${OneCD_url_prefix}/Par2/Par2_0.7.4.0_arm-x41.qpkg"
                         qpkg_md5='e1684e903f93f9a45b6aea4a388b43fb'
                         ;;
