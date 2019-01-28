@@ -92,7 +92,7 @@ Init()
     {
 
     local SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=190128
+    local SCRIPT_VERSION=190129
     debug=false
     ResetErrorcode
 
@@ -723,6 +723,8 @@ InstallIPKGs()
         returncode=1
     fi
 
+    [[ $STEPHANE_QPKG_ARCH = none ]] && packages+=' par2cmdline'
+
     DebugFuncExit
     return $returncode
 
@@ -1248,7 +1250,7 @@ CalcStephaneQPKGArch()
 
     # decide which package arch is suitable for this NAS
 
-    case $NAS_ARCH in
+    case "$NAS_ARCH" in
         x86_64)
             [[ ${FIRMWARE_VERSION//.} -ge 430 ]] && STEPHANE_QPKG_ARCH=x64 || STEPHANE_QPKG_ARCH=x86
             ;;
@@ -1363,6 +1365,7 @@ LoadQPKGFileDetails()
 
     # $1 = QPKG name
 
+    local qpkg_name=$1
     qpkg_url=''
     qpkg_md5=''
     qpkg_file=''
@@ -1371,17 +1374,14 @@ LoadQPKGFileDetails()
     local target_file=''
     local OneCD_url_prefix='https://raw.githubusercontent.com/onecdonly/sherpa/master/QPKGs'
 
-    if [[ -z $1 ]]; then
+    if [[ -z $qpkg_name ]]; then
         DebugError 'QPKG name unspecified'
         errorcode=32
         returncode=1
     else
-        qpkg_name=$1
         local base_url=''
 
-DebugVar qpkg_name
-
-        case $1 in
+        case "$1" in
             Entware)
                 qpkg_url='http://bin.entware.net/other/Entware_1.00std.qpkg'
                 qpkg_md5='0c99cf2cf8ef61c7a18b42651a37da74'
@@ -1444,7 +1444,7 @@ DebugVar qpkg_name
                         qpkg_url="${OneCD_url_prefix}/Par2/Par2_0.7.4.0_x86_64.qpkg"
                         qpkg_md5='f3a183e1f25831db6beac5fa2853689d'
                         ;;
-                    x41|a64)
+                    x41)
                         qpkg_url="${OneCD_url_prefix}/Par2/Par2_0.7.4.0_arm-x41.qpkg"
                         qpkg_md5='e1684e903f93f9a45b6aea4a388b43fb'
                         ;;
@@ -1455,21 +1455,18 @@ DebugVar qpkg_name
                 esac
                 ;;
             *)
-                DebugError 'QPKG name not found'
+                DebugError "QPKG name not found [$qpkg_name]"
                 errorcode=33
                 returncode=1
                 ;;
         esac
 
-DebugVar qpkg_url
-DebugVar qpkg_md5
-
         if [[ -z $qpkg_url || -z $qpkg_md5 ]]; then
-            DebugError 'QPKG details not found'
+            DebugError "QPKG details not found [$qpkg_name]"
             errorcode=34
             returncode=1
         else
-            [[ -z $qpkg_file ]] && qpkg_file=$($BASENAME_CMD "$qpkg_url")
+            [[ -z $qpkg_file ]] && qpkg_file="$($BASENAME_CMD "$qpkg_url")"
             qpkg_pathfile="${QPKG_DL_PATH}/${qpkg_file}"
         fi
     fi
