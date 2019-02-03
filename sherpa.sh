@@ -92,7 +92,7 @@ Init()
     {
 
     local SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=190129
+    local SCRIPT_VERSION=190203
     debug=false
     ResetErrorcode
 
@@ -1254,7 +1254,7 @@ CalcStephaneQPKGArch()
         x86_64)
             [[ ${FIRMWARE_VERSION//.} -ge 430 ]] && STEPHANE_QPKG_ARCH=x64 || STEPHANE_QPKG_ARCH=x86
             ;;
-        i686)
+        i686|x86)
             STEPHANE_QPKG_ARCH=x86
             ;;
         armv7h)
@@ -1381,7 +1381,7 @@ LoadQPKGFileDetails()
     else
         local base_url=''
 
-        case "$1" in
+        case $1 in
             Entware)
                 qpkg_url='http://bin.entware.net/other/Entware_1.00std.qpkg'
                 qpkg_md5='0c99cf2cf8ef61c7a18b42651a37da74'
@@ -1391,66 +1391,74 @@ LoadQPKGFileDetails()
                 qpkg_md5='6c81cc37cbadd85adfb2751dc06a238f'
                 ;;
             SABnzbdplus)
-                qpkg_url="${OneCD_url_prefix}/SABnzbdplus/build/SABnzbdplus_190109.qpkg"
+                qpkg_url="$OneCD_url_prefix/SABnzbdplus/build/SABnzbdplus_190109.qpkg"
                 qpkg_md5='370dcef60a04a356772707b9902b1874'
                 ;;
             SickChill)
-                qpkg_url="${OneCD_url_prefix}/SickChill/build/SickChill_181011.qpkg"
+                qpkg_url="$OneCD_url_prefix/SickChill/build/SickChill_181011.qpkg"
                 qpkg_md5='552d3c1fc5ddd832fc8f70327fbcb11f'
                 ;;
             CouchPotato2)
-                qpkg_url="${OneCD_url_prefix}/CouchPotato2/build/CouchPotato2_180427.qpkg"
+                qpkg_url="$OneCD_url_prefix/CouchPotato2/build/CouchPotato2_180427.qpkg"
                 qpkg_md5='395ffdb9c25d0bc07eb24987cc722cdb'
                 ;;
             LazyLibrarian)
-                qpkg_url="${OneCD_url_prefix}/LazyLibrarian/build/LazyLibrarian_181112.qpkg"
+                qpkg_url="$OneCD_url_prefix/LazyLibrarian/build/LazyLibrarian_181112.qpkg"
                 qpkg_md5='8f3aae17aba2cbdef5d06b432d3d8015'
                 ;;
             OMedusa)
-                qpkg_url="${OneCD_url_prefix}/OMedusa/build/OMedusa_180427.qpkg"
+                qpkg_url="$OneCD_url_prefix/OMedusa/build/OMedusa_180427.qpkg"
                 qpkg_md5='ec3b193c7931a100067cfaa334caf883'
                 ;;
             OWatcher3)
-                qpkg_url="${OneCD_url_prefix}/OWatcher3/build/OWatcher3_190106.qpkg"
+                qpkg_url="$OneCD_url_prefix/OWatcher3/build/OWatcher3_190106.qpkg"
                 qpkg_md5='45145a005a8b0622790a735087c2699f'
                 ;;
             Headphones)
-                qpkg_url="${OneCD_url_prefix}/Headphones/build/Headphones_180429.qpkg"
+                qpkg_url="$OneCD_url_prefix/Headphones/build/Headphones_180429.qpkg"
                 qpkg_md5='c1b5ba10f5636b4e951eb57fb2bb1ed5'
                 ;;
             Par2cmdline-MT)
                 case $STEPHANE_QPKG_ARCH in
                     x86)
-                        qpkg_url="${OneCD_url_prefix}/Par2cmdline-MT/Par2cmdline-MT_0.6.14-MT_x86.qpkg"
+                        qpkg_url="$OneCD_url_prefix/Par2cmdline-MT/Par2cmdline-MT_0.6.14-MT_x86.qpkg"
                         qpkg_md5='e5157c10b32c71079129640877eaa11e'
                         ;;
                     x64)
-                        qpkg_url="${OneCD_url_prefix}/Par2cmdline-MT/Par2cmdline-MT_0.6.14-MT_x86_64.qpkg"
+                        qpkg_url="$OneCD_url_prefix/Par2cmdline-MT/Par2cmdline-MT_0.6.14-MT_x86_64.qpkg"
                         qpkg_md5='b77346b9cceae3a155ee477eca3757a2'
                         ;;
                     x41)
-                        qpkg_url="${OneCD_url_prefix}/Par2cmdline-MT/Par2cmdline-MT_0.6.14-MT_arm-x41.qpkg"
+                        qpkg_url="$OneCD_url_prefix/Par2cmdline-MT/Par2cmdline-MT_0.6.14-MT_arm-x41.qpkg"
                         qpkg_md5='52b8e93704d0d3515fa94f189763b89d'
                         ;;
                     a64)
-                        qpkg_url="${OneCD_url_prefix}/Par2cmdline-MT/Par2cmdline-MT_0.6.14-MT_arm-64.qpkg"
+                        qpkg_url="$OneCD_url_prefix/Par2cmdline-MT/Par2cmdline-MT_0.6.14-MT_arm-64.qpkg"
                         qpkg_md5='9fcc39160c958a094e963236aca5e08d'
                         ;;
                 esac
                 ;;
             Par2)
                 case $STEPHANE_QPKG_ARCH in
+                    x86)
+                        qpkg_url="$OneCD_url_prefix/Par2/Par2_0.8.0.0_x86.qpkg"
+                        qpkg_md5='c2584f84334dccd685e56419f2f07b9d'
+                        ;;
                     x64)
-                        qpkg_url="${OneCD_url_prefix}/Par2/Par2_0.7.4.0_x86_64.qpkg"
-                        qpkg_md5='f3a183e1f25831db6beac5fa2853689d'
+                        qpkg_url="$OneCD_url_prefix/Par2/Par2_0.8.0.0_x86_64.qpkg"
+                        qpkg_md5='e720a700a3364f5e81af6de40ab2e0b0'
                         ;;
                     x41)
-                        qpkg_url="${OneCD_url_prefix}/Par2/Par2_0.7.4.0_arm-x41.qpkg"
-                        qpkg_md5='e1684e903f93f9a45b6aea4a388b43fb'
+                        qpkg_url="$OneCD_url_prefix/Par2/Par2_0.8.0.0_arm-x41.qpkg"
+                        qpkg_md5='32281486500ba2dd55df40f00c38af53'
                         ;;
                     x31)
-                        qpkg_url="${OneCD_url_prefix}/Par2/Par2_0.7.4.0_arm-x31.qpkg"
-                        qpkg_md5='95c54a62c0a10bdcd66b945d627cac9e'
+                        qpkg_url="$OneCD_url_prefix/Par2/Par2_0.8.0.0_arm-x31.qpkg"
+                        qpkg_md5='d60a625e255a48f82c414fab1ea53a76'
+                        ;;
+                    a64)
+                        qpkg_url="$OneCD_url_prefix/Par2/Par2_0.8.0.0_arm_64.qpkg"
+                        qpkg_md5='1cb7fa5dc1b3b6f912cb0e1981aa74d2'
                         ;;
                 esac
                 ;;
@@ -1467,7 +1475,7 @@ LoadQPKGFileDetails()
             returncode=1
         else
             [[ -z $qpkg_file ]] && qpkg_file="$($BASENAME_CMD "$qpkg_url")"
-            qpkg_pathfile="${QPKG_DL_PATH}/${qpkg_file}"
+            qpkg_pathfile="$QPKG_DL_PATH/$qpkg_file"
         fi
     fi
 
