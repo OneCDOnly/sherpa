@@ -6,19 +6,20 @@ Init()
     QPKG_NAME=SABnzbdplus
     local TARGET_SCRIPT=SABnzbd.py
 
-    QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
+    QPKG_CONF_PATHFILE=/etc/config/qpkg.conf
+    QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f $QPKG_CONF_PATHFILE)
     NZBMEDIA_PATH=/share/$(/sbin/getcfg SHARE_DEF defDownload -d Qdownload -f /etc/config/def_share.info)
-    SETTINGS_PATH=${QPKG_PATH}/config
-    local SETTINGS_PATHFILE=${SETTINGS_PATH}/config.ini
-    local SETTINGS_DEFAULT_PATHFILE=${SETTINGS_PATHFILE}.def
-    STORED_PID_PATHFILE=/tmp/${QPKG_NAME}.pid
+    SETTINGS_PATH=$QPKG_PATH/config
+    SETTINGS_PATHFILE=$SETTINGS_PATH/config.ini
+    local SETTINGS_DEFAULT_PATHFILE=$SETTINGS_PATHFILE.def
+    STORED_PID_PATHFILE=/tmp/$QPKG_NAME.pid
     local SETTINGS="--config-file $SETTINGS_PATHFILE --browser 0"
     local PIDS="--pidfile $STORED_PID_PATHFILE"
     DAEMON_OPTS="$TARGET_SCRIPT --daemon $SETTINGS $PIDS"
-    LOG_PATHFILE=/var/log/${QPKG_NAME}.log
+    LOG_PATHFILE=/var/log/$QPKG_NAME.log
     DAEMON=/opt/bin/python2.7
     export PYTHONPATH=$DAEMON
-    export PATH=/opt/bin:/opt/sbin:${PATH}
+    export PATH=/opt/bin:/opt/sbin:$PATH
 
     if [[ -z $LANG ]]; then
         export LANG=en_US.UTF-8
@@ -89,7 +90,7 @@ UpdateLanguages()
     echo -n "* updating language support ($QPKG_NAME): " | tee -a "$LOG_PATHFILE"
     cd $QPKG_PATH/SABnzbdplus
 
-    exec_msgs="$(python tools/make_mo.py)"
+    exec_msgs=$(python tools/make_mo.py)
     result=$?
 
     if [[ $result -eq 0 ]]; then
@@ -127,19 +128,19 @@ PullGitRepo()
         local GIT_HTTPS_URL=${GIT_HTTP_URL/http/git}
 
         echo -n "* updating ($1): " | tee -a "$LOG_PATHFILE"
-        exec_msgs="$({
+        exec_msgs=$({
         [[ ! -d ${QPKG_GIT_PATH}/.git ]] && { $GIT_CMD clone -b master --depth 1 "$GIT_HTTPS_URL" "$QPKG_GIT_PATH" || $GIT_CMD clone -b master --depth 1 "$GIT_HTTP_URL" "$QPKG_GIT_PATH" ;}
         cd "$QPKG_GIT_PATH" && $GIT_CMD pull
-        } 2>&1)"
+        } 2>&1)
         result=$?
 
         if [[ $result = 0 ]]; then
             msg='OK'
             echo -e "$msg" | tee -a "$LOG_PATHFILE"
-            echo -e "${exec_msgs}" >> "$LOG_PATHFILE"
+            echo -e "$exec_msgs" >> "$LOG_PATHFILE"
         else
             msg="failed!\nresult=[$result]"
-            echo -e "$msg\n${exec_msgs}" | tee -a "$LOG_PATHFILE"
+            echo -e "$msg\n$exec_msgs" | tee -a "$LOG_PATHFILE"
             returncode=1
         fi
     fi
@@ -154,24 +155,43 @@ StartQPKG()
     local returncode=0
     local msg=''
     local exec_msgs=''
+    local ui_port=''
 
     QPKGIsActive && return
 
     UpdateQpkg
 
-    cd "${QPKG_PATH}/${QPKG_NAME}"
+    cd "$QPKG_PATH/$QPKG_NAME"
 
     echo -n "* starting ($QPKG_NAME): " | tee -a "$LOG_PATHFILE"
-    exec_msgs="$(${DAEMON} ${DAEMON_OPTS} 2>&1)"
+    exec_msgs=$(${DAEMON} ${DAEMON_OPTS} 2>&1)
     result=$?
 
     if [[ $result = 0 || $result = 2 ]]; then
         msg='OK'
-        echo -e "$msg" | tee -a "$LOG_PATHFILE"
-        echo -e "${exec_msgs}" >> "$LOG_PATHFILE"
+        echo -e "$msg\n= startup messages: $exec_msgs" | tee -a "$LOG_PATHFILE"
+
+        msg='* service configured for '
+
+        if [[ $(/sbin/getcfg misc enable_https -d 0 -f "$SETTINGS_PATHFILE") = 1 ]]; then
+            ui_port=$(/sbin/getcfg misc https_port -d 0 -f "$SETTINGS_PATHFILE")
+            msg+='HTTPS port: '
+        else
+            ui_port=$(/sbin/getcfg misc port -d 0 -f "$SETTINGS_PATHFILE")
+            msg+='HTTP port: '
+        fi
+
+        if [[ $ui_port -gt 0 ]]; then
+            /sbin/setcfg $QPKG_NAME Web_Port $ui_port -f "$QPKG_CONF_PATHFILE"
+            msg+=$ui_port
+        else
+             msg='! no web service port found'
+        fi
+
+        echo "$msg" | tee -a "$LOG_PATHFILE"
     else
         msg="failed!\nresult=[$result]"
-        echo -e "${msg}\n${exec_msgs}" | tee -a "$LOG_PATHFILE"
+        echo -e "$msg\n$exec_msgs" | tee -a "$LOG_PATHFILE"
         returncode=1
     fi
 
@@ -270,7 +290,7 @@ WaitForEntware()
 Init
 
 if [[ $errorcode -eq 0 ]]; then
-    case "$1" in
+    case $1 in
         start)
             echo -e "$(SessionSeparator 'start requested')\n= $(date)" >> "$LOG_PATHFILE"
             StartQPKG || errorcode=1
