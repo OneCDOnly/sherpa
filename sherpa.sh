@@ -92,7 +92,7 @@ Init()
     {
 
     local SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=190205
+    local SCRIPT_VERSION=190206
     debug=false
     ResetErrorcode
 
@@ -667,7 +667,7 @@ InstallIPKGs()
         fi
 
         if (IsQPKGInstalled OMedusa) || [[ $TARGET_APP = OMedusa ]]; then
-            packages+=' python python-pip python-lib2to3'
+            packages+=' python python-pip python-lib2to3 mediainfo'
         fi
 
         if (IsQPKGInstalled SickChill) || [[ $TARGET_APP = SickChill ]]; then
