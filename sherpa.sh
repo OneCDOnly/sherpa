@@ -440,20 +440,6 @@ RemoveOther()
 
     DebugFuncEntry
 
-    # cruft: remove previous x41 Par2cmdline-MT package due to wrong arch - this was corrected on 2017-06-03 - remove this code after 2018-06-03
-        # don't use Par2cmdline-MT for x86_64 as multi-thread changes have been merged upstream into Par2cmdline and Par2cmdline-MT has been discontinued
-        case $STEPHANE_QPKG_ARCH in
-            x86)
-                UninstallQPKG Par2
-                ;;
-            none)
-                ;;
-            *)
-                UninstallQPKG Par2cmdline-MT
-                ;;
-        esac
-    # end cruft
-
     UninstallQPKG Optware || ResetErrorcode  # ignore Optware uninstall errors
 
     [[ $force_entware_reinstall = true ]] && { UninstallQPKG $PREF_ENTWARE; CalcPrefEntware ;}
@@ -475,17 +461,8 @@ DownloadQPKGs()
 
     ! IsQPKGInstalled $PREF_ENTWARE && DownloadQPKG $PREF_ENTWARE
 
-    if [[ $TARGET_APP = SABnzbdplus ]]; then
-        case $STEPHANE_QPKG_ARCH in
-            x86)
-                ! IsQPKGInstalled Par2cmdline-MT && DownloadQPKG Par2cmdline-MT
-                ;;
-            none)
-                ;;
-            *)
-                ! IsQPKGInstalled Par2 && DownloadQPKG Par2
-                ;;
-        esac
+    if [[ $TARGET_APP = SABnzbdplus && $STEPHANE_QPKG_ARCH != none ]]; then
+        ! IsQPKGInstalled Par2 && DownloadQPKG Par2
     fi
 
     DownloadQPKG $TARGET_APP
@@ -618,27 +595,13 @@ InstallExtras()
 
     DebugFuncEntry
 
-    if [[ $TARGET_APP = SABnzbdplus ]]; then
-        case $STEPHANE_QPKG_ARCH in
-            x86)
-                InstallQPKG Par2cmdline-MT
-                if [[ $errorcode -gt 0 ]]; then
-                    ShowWarning "Par2cmdline-MT installation failed - but it's not essential so I'm continuing"
-                    ResetErrorcode
-                    DebugVar errorcode
-                fi
-                ;;
-            none)
-                ;;
-            *)
-                InstallQPKG Par2
-                if [[ $errorcode -gt 0 ]]; then
-                    ShowWarning "Par2 installation failed - but it's not essential so I'm continuing"
-                    ResetErrorcode
-                    DebugVar errorcode
-                fi
-                ;;
-        esac
+    if [[ $TARGET_APP = SABnzbdplus && $STEPHANE_QPKG_ARCH != none ]]; then
+        InstallQPKG Par2
+        if [[ $errorcode -gt 0 ]]; then
+            ShowWarning "Par2 installation failed - but it's not essential so I'm continuing"
+            ResetErrorcode
+            DebugVar errorcode
+        fi
     fi
 
     InstallIPKGs
@@ -693,7 +656,6 @@ InstallIPKGs()
 
         if (IsQPKGInstalled SABnzbdplus) || [[ $TARGET_APP = SABnzbdplus ]]; then
             packages+=' python python-pip python-pyopenssl python-dev gcc unrar p7zip coreutils-nice ionice ffprobe'
-            [[ $STEPHANE_QPKG_ARCH = none ]] && packages+=' par2cmdline'
         fi
 
         if (IsQPKGInstalled CouchPotato2) || [[ $TARGET_APP = CouchPotato2 ]]; then
@@ -716,14 +678,14 @@ InstallIPKGs()
             packages+=' python python-pip python-urllib3'
         fi
 
+        [[ $STEPHANE_QPKG_ARCH = none ]] && packages+=' par2cmdline'
+
         InstallIPKGBatch "$packages" 'Python, Git and others'
     else
         ShowError "IPKG download path [$IPKG_DL_PATH] does not exist"
         errorcode=15
         returncode=1
     fi
-
-    [[ $STEPHANE_QPKG_ARCH = none ]] && packages+=' par2cmdline'
 
     DebugFuncExit
     return $returncode
@@ -1417,26 +1379,6 @@ LoadQPKGFileDetails()
             Headphones)
                 qpkg_url="$OneCD_url_prefix/Headphones/build/Headphones_180429.qpkg"
                 qpkg_md5='c1b5ba10f5636b4e951eb57fb2bb1ed5'
-                ;;
-            Par2cmdline-MT)
-                case $STEPHANE_QPKG_ARCH in
-                    x86)
-                        qpkg_url="$OneCD_url_prefix/Par2cmdline-MT/Par2cmdline-MT_0.6.14-MT_x86.qpkg"
-                        qpkg_md5='e5157c10b32c71079129640877eaa11e'
-                        ;;
-                    x64)
-                        qpkg_url="$OneCD_url_prefix/Par2cmdline-MT/Par2cmdline-MT_0.6.14-MT_x86_64.qpkg"
-                        qpkg_md5='b77346b9cceae3a155ee477eca3757a2'
-                        ;;
-                    x41)
-                        qpkg_url="$OneCD_url_prefix/Par2cmdline-MT/Par2cmdline-MT_0.6.14-MT_arm-x41.qpkg"
-                        qpkg_md5='52b8e93704d0d3515fa94f189763b89d'
-                        ;;
-                    a64)
-                        qpkg_url="$OneCD_url_prefix/Par2cmdline-MT/Par2cmdline-MT_0.6.14-MT_arm-64.qpkg"
-                        qpkg_md5='9fcc39160c958a094e963236aca5e08d'
-                        ;;
-                esac
                 ;;
             Par2)
                 case $STEPHANE_QPKG_ARCH in
