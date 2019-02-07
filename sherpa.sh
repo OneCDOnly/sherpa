@@ -1711,13 +1711,14 @@ FindAllIPKGDependencies()
     local iterations=0
     local iteration_limit=20
     local complete=false
+    local result_size=0
 
     [[ -n $1 ]] && original_list="$1" || { DebugError 'No IPKGs were requested'; return 1 ;}
 
     IsSysFilePresent $OPKG_CMD || return
 
     ShowProc 'calculating number and size of IPKGs required'
-    DebugInfo "requested IPKG names: $original_list"
+    DebugInfo "requested IPKGs: $original_list"
 
     last_list="$original_list"
 
@@ -1736,7 +1737,7 @@ FindAllIPKGDependencies()
         fi
     done
 
-    [[ $complete = false ]] && DebugError "IPKG dependency list incomplete! Consider raising \$iteration_limit [$iteration_limit]."
+    [[ $complete = false ]] && DebugError "IPKG dependency list is incomplete! Consider raising \$iteration_limit [$iteration_limit]."
 
     all_list_sorted=$(echo "$original_list $dependency_list" | $TR_CMD ' ' '\n' | $SORT_CMD | $UNIQ_CMD)
     read -r -a all_required_packages_array <<< $all_list_sorted
@@ -1747,11 +1748,11 @@ FindAllIPKGDependencies()
         $OPKG_CMD status "$element" | $GREP_CMD -q "Status:.*installed" || IPKG_download_list+=($element)
     done
     DebugDone 'complete'
-    DebugInfo "required IPKG names: ${IPKG_download_list[*]}"
+    DebugInfo "IPKGs to download: ${IPKG_download_list[*]}"
     IPKG_download_count=${#IPKG_download_list[@]}
 
     if [[ $IPKG_download_count -gt 0 ]]; then
-        DebugProc 'calculating size of required IPKGs'
+        DebugProc 'calculating size of IPKGs to download'
         for element in ${IPKG_download_list[@]}; do
             result_size=$($OPKG_CMD info $element | $GREP_CMD -F 'Size:' | $SED_CMD 's|^Size: ||')
             ((IPKG_download_size+=result_size))
@@ -1763,7 +1764,7 @@ FindAllIPKGDependencies()
 
     DebugVar IPKG_download_size
     if [[ $IPKG_download_count -gt 0 ]]; then
-        ShowDone "$IPKG_download_count IPKGs ($(Convert2ISO $IPKG_download_size)) are required"
+        ShowDone "$IPKG_download_count IPKGs ($(Convert2ISO $IPKG_download_size)) need to be downloaded"
     else
         ShowDone 'no IPKGs are required'
     fi
