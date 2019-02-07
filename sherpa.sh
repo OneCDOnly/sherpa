@@ -47,7 +47,7 @@ ParseArgs()
         local user_args=($(echo "$USER_ARGS_RAW" | $TR_CMD '[A-Z]' '[a-z]'))
     fi
 
-    for arg in "${user_args[@]}"; do
+    for arg in ${user_args[@]}; do
         case $arg in
             sab|sabnzbd|sabnzbdplus)
                 TARGET_APP=SABnzbdplus
@@ -78,6 +78,18 @@ ParseArgs()
                 force_entware_reinstall=true
                 DebugVar force_entware_reinstall
                 ;;
+#             --refresh)
+#                 check_dependencies=true
+#                 DebugVar check_dependencies
+#                 ;;
+#             --update)
+#                 update_all_apps=true
+#                 DebugVar update_all_apps
+#                 ;;
+#             --help)
+#                 errorcode=2
+#                 return 1
+#                 ;;
             *)
                 break
                 ;;
@@ -92,7 +104,7 @@ Init()
     {
 
     local SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=190206
+    local SCRIPT_VERSION=190208
     debug=false
     ResetErrorcode
 
@@ -142,7 +154,7 @@ Init()
     PIP3_CMD=/opt/bin/pip3
 
     # paths and files
-    QPKG_CONFIG_PATHFILE=/etc/config/qpkg.conf
+    APP_CENTER_CONFIG_PATHFILE=/etc/config/qpkg.conf
     INSTALL_LOG_FILE=install.log
     DOWNLOAD_LOG_FILE=download.log
     START_LOG_FILE=start.log
@@ -193,7 +205,7 @@ Init()
 
     local DEFAULT_SHARE_DOWNLOAD_PATH=/share/Download
     local DEFAULT_SHARE_PUBLIC_PATH=/share/Public
-    local DEFAULT_VOLUME="$($GETCFG_CMD SHARE_DEF defVolMP -f "$DEFAULT_SHARES_PATHFILE")"
+    local DEFAULT_VOLUME=$($GETCFG_CMD SHARE_DEF defVolMP -f "$DEFAULT_SHARES_PATHFILE")
 
     if [[ -L $DEFAULT_SHARE_DOWNLOAD_PATH ]]; then
         SHARE_DOWNLOAD_PATH="$DEFAULT_SHARE_DOWNLOAD_PATH"
@@ -211,32 +223,31 @@ Init()
     IsSysSharePresent "$SHARE_DOWNLOAD_PATH" || return
     IsSysSharePresent "$SHARE_PUBLIC_PATH" || return
 
-    WORKING_PATH="${SHARE_PUBLIC_PATH}/${SCRIPT_FILE%.*}.tmp"
-    BACKUP_PATH="${WORKING_PATH}/backup"
-    SETTINGS_BACKUP_PATH="${BACKUP_PATH}/config"
-    SETTINGS_BACKUP_PATHFILE="${SETTINGS_BACKUP_PATH}/config.ini"
-    QPKG_DL_PATH="${WORKING_PATH}/qpkg-downloads"
-    IPKG_DL_PATH="${WORKING_PATH}/ipkg-downloads"
-    IPKG_CACHE_PATH="${WORKING_PATH}/ipkg-cache"
-    DEBUG_LOG_PATHFILE="${SHARE_PUBLIC_PATH}/${DEBUG_LOG_FILE}"
-    QPKG_BASE_PATH="${DEFAULT_VOLUME}/.qpkg"
-    PACKAGES_PATHFILE="${WORKING_PATH}/packages.conf"
+    WORKING_PATH="$SHARE_PUBLIC_PATH/${SCRIPT_FILE%.*}.tmp"
+    QPKG_BACKUP_PATH="$WORKING_PATH/backup"
+    QPKG_CONFIG_BACKUP_PATH="$QPKG_BACKUP_PATH/config"
+    QPKG_CONFIG_BACKUP_PATHFILE="$QPKG_CONFIG_BACKUP_PATH/config.ini"
+    QPKG_DL_PATH="$WORKING_PATH/qpkg-downloads"
+    IPKG_DL_PATH="$WORKING_PATH/ipkg-downloads"
+    IPKG_CACHE_PATH="$WORKING_PATH/ipkg-cache"
+    DEBUG_LOG_PATHFILE="$SHARE_PUBLIC_PATH/$DEBUG_LOG_FILE"
+    SHERPA_PACKAGES_PATHFILE="$WORKING_PATH/packages.conf"
 
     # internals
     secure_web_login=false
     package_port=0
     SCRIPT_STARTSECONDS=$($DATE_CMD +%s)
     queue_paused=false
-    FIRMWARE_VERSION="$($GETCFG_CMD System Version -f "$ULINUX_PATHFILE")"
-    NAS_ARCH="$($UNAME_CMD -m)"
+    NAS_FIRMWARE=$($GETCFG_CMD System Version -f "$ULINUX_PATHFILE")
+    NAS_ARCH=$($UNAME_CMD -m)
     progress_message=''
     previous_length=0
     previous_msg=''
     REINSTALL_FLAG=false
     OLD_APP=''
     force_entware_reinstall=false
-    [[ ${FIRMWARE_VERSION//.} -lt 426 ]] && curl_cmd+=' --insecure'
-    [[ ${FIRMWARE_VERSION//.} -ge 435 ]] && find_cmd=/usr/bin/find      # 4.3.5 has a much better BusyBox 'find'
+    [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_cmd+=' --insecure'
+    [[ ${NAS_FIRMWARE//.} -ge 435 ]] && find_cmd=/usr/bin/find      # 4.3.5 has a much better BusyBox 'find'
     local result=0
 
     ParseArgs
@@ -255,7 +266,7 @@ Init()
     DebugInfo ' (vv) variable name & value, ($1) positional argument value.'
     DebugInfoThinSeparator
     DebugNAS 'model' "$($GREP_CMD -v "^$" "$ISSUE_PATHFILE" | $SED_CMD 's|^Welcome to ||;s|(.*||')"
-    DebugNAS 'firmware version' "$FIRMWARE_VERSION"
+    DebugNAS 'firmware version' "$NAS_FIRMWARE"
     DebugNAS 'firmware build' "$($GETCFG_CMD System 'Build Number' -f "$ULINUX_PATHFILE")"
     DebugNAS 'kernel' "$($UNAME_CMD -mr)"
     DebugNAS 'OS uptime' "$($UPTIME_CMD | $SED_CMD 's|.*up.||;s|,.*load.*||;s|^\ *||')"
@@ -269,7 +280,7 @@ Init()
     DebugScript 'target app' "$TARGET_APP"
     DebugInfoThinSeparator
 
-    [[ -z $TARGET_APP ]] && errorcode=1
+    [[ -z $TARGET_APP ]] && errorcode=3
     [[ $errorcode -eq 1 ]] && DisplayHelp
 
     CalcStephaneQPKGArch
@@ -277,7 +288,7 @@ Init()
 
     if [[ $errorcode -eq 0 && $EUID -ne 0 ]]; then
         ShowError "This script must be run as the 'admin' user. Please login via SSH as 'admin' and try again."
-        errorcode=2
+        errorcode=4
     fi
 
     if [[ $errorcode -eq 0 ]]; then
@@ -286,9 +297,19 @@ Init()
 
         if [[ $result -ne 0 ]]; then
             ShowError "Unable to create working directory ($WORKING_PATH) [$result]"
-            errorcode=3
+            errorcode=5
         else
             cd "$WORKING_PATH"
+        fi
+    fi
+
+    if [[ $errorcode -eq 0 ]]; then
+        $MKDIR_CMD -p "$QPKG_BACKUP_PATH" 2> /dev/null
+        result=$?
+
+        if [[ $result -ne 0 ]]; then
+            ShowError "Unable to create backup directory ($QPKG_BACKUP_PATH) [$result]"
+            errorcode=6
         fi
     fi
 
@@ -298,7 +319,7 @@ Init()
 
         if [[ $result -ne 0 ]]; then
             ShowError "Unable to create QPKG download directory ($QPKG_DL_PATH) [$result]"
-            errorcode=4
+            errorcode=7
         fi
     fi
 
@@ -309,7 +330,7 @@ Init()
 
         if [[ $result -ne 0 ]]; then
             ShowError "Unable to create IPKG download directory ($IPKG_DL_PATH) [$result]"
-            errorcode=5
+            errorcode=8
         else
             monitor_flag="$IPKG_DL_PATH/.monitor"
         fi
@@ -321,7 +342,7 @@ Init()
 
         if [[ $result -ne 0 ]]; then
             ShowError "Unable to create IPKG cache directory ($IPKG_CACHE_PATH) [$result]"
-            errorcode=6
+            errorcode=9
         fi
     fi
 
@@ -329,7 +350,7 @@ Init()
         if (IsQPKGInstalled $TARGET_APP && ! IsQPKGEnabled $TARGET_APP); then
             ShowError "'$TARGET_APP' is already installed but is disabled. You'll need to enable it first to allow re-installation."
             REINSTALL_FLAG=true
-            errorcode=7
+            errorcode=10
         fi
     fi
 
@@ -337,7 +358,7 @@ Init()
         if [[ $TARGET_APP = SABnzbdplus ]] && IsQPKGEnabled QSabNZBdPlus && IsQPKGEnabled SABnzbdplus; then
             ShowError "Both 'SABnzbdplus' and 'QSabNZBdPlus' are enabled. This is an unsupported configuration. Please disable the unused one via the QNAP App Center then re-run this installer."
             REINSTALL_FLAG=true
-            errorcode=8
+            errorcode=11
         fi
     fi
 
@@ -345,21 +366,21 @@ Init()
         if [[ $TARGET_APP = SickChill ]] && IsQPKGEnabled SickRage && IsQPKGEnabled SickChill; then
             ShowError "Both 'SickChill' and 'SickRage' are enabled. This is an unsupported configuration. Please disable the unused one via the QNAP App Center then re-run this installer."
             REINSTALL_FLAG=true
-            errorcode=9
+            errorcode=12
         fi
     fi
 
     if [[ $errorcode -eq 0 ]]; then
         if IsQPKGEnabled Optware-NG; then
             ShowError "'Optware-NG' is enabled. This is an unsupported configuration."
-            errorcode=10
+            errorcode=13
         fi
     fi
 
     if [[ $errorcode -eq 0 ]]; then
         if IsQPKGEnabled Entware-ng && IsQPKGEnabled Entware-3x; then
             ShowError "Both 'Entware-ng' and 'Entware-3x' are enabled. This is an unsupported configuration. Please manually disable (or uninstall) one or both of them via the QNAP App Center then re-run this installer."
-            errorcode=11
+            errorcode=14
         fi
     fi
 
@@ -371,7 +392,7 @@ Init()
 
             if [[ $ENTWARE_VER = none ]]; then
                 ShowError 'Entware appears to be installed but is not visible.'
-                errorcode=12
+                errorcode=15
             fi
         fi
     fi
@@ -379,11 +400,11 @@ Init()
     if [[ $errorcode -eq 0 ]]; then
         ShowProc "downloading sherpa package list"
 
-        if ($curl_cmd --silent --fail https://raw.githubusercontent.com/onecdonly/sherpa/master/packages.conf -o $PACKAGES_PATHFILE); then
+        if ($curl_cmd --silent --fail https://onecdonly.github.io/sherpa/packages.conf -o $SHERPA_PACKAGES_PATHFILE); then
             ShowDone "downloaded sherpa package list"
         else
             ShowError "No Internet access"
-            errorcode=13
+            errorcode=16
         fi
     fi
 
@@ -406,6 +427,15 @@ DisplayHelp()
     echo "$0 OMedusa"
     echo "$0 OWatcher3"
     echo "$0 Headphones"
+
+    echo -e "\n- To force a reinstallation of Entware:"
+    echo -e "$0 --force-entware-reinstall"
+
+#     echo -e "\n- To ensure all sherpa app dependencies are installed:"
+#     echo "$0 --refresh"
+#
+#     echo -e "\n- To update all apps:"
+#     echo "$0 --update"
 
     DebugFuncExit
     return 0
@@ -518,7 +548,7 @@ PatchEntwareInit()
 
     if [[ ! -e $package_init_pathfile ]]; then
         ShowError "No init file found [$package_init_pathfile]"
-        errorcode=14
+        errorcode=17
         returncode=1
     else
         if ($GREP_CMD -q 'opt.orig' "$package_init_pathfile"); then
@@ -550,7 +580,7 @@ UpdateEntware()
     local package_list_age=60
     local release_file=/opt/etc/entware_release
     local result=0
-    local log_pathfile="${WORKING_PATH}/entware-update.log"
+    local log_pathfile="$WORKING_PATH/entware-update.log"
 
     IsSysFilePresent $OPKG_CMD || return
     IsSysFilePresent $find_cmd || return
@@ -559,7 +589,7 @@ UpdateEntware()
     [[ -e $find_cmd && -e $package_list_file ]] && result=$($find_cmd "$package_list_file" -mmin +$package_list_age) || result='new install'
 
     if [[ -n $result ]]; then
-        ShowProc "updating Entware package list"
+        ShowProc 'updating Entware package list'
 
         install_msgs=$($OPKG_CMD update)
         result=$?
@@ -573,14 +603,14 @@ UpdateEntware()
         fi
 
         if [[ $result -eq 0 ]]; then
-            ShowDone "updated Entware package list"
+            ShowDone 'updated Entware package list'
         else
             ShowWarning "Unable to update Entware package list [$result]"
             # meh, continue anyway with old list ...
         fi
     else
         DebugInfo "Entware package list was updated less than $package_list_age minutes ago"
-        ShowDone "Entware package list is up-to-date"
+        ShowDone 'Entware package list is up-to-date'
     fi
 
     DebugFuncExit
@@ -612,30 +642,66 @@ InstallExtras()
 
     }
 
+BackupAndRemoveOldApp()
+    {
+
+    [[ $errorcode -gt 0 ]] && return
+
+    DebugFuncEntry
+    local returncode=0
+
+    case $TARGET_APP in
+        SABnzbdplus)
+            if (IsQPKGEnabled QSabNZBdPlus); then
+                BackupConfig && UninstallQPKG QSabNZBdPlus
+            else
+                IsQPKGEnabled $TARGET_APP && BackupConfig && UninstallQPKG $TARGET_APP
+            fi
+            ;;
+        SickChill)
+            if (IsQPKGEnabled SickRage); then
+                BackupConfig && UninstallQPKG SickRage
+            elif (IsQPKGEnabled QSickRage); then
+                BackupConfig && $SERVICE_CMD stop QSickRage && $SERVICE_CMD disable QSickRage
+            else
+                IsQPKGEnabled $TARGET_APP && BackupConfig && UninstallQPKG $TARGET_APP
+            fi
+            ;;
+        CouchPotato2|LazyLibrarian|OMedusa|OWatcher3|Headphones)
+            IsQPKGEnabled $TARGET_APP && BackupConfig && UninstallQPKG $TARGET_APP
+            ;;
+        *)
+            ShowError "Can't backup and remove app '$TARGET_APP' as it's unknown"
+            returncode=1
+            ;;
+    esac
+
+    DebugFuncExit
+    return $returncode
+
+    }
+
 InstallTargetApp()
     {
 
     [[ $errorcode -gt 0 ]] && return
 
     DebugFuncEntry
+    local returncode=0
 
     case $TARGET_APP in
         SABnzbdplus|SickChill|CouchPotato2|LazyLibrarian|OMedusa|OWatcher3|Headphones)
-            IsQPKGEnabled $TARGET_APP && BackupConfig && UninstallQPKG $TARGET_APP
-            [[ $TARGET_APP = SABnzbdplus ]] && IsQPKGEnabled QSabNZBdPlus && BackupConfig && UninstallQPKG QSabNZBdPlus
-            [[ $TARGET_APP = SickChill ]] && IsQPKGEnabled SickRage && BackupConfig && UninstallQPKG SickRage
-            [[ $TARGET_APP = SickChill ]] && IsQPKGEnabled QSickRage && BackupConfig && $SERVICE_CMD stop QSickRage && $SERVICE_CMD disable QSickRage
-
             ! IsQPKGInstalled $TARGET_APP && InstallQPKG $TARGET_APP && PauseHere && RestoreConfig
             [[ $errorcode -eq 0 ]] && DaemonCtl start "$package_init_pathfile"
             ;;
         *)
             ShowError "Can't install app '$TARGET_APP' as it's unknown"
+            returncode=1
             ;;
     esac
 
     DebugFuncExit
-    return 0
+    return $returncode
 
     }
 
@@ -645,7 +711,6 @@ InstallIPKGs()
     [[ $errorcode -gt 0 ]] && return
 
     DebugFuncEntry
-
     local returncode=0
     local install_msgs=''
     local packages=''
@@ -683,7 +748,7 @@ InstallIPKGs()
         InstallIPKGBatch "$packages" 'Python, Git and others'
     else
         ShowError "IPKG download path [$IPKG_DL_PATH] does not exist"
-        errorcode=15
+        errorcode=18
         returncode=1
     fi
 
@@ -704,7 +769,7 @@ InstallIPKGBatch()
     local returncode=0
     local requested_IPKGs=''
     local IPKG_batch_desc=''
-    local log_pathfile="${IPKG_DL_PATH}/ipkgs.$INSTALL_LOG_FILE"
+    local log_pathfile="$IPKG_DL_PATH/ipkgs.$INSTALL_LOG_FILE"
 
     [[ -n $1 ]] && requested_IPKGs="$1" || return 1
     [[ -n $2 ]] && IPKG_batch_desc="$2" || IPKG_batch_desc="$1"
@@ -735,7 +800,7 @@ InstallIPKGBatch()
             ShowError "Download & install IPKGs failed ($IPKG_batch_desc) [$result]"
             DebugErrorFile "$log_pathfile"
 
-            errorcode=16
+            errorcode=19
             returncode=1
         fi
     fi
@@ -757,7 +822,7 @@ InstallPIPs()
     local returncode=0
     local op='PIP modules'
     local pip_install='pip install setuptools'
-    local log_pathfile="${WORKING_PATH}/${op// /_}.$INSTALL_LOG_FILE"
+    local log_pathfile="$WORKING_PATH/${op// /_}.$INSTALL_LOG_FILE"
 
     if [[ -f $PIP_CMD ]]; then
         ShowProc "downloading & installing ($op)"
@@ -768,7 +833,7 @@ InstallPIPs()
                 ;;
         esac
 
-        install_msgs=$({ eval $pip_install ;} 2>&1)
+        install_msgs=$(eval $pip_install 2>&1)
         result=$?
         echo -e "${install_msgs}\nresult=[$result]" > "$log_pathfile"
 
@@ -778,7 +843,7 @@ InstallPIPs()
             ShowError "Download & install failed ($op) [$result]"
             DebugErrorFile "$log_pathfile"
 
-            errorcode=17
+            errorcode=20
             returncode=1
         fi
     fi
@@ -814,7 +879,7 @@ InstallNG()
             #Go to default router ip address and port 6789 192.168.1.1:6789 and now you should see NZBget interface
         else
             ShowError "Download & install IPKG failed ($package_desc) [$result]"
-            errorcode=18
+            errorcode=21
             returncode=1
         fi
     fi
@@ -834,7 +899,7 @@ InstallQPKG()
 
     if [[ -z $1 ]]; then
         DebugError 'QPKG name unspecified'
-        errorcode=19
+        errorcode=22
         return 1
     fi
 
@@ -869,62 +934,11 @@ InstallQPKG()
         ShowError "QPKG installation failed ($target_file) [$result]"
         DebugErrorFile "$log_pathfile"
 
-        errorcode=20
+        errorcode=23
         returncode=1
     fi
 
     return $returncode
-
-    }
-
-BackupThisPackage()
-    {
-
-    local result=0
-
-    DebugVar package_config_path
-    backup_pathfile="${SETTINGS_BACKUP_PATH}/sherpa.config.backup.zip"
-    DebugVar backup_pathfile
-
-    if [[ -d $package_config_path ]]; then
-        if [[ ! -d $SETTINGS_BACKUP_PATH ]]; then
-            $MKDIR_CMD -p "$BACKUP_PATH" 2> /dev/null
-            result=$?
-
-            if [[ $result -eq 0 ]]; then
-                DebugDone "backup directory created ($BACKUP_PATH)"
-            else
-                ShowError "Unable to create backup directory ($BACKUP_PATH) [$result]"
-                errorcode=21
-                return 1
-            fi
-        fi
-
-        if [[ ! -d $SETTINGS_BACKUP_PATH ]]; then
-            mv "$package_config_path" "$BACKUP_PATH"
-            mvresult=$?
-
-            [[ -e $backup_pathfile ]] && rm "$backup_pathfile"
-
-            $ZIP_CMD -q "$backup_pathfile" "${SETTINGS_BACKUP_PATH}/"*
-            zipresult=$?
-
-            if [[ $mvresult -eq 0 && $zipresult -eq 0 ]]; then
-                ShowDone "created '$TARGET_APP' settings backup"
-            else
-                ShowError "Could not create settings backup of ($package_config_path) [$result]"
-                errorcode=22
-                return 1
-            fi
-        else
-            DebugInfo "a backup set already exists ($BACKUP_PATH)"
-        fi
-
-        ConvertSettings
-    else
-        ShowError "Could not find existing package configuration path. Can't safely continue with backup. Aborting."
-        errorcode=23
-    fi
 
     }
 
@@ -991,7 +1005,7 @@ BackupConfig()
             [[ $package_is_enabled = true ]] && BackupThisPackage
             ;;
         *)
-            ShowError "Can't backup specified app '$TARGET_APP' - unknown!"
+            ShowError "Can't backup app '$TARGET_APP' as it's unknown"
             returncode=1
             ;;
     esac
@@ -1001,41 +1015,92 @@ BackupConfig()
 
     }
 
+BackupThisPackage()
+    {
+
+    local result=0
+
+    DebugVar qpkg_config_path
+#     local package_config_backup_pathfile="$QPKG_BACKUP_PATH/sherpa.config.backup.zip"
+#     DebugVar package_config_backup_pathfile
+
+    if [[ -d $qpkg_config_path ]]; then
+        if [[ ! -d $QPKG_CONFIG_BACKUP_PATH ]]; then
+            DebugVar QPKG_BACKUP_PATH
+            mv "$qpkg_config_path" "$QPKG_BACKUP_PATH"
+            result=$?
+            DebugInfo "moved old config to backup location"
+
+#             [[ -e $package_config_backup_pathfile ]] && rm "$package_config_backup_pathfile"
+
+#             $ZIP_CMD -q "$package_config_backup_pathfile" "$QPKG_CONFIG_BACKUP_PATH"
+#             zipresult=$?
+#
+#             if [[ $result -eq 0 && $zipresult -eq 0 ]]; then
+#                 ShowDone "created '$TARGET_APP' settings backup"
+#             else
+#                 ShowError "Could not create settings backup of ($qpkg_config_path) [$result]"
+#                 errorcode=24
+#                 return 1
+#             fi
+        else
+            DebugInfo "a backup set already exists [$QPKG_CONFIG_BACKUP_PATH]"
+            errorcode=25
+        fi
+
+        ConvertSettings
+    else
+        ShowError "Could not find installed QPKG configuration path [$qpkg_config_path]. Can't safely continue with backup. Aborting."
+        errorcode=26
+    fi
+
+    }
+
 ConvertSettings()
     {
 
     DebugFuncEntry
 
     local returncode=0
+    local old_config_dirs=()
+    local old_config_dir=''
+    local old_config_path=''
 
     case $TARGET_APP in
         SABnzbdplus)
-            local OLD_BACKUP_PATH="${BACKUP_PATH}/SAB_CONFIG"
-            [[ -d $OLD_BACKUP_PATH ]] && { mv "$OLD_BACKUP_PATH" "$SETTINGS_BACKUP_PATH"; DebugDone 'renamed backup config path' ;}
-
-            OLD_BACKUP_PATH="${BACKUP_PATH}/Config"
-            [[ -d $OLD_BACKUP_PATH ]] && { mv "$OLD_BACKUP_PATH" "$SETTINGS_BACKUP_PATH"; DebugDone 'renamed backup config path' ;}
+            old_config_dirs+=(SAB_CONFIG CONFIG Config)
+            for old_config_dir in "${old_config_dirs[@]}"; do
+                old_config_path=$QPKG_BACKUP_PATH/$old_config_dir
+                if [[ -d $old_config_path ]]; then
+                    mv "$old_config_path" "$QPKG_CONFIG_BACKUP_PATH"
+                    DebugDone "renamed config path from [$old_config_path] to [$QPKG_CONFIG_BACKUP_PATH]"
+                    break
+                fi
+            done
 
             # for converting from Stephane's QPKG and from previous version SAB QPKGs
-            local SETTINGS_PREV_BACKUP_PATHFILE="${SETTINGS_BACKUP_PATH}/sabnzbd.ini"
+            local SETTINGS_PREV_BACKUP_PATHFILE="$QPKG_CONFIG_BACKUP_PATH/sabnzbd.ini"
 
-            [[ -f $SETTINGS_PREV_BACKUP_PATHFILE ]] && { mv "$SETTINGS_PREV_BACKUP_PATHFILE" "$SETTINGS_BACKUP_PATHFILE"; DebugDone 'renamed backup config file' ;}
+            if [[ -f $SETTINGS_PREV_BACKUP_PATHFILE ]]; then
+                mv "$SETTINGS_PREV_BACKUP_PATHFILE" "$QPKG_CONFIG_BACKUP_PATHFILE"
+                DebugDone "renamed config file from [$SETTINGS_PREV_BACKUP_PATHFILE] to [$QPKG_CONFIG_BACKUP_PATHFILE]"
+            fi
 
-            if [[ -f $SETTINGS_BACKUP_PATHFILE ]]; then
-                $SED_CMD -i "s|log_dir = logs|log_dir = ${SHARE_DOWNLOAD_PATH}/sabnzbd/logs|" "$SETTINGS_BACKUP_PATHFILE"
-                $SED_CMD -i "s|download_dir = Downloads/incomplete|download_dir = ${SHARE_DOWNLOAD_PATH}/incomplete|" "$SETTINGS_BACKUP_PATHFILE"
-                $SED_CMD -i "s|complete_dir = Downloads/complete|complete_dir = ${SHARE_DOWNLOAD_PATH}/complete|" "$SETTINGS_BACKUP_PATHFILE"
+            if [[ -f $QPKG_CONFIG_BACKUP_PATHFILE ]]; then
+                $SED_CMD -i "s|log_dir = logs|log_dir = ${SHARE_DOWNLOAD_PATH}/sabnzbd/logs|" "$QPKG_CONFIG_BACKUP_PATHFILE"
+                $SED_CMD -i "s|download_dir = Downloads/incomplete|download_dir = $SHARE_DOWNLOAD_PATH/incomplete|" "$QPKG_CONFIG_BACKUP_PATHFILE"
+                $SED_CMD -i "s|complete_dir = Downloads/complete|complete_dir = $SHARE_DOWNLOAD_PATH/complete|" "$QPKG_CONFIG_BACKUP_PATHFILE"
 
-                if ($GREP_CMD -q '^enable_https = 1' "$SETTINGS_BACKUP_PATHFILE"); then
-                    package_port=$($GREP_CMD '^https_port = ' "$SETTINGS_BACKUP_PATHFILE" | $HEAD_CMD -n1 | $CUT_CMD -f3 -d' ')
+                if ($GREP_CMD -q '^enable_https = 1' "$QPKG_CONFIG_BACKUP_PATHFILE"); then
+                    package_port=$($GREP_CMD '^https_port = ' "$QPKG_CONFIG_BACKUP_PATHFILE" | $HEAD_CMD -n1 | $CUT_CMD -f3 -d' ')
                     secure_web_login=true
                 else
-                    package_port=$($GREP_CMD '^port = ' "$SETTINGS_BACKUP_PATHFILE" | $HEAD_CMD -n1 | $CUT_CMD -f3 -d' ')
+                    package_port=$($GREP_CMD '^port = ' "$QPKG_CONFIG_BACKUP_PATHFILE" | $HEAD_CMD -n1 | $CUT_CMD -f3 -d' ')
                 fi
             fi
             ;;
         SickChill)
-            [[ -f $SETTINGS_BACKUP_PATHFILE ]] && $SETCFG_CMD General git_remote_url 'http://github.com/sickchill/sickchill.git' -f  "$SETTINGS_BACKUP_PATHFILE"
+            [[ -f $QPKG_CONFIG_BACKUP_PATHFILE ]] && $SETCFG_CMD General git_remote_url 'http://github.com/sickchill/sickchill.git' -f "$QPKG_CONFIG_BACKUP_PATHFILE"
             ;;
         LazyLibrarian|OMedusa|OWatcher3|Headphones)
             # do nothing - don't need to convert from older versions for these QPKGs as sherpa is the only installer for them.
@@ -1044,7 +1109,7 @@ ConvertSettings()
             ShowWarning "Can't convert settings for '$TARGET_APP' yet!"
             ;;
         *)
-            ShowError "Can't convert settings for '$TARGET_APP' - unsupported app!"
+            ShowError "Can't convert settings for '$TARGET_APP' as it's unknown"
             returncode=1
             ;;
     esac
@@ -1081,37 +1146,37 @@ RestoreConfig()
 
         case $TARGET_APP in
             SABnzbdplus|LazyLibrarian|SickChill|CouchPotato2|OMedusa|OWatcher3|Headphones)
-                if [[ -d $SETTINGS_BACKUP_PATH ]]; then
+                if [[ -d $QPKG_CONFIG_BACKUP_PATH ]]; then
                     DaemonCtl stop "$package_init_pathfile"
 
-                    if [[ ! -d $package_config_path ]]; then
-                        $MKDIR_CMD -p "$($DIRNAME_CMD "$package_config_path")" 2> /dev/null
+                    if [[ ! -d $qpkg_config_path ]]; then
+                        $MKDIR_CMD -p "$($DIRNAME_CMD "$qpkg_config_path")" 2> /dev/null
                     else
-                        rm -r "$package_config_path" 2> /dev/null
+                        rm -r "$qpkg_config_path" 2> /dev/null
                     fi
 
-                    mv "$SETTINGS_BACKUP_PATH" "$($DIRNAME_CMD "$package_config_path")"
+                    mv "$QPKG_CONFIG_BACKUP_PATH" "$($DIRNAME_CMD "$qpkg_config_path")"
                     result=$?
 
                     if [[ $result -eq 0 ]]; then
                         ShowDone "restored '$TARGET_APP' settings backup"
 
-                        [[ -n $package_port ]] && $SETCFG_CMD "$TARGET_APP" Web_Port $package_port -f "$QPKG_CONFIG_PATHFILE"
+                        [[ -n $package_port ]] && $SETCFG_CMD "$TARGET_APP" Web_Port $package_port -f "$APP_CENTER_CONFIG_PATHFILE"
                     else
-                        ShowError "Could not restore settings backup to ($package_config_path) [$result]"
-                        errorcode=24
+                        ShowError "Could not restore settings backup to ($qpkg_config_path) [$result]"
+                        errorcode=27
                         returncode=1
                     fi
                 fi
                 ;;
             *)
-                ShowError "Can't restore settings for '$TARGET_APP' - unsupported app!"
+                ShowError "Can't restore settings for '$TARGET_APP' as it's unknown"
                 returncode=1
                 ;;
         esac
     else
-        ShowError "'$TARGET_APP' is NOT installed so can't restore backups"
-        errorcode=25
+        ShowError "'$TARGET_APP' is NOT installed so can't restore backup"
+        errorcode=28
         returncode=1
     fi
 
@@ -1127,7 +1192,7 @@ DownloadQPKG()
 
     if [[ -z $1 ]]; then
         DebugError 'QPKG name unspecified'
-        errorcode=26
+        errorcode=29
         return 1
     fi
 
@@ -1152,7 +1217,7 @@ DownloadQPKG()
             fi
         else
             ShowError "Problem creating checksum from existing QPKG ($qpkg_file) [$result]"
-            errorcode=27
+            errorcode=30
             returncode=1
         fi
     fi
@@ -1185,19 +1250,19 @@ DownloadQPKG()
                     ShowDone "downloaded QPKG ($qpkg_file)"
                 else
                     ShowError "Downloaded QPKG checksum incorrect ($qpkg_file) [$result]"
-                    errorcode=28
+                    errorcode=31
                     returncode=1
                 fi
             else
                 ShowError "Problem creating checksum from downloaded QPKG ($qpkg_pathfile) [$result]"
-                errorcode=29
+                errorcode=32
                 returncode=1
             fi
         else
             ShowError "Download failed ($qpkg_pathfile) [$result]"
             DebugErrorFile "$log_pathfile"
 
-            errorcode=30
+            errorcode=33
             returncode=1
         fi
     fi
@@ -1214,7 +1279,7 @@ CalcStephaneQPKGArch()
 
     case "$NAS_ARCH" in
         x86_64)
-            [[ ${FIRMWARE_VERSION//.} -ge 430 ]] && STEPHANE_QPKG_ARCH=x64 || STEPHANE_QPKG_ARCH=x86
+            [[ ${NAS_FIRMWARE//.} -ge 430 ]] && STEPHANE_QPKG_ARCH=x64 || STEPHANE_QPKG_ARCH=x86
             ;;
         i686|x86)
             STEPHANE_QPKG_ARCH=x86
@@ -1259,7 +1324,7 @@ CalcPrefEntware()
 LoadQPKGVars()
     {
 
-    # $1 = installed package name to load variables for
+    # $1 = load variables for this installed package name
 
     local package_name=$1
     local result=0
@@ -1267,48 +1332,50 @@ LoadQPKGVars()
 
     if [[ -z $package_name ]]; then
         DebugError 'QPKG name unspecified'
-        errorcode=31
+        errorcode=34
         returncode=1
     else
         package_installed_path=''
         package_init_pathfile=''
-        package_config_path=''
+        qpkg_config_path=''
         local package_settings_pathfile=''
         package_port=''
         package_api=''
         sab_chartranslator_pathfile=''
 
-        package_installed_path=$($GETCFG_CMD $package_name Install_Path -f $QPKG_CONFIG_PATHFILE)
+        package_installed_path=$($GETCFG_CMD $package_name Install_Path -f $APP_CENTER_CONFIG_PATHFILE)
         result=$?
 
         if [[ $result -eq 0 ]]; then
-            package_init_pathfile=$($GETCFG_CMD $package_name Shell -f $QPKG_CONFIG_PATHFILE)
+            package_init_pathfile=$($GETCFG_CMD $package_name Shell -f $APP_CENTER_CONFIG_PATHFILE)
 
-            if [[ -d ${package_installed_path}/SAB_CONFIG ]]; then
-                package_config_path=${package_installed_path}/SAB_CONFIG
-            elif [[ -d ${package_installed_path}/CONFIG ]]; then
-                package_config_path=${package_installed_path}/CONFIG
-            elif [[ -d ${package_installed_path}/Config ]]; then
-                package_config_path=${package_installed_path}/Config
+            qpkg_config_path=$package_installed_path
+            if [[ -d $package_installed_path/SAB_CONFIG ]]; then
+                qpkg_config_path+=/SAB_CONFIG
+            elif [[ -d $package_installed_path/CONFIG ]]; then
+                qpkg_config_path+=/CONFIG
+            elif [[ -d $package_installed_path/Config ]]; then
+                qpkg_config_path+=/Config
             else
-                package_config_path=${package_installed_path}/config
+                qpkg_config_path+=/config
             fi
 
-            if [[ -f ${package_config_path}/sabnzbd.ini ]]; then
-                package_settings_pathfile=${package_config_path}/sabnzbd.ini
+            package_settings_pathfile=$qpkg_config_path
+            if [[ -f $qpkg_config_path/sabnzbd.ini ]]; then
+                package_settings_pathfile+=/sabnzbd.ini
             else
-                package_settings_pathfile=${package_config_path}/config.ini
+                package_settings_pathfile+=/config.ini
             fi
 
-            if [[ -e $SETTINGS_BACKUP_PATHFILE ]]; then
-                if [[ $($GETCFG_CMD misc enable_https -d 0 -f "$SETTINGS_BACKUP_PATHFILE") -eq 1 ]]; then
-                    package_port=$($GETCFG_CMD misc https_port -f "$SETTINGS_BACKUP_PATHFILE")
+            if [[ -e $QPKG_CONFIG_BACKUP_PATHFILE ]]; then
+                if [[ $($GETCFG_CMD misc enable_https -d 0 -f "$QPKG_CONFIG_BACKUP_PATHFILE") -eq 1 ]]; then
+                    package_port=$($GETCFG_CMD misc https_port -f "$QPKG_CONFIG_BACKUP_PATHFILE")
                     secure_web_login=true
                 else
-                    package_port=$($GETCFG_CMD misc port -f "$SETTINGS_BACKUP_PATHFILE")
+                    package_port=$($GETCFG_CMD misc port -f "$QPKG_CONFIG_BACKUP_PATHFILE")
                 fi
             else
-                package_port=$($GETCFG_CMD $package_name Web_Port -f $QPKG_CONFIG_PATHFILE)
+                package_port=$($GETCFG_CMD $package_name Web_Port -f $APP_CENTER_CONFIG_PATHFILE)
             fi
 
             [[ -e $package_settings_pathfile ]] && package_api=$($GETCFG_CMD api_key -f "$package_settings_pathfile")
@@ -1334,11 +1401,11 @@ LoadQPKGFileDetails()
     qpkg_pathfile=''
     local returncode=0
     local target_file=''
-    local OneCD_url_prefix='https://raw.githubusercontent.com/onecdonly/sherpa/master/QPKGs'
+    local OneCD_url_prefix='https://onecdonly.github.io/sherpa/QPKGs'
 
     if [[ -z $qpkg_name ]]; then
         DebugError 'QPKG name unspecified'
-        errorcode=32
+        errorcode=35
         returncode=1
     else
         local base_url=''
@@ -1406,14 +1473,14 @@ LoadQPKGFileDetails()
                 ;;
             *)
                 DebugError "QPKG name not found [$qpkg_name]"
-                errorcode=33
+                errorcode=36
                 returncode=1
                 ;;
         esac
 
         if [[ -z $qpkg_url || -z $qpkg_md5 ]]; then
             DebugError "QPKG details not found [$qpkg_name]"
-            errorcode=34
+            errorcode=37
             returncode=1
         else
             [[ -z $qpkg_file ]] && qpkg_file="$($BASENAME_CMD "$qpkg_url")"
@@ -1437,14 +1504,14 @@ UninstallQPKG()
 
     if [[ -z $1 ]]; then
         DebugError 'QPKG name unspecified'
-        errorcode=35
+        errorcode=38
         returncode=1
     else
-        qpkg_installed_path="$($GETCFG_CMD "$1" Install_Path -f "$QPKG_CONFIG_PATHFILE")"
+        qpkg_installed_path="$($GETCFG_CMD "$1" Install_Path -f "$APP_CENTER_CONFIG_PATHFILE")"
         result=$?
 
         if [[ $result -eq 0 ]]; then
-            qpkg_installed_path="$($GETCFG_CMD "$1" Install_Path -f "$QPKG_CONFIG_PATHFILE")"
+            qpkg_installed_path="$($GETCFG_CMD "$1" Install_Path -f "$APP_CENTER_CONFIG_PATHFILE")"
 
             if [[ -e ${qpkg_installed_path}/.uninstall.sh ]]; then
                 ShowProc "uninstalling QPKG '$1'"
@@ -1456,12 +1523,12 @@ UninstallQPKG()
                     ShowDone "uninstalled QPKG '$1'"
                 else
                     ShowError "Unable to uninstall QPKG \"$1\" [$result]"
-                    errorcode=36
+                    errorcode=39
                     returncode=1
                 fi
             fi
 
-            $RMCFG_CMD "$1" -f "$QPKG_CONFIG_PATHFILE"
+            $RMCFG_CMD "$1" -f "$APP_CENTER_CONFIG_PATHFILE"
         else
             DebugQPKG "'$1'" "not installed [$result]"
         fi
@@ -1485,11 +1552,11 @@ DaemonCtl()
 
     if [[ -z $2 ]]; then
         DebugError 'daemon unspecified'
-        errorcode=37
+        errorcode=40
         returncode=1
     elif [[ ! -e $2 ]]; then
         DebugError "daemon ($2) not found"
-        errorcode=38
+        errorcode=41
         returncode=1
     else
         target_init_pathfile="$2"
@@ -1513,7 +1580,7 @@ DaemonCtl()
                     else
                         $CAT_CMD "$qpkg_pathfile.$START_LOG_FILE" >> "$DEBUG_LOG_PATHFILE"
                     fi
-                    errorcode=39
+                    errorcode=42
                     returncode=1
                 fi
                 ;;
@@ -1540,7 +1607,7 @@ DaemonCtl()
                 ;;
             *)
                 DebugError "action unrecognised ($1)"
-                errorcode=40
+                errorcode=43
                 returncode=1
                 ;;
         esac
@@ -1645,11 +1712,11 @@ FindAllIPKGDependencies()
     local iteration_limit=20
     local complete=false
 
-    [[ -n $1 ]] && original_list="$1" || { DebugError "No IPKGs were requested"; return 1 ;}
+    [[ -n $1 ]] && original_list="$1" || { DebugError 'No IPKGs were requested'; return 1 ;}
 
     IsSysFilePresent $OPKG_CMD || return
 
-    ShowProc "calculating number and size of IPKGs required"
+    ShowProc 'calculating number and size of IPKGs required'
     DebugInfo "requested IPKG names: $original_list"
 
     last_list="$original_list"
@@ -1671,7 +1738,7 @@ FindAllIPKGDependencies()
 
     [[ $complete = false ]] && DebugError "IPKG dependency list incomplete! Consider raising \$iteration_limit [$iteration_limit]."
 
-    all_list_sorted="$(echo "$original_list $dependency_list" | $TR_CMD ' ' '\n' | $SORT_CMD | $UNIQ_CMD)"
+    all_list_sorted=$(echo "$original_list $dependency_list" | $TR_CMD ' ' '\n' | $SORT_CMD | $UNIQ_CMD)
     read -r -a all_required_packages_array <<< $all_list_sorted
     all_required_packages=($(printf '%s\n' "${all_required_packages_array[@]}"))
 
@@ -1698,7 +1765,7 @@ FindAllIPKGDependencies()
     if [[ $IPKG_download_count -gt 0 ]]; then
         ShowDone "$IPKG_download_count IPKGs ($(Convert2ISO $IPKG_download_size)) are required"
     else
-        ShowDone "no IPKGs are required"
+        ShowDone 'no IPKGs are required'
     fi
 
     }
@@ -1739,7 +1806,7 @@ _MonitorDirSize_()
             ((stall_seconds++))
         fi
 
-        percent="$((200*($current_bytes)/($total_bytes) % 2 + 100*($current_bytes)/($total_bytes)))%"
+        percent="$((200*(current_bytes)/(total_bytes) % 2 + 100*(current_bytes)/(total_bytes)))%"
         progress_message=" $percent ($(Convert2ISO $current_bytes)/$(Convert2ISO $total_bytes))"
 
         if [[ $stall_seconds -ge $stall_seconds_threshold ]]; then
@@ -1787,9 +1854,9 @@ EnableQPKG()
 
     [[ -z $1 ]] && return 1
 
-    if [[ $($GETCFG_CMD "$1" Enable -u -f "$QPKG_CONFIG_PATHFILE") != 'TRUE' ]]; then
+    if [[ $($GETCFG_CMD "$1" Enable -u -f "$APP_CENTER_CONFIG_PATHFILE") != 'TRUE' ]]; then
         DebugProc "enabling QPKG [$1]"
-        $SETCFG_CMD "$1" Enable TRUE -f "$QPKG_CONFIG_PATHFILE"
+        $SETCFG_CMD "$1" Enable TRUE -f "$APP_CENTER_CONFIG_PATHFILE"
         DebugDone "QPKG [$1] enabled"
     fi
 
@@ -1808,7 +1875,7 @@ IsQPKGInstalled()
 
     [[ -z $1 ]] && return 1
 
-    if [[ $($GETCFG_CMD "$1" RC_Number -d 0 -f "$QPKG_CONFIG_PATHFILE") -eq 0 ]]; then
+    if [[ $($GETCFG_CMD "$1" RC_Number -d 0 -f "$APP_CENTER_CONFIG_PATHFILE") -eq 0 ]]; then
         return 1
     else
         package_is_installed=true
@@ -1830,7 +1897,7 @@ IsQPKGEnabled()
 
     [[ -z $1 ]] && return 1
 
-    if [[ $($GETCFG_CMD "$1" Enable -u -f "$QPKG_CONFIG_PATHFILE") != 'TRUE' ]]; then
+    if [[ $($GETCFG_CMD "$1" Enable -u -f "$APP_CENTER_CONFIG_PATHFILE") != 'TRUE' ]]; then
         return 1
     else
         package_is_enabled=true
@@ -1871,7 +1938,7 @@ IsSysFilePresent()
 
     if ! [[ -f $1 || -L $1 ]]; then
         ShowError "A required NAS system file is missing [$1]"
-        errorcode=41
+        errorcode=44
         return 1
     else
         return 0
@@ -1891,7 +1958,7 @@ IsSysSharePresent()
 
     if [[ ! -L $1 ]]; then
         ShowError "A required NAS system share is missing [$1]. Please re-create it via QNAP Control Panel -> Privilege Settings -> Shared Folders."
-        errorcode=42
+        errorcode=45
         return 1
     else
         return 0
@@ -1951,7 +2018,7 @@ ConvertSecs()
 Convert2ISO()
     {
 
-    echo $1 | $AWK_CMD 'BEGIN{ u[0]="B"; u[1]="kB"; u[2]="MB"; u[3]="GB"} { n = $1; i = 0; while(n > 1000) { i+=1; n= int((n/1000)+0.5) } print n u[i] } '
+    echo "$1" | $AWK_CMD 'BEGIN{ u[0]="B"; u[1]="kB"; u[2]="MB"; u[3]="GB"} { n = $1; i = 0; while(n > 1000) { i+=1; n= int((n/1000)+0.5) } print n u[i] } '
 
     }
 
@@ -2281,7 +2348,7 @@ PauseHere()
 
     ShowProc "waiting for $wait_seconds seconds"
     $SLEEP_CMD $wait_seconds
-    ShowDone "wait complete"
+    ShowDone 'wait complete'
 
     }
 
@@ -2291,6 +2358,7 @@ RemoveOther
 DownloadQPKGs
 InstallEntware
 InstallExtras
+BackupAndRemoveOldApp
 InstallTargetApp
 Cleanup
 DisplayResult
