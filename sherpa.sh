@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 ###############################################################################
 # sherpa.sh
-#
+###############################################################################
 # (C)opyright 2017-2019 OneCD - one.cd.only@gmail.com
 #
 # So, blame OneCD if it all goes horribly wrong. ;)
 #
-# For more info [https://forum.qnap.com/viewtopic.php?f=320&t=132373]
+# For more info: https://forum.qnap.com/viewtopic.php?f=320&t=132373
 #
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -40,6 +40,8 @@ ResetErrorcode()
 ParseArgs()
     {
 
+    TARGET_APP=''
+
     if [[ -z $USER_ARGS_RAW ]]; then
         errorcode=1
         return 1
@@ -47,7 +49,7 @@ ParseArgs()
         local user_args=($(echo "$USER_ARGS_RAW" | $TR_CMD '[A-Z]' '[a-z]'))
     fi
 
-    for arg in "${user_args[@]}"; do
+    for arg in ${user_args[@]}; do
         case $arg in
             -d|--debug)
                 debug=true
@@ -61,10 +63,10 @@ ParseArgs()
                 satisfy_dependencies_only=true
                 DebugVar satisfy_dependencies_only
                 ;;
-#             --update)
-#                 update_all_apps=true
-#                 DebugVar update_all_apps
-#                 ;;
+            --update)
+                update_all_apps=true
+                DebugVar update_all_apps
+                ;;
             --help)
                 errorcode=2
                 return 1
@@ -214,16 +216,39 @@ Init()
     SHERPA_PACKAGES_PATHFILE="$WORKING_PATH/packages.conf"
 
     # sherpa-supported package details
-    SHERPA_PACKAGE_NAMES=()
-    SHERPA_PACKAGE_ABBRVS=()
+    SHERPA_QPKG_NAMES=()
+    SHERPA_QPKG_ABBRVS=()
+    SHERPA_QPKG_IPKGs=()
 
-    SHERPA_PACKAGE_NAMES+=('SABnzbdplus'); SHERPA_PACKAGE_ABBRVS+=('sab sabnzbd sabnzbdplus')
-    SHERPA_PACKAGE_NAMES+=('SickChill'); SHERPA_PACKAGE_ABBRVS+=('sc sickc chill sickchill')
-    SHERPA_PACKAGE_NAMES+=('CouchPotato2'); SHERPA_PACKAGE_ABBRVS+=('cp cp2 couch couchpotato couchpotato2 couchpotatoserver')
-    SHERPA_PACKAGE_NAMES+=('LazyLibrarian'); SHERPA_PACKAGE_ABBRVS+=('ll lazy lazylibrarian')
-    SHERPA_PACKAGE_NAMES+=('OMedusa'); SHERPA_PACKAGE_ABBRVS+=('med omed medusa omedusa')
-    SHERPA_PACKAGE_NAMES+=('OWatcher3'); SHERPA_PACKAGE_ABBRVS+=('wat watcher owatcher watcher3 owatcher3')
-    SHERPA_PACKAGE_NAMES+=('Headphones'); SHERPA_PACKAGE_ABBRVS+=('hp head phones headphones')
+    SHERPA_STD_IPKGs='git git-http nano less ca-certificates'
+
+    SHERPA_QPKG_NAMES+=('SABnzbdplus')
+        SHERPA_QPKG_ABBRVS+=('sb sab sabnzbd sabnzbdplus')
+        SHERPA_QPKG_IPKGs+=('python python-pip python-pyopenssl python-dev gcc unrar p7zip coreutils-nice ionice ffprobe')
+
+    SHERPA_QPKG_NAMES+=('SickChill')
+        SHERPA_QPKG_ABBRVS+=('sc sick sickc chill sickchill')
+        SHERPA_QPKG_IPKGs+=('python')
+
+    SHERPA_QPKG_NAMES+=('CouchPotato2')
+        SHERPA_QPKG_ABBRVS+=('cp cp2 couch couchpotato couchpotato2 couchpotatoserver')
+        SHERPA_QPKG_IPKGs+=('python python-pip python-pyopenssl python-lxml')
+
+    SHERPA_QPKG_NAMES+=('LazyLibrarian')
+        SHERPA_QPKG_ABBRVS+=('ll lazy lazylibrarian')
+        SHERPA_QPKG_IPKGs+=('python python-pip python-urllib3')
+
+    SHERPA_QPKG_NAMES+=('OMedusa')
+        SHERPA_QPKG_ABBRVS+=('om med omed medusa omedusa')
+        SHERPA_QPKG_IPKGs+=('python python-pip python-lib2to3 mediainfo')
+
+    SHERPA_QPKG_NAMES+=('OWatcher3')
+        SHERPA_QPKG_ABBRVS+=('ow wat watcher owatcher watcher3 owatcher3')
+        SHERPA_QPKG_IPKGs+=('python3 python3-pip')
+
+    SHERPA_QPKG_NAMES+=('Headphones')
+        SHERPA_QPKG_ABBRVS+=('hp head phones headphones')
+        SHERPA_QPKG_IPKGs+=('python')
 
     # internals
     secure_web_login=false
@@ -414,9 +439,8 @@ DisplayHelp()
 
     echo -e "A BASH script to install various Usenet apps into a QNAP NAS.\n"
     echo -e "- Each application can be (re)installed by running $0 with the name of a single app as an argument.\n\nSome examples are:"
-    for package_name in "${SHERPA_PACKAGE_NAMES[@]}"; do
-        echo "$0 $package_name"
-    done
+    printf "$0 %s\n" "${SHERPA_QPKG_NAMES[@]}"
+
     echo -e "\n- To force a reinstallation of Entware:"
     echo -e "$0 --force-entware-reinstall"
 
@@ -677,16 +701,13 @@ InstallTargetApp()
     DebugFuncEntry
     local returncode=0
 
-    case $TARGET_APP in
-        SABnzbdplus|SickChill|CouchPotato2|LazyLibrarian|OMedusa|OWatcher3|Headphones)
-            ! IsQPKGInstalled $TARGET_APP && InstallQPKG $TARGET_APP && PauseHere && RestoreConfig
-            [[ $errorcode -eq 0 ]] && DaemonCtl start "$package_init_pathfile"
-            ;;
-        *)
-            ShowError "Can't install app '$TARGET_APP' as it's unknown"
-            returncode=1
-            ;;
-    esac
+    if [[ -n $TARGET_APP ]]; then
+        ! IsQPKGInstalled $TARGET_APP && InstallQPKG $TARGET_APP && PauseHere && RestoreConfig
+        [[ $errorcode -eq 0 ]] && DaemonCtl start "$package_init_pathfile"
+    else
+        ShowError "Can't install app '$TARGET_APP' as it's unknown"
+        returncode=1
+    fi
 
     DebugFuncExit
     return $returncode
@@ -701,37 +722,18 @@ InstallIPKGs()
     DebugFuncEntry
     local returncode=0
     local install_msgs=''
-    local packages=''
+    local packages="$SHERPA_STD_IPKGs"
+    local index=''
 
     if [[ -n $IPKG_DL_PATH && -d $IPKG_DL_PATH ]]; then
         UpdateEntware
-        packages='git git-http nano less ca-certificates'
+        for index in ${!SHERPA_QPKG_NAMES[@]}; do
+            if (IsQPKGInstalled ${SHERPA_QPKG_NAMES[$index]}) || [[ $TARGET_APP = ${SHERPA_QPKG_NAMES[$index]} ]]; then
+                packages+=" ${SHERPA_QPKG_IPKGs[$index]}"
+            fi
+        done
 
-        if (IsQPKGInstalled SABnzbdplus) || [[ $TARGET_APP = SABnzbdplus ]]; then
-            packages+=' python python-pip python-pyopenssl python-dev gcc unrar p7zip coreutils-nice ionice ffprobe'
-        fi
-
-        if (IsQPKGInstalled CouchPotato2) || [[ $TARGET_APP = CouchPotato2 ]]; then
-            packages+=' python python-pip python-pyopenssl python-lxml'
-        fi
-
-        if (IsQPKGInstalled OWatcher3) || [[ $TARGET_APP = OWatcher3 ]]; then
-            packages+=' python3 python3-pip'
-        fi
-
-        if (IsQPKGInstalled OMedusa) || [[ $TARGET_APP = OMedusa ]]; then
-            packages+=' python python-pip python-lib2to3 mediainfo'
-        fi
-
-        if (IsQPKGInstalled SickChill) || [[ $TARGET_APP = SickChill ]]; then
-            packages+=' python'
-        fi
-
-        if (IsQPKGInstalled LazyLibrarian) || [[ $TARGET_APP = LazyLibrarian ]]; then
-            packages+=' python python-pip python-urllib3'
-        fi
-
-        [[ $STEPHANE_QPKG_ARCH = none ]] && packages+=' par2cmdline'
+        [[ $TARGET_APP = SABnzbd && $STEPHANE_QPKG_ARCH = none ]] && packages+=' par2cmdline'
 
         InstallIPKGBatch "$packages" 'Python, Git and others'
     else
@@ -1057,7 +1059,7 @@ ConvertSettings()
     case $TARGET_APP in
         SABnzbdplus)
             old_config_dirs+=(SAB_CONFIG CONFIG Config)
-            for old_config_dir in "${old_config_dirs[@]}"; do
+            for old_config_dir in ${old_config_dirs[@]}; do
                 old_config_path=$QPKG_BACKUP_PATH/$old_config_dir
                 if [[ -d $old_config_path ]]; then
                     mv "$old_config_path" "$QPKG_CONFIG_BACKUP_PATH"
@@ -1969,13 +1971,13 @@ MatchAbbrvToPackage()
     local abb_index=0
 
     [[ -z $1 ]] && return 1
-    [[ ${#SHERPA_PACKAGE_NAMES[@]} -eq 0 || ${#SHERPA_PACKAGE_ABBRVS[@]} -eq 0 ]] && return 1
+    [[ ${#SHERPA_QPKG_NAMES[@]} -eq 0 || ${#SHERPA_QPKG_ABBRVS[@]} -eq 0 ]] && return 1
 
-    for package_index in "${!SHERPA_PACKAGE_NAMES[@]}"; do
-        abbs=( ${SHERPA_PACKAGE_ABBRVS[$package_index]} )
-        for abb_index in "${!abbs[@]}"; do
+    for package_index in ${!SHERPA_QPKG_NAMES[@]}; do
+        abbs=(${SHERPA_QPKG_ABBRVS[$package_index]})
+        for abb_index in ${!abbs[@]}; do
             if [[ ${abbs[$abb_index]} = $1 ]]; then
-                echo "${SHERPA_PACKAGE_NAMES[$package_index]}"
+                echo "${SHERPA_QPKG_NAMES[$package_index]}"
                 returncode=0
                 break 2
             fi
