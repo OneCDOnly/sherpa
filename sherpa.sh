@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-###############################################################################
+####################################################################################
 # sherpa.sh
-###############################################################################
+####################################################################################
 # (C)opyright 2017-2019 OneCD - one.cd.only@gmail.com
 #
 # So, blame OneCD if it all goes horribly wrong. ;)
@@ -20,13 +20,14 @@
 #
 # You should have received a copy of the GNU General Public License along with
 # this program. If not, see http://www.gnu.org/licenses/.
-###############################################################################
+####################################################################################
 # * Style Guide *
 # function names: CamelCase
 # variable names: lowercase_with_underscores (except for 'returncode' & 'errorcode')
 # constants: UPPERCASE_WITH_UNDERSCORES
 # indents: tab (4 spaces)
-###############################################################################
+# screen/log message text: lowercase unless failure, then capitalize first word
+####################################################################################
 
 USER_ARGS_RAW="$@"
 
@@ -222,31 +223,31 @@ Init()
 
     SHERPA_STD_IPKGs='git git-http nano less ca-certificates'
 
-    SHERPA_QPKG_NAMES+=('SABnzbdplus')
+    SHERPA_QPKG_NAMES+=(SABnzbdplus)
         SHERPA_QPKG_ABBRVS+=('sb sab sabnzbd sabnzbdplus')
         SHERPA_QPKG_IPKGs+=('python python-pip python-pyopenssl python-dev gcc unrar p7zip coreutils-nice ionice ffprobe')
 
-    SHERPA_QPKG_NAMES+=('SickChill')
+    SHERPA_QPKG_NAMES+=(SickChill)
         SHERPA_QPKG_ABBRVS+=('sc sick sickc chill sickchill')
         SHERPA_QPKG_IPKGs+=('python')
 
-    SHERPA_QPKG_NAMES+=('CouchPotato2')
+    SHERPA_QPKG_NAMES+=(CouchPotato2)
         SHERPA_QPKG_ABBRVS+=('cp cp2 couch couchpotato couchpotato2 couchpotatoserver')
         SHERPA_QPKG_IPKGs+=('python python-pip python-pyopenssl python-lxml')
 
-    SHERPA_QPKG_NAMES+=('LazyLibrarian')
+    SHERPA_QPKG_NAMES+=(LazyLibrarian)
         SHERPA_QPKG_ABBRVS+=('ll lazy lazylibrarian')
         SHERPA_QPKG_IPKGs+=('python python-pip python-urllib3')
 
-    SHERPA_QPKG_NAMES+=('OMedusa')
+    SHERPA_QPKG_NAMES+=(OMedusa)
         SHERPA_QPKG_ABBRVS+=('om med omed medusa omedusa')
         SHERPA_QPKG_IPKGs+=('python python-pip python-lib2to3 mediainfo')
 
-    SHERPA_QPKG_NAMES+=('OWatcher3')
+    SHERPA_QPKG_NAMES+=(OWatcher3)
         SHERPA_QPKG_ABBRVS+=('ow wat watcher owatcher watcher3 owatcher3')
         SHERPA_QPKG_IPKGs+=('python3 python3-pip')
 
-    SHERPA_QPKG_NAMES+=('Headphones')
+    SHERPA_QPKG_NAMES+=(Headphones)
         SHERPA_QPKG_ABBRVS+=('hp head phones headphones')
         SHERPA_QPKG_IPKGs+=('python')
 
@@ -434,7 +435,6 @@ DisplayHelp()
     {
 
     DebugFuncEntry
-
     local package_name=''
 
     echo -e "A BASH script to install various Usenet apps into a QNAP NAS.\n"
@@ -498,7 +498,6 @@ DownloadQPKGs()
     [[ $errorcode -gt 0 ]] && return
 
     DebugFuncEntry
-
     local returncode=0
 
     ! IsQPKGInstalled $PREF_ENTWARE && DownloadQPKG $PREF_ENTWARE
@@ -520,7 +519,6 @@ InstallEntware()
     [[ $errorcode -gt 0 ]] && return
 
     DebugFuncEntry
-
     local returncode=0
 
     if ! IsQPKGInstalled $PREF_ENTWARE; then
@@ -551,7 +549,6 @@ PatchEntwareInit()
     {
 
     DebugFuncEntry
-
     local returncode=0
     local find_text=''
     local insert_text=''
@@ -587,7 +584,6 @@ UpdateEntware()
     {
 
     DebugFuncEntry
-
     local package_list_file=/opt/var/opkg-lists/entware
     local package_list_age=60
     local release_file=/opt/etc/entware_release
@@ -754,7 +750,6 @@ InstallIPKGBatch()
     # $2 = on-screen description of this package batch
 
     DebugFuncEntry
-
     local result=0
     local returncode=0
     local requested_IPKGs=''
@@ -806,7 +801,6 @@ InstallPIPs()
     [[ $errorcode -gt 0 ]] && return
 
     DebugFuncEntry
-
     local install_msgs=''
     local result=0
     local returncode=0
@@ -817,11 +811,7 @@ InstallPIPs()
     if [[ -f $PIP_CMD ]]; then
         ShowProc "downloading & installing ($op)"
 
-        case $TARGET_APP in
-            SABnzbdplus)
-                pip_install+=' && pip install sabyenc==3.3.5 cheetah'
-                ;;
-        esac
+        [[ $TARGET_APP = SABnzbdplus ]] && pip_install+=' && pip install sabyenc==3.3.5 cheetah'
 
         install_msgs=$(eval $pip_install 2>&1)
         result=$?
@@ -938,7 +928,6 @@ BackupConfig()
     [[ $errorcode -gt 0 ]] && return
 
     DebugFuncEntry
-
     local returncode=0
 
     case $TARGET_APP in
@@ -1010,14 +999,14 @@ BackupThisPackage()
 
     local result=0
 
-    DebugVar qpkg_config_path
+    DebugVar package_config_path
 #     local package_config_backup_pathfile="$QPKG_BACKUP_PATH/sherpa.config.backup.zip"
 #     DebugVar package_config_backup_pathfile
 
-    if [[ -d $qpkg_config_path ]]; then
+    if [[ -d $package_config_path ]]; then
         if [[ ! -d $QPKG_CONFIG_BACKUP_PATH ]]; then
             DebugVar QPKG_BACKUP_PATH
-            mv "$qpkg_config_path" "$QPKG_BACKUP_PATH"
+            mv "$package_config_path" "$QPKG_BACKUP_PATH"
             result=$?
             DebugInfo "moved old config to backup location"
 
@@ -1029,7 +1018,7 @@ BackupThisPackage()
 #             if [[ $result -eq 0 && $zipresult -eq 0 ]]; then
 #                 ShowDone "created '$TARGET_APP' settings backup"
 #             else
-#                 ShowError "Could not create settings backup of ($qpkg_config_path) [$result]"
+#                 ShowError "Could not create settings backup of ($package_config_path) [$result]"
 #                 errorcode=24
 #                 return 1
 #             fi
@@ -1040,7 +1029,7 @@ BackupThisPackage()
 
         ConvertSettings
     else
-        ShowError "Could not find installed QPKG configuration path [$qpkg_config_path]. Can't safely continue with backup. Aborting."
+        ShowError "Could not find installed QPKG configuration path [$package_config_path]. Can't safely continue with backup. Aborting."
         errorcode=26
     fi
 
@@ -1050,30 +1039,30 @@ ConvertSettings()
     {
 
     DebugFuncEntry
-
     local returncode=0
-    local old_config_dirs=()
-    local old_config_dir=''
-    local old_config_path=''
+    local prev_config_dirs=()
+    local prev_config_dir=''
+    local test_config_path=''
+    local settings_prev_backup_pathfile
 
     case $TARGET_APP in
         SABnzbdplus)
-            old_config_dirs+=(SAB_CONFIG CONFIG Config)
-            for old_config_dir in ${old_config_dirs[@]}; do
-                old_config_path=$QPKG_BACKUP_PATH/$old_config_dir
-                if [[ -d $old_config_path ]]; then
-                    mv "$old_config_path" "$QPKG_CONFIG_BACKUP_PATH"
-                    DebugDone "renamed config path from [$old_config_path] to [$QPKG_CONFIG_BACKUP_PATH]"
+            prev_config_dirs+=(SAB_CONFIG CONFIG Config)
+            for prev_config_dir in ${prev_config_dirs[@]}; do
+                test_config_path=$QPKG_BACKUP_PATH/$prev_config_dir
+                if [[ -d $test_config_path ]]; then
+                    mv "$test_config_path" "$QPKG_CONFIG_BACKUP_PATH"
+                    DebugDone "renamed config path from [$test_config_path] to [$QPKG_CONFIG_BACKUP_PATH]"
                     break
                 fi
             done
 
             # for converting from Stephane's QPKG and from previous version SAB QPKGs
-            local SETTINGS_PREV_BACKUP_PATHFILE="$QPKG_CONFIG_BACKUP_PATH/sabnzbd.ini"
+            settings_prev_backup_pathfile="$QPKG_CONFIG_BACKUP_PATH/sabnzbd.ini"
 
-            if [[ -f $SETTINGS_PREV_BACKUP_PATHFILE ]]; then
-                mv "$SETTINGS_PREV_BACKUP_PATHFILE" "$QPKG_CONFIG_BACKUP_PATHFILE"
-                DebugDone "renamed config file from [$SETTINGS_PREV_BACKUP_PATHFILE] to [$QPKG_CONFIG_BACKUP_PATHFILE]"
+            if [[ -f $settings_prev_backup_pathfile ]]; then
+                mv "$settings_prev_backup_pathfile" "$QPKG_CONFIG_BACKUP_PATHFILE"
+                DebugDone "renamed config file from [$settings_prev_backup_pathfile] to [$QPKG_CONFIG_BACKUP_PATHFILE]"
             fi
 
             if [[ -f $QPKG_CONFIG_BACKUP_PATHFILE ]]; then
@@ -1127,7 +1116,6 @@ RestoreConfig()
     [[ $errorcode -gt 0 ]] && return
 
     DebugFuncEntry
-
     local result=0
     local returncode=0
 
@@ -1139,13 +1127,13 @@ RestoreConfig()
                 if [[ -d $QPKG_CONFIG_BACKUP_PATH ]]; then
                     DaemonCtl stop "$package_init_pathfile"
 
-                    if [[ ! -d $qpkg_config_path ]]; then
-                        $MKDIR_CMD -p "$($DIRNAME_CMD "$qpkg_config_path")" 2> /dev/null
+                    if [[ ! -d $package_config_path ]]; then
+                        $MKDIR_CMD -p "$($DIRNAME_CMD "$package_config_path")" 2> /dev/null
                     else
-                        rm -r "$qpkg_config_path" 2> /dev/null
+                        rm -r "$package_config_path" 2> /dev/null
                     fi
 
-                    mv "$QPKG_CONFIG_BACKUP_PATH" "$($DIRNAME_CMD "$qpkg_config_path")"
+                    mv "$QPKG_CONFIG_BACKUP_PATH" "$($DIRNAME_CMD "$package_config_path")"
                     result=$?
 
                     if [[ $result -eq 0 ]]; then
@@ -1153,7 +1141,7 @@ RestoreConfig()
 
                         [[ -n $package_port ]] && $SETCFG_CMD "$TARGET_APP" Web_Port $package_port -f "$APP_CENTER_CONFIG_PATHFILE"
                     else
-                        ShowError "Could not restore settings backup to ($qpkg_config_path) [$result]"
+                        ShowError "Could not restore settings backup to ($package_config_path) [$result]"
                         errorcode=27
                         returncode=1
                     fi
@@ -1187,7 +1175,6 @@ DownloadQPKG()
     fi
 
     DebugFuncEntry
-
     local result=0
     local returncode=0
 
@@ -1319,6 +1306,10 @@ LoadQPKGVars()
     local package_name=$1
     local result=0
     local returncode=0
+    local prev_config_dirs=()
+    local prev_config_dir=''
+    local prev_config_files=()
+    local prev_config_file=''
 
     if [[ -z $package_name ]]; then
         DebugError 'QPKG name unspecified'
@@ -1327,7 +1318,7 @@ LoadQPKGVars()
     else
         package_installed_path=''
         package_init_pathfile=''
-        qpkg_config_path=''
+        package_config_path=''
         local package_settings_pathfile=''
         package_port=''
         package_api=''
@@ -1339,23 +1330,17 @@ LoadQPKGVars()
         if [[ $result -eq 0 ]]; then
             package_init_pathfile=$($GETCFG_CMD $package_name Shell -f $APP_CENTER_CONFIG_PATHFILE)
 
-            qpkg_config_path=$package_installed_path
-            if [[ -d $package_installed_path/SAB_CONFIG ]]; then
-                qpkg_config_path+=/SAB_CONFIG
-            elif [[ -d $package_installed_path/CONFIG ]]; then
-                qpkg_config_path+=/CONFIG
-            elif [[ -d $package_installed_path/Config ]]; then
-                qpkg_config_path+=/Config
-            else
-                qpkg_config_path+=/config
-            fi
+            prev_config_dirs=(SAB_CONFIG CONFIG Config config)
+            for prev_config_dir in ${prev_config_dirs[@]}; do
+                package_config_path=$package_installed_path/$prev_config_dir
+                [[ -d $package_config_path ]] && break
+            done
 
-            package_settings_pathfile=$qpkg_config_path
-            if [[ -f $qpkg_config_path/sabnzbd.ini ]]; then
-                package_settings_pathfile+=/sabnzbd.ini
-            else
-                package_settings_pathfile+=/config.ini
-            fi
+            prev_config_files=(sabnzbd.ini config.ini)
+            for prev_config_file in ${prev_config_files[@]}; do
+                package_settings_pathfile=$package_config_path/$prev_config_file
+                [[ -f $package_settings_pathfile ]] && break
+            done
 
             if [[ -e $QPKG_CONFIG_BACKUP_PATHFILE ]]; then
                 if [[ $($GETCFG_CMD misc enable_https -d 0 -f "$QPKG_CONFIG_BACKUP_PATHFILE") -eq 1 ]]; then
