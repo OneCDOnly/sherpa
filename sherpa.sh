@@ -47,29 +47,8 @@ ParseArgs()
         local user_args=($(echo "$USER_ARGS_RAW" | $TR_CMD '[A-Z]' '[a-z]'))
     fi
 
-    for arg in ${user_args[@]}; do
+    for arg in "${user_args[@]}"; do
         case $arg in
-            sab|sabnzbd|sabnzbdplus)
-                TARGET_APP=SABnzbdplus
-                ;;
-            sc|sickc|sickchill)
-                TARGET_APP=SickChill
-                ;;
-            cp|cp2|couch|couchpotato|couchpotato2|couchpotatoserver)
-                TARGET_APP=CouchPotato2
-                ;;
-            ll|lazy|lazylibrarian)
-                TARGET_APP=LazyLibrarian
-                ;;
-            med|omed|medusa|omedusa)
-                TARGET_APP=OMedusa
-                ;;
-            wat|watcher|owatcher|watcher3|owatcher3)
-                TARGET_APP=OWatcher3
-                ;;
-            hp|head|phones|headphones)
-                TARGET_APP=Headphones
-                ;;
             -d|--debug)
                 debug=true
                 DebugVar debug
@@ -78,10 +57,10 @@ ParseArgs()
                 force_entware_reinstall=true
                 DebugVar force_entware_reinstall
                 ;;
-#             --refresh)
-#                 check_dependencies=true
-#                 DebugVar check_dependencies
-#                 ;;
+            --refresh)
+                satisfy_dependencies_only=true
+                DebugVar satisfy_dependencies_only
+                ;;
 #             --update)
 #                 update_all_apps=true
 #                 DebugVar update_all_apps
@@ -90,10 +69,10 @@ ParseArgs()
 #                 errorcode=2
 #                 return 1
 #                 ;;
-            *)
-                break
-                ;;
         esac
+
+        # only use first matched package name abbreviation as app to install
+        [[ -z $TARGET_APP ]] && TARGET_APP=$(MatchAbbrvToPackage "$arg")
     done
 
     return 0
@@ -233,6 +212,18 @@ Init()
     DEBUG_LOG_PATHFILE="$SHARE_PUBLIC_PATH/$DEBUG_LOG_FILE"
     SHERPA_PACKAGES_PATHFILE="$WORKING_PATH/packages.conf"
 
+    # sherpa-supported package details
+    SHERPA_PACKAGE_NAMES=()
+    SHERPA_PACKAGE_ABBRVS=()
+
+    SHERPA_PACKAGE_NAMES+=('SABnzbdplus'); SHERPA_PACKAGE_ABBRVS+=('sab sabnzbd sabnzbdplus')
+    SHERPA_PACKAGE_NAMES+=('SickChill'); SHERPA_PACKAGE_ABBRVS+=('sc sickc sickchill')
+    SHERPA_PACKAGE_NAMES+=('CouchPotato2'); SHERPA_PACKAGE_ABBRVS+=('cp cp2 couch couchpotato couchpotato2 couchpotatoserver')
+    SHERPA_PACKAGE_NAMES+=('LazyLibrarian'); SHERPA_PACKAGE_ABBRVS+=('ll lazy lazylibrarian')
+    SHERPA_PACKAGE_NAMES+=('OMedusa'); SHERPA_PACKAGE_ABBRVS+=('med omed medusa omedusa')
+    SHERPA_PACKAGE_NAMES+=('OWatcher3'); SHERPA_PACKAGE_ABBRVS+=('wat watcher owatcher watcher3 owatcher3')
+    SHERPA_PACKAGE_NAMES+=('Headphones'); SHERPA_PACKAGE_ABBRVS+=('hp head phones headphones')
+
     # internals
     secure_web_login=false
     package_port=0
@@ -246,6 +237,7 @@ Init()
     REINSTALL_FLAG=false
     OLD_APP=''
     force_entware_reinstall=false
+    satisfy_dependencies_only=false
     [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_cmd+=' --insecure'
     [[ ${NAS_FIRMWARE//.} -ge 435 ]] && find_cmd=/usr/bin/find      # 4.3.5 has a much better BusyBox 'find'
     local result=0
@@ -280,15 +272,14 @@ Init()
     DebugScript 'target app' "$TARGET_APP"
     DebugInfoThinSeparator
 
-    [[ -z $TARGET_APP ]] && errorcode=3
-    [[ $errorcode -eq 1 ]] && DisplayHelp
+    [[ -z $TARGET_APP || $errorcode -eq 1 ]] && DisplayHelp
 
     CalcStephaneQPKGArch
     CalcPrefEntware
 
     if [[ $errorcode -eq 0 && $EUID -ne 0 ]]; then
         ShowError "This script must be run as the 'admin' user. Please login via SSH as 'admin' and try again."
-        errorcode=4
+        errorcode=3
     fi
 
     if [[ $errorcode -eq 0 ]]; then
@@ -297,7 +288,7 @@ Init()
 
         if [[ $result -ne 0 ]]; then
             ShowError "Unable to create working directory ($WORKING_PATH) [$result]"
-            errorcode=5
+            errorcode=4
         else
             cd "$WORKING_PATH"
         fi
@@ -309,7 +300,7 @@ Init()
 
         if [[ $result -ne 0 ]]; then
             ShowError "Unable to create backup directory ($QPKG_BACKUP_PATH) [$result]"
-            errorcode=6
+            errorcode=5
         fi
     fi
 
@@ -319,7 +310,7 @@ Init()
 
         if [[ $result -ne 0 ]]; then
             ShowError "Unable to create QPKG download directory ($QPKG_DL_PATH) [$result]"
-            errorcode=7
+            errorcode=6
         fi
     fi
 
@@ -330,7 +321,7 @@ Init()
 
         if [[ $result -ne 0 ]]; then
             ShowError "Unable to create IPKG download directory ($IPKG_DL_PATH) [$result]"
-            errorcode=8
+            errorcode=7
         else
             monitor_flag="$IPKG_DL_PATH/.monitor"
         fi
@@ -342,7 +333,7 @@ Init()
 
         if [[ $result -ne 0 ]]; then
             ShowError "Unable to create IPKG cache directory ($IPKG_CACHE_PATH) [$result]"
-            errorcode=9
+            errorcode=8
         fi
     fi
 
@@ -350,7 +341,7 @@ Init()
         if (IsQPKGInstalled $TARGET_APP && ! IsQPKGEnabled $TARGET_APP); then
             ShowError "'$TARGET_APP' is already installed but is disabled. You'll need to enable it first to allow re-installation."
             REINSTALL_FLAG=true
-            errorcode=10
+            errorcode=9
         fi
     fi
 
@@ -358,7 +349,7 @@ Init()
         if [[ $TARGET_APP = SABnzbdplus ]] && IsQPKGEnabled QSabNZBdPlus && IsQPKGEnabled SABnzbdplus; then
             ShowError "Both 'SABnzbdplus' and 'QSabNZBdPlus' are enabled. This is an unsupported configuration. Please disable the unused one via the QNAP App Center then re-run this installer."
             REINSTALL_FLAG=true
-            errorcode=11
+            errorcode=10
         fi
     fi
 
@@ -366,21 +357,21 @@ Init()
         if [[ $TARGET_APP = SickChill ]] && IsQPKGEnabled SickRage && IsQPKGEnabled SickChill; then
             ShowError "Both 'SickChill' and 'SickRage' are enabled. This is an unsupported configuration. Please disable the unused one via the QNAP App Center then re-run this installer."
             REINSTALL_FLAG=true
-            errorcode=12
+            errorcode=11
         fi
     fi
 
     if [[ $errorcode -eq 0 ]]; then
         if IsQPKGEnabled Optware-NG; then
             ShowError "'Optware-NG' is enabled. This is an unsupported configuration."
-            errorcode=13
+            errorcode=12
         fi
     fi
 
     if [[ $errorcode -eq 0 ]]; then
         if IsQPKGEnabled Entware-ng && IsQPKGEnabled Entware-3x; then
             ShowError "Both 'Entware-ng' and 'Entware-3x' are enabled. This is an unsupported configuration. Please manually disable (or uninstall) one or both of them via the QNAP App Center then re-run this installer."
-            errorcode=14
+            errorcode=13
         fi
     fi
 
@@ -392,7 +383,7 @@ Init()
 
             if [[ $ENTWARE_VER = none ]]; then
                 ShowError 'Entware appears to be installed but is not visible.'
-                errorcode=15
+                errorcode=14
             fi
         fi
     fi
@@ -404,7 +395,7 @@ Init()
             ShowDone "downloaded sherpa package list"
         else
             ShowError "No Internet access"
-            errorcode=16
+            errorcode=15
         fi
     fi
 
@@ -418,16 +409,13 @@ DisplayHelp()
 
     DebugFuncEntry
 
+    local package_name=''
+
     echo -e "A BASH script to install various Usenet apps into a QNAP NAS.\n"
     echo -e "- Each application can be (re)installed by running $0 with the name of a single app as an argument.\n\nSome examples are:"
-    echo "$0 SABnzbd"
-    echo "$0 SickChill"
-    echo "$0 CouchPotato2"
-    echo "$0 LazyLibrarian"
-    echo "$0 OMedusa"
-    echo "$0 OWatcher3"
-    echo "$0 Headphones"
-
+    for package_name in "${SHERPA_PACKAGE_NAMES[@]}"; do
+        echo "$0 $package_name"
+    done
     echo -e "\n- To force a reinstallation of Entware:"
     echo -e "$0 --force-entware-reinstall"
 
@@ -548,7 +536,7 @@ PatchEntwareInit()
 
     if [[ ! -e $package_init_pathfile ]]; then
         ShowError "No init file found [$package_init_pathfile]"
-        errorcode=17
+        errorcode=16
         returncode=1
     else
         if ($GREP_CMD -q 'opt.orig' "$package_init_pathfile"); then
@@ -748,7 +736,7 @@ InstallIPKGs()
         InstallIPKGBatch "$packages" 'Python, Git and others'
     else
         ShowError "IPKG download path [$IPKG_DL_PATH] does not exist"
-        errorcode=18
+        errorcode=17
         returncode=1
     fi
 
@@ -800,7 +788,7 @@ InstallIPKGBatch()
             ShowError "Download & install IPKGs failed ($IPKG_batch_desc) [$result]"
             DebugErrorFile "$log_pathfile"
 
-            errorcode=19
+            errorcode=18
             returncode=1
         fi
     fi
@@ -843,7 +831,7 @@ InstallPIPs()
             ShowError "Download & install failed ($op) [$result]"
             DebugErrorFile "$log_pathfile"
 
-            errorcode=20
+            errorcode=19
             returncode=1
         fi
     fi
@@ -879,7 +867,7 @@ InstallNG()
             #Go to default router ip address and port 6789 192.168.1.1:6789 and now you should see NZBget interface
         else
             ShowError "Download & install IPKG failed ($package_desc) [$result]"
-            errorcode=21
+            errorcode=20
             returncode=1
         fi
     fi
@@ -899,7 +887,7 @@ InstallQPKG()
 
     if [[ -z $1 ]]; then
         DebugError 'QPKG name unspecified'
-        errorcode=22
+        errorcode=21
         return 1
     fi
 
@@ -934,7 +922,7 @@ InstallQPKG()
         ShowError "QPKG installation failed ($target_file) [$result]"
         DebugErrorFile "$log_pathfile"
 
-        errorcode=23
+        errorcode=22
         returncode=1
     fi
 
@@ -1040,18 +1028,18 @@ BackupThisPackage()
 #                 ShowDone "created '$TARGET_APP' settings backup"
 #             else
 #                 ShowError "Could not create settings backup of ($qpkg_config_path) [$result]"
-#                 errorcode=24
+#                 errorcode=23
 #                 return 1
 #             fi
         else
             DebugInfo "a backup set already exists [$QPKG_CONFIG_BACKUP_PATH]"
-            errorcode=25
+            errorcode=24
         fi
 
         ConvertSettings
     else
         ShowError "Could not find installed QPKG configuration path [$qpkg_config_path]. Can't safely continue with backup. Aborting."
-        errorcode=26
+        errorcode=25
     fi
 
     }
@@ -1164,7 +1152,7 @@ RestoreConfig()
                         [[ -n $package_port ]] && $SETCFG_CMD "$TARGET_APP" Web_Port $package_port -f "$APP_CENTER_CONFIG_PATHFILE"
                     else
                         ShowError "Could not restore settings backup to ($qpkg_config_path) [$result]"
-                        errorcode=27
+                        errorcode=26
                         returncode=1
                     fi
                 fi
@@ -1176,7 +1164,7 @@ RestoreConfig()
         esac
     else
         ShowError "'$TARGET_APP' is NOT installed so can't restore backup"
-        errorcode=28
+        errorcode=27
         returncode=1
     fi
 
@@ -1192,7 +1180,7 @@ DownloadQPKG()
 
     if [[ -z $1 ]]; then
         DebugError 'QPKG name unspecified'
-        errorcode=29
+        errorcode=28
         return 1
     fi
 
@@ -1217,7 +1205,7 @@ DownloadQPKG()
             fi
         else
             ShowError "Problem creating checksum from existing QPKG ($qpkg_file) [$result]"
-            errorcode=30
+            errorcode=29
             returncode=1
         fi
     fi
@@ -1250,19 +1238,19 @@ DownloadQPKG()
                     ShowDone "downloaded QPKG ($qpkg_file)"
                 else
                     ShowError "Downloaded QPKG checksum incorrect ($qpkg_file) [$result]"
-                    errorcode=31
+                    errorcode=30
                     returncode=1
                 fi
             else
                 ShowError "Problem creating checksum from downloaded QPKG ($qpkg_pathfile) [$result]"
-                errorcode=32
+                errorcode=31
                 returncode=1
             fi
         else
             ShowError "Download failed ($qpkg_pathfile) [$result]"
             DebugErrorFile "$log_pathfile"
 
-            errorcode=33
+            errorcode=32
             returncode=1
         fi
     fi
@@ -1332,7 +1320,7 @@ LoadQPKGVars()
 
     if [[ -z $package_name ]]; then
         DebugError 'QPKG name unspecified'
-        errorcode=34
+        errorcode=33
         returncode=1
     else
         package_installed_path=''
@@ -1405,7 +1393,7 @@ LoadQPKGFileDetails()
 
     if [[ -z $qpkg_name ]]; then
         DebugError 'QPKG name unspecified'
-        errorcode=35
+        errorcode=34
         returncode=1
     else
         local base_url=''
@@ -1473,14 +1461,14 @@ LoadQPKGFileDetails()
                 ;;
             *)
                 DebugError "QPKG name not found [$qpkg_name]"
-                errorcode=36
+                errorcode=35
                 returncode=1
                 ;;
         esac
 
         if [[ -z $qpkg_url || -z $qpkg_md5 ]]; then
             DebugError "QPKG details not found [$qpkg_name]"
-            errorcode=37
+            errorcode=36
             returncode=1
         else
             [[ -z $qpkg_file ]] && qpkg_file="$($BASENAME_CMD "$qpkg_url")"
@@ -1504,7 +1492,7 @@ UninstallQPKG()
 
     if [[ -z $1 ]]; then
         DebugError 'QPKG name unspecified'
-        errorcode=38
+        errorcode=37
         returncode=1
     else
         qpkg_installed_path="$($GETCFG_CMD "$1" Install_Path -f "$APP_CENTER_CONFIG_PATHFILE")"
@@ -1523,7 +1511,7 @@ UninstallQPKG()
                     ShowDone "uninstalled QPKG '$1'"
                 else
                     ShowError "Unable to uninstall QPKG \"$1\" [$result]"
-                    errorcode=39
+                    errorcode=38
                     returncode=1
                 fi
             fi
@@ -1552,11 +1540,11 @@ DaemonCtl()
 
     if [[ -z $2 ]]; then
         DebugError 'daemon unspecified'
-        errorcode=40
+        errorcode=39
         returncode=1
     elif [[ ! -e $2 ]]; then
         DebugError "daemon ($2) not found"
-        errorcode=41
+        errorcode=40
         returncode=1
     else
         target_init_pathfile="$2"
@@ -1580,7 +1568,7 @@ DaemonCtl()
                     else
                         $CAT_CMD "$qpkg_pathfile.$START_LOG_FILE" >> "$DEBUG_LOG_PATHFILE"
                     fi
-                    errorcode=42
+                    errorcode=41
                     returncode=1
                 fi
                 ;;
@@ -1607,7 +1595,7 @@ DaemonCtl()
                 ;;
             *)
                 DebugError "action unrecognised ($1)"
-                errorcode=43
+                errorcode=42
                 returncode=1
                 ;;
         esac
@@ -1939,7 +1927,7 @@ IsSysFilePresent()
 
     if ! [[ -f $1 || -L $1 ]]; then
         ShowError "A required NAS system file is missing [$1]"
-        errorcode=44
+        errorcode=43
         return 1
     else
         return 0
@@ -1959,11 +1947,41 @@ IsSysSharePresent()
 
     if [[ ! -L $1 ]]; then
         ShowError "A required NAS system share is missing [$1]. Please re-create it via QNAP Control Panel -> Privilege Settings -> Shared Folders."
-        errorcode=45
+        errorcode=44
         return 1
     else
         return 0
     fi
+
+    }
+
+MatchAbbrvToPackage()
+    {
+
+    # $1 = a potential package abbreviation
+    # stdout = available package name (empty if unmatched)
+    # $? = 0 if matched, 1 if unmatched
+
+    local returncode=1
+    local abbs=()
+    local package_index=0
+    local abb_index=0
+
+    [[ -z $1 ]] && return 1
+    [[ ${#SHERPA_PACKAGE_NAMES[@]} -eq 0 || ${#SHERPA_PACKAGE_ABBRVS[@]} -eq 0 ]] && return 1
+
+    for package_index in "${!SHERPA_PACKAGE_NAMES[@]}"; do
+        abbs=( ${SHERPA_PACKAGE_ABBRVS[$package_index]} )
+        for abb_index in "${!abbs[@]}"; do
+            if [[ ${abbs[$abb_index]} = $1 ]]; then
+                echo "${SHERPA_PACKAGE_NAMES[$package_index]}"
+                returncode=0
+                break 2
+            fi
+        done
+    done
+
+    return $returncode
 
     }
 
