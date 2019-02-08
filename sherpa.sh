@@ -1016,7 +1016,7 @@ BackupThisPackage()
 #             zipresult=$?
 #
 #             if [[ $result -eq 0 && $zipresult -eq 0 ]]; then
-#                 ShowDone "created '$TARGET_APP' settings backup"
+            ShowDone "created '$TARGET_APP' settings backup"
 #             else
 #                 ShowError "Could not create settings backup of ($package_config_path) [$result]"
 #                 errorcode=24
@@ -1122,36 +1122,28 @@ RestoreConfig()
     if IsQPKGInstalled $TARGET_APP; then
         LoadQPKGVars $TARGET_APP
 
-        case $TARGET_APP in
-            SABnzbdplus|LazyLibrarian|SickChill|CouchPotato2|OMedusa|OWatcher3|Headphones)
-                if [[ -d $QPKG_CONFIG_BACKUP_PATH ]]; then
-                    DaemonCtl stop "$package_init_pathfile"
+        if [[ -d $QPKG_CONFIG_BACKUP_PATH ]]; then
+            DaemonCtl stop "$package_init_pathfile"
 
-                    if [[ ! -d $package_config_path ]]; then
-                        $MKDIR_CMD -p "$($DIRNAME_CMD "$package_config_path")" 2> /dev/null
-                    else
-                        rm -r "$package_config_path" 2> /dev/null
-                    fi
+            if [[ ! -d $package_config_path ]]; then
+                $MKDIR_CMD -p "$($DIRNAME_CMD "$package_config_path")" 2> /dev/null
+            else
+                rm -r "$package_config_path" 2> /dev/null
+            fi
 
-                    mv "$QPKG_CONFIG_BACKUP_PATH" "$($DIRNAME_CMD "$package_config_path")"
-                    result=$?
+            mv "$QPKG_CONFIG_BACKUP_PATH" "$($DIRNAME_CMD "$package_config_path")"
+            result=$?
 
-                    if [[ $result -eq 0 ]]; then
-                        ShowDone "restored '$TARGET_APP' settings backup"
+            if [[ $result -eq 0 ]]; then
+                ShowDone "restored '$TARGET_APP' settings backup"
 
-                        [[ -n $package_port ]] && $SETCFG_CMD "$TARGET_APP" Web_Port $package_port -f "$APP_CENTER_CONFIG_PATHFILE"
-                    else
-                        ShowError "Could not restore settings backup to ($package_config_path) [$result]"
-                        errorcode=27
-                        returncode=1
-                    fi
-                fi
-                ;;
-            *)
-                ShowError "Can't restore settings for '$TARGET_APP' as it's unknown"
+                [[ -n $package_port ]] && $SETCFG_CMD "$TARGET_APP" Web_Port $package_port -f "$APP_CENTER_CONFIG_PATHFILE"
+            else
+                ShowError "Could not restore settings backup to ($package_config_path) [$result]"
+                errorcode=27
                 returncode=1
-                ;;
-        esac
+            fi
+        fi
     else
         ShowError "'$TARGET_APP' is NOT installed so can't restore backup"
         errorcode=28
