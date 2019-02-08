@@ -87,7 +87,7 @@ Init()
     {
 
     local SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=190208
+    local SCRIPT_VERSION=190209
     debug=false
     ResetErrorcode
 
@@ -1296,7 +1296,6 @@ LoadQPKGVars()
     # $1 = load variables for this installed package name
 
     local package_name=$1
-    local result=0
     local returncode=0
     local prev_config_dirs=()
     local prev_config_dir=''
@@ -1314,12 +1313,11 @@ LoadQPKGVars()
         local package_settings_pathfile=''
         package_port=''
         package_api=''
+        package_version=''
         sab_chartranslator_pathfile=''
 
         package_installed_path=$($GETCFG_CMD $package_name Install_Path -f $APP_CENTER_CONFIG_PATHFILE)
-        result=$?
-
-        if [[ $result -eq 0 ]]; then
+        if [[ $? -eq 0 ]]; then
             package_init_pathfile=$($GETCFG_CMD $package_name Shell -f $APP_CENTER_CONFIG_PATHFILE)
 
             prev_config_dirs=(SAB_CONFIG CONFIG Config config)
@@ -1346,6 +1344,7 @@ LoadQPKGVars()
             fi
 
             [[ -e $package_settings_pathfile ]] && package_api=$($GETCFG_CMD api_key -f "$package_settings_pathfile")
+            package_version=$($GETCFG_CMD $package_name Version -f $APP_CENTER_CONFIG_PATHFILE)
             sab_chartranslator_pathfile=$package_installed_path/scripts/CharTranslator.py
         else
             returncode=1
@@ -1478,12 +1477,10 @@ UninstallQPKG()
         result=$?
 
         if [[ $result -eq 0 ]]; then
-            qpkg_installed_path="$($GETCFG_CMD "$1" Install_Path -f "$APP_CENTER_CONFIG_PATHFILE")"
-
-            if [[ -e ${qpkg_installed_path}/.uninstall.sh ]]; then
+            if [[ -e $qpkg_installed_path/.uninstall.sh ]]; then
                 ShowProc "uninstalling QPKG '$1'"
 
-                ${qpkg_installed_path}/.uninstall.sh > /dev/null
+                $qpkg_installed_path/.uninstall.sh > /dev/null
                 result=$?
 
                 if [[ $result -eq 0 ]]; then
