@@ -2173,7 +2173,7 @@ DebugLog()
 DebugVar()
     {
 
-    DebugThis "(vv) $1 [${!1}]"
+    DebugThis "(vv) \$$1 [${!1}]"
 
     }
 
