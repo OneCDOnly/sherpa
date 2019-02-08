@@ -476,7 +476,6 @@ DownloadQPKGs()
     DebugFuncEntry
 
     local returncode=0
-    local SL=''
 
     ! IsQPKGInstalled $PREF_ENTWARE && DownloadQPKG $PREF_ENTWARE
 
@@ -1820,6 +1819,7 @@ SabQueueControl()
 
     # $1 = 'pause' or 'resume'
 
+    local SL=''
     local returncode=0
 
     if [[ -z $1 ]]; then
@@ -1827,7 +1827,7 @@ SabQueueControl()
     elif [[ $1 != pause && $1 != resume ]]; then
         returncode=1
     else
-        [[ $secure_web_login = true ]] && SL='s' || SL=''
+        [[ $secure_web_login = true ]] && SL='s'
         $WGET_CMD --no-check-certificate --quiet "http${SL}://127.0.0.1:${package_port}/sabnzbd/api?mode=${1}&apikey=${package_api}" -O - 2>&1 >/dev/null &
         [[ $1 = pause ]] && queue_paused=true || queue_paused=false
         DebugDone "${1}d existing SABnzbd queue"
