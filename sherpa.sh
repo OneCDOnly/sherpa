@@ -1,12 +1,21 @@
 #!/usr/bin/env bash
 ####################################################################################
+#
 # sherpa.sh
+#
 ####################################################################################
+#
 # (C)opyright 2017-2019 OneCD - one.cd.only@gmail.com
 #
-# So, blame OneCD if it all goes horribly wrong. ;)
+# so, blame OneCD if it all goes horribly wrong. ;)
 #
-# For more info: https://forum.qnap.com/viewtopic.php?f=320&t=132373
+# for more info: https://forum.qnap.com/viewtopic.php?f=320&t=132373
+#
+# tested on:
+#  GNU bash, version 3.2.57(2)-release (i686-pc-linux-gnu)
+#  Copyright (C) 2007 Free Software Foundation, Inc.
+#
+####################################################################################
 #
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -20,13 +29,16 @@
 #
 # You should have received a copy of the GNU General Public License along with
 # this program. If not, see http://www.gnu.org/licenses/.
+#
 ####################################################################################
+#
 # * Style Guide *
 # function names: CamelCase
 # variable names: lowercase_with_underscores (except for 'returncode' & 'errorcode')
 # constants: UPPERCASE_WITH_UNDERSCORES
 # indents: tab (4 spaces)
 # screen/log message text: lowercase unless failure, then capitalize first word
+#
 ####################################################################################
 
 USER_ARGS_RAW="$@"
@@ -87,7 +99,7 @@ Init()
     {
 
     local SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=190209
+    local SCRIPT_VERSION=190212
     debug=false
     ResetErrorcode
 
@@ -206,15 +218,17 @@ Init()
     IsSysSharePresent "$SHARE_DOWNLOAD_PATH" || return
     IsSysSharePresent "$SHARE_PUBLIC_PATH" || return
 
-    WORKING_PATH="$SHARE_PUBLIC_PATH/${SCRIPT_FILE%.*}.tmp"
-    QPKG_BACKUP_PATH="$WORKING_PATH/backup"
-    QPKG_CONFIG_BACKUP_PATH="$QPKG_BACKUP_PATH/config"
-    QPKG_CONFIG_BACKUP_PATHFILE="$QPKG_CONFIG_BACKUP_PATH/config.ini"
-    QPKG_DL_PATH="$WORKING_PATH/qpkg-downloads"
-    IPKG_DL_PATH="$WORKING_PATH/ipkg-downloads"
-    IPKG_CACHE_PATH="$WORKING_PATH/ipkg-cache"
-    DEBUG_LOG_PATHFILE="$SHARE_PUBLIC_PATH/$DEBUG_LOG_FILE"
-    SHERPA_PACKAGES_PATHFILE="$WORKING_PATH/packages.conf"
+    PREV_QPKG_CONFIG_DIRS=(SAB_CONFIG CONFIG Config config)     # last element is used as target dirname
+    PREV_QPKG_CONFIG_FILES=(sabnzbd.ini config.ini)             # last element is used as target filename
+    WORKING_PATH=$SHARE_PUBLIC_PATH/${SCRIPT_FILE%.*}.tmp
+    DEBUG_LOG_PATHFILE=$SHARE_PUBLIC_PATH/$DEBUG_LOG_FILE
+    SHERPA_PACKAGES_PATHFILE=$WORKING_PATH/packages.conf
+    QPKG_DL_PATH=$WORKING_PATH/qpkg-downloads
+    IPKG_DL_PATH=$WORKING_PATH/ipkg-downloads
+    IPKG_CACHE_PATH=$WORKING_PATH/ipkg-cache
+    QPKG_BACKUP_PATH=$WORKING_PATH/backup
+    QPKG_CONFIG_BACKUP_PATH=$QPKG_BACKUP_PATH/${PREV_QPKG_CONFIG_DIRS[${#PREV_QPKG_CONFIG_DIRS[@]}-1]}
+    QPKG_CONFIG_BACKUP_PATHFILE=$QPKG_CONFIG_BACKUP_PATH/${PREV_QPKG_CONFIG_FILES[${#PREV_QPKG_CONFIG_FILES[@]}-1]}
 
     # sherpa-supported package details
     SHERPA_QPKG_NAMES=()
@@ -464,10 +478,10 @@ PauseDownloaders()
 
     # pause local SABnzbd queue so installer downloads will finish faster
     if IsQPKGEnabled SABnzbdplus; then
-        LoadQPKGVars SABnzbdplus
+        LoadInstalledQPKGVars SABnzbdplus
         SabQueueControl pause
     elif IsQPKGEnabled QSabNZBdPlus; then
-        LoadQPKGVars QSabNZBdPlus
+        LoadInstalledQPKGVars QSabNZBdPlus
         SabQueueControl pause
     fi
 
@@ -553,7 +567,7 @@ PatchEntwareInit()
     local find_text=''
     local insert_text=''
 
-    LoadQPKGVars $PREF_ENTWARE
+    LoadInstalledQPKGVars $PREF_ENTWARE
 
     if [[ ! -e $package_init_pathfile ]]; then
         ShowError "No init file found [$package_init_pathfile]"
@@ -933,11 +947,11 @@ BackupConfig()
     case $TARGET_APP in
         SABnzbdplus)
             if IsQPKGEnabled QSabNZBdPlus; then
-                LoadQPKGVars QSabNZBdPlus
+                LoadInstalledQPKGVars QSabNZBdPlus
                 OLD_APP=QSabNZBdPlus
                 DaemonCtl stop "$package_init_pathfile"
             elif IsQPKGEnabled $TARGET_APP; then
-                LoadQPKGVars $TARGET_APP
+                LoadInstalledQPKGVars $TARGET_APP
                 DaemonCtl stop "$package_init_pathfile"
             fi
 
@@ -946,15 +960,15 @@ BackupConfig()
             ;;
         SickChill)
             if IsQPKGEnabled QSickRage; then
-                LoadQPKGVars QSickRage
+                LoadInstalledQPKGVars QSickRage
                 OLD_APP=QSickRage
                 DaemonCtl stop "$package_init_pathfile"
             elif IsQPKGEnabled SickRage; then
-                LoadQPKGVars SickRage
+                LoadInstalledQPKGVars SickRage
                 OLD_APP=SickRage
                 DaemonCtl stop "$package_init_pathfile"
             elif IsQPKGEnabled $TARGET_APP; then
-                LoadQPKGVars $TARGET_APP
+                LoadInstalledQPKGVars $TARGET_APP
                 DaemonCtl stop "$package_init_pathfile"
             fi
 
@@ -963,11 +977,11 @@ BackupConfig()
             ;;
         CouchPotato2)
             if IsQPKGEnabled QCouchPotato; then
-                LoadQPKGVars QCouchPotato
+                LoadInstalledQPKGVars QCouchPotato
                 OLD_APP=QCouchPotato
                 DaemonCtl stop "$package_init_pathfile"
             elif IsQPKGEnabled $TARGET_APP; then
-                LoadQPKGVars $TARGET_APP
+                LoadInstalledQPKGVars $TARGET_APP
                 DaemonCtl stop "$package_init_pathfile"
             fi
 
@@ -976,7 +990,7 @@ BackupConfig()
             ;;
         LazyLibrarian|OMedusa|OWatcher3|Headphones)
             if IsQPKGEnabled $TARGET_APP; then
-                LoadQPKGVars $TARGET_APP
+                LoadInstalledQPKGVars $TARGET_APP
                 DaemonCtl stop "$package_init_pathfile"
             fi
 
@@ -1040,30 +1054,29 @@ ConvertSettings()
 
     DebugFuncEntry
     local returncode=0
-    local prev_config_dirs=()
     local prev_config_dir=''
-    local test_config_path=''
-    local settings_prev_backup_pathfile
+    local prev_config_file=''
+    local test_path=''
+    local test_pathfile=''
 
     case $TARGET_APP in
         SABnzbdplus)
-            prev_config_dirs+=(SAB_CONFIG CONFIG Config)
-            for prev_config_dir in ${prev_config_dirs[@]}; do
-                test_config_path=$QPKG_BACKUP_PATH/$prev_config_dir
-                if [[ -d $test_config_path ]]; then
-                    mv "$test_config_path" "$QPKG_CONFIG_BACKUP_PATH"
-                    DebugDone "renamed config path from [$test_config_path] to [$QPKG_CONFIG_BACKUP_PATH]"
+            for prev_config_dir in ${PREV_QPKG_CONFIG_DIRS[@]}; do
+                test_path=$QPKG_BACKUP_PATH/$prev_config_dir
+                if [[ -d $test_path && ! -d $QPKG_CONFIG_BACKUP_PATH ]]; then
+                    mv $test_path $QPKG_CONFIG_BACKUP_PATH
+                    DebugDone "renamed config path from [$test_path] to [$QPKG_CONFIG_BACKUP_PATH]"
                     break
                 fi
             done
 
-            # for converting from Stephane's QPKG and from previous version SAB QPKGs
-            settings_prev_backup_pathfile="$QPKG_CONFIG_BACKUP_PATH/sabnzbd.ini"
-
-            if [[ -f $settings_prev_backup_pathfile ]]; then
-                mv "$settings_prev_backup_pathfile" "$QPKG_CONFIG_BACKUP_PATHFILE"
-                DebugDone "renamed config file from [$settings_prev_backup_pathfile] to [$QPKG_CONFIG_BACKUP_PATHFILE]"
-            fi
+            for prev_config_file in ${PREV_QPKG_CONFIG_FILES[@]}; do
+                test_pathfile=$QPKG_CONFIG_BACKUP_PATH/$prev_config_file
+                if [[ -f $test_pathfile && $test_pathfile != $QPKG_CONFIG_BACKUP_PATHFILE ]]; then
+                    mv $test_pathfile $QPKG_CONFIG_BACKUP_PATHFILE
+                    DebugDone "renamed config file from [$test_pathfile] to [$QPKG_CONFIG_BACKUP_PATHFILE]"
+                fi
+            done
 
             if [[ -f $QPKG_CONFIG_BACKUP_PATHFILE ]]; then
                 $SED_CMD -i "s|log_dir = logs|log_dir = ${SHARE_DOWNLOAD_PATH}/sabnzbd/logs|" "$QPKG_CONFIG_BACKUP_PATHFILE"
@@ -1120,7 +1133,7 @@ RestoreConfig()
     local returncode=0
 
     if IsQPKGInstalled $TARGET_APP; then
-        LoadQPKGVars $TARGET_APP
+        LoadInstalledQPKGVars $TARGET_APP
 
         if [[ -d $QPKG_CONFIG_BACKUP_PATH ]]; then
             DaemonCtl stop "$package_init_pathfile"
@@ -1290,60 +1303,55 @@ CalcPrefEntware()
 
     }
 
-LoadQPKGVars()
+LoadInstalledQPKGVars()
     {
 
     # $1 = load variables for this installed package name
 
     local package_name=$1
     local returncode=0
-    local prev_config_dirs=()
     local prev_config_dir=''
-    local prev_config_files=()
     local prev_config_file=''
+    local package_settings_pathfile=''
+    package_installed_path=''
+    package_init_pathfile=''
+    package_config_path=''
+    package_port=''
+    package_api=''
+    package_version=''
+    sab_chartranslator_pathfile=''
 
     if [[ -z $package_name ]]; then
         DebugError 'QPKG name unspecified'
         errorcode=34
         returncode=1
     else
-        package_installed_path=''
-        package_init_pathfile=''
-        package_config_path=''
-        local package_settings_pathfile=''
-        package_port=''
-        package_api=''
-        package_version=''
-        sab_chartranslator_pathfile=''
-
         package_installed_path=$($GETCFG_CMD $package_name Install_Path -f $APP_CENTER_CONFIG_PATHFILE)
         if [[ $? -eq 0 ]]; then
             package_init_pathfile=$($GETCFG_CMD $package_name Shell -f $APP_CENTER_CONFIG_PATHFILE)
 
-            prev_config_dirs=(SAB_CONFIG CONFIG Config config)
-            for prev_config_dir in ${prev_config_dirs[@]}; do
+            for prev_config_dir in ${PREV_QPKG_CONFIG_DIRS[@]}; do
                 package_config_path=$package_installed_path/$prev_config_dir
                 [[ -d $package_config_path ]] && break
             done
 
-            prev_config_files=(sabnzbd.ini config.ini)
-            for prev_config_file in ${prev_config_files[@]}; do
+            for prev_config_file in ${PREV_QPKG_CONFIG_FILES[@]}; do
                 package_settings_pathfile=$package_config_path/$prev_config_file
                 [[ -f $package_settings_pathfile ]] && break
             done
 
             if [[ -e $QPKG_CONFIG_BACKUP_PATHFILE ]]; then
-                if [[ $($GETCFG_CMD misc enable_https -d 0 -f "$QPKG_CONFIG_BACKUP_PATHFILE") -eq 1 ]]; then
-                    package_port=$($GETCFG_CMD misc https_port -f "$QPKG_CONFIG_BACKUP_PATHFILE")
+                if [[ $($GETCFG_CMD misc enable_https -d 0 -f $QPKG_CONFIG_BACKUP_PATHFILE) -eq 1 ]]; then
+                    package_port=$($GETCFG_CMD misc https_port -f $QPKG_CONFIG_BACKUP_PATHFILE)
                     secure_web_login=true
                 else
-                    package_port=$($GETCFG_CMD misc port -f "$QPKG_CONFIG_BACKUP_PATHFILE")
+                    package_port=$($GETCFG_CMD misc port -f $QPKG_CONFIG_BACKUP_PATHFILE)
                 fi
             else
                 package_port=$($GETCFG_CMD $package_name Web_Port -f $APP_CENTER_CONFIG_PATHFILE)
             fi
 
-            [[ -e $package_settings_pathfile ]] && package_api=$($GETCFG_CMD api_key -f "$package_settings_pathfile")
+            [[ -e $package_settings_pathfile ]] && package_api=$($GETCFG_CMD api_key -f $package_settings_pathfile)
             package_version=$($GETCFG_CMD $package_name Version -f $APP_CENTER_CONFIG_PATHFILE)
             sab_chartranslator_pathfile=$package_installed_path/scripts/CharTranslator.py
         else
@@ -1603,10 +1611,10 @@ Cleanup()
 
     if [[ $queue_paused = true ]]; then
         if IsQPKGInstalled SABnzbdplus; then
-            LoadQPKGVars SABnzbdplus
+            LoadInstalledQPKGVars SABnzbdplus
             SabQueueControl resume
         elif IsQPKGInstalled QSabNZBdPlus; then
-            LoadQPKGVars QSabNZBdPlus
+            LoadInstalledQPKGVars QSabNZBdPlus
             SabQueueControl resume
         fi
     fi
