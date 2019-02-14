@@ -99,7 +99,7 @@ Init()
     {
 
     local SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=190212
+    local SCRIPT_VERSION=190214
     debug=false
     ResetErrorcode
 
@@ -1319,13 +1319,8 @@ LoadInstalledQPKGVars()
     package_port=''
     package_api=''
     package_version=''
-    sab_chartranslator_pathfile=''
 
-    if [[ -z $package_name ]]; then
-        DebugError 'QPKG name unspecified'
-        errorcode=34
-        returncode=1
-    else
+    if [[ -n $package_name ]]; then
         package_installed_path=$($GETCFG_CMD $package_name Install_Path -f $APP_CENTER_CONFIG_PATHFILE)
         if [[ $? -eq 0 ]]; then
             package_init_pathfile=$($GETCFG_CMD $package_name Shell -f $APP_CENTER_CONFIG_PATHFILE)
@@ -1353,10 +1348,15 @@ LoadInstalledQPKGVars()
 
             [[ -e $package_settings_pathfile ]] && package_api=$($GETCFG_CMD api_key -f $package_settings_pathfile)
             package_version=$($GETCFG_CMD $package_name Version -f $APP_CENTER_CONFIG_PATHFILE)
-            sab_chartranslator_pathfile=$package_installed_path/scripts/CharTranslator.py
         else
+            DebugError 'QPKG not installed?'
+            errorcode=34
             returncode=1
         fi
+    else
+        DebugError 'QPKG name unspecified'
+        errorcode=35
+        returncode=1
     fi
 
     return $returncode
@@ -1379,7 +1379,7 @@ LoadQPKGFileDetails()
 
     if [[ -z $qpkg_name ]]; then
         DebugError 'QPKG name unspecified'
-        errorcode=35
+        errorcode=36
         returncode=1
     else
         local base_url=''
@@ -1447,14 +1447,14 @@ LoadQPKGFileDetails()
                 ;;
             *)
                 DebugError "QPKG name not found [$qpkg_name]"
-                errorcode=36
+                errorcode=37
                 returncode=1
                 ;;
         esac
 
         if [[ -z $qpkg_url || -z $qpkg_md5 ]]; then
             DebugError "QPKG details not found [$qpkg_name]"
-            errorcode=37
+            errorcode=38
             returncode=1
         else
             [[ -z $qpkg_file ]] && qpkg_file="$($BASENAME_CMD "$qpkg_url")"
@@ -1478,7 +1478,7 @@ UninstallQPKG()
 
     if [[ -z $1 ]]; then
         DebugError 'QPKG name unspecified'
-        errorcode=38
+        errorcode=39
         returncode=1
     else
         qpkg_installed_path="$($GETCFG_CMD "$1" Install_Path -f "$APP_CENTER_CONFIG_PATHFILE")"
@@ -1495,7 +1495,7 @@ UninstallQPKG()
                     ShowDone "uninstalled QPKG '$1'"
                 else
                     ShowError "Unable to uninstall QPKG \"$1\" [$result]"
-                    errorcode=39
+                    errorcode=40
                     returncode=1
                 fi
             fi
@@ -1524,11 +1524,11 @@ DaemonCtl()
 
     if [[ -z $2 ]]; then
         DebugError 'daemon unspecified'
-        errorcode=40
+        errorcode=41
         returncode=1
     elif [[ ! -e $2 ]]; then
         DebugError "daemon ($2) not found"
-        errorcode=41
+        errorcode=42
         returncode=1
     else
         target_init_pathfile="$2"
@@ -1552,7 +1552,7 @@ DaemonCtl()
                     else
                         $CAT_CMD "$qpkg_pathfile.$START_LOG_FILE" >> "$DEBUG_LOG_PATHFILE"
                     fi
-                    errorcode=42
+                    errorcode=43
                     returncode=1
                 fi
                 ;;
@@ -1579,7 +1579,7 @@ DaemonCtl()
                 ;;
             *)
                 DebugError "action unrecognised ($1)"
-                errorcode=43
+                errorcode=44
                 returncode=1
                 ;;
         esac
@@ -1912,7 +1912,7 @@ IsSysFilePresent()
 
     if ! [[ -f $1 || -L $1 ]]; then
         ShowError "A required NAS system file is missing [$1]"
-        errorcode=44
+        errorcode=45
         return 1
     else
         return 0
@@ -1932,7 +1932,7 @@ IsSysSharePresent()
 
     if [[ ! -L $1 ]]; then
         ShowError "A required NAS system share is missing [$1]. Please re-create it via QNAP Control Panel -> Privilege Settings -> Shared Folders."
-        errorcode=45
+        errorcode=46
         return 1
     else
         return 0
