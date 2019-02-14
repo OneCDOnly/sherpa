@@ -99,7 +99,7 @@ Init()
     {
 
     local SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=190214
+    local SCRIPT_VERSION=190215
     debug=false
     ResetErrorcode
 
@@ -743,7 +743,7 @@ InstallIPKGs()
             fi
         done
 
-        [[ $TARGET_APP = SABnzbd && $STEPHANE_QPKG_ARCH = none ]] && packages+=' par2cmdline'
+        [[ $TARGET_APP = SABnzbdplus && $STEPHANE_QPKG_ARCH = none ]] && packages+=' par2cmdline'
 
         InstallIPKGBatch "$packages" 'Python, Git and others'
     else
