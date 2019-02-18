@@ -72,7 +72,7 @@ ParseArgs()
                 force_entware_reinstall=true
                 DebugVar force_entware_reinstall
                 ;;
-            --refresh)
+            --check)
                 satisfy_dependencies_only=true
                 DebugVar satisfy_dependencies_only
                 ;;
@@ -90,7 +90,7 @@ ParseArgs()
         [[ -z $TARGET_APP ]] && TARGET_APP=$(MatchAbbrvToPackage "$arg")
     done
 
-    [[ -z $TARGET_APP ]] && errorcode=3
+    [[ -z $TARGET_APP && $force_entware_reinstall = false && $satisfy_dependencies_only = false && $update_all_apps = false ]] && errorcode=3
     return 0
 
     }
@@ -98,8 +98,8 @@ ParseArgs()
 Init()
     {
 
-    local SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=190215
+    SCRIPT_FILE=sherpa.sh
+    local SCRIPT_VERSION=190218
     debug=false
     ResetErrorcode
 
@@ -279,6 +279,7 @@ Init()
     OLD_APP=''
     force_entware_reinstall=false
     satisfy_dependencies_only=false
+    update_all_apps=false
     [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_cmd+=' --insecure'
     [[ ${NAS_FIRMWARE//.} -ge 435 ]] && find_cmd=/usr/bin/find      # 4.3.5 has a much better BusyBox 'find'
     local result=0
@@ -452,17 +453,17 @@ DisplayHelp()
     local package_name=''
 
     echo -e "A BASH script to install various Usenet apps into a QNAP NAS.\n"
-    echo -e "- Each application can be (re)installed by running $0 with the name of a single app as an argument.\n\nSome examples are:"
-    printf "$0 %s\n" "${SHERPA_QPKG_NAMES[@]}"
+    echo -e "- Each application can be installed (or reinstalled) by running $SCRIPT_FILE with the name of a single app as an argument. Examples are:"
+    printf "\t$0 %s\n" "${SHERPA_QPKG_NAMES[@]}"
+
+    echo -e "\n- To ensure all sherpa application dependencies are installed:"
+    echo -e "\t$0 --check"
+
+#     echo -e "\n- To update all apps:"
+#     echo "\t$0 --update"
 
     echo -e "\n- To force a reinstallation of Entware:"
-    echo -e "$0 --force-entware-reinstall"
-
-#     echo -e "\n- To ensure all sherpa app dependencies are installed:"
-#     echo "$0 --refresh"
-#
-#     echo -e "\n- To update all apps:"
-#     echo "$0 --update"
+    echo -e "\t$0 --force-entware-reinstall"
 
     DebugFuncExit
     return 0
@@ -516,11 +517,9 @@ DownloadQPKGs()
 
     ! IsQPKGInstalled $PREF_ENTWARE && DownloadQPKG $PREF_ENTWARE
 
-    if [[ $TARGET_APP = SABnzbdplus && $STEPHANE_QPKG_ARCH != none ]]; then
-        ! IsQPKGInstalled Par2 && DownloadQPKG Par2
-    fi
+    { (IsQPKGInstalled SABnzbdplus) || [[ $TARGET_APP = SABnzbdplus ]] ;} && [[ $STEPHANE_QPKG_ARCH != none ]] && ! IsQPKGInstalled Par2 && DownloadQPKG Par2
 
-    DownloadQPKG $TARGET_APP
+    [[ $satisfy_dependencies_only = false ]] && DownloadQPKG $TARGET_APP
 
     DebugFuncExit
     return $returncode
@@ -647,7 +646,7 @@ InstallExtras()
 
     DebugFuncEntry
 
-    if [[ $TARGET_APP = SABnzbdplus && $STEPHANE_QPKG_ARCH != none ]]; then
+    if { (IsQPKGInstalled SABnzbdplus) || [[ $TARGET_APP = SABnzbdplus ]] ;} && [[ $STEPHANE_QPKG_ARCH != none ]]; then
         InstallQPKG Par2
         if [[ $errorcode -gt 0 ]]; then
             ShowWarning "Par2 installation failed - but it's not essential so I'm continuing"
@@ -667,7 +666,7 @@ InstallExtras()
 BackupAndRemoveOldApp()
     {
 
-    [[ $errorcode -gt 0 ]] && return
+    [[ $errorcode -gt 0 || $satisfy_dependencies_only = true ]] && return
 
     DebugFuncEntry
     local returncode=0
@@ -706,21 +705,15 @@ BackupAndRemoveOldApp()
 InstallTargetApp()
     {
 
-    [[ $errorcode -gt 0 ]] && return
+    [[ $errorcode -gt 0 || -z $TARGET_APP ]] && return
 
     DebugFuncEntry
-    local returncode=0
 
-    if [[ -n $TARGET_APP ]]; then
-        ! IsQPKGInstalled $TARGET_APP && InstallQPKG $TARGET_APP && PauseHere && RestoreConfig
-        [[ $errorcode -eq 0 ]] && DaemonCtl start "$package_init_pathfile"
-    else
-        ShowError "Can't install app '$TARGET_APP' as it's unknown"
-        returncode=1
-    fi
+    ! IsQPKGInstalled $TARGET_APP && InstallQPKG $TARGET_APP && PauseHere && RestoreConfig
+    [[ $errorcode -eq 0 ]] && DaemonCtl start "$package_init_pathfile"
 
     DebugFuncExit
-    return $returncode
+    return 0
 
     }
 
@@ -743,7 +736,9 @@ InstallIPKGs()
             fi
         done
 
-        [[ $TARGET_APP = SABnzbdplus && $STEPHANE_QPKG_ARCH = none ]] && packages+=' par2cmdline'
+        if (IsQPKGInstalled SABnzbdplus) || [[ $TARGET_APP = SABnzbdplus ]]; then
+            [[ $STEPHANE_QPKG_ARCH = none ]] && packages+=' par2cmdline'
+        fi
 
         InstallIPKGBatch "$packages" 'Python, Git and others'
     else
@@ -939,7 +934,7 @@ InstallQPKG()
 BackupConfig()
     {
 
-    [[ $errorcode -gt 0 ]] && return
+    [[ $errorcode -gt 0 || $satisfy_dependencies_only = true ]] && return
 
     DebugFuncEntry
     local returncode=0
@@ -1126,7 +1121,7 @@ ReloadProfile()
 RestoreConfig()
     {
 
-    [[ $errorcode -gt 0 ]] && return
+    [[ $errorcode -gt 0 || $satisfy_dependencies_only = true ]] && return
 
     DebugFuncEntry
     local result=0
@@ -1173,12 +1168,6 @@ DownloadQPKG()
 
     [[ $errorcode -gt 0 ]] && return
 
-    if [[ -z $1 ]]; then
-        DebugError 'QPKG name unspecified'
-        errorcode=29
-        return 1
-    fi
-
     DebugFuncEntry
     local result=0
     local returncode=0
@@ -1199,7 +1188,7 @@ DownloadQPKG()
             fi
         else
             ShowError "Problem creating checksum from existing QPKG ($qpkg_file) [$result]"
-            errorcode=30
+            errorcode=29
             returncode=1
         fi
     fi
@@ -1232,19 +1221,19 @@ DownloadQPKG()
                     ShowDone "downloaded QPKG ($qpkg_file)"
                 else
                     ShowError "Downloaded QPKG checksum incorrect ($qpkg_file) [$result]"
-                    errorcode=31
+                    errorcode=30
                     returncode=1
                 fi
             else
                 ShowError "Problem creating checksum from downloaded QPKG ($qpkg_pathfile) [$result]"
-                errorcode=32
+                errorcode=31
                 returncode=1
             fi
         else
             ShowError "Download failed ($qpkg_pathfile) [$result]"
             DebugErrorFile "$log_pathfile"
 
-            errorcode=33
+            errorcode=32
             returncode=1
         fi
     fi
@@ -1350,12 +1339,12 @@ LoadInstalledQPKGVars()
             package_version=$($GETCFG_CMD $package_name Version -f $APP_CENTER_CONFIG_PATHFILE)
         else
             DebugError 'QPKG not installed?'
-            errorcode=34
+            errorcode=33
             returncode=1
         fi
     else
         DebugError 'QPKG name unspecified'
-        errorcode=35
+        errorcode=34
         returncode=1
     fi
 
@@ -1379,7 +1368,7 @@ LoadQPKGFileDetails()
 
     if [[ -z $qpkg_name ]]; then
         DebugError 'QPKG name unspecified'
-        errorcode=36
+        errorcode=35
         returncode=1
     else
         local base_url=''
@@ -1447,14 +1436,14 @@ LoadQPKGFileDetails()
                 ;;
             *)
                 DebugError "QPKG name not found [$qpkg_name]"
-                errorcode=37
+                errorcode=36
                 returncode=1
                 ;;
         esac
 
         if [[ -z $qpkg_url || -z $qpkg_md5 ]]; then
             DebugError "QPKG details not found [$qpkg_name]"
-            errorcode=38
+            errorcode=37
             returncode=1
         else
             [[ -z $qpkg_file ]] && qpkg_file="$($BASENAME_CMD "$qpkg_url")"
@@ -1478,7 +1467,7 @@ UninstallQPKG()
 
     if [[ -z $1 ]]; then
         DebugError 'QPKG name unspecified'
-        errorcode=39
+        errorcode=38
         returncode=1
     else
         qpkg_installed_path="$($GETCFG_CMD "$1" Install_Path -f "$APP_CENTER_CONFIG_PATHFILE")"
@@ -1495,7 +1484,7 @@ UninstallQPKG()
                     ShowDone "uninstalled QPKG '$1'"
                 else
                     ShowError "Unable to uninstall QPKG \"$1\" [$result]"
-                    errorcode=40
+                    errorcode=39
                     returncode=1
                 fi
             fi
@@ -1524,11 +1513,11 @@ DaemonCtl()
 
     if [[ -z $2 ]]; then
         DebugError 'daemon unspecified'
-        errorcode=41
+        errorcode=40
         returncode=1
     elif [[ ! -e $2 ]]; then
         DebugError "daemon ($2) not found"
-        errorcode=42
+        errorcode=41
         returncode=1
     else
         target_init_pathfile="$2"
@@ -1552,7 +1541,7 @@ DaemonCtl()
                     else
                         $CAT_CMD "$qpkg_pathfile.$START_LOG_FILE" >> "$DEBUG_LOG_PATHFILE"
                     fi
-                    errorcode=43
+                    errorcode=42
                     returncode=1
                 fi
                 ;;
@@ -1579,7 +1568,7 @@ DaemonCtl()
                 ;;
             *)
                 DebugError "action unrecognised ($1)"
-                errorcode=44
+                errorcode=43
                 returncode=1
                 ;;
         esac
@@ -1631,30 +1620,49 @@ DisplayResult()
 
     local RE=''
     local SL=''
+    local suggest_issue=false
 
-    [[ $REINSTALL_FLAG = true ]] && RE='re' || RE=''
-    [[ $secure_web_login = true ]] && SL='s' || SL=''
+    if [[ -n $TARGET_APP ]]; then
+        [[ $REINSTALL_FLAG = true ]] && RE='re' || RE=''
+        [[ $secure_web_login = true ]] && SL='s' || SL=''
 
-    if [[ $errorcode -eq 0 ]]; then
-        [[ $debug = true ]] && emoticon=':DD' || { emoticon=''; echo ;}
+        if [[ $errorcode -eq 0 ]]; then
+            [[ $debug = true ]] && emoticon=':DD' || { emoticon=''; echo ;}
 
-        if [[ -n $OLD_APP ]]; then
-            ShowDone "'$OLD_APP' has been successfully replaced with '$TARGET_APP'! $emoticon"
-        else
-            ShowDone "'$TARGET_APP' has been successfully ${RE}installed! $emoticon"
+            if [[ -n $OLD_APP ]]; then
+                ShowDone "'$OLD_APP' has been successfully replaced with '$TARGET_APP'! $emoticon"
+            else
+                ShowDone "'$TARGET_APP' has been successfully ${RE}installed! $emoticon"
+            fi
+        elif [[ $errorcode -gt 3 ]]; then       # don't display 'failed' when only showing help
+            [[ $debug = true ]] && emoticon=':S ' || { emoticon=''; echo ;}
+            ShowError "'$TARGET_APP' ${RE}install failed! ${emoticon}[$errorcode]"
+            suggest_issue=true
         fi
-        #ShowInfo "It should now be accessible on your LAN @ $(ColourTextUnderlinedBlue "http${SL}://$($HOSTNAME_CMD -i | $TR_CMD -d ' '):$package_port")"
+    fi
 
-    elif [[ $errorcode -gt 3 ]]; then       # don't display 'failed' when only showing help
-        [[ $debug = true ]] && emoticon=':S ' || { emoticon=''; echo ;}
-        ShowError "'$TARGET_APP' ${RE}install failed! ${emoticon}[$errorcode]"
+    if [[ $satisfy_dependencies_only = true ]]; then
+        if [[ $errorcode -eq 0 ]]; then
+            [[ $debug = true ]] && emoticon=':DD' || { emoticon=''; echo ;}
+            ShowDone "all application dependencies are installed! $emoticon"
+        else
+            [[ $debug = true ]] && emoticon=':S ' || { emoticon=''; echo ;}
+            ShowError "application dependency check failed! ${emoticon}[$errorcode]"
+            suggest_issue=true
+        fi
+    fi
+
+    if [[ $suggest_issue = true ]]; then
+        echo -e "\n* Please consider creating a new issue for this on GitHub:\n\thttps://github.com/OneCDOnly/sherpa/issues"
+        echo -e "\n* Alternatively, post on the QNAP NAS Community Forum:\n\thttps://forum.qnap.com/viewtopic.php?f=320&t=132373"
+        echo -e "\n* Remember to include a copy of your sherpa runtime debug log for analysis."
     fi
 
     DebugScript 'finished' "$($DATE_CMD)"
     DebugScript 'elapsed time' "$(ConvertSecs "$(($($DATE_CMD +%s)-$([[ -n $SCRIPT_STARTSECONDS ]] && echo $SCRIPT_STARTSECONDS || echo "1")))")"
     DebugInfoThickSeparator
 
-    [[ -e $DEBUG_LOG_PATHFILE && $debug = false ]] && echo -e "\n- To display the debug log:\ncat ${DEBUG_LOG_PATHFILE}\n"
+    [[ -e $DEBUG_LOG_PATHFILE && $debug = false ]] && echo -e "\n- To display the runtime debug log:\n\tcat ${DEBUG_LOG_PATHFILE}\n"
 
     DebugFuncExit
     return 0
@@ -1736,7 +1744,7 @@ FindAllIPKGDependencies()
 
     DebugVar IPKG_download_size
     if [[ $IPKG_download_count -gt 0 ]]; then
-        ShowDone "$IPKG_download_count IPKGs ($(Convert2ISO $IPKG_download_size)) need to be downloaded"
+        ShowDone "$IPKG_download_count IPKGs ($(Convert2ISO $IPKG_download_size)) to be downloaded"
     else
         ShowDone 'no IPKGs are required'
     fi
@@ -1912,7 +1920,7 @@ IsSysFilePresent()
 
     if ! [[ -f $1 || -L $1 ]]; then
         ShowError "A required NAS system file is missing [$1]"
-        errorcode=45
+        errorcode=44
         return 1
     else
         return 0
@@ -1932,7 +1940,7 @@ IsSysSharePresent()
 
     if [[ ! -L $1 ]]; then
         ShowError "A required NAS system share is missing [$1]. Please re-create it via QNAP Control Panel -> Privilege Settings -> Shared Folders."
-        errorcode=46
+        errorcode=45
         return 1
     else
         return 0
