@@ -99,7 +99,7 @@ Init()
     {
 
     SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=190218
+    local SCRIPT_VERSION=190224
     debug=false
     ResetErrorcode
 
@@ -459,7 +459,7 @@ DisplayHelp()
     echo -e "\n- To ensure all sherpa application dependencies are installed:"
     echo -e "\t$0 --check"
 
-#     echo -e "\n- To update all apps:"
+#     echo -e "\n- To update all installed sherpa apps:"
 #     echo "\t$0 --update"
 
     echo -e "\n- To force a reinstallation of Entware:"
@@ -519,7 +519,7 @@ DownloadQPKGs()
 
     { (IsQPKGInstalled SABnzbdplus) || [[ $TARGET_APP = SABnzbdplus ]] ;} && [[ $STEPHANE_QPKG_ARCH != none ]] && ! IsQPKGInstalled Par2 && DownloadQPKG Par2
 
-    [[ $satisfy_dependencies_only = false ]] && DownloadQPKG $TARGET_APP
+    [[ -n $TARGET_APP ]] && DownloadQPKG $TARGET_APP
 
     DebugFuncExit
     return $returncode
@@ -1166,7 +1166,7 @@ RestoreConfig()
 DownloadQPKG()
     {
 
-    [[ $errorcode -gt 0 ]] && return
+    [[ $errorcode -gt 0 || -z $1 ]] && return
 
     DebugFuncEntry
     local result=0
@@ -1676,7 +1676,7 @@ FindAllIPKGDependencies()
     # input:
     #   $1 = string with space-separated initial IPKG names
     # output:
-    #   $IPKG_download_list = array with complete list of all IPKGs including those originally specified
+    #   $IPKG_download_list[] = array with complete list of all IPKGs including those originally specified
     #   $IPKG_download_count = number of packages needing download
     #   $IPKG_download_size = byte-count of all these packages
 
