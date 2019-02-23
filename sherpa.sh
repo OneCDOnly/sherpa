@@ -783,7 +783,7 @@ InstallIPKGBatch()
         install_msgs=$($OPKG_CMD install --force-overwrite ${IPKG_download_list[*]} --cache "$IPKG_CACHE_PATH" --tmp-dir "$IPKG_DL_PATH" 2>&1)
         result=$?
 
-        [[ -e $monitor_flag ]] && { rm "$monitor_flag"; $SLEEP_CMD 1 ;}
+        [[ -e $monitor_flag ]] && { rm "$monitor_flag"; $SLEEP_CMD 2 ;}
         trap - INT
         echo -e "${install_msgs}\nresult=[$result]" > "$log_pathfile"
 
