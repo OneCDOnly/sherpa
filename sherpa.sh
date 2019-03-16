@@ -601,6 +601,7 @@ UpdateEntware()
     local package_list_age=60
     local release_file=/opt/etc/entware_release
     local result=0
+    local upgrade_result=0
     local log_pathfile="$WORKING_PATH/entware-update.log"
 
     IsSysFilePresent $OPKG_CMD || return
@@ -619,8 +620,8 @@ UpdateEntware()
         if [[ $PREF_ENTWARE = Entware-3x && ! -e $release_file ]]; then
             DebugProc 'performing Entware-3x upgrade x 2'
             install_msgs=$($OPKG_CMD upgrade; $OPKG_CMD update; $OPKG_CMD upgrade)
-            result=$?
-            echo -e "${install_msgs}\nresult=[$result]" >> "$log_pathfile"
+            upgrade_result=$?
+            echo -e "${install_msgs}\nresult=[$upgrade_result]" >> "$log_pathfile"
         fi
 
         if [[ $result -eq 0 ]]; then
