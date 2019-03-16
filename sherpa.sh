@@ -99,7 +99,7 @@ Init()
     {
 
     SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=190224
+    local SCRIPT_VERSION=190317
     debug=false
     ResetErrorcode
 
@@ -612,7 +612,7 @@ UpdateEntware()
     if [[ -n $result ]]; then
         ShowProc 'updating Entware package list'
 
-        install_msgs=$($OPKG_CMD update)
+        install_msgs=$($OPKG_CMD update 2>&1)
         result=$?
         echo -e "${install_msgs}\nresult=[$result]" >> "$log_pathfile"
 
@@ -627,6 +627,7 @@ UpdateEntware()
             ShowDone 'updated Entware package list'
         else
             ShowWarning "Unable to update Entware package list [$result]"
+            DebugErrorFile "$log_pathfile"
             # meh, continue anyway with old list ...
         fi
     else
