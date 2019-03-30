@@ -68,7 +68,7 @@ ParseArgs()
                 debug=true
                 DebugVar debug
                 ;;
-            --force-entware-reinstall)
+            --reinstall-entware)
                 force_entware_reinstall=true
                 DebugVar force_entware_reinstall
                 ;;
@@ -99,7 +99,7 @@ Init()
     {
 
     SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=190317
+    local SCRIPT_VERSION=190331
     debug=false
     ResetErrorcode
 
@@ -463,7 +463,7 @@ DisplayHelp()
 #     echo "\t$0 --update"
 
     echo -e "\n- To force a reinstallation of Entware:"
-    echo -e "\t$0 --force-entware-reinstall"
+    echo -e "\t$0 --reinstall-entware"
 
     DebugFuncExit
     return 0
