@@ -22,13 +22,13 @@ STABLE
 1) Sometimes, it seems existing installations of Entware can become "difficult" to work with. So, I've included an option to re-install Entware, but this should only be used as a last resort. Using:
 
 ```
-./sherpa.sh sab --force-entware-reinstall
+./sherpa.sh sab --reinstall-entware
 ```
 
 ... will force **sherpa** to uninstall your existing Entware QPKG, then install a new one. Please note: Entware will be reverted back to default, and only the IPKGs required to support your installed **sherpa** apps will be installed.
 
 
-2) **sherpa** is incompatible with existing installs of Optware-NG as various required packages cannot be installed through it.
+2) **sherpa** is incompatible with existing installs of Optware-NG. Various required packages are not available in Optware-NG.
 
 ---
 ## Usage
