@@ -224,12 +224,9 @@ Init()
 
     # sherpa-supported package details
     SHERPA_QPKG_NAMES=()
-    SHERPA_QPKG_ABBRVS=()
-    SHERPA_QPKG_IPKGS=()
-    SHERPA_QPKG_PIPS=()
-
-    SHERPA_COMMON_IPKGS='git git-http nano less ca-certificates'
-    SHERPA_COMMON_PIPS='--upgrade pip setuptools'
+        SHERPA_QPKG_ABBRVS=()
+        SHERPA_QPKG_IPKGS=()
+        SHERPA_QPKG_PIPS=()
 
     SHERPA_QPKG_NAMES+=(SABnzbdplus)
         SHERPA_QPKG_ABBRVS+=('sb sab sabnzbd sabnzbdplus')
@@ -265,6 +262,10 @@ Init()
         SHERPA_QPKG_ABBRVS+=('hp head phones headphones')
         SHERPA_QPKG_IPKGS+=('python')
         SHERPA_QPKG_PIPS+=('')
+
+    SHERPA_COMMON_QPKGS='Entware'
+    SHERPA_COMMON_IPKGS='git git-http nano less ca-certificates'
+    SHERPA_COMMON_PIPS='--upgrade pip setuptools'
 
     # internals
     secure_web_login=false
