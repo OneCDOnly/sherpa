@@ -281,7 +281,9 @@ Init()
     satisfy_dependencies_only=false
     update_all_apps=false
     [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_cmd+=' --insecure'
-    [[ ${NAS_FIRMWARE//.} -ge 435 ]] && find_cmd=/usr/bin/find      # 4.3.5 has a much better BusyBox 'find'
+    #[[ ${NAS_FIRMWARE//.} -ge 435 ]] && find_cmd=/usr/bin/find      # 4.3.5 has a much better BusyBox 'find'
+    # nope, looks like some models on QTS 4.3.6 may be using BusyBox 1.01. :(
+
     local result=0
 
     ParseArgs
