@@ -226,36 +226,45 @@ Init()
     SHERPA_QPKG_NAMES=()
     SHERPA_QPKG_ABBRVS=()
     SHERPA_QPKG_IPKGS=()
+    SHERPA_QPKG_PIPS=()
 
     SHERPA_COMMON_IPKGS='git git-http nano less ca-certificates'
+    SHERPA_COMMON_PIPS='--upgrade pip setuptools'
 
     SHERPA_QPKG_NAMES+=(SABnzbdplus)
         SHERPA_QPKG_ABBRVS+=('sb sab sabnzbd sabnzbdplus')
         SHERPA_QPKG_IPKGS+=('python python-pip python-pyopenssl python-dev gcc unrar p7zip coreutils-nice ionice ffprobe')
+        SHERPA_QPKG_PIPS+=('sabyenc==3.3.5 cheetah')
 
     SHERPA_QPKG_NAMES+=(SickChill)
         SHERPA_QPKG_ABBRVS+=('sc sick sickc chill sickchill')
         SHERPA_QPKG_IPKGS+=('python')
+        SHERPA_QPKG_PIPS+=('')
 
     SHERPA_QPKG_NAMES+=(CouchPotato2)
         SHERPA_QPKG_ABBRVS+=('cp cp2 couch couchpotato couchpotato2 couchpotatoserver')
         SHERPA_QPKG_IPKGS+=('python python-pip python-pyopenssl python-lxml')
+        SHERPA_QPKG_PIPS+=('')
 
     SHERPA_QPKG_NAMES+=(LazyLibrarian)
         SHERPA_QPKG_ABBRVS+=('ll lazy lazylibrarian')
         SHERPA_QPKG_IPKGS+=('python python-pip python-urllib3')
+        SHERPA_QPKG_PIPS+=('')
 
     SHERPA_QPKG_NAMES+=(OMedusa)
         SHERPA_QPKG_ABBRVS+=('om med omed medusa omedusa')
         SHERPA_QPKG_IPKGS+=('python python-pip python-lib2to3 mediainfo')
+        SHERPA_QPKG_PIPS+=('')
 
     SHERPA_QPKG_NAMES+=(OWatcher3)
         SHERPA_QPKG_ABBRVS+=('ow wat owat watcher owatcher watcher3 owatcher3')
         SHERPA_QPKG_IPKGS+=('python3 python3-pip')
+        SHERPA_QPKG_PIPS+=('')
 
     SHERPA_QPKG_NAMES+=(Headphones)
         SHERPA_QPKG_ABBRVS+=('hp head phones headphones')
         SHERPA_QPKG_IPKGS+=('python')
+        SHERPA_QPKG_PIPS+=('')
 
     # internals
     secure_web_login=false
@@ -731,11 +740,11 @@ InstallIPKGBatch()
     local result=0
     local returncode=0
     local requested_IPKGs=''
-    local IPKG_batch_desc=''
+    local batch_description=''
     local log_pathfile="$IPKG_DL_PATH/ipkgs.$INSTALL_LOG_FILE"
 
     [[ -n $1 ]] && requested_IPKGs="$1" || return 1
-    [[ -n $2 ]] && IPKG_batch_desc="$2" || IPKG_batch_desc="$1"
+    [[ -n $2 ]] && batch_description="$2" || batch_description="$1"
 
     # errors can occur due to incompatible IPKGs (tried installing Entware-3x, then Entware-ng), so delete them first
     [[ -d $IPKG_DL_PATH ]] && rm -f "$IPKG_DL_PATH"/*.ipk
@@ -744,11 +753,12 @@ InstallIPKGBatch()
 
     if [[ $IPKG_download_count -gt 0 ]]; then
         IPKG_download_startseconds=$($DATE_CMD +%s)
-        ShowProc "downloading & installing $IPKG_download_count IPKGs ($IPKG_batch_desc)"
+        ShowProc "downloading & installing $IPKG_download_count IPKGs ($batch_description)"
+
         $TOUCH_CMD "$monitor_flag"
         trap CTRL_C_Captured INT
-
         _MonitorDirSize_ "$IPKG_DL_PATH" $IPKG_download_size &
+
         install_msgs=$($OPKG_CMD install --force-overwrite ${IPKG_download_list[*]} --cache "$IPKG_CACHE_PATH" --tmp-dir "$IPKG_DL_PATH" 2>&1)
         result=$?
 
@@ -757,10 +767,10 @@ InstallIPKGBatch()
         echo -e "${install_msgs}\nresult=[$result]" > "$log_pathfile"
 
         if [[ $result -eq 0 ]]; then
-            ShowDone "downloaded & installed $IPKG_download_count IPKGs ($IPKG_batch_desc)"
+            ShowDone "downloaded & installed $IPKG_download_count IPKGs ($batch_description)"
             DebugStage 'elapsed time' "$(ConvertSecsToMinutes "$(($($DATE_CMD +%s)-$([[ -n $IPKG_download_startseconds ]] && echo $IPKG_download_startseconds || echo "1")))")"
         else
-            ShowError "download & install IPKGs failed ($IPKG_batch_desc) [$result]"
+            ShowError "download & install IPKGs failed ($batch_description) [$result]"
             DebugErrorFile "$log_pathfile"
 
             errorcode=18
@@ -782,28 +792,32 @@ InstallPIPs()
     local install_msgs=''
     local result=0
     local returncode=0
-    local op='PIP modules'
-    local pip_install='pip install setuptools'
-    local log_pathfile="$WORKING_PATH/${op// /_}.$INSTALL_LOG_FILE"
+    local packages=''
+    local batch_description='PIP packages'
+    local log_pathfile="$WORKING_PATH/${batch_description// /_}.$INSTALL_LOG_FILE"
 
-    if [[ -f $PIP_CMD ]]; then
-        ShowProc "downloading & installing ($op)"
+    IsSysFilePresent $PIP_CMD || return 1
 
-        (IsQPKGInstalled SABnzbdplus) && pip_install+=' && pip install sabyenc==3.3.5 cheetah'
-
-        install_msgs=$(eval $pip_install 2>&1)
-        result=$?
-        echo -e "${install_msgs}\nresult=[$result]" > "$log_pathfile"
-
-        if [[ $result -eq 0 ]]; then
-            ShowDone "downloaded & installed ($op)"
-        else
-            ShowError "download & install failed ($op) [$result]"
-            DebugErrorFile "$log_pathfile"
-
-            errorcode=19
-            returncode=1
+    for index in ${!SHERPA_QPKG_NAMES[@]}; do
+        if (IsQPKGInstalled ${SHERPA_QPKG_NAMES[$index]}) || [[ $TARGET_APP = ${SHERPA_QPKG_NAMES[$index]} ]]; then
+            packages+=" ${SHERPA_QPKG_PIPS[$index]}"
         fi
+    done
+
+    ShowProc "downloading & installing ($batch_description)"
+
+    install_msgs=$($PIP_CMD install $SHERPA_COMMON_PIPS 2>&1 && $PIP_CMD install $packages 2>&1)
+    result=$?
+    echo -e "${install_msgs}\nresult=[$result]" > "$log_pathfile"
+
+    if [[ $result -eq 0 ]]; then
+        ShowDone "downloaded & installed ($batch_description)"
+    else
+        ShowError "download & install PIPs failed ($batch_description) [$result]"
+        DebugErrorFile "$log_pathfile"
+
+        errorcode=19
+        returncode=1
     fi
 
     DebugFuncExit
