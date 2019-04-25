@@ -1,11 +1,8 @@
 #!/usr/bin/env bash
 ####################################################################################
-#
 # sherpa.sh
 #
-####################################################################################
-#
-# (C)opyright 2017-2019 OneCD - one.cd.only@gmail.com
+# Copyright (C) 2017-2019 OneCD - one.cd.only@gmail.com
 #
 # so, blame OneCD if it all goes horribly wrong. ;)
 #
@@ -14,9 +11,7 @@
 # tested on:
 #  GNU bash, version 3.2.57(2)-release (i686-pc-linux-gnu)
 #  Copyright (C) 2007 Free Software Foundation, Inc.
-#
 ####################################################################################
-#
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
 # Foundation, either version 3 of the License, or (at your option) any later
@@ -29,16 +24,12 @@
 #
 # You should have received a copy of the GNU General Public License along with
 # this program. If not, see http://www.gnu.org/licenses/.
-#
 ####################################################################################
-#
 # * Style Guide *
 # function names: CamelCase
 # variable names: lowercase_with_underscores (except for 'returncode' & 'errorcode')
 # constants: UPPERCASE_WITH_UNDERSCORES
-# indents: tab (4 spaces)
-# screen/log message text: lowercase unless failure, then capitalize first word
-#
+# indents: 1 x tab (= 4 x spaces)
 ####################################################################################
 
 USER_ARGS_RAW="$@"
@@ -69,8 +60,8 @@ ParseArgs()
                 DebugVar debug
                 ;;
             --reinstall-entware)
-                force_entware_reinstall=true
-                DebugVar force_entware_reinstall
+                reinstall_entware=true
+                DebugVar reinstall_entware
                 ;;
             --check)
                 satisfy_dependencies_only=true
@@ -87,10 +78,10 @@ ParseArgs()
         esac
 
         # only use first matched package name abbreviation as app to install
-        [[ -z $TARGET_APP ]] && TARGET_APP=$(MatchAbbrvToPackage "$arg")
+        [[ -z $TARGET_APP ]] && TARGET_APP=$(MatchAbbrvToQPKGName "$arg")
     done
 
-    [[ -z $TARGET_APP && $force_entware_reinstall = false && $satisfy_dependencies_only = false && $update_all_apps = false ]] && errorcode=3
+    [[ -z $TARGET_APP && $reinstall_entware = false && $satisfy_dependencies_only = false && $update_all_apps = false ]] && errorcode=3
     return 0
 
     }
@@ -99,7 +90,7 @@ Init()
     {
 
     SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=190331
+    local SCRIPT_VERSION=190425
     debug=false
     ResetErrorcode
 
@@ -154,10 +145,11 @@ Init()
     DOWNLOAD_LOG_FILE=download.log
     START_LOG_FILE=start.log
     STOP_LOG_FILE=stop.log
+    RESTART_LOG_FILE=restart.log
     local DEFAULT_SHARES_PATHFILE=/etc/config/def_share.info
     local ULINUX_PATHFILE=/etc/config/uLinux.conf
     local ISSUE_PATHFILE=/etc/issue
-    local DEBUG_LOG_FILE="${SCRIPT_FILE%.*}.debug.log"
+    local DEBUG_LOG_FILE=${SCRIPT_FILE%.*}.debug.log
 
     # check required binaries are present
     IsSysFilePresent $AWK_CMD || return
@@ -203,13 +195,13 @@ Init()
     local DEFAULT_VOLUME=$($GETCFG_CMD SHARE_DEF defVolMP -f "$DEFAULT_SHARES_PATHFILE")
 
     if [[ -L $DEFAULT_SHARE_DOWNLOAD_PATH ]]; then
-        SHARE_DOWNLOAD_PATH="$DEFAULT_SHARE_DOWNLOAD_PATH"
+        SHARE_DOWNLOAD_PATH=$DEFAULT_SHARE_DOWNLOAD_PATH
     else
         SHARE_DOWNLOAD_PATH="/share/$($GETCFG_CMD SHARE_DEF defDownload -d Qdownload -f "$DEFAULT_SHARES_PATHFILE")"
     fi
 
     if [[ -L $DEFAULT_SHARE_PUBLIC_PATH ]]; then
-        SHARE_PUBLIC_PATH="$DEFAULT_SHARE_PUBLIC_PATH"
+        SHARE_PUBLIC_PATH=$DEFAULT_SHARE_PUBLIC_PATH
     else
         SHARE_PUBLIC_PATH="/share/$($GETCFG_CMD SHARE_DEF defPublic -d Qpublic -f "$DEFAULT_SHARES_PATHFILE")"
     fi
@@ -233,43 +225,42 @@ Init()
     # sherpa-supported package details
     SHERPA_QPKG_NAMES=()
     SHERPA_QPKG_ABBRVS=()
-    SHERPA_QPKG_IPKGs=()
+    SHERPA_QPKG_IPKGS=()
 
-    SHERPA_STD_IPKGs='git git-http nano less ca-certificates'
+    SHERPA_COMMON_IPKGS='git git-http nano less ca-certificates'
 
     SHERPA_QPKG_NAMES+=(SABnzbdplus)
         SHERPA_QPKG_ABBRVS+=('sb sab sabnzbd sabnzbdplus')
-        SHERPA_QPKG_IPKGs+=('python python-pip python-pyopenssl python-dev gcc unrar p7zip coreutils-nice ionice ffprobe')
+        SHERPA_QPKG_IPKGS+=('python python-pip python-pyopenssl python-dev gcc unrar p7zip coreutils-nice ionice ffprobe')
 
     SHERPA_QPKG_NAMES+=(SickChill)
         SHERPA_QPKG_ABBRVS+=('sc sick sickc chill sickchill')
-        SHERPA_QPKG_IPKGs+=('python')
+        SHERPA_QPKG_IPKGS+=('python')
 
     SHERPA_QPKG_NAMES+=(CouchPotato2)
         SHERPA_QPKG_ABBRVS+=('cp cp2 couch couchpotato couchpotato2 couchpotatoserver')
-        SHERPA_QPKG_IPKGs+=('python python-pip python-pyopenssl python-lxml')
+        SHERPA_QPKG_IPKGS+=('python python-pip python-pyopenssl python-lxml')
 
     SHERPA_QPKG_NAMES+=(LazyLibrarian)
         SHERPA_QPKG_ABBRVS+=('ll lazy lazylibrarian')
-        SHERPA_QPKG_IPKGs+=('python python-pip python-urllib3')
+        SHERPA_QPKG_IPKGS+=('python python-pip python-urllib3')
 
     SHERPA_QPKG_NAMES+=(OMedusa)
         SHERPA_QPKG_ABBRVS+=('om med omed medusa omedusa')
-        SHERPA_QPKG_IPKGs+=('python python-pip python-lib2to3 mediainfo')
+        SHERPA_QPKG_IPKGS+=('python python-pip python-lib2to3 mediainfo')
 
     SHERPA_QPKG_NAMES+=(OWatcher3)
-        SHERPA_QPKG_ABBRVS+=('ow wat watcher owatcher watcher3 owatcher3')
-        SHERPA_QPKG_IPKGs+=('python3 python3-pip')
+        SHERPA_QPKG_ABBRVS+=('ow wat owat watcher owatcher watcher3 owatcher3')
+        SHERPA_QPKG_IPKGS+=('python3 python3-pip')
 
     SHERPA_QPKG_NAMES+=(Headphones)
         SHERPA_QPKG_ABBRVS+=('hp head phones headphones')
-        SHERPA_QPKG_IPKGs+=('python')
+        SHERPA_QPKG_IPKGS+=('python')
 
     # internals
     secure_web_login=false
     package_port=0
     SCRIPT_STARTSECONDS=$($DATE_CMD +%s)
-    queue_paused=false
     NAS_FIRMWARE=$($GETCFG_CMD System Version -f "$ULINUX_PATHFILE")
     NAS_ARCH=$($UNAME_CMD -m)
     progress_message=''
@@ -277,7 +268,7 @@ Init()
     previous_msg=''
     REINSTALL_FLAG=false
     OLD_APP=''
-    force_entware_reinstall=false
+    reinstall_entware=false
     satisfy_dependencies_only=false
     update_all_apps=false
     [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_cmd+=' --insecure'
@@ -320,7 +311,7 @@ Init()
     CalcPrefEntware
 
     if [[ $errorcode -eq 0 && $EUID -ne 0 ]]; then
-        ShowError "This script must be run as the 'admin' user. Please login via SSH as 'admin' and try again."
+        ShowError "this script must be run as the 'admin' user. Please login via SSH as 'admin' and try again."
         errorcode=4
     fi
 
@@ -329,7 +320,7 @@ Init()
         result=$?
 
         if [[ $result -ne 0 ]]; then
-            ShowError "Unable to create working directory ($WORKING_PATH) [$result]"
+            ShowError "unable to create working directory ($WORKING_PATH) [$result]"
             errorcode=5
         else
             cd "$WORKING_PATH"
@@ -341,7 +332,7 @@ Init()
         result=$?
 
         if [[ $result -ne 0 ]]; then
-            ShowError "Unable to create backup directory ($QPKG_BACKUP_PATH) [$result]"
+            ShowError "unable to create backup directory ($QPKG_BACKUP_PATH) [$result]"
             errorcode=6
         fi
     fi
@@ -351,7 +342,7 @@ Init()
         result=$?
 
         if [[ $result -ne 0 ]]; then
-            ShowError "Unable to create QPKG download directory ($QPKG_DL_PATH) [$result]"
+            ShowError "unable to create QPKG download directory ($QPKG_DL_PATH) [$result]"
             errorcode=7
         fi
     fi
@@ -362,7 +353,7 @@ Init()
         result=$?
 
         if [[ $result -ne 0 ]]; then
-            ShowError "Unable to create IPKG download directory ($IPKG_DL_PATH) [$result]"
+            ShowError "unable to create IPKG download directory ($IPKG_DL_PATH) [$result]"
             errorcode=8
         else
             monitor_flag="$IPKG_DL_PATH/.monitor"
@@ -374,7 +365,7 @@ Init()
         result=$?
 
         if [[ $result -ne 0 ]]; then
-            ShowError "Unable to create IPKG cache directory ($IPKG_CACHE_PATH) [$result]"
+            ShowError "unable to create IPKG cache directory ($IPKG_CACHE_PATH) [$result]"
             errorcode=9
         fi
     fi
@@ -389,7 +380,7 @@ Init()
 
     if [[ $errorcode -eq 0 ]]; then
         if [[ $TARGET_APP = SABnzbdplus ]] && IsQPKGEnabled QSabNZBdPlus && IsQPKGEnabled SABnzbdplus; then
-            ShowError "Both 'SABnzbdplus' and 'QSabNZBdPlus' are enabled. This is an unsupported configuration. Please disable the unused one via the QNAP App Center then re-run this installer."
+            ShowError "both 'SABnzbdplus' and 'QSabNZBdPlus' are enabled. This is an unsupported configuration. Please disable the unused one via the QNAP App Center then re-run this installer."
             REINSTALL_FLAG=true
             errorcode=11
         fi
@@ -397,7 +388,7 @@ Init()
 
     if [[ $errorcode -eq 0 ]]; then
         if [[ $TARGET_APP = SickChill ]] && IsQPKGEnabled SickRage && IsQPKGEnabled SickChill; then
-            ShowError "Both 'SickChill' and 'SickRage' are enabled. This is an unsupported configuration. Please disable the unused one via the QNAP App Center then re-run this installer."
+            ShowError "both 'SickChill' and 'SickRage' are enabled. This is an unsupported configuration. Please disable the unused one via the QNAP App Center then re-run this installer."
             REINSTALL_FLAG=true
             errorcode=12
         fi
@@ -412,7 +403,7 @@ Init()
 
     if [[ $errorcode -eq 0 ]]; then
         if IsQPKGEnabled Entware-ng && IsQPKGEnabled Entware-3x; then
-            ShowError "Both 'Entware-ng' and 'Entware-3x' are enabled. This is an unsupported configuration. Please manually disable (or uninstall) one or both of them via the QNAP App Center then re-run this installer."
+            ShowError "both 'Entware-ng' and 'Entware-3x' are enabled. This is an unsupported configuration. Please manually disable (or uninstall) one or both of them via the QNAP App Center then re-run this installer."
             errorcode=14
         fi
     fi
@@ -436,7 +427,7 @@ Init()
         if ($curl_cmd --silent --fail https://onecdonly.github.io/sherpa/packages.conf -o $SHERPA_PACKAGES_PATHFILE); then
             ShowDone "downloaded sherpa package list"
         else
-            ShowError "No Internet access"
+            ShowError "no Internet access"
             errorcode=16
         fi
     fi
@@ -453,38 +444,17 @@ DisplayHelp()
     local package_name=''
 
     echo -e "A BASH script to install various Usenet apps into a QNAP NAS.\n"
-    echo -e "- Each application can be installed (or reinstalled) by running $SCRIPT_FILE with the name of a single app as an argument. Examples are:"
+    echo -e "- Each application shown below can be installed (or automatically reinstalled) by running:"
     printf "\t$0 %s\n" "${SHERPA_QPKG_NAMES[@]}"
 
     echo -e "\n- To ensure all sherpa application dependencies are installed:"
     echo -e "\t$0 --check"
 
-#     echo -e "\n- To update all installed sherpa apps:"
-#     echo "\t$0 --update"
+    echo -e "\n- To update all sherpa installed applications:"
+    echo -e "\t$0 --update"
 
     echo -e "\n- To force a reinstallation of Entware:"
     echo -e "\t$0 --reinstall-entware"
-
-    DebugFuncExit
-    return 0
-
-    }
-
-PauseDownloaders()
-    {
-
-    [[ $errorcode -gt 0 ]] && return
-
-    DebugFuncEntry
-
-    # pause local SABnzbd queue so installer downloads will finish faster
-    if IsQPKGEnabled SABnzbdplus; then
-        LoadInstalledQPKGVars SABnzbdplus
-        SabQueueControl pause
-    elif IsQPKGEnabled QSabNZBdPlus; then
-        LoadInstalledQPKGVars QSabNZBdPlus
-        SabQueueControl pause
-    fi
 
     DebugFuncExit
     return 0
@@ -500,7 +470,7 @@ RemoveOther()
 
     UninstallQPKG Optware || ResetErrorcode  # ignore Optware uninstall errors
 
-    [[ $force_entware_reinstall = true ]] && { UninstallQPKG $PREF_ENTWARE; CalcPrefEntware ;}
+    [[ $reinstall_entware = true ]] && { UninstallQPKG $PREF_ENTWARE; CalcPrefEntware ;}
 
     DebugFuncExit
     return 0
@@ -565,27 +535,20 @@ PatchEntwareInit()
     local returncode=0
     local find_text=''
     local insert_text=''
+    local package_init_pathfile="$(GetQPKGServiceFile $PREF_ENTWARE)"
 
-    LoadInstalledQPKGVars $PREF_ENTWARE
-
-    if [[ ! -e $package_init_pathfile ]]; then
-        ShowError "No init file found [$package_init_pathfile]"
-        errorcode=17
-        returncode=1
+    if ($GREP_CMD -q 'opt.orig' "$package_init_pathfile"); then
+        DebugInfo 'patch: do the "opt shuffle" - already done'
     else
-        if ($GREP_CMD -q 'opt.orig' "$package_init_pathfile"); then
-            DebugInfo 'patch: do the "opt shuffle" - already done'
-        else
-            find_text='/bin/rm -rf /opt'
-            insert_text='opt_path="/opt"; opt_backup_path="/opt.orig"; [ -d "$opt_path" ] \&\& [ ! -L "$opt_path" ] \&\& [ ! -e "$opt_backup_path" ] \&\& mv "$opt_path" "$opt_backup_path"'
-            $SED_CMD -i "s|$find_text|$insert_text\n$find_text|" "$package_init_pathfile"
+        find_text='/bin/rm -rf /opt'
+        insert_text='opt_path="/opt"; opt_backup_path="/opt.orig"; [ -d "$opt_path" ] \&\& [ ! -L "$opt_path" ] \&\& [ ! -e "$opt_backup_path" ] \&\& mv "$opt_path" "$opt_backup_path"'
+        $SED_CMD -i "s|$find_text|$insert_text\n$find_text|" "$package_init_pathfile"
 
-            find_text='/bin/ln -sf $QPKG_DIR /opt'
-            insert_text=$(echo -e "\t")'[ -L "$opt_path" ] \&\& [ -d "$opt_backup_path" ] \&\& cp "$opt_backup_path"/* --target-directory "$opt_path" \&\& rm -r "$opt_backup_path"'
-            $SED_CMD -i "s|$find_text|$find_text\n$insert_text\n|" "$package_init_pathfile"
+        find_text='/bin/ln -sf $QPKG_DIR /opt'
+        insert_text=$(echo -e "\t")'[ -L "$opt_path" ] \&\& [ -d "$opt_backup_path" ] \&\& cp "$opt_backup_path"/* --target-directory "$opt_path" \&\& rm -r "$opt_backup_path"'
+        $SED_CMD -i "s|$find_text|$find_text\n$insert_text\n|" "$package_init_pathfile"
 
-            DebugDone 'patch: do the "opt shuffle"'
-        fi
+        DebugDone 'patch: do the "opt shuffle"'
     fi
 
     DebugFuncExit
@@ -660,6 +623,8 @@ InstallExtras()
     InstallIPKGs
     InstallPIPs
 
+    [[ $reinstall_entware = true || $update_all_apps = true ]] && RestartAllQPKGs
+
     DebugFuncExit
     return 0
 
@@ -673,31 +638,33 @@ BackupAndRemoveOldApp()
     DebugFuncEntry
     local returncode=0
 
-    case $TARGET_APP in
-        SABnzbdplus)
-            if (IsQPKGEnabled QSabNZBdPlus); then
-                BackupConfig && UninstallQPKG QSabNZBdPlus
-            else
+    if [[ -n $TARGET_APP ]]; then
+        case $TARGET_APP in
+            SABnzbdplus)
+                if (IsQPKGEnabled QSabNZBdPlus); then
+                    BackupConfig && UninstallQPKG QSabNZBdPlus
+                else
+                    IsQPKGEnabled $TARGET_APP && BackupConfig && UninstallQPKG $TARGET_APP
+                fi
+                ;;
+            SickChill)
+                if (IsQPKGEnabled SickRage); then
+                    BackupConfig && UninstallQPKG SickRage
+                elif (IsQPKGEnabled QSickRage); then
+                    BackupConfig && $SERVICE_CMD stop QSickRage && $SERVICE_CMD disable QSickRage
+                else
+                    IsQPKGEnabled $TARGET_APP && BackupConfig && UninstallQPKG $TARGET_APP
+                fi
+                ;;
+            CouchPotato2|LazyLibrarian|OMedusa|OWatcher3|Headphones)
                 IsQPKGEnabled $TARGET_APP && BackupConfig && UninstallQPKG $TARGET_APP
-            fi
-            ;;
-        SickChill)
-            if (IsQPKGEnabled SickRage); then
-                BackupConfig && UninstallQPKG SickRage
-            elif (IsQPKGEnabled QSickRage); then
-                BackupConfig && $SERVICE_CMD stop QSickRage && $SERVICE_CMD disable QSickRage
-            else
-                IsQPKGEnabled $TARGET_APP && BackupConfig && UninstallQPKG $TARGET_APP
-            fi
-            ;;
-        CouchPotato2|LazyLibrarian|OMedusa|OWatcher3|Headphones)
-            IsQPKGEnabled $TARGET_APP && BackupConfig && UninstallQPKG $TARGET_APP
-            ;;
-        *)
-            ShowError "Can't backup and remove app '$TARGET_APP' as it's unknown"
-            returncode=1
-            ;;
-    esac
+                ;;
+            *)
+                ShowError "can't backup and remove app '$TARGET_APP' as it's unknown"
+                returncode=1
+                ;;
+        esac
+    fi
 
     DebugFuncExit
     return $returncode
@@ -712,7 +679,7 @@ InstallTargetApp()
     DebugFuncEntry
 
     ! IsQPKGInstalled $TARGET_APP && InstallQPKG $TARGET_APP && PauseHere && RestoreConfig
-    [[ $errorcode -eq 0 ]] && DaemonCtl start "$package_init_pathfile"
+    [[ $errorcode -eq 0 ]] && QPKGServiceCtl start $TARGET_APP
 
     DebugFuncExit
     return 0
@@ -727,14 +694,14 @@ InstallIPKGs()
     DebugFuncEntry
     local returncode=0
     local install_msgs=''
-    local packages="$SHERPA_STD_IPKGs"
+    local packages="$SHERPA_COMMON_IPKGS"
     local index=''
 
     if [[ -n $IPKG_DL_PATH && -d $IPKG_DL_PATH ]]; then
         UpdateEntware
         for index in ${!SHERPA_QPKG_NAMES[@]}; do
             if (IsQPKGInstalled ${SHERPA_QPKG_NAMES[$index]}) || [[ $TARGET_APP = ${SHERPA_QPKG_NAMES[$index]} ]]; then
-                packages+=" ${SHERPA_QPKG_IPKGs[$index]}"
+                packages+=" ${SHERPA_QPKG_IPKGS[$index]}"
             fi
         done
 
@@ -745,7 +712,7 @@ InstallIPKGs()
         InstallIPKGBatch "$packages" 'Python, Git and others'
     else
         ShowError "IPKG download path [$IPKG_DL_PATH] does not exist"
-        errorcode=18
+        errorcode=17
         returncode=1
     fi
 
@@ -791,12 +758,12 @@ InstallIPKGBatch()
 
         if [[ $result -eq 0 ]]; then
             ShowDone "downloaded & installed $IPKG_download_count IPKGs ($IPKG_batch_desc)"
-            DebugStage 'elapsed time' "$(ConvertSecs "$(($($DATE_CMD +%s)-$([[ -n $IPKG_download_startseconds ]] && echo $IPKG_download_startseconds || echo "1")))")"
+            DebugStage 'elapsed time' "$(ConvertSecsToMinutes "$(($($DATE_CMD +%s)-$([[ -n $IPKG_download_startseconds ]] && echo $IPKG_download_startseconds || echo "1")))")"
         else
-            ShowError "Download & install IPKGs failed ($IPKG_batch_desc) [$result]"
+            ShowError "download & install IPKGs failed ($IPKG_batch_desc) [$result]"
             DebugErrorFile "$log_pathfile"
 
-            errorcode=19
+            errorcode=18
             returncode=1
         fi
     fi
@@ -822,7 +789,7 @@ InstallPIPs()
     if [[ -f $PIP_CMD ]]; then
         ShowProc "downloading & installing ($op)"
 
-        [[ $TARGET_APP = SABnzbdplus ]] && pip_install+=' && pip install sabyenc==3.3.5 cheetah'
+        (IsQPKGInstalled SABnzbdplus) && pip_install+=' && pip install sabyenc==3.3.5 cheetah'
 
         install_msgs=$(eval $pip_install 2>&1)
         result=$?
@@ -831,16 +798,33 @@ InstallPIPs()
         if [[ $result -eq 0 ]]; then
             ShowDone "downloaded & installed ($op)"
         else
-            ShowError "Download & install failed ($op) [$result]"
+            ShowError "download & install failed ($op) [$result]"
             DebugErrorFile "$log_pathfile"
 
-            errorcode=20
+            errorcode=19
             returncode=1
         fi
     fi
 
     DebugFuncExit
     return $returncode
+
+    }
+
+RestartAllQPKGs()
+    {
+
+    [[ $errorcode -gt 0 ]] && return
+
+    DebugFuncEntry
+    local index=0
+
+    for index in ${!SHERPA_QPKG_NAMES[@]}; do
+        (IsQPKGEnabled ${SHERPA_QPKG_NAMES[$index]}) && QPKGServiceCtl restart ${SHERPA_QPKG_NAMES[$index]}
+    done
+
+    DebugFuncExit
+    return 0
 
     }
 
@@ -869,8 +853,8 @@ InstallNG()
             $CAT_CMD /opt/share/nzbget/nzbget.conf | $GREP_CMD ControlPassword=
             #Go to default router ip address and port 6789 192.168.1.1:6789 and now you should see NZBget interface
         else
-            ShowError "Download & install IPKG failed ($package_desc) [$result]"
-            errorcode=21
+            ShowError "download & install IPKG failed ($package_desc) [$result]"
+            errorcode=20
             returncode=1
         fi
     fi
@@ -890,7 +874,7 @@ InstallQPKG()
 
     if [[ -z $1 ]]; then
         DebugError 'QPKG name unspecified'
-        errorcode=22
+        errorcode=21
         return 1
     fi
 
@@ -904,7 +888,7 @@ InstallQPKG()
         return 0
     fi
 
-    LoadQPKGFileDetails $1
+    LoadRemoteQPKGDetails $1
 
     if [[ ${qpkg_pathfile##*.} = zip ]]; then
         $UNZIP_CMD -nq "$qpkg_pathfile" -d "$QPKG_DL_PATH"
@@ -925,7 +909,7 @@ InstallQPKG()
         ShowError "QPKG installation failed ($target_file) [$result]"
         DebugErrorFile "$log_pathfile"
 
-        errorcode=23
+        errorcode=22
         returncode=1
     fi
 
@@ -944,12 +928,12 @@ BackupConfig()
     case $TARGET_APP in
         SABnzbdplus)
             if IsQPKGEnabled QSabNZBdPlus; then
-                LoadInstalledQPKGVars QSabNZBdPlus
                 OLD_APP=QSabNZBdPlus
-                DaemonCtl stop "$package_init_pathfile"
+                QPKGServiceCtl stop $OLD_APP
+                LoadInstalledQPKGVars $OLD_APP
             elif IsQPKGEnabled $TARGET_APP; then
+                QPKGServiceCtl stop $TARGET_APP
                 LoadInstalledQPKGVars $TARGET_APP
-                DaemonCtl stop "$package_init_pathfile"
             fi
 
             REINSTALL_FLAG=$package_is_enabled
@@ -957,16 +941,16 @@ BackupConfig()
             ;;
         SickChill)
             if IsQPKGEnabled QSickRage; then
-                LoadInstalledQPKGVars QSickRage
                 OLD_APP=QSickRage
-                DaemonCtl stop "$package_init_pathfile"
+                QPKGServiceCtl stop $OLD_APP
+                LoadInstalledQPKGVars $OLD_APP
             elif IsQPKGEnabled SickRage; then
-                LoadInstalledQPKGVars SickRage
                 OLD_APP=SickRage
-                DaemonCtl stop "$package_init_pathfile"
+                QPKGServiceCtl stop $OLD_APP
+                LoadInstalledQPKGVars $OLD_APP
             elif IsQPKGEnabled $TARGET_APP; then
+                QPKGServiceCtl stop $TARGET_APP
                 LoadInstalledQPKGVars $TARGET_APP
-                DaemonCtl stop "$package_init_pathfile"
             fi
 
             REINSTALL_FLAG=$package_is_enabled
@@ -974,12 +958,12 @@ BackupConfig()
             ;;
         CouchPotato2)
             if IsQPKGEnabled QCouchPotato; then
-                LoadInstalledQPKGVars QCouchPotato
                 OLD_APP=QCouchPotato
-                DaemonCtl stop "$package_init_pathfile"
+                QPKGServiceCtl stop $OLD_APP
+                LoadInstalledQPKGVars $OLD_APP
             elif IsQPKGEnabled $TARGET_APP; then
+                QPKGServiceCtl stop $TARGET_APP
                 LoadInstalledQPKGVars $TARGET_APP
-                DaemonCtl stop "$package_init_pathfile"
             fi
 
             REINSTALL_FLAG=$package_is_enabled
@@ -987,15 +971,15 @@ BackupConfig()
             ;;
         LazyLibrarian|OMedusa|OWatcher3|Headphones)
             if IsQPKGEnabled $TARGET_APP; then
+                QPKGServiceCtl stop $TARGET_APP
                 LoadInstalledQPKGVars $TARGET_APP
-                DaemonCtl stop "$package_init_pathfile"
             fi
 
             REINSTALL_FLAG=$package_is_enabled
             [[ $package_is_enabled = true ]] && BackupThisPackage
             ;;
         *)
-            ShowError "Can't backup app '$TARGET_APP' as it's unknown"
+            ShowError "can't backup app '$TARGET_APP' as it's unknown"
             returncode=1
             ;;
     esac
@@ -1029,19 +1013,19 @@ BackupThisPackage()
 #             if [[ $result -eq 0 && $zipresult -eq 0 ]]; then
             ShowDone "created '$TARGET_APP' settings backup"
 #             else
-#                 ShowError "Could not create settings backup of ($package_config_path) [$result]"
-#                 errorcode=24
+#                 ShowError "could not create settings backup of ($package_config_path) [$result]"
+#                 errorcode=23
 #                 return 1
 #             fi
         else
             DebugInfo "a backup set already exists [$QPKG_CONFIG_BACKUP_PATH]"
-            errorcode=25
+            errorcode=24
         fi
 
         ConvertSettings
     else
-        ShowError "Could not find installed QPKG configuration path [$package_config_path]. Can't safely continue with backup. Aborting."
-        errorcode=26
+        ShowError "could not find installed QPKG configuration path [$package_config_path]. Can't safely continue with backup. Aborting."
+        errorcode=25
     fi
 
     }
@@ -1095,10 +1079,10 @@ ConvertSettings()
             # do nothing - don't need to convert from older versions for these QPKGs as sherpa is the only installer for them.
             ;;
         CouchPotato2)
-            ShowWarning "Can't convert settings for '$TARGET_APP' yet!"
+            ShowWarning "can't convert settings for '$TARGET_APP' yet!"
             ;;
         *)
-            ShowError "Can't convert settings for '$TARGET_APP' as it's unknown"
+            ShowError "can't convert settings for '$TARGET_APP' as it's unknown"
             returncode=1
             ;;
     esac
@@ -1129,35 +1113,37 @@ RestoreConfig()
     local result=0
     local returncode=0
 
-    if IsQPKGInstalled $TARGET_APP; then
-        LoadInstalledQPKGVars $TARGET_APP
+    if [[ -n $TARGET_APP ]]; then
+        if IsQPKGInstalled $TARGET_APP; then
+            LoadInstalledQPKGVars $TARGET_APP
 
-        if [[ -d $QPKG_CONFIG_BACKUP_PATH ]]; then
-            DaemonCtl stop "$package_init_pathfile"
+            if [[ -d $QPKG_CONFIG_BACKUP_PATH ]]; then
+                QPKGServiceCtl stop $TARGET_APP
 
-            if [[ ! -d $package_config_path ]]; then
-                $MKDIR_CMD -p "$($DIRNAME_CMD "$package_config_path")" 2> /dev/null
-            else
-                rm -r "$package_config_path" 2> /dev/null
+                if [[ ! -d $package_config_path ]]; then
+                    $MKDIR_CMD -p "$($DIRNAME_CMD "$package_config_path")" 2> /dev/null
+                else
+                    rm -r "$package_config_path" 2> /dev/null
+                fi
+
+                mv "$QPKG_CONFIG_BACKUP_PATH" "$($DIRNAME_CMD "$package_config_path")"
+                result=$?
+
+                if [[ $result -eq 0 ]]; then
+                    ShowDone "restored '$TARGET_APP' settings backup"
+
+                    [[ -n $package_port ]] && $SETCFG_CMD "$TARGET_APP" Web_Port $package_port -f "$APP_CENTER_CONFIG_PATHFILE"
+                else
+                    ShowError "could not restore settings backup to ($package_config_path) [$result]"
+                    errorcode=26
+                    returncode=1
+                fi
             fi
-
-            mv "$QPKG_CONFIG_BACKUP_PATH" "$($DIRNAME_CMD "$package_config_path")"
-            result=$?
-
-            if [[ $result -eq 0 ]]; then
-                ShowDone "restored '$TARGET_APP' settings backup"
-
-                [[ -n $package_port ]] && $SETCFG_CMD "$TARGET_APP" Web_Port $package_port -f "$APP_CENTER_CONFIG_PATHFILE"
-            else
-                ShowError "Could not restore settings backup to ($package_config_path) [$result]"
-                errorcode=27
-                returncode=1
-            fi
+        else
+            ShowError "'$TARGET_APP' is NOT installed so can't restore backup"
+            errorcode=27
+            returncode=1
         fi
-    else
-        ShowError "'$TARGET_APP' is NOT installed so can't restore backup"
-        errorcode=28
-        returncode=1
     fi
 
     DebugFuncExit
@@ -1174,7 +1160,7 @@ DownloadQPKG()
     local result=0
     local returncode=0
 
-    LoadQPKGFileDetails $1
+    LoadRemoteQPKGDetails $1
 
     if [[ -e $qpkg_pathfile ]]; then
         file_md5=$($MD5SUM_CMD "$qpkg_pathfile" | $CUT_CMD -f1 -d' ')
@@ -1189,8 +1175,8 @@ DownloadQPKG()
                 rm -f "$qpkg_pathfile"
             fi
         else
-            ShowError "Problem creating checksum from existing QPKG ($qpkg_file) [$result]"
-            errorcode=29
+            ShowError "problem creating checksum from existing QPKG ($qpkg_file) [$result]"
+            errorcode=28
             returncode=1
         fi
     fi
@@ -1222,20 +1208,20 @@ DownloadQPKG()
                 if [[ $file_md5 = $qpkg_md5 ]]; then
                     ShowDone "downloaded QPKG ($qpkg_file)"
                 else
-                    ShowError "Downloaded QPKG checksum incorrect ($qpkg_file) [$result]"
-                    errorcode=30
+                    ShowError "downloaded QPKG checksum incorrect ($qpkg_file) [$result]"
+                    errorcode=29
                     returncode=1
                 fi
             else
-                ShowError "Problem creating checksum from downloaded QPKG ($qpkg_pathfile) [$result]"
-                errorcode=31
+                ShowError "problem creating checksum from downloaded QPKG ($qpkg_pathfile) [$result]"
+                errorcode=30
                 returncode=1
             fi
         else
-            ShowError "Download failed ($qpkg_pathfile) [$result]"
+            ShowError "download failed ($qpkg_pathfile) [$result]"
             DebugErrorFile "$log_pathfile"
 
-            errorcode=32
+            errorcode=31
             returncode=1
         fi
     fi
@@ -1305,7 +1291,6 @@ LoadInstalledQPKGVars()
     local prev_config_file=''
     local package_settings_pathfile=''
     package_installed_path=''
-    package_init_pathfile=''
     package_config_path=''
     package_port=''
     package_api=''
@@ -1314,8 +1299,6 @@ LoadInstalledQPKGVars()
     if [[ -n $package_name ]]; then
         package_installed_path=$($GETCFG_CMD $package_name Install_Path -f $APP_CENTER_CONFIG_PATHFILE)
         if [[ $? -eq 0 ]]; then
-            package_init_pathfile=$($GETCFG_CMD $package_name Shell -f $APP_CENTER_CONFIG_PATHFILE)
-
             for prev_config_dir in ${PREV_QPKG_CONFIG_DIRS[@]}; do
                 package_config_path=$package_installed_path/$prev_config_dir
                 [[ -d $package_config_path ]] && break
@@ -1341,12 +1324,12 @@ LoadInstalledQPKGVars()
             package_version=$($GETCFG_CMD $package_name Version -f $APP_CENTER_CONFIG_PATHFILE)
         else
             DebugError 'QPKG not installed?'
-            errorcode=33
+            errorcode=32
             returncode=1
         fi
     else
         DebugError 'QPKG name unspecified'
-        errorcode=34
+        errorcode=33
         returncode=1
     fi
 
@@ -1354,7 +1337,7 @@ LoadInstalledQPKGVars()
 
     }
 
-LoadQPKGFileDetails()
+LoadRemoteQPKGDetails()
     {
 
     # $1 = QPKG name
@@ -1370,87 +1353,85 @@ LoadQPKGFileDetails()
 
     if [[ -z $qpkg_name ]]; then
         DebugError 'QPKG name unspecified'
-        errorcode=35
+        errorcode=34
+        return 1
+    fi
+
+    case $1 in
+        Entware)
+            qpkg_url='http://bin.entware.net/other/Entware_1.00std.qpkg'
+            qpkg_md5='0c99cf2cf8ef61c7a18b42651a37da74'
+            ;;
+        Entware-ng)
+            qpkg_url='http://entware.zyxmon.org/binaries/other/Entware-ng_0.97.qpkg'
+            qpkg_md5='6c81cc37cbadd85adfb2751dc06a238f'
+            ;;
+        SABnzbdplus)
+            qpkg_url="$OneCD_url_prefix/SABnzbdplus/build/SABnzbdplus_190205.qpkg"
+            qpkg_md5='b771606008cf5f7a74052a7db53c789a'
+            ;;
+        SickChill)
+            qpkg_url="$OneCD_url_prefix/SickChill/build/SickChill_181011.qpkg"
+            qpkg_md5='552d3c1fc5ddd832fc8f70327fbcb11f'
+            ;;
+        CouchPotato2)
+            qpkg_url="$OneCD_url_prefix/CouchPotato2/build/CouchPotato2_180427.qpkg"
+            qpkg_md5='395ffdb9c25d0bc07eb24987cc722cdb'
+            ;;
+        LazyLibrarian)
+            qpkg_url="$OneCD_url_prefix/LazyLibrarian/build/LazyLibrarian_181112.qpkg"
+            qpkg_md5='8f3aae17aba2cbdef5d06b432d3d8015'
+            ;;
+        OMedusa)
+            qpkg_url="$OneCD_url_prefix/OMedusa/build/OMedusa_180427.qpkg"
+            qpkg_md5='ec3b193c7931a100067cfaa334caf883'
+            ;;
+        OWatcher3)
+            qpkg_url="$OneCD_url_prefix/OWatcher3/build/OWatcher3_190106.qpkg"
+            qpkg_md5='45145a005a8b0622790a735087c2699f'
+            ;;
+        Headphones)
+            qpkg_url="$OneCD_url_prefix/Headphones/build/Headphones_180429.qpkg"
+            qpkg_md5='c1b5ba10f5636b4e951eb57fb2bb1ed5'
+            ;;
+        Par2)
+            case $STEPHANE_QPKG_ARCH in
+                x86)
+                    qpkg_url="$OneCD_url_prefix/Par2/Par2_0.8.0.0_x86.qpkg"
+                    qpkg_md5='c2584f84334dccd685e56419f2f07b9d'
+                    ;;
+                x64)
+                    qpkg_url="$OneCD_url_prefix/Par2/Par2_0.8.0.0_x86_64.qpkg"
+                    qpkg_md5='e720a700a3364f5e81af6de40ab2e0b0'
+                    ;;
+                x41)
+                    qpkg_url="$OneCD_url_prefix/Par2/Par2_0.8.0.0_arm-x41.qpkg"
+                    qpkg_md5='32281486500ba2dd55df40f00c38af53'
+                    ;;
+                x31)
+                    qpkg_url="$OneCD_url_prefix/Par2/Par2_0.8.0.0_arm-x31.qpkg"
+                    qpkg_md5='d60a625e255a48f82c414fab1ea53a76'
+                    ;;
+                a64)
+                    qpkg_url="$OneCD_url_prefix/Par2/Par2_0.8.0.0_arm_64.qpkg"
+                    qpkg_md5='1cb7fa5dc1b3b6f912cb0e1981aa74d2'
+                    ;;
+            esac
+            ;;
+        *)
+            DebugError "QPKG name not found [$qpkg_name]"
+            errorcode=35
+            returncode=1
+            ;;
+    esac
+
+    if [[ -z $qpkg_url || -z $qpkg_md5 ]]; then
+        DebugError "QPKG details not found [$qpkg_name]"
+        errorcode=36
         returncode=1
     else
-        local base_url=''
-
-        case $1 in
-            Entware)
-                qpkg_url='http://bin.entware.net/other/Entware_1.00std.qpkg'
-                qpkg_md5='0c99cf2cf8ef61c7a18b42651a37da74'
-                ;;
-            Entware-ng)
-                qpkg_url='http://entware.zyxmon.org/binaries/other/Entware-ng_0.97.qpkg'
-                qpkg_md5='6c81cc37cbadd85adfb2751dc06a238f'
-                ;;
-            SABnzbdplus)
-                qpkg_url="$OneCD_url_prefix/SABnzbdplus/build/SABnzbdplus_190205.qpkg"
-                qpkg_md5='b771606008cf5f7a74052a7db53c789a'
-                ;;
-            SickChill)
-                qpkg_url="$OneCD_url_prefix/SickChill/build/SickChill_181011.qpkg"
-                qpkg_md5='552d3c1fc5ddd832fc8f70327fbcb11f'
-                ;;
-            CouchPotato2)
-                qpkg_url="$OneCD_url_prefix/CouchPotato2/build/CouchPotato2_180427.qpkg"
-                qpkg_md5='395ffdb9c25d0bc07eb24987cc722cdb'
-                ;;
-            LazyLibrarian)
-                qpkg_url="$OneCD_url_prefix/LazyLibrarian/build/LazyLibrarian_181112.qpkg"
-                qpkg_md5='8f3aae17aba2cbdef5d06b432d3d8015'
-                ;;
-            OMedusa)
-                qpkg_url="$OneCD_url_prefix/OMedusa/build/OMedusa_180427.qpkg"
-                qpkg_md5='ec3b193c7931a100067cfaa334caf883'
-                ;;
-            OWatcher3)
-                qpkg_url="$OneCD_url_prefix/OWatcher3/build/OWatcher3_190106.qpkg"
-                qpkg_md5='45145a005a8b0622790a735087c2699f'
-                ;;
-            Headphones)
-                qpkg_url="$OneCD_url_prefix/Headphones/build/Headphones_180429.qpkg"
-                qpkg_md5='c1b5ba10f5636b4e951eb57fb2bb1ed5'
-                ;;
-            Par2)
-                case $STEPHANE_QPKG_ARCH in
-                    x86)
-                        qpkg_url="$OneCD_url_prefix/Par2/Par2_0.8.0.0_x86.qpkg"
-                        qpkg_md5='c2584f84334dccd685e56419f2f07b9d'
-                        ;;
-                    x64)
-                        qpkg_url="$OneCD_url_prefix/Par2/Par2_0.8.0.0_x86_64.qpkg"
-                        qpkg_md5='e720a700a3364f5e81af6de40ab2e0b0'
-                        ;;
-                    x41)
-                        qpkg_url="$OneCD_url_prefix/Par2/Par2_0.8.0.0_arm-x41.qpkg"
-                        qpkg_md5='32281486500ba2dd55df40f00c38af53'
-                        ;;
-                    x31)
-                        qpkg_url="$OneCD_url_prefix/Par2/Par2_0.8.0.0_arm-x31.qpkg"
-                        qpkg_md5='d60a625e255a48f82c414fab1ea53a76'
-                        ;;
-                    a64)
-                        qpkg_url="$OneCD_url_prefix/Par2/Par2_0.8.0.0_arm_64.qpkg"
-                        qpkg_md5='1cb7fa5dc1b3b6f912cb0e1981aa74d2'
-                        ;;
-                esac
-                ;;
-            *)
-                DebugError "QPKG name not found [$qpkg_name]"
-                errorcode=36
-                returncode=1
-                ;;
-        esac
-
-        if [[ -z $qpkg_url || -z $qpkg_md5 ]]; then
-            DebugError "QPKG details not found [$qpkg_name]"
-            errorcode=37
-            returncode=1
-        else
-            [[ -z $qpkg_file ]] && qpkg_file="$($BASENAME_CMD "$qpkg_url")"
-            qpkg_pathfile="$QPKG_DL_PATH/$qpkg_file"
-        fi
+        [[ -z $qpkg_file ]] && qpkg_file="$($BASENAME_CMD "$qpkg_url")"
+        qpkg_pathfile="$QPKG_DL_PATH/$qpkg_file"
     fi
 
     return $returncode
@@ -1469,7 +1450,7 @@ UninstallQPKG()
 
     if [[ -z $1 ]]; then
         DebugError 'QPKG name unspecified'
-        errorcode=38
+        errorcode=37
         returncode=1
     else
         qpkg_installed_path="$($GETCFG_CMD "$1" Install_Path -f "$APP_CENTER_CONFIG_PATHFILE")"
@@ -1485,8 +1466,8 @@ UninstallQPKG()
                 if [[ $result -eq 0 ]]; then
                     ShowDone "uninstalled QPKG '$1'"
                 else
-                    ShowError "Unable to uninstall QPKG \"$1\" [$result]"
-                    errorcode=39
+                    ShowError "unable to uninstall QPKG \"$1\" [$result]"
+                    errorcode=38
                     returncode=1
                 fi
             fi
@@ -1501,79 +1482,133 @@ UninstallQPKG()
 
     }
 
-DaemonCtl()
+QPKGServiceCtl()
     {
 
-    # $1 = action (start|stop)
-    # $2 = pathfile of daemon init script
+    # $1 = action (start|stop|restart)
+    # $2 = QPKG name
+
+    # this function is used in-place of [qpkg_service] as the QTS 4.2.6 version does not offer returncodes
 
     local msgs=''
     local result=0
-    local target_init_pathfile=''
-    local init_file=''
+    local init_pathfile=''
+
+    if [[ -z $1 ]]; then
+        DebugError 'action unspecified'
+        errorcode=39
+        return 1
+    elif [[ -z $2 ]]; then
+        DebugError 'package unspecified'
+        errorcode=40
+        return 1
+    fi
+
+    init_pathfile=$(GetQPKGServiceFile $2)
+    init_file=$($BASENAME_CMD "$init_pathfile")
+
+    case $1 in
+        start)
+            ShowProc "starting service ($2) - this can take a while"
+            msgs=$("$init_pathfile" start)
+            result=$?
+            echo -e "${msgs}\nresult=[$result]" >> "$qpkg_pathfile.$START_LOG_FILE"
+
+            if [[ $result -eq 0 ]]; then
+                ShowDone "service started ($2)"
+            else
+                ShowWarning "Could not start service ($2) [$result]"
+                if [[ $debug = true ]]; then
+                    DebugInfoThickSeparator
+                    $CAT_CMD "$qpkg_pathfile.$START_LOG_FILE"
+                    DebugInfoThickSeparator
+                else
+                    $CAT_CMD "$qpkg_pathfile.$START_LOG_FILE" >> "$DEBUG_LOG_PATHFILE"
+                fi
+                errorcode=41
+                return 1
+            fi
+            ;;
+        stop)
+            ShowProc "stopping service ($2)"
+            msgs=$("$init_pathfile" stop)
+            result=$?
+            echo -e "${msgs}\nresult=[$result]" >> "$qpkg_pathfile.$STOP_LOG_FILE"
+
+            if [[ $result -eq 0 ]]; then
+                ShowDone "service stopped ($2)"
+            else
+                ShowWarning "Could not stop service ($2) [$result]"
+                if [[ $debug = true ]]; then
+                    DebugInfoThickSeparator
+                    $CAT_CMD "$qpkg_pathfile.$STOP_LOG_FILE"
+                    DebugInfoThickSeparator
+                else
+                    $CAT_CMD "$qpkg_pathfile.$STOP_LOG_FILE" >> "$DEBUG_LOG_PATHFILE"
+                fi
+                # meh, continue anyway...
+                return 1
+            fi
+            ;;
+        restart)
+            ShowProc "restarting service ($2)"
+            msgs=$("$init_pathfile" restart)
+            result=$?
+            echo -e "${msgs}\nresult=[$result]" >> "$qpkg_pathfile.$RESTART_LOG_FILE"
+
+            if [[ $result -eq 0 ]]; then
+                ShowDone "service restarted ($2)"
+            else
+                ShowWarning "Could not restart service ($2) [$result]"
+                if [[ $debug = true ]]; then
+                    DebugInfoThickSeparator
+                    $CAT_CMD "$qpkg_pathfile.$RESTART_LOG_FILE"
+                    DebugInfoThickSeparator
+                else
+                    $CAT_CMD "$qpkg_pathfile.$RESTART_LOG_FILE" >> "$DEBUG_LOG_PATHFILE"
+                fi
+                # meh, continue anyway...
+                return 1
+            fi
+            ;;
+        *)
+            DebugError "Unrecognised action ($1)"
+            errorcode=42
+            return 1
+            ;;
+    esac
+
+    return 0
+
+    }
+
+GetQPKGServiceFile()
+    {
+
+    # $1 = QPKG name
+
+    local result=0
+    local init_pathfile=''
     local returncode=0
 
-    if [[ -z $2 ]]; then
-        DebugError 'daemon unspecified'
-        errorcode=40
-        returncode=1
-    elif [[ ! -e $2 ]]; then
-        DebugError "daemon ($2) not found"
-        errorcode=41
+    if [[ -z $1 ]]; then
+        DebugError 'Package unspecified'
+        errorcode=43
         returncode=1
     else
-        target_init_pathfile="$2"
-        target_init_file=$($BASENAME_CMD "$target_init_pathfile")
+        init_pathfile=$($GETCFG_CMD $1 Shell -f $APP_CENTER_CONFIG_PATHFILE)
 
-        case $1 in
-            start)
-                ShowProc "starting daemon ($target_init_file) - this can take a while"
-                msgs=$("$target_init_pathfile" start)
-                result=$?
-                echo -e "${msgs}\nresult=[$result]" >> "$qpkg_pathfile.$START_LOG_FILE"
-
-                if [[ $result -eq 0 ]]; then
-                    ShowDone "daemon started ($target_init_file)"
-                else
-                    ShowWarning "could not start daemon ($target_init_file) [$result]"
-                    if [[ $debug = true ]]; then
-                        DebugInfoThickSeparator
-                        $CAT_CMD "$qpkg_pathfile.$START_LOG_FILE"
-                        DebugInfoThickSeparator
-                    else
-                        $CAT_CMD "$qpkg_pathfile.$START_LOG_FILE" >> "$DEBUG_LOG_PATHFILE"
-                    fi
-                    errorcode=42
-                    returncode=1
-                fi
-                ;;
-            stop)
-                ShowProc "stopping daemon ($target_init_file)"
-                msgs=$("$target_init_pathfile" stop)
-                result=$?
-                echo -e "${msgs}\nresult=[$result]" >> "$qpkg_pathfile.$STOP_LOG_FILE"
-
-                if [[ $result -eq 0 ]]; then
-                    ShowDone "daemon stopped ($target_init_file)"
-                else
-                    ShowWarning "could not stop daemon ($target_init_file) [$result]"
-                    if [[ $debug = true ]]; then
-                        DebugInfoThickSeparator
-                        $CAT_CMD "$qpkg_pathfile.$STOP_LOG_FILE"
-                        DebugInfoThickSeparator
-                    else
-                        $CAT_CMD "$qpkg_pathfile.$STOP_LOG_FILE" >> "$DEBUG_LOG_PATHFILE"
-                    fi
-                    # meh, continue anyway...
-                    returncode=1
-                fi
-                ;;
-            *)
-                DebugError "action unrecognised ($1)"
-                errorcode=43
-                returncode=1
-                ;;
-        esac
+        if [[ -z $init_pathfile ]]; then
+            DebugError "No service file configured for package ($1)"
+            errorcode=44
+            returncode=1
+        elif [[ ! -e $init_pathfile ]]; then
+            DebugError "Package service file not found ($init_pathfile)"
+            errorcode=45
+            returncode=1
+        else
+            echo "$init_pathfile"
+        fi
     fi
 
     return $returncode
@@ -1599,16 +1634,6 @@ Cleanup()
     cd "$SHARE_PUBLIC_PATH"
 
     [[ $errorcode -eq 0 && $debug != true && -d $WORKING_PATH ]] && rm -rf "$WORKING_PATH"
-
-    if [[ $queue_paused = true ]]; then
-        if IsQPKGInstalled SABnzbdplus; then
-            LoadInstalledQPKGVars SABnzbdplus
-            SabQueueControl resume
-        elif IsQPKGInstalled QSabNZBdPlus; then
-            LoadInstalledQPKGVars QSabNZBdPlus
-            SabQueueControl resume
-        fi
-    fi
 
     DebugFuncExit
     return 0
@@ -1661,7 +1686,7 @@ DisplayResult()
     fi
 
     DebugScript 'finished' "$($DATE_CMD)"
-    DebugScript 'elapsed time' "$(ConvertSecs "$(($($DATE_CMD +%s)-$([[ -n $SCRIPT_STARTSECONDS ]] && echo $SCRIPT_STARTSECONDS || echo "1")))")"
+    DebugScript 'elapsed time' "$(ConvertSecsToMinutes "$(($($DATE_CMD +%s)-$([[ -n $SCRIPT_STARTSECONDS ]] && echo $SCRIPT_STARTSECONDS || echo "1")))")"
     DebugInfoThickSeparator
 
     [[ -e $DEBUG_LOG_PATHFILE && $debug = false ]] && echo -e "\n- To display the runtime debug log:\n\tcat ${DEBUG_LOG_PATHFILE}\n"
@@ -1796,7 +1821,7 @@ _MonitorDirSize_()
             if [[ $stall_seconds -lt 60 ]]; then
                 progress_message+=" stalled for $stall_seconds seconds"
             else
-                progress_message+=" stalled for $(ConvertSecs $stall_seconds)"
+                progress_message+=" stalled for $(ConvertSecsToMinutes $stall_seconds)"
             fi
         fi
 
@@ -1805,29 +1830,6 @@ _MonitorDirSize_()
     done
 
     [[ -n $progress_message ]] && ProgressUpdater " done!"
-
-    }
-
-SabQueueControl()
-    {
-
-    # $1 = 'pause' or 'resume'
-
-    local SL=''
-    local returncode=0
-
-    if [[ -z $1 ]]; then
-        returncode=1
-    elif [[ $1 != pause && $1 != resume ]]; then
-        returncode=1
-    else
-        [[ $secure_web_login = true ]] && SL='s'
-        $WGET_CMD --no-check-certificate --quiet "http${SL}://127.0.0.1:${package_port}/sabnzbd/api?mode=${1}&apikey=${package_api}" -O - 2>&1 >/dev/null &
-        [[ $1 = pause ]] && queue_paused=true || queue_paused=false
-        DebugDone "${1}d existing SABnzbd queue"
-    fi
-
-    return $returncode
 
     }
 
@@ -1921,8 +1923,8 @@ IsSysFilePresent()
     [[ -z $1 ]] && return 1
 
     if ! [[ -f $1 || -L $1 ]]; then
-        ShowError "A required NAS system file is missing [$1]"
-        errorcode=44
+        ShowError "a required NAS system file is missing [$1]"
+        errorcode=46
         return 1
     else
         return 0
@@ -1941,8 +1943,8 @@ IsSysSharePresent()
     [[ -z $1 ]] && return 1
 
     if [[ ! -L $1 ]]; then
-        ShowError "A required NAS system share is missing [$1]. Please re-create it via QNAP Control Panel -> Privilege Settings -> Shared Folders."
-        errorcode=45
+        ShowError "a required NAS system share is missing [$1]. Please re-create it via the QTS Control Panel -> Privilege Settings -> Shared Folders."
+        errorcode=47
         return 1
     else
         return 0
@@ -1950,7 +1952,7 @@ IsSysSharePresent()
 
     }
 
-MatchAbbrvToPackage()
+MatchAbbrvToQPKGName()
     {
 
     # $1 = a potential package abbreviation
@@ -2015,7 +2017,7 @@ ProgressUpdater()
 
     }
 
-ConvertSecs()
+ConvertSecsToMinutes()
     {
 
     # http://stackoverflow.com/questions/12199631/convert-seconds-to-hours-minutes-seconds
@@ -2239,8 +2241,11 @@ ShowWarning()
 ShowError()
     {
 
-    ShowLogLine_update "$(ColourTextBrightRed fail)" "$1"
-    SaveLogLine fail "$1"
+    local buffer="$1"
+    local capitalised="$(tr "[a-z]" "[A-Z]" <<< ${buffer:0:1})${buffer:1}"
+
+    ShowLogLine_update "$(ColourTextBrightRed fail)" "$capitalised"
+    SaveLogLine fail "$capitalised"
 
     }
 
@@ -2367,7 +2372,6 @@ PauseHere()
     }
 
 Init
-PauseDownloaders
 RemoveOther
 DownloadQPKGs
 InstallEntware

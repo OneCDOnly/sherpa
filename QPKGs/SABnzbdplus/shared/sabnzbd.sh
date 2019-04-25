@@ -9,8 +9,7 @@ Init()
     QPKG_CONF_PATHFILE=/etc/config/qpkg.conf
     QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f $QPKG_CONF_PATHFILE)
     NZBMEDIA_PATH=/share/$(/sbin/getcfg SHARE_DEF defDownload -d Qdownload -f /etc/config/def_share.info)
-    SETTINGS_PATH=$QPKG_PATH/config
-    SETTINGS_PATHFILE=$SETTINGS_PATH/config.ini
+    SETTINGS_PATHFILE=$QPKG_PATH/config/config.ini
     local SETTINGS_DEFAULT_PATHFILE=$SETTINGS_PATHFILE.def
     STORED_PID_PATHFILE=/tmp/$QPKG_NAME.pid
     local SETTINGS="--config-file $SETTINGS_PATHFILE --browser 0"
