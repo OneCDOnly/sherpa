@@ -935,15 +935,14 @@ RestartAllQPKGs()
     [[ $errorcode -gt 0 ]] && return
 
     DebugFuncEntry
-    local indexouter=0
-    local indexinner=0
+    local index=0
     local dependant_on=''
 
-    for indexouter in ${!SHERPA_QPKG_NAME[@]}; do
-        if (IsQPKGEnabled ${SHERPA_QPKG_NAME[$indexouter]}); then
-            for dependant_on in ${SHERPA_QPKG_DEPS[$indexouter]}; do
-                if [[ $dependant_on = $PREF_ENTWARE ]]; then
-                    QPKGServiceCtl restart ${SHERPA_QPKG_NAME[$indexouter]}
+    for index in ${!SHERPA_QPKG_NAME[@]}; do
+        if (IsQPKGEnabled ${SHERPA_QPKG_NAME[$index]}); then
+            for dependant_on in ${SHERPA_QPKG_DEPS[$index]}; do
+                if [[ $dependant_on = $TARGET_APP ]]; then
+                    QPKGServiceCtl restart ${SHERPA_QPKG_NAME[$index]}
                     break
                 fi
             done
@@ -1519,15 +1518,15 @@ QPKGServiceCtl()
 
     case $1 in
         start)
-            ShowProc "starting service ($2) - this can take a while"
+            ShowProc "starting service '$2' - this can take a while"
             msgs=$("$init_pathfile" start)
             result=$?
             echo -e "${msgs}\nresult=[$result]" >> "$qpkg_pathfile.$START_LOG_FILE"
 
             if [[ $result -eq 0 ]]; then
-                ShowDone "service started ($2)"
+                ShowDone "service started '$2'"
             else
-                ShowWarning "Could not start service ($2) [$result]"
+                ShowWarning "Could not start service '$2' [$result]"
                 if [[ $debug = true ]]; then
                     DebugInfoThickSeparator
                     $CAT_CMD "$qpkg_pathfile.$START_LOG_FILE"
@@ -1540,15 +1539,15 @@ QPKGServiceCtl()
             fi
             ;;
         stop)
-            ShowProc "stopping service ($2)"
+            ShowProc "stopping service '$2'"
             msgs=$("$init_pathfile" stop)
             result=$?
             echo -e "${msgs}\nresult=[$result]" >> "$qpkg_pathfile.$STOP_LOG_FILE"
 
             if [[ $result -eq 0 ]]; then
-                ShowDone "service stopped ($2)"
+                ShowDone "service stopped '$2'"
             else
-                ShowWarning "Could not stop service ($2) [$result]"
+                ShowWarning "Could not stop service '$2' [$result]"
                 if [[ $debug = true ]]; then
                     DebugInfoThickSeparator
                     $CAT_CMD "$qpkg_pathfile.$STOP_LOG_FILE"
@@ -1561,15 +1560,15 @@ QPKGServiceCtl()
             fi
             ;;
         restart)
-            ShowProc "restarting service ($2)"
+            ShowProc "restarting service '$2'"
             msgs=$("$init_pathfile" restart)
             result=$?
             echo -e "${msgs}\nresult=[$result]" >> "$qpkg_pathfile.$RESTART_LOG_FILE"
 
             if [[ $result -eq 0 ]]; then
-                ShowDone "service restarted ($2)"
+                ShowDone "service restarted '$2'"
             else
-                ShowWarning "Could not restart service ($2) [$result]"
+                ShowWarning "Could not restart service '$2' [$result]"
                 if [[ $debug = true ]]; then
                     DebugInfoThickSeparator
                     $CAT_CMD "$qpkg_pathfile.$RESTART_LOG_FILE"
