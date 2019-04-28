@@ -574,7 +574,7 @@ RemoveQPKGs()
 
     UninstallQPKG Optware || ResetErrorcode  # ignore Optware uninstall errors
 
-    [[ $TARGET_APP = $PREF_ENTWARE ]] && { UninstallQPKG $PREF_ENTWARE; CalcPrefEntware ;}
+    [[ $TARGET_APP = $PREF_ENTWARE ]] && { REINSTALL_FLAG=true; UninstallQPKG $PREF_ENTWARE; CalcPrefEntware ;}
 
     DebugFuncExit
     return 0
@@ -727,7 +727,7 @@ InstallExtras()
     InstallIPKGs
     InstallPIPs
 
-    [[ $reinstall_entware = true || $update_all_apps = true ]] && RestartAllQPKGs
+    [[ $TARGET_APP = $PREF_ENTWARE || $update_all_apps = true ]] && RestartAllQPKGs
 
     DebugFuncExit
     return 0
@@ -786,9 +786,9 @@ InstallTargetApp()
     DebugFuncEntry
 
     if [[ $TARGET_APP -ne Entware ]]; then
-		! IsQPKGInstalled $TARGET_APP && InstallQPKG $TARGET_APP && PauseHere && RestoreConfig
-		[[ $errorcode -eq 0 ]] && QPKGServiceCtl start $TARGET_APP
-	fi
+        ! IsQPKGInstalled $TARGET_APP && InstallQPKG $TARGET_APP && PauseHere && RestoreConfig
+        [[ $errorcode -eq 0 ]] && QPKGServiceCtl start $TARGET_APP
+    fi
 
     DebugFuncExit
     return 0
@@ -937,12 +937,14 @@ RestartAllQPKGs()
     DebugFuncEntry
     local indexouter=0
     local indexinner=0
+    local dependant_on=''
 
     for indexouter in ${!SHERPA_QPKG_NAME[@]}; do
         if (IsQPKGEnabled ${SHERPA_QPKG_NAME[$indexouter]}); then
-            for indexinner in ${!SHERPA_QPKG_DEPS[@]}; do
-                if [[ ${SHERPA_QPKG_DEPS[$indexinner]} = 'Entware' ]]; then
+            for dependant_on in ${SHERPA_QPKG_DEPS[$indexouter]}; do
+                if [[ $dependant_on = $PREF_ENTWARE ]]; then
                     QPKGServiceCtl restart ${SHERPA_QPKG_NAME[$indexouter]}
+                    break
                 fi
             done
         fi
