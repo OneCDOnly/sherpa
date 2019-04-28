@@ -19,10 +19,10 @@ STABLE
 ---
 ## Known issues
 
-1) Sometimes, it seems existing installations of Entware can become "difficult" to work with. So, I've included an option to re-install Entware, but this should only be used as a last resort. Using:
+1) Sometimes, it seems existing installations of Entware can become "difficult" to work with. So, Entware can also be reinstalled, but this should only be used as a last resort. Using:
 
 ```
-./sherpa.sh --reinstall-entware
+./sherpa.sh Entware
 ```
 
 ... will force **sherpa** to uninstall your existing Entware QPKG, then install a new one. Please note: Entware will be reverted back to default, and only the IPKGs required to support your installed **sherpa** apps will be installed. All **sherpa** installed applications will be restarted afterward.
