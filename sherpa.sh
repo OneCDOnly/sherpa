@@ -1020,16 +1020,16 @@ InstallQPKG()
 
     local log_pathfile="$local_pathfile.$INSTALL_LOG_FILE"
     target_file=$($BASENAME_CMD "$local_pathfile")
-    ShowProc "installing QPKG ($target_file) - this can take a while"
+    ShowProc "installing file ($target_file) - this can take a while"
     install_msgs=$(eval sh "$local_pathfile" 2>&1)
     result=$?
 
     echo -e "${install_msgs}\nresult=[$result]" > "$log_pathfile"
 
     if [[ $result -eq 0 || $result -eq 10 ]]; then
-        ShowDone "installed QPKG ($target_file)"
+        ShowDone "installed file ($target_file)"
     else
-        ShowError "QPKG installation failed ($target_file) [$result]"
+        ShowError "file installation failed ($target_file) [$result]"
         DebugErrorFile "$log_pathfile"
 
         errorcode=21
@@ -1202,7 +1202,7 @@ ConvertSettings()
             # do nothing - don't need to convert from older versions for these QPKGs as sherpa is the only installer for them.
             ;;
         CouchPotato2)
-            ShowWarning "can't convert settings for '$TARGET_APP' yet!"
+            DebugWarning "can't convert settings for '$TARGET_APP' yet!"
             ;;
         *)
             ShowError "can't convert settings for '$TARGET_APP' as it's unknown"
@@ -1296,13 +1296,13 @@ DownloadQPKG()
             DebugInfo "existing QPKG checksum correct ($local_filename)"
         else
             DebugWarning "existing QPKG checksum incorrect ($local_filename)"
-            DebugInfo "deleting ($local_filename)"
+            DebugInfo "deleting file ($local_filename)"
             rm -f "$local_pathfile"
         fi
     fi
 
     if [[ $errorcode -eq 0 && ! -e $local_pathfile ]]; then
-        ShowProc "downloading QPKG ($remote_filename)"
+        ShowProc "downloading file ($remote_filename)"
 
         [[ -e $log_pathfile ]] && rm -f "$log_pathfile"
 
@@ -1321,9 +1321,9 @@ DownloadQPKG()
 
         if [[ $result -eq 0 ]]; then
             if [[ $($MD5SUM_CMD "$local_pathfile" | $CUT_CMD -f1 -d' ') = $remote_filename_md5 ]]; then
-                ShowDone "downloaded QPKG ($remote_filename)"
+                ShowDone "downloaded file ($remote_filename)"
             else
-                ShowError "downloaded QPKG checksum incorrect ($remote_filename)"
+                ShowError "downloaded file checksum incorrect ($remote_filename)"
                 errorcode=27
                 returncode=1
             fi
@@ -1518,15 +1518,15 @@ QPKGServiceCtl()
 
     case $1 in
         start)
-            ShowProc "starting service '$2' - this can take a while"
+            ShowProc "starting QPKG service '$2' - this can take a while"
             msgs=$("$init_pathfile" start)
             result=$?
             echo -e "${msgs}\nresult=[$result]" >> "$qpkg_pathfile.$START_LOG_FILE"
 
             if [[ $result -eq 0 ]]; then
-                ShowDone "service started '$2'"
+                ShowDone "QPKG service started '$2'"
             else
-                ShowWarning "Could not start service '$2' [$result]"
+                ShowWarning "Could not start QPKG service '$2' [$result]"
                 if [[ $debug = true ]]; then
                     DebugInfoThickSeparator
                     $CAT_CMD "$qpkg_pathfile.$START_LOG_FILE"
@@ -1539,15 +1539,15 @@ QPKGServiceCtl()
             fi
             ;;
         stop)
-            ShowProc "stopping service '$2'"
+            ShowProc "stopping QPKG service '$2'"
             msgs=$("$init_pathfile" stop)
             result=$?
             echo -e "${msgs}\nresult=[$result]" >> "$qpkg_pathfile.$STOP_LOG_FILE"
 
             if [[ $result -eq 0 ]]; then
-                ShowDone "service stopped '$2'"
+                ShowDone "QPKG service stopped '$2'"
             else
-                ShowWarning "Could not stop service '$2' [$result]"
+                ShowWarning "Could not stop QPKG service '$2' [$result]"
                 if [[ $debug = true ]]; then
                     DebugInfoThickSeparator
                     $CAT_CMD "$qpkg_pathfile.$STOP_LOG_FILE"
@@ -1560,15 +1560,15 @@ QPKGServiceCtl()
             fi
             ;;
         restart)
-            ShowProc "restarting service '$2'"
+            ShowProc "restarting QPKG service '$2'"
             msgs=$("$init_pathfile" restart)
             result=$?
             echo -e "${msgs}\nresult=[$result]" >> "$qpkg_pathfile.$RESTART_LOG_FILE"
 
             if [[ $result -eq 0 ]]; then
-                ShowDone "service restarted '$2'"
+                ShowDone "QPKG service restarted '$2'"
             else
-                ShowWarning "Could not restart service '$2' [$result]"
+                ShowWarning "Could not restart QPKG service '$2' [$result]"
                 if [[ $debug = true ]]; then
                     DebugInfoThickSeparator
                     $CAT_CMD "$qpkg_pathfile.$RESTART_LOG_FILE"
