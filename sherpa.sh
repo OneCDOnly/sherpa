@@ -785,7 +785,7 @@ InstallTargetApp()
 
     DebugFuncEntry
 
-    if [[ $TARGET_APP -ne Entware ]]; then
+    if [[ $TARGET_APP != $PREF_ENTWARE ]]; then
         ! IsQPKGInstalled $TARGET_APP && InstallQPKG $TARGET_APP && PauseHere && RestoreConfig
         [[ $errorcode -eq 0 ]] && QPKGServiceCtl start $TARGET_APP
     fi
@@ -908,7 +908,7 @@ InstallPIPs()
     ShowProc "downloading & installing ($batch_description)"
 
     install_cmd="$PIP_CMD install $SHERPA_COMMON_PIPS 2>&1"
-    [[ -n $packages ]] && install_cmd+=" && $PIP_CMD install $packages 2>&1"
+    [[ -n ${packages// /} ]] && install_cmd+=" && $PIP_CMD install $packages 2>&1"
 
     install_msgs=$(eval "$install_cmd")
     result=$?
