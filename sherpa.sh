@@ -90,7 +90,7 @@ Init()
     {
 
     SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=190425
+    local SCRIPT_VERSION=190428
     debug=false
     ResetErrorcode
 
@@ -798,6 +798,7 @@ InstallPIPs()
     local packages=''
     local batch_description='PIP packages'
     local log_pathfile="$WORKING_PATH/${batch_description// /_}.$INSTALL_LOG_FILE"
+    local install_cmd=''
 
     IsSysFilePresent $PIP_CMD || return 1
 
@@ -809,7 +810,10 @@ InstallPIPs()
 
     ShowProc "downloading & installing ($batch_description)"
 
-    install_msgs=$($PIP_CMD install $SHERPA_COMMON_PIPS 2>&1 && $PIP_CMD install $packages 2>&1)
+    install_cmd=$($PIP_CMD install $SHERPA_COMMON_PIPS 2>&1)
+    [[ -n $packages ]] && install_cmd+=$( && $PIP_CMD install $packages 2>&1)
+
+    install_msgs=$(eval $install_cmd)
     result=$?
     echo -e "${install_msgs}\nresult=[$result]" > "$log_pathfile"
 
