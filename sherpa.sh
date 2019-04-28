@@ -220,139 +220,139 @@ Init()
 
     # sherpa-supported package details
     SHERPA_QPKG_NAME=()
-        SHERPA_QPKG_ARCH=()     # this QPKG supports this architecture
+        SHERPA_QPKG_ARCH=()     # QPKG supports this architecture ('noarch' = all)
         SHERPA_QPKG_URL=()      # remote QPKG URL available for download
         SHERPA_QPKG_MD5=()      # remote QPKG MD5
         SHERPA_QPKG_ABBRVS=()   # if set, this package is user-installable, and these abbreviations can be used to specify app
-        SHERPA_QPKG_IPKGS=()    # this QPKG requires these IPKGs to be installed first
-        SHERPA_QPKG_PIPS=()     # this QPKG requires these PIPs to be installed first
-        SHERPA_QPKG_DEPS=()     # this QPKG requires these QPKGs to be installed first
+        SHERPA_QPKG_DEPS=()     # QPKG requires these QPKGs to be installed first
+        SHERPA_QPKG_IPKGS=()    # QPKG requires these IPKGs to be installed first
+        SHERPA_QPKG_PIPS=()     # QPKG requires these PIPs to be installed first
 
     SHERPA_QPKG_NAME+=(SABnzbdplus)
-        SHERPA_QPKG_ARCH+=('all')
+        SHERPA_QPKG_ARCH+=('noarch')
         SHERPA_QPKG_URL+=('https://onecdonly.github.io/sherpa/QPKGs/SABnzbdplus/build/SABnzbdplus_190205.qpkg')
         SHERPA_QPKG_MD5+=('b771606008cf5f7a74052a7db53c789a')
         SHERPA_QPKG_ABBRVS+=('sb sab sabnzbd sabnzbdplus')
+        SHERPA_QPKG_DEPS+=('Entware Par2')
         SHERPA_QPKG_IPKGS+=('python python-pip python-pyopenssl python-dev gcc unrar p7zip coreutils-nice ionice ffprobe')
         SHERPA_QPKG_PIPS+=('sabyenc==3.3.5 cheetah')
-        SHERPA_QPKG_DEPS+=('Entware Par2')
 
     SHERPA_QPKG_NAME+=(SickChill)
-        SHERPA_QPKG_ARCH+=('all')
+        SHERPA_QPKG_ARCH+=('noarch')
         SHERPA_QPKG_URL+=('https://onecdonly.github.io/sherpa/QPKGs/SickChill/build/SickChill_181011.qpkg')
         SHERPA_QPKG_MD5+=('552d3c1fc5ddd832fc8f70327fbcb11f')
         SHERPA_QPKG_ABBRVS+=('sc sick sickc chill sickchill')
+        SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python')
         SHERPA_QPKG_PIPS+=('')
-        SHERPA_QPKG_DEPS+=('Entware')
 
     SHERPA_QPKG_NAME+=(CouchPotato2)
-        SHERPA_QPKG_ARCH+=('all')
+        SHERPA_QPKG_ARCH+=('noarch')
         SHERPA_QPKG_URL+=('https://onecdonly.github.io/sherpa/QPKGs/CouchPotato2/build/CouchPotato2_180427.qpkg')
         SHERPA_QPKG_MD5+=('395ffdb9c25d0bc07eb24987cc722cdb')
         SHERPA_QPKG_ABBRVS+=('cp cp2 couch couchpotato couchpotato2 couchpotatoserver')
+        SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python python-pip python-pyopenssl python-lxml')
         SHERPA_QPKG_PIPS+=('')
-        SHERPA_QPKG_DEPS+=('Entware')
 
     SHERPA_QPKG_NAME+=(LazyLibrarian)
-        SHERPA_QPKG_ARCH+=('all')
+        SHERPA_QPKG_ARCH+=('noarch')
         SHERPA_QPKG_URL+=('https://onecdonly.github.io/sherpa/QPKGs/LazyLibrarian/build/LazyLibrarian_181112.qpkg')
         SHERPA_QPKG_MD5+=('8f3aae17aba2cbdef5d06b432d3d8015')
         SHERPA_QPKG_ABBRVS+=('ll lazy lazylibrarian')
+        SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python python-pip python-urllib3')
         SHERPA_QPKG_PIPS+=('')
-        SHERPA_QPKG_DEPS+=('Entware')
 
     SHERPA_QPKG_NAME+=(OMedusa)
-        SHERPA_QPKG_ARCH+=('all')
+        SHERPA_QPKG_ARCH+=('noarch')
         SHERPA_QPKG_URL+=('https://onecdonly.github.io/sherpa/QPKGs/OMedusa/build/OMedusa_180427.qpkg')
         SHERPA_QPKG_MD5+=('ec3b193c7931a100067cfaa334caf883')
         SHERPA_QPKG_ABBRVS+=('om med omed medusa omedusa')
+        SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python python-pip python-lib2to3 mediainfo')
         SHERPA_QPKG_PIPS+=('')
-        SHERPA_QPKG_DEPS+=('Entware')
 
     SHERPA_QPKG_NAME+=(OWatcher3)
-        SHERPA_QPKG_ARCH+=('all')
+        SHERPA_QPKG_ARCH+=('noarch')
         SHERPA_QPKG_URL+=('https://onecdonly.github.io/sherpa/QPKGs/OWatcher3/build/OWatcher3_190106.qpkg')
         SHERPA_QPKG_MD5+=('45145a005a8b0622790a735087c2699f')
         SHERPA_QPKG_ABBRVS+=('ow wat owat watcher owatcher watcher3 owatcher3')
+        SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python3 python3-pip')
         SHERPA_QPKG_PIPS+=('')
-        SHERPA_QPKG_DEPS+=('Entware')
 
     SHERPA_QPKG_NAME+=(Headphones)
-        SHERPA_QPKG_ARCH+=('all')
+        SHERPA_QPKG_ARCH+=('noarch')
         SHERPA_QPKG_URL+=('https://onecdonly.github.io/sherpa/QPKGs/Headphones/build/Headphones_180429.qpkg')
         SHERPA_QPKG_MD5+=('c1b5ba10f5636b4e951eb57fb2bb1ed5')
         SHERPA_QPKG_ABBRVS+=('hp head phones headphones')
+        SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python')
         SHERPA_QPKG_PIPS+=('')
-        SHERPA_QPKG_DEPS+=('Entware')
 
     SHERPA_QPKG_NAME+=(Entware)
-        SHERPA_QPKG_ARCH+=('all')
+        SHERPA_QPKG_ARCH+=('noarch')
         SHERPA_QPKG_URL+=('http://bin.entware.net/other/Entware_1.00std.qpkg')
         SHERPA_QPKG_MD5+=('0c99cf2cf8ef61c7a18b42651a37da74')
         SHERPA_QPKG_ABBRVS+=('entware')
+        SHERPA_QPKG_DEPS+=('')
         SHERPA_QPKG_IPKGS+=('')
         SHERPA_QPKG_PIPS+=('')
-        SHERPA_QPKG_DEPS+=('')
 
     SHERPA_QPKG_NAME+=(Entware-ng)
         SHERPA_QPKG_ARCH+=('i686')
         SHERPA_QPKG_URL+=('http://entware.zyxmon.org/binaries/other/Entware-ng_0.97.qpkg')
         SHERPA_QPKG_MD5+=('6c81cc37cbadd85adfb2751dc06a238f')
         SHERPA_QPKG_ABBRVS+=('')
+        SHERPA_QPKG_DEPS+=('')
         SHERPA_QPKG_IPKGS+=('')
         SHERPA_QPKG_PIPS+=('')
-        SHERPA_QPKG_DEPS+=('')
 
     SHERPA_QPKG_NAME+=(Par2)
         SHERPA_QPKG_ARCH+=('x86')
         SHERPA_QPKG_URL+=('https://onecdonly.github.io/sherpa/QPKGs/Par2/Par2_0.8.0.0_x86.qpkg')
         SHERPA_QPKG_MD5+=('c2584f84334dccd685e56419f2f07b9d')
         SHERPA_QPKG_ABBRVS+=('')
+        SHERPA_QPKG_DEPS+=('')
         SHERPA_QPKG_IPKGS+=('')
         SHERPA_QPKG_PIPS+=('')
-        SHERPA_QPKG_DEPS+=('')
 
     SHERPA_QPKG_NAME+=(Par2)
         SHERPA_QPKG_ARCH+=('x64')
         SHERPA_QPKG_URL+=('https://onecdonly.github.io/sherpa/QPKGs/Par2/Par2_0.8.0.0_x86_64.qpkg')
         SHERPA_QPKG_MD5+=('e720a700a3364f5e81af6de40ab2e0b0')
         SHERPA_QPKG_ABBRVS+=('')
+        SHERPA_QPKG_DEPS+=('')
         SHERPA_QPKG_IPKGS+=('')
         SHERPA_QPKG_PIPS+=('')
-        SHERPA_QPKG_DEPS+=('')
 
     SHERPA_QPKG_NAME+=(Par2)
         SHERPA_QPKG_ARCH+=('x41')
         SHERPA_QPKG_URL+=('https://onecdonly.github.io/sherpa/QPKGs/Par2/Par2_0.8.0.0_arm-x41.qpkg')
         SHERPA_QPKG_MD5+=('32281486500ba2dd55df40f00c38af53')
         SHERPA_QPKG_ABBRVS+=('')
+        SHERPA_QPKG_DEPS+=('')
         SHERPA_QPKG_IPKGS+=('')
         SHERPA_QPKG_PIPS+=('')
-        SHERPA_QPKG_DEPS+=('')
 
     SHERPA_QPKG_NAME+=(Par2)
         SHERPA_QPKG_ARCH+=('x31')
         SHERPA_QPKG_URL+=('https://onecdonly.github.io/sherpa/QPKGs/Par2/Par2_0.8.0.0_arm-x31.qpkg')
         SHERPA_QPKG_MD5+=('d60a625e255a48f82c414fab1ea53a76')
         SHERPA_QPKG_ABBRVS+=('')
+        SHERPA_QPKG_DEPS+=('')
         SHERPA_QPKG_IPKGS+=('')
         SHERPA_QPKG_PIPS+=('')
-        SHERPA_QPKG_DEPS+=('')
 
     SHERPA_QPKG_NAME+=(Par2)
         SHERPA_QPKG_ARCH+=('a64')
         SHERPA_QPKG_URL+=('https://onecdonly.github.io/sherpa/QPKGs/Par2/Par2_0.8.0.0_arm_64.qpkg')
         SHERPA_QPKG_MD5+=('1cb7fa5dc1b3b6f912cb0e1981aa74d2')
         SHERPA_QPKG_ABBRVS+=('')
+        SHERPA_QPKG_DEPS+=('')
         SHERPA_QPKG_IPKGS+=('')
         SHERPA_QPKG_PIPS+=('')
-        SHERPA_QPKG_DEPS+=('')
 
     SHERPA_COMMON_IPKGS='git git-http nano less ca-certificates'
     SHERPA_COMMON_PIPS='--upgrade pip setuptools'
@@ -1663,7 +1663,7 @@ GetQPKGRemoteURL()
         errorcode=41
     else
         for index in ${!SHERPA_QPKG_NAME[@]}; do
-            if [[ $1 = ${SHERPA_QPKG_NAME[$index]} ]] && [[ ${SHERPA_QPKG_ARCH[$index]} = all || ${SHERPA_QPKG_ARCH[$index]} = $NAS_QPKG_ARCH ]]; then
+            if [[ $1 = ${SHERPA_QPKG_NAME[$index]} ]] && [[ ${SHERPA_QPKG_ARCH[$index]} = noarch || ${SHERPA_QPKG_ARCH[$index]} = $NAS_QPKG_ARCH ]]; then
                 output="${SHERPA_QPKG_URL[$index]}"
                 returncode=0
                 break
@@ -1692,7 +1692,7 @@ GetQPKGMD5()
         errorcode=42
     else
         for index in ${!SHERPA_QPKG_NAME[@]}; do
-            if [[ $1 = ${SHERPA_QPKG_NAME[$index]} ]] && [[ ${SHERPA_QPKG_ARCH[$index]} = all || ${SHERPA_QPKG_ARCH[$index]} = $NAS_QPKG_ARCH ]]; then
+            if [[ $1 = ${SHERPA_QPKG_NAME[$index]} ]] && [[ ${SHERPA_QPKG_ARCH[$index]} = noarch || ${SHERPA_QPKG_ARCH[$index]} = $NAS_QPKG_ARCH ]]; then
                 output="${SHERPA_QPKG_MD5[$index]}"
                 returncode=0
                 break
