@@ -870,6 +870,7 @@ InstallIPKGBatch()
         if [[ $result -eq 0 ]]; then
             ShowDone "downloaded & installed $IPKG_download_count IPKGs"
             DebugStage 'elapsed time' "$(ConvertSecsToMinutes "$(($($DATE_CMD +%s)-$([[ -n $IPKG_download_startseconds ]] && echo $IPKG_download_startseconds || echo "1")))")"
+            DebugInfoThinSeparator
         else
             ShowError "download & install IPKGs failed [$result]"
             DebugErrorFile "$log_pathfile"
@@ -1775,6 +1776,7 @@ DisplayResult()
         echo -e "\n* Remember to include a copy of your sherpa runtime debug log for analysis."
     fi
 
+    DebugInfoThinSeparator
     DebugScript 'finished' "$($DATE_CMD)"
     DebugScript 'elapsed time' "$(ConvertSecsToMinutes "$(($($DATE_CMD +%s)-$([[ -n $SCRIPT_STARTSECONDS ]] && echo $SCRIPT_STARTSECONDS || echo "1")))")"
     DebugInfoThickSeparator
