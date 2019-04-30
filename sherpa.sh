@@ -86,7 +86,7 @@ Init()
     {
 
     SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=190428
+    local SCRIPT_VERSION=190430
     debug=false
     ResetErrorcode
 
@@ -354,8 +354,9 @@ Init()
         SHERPA_QPKG_IPKGS+=('')
         SHERPA_QPKG_PIPS+=('')
 
-    SHERPA_COMMON_IPKGS='git git-http nano less ca-certificates'
+    SHERPA_COMMON_IPKGS='git git-http nano less ca-certificates python-pip python3-pip'
     SHERPA_COMMON_PIPS='--upgrade pip setuptools'
+    SHERPA_COMMON_CONFLICTS='Optware-NG'
 
     # internals
     secure_web_login=false
@@ -370,6 +371,7 @@ Init()
     OLD_APP=''
     satisfy_dependencies_only=false
     update_all_apps=false
+    local conflicting_qpkg=''
     [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_cmd+=' --insecure'
     #[[ ${NAS_FIRMWARE//.} -ge 435 ]] && find_cmd=/usr/bin/find      # 4.3.5 has a much better BusyBox 'find'
     # nope, looks like some models on QTS 4.3.6 may be using BusyBox 1.01. :(
@@ -496,10 +498,12 @@ Init()
     fi
 
     if [[ $errorcode -eq 0 ]]; then
-        if IsQPKGEnabled Optware-NG; then
-            ShowError "'Optware-NG' is enabled. This is an unsupported configuration."
-            errorcode=13
-        fi
+        for conflicting_qpkg in ${SHERPA_COMMON_CONFLICTS[@]}; do
+            if IsQPKGEnabled $conflicting_qpkg; then
+                ShowError "'$conflicting_qpkg' is enabled. This is an unsupported configuration."
+                errorcode=13
+            fi
+        done
     fi
 
     if [[ $errorcode -eq 0 ]]; then
@@ -1789,13 +1793,13 @@ DisplayResult()
 FindAllIPKGDependencies()
     {
 
-    # From a specified list of IPKG names, find all dependent IPKGs, exclude those already installed,then generate a total qty to download and a total download byte-size.
+    # From a specified list of IPKG names, find all dependent IPKGs, exclude those already installed, then generate a total qty to download and a total download byte-size.
     # input:
-    #   $1 = string with space-separated initial IPKG names
+    #   $1 = string with space-separated initial IPKG names.
     # output:
-    #   $IPKG_download_list[] = array with complete list of all IPKGs including those originally specified
-    #   $IPKG_download_count = number of packages needing download
-    #   $IPKG_download_size = byte-count of all these packages
+    #   $IPKG_download_list = array with complete list of all IPKGs, including those originally specified.
+    #   $IPKG_download_count = number of packages to be downloaded.
+    #   $IPKG_download_size = byte-count of packages to be downloaded.
 
     IPKG_download_size=0
     IPKG_download_count=0
@@ -1872,11 +1876,11 @@ _MonitorDirSize_()
     {
 
     # * This function runs autonomously *
-    # It watches for the existence of the pathfile set in $monitor_flag
+    # It watches for the existence of the pathfile set in $monitor_flag.
     # If this file is removed, this function dies gracefully.
 
     # $1 = directory to monitor the size of.
-    # $2 = total target bytes for $1 directory.
+    # $2 = total target bytes (100%) for specified path.
 
     [[ -z $1 || ! -d $1 ]] && return 1
     [[ -z $2 || $2 -eq 0 ]] && return 1
@@ -1931,9 +1935,9 @@ EnableQPKG()
     [[ -z $1 ]] && return 1
 
     if [[ $($GETCFG_CMD "$1" Enable -u -f "$APP_CENTER_CONFIG_PATHFILE") != 'TRUE' ]]; then
-        DebugProc "enabling QPKG [$1]"
+        DebugProc "enabling QPKG '$1'"
         $SETCFG_CMD "$1" Enable TRUE -f "$APP_CENTER_CONFIG_PATHFILE"
-        DebugDone "QPKG [$1] enabled"
+        DebugDone "QPKG '$1' enabled"
     fi
 
     }
