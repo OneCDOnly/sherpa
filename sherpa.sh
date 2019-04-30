@@ -822,7 +822,7 @@ InstallIPKGs()
             [[ $NAS_QPKG_ARCH = none ]] && packages+=' par2cmdline'
         fi
 
-        InstallIPKGBatch "$packages" 'Python, Git and others'
+        InstallIPKGBatch "$packages"
     else
         ShowError "IPKG download path [$IPKG_DL_PATH] does not exist"
         errorcode=17
@@ -838,17 +838,14 @@ InstallIPKGBatch()
     {
 
     # $1 = space-separated string containing list of IPKG names to download and install
-    # $2 = on-screen description of this package batch
 
     DebugFuncEntry
     local result=0
     local returncode=0
     local requested_IPKGs=''
-    local batch_description=''
-    local log_pathfile="$IPKG_DL_PATH/ipkgs.$INSTALL_LOG_FILE"
+    local log_pathfile="$IPKG_DL_PATH/IPKGs.$INSTALL_LOG_FILE"
 
     [[ -n $1 ]] && requested_IPKGs="$1" || return 1
-    [[ -n $2 ]] && batch_description="$2" || batch_description="$1"
 
     # errors can occur due to incompatible IPKGs (tried installing Entware-3x, then Entware-ng), so delete them first
     [[ -d $IPKG_DL_PATH ]] && rm -f "$IPKG_DL_PATH"/*.ipk
@@ -857,7 +854,7 @@ InstallIPKGBatch()
 
     if [[ $IPKG_download_count -gt 0 ]]; then
         IPKG_download_startseconds=$($DATE_CMD +%s)
-        ShowProc "downloading & installing $IPKG_download_count IPKGs ($batch_description)"
+        ShowProc "downloading & installing $IPKG_download_count IPKGs"
 
         $TOUCH_CMD "$monitor_flag"
         trap CTRL_C_Captured INT
@@ -871,10 +868,10 @@ InstallIPKGBatch()
         echo -e "${install_msgs}\nresult=[$result]" > "$log_pathfile"
 
         if [[ $result -eq 0 ]]; then
-            ShowDone "downloaded & installed $IPKG_download_count IPKGs ($batch_description)"
+            ShowDone "downloaded & installed $IPKG_download_count IPKGs"
             DebugStage 'elapsed time' "$(ConvertSecsToMinutes "$(($($DATE_CMD +%s)-$([[ -n $IPKG_download_startseconds ]] && echo $IPKG_download_startseconds || echo "1")))")"
         else
-            ShowError "download & install IPKGs failed ($batch_description) [$result]"
+            ShowError "download & install IPKGs failed [$result]"
             DebugErrorFile "$log_pathfile"
 
             errorcode=18
@@ -898,8 +895,7 @@ InstallPIPs()
     local result=0
     local returncode=0
     local packages=''
-    local batch_description='PIP packages'
-    local log_pathfile="$WORKING_PATH/${batch_description// /_}.$INSTALL_LOG_FILE"
+    local log_pathfile="$WORKING_PATH/PIP-modules.$INSTALL_LOG_FILE"
 
     IsSysFilePresent $PIP_CMD || return 1
 
@@ -909,7 +905,7 @@ InstallPIPs()
         fi
     done
 
-    ShowProc "downloading & installing ($batch_description)"
+    ShowProc "downloading & installing PIP modules"
 
     install_cmd="$PIP_CMD install $SHERPA_COMMON_PIPS 2>&1"
     [[ -n ${packages// /} ]] && install_cmd+=" && $PIP_CMD install $packages 2>&1"
@@ -919,9 +915,9 @@ InstallPIPs()
     echo -e "${install_msgs}\nresult=[$result]" > "$log_pathfile"
 
     if [[ $result -eq 0 ]]; then
-        ShowDone "downloaded & installed ($batch_description)"
+        ShowDone "downloaded & installed PIP modules"
     else
-        ShowError "download & install PIPs failed ($batch_description) [$result]"
+        ShowError "download & install PIP modules failed [$result]"
         DebugErrorFile "$log_pathfile"
 
         errorcode=19
@@ -972,7 +968,7 @@ InstallNG()
         local package_desc=''
         local returncode=0
 
-        InstallIPKGBatch 'nzbget' 'NZBGet'
+        InstallIPKGBatch 'nzbget'
 
         if [[ $? -eq 0 ]]; then
             ShowProc "modifying NZBGet"
