@@ -17,20 +17,6 @@ STABLE
 
 
 ---
-## Known issues
-
-1) Sometimes, it seems existing installations of Entware can become "difficult" to work with. So, Entware can also be reinstalled, but this should only be used as a last resort. Using:
-
-```
-./sherpa.sh Entware
-```
-
-... will force **sherpa** to uninstall your existing Entware QPKG, then install a new one. Please note: Entware will be reverted back to default, and only the IPKGs required to support your installed **sherpa** apps will be installed. All **sherpa** installed applications will be restarted afterward.
-
-
-2) **sherpa** is incompatible with existing installs of Optware-NG. Various required packages are not available in Optware-NG.
-
----
 ## Usage
 
 1) [SSH](https://wiki.qnap.com/wiki/How_to_SSH_into_your_QNAP_device) / [PuTTY](http://www.putty.org/) into your NAS as the 'admin' user,
@@ -72,6 +58,20 @@ So, to install SABnzbd:
 ```
 
 ---
+## Known issues
+
+1) Sometimes, it seems existing installations of Entware can become "difficult" to work with. So, Entware can also be reinstalled, but this should only be used as a last resort. Using:
+
+```
+./sherpa.sh Entware
+```
+
+... will force **sherpa** to uninstall your existing Entware QPKG, then install a new one. Please note: Entware will be reverted back to default, and only the IPKGs required to support your installed **sherpa** apps will be installed. All **sherpa** installed applications will be restarted afterward.
+
+
+2) **sherpa** is incompatible with Optware-NG as it's missing a few required packages.
+
+---
 ## Problems?
 
 This will happen from time-to-time as the environment changes. If it's not shown above in '**Known issues**' then you may have found something new, so please add to this thread with the details of the problem you encountered. Diagnose where you can and provide a solution if you're able. The functions in this script are a community effort. ;)
@@ -91,9 +91,10 @@ Or run the installer in debug-mode to see it realtime. e.g.:
 ---
 ## Firmware compatibility
 
+* QTS 4.4.x - **Unknown**
 * QTS 4.3.x - **OK**
 * QTS 4.2.x - **OK**
-* QTS 4.1.x or earlier - **Unknown** (let me know if it works)
+* QTS 4.1.x or earlier - **Unknown**
 
 ---
 ## Notes
