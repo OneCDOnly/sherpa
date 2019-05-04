@@ -86,7 +86,7 @@ Init()
     {
 
     SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=190430
+    local SCRIPT_VERSION=190504
     debug=false
     ResetErrorcode
 
@@ -224,135 +224,150 @@ Init()
         SHERPA_QPKG_URL=()      # remote QPKG URL available for download
         SHERPA_QPKG_MD5=()      # remote QPKG MD5
         SHERPA_QPKG_ABBRVS=()   # if set, this package is user-installable, and these abbreviations can be used to specify app
-        SHERPA_QPKG_DEPS=()     # QPKG requires these QPKGs to be installed first
-        SHERPA_QPKG_IPKGS=()    # QPKG requires these IPKGs to be installed first
-        SHERPA_QPKG_PIPS=()     # QPKG requires these PIPs to be installed first
-
-    SHERPA_QPKG_NAME+=(SABnzbdplus)
-        SHERPA_QPKG_ARCH+=('noarch')
-        SHERPA_QPKG_URL+=('https://onecdonly.github.io/sherpa/QPKGs/SABnzbdplus/build/SABnzbdplus_190205.qpkg')
-        SHERPA_QPKG_MD5+=('b771606008cf5f7a74052a7db53c789a')
-        SHERPA_QPKG_ABBRVS+=('sb sab sabnzbd sabnzbdplus')
-        SHERPA_QPKG_DEPS+=('Entware Par2')
-        SHERPA_QPKG_IPKGS+=('python python-pip python-pyopenssl python-dev gcc unrar p7zip coreutils-nice ionice ffprobe')
-        SHERPA_QPKG_PIPS+=('sabyenc==3.3.5 cheetah')
-
-    SHERPA_QPKG_NAME+=(SickChill)
-        SHERPA_QPKG_ARCH+=('noarch')
-        SHERPA_QPKG_URL+=('https://onecdonly.github.io/sherpa/QPKGs/SickChill/build/SickChill_181011.qpkg')
-        SHERPA_QPKG_MD5+=('552d3c1fc5ddd832fc8f70327fbcb11f')
-        SHERPA_QPKG_ABBRVS+=('sc sick sickc chill sickchill')
-        SHERPA_QPKG_DEPS+=('Entware')
-        SHERPA_QPKG_IPKGS+=('python')
-        SHERPA_QPKG_PIPS+=('')
-
-    SHERPA_QPKG_NAME+=(CouchPotato2)
-        SHERPA_QPKG_ARCH+=('noarch')
-        SHERPA_QPKG_URL+=('https://onecdonly.github.io/sherpa/QPKGs/CouchPotato2/build/CouchPotato2_180427.qpkg')
-        SHERPA_QPKG_MD5+=('395ffdb9c25d0bc07eb24987cc722cdb')
-        SHERPA_QPKG_ABBRVS+=('cp cp2 couch couchpotato couchpotato2 couchpotatoserver')
-        SHERPA_QPKG_DEPS+=('Entware')
-        SHERPA_QPKG_IPKGS+=('python python-pip python-pyopenssl python-lxml')
-        SHERPA_QPKG_PIPS+=('')
-
-    SHERPA_QPKG_NAME+=(LazyLibrarian)
-        SHERPA_QPKG_ARCH+=('noarch')
-        SHERPA_QPKG_URL+=('https://onecdonly.github.io/sherpa/QPKGs/LazyLibrarian/build/LazyLibrarian_181112.qpkg')
-        SHERPA_QPKG_MD5+=('8f3aae17aba2cbdef5d06b432d3d8015')
-        SHERPA_QPKG_ABBRVS+=('ll lazy lazylibrarian')
-        SHERPA_QPKG_DEPS+=('Entware')
-        SHERPA_QPKG_IPKGS+=('python python-pip python-urllib3')
-        SHERPA_QPKG_PIPS+=('')
-
-    SHERPA_QPKG_NAME+=(OMedusa)
-        SHERPA_QPKG_ARCH+=('noarch')
-        SHERPA_QPKG_URL+=('https://onecdonly.github.io/sherpa/QPKGs/OMedusa/build/OMedusa_180427.qpkg')
-        SHERPA_QPKG_MD5+=('ec3b193c7931a100067cfaa334caf883')
-        SHERPA_QPKG_ABBRVS+=('om med omed medusa omedusa')
-        SHERPA_QPKG_DEPS+=('Entware')
-        SHERPA_QPKG_IPKGS+=('python python-pip python-lib2to3 mediainfo')
-        SHERPA_QPKG_PIPS+=('')
-
-    SHERPA_QPKG_NAME+=(OWatcher3)
-        SHERPA_QPKG_ARCH+=('noarch')
-        SHERPA_QPKG_URL+=('https://onecdonly.github.io/sherpa/QPKGs/OWatcher3/build/OWatcher3_190106.qpkg')
-        SHERPA_QPKG_MD5+=('45145a005a8b0622790a735087c2699f')
-        SHERPA_QPKG_ABBRVS+=('ow wat owat watcher owatcher watcher3 owatcher3')
-        SHERPA_QPKG_DEPS+=('Entware')
-        SHERPA_QPKG_IPKGS+=('python3 python3-pip')
-        SHERPA_QPKG_PIPS+=('')
-
-    SHERPA_QPKG_NAME+=(Headphones)
-        SHERPA_QPKG_ARCH+=('noarch')
-        SHERPA_QPKG_URL+=('https://onecdonly.github.io/sherpa/QPKGs/Headphones/build/Headphones_180429.qpkg')
-        SHERPA_QPKG_MD5+=('c1b5ba10f5636b4e951eb57fb2bb1ed5')
-        SHERPA_QPKG_ABBRVS+=('hp head phones headphones')
-        SHERPA_QPKG_DEPS+=('Entware')
-        SHERPA_QPKG_IPKGS+=('python')
-        SHERPA_QPKG_PIPS+=('')
+        SHERPA_QPKG_DEPS=()     # this QPKG requires these QPKGs to be installed first
+        SHERPA_QPKG_IPKGS=()    # this QPKG requires these IPKGs to be installed first
+        SHERPA_QPKG_PIPS=()     # this QPKG requires these PIPs to be installed first
+        SHERPA_QPKG_REPLACES=() # this QPKG replaces these QPKGs if installed (although, only one must be active to be replaced). Original data is backed-up, converted, then restored into new QPKG.
 
     SHERPA_QPKG_NAME+=(Entware)
-        SHERPA_QPKG_ARCH+=('noarch')
-        SHERPA_QPKG_URL+=('http://bin.entware.net/other/Entware_1.00std.qpkg')
-        SHERPA_QPKG_MD5+=('0c99cf2cf8ef61c7a18b42651a37da74')
+        SHERPA_QPKG_ARCH+=(noarch)
+        SHERPA_QPKG_URL+=(http://bin.entware.net/other/Entware_1.00std.qpkg)
+        SHERPA_QPKG_MD5+=(0c99cf2cf8ef61c7a18b42651a37da74)
         SHERPA_QPKG_ABBRVS+=('entware')
         SHERPA_QPKG_DEPS+=('')
         SHERPA_QPKG_IPKGS+=('')
         SHERPA_QPKG_PIPS+=('')
+        SHERPA_QPKG_REPLACES+=('Entware-ng Entware-3x Optware')
 
     SHERPA_QPKG_NAME+=(Entware-ng)
-        SHERPA_QPKG_ARCH+=('i686')
-        SHERPA_QPKG_URL+=('http://entware.zyxmon.org/binaries/other/Entware-ng_0.97.qpkg')
-        SHERPA_QPKG_MD5+=('6c81cc37cbadd85adfb2751dc06a238f')
+        SHERPA_QPKG_ARCH+=(i686)
+        SHERPA_QPKG_URL+=(http://entware.zyxmon.org/binaries/other/Entware-ng_0.97.qpkg)
+        SHERPA_QPKG_MD5+=(6c81cc37cbadd85adfb2751dc06a238f)
         SHERPA_QPKG_ABBRVS+=('')
         SHERPA_QPKG_DEPS+=('')
         SHERPA_QPKG_IPKGS+=('')
         SHERPA_QPKG_PIPS+=('')
+        SHERPA_QPKG_REPLACES+=('')
+
+    SHERPA_QPKG_NAME+=(SABnzbdplus)
+        SHERPA_QPKG_ARCH+=(noarch)
+        SHERPA_QPKG_URL+=(https://onecdonly.github.io/sherpa/QPKGs/SABnzbdplus/build/SABnzbdplus_190205.qpkg)
+        SHERPA_QPKG_MD5+=(b771606008cf5f7a74052a7db53c789a)
+        SHERPA_QPKG_ABBRVS+=('sb sab sabnzbd sabnzbdplus')
+        SHERPA_QPKG_DEPS+=('Entware Par2')
+        SHERPA_QPKG_IPKGS+=('python python-pyopenssl python-dev gcc unrar p7zip coreutils-nice ionice ffprobe')
+        SHERPA_QPKG_PIPS+=('sabyenc==3.3.5 cheetah')
+        SHERPA_QPKG_REPLACES+=('QSabNZBdPlus')
+
+    SHERPA_QPKG_NAME+=(SickChill)
+        SHERPA_QPKG_ARCH+=(noarch)
+        SHERPA_QPKG_URL+=(https://onecdonly.github.io/sherpa/QPKGs/SickChill/build/SickChill_181011.qpkg)
+        SHERPA_QPKG_MD5+=(552d3c1fc5ddd832fc8f70327fbcb11f)
+        SHERPA_QPKG_ABBRVS+=('sc sick sickc chill sickchill')
+        SHERPA_QPKG_DEPS+=('Entware')
+        SHERPA_QPKG_IPKGS+=('python')
+        SHERPA_QPKG_PIPS+=('')
+        SHERPA_QPKG_REPLACES+=('SickRage')
+
+    SHERPA_QPKG_NAME+=(CouchPotato2)
+        SHERPA_QPKG_ARCH+=(noarch)
+        SHERPA_QPKG_URL+=(https://onecdonly.github.io/sherpa/QPKGs/CouchPotato2/build/CouchPotato2_180427.qpkg)
+        SHERPA_QPKG_MD5+=(395ffdb9c25d0bc07eb24987cc722cdb)
+        SHERPA_QPKG_ABBRVS+=('cp cp2 couch couchpotato couchpotato2 couchpotatoserver')
+        SHERPA_QPKG_DEPS+=('Entware')
+        SHERPA_QPKG_IPKGS+=('python python-pyopenssl python-lxml')
+        SHERPA_QPKG_PIPS+=('')
+        SHERPA_QPKG_REPLACES+=('QCouchPotato')
+
+    SHERPA_QPKG_NAME+=(LazyLibrarian)
+        SHERPA_QPKG_ARCH+=(noarch)
+        SHERPA_QPKG_URL+=(https://onecdonly.github.io/sherpa/QPKGs/LazyLibrarian/build/LazyLibrarian_181112.qpkg)
+        SHERPA_QPKG_MD5+=(8f3aae17aba2cbdef5d06b432d3d8015)
+        SHERPA_QPKG_ABBRVS+=('ll lazy lazylibrarian')
+        SHERPA_QPKG_DEPS+=('Entware')
+        SHERPA_QPKG_IPKGS+=('python python-urllib3')
+        SHERPA_QPKG_PIPS+=('')
+        SHERPA_QPKG_REPLACES+=('')
+
+    SHERPA_QPKG_NAME+=(OMedusa)
+        SHERPA_QPKG_ARCH+=(noarch)
+        SHERPA_QPKG_URL+=(https://onecdonly.github.io/sherpa/QPKGs/OMedusa/build/OMedusa_180427.qpkg)
+        SHERPA_QPKG_MD5+=(ec3b193c7931a100067cfaa334caf883)
+        SHERPA_QPKG_ABBRVS+=('om med omed medusa omedusa')
+        SHERPA_QPKG_DEPS+=('Entware')
+        SHERPA_QPKG_IPKGS+=('python python-lib2to3 mediainfo')
+        SHERPA_QPKG_PIPS+=('')
+        SHERPA_QPKG_REPLACES+=('')
+
+    SHERPA_QPKG_NAME+=(OWatcher3)
+        SHERPA_QPKG_ARCH+=(noarch)
+        SHERPA_QPKG_URL+=(https://onecdonly.github.io/sherpa/QPKGs/OWatcher3/build/OWatcher3_190106.qpkg)
+        SHERPA_QPKG_MD5+=(45145a005a8b0622790a735087c2699f)
+        SHERPA_QPKG_ABBRVS+=('ow wat owat watcher owatcher watcher3 owatcher3')
+        SHERPA_QPKG_DEPS+=('Entware')
+        SHERPA_QPKG_IPKGS+=('python3')
+        SHERPA_QPKG_PIPS+=('')
+        SHERPA_QPKG_REPLACES+=('')
+
+    SHERPA_QPKG_NAME+=(Headphones)
+        SHERPA_QPKG_ARCH+=(noarch)
+        SHERPA_QPKG_URL+=(https://onecdonly.github.io/sherpa/QPKGs/Headphones/build/Headphones_180429.qpkg)
+        SHERPA_QPKG_MD5+=(c1b5ba10f5636b4e951eb57fb2bb1ed5)
+        SHERPA_QPKG_ABBRVS+=('hp head phones headphones')
+        SHERPA_QPKG_DEPS+=('Entware')
+        SHERPA_QPKG_IPKGS+=('python')
+        SHERPA_QPKG_PIPS+=('')
+        SHERPA_QPKG_REPLACES+=('')
 
     SHERPA_QPKG_NAME+=(Par2)
-        SHERPA_QPKG_ARCH+=('x86')
-        SHERPA_QPKG_URL+=('https://onecdonly.github.io/sherpa/QPKGs/Par2/Par2_0.8.0.0_x86.qpkg')
-        SHERPA_QPKG_MD5+=('c2584f84334dccd685e56419f2f07b9d')
+        SHERPA_QPKG_ARCH+=(x86)
+        SHERPA_QPKG_URL+=(https://onecdonly.github.io/sherpa/QPKGs/Par2/Par2_0.8.0.0_x86.qpkg)
+        SHERPA_QPKG_MD5+=(c2584f84334dccd685e56419f2f07b9d)
         SHERPA_QPKG_ABBRVS+=('')
         SHERPA_QPKG_DEPS+=('')
         SHERPA_QPKG_IPKGS+=('')
         SHERPA_QPKG_PIPS+=('')
+        SHERPA_QPKG_REPLACES+=('')
 
     SHERPA_QPKG_NAME+=(Par2)
-        SHERPA_QPKG_ARCH+=('x64')
-        SHERPA_QPKG_URL+=('https://onecdonly.github.io/sherpa/QPKGs/Par2/Par2_0.8.0.0_x86_64.qpkg')
-        SHERPA_QPKG_MD5+=('e720a700a3364f5e81af6de40ab2e0b0')
+        SHERPA_QPKG_ARCH+=(x64)
+        SHERPA_QPKG_URL+=(https://onecdonly.github.io/sherpa/QPKGs/Par2/Par2_0.8.0.0_x86_64.qpkg)
+        SHERPA_QPKG_MD5+=(e720a700a3364f5e81af6de40ab2e0b0)
         SHERPA_QPKG_ABBRVS+=('')
         SHERPA_QPKG_DEPS+=('')
         SHERPA_QPKG_IPKGS+=('')
         SHERPA_QPKG_PIPS+=('')
+        SHERPA_QPKG_REPLACES+=('')
 
     SHERPA_QPKG_NAME+=(Par2)
-        SHERPA_QPKG_ARCH+=('x41')
-        SHERPA_QPKG_URL+=('https://onecdonly.github.io/sherpa/QPKGs/Par2/Par2_0.8.0.0_arm-x41.qpkg')
-        SHERPA_QPKG_MD5+=('32281486500ba2dd55df40f00c38af53')
+        SHERPA_QPKG_ARCH+=(x41)
+        SHERPA_QPKG_URL+=(https://onecdonly.github.io/sherpa/QPKGs/Par2/Par2_0.8.0.0_arm-x41.qpkg)
+        SHERPA_QPKG_MD5+=(32281486500ba2dd55df40f00c38af53)
         SHERPA_QPKG_ABBRVS+=('')
         SHERPA_QPKG_DEPS+=('')
         SHERPA_QPKG_IPKGS+=('')
         SHERPA_QPKG_PIPS+=('')
+        SHERPA_QPKG_REPLACES+=('')
 
     SHERPA_QPKG_NAME+=(Par2)
-        SHERPA_QPKG_ARCH+=('x31')
-        SHERPA_QPKG_URL+=('https://onecdonly.github.io/sherpa/QPKGs/Par2/Par2_0.8.0.0_arm-x31.qpkg')
-        SHERPA_QPKG_MD5+=('d60a625e255a48f82c414fab1ea53a76')
+        SHERPA_QPKG_ARCH+=(x31)
+        SHERPA_QPKG_URL+=(https://onecdonly.github.io/sherpa/QPKGs/Par2/Par2_0.8.0.0_arm-x31.qpkg)
+        SHERPA_QPKG_MD5+=(d60a625e255a48f82c414fab1ea53a76)
         SHERPA_QPKG_ABBRVS+=('')
         SHERPA_QPKG_DEPS+=('')
         SHERPA_QPKG_IPKGS+=('')
         SHERPA_QPKG_PIPS+=('')
+        SHERPA_QPKG_REPLACES+=('')
 
     SHERPA_QPKG_NAME+=(Par2)
-        SHERPA_QPKG_ARCH+=('a64')
-        SHERPA_QPKG_URL+=('https://onecdonly.github.io/sherpa/QPKGs/Par2/Par2_0.8.0.0_arm_64.qpkg')
-        SHERPA_QPKG_MD5+=('1cb7fa5dc1b3b6f912cb0e1981aa74d2')
+        SHERPA_QPKG_ARCH+=(a64)
+        SHERPA_QPKG_URL+=(https://onecdonly.github.io/sherpa/QPKGs/Par2/Par2_0.8.0.0_arm_64.qpkg)
+        SHERPA_QPKG_MD5+=(1cb7fa5dc1b3b6f912cb0e1981aa74d2)
         SHERPA_QPKG_ABBRVS+=('')
         SHERPA_QPKG_DEPS+=('')
         SHERPA_QPKG_IPKGS+=('')
         SHERPA_QPKG_PIPS+=('')
+        SHERPA_QPKG_REPLACES+=('')
 
     SHERPA_COMMON_IPKGS='git git-http nano less ca-certificates python-pip python3-pip'
     SHERPA_COMMON_PIPS='--upgrade pip setuptools'
@@ -549,7 +564,7 @@ DisplayHelp()
     local index=0
     local package_name=''
 
-    echo -e "A BASH script to install various Usenet apps into a QNAP NAS.\n"
+    echo -e "* A BASH script to install various Usenet apps into a QNAP NAS.\n"
     echo -e "- Each application shown below can be installed (or automatically reinstalled) by running:"
 
     for index in ${!SHERPA_QPKG_NAME[@]}; do
@@ -563,22 +578,6 @@ DisplayHelp()
 
     echo -e "\n- To update all sherpa installed applications:"
     echo -e "\t$0 --update"
-
-    DebugFuncExit
-    return 0
-
-    }
-
-RemoveQPKGs()
-    {
-
-    [[ $errorcode -gt 0 ]] && return
-
-    DebugFuncEntry
-
-    UninstallQPKG Optware || ResetErrorcode  # ignore Optware uninstall errors
-
-    [[ $TARGET_APP = $PREF_ENTWARE ]] && { REINSTALL_FLAG=true; UninstallQPKG $PREF_ENTWARE; CalcPrefEntware ;}
 
     DebugFuncExit
     return 0
@@ -604,7 +603,23 @@ DownloadQPKGs()
 
     }
 
-InstallEntware()
+RemoveUnwantedQPKGs()
+    {
+
+    [[ $errorcode -gt 0 ]] && return
+
+    DebugFuncEntry
+
+    UninstallQPKG Optware || ResetErrorcode  # ignore Optware uninstall errors
+
+    [[ $TARGET_APP = $PREF_ENTWARE ]] && { REINSTALL_FLAG=true; UninstallQPKG $PREF_ENTWARE; CalcPrefEntware ;}
+
+    DebugFuncExit
+    return 0
+
+    }
+
+InstallBase()
     {
 
     [[ $errorcode -gt 0 ]] && return
@@ -629,14 +644,14 @@ InstallEntware()
         [[ $NAS_QPKG_ARCH != none ]] && ($OPKG_CMD list-installed | $GREP_CMD -q par2cmdline) && $OPKG_CMD remove par2cmdline > /dev/null 2>&1
     fi
 
-    PatchEntwareInit
+    PatchBaseInit
 
     DebugFuncExit
     return $returncode
 
     }
 
-PatchEntwareInit()
+PatchBaseInit()
     {
 
     DebugFuncEntry
@@ -712,7 +727,7 @@ UpdateEntware()
 
     }
 
-InstallExtras()
+InstallBaseAddons()
     {
 
     [[ $errorcode -gt 0 ]] && return
@@ -738,7 +753,7 @@ InstallExtras()
 
     }
 
-BackupAndRemoveOldApp()
+BackupAndRemoveOldQPKG()
     {
 
     [[ $errorcode -gt 0 || $satisfy_dependencies_only = true ]] && return
@@ -782,7 +797,7 @@ BackupAndRemoveOldApp()
 
     }
 
-InstallTargetApp()
+InstallTargetQPKG()
     {
 
     [[ $errorcode -gt 0 || -z $TARGET_APP ]] && return
@@ -849,6 +864,7 @@ InstallIPKGBatch()
 
     # errors can occur due to incompatible IPKGs (tried installing Entware-3x, then Entware-ng), so delete them first
     [[ -d $IPKG_DL_PATH ]] && rm -f "$IPKG_DL_PATH"/*.ipk
+    [[ -d $IPKG_CACHE_PATH ]] && rm -f "$IPKG_CACHE_PATH"/*.ipk
 
     FindAllIPKGDependencies "$requested_IPKGs"
 
@@ -1468,15 +1484,15 @@ UninstallQPKG()
 
         if [[ $result -eq 0 ]]; then
             if [[ -e $qpkg_installed_path/.uninstall.sh ]]; then
-                ShowProc "uninstalling QPKG '$1'"
+                ShowProc "uninstalling '$1'"
 
                 $qpkg_installed_path/.uninstall.sh > /dev/null
                 result=$?
 
                 if [[ $result -eq 0 ]]; then
-                    ShowDone "uninstalled QPKG '$1'"
+                    ShowDone "uninstalled '$1'"
                 else
-                    ShowError "unable to uninstall QPKG \"$1\" [$result]"
+                    ShowError "unable to uninstall '$1' [$result]"
                     errorcode=32
                     returncode=1
                 fi
@@ -1519,15 +1535,15 @@ QPKGServiceCtl()
 
     case $1 in
         start)
-            ShowProc "starting QPKG service '$2' - this can take a while"
+            ShowProc "starting service '$2' - this can take a while"
             msgs=$("$init_pathfile" start)
             result=$?
             echo -e "${msgs}\nresult=[$result]" >> "$qpkg_pathfile.$START_LOG_FILE"
 
             if [[ $result -eq 0 ]]; then
-                ShowDone "QPKG service started '$2'"
+                ShowDone "service started '$2'"
             else
-                ShowWarning "Could not start QPKG service '$2' [$result]"
+                ShowWarning "Could not start service '$2' [$result]"
                 if [[ $debug = true ]]; then
                     DebugInfoThickSeparator
                     $CAT_CMD "$qpkg_pathfile.$START_LOG_FILE"
@@ -1540,15 +1556,15 @@ QPKGServiceCtl()
             fi
             ;;
         stop)
-            ShowProc "stopping QPKG service '$2'"
+            ShowProc "stopping service '$2'"
             msgs=$("$init_pathfile" stop)
             result=$?
             echo -e "${msgs}\nresult=[$result]" >> "$qpkg_pathfile.$STOP_LOG_FILE"
 
             if [[ $result -eq 0 ]]; then
-                ShowDone "QPKG service stopped '$2'"
+                ShowDone "service stopped '$2'"
             else
-                ShowWarning "Could not stop QPKG service '$2' [$result]"
+                ShowWarning "Could not stop service '$2' [$result]"
                 if [[ $debug = true ]]; then
                     DebugInfoThickSeparator
                     $CAT_CMD "$qpkg_pathfile.$STOP_LOG_FILE"
@@ -1561,15 +1577,15 @@ QPKGServiceCtl()
             fi
             ;;
         restart)
-            ShowProc "restarting QPKG service '$2'"
+            ShowProc "restarting service '$2'"
             msgs=$("$init_pathfile" restart)
             result=$?
             echo -e "${msgs}\nresult=[$result]" >> "$qpkg_pathfile.$RESTART_LOG_FILE"
 
             if [[ $result -eq 0 ]]; then
-                ShowDone "QPKG service restarted '$2'"
+                ShowDone "service restarted '$2'"
             else
-                ShowWarning "Could not restart QPKG service '$2' [$result]"
+                ShowWarning "Could not restart service '$2' [$result]"
                 if [[ $debug = true ]]; then
                     DebugInfoThickSeparator
                     $CAT_CMD "$qpkg_pathfile.$RESTART_LOG_FILE"
@@ -1802,32 +1818,33 @@ FindAllIPKGDependencies()
     IPKG_download_size=0
     IPKG_download_count=0
     IPKG_download_list=()
-    local all_required_packages=()
-    local original_list=''
-    local all_list_sorted=''
+    local requested_list=()
+    local last_list=()
+    local all_list=()
     local dependency_list=''
-    local last_list=''
     local iterations=0
     local iteration_limit=20
     local complete=false
     local result_size=0
 
-    [[ -n $1 ]] && original_list="$1" || { DebugError 'No IPKGs were requested'; return 1 ;}
+    [[ -z $1 ]] && { DebugError 'No IPKGs were requested'; return 1 ;}
 
     IsSysFilePresent $OPKG_CMD || return
 
-    ShowProc 'calculating number and size of IPKGs required'
-    DebugInfo "requested IPKGs: $original_list"
+    # remove duplicate entries
+    requested_list=$($TR_CMD ' ' '\n' <<< $1 | $SORT_CMD | $UNIQ_CMD | $TR_CMD '\n' ' ')
+    last_list=$requested_list
 
-    last_list="$original_list"
+    ShowProc 'calculating number and size of IPKGs required'
+    DebugInfo "requested IPKGs: ${requested_list[*]}"
 
     DebugProc 'finding all IPKG dependencies'
     while [[ $iterations -lt $iteration_limit ]]; do
         ((iterations++))
-        last_list="$($OPKG_CMD depends -A $last_list | $GREP_CMD -v 'depends on:' | $SED_CMD 's|^[[:blank:]]*||;s|[[:blank:]]*$||' | $TR_CMD ' ' '\n' | $SORT_CMD | $UNIQ_CMD)"
+        last_list=$($OPKG_CMD depends -A $last_list | $GREP_CMD -v 'depends on:' | $SED_CMD 's|^[[:blank:]]*||;s|[[:blank:]]*$||' | $TR_CMD ' ' '\n' | $SORT_CMD | $UNIQ_CMD)
 
         if [[ -n $last_list ]]; then
-            [[ -n $dependency_list ]] && dependency_list+="$(echo -e "\n$last_list")" || dependency_list="$last_list"
+            [[ -n $dependency_list ]] && dependency_list+=$(echo -e "\n$last_list") || dependency_list=$last_list
         else
             DebugDone 'complete'
             DebugInfo "found all IPKG dependencies in $iterations iterations"
@@ -1838,12 +1855,11 @@ FindAllIPKGDependencies()
 
     [[ $complete = false ]] && DebugError "IPKG dependency list is incomplete! Consider raising \$iteration_limit [$iteration_limit]."
 
-    all_list_sorted=$(echo "$original_list $dependency_list" | $TR_CMD ' ' '\n' | $SORT_CMD | $UNIQ_CMD)
-    read -r -a all_required_packages_array <<< $all_list_sorted
-    all_required_packages=($(printf '%s\n' "${all_required_packages_array[@]}"))
+    # remove duplicate entries
+    all_list=$(echo "$requested_list $dependency_list" | $TR_CMD ' ' '\n' | $SORT_CMD | $UNIQ_CMD | $TR_CMD '\n' ' ')
 
     DebugProc 'excluding packages already installed'
-    for element in ${all_required_packages[@]}; do
+    for element in ${all_list[@]}; do
         $OPKG_CMD status "$element" | $GREP_CMD -q "Status:.*installed" || IPKG_download_list+=($element)
     done
     DebugDone 'complete'
@@ -1858,10 +1874,8 @@ FindAllIPKGDependencies()
         done
         DebugDone 'complete'
     fi
-
-    [[ -z $IPKG_download_size ]] && IPKG_download_size=0
-
     DebugVar IPKG_download_size
+
     if [[ $IPKG_download_count -gt 0 ]]; then
         ShowDone "$IPKG_download_count IPKGs ($(Convert2ISO $IPKG_download_size)) to be downloaded"
     else
@@ -2047,9 +2061,11 @@ IsSysSharePresent()
 MatchAbbrvToQPKGName()
     {
 
-    # $1 = a potential package abbreviation
-    # stdout = available package name (empty if unmatched)
-    # $? = 0 if matched, 1 if unmatched
+    # input:
+    #   $1 = a potential package abbreviation supplied by user
+    # output:
+    #   stdout = matched installable package name (empty if unmatched)
+    #   $? = 0 (matched) or 1 (unmatched)
 
     local returncode=1
     local abbs=()
@@ -2464,12 +2480,12 @@ PauseHere()
     }
 
 Init
-RemoveQPKGs
 DownloadQPKGs
-InstallEntware
-InstallExtras
-BackupAndRemoveOldApp
-InstallTargetApp
+RemoveUnwantedQPKGs
+InstallBase
+InstallBaseAddons
+BackupAndRemoveOldQPKG
+InstallTargetQPKG
 Cleanup
 DisplayResult
 
