@@ -86,7 +86,7 @@ Init()
     {
 
     SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=190504
+    local SCRIPT_VERSION=190505
     debug=false
     ResetErrorcode
 
@@ -956,13 +956,17 @@ RestartAllQPKGs()
     local dependant_on=''
 
     for index in ${!SHERPA_QPKG_NAME[@]}; do
-        if (IsQPKGEnabled ${SHERPA_QPKG_NAME[$index]}); then
-            for dependant_on in ${SHERPA_QPKG_DEPS[$index]}; do
-                if [[ $dependant_on = $TARGET_APP ]]; then
-                    QPKGServiceCtl restart ${SHERPA_QPKG_NAME[$index]}
-                    break
-                fi
-            done
+        if (IsQPKGUserInstallable ${SHERPA_QPKG_NAME[$index]}) && (IsQPKGEnabled ${SHERPA_QPKG_NAME[$index]}); then
+            if [[ $update_all_apps = true ]]; then
+                QPKGServiceCtl restart ${SHERPA_QPKG_NAME[$index]}
+            else
+                for dependant_on in ${SHERPA_QPKG_DEPS[$index]}; do
+                    if [[ $dependant_on = $TARGET_APP ]]; then
+                        QPKGServiceCtl restart ${SHERPA_QPKG_NAME[$index]}
+                        break
+                    fi
+                done
+            fi
         fi
     done
 
@@ -1953,6 +1957,32 @@ EnableQPKG()
     fi
 
     }
+
+IsQPKGUserInstallable()
+    {
+
+    # input:
+    #   $1 = package name to check
+    # output:
+    #   $? = 0 (true) or 1 (false)
+
+    local returncode=1
+    local package_index=0
+
+    [[ -z $1 ]] && return 1
+    [[ ${#SHERPA_QPKG_NAME[@]} -eq 0 || ${#SHERPA_QPKG_ABBRVS[@]} -eq 0 ]] && return 1
+
+    for package_index in ${!SHERPA_QPKG_NAME[@]}; do
+        if [[ ${SHERPA_QPKG_NAME[$package_index]} = $1 && -n ${SHERPA_QPKG_ABBRVS[$package_index]} ]]; then
+            returncode=0
+            break
+        fi
+    done
+
+    return $returncode
+
+    }
+
 
 IsQPKGInstalled()
     {
