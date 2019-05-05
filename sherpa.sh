@@ -45,6 +45,7 @@ ParseArgs()
     {
 
     TARGET_APP=''
+    TARGET_APPS=()
 
     if [[ -z $USER_ARGS_RAW ]]; then
         errorcode=1
@@ -71,10 +72,12 @@ ParseArgs()
                 errorcode=2
                 return 1
                 ;;
+            *)
+                TARGET_APP=$(MatchAbbrvToQPKGName "$arg") && TARGET_APPS+=($TARGET_APP)
         esac
 
-        # only use first matched package name abbreviation as app to install
-        [[ -z $TARGET_APP ]] && TARGET_APP=$(MatchAbbrvToQPKGName "$arg")
+#        # only use first matched package name abbreviation as app to install
+#        [[ -z $TARGET_APP ]] && TARGET_APP=$(MatchAbbrvToQPKGName "$arg")
     done
 
     [[ -z $TARGET_APP && $satisfy_dependencies_only = false && $update_all_apps = false ]] && errorcode=3
@@ -86,7 +89,7 @@ Init()
     {
 
     SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=190505
+    local SCRIPT_VERSION=190506
     debug=false
     ResetErrorcode
 
@@ -130,7 +133,7 @@ Init()
     WHICH_CMD=/usr/bin/which
     ZIP_CMD=/usr/local/sbin/zip
 
-    find_cmd=/opt/bin/find      # this will change depending on QTS version
+    FIND_CMD=/opt/bin/find
     OPKG_CMD=/opt/bin/opkg
     PIP_CMD=/opt/bin/pip
     PIP3_CMD=/opt/bin/pip3
@@ -188,18 +191,18 @@ Init()
 
     local DEFAULT_SHARE_DOWNLOAD_PATH=/share/Download
     local DEFAULT_SHARE_PUBLIC_PATH=/share/Public
-    local DEFAULT_VOLUME=$($GETCFG_CMD SHARE_DEF defVolMP -f "$DEFAULT_SHARES_PATHFILE")
+    local DEFAULT_VOLUME=$($GETCFG_CMD SHARE_DEF defVolMP -f $DEFAULT_SHARES_PATHFILE)
 
     if [[ -L $DEFAULT_SHARE_DOWNLOAD_PATH ]]; then
         SHARE_DOWNLOAD_PATH=$DEFAULT_SHARE_DOWNLOAD_PATH
     else
-        SHARE_DOWNLOAD_PATH="/share/$($GETCFG_CMD SHARE_DEF defDownload -d Qdownload -f "$DEFAULT_SHARES_PATHFILE")"
+        SHARE_DOWNLOAD_PATH=/share/$($GETCFG_CMD SHARE_DEF defDownload -d Qdownload -f $DEFAULT_SHARES_PATHFILE)
     fi
 
     if [[ -L $DEFAULT_SHARE_PUBLIC_PATH ]]; then
         SHARE_PUBLIC_PATH=$DEFAULT_SHARE_PUBLIC_PATH
     else
-        SHARE_PUBLIC_PATH="/share/$($GETCFG_CMD SHARE_DEF defPublic -d Qpublic -f "$DEFAULT_SHARES_PATHFILE")"
+        SHARE_PUBLIC_PATH=/share/$($GETCFG_CMD SHARE_DEF defPublic -d Qpublic -f $DEFAULT_SHARES_PATHFILE)
     fi
 
     # check required system paths are present
@@ -219,7 +222,7 @@ Init()
     QPKG_CONFIG_BACKUP_PATHFILE=$QPKG_CONFIG_BACKUP_PATH/${PREV_QPKG_CONFIG_FILES[${#PREV_QPKG_CONFIG_FILES[@]}-1]}
 
     # sherpa-supported package details
-    SHERPA_QPKG_NAME=()
+    SHERPA_QPKG_NAME=()         # internal QPKG name
         SHERPA_QPKG_ARCH=()     # QPKG supports this architecture ('noarch' = all)
         SHERPA_QPKG_URL=()      # remote QPKG URL available for download
         SHERPA_QPKG_MD5=()      # remote QPKG MD5
@@ -377,7 +380,7 @@ Init()
     secure_web_login=false
     package_port=0
     SCRIPT_STARTSECONDS=$($DATE_CMD +%s)
-    NAS_FIRMWARE=$($GETCFG_CMD System Version -f "$ULINUX_PATHFILE")
+    NAS_FIRMWARE=$($GETCFG_CMD System Version -f $ULINUX_PATHFILE)
     NAS_ARCH=$($UNAME_CMD -m)
     progress_message=''
     previous_length=0
@@ -388,8 +391,6 @@ Init()
     update_all_apps=false
     local conflicting_qpkg=''
     [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_cmd+=' --insecure'
-    #[[ ${NAS_FIRMWARE//.} -ge 435 ]] && find_cmd=/usr/bin/find      # 4.3.5 has a much better BusyBox 'find'
-    # nope, looks like some models on QTS 4.3.6 may be using BusyBox 1.01. :(
 
     local result=0
 
@@ -410,7 +411,7 @@ Init()
     DebugInfoThinSeparator
     DebugNAS 'model' "$($GREP_CMD -v "^$" "$ISSUE_PATHFILE" | $SED_CMD 's|^Welcome to ||;s|(.*||')"
     DebugNAS 'firmware version' "$NAS_FIRMWARE"
-    DebugNAS 'firmware build' "$($GETCFG_CMD System 'Build Number' -f "$ULINUX_PATHFILE")"
+    DebugNAS 'firmware build' "$($GETCFG_CMD System 'Build Number' -f $ULINUX_PATHFILE)"
     DebugNAS 'kernel' "$($UNAME_CMD -mr)"
     DebugNAS 'OS uptime' "$($UPTIME_CMD | $SED_CMD 's|.*up.||;s|,.*load.*||;s|^\ *||')"
     DebugNAS 'system load' "$($UPTIME_CMD | $SED_CMD 's|.*load average: ||' | $AWK_CMD -F', ' '{print "1 min="$1 ", 5 min="$2 ", 15 min="$3}')"
@@ -420,7 +421,7 @@ Init()
     DebugNAS '/opt' "$([[ -L '/opt' ]] && $READLINK_CMD '/opt' || echo "not present")"
     DebugNAS "$SHARE_DOWNLOAD_PATH" "$([[ -L $SHARE_DOWNLOAD_PATH ]] && $READLINK_CMD "$SHARE_DOWNLOAD_PATH" || echo "not present!")"
     DebugScript 'user arguments' "$USER_ARGS_RAW"
-    DebugScript 'target app' "$TARGET_APP"
+    DebugScript 'target app(s)' "${TARGET_APPS[*]}"
     DebugInfoThinSeparator
 
     [[ $errorcode -gt 0 ]] && DisplayHelp
@@ -542,10 +543,10 @@ Init()
     fi
 
     if [[ $errorcode -eq 0 ]]; then
-        ShowProc "downloading sherpa package list"
+        ShowProc "testing Internet access"
 
         if ($curl_cmd --silent --fail https://onecdonly.github.io/sherpa/packages.conf -o $SHERPA_PACKAGES_PATHFILE); then
-            ShowDone "downloaded sherpa package list"
+            ShowDone "Internet is accessible"
         else
             ShowError "no Internet access"
             errorcode=16
@@ -655,7 +656,6 @@ PatchBaseInit()
     {
 
     DebugFuncEntry
-    local returncode=0
     local find_text=''
     local insert_text=''
     local package_init_pathfile="$(GetQPKGServiceFile $PREF_ENTWARE)"
@@ -675,7 +675,7 @@ PatchBaseInit()
     fi
 
     DebugFuncExit
-    return $returncode
+    return 0
 
     }
 
@@ -691,10 +691,10 @@ UpdateEntware()
     local log_pathfile="$WORKING_PATH/entware-update.log"
 
     IsSysFilePresent $OPKG_CMD || return
-    IsSysFilePresent $find_cmd || return
+    IsSysFilePresent $FIND_CMD || return
 
     # if Entware package list was updated only recently, don't run another update
-    [[ -e $find_cmd && -e $package_list_file ]] && result=$($find_cmd "$package_list_file" -mmin +$package_list_age) || result='new install'
+    [[ -e $FIND_CMD && -e $package_list_file ]] && result=$($FIND_CMD "$package_list_file" -mmin +$package_list_age) || result='new install'
 
     if [[ -n $result ]]; then
         ShowProc 'updating Entware package list'
@@ -1909,12 +1909,12 @@ _MonitorDirSize_()
     local current_bytes=0
     local percent=''
 
-    IsSysFilePresent $find_cmd || return
+    IsSysFilePresent $FIND_CMD || return
 
     InitProgress
 
     while [[ -e $monitor_flag ]]; do
-        current_bytes=$($find_cmd $target_dir -type f -name '*.ipk' -exec $DU_CMD --bytes --total --apparent-size {} + 2> /dev/null | $GREP_CMD total$ | $CUT_CMD -f1)
+        current_bytes=$($FIND_CMD $target_dir -type f -name '*.ipk' -exec $DU_CMD --bytes --total --apparent-size {} + 2> /dev/null | $GREP_CMD total$ | $CUT_CMD -f1)
         [[ -z $current_bytes ]] && current_bytes=0
 
         if [[ $current_bytes -ne $last_bytes ]]; then
@@ -1982,7 +1982,6 @@ IsQPKGUserInstallable()
     return $returncode
 
     }
-
 
 IsQPKGInstalled()
     {
