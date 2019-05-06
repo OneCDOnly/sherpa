@@ -93,6 +93,11 @@ Init()
     debug=false
     ResetErrorcode
 
+    if [[ ! -e /etc/init.d/functions ]]; then
+        ShowError "QTS functions missing. Is this a QNAP NAS?"
+        exit 1
+    fi
+
     # cherry-pick required binaries
     AWK_CMD=/bin/awk
     CAT_CMD=/bin/cat
@@ -562,16 +567,13 @@ DisplayHelp()
     {
 
     DebugFuncEntry
-    local index=0
-    local package_name=''
+    local package=''
 
     echo -e "* A BASH script to install various Usenet apps into a QNAP NAS.\n"
-    echo -e "- Each application shown below can be installed (or automatically reinstalled) by running:"
 
-    for index in ${!SHERPA_QPKG_NAME[@]}; do
-        if [[ -n ${SHERPA_QPKG_ABBRVS[$index]} ]]; then
-            printf "\t$0 %s\n" "${SHERPA_QPKG_NAME[$index]}"
-        fi
+    echo "- Each application shown below can be installed (or reinstalled) by running:"
+    for package in ${SHERPA_QPKG_NAME[@]}; do
+        (IsQPKGUserInstallable $package) && echo -e "\t$0 $package"
     done
 
     echo -e "\n- To ensure all sherpa application dependencies are installed:"
