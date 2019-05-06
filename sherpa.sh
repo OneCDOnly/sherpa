@@ -1157,7 +1157,7 @@ BackupThisPackage()
 #             zipresult=$?
 #
 #             if [[ $result -eq 0 && $zipresult -eq 0 ]]; then
-            ShowDone "created '$TARGET_APP' settings backup"
+            ShowDone "created settings backup '$TARGET_APP'"
 #             else
 #                 ShowError "could not create settings backup of ($package_config_path) [$result]"
 #                 errorcode=22
@@ -1276,7 +1276,7 @@ RestoreConfig()
                 result=$?
 
                 if [[ $result -eq 0 ]]; then
-                    ShowDone "restored '$TARGET_APP' settings backup"
+                    ShowDone "restored settings backup '$TARGET_APP'"
 
                     [[ -n $package_port ]] && $SETCFG_CMD "$TARGET_APP" Web_Port $package_port -f "$APP_CENTER_CONFIG_PATHFILE"
                 else
@@ -1547,7 +1547,7 @@ QPKGServiceCtl()
             echo -e "${msgs}\nresult=[$result]" >> "$qpkg_pathfile.$START_LOG_FILE"
 
             if [[ $result -eq 0 ]]; then
-                ShowDone "service started '$2'"
+                ShowDone "started service '$2'"
             else
                 ShowWarning "Could not start service '$2' [$result]"
                 if [[ $debug = true ]]; then
@@ -1568,7 +1568,7 @@ QPKGServiceCtl()
             echo -e "${msgs}\nresult=[$result]" >> "$qpkg_pathfile.$STOP_LOG_FILE"
 
             if [[ $result -eq 0 ]]; then
-                ShowDone "service stopped '$2'"
+                ShowDone "stopped service '$2'"
             else
                 ShowWarning "Could not stop service '$2' [$result]"
                 if [[ $debug = true ]]; then
@@ -1589,7 +1589,7 @@ QPKGServiceCtl()
             echo -e "${msgs}\nresult=[$result]" >> "$qpkg_pathfile.$RESTART_LOG_FILE"
 
             if [[ $result -eq 0 ]]; then
-                ShowDone "service restarted '$2'"
+                ShowDone "restarted service '$2'"
             else
                 ShowWarning "Could not restart service '$2' [$result]"
                 if [[ $debug = true ]]; then
@@ -2504,9 +2504,9 @@ PauseHere()
 
     local wait_seconds=10
 
-    ShowProc "waiting for $wait_seconds seconds"
+    ShowProc "waiting for $wait_seconds seconds for service to initialise"
     $SLEEP_CMD $wait_seconds
-    ShowDone 'wait complete'
+    ShowDone 'completed wait'
 
     }
 
