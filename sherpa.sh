@@ -198,21 +198,20 @@ Init()
     local DEFAULT_SHARE_PUBLIC_PATH=/share/Public
     local DEFAULT_VOLUME=$($GETCFG_CMD SHARE_DEF defVolMP -f $DEFAULT_SHARES_PATHFILE)
 
+    # check required system paths are present
     if [[ -L $DEFAULT_SHARE_DOWNLOAD_PATH ]]; then
         SHARE_DOWNLOAD_PATH=$DEFAULT_SHARE_DOWNLOAD_PATH
     else
         SHARE_DOWNLOAD_PATH=/share/$($GETCFG_CMD SHARE_DEF defDownload -d Qdownload -f $DEFAULT_SHARES_PATHFILE)
+        IsSysSharePresent "$SHARE_DOWNLOAD_PATH" || return
     fi
 
     if [[ -L $DEFAULT_SHARE_PUBLIC_PATH ]]; then
         SHARE_PUBLIC_PATH=$DEFAULT_SHARE_PUBLIC_PATH
     else
         SHARE_PUBLIC_PATH=/share/$($GETCFG_CMD SHARE_DEF defPublic -d Qpublic -f $DEFAULT_SHARES_PATHFILE)
+        IsSysSharePresent "$SHARE_PUBLIC_PATH" || return
     fi
-
-    # check required system paths are present
-    IsSysSharePresent "$SHARE_DOWNLOAD_PATH" || return
-    IsSysSharePresent "$SHARE_PUBLIC_PATH" || return
 
     PREV_QPKG_CONFIG_DIRS=(SAB_CONFIG CONFIG Config config)     # last element is used as target dirname
     PREV_QPKG_CONFIG_FILES=(sabnzbd.ini config.ini)             # last element is used as target filename
