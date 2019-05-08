@@ -2,16 +2,16 @@
 ####################################################################################
 # sherpa.sh
 #
-# Copyright (C) 2017-2019 OneCD - one.cd.only@gmail.com
+# Copyright (C) 2017-2019 OneCD [one.cd.only@gmail.com]
 #
 # so, blame OneCD if it all goes horribly wrong. ;)
 #
-# for more info: https://forum.qnap.com/viewtopic.php?f=320&t=132373
+# For more info: https://forum.qnap.com/viewtopic.php?f=320&t=132373
 #
-# tested on:
+# Tested on:
 #  GNU bash, version 3.2.57(2)-release (i686-pc-linux-gnu)
 #  Copyright (C) 2007 Free Software Foundation, Inc.
-####################################################################################
+#
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
 # Foundation, either version 3 of the License, or (at your option) any later
@@ -89,7 +89,7 @@ Init()
     {
 
     SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=190506
+    local SCRIPT_VERSION=190509
     debug=false
     ResetErrorcode
 
@@ -1841,7 +1841,7 @@ FindAllIPKGDependencies()
     requested_list=$($TR_CMD ' ' '\n' <<< $1 | $SORT_CMD | $UNIQ_CMD | $TR_CMD '\n' ' ')
     last_list=$requested_list
 
-    ShowProc 'calculating number and size of IPKGs required'
+    ShowProc 'calculating number and total size of IPKGs required'
     DebugInfo "requested IPKGs: ${requested_list[*]}"
 
     DebugProc 'finding all IPKG dependencies'
