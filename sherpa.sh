@@ -89,7 +89,7 @@ Init()
     {
 
     SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=190509
+    local SCRIPT_VERSION=190512
     debug=false
     ResetErrorcode
 
@@ -870,7 +870,7 @@ InstallIPKGBatch()
     FindAllIPKGDependencies "$requested_IPKGs"
 
     if [[ $IPKG_download_count -gt 0 ]]; then
-        IPKG_download_startseconds=$($DATE_CMD +%s)
+        local IPKG_download_startseconds=$(DebugStageStart)
         ShowProc "downloading & installing $IPKG_download_count IPKGs"
 
         $TOUCH_CMD "$monitor_flag"
@@ -886,8 +886,6 @@ InstallIPKGBatch()
 
         if [[ $result -eq 0 ]]; then
             ShowDone "downloaded & installed $IPKG_download_count IPKGs"
-            DebugStage 'elapsed time' "$(ConvertSecsToMinutes "$(($($DATE_CMD +%s)-$([[ -n $IPKG_download_startseconds ]] && echo $IPKG_download_startseconds || echo "1")))")"
-            DebugInfoThinSeparator
         else
             ShowError "download & install IPKGs failed [$result]"
             DebugErrorFile "$log_pathfile"
@@ -895,6 +893,7 @@ InstallIPKGBatch()
             errorcode=18
             returncode=1
         fi
+        DebugStageEnd $IPKG_download_startseconds
     fi
 
     DebugFuncExit
@@ -1831,6 +1830,7 @@ FindAllIPKGDependencies()
     local iteration_limit=20
     local complete=false
     local result_size=0
+    local IPKG_search_startseconds=$(DebugStageStart)
 
     [[ -z $1 ]] && { DebugError 'No IPKGs were requested'; return 1 ;}
 
@@ -1880,6 +1880,7 @@ FindAllIPKGDependencies()
         DebugDone 'complete'
     fi
     DebugVar IPKG_download_size
+    DebugStageEnd $IPKG_search_startseconds
 
     if [[ $IPKG_download_count -gt 0 ]]; then
         ShowDone "$IPKG_download_count IPKGs ($(Convert2ISO $IPKG_download_size)) to be downloaded"
@@ -2204,6 +2205,27 @@ DebugLogThinSeparator()
 
     }
 
+DebugStageStart()
+    {
+
+    # stdout = current time in seconds
+
+    $DATE_CMD +%s
+    DebugInfoThinSeparator
+    DebugStage 'start stage timer'
+
+    }
+
+DebugStageEnd()
+    {
+
+    # $1 = start time in seconds
+
+    DebugStage 'elapsed time' "$(ConvertSecsToMinutes "$(($($DATE_CMD +%s)-$([[ -n $1 ]] && echo $1 || echo "1")))")"
+    DebugInfoThinSeparator
+
+    }
+
 DebugScript()
     {
 
@@ -2270,7 +2292,11 @@ DebugDone()
 DebugDetected()
     {
 
-    DebugThis "(**) $(printf "%-6s: %17s: %-s\n" "$1" "$2" "$3")"
+    if [[ -z $3 ]]; then
+        DebugThis "(**) $(printf "%-6s: %17s\n" "$1" "$2")"
+    else
+        DebugThis "(**) $(printf "%-6s: %17s: %-s\n" "$1" "$2" "$3")"
+    fi
 
     }
 
