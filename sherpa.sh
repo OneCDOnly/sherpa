@@ -41,62 +41,13 @@ ResetErrorcode()
 
     }
 
-ParseArgs()
-    {
-
-    TARGET_APP=''
-    TARGET_APPS=()
-
-    if [[ -z $USER_ARGS_RAW ]]; then
-        errorcode=1
-        return 1
-    else
-        local user_args=($(echo "$USER_ARGS_RAW" | $TR_CMD '[A-Z]' '[a-z]'))
-    fi
-
-    for arg in ${user_args[@]}; do
-        case $arg in
-            -d|--debug)
-                debug=true
-                DebugVar debug
-                ;;
-            --check)
-                satisfy_dependencies_only=true
-                DebugVar satisfy_dependencies_only
-                ;;
-            --update)
-                update_all_apps=true
-                DebugVar update_all_apps
-                ;;
-            --help)
-                errorcode=2
-                return 1
-                ;;
-            *)
-                TARGET_APP=$(MatchAbbrvToQPKGName "$arg") && TARGET_APPS+=($TARGET_APP)
-        esac
-
-#        # only use first matched package name abbreviation as app to install
-#        [[ -z $TARGET_APP ]] && TARGET_APP=$(MatchAbbrvToQPKGName "$arg")
-    done
-
-    [[ -z $TARGET_APP && $satisfy_dependencies_only = false && $update_all_apps = false ]] && errorcode=3
-    return 0
-
-    }
-
 Init()
     {
 
     SCRIPT_FILE=sherpa.sh
-    local SCRIPT_VERSION=190512
+    SCRIPT_VERSION=190513
     debug=false
     ResetErrorcode
-
-    if [[ ! -e /etc/init.d/functions ]]; then
-        ShowError "QTS functions missing. Is this a QNAP NAS?"
-        exit 1
-    fi
 
     # cherry-pick required binaries
     AWK_CMD=/bin/awk
@@ -150,9 +101,8 @@ Init()
     START_LOG_FILE=start.log
     STOP_LOG_FILE=stop.log
     RESTART_LOG_FILE=restart.log
-    local DEFAULT_SHARES_PATHFILE=/etc/config/def_share.info
-    local ULINUX_PATHFILE=/etc/config/uLinux.conf
-    local ISSUE_PATHFILE=/etc/issue
+    DEFAULT_SHARES_PATHFILE=/etc/config/def_share.info
+    ULINUX_PATHFILE=/etc/config/uLinux.conf
     local DEBUG_LOG_FILE=${SCRIPT_FILE%.*}.debug.log
 
     # check required binaries are present
@@ -196,7 +146,6 @@ Init()
 
     local DEFAULT_SHARE_DOWNLOAD_PATH=/share/Download
     local DEFAULT_SHARE_PUBLIC_PATH=/share/Public
-    local DEFAULT_VOLUME=$($GETCFG_CMD SHARE_DEF defVolMP -f $DEFAULT_SHARES_PATHFILE)
 
     # check required system paths are present
     if [[ -L $DEFAULT_SHARE_DOWNLOAD_PATH ]]; then
@@ -213,19 +162,7 @@ Init()
         IsSysSharePresent "$SHARE_PUBLIC_PATH" || return
     fi
 
-    PREV_QPKG_CONFIG_DIRS=(SAB_CONFIG CONFIG Config config)     # last element is used as target dirname
-    PREV_QPKG_CONFIG_FILES=(sabnzbd.ini config.ini)             # last element is used as target filename
-    WORKING_PATH=$SHARE_PUBLIC_PATH/${SCRIPT_FILE%.*}.tmp
-    DEBUG_LOG_PATHFILE=$SHARE_PUBLIC_PATH/$DEBUG_LOG_FILE
-    SHERPA_PACKAGES_PATHFILE=$WORKING_PATH/packages.conf
-    QPKG_DL_PATH=$WORKING_PATH/qpkg-downloads
-    IPKG_DL_PATH=$WORKING_PATH/ipkg-downloads
-    IPKG_CACHE_PATH=$WORKING_PATH/ipkg-cache
-    QPKG_BACKUP_PATH=$WORKING_PATH/backup
-    QPKG_CONFIG_BACKUP_PATH=$QPKG_BACKUP_PATH/${PREV_QPKG_CONFIG_DIRS[${#PREV_QPKG_CONFIG_DIRS[@]}-1]}
-    QPKG_CONFIG_BACKUP_PATHFILE=$QPKG_CONFIG_BACKUP_PATH/${PREV_QPKG_CONFIG_FILES[${#PREV_QPKG_CONFIG_FILES[@]}-1]}
-
-    # sherpa-supported package details
+    # sherpa-supported package details - parallel arrays
     SHERPA_QPKG_NAME=()         # internal QPKG name
         SHERPA_QPKG_ARCH=()     # QPKG supports this architecture ('noarch' = all)
         SHERPA_QPKG_URL=()      # remote QPKG URL available for download
@@ -380,6 +317,18 @@ Init()
     SHERPA_COMMON_PIPS='--upgrade pip setuptools'
     SHERPA_COMMON_CONFLICTS='Optware-NG'
 
+    PREV_QPKG_CONFIG_DIRS=(SAB_CONFIG CONFIG Config config)     # last element is used as target dirname
+    PREV_QPKG_CONFIG_FILES=(sabnzbd.ini config.ini)             # last element is used as target filename
+    WORKING_PATH=$SHARE_PUBLIC_PATH/${SCRIPT_FILE%.*}.tmp
+    DEBUG_LOG_PATHFILE=$SHARE_PUBLIC_PATH/$DEBUG_LOG_FILE
+    SHERPA_PACKAGES_PATHFILE=$WORKING_PATH/packages.conf
+    QPKG_DL_PATH=$WORKING_PATH/qpkg-downloads
+    IPKG_DL_PATH=$WORKING_PATH/ipkg-downloads
+    IPKG_CACHE_PATH=$WORKING_PATH/ipkg-cache
+    QPKG_BACKUP_PATH=$WORKING_PATH/backup
+    QPKG_CONFIG_BACKUP_PATH=$QPKG_BACKUP_PATH/${PREV_QPKG_CONFIG_DIRS[${#PREV_QPKG_CONFIG_DIRS[@]}-1]}
+    QPKG_CONFIG_BACKUP_PATHFILE=$QPKG_CONFIG_BACKUP_PATH/${PREV_QPKG_CONFIG_FILES[${#PREV_QPKG_CONFIG_FILES[@]}-1]}
+
     # internals
     secure_web_login=false
     package_port=0
@@ -393,10 +342,17 @@ Init()
     OLD_APP=''
     satisfy_dependencies_only=false
     update_all_apps=false
-    local conflicting_qpkg=''
     [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_cmd+=' --insecure'
 
     local result=0
+
+    }
+
+EnvironCheck()
+    {
+
+    local conflicting_qpkg=''
+    local test_pathfile=/opt/etc/passwd
 
     ParseArgs
 
@@ -413,14 +369,14 @@ Init()
     DebugInfo ' (EE) error, (==) processing, (--) done, (>>) f entry, (<<) f exit,'
     DebugInfo ' (vv) variable name & value, ($1) positional argument value.'
     DebugInfoThinSeparator
-    DebugNAS 'model' "$($GREP_CMD -v "^$" "$ISSUE_PATHFILE" | $SED_CMD 's|^Welcome to ||;s|(.*||')"
+    DebugNAS 'model' "$($GREP_CMD -v "^$" /etc/issue | $SED_CMD 's|^Welcome to ||;s|(.*||')"
     DebugNAS 'firmware version' "$NAS_FIRMWARE"
     DebugNAS 'firmware build' "$($GETCFG_CMD System 'Build Number' -f $ULINUX_PATHFILE)"
     DebugNAS 'kernel' "$($UNAME_CMD -mr)"
     DebugNAS 'OS uptime' "$($UPTIME_CMD | $SED_CMD 's|.*up.||;s|,.*load.*||;s|^\ *||')"
     DebugNAS 'system load' "$($UPTIME_CMD | $SED_CMD 's|.*load average: ||' | $AWK_CMD -F', ' '{print "1 min="$1 ", 5 min="$2 ", 15 min="$3}')"
     DebugNAS 'EUID' "$EUID"
-    DebugNAS 'default volume' "$DEFAULT_VOLUME"
+    DebugNAS 'default volume' "$($GETCFG_CMD SHARE_DEF defVolMP -f $DEFAULT_SHARES_PATHFILE)"
     DebugNAS '$PATH' "${PATH:0:43}"
     DebugNAS '/opt' "$([[ -L '/opt' ]] && $READLINK_CMD '/opt' || echo "not present")"
     DebugNAS "$SHARE_DOWNLOAD_PATH" "$([[ -L $SHARE_DOWNLOAD_PATH ]] && $READLINK_CMD "$SHARE_DOWNLOAD_PATH" || echo "not present!")"
@@ -435,7 +391,7 @@ Init()
 
     if [[ $errorcode -eq 0 && $EUID -ne 0 ]]; then
         ShowError "this script must be run as the 'admin' user. Please login via SSH as 'admin' and try again."
-        errorcode=4
+        errorcode=1
     fi
 
     if [[ $errorcode -eq 0 ]]; then
@@ -444,7 +400,7 @@ Init()
 
         if [[ $result -ne 0 ]]; then
             ShowError "unable to create working directory ($WORKING_PATH) [$result]"
-            errorcode=5
+            errorcode=2
         else
             cd "$WORKING_PATH"
         fi
@@ -456,7 +412,7 @@ Init()
 
         if [[ $result -ne 0 ]]; then
             ShowError "unable to create backup directory ($QPKG_BACKUP_PATH) [$result]"
-            errorcode=6
+            errorcode=3
         fi
     fi
 
@@ -466,7 +422,7 @@ Init()
 
         if [[ $result -ne 0 ]]; then
             ShowError "unable to create QPKG download directory ($QPKG_DL_PATH) [$result]"
-            errorcode=7
+            errorcode=4
         fi
     fi
 
@@ -477,7 +433,7 @@ Init()
 
         if [[ $result -ne 0 ]]; then
             ShowError "unable to create IPKG download directory ($IPKG_DL_PATH) [$result]"
-            errorcode=8
+            errorcode=5
         else
             monitor_flag="$IPKG_DL_PATH/.monitor"
         fi
@@ -489,7 +445,7 @@ Init()
 
         if [[ $result -ne 0 ]]; then
             ShowError "unable to create IPKG cache directory ($IPKG_CACHE_PATH) [$result]"
-            errorcode=9
+            errorcode=6
         fi
     fi
 
@@ -497,7 +453,7 @@ Init()
         if (IsQPKGInstalled $TARGET_APP && ! IsQPKGEnabled $TARGET_APP); then
             ShowError "'$TARGET_APP' is already installed but is disabled. You'll need to enable it first to allow re-installation."
             REINSTALL_FLAG=true
-            errorcode=10
+            errorcode=7
         fi
     fi
 
@@ -505,7 +461,7 @@ Init()
         if [[ $TARGET_APP = SABnzbdplus ]] && IsQPKGEnabled QSabNZBdPlus && IsQPKGEnabled SABnzbdplus; then
             ShowError "both 'SABnzbdplus' and 'QSabNZBdPlus' are enabled. This is an unsupported configuration. Please disable the unused one via the QNAP App Center then re-run this installer."
             REINSTALL_FLAG=true
-            errorcode=11
+            errorcode=8
         fi
     fi
 
@@ -513,7 +469,7 @@ Init()
         if [[ $TARGET_APP = SickChill ]] && IsQPKGEnabled SickRage && IsQPKGEnabled SickChill; then
             ShowError "both 'SickChill' and 'SickRage' are enabled. This is an unsupported configuration. Please disable the unused one via the QNAP App Center then re-run this installer."
             REINSTALL_FLAG=true
-            errorcode=12
+            errorcode=9
         fi
     fi
 
@@ -521,7 +477,7 @@ Init()
         for conflicting_qpkg in ${SHERPA_COMMON_CONFLICTS[@]}; do
             if IsQPKGEnabled $conflicting_qpkg; then
                 ShowError "'$conflicting_qpkg' is enabled. This is an unsupported configuration."
-                errorcode=13
+                errorcode=10
             fi
         done
     fi
@@ -529,19 +485,18 @@ Init()
     if [[ $errorcode -eq 0 ]]; then
         if IsQPKGEnabled Entware-ng && IsQPKGEnabled Entware-3x; then
             ShowError "both 'Entware-ng' and 'Entware-3x' are enabled. This is an unsupported configuration. Please manually disable (or uninstall) one or both of them via the QNAP App Center then re-run this installer."
-            errorcode=14
+            errorcode=11
         fi
     fi
 
     if [[ $errorcode -eq 0 ]]; then
         if IsQPKGInstalled $PREF_ENTWARE && [[ $PREF_ENTWARE = Entware-3x || $PREF_ENTWARE = Entware ]]; then
-            local test_pathfile=/opt/etc/passwd
             [[ -e $test_pathfile ]] && { [[ -L $test_pathfile ]] && ENTWARE_VER=std || ENTWARE_VER=alt ;} || ENTWARE_VER=none
             DebugQPKG 'Entware installer' $ENTWARE_VER
 
             if [[ $ENTWARE_VER = none ]]; then
                 ShowError 'Entware appears to be installed but is not visible.'
-                errorcode=15
+                errorcode=12
             fi
         fi
     fi
@@ -553,11 +508,55 @@ Init()
             ShowDone "Internet is accessible"
         else
             ShowError "no Internet access"
-            errorcode=16
+            errorcode=13
         fi
     fi
 
     DebugFuncExit
+    return 0
+
+    }
+
+ParseArgs()
+    {
+
+    TARGET_APP=''
+    TARGET_APPS=()
+
+    if [[ -z $USER_ARGS_RAW ]]; then
+        errorcode=14
+        return 1
+    else
+        local user_args=($(echo "$USER_ARGS_RAW" | $TR_CMD '[A-Z]' '[a-z]'))
+    fi
+
+    for arg in ${user_args[@]}; do
+        case $arg in
+            -d|--debug)
+                debug=true
+                DebugVar debug
+                ;;
+            --check)
+                satisfy_dependencies_only=true
+                DebugVar satisfy_dependencies_only
+                ;;
+            --update)
+                update_all_apps=true
+                DebugVar update_all_apps
+                ;;
+            --help)
+                errorcode=15
+                return 1
+                ;;
+            *)
+                TARGET_APP=$(MatchAbbrvToQPKGName "$arg") && TARGET_APPS+=($TARGET_APP)
+        esac
+
+#        # only use first matched package name abbreviation as app to install
+#        [[ -z $TARGET_APP ]] && TARGET_APP=$(MatchAbbrvToQPKGName "$arg")
+    done
+
+    [[ -z $TARGET_APP && $satisfy_dependencies_only = false && $update_all_apps = false ]] && errorcode=16
     return 0
 
     }
@@ -1365,9 +1364,9 @@ DownloadQPKG()
 CalcNASQPKGArch()
     {
 
-    # decide which package arch is suitable for this NAS. This is really only needed for Stephane's packages.
+    # Decide which package arch is suitable for this NAS. This is only needed for Stephane's packages.
 
-    case "$NAS_ARCH" in
+    case $NAS_ARCH in
         x86_64)
             [[ ${NAS_FIRMWARE//.} -ge 430 ]] && NAS_QPKG_ARCH=x64 || NAS_QPKG_ARCH=x86
             ;;
@@ -2535,7 +2534,13 @@ PauseHere()
 
     }
 
+if [[ ! -e /etc/init.d/functions ]]; then
+    ShowError "QTS functions missing. Is this a QNAP NAS?"
+    exit 1
+fi
+
 Init
+EnvironCheck
 DownloadQPKGs
 RemoveUnwantedQPKGs
 InstallBase
