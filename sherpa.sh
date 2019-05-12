@@ -1374,10 +1374,10 @@ CalcNASQPKGArch()
             NAS_QPKG_ARCH=x86
             ;;
         armv7h)
-            NAS_QPKG_ARCH=x41
+            NAS_QPKG_ARCH=x31
             ;;
         armv7l)
-            NAS_QPKG_ARCH=x31
+            NAS_QPKG_ARCH=x41
             ;;
         aarch64)
             NAS_QPKG_ARCH=a64
