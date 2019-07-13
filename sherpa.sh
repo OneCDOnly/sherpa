@@ -45,7 +45,7 @@ Init()
     {
 
     SCRIPT_FILE=sherpa.sh
-    SCRIPT_VERSION=190513
+    SCRIPT_VERSION=190714
     debug=false
     ResetErrorcode
 
@@ -382,12 +382,17 @@ EnvironCheck()
     DebugNAS "$SHARE_DOWNLOAD_PATH" "$([[ -L $SHARE_DOWNLOAD_PATH ]] && $READLINK_CMD "$SHARE_DOWNLOAD_PATH" || echo "not present!")"
     DebugScript 'user arguments' "$USER_ARGS_RAW"
     DebugScript 'target app(s)' "${TARGET_APPS[*]}"
-    DebugInfoThinSeparator
-
-    [[ $errorcode -gt 0 ]] && DisplayHelp
+    DebugScript 'working path' "$WORKING_PATH"
+    DebugQPKG 'download path' "$QPKG_DL_PATH"
+    DebugIPKG 'download path' "$IPKG_DL_PATH"
 
     CalcNASQPKGArch
+    DebugQPKG 'arch' "$NAS_QPKG_ARCH"
+
     CalcPrefEntware
+    DebugScript 'preferred installer' "$PREF_ENTWARE"
+
+    [[ $errorcode -gt 0 ]] && DisplayHelp
 
     if [[ $errorcode -eq 0 && $EUID -ne 0 ]]; then
         ShowError "this script must be run as the 'admin' user. Please login via SSH as 'admin' and try again."
@@ -512,6 +517,7 @@ EnvironCheck()
         fi
     fi
 
+    DebugInfoThinSeparator
     DebugFuncExit
     return 0
 
@@ -1387,7 +1393,6 @@ CalcNASQPKGArch()
             ;;
     esac
 
-    DebugVar NAS_QPKG_ARCH
     return 0
 
     }
@@ -1405,7 +1410,6 @@ CalcPrefEntware()
     IsQPKGInstalled Entware-ng && PREF_ENTWARE=Entware-ng
     IsQPKGInstalled Entware-3x && PREF_ENTWARE=Entware-3x
 
-    DebugVar PREF_ENTWARE
     return 0
 
     }
@@ -2179,28 +2183,28 @@ Convert2ISO()
 DebugInfoThickSeparator()
     {
 
-    DebugInfo "$(printf '%0.s=' {1..70})"
+    DebugInfo "$(printf '%0.s=' {1..72})"
 
     }
 
 DebugInfoThinSeparator()
     {
 
-    DebugInfo "$(printf '%0.s-' {1..70})"
+    DebugInfo "$(printf '%0.s-' {1..72})"
 
     }
 
 DebugErrorThinSeparator()
     {
 
-    DebugError "$(printf '%0.s-' {1..70})"
+    DebugError "$(printf '%0.s-' {1..72})"
 
     }
 
 DebugLogThinSeparator()
     {
 
-    DebugLog "$(printf '%0.s-' {1..70})"
+    DebugLog "$(printf '%0.s-' {1..72})"
 
     }
 
@@ -2292,9 +2296,9 @@ DebugDetected()
     {
 
     if [[ -z $3 ]]; then
-        DebugThis "(**) $(printf "%-6s: %17s\n" "$1" "$2")"
+        DebugThis "(**) $(printf "%-6s: %19s\n" "$1" "$2")"
     else
-        DebugThis "(**) $(printf "%-6s: %17s: %-s\n" "$1" "$2" "$3")"
+        DebugThis "(**) $(printf "%-6s: %19s: %-s\n" "$1" "$2" "$3")"
     fi
 
     }
