@@ -45,7 +45,7 @@ Init()
     {
 
     SCRIPT_FILE=sherpa.sh
-    SCRIPT_VERSION=190714
+    SCRIPT_VERSION=190824
     debug=false
     ResetErrorcode
 
@@ -341,6 +341,7 @@ Init()
     REINSTALL_FLAG=false
     OLD_APP=''
     satisfy_dependencies_only=false
+    ignore_space_arg=''
     update_all_apps=false
     [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_cmd+=' --insecure'
 
@@ -546,6 +547,10 @@ ParseArgs()
                 satisfy_dependencies_only=true
                 DebugVar satisfy_dependencies_only
                 ;;
+            --ignore-space)
+                ignore_space_arg='--force-space'
+                DebugVar ignore_space_arg
+                ;;
             --update)
                 update_all_apps=true
                 DebugVar update_all_apps
@@ -580,10 +585,13 @@ DisplayHelp()
         (IsQPKGUserInstallable $package) && echo -e "\t$0 $package"
     done
 
-    echo -e "\n- To ensure all sherpa application dependencies are installed:"
+    echo -e "\n- Ensure all sherpa application dependencies are installed:"
     echo -e "\t$0 --check"
 
-    echo -e "\n- To update all sherpa installed applications:"
+    echo -e "\n- Don't check free-space on target filesystem when installing Entware packages:"
+    echo -e "\t$0 --ignore-space"
+
+    echo -e "\n- Update all sherpa installed applications:"
     echo -e "\t$0 --update"
 
     DebugFuncExit
@@ -882,7 +890,7 @@ InstallIPKGBatch()
         trap CTRL_C_Captured INT
         _MonitorDirSize_ "$IPKG_DL_PATH" $IPKG_download_size &
 
-        install_msgs=$($OPKG_CMD install --force-overwrite ${IPKG_download_list[*]} --cache "$IPKG_CACHE_PATH" --tmp-dir "$IPKG_DL_PATH" 2>&1)
+        install_msgs=$($OPKG_CMD install $ignore_space_arg --force-overwrite ${IPKG_download_list[*]} --cache "$IPKG_CACHE_PATH" --tmp-dir "$IPKG_DL_PATH" 2>&1)
         result=$?
 
         [[ -e $monitor_flag ]] && { rm "$monitor_flag"; $SLEEP_CMD 2 ;}
@@ -2532,7 +2540,7 @@ PauseHere()
 
     local wait_seconds=10
 
-    ShowProc "waiting for $wait_seconds seconds for service to initialise"
+    ShowProc "waiting $wait_seconds seconds for service to initialise"
     $SLEEP_CMD $wait_seconds
     ShowDone 'completed wait'
 
@@ -2540,18 +2548,18 @@ PauseHere()
 
 if [[ ! -e /etc/init.d/functions ]]; then
     ShowError "QTS functions missing. Is this a QNAP NAS?"
-    exit 1
+    errorcode=1
+else
+    Init
+    EnvironCheck
+    DownloadQPKGs
+    RemoveUnwantedQPKGs
+    InstallBase
+    InstallBaseAddons
+    BackupAndRemoveOldQPKG
+    InstallTargetQPKG
+    Cleanup
+    DisplayResult
 fi
-
-Init
-EnvironCheck
-DownloadQPKGs
-RemoveUnwantedQPKGs
-InstallBase
-InstallBaseAddons
-BackupAndRemoveOldQPKG
-InstallTargetQPKG
-Cleanup
-DisplayResult
 
 exit $errorcode
