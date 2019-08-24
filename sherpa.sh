@@ -45,7 +45,7 @@ Init()
     {
 
     SCRIPT_FILE=sherpa.sh
-    SCRIPT_VERSION=190824
+    SCRIPT_VERSION=190825
     debug=false
     ResetErrorcode
 
@@ -343,7 +343,7 @@ Init()
     satisfy_dependencies_only=false
     ignore_space_arg=''
     update_all_apps=false
-    [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_cmd+=' --insecure'
+    [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg=' --insecure' || curl_insecure_arg=''
 
     local result=0
 
@@ -510,7 +510,7 @@ EnvironCheck()
     if [[ $errorcode -eq 0 ]]; then
         ShowProc "testing Internet access"
 
-        if ($curl_cmd --silent --fail https://onecdonly.github.io/sherpa/packages.conf -o $SHERPA_PACKAGES_PATHFILE); then
+        if ($curl_cmd $curl_insecure_arg --silent --fail https://onecdonly.github.io/sherpa/packages.conf -o $SHERPA_PACKAGES_PATHFILE); then
             ShowDone "Internet is accessible"
         else
             ShowError "no Internet access"
@@ -1344,10 +1344,10 @@ DownloadQPKG()
         # curl http://entware-3x.zyxmon.org/binaries/other/Entware-3x_1.00std.qpkg --socks5 IP:PORT --output target.qpkg
 
         if [[ $debug = true ]]; then
-            $curl_cmd --output "$local_pathfile" "$remote_url" 2>&1 | $TEE_CMD -a "$log_pathfile"
+            $curl_cmd $curl_insecure_arg --output "$local_pathfile" "$remote_url" 2>&1 | $TEE_CMD -a "$log_pathfile"
             result=$?
         else
-            $curl_cmd --output "$local_pathfile" "$remote_url" >> "$log_pathfile" 2>&1
+            $curl_cmd $curl_insecure_arg --output "$local_pathfile" "$remote_url" >> "$log_pathfile" 2>&1
             result=$?
         fi
 
