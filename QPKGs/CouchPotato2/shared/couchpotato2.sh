@@ -11,7 +11,7 @@ Init()
     local SETTINGS_PATHFILE=${SETTINGS_PATH}/config.ini
     local SETTINGS_DEFAULT_PATHFILE=${SETTINGS_PATHFILE}.def
     STORED_PID_PATHFILE=/tmp/${QPKG_NAME}.pid
-    local SETTINGS="--data_dir $SETTINGS_PATH"
+    local SETTINGS="--data_dir $SETTINGS_PATH --config_file $SETTINGS_PATHFILE"
     local PIDS="--pid_file $STORED_PID_PATHFILE"
     DAEMON_OPTS="$TARGET_SCRIPT --daemon $SETTINGS $PIDS"
     LOG_PATHFILE=/var/log/${QPKG_NAME}.log
