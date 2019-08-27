@@ -45,7 +45,7 @@ Init()
     {
 
     SCRIPT_FILE=sherpa.sh
-    SCRIPT_VERSION=190825
+    SCRIPT_VERSION=190828
     debug=false
     ResetErrorcode
 
@@ -343,7 +343,7 @@ Init()
     satisfy_dependencies_only=false
     ignore_space_arg=''
     update_all_apps=false
-    [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg=' --insecure' || curl_insecure_arg=''
+    [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg='--insecure' || curl_insecure_arg=''
 
     local result=0
 
@@ -626,6 +626,7 @@ RemoveUnwantedQPKGs()
     DebugFuncEntry
 
     UninstallQPKG Optware || ResetErrorcode  # ignore Optware uninstall errors
+    UninstallQPKG Entware-3x
 
     [[ $TARGET_APP = $PREF_ENTWARE ]] && { REINSTALL_FLAG=true; UninstallQPKG $PREF_ENTWARE; CalcPrefEntware ;}
 
@@ -1416,7 +1417,6 @@ CalcPrefEntware()
     # then modify according to local environment
     [[ $NAS_ARCH = i686 ]] && PREF_ENTWARE=Entware-ng
     IsQPKGInstalled Entware-ng && PREF_ENTWARE=Entware-ng
-    IsQPKGInstalled Entware-3x && PREF_ENTWARE=Entware-3x
 
     return 0
 
