@@ -45,7 +45,7 @@ Init()
     {
 
     SCRIPT_FILE=sherpa.sh
-    SCRIPT_VERSION=190828
+    SCRIPT_VERSION=190829
     debug=false
     ResetErrorcode
 
@@ -317,8 +317,8 @@ Init()
     SHERPA_COMMON_PIPS='--upgrade pip setuptools'
     SHERPA_COMMON_CONFLICTS='Optware-NG'
 
-    PREV_QPKG_CONFIG_DIRS=(SAB_CONFIG CONFIG Config config)     # last element is used as target dirname
-    PREV_QPKG_CONFIG_FILES=(sabnzbd.ini config.ini)             # last element is used as target filename
+    PREV_QPKG_CONFIG_DIRS=(SAB_CONFIG CONFIG Config config)         # last element is used as target dirname
+    PREV_QPKG_CONFIG_FILES=(sabnzbd.ini settings.ini config.ini)    # last element is used as target filename
     WORKING_PATH=$SHARE_PUBLIC_PATH/${SCRIPT_FILE%.*}.tmp
     DEBUG_LOG_PATHFILE=$SHARE_PUBLIC_PATH/$DEBUG_LOG_FILE
     SHERPA_PACKAGES_PATHFILE=$WORKING_PATH/packages.conf
@@ -1237,7 +1237,13 @@ ConvertSettings()
             # do nothing - don't need to convert from older versions for these QPKGs as sherpa is the only installer for them.
             ;;
         CouchPotato2)
-            DebugWarning "can't convert settings for '$TARGET_APP' yet!"
+            for prev_config_file in ${PREV_QPKG_CONFIG_FILES[@]}; do
+                test_pathfile=$QPKG_CONFIG_BACKUP_PATH/$prev_config_file
+                if [[ -f $test_pathfile && $test_pathfile != $QPKG_CONFIG_BACKUP_PATHFILE ]]; then
+                    mv $test_pathfile $QPKG_CONFIG_BACKUP_PATHFILE
+                    DebugDone "renamed config file from [$test_pathfile] to [$QPKG_CONFIG_BACKUP_PATHFILE]"
+                fi
+            done
             ;;
         *)
             ShowError "can't convert settings for '$TARGET_APP' as it's unknown"
