@@ -45,7 +45,7 @@ Init()
     {
 
     SCRIPT_FILE=sherpa.sh
-    SCRIPT_VERSION=190829
+    SCRIPT_VERSION=190910
     debug=false
     ResetErrorcode
 
@@ -245,8 +245,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(OWatcher3)
         SHERPA_QPKG_ARCH+=(noarch)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/OWatcher3/build/OWatcher3_190106.qpkg)
-        SHERPA_QPKG_MD5+=(45145a005a8b0622790a735087c2699f)
+        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/OWatcher3/build/OWatcher3_190910.qpkg)
+        SHERPA_QPKG_MD5+=(876ce9cd9d4681506462d22a0d9db276)
         SHERPA_QPKG_ABBRVS+=('ow wat owat watcher owatcher watcher3 owatcher3')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python3')

@@ -56,7 +56,7 @@ QPKGIsActive()
 UpdateQpkg()
     {
 
-    PullGitRepo $QPKG_NAME 'https://github.com/nosmokingbandit/Watcher3.git' "$QPKG_PATH"
+    PullGitRepo $QPKG_NAME 'https://github.com/barbequesauce/Watcher3.git' "$QPKG_PATH"
 
     }
 
