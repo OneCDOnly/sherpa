@@ -1,3 +1,4 @@
 [core]
 dark_theme = 1
 port = 5055
+launch_browser = 0
