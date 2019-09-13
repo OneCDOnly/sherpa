@@ -8,7 +8,7 @@ Init()
 
     QPKG_CONF_PATHFILE=/etc/config/qpkg.conf
     QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f $QPKG_CONF_PATHFILE)
-    SETTINGS_PATHFILE=$SETTINGS_PATH/config/config.ini
+    SETTINGS_PATHFILE=$QPKG_PATH/config/config.ini
     local SETTINGS_DEFAULT_PATHFILE=$SETTINGS_PATHFILE.def
     STORED_PID_PATHFILE=/tmp/$QPKG_NAME.pid
     local SETTINGS="--datadir $(dirname $SETTINGS_PATHFILE) --config $SETTINGS_PATHFILE"
