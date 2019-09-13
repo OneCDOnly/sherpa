@@ -45,7 +45,7 @@ Init()
     {
 
     SCRIPT_FILE=sherpa.sh
-    SCRIPT_VERSION=190913
+    SCRIPT_VERSION=190914
     debug=false
     ResetErrorcode
 
@@ -195,8 +195,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(SABnzbdplus)
         SHERPA_QPKG_ARCH+=(noarch)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/SABnzbdplus/build/SABnzbdplus_190913.qpkg)
-        SHERPA_QPKG_MD5+=(78df0eb89c9ba7c976a3d7bcab1d8de4)
+        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/SABnzbdplus/build/SABnzbdplus_190914.qpkg)
+        SHERPA_QPKG_MD5+=(24bc39a035acb3670e90fd3fd077f981)
         SHERPA_QPKG_ABBRVS+=('sb sab sabnzbd sabnzbdplus')
         SHERPA_QPKG_DEPS+=('Entware Par2')
         SHERPA_QPKG_IPKGS+=('python python-pyopenssl python-dev gcc unrar p7zip coreutils-nice ionice ffprobe')
@@ -215,8 +215,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(CouchPotato2)
         SHERPA_QPKG_ARCH+=(noarch)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/CouchPotato2/build/CouchPotato2_190828.qpkg)
-        SHERPA_QPKG_MD5+=(9cc38ea4612a6df8957b972f14a06ccf)
+        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/CouchPotato2/build/CouchPotato2_190914.qpkg)
+        SHERPA_QPKG_MD5+=(2e3f111e3fbbb0930cff6d4d81cde208)
         SHERPA_QPKG_ABBRVS+=('cp cp2 couch couchpotato couchpotato2 couchpotatoserver')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python python-pyopenssl python-lxml')
@@ -247,7 +247,7 @@ Init()
         SHERPA_QPKG_ARCH+=(noarch)
         SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/OWatcher3/build/OWatcher3_190913.qpkg)
         SHERPA_QPKG_MD5+=(972f18ae34284dd8ad82b3ab83e71062)
-        SHERPA_QPKG_ABBRVS+=('ow wat owat watcher owatcher watcher3 owatcher3')
+        SHERPA_QPKG_ABBRVS+=('ow wat owat watch watcher owatcher watcher3 owatcher3')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python3')
         SHERPA_QPKG_PIPS+=('')
@@ -255,8 +255,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(Headphones)
         SHERPA_QPKG_ARCH+=(noarch)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/Headphones/build/Headphones_180429.qpkg)
-        SHERPA_QPKG_MD5+=(c1b5ba10f5636b4e951eb57fb2bb1ed5)
+        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/Headphones/build/Headphones_190914.qpkg)
+        SHERPA_QPKG_MD5+=(dcd4d47aafec2ad22e8281c701f9f479)
         SHERPA_QPKG_ABBRVS+=('hp head phones headphones')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python')

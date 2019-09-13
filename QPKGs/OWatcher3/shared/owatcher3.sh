@@ -71,7 +71,7 @@ PullGitRepo()
     local msg=''
     local GIT_CMD=/opt/bin/git
 
-    [[ -z $1 ]] && returncode=1; [[ -z $2 ]] && returncode=1; [[ -z $3 ]] && returncode=1
+    [[ -z $1 || -z $2 || -z $3 ]] && returncode=1
     SysFilePresent "$GIT_CMD" || { errorcode=1; returncode=1 ;}
 
     local QPKG_GIT_PATH="$3/$1"

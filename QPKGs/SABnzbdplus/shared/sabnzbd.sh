@@ -98,7 +98,7 @@ PullGitRepo()
     local exec_msgs=''
     local GIT_CMD=/opt/bin/git
 
-    [[ -z $1 ]] && returncode=1; [[ -z $2 ]] && returncode=1; [[ -z $3 ]] && returncode=1
+    [[ -z $1 || -z $2 || -z $3 ]] && returncode=1
     SysFilePresent "$GIT_CMD" || { errorcode=1; returncode=1 ;}
 
     local QPKG_GIT_PATH="$3/$1"
@@ -149,7 +149,7 @@ StartQPKG()
     fi
 
     if [[ $ui_port -gt 0 ]]; then
-        /sbin/setcfg $QPKG_NAME Web_Port $ui_port -f "$QPKG_CONF_PATHFILE"
+        /sbin/setcfg $QPKG_NAME Web_Port $ui_port -f $QPKG_CONF_PATHFILE
 
         echo -n "* starting ($QPKG_NAME): " | tee -a $LOG_PATHFILE
         exec_msgs=$(${DAEMON} ${DAEMON_OPTS} 2>&1)
