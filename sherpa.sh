@@ -45,7 +45,7 @@ Init()
     {
 
     SCRIPT_FILE=sherpa.sh
-    SCRIPT_VERSION=190910
+    SCRIPT_VERSION=190913
     debug=false
     ResetErrorcode
 
@@ -195,8 +195,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(SABnzbdplus)
         SHERPA_QPKG_ARCH+=(noarch)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/SABnzbdplus/build/SABnzbdplus_190205.qpkg)
-        SHERPA_QPKG_MD5+=(b771606008cf5f7a74052a7db53c789a)
+        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/SABnzbdplus/build/SABnzbdplus_190913.qpkg)
+        SHERPA_QPKG_MD5+=(78df0eb89c9ba7c976a3d7bcab1d8de4)
         SHERPA_QPKG_ABBRVS+=('sb sab sabnzbd sabnzbdplus')
         SHERPA_QPKG_DEPS+=('Entware Par2')
         SHERPA_QPKG_IPKGS+=('python python-pyopenssl python-dev gcc unrar p7zip coreutils-nice ionice ffprobe')
