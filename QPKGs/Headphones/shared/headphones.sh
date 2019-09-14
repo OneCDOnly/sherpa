@@ -14,7 +14,7 @@ Init()
     local SETTINGS="--datadir $(dirname $SETTINGS_PATHFILE) --config $SETTINGS_PATHFILE"
     local PIDS="--pidfile $STORED_PID_PATHFILE"
     DAEMON_OPTS="$TARGET_SCRIPT --daemon --nolaunch $SETTINGS $PIDS"
-    LOG_PATHFILE=/var/log/${QPKG_NAME}.log
+    LOG_PATHFILE=/var/log/$QPKG_NAME.log
     DAEMON=/opt/bin/python2.7
     export PYTHONPATH=$DAEMON
     export PATH=/opt/bin:/opt/sbin:$PATH
@@ -166,7 +166,7 @@ StopQPKG()
         done
 
         rm -f "$STORED_PID_PATHFILE"
-        echo "OK"; echo "stopped OK in $acc seconds" >> "$LOG_PATHFILE"
+        echo "OK"; echo "stopped OK in $acc seconds" >> $LOG_PATHFILE
         break
     done
 
