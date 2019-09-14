@@ -45,7 +45,7 @@ Init()
     {
 
     SCRIPT_FILE=sherpa.sh
-    SCRIPT_VERSION=190914
+    SCRIPT_VERSION=190915
     debug=false
     ResetErrorcode
 
@@ -245,11 +245,11 @@ Init()
 
     SHERPA_QPKG_NAME+=(OWatcher3)
         SHERPA_QPKG_ARCH+=(noarch)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/OWatcher3/build/OWatcher3_190913.qpkg)
-        SHERPA_QPKG_MD5+=(972f18ae34284dd8ad82b3ab83e71062)
+        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/OWatcher3/build/OWatcher3_190915.qpkg)
+        SHERPA_QPKG_MD5+=(2af070bc84d57192a6caf01904a49544)
         SHERPA_QPKG_ABBRVS+=('ow wat owat watch watcher owatcher watcher3 owatcher3')
         SHERPA_QPKG_DEPS+=('Entware')
-        SHERPA_QPKG_IPKGS+=('python3')
+        SHERPA_QPKG_IPKGS+=('python3 jq')
         SHERPA_QPKG_PIPS+=('')
         SHERPA_QPKG_REPLACES+=('')
 
@@ -317,8 +317,8 @@ Init()
     SHERPA_COMMON_PIPS='--upgrade pip setuptools'
     SHERPA_COMMON_CONFLICTS='Optware-NG'
 
-    PREV_QPKG_CONFIG_DIRS=(SAB_CONFIG CONFIG Config config)         # last element is used as target dirname
-    PREV_QPKG_CONFIG_FILES=(sabnzbd.ini settings.ini config.ini)    # last element is used as target filename
+    PREV_QPKG_CONFIG_DIRS=(SAB_CONFIG CONFIG Config config)                 # last element is used as target dirname
+    PREV_QPKG_CONFIG_FILES=(sabnzbd.ini settings.ini config.cfg config.ini) # last element is used as target filename
     WORKING_PATH=$SHARE_PUBLIC_PATH/${SCRIPT_FILE%.*}.tmp
     DEBUG_LOG_PATHFILE=$SHARE_PUBLIC_PATH/$DEBUG_LOG_FILE
     SHERPA_PACKAGES_PATHFILE=$WORKING_PATH/packages.conf

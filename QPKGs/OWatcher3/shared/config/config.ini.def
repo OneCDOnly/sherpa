@@ -1,0 +1,436 @@
+{
+    "Downloader": {
+        "Sources": {
+            "torrentenabled": true,
+            "usenetenabled": true
+        },
+        "Torrent": {
+            "BlackHole": {
+                "directory": "",
+                "enabled": false
+            },
+            "DelugeRPC": {
+                "addpaused": false,
+                "category": "Watcher",
+                "enabled": false,
+                "host": "localhost",
+                "pass": "",
+                "port": 58846,
+                "priority": "Normal",
+                "user": ""
+            },
+            "DelugeWeb": {
+                "addpaused": false,
+                "category": "Watcher",
+                "enabled": false,
+                "host": "http://localhost",
+                "pass": "",
+                "port": 8112,
+                "priority": "Normal"
+            },
+            "DownloadStation": {
+                "account": "",
+                "destination": "",
+                "enabled": false,
+                "host": "http://localhost",
+                "pass": "",
+                "port": 5000
+            },
+            "PutIO": {
+                "deleteafterdownload": false,
+                "directory": 0,
+                "downloaddirectory": "",
+                "downloadwhencomplete": false,
+                "enabled": false,
+                "externaladdress": "",
+                "oauthtoken": "",
+                "postprocessingenabled": false
+            },
+            "QBittorrent": {
+                "category": "Watcher",
+                "enabled": false,
+                "host": "http://localhost",
+                "pass": "",
+                "port": 8080,
+                "user": ""
+            },
+            "Transmission": {
+                "addpaused": false,
+                "category": "Watcher",
+                "enabled": true,
+                "host": "localhost",
+                "pass": "",
+                "port": 9091,
+                "priority": "Normal",
+                "user": ""
+            },
+            "rTorrentHTTP": {
+                "addpaused": false,
+                "address": "http://localhost/rutorrent/plugins/httprpc/action.php",
+                "enabled": false,
+                "label": "Watcher",
+                "pass": "",
+                "port": 5000,
+                "user": ""
+            },
+            "rTorrentSCGI": {
+                "addpaused": false,
+                "enabled": false,
+                "host": "localhost",
+                "label": "Watcher",
+                "port": 5000
+            }
+        },
+        "Usenet": {
+            "BlackHole": {
+                "directory": "",
+                "enabled": false
+            },
+            "NzbGet": {
+                "addpaused": true,
+                "category": "Watcher",
+                "enabled": true,
+                "host": "",
+                "pass": "tegbzn6789",
+                "port": 6789,
+                "priority": "Normal",
+                "user": "nzbget"
+            },
+            "Sabnzbd": {
+                "api": "",
+                "category": "Watcher",
+                "enabled": false,
+                "host": "",
+                "port": 8080,
+                "priority": "Paused"
+            }
+        }
+    },
+    "Indexers": {
+        "NewzNab": {},
+        "PrivateTorrent": {
+            "danishbits": {
+                "enabled": false,
+                "passkey": "",
+                "username": ""
+            }
+        },
+        "Torrent": {
+            "extratorrent": false,
+            "limetorrents": false,
+            "rarbg": false,
+            "thepiratebay": false,
+            "torrentdownloads": false,
+            "torrentz2": false,
+            "yts": false,
+            "zooqle": false
+        },
+        "TorzNab": {}
+    },
+    "Plugins": {
+        "added": {},
+        "finished": {},
+        "snatched": {}
+    },
+    "Postprocessing": {
+        "RemoteMapping": {},
+        "Scanner": {
+            "directory": "",
+            "enabled": false,
+            "interval": 4,
+            "minsize": 500,
+            "newfilesonly": false
+        },
+        "cleanupenabled": false,
+        "cleanupfailed": true,
+        "moveextensions": "",
+        "moverenabled": false,
+        "movermethod": "",
+        "moverpath": "",
+        "recyclebindirectory": "",
+        "recyclebinenabled": false,
+        "removeadditionalfiles": false,
+        "renamerenabled": true,
+        "renamerstring": "",
+        "replaceillegal": "",
+        "replacespaces": false
+    },
+    "Quality": {
+        "Aliases": {
+            "BluRay": [
+                "bluray",
+                "blu-ray",
+                "blueray",
+                "blue-ray",
+                "bdrip",
+                "brrip"
+            ],
+            "CAM": [
+                "cam",
+                "camrip"
+            ],
+            "DVD": [
+                "dvd-rip",
+                "dvdrip"
+            ],
+            "Screener": [
+                "screener",
+                "scr",
+                "dvdscr",
+                "dvdscreener",
+                "bdscr"
+            ],
+            "Telesync": [
+                "telesync",
+                "ts",
+                "pdvd"
+            ],
+            "WebDL": [
+                "web-dl",
+                "webdl",
+                "hdrip"
+            ],
+            "WebRip": [
+                "web-rip",
+                "webrip"
+            ]
+        },
+        "Profiles": {
+            "Default": {
+                "Sources": {
+                    "BluRay-1080P": [
+                        true,
+                        1
+                    ],
+                    "BluRay-4K": [
+                        false,
+                        0
+                    ],
+                    "BluRay-720P": [
+                        true,
+                        2
+                    ],
+                    "CAM-SD": [
+                        false,
+                        13
+                    ],
+                    "DVD-SD": [
+                        false,
+                        9
+                    ],
+                    "Screener-1080P": [
+                        false,
+                        10
+                    ],
+                    "Screener-720P": [
+                        false,
+                        11
+                    ],
+                    "Telesync-SD": [
+                        false,
+                        12
+                    ],
+                    "Unknown": [
+                        false,
+                        14
+                    ],
+                    "WebDL-1080P": [
+                        true,
+                        4
+                    ],
+                    "WebDL-4K": [
+                        false,
+                        3
+                    ],
+                    "WebDL-720P": [
+                        true,
+                        5
+                    ],
+                    "WebRip-1080P": [
+                        true,
+                        7
+                    ],
+                    "WebRip-4K": [
+                        false,
+                        6
+                    ],
+                    "WebRip-720P": [
+                        true,
+                        8
+                    ]
+                },
+                "default": true,
+                "ignoredwords": "subs,german,dutch,french,truefrench,danish,swedish,spanish,italian,korean,dubbed,swesub,korsub,dksubs,vain,HC,blurred",
+                "preferredwords": "",
+                "prefersmaller": false,
+                "requiredwords": "",
+                "scoretitle": true
+            }
+        },
+        "Sources": {
+            "BluRay-1080P": {
+                "max": 20000,
+                "min": 4000
+            },
+            "BluRay-4K": {
+                "max": 90000,
+                "min": 10000
+            },
+            "BluRay-720P": {
+                "max": 10000,
+                "min": 2000
+            },
+            "BluRay-SD": {
+                "max": 3000,
+                "min": 500
+            },
+            "CAM-SD": {
+                "max": 1500,
+                "min": 400
+            },
+            "DVD-SD": {
+                "max": 1500,
+                "min": 400
+            },
+            "Screener-1080P": {
+                "max": 15000,
+                "min": 2000
+            },
+            "Screener-720P": {
+                "max": 5000,
+                "min": 500
+            },
+            "Telesync-SD": {
+                "max": 2500,
+                "min": 500
+            },
+            "Unknown": {
+                "max": 20000,
+                "min": 500
+            },
+            "WebDL-1080P": {
+                "max": 6000,
+                "min": 2000
+            },
+            "WebDL-4K": {
+                "max": 12000,
+                "min": 4000
+            },
+            "WebDL-720P": {
+                "max": 2500,
+                "min": 500
+            },
+            "WebDL-SD": {
+                "max": 3000,
+                "min": 500
+            },
+            "WebRip-1080P": {
+                "max": 6000,
+                "min": 2000
+            },
+            "WebRip-4K": {
+                "max": 12000,
+                "min": 4000
+            },
+            "WebRip-720P": {
+                "max": 2500,
+                "min": 500
+            },
+            "WebRip-SD": {
+                "max": 3000,
+                "min": 500
+            }
+        }
+    },
+    "Search": {
+        "Watchlists": {
+            "Traktlists": {
+                "anticipated": false,
+                "boxoffice": false,
+                "collected": false,
+                "popular": false,
+                "trending": false,
+                "watched": false
+            },
+            "imdbcsv": [],
+            "imdbfrequency": 60,
+            "imdbrss": [],
+            "imdbsync": false,
+            "popularmovieshour": 0,
+            "popularmoviesmin": 0,
+            "popularmoviessync": false,
+            "traktfrequency": 60,
+            "traktlength": 10,
+            "traktrss": "",
+            "traktscore": 0,
+            "traktsync": false
+        },
+        "allowadult": false,
+        "autograb": true,
+        "freeleechpoints": 10,
+        "keepsearching": false,
+        "keepsearchingdays": 3,
+        "keepsearchingscore": 50,
+        "mintorrentseeds": 1,
+        "popularmovieshour": 8,
+        "popularmoviesmin": 6,
+        "preferredsource": "",
+        "requirefreeleech": false,
+        "retention": 1500,
+        "rsssyncfrequency": 60,
+        "searchafteradd": false,
+        "searchtimehr": 22,
+        "searchtimemin": 45,
+        "skipwait": false,
+        "skipwaitweeks": 26,
+        "verifyreleases": "",
+        "verifyreleasesskip": false,
+        "verifyreleasesskipweeks": 28,
+        "waitdays": 1
+    },
+    "Server": {
+        "Proxy": {
+            "enabled": false,
+            "host": "",
+            "pass": "",
+            "port": "",
+            "type": "",
+            "user": "",
+            "whitelist": ""
+        },
+        "adminpass": "",
+        "adminrequired": false,
+        "adminuser": "",
+        "apikey": "",
+        "authpass": "rehctaw",
+        "authrequired": false,
+        "authuser": "watcher",
+        "checkupdatefrequency": 24,
+        "checkupdates": true,
+        "customwebroot": false,
+        "customwebrootpath": "/watcher",
+        "debuglog": false,
+        "gitbranch": "master",
+        "gitpath": "",
+        "installupdatehr": 15,
+        "installupdatemin": 22,
+        "installupdates": false,
+        "keeplog": 3,
+        "language": "en",
+        "launchbrowser": false,
+        "serverhost": "0.0.0.0",
+        "serverport": 5070,
+        "ssl_cert": "",
+        "ssl_key": "",
+        "uitheme": "",
+        "verifyssl": true
+    },
+    "System": {
+        "FileManagement": {
+            "missingfileaction": 0,
+            "scanmissingfiles": false,
+            "scanmissinghour": 0,
+            "scanmissingmin": 0
+        }
+    }
+}
