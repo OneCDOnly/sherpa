@@ -45,7 +45,7 @@ Init()
     {
 
     SCRIPT_FILE=sherpa.sh
-    SCRIPT_VERSION=190915
+    SCRIPT_VERSION=190918
     debug=false
     ResetErrorcode
 
@@ -71,6 +71,7 @@ Init()
     GETCFG_CMD=/sbin/getcfg
     RMCFG_CMD=/sbin/rmcfg
     SETCFG_CMD=/sbin/setcfg
+    SERVICE_CMD=/sbin/qpkg_service
 
     BASENAME_CMD=/usr/bin/basename
     CUT_CMD=/usr/bin/cut
@@ -127,6 +128,7 @@ Init()
     IsSysFilePresent $GETCFG_CMD || return
     IsSysFilePresent $RMCFG_CMD || return
     IsSysFilePresent $SETCFG_CMD || return
+    IsSysFilePresent $SERVICE_CMD || return
 
     IsSysFilePresent $BASENAME_CMD || return
     IsSysFilePresent $CUT_CMD || return
