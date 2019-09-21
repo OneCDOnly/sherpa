@@ -24,8 +24,11 @@ Init()
     WaitForEntware
     errorcode=0
     [[ ! -f $SETTINGS_PATHFILE && -f $SETTINGS_DEFAULT_PATHFILE ]] && { echo "! no settings file found - using default"; cp "$SETTINGS_DEFAULT_PATHFILE" "$SETTINGS_PATHFILE" ;}
-    ( ps ax | grep ' nzbget -D' | grep -vq grep ) && killall nzbget     # kill default NZBGet daemon if it's running
-    chmod -x /opt/etc/init.d/S75nzbget                                  # then ensure Entware does not relaunch NZBGet daemon on startup
+    if [[ -x /opt/etc/init.d/S75nzbget ]]; then
+        /opt/etc/init.d/S75nzbget stop          # stop default daemon
+        chmod -x /opt/etc/init.d/S75nzbget      # and ensure Entware doesn't relaunch daemon on startup
+    fi
+
     return 0
 
     }
