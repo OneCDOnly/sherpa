@@ -45,7 +45,7 @@ Init()
     {
 
     SCRIPT_FILE=sherpa.sh
-    SCRIPT_VERSION=190921
+    SCRIPT_VERSION=190922
     debug=false
     ResetErrorcode
 
@@ -267,8 +267,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(NZBGet)
         SHERPA_QPKG_ARCH+=(noarch)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/NZBGet/build/NZBGet_190921.qpkg)
-        SHERPA_QPKG_MD5+=(16e5300339e55a6cc266dd4ffbd6ef32)
+        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/NZBGet/build/NZBGet_190922.qpkg)
+        SHERPA_QPKG_MD5+=(effde087e0750dcf063f4662816736fd)
         SHERPA_QPKG_ABBRVS+=('ng nget nzb nzbget')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('nzbget')

@@ -24,6 +24,8 @@ Init()
     WaitForEntware
     errorcode=0
     [[ ! -f $SETTINGS_PATHFILE && -f $SETTINGS_DEFAULT_PATHFILE ]] && { echo "! no settings file found - using default"; cp "$SETTINGS_DEFAULT_PATHFILE" "$SETTINGS_PATHFILE" ;}
+    ( ps ax | grep ' nzbget -D' | grep -vq grep ) && killall nzbget     # kill default NZBGet daemon if it's running
+    chmod -x /opt/etc/init.d/S75nzbget                                  # then ensure Entware does not relaunch NZBGet daemon on startup
     return 0
 
     }
@@ -34,11 +36,12 @@ QPKGIsActive()
     # $? = 0 if $QPKG_NAME is active
     # $? = 1 if $QPKG_NAME is not active
 
-    if [[ -f $STORED_PID_PATHFILE && -d /proc/$(<$STORED_PID_PATHFILE) ]]; then
+    if ( ps ax | grep $DAEMON | grep -vq grep ); then
         echo "= ($QPKG_NAME) is active" | tee -a $LOG_PATHFILE
+        return 0
     else
         echo "= ($QPKG_NAME) is not active" | tee -a $LOG_PATHFILE
-        [[ -f $STORED_PID_PATHFILE ]] && rm $STORED_PID_PATHFILE
+        return 1
     fi
 
     }
@@ -94,27 +97,23 @@ StopQPKG()
 
     ! QPKGIsActive && return
 
-    PID=$(<"$STORED_PID_PATHFILE"); acc=0
-
-    kill $PID
+    killall $(basename $DAEMON)
     echo -n "* stopping ($QPKG_NAME) with SIGTERM: " | tee -a $LOG_PATHFILE; echo -n "waiting for upto $maxwait seconds: "
 
     while true; do
-        while [[ -d /proc/$PID ]]; do
+        while ( ps ax | grep $DAEMON | grep -vq grep ); do
             sleep 1
             ((acc++))
             echo -n "$acc, "
 
             if [[ $acc -ge $maxwait ]]; then
                 echo -n "failed! " | tee -a $LOG_PATHFILE
-                kill -9 $PID
+                killall -9 $(basename $DAEMON)
                 echo "sent SIGKILL." | tee -a $LOG_PATHFILE
-                rm -f "$STORED_PID_PATHFILE"
                 break 2
             fi
         done
 
-        rm -f "$STORED_PID_PATHFILE"
         echo "OK"; echo "stopped OK in $acc seconds" >> $LOG_PATHFILE
         break
     done
