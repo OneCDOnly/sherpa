@@ -45,7 +45,7 @@ Init()
     {
 
     SCRIPT_FILE=sherpa.sh
-    SCRIPT_VERSION=190918
+    SCRIPT_VERSION=190921
     debug=false
     ResetErrorcode
 
@@ -262,6 +262,16 @@ Init()
         SHERPA_QPKG_ABBRVS+=('hp head phones headphones')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python')
+        SHERPA_QPKG_PIPS+=('')
+        SHERPA_QPKG_REPLACES+=('')
+
+    SHERPA_QPKG_NAME+=(NZBGet)
+        SHERPA_QPKG_ARCH+=(noarch)
+        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/NZBGet/build/NZBGet_190921.qpkg)
+        SHERPA_QPKG_MD5+=(16e5300339e55a6cc266dd4ffbd6ef32)
+        SHERPA_QPKG_ABBRVS+=('ng nget nzb nzbget')
+        SHERPA_QPKG_DEPS+=('Entware')
+        SHERPA_QPKG_IPKGS+=('nzbget')
         SHERPA_QPKG_PIPS+=('')
         SHERPA_QPKG_REPLACES+=('')
 
@@ -796,7 +806,7 @@ BackupAndRemoveOldQPKG()
                     IsQPKGEnabled $TARGET_APP && BackupConfig && UninstallQPKG $TARGET_APP
                 fi
                 ;;
-            CouchPotato2|LazyLibrarian|OMedusa|OWatcher3|Headphones)
+            CouchPotato2|LazyLibrarian|OMedusa|OWatcher3|Headphones|NZBGet)
                 IsQPKGEnabled $TARGET_APP && BackupConfig && UninstallQPKG $TARGET_APP
                 ;;
             Entware)
@@ -991,42 +1001,6 @@ RestartAllQPKGs()
 
     }
 
-InstallNG()
-    {
-
-    [[ $errorcode -gt 0 ]] && return
-
-    DebugFuncEntry
-
-    if ! IsIPKGInstalled nzbget; then
-        local install_msgs=''
-        local result=0
-        local packages=''
-        local package_desc=''
-        local returncode=0
-
-        InstallIPKGBatch 'nzbget'
-
-        if [[ $? -eq 0 ]]; then
-            ShowProc "modifying NZBGet"
-
-            $SED_CMD -i 's|ConfigTemplate=.*|ConfigTemplate=/opt/share/nzbget/nzbget.conf.template|g' /opt/share/nzbget/nzbget.conf
-            ShowDone "modified NZBGet"
-            /opt/etc/init.d/S75nzbget start
-            $CAT_CMD /opt/share/nzbget/nzbget.conf | $GREP_CMD ControlPassword=
-            #Go to default router ip address and port 6789 192.168.1.1:6789 and now you should see NZBget interface
-        else
-            ShowError "download & install IPKG failed ($package_desc) [$result]"
-            errorcode=20
-            returncode=1
-        fi
-    fi
-
-    DebugFuncExit
-    return 0
-
-    }
-
 InstallQPKG()
     {
 
@@ -1129,7 +1103,7 @@ BackupConfig()
             REINSTALL_FLAG=$package_is_enabled
             [[ $package_is_enabled = true ]] && BackupThisPackage
             ;;
-        LazyLibrarian|OMedusa|OWatcher3|Headphones)
+        LazyLibrarian|OMedusa|OWatcher3|Headphones|NZBGet)
             if IsQPKGEnabled $TARGET_APP; then
                 QPKGServiceCtl stop $TARGET_APP
                 LoadInstalledQPKGVars $TARGET_APP
@@ -1235,7 +1209,7 @@ ConvertSettings()
         SickChill)
             [[ -f $QPKG_CONFIG_BACKUP_PATHFILE ]] && $SETCFG_CMD General git_remote_url 'http://github.com/sickchill/sickchill.git' -f "$QPKG_CONFIG_BACKUP_PATHFILE"
             ;;
-        LazyLibrarian|OMedusa|OWatcher3|Headphones)
+        LazyLibrarian|OMedusa|OWatcher3|Headphones|NZBGet)
             # do nothing - don't need to convert from older versions for these QPKGs as sherpa is the only installer for them.
             ;;
         CouchPotato2)
