@@ -23,7 +23,9 @@ Init()
 
     WaitForEntware
     errorcode=0
+
     [[ ! -f $SETTINGS_PATHFILE && -f $SETTINGS_DEFAULT_PATHFILE ]] && { echo "! no settings file found - using default"; cp "$SETTINGS_DEFAULT_PATHFILE" "$SETTINGS_PATHFILE" ;}
+
     if [[ -x /opt/etc/init.d/S75nzbget ]]; then
         /opt/etc/init.d/S75nzbget stop          # stop default daemon
         chmod -x /opt/etc/init.d/S75nzbget      # and ensure Entware doesn't relaunch daemon on startup
@@ -39,7 +41,7 @@ QPKGIsActive()
     # $? = 0 if $QPKG_NAME is active
     # $? = 1 if $QPKG_NAME is not active
 
-    if ( ps ax | grep $DAEMON | grep -vq grep ); then
+    if (ps ax | grep $DAEMON | grep -vq grep); then
         echo "= ($QPKG_NAME) is active" | tee -a $LOG_PATHFILE
         return 0
     else
@@ -59,32 +61,38 @@ StartQPKG()
 
     QPKGIsActive && return
 
-    if [[ $(/sbin/getcfg '' SecureControl -d no -f "$SETTINGS_PATHFILE") = yes ]]; then
-        ui_port=$(/sbin/getcfg '' SecurePort -d 0 -f "$SETTINGS_PATHFILE")
+    ui_port=$(UIPortSecure)
+    if [[ $ui_port > 0 ]]; then
         secure='S'
     else
-        ui_port=$(/sbin/getcfg '' ControlPort -d 0 -f "$SETTINGS_PATHFILE")
+        ui_port=$(UIPort)
     fi
 
     {
-        if [[ $ui_port -gt 0 ]]; then
-            /sbin/setcfg $QPKG_NAME Web_Port $ui_port -f $QPKG_CONF_PATHFILE
+        if (PortAvailable $ui_port); then
+            if [[ $ui_port -gt 0 ]]; then
+                /sbin/setcfg $QPKG_NAME Web_Port $ui_port -f $QPKG_CONF_PATHFILE
 
-            echo -n "* starting ($QPKG_NAME): "
-            exec_msgs=$(${DAEMON} ${DAEMON_OPTS} 2>&1)
-            result=$?
+                echo -n "* starting ($QPKG_NAME): "
+                exec_msgs=$(${DAEMON} ${DAEMON_OPTS} 2>&1)
+                result=$?
 
-            if [[ $result = 0 || $result = 2 ]]; then
-                echo "OK"
-                echo "= service configured for HTTP${secure} port: $ui_port"
+                if [[ $result = 0 || $result = 2 ]]; then
+                    echo "OK"
+                    sleep 2             # allow time for daemon to start and claim port
+                    ! PortAvailable $ui_port && echo "= service configured for HTTP${secure} port: $ui_port"
+                else
+                    echo "failed!"
+                    echo "= result: $result"
+                    echo "= startup messages: '$exec_msgs'"
+                    returncode=1
+                fi
             else
-                echo "failed!"
-                echo "= result: $result"
-                echo "= startup messages: '$exec_msgs'"
-                returncode=1
+                echo "! unable to start - no UI service port found"
+                returncode=2
             fi
         else
-            echo "! unable to start - no web service port found"
+            echo "! unable to start - UI service port ($ui_port) already in use"
             returncode=2
         fi
     } | tee -a "$LOG_PATHFILE"
@@ -104,7 +112,7 @@ StopQPKG()
     echo -n "* stopping ($QPKG_NAME) with SIGTERM: " | tee -a $LOG_PATHFILE; echo -n "waiting for upto $maxwait seconds: "
 
     while true; do
-        while ( ps ax | grep $DAEMON | grep -vq grep ); do
+        while (ps ax | grep $DAEMON | grep -vq grep); do
             sleep 1
             ((acc++))
             echo -n "$acc, "
@@ -120,6 +128,45 @@ StopQPKG()
         echo "OK"; echo "stopped OK in $acc seconds" >> $LOG_PATHFILE
         break
     done
+
+    }
+
+UIPort()
+    {
+
+    # get HTTP port
+    # stdout = HTTP port (if used) or 0 if none found
+
+    echo $(/sbin/getcfg '' ControlPort -d 0 -f "$SETTINGS_PATHFILE")
+
+    }
+
+UIPortSecure()
+    {
+
+    # get HTTPS port
+    # stdout = HTTPS port (if used) or 0 if none found
+
+    if [[ $(/sbin/getcfg '' SecureControl -d no -f "$SETTINGS_PATHFILE") = yes ]]; then
+        echo $(/sbin/getcfg '' SecurePort -d 0 -f "$SETTINGS_PATHFILE")
+    else
+        echo 0
+    fi
+
+    }
+
+PortAvailable()
+    {
+
+    # $1 = port to check
+    # $? = 0 if available
+    #    = 1 if already used or unspecified
+
+    if [[ -z $1 ]] || (/usr/sbin/lsof -i :$1 2>&1 >/dev/null); then
+        return 1
+    else
+        return 0
+    fi
 
     }
 
