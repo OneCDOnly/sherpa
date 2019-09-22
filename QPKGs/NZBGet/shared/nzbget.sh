@@ -137,7 +137,7 @@ UIPort()
     # get HTTP port
     # stdout = HTTP port (if used) or 0 if none found
 
-    echo $(/sbin/getcfg '' ControlPort -d 0 -f "$SETTINGS_PATHFILE")
+    /sbin/getcfg '' ControlPort -d 0 -f "$SETTINGS_PATHFILE"
 
     }
 
@@ -148,7 +148,7 @@ UIPortSecure()
     # stdout = HTTPS port (if used) or 0 if none found
 
     if [[ $(/sbin/getcfg '' SecureControl -d no -f "$SETTINGS_PATHFILE") = yes ]]; then
-        echo $(/sbin/getcfg '' SecurePort -d 0 -f "$SETTINGS_PATHFILE")
+        /sbin/getcfg '' SecurePort -d 0 -f "$SETTINGS_PATHFILE"
     else
         echo 0
     fi
@@ -160,7 +160,7 @@ PortAvailable()
 
     # $1 = port to check
     # $? = 0 if available
-    #    = 1 if already used or unspecified
+    # $? = 1 if already used or unspecified
 
     if [[ -z $1 ]] || (/usr/sbin/lsof -i :$1 2>&1 >/dev/null); then
         return 1
