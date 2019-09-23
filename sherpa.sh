@@ -45,7 +45,7 @@ Init()
     {
 
     SCRIPT_FILE=sherpa.sh
-    SCRIPT_VERSION=190922.1
+    SCRIPT_VERSION=190924
     debug=false
     ResetErrorcode
 
@@ -832,7 +832,7 @@ InstallTargetQPKG()
     DebugFuncEntry
 
     if [[ $TARGET_APP != $PREF_ENTWARE ]]; then
-        ! IsQPKGInstalled $TARGET_APP && InstallQPKG $TARGET_APP && PauseHere && RestoreConfig
+        ! IsQPKGInstalled $TARGET_APP && InstallQPKG $TARGET_APP && RestoreConfig
         [[ $errorcode -eq 0 ]] && QPKGServiceCtl start $TARGET_APP
     fi
 
@@ -2511,19 +2511,6 @@ PrintResetColours()
     {
 
     echo -en "$1"'\033[0m'
-
-    }
-
-PauseHere()
-    {
-
-    # wait here temporarily
-
-    local wait_seconds=10
-
-    ShowProc "waiting $wait_seconds seconds for service to initialise"
-    $SLEEP_CMD $wait_seconds
-    ShowDone 'completed wait'
 
     }
 

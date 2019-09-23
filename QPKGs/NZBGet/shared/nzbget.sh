@@ -24,7 +24,7 @@ Init()
     errorcode=0
 
     if [[ ! -f $QPKG_INI_PATHFILE && -f $QPKG_INI_DEFAULT_PATHFILE ]]; then
-        echo "! no settings file found - using default"
+        echo "! no settings file found: using default"
         cp "$QPKG_INI_DEFAULT_PATHFILE" "$QPKG_INI_PATHFILE"
     fi
 
@@ -219,7 +219,7 @@ WaitForEntware()
 
         if [[ $? -ne 0 ]]; then
             echo "Entware not found! [TIMEOUT = $TIMEOUT seconds]" | tee -a $INIT_LOG_PATHFILE
-            write_log "[$(basename $0)] Can't continue: Entware not found! (timeout)" 1
+            write_log "[$(basename "$0")] Can't continue: Entware not found! (timeout)" 1
             false
             exit
         else
