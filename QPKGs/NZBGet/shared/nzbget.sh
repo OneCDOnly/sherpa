@@ -5,13 +5,12 @@ Init()
 
     QPKG_NAME=NZBGet
 
-    QPKG_CONF_PATHFILE=/etc/config/qpkg.conf
-    QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f $QPKG_CONF_PATHFILE)
-    SETTINGS_PATHFILE=$QPKG_PATH/config/config.ini
-    local SETTINGS_DEFAULT_PATHFILE=$SETTINGS_PATHFILE.def
-    local SETTINGS="--configfile $SETTINGS_PATHFILE"
-    DAEMON_OPTS="--daemon $SETTINGS"
-    LOG_PATHFILE=/var/log/$QPKG_NAME.log
+    QTS_QPKG_CONF_PATHFILE=/etc/config/qpkg.conf
+    QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f $QTS_QPKG_CONF_PATHFILE)
+    QPKG_INI_PATHFILE=$QPKG_PATH/config/config.ini
+    local QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.def
+    DAEMON_OPTS="--daemon --configfile $QPKG_INI_PATHFILE"
+    INIT_LOG_PATHFILE=/var/log/$QPKG_NAME.log
     DAEMON=/opt/bin/nzbget
     export PATH=/opt/bin:/opt/sbin:$PATH
 
@@ -24,7 +23,10 @@ Init()
     WaitForEntware
     errorcode=0
 
-    [[ ! -f $SETTINGS_PATHFILE && -f $SETTINGS_DEFAULT_PATHFILE ]] && { echo "! no settings file found - using default"; cp "$SETTINGS_DEFAULT_PATHFILE" "$SETTINGS_PATHFILE" ;}
+    if [[ ! -f $QPKG_INI_PATHFILE && -f $QPKG_INI_DEFAULT_PATHFILE ]]; then
+        echo "! no settings file found - using default"
+        cp "$QPKG_INI_DEFAULT_PATHFILE" "$QPKG_INI_PATHFILE"
+    fi
 
     if [[ -x /opt/etc/init.d/S75nzbget ]]; then
         /opt/etc/init.d/S75nzbget stop          # stop default daemon
@@ -42,10 +44,10 @@ QPKGIsActive()
     # $? = 1 if $QPKG_NAME is not active
 
     if (ps ax | grep $DAEMON | grep -vq grep); then
-        echo "= ($QPKG_NAME) is active" | tee -a $LOG_PATHFILE
+        echo "= ($QPKG_NAME) is active" | tee -a $INIT_LOG_PATHFILE
         return 0
     else
-        echo "= ($QPKG_NAME) is not active" | tee -a $LOG_PATHFILE
+        echo "= ($QPKG_NAME) is not active" | tee -a $INIT_LOG_PATHFILE
         return 1
     fi
 
@@ -58,11 +60,12 @@ StartQPKG()
     local exec_msgs=''
     local ui_port=''
     local secure=''
+    local msg=''
 
     QPKGIsActive && return
 
     ui_port=$(UIPortSecure)
-    if [[ $ui_port > 0 ]]; then
+    if [[ $ui_port -gt 0 ]]; then
         secure='S'
     else
         ui_port=$(UIPort)
@@ -71,7 +74,7 @@ StartQPKG()
     {
         if (PortAvailable $ui_port); then
             if [[ $ui_port -gt 0 ]]; then
-                /sbin/setcfg $QPKG_NAME Web_Port $ui_port -f $QPKG_CONF_PATHFILE
+                /sbin/setcfg $QPKG_NAME Web_Port $ui_port -f $QTS_QPKG_CONF_PATHFILE
 
                 echo -n "* starting ($QPKG_NAME): "
                 exec_msgs=$(${DAEMON} ${DAEMON_OPTS} 2>&1)
@@ -88,14 +91,18 @@ StartQPKG()
                     returncode=1
                 fi
             else
-                echo "! unable to start - no UI service port found"
+                msg="unable to start: no UI service port found"
+                echo "! $msg"
+                write_log "[$(basename $0)] $msg" 1
                 returncode=2
             fi
         else
-            echo "! unable to start - UI service port ($ui_port) already in use"
+            msg="unable to start: UI service port ($ui_port) already in use"
+            echo "! $msg"
+            write_log "[$(basename $0)] $msg" 1
             returncode=2
         fi
-    } | tee -a "$LOG_PATHFILE"
+    } | tee -a "$INIT_LOG_PATHFILE"
 
     return $returncode
 
@@ -109,7 +116,7 @@ StopQPKG()
     ! QPKGIsActive && return
 
     killall $(basename $DAEMON)
-    echo -n "* stopping ($QPKG_NAME) with SIGTERM: " | tee -a $LOG_PATHFILE; echo -n "waiting for upto $maxwait seconds: "
+    echo -n "* stopping ($QPKG_NAME) with SIGTERM: " | tee -a $INIT_LOG_PATHFILE; echo -n "waiting for upto $maxwait seconds: "
 
     while true; do
         while (ps ax | grep $DAEMON | grep -vq grep); do
@@ -118,14 +125,14 @@ StopQPKG()
             echo -n "$acc, "
 
             if [[ $acc -ge $maxwait ]]; then
-                echo -n "failed! " | tee -a $LOG_PATHFILE
+                echo -n "failed! " | tee -a $INIT_LOG_PATHFILE
                 killall -9 $(basename $DAEMON)
-                echo "sent SIGKILL." | tee -a $LOG_PATHFILE
+                echo "sent SIGKILL." | tee -a $INIT_LOG_PATHFILE
                 break 2
             fi
         done
 
-        echo "OK"; echo "stopped OK in $acc seconds" >> $LOG_PATHFILE
+        echo "OK"; echo "stopped OK in $acc seconds" >> $INIT_LOG_PATHFILE
         break
     done
 
@@ -137,7 +144,7 @@ UIPort()
     # get HTTP port
     # stdout = HTTP port (if used) or 0 if none found
 
-    /sbin/getcfg '' ControlPort -d 0 -f "$SETTINGS_PATHFILE"
+    /sbin/getcfg '' ControlPort -d 0 -f "$QPKG_INI_PATHFILE"
 
     }
 
@@ -147,8 +154,8 @@ UIPortSecure()
     # get HTTPS port
     # stdout = HTTPS port (if used) or 0 if none found
 
-    if [[ $(/sbin/getcfg '' SecureControl -d no -f "$SETTINGS_PATHFILE") = yes ]]; then
-        /sbin/getcfg '' SecurePort -d 0 -f "$SETTINGS_PATHFILE"
+    if [[ $(/sbin/getcfg '' SecureControl -d no -f "$QPKG_INI_PATHFILE") = yes ]]; then
+        /sbin/getcfg '' SecurePort -d 0 -f "$QPKG_INI_PATHFILE"
     else
         echo 0
     fi
@@ -205,13 +212,13 @@ WaitForEntware()
         (
             for ((count=1; count<=TIMEOUT; count++)); do
                 sleep 1
-                [[ -e /opt/Entware.sh || -e /opt/Entware-3x.sh || -e /opt/Entware-ng.sh ]] && { echo "waited for Entware for $count seconds" >> $LOG_PATHFILE; true; exit ;}
+                [[ -e /opt/Entware.sh || -e /opt/Entware-3x.sh || -e /opt/Entware-ng.sh ]] && { echo "waited for Entware for $count seconds" >> $INIT_LOG_PATHFILE; true; exit ;}
             done
             false
         )
 
         if [[ $? -ne 0 ]]; then
-            echo "Entware not found! [TIMEOUT = $TIMEOUT seconds]" | tee -a $LOG_PATHFILE
+            echo "Entware not found! [TIMEOUT = $TIMEOUT seconds]" | tee -a $INIT_LOG_PATHFILE
             write_log "[$(basename $0)] Can't continue: Entware not found! (timeout)" 1
             false
             exit
@@ -229,15 +236,15 @@ Init
 if [[ $errorcode -eq 0 ]]; then
     case $1 in
         start)
-            echo -e "$(SessionSeparator 'start requested')\n= $(date)" >> $LOG_PATHFILE
+            echo -e "$(SessionSeparator 'start requested')\n= $(date)" >> $INIT_LOG_PATHFILE
             StartQPKG || errorcode=1
             ;;
         stop)
-            echo -e "$(SessionSeparator 'stop requested')\n= $(date)" >> $LOG_PATHFILE
+            echo -e "$(SessionSeparator 'stop requested')\n= $(date)" >> $INIT_LOG_PATHFILE
             StopQPKG || errorcode=1
             ;;
         restart)
-            echo -e "$(SessionSeparator 'restart requested')\n= $(date)" >> $LOG_PATHFILE
+            echo -e "$(SessionSeparator 'restart requested')\n= $(date)" >> $INIT_LOG_PATHFILE
             StopQPKG; StartQPKG || errorcode=1
             ;;
         *)

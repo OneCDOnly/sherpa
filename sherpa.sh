@@ -1888,13 +1888,12 @@ _MonitorDirSize_()
 
     # * This function runs autonomously *
     # It watches for the existence of the pathfile set in $monitor_flag.
-    # If this file is removed, this function dies gracefully.
+    # If that file is removed, this function dies gracefully.
 
     # $1 = directory to monitor the size of.
     # $2 = total target bytes (100%) for specified path.
 
-    [[ -z $1 || ! -d $1 ]] && return 1
-    [[ -z $2 || $2 -eq 0 ]] && return 1
+    [[ -z $1 || ! -d $1 || -z $2 || $2 -eq 0 ]] && return 1
 
     local target_dir="$1"
     local total_bytes=$2
