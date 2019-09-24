@@ -1043,7 +1043,7 @@ InstallQPKG()
         ShowError "file installation failed ($target_file) [$result]"
         DebugErrorFile "$log_pathfile"
 
-        errorcode=21
+        errorcode=20
         returncode=1
     fi
 
@@ -1148,18 +1148,18 @@ BackupThisPackage()
             ShowDone "created settings backup '$TARGET_APP'"
 #             else
 #                 ShowError "could not create settings backup of ($package_config_path) [$result]"
-#                 errorcode=22
+#                 errorcode=21
 #                 return 1
 #             fi
         else
             DebugInfo "a backup set already exists [$QPKG_CONFIG_BACKUP_PATH]"
-            errorcode=23
+            errorcode=22
         fi
 
         ConvertSettings
     else
         ShowError "could not find installed QPKG configuration path [$package_config_path]. Can't safely continue with backup. Aborting."
-        errorcode=24
+        errorcode=23
     fi
 
     }
@@ -1275,13 +1275,13 @@ RestoreConfig()
                     [[ -n $package_port ]] && $SETCFG_CMD "$TARGET_APP" Web_Port $package_port -f "$APP_CENTER_CONFIG_PATHFILE"
                 else
                     ShowError "could not restore settings backup to ($package_config_path) [$result]"
-                    errorcode=25
+                    errorcode=24
                     returncode=1
                 fi
             fi
         else
             ShowError "'$TARGET_APP' is NOT installed so can't restore backup"
-            errorcode=26
+            errorcode=25
             returncode=1
         fi
     fi
@@ -1341,14 +1341,14 @@ DownloadQPKG()
                 ShowDone "downloaded file ($remote_filename)"
             else
                 ShowError "downloaded file checksum incorrect ($remote_filename)"
-                errorcode=27
+                errorcode=26
                 returncode=1
             fi
         else
             ShowError "download failed ($local_pathfile) [$result]"
             DebugErrorFile "$log_pathfile"
 
-            errorcode=28
+            errorcode=27
             returncode=1
         fi
     fi
@@ -1448,12 +1448,12 @@ LoadInstalledQPKGVars()
             package_version=$($GETCFG_CMD $package_name Version -f $APP_CENTER_CONFIG_PATHFILE)
         else
             DebugError 'QPKG not installed?'
-            errorcode=29
+            errorcode=28
             returncode=1
         fi
     else
         DebugError 'QPKG name unspecified'
-        errorcode=30
+        errorcode=29
         returncode=1
     fi
 
@@ -1473,7 +1473,7 @@ UninstallQPKG()
 
     if [[ -z $1 ]]; then
         DebugError 'QPKG name unspecified'
-        errorcode=31
+        errorcode=30
         returncode=1
     else
         qpkg_installed_path="$($GETCFG_CMD "$1" Install_Path -f "$APP_CENTER_CONFIG_PATHFILE")"
@@ -1490,7 +1490,7 @@ UninstallQPKG()
                     ShowDone "uninstalled '$1'"
                 else
                     ShowError "unable to uninstall '$1' [$result]"
-                    errorcode=32
+                    errorcode=31
                     returncode=1
                 fi
             fi
@@ -1519,11 +1519,11 @@ QPKGServiceCtl()
 
     if [[ -z $1 ]]; then
         DebugError 'action unspecified'
-        errorcode=33
+        errorcode=32
         return 1
     elif [[ -z $2 ]]; then
         DebugError 'package unspecified'
-        errorcode=34
+        errorcode=33
         return 1
     fi
 
@@ -1548,7 +1548,7 @@ QPKGServiceCtl()
                 else
                     $CAT_CMD "$qpkg_pathfile.$START_LOG_FILE" >> "$DEBUG_LOG_PATHFILE"
                 fi
-                errorcode=35
+                errorcode=34
                 return 1
             fi
             ;;
@@ -1596,7 +1596,7 @@ QPKGServiceCtl()
             ;;
         *)
             DebugError "Unrecognised action ($1)"
-            errorcode=36
+            errorcode=35
             return 1
             ;;
     esac
@@ -1617,18 +1617,18 @@ GetQPKGServiceFile()
 
     if [[ -z $1 ]]; then
         DebugError 'Package unspecified'
-        errorcode=37
+        errorcode=36
         returncode=1
     else
         output=$($GETCFG_CMD $1 Shell -f $APP_CENTER_CONFIG_PATHFILE)
 
         if [[ -z $output ]]; then
             DebugError "No service file configured for package ($1)"
-            errorcode=38
+            errorcode=37
             returncode=1
         elif [[ ! -e $output ]]; then
             DebugError "Package service file not found ($output)"
-            errorcode=39
+            errorcode=38
             returncode=1
         fi
     fi
@@ -1650,7 +1650,7 @@ GetQPKGPathFilename()
 
     if [[ -z $1 ]]; then
         DebugError 'Package unspecified'
-        errorcode=40
+        errorcode=39
         returncode=1
     else
         output="$QPKG_DL_PATH/$($BASENAME_CMD "$(GetQPKGRemoteURL $1)")"
@@ -1674,7 +1674,7 @@ GetQPKGRemoteURL()
 
     if [[ -z $1 ]]; then
         DebugError 'Package unspecified'
-        errorcode=41
+        errorcode=40
     else
         for index in ${!SHERPA_QPKG_NAME[@]}; do
             if [[ $1 = ${SHERPA_QPKG_NAME[$index]} ]] && [[ ${SHERPA_QPKG_ARCH[$index]} = noarch || ${SHERPA_QPKG_ARCH[$index]} = $NAS_QPKG_ARCH ]]; then
@@ -1703,7 +1703,7 @@ GetQPKGMD5()
 
     if [[ -z $1 ]]; then
         DebugError 'Package unspecified'
-        errorcode=42
+        errorcode=41
     else
         for index in ${!SHERPA_QPKG_NAME[@]}; do
             if [[ $1 = ${SHERPA_QPKG_NAME[$index]} ]] && [[ ${SHERPA_QPKG_ARCH[$index]} = noarch || ${SHERPA_QPKG_ARCH[$index]} = $NAS_QPKG_ARCH ]]; then
@@ -2053,7 +2053,7 @@ IsSysFilePresent()
 
     if ! [[ -f $1 || -L $1 ]]; then
         ShowError "a required NAS system file is missing [$1]"
-        errorcode=43
+        errorcode=42
         return 1
     else
         return 0
@@ -2073,7 +2073,7 @@ IsSysSharePresent()
 
     if [[ ! -L $1 ]]; then
         ShowError "a required NAS system share is missing [$1]. Please re-create it via the QTS Control Panel -> Privilege Settings -> Shared Folders."
-        errorcode=44
+        errorcode=43
         return 1
     else
         return 0
@@ -2516,18 +2516,18 @@ PrintResetColours()
 
 if [[ ! -e /etc/init.d/functions ]]; then
     ShowError "QTS functions missing. Is this a QNAP NAS?"
-    errorcode=1
-else
-    Init
-    EnvironCheck
-    DownloadQPKGs
-    RemoveUnwantedQPKGs
-    InstallBase
-    InstallBaseAddons
-    BackupAndRemoveOldQPKG
-    InstallTargetQPKG
-    Cleanup
-    DisplayResult
+    exit 1
 fi
+
+Init
+EnvironCheck
+DownloadQPKGs
+RemoveUnwantedQPKGs
+InstallBase
+InstallBaseAddons
+BackupAndRemoveOldQPKG
+InstallTargetQPKG
+Cleanup
+DisplayResult
 
 exit $errorcode
