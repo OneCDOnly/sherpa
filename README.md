@@ -55,6 +55,8 @@ So, to install SABnzbd:
 ./sherpa.sh Medusa
 
 ./sherpa.sh Headphones
+
+./sherpa.sh NZBGet
 ```
 
 ---
@@ -91,7 +93,7 @@ Or run the installer in debug-mode to see it realtime. e.g.:
 ---
 ## Firmware compatibility
 
-* QTS 4.4.x - **Unknown**
+* QTS 4.4.x - **OK**
 * QTS 4.3.x - **OK**
 * QTS 4.2.x - **OK**
 * QTS 4.1.x or earlier - **Unknown**
