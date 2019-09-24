@@ -6,15 +6,13 @@ Init()
     QPKG_NAME=OWatcher3
     local TARGET_SCRIPT=watcher.py
 
-    QPKG_CONF_PATHFILE=/etc/config/qpkg.conf
-    QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f $QPKG_CONF_PATHFILE)
-    SETTINGS_PATHFILE=$QPKG_PATH/config/config.ini
-    local SETTINGS_DEFAULT_PATHFILE=$SETTINGS_PATHFILE.def
+    QTS_QPKG_CONF_PATHFILE=/etc/config/qpkg.conf
+    QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f $QTS_QPKG_CONF_PATHFILE)
+    QPKG_INI_PATHFILE=$QPKG_PATH/config/config.ini
+    local QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.def
     STORED_PID_PATHFILE=/tmp/$QPKG_NAME.pid
-    local SETTINGS="--userdata $(dirname $SETTINGS_PATHFILE) --conf $SETTINGS_PATHFILE"
-    local PIDS="--pid $STORED_PID_PATHFILE"
-    DAEMON_OPTS="$TARGET_SCRIPT --daemon $SETTINGS $PIDS"
-    LOG_PATHFILE=/var/log/$QPKG_NAME.log
+    DAEMON_OPTS="$TARGET_SCRIPT --daemon --userdata $(dirname $QPKG_INI_PATHFILE) --conf $QPKG_INI_PATHFILE --pid $STORED_PID_PATHFILE"
+    INIT_LOG_PATHFILE=/var/log/$QPKG_NAME.log
     DAEMON=/opt/bin/python3
     export PYTHONPATH=$DAEMON
     export PATH=/opt/bin:/opt/sbin:$PATH
@@ -27,7 +25,12 @@ Init()
 
     WaitForEntware
     errorcode=0
-    [[ ! -f $SETTINGS_PATHFILE && -f $SETTINGS_DEFAULT_PATHFILE ]] && { echo "! no settings file found - using default"; cp "$SETTINGS_DEFAULT_PATHFILE" "$SETTINGS_PATHFILE" ;}
+
+    if [[ ! -f $QPKG_INI_PATHFILE && -f $QPKG_INI_DEFAULT_PATHFILE ]]; then
+        echo "! no settings file found: using default"
+        cp "$QPKG_INI_DEFAULT_PATHFILE" "$QPKG_INI_PATHFILE"
+    fi
+
     return 0
 
     }
@@ -39,11 +42,16 @@ QPKGIsActive()
     # $? = 1 if $QPKG_NAME is not active
 
     if [[ -f $STORED_PID_PATHFILE && -d /proc/$(<$STORED_PID_PATHFILE) ]]; then
-        echo "= ($QPKG_NAME) is active" | tee -a $LOG_PATHFILE
+        echo "= ($QPKG_NAME) is active" | tee -a $INIT_LOG_PATHFILE
+        return 0
     else
-        echo "= ($QPKG_NAME) is not active" | tee -a $LOG_PATHFILE
+        echo "= ($QPKG_NAME) is not active" | tee -a $INIT_LOG_PATHFILE
         [[ -f $STORED_PID_PATHFILE ]] && rm $STORED_PID_PATHFILE
+        return 1
     fi
+
+    echo "$msg" | tee -a "$INIT_LOG_PATHFILE"
+    return $returncode
 
     }
 
@@ -74,7 +82,7 @@ PullGitRepo()
         local GIT_HTTP_URL="$2"
         local GIT_HTTPS_URL=${GIT_HTTP_URL/http/git}
 
-        echo -n "* updating ($1): " | tee -a $LOG_PATHFILE
+        echo -n "* updating ($1): " | tee -a $INIT_LOG_PATHFILE
         exec_msgs=$({
             [[ ! -d ${QPKG_GIT_PATH}/.git ]] && { $GIT_CMD clone -b master --depth 1 "$GIT_HTTPS_URL" "$QPKG_GIT_PATH" || $GIT_CMD clone -b master --depth 1 "$GIT_HTTP_URL" "$QPKG_GIT_PATH" ;}
             cd "$QPKG_GIT_PATH" && $GIT_CMD pull
@@ -82,10 +90,10 @@ PullGitRepo()
         result=$?
 
         if [[ $result = 0 ]]; then
-            echo "OK" | tee -a $LOG_PATHFILE
-            echo -e "= result: $result\n= ${FUNCNAME[0]}(): '$exec_msgs'" >> $LOG_PATHFILE
+            echo "OK" | tee -a $INIT_LOG_PATHFILE
+            echo -e "= result: $result\n= ${FUNCNAME[0]}(): '$exec_msgs'" >> $INIT_LOG_PATHFILE
         else
-            echo -e "failed!\n= result: $result\n= ${FUNCNAME[0]}(): '$exec_msgs'" | tee -a $LOG_PATHFILE
+            echo -e "failed!\n= result: $result\n= ${FUNCNAME[0]}(): '$exec_msgs'" | tee -a $INIT_LOG_PATHFILE
             returncode=1
         fi
     fi
@@ -101,6 +109,7 @@ StartQPKG()
     local exec_msgs=''
     local ui_port=''
     local secure=''
+    local msg=''
 
     QPKGIsActive && return
 
@@ -108,27 +117,40 @@ StartQPKG()
 
     cd "$QPKG_PATH/$QPKG_NAME"
 
-    ui_port=$(/opt/bin/jq -r .Server.serverport < "$SETTINGS_PATHFILE")
+    ui_port=$(/opt/bin/jq -r .Server.serverport < "$QPKG_INI_PATHFILE")
 
-    if [[ $ui_port -gt 0 ]]; then
-        /sbin/setcfg $QPKG_NAME Web_Port $ui_port -f $QPKG_CONF_PATHFILE
+    {
+        if (PortAvailable $ui_port); then
+            if [[ $ui_port -gt 0 ]]; then
+                /sbin/setcfg $QPKG_NAME Web_Port $ui_port -f $QTS_QPKG_CONF_PATHFILE
 
-        echo -n "* starting ($QPKG_NAME): " | tee -a $LOG_PATHFILE
-        exec_msgs=$(${DAEMON} ${DAEMON_OPTS} 2>&1)
-        result=$?
+                echo -n "* starting ($QPKG_NAME): "
+                exec_msgs=$(${DAEMON} ${DAEMON_OPTS} 2>&1)
+                result=$?
 
-        if [[ $result = 0 || $result = 2 ]]; then
-            echo "OK" | tee -a $LOG_PATHFILE
-            echo -e "= result: $result\n= ${FUNCNAME[0]}(): '$exec_msgs'" >> $LOG_PATHFILE
+                if [[ $result = 0 || $result = 2 ]]; then
+                    echo "OK"
+                    sleep 10             # allow time for daemon to start and claim port
+                    ! PortAvailable $ui_port && echo "= service configured for HTTP${secure} port: $ui_port"
+                else
+                    echo "failed!"
+                    echo "= result: $result"
+                    echo "= startup messages: '$exec_msgs'"
+                    returncode=1
+                fi
+            else
+                msg="unable to start: no UI service port found"
+                echo "! $msg"
+                write_log "[$(basename $0)] $msg" 1
+                returncode=2
+            fi
         else
-            echo -e "failed!\n= result: $result\n= ${FUNCNAME[0]}(): '$exec_msgs'" | tee -a $LOG_PATHFILE
-            returncode=1
+            msg="unable to start: UI service port ($ui_port) already in use"
+            echo "! $msg"
+            write_log "[$(basename $0)] $msg" 1
+            returncode=2
         fi
-        [[ $ui_port -gt 0 ]] && echo "= service configured for HTTP${secure} port: $ui_port" | tee -a $LOG_PATHFILE
-    else
-        echo "! unable to start - no web service port found" | tee -a $LOG_PATHFILE
-        returncode=2
-    fi
+    } | tee -a "$INIT_LOG_PATHFILE"
 
     return $returncode
 
@@ -144,7 +166,7 @@ StopQPKG()
     PID=$(<"$STORED_PID_PATHFILE"); acc=0
 
     kill $PID
-    echo -n "* stopping ($QPKG_NAME) with SIGTERM: " | tee -a $LOG_PATHFILE; echo -n "waiting for upto $maxwait seconds: "
+    echo -n "* stopping ($QPKG_NAME) with SIGTERM: " | tee -a $INIT_LOG_PATHFILE; echo -n "waiting for upto $maxwait seconds: "
 
     while true; do
         while [[ -d /proc/$PID ]]; do
@@ -153,18 +175,33 @@ StopQPKG()
             echo -n "$acc, "
 
             if [[ $acc -ge $maxwait ]]; then
-                echo -n "failed! " | tee -a $LOG_PATHFILE
+                echo -n "failed! " | tee -a $INIT_LOG_PATHFILE
                 kill -9 $PID
-                echo "sent SIGKILL." | tee -a $LOG_PATHFILE
+                echo "sent SIGKILL." | tee -a $INIT_LOG_PATHFILE
                 rm -f "$STORED_PID_PATHFILE"
                 break 2
             fi
         done
 
         rm -f "$STORED_PID_PATHFILE"
-        echo "OK"; echo "stopped OK in $acc seconds" >> "$LOG_PATHFILE"
+        echo "OK"; echo "stopped OK in $acc seconds" >> $INIT_LOG_PATHFILE
         break
     done
+
+    }
+
+PortAvailable()
+    {
+
+    # $1 = port to check
+    # $? = 0 if available
+    # $? = 1 if already used or unspecified
+
+    if [[ -z $1 ]] || (/usr/sbin/lsof -i :$1 2>&1 >/dev/null); then
+        return 1
+    else
+        return 0
+    fi
 
     }
 
@@ -203,13 +240,13 @@ WaitForEntware()
         (
             for ((count=1; count<=TIMEOUT; count++)); do
                 sleep 1
-                [[ -e /opt/Entware.sh || -e /opt/Entware-3x.sh || -e /opt/Entware-ng.sh ]] && { echo "waited for Entware for $count seconds" >> $LOG_PATHFILE; true; exit ;}
+                [[ -e /opt/Entware.sh || -e /opt/Entware-3x.sh || -e /opt/Entware-ng.sh ]] && { echo "waited for Entware for $count seconds" >> $INIT_LOG_PATHFILE; true; exit ;}
             done
             false
         )
 
         if [[ $? -ne 0 ]]; then
-            echo "Entware not found! [TIMEOUT = $TIMEOUT seconds]" | tee -a $LOG_PATHFILE
+            echo "Entware not found! [TIMEOUT = $TIMEOUT seconds]" | tee -a $INIT_LOG_PATHFILE
             write_log "[$(basename $0)] Can't continue: Entware not found! (timeout)" 1
             false
             exit
@@ -227,15 +264,15 @@ Init
 if [[ $errorcode -eq 0 ]]; then
     case $1 in
         start)
-            echo -e "$(SessionSeparator 'start requested')\n= $(date)" >> $LOG_PATHFILE
+            echo -e "$(SessionSeparator 'start requested')\n= $(date)" >> $INIT_LOG_PATHFILE
             StartQPKG || errorcode=1
             ;;
         stop)
-            echo -e "$(SessionSeparator 'stop requested')\n= $(date)" >> $LOG_PATHFILE
+            echo -e "$(SessionSeparator 'stop requested')\n= $(date)" >> $INIT_LOG_PATHFILE
             StopQPKG || errorcode=1
             ;;
         restart)
-            echo -e "$(SessionSeparator 'restart requested')\n= $(date)" >> $LOG_PATHFILE
+            echo -e "$(SessionSeparator 'restart requested')\n= $(date)" >> $INIT_LOG_PATHFILE
             StopQPKG; StartQPKG || errorcode=1
             ;;
         *)

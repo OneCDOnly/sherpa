@@ -11,7 +11,7 @@ Init()
     QPKG_INI_PATHFILE=$QPKG_PATH/config/config.ini
     local QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.def
     STORED_PID_PATHFILE=/tmp/$QPKG_NAME.pid
-    DAEMON_OPTS="$TARGET_SCRIPT --daemon --data_dir $(dirname $SETTINGS_PATHFILE) --config_file $QPKG_INI_PATHFILE --pid_file $STORED_PID_PATHFILE"
+    DAEMON_OPTS="$TARGET_SCRIPT --daemon --data_dir $(dirname $QPKG_INI_PATHFILE) --config_file $QPKG_INI_PATHFILE --pid_file $STORED_PID_PATHFILE"
     INIT_LOG_PATHFILE=/var/log/$QPKG_NAME.log
     DAEMON=/opt/bin/python2.7
     export PYTHONPATH=$DAEMON
@@ -126,7 +126,7 @@ StartQPKG()
                 echo "OK"
             fi
 
-            /sbin/setcfg $QPKG_NAME Web_Port $ui_port -f $QPKG_CONF_PATHFILE
+            /sbin/setcfg $QPKG_NAME Web_Port $ui_port -f $QTS_QPKG_CONF_PATHFILE
         fi
 
         if (PortAvailable $ui_port); then

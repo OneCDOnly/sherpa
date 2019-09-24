@@ -11,7 +11,7 @@ Init()
     QPKG_INI_PATHFILE=$QPKG_PATH/config/config.ini
     local QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.def
     STORED_PID_PATHFILE=/tmp/$QPKG_NAME.pid
-    DAEMON_OPTS="$TARGET_SCRIPT --daemon --nolaunch --datadir $(dirname $SETTINGS_PATHFILE) --config $QPKG_INI_PATHFILE --pidfile $STORED_PID_PATHFILE"
+    DAEMON_OPTS="$TARGET_SCRIPT --daemon --nolaunch --datadir $(dirname $QPKG_INI_PATHFILE) --config $QPKG_INI_PATHFILE --pidfile $STORED_PID_PATHFILE"
     INIT_LOG_PATHFILE=/var/log/$QPKG_NAME.log
     DAEMON=/opt/bin/python2.7
     export PYTHONPATH=$DAEMON
@@ -49,6 +49,9 @@ QPKGIsActive()
         [[ -f $STORED_PID_PATHFILE ]] && rm $STORED_PID_PATHFILE
         return 1
     fi
+
+    echo "$msg" | tee -a "$INIT_LOG_PATHFILE"
+    return $returncode
 
     }
 

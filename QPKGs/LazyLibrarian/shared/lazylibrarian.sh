@@ -8,8 +8,6 @@ Init()
 
     QTS_QPKG_CONF_PATHFILE=/etc/config/qpkg.conf
     QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f $QTS_QPKG_CONF_PATHFILE)
-    QPKG_INI_PATHFILE=$QPKG_PATH/config/config.ini
-    local QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.def
     STORED_PID_PATHFILE=/tmp/$QPKG_NAME.pid
     DAEMON_OPTS="$TARGET_SCRIPT -d --datadir $QPKG_PATH/config --pidfile $STORED_PID_PATHFILE"
     INIT_LOG_PATHFILE=/var/log/$QPKG_NAME.log
@@ -25,11 +23,6 @@ Init()
 
     WaitForEntware
     errorcode=0
-
-    if [[ ! -f $QPKG_INI_PATHFILE && -f $QPKG_INI_DEFAULT_PATHFILE ]]; then
-        echo "! no settings file found: using default"
-        cp "$QPKG_INI_DEFAULT_PATHFILE" "$QPKG_INI_PATHFILE"
-    fi
 
     return 0
 
@@ -114,12 +107,8 @@ StartQPKG()
 
     cd "$QPKG_PATH/$QPKG_NAME"
 
-    ui_port=$(UIPortSecure)
-    if [[ $ui_port -gt 0 ]]; then
-        secure='S'
-    else
-        ui_port=$(UIPort)
-    fi
+    # this package is shipped without a default config, so don't check for one
+    ui_port=5299
 
     {
         if (PortAvailable $ui_port); then
@@ -189,30 +178,6 @@ StopQPKG()
         echo "OK"; echo "stopped OK in $acc seconds" >> $INIT_LOG_PATHFILE
         break
     done
-
-    }
-
-UIPort()
-    {
-
-    # get HTTP port
-    # stdout = HTTP port (if used) or 0 if none found
-
-    /sbin/getcfg misc port -d 0 -f "$QPKG_INI_PATHFILE"
-
-    }
-
-UIPortSecure()
-    {
-
-    # get HTTPS port
-    # stdout = HTTPS port (if used) or 0 if none found
-
-    if [[ $(/sbin/getcfg misc enable_https -d 0 -f "$QPKG_INI_PATHFILE") = 1 ]]; then
-        /sbin/getcfg misc https_port -d 0 -f "$QPKG_INI_PATHFILE"
-    else
-        echo 0
-    fi
 
     }
 
