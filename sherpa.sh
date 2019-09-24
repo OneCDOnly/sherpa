@@ -166,7 +166,7 @@ Init()
 
     # sherpa-supported package details - parallel arrays
     SHERPA_QPKG_NAME=()         # internal QPKG name
-        SHERPA_QPKG_ARCH=()     # QPKG supports this architecture ('noarch' = all)
+        SHERPA_QPKG_ARCH=()     # QPKG supports this architecture
         SHERPA_QPKG_URL=()      # remote QPKG URL available for download
         SHERPA_QPKG_MD5=()      # remote QPKG MD5
         SHERPA_QPKG_ABBRVS=()   # if set, this package is user-installable, and these abbreviations can be used to specify app
@@ -176,7 +176,7 @@ Init()
         SHERPA_QPKG_REPLACES=() # this QPKG replaces these QPKGs if installed (although, only one must be active to be replaced). Original data is backed-up, converted, then restored into new QPKG.
 
     SHERPA_QPKG_NAME+=(Entware)
-        SHERPA_QPKG_ARCH+=(noarch)
+        SHERPA_QPKG_ARCH+=(all)
         SHERPA_QPKG_URL+=(http://bin.entware.net/other/Entware_1.00std.qpkg)
         SHERPA_QPKG_MD5+=(0c99cf2cf8ef61c7a18b42651a37da74)
         SHERPA_QPKG_ABBRVS+=('ew ent entware')
@@ -196,7 +196,7 @@ Init()
         SHERPA_QPKG_REPLACES+=('')
 
     SHERPA_QPKG_NAME+=(SABnzbdplus)
-        SHERPA_QPKG_ARCH+=(noarch)
+        SHERPA_QPKG_ARCH+=(all)
         SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/SABnzbdplus/build/SABnzbdplus_190924.qpkg)
         SHERPA_QPKG_MD5+=(70bd0a4a0632691615d8a1f8449b6c1d)
         SHERPA_QPKG_ABBRVS+=('sb sab sabnzbd sabnzbdplus')
@@ -206,7 +206,7 @@ Init()
         SHERPA_QPKG_REPLACES+=('QSabNZBdPlus')
 
     SHERPA_QPKG_NAME+=(SickChill)
-        SHERPA_QPKG_ARCH+=(noarch)
+        SHERPA_QPKG_ARCH+=(all)
         SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/SickChill/build/SickChill_190924.qpkg)
         SHERPA_QPKG_MD5+=(89d83e08fd92edf509322a385d31f673)
         SHERPA_QPKG_ABBRVS+=('sc sick sickc chill sickchill')
@@ -216,7 +216,7 @@ Init()
         SHERPA_QPKG_REPLACES+=('SickRage')
 
     SHERPA_QPKG_NAME+=(CouchPotato2)
-        SHERPA_QPKG_ARCH+=(noarch)
+        SHERPA_QPKG_ARCH+=(all)
         SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/CouchPotato2/build/CouchPotato2_190924.qpkg)
         SHERPA_QPKG_MD5+=(8b3a0c9afdfa5c1f873426fa999f26e4)
         SHERPA_QPKG_ABBRVS+=('cp cp2 couch couchpotato couchpotato2 couchpotatoserver')
@@ -226,7 +226,7 @@ Init()
         SHERPA_QPKG_REPLACES+=('QCouchPotato')
 
     SHERPA_QPKG_NAME+=(LazyLibrarian)
-        SHERPA_QPKG_ARCH+=(noarch)
+        SHERPA_QPKG_ARCH+=(all)
         SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/LazyLibrarian/build/LazyLibrarian_190924.qpkg)
         SHERPA_QPKG_MD5+=(32ccfc2beec0cdf60af44e22da9f09ca)
         SHERPA_QPKG_ABBRVS+=('ll lazy lazylibrarian')
@@ -236,7 +236,7 @@ Init()
         SHERPA_QPKG_REPLACES+=('')
 
     SHERPA_QPKG_NAME+=(OMedusa)
-        SHERPA_QPKG_ARCH+=(noarch)
+        SHERPA_QPKG_ARCH+=(all)
         SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/OMedusa/build/OMedusa_190924.qpkg)
         SHERPA_QPKG_MD5+=(b7885cbc9768fec39b3dee2ae4ea7646)
         SHERPA_QPKG_ABBRVS+=('om med omed medusa omedusa')
@@ -246,7 +246,7 @@ Init()
         SHERPA_QPKG_REPLACES+=('')
 
     SHERPA_QPKG_NAME+=(OWatcher3)
-        SHERPA_QPKG_ARCH+=(noarch)
+        SHERPA_QPKG_ARCH+=(all)
         SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/OWatcher3/build/OWatcher3_190924.qpkg)
         SHERPA_QPKG_MD5+=(0e1c4ecd99efa8c98547cf9740f18d14)
         SHERPA_QPKG_ABBRVS+=('ow wat owat watch watcher owatcher watcher3 owatcher3')
@@ -256,7 +256,7 @@ Init()
         SHERPA_QPKG_REPLACES+=('')
 
     SHERPA_QPKG_NAME+=(Headphones)
-        SHERPA_QPKG_ARCH+=(noarch)
+        SHERPA_QPKG_ARCH+=(all)
         SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/Headphones/build/Headphones_190924.qpkg)
         SHERPA_QPKG_MD5+=(251c69ff8c03a25896f92416900e60db)
         SHERPA_QPKG_ABBRVS+=('hp head phones headphones')
@@ -266,7 +266,7 @@ Init()
         SHERPA_QPKG_REPLACES+=('')
 
     SHERPA_QPKG_NAME+=(NZBGet)
-        SHERPA_QPKG_ARCH+=(noarch)
+        SHERPA_QPKG_ARCH+=(all)
         SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/NZBGet/build/NZBGet_190924.qpkg)
         SHERPA_QPKG_MD5+=(6c72b03addeadafdbce1a633710c153a)
         SHERPA_QPKG_ABBRVS+=('ng nget nzb nzbget')
@@ -1677,7 +1677,7 @@ GetQPKGRemoteURL()
         errorcode=40
     else
         for index in ${!SHERPA_QPKG_NAME[@]}; do
-            if [[ $1 = ${SHERPA_QPKG_NAME[$index]} ]] && [[ ${SHERPA_QPKG_ARCH[$index]} = noarch || ${SHERPA_QPKG_ARCH[$index]} = $NAS_QPKG_ARCH ]]; then
+            if [[ $1 = ${SHERPA_QPKG_NAME[$index]} ]] && [[ ${SHERPA_QPKG_ARCH[$index]} = all || ${SHERPA_QPKG_ARCH[$index]} = $NAS_QPKG_ARCH ]]; then
                 output="${SHERPA_QPKG_URL[$index]}"
                 returncode=0
                 break
@@ -1706,7 +1706,7 @@ GetQPKGMD5()
         errorcode=41
     else
         for index in ${!SHERPA_QPKG_NAME[@]}; do
-            if [[ $1 = ${SHERPA_QPKG_NAME[$index]} ]] && [[ ${SHERPA_QPKG_ARCH[$index]} = noarch || ${SHERPA_QPKG_ARCH[$index]} = $NAS_QPKG_ARCH ]]; then
+            if [[ $1 = ${SHERPA_QPKG_NAME[$index]} ]] && [[ ${SHERPA_QPKG_ARCH[$index]} = all || ${SHERPA_QPKG_ARCH[$index]} = $NAS_QPKG_ARCH ]]; then
                 output="${SHERPA_QPKG_MD5[$index]}"
                 returncode=0
                 break
