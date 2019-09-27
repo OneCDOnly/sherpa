@@ -45,7 +45,7 @@ Init()
     {
 
     SCRIPT_FILE=sherpa.sh
-    SCRIPT_VERSION=190924
+    SCRIPT_VERSION=190928
     debug=false
     ResetErrorcode
 
@@ -337,8 +337,8 @@ Init()
     QPKG_DL_PATH=$WORKING_PATH/qpkg-downloads
     IPKG_DL_PATH=$WORKING_PATH/ipkg-downloads
     IPKG_CACHE_PATH=$WORKING_PATH/ipkg-cache
-    QPKG_BACKUP_PATH=$WORKING_PATH/backup
-    QPKG_CONFIG_BACKUP_PATH=$QPKG_BACKUP_PATH/${PREV_QPKG_CONFIG_DIRS[${#PREV_QPKG_CONFIG_DIRS[@]}-1]}
+    QPKG_BACKUP_ROOT_PATH=$WORKING_PATH/backup
+    QPKG_CONFIG_BACKUP_PATH=$QPKG_BACKUP_ROOT_PATH/${PREV_QPKG_CONFIG_DIRS[${#PREV_QPKG_CONFIG_DIRS[@]}-1]}
     QPKG_CONFIG_BACKUP_PATHFILE=$QPKG_CONFIG_BACKUP_PATH/${PREV_QPKG_CONFIG_FILES[${#PREV_QPKG_CONFIG_FILES[@]}-1]}
 
     # internals
@@ -425,11 +425,11 @@ EnvironCheck()
     fi
 
     if [[ $errorcode -eq 0 ]]; then
-        $MKDIR_CMD -p "$QPKG_BACKUP_PATH" 2> /dev/null
+        $MKDIR_CMD -p "$QPKG_BACKUP_ROOT_PATH" 2> /dev/null
         result=$?
 
         if [[ $result -ne 0 ]]; then
-            ShowError "unable to create backup directory ($QPKG_BACKUP_PATH) [$result]"
+            ShowError "unable to create backup directory ($QPKG_BACKUP_ROOT_PATH) [$result]"
             errorcode=3
         fi
     fi
@@ -979,15 +979,15 @@ RestartAllQPKGs()
 
     DebugFuncEntry
     local index=0
-    local dependant_on=''
+    local dependent_on=''
 
     for index in ${!SHERPA_QPKG_NAME[@]}; do
         if (IsQPKGUserInstallable ${SHERPA_QPKG_NAME[$index]}) && (IsQPKGEnabled ${SHERPA_QPKG_NAME[$index]}); then
             if [[ $update_all_apps = true ]]; then
                 QPKGServiceCtl restart ${SHERPA_QPKG_NAME[$index]}
             else
-                for dependant_on in ${SHERPA_QPKG_DEPS[$index]}; do
-                    if [[ $dependant_on = $TARGET_APP ]]; then
+                for dependent_on in ${SHERPA_QPKG_DEPS[$index]}; do
+                    if [[ $dependent_on = $TARGET_APP ]]; then
                         QPKGServiceCtl restart ${SHERPA_QPKG_NAME[$index]}
                         break
                     fi
@@ -1129,13 +1129,13 @@ BackupThisPackage()
     local result=0
 
     DebugVar package_config_path
-#     local package_config_backup_pathfile="$QPKG_BACKUP_PATH/sherpa.config.backup.zip"
+#     local package_config_backup_pathfile="$QPKG_BACKUP_ROOT_PATH/sherpa.config.backup.zip"
 #     DebugVar package_config_backup_pathfile
 
     if [[ -d $package_config_path ]]; then
         if [[ ! -d $QPKG_CONFIG_BACKUP_PATH ]]; then
-            DebugVar QPKG_BACKUP_PATH
-            mv "$package_config_path" "$QPKG_BACKUP_PATH"
+            DebugVar QPKG_BACKUP_ROOT_PATH
+            mv "$package_config_path" "$QPKG_BACKUP_ROOT_PATH"
             result=$?
             DebugInfo "moved old config to backup location"
 
@@ -1177,7 +1177,7 @@ ConvertSettings()
     case $TARGET_APP in
         SABnzbdplus)
             for prev_config_dir in ${PREV_QPKG_CONFIG_DIRS[@]}; do
-                test_path=$QPKG_BACKUP_PATH/$prev_config_dir
+                test_path=$QPKG_BACKUP_ROOT_PATH/$prev_config_dir
                 if [[ -d $test_path && ! -d $QPKG_CONFIG_BACKUP_PATH ]]; then
                     mv $test_path $QPKG_CONFIG_BACKUP_PATH
                     DebugDone "renamed config path from [$test_path] to [$QPKG_CONFIG_BACKUP_PATH]"
