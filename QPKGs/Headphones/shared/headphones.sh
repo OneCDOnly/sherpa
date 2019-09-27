@@ -11,9 +11,9 @@ Init()
     QPKG_INI_PATHFILE=$QPKG_PATH/config/config.ini
     local QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.def
     STORED_PID_PATHFILE=/tmp/$QPKG_NAME.pid
-    DAEMON_OPTS="$TARGET_SCRIPT --daemon --nolaunch --datadir $(dirname $QPKG_INI_PATHFILE) --config $QPKG_INI_PATHFILE --pidfile $STORED_PID_PATHFILE"
     INIT_LOG_PATHFILE=/var/log/$QPKG_NAME.log
-    DAEMON=/opt/bin/python2.7
+    local DAEMON=/opt/bin/python2.7
+    LAUNCHER="$DAEMON $TARGET_SCRIPT --daemon --nolaunch --datadir $(dirname $QPKG_INI_PATHFILE) --config $QPKG_INI_PATHFILE --pidfile $STORED_PID_PATHFILE"
     export PYTHONPATH=$DAEMON
     export PATH=/opt/bin:/opt/sbin:$PATH
 
@@ -28,7 +28,7 @@ Init()
 
     if [[ ! -f $QPKG_INI_PATHFILE && -f $QPKG_INI_DEFAULT_PATHFILE ]]; then
         echo "! no settings file found: using default"
-        cp "$QPKG_INI_DEFAULT_PATHFILE" "$QPKG_INI_PATHFILE"
+        cp $QPKG_INI_DEFAULT_PATHFILE $QPKG_INI_PATHFILE
     fi
 
     return 0
@@ -50,15 +50,12 @@ QPKGIsActive()
         return 1
     fi
 
-    echo "$msg" | tee -a "$INIT_LOG_PATHFILE"
-    return $returncode
-
     }
 
 UpdateQpkg()
     {
 
-    PullGitRepo $QPKG_NAME 'https://github.com/rembo10/headphones.git' "$QPKG_PATH"
+    PullGitRepo $QPKG_NAME 'https://github.com/rembo10/headphones.git' $QPKG_PATH
 
     }
 
@@ -115,7 +112,7 @@ StartQPKG()
 
     UpdateQpkg
 
-    cd "$QPKG_PATH/$QPKG_NAME"
+    cd $QPKG_PATH/$QPKG_NAME || return 1
 
     ui_port=$(UIPortSecure)
     if [[ $ui_port -gt 0 ]]; then
@@ -130,7 +127,7 @@ StartQPKG()
                 /sbin/setcfg $QPKG_NAME Web_Port $ui_port -f $QTS_QPKG_CONF_PATHFILE
 
                 echo -n "* starting ($QPKG_NAME): "
-                exec_msgs=$(${DAEMON} ${DAEMON_OPTS} 2>&1)
+                exec_msgs=$($LAUNCHER 2>&1)
                 result=$?
 
                 if [[ $result = 0 || $result = 2 ]]; then
@@ -146,16 +143,16 @@ StartQPKG()
             else
                 msg="unable to start: no UI service port found"
                 echo "! $msg"
-                write_log "[$(basename $0)] $msg" 1
+                /sbin/write_log "[$(basename $0)] $msg" 1
                 returncode=2
             fi
         else
             msg="unable to start: UI service port ($ui_port) already in use"
             echo "! $msg"
-            write_log "[$(basename $0)] $msg" 1
+            /sbin/write_log "[$(basename $0)] $msg" 1
             returncode=2
         fi
-    } | tee -a "$INIT_LOG_PATHFILE"
+    } | tee -a $INIT_LOG_PATHFILE
 
     return $returncode
 
@@ -168,7 +165,7 @@ StopQPKG()
 
     ! QPKGIsActive && return
 
-    PID=$(<"$STORED_PID_PATHFILE"); acc=0
+    PID=$(<$STORED_PID_PATHFILE); acc=0
 
     kill $PID
     echo -n "* stopping ($QPKG_NAME) with SIGTERM: " | tee -a $INIT_LOG_PATHFILE; echo -n "waiting for upto $maxwait seconds: "
@@ -183,12 +180,12 @@ StopQPKG()
                 echo -n "failed! " | tee -a $INIT_LOG_PATHFILE
                 kill -9 $PID
                 echo "sent SIGKILL." | tee -a $INIT_LOG_PATHFILE
-                rm -f "$STORED_PID_PATHFILE"
+                rm -f $STORED_PID_PATHFILE
                 break 2
             fi
         done
 
-        rm -f "$STORED_PID_PATHFILE"
+        rm -f $STORED_PID_PATHFILE
         echo "OK"; echo "stopped OK in $acc seconds" >> $INIT_LOG_PATHFILE
         break
     done
@@ -201,7 +198,7 @@ UIPort()
     # get HTTP port
     # stdout = HTTP port (if used) or 0 if none found
 
-    /sbin/getcfg General http_port -d 0 -f "$QPKG_INI_PATHFILE"
+    /sbin/getcfg General http_port -d 0 -f $QPKG_INI_PATHFILE
 
     }
 
@@ -211,8 +208,8 @@ UIPortSecure()
     # get HTTPS port
     # stdout = HTTPS port (if used) or 0 if none found
 
-    if [[ $(/sbin/getcfg General enable_https -d 0 -f "$QPKG_INI_PATHFILE") = 1 ]]; then
-        /sbin/getcfg General https_port -d 0 -f "$QPKG_INI_PATHFILE"
+    if [[ $(/sbin/getcfg General enable_https -d 0 -f $QPKG_INI_PATHFILE) = 1 ]]; then
+        /sbin/getcfg General https_port -d 0 -f $QPKG_INI_PATHFILE
     else
         echo 0
     fi
@@ -276,7 +273,7 @@ WaitForEntware()
 
         if [[ $? -ne 0 ]]; then
             echo "Entware not found! [TIMEOUT = $TIMEOUT seconds]" | tee -a $INIT_LOG_PATHFILE
-            write_log "[$(basename $0)] Can't continue: Entware not found! (timeout)" 1
+            /sbin/write_log "[$(basename $0)] can't continue: Entware not found! (timeout)" 1
             false
             exit
         else
