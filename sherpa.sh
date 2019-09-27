@@ -173,7 +173,7 @@ Init()
         SHERPA_QPKG_DEPS=()     # this QPKG requires these QPKGs to be installed first
         SHERPA_QPKG_IPKGS=()    # this QPKG requires these IPKGs to be installed first
         SHERPA_QPKG_PIPS=()     # this QPKG requires these PIPs to be installed first
-        SHERPA_QPKG_REPLACES=() # this QPKG replaces these QPKGs if installed (although, only one must be active to be replaced). Original data is backed-up, converted, then restored into new QPKG.
+        SHERPA_QPKG_REPLACES=() # (not yet implemented) this QPKG replaces these QPKGs if installed (although, only one must be active to be replaced). Original data is backed-up, converted, then restored into new QPKG.
 
     SHERPA_QPKG_NAME+=(Entware)
         SHERPA_QPKG_ARCH+=(all)
@@ -1724,7 +1724,7 @@ CTRL_C_Captured()
 
     [[ -e $monitor_flag ]] && rm "$monitor_flag"
 
-    $SLEEP_CMD 1
+    $SLEEP_CMD 2
 
     exit
 
