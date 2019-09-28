@@ -67,7 +67,7 @@ Init()
     UNAME_CMD=/bin/uname
     UNIQ_CMD=/bin/uniq
 
-    curl_cmd=/sbin/curl         # this will change depending on QTS version
+    CURL_CMD=/sbin/curl
     GETCFG_CMD=/sbin/getcfg
     RMCFG_CMD=/sbin/rmcfg
     SETCFG_CMD=/sbin/setcfg
@@ -124,7 +124,7 @@ Init()
     IsSysFilePresent $UNAME_CMD || return
     IsSysFilePresent $UNIQ_CMD || return
 
-    IsSysFilePresent $curl_cmd || return
+    IsSysFilePresent $CURL_CMD || return
     IsSysFilePresent $GETCFG_CMD || return
     IsSysFilePresent $RMCFG_CMD || return
     IsSysFilePresent $SETCFG_CMD || return
@@ -522,7 +522,7 @@ EnvironCheck()
     if [[ $errorcode -eq 0 ]]; then
         ShowProc "testing Internet access"
 
-        if ($curl_cmd $curl_insecure_arg --silent --fail https://onecdonly.github.io/sherpa/packages.conf -o $SHERPA_PACKAGES_PATHFILE); then
+        if ($CURL_CMD $curl_insecure_arg --silent --fail https://onecdonly.github.io/sherpa/packages.conf -o $SHERPA_PACKAGES_PATHFILE); then
             ShowDone "Internet is accessible"
         else
             ShowError "no Internet access"
@@ -1327,10 +1327,10 @@ DownloadQPKG()
         # curl http://entware-3x.zyxmon.org/binaries/other/Entware-3x_1.00std.qpkg --socks5 IP:PORT --output target.qpkg
 
         if [[ $debug = true ]]; then
-            $curl_cmd $curl_insecure_arg --output "$local_pathfile" "$remote_url" 2>&1 | $TEE_CMD -a "$log_pathfile"
+            $CURL_CMD $curl_insecure_arg --output "$local_pathfile" "$remote_url" 2>&1 | $TEE_CMD -a "$log_pathfile"
             result=$?
         else
-            $curl_cmd $curl_insecure_arg --output "$local_pathfile" "$remote_url" >> "$log_pathfile" 2>&1
+            $CURL_CMD $curl_insecure_arg --output "$local_pathfile" "$remote_url" >> "$log_pathfile" 2>&1
             result=$?
         fi
 
