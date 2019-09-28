@@ -70,8 +70,8 @@ Init()
     CURL_CMD=/sbin/curl
     GETCFG_CMD=/sbin/getcfg
     RMCFG_CMD=/sbin/rmcfg
-    SETCFG_CMD=/sbin/setcfg
     SERVICE_CMD=/sbin/qpkg_service
+    SETCFG_CMD=/sbin/setcfg
 
     BASENAME_CMD=/usr/bin/basename
     CUT_CMD=/usr/bin/cut
@@ -79,7 +79,6 @@ Init()
     DU_CMD=/usr/bin/du
     HEAD_CMD=/usr/bin/head
     READLINK_CMD=/usr/bin/readlink
-    SERVICE_CMD=/sbin/qpkg_service
     SORT_CMD=/usr/bin/sort
     TAIL_CMD=/usr/bin/tail
     TEE_CMD=/usr/bin/tee
@@ -87,7 +86,7 @@ Init()
     UPTIME_CMD=/usr/bin/uptime
     WC_CMD=/usr/bin/wc
     WGET_CMD=/usr/bin/wget
-    WHICH_CMD=/usr/bin/which
+
     ZIP_CMD=/usr/local/sbin/zip
 
     FIND_CMD=/opt/bin/find
@@ -127,8 +126,8 @@ Init()
     IsSysFilePresent $CURL_CMD || return
     IsSysFilePresent $GETCFG_CMD || return
     IsSysFilePresent $RMCFG_CMD || return
-    IsSysFilePresent $SETCFG_CMD || return
     IsSysFilePresent $SERVICE_CMD || return
+    IsSysFilePresent $SETCFG_CMD || return
 
     IsSysFilePresent $BASENAME_CMD || return
     IsSysFilePresent $CUT_CMD || return
@@ -136,7 +135,6 @@ Init()
     IsSysFilePresent $DU_CMD || return
     IsSysFilePresent $HEAD_CMD || return
     IsSysFilePresent $READLINK_CMD || return
-    IsSysFilePresent $SERVICE_CMD || return
     IsSysFilePresent $SORT_CMD || return
     IsSysFilePresent $TAIL_CMD || return
     IsSysFilePresent $TEE_CMD || return
@@ -144,6 +142,7 @@ Init()
     IsSysFilePresent $UPTIME_CMD || return
     IsSysFilePresent $WC_CMD || return
     IsSysFilePresent $WGET_CMD || return
+
     IsSysFilePresent $ZIP_CMD || return
 
     local DEFAULT_SHARE_DOWNLOAD_PATH=/share/Download
