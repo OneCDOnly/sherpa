@@ -10,8 +10,8 @@ Init()
     QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f $QTS_QPKG_CONF_PATHFILE)
     STORED_PID_PATHFILE=/tmp/$QPKG_NAME.pid
     INIT_LOG_PATHFILE=/var/log/$QPKG_NAME.log
-    local DAEMON=/opt/bin/python2.7
-    LAUNCHER="$DAEMON $TARGET_SCRIPT -d --datadir $QPKG_PATH/config --pidfile $STORED_PID_PATHFILE"
+    local DAEMON=/opt/bin/python3
+    LAUNCHER="$DAEMON $TARGET_SCRIPT --daemon --nolaunch --datadir $QPKG_PATH/config --pidfile $STORED_PID_PATHFILE"
     export PYTHONPATH=$DAEMON
     export PATH=/opt/bin:/opt/sbin:$PATH
 

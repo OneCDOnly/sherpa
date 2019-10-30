@@ -45,7 +45,7 @@ Init()
     {
 
     SCRIPT_FILE=sherpa.sh
-    SCRIPT_VERSION=190928
+    SCRIPT_VERSION=191030
     debug=false
     ResetErrorcode
 
@@ -172,7 +172,6 @@ Init()
         SHERPA_QPKG_DEPS=()     # this QPKG requires these QPKGs to be installed first
         SHERPA_QPKG_IPKGS=()    # this QPKG requires these IPKGs to be installed first
         SHERPA_QPKG_PIPS=()     # this QPKG requires these PIPs to be installed first
-        SHERPA_QPKG_REPLACES=() # (not yet implemented) this QPKG replaces these QPKGs if installed (although, only one must be active to be replaced). Original data is backed-up, converted, then restored into new QPKG.
 
     SHERPA_QPKG_NAME+=(Entware)
         SHERPA_QPKG_ARCH+=(all)
@@ -182,7 +181,6 @@ Init()
         SHERPA_QPKG_DEPS+=('')
         SHERPA_QPKG_IPKGS+=('')
         SHERPA_QPKG_PIPS+=('')
-        SHERPA_QPKG_REPLACES+=('Entware-ng Entware-3x Optware')
 
     SHERPA_QPKG_NAME+=(Entware-ng)
         SHERPA_QPKG_ARCH+=(i686)
@@ -192,7 +190,6 @@ Init()
         SHERPA_QPKG_DEPS+=('')
         SHERPA_QPKG_IPKGS+=('')
         SHERPA_QPKG_PIPS+=('')
-        SHERPA_QPKG_REPLACES+=('')
 
     SHERPA_QPKG_NAME+=(SABnzbdplus)
         SHERPA_QPKG_ARCH+=(all)
@@ -202,7 +199,6 @@ Init()
         SHERPA_QPKG_DEPS+=('Entware Par2')
         SHERPA_QPKG_IPKGS+=('python python-pyopenssl python-dev gcc unrar p7zip coreutils-nice ionice ffprobe')
         SHERPA_QPKG_PIPS+=('sabyenc==3.3.5 cheetah')
-        SHERPA_QPKG_REPLACES+=('QSabNZBdPlus')
 
     SHERPA_QPKG_NAME+=(SickChill)
         SHERPA_QPKG_ARCH+=(all)
@@ -212,27 +208,15 @@ Init()
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python')
         SHERPA_QPKG_PIPS+=('')
-        SHERPA_QPKG_REPLACES+=('SickRage')
-
-    SHERPA_QPKG_NAME+=(CouchPotato2)
-        SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/CouchPotato2/build/CouchPotato2_190928.qpkg)
-        SHERPA_QPKG_MD5+=(6c174d38a606b89892764c5ecc3d64e5)
-        SHERPA_QPKG_ABBRVS+=('cp cp2 couch couchpotato couchpotato2 couchpotatoserver')
-        SHERPA_QPKG_DEPS+=('Entware')
-        SHERPA_QPKG_IPKGS+=('python python-pyopenssl python-lxml')
-        SHERPA_QPKG_PIPS+=('')
-        SHERPA_QPKG_REPLACES+=('QCouchPotato')
 
     SHERPA_QPKG_NAME+=(LazyLibrarian)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/LazyLibrarian/build/LazyLibrarian_190928.qpkg)
-        SHERPA_QPKG_MD5+=(124256bcf8ba54a7f0308a7214257fb3)
+        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/LazyLibrarian/build/LazyLibrarian_191027.qpkg)
+        SHERPA_QPKG_MD5+=(0774979373b9d31bc0901c555a834684)
         SHERPA_QPKG_ABBRVS+=('ll lazy lazylibrarian')
         SHERPA_QPKG_DEPS+=('Entware')
-        SHERPA_QPKG_IPKGS+=('python python-urllib3')
+        SHERPA_QPKG_IPKGS+=('python3 python3-pyopenssl python3-requests')
         SHERPA_QPKG_PIPS+=('')
-        SHERPA_QPKG_REPLACES+=('')
 
     SHERPA_QPKG_NAME+=(OMedusa)
         SHERPA_QPKG_ARCH+=(all)
@@ -252,7 +236,6 @@ Init()
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python3 jq')
         SHERPA_QPKG_PIPS+=('')
-        SHERPA_QPKG_REPLACES+=('')
 
     SHERPA_QPKG_NAME+=(Headphones)
         SHERPA_QPKG_ARCH+=(all)
@@ -262,7 +245,6 @@ Init()
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python')
         SHERPA_QPKG_PIPS+=('')
-        SHERPA_QPKG_REPLACES+=('')
 
     SHERPA_QPKG_NAME+=(NZBGet)
         SHERPA_QPKG_ARCH+=(all)
@@ -272,7 +254,6 @@ Init()
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('nzbget')
         SHERPA_QPKG_PIPS+=('')
-        SHERPA_QPKG_REPLACES+=('')
 
     SHERPA_QPKG_NAME+=(Par2)
         SHERPA_QPKG_ARCH+=(x86)
@@ -282,7 +263,6 @@ Init()
         SHERPA_QPKG_DEPS+=('')
         SHERPA_QPKG_IPKGS+=('')
         SHERPA_QPKG_PIPS+=('')
-        SHERPA_QPKG_REPLACES+=('')
 
     SHERPA_QPKG_NAME+=(Par2)
         SHERPA_QPKG_ARCH+=(x64)
@@ -292,7 +272,6 @@ Init()
         SHERPA_QPKG_DEPS+=('')
         SHERPA_QPKG_IPKGS+=('')
         SHERPA_QPKG_PIPS+=('')
-        SHERPA_QPKG_REPLACES+=('')
 
     SHERPA_QPKG_NAME+=(Par2)
         SHERPA_QPKG_ARCH+=(x41)
@@ -302,7 +281,6 @@ Init()
         SHERPA_QPKG_DEPS+=('')
         SHERPA_QPKG_IPKGS+=('')
         SHERPA_QPKG_PIPS+=('')
-        SHERPA_QPKG_REPLACES+=('')
 
     SHERPA_QPKG_NAME+=(Par2)
         SHERPA_QPKG_ARCH+=(x31)
@@ -312,7 +290,6 @@ Init()
         SHERPA_QPKG_DEPS+=('')
         SHERPA_QPKG_IPKGS+=('')
         SHERPA_QPKG_PIPS+=('')
-        SHERPA_QPKG_REPLACES+=('')
 
     SHERPA_QPKG_NAME+=(Par2)
         SHERPA_QPKG_ARCH+=(a64)
@@ -322,7 +299,6 @@ Init()
         SHERPA_QPKG_DEPS+=('')
         SHERPA_QPKG_IPKGS+=('')
         SHERPA_QPKG_PIPS+=('')
-        SHERPA_QPKG_REPLACES+=('')
 
     SHERPA_COMMON_IPKGS='git git-http nano less ca-certificates python-pip python3-pip'
     SHERPA_COMMON_PIPS='--upgrade pip setuptools'
@@ -350,7 +326,6 @@ Init()
     previous_length=0
     previous_msg=''
     REINSTALL_FLAG=false
-    OLD_APP=''
     satisfy_dependencies_only=false
     ignore_space_arg=''
     update_all_apps=false
@@ -402,7 +377,7 @@ EnvironCheck()
     DebugQPKG 'arch' "$NAS_QPKG_ARCH"
 
     CalcPrefEntware
-    DebugScript 'preferred installer' "$PREF_ENTWARE"
+    DebugScript 'preferred package installer' "$PREF_ENTWARE"
 
     [[ $errorcode -gt 0 ]] && DisplayHelp
 
@@ -420,16 +395,6 @@ EnvironCheck()
             errorcode=2
         else
             cd "$WORKING_PATH"
-        fi
-    fi
-
-    if [[ $errorcode -eq 0 ]]; then
-        $MKDIR_CMD -p "$QPKG_BACKUP_ROOT_PATH" 2> /dev/null
-        result=$?
-
-        if [[ $result -ne 0 ]]; then
-            ShowError "unable to create backup directory ($QPKG_BACKUP_ROOT_PATH) [$result]"
-            errorcode=3
         fi
     fi
 
@@ -467,43 +432,12 @@ EnvironCheck()
     fi
 
     if [[ $errorcode -eq 0 ]]; then
-        if (IsQPKGInstalled $TARGET_APP && ! IsQPKGEnabled $TARGET_APP); then
-            ShowError "'$TARGET_APP' is already installed but is disabled. You'll need to enable it first to allow re-installation."
-            REINSTALL_FLAG=true
-            errorcode=7
-        fi
-    fi
-
-    if [[ $errorcode -eq 0 ]]; then
-        if [[ $TARGET_APP = SABnzbdplus ]] && IsQPKGEnabled QSabNZBdPlus && IsQPKGEnabled SABnzbdplus; then
-            ShowError "both 'SABnzbdplus' and 'QSabNZBdPlus' are enabled. This is an unsupported configuration. Please disable the unused one via the QNAP App Center then re-run this installer."
-            REINSTALL_FLAG=true
-            errorcode=8
-        fi
-    fi
-
-    if [[ $errorcode -eq 0 ]]; then
-        if [[ $TARGET_APP = SickChill ]] && IsQPKGEnabled SickRage && IsQPKGEnabled SickChill; then
-            ShowError "both 'SickChill' and 'SickRage' are enabled. This is an unsupported configuration. Please disable the unused one via the QNAP App Center then re-run this installer."
-            REINSTALL_FLAG=true
-            errorcode=9
-        fi
-    fi
-
-    if [[ $errorcode -eq 0 ]]; then
         for conflicting_qpkg in ${SHERPA_COMMON_CONFLICTS[@]}; do
             if IsQPKGEnabled $conflicting_qpkg; then
                 ShowError "'$conflicting_qpkg' is enabled. This is an unsupported configuration."
                 errorcode=10
             fi
         done
-    fi
-
-    if [[ $errorcode -eq 0 ]]; then
-        if IsQPKGEnabled Entware-ng && IsQPKGEnabled Entware-3x; then
-            ShowError "both 'Entware-ng' and 'Entware-3x' are enabled. This is an unsupported configuration. Please manually disable (or uninstall) one or both of them via the QNAP App Center then re-run this installer."
-            errorcode=11
-        fi
     fi
 
     if [[ $errorcode -eq 0 ]]; then
@@ -573,9 +507,6 @@ ParseArgs()
             *)
                 TARGET_APP=$(MatchAbbrvToQPKGName "$arg") && TARGET_APPS+=($TARGET_APP)
         esac
-
-#        # only use first matched package name abbreviation as app to install
-#        [[ -z $TARGET_APP ]] && TARGET_APP=$(MatchAbbrvToQPKGName "$arg")
     done
 
     [[ -z $TARGET_APP && $satisfy_dependencies_only = false && $update_all_apps = false ]] && errorcode=16
@@ -761,11 +692,13 @@ InstallBaseAddons()
     DebugFuncEntry
 
     if { (IsQPKGInstalled SABnzbdplus) || [[ $TARGET_APP = SABnzbdplus ]] ;} && [[ $NAS_QPKG_ARCH != none ]]; then
-        InstallQPKG Par2
-        if [[ $errorcode -gt 0 ]]; then
-            ShowWarning "Par2 installation failed - but it's not essential so I'm continuing"
-            ResetErrorcode
-            DebugVar errorcode
+        if ! IsQPKGInstalled Par2; then
+            InstallQPKG Par2
+            if [[ $errorcode -gt 0 ]]; then
+                ShowWarning "Par2 installation failed - but it's not essential so I'm continuing"
+                ResetErrorcode
+                DebugVar errorcode
+            fi
         fi
     fi
 
@@ -779,50 +712,6 @@ InstallBaseAddons()
 
     }
 
-BackupAndRemoveOldQPKG()
-    {
-
-    [[ $errorcode -gt 0 || $satisfy_dependencies_only = true ]] && return
-
-    DebugFuncEntry
-    local returncode=0
-
-    if [[ -n $TARGET_APP ]]; then
-        case $TARGET_APP in
-            SABnzbdplus)
-                if (IsQPKGEnabled QSabNZBdPlus); then
-                    BackupConfig && UninstallQPKG QSabNZBdPlus
-                else
-                    IsQPKGEnabled $TARGET_APP && BackupConfig && UninstallQPKG $TARGET_APP
-                fi
-                ;;
-            SickChill)
-                if (IsQPKGEnabled SickRage); then
-                    BackupConfig && UninstallQPKG SickRage
-                elif (IsQPKGEnabled QSickRage); then
-                    BackupConfig && $SERVICE_CMD stop QSickRage && $SERVICE_CMD disable QSickRage
-                else
-                    IsQPKGEnabled $TARGET_APP && BackupConfig && UninstallQPKG $TARGET_APP
-                fi
-                ;;
-            CouchPotato2|LazyLibrarian|OMedusa|OWatcher3|Headphones|NZBGet)
-                IsQPKGEnabled $TARGET_APP && BackupConfig && UninstallQPKG $TARGET_APP
-                ;;
-            Entware)
-                # don't backup and restore
-                ;;
-            *)
-                ShowError "can't backup and remove app '$TARGET_APP' as it's unknown"
-                returncode=1
-                ;;
-        esac
-    fi
-
-    DebugFuncExit
-    return $returncode
-
-    }
-
 InstallTargetQPKG()
     {
 
@@ -830,10 +719,7 @@ InstallTargetQPKG()
 
     DebugFuncEntry
 
-    if [[ $TARGET_APP != $PREF_ENTWARE ]]; then
-        ! IsQPKGInstalled $TARGET_APP && InstallQPKG $TARGET_APP && RestoreConfig
-        [[ $errorcode -eq 0 ]] && QPKGServiceCtl start $TARGET_APP
-    fi
+    [[ $TARGET_APP != $PREF_ENTWARE ]] && InstallQPKG $TARGET_APP
 
     DebugFuncExit
     return 0
@@ -1013,16 +899,6 @@ InstallQPKG()
     local returncode=0
     local local_pathfile="$(GetQPKGPathFilename $1)"
 
-    if IsQPKGInstalled $1; then
-        DebugInfo "QPKG '$1' is already installed"
-        if IsQPKGEnabled $1; then
-            DebugInfo "QPKG '$1' is already enabled"
-        else
-            EnableQPKG $1
-        fi
-        return 0
-    fi
-
     if [[ ${local_pathfile##*.} = zip ]]; then
         $UNZIP_CMD -nq "$local_pathfile" -d "$QPKG_DL_PATH"
         local_pathfile="${local_pathfile%.*}"
@@ -1050,187 +926,6 @@ InstallQPKG()
 
     }
 
-BackupConfig()
-    {
-
-    [[ $errorcode -gt 0 || $satisfy_dependencies_only = true ]] && return
-
-    DebugFuncEntry
-    local returncode=0
-
-    case $TARGET_APP in
-        SABnzbdplus)
-            if IsQPKGEnabled QSabNZBdPlus; then
-                OLD_APP=QSabNZBdPlus
-                QPKGServiceCtl stop $OLD_APP
-                LoadInstalledQPKGVars $OLD_APP
-            elif IsQPKGEnabled $TARGET_APP; then
-                QPKGServiceCtl stop $TARGET_APP
-                LoadInstalledQPKGVars $TARGET_APP
-            fi
-
-            REINSTALL_FLAG=$package_is_enabled
-            [[ $package_is_enabled = true ]] && BackupThisPackage
-            ;;
-        SickChill)
-            if IsQPKGEnabled QSickRage; then
-                OLD_APP=QSickRage
-                QPKGServiceCtl stop $OLD_APP
-                LoadInstalledQPKGVars $OLD_APP
-            elif IsQPKGEnabled SickRage; then
-                OLD_APP=SickRage
-                QPKGServiceCtl stop $OLD_APP
-                LoadInstalledQPKGVars $OLD_APP
-            elif IsQPKGEnabled $TARGET_APP; then
-                QPKGServiceCtl stop $TARGET_APP
-                LoadInstalledQPKGVars $TARGET_APP
-            fi
-
-            REINSTALL_FLAG=$package_is_enabled
-            [[ $package_is_enabled = true ]] && BackupThisPackage
-            ;;
-        CouchPotato2)
-            if IsQPKGEnabled QCouchPotato; then
-                OLD_APP=QCouchPotato
-                QPKGServiceCtl stop $OLD_APP
-                LoadInstalledQPKGVars $OLD_APP
-            elif IsQPKGEnabled $TARGET_APP; then
-                QPKGServiceCtl stop $TARGET_APP
-                LoadInstalledQPKGVars $TARGET_APP
-            fi
-
-            REINSTALL_FLAG=$package_is_enabled
-            [[ $package_is_enabled = true ]] && BackupThisPackage
-            ;;
-        LazyLibrarian|OMedusa|OWatcher3|Headphones|NZBGet)
-            if IsQPKGEnabled $TARGET_APP; then
-                QPKGServiceCtl stop $TARGET_APP
-                LoadInstalledQPKGVars $TARGET_APP
-            fi
-
-            REINSTALL_FLAG=$package_is_enabled
-            [[ $package_is_enabled = true ]] && BackupThisPackage
-            ;;
-        *)
-            ShowError "can't backup app '$TARGET_APP' as it's unknown"
-            returncode=1
-            ;;
-    esac
-
-    DebugFuncExit
-    return $returncode
-
-    }
-
-BackupThisPackage()
-    {
-
-    local result=0
-
-    DebugVar package_config_path
-#     local package_config_backup_pathfile="$QPKG_BACKUP_ROOT_PATH/sherpa.config.backup.zip"
-#     DebugVar package_config_backup_pathfile
-
-    if [[ -d $package_config_path ]]; then
-        if [[ ! -d $QPKG_CONFIG_BACKUP_PATH ]]; then
-            DebugVar QPKG_BACKUP_ROOT_PATH
-            mv "$package_config_path" "$QPKG_BACKUP_ROOT_PATH"
-            result=$?
-            DebugInfo "moved old config to backup location"
-
-#             [[ -e $package_config_backup_pathfile ]] && rm "$package_config_backup_pathfile"
-
-#             $ZIP_CMD -q "$package_config_backup_pathfile" "$QPKG_CONFIG_BACKUP_PATH"
-#             zipresult=$?
-#
-#             if [[ $result -eq 0 && $zipresult -eq 0 ]]; then
-            ShowDone "created settings backup '$TARGET_APP'"
-#             else
-#                 ShowError "could not create settings backup of ($package_config_path) [$result]"
-#                 errorcode=21
-#                 return 1
-#             fi
-        else
-            DebugInfo "a backup set already exists [$QPKG_CONFIG_BACKUP_PATH]"
-            errorcode=22
-        fi
-
-        ConvertSettings
-    else
-        ShowError "could not find installed QPKG configuration path [$package_config_path]. Can't safely continue with backup. Aborting."
-        errorcode=23
-    fi
-
-    }
-
-ConvertSettings()
-    {
-
-    DebugFuncEntry
-    local returncode=0
-    local prev_config_dir=''
-    local prev_config_file=''
-    local test_path=''
-    local test_pathfile=''
-
-    case $TARGET_APP in
-        SABnzbdplus)
-            for prev_config_dir in ${PREV_QPKG_CONFIG_DIRS[@]}; do
-                test_path=$QPKG_BACKUP_ROOT_PATH/$prev_config_dir
-                if [[ -d $test_path && ! -d $QPKG_CONFIG_BACKUP_PATH ]]; then
-                    mv $test_path $QPKG_CONFIG_BACKUP_PATH
-                    DebugDone "renamed config path from [$test_path] to [$QPKG_CONFIG_BACKUP_PATH]"
-                    break
-                fi
-            done
-
-            for prev_config_file in ${PREV_QPKG_CONFIG_FILES[@]}; do
-                test_pathfile=$QPKG_CONFIG_BACKUP_PATH/$prev_config_file
-                if [[ -f $test_pathfile && $test_pathfile != $QPKG_CONFIG_BACKUP_PATHFILE ]]; then
-                    mv $test_pathfile $QPKG_CONFIG_BACKUP_PATHFILE
-                    DebugDone "renamed config file from [$test_pathfile] to [$QPKG_CONFIG_BACKUP_PATHFILE]"
-                fi
-            done
-
-            if [[ -f $QPKG_CONFIG_BACKUP_PATHFILE ]]; then
-                $SED_CMD -i "s|log_dir = logs|log_dir = ${SHARE_DOWNLOAD_PATH}/sabnzbd/logs|" "$QPKG_CONFIG_BACKUP_PATHFILE"
-                $SED_CMD -i "s|download_dir = Downloads/incomplete|download_dir = $SHARE_DOWNLOAD_PATH/incomplete|" "$QPKG_CONFIG_BACKUP_PATHFILE"
-                $SED_CMD -i "s|complete_dir = Downloads/complete|complete_dir = $SHARE_DOWNLOAD_PATH/complete|" "$QPKG_CONFIG_BACKUP_PATHFILE"
-
-                if ($GREP_CMD -q '^enable_https = 1' "$QPKG_CONFIG_BACKUP_PATHFILE"); then
-                    package_port=$($GREP_CMD '^https_port = ' "$QPKG_CONFIG_BACKUP_PATHFILE" | $HEAD_CMD -n1 | $CUT_CMD -f3 -d' ')
-                    secure_web_login=true
-                else
-                    package_port=$($GREP_CMD '^port = ' "$QPKG_CONFIG_BACKUP_PATHFILE" | $HEAD_CMD -n1 | $CUT_CMD -f3 -d' ')
-                fi
-            fi
-            ;;
-        SickChill)
-            [[ -f $QPKG_CONFIG_BACKUP_PATHFILE ]] && $SETCFG_CMD General git_remote_url 'http://github.com/sickchill/sickchill.git' -f "$QPKG_CONFIG_BACKUP_PATHFILE"
-            ;;
-        LazyLibrarian|OMedusa|OWatcher3|Headphones|NZBGet)
-            # do nothing - don't need to convert from older versions for these QPKGs as sherpa is the only installer for them.
-            ;;
-        CouchPotato2)
-            for prev_config_file in ${PREV_QPKG_CONFIG_FILES[@]}; do
-                test_pathfile=$QPKG_CONFIG_BACKUP_PATH/$prev_config_file
-                if [[ -f $test_pathfile && $test_pathfile != $QPKG_CONFIG_BACKUP_PATHFILE ]]; then
-                    mv $test_pathfile $QPKG_CONFIG_BACKUP_PATHFILE
-                    DebugDone "renamed config file from [$test_pathfile] to [$QPKG_CONFIG_BACKUP_PATHFILE]"
-                fi
-            done
-            ;;
-        *)
-            ShowError "can't convert settings for '$TARGET_APP' as it's unknown"
-            returncode=1
-            ;;
-    esac
-
-    DebugFuncExit
-    return $returncode
-
-    }
-
 ReloadProfile()
     {
 
@@ -1240,53 +935,6 @@ ReloadProfile()
     DebugVar PATH
 
     return 0
-
-    }
-
-RestoreConfig()
-    {
-
-    [[ $errorcode -gt 0 || $satisfy_dependencies_only = true ]] && return
-
-    DebugFuncEntry
-    local result=0
-    local returncode=0
-
-    if [[ -n $TARGET_APP ]]; then
-        if IsQPKGInstalled $TARGET_APP; then
-            LoadInstalledQPKGVars $TARGET_APP
-
-            if [[ -d $QPKG_CONFIG_BACKUP_PATH ]]; then
-                QPKGServiceCtl stop $TARGET_APP
-
-                if [[ ! -d $package_config_path ]]; then
-                    $MKDIR_CMD -p "$($DIRNAME_CMD "$package_config_path")" 2> /dev/null
-                else
-                    rm -r "$package_config_path" 2> /dev/null
-                fi
-
-                mv "$QPKG_CONFIG_BACKUP_PATH" "$($DIRNAME_CMD "$package_config_path")"
-                result=$?
-
-                if [[ $result -eq 0 ]]; then
-                    ShowDone "restored settings backup '$TARGET_APP'"
-
-                    [[ -n $package_port ]] && $SETCFG_CMD "$TARGET_APP" Web_Port $package_port -f "$APP_CENTER_CONFIG_PATHFILE"
-                else
-                    ShowError "could not restore settings backup to ($package_config_path) [$result]"
-                    errorcode=24
-                    returncode=1
-                fi
-            fi
-        else
-            ShowError "'$TARGET_APP' is NOT installed so can't restore backup"
-            errorcode=25
-            returncode=1
-        fi
-    fi
-
-    DebugFuncExit
-    return $returncode
 
     }
 
@@ -1432,16 +1080,16 @@ LoadInstalledQPKGVars()
                 [[ -f $package_settings_pathfile ]] && break
             done
 
-            if [[ -e $QPKG_CONFIG_BACKUP_PATHFILE ]]; then
-                if [[ $($GETCFG_CMD misc enable_https -d 0 -f $QPKG_CONFIG_BACKUP_PATHFILE) -eq 1 ]]; then
-                    package_port=$($GETCFG_CMD misc https_port -f $QPKG_CONFIG_BACKUP_PATHFILE)
-                    secure_web_login=true
-                else
-                    package_port=$($GETCFG_CMD misc port -f $QPKG_CONFIG_BACKUP_PATHFILE)
-                fi
-            else
+#            if [[ -e $QPKG_CONFIG_BACKUP_PATHFILE ]]; then
+#                if [[ $($GETCFG_CMD misc enable_https -d 0 -f $QPKG_CONFIG_BACKUP_PATHFILE) -eq 1 ]]; then
+#                    package_port=$($GETCFG_CMD misc https_port -f $QPKG_CONFIG_BACKUP_PATHFILE)
+#                    secure_web_login=true
+#                else
+#                    package_port=$($GETCFG_CMD misc port -f $QPKG_CONFIG_BACKUP_PATHFILE)
+#                fi
+#            else
                 package_port=$($GETCFG_CMD $package_name Web_Port -f $APP_CENTER_CONFIG_PATHFILE)
-            fi
+#            fi
 
             [[ -e $package_settings_pathfile ]] && package_api=$($GETCFG_CMD api_key -f $package_settings_pathfile)
             package_version=$($GETCFG_CMD $package_name Version -f $APP_CENTER_CONFIG_PATHFILE)
@@ -1759,11 +1407,7 @@ DisplayResult()
         if [[ $errorcode -eq 0 ]]; then
             [[ $debug = true ]] && emoticon=':DD' || { emoticon=''; echo ;}
 
-            if [[ -n $OLD_APP ]]; then
-                ShowDone "'$OLD_APP' has been successfully replaced with '$TARGET_APP'! $emoticon"
-            else
-                ShowDone "'$TARGET_APP' has been successfully ${RE}installed! $emoticon"
-            fi
+            ShowDone "'$TARGET_APP' has been successfully ${RE}installed! $emoticon"
         elif [[ $errorcode -gt 3 ]]; then       # don't display 'failed' when only showing help
             [[ $debug = true ]] && emoticon=':S ' || { emoticon=''; echo ;}
             ShowError "'$TARGET_APP' ${RE}install failed! ${emoticon}[$errorcode]"
@@ -2524,7 +2168,6 @@ DownloadQPKGs
 RemoveUnwantedQPKGs
 InstallBase
 InstallBaseAddons
-BackupAndRemoveOldQPKG
 InstallTargetQPKG
 Cleanup
 DisplayResult

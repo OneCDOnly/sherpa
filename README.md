@@ -46,8 +46,6 @@ So, to install SABnzbd:
 ```
 ./sherpa.sh SickChill
 
-./sherpa.sh CouchPotato
-
 ./sherpa.sh OWatcher3
 
 ./sherpa.sh LazyLibrarian
@@ -103,15 +101,7 @@ Or run the installer in debug-mode to see it realtime. e.g.:
 
 * The information contained therein was constructed from the efforts of many community members, both here and on the [SABnzbd forum](https://forums.sabnzbd.org/). Thank you to everyone who has contributed.
 
-* Existing installations of Clinton Hall's **SABnzbdplus** or QNAP_Stephane's **QSabNZBdPlus** will be replaced with **SABnzbdplus**. Configuration will be retained.
-
-* Existing installations of Clinton Hall's **CouchPotato2** will be replaced with **CouchPotato2**. Configuration will be retained.
-
-* Existing active installations of **SickRage** will be replaced with **SickChill**. Configuration will be retained.
-
 * Each of these packages continues the idea of 'self-update-on-launch' that was used in Clinton Hall's wrapper scripts. These scripts are my own version and require a few packages to be installed via Entware (this is what **sherpa** does). Updating an app is easy - just restart the app via its init script. Each app is updated from GitHub and from that application's current 'master' branch.
-
-* For those looking to setup a new NAS, suggest you start with SABnzbd+ first, then install a TV show finder like SickChill or Medusa.
 
 * **Medusa** will appear as 'OMedusa' in your App Center to avoid conflict with the existing **Medusa** package available in the Qnapclub Store.
 
