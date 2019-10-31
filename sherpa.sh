@@ -45,7 +45,7 @@ Init()
     {
 
     SCRIPT_FILE=sherpa.sh
-    SCRIPT_VERSION=191030
+    SCRIPT_VERSION=191031
     debug=false
     ResetErrorcode
 
@@ -211,8 +211,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(LazyLibrarian)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/LazyLibrarian/build/LazyLibrarian_191027.qpkg)
-        SHERPA_QPKG_MD5+=(0774979373b9d31bc0901c555a834684)
+        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/LazyLibrarian/build/LazyLibrarian_191031.qpkg)
+        SHERPA_QPKG_MD5+=(0ea1c3cb0c18e04d2291928a1931077a)
         SHERPA_QPKG_ABBRVS+=('ll lazy lazylibrarian')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python3 python3-pyopenssl python3-requests')

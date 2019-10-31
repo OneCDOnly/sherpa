@@ -75,9 +75,13 @@ PullGitRepo()
         echo -n "* updating ($1): " | tee -a $INIT_LOG_PATHFILE
         exec_msgs=$({
             [[ ! -d ${QPKG_GIT_PATH}/.git ]] && { $GIT_CMD clone -b master --depth 1 "$GIT_HTTPS_URL" "$QPKG_GIT_PATH" || $GIT_CMD clone -b master --depth 1 "$GIT_HTTP_URL" "$QPKG_GIT_PATH" ;}
-            cd "$QPKG_GIT_PATH" && $GIT_CMD pull
+            cd "$QPKG_GIT_PATH" && $GIT_CMD fetch --all && $GIT_CMD reset --hard origin/master && $GIT_CMD pull     # allow 'git pull' to overwrite local changes
         } 2>&1)
         result=$?
+
+        # remove module import of 'webbrowser' as it's unavailable via Entware-ng 0.97 and isn't needed anyway
+        local launch_pathfile="$QPKG_GIT_PATH/lazylibrarian/__init__.py"
+        [[ -e $launch_pathfile ]] && (grep -q 'import webbrowser' $launch_pathfile) && sed -i '/^import webbrowser/d' "$launch_pathfile"
 
         if [[ $result = 0 ]]; then
             echo "OK" | tee -a $INIT_LOG_PATHFILE
