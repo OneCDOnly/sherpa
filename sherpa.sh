@@ -45,7 +45,7 @@ Init()
     {
 
     SCRIPT_FILE=sherpa.sh
-    SCRIPT_VERSION=191105
+    SCRIPT_VERSION=191106
     debug=false
     ResetErrorcode
 
@@ -367,9 +367,6 @@ EnvironCheck()
     CalcNASQPKGArch
     DebugQPKG 'arch' "$NAS_QPKG_ARCH"
 
-    CalcPrefEntware
-    DebugScript 'preferred package installer' "$PREF_ENTWARE"
-
     [[ $errorcode -gt 0 ]] && DisplayHelp
 
     if [[ $errorcode -eq 0 && $EUID -ne 0 ]]; then
@@ -432,7 +429,7 @@ EnvironCheck()
     fi
 
     if [[ $errorcode -eq 0 ]]; then
-        if IsQPKGInstalled $PREF_ENTWARE && [[ $PREF_ENTWARE = Entware-3x || $PREF_ENTWARE = Entware ]]; then
+        if IsQPKGInstalled Entware; then
             [[ -e $test_pathfile ]] && { [[ -L $test_pathfile ]] && ENTWARE_VER=std || ENTWARE_VER=alt ;} || ENTWARE_VER=none
             DebugQPKG 'Entware installer' $ENTWARE_VER
 
@@ -540,7 +537,7 @@ DownloadQPKGs()
     DebugFuncEntry
     local returncode=0
 
-    ! IsQPKGInstalled $PREF_ENTWARE && DownloadQPKG $PREF_ENTWARE
+    ! IsQPKGInstalled Entware && DownloadQPKG Entware
 
     { (IsQPKGInstalled SABnzbdplus) || [[ $TARGET_APP = SABnzbdplus ]] ;} && [[ $NAS_QPKG_ARCH != none ]] && ! IsQPKGInstalled Par2 && DownloadQPKG Par2
 
@@ -562,7 +559,7 @@ RemoveUnwantedQPKGs()
     UninstallQPKG Entware-3x
     UninstallQPKG Entware-ng
 
-    [[ $TARGET_APP = $PREF_ENTWARE ]] && { REINSTALL_FLAG=true; UninstallQPKG $PREF_ENTWARE; CalcPrefEntware ;}
+    [[ $TARGET_APP = Entware && $REINSTALL_FLAG = true ]] && UninstallQPKG Entware
 
     DebugFuncExit
     return 0
@@ -577,18 +574,18 @@ InstallBase()
     DebugFuncEntry
     local returncode=0
 
-    if ! IsQPKGInstalled $PREF_ENTWARE; then
+    if ! IsQPKGInstalled Entware; then
         # rename original [/opt]
         opt_path=/opt
         opt_backup_path=/opt.orig
         [[ -d $opt_path && ! -L $opt_path && ! -e $opt_backup_path ]] && mv "$opt_path" "$opt_backup_path"
 
-        InstallQPKG $PREF_ENTWARE && ReloadProfile
+        InstallQPKG Entware && ReloadProfile
 
         # copy all files from original [/opt] into new [/opt]
         [[ -L $opt_path && -d $opt_backup_path ]] && cp --recursive "$opt_backup_path"/* --target-directory "$opt_path" && rm -r "$opt_backup_path"
     else
-        ! IsQPKGEnabled $PREF_ENTWARE && EnableQPKG $PREF_ENTWARE
+        ! IsQPKGEnabled Entware && EnableQPKG Entware
         ReloadProfile
 
         [[ $NAS_QPKG_ARCH != none ]] && ($OPKG_CMD list-installed | $GREP_CMD -q par2cmdline) && $OPKG_CMD remove par2cmdline > /dev/null 2>&1
@@ -607,7 +604,7 @@ PatchBaseInit()
     DebugFuncEntry
     local find_text=''
     local insert_text=''
-    local package_init_pathfile="$(GetQPKGServiceFile $PREF_ENTWARE)"
+    local package_init_pathfile="$(GetQPKGServiceFile Entware)"
 
     if ($GREP_CMD -q 'opt.orig' "$package_init_pathfile"); then
         DebugInfo 'patch: do the "opt shuffle" - already done'
@@ -636,7 +633,6 @@ UpdateEntware()
     local package_list_age=60
     local release_file=/opt/etc/entware_release
     local result=0
-    local upgrade_result=0
     local log_pathfile="$WORKING_PATH/entware-update.log"
 
     IsSysFilePresent $OPKG_CMD || return
@@ -651,13 +647,6 @@ UpdateEntware()
         install_msgs=$($OPKG_CMD update 2>&1)
         result=$?
         echo -e "${install_msgs}\nresult=[$result]" >> "$log_pathfile"
-
-        if [[ $PREF_ENTWARE = Entware-3x && ! -e $release_file ]]; then
-            DebugProc 'performing Entware-3x upgrade x 2'
-            install_msgs=$($OPKG_CMD upgrade; $OPKG_CMD update; $OPKG_CMD upgrade)
-            upgrade_result=$?
-            echo -e "${install_msgs}\nresult=[$upgrade_result]" >> "$log_pathfile"
-        fi
 
         if [[ $result -eq 0 ]]; then
             ShowDone 'updated Entware package list'
@@ -697,7 +686,7 @@ InstallBaseAddons()
     InstallIPKGs
     InstallPIPs
 
-    [[ $TARGET_APP = $PREF_ENTWARE || $update_all_apps = true ]] && RestartAllQPKGs
+    [[ $TARGET_APP = Entware || $update_all_apps = true ]] && RestartAllQPKGs
 
     DebugFuncExit
     return 0
@@ -711,7 +700,7 @@ InstallTargetQPKG()
 
     DebugFuncEntry
 
-    [[ $TARGET_APP != $PREF_ENTWARE ]] && InstallQPKG $TARGET_APP
+    [[ $TARGET_APP != Entware ]] && InstallQPKG $TARGET_APP
 
     DebugFuncExit
     return 0
@@ -921,7 +910,7 @@ InstallQPKG()
 ReloadProfile()
     {
 
-    IsQPKGInstalled $PREF_ENTWARE && PATH="/opt/bin:/opt/sbin:$PATH"
+    IsQPKGInstalled Entware && PATH="/opt/bin:/opt/sbin:$PATH"
 
     DebugDone 'adjusted $PATH'
     DebugVar PATH
@@ -1022,22 +1011,6 @@ CalcNASQPKGArch()
             NAS_QPKG_ARCH=none
             ;;
     esac
-
-    return 0
-
-    }
-
-CalcPrefEntware()
-    {
-
-    # decide which Entware is suitable for this NAS
-
-    # start with the default preferred variant
-    PREF_ENTWARE=Entware
-
-    # then modify according to local environment
-#    [[ $NAS_ARCH = i686 ]] && PREF_ENTWARE=Entware-ng
-#    IsQPKGInstalled Entware-ng && PREF_ENTWARE=Entware-ng
 
     return 0
 
