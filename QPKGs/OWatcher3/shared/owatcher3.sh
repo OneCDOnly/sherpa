@@ -63,7 +63,7 @@ PullGitRepo()
     {
 
     # $1 = package name
-    # $2 = URL to pull/clone from
+    # $2 = URL to clone/pull from
     # $3 = path to clone into
 
     local returncode=0
@@ -76,13 +76,15 @@ PullGitRepo()
     local QPKG_GIT_PATH="$3/$1"
 
     if [[ $returncode = 0 ]]; then
-        local GIT_HTTP_URL="$2"
-        local GIT_HTTPS_URL=${GIT_HTTP_URL/http/git}
+        local GIT_URL="$2"
 
         echo -n "* updating ($1): " | tee -a $INIT_LOG_PATHFILE
         exec_msgs=$({
-            [[ ! -d ${QPKG_GIT_PATH}/.git ]] && { $GIT_CMD clone -b master --depth 1 "$GIT_HTTPS_URL" "$QPKG_GIT_PATH" || $GIT_CMD clone -b master --depth 1 "$GIT_HTTP_URL" "$QPKG_GIT_PATH" ;}
-            cd "$QPKG_GIT_PATH" && $GIT_CMD pull
+            if [[ ! -d ${QPKG_GIT_PATH}/.git ]]; then
+                $GIT_CMD clone -b master --depth 1 "$GIT_URL" "$QPKG_GIT_PATH"
+            else
+                [[ -d $QPKG_GIT_PATH ]] && cd "$QPKG_GIT_PATH" && $GIT_CMD fetch --all && $GIT_CMD reset --hard origin/master && $GIT_CMD pull     # allow 'git pull' to overwrite local changes
+            fi
         } 2>&1)
         result=$?
 

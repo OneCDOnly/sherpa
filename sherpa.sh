@@ -45,7 +45,7 @@ Init()
     {
 
     SCRIPT_FILE=sherpa.sh
-    SCRIPT_VERSION=191031
+    SCRIPT_VERSION=191105
     debug=false
     ResetErrorcode
 
@@ -175,18 +175,9 @@ Init()
 
     SHERPA_QPKG_NAME+=(Entware)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=(http://bin.entware.net/other/Entware_1.00std.qpkg)
-        SHERPA_QPKG_MD5+=(0c99cf2cf8ef61c7a18b42651a37da74)
+        SHERPA_QPKG_URL+=(http://bin.entware.net/other/Entware_1.01std.qpkg)
+        SHERPA_QPKG_MD5+=(9dd3a5baf57058786c945dc2b461d3c5)
         SHERPA_QPKG_ABBRVS+=('ew ent entware')
-        SHERPA_QPKG_DEPS+=('')
-        SHERPA_QPKG_IPKGS+=('')
-        SHERPA_QPKG_PIPS+=('')
-
-    SHERPA_QPKG_NAME+=(Entware-ng)
-        SHERPA_QPKG_ARCH+=(i686)
-        SHERPA_QPKG_URL+=(http://entware.zyxmon.org/binaries/other/Entware-ng_0.97.qpkg)
-        SHERPA_QPKG_MD5+=(6c81cc37cbadd85adfb2751dc06a238f)
-        SHERPA_QPKG_ABBRVS+=('')
         SHERPA_QPKG_DEPS+=('')
         SHERPA_QPKG_IPKGS+=('')
         SHERPA_QPKG_PIPS+=('')
@@ -211,11 +202,11 @@ Init()
 
     SHERPA_QPKG_NAME+=(LazyLibrarian)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/LazyLibrarian/build/LazyLibrarian_191031.qpkg)
-        SHERPA_QPKG_MD5+=(0ea1c3cb0c18e04d2291928a1931077a)
+        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/LazyLibrarian/build/LazyLibrarian_191105.qpkg)
+        SHERPA_QPKG_MD5+=(d06380c0b374f946345ea4087f41a9cf)
         SHERPA_QPKG_ABBRVS+=('ll lazy lazylibrarian')
         SHERPA_QPKG_DEPS+=('Entware')
-        SHERPA_QPKG_IPKGS+=('python3 python3-pyopenssl python3-requests')
+        SHERPA_QPKG_IPKGS+=('python3-pyopenssl python3-requests')
         SHERPA_QPKG_PIPS+=('')
 
     SHERPA_QPKG_NAME+=(OMedusa)
@@ -230,11 +221,11 @@ Init()
 
     SHERPA_QPKG_NAME+=(OWatcher3)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/OWatcher3/build/OWatcher3_190928.qpkg)
-        SHERPA_QPKG_MD5+=(f06ab72f306f5d3ecdf41a1f04ce6f47)
+        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/OWatcher3/build/OWatcher3_191105.qpkg)
+        SHERPA_QPKG_MD5+=(b84af7b6bfec6e83ce19a73da1803710)
         SHERPA_QPKG_ABBRVS+=('ow wat owat watch watcher owatcher watcher3 owatcher3')
         SHERPA_QPKG_DEPS+=('Entware')
-        SHERPA_QPKG_IPKGS+=('python3 jq')
+        SHERPA_QPKG_IPKGS+=('jq')
         SHERPA_QPKG_PIPS+=('')
 
     SHERPA_QPKG_NAME+=(Headphones)
@@ -569,6 +560,7 @@ RemoveUnwantedQPKGs()
 
     UninstallQPKG Optware || ResetErrorcode  # ignore Optware uninstall errors
     UninstallQPKG Entware-3x
+    UninstallQPKG Entware-ng
 
     [[ $TARGET_APP = $PREF_ENTWARE ]] && { REINSTALL_FLAG=true; UninstallQPKG $PREF_ENTWARE; CalcPrefEntware ;}
 
@@ -1044,8 +1036,8 @@ CalcPrefEntware()
     PREF_ENTWARE=Entware
 
     # then modify according to local environment
-    [[ $NAS_ARCH = i686 ]] && PREF_ENTWARE=Entware-ng
-    IsQPKGInstalled Entware-ng && PREF_ENTWARE=Entware-ng
+#    [[ $NAS_ARCH = i686 ]] && PREF_ENTWARE=Entware-ng
+#    IsQPKGInstalled Entware-ng && PREF_ENTWARE=Entware-ng
 
     return 0
 
