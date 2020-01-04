@@ -2,7 +2,7 @@
 ####################################################################################
 # sherpa.sh
 #
-# Copyright (C) 2017-2019 OneCD [one.cd.only@gmail.com]
+# Copyright (C) 2017-2020 OneCD [one.cd.only@gmail.com]
 #
 # so, blame OneCD if it all goes horribly wrong. ;)
 #
@@ -45,7 +45,7 @@ Init()
     {
 
     SCRIPT_FILE=sherpa.sh
-    SCRIPT_VERSION=191106
+    SCRIPT_VERSION=191204
     debug=false
     ResetErrorcode
 
@@ -353,6 +353,7 @@ EnvironCheck()
     DebugNAS 'kernel' "$($UNAME_CMD -mr)"
     DebugNAS 'OS uptime' "$($UPTIME_CMD | $SED_CMD 's|.*up.||;s|,.*load.*||;s|^\ *||')"
     DebugNAS 'system load' "$($UPTIME_CMD | $SED_CMD 's|.*load average: ||' | $AWK_CMD -F', ' '{print "1 min="$1 ", 5 min="$2 ", 15 min="$3}')"
+    DebugNAS 'USER' "$USER"
     DebugNAS 'EUID' "$EUID"
     DebugNAS 'default volume' "$($GETCFG_CMD SHARE_DEF defVolMP -f $DEFAULT_SHARES_PATHFILE)"
     DebugNAS '$PATH' "${PATH:0:43}"
@@ -369,7 +370,7 @@ EnvironCheck()
 
     [[ $errorcode -gt 0 ]] && DisplayHelp
 
-    if [[ $errorcode -eq 0 && $EUID -ne 0 ]]; then
+    if [[ $errorcode -eq 0 ]] && [[ $EUID -ne 0 || $USER != admin ]]; then
         ShowError "this script must be run as the 'admin' user. Please login via SSH as 'admin' and try again."
         errorcode=1
     fi
