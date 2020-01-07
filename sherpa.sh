@@ -45,7 +45,7 @@ Init()
     {
 
     SCRIPT_FILE=sherpa.sh
-    SCRIPT_VERSION=200104
+    SCRIPT_VERSION=200108
     debug=false
     ResetErrorcode
 
@@ -175,8 +175,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(Entware)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=(http://bin.entware.net/other/Entware_1.01std.qpkg)
-        SHERPA_QPKG_MD5+=(9dd3a5baf57058786c945dc2b461d3c5)
+        SHERPA_QPKG_URL+=(http://bin.entware.net/other/Entware_1.02std.qpkg)
+        SHERPA_QPKG_MD5+=(dbc82469933ac3049c06d4c8a023bbb9)
         SHERPA_QPKG_ABBRVS+=('ew ent entware')
         SHERPA_QPKG_DEPS+=('')
         SHERPA_QPKG_IPKGS+=('')
@@ -293,7 +293,7 @@ Init()
 
     SHERPA_COMMON_IPKGS='git git-http nano less ca-certificates python-pip python3-pip'
     SHERPA_COMMON_PIPS='--upgrade pip setuptools'
-    SHERPA_COMMON_CONFLICTS='Optware-NG'
+    SHERPA_COMMON_CONFLICTS='Optware Optware-NG'
 
     PREV_QPKG_CONFIG_DIRS=(SAB_CONFIG CONFIG Config config)                 # last element is used as target dirname
     PREV_QPKG_CONFIG_FILES=(sabnzbd.ini settings.ini config.cfg config.ini) # last element is used as target filename
