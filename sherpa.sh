@@ -45,7 +45,7 @@ Init()
     {
 
     SCRIPT_FILE=sherpa.sh
-    SCRIPT_VERSION=200108
+    SCRIPT_VERSION=200211
     debug=false
     ResetErrorcode
 
@@ -560,7 +560,9 @@ RemoveUnwantedQPKGs()
     UninstallQPKG Entware-3x
     UninstallQPKG Entware-ng
 
-    [[ $TARGET_APP = Entware && $REINSTALL_FLAG = true ]] && UninstallQPKG Entware
+    IsQPKGInstalled $TARGET_APP && REINSTALL_FLAG=true
+
+    [[ $TARGET_APP = Entware ]] && UninstallQPKG Entware
 
     DebugFuncExit
     return 0
