@@ -45,7 +45,7 @@ Init()
     {
 
     SCRIPT_FILE=sherpa.sh
-    SCRIPT_VERSION=200211
+    SCRIPT_VERSION=200212
     debug=false
     ResetErrorcode
 
@@ -191,6 +191,15 @@ Init()
         SHERPA_QPKG_IPKGS+=('python python-pyopenssl python-dev gcc unrar p7zip coreutils-nice ionice ffprobe')
         SHERPA_QPKG_PIPS+=('sabyenc==3.3.5 cheetah')
 
+    SHERPA_QPKG_NAME+=(NZBGet)
+        SHERPA_QPKG_ARCH+=(all)
+        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/NZBGet/build/NZBGet_190928.qpkg)
+        SHERPA_QPKG_MD5+=(baf83cda1c3f44eea6c63a53c88b03ad)
+        SHERPA_QPKG_ABBRVS+=('ng nget nzb nzbget')
+        SHERPA_QPKG_DEPS+=('Entware')
+        SHERPA_QPKG_IPKGS+=('nzbget')
+        SHERPA_QPKG_PIPS+=('')
+
     SHERPA_QPKG_NAME+=(SickChill)
         SHERPA_QPKG_ARCH+=(all)
         SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/SickChill/build/SickChill_190928.qpkg)
@@ -235,15 +244,6 @@ Init()
         SHERPA_QPKG_ABBRVS+=('hp head phones headphones')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python')
-        SHERPA_QPKG_PIPS+=('')
-
-    SHERPA_QPKG_NAME+=(NZBGet)
-        SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/NZBGet/build/NZBGet_190928.qpkg)
-        SHERPA_QPKG_MD5+=(baf83cda1c3f44eea6c63a53c88b03ad)
-        SHERPA_QPKG_ABBRVS+=('ng nget nzb nzbget')
-        SHERPA_QPKG_DEPS+=('Entware')
-        SHERPA_QPKG_IPKGS+=('nzbget')
         SHERPA_QPKG_PIPS+=('')
 
     SHERPA_QPKG_NAME+=(Par2)
