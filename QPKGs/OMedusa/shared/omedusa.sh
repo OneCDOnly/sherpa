@@ -12,7 +12,7 @@ Init()
     local QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.def
     STORED_PID_PATHFILE=/tmp/$QPKG_NAME.pid
     INIT_LOG_PATHFILE=/var/log/$QPKG_NAME.log
-    local DAEMON=/opt/bin/python2.7
+    local DAEMON=/opt/bin/python3
     LAUNCHER="$DAEMON $TARGET_SCRIPT --daemon --nolaunch --datadir $(dirname $QPKG_INI_PATHFILE) --config $QPKG_INI_PATHFILE --pidfile $STORED_PID_PATHFILE"
     export PYTHONPATH=$DAEMON
     export PATH=/opt/bin:/opt/sbin:$PATH
