@@ -1,31 +1,19 @@
 #!/usr/bin/env bash
-####################################################################################
-# sabnzbd.sh
-#
-# Copyright (C) 2017-2020 OneCD [one.cd.only@gmail.com]
-#
-# so, blame OneCD if it all goes horribly wrong. ;)
-#
-# For more info: https://forum.qnap.com/viewtopic.php?f=320&t=132373
-####################################################################################
 
 Init()
     {
 
-    QPKG_NAME=SABnzbdplus
-    local TARGET_SCRIPT=SABnzbd.py
+    QPKG_NAME=CouchPotato2
+    local TARGET_SCRIPT=CouchPotato.py
 
     QTS_QPKG_CONF_PATHFILE=/etc/config/qpkg.conf
     QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f $QTS_QPKG_CONF_PATHFILE)
-    NZBMEDIA_PATH=/share/$(/sbin/getcfg SHARE_DEF defDownload -d Qdownload -f /etc/config/def_share.info)
     QPKG_INI_PATHFILE=$QPKG_PATH/config/config.ini
     local QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.def
     STORED_PID_PATHFILE=/tmp/$QPKG_NAME.pid
     INIT_LOG_PATHFILE=/var/log/$QPKG_NAME.log
-    QPKG_BACKUP_FILE=$QPKG_NAME.backup.gz
-    BACKUP_PATHFILE=''									# use weekly QTS config backup location in default volume
     local DAEMON=/opt/bin/python2.7
-    LAUNCHER="$DAEMON $TARGET_SCRIPT --daemon --browser 0 --config-file $QPKG_INI_PATHFILE --pidfile $STORED_PID_PATHFILE"
+    LAUNCHER="$DAEMON $TARGET_SCRIPT --daemon --data_dir $(dirname $QPKG_INI_PATHFILE) --config_file $QPKG_INI_PATHFILE --pid_file $STORED_PID_PATHFILE"
     export PYTHONPATH=$DAEMON
     export PATH=/opt/bin:/opt/sbin:$PATH
 
@@ -67,38 +55,7 @@ QPKGIsActive()
 UpdateQpkg()
     {
 
-    PullGitRepo $QPKG_NAME 'http://github.com/sabnzbd/sabnzbd.git' $QPKG_PATH && UpdateLanguages
-    PullGitRepo 'nzbToMedia' 'http://github.com/clinton-hall/nzbToMedia.git' $NZBMEDIA_PATH
-
-    }
-
-UpdateLanguages()
-    {
-
-    # run [tools/make_mo.py] if SABnzbd version number has changed since last run
-
-    local exec_msgs=''
-    local olddir=$PWD
-    local version_current_pathfile=${QPKG_PATH}/SABnzbdplus/sabnzbd/version.py
-    local version_store_pathfile=$(dirname $version_current_pathfile)/version.stored
-    local version_current_number=$(grep '__version__ =' $version_current_pathfile | sed 's|^.*"\(.*\)"|\1|')
-
-    [[ -e $version_store_pathfile && $version_current_number = $(<$version_store_pathfile) ]] && return 0
-
-    echo -n "* updating language support ($QPKG_NAME): " | tee -a $INIT_LOG_PATHFILE
-    cd $QPKG_PATH/SABnzbdplus || return 1
-    exec_msgs=$(python tools/make_mo.py)
-    result=$?
-
-    if [[ $result -eq 0 ]]; then
-        echo "$version_current_number" > $version_store_pathfile
-        echo "OK" | tee -a $INIT_LOG_PATHFILE
-        echo -e "= result: $result\n= ${FUNCNAME[0]}(): '$exec_msgs'" >> $INIT_LOG_PATHFILE
-    else
-        echo -e "failed!\n= result: $result\n= ${FUNCNAME[0]}(): '$exec_msgs'" | tee -a $INIT_LOG_PATHFILE
-    fi
-
-    cd $olddir || return 1
+    PullGitRepo $QPKG_NAME 'http://github.com/CouchPotato/CouchPotatoServer.git' $QPKG_PATH
 
     }
 
@@ -148,8 +105,9 @@ StartQPKG()
     local returncode=0
     local exec_msgs=''
     local ui_port=''
-    local secure=''
     local msg=''
+    local conflicting_port=5050     # port 5050 now conflicts with QNAP's HBS Cloud Connector, so assign a different port
+    local new_port=5055
 
     QPKGIsActive && return
 
@@ -157,14 +115,20 @@ StartQPKG()
 
     cd $QPKG_PATH/$QPKG_NAME || return 1
 
-    ui_port=$(UIPortSecure)
-    if [[ $ui_port -gt 0 ]]; then
-        secure='S'
-    else
-        ui_port=$(UIPort)
-    fi
+    ui_port=$(UIPort)
 
     {
+        if [[ $ui_port -gt 0 ]]; then
+            if [[ $ui_port -eq $conflicting_port ]]; then
+                echo -n "* re-assigning port $ui_port to $new_port: "
+                ui_port=$new_port
+                /sbin/setcfg core port $ui_port -f "$QPKG_INI_PATHFILE"
+                echo "OK"
+            fi
+
+            /sbin/setcfg $QPKG_NAME Web_Port $ui_port -f $QTS_QPKG_CONF_PATHFILE
+        fi
+
         if (PortAvailable $ui_port); then
             if [[ $ui_port -gt 0 ]]; then
                 /sbin/setcfg $QPKG_NAME Web_Port $ui_port -f $QTS_QPKG_CONF_PATHFILE
@@ -176,7 +140,7 @@ StartQPKG()
                 if [[ $result = 0 || $result = 2 ]]; then
                     echo "OK"
                     sleep 10             # allow time for daemon to start and claim port
-                    ! PortAvailable $ui_port && echo "= service configured for HTTP${secure} port: $ui_port"
+                    ! PortAvailable $ui_port && echo "= service configured for HTTP port: $ui_port"
                 else
                     echo "failed!"
                     echo "= result: $result"
@@ -235,42 +199,13 @@ StopQPKG()
 
     }
 
-BackupQPKGData()
-	{
-
-	# copy everything in $QPKG_PATH/config to .gz at highest speed (no compression), updating existing .gz
-
-	}
-
-RestoreQPKGData()
-	{
-
-	# test if backup file exists.
-	# if so, then extract backup file and overwrite existing config.
-
-	}
-
 UIPort()
     {
 
     # get HTTP port
     # stdout = HTTP port (if used) or 0 if none found
 
-    /sbin/getcfg misc port -d 0 -f $QPKG_INI_PATHFILE
-
-    }
-
-UIPortSecure()
-    {
-
-    # get HTTPS port
-    # stdout = HTTPS port (if used) or 0 if none found
-
-    if [[ $(/sbin/getcfg misc enable_https -d 0 -f $QPKG_INI_PATHFILE) = 1 ]]; then
-        /sbin/getcfg misc https_port -d 0 -f $QPKG_INI_PATHFILE
-    else
-        echo 0
-    fi
+    /sbin/getcfg core port -d 0 -f $QPKG_INI_PATHFILE
 
     }
 
@@ -346,25 +281,21 @@ WaitForEntware()
 Init
 
 if [[ $errorcode -eq 0 ]]; then
-	echo -e "$(SessionSeparator "$1 requested")\n= $(date)" >> $INIT_LOG_PATHFILE
     case $1 in
         start)
+            echo -e "$(SessionSeparator 'start requested')\n= $(date)" >> $INIT_LOG_PATHFILE
             StartQPKG || errorcode=1
             ;;
         stop)
+            echo -e "$(SessionSeparator 'stop requested')\n= $(date)" >> $INIT_LOG_PATHFILE
             StopQPKG || errorcode=1
             ;;
         restart)
+            echo -e "$(SessionSeparator 'restart requested')\n= $(date)" >> $INIT_LOG_PATHFILE
             StopQPKG; StartQPKG || errorcode=1
             ;;
-		backup)
-            BackupQPKGData || errorcode=1
-            ;;
-		restore)
-            StopQPKG; RestoreQPKGData; StartQPKG || errorcode=1
-			;;
         *)
-            echo "Usage: $0 {start|stop|restart|backup|restore}"
+            echo "Usage: $0 {start|stop|restart}"
             ;;
     esac
 fi
