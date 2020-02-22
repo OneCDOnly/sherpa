@@ -22,8 +22,7 @@ Init()
     local QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.def
     STORED_PID_PATHFILE=/tmp/$QPKG_NAME.pid
     INIT_LOG_PATHFILE=/var/log/$QPKG_NAME.log
-    QPKG_BACKUP_FILE=$QPKG_NAME.backup.gz
-    BACKUP_PATHFILE=''									# use weekly QTS config backup location in default volume
+    BACKUP_PATHFILE=$(getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info)/.@backup_config/$QPKG_NAME.userdata.tar.gz
     local DAEMON=/opt/bin/python2.7
     LAUNCHER="$DAEMON $TARGET_SCRIPT --daemon --browser 0 --config-file $QPKG_INI_PATHFILE --pidfile $STORED_PID_PATHFILE"
     export PYTHONPATH=$DAEMON
@@ -68,7 +67,7 @@ UpdateQpkg()
     {
 
     PullGitRepo $QPKG_NAME 'http://github.com/sabnzbd/sabnzbd.git' $QPKG_PATH && UpdateLanguages
-    PullGitRepo 'nzbToMedia' 'http://github.com/clinton-hall/nzbToMedia.git' $NZBMEDIA_PATH
+    PullGitRepo nzbToMedia 'http://github.com/clinton-hall/nzbToMedia.git' $NZBMEDIA_PATH
 
     }
 
@@ -236,19 +235,26 @@ StopQPKG()
     }
 
 BackupQPKGData()
-	{
+    {
 
-	# copy everything in $QPKG_PATH/config to .gz at highest speed (no compression), updating existing .gz
+    echo -n "* creating userdata backup: "
+    /bin/tar --create --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config .
+    [[ $? = 0 ]] && echo "OK" || echo "error!"
 
-	}
+    }
 
 RestoreQPKGData()
-	{
+    {
 
-	# test if backup file exists.
-	# if so, then extract backup file and overwrite existing config.
+    echo -n "* restoring userdata backup: "
+    if [[ -f $BACKUP_PATHFILE ]]; then
+        /bin/tar --extract --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config
+        [[ $? = 0 ]] && echo "OK" || echo "error!"
+    else
+        echo "no previous backup file found!"
+    fi
 
-	}
+    }
 
 UIPort()
     {
@@ -346,7 +352,7 @@ WaitForEntware()
 Init
 
 if [[ $errorcode -eq 0 ]]; then
-	echo -e "$(SessionSeparator "$1 requested")\n= $(date)" >> $INIT_LOG_PATHFILE
+    echo -e "$(SessionSeparator "$1 requested")\n= $(date)" >> $INIT_LOG_PATHFILE
     case $1 in
         start)
             StartQPKG || errorcode=1
@@ -357,12 +363,12 @@ if [[ $errorcode -eq 0 ]]; then
         restart)
             StopQPKG; StartQPKG || errorcode=1
             ;;
-		backup)
+        backup)
             BackupQPKGData || errorcode=1
             ;;
-		restore)
+        restore)
             StopQPKG; RestoreQPKGData; StartQPKG || errorcode=1
-			;;
+            ;;
         *)
             echo "Usage: $0 {start|stop|restart|backup|restore}"
             ;;
