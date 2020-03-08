@@ -45,7 +45,7 @@ Init()
     {
 
     SCRIPT_FILE=sherpa.sh
-    SCRIPT_VERSION=200223
+    SCRIPT_VERSION=200309
     debug=false
     ResetErrorcode
 
@@ -177,7 +177,7 @@ Init()
         SHERPA_QPKG_ARCH+=(all)
         SHERPA_QPKG_URL+=(http://bin.entware.net/other/Entware_1.02std.qpkg)
         SHERPA_QPKG_MD5+=(dbc82469933ac3049c06d4c8a023bbb9)
-        SHERPA_QPKG_ABBRVS+=('ew ent entware')
+        SHERPA_QPKG_ABBRVS+=('opkg ew ent entware')
         SHERPA_QPKG_DEPS+=('')
         SHERPA_QPKG_IPKGS+=('')
         SHERPA_QPKG_PIPS+=('')
@@ -303,9 +303,6 @@ Init()
     QPKG_DL_PATH=$WORKING_PATH/qpkg-downloads
     IPKG_DL_PATH=$WORKING_PATH/ipkg-downloads
     IPKG_CACHE_PATH=$WORKING_PATH/ipkg-cache
-    QPKG_BACKUP_ROOT_PATH=$WORKING_PATH/backup
-    QPKG_CONFIG_BACKUP_PATH=$QPKG_BACKUP_ROOT_PATH/${PREV_QPKG_CONFIG_DIRS[${#PREV_QPKG_CONFIG_DIRS[@]}-1]}
-    QPKG_CONFIG_BACKUP_PATHFILE=$QPKG_CONFIG_BACKUP_PATH/${PREV_QPKG_CONFIG_FILES[${#PREV_QPKG_CONFIG_FILES[@]}-1]}
 
     # internals
     secure_web_login=false
@@ -316,10 +313,12 @@ Init()
     progress_message=''
     previous_length=0
     previous_msg=''
-    REINSTALL_FLAG=false
+    reinstall_flag=false
     satisfy_dependencies_only=false
     ignore_space_arg=''
     update_all_apps=false
+    backup_all_apps=false
+    restore_all_apps=false
     [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg='--insecure' || curl_insecure_arg=''
 
     local result=0
@@ -393,7 +392,7 @@ EnvironCheck()
 
         if [[ $result -ne 0 ]]; then
             ShowError "unable to create QPKG download directory ($QPKG_DL_PATH) [$result]"
-            errorcode=4
+            errorcode=3
         fi
     fi
 
@@ -404,7 +403,7 @@ EnvironCheck()
 
         if [[ $result -ne 0 ]]; then
             ShowError "unable to create IPKG download directory ($IPKG_DL_PATH) [$result]"
-            errorcode=5
+            errorcode=4
         else
             monitor_flag="$IPKG_DL_PATH/.monitor"
         fi
@@ -416,7 +415,7 @@ EnvironCheck()
 
         if [[ $result -ne 0 ]]; then
             ShowError "unable to create IPKG cache directory ($IPKG_CACHE_PATH) [$result]"
-            errorcode=6
+            errorcode=5
         fi
     fi
 
@@ -424,7 +423,7 @@ EnvironCheck()
         for conflicting_qpkg in ${SHERPA_COMMON_CONFLICTS[@]}; do
             if IsQPKGEnabled $conflicting_qpkg; then
                 ShowError "'$conflicting_qpkg' is enabled. This is an unsupported configuration."
-                errorcode=10
+                errorcode=6
             fi
         done
     fi
@@ -436,7 +435,7 @@ EnvironCheck()
 
             if [[ $ENTWARE_VER = none ]]; then
                 ShowError 'Entware appears to be installed but is not visible.'
-                errorcode=12
+                errorcode=7
             fi
         fi
     fi
@@ -448,7 +447,7 @@ EnvironCheck()
             ShowDone "Internet is accessible"
         else
             ShowError "no Internet access"
-            errorcode=13
+            errorcode=8
         fi
     fi
 
@@ -465,7 +464,7 @@ ParseArgs()
     TARGET_APPS=()
 
     if [[ -z $USER_ARGS_RAW ]]; then
-        errorcode=14
+        errorcode=9
         return 1
     else
         local user_args=($(echo "$USER_ARGS_RAW" | $TR_CMD '[A-Z]' '[a-z]'))
@@ -489,8 +488,16 @@ ParseArgs()
                 update_all_apps=true
                 DebugVar update_all_apps
                 ;;
+            --backup-all)
+                backup_all_apps=true
+                DebugVar backup_all_apps
+                ;;
+            --restore-all)
+                restore_all_apps=true
+                DebugVar restore_all_apps
+                ;;
             --help)
-                errorcode=15
+                errorcode=10
                 return 1
                 ;;
             *)
@@ -498,7 +505,8 @@ ParseArgs()
         esac
     done
 
-    [[ -z $TARGET_APP && $satisfy_dependencies_only = false && $update_all_apps = false ]] && errorcode=16
+    [[ -z $TARGET_APP && $satisfy_dependencies_only = false && $update_all_apps = false ]] && errorcode=11
+    [[ $backup_all_apps = true && $restore_all_apps = true ]] && errorcode=12               # no-point performing both operations
     return 0
 
     }
@@ -560,7 +568,7 @@ RemoveUnwantedQPKGs()
     UninstallQPKG Entware-3x
     UninstallQPKG Entware-ng
 
-    IsQPKGInstalled $TARGET_APP && REINSTALL_FLAG=true
+    IsQPKGInstalled $TARGET_APP && reinstall_flag=true
 
     [[ $TARGET_APP = Entware ]] && UninstallQPKG Entware
 
@@ -736,7 +744,7 @@ InstallIPKGs()
         InstallIPKGBatch "$packages"
     else
         ShowError "IPKG download path [$IPKG_DL_PATH] does not exist"
-        errorcode=17
+        errorcode=13
         returncode=1
     fi
 
@@ -785,7 +793,7 @@ InstallIPKGBatch()
             ShowError "download & install IPKGs failed [$result]"
             DebugErrorFile "$log_pathfile"
 
-            errorcode=18
+            errorcode=14
             returncode=1
         fi
         DebugStageEnd $IPKG_download_startseconds
@@ -832,7 +840,7 @@ InstallPIPs()
         ShowError "download & install PIP modules failed [$result]"
         DebugErrorFile "$log_pathfile"
 
-        errorcode=19
+        errorcode=15
         returncode=1
     fi
 
@@ -902,7 +910,7 @@ InstallQPKG()
         ShowError "file installation failed ($target_file) [$result]"
         DebugErrorFile "$log_pathfile"
 
-        errorcode=20
+        errorcode=16
         returncode=1
     fi
 
@@ -972,14 +980,14 @@ DownloadQPKG()
                 ShowDone "downloaded file ($remote_filename)"
             else
                 ShowError "downloaded file checksum incorrect ($remote_filename)"
-                errorcode=26
+                errorcode=17
                 returncode=1
             fi
         else
             ShowError "download failed ($local_pathfile) [$result]"
             DebugErrorFile "$log_pathfile"
 
-            errorcode=27
+            errorcode=18
             returncode=1
         fi
     fi
@@ -1048,27 +1056,18 @@ LoadInstalledQPKGVars()
                 [[ -f $package_settings_pathfile ]] && break
             done
 
-#            if [[ -e $QPKG_CONFIG_BACKUP_PATHFILE ]]; then
-#                if [[ $($GETCFG_CMD misc enable_https -d 0 -f $QPKG_CONFIG_BACKUP_PATHFILE) -eq 1 ]]; then
-#                    package_port=$($GETCFG_CMD misc https_port -f $QPKG_CONFIG_BACKUP_PATHFILE)
-#                    secure_web_login=true
-#                else
-#                    package_port=$($GETCFG_CMD misc port -f $QPKG_CONFIG_BACKUP_PATHFILE)
-#                fi
-#            else
-                package_port=$($GETCFG_CMD $package_name Web_Port -f $APP_CENTER_CONFIG_PATHFILE)
-#            fi
+            package_port=$($GETCFG_CMD $package_name Web_Port -f $APP_CENTER_CONFIG_PATHFILE)
 
             [[ -e $package_settings_pathfile ]] && package_api=$($GETCFG_CMD api_key -f $package_settings_pathfile)
             package_version=$($GETCFG_CMD $package_name Version -f $APP_CENTER_CONFIG_PATHFILE)
         else
             DebugError 'QPKG not installed?'
-            errorcode=28
+            errorcode=19
             returncode=1
         fi
     else
         DebugError 'QPKG name unspecified'
-        errorcode=29
+        errorcode=20
         returncode=1
     fi
 
@@ -1088,7 +1087,7 @@ UninstallQPKG()
 
     if [[ -z $1 ]]; then
         DebugError 'QPKG name unspecified'
-        errorcode=30
+        errorcode=21
         returncode=1
     else
         qpkg_installed_path="$($GETCFG_CMD "$1" Install_Path -f "$APP_CENTER_CONFIG_PATHFILE")"
@@ -1105,7 +1104,7 @@ UninstallQPKG()
                     ShowDone "uninstalled '$1'"
                 else
                     ShowError "unable to uninstall '$1' [$result]"
-                    errorcode=31
+                    errorcode=22
                     returncode=1
                 fi
             fi
@@ -1134,11 +1133,11 @@ QPKGServiceCtl()
 
     if [[ -z $1 ]]; then
         DebugError 'action unspecified'
-        errorcode=32
+        errorcode=23
         return 1
     elif [[ -z $2 ]]; then
         DebugError 'package unspecified'
-        errorcode=33
+        errorcode=24
         return 1
     fi
 
@@ -1163,7 +1162,7 @@ QPKGServiceCtl()
                 else
                     $CAT_CMD "$qpkg_pathfile.$START_LOG_FILE" >> "$DEBUG_LOG_PATHFILE"
                 fi
-                errorcode=34
+                errorcode=25
                 return 1
             fi
             ;;
@@ -1211,7 +1210,7 @@ QPKGServiceCtl()
             ;;
         *)
             DebugError "Unrecognised action ($1)"
-            errorcode=35
+            errorcode=26
             return 1
             ;;
     esac
@@ -1232,18 +1231,18 @@ GetQPKGServiceFile()
 
     if [[ -z $1 ]]; then
         DebugError 'Package unspecified'
-        errorcode=36
+        errorcode=27
         returncode=1
     else
         output=$($GETCFG_CMD $1 Shell -f $APP_CENTER_CONFIG_PATHFILE)
 
         if [[ -z $output ]]; then
             DebugError "No service file configured for package ($1)"
-            errorcode=37
+            errorcode=28
             returncode=1
         elif [[ ! -e $output ]]; then
             DebugError "Package service file not found ($output)"
-            errorcode=38
+            errorcode=29
             returncode=1
         fi
     fi
@@ -1265,7 +1264,7 @@ GetQPKGPathFilename()
 
     if [[ -z $1 ]]; then
         DebugError 'Package unspecified'
-        errorcode=39
+        errorcode=30
         returncode=1
     else
         output="$QPKG_DL_PATH/$($BASENAME_CMD "$(GetQPKGRemoteURL $1)")"
@@ -1289,7 +1288,7 @@ GetQPKGRemoteURL()
 
     if [[ -z $1 ]]; then
         DebugError 'Package unspecified'
-        errorcode=40
+        errorcode=31
     else
         for index in ${!SHERPA_QPKG_NAME[@]}; do
             if [[ $1 = ${SHERPA_QPKG_NAME[$index]} ]] && [[ ${SHERPA_QPKG_ARCH[$index]} = all || ${SHERPA_QPKG_ARCH[$index]} = $NAS_QPKG_ARCH ]]; then
@@ -1318,7 +1317,7 @@ GetQPKGMD5()
 
     if [[ -z $1 ]]; then
         DebugError 'Package unspecified'
-        errorcode=41
+        errorcode=32
     else
         for index in ${!SHERPA_QPKG_NAME[@]}; do
             if [[ $1 = ${SHERPA_QPKG_NAME[$index]} ]] && [[ ${SHERPA_QPKG_ARCH[$index]} = all || ${SHERPA_QPKG_ARCH[$index]} = $NAS_QPKG_ARCH ]]; then
@@ -1369,7 +1368,7 @@ DisplayResult()
     local suggest_issue=false
 
     if [[ -n $TARGET_APP ]]; then
-        [[ $REINSTALL_FLAG = true ]] && RE='re' || RE=''
+        [[ $reinstall_flag = true ]] && RE='re' || RE=''
         [[ $secure_web_login = true ]] && SL='s' || SL=''
 
         if [[ $errorcode -eq 0 ]]; then
@@ -1664,7 +1663,7 @@ IsSysFilePresent()
 
     if ! [[ -f $1 || -L $1 ]]; then
         ShowError "a required NAS system file is missing [$1]"
-        errorcode=42
+        errorcode=33
         return 1
     else
         return 0
@@ -1684,7 +1683,7 @@ IsSysSharePresent()
 
     if [[ ! -L $1 ]]; then
         ShowError "a required NAS system share is missing [$1]. Please re-create it via the QTS Control Panel -> Privilege Settings -> Shared Folders."
-        errorcode=43
+        errorcode=34
         return 1
     else
         return 0
