@@ -19,6 +19,4 @@ ipkg_urls+=(-O "${source_url}/archive/${pkg_base}_${pkg_version}_${pkg_arch}.ipk
 
 curl ${ipkg_urls[@]}
 
-opkg install --force-downgrade *.ipk
-
-rm *.ipk
+opkg install --force-downgrade *.ipk && rm *.ipk
