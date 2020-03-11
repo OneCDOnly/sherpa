@@ -45,7 +45,7 @@ Init()
     {
 
     SCRIPT_FILE=sherpa.sh
-    SCRIPT_VERSION=200309
+    SCRIPT_VERSION=200311
     debug=false
     ResetErrorcode
 
@@ -742,6 +742,10 @@ InstallIPKGs()
         fi
 
         InstallIPKGBatch "$packages"
+
+        if (IsQPKGInstalled OWatcher3) || [[ $TARGET_APP = OWatcher3 ]]; then
+            DowngradePy3
+        fi
     else
         ShowError "IPKG download path [$IPKG_DL_PATH] does not exist"
         errorcode=13
@@ -801,6 +805,34 @@ InstallIPKGBatch()
 
     DebugFuncExit
     return $returncode
+
+    }
+
+DowngradePy3()
+    {
+
+    # Watcher3 isn't presently compatible with Python 3.8.1 so let's force a downgrade to 3.7.4
+
+    [[ -d $IPKG_DL_PATH ]] && rm -f "$IPKG_DL_PATH"/*.ipk
+
+    source_url=$(grep -o 'http://.*' /opt/etc/opkg.conf)
+    pkg_base=python3
+    pkg_names=(asyncio base cgi cgitb codecs ctypes dbm decimal dev distutils email gdbm lib2to3 light logging lzma multiprocessing ncurses openssl pydoc sqlite3 unittest urllib xml)
+    pkg_version=3.7.4-2
+    pkg_arch=$(basename $source_url | sed 's|\-k|\-|;s|sf\-|\-|')
+    pkg_name=''
+    ipkg_urls=()
+
+    for pkg_name in ${pkg_names[@]}; do
+        ipkg_urls+=(-O "${source_url}/archive/${pkg_base}-${pkg_name}_${pkg_version}_${pkg_arch}.ipk")
+    done
+
+    # and this package too
+    ipkg_urls+=(-O "${source_url}/archive/${pkg_base}_${pkg_version}_${pkg_arch}.ipk")
+
+    (cd "$IPKG_DL_PATH" && $CURL_CMD $curl_insecure_arg ${ipkg_urls[@]})
+
+    $OPKG_CMD install --force-downgrade "$IPKG_DL_PATH"/*.ipk
 
     }
 
