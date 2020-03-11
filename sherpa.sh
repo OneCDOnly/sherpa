@@ -812,6 +812,8 @@ DowngradePy3()
 
     (! IsQPKGInstalled OWatcher3) && [[ $TARGET_APP != OWatcher3 ]] && return
 
+    DebugFuncEntry
+
     [[ -d $IPKG_DL_PATH ]] && rm -f "$IPKG_DL_PATH"/*.ipk
 
     local source_url=$(grep -o 'http://.*' /opt/etc/opkg.conf)
@@ -840,6 +842,9 @@ DowngradePy3()
     echo -e "${install_msgs}\nresult=[$result]" > "$install_log_pathfile"
 
     ShowDone "downgraded to Python $pkg_version"
+
+    DebugFuncExit
+    return $returncode
 
     }
 
@@ -937,7 +942,7 @@ InstallQPKG()
 
     local log_pathfile="$local_pathfile.$INSTALL_LOG_FILE"
     target_file=$($BASENAME_CMD "$local_pathfile")
-    ShowProc "installing file ($target_file) - this can take a while"
+    ShowProcLong "installing file ($target_file)"
     install_msgs=$(eval sh "$local_pathfile" 2>&1)
     result=$?
 
@@ -1185,7 +1190,7 @@ QPKGServiceCtl()
 
     case $1 in
         start)
-            ShowProc "starting service '$2' - this can take a while"
+            ShowProcLong "starting service '$2'"
             msgs=$("$init_pathfile" start)
             result=$?
             echo -e "${msgs}\nresult=[$result]" >> "$qpkg_pathfile.$START_LOG_FILE"
@@ -2017,6 +2022,13 @@ ShowProc()
 
     ShowLogLine_write "$(ColourTextBrightOrange proc)" "$1 ..."
     SaveLogLine proc "$1 ..."
+
+    }
+
+ShowProcLong()
+    {
+
+    ShowProc "$1 - this can take a while"
 
     }
 
