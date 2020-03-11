@@ -45,7 +45,7 @@ Init()
     {
 
     SCRIPT_FILE=sherpa.sh
-    SCRIPT_VERSION=200311
+    SCRIPT_VERSION=200312
     debug=false
     ResetErrorcode
 
@@ -742,10 +742,7 @@ InstallIPKGs()
         fi
 
         InstallIPKGBatch "$packages"
-
-        if (IsQPKGInstalled OWatcher3) || [[ $TARGET_APP = OWatcher3 ]]; then
-            DowngradePy3
-        fi
+        DowngradePy3
     else
         ShowError "IPKG download path [$IPKG_DL_PATH] does not exist"
         errorcode=13
@@ -813,15 +810,21 @@ DowngradePy3()
 
     # Watcher3 isn't presently compatible with Python 3.8.1 so let's force a downgrade to 3.7.4
 
+    (! IsQPKGInstalled OWatcher3) && [[ $TARGET_APP != OWatcher3 ]] && return
+
     [[ -d $IPKG_DL_PATH ]] && rm -f "$IPKG_DL_PATH"/*.ipk
 
-    source_url=$(grep -o 'http://.*' /opt/etc/opkg.conf)
-    pkg_base=python3
-    pkg_names=(asyncio base cgi cgitb codecs ctypes dbm decimal dev distutils email gdbm lib2to3 light logging lzma multiprocessing ncurses openssl pydoc sqlite3 unittest urllib xml)
-    pkg_version=3.7.4-2
-    pkg_arch=$(basename $source_url | sed 's|\-k|\-|;s|sf\-|\-|')
-    pkg_name=''
-    ipkg_urls=()
+    local source_url=$(grep -o 'http://.*' /opt/etc/opkg.conf)
+    local pkg_base=python3
+    local pkg_names=(asyncio base cgi cgitb codecs ctypes dbm decimal dev distutils email gdbm lib2to3 light logging lzma multiprocessing ncurses openssl pydoc sqlite3 unittest urllib xml)
+    local pkg_version=3.7.4-2
+    local pkg_arch=$(basename $source_url | sed 's|\-k|\-|;s|sf\-|\-|')
+    local pkg_name=''
+    local ipkg_urls=()
+    local dl_log_pathfile="$IPKG_DL_PATH/IPKGs.$DOWNLOAD_LOG_FILE"
+    local install_log_pathfile="$IPKG_DL_PATH/IPKGs.$INSTALL_LOG_FILE"
+
+    ShowProc "downgrading to Python $pkg_version"
 
     for pkg_name in ${pkg_names[@]}; do
         ipkg_urls+=(-O "${source_url}/archive/${pkg_base}-${pkg_name}_${pkg_version}_${pkg_arch}.ipk")
@@ -830,9 +833,13 @@ DowngradePy3()
     # and this package too
     ipkg_urls+=(-O "${source_url}/archive/${pkg_base}_${pkg_version}_${pkg_arch}.ipk")
 
-    (cd "$IPKG_DL_PATH" && $CURL_CMD $curl_insecure_arg ${ipkg_urls[@]})
+    (cd "$IPKG_DL_PATH" && $CURL_CMD $curl_insecure_arg ${ipkg_urls[@]} >> "$dl_log_pathfile" 2>&1)
 
-    $OPKG_CMD install --force-downgrade "$IPKG_DL_PATH"/*.ipk
+    install_msgs=$($OPKG_CMD install --force-downgrade "$IPKG_DL_PATH"/*.ipk 2>&1)
+    result=$?
+    echo -e "${install_msgs}\nresult=[$result]" > "$install_log_pathfile"
+
+    ShowDone "downgraded to Python $pkg_version"
 
     }
 
