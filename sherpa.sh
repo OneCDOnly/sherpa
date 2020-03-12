@@ -805,6 +805,7 @@ DowngradePy3()
     # Watcher3 isn't presently compatible with Python 3.8.1 so let's force a downgrade to 3.7.4
 
     (! IsQPKGInstalled OWatcher3) && [[ $TARGET_APP != OWatcher3 ]] && return
+    [[ -e /opt/bin/python3 && $(/opt/bin/python3 -V | sed 's|[^0-9]*||g') -le 374 ]] && return
 
     DebugFuncEntry
 
