@@ -85,14 +85,12 @@ Init()
     UNZIP_CMD=/usr/bin/unzip
     UPTIME_CMD=/usr/bin/uptime
     WC_CMD=/usr/bin/wc
-    WGET_CMD=/usr/bin/wget
 
     ZIP_CMD=/usr/local/sbin/zip
 
     FIND_CMD=/opt/bin/find
     OPKG_CMD=/opt/bin/opkg
     PIP_CMD=/opt/bin/pip
-    PIP3_CMD=/opt/bin/pip3
 
     # paths and files
     APP_CENTER_CONFIG_PATHFILE=/etc/config/qpkg.conf
@@ -141,7 +139,6 @@ Init()
     IsSysFilePresent $UNZIP_CMD || return
     IsSysFilePresent $UPTIME_CMD || return
     IsSysFilePresent $WC_CMD || return
-    IsSysFilePresent $WGET_CMD || return
 
     IsSysFilePresent $ZIP_CMD || return
 
@@ -305,8 +302,6 @@ Init()
     IPKG_CACHE_PATH=$WORKING_PATH/ipkg-cache
 
     # internals
-    secure_web_login=false
-    package_port=0
     SCRIPT_STARTSECONDS=$($DATE_CMD +%s)
     NAS_FIRMWARE=$($GETCFG_CMD System Version -f $ULINUX_PATHFILE)
     NAS_ARCH=$($UNAME_CMD -m)
@@ -642,7 +637,6 @@ UpdateEntware()
     DebugFuncEntry
     local package_list_file=/opt/var/opkg-lists/entware
     local package_list_age=60
-    local release_file=/opt/etc/entware_release
     local result=0
     local log_pathfile="$WORKING_PATH/entware-update.log"
 
@@ -1083,9 +1077,6 @@ LoadInstalledQPKGVars()
     local package_settings_pathfile=''
     package_installed_path=''
     package_config_path=''
-    package_port=''
-    package_api=''
-    package_version=''
 
     if [[ -n $package_name ]]; then
         package_installed_path=$($GETCFG_CMD $package_name Install_Path -f $APP_CENTER_CONFIG_PATHFILE)
@@ -1099,11 +1090,6 @@ LoadInstalledQPKGVars()
                 package_settings_pathfile=$package_config_path/$prev_config_file
                 [[ -f $package_settings_pathfile ]] && break
             done
-
-            package_port=$($GETCFG_CMD $package_name Web_Port -f $APP_CENTER_CONFIG_PATHFILE)
-
-            [[ -e $package_settings_pathfile ]] && package_api=$($GETCFG_CMD api_key -f $package_settings_pathfile)
-            package_version=$($GETCFG_CMD $package_name Version -f $APP_CENTER_CONFIG_PATHFILE)
         else
             DebugError 'QPKG not installed?'
             errorcode=19
@@ -1186,7 +1172,6 @@ QPKGServiceCtl()
     fi
 
     init_pathfile=$(GetQPKGServiceFile $2)
-    init_file=$($BASENAME_CMD "$init_pathfile")
 
     case $1 in
         start)
@@ -1408,12 +1393,10 @@ DisplayResult()
     DebugFuncEntry
 
     local RE=''
-    local SL=''
     local suggest_issue=false
 
     if [[ -n $TARGET_APP ]]; then
         [[ $reinstall_flag = true ]] && RE='re' || RE=''
-        [[ $secure_web_login = true ]] && SL='s' || SL=''
 
         if [[ $errorcode -eq 0 ]]; then
             [[ $debug = true ]] && emoticon=':DD' || { emoticon=''; echo ;}
@@ -1637,17 +1620,13 @@ IsQPKGInstalled()
     # input:
     #   $1 = package name to check
     # output:
-    #   $package_is_installed = true / false
     #   $? = 0 (true) or 1 (false)
-
-    package_is_installed=false
 
     [[ -z $1 ]] && return 1
 
     if [[ $($GETCFG_CMD "$1" RC_Number -d 0 -f "$APP_CENTER_CONFIG_PATHFILE") -eq 0 ]]; then
         return 1
     else
-        package_is_installed=true
         return 0
     fi
 
@@ -1659,17 +1638,13 @@ IsQPKGEnabled()
     # input:
     #   $1 = package name to check
     # output:
-    #   $package_is_enabled = true / false
     #   $? = 0 (true) or 1 (false)
-
-    package_is_enabled=false
 
     [[ -z $1 ]] && return 1
 
     if [[ $($GETCFG_CMD "$1" Enable -u -f "$APP_CENTER_CONFIG_PATHFILE") != 'TRUE' ]]; then
         return 1
     else
-        package_is_enabled=true
         return 0
     fi
 
@@ -1867,7 +1842,7 @@ DebugStageEnd()
 
     # $1 = start time in seconds
 
-    DebugStage 'elapsed time' "$(ConvertSecsToMinutes "$(($($DATE_CMD +%s)-$([[ -n $1 ]] && echo $1 || echo "1")))")"
+    DebugStage 'elapsed time' "$(ConvertSecsToMinutes "$(($($DATE_CMD +%s)-$([[ -n $1 ]] && echo "$1" || echo "1")))")"
     DebugInfoThinSeparator
 
     }
@@ -2001,7 +1976,7 @@ DebugErrorFile()
     DebugLog "$1"
     DebugLogThinSeparator
 
-    while read linebuff; do
+    while read -r linebuff; do
         DebugLog "$linebuff"
     done < "$1"
 
