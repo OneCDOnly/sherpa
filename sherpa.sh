@@ -90,7 +90,8 @@ Init()
 
     FIND_CMD=/opt/bin/find
     OPKG_CMD=/opt/bin/opkg
-    PIP_CMD=/opt/bin/pip
+    PIP2_CMD=/opt/bin/pip2
+    PIP3_CMD=/opt/bin/pip3
 
     # paths and files
     APP_CENTER_CONFIG_PATHFILE=/etc/config/qpkg.conf
@@ -168,7 +169,8 @@ Init()
         SHERPA_QPKG_ABBRVS=()   # if set, this package is user-installable, and these abbreviations can be used to specify app
         SHERPA_QPKG_DEPS=()     # this QPKG requires these QPKGs to be installed first
         SHERPA_QPKG_IPKGS=()    # this QPKG requires these IPKGs to be installed first
-        SHERPA_QPKG_PIPS=()     # this QPKG requires these PIPs to be installed first
+        SHERPA_QPKG_PIP2S=()    # this QPKG requires these PIPs for Python 2 to be installed first
+        SHERPA_QPKG_PIP3S=()    # this QPKG requires these PIPs for Python 3 to be installed first
 
     SHERPA_QPKG_NAME+=(Entware)
         SHERPA_QPKG_ARCH+=(all)
@@ -177,7 +179,8 @@ Init()
         SHERPA_QPKG_ABBRVS+=('opkg ew ent entware')
         SHERPA_QPKG_DEPS+=('')
         SHERPA_QPKG_IPKGS+=('')
-        SHERPA_QPKG_PIPS+=('')
+        SHERPA_QPKG_PIP2S+=('')
+        SHERPA_QPKG_PIP3S+=('')
 
     SHERPA_QPKG_NAME+=(SABnzbdplus)
         SHERPA_QPKG_ARCH+=(all)
@@ -186,7 +189,8 @@ Init()
         SHERPA_QPKG_ABBRVS+=('sb sab sabnzbd sabnzbdplus')
         SHERPA_QPKG_DEPS+=('Entware Par2')
         SHERPA_QPKG_IPKGS+=('python python-pyopenssl python-dev gcc unrar p7zip coreutils-nice ionice ffprobe')
-        SHERPA_QPKG_PIPS+=('sabyenc==3.3.5 cheetah')
+        SHERPA_QPKG_PIP2S+=('sabyenc==3.3.5 cheetah')
+        SHERPA_QPKG_PIP3S+=('')
 
     SHERPA_QPKG_NAME+=(NZBGet)
         SHERPA_QPKG_ARCH+=(all)
@@ -195,7 +199,8 @@ Init()
         SHERPA_QPKG_ABBRVS+=('ng nget nzb nzbget')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('nzbget')
-        SHERPA_QPKG_PIPS+=('')
+        SHERPA_QPKG_PIP2S+=('')
+        SHERPA_QPKG_PIP3S+=('')
 
     SHERPA_QPKG_NAME+=(SickChill)
         SHERPA_QPKG_ARCH+=(all)
@@ -204,7 +209,8 @@ Init()
         SHERPA_QPKG_ABBRVS+=('sc sick sickc chill sickchill')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python')
-        SHERPA_QPKG_PIPS+=('')
+        SHERPA_QPKG_PIP2S+=('')
+        SHERPA_QPKG_PIP3S+=('')
 
     SHERPA_QPKG_NAME+=(LazyLibrarian)
         SHERPA_QPKG_ARCH+=(all)
@@ -213,7 +219,8 @@ Init()
         SHERPA_QPKG_ABBRVS+=('ll lazy lazylibrarian')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python3-pyopenssl python3-requests')
-        SHERPA_QPKG_PIPS+=('')
+        SHERPA_QPKG_PIP2S+=('')
+        SHERPA_QPKG_PIP3S+=('python-magic')
 
     SHERPA_QPKG_NAME+=(OMedusa)
         SHERPA_QPKG_ARCH+=(all)
@@ -222,8 +229,8 @@ Init()
         SHERPA_QPKG_ABBRVS+=('om med omed medusa omedusa')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python3 mediainfo')
-        SHERPA_QPKG_PIPS+=('')
-        SHERPA_QPKG_REPLACES+=('')
+        SHERPA_QPKG_PIP2S+=('')
+        SHERPA_QPKG_PIP3S+=('')
 
     SHERPA_QPKG_NAME+=(OWatcher3)
         SHERPA_QPKG_ARCH+=(all)
@@ -232,7 +239,8 @@ Init()
         SHERPA_QPKG_ABBRVS+=('ow wat owat watch watcher owatcher watcher3 owatcher3')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('jq')
-        SHERPA_QPKG_PIPS+=('')
+        SHERPA_QPKG_PIP2S+=('')
+        SHERPA_QPKG_PIP3S+=('')
 
     SHERPA_QPKG_NAME+=(Headphones)
         SHERPA_QPKG_ARCH+=(all)
@@ -241,7 +249,8 @@ Init()
         SHERPA_QPKG_ABBRVS+=('hp head phones headphones')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python')
-        SHERPA_QPKG_PIPS+=('')
+        SHERPA_QPKG_PIP2S+=('')
+        SHERPA_QPKG_PIP3S+=('')
 
     SHERPA_QPKG_NAME+=(Par2)
         SHERPA_QPKG_ARCH+=(x86)
@@ -250,7 +259,8 @@ Init()
         SHERPA_QPKG_ABBRVS+=('')
         SHERPA_QPKG_DEPS+=('')
         SHERPA_QPKG_IPKGS+=('')
-        SHERPA_QPKG_PIPS+=('')
+        SHERPA_QPKG_PIP2S+=('')
+        SHERPA_QPKG_PIP3S+=('')
 
     SHERPA_QPKG_NAME+=(Par2)
         SHERPA_QPKG_ARCH+=(x64)
@@ -259,7 +269,8 @@ Init()
         SHERPA_QPKG_ABBRVS+=('')
         SHERPA_QPKG_DEPS+=('')
         SHERPA_QPKG_IPKGS+=('')
-        SHERPA_QPKG_PIPS+=('')
+        SHERPA_QPKG_PIP2S+=('')
+        SHERPA_QPKG_PIP3S+=('')
 
     SHERPA_QPKG_NAME+=(Par2)
         SHERPA_QPKG_ARCH+=(x41)
@@ -268,7 +279,8 @@ Init()
         SHERPA_QPKG_ABBRVS+=('')
         SHERPA_QPKG_DEPS+=('')
         SHERPA_QPKG_IPKGS+=('')
-        SHERPA_QPKG_PIPS+=('')
+        SHERPA_QPKG_PIP2S+=('')
+        SHERPA_QPKG_PIP3S+=('')
 
     SHERPA_QPKG_NAME+=(Par2)
         SHERPA_QPKG_ARCH+=(x31)
@@ -277,7 +289,8 @@ Init()
         SHERPA_QPKG_ABBRVS+=('')
         SHERPA_QPKG_DEPS+=('')
         SHERPA_QPKG_IPKGS+=('')
-        SHERPA_QPKG_PIPS+=('')
+        SHERPA_QPKG_PIP2S+=('')
+        SHERPA_QPKG_PIP3S+=('')
 
     SHERPA_QPKG_NAME+=(Par2)
         SHERPA_QPKG_ARCH+=(a64)
@@ -286,10 +299,12 @@ Init()
         SHERPA_QPKG_ABBRVS+=('')
         SHERPA_QPKG_DEPS+=('')
         SHERPA_QPKG_IPKGS+=('')
-        SHERPA_QPKG_PIPS+=('')
+        SHERPA_QPKG_PIP2S+=('')
+        SHERPA_QPKG_PIP3S+=('')
 
     SHERPA_COMMON_IPKGS='git git-http nano less ca-certificates python-pip python3-pip'
-    SHERPA_COMMON_PIPS='--upgrade pip setuptools'
+    SHERPA_COMMON_PIP2S='--upgrade pip setuptools'
+    SHERPA_COMMON_PIP3S='--upgrade pip setuptools'
     SHERPA_COMMON_CONFLICTS='Optware Optware-NG'
 
     PREV_QPKG_CONFIG_DIRS=(SAB_CONFIG CONFIG Config config)                 # last element is used as target dirname
@@ -689,7 +704,8 @@ InstallBaseAddons()
     fi
 
     InstallIPKGs
-    InstallPIPs
+    InstallPIP2s
+    InstallPIP3s
 
     [[ $TARGET_APP = Entware || $update_all_apps = true ]] && RestartAllQPKGs
 
@@ -843,7 +859,7 @@ DowngradePy3()
 
     }
 
-InstallPIPs()
+InstallPIP2s()
     {
 
     [[ $errorcode -gt 0 ]] && return
@@ -854,32 +870,77 @@ InstallPIPs()
     local result=0
     local returncode=0
     local packages=''
-    local log_pathfile="$WORKING_PATH/PIP-modules.$INSTALL_LOG_FILE"
+    local log_pathfile="$WORKING_PATH/PIP2-modules.$INSTALL_LOG_FILE"
 
-    IsSysFilePresent $PIP_CMD || return 1
+    IsSysFilePresent $PIP2_CMD || return 1
 
     for index in ${!SHERPA_QPKG_NAME[@]}; do
         if (IsQPKGInstalled ${SHERPA_QPKG_NAME[$index]}) || [[ $TARGET_APP = ${SHERPA_QPKG_NAME[$index]} ]]; then
-            packages+=" ${SHERPA_QPKG_PIPS[$index]}"
+            packages+=" ${SHERPA_QPKG_PIP2S[$index]}"
         fi
     done
 
-    ShowProc "downloading & installing PIP modules"
+    ShowProc "downloading & installing PIP2 modules"
 
-    install_cmd="$PIP_CMD install $SHERPA_COMMON_PIPS 2>&1"
-    [[ -n ${packages// /} ]] && install_cmd+=" && $PIP_CMD install $packages 2>&1"
+    install_cmd="$PIP2_CMD install $SHERPA_COMMON_PIP2S 2>&1"
+    [[ -n ${packages// /} ]] && install_cmd+=" && $PIP2_CMD install $packages 2>&1"
 
     install_msgs=$(eval "$install_cmd")
     result=$?
-    echo -e "${install_msgs}\nresult=[$result]" > "$log_pathfile"
+    echo -e "command=[${install_cmd}]\nmessages=[${install_msgs}]\nresult=[$result]" > "$log_pathfile"
 
     if [[ $result -eq 0 ]]; then
-        ShowDone "downloaded & installed PIP modules"
+        ShowDone "downloaded & installed PIP2 modules"
     else
-        ShowError "download & install PIP modules failed [$result]"
+        ShowError "download & install PIP2 modules failed [$result]"
         DebugErrorFile "$log_pathfile"
 
         errorcode=15
+        returncode=1
+    fi
+
+    DebugFuncExit
+    return $returncode
+
+    }
+
+InstallPIP3s()
+    {
+
+    [[ $errorcode -gt 0 ]] && return
+
+    DebugFuncEntry
+    local install_cmd=''
+    local install_msgs=''
+    local result=0
+    local returncode=0
+    local packages=''
+    local log_pathfile="$WORKING_PATH/PIP3-modules.$INSTALL_LOG_FILE"
+
+    IsSysFilePresent $PIP3_CMD || return 1
+
+    for index in ${!SHERPA_QPKG_NAME[@]}; do
+        if (IsQPKGInstalled ${SHERPA_QPKG_NAME[$index]}) || [[ $TARGET_APP = ${SHERPA_QPKG_NAME[$index]} ]]; then
+            packages+=" ${SHERPA_QPKG_PIP3S[$index]}"
+        fi
+    done
+
+    ShowProc "downloading & installing PIP3 modules"
+
+    install_cmd="$PIP3_CMD install $SHERPA_COMMON_PIP3S 2>&1"
+    [[ -n ${packages// /} ]] && install_cmd+=" && $PIP3_CMD install $packages 2>&1"
+
+    install_msgs=$(eval "$install_cmd")
+    result=$?
+    echo -e "command=[${install_cmd}]\nmessages=[${install_msgs}]\nresult=[$result]" > "$log_pathfile"
+
+    if [[ $result -eq 0 ]]; then
+        ShowDone "downloaded & installed PIP3 modules"
+    else
+        ShowError "download & install PIP3 modules failed [$result]"
+        DebugErrorFile "$log_pathfile"
+
+        errorcode=16
         returncode=1
     fi
 
@@ -949,7 +1010,7 @@ InstallQPKG()
         ShowError "file installation failed ($target_file) [$result]"
         DebugErrorFile "$log_pathfile"
 
-        errorcode=16
+        errorcode=17
         returncode=1
     fi
 
@@ -1019,14 +1080,14 @@ DownloadQPKG()
                 ShowDone "downloaded file ($remote_filename)"
             else
                 ShowError "downloaded file checksum incorrect ($remote_filename)"
-                errorcode=17
+                errorcode=18
                 returncode=1
             fi
         else
             ShowError "download failed ($local_pathfile) [$result]"
             DebugErrorFile "$log_pathfile"
 
-            errorcode=18
+            errorcode=19
             returncode=1
         fi
     fi
@@ -1093,12 +1154,12 @@ LoadInstalledQPKGVars()
             done
         else
             DebugError 'QPKG not installed?'
-            errorcode=19
+            errorcode=20
             returncode=1
         fi
     else
         DebugError 'QPKG name unspecified'
-        errorcode=20
+        errorcode=21
         returncode=1
     fi
 
@@ -1118,7 +1179,7 @@ UninstallQPKG()
 
     if [[ -z $1 ]]; then
         DebugError 'QPKG name unspecified'
-        errorcode=21
+        errorcode=22
         returncode=1
     else
         qpkg_installed_path="$($GETCFG_CMD "$1" Install_Path -f "$APP_CENTER_CONFIG_PATHFILE")"
@@ -1135,7 +1196,7 @@ UninstallQPKG()
                     ShowDone "uninstalled '$1'"
                 else
                     ShowError "unable to uninstall '$1' [$result]"
-                    errorcode=22
+                    errorcode=23
                     returncode=1
                 fi
             fi
@@ -1164,11 +1225,11 @@ QPKGServiceCtl()
 
     if [[ -z $1 ]]; then
         DebugError 'action unspecified'
-        errorcode=23
+        errorcode=24
         return 1
     elif [[ -z $2 ]]; then
         DebugError 'package unspecified'
-        errorcode=24
+        errorcode=25
         return 1
     fi
 
@@ -1192,7 +1253,7 @@ QPKGServiceCtl()
                 else
                     $CAT_CMD "$qpkg_pathfile.$START_LOG_FILE" >> "$DEBUG_LOG_PATHFILE"
                 fi
-                errorcode=25
+                errorcode=26
                 return 1
             fi
             ;;
@@ -1240,7 +1301,7 @@ QPKGServiceCtl()
             ;;
         *)
             DebugError "Unrecognised action ($1)"
-            errorcode=26
+            errorcode=27
             return 1
             ;;
     esac
@@ -1261,18 +1322,18 @@ GetQPKGServiceFile()
 
     if [[ -z $1 ]]; then
         DebugError 'Package unspecified'
-        errorcode=27
+        errorcode=28
         returncode=1
     else
         output=$($GETCFG_CMD $1 Shell -f $APP_CENTER_CONFIG_PATHFILE)
 
         if [[ -z $output ]]; then
             DebugError "No service file configured for package ($1)"
-            errorcode=28
+            errorcode=29
             returncode=1
         elif [[ ! -e $output ]]; then
             DebugError "Package service file not found ($output)"
-            errorcode=29
+            errorcode=30
             returncode=1
         fi
     fi
@@ -1294,7 +1355,7 @@ GetQPKGPathFilename()
 
     if [[ -z $1 ]]; then
         DebugError 'Package unspecified'
-        errorcode=30
+        errorcode=31
         returncode=1
     else
         output="$QPKG_DL_PATH/$($BASENAME_CMD "$(GetQPKGRemoteURL $1)")"
@@ -1318,7 +1379,7 @@ GetQPKGRemoteURL()
 
     if [[ -z $1 ]]; then
         DebugError 'Package unspecified'
-        errorcode=31
+        errorcode=32
     else
         for index in ${!SHERPA_QPKG_NAME[@]}; do
             if [[ $1 = ${SHERPA_QPKG_NAME[$index]} ]] && [[ ${SHERPA_QPKG_ARCH[$index]} = all || ${SHERPA_QPKG_ARCH[$index]} = $NAS_QPKG_ARCH ]]; then
@@ -1347,7 +1408,7 @@ GetQPKGMD5()
 
     if [[ -z $1 ]]; then
         DebugError 'Package unspecified'
-        errorcode=32
+        errorcode=33
     else
         for index in ${!SHERPA_QPKG_NAME[@]}; do
             if [[ $1 = ${SHERPA_QPKG_NAME[$index]} ]] && [[ ${SHERPA_QPKG_ARCH[$index]} = all || ${SHERPA_QPKG_ARCH[$index]} = $NAS_QPKG_ARCH ]]; then
@@ -1683,7 +1744,7 @@ IsSysFilePresent()
 
     if ! [[ -f $1 || -L $1 ]]; then
         ShowError "a required NAS system file is missing [$1]"
-        errorcode=33
+        errorcode=34
         return 1
     else
         return 0
@@ -1703,7 +1764,7 @@ IsSysSharePresent()
 
     if [[ ! -L $1 ]]; then
         ShowError "a required NAS system share is missing [$1]. Please re-create it via the QTS Control Panel -> Privilege Settings -> Shared Folders."
-        errorcode=34
+        errorcode=35
         return 1
     else
         return 0
