@@ -45,7 +45,7 @@ Init()
     {
 
     SCRIPT_FILE=sherpa.sh
-    SCRIPT_VERSION=200312
+    SCRIPT_VERSION=200313
     debug=false
     ResetErrorcode
 
@@ -90,7 +90,8 @@ Init()
 
     FIND_CMD=/opt/bin/find
     OPKG_CMD=/opt/bin/opkg
-    PIP2_CMD=/opt/bin/pip2
+#     PIP2_CMD=/opt/bin/pip2
+    PIP2_CMD=/opt/bin/pip
     PIP3_CMD=/opt/bin/pip3
 
     # paths and files
@@ -705,7 +706,7 @@ InstallBaseAddons()
 
     InstallIPKGs
     InstallPIP2s
-    InstallPIP3s
+#     InstallPIP3s
 
     [[ $TARGET_APP = Entware || $update_all_apps = true ]] && RestartAllQPKGs
 
