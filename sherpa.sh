@@ -90,9 +90,8 @@ Init()
 
     FIND_CMD=/opt/bin/find
     OPKG_CMD=/opt/bin/opkg
-#     PIP2_CMD=/opt/bin/pip2
-    PIP2_CMD=/opt/bin/pip
-    PIP3_CMD=/opt/bin/pip3
+    pip2_cmd=/opt/bin/pip2
+    pip3_cmd=/opt/bin/pip3
 
     # paths and files
     APP_CENTER_CONFIG_PATHFILE=/etc/config/qpkg.conf
@@ -706,7 +705,7 @@ InstallBaseAddons()
 
     InstallIPKGs
     InstallPIP2s
-#     InstallPIP3s
+    InstallPIP3s
 
     [[ $TARGET_APP = Entware || $update_all_apps = true ]] && RestartAllQPKGs
 
@@ -822,7 +821,8 @@ DowngradePy3()
     # Watcher3 isn't presently compatible with Python 3.8.1 so let's force a downgrade to 3.7.4
 
     (! IsQPKGInstalled OWatcher3) && [[ $TARGET_APP != OWatcher3 ]] && return
-    [[ -e /opt/bin/python3 && $(/opt/bin/python3 -V | sed 's|[^0-9]*||g') -le 374 ]] && return
+    [[ ! -e /opt/bin/python3 ]] && return
+    [[ $(/opt/bin/python3 -V | sed 's|[^0-9]*||g') -le 374 ]] && return
 
     DebugFuncEntry
 
@@ -873,7 +873,16 @@ InstallPIP2s()
     local packages=''
     local log_pathfile="$WORKING_PATH/PIP2-modules.$INSTALL_LOG_FILE"
 
-    IsSysFilePresent $PIP2_CMD || return 1
+    # sometimes, OpenWRT 'pip' is for Py3, so let's prefer a Py2 version
+    if [[ -e /opt/bin/pip2 ]]; then
+        pip2_cmd=/opt/bin/pip2
+    elif [[ -e /opt/bin/pip2.7 ]]; then
+        pip2_cmd=/opt/bin/pip2.7
+    elif [[ -e /opt/bin/pip ]]; then
+        pip2_cmd=/opt/bin/pip
+    else
+        IsSysFilePresent $pip2_cmd || return 1
+    fi
 
     for index in ${!SHERPA_QPKG_NAME[@]}; do
         if (IsQPKGInstalled ${SHERPA_QPKG_NAME[$index]}) || [[ $TARGET_APP = ${SHERPA_QPKG_NAME[$index]} ]]; then
@@ -883,8 +892,8 @@ InstallPIP2s()
 
     ShowProc "downloading & installing PIP2 modules"
 
-    install_cmd="$PIP2_CMD install $SHERPA_COMMON_PIP2S 2>&1"
-    [[ -n ${packages// /} ]] && install_cmd+=" && $PIP2_CMD install $packages 2>&1"
+    install_cmd="$pip2_cmd install $SHERPA_COMMON_PIP2S 2>&1"
+    [[ -n ${packages// /} ]] && install_cmd+=" && $pip2_cmd install $packages 2>&1"
 
     install_msgs=$(eval "$install_cmd")
     result=$?
@@ -918,7 +927,14 @@ InstallPIP3s()
     local packages=''
     local log_pathfile="$WORKING_PATH/PIP3-modules.$INSTALL_LOG_FILE"
 
-    IsSysFilePresent $PIP3_CMD || return 1
+    # sometimes, OpenWRT doesn't have a 'pip3'
+    if [[ -e /opt/bin/pip3 ]]; then
+        pip3_cmd=/opt/bin/pip3
+    elif [[ -e /opt/bin/pip3.8 ]]; then
+        pip3_cmd=/opt/bin/pip3.8
+    else
+        IsSysFilePresent $pip3_cmd || return 1
+    fi
 
     for index in ${!SHERPA_QPKG_NAME[@]}; do
         if (IsQPKGInstalled ${SHERPA_QPKG_NAME[$index]}) || [[ $TARGET_APP = ${SHERPA_QPKG_NAME[$index]} ]]; then
@@ -928,8 +944,8 @@ InstallPIP3s()
 
     ShowProc "downloading & installing PIP3 modules"
 
-    install_cmd="$PIP3_CMD install $SHERPA_COMMON_PIP3S 2>&1"
-    [[ -n ${packages// /} ]] && install_cmd+=" && $PIP3_CMD install $packages 2>&1"
+    install_cmd="$pip3_cmd install $SHERPA_COMMON_PIP3S 2>&1"
+    [[ -n ${packages// /} ]] && install_cmd+=" && $pip3_cmd install $packages 2>&1"
 
     install_msgs=$(eval "$install_cmd")
     result=$?
