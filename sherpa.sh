@@ -45,7 +45,7 @@ Init()
     {
 
     SCRIPT_FILE=sherpa.sh
-    SCRIPT_VERSION=200313
+    SCRIPT_VERSION=200315
     debug=false
     ResetErrorcode
 
@@ -303,8 +303,10 @@ Init()
         SHERPA_QPKG_PIP3S+=('')
 
     SHERPA_COMMON_IPKGS='git git-http nano less ca-certificates python-pip python3-pip'
-    SHERPA_COMMON_PIP2S='--upgrade pip setuptools'
-    SHERPA_COMMON_PIP3S='--upgrade pip setuptools'
+#     SHERPA_COMMON_PIP2S='--upgrade pip setuptools'
+#     SHERPA_COMMON_PIP3S='--upgrade pip setuptools'
+    SHERPA_COMMON_PIP2S='--disable-pip-version-check --upgrade setuptools'
+    SHERPA_COMMON_PIP3S='--disable-pip-version-check --upgrade setuptools'
     SHERPA_COMMON_CONFLICTS='Optware Optware-NG'
 
     PREV_QPKG_CONFIG_DIRS=(SAB_CONFIG CONFIG Config config)                 # last element is used as target dirname
@@ -366,8 +368,8 @@ EnvironCheck()
     DebugNAS 'EUID' "$EUID"
     DebugNAS 'default volume' "$($GETCFG_CMD SHARE_DEF defVolMP -f $DEFAULT_SHARES_PATHFILE)"
     DebugNAS '$PATH' "${PATH:0:43}"
-    DebugNAS '/opt' "$([[ -L '/opt' ]] && $READLINK_CMD '/opt' || echo "not present")"
-    DebugNAS "$SHARE_DOWNLOAD_PATH" "$([[ -L $SHARE_DOWNLOAD_PATH ]] && $READLINK_CMD "$SHARE_DOWNLOAD_PATH" || echo "not present!")"
+    DebugNAS '/opt' "$([[ -L '/opt' ]] && $READLINK_CMD '/opt' || echo "<not present>")"
+    DebugNAS "$SHARE_DOWNLOAD_PATH" "$([[ -L $SHARE_DOWNLOAD_PATH ]] && $READLINK_CMD "$SHARE_DOWNLOAD_PATH" || echo "<not present>")"
     DebugScript 'user arguments' "$USER_ARGS_RAW"
     DebugScript 'target app(s)' "${TARGET_APPS[*]}"
     DebugScript 'working path' "$WORKING_PATH"
@@ -705,7 +707,7 @@ InstallBaseAddons()
 
     InstallIPKGs
     InstallPIP2s
-    InstallPIP3s
+#     InstallPIP3s
 
     [[ $TARGET_APP = Entware || $update_all_apps = true ]] && RestartAllQPKGs
 
