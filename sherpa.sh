@@ -45,7 +45,7 @@ Init()
     {
 
     SCRIPT_FILE=sherpa.sh
-    SCRIPT_VERSION=200315
+    SCRIPT_VERSION=200316
     debug=false
     ResetErrorcode
 
@@ -254,8 +254,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(Par2)
         SHERPA_QPKG_ARCH+=(x86)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/Par2/Par2_0.8.0.0_x86.qpkg)
-        SHERPA_QPKG_MD5+=(c2584f84334dccd685e56419f2f07b9d)
+        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/Par2/Par2_0.8.1.0_x86.qpkg)
+        SHERPA_QPKG_MD5+=(996ffb92d774eb01968003debc171e91)
         SHERPA_QPKG_ABBRVS+=('')
         SHERPA_QPKG_DEPS+=('')
         SHERPA_QPKG_IPKGS+=('')
@@ -264,8 +264,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(Par2)
         SHERPA_QPKG_ARCH+=(x64)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/Par2/Par2_0.8.0.0_x86_64.qpkg)
-        SHERPA_QPKG_MD5+=(e720a700a3364f5e81af6de40ab2e0b0)
+        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/Par2/Par2_0.8.1.0_x86_64.qpkg)
+        SHERPA_QPKG_MD5+=(520472cc87d301704f975f6eb9948e38)
         SHERPA_QPKG_ABBRVS+=('')
         SHERPA_QPKG_DEPS+=('')
         SHERPA_QPKG_IPKGS+=('')
@@ -274,8 +274,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(Par2)
         SHERPA_QPKG_ARCH+=(x41)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/Par2/Par2_0.8.0.0_arm-x41.qpkg)
-        SHERPA_QPKG_MD5+=(32281486500ba2dd55df40f00c38af53)
+        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/Par2/Par2_0.8.1.0_arm-x41.qpkg)
+        SHERPA_QPKG_MD5+=(8516e45e704875cdd2cd2bb315c4e1e6)
         SHERPA_QPKG_ABBRVS+=('')
         SHERPA_QPKG_DEPS+=('')
         SHERPA_QPKG_IPKGS+=('')
@@ -284,8 +284,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(Par2)
         SHERPA_QPKG_ARCH+=(x31)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/Par2/Par2_0.8.0.0_arm-x31.qpkg)
-        SHERPA_QPKG_MD5+=(d60a625e255a48f82c414fab1ea53a76)
+        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/Par2/Par2_0.8.1.0_arm-x31.qpkg)
+        SHERPA_QPKG_MD5+=(ce8af2e009eb87733c3b855e41a94f8e)
         SHERPA_QPKG_ABBRVS+=('')
         SHERPA_QPKG_DEPS+=('')
         SHERPA_QPKG_IPKGS+=('')
@@ -294,8 +294,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(Par2)
         SHERPA_QPKG_ARCH+=(a64)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/Par2/Par2_0.8.0.0_arm_64.qpkg)
-        SHERPA_QPKG_MD5+=(1cb7fa5dc1b3b6f912cb0e1981aa74d2)
+        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/Par2/Par2_0.8.1.0_arm_64.qpkg)
+        SHERPA_QPKG_MD5+=(4d8e99f97936a163e411aa8765595f7a)
         SHERPA_QPKG_ABBRVS+=('')
         SHERPA_QPKG_DEPS+=('')
         SHERPA_QPKG_IPKGS+=('')
