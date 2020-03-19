@@ -45,7 +45,7 @@ Init()
     {
 
     SCRIPT_FILE=sherpa.sh
-    SCRIPT_VERSION=200316
+    SCRIPT_VERSION=200320
     debug=false
     ResetErrorcode
 
@@ -824,17 +824,17 @@ DowngradePy3()
 
     (! IsQPKGInstalled OWatcher3) && [[ $TARGET_APP != OWatcher3 ]] && return
     [[ ! -e /opt/bin/python3 ]] && return
-    [[ $(/opt/bin/python3 -V | sed 's|[^0-9]*||g') -le 374 ]] && return
+    [[ $(/opt/bin/python3 -V | $SED_CMD 's|[^0-9]*||g') -le 374 ]] && return
 
     DebugFuncEntry
 
     [[ -d $IPKG_DL_PATH ]] && rm -f "$IPKG_DL_PATH"/*.ipk
 
-    local source_url=$(grep -o 'http://.*' /opt/etc/opkg.conf)
+    local source_url=$($GREP_CMD 'http://' /opt/etc/opkg.conf | $SED_CMD 's|^.*\(http://\)|\1|')
     local pkg_base=python3
     local pkg_names=(asyncio base cgi cgitb codecs ctypes dbm decimal dev distutils email gdbm lib2to3 light logging lzma multiprocessing ncurses openssl pydoc sqlite3 unittest urllib xml)
     local pkg_version=3.7.4-2
-    local pkg_arch=$(basename $source_url | sed 's|\-k|\-|;s|sf\-|\-|')
+    local pkg_arch=$($BASENAME_CMD $source_url | $SED_CMD 's|\-k|\-|;s|sf\-|\-|')
     local pkg_name=''
     local ipkg_urls=()
     local dl_log_pathfile="$IPKG_DL_PATH/IPKGs.$DOWNLOAD_LOG_FILE"
