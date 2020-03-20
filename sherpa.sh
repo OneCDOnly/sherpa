@@ -45,7 +45,7 @@ Init()
     {
 
     SCRIPT_FILE=sherpa.sh
-    SCRIPT_VERSION=200320
+    SCRIPT_VERSION=200321
     debug=false
     ResetErrorcode
 
@@ -488,7 +488,7 @@ ParseArgs()
                 debug=true
                 DebugVar debug
                 ;;
-            --check)
+            --check-all)
                 satisfy_dependencies_only=true
                 DebugVar satisfy_dependencies_only
                 ;;
@@ -496,7 +496,7 @@ ParseArgs()
                 ignore_space_arg='--force-space'
                 DebugVar ignore_space_arg
                 ;;
-            --update)
+            --update-all)
                 update_all_apps=true
                 DebugVar update_all_apps
                 ;;
@@ -537,13 +537,13 @@ DisplayHelp()
     done
 
     echo -e "\n- Ensure all sherpa application dependencies are installed:"
-    echo -e "\t$0 --check"
+    echo -e "\t$0 --check-all"
 
     echo -e "\n- Don't check free-space on target filesystem when installing Entware packages:"
     echo -e "\t$0 --ignore-space"
 
     echo -e "\n- Update all sherpa installed applications:"
-    echo -e "\t$0 --update"
+    echo -e "\t$0 --update-all"
 
     DebugFuncExit
     return 0
