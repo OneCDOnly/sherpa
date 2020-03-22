@@ -45,7 +45,7 @@ Init()
     {
 
     SCRIPT_FILE=sherpa.sh
-    SCRIPT_VERSION=200321
+    SCRIPT_VERSION=200322
     debug=false
     ResetErrorcode
 
@@ -105,43 +105,43 @@ Init()
     local DEBUG_LOG_FILE=${SCRIPT_FILE%.*}.debug.log
 
     # check required binaries are present
-    IsSysFilePresent $AWK_CMD || return
-    IsSysFilePresent $CAT_CMD || return
-    IsSysFilePresent $CHMOD_CMD || return
-    IsSysFilePresent $DATE_CMD || return
-    IsSysFilePresent $GREP_CMD || return
-    IsSysFilePresent $HOSTNAME_CMD || return
-    IsSysFilePresent $LN_CMD || return
-    IsSysFilePresent $MD5SUM_CMD || return
-    IsSysFilePresent $MKDIR_CMD || return
-    IsSysFilePresent $PING_CMD || return
-    IsSysFilePresent $SED_CMD || return
-    IsSysFilePresent $SLEEP_CMD || return
-    IsSysFilePresent $TOUCH_CMD || return
-    IsSysFilePresent $TR_CMD || return
-    IsSysFilePresent $UNAME_CMD || return
-    IsSysFilePresent $UNIQ_CMD || return
+    IsSysFilePresent $AWK_CMD || return 1
+    IsSysFilePresent $CAT_CMD || return 1
+    IsSysFilePresent $CHMOD_CMD || return 1
+    IsSysFilePresent $DATE_CMD || return 1
+    IsSysFilePresent $GREP_CMD || return 1
+    IsSysFilePresent $HOSTNAME_CMD || return 1
+    IsSysFilePresent $LN_CMD || return 1
+    IsSysFilePresent $MD5SUM_CMD || return 1
+    IsSysFilePresent $MKDIR_CMD || return 1
+    IsSysFilePresent $PING_CMD || return 1
+    IsSysFilePresent $SED_CMD || return 1
+    IsSysFilePresent $SLEEP_CMD || return 1
+    IsSysFilePresent $TOUCH_CMD || return 1
+    IsSysFilePresent $TR_CMD || return 1
+    IsSysFilePresent $UNAME_CMD || return 1
+    IsSysFilePresent $UNIQ_CMD || return 1
 
-    IsSysFilePresent $CURL_CMD || return
-    IsSysFilePresent $GETCFG_CMD || return
-    IsSysFilePresent $RMCFG_CMD || return
-    IsSysFilePresent $SERVICE_CMD || return
-    IsSysFilePresent $SETCFG_CMD || return
+    IsSysFilePresent $CURL_CMD || return 1
+    IsSysFilePresent $GETCFG_CMD || return 1
+    IsSysFilePresent $RMCFG_CMD || return 1
+    IsSysFilePresent $SERVICE_CMD || return 1
+    IsSysFilePresent $SETCFG_CMD || return 1
 
-    IsSysFilePresent $BASENAME_CMD || return
-    IsSysFilePresent $CUT_CMD || return
-    IsSysFilePresent $DIRNAME_CMD || return
-    IsSysFilePresent $DU_CMD || return
-    IsSysFilePresent $HEAD_CMD || return
-    IsSysFilePresent $READLINK_CMD || return
-    IsSysFilePresent $SORT_CMD || return
-    IsSysFilePresent $TAIL_CMD || return
-    IsSysFilePresent $TEE_CMD || return
-    IsSysFilePresent $UNZIP_CMD || return
-    IsSysFilePresent $UPTIME_CMD || return
-    IsSysFilePresent $WC_CMD || return
+    IsSysFilePresent $BASENAME_CMD || return 1
+    IsSysFilePresent $CUT_CMD || return 1
+    IsSysFilePresent $DIRNAME_CMD || return 1
+    IsSysFilePresent $DU_CMD || return 1
+    IsSysFilePresent $HEAD_CMD || return 1
+    IsSysFilePresent $READLINK_CMD || return 1
+    IsSysFilePresent $SORT_CMD || return 1
+    IsSysFilePresent $TAIL_CMD || return 1
+    IsSysFilePresent $TEE_CMD || return 1
+    IsSysFilePresent $UNZIP_CMD || return 1
+    IsSysFilePresent $UPTIME_CMD || return 1
+    IsSysFilePresent $WC_CMD || return 1
 
-    IsSysFilePresent $ZIP_CMD || return
+    IsSysFilePresent $ZIP_CMD || return 1
 
     local DEFAULT_SHARE_DOWNLOAD_PATH=/share/Download
     local DEFAULT_SHARE_PUBLIC_PATH=/share/Public
@@ -151,14 +151,14 @@ Init()
         SHARE_DOWNLOAD_PATH=$DEFAULT_SHARE_DOWNLOAD_PATH
     else
         SHARE_DOWNLOAD_PATH=/share/$($GETCFG_CMD SHARE_DEF defDownload -d Qdownload -f $DEFAULT_SHARES_PATHFILE)
-        IsSysSharePresent "$SHARE_DOWNLOAD_PATH" || return
+        IsSysSharePresent "$SHARE_DOWNLOAD_PATH" || return 1
     fi
 
     if [[ -L $DEFAULT_SHARE_PUBLIC_PATH ]]; then
         SHARE_PUBLIC_PATH=$DEFAULT_SHARE_PUBLIC_PATH
     else
         SHARE_PUBLIC_PATH=/share/$($GETCFG_CMD SHARE_DEF defPublic -d Qpublic -f $DEFAULT_SHARES_PATHFILE)
-        IsSysSharePresent "$SHARE_PUBLIC_PATH" || return
+        IsSysSharePresent "$SHARE_PUBLIC_PATH" || return 1
     fi
 
     # sherpa-supported package details - parallel arrays
@@ -333,11 +333,11 @@ Init()
     restore_all_apps=false
     [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg='--insecure' || curl_insecure_arg=''
 
-    local result=0
+    return 0
 
     }
 
-EnvironCheck()
+LogNASDetails()
     {
 
     local conflicting_qpkg=''
@@ -371,11 +371,15 @@ EnvironCheck()
     DebugNAS '/opt' "$([[ -L '/opt' ]] && $READLINK_CMD '/opt' || echo "<not present>")"
     DebugNAS "$SHARE_DOWNLOAD_PATH" "$([[ -L $SHARE_DOWNLOAD_PATH ]] && $READLINK_CMD "$SHARE_DOWNLOAD_PATH" || echo "<not present>")"
     DebugScript 'user arguments' "$USER_ARGS_RAW"
-    DebugScript 'target app(s)' "${TARGET_APPS[*]}"
+    DebugScript 'app(s) to install' "${QPKGS_to_install[*]} "
+    DebugScript 'app(s) to uninstall' "${QPKGS_to_uninstall[*]} "
+    DebugScript 'app(s) to reinstall' "${QPKGS_to_reinstall[*]} "
+    DebugScript 'app(s) to update' "${QPKGS_to_update[*]} "
+    DebugScript 'app(s) to backup' "${QPKGS_to_backup[*]} "
+    DebugScript 'app(s) to restore' "${QPKGS_to_restore[*]} "
     DebugScript 'working path' "$WORKING_PATH"
     DebugQPKG 'download path' "$QPKG_DL_PATH"
     DebugIPKG 'download path' "$IPKG_DL_PATH"
-
     CalcNASQPKGArch
     DebugQPKG 'arch' "$NAS_QPKG_ARCH"
 
@@ -472,8 +476,14 @@ EnvironCheck()
 ParseArgs()
     {
 
-    TARGET_APP=''
-    TARGET_APPS=()
+    local target_app=''
+    local current_operation=''
+    QPKGS_to_install=()
+    QPKGS_to_uninstall=()
+    QPKGS_to_reinstall=()
+    QPKGS_to_update=()
+    QPKGS_to_backup=()
+    QPKGS_to_restore=()
 
     if [[ -z $USER_ARGS_RAW ]]; then
         errorcode=9
@@ -487,37 +497,100 @@ ParseArgs()
             -d|--debug)
                 debug=true
                 DebugVar debug
+                current_operation=''
                 ;;
             --check-all)
                 satisfy_dependencies_only=true
                 DebugVar satisfy_dependencies_only
+                current_operation=''
                 ;;
             --ignore-space)
                 ignore_space_arg='--force-space'
                 DebugVar ignore_space_arg
-                ;;
-            --update-all)
-                update_all_apps=true
-                DebugVar update_all_apps
-                ;;
-            --backup-all)
-                backup_all_apps=true
-                DebugVar backup_all_apps
-                ;;
-            --restore-all)
-                restore_all_apps=true
-                DebugVar restore_all_apps
+                current_operation=''
                 ;;
             --help)
                 errorcode=10
                 return 1
                 ;;
+            --install-all)
+                install_all_apps=true
+                DebugVar install_all_apps
+                current_operation=''
+                ;;
+            --uninstall-all)
+                uninstall_all_apps=true
+                DebugVar uninstall_all_apps
+                current_operation=''
+                ;;
+            --reinstall-all)
+                reinstall_all_apps=true
+                DebugVar reinstall_all_apps
+                current_operation=''
+                ;;
+            --update-all)
+                update_all_apps=true
+                DebugVar update_all_apps
+                current_operation=''
+                ;;
+            --backup-all)
+                backup_all_apps=true
+                DebugVar backup_all_apps
+                current_operation=''
+                ;;
+            --restore-all)
+                restore_all_apps=true
+                DebugVar restore_all_apps
+                current_operation=''
+                ;;
+            --install)
+                current_operation=install
+                ;;
+            --uninstall)
+                current_operation=uninstall
+                ;;
+            --reinstall)
+                current_operation=reinstall
+                ;;
+            --update)
+                current_operation=update
+                ;;
+            --backup)
+                current_operation=backup
+                ;;
+            --restore)
+                current_operation=restore
+                ;;
             *)
-                TARGET_APP=$(MatchAbbrvToQPKGName "$arg") && TARGET_APPS+=($TARGET_APP)
+                target_app=$(MatchAbbrvToQPKGName "$arg")
+                [[ -z $target_app ]] && continue
+
+                case $current_operation in
+                    uninstall)
+                        QPKGS_to_uninstall+=($target_app)
+                        ;;
+                    reinstall)
+                        QPKGS_to_reinstall+=($target_app)
+                        ;;
+                    update)
+                        QPKGS_to_update+=($target_app)
+                        ;;
+                    backup)
+                        QPKGS_to_backup+=($target_app)
+                        ;;
+                    restore)
+                        QPKGS_to_restore+=($target_app)
+                        ;;
+                    install|*)  # default
+                        QPKGS_to_install+=($target_app)
+                        ;;
+                esac
         esac
     done
 
-    [[ -z $TARGET_APP && $satisfy_dependencies_only = false && $update_all_apps = false ]] && errorcode=11
+    TARGET_APP=${QPKGS_to_install[0]}           # keep for compatibility until multi-package rollout is ready
+
+    [[ ${#QPKGS_to_install[@]} -eq 0 && ${#QPKGS_to_uninstall[@]} -eq 0 && ${#QPKGS_to_update[@]} -eq 0 && ${#QPKGS_to_backup[@]} -eq 0 && ${#QPKGS_to_restore[@]} -eq 0 && $satisfy_dependencies_only = false && $update_all_apps = false ]] && errorcode=11
     [[ $backup_all_apps = true && $restore_all_apps = true ]] && errorcode=12               # no-point performing both operations
     return 0
 
@@ -557,6 +630,14 @@ DownloadQPKGs()
 
     DebugFuncEntry
     local returncode=0
+
+    # check user specified install list and built a temp list of QPKGs to install (temp QPKG install list).
+    # loop through sherpa QPKG installable list and if names matches entry in temp QPKG install list then:
+    #   add package name to final QPKG install list,
+    #   add package deps to final QPKG install list,
+    #   remove duplicates and installed packages from final QPKG install list.
+    # loop through final QPKG install list and if sherpa installable package index matches then:
+    #   add package ipks to final IPK install list.
 
     ! IsQPKGInstalled Entware && DownloadQPKG Entware
 
@@ -657,8 +738,8 @@ UpdateEntware()
     local result=0
     local log_pathfile="$WORKING_PATH/entware-update.log"
 
-    IsSysFilePresent $OPKG_CMD || return
-    IsSysFilePresent $FIND_CMD || return
+    IsSysFilePresent $OPKG_CMD || return 1
+    IsSysFilePresent $FIND_CMD || return 1
 
     # if Entware package list was updated only recently, don't run another update
     [[ -e $FIND_CMD && -e $package_list_file ]] && result=$($FIND_CMD "$package_list_file" -mmin +$package_list_age) || result='new install'
@@ -1545,7 +1626,7 @@ FindAllIPKGDependencies()
 
     [[ -z $1 ]] && { DebugError 'No IPKGs were requested'; return 1 ;}
 
-    IsSysFilePresent $OPKG_CMD || return
+    IsSysFilePresent $OPKG_CMD || return 1
 
     # remove duplicate entries
     requested_list=$($TR_CMD ' ' '\n' <<< $1 | $SORT_CMD | $UNIQ_CMD | $TR_CMD '\n' ' ')
@@ -1621,7 +1702,7 @@ _MonitorDirSize_()
     local current_bytes=0
     local percent=''
 
-    IsSysFilePresent $FIND_CMD || return
+    IsSysFilePresent $FIND_CMD || return 1
 
     InitProgress
 
@@ -2236,9 +2317,10 @@ if [[ ! -e /etc/init.d/functions ]]; then
     exit 1
 fi
 
-Init
-EnvironCheck
+Init || exit
+LogNASDetails
 DownloadQPKGs
+exit
 RemoveUnwantedQPKGs
 InstallBase
 InstallBaseAddons
