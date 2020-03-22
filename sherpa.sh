@@ -617,6 +617,7 @@ DisplayHelp()
 
     echo -e "\n- Update all sherpa installed applications:"
     echo -e "\t$0 --update-all"
+    echo
 
     DebugFuncExit
     return 0
@@ -2320,7 +2321,6 @@ fi
 Init || exit
 LogNASDetails
 DownloadQPKGs
-exit
 RemoveUnwantedQPKGs
 InstallBase
 InstallBaseAddons
