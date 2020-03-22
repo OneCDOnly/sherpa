@@ -45,7 +45,7 @@ Init()
     {
 
     SCRIPT_FILE=sherpa.sh
-    SCRIPT_VERSION=200322
+    SCRIPT_VERSION=200323
     debug=false
     ResetErrorcode
 
@@ -309,6 +309,14 @@ Init()
     SHERPA_COMMON_PIP3S='--disable-pip-version-check --upgrade setuptools'
     SHERPA_COMMON_CONFLICTS='Optware Optware-NG'
 
+    # user-specified as arguments at runtime
+    QPKGS_to_install=()
+    QPKGS_to_uninstall=()
+    QPKGS_to_reinstall=()
+    QPKGS_to_update=()
+    QPKGS_to_backup=()
+    QPKGS_to_restore=()
+
     PREV_QPKG_CONFIG_DIRS=(SAB_CONFIG CONFIG Config config)                 # last element is used as target dirname
     PREV_QPKG_CONFIG_FILES=(sabnzbd.ini settings.ini config.cfg config.ini) # last element is used as target filename
     WORKING_PATH=$SHARE_PUBLIC_PATH/${SCRIPT_FILE%.*}.tmp
@@ -478,12 +486,6 @@ ParseArgs()
 
     local target_app=''
     local current_operation=''
-    QPKGS_to_install=()
-    QPKGS_to_uninstall=()
-    QPKGS_to_reinstall=()
-    QPKGS_to_update=()
-    QPKGS_to_backup=()
-    QPKGS_to_restore=()
 
     if [[ -z $USER_ARGS_RAW ]]; then
         errorcode=9
