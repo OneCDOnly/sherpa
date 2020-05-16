@@ -169,7 +169,7 @@ PortAvailable()
     # $? = 0 if available
     # $? = 1 if already used or unspecified
 
-    if [[ -z $1 ]] || (/usr/sbin/lsof -i :$1 2>&1 >/dev/null); then
+    if [[ -z $1 ]] || (/usr/sbin/lsof -i :$1 -sTCP:LISTEN 2>&1 >/dev/null); then
         return 1
     else
         return 0

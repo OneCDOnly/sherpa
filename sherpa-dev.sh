@@ -45,7 +45,7 @@ Init()
     {
 
     SCRIPT_FILE=sherpa.sh
-    SCRIPT_VERSION=200517
+    SCRIPT_VERSION=200405b
     debug=false
     ResetErrorcode
 
@@ -122,11 +122,11 @@ Init()
     IsSysFilePresent $UNAME_CMD || return 1
     IsSysFilePresent $UNIQ_CMD || return 1
 
-    IsSysFilePresent $CURL_CMD || return 1
-    IsSysFilePresent $GETCFG_CMD || return 1
-    IsSysFilePresent $RMCFG_CMD || return 1
-    IsSysFilePresent $SERVICE_CMD || return 1
-    IsSysFilePresent $SETCFG_CMD || return 1
+#     IsSysFilePresent $CURL_CMD || return 1
+#     IsSysFilePresent $GETCFG_CMD || return 1
+#     IsSysFilePresent $RMCFG_CMD || return 1
+#     IsSysFilePresent $SERVICE_CMD || return 1
+#     IsSysFilePresent $SETCFG_CMD || return 1
 
     IsSysFilePresent $BASENAME_CMD || return 1
     IsSysFilePresent $CUT_CMD || return 1
@@ -184,8 +184,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(SABnzbdplus)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/SABnzbdplus/build/SABnzbdplus_200517.qpkg)
-        SHERPA_QPKG_MD5+=(db98760cc383d39dad34ea62718cba76)
+        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/SABnzbdplus/build/SABnzbdplus_200223.qpkg)
+        SHERPA_QPKG_MD5+=(e2ae9ad26e48b4844cdf3ac54955de73)
         SHERPA_QPKG_ABBRVS+=('sb sab sabnzbd sabnzbdplus')
         SHERPA_QPKG_DEPS+=('Entware Par2')
         SHERPA_QPKG_IPKGS+=('python python-pyopenssl python-dev gcc unrar p7zip coreutils-nice ionice ffprobe')
@@ -194,8 +194,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(NZBGet)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/NZBGet/build/NZBGet_200517.qpkg)
-        SHERPA_QPKG_MD5+=(5a519738bb72799f1e0ba109409f4259)
+        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/NZBGet/build/NZBGet_190928.qpkg)
+        SHERPA_QPKG_MD5+=(baf83cda1c3f44eea6c63a53c88b03ad)
         SHERPA_QPKG_ABBRVS+=('ng nget nzb nzbget')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('nzbget')
@@ -204,8 +204,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(SickChill)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/SickChill/build/SickChill_200517.qpkg)
-        SHERPA_QPKG_MD5+=(12937a55cdefd466f4e90fb8b6f109b3)
+        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/SickChill/build/SickChill_190928.qpkg)
+        SHERPA_QPKG_MD5+=(b690b5815d542936436efac3dc442840)
         SHERPA_QPKG_ABBRVS+=('sc sick sickc chill sickchill')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python')
@@ -214,8 +214,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(LazyLibrarian)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/LazyLibrarian/build/LazyLibrarian_200517.qpkg)
-        SHERPA_QPKG_MD5+=(44f4bb7e5a3ae546eea8a088e0bf735d)
+        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/LazyLibrarian/build/LazyLibrarian_191105.qpkg)
+        SHERPA_QPKG_MD5+=(d06380c0b374f946345ea4087f41a9cf)
         SHERPA_QPKG_ABBRVS+=('ll lazy lazylibrarian')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python3-pyopenssl python3-requests')
@@ -224,8 +224,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(OMedusa)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/OMedusa/build/OMedusa_200517.qpkg)
-        SHERPA_QPKG_MD5+=(8a8a48261c7bc7c954012e83766de3fa)
+        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/OMedusa/build/OMedusa_200216.qpkg)
+        SHERPA_QPKG_MD5+=(c8e6ec6b711ee785a11994502b802989)
         SHERPA_QPKG_ABBRVS+=('om med omed medusa omedusa')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python3 mediainfo')
@@ -234,8 +234,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(OWatcher3)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/OWatcher3/build/OWatcher3_200517.qpkg)
-        SHERPA_QPKG_MD5+=(b7410f7e695dc652d3793c0d194cf8e5)
+        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/OWatcher3/build/OWatcher3_191105.qpkg)
+        SHERPA_QPKG_MD5+=(b84af7b6bfec6e83ce19a73da1803710)
         SHERPA_QPKG_ABBRVS+=('ow wat owat watch watcher owatcher watcher3 owatcher3')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('jq')
@@ -244,8 +244,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(Headphones)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/Headphones/build/Headphones_200517.qpkg)
-        SHERPA_QPKG_MD5+=(7fb395f1288dabcfb68a0dbc9a83fded)
+        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/Headphones/build/Headphones_190928.qpkg)
+        SHERPA_QPKG_MD5+=(3e01dd9c44bcab287f6f105caabd816d)
         SHERPA_QPKG_ABBRVS+=('hp head phones headphones')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python')
@@ -345,141 +345,6 @@ Init()
 
     }
 
-LogNASDetails()
-    {
-
-    local conflicting_qpkg=''
-    local test_pathfile=/opt/etc/passwd
-
-    ParseArgs
-
-    DebugFuncEntry
-
-    DebugInfoThickSeparator
-    DebugScript 'started' "$($DATE_CMD | $TR_CMD -s ' ')"
-
-    [[ $debug = false ]] && echo -e "$(ColourTextBrightWhite "$SCRIPT_FILE") ($SCRIPT_VERSION)\n"
-
-    DebugScript 'version' "$SCRIPT_VERSION"
-    DebugInfoThinSeparator
-    DebugInfo 'Markers: (**) detected, (II) information, (WW) warning, (LL) log file,'
-    DebugInfo ' (EE) error, (==) processing, (--) done, (>>) f entry, (<<) f exit,'
-    DebugInfo ' (vv) variable name & value, ($1) positional argument value.'
-    DebugInfoThinSeparator
-    DebugNAS 'model' "$($GREP_CMD -v "^$" /etc/issue | $SED_CMD 's|^Welcome to ||;s|(.*||')"
-    DebugNAS 'firmware version' "$NAS_FIRMWARE"
-    DebugNAS 'firmware build' "$($GETCFG_CMD System 'Build Number' -f $ULINUX_PATHFILE)"
-    DebugNAS 'kernel' "$($UNAME_CMD -mr)"
-    DebugNAS 'OS uptime' "$($UPTIME_CMD | $SED_CMD 's|.*up.||;s|,.*load.*||;s|^\ *||')"
-    DebugNAS 'system load' "$($UPTIME_CMD | $SED_CMD 's|.*load average: ||' | $AWK_CMD -F', ' '{print "1 min="$1 ", 5 min="$2 ", 15 min="$3}')"
-    DebugNAS 'USER' "$USER"
-    DebugNAS 'EUID' "$EUID"
-    DebugNAS 'default volume' "$($GETCFG_CMD SHARE_DEF defVolMP -f $DEFAULT_SHARES_PATHFILE)"
-    DebugNAS '$PATH' "${PATH:0:43}"
-    DebugNAS '/opt' "$([[ -L '/opt' ]] && $READLINK_CMD '/opt' || echo "<not present>")"
-    DebugNAS "$SHARE_DOWNLOAD_PATH" "$([[ -L $SHARE_DOWNLOAD_PATH ]] && $READLINK_CMD "$SHARE_DOWNLOAD_PATH" || echo "<not present>")"
-    DebugScript 'user arguments' "$USER_ARGS_RAW"
-    DebugScript 'app(s) to install' "${QPKGS_to_install[*]} "
-    DebugScript 'app(s) to uninstall' "${QPKGS_to_uninstall[*]} "
-    DebugScript 'app(s) to reinstall' "${QPKGS_to_reinstall[*]} "
-    DebugScript 'app(s) to update' "${QPKGS_to_update[*]} "
-    DebugScript 'app(s) to backup' "${QPKGS_to_backup[*]} "
-    DebugScript 'app(s) to restore' "${QPKGS_to_restore[*]} "
-    DebugScript 'working path' "$WORKING_PATH"
-    DebugQPKG 'download path' "$QPKG_DL_PATH"
-    DebugIPKG 'download path' "$IPKG_DL_PATH"
-    CalcNASQPKGArch
-    DebugQPKG 'arch' "$NAS_QPKG_ARCH"
-
-    [[ $errorcode -gt 0 ]] && DisplayHelp
-
-    if [[ $errorcode -eq 0 ]] && [[ $EUID -ne 0 || $USER != admin ]]; then
-        ShowError "this script must be run as the 'admin' user. Please login via SSH as 'admin' and try again."
-        errorcode=1
-    fi
-
-    if [[ $errorcode -eq 0 ]]; then
-        $MKDIR_CMD -p "$WORKING_PATH" 2> /dev/null
-        result=$?
-
-        if [[ $result -ne 0 ]]; then
-            ShowError "unable to create working directory ($WORKING_PATH) [$result]"
-            errorcode=2
-        else
-            cd "$WORKING_PATH"
-        fi
-    fi
-
-    if [[ $errorcode -eq 0 ]]; then
-        $MKDIR_CMD -p "$QPKG_DL_PATH" 2> /dev/null
-        result=$?
-
-        if [[ $result -ne 0 ]]; then
-            ShowError "unable to create QPKG download directory ($QPKG_DL_PATH) [$result]"
-            errorcode=3
-        fi
-    fi
-
-    if [[ $errorcode -eq 0 ]]; then
-        [[ -d $IPKG_DL_PATH ]] && rm -r "$IPKG_DL_PATH"
-        $MKDIR_CMD -p "$IPKG_DL_PATH" 2> /dev/null
-        result=$?
-
-        if [[ $result -ne 0 ]]; then
-            ShowError "unable to create IPKG download directory ($IPKG_DL_PATH) [$result]"
-            errorcode=4
-        else
-            monitor_flag="$IPKG_DL_PATH/.monitor"
-        fi
-    fi
-
-    if [[ $errorcode -eq 0 ]]; then
-        $MKDIR_CMD -p "$IPKG_CACHE_PATH" 2> /dev/null
-        result=$?
-
-        if [[ $result -ne 0 ]]; then
-            ShowError "unable to create IPKG cache directory ($IPKG_CACHE_PATH) [$result]"
-            errorcode=5
-        fi
-    fi
-
-    if [[ $errorcode -eq 0 ]]; then
-        for conflicting_qpkg in ${SHERPA_COMMON_CONFLICTS[@]}; do
-            if IsQPKGEnabled $conflicting_qpkg; then
-                ShowError "'$conflicting_qpkg' is enabled. This is an unsupported configuration."
-                errorcode=6
-            fi
-        done
-    fi
-
-    if [[ $errorcode -eq 0 ]]; then
-        if IsQPKGInstalled Entware; then
-            [[ -e $test_pathfile ]] && { [[ -L $test_pathfile ]] && ENTWARE_VER=std || ENTWARE_VER=alt ;} || ENTWARE_VER=none
-            DebugQPKG 'Entware installer' $ENTWARE_VER
-
-            if [[ $ENTWARE_VER = none ]]; then
-                ShowError 'Entware appears to be installed but is not visible.'
-                errorcode=7
-            fi
-        fi
-    fi
-
-    if [[ $errorcode -eq 0 ]]; then
-        ShowProc "testing Internet access"
-
-        if ($CURL_CMD $curl_insecure_arg --silent --fail https://onecdonly.github.io/sherpa/packages.conf -o $SHERPA_PACKAGES_PATHFILE); then
-            ShowDone "Internet is accessible"
-        else
-            ShowError "no Internet access"
-            errorcode=8
-        fi
-    fi
-
-    DebugInfoThinSeparator
-    DebugFuncExit
-    return 0
-
-    }
 
 ParseArgs()
     {
@@ -642,11 +507,19 @@ DownloadQPKGs()
     # loop through final QPKG install list and if sherpa installable package index matches then:
     #   add package ipks to final IPK install list.
 
-    ! IsQPKGInstalled Entware && DownloadQPKG Entware
+	temp="$QPKGS_to_install"
+	temp+="$QPKGS_to_reinstall"
 
-    { (IsQPKGInstalled SABnzbdplus) || [[ $TARGET_APP = SABnzbdplus ]] ;} && [[ $NAS_QPKG_ARCH != none ]] && ! IsQPKGInstalled Par2 && DownloadQPKG Par2
 
-    [[ -n $TARGET_APP ]] && DownloadQPKG $TARGET_APP
+    FindAllQPKGDependencies "$requested_QPKGs"
+
+exit
+
+#     ! IsQPKGInstalled Entware && DownloadQPKG Entware
+#
+#     { (IsQPKGInstalled SABnzbdplus) || [[ $TARGET_APP = SABnzbdplus ]] ;} && [[ $NAS_QPKG_ARCH != none ]] && ! IsQPKGInstalled Par2 && DownloadQPKG Par2
+#
+#     [[ -n $TARGET_APP ]] && DownloadQPKG $TARGET_APP
 
     DebugFuncExit
     return $returncode
@@ -1603,6 +1476,77 @@ DisplayResult()
 
     }
 
+FindAllQPKGDependencies()
+    {
+
+    # From a specified list of QPKG names, find all dependent QPKGs, exclude those already installed, then generate a total qty to download.
+    # input:
+    #   $1 = string with space-separated initial QPKG names.
+    # output:
+    #   $QPKG_download_list = array with complete list of all QPKGs, including those originally specified.
+    #   $QPKG_download_count = number of packages to be downloaded.
+
+    QPKG_download_count=0
+    QPKG_download_list=()
+    local requested_list=()
+    local last_list=()
+    local all_list=()
+    local dependency_list=''
+    local iterations=0
+    local iteration_limit=20
+    local complete=false
+    local result_size=0
+    local QPKG_search_startseconds=$(DebugStageStart)
+
+    [[ -z $1 ]] && { DebugError 'No QPKGs were requested'; return 1 ;}
+
+    IsSysFilePresent $OPKG_CMD || return 1
+
+    # remove duplicate entries
+    requested_list=$($TR_CMD ' ' '\n' <<< $1 | $SORT_CMD | $UNIQ_CMD | $TR_CMD '\n' ' ')
+    last_list=$requested_list
+
+    ShowProc 'calculating number and total size of QPKGs required'
+    DebugInfo "requested QPKGs: ${requested_list[*]}"
+
+    DebugProc 'finding all QPKG dependencies'
+    while [[ $iterations -lt $iteration_limit ]]; do
+        ((iterations++))
+#         last_list=$($OPKG_CMD depends -A $last_list | $GREP_CMD -v 'depends on:' | $SED_CMD 's|^[[:blank:]]*||;s|[[:blank:]]*$||' | $TR_CMD ' ' '\n' | $SORT_CMD | $UNIQ_CMD)
+
+        if [[ -n $last_list ]]; then
+            [[ -n $dependency_list ]] && dependency_list+=$(echo -e "\n$last_list") || dependency_list=$last_list
+        else
+            DebugDone 'complete'
+            DebugInfo "found all QPKG dependencies in $iterations iterations"
+            complete=true
+            break
+        fi
+    done
+
+    [[ $complete = false ]] && DebugError "QPKG dependency list is incomplete! Consider raising \$iteration_limit [$iteration_limit]."
+
+    # remove duplicate entries
+    all_list=$(echo "$requested_list $dependency_list" | $TR_CMD ' ' '\n' | $SORT_CMD | $UNIQ_CMD | $TR_CMD '\n' ' ')
+
+    DebugProc 'excluding packages already installed'
+    for element in ${all_list[@]}; do
+        $OPKG_CMD status "$element" | $GREP_CMD -q "Status:.*installed" || QPKG_download_list+=($element)
+    done
+    DebugDone 'complete'
+    DebugInfo "QPKGs to download: ${IPKG_download_list[*]}"
+    QPKG_download_count=${#IPKG_download_list[@]}
+
+    DebugStageEnd $IPKG_search_startseconds
+
+    if [[ $QPKG_download_count -gt 0 ]]; then
+        ShowDone "$QPKG_download_count QPKGs to be downloaded"
+    else
+        ShowDone 'no QPKGs are required'
+    fi
+
+    }
+
 FindAllIPKGDependencies()
     {
 
@@ -2321,7 +2265,6 @@ if [[ ! -e /etc/init.d/functions ]]; then
 fi
 
 Init || exit
-LogNASDetails
 DownloadQPKGs
 RemoveUnwantedQPKGs
 InstallBase
