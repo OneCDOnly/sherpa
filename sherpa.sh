@@ -801,7 +801,7 @@ InstallBaseAddons()
 
     InstallIPKGs
     InstallPIP2s
-#     InstallPIP3s
+    InstallPIP3s
 
     [[ $TARGET_APP = Entware || $update_all_apps = true ]] && RestartAllQPKGs
 
