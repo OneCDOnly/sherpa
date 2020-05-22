@@ -66,8 +66,8 @@ QPKGIsActive()
 UpdateQpkg()
     {
 
-    PullGitRepo $QPKG_NAME 'http://github.com/sabnzbd/sabnzbd.git' $QPKG_PATH && UpdateLanguages
-    PullGitRepo nzbToMedia 'http://github.com/clinton-hall/nzbToMedia.git' $NZBMEDIA_PATH
+    PullGitRepo $QPKG_NAME 'http://github.com/sabnzbd/sabnzbd.git' master $QPKG_PATH && UpdateLanguages
+    PullGitRepo nzbToMedia 'http://github.com/clinton-hall/nzbToMedia.git' master $NZBMEDIA_PATH
 
     }
 
@@ -78,14 +78,14 @@ UpdateLanguages()
 
     local exec_msgs=''
     local olddir=$PWD
-    local version_current_pathfile=${QPKG_PATH}/SABnzbdplus/sabnzbd/version.py
+    local version_current_pathfile=$QPKG_PATH/$QPKG_NAME/sabnzbd/version.py
     local version_store_pathfile=$(dirname $version_current_pathfile)/version.stored
     local version_current_number=$(grep '__version__ =' $version_current_pathfile | sed 's|^.*"\(.*\)"|\1|')
 
     [[ -e $version_store_pathfile && $version_current_number = $(<$version_store_pathfile) ]] && return 0
 
     echo -n "* updating language support ($QPKG_NAME): " | tee -a $INIT_LOG_PATHFILE
-    cd $QPKG_PATH/SABnzbdplus || return 1
+    cd $QPKG_PATH/$QPKG_NAME || return 1
     exec_msgs=$(python tools/make_mo.py)
     result=$?
 
@@ -106,24 +106,24 @@ PullGitRepo()
 
     # $1 = package name
     # $2 = URL to pull/clone from
-    # $3 = path to clone into
+    # $3 = branch
+    # $4 = path to clone into
 
     local returncode=0
     local exec_msgs=''
     local GIT_CMD=/opt/bin/git
 
-    [[ -z $1 || -z $2 || -z $3 ]] && returncode=1
+    [[ -z $1 || -z $2 || -z $3 || -z $4 ]] && returncode=1
     SysFilePresent "$GIT_CMD" || { errorcode=1; returncode=1 ;}
 
-    local QPKG_GIT_PATH="$3/$1"
-
     if [[ $returncode = 0 ]]; then
+        local QPKG_GIT_PATH="$4/$1"
         local GIT_HTTP_URL="$2"
         local GIT_HTTPS_URL=${GIT_HTTP_URL/http/git}
 
         echo -n "* updating ($1): " | tee -a $INIT_LOG_PATHFILE
         exec_msgs=$({
-            [[ ! -d ${QPKG_GIT_PATH}/.git ]] && { $GIT_CMD clone -b master --depth 1 "$GIT_HTTPS_URL" "$QPKG_GIT_PATH" || $GIT_CMD clone -b master --depth 1 "$GIT_HTTP_URL" "$QPKG_GIT_PATH" ;}
+            [[ ! -d ${QPKG_GIT_PATH}/.git ]] && { $GIT_CMD clone -b $3 --depth 1 "$GIT_HTTPS_URL" "$QPKG_GIT_PATH" || $GIT_CMD clone -b $3 --depth 1 "$GIT_HTTP_URL" "$QPKG_GIT_PATH" ;}
             cd "$QPKG_GIT_PATH" && $GIT_CMD pull
         } 2>&1)
         result=$?
