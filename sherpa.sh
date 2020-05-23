@@ -45,7 +45,7 @@ Init()
     {
 
     SCRIPT_FILE=sherpa.sh
-    SCRIPT_VERSION=200523
+    SCRIPT_VERSION=200524
     debug=false
     ResetErrorcode
 
@@ -881,7 +881,7 @@ InstallIPKGBatch()
 
     if [[ $IPKG_download_count -gt 0 ]]; then
         local IPKG_download_startseconds=$(DebugStageStart)
-        ShowProc "downloading & installing $IPKG_download_count IPKGs"
+        ShowProc "downloading & installing $IPKG_download_count IPKG$([[ $IPKG_download_count -gt 1 ]] && echo 's')"
 
         $TOUCH_CMD "$monitor_flag"
         trap CTRL_C_Captured INT
@@ -895,9 +895,9 @@ InstallIPKGBatch()
         echo -e "${install_msgs}\nresult=[$result]" > "$log_pathfile"
 
         if [[ $result -eq 0 ]]; then
-            ShowDone "downloaded & installed $IPKG_download_count IPKGs"
+            ShowDone "downloaded & installed $IPKG_download_count IPKG$([[ $IPKG_download_count -gt 1 ]] && echo 's')"
         else
-            ShowError "download & install IPKGs failed [$result]"
+            ShowError "download & install IPKG$([[ $IPKG_download_count -gt 1 ]] && echo 's') failed [$result]"
             DebugErrorFile "$log_pathfile"
 
             errorcode=14
@@ -986,7 +986,7 @@ InstallPIP2s()
         fi
     done
 
-    ShowProc "downloading & installing PIP2 modules"
+    ShowProc "downloading & installing Python 2 modules"
 
     install_cmd="$pip2_cmd install $SHERPA_COMMON_PIP2S 2>&1"
     [[ -n ${packages// /} ]] && install_cmd+=" && $pip2_cmd install $packages 2>&1"
@@ -996,9 +996,9 @@ InstallPIP2s()
     echo -e "command=[${install_cmd}]\nmessages=[${install_msgs}]\nresult=[$result]" > "$log_pathfile"
 
     if [[ $result -eq 0 ]]; then
-        ShowDone "downloaded & installed PIP2 modules"
+        ShowDone "downloaded & installed Python 2 modules"
     else
-        ShowError "download & install PIP2 modules failed [$result]"
+        ShowError "download & install Python 2 modules failed [$result]"
         DebugErrorFile "$log_pathfile"
 
         errorcode=15
@@ -1038,7 +1038,7 @@ InstallPIP3s()
         fi
     done
 
-    ShowProc "downloading & installing PIP3 modules"
+    ShowProc "downloading & installing Python 3 modules"
 
     install_cmd="$pip3_cmd install $SHERPA_COMMON_PIP3S 2>&1"
     [[ -n ${packages// /} ]] && install_cmd+=" && $pip3_cmd install $packages 2>&1"
@@ -1048,9 +1048,9 @@ InstallPIP3s()
     echo -e "command=[${install_cmd}]\nmessages=[${install_msgs}]\nresult=[$result]" > "$log_pathfile"
 
     if [[ $result -eq 0 ]]; then
-        ShowDone "downloaded & installed PIP3 modules"
+        ShowDone "downloaded & installed Python 3 modules"
     else
-        ShowError "download & install PIP3 modules failed [$result]"
+        ShowError "download & install Python 3 modules failed [$result]"
         DebugErrorFile "$log_pathfile"
 
         errorcode=16
@@ -1677,7 +1677,7 @@ FindAllIPKGDependencies()
     IPKG_download_count=${#IPKG_download_list[@]}
 
     if [[ $IPKG_download_count -gt 0 ]]; then
-        DebugProc 'calculating size of IPKGs to download'
+        DebugProc "calculating size of IPKG$([[ $IPKG_download_count -gt 1 ]] && echo 's') to download"
         for element in ${IPKG_download_list[@]}; do
             result_size=$($OPKG_CMD info $element | $GREP_CMD -F 'Size:' | $SED_CMD 's|^Size: ||')
             ((IPKG_download_size+=result_size))
@@ -1688,7 +1688,7 @@ FindAllIPKGDependencies()
     DebugStageEnd $IPKG_search_startseconds
 
     if [[ $IPKG_download_count -gt 0 ]]; then
-        ShowDone "$IPKG_download_count IPKGs ($(Convert2ISO $IPKG_download_size)) to be downloaded"
+        ShowDone "$IPKG_download_count IPKG$([[ $IPKG_download_count -gt 1 ]] && echo 's') ($(Convert2ISO $IPKG_download_size)) to be downloaded"
     else
         ShowDone 'no IPKGs are required'
     fi
