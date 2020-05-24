@@ -800,8 +800,8 @@ InstallBaseAddons()
     fi
 
     InstallIPKGs
-    InstallPIP2s
-    InstallPIP3s
+    InstallPy2Modules
+    InstallPy3Modules
 
     [[ $TARGET_APP = Entware || $update_all_apps = true ]] && RestartAllQPKGs
 
@@ -956,7 +956,7 @@ DowngradePy3()
 
     }
 
-InstallPIP2s()
+InstallPy2Modules()
     {
 
     [[ $errorcode -gt 0 ]] && return
@@ -967,7 +967,8 @@ InstallPIP2s()
     local result=0
     local returncode=0
     local packages=''
-    local log_pathfile="$WORKING_PATH/PIP2-modules.$INSTALL_LOG_FILE"
+    local desc='Python 2 modules'
+    local log_pathfile="$WORKING_PATH/Py2-modules.$INSTALL_LOG_FILE"
 
     # sometimes, OpenWRT 'pip' is for Py3, so let's prefer a Py2 version
     if [[ -e /opt/bin/pip2 ]]; then
@@ -986,7 +987,7 @@ InstallPIP2s()
         fi
     done
 
-    ShowProc "downloading & installing Python 2 modules"
+    ShowProc "downloading & installing $desc"
 
     install_cmd="$pip2_cmd install $SHERPA_COMMON_PIP2S 2>&1"
     [[ -n ${packages// /} ]] && install_cmd+=" && $pip2_cmd install $packages 2>&1"
@@ -996,9 +997,9 @@ InstallPIP2s()
     echo -e "command=[${install_cmd}]\nmessages=[${install_msgs}]\nresult=[$result]" > "$log_pathfile"
 
     if [[ $result -eq 0 ]]; then
-        ShowDone "downloaded & installed Python 2 modules"
+        ShowDone "downloaded & installed $desc"
     else
-        ShowError "download & install Python 2 modules failed [$result]"
+        ShowError "download & install $desc failed [$result]"
         DebugErrorFile "$log_pathfile"
 
         errorcode=15
@@ -1010,7 +1011,7 @@ InstallPIP2s()
 
     }
 
-InstallPIP3s()
+InstallPy3Modules()
     {
 
     [[ $errorcode -gt 0 ]] && return
@@ -1021,7 +1022,8 @@ InstallPIP3s()
     local result=0
     local returncode=0
     local packages=''
-    local log_pathfile="$WORKING_PATH/PIP3-modules.$INSTALL_LOG_FILE"
+    local desc='Python 3 modules'
+    local log_pathfile="$WORKING_PATH/Py3-modules.$INSTALL_LOG_FILE"
 
     # sometimes, OpenWRT doesn't have a 'pip3'
     if [[ -e /opt/bin/pip3 ]]; then
@@ -1038,7 +1040,7 @@ InstallPIP3s()
         fi
     done
 
-    ShowProc "downloading & installing Python 3 modules"
+    ShowProc "downloading & installing $desc"
 
     install_cmd="$pip3_cmd install $SHERPA_COMMON_PIP3S 2>&1"
     [[ -n ${packages// /} ]] && install_cmd+=" && $pip3_cmd install $packages 2>&1"
@@ -1048,9 +1050,9 @@ InstallPIP3s()
     echo -e "command=[${install_cmd}]\nmessages=[${install_msgs}]\nresult=[$result]" > "$log_pathfile"
 
     if [[ $result -eq 0 ]]; then
-        ShowDone "downloaded & installed Python 3 modules"
+        ShowDone "downloaded & installed $desc"
     else
-        ShowError "download & install Python 3 modules failed [$result]"
+        ShowError "download & install $desc failed [$result]"
         DebugErrorFile "$log_pathfile"
 
         errorcode=16
