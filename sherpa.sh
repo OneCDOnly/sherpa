@@ -45,7 +45,7 @@ Init()
     {
 
     SCRIPT_FILE=sherpa.sh
-    SCRIPT_VERSION=200524
+    SCRIPT_VERSION=200526
     debug=false
     ResetErrorcode
 
@@ -313,10 +313,10 @@ Init()
         SHERPA_QPKG_PIP3S+=('')
 
     SHERPA_COMMON_IPKGS='git git-http nano less ca-certificates python-pip python3-pip'
-#     SHERPA_COMMON_PIP2S='--upgrade pip setuptools'
-#     SHERPA_COMMON_PIP3S='--upgrade pip setuptools'
-    SHERPA_COMMON_PIP2S='--disable-pip-version-check --upgrade setuptools'
-    SHERPA_COMMON_PIP3S='--disable-pip-version-check --upgrade setuptools'
+#    SHERPA_COMMON_PIP2S='--upgrade setuptools'
+#    SHERPA_COMMON_PIP3S='--upgrade setuptools'
+    SHERPA_COMMON_PIP2S='setuptools'
+    SHERPA_COMMON_PIP3S='setuptools'
     SHERPA_COMMON_CONFLICTS='Optware Optware-NG'
 
     # user-specified as arguments at runtime
@@ -651,6 +651,13 @@ DownloadQPKGs()
     #   remove duplicates and installed packages from final QPKG install list.
     # loop through final QPKG install list and if sherpa installable package index matches then:
     #   add package ipks to final IPK install list.
+
+#   temp="$QPKGS_to_install"
+#   temp+="$QPKGS_to_reinstall"
+
+#   TARGET_APP=${QPKGS_to_install[0]}
+
+#     FindAllQPKGDependencies "$TARGET_APP"
 
     ! IsQPKGInstalled Entware && DownloadQPKG Entware
 
@@ -989,7 +996,7 @@ InstallPy2Modules()
 
     ShowProc "downloading & installing $desc"
 
-    install_cmd="$pip2_cmd install $SHERPA_COMMON_PIP2S 2>&1"
+    install_cmd="$pip2_cmd install $SHERPA_COMMON_PIP2S --disable-pip-version-check 2>&1"
     [[ -n ${packages// /} ]] && install_cmd+=" && $pip2_cmd install $packages 2>&1"
 
     install_msgs=$(eval "$install_cmd")
@@ -1042,7 +1049,7 @@ InstallPy3Modules()
 
     ShowProc "downloading & installing $desc"
 
-    install_cmd="$pip3_cmd install $SHERPA_COMMON_PIP3S 2>&1"
+    install_cmd="$pip3_cmd install $SHERPA_COMMON_PIP3S --disable-pip-version-check 2>&1"
     [[ -n ${packages// /} ]] && install_cmd+=" && $pip3_cmd install $packages 2>&1"
 
     install_msgs=$(eval "$install_cmd")
@@ -1612,6 +1619,77 @@ DisplayResult()
 
     DebugFuncExit
     return 0
+
+    }
+
+FindAllQPKGDependencies()
+    {
+
+    # From a specified list of QPKG names, find all dependent QPKGs, exclude those already installed, then generate a total qty to download.
+    # input:
+    #   $1 = string with space-separated initial QPKG names.
+    # output:
+    #   $QPKG_download_list = array with complete list of all QPKGs, including those originally specified.
+    #   $QPKG_download_count = number of packages to be downloaded.
+
+    QPKG_download_count=0
+    QPKG_download_list=()
+    local requested_list=()
+    local last_list=()
+    local all_list=()
+    local dependency_list=''
+    local iterations=0
+    local iteration_limit=20
+    local complete=false
+    local result_size=0
+    local QPKG_search_startseconds=$(DebugStageStart)
+
+    [[ -z $1 ]] && { DebugError 'No QPKGs were requested'; return 1 ;}
+
+    IsSysFilePresent $OPKG_CMD || return 1
+
+    # remove duplicate entries
+    requested_list=$($TR_CMD ' ' '\n' <<< $1 | $SORT_CMD | $UNIQ_CMD | $TR_CMD '\n' ' ')
+    last_list=$requested_list
+
+    ShowProc 'calculating number and total size of QPKGs required'
+    DebugInfo "requested QPKGs: ${requested_list[*]}"
+
+    DebugProc 'finding all QPKG dependencies'
+    while [[ $iterations -lt $iteration_limit ]]; do
+        ((iterations++))
+#         last_list=$($OPKG_CMD depends -A $last_list | $GREP_CMD -v 'depends on:' | $SED_CMD 's|^[[:blank:]]*||;s|[[:blank:]]*$||' | $TR_CMD ' ' '\n' | $SORT_CMD | $UNIQ_CMD)
+
+        if [[ -n $last_list ]]; then
+            [[ -n $dependency_list ]] && dependency_list+=$(echo -e "\n$last_list") || dependency_list=$last_list
+        else
+            DebugDone 'complete'
+            DebugInfo "found all QPKG dependencies in $iterations iterations"
+            complete=true
+            break
+        fi
+    done
+
+    [[ $complete = false ]] && DebugError "QPKG dependency list is incomplete! Consider raising \$iteration_limit [$iteration_limit]."
+
+    # remove duplicate entries
+    all_list=$(echo "$requested_list $dependency_list" | $TR_CMD ' ' '\n' | $SORT_CMD | $UNIQ_CMD | $TR_CMD '\n' ' ')
+
+    DebugProc 'excluding packages already installed'
+    for element in ${all_list[@]}; do
+        $OPKG_CMD status "$element" | $GREP_CMD -q "Status:.*installed" || QPKG_download_list+=($element)
+    done
+    DebugDone 'complete'
+    DebugInfo "QPKGs to download: ${IPKG_download_list[*]}"
+    QPKG_download_count=${#IPKG_download_list[@]}
+
+    DebugStageEnd $IPKG_search_startseconds
+
+    if [[ $QPKG_download_count -gt 0 ]]; then
+        ShowDone "$QPKG_download_count QPKGs to be downloaded"
+    else
+        ShowDone 'no QPKGs are required'
+    fi
 
     }
 
