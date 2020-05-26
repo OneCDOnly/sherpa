@@ -803,9 +803,9 @@ InstallBaseAddons()
     fi
 
     InstallIPKGs
+    DowngradePy3
     InstallPy2Modules
     InstallPy3Modules
-    DowngradePy3
 
     [[ $TARGET_APP = Entware || $update_all_apps = true ]] && RestartAllQPKGs
 
