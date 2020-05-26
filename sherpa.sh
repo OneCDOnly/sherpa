@@ -313,8 +313,6 @@ Init()
         SHERPA_QPKG_PIP3S+=('')
 
     SHERPA_COMMON_IPKGS='git git-http nano less ca-certificates python-pip python3-pip'
-#    SHERPA_COMMON_PIP2S='--upgrade setuptools'
-#    SHERPA_COMMON_PIP3S='--upgrade setuptools'
     SHERPA_COMMON_PIP2S='setuptools'
     SHERPA_COMMON_PIP3S='setuptools'
     SHERPA_COMMON_CONFLICTS='Optware Optware-NG'
@@ -603,7 +601,7 @@ ParseArgs()
     TARGET_APP=${QPKGS_to_install[0]}           # keep for compatibility until multi-package rollout is ready
 
     [[ ${#QPKGS_to_install[@]} -eq 0 && ${#QPKGS_to_uninstall[@]} -eq 0 && ${#QPKGS_to_update[@]} -eq 0 && ${#QPKGS_to_backup[@]} -eq 0 && ${#QPKGS_to_restore[@]} -eq 0 && $satisfy_dependencies_only = false && $update_all_apps = false ]] && errorcode=11
-    [[ $backup_all_apps = true && $restore_all_apps = true ]] && errorcode=12               # no-point performing both operations
+    [[ $backup_all_apps = true && $restore_all_apps = true ]] && errorcode=12               # there's no-point performing both operations
     return 0
 
     }
@@ -655,9 +653,7 @@ DownloadQPKGs()
 #   temp="$QPKGS_to_install"
 #   temp+="$QPKGS_to_reinstall"
 
-#   TARGET_APP=${QPKGS_to_install[0]}
-
-#     FindAllQPKGDependencies "$TARGET_APP"
+#   FindAllQPKGDependencies "$TARGET_APP"
 
     ! IsQPKGInstalled Entware && DownloadQPKG Entware
 
@@ -1183,9 +1179,6 @@ DownloadQPKG()
         ShowProc "downloading file ($remote_filename)"
 
         [[ -e $log_pathfile ]] && rm -f "$log_pathfile"
-
-        # keep this one handy for SOCKS5
-        # curl http://entware-3x.zyxmon.org/binaries/other/Entware-3x_1.00std.qpkg --socks5 IP:PORT --output target.qpkg
 
         if [[ $debug = true ]]; then
             $CURL_CMD $curl_insecure_arg --output "$local_pathfile" "$remote_url" 2>&1 | $TEE_CMD -a "$log_pathfile"
