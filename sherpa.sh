@@ -45,7 +45,7 @@ Init()
     {
 
     SCRIPT_FILE=sherpa.sh
-    SCRIPT_VERSION=200526
+    SCRIPT_VERSION=200527
     debug=false
     ResetErrorcode
 
@@ -805,6 +805,7 @@ InstallBaseAddons()
     InstallIPKGs
     InstallPy2Modules
     InstallPy3Modules
+    DowngradePy3
 
     [[ $TARGET_APP = Entware || $update_all_apps = true ]] && RestartAllQPKGs
 
@@ -851,7 +852,6 @@ InstallIPKGs()
         fi
 
         InstallIPKGBatch "$packages"
-        DowngradePy3
     else
         ShowError "IPKG download path [$IPKG_DL_PATH] does not exist"
         errorcode=13
@@ -917,7 +917,7 @@ InstallIPKGBatch()
 DowngradePy3()
     {
 
-    # Watcher3 isn't presently compatible with Python 3.8.1 so let's force a downgrade to 3.7.4
+    # Watcher3 isn't presently compatible with Python 3.8.x so let's force a downgrade to 3.7.4
 
     (! IsQPKGInstalled OWatcher3) && [[ $TARGET_APP != OWatcher3 ]] && return
     [[ ! -e /opt/bin/python3 ]] && return
@@ -937,7 +937,7 @@ DowngradePy3()
     local dl_log_pathfile="$IPKG_DL_PATH/IPKGs.$DOWNLOAD_LOG_FILE"
     local install_log_pathfile="$IPKG_DL_PATH/IPKGs.$INSTALL_LOG_FILE"
 
-    ShowProc "downgrading to Python $pkg_version"
+    ShowProc "Watcher3 selected so downgrading to Python $pkg_version"
 
     for pkg_name in ${pkg_names[@]}; do
         ipkg_urls+=(-O "${source_url}/archive/${pkg_base}-${pkg_name}_${pkg_version}_${pkg_arch}.ipk")
@@ -946,13 +946,16 @@ DowngradePy3()
     # and this package too
     ipkg_urls+=(-O "${source_url}/archive/${pkg_base}_${pkg_version}_${pkg_arch}.ipk")
 
+    # also need to downgrade 'pip3' to prevent 'pip not found' error
+    ipkg_urls+=(-O "${source_url}/archive/${pkg_base}-pip_19.0.3-1_${pkg_arch}.ipk")
+
     (cd "$IPKG_DL_PATH" && $CURL_CMD $curl_insecure_arg ${ipkg_urls[@]} >> "$dl_log_pathfile" 2>&1)
 
     install_msgs=$($OPKG_CMD install --force-downgrade "$IPKG_DL_PATH"/*.ipk 2>&1)
     result=$?
     echo -e "${install_msgs}\nresult=[$result]" > "$install_log_pathfile"
 
-    ShowDone "downgraded to Python $pkg_version"
+    ShowDone "Watcher3 selected so downgraded to Python $pkg_version"
 
     DebugFuncExit
     return $returncode
