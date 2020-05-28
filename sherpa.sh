@@ -45,7 +45,7 @@ Init()
     {
 
     SCRIPT_FILE=sherpa.sh
-    SCRIPT_VERSION=200527
+    SCRIPT_VERSION=200528
     debug=false
     ResetErrorcode
 
@@ -102,6 +102,7 @@ Init()
     RESTART_LOG_FILE=restart.log
     DEFAULT_SHARES_PATHFILE=/etc/config/def_share.info
     ULINUX_PATHFILE=/etc/config/uLinux.conf
+    PLATFORM_PATHFILE=/etc/platform.conf
     local DEBUG_LOG_FILE=${SCRIPT_FILE%.*}.debug.log
 
     # check required binaries are present
@@ -283,9 +284,9 @@ Init()
         SHERPA_QPKG_PIP3S+=('')
 
     SHERPA_QPKG_NAME+=(Par2)
-        SHERPA_QPKG_ARCH+=(x41)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/Par2/Par2_0.8.1.0_arm-x41.qpkg)
-        SHERPA_QPKG_MD5+=(8516e45e704875cdd2cd2bb315c4e1e6)
+        SHERPA_QPKG_ARCH+=(x31)
+        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/Par2/Par2_0.8.1.0_arm-x31.qpkg)
+        SHERPA_QPKG_MD5+=(ce8af2e009eb87733c3b855e41a94f8e)
         SHERPA_QPKG_ABBRVS+=('')
         SHERPA_QPKG_DEPS+=('')
         SHERPA_QPKG_IPKGS+=('')
@@ -293,9 +294,9 @@ Init()
         SHERPA_QPKG_PIP3S+=('')
 
     SHERPA_QPKG_NAME+=(Par2)
-        SHERPA_QPKG_ARCH+=(x31)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/Par2/Par2_0.8.1.0_arm-x31.qpkg)
-        SHERPA_QPKG_MD5+=(ce8af2e009eb87733c3b855e41a94f8e)
+        SHERPA_QPKG_ARCH+=(x41)
+        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/Par2/Par2_0.8.1.0_arm-x41.qpkg)
+        SHERPA_QPKG_MD5+=(8516e45e704875cdd2cd2bb315c4e1e6)
         SHERPA_QPKG_ABBRVS+=('')
         SHERPA_QPKG_DEPS+=('')
         SHERPA_QPKG_IPKGS+=('')
@@ -337,7 +338,6 @@ Init()
     # internals
     SCRIPT_STARTSECONDS=$($DATE_CMD +%s)
     NAS_FIRMWARE=$($GETCFG_CMD System Version -f $ULINUX_PATHFILE)
-    NAS_ARCH=$($UNAME_CMD -m)
     progress_message=''
     previous_length=0
     previous_msg=''
@@ -1220,18 +1220,25 @@ CalcNASQPKGArch()
 
     # Decide which package arch is suitable for this NAS. This is only needed for Stephane's packages.
 
-    case $NAS_ARCH in
+    case $($UNAME_CMD -m) in
         x86_64)
             [[ ${NAS_FIRMWARE//.} -ge 430 ]] && NAS_QPKG_ARCH=x64 || NAS_QPKG_ARCH=x86
             ;;
         i686|x86)
             NAS_QPKG_ARCH=x86
             ;;
-        armv7h)
-            NAS_QPKG_ARCH=x31
-            ;;
         armv7l)
-            NAS_QPKG_ARCH=x41
+            case $($GETCFG_CMD Platform -f $PLATFORM_PATHFILE) in
+                ARM_MS)
+                    NAS_QPKG_ARCH=x31
+                    ;;
+                ARM_AL)
+                    NAS_QPKG_ARCH=x41
+                    ;;
+                *)
+                    NAS_QPKG_ARCH=none
+                    ;;
+            esac
             ;;
         aarch64)
             NAS_QPKG_ARCH=a64
