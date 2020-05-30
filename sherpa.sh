@@ -627,7 +627,6 @@ DisplayHelp()
 
     echo -e "\n- Update all sherpa installed applications:"
     echo -e "\t$0 --update-all"
-    echo
 
     DebugFuncExit
     return 0
@@ -658,6 +657,9 @@ DownloadQPKGs()
     ! IsQPKGInstalled Entware && DownloadQPKG Entware
 
     { (IsQPKGInstalled SABnzbdplus) || [[ $TARGET_APP = SABnzbdplus ]] ;} && [[ $NAS_QPKG_ARCH != none ]] && ! IsQPKGInstalled Par2 && DownloadQPKG Par2
+
+    # an ugly workaround until QPKG dependency checking works properly.
+    { (IsQPKGInstalled SABnzbd) || [[ $TARGET_APP = SABnzbd ]] ;} && [[ $NAS_QPKG_ARCH != none ]] && ! IsQPKGInstalled Par2 && DownloadQPKG Par2
 
     [[ -n $TARGET_APP ]] && DownloadQPKG $TARGET_APP
 
@@ -792,6 +794,18 @@ InstallBaseAddons()
     DebugFuncEntry
 
     if { (IsQPKGInstalled SABnzbdplus) || [[ $TARGET_APP = SABnzbdplus ]] ;} && [[ $NAS_QPKG_ARCH != none ]]; then
+        if ! IsQPKGInstalled Par2; then
+            InstallQPKG Par2
+            if [[ $errorcode -gt 0 ]]; then
+                ShowWarning "Par2 installation failed - but it's not essential so I'm continuing"
+                ResetErrorcode
+                DebugVar errorcode
+            fi
+        fi
+    fi
+
+    # use the same ugly workaround until QPKG dep checking works properly
+    if { (IsQPKGInstalled SABnzbd) || [[ $TARGET_APP = SABnzbd ]] ;} && [[ $NAS_QPKG_ARCH != none ]]; then
         if ! IsQPKGInstalled Par2; then
             InstallQPKG Par2
             if [[ $errorcode -gt 0 ]]; then
