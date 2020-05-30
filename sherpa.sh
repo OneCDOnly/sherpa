@@ -45,7 +45,7 @@ Init()
     {
 
     SCRIPT_FILE=sherpa.sh
-    SCRIPT_VERSION=200528
+    SCRIPT_VERSION=200531
     debug=false
     ResetErrorcode
 
@@ -165,13 +165,13 @@ Init()
     # sherpa-supported package details - parallel arrays
     SHERPA_QPKG_NAME=()         # internal QPKG name
         SHERPA_QPKG_ARCH=()     # QPKG supports this architecture
-        SHERPA_QPKG_URL=()      # remote QPKG URL available for download
+        SHERPA_QPKG_URL=()      # remote QPKG URL
         SHERPA_QPKG_MD5=()      # remote QPKG MD5
-        SHERPA_QPKG_ABBRVS=()   # if set, this package is user-installable, and these abbreviations can be used to specify app
-        SHERPA_QPKG_DEPS=()     # this QPKG requires these QPKGs to be installed first
-        SHERPA_QPKG_IPKGS=()    # this QPKG requires these IPKGs to be installed first
-        SHERPA_QPKG_PIP2S=()    # this QPKG requires these PIPs for Python 2 to be installed first
-        SHERPA_QPKG_PIP3S=()    # this QPKG requires these PIPs for Python 3 to be installed first
+        SHERPA_QPKG_ABBRVS=()   # if set, this package is user-installable, and these abbreviations may be used to specify app
+        SHERPA_QPKG_DEPS=()     # require these QPKGs to be installed first
+        SHERPA_QPKG_IPKGS=()    # require these IPKGs to be installed first
+        SHERPA_QPKG_PIP2S=()    # require these PIPs for Python 2 to be installed first
+        SHERPA_QPKG_PIP3S=()    # require these PIPs for Python 3 to be installed first
 
     SHERPA_QPKG_NAME+=(Entware)
         SHERPA_QPKG_ARCH+=(all)
