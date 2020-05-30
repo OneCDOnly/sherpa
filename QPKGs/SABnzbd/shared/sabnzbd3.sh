@@ -23,7 +23,7 @@ Init()
     STORED_PID_PATHFILE=/tmp/$QPKG_NAME.pid
     INIT_LOG_PATHFILE=/var/log/$QPKG_NAME.log
     BACKUP_PATHFILE=$(getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info)/.@backup_config/$QPKG_NAME.userdata.tar.gz
-    local DAEMON=/opt/bin/python3
+    DAEMON=/opt/bin/python3
     LAUNCHER="$DAEMON $TARGET_SCRIPT --daemon --browser 0 --config-file $QPKG_INI_PATHFILE --pidfile $STORED_PID_PATHFILE"
     export PYTHONPATH=$DAEMON
     export PATH=/opt/bin:/opt/sbin:$PATH
@@ -86,7 +86,7 @@ UpdateLanguages()
 
     echo -n "* updating language support ($QPKG_NAME): " | tee -a $INIT_LOG_PATHFILE
     cd $QPKG_PATH/$QPKG_NAME || return 1
-    exec_msgs=$(python3 tools/make_mo.py)
+    exec_msgs=$($DAEMON tools/make_mo.py)
     result=$?
 
     if [[ $result -eq 0 ]]; then
