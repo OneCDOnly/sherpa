@@ -963,6 +963,9 @@ DowngradePy3()
     # also need to downgrade 'pip3' to prevent 'pip not found' error
     ipkg_urls+=(-O "${source_url}/archive/${pkg_base}-pip_19.0.3-1_${pkg_arch}.ipk")
 
+    # and a specific version of cryptography - so SAB3 will restart correctly
+    ipkg_urls+=(-O "${source_url}/archive/${pkg_base}-cryptography_2.7-2_${pkg_arch}.ipk")
+
     (cd "$IPKG_DL_PATH" && $CURL_CMD $curl_insecure_arg ${ipkg_urls[@]} >> "$dl_log_pathfile" 2>&1)
 
     install_msgs=$($OPKG_CMD install --force-downgrade "$IPKG_DL_PATH"/*.ipk 2>&1)
