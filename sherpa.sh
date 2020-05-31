@@ -45,7 +45,7 @@ Init()
     {
 
     SCRIPT_FILE=sherpa.sh
-    SCRIPT_VERSION=200531
+    SCRIPT_VERSION=200601
     debug=false
     ResetErrorcode
 
@@ -763,22 +763,22 @@ UpdateEntware()
     [[ -e $FIND_CMD && -e $package_list_file ]] && result=$($FIND_CMD "$package_list_file" -mmin +$package_list_age) || result='new install'
 
     if [[ -n $result ]]; then
-        ShowProc 'updating Entware package list'
+        ShowProc "updating $(FormatAsPackageName Entware) package list"
 
         install_msgs=$($OPKG_CMD update 2>&1)
         result=$?
         echo -e "${install_msgs}\nresult=[$result]" >> "$log_pathfile"
 
         if [[ $result -eq 0 ]]; then
-            ShowDone 'updated Entware package list'
+            ShowDone "updated $(FormatAsPackageName Entware) package list"
         else
-            ShowWarning "Unable to update Entware package list [$result]"
+            ShowWarning "Unable to update $(FormatAsPackageName Entware) package list $(FormatAsExitcode $result)"
             DebugErrorFile "$log_pathfile"
             # meh, continue anyway with old list ...
         fi
     else
-        DebugInfo "Entware package list was updated less than $package_list_age minutes ago"
-        ShowDone 'Entware package list is up-to-date'
+        DebugInfo "$(FormatAsPackageName Entware) package list was updated less than $package_list_age minutes ago"
+        ShowDone "$(FormatAsPackageName Entware) package list is up-to-date"
     fi
 
     DebugFuncExit
@@ -797,7 +797,7 @@ InstallBaseAddons()
         if ! IsQPKGInstalled Par2; then
             InstallQPKG Par2
             if [[ $errorcode -gt 0 ]]; then
-                ShowWarning "Par2 installation failed - but it's not essential so I'm continuing"
+                ShowWarning "$(FormatAsPackageName Par2) installation failed - but it's not essential so I'm continuing"
                 ResetErrorcode
                 DebugVar errorcode
             fi
@@ -809,7 +809,7 @@ InstallBaseAddons()
         if ! IsQPKGInstalled Par2; then
             InstallQPKG Par2
             if [[ $errorcode -gt 0 ]]; then
-                ShowWarning "Par2 installation failed - but it's not essential so I'm continuing"
+                ShowWarning "$(FormatAsPackageName Par2) installation failed - but it's not essential so I'm continuing"
                 ResetErrorcode
                 DebugVar errorcode
             fi
@@ -1136,16 +1136,16 @@ InstallQPKG()
 
     local log_pathfile="$local_pathfile.$INSTALL_LOG_FILE"
     target_file=$($BASENAME_CMD "$local_pathfile")
-    ShowProcLong "installing file ($target_file)"
+    ShowProcLong "installing file $(FormatAsFileName "$target_file")"
     install_msgs=$(eval sh "$local_pathfile" 2>&1)
     result=$?
 
-    echo -e "${install_msgs}\nresult=[$result]" > "$log_pathfile"
+    echo -e "${install_msgs}\nresult=$(FormatAsExitcode $result)" > "$log_pathfile"
 
     if [[ $result -eq 0 || $result -eq 10 ]]; then
-        ShowDone "installed file ($target_file)"
+        ShowDone "installed file $(FormatAsFileName "$target_file")"
     else
-        ShowError "file installation failed ($target_file) [$result]"
+        ShowError "file installation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $result)"
         DebugErrorFile "$log_pathfile"
 
         errorcode=17
@@ -1187,16 +1187,16 @@ DownloadQPKG()
 
     if [[ -e $local_pathfile ]]; then
         if [[ $($MD5SUM_CMD "$local_pathfile" | $CUT_CMD -f1 -d' ') = $remote_filename_md5 ]]; then
-            DebugInfo "existing QPKG checksum correct ($local_filename)"
+            DebugInfo "existing QPKG checksum correct $(FormatAsFileName "$local_filename")"
         else
-            DebugWarning "existing QPKG checksum incorrect ($local_filename)"
-            DebugInfo "deleting file ($local_filename)"
+            DebugWarning "existing QPKG checksum incorrect $(FormatAsFileName "$local_filename")"
+            DebugInfo "deleting file $(FormatAsFileName "$local_filename")"
             rm -f "$local_pathfile"
         fi
     fi
 
     if [[ $errorcode -eq 0 && ! -e $local_pathfile ]]; then
-        ShowProc "downloading file ($remote_filename)"
+        ShowProc "downloading file $(FormatAsFileName "$remote_filename")"
 
         [[ -e $log_pathfile ]] && rm -f "$log_pathfile"
 
@@ -1212,14 +1212,14 @@ DownloadQPKG()
 
         if [[ $result -eq 0 ]]; then
             if [[ $($MD5SUM_CMD "$local_pathfile" | $CUT_CMD -f1 -d' ') = $remote_filename_md5 ]]; then
-                ShowDone "downloaded file ($remote_filename)"
+                ShowDone "downloaded file $(FormatAsFileName "$remote_filename")"
             else
-                ShowError "downloaded file checksum incorrect ($remote_filename)"
+                ShowError "downloaded file checksum incorrect $(FormatAsFileName "$local_pathfile")"
                 errorcode=18
                 returncode=1
             fi
         else
-            ShowError "download failed ($local_pathfile) [$result]"
+            ShowError "download failed $(FormatAsFileName "$local_pathfile") $(FormatAsExitcode $result)"
             DebugErrorFile "$log_pathfile"
 
             errorcode=19
@@ -1329,15 +1329,15 @@ UninstallQPKG()
 
         if [[ $result -eq 0 ]]; then
             if [[ -e $qpkg_installed_path/.uninstall.sh ]]; then
-                ShowProc "uninstalling '$1'"
+                ShowProc "uninstalling $(FormatAsPackageName $1)"
 
                 $qpkg_installed_path/.uninstall.sh > /dev/null
                 result=$?
 
                 if [[ $result -eq 0 ]]; then
-                    ShowDone "uninstalled '$1'"
+                    ShowDone "uninstalled $(FormatAsPackageName $1)"
                 else
-                    ShowError "unable to uninstall '$1' [$result]"
+                    ShowError "unable to uninstall $(FormatAsPackageName $1) $(FormatAsExitcode $result)"
                     errorcode=23
                     returncode=1
                 fi
@@ -1345,7 +1345,7 @@ UninstallQPKG()
 
             $RMCFG_CMD "$1" -f "$APP_CENTER_CONFIG_PATHFILE"
         else
-            DebugQPKG "'$1'" "not installed [$result]"
+            DebugQPKG "$(FormatAsPackageName $1)" "not installed $(FormatAsExitcode $result)"
         fi
     fi
 
@@ -1379,15 +1379,15 @@ QPKGServiceCtl()
 
     case $1 in
         start)
-            ShowProcLong "starting service '$2'"
+            ShowProcLong "starting service $(FormatAsPackageName $2)"
             msgs=$("$init_pathfile" start)
             result=$?
-            echo -e "${msgs}\nresult=[$result]" >> "$qpkg_pathfile.$START_LOG_FILE"
+            echo -e "$(FormatAsStdout "$msgs")\nresult=$(FormatAsExitcode $result)" >> "$qpkg_pathfile.$START_LOG_FILE"
 
             if [[ $result -eq 0 ]]; then
-                ShowDone "started service '$2'"
+                ShowDone "started service $(FormatAsPackageName $2)"
             else
-                ShowWarning "Could not start service '$2' [$result]"
+                ShowWarning "Could not start service $(FormatAsPackageName $2) $(FormatAsExitcode $result)"
                 if [[ $debug = true ]]; then
                     DebugInfoThickSeparator
                     $CAT_CMD "$qpkg_pathfile.$START_LOG_FILE"
@@ -1400,15 +1400,15 @@ QPKGServiceCtl()
             fi
             ;;
         stop)
-            ShowProc "stopping service '$2'"
+            ShowProc "stopping service $(FormatAsPackageName $2)"
             msgs=$("$init_pathfile" stop)
             result=$?
-            echo -e "${msgs}\nresult=[$result]" >> "$qpkg_pathfile.$STOP_LOG_FILE"
+            echo -e "$(FormatAsStdout "$msgs")\nresult=$(FormatAsExitcode $result)" >> "$qpkg_pathfile.$STOP_LOG_FILE"
 
             if [[ $result -eq 0 ]]; then
-                ShowDone "stopped service '$2'"
+                ShowDone "stopped service $(FormatAsPackageName $2)"
             else
-                ShowWarning "Could not stop service '$2' [$result]"
+                ShowWarning "Could not stop service $(FormatAsPackageName $2) $(FormatAsExitcode $result)"
                 if [[ $debug = true ]]; then
                     DebugInfoThickSeparator
                     $CAT_CMD "$qpkg_pathfile.$STOP_LOG_FILE"
@@ -1421,15 +1421,15 @@ QPKGServiceCtl()
             fi
             ;;
         restart)
-            ShowProc "restarting service '$2'"
+            ShowProc "restarting service $(FormatAsPackageName $2)"
             msgs=$("$init_pathfile" restart)
             result=$?
-            echo -e "${msgs}\nresult=[$result]" >> "$qpkg_pathfile.$RESTART_LOG_FILE"
+            echo -e "$(FormatAsStdout "$msgs")\nresult=$(FormatAsExitcode $result)" >> "$qpkg_pathfile.$RESTART_LOG_FILE"
 
             if [[ $result -eq 0 ]]; then
-                ShowDone "restarted service '$2'"
+                ShowDone "restarted service $(FormatAsPackageName $2)"
             else
-                ShowWarning "Could not restart service '$2' [$result]"
+                ShowWarning "Could not restart service $(FormatAsPackageName $2) $(FormatAsExitcode $result)"
                 if [[ $debug = true ]]; then
                     DebugInfoThickSeparator
                     $CAT_CMD "$qpkg_pathfile.$RESTART_LOG_FILE"
@@ -1442,7 +1442,7 @@ QPKGServiceCtl()
             fi
             ;;
         *)
-            DebugError "Unrecognised action ($1)"
+            DebugError "Unrecognised action '$1'"
             errorcode=27
             return 1
             ;;
@@ -1470,11 +1470,11 @@ GetQPKGServiceFile()
         output=$($GETCFG_CMD $1 Shell -f $APP_CENTER_CONFIG_PATHFILE)
 
         if [[ -z $output ]]; then
-            DebugError "No service file configured for package ($1)"
+            DebugError "No service file configured for package $(FormatAsPackageName $1)"
             errorcode=29
             returncode=1
         elif [[ ! -e $output ]]; then
-            DebugError "Package service file not found ($output)"
+            DebugError "Package service file not found $(FormatAsStdout "$output")"
             errorcode=30
             returncode=1
         fi
@@ -1605,10 +1605,10 @@ DisplayResult()
         if [[ $errorcode -eq 0 ]]; then
             [[ $debug = true ]] && emoticon=':DD' || { emoticon=''; echo ;}
 
-            ShowDone "'$TARGET_APP' has been successfully ${RE}installed! $emoticon"
+            ShowDone "$(FormatAsPackageName $TARGET_APP) has been successfully ${RE}installed! $emoticon"
         elif [[ $errorcode -gt 3 ]]; then       # don't display 'failed' when only showing help
             [[ $debug = true ]] && emoticon=':S ' || { emoticon=''; echo ;}
-            ShowError "'$TARGET_APP' ${RE}install failed! ${emoticon}[$errorcode]"
+            ShowError "$(FormatAsPackageName $TARGET_APP) ${RE}install failed! ${emoticon}[$errorcode]"
             suggest_issue=true
         fi
     fi
@@ -2070,6 +2070,38 @@ Convert2ISO()
     {
 
     echo "$1" | $AWK_CMD 'BEGIN{ u[0]="B"; u[1]="kB"; u[2]="MB"; u[3]="GB"} { n = $1; i = 0; while(n > 1000) { i+=1; n= int((n/1000)+0.5) } print n u[i] } '
+
+    }
+
+FormatAsPackageName()
+    {
+
+    [[ -z $1 ]] && return 1
+    echo "'$1'"
+
+    }
+
+FormatAsFileName()
+    {
+
+    [[ -z $1 ]] && return 1
+    echo "($1)"
+
+    }
+
+FormatAsStdout()
+    {
+
+    [[ -z $1 ]] && return 1
+    echo "\"$1\""
+
+    }
+
+FormatAsExitcode()
+    {
+
+    [[ -z $1 ]] && return 1
+    echo "[$1]"
 
     }
 
