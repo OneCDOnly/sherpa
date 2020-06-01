@@ -32,7 +32,7 @@
 # indents: 1 x tab (= 4 x spaces)
 ####################################################################################
 
-USER_ARGS_RAW="$@"
+readonly USER_ARGS_RAW="$@"
 
 ResetErrorcode()
     {
@@ -44,66 +44,66 @@ ResetErrorcode()
 Init()
     {
 
-    SCRIPT_FILE=sherpa.sh
-    SCRIPT_VERSION=200601
+    readonly SCRIPT_FILE=sherpa.sh
+    readonly SCRIPT_VERSION=200602
     debug=false
     ResetErrorcode
 
     # cherry-pick required binaries
-    AWK_CMD=/bin/awk
-    CAT_CMD=/bin/cat
-    CHMOD_CMD=/bin/chmod
-    DATE_CMD=/bin/date
-    GREP_CMD=/bin/grep
-    HOSTNAME_CMD=/bin/hostname
-    LN_CMD=/bin/ln
-    MD5SUM_CMD=/bin/md5sum
-    MKDIR_CMD=/bin/mkdir
-    PING_CMD=/bin/ping
-    SED_CMD=/bin/sed
-    SLEEP_CMD=/bin/sleep
-    TOUCH_CMD=/bin/touch
-    TR_CMD=/bin/tr
-    UNAME_CMD=/bin/uname
-    UNIQ_CMD=/bin/uniq
+    readonly AWK_CMD=/bin/awk
+    readonly CAT_CMD=/bin/cat
+    readonly CHMOD_CMD=/bin/chmod
+    readonly DATE_CMD=/bin/date
+    readonly GREP_CMD=/bin/grep
+    readonly HOSTNAME_CMD=/bin/hostname
+    readonly LN_CMD=/bin/ln
+    readonly MD5SUM_CMD=/bin/md5sum
+    readonly MKDIR_CMD=/bin/mkdir
+    readonly PING_CMD=/bin/ping
+    readonly SED_CMD=/bin/sed
+    readonly SLEEP_CMD=/bin/sleep
+    readonly TOUCH_CMD=/bin/touch
+    readonly TR_CMD=/bin/tr
+    readonly UNAME_CMD=/bin/uname
+    readonly UNIQ_CMD=/bin/uniq
 
-    CURL_CMD=/sbin/curl
-    GETCFG_CMD=/sbin/getcfg
-    RMCFG_CMD=/sbin/rmcfg
-    SERVICE_CMD=/sbin/qpkg_service
-    SETCFG_CMD=/sbin/setcfg
+    readonly CURL_CMD=/sbin/curl
+    readonly GETCFG_CMD=/sbin/getcfg
+    readonly RMCFG_CMD=/sbin/rmcfg
+    readonly SERVICE_CMD=/sbin/qpkg_service
+    readonly SETCFG_CMD=/sbin/setcfg
 
-    BASENAME_CMD=/usr/bin/basename
-    CUT_CMD=/usr/bin/cut
-    DIRNAME_CMD=/usr/bin/dirname
-    DU_CMD=/usr/bin/du
-    HEAD_CMD=/usr/bin/head
-    READLINK_CMD=/usr/bin/readlink
-    SORT_CMD=/usr/bin/sort
-    TAIL_CMD=/usr/bin/tail
-    TEE_CMD=/usr/bin/tee
-    UNZIP_CMD=/usr/bin/unzip
-    UPTIME_CMD=/usr/bin/uptime
-    WC_CMD=/usr/bin/wc
+    readonly BASENAME_CMD=/usr/bin/basename
+    readonly CUT_CMD=/usr/bin/cut
+    readonly DIRNAME_CMD=/usr/bin/dirname
+    readonly DU_CMD=/usr/bin/du
+    readonly HEAD_CMD=/usr/bin/head
+    readonly READLINK_CMD=/usr/bin/readlink
+    readonly SORT_CMD=/usr/bin/sort
+    readonly TAIL_CMD=/usr/bin/tail
+    readonly TEE_CMD=/usr/bin/tee
+    readonly UNZIP_CMD=/usr/bin/unzip
+    readonly UPTIME_CMD=/usr/bin/uptime
+    readonly WC_CMD=/usr/bin/wc
 
-    ZIP_CMD=/usr/local/sbin/zip
+    readonly ZIP_CMD=/usr/local/sbin/zip
 
-    FIND_CMD=/opt/bin/find
-    OPKG_CMD=/opt/bin/opkg
+    readonly FIND_CMD=/opt/bin/find
+    readonly OPKG_CMD=/opt/bin/opkg
     pip2_cmd=/opt/bin/pip2
     pip3_cmd=/opt/bin/pip3
 
     # paths and files
-    APP_CENTER_CONFIG_PATHFILE=/etc/config/qpkg.conf
-    INSTALL_LOG_FILE=install.log
-    DOWNLOAD_LOG_FILE=download.log
-    START_LOG_FILE=start.log
-    STOP_LOG_FILE=stop.log
-    RESTART_LOG_FILE=restart.log
-    DEFAULT_SHARES_PATHFILE=/etc/config/def_share.info
-    ULINUX_PATHFILE=/etc/config/uLinux.conf
-    PLATFORM_PATHFILE=/etc/platform.conf
-    local DEBUG_LOG_FILE=${SCRIPT_FILE%.*}.debug.log
+    readonly APP_CENTER_CONFIG_PATHFILE=/etc/config/qpkg.conf
+    readonly INSTALL_LOG_FILE=install.log
+    readonly DOWNLOAD_LOG_FILE=download.log
+    readonly START_LOG_FILE=start.log
+    readonly STOP_LOG_FILE=stop.log
+    readonly RESTART_LOG_FILE=restart.log
+    readonly DEFAULT_SHARES_PATHFILE=/etc/config/def_share.info
+    readonly ULINUX_PATHFILE=/etc/config/uLinux.conf
+    readonly PLATFORM_PATHFILE=/etc/platform.conf
+    local -r DEBUG_LOG_FILE=${SCRIPT_FILE%.*}.debug.log
 
     # check required binaries are present
     IsSysFilePresent $AWK_CMD || return 1
@@ -144,21 +144,21 @@ Init()
 
     IsSysFilePresent $ZIP_CMD || return 1
 
-    local DEFAULT_SHARE_DOWNLOAD_PATH=/share/Download
-    local DEFAULT_SHARE_PUBLIC_PATH=/share/Public
+    local -r DEFAULT_SHARE_DOWNLOAD_PATH=/share/Download
+    local -r DEFAULT_SHARE_PUBLIC_PATH=/share/Public
 
     # check required system paths are present
     if [[ -L $DEFAULT_SHARE_DOWNLOAD_PATH ]]; then
-        SHARE_DOWNLOAD_PATH=$DEFAULT_SHARE_DOWNLOAD_PATH
+        readonly SHARE_DOWNLOAD_PATH=$DEFAULT_SHARE_DOWNLOAD_PATH
     else
-        SHARE_DOWNLOAD_PATH=/share/$($GETCFG_CMD SHARE_DEF defDownload -d Qdownload -f $DEFAULT_SHARES_PATHFILE)
+        readonly SHARE_DOWNLOAD_PATH=/share/$($GETCFG_CMD SHARE_DEF defDownload -d Qdownload -f $DEFAULT_SHARES_PATHFILE)
         IsSysSharePresent "$SHARE_DOWNLOAD_PATH" || return 1
     fi
 
     if [[ -L $DEFAULT_SHARE_PUBLIC_PATH ]]; then
-        SHARE_PUBLIC_PATH=$DEFAULT_SHARE_PUBLIC_PATH
+        readonly SHARE_PUBLIC_PATH=$DEFAULT_SHARE_PUBLIC_PATH
     else
-        SHARE_PUBLIC_PATH=/share/$($GETCFG_CMD SHARE_DEF defPublic -d Qpublic -f $DEFAULT_SHARES_PATHFILE)
+        readonly SHARE_PUBLIC_PATH=/share/$($GETCFG_CMD SHARE_DEF defPublic -d Qpublic -f $DEFAULT_SHARES_PATHFILE)
         IsSysSharePresent "$SHARE_PUBLIC_PATH" || return 1
     fi
 
@@ -313,10 +313,21 @@ Init()
         SHERPA_QPKG_PIP2S+=('')
         SHERPA_QPKG_PIP3S+=('')
 
-    SHERPA_COMMON_IPKGS='git git-http nano less ca-certificates python-pip python3-pip'
-    SHERPA_COMMON_PIP2S='setuptools'
-    SHERPA_COMMON_PIP3S='setuptools'
-    SHERPA_COMMON_CONFLICTS='Optware Optware-NG'
+    # arrays are now full, so lock them
+    readonly SHERPA_QPKG_NAME
+        readonly SHERPA_QPKG_ARCH
+        readonly SHERPA_QPKG_URL
+        readonly SHERPA_QPKG_MD5
+        readonly SHERPA_QPKG_ABBRVS
+        readonly SHERPA_QPKG_DEPS
+        readonly SHERPA_QPKG_IPKGS
+        readonly SHERPA_QPKG_PIP2S
+        readonly SHERPA_QPKG_PIP3S
+
+    readonly SHERPA_COMMON_IPKGS='git git-http nano less ca-certificates python-pip python3-pip'
+    readonly SHERPA_COMMON_PIP2S='setuptools'
+    readonly SHERPA_COMMON_PIP3S='setuptools'
+    readonly SHERPA_COMMON_CONFLICTS='Optware Optware-NG'
 
     # user-specified as arguments at runtime
     QPKGS_to_install=()
@@ -326,18 +337,18 @@ Init()
     QPKGS_to_backup=()
     QPKGS_to_restore=()
 
-    PREV_QPKG_CONFIG_DIRS=(SAB_CONFIG CONFIG Config config)                 # last element is used as target dirname
-    PREV_QPKG_CONFIG_FILES=(sabnzbd.ini settings.ini config.cfg config.ini) # last element is used as target filename
-    WORKING_PATH=$SHARE_PUBLIC_PATH/${SCRIPT_FILE%.*}.tmp
-    DEBUG_LOG_PATHFILE=$SHARE_PUBLIC_PATH/$DEBUG_LOG_FILE
-    SHERPA_PACKAGES_PATHFILE=$WORKING_PATH/packages.conf
-    QPKG_DL_PATH=$WORKING_PATH/qpkg-downloads
-    IPKG_DL_PATH=$WORKING_PATH/ipkg-downloads
-    IPKG_CACHE_PATH=$WORKING_PATH/ipkg-cache
+    readonly PREV_QPKG_CONFIG_DIRS=(SAB_CONFIG CONFIG Config config)                 # last element is used as target dirname
+    readonly PREV_QPKG_CONFIG_FILES=(sabnzbd.ini settings.ini config.cfg config.ini) # last element is used as target filename
+    readonly WORKING_PATH=$SHARE_PUBLIC_PATH/${SCRIPT_FILE%.*}.tmp
+    readonly DEBUG_LOG_PATHFILE=$SHARE_PUBLIC_PATH/$DEBUG_LOG_FILE
+    readonly SHERPA_PACKAGES_PATHFILE=$WORKING_PATH/packages.conf
+    readonly QPKG_DL_PATH=$WORKING_PATH/qpkg-downloads
+    readonly IPKG_DL_PATH=$WORKING_PATH/ipkg-downloads
+    readonly IPKG_CACHE_PATH=$WORKING_PATH/ipkg-cache
 
     # internals
-    SCRIPT_STARTSECONDS=$($DATE_CMD +%s)
-    NAS_FIRMWARE=$($GETCFG_CMD System Version -f $ULINUX_PATHFILE)
+    readonly SCRIPT_STARTSECONDS=$($DATE_CMD +%s)
+    readonly NAS_FIRMWARE=$($GETCFG_CMD System Version -f $ULINUX_PATHFILE)
     progress_message=''
     previous_length=0
     previous_msg=''
@@ -612,7 +623,7 @@ DisplayHelp()
     DebugFuncEntry
     local package=''
 
-    echo -e "* A BASH script to install various Usenet apps into a QNAP NAS.\n"
+    echo -e "* a BASH script to install various Usenet media-management apps into QNAP NAS.\n"
 
     echo "- Each application shown below can be installed (or reinstalled) by running:"
     for package in ${SHERPA_QPKG_NAME[@]}; do
