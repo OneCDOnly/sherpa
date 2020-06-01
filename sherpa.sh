@@ -962,7 +962,7 @@ DowngradePy3()
     local dl_log_pathfile="$IPKG_DL_PATH/IPKGs.$DOWNLOAD_LOG_FILE"
     local install_log_pathfile="$IPKG_DL_PATH/IPKGs.$INSTALL_LOG_FILE"
 
-    ShowProc "Watcher3 selected so downgrading to Python $pkg_version"
+    ShowProc "$(FormatAsPackageName Watcher3) selected so downgrading to Python $pkg_version"
 
     for pkg_name in ${pkg_names[@]}; do
         ipkg_urls+=(-O "${source_url}/archive/${pkg_base}-${pkg_name}_${pkg_version}_${pkg_arch}.ipk")
@@ -983,7 +983,7 @@ DowngradePy3()
     result=$?
     echo -e "${install_msgs}\nresult=[$result]" > "$install_log_pathfile"
 
-    ShowDone "Watcher3 selected so downgraded to Python $pkg_version"
+    ShowDone "$(FormatAsPackageName Watcher3) selected so downgraded to Python $pkg_version"
 
     DebugFuncExit
     return $returncode
