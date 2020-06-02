@@ -45,7 +45,7 @@ Init()
     {
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200602
+    readonly SCRIPT_VERSION=200603
     debug=false
     ResetErrorcode
 
@@ -1803,7 +1803,7 @@ FindAllIPKGDependencies()
     DebugStageEnd $IPKG_search_startseconds
 
     if [[ $IPKG_download_count -gt 0 ]]; then
-        ShowDone "$IPKG_download_count IPKG$([[ $IPKG_download_count -gt 1 ]] && echo 's') ($(Convert2ISO $IPKG_download_size)) to be downloaded"
+        ShowDone "$IPKG_download_count IPKG$([[ $IPKG_download_count -gt 1 ]] && echo 's') ($(FormatAsISO $IPKG_download_size)) to be downloaded"
     else
         ShowDone 'no IPKGs are required'
     fi
@@ -1846,7 +1846,7 @@ _MonitorDirSize_()
         fi
 
         percent="$((200*(current_bytes)/(total_bytes) % 2 + 100*(current_bytes)/(total_bytes)))%"
-        progress_message=" $percent ($(Convert2ISO $current_bytes)/$(Convert2ISO $total_bytes))"
+        progress_message=" $percent ($(FormatAsISO $current_bytes)/$(FormatAsISO $total_bytes))"
 
         if [[ $stall_seconds -ge $stall_seconds_threshold ]]; then
             if [[ $stall_seconds -lt 60 ]]; then
@@ -2081,7 +2081,7 @@ ConvertSecsToMinutes()
 
     }
 
-Convert2ISO()
+FormatAsISO()
     {
 
     echo "$1" | $AWK_CMD 'BEGIN{ u[0]="B"; u[1]="kB"; u[2]="MB"; u[3]="GB"} { n = $1; i = 0; while(n > 1000) { i+=1; n= int((n/1000)+0.5) } print n u[i] } '
