@@ -955,27 +955,31 @@ DowngradePy3()
     local source_url=$($GREP_CMD 'http://' /opt/etc/opkg.conf | $SED_CMD 's|^.*\(http://\)|\1|')
     local pkg_base=python3
     local pkg_names=(asyncio base cgi cgitb codecs ctypes dbm decimal dev distutils email gdbm lib2to3 light logging lzma multiprocessing ncurses openssl pydoc sqlite3 unittest urllib xml)
+    local pkg_name=''
     local pkg_version=3.7.4-2
     local pkg_arch=$($BASENAME_CMD $source_url | $SED_CMD 's|\-k|\-|;s|sf\-|\-|')
-    local pkg_name=''
     local ipkg_urls=()
     local dl_log_pathfile="$IPKG_DL_PATH/IPKGs.$DOWNLOAD_LOG_FILE"
     local install_log_pathfile="$IPKG_DL_PATH/IPKGs.$INSTALL_LOG_FILE"
 
-    ShowProc "$(FormatAsPackageName Watcher3) selected so downgrading to Python $pkg_version"
+    ShowProc "$(FormatAsPackageName Watcher3) selected so downgrading Python 3"
 
     for pkg_name in ${pkg_names[@]}; do
         ipkg_urls+=(-O "${source_url}/archive/${pkg_base}-${pkg_name}_${pkg_version}_${pkg_arch}.ipk")
     done
 
-    # and this package too
+    # ... and base package
     ipkg_urls+=(-O "${source_url}/archive/${pkg_base}_${pkg_version}_${pkg_arch}.ipk")
 
-    # also need to downgrade 'pip3' to prevent 'pip not found' error
-    ipkg_urls+=(-O "${source_url}/archive/${pkg_base}-pip_19.0.3-1_${pkg_arch}.ipk")
+    # ... also need to downgrade 'pip3' to prevent 'pip not found' error
+    pkg_name=pip
+    pkg_version=19.0.3-1
+    ipkg_urls+=(-O "${source_url}/archive/${pkg_base}-${pkg_name}_${pkg_version}_${pkg_arch}.ipk")
 
-    # and a specific version of cryptography - so SAB3 will restart correctly
-    ipkg_urls+=(-O "${source_url}/archive/${pkg_base}-cryptography_2.7-2_${pkg_arch}.ipk")
+    # ... and a specific version of cryptography, so SAB3 will restart correctly
+    pkg_name=cryptography
+    pkg_version=2.7-2
+    ipkg_urls+=(-O "${source_url}/archive/${pkg_base}-${pkg_name}_${pkg_version}_${pkg_arch}.ipk")
 
     (cd "$IPKG_DL_PATH" && $CURL_CMD $curl_insecure_arg ${ipkg_urls[@]} >> "$dl_log_pathfile" 2>&1)
 
@@ -983,7 +987,7 @@ DowngradePy3()
     result=$?
     echo -e "${install_msgs}\nresult=[$result]" > "$install_log_pathfile"
 
-    ShowDone "$(FormatAsPackageName Watcher3) selected so downgraded to Python $pkg_version"
+    ShowDone "$(FormatAsPackageName Watcher3) selected so downgraded Python 3"
 
     DebugFuncExit
     return $returncode
