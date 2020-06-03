@@ -45,7 +45,7 @@ Init()
     {
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200603
+    readonly SCRIPT_VERSION=200604
     debug=false
     ResetErrorcode
 
@@ -235,8 +235,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(OMedusa)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/OMedusa/build/OMedusa_200517.qpkg)
-        SHERPA_QPKG_MD5+=(8a8a48261c7bc7c954012e83766de3fa)
+        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/OMedusa/build/OMedusa_200604.qpkg)
+        SHERPA_QPKG_MD5+=(20a58929f669b2462ee27ed6fe5764ea)
         SHERPA_QPKG_ABBRVS+=('om med omed medusa omedusa')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python3 mediainfo')
@@ -968,7 +968,7 @@ DowngradePy3()
         ipkg_urls+=(-O "${source_url}/archive/${pkg_base}-${pkg_name}_${pkg_version}_${pkg_arch}.ipk")
     done
 
-    # ... and base package
+    # ... include base package
     ipkg_urls+=(-O "${source_url}/archive/${pkg_base}_${pkg_version}_${pkg_arch}.ipk")
 
     # ... also need to downgrade 'pip3' to prevent 'pip not found' error
