@@ -45,7 +45,7 @@ Init()
     {
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200604
+    readonly SCRIPT_VERSION=200605
     debug=false
     ResetErrorcode
 
@@ -235,8 +235,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(OMedusa)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/OMedusa/build/OMedusa_200604.qpkg)
-        SHERPA_QPKG_MD5+=(20a58929f669b2462ee27ed6fe5764ea)
+        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/OMedusa/build/OMedusa_200605.qpkg)
+        SHERPA_QPKG_MD5+=(394f5f9602b94618eb9061f3c8a272c6)
         SHERPA_QPKG_ABBRVS+=('om med omed medusa omedusa')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python3 mediainfo')

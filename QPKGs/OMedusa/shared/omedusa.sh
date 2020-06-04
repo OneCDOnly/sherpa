@@ -1,19 +1,30 @@
 #!/usr/bin/env bash
+####################################################################################
+# omedusa.sh
+#
+# Copyright (C) 2020 OneCD [one.cd.only@gmail.com]
+#
+# so, blame OneCD if it all goes horribly wrong. ;)
+#
+# For more info: https://forum.qnap.com/viewtopic.php?f=320&t=132373
+####################################################################################
 
 Init()
     {
 
     readonly QPKG_NAME=OMedusa
-    readonly REPO_URL=http://github.com/pymedusa/Medusa.git
+    readonly SOURCE_URL=http://github.com/pymedusa/Medusa.git
+    readonly SOURCE_BRANCH=master
     local -r PYTHON=/opt/bin/python3
     local -r TARGET_SCRIPT=start.py
 
-    # cherry-pick binaries
-    readonly CMD_BASENAME=/usr/bin/basename
+    # cherry-pick required binaries
     readonly CMD_CURL=/sbin/curl
     readonly CMD_DIRNAME=/usr/bin/dirname
     readonly CMD_GETCFG=/sbin/getcfg
+    readonly CMD_GREP=/bin/grep
     readonly CMD_LSOF=/usr/sbin/lsof
+    readonly CMD_SED=/bin/sed
     readonly CMD_SETCFG=/sbin/setcfg
     readonly CMD_TAR=/bin/tar
     readonly CMD_TEE=/usr/bin/tee
@@ -63,7 +74,7 @@ StartQPKG()
 
     QPKGIsActive && return
 
-    PullGitRepo $QPKG_NAME "$REPO_URL" $QPKG_PATH
+    PullGitRepo $QPKG_NAME "$SOURCE_URL" $SOURCE_BRANCH $QPKG_PATH
 
     cd $QPKG_PATH/$QPKG_NAME || return 1
 
@@ -85,16 +96,20 @@ StartQPKG()
     fi
 
     $CMD_SETCFG $QPKG_NAME Web_Port $ui_port -f $QTS_QPKG_CONF_PATHFILE
-    echo -n "* launching: "
+
+    echo -n "* launching: " | $CMD_TEE -a $INIT_LOG_PATHFILE
     exec_msgs=$($LAUNCHER 2>&1)
     result=$?
 
     if [[ $result = 0 || $result = 2 ]]; then
-        echo "OK"
+        echo "OK" | $CMD_TEE -a $INIT_LOG_PATHFILE
     else
-        echo "failed!"
-        echo "= result: $(FormatAsExitcode $result)"
-        echo "= daemon startup messages: $(FormatAsStdout "$exec_msgs")"
+        {
+            echo "failed!"
+            echo "= result: $(FormatAsExitcode $result)"
+            echo "= daemon startup messages: $(FormatAsStdout "$exec_msgs")"
+        } | $CMD_TEE -a $INIT_LOG_PATHFILE
+        WriteErrorToSystemLog "Daemon launch failed. Check $(FormatAsFileName "$INIT_LOG_PATHFILE") for more details."
         return 1
     fi
 
@@ -117,7 +132,7 @@ StartQPKG()
         break
     done
 
-    echo "= $(FormatAsPackageName $QPKG_NAME) daemon UI is now listening on HTTP${secure} port: $ui_port"
+    echo "= $(FormatAsPackageName $QPKG_NAME) daemon UI is now listening on HTTP${secure} port: $ui_port" | $CMD_TEE -a $INIT_LOG_PATHFILE
 
     return 0
 
@@ -245,32 +260,39 @@ PullGitRepo()
 
     # $1 = package name
     # $2 = URL to pull/clone from
-    # $3 = path to clone into
+    # $3 = branch
+    # $4 = path to clone into
 
     local -r GIT_CMD=/opt/bin/git
     local exec_msgs=''
 
-    [[ -z $1 || -z $2 || -z $3 ]] && return 1
+    [[ -z $1 || -z $2 || -z $3 || -z $4 ]] && return 1
     SysFilePresent "$GIT_CMD" || { errorcode=1; return 1 ;}
 
-    local -r QPKG_GIT_PATH="$3/$1"
-    local -r GIT_HTTP_URL="$2"
-    local -r GIT_HTTPS_URL=${GIT_HTTP_URL/http/git}
+    local QPKG_GIT_PATH="$4/$1"
+    local GIT_HTTP_URL="$2"
+    local GIT_HTTPS_URL=${GIT_HTTP_URL/http/git}
 
     echo -n "* updating: " | $CMD_TEE -a $INIT_LOG_PATHFILE
     exec_msgs=$({
-
-        [[ ! -d ${QPKG_GIT_PATH}/.git ]] && { $GIT_CMD clone -b master --depth 1 "$GIT_HTTPS_URL" "$QPKG_GIT_PATH" || $GIT_CMD clone -b master --depth 1 "$GIT_HTTP_URL" "$QPKG_GIT_PATH" ;}
+        [[ ! -d ${QPKG_GIT_PATH}/.git ]] && { $GIT_CMD clone -b $3 --depth 1 "$GIT_HTTPS_URL" "$QPKG_GIT_PATH" || $GIT_CMD clone -b $3 --depth 1 "$GIT_HTTP_URL" "$QPKG_GIT_PATH" ;}
         cd "$QPKG_GIT_PATH" && $GIT_CMD pull
-
-        } 2>&1)
+    } 2>&1)
     result=$?
 
     if [[ $result = 0 ]]; then
         echo "OK" | $CMD_TEE -a $INIT_LOG_PATHFILE
-        echo -e "= result: $result\n= ${FUNCNAME[0]}(): $(FormatAsStdout "$exec_msgs")" >> $INIT_LOG_PATHFILE
+        {
+            echo "= result: $(FormatAsExitcode $result)"
+            echo "= ${FUNCNAME[0]}(): $(FormatAsStdout "$exec_msgs")"
+        } >> $INIT_LOG_PATHFILE
     else
-        echo -e "failed!\n= result: $result\n= ${FUNCNAME[0]}(): $(FormatAsStdout "$exec_msgs")" | $CMD_TEE -a $INIT_LOG_PATHFILE
+        {
+            echo "failed!"
+            echo "= result: $(FormatAsExitcode $result)"
+            echo "= ${FUNCNAME[0]}(): $(FormatAsStdout "$exec_msgs")"
+        } | $CMD_TEE -a $INIT_LOG_PATHFILE
+        WriteErrorToSystemLog "An error occurred while updating daemon from remote repository. Check $(FormatAsFileName "$INIT_LOG_PATHFILE") for more details."
         return 1
     fi
 
