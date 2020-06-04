@@ -52,7 +52,7 @@ Init()
     errorcode=0
 
     if [[ ! -f $QPKG_INI_PATHFILE && -f $QPKG_INI_DEFAULT_PATHFILE ]]; then
-        echo "! no settings file found: using default"
+        WriteToDisplayAndLog '! no settings file found: using default'
         cp $QPKG_INI_DEFAULT_PATHFILE $QPKG_INI_PATHFILE
     fi
 
@@ -86,54 +86,52 @@ StartQPKG()
     fi
 
     if [[ $ui_port -eq 0 ]]; then
-        echo "! unable to start daemon: no port specified" | $CMD_TEE -a $INIT_LOG_PATHFILE
-        WriteErrorToSystemLog "Unable to start daemon as no UI port was specified"
+        WriteToDisplayAndLog '! unable to start daemon: no port specified'
+        WriteErrorToSystemLog 'Unable to start daemon as no UI port was specified'
         return 1
     elif ! PortAvailable $ui_port; then
-        echo "! unable to start daemon: port $ui_port already in use" | $CMD_TEE -a $INIT_LOG_PATHFILE
-        WriteErrorToSystemLog "Unable to start daemon as specified UI port is already in use"
+        WriteToDisplayAndLog "! unable to start daemon: port $ui_port already in use"
+        WriteErrorToSystemLog 'Unable to start daemon as specified UI port is already in use'
         return 1
     fi
 
     $CMD_SETCFG $QPKG_NAME Web_Port $ui_port -f $QTS_QPKG_CONF_PATHFILE
 
-    echo -n "* launching: " | $CMD_TEE -a $INIT_LOG_PATHFILE
+    WriteToDisplayAndLog_SameLine '* launching: '
     exec_msgs=$($LAUNCHER 2>&1)
     result=$?
 
     if [[ $result = 0 || $result = 2 ]]; then
-        echo "OK" | $CMD_TEE -a $INIT_LOG_PATHFILE
+        WriteToDisplayAndLog 'OK'
     else
-        {
-            echo "failed!"
-            echo "= result: $(FormatAsExitcode $result)"
-            echo "= daemon startup messages: $(FormatAsStdout "$exec_msgs")"
-        } | $CMD_TEE -a $INIT_LOG_PATHFILE
+        WriteToDisplayAndLog 'failed!'
+        WriteToDisplayAndLog "= result: $(FormatAsExitcode $result)"
+        WriteToDisplayAndLog "= daemon startup messages: $(FormatAsStdout "$exec_msgs")"
         WriteErrorToSystemLog "Daemon launch failed. Check $(FormatAsFileName "$INIT_LOG_PATHFILE") for more details."
         return 1
     fi
 
-    echo -n "* checking for daemon UI port $ui_port response: " | $CMD_TEE -a $INIT_LOG_PATHFILE
-    echo -n "(waiting for upto $MAX_WAIT_SECONDS_START seconds): "
+    WriteToDisplayAndLog_SameLine "* checking for daemon UI port $ui_port response: "
+    WriteToDisplay_SameLine "(waiting for upto $MAX_WAIT_SECONDS_START seconds): "
 
     while true; do
         while ! PortResponds $ui_port; do
             sleep 1
             ((acc++))
-            echo -n "$acc, "
+            WriteToDisplay_SameLine "$acc, "
 
             if [[ $acc -ge $MAX_WAIT_SECONDS_START ]]; then
-                echo "failed!" | $CMD_TEE -a $INIT_LOG_PATHFILE
+                WriteToDisplayAndLog 'failed!'
                 WriteErrorToSystemLog "Daemon UI port $ui_port failed to respond after $acc seconds"
                 return 1
             fi
         done
-        echo "OK"; echo "daemon UI responded after $acc seconds" >> $INIT_LOG_PATHFILE
+        WriteToDisplay 'OK'
+        WriteToLog "daemon UI responded after $acc seconds"
         break
     done
 
-    echo "= $(FormatAsPackageName $QPKG_NAME) daemon UI is now listening on HTTP${secure} port: $ui_port" | $CMD_TEE -a $INIT_LOG_PATHFILE
-
+    WriteToDisplayAndLog "= $(FormatAsPackageName $QPKG_NAME) daemon UI is now listening on HTTP${secure} port: $ui_port"
     return 0
 
     }
@@ -149,25 +147,27 @@ StopQPKG()
     PID=$(<$STORED_PID_PATHFILE)
 
     kill $PID
-    echo -n "* stopping daemon with SIGTERM: " | $CMD_TEE -a $INIT_LOG_PATHFILE; echo -n "(waiting for upto $MAX_WAIT_SECONDS_STOP seconds): "
+    WriteToDisplayAndLog_SameLine '* stopping daemon with SIGTERM: '
+    WriteToDisplay_SameLine "(waiting for upto $MAX_WAIT_SECONDS_STOP seconds): "
 
     while true; do
         while [[ -d /proc/$PID ]]; do
             sleep 1
             ((acc++))
-            echo -n "$acc, "
+            WriteToDisplay_SameLine "$acc, "
 
             if [[ $acc -ge $MAX_WAIT_SECONDS_STOP ]]; then
-                echo -n "failed! " | $CMD_TEE -a $INIT_LOG_PATHFILE
+                WriteToDisplayAndLog_SameLine "failed! "
                 kill -9 $PID 2> /dev/null
-                echo "sent SIGKILL." | $CMD_TEE -a $INIT_LOG_PATHFILE
+                WriteToDisplayAndLog 'sent SIGKILL.'
                 rm -f $STORED_PID_PATHFILE
                 break 2
             fi
         done
 
         rm -f $STORED_PID_PATHFILE
-        echo "OK"; echo "stopped OK in $acc seconds" >> $INIT_LOG_PATHFILE
+        WriteToDisplay 'OK'
+        WriteToLog "stopped OK in $acc seconds"
         break
     done
 
@@ -180,19 +180,17 @@ BackupQPKGData()
     local exec_msgs=''
     local result=0
 
-    echo -n "* creating configuration backup: " | $CMD_TEE -a $INIT_LOG_PATHFILE
+    WriteToDisplayAndLog_SameLine '* creating configuration backup: '
 
-    exec_msgs=$($CMD_TAR --create --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config . ; echo hi 2>&1)
+    exec_msgs=$($CMD_TAR --create --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config . 2>&1)
     result=$?
 
     if [[ $result = 0 ]]; then
-        echo "OK" | $CMD_TEE -a $INIT_LOG_PATHFILE
+        WriteToDisplayAndLog 'OK'
     else
-        {
-            echo "failed!"
-            echo "= result: $(FormatAsExitcode $result)"
-            echo "= messages: $(FormatAsStdout "$exec_msgs")"
-        } | $CMD_TEE -a $INIT_LOG_PATHFILE
+        WriteToDisplayAndLog 'failed!'
+        WriteToDisplayAndLog "= result: $(FormatAsExitcode $result)"
+        WriteToDisplayAndLog "= messages: $(FormatAsStdout "$exec_msgs")"
         WriteErrorToSystemLog "An error occurred while creating configuration backup. Check $(FormatAsFileName "$INIT_LOG_PATHFILE") for more details."
         returncode=1
     fi
@@ -211,26 +209,24 @@ RestoreQPKGData()
     if [[ -f $BACKUP_PATHFILE ]]; then
         StopQPKG
 
-        echo -n "* restoring configuration backup: " | $CMD_TEE -a $INIT_LOG_PATHFILE
+        WriteToDisplayAndLog_SameLine '* restoring configuration backup: '
 
         exec_msgs=$($CMD_TAR --extract --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config 2>&1)
         result=$?
 
         if [[ $result = 0 ]]; then
-            echo "OK" | $CMD_TEE -a $INIT_LOG_PATHFILE
+            WriteToDisplayAndLog 'OK'
             StartQPKG
         else
-            {
-                echo "failed!"
-                echo "= result: $(FormatAsExitcode $result)"
-                echo "= messages: $(FormatAsStdout "$exec_msgs")"
-            } | $CMD_TEE -a $INIT_LOG_PATHFILE
+            WriteToDisplayAndLog 'failed!'
+            WriteToDisplayAndLog "= result: $(FormatAsExitcode $result)"
+            WriteToDisplayAndLog "= messages: $(FormatAsStdout "$exec_msgs")"
             WriteErrorToSystemLog "An error occurred while restoring configuration backup. Check $(FormatAsFileName "$INIT_LOG_PATHFILE") for more details."
             returncode=1
         fi
     else
-        echo "! unable to restore - no backup file was found!" | $CMD_TEE -a $INIT_LOG_PATHFILE
-        WriteErrorToSystemLog "No configuration backup file was found"
+        WriteToDisplayAndLog '! unable to restore - no backup file was found!'
+        WriteErrorToSystemLog 'No configuration backup file was found'
         returncode=1
     fi
 
@@ -245,10 +241,10 @@ QPKGIsActive()
     # $? = 1 if $QPKG_NAME is not active
 
     if [[ -f $STORED_PID_PATHFILE && -d /proc/$(<$STORED_PID_PATHFILE) ]]; then
-        echo "= daemon is active" | $CMD_TEE -a $INIT_LOG_PATHFILE
+        WriteToDisplayAndLog '= daemon is active'
         return 0
     else
-        echo "= daemon is not active" | $CMD_TEE -a $INIT_LOG_PATHFILE
+        WriteToDisplayAndLog '= daemon is not active'
         [[ -f $STORED_PID_PATHFILE ]] && rm $STORED_PID_PATHFILE
         return 1
     fi
@@ -273,7 +269,7 @@ PullGitRepo()
     local GIT_HTTP_URL="$2"
     local GIT_HTTPS_URL=${GIT_HTTP_URL/http/git}
 
-    echo -n "* updating: " | $CMD_TEE -a $INIT_LOG_PATHFILE
+    WriteToDisplayAndLog_SameLine '* updating: '
     exec_msgs=$({
         [[ ! -d ${QPKG_GIT_PATH}/.git ]] && { $GIT_CMD clone -b $3 --depth 1 "$GIT_HTTPS_URL" "$QPKG_GIT_PATH" || $GIT_CMD clone -b $3 --depth 1 "$GIT_HTTP_URL" "$QPKG_GIT_PATH" ;}
         cd "$QPKG_GIT_PATH" && $GIT_CMD pull
@@ -281,17 +277,13 @@ PullGitRepo()
     result=$?
 
     if [[ $result = 0 ]]; then
-        echo "OK" | $CMD_TEE -a $INIT_LOG_PATHFILE
-        {
-            echo "= result: $(FormatAsExitcode $result)"
-            echo "= ${FUNCNAME[0]}(): $(FormatAsStdout "$exec_msgs")"
-        } >> $INIT_LOG_PATHFILE
+        WriteToDisplayAndLog 'OK'
+        WriteToLog "= result: $(FormatAsExitcode $result)"
+        WriteToLog "= ${FUNCNAME[0]}(): $(FormatAsStdout "$exec_msgs")"
     else
-        {
-            echo "failed!"
-            echo "= result: $(FormatAsExitcode $result)"
-            echo "= ${FUNCNAME[0]}(): $(FormatAsStdout "$exec_msgs")"
-        } | $CMD_TEE -a $INIT_LOG_PATHFILE
+        WriteToDisplayAndLog 'failed!'
+        WriteToDisplayAndLog "= result: $(FormatAsExitcode $result)"
+        WriteToDisplayAndLog "= ${FUNCNAME[0]}(): $(FormatAsStdout "$exec_msgs")"
         WriteErrorToSystemLog "An error occurred while updating daemon from remote repository. Check $(FormatAsFileName "$INIT_LOG_PATHFILE") for more details."
         return 1
     fi
@@ -382,6 +374,41 @@ FormatAsExitcode()
 
     }
 
+WriteToDisplayAndLog_SameLine()
+    {
+
+    echo -n "$1" | $CMD_TEE -a $INIT_LOG_PATHFILE
+
+    }
+
+WriteToDisplayAndLog()
+    {
+
+    echo "$1" | $CMD_TEE -a $INIT_LOG_PATHFILE
+
+    }
+
+WriteToDisplay_SameLine()
+    {
+
+    echo -n "$1"
+
+    }
+
+WriteToDisplay()
+    {
+
+    echo "$1"
+
+    }
+
+WriteToLog()
+    {
+
+    echo "$1" >> $INIT_LOG_PATHFILE
+
+    }
+
 WriteErrorToSystemLog()
     {
 
@@ -427,14 +454,14 @@ WaitForEntware()
         (
             for ((count=1; count<=MAX_WAIT_SECONDS_ENTWARE; count++)); do
                 sleep 1
-                [[ -e /opt/Entware.sh || -e /opt/Entware-3x.sh || -e /opt/Entware-ng.sh ]] && { echo "waited for Entware for $count seconds" >> $INIT_LOG_PATHFILE; true; exit ;}
+                [[ -e /opt/Entware.sh || -e /opt/Entware-3x.sh || -e /opt/Entware-ng.sh ]] && { WriteToLog "waited for Entware for $count seconds"; true; exit ;}
             done
             false
         )
 
         if [[ $? -ne 0 ]]; then
-            echo "Entware not found! (exceeded timeout: $MAX_WAIT_SECONDS_ENTWARE seconds)" | $CMD_TEE -a $INIT_LOG_PATHFILE
-            WriteErrorToSystemLog "Unable to manage daemon: Entware was not found (exceeded timeout)"
+            WriteToDisplayAndLog "Entware not found! (exceeded timeout: $MAX_WAIT_SECONDS_ENTWARE seconds)"
+            WriteErrorToSystemLog 'Unable to manage daemon: Entware was not found (exceeded timeout)'
             false
             exit
         else
@@ -449,7 +476,8 @@ WaitForEntware()
 Init
 
 if [[ $errorcode -eq 0 ]]; then
-    echo -e "$(SessionSeparator "$1 requested")\n= $(date)" >> $INIT_LOG_PATHFILE
+    WriteToLog "$(SessionSeparator "$1 requested")"
+    WriteToLog "= $(date)"
     case $1 in
         start)
             StartQPKG || errorcode=1
@@ -467,7 +495,7 @@ if [[ $errorcode -eq 0 ]]; then
             RestoreQPKGData || errorcode=1
             ;;
         *)
-            echo "Usage: $0 {start|stop|restart|backup|restore}"
+            WriteToDisplay "Usage: $0 {start|stop|restart|backup|restore}"
             ;;
     esac
 fi
