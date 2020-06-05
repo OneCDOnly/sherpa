@@ -15,23 +15,25 @@ Init()
     readonly QPKG_NAME=SABnzbd
     readonly SOURCE_URL=http://github.com/sabnzbd/sabnzbd.git
     readonly SOURCE_BRANCH=develop
-    local -r PYTHON=/opt/bin/python3
+    readonly PYTHON=/opt/bin/python3
     local -r TARGET_SCRIPT=SABnzbd.py
 
     # cherry-pick required binaries
-    readonly CMD_CURL=/sbin/curl
-    readonly CMD_DIRNAME=/usr/bin/dirname
-    readonly CMD_GETCFG=/sbin/getcfg
-    readonly CMD_GREP=/bin/grep
-    readonly CMD_LSOF=/usr/sbin/lsof
-    readonly CMD_SED=/bin/sed
-    readonly CMD_SETCFG=/sbin/setcfg
-    readonly CMD_TAR=/bin/tar
-    readonly CMD_TEE=/usr/bin/tee
-    readonly CMD_WRITE_LOG=/sbin/write_log
+    readonly BASENAME_CMD=/usr/bin/basename
+    readonly CURL_CMD=/sbin/curl
+    readonly DIRNAME_CMD=/usr/bin/dirname
+    readonly GETCFG_CMD=/sbin/getcfg
+    readonly GREP_CMD=/bin/grep
+    readonly LSOF_CMD=/usr/sbin/lsof
+    readonly SED_CMD=/bin/sed
+    readonly SETCFG_CMD=/sbin/setcfg
+    readonly TAR_CMD=/bin/tar
+    readonly TAIL_CMD=/usr/bin/tail
+    readonly TEE_CMD=/usr/bin/tee
+    readonly WRITE_LOG_CMD=/sbin/write_log
 
     readonly QTS_QPKG_CONF_PATHFILE=/etc/config/qpkg.conf
-    readonly QPKG_PATH=$($CMD_GETCFG $QPKG_NAME Install_Path -f $QTS_QPKG_CONF_PATHFILE)
+    readonly QPKG_PATH=$($GETCFG_CMD $QPKG_NAME Install_Path -f $QTS_QPKG_CONF_PATHFILE)
     readonly QPKG_INI_PATHFILE=$QPKG_PATH/config/config.ini
     local -r QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.def
     readonly STORED_PID_PATHFILE=/tmp/$QPKG_NAME.pid
@@ -75,7 +77,7 @@ StartQPKG()
     QPKGIsActive && return
 
     PullGitRepo $QPKG_NAME "$SOURCE_URL" $SOURCE_BRANCH $QPKG_PATH && UpdateLanguages
-    PullGitRepo nzbToMedia 'http://github.com/clinton-hall/nzbToMedia.git' master "/share/$($CMD_GETCFG SHARE_DEF defDownload -d Qdownload -f /etc/config/def_share.info)"
+    PullGitRepo nzbToMedia 'http://github.com/clinton-hall/nzbToMedia.git' master "/share/$($GETCFG_CMD SHARE_DEF defDownload -d Qdownload -f /etc/config/def_share.info)"
 
     cd $QPKG_PATH/$QPKG_NAME || return 1
 
@@ -96,7 +98,7 @@ StartQPKG()
         return 1
     fi
 
-    $CMD_SETCFG $QPKG_NAME Web_Port $ui_port -f $QTS_QPKG_CONF_PATHFILE
+    $SETCFG_CMD $QPKG_NAME Web_Port $ui_port -f $QTS_QPKG_CONF_PATHFILE
 
     WriteToDisplayAndLog_SameLine '* launching: '
     exec_msgs=$($LAUNCHER 2>&1)
@@ -133,6 +135,7 @@ StartQPKG()
     done
 
     WriteToDisplayAndLog "= $(FormatAsPackageName $QPKG_NAME) daemon UI is now listening on HTTP${secure} port: $ui_port"
+
     return 0
 
     }
@@ -177,33 +180,30 @@ StopQPKG()
 BackupQPKGData()
     {
 
-    local returncode=0
     local exec_msgs=''
     local result=0
 
-    WriteToDisplayAndLog_SameLine '* creating configuration backup: '
+    WriteToDisplayAndLog_SameLine '* updating configuration backup: '
 
-    exec_msgs=$($CMD_TAR --create --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config . 2>&1)
+    exec_msgs=$($TAR_CMD --create --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config . 2>&1)
     result=$?
 
     if [[ $result = 0 ]]; then
         WriteToDisplayAndLog 'OK'
+        WriteInfoToSystemLog "updated configuration backup"
     else
         WriteToDisplayAndLog 'failed!'
         WriteToDisplayAndLog "= result: $(FormatAsExitcode $result)"
         WriteToDisplayAndLog "= messages: $(FormatAsStdout "$exec_msgs")"
-        WriteErrorToSystemLog "An error occurred while creating configuration backup. Check $(FormatAsFileName "$INIT_LOG_PATHFILE") for more details."
-        returncode=1
+        WriteWarningToSystemLog "A problem occurred while updating configuration backup. Check $(FormatAsFileName "$INIT_LOG_PATHFILE") for more details."
+        return 1
     fi
-
-    return $returncode
 
     }
 
 RestoreQPKGData()
     {
 
-    local returncode=0
     local exec_msgs=''
     local result=0
 
@@ -212,26 +212,25 @@ RestoreQPKGData()
 
         WriteToDisplayAndLog_SameLine '* restoring configuration backup: '
 
-        exec_msgs=$($CMD_TAR --extract --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config 2>&1)
+        exec_msgs=$($TAR_CMD --extract --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config 2>&1)
         result=$?
 
         if [[ $result = 0 ]]; then
             WriteToDisplayAndLog 'OK'
+            WriteInfoToSystemLog "configuration restored from backup"
             StartQPKG
         else
             WriteToDisplayAndLog 'failed!'
             WriteToDisplayAndLog "= result: $(FormatAsExitcode $result)"
             WriteToDisplayAndLog "= messages: $(FormatAsStdout "$exec_msgs")"
-            WriteErrorToSystemLog "An error occurred while restoring configuration backup. Check $(FormatAsFileName "$INIT_LOG_PATHFILE") for more details."
-            returncode=1
+            WriteWarningToSystemLog "A problem occurred while restoring configuration backup. Check $(FormatAsFileName "$INIT_LOG_PATHFILE") for more details."
+            return 1
         fi
     else
         WriteToDisplayAndLog '! unable to restore - no backup file was found!'
-        WriteErrorToSystemLog 'No configuration backup file was found'
-        returncode=1
+        WriteErrorToSystemLog 'Unable to restore configuration. No backup file was found.'
+        return 1
     fi
-
-    return $returncode
 
     }
 
@@ -243,19 +242,19 @@ UpdateLanguages()
     local exec_msgs=''
     local olddir=$PWD
     local version_current_pathfile=$QPKG_PATH/$QPKG_NAME/sabnzbd/version.py
-    local version_store_pathfile=$($CMD_DIRNAME $version_current_pathfile)/version.stored
-    local version_current_number=$($CMD_GREP '__version__ =' $version_current_pathfile | $CMD_SED 's|^.*"\(.*\)"|\1|')
+    local version_store_pathfile=$($DIRNAME_CMD $version_current_pathfile)/version.stored
+    local version_current_number=$($GREP_CMD '__version__ =' $version_current_pathfile | $SED_CMD 's|^.*"\(.*\)"|\1|')
 
     [[ -e $version_store_pathfile && $version_current_number = $(<$version_store_pathfile) ]] && return 0
 
-    echo -n "* updating language support: " | $CMD_TEE -a $INIT_LOG_PATHFILE
+    echo -n "* updating language support: " | $TEE_CMD -a $INIT_LOG_PATHFILE
     cd $QPKG_PATH/$QPKG_NAME || return 1
     exec_msgs=$($PYTHON tools/make_mo.py)
     result=$?
 
     if [[ $result -eq 0 ]]; then
         echo "$version_current_number" > $version_store_pathfile
-        echo "OK" | $CMD_TEE -a $INIT_LOG_PATHFILE
+        echo "OK" | $TEE_CMD -a $INIT_LOG_PATHFILE
         {
             echo "= result: $(FormatAsExitcode $result)"
             echo "= ${FUNCNAME[0]}(): '$exec_msgs'"
@@ -265,8 +264,8 @@ UpdateLanguages()
             echo "failed!"
             echo "= result: $(FormatAsExitcode $result)"
             echo "= messages: $(FormatAsStdout "$exec_msgs")"
-        } | $CMD_TEE -a $INIT_LOG_PATHFILE
-        WriteErrorToSystemLog "An error occurred while updating language support. Check $(FormatAsFileName "$INIT_LOG_PATHFILE") for more details."
+        } | $TEE_CMD -a $INIT_LOG_PATHFILE
+        WriteWarningToSystemLog "A problem occurred while updating language support. Check $(FormatAsFileName "$INIT_LOG_PATHFILE") for more details."
     fi
 
     cd $olddir || return 1
@@ -308,7 +307,7 @@ PullGitRepo()
     local GIT_HTTP_URL="$2"
     local GIT_HTTPS_URL=${GIT_HTTP_URL/http/git}
 
-    WriteToDisplayAndLog_SameLine '* updating: '
+    WriteToDisplayAndLog_SameLine "* updating application $(FormatAsPackageName $1): "
     exec_msgs=$({
         [[ ! -d ${QPKG_GIT_PATH}/.git ]] && { $GIT_CMD clone -b $3 --depth 1 "$GIT_HTTPS_URL" "$QPKG_GIT_PATH" || $GIT_CMD clone -b $3 --depth 1 "$GIT_HTTP_URL" "$QPKG_GIT_PATH" ;}
         cd "$QPKG_GIT_PATH" && $GIT_CMD pull
@@ -323,7 +322,7 @@ PullGitRepo()
         WriteToDisplayAndLog 'failed!'
         WriteToDisplayAndLog "= result: $(FormatAsExitcode $result)"
         WriteToDisplayAndLog "= ${FUNCNAME[0]}(): $(FormatAsStdout "$exec_msgs")"
-        WriteErrorToSystemLog "An error occurred while updating daemon from remote repository. Check $(FormatAsFileName "$INIT_LOG_PATHFILE") for more details."
+        WriteErrorToSystemLog "An error occurred while updating $(FormatAsPackageName $1) daemon from remote repository. Check $(FormatAsFileName "$INIT_LOG_PATHFILE") for more details."
         return 1
     fi
 
@@ -335,7 +334,7 @@ UIPort()
     # get HTTP port
     # stdout = HTTP port (if used) or 0 if none found
 
-    $CMD_GETCFG misc port -d 0 -f $QPKG_INI_PATHFILE
+    $GETCFG_CMD misc port -d 0 -f $QPKG_INI_PATHFILE
 
     }
 
@@ -345,8 +344,8 @@ UIPortSecure()
     # get HTTPS port
     # stdout = HTTPS port (if used) or 0 if none found
 
-    if [[ $($CMD_GETCFG misc enable_https -d 0 -f $QPKG_INI_PATHFILE) = 1 ]]; then
-        $CMD_GETCFG misc https_port -d 0 -f $QPKG_INI_PATHFILE
+    if [[ $($GETCFG_CMD misc enable_https -d 0 -f $QPKG_INI_PATHFILE) = 1 ]]; then
+        $GETCFG_CMD misc https_port -d 0 -f $QPKG_INI_PATHFILE
     else
         echo 0
     fi
@@ -360,7 +359,7 @@ PortAvailable()
     # $? = 0 if available
     # $? = 1 if already used or unspecified
 
-    if [[ -z $1 ]] || ($CMD_LSOF -i :$1 -sTCP:LISTEN 2>&1 >/dev/null); then
+    if [[ -z $1 ]] || ($LSOF_CMD -i :$1 -sTCP:LISTEN 2>&1 >/dev/null); then
         return 1
     else
         return 0
@@ -377,7 +376,7 @@ PortResponds()
 
     [[ -z $1 ]] && return 1
 
-    $CMD_CURL --silent --fail localhost:$1 >/dev/null
+    $CURL_CMD --silent --fail localhost:$1 >/dev/null
 
     }
 
@@ -385,6 +384,7 @@ FormatAsPackageName()
     {
 
     [[ -z $1 ]] && return 1
+
     echo "'$1'"
 
     }
@@ -393,6 +393,7 @@ FormatAsFileName()
     {
 
     [[ -z $1 ]] && return 1
+
     echo "($1)"
 
     }
@@ -401,6 +402,7 @@ FormatAsStdout()
     {
 
     [[ -z $1 ]] && return 1
+
     echo "\"$1\""
 
     }
@@ -409,6 +411,7 @@ FormatAsExitcode()
     {
 
     [[ -z $1 ]] && return 1
+
     echo "[$1]"
 
     }
@@ -416,14 +419,14 @@ FormatAsExitcode()
 WriteToDisplayAndLog_SameLine()
     {
 
-    echo -n "$1" | $CMD_TEE -a $INIT_LOG_PATHFILE
+    echo -n "$1" | $TEE_CMD -a $INIT_LOG_PATHFILE
 
     }
 
 WriteToDisplayAndLog()
     {
 
-    echo "$1" | $CMD_TEE -a $INIT_LOG_PATHFILE
+    echo "$1" | $TEE_CMD -a $INIT_LOG_PATHFILE
 
     }
 
@@ -448,13 +451,45 @@ WriteToLog()
 
     }
 
+WriteInfoToSystemLog()
+    {
+
+    [[ -z $1 ]] && return 1
+
+    SystemLogWrite "$1" 4
+
+    }
+
+WriteWarningToSystemLog()
+    {
+
+    [[ -z $1 ]] && return 1
+
+    SystemLogWrite "$1" 2
+
+    }
+
 WriteErrorToSystemLog()
     {
 
-    # $1 = message to write into QTS system log as an error
-
     [[ -z $1 ]] && return 1
-    $CMD_WRITE_LOG "[$QPKG_NAME] $1" 1
+
+    SystemLogWrite "$1" 1
+
+    }
+
+SystemLogWrite()
+    {
+
+    # $1 = message to append to QTS system log
+    # $2 = event type:
+    #    1 : Error
+    #    2 : Warning
+    #    4 : Information
+
+    [[ -z $1 || -z $2 ]] && return 1
+
+    $WRITE_LOG_CMD "[$QPKG_NAME] $1" $2
 
     }
 
