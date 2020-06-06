@@ -392,7 +392,7 @@ LogNASDetails()
     DebugNAS 'RAM' "$INSTALLED_RAM_KB kB"
     if [[ $INSTALLED_RAM_KB -le $MIN_RAM_KB ]]; then
         DebugNAS 'RAM' "less-than or equal-to $MIN_RAM_KB kB"
-        [[ $errorcode -eq 0 ]] && ShowWarning "running QTS with 1GB RAM or less can lead to unstable sherpa application uptimes :("
+        [[ $errorcode -eq 0 ]] && ShowNote "running QTS with 1GB RAM or less can lead to unstable sherpa application uptimes :("
     fi
     DebugNAS 'firmware version' "$NAS_FIRMWARE"
     DebugNAS 'firmware build' "$($GETCFG_CMD System 'Build Number' -f $ULINUX_PATHFILE)"
@@ -2380,7 +2380,7 @@ ShowDebug()
 ShowNote()
     {
 
-    ShowLogLine_update "$(ColourTextBrightYellow note)" "$1"
+    ShowLogLine_update "$(ColourTextBrightYellowBlink note)" "$1"
     SaveLogLine note "$1"
 
     }
@@ -2491,6 +2491,13 @@ ColourTextBrightYellow()
     {
 
     echo -en '\033[1;33m'"$(PrintResetColours "$1")"
+
+    }
+
+ColourTextBrightYellowBlink()
+    {
+
+    echo -en '\033[1;5;33m'"$(PrintResetColours "$1")"
 
     }
 
