@@ -349,6 +349,8 @@ Init()
     # internals
     readonly SCRIPT_STARTSECONDS=$($DATE_CMD +%s)
     readonly NAS_FIRMWARE=$($GETCFG_CMD System Version -f $ULINUX_PATHFILE)
+    readonly MIN_RAM_KB=1048576
+    readonly INSTALLED_RAM_KB=$($GREP_CMD MemTotal /proc/meminfo | $CUT_CMD -f2 -d':' | $SED_CMD 's|kB||;s| ||g')
     progress_message=''
     previous_length=0
     previous_msg=''
@@ -386,6 +388,11 @@ LogNASDetails()
     DebugInfo ' (vv) variable name & value, ($1) positional argument value.'
     DebugInfoThinSeparator
     DebugNAS 'model' "$($GREP_CMD -v "^$" /etc/issue | $SED_CMD 's|^Welcome to ||;s|(.*||')"
+    DebugNAS 'RAM' "$INSTALLED_RAM_KB kB"
+    if [[ $INSTALLED_RAM_KB -le $MIN_RAM_KB ]]; then
+        DebugNAS 'RAM' "less-than or equal-to $MIN_RAM_KB kB"
+        [[ $errorcode -eq 0 ]] && ShowWarning "Running QTS with 1GB RAM or less can lead to unstable sherpa application uptimes :("
+    fi
     DebugNAS 'firmware version' "$NAS_FIRMWARE"
     DebugNAS 'firmware build' "$($GETCFG_CMD System 'Build Number' -f $ULINUX_PATHFILE)"
     DebugNAS 'kernel' "$($UNAME_CMD -mr)"
