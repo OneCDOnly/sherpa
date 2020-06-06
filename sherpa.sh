@@ -152,14 +152,14 @@ Init()
         readonly SHARE_DOWNLOAD_PATH=$DEFAULT_SHARE_DOWNLOAD_PATH
     else
         readonly SHARE_DOWNLOAD_PATH=/share/$($GETCFG_CMD SHARE_DEF defDownload -d Qdownload -f $DEFAULT_SHARES_PATHFILE)
-        IsSysSharePresent "$SHARE_DOWNLOAD_PATH" || return 1
+        IsSysSharePresent $SHARE_DOWNLOAD_PATH || return 1
     fi
 
     if [[ -L $DEFAULT_SHARE_PUBLIC_PATH ]]; then
         readonly SHARE_PUBLIC_PATH=$DEFAULT_SHARE_PUBLIC_PATH
     else
         readonly SHARE_PUBLIC_PATH=/share/$($GETCFG_CMD SHARE_DEF defPublic -d Qpublic -f $DEFAULT_SHARES_PATHFILE)
-        IsSysSharePresent "$SHARE_PUBLIC_PATH" || return 1
+        IsSysSharePresent $SHARE_PUBLIC_PATH || return 1
     fi
 
     # sherpa-supported package details - parallel arrays
@@ -404,7 +404,7 @@ LogNASDetails()
     DebugNAS 'default volume' "$($GETCFG_CMD SHARE_DEF defVolMP -f $DEFAULT_SHARES_PATHFILE)"
     DebugNAS '$PATH' "${PATH:0:43}"
     DebugNAS '/opt' "$([[ -L '/opt' ]] && $READLINK_CMD '/opt' || echo "<not present>")"
-    DebugNAS "$SHARE_DOWNLOAD_PATH" "$([[ -L $SHARE_DOWNLOAD_PATH ]] && $READLINK_CMD "$SHARE_DOWNLOAD_PATH" || echo "<not present>")"
+    DebugNAS $SHARE_DOWNLOAD_PATH "$([[ -L $SHARE_DOWNLOAD_PATH ]] && $READLINK_CMD $SHARE_DOWNLOAD_PATH || echo "<not present>")"
     DebugScript 'user arguments' "$USER_ARGS_RAW"
     DebugScript 'app(s) to install' "${QPKGS_to_install[*]} "
     DebugScript 'app(s) to uninstall' "${QPKGS_to_uninstall[*]} "
@@ -707,6 +707,7 @@ RemoveUnwantedQPKGs()
 
     DebugFuncEntry
     local response=''
+    local previous_Entware_package_list=$SHARE_PUBLIC_PATH/Entware.previously.installed.list
 
     UninstallQPKG Optware || ResetErrorcode  # ignore Optware uninstall errors
     UninstallQPKG Entware-3x
@@ -714,13 +715,16 @@ RemoveUnwantedQPKGs()
 
     IsQPKGInstalled $TARGET_APP && reinstall_flag=true
 
-    if [[ $TARGET_APP = Entware ]]; then
-        ShowNote "reinstalling Entware will revert all IPKGs to defaults and only those required to support your sherpa-installed apps will be reinstalled."
-        ShowQuiz "press (y) if you agree to remove all current Entware IPKGs and their configs, or any other key to abort"
+    if [[ $TARGET_APP = Entware && $reinstall_flag = true ]]; then
+        ShowNote "Reinstalling Entware will revert all IPKGs to defaults and only those required to support your sherpa apps will be reinstalled"
+        ShowNote "The currently installed IPKG list will be saved to $(FormatAsFileName $previous_Entware_package_list)"
+        ShowQuiz "Press (y) if you agree to remove all current Entware IPKGs and their configs, or any other key to abort"
         read -n1 response; echo
         DebugVar response
         case ${response:0:1} in
             y|Y)
+                echo -e "# Entware had these IPKGs installed as of: $($DATE_CMD)\n$($OPKG_CMD list-installed)" > $previous_Entware_package_list
+                DebugDone "saved current Entware IPKG list to $(FormatAsFileName $previous_Entware_package_list)"
                 UninstallQPKG Entware
                 ;;
             *)
@@ -1637,7 +1641,7 @@ Cleanup()
 
     DebugFuncEntry
 
-    cd "$SHARE_PUBLIC_PATH"
+    cd $SHARE_PUBLIC_PATH
 
     [[ $errorcode -eq 0 && $debug != true && -d $WORKING_PATH ]] && rm -rf "$WORKING_PATH"
 
@@ -2032,7 +2036,7 @@ IsSysSharePresent()
     [[ -z $1 ]] && return 1
 
     if [[ ! -L $1 ]]; then
-        ShowError "a required NAS system share is missing [$1]. Please re-create it via the QTS Control Panel -> Privilege Settings -> Shared Folders."
+        ShowError "a required NAS system share is missing $(FormatAsFileName "$1"). Please re-create it via the QTS Control Panel -> Privilege Settings -> Shared Folders."
         errorcode=35
         return 1
     else
