@@ -45,7 +45,7 @@ Init()
     {
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200606
+    readonly SCRIPT_VERSION=200607
     debug=false
     ResetErrorcode
 
@@ -356,6 +356,7 @@ Init()
     previous_msg=''
     reinstall_flag=false
     satisfy_dependencies_only=false
+    help_only=false
     ignore_space_arg=''
     update_all_apps=false
     backup_all_apps=false
@@ -417,11 +418,19 @@ LogNASDetails()
     CalcNASQPKGArch
     DebugQPKG 'arch' "$NAS_QPKG_ARCH"
 
-    [[ $errorcode -gt 0 ]] && DisplayHelp
+    if [[ $help_only = true ]]; then
+        DisplayHelp
+        return 1
+    fi
 
     if [[ $errorcode -eq 0 ]] && [[ $EUID -ne 0 || $USER != admin ]]; then
         ShowError "this script must be run as the 'admin' user. Please login via SSH as 'admin' and try again."
         errorcode=1
+    fi
+
+    if [[ $errorcode -eq 0 && ${#QPKGS_to_install[@]} -eq 0 && ${#QPKGS_to_uninstall[@]} -eq 0 && ${#QPKGS_to_update[@]} -eq 0 && ${#QPKGS_to_backup[@]} -eq 0 && ${#QPKGS_to_restore[@]} -eq 0 && $satisfy_dependencies_only = false && $update_all_apps = false ]]; then
+        ShowError 'No valid QPKG(s) or action(s) were specified'
+        errorcode=2
     fi
 
     if [[ $errorcode -eq 0 ]]; then
@@ -430,7 +439,7 @@ LogNASDetails()
 
         if [[ $result -ne 0 ]]; then
             ShowError "unable to create working directory ($WORKING_PATH) [$result]"
-            errorcode=2
+            errorcode=3
         else
             cd "$WORKING_PATH"
         fi
@@ -442,7 +451,7 @@ LogNASDetails()
 
         if [[ $result -ne 0 ]]; then
             ShowError "unable to create QPKG download directory ($QPKG_DL_PATH) [$result]"
-            errorcode=3
+            errorcode=4
         fi
     fi
 
@@ -453,7 +462,7 @@ LogNASDetails()
 
         if [[ $result -ne 0 ]]; then
             ShowError "unable to create IPKG download directory ($IPKG_DL_PATH) [$result]"
-            errorcode=4
+            errorcode=5
         else
             monitor_flag="$IPKG_DL_PATH/.monitor"
         fi
@@ -465,7 +474,7 @@ LogNASDetails()
 
         if [[ $result -ne 0 ]]; then
             ShowError "unable to create IPKG cache directory ($IPKG_CACHE_PATH) [$result]"
-            errorcode=5
+            errorcode=6
         fi
     fi
 
@@ -473,7 +482,7 @@ LogNASDetails()
         for conflicting_qpkg in ${SHERPA_COMMON_CONFLICTS[@]}; do
             if IsQPKGEnabled $conflicting_qpkg; then
                 ShowError "'$conflicting_qpkg' is enabled. This is an unsupported configuration."
-                errorcode=6
+                errorcode=7
             fi
         done
     fi
@@ -485,19 +494,19 @@ LogNASDetails()
 
             if [[ $ENTWARE_VER = none ]]; then
                 ShowError 'Entware appears to be installed but is not visible.'
-                errorcode=7
+                errorcode=8
             fi
         fi
     fi
 
     if [[ $errorcode -eq 0 ]]; then
-        ShowProc "testing Internet access"
+        ShowProc 'testing Internet access'
 
         if ($CURL_CMD $curl_insecure_arg --silent --fail https://onecdonly.github.io/sherpa/packages.conf -o $SHERPA_PACKAGES_PATHFILE); then
-            ShowDone "Internet is accessible"
+            ShowDone 'Internet is accessible'
         else
-            ShowError "no Internet access"
-            errorcode=8
+            ShowError 'no Internet access'
+            errorcode=9
         fi
     fi
 
@@ -514,7 +523,8 @@ ParseArgs()
     local current_operation=''
 
     if [[ -z $USER_ARGS_RAW ]]; then
-        errorcode=9
+        help_only=true
+        errorcode=10
         return 1
     else
         local user_args=($(echo "$USER_ARGS_RAW" | $TR_CMD '[A-Z]' '[a-z]'))
@@ -538,7 +548,8 @@ ParseArgs()
                 current_operation=''
                 ;;
             --help)
-                errorcode=10
+                help_only=true
+                errorcode=11
                 return 1
                 ;;
             --install-all)
@@ -616,10 +627,13 @@ ParseArgs()
         esac
     done
 
-    TARGET_APP=${QPKGS_to_install[0]}           # keep for compatibility until multi-package rollout is ready
+    TARGET_APP=${QPKGS_to_install[0]}   # keep for compatibility until multi-package rollout is ready
 
-    [[ ${#QPKGS_to_install[@]} -eq 0 && ${#QPKGS_to_uninstall[@]} -eq 0 && ${#QPKGS_to_update[@]} -eq 0 && ${#QPKGS_to_backup[@]} -eq 0 && ${#QPKGS_to_restore[@]} -eq 0 && $satisfy_dependencies_only = false && $update_all_apps = false ]] && errorcode=11
-    [[ $backup_all_apps = true && $restore_all_apps = true ]] && errorcode=12               # there's no-point performing both operations
+    if [[ $backup_all_apps = true && $restore_all_apps = true ]]; then  # there's no-point performing both these operations
+        errorcode=12
+        return 1
+    fi
+
     return 0
 
     }
@@ -1561,6 +1575,7 @@ GetQPKGRemoteURL()
     if [[ -z $1 ]]; then
         DebugError 'Package unspecified'
         errorcode=32
+        returncode=1
     else
         for index in ${!SHERPA_QPKG_NAME[@]}; do
             if [[ $1 = ${SHERPA_QPKG_NAME[$index]} ]] && [[ ${SHERPA_QPKG_ARCH[$index]} = all || ${SHERPA_QPKG_ARCH[$index]} = $NAS_QPKG_ARCH ]]; then
@@ -1590,6 +1605,7 @@ GetQPKGMD5()
     if [[ -z $1 ]]; then
         DebugError 'Package unspecified'
         errorcode=33
+        returncode=1
     else
         for index in ${!SHERPA_QPKG_NAME[@]}; do
             if [[ $1 = ${SHERPA_QPKG_NAME[$index]} ]] && [[ ${SHERPA_QPKG_ARCH[$index]} = all || ${SHERPA_QPKG_ARCH[$index]} = $NAS_QPKG_ARCH ]]; then
@@ -1638,28 +1654,29 @@ DisplayResult()
     local RE=''
     local suggest_issue=false
 
-    if [[ -n $TARGET_APP ]]; then
-        [[ $reinstall_flag = true ]] && RE='re' || RE=''
+    if [[ $help_only = false ]]; then
+        if [[ -n $TARGET_APP ]]; then
+            [[ $reinstall_flag = true ]] && RE='re' || RE=''
 
-        if [[ $errorcode -eq 0 ]]; then
-            [[ $debug = true ]] && emoticon=':DD' || { emoticon=''; echo ;}
-
-            ShowDone "$(FormatAsPackageName $TARGET_APP) has been successfully ${RE}installed! $emoticon"
-        elif [[ $errorcode -gt 3 ]]; then       # don't display 'failed' when only showing help
-            [[ $debug = true ]] && emoticon=':S ' || { emoticon=''; echo ;}
-            ShowError "$(FormatAsPackageName $TARGET_APP) ${RE}install failed! ${emoticon}[$errorcode]"
-            suggest_issue=true
+            if [[ $errorcode -eq 0 ]]; then
+                [[ $debug = true ]] && emoticon=':DD' || { emoticon=''; echo ;}
+                ShowDone "$(FormatAsPackageName $TARGET_APP) has been successfully ${RE}installed! $emoticon"
+            else
+                [[ $debug = true ]] && emoticon=':S ' || { emoticon=''; echo ;}
+                ShowError "$(FormatAsPackageName $TARGET_APP) ${RE}install failed! ${emoticon}[$errorcode]"
+                suggest_issue=true
+            fi
         fi
-    fi
 
-    if [[ $satisfy_dependencies_only = true ]]; then
-        if [[ $errorcode -eq 0 ]]; then
-            [[ $debug = true ]] && emoticon=':DD' || { emoticon=''; echo ;}
-            ShowDone "all application dependencies are installed! $emoticon"
-        else
-            [[ $debug = true ]] && emoticon=':S ' || { emoticon=''; echo ;}
-            ShowError "application dependency check failed! ${emoticon}[$errorcode]"
-            suggest_issue=true
+        if [[ $satisfy_dependencies_only = true ]]; then
+            if [[ $errorcode -eq 0 ]]; then
+                [[ $debug = true ]] && emoticon=':DD' || { emoticon=''; echo ;}
+                ShowDone "all application dependencies are installed! $emoticon"
+            else
+                [[ $debug = true ]] && emoticon=':S ' || { emoticon=''; echo ;}
+                ShowError "application dependency check failed! ${emoticon}[$errorcode]"
+                suggest_issue=true
+            fi
         fi
     fi
 
