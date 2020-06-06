@@ -2,7 +2,7 @@
 
 ## Description
 
-A BASH script to install various Usenet apps into a QNAP NAS.
+A BASH script to install various Usenet media-management apps into QNAP NAS.
 
 **sherpa** is able to install several Usenet-related search and download apps but will only install **ONE app** at a time. If you elect to install an app that is already installed, the app will be fully reinstalled. This means the app configuration and settings are saved, the old app is uninstalled, a new version is installed, then the original settings are restored.
 
@@ -35,15 +35,17 @@ curl -skLO https://git.io/sherpa.sh && chmod +x sherpa.sh
 
 4) Then, to install (or reinstall) an app, run **sherpa.sh** with the name of your required app as an argument.
 
-So, to install SABnzbd:
+So, to install SABnzbd+, use:
 
 ```
-./sherpa.sh SABnzbd
+./sherpa.sh SABnzbdplus
 ```
 
 ... and then/or:
 
 ```
+./sherpa.sh SABnzbd
+
 ./sherpa.sh SickChill
 
 ./sherpa.sh OWatcher3
