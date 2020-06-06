@@ -391,7 +391,7 @@ LogNASDetails()
     DebugNAS 'RAM' "$INSTALLED_RAM_KB kB"
     if [[ $INSTALLED_RAM_KB -le $MIN_RAM_KB ]]; then
         DebugNAS 'RAM' "less-than or equal-to $MIN_RAM_KB kB"
-        [[ $errorcode -eq 0 ]] && ShowWarning "Running QTS with 1GB RAM or less can lead to unstable sherpa application uptimes :("
+        [[ $errorcode -eq 0 ]] && ShowWarning "running QTS with 1GB RAM or less can lead to unstable sherpa application uptimes :("
     fi
     DebugNAS 'firmware version' "$NAS_FIRMWARE"
     DebugNAS 'firmware build' "$($GETCFG_CMD System 'Build Number' -f $ULINUX_PATHFILE)"
@@ -692,6 +692,7 @@ RemoveUnwantedQPKGs()
     [[ $errorcode -gt 0 ]] && return
 
     DebugFuncEntry
+    local response=''
 
     UninstallQPKG Optware || ResetErrorcode  # ignore Optware uninstall errors
     UninstallQPKG Entware-3x
@@ -699,7 +700,23 @@ RemoveUnwantedQPKGs()
 
     IsQPKGInstalled $TARGET_APP && reinstall_flag=true
 
-    [[ $TARGET_APP = Entware ]] && UninstallQPKG Entware
+    if [[ $TARGET_APP = Entware ]]; then
+        ShowNote "reinstalling Entware will revert all IPKGs to defaults and only those required to support your sherpa-installed apps will be reinstalled."
+        ShowQuiz "press (y) if you agree to remove all current Entware IPKGs and their configs, or any other key to abort"
+        read -n1 response; echo
+        DebugVar response
+        case ${response:0:1} in
+            y|Y)
+                UninstallQPKG Entware
+                ;;
+            *)
+                DebugInfoThinSeparator
+                DebugScript 'user abort'
+                DebugInfoThickSeparator
+                exit $errorcode
+                ;;
+        esac
+    fi
 
     DebugFuncExit
     return 0
@@ -2343,6 +2360,22 @@ ShowDebug()
 
     }
 
+ShowNote()
+    {
+
+    ShowLogLine_update "$(ColourTextBrightYellow note)" "$1"
+    SaveLogLine note "$1"
+
+    }
+
+ShowQuiz()
+    {
+
+    ShowLogLine_write "$(ColourTextBrightYellow quiz)" "$1: "
+    SaveLogLine quiz "$1"
+
+    }
+
 ShowDone()
     {
 
@@ -2434,6 +2467,13 @@ ColourTextBrightGreen()
     {
 
     echo -en '\033[1;32m'"$(PrintResetColours "$1")"
+
+    }
+
+ColourTextBrightYellow()
+    {
+
+    echo -en '\033[1;33m'"$(PrintResetColours "$1")"
 
     }
 
