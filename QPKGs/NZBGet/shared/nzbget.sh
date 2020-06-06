@@ -35,7 +35,7 @@ Init()
     local -r QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.def
     readonly STORED_PID_PATHFILE=/tmp/$QPKG_NAME.pid
     readonly INIT_LOG_PATHFILE=/var/log/$QPKG_NAME.log
-    local -r BACKUP_PATH=$(getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
+    local -r BACKUP_PATH=$($GETCFG_CMD SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
     readonly BACKUP_PATHFILE=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
     readonly LAUNCHER="$TARGET_DAEMON --daemon --configfile $QPKG_INI_PATHFILE"
     export PATH=/opt/bin:/opt/sbin:$PATH

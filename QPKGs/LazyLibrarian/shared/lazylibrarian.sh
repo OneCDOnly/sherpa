@@ -38,7 +38,7 @@ Init()
     local -r QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.def
     readonly STORED_PID_PATHFILE=/tmp/$QPKG_NAME.pid
     readonly INIT_LOG_PATHFILE=/var/log/$QPKG_NAME.log
-    local -r BACKUP_PATH=$(getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
+    local -r BACKUP_PATH=$($GETCFG_CMD SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
     readonly BACKUP_PATHFILE=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
     readonly LAUNCHER="$PYTHON $TARGET_SCRIPT --daemon --nolaunch --datadir $QPKG_PATH/config --pidfile $STORED_PID_PATHFILE"
     export PYTHONPATH=$PYTHON
