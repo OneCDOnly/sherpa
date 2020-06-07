@@ -76,7 +76,7 @@ StartQPKG()
 
     DaemonIsActive && return
 
-    cd $QPKG_PATH/$QPKG_NAME || return 1
+    cd $QPKG_PATH || return 1
 
     if [[ $ui_port -eq 0 ]]; then
         WriteToDisplayAndLog '! unable to start daemon: no port specified'
@@ -210,12 +210,25 @@ DaemonIsActive()
     # $? = 0 if $QPKG_NAME is active
     # $? = 1 if $QPKG_NAME is not active
 
-    if (ps ax | $GREP_CMD $TARGET_DAEMON | $GREP_CMD -vq grep); then
+    if (ps ax | $GREP_CMD $TARGET_DAEMON | $GREP_CMD -vq grep) && (PortResponds $ui_port); then
         WriteToDisplayAndLog '= daemon is active'
         return 0
     else
         WriteToDisplayAndLog '= daemon is not active'
         return 1
+    fi
+
+    }
+
+ChoosePort()
+    {
+
+    ui_port=$(UIPortSecure)
+
+    if [[ $ui_port -gt 0 ]]; then
+        UI_secure='S'
+    else
+        ui_port=$(UIPort)
     fi
 
     }
