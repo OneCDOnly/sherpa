@@ -25,11 +25,11 @@
 # You should have received a copy of the GNU General Public License along with
 # this program. If not, see http://www.gnu.org/licenses/.
 ####################################################################################
-# * Style Guide *
+# *** Style Guide ***
 # function names: CamelCase
 # variable names: lowercase_with_underscores (except for 'returncode' & 'errorcode')
-# constants: UPPERCASE_WITH_UNDERSCORES
-# indents: 1 x tab (= 4 x spaces)
+#      constants: UPPERCASE_WITH_UNDERSCORES (also set to readonly)
+#        indents: 1 x tab (converted to 4 x spaces to suit GitHub web-display)
 ####################################################################################
 
 readonly USER_ARGS_RAW="$@"
@@ -313,7 +313,7 @@ Init()
         SHERPA_QPKG_PIP2S+=('')
         SHERPA_QPKG_PIP3S+=('')
 
-    # arrays are now full, so lock them
+    # package arrays are now full, so lock them
     readonly SHERPA_QPKG_NAME
         readonly SHERPA_QPKG_ARCH
         readonly SHERPA_QPKG_URL
@@ -351,9 +351,6 @@ Init()
     readonly NAS_FIRMWARE=$($GETCFG_CMD System Version -f $ULINUX_PATHFILE)
     readonly MIN_RAM_KB=1048576
     readonly INSTALLED_RAM_KB=$($GREP_CMD MemTotal /proc/meminfo | $CUT_CMD -f2 -d':' | $SED_CMD 's|kB||;s| ||g')
-    progress_message=''
-    previous_length=0
-    previous_msg=''
     reinstall_flag=false
     satisfy_dependencies_only=false
     help_only=false
@@ -361,6 +358,9 @@ Init()
     update_all_apps=false
     backup_all_apps=false
     restore_all_apps=false
+    progress_message=''
+    previous_length=0
+    previous_msg=''
     [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg='--insecure' || curl_insecure_arg=''
 
     return 0
@@ -371,7 +371,6 @@ LogNASDetails()
     {
 
     local conflicting_qpkg=''
-    local test_pathfile=/opt/etc/passwd
 
     ParseArgs
 
@@ -392,7 +391,7 @@ LogNASDetails()
     DebugNAS 'RAM' "$INSTALLED_RAM_KB kB"
     if [[ $INSTALLED_RAM_KB -le $MIN_RAM_KB ]]; then
         DebugNAS 'RAM' "less-than or equal-to $MIN_RAM_KB kB"
-        [[ $errorcode -eq 0 ]] && ShowNote "running QTS with 1GB RAM or less can lead to unstable sherpa application uptimes :("
+        [[ $errorcode -eq 0 ]] && ShowNote "running QTS with 1GB RAM or less can lead to unstable SABnzbd uptimes :("
     fi
     DebugNAS 'firmware version' "$NAS_FIRMWARE"
     DebugNAS 'firmware build' "$($GETCFG_CMD System 'Build Number' -f $ULINUX_PATHFILE)"
@@ -429,8 +428,13 @@ LogNASDetails()
     fi
 
     if [[ $errorcode -eq 0 && ${#QPKGS_to_install[@]} -eq 0 && ${#QPKGS_to_uninstall[@]} -eq 0 && ${#QPKGS_to_update[@]} -eq 0 && ${#QPKGS_to_backup[@]} -eq 0 && ${#QPKGS_to_restore[@]} -eq 0 && $satisfy_dependencies_only = false && $update_all_apps = false ]]; then
-        ShowError 'No valid QPKG(s) or action(s) were specified'
+        ShowError 'no valid QPKG(s) or action(s) were specified'
         errorcode=2
+    fi
+
+    if [[ $backup_all_apps = true && $restore_all_apps = true ]]; then
+        ShowError 'no point running a backup then a restore operation'
+        errorcode=3
     fi
 
     if [[ $errorcode -eq 0 ]]; then
@@ -439,7 +443,7 @@ LogNASDetails()
 
         if [[ $result -ne 0 ]]; then
             ShowError "unable to create working directory ($WORKING_PATH) [$result]"
-            errorcode=3
+            errorcode=4
         else
             cd "$WORKING_PATH"
         fi
@@ -451,7 +455,7 @@ LogNASDetails()
 
         if [[ $result -ne 0 ]]; then
             ShowError "unable to create QPKG download directory ($QPKG_DL_PATH) [$result]"
-            errorcode=4
+            errorcode=5
         fi
     fi
 
@@ -462,7 +466,7 @@ LogNASDetails()
 
         if [[ $result -ne 0 ]]; then
             ShowError "unable to create IPKG download directory ($IPKG_DL_PATH) [$result]"
-            errorcode=5
+            errorcode=6
         else
             monitor_flag="$IPKG_DL_PATH/.monitor"
         fi
@@ -474,7 +478,7 @@ LogNASDetails()
 
         if [[ $result -ne 0 ]]; then
             ShowError "unable to create IPKG cache directory ($IPKG_CACHE_PATH) [$result]"
-            errorcode=6
+            errorcode=7
         fi
     fi
 
@@ -482,19 +486,19 @@ LogNASDetails()
         for conflicting_qpkg in ${SHERPA_COMMON_CONFLICTS[@]}; do
             if IsQPKGEnabled $conflicting_qpkg; then
                 ShowError "'$conflicting_qpkg' is enabled. This is an unsupported configuration."
-                errorcode=7
+                errorcode=8
             fi
         done
     fi
 
     if [[ $errorcode -eq 0 ]]; then
         if IsQPKGInstalled Entware; then
-            [[ -e $test_pathfile ]] && { [[ -L $test_pathfile ]] && ENTWARE_VER=std || ENTWARE_VER=alt ;} || ENTWARE_VER=none
+            [[ -e /opt/etc/passwd ]] && { [[ -L /opt/etc/passwd ]] && ENTWARE_VER=std || ENTWARE_VER=alt ;} || ENTWARE_VER=none
             DebugQPKG 'Entware installer' $ENTWARE_VER
 
             if [[ $ENTWARE_VER = none ]]; then
                 ShowError 'Entware appears to be installed but is not visible.'
-                errorcode=8
+                errorcode=9
             fi
         fi
     fi
@@ -506,7 +510,7 @@ LogNASDetails()
             ShowDone 'Internet is accessible'
         else
             ShowError 'no Internet access'
-            errorcode=9
+            errorcode=10
         fi
     fi
 
@@ -524,7 +528,7 @@ ParseArgs()
 
     if [[ -z $USER_ARGS_RAW ]]; then
         help_only=true
-        errorcode=10
+        errorcode=11
         return 1
     else
         local user_args=($(echo "$USER_ARGS_RAW" | $TR_CMD '[A-Z]' '[a-z]'))
@@ -549,7 +553,7 @@ ParseArgs()
                 ;;
             --help)
                 help_only=true
-                errorcode=11
+                errorcode=12
                 return 1
                 ;;
             --install-all)
@@ -627,12 +631,7 @@ ParseArgs()
         esac
     done
 
-    TARGET_APP=${QPKGS_to_install[0]}   # keep for compatibility until multi-package rollout is ready
-
-    if [[ $backup_all_apps = true && $restore_all_apps = true ]]; then  # there's no-point performing both these operations
-        errorcode=12
-        return 1
-    fi
+    TARGET_APP=${QPKGS_to_install[0]}   # keep this line for compatibility until multi-package rollout is ready
 
     return 0
 
@@ -716,9 +715,9 @@ RemoveUnwantedQPKGs()
     IsQPKGInstalled $TARGET_APP && reinstall_flag=true
 
     if [[ $TARGET_APP = Entware && $reinstall_flag = true ]]; then
-        ShowNote "Reinstalling Entware will revert all IPKGs to defaults and only those required to support your sherpa apps will be reinstalled"
+        ShowNote 'Reinstalling Entware will revert all IPKGs to defaults and only those required to support your sherpa apps will be reinstalled'
         ShowNote "The currently installed IPKG list will be saved to $(FormatAsFileName $previous_Entware_package_list)"
-        ShowQuiz "Press (y) if you agree to remove all current Entware IPKGs and their configs, or any other key to abort"
+        ShowQuiz 'Press (y) if you agree to remove all current Entware IPKGs and their configs, or any other key to abort'
         read -n1 response; echo
         DebugVar response
         case ${response:0:1} in
@@ -1010,15 +1009,15 @@ DowngradePy3()
         ipkg_urls+=(-O "${source_url}/archive/${pkg_base}-${pkg_name}_${pkg_version}_${pkg_arch}.ipk")
     done
 
-    # ... include base package
+    # include base package
     ipkg_urls+=(-O "${source_url}/archive/${pkg_base}_${pkg_version}_${pkg_arch}.ipk")
 
-    # ... also need to downgrade 'pip3' to prevent 'pip not found' error
+    # also need to downgrade 'pip3' to prevent 'pip not found' error
     pkg_name=pip
     pkg_version=19.0.3-1
     ipkg_urls+=(-O "${source_url}/archive/${pkg_base}-${pkg_name}_${pkg_version}_${pkg_arch}.ipk")
 
-    # ... and a specific version of cryptography, so SAB3 will restart correctly
+    # and a specific version of cryptography, so SAB3 will restart correctly
     pkg_name=cryptography
     pkg_version=2.7-2
     ipkg_urls+=(-O "${source_url}/archive/${pkg_base}-${pkg_name}_${pkg_version}_${pkg_arch}.ipk")
@@ -1292,7 +1291,7 @@ DownloadQPKG()
 CalcNASQPKGArch()
     {
 
-    # Decide which package arch is suitable for this NAS. This is only needed for Stephane's packages.
+    # Decide which package arch is suitable for this NAS. Only needed for Stephane's packages.
 
     case $($UNAME_CMD -m) in
         x86_64)
@@ -1381,7 +1380,7 @@ UninstallQPKG()
         errorcode=22
         returncode=1
     else
-        qpkg_installed_path="$($GETCFG_CMD "$1" Install_Path -f "$APP_CENTER_CONFIG_PATHFILE")"
+        qpkg_installed_path="$($GETCFG_CMD $1 Install_Path -f $APP_CENTER_CONFIG_PATHFILE)"
         result=$?
 
         if [[ $result -eq 0 ]]; then
@@ -1400,7 +1399,7 @@ UninstallQPKG()
                 fi
             fi
 
-            $RMCFG_CMD "$1" -f "$APP_CENTER_CONFIG_PATHFILE"
+            $RMCFG_CMD $1 -f $APP_CENTER_CONFIG_PATHFILE
         else
             DebugQPKG "$(FormatAsPackageName $1)" "not installed $(FormatAsExitcode $result)"
         fi
@@ -1427,7 +1426,7 @@ QPKGServiceCtl()
         errorcode=24
         return 1
     elif [[ -z $2 ]]; then
-        DebugError 'package unspecified'
+        DebugError 'QPKG name unspecified'
         errorcode=25
         return 1
     fi
@@ -1520,7 +1519,7 @@ GetQPKGServiceFile()
     local returncode=0
 
     if [[ -z $1 ]]; then
-        DebugError 'Package unspecified'
+        DebugError 'QPKG name unspecified'
         errorcode=28
         returncode=1
     else
@@ -1553,7 +1552,7 @@ GetQPKGPathFilename()
     local returncode=0
 
     if [[ -z $1 ]]; then
-        DebugError 'Package unspecified'
+        DebugError 'QPKG name unspecified'
         errorcode=31
         returncode=1
     else
@@ -1577,7 +1576,7 @@ GetQPKGRemoteURL()
     local returncode=1
 
     if [[ -z $1 ]]; then
-        DebugError 'Package unspecified'
+        DebugError 'QPKG name unspecified'
         errorcode=32
         returncode=1
     else
@@ -1607,7 +1606,7 @@ GetQPKGMD5()
     local returncode=1
 
     if [[ -z $1 ]]; then
-        DebugError 'Package unspecified'
+        DebugError 'QPKG name unspecified'
         errorcode=33
         returncode=1
     else
@@ -1905,7 +1904,7 @@ _MonitorDirSize_()
         $SLEEP_CMD 1
     done
 
-    [[ -n $progress_message ]] && ProgressUpdater " done!"
+    [[ -n $progress_message ]] && ProgressUpdater ' done!'
 
     }
 
@@ -1916,10 +1915,10 @@ EnableQPKG()
 
     [[ -z $1 ]] && return 1
 
-    if [[ $($GETCFG_CMD "$1" Enable -u -f "$APP_CENTER_CONFIG_PATHFILE") != 'TRUE' ]]; then
-        DebugProc "enabling QPKG '$1'"
-        $SETCFG_CMD "$1" Enable TRUE -f "$APP_CENTER_CONFIG_PATHFILE"
-        DebugDone "QPKG '$1' enabled"
+    if [[ $($GETCFG_CMD $1 Enable -u -f $APP_CENTER_CONFIG_PATHFILE) != 'TRUE' ]]; then
+        DebugProc "enabling QPKG $(FormatAsPackageName $1)"
+        $SETCFG_CMD $1 Enable TRUE -f $APP_CENTER_CONFIG_PATHFILE
+        DebugDone "QPKG $(FormatAsPackageName $1) enabled"
     fi
 
     }
@@ -1959,7 +1958,7 @@ IsQPKGInstalled()
 
     [[ -z $1 ]] && return 1
 
-    if [[ $($GETCFG_CMD "$1" RC_Number -d 0 -f "$APP_CENTER_CONFIG_PATHFILE") -eq 0 ]]; then
+    if [[ $($GETCFG_CMD $1 RC_Number -d 0 -f $APP_CENTER_CONFIG_PATHFILE) -eq 0 ]]; then
         return 1
     else
         return 0
@@ -1977,7 +1976,7 @@ IsQPKGEnabled()
 
     [[ -z $1 ]] && return 1
 
-    if [[ $($GETCFG_CMD "$1" Enable -u -f "$APP_CENTER_CONFIG_PATHFILE") != 'TRUE' ]]; then
+    if [[ $($GETCFG_CMD $1 Enable -u -f $APP_CENTER_CONFIG_PATHFILE) != 'TRUE' ]]; then
         return 1
     else
         return 0
@@ -2016,7 +2015,7 @@ IsSysFilePresent()
     [[ -z $1 ]] && return 1
 
     if ! [[ -f $1 || -L $1 ]]; then
-        ShowError "a required NAS system file is missing [$1]"
+        ShowError "a required NAS system file is missing $(FormatAsFileName $1)"
         errorcode=34
         return 1
     else
@@ -2036,7 +2035,7 @@ IsSysSharePresent()
     [[ -z $1 ]] && return 1
 
     if [[ ! -L $1 ]]; then
-        ShowError "a required NAS system share is missing $(FormatAsFileName "$1"). Please re-create it via the QTS Control Panel -> Privilege Settings -> Shared Folders."
+        ShowError "a required NAS system share is missing $(FormatAsFileName $1). Please re-create it via the QTS Control Panel -> Privilege Settings -> Shared Folders."
         errorcode=35
         return 1
     else
@@ -2066,7 +2065,7 @@ MatchAbbrvToQPKGName()
         abbs=(${SHERPA_QPKG_ABBRVS[$package_index]})
         for abb_index in ${!abbs[@]}; do
             if [[ ${abbs[$abb_index]} = $1 ]]; then
-                echo "${SHERPA_QPKG_NAME[$package_index]}"
+                echo ${SHERPA_QPKG_NAME[$package_index]}
                 returncode=0
                 break 2
             fi
@@ -2417,7 +2416,7 @@ ShowError()
     {
 
     local buffer="$1"
-    local capitalised="$(tr "[a-z]" "[A-Z]" <<< ${buffer:0:1})${buffer:1}"
+    local capitalised="$($TR_CMD "[a-z]" "[A-Z]" <<< ${buffer:0:1})${buffer:1}"
 
     ShowLogLine_update "$(ColourTextBrightRed fail)" "$capitalised"
     SaveLogLine fail "$capitalised"
@@ -2548,7 +2547,7 @@ PrintResetColours()
     }
 
 if [[ ! -e /etc/init.d/functions ]]; then
-    ShowError "QTS functions missing. Is this a QNAP NAS?"
+    ShowError 'QTS functions missing. Is this a QNAP NAS?'
     exit 1
 fi
 
