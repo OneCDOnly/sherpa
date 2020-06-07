@@ -36,13 +36,15 @@ Init()
     readonly QPKG_PATH=$($GETCFG_CMD $QPKG_NAME Install_Path -f $QTS_QPKG_CONF_PATHFILE)
     readonly QPKG_INI_PATHFILE=$QPKG_PATH/config/config.ini
     local -r QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.def
-    readonly STORED_PID_PATHFILE=/tmp/$QPKG_NAME.pid
+    readonly STORED_PID_PATHFILE=/var/run/$QPKG_NAME.pid
     readonly INIT_LOG_PATHFILE=/var/log/$QPKG_NAME.log
     local -r BACKUP_PATH=$($GETCFG_CMD SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
     readonly BACKUP_PATHFILE=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
     readonly LAUNCHER="$PYTHON $TARGET_SCRIPT --daemon --nolaunch --datadir $($DIRNAME_CMD $QPKG_INI_PATHFILE) --pidfile $STORED_PID_PATHFILE"
     export PYTHONPATH=$PYTHON
     export PATH=/opt/bin:/opt/sbin:$PATH
+    ui_port=0
+    UI_secure=''
 
     if [[ -z $LANG ]]; then
         export LANG=en_US.UTF-8
@@ -58,6 +60,8 @@ Init()
         cp $QPKG_INI_DEFAULT_PATHFILE $QPKG_INI_PATHFILE
     fi
 
+    ChoosePort
+
     [[ ! -d $BACKUP_PATH ]] && mkdir -p $BACKUP_PATH
 
     return 0
@@ -67,25 +71,14 @@ Init()
 StartQPKG()
     {
 
-    local -r MAX_WAIT_SECONDS_START=100
     local exec_msgs=''
     local result=0
-    local ui_port=''
-    local secure=''
-    local acc=0
 
-    QPKGIsActive && return
+    DaemonIsActive && return
 
     PullGitRepo $QPKG_NAME "$SOURCE_URL" $SOURCE_BRANCH $QPKG_PATH
 
     cd $QPKG_PATH/$QPKG_NAME || return 1
-
-    ui_port=$(UIPortSecure)
-    if [[ $ui_port -gt 0 ]]; then
-        secure='S'
-    else
-        ui_port=$(UIPort)
-    fi
 
     if [[ $ui_port -eq 0 ]]; then
         WriteToDisplayAndLog '! unable to start daemon: no port specified'
@@ -113,27 +106,11 @@ StartQPKG()
         return 1
     fi
 
-    WriteToDisplayAndLog_SameLine "* checking for daemon UI port $ui_port response: "
-    WriteToDisplay_SameLine "(waiting for upto $MAX_WAIT_SECONDS_START seconds): "
-
-    while true; do
-        while ! PortResponds $ui_port; do
-            sleep 1
-            ((acc++))
-            WriteToDisplay_SameLine "$acc, "
-
-            if [[ $acc -ge $MAX_WAIT_SECONDS_START ]]; then
-                WriteToDisplayAndLog 'failed!'
-                WriteErrorToSystemLog "Daemon UI port $ui_port failed to respond after $acc seconds"
-                return 1
-            fi
-        done
-        WriteToDisplay 'OK'
-        WriteToLog "daemon UI responded after $acc seconds"
-        break
-    done
-
-    WriteToDisplayAndLog "= $(FormatAsPackageName $QPKG_NAME) daemon UI is now listening on HTTP${secure} port: $ui_port"
+    if PortResponds $ui_port; then
+        WriteToDisplayAndLog "= $(FormatAsPackageName $QPKG_NAME) daemon UI is now listening on HTTP${UI_secure} port: $ui_port"
+    else
+        return 1
+    fi
 
     return 0
 
@@ -145,7 +122,7 @@ StopQPKG()
     local -r MAX_WAIT_SECONDS_STOP=100
     local acc=0
 
-    ! QPKGIsActive && return
+    ! DaemonIsActive && return
 
     PID=$(<$STORED_PID_PATHFILE)
 
@@ -176,7 +153,7 @@ StopQPKG()
 
     }
 
-BackupQPKGData()
+BackupConfig()
     {
 
     local exec_msgs=''
@@ -200,7 +177,7 @@ BackupQPKGData()
 
     }
 
-RestoreQPKGData()
+RestoreConfig()
     {
 
     local exec_msgs=''
@@ -233,13 +210,13 @@ RestoreQPKGData()
 
     }
 
-QPKGIsActive()
+DaemonIsActive()
     {
 
     # $? = 0 if $QPKG_NAME is active
     # $? = 1 if $QPKG_NAME is not active
 
-    if [[ -f $STORED_PID_PATHFILE && -d /proc/$(<$STORED_PID_PATHFILE) ]]; then
+    if [[ -f $STORED_PID_PATHFILE && -d /proc/$(<$STORED_PID_PATHFILE) ]] && (PortResponds $ui_port); then
         WriteToDisplayAndLog '= daemon is active'
         return 0
     else
@@ -299,6 +276,19 @@ PullGitRepo()
 
     }
 
+ChoosePort()
+    {
+
+    ui_port=$(UIPortSecure)
+
+    if [[ $ui_port -gt 0 ]]; then
+        UI_secure='S'
+    else
+        ui_port=$(UIPort)
+    fi
+
+    }
+
 UIPort()
     {
 
@@ -347,7 +337,28 @@ PortResponds()
 
     [[ -z $1 ]] && return 1
 
-    $CURL_CMD --silent --fail localhost:$1 >/dev/null
+    local -r MAX_WAIT_SECONDS_START=100
+    local acc=0
+
+    WriteToDisplayAndLog_SameLine "* checking for daemon UI port $ui_port response: "
+    WriteToDisplay_SameLine "(waiting for upto $MAX_WAIT_SECONDS_START seconds): "
+
+    while true; do
+        while ! $CURL_CMD --silent --fail localhost:$1 >/dev/null; do
+            sleep 1
+            ((acc++))
+            WriteToDisplay_SameLine "$acc, "
+
+            if [[ $acc -ge $MAX_WAIT_SECONDS_START ]]; then
+                WriteToDisplayAndLog 'failed!'
+                WriteErrorToSystemLog "Daemon UI port $ui_port failed to respond after $acc seconds"
+                return 1
+            fi
+        done
+        WriteToDisplay 'OK'
+        WriteToLog "daemon UI responded after $acc seconds"
+        return 0
+    done
 
     }
 
@@ -521,8 +532,10 @@ WaitForEntware()
 Init
 
 if [[ $errorcode -eq 0 ]]; then
-    WriteToLog "$(SessionSeparator "$1 requested")"
-    WriteToLog "= $(date)"
+    if [[ -n $1 ]]; then
+        WriteToLog "$(SessionSeparator "$1 requested")"
+        WriteToLog "= $(date)"
+    fi
     case $1 in
         start)
             StartQPKG || errorcode=1
@@ -533,14 +546,24 @@ if [[ $errorcode -eq 0 ]]; then
         restart)
             StopQPKG; StartQPKG || errorcode=1
             ;;
+        status)
+            DaemonIsActive $QPKG_NAME || errorcode=1
+            ;;
         backup)
-            BackupQPKGData || errorcode=1
+            BackupConfig || errorcode=1
             ;;
         restore)
-            RestoreQPKGData || errorcode=1
+            RestoreConfig || errorcode=1
+            ;;
+        history)
+            if [[ -e $INIT_LOG_PATHFILE ]]; then
+                cat $INIT_LOG_PATHFILE
+            else
+                WriteToDisplay "Init log not found: $(FormatAsFileName $INIT_LOG_PATHFILE)"
+            fi
             ;;
         *)
-            WriteToDisplay "Usage: $0 {start|stop|restart|backup|restore}"
+            WriteToDisplay "Usage: $0 {start|stop|restart|status|backup|restore|history}"
             ;;
     esac
 fi
