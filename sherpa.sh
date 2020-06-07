@@ -2416,7 +2416,7 @@ ShowError()
     {
 
     local buffer="$1"
-    local capitalised="$($TR_CMD "[a-z]" "[A-Z]" <<< ${buffer:0:1})${buffer:1}"
+    local capitalised="$(tr "[a-z]" "[A-Z]" <<< ${buffer:0:1})${buffer:1}"      # use any available 'tr' command as we haven't picked one yet
 
     ShowLogLine_update "$(ColourTextBrightRed fail)" "$capitalised"
     SaveLogLine fail "$capitalised"
