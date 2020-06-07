@@ -2326,7 +2326,7 @@ DebugThis()
     {
 
     [[ $debug = true ]] && ShowDebug "$1"
-    SaveDebug "$1"
+    WriteAsDebug "$1"
 
     }
 
@@ -2353,16 +2353,16 @@ DebugErrorFile()
 ShowInfo()
     {
 
-    ShowLogLine_write "$(ColourTextBrightWhite info)" "$1"
-    SaveLogLine info "$1"
+    WriteToDisplay_SameLine "$(ColourTextBrightWhite info)" "$1"
+    WriteToLog info "$1"
 
     }
 
 ShowProc()
     {
 
-    ShowLogLine_write "$(ColourTextBrightOrange proc)" "$1 ..."
-    SaveLogLine proc "$1 ..."
+    WriteToDisplay_SameLine "$(ColourTextBrightOrange proc)" "$1 ..."
+    WriteToLog proc "$1 ..."
 
     }
 
@@ -2376,39 +2376,39 @@ ShowProcLong()
 ShowDebug()
     {
 
-    ShowLogLine_write "$(ColourTextBlackOnCyan dbug)" "$1"
+    WriteToDisplay_SameLine "$(ColourTextBlackOnCyan dbug)" "$1"
 
     }
 
 ShowNote()
     {
 
-    ShowLogLine_update "$(ColourTextBrightYellowBlink note)" "$1"
-    SaveLogLine note "$1"
+    WriteToDisplay_NewLine "$(ColourTextBrightYellowBlink note)" "$1"
+    WriteToLog note "$1"
 
     }
 
 ShowQuiz()
     {
 
-    ShowLogLine_write "$(ColourTextBrightYellow quiz)" "$1: "
-    SaveLogLine quiz "$1"
+    WriteToDisplay_SameLine "$(ColourTextBrightYellow quiz)" "$1: "
+    WriteToLog quiz "$1"
 
     }
 
 ShowDone()
     {
 
-    ShowLogLine_update "$(ColourTextBrightGreen done)" "$1"
-    SaveLogLine done "$1"
+    WriteToDisplay_NewLine "$(ColourTextBrightGreen done)" "$1"
+    WriteToLog done "$1"
 
     }
 
 ShowWarning()
     {
 
-    ShowLogLine_update "$(ColourTextBrightOrange warn)" "$1"
-    SaveLogLine warn "$1"
+    WriteToDisplay_NewLine "$(ColourTextBrightOrange warn)" "$1"
+    WriteToLog warn "$1"
 
     }
 
@@ -2418,19 +2418,19 @@ ShowError()
     local buffer="$1"
     local capitalised="$(tr "[a-z]" "[A-Z]" <<< ${buffer:0:1})${buffer:1}"      # use any available 'tr' command as we haven't picked one yet
 
-    ShowLogLine_update "$(ColourTextBrightRed fail)" "$capitalised"
-    SaveLogLine fail "$capitalised"
+    WriteToDisplay_NewLine "$(ColourTextBrightRed fail)" "$capitalised"
+    WriteToLog fail "$capitalised"
 
     }
 
-SaveDebug()
+WriteAsDebug()
     {
 
-    SaveLogLine dbug "$1"
+    WriteToLog dbug "$1"
 
     }
 
-ShowLogLine_write()
+WriteToDisplay_SameLine()
     {
 
     # writes a new message without newline (unless in debug mode)
@@ -2446,7 +2446,7 @@ ShowLogLine_write()
 
     }
 
-ShowLogLine_update()
+WriteToDisplay_NewLine()
     {
 
     # updates the previous message
@@ -2473,7 +2473,7 @@ ShowLogLine_update()
 
     }
 
-SaveLogLine()
+WriteToLog()
     {
 
     # $1 = pass/fail
