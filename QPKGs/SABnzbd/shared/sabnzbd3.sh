@@ -575,16 +575,16 @@ if [[ $errorcode -eq 0 ]]; then
         restart)
             StopQPKG; StartQPKG || errorcode=1
             ;;
-        status)
+        s|status)
             DaemonIsActive $QPKG_NAME || errorcode=1
             ;;
-        backup)
+        b|backup)
             BackupConfig || errorcode=1
             ;;
         restore)
             RestoreConfig || errorcode=1
             ;;
-        history)
+        h|history)
             if [[ -e $INIT_LOG_PATHFILE ]]; then
                 cat $INIT_LOG_PATHFILE
             else
