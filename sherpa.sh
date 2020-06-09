@@ -45,7 +45,7 @@ Init()
     {
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200607
+    readonly SCRIPT_VERSION=200609
     debug=false
     ResetErrorcode
 
@@ -367,7 +367,7 @@ Init()
 
     }
 
-LogNASDetails()
+LogRuntimeParameters()
     {
 
     local conflicting_qpkg=''
@@ -400,17 +400,19 @@ LogNASDetails()
     DebugNAS 'system load' "$($UPTIME_CMD | $SED_CMD 's|.*load average: ||' | $AWK_CMD -F', ' '{print "1 min="$1 ", 5 min="$2 ", 15 min="$3}')"
     DebugNAS 'USER' "$USER"
     DebugNAS 'EUID' "$EUID"
+    [[ $HOSTNAME = sarah && ${NAS_FIRMWARE//.} -eq 426 ]] && devmode=true || devmode=false
+    DebugVar devmode
     DebugNAS 'default volume' "$($GETCFG_CMD SHARE_DEF defVolMP -f $DEFAULT_SHARES_PATHFILE)"
     DebugNAS '$PATH' "${PATH:0:43}"
     DebugNAS '/opt' "$([[ -L '/opt' ]] && $READLINK_CMD '/opt' || echo "<not present>")"
     DebugNAS $SHARE_DOWNLOAD_PATH "$([[ -L $SHARE_DOWNLOAD_PATH ]] && $READLINK_CMD $SHARE_DOWNLOAD_PATH || echo "<not present>")"
     DebugScript 'user arguments' "$USER_ARGS_RAW"
-    DebugScript 'app(s) to install' "${QPKGS_to_install[*]} "
-    DebugScript 'app(s) to uninstall' "${QPKGS_to_uninstall[*]} "
-    DebugScript 'app(s) to reinstall' "${QPKGS_to_reinstall[*]} "
-    DebugScript 'app(s) to update' "${QPKGS_to_update[*]} "
-    DebugScript 'app(s) to backup' "${QPKGS_to_backup[*]} "
-    DebugScript 'app(s) to restore' "${QPKGS_to_restore[*]} "
+    DebugScript 'app(s) to install' "${QPKGS_to_install[*]}"
+    DebugScript 'app(s) to uninstall' "${QPKGS_to_uninstall[*]}"
+    DebugScript 'app(s) to reinstall' "${QPKGS_to_reinstall[*]}"
+    DebugScript 'app(s) to update' "${QPKGS_to_update[*]}"
+    DebugScript 'app(s) to backup' "${QPKGS_to_backup[*]}"
+    DebugScript 'app(s) to restore' "${QPKGS_to_restore[*]}"
     DebugScript 'working path' "$WORKING_PATH"
     DebugQPKG 'download path' "$QPKG_DL_PATH"
     DebugIPKG 'download path' "$IPKG_DL_PATH"
@@ -671,19 +673,18 @@ DownloadQPKGs()
 
     DebugFuncEntry
     local returncode=0
+    local QPKGs_to_download=''
 
-    # check user specified install list and built a temp list of QPKGs to install (temp QPKG install list).
-    # loop through sherpa QPKG installable list and if names matches entry in temp QPKG install list then:
-    #   add package name to final QPKG install list,
-    #   add package deps to final QPKG install list,
-    #   remove duplicates and installed packages from final QPKG install list.
-    # loop through final QPKG install list and if sherpa installable package index matches then:
-    #   add package ipks to final IPK install list.
+    if [[ $devmode = true ]]; then
+        QPKGs_to_download="${QPKGS_to_install[*]}"
+        QPKGs_to_download+=" ${QPKGS_to_reinstall[*]}"
 
-#   temp="$QPKGS_to_install"
-#   temp+="$QPKGS_to_reinstall"
+        echo "QPKGs_to_download: [$QPKGs_to_download]"
 
-#   FindAllQPKGDependencies "$TARGET_APP"
+        FindAllQPKGDependencies "$QPKGs_to_download"
+
+        exit
+    fi
 
     ! IsQPKGInstalled Entware && DownloadQPKG Entware
 
@@ -1701,6 +1702,26 @@ DisplayResult()
 
     }
 
+GetQPKGDeps()
+    {
+
+    # $1 = QPKG name to return dependencies for
+
+    [[ -z $1 ]] && { DebugError 'No QPKG was requested'; return 1 ;}
+
+    local index=0
+
+    for index in ${!SHERPA_QPKG_NAME[@]}; do
+        if [[ ${SHERPA_QPKG_NAME[$index]} = $1 ]]; then
+            echo ${SHERPA_QPKG_DEPS[$index]}
+            return 0
+        fi
+    done
+
+    return 1
+
+    }
+
 FindAllQPKGDependencies()
     {
 
@@ -1708,7 +1729,7 @@ FindAllQPKGDependencies()
     # input:
     #   $1 = string with space-separated initial QPKG names.
     # output:
-    #   $QPKG_download_list = array with complete list of all QPKGs, including those originally specified.
+    #   $QPKG_download_list = name-sorted array with complete list of all QPKGs, including those originally specified.
     #   $QPKG_download_count = number of packages to be downloaded.
 
     QPKG_download_count=0
@@ -1718,10 +1739,10 @@ FindAllQPKGDependencies()
     local all_list=()
     local dependency_list=''
     local iterations=0
-    local iteration_limit=20
+    local -r ITERATION_LIMIT=6
     local complete=false
     local result_size=0
-    local QPKG_search_startseconds=$(DebugStageStart)
+    local -r SEARCH_STARTSECONDS=$(DebugStageStart)
 
     [[ -z $1 ]] && { DebugError 'No QPKGs were requested'; return 1 ;}
 
@@ -1731,45 +1752,56 @@ FindAllQPKGDependencies()
     requested_list=$($TR_CMD ' ' '\n' <<< $1 | $SORT_CMD | $UNIQ_CMD | $TR_CMD '\n' ' ')
     last_list=$requested_list
 
-    ShowProc 'calculating number and total size of QPKGs required'
+    ShowProc 'calculating number of QPKGs required'
     DebugInfo "requested QPKGs: ${requested_list[*]}"
 
     DebugProc 'finding all QPKG dependencies'
-    while [[ $iterations -lt $iteration_limit ]]; do
+
+    while [[ $iterations -lt $ITERATION_LIMIT ]]; do
         ((iterations++))
-#         last_list=$($OPKG_CMD depends -A $last_list | $GREP_CMD -v 'depends on:' | $SED_CMD 's|^[[:blank:]]*||;s|[[:blank:]]*$||' | $TR_CMD ' ' '\n' | $SORT_CMD | $UNIQ_CMD)
+        for package in ${last_list[@]}; do
+            last_list+=$(GetQPKGDeps $package)
+        done
+
+        # remove duplicates
+        last_list=$(echo $last_list | $TR_CMD ' ' '\n' | $SORT_CMD | $UNIQ_CMD)
 
         if [[ -n $last_list ]]; then
             [[ -n $dependency_list ]] && dependency_list+=$(echo -e "\n$last_list") || dependency_list=$last_list
         else
             DebugDone 'complete'
-            DebugInfo "found all QPKG dependencies in $iterations iterations"
+            DebugInfo "found all QPKG dependencies in $iterations iteration$([[ $iterations -gt 0 ]] && echo s)"
             complete=true
             break
         fi
     done
 
-    [[ $complete = false ]] && DebugError "QPKG dependency list is incomplete! Consider raising \$iteration_limit [$iteration_limit]."
+    [[ $complete = false ]] && DebugError "QPKG dependency list is incomplete! Consider raising \$ITERATION_LIMIT [$ITERATION_LIMIT]."
+
+echo "all_list: [${all_list[*]}]"
+exit
 
     # remove duplicate entries
     all_list=$(echo "$requested_list $dependency_list" | $TR_CMD ' ' '\n' | $SORT_CMD | $UNIQ_CMD | $TR_CMD '\n' ' ')
 
+echo "all_list: [${all_list[*]}]"
+
     DebugProc 'excluding packages already installed'
-    for element in ${all_list[@]}; do
-        $OPKG_CMD status "$element" | $GREP_CMD -q "Status:.*installed" || QPKG_download_list+=($element)
-    done
+#     for element in ${all_list[@]}; do
+#         $OPKG_CMD status "$element" | $GREP_CMD -q "Status:.*installed" || QPKG_download_list+=($element)
+#     done
     DebugDone 'complete'
     DebugInfo "QPKGs to download: ${IPKG_download_list[*]}"
     QPKG_download_count=${#IPKG_download_list[@]}
 
-    DebugStageEnd $IPKG_search_startseconds
+    DebugStageEnd $SEARCH_STARTSECONDS
 
     if [[ $QPKG_download_count -gt 0 ]]; then
         ShowDone "$QPKG_download_count QPKGs to be downloaded"
     else
         ShowDone 'no QPKGs are required'
     fi
-
+exit
     }
 
 FindAllIPKGDependencies()
@@ -1779,7 +1811,7 @@ FindAllIPKGDependencies()
     # input:
     #   $1 = string with space-separated initial IPKG names.
     # output:
-    #   $IPKG_download_list = array with complete list of all IPKGs, including those originally specified.
+    #   $IPKG_download_list = name-sorted array with complete list of all IPKGs, including those originally specified.
     #   $IPKG_download_count = number of packages to be downloaded.
     #   $IPKG_download_size = byte-count of packages to be downloaded.
 
@@ -1791,10 +1823,10 @@ FindAllIPKGDependencies()
     local all_list=()
     local dependency_list=''
     local iterations=0
-    local iteration_limit=20
+    local -r ITERATION_LIMIT=20
     local complete=false
     local result_size=0
-    local IPKG_search_startseconds=$(DebugStageStart)
+    local -r SEARCH_STARTSECONDS=$(DebugStageStart)
 
     [[ -z $1 ]] && { DebugError 'No IPKGs were requested'; return 1 ;}
 
@@ -1808,7 +1840,7 @@ FindAllIPKGDependencies()
     DebugInfo "requested IPKGs: ${requested_list[*]}"
 
     DebugProc 'finding all IPKG dependencies'
-    while [[ $iterations -lt $iteration_limit ]]; do
+    while [[ $iterations -lt $ITERATION_LIMIT ]]; do
         ((iterations++))
         last_list=$($OPKG_CMD depends -A $last_list | $GREP_CMD -v 'depends on:' | $SED_CMD 's|^[[:blank:]]*||;s|[[:blank:]]*$||' | $TR_CMD ' ' '\n' | $SORT_CMD | $UNIQ_CMD)
 
@@ -1816,13 +1848,13 @@ FindAllIPKGDependencies()
             [[ -n $dependency_list ]] && dependency_list+=$(echo -e "\n$last_list") || dependency_list=$last_list
         else
             DebugDone 'complete'
-            DebugInfo "found all IPKG dependencies in $iterations iterations"
+            DebugInfo "found all IPKG dependencies in $iterations iteration$([[ $iterations -gt 0 ]] && echo s)"
             complete=true
             break
         fi
     done
 
-    [[ $complete = false ]] && DebugError "IPKG dependency list is incomplete! Consider raising \$iteration_limit [$iteration_limit]."
+    [[ $complete = false ]] && DebugError "IPKG dependency list is incomplete! Consider raising \$ITERATION_LIMIT [$ITERATION_LIMIT]."
 
     # remove duplicate entries
     all_list=$(echo "$requested_list $dependency_list" | $TR_CMD ' ' '\n' | $SORT_CMD | $UNIQ_CMD | $TR_CMD '\n' ' ')
@@ -1844,7 +1876,7 @@ FindAllIPKGDependencies()
         DebugDone 'complete'
     fi
     DebugVar IPKG_download_size
-    DebugStageEnd $IPKG_search_startseconds
+    DebugStageEnd $SEARCH_STARTSECONDS
 
     if [[ $IPKG_download_count -gt 0 ]]; then
         ShowDone "$IPKG_download_count IPKG$([[ $IPKG_download_count -gt 1 ]] && echo 's') ($(FormatAsISO $IPKG_download_size)) to be downloaded"
@@ -2552,7 +2584,7 @@ if [[ ! -e /etc/init.d/functions ]]; then
 fi
 
 Init || exit
-LogNASDetails
+LogRuntimeParameters
 DownloadQPKGs
 RemoveUnwantedQPKGs
 InstallBase
