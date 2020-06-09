@@ -45,7 +45,7 @@ Init()
     {
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200609
+    readonly SCRIPT_VERSION=200610
     debug=false
     ResetErrorcode
 
@@ -373,6 +373,13 @@ LogRuntimeParameters()
     local conflicting_qpkg=''
 
     ParseArgs
+    if [[ $HOSTNAME = Sarah && ${NAS_FIRMWARE//.} -eq 426 ]]; then
+        devmode=true
+        debug=true
+    else
+        devmode=false
+    fi
+    DebugVar devmode
 
     DebugFuncEntry
 
@@ -391,7 +398,7 @@ LogRuntimeParameters()
     DebugNAS 'RAM' "$INSTALLED_RAM_KB kB"
     if [[ $INSTALLED_RAM_KB -le $MIN_RAM_KB ]]; then
         DebugNAS 'RAM' "less-than or equal-to $MIN_RAM_KB kB"
-        [[ $errorcode -eq 0 ]] && ShowNote "running QTS with 1GB RAM or less can lead to unstable SABnzbd uptimes :("
+        [[ $errorcode -eq 0 ]] && ShowNote "QTS with 1GB RAM or less can lead to unstable SABnzbd uptimes :("
     fi
     DebugNAS 'firmware version' "$NAS_FIRMWARE"
     DebugNAS 'firmware build' "$($GETCFG_CMD System 'Build Number' -f $ULINUX_PATHFILE)"
@@ -400,8 +407,6 @@ LogRuntimeParameters()
     DebugNAS 'system load' "$($UPTIME_CMD | $SED_CMD 's|.*load average: ||' | $AWK_CMD -F', ' '{print "1 min="$1 ", 5 min="$2 ", 15 min="$3}')"
     DebugNAS 'USER' "$USER"
     DebugNAS 'EUID' "$EUID"
-    [[ $HOSTNAME = sarah && ${NAS_FIRMWARE//.} -eq 426 ]] && devmode=true || devmode=false
-    DebugVar devmode
     DebugNAS 'default volume' "$($GETCFG_CMD SHARE_DEF defVolMP -f $DEFAULT_SHARES_PATHFILE)"
     DebugNAS '$PATH' "${PATH:0:43}"
     DebugNAS '/opt' "$([[ -L '/opt' ]] && $READLINK_CMD '/opt' || echo "<not present>")"
@@ -1643,7 +1648,7 @@ Cleanup()
 
     cd $SHARE_PUBLIC_PATH
 
-    [[ $errorcode -eq 0 && $debug != true && -d $WORKING_PATH ]] && rm -rf "$WORKING_PATH"
+    [[ $errorcode -eq 0 && $debug = false && $devmode = false && -d $WORKING_PATH ]] && rm -rf "$WORKING_PATH"
 
     DebugFuncExit
     return 0
