@@ -2,7 +2,7 @@
 
 ## Description
 
-A BASH script to install various Usenet media-management apps into QNAP NAS.
+A package manager to install various Usenet media-management apps into QNAP NAS.
 
 **sherpa** is able to install several Usenet-related search and download apps but will only install **ONE app** at a time. If you elect to install an app that is already installed, the app will be fully reinstalled. This means the app configuration and settings are saved, the old app is uninstalled, a new version is installed, then the original settings are restored.
 
