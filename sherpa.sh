@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
-####################################################################################
+######################################################################################################################################
 # sherpa.sh
+######################################################################################################################################
+# Description:
+#  A package manager to install various Usenet media-management apps into QNAP NAS
 #
 # Copyright (C) 2017-2020 OneCD [one.cd.only@gmail.com]
 #
@@ -12,25 +15,18 @@
 #  GNU bash, version 3.2.57(2)-release (i686-pc-linux-gnu)
 #  Copyright (C) 2007 Free Software Foundation, Inc.
 #
-# This program is free software: you can redistribute it and/or modify it under
-# the terms of the GNU General Public License as published by the Free Software
-# Foundation, either version 3 of the License, or (at your option) any later
-# version.
+# This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 #
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
-# details.
+# This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 #
-# You should have received a copy of the GNU General Public License along with
-# this program. If not, see http://www.gnu.org/licenses/.
-####################################################################################
+# You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/.
+######################################################################################################################################
 # *** Style Guide ***
 # function names: CamelCase
 # variable names: lowercase_with_underscores (except for 'returncode' & 'errorcode')
 #      constants: UPPERCASE_WITH_UNDERSCORES (also set to readonly)
 #        indents: 1 x tab (converted to 4 x spaces to suit GitHub web-display)
-####################################################################################
+######################################################################################################################################
 
 readonly USER_ARGS_RAW="$@"
 
@@ -45,7 +41,7 @@ Init()
     {
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200610
+    readonly SCRIPT_VERSION=200614
     debug=false
     ResetErrorcode
 
@@ -185,8 +181,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(SABnzbdplus)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/SABnzbdplus/build/SABnzbdplus_200607.qpkg)
-        SHERPA_QPKG_MD5+=(e4ac4a45eee1f5595de87e0f3fdff353)
+        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/SABnzbdplus/build/SABnzbdplus_200614.qpkg)
+        SHERPA_QPKG_MD5+=(43f913082d7c5b78341500ba231ddfd7)
         SHERPA_QPKG_ABBRVS+=('sb sab sabnzbd sabnzbdplus')
         SHERPA_QPKG_DEPS+=('Entware Par2')
         SHERPA_QPKG_IPKGS+=('python python-pyopenssl python-dev gcc unrar p7zip coreutils-nice ionice ffprobe')
@@ -195,8 +191,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(SABnzbd)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/SABnzbd/build/SABnzbd_200607.qpkg)
-        SHERPA_QPKG_MD5+=(7839ad24f13d3a4d14091b026e711bb3)
+        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/SABnzbd/build/SABnzbd_200614.qpkg)
+        SHERPA_QPKG_MD5+=(3751a666f93aaeb25d5ca36484d06ac3)
         SHERPA_QPKG_ABBRVS+=('sb3 sab3 sabnzbd3')
         SHERPA_QPKG_DEPS+=('Entware Par2')
         SHERPA_QPKG_IPKGS+=('python3 python3-pyopenssl python3-cryptography python3-dev gcc unrar p7zip coreutils-nice ionice ffprobe')
@@ -650,7 +646,7 @@ DisplayHelp()
     DebugFuncEntry
     local package=''
 
-    echo -e "* a BASH script to install various Usenet media-management apps into QNAP NAS.\n"
+    echo -e "* A package manager to install various Usenet media-management apps into QNAP NAS.\n"
 
     echo "- Each application shown below can be installed (or reinstalled) by running:"
     for package in ${SHERPA_QPKG_NAME[@]}; do
@@ -663,7 +659,7 @@ DisplayHelp()
     echo -e "\n- Don't check free-space on target filesystem when installing Entware packages:"
     echo -e "\t$0 --ignore-space"
 
-    echo -e "\n- Update all sherpa installed applications:"
+    echo -e "\n- Update all sherpa-installed applications:"
     echo -e "\t$0 --update-all"
 
     DebugFuncExit
@@ -1116,7 +1112,12 @@ InstallPy3Modules()
     elif [[ -e /opt/bin/pip3.8 ]]; then
         pip3_cmd=/opt/bin/pip3.8
     else
-        IsSysFilePresent $pip3_cmd || return 1
+        if ! IsSysFilePresent $pip3_cmd; then
+            echo -e "\n* Ugh! The usual fix is to let sherpa reinstall Entware at least once."
+            echo -e "\t./sherpa.sh ew"
+            echo -e "If it happens again after reinstalling Entware, please create a new issue for this on GitHub."
+            return 1
+        fi
     fi
 
     for index in ${!SHERPA_QPKG_NAME[@]}; do
