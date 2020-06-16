@@ -41,7 +41,7 @@ Init()
     {
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200614
+    readonly SCRIPT_VERSION=200617
     debug=false
     ResetErrorcode
 
@@ -181,8 +181,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(SABnzbdplus)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/SABnzbdplus/build/SABnzbdplus_200614.qpkg)
-        SHERPA_QPKG_MD5+=(43f913082d7c5b78341500ba231ddfd7)
+        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/SABnzbdplus/build/SABnzbdplus_200617.qpkg)
+        SHERPA_QPKG_MD5+=(8502b642483479dcf6ea6b7c1dc9dae7)
         SHERPA_QPKG_ABBRVS+=('sb sab sabnzbd sabnzbdplus')
         SHERPA_QPKG_DEPS+=('Entware Par2')
         SHERPA_QPKG_IPKGS+=('python python-pyopenssl python-dev gcc unrar p7zip coreutils-nice ionice ffprobe')
@@ -191,8 +191,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(SABnzbd)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/SABnzbd/build/SABnzbd_200614.qpkg)
-        SHERPA_QPKG_MD5+=(3751a666f93aaeb25d5ca36484d06ac3)
+        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/SABnzbd/build/SABnzbd_200617.qpkg)
+        SHERPA_QPKG_MD5+=(dea242426d2a4c7f27435a191f7ed592)
         SHERPA_QPKG_ABBRVS+=('sb3 sab3 sabnzbd3')
         SHERPA_QPKG_DEPS+=('Entware Par2')
         SHERPA_QPKG_IPKGS+=('python3 python3-pyopenssl python3-cryptography python3-dev gcc unrar p7zip coreutils-nice ionice ffprobe')

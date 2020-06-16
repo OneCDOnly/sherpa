@@ -24,6 +24,7 @@ Init()
     readonly DIRNAME_CMD=/usr/bin/dirname
     readonly GETCFG_CMD=/sbin/getcfg
     readonly GREP_CMD=/bin/grep
+    readonly LESS_CMD=/opt/bin/less
     readonly LSOF_CMD=/usr/sbin/lsof
     readonly SED_CMD=/bin/sed
     readonly SETCFG_CMD=/sbin/setcfg
@@ -76,7 +77,7 @@ StartQPKG()
 
     DaemonIsActive && return
 
-    PullGitRepo $QPKG_NAME "$SOURCE_URL" $SOURCE_BRANCH $QPKG_PATH && UpdateLanguages
+    PullGitRepo $QPKG_NAME "$SOURCE_URL" "$SOURCE_BRANCH" $QPKG_PATH && UpdateLanguages
     PullGitRepo nzbToMedia 'http://github.com/clinton-hall/nzbToMedia.git' master "/share/$($GETCFG_CMD SHARE_DEF defDownload -d Qdownload -f /etc/config/def_share.info)"
 
     cd $QPKG_PATH/$QPKG_NAME || return 1
@@ -101,8 +102,8 @@ StartQPKG()
         WriteToDisplayAndLog 'OK'
     else
         WriteToDisplayAndLog 'failed!'
-        WriteToDisplayAndLog "= result: $(FormatAsExitcode $result)"
-        WriteToDisplayAndLog "= daemon startup messages: $(FormatAsStdout "$exec_msgs")"
+        WriteToDisplayAndLog "$(FormatAsResult $result)"
+        WriteToDisplayAndLog "$(FormatAsFuncMessages "$exec_msgs")"
         WriteErrorToSystemLog "Daemon launch failed. Check $(FormatAsFileName "$INIT_LOG_PATHFILE") for more details."
         return 1
     fi
@@ -161,17 +162,16 @@ BackupConfig()
     local result=0
 
     WriteToDisplayAndLog_SameLine '* updating configuration backup: '
-
     exec_msgs=$($TAR_CMD --create --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config . 2>&1)
     result=$?
 
     if [[ $result = 0 ]]; then
         WriteToDisplayAndLog 'OK'
-        WriteInfoToSystemLog "updated configuration backup"
+        WriteInfoToSystemLog 'updated configuration backup'
     else
         WriteToDisplayAndLog 'failed!'
-        WriteToDisplayAndLog "= result: $(FormatAsExitcode $result)"
-        WriteToDisplayAndLog "= messages: $(FormatAsStdout "$exec_msgs")"
+        WriteToDisplayAndLog "$(FormatAsResult $result)"
+        WriteToDisplayAndLog "$(FormatAsFuncMessages "$exec_msgs")"
         WriteWarningToSystemLog "A problem occurred while updating configuration backup. Check $(FormatAsFileName "$INIT_LOG_PATHFILE") for more details."
         return 1
     fi
@@ -188,7 +188,6 @@ RestoreConfig()
         StopQPKG
 
         WriteToDisplayAndLog_SameLine '* restoring configuration backup: '
-
         exec_msgs=$($TAR_CMD --extract --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config 2>&1)
         result=$?
 
@@ -198,8 +197,8 @@ RestoreConfig()
             StartQPKG
         else
             WriteToDisplayAndLog 'failed!'
-            WriteToDisplayAndLog "= result: $(FormatAsExitcode $result)"
-            WriteToDisplayAndLog "= messages: $(FormatAsStdout "$exec_msgs")"
+            WriteToDisplayAndLog "$(FormatAsResult $result)"
+            WriteToDisplayAndLog "$(FormatAsFuncMessages "$exec_msgs")"
             WriteWarningToSystemLog "A problem occurred while restoring configuration backup. Check $(FormatAsFileName "$INIT_LOG_PATHFILE") for more details."
             return 1
         fi
@@ -224,24 +223,21 @@ UpdateLanguages()
 
     [[ -e $version_store_pathfile && $version_current_number = $(<$version_store_pathfile) ]] && return 0
 
-    echo -n "* updating language support: " | $TEE_CMD -a $INIT_LOG_PATHFILE
     cd $QPKG_PATH/$QPKG_NAME || return 1
+
+    WriteToDisplayAndLog_SameLine '* updating language support: '
     exec_msgs=$($PYTHON tools/make_mo.py)
     result=$?
 
     if [[ $result -eq 0 ]]; then
         echo "$version_current_number" > $version_store_pathfile
-        echo "OK" | $TEE_CMD -a $INIT_LOG_PATHFILE
-        {
-            echo "= result: $(FormatAsExitcode $result)"
-            echo "= ${FUNCNAME[0]}(): '$exec_msgs'"
-        } >> $INIT_LOG_PATHFILE
+        WriteToDisplayAndLog 'OK'
+        WriteToLog "$(FormatAsResult $result)"
+        WriteToLog "$(FormatAsFuncMessages "$exec_msgs")"
     else
-        {
-            echo "failed!"
-            echo "= result: $(FormatAsExitcode $result)"
-            echo "= messages: $(FormatAsStdout "$exec_msgs")"
-        } | $TEE_CMD -a $INIT_LOG_PATHFILE
+        WriteToDisplayAndLog 'failed!'
+        WriteToDisplayAndLog "$(FormatAsResult $result)"
+        WriteToDisplayAndLog "$(FormatAsFuncMessages "$exec_msgs")"
         WriteWarningToSystemLog "A problem occurred while updating language support. Check $(FormatAsFileName "$INIT_LOG_PATHFILE") for more details."
     fi
 
@@ -271,8 +267,8 @@ PullGitRepo()
 
     # $1 = package name
     # $2 = URL to pull/clone from
-    # $3 = branch
-    # $4 = path to clone into
+    # $3 = remote branch or tag
+    # $4 = local path to clone into
 
     local -r GIT_CMD=/opt/bin/git
     local exec_msgs=''
@@ -286,19 +282,21 @@ PullGitRepo()
 
     WriteToDisplayAndLog_SameLine "* updating application $(FormatAsPackageName $1): "
     exec_msgs=$({
-        [[ ! -d ${QPKG_GIT_PATH}/.git ]] && { $GIT_CMD clone -b $3 --depth 1 "$GIT_HTTPS_URL" "$QPKG_GIT_PATH" || $GIT_CMD clone -b $3 --depth 1 "$GIT_HTTP_URL" "$QPKG_GIT_PATH" ;}
+        if [[ ! -d ${QPKG_GIT_PATH}/.git ]]; then
+            $GIT_CMD clone -b $3 --depth 1 -c advice.detachedHead=false "$GIT_HTTPS_URL" "$QPKG_GIT_PATH" || $GIT_CMD clone -b $3 --depth 1 -c advice.detachedHead=false "$GIT_HTTP_URL" "$QPKG_GIT_PATH"
+        fi
         cd "$QPKG_GIT_PATH" && $GIT_CMD pull
     } 2>&1)
     result=$?
 
     if [[ $result = 0 ]]; then
         WriteToDisplayAndLog 'OK'
-        WriteToLog "= result: $(FormatAsExitcode $result)"
-        WriteToLog "= ${FUNCNAME[0]}(): $(FormatAsStdout "$exec_msgs")"
+        WriteToLog "$(FormatAsResult $result)"
+        WriteToLog "$(FormatAsFuncMessages "$exec_msgs")"
     else
         WriteToDisplayAndLog 'failed!'
-        WriteToDisplayAndLog "= result: $(FormatAsExitcode $result)"
-        WriteToDisplayAndLog "= ${FUNCNAME[0]}(): $(FormatAsStdout "$exec_msgs")"
+        WriteToDisplayAndLog "$(FormatAsResult $result)"
+        WriteToDisplayAndLog "$(FormatAsFuncMessages "$exec_msgs")"
         WriteErrorToSystemLog "An error occurred while updating $(FormatAsPackageName $1) daemon from remote repository. Check $(FormatAsFileName "$INIT_LOG_PATHFILE") for more details."
         return 1
     fi
@@ -424,6 +422,24 @@ FormatAsExitcode()
     [[ -z $1 ]] && return 1
 
     echo "[$1]"
+
+    }
+
+FormatAsResult()
+    {
+
+    [[ -z $1 ]] && return 1
+
+    echo "= result: $(FormatAsExitcode "$1")"
+
+    }
+
+FormatAsFuncMessages()
+    {
+
+    [[ -z $1 ]] && return 1
+
+    echo "= ${FUNCNAME[1]}() output: $(FormatAsStdout "$1")"
 
     }
 
@@ -572,7 +588,7 @@ if [[ $errorcode -eq 0 ]]; then
         stop)
             StopQPKG || errorcode=1
             ;;
-        restart)
+        r|restart)
             StopQPKG; StartQPKG || errorcode=1
             ;;
         s|status)
@@ -586,7 +602,7 @@ if [[ $errorcode -eq 0 ]]; then
             ;;
         h|history)
             if [[ -e $INIT_LOG_PATHFILE ]]; then
-                cat $INIT_LOG_PATHFILE
+                $LESS_CMD -rMK -PM' use arrow-keys to scroll up-down left-right, press Q to quit' $INIT_LOG_PATHFILE
             else
                 WriteToDisplay "Init log not found: $(FormatAsFileName $INIT_LOG_PATHFILE)"
             fi

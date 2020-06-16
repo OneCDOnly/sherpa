@@ -249,7 +249,7 @@ PullGitRepo()
     WriteToDisplayAndLog_SameLine "* updating application $(FormatAsPackageName $1): "
     exec_msgs="$({
     if [[ ! -d ${QPKG_GIT_PATH}/.git ]]; then
-        raw_tag=$($GIT_CMD ls-remote --tags "$GIT_HTTP_URL" | tail -n1 | $SED_CMD 's|^.*tags/||;s|\^.*$||')
+        raw_tag=$($GIT_CMD ls-remote --tags "$GIT_HTTP_URL" | $TAIL_CMD -n1 | $SED_CMD 's|^.*tags/||;s|\^.*$||')
         $GIT_CMD clone -b "$raw_tag" --depth 1 "$GIT_HTTP_URL" $QPKG_GIT_PATH
         cd "$QPKG_GIT_PATH"
         $GIT_CMD remote set-branches --add origin master
