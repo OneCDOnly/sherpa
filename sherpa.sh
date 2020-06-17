@@ -335,7 +335,6 @@ Init()
     readonly PREV_QPKG_CONFIG_FILES=(sabnzbd.ini settings.ini config.cfg config.ini) # last element is used as target filename
     readonly WORKING_PATH=$SHARE_PUBLIC_PATH/${SCRIPT_FILE%.*}.tmp
     readonly DEBUG_LOG_PATHFILE=$SHARE_PUBLIC_PATH/$DEBUG_LOG_FILE
-    readonly SHERPA_PACKAGES_PATHFILE=$WORKING_PATH/packages.conf
     readonly QPKG_DL_PATH=$WORKING_PATH/qpkg-downloads
     readonly IPKG_DL_PATH=$WORKING_PATH/ipkg-downloads
     readonly IPKG_CACHE_PATH=$WORKING_PATH/ipkg-cache
@@ -498,11 +497,7 @@ LogRuntimeParameters()
     fi
 
     if [[ $errorcode -eq 0 ]]; then
-        ShowProc 'testing Internet access'
-
-        if ($CURL_CMD $curl_insecure_arg --silent --fail https://onecdonly.github.io/sherpa/packages.conf -o $SHERPA_PACKAGES_PATHFILE); then
-            ShowDone 'Internet is accessible'
-        else
+        if ! ($CURL_CMD $curl_insecure_arg --silent --fail https://onecdonly.github.io/sherpa/LICENSE -o LICENSE); then
             ShowError 'no Internet access'
             errorcode=10
         fi
