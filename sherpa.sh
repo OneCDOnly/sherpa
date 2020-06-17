@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
-######################################################################################################################################
+#
 # sherpa.sh
-######################################################################################################################################
-# Description:
-#  A package manager to install various Usenet media-management apps into QNAP NAS
+#
+# A package manager to install various Usenet media-management apps into QNAP NAS
 #
 # Copyright (C) 2017-2020 OneCD [one.cd.only@gmail.com]
 #
@@ -20,13 +19,12 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/.
-######################################################################################################################################
+#
 # *** Style Guide ***
 # function names: CamelCase
 # variable names: lowercase_with_underscores (except for 'returncode' & 'errorcode')
 #      constants: UPPERCASE_WITH_UNDERSCORES (also set to readonly)
 #        indents: 1 x tab (converted to 4 x spaces to suit GitHub web-display)
-######################################################################################################################################
 
 readonly USER_ARGS_RAW="$@"
 
@@ -41,7 +39,7 @@ Init()
     {
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200617
+    readonly SCRIPT_VERSION=200618
     debug=false
     ResetErrorcode
 
@@ -369,7 +367,7 @@ LogRuntimeParameters()
     local conflicting_qpkg=''
 
     ParseArgs
-    if [[ $HOSTNAME = Sarah && ${NAS_FIRMWARE//.} -eq 426 ]]; then
+    if [[ -f .sherpa.devmode ]]; then
         devmode=true
         debug=true
     else
