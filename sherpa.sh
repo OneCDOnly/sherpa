@@ -40,7 +40,7 @@ Init()
 
     readonly SCRIPT_FILE=sherpa.sh
     readonly SCRIPT_VERSION=200618
-    debug=false
+    DisableDebug
     ResetErrorcode
 
     # cherry-pick required binaries
@@ -367,13 +367,6 @@ LogRuntimeParameters()
     local conflicting_qpkg=''
 
     ParseArgs
-    if [[ -f .sherpa.devmode ]]; then
-        devmode=true
-        debug=true
-    else
-        devmode=false
-    fi
-    DebugVar devmode
 
     DebugFuncEntry
 
@@ -527,6 +520,13 @@ ParseArgs()
     local target_app=''
     local current_operation=''
 
+    if [[ -f .sherpa.devmode ]]; then
+        EnableDev
+        EnableDebug
+    else
+        DisableDev
+    fi
+
     if [[ -z $USER_ARGS_RAW ]]; then
         help_only=true
         errorcode=11
@@ -538,8 +538,7 @@ ParseArgs()
     for arg in ${user_args[@]}; do
         case $arg in
             -d|--debug)
-                debug=true
-                DebugVar debug
+                EnableDebug
                 current_operation=''
                 ;;
             --check-all)
@@ -2144,6 +2143,38 @@ ProgressUpdater()
         previous_length=$current_length
         previous_msg="$1"
     fi
+
+    }
+
+EnableDebug()
+    {
+
+    debug=true
+    DebugVar debug
+
+    }
+
+DisableDebug()
+    {
+
+    debug=false
+    DebugVar debug
+
+    }
+
+EnableDev()
+    {
+
+    devmode=true
+    DebugVar devmode
+
+    }
+
+DisableDev()
+    {
+
+    devmode=false
+    DebugVar devmode
 
     }
 
