@@ -521,8 +521,8 @@ ParseArgs()
     local current_operation=''
 
     if [[ -f .sherpa.devmode ]]; then
-        EnableDev
         EnableDebug
+        EnableDev
     else
         DisableDev
     fi
@@ -2318,14 +2318,14 @@ DebugIPKG()
 DebugFuncEntry()
     {
 
-    DebugThis "(>>) <${FUNCNAME[1]}>"
+    DebugThis "(>>) ${FUNCNAME[1]}()"
 
     }
 
 DebugFuncExit()
     {
 
-    DebugThis "(<<) <${FUNCNAME[1]}> [$errorcode]"
+    DebugThis "(<<) ${FUNCNAME[1]}() [$errorcode]"
 
     }
 
