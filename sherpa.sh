@@ -40,7 +40,7 @@ Init()
 
     readonly SCRIPT_FILE=sherpa.sh
     readonly SCRIPT_VERSION=200618
-    DisableDebug
+    DisableDebugMode
     ResetErrorcode
 
     # cherry-pick required binaries
@@ -372,7 +372,7 @@ LogRuntimeParameters()
     DebugInfoThickSeparator
     DebugScript 'started' "$($DATE_CMD | $TR_CMD -s ' ')"
 
-    [[ $debug = false ]] && echo -e "$(ColourTextBrightWhite "$SCRIPT_FILE") ($SCRIPT_VERSION)\n"
+    IsDebugMode || echo -e "$(ColourTextBrightWhite "$SCRIPT_FILE") ($SCRIPT_VERSION)\n"
 
     DebugScript 'version' "$SCRIPT_VERSION"
     DebugInfoThinSeparator
@@ -516,10 +516,10 @@ ParseArgs()
     local current_operation=''
 
     if [[ -f .sherpa.devmode ]]; then
-        EnableDebug
-        EnableDev
+        EnableDebugMode
+        EnableDevMode
     else
-        DisableDev
+        DisableDevMode
     fi
 
     if [[ -z $USER_ARGS_RAW ]]; then
@@ -533,7 +533,7 @@ ParseArgs()
     for arg in ${user_args[@]}; do
         case $arg in
             -d|--debug)
-                EnableDebug
+                EnableDebugMode
                 current_operation=''
                 ;;
             --check-all)
@@ -668,24 +668,23 @@ DownloadQPKGs()
     local returncode=0
     local QPKGs_to_download=''
 
-    if [[ $devmode = true ]]; then
+    if IsDevMode; then
         [[ ${#QPKGS_to_install[@]} -gt 0 ]] && QPKGs_to_download+="${QPKGS_to_install[*]}"
         [[ ${#QPKGS_to_reinstall[@]} -gt 0 ]] && QPKGs_to_download+=" ${QPKGS_to_reinstall[*]}"
 
-#         echo "QPKGs_to_download: [$QPKGs_to_download]"
         FindAllQPKGDependencies "$QPKGs_to_download"
 
         exit
+    else
+        ! IsQPKGInstalled Entware && DownloadQPKG Entware
+
+        { (IsQPKGInstalled SABnzbdplus) || [[ $TARGET_APP = SABnzbdplus ]] ;} && [[ $NAS_QPKG_ARCH != none ]] && ! IsQPKGInstalled Par2 && DownloadQPKG Par2
+
+        # an ugly workaround until QPKG dependency checking works properly.
+        { (IsQPKGInstalled SABnzbd) || [[ $TARGET_APP = SABnzbd ]] ;} && [[ $NAS_QPKG_ARCH != none ]] && ! IsQPKGInstalled Par2 && DownloadQPKG Par2
+
+        [[ -n $TARGET_APP ]] && DownloadQPKG $TARGET_APP
     fi
-
-    ! IsQPKGInstalled Entware && DownloadQPKG Entware
-
-    { (IsQPKGInstalled SABnzbdplus) || [[ $TARGET_APP = SABnzbdplus ]] ;} && [[ $NAS_QPKG_ARCH != none ]] && ! IsQPKGInstalled Par2 && DownloadQPKG Par2
-
-    # an ugly workaround until QPKG dependency checking works properly.
-    { (IsQPKGInstalled SABnzbd) || [[ $TARGET_APP = SABnzbd ]] ;} && [[ $NAS_QPKG_ARCH != none ]] && ! IsQPKGInstalled Par2 && DownloadQPKG Par2
-
-    [[ -n $TARGET_APP ]] && DownloadQPKG $TARGET_APP
 
     DebugFuncExit
     return $returncode
@@ -1254,7 +1253,7 @@ DownloadQPKG()
 
         [[ -e $log_pathfile ]] && rm -f "$log_pathfile"
 
-        if [[ $debug = true ]]; then
+        if IsDebugMode; then
             $CURL_CMD $curl_insecure_arg --output "$local_pathfile" "$remote_url" 2>&1 | $TEE_CMD -a "$log_pathfile"
             result=$?
         else
@@ -1442,7 +1441,7 @@ QPKGServiceCtl()
                 ShowDone "started service $(FormatAsPackageName $2)"
             else
                 ShowWarning "Could not start service $(FormatAsPackageName $2) $(FormatAsExitcode $result)"
-                if [[ $debug = true ]]; then
+                if IsDebugMode; then
                     DebugInfoThickSeparator
                     $CAT_CMD "$qpkg_pathfile.$START_LOG_FILE"
                     DebugInfoThickSeparator
@@ -1463,7 +1462,7 @@ QPKGServiceCtl()
                 ShowDone "stopped service $(FormatAsPackageName $2)"
             else
                 ShowWarning "Could not stop service $(FormatAsPackageName $2) $(FormatAsExitcode $result)"
-                if [[ $debug = true ]]; then
+                if IsDebugMode; then
                     DebugInfoThickSeparator
                     $CAT_CMD "$qpkg_pathfile.$STOP_LOG_FILE"
                     DebugInfoThickSeparator
@@ -1484,7 +1483,7 @@ QPKGServiceCtl()
                 ShowDone "restarted service $(FormatAsPackageName $2)"
             else
                 ShowWarning "Could not restart service $(FormatAsPackageName $2) $(FormatAsExitcode $result)"
-                if [[ $debug = true ]]; then
+                if IsDebugMode; then
                     DebugInfoThickSeparator
                     $CAT_CMD "$qpkg_pathfile.$RESTART_LOG_FILE"
                     DebugInfoThickSeparator
@@ -1640,7 +1639,7 @@ Cleanup()
 
     cd $SHARE_PUBLIC_PATH
 
-    [[ $errorcode -eq 0 && $debug = false && $devmode = false && -d $WORKING_PATH ]] && rm -rf "$WORKING_PATH"
+    [[ $errorcode -eq 0 && -d $WORKING_PATH ]] && ! IsDebugMode && ! IsDevMode && rm -rf "$WORKING_PATH"
 
     DebugFuncExit
     return 0
@@ -1660,10 +1659,10 @@ DisplayResult()
             [[ $reinstall_flag = true ]] && RE='re' || RE=''
 
             if [[ $errorcode -eq 0 ]]; then
-                [[ $debug = true ]] && emoticon=':DD' || { emoticon=''; echo ;}
+                IsDebugMode && emoticon=':DD' || { emoticon=''; echo ;}
                 ShowDone "$(FormatAsPackageName $TARGET_APP) has been successfully ${RE}installed! $emoticon"
             else
-                [[ $debug = true ]] && emoticon=':S ' || { emoticon=''; echo ;}
+                IsDebugMode && emoticon=':S ' || { emoticon=''; echo ;}
                 ShowError "$(FormatAsPackageName $TARGET_APP) ${RE}install failed! ${emoticon}[$errorcode]"
                 suggest_issue=true
             fi
@@ -1671,10 +1670,10 @@ DisplayResult()
 
         if [[ $satisfy_dependencies_only = true ]]; then
             if [[ $errorcode -eq 0 ]]; then
-                [[ $debug = true ]] && emoticon=':DD' || { emoticon=''; echo ;}
+                IsDebugMode && emoticon=':DD' || { emoticon=''; echo ;}
                 ShowDone "all application dependencies are installed! $emoticon"
             else
-                [[ $debug = true ]] && emoticon=':S ' || { emoticon=''; echo ;}
+                IsDebugMode && emoticon=':S ' || { emoticon=''; echo ;}
                 ShowError "application dependency check failed! ${emoticon}[$errorcode]"
                 suggest_issue=true
             fi
@@ -1692,7 +1691,7 @@ DisplayResult()
     DebugScript 'elapsed time' "$(ConvertSecsToMinutes "$(($($DATE_CMD +%s)-$([[ -n $SCRIPT_STARTSECONDS ]] && echo $SCRIPT_STARTSECONDS || echo "1")))")"
     DebugInfoThickSeparator
 
-    [[ -e $DEBUG_LOG_PATHFILE && $debug = false ]] && echo -e "\n- To display the runtime debug log:\n\tcat $(basename $DEBUG_LOG_PATHFILE)\n"
+    [[ -e $DEBUG_LOG_PATHFILE ]] && ! IsDebugMode && echo -e "\n- To display the runtime debug log:\n\tcat $(basename $DEBUG_LOG_PATHFILE)\n"
 
     DebugFuncExit
     return 0
@@ -2140,35 +2139,57 @@ ProgressUpdater()
 
     }
 
-EnableDebug()
+EnableDebugMode()
     {
 
-    debug=true
-    DebugVar debug
+    debug_mode=true
+    DebugVar debug_mode
 
     }
 
-DisableDebug()
+DisableDebugMode()
     {
 
-    debug=false
-    DebugVar debug
+    debug_mode=false
+    DebugVar debug_mode
 
     }
 
-EnableDev()
+IsDebugMode()
     {
 
-    devmode=true
-    DebugVar devmode
+    if [[ $debug_mode = true ]]; then
+        return true
+    else
+        return false
+    fi
 
     }
 
-DisableDev()
+EnableDevMode()
     {
 
-    devmode=false
-    DebugVar devmode
+    dev_mode=true
+    DebugVar dev_mode
+
+    }
+
+DisableDevMode()
+    {
+
+    dev_mode=false
+    DebugVar dev_mode
+
+    }
+
+IsDevMode()
+    {
+
+    if [[ $dev_mode = true ]]; then
+        return true
+    else
+        return false
+    fi
 
     }
 
@@ -2386,7 +2407,7 @@ DebugVar()
 DebugThis()
     {
 
-    [[ $debug = true ]] && ShowDebug "$1"
+    IsDebugMode && ShowDebug "$1"
     WriteAsDebug "$1"
 
     }
@@ -2501,7 +2522,7 @@ WriteToDisplay_SameLine()
 
     previous_msg=$(printf "[ %-10s ] %s" "$1" "$2")
 
-    echo -n "$previous_msg"; [[ $debug = true ]] && echo
+    echo -n "$previous_msg"; IsDebugMode && echo
 
     return 0
 
