@@ -351,9 +351,6 @@ Init()
     update_all_apps=false
     backup_all_apps=false
     restore_all_apps=false
-    progress_message=''
-    previous_length=0
-    previous_msg=''
     [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg='--insecure' || curl_insecure_arg=''
 
     return 0
@@ -1902,6 +1899,10 @@ _MonitorDirSize_()
 
     IsSysFilePresent $FIND_CMD || return 1
 
+    progress_message=''
+    previous_length=0
+    previous_msg=''
+
     while [[ -e $monitor_flag ]]; do
         current_bytes=$($FIND_CMD $target_dir -type f -name '*.ipk' -exec $DU_CMD --bytes --total --apparent-size {} + 2> /dev/null | $GREP_CMD total$ | $CUT_CMD -f1)
         [[ -z $current_bytes ]] && current_bytes=0
@@ -1982,11 +1983,7 @@ IsQPKGInstalled()
 
     [[ -z $1 ]] && return 1
 
-    if [[ $($GETCFG_CMD $1 RC_Number -d 0 -f $APP_CENTER_CONFIG_PATHFILE) -eq 0 ]]; then
-        return 1
-    else
-        return 0
-    fi
+    [[ $($GETCFG_CMD $1 RC_Number -d 0 -f $APP_CENTER_CONFIG_PATHFILE) -gt 0 ]]
 
     }
 
@@ -2143,22 +2140,14 @@ DisableHelpOnly()
 IsError()
     {
 
-    if [[ $errorcode -gt 0 ]]; then
-        return 0
-    else
-        return 1
-    fi
+    [[ $errorcode -gt 0 ]]
 
     }
 
 IsHelpOnly()
     {
 
-    if [[ $help_only = true ]]; then
-        return 0
-    else
-        return 1
-    fi
+    [[ $help_only = true ]]
 
     }
 
@@ -2181,11 +2170,7 @@ DisableSatisfyDependenciesOnly()
 IsSatisfyDependenciesOnly()
     {
 
-    if [[ $satisfy_dependencies_only = true ]]; then
-        return 0
-    else
-        return 1
-    fi
+    [[ $satisfy_dependencies_only = true ]]
 
     }
 
@@ -2208,11 +2193,7 @@ DisableDebugMode()
 IsDebugMode()
     {
 
-    if [[ $debug_mode = true ]]; then
-        return 0
-    else
-        return 1
-    fi
+    [[ $debug_mode = true ]]
 
     }
 
@@ -2227,11 +2208,7 @@ EnableDevMode()
 IsDevMode()
     {
 
-    if [[ $dev_mode = true ]]; then
-        return 0
-    else
-        return 1
-    fi
+    [[ $dev_mode = true ]]
 
     }
 
@@ -2254,11 +2231,7 @@ DisableSuggestIssue()
 IsSuggestIssue()
     {
 
-    if [[ $suggest_issue = true ]]; then
-        return 0
-    else
-        return 1
-    fi
+    [[ $suggest_issue = true ]]
 
     }
 
