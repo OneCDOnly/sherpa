@@ -384,7 +384,7 @@ LogRuntimeParameters()
     DebugNAS 'RAM' "$INSTALLED_RAM_KB kB"
     if [[ $INSTALLED_RAM_KB -le $MIN_RAM_KB ]]; then
         DebugNAS 'RAM' "less-than or equal-to $MIN_RAM_KB kB"
-        [[ $errorcode -eq 0 ]] && ShowNote "QTS with 1GB RAM or less can lead to unstable SABnzbd uptimes :("
+        ! IsError && ShowNote "QTS with 1GB RAM or less can lead to unstable SABnzbd uptimes :("
     fi
     DebugNAS 'firmware version' "$NAS_FIRMWARE"
     DebugNAS 'firmware build' "$($GETCFG_CMD System 'Build Number' -f $ULINUX_PATHFILE)"
@@ -415,12 +415,12 @@ LogRuntimeParameters()
         return 1
     fi
 
-    if [[ $errorcode -eq 0 ]] && [[ $EUID -ne 0 || $USER != admin ]]; then
+    if ! IsError && [[ $EUID -ne 0 || $USER != admin ]]; then
         ShowError "this script must be run as the 'admin' user. Please login via SSH as 'admin' and try again."
         errorcode=1
     fi
 
-    if [[ $errorcode -eq 0 && ${#QPKGS_to_install[@]} -eq 0 && ${#QPKGS_to_uninstall[@]} -eq 0 && ${#QPKGS_to_update[@]} -eq 0 && ${#QPKGS_to_backup[@]} -eq 0 && ${#QPKGS_to_restore[@]} -eq 0 ]] && ! IsSatisfyDependenciesOnly && [[ $update_all_apps = false ]]; then
+    if ! IsError && [[ ${#QPKGS_to_install[@]} -eq 0 && ${#QPKGS_to_uninstall[@]} -eq 0 && ${#QPKGS_to_update[@]} -eq 0 && ${#QPKGS_to_backup[@]} -eq 0 && ${#QPKGS_to_restore[@]} -eq 0 ]] && ! IsSatisfyDependenciesOnly && [[ $update_all_apps = false ]]; then
         ShowError 'no valid QPKG(s) or action(s) were specified'
         errorcode=2
     fi
@@ -430,7 +430,7 @@ LogRuntimeParameters()
         errorcode=3
     fi
 
-    if [[ $errorcode -eq 0 ]]; then
+    if ! IsError; then
         $MKDIR_CMD -p "$WORKING_PATH" 2> /dev/null
         result=$?
 
@@ -442,7 +442,7 @@ LogRuntimeParameters()
         fi
     fi
 
-    if [[ $errorcode -eq 0 ]]; then
+    if ! IsError; then
         $MKDIR_CMD -p "$QPKG_DL_PATH" 2> /dev/null
         result=$?
 
@@ -452,7 +452,7 @@ LogRuntimeParameters()
         fi
     fi
 
-    if [[ $errorcode -eq 0 ]]; then
+    if ! IsError; then
         [[ -d $IPKG_DL_PATH ]] && rm -r "$IPKG_DL_PATH"
         $MKDIR_CMD -p "$IPKG_DL_PATH" 2> /dev/null
         result=$?
@@ -465,7 +465,7 @@ LogRuntimeParameters()
         fi
     fi
 
-    if [[ $errorcode -eq 0 ]]; then
+    if ! IsError; then
         $MKDIR_CMD -p "$IPKG_CACHE_PATH" 2> /dev/null
         result=$?
 
@@ -475,7 +475,7 @@ LogRuntimeParameters()
         fi
     fi
 
-    if [[ $errorcode -eq 0 ]]; then
+    if ! IsError; then
         for conflicting_qpkg in ${SHERPA_COMMON_CONFLICTS[@]}; do
             if IsQPKGEnabled $conflicting_qpkg; then
                 ShowError "'$conflicting_qpkg' is enabled. This is an unsupported configuration."
@@ -484,7 +484,7 @@ LogRuntimeParameters()
         done
     fi
 
-    if [[ $errorcode -eq 0 ]]; then
+    if ! IsError; then
         if IsQPKGInstalled Entware; then
             [[ -e /opt/etc/passwd ]] && { [[ -L /opt/etc/passwd ]] && ENTWARE_VER=std || ENTWARE_VER=alt ;} || ENTWARE_VER=none
             DebugQPKG 'Entware installer' $ENTWARE_VER
@@ -496,7 +496,7 @@ LogRuntimeParameters()
         fi
     fi
 
-    if [[ $errorcode -eq 0 ]]; then
+    if ! IsError; then
         if ! ($CURL_CMD $curl_insecure_arg --silent --fail https://onecdonly.github.io/sherpa/LICENSE -o LICENSE); then
             ShowError 'no Internet access'
             errorcode=10
@@ -512,8 +512,9 @@ LogRuntimeParameters()
 ParseArgs()
     {
 
-    local target_app=''
+    local arg=''
     local current_operation=''
+    local target_app=''
 
     if [[ -f .sherpa.devmode ]]; then
         EnableDebugMode
@@ -659,7 +660,7 @@ ShowHelp()
 DownloadQPKGs()
     {
 
-    [[ $errorcode -gt 0 ]] && return
+    IsError && return
 
     DebugFuncEntry
     local returncode=0
@@ -691,7 +692,7 @@ DownloadQPKGs()
 RemoveUnwantedQPKGs()
     {
 
-    [[ $errorcode -gt 0 ]] && return
+    IsError && return
 
     DebugFuncEntry
     local response=''
@@ -732,7 +733,7 @@ RemoveUnwantedQPKGs()
 InstallBase()
     {
 
-    [[ $errorcode -gt 0 ]] && return
+    IsError && return
 
     DebugFuncEntry
     local returncode=0
@@ -830,14 +831,14 @@ UpdateEntware()
 InstallBaseAddons()
     {
 
-    [[ $errorcode -gt 0 ]] && return
+    IsError && return
 
     DebugFuncEntry
 
     if { (IsQPKGInstalled SABnzbdplus) || [[ $TARGET_APP = SABnzbdplus ]] ;} && [[ $NAS_QPKG_ARCH != none ]]; then
         if ! IsQPKGInstalled Par2; then
             InstallQPKG Par2
-            if [[ $errorcode -gt 0 ]]; then
+            if IsError; then
                 ShowWarning "$(FormatAsPackageName Par2) installation failed - but it's not essential so I'm continuing"
                 ResetErrorcode
                 DebugVar errorcode
@@ -849,7 +850,7 @@ InstallBaseAddons()
     if { (IsQPKGInstalled SABnzbd) || [[ $TARGET_APP = SABnzbd ]] ;} && [[ $NAS_QPKG_ARCH != none ]]; then
         if ! IsQPKGInstalled Par2; then
             InstallQPKG Par2
-            if [[ $errorcode -gt 0 ]]; then
+            if IsError; then
                 ShowWarning "$(FormatAsPackageName Par2) installation failed - but it's not essential so I'm continuing"
                 ResetErrorcode
                 DebugVar errorcode
@@ -872,7 +873,7 @@ InstallBaseAddons()
 InstallTargetQPKG()
     {
 
-    [[ $errorcode -gt 0 || -z $TARGET_APP ]] && return
+    IsError || [[ -z $TARGET_APP ]] && return
 
     DebugFuncEntry
 
@@ -886,7 +887,7 @@ InstallTargetQPKG()
 InstallIPKGs()
     {
 
-    [[ $errorcode -gt 0 ]] && return
+    IsError && return
 
     DebugFuncEntry
     local returncode=0
@@ -1027,7 +1028,7 @@ DowngradePy3()
 InstallPy2Modules()
     {
 
-    [[ $errorcode -gt 0 ]] && return
+    IsError && return
 
     DebugFuncEntry
     local install_cmd=''
@@ -1082,7 +1083,7 @@ InstallPy2Modules()
 InstallPy3Modules()
     {
 
-    [[ $errorcode -gt 0 ]] && return
+    IsError && return
 
     DebugFuncEntry
     local install_cmd=''
@@ -1140,7 +1141,7 @@ InstallPy3Modules()
 RestartAllQPKGs()
     {
 
-    [[ $errorcode -gt 0 ]] && return
+    IsError && return
 
     DebugFuncEntry
     local index=0
@@ -1171,7 +1172,7 @@ InstallQPKG()
 
     # $1 = QPKG name to install
 
-    [[ $errorcode -gt 0 || -z $1 ]] && return
+    IsError || [[ -z $1 ]] && return
 
     local target_file=''
     local install_msgs=''
@@ -1223,7 +1224,7 @@ DownloadQPKG()
 
     # $1 = QPKG name to download
 
-    [[ $errorcode -gt 0 || -z $1 ]] && return
+    IsError || [[ -z $1 ]] && return
 
     DebugFuncEntry
     local result=0
@@ -1245,7 +1246,7 @@ DownloadQPKG()
         fi
     fi
 
-    if [[ $errorcode -eq 0 && ! -e $local_pathfile ]]; then
+    if ! IsError && [[ ! -e $local_pathfile ]]; then
         ShowProc "downloading file $(FormatAsFileName "$remote_filename")"
 
         [[ -e $log_pathfile ]] && rm -f "$log_pathfile"
@@ -1364,7 +1365,7 @@ UninstallQPKG()
 
     # $1 = QPKG name
 
-    [[ $errorcode -gt 0 ]] && return
+    IsError && return
 
     local result=0
     local returncode=0
@@ -1636,7 +1637,7 @@ Cleanup()
 
     cd $SHARE_PUBLIC_PATH
 
-    [[ $errorcode -eq 0 && -d $WORKING_PATH ]] && ! IsDebugMode && ! IsDevMode && rm -rf "$WORKING_PATH"
+    ! IsError && [[ -d $WORKING_PATH ]] && ! IsDebugMode && ! IsDevMode && rm -rf "$WORKING_PATH"
 
     DebugFuncExit
     return 0
@@ -1655,7 +1656,7 @@ ShowResult()
         if [[ -n $TARGET_APP ]]; then
             [[ $reinstall_flag = true ]] && RE='re' || RE=''
 
-            if [[ $errorcode -eq 0 ]]; then
+            if ! IsError; then
                 IsDebugMode && emoticon=':DD' || { emoticon=''; echo ;}
                 ShowDone "$(FormatAsPackageName $TARGET_APP) has been successfully ${RE}installed! $emoticon"
             else
@@ -1666,7 +1667,7 @@ ShowResult()
         fi
 
         if IsSatisfyDependenciesOnly; then
-            if [[ $errorcode -eq 0 ]]; then
+            if ! IsError; then
                 IsDebugMode && emoticon=':DD' || { emoticon=''; echo ;}
                 ShowDone "all application dependencies are installed! $emoticon"
             else
@@ -2136,6 +2137,17 @@ DisableHelpOnly()
 
     help_only=false
     DebugVar help_only
+
+    }
+
+IsError()
+    {
+
+    if [[ $errorcode -eq 0 ]]; then
+        return true
+    else
+        return false
+    fi
 
     }
 
