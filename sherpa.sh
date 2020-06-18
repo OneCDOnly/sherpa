@@ -397,7 +397,7 @@ LogRuntimeParameters()
     DebugNAS '$PATH' "${PATH:0:43}"
     DebugNAS '/opt' "$([[ -L '/opt' ]] && $READLINK_CMD '/opt' || echo "<not present>")"
     DebugNAS $SHARE_DOWNLOAD_PATH "$([[ -L $SHARE_DOWNLOAD_PATH ]] && $READLINK_CMD $SHARE_DOWNLOAD_PATH || echo "<not present>")"
-    DebugScript 'user arguments' "$USER_ARGS_RAW"
+    DebugScript 'unparsed arguments' "$USER_ARGS_RAW"
     DebugScript 'app(s) to install' "${QPKGS_to_install[*]}"
     DebugScript 'app(s) to uninstall' "${QPKGS_to_uninstall[*]}"
     DebugScript 'app(s) to reinstall' "${QPKGS_to_reinstall[*]}"
@@ -669,11 +669,10 @@ DownloadQPKGs()
     local QPKGs_to_download=''
 
     if [[ $devmode = true ]]; then
-        QPKGs_to_download="${QPKGS_to_install[*]}"
-        QPKGs_to_download+=" ${QPKGS_to_reinstall[*]}"
+        [[ ${#QPKGS_to_install[@]} -gt 0 ]] && QPKGs_to_download+="${QPKGS_to_install[*]}"
+        [[ ${#QPKGS_to_reinstall[@]} -gt 0 ]] && QPKGs_to_download+=" ${QPKGS_to_reinstall[*]}"
 
-        echo "QPKGs_to_download: [$QPKGs_to_download]"
-
+#         echo "QPKGs_to_download: [$QPKGs_to_download]"
         FindAllQPKGDependencies "$QPKGs_to_download"
 
         exit
@@ -1754,7 +1753,7 @@ FindAllQPKGDependencies()
     DebugInfo "requested QPKGs: ${requested_list[*]}"
 
     DebugProc 'finding all QPKG dependencies'
-
+exit
     while [[ $iterations -lt $ITERATION_LIMIT ]]; do
         ((iterations++))
         for package in ${last_list[@]}; do
