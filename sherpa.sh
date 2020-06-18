@@ -2144,9 +2144,9 @@ IsError()
     {
 
     if [[ $errorcode -eq 0 ]]; then
-        return true
+        return 0
     else
-        return false
+        return 1
     fi
 
     }
@@ -2155,9 +2155,9 @@ IsHelpOnly()
     {
 
     if [[ $help_only = true ]]; then
-        return true
+        return 0
     else
-        return false
+        return 1
     fi
 
     }
@@ -2182,9 +2182,9 @@ IsSatisfyDependenciesOnly()
     {
 
     if [[ $satisfy_dependencies_only = true ]]; then
-        return true
+        return 0
     else
-        return false
+        return 1
     fi
 
     }
@@ -2209,9 +2209,9 @@ IsDebugMode()
     {
 
     if [[ $debug_mode = true ]]; then
-        return true
+        return 0
     else
-        return false
+        return 1
     fi
 
     }
@@ -2228,9 +2228,9 @@ IsDevMode()
     {
 
     if [[ $dev_mode = true ]]; then
-        return true
+        return 0
     else
-        return false
+        return 1
     fi
 
     }
@@ -2255,9 +2255,9 @@ IsSuggestIssue()
     {
 
     if [[ $suggest_issue = true ]]; then
-        return true
+        return 0
     else
-        return false
+        return 1
     fi
 
     }
