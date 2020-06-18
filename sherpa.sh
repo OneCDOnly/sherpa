@@ -2143,7 +2143,7 @@ DisableHelpOnly()
 IsError()
     {
 
-    if [[ $errorcode -eq 0 ]]; then
+    if [[ $errorcode -gt 0 ]]; then
         return 0
     else
         return 1
