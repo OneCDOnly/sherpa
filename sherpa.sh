@@ -39,7 +39,7 @@ Init()
     {
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200618
+    readonly SCRIPT_VERSION=200619
     DisableDebugMode
     ResetErrorcode
 
@@ -345,8 +345,8 @@ Init()
     readonly MIN_RAM_KB=1048576
     readonly INSTALLED_RAM_KB=$($GREP_CMD MemTotal /proc/meminfo | $CUT_CMD -f2 -d':' | $SED_CMD 's|kB||;s| ||g')
     reinstall_flag=false
-    satisfy_dependencies_only=false
-    help_only=false
+    DisableSatisfyDependenciesOnly
+    DisableHelpOnly
     ignore_space_arg=''
     update_all_apps=false
     backup_all_apps=false
@@ -410,8 +410,8 @@ LogRuntimeParameters()
     CalcNASQPKGArch
     DebugQPKG 'arch' "$NAS_QPKG_ARCH"
 
-    if [[ $help_only = true ]]; then
-        DisplayHelp
+    if IsHelpOnly; then
+        ShowHelp
         return 1
     fi
 
@@ -420,7 +420,7 @@ LogRuntimeParameters()
         errorcode=1
     fi
 
-    if [[ $errorcode -eq 0 && ${#QPKGS_to_install[@]} -eq 0 && ${#QPKGS_to_uninstall[@]} -eq 0 && ${#QPKGS_to_update[@]} -eq 0 && ${#QPKGS_to_backup[@]} -eq 0 && ${#QPKGS_to_restore[@]} -eq 0 && $satisfy_dependencies_only = false && $update_all_apps = false ]]; then
+    if [[ $errorcode -eq 0 && ${#QPKGS_to_install[@]} -eq 0 && ${#QPKGS_to_uninstall[@]} -eq 0 && ${#QPKGS_to_update[@]} -eq 0 && ${#QPKGS_to_backup[@]} -eq 0 && ${#QPKGS_to_restore[@]} -eq 0 ]] && ! IsSatisfyDependenciesOnly && [[ $update_all_apps = false ]]; then
         ShowError 'no valid QPKG(s) or action(s) were specified'
         errorcode=2
     fi
@@ -518,12 +518,10 @@ ParseArgs()
     if [[ -f .sherpa.devmode ]]; then
         EnableDebugMode
         EnableDevMode
-    else
-        DisableDevMode
     fi
 
     if [[ -z $USER_ARGS_RAW ]]; then
-        help_only=true
+        EnableHelpOnly
         errorcode=11
         return 1
     else
@@ -537,8 +535,7 @@ ParseArgs()
                 current_operation=''
                 ;;
             --check-all)
-                satisfy_dependencies_only=true
-                DebugVar satisfy_dependencies_only
+                EnableSatisfyDependenciesOnly
                 current_operation=''
                 ;;
             --ignore-space)
@@ -547,7 +544,7 @@ ParseArgs()
                 current_operation=''
                 ;;
             --help)
-                help_only=true
+                EnableHelpOnly
                 errorcode=12
                 return 1
                 ;;
@@ -632,7 +629,7 @@ ParseArgs()
 
     }
 
-DisplayHelp()
+ShowHelp()
     {
 
     DebugFuncEntry
@@ -1646,15 +1643,15 @@ Cleanup()
 
     }
 
-DisplayResult()
+ShowResult()
     {
 
     DebugFuncEntry
 
     local RE=''
-    local suggest_issue=false
+    DisableSuggestIssue
 
-    if [[ $help_only = false ]]; then
+    if ! IsHelpOnly; then
         if [[ -n $TARGET_APP ]]; then
             [[ $reinstall_flag = true ]] && RE='re' || RE=''
 
@@ -1664,23 +1661,23 @@ DisplayResult()
             else
                 IsDebugMode && emoticon=':S ' || { emoticon=''; echo ;}
                 ShowError "$(FormatAsPackageName $TARGET_APP) ${RE}install failed! ${emoticon}[$errorcode]"
-                suggest_issue=true
+                EnableSuggestIssue
             fi
         fi
 
-        if [[ $satisfy_dependencies_only = true ]]; then
+        if IsSatisfyDependenciesOnly; then
             if [[ $errorcode -eq 0 ]]; then
                 IsDebugMode && emoticon=':DD' || { emoticon=''; echo ;}
                 ShowDone "all application dependencies are installed! $emoticon"
             else
                 IsDebugMode && emoticon=':S ' || { emoticon=''; echo ;}
                 ShowError "application dependency check failed! ${emoticon}[$errorcode]"
-                suggest_issue=true
+                EnableSuggestIssue
             fi
         fi
     fi
 
-    if [[ $suggest_issue = true ]]; then
+    if IsSuggestIssue; then
         echo -e "\n* Please consider creating a new issue for this on GitHub:\n\thttps://github.com/OneCDOnly/sherpa/issues"
         echo -e "\n* Alternatively, post on the QNAP NAS Community Forum:\n\thttps://forum.qnap.com/viewtopic.php?f=320&t=132373"
         echo -e "\n* Remember to include a copy of your sherpa runtime debug log for analysis."
@@ -1904,8 +1901,6 @@ _MonitorDirSize_()
 
     IsSysFilePresent $FIND_CMD || return 1
 
-    InitProgress
-
     while [[ -e $monitor_flag ]]; do
         current_bytes=$($FIND_CMD $target_dir -type f -name '*.ipk' -exec $DU_CMD --bytes --total --apparent-size {} + 2> /dev/null | $GREP_CMD total$ | $CUT_CMD -f1)
         [[ -z $current_bytes ]] && current_bytes=0
@@ -2104,17 +2099,6 @@ MatchAbbrvToQPKGName()
 
     }
 
-InitProgress()
-    {
-
-    # needs to be called prior to first call of ProgressUpdater
-
-    progress_message=''
-    previous_length=0
-    previous_msg=''
-
-    }
-
 ProgressUpdater()
     {
 
@@ -2135,6 +2119,60 @@ ProgressUpdater()
 
         previous_length=$current_length
         previous_msg="$1"
+    fi
+
+    }
+
+EnableHelpOnly()
+    {
+
+    help_only=true
+    DebugVar help_only
+
+    }
+
+DisableHelpOnly()
+    {
+
+    help_only=false
+    DebugVar help_only
+
+    }
+
+IsHelpOnly()
+    {
+
+    if [[ $help_only = true ]]; then
+        return true
+    else
+        return false
+    fi
+
+    }
+
+EnableSatisfyDependenciesOnly()
+    {
+
+    satisfy_dependencies_only=true
+    DebugVar satisfy_dependencies_only
+
+    }
+
+DisableSatisfyDependenciesOnly()
+    {
+
+    satisfy_dependencies_only=false
+    DebugVar satisfy_dependencies_only
+
+    }
+
+IsSatisfyDependenciesOnly()
+    {
+
+    if [[ $satisfy_dependencies_only = true ]]; then
+        return true
+    else
+        return false
     fi
 
     }
@@ -2174,18 +2212,37 @@ EnableDevMode()
 
     }
 
-DisableDevMode()
-    {
-
-    dev_mode=false
-    DebugVar dev_mode
-
-    }
-
 IsDevMode()
     {
 
     if [[ $dev_mode = true ]]; then
+        return true
+    else
+        return false
+    fi
+
+    }
+
+EnableSuggestIssue()
+    {
+
+    suggest_issue=true
+    DebugVar suggest_issue
+
+    }
+
+DisableSuggestIssue()
+    {
+
+    suggest_issue=false
+    DebugVar suggest_issue
+
+    }
+
+IsSuggestIssue()
+    {
+
+    if [[ $suggest_issue = true ]]; then
         return true
     else
         return false
@@ -2641,6 +2698,6 @@ InstallBase
 InstallBaseAddons
 InstallTargetQPKG
 Cleanup
-DisplayResult
+ShowResult
 
 exit $errorcode
