@@ -729,7 +729,7 @@ RemoveUnwantedQPKGs()
 
     }
 
-# InstallBase()
+InstallBase()
     {
 
     IsError && return
