@@ -673,8 +673,6 @@ DownloadQPKGs()
         for package in ${QPKG_download_list[@]}; do
             DownloadQPKG $package
         done
-
-        exit
     else
         ! IsQPKGInstalled Entware && DownloadQPKG Entware
 
@@ -709,6 +707,7 @@ RemoveUnwantedQPKGs()
     if [[ $TARGET_APP = Entware && $reinstall_flag = true ]]; then
         ShowNote 'Reinstalling Entware will revert all IPKGs to defaults and only those required to support your sherpa apps will be reinstalled'
         ShowNote "The currently installed IPKG list will be saved to $(FormatAsFileName $previous_Entware_package_list)"
+        ShowNote "Also, the SABnzbdplus, SickChill and Headphones packages CANNOT BE REINSTALLED as Python 2.7.16 is no-longer available"
         ShowQuiz 'Press (y) if you agree to remove all current Entware IPKGs and their configs, or any other key to abort'
         read -n1 response; echo
         DebugVar response
