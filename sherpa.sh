@@ -100,43 +100,43 @@ Init()
     local -r DEBUG_LOG_FILE=${SCRIPT_FILE%.*}.debug.log
 
     # check required binaries are present
-    IsSysFilePresent $AWK_CMD || return 1
-    IsSysFilePresent $CAT_CMD || return 1
-    IsSysFilePresent $CHMOD_CMD || return 1
-    IsSysFilePresent $DATE_CMD || return 1
-    IsSysFilePresent $GREP_CMD || return 1
-    IsSysFilePresent $HOSTNAME_CMD || return 1
-    IsSysFilePresent $LN_CMD || return 1
-    IsSysFilePresent $MD5SUM_CMD || return 1
-    IsSysFilePresent $MKDIR_CMD || return 1
-    IsSysFilePresent $PING_CMD || return 1
-    IsSysFilePresent $SED_CMD || return 1
-    IsSysFilePresent $SLEEP_CMD || return 1
-    IsSysFilePresent $TOUCH_CMD || return 1
-    IsSysFilePresent $TR_CMD || return 1
-    IsSysFilePresent $UNAME_CMD || return 1
-    IsSysFilePresent $UNIQ_CMD || return 1
+    IsNotSysFilePresent $AWK_CMD && return 1
+    IsNotSysFilePresent $CAT_CMD && return 1
+    IsNotSysFilePresent $CHMOD_CMD && return 1
+    IsNotSysFilePresent $DATE_CMD && return 1
+    IsNotSysFilePresent $GREP_CMD && return 1
+    IsNotSysFilePresent $HOSTNAME_CMD && return 1
+    IsNotSysFilePresent $LN_CMD && return 1
+    IsNotSysFilePresent $MD5SUM_CMD && return 1
+    IsNotSysFilePresent $MKDIR_CMD && return 1
+    IsNotSysFilePresent $PING_CMD && return 1
+    IsNotSysFilePresent $SED_CMD && return 1
+    IsNotSysFilePresent $SLEEP_CMD && return 1
+    IsNotSysFilePresent $TOUCH_CMD && return 1
+    IsNotSysFilePresent $TR_CMD && return 1
+    IsNotSysFilePresent $UNAME_CMD && return 1
+    IsNotSysFilePresent $UNIQ_CMD && return 1
 
-    IsSysFilePresent $CURL_CMD || return 1
-    IsSysFilePresent $GETCFG_CMD || return 1
-    IsSysFilePresent $RMCFG_CMD || return 1
-    IsSysFilePresent $SERVICE_CMD || return 1
-    IsSysFilePresent $SETCFG_CMD || return 1
+    IsNotSysFilePresent $CURL_CMD && return 1
+    IsNotSysFilePresent $GETCFG_CMD && return 1
+    IsNotSysFilePresent $RMCFG_CMD && return 1
+    IsNotSysFilePresent $SERVICE_CMD && return 1
+    IsNotSysFilePresent $SETCFG_CMD && return 1
 
-    IsSysFilePresent $BASENAME_CMD || return 1
-    IsSysFilePresent $CUT_CMD || return 1
-    IsSysFilePresent $DIRNAME_CMD || return 1
-    IsSysFilePresent $DU_CMD || return 1
-    IsSysFilePresent $HEAD_CMD || return 1
-    IsSysFilePresent $READLINK_CMD || return 1
-    IsSysFilePresent $SORT_CMD || return 1
-    IsSysFilePresent $TAIL_CMD || return 1
-    IsSysFilePresent $TEE_CMD || return 1
-    IsSysFilePresent $UNZIP_CMD || return 1
-    IsSysFilePresent $UPTIME_CMD || return 1
-    IsSysFilePresent $WC_CMD || return 1
+    IsNotSysFilePresent $BASENAME_CMD && return 1
+    IsNotSysFilePresent $CUT_CMD && return 1
+    IsNotSysFilePresent $DIRNAME_CMD && return 1
+    IsNotSysFilePresent $DU_CMD && return 1
+    IsNotSysFilePresent $HEAD_CMD && return 1
+    IsNotSysFilePresent $READLINK_CMD && return 1
+    IsNotSysFilePresent $SORT_CMD && return 1
+    IsNotSysFilePresent $TAIL_CMD && return 1
+    IsNotSysFilePresent $TEE_CMD && return 1
+    IsNotSysFilePresent $UNZIP_CMD && return 1
+    IsNotSysFilePresent $UPTIME_CMD && return 1
+    IsNotSysFilePresent $WC_CMD && return 1
 
-    IsSysFilePresent $ZIP_CMD || return 1
+    IsNotSysFilePresent $ZIP_CMD && return 1
 
     local -r DEFAULT_SHARE_DOWNLOAD_PATH=/share/Download
     local -r DEFAULT_SHARE_PUBLIC_PATH=/share/Public
@@ -146,14 +146,14 @@ Init()
         readonly SHARE_DOWNLOAD_PATH=$DEFAULT_SHARE_DOWNLOAD_PATH
     else
         readonly SHARE_DOWNLOAD_PATH=/share/$($GETCFG_CMD SHARE_DEF defDownload -d Qdownload -f $DEFAULT_SHARES_PATHFILE)
-        IsSysSharePresent $SHARE_DOWNLOAD_PATH || return 1
+        ! IsSysSharePresent $SHARE_DOWNLOAD_PATH && return 1
     fi
 
     if [[ -L $DEFAULT_SHARE_PUBLIC_PATH ]]; then
         readonly SHARE_PUBLIC_PATH=$DEFAULT_SHARE_PUBLIC_PATH
     else
         readonly SHARE_PUBLIC_PATH=/share/$($GETCFG_CMD SHARE_DEF defPublic -d Qpublic -f $DEFAULT_SHARES_PATHFILE)
-        IsSysSharePresent $SHARE_PUBLIC_PATH || return 1
+        ! IsSysSharePresent $SHARE_PUBLIC_PATH && return 1
     fi
 
     # sherpa-supported package details - parallel arrays
@@ -382,7 +382,7 @@ LogRuntimeParameters()
     DebugNAS 'RAM' "$INSTALLED_RAM_KB kB"
     if [[ $INSTALLED_RAM_KB -le $MIN_RAM_KB ]]; then
         DebugNAS 'RAM' "less-than or equal-to $MIN_RAM_KB kB"
-        ! IsError && ShowNote "QTS with 1GB RAM or less can lead to unstable SABnzbd uptimes :("
+        IsNotError && ShowNote "QTS with 1GB RAM or less can lead to unstable SABnzbd uptimes :("
     fi
     DebugNAS 'firmware version' "$NAS_FIRMWARE"
     DebugNAS 'firmware build' "$($GETCFG_CMD System 'Build Number' -f $ULINUX_PATHFILE)"
@@ -413,12 +413,12 @@ LogRuntimeParameters()
         return 1
     fi
 
-    if ! IsError && [[ $EUID -ne 0 || $USER != admin ]]; then
+    if IsNotError && [[ $EUID -ne 0 || $USER != admin ]]; then
         ShowError "this script must be run as the 'admin' user. Please login via SSH as 'admin' and try again."
         errorcode=1
     fi
 
-    if ! IsError && [[ ${#QPKGS_to_install[@]} -eq 0 && ${#QPKGS_to_uninstall[@]} -eq 0 && ${#QPKGS_to_update[@]} -eq 0 && ${#QPKGS_to_backup[@]} -eq 0 && ${#QPKGS_to_restore[@]} -eq 0 ]] && ! IsSatisfyDependenciesOnly && [[ $update_all_apps = false ]]; then
+    if IsNotError && [[ ${#QPKGS_to_install[@]} -eq 0 && ${#QPKGS_to_uninstall[@]} -eq 0 && ${#QPKGS_to_update[@]} -eq 0 && ${#QPKGS_to_backup[@]} -eq 0 && ${#QPKGS_to_restore[@]} -eq 0 ]] && ! IsSatisfyDependenciesOnly && [[ $update_all_apps = false ]]; then
         ShowError 'no valid QPKG(s) or action(s) were specified'
         errorcode=2
     fi
@@ -428,7 +428,7 @@ LogRuntimeParameters()
         errorcode=3
     fi
 
-    if ! IsError; then
+    if IsNotError; then
         $MKDIR_CMD -p "$WORKING_PATH" 2> /dev/null
         result=$?
 
@@ -440,7 +440,7 @@ LogRuntimeParameters()
         fi
     fi
 
-    if ! IsError; then
+    if IsNotError; then
         $MKDIR_CMD -p "$QPKG_DL_PATH" 2> /dev/null
         result=$?
 
@@ -450,7 +450,7 @@ LogRuntimeParameters()
         fi
     fi
 
-    if ! IsError; then
+    if IsNotError; then
         [[ -d $IPKG_DL_PATH ]] && rm -r "$IPKG_DL_PATH"
         $MKDIR_CMD -p "$IPKG_DL_PATH" 2> /dev/null
         result=$?
@@ -463,7 +463,7 @@ LogRuntimeParameters()
         fi
     fi
 
-    if ! IsError; then
+    if IsNotError; then
         $MKDIR_CMD -p "$IPKG_CACHE_PATH" 2> /dev/null
         result=$?
 
@@ -473,7 +473,7 @@ LogRuntimeParameters()
         fi
     fi
 
-    if ! IsError; then
+    if IsNotError; then
         for conflicting_qpkg in ${SHERPA_COMMON_CONFLICTS[@]}; do
             if IsQPKGEnabled $conflicting_qpkg; then
                 ShowError "'$conflicting_qpkg' is enabled. This is an unsupported configuration."
@@ -482,7 +482,7 @@ LogRuntimeParameters()
         done
     fi
 
-    if ! IsError; then
+    if IsNotError; then
         if IsQPKGInstalled Entware; then
             [[ -e /opt/etc/passwd ]] && { [[ -L /opt/etc/passwd ]] && ENTWARE_VER=std || ENTWARE_VER=alt ;} || ENTWARE_VER=none
             DebugQPKG 'Entware installer' $ENTWARE_VER
@@ -494,7 +494,7 @@ LogRuntimeParameters()
         fi
     fi
 
-    if ! IsError; then
+    if IsNotError; then
         if ! ($CURL_CMD $curl_insecure_arg --silent --fail https://onecdonly.github.io/sherpa/LICENSE -o LICENSE); then
             ShowError 'no Internet access'
             errorcode=10
@@ -799,8 +799,10 @@ UpdateEntware()
     local result=0
     local log_pathfile="$WORKING_PATH/entware-update.log"
 
-    IsSysFilePresent $OPKG_CMD || return 1
-    IsSysFilePresent $FIND_CMD || return 1
+    if IsNotSysFilePresent $OPKG_CMD || IsNotSysFilePresent $FIND_CMD; then
+        errorcode=13
+        return 1
+    fi
 
     # if Entware package list was updated only recently, don't run another update
     [[ -e $FIND_CMD && -e $package_list_file ]] && result=$($FIND_CMD "$package_list_file" -mmin +$package_list_age) || result='new install'
@@ -898,6 +900,7 @@ InstallIPKGs()
 
     if [[ -n $IPKG_DL_PATH && -d $IPKG_DL_PATH ]]; then
         UpdateEntware
+        IsError && return
         for index in ${!SHERPA_QPKG_NAME[@]}; do
             if (IsQPKGInstalled ${SHERPA_QPKG_NAME[$index]}) || [[ $TARGET_APP = ${SHERPA_QPKG_NAME[$index]} ]]; then
                 packages+=" ${SHERPA_QPKG_IPKGS[$index]}"
@@ -911,7 +914,7 @@ InstallIPKGs()
         InstallIPKGBatch "$packages"
     else
         ShowError "IPKG download path [$IPKG_DL_PATH] does not exist"
-        errorcode=13
+        errorcode=14
         returncode=1
     fi
 
@@ -960,7 +963,7 @@ InstallIPKGBatch()
             ShowError "download & install IPKG$(DisplayPlural $IPKG_download_count) failed [$result]"
             DebugErrorFile "$log_pathfile"
 
-            errorcode=14
+            errorcode=15
             returncode=1
         fi
         DebugStageEnd $IPKG_download_startseconds
@@ -973,6 +976,8 @@ InstallIPKGBatch()
 
 DowngradePy3()
     {
+
+    IsError && return
 
     # Watcher3 isn't presently compatible with Python 3.8.x so let's force a downgrade to 3.7.4
 
@@ -1062,7 +1067,10 @@ InstallPy2Modules()
     elif [[ -e /opt/bin/pip ]]; then
         pip2_cmd=/opt/bin/pip
     else
-        IsSysFilePresent $pip2_cmd || return 1
+        if IsNotSysFilePresent $pip2_cmd; then
+            errorcode=16
+            return 1
+        fi
     fi
 
     ShowProc "downloading & installing $desc"
@@ -1077,7 +1085,7 @@ InstallPy2Modules()
         ShowError "download & install $desc failed [$result]"
         DebugErrorFile "$log_pathfile"
 
-        errorcode=15
+        errorcode=17
         returncode=1
     fi
 
@@ -1117,10 +1125,11 @@ InstallPy3Modules()
     elif [[ -e /opt/bin/pip3.8 ]]; then
         pip3_cmd=/opt/bin/pip3.8
     else
-        if ! IsSysFilePresent $pip3_cmd; then
+        if IsNotSysFilePresent $pip3_cmd; then
             echo -e "\n* Ugh! The usual fix is to let sherpa reinstall Entware at least once."
             echo -e "\t./sherpa.sh ew"
             echo -e "If it happens again after reinstalling Entware, please create a new issue for this on GitHub."
+            errorcode=18
             return 1
         fi
     fi
@@ -1137,7 +1146,7 @@ InstallPy3Modules()
         ShowError "download & install $desc failed [$result]"
         DebugErrorFile "$log_pathfile"
 
-        errorcode=16
+        errorcode=19
         returncode=1
     fi
 
@@ -1207,7 +1216,7 @@ InstallQPKG()
         ShowError "file installation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $result)"
         DebugErrorFile "$log_pathfile"
 
-        errorcode=17
+        errorcode=20
         returncode=1
     fi
 
@@ -1254,7 +1263,7 @@ DownloadQPKG()
         fi
     fi
 
-    if ! IsError && [[ ! -e $local_pathfile ]]; then
+    if IsNotError && [[ ! -e $local_pathfile ]]; then
         ShowProc "downloading file $(FormatAsFileName "$remote_filename")"
 
         [[ -e $log_pathfile ]] && rm -f "$log_pathfile"
@@ -1274,14 +1283,14 @@ DownloadQPKG()
                 ShowDone "downloaded file $(FormatAsFileName "$remote_filename")"
             else
                 ShowError "downloaded file checksum incorrect $(FormatAsFileName "$local_pathfile")"
-                errorcode=18
+                errorcode=21
                 returncode=1
             fi
         else
             ShowError "download failed $(FormatAsFileName "$local_pathfile") $(FormatAsExitcode $result)"
             DebugErrorFile "$log_pathfile"
 
-            errorcode=19
+            errorcode=22
             returncode=1
         fi
     fi
@@ -1355,12 +1364,12 @@ LoadInstalledQPKGVars()
             done
         else
             DebugError 'QPKG not installed?'
-            errorcode=20
+            errorcode=23
             returncode=1
         fi
     else
         DebugError 'QPKG name unspecified'
-        errorcode=21
+        errorcode=24
         returncode=1
     fi
 
@@ -1380,7 +1389,7 @@ UninstallQPKG()
 
     if [[ -z $1 ]]; then
         DebugError 'QPKG name unspecified'
-        errorcode=22
+        errorcode=25
         returncode=1
     else
         qpkg_installed_path="$($GETCFG_CMD $1 Install_Path -f $APP_CENTER_CONFIG_PATHFILE)"
@@ -1397,7 +1406,7 @@ UninstallQPKG()
                     ShowDone "uninstalled $(FormatAsPackageName $1)"
                 else
                     ShowError "unable to uninstall $(FormatAsPackageName $1) $(FormatAsExitcode $result)"
-                    errorcode=23
+                    errorcode=26
                     returncode=1
                 fi
             fi
@@ -1426,11 +1435,11 @@ QPKGServiceCtl()
 
     if [[ -z $1 ]]; then
         DebugError 'action unspecified'
-        errorcode=24
+        errorcode=27
         return 1
     elif [[ -z $2 ]]; then
         DebugError 'QPKG name unspecified'
-        errorcode=25
+        errorcode=28
         return 1
     fi
 
@@ -1454,7 +1463,7 @@ QPKGServiceCtl()
                 else
                     $CAT_CMD "$qpkg_pathfile.$START_LOG_FILE" >> "$DEBUG_LOG_PATHFILE"
                 fi
-                errorcode=26
+                errorcode=29
                 return 1
             fi
             ;;
@@ -1502,7 +1511,7 @@ QPKGServiceCtl()
             ;;
         *)
             DebugError "Unrecognised action '$1'"
-            errorcode=27
+            errorcode=30
             return 1
             ;;
     esac
@@ -1523,18 +1532,18 @@ GetQPKGServiceFile()
 
     if [[ -z $1 ]]; then
         DebugError 'QPKG name unspecified'
-        errorcode=28
+        errorcode=31
         returncode=1
     else
         output=$($GETCFG_CMD $1 Shell -f $APP_CENTER_CONFIG_PATHFILE)
 
         if [[ -z $output ]]; then
             DebugError "No service file configured for package $(FormatAsPackageName $1)"
-            errorcode=29
+            errorcode=32
             returncode=1
         elif [[ ! -e $output ]]; then
             DebugError "Package service file not found $(FormatAsStdout "$output")"
-            errorcode=30
+            errorcode=33
             returncode=1
         fi
     fi
@@ -1556,7 +1565,7 @@ GetQPKGPathFilename()
 
     if [[ -z $1 ]]; then
         DebugError 'QPKG name unspecified'
-        errorcode=31
+        errorcode=34
         returncode=1
     else
         output="$QPKG_DL_PATH/$($BASENAME_CMD "$(GetQPKGRemoteURL $1)")"
@@ -1580,7 +1589,7 @@ GetQPKGRemoteURL()
 
     if [[ -z $1 ]]; then
         DebugError 'QPKG name unspecified'
-        errorcode=32
+        errorcode=35
         returncode=1
     else
         for index in ${!SHERPA_QPKG_NAME[@]}; do
@@ -1610,7 +1619,7 @@ GetQPKGMD5()
 
     if [[ -z $1 ]]; then
         DebugError 'QPKG name unspecified'
-        errorcode=33
+        errorcode=36
         returncode=1
     else
         for index in ${!SHERPA_QPKG_NAME[@]}; do
@@ -1645,7 +1654,7 @@ Cleanup()
 
     cd $SHARE_PUBLIC_PATH
 
-    ! IsError && [[ -d $WORKING_PATH ]] && ! IsDebugMode && ! IsDevMode && rm -rf "$WORKING_PATH"
+    IsNotError && [[ -d $WORKING_PATH ]] && ! IsDebugMode && ! IsDevMode && rm -rf "$WORKING_PATH"
 
     DebugFuncExit
     return 0
@@ -1663,7 +1672,7 @@ ShowResult()
         if [[ -n $TARGET_APP ]]; then
             [[ $reinstall_flag = true ]] && RE='re' || RE=''
 
-            if ! IsError; then
+            if IsNotError; then
                 IsDebugMode && emoticon=':DD' || { emoticon=''; echo ;}
                 ShowDone "$(FormatAsPackageName $TARGET_APP) has been successfully ${RE}installed! $emoticon"
             else
@@ -1674,7 +1683,7 @@ ShowResult()
         fi
 
         if IsSatisfyDependenciesOnly; then
-            if ! IsError; then
+            if IsNotError; then
                 IsDebugMode && emoticon=':DD' || { emoticon=''; echo ;}
                 ShowDone "all application dependencies are installed! $emoticon"
             else
@@ -1747,7 +1756,10 @@ FindAllQPKGDependencies()
 
     [[ -z $1 ]] && { DebugError 'No QPKGs were requested'; return 1 ;}
 
-    ! IsSysFilePresent $OPKG_CMD && return 1
+    if IsNotSysFilePresent $OPKG_CMD; then
+        errorcode=37
+        return 1
+    fi
 
     requested_list=($(DeDupeWords "$1"))
     last_list=($requested_list)
@@ -1819,7 +1831,10 @@ FindAllIPKGDependencies()
 
     [[ -z $1 ]] && { DebugError 'No IPKGs were requested'; return 1 ;}
 
-    ! IsSysFilePresent $OPKG_CMD && return 1
+    if IsNotSysFilePresent $OPKG_CMD; then
+        errorcode=38
+        return 1
+    fi
 
     # remove duplicate entries
     requested_list=($(DeDupeWords "$1"))
@@ -1909,7 +1924,10 @@ _MonitorDirSize_()
     local current_bytes=0
     local percent=''
 
-    IsSysFilePresent $FIND_CMD || return 1
+    if IsNotSysFilePresent $FIND_CMD; then
+        errorcode=39
+        return 1
+    fi
 
     progress_message=''
     previous_length=0
@@ -2045,13 +2063,28 @@ IsSysFilePresent()
 
     if ! [[ -f $1 || -L $1 ]]; then
         ShowError "a required NAS system file is missing $(FormatAsFileName $1)"
-        errorcode=34
+        errorcode=40
         return 1
     else
         return 0
     fi
 
     }
+
+IsNotSysFilePresent()
+    {
+
+    # input:
+    #   $1 = pathfile to check
+    # output:
+    #   $? = 0 (true) or 1 (false)
+
+    [[ -z $1 ]] && return 1
+
+    ! IsSysFilePresent "$1"
+
+    }
+
 
 IsSysSharePresent()
     {
@@ -2065,7 +2098,7 @@ IsSysSharePresent()
 
     if [[ ! -L $1 ]]; then
         ShowError "a required NAS system share is missing $(FormatAsFileName $1). Please re-create it via the QTS Control Panel -> Privilege Settings -> Shared Folders."
-        errorcode=35
+        errorcode=41
         return 1
     else
         return 0
@@ -2149,6 +2182,13 @@ IsError()
     {
 
     [[ $errorcode -gt 0 ]]
+
+    }
+
+IsNotError()
+    {
+
+    [[ $errorcode -eq 0 ]]
 
     }
 
