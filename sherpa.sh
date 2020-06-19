@@ -1748,7 +1748,7 @@ FindAllQPKGDependencies()
 
     ! IsSysFilePresent $OPKG_CMD && return 1
 
-    requested_list=$(DeDupeWords "$1")
+    requested_list=($(DeDupeWords "$1"))
     last_list=$requested_list
 
     ShowProc 'calculating number of QPKGs required'
@@ -1825,7 +1825,7 @@ FindAllIPKGDependencies()
     ! IsSysFilePresent $OPKG_CMD && return 1
 
     # remove duplicate entries
-    requested_list=$($TR_CMD ' ' '\n' <<< $1 | $SORT_CMD | $UNIQ_CMD | $TR_CMD '\n' ' ')
+    requested_list=($(DeDupeWords "$1"))
     last_list=$requested_list
 
     ShowProc 'calculating number and total size of IPKGs required'
@@ -1847,9 +1847,7 @@ FindAllIPKGDependencies()
     done
 
     [[ $complete = false ]] && DebugError "IPKG dependency list is incomplete! Consider raising \$ITERATION_LIMIT [$ITERATION_LIMIT]."
-
-    # remove duplicate entries
-    all_list=$(echo "$requested_list $dependency_list" | $TR_CMD ' ' '\n' | $SORT_CMD | $UNIQ_CMD | $TR_CMD '\n' ' ')
+    all_list=($(DeDupeWords "$requested_list $dependency_list"))
 
     DebugProc 'excluding packages already installed'
     for element in ${all_list[@]}; do
