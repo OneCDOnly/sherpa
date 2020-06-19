@@ -670,14 +670,18 @@ DownloadQPKGs()
 
         FindAllQPKGDependencies "$QPKGs_to_download"
 
+        for package in ${QPKG_download_list[@]}; do
+            DownloadQPKG $package
+        done
+
         exit
     else
         ! IsQPKGInstalled Entware && DownloadQPKG Entware
 
-        { (IsQPKGInstalled SABnzbdplus) || [[ $TARGET_APP = SABnzbdplus ]] ;} && [[ $NAS_QPKG_ARCH != none ]] && ! IsQPKGInstalled Par2 && DownloadQPKG Par2
+        (IsQPKGInstalled SABnzbdplus || [[ $TARGET_APP = SABnzbdplus ]];) && [[ $NAS_QPKG_ARCH != none ]] && ! IsQPKGInstalled Par2 && DownloadQPKG Par2
 
         # an ugly workaround until QPKG dependency checking works properly.
-        { (IsQPKGInstalled SABnzbd) || [[ $TARGET_APP = SABnzbd ]] ;} && [[ $NAS_QPKG_ARCH != none ]] && ! IsQPKGInstalled Par2 && DownloadQPKG Par2
+        (IsQPKGInstalled SABnzbd || [[ $TARGET_APP = SABnzbd ]];) && [[ $NAS_QPKG_ARCH != none ]] && ! IsQPKGInstalled Par2 && DownloadQPKG Par2
 
         [[ -n $TARGET_APP ]] && DownloadQPKG $TARGET_APP
     fi
@@ -833,7 +837,7 @@ InstallBaseAddons()
 
     DebugFuncEntry
 
-    if { (IsQPKGInstalled SABnzbdplus) || [[ $TARGET_APP = SABnzbdplus ]] ;} && [[ $NAS_QPKG_ARCH != none ]]; then
+    if (IsQPKGInstalled SABnzbdplus || [[ $TARGET_APP = SABnzbdplus ]];) && [[ $NAS_QPKG_ARCH != none ]]; then
         if ! IsQPKGInstalled Par2; then
             InstallQPKG Par2
             if IsError; then
@@ -845,7 +849,7 @@ InstallBaseAddons()
     fi
 
     # use the same ugly workaround until QPKG dep checking works properly
-    if { (IsQPKGInstalled SABnzbd) || [[ $TARGET_APP = SABnzbd ]] ;} && [[ $NAS_QPKG_ARCH != none ]]; then
+    if (IsQPKGInstalled SABnzbd || [[ $TARGET_APP = SABnzbd ]];) && [[ $NAS_QPKG_ARCH != none ]]; then
         if ! IsQPKGInstalled Par2; then
             InstallQPKG Par2
             if IsError; then
@@ -871,7 +875,7 @@ InstallBaseAddons()
 InstallTargetQPKG()
     {
 
-    IsError || [[ -z $TARGET_APP ]] && return
+    (IsError || [[ -z $TARGET_APP ]];) && return
 
     DebugFuncEntry
 
@@ -938,7 +942,7 @@ InstallIPKGBatch()
 
     if [[ $IPKG_download_count -gt 0 ]]; then
         local IPKG_download_startseconds=$(DebugStageStart)
-        ShowProc "downloading & installing $IPKG_download_count IPKG$([[ $IPKG_download_count -gt 1 ]] && echo 's')"
+        ShowProc "downloading & installing $IPKG_download_count IPKG$(DisplayPlural $IPKG_download_count)"
 
         $TOUCH_CMD "$monitor_flag"
         trap CTRL_C_Captured INT
@@ -952,9 +956,9 @@ InstallIPKGBatch()
         echo -e "${install_msgs}\nresult=[$result]" > "$log_pathfile"
 
         if [[ $result -eq 0 ]]; then
-            ShowDone "downloaded & installed $IPKG_download_count IPKG$([[ $IPKG_download_count -gt 1 ]] && echo 's')"
+            ShowDone "downloaded & installed $IPKG_download_count IPKG$(DisplayPlural $IPKG_download_count)"
         else
-            ShowError "download & install IPKG$([[ $IPKG_download_count -gt 1 ]] && echo 's') failed [$result]"
+            ShowError "download & install IPKG$(DisplayPlural $IPKG_download_count) failed [$result]"
             DebugErrorFile "$log_pathfile"
 
             errorcode=14
@@ -1027,6 +1031,7 @@ InstallPy2Modules()
     {
 
     IsError && return
+    IsDevMode && return
 
     DebugFuncEntry
     local install_cmd=''
@@ -1720,7 +1725,7 @@ GetQPKGDeps()
 FindAllQPKGDependencies()
     {
 
-    # From a specified list of QPKG names, find all dependent QPKGs, exclude those already installed, then generate a total qty to download.
+    # From a specified list of QPKG names, find all dependent QPKGs then generate a total qty to download.
     # input:
     #   $1 = string with space-separated initial QPKG names.
     # output:
@@ -1731,7 +1736,7 @@ FindAllQPKGDependencies()
     QPKG_download_list=()
     local requested_list=()
     local last_list=()
-    local all_list=()
+    local new_list=()
     local dependency_list=''
     local iterations=0
     local -r ITERATION_LIMIT=6
@@ -1741,62 +1746,54 @@ FindAllQPKGDependencies()
 
     [[ -z $1 ]] && { DebugError 'No QPKGs were requested'; return 1 ;}
 
-    IsSysFilePresent $OPKG_CMD || return 1
+    ! IsSysFilePresent $OPKG_CMD && return 1
 
-    # remove duplicate entries
-    requested_list=$($TR_CMD ' ' '\n' <<< $1 | $SORT_CMD | $UNIQ_CMD | $TR_CMD '\n' ' ')
+    requested_list=$(DeDupeWords "$1")
     last_list=$requested_list
 
     ShowProc 'calculating number of QPKGs required'
     DebugInfo "requested QPKGs: ${requested_list[*]}"
 
     DebugProc 'finding all QPKG dependencies'
-exit
     while [[ $iterations -lt $ITERATION_LIMIT ]]; do
         ((iterations++))
+        new_list=()
         for package in ${last_list[@]}; do
-            last_list+=$(GetQPKGDeps $package)
+            new_list+=" $(GetQPKGDeps $package)"
         done
 
-        # remove duplicates
-        last_list=$(echo $last_list | $TR_CMD ' ' '\n' | $SORT_CMD | $UNIQ_CMD)
+        new_list=$(DeDupeWords "$new_list")
 
-        if [[ -n $last_list ]]; then
-            [[ -n $dependency_list ]] && dependency_list+=$(echo -e "\n$last_list") || dependency_list=$last_list
+        if [[ -n $new_list ]]; then
+            if [[ -n $dependency_list ]]; then
+                dependency_list+=$(echo " ${new_list[*]}")
+            else
+                dependency_list=$new_list
+            fi
+            last_list=$new_list
         else
             DebugDone 'complete'
-            DebugInfo "found all QPKG dependencies in $iterations iteration$([[ $iterations -gt 0 ]] && echo s)"
+            DebugInfo "found all QPKG dependencies in $iterations iteration$(DisplayPlural $iterations)"
             complete=true
             break
         fi
     done
 
     [[ $complete = false ]] && DebugError "QPKG dependency list is incomplete! Consider raising \$ITERATION_LIMIT [$ITERATION_LIMIT]."
+    QPKG_download_list=($(DeDupeWords "$requested_list $dependency_list"))
 
-echo "all_list: [${all_list[*]}]"
-exit
-
-    # remove duplicate entries
-    all_list=$(echo "$requested_list $dependency_list" | $TR_CMD ' ' '\n' | $SORT_CMD | $UNIQ_CMD | $TR_CMD '\n' ' ')
-
-echo "all_list: [${all_list[*]}]"
-
-    DebugProc 'excluding packages already installed'
-#     for element in ${all_list[@]}; do
-#         $OPKG_CMD status "$element" | $GREP_CMD -q "Status:.*installed" || QPKG_download_list+=($element)
-#     done
     DebugDone 'complete'
-    DebugInfo "QPKGs to download: ${IPKG_download_list[*]}"
-    QPKG_download_count=${#IPKG_download_list[@]}
+    DebugInfo "QPKGs to download: ${QPKG_download_list[*]}"
+    QPKG_download_count=${#QPKG_download_list[@]}
 
     DebugStageEnd $SEARCH_STARTSECONDS
 
     if [[ $QPKG_download_count -gt 0 ]]; then
-        ShowDone "$QPKG_download_count QPKGs to be downloaded"
+        ShowDone "$QPKG_download_count QPKG$(DisplayPlural $QPKG_download_count) to be downloaded"
     else
         ShowDone 'no QPKGs are required'
     fi
-exit
+
     }
 
 FindAllIPKGDependencies()
@@ -1825,7 +1822,7 @@ FindAllIPKGDependencies()
 
     [[ -z $1 ]] && { DebugError 'No IPKGs were requested'; return 1 ;}
 
-    IsSysFilePresent $OPKG_CMD || return 1
+    ! IsSysFilePresent $OPKG_CMD && return 1
 
     # remove duplicate entries
     requested_list=$($TR_CMD ' ' '\n' <<< $1 | $SORT_CMD | $UNIQ_CMD | $TR_CMD '\n' ' ')
@@ -1843,7 +1840,7 @@ FindAllIPKGDependencies()
             [[ -n $dependency_list ]] && dependency_list+=$(echo -e "\n$last_list") || dependency_list=$last_list
         else
             DebugDone 'complete'
-            DebugInfo "found all IPKG dependencies in $iterations iteration$([[ $iterations -gt 0 ]] && echo s)"
+            DebugInfo "found all IPKG dependencies in $iterations iteration$(DisplayPlural $iterations)"
             complete=true
             break
         fi
@@ -1863,7 +1860,7 @@ FindAllIPKGDependencies()
     IPKG_download_count=${#IPKG_download_list[@]}
 
     if [[ $IPKG_download_count -gt 0 ]]; then
-        DebugProc "calculating size of IPKG$([[ $IPKG_download_count -gt 1 ]] && echo 's') to download"
+        DebugProc "calculating size of IPKG$(DisplayPlural $IPKG_download_count) to download"
         for element in ${IPKG_download_list[@]}; do
             result_size=$($OPKG_CMD info $element | $GREP_CMD -F 'Size:' | $SED_CMD 's|^Size: ||')
             ((IPKG_download_size+=result_size))
@@ -1874,10 +1871,26 @@ FindAllIPKGDependencies()
     DebugStageEnd $SEARCH_STARTSECONDS
 
     if [[ $IPKG_download_count -gt 0 ]]; then
-        ShowDone "$IPKG_download_count IPKG$([[ $IPKG_download_count -gt 1 ]] && echo 's') ($(FormatAsISO $IPKG_download_size)) to be downloaded"
+        ShowDone "$IPKG_download_count IPKG$(DisplayPlural $IPKG_download_count) ($(FormatAsISO $IPKG_download_size)) to be downloaded"
     else
         ShowDone 'no IPKGs are required'
     fi
+
+    }
+
+DeDupeWords()
+    {
+
+    [[ -z $1 ]] && return 1
+
+    $TR_CMD ' ' '\n' <<< $1 | $SORT_CMD | $UNIQ_CMD | $TR_CMD '\n' ' ' | $SED_CMD 's|^[[:blank:]]*||;s|[[:blank:]]*$||'
+
+    }
+
+DisplayPlural()
+    {
+
+    [[ $1 -gt 1 ]] && echo 's'
 
     }
 
