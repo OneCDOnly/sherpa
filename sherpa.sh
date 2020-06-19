@@ -347,6 +347,7 @@ Init()
     reinstall_flag=false
     DisableSatisfyDependenciesOnly
     DisableHelpOnly
+    DisableSuggestIssue
     ignore_space_arg=''
     update_all_apps=false
     backup_all_apps=false
@@ -1647,7 +1648,6 @@ ShowResult()
     DebugFuncEntry
 
     local RE=''
-    DisableSuggestIssue
 
     if ! IsHelpOnly; then
         if [[ -n $TARGET_APP ]]; then
@@ -1997,11 +1997,7 @@ IsQPKGEnabled()
 
     [[ -z $1 ]] && return 1
 
-    if [[ $($GETCFG_CMD $1 Enable -u -f $APP_CENTER_CONFIG_PATHFILE) != 'TRUE' ]]; then
-        return 1
-    else
-        return 0
-    fi
+    [[ $($GETCFG_CMD $1 Enable -u -f $APP_CENTER_CONFIG_PATHFILE) = 'TRUE' ]]
 
     }
 
