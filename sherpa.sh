@@ -39,7 +39,7 @@ Init()
     {
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200619
+    readonly SCRIPT_VERSION=200620
     DisableDebugMode
     ResetErrorcode
 
@@ -169,7 +169,7 @@ Init()
 
     SHERPA_QPKG_NAME+=(Entware)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=(http://bin.entware.net/other/Entware_1.02std.qpkg)
+        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/Entware/Entware_1.02std.qpkg)
         SHERPA_QPKG_MD5+=(dbc82469933ac3049c06d4c8a023bbb9)
         SHERPA_QPKG_ABBRVS+=('opkg ew ent entware')
         SHERPA_QPKG_DEPS+=('')
@@ -707,7 +707,7 @@ RemoveUnwantedQPKGs()
     if [[ $TARGET_APP = Entware && $reinstall_flag = true ]]; then
         ShowNote 'Reinstalling Entware will revert all IPKGs to defaults and only those required to support your sherpa apps will be reinstalled'
         ShowNote "The currently installed IPKG list will be saved to $(FormatAsFileName $previous_Entware_package_list)"
-        ShowNote "Also, the SABnzbdplus, SickChill and Headphones packages CANNOT BE REINSTALLED as Python 2.7.16 is no-longer available"
+        ShowWarning "Also, the SABnzbdplus, SickChill and Headphones packages CANNOT BE REINSTALLED as Python 2.7.16 is no-longer available"
         ShowQuiz 'Press (y) if you agree to remove all current Entware IPKGs and their configs, or any other key to abort'
         read -n1 response; echo
         DebugVar response
@@ -1738,7 +1738,7 @@ FindAllQPKGDependencies()
     local requested_list=()
     local last_list=()
     local new_list=()
-    local dependency_list=''
+    local dependency_list=()
     local iterations=0
     local -r ITERATION_LIMIT=6
     local complete=false
@@ -1750,7 +1750,7 @@ FindAllQPKGDependencies()
     ! IsSysFilePresent $OPKG_CMD && return 1
 
     requested_list=($(DeDupeWords "$1"))
-    last_list=$requested_list
+    last_list=($requested_list)
 
     ShowProc 'calculating number of QPKGs required'
     DebugInfo "requested QPKGs: ${requested_list[*]}"
@@ -1760,18 +1760,14 @@ FindAllQPKGDependencies()
         ((iterations++))
         new_list=()
         for package in ${last_list[@]}; do
-            new_list+=" $(GetQPKGDeps $package)"
+            new_list+=($(GetQPKGDeps $package))
         done
 
-        new_list=$(DeDupeWords "$new_list")
+        new_list=($(DeDupeWords "$new_list"))
 
         if [[ -n $new_list ]]; then
-            if [[ -n $dependency_list ]]; then
-                dependency_list+=$(echo " ${new_list[*]}")
-            else
-                dependency_list=$new_list
-            fi
-            last_list=$new_list
+            dependency_list+=(${new_list[*]})
+            last_list=($new_list)
         else
             DebugDone 'complete'
             DebugInfo "found all QPKG dependencies in $iterations iteration$(DisplayPlural $iterations)"
@@ -1814,7 +1810,7 @@ FindAllIPKGDependencies()
     local requested_list=()
     local last_list=()
     local all_list=()
-    local dependency_list=''
+    local dependency_list=()
     local iterations=0
     local -r ITERATION_LIMIT=20
     local complete=false
@@ -1827,7 +1823,7 @@ FindAllIPKGDependencies()
 
     # remove duplicate entries
     requested_list=($(DeDupeWords "$1"))
-    last_list=$requested_list
+    last_list=($requested_list)
 
     ShowProc 'calculating number and total size of IPKGs required'
     DebugInfo "requested IPKGs: ${requested_list[*]}"
@@ -1838,7 +1834,7 @@ FindAllIPKGDependencies()
         last_list=$($OPKG_CMD depends -A $last_list | $GREP_CMD -v 'depends on:' | $SED_CMD 's|^[[:blank:]]*||;s|[[:blank:]]*$||' | $TR_CMD ' ' '\n' | $SORT_CMD | $UNIQ_CMD)
 
         if [[ -n $last_list ]]; then
-            [[ -n $dependency_list ]] && dependency_list+=$(echo -e "\n$last_list") || dependency_list=$last_list
+            dependency_list+=($last_list)
         else
             DebugDone 'complete'
             DebugInfo "found all IPKG dependencies in $iterations iteration$(DisplayPlural $iterations)"
@@ -1889,7 +1885,7 @@ DeDupeWords()
 DisplayPlural()
     {
 
-    [[ $1 -gt 1 ]] && echo 's'
+    [[ $1 -ne 1 ]] && echo 's'
 
     }
 
