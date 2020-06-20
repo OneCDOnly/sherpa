@@ -1860,10 +1860,10 @@ FindAllIPKGDependencies()
     IPKG_download_size=0
     IPKG_download_count=0
     IPKG_download_list=()
-    local requested_list=()
-    local last_list=()
-    local all_list=()
+    local requested_list=''
     local dependency_list=''
+    local last_list=''
+    local all_list=''
     local iterations=0
     local -r ITERATION_LIMIT=20
     local complete=false
@@ -1875,15 +1875,15 @@ FindAllIPKGDependencies()
     last_list=$requested_list
 
     ShowProc 'calculating number and total size of IPKGs required'
-    DebugInfo "requested IPKGs: ${requested_list[*]}"
+    DebugInfo "IPKGs requested: $requested_list"
 
-    DebugProc 'finding all IPKG dependencies'
+    DebugProc 'finding IPKG dependencies'
     while [[ $iterations -lt $ITERATION_LIMIT ]]; do
         ((iterations++))
         last_list=$($OPKG_CMD depends -A $last_list | $GREP_CMD -v 'depends on:' | $SED_CMD 's|^[[:blank:]]*||;s|[[:blank:]]*$||' | $TR_CMD ' ' '\n' | $SORT_CMD | $UNIQ_CMD)
 
         if [[ -n $last_list ]]; then
-            [[ -n $dependency_list ]] && dependency_list+=$(echo -e "\n$last_list") || dependency_list=$last_list
+            dependency_list+=" $last_list"
         else
             DebugDone 'complete'
             DebugInfo "found all IPKG dependencies in $iterations iteration$(DisplayPlural $iterations)"
@@ -1894,8 +1894,9 @@ FindAllIPKGDependencies()
 
     [[ $complete = false ]] && DebugError "IPKG dependency list is incomplete! Consider raising \$ITERATION_LIMIT [$ITERATION_LIMIT]."
 
-    # remove duplicate entries
-    all_list=$(echo "$requested_list $dependency_list" | $TR_CMD ' ' '\n' | $SORT_CMD | $UNIQ_CMD | $TR_CMD '\n' ' ')
+    all_list=$(DeDupeWords "$requested_list $dependency_list")
+
+    DebugInfo "IPKGs requested including dependencies: ${all_list[*]}"
 
     DebugProc 'excluding packages already installed'
     for element in ${all_list[@]}; do
@@ -1903,6 +1904,7 @@ FindAllIPKGDependencies()
     done
     DebugDone 'complete'
     DebugInfo "IPKGs to download: ${IPKG_download_list[*]}"
+
     IPKG_download_count=${#IPKG_download_list[@]}
 
     if [[ $IPKG_download_count -gt 0 ]]; then
@@ -1913,6 +1915,7 @@ FindAllIPKGDependencies()
         done
         DebugDone 'complete'
     fi
+
     DebugVar IPKG_download_size
     DebugStageEnd $SEARCH_STARTSECONDS
 
