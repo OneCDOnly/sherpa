@@ -1336,6 +1336,7 @@ CalcNASQPKGArch()
     {
 
     # Decide which package arch is suitable for this NAS. Only needed for Stephane's packages.
+    # creates a global constant: $NAS_QPKG_ARCH
 
     case $($UNAME_CMD -m) in
         x86_64)
@@ -1365,6 +1366,8 @@ CalcNASQPKGArch()
             ;;
     esac
 
+    readonly NAS_QPKG_ARCH
+
     return 0
 
     }
@@ -1374,38 +1377,37 @@ LoadInstalledQPKGVars()
 
     # $1 = load variables for this installed package name
 
+    if [[ -z $1 ]]; then
+        DebugError 'QPKG name unspecified'
+        errorcode=27
+        return 1
+    fi
+
     local package_name=$1
-    local returncode=0
     local prev_config_dir=''
     local prev_config_file=''
     local package_settings_pathfile=''
     package_installed_path=''
     package_config_path=''
 
-    if [[ -n $package_name ]]; then
-        package_installed_path=$($GETCFG_CMD $package_name Install_Path -f $APP_CENTER_CONFIG_PATHFILE)
-        if [[ $? -eq 0 ]]; then
-            for prev_config_dir in ${PREV_QPKG_CONFIG_DIRS[@]}; do
-                package_config_path=$package_installed_path/$prev_config_dir
-                [[ -d $package_config_path ]] && break
-            done
+    package_installed_path=$($GETCFG_CMD $package_name Install_Path -f $APP_CENTER_CONFIG_PATHFILE)
+    if [[ $? -eq 0 ]]; then
+        for prev_config_dir in ${PREV_QPKG_CONFIG_DIRS[@]}; do
+            package_config_path=$package_installed_path/$prev_config_dir
+            [[ -d $package_config_path ]] && break
+        done
 
-            for prev_config_file in ${PREV_QPKG_CONFIG_FILES[@]}; do
-                package_settings_pathfile=$package_config_path/$prev_config_file
-                [[ -f $package_settings_pathfile ]] && break
-            done
-        else
-            DebugError 'QPKG not installed?'
-            errorcode=27
-            returncode=1
-        fi
+        for prev_config_file in ${PREV_QPKG_CONFIG_FILES[@]}; do
+            package_settings_pathfile=$package_config_path/$prev_config_file
+            [[ -f $package_settings_pathfile ]] && break
+        done
     else
-        DebugError 'QPKG name unspecified'
+        DebugError 'QPKG not installed?'
         errorcode=28
-        returncode=1
+        return 1
     fi
 
-    return $returncode
+    return 0
 
     }
 
@@ -1423,7 +1425,6 @@ UninstallQPKG()
     fi
 
     local result=0
-    local returncode=0
 
     qpkg_installed_path="$($GETCFG_CMD $1 Install_Path -f $APP_CENTER_CONFIG_PATHFILE)"
     result=$?
@@ -1440,7 +1441,7 @@ UninstallQPKG()
             else
                 ShowError "unable to uninstall $(FormatAsPackageName $1) $(FormatAsExitcode $result)"
                 errorcode=30
-                returncode=1
+                return 1
             fi
         fi
 
@@ -1449,7 +1450,7 @@ UninstallQPKG()
         DebugQPKG "$(FormatAsPackageName $1)" "not installed $(FormatAsExitcode $result)"
     fi
 
-    return $returncode
+    return 0
 
     }
 
@@ -1857,7 +1858,7 @@ FindAllIPKGDependencies()
     fi
 
     if IsNotSysFilePresent $OPKG_CMD; then
-        errorcode=43
+        errorcode=42
         return 1
     fi
 
@@ -1962,7 +1963,7 @@ _MonitorDirSize_()
     [[ -z $1 || ! -d $1 || -z $2 || $2 -eq 0 ]] && return 1
 
     if IsNotSysFilePresent $FIND_CMD; then
-        errorcode=44
+        errorcode=43
         return 1
     fi
 
@@ -2015,7 +2016,7 @@ EnableQPKG()
 
     if [[ -z $1 ]]; then
         DebugError 'QPKG name unspecified'
-        errorcode=45
+        errorcode=44
         return 1
     fi
 
@@ -2037,7 +2038,7 @@ IsQPKGUserInstallable()
 
     if [[ -z $1 ]]; then
         DebugError 'QPKG name unspecified'
-        errorcode=46
+        errorcode=45
         return 1
     fi
 
@@ -2067,7 +2068,7 @@ IsQPKGInstalled()
 
     if [[ -z $1 ]]; then
         DebugError 'QPKG name unspecified'
-        errorcode=47
+        errorcode=46
         return 1
     fi
 
@@ -2085,7 +2086,7 @@ IsQPKGEnabled()
 
     if [[ -z $1 ]]; then
         DebugError 'QPKG name unspecified'
-        errorcode=48
+        errorcode=47
         return 1
     fi
 
@@ -2103,7 +2104,7 @@ IsIPKGInstalled()
 
     if [[ -z $1 ]]; then
         DebugError 'IPKG name unspecified'
-        errorcode=49
+        errorcode=48
         return 1
     fi
 
@@ -2127,13 +2128,13 @@ IsSysFilePresent()
 
     if [[ -z $1 ]]; then
         DebugError 'system file unspecified'
-        errorcode=50
+        errorcode=49
         return 1
     fi
 
     if ! [[ -f $1 || -L $1 ]]; then
         ShowError "a required NAS system file is missing $(FormatAsFileName $1)"
-        errorcode=51
+        errorcode=50
         return 1
     else
         return 0
@@ -2151,14 +2152,13 @@ IsNotSysFilePresent()
 
     if [[ -z $1 ]]; then
         DebugError 'system file unspecified'
-        errorcode=52
+        errorcode=51
         return 1
     fi
 
     ! IsSysFilePresent "$1"
 
     }
-
 
 IsSysSharePresent()
     {
@@ -2170,13 +2170,13 @@ IsSysSharePresent()
 
     if [[ -z $1 ]]; then
         DebugError 'system share unspecified'
-        errorcode=53
+        errorcode=52
         return 1
     fi
 
     if [[ ! -L $1 ]]; then
         ShowError "a required NAS system share is missing $(FormatAsFileName $1). Please re-create it via the QTS Control Panel -> Privilege Settings -> Shared Folders."
-        errorcode=54
+        errorcode=53
         return 1
     else
         return 0
@@ -2194,7 +2194,7 @@ IsNotSysSharePresent()
 
     if [[ -z $1 ]]; then
         DebugError 'system share unspecified'
-        errorcode=55
+        errorcode=54
         return 1
     fi
 
@@ -2348,7 +2348,7 @@ IsDebugMode()
 IsNotDebugMode()
     {
 
-    ! [[ $debug_mode = true ]]
+    [[ $debug_mode != true ]]
 
     }
 
@@ -2370,7 +2370,7 @@ IsDevMode()
 IsNotDevMode()
     {
 
-    ! [[ $dev_mode = true ]]
+    [[ $dev_mode != true ]]
 
     }
 
