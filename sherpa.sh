@@ -1775,42 +1775,37 @@ FindAllQPKGDependencies()
         return 1
     fi
 
-    if IsNotSysFilePresent $OPKG_CMD; then
-        errorcode=42
-        return 1
-    fi
-
-    local requested_list=()
-    local last_list=()
-    local new_list=()
-    local dependency_list=()
+    QPKG_download_list=()
+    QPKG_download_count=0
+    local requested_list=''
+    local dependency_list=''
+    local last_list=''
+    local all_list=''
+    local new_list=''
     local iterations=0
     local -r ITERATION_LIMIT=6
     local complete=false
-    local result_size=0
     local -r SEARCH_STARTSECONDS=$(DebugStageStart)
 
-    QPKG_download_count=0
-    QPKG_download_list=()
-    requested_list=($(DeDupeWords "$1"))
-    last_list=($requested_list)
+    requested_list=$(DeDupeWords "$1")
+    last_list=$requested_list
 
     ShowProc 'calculating number of QPKGs required'
-    DebugInfo "requested QPKGs: ${requested_list[*]}"
+    DebugInfo "requested QPKGs: $requested_list"
 
     DebugProc 'finding QPKG dependencies'
     while [[ $iterations -lt $ITERATION_LIMIT ]]; do
         ((iterations++))
-        new_list=()
+        new_list=''
         for package in ${last_list[@]}; do
-            new_list+=($(GetQPKGDeps $package))
+            new_list+=$(GetQPKGDeps $package)
         done
 
-        new_list=($(DeDupeWords "$new_list"))
+        new_list=$(DeDupeWords "$new_list")
 
         if [[ -n $new_list ]]; then
-            dependency_list+=(${new_list[*]})
-            last_list=($new_list)
+            dependency_list+=${new_list[*]}
+            last_list=$new_list
         else
             DebugDone 'complete'
             DebugInfo "found all QPKG dependencies in $iterations iteration$(DisplayPlural $iterations)"
@@ -1819,9 +1814,18 @@ FindAllQPKGDependencies()
         fi
     done
 
-    [[ $complete = false ]] && DebugError "QPKG dependency list is incomplete! Consider raising \$ITERATION_LIMIT [$ITERATION_LIMIT]."
-    QPKG_download_list=($(DeDupeWords "$requested_list $dependency_list"))
+    if [[ $complete = false ]]; then
+        DebugError "QPKG dependency list is incomplete! Consider raising \$ITERATION_LIMIT [$ITERATION_LIMIT]."
+        EnableSuggestIssue
+    fi
 
+    all_list=$(DeDupeWords "$requested_list $dependency_list")
+    DebugInfo "QPKGs requested + dependencies: $all_list"
+
+    DebugProc 'excluding QPKGs already installed'
+    for element in ${all_list[@]}; do
+        ! IsQPKGInstalled $element && QPKG_download_list+=($element)
+    done
     DebugDone 'complete'
     DebugInfo "QPKGs to download: ${QPKG_download_list[*]}"
     QPKG_download_count=${#QPKG_download_list[@]}
@@ -1857,9 +1861,9 @@ FindAllIPKGDependencies()
         return 1
     fi
 
-    IPKG_download_size=0
-    IPKG_download_count=0
     IPKG_download_list=()
+    IPKG_download_count=0
+    IPKG_download_size=0
     local requested_list=''
     local dependency_list=''
     local last_list=''
@@ -1892,13 +1896,15 @@ FindAllIPKGDependencies()
         fi
     done
 
-    [[ $complete = false ]] && DebugError "IPKG dependency list is incomplete! Consider raising \$ITERATION_LIMIT [$ITERATION_LIMIT]."
+    if [[ $complete = false ]]; then
+        DebugError "IPKG dependency list is incomplete! Consider raising \$ITERATION_LIMIT [$ITERATION_LIMIT]."
+        EnableSuggestIssue
+    fi
 
     all_list=$(DeDupeWords "$requested_list $dependency_list")
+    DebugInfo "IPKGs requested + dependencies: $all_list"
 
-    DebugInfo "IPKGs requested including dependencies: $all_list"
-
-    DebugProc 'excluding packages already installed'
+    DebugProc 'excluding IPKGs already installed'
     for element in ${all_list[@]}; do
         $OPKG_CMD status "$element" | $GREP_CMD -q "Status:.*installed" || IPKG_download_list+=($element)
     done
