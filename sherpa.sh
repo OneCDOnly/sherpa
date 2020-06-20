@@ -803,7 +803,7 @@ UpdateEntware()
     local result=0
 
     # if Entware package list was updated only recently, don't run another update
-    [[ -e $FIND_CMD && -e $package_list_file ]] && result=$($FIND_CMD "$package_list_file" -mmin +$package_list_age) || result='new install'
+    [[ -e $package_list_file ]] && result=$($FIND_CMD "$package_list_file" -mmin +$package_list_age) || result='new install'
 
     if [[ -n $result ]]; then
         ShowProc "updating $(FormatAsPackageName Entware) package list"
@@ -1679,7 +1679,7 @@ Cleanup()
 
     cd $SHARE_PUBLIC_PATH
 
-    IsNotError && [[ -d $WORKING_PATH ]] && ! IsDebugMode && ! IsDevMode && rm -rf "$WORKING_PATH"
+    IsNotError && [[ -d $WORKING_PATH ]] && IsNotDebugMode && IsNotDevMode && rm -rf "$WORKING_PATH"
 
     DebugFuncExit
     return 0
@@ -1729,7 +1729,7 @@ ShowResult()
     DebugScript 'elapsed time' "$(ConvertSecsToMinutes "$(($($DATE_CMD +%s)-$([[ -n $SCRIPT_STARTSECONDS ]] && echo $SCRIPT_STARTSECONDS || echo "1")))")"
     DebugInfoThickSeparator
 
-    [[ -e $DEBUG_LOG_PATHFILE ]] && ! IsDebugMode && echo -e "\n- To display the runtime debug log:\n\tcat $(basename $DEBUG_LOG_PATHFILE)\n"
+    [[ -e $DEBUG_LOG_PATHFILE ]] && IsNotDebugMode && echo -e "\n- To display the runtime debug log:\n\tcat $(basename $DEBUG_LOG_PATHFILE)\n"
 
     DebugFuncExit
     return 0
@@ -1798,7 +1798,7 @@ FindAllQPKGDependencies()
     ShowProc 'calculating number of QPKGs required'
     DebugInfo "requested QPKGs: ${requested_list[*]}"
 
-    DebugProc 'finding all QPKG dependencies'
+    DebugProc 'finding QPKG dependencies'
     while [[ $iterations -lt $ITERATION_LIMIT ]]; do
         ((iterations++))
         new_list=()
@@ -1896,7 +1896,7 @@ FindAllIPKGDependencies()
 
     all_list=$(DeDupeWords "$requested_list $dependency_list")
 
-    DebugInfo "IPKGs requested including dependencies: ${all_list[*]}"
+    DebugInfo "IPKGs requested including dependencies: $all_list"
 
     DebugProc 'excluding packages already installed'
     for element in ${all_list[@]}; do
@@ -2339,6 +2339,13 @@ IsDebugMode()
 
     }
 
+IsNotDebugMode()
+    {
+
+    ! [[ $debug_mode = true ]]
+
+    }
+
 EnableDevMode()
     {
 
@@ -2351,6 +2358,13 @@ IsDevMode()
     {
 
     [[ $dev_mode = true ]]
+
+    }
+
+IsNotDevMode()
+    {
+
+    ! [[ $dev_mode = true ]]
 
     }
 
