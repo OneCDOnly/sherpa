@@ -102,8 +102,8 @@ StartQPKG()
         WriteToDisplayAndLog 'OK'
     else
         WriteToDisplayAndLog 'failed!'
-        WriteToDisplayAndLog "$(FormatAsResult $result)"
         WriteToDisplayAndLog "$(FormatAsFuncMessages "$exec_msgs")"
+        WriteToDisplayAndLog "$(FormatAsResult $result)"
         WriteErrorToSystemLog "Daemon launch failed. Check $(FormatAsFileName "$INIT_LOG_PATHFILE") for more details."
         return 1
     fi
@@ -170,8 +170,8 @@ BackupConfig()
         WriteInfoToSystemLog 'updated configuration backup'
     else
         WriteToDisplayAndLog 'failed!'
-        WriteToDisplayAndLog "$(FormatAsResult $result)"
         WriteToDisplayAndLog "$(FormatAsFuncMessages "$exec_msgs")"
+        WriteToDisplayAndLog "$(FormatAsResult $result)"
         WriteWarningToSystemLog "A problem occurred while updating configuration backup. Check $(FormatAsFileName "$INIT_LOG_PATHFILE") for more details."
         return 1
     fi
@@ -197,8 +197,8 @@ RestoreConfig()
             StartQPKG
         else
             WriteToDisplayAndLog 'failed!'
-            WriteToDisplayAndLog "$(FormatAsResult $result)"
             WriteToDisplayAndLog "$(FormatAsFuncMessages "$exec_msgs")"
+            WriteToDisplayAndLog "$(FormatAsResult $result)"
             WriteWarningToSystemLog "A problem occurred while restoring configuration backup. Check $(FormatAsFileName "$INIT_LOG_PATHFILE") for more details."
             return 1
         fi
@@ -232,12 +232,12 @@ UpdateLanguages()
     if [[ $result -eq 0 ]]; then
         echo "$version_current_number" > $version_store_pathfile
         WriteToDisplayAndLog 'OK'
-        WriteToLog "$(FormatAsResult $result)"
         WriteToLog "$(FormatAsFuncMessages "$exec_msgs")"
+        WriteToLog "$(FormatAsResult $result)"
     else
         WriteToDisplayAndLog 'failed!'
-        WriteToDisplayAndLog "$(FormatAsResult $result)"
         WriteToDisplayAndLog "$(FormatAsFuncMessages "$exec_msgs")"
+        WriteToDisplayAndLog "$(FormatAsResult $result)"
         WriteWarningToSystemLog "A problem occurred while updating language support. Check $(FormatAsFileName "$INIT_LOG_PATHFILE") for more details."
     fi
 
@@ -291,12 +291,12 @@ PullGitRepo()
 
     if [[ $result = 0 ]]; then
         WriteToDisplayAndLog 'OK'
-        WriteToLog "$(FormatAsResult $result)"
         WriteToLog "$(FormatAsFuncMessages "$exec_msgs")"
+        WriteToLog "$(FormatAsResult $result)"
     else
         WriteToDisplayAndLog 'failed!'
-        WriteToDisplayAndLog "$(FormatAsResult $result)"
         WriteToDisplayAndLog "$(FormatAsFuncMessages "$exec_msgs")"
+        WriteToDisplayAndLog "$(FormatAsResult $result)"
         WriteErrorToSystemLog "An error occurred while updating $(FormatAsPackageName $1) daemon from remote repository. Check $(FormatAsFileName "$INIT_LOG_PATHFILE") for more details."
         return 1
     fi
@@ -412,7 +412,7 @@ FormatAsStdout()
 
     [[ -z $1 ]] && return 1
 
-    echo "\"$1\""
+    echo "= output: \"$1\""
 
     }
 
@@ -439,7 +439,8 @@ FormatAsFuncMessages()
 
     [[ -z $1 ]] && return 1
 
-    echo "= ${FUNCNAME[1]}() output: $(FormatAsStdout "$1")"
+    echo "= ${FUNCNAME[1]}()"
+    FormatAsStdout "$1"
 
     }
 

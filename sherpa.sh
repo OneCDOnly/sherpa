@@ -38,10 +38,11 @@ ResetErrorcode()
 Init()
     {
 
-    readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200620
     DisableDebugMode
     ResetErrorcode
+
+    readonly SCRIPT_FILE=sherpa.sh
+    readonly SCRIPT_VERSION=200620
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -146,14 +147,14 @@ Init()
         readonly SHARE_DOWNLOAD_PATH=$DEFAULT_SHARE_DOWNLOAD_PATH
     else
         readonly SHARE_DOWNLOAD_PATH=/share/$($GETCFG_CMD SHARE_DEF defDownload -d Qdownload -f $DEFAULT_SHARES_PATHFILE)
-        ! IsSysSharePresent $SHARE_DOWNLOAD_PATH && return 1
+        IsNotSysSharePresent $SHARE_DOWNLOAD_PATH && return 1
     fi
 
     if [[ -L $DEFAULT_SHARE_PUBLIC_PATH ]]; then
         readonly SHARE_PUBLIC_PATH=$DEFAULT_SHARE_PUBLIC_PATH
     else
         readonly SHARE_PUBLIC_PATH=/share/$($GETCFG_CMD SHARE_DEF defPublic -d Qpublic -f $DEFAULT_SHARES_PATHFILE)
-        ! IsSysSharePresent $SHARE_PUBLIC_PATH && return 1
+        IsNotSysSharePresent $SHARE_PUBLIC_PATH && return 1
     fi
 
     # sherpa-supported package details - parallel arrays
@@ -361,11 +362,15 @@ Init()
 LogRuntimeParameters()
     {
 
-    local conflicting_qpkg=''
+    if [[ -f .sherpa.devmode ]]; then
+        EnableDebugMode
+        EnableDevMode
+    fi
 
     ParseArgs
 
     DebugFuncEntry
+    local conflicting_qpkg=''
 
     DebugInfoThickSeparator
     DebugScript 'started' "$($DATE_CMD | $TR_CMD -s ' ')"
@@ -433,7 +438,7 @@ LogRuntimeParameters()
         result=$?
 
         if [[ $result -ne 0 ]]; then
-            ShowError "unable to create working directory ($WORKING_PATH) [$result]"
+            ShowError "unable to create working directory $(FormatAsFileName "$WORKING_PATH") $(FormatAsExitcode $result)"
             errorcode=4
         else
             cd "$WORKING_PATH"
@@ -445,7 +450,7 @@ LogRuntimeParameters()
         result=$?
 
         if [[ $result -ne 0 ]]; then
-            ShowError "unable to create QPKG download directory ($QPKG_DL_PATH) [$result]"
+            ShowError "unable to create QPKG download directory $(FormatAsFileName "$QPKG_DL_PATH") $(FormatAsExitcode $result)"
             errorcode=5
         fi
     fi
@@ -456,7 +461,7 @@ LogRuntimeParameters()
         result=$?
 
         if [[ $result -ne 0 ]]; then
-            ShowError "unable to create IPKG download directory ($IPKG_DL_PATH) [$result]"
+            ShowError "unable to create IPKG download directory $(FormatAsFileName "$IPKG_DL_PATH") $(FormatAsExitcode $result)"
             errorcode=6
         else
             monitor_flag="$IPKG_DL_PATH/.monitor"
@@ -468,7 +473,7 @@ LogRuntimeParameters()
         result=$?
 
         if [[ $result -ne 0 ]]; then
-            ShowError "unable to create IPKG cache directory ($IPKG_CACHE_PATH) [$result]"
+            ShowError "unable to create IPKG cache directory $(FormatAsFileName "$IPKG_CACHE_PATH") $(FormatAsExitcode $result)"
             errorcode=7
         fi
     fi
@@ -510,18 +515,13 @@ LogRuntimeParameters()
 ParseArgs()
     {
 
-    if [[ -f .sherpa.devmode ]]; then
-        EnableDebugMode
-        EnableDevMode
-    fi
-
     if [[ -z $USER_ARGS_RAW ]]; then
         EnableHelpOnly
         errorcode=11
         return 1
     fi
 
-    local user_args=($(echo "$USER_ARGS_RAW" | $TR_CMD '[A-Z]' '[a-z]'))
+    local user_args=($($TR_CMD '[A-Z]' '[a-z]' <<< "$USER_ARGS_RAW"))
     local arg=''
     local current_operation=''
     local target_app=''
@@ -798,8 +798,9 @@ UpdateEntware()
     DebugFuncEntry
     local package_list_file=/opt/var/opkg-lists/entware
     local package_list_age=60
-    local result=0
     local log_pathfile="$WORKING_PATH/entware-update.log"
+    local exec_msgs=''
+    local result=0
 
     # if Entware package list was updated only recently, don't run another update
     [[ -e $FIND_CMD && -e $package_list_file ]] && result=$($FIND_CMD "$package_list_file" -mmin +$package_list_age) || result='new install'
@@ -807,9 +808,10 @@ UpdateEntware()
     if [[ -n $result ]]; then
         ShowProc "updating $(FormatAsPackageName Entware) package list"
 
-        install_msgs=$($OPKG_CMD update 2>&1)
+        exec_msgs=$($OPKG_CMD update 2>&1)
         result=$?
-        echo -e "${install_msgs}\nresult=[$result]" >> "$log_pathfile"
+        FormatAsStdout "$exec_msgs" >> "$log_pathfile"
+        FormatAsResult "$result" >> "$log_pathfile"
 
         if [[ $result -eq 0 ]]; then
             ShowDone "updated $(FormatAsPackageName Entware) package list"
@@ -897,7 +899,6 @@ InstallIPKGs()
 
     DebugFuncEntry
     local returncode=0
-    local install_msgs=''
     local packages="$SHERPA_COMMON_IPKGS"
     local index=0
 
@@ -938,10 +939,11 @@ InstallIPKGBatch()
     fi
 
     DebugFuncEntry
-    local result=0
     local returncode=0
     local requested_IPKGs=''
     local log_pathfile="$IPKG_DL_PATH/IPKGs.$INSTALL_LOG_FILE"
+    local exec_msgs=''
+    local result=0
 
     requested_IPKGs="$1"
 
@@ -959,17 +961,18 @@ InstallIPKGBatch()
         trap CTRL_C_Captured INT
         _MonitorDirSize_ "$IPKG_DL_PATH" $IPKG_download_size &
 
-        install_msgs=$($OPKG_CMD install $ignore_space_arg --force-overwrite ${IPKG_download_list[*]} --cache "$IPKG_CACHE_PATH" --tmp-dir "$IPKG_DL_PATH" 2>&1)
+        exec_msgs=$($OPKG_CMD install $ignore_space_arg --force-overwrite ${IPKG_download_list[*]} --cache "$IPKG_CACHE_PATH" --tmp-dir "$IPKG_DL_PATH" 2>&1)
         result=$?
 
         [[ -e $monitor_flag ]] && { rm "$monitor_flag"; $SLEEP_CMD 2 ;}
         trap - INT
-        echo -e "${install_msgs}\nresult=[$result]" > "$log_pathfile"
+        FormatAsStdout "$exec_msgs" >> "$log_pathfile"
+        FormatAsResult "$result" >> "$log_pathfile"
 
         if [[ $result -eq 0 ]]; then
             ShowDone "downloaded & installed $IPKG_download_count IPKG$(DisplayPlural $IPKG_download_count)"
         else
-            ShowError "download & install IPKG$(DisplayPlural $IPKG_download_count) failed [$result]"
+            ShowError "download & install IPKG$(DisplayPlural $IPKG_download_count) failed $(FormatAsExitcode $result)"
             DebugErrorFile "$log_pathfile"
 
             errorcode=17
@@ -1006,7 +1009,9 @@ DowngradePy3()
     local pkg_arch=$($BASENAME_CMD $source_url | $SED_CMD 's|\-k|\-|;s|sf\-|\-|')
     local ipkg_urls=()
     local dl_log_pathfile="$IPKG_DL_PATH/IPKGs.$DOWNLOAD_LOG_FILE"
-    local install_log_pathfile="$IPKG_DL_PATH/IPKGs.$INSTALL_LOG_FILE"
+    local log_pathfile="$IPKG_DL_PATH/IPKGs.$INSTALL_LOG_FILE"
+    local exec_msgs=''
+    local result=0
 
     ShowProc "$(FormatAsPackageName Watcher3) selected so downgrading Python 3"
 
@@ -1029,9 +1034,10 @@ DowngradePy3()
 
     (cd "$IPKG_DL_PATH" && $CURL_CMD $curl_insecure_arg ${ipkg_urls[@]} >> "$dl_log_pathfile" 2>&1)
 
-    install_msgs=$($OPKG_CMD install --force-downgrade "$IPKG_DL_PATH"/*.ipk 2>&1)
+    exec_msgs=$($OPKG_CMD install --force-downgrade "$IPKG_DL_PATH"/*.ipk 2>&1)
     result=$?
-    echo -e "${install_msgs}\nresult=[$result]" > "$install_log_pathfile"
+    FormatAsStdout "$exec_msgs" >> "$log_pathfile"
+    FormatAsResult "$result" >> "$log_pathfile"
 
     ShowDone "$(FormatAsPackageName Watcher3) selected so downgraded Python 3"
 
@@ -1050,7 +1056,7 @@ InstallPy2Modules()
 
     DebugFuncEntry
     local install_cmd=''
-    local install_msgs=''
+    local exec_msgs=''
     local result=0
     local returncode=0
     local packages=''
@@ -1084,14 +1090,16 @@ InstallPy2Modules()
 
     ShowProc "downloading & installing $desc"
 
-    install_msgs=$(eval "$install_cmd")
+    exec_msgs=$(eval "$install_cmd")
     result=$?
-    echo -e "command=[${install_cmd}]\nmessages=[${install_msgs}]\nresult=[$result]" > "$log_pathfile"
+    echo -e "command=[${install_cmd}]" >> "$log_pathfile"
+    FormatAsStdout "$exec_msgs" >> "$log_pathfile"
+    FormatAsResult "$result" >> "$log_pathfile"
 
     if [[ $result -eq 0 ]]; then
         ShowDone "downloaded & installed $desc"
     else
-        ShowError "download & install $desc failed [$result]"
+        ShowError "download & install $desc failed $(FormatAsResult "$result")"
         DebugErrorFile "$log_pathfile"
 
         errorcode=19
@@ -1110,7 +1118,7 @@ InstallPy3Modules()
 
     DebugFuncEntry
     local install_cmd=''
-    local install_msgs=''
+    local exec_msgs=''
     local result=0
     local returncode=0
     local packages=''
@@ -1145,14 +1153,16 @@ InstallPy3Modules()
 
     ShowProc "downloading & installing $desc"
 
-    install_msgs=$(eval "$install_cmd")
+    exec_msgs=$(eval "$install_cmd")
     result=$?
-    echo -e "command=[${install_cmd}]\nmessages=[${install_msgs}]\nresult=[$result]" > "$log_pathfile"
+    echo -e "command=[${install_cmd}]" >> "$log_pathfile"
+    FormatAsStdout "$exec_msgs" >> "$log_pathfile"
+    FormatAsResult "$result" >> "$log_pathfile"
 
     if [[ $result -eq 0 ]]; then
         ShowDone "downloaded & installed $desc"
     else
-        ShowError "download & install $desc failed [$result]"
+        ShowError "download & install $desc failed $(FormatAsResult "$result")"
         DebugErrorFile "$log_pathfile"
 
         errorcode=21
@@ -1207,7 +1217,7 @@ InstallQPKG()
     fi
 
     local target_file=''
-    local install_msgs=''
+    local exec_msgs=''
     local result=0
     local returncode=0
     local local_pathfile="$(GetQPKGPathFilename $1)"
@@ -1219,11 +1229,12 @@ InstallQPKG()
 
     local log_pathfile="$local_pathfile.$INSTALL_LOG_FILE"
     target_file=$($BASENAME_CMD "$local_pathfile")
-    ShowProcLong "installing file $(FormatAsFileName "$target_file")"
-    install_msgs=$(eval sh "$local_pathfile" 2>&1)
-    result=$?
 
-    echo -e "${install_msgs}\nresult=$(FormatAsExitcode $result)" > "$log_pathfile"
+    ShowProcLong "installing file $(FormatAsFileName "$target_file")"
+    exec_msgs=$(eval sh "$local_pathfile" 2>&1)
+    result=$?
+    FormatAsStdout "$exec_msgs" >> "$log_pathfile"
+    FormatAsResult "$result" >> "$log_pathfile"
 
     if [[ $result -eq 0 || $result -eq 10 ]]; then
         ShowDone "installed file $(FormatAsFileName "$target_file")"
@@ -1297,7 +1308,7 @@ DownloadQPKG()
             result=$?
         fi
 
-        echo -e "\nresult=[$result]" >> "$log_pathfile"
+        FormatAsResult "$result" >> "$log_pathfile"
 
         if [[ $result -eq 0 ]]; then
             if [[ $($MD5SUM_CMD "$local_pathfile" | $CUT_CMD -f1 -d' ') = $remote_filename_md5 ]]; then
@@ -1460,7 +1471,7 @@ QPKGServiceCtl()
         return 1
     fi
 
-    local msgs=''
+    local exec_msgs=''
     local result=0
     local init_pathfile=''
 
@@ -1469,9 +1480,10 @@ QPKGServiceCtl()
     case $1 in
         start)
             ShowProcLong "starting service $(FormatAsPackageName $2)"
-            msgs=$("$init_pathfile" start)
+            exec_msgs=$("$init_pathfile" start)
             result=$?
-            echo -e "$(FormatAsStdout "$msgs")\nresult=$(FormatAsExitcode $result)" >> "$qpkg_pathfile.$START_LOG_FILE"
+            FormatAsStdout "$exec_msgs" >> "$qpkg_pathfile.$START_LOG_FILE"
+            FormatAsResult "$result" >> "$qpkg_pathfile.$START_LOG_FILE"
 
             if [[ $result -eq 0 ]]; then
                 ShowDone "started service $(FormatAsPackageName $2)"
@@ -1490,9 +1502,10 @@ QPKGServiceCtl()
             ;;
         stop)
             ShowProc "stopping service $(FormatAsPackageName $2)"
-            msgs=$("$init_pathfile" stop)
+            exec_msgs=$("$init_pathfile" stop)
             result=$?
-            echo -e "$(FormatAsStdout "$msgs")\nresult=$(FormatAsExitcode $result)" >> "$qpkg_pathfile.$STOP_LOG_FILE"
+            FormatAsStdout "$exec_msgs" >> "$qpkg_pathfile.$STOP_LOG_FILE"
+            FormatAsResult "$result" >> "$qpkg_pathfile.$STOP_LOG_FILE"
 
             if [[ $result -eq 0 ]]; then
                 ShowDone "stopped service $(FormatAsPackageName $2)"
@@ -1511,9 +1524,10 @@ QPKGServiceCtl()
             ;;
         restart)
             ShowProc "restarting service $(FormatAsPackageName $2)"
-            msgs=$("$init_pathfile" restart)
+            exec_msgs=$("$init_pathfile" restart)
             result=$?
-            echo -e "$(FormatAsStdout "$msgs")\nresult=$(FormatAsExitcode $result)" >> "$qpkg_pathfile.$RESTART_LOG_FILE"
+            FormatAsStdout "$exec_msgs" >> "$qpkg_pathfile.$RESTART_LOG_FILE"
+            FormatAsResult "$result" >> "$qpkg_pathfile.$RESTART_LOG_FILE"
 
             if [[ $result -eq 0 ]]; then
                 ShowDone "restarted service $(FormatAsPackageName $2)"
@@ -1676,7 +1690,6 @@ ShowResult()
     {
 
     DebugFuncEntry
-
     local RE=''
 
     if ! IsHelpOnly; then
@@ -2160,6 +2173,24 @@ IsSysSharePresent()
 
     }
 
+IsNotSysSharePresent()
+    {
+
+    # input:
+    #   $1 = symlink path to check
+    # output:
+    #   $? = 0 (true) or 1 (false)
+
+    if [[ -z $1 ]]; then
+        DebugError 'system share unspecified'
+        errorcode=55
+        return 1
+    fi
+
+    ! IsSysSharePresent "$1"
+
+    }
+
 MatchAbbrvToQPKGName()
     {
 
@@ -2385,7 +2416,7 @@ FormatAsStdout()
 
     [[ -z $1 ]] && return 1
 
-    echo "\"$1\""
+    echo "= output: \"$1\""
 
     }
 
@@ -2395,6 +2426,15 @@ FormatAsExitcode()
     [[ -z $1 ]] && return 1
 
     echo "[$1]"
+
+    }
+
+FormatAsResult()
+    {
+
+    [[ -z $1 ]] && return 1
+
+    echo "= result: $(FormatAsExitcode "$1")"
 
     }
 
