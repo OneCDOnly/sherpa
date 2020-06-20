@@ -42,7 +42,7 @@ Init()
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200620
+    readonly SCRIPT_VERSION=200621
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -220,8 +220,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(LazyLibrarian)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/LazyLibrarian/build/LazyLibrarian_200607.qpkg)
-        SHERPA_QPKG_MD5+=(9bd5e00bd11980986389c36a215402d8)
+        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/LazyLibrarian/build/LazyLibrarian_200621.qpkg)
+        SHERPA_QPKG_MD5+=(798546bbfff3d6540423c11d1df0b8ec)
         SHERPA_QPKG_ABBRVS+=('ll lazy lazylibrarian')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python3-pip python3-pyopenssl python3-requests')
@@ -1863,7 +1863,7 @@ FindAllIPKGDependencies()
     local requested_list=()
     local last_list=()
     local all_list=()
-    local dependency_list=()
+    local dependency_list=''
     local iterations=0
     local -r ITERATION_LIMIT=20
     local complete=false
@@ -1871,8 +1871,8 @@ FindAllIPKGDependencies()
     local -r SEARCH_STARTSECONDS=$(DebugStageStart)
 
     # remove duplicate entries
-    requested_list=($(DeDupeWords "$1"))
-    last_list=($requested_list)
+    requested_list=$(DeDupeWords "$1")
+    last_list=$requested_list
 
     ShowProc 'calculating number and total size of IPKGs required'
     DebugInfo "requested IPKGs: ${requested_list[*]}"
@@ -1883,7 +1883,7 @@ FindAllIPKGDependencies()
         last_list=$($OPKG_CMD depends -A $last_list | $GREP_CMD -v 'depends on:' | $SED_CMD 's|^[[:blank:]]*||;s|[[:blank:]]*$||' | $TR_CMD ' ' '\n' | $SORT_CMD | $UNIQ_CMD)
 
         if [[ -n $last_list ]]; then
-            dependency_list+=($last_list)
+            [[ -n $dependency_list ]] && dependency_list+=$(echo -e "\n$last_list") || dependency_list=$last_list
         else
             DebugDone 'complete'
             DebugInfo "found all IPKG dependencies in $iterations iteration$(DisplayPlural $iterations)"
@@ -1893,7 +1893,9 @@ FindAllIPKGDependencies()
     done
 
     [[ $complete = false ]] && DebugError "IPKG dependency list is incomplete! Consider raising \$ITERATION_LIMIT [$ITERATION_LIMIT]."
-    all_list=($(DeDupeWords "$requested_list $dependency_list"))
+
+    # remove duplicate entries
+    all_list=$(echo "$requested_list $dependency_list" | $TR_CMD ' ' '\n' | $SORT_CMD | $UNIQ_CMD | $TR_CMD '\n' ' ')
 
     DebugProc 'excluding packages already installed'
     for element in ${all_list[@]}; do

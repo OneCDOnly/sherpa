@@ -57,6 +57,8 @@ Init()
 
     # this package is shipped without a default config, so don't check for one
 
+    ChoosePort
+
     [[ ! -d $BACKUP_PATH ]] && mkdir -p $BACKUP_PATH
 
     return 0
