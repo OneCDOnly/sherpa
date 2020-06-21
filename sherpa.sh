@@ -363,11 +363,6 @@ Init()
 LogRuntimeParameters()
     {
 
-    if [[ -f .sherpa.devmode ]]; then
-        EnableDebugMode
-        EnableDevMode
-    fi
-
     ParseArgs
 
     if IsVersionOnly; then
@@ -680,6 +675,8 @@ DownloadQPKGs()
     {
 
     IsError && return
+
+    [[ -f .sherpa.devmode ]] && EnableDevMode
 
     DebugFuncEntry
     local QPKGs_to_download=''
@@ -2426,6 +2423,8 @@ IsNotDebugMode()
 
 EnableDevMode()
     {
+
+    EnableDebugMode
 
     dev_mode=true
     DebugVar dev_mode
