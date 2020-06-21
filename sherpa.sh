@@ -2138,7 +2138,7 @@ IsQPKGInstalled()
 
     if [[ -z $1 ]]; then
         DebugError 'QPKG name unspecified'
-        errorcode=47
+        errorcode=48
         return 1
     fi
 
@@ -2156,7 +2156,7 @@ IsQPKGEnabled()
 
     if [[ -z $1 ]]; then
         DebugError 'QPKG name unspecified'
-        errorcode=48
+        errorcode=49
         return 1
     fi
 
@@ -2174,7 +2174,7 @@ IsIPKGInstalled()
 
     if [[ -z $1 ]]; then
         DebugError 'IPKG name unspecified'
-        errorcode=49
+        errorcode=50
         return 1
     fi
 
@@ -2198,13 +2198,13 @@ IsSysFilePresent()
 
     if [[ -z $1 ]]; then
         DebugError 'system file unspecified'
-        errorcode=50
+        errorcode=51
         return 1
     fi
 
     if ! [[ -f $1 || -L $1 ]]; then
         ShowError "a required NAS system file is missing $(FormatAsFileName $1)"
-        errorcode=51
+        errorcode=52
         return 1
     else
         return 0
@@ -2222,7 +2222,7 @@ IsNotSysFilePresent()
 
     if [[ -z $1 ]]; then
         DebugError 'system file unspecified'
-        errorcode=52
+        errorcode=53
         return 1
     fi
 
@@ -2240,13 +2240,13 @@ IsSysSharePresent()
 
     if [[ -z $1 ]]; then
         DebugError 'system share unspecified'
-        errorcode=53
+        errorcode=54
         return 1
     fi
 
     if [[ ! -L $1 ]]; then
         ShowError "a required NAS system share is missing $(FormatAsFileName $1). Please re-create it via the QTS Control Panel -> Privilege Settings -> Shared Folders."
-        errorcode=54
+        errorcode=55
         return 1
     else
         return 0
@@ -2264,7 +2264,7 @@ IsNotSysSharePresent()
 
     if [[ -z $1 ]]; then
         DebugError 'system share unspecified'
-        errorcode=55
+        errorcode=56
         return 1
     fi
 
