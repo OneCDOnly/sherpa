@@ -819,6 +819,7 @@ UpdateEntware()
     local package_list_file=/opt/var/opkg-lists/entware
     local package_list_age=60
     local log_pathfile="$WORKING_PATH/entware-update.log"
+    local exec_cmd=''
     local exec_msgs=''
     local result=0
 
@@ -828,10 +829,12 @@ UpdateEntware()
     if [[ -n $result ]]; then
         ShowProc "updating $(FormatAsPackageName Entware) package list"
 
-        exec_msgs=$($OPKG_CMD update 2>&1)
+        exec_cmd="$OPKG_CMD update"
+        exec_msgs=$(eval $exec_cmd 2>&1)
         result=$?
-        FormatAsStdout "$exec_msgs" >> "$log_pathfile"
+        FormatAsCommand "$exec_cmd" >> "$log_pathfile"
         FormatAsResult "$result" >> "$log_pathfile"
+        FormatAsStdout "$exec_msgs" >> "$log_pathfile"
 
         if [[ $result -eq 0 ]]; then
             ShowDone "updated $(FormatAsPackageName Entware) package list"
@@ -962,6 +965,7 @@ InstallIPKGBatch()
     local returncode=0
     local requested_IPKGs=''
     local log_pathfile="$IPKG_DL_PATH/IPKGs.$INSTALL_LOG_FILE"
+    local exec_cmd=''
     local exec_msgs=''
     local result=0
 
@@ -981,13 +985,15 @@ InstallIPKGBatch()
         trap CTRL_C_Captured INT
         _MonitorDirSize_ "$IPKG_DL_PATH" $IPKG_download_size &
 
-        exec_msgs=$($OPKG_CMD install $ignore_space_arg --force-overwrite ${IPKG_download_list[*]} --cache "$IPKG_CACHE_PATH" --tmp-dir "$IPKG_DL_PATH" 2>&1)
+        exec_cmd="$OPKG_CMD install $ignore_space_arg --force-overwrite ${IPKG_download_list[*]} --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH"
+        exec_msgs=$(eval $exec_cmd 2>&1)
         result=$?
 
         [[ -e $monitor_flag ]] && { rm "$monitor_flag"; $SLEEP_CMD 2 ;}
         trap - INT
-        FormatAsStdout "$exec_msgs" >> "$log_pathfile"
+        FormatAsCommand "$exec_cmd" >> "$log_pathfile"
         FormatAsResult "$result" >> "$log_pathfile"
+        FormatAsStdout "$exec_msgs" >> "$log_pathfile"
 
         if [[ $result -eq 0 ]]; then
             ShowDone "downloaded & installed $IPKG_download_count IPKG$(DisplayPlural $IPKG_download_count)"
@@ -1030,10 +1036,11 @@ DowngradePy3()
     local ipkg_urls=()
     local dl_log_pathfile="$IPKG_DL_PATH/IPKGs.$DOWNLOAD_LOG_FILE"
     local log_pathfile="$IPKG_DL_PATH/IPKGs.$INSTALL_LOG_FILE"
+    local exec_cmd=''
     local exec_msgs=''
     local result=0
 
-    ShowProc "$(FormatAsPackageName Watcher3) selected so downgrading Python 3"
+    ShowProc "$(FormatAsPackageName Watcher3) selected so downgrading Python 3 IPKGs"
 
     for pkg_name in ${pkg_names[@]}; do
         ipkg_urls+=(-O "${source_url}/archive/${pkg_base}-${pkg_name}_${pkg_version}_${pkg_arch}.ipk")
@@ -1054,12 +1061,14 @@ DowngradePy3()
 
     (cd "$IPKG_DL_PATH" && $CURL_CMD $curl_insecure_arg ${ipkg_urls[@]} >> "$dl_log_pathfile" 2>&1)
 
-    exec_msgs=$($OPKG_CMD install --force-downgrade "$IPKG_DL_PATH"/*.ipk 2>&1)
+    exec_cmd="$OPKG_CMD install --force-downgrade $IPKG_DL_PATH/*.ipk"
+    exec_msgs=$(eval $exec_cmd 2>&1)
     result=$?
-    FormatAsStdout "$exec_msgs" >> "$log_pathfile"
+    FormatAsCommand "$exec_cmd" >> "$log_pathfile"
     FormatAsResult "$result" >> "$log_pathfile"
+    FormatAsStdout "$exec_msgs" >> "$log_pathfile"
 
-    ShowDone "$(FormatAsPackageName Watcher3) selected so downgraded Python 3"
+    ShowDone "$(FormatAsPackageName Watcher3) selected so downgraded Python 3 IPKGs"
 
     DebugFuncExit
     return $returncode
@@ -1075,7 +1084,7 @@ InstallPy2Modules()
     return
 
     DebugFuncEntry
-    local install_cmd=''
+    local exec_cmd=''
     local exec_msgs=''
     local result=0
     local returncode=0
@@ -1088,11 +1097,6 @@ InstallPy2Modules()
             packages+=" ${SHERPA_QPKG_PIP2S[$index]}"
         fi
     done
-
-    [[ -n ${SHERPA_COMMON_PIP2S// /} ]] && install_cmd="$pip2_cmd install $SHERPA_COMMON_PIP2S --disable-pip-version-check 2>&1"
-    [[ -n ${SHERPA_COMMON_PIP2S// /} && -n ${packages// /} ]] && install_cmd+=" && "
-    [[ -n ${packages// /} ]] && install_cmd+="$pip2_cmd install $packages --disable-pip-version-check 2>&1"
-    [[ -z $install_cmd ]] && return
 
     # sometimes, OpenWRT 'pip' is for Py3, so let's prefer a Py2 version
     if [[ -e /opt/bin/pip2 ]]; then
@@ -1108,13 +1112,18 @@ InstallPy2Modules()
         fi
     fi
 
+    [[ -n ${SHERPA_COMMON_PIP2S// /} ]] && exec_cmd="$pip2_cmd install $SHERPA_COMMON_PIP2S --disable-pip-version-check"
+    [[ -n ${SHERPA_COMMON_PIP2S// /} && -n ${packages// /} ]] && exec_cmd+=" && "
+    [[ -n ${packages// /} ]] && exec_cmd+="$pip2_cmd install $packages --disable-pip-version-check"
+    [[ -z $exec_cmd ]] && return
+
     ShowProc "downloading & installing $desc"
 
-    exec_msgs=$(eval "$install_cmd")
+    exec_msgs=$(eval $exec_cmd 2>&1)
     result=$?
-    echo -e "command=[${install_cmd}]" >> "$log_pathfile"
-    FormatAsStdout "$exec_msgs" >> "$log_pathfile"
+    FormatAsCommand "$exec_cmd" >> "$log_pathfile"
     FormatAsResult "$result" >> "$log_pathfile"
+    FormatAsStdout "$exec_msgs" >> "$log_pathfile"
 
     if [[ $result -eq 0 ]]; then
         ShowDone "downloaded & installed $desc"
@@ -1137,7 +1146,7 @@ InstallPy3Modules()
     IsError && return
 
     DebugFuncEntry
-    local install_cmd=''
+    local exec_cmd=''
     local exec_msgs=''
     local result=0
     local returncode=0
@@ -1150,11 +1159,6 @@ InstallPy3Modules()
             packages+=" ${SHERPA_QPKG_PIP3S[$index]}"
         fi
     done
-
-    [[ -n ${SHERPA_COMMON_PIP3S// /} ]] && install_cmd="$pip3_cmd install $SHERPA_COMMON_PIP3S --disable-pip-version-check 2>&1"
-    [[ -n ${SHERPA_COMMON_PIP3S// /} && -n ${packages// /} ]] && install_cmd+=" && "
-    [[ -n ${packages// /} ]] && install_cmd+="$pip3_cmd install $packages --disable-pip-version-check 2>&1"
-    [[ -z $install_cmd ]] && return
 
     # sometimes, OpenWRT doesn't have a 'pip3'
     if [[ -e /opt/bin/pip3 ]]; then
@@ -1171,13 +1175,18 @@ InstallPy3Modules()
         fi
     fi
 
+    [[ -n ${SHERPA_COMMON_PIP3S// /} ]] && exec_cmd="$pip3_cmd install $SHERPA_COMMON_PIP3S --disable-pip-version-check"
+    [[ -n ${SHERPA_COMMON_PIP3S// /} && -n ${packages// /} ]] && exec_cmd+=" && "
+    [[ -n ${packages// /} ]] && exec_cmd+="$pip3_cmd install $packages --disable-pip-version-check"
+    [[ -z $exec_cmd ]] && return
+
     ShowProc "downloading & installing $desc"
 
-    exec_msgs=$(eval "$install_cmd")
+    exec_msgs=$(eval $exec_cmd 2>&1)
     result=$?
-    echo -e "command=[${install_cmd}]" >> "$log_pathfile"
-    FormatAsStdout "$exec_msgs" >> "$log_pathfile"
+    FormatAsCommand "$exec_cmd" >> "$log_pathfile"
     FormatAsResult "$result" >> "$log_pathfile"
+    FormatAsStdout "$exec_msgs" >> "$log_pathfile"
 
     if [[ $result -eq 0 ]]; then
         ShowDone "downloaded & installed $desc"
@@ -1237,6 +1246,7 @@ InstallQPKG()
     fi
 
     local target_file=''
+    local exec_cmd=''
     local exec_msgs=''
     local result=0
     local returncode=0
@@ -1251,10 +1261,13 @@ InstallQPKG()
     target_file=$($BASENAME_CMD "$local_pathfile")
 
     ShowProcLong "installing file $(FormatAsFileName "$target_file")"
-    exec_msgs=$(eval sh "$local_pathfile" 2>&1)
+
+    exec_cmd="sh $local_pathfile"
+    exec_msgs=$(eval $exec_cmd 2>&1)
     result=$?
-    FormatAsStdout "$exec_msgs" >> "$log_pathfile"
+    FormatAsCommand "$exec_cmd" >> "$log_pathfile"
     FormatAsResult "$result" >> "$log_pathfile"
+    FormatAsStdout "$exec_msgs" >> "$log_pathfile"
 
     if [[ $result -eq 0 || $result -eq 10 ]]; then
         ShowDone "installed file $(FormatAsFileName "$target_file")"
@@ -1492,6 +1505,7 @@ QPKGServiceCtl()
         return 1
     fi
 
+    local exec_cmd=''
     local exec_msgs=''
     local result=0
     local init_pathfile=''
@@ -1501,10 +1515,12 @@ QPKGServiceCtl()
     case $1 in
         start)
             ShowProcLong "starting service $(FormatAsPackageName $2)"
-            exec_msgs=$("$init_pathfile" start)
+            exec_cmd="$init_pathfile start"
+            exec_msgs=$(eval $exec_cmd 2>&1)
             result=$?
-            FormatAsStdout "$exec_msgs" >> "$qpkg_pathfile.$START_LOG_FILE"
+            FormatAsCommand "$exec_cmd" >> "$qpkg_pathfile.$START_LOG_FILE"
             FormatAsResult "$result" >> "$qpkg_pathfile.$START_LOG_FILE"
+            FormatAsStdout "$exec_msgs" >> "$qpkg_pathfile.$START_LOG_FILE"
 
             if [[ $result -eq 0 ]]; then
                 ShowDone "started service $(FormatAsPackageName $2)"
@@ -1523,10 +1539,12 @@ QPKGServiceCtl()
             ;;
         stop)
             ShowProc "stopping service $(FormatAsPackageName $2)"
-            exec_msgs=$("$init_pathfile" stop)
+            exec_cmd="$init_pathfile stop"
+            exec_msgs=$(eval $exec_cmd 2>&1)
             result=$?
-            FormatAsStdout "$exec_msgs" >> "$qpkg_pathfile.$STOP_LOG_FILE"
+            FormatAsCommand "$exec_cmd" >> "$qpkg_pathfile.$STOP_LOG_FILE"
             FormatAsResult "$result" >> "$qpkg_pathfile.$STOP_LOG_FILE"
+            FormatAsStdout "$exec_msgs" >> "$qpkg_pathfile.$STOP_LOG_FILE"
 
             if [[ $result -eq 0 ]]; then
                 ShowDone "stopped service $(FormatAsPackageName $2)"
@@ -1545,10 +1563,12 @@ QPKGServiceCtl()
             ;;
         restart)
             ShowProc "restarting service $(FormatAsPackageName $2)"
-            exec_msgs=$("$init_pathfile" restart)
+            exec_cmd="$init_pathfile restart"
+            exec_msgs=$(eval $exec_cmd 2>&1)
             result=$?
-            FormatAsStdout "$exec_msgs" >> "$qpkg_pathfile.$RESTART_LOG_FILE"
+            FormatAsCommand "$exec_cmd" >> "$qpkg_pathfile.$RESTART_LOG_FILE"
             FormatAsResult "$result" >> "$qpkg_pathfile.$RESTART_LOG_FILE"
+            FormatAsStdout "$exec_msgs" >> "$qpkg_pathfile.$RESTART_LOG_FILE"
 
             if [[ $result -eq 0 ]]; then
                 ShowDone "restarted service $(FormatAsPackageName $2)"
@@ -2479,12 +2499,21 @@ FormatAsFileName()
 
     }
 
+FormatAsCommand()
+    {
+
+    [[ -z $1 ]] && return 1
+
+    echo "= command: '$1'"
+
+    }
+
 FormatAsStdout()
     {
 
     [[ -z $1 ]] && return 1
 
-    echo "= output: \"$1\""
+    echo "=  output: \"$1\""
 
     }
 
@@ -2502,7 +2531,11 @@ FormatAsResult()
 
     [[ -z $1 ]] && return 1
 
-    echo "= result: $(FormatAsExitcode "$1")"
+    if [[ $1 -eq 0 ]]; then
+        echo "=  result: $(FormatAsExitcode "$1")"
+    else
+        echo "!  result: $(FormatAsExitcode "$1")"
+    fi
 
     }
 
