@@ -391,9 +391,11 @@ LogRuntimeParameters()
     DebugInfoThinSeparator
     DebugNAS 'model' "$($GREP_CMD -v "^$" /etc/issue | $SED_CMD 's|^Welcome to ||;s|(.*||')"
     DebugNAS 'RAM' "$INSTALLED_RAM_KB kB"
-    if [[ $INSTALLED_RAM_KB -le $MIN_RAM_KB ]]; then
-        DebugNAS 'RAM' "less-than or equal-to $MIN_RAM_KB kB"
-        IsNotError && ShowNote "QTS with 1GB RAM or less can lead to unstable SABnzbd uptimes :("
+    if IsQPKGToBeInstalled SABnzbd || IsQPKGToBeInstalled SABnzbdplus || IsQPKGInstalled SABnzbd || IsQPKGInstalled SABnzbdplus; then
+        if [[ $INSTALLED_RAM_KB -le $MIN_RAM_KB ]]; then
+            DebugNAS 'RAM' "less-than or equal-to $MIN_RAM_KB kB"
+            IsNotError && ShowNote "QTS with 1GB RAM or less can lead to unstable SABnzbd uptimes :("
+        fi
     fi
     DebugNAS 'firmware version' "$NAS_FIRMWARE"
     DebugNAS 'firmware build' "$($GETCFG_CMD System 'Build Number' -f $ULINUX_PATHFILE)"
@@ -2095,6 +2097,34 @@ IsQPKGUserInstallable()
     done
 
     return $returncode
+
+    }
+
+IsQPKGToBeInstalled()
+    {
+
+    # input:
+    #   $1 = package name to check
+    # output:
+    #   $? = 0 (true) or 1 (false)
+
+    if [[ -z $1 ]]; then
+        DebugError 'QPKG name unspecified'
+        errorcode=47
+        return 1
+    fi
+
+    local package=''
+
+    for package in ${QPKGS_to_install[@]}; do
+        [[ $package = $1 ]] && return 0
+    done
+
+    for package in ${QPKGS_to_reinstall[@]}; do
+        [[ $package = $1 ]] && return 0
+    done
+
+    return 1
 
     }
 
