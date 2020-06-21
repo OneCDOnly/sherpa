@@ -676,7 +676,7 @@ DownloadQPKGs()
 
     IsError && return
 
-    [[ -f .sherpa.devmode ]] && EnableDevMode
+    [[ -f $SHARE_PUBLIC_PATH/.sherpa.devmode ]] && EnableDevMode
 
     DebugFuncEntry
     local QPKGs_to_download=''
@@ -1876,6 +1876,7 @@ FindAllIPKGDependencies()
     DebugInfo "IPKGs requested: $requested_list"
 
     DebugProc 'finding IPKG dependencies'
+
     while [[ $iterations -lt $ITERATION_LIMIT ]]; do
         ((iterations++))
         last_list=$($OPKG_CMD depends -A $last_list | $GREP_CMD -v 'depends on:' | $SED_CMD 's|^[[:blank:]]*||;s|[[:blank:]]*$||' | $TR_CMD ' ' '\n' | $SORT_CMD | $UNIQ_CMD)
