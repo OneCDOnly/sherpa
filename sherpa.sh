@@ -629,7 +629,8 @@ ParseArgs()
         esac
     done
 
-    TARGET_APP=${QPKGS_to_install[0]}   # keep this line for compatibility until multi-package rollout is ready
+    # kludge: keep this for compatibility until multi-package rollout is ready
+    TARGET_APP=${QPKGS_to_install[0]}
 
     return 0
 
@@ -695,7 +696,7 @@ DownloadQPKGs()
 
         (IsQPKGInstalled SABnzbdplus || [[ $TARGET_APP = SABnzbdplus ]];) && [[ $NAS_QPKG_ARCH != none ]] && ! IsQPKGInstalled Par2 && DownloadQPKG Par2
 
-        # an ugly workaround until QPKG dependency checking works properly.
+        # kludge: an ugly workaround until QPKG dependency checking works properly
         (IsQPKGInstalled SABnzbd || [[ $TARGET_APP = SABnzbd ]];) && [[ $NAS_QPKG_ARCH != none ]] && ! IsQPKGInstalled Par2 && DownloadQPKG Par2
 
         [[ -n $TARGET_APP ]] && DownloadQPKG $TARGET_APP
@@ -864,7 +865,7 @@ InstallBaseAddons()
         fi
     fi
 
-    # use the same ugly workaround until QPKG dep checking works properly
+    # kludge: use the same ugly workaround until QPKG dep checking works properly
     if (IsQPKGInstalled SABnzbd || [[ $TARGET_APP = SABnzbd ]];) && [[ $NAS_QPKG_ARCH != none ]]; then
         if ! IsQPKGInstalled Par2; then
             InstallQPKG Par2
@@ -1004,7 +1005,7 @@ DowngradePy3()
 
     IsError && return
 
-    # Watcher3 isn't presently compatible with Python 3.8.x so let's force a downgrade to 3.7.4
+    # kludge: Watcher3 isn't presently compatible with Python 3.8.x so let's force a downgrade to 3.7.4
 
     (! IsQPKGInstalled OWatcher3) && [[ $TARGET_APP != OWatcher3 ]] && return
     [[ ! -e /opt/bin/python3 ]] && return
@@ -1061,7 +1062,7 @@ InstallPy2Modules()
 
     IsError && return
 
-    # Python 2.7.x is no-longer available via Entware/OpenWRT, so disable any PIP2 execution for now
+    # kludge: Python 2.7.x is no-longer available via Entware/OpenWRT, so disable any PIP2 execution for now
     return
 
     DebugFuncEntry
