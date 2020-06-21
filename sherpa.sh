@@ -196,7 +196,7 @@ Init()
         SHERPA_QPKG_DEPS+=('Entware Par2')
         SHERPA_QPKG_IPKGS+=('python3 python3-pip python3-pyopenssl python3-cryptography python3-dev gcc unrar p7zip coreutils-nice ionice ffprobe')
         SHERPA_QPKG_PIP2S+=('')
-        SHERPA_QPKG_PIP3S+=('sabyenc3==4.0.0 cheetah3 feedparser configobj cherrypy chardet')
+        SHERPA_QPKG_PIP3S+=('sabyenc3 cheetah3 feedparser configobj cherrypy chardet')
 
     SHERPA_QPKG_NAME+=(NZBGet)
         SHERPA_QPKG_ARCH+=(all)
@@ -1154,6 +1154,10 @@ InstallPy3Modules()
     [[ -n ${SHERPA_COMMON_PIP3S// /} ]] && exec_cmd="$pip3_cmd install $SHERPA_COMMON_PIP3S --disable-pip-version-check"
     [[ -n ${SHERPA_COMMON_PIP3S// /} && -n ${packages// /} ]] && exec_cmd+=" && "
     [[ -n ${packages// /} ]] && exec_cmd+="$pip3_cmd install $packages --disable-pip-version-check"
+
+    # kludge: force recompilation of 'sabyenc3' package so it's recognised by SABnzbd. See: https://forums.sabnzbd.org/viewtopic.php?p=121214#p121214
+    [[ $exec_cmd =~ .*sabyenc3.* ]] && exec_cmd+=" && $pip3_cmd install --force-reinstall --ignore-installed --no-binary :all: sabyenc3 --disable-pip-version-check"
+
     [[ -z $exec_cmd ]] && return
 
     ShowProc "downloading & installing $desc"
