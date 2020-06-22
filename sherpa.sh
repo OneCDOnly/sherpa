@@ -21,10 +21,10 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/.
 #
 # *** Style Guide ***
-# function names: CamelCase
-# variable names: lowercase_with_underscores (except for 'returncode' & 'errorcode')
-#      constants: UPPERCASE_WITH_UNDERSCORES (also set to readonly)
-#        indents: 1 x tab (converted to 4 x spaces to suit GitHub web-display)
+# functions: CamelCase
+# variables: lowercase_with_underscores (except for 'returncode' & 'errorcode')
+# constants: UPPERCASE_WITH_UNDERSCORES (also set to readonly)
+#   indents: 1 x tab (converted to 4 x spaces to suit GitHub web-display)
 
 readonly USER_ARGS_RAW="$@"
 
@@ -819,12 +819,13 @@ UpdateEntware()
     local package_list_file=/opt/var/opkg-lists/entware
     local package_list_age=60
     local log_pathfile="$WORKING_PATH/entware-update.log"
+    local msgs=''
     local result=0
 
     # if Entware package list was updated only recently, don't run another update
-    [[ -e $package_list_file ]] && result=$($FIND_CMD "$package_list_file" -mmin +$package_list_age) || result='new install'
+    [[ -e $package_list_file ]] && msgs=$($FIND_CMD "$package_list_file" -mmin +$package_list_age) || msgs='new install'
 
-    if [[ -n $result ]]; then
+    if [[ -n $msgs ]]; then
         ShowProc "updating $(FormatAsPackageName Entware) package list"
 
         RunThisAndLogResults "$OPKG_CMD update" "$log_pathfile"
@@ -893,12 +894,7 @@ InstallTargetQPKG()
     {
 
     IsError && return
-
-    if [[ -z $TARGET_APP ]]; then
-        DebugError 'QPKG name unspecified'
-        errorcode=15
-        return 1
-    fi
+    [[ -z $TARGET_APP ]] && return 1
 
     DebugFuncEntry
 
@@ -935,7 +931,7 @@ InstallIPKGs()
         InstallIPKGBatch "$packages"
     else
         ShowError "IPKG download path [$IPKG_DL_PATH] does not exist"
-        errorcode=16
+        errorcode=15
         returncode=1
     fi
 
@@ -949,11 +945,7 @@ InstallIPKGBatch()
 
     # $1 = space-separated string containing list of IPKG names to download and install
 
-    if [[ -z $1 ]]; then
-        DebugError 'IPKG list unspecified'
-        errorcode=17
-        return 1
-    fi
+    [[ -z $1 ]] && return 1
 
     DebugFuncEntry
     local returncode=0
@@ -989,7 +981,7 @@ InstallIPKGBatch()
             ShowError "download & install IPKG$(DisplayPlural $IPKG_download_count) failed $(FormatAsExitcode $result)"
             DebugErrorFile "$log_pathfile"
 
-            errorcode=18
+            errorcode=16
             returncode=1
         fi
         DebugStageEnd $IPKG_download_startseconds
@@ -1088,7 +1080,7 @@ InstallPy2Modules()
         pip2_cmd=/opt/bin/pip
     else
         if IsNotSysFilePresent $pip2_cmd; then
-            errorcode=19
+            errorcode=17
             return 1
         fi
     fi
@@ -1109,7 +1101,7 @@ InstallPy2Modules()
         ShowError "download & install $desc failed $(FormatAsResult "$result")"
         DebugErrorFile "$log_pathfile"
 
-        errorcode=20
+        errorcode=18
         returncode=1
     fi
 
@@ -1147,7 +1139,7 @@ InstallPy3Modules()
             echo -e "\n* Ugh! The usual fix is to let sherpa reinstall Entware at least once."
             echo -e "\t./sherpa.sh ew"
             echo -e "If it happens again after reinstalling Entware, please create a new issue for this on GitHub."
-            errorcode=21
+            errorcode=19
             return 1
         fi
     fi
@@ -1172,7 +1164,7 @@ InstallPy3Modules()
         ShowError "download & install $desc failed $(FormatAsResult "$result")"
         DebugErrorFile "$log_pathfile"
 
-        errorcode=22
+        errorcode=20
         returncode=1
     fi
 
@@ -1216,12 +1208,7 @@ InstallQPKG()
     # $1 = QPKG name to install
 
     IsError && return
-
-    if [[ -z $1 ]]; then
-        DebugError 'QPKG name unspecified'
-        errorcode=23
-        return 1
-    fi
+    [[ -z $1 ]] && return 1
 
     local target_file=''
     local result=0
@@ -1247,7 +1234,7 @@ InstallQPKG()
         ShowError "file installation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $result)"
         DebugErrorFile "$log_pathfile"
 
-        errorcode=24
+        errorcode=21
         returncode=1
     fi
 
@@ -1273,12 +1260,7 @@ DownloadQPKG()
     # $1 = QPKG name to download
 
     IsError && return
-
-    if [[ -z $1 ]]; then
-        DebugError 'QPKG name unspecified'
-        errorcode=25
-        return 1
-    fi
+    [[ -z $1 ]] && return 1
 
     DebugFuncEntry
     local result=0
@@ -1318,14 +1300,14 @@ DownloadQPKG()
                 ShowDone "downloaded file $(FormatAsFileName "$remote_filename")"
             else
                 ShowError "downloaded file checksum incorrect $(FormatAsFileName "$local_pathfile")"
-                errorcode=26
+                errorcode=22
                 returncode=1
             fi
         else
             ShowError "download failed $(FormatAsFileName "$local_pathfile") $(FormatAsExitcode $result)"
             DebugErrorFile "$log_pathfile"
 
-            errorcode=27
+            errorcode=23
             returncode=1
         fi
     fi
@@ -1380,11 +1362,7 @@ LoadInstalledQPKGVars()
 
     # $1 = load variables for this installed package name
 
-    if [[ -z $1 ]]; then
-        DebugError 'QPKG name unspecified'
-        errorcode=28
-        return 1
-    fi
+    [[ -z $1 ]] && return 1
 
     local package_name=$1
     local prev_config_dir=''
@@ -1406,7 +1384,7 @@ LoadInstalledQPKGVars()
         done
     else
         DebugError 'QPKG not installed?'
-        errorcode=29
+        errorcode=24
         return 1
     fi
 
@@ -1420,12 +1398,7 @@ UninstallQPKG()
     # $1 = QPKG name
 
     IsError && return
-
-    if [[ -z $1 ]]; then
-        DebugError 'QPKG name unspecified'
-        errorcode=30
-        return 1
-    fi
+    [[ -z $1 ]] && return 1
 
     local result=0
 
@@ -1443,7 +1416,7 @@ UninstallQPKG()
                 ShowDone "uninstalled $(FormatAsPackageName $1)"
             else
                 ShowError "unable to uninstall $(FormatAsPackageName $1) $(FormatAsExitcode $result)"
-                errorcode=31
+                errorcode=25
                 return 1
             fi
         fi
@@ -1467,11 +1440,11 @@ QPKGServiceCtl()
 
     if [[ -z $1 ]]; then
         DebugError 'action unspecified'
-        errorcode=32
+        errorcode=26
         return 1
     elif [[ -z $2 ]]; then
         DebugError 'QPKG name unspecified'
-        errorcode=33
+        errorcode=27
         return 1
     fi
 
@@ -1497,7 +1470,7 @@ QPKGServiceCtl()
                 else
                     $CAT_CMD "$qpkg_pathfile.$START_LOG_FILE" >> "$DEBUG_LOG_PATHFILE"
                 fi
-                errorcode=34
+                errorcode=28
                 return 1
             fi
             ;;
@@ -1543,7 +1516,7 @@ QPKGServiceCtl()
             ;;
         *)
             DebugError "Unrecognised action '$1'"
-            errorcode=35
+            errorcode=29
             return 1
             ;;
     esac
@@ -1559,11 +1532,7 @@ GetQPKGServiceFile()
     # stdout = QPKG init pathfilename
     # $? = 0 if successful, 1 if failed
 
-    if [[ -z $1 ]]; then
-        DebugError 'QPKG name unspecified'
-        errorcode=36
-        return 1
-    fi
+    [[ -z $1 ]] && return 1
 
     local output=''
     local returncode=0
@@ -1572,11 +1541,11 @@ GetQPKGServiceFile()
 
     if [[ -z $output ]]; then
         DebugError "No service file configured for package $(FormatAsPackageName $1)"
-        errorcode=37
+        errorcode=30
         returncode=1
     elif [[ ! -e $output ]]; then
         DebugError "Package service file not found $(FormatAsStdout "$output")"
-        errorcode=38
+        errorcode=31
         returncode=1
     fi
 
@@ -1592,11 +1561,7 @@ GetQPKGPathFilename()
     # stdout = QPKG local filename
     # $? = 0 if successful, 1 if failed
 
-    if [[ -z $1 ]]; then
-        DebugError 'QPKG name unspecified'
-        errorcode=39
-        return 1
-    fi
+    [[ -z $1 ]] && return 1
 
     echo "$QPKG_DL_PATH/$($BASENAME_CMD "$(GetQPKGRemoteURL $1)")"
 
@@ -1609,11 +1574,7 @@ GetQPKGRemoteURL()
     # stdout = QPKG remote URL
     # $? = 0 if successful, 1 if failed
 
-    if [[ -z $1 ]]; then
-        DebugError 'QPKG name unspecified'
-        errorcode=40
-        return 1
-    fi
+    [[ -z $1 ]] && return 1
 
     local index=0
     local returncode=1
@@ -1637,11 +1598,7 @@ GetQPKGMD5()
     # stdout = QPKG MD5
     # $? = 0 if successful, 1 if failed
 
-    if [[ -z $1 ]]; then
-        DebugError 'QPKG name unspecified'
-        errorcode=41
-        return 1
-    fi
+    [[ -z $1 ]] && return 1
 
     local index=0
     local returncode=1
@@ -1738,11 +1695,7 @@ GetQPKGDeps()
 
     # $1 = QPKG name to return dependencies for
 
-    if [[ -z $1 ]]; then
-        DebugError 'QPKG name unspecified'
-        errorcode=42
-        return 1
-    fi
+    [[ -z $1 ]] && return 1
 
     local index=0
 
@@ -1767,10 +1720,7 @@ FindAllQPKGDependencies()
     #   $QPKG_download_list = name-sorted array with complete list of all QPKGs, including those originally specified.
     #   $QPKG_download_count = number of packages to be downloaded.
 
-    if [[ -z $1 ]]; then
-        DebugError 'No QPKGs were requested'
-        return 1
-    fi
+    [[ -z $1 ]] && return 1
 
     QPKG_download_list=()
     QPKG_download_count=0
@@ -1848,13 +1798,10 @@ FindAllIPKGDependencies()
     #   $IPKG_download_count = number of packages to be downloaded.
     #   $IPKG_download_size = byte-count of packages to be downloaded.
 
-    if [[ -z $1 ]]; then
-        DebugError 'No IPKGs were requested'
-        return 1
-    fi
+    [[ -z $1 ]] && return 1
 
     if IsNotSysFilePresent $OPKG_CMD; then
-        errorcode=43
+        errorcode=32
         return 1
     fi
 
@@ -1948,7 +1895,7 @@ _MonitorDirSize_()
     [[ -z $1 || ! -d $1 || -z $2 || $2 -eq 0 ]] && return 1
 
     if IsNotSysFilePresent $FIND_CMD; then
-        errorcode=44
+        errorcode=33
         return 1
     fi
 
@@ -2006,7 +1953,7 @@ IsSysFilePresent()
 
     if ! [[ -f $1 || -L $1 ]]; then
         ShowError "a required NAS system file is missing $(FormatAsFileName $1)"
-        errorcode=45
+        errorcode=34
         return 1
     else
         return 0
@@ -2026,7 +1973,7 @@ IsSysSharePresent()
 
     if [[ ! -L $1 ]]; then
         ShowError "a required NAS system share is missing $(FormatAsFileName $1). Please re-create it via the QTS Control Panel -> Privilege Settings -> Shared Folders."
-        errorcode=46
+        errorcode=35
         return 1
     else
         return 0
@@ -2080,7 +2027,6 @@ IsQPKGUserInstallable()
     #   $? = 0 (true) or 1 (false)
 
     [[ -z $1 ]] && return 1
-
     [[ ${#SHERPA_QPKG_NAME[@]} -eq 0 || ${#SHERPA_QPKG_ABBRVS[@]} -eq 0 ]] && return 1
 
     local returncode=1
