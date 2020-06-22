@@ -1291,7 +1291,7 @@ DownloadQPKG()
     local log_pathfile="$local_pathfile.$DOWNLOAD_LOG_FILE"
 
     if [[ -e $local_pathfile ]]; then
-        if [[ $($MD5SUM_CMD "$local_pathfile" | $CUT_CMD -f1 -d' ') = $remote_filename_md5 ]]; then
+        if FileMatchesMD5 "$local_pathfile" "$remote_filename_md5"; then
             DebugInfo "existing QPKG checksum correct $(FormatAsFileName "$local_filename")"
         else
             DebugWarning "existing QPKG checksum incorrect $(FormatAsFileName "$local_filename")"
@@ -1306,17 +1306,15 @@ DownloadQPKG()
         [[ -e $log_pathfile ]] && rm -f "$log_pathfile"
 
         if IsDebugMode; then
-            $CURL_CMD $curl_insecure_arg --output "$local_pathfile" "$remote_url" 2>&1 | $TEE_CMD -a "$log_pathfile"
+            RunThisAndLogResultsRealtime "$CURL_CMD $curl_insecure_arg --output $local_pathfile $remote_url" "$log_pathfile"
             result=$?
         else
-            $CURL_CMD $curl_insecure_arg --output "$local_pathfile" "$remote_url" >> "$log_pathfile" 2>&1
+            RunThisAndLogResults "$CURL_CMD $curl_insecure_arg --output $local_pathfile $remote_url" "$log_pathfile"
             result=$?
         fi
 
-        FormatAsResult "$result" >> "$log_pathfile"
-
         if [[ $result -eq 0 ]]; then
-            if [[ $($MD5SUM_CMD "$local_pathfile" | $CUT_CMD -f1 -d' ') = $remote_filename_md5 ]]; then
+            if FileMatchesMD5 "$local_pathfile" "$remote_filename_md5"; then
                 ShowDone "downloaded file $(FormatAsFileName "$remote_filename")"
             else
                 ShowError "downloaded file checksum incorrect $(FormatAsFileName "$local_pathfile")"
@@ -1937,47 +1935,6 @@ FindAllIPKGDependencies()
 
     }
 
-RunThisAndLogResults()
-    {
-
-    # Run a command string and log the results
-    # input:
-    #   $1 = command string to execute
-    #   $2 = pathfilename to record this operation in
-    # output:
-    #   $? = result code of command string
-
-    [[ -z $1 || -z $2 ]] && return 1
-
-    local msgs=''
-    local result=0
-
-    FormatAsCommand "$1" >> "$2"
-    msgs=$(eval $1 2>&1)
-    result=$?
-    FormatAsResult "$result" >> "$2"
-    FormatAsStdout "$msgs" >> "$2"
-
-    return $result
-
-    }
-
-DeDupeWords()
-    {
-
-    [[ -z $1 ]] && return 1
-
-    $TR_CMD ' ' '\n' <<< $1 | $SORT_CMD | $UNIQ_CMD | $TR_CMD '\n' ' ' | $SED_CMD 's|^[[:blank:]]*||;s|[[:blank:]]*$||'
-
-    }
-
-DisplayPlural()
-    {
-
-    [[ $1 -ne 1 ]] && echo 's'
-
-    }
-
 _MonitorDirSize_()
     {
 
@@ -2294,6 +2251,87 @@ MatchAbbrvToQPKGName()
 
     }
 
+# all functions below here do-not generate global or logged errors
+
+RunThisAndLogResults()
+    {
+
+    # Run a command string and log the results
+    # input:
+    #   $1 = command string to execute
+    #   $2 = pathfilename to record this operation in
+    # output:
+    #   $? = result code of command string
+
+    [[ -z $1 || -z $2 ]] && return 1
+
+    local msgs=''
+    local result=0
+
+    FormatAsCommand "$1" >> "$2"
+    msgs=$(eval $1 2>&1)
+    result=$?
+    FormatAsResult "$result" >> "$2"
+    FormatAsStdout "$msgs" >> "$2"
+
+    return $result
+
+    }
+
+RunThisAndLogResultsRealtime()
+    {
+
+    # Run a command string, show and log the results
+    # input:
+    #   $1 = command string to execute
+    #   $2 = pathfilename to record this operation in
+    # output:
+    #   $? = result code of command string
+
+    [[ -z $1 || -z $2 ]] && return 1
+
+    local msgs=''
+    local result=0
+
+    FormatAsCommand "$1" >> "$2"
+    exec 5>&1
+    msgs=$(eval $1 2>&1 | $TEE_CMD /dev/fd/5)
+    result=$?
+    FormatAsResult "$result" >> "$2"
+    FormatAsStdout "$msgs" >> "$2"
+
+    return $result
+
+    }
+
+DeDupeWords()
+    {
+
+    [[ -z $1 ]] && return 1
+
+    $TR_CMD ' ' '\n' <<< $1 | $SORT_CMD | $UNIQ_CMD | $TR_CMD '\n' ' ' | $SED_CMD 's|^[[:blank:]]*||;s|[[:blank:]]*$||'
+
+    }
+
+DisplayPlural()
+    {
+
+    [[ $1 -ne 1 ]] && echo 's'
+
+    }
+
+FileMatchesMD5()
+    {
+
+    # $1 = pathfilename to generate an MD5 checksum for
+    # $2 = MD5 checksum to compare against
+
+    [[ -z $1 || -z $2 ]] && return 1
+
+    [[ $($MD5SUM_CMD "$1" | $CUT_CMD -f1 -d' ') = $2 ]]
+
+    }
+
 ProgressUpdater()
     {
 
@@ -2531,7 +2569,9 @@ FormatAsStdout()
 
     [[ -z $1 ]] && return 1
 
-    echo "=  output: \"$1\""
+    echo "= stdout begins next line:"
+    echo "$1"
+    echo "= stdout complete."
 
     }
 
@@ -2550,9 +2590,9 @@ FormatAsResult()
     [[ -z $1 ]] && return 1
 
     if [[ $1 -eq 0 ]]; then
-        echo "=  result: $(FormatAsExitcode "$1")"
+        echo "= result: $(FormatAsExitcode "$1")"
     else
-        echo "!  result: $(FormatAsExitcode "$1")"
+        echo "! result: $(FormatAsExitcode "$1")"
     fi
 
     }
