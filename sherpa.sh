@@ -42,7 +42,7 @@ Init()
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200622
+    readonly SCRIPT_VERSION=200623
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -1032,10 +1032,15 @@ DowngradePy3()
     pkg_version=19.0.3-1
     ipkg_urls+=(-O "${source_url}/archive/${pkg_base}-${pkg_name}_${pkg_version}_${pkg_arch}.ipk")
 
-    # and a specific version of cryptography, so SAB3 will restart correctly
+    # and a specific version of 'cryptography', so SAB3 will restart correctly
     pkg_name=cryptography
     pkg_version=2.7-2
     ipkg_urls+=(-O "${source_url}/archive/${pkg_base}-${pkg_name}_${pkg_version}_${pkg_arch}.ipk")
+
+    # and a specific version of 'libffi', so 'pip3' will restart correctly
+    pkg_name=libffi
+    pkg_version=3.2.1-4
+    ipkg_urls+=(-O "${source_url}/archive/${pkg_name}_${pkg_version}_${pkg_arch}.ipk")
 
     (cd "$IPKG_DL_PATH" && $CURL_CMD $curl_insecure_arg ${ipkg_urls[@]} >> "$dl_log_pathfile" 2>&1)
 
