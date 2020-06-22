@@ -427,7 +427,7 @@ LogRuntimeParameters()
     fi
 
     if IsNotError && [[ ${#QPKGS_to_install[@]} -eq 0 && ${#QPKGS_to_uninstall[@]} -eq 0 && ${#QPKGS_to_update[@]} -eq 0 && ${#QPKGS_to_backup[@]} -eq 0 && ${#QPKGS_to_restore[@]} -eq 0 ]] && ! IsSatisfyDependenciesOnly && [[ $update_all_apps = false ]]; then
-        ShowError 'no valid QPKG(s) or action(s) were specified'
+        ShowError 'no valid QPKGs or actions were specified'
         errorcode=2
     fi
 
@@ -692,12 +692,12 @@ DownloadQPKGs()
             DownloadQPKG $package
         done
     else
-        ! IsQPKGInstalled Entware && DownloadQPKG Entware
+        IsNotQPKGInstalled Entware && DownloadQPKG Entware
 
-        (IsQPKGInstalled SABnzbdplus || [[ $TARGET_APP = SABnzbdplus ]];) && [[ $NAS_QPKG_ARCH != none ]] && ! IsQPKGInstalled Par2 && DownloadQPKG Par2
+        (IsQPKGInstalled SABnzbdplus || [[ $TARGET_APP = SABnzbdplus ]];) && [[ $NAS_QPKG_ARCH != none ]] && IsNotQPKGInstalled Par2 && DownloadQPKG Par2
 
         # kludge: an ugly workaround until QPKG dependency checking works properly
-        (IsQPKGInstalled SABnzbd || [[ $TARGET_APP = SABnzbd ]];) && [[ $NAS_QPKG_ARCH != none ]] && ! IsQPKGInstalled Par2 && DownloadQPKG Par2
+        (IsQPKGInstalled SABnzbd || [[ $TARGET_APP = SABnzbd ]];) && [[ $NAS_QPKG_ARCH != none ]] && IsNotQPKGInstalled Par2 && DownloadQPKG Par2
 
         [[ -n $TARGET_APP ]] && DownloadQPKG $TARGET_APP
     fi
@@ -756,7 +756,7 @@ InstallBase()
 
     DebugFuncEntry
 
-    if ! IsQPKGInstalled Entware; then
+    if IsNotQPKGInstalled Entware; then
         # rename original [/opt]
         opt_path=/opt
         opt_backup_path=/opt.orig
@@ -767,7 +767,7 @@ InstallBase()
         # copy all files from original [/opt] into new [/opt]
         [[ -L $opt_path && -d $opt_backup_path ]] && cp --recursive "$opt_backup_path"/* --target-directory "$opt_path" && rm -r "$opt_backup_path"
     else
-        ! IsQPKGEnabled Entware && EnableQPKG Entware
+        IsNotQPKGEnabled Entware && EnableQPKG Entware
         ReloadProfile
 
         [[ $NAS_QPKG_ARCH != none ]] && ($OPKG_CMD list-installed | $GREP_CMD -q par2cmdline) && $OPKG_CMD remove par2cmdline > /dev/null 2>&1
@@ -855,7 +855,7 @@ InstallBaseAddons()
     DebugFuncEntry
 
     if (IsQPKGInstalled SABnzbdplus || [[ $TARGET_APP = SABnzbdplus ]];) && [[ $NAS_QPKG_ARCH != none ]]; then
-        if ! IsQPKGInstalled Par2; then
+        if IsNotQPKGInstalled Par2; then
             InstallQPKG Par2
             if IsError; then
                 ShowWarning "$(FormatAsPackageName Par2) installation failed - but it's not essential so I'm continuing"
@@ -867,7 +867,7 @@ InstallBaseAddons()
 
     # kludge: use the same ugly workaround until QPKG dep checking works properly
     if (IsQPKGInstalled SABnzbd || [[ $TARGET_APP = SABnzbd ]];) && [[ $NAS_QPKG_ARCH != none ]]; then
-        if ! IsQPKGInstalled Par2; then
+        if IsNotQPKGInstalled Par2; then
             InstallQPKG Par2
             if IsError; then
                 ShowWarning "$(FormatAsPackageName Par2) installation failed - but it's not essential so I'm continuing"
@@ -1007,7 +1007,7 @@ DowngradePy3()
 
     # kludge: Watcher3 isn't presently compatible with Python 3.8.x so let's force a downgrade to 3.7.4
 
-    (! IsQPKGInstalled OWatcher3) && [[ $TARGET_APP != OWatcher3 ]] && return
+    IsNotQPKGInstalled OWatcher3 && [[ $TARGET_APP != OWatcher3 ]] && return
     [[ ! -e /opt/bin/python3 ]] && return
     [[ $(/opt/bin/python3 -V | $SED_CMD 's|[^0-9]*||g') -le 374 ]] && return
 
@@ -1821,7 +1821,7 @@ FindAllQPKGDependencies()
 
     DebugProc 'excluding QPKGs already installed'
     for element in ${all_list[@]}; do
-        ! IsQPKGInstalled $element && QPKG_download_list+=($element)
+        IsNotQPKGInstalled $element && QPKG_download_list+=($element)
     done
     DebugDone 'complete'
     DebugInfo "QPKGs to download: ${QPKG_download_list[*]}"
@@ -1994,16 +1994,74 @@ _MonitorDirSize_()
 
     }
 
+IsSysFilePresent()
+    {
+
+    # input:
+    #   $1 = pathfile to check
+    # output:
+    #   $? = 0 (true) or 1 (false)
+
+    [[ -z $1 ]] && return 1
+
+    if ! [[ -f $1 || -L $1 ]]; then
+        ShowError "a required NAS system file is missing $(FormatAsFileName $1)"
+        errorcode=45
+        return 1
+    else
+        return 0
+    fi
+
+    }
+
+IsSysSharePresent()
+    {
+
+    # input:
+    #   $1 = symlink path to check
+    # output:
+    #   $? = 0 (true) or 1 (false)
+
+    [[ -z $1 ]] && return 1
+
+    if [[ ! -L $1 ]]; then
+        ShowError "a required NAS system share is missing $(FormatAsFileName $1). Please re-create it via the QTS Control Panel -> Privilege Settings -> Shared Folders."
+        errorcode=46
+        return 1
+    else
+        return 0
+    fi
+
+    }
+
+IsIPKGInstalled()
+    {
+
+    # input:
+    #   $1 = package name to check
+    # output:
+    #   $? = 0 (true) or 1 (false)
+
+    [[ -z $1 ]] && return 1
+
+    if ! ($OPKG_CMD list-installed | $GREP_CMD -q -F "$1"); then
+        DebugIPKG "'$1'" 'not installed'
+        return 1
+    else
+        DebugIPKG "'$1'" 'installed'
+        return 0
+    fi
+
+    }
+
+# all functions below here do-not generate global or logged errors
+
 EnableQPKG()
     {
 
     # $1 = package name to enable
 
-    if [[ -z $1 ]]; then
-        DebugError 'QPKG name unspecified'
-        errorcode=45
-        return 1
-    fi
+    [[ -z $1 ]] && return 1
 
     if [[ $($GETCFG_CMD $1 Enable -u -f $APP_CENTER_CONFIG_PATHFILE) != 'TRUE' ]]; then
         DebugProc "enabling QPKG $(FormatAsPackageName $1)"
@@ -2021,11 +2079,7 @@ IsQPKGUserInstallable()
     # output:
     #   $? = 0 (true) or 1 (false)
 
-    if [[ -z $1 ]]; then
-        DebugError 'QPKG name unspecified'
-        errorcode=46
-        return 1
-    fi
+    [[ -z $1 ]] && return 1
 
     [[ ${#SHERPA_QPKG_NAME[@]} -eq 0 || ${#SHERPA_QPKG_ABBRVS[@]} -eq 0 ]] && return 1
 
@@ -2051,11 +2105,7 @@ IsQPKGToBeInstalled()
     # output:
     #   $? = 0 (true) or 1 (false)
 
-    if [[ -z $1 ]]; then
-        DebugError 'QPKG name unspecified'
-        errorcode=47
-        return 1
-    fi
+    [[ -z $1 ]] && return 1
 
     local package=''
 
@@ -2079,13 +2129,23 @@ IsQPKGInstalled()
     # output:
     #   $? = 0 (true) or 1 (false)
 
-    if [[ -z $1 ]]; then
-        DebugError 'QPKG name unspecified'
-        errorcode=48
-        return 1
-    fi
+    [[ -z $1 ]] && return 1
 
     [[ $($GETCFG_CMD $1 RC_Number -d 0 -f $APP_CENTER_CONFIG_PATHFILE) -gt 0 ]]
+
+    }
+
+IsNotQPKGInstalled()
+    {
+
+    # input:
+    #   $1 = package name to check
+    # output:
+    #   $? = 0 (true) or 1 (false)
+
+    [[ -z $1 ]] && return 1
+
+    ! IsQPKGInstalled "$1"
 
     }
 
@@ -2097,17 +2157,13 @@ IsQPKGEnabled()
     # output:
     #   $? = 0 (true) or 1 (false)
 
-    if [[ -z $1 ]]; then
-        DebugError 'QPKG name unspecified'
-        errorcode=49
-        return 1
-    fi
+    [[ -z $1 ]] && return 1
 
     [[ $($GETCFG_CMD $1 Enable -u -f $APP_CENTER_CONFIG_PATHFILE) = 'TRUE' ]]
 
     }
 
-IsIPKGInstalled()
+IsNotQPKGEnabled()
     {
 
     # input:
@@ -2115,43 +2171,9 @@ IsIPKGInstalled()
     # output:
     #   $? = 0 (true) or 1 (false)
 
-    if [[ -z $1 ]]; then
-        DebugError 'IPKG name unspecified'
-        errorcode=50
-        return 1
-    fi
+    [[ -z $1 ]] && return 1
 
-    if ! ($OPKG_CMD list-installed | $GREP_CMD -q -F "$1"); then
-        DebugIPKG "'$1'" 'not installed'
-        return 1
-    else
-        DebugIPKG "'$1'" 'installed'
-        return 0
-    fi
-
-    }
-
-IsSysFilePresent()
-    {
-
-    # input:
-    #   $1 = pathfile to check
-    # output:
-    #   $? = 0 (true) or 1 (false)
-
-    if [[ -z $1 ]]; then
-        DebugError 'system file unspecified'
-        errorcode=51
-        return 1
-    fi
-
-    if ! [[ -f $1 || -L $1 ]]; then
-        ShowError "a required NAS system file is missing $(FormatAsFileName $1)"
-        errorcode=52
-        return 1
-    else
-        return 0
-    fi
+    ! IsQPKGEnabled "$1"
 
     }
 
@@ -2163,37 +2185,9 @@ IsNotSysFilePresent()
     # output:
     #   $? = 0 (true) or 1 (false)
 
-    if [[ -z $1 ]]; then
-        DebugError 'system file unspecified'
-        errorcode=53
-        return 1
-    fi
+    [[ -z $1 ]] && return 1
 
     ! IsSysFilePresent "$1"
-
-    }
-
-IsSysSharePresent()
-    {
-
-    # input:
-    #   $1 = symlink path to check
-    # output:
-    #   $? = 0 (true) or 1 (false)
-
-    if [[ -z $1 ]]; then
-        DebugError 'system share unspecified'
-        errorcode=54
-        return 1
-    fi
-
-    if [[ ! -L $1 ]]; then
-        ShowError "a required NAS system share is missing $(FormatAsFileName $1). Please re-create it via the QTS Control Panel -> Privilege Settings -> Shared Folders."
-        errorcode=55
-        return 1
-    else
-        return 0
-    fi
 
     }
 
@@ -2205,11 +2199,7 @@ IsNotSysSharePresent()
     # output:
     #   $? = 0 (true) or 1 (false)
 
-    if [[ -z $1 ]]; then
-        DebugError 'system share unspecified'
-        errorcode=56
-        return 1
-    fi
+    [[ -z $1 ]] && return 1
 
     ! IsSysSharePresent "$1"
 
@@ -2224,11 +2214,7 @@ MatchAbbrvToQPKGName()
     #   stdout = matched installable package name (empty if unmatched)
     #   $? = 0 (matched) or 1 (unmatched)
 
-    if [[ -z $1 ]]; then
-        DebugError 'abbreviation unspecified'
-        return 1
-    fi
-
+    [[ -z $1 ]] && return 1
     [[ ${#SHERPA_QPKG_NAME[@]} -eq 0 || ${#SHERPA_QPKG_ABBRVS[@]} -eq 0 ]] && return 1
 
     local returncode=1
@@ -2250,8 +2236,6 @@ MatchAbbrvToQPKGName()
     return $returncode
 
     }
-
-# all functions below here do-not generate global or logged errors
 
 RunThisAndLogResults()
     {
