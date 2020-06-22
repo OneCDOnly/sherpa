@@ -389,7 +389,7 @@ LogRuntimeParameters()
     if IsQPKGToBeInstalled SABnzbd || IsQPKGToBeInstalled SABnzbdplus || IsQPKGInstalled SABnzbd || IsQPKGInstalled SABnzbdplus; then
         if [[ $INSTALLED_RAM_KB -le $MIN_RAM_KB ]]; then
             DebugNAS 'RAM' "less-than or equal-to $MIN_RAM_KB kB"
-            IsNotError && ShowNote "QTS with 1GB RAM or less can lead to unstable SABnzbd uptimes :("
+            IsNotError && ShowNote "QTS with 1GB RAM or less can lead to unstable SABnzbd uptimes. :("
         fi
     fi
     DebugNAS 'firmware version' "$NAS_FIRMWARE"
@@ -723,9 +723,9 @@ RemoveUnwantedQPKGs()
     IsQPKGInstalled $TARGET_APP && reinstall_flag=true
 
     if [[ $TARGET_APP = Entware && $reinstall_flag = true ]]; then
-        ShowNote 'Reinstalling Entware will revert all IPKGs to defaults and only those required to support your sherpa apps will be reinstalled'
+        ShowNote 'Reinstalling Entware will revert all IPKGs to defaults and only those required to support your sherpa apps will be reinstalled.'
         ShowNote "The currently installed IPKG list will be saved to $(FormatAsFileName $previous_Entware_package_list)"
-        ShowWarning "Also, the SABnzbdplus, SickChill and Headphones packages CANNOT BE REINSTALLED as Python 2.7.16 is no-longer available"
+        ShowWarning "Also, the SABnzbdplus, SickChill and Headphones packages CANNOT BE REINSTALLED as Python 2.7.16 is no-longer available."
         ShowQuiz 'Press (y) if you agree to remove all current Entware IPKGs and their configs, or any other key to abort'
         read -n1 response; echo
         DebugVar response
@@ -1037,7 +1037,7 @@ DowngradePy3()
     pkg_version=2.7-2
     ipkg_urls+=(-O "${source_url}/archive/${pkg_base}-${pkg_name}_${pkg_version}_${pkg_arch}.ipk")
 
-    # and a specific version of 'libffi', so 'pip3' will restart correctly
+    # and a specific version of 'libffi', so 'pip3' will keep working
     pkg_name=libffi
     pkg_version=3.2.1-4
     ipkg_urls+=(-O "${source_url}/archive/${pkg_name}_${pkg_version}_${pkg_arch}.ipk")
@@ -2752,7 +2752,7 @@ ShowDebug()
 ShowNote()
     {
 
-    WriteToDisplay_NewLine "$(ColourTextBrightYellowBlink note)" "$1"
+    WriteToDisplay_NewLine "$(ColourTextBrightYellow note)" "$1"
     WriteToLog note "$1"
 
     }
@@ -2776,7 +2776,7 @@ ShowDone()
 ShowWarning()
     {
 
-    WriteToDisplay_NewLine "$(ColourTextBrightOrange warn)" "$1"
+    WriteToDisplay_NewLine "$(ColourTextBrightOrangeBlink warn)" "$1"
     WriteToLog warn "$1"
 
     }
@@ -2877,6 +2877,13 @@ ColourTextBrightOrange()
     {
 
     echo -en '\033[1;38;5;214m'"$(PrintResetColours "$1")"
+
+    }
+
+ColourTextBrightOrangeBlink()
+    {
+
+    echo -en '\033[1;5;38;5;214m'"$(PrintResetColours "$1")"
 
     }
 
