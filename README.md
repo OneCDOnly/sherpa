@@ -38,23 +38,17 @@ curl -skLO https://git.io/sherpa.sh && chmod +x sherpa.sh
 So, to install SABnzbd+, use:
 
 ```
-./sherpa.sh SABnzbdplus
+./sherpa.sh SABnzbd
 ```
 
 ... and then/or:
 
 ```
-./sherpa.sh SABnzbd
-
-./sherpa.sh SickChill
-
 ./sherpa.sh OWatcher3
 
 ./sherpa.sh LazyLibrarian
 
 ./sherpa.sh Medusa
-
-./sherpa.sh Headphones
 
 ./sherpa.sh NZBGet
 ```
