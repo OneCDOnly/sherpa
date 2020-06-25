@@ -42,7 +42,7 @@ Init()
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200623
+    readonly SCRIPT_VERSION=200626
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -346,6 +346,7 @@ Init()
     readonly MIN_RAM_KB=1048576
     readonly INSTALLED_RAM_KB=$($GREP_CMD MemTotal /proc/meminfo | $CUT_CMD -f2 -d':' | $SED_CMD 's|kB||;s| ||g')
     reinstall_flag=false
+    [[ -s $DEBUG_LOG_PATHFILE ]] && DebugScript 'start session'
     DisableSatisfyDependenciesOnly
     DisableHelpOnly
     DisableVersionOnly
@@ -1689,7 +1690,6 @@ ShowResult()
     DebugInfoThickSeparator
 
     [[ -e $DEBUG_LOG_PATHFILE ]] && IsNotDebugMode && ! IsVersionOnly && echo -e "\n- To display the runtime debug log:\n\tcat $(basename $DEBUG_LOG_PATHFILE)\n"
-
     DebugFuncExit
     return 0
 
@@ -2504,9 +2504,9 @@ FormatAsStdout()
 
     [[ -z $1 ]] && return 1
 
-    echo "= stdout begins next line:"
+    echo "= stdout begins next line: ▼"
     echo "$1"
-    echo "= stdout complete."
+    echo "= stdout complete: ▲"
 
     }
 
