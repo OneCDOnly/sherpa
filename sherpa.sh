@@ -38,11 +38,15 @@ ResetErrorcode()
 Init()
     {
 
-    DisableOnscreenDebugging
+    DisableVisibleDebugging
+    DisableSatisfyDependenciesOnly
+    DisableHelpOnly
+    DisableVersionOnly
+    DisableSuggestIssue
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200626c
+    readonly SCRIPT_VERSION=200626d
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -346,15 +350,10 @@ Init()
     readonly MIN_RAM_KB=1048576
     readonly INSTALLED_RAM_KB=$($GREP_CMD MemTotal /proc/meminfo | $CUT_CMD -f2 -d':' | $SED_CMD 's|kB||;s| ||g')
     reinstall_flag=false
-    [[ -s $DEBUG_LOG_PATHFILE ]] && DebugScript 'start session'
-    DisableSatisfyDependenciesOnly
-    DisableHelpOnly
-    DisableVersionOnly
-    DisableSuggestIssue
-    ignore_space_arg=''
     update_all_apps=false
     backup_all_apps=false
     restore_all_apps=false
+    ignore_space_arg=''
     [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg='--insecure' || curl_insecure_arg=''
 
     return 0
@@ -364,6 +363,15 @@ Init()
 LogRuntimeParameters()
     {
 
+    DebugInfoThickSeparator
+    DebugScript 'started' "$($DATE_CMD | $TR_CMD -s ' ')"
+    DebugScript 'version' "$SCRIPT_VERSION"
+    DebugInfoThinSeparator
+    DebugInfo 'Markers: (**) detected, (II) information, (WW) warning, (LL) log file,'
+    DebugInfo ' (EE) error, (==) processing, (--) done, (>>) f entry, (<<) f exit,'
+    DebugInfo ' (vv) variable name & value, ($1) positional argument value.'
+    DebugInfoThinSeparator
+
     ParseArgs
 
     if IsVersionOnly; then
@@ -371,26 +379,16 @@ LogRuntimeParameters()
         return 1
     fi
 
-    DebugFuncEntry
     local conflicting_qpkg=''
 
-    DebugInfoThickSeparator
-    DebugScript 'started' "$($DATE_CMD | $TR_CMD -s ' ')"
+    IsVisibleDebugging || echo -e "$(ColourTextBrightWhite "$SCRIPT_FILE") ($SCRIPT_VERSION)\n"
 
-    IsEnableOnscreenDebugging || echo -e "$(ColourTextBrightWhite "$SCRIPT_FILE") ($SCRIPT_VERSION)\n"
-
-    DebugScript 'version' "$SCRIPT_VERSION"
-    DebugInfoThinSeparator
-    DebugInfo 'Markers: (**) detected, (II) information, (WW) warning, (LL) log file,'
-    DebugInfo ' (EE) error, (==) processing, (--) done, (>>) f entry, (<<) f exit,'
-    DebugInfo ' (vv) variable name & value, ($1) positional argument value.'
-    DebugInfoThinSeparator
     DebugNAS 'model' "$($GREP_CMD -v "^$" /etc/issue | $SED_CMD 's|^Welcome to ||;s|(.*||')"
     DebugNAS 'RAM' "$INSTALLED_RAM_KB kB"
     if IsQPKGToBeInstalled SABnzbd || IsQPKGToBeInstalled SABnzbdplus || IsQPKGInstalled SABnzbd || IsQPKGInstalled SABnzbdplus; then
         if [[ $INSTALLED_RAM_KB -le $MIN_RAM_KB ]]; then
             DebugNAS 'RAM' "less-than or equal-to $MIN_RAM_KB kB"
-            IsNotError && ShowNote "QTS with 1GB RAM or less can lead to unstable SABnzbd uptimes. :("
+            IsNotError && ShowAsNote "QTS with 1GB RAM or less can lead to unstable SABnzbd uptimes. :("
         fi
     fi
     DebugNAS 'firmware version' "$NAS_FIRMWARE"
@@ -423,17 +421,17 @@ LogRuntimeParameters()
     fi
 
     if IsNotError && [[ $EUID -ne 0 || $USER != admin ]]; then
-        ShowError "this script must be run as the 'admin' user. Please login via SSH as 'admin' and try again."
+        ShowAsError "this script must be run as the 'admin' user. Please login via SSH as 'admin' and try again."
         errorcode=1
     fi
 
     if IsNotError && [[ ${#QPKGS_to_install[@]} -eq 0 && ${#QPKGS_to_uninstall[@]} -eq 0 && ${#QPKGS_to_update[@]} -eq 0 && ${#QPKGS_to_backup[@]} -eq 0 && ${#QPKGS_to_restore[@]} -eq 0 ]] && ! IsSatisfyDependenciesOnly && [[ $update_all_apps = false ]]; then
-        ShowError 'no valid QPKGs or actions were specified'
+        ShowAsError 'no valid QPKGs or actions were specified'
         errorcode=2
     fi
 
     if [[ $backup_all_apps = true && $restore_all_apps = true ]]; then
-        ShowError 'no point running a backup then a restore operation'
+        ShowAsError 'no point running a backup then a restore operation'
         errorcode=3
     fi
 
@@ -442,7 +440,7 @@ LogRuntimeParameters()
         result=$?
 
         if [[ $result -ne 0 ]]; then
-            ShowError "unable to create working directory $(FormatAsFileName "$WORKING_PATH") $(FormatAsExitcode $result)"
+            ShowAsError "unable to create working directory $(FormatAsFileName "$WORKING_PATH") $(FormatAsExitcode $result)"
             errorcode=4
         else
             cd "$WORKING_PATH"
@@ -454,7 +452,7 @@ LogRuntimeParameters()
         result=$?
 
         if [[ $result -ne 0 ]]; then
-            ShowError "unable to create QPKG download directory $(FormatAsFileName "$QPKG_DL_PATH") $(FormatAsExitcode $result)"
+            ShowAsError "unable to create QPKG download directory $(FormatAsFileName "$QPKG_DL_PATH") $(FormatAsExitcode $result)"
             errorcode=5
         fi
     fi
@@ -465,7 +463,7 @@ LogRuntimeParameters()
         result=$?
 
         if [[ $result -ne 0 ]]; then
-            ShowError "unable to create IPKG download directory $(FormatAsFileName "$IPKG_DL_PATH") $(FormatAsExitcode $result)"
+            ShowAsError "unable to create IPKG download directory $(FormatAsFileName "$IPKG_DL_PATH") $(FormatAsExitcode $result)"
             errorcode=6
         else
             monitor_flag="$IPKG_DL_PATH/.monitor"
@@ -477,7 +475,7 @@ LogRuntimeParameters()
         result=$?
 
         if [[ $result -ne 0 ]]; then
-            ShowError "unable to create IPKG cache directory $(FormatAsFileName "$IPKG_CACHE_PATH") $(FormatAsExitcode $result)"
+            ShowAsError "unable to create IPKG cache directory $(FormatAsFileName "$IPKG_CACHE_PATH") $(FormatAsExitcode $result)"
             errorcode=7
         fi
     fi
@@ -485,7 +483,7 @@ LogRuntimeParameters()
     if IsNotError; then
         for conflicting_qpkg in ${SHERPA_COMMON_CONFLICTS[@]}; do
             if IsQPKGEnabled $conflicting_qpkg; then
-                ShowError "'$conflicting_qpkg' is enabled. This is an unsupported configuration."
+                ShowAsError "'$conflicting_qpkg' is enabled. This is an unsupported configuration."
                 errorcode=8
             fi
         done
@@ -497,7 +495,7 @@ LogRuntimeParameters()
             DebugQPKG 'Entware installer' $ENTWARE_VER
 
             if [[ $ENTWARE_VER = none ]]; then
-                ShowError 'Entware appears to be installed but is not visible.'
+                ShowAsError 'Entware appears to be installed but is not visible.'
                 errorcode=9
             fi
         fi
@@ -505,13 +503,12 @@ LogRuntimeParameters()
 
     if IsNotError; then
         if ! ($CURL_CMD $curl_insecure_arg --silent --fail https://onecdonly.github.io/sherpa/LICENSE -o LICENSE); then
-            ShowError 'no Internet access'
+            ShowAsError 'no Internet access'
             errorcode=10
         fi
     fi
 
     DebugInfoThinSeparator
-    DebugFuncExit
     return 0
 
     }
@@ -533,7 +530,7 @@ ParseArgs()
     for arg in ${user_args[@]}; do
         case $arg in
             -d|--debug)
-                EnableOnscreenDebugging
+                EnableVisibleDebugging
                 current_operation=''
                 ;;
             --check-all)
@@ -724,10 +721,10 @@ RemoveUnwantedQPKGs()
     IsQPKGInstalled $TARGET_APP && reinstall_flag=true
 
     if [[ $TARGET_APP = Entware && $reinstall_flag = true ]]; then
-        ShowNote 'Reinstalling Entware will revert all IPKGs to defaults and only those required to support your sherpa apps will be reinstalled.'
-        ShowNote "The currently installed IPKG list will be saved to $(FormatAsFileName $previous_Entware_package_list)"
-        ShowWarning "Also, the SABnzbdplus, SickChill and Headphones packages CANNOT BE REINSTALLED as Python 2.7.16 is no-longer available."
-        ShowQuiz 'Press (y) if you agree to remove all current Entware IPKGs and their configs, or any other key to abort'
+        ShowAsNote 'Reinstalling Entware will revert all IPKGs to defaults and only those required to support your sherpa apps will be reinstalled.'
+        ShowAsNote "The currently installed IPKG list will be saved to $(FormatAsFileName $previous_Entware_package_list)"
+        ShowAsWarning "Also, the SABnzbdplus, SickChill and Headphones packages CANNOT BE REINSTALLED as Python 2.7.16 is no-longer available."
+        ShowAsQuiz 'Press (y) if you agree to remove all current Entware IPKGs and their configs, or any other key to abort'
         read -n1 response; echo
         DebugVar response
         case ${response:0:1} in
@@ -827,21 +824,21 @@ UpdateEntware()
     [[ -e $package_list_file ]] && msgs=$($FIND_CMD "$package_list_file" -mmin +$package_list_age) || msgs='new install'
 
     if [[ -n $msgs ]]; then
-        ShowProc "updating $(FormatAsPackageName Entware) package list"
+        ShowAsProc "updating $(FormatAsPackageName Entware) package list"
 
         RunThisAndLogResults "$OPKG_CMD update" "$log_pathfile"
         result=$?
 
         if [[ $result -eq 0 ]]; then
-            ShowDone "updated $(FormatAsPackageName Entware) package list"
+            ShowAsDone "updated $(FormatAsPackageName Entware) package list"
         else
-            ShowWarning "Unable to update $(FormatAsPackageName Entware) package list $(FormatAsExitcode $result)"
+            ShowAsWarning "Unable to update $(FormatAsPackageName Entware) package list $(FormatAsExitcode $result)"
             DebugErrorFile "$log_pathfile"
             # meh, continue anyway with old list ...
         fi
     else
         DebugInfo "$(FormatAsPackageName Entware) package list was updated less than $package_list_age minutes ago"
-        ShowDone "$(FormatAsPackageName Entware) package list is up-to-date"
+        ShowAsDone "$(FormatAsPackageName Entware) package list is up-to-date"
     fi
 
     DebugFuncExit
@@ -860,7 +857,7 @@ InstallBaseAddons()
         if IsNotQPKGInstalled Par2; then
             InstallQPKG Par2
             if IsError; then
-                ShowWarning "$(FormatAsPackageName Par2) installation failed - but it's not essential so I'm continuing"
+                ShowAsWarning "$(FormatAsPackageName Par2) installation failed - but it's not essential so I'm continuing"
                 ResetErrorcode
                 DebugVar errorcode
             fi
@@ -872,7 +869,7 @@ InstallBaseAddons()
         if IsNotQPKGInstalled Par2; then
             InstallQPKG Par2
             if IsError; then
-                ShowWarning "$(FormatAsPackageName Par2) installation failed - but it's not essential so I'm continuing"
+                ShowAsWarning "$(FormatAsPackageName Par2) installation failed - but it's not essential so I'm continuing"
                 ResetErrorcode
                 DebugVar errorcode
             fi
@@ -931,7 +928,7 @@ InstallIPKGs()
 
         InstallIPKGBatch "$packages"
     else
-        ShowError "IPKG download path [$IPKG_DL_PATH] does not exist"
+        ShowAsError "IPKG download path [$IPKG_DL_PATH] does not exist"
         errorcode=15
         returncode=1
     fi
@@ -964,7 +961,7 @@ InstallIPKGBatch()
 
     if [[ $IPKG_download_count -gt 0 ]]; then
         local IPKG_download_startseconds=$(DebugStageStart)
-        ShowProc "downloading & installing $IPKG_download_count IPKG$(DisplayPlural $IPKG_download_count)"
+        ShowAsProc "downloading & installing $IPKG_download_count IPKG$(DisplayPlural $IPKG_download_count)"
 
         $TOUCH_CMD "$monitor_flag"
         trap CTRL_C_Captured INT
@@ -977,9 +974,9 @@ InstallIPKGBatch()
         trap - INT
 
         if [[ $result -eq 0 ]]; then
-            ShowDone "downloaded & installed $IPKG_download_count IPKG$(DisplayPlural $IPKG_download_count)"
+            ShowAsDone "downloaded & installed $IPKG_download_count IPKG$(DisplayPlural $IPKG_download_count)"
         else
-            ShowError "download & install IPKG$(DisplayPlural $IPKG_download_count) failed $(FormatAsExitcode $result)"
+            ShowAsError "download & install IPKG$(DisplayPlural $IPKG_download_count) failed $(FormatAsExitcode $result)"
             DebugErrorFile "$log_pathfile"
 
             errorcode=16
@@ -1019,7 +1016,7 @@ DowngradePy3()
     local log_pathfile="$IPKG_DL_PATH/IPKGs.$INSTALL_LOG_FILE"
     local result=0
 
-    ShowProc "$(FormatAsPackageName Watcher3) selected so downgrading Python 3 IPKGs"
+    ShowAsProc "$(FormatAsPackageName Watcher3) selected so downgrading Python 3 IPKGs"
 
     for pkg_name in ${pkg_names[@]}; do
         ipkg_urls+=(-O "${source_url}/archive/${pkg_base}-${pkg_name}_${pkg_version}_${pkg_arch}.ipk")
@@ -1048,7 +1045,7 @@ DowngradePy3()
     RunThisAndLogResults "$OPKG_CMD install --force-downgrade $IPKG_DL_PATH/*.ipk" "$log_pathfile"
     result=$?
 
-    ShowDone "$(FormatAsPackageName Watcher3) selected so downgraded Python 3 IPKGs"
+    ShowAsDone "$(FormatAsPackageName Watcher3) selected so downgraded Python 3 IPKGs"
 
     DebugFuncExit
     return $returncode
@@ -1096,15 +1093,15 @@ InstallPy2Modules()
     [[ -n ${packages// /} ]] && exec_cmd+="$pip2_cmd install $packages --disable-pip-version-check"
     [[ -z $exec_cmd ]] && return
 
-    ShowProc "downloading & installing $desc"
+    ShowAsProc "downloading & installing $desc"
 
     RunThisAndLogResults "$exec_cmd" "$log_pathfile"
     result=$?
 
     if [[ $result -eq 0 ]]; then
-        ShowDone "downloaded & installed $desc"
+        ShowAsDone "downloaded & installed $desc"
     else
-        ShowError "download & install $desc failed $(FormatAsResult "$result")"
+        ShowAsError "download & install $desc failed $(FormatAsResult "$result")"
         DebugErrorFile "$log_pathfile"
 
         errorcode=18
@@ -1163,15 +1160,15 @@ InstallPy3Modules()
 
     [[ -z $exec_cmd ]] && return
 
-    ShowProc "downloading & installing $desc"
+    ShowAsProc "downloading & installing $desc"
 
     RunThisAndLogResults "$exec_cmd" "$log_pathfile"
     result=$?
 
     if [[ $result -eq 0 ]]; then
-        ShowDone "downloaded & installed $desc"
+        ShowAsDone "downloaded & installed $desc"
     else
-        ShowError "download & install $desc failed $(FormatAsResult "$result")"
+        ShowAsError "download & install $desc failed $(FormatAsResult "$result")"
         DebugErrorFile "$log_pathfile"
 
         errorcode=20
@@ -1233,15 +1230,15 @@ InstallQPKG()
     local log_pathfile="$local_pathfile.$INSTALL_LOG_FILE"
     target_file=$($BASENAME_CMD "$local_pathfile")
 
-    ShowProcLong "installing file $(FormatAsFileName "$target_file")"
+    ShowAsProcLong "installing file $(FormatAsFileName "$target_file")"
 
     RunThisAndLogResults "sh $local_pathfile" "$log_pathfile"
     result=$?
 
     if [[ $result -eq 0 || $result -eq 10 ]]; then
-        ShowDone "installed file $(FormatAsFileName "$target_file")"
+        ShowAsDone "installed file $(FormatAsFileName "$target_file")"
     else
-        ShowError "file installation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $result)"
+        ShowAsError "file installation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $result)"
         DebugErrorFile "$log_pathfile"
 
         errorcode=21
@@ -1293,11 +1290,11 @@ DownloadQPKG()
     fi
 
     if IsNotError && [[ ! -e $local_pathfile ]]; then
-        ShowProc "downloading file $(FormatAsFileName "$remote_filename")"
+        ShowAsProc "downloading file $(FormatAsFileName "$remote_filename")"
 
         [[ -e $log_pathfile ]] && rm -f "$log_pathfile"
 
-        if IsEnableOnscreenDebugging; then
+        if IsVisibleDebugging; then
             RunThisAndLogResultsRealtime "$CURL_CMD $curl_insecure_arg --output $local_pathfile $remote_url" "$log_pathfile"
             result=$?
         else
@@ -1307,14 +1304,14 @@ DownloadQPKG()
 
         if [[ $result -eq 0 ]]; then
             if FileMatchesMD5 "$local_pathfile" "$remote_filename_md5"; then
-                ShowDone "downloaded file $(FormatAsFileName "$remote_filename")"
+                ShowAsDone "downloaded file $(FormatAsFileName "$remote_filename")"
             else
-                ShowError "downloaded file checksum incorrect $(FormatAsFileName "$local_pathfile")"
+                ShowAsError "downloaded file checksum incorrect $(FormatAsFileName "$local_pathfile")"
                 errorcode=22
                 returncode=1
             fi
         else
-            ShowError "download failed $(FormatAsFileName "$local_pathfile") $(FormatAsExitcode $result)"
+            ShowAsError "download failed $(FormatAsFileName "$local_pathfile") $(FormatAsExitcode $result)"
             DebugErrorFile "$log_pathfile"
 
             errorcode=23
@@ -1417,15 +1414,15 @@ UninstallQPKG()
 
     if [[ $result -eq 0 ]]; then
         if [[ -e $qpkg_installed_path/.uninstall.sh ]]; then
-            ShowProc "uninstalling $(FormatAsPackageName $1)"
+            ShowAsProc "uninstalling $(FormatAsPackageName $1)"
 
             $qpkg_installed_path/.uninstall.sh > /dev/null
             result=$?
 
             if [[ $result -eq 0 ]]; then
-                ShowDone "uninstalled $(FormatAsPackageName $1)"
+                ShowAsDone "uninstalled $(FormatAsPackageName $1)"
             else
-                ShowError "unable to uninstall $(FormatAsPackageName $1) $(FormatAsExitcode $result)"
+                ShowAsError "unable to uninstall $(FormatAsPackageName $1) $(FormatAsExitcode $result)"
                 errorcode=25
                 return 1
             fi
@@ -1465,15 +1462,15 @@ QPKGServiceCtl()
 
     case $1 in
         start)
-            ShowProcLong "starting service $(FormatAsPackageName $2)"
+            ShowAsProcLong "starting service $(FormatAsPackageName $2)"
             RunThisAndLogResults "$init_pathfile start" "$qpkg_pathfile.$START_LOG_FILE"
             result=$?
 
             if [[ $result -eq 0 ]]; then
-                ShowDone "started service $(FormatAsPackageName $2)"
+                ShowAsDone "started service $(FormatAsPackageName $2)"
             else
-                ShowWarning "Could not start service $(FormatAsPackageName $2) $(FormatAsExitcode $result)"
-                if IsEnableOnscreenDebugging; then
+                ShowAsWarning "Could not start service $(FormatAsPackageName $2) $(FormatAsExitcode $result)"
+                if IsVisibleDebugging; then
                     DebugInfoThickSeparator
                     $CAT_CMD "$qpkg_pathfile.$START_LOG_FILE"
                     DebugInfoThickSeparator
@@ -1485,15 +1482,15 @@ QPKGServiceCtl()
             fi
             ;;
         stop)
-            ShowProc "stopping service $(FormatAsPackageName $2)"
+            ShowAsProc "stopping service $(FormatAsPackageName $2)"
             RunThisAndLogResults "$init_pathfile stop" "$qpkg_pathfile.$STOP_LOG_FILE"
             result=$?
 
             if [[ $result -eq 0 ]]; then
-                ShowDone "stopped service $(FormatAsPackageName $2)"
+                ShowAsDone "stopped service $(FormatAsPackageName $2)"
             else
-                ShowWarning "Could not stop service $(FormatAsPackageName $2) $(FormatAsExitcode $result)"
-                if IsEnableOnscreenDebugging; then
+                ShowAsWarning "Could not stop service $(FormatAsPackageName $2) $(FormatAsExitcode $result)"
+                if IsVisibleDebugging; then
                     DebugInfoThickSeparator
                     $CAT_CMD "$qpkg_pathfile.$STOP_LOG_FILE"
                     DebugInfoThickSeparator
@@ -1505,15 +1502,15 @@ QPKGServiceCtl()
             fi
             ;;
         restart)
-            ShowProc "restarting service $(FormatAsPackageName $2)"
+            ShowAsProc "restarting service $(FormatAsPackageName $2)"
             RunThisAndLogResults "$init_pathfile restart" "$qpkg_pathfile.$RESTART_LOG_FILE"
             result=$?
 
             if [[ $result -eq 0 ]]; then
-                ShowDone "restarted service $(FormatAsPackageName $2)"
+                ShowAsDone "restarted service $(FormatAsPackageName $2)"
             else
-                ShowWarning "Could not restart service $(FormatAsPackageName $2) $(FormatAsExitcode $result)"
-                if IsEnableOnscreenDebugging; then
+                ShowAsWarning "Could not restart service $(FormatAsPackageName $2) $(FormatAsExitcode $result)"
+                if IsVisibleDebugging; then
                     DebugInfoThickSeparator
                     $CAT_CMD "$qpkg_pathfile.$RESTART_LOG_FILE"
                     DebugInfoThickSeparator
@@ -1643,7 +1640,7 @@ Cleanup()
 
     cd $SHARE_PUBLIC_PATH
 
-    IsNotError && [[ -d $WORKING_PATH ]] && IsDisableOnscreenDebugging && IsNotDevMode && rm -rf "$WORKING_PATH"
+    IsNotError && [[ -d $WORKING_PATH ]] && IsNotVisibleDebugging && IsNotDevMode && rm -rf "$WORKING_PATH"
 
     DebugFuncExit
     return 0
@@ -1661,22 +1658,22 @@ ShowResult()
             [[ $reinstall_flag = true ]] && RE='re' || RE=''
 
             if IsNotError; then
-                IsEnableOnscreenDebugging && emoticon=':DD' || { emoticon=''; echo ;}
-                ShowDone "$(FormatAsPackageName $TARGET_APP) has been successfully ${RE}installed! $emoticon"
+                IsVisibleDebugging && emoticon=':DD' || { emoticon=''; echo ;}
+                ShowAsDone "$(FormatAsPackageName $TARGET_APP) has been successfully ${RE}installed! $emoticon"
             else
-                IsEnableOnscreenDebugging && emoticon=':S ' || { emoticon=''; echo ;}
-                ShowError "$(FormatAsPackageName $TARGET_APP) ${RE}install failed! ${emoticon}[$errorcode]"
+                IsVisibleDebugging && emoticon=':S ' || { emoticon=''; echo ;}
+                ShowAsError "$(FormatAsPackageName $TARGET_APP) ${RE}install failed! ${emoticon}[$errorcode]"
                 EnableSuggestIssue
             fi
         fi
 
         if IsSatisfyDependenciesOnly; then
             if IsNotError; then
-                IsEnableOnscreenDebugging && emoticon=':DD' || { emoticon=''; echo ;}
-                ShowDone "all application dependencies are installed! $emoticon"
+                IsVisibleDebugging && emoticon=':DD' || { emoticon=''; echo ;}
+                ShowAsDone "all application dependencies are installed! $emoticon"
             else
-                IsEnableOnscreenDebugging && emoticon=':S ' || { emoticon=''; echo ;}
-                ShowError "application dependency check failed! ${emoticon}[$errorcode]"
+                IsVisibleDebugging && emoticon=':S ' || { emoticon=''; echo ;}
+                ShowAsError "application dependency check failed! ${emoticon}[$errorcode]"
                 EnableSuggestIssue
             fi
         fi
@@ -1693,7 +1690,7 @@ ShowResult()
     DebugScript 'elapsed time' "$(ConvertSecsToMinutes "$(($($DATE_CMD +%s)-$([[ -n $SCRIPT_STARTSECONDS ]] && echo $SCRIPT_STARTSECONDS || echo "1")))")"
     DebugInfoThickSeparator
 
-    [[ -e $DEBUG_LOG_PATHFILE ]] && IsDisableOnscreenDebugging && ! IsVersionOnly && echo -e "\n- To display the runtime debug log:\n\tcat $(basename $DEBUG_LOG_PATHFILE)\n"
+    [[ -e $DEBUG_LOG_PATHFILE ]] && IsNotVisibleDebugging && ! IsVersionOnly && echo -e "\n- To display the runtime debug log:\n\tcat $(basename $DEBUG_LOG_PATHFILE)\n"
     DebugFuncExit
     return 0
 
@@ -1746,7 +1743,7 @@ FindAllQPKGDependencies()
     requested_list=$(DeDupeWords "$1")
     last_list=$requested_list
 
-    ShowProc 'calculating number of QPKGs required'
+    ShowAsProc 'calculating number of QPKGs required'
     DebugInfo "requested QPKGs: $requested_list"
 
     DebugProc 'finding QPKG dependencies'
@@ -1789,9 +1786,9 @@ FindAllQPKGDependencies()
     DebugStageEnd $SEARCH_STARTSECONDS
 
     if [[ $QPKG_download_count -gt 0 ]]; then
-        ShowDone "$QPKG_download_count QPKG$(DisplayPlural $QPKG_download_count) to be downloaded"
+        ShowAsDone "$QPKG_download_count QPKG$(DisplayPlural $QPKG_download_count) to be downloaded"
     else
-        ShowDone 'no QPKGs are required'
+        ShowAsDone 'no QPKGs are required'
     fi
 
     }
@@ -1831,7 +1828,7 @@ FindAllIPKGDependencies()
     requested_list=$(DeDupeWords "$1")
     last_list=$requested_list
 
-    ShowProc 'calculating number and total size of IPKGs required'
+    ShowAsProc 'calculating number and total size of IPKGs required'
     DebugInfo "IPKGs requested: $requested_list"
 
     DebugProc 'finding IPKG dependencies'
@@ -1884,9 +1881,9 @@ FindAllIPKGDependencies()
     DebugStageEnd $SEARCH_STARTSECONDS
 
     if [[ $IPKG_download_count -gt 0 ]]; then
-        ShowDone "$IPKG_download_count IPKG$(DisplayPlural $IPKG_download_count) ($(FormatAsISO $IPKG_download_size)) to be downloaded"
+        ShowAsDone "$IPKG_download_count IPKG$(DisplayPlural $IPKG_download_count) ($(FormatAsISO $IPKG_download_size)) to be downloaded"
     else
-        ShowDone 'no IPKGs are required'
+        ShowAsDone 'no IPKGs are required'
     fi
 
     }
@@ -1961,7 +1958,7 @@ IsSysFilePresent()
     [[ -z $1 ]] && return 1
 
     if ! [[ -f $1 || -L $1 ]]; then
-        ShowError "a required NAS system file is missing $(FormatAsFileName $1)"
+        ShowAsError "a required NAS system file is missing $(FormatAsFileName $1)"
         errorcode=34
         return 1
     else
@@ -1981,7 +1978,7 @@ IsSysSharePresent()
     [[ -z $1 ]] && return 1
 
     if [[ ! -L $1 ]]; then
-        ShowError "a required NAS system share is missing $(FormatAsFileName $1). Please re-create it via the QTS Control Panel -> Privilege Settings -> Shared Folders."
+        ShowAsError "a required NAS system share is missing $(FormatAsFileName $1). Please re-create it via the QTS Control Panel -> Privilege Settings -> Shared Folders."
         errorcode=35
         return 1
     else
@@ -2378,7 +2375,7 @@ IsSatisfyDependenciesOnly()
 
     }
 
-EnableOnscreenDebugging()
+EnableVisibleDebugging()
     {
 
     show_debugging=true
@@ -2386,7 +2383,7 @@ EnableOnscreenDebugging()
 
     }
 
-DisableOnscreenDebugging()
+DisableVisibleDebugging()
     {
 
     show_debugging=false
@@ -2394,14 +2391,14 @@ DisableOnscreenDebugging()
 
     }
 
-IsEnableOnscreenDebugging()
+IsVisibleDebugging()
     {
 
     [[ $show_debugging = true ]]
 
     }
 
-IsDisableOnscreenDebugging()
+IsNotVisibleDebugging()
     {
 
     [[ $show_debugging != true ]]
@@ -2411,7 +2408,7 @@ IsDisableOnscreenDebugging()
 EnableDevMode()
     {
 
-    EnableOnscreenDebugging
+    EnableVisibleDebugging
 
     dev_mode=true
     DebugVar dev_mode
@@ -2697,7 +2694,7 @@ DebugVar()
 DebugThis()
     {
 
-    IsEnableOnscreenDebugging && ShowDebug "$1"
+    IsVisibleDebugging && ShowAsDebug "$1"
     WriteAsDebug "$1"
 
     }
@@ -2723,7 +2720,7 @@ DebugErrorFile()
 
     }
 
-ShowInfo()
+ShowAsInfo()
     {
 
     WriteToDisplay_SameLine "$(ColourTextBrightWhite info)" "$1"
@@ -2731,7 +2728,7 @@ ShowInfo()
 
     }
 
-ShowProc()
+ShowAsProc()
     {
 
     WriteToDisplay_SameLine "$(ColourTextBrightOrange proc)" "$1 ..."
@@ -2739,21 +2736,21 @@ ShowProc()
 
     }
 
-ShowProcLong()
+ShowAsProcLong()
     {
 
-    ShowProc "$1 - this can take a while"
+    ShowAsProc "$1 - this can take a while"
 
     }
 
-ShowDebug()
+ShowAsDebug()
     {
 
     WriteToDisplay_SameLine "$(ColourTextBlackOnCyan dbug)" "$1"
 
     }
 
-ShowNote()
+ShowAsNote()
     {
 
     WriteToDisplay_NewLine "$(ColourTextBrightYellow note)" "$1"
@@ -2761,7 +2758,7 @@ ShowNote()
 
     }
 
-ShowQuiz()
+ShowAsQuiz()
     {
 
     WriteToDisplay_SameLine "$(ColourTextBrightYellow quiz)" "$1: "
@@ -2769,7 +2766,7 @@ ShowQuiz()
 
     }
 
-ShowDone()
+ShowAsDone()
     {
 
     WriteToDisplay_NewLine "$(ColourTextBrightGreen done)" "$1"
@@ -2777,7 +2774,7 @@ ShowDone()
 
     }
 
-ShowWarning()
+ShowAsWarning()
     {
 
     WriteToDisplay_NewLine "$(ColourTextBrightOrangeBlink warn)" "$1"
@@ -2785,7 +2782,7 @@ ShowWarning()
 
     }
 
-ShowError()
+ShowAsError()
     {
 
     local buffer="$1"
@@ -2813,7 +2810,7 @@ WriteToDisplay_SameLine()
 
     previous_msg=$(printf "[ %-10s ] %s" "$1" "$2")
 
-    echo -n "$previous_msg"; IsEnableOnscreenDebugging && echo
+    echo -n "$previous_msg"; IsVisibleDebugging && echo
 
     return 0
 
@@ -2859,67 +2856,67 @@ WriteToLog()
 ColourTextBrightGreen()
     {
 
-    echo -en '\033[1;32m'"$(PrintResetColours "$1")"
+    echo -en '\033[1;32m'"$(ColoursReset "$1")"
 
     }
 
 ColourTextBrightYellow()
     {
 
-    echo -en '\033[1;33m'"$(PrintResetColours "$1")"
+    echo -en '\033[1;33m'"$(ColoursReset "$1")"
 
     }
 
 ColourTextBrightYellowBlink()
     {
 
-    echo -en '\033[1;5;33m'"$(PrintResetColours "$1")"
+    echo -en '\033[1;5;33m'"$(ColoursReset "$1")"
 
     }
 
 ColourTextBrightOrange()
     {
 
-    echo -en '\033[1;38;5;214m'"$(PrintResetColours "$1")"
+    echo -en '\033[1;38;5;214m'"$(ColoursReset "$1")"
 
     }
 
 ColourTextBrightOrangeBlink()
     {
 
-    echo -en '\033[1;5;38;5;214m'"$(PrintResetColours "$1")"
+    echo -en '\033[1;5;38;5;214m'"$(ColoursReset "$1")"
 
     }
 
 ColourTextBrightRed()
     {
 
-    echo -en '\033[1;31m'"$(PrintResetColours "$1")"
+    echo -en '\033[1;31m'"$(ColoursReset "$1")"
 
     }
 
 ColourTextUnderlinedBlue()
     {
 
-    echo -en '\033[4;94m'"$(PrintResetColours "$1")"
+    echo -en '\033[4;94m'"$(ColoursReset "$1")"
 
     }
 
 ColourTextBlackOnCyan()
     {
 
-    echo -en '\033[30;46m'"$(PrintResetColours "$1")"
+    echo -en '\033[30;46m'"$(ColoursReset "$1")"
 
     }
 
 ColourTextBrightWhite()
     {
 
-    echo -en '\033[1;97m'"$(PrintResetColours "$1")"
+    echo -en '\033[1;97m'"$(ColoursReset "$1")"
 
     }
 
-PrintResetColours()
+ColoursReset()
     {
 
     echo -en "$1"'\033[0m'
@@ -2927,7 +2924,7 @@ PrintResetColours()
     }
 
 if [[ ! -e /etc/init.d/functions ]]; then
-    ShowError 'QTS functions missing. Is this a QNAP NAS?'
+    ShowAsError 'QTS functions missing. Is this a QNAP NAS?'
     exit 1
 fi
 
