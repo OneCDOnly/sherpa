@@ -42,7 +42,7 @@ Init()
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200626
+    readonly SCRIPT_VERSION=200626b
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -194,7 +194,7 @@ Init()
         SHERPA_QPKG_MD5+=(dea242426d2a4c7f27435a191f7ed592)
         SHERPA_QPKG_ABBRVS+=('sb3 sab3 sabnzbd3')
         SHERPA_QPKG_DEPS+=('Entware Par2')
-        SHERPA_QPKG_IPKGS+=('python3 python3-pip python3-pyopenssl python3-cryptography python3-dev gcc unrar p7zip coreutils-nice ionice ffprobe')
+        SHERPA_QPKG_IPKGS+=('python3 python3-pyopenssl python3-cryptography python3-dev gcc unrar p7zip coreutils-nice ionice ffprobe')
         SHERPA_QPKG_PIP2S+=('')
         SHERPA_QPKG_PIP3S+=('sabyenc3 cheetah3 feedparser configobj cherrypy chardet')
 
@@ -224,7 +224,7 @@ Init()
         SHERPA_QPKG_MD5+=(798546bbfff3d6540423c11d1df0b8ec)
         SHERPA_QPKG_ABBRVS+=('ll lazy lazylibrarian')
         SHERPA_QPKG_DEPS+=('Entware')
-        SHERPA_QPKG_IPKGS+=('python3-pip python3-pyopenssl python3-requests')
+        SHERPA_QPKG_IPKGS+=('python3-pyopenssl python3-requests')
         SHERPA_QPKG_PIP2S+=('')
         SHERPA_QPKG_PIP3S+=('python-magic')
 
@@ -234,7 +234,7 @@ Init()
         SHERPA_QPKG_MD5+=(1990ee7712134a408f247e176ee83930)
         SHERPA_QPKG_ABBRVS+=('om med omed medusa omedusa')
         SHERPA_QPKG_DEPS+=('Entware')
-        SHERPA_QPKG_IPKGS+=('python3 python3-pip mediainfo')
+        SHERPA_QPKG_IPKGS+=('python3 mediainfo')
         SHERPA_QPKG_PIP2S+=('')
         SHERPA_QPKG_PIP3S+=('')
 
@@ -244,7 +244,7 @@ Init()
         SHERPA_QPKG_MD5+=(900843cc3b7b63bcf51c318e52f4e34e)
         SHERPA_QPKG_ABBRVS+=('ow wat owat watch watcher owatcher watcher3 owatcher3')
         SHERPA_QPKG_DEPS+=('Entware')
-        SHERPA_QPKG_IPKGS+=('python3 python3-pip jq')
+        SHERPA_QPKG_IPKGS+=('python3 jq')
         SHERPA_QPKG_PIP2S+=('')
         SHERPA_QPKG_PIP3S+=('')
 
@@ -319,7 +319,7 @@ Init()
         readonly SHERPA_QPKG_PIP2S
         readonly SHERPA_QPKG_PIP3S
 
-    readonly SHERPA_COMMON_IPKGS='git git-http nano less ca-certificates'
+    readonly SHERPA_COMMON_IPKGS='git git-http nano less ca-certificates python3-pip'
     readonly SHERPA_COMMON_PIP2S='setuptools'
     readonly SHERPA_COMMON_PIP3S='setuptools'
     readonly SHERPA_COMMON_CONFLICTS='Optware Optware-NG'
@@ -1135,19 +1135,23 @@ InstallPy3Modules()
         fi
     done
 
-    # sometimes, OpenWRT doesn't have a 'pip3'
-    if [[ -e /opt/bin/pip3 ]]; then
-        pip3_cmd=/opt/bin/pip3
-    elif [[ -e /opt/bin/pip3.8 ]]; then
-        pip3_cmd=/opt/bin/pip3.8
-    else
-        if IsNotSysFilePresent $pip3_cmd; then
-            echo -e "\n* Ugh! The usual fix is to let sherpa reinstall Entware at least once."
-            echo -e "\t./sherpa.sh ew"
-            echo -e "If it happens again after reinstalling Entware, please create a new issue for this on GitHub."
-            errorcode=19
-            return 1
+    if [[ -n ${packages// /} ]]; then
+        # sometimes, OpenWRT doesn't have a 'pip3'
+        if [[ -e /opt/bin/pip3 ]]; then
+            pip3_cmd=/opt/bin/pip3
+        elif [[ -e /opt/bin/pip3.8 ]]; then
+            pip3_cmd=/opt/bin/pip3.8
+        else
+            if IsNotSysFilePresent $pip3_cmd; then
+                echo "* Ugh! The usual fix is to let sherpa reinstall Entware at least once."
+                echo -e "\t./sherpa.sh ew"
+                echo "If it happens again after reinstalling Entware, please create a new issue for this on GitHub."
+                errorcode=19
+                return 1
+            fi
         fi
+    else
+        return      # nothing to install
     fi
 
     [[ -n ${SHERPA_COMMON_PIP3S// /} ]] && exec_cmd="$pip3_cmd install $SHERPA_COMMON_PIP3S --disable-pip-version-check"
