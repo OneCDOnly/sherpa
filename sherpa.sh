@@ -38,11 +38,11 @@ ResetErrorcode()
 Init()
     {
 
-    DisableDebugMode
+    DisableOnscreenDebugging
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200626b
+    readonly SCRIPT_VERSION=200626c
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -377,7 +377,7 @@ LogRuntimeParameters()
     DebugInfoThickSeparator
     DebugScript 'started' "$($DATE_CMD | $TR_CMD -s ' ')"
 
-    IsDebugMode || echo -e "$(ColourTextBrightWhite "$SCRIPT_FILE") ($SCRIPT_VERSION)\n"
+    IsEnableOnscreenDebugging || echo -e "$(ColourTextBrightWhite "$SCRIPT_FILE") ($SCRIPT_VERSION)\n"
 
     DebugScript 'version' "$SCRIPT_VERSION"
     DebugInfoThinSeparator
@@ -533,7 +533,7 @@ ParseArgs()
     for arg in ${user_args[@]}; do
         case $arg in
             -d|--debug)
-                EnableDebugMode
+                EnableOnscreenDebugging
                 current_operation=''
                 ;;
             --check-all)
@@ -1297,7 +1297,7 @@ DownloadQPKG()
 
         [[ -e $log_pathfile ]] && rm -f "$log_pathfile"
 
-        if IsDebugMode; then
+        if IsEnableOnscreenDebugging; then
             RunThisAndLogResultsRealtime "$CURL_CMD $curl_insecure_arg --output $local_pathfile $remote_url" "$log_pathfile"
             result=$?
         else
@@ -1473,7 +1473,7 @@ QPKGServiceCtl()
                 ShowDone "started service $(FormatAsPackageName $2)"
             else
                 ShowWarning "Could not start service $(FormatAsPackageName $2) $(FormatAsExitcode $result)"
-                if IsDebugMode; then
+                if IsEnableOnscreenDebugging; then
                     DebugInfoThickSeparator
                     $CAT_CMD "$qpkg_pathfile.$START_LOG_FILE"
                     DebugInfoThickSeparator
@@ -1493,7 +1493,7 @@ QPKGServiceCtl()
                 ShowDone "stopped service $(FormatAsPackageName $2)"
             else
                 ShowWarning "Could not stop service $(FormatAsPackageName $2) $(FormatAsExitcode $result)"
-                if IsDebugMode; then
+                if IsEnableOnscreenDebugging; then
                     DebugInfoThickSeparator
                     $CAT_CMD "$qpkg_pathfile.$STOP_LOG_FILE"
                     DebugInfoThickSeparator
@@ -1513,7 +1513,7 @@ QPKGServiceCtl()
                 ShowDone "restarted service $(FormatAsPackageName $2)"
             else
                 ShowWarning "Could not restart service $(FormatAsPackageName $2) $(FormatAsExitcode $result)"
-                if IsDebugMode; then
+                if IsEnableOnscreenDebugging; then
                     DebugInfoThickSeparator
                     $CAT_CMD "$qpkg_pathfile.$RESTART_LOG_FILE"
                     DebugInfoThickSeparator
@@ -1643,7 +1643,7 @@ Cleanup()
 
     cd $SHARE_PUBLIC_PATH
 
-    IsNotError && [[ -d $WORKING_PATH ]] && IsNotDebugMode && IsNotDevMode && rm -rf "$WORKING_PATH"
+    IsNotError && [[ -d $WORKING_PATH ]] && IsDisableOnscreenDebugging && IsNotDevMode && rm -rf "$WORKING_PATH"
 
     DebugFuncExit
     return 0
@@ -1661,10 +1661,10 @@ ShowResult()
             [[ $reinstall_flag = true ]] && RE='re' || RE=''
 
             if IsNotError; then
-                IsDebugMode && emoticon=':DD' || { emoticon=''; echo ;}
+                IsEnableOnscreenDebugging && emoticon=':DD' || { emoticon=''; echo ;}
                 ShowDone "$(FormatAsPackageName $TARGET_APP) has been successfully ${RE}installed! $emoticon"
             else
-                IsDebugMode && emoticon=':S ' || { emoticon=''; echo ;}
+                IsEnableOnscreenDebugging && emoticon=':S ' || { emoticon=''; echo ;}
                 ShowError "$(FormatAsPackageName $TARGET_APP) ${RE}install failed! ${emoticon}[$errorcode]"
                 EnableSuggestIssue
             fi
@@ -1672,10 +1672,10 @@ ShowResult()
 
         if IsSatisfyDependenciesOnly; then
             if IsNotError; then
-                IsDebugMode && emoticon=':DD' || { emoticon=''; echo ;}
+                IsEnableOnscreenDebugging && emoticon=':DD' || { emoticon=''; echo ;}
                 ShowDone "all application dependencies are installed! $emoticon"
             else
-                IsDebugMode && emoticon=':S ' || { emoticon=''; echo ;}
+                IsEnableOnscreenDebugging && emoticon=':S ' || { emoticon=''; echo ;}
                 ShowError "application dependency check failed! ${emoticon}[$errorcode]"
                 EnableSuggestIssue
             fi
@@ -1693,7 +1693,7 @@ ShowResult()
     DebugScript 'elapsed time' "$(ConvertSecsToMinutes "$(($($DATE_CMD +%s)-$([[ -n $SCRIPT_STARTSECONDS ]] && echo $SCRIPT_STARTSECONDS || echo "1")))")"
     DebugInfoThickSeparator
 
-    [[ -e $DEBUG_LOG_PATHFILE ]] && IsNotDebugMode && ! IsVersionOnly && echo -e "\n- To display the runtime debug log:\n\tcat $(basename $DEBUG_LOG_PATHFILE)\n"
+    [[ -e $DEBUG_LOG_PATHFILE ]] && IsDisableOnscreenDebugging && ! IsVersionOnly && echo -e "\n- To display the runtime debug log:\n\tcat $(basename $DEBUG_LOG_PATHFILE)\n"
     DebugFuncExit
     return 0
 
@@ -2378,40 +2378,40 @@ IsSatisfyDependenciesOnly()
 
     }
 
-EnableDebugMode()
+EnableOnscreenDebugging()
     {
 
-    debug_mode=true
-    DebugVar debug_mode
+    show_debugging=true
+    DebugVar show_debugging
 
     }
 
-DisableDebugMode()
+DisableOnscreenDebugging()
     {
 
-    debug_mode=false
-    DebugVar debug_mode
+    show_debugging=false
+    DebugVar show_debugging
 
     }
 
-IsDebugMode()
+IsEnableOnscreenDebugging()
     {
 
-    [[ $debug_mode = true ]]
+    [[ $show_debugging = true ]]
 
     }
 
-IsNotDebugMode()
+IsDisableOnscreenDebugging()
     {
 
-    [[ $debug_mode != true ]]
+    [[ $show_debugging != true ]]
 
     }
 
 EnableDevMode()
     {
 
-    EnableDebugMode
+    EnableOnscreenDebugging
 
     dev_mode=true
     DebugVar dev_mode
@@ -2697,7 +2697,7 @@ DebugVar()
 DebugThis()
     {
 
-    IsDebugMode && ShowDebug "$1"
+    IsEnableOnscreenDebugging && ShowDebug "$1"
     WriteAsDebug "$1"
 
     }
@@ -2813,7 +2813,7 @@ WriteToDisplay_SameLine()
 
     previous_msg=$(printf "[ %-10s ] %s" "$1" "$2")
 
-    echo -n "$previous_msg"; IsDebugMode && echo
+    echo -n "$previous_msg"; IsEnableOnscreenDebugging && echo
 
     return 0
 
