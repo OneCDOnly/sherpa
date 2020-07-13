@@ -46,7 +46,7 @@ Init()
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200629
+    readonly SCRIPT_VERSION=200714
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -1012,8 +1012,8 @@ DowngradePy3()
     local pkg_version=3.7.4-2
     local pkg_arch=$($BASENAME_CMD $source_url | $SED_CMD 's|\-k|\-|;s|sf\-|\-|')
     local ipkg_urls=()
-    local dl_log_pathfile="$IPKG_DL_PATH/IPKGs.$DOWNLOAD_LOG_FILE"
-    local log_pathfile="$IPKG_DL_PATH/IPKGs.$INSTALL_LOG_FILE"
+    local dl_log_pathfile="$IPKG_DL_PATH/IPKGs.downgrade.$DOWNLOAD_LOG_FILE"
+    local install_log_pathfile="$IPKG_DL_PATH/IPKGs.downgrade.$INSTALL_LOG_FILE"
     local result=0
 
     ShowAsProc "$(FormatAsPackageName Watcher3) selected so downgrading Python 3 IPKGs"
@@ -1040,9 +1040,10 @@ DowngradePy3()
     pkg_version=3.2.1-4
     ipkg_urls+=(-O "${source_url}/archive/${pkg_name}_${pkg_version}_${pkg_arch}.ipk")
 
-    (cd "$IPKG_DL_PATH" && $CURL_CMD $curl_insecure_arg ${ipkg_urls[@]} >> "$dl_log_pathfile" 2>&1)
+    RunThisAndLogResults "cd $IPKG_DL_PATH && $CURL_CMD $curl_insecure_arg ${ipkg_urls[*]}" "$dl_log_pathfile"
+    result=$?
 
-    RunThisAndLogResults "$OPKG_CMD install --force-downgrade $IPKG_DL_PATH/*.ipk" "$log_pathfile"
+    RunThisAndLogResults "$OPKG_CMD install --force-downgrade $IPKG_DL_PATH/*.ipk" "$install_log_pathfile"
     result=$?
 
     ShowAsDone "$(FormatAsPackageName Watcher3) selected so downgraded Python 3 IPKGs"
