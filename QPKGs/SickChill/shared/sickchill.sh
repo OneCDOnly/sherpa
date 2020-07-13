@@ -14,7 +14,7 @@ Init()
 
     readonly QPKG_NAME=SickChill
     readonly SOURCE_URL=http://github.com/sickchill/sickchill.git
-    readonly SOURCE_BRANCH=master
+    readonly SOURCE_BRANCH=py3-again
     readonly PYTHON=/opt/bin/python3
     local -r TARGET_SCRIPT=SickBeard.py
 
@@ -24,6 +24,7 @@ Init()
     readonly DIRNAME_CMD=/usr/bin/dirname
     readonly GETCFG_CMD=/sbin/getcfg
     readonly GREP_CMD=/bin/grep
+    readonly LESS_CMD=/opt/bin/less
     readonly LSOF_CMD=/usr/sbin/lsof
     readonly SED_CMD=/bin/sed
     readonly SETCFG_CMD=/sbin/setcfg
@@ -100,8 +101,8 @@ StartQPKG()
         WriteToDisplayAndLog 'OK'
     else
         WriteToDisplayAndLog 'failed!'
-        WriteToDisplayAndLog "= result: $(FormatAsExitcode $result)"
-        WriteToDisplayAndLog "= daemon startup messages: $(FormatAsStdout "$exec_msgs")"
+        WriteToDisplayAndLog "$(FormatAsFuncMessages "$exec_msgs")"
+        WriteToDisplayAndLog "$(FormatAsResult $result)"
         WriteErrorToSystemLog "Daemon launch failed. Check $(FormatAsFileName "$INIT_LOG_PATHFILE") for more details."
         return 1
     fi
@@ -160,17 +161,16 @@ BackupConfig()
     local result=0
 
     WriteToDisplayAndLog_SameLine '* updating configuration backup: '
-
     exec_msgs=$($TAR_CMD --create --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config . 2>&1)
     result=$?
 
     if [[ $result = 0 ]]; then
         WriteToDisplayAndLog 'OK'
-        WriteInfoToSystemLog "updated configuration backup"
+        WriteInfoToSystemLog 'updated configuration backup'
     else
         WriteToDisplayAndLog 'failed!'
-        WriteToDisplayAndLog "= result: $(FormatAsExitcode $result)"
-        WriteToDisplayAndLog "= messages: $(FormatAsStdout "$exec_msgs")"
+        WriteToDisplayAndLog "$(FormatAsFuncMessages "$exec_msgs")"
+        WriteToDisplayAndLog "$(FormatAsResult $result)"
         WriteWarningToSystemLog "A problem occurred while updating configuration backup. Check $(FormatAsFileName "$INIT_LOG_PATHFILE") for more details."
         return 1
     fi
@@ -187,7 +187,6 @@ RestoreConfig()
         StopQPKG
 
         WriteToDisplayAndLog_SameLine '* restoring configuration backup: '
-
         exec_msgs=$($TAR_CMD --extract --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config 2>&1)
         result=$?
 
@@ -197,8 +196,8 @@ RestoreConfig()
             StartQPKG
         else
             WriteToDisplayAndLog 'failed!'
-            WriteToDisplayAndLog "= result: $(FormatAsExitcode $result)"
-            WriteToDisplayAndLog "= messages: $(FormatAsStdout "$exec_msgs")"
+            WriteToDisplayAndLog "$(FormatAsFuncMessages "$exec_msgs")"
+            WriteToDisplayAndLog "$(FormatAsResult $result)"
             WriteWarningToSystemLog "A problem occurred while restoring configuration backup. Check $(FormatAsFileName "$INIT_LOG_PATHFILE") for more details."
             return 1
         fi
@@ -232,12 +231,11 @@ PullGitRepo()
 
     # $1 = package name
     # $2 = URL to pull/clone from
-    # $3 = branch
-    # $4 = path to clone into
+    # $3 = remote branch or tag
+    # $4 = local path to clone into
 
     local -r GIT_CMD=/opt/bin/git
     local exec_msgs=''
-    local raw_tag=''
 
     [[ -z $1 || -z $2 || -z $3 || -z $4 ]] && return 1
     SysFilePresent "$GIT_CMD" || { errorcode=1; return 1 ;}
@@ -247,29 +245,22 @@ PullGitRepo()
     local GIT_HTTPS_URL=${GIT_HTTP_URL/http/git}
 
     WriteToDisplayAndLog_SameLine "* updating application $(FormatAsPackageName $1): "
-    exec_msgs="$({
-    if [[ ! -d ${QPKG_GIT_PATH}/.git ]]; then
-        raw_tag=$($GIT_CMD ls-remote --tags "$GIT_HTTP_URL" | $TAIL_CMD -n1 | $SED_CMD 's|^.*tags/||;s|\^.*$||')
-        $GIT_CMD clone -b "$raw_tag" --depth 1 "$GIT_HTTP_URL" $QPKG_GIT_PATH
-        cd "$QPKG_GIT_PATH"
-        $GIT_CMD remote set-branches --add origin master
-        $GIT_CMD fetch
-        $GIT_CMD checkout master
-    else
-        cd "$QPKG_GIT_PATH"
-        $GIT_CMD pull
-    fi
-    } 2>&1)"
+    exec_msgs=$({
+        if [[ ! -d ${QPKG_GIT_PATH}/.git ]]; then
+            $GIT_CMD clone -b $3 --depth 1 -c advice.detachedHead=false "$GIT_HTTPS_URL" "$QPKG_GIT_PATH" || $GIT_CMD clone -b $3 --depth 1 -c advice.detachedHead=false "$GIT_HTTP_URL" "$QPKG_GIT_PATH"
+        fi
+        cd "$QPKG_GIT_PATH" && $GIT_CMD pull
+    } 2>&1)
     result=$?
 
     if [[ $result = 0 ]]; then
         WriteToDisplayAndLog 'OK'
-        WriteToLog "= result: $(FormatAsExitcode $result)"
-        WriteToLog "= ${FUNCNAME[0]}(): $(FormatAsStdout "$exec_msgs")"
+        WriteToLog "$(FormatAsFuncMessages "$exec_msgs")"
+        WriteToLog "$(FormatAsResult $result)"
     else
         WriteToDisplayAndLog 'failed!'
-        WriteToDisplayAndLog "= result: $(FormatAsExitcode $result)"
-        WriteToDisplayAndLog "= ${FUNCNAME[0]}(): $(FormatAsStdout "$exec_msgs")"
+        WriteToDisplayAndLog "$(FormatAsFuncMessages "$exec_msgs")"
+        WriteToDisplayAndLog "$(FormatAsResult $result)"
         WriteErrorToSystemLog "An error occurred while updating $(FormatAsPackageName $1) daemon from remote repository. Check $(FormatAsFileName "$INIT_LOG_PATHFILE") for more details."
         return 1
     fi
@@ -385,7 +376,7 @@ FormatAsStdout()
 
     [[ -z $1 ]] && return 1
 
-    echo "\"$1\""
+    echo "= output: \"$1\""
 
     }
 
@@ -395,6 +386,25 @@ FormatAsExitcode()
     [[ -z $1 ]] && return 1
 
     echo "[$1]"
+
+    }
+
+FormatAsResult()
+    {
+
+    [[ -z $1 ]] && return 1
+
+    echo "= result: $(FormatAsExitcode "$1")"
+
+    }
+
+FormatAsFuncMessages()
+    {
+
+    [[ -z $1 ]] && return 1
+
+    echo "= ${FUNCNAME[1]}()"
+    FormatAsStdout "$1"
 
     }
 
@@ -543,21 +553,21 @@ if [[ $errorcode -eq 0 ]]; then
         stop)
             StopQPKG || errorcode=1
             ;;
-        restart)
+        r|restart)
             StopQPKG; StartQPKG || errorcode=1
             ;;
-        status)
+        s|status)
             DaemonIsActive $QPKG_NAME || errorcode=1
             ;;
-        backup)
+        b|backup)
             BackupConfig || errorcode=1
             ;;
         restore)
             RestoreConfig || errorcode=1
             ;;
-        history)
+        h|history)
             if [[ -e $INIT_LOG_PATHFILE ]]; then
-                cat $INIT_LOG_PATHFILE
+                $LESS_CMD -rMK -PM' use arrow-keys to scroll up-down left-right, press Q to quit' $INIT_LOG_PATHFILE
             else
                 WriteToDisplay "Init log not found: $(FormatAsFileName $INIT_LOG_PATHFILE)"
             fi

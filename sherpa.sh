@@ -46,7 +46,7 @@ Init()
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200714b
+    readonly SCRIPT_VERSION=200714c
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -215,7 +215,7 @@ Init()
     SHERPA_QPKG_NAME+=(SickChill)
         SHERPA_QPKG_ARCH+=(all)
         SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/SickChill/build/SickChill_200714.qpkg)
-        SHERPA_QPKG_MD5+=(42aaf106903fd985c67e0bd67e8d00b9)
+        SHERPA_QPKG_MD5+=(906f0a7aa98f72add3de0c1a53274778)
         SHERPA_QPKG_ABBRVS+=('sc sick sickc chill sickchill')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python3')
