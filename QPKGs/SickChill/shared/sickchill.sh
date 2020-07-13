@@ -15,7 +15,7 @@ Init()
     readonly QPKG_NAME=SickChill
     readonly SOURCE_URL=http://github.com/sickchill/sickchill.git
     readonly SOURCE_BRANCH=master
-    readonly PYTHON=/opt/bin/python2.7
+    readonly PYTHON=/opt/bin/python3
     local -r TARGET_SCRIPT=SickBeard.py
 
     # cherry-pick required binaries
