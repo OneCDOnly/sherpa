@@ -1043,10 +1043,28 @@ DowngradePy3()
     RunThisAndLogResults "cd $IPKG_DL_PATH && $CURL_CMD $curl_insecure_arg ${ipkg_urls[*]}" "$dl_log_pathfile"
     result=$?
 
-    RunThisAndLogResults "$OPKG_CMD install --force-downgrade $IPKG_DL_PATH/*.ipk" "$install_log_pathfile"
-    result=$?
+    if [[ $result -gt 0 ]]; then
+        errorcode=17
+        returncode=1
+    fi
 
-    ShowAsDone "$(FormatAsPackageName Watcher3) selected so downgraded Python 3 IPKGs"
+    if IsNotError; then
+        RunThisAndLogResults "$OPKG_CMD install --force-downgrade $IPKG_DL_PATH/*.ipk" "$install_log_pathfile"
+        result=$?
+
+        if [[ $result -eq 0 ]]; then
+            ShowAsDone "$(FormatAsPackageName Watcher3) selected so downgraded Python 3 IPKGs"
+        else
+            errorcode=18
+            returncode=1
+        fi
+    fi
+
+    if IsError; then
+        ShowAsError "Python 3 downgrade failed $(FormatAsResult "$result")"
+        DebugErrorFile "$dl_log_pathfile"
+        DebugErrorFile "$install_log_pathfile"
+    fi
 
     DebugFuncExit
     return $returncode
@@ -1084,7 +1102,7 @@ InstallPy2Modules()
         pip2_cmd=/opt/bin/pip
     else
         if IsNotSysFilePresent $pip2_cmd; then
-            errorcode=17
+            errorcode=19
             return 1
         fi
     fi
@@ -1105,7 +1123,7 @@ InstallPy2Modules()
         ShowAsError "download & install $desc failed $(FormatAsResult "$result")"
         DebugErrorFile "$log_pathfile"
 
-        errorcode=18
+        errorcode=20
         returncode=1
     fi
 
@@ -1144,7 +1162,7 @@ InstallPy3Modules()
                 echo "* Ugh! The usual fix is to let sherpa reinstall Entware at least once."
                 echo -e "\t./sherpa.sh ew"
                 echo "If it happens again after reinstalling Entware, please create a new issue for this on GitHub."
-                errorcode=19
+                errorcode=21
                 return 1
             fi
         fi
@@ -1172,7 +1190,7 @@ InstallPy3Modules()
         ShowAsError "download & install $desc failed $(FormatAsResult "$result")"
         DebugErrorFile "$log_pathfile"
 
-        errorcode=20
+        errorcode=22
         returncode=1
     fi
 
@@ -1242,7 +1260,7 @@ InstallQPKG()
         ShowAsError "file installation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $result)"
         DebugErrorFile "$log_pathfile"
 
-        errorcode=21
+        errorcode=23
         returncode=1
     fi
 
@@ -1308,14 +1326,14 @@ DownloadQPKG()
                 ShowAsDone "downloaded file $(FormatAsFileName "$remote_filename")"
             else
                 ShowAsError "downloaded file checksum incorrect $(FormatAsFileName "$local_pathfile")"
-                errorcode=22
+                errorcode=24
                 returncode=1
             fi
         else
             ShowAsError "download failed $(FormatAsFileName "$local_pathfile") $(FormatAsExitcode $result)"
             DebugErrorFile "$log_pathfile"
 
-            errorcode=23
+            errorcode=25
             returncode=1
         fi
     fi
@@ -1392,7 +1410,7 @@ LoadInstalledQPKGVars()
         done
     else
         DebugError 'QPKG not installed?'
-        errorcode=24
+        errorcode=26
         return 1
     fi
 
@@ -1424,7 +1442,7 @@ UninstallQPKG()
                 ShowAsDone "uninstalled $(FormatAsPackageName $1)"
             else
                 ShowAsError "unable to uninstall $(FormatAsPackageName $1) $(FormatAsExitcode $result)"
-                errorcode=25
+                errorcode=27
                 return 1
             fi
         fi
@@ -1448,11 +1466,11 @@ QPKGServiceCtl()
 
     if [[ -z $1 ]]; then
         DebugError 'action unspecified'
-        errorcode=26
+        errorcode=28
         return 1
     elif [[ -z $2 ]]; then
         DebugError 'QPKG name unspecified'
-        errorcode=27
+        errorcode=29
         return 1
     fi
 
@@ -1478,7 +1496,7 @@ QPKGServiceCtl()
                 else
                     $CAT_CMD "$qpkg_pathfile.$START_LOG_FILE" >> "$DEBUG_LOG_PATHFILE"
                 fi
-                errorcode=28
+                errorcode=30
                 return 1
             fi
             ;;
@@ -1524,7 +1542,7 @@ QPKGServiceCtl()
             ;;
         *)
             DebugError "Unrecognised action '$1'"
-            errorcode=29
+            errorcode=31
             return 1
             ;;
     esac
@@ -1549,11 +1567,11 @@ GetQPKGServiceFile()
 
     if [[ -z $output ]]; then
         DebugError "No service file configured for package $(FormatAsPackageName $1)"
-        errorcode=30
+        errorcode=32
         returncode=1
     elif [[ ! -e $output ]]; then
         DebugError "Package service file not found $(FormatAsStdout "$output")"
-        errorcode=31
+        errorcode=33
         returncode=1
     fi
 
@@ -1808,7 +1826,7 @@ FindAllIPKGDependencies()
     [[ -z $1 ]] && return 1
 
     if IsNotSysFilePresent $OPKG_CMD; then
-        errorcode=32
+        errorcode=34
         return 1
     fi
 
@@ -1902,7 +1920,7 @@ _MonitorDirSize_()
     [[ -z $1 || ! -d $1 || -z $2 || $2 -eq 0 ]] && return 1
 
     if IsNotSysFilePresent $FIND_CMD; then
-        errorcode=33
+        errorcode=35
         return 1
     fi
 
@@ -1960,7 +1978,7 @@ IsSysFilePresent()
 
     if ! [[ -f $1 || -L $1 ]]; then
         ShowAsError "a required NAS system file is missing $(FormatAsFileName $1)"
-        errorcode=34
+        errorcode=36
         return 1
     else
         return 0
@@ -1980,7 +1998,7 @@ IsSysSharePresent()
 
     if [[ ! -L $1 ]]; then
         ShowAsError "a required NAS system share is missing $(FormatAsFileName $1). Please re-create it via the QTS Control Panel -> Privilege Settings -> Shared Folders."
-        errorcode=35
+        errorcode=37
         return 1
     else
         return 0
