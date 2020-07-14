@@ -46,7 +46,7 @@ Init()
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200715b
+    readonly SCRIPT_VERSION=200715c
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -366,6 +366,8 @@ Init()
 LogRuntimeParameters()
     {
 
+    ParseArgs
+
     DebugInfoThickSeparator
     DebugScript 'started' "$($DATE_CMD | $TR_CMD -s ' ')"
     DebugScript 'version' "$SCRIPT_VERSION"
@@ -374,8 +376,6 @@ LogRuntimeParameters()
     DebugInfo ' (EE) error, (==) processing, (--) done, (>>) f entry, (<<) f exit,'
     DebugInfo ' (vv) variable name & value, ($1) positional argument value.'
     DebugInfoThinSeparator
-
-    ParseArgs
 
     if IsVersionOnly; then
         ShowVersion
