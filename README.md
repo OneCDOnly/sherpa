@@ -35,7 +35,7 @@ curl -skLO https://git.io/sherpa.sh && chmod +x sherpa.sh
 
 4) Then, to install (or reinstall) an app, run **sherpa.sh** with the name of your required app as an argument.
 
-So, to install SABnzbd+, use:
+So, to install SABnzbd, use:
 
 ```
 ./sherpa.sh SABnzbd
@@ -49,6 +49,8 @@ So, to install SABnzbd+, use:
 ./sherpa.sh LazyLibrarian
 
 ./sherpa.sh Medusa
+
+./sherpa.sh SickChill
 
 ./sherpa.sh NZBGet
 ```
