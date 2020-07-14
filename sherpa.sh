@@ -46,7 +46,7 @@ Init()
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200715
+    readonly SCRIPT_VERSION=200715b
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -726,7 +726,7 @@ RemoveUnwantedQPKGs()
     if [[ $TARGET_APP = Entware && $reinstall_flag = true ]]; then
         ShowAsNote 'Reinstalling Entware will revert all IPKGs to defaults and only those required to support your sherpa apps will be reinstalled.'
         ShowAsNote "The currently installed IPKG list will be saved to $(FormatAsFileName $previous_Entware_package_list)"
-        ShowAsWarning "Also, the SABnzbdplus, SickChill and Headphones packages CANNOT BE REINSTALLED as Python 2.7.16 is no-longer available."
+        ShowAsWarning "Also, the SABnzbdplus and Headphones packages CANNOT BE REINSTALLED as Python 2.7.16 is no-longer available."
         ShowAsQuiz 'Press (y) if you agree to remove all current Entware IPKGs and their configs, or any other key to abort'
         read -n1 response; echo
         DebugVar response
@@ -750,7 +750,7 @@ RemoveUnwantedQPKGs()
 
     }
 
-InstallBase()
+InstallQPKGIndeps()
     {
 
     IsError && return
@@ -849,7 +849,7 @@ UpdateEntware()
 
     }
 
-InstallBaseAddons()
+InstallQPKGIndepsAddons()
     {
 
     IsError && return
@@ -884,7 +884,7 @@ InstallBaseAddons()
     InstallPy2Modules
     InstallPy3Modules
 
-    [[ $TARGET_APP = Entware || $update_all_apps = true ]] && RestartAllQPKGs
+    [[ $TARGET_APP = Entware || $update_all_apps = true ]] && RestartAllDepQPKGs
 
     DebugFuncExit
     return 0
@@ -1069,6 +1069,8 @@ DowngradePy3()
         DebugErrorFile "$install_log_pathfile"
     fi
 
+    IsNotError && update_all_apps=true
+
     DebugFuncExit
     return $returncode
 
@@ -1202,30 +1204,20 @@ InstallPy3Modules()
 
     }
 
-RestartAllQPKGs()
+RestartAllDepQPKGs()
     {
 
-    # restart all sherpa QPKGs except independents
+    # restart all sherpa QPKGs except independents. Needed if user has requested each QPKG update itself, or we downgrade Python 3.
 
     IsError && return
 
-    DebugFuncEntry
-    local index=0
-    local dependent_on=''
+    [[ -z ${SHERPA_DEP_QPKGs[*]} || ${#SHERPA_DEP_QPKGs[@]} -eq 0 ]] && return
 
-    for index in ${!SHERPA_QPKG_NAME[@]}; do
-        if (IsQPKGUserInstallable ${SHERPA_QPKG_NAME[$index]}) && (IsQPKGEnabled ${SHERPA_QPKG_NAME[$index]}); then
-            if [[ $update_all_apps = true ]]; then
-                QPKGServiceCtl restart ${SHERPA_QPKG_NAME[$index]}
-            else
-                for dependent_on in ${SHERPA_QPKG_DEPS[$index]}; do
-                    if [[ $dependent_on = $TARGET_APP ]]; then
-                        QPKGServiceCtl restart ${SHERPA_QPKG_NAME[$index]}
-                        break
-                    fi
-                done
-            fi
-        fi
+    DebugFuncEntry
+    local package=''
+
+    for package in ${SHERPA_DEP_QPKGs[@]}; do
+        IsQPKGEnabled $package && QPKGServiceCtl restart $package
     done
 
     DebugFuncExit
@@ -1396,7 +1388,6 @@ CalcIndependentQPKGs()
 
     IsError && return
 
-    DebugFuncEntry
     SHERPA_INDEP_QPKGs=()
     local index=0
 
@@ -1406,7 +1397,6 @@ CalcIndependentQPKGs()
 
     readonly SHERPA_INDEP_QPKGs
 
-    DebugFuncExit
     return 0
 
     }
@@ -1419,7 +1409,6 @@ CalcDependantQPKGs()
 
     IsError && return
 
-    DebugFuncEntry
     SHERPA_DEP_QPKGs=()
     local index=0
 
@@ -1429,7 +1418,6 @@ CalcDependantQPKGs()
 
     readonly SHERPA_DEP_QPKGs
 
-    DebugFuncExit
     return 0
 
     }
@@ -3002,8 +2990,8 @@ Init || exit
 LogRuntimeParameters
 DownloadQPKGs
 RemoveUnwantedQPKGs
-InstallBase
-InstallBaseAddons
+InstallQPKGIndeps
+InstallQPKGIndepsAddons
 InstallTargetQPKG
 Cleanup
 ShowResult
