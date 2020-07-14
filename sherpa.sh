@@ -46,7 +46,7 @@ Init()
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200714d
+    readonly SCRIPT_VERSION=200715
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -1401,11 +1401,8 @@ CalcIndependentQPKGs()
     local index=0
 
     for index in ${!SHERPA_QPKG_NAME[@]}; do
-        [[ -z ${SHERPA_QPKG_DEPS[$index]} ]] && SHERPA_INDEP_QPKGs+=(${SHERPA_QPKG_NAME[$index]})
+        [[ -z ${SHERPA_QPKG_DEPS[$index]} && ! ${SHERPA_INDEP_QPKGs[@]} =~ ${SHERPA_QPKG_NAME[$index]} ]] && SHERPA_INDEP_QPKGs+=(${SHERPA_QPKG_NAME[$index]})
     done
-
-    # then uniq this array, maintaining current element order
-#    SHERPA_INDEP_QPKGs=($(cat -n $(<<< ${SHERPA_INDEP_QPKGs[*]}) | sort -uk2 | sort -nk1 | cut -f2))
 
     readonly SHERPA_INDEP_QPKGs
 
@@ -1427,11 +1424,8 @@ CalcDependantQPKGs()
     local index=0
 
     for index in ${!SHERPA_QPKG_NAME[@]}; do
-        [[ -n ${SHERPA_QPKG_DEPS[$index]} ]] && SHERPA_DEP_QPKGs+=(${SHERPA_QPKG_NAME[$index]})
+        [[ -n ${SHERPA_QPKG_DEPS[$index]} && ! ${SHERPA_DEP_QPKGs[@]} =~ ${SHERPA_QPKG_NAME[$index]} ]] && SHERPA_DEP_QPKGs+=(${SHERPA_QPKG_NAME[$index]})
     done
-
-    # then uniq this array, maintaining current element order
-#    SHERPA_DEP_QPKGs=($(cat -n $(<<< ${SHERPA_DEP_QPKGs[*]}) | sort -uk2 | sort -nk1 | cut -f2))
 
     readonly SHERPA_DEP_QPKGs
 
