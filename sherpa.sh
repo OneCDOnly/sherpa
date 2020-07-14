@@ -46,7 +46,7 @@ Init()
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200714c
+    readonly SCRIPT_VERSION=200714d
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -355,6 +355,9 @@ Init()
     restore_all_apps=false
     ignore_space_arg=''
     [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg='--insecure' || curl_insecure_arg=''
+
+    CalcIndependentQPKGs
+    CalcDependantQPKGs
 
     return 0
 
@@ -684,7 +687,7 @@ DownloadQPKGs()
         [[ ${#QPKGS_to_install[@]} -gt 0 ]] && QPKGs_to_download+="${QPKGS_to_install[*]}"
         [[ ${#QPKGS_to_reinstall[@]} -gt 0 ]] && QPKGs_to_download+=" ${QPKGS_to_reinstall[*]}"
 
-        FindAllQPKGDependencies "$QPKGs_to_download"
+        FindAllQPKGDependants "$QPKGs_to_download"
 
         for package in ${QPKG_download_list[@]}; do
             DownloadQPKG $package
@@ -1202,6 +1205,8 @@ InstallPy3Modules()
 RestartAllQPKGs()
     {
 
+    # restart all sherpa QPKGs except independents
+
     IsError && return
 
     DebugFuncEntry
@@ -1379,6 +1384,58 @@ CalcNASQPKGArch()
 
     readonly NAS_QPKG_ARCH
 
+    return 0
+
+    }
+
+CalcIndependentQPKGs()
+    {
+
+    # Returns a list of QPKGs that don't depend on other QPKGs. These are therefore independent. They should be installed/started before any dependant QPKGs.
+    # creates a global constant: $SHERPA_INDEP_QPKGs
+
+    IsError && return
+
+    DebugFuncEntry
+    SHERPA_INDEP_QPKGs=()
+    local index=0
+
+    for index in ${!SHERPA_QPKG_NAME[@]}; do
+        [[ -z ${SHERPA_QPKG_DEPS[$index]} ]] && SHERPA_INDEP_QPKGs+=(${SHERPA_QPKG_NAME[$index]})
+    done
+
+    # then uniq this array, maintaining current element order
+#    SHERPA_INDEP_QPKGs=($(cat -n $(<<< ${SHERPA_INDEP_QPKGs[*]}) | sort -uk2 | sort -nk1 | cut -f2))
+
+    readonly SHERPA_INDEP_QPKGs
+
+    DebugFuncExit
+    return 0
+
+    }
+
+CalcDependantQPKGs()
+    {
+
+    # Returns a list of QPKGs that depend on other QPKGs. These are therefore dependant. They should be installed/started after any independent QPKGs.
+    # creates a global constant: $SHERPA_DEP_QPKGs
+
+    IsError && return
+
+    DebugFuncEntry
+    SHERPA_DEP_QPKGs=()
+    local index=0
+
+    for index in ${!SHERPA_QPKG_NAME[@]}; do
+        [[ -n ${SHERPA_QPKG_DEPS[$index]} ]] && SHERPA_DEP_QPKGs+=(${SHERPA_QPKG_NAME[$index]})
+    done
+
+    # then uniq this array, maintaining current element order
+#    SHERPA_DEP_QPKGs=($(cat -n $(<<< ${SHERPA_DEP_QPKGs[*]}) | sort -uk2 | sort -nk1 | cut -f2))
+
+    readonly SHERPA_DEP_QPKGs
+
+    DebugFuncExit
     return 0
 
     }
@@ -1735,7 +1792,7 @@ GetQPKGDeps()
 
     }
 
-FindAllQPKGDependencies()
+FindAllQPKGDependants()
     {
 
     # From a specified list of QPKG names, find all dependent QPKGs then generate a total qty to download.
