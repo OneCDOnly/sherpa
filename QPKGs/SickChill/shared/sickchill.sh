@@ -247,7 +247,7 @@ PullGitRepo()
     WriteToDisplayAndLog_SameLine "* updating application $(FormatAsPackageName $1): "
     exec_msgs=$({
         if [[ ! -d ${QPKG_GIT_PATH}/.git ]]; then
-            $GIT_CMD clone -b $3 --depth 1 -c advice.detachedHead=false "$GIT_HTTPS_URL" "$QPKG_GIT_PATH" || $GIT_CMD clone -b $3 --depth 1 -c advice.detachedHead=false "$GIT_HTTP_URL" "$QPKG_GIT_PATH"
+            $GIT_CMD clone --branch $3 --single-branch "$GIT_HTTPS_URL" "$QPKG_GIT_PATH" || $GIT_CMD clone --branch $3 --single-branch "$GIT_HTTP_URL" "$QPKG_GIT_PATH"
         fi
         cd "$QPKG_GIT_PATH" && $GIT_CMD pull
     } 2>&1)
