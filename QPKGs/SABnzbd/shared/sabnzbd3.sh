@@ -286,6 +286,9 @@ PullGitRepo()
             $GIT_CMD clone -b $3 --depth 1 -c advice.detachedHead=false "$GIT_HTTPS_URL" "$QPKG_GIT_PATH" || $GIT_CMD clone -b $3 --depth 1 -c advice.detachedHead=false "$GIT_HTTP_URL" "$QPKG_GIT_PATH"
         fi
         cd "$QPKG_GIT_PATH" && $GIT_CMD pull
+        # might need to use these instead of 'git pull' if we keep seeing "Tell me who you are"
+        # git fetch
+        # git reset --hard origin/master
     } 2>&1)
     result=$?
 
