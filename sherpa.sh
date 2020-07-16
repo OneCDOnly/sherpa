@@ -46,7 +46,7 @@ Init()
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200715c
+    readonly SCRIPT_VERSION=200716
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -726,7 +726,7 @@ RemoveUnwantedQPKGs()
     if [[ $TARGET_APP = Entware && $reinstall_flag = true ]]; then
         ShowAsNote 'Reinstalling Entware will revert all IPKGs to defaults and only those required to support your sherpa apps will be reinstalled.'
         ShowAsNote "The currently installed IPKG list will be saved to $(FormatAsFileName $previous_Entware_package_list)"
-        ShowAsWarning "Also, the SABnzbdplus and Headphones packages CANNOT BE REINSTALLED as Python 2.7.16 is no-longer available."
+        ( IsQPKGInstalled SABnzbdplus || IsQPKGInstalled Headphones ) && ShowAsWarning "Also, the SABnzbdplus and Headphones packages CANNOT BE REINSTALLED as Python 2.7.16 is no-longer available."
         ShowAsQuiz 'Press (y) if you agree to remove all current Entware IPKGs and their configs, or any other key to abort'
         read -n1 response; echo
         DebugVar response
