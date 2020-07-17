@@ -96,7 +96,7 @@ StartQPKG()
     ExecuteAndLog 'starting daemon' "$LAUNCHER" log:everything || return 1
 
     if PortResponds $ui_port; then
-        DisplayDoneCommitToLog "$(FormatAsPackageName $QPKG_NAME) daemon UI is now listening on HTTP${ui_secure} port: $ui_port"
+        DisplayDoneCommitToLog "$(FormatAsPackageName $QPKG_NAME) UI is now listening on HTTP${ui_secure} port $ui_port"
     else
         return 1
     fi
@@ -221,9 +221,9 @@ PullGitRepo()
     [[ $4 = single-branch ]] && local depth=' --single-branch'
 
     if [[ ! -d ${QPKG_GIT_PATH}/.git ]]; then
-        ExecuteAndLog "cloning $(FormatAsPackageName $1) daemon from remote repository" "$GIT_CMD clone --branch $3 $depth -c advice.detachedHead=false $GIT_HTTPS_URL $QPKG_GIT_PATH || $GIT_CMD clone --branch $3 $depth -c advice.detachedHead=false $GIT_HTTP_URL $QPKG_GIT_PATH"
+        ExecuteAndLog "cloning $(FormatAsPackageName $1) from remote repository" "$GIT_CMD clone --branch $3 $depth -c advice.detachedHead=false $GIT_HTTPS_URL $QPKG_GIT_PATH || $GIT_CMD clone --branch $3 $depth -c advice.detachedHead=false $GIT_HTTP_URL $QPKG_GIT_PATH"
     else
-        ExecuteAndLog "updating $(FormatAsPackageName $1) daemon from remote repository" "cd $QPKG_GIT_PATH && $GIT_CMD pull"
+        ExecuteAndLog "updating $(FormatAsPackageName $1) from remote repository" "cd $QPKG_GIT_PATH && $GIT_CMD pull"
     fi
 
     # might need to use these instead of 'git pull' if we keep seeing a 'Tell me who you are' error :(
@@ -340,7 +340,7 @@ PortResponds()
     local -r MAX_WAIT_SECONDS_START=100
     local acc=0
 
-    DisplayWaitCommitToLog "* checking daemon UI port $ui_port response:"
+    DisplayWaitCommitToLog "* checking for UI port $ui_port response:"
     DisplayWait "(waiting for upto $MAX_WAIT_SECONDS_START seconds):"
 
     while true; do
@@ -351,12 +351,12 @@ PortResponds()
 
             if [[ $acc -ge $MAX_WAIT_SECONDS_START ]]; then
                 DisplayCommitToLog 'failed!'
-                CommitErrToSysLog "Daemon UI port $ui_port failed to respond after $acc seconds"
+                CommitErrToSysLog "UI port $ui_port failed to respond after $acc seconds"
                 return 1
             fi
         done
         Display 'OK'
-        CommitLog "daemon UI responded after $acc seconds"
+        CommitLog "UI port responded after $acc seconds"
         return 0
     done
 

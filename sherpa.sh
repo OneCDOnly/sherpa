@@ -46,7 +46,7 @@ Init()
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200717b
+    readonly SCRIPT_VERSION=200718
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -194,8 +194,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(SABnzbd)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/SABnzbd/build/SABnzbd_200717b.qpkg)
-        SHERPA_QPKG_MD5+=(79b5f40b5a2c62848e1ea1b85a3eb0c3)
+        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/SABnzbd/build/SABnzbd_200718.qpkg)
+        SHERPA_QPKG_MD5+=(1eb599e9ca1d3434e2cf58cd1ca609e5)
         SHERPA_QPKG_ABBRVS+=('sb sb3 sab sab3 sabnzbd3 sabnzbd')
         SHERPA_QPKG_DEPS+=('Entware Par2')
         SHERPA_QPKG_IPKGS+=('python3 python3-pyopenssl python3-cryptography python3-dev gcc unrar p7zip coreutils-nice ionice ffprobe')
