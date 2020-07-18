@@ -12,6 +12,7 @@
 Init()
     {
 
+    readonly SCRIPT_VERSION=200718
     readonly QPKG_NAME=NZBGet
     readonly TARGET_DAEMON=/opt/bin/nzbget
 
@@ -21,6 +22,7 @@ Init()
     readonly DIRNAME_CMD=/usr/bin/dirname
     readonly GETCFG_CMD=/sbin/getcfg
     readonly GREP_CMD=/bin/grep
+    readonly LESS_CMD=/opt/bin/less
     readonly LSOF_CMD=/usr/sbin/lsof
     readonly SED_CMD=/bin/sed
     readonly SETCFG_CMD=/sbin/setcfg
@@ -39,7 +41,7 @@ Init()
     readonly LAUNCHER="$TARGET_DAEMON --daemon --configfile $QPKG_INI_PATHFILE"
     export PATH=/opt/bin:/opt/sbin:$PATH
     ui_port=0
-    UI_secure=''
+    ui_secure=''
 
     if [[ -z $LANG ]]; then
         export LANG=en_US.UTF-8
@@ -51,7 +53,7 @@ Init()
     errorcode=0
 
     if [[ ! -f $QPKG_INI_PATHFILE && -f $QPKG_INI_DEFAULT_PATHFILE ]]; then
-        WriteToDisplayAndLog '! no settings file found: using default'
+        DisplayWarnCommitToLog 'no settings file found: using default'
         cp $QPKG_INI_DEFAULT_PATHFILE $QPKG_INI_PATHFILE
     fi
 
@@ -68,44 +70,49 @@ Init()
 
     }
 
-StartQPKG()
+ShowHelp()
     {
 
-    local exec_msgs=''
-    local result=0
+    Display " $($BASENAME_CMD "$0") ($SCRIPT_VERSION)"
+    Display " A service control script for $(FormatAsPackageName $QPKG_NAME)"
+    Display
+    Display " Usage: $0 [OPTION]"
+    Display
+    Display " [OPTION] can be any one of the following:"
+    Display
+    Display " start      - launch $(FormatAsPackageName $QPKG_NAME) if not already running."
+    Display " stop       - shutdown $(FormatAsPackageName $QPKG_NAME) if running."
+    Display " restart    - stop, then start $(FormatAsPackageName $QPKG_NAME)."
+    Display " status     - check if $(FormatAsPackageName $QPKG_NAME) is still running. \$? = 0 if running, 1 if not."
+    Display " backup     - backup the current $(FormatAsPackageName $QPKG_NAME) configuration to persistent storage."
+    Display " restore    - restore a previously saved configuration from persistent storage. $(FormatAsPackageName $QPKG_NAME) will be stopped, then restarted."
+    Display " history    - display this service script runtime log."
+    Display " version    - display this service script version number only."
+    Display
+
+    }
+
+StartQPKG()
+    {
 
     DaemonIsActive && return
 
     cd $QPKG_PATH || return 1
 
     if [[ $ui_port -eq 0 ]]; then
-        WriteToDisplayAndLog '! unable to start daemon: no port specified'
-        WriteErrorToSystemLog 'Unable to start daemon as no UI port was specified'
+        DisplayErrCommitAllLogs 'unable to start daemon as no UI port was specified'
         return 1
     elif ! PortAvailable $ui_port; then
-        WriteToDisplayAndLog "! unable to start daemon: port $ui_port already in use"
-        WriteErrorToSystemLog 'Unable to start daemon as specified UI port is already in use'
+        DisplayErrCommitAllLogs "unable to start daemon as port $ui_port is already in use"
         return 1
     fi
 
     $SETCFG_CMD $QPKG_NAME Web_Port $ui_port -f $QTS_QPKG_CONF_PATHFILE
 
-    WriteToDisplayAndLog_SameLine '* launching: '
-    exec_msgs=$($LAUNCHER 2>&1)
-    result=$?
-
-    if [[ $result = 0 || $result = 2 ]]; then
-        WriteToDisplayAndLog 'OK'
-    else
-        WriteToDisplayAndLog 'failed!'
-        WriteToDisplayAndLog "= result: $(FormatAsExitcode $result)"
-        WriteToDisplayAndLog "= daemon startup messages: $(FormatAsStdout "$exec_msgs")"
-        WriteErrorToSystemLog "Daemon launch failed. Check $(FormatAsFileName "$INIT_LOG_PATHFILE") for more details."
-        return 1
-    fi
+    ExecuteAndLog 'starting daemon' "$LAUNCHER" log:everything || return 1
 
     if PortResponds $ui_port; then
-        WriteToDisplayAndLog "= $(FormatAsPackageName $QPKG_NAME) daemon UI is now listening on HTTP${UI_secure} port: $ui_port"
+        DisplayDoneCommitToLog "$(FormatAsPackageName $QPKG_NAME) UI is now listening on HTTP${ui_secure} port $ui_port"
     else
         return 1
     fi
@@ -122,26 +129,26 @@ StopQPKG()
 
     ! DaemonIsActive && return
 
-    killall $($BASENAME_CMD $TARGET_DAEMON)
-    WriteToDisplayAndLog_SameLine '* stopping daemon with SIGTERM: '
-    WriteToDisplay_SameLine "(waiting for upto $MAX_WAIT_SECONDS_STOP seconds): "
+    killall "$($BASENAME_CMD $TARGET_DAEMON)"
+    DisplayWaitCommitToLog '* stopping daemon with SIGTERM:'
+    DisplayWait "(waiting for upto $MAX_WAIT_SECONDS_STOP seconds):"
 
     while true; do
         while (ps ax | $GREP_CMD $TARGET_DAEMON | $GREP_CMD -vq grep); do
             sleep 1
             ((acc++))
-            WriteToDisplay_SameLine "$acc, "
+            DisplayWait "$acc,"
 
             if [[ $acc -ge $MAX_WAIT_SECONDS_STOP ]]; then
-                WriteToDisplayAndLog_SameLine "failed! "
-                killall -9 $($BASENAME_CMD $TARGET_DAEMON)
-                WriteToDisplayAndLog 'sent SIGKILL.'
+                DisplayWaitCommitToLog 'failed!'
+                killall -9 "$($BASENAME_CMD $TARGET_DAEMON)"
+                DisplayCommitToLog 'sent SIGKILL.'
                 break 2
             fi
         done
 
-        WriteToDisplay 'OK'
-        WriteToLog "stopped OK in $acc seconds"
+        Display 'OK'
+        CommitLog "stopped OK in $acc seconds"
         break
     done
 
@@ -150,57 +157,21 @@ StopQPKG()
 BackupConfig()
     {
 
-    local exec_msgs=''
-    local result=0
-
-    WriteToDisplayAndLog_SameLine '* updating configuration backup: '
-
-    exec_msgs=$($TAR_CMD --create --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config . 2>&1)
-    result=$?
-
-    if [[ $result = 0 ]]; then
-        WriteToDisplayAndLog 'OK'
-        WriteInfoToSystemLog "updated configuration backup"
-    else
-        WriteToDisplayAndLog 'failed!'
-        WriteToDisplayAndLog "= result: $(FormatAsExitcode $result)"
-        WriteToDisplayAndLog "= messages: $(FormatAsStdout "$exec_msgs")"
-        WriteWarningToSystemLog "A problem occurred while updating configuration backup. Check $(FormatAsFileName "$INIT_LOG_PATHFILE") for more details."
-        return 1
-    fi
+    ExecuteAndLog 'updating configuration backup' "$TAR_CMD --create --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config ." log:everything
 
     }
 
 RestoreConfig()
     {
 
-    local exec_msgs=''
-    local result=0
-
-    if [[ -f $BACKUP_PATHFILE ]]; then
-        StopQPKG
-
-        WriteToDisplayAndLog_SameLine '* restoring configuration backup: '
-
-        exec_msgs=$($TAR_CMD --extract --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config 2>&1)
-        result=$?
-
-        if [[ $result = 0 ]]; then
-            WriteToDisplayAndLog 'OK'
-            WriteInfoToSystemLog "configuration restored from backup"
-            StartQPKG
-        else
-            WriteToDisplayAndLog 'failed!'
-            WriteToDisplayAndLog "= result: $(FormatAsExitcode $result)"
-            WriteToDisplayAndLog "= messages: $(FormatAsStdout "$exec_msgs")"
-            WriteWarningToSystemLog "A problem occurred while restoring configuration backup. Check $(FormatAsFileName "$INIT_LOG_PATHFILE") for more details."
-            return 1
-        fi
-    else
-        WriteToDisplayAndLog '! unable to restore - no backup file was found!'
-        WriteErrorToSystemLog 'Unable to restore configuration. No backup file was found.'
+    if [[ ! -f $BACKUP_PATHFILE ]]; then
+        DisplayErrCommitAllLogs 'unable to restore configuration: no backup file was found!'
         return 1
     fi
+
+    StopQPKG
+    ExecuteAndLog 'restoring configuration backup' "$TAR_CMD --extract --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config" log:everything
+    StartQPKG
 
     }
 
@@ -211,10 +182,10 @@ DaemonIsActive()
     # $? = 1 if $QPKG_NAME is not active
 
     if (ps ax | $GREP_CMD $TARGET_DAEMON | $GREP_CMD -vq grep) && (PortResponds $ui_port); then
-        WriteToDisplayAndLog '= daemon is active'
+        DisplayDoneCommitToLog 'daemon is active'
         return 0
     else
-        WriteToDisplayAndLog '= daemon is not active'
+        DisplayDoneCommitToLog 'daemon is not active'
         return 1
     fi
 
@@ -226,7 +197,7 @@ ChoosePort()
     ui_port=$(UIPortSecure)
 
     if [[ $ui_port -gt 0 ]]; then
-        UI_secure='S'
+        ui_secure='S'
     else
         ui_port=$(UIPort)
     fi
@@ -264,7 +235,7 @@ PortAvailable()
     # $? = 0 if available
     # $? = 1 if already used or unspecified
 
-    if [[ -z $1 ]] || ($LSOF_CMD -i :$1 -sTCP:LISTEN 2>&1 >/dev/null); then
+    if [[ -z $1 ]] || ($LSOF_CMD -i :$1 -sTCP:LISTEN >/dev/null 2>&1); then
         return 1
     else
         return 0
@@ -284,32 +255,123 @@ PortResponds()
     local -r MAX_WAIT_SECONDS_START=100
     local acc=0
 
-    WriteToDisplayAndLog_SameLine "* checking for daemon UI port $ui_port response: "
-    WriteToDisplay_SameLine "(waiting for upto $MAX_WAIT_SECONDS_START seconds): "
+    DisplayWaitCommitToLog "* checking for UI port $ui_port response:"
+    DisplayWait "(waiting for upto $MAX_WAIT_SECONDS_START seconds):"
 
     while true; do
         while ! $CURL_CMD --silent --fail localhost:$1 >/dev/null; do
             sleep 1
             ((acc++))
-            WriteToDisplay_SameLine "$acc, "
+            DisplayWait "$acc,"
 
             if [[ $acc -ge $MAX_WAIT_SECONDS_START ]]; then
-                WriteToDisplayAndLog 'failed!'
-                WriteErrorToSystemLog "Daemon UI port $ui_port failed to respond after $acc seconds"
+                DisplayCommitToLog 'failed!'
+                CommitErrToSysLog "UI port $ui_port failed to respond after $acc seconds"
                 return 1
             fi
         done
-        WriteToDisplay 'OK'
-        WriteToLog "daemon UI responded after $acc seconds"
+        Display 'OK'
+        CommitLog "UI port responded after $acc seconds"
         return 0
     done
 
     }
 
-FormatAsPackageName()
+DisplayDoneCommitToLog()
     {
 
-    [[ -z $1 ]] && return 1
+    DisplayCommitToLog "$(FormatAsDisplayDone "$1")"
+
+    }
+
+DisplayWarnCommitToLog()
+    {
+
+    DisplayCommitToLog "$(FormatAsDisplayWarn "$1")"
+
+    }
+
+DisplayErrCommitAllLogs()
+    {
+
+    DisplayErrCommitToLog "$1"
+    CommitErrToSysLog "$1"
+
+    }
+
+DisplayErrCommitToLog()
+    {
+
+    DisplayCommitToLog "$(FormatAsDisplayError "$1")"
+
+    }
+
+DisplayCommitToLog()
+    {
+
+    echo "$1" | $TEE_CMD -a $INIT_LOG_PATHFILE
+
+    }
+
+DisplayWaitCommitToLog()
+    {
+
+    DisplayWait "$1" | $TEE_CMD -a $INIT_LOG_PATHFILE
+
+    }
+
+FormatAsStdout()
+    {
+
+    FormatAsDisplayDone "output: \"$1\""
+
+    }
+
+FormatAsResult()
+    {
+
+    FormatAsDisplayDone "result: $(FormatAsExitcode "$1")"
+
+    }
+
+FormatAsFuncMessages()
+    {
+
+    echo "= ${FUNCNAME[1]}()"
+    FormatAsStdout "$1"
+
+    }
+
+FormatAsDisplayDone()
+    {
+
+    Display "= $1"
+
+    }
+
+FormatAsDisplayWarn()
+    {
+
+    Display "> $1"
+
+    }
+
+FormatAsDisplayError()
+    {
+
+    Display "! $1"
+
+    }
+
+FormatAsExitcode()
+    {
+
+    echo "[$1]"
+
+    }
+
+FormatAsPackageName()
+    {
 
     echo "'$1'"
 
@@ -318,93 +380,53 @@ FormatAsPackageName()
 FormatAsFileName()
     {
 
-    [[ -z $1 ]] && return 1
-
     echo "($1)"
 
     }
 
-FormatAsStdout()
-    {
-
-    [[ -z $1 ]] && return 1
-
-    echo "\"$1\""
-
-    }
-
-FormatAsExitcode()
-    {
-
-    [[ -z $1 ]] && return 1
-
-    echo "[$1]"
-
-    }
-
-WriteToDisplayAndLog_SameLine()
-    {
-
-    echo -n "$1" | $TEE_CMD -a $INIT_LOG_PATHFILE
-
-    }
-
-WriteToDisplayAndLog()
-    {
-
-    echo "$1" | $TEE_CMD -a $INIT_LOG_PATHFILE
-
-    }
-
-WriteToDisplay_SameLine()
-    {
-
-    echo -n "$1"
-
-    }
-
-WriteToDisplay()
+Display()
     {
 
     echo "$1"
 
     }
 
-WriteToLog()
+DisplayWait()
+    {
+
+    echo -n "$1 "
+
+    }
+
+CommitInfoToSysLog()
+    {
+
+    CommitSysLog "$1" 4
+
+    }
+
+CommitWarnToSysLog()
+    {
+
+    CommitSysLog "$1" 2
+
+    }
+
+CommitErrToSysLog()
+    {
+
+    CommitSysLog "$1" 1
+
+    }
+
+CommitLog()
     {
 
     echo "$1" >> $INIT_LOG_PATHFILE
 
     }
 
-WriteInfoToSystemLog()
-    {
-
-    [[ -z $1 ]] && return 1
-
-    SystemLogWrite "$1" 4
-
-    }
-
-WriteWarningToSystemLog()
-    {
-
-    [[ -z $1 ]] && return 1
-
-    SystemLogWrite "$1" 2
-
-    }
-
-WriteErrorToSystemLog()
-    {
-
-    [[ -z $1 ]] && return 1
-
-    SystemLogWrite "$1" 1
-
-    }
-
-SystemLogWrite()
+CommitSysLog()
     {
 
     # $1 = message to append to QTS system log
@@ -454,14 +476,13 @@ WaitForEntware()
         (
             for ((count=1; count<=MAX_WAIT_SECONDS_ENTWARE; count++)); do
                 sleep 1
-                [[ -e /opt/Entware.sh || -e /opt/Entware-3x.sh || -e /opt/Entware-ng.sh ]] && { WriteToLog "waited for Entware for $count seconds"; true; exit ;}
+                [[ -e /opt/Entware.sh || -e /opt/Entware-3x.sh || -e /opt/Entware-ng.sh ]] && { CommitLog "waited for Entware for $count seconds"; true; exit ;}
             done
             false
         )
 
         if [[ $? -ne 0 ]]; then
-            WriteToDisplayAndLog "Entware not found! (exceeded timeout: $MAX_WAIT_SECONDS_ENTWARE seconds)"
-            WriteErrorToSystemLog 'Unable to manage daemon: Entware was not found (exceeded timeout)'
+            DisplayErrCommitAllLogs "Entware not found! (exceeded timeout: $MAX_WAIT_SECONDS_ENTWARE seconds)"
             false
             exit
         else
@@ -477,8 +498,8 @@ Init
 
 if [[ $errorcode -eq 0 ]]; then
     if [[ -n $1 ]]; then
-        WriteToLog "$(SessionSeparator "$1 requested")"
-        WriteToLog "= $(date)"
+        CommitLog "$(SessionSeparator "$1 requested")"
+        CommitLog "= $(date)"
     fi
     case $1 in
         start)
@@ -487,27 +508,30 @@ if [[ $errorcode -eq 0 ]]; then
         stop)
             StopQPKG || errorcode=1
             ;;
-        restart)
+        r|restart)
             StopQPKG; StartQPKG || errorcode=1
             ;;
-        status)
-            DaemonIsActive $QPKG_NAME || errorcode=1
+        s|status)
+            DaemonIsActive $QPKG_NAME >/dev/null || errorcode=1
             ;;
-        backup)
+        b|backup)
             BackupConfig || errorcode=1
             ;;
         restore)
             RestoreConfig || errorcode=1
             ;;
-        history)
+        h|history)
             if [[ -e $INIT_LOG_PATHFILE ]]; then
-                cat $INIT_LOG_PATHFILE
+                $LESS_CMD -rMK -PM' use arrow-keys to scroll up-down left-right, press Q to quit' $INIT_LOG_PATHFILE
             else
-                WriteToDisplay "Init log not found: $(FormatAsFileName $INIT_LOG_PATHFILE)"
+                Display "Init log not found: $(FormatAsFileName $INIT_LOG_PATHFILE)"
             fi
             ;;
+        v|version)
+            Display "$SCRIPT_VERSION"
+            ;;
         *)
-            WriteToDisplay "Usage: $0 {start|stop|restart|status|backup|restore|history}"
+            ShowHelp
             ;;
     esac
 fi

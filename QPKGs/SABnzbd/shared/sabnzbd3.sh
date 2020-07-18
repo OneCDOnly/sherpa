@@ -12,6 +12,7 @@
 Init()
     {
 
+    readonly SCRIPT_VERSION=200718b
     readonly QPKG_NAME=SABnzbd
     readonly SOURCE_URL=http://github.com/sabnzbd/sabnzbd.git
     readonly SOURCE_BRANCH=develop
@@ -70,11 +71,31 @@ Init()
 
     }
 
-StartQPKG()
+ShowHelp()
     {
 
-    local exec_msgs=''
-    local result=0
+    Display " $($BASENAME_CMD "$0") ($SCRIPT_VERSION)"
+    Display " A service control script for $(FormatAsPackageName $QPKG_NAME)"
+    Display
+    Display " Usage: $0 [OPTION]"
+    Display
+    Display " [OPTION] can be any one of the following:"
+    Display
+    Display " start      - launch $(FormatAsPackageName $QPKG_NAME) if not already running."
+    Display " stop       - shutdown $(FormatAsPackageName $QPKG_NAME) if running."
+    Display " restart    - stop, then start $(FormatAsPackageName $QPKG_NAME)."
+    Display " status     - check if $(FormatAsPackageName $QPKG_NAME) is still running. \$? = 0 if running, 1 if not."
+    Display " backup     - backup the current $(FormatAsPackageName $QPKG_NAME) configuration to persistent storage."
+    Display " restore    - restore a previously saved configuration from persistent storage. $(FormatAsPackageName $QPKG_NAME) will be stopped, then restarted."
+    Display " clean      - wipe the current local copy of $(FormatAsPackageName $QPKG_NAME), and download it again from remote source. Configuration will be retained."
+    Display " history    - display this service script runtime log."
+    Display " version    - display this service script version number only."
+    Display
+
+    }
+
+StartQPKG()
+    {
 
     DaemonIsActive && return
 
@@ -239,7 +260,9 @@ CleanLocalClone()
 
     [[ -z $QPKG_PATH || -z $QPKG_NAME ]] && return 1
 
+    StopQPKG
     ExecuteAndLog 'cleaning local repo' "rm -r $QPKG_PATH/$QPKG_NAME"
+    StartQPKG
 
     }
 
@@ -597,7 +620,7 @@ if [[ $errorcode -eq 0 ]]; then
             StopQPKG; StartQPKG || errorcode=1
             ;;
         s|status)
-            DaemonIsActive $QPKG_NAME || errorcode=1
+            DaemonIsActive $QPKG_NAME >/dev/null || errorcode=1
             ;;
         b|backup)
             BackupConfig || errorcode=1
@@ -606,7 +629,7 @@ if [[ $errorcode -eq 0 ]]; then
             RestoreConfig || errorcode=1
             ;;
         clean)
-            StopQPKG && CleanLocalClone && StartQPKG || errorcode=1
+            CleanLocalClone || errorcode=1
             ;;
         h|history)
             if [[ -e $INIT_LOG_PATHFILE ]]; then
@@ -615,8 +638,11 @@ if [[ $errorcode -eq 0 ]]; then
                 Display "Init log not found: $(FormatAsFileName $INIT_LOG_PATHFILE)"
             fi
             ;;
+        v|version)
+            Display "$SCRIPT_VERSION"
+            ;;
         *)
-            Display "Usage: $0 {start|stop|restart|status|backup|restore|clean|history}"
+            ShowHelp
             ;;
     esac
 fi
