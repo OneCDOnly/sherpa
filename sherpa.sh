@@ -46,7 +46,7 @@ Init()
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200718c
+    readonly SCRIPT_VERSION=200719
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -1854,13 +1854,13 @@ FindAllQPKGDependants()
 FindAllIPKGDependencies()
     {
 
-    # From a specified list of IPKG names, find all dependent IPKGs, exclude those already installed, then generate a total qty to download and a total download byte-size.
+    # From a specified list of IPKG names, find all dependent IPKGs, exclude those already installed, then generate a total qty to download and a total download byte-size
     # input:
-    #   $1 = string with space-separated initial IPKG names.
+    #   $1 = string with space-separated initial IPKG names
     # output:
-    #   $IPKG_download_list = name-sorted array with complete list of all IPKGs, including those originally specified.
-    #   $IPKG_download_count = number of packages to be downloaded.
-    #   $IPKG_download_size = byte-count of packages to be downloaded.
+    #   $IPKG_download_list = name-sorted array with complete list of all IPKGs, including those originally specified
+    #   $IPKG_download_count = number of packages to be downloaded
+    #   $IPKG_download_size = byte-count of packages to be downloaded
 
     [[ -z $1 ]] && return 1
 
@@ -1876,6 +1876,7 @@ FindAllIPKGDependencies()
     local dependency_list=''
     local last_list=''
     local all_list=''
+    local element=''
     local iterations=0
     local -r ITERATION_LIMIT=20
     local complete=false
@@ -1912,6 +1913,7 @@ FindAllIPKGDependencies()
 
     all_list=$(DeDupeWords "$requested_list $dependency_list")
     DebugInfo "IPKGs requested + dependencies: $all_list"
+    DebugStageEnd $SEARCH_STARTSECONDS
 
     DebugProc 'excluding IPKGs already installed'
     for element in ${all_list[@]}; do
@@ -1923,26 +1925,37 @@ FindAllIPKGDependencies()
     done
     DebugDone 'complete'
     DebugInfo "IPKGs to download: ${IPKG_download_list[*]}"
+    DebugStageEnd $SEARCH_STARTSECONDS
 
     IPKG_download_count=${#IPKG_download_list[@]}
 
     if [[ $IPKG_download_count -gt 0 ]]; then
         DebugProc "calculating size of IPKG$(DisplayPlural $IPKG_download_count) to download"
+#       rm -rf $IPKG_DL_PATH/*.size
+
         for element in ${IPKG_download_list[@]}; do
             result_size=$($OPKG_CMD info $element | $GREP_CMD -F 'Size:' | $SED_CMD 's|^Size: ||')
             ((IPKG_download_size+=result_size))
+
+#           mkdir $IPKG_DL_PATH/$element.tmp
+#           $OPKG_CMD info $element --tmp-dir $IPKG_DL_PATH/$element.tmp | $GREP_CMD -F 'Size:' | $SED_CMD 's|^Size: ||' > $IPKG_DL_PATH/$element.size &
         done
+
+#         wait 2>/dev/null;       # wait here until all forked query jobs have exited
+
+#         for element in ${IPKG_download_list[@]}; do
+#           result_size=$(<$IPKG_DL_PATH/$element.size)
+#           ((IPKG_download_size+=result_size))
+#         done
+
         DebugDone 'complete'
-    fi
-
-    DebugVar IPKG_download_size
-    DebugStageEnd $SEARCH_STARTSECONDS
-
-    if [[ $IPKG_download_count -gt 0 ]]; then
         ShowAsDone "$IPKG_download_count IPKG$(DisplayPlural $IPKG_download_count) ($(FormatAsISO $IPKG_download_size)) to be downloaded"
     else
         ShowAsDone 'no IPKGs are required'
     fi
+
+    DebugVar IPKG_download_size
+    DebugStageEnd $SEARCH_STARTSECONDS
 
     }
 
@@ -1950,18 +1963,14 @@ _MonitorDirSize_()
     {
 
     # * This function runs autonomously *
-    # It watches for the existence of the pathfile set in $monitor_flag.
-    # If that file is removed, this function dies gracefully.
+    # It watches for the existence of the pathfile set in $monitor_flag
+    # If that file is removed, this function dies gracefully
 
-    # $1 = directory to monitor the size of.
-    # $2 = total target bytes (100%) for specified path.
+    # $1 = directory to monitor the size of
+    # $2 = total target bytes (100%) for specified path
 
-    [[ -z $1 || ! -d $1 || -z $2 || $2 -eq 0 ]] && return 1
-
-    if IsNotSysFilePresent $FIND_CMD; then
-        errorcode=35
-        return 1
-    fi
+    [[ -z $1 || ! -d $1 || -z $2 || $2 -eq 0 ]] && return
+    IsNotSysFilePresent $FIND_CMD && return
 
     local target_dir="$1"
     local total_bytes=$2
@@ -2017,7 +2026,7 @@ IsSysFilePresent()
 
     if ! [[ -f $1 || -L $1 ]]; then
         ShowAsError "a required NAS system file is missing $(FormatAsFileName $1)"
-        errorcode=36
+        errorcode=35
         return 1
     else
         return 0
@@ -2037,7 +2046,7 @@ IsSysSharePresent()
 
     if [[ ! -L $1 ]]; then
         ShowAsError "a required NAS system share is missing $(FormatAsFileName $1). Please re-create it via the QTS Control Panel -> Privilege Settings -> Shared Folders."
-        errorcode=37
+        errorcode=36
         return 1
     else
         return 0
