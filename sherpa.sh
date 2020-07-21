@@ -46,7 +46,7 @@ Init()
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200719
+    readonly SCRIPT_VERSION=200721
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -85,9 +85,11 @@ Init()
     readonly UPTIME_CMD=/usr/bin/uptime
     readonly WC_CMD=/usr/bin/wc
 
+    readonly Z7_CMD=/usr/local/sbin/7z
     readonly ZIP_CMD=/usr/local/sbin/zip
 
     readonly FIND_CMD=/opt/bin/find
+    readonly SUPER_GREP_CMD=/opt/bin/grep
     readonly OPKG_CMD=/opt/bin/opkg
     pip2_cmd=/opt/bin/pip2
     pip3_cmd=/opt/bin/pip3
@@ -102,6 +104,7 @@ Init()
     readonly DEFAULT_SHARES_PATHFILE=/etc/config/def_share.info
     readonly ULINUX_PATHFILE=/etc/config/uLinux.conf
     readonly PLATFORM_PATHFILE=/etc/platform.conf
+    readonly EXTERNAL_PACKAGE_ARCHIVE_PATHFILE=/opt/var/opkg-lists/entware
     local -r DEBUG_LOG_FILE=${SCRIPT_FILE%.*}.debug.log
 
     # check required binaries are present
@@ -141,6 +144,7 @@ Init()
     IsNotSysFilePresent $UPTIME_CMD && return 1
     IsNotSysFilePresent $WC_CMD && return 1
 
+    IsNotSysFilePresent $Z7_CMD && return 1
     IsNotSysFilePresent $ZIP_CMD && return 1
 
     local -r DEFAULT_SHARE_DOWNLOAD_PATH=/share/Download
@@ -960,7 +964,7 @@ InstallIPKGBatch()
     [[ -d $IPKG_DL_PATH ]] && rm -f "$IPKG_DL_PATH"/*.ipk
     [[ -d $IPKG_CACHE_PATH ]] && rm -f "$IPKG_CACHE_PATH"/*.ipk
 
-    FindAllIPKGDependencies "$requested_IPKGs"
+    FindAllIPKGDependencies "$requested_IPKGs" || return 1
 
     if [[ $IPKG_download_count -gt 0 ]]; then
         local IPKG_download_startseconds=$(DebugStageStart)
@@ -1931,25 +1935,30 @@ FindAllIPKGDependencies()
 
     if [[ $IPKG_download_count -gt 0 ]]; then
         DebugProc "calculating size of IPKG$(DisplayPlural $IPKG_download_count) to download"
-#       rm -rf $IPKG_DL_PATH/*.size
 
-        for element in ${IPKG_download_list[@]}; do
-            result_size=$($OPKG_CMD info $element | $GREP_CMD -F 'Size:' | $SED_CMD 's|^Size: ||')
-            ((IPKG_download_size+=result_size))
+        if [[ ! -e $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE ]]; then
+            ShowAsError "could not locate the Entware package list file"
+            errorcode=24
+            return 1
+        fi
 
-#           mkdir $IPKG_DL_PATH/$element.tmp
-#           $OPKG_CMD info $element --tmp-dir $IPKG_DL_PATH/$element.tmp | $GREP_CMD -F 'Size:' | $SED_CMD 's|^Size: ||' > $IPKG_DL_PATH/$element.size &
-        done
+        local -r EXTERNAL_PACKAGE_LIST_PATHFILE="$WORKING_PATH/entware~"
+        [[ -e $EXTERNAL_PACKAGE_LIST_PATHFILE ]] && rm $EXTERNAL_PACKAGE_LIST_PATHFILE
 
-#         wait 2>/dev/null;       # wait here until all forked query jobs have exited
+        RunThisAndLogResults "$Z7_CMD e -o$($DIRNAME_CMD $EXTERNAL_PACKAGE_LIST_PATHFILE) $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE" "$WORKING_PATH/IPKG.list.archive.extract"
 
-#         for element in ${IPKG_download_list[@]}; do
-#           result_size=$(<$IPKG_DL_PATH/$element.size)
-#           ((IPKG_download_size+=result_size))
-#         done
+        if [[ ! -e $EXTERNAL_PACKAGE_LIST_PATHFILE ]]; then
+            ShowAsError "could not open the Entware package list file"
+            errorcode=24
+            return 1
+        fi
+
+        size_array=($($SUPER_GREP_CMD -w '^Package:\|^Size:' $EXTERNAL_PACKAGE_LIST_PATHFILE | $SUPER_GREP_CMD --after-context 1 --no-group-separator ": $($SED_CMD 's/ /$ /g;s/\$ /\$\\\|: /g' <<< ${IPKG_download_list[*]})$" | $GREP_CMD '^Size:' | $SED_CMD 's|^Size: ||'))
+        IPKG_download_size=$(IFS=+; echo "$((${size_array[*]}))")       # a neat trick found here https://stackoverflow.com/a/13635566/6182835
 
         DebugDone 'complete'
         ShowAsDone "$IPKG_download_count IPKG$(DisplayPlural $IPKG_download_count) ($(FormatAsISO $IPKG_download_size)) to be downloaded"
+        [[ -e $EXTERNAL_PACKAGE_LIST_PATHFILE ]] && rm $EXTERNAL_PACKAGE_LIST_PATHFILE
     else
         ShowAsDone 'no IPKGs are required'
     fi
