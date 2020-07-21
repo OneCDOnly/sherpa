@@ -1938,7 +1938,7 @@ FindAllIPKGDependencies()
 
         if [[ ! -e $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE ]]; then
             ShowAsError "could not locate the Entware package list file"
-            errorcode=24
+            errorcode=35
             return 1
         fi
 
@@ -1949,7 +1949,7 @@ FindAllIPKGDependencies()
 
         if [[ ! -e $EXTERNAL_PACKAGE_LIST_PATHFILE ]]; then
             ShowAsError "could not open the Entware package list file"
-            errorcode=24
+            errorcode=36
             return 1
         fi
 
@@ -2035,7 +2035,7 @@ IsSysFilePresent()
 
     if ! [[ -f $1 || -L $1 ]]; then
         ShowAsError "a required NAS system file is missing $(FormatAsFileName $1)"
-        errorcode=35
+        errorcode=37
         return 1
     else
         return 0
@@ -2055,7 +2055,7 @@ IsSysSharePresent()
 
     if [[ ! -L $1 ]]; then
         ShowAsError "a required NAS system share is missing $(FormatAsFileName $1). Please re-create it via the QTS Control Panel -> Privilege Settings -> Shared Folders."
-        errorcode=36
+        errorcode=38
         return 1
     else
         return 0
