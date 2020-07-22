@@ -1898,7 +1898,6 @@ FindAllIPKGDependencies()
     OpenIPKGArchive || return 1
 
     DebugProc 'finding IPKG dependencies'
-
     while [[ $iterations -lt $ITERATION_LIMIT ]]; do
         ((iterations++))
         last_list=$($OPKG_CMD depends -A $last_list | $GREP_CMD -v 'depends on:' | $SED_CMD 's|^[[:blank:]]*||;s|[[:blank:]]*$||' | $TR_CMD ' ' '\n' | $SORT_CMD | $UNIQ_CMD)
@@ -1937,18 +1936,16 @@ FindAllIPKGDependencies()
 
     if [[ $IPKG_download_count -gt 0 ]]; then
         DebugProc "calculating size of IPKG$(DisplayPlural $IPKG_download_count) to download"
-
         size_array=($($SUPER_GREP_CMD -w '^Package:\|^Size:' $EXTERNAL_PACKAGE_LIST_PATHFILE | $SUPER_GREP_CMD --after-context 1 --no-group-separator ": $($SED_CMD 's/ /$ /g;s/\$ /\$\\\|: /g' <<< ${IPKG_download_list[*]})$" | $GREP_CMD '^Size:' | $SED_CMD 's|^Size: ||'))
         IPKG_download_size=$(IFS=+; echo "$((${size_array[*]}))")       # a neat trick found here https://stackoverflow.com/a/13635566/6182835
-
         DebugDone 'complete'
+        DebugVar IPKG_download_size
         ShowAsDone "$IPKG_download_count IPKG$(DisplayPlural $IPKG_download_count) ($(FormatAsISO $IPKG_download_size)) to be downloaded"
     else
         ShowAsDone 'no IPKGs are required'
     fi
 
     CloseIPKGArchive
-    DebugVar IPKG_download_size
 
     }
 
