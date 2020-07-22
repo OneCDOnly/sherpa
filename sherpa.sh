@@ -46,7 +46,7 @@ Init()
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200721
+    readonly SCRIPT_VERSION=200723
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -105,6 +105,7 @@ Init()
     readonly ULINUX_PATHFILE=/etc/config/uLinux.conf
     readonly PLATFORM_PATHFILE=/etc/platform.conf
     readonly EXTERNAL_PACKAGE_ARCHIVE_PATHFILE=/opt/var/opkg-lists/entware
+
     local -r DEBUG_LOG_FILE=${SCRIPT_FILE%.*}.debug.log
 
     # check required binaries are present
@@ -347,6 +348,7 @@ Init()
     readonly QPKG_DL_PATH=$WORKING_PATH/qpkg-downloads
     readonly IPKG_DL_PATH=$WORKING_PATH/ipkg-downloads
     readonly IPKG_CACHE_PATH=$WORKING_PATH/ipkg-cache
+    readonly EXTERNAL_PACKAGE_LIST_PATHFILE=$WORKING_PATH/entware~
 
     # internals
     readonly SCRIPT_STARTSECONDS=$($DATE_CMD +%s)
@@ -1868,7 +1870,7 @@ FindAllIPKGDependencies()
 
     [[ -z $1 ]] && return 1
 
-    if IsNotSysFilePresent $OPKG_CMD; then
+    if IsNotSysFilePresent $OPKG_CMD || IsNotSysFilePresent $SUPER_GREP_CMD; then
         errorcode=34
         return 1
     fi
@@ -1893,6 +1895,8 @@ FindAllIPKGDependencies()
 
     ShowAsProc 'calculating number and total size of IPKGs required'
     DebugInfo "IPKGs requested: $requested_list"
+
+    OpenIPKGArchive || return 1
 
     DebugProc 'finding IPKG dependencies'
 
@@ -1936,35 +1940,50 @@ FindAllIPKGDependencies()
     if [[ $IPKG_download_count -gt 0 ]]; then
         DebugProc "calculating size of IPKG$(DisplayPlural $IPKG_download_count) to download"
 
-        if [[ ! -e $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE ]]; then
-            ShowAsError "could not locate the Entware package list file"
-            errorcode=35
-            return 1
-        fi
-
-        local -r EXTERNAL_PACKAGE_LIST_PATHFILE="$WORKING_PATH/entware~"
-        [[ -e $EXTERNAL_PACKAGE_LIST_PATHFILE ]] && rm $EXTERNAL_PACKAGE_LIST_PATHFILE
-
-        RunThisAndLogResults "$Z7_CMD e -o$($DIRNAME_CMD $EXTERNAL_PACKAGE_LIST_PATHFILE) $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE" "$WORKING_PATH/IPKG.list.archive.extract"
-
-        if [[ ! -e $EXTERNAL_PACKAGE_LIST_PATHFILE ]]; then
-            ShowAsError "could not open the Entware package list file"
-            errorcode=36
-            return 1
-        fi
-
         size_array=($($SUPER_GREP_CMD -w '^Package:\|^Size:' $EXTERNAL_PACKAGE_LIST_PATHFILE | $SUPER_GREP_CMD --after-context 1 --no-group-separator ": $($SED_CMD 's/ /$ /g;s/\$ /\$\\\|: /g' <<< ${IPKG_download_list[*]})$" | $GREP_CMD '^Size:' | $SED_CMD 's|^Size: ||'))
         IPKG_download_size=$(IFS=+; echo "$((${size_array[*]}))")       # a neat trick found here https://stackoverflow.com/a/13635566/6182835
 
         DebugDone 'complete'
         ShowAsDone "$IPKG_download_count IPKG$(DisplayPlural $IPKG_download_count) ($(FormatAsISO $IPKG_download_size)) to be downloaded"
-        [[ -e $EXTERNAL_PACKAGE_LIST_PATHFILE ]] && rm $EXTERNAL_PACKAGE_LIST_PATHFILE
     else
         ShowAsDone 'no IPKGs are required'
     fi
 
+    CloseIPKGArchive
     DebugVar IPKG_download_size
     DebugStageEnd $SEARCH_STARTSECONDS
+
+    }
+
+OpenIPKGArchive()
+    {
+
+    # extract the 'opkg' package list file
+
+    if [[ ! -e $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE ]]; then
+        ShowAsError "could not locate the IPKG list file"
+        errorcode=35
+        return 1
+    fi
+
+    CloseIPKGArchive
+
+    RunThisAndLogResults "$Z7_CMD e -o$($DIRNAME_CMD $EXTERNAL_PACKAGE_LIST_PATHFILE) $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE" "$WORKING_PATH/IPKG.list.archive.extract"
+
+    if [[ ! -e $EXTERNAL_PACKAGE_LIST_PATHFILE ]]; then
+        ShowAsError "could not open the IPKG list file"
+        errorcode=36
+        return 1
+    fi
+
+    return 0
+
+    }
+
+CloseIPKGArchive()
+    {
+
+    [[ -e $EXTERNAL_PACKAGE_LIST_PATHFILE ]] && rm "$EXTERNAL_PACKAGE_LIST_PATHFILE"
 
     }
 
