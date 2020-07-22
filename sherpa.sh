@@ -26,7 +26,7 @@
 # constants: UPPERCASE_WITH_UNDERSCORES (also set to readonly)
 #   indents: 1 x tab (converted to 4 x spaces to suit GitHub web-display)
 
-readonly USER_ARGS_RAW="$@"
+readonly USER_ARGS_RAW="$*"
 
 ResetErrorcode()
     {
@@ -46,7 +46,7 @@ Init()
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200723
+    readonly SCRIPT_VERSION=200723b
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -452,7 +452,7 @@ LogRuntimeParameters()
             ShowAsError "unable to create working directory $(FormatAsFileName "$WORKING_PATH") $(FormatAsExitcode $result)"
             errorcode=4
         else
-            cd "$WORKING_PATH"
+            cd "$WORKING_PATH" || return 1
         fi
     fi
 
@@ -1398,7 +1398,7 @@ CalcIndependentQPKGs()
     local index=0
 
     for index in ${!SHERPA_QPKG_NAME[@]}; do
-        [[ -z ${SHERPA_QPKG_DEPS[$index]} && ! ${SHERPA_INDEP_QPKGs[@]} =~ ${SHERPA_QPKG_NAME[$index]} ]] && SHERPA_INDEP_QPKGs+=(${SHERPA_QPKG_NAME[$index]})
+        [[ -z ${SHERPA_QPKG_DEPS[$index]} && ! ${SHERPA_INDEP_QPKGs[*]} =~ ${SHERPA_QPKG_NAME[$index]} ]] && SHERPA_INDEP_QPKGs+=(${SHERPA_QPKG_NAME[$index]})
     done
 
     readonly SHERPA_INDEP_QPKGs
@@ -1419,7 +1419,7 @@ CalcDependantQPKGs()
     local index=0
 
     for index in ${!SHERPA_QPKG_NAME[@]}; do
-        [[ -n ${SHERPA_QPKG_DEPS[$index]} && ! ${SHERPA_DEP_QPKGs[@]} =~ ${SHERPA_QPKG_NAME[$index]} ]] && SHERPA_DEP_QPKGs+=(${SHERPA_QPKG_NAME[$index]})
+        [[ -n ${SHERPA_QPKG_DEPS[$index]} && ! ${SHERPA_DEP_QPKGs[*]} =~ ${SHERPA_QPKG_NAME[$index]} ]] && SHERPA_DEP_QPKGs+=(${SHERPA_QPKG_NAME[$index]})
     done
 
     readonly SHERPA_DEP_QPKGs
@@ -1702,7 +1702,7 @@ Cleanup()
 
     DebugFuncEntry
 
-    cd $SHARE_PUBLIC_PATH
+    cd $SHARE_PUBLIC_PATH || return 1
 
     IsNotError && [[ -d $WORKING_PATH ]] && IsNotVisibleDebugging && IsNotDevMode && rm -rf "$WORKING_PATH"
 
@@ -1886,7 +1886,6 @@ FindAllIPKGDependencies()
     local iterations=0
     local -r ITERATION_LIMIT=20
     local complete=false
-    local result_size=0
     local -r SEARCH_STARTSECONDS=$(DebugStageStart)
 
     # remove duplicate entries
