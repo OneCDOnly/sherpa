@@ -1932,7 +1932,6 @@ FindAllIPKGDependencies()
     done
     DebugDone 'complete'
     DebugInfo "IPKGs to download: ${IPKG_download_list[*]}"
-    DebugStageEnd $SEARCH_STARTSECONDS
 
     IPKG_download_count=${#IPKG_download_list[@]}
 
@@ -1950,7 +1949,6 @@ FindAllIPKGDependencies()
 
     CloseIPKGArchive
     DebugVar IPKG_download_size
-    DebugStageEnd $SEARCH_STARTSECONDS
 
     }
 
