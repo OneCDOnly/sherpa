@@ -969,7 +969,7 @@ InstallIPKGBatch()
     FindAllIPKGDependencies "$requested_IPKGs" || return 1
 
     if [[ $IPKG_download_count -gt 0 ]]; then
-        local IPKG_download_startseconds=$(DebugStageStart)
+        local -r STARTSECONDS=$(DebugTimerStageStart)
         ShowAsProc "downloading & installing $IPKG_download_count IPKG$(DisplayPlural $IPKG_download_count)"
 
         $TOUCH_CMD "$monitor_flag"
@@ -991,7 +991,7 @@ InstallIPKGBatch()
             errorcode=16
             returncode=1
         fi
-        DebugStageEnd $IPKG_download_startseconds
+        DebugTimerStageEnd $STARTSECONDS
     fi
 
     DebugFuncExit
@@ -1802,7 +1802,7 @@ FindAllQPKGDependants()
     local iterations=0
     local -r ITERATION_LIMIT=6
     local complete=false
-    local -r SEARCH_STARTSECONDS=$(DebugStageStart)
+    local -r STARTSECONDS=$(DebugTimerStageStart)
 
     requested_list=$(DeDupeWords "$1")
     last_list=$requested_list
@@ -1847,7 +1847,7 @@ FindAllQPKGDependants()
     DebugInfo "QPKGs to download: ${QPKG_download_list[*]}"
     QPKG_download_count=${#QPKG_download_list[@]}
 
-    DebugStageEnd $SEARCH_STARTSECONDS
+    DebugTimerStageEnd $STARTSECONDS
 
     if [[ $QPKG_download_count -gt 0 ]]; then
         ShowAsDone "$QPKG_download_count QPKG$(DisplayPlural $QPKG_download_count) to be downloaded"
@@ -1886,7 +1886,7 @@ FindAllIPKGDependencies()
     local iterations=0
     local -r ITERATION_LIMIT=20
     local complete=false
-    local -r SEARCH_STARTSECONDS=$(DebugStageStart)
+    local -r STARTSECONDS=$(DebugTimerStageStart)
 
     # remove duplicate entries
     requested_list=$(DeDupeWords "$1")
@@ -1919,7 +1919,7 @@ FindAllIPKGDependencies()
 
     all_list=$(DeDupeWords "$requested_list $dependency_list")
     DebugInfo "IPKGs requested + dependencies: $all_list"
-    DebugStageEnd $SEARCH_STARTSECONDS
+    DebugTimerStageEnd $STARTSECONDS
 
     DebugProc 'excluding IPKGs already installed'
     for element in ${all_list[@]}; do
@@ -2650,7 +2650,7 @@ DebugLogThinSeparator()
 
     }
 
-DebugStageStart()
+DebugTimerStageStart()
     {
 
     # stdout = current time in seconds
@@ -2661,7 +2661,7 @@ DebugStageStart()
 
     }
 
-DebugStageEnd()
+DebugTimerStageEnd()
     {
 
     # $1 = start time in seconds
