@@ -46,7 +46,7 @@ Init()
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200723b
+    readonly SCRIPT_VERSION=200726
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -1252,15 +1252,15 @@ InstallQPKG()
     local log_pathfile="$local_pathfile.$INSTALL_LOG_FILE"
     target_file=$($BASENAME_CMD "$local_pathfile")
 
-    ShowAsProcLong "installing file $(FormatAsFileName "$target_file")"
+    ShowAsProcLong "installing QPKG $(FormatAsFileName "$target_file")"
 
     RunThisAndLogResults "sh $local_pathfile" "$log_pathfile"
     result=$?
 
     if [[ $result -eq 0 || $result -eq 10 ]]; then
-        ShowAsDone "installed file $(FormatAsFileName "$target_file")"
+        ShowAsDone "installed QPKG $(FormatAsFileName "$target_file")"
     else
-        ShowAsError "file installation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $result)"
+        ShowAsError "QPKG installation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $result)"
         DebugErrorFile "$log_pathfile"
 
         errorcode=23
@@ -1306,13 +1306,13 @@ DownloadQPKG()
             DebugInfo "existing QPKG checksum correct $(FormatAsFileName "$local_filename")"
         else
             DebugWarning "existing QPKG checksum incorrect $(FormatAsFileName "$local_filename")"
-            DebugInfo "deleting file $(FormatAsFileName "$local_filename")"
+            DebugInfo "deleting QPKG $(FormatAsFileName "$local_filename")"
             rm -f "$local_pathfile"
         fi
     fi
 
     if IsNotError && [[ ! -e $local_pathfile ]]; then
-        ShowAsProc "downloading file $(FormatAsFileName "$remote_filename")"
+        ShowAsProc "downloading QPKG $(FormatAsFileName "$remote_filename")"
 
         [[ -e $log_pathfile ]] && rm -f "$log_pathfile"
 
@@ -1326,9 +1326,9 @@ DownloadQPKG()
 
         if [[ $result -eq 0 ]]; then
             if FileMatchesMD5 "$local_pathfile" "$remote_filename_md5"; then
-                ShowAsDone "downloaded file $(FormatAsFileName "$remote_filename")"
+                ShowAsDone "downloaded QPKG $(FormatAsFileName "$remote_filename")"
             else
-                ShowAsError "downloaded file checksum incorrect $(FormatAsFileName "$local_pathfile")"
+                ShowAsError "downloaded QPKG checksum incorrect $(FormatAsFileName "$local_pathfile")"
                 errorcode=24
                 returncode=1
             fi
