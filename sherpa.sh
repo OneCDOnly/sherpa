@@ -46,7 +46,7 @@ Init()
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200726
+    readonly SCRIPT_VERSION=200728
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -343,12 +343,12 @@ Init()
 
     readonly PREV_QPKG_CONFIG_DIRS=(SAB_CONFIG CONFIG Config config)                 # last element is used as target dirname
     readonly PREV_QPKG_CONFIG_FILES=(sabnzbd.ini settings.ini config.cfg config.ini) # last element is used as target filename
-    readonly WORKING_PATH=$SHARE_PUBLIC_PATH/${SCRIPT_FILE%.*}.tmp
+    readonly WORK_PATH=$SHARE_PUBLIC_PATH/${SCRIPT_FILE%.*}.tmp
     readonly DEBUG_LOG_PATHFILE=$SHARE_PUBLIC_PATH/$DEBUG_LOG_FILE
-    readonly QPKG_DL_PATH=$WORKING_PATH/qpkg-downloads
-    readonly IPKG_DL_PATH=$WORKING_PATH/ipkg-downloads
-    readonly IPKG_CACHE_PATH=$WORKING_PATH/ipkg-cache
-    readonly EXTERNAL_PACKAGE_LIST_PATHFILE=$WORKING_PATH/entware~
+    readonly QPKG_DL_PATH=$WORK_PATH/qpkg-downloads
+    readonly IPKG_DL_PATH=$WORK_PATH/ipkg-downloads
+    readonly IPKG_CACHE_PATH=$WORK_PATH/ipkg-cache
+    readonly EXTERNAL_PACKAGE_LIST_PATHFILE=$WORK_PATH/entware~
 
     # internals
     readonly SCRIPT_STARTSECONDS=$($DATE_CMD +%s)
@@ -418,7 +418,7 @@ LogRuntimeParameters()
     DebugScript 'app(s) to update' "${QPKGS_to_update[*]}"
     DebugScript 'app(s) to backup' "${QPKGS_to_backup[*]}"
     DebugScript 'app(s) to restore' "${QPKGS_to_restore[*]}"
-    DebugScript 'working path' "$WORKING_PATH"
+    DebugScript 'work path' "$WORK_PATH"
     DebugQPKG 'download path' "$QPKG_DL_PATH"
     DebugIPKG 'download path' "$IPKG_DL_PATH"
     CalcNASQPKGArch
@@ -445,14 +445,14 @@ LogRuntimeParameters()
     fi
 
     if IsNotError; then
-        $MKDIR_CMD -p "$WORKING_PATH" 2> /dev/null
+        $MKDIR_CMD -p "$WORK_PATH" 2> /dev/null
         result=$?
 
         if [[ $result -ne 0 ]]; then
-            ShowAsError "unable to create working directory $(FormatAsFileName "$WORKING_PATH") $(FormatAsExitcode $result)"
+            ShowAsError "unable to create working directory $(FormatAsFileName "$WORK_PATH") $(FormatAsExitcode $result)"
             errorcode=4
         else
-            cd "$WORKING_PATH" || return 1
+            cd "$WORK_PATH" || return 1
         fi
     fi
 
@@ -823,14 +823,17 @@ UpdateEntware()
     fi
 
     DebugFuncEntry
-    local package_list_file=/opt/var/opkg-lists/entware
-    local package_list_age=60
-    local log_pathfile="$WORKING_PATH/entware-update.log"
+    local package_minutes_threshold=60
+    local log_pathfile="$WORK_PATH/entware-update.log"
     local msgs=''
     local result=0
 
-    # if Entware package list was updated only recently, don't run another update
-    [[ -e $package_list_file ]] && msgs=$($FIND_CMD "$package_list_file" -mmin +$package_list_age) || msgs='new install'
+    # if Entware package list was updated only recently, don't run another update. Examine 'change' time as this is updated even if package list content isn't modified.
+    if [[ -e $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE ]]; then
+        msgs=$($FIND_CMD "$EXTERNAL_PACKAGE_ARCHIVE_PATHFILE" -cmin +$package_minutes_threshold)        # no-output if last update was less than $package_minutes_threshold minutes ago
+    else
+        msgs='new install'
+    fi
 
     if [[ -n $msgs ]]; then
         ShowAsProc "updating $(FormatAsPackageName Entware) package list"
@@ -846,7 +849,7 @@ UpdateEntware()
             # meh, continue anyway with old list ...
         fi
     else
-        DebugInfo "$(FormatAsPackageName Entware) package list was updated less than $package_list_age minutes ago"
+        DebugInfo "$(FormatAsPackageName Entware) package list was updated less than $package_minutes_threshold minutes ago"
         ShowAsDone "$(FormatAsPackageName Entware) package list is up-to-date"
     fi
 
@@ -1096,7 +1099,7 @@ InstallPy2Modules()
     local returncode=0
     local packages=''
     local desc='Python 2 modules'
-    local log_pathfile="$WORKING_PATH/Py2-modules.$INSTALL_LOG_FILE"
+    local log_pathfile="$WORK_PATH/Py2-modules.$INSTALL_LOG_FILE"
 
     for index in ${!SHERPA_QPKG_NAME[@]}; do
         if (IsQPKGInstalled ${SHERPA_QPKG_NAME[$index]}) || [[ $TARGET_APP = ${SHERPA_QPKG_NAME[$index]} ]]; then
@@ -1154,7 +1157,7 @@ InstallPy3Modules()
     local returncode=0
     local packages=''
     local desc='Python 3 modules'
-    local log_pathfile="$WORKING_PATH/Py3-modules.$INSTALL_LOG_FILE"
+    local log_pathfile="$WORK_PATH/Py3-modules.$INSTALL_LOG_FILE"
 
     for index in ${!SHERPA_QPKG_NAME[@]}; do
         if (IsQPKGInstalled ${SHERPA_QPKG_NAME[$index]}) || [[ $TARGET_APP = ${SHERPA_QPKG_NAME[$index]} ]]; then
@@ -1704,7 +1707,7 @@ Cleanup()
 
     cd $SHARE_PUBLIC_PATH || return 1
 
-    IsNotError && [[ -d $WORKING_PATH ]] && IsNotVisibleDebugging && IsNotDevMode && rm -rf "$WORKING_PATH"
+    IsNotError && [[ -d $WORK_PATH ]] && IsNotVisibleDebugging && IsNotDevMode && rm -rf "$WORK_PATH"
 
     DebugFuncExit
     return 0
@@ -1962,7 +1965,7 @@ OpenIPKGArchive()
 
     CloseIPKGArchive
 
-    RunThisAndLogResults "$Z7_CMD e -o$($DIRNAME_CMD $EXTERNAL_PACKAGE_LIST_PATHFILE) $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE" "$WORKING_PATH/IPKG.list.archive.extract"
+    RunThisAndLogResults "$Z7_CMD e -o$($DIRNAME_CMD $EXTERNAL_PACKAGE_LIST_PATHFILE) $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE" "$WORK_PATH/IPKG.list.archive.extract"
 
     if [[ ! -e $EXTERNAL_PACKAGE_LIST_PATHFILE ]]; then
         ShowAsError "could not open the IPKG list file"
