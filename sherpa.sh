@@ -46,7 +46,7 @@ Init()
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200728
+    readonly SCRIPT_VERSION=200729
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -88,8 +88,8 @@ Init()
     readonly Z7_CMD=/usr/local/sbin/7z
     readonly ZIP_CMD=/usr/local/sbin/zip
 
-    readonly FIND_CMD=/opt/bin/find
-    readonly SUPER_GREP_CMD=/opt/bin/grep
+    readonly GNU_FIND_CMD=/opt/bin/find
+    readonly GNU_GREP_CMD=/opt/bin/grep
     readonly OPKG_CMD=/opt/bin/opkg
     pip2_cmd=/opt/bin/pip2
     pip3_cmd=/opt/bin/pip3
@@ -817,7 +817,7 @@ PatchBaseInit()
 UpdateEntware()
     {
 
-    if IsNotSysFilePresent $OPKG_CMD || IsNotSysFilePresent $FIND_CMD; then
+    if IsNotSysFilePresent $OPKG_CMD || IsNotSysFilePresent $GNU_FIND_CMD; then
         errorcode=14
         return 1
     fi
@@ -830,7 +830,7 @@ UpdateEntware()
 
     # if Entware package list was updated only recently, don't run another update. Examine 'change' time as this is updated even if package list content isn't modified.
     if [[ -e $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE ]]; then
-        msgs=$($FIND_CMD "$EXTERNAL_PACKAGE_ARCHIVE_PATHFILE" -cmin +$package_minutes_threshold)        # no-output if last update was less than $package_minutes_threshold minutes ago
+        msgs=$($GNU_FIND_CMD "$EXTERNAL_PACKAGE_ARCHIVE_PATHFILE" -cmin +$package_minutes_threshold)        # no-output if last update was less than $package_minutes_threshold minutes ago
     else
         msgs='new install'
     fi
@@ -1873,7 +1873,7 @@ FindAllIPKGDependencies()
 
     [[ -z $1 ]] && return 1
 
-    if IsNotSysFilePresent $OPKG_CMD || IsNotSysFilePresent $SUPER_GREP_CMD; then
+    if IsNotSysFilePresent $OPKG_CMD || IsNotSysFilePresent $GNU_GREP_CMD; then
         errorcode=34
         return 1
     fi
@@ -1939,7 +1939,7 @@ FindAllIPKGDependencies()
 
     if [[ $IPKG_download_count -gt 0 ]]; then
         DebugProc "calculating size of IPKG$(DisplayPlural $IPKG_download_count) to download"
-        size_array=($($SUPER_GREP_CMD -w '^Package:\|^Size:' $EXTERNAL_PACKAGE_LIST_PATHFILE | $SUPER_GREP_CMD --after-context 1 --no-group-separator ": $($SED_CMD 's/ /$ /g;s/\$ /\$\\\|: /g' <<< ${IPKG_download_list[*]})$" | $GREP_CMD '^Size:' | $SED_CMD 's|^Size: ||'))
+        size_array=($($GNU_GREP_CMD -w '^Package:\|^Size:' $EXTERNAL_PACKAGE_LIST_PATHFILE | $GNU_GREP_CMD --after-context 1 --no-group-separator ": $($SED_CMD 's/ /$ /g;s/\$ /\$\\\|: /g' <<< ${IPKG_download_list[*]})$" | $GREP_CMD '^Size:' | $SED_CMD 's|^Size: ||'))
         IPKG_download_size=$(IFS=+; echo "$((${size_array[*]}))")       # a neat trick found here https://stackoverflow.com/a/13635566/6182835
         DebugDone 'complete'
         DebugVar IPKG_download_size
@@ -1995,7 +1995,7 @@ _MonitorDirSize_()
     # $2 = total target bytes (100%) for specified path
 
     [[ -z $1 || ! -d $1 || -z $2 || $2 -eq 0 ]] && return
-    IsNotSysFilePresent $FIND_CMD && return
+    IsNotSysFilePresent $GNU_FIND_CMD && return
 
     local target_dir="$1"
     local total_bytes=$2
@@ -2010,7 +2010,7 @@ _MonitorDirSize_()
     previous_msg=''
 
     while [[ -e $monitor_flag ]]; do
-        current_bytes=$($FIND_CMD $target_dir -type f -name '*.ipk' -exec $DU_CMD --bytes --total --apparent-size {} + 2> /dev/null | $GREP_CMD total$ | $CUT_CMD -f1)
+        current_bytes=$($GNU_FIND_CMD $target_dir -type f -name '*.ipk' -exec $DU_CMD --bytes --total --apparent-size {} + 2> /dev/null | $GREP_CMD total$ | $CUT_CMD -f1)
         [[ -z $current_bytes ]] && current_bytes=0
 
         if [[ $current_bytes -ne $last_bytes ]]; then
