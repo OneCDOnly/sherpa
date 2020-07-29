@@ -46,7 +46,7 @@ Init()
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200730
+    readonly SCRIPT_VERSION=200730b
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -1098,7 +1098,7 @@ InstallPy2Modules()
     local result=0
     local returncode=0
     local packages=''
-    local desc='Python 2 modules'
+    local desc="'Python 2' modules"
     local log_pathfile="$WORK_PATH/Py2-modules.$INSTALL_LOG_FILE"
 
     for index in ${!SHERPA_QPKG_NAME[@]}; do
@@ -1156,7 +1156,7 @@ InstallPy3Modules()
     local result=0
     local returncode=0
     local packages=''
-    local desc='Python 3 modules'
+    local desc="'Python 3' modules"
     local log_pathfile="$WORK_PATH/Py3-modules.$INSTALL_LOG_FILE"
 
     for index in ${!SHERPA_QPKG_NAME[@]}; do
