@@ -46,7 +46,7 @@ Init()
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200730b
+    readonly SCRIPT_VERSION=200730c
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -1725,10 +1725,10 @@ ShowResult()
             [[ $reinstall_flag = true ]] && RE='re' || RE=''
 
             if IsNotError; then
-                IsVisibleDebugging && emoticon=':DD' || { emoticon=''; echo ;}
+                IsVisibleDebugging && emoticon=':DD' || emoticon=''
                 ShowAsDone "$(FormatAsPackageName $TARGET_APP) has been successfully ${RE}installed! $emoticon"
             else
-                IsVisibleDebugging && emoticon=':S ' || { emoticon=''; echo ;}
+                IsVisibleDebugging && emoticon=':S ' || emoticon=''
                 ShowAsError "$(FormatAsPackageName $TARGET_APP) ${RE}install failed! ${emoticon}[$errorcode]"
                 EnableSuggestIssue
             fi
@@ -1736,10 +1736,10 @@ ShowResult()
 
         if IsSatisfyDependenciesOnly; then
             if IsNotError; then
-                IsVisibleDebugging && emoticon=':DD' || { emoticon=''; echo ;}
+                IsVisibleDebugging && emoticon=':DD' || emoticon=''
                 ShowAsDone "all application dependencies are installed! $emoticon"
             else
-                IsVisibleDebugging && emoticon=':S ' || { emoticon=''; echo ;}
+                IsVisibleDebugging && emoticon=':S ' || emoticon=''
                 ShowAsError "application dependency check failed! ${emoticon}[$errorcode]"
                 EnableSuggestIssue
             fi
