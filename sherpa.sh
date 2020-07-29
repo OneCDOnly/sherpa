@@ -46,7 +46,7 @@ Init()
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200729
+    readonly SCRIPT_VERSION=200730
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -219,13 +219,13 @@ Init()
 
     SHERPA_QPKG_NAME+=(SickChill)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/SickChill/build/SickChill_200718.qpkg)
-        SHERPA_QPKG_MD5+=(e17ee1f809b3721c7da4ad9dfbe491b6)
+        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/SickChill/build/SickChill_200730.qpkg)
+        SHERPA_QPKG_MD5+=(930704cbabac37c292f146cd2bcaf78b)
         SHERPA_QPKG_ABBRVS+=('sc sick sickc chill sickchill')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python3')
         SHERPA_QPKG_PIP2S+=('')
-        SHERPA_QPKG_PIP3S+=('')
+        SHERPA_QPKG_PIP3S+=('random_user_agent pygithub')
 
     SHERPA_QPKG_NAME+=(LazyLibrarian)
         SHERPA_QPKG_ARCH+=(all)

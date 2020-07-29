@@ -12,13 +12,13 @@
 Init()
     {
 
-    readonly SCRIPT_VERSION=200718
+    readonly SCRIPT_VERSION=200730
     readonly QPKG_NAME=SickChill
     readonly SOURCE_URL=http://github.com/sickchill/sickchill.git
     readonly SOURCE_BRANCH=py3-again
     readonly SOURCE_DEPTH=single-branch               # 'shallow' (depth 1) or 'single-branch' (note: 'shallow' implies a 'single-branch' too)
     readonly PYTHON=/opt/bin/python3
-    local -r TARGET_SCRIPT=SickBeard.py
+    local -r TARGET_SCRIPT=SickChill.py
 
     # cherry-pick required binaries
     readonly BASENAME_CMD=/usr/bin/basename
@@ -99,7 +99,7 @@ StartQPKG()
 
     DaemonIsActive && return
 
-    PullGitRepo $QPKG_NAME "$SOURCE_URL" "$SOURCE_BRANCH" "$SOURCE_DEPTH" $QPKG_PATH 
+    PullGitRepo $QPKG_NAME "$SOURCE_URL" "$SOURCE_BRANCH" "$SOURCE_DEPTH" $QPKG_PATH
 
     cd $QPKG_PATH/$QPKG_NAME || return 1
 
