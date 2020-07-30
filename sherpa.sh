@@ -46,7 +46,7 @@ Init()
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200730c
+    readonly SCRIPT_VERSION=200731
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -934,7 +934,7 @@ InstallIPKGs()
             fi
         done
 
-        if (IsQPKGInstalled SABnzbdplus) || [[ $TARGET_APP = SABnzbdplus ]]; then
+        if (IsQPKGInstalled SABnzbd) || [[ $TARGET_APP = SABnzbd ]]; then
             [[ $NAS_QPKG_ARCH = none ]] && packages+=' par2cmdline'
         fi
 
