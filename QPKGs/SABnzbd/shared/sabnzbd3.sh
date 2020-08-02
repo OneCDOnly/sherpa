@@ -12,10 +12,10 @@
 Init()
     {
 
-    readonly SCRIPT_VERSION=200718b
+    readonly SCRIPT_VERSION=200803
     readonly QPKG_NAME=SABnzbd
     readonly SOURCE_URL=http://github.com/sabnzbd/sabnzbd.git
-    readonly SOURCE_BRANCH=develop
+    readonly SOURCE_BRANCH=master
     readonly SOURCE_DEPTH=shallow               # 'shallow' (depth 1) or 'single-branch' (note: 'shallow' implies a 'single-branch' too)
     readonly PYTHON=/opt/bin/python3
     local -r TARGET_SCRIPT=SABnzbd.py
