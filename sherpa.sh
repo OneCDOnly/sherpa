@@ -46,7 +46,7 @@ Init()
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200731
+    readonly SCRIPT_VERSION=200802
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -1363,7 +1363,7 @@ CalcNASQPKGArch()
             NAS_QPKG_ARCH=x86
             ;;
         armv7l)
-            case $($GETCFG_CMD Platform -f $PLATFORM_PATHFILE) in
+            case $($GETCFG_CMD '' Platform -f $PLATFORM_PATHFILE) in
                 ARM_MS)
                     NAS_QPKG_ARCH=x31
                     ;;
