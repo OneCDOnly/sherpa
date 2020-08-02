@@ -46,7 +46,7 @@ Init()
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200803
+    readonly SCRIPT_VERSION=200803b
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -730,16 +730,16 @@ RemoveUnwantedQPKGs()
     IsQPKGInstalled $TARGET_APP && reinstall_flag=true
 
     if [[ $TARGET_APP = Entware && $reinstall_flag = true ]]; then
-        ShowAsNote 'Reinstalling Entware will revert all IPKGs to defaults and only those required to support your sherpa apps will be reinstalled.'
+        ShowAsNote "Reinstalling $(FormatAsPackageName Entware) will revert all IPKGs to defaults and only those required to support your sherpa apps will be reinstalled."
         ShowAsNote "The currently installed IPKG list will be saved to $(FormatAsFileName $previous_Entware_package_list)"
-        ( IsQPKGInstalled SABnzbdplus || IsQPKGInstalled Headphones ) && ShowAsWarning "Also, the SABnzbdplus and Headphones packages CANNOT BE REINSTALLED as Python 2.7.16 is no-longer available."
-        ShowAsQuiz 'Press (y) if you agree to remove all current Entware IPKGs and their configs, or any other key to abort'
+        ( IsQPKGInstalled SABnzbdplus || IsQPKGInstalled Headphones ) && ShowAsWarning "Also, the $(FormatAsPackageName SABnzbdplus) and $(FormatAsPackageName Headphones) packages CANNOT BE REINSTALLED as Python 2.7.16 is no-longer available."
+        ShowAsQuiz "Press (y) if you agree to remove all current $(FormatAsPackageName Entware) IPKGs and their configs, or any other key to abort"
         read -n1 response; echo
         DebugVar response
         case ${response:0:1} in
             y|Y)
                 echo -e "# Entware had these IPKGs installed as of: $($DATE_CMD)\n$($OPKG_CMD list-installed)" > $previous_Entware_package_list
-                DebugDone "saved current Entware IPKG list to $(FormatAsFileName $previous_Entware_package_list)"
+                DebugDone "saved current $(FormatAsPackageName Entware) IPKG list to $(FormatAsFileName $previous_Entware_package_list)"
                 UninstallQPKG Entware
                 ;;
             *)
