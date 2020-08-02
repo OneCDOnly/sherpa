@@ -46,7 +46,7 @@ Init()
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200802
+    readonly SCRIPT_VERSION=200802b
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -348,7 +348,7 @@ Init()
     readonly QPKG_DL_PATH=$WORK_PATH/qpkg-downloads
     readonly IPKG_DL_PATH=$WORK_PATH/ipkg-downloads
     readonly IPKG_CACHE_PATH=$WORK_PATH/ipkg-cache
-    readonly EXTERNAL_PACKAGE_LIST_PATHFILE=$WORK_PATH/entware~
+    readonly EXTERNAL_PACKAGE_LIST_PATHFILE=$WORK_PATH/Packages
 
     # internals
     readonly SCRIPT_STARTSECONDS=$($DATE_CMD +%s)
