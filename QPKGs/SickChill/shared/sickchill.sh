@@ -12,7 +12,7 @@
 Init()
     {
 
-    readonly SCRIPT_VERSION=200730
+    readonly SCRIPT_VERSION=200804
     readonly QPKG_NAME=SickChill
     readonly SOURCE_URL=http://github.com/sickchill/sickchill.git
     readonly SOURCE_BRANCH=py3-again
@@ -179,6 +179,7 @@ RestoreConfig()
 
     StopQPKG
     ExecuteAndLog 'restoring configuration backup' "$TAR_CMD --extract --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config" log:everything
+    ChoosePort
     StartQPKG
 
     }

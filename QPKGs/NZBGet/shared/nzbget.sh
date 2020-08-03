@@ -12,7 +12,7 @@
 Init()
     {
 
-    readonly SCRIPT_VERSION=200718
+    readonly SCRIPT_VERSION=200804
     readonly QPKG_NAME=NZBGet
     readonly TARGET_DAEMON=/opt/bin/nzbget
 
@@ -171,6 +171,7 @@ RestoreConfig()
 
     StopQPKG
     ExecuteAndLog 'restoring configuration backup' "$TAR_CMD --extract --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config" log:everything
+    ChoosePort
     StartQPKG
 
     }
