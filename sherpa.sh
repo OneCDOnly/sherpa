@@ -46,7 +46,7 @@ Init()
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200804b
+    readonly SCRIPT_VERSION=200804c
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -266,6 +266,16 @@ Init()
 #         SHERPA_QPKG_IPKGS+=('python python-pip')
 #         SHERPA_QPKG_PIP2S+=('')
 #         SHERPA_QPKG_PIP3S+=('')
+
+    SHERPA_QPKG_NAME+=(OSickGear)
+        SHERPA_QPKG_ARCH+=(all)
+        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/OSickGear/build/OSickGear_200804.qpkg)
+        SHERPA_QPKG_MD5+=(f73a8763ca193446d267dca418205301)
+        SHERPA_QPKG_ABBRVS+=('sg osg sickg osickg gear ogear sickgear osickgear')
+        SHERPA_QPKG_DEPS+=('Entware')
+        SHERPA_QPKG_IPKGS+=('python3')
+        SHERPA_QPKG_PIP2S+=('')
+        SHERPA_QPKG_PIP3S+=('cheetah3')
 
     SHERPA_QPKG_NAME+=(Par2)
         SHERPA_QPKG_ARCH+=(x86)
