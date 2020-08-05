@@ -109,6 +109,7 @@
 #PKG_MAIN_REMOVE="{
 #}"
 #
-#PKG_POST_REMOVE="{
-#}"
+PKG_POST_REMOVE="{
+    [[ -e /opt/bin/opkg ]] && /opt/bin/opkg remove nzbget > /dev/null 2>&1
+}"
 #

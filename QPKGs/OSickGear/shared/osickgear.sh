@@ -130,7 +130,7 @@ StartQPKG()
     DaemonIsActive && return
 
     if [[ -n $SOURCE_GIT_URL ]]; then
-        PullGitRepo $QPKG_NAME "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" $QPKG_PATH
+        PullGitRepo $QPKG_NAME "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" $QPKG_PATH && UpdateLanguages
         cd $QPKG_PATH/$QPKG_NAME || return 1
     else
         cd $QPKG_PATH || return 1
@@ -223,6 +223,8 @@ UpdateLanguages()
     # only used by the SABnzbd package(s)
     # run [tools/make_mo.py] if SABnzbd version number has changed since last run
 
+    [[ $QPKG_NAME != SABnzbd ]] && return
+
     local olddir=$PWD
     local version_current_pathfile=$QPKG_PATH/$QPKG_NAME/sabnzbd/version.py
     local version_store_pathfile=$($DIRNAME_CMD $version_current_pathfile)/version.stored
@@ -247,7 +249,7 @@ DaemonIsActive()
     if [[ -f $STORED_PID_PATHFILE && -d /proc/$(<$STORED_PID_PATHFILE) ]] && (PortResponds $ui_port); then
         DisplayDoneCommitToLog 'daemon is active'
         return 0
-    elif (ps ax | $GREP_CMD $TARGET_DAEMON | $GREP_CMD -vq grep) && (PortResponds $ui_port); then
+    elif [[ -n $TARGET_DAEMON ]] && (ps ax | $GREP_CMD $TARGET_DAEMON | $GREP_CMD -vq grep) && (PortResponds $ui_port); then
         DisplayDoneCommitToLog 'daemon is active'
         return 0
     else
