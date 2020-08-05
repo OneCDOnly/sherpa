@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 ####################################################################################
-# owatcher3.sh
+# otransmission.sh
 #
-# Copyright (C) 2019-2020 OneCD [one.cd.only@gmail.com]
+# Copyright (C) 2020 OneCD [one.cd.only@gmail.com]
 #
 # so, blame OneCD if it all goes horribly wrong. ;)
 #
@@ -13,23 +13,23 @@ Init()
     {
 
     # specific environment
-        readonly QPKG_NAME=OWatcher3
-        readonly DEFAULT_UI_PORT=0
+        readonly QPKG_NAME=OTransmission
+        readonly DEFAULT_UI_PORT=9991
 
     # for Python-based remote apps
-        readonly SOURCE_GIT_URL=https://github.com/barbequesauce/Watcher3.git
-        readonly SOURCE_GIT_BRANCH=master
+        readonly SOURCE_GIT_URL=''
+        readonly SOURCE_GIT_BRANCH=''
         # 'shallow' (depth 1) or 'single-branch' (note: 'shallow' implies a 'single-branch' too)
-        readonly SOURCE_GIT_DEPTH=shallow
-        readonly PYTHON=/opt/bin/python3
-        local -r TARGET_SCRIPT=watcher.py
+        readonly SOURCE_GIT_DEPTH=''
+        readonly PYTHON=''
+        local -r TARGET_SCRIPT=''
 
     # for 'opkg'-based local apps
-        readonly TARGET_DAEMON=''
-        readonly ORIG_DAEMON_SERVICE_SCRIPT=''
+        readonly TARGET_DAEMON=/opt/bin/transmission-daemon
+        readonly ORIG_DAEMON_SERVICE_SCRIPT=/opt/etc/init.d/S88transmission
 
     # additional required environment variables
-        readonly TRANSMISSION_WEB_HOME=''
+        readonly TRANSMISSION_WEB_HOME=/opt/share/transmission/web
 
     # cherry-pick required binaries
     readonly BASENAME_CMD=/usr/bin/basename
@@ -51,7 +51,7 @@ Init()
     readonly QTS_QPKG_CONF_PATHFILE=/etc/config/qpkg.conf
     readonly QPKG_PATH=$($GETCFG_CMD $QPKG_NAME Install_Path -f $QTS_QPKG_CONF_PATHFILE)
     readonly QPKG_VERSION=$($GETCFG_CMD $QPKG_NAME Version -f $QTS_QPKG_CONF_PATHFILE)
-    readonly QPKG_INI_PATHFILE=$QPKG_PATH/config/config.ini
+    readonly QPKG_INI_PATHFILE=$QPKG_PATH/config/settings.json
     local -r QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.def
     readonly STORED_PID_PATHFILE=/var/run/$QPKG_NAME.pid
     readonly INIT_LOG_PATHFILE=/var/log/$QPKG_NAME.log
@@ -65,9 +65,9 @@ Init()
 
     # specific launch arguments
     if [[ -n $PYTHON && -n $TARGET_SCRIPT ]]; then
-        readonly LAUNCHER="$PYTHON $TARGET_SCRIPT --daemon --userdata $($DIRNAME_CMD $QPKG_INI_PATHFILE) --conf $QPKG_INI_PATHFILE --pid $STORED_PID_PATHFILE"
+        readonly LAUNCHER="$PYTHON $TARGET_SCRIPT --daemon --nolaunch --datadir $($DIRNAME_CMD $QPKG_INI_PATHFILE) --pidfile $STORED_PID_PATHFILE"
     elif [[ -n $ORIG_DAEMON_SERVICE_SCRIPT && -n $TARGET_DAEMON ]]; then
-        readonly LAUNCHER="$TARGET_DAEMON --daemon --configfile $QPKG_INI_PATHFILE"
+        readonly LAUNCHER="$TARGET_DAEMON --config-dir $($DIRNAME_CMD $QPKG_INI_PATHFILE) --pid-file $STORED_PID_PATHFILE"
     else
         DisplayErrCommitAllLogs 'found nothing to launch!'
         errorcode=1
@@ -166,21 +166,19 @@ StopQPKG()
 
     ! DaemonIsActive && return
 
-    PID=$(<$STORED_PID_PATHFILE)
-
-    kill $PID
+    killall "$($BASENAME_CMD $TARGET_DAEMON)"
     DisplayWaitCommitToLog '* stopping daemon with SIGTERM:'
     DisplayWait "(waiting for upto $MAX_WAIT_SECONDS_STOP seconds):"
 
     while true; do
-        while [[ -d /proc/$PID ]]; do
+        while (ps ax | $GREP_CMD $TARGET_DAEMON | $GREP_CMD -vq grep); do
             sleep 1
             ((acc++))
             DisplayWait "$acc,"
 
             if [[ $acc -ge $MAX_WAIT_SECONDS_STOP ]]; then
                 DisplayWaitCommitToLog 'failed!'
-                kill -9 $PID 2> /dev/null
+                killall -9 "$($BASENAME_CMD $TARGET_DAEMON)"
                 DisplayCommitToLog 'sent SIGKILL.'
                 [[ -f $STORED_PID_PATHFILE ]] && rm -f $STORED_PID_PATHFILE
                 break 2
@@ -349,9 +347,9 @@ UIPort()
     {
 
     # get HTTP port
-    # stdout = HTTP port (if used) or 0 if none found
+    # stdout = HTTP port (if used) or default if none found
 
-    $JQ_CMD -r .Server.serverport < $QPKG_INI_PATHFILE
+    $JQ_CMD -r '."rpc-port"' < $QPKG_INI_PATHFILE
 
     }
 
@@ -361,8 +359,8 @@ UIPortSecure()
     # get HTTPS port
     # stdout = HTTPS port (if used) or 0 if none found
 
-    if [[ $($GETCFG_CMD General enable_https -d 0 -f $QPKG_INI_PATHFILE) = 1 ]]; then
-        $GETCFG_CMD General web_port -d 0 -f $QPKG_INI_PATHFILE
+    if [[ $($GETCFG_CMD '' SecureControl -d no -f $QPKG_INI_PATHFILE) = yes ]]; then
+        $GETCFG_CMD '' SecurePort -d 0 -f $QPKG_INI_PATHFILE
     else
         echo 0
     fi

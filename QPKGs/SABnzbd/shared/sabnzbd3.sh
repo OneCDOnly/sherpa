@@ -12,13 +12,24 @@
 Init()
     {
 
-    readonly SCRIPT_VERSION=200804
-    readonly QPKG_NAME=SABnzbd
-    readonly SOURCE_URL=http://github.com/sabnzbd/sabnzbd.git
-    readonly SOURCE_BRANCH=master
-    readonly SOURCE_DEPTH=shallow               # 'shallow' (depth 1) or 'single-branch' (note: 'shallow' implies a 'single-branch' too)
-    readonly PYTHON=/opt/bin/python3
-    local -r TARGET_SCRIPT=SABnzbd.py
+    # specific environment
+        readonly QPKG_NAME=SABnzbd
+        readonly DEFAULT_UI_PORT=0
+
+    # for Python-based remote apps
+        readonly SOURCE_GIT_URL=http://github.com/sabnzbd/sabnzbd.git
+        readonly SOURCE_GIT_BRANCH=master
+        # 'shallow' (depth 1) or 'single-branch' (note: 'shallow' implies a 'single-branch' too)
+        readonly SOURCE_GIT_DEPTH=shallow
+        readonly PYTHON=/opt/bin/python3
+        local -r TARGET_SCRIPT=SABnzbd.py
+
+    # for 'opkg'-based local apps
+        readonly TARGET_DAEMON=''
+        readonly ORIG_DAEMON_SERVICE_SCRIPT=''
+
+    # additional required environment variables
+        readonly TRANSMISSION_WEB_HOME=''
 
     # cherry-pick required binaries
     readonly BASENAME_CMD=/usr/bin/basename
@@ -26,6 +37,7 @@ Init()
     readonly DIRNAME_CMD=/usr/bin/dirname
     readonly GETCFG_CMD=/sbin/getcfg
     readonly GREP_CMD=/bin/grep
+    readonly JQ_CMD=/opt/bin/jq
     readonly LESS_CMD=/opt/bin/less
     readonly LSOF_CMD=/usr/sbin/lsof
     readonly SED_CMD=/bin/sed
@@ -35,19 +47,32 @@ Init()
     readonly TEE_CMD=/usr/bin/tee
     readonly WRITE_LOG_CMD=/sbin/write_log
 
+    # generic environment
     readonly QTS_QPKG_CONF_PATHFILE=/etc/config/qpkg.conf
     readonly QPKG_PATH=$($GETCFG_CMD $QPKG_NAME Install_Path -f $QTS_QPKG_CONF_PATHFILE)
+    readonly QPKG_VERSION=$($GETCFG_CMD $QPKG_NAME Version -f $QTS_QPKG_CONF_PATHFILE)
     readonly QPKG_INI_PATHFILE=$QPKG_PATH/config/config.ini
     local -r QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.def
     readonly STORED_PID_PATHFILE=/var/run/$QPKG_NAME.pid
     readonly INIT_LOG_PATHFILE=/var/log/$QPKG_NAME.log
     local -r BACKUP_PATH=$($GETCFG_CMD SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
     readonly BACKUP_PATHFILE=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
-    readonly LAUNCHER="$PYTHON $TARGET_SCRIPT --daemon --browser 0 --config-file $QPKG_INI_PATHFILE --pidfile $STORED_PID_PATHFILE"
-    export PYTHONPATH=$PYTHON
+    [[ -n $PYTHON ]] && export PYTHONPATH=$PYTHON
     export PATH=/opt/bin:/opt/sbin:$PATH
     ui_port=0
+    ui_port_secure=0
     ui_secure=''
+
+    # specific launch arguments
+    if [[ -n $PYTHON && -n $TARGET_SCRIPT ]]; then
+        readonly LAUNCHER="$PYTHON $TARGET_SCRIPT --daemon --browser 0 --config-file $QPKG_INI_PATHFILE --pidfile $STORED_PID_PATHFILE"
+    elif [[ -n $ORIG_DAEMON_SERVICE_SCRIPT && -n $TARGET_DAEMON ]]; then
+        readonly LAUNCHER="$TARGET_DAEMON --daemon --configfile $QPKG_INI_PATHFILE"
+    else
+        DisplayErrCommitAllLogs 'found nothing to launch!'
+        errorcode=1
+        return 1
+    fi
 
     if [[ -z $LANG ]]; then
         export LANG=en_US.UTF-8
@@ -63,6 +88,11 @@ Init()
         cp $QPKG_INI_DEFAULT_PATHFILE $QPKG_INI_PATHFILE
     fi
 
+    if [[ -n $ORIG_DAEMON_SERVICE_SCRIPT && -x $ORIG_DAEMON_SERVICE_SCRIPT ]]; then
+        $ORIG_DAEMON_SERVICE_SCRIPT stop        # stop default daemon
+        chmod -x $ORIG_DAEMON_SERVICE_SCRIPT    # ... and ensure Entware doesn't re-launch it on startup
+    fi
+
     ChoosePort
 
     [[ ! -d $BACKUP_PATH ]] && mkdir -p $BACKUP_PATH
@@ -74,8 +104,8 @@ Init()
 ShowHelp()
     {
 
-    Display " $($BASENAME_CMD "$0") ($SCRIPT_VERSION)"
-    Display " A service control script for $(FormatAsPackageName $QPKG_NAME)"
+    Display " $($BASENAME_CMD "$0") ($QPKG_VERSION)"
+    Display " A service control script for the $(FormatAsPackageName $QPKG_NAME) QPKG"
     Display
     Display " Usage: $0 [OPTION]"
     Display
@@ -84,12 +114,12 @@ ShowHelp()
     Display " start      - launch $(FormatAsPackageName $QPKG_NAME) if not already running."
     Display " stop       - shutdown $(FormatAsPackageName $QPKG_NAME) if running."
     Display " restart    - stop, then start $(FormatAsPackageName $QPKG_NAME)."
-    Display " status     - check if $(FormatAsPackageName $QPKG_NAME) is still running. \$? = 0 if running, 1 if not."
+    Display " status     - check if $(FormatAsPackageName $QPKG_NAME) is still running. Returns \$? = 0 if running, 1 if not."
     Display " backup     - backup the current $(FormatAsPackageName $QPKG_NAME) configuration to persistent storage."
     Display " restore    - restore a previously saved configuration from persistent storage. $(FormatAsPackageName $QPKG_NAME) will be stopped, then restarted."
-    Display " clean      - wipe the current local copy of $(FormatAsPackageName $QPKG_NAME), and download it again from remote source. Configuration will be retained."
-    Display " history    - display this service script runtime log."
-    Display " version    - display this service script version number only."
+    [[ -n $SOURCE_GIT_URL ]] && Display " clean      - wipe the current local copy of $(FormatAsPackageName $QPKG_NAME), and download it again from remote source. Configuration will be retained."
+    Display " log        - display this service script runtime log."
+    Display " version    - display the package version number."
     Display
 
     }
@@ -99,10 +129,13 @@ StartQPKG()
 
     DaemonIsActive && return
 
-    PullGitRepo $QPKG_NAME "$SOURCE_URL" "$SOURCE_BRANCH" "$SOURCE_DEPTH" $QPKG_PATH && UpdateLanguages
-    PullGitRepo nzbToMedia 'http://github.com/clinton-hall/nzbToMedia.git' master shallow "/share/$($GETCFG_CMD SHARE_DEF defDownload -d Qdownload -f /etc/config/def_share.info)"
-
-    cd $QPKG_PATH/$QPKG_NAME || return 1
+    if [[ -n $SOURCE_GIT_URL ]]; then
+        PullGitRepo $QPKG_NAME "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" $QPKG_PATH
+        PullGitRepo nzbToMedia 'http://github.com/clinton-hall/nzbToMedia.git' master shallow "/share/$($GETCFG_CMD SHARE_DEF defDownload -d Qdownload -f /etc/config/def_share.info)"
+        cd $QPKG_PATH/$QPKG_NAME || return 1
+    else
+        cd $QPKG_PATH || return 1
+    fi
 
     if [[ $ui_port -eq 0 ]]; then
         DisplayErrCommitAllLogs 'unable to start daemon as no UI port was specified'
@@ -150,12 +183,12 @@ StopQPKG()
                 DisplayWaitCommitToLog 'failed!'
                 kill -9 $PID 2> /dev/null
                 DisplayCommitToLog 'sent SIGKILL.'
-                rm -f $STORED_PID_PATHFILE
+                [[ -f $STORED_PID_PATHFILE ]] && rm -f $STORED_PID_PATHFILE
                 break 2
             fi
         done
 
-        rm -f $STORED_PID_PATHFILE
+        [[ -f $STORED_PID_PATHFILE ]] && rm -f $STORED_PID_PATHFILE
         Display 'OK'
         CommitLog "stopped OK in $acc seconds"
         break
@@ -188,6 +221,7 @@ RestoreConfig()
 UpdateLanguages()
     {
 
+    # only used by the SABnzbd package(s)
     # run [tools/make_mo.py] if SABnzbd version number has changed since last run
 
     local olddir=$PWD
@@ -212,6 +246,9 @@ DaemonIsActive()
     # $? = 1 if $QPKG_NAME is not active
 
     if [[ -f $STORED_PID_PATHFILE && -d /proc/$(<$STORED_PID_PATHFILE) ]] && (PortResponds $ui_port); then
+        DisplayDoneCommitToLog 'daemon is active'
+        return 0
+    elif (ps ax | $GREP_CMD $TARGET_DAEMON | $GREP_CMD -vq grep) && (PortResponds $ui_port); then
         DisplayDoneCommitToLog 'daemon is active'
         return 0
     else
@@ -248,10 +285,6 @@ PullGitRepo()
         ExecuteAndLog "updating $(FormatAsPackageName $1) from remote repository" "cd $QPKG_GIT_PATH && $GIT_CMD pull"
     fi
 
-    # might need to use these instead of 'git pull' if we keep seeing a 'Tell me who you are' error :(
-    #   git fetch
-    #   git reset --hard origin/master
-
     }
 
 CleanLocalClone()
@@ -259,7 +292,7 @@ CleanLocalClone()
 
     # for the rare occasions the local repo becomes corrupt, it needs to be deleted and cloned again from source.
 
-    [[ -z $QPKG_PATH || -z $QPKG_NAME ]] && return 1
+    [[ -z $QPKG_PATH || -z $QPKG_NAME || -z $SOURCE_GIT_URL ]] && return 1
 
     StopQPKG
     ExecuteAndLog 'cleaning local repo' "rm -r $QPKG_PATH/$QPKG_NAME"
@@ -317,9 +350,9 @@ UIPort()
     {
 
     # get HTTP port
-    # stdout = HTTP port (if used) or 0 if none found
+    # stdout = HTTP port (if used) or default if none found
 
-    $GETCFG_CMD misc port -d 0 -f $QPKG_INI_PATHFILE
+    $GETCFG_CMD misc port -d $DEFAULT_UI_PORT -f $QPKG_INI_PATHFILE
 
     }
 
@@ -607,7 +640,7 @@ Init
 
 if [[ $errorcode -eq 0 ]]; then
     if [[ -n $1 ]]; then
-        CommitLog "$(SessionSeparator "$1 requested")"
+        CommitLog "$(SessionSeparator "'$1' requested")"
         CommitLog "= $(date)"
     fi
     case $1 in
@@ -629,18 +662,18 @@ if [[ $errorcode -eq 0 ]]; then
         restore)
             RestoreConfig || errorcode=1
             ;;
-        clean)
+        c|clean)
             CleanLocalClone || errorcode=1
             ;;
-        h|history)
+        l|log)
             if [[ -e $INIT_LOG_PATHFILE ]]; then
                 $LESS_CMD -rMK -PM' use arrow-keys to scroll up-down left-right, press Q to quit' $INIT_LOG_PATHFILE
             else
-                Display "Init log not found: $(FormatAsFileName $INIT_LOG_PATHFILE)"
+                Display "service log not found: $(FormatAsFileName $INIT_LOG_PATHFILE)"
             fi
             ;;
         v|version)
-            Display "$SCRIPT_VERSION"
+            Display "$QPKG_VERSION"
             ;;
         *)
             ShowHelp
