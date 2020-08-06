@@ -46,7 +46,7 @@ Init()
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200807d
+    readonly SCRIPT_VERSION=200807e
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -90,6 +90,7 @@ Init()
 
     readonly GNU_FIND_CMD=/opt/bin/find
     readonly GNU_GREP_CMD=/opt/bin/grep
+    readonly GNU_LESS_CMD=/opt/bin/less
     readonly OPKG_CMD=/opt/bin/opkg
     pip3_cmd=/opt/bin/pip3
 
@@ -370,6 +371,11 @@ LogRuntimeParameters()
         return 1
     fi
 
+    if IsLogViewOnly; then
+        ShowLogView
+        return 1
+    fi
+
     local conflicting_qpkg=''
 
     IsVisibleDebugging || echo -e "$(ColourTextBrightWhite "$SCRIPT_FILE") ($SCRIPT_VERSION)\n"
@@ -539,9 +545,14 @@ ParseArgs()
                 errorcode=12
                 return 1
                 ;;
+            -l|--log)
+                EnableLogViewOnly
+                errorcode=13
+                return 1
+                ;;
             -v|--version)
                 EnableVersionOnly
-                errorcode=13
+                errorcode=14
                 return 1
                 ;;
             --install-all)
@@ -673,6 +684,23 @@ ShowVersion()
     {
 
     echo "$SCRIPT_VERSION"
+
+    return 0
+
+    }
+
+ShowLogView()
+    {
+
+    if [[ -n $DEBUG_LOG_PATHFILE && -e $DEBUG_LOG_PATHFILE ]]; then
+        if [[ -e $GNU_LESS_CMD ]]; then
+            $GNU_LESS_CMD -rMK -PM' use arrow-keys to scroll up-down left-right, press Q to quit' $DEBUG_LOG_PATHFILE
+        else
+            $CAT_CMD $DEBUG_LOG_PATHFILE
+        fi
+    else
+        echo "no log to display"
+    fi
 
     return 0
 
@@ -811,7 +839,7 @@ UpdateEntware()
     {
 
     if IsNotSysFilePresent $OPKG_CMD || IsNotSysFilePresent $GNU_FIND_CMD; then
-        errorcode=14
+        errorcode=15
         return 1
     fi
 
@@ -931,7 +959,7 @@ InstallIPKGs()
         InstallIPKGBatch "$packages"
     else
         ShowAsError "IPKG download path [$IPKG_DL_PATH] does not exist"
-        errorcode=15
+        errorcode=16
         returncode=1
     fi
 
@@ -985,7 +1013,7 @@ InstallIPKGBatch()
             ShowAsError "download & install IPKG$(DisplayPlural $IPKG_download_count) failed $(FormatAsExitcode $result)"
             DebugErrorFile "$log_pathfile"
 
-            errorcode=16
+            errorcode=17
             returncode=1
         fi
         DebugTimerStageEnd $STARTSECONDS
@@ -1050,7 +1078,7 @@ DowngradePy3()
     result=$?
 
     if [[ $result -gt 0 ]]; then
-        errorcode=17
+        errorcode=18
         returncode=1
     fi
 
@@ -1061,7 +1089,7 @@ DowngradePy3()
         if [[ $result -eq 0 ]]; then
             ShowAsDone "$(FormatAsPackageName Watcher3) selected so downgraded Python 3 IPKGs"
         else
-            errorcode=18
+            errorcode=19
             returncode=1
         fi
     fi
@@ -1109,7 +1137,7 @@ InstallPy3Modules()
                 echo "* Ugh! The usual fix is to let sherpa reinstall 'Entware' at least once."
                 echo -e "\t./sherpa.sh ew"
                 echo "If it happens again after reinstalling 'Entware', please create a new issue for this on GitHub."
-                errorcode=21
+                errorcode=20
                 return 1
             fi
         fi
@@ -1137,7 +1165,7 @@ InstallPy3Modules()
         ShowAsError "download & install $desc failed $(FormatAsResult "$result")"
         DebugErrorFile "$log_pathfile"
 
-        errorcode=22
+        errorcode=21
         returncode=1
     fi
 
@@ -1199,7 +1227,7 @@ InstallQPKG()
         ShowAsError "QPKG installation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $result)"
         DebugErrorFile "$log_pathfile"
 
-        errorcode=23
+        errorcode=22
         returncode=1
     fi
 
@@ -1269,14 +1297,14 @@ DownloadQPKG()
                 ShowAsDone "downloaded QPKG $(FormatAsFileName "$remote_filename")"
             else
                 ShowAsError "downloaded QPKG checksum incorrect $(FormatAsFileName "$local_pathfile")"
-                errorcode=24
+                errorcode=23
                 returncode=1
             fi
         else
             ShowAsError "download failed $(FormatAsFileName "$local_pathfile") $(FormatAsExitcode $result)"
             DebugErrorFile "$log_pathfile"
 
-            errorcode=25
+            errorcode=24
             returncode=1
         fi
     fi
@@ -1403,7 +1431,7 @@ LoadInstalledQPKGVars()
         done
     else
         DebugError 'QPKG not installed?'
-        errorcode=26
+        errorcode=25
         return 1
     fi
 
@@ -1439,7 +1467,7 @@ UninstallQPKG()
                 ShowAsDone "uninstalled $(FormatAsPackageName $1)"
             else
                 ShowAsError "unable to uninstall $(FormatAsPackageName $1) $(FormatAsExitcode $result)"
-                errorcode=27
+                errorcode=26
                 return 1
             fi
         fi
@@ -1467,11 +1495,11 @@ QPKGServiceCtl()
 
     if [[ -z $1 ]]; then
         DebugError 'action unspecified'
-        errorcode=28
+        errorcode=27
         return 1
     elif [[ -z $2 ]]; then
         DebugError 'QPKG name unspecified'
-        errorcode=29
+        errorcode=28
         return 1
     fi
 
@@ -1497,7 +1525,7 @@ QPKGServiceCtl()
                 else
                     $CAT_CMD "$qpkg_pathfile.$START_LOG_FILE" >> "$DEBUG_LOG_PATHFILE"
                 fi
-                errorcode=30
+                errorcode=29
                 return 1
             fi
             ;;
@@ -1543,7 +1571,7 @@ QPKGServiceCtl()
             ;;
         *)
             DebugError "Unrecognised action '$1'"
-            errorcode=31
+            errorcode=30
             return 1
             ;;
     esac
@@ -1571,11 +1599,11 @@ GetQPKGServiceFile()
 
     if [[ -z $output ]]; then
         DebugError "No service file configured for package $(FormatAsPackageName $1)"
-        errorcode=32
+        errorcode=31
         returncode=1
     elif [[ ! -e $output ]]; then
         DebugError "Package service file not found $(FormatAsStdout "$output")"
-        errorcode=33
+        errorcode=32
         returncode=1
     fi
 
@@ -1718,7 +1746,10 @@ ShowResult()
     DebugScript 'elapsed time' "$(ConvertSecsToMinutes "$(($($DATE_CMD +%s)-$([[ -n $SCRIPT_STARTSECONDS ]] && echo $SCRIPT_STARTSECONDS || echo "1")))")"
     DebugInfoThickSeparator
 
-    [[ -e $DEBUG_LOG_PATHFILE ]] && IsNotVisibleDebugging && ! IsVersionOnly && echo -e "\n- To display the runtime debug log:\n\tcat $(basename $DEBUG_LOG_PATHFILE)\n"
+    if [[ -e $DEBUG_LOG_PATHFILE ]] && IsNotVisibleDebugging && ! IsVersionOnly; then
+        echo -e "\n- To view the runtime debug log:"
+        echo -e "\t$0 --log"
+    fi
 
     return 0
 
@@ -1843,7 +1874,7 @@ FindAllIPKGDependencies()
     [[ -z $1 ]] && return 1
 
     if IsNotSysFilePresent $OPKG_CMD || IsNotSysFilePresent $GNU_GREP_CMD; then
-        errorcode=34
+        errorcode=33
         return 1
     fi
 
@@ -1928,7 +1959,7 @@ OpenIPKGArchive()
 
     if [[ ! -e $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE ]]; then
         ShowAsError "could not locate the IPKG list file"
-        errorcode=35
+        errorcode=34
         return 1
     fi
 
@@ -1938,7 +1969,7 @@ OpenIPKGArchive()
 
     if [[ ! -e $EXTERNAL_PACKAGE_LIST_PATHFILE ]]; then
         ShowAsError "could not open the IPKG list file"
-        errorcode=36
+        errorcode=35
         return 1
     fi
 
@@ -2022,7 +2053,7 @@ IsSysFilePresent()
 
     if ! [[ -f $1 || -L $1 ]]; then
         ShowAsError "a required NAS system file is missing $(FormatAsFileName $1)"
-        errorcode=37
+        errorcode=36
         return 1
     else
         return 0
@@ -2043,7 +2074,7 @@ IsSysSharePresent()
 
     if [[ ! -L $1 ]]; then
         ShowAsError "a required NAS system share is missing $(FormatAsFileName $1). Please re-create it via the QTS Control Panel -> Privilege Settings -> Shared Folders."
-        errorcode=38
+        errorcode=37
         return 1
     else
         return 0
@@ -2388,6 +2419,22 @@ DisableHelpOnly()
 
     }
 
+EnableLogViewOnly()
+    {
+
+    logview_only=true
+    DebugVar logview_only
+
+    }
+
+DisableLogViewOnly()
+    {
+
+    logview_only=false
+    DebugVar logview_only
+
+    }
+
 EnableVersionOnly()
     {
 
@@ -2422,6 +2469,13 @@ IsHelpOnly()
     {
 
     [[ $help_only = true ]]
+
+    }
+
+IsLogViewOnly()
+    {
+
+    [[ $logview_only = true ]]
 
     }
 
