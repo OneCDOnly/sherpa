@@ -46,7 +46,7 @@ Init()
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200806c
+    readonly SCRIPT_VERSION=200807
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -2043,8 +2043,9 @@ _MonitorDirSize_()
     # It watches for the existence of the pathfile set in $monitor_flag
     # If that file is removed, this function dies gracefully
 
-    # $1 = directory to monitor the size of
-    # $2 = total target bytes (100%) for specified path
+    # input:
+    #   $1 = directory to monitor the size of
+    #   $2 = total target bytes (100%) for specified path
 
     [[ -z $1 || ! -d $1 || -z $2 || $2 -eq 0 ]] && return
     IsNotSysFilePresent $GNU_FIND_CMD && return
@@ -2096,6 +2097,7 @@ IsSysFilePresent()
 
     # input:
     #   $1 = pathfile to check
+
     # output:
     #   $? = 0 (true) or 1 (false)
 
@@ -2116,6 +2118,7 @@ IsSysSharePresent()
 
     # input:
     #   $1 = symlink path to check
+
     # output:
     #   $? = 0 (true) or 1 (false)
 
@@ -2136,6 +2139,7 @@ IsIPKGInstalled()
 
     # input:
     #   $1 = package name to check
+
     # output:
     #   $? = 0 (true) or 1 (false)
 
@@ -2173,6 +2177,7 @@ IsQPKGUserInstallable()
 
     # input:
     #   $1 = package name to check
+
     # output:
     #   $? = 0 (true) or 1 (false)
 
@@ -2198,6 +2203,7 @@ IsQPKGToBeInstalled()
 
     # input:
     #   $1 = package name to check
+
     # output:
     #   $? = 0 (true) or 1 (false)
 
@@ -2222,6 +2228,7 @@ IsQPKGInstalled()
 
     # input:
     #   $1 = package name to check
+
     # output:
     #   $? = 0 (true) or 1 (false)
 
@@ -2236,6 +2243,7 @@ IsNotQPKGInstalled()
 
     # input:
     #   $1 = package name to check
+
     # output:
     #   $? = 0 (true) or 1 (false)
 
@@ -2250,6 +2258,7 @@ IsQPKGEnabled()
 
     # input:
     #   $1 = package name to check
+
     # output:
     #   $? = 0 (true) or 1 (false)
 
@@ -2264,6 +2273,7 @@ IsNotQPKGEnabled()
 
     # input:
     #   $1 = package name to check
+
     # output:
     #   $? = 0 (true) or 1 (false)
 
@@ -2278,6 +2288,7 @@ IsNotSysFilePresent()
 
     # input:
     #   $1 = pathfile to check
+
     # output:
     #   $? = 0 (true) or 1 (false)
 
@@ -2292,6 +2303,7 @@ IsNotSysSharePresent()
 
     # input:
     #   $1 = symlink path to check
+
     # output:
     #   $? = 0 (true) or 1 (false)
 
@@ -2306,9 +2318,10 @@ MatchAbbrvToQPKGName()
 
     # input:
     #   $1 = a potential package abbreviation supplied by user
+
     # output:
-    #   stdout = matched installable package name (empty if unmatched)
     #   $? = 0 (matched) or 1 (unmatched)
+    #   stdout = matched installable package name (empty if unmatched)
 
     [[ -z $1 ]] && return 1
     [[ ${#SHERPA_QPKG_NAME[@]} -eq 0 || ${#SHERPA_QPKG_ABBRVS[@]} -eq 0 ]] && return 1
@@ -2337,9 +2350,11 @@ RunThisAndLogResults()
     {
 
     # Run a command string and log the results
+
     # input:
     #   $1 = command string to execute
     #   $2 = pathfilename to record this operation in
+
     # output:
     #   $? = result code of command string
 
@@ -2362,9 +2377,11 @@ RunThisAndLogResultsRealtime()
     {
 
     # Run a command string, show and log the results
+
     # input:
     #   $1 = command string to execute
     #   $2 = pathfilename to record this operation in
+
     # output:
     #   $? = result code of command string
 
@@ -2403,8 +2420,9 @@ DisplayPlural()
 FileMatchesMD5()
     {
 
-    # $1 = pathfilename to generate an MD5 checksum for
-    # $2 = MD5 checksum to compare against
+    # input:
+    #   $1 = pathfilename to generate an MD5 checksum for
+    #   $2 = MD5 checksum to compare against
 
     [[ -z $1 || -z $2 ]] && return 1
 
@@ -2415,7 +2433,8 @@ FileMatchesMD5()
 ProgressUpdater()
     {
 
-    # $1 = message to display
+    # input:
+    #   $1 = message to display
 
     if [[ $1 != $previous_msg ]]; then
         temp="$1"
@@ -2600,7 +2619,9 @@ ConvertSecsToMinutes()
     {
 
     # http://stackoverflow.com/questions/12199631/convert-seconds-to-hours-minutes-seconds
-    # $1 = a time in seconds to convert to 'hh:mm:ss'
+
+    # input:
+    #   $1 = a time in seconds to convert to 'hh:mm:ss'
 
     ((h=${1}/3600))
     ((m=(${1}%3600)/60))
@@ -2708,7 +2729,8 @@ DebugLogThinSeparator()
 DebugTimerStageStart()
     {
 
-    # stdout = current time in seconds
+    # output:
+    #   stdout = current time in seconds
 
     $DATE_CMD +%s
     DebugInfoThinSeparator
@@ -2719,7 +2741,8 @@ DebugTimerStageStart()
 DebugTimerStageEnd()
     {
 
-    # $1 = start time in seconds
+    # input:
+    #   $1 = start time in seconds
 
     DebugStage 'elapsed time' "$(ConvertSecsToMinutes "$(($($DATE_CMD +%s)-$([[ -n $1 ]] && echo "$1" || echo "1")))")"
     DebugInfoThinSeparator
@@ -2846,7 +2869,7 @@ DebugThis()
 DebugErrorFile()
     {
 
-    # add the contents of specified pathfile $1 to the main runtime log
+    # Add the contents of specified pathfile $1 to the main runtime log
 
     [[ -z $1 || ! -e $1 ]] && return 1
 
@@ -2947,10 +2970,11 @@ WriteAsDebug()
 WriteToDisplay_SameLine()
     {
 
-    # writes a new message without newline (unless in debug mode)
+    # Writes a new message without newline (unless in debug mode)
 
-    # $1 = pass/fail
-    # $2 = message
+    # input:
+    #   $1 = pass/fail
+    #   $2 = message
 
     previous_msg=$(printf "[ %-10s ] %s" "$1" "$2")
 
@@ -2963,10 +2987,11 @@ WriteToDisplay_SameLine()
 WriteToDisplay_NewLine()
     {
 
-    # updates the previous message
+    # Updates the previous message
 
-    # $1 = pass/fail
-    # $2 = message
+    # input:
+    #   $1 = pass/fail
+    #   $2 = message
 
     new_message=$(printf "[ %-10s ] %s" "$1" "$2")
 
@@ -2990,8 +3015,9 @@ WriteToDisplay_NewLine()
 WriteToLog()
     {
 
-    # $1 = pass/fail
-    # $2 = message
+    # input:
+    #   $1 = pass/fail
+    #   $2 = message
 
     [[ -n $DEBUG_LOG_PATHFILE ]] && $TOUCH_CMD "$DEBUG_LOG_PATHFILE" && printf "[ %-4s ] %s\n" "$1" "$2" >> "$DEBUG_LOG_PATHFILE"
 
