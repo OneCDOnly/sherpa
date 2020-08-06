@@ -46,7 +46,7 @@ Init()
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200806b
+    readonly SCRIPT_VERSION=200806c
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -711,8 +711,6 @@ DownloadQPKGs()
     else
         IsNotQPKGInstalled Entware && DownloadQPKG Entware
 
-        (IsQPKGInstalled SABnzbdplus || [[ $TARGET_APP = SABnzbdplus ]];) && [[ $NAS_QPKG_ARCH != none ]] && IsNotQPKGInstalled Par2 && DownloadQPKG Par2
-
         # kludge: an ugly workaround until QPKG dependency checking works properly
         (IsQPKGInstalled SABnzbd || [[ $TARGET_APP = SABnzbd ]];) && [[ $NAS_QPKG_ARCH != none ]] && IsNotQPKGInstalled Par2 && DownloadQPKG Par2
 
@@ -733,9 +731,9 @@ RemoveUnwantedQPKGs()
     local response=''
     local previous_Entware_package_list=$SHARE_PUBLIC_PATH/Entware.previously.installed.list
 
-    UninstallQPKG Optware || ResetErrorcode  # ignore Optware uninstall errors
-    UninstallQPKG Entware-3x
-    UninstallQPKG Entware-ng
+    UninstallQPKG Optware || ResetErrorcode     # ignore uninstall errors
+    UninstallQPKG Entware-3x || ResetErrorcode  # ignore uninstall errors
+    UninstallQPKG Entware-ng || ResetErrorcode  # ignore uninstall errors
 
     IsQPKGInstalled $TARGET_APP && reinstall_flag=true
 
@@ -803,7 +801,7 @@ PatchBaseInit()
     DebugFuncEntry
     local find_text=''
     local insert_text=''
-    local package_init_pathfile="$(GetQPKGServiceFile Entware)"
+    local package_init_pathfile=$(GetQPKGServiceFile Entware)
 
     if ($GREP_CMD -q 'opt.orig' "$package_init_pathfile"); then
         DebugInfo 'patch: do the "opt shuffle" - already done'
@@ -875,7 +873,7 @@ InstallQPKGIndepsAddons()
 
     DebugFuncEntry
 
-    if (IsQPKGInstalled SABnzbdplus || [[ $TARGET_APP = SABnzbdplus ]];) && [[ $NAS_QPKG_ARCH != none ]]; then
+    if IsQPKGInstalled SABnzbdplus && [[ $NAS_QPKG_ARCH != none ]]; then
         if IsNotQPKGInstalled Par2; then
             InstallQPKG Par2
             if IsError; then
@@ -963,7 +961,11 @@ InstallIPKGs()
 InstallIPKGBatch()
     {
 
-    # $1 = space-separated string containing list of IPKG names to download and install
+    # input:
+    #   $1 = whitespace-separated string containing list of IPKG names to download and install
+
+    # output:
+    #   $? = 0 (true) or 1 (false)
 
     [[ -z $1 ]] && return 1
 
@@ -1183,9 +1185,9 @@ InstallPy3Modules()
             pip3_cmd=/opt/bin/pip3.8
         else
             if IsNotSysFilePresent $pip3_cmd; then
-                echo "* Ugh! The usual fix is to let sherpa reinstall Entware at least once."
+                echo "* Ugh! The usual fix is to let sherpa reinstall 'Entware' at least once."
                 echo -e "\t./sherpa.sh ew"
-                echo "If it happens again after reinstalling Entware, please create a new issue for this on GitHub."
+                echo "If it happens again after reinstalling 'Entware', please create a new issue for this on GitHub."
                 errorcode=21
                 return 1
             fi
@@ -1226,7 +1228,7 @@ InstallPy3Modules()
 RestartAllDepQPKGs()
     {
 
-    # restart all sherpa QPKGs except independents. Needed if user has requested each QPKG update itself, or we downgrade Python 3.
+    # restart all sherpa QPKGs except independents. Needed if user has requested each QPKG update itself, or Python 3 was downgraded.
 
     IsError && return
 
@@ -1299,7 +1301,11 @@ ReloadProfile()
 DownloadQPKG()
     {
 
-    # $1 = QPKG name to download
+    # input:
+    #   $1 = QPKG name to download
+
+    # output:
+    #   $? = 0 if successful, 1 if failed
 
     IsError && return
     [[ -z $1 ]] && return 1
@@ -1444,7 +1450,15 @@ CalcDependantQPKGs()
 LoadInstalledQPKGVars()
     {
 
-    # $1 = load variables for this installed package name
+    # Load variables for specified package
+
+    # input:
+    #   $1 = QPKG name
+
+    # output:
+    #   $? = 0 if successful, 1 if failed
+    #   $package_installed_path
+    #   $package_config_path
 
     [[ -z $1 ]] && return 1
 
@@ -1479,7 +1493,11 @@ LoadInstalledQPKGVars()
 UninstallQPKG()
     {
 
-    # $1 = QPKG name
+    # input:
+    #   $1 = QPKG name
+
+    # output:
+    #   $? = 0 if successful, 1 if failed
 
     IsError && return
     [[ -z $1 ]] && return 1
@@ -1517,10 +1535,14 @@ UninstallQPKG()
 QPKGServiceCtl()
     {
 
-    # $1 = action (start|stop|restart)
-    # $2 = QPKG name
+    # Used in-place of [qpkg_service] as the QTS 4.2.6 version does not offer returncodes
 
-    # this function is used in-place of [qpkg_service] as the QTS 4.2.6 version does not offer returncodes
+    # input:
+    #   $1 = action (start|stop|restart)
+    #   $2 = QPKG name
+
+    # output:
+    #   $? = 0 if successful, 1 if failed
 
     if [[ -z $1 ]]; then
         DebugError 'action unspecified'
@@ -1612,9 +1634,12 @@ QPKGServiceCtl()
 GetQPKGServiceFile()
     {
 
-    # $1 = QPKG name
-    # stdout = QPKG init pathfilename
-    # $? = 0 if successful, 1 if failed
+    # input:
+    #   $1 = QPKG name
+
+    # output:
+    #   stdout = QPKG init pathfilename
+    #   $? = 0 if successful, 1 if failed
 
     [[ -z $1 ]] && return 1
 
@@ -1641,9 +1666,12 @@ GetQPKGServiceFile()
 GetQPKGPathFilename()
     {
 
-    # $1 = QPKG name
-    # stdout = QPKG local filename
-    # $? = 0 if successful, 1 if failed
+    # input:
+    #   $1 = QPKG name
+
+    # output:
+    #   stdout = QPKG local filename
+    #   $? = 0 if successful, 1 if failed
 
     [[ -z $1 ]] && return 1
 
@@ -1654,9 +1682,12 @@ GetQPKGPathFilename()
 GetQPKGRemoteURL()
     {
 
-    # $1 = QPKG name
-    # stdout = QPKG remote URL
-    # $? = 0 if successful, 1 if failed
+    # input:
+    #   $1 = QPKG name
+
+    # output:
+    #   stdout = QPKG remote URL
+    #   $? = 0 if successful, 1 if failed
 
     [[ -z $1 ]] && return 1
 
@@ -1678,9 +1709,12 @@ GetQPKGRemoteURL()
 GetQPKGMD5()
     {
 
-    # $1 = QPKG name
-    # stdout = QPKG MD5
-    # $? = 0 if successful, 1 if failed
+    # input:
+    #   $1 = QPKG name
+
+    # output:
+    #   stdout = QPKG MD5
+    #   $? = 0 if successful, 1 if failed
 
     [[ -z $1 ]] && return 1
 
@@ -1717,7 +1751,7 @@ Cleanup()
 
     cd $SHARE_PUBLIC_PATH || return 1
 
-    IsNotError && [[ -d $WORK_PATH ]] && IsNotVisibleDebugging && IsNotDevMode && rm -rf "$WORK_PATH"
+    [[ -d $WORK_PATH ]] && IsNotError && IsNotVisibleDebugging && IsNotDevMode && rm -rf "$WORK_PATH"
 
     DebugFuncExit
     return 0
@@ -1776,7 +1810,11 @@ ShowResult()
 GetQPKGDeps()
     {
 
-    # $1 = QPKG name to return dependencies for
+    # input:
+    #   $1 = QPKG name to return dependencies for
+
+    # output:
+    #   $? = 0 if successful, 1 if failed
 
     [[ -z $1 ]] && return 1
 
@@ -1797,8 +1835,10 @@ FindAllQPKGDependants()
     {
 
     # From a specified list of QPKG names, find all dependent QPKGs then generate a total qty to download.
+
     # input:
     #   $1 = string with space-separated initial QPKG names.
+
     # output:
     #   $QPKG_download_list = name-sorted array with complete list of all QPKGs, including those originally specified.
     #   $QPKG_download_count = number of packages to be downloaded.
@@ -1874,8 +1914,10 @@ FindAllIPKGDependencies()
     {
 
     # From a specified list of IPKG names, find all dependent IPKGs, exclude those already installed, then generate a total qty to download and a total download byte-size
+
     # input:
     #   $1 = string with space-separated initial IPKG names
+
     # output:
     #   $IPKG_download_list = name-sorted array with complete list of all IPKGs, including those originally specified
     #   $IPKG_download_count = number of packages to be downloaded
