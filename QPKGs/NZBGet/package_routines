@@ -103,13 +103,6 @@
 # Define any package specific operations that shall be performed when
 # the package is removed.
 ######################################################################
-#PKG_PRE_REMOVE="{
-#}"
-#
-#PKG_MAIN_REMOVE="{
-#}"
-#
 PKG_POST_REMOVE="{
     [[ -e /opt/bin/opkg ]] && /opt/bin/opkg remove nzbget > /dev/null 2>&1
 }"
-#

@@ -98,17 +98,3 @@
 # All package specific functions shall call 'err_log MSG' if an error
 # is detected that shall terminate the installation.
 ######################################################################
-#
-######################################################################
-# Define any package specific operations that shall be performed when
-# the package is removed.
-######################################################################
-#PKG_PRE_REMOVE="{
-#}"
-#
-#PKG_MAIN_REMOVE="{
-#}"
-#
-#PKG_POST_REMOVE="{
-#}"
-#
