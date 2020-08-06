@@ -46,7 +46,7 @@ Init()
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200807c
+    readonly SCRIPT_VERSION=200807d
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -91,7 +91,6 @@ Init()
     readonly GNU_FIND_CMD=/opt/bin/find
     readonly GNU_GREP_CMD=/opt/bin/grep
     readonly OPKG_CMD=/opt/bin/opkg
-    pip2_cmd=/opt/bin/pip2
     pip3_cmd=/opt/bin/pip3
 
     # paths and files
@@ -174,8 +173,7 @@ Init()
         SHERPA_QPKG_ABBRVS=()   # if set, this package is user-installable, and these abbreviations may be used to specify app
         SHERPA_QPKG_DEPS=()     # require these QPKGs to be installed first
         SHERPA_QPKG_IPKGS=()    # require these IPKGs to be installed first
-        SHERPA_QPKG_PIP2S=()    # require these PIPs for Python 2 to be installed first
-        SHERPA_QPKG_PIP3S=()    # require these PIPs for Python 3 to be installed first
+        SHERPA_QPKG_PIPS=()     # require these PIPs for Python 3 to be installed first
 
     SHERPA_QPKG_NAME+=(Entware)
         SHERPA_QPKG_ARCH+=(all)
@@ -184,8 +182,7 @@ Init()
         SHERPA_QPKG_ABBRVS+=('ew ent entware opkg')
         SHERPA_QPKG_DEPS+=('')
         SHERPA_QPKG_IPKGS+=('')
-        SHERPA_QPKG_PIP2S+=('')
-        SHERPA_QPKG_PIP3S+=('')
+        SHERPA_QPKG_PIPS+=('')
 
     SHERPA_QPKG_NAME+=(SABnzbd)
         SHERPA_QPKG_ARCH+=(all)
@@ -194,8 +191,7 @@ Init()
         SHERPA_QPKG_ABBRVS+=('sb sb3 sab sab3 sabnzbd3 sabnzbd')
         SHERPA_QPKG_DEPS+=('Entware Par2')
         SHERPA_QPKG_IPKGS+=('python3 python3-pyopenssl python3-cryptography python3-dev gcc unrar p7zip coreutils-nice ionice ffprobe')
-        SHERPA_QPKG_PIP2S+=('')
-        SHERPA_QPKG_PIP3S+=('sabyenc3 cheetah3 feedparser configobj cherrypy chardet')
+        SHERPA_QPKG_PIPS+=('sabyenc3 cheetah3 feedparser configobj cherrypy chardet')
 
     SHERPA_QPKG_NAME+=(NZBGet)
         SHERPA_QPKG_ARCH+=(all)
@@ -204,8 +200,7 @@ Init()
         SHERPA_QPKG_ABBRVS+=('ng nget nzb nzbget')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('nzbget')
-        SHERPA_QPKG_PIP2S+=('')
-        SHERPA_QPKG_PIP3S+=('')
+        SHERPA_QPKG_PIPS+=('')
 
     SHERPA_QPKG_NAME+=(SickChill)
         SHERPA_QPKG_ARCH+=(all)
@@ -214,8 +209,7 @@ Init()
         SHERPA_QPKG_ABBRVS+=('sc sick sickc chill sickchill')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python3')
-        SHERPA_QPKG_PIP2S+=('')
-        SHERPA_QPKG_PIP3S+=('random_user_agent pygithub')
+        SHERPA_QPKG_PIPS+=('random_user_agent pygithub')
 
     SHERPA_QPKG_NAME+=(LazyLibrarian)
         SHERPA_QPKG_ARCH+=(all)
@@ -224,8 +218,7 @@ Init()
         SHERPA_QPKG_ABBRVS+=('ll lazy lazylibrarian')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python3-pyopenssl python3-requests')
-        SHERPA_QPKG_PIP2S+=('')
-        SHERPA_QPKG_PIP3S+=('python-magic')
+        SHERPA_QPKG_PIPS+=('python-magic')
 
     SHERPA_QPKG_NAME+=(OMedusa)
         SHERPA_QPKG_ARCH+=(all)
@@ -234,8 +227,7 @@ Init()
         SHERPA_QPKG_ABBRVS+=('om med omed medusa omedusa')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python3 mediainfo')
-        SHERPA_QPKG_PIP2S+=('')
-        SHERPA_QPKG_PIP3S+=('')
+        SHERPA_QPKG_PIPS+=('')
 
     SHERPA_QPKG_NAME+=(OWatcher3)
         SHERPA_QPKG_ARCH+=(all)
@@ -244,18 +236,7 @@ Init()
         SHERPA_QPKG_ABBRVS+=('ow wat owat watch watcher owatcher watcher3 owatcher3')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python3 jq')
-        SHERPA_QPKG_PIP2S+=('')
-        SHERPA_QPKG_PIP3S+=('')
-
-#     SHERPA_QPKG_NAME+=(Headphones)
-#         SHERPA_QPKG_ARCH+=(all)
-#         SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/Headphones/build/Headphones_200607.qpkg)
-#         SHERPA_QPKG_MD5+=(417af5c74d8a592248b0bbbee86230f0)
-#         SHERPA_QPKG_ABBRVS+=('hp head phones headphones')
-#         SHERPA_QPKG_DEPS+=('Entware')
-#         SHERPA_QPKG_IPKGS+=('python python-pip')
-#         SHERPA_QPKG_PIP2S+=('')
-#         SHERPA_QPKG_PIP3S+=('')
+        SHERPA_QPKG_PIPS+=('')
 
     SHERPA_QPKG_NAME+=(OSickGear)
         SHERPA_QPKG_ARCH+=(all)
@@ -264,8 +245,7 @@ Init()
         SHERPA_QPKG_ABBRVS+=('sg os osg sickg osickg gear ogear sickgear osickgear')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python3')
-        SHERPA_QPKG_PIP2S+=('')
-        SHERPA_QPKG_PIP3S+=('cheetah3')
+        SHERPA_QPKG_PIPS+=('cheetah3')
 
     SHERPA_QPKG_NAME+=(OTransmission)
         SHERPA_QPKG_ARCH+=(all)
@@ -274,8 +254,7 @@ Init()
         SHERPA_QPKG_ABBRVS+=('ot otrans tm tr trans tmission transmission otransmission')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('transmission-web transmission-daemon-openssl jq')
-        SHERPA_QPKG_PIP2S+=('')
-        SHERPA_QPKG_PIP3S+=('')
+        SHERPA_QPKG_PIPS+=('')
 
     SHERPA_QPKG_NAME+=(Par2)
         SHERPA_QPKG_ARCH+=(x86)
@@ -284,8 +263,7 @@ Init()
         SHERPA_QPKG_ABBRVS+=('')
         SHERPA_QPKG_DEPS+=('')
         SHERPA_QPKG_IPKGS+=('')
-        SHERPA_QPKG_PIP2S+=('')
-        SHERPA_QPKG_PIP3S+=('')
+        SHERPA_QPKG_PIPS+=('')
 
     SHERPA_QPKG_NAME+=(Par2)
         SHERPA_QPKG_ARCH+=(x64)
@@ -294,8 +272,7 @@ Init()
         SHERPA_QPKG_ABBRVS+=('')
         SHERPA_QPKG_DEPS+=('')
         SHERPA_QPKG_IPKGS+=('')
-        SHERPA_QPKG_PIP2S+=('')
-        SHERPA_QPKG_PIP3S+=('')
+        SHERPA_QPKG_PIPS+=('')
 
     SHERPA_QPKG_NAME+=(Par2)
         SHERPA_QPKG_ARCH+=(x31)
@@ -304,8 +281,7 @@ Init()
         SHERPA_QPKG_ABBRVS+=('')
         SHERPA_QPKG_DEPS+=('')
         SHERPA_QPKG_IPKGS+=('')
-        SHERPA_QPKG_PIP2S+=('')
-        SHERPA_QPKG_PIP3S+=('')
+        SHERPA_QPKG_PIPS+=('')
 
     SHERPA_QPKG_NAME+=(Par2)
         SHERPA_QPKG_ARCH+=(x41)
@@ -314,8 +290,7 @@ Init()
         SHERPA_QPKG_ABBRVS+=('')
         SHERPA_QPKG_DEPS+=('')
         SHERPA_QPKG_IPKGS+=('')
-        SHERPA_QPKG_PIP2S+=('')
-        SHERPA_QPKG_PIP3S+=('')
+        SHERPA_QPKG_PIPS+=('')
 
     SHERPA_QPKG_NAME+=(Par2)
         SHERPA_QPKG_ARCH+=(a64)
@@ -324,8 +299,7 @@ Init()
         SHERPA_QPKG_ABBRVS+=('')
         SHERPA_QPKG_DEPS+=('')
         SHERPA_QPKG_IPKGS+=('')
-        SHERPA_QPKG_PIP2S+=('')
-        SHERPA_QPKG_PIP3S+=('')
+        SHERPA_QPKG_PIPS+=('')
 
     # package arrays are now full, so lock them
     readonly SHERPA_QPKG_NAME
@@ -335,12 +309,10 @@ Init()
         readonly SHERPA_QPKG_ABBRVS
         readonly SHERPA_QPKG_DEPS
         readonly SHERPA_QPKG_IPKGS
-        readonly SHERPA_QPKG_PIP2S
-        readonly SHERPA_QPKG_PIP3S
+        readonly SHERPA_QPKG_PIPS
 
     readonly SHERPA_COMMON_IPKGS='git git-http nano less ca-certificates python3-pip'
-    readonly SHERPA_COMMON_PIP2S='setuptools'
-    readonly SHERPA_COMMON_PIP3S='setuptools'
+    readonly SHERPA_COMMON_PIPS='setuptools'
     readonly SHERPA_COMMON_CONFLICTS='Optware Optware-NG'
 
     # user-specified as arguments at runtime
@@ -744,7 +716,6 @@ RemoveUnwantedQPKGs()
 
     IsError && return
 
-    DebugFuncEntry
     local response=''
     local previous_Entware_package_list=$SHARE_PUBLIC_PATH/Entware.previously.installed.list
 
@@ -776,7 +747,6 @@ RemoveUnwantedQPKGs()
         esac
     fi
 
-    DebugFuncExit
     return 0
 
     }
@@ -845,7 +815,6 @@ UpdateEntware()
         return 1
     fi
 
-    DebugFuncEntry
     local package_minutes_threshold=60
     local log_pathfile="$WORK_PATH/entware-update.log"
     local msgs=''
@@ -876,7 +845,6 @@ UpdateEntware()
         ShowAsDone "$(FormatAsPackageName Entware) package list is up-to-date"
     fi
 
-    DebugFuncExit
     return 0
 
     }
@@ -913,7 +881,6 @@ InstallQPKGIndepsAddons()
 
     InstallIPKGs
     DowngradePy3
-    InstallPy2Modules
     InstallPy3Modules
 
     [[ $TARGET_APP = Entware || $update_all_apps = true ]] && RestartAllDepQPKGs
@@ -1112,67 +1079,6 @@ DowngradePy3()
 
     }
 
-InstallPy2Modules()
-    {
-
-    IsError && return
-
-    # kludge: Python 2.7.x is no-longer available via Entware/OpenWRT, so disable any PIP2 execution for now
-    return
-
-    DebugFuncEntry
-    local exec_cmd=''
-    local result=0
-    local returncode=0
-    local packages=''
-    local desc="'Python 2' modules"
-    local log_pathfile="$WORK_PATH/Py2-modules.$INSTALL_LOG_FILE"
-
-    for index in ${!SHERPA_QPKG_NAME[@]}; do
-        if (IsQPKGInstalled ${SHERPA_QPKG_NAME[$index]}) || [[ $TARGET_APP = ${SHERPA_QPKG_NAME[$index]} ]]; then
-            packages+=" ${SHERPA_QPKG_PIP2S[$index]}"
-        fi
-    done
-
-    # sometimes, OpenWRT 'pip' is for Py3, so let's prefer a Py2 version
-    if [[ -e /opt/bin/pip2 ]]; then
-        pip2_cmd=/opt/bin/pip2
-    elif [[ -e /opt/bin/pip2.7 ]]; then
-        pip2_cmd=/opt/bin/pip2.7
-    elif [[ -e /opt/bin/pip ]]; then
-        pip2_cmd=/opt/bin/pip
-    else
-        if IsNotSysFilePresent $pip2_cmd; then
-            errorcode=19
-            return 1
-        fi
-    fi
-
-    [[ -n ${SHERPA_COMMON_PIP2S// /} ]] && exec_cmd="$pip2_cmd install $SHERPA_COMMON_PIP2S --disable-pip-version-check"
-    [[ -n ${SHERPA_COMMON_PIP2S// /} && -n ${packages// /} ]] && exec_cmd+=" && "
-    [[ -n ${packages// /} ]] && exec_cmd+="$pip2_cmd install $packages --disable-pip-version-check"
-    [[ -z $exec_cmd ]] && return
-
-    ShowAsProc "downloading & installing $desc"
-
-    RunThisAndLogResults "$exec_cmd" "$log_pathfile"
-    result=$?
-
-    if [[ $result -eq 0 ]]; then
-        ShowAsDone "downloaded & installed $desc"
-    else
-        ShowAsError "download & install $desc failed $(FormatAsResult "$result")"
-        DebugErrorFile "$log_pathfile"
-
-        errorcode=20
-        returncode=1
-    fi
-
-    DebugFuncExit
-    return $returncode
-
-    }
-
 InstallPy3Modules()
     {
 
@@ -1188,7 +1094,7 @@ InstallPy3Modules()
 
     for index in ${!SHERPA_QPKG_NAME[@]}; do
         if (IsQPKGInstalled ${SHERPA_QPKG_NAME[$index]}) || [[ $TARGET_APP = ${SHERPA_QPKG_NAME[$index]} ]]; then
-            packages+=" ${SHERPA_QPKG_PIP3S[$index]}"
+            packages+=" ${SHERPA_QPKG_PIPS[$index]}"
         fi
     done
 
@@ -1211,8 +1117,8 @@ InstallPy3Modules()
         return      # nothing to install
     fi
 
-    [[ -n ${SHERPA_COMMON_PIP3S// /} ]] && exec_cmd="$pip3_cmd install $SHERPA_COMMON_PIP3S --disable-pip-version-check"
-    [[ -n ${SHERPA_COMMON_PIP3S// /} && -n ${packages// /} ]] && exec_cmd+=" && "
+    [[ -n ${SHERPA_COMMON_PIPS// /} ]] && exec_cmd="$pip3_cmd install $SHERPA_COMMON_PIPS --disable-pip-version-check"
+    [[ -n ${SHERPA_COMMON_PIPS// /} && -n ${packages// /} ]] && exec_cmd+=" && "
     [[ -n ${packages// /} ]] && exec_cmd+="$pip3_cmd install $packages --disable-pip-version-check"
 
     # kludge: force recompilation of 'sabyenc3' package so it's recognised by SABnzbd. See: https://forums.sabnzbd.org/viewtopic.php?p=121214#p121214
