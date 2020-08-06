@@ -46,7 +46,7 @@ Init()
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200807
+    readonly SCRIPT_VERSION=200807b
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -181,7 +181,7 @@ Init()
         SHERPA_QPKG_ARCH+=(all)
         SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/Entware/Entware_1.02std.qpkg)
         SHERPA_QPKG_MD5+=(dbc82469933ac3049c06d4c8a023bbb9)
-        SHERPA_QPKG_ABBRVS+=('opkg ew ent entware')
+        SHERPA_QPKG_ABBRVS+=('ew ent entware opkg')
         SHERPA_QPKG_DEPS+=('')
         SHERPA_QPKG_IPKGS+=('')
         SHERPA_QPKG_PIP2S+=('')
@@ -261,7 +261,7 @@ Init()
         SHERPA_QPKG_ARCH+=(all)
         SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/OSickGear/build/OSickGear_200806b.qpkg)
         SHERPA_QPKG_MD5+=(e7a800fb2d821b9d502fdf5e2881b455)
-        SHERPA_QPKG_ABBRVS+=('sg osg sickg osickg gear ogear sickgear osickgear')
+        SHERPA_QPKG_ABBRVS+=('sg os osg sickg osickg gear ogear sickgear osickgear')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python3')
         SHERPA_QPKG_PIP2S+=('')
@@ -446,6 +446,7 @@ LogRuntimeParameters()
 
     if IsNotError && [[ ${#QPKGS_to_install[@]} -eq 0 && ${#QPKGS_to_uninstall[@]} -eq 0 && ${#QPKGS_to_update[@]} -eq 0 && ${#QPKGS_to_backup[@]} -eq 0 && ${#QPKGS_to_restore[@]} -eq 0 ]] && ! IsSatisfyDependenciesOnly && [[ $update_all_apps = false ]]; then
         ShowAsError 'no valid QPKGs or actions were specified'
+        ShowPackageAbbreviations
         errorcode=2
     fi
 
@@ -656,7 +657,6 @@ ParseArgs()
 ShowHelp()
     {
 
-    DebugFuncEntry
     local package=''
 
     echo -e "* A package manager to install various Usenet media-management apps into QNAP NAS.\n"
@@ -675,7 +675,24 @@ ShowHelp()
     echo -e "\n- Update all sherpa-installed applications:"
     echo -e "\t$0 --update-all"
 
-    DebugFuncExit
+    return 0
+
+    }
+
+ShowPackageAbbreviations()
+    {
+
+    [[ ${#SHERPA_QPKG_NAME[@]} -eq 0 || ${#SHERPA_QPKG_ABBRVS[@]} -eq 0 ]] && return 1
+
+    local package_index=0
+
+    echo
+    echo "- sherpa recognises these package names and abbreviations:"
+
+    for package_index in ${!SHERPA_QPKG_NAME[@]}; do
+        [[ -n ${SHERPA_QPKG_ABBRVS[$package_index]} ]] && printf "%15s: %s\n" "${SHERPA_QPKG_NAME[$package_index]}" "$($SED_CMD 's| |, |g' <<< "${SHERPA_QPKG_ABBRVS[$package_index]}")"
+    done
+
     return 0
 
     }
