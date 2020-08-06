@@ -46,7 +46,7 @@ Init()
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200807b
+    readonly SCRIPT_VERSION=200807c
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -815,7 +815,6 @@ InstallQPKGIndeps()
 PatchBaseInit()
     {
 
-    DebugFuncEntry
     local find_text=''
     local insert_text=''
     local package_init_pathfile=$(GetQPKGServiceFile Entware)
@@ -834,7 +833,6 @@ PatchBaseInit()
         DebugDone 'patch: do the "opt shuffle"'
     fi
 
-    DebugFuncExit
     return 0
 
     }
@@ -1764,13 +1762,10 @@ CTRL_C_Captured()
 Cleanup()
     {
 
-    DebugFuncEntry
-
     cd $SHARE_PUBLIC_PATH || return 1
 
     [[ -d $WORK_PATH ]] && IsNotError && IsNotVisibleDebugging && IsNotDevMode && rm -rf "$WORK_PATH"
 
-    DebugFuncExit
     return 0
 
     }
@@ -1778,7 +1773,6 @@ Cleanup()
 ShowResult()
     {
 
-    DebugFuncEntry
     local RE=''
 
     if ! IsHelpOnly && ! IsVersionOnly; then
@@ -1819,7 +1813,7 @@ ShowResult()
     DebugInfoThickSeparator
 
     [[ -e $DEBUG_LOG_PATHFILE ]] && IsNotVisibleDebugging && ! IsVersionOnly && echo -e "\n- To display the runtime debug log:\n\tcat $(basename $DEBUG_LOG_PATHFILE)\n"
-    DebugFuncExit
+
     return 0
 
     }
