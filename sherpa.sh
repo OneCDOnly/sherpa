@@ -47,7 +47,7 @@ Init()
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200807h
+    readonly SCRIPT_VERSION=200807i
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -1941,7 +1941,8 @@ FindAllIPKGDependencies()
     DebugProc 'finding IPKG dependencies'
     while [[ $iterations -lt $ITERATION_LIMIT ]]; do
         ((iterations++))
-        last_list=$($OPKG_CMD depends -A "$last_list" | $GREP_CMD -v 'depends on:' | $SED_CMD 's|^[[:blank:]]*||;s|[[:blank:]]*$||' | $TR_CMD ' ' '\n' | $SORT_CMD | $UNIQ_CMD)
+        # shellcheck disable=SC2086
+        last_list=$($OPKG_CMD depends -A $last_list | $GREP_CMD -v 'depends on:' | $SED_CMD 's|^[[:blank:]]*||;s|[[:blank:]]*$||' | $TR_CMD ' ' '\n' | $SORT_CMD | $UNIQ_CMD)
 
         if [[ -n $last_list ]]; then
             dependency_list+=" $last_list"
