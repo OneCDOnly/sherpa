@@ -48,7 +48,7 @@ Init()
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200807j
+    readonly SCRIPT_VERSION=200808
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -446,6 +446,7 @@ LogRuntimeParameters()
 
         if [[ $result -ne 0 ]]; then
             ShowAsError "unable to create working directory $(FormatAsFileName "$WORK_PATH") $(FormatAsExitcode $result)"
+            EnableSuggestIssue
             errorcode=4
         else
             cd "$WORK_PATH" || return 1
@@ -458,6 +459,7 @@ LogRuntimeParameters()
 
         if [[ $result -ne 0 ]]; then
             ShowAsError "unable to create QPKG download directory $(FormatAsFileName "$QPKG_DL_PATH") $(FormatAsExitcode $result)"
+            EnableSuggestIssue
             errorcode=5
         fi
     fi
@@ -469,6 +471,7 @@ LogRuntimeParameters()
 
         if [[ $result -ne 0 ]]; then
             ShowAsError "unable to create IPKG download directory $(FormatAsFileName "$IPKG_DL_PATH") $(FormatAsExitcode $result)"
+            EnableSuggestIssue
             errorcode=6
         else
             monitor_flag="$IPKG_DL_PATH/.monitor"
@@ -481,6 +484,7 @@ LogRuntimeParameters()
 
         if [[ $result -ne 0 ]]; then
             ShowAsError "unable to create IPKG cache directory $(FormatAsFileName "$IPKG_CACHE_PATH") $(FormatAsExitcode $result)"
+            EnableSuggestIssue
             errorcode=7
         fi
     fi
