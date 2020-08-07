@@ -48,7 +48,7 @@ Init()
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200808b
+    readonly SCRIPT_VERSION=200808c
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -1969,7 +1969,8 @@ FindAllIPKGDependencies()
     DebugTimerStageEnd "$STARTSECONDS"
 
     DebugProc 'excluding IPKGs already installed'
-    for element in "${all_list[@]}"; do
+    # shellcheck disable=SC2068
+    for element in ${all_list[@]}; do
         if [[ $element != 'ca-certs' ]]; then   # kludge: 'ca-certs' appears to be a bogus meta-package, so silently exclude it from attempted installation
             if ! $OPKG_CMD status "$element" | $GREP_CMD -q "Status:.*installed"; then
                 IPKG_download_list+=($element)
