@@ -46,7 +46,7 @@ Init()
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200807e
+    readonly SCRIPT_VERSION=200807f
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -694,7 +694,7 @@ ShowLogView()
 
     if [[ -n $DEBUG_LOG_PATHFILE && -e $DEBUG_LOG_PATHFILE ]]; then
         if [[ -e $GNU_LESS_CMD ]]; then
-            $GNU_LESS_CMD -rMK -PM' use arrow-keys to scroll up-down left-right, press Q to quit' $DEBUG_LOG_PATHFILE
+            LESSSECURE=1 $GNU_LESS_CMD +G --quit-on-intr --tilde --prompt' use arrow-keys to scroll up-down left-right, press Q to quit' $DEBUG_LOG_PATHFILE
         else
             $CAT_CMD $DEBUG_LOG_PATHFILE
         fi
