@@ -46,7 +46,7 @@ Init()
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200807f
+    readonly SCRIPT_VERSION=200807g
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -357,6 +357,11 @@ LogRuntimeParameters()
 
     ParseArgs
 
+    if IsLogPasteOnly; then
+        PasteLogOnline
+        return 1
+    fi
+
     DebugInfoThickSeparator
     DebugScript 'started' "$($DATE_CMD | $TR_CMD -s ' ')"
     DebugScript 'version' "$SCRIPT_VERSION"
@@ -550,9 +555,14 @@ ParseArgs()
                 errorcode=13
                 return 1
                 ;;
+            --paste)
+                EnableLogPasteOnly
+                errorcode=14
+                return 1
+                ;;
             -v|--version)
                 EnableVersionOnly
-                errorcode=14
+                errorcode=15
                 return 1
                 ;;
             --install-all)
@@ -706,6 +716,26 @@ ShowLogView()
 
     }
 
+PasteLogOnline()
+    {
+
+    # with thanks to https://github.com/solusipse/fiche
+
+    if [[ -n $DEBUG_LOG_PATHFILE && -e $DEBUG_LOG_PATHFILE ]]; then
+        link=$($CAT_CMD $DEBUG_LOG_PATHFILE | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
+        if [[ $? -eq 0 ]]; then
+            ShowAsDone "debug log is now online at $($SED_CMD 's|http://|http://l.|;s|https://|https://l.|' <<< $link) and will be deleted in 1 month"
+        else
+            ShowAsError 'a link could not be generated. Most likely a problem occurred when talking with https://termbin.com'
+        fi
+    else
+        ShowAsError 'no log to paste'
+    fi
+
+    return 0
+
+    }
+
 DownloadQPKGs()
     {
 
@@ -839,7 +869,7 @@ UpdateEntware()
     {
 
     if IsNotSysFilePresent $OPKG_CMD || IsNotSysFilePresent $GNU_FIND_CMD; then
-        errorcode=15
+        errorcode=16
         return 1
     fi
 
@@ -959,7 +989,7 @@ InstallIPKGs()
         InstallIPKGBatch "$packages"
     else
         ShowAsError "IPKG download path [$IPKG_DL_PATH] does not exist"
-        errorcode=16
+        errorcode=17
         returncode=1
     fi
 
@@ -1013,7 +1043,7 @@ InstallIPKGBatch()
             ShowAsError "download & install IPKG$(DisplayPlural $IPKG_download_count) failed $(FormatAsExitcode $result)"
             DebugErrorFile "$log_pathfile"
 
-            errorcode=17
+            errorcode=18
             returncode=1
         fi
         DebugTimerStageEnd $STARTSECONDS
@@ -1078,7 +1108,7 @@ DowngradePy3()
     result=$?
 
     if [[ $result -gt 0 ]]; then
-        errorcode=18
+        errorcode=19
         returncode=1
     fi
 
@@ -1089,7 +1119,7 @@ DowngradePy3()
         if [[ $result -eq 0 ]]; then
             ShowAsDone "$(FormatAsPackageName Watcher3) selected so downgraded Python 3 IPKGs"
         else
-            errorcode=19
+            errorcode=20
             returncode=1
         fi
     fi
@@ -1137,7 +1167,7 @@ InstallPy3Modules()
                 echo "* Ugh! The usual fix is to let sherpa reinstall 'Entware' at least once."
                 echo -e "\t./sherpa.sh ew"
                 echo "If it happens again after reinstalling 'Entware', please create a new issue for this on GitHub."
-                errorcode=20
+                errorcode=21
                 return 1
             fi
         fi
@@ -1165,7 +1195,7 @@ InstallPy3Modules()
         ShowAsError "download & install $desc failed $(FormatAsResult "$result")"
         DebugErrorFile "$log_pathfile"
 
-        errorcode=21
+        errorcode=22
         returncode=1
     fi
 
@@ -1227,7 +1257,7 @@ InstallQPKG()
         ShowAsError "QPKG installation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $result)"
         DebugErrorFile "$log_pathfile"
 
-        errorcode=22
+        errorcode=23
         returncode=1
     fi
 
@@ -1297,14 +1327,14 @@ DownloadQPKG()
                 ShowAsDone "downloaded QPKG $(FormatAsFileName "$remote_filename")"
             else
                 ShowAsError "downloaded QPKG checksum incorrect $(FormatAsFileName "$local_pathfile")"
-                errorcode=23
+                errorcode=24
                 returncode=1
             fi
         else
             ShowAsError "download failed $(FormatAsFileName "$local_pathfile") $(FormatAsExitcode $result)"
             DebugErrorFile "$log_pathfile"
 
-            errorcode=24
+            errorcode=25
             returncode=1
         fi
     fi
@@ -1431,7 +1461,7 @@ LoadInstalledQPKGVars()
         done
     else
         DebugError 'QPKG not installed?'
-        errorcode=25
+        errorcode=26
         return 1
     fi
 
@@ -1467,7 +1497,7 @@ UninstallQPKG()
                 ShowAsDone "uninstalled $(FormatAsPackageName $1)"
             else
                 ShowAsError "unable to uninstall $(FormatAsPackageName $1) $(FormatAsExitcode $result)"
-                errorcode=26
+                errorcode=27
                 return 1
             fi
         fi
@@ -1495,11 +1525,11 @@ QPKGServiceCtl()
 
     if [[ -z $1 ]]; then
         DebugError 'action unspecified'
-        errorcode=27
+        errorcode=28
         return 1
     elif [[ -z $2 ]]; then
         DebugError 'QPKG name unspecified'
-        errorcode=28
+        errorcode=29
         return 1
     fi
 
@@ -1525,7 +1555,7 @@ QPKGServiceCtl()
                 else
                     $CAT_CMD "$qpkg_pathfile.$START_LOG_FILE" >> "$DEBUG_LOG_PATHFILE"
                 fi
-                errorcode=29
+                errorcode=30
                 return 1
             fi
             ;;
@@ -1571,7 +1601,7 @@ QPKGServiceCtl()
             ;;
         *)
             DebugError "Unrecognised action '$1'"
-            errorcode=30
+            errorcode=31
             return 1
             ;;
     esac
@@ -1599,11 +1629,11 @@ GetQPKGServiceFile()
 
     if [[ -z $output ]]; then
         DebugError "No service file configured for package $(FormatAsPackageName $1)"
-        errorcode=31
+        errorcode=32
         returncode=1
     elif [[ ! -e $output ]]; then
         DebugError "Package service file not found $(FormatAsStdout "$output")"
-        errorcode=32
+        errorcode=33
         returncode=1
     fi
 
@@ -1746,9 +1776,15 @@ ShowResult()
     DebugScript 'elapsed time' "$(ConvertSecsToMinutes "$(($($DATE_CMD +%s)-$([[ -n $SCRIPT_STARTSECONDS ]] && echo $SCRIPT_STARTSECONDS || echo "1")))")"
     DebugInfoThickSeparator
 
-    if [[ -e $DEBUG_LOG_PATHFILE ]] && IsNotVisibleDebugging && ! IsVersionOnly; then
-        echo -e "\n- To view the runtime debug log:"
-        echo -e "\t$0 --log"
+    if [[ -e $DEBUG_LOG_PATHFILE ]] && IsNotVisibleDebugging; then
+        if ! IsVersionOnly && ! IsLogPasteOnly; then
+            echo -e "\n- To view the runtime debug log:"
+            echo -e "\t$0 --log"
+
+            echo -e "\n- To upload the runtime debug log to a public pastebin (https://termbin.com):"
+            echo -e "\t$0 --paste"
+            echo
+        fi
     fi
 
     return 0
@@ -1874,7 +1910,7 @@ FindAllIPKGDependencies()
     [[ -z $1 ]] && return 1
 
     if IsNotSysFilePresent $OPKG_CMD || IsNotSysFilePresent $GNU_GREP_CMD; then
-        errorcode=33
+        errorcode=34
         return 1
     fi
 
@@ -1959,7 +1995,7 @@ OpenIPKGArchive()
 
     if [[ ! -e $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE ]]; then
         ShowAsError "could not locate the IPKG list file"
-        errorcode=34
+        errorcode=35
         return 1
     fi
 
@@ -1969,7 +2005,7 @@ OpenIPKGArchive()
 
     if [[ ! -e $EXTERNAL_PACKAGE_LIST_PATHFILE ]]; then
         ShowAsError "could not open the IPKG list file"
-        errorcode=35
+        errorcode=36
         return 1
     fi
 
@@ -2053,7 +2089,7 @@ IsSysFilePresent()
 
     if ! [[ -f $1 || -L $1 ]]; then
         ShowAsError "a required NAS system file is missing $(FormatAsFileName $1)"
-        errorcode=36
+        errorcode=37
         return 1
     else
         return 0
@@ -2074,7 +2110,7 @@ IsSysSharePresent()
 
     if [[ ! -L $1 ]]; then
         ShowAsError "a required NAS system share is missing $(FormatAsFileName $1). Please re-create it via the QTS Control Panel -> Privilege Settings -> Shared Folders."
-        errorcode=37
+        errorcode=38
         return 1
     else
         return 0
@@ -2451,6 +2487,22 @@ DisableVersionOnly()
 
     }
 
+EnableLogPasteOnly()
+    {
+
+    logpaste_only=true
+    DebugVar logpaste_only
+
+    }
+
+DisableVLogPasteOnly()
+    {
+
+    logpaste_only=false
+    DebugVar logpaste_only
+
+    }
+
 IsError()
     {
 
@@ -2483,6 +2535,13 @@ IsVersionOnly()
     {
 
     [[ $version_only = true ]]
+
+    }
+
+IsLogPasteOnly()
+    {
+
+    [[ $logpaste_only = true ]]
 
     }
 
