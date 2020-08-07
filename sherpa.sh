@@ -43,10 +43,11 @@ Init()
     DisableHelpOnly
     DisableVersionOnly
     DisableSuggestIssue
+    DisableLogPasteOnly
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200807g
+    readonly SCRIPT_VERSION=200807h
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -156,14 +157,14 @@ Init()
         readonly SHARE_DOWNLOAD_PATH=$DEFAULT_SHARE_DOWNLOAD_PATH
     else
         readonly SHARE_DOWNLOAD_PATH=/share/$($GETCFG_CMD SHARE_DEF defDownload -d Qdownload -f $DEFAULT_SHARES_PATHFILE)
-        IsNotSysSharePresent $SHARE_DOWNLOAD_PATH && return 1
+        IsNotSysSharePresent "$SHARE_DOWNLOAD_PATH" && return 1
     fi
 
     if [[ -L $DEFAULT_SHARE_PUBLIC_PATH ]]; then
         readonly SHARE_PUBLIC_PATH=$DEFAULT_SHARE_PUBLIC_PATH
     else
         readonly SHARE_PUBLIC_PATH=/share/$($GETCFG_CMD SHARE_DEF defPublic -d Qpublic -f $DEFAULT_SHARES_PATHFILE)
-        IsNotSysSharePresent $SHARE_PUBLIC_PATH && return 1
+        IsNotSysSharePresent "$SHARE_PUBLIC_PATH" && return 1
     fi
 
     # sherpa-supported package details - parallel arrays
@@ -357,11 +358,6 @@ LogRuntimeParameters()
 
     ParseArgs
 
-    if IsLogPasteOnly; then
-        PasteLogOnline
-        return 1
-    fi
-
     DebugInfoThickSeparator
     DebugScript 'started' "$($DATE_CMD | $TR_CMD -s ' ')"
     DebugScript 'version' "$SCRIPT_VERSION"
@@ -385,6 +381,11 @@ LogRuntimeParameters()
 
     IsVisibleDebugging || echo -e "$(ColourTextBrightWhite "$SCRIPT_FILE") ($SCRIPT_VERSION)\n"
 
+    if IsLogPasteOnly; then
+        PasteLogOnline
+        return 1
+    fi
+
     DebugNAS 'model' "$($GREP_CMD -v "^$" /etc/issue | $SED_CMD 's|^Welcome to ||;s|(.*||')"
     DebugNAS 'RAM' "$INSTALLED_RAM_KB kB"
     if IsQPKGToBeInstalled SABnzbd || IsQPKGToBeInstalled SABnzbdplus || IsQPKGInstalled SABnzbd || IsQPKGInstalled SABnzbdplus; then
@@ -403,7 +404,7 @@ LogRuntimeParameters()
     DebugNAS 'default volume' "$($GETCFG_CMD SHARE_DEF defVolMP -f $DEFAULT_SHARES_PATHFILE)"
     DebugNAS '$PATH' "${PATH:0:43}"
     DebugNAS '/opt' "$([[ -L '/opt' ]] && $READLINK_CMD '/opt' || echo "<not present>")"
-    DebugNAS $SHARE_DOWNLOAD_PATH "$([[ -L $SHARE_DOWNLOAD_PATH ]] && $READLINK_CMD $SHARE_DOWNLOAD_PATH || echo "<not present>")"
+    DebugNAS "$SHARE_DOWNLOAD_PATH" "$([[ -L $SHARE_DOWNLOAD_PATH ]] && $READLINK_CMD "$SHARE_DOWNLOAD_PATH" || echo "<not present>")"
     DebugScript 'unparsed arguments' "$USER_ARGS_RAW"
     DebugScript 'app(s) to install' "${QPKGS_to_install[*]}"
     DebugScript 'app(s) to uninstall' "${QPKGS_to_uninstall[*]}"
@@ -427,7 +428,7 @@ LogRuntimeParameters()
         errorcode=1
     fi
 
-    if IsNotError && [[ ${#QPKGS_to_install[@]} -eq 0 && ${#QPKGS_to_uninstall[@]} -eq 0 && ${#QPKGS_to_update[@]} -eq 0 && ${#QPKGS_to_backup[@]} -eq 0 && ${#QPKGS_to_restore[@]} -eq 0 ]] && ! IsSatisfyDependenciesOnly && [[ $update_all_apps = false ]]; then
+    if IsNotError && [[ ${#QPKGS_to_install[@]} -eq 0 && ${#QPKGS_to_uninstall[@]} -eq 0 && ${#QPKGS_to_update[@]} -eq 0 && ${#QPKGS_to_backup[@]} -eq 0 && ${#QPKGS_to_restore[@]} -eq 0 ]] && IsNotSatisfyDependenciesOnly && [[ $update_all_apps = false ]]; then
         ShowAsError 'no valid QPKGs or actions were specified'
         ShowPackageAbbreviations
         errorcode=2
@@ -484,8 +485,8 @@ LogRuntimeParameters()
     fi
 
     if IsNotError; then
-        for conflicting_qpkg in ${SHERPA_COMMON_CONFLICTS[@]}; do
-            if IsQPKGEnabled $conflicting_qpkg; then
+        for conflicting_qpkg in "${SHERPA_COMMON_CONFLICTS[@]}"; do
+            if IsQPKGEnabled "$conflicting_qpkg"; then
                 ShowAsError "'$conflicting_qpkg' is enabled. This is an unsupported configuration."
                 errorcode=8
             fi
@@ -530,7 +531,7 @@ ParseArgs()
     local current_operation=''
     local target_app=''
 
-    for arg in ${user_args[@]}; do
+    for arg in "${user_args[@]}"; do
         case $arg in
             -d|--debug)
                 EnableVisibleDebugging
@@ -655,8 +656,8 @@ ShowHelp()
     echo -e "* A package manager to install various Usenet media-management apps into QNAP NAS.\n"
 
     echo "- Each application shown below can be installed (or reinstalled) by running:"
-    for package in ${SHERPA_QPKG_NAME[@]}; do
-        (IsQPKGUserInstallable $package) && echo -e "\t$0 $package"
+    for package in "${SHERPA_QPKG_NAME[@]}"; do
+        (IsQPKGUserInstallable "$package") && echo -e "\t$0 $package"
     done
 
     echo -e "\n- Ensure all sherpa application dependencies are installed:"
@@ -682,7 +683,7 @@ ShowPackageAbbreviations()
     echo
     echo "- sherpa recognises these package names and abbreviations:"
 
-    for package_index in ${!SHERPA_QPKG_NAME[@]}; do
+    for package_index in "${!SHERPA_QPKG_NAME[@]}"; do
         [[ -n ${SHERPA_QPKG_ABBRVS[$package_index]} ]] && printf "%15s: %s\n" "${SHERPA_QPKG_NAME[$package_index]}" "$($SED_CMD 's| |, |g' <<< "${SHERPA_QPKG_ABBRVS[$package_index]}")"
     done
 
@@ -704,9 +705,9 @@ ShowLogView()
 
     if [[ -n $DEBUG_LOG_PATHFILE && -e $DEBUG_LOG_PATHFILE ]]; then
         if [[ -e $GNU_LESS_CMD ]]; then
-            LESSSECURE=1 $GNU_LESS_CMD +G --quit-on-intr --tilde --prompt' use arrow-keys to scroll up-down left-right, press Q to quit' $DEBUG_LOG_PATHFILE
+            LESSSECURE=1 $GNU_LESS_CMD +G --quit-on-intr --tilde --prompt' use arrow-keys to scroll up-down left-right, press Q to quit' "$DEBUG_LOG_PATHFILE"
         else
-            $CAT_CMD $DEBUG_LOG_PATHFILE
+            $CAT_CMD "$DEBUG_LOG_PATHFILE"
         fi
     else
         echo "no log to display"
@@ -722,15 +723,18 @@ PasteLogOnline()
     # with thanks to https://github.com/solusipse/fiche
 
     if [[ -n $DEBUG_LOG_PATHFILE && -e $DEBUG_LOG_PATHFILE ]]; then
-        link=$($CAT_CMD $DEBUG_LOG_PATHFILE | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
+        ShowAsProc 'uploading runtime debug log'
+        link=$($CAT_CMD "$DEBUG_LOG_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
         if [[ $? -eq 0 ]]; then
-            ShowAsDone "debug log is now online at $($SED_CMD 's|http://|http://l.|;s|https://|https://l.|' <<< $link) and will be deleted in 1 month"
+            ShowAsDone "debug log is now online at $(ColourTextBrightOrange "$($SED_CMD 's|http://|http://l.|;s|https://|https://l.|' <<< "$link")") and will be deleted in 1 month"
         else
             ShowAsError 'a link could not be generated. Most likely a problem occurred when talking with https://termbin.com'
         fi
     else
         ShowAsError 'no log to paste'
     fi
+
+    echo
 
     return 0
 
@@ -752,8 +756,8 @@ DownloadQPKGs()
 
         FindAllQPKGDependants "$QPKGs_to_download"
 
-        for package in ${QPKG_download_list[@]}; do
-            DownloadQPKG $package
+        for package in "${QPKG_download_list[@]}"; do
+            DownloadQPKG "$package"
         done
     else
         IsNotQPKGInstalled Entware && DownloadQPKG Entware
@@ -761,7 +765,7 @@ DownloadQPKGs()
         # kludge: an ugly workaround until QPKG dependency checking works properly
         (IsQPKGInstalled SABnzbd || [[ $TARGET_APP = SABnzbd ]];) && [[ $NAS_QPKG_ARCH != none ]] && IsNotQPKGInstalled Par2 && DownloadQPKG Par2
 
-        [[ -n $TARGET_APP ]] && DownloadQPKG $TARGET_APP
+        [[ -n $TARGET_APP ]] && DownloadQPKG "$TARGET_APP"
     fi
 
     DebugFuncExit
@@ -781,19 +785,19 @@ RemoveUnwantedQPKGs()
     UninstallQPKG Entware-3x || ResetErrorcode  # ignore uninstall errors
     UninstallQPKG Entware-ng || ResetErrorcode  # ignore uninstall errors
 
-    IsQPKGInstalled $TARGET_APP && reinstall_flag=true
+    IsQPKGInstalled "$TARGET_APP" && reinstall_flag=true
 
     if [[ $TARGET_APP = Entware && $reinstall_flag = true ]]; then
         ShowAsNote "Reinstalling $(FormatAsPackageName Entware) will revert all IPKGs to defaults and only those required to support your sherpa apps will be reinstalled."
-        ShowAsNote "The currently installed IPKG list will be saved to $(FormatAsFileName $previous_Entware_package_list)"
+        ShowAsNote "The currently installed IPKG list will be saved to $(FormatAsFileName "$previous_Entware_package_list")"
         ( IsQPKGInstalled SABnzbdplus || IsQPKGInstalled Headphones ) && ShowAsWarning "Also, the $(FormatAsPackageName SABnzbdplus) and $(FormatAsPackageName Headphones) packages CANNOT BE REINSTALLED as Python 2.7.16 is no-longer available."
         ShowAsQuiz "Press (y) if you agree to remove all current $(FormatAsPackageName Entware) IPKGs and their configs, or any other key to abort"
-        read -n1 response; echo
+        read -rn1 response; echo
         DebugVar response
         case ${response:0:1} in
             y|Y)
-                echo -e "# Entware had these IPKGs installed as of: $($DATE_CMD)\n$($OPKG_CMD list-installed)" > $previous_Entware_package_list
-                DebugDone "saved current $(FormatAsPackageName Entware) IPKG list to $(FormatAsFileName $previous_Entware_package_list)"
+                echo -e "# Entware had these IPKGs installed as of: $($DATE_CMD)\n$($OPKG_CMD list-installed)" > "$previous_Entware_package_list"
+                DebugDone "saved current $(FormatAsPackageName Entware) IPKG list to $(FormatAsFileName "$previous_Entware_package_list")"
                 UninstallQPKG Entware
                 ;;
             *)
@@ -956,7 +960,7 @@ InstallTargetQPKG()
 
     DebugFuncEntry
 
-    [[ $TARGET_APP != Entware ]] && InstallQPKG $TARGET_APP
+    [[ $TARGET_APP != Entware ]] && InstallQPKG "$TARGET_APP"
 
     DebugFuncExit
     return 0
@@ -976,8 +980,8 @@ InstallIPKGs()
     if [[ -n $IPKG_DL_PATH && -d $IPKG_DL_PATH ]]; then
         UpdateEntware
         IsError && return
-        for index in ${!SHERPA_QPKG_NAME[@]}; do
-            if (IsQPKGInstalled ${SHERPA_QPKG_NAME[$index]}) || [[ $TARGET_APP = ${SHERPA_QPKG_NAME[$index]} ]]; then
+        for index in "${!SHERPA_QPKG_NAME[@]}"; do
+            if (IsQPKGInstalled "${SHERPA_QPKG_NAME[$index]}") || [[ $TARGET_APP = ${SHERPA_QPKG_NAME[$index]} ]]; then
                 packages+=" ${SHERPA_QPKG_IPKGS[$index]}"
             fi
         done
@@ -1025,11 +1029,11 @@ InstallIPKGBatch()
 
     if [[ $IPKG_download_count -gt 0 ]]; then
         local -r STARTSECONDS=$(DebugTimerStageStart)
-        ShowAsProc "downloading & installing $IPKG_download_count IPKG$(DisplayPlural $IPKG_download_count)"
+        ShowAsProc "downloading & installing $IPKG_download_count IPKG$(DisplayPlural "$IPKG_download_count")"
 
         $TOUCH_CMD "$monitor_flag"
         trap CTRL_C_Captured INT
-        _MonitorDirSize_ "$IPKG_DL_PATH" $IPKG_download_size &
+        _MonitorDirSize_ "$IPKG_DL_PATH" "$IPKG_download_size" &
 
         RunThisAndLogResults "$OPKG_CMD install $ignore_space_arg --force-overwrite ${IPKG_download_list[*]} --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
         result=$?
@@ -1038,15 +1042,15 @@ InstallIPKGBatch()
         trap - INT
 
         if [[ $result -eq 0 ]]; then
-            ShowAsDone "downloaded & installed $IPKG_download_count IPKG$(DisplayPlural $IPKG_download_count)"
+            ShowAsDone "downloaded & installed $IPKG_download_count IPKG$(DisplayPlural "$IPKG_download_count")"
         else
-            ShowAsError "download & install IPKG$(DisplayPlural $IPKG_download_count) failed $(FormatAsExitcode $result)"
+            ShowAsError "download & install IPKG$(DisplayPlural "$IPKG_download_count") failed $(FormatAsExitcode $result)"
             DebugErrorFile "$log_pathfile"
 
             errorcode=18
             returncode=1
         fi
-        DebugTimerStageEnd $STARTSECONDS
+        DebugTimerStageEnd "$STARTSECONDS"
     fi
 
     DebugFuncExit
@@ -1074,7 +1078,7 @@ DowngradePy3()
     local pkg_names=(asyncio base cgi cgitb codecs ctypes dbm decimal dev distutils email gdbm lib2to3 light logging lzma multiprocessing ncurses openssl pydoc sqlite3 unittest urllib xml)
     local pkg_name=''
     local pkg_version=3.7.4-2
-    local pkg_arch=$($BASENAME_CMD $source_url | $SED_CMD 's|\-k|\-|;s|sf\-|\-|')
+    local pkg_arch=$($BASENAME_CMD "$source_url" | $SED_CMD 's|\-k|\-|;s|sf\-|\-|')
     local ipkg_urls=()
     local dl_log_pathfile="$IPKG_DL_PATH/IPKGs.downgrade.$DOWNLOAD_LOG_FILE"
     local install_log_pathfile="$IPKG_DL_PATH/IPKGs.downgrade.$INSTALL_LOG_FILE"
@@ -1082,7 +1086,7 @@ DowngradePy3()
 
     ShowAsProc "$(FormatAsPackageName Watcher3) selected so downgrading Python 3 IPKGs"
 
-    for pkg_name in ${pkg_names[@]}; do
+    for pkg_name in "${pkg_names[@]}"; do
         ipkg_urls+=(-O "${source_url}/archive/${pkg_base}-${pkg_name}_${pkg_version}_${pkg_arch}.ipk")
     done
 
@@ -1150,8 +1154,8 @@ InstallPy3Modules()
     local desc="'Python 3' modules"
     local log_pathfile="$WORK_PATH/Py3-modules.$INSTALL_LOG_FILE"
 
-    for index in ${!SHERPA_QPKG_NAME[@]}; do
-        if (IsQPKGInstalled ${SHERPA_QPKG_NAME[$index]}) || [[ $TARGET_APP = ${SHERPA_QPKG_NAME[$index]} ]]; then
+    for index in "${!SHERPA_QPKG_NAME[@]}"; do
+        if (IsQPKGInstalled "${SHERPA_QPKG_NAME[$index]}") || [[ $TARGET_APP = ${SHERPA_QPKG_NAME[$index]} ]]; then
             packages+=" ${SHERPA_QPKG_PIPS[$index]}"
         fi
     done
@@ -1216,8 +1220,8 @@ RestartAllDepQPKGs()
     DebugFuncEntry
     local package=''
 
-    for package in ${SHERPA_DEP_QPKGs[@]}; do
-        IsQPKGEnabled $package && QPKGServiceCtl restart $package
+    for package in "${SHERPA_DEP_QPKGs[@]}"; do
+        IsQPKGEnabled "$package" && QPKGServiceCtl restart "$package"
     done
 
     DebugFuncExit
@@ -1236,7 +1240,7 @@ InstallQPKG()
     local target_file=''
     local result=0
     local returncode=0
-    local local_pathfile="$(GetQPKGPathFilename $1)"
+    local local_pathfile="$(GetQPKGPathFilename "$1")"
 
     if [[ ${local_pathfile##*.} = zip ]]; then
         $UNZIP_CMD -nq "$local_pathfile" -d "$QPKG_DL_PATH"
@@ -1292,9 +1296,9 @@ DownloadQPKG()
     DebugFuncEntry
     local result=0
     local returncode=0
-    local remote_url=$(GetQPKGRemoteURL $1)
+    local remote_url=$(GetQPKGRemoteURL "$1")
     local remote_filename="$($BASENAME_CMD "$remote_url")"
-    local remote_filename_md5="$(GetQPKGMD5 $1)"
+    local remote_filename_md5="$(GetQPKGMD5 "$1")"
     local local_pathfile="$QPKG_DL_PATH/$remote_filename"
     local local_filename="$($BASENAME_CMD "$local_pathfile")"
     local log_pathfile="$local_pathfile.$DOWNLOAD_LOG_FILE"
@@ -1395,7 +1399,7 @@ CalcIndependentQPKGs()
     SHERPA_INDEP_QPKGs=()
     local index=0
 
-    for index in ${!SHERPA_QPKG_NAME[@]}; do
+    for index in "${!SHERPA_QPKG_NAME[@]}"; do
         [[ -z ${SHERPA_QPKG_DEPS[$index]} && ! ${SHERPA_INDEP_QPKGs[*]} =~ ${SHERPA_QPKG_NAME[$index]} ]] && SHERPA_INDEP_QPKGs+=(${SHERPA_QPKG_NAME[$index]})
     done
 
@@ -1416,7 +1420,7 @@ CalcDependantQPKGs()
     SHERPA_DEP_QPKGs=()
     local index=0
 
-    for index in ${!SHERPA_QPKG_NAME[@]}; do
+    for index in "${!SHERPA_QPKG_NAME[@]}"; do
         [[ -n ${SHERPA_QPKG_DEPS[$index]} && ! ${SHERPA_DEP_QPKGs[*]} =~ ${SHERPA_QPKG_NAME[$index]} ]] && SHERPA_DEP_QPKGs+=(${SHERPA_QPKG_NAME[$index]})
     done
 
@@ -1448,14 +1452,14 @@ LoadInstalledQPKGVars()
     package_installed_path=''
     package_config_path=''
 
-    package_installed_path=$($GETCFG_CMD $package_name Install_Path -f $APP_CENTER_CONFIG_PATHFILE)
+    package_installed_path=$($GETCFG_CMD "$package_name" Install_Path -f $APP_CENTER_CONFIG_PATHFILE)
     if [[ $? -eq 0 ]]; then
-        for prev_config_dir in ${PREV_QPKG_CONFIG_DIRS[@]}; do
+        for prev_config_dir in "${PREV_QPKG_CONFIG_DIRS[@]}"; do
             package_config_path=$package_installed_path/$prev_config_dir
             [[ -d $package_config_path ]] && break
         done
 
-        for prev_config_file in ${PREV_QPKG_CONFIG_FILES[@]}; do
+        for prev_config_file in "${PREV_QPKG_CONFIG_FILES[@]}"; do
             package_settings_pathfile=$package_config_path/$prev_config_file
             [[ -f $package_settings_pathfile ]] && break
         done
@@ -1483,28 +1487,28 @@ UninstallQPKG()
 
     local result=0
 
-    qpkg_installed_path="$($GETCFG_CMD $1 Install_Path -f $APP_CENTER_CONFIG_PATHFILE)"
+    qpkg_installed_path="$($GETCFG_CMD "$1" Install_Path -f $APP_CENTER_CONFIG_PATHFILE)"
     result=$?
 
     if [[ $result -eq 0 ]]; then
         if [[ -e $qpkg_installed_path/.uninstall.sh ]]; then
-            ShowAsProc "uninstalling $(FormatAsPackageName $1)"
+            ShowAsProc "uninstalling $(FormatAsPackageName "$1")"
 
-            $qpkg_installed_path/.uninstall.sh > /dev/null
+            "$qpkg_installed_path"/.uninstall.sh > /dev/null
             result=$?
 
             if [[ $result -eq 0 ]]; then
-                ShowAsDone "uninstalled $(FormatAsPackageName $1)"
+                ShowAsDone "uninstalled $(FormatAsPackageName "$1")"
             else
-                ShowAsError "unable to uninstall $(FormatAsPackageName $1) $(FormatAsExitcode $result)"
+                ShowAsError "unable to uninstall $(FormatAsPackageName "$1") $(FormatAsExitcode $result)"
                 errorcode=27
                 return 1
             fi
         fi
 
-        $RMCFG_CMD $1 -f $APP_CENTER_CONFIG_PATHFILE
+        $RMCFG_CMD "$1" -f $APP_CENTER_CONFIG_PATHFILE
     else
-        DebugQPKG "$(FormatAsPackageName $1)" "not installed $(FormatAsExitcode $result)"
+        DebugQPKG "$(FormatAsPackageName "$1")" "not installed $(FormatAsExitcode $result)"
     fi
 
     return 0
@@ -1536,18 +1540,18 @@ QPKGServiceCtl()
     local result=0
     local init_pathfile=''
 
-    init_pathfile=$(GetQPKGServiceFile $2)
+    init_pathfile=$(GetQPKGServiceFile "$2")
 
     case $1 in
         start)
-            ShowAsProcLong "starting service $(FormatAsPackageName $2)"
+            ShowAsProcLong "starting service $(FormatAsPackageName "$2")"
             RunThisAndLogResults "$init_pathfile start" "$qpkg_pathfile.$START_LOG_FILE"
             result=$?
 
             if [[ $result -eq 0 ]]; then
-                ShowAsDone "started service $(FormatAsPackageName $2)"
+                ShowAsDone "started service $(FormatAsPackageName "$2")"
             else
-                ShowAsWarning "Could not start service $(FormatAsPackageName $2) $(FormatAsExitcode $result)"
+                ShowAsWarning "Could not start service $(FormatAsPackageName "$2") $(FormatAsExitcode $result)"
                 if IsVisibleDebugging; then
                     DebugInfoThickSeparator
                     $CAT_CMD "$qpkg_pathfile.$START_LOG_FILE"
@@ -1560,14 +1564,14 @@ QPKGServiceCtl()
             fi
             ;;
         stop)
-            ShowAsProc "stopping service $(FormatAsPackageName $2)"
+            ShowAsProc "stopping service $(FormatAsPackageName "$2")"
             RunThisAndLogResults "$init_pathfile stop" "$qpkg_pathfile.$STOP_LOG_FILE"
             result=$?
 
             if [[ $result -eq 0 ]]; then
-                ShowAsDone "stopped service $(FormatAsPackageName $2)"
+                ShowAsDone "stopped service $(FormatAsPackageName "$2")"
             else
-                ShowAsWarning "Could not stop service $(FormatAsPackageName $2) $(FormatAsExitcode $result)"
+                ShowAsWarning "Could not stop service $(FormatAsPackageName "$2") $(FormatAsExitcode $result)"
                 if IsVisibleDebugging; then
                     DebugInfoThickSeparator
                     $CAT_CMD "$qpkg_pathfile.$STOP_LOG_FILE"
@@ -1580,14 +1584,14 @@ QPKGServiceCtl()
             fi
             ;;
         restart)
-            ShowAsProc "restarting service $(FormatAsPackageName $2)"
+            ShowAsProc "restarting service $(FormatAsPackageName "$2")"
             RunThisAndLogResults "$init_pathfile restart" "$qpkg_pathfile.$RESTART_LOG_FILE"
             result=$?
 
             if [[ $result -eq 0 ]]; then
-                ShowAsDone "restarted service $(FormatAsPackageName $2)"
+                ShowAsDone "restarted service $(FormatAsPackageName "$2")"
             else
-                ShowAsWarning "Could not restart service $(FormatAsPackageName $2) $(FormatAsExitcode $result)"
+                ShowAsWarning "Could not restart service $(FormatAsPackageName "$2") $(FormatAsExitcode $result)"
                 if IsVisibleDebugging; then
                     DebugInfoThickSeparator
                     $CAT_CMD "$qpkg_pathfile.$RESTART_LOG_FILE"
@@ -1625,10 +1629,10 @@ GetQPKGServiceFile()
     local output=''
     local returncode=0
 
-    output=$($GETCFG_CMD $1 Shell -f $APP_CENTER_CONFIG_PATHFILE)
+    output=$($GETCFG_CMD "$1" Shell -f $APP_CENTER_CONFIG_PATHFILE)
 
     if [[ -z $output ]]; then
-        DebugError "No service file configured for package $(FormatAsPackageName $1)"
+        DebugError "No service file configured for package $(FormatAsPackageName "$1")"
         errorcode=32
         returncode=1
     elif [[ ! -e $output ]]; then
@@ -1654,7 +1658,7 @@ GetQPKGPathFilename()
 
     [[ -z $1 ]] && return 1
 
-    echo "$QPKG_DL_PATH/$($BASENAME_CMD "$(GetQPKGRemoteURL $1)")"
+    echo "$QPKG_DL_PATH/$($BASENAME_CMD "$(GetQPKGRemoteURL "$1")")"
 
     }
 
@@ -1673,7 +1677,7 @@ GetQPKGRemoteURL()
     local index=0
     local returncode=1
 
-    for index in ${!SHERPA_QPKG_NAME[@]}; do
+    for index in "${!SHERPA_QPKG_NAME[@]}"; do
         if [[ $1 = ${SHERPA_QPKG_NAME[$index]} ]] && [[ ${SHERPA_QPKG_ARCH[$index]} = all || ${SHERPA_QPKG_ARCH[$index]} = $NAS_QPKG_ARCH ]]; then
             echo "${SHERPA_QPKG_URL[$index]}"
             returncode=0
@@ -1700,7 +1704,7 @@ GetQPKGMD5()
     local index=0
     local returncode=1
 
-    for index in ${!SHERPA_QPKG_NAME[@]}; do
+    for index in "${!SHERPA_QPKG_NAME[@]}"; do
         if [[ $1 = ${SHERPA_QPKG_NAME[$index]} ]] && [[ ${SHERPA_QPKG_ARCH[$index]} = all || ${SHERPA_QPKG_ARCH[$index]} = $NAS_QPKG_ARCH ]]; then
             echo "${SHERPA_QPKG_MD5[$index]}"
             returncode=0
@@ -1726,7 +1730,7 @@ CTRL_C_Captured()
 Cleanup()
     {
 
-    cd $SHARE_PUBLIC_PATH || return 1
+    cd "$SHARE_PUBLIC_PATH" || return 1
 
     [[ -d $WORK_PATH ]] && IsNotError && IsNotVisibleDebugging && IsNotDevMode && rm -rf "$WORK_PATH"
 
@@ -1739,16 +1743,16 @@ ShowResult()
 
     local RE=''
 
-    if ! IsHelpOnly && ! IsVersionOnly; then
+    if IsNotHelpOnly && IsNotVersionOnly; then
         if [[ -n $TARGET_APP ]]; then
             [[ $reinstall_flag = true ]] && RE='re' || RE=''
 
             if IsNotError; then
                 IsVisibleDebugging && emoticon=':DD' || emoticon=''
-                ShowAsDone "$(FormatAsPackageName $TARGET_APP) has been successfully ${RE}installed! $emoticon"
+                ShowAsDone "$(FormatAsPackageName "$TARGET_APP") has been successfully ${RE}installed! $emoticon"
             else
                 IsVisibleDebugging && emoticon=':S ' || emoticon=''
-                ShowAsError "$(FormatAsPackageName $TARGET_APP) ${RE}install failed! ${emoticon}[$errorcode]"
+                ShowAsError "$(FormatAsPackageName "$TARGET_APP") ${RE}install failed! ${emoticon}[$errorcode]"
                 EnableSuggestIssue
             fi
         fi
@@ -1773,18 +1777,16 @@ ShowResult()
 
     DebugInfoThinSeparator
     DebugScript 'finished' "$($DATE_CMD)"
-    DebugScript 'elapsed time' "$(ConvertSecsToMinutes "$(($($DATE_CMD +%s)-$([[ -n $SCRIPT_STARTSECONDS ]] && echo $SCRIPT_STARTSECONDS || echo "1")))")"
+    DebugScript 'elapsed time' "$(ConvertSecsToMinutes "$(($($DATE_CMD +%s)-$([[ -n $SCRIPT_STARTSECONDS ]] && echo "$SCRIPT_STARTSECONDS" || echo "1")))")"
     DebugInfoThickSeparator
 
-    if [[ -e $DEBUG_LOG_PATHFILE ]] && IsNotVisibleDebugging; then
-        if ! IsVersionOnly && ! IsLogPasteOnly; then
-            echo -e "\n- To view the runtime debug log:"
-            echo -e "\t$0 --log"
+    if [[ -e $DEBUG_LOG_PATHFILE ]] && IsNotVisibleDebugging && IsNotVersionOnly && IsNotLogViewOnly && IsNotLogPasteOnly; then
+        echo -e "\n- View the runtime debug log:"
+        echo -e "\t$0 --log"
 
-            echo -e "\n- To upload the runtime debug log to a public pastebin (https://termbin.com):"
-            echo -e "\t$0 --paste"
-            echo
-        fi
+        echo -e "\n- Upload the runtime debug log to a public pastebin (https://termbin.com):"
+        echo -e "\t$0 --paste"
+        echo
     fi
 
     return 0
@@ -1804,9 +1806,9 @@ GetQPKGDeps()
 
     local index=0
 
-    for index in ${!SHERPA_QPKG_NAME[@]}; do
-        if [[ ${SHERPA_QPKG_NAME[$index]} = $1 ]]; then
-            echo ${SHERPA_QPKG_DEPS[$index]}
+    for index in "${!SHERPA_QPKG_NAME[@]}"; do
+        if [[ ${SHERPA_QPKG_NAME[$index]} = "$1" ]]; then
+            echo "${SHERPA_QPKG_DEPS[$index]}"
             return 0
         fi
     done
@@ -1851,8 +1853,8 @@ FindAllQPKGDependants()
     while [[ $iterations -lt $ITERATION_LIMIT ]]; do
         ((iterations++))
         new_list=''
-        for package in ${last_list[@]}; do
-            new_list+=$(GetQPKGDeps $package)
+        for package in "${last_list[@]}"; do
+            new_list+=$(GetQPKGDeps "$package")
         done
 
         new_list=$(DeDupeWords "$new_list")
@@ -1877,17 +1879,17 @@ FindAllQPKGDependants()
     DebugInfo "QPKGs requested + dependencies: $all_list"
 
     DebugProc 'excluding QPKGs already installed'
-    for element in ${all_list[@]}; do
-        IsNotQPKGInstalled $element && QPKG_download_list+=($element)
+    for element in "${all_list[@]}"; do
+        IsNotQPKGInstalled "$element" && QPKG_download_list+=($element)
     done
     DebugDone 'complete'
     DebugInfo "QPKGs to download: ${QPKG_download_list[*]}"
     QPKG_download_count=${#QPKG_download_list[@]}
 
-    DebugTimerStageEnd $STARTSECONDS
+    DebugTimerStageEnd "$STARTSECONDS"
 
     if [[ $QPKG_download_count -gt 0 ]]; then
-        ShowAsDone "$QPKG_download_count QPKG$(DisplayPlural $QPKG_download_count) to be downloaded"
+        ShowAsDone "$QPKG_download_count QPKG$(DisplayPlural "$QPKG_download_count") to be downloaded"
     else
         ShowAsDone 'no QPKGs are required'
     fi
@@ -1939,7 +1941,7 @@ FindAllIPKGDependencies()
     DebugProc 'finding IPKG dependencies'
     while [[ $iterations -lt $ITERATION_LIMIT ]]; do
         ((iterations++))
-        last_list=$($OPKG_CMD depends -A $last_list | $GREP_CMD -v 'depends on:' | $SED_CMD 's|^[[:blank:]]*||;s|[[:blank:]]*$||' | $TR_CMD ' ' '\n' | $SORT_CMD | $UNIQ_CMD)
+        last_list=$($OPKG_CMD depends -A "$last_list" | $GREP_CMD -v 'depends on:' | $SED_CMD 's|^[[:blank:]]*||;s|[[:blank:]]*$||' | $TR_CMD ' ' '\n' | $SORT_CMD | $UNIQ_CMD)
 
         if [[ -n $last_list ]]; then
             dependency_list+=" $last_list"
@@ -1958,10 +1960,10 @@ FindAllIPKGDependencies()
 
     all_list=$(DeDupeWords "$requested_list $dependency_list")
     DebugInfo "IPKGs requested + dependencies: $all_list"
-    DebugTimerStageEnd $STARTSECONDS
+    DebugTimerStageEnd "$STARTSECONDS"
 
     DebugProc 'excluding IPKGs already installed'
-    for element in ${all_list[@]}; do
+    for element in "${all_list[@]}"; do
         if [[ $element != 'ca-certs' ]]; then   # kludge: 'ca-certs' appears to be a bogus meta-package, so silently exclude it from attempted installation
             if ! $OPKG_CMD status "$element" | $GREP_CMD -q "Status:.*installed"; then
                 IPKG_download_list+=($element)
@@ -1974,12 +1976,12 @@ FindAllIPKGDependencies()
     IPKG_download_count=${#IPKG_download_list[@]}
 
     if [[ $IPKG_download_count -gt 0 ]]; then
-        DebugProc "calculating size of IPKG$(DisplayPlural $IPKG_download_count) to download"
-        size_array=($($GNU_GREP_CMD -w '^Package:\|^Size:' $EXTERNAL_PACKAGE_LIST_PATHFILE | $GNU_GREP_CMD --after-context 1 --no-group-separator ": $($SED_CMD 's/ /$ /g;s/\$ /\$\\\|: /g' <<< ${IPKG_download_list[*]})$" | $GREP_CMD '^Size:' | $SED_CMD 's|^Size: ||'))
+        DebugProc "calculating size of IPKG$(DisplayPlural "$IPKG_download_count") to download"
+        size_array=($($GNU_GREP_CMD -w '^Package:\|^Size:' "$EXTERNAL_PACKAGE_LIST_PATHFILE" | $GNU_GREP_CMD --after-context 1 --no-group-separator ": $($SED_CMD 's/ /$ /g;s/\$ /\$\\\|: /g' <<< "${IPKG_download_list[*]}")$" | $GREP_CMD '^Size:' | $SED_CMD 's|^Size: ||'))
         IPKG_download_size=$(IFS=+; echo "$((${size_array[*]}))")       # a neat trick found here https://stackoverflow.com/a/13635566/6182835
         DebugDone 'complete'
         DebugVar IPKG_download_size
-        ShowAsDone "$IPKG_download_count IPKG$(DisplayPlural $IPKG_download_count) ($(FormatAsISO $IPKG_download_size)) to be downloaded"
+        ShowAsDone "$IPKG_download_count IPKG$(DisplayPlural "$IPKG_download_count") ($(FormatAsISO "$IPKG_download_size")) to be downloaded"
     else
         ShowAsDone 'no IPKGs are required'
     fi
@@ -2001,7 +2003,7 @@ OpenIPKGArchive()
 
     CloseIPKGArchive
 
-    RunThisAndLogResults "$Z7_CMD e -o$($DIRNAME_CMD $EXTERNAL_PACKAGE_LIST_PATHFILE) $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE" "$WORK_PATH/IPKG.list.archive.extract"
+    RunThisAndLogResults "$Z7_CMD e -o$($DIRNAME_CMD "$EXTERNAL_PACKAGE_LIST_PATHFILE") $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE" "$WORK_PATH/IPKG.list.archive.extract"
 
     if [[ ! -e $EXTERNAL_PACKAGE_LIST_PATHFILE ]]; then
         ShowAsError "could not open the IPKG list file"
@@ -2047,7 +2049,7 @@ _MonitorDirSize_()
     previous_msg=''
 
     while [[ -e $monitor_flag ]]; do
-        current_bytes=$($GNU_FIND_CMD $target_dir -type f -name '*.ipk' -exec $DU_CMD --bytes --total --apparent-size {} + 2> /dev/null | $GREP_CMD total$ | $CUT_CMD -f1)
+        current_bytes=$($GNU_FIND_CMD "$target_dir" -type f -name '*.ipk' -exec $DU_CMD --bytes --total --apparent-size {} + 2> /dev/null | $GREP_CMD total$ | $CUT_CMD -f1)
         [[ -z $current_bytes ]] && current_bytes=0
 
         if [[ $current_bytes -ne $last_bytes ]]; then
@@ -2058,7 +2060,7 @@ _MonitorDirSize_()
         fi
 
         percent="$((200*(current_bytes)/(total_bytes) % 2 + 100*(current_bytes)/(total_bytes)))%"
-        progress_message=" $percent ($(FormatAsISO $current_bytes)/$(FormatAsISO $total_bytes))"
+        progress_message=" $percent ($(FormatAsISO "$current_bytes")/$(FormatAsISO "$total_bytes"))"
 
         if [[ $stall_seconds -ge $stall_seconds_threshold ]]; then
             if [[ $stall_seconds -lt 60 ]]; then
@@ -2088,7 +2090,7 @@ IsSysFilePresent()
     [[ -z $1 ]] && return 1
 
     if ! [[ -f $1 || -L $1 ]]; then
-        ShowAsError "a required NAS system file is missing $(FormatAsFileName $1)"
+        ShowAsError "a required NAS system file is missing $(FormatAsFileName "$1")"
         errorcode=37
         return 1
     else
@@ -2109,7 +2111,7 @@ IsSysSharePresent()
     [[ -z $1 ]] && return 1
 
     if [[ ! -L $1 ]]; then
-        ShowAsError "a required NAS system share is missing $(FormatAsFileName $1). Please re-create it via the QTS Control Panel -> Privilege Settings -> Shared Folders."
+        ShowAsError "a required NAS system share is missing $(FormatAsFileName "$1"). Please re-create it via the QTS Control Panel -> Privilege Settings -> Shared Folders."
         errorcode=38
         return 1
     else
@@ -2148,10 +2150,10 @@ EnableQPKG()
 
     [[ -z $1 ]] && return 1
 
-    if [[ $($GETCFG_CMD $1 Enable -u -f $APP_CENTER_CONFIG_PATHFILE) != 'TRUE' ]]; then
-        DebugProc "enabling QPKG $(FormatAsPackageName $1)"
-        $SETCFG_CMD $1 Enable TRUE -f $APP_CENTER_CONFIG_PATHFILE
-        DebugDone "QPKG $(FormatAsPackageName $1) enabled"
+    if [[ $($GETCFG_CMD "$1" Enable -u -f $APP_CENTER_CONFIG_PATHFILE) != 'TRUE' ]]; then
+        DebugProc "enabling QPKG $(FormatAsPackageName "$1")"
+        $SETCFG_CMD "$1" Enable TRUE -f $APP_CENTER_CONFIG_PATHFILE
+        DebugDone "QPKG $(FormatAsPackageName "$1") enabled"
     fi
 
     }
@@ -2171,7 +2173,7 @@ IsQPKGUserInstallable()
     local returncode=1
     local package_index=0
 
-    for package_index in ${!SHERPA_QPKG_NAME[@]}; do
+    for package_index in "${!SHERPA_QPKG_NAME[@]}"; do
         if [[ ${SHERPA_QPKG_NAME[$package_index]} = $1 && -n ${SHERPA_QPKG_ABBRVS[$package_index]} ]]; then
             returncode=0
             break
@@ -2195,11 +2197,11 @@ IsQPKGToBeInstalled()
 
     local package=''
 
-    for package in ${QPKGS_to_install[@]}; do
+    for package in "${QPKGS_to_install[@]}"; do
         [[ $package = $1 ]] && return 0
     done
 
-    for package in ${QPKGS_to_reinstall[@]}; do
+    for package in "${QPKGS_to_reinstall[@]}"; do
         [[ $package = $1 ]] && return 0
     done
 
@@ -2218,7 +2220,7 @@ IsQPKGInstalled()
 
     [[ -z $1 ]] && return 1
 
-    [[ $($GETCFG_CMD $1 RC_Number -d 0 -f $APP_CENTER_CONFIG_PATHFILE) -gt 0 ]]
+    [[ $($GETCFG_CMD "$1" RC_Number -d 0 -f $APP_CENTER_CONFIG_PATHFILE) -gt 0 ]]
 
     }
 
@@ -2248,7 +2250,7 @@ IsQPKGEnabled()
 
     [[ -z $1 ]] && return 1
 
-    [[ $($GETCFG_CMD $1 Enable -u -f $APP_CENTER_CONFIG_PATHFILE) = 'TRUE' ]]
+    [[ $($GETCFG_CMD "$1" Enable -u -f $APP_CENTER_CONFIG_PATHFILE) = 'TRUE' ]]
 
     }
 
@@ -2315,11 +2317,11 @@ MatchAbbrvToQPKGName()
     local package_index=0
     local abb_index=0
 
-    for package_index in ${!SHERPA_QPKG_NAME[@]}; do
+    for package_index in "${!SHERPA_QPKG_NAME[@]}"; do
         abbs=(${SHERPA_QPKG_ABBRVS[$package_index]})
-        for abb_index in ${!abbs[@]}; do
+        for abb_index in "${!abbs[@]}"; do
             if [[ ${abbs[$abb_index]} = $1 ]]; then
-                echo ${SHERPA_QPKG_NAME[$package_index]}
+                echo "${SHERPA_QPKG_NAME[$package_index]}"
                 returncode=0
                 break 2
             fi
@@ -2348,7 +2350,7 @@ RunThisAndLogResults()
     local result=0
 
     FormatAsCommand "$1" >> "$2"
-    msgs=$(eval $1 2>&1)
+    msgs=$(eval "$1" 2>&1)
     result=$?
     FormatAsResult "$result" >> "$2"
     FormatAsStdout "$msgs" >> "$2"
@@ -2376,7 +2378,7 @@ RunThisAndLogResultsRealtime()
 
     FormatAsCommand "$1" >> "$2"
     exec 5>&1
-    msgs=$(eval $1 2>&1 | $TEE_CMD /dev/fd/5)
+    msgs=$(eval "$1" 2>&1 | $TEE_CMD /dev/fd/5)
     result=$?
     FormatAsResult "$result" >> "$2"
     FormatAsStdout "$msgs" >> "$2"
@@ -2390,7 +2392,7 @@ DeDupeWords()
 
     [[ -z $1 ]] && return 1
 
-    $TR_CMD ' ' '\n' <<< $1 | $SORT_CMD | $UNIQ_CMD | $TR_CMD '\n' ' ' | $SED_CMD 's|^[[:blank:]]*||;s|[[:blank:]]*$||'
+    $TR_CMD ' ' '\n' <<< "$1" | $SORT_CMD | $UNIQ_CMD | $TR_CMD '\n' ' ' | $SED_CMD 's|^[[:blank:]]*||;s|[[:blank:]]*$||'
 
     }
 
@@ -2425,7 +2427,7 @@ ProgressUpdater()
         current_length=$((${#temp}+1))
 
         if [[ $current_length -lt $previous_length ]]; then
-            appended_length=$(($current_length-$previous_length))
+            appended_length=$((current_length-previous_length))
             # backspace to start of previous msg, print new msg, add additional spaces, then backspace to end of msg
             printf "%${previous_length}s" | $TR_CMD ' ' '\b' ; echo -n "$1 " ; printf "%${appended_length}s" ; printf "%${appended_length}s" | $TR_CMD ' ' '\b'
         else
@@ -2495,7 +2497,7 @@ EnableLogPasteOnly()
 
     }
 
-DisableVLogPasteOnly()
+DisableLogPasteOnly()
     {
 
     logpaste_only=false
@@ -2524,10 +2526,24 @@ IsHelpOnly()
 
     }
 
+IsNotHelpOnly()
+    {
+
+    [[ $help_only != true ]]
+
+    }
+
 IsLogViewOnly()
     {
 
     [[ $logview_only = true ]]
+
+    }
+
+IsNotLogViewOnly()
+    {
+
+    [[ $logview_only != true ]]
 
     }
 
@@ -2538,10 +2554,24 @@ IsVersionOnly()
 
     }
 
+IsNotVersionOnly()
+    {
+
+    [[ $version_only != true ]]
+
+    }
+
 IsLogPasteOnly()
     {
 
     [[ $logpaste_only = true ]]
+
+    }
+
+IsNotLogPasteOnly()
+    {
+
+    [[ $logpaste_only != true ]]
 
     }
 
@@ -2565,6 +2595,13 @@ IsSatisfyDependenciesOnly()
     {
 
     [[ $satisfy_dependencies_only = true ]]
+
+    }
+
+IsNotSatisfyDependenciesOnly()
+    {
+
+    [[ $satisfy_dependencies_only != true ]]
 
     }
 
@@ -2966,8 +3003,8 @@ ShowAsQuiz()
 ShowAsDone()
     {
 
-    WriteToDisplay_NewLine "$(ColourTextBrightGreen done)" "$1"
-    WriteToLog done "$1"
+    WriteToDisplay_NewLine "$(ColourTextBrightGreen 'done')" "$1"
+    WriteToLog 'done' "$1"
 
     }
 
@@ -2983,7 +3020,7 @@ ShowAsError()
     {
 
     local buffer="$1"
-    local capitalised="$(tr "[a-z]" "[A-Z]" <<< ${buffer:0:1})${buffer:1}"      # use any available 'tr' command as we haven't picked one yet
+    local capitalised="$(tr "[a-z]" "[A-Z]" <<< "${buffer:0:1}")${buffer:1}"      # use any available 'tr' command as we haven't picked one yet
 
     WriteToDisplay_NewLine "$(ColourTextBrightRed fail)" "$capitalised"
     WriteToLog fail "$capitalised"
@@ -3033,7 +3070,7 @@ WriteToDisplay_NewLine()
         strbuffer=$(echo -en "\r$new_message ")
 
         # if new msg is shorter then add spaces to end to cover previous msg
-        [[ $new_length -lt $previous_length ]] && { appended_length=$(($new_length-$previous_length)); strbuffer+=$(printf "%${appended_length}s") ;}
+        [[ $new_length -lt $previous_length ]] && { appended_length=$((new_length-previous_length)); strbuffer+=$(printf "%${appended_length}s") ;}
 
         echo "$strbuffer"
     fi
