@@ -48,7 +48,7 @@ Init()
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200808c
+    readonly SCRIPT_VERSION=200808d
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -1966,6 +1966,7 @@ FindAllIPKGDependencies()
 
     all_list=$(DeDupeWords "$requested_list $dependency_list")
     DebugInfo "IPKGs requested + dependencies: $all_list"
+
     DebugTimerStageEnd "$STARTSECONDS"
 
     DebugProc 'excluding IPKGs already installed'
@@ -2824,8 +2825,11 @@ DebugTimerStageStart()
     #   stdout = current time in seconds
 
     $DATE_CMD +%s
-    DebugInfoThinSeparator
-    DebugStage 'start stage timer'
+
+    if IsNotVisibleDebugging; then
+        DebugInfoThinSeparator
+        DebugStage 'start stage timer'
+    fi
 
     }
 
