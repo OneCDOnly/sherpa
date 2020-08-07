@@ -18,7 +18,7 @@ Init()
 
     # for Python-based remote apps
         readonly SOURCE_GIT_URL=http://github.com/sickchill/sickchill.git
-        readonly SOURCE_GIT_BRANCH=py3-again
+        readonly SOURCE_GIT_BRANCH=develop
         # 'shallow' (depth 1) or 'single-branch' (note: 'shallow' implies a 'single-branch' too)
         readonly SOURCE_GIT_DEPTH=single-branch
         readonly PYTHON=/opt/bin/python3
