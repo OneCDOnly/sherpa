@@ -47,7 +47,7 @@ Init()
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200807i
+    readonly SCRIPT_VERSION=200807j
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -981,7 +981,7 @@ InstallIPKGs()
         UpdateEntware
         IsError && return
         for index in "${!SHERPA_QPKG_NAME[@]}"; do
-            if (IsQPKGInstalled "${SHERPA_QPKG_NAME[$index]}") || [[ $TARGET_APP = ${SHERPA_QPKG_NAME[$index]} ]]; then
+            if (IsQPKGInstalled "${SHERPA_QPKG_NAME[$index]}") || [[ $TARGET_APP = "${SHERPA_QPKG_NAME[$index]}" ]]; then
                 packages+=" ${SHERPA_QPKG_IPKGS[$index]}"
             fi
         done
@@ -1155,7 +1155,7 @@ InstallPy3Modules()
     local log_pathfile="$WORK_PATH/Py3-modules.$INSTALL_LOG_FILE"
 
     for index in "${!SHERPA_QPKG_NAME[@]}"; do
-        if (IsQPKGInstalled "${SHERPA_QPKG_NAME[$index]}") || [[ $TARGET_APP = ${SHERPA_QPKG_NAME[$index]} ]]; then
+        if (IsQPKGInstalled "${SHERPA_QPKG_NAME[$index]}") || [[ $TARGET_APP = "${SHERPA_QPKG_NAME[$index]}" ]]; then
             packages+=" ${SHERPA_QPKG_PIPS[$index]}"
         fi
     done
@@ -1678,7 +1678,7 @@ GetQPKGRemoteURL()
     local returncode=1
 
     for index in "${!SHERPA_QPKG_NAME[@]}"; do
-        if [[ $1 = ${SHERPA_QPKG_NAME[$index]} ]] && [[ ${SHERPA_QPKG_ARCH[$index]} = all || ${SHERPA_QPKG_ARCH[$index]} = $NAS_QPKG_ARCH ]]; then
+        if [[ $1 = "${SHERPA_QPKG_NAME[$index]}" ]] && [[ ${SHERPA_QPKG_ARCH[$index]} = all || ${SHERPA_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
             echo "${SHERPA_QPKG_URL[$index]}"
             returncode=0
             break
@@ -1705,7 +1705,7 @@ GetQPKGMD5()
     local returncode=1
 
     for index in "${!SHERPA_QPKG_NAME[@]}"; do
-        if [[ $1 = ${SHERPA_QPKG_NAME[$index]} ]] && [[ ${SHERPA_QPKG_ARCH[$index]} = all || ${SHERPA_QPKG_ARCH[$index]} = $NAS_QPKG_ARCH ]]; then
+        if [[ $1 = "${SHERPA_QPKG_NAME[$index]}" ]] && [[ ${SHERPA_QPKG_ARCH[$index]} = all || ${SHERPA_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
             echo "${SHERPA_QPKG_MD5[$index]}"
             returncode=0
             break
@@ -2175,7 +2175,7 @@ IsQPKGUserInstallable()
     local package_index=0
 
     for package_index in "${!SHERPA_QPKG_NAME[@]}"; do
-        if [[ ${SHERPA_QPKG_NAME[$package_index]} = $1 && -n ${SHERPA_QPKG_ABBRVS[$package_index]} ]]; then
+        if [[ ${SHERPA_QPKG_NAME[$package_index]} = "$1" && -n ${SHERPA_QPKG_ABBRVS[$package_index]} ]]; then
             returncode=0
             break
         fi
@@ -2199,11 +2199,11 @@ IsQPKGToBeInstalled()
     local package=''
 
     for package in "${QPKGS_to_install[@]}"; do
-        [[ $package = $1 ]] && return 0
+        [[ $package = "$1" ]] && return 0
     done
 
     for package in "${QPKGS_to_reinstall[@]}"; do
-        [[ $package = $1 ]] && return 0
+        [[ $package = "$1" ]] && return 0
     done
 
     return 1
@@ -2321,7 +2321,7 @@ MatchAbbrvToQPKGName()
     for package_index in "${!SHERPA_QPKG_NAME[@]}"; do
         abbs=(${SHERPA_QPKG_ABBRVS[$package_index]})
         for abb_index in "${!abbs[@]}"; do
-            if [[ ${abbs[$abb_index]} = $1 ]]; then
+            if [[ ${abbs[$abb_index]} = "$1" ]]; then
                 echo "${SHERPA_QPKG_NAME[$package_index]}"
                 returncode=0
                 break 2
@@ -2413,7 +2413,7 @@ FileMatchesMD5()
 
     [[ -z $1 || -z $2 ]] && return 1
 
-    [[ $($MD5SUM_CMD "$1" | $CUT_CMD -f1 -d' ') = $2 ]]
+    [[ $($MD5SUM_CMD "$1" | $CUT_CMD -f1 -d' ') = "$2" ]]
 
     }
 
@@ -2423,7 +2423,7 @@ ProgressUpdater()
     # input:
     #   $1 = message to display
 
-    if [[ $1 != $previous_msg ]]; then
+    if [[ $1 != "$previous_msg" ]]; then
         temp="$1"
         current_length=$((${#temp}+1))
 
@@ -3063,7 +3063,7 @@ WriteToDisplay_NewLine()
 
     new_message=$(printf "[ %-10s ] %s" "$1" "$2")
 
-    if [[ $new_message != $previous_msg ]]; then
+    if [[ $new_message != "$previous_msg" ]]; then
         previous_length=$((${#previous_msg}+1))
         new_length=$((${#new_message}+1))
 

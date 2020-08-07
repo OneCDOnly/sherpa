@@ -1,7 +1,6 @@
 #!/bin/bash
 
-. .package_name
-
+package_name='sherpa'
 base_path="${HOME}/scripts/nas/${package_name}"
 target_path="${base_path}/backups-b4-reordering"
 source_file="${package_name}.sh"
@@ -13,4 +12,4 @@ mkdir -p "$target_path"
 cp "$source_pathfile" "$target_pathfile"
 
 # https://stackoverflow.com/questions/42869901/bash-script-to-rewrite-numbers-sequentially
-perl -i -pe 's/(\berrorcode=)\d+/$1.$i++/ge' $source_pathfile
+perl -i -pe 's/(\berrorcode=)\d+/$1.$i++/ge' "$source_pathfile"
