@@ -44,6 +44,7 @@ Init()
     DisableVersionOnly
     DisableSuggestIssue
     DisableLogPasteOnly
+    DisableDevMode
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
@@ -2430,10 +2431,10 @@ ProgressUpdater()
         if [[ $current_length -lt $previous_length ]]; then
             appended_length=$((current_length-previous_length))
             # backspace to start of previous msg, print new msg, add additional spaces, then backspace to end of msg
-            printf "%${previous_length}s" | $TR_CMD ' ' '\b' ; echo -n "$1 " ; printf "%${appended_length}s" ; printf "%${appended_length}s" | $TR_CMD ' ' '\b'
+            printf "%${previous_length}s" | $TR_CMD ' ' '\b'; echo -n "$1 "; printf "%${appended_length}s"; printf "%${appended_length}s" | $TR_CMD ' ' '\b'
         else
             # backspace to start of previous msg, print new msg
-            printf "%${previous_length}s" | $TR_CMD ' ' '\b' ; echo -n "$1 "
+            printf "%${previous_length}s" | $TR_CMD ' ' '\b'; echo -n "$1 "
         fi
 
         previous_length=$current_length
@@ -2458,6 +2459,20 @@ DisableHelpOnly()
 
     }
 
+IsHelpOnly()
+    {
+
+    [[ $help_only = true ]]
+
+    }
+
+IsNotHelpOnly()
+    {
+
+    [[ $help_only != true ]]
+
+    }
+
 EnableLogViewOnly()
     {
 
@@ -2471,6 +2486,20 @@ DisableLogViewOnly()
 
     logview_only=false
     DebugVar logview_only
+
+    }
+
+IsLogViewOnly()
+    {
+
+    [[ $logview_only = true ]]
+
+    }
+
+IsNotLogViewOnly()
+    {
+
+    [[ $logview_only != true ]]
 
     }
 
@@ -2490,6 +2519,20 @@ DisableVersionOnly()
 
     }
 
+IsVersionOnly()
+    {
+
+    [[ $version_only = true ]]
+
+    }
+
+IsNotVersionOnly()
+    {
+
+    [[ $version_only != true ]]
+
+    }
+
 EnableLogPasteOnly()
     {
 
@@ -2506,62 +2549,6 @@ DisableLogPasteOnly()
 
     }
 
-IsError()
-    {
-
-    [[ $errorcode -gt 0 ]]
-
-    }
-
-IsNotError()
-    {
-
-    [[ $errorcode -eq 0 ]]
-
-    }
-
-IsHelpOnly()
-    {
-
-    [[ $help_only = true ]]
-
-    }
-
-IsNotHelpOnly()
-    {
-
-    [[ $help_only != true ]]
-
-    }
-
-IsLogViewOnly()
-    {
-
-    [[ $logview_only = true ]]
-
-    }
-
-IsNotLogViewOnly()
-    {
-
-    [[ $logview_only != true ]]
-
-    }
-
-IsVersionOnly()
-    {
-
-    [[ $version_only = true ]]
-
-    }
-
-IsNotVersionOnly()
-    {
-
-    [[ $version_only != true ]]
-
-    }
-
 IsLogPasteOnly()
     {
 
@@ -2573,6 +2560,20 @@ IsNotLogPasteOnly()
     {
 
     [[ $logpaste_only != true ]]
+
+    }
+
+IsError()
+    {
+
+    [[ $errorcode -gt 0 ]]
+
+    }
+
+IsNotError()
+    {
+
+    [[ $errorcode -eq 0 ]]
 
     }
 
@@ -2646,6 +2647,16 @@ EnableDevMode()
 
     }
 
+DisableDevMode()
+    {
+
+    DisableVisibleDebugging
+
+    dev_mode=false
+    DebugVar dev_mode
+
+    }
+
 IsDevMode()
     {
 
@@ -2680,6 +2691,13 @@ IsSuggestIssue()
     {
 
     [[ $suggest_issue = true ]]
+
+    }
+
+IsNotSuggestIssue()
+    {
+
+    [[ $suggest_issue != true ]]
 
     }
 
@@ -3021,7 +3039,7 @@ ShowAsError()
     {
 
     local buffer="$1"
-    local capitalised="$(tr "[a-z]" "[A-Z]" <<< "${buffer:0:1}")${buffer:1}"      # use any available 'tr' command as we haven't picked one yet
+    local capitalised="$(tr "[a-z]" "[A-Z]" <<< "${buffer:0:1}")${buffer:1}"      # use any available 'tr' as we may not have picked one yet
 
     WriteToDisplay_NewLine "$(ColourTextBrightRed fail)" "$capitalised"
     WriteToLog fail "$capitalised"
@@ -3071,7 +3089,10 @@ WriteToDisplay_NewLine()
         strbuffer=$(echo -en "\r$new_message ")
 
         # if new msg is shorter then add spaces to end to cover previous msg
-        [[ $new_length -lt $previous_length ]] && { appended_length=$((new_length-previous_length)); strbuffer+=$(printf "%${appended_length}s") ;}
+        if [[ $new_length -lt $previous_length ]]; then
+            appended_length=$((new_length-previous_length))
+            strbuffer+=$(printf "%${appended_length}s")
+        fi
 
         echo "$strbuffer"
     fi
