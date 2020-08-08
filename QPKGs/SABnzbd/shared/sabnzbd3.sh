@@ -131,7 +131,6 @@ StartQPKG()
 
     if [[ -n $SOURCE_GIT_URL ]]; then
         PullGitRepo $QPKG_NAME "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" $QPKG_PATH && UpdateLanguages
-        PullGitRepo nzbToMedia 'http://github.com/clinton-hall/nzbToMedia.git' master shallow "/share/$($GETCFG_CMD SHARE_DEF defDownload -d Qdownload -f /etc/config/def_share.info)"
         cd $QPKG_PATH/$QPKG_NAME || return 1
     else
         cd $QPKG_PATH || return 1

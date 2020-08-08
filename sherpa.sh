@@ -48,7 +48,7 @@ Init()
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200808d
+    readonly SCRIPT_VERSION=200809
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -189,12 +189,21 @@ Init()
 
     SHERPA_QPKG_NAME+=(SABnzbd)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/SABnzbd/build/SABnzbd_200806b.qpkg)
-        SHERPA_QPKG_MD5+=(a3a84f8d755e5ec5dbcb68f3a4b9ac8f)
+        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/SABnzbd/build/SABnzbd_200809.qpkg)
+        SHERPA_QPKG_MD5+=(eceadef0f136c06d455ecbb9164a6a65)
         SHERPA_QPKG_ABBRVS+=('sb sb3 sab sab3 sabnzbd3 sabnzbd')
-        SHERPA_QPKG_DEPS+=('Entware Par2')
+        SHERPA_QPKG_DEPS+=('Entware Par2 nzbToMedia')
         SHERPA_QPKG_IPKGS+=('python3 python3-pyopenssl python3-cryptography python3-dev gcc unrar p7zip coreutils-nice ionice ffprobe')
         SHERPA_QPKG_PIPS+=('sabyenc3 cheetah3 feedparser configobj cherrypy chardet')
+
+    SHERPA_QPKG_NAME+=(nzbToMedia)
+        SHERPA_QPKG_ARCH+=(all)
+        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/nzbToMedia/build/nzbToMedia_200809.qpkg)
+        SHERPA_QPKG_MD5+=(48361e2b150cf71673e6b255f8906b2c)
+        SHERPA_QPKG_ABBRVS+=('nzb2 nzb2m nzbtom nzbto nzbtomedia')
+        SHERPA_QPKG_DEPS+=('Entware')
+        SHERPA_QPKG_IPKGS+=('')
+        SHERPA_QPKG_PIPS+=('')
 
     SHERPA_QPKG_NAME+=(NZBGet)
         SHERPA_QPKG_ARCH+=(all)
