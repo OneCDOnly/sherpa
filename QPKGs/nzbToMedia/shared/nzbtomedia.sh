@@ -87,33 +87,33 @@ ShowHelp()
 StartQPKG()
     {
 
-	local limit_version=200809
+    local -r SAB_MIN_VERSION=200809
 
     if [[ -n $SOURCE_GIT_URL ]]; then
         PullGitRepo $QPKG_NAME "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_PATH"
         cd "$QPKG_PATH/$QPKG_NAME" || return 1
     fi
 
-	if [[ $($GETCFG_CMD SABnzbdplus Enable -f $QTS_QPKG_CONF_PATHFILE) = TRUE ]]; then
-		DisplayErrCommitAllLogs "unable to link from package to target: installed SABnzbdplus QPKG must be replaced with SABnzbd $limit_version or later"
-		return 1
-	fi
+    if [[ $($GETCFG_CMD SABnzbdplus Enable -f $QTS_QPKG_CONF_PATHFILE) = TRUE ]]; then
+        DisplayErrCommitAllLogs "unable to link from package to target: installed SABnzbdplus QPKG must be replaced with SABnzbd $SAB_MIN_VERSION or later"
+        return 1
+    fi
 
-	if [[ $($GETCFG_CMD SABnzbd Enable -f $QTS_QPKG_CONF_PATHFILE) = TRUE ]]; then
-		local current_version=$($GETCFG_CMD SABnzbd Version -f $QTS_QPKG_CONF_PATHFILE)
-		if [[ ${current_version//[!0-9]/} -lt $limit_version ]]; then
-			DisplayErrCommitAllLogs "unable to link from package to target: installed SABnzbd QPKG must first be upgraded to $limit_version or later"
-			return 1
-		fi
-	fi
+    if [[ $($GETCFG_CMD SABnzbd Enable -f $QTS_QPKG_CONF_PATHFILE) = TRUE ]]; then
+        local current_version=$($GETCFG_CMD SABnzbd Version -f $QTS_QPKG_CONF_PATHFILE)
+        if [[ ${current_version//[!0-9]/} -lt $SAB_MIN_VERSION ]]; then
+            DisplayErrCommitAllLogs "unable to link from package to target: installed SABnzbd QPKG must first be upgraded to $SAB_MIN_VERSION or later"
+            return 1
+        fi
+    fi
 
     if [[ -d $APPARENT_PATH ]]; then
-		# save config from original nzbToMedia install (done via the sherpa SABnzbd QPKG)
-		cp "$APPARENT_PATH/$($BASENAME_CMD "$QPKG_INI_PATHFILE")" "$QPKG_INI_PATHFILE"
+        # save config from original nzbToMedia install (which was created by sherpa SABnzbd QPKGs earlier than 200809)
+        cp "$APPARENT_PATH/$($BASENAME_CMD "$QPKG_INI_PATHFILE")" "$QPKG_INI_PATHFILE"
 
-		# destroy original installation
-		rm -r "$APPARENT_PATH"
-	fi
+        # destroy original installation
+        rm -r "$APPARENT_PATH"
+    fi
 
     [[ ! -L $APPARENT_PATH ]] && ln -s "$QPKG_PATH/$QPKG_NAME" "$APPARENT_PATH"
 
