@@ -57,6 +57,8 @@ So, to install SABnzbd, use:
 ./sherpa.sh NZBGet
 
 ./sherpa.sh Transmission
+
+./sherpa.sh nzbToMedia
 ```
 
 ---
