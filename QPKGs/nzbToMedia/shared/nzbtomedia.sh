@@ -74,7 +74,7 @@ ShowHelp()
     Display " start      - launch $(FormatAsPackageName $QPKG_NAME) if not already running."
     Display " stop       - shutdown $(FormatAsPackageName $QPKG_NAME) if running."
     Display " restart    - stop, then start $(FormatAsPackageName $QPKG_NAME)."
-    Display " status     - check if $(FormatAsPackageName $QPKG_NAME) is still running. Always returns \$? = 0 for this package."
+    Display " status     - check if $(FormatAsPackageName $QPKG_NAME) is still running. \$? always = 0 for this package."
     Display " backup     - backup the current $(FormatAsPackageName $QPKG_NAME) configuration to persistent storage."
     Display " restore    - restore a previously saved configuration from persistent storage. $(FormatAsPackageName $QPKG_NAME) will be stopped, then restarted."
     [[ -n $SOURCE_GIT_URL ]] && Display " clean      - wipe the current local copy of $(FormatAsPackageName $QPKG_NAME), and download it again from remote source. Configuration will be retained."
@@ -107,7 +107,7 @@ StartQPKG()
         fi
     fi
 
-    if [[ -d $APPARENT_PATH ]]; then
+    if [[ -d $APPARENT_PATH && ! -L $APPARENT_PATH ]]; then
         # save config from original nzbToMedia install (which was created by sherpa SABnzbd QPKGs earlier than 200809)
         cp "$APPARENT_PATH/$($BASENAME_CMD "$QPKG_INI_PATHFILE")" "$QPKG_INI_PATHFILE"
 

@@ -48,7 +48,7 @@ Init()
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200809c
+    readonly SCRIPT_VERSION=200809d
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -198,8 +198,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(nzbToMedia)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/nzbToMedia/build/nzbToMedia_200809b.qpkg)
-        SHERPA_QPKG_MD5+=(92d1a292b3e117f010a5686e1b7d37f6)
+        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/nzbToMedia/build/nzbToMedia_200809c.qpkg)
+        SHERPA_QPKG_MD5+=(d2bccbeadcb38a7d668576bd055cfcc6)
         SHERPA_QPKG_ABBRVS+=('nzb2 nzb2m nzbtom nzbto nzbtomedia')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('')
