@@ -150,7 +150,6 @@ RestoreConfig()
 
     StopQPKG
     ExecuteAndLog 'restoring configuration backup' "$TAR_CMD --extract --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/$QPKG_NAME" log:everything
-    ChoosePort
     StartQPKG
 
     }
