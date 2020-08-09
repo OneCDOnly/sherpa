@@ -48,7 +48,7 @@ Init()
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200809d
+    readonly SCRIPT_VERSION=200809e
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -1141,6 +1141,9 @@ DowngradePy3()
             returncode=1
         fi
     fi
+
+    # seems 'python' can disappear during a Python downgrade so ...
+    [[ ! -L /opt/bin/python && -e /opt/bin/python3 ]] && ln -s /opt/bin/python3 /opt/bin/python
 
     if IsError; then
         ShowAsError "Python 3 downgrade failed $(FormatAsResult "$result")"
