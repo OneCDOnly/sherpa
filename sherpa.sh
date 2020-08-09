@@ -48,7 +48,7 @@ Init()
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200809e
+    readonly SCRIPT_VERSION=200809f
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -1010,6 +1010,9 @@ InstallIPKGs()
         errorcode=17
         returncode=1
     fi
+
+    # in-case 'python' has disappeared
+    [[ ! -L /opt/bin/python && -e /opt/bin/python3 ]] && ln -s /opt/bin/python3 /opt/bin/python
 
     DebugFuncExit
     return $returncode
