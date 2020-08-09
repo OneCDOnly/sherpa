@@ -42,13 +42,14 @@ Init()
     DisableSatisfyDependenciesOnly
     DisableHelpOnly
     DisableVersionOnly
-    DisableSuggestIssue
     DisableLogPasteOnly
+    DisableAbbreviationsOnly
+    DisableSuggestIssue
     DisableDevMode
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200809f
+    readonly SCRIPT_VERSION=200810
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -396,6 +397,11 @@ LogRuntimeParameters()
         return 1
     fi
 
+    if IsAbbreviationsOnly; then
+        ShowPackageAbbreviations
+        return 1
+    fi
+
     DebugNAS 'model' "$($GREP_CMD -v "^$" /etc/issue | $SED_CMD 's|^Welcome to ||;s|(.*||')"
     DebugNAS 'RAM' "$INSTALLED_RAM_KB kB"
     if IsQPKGToBeInstalled SABnzbd || IsQPKGToBeInstalled SABnzbdplus || IsQPKGInstalled SABnzbd || IsQPKGInstalled SABnzbdplus; then
@@ -440,6 +446,7 @@ LogRuntimeParameters()
 
     if IsNotError && [[ ${#QPKGS_to_install[@]} -eq 0 && ${#QPKGS_to_uninstall[@]} -eq 0 && ${#QPKGS_to_update[@]} -eq 0 && ${#QPKGS_to_backup[@]} -eq 0 && ${#QPKGS_to_restore[@]} -eq 0 ]] && IsNotSatisfyDependenciesOnly && [[ $update_all_apps = false ]]; then
         ShowAsError 'no valid QPKGs or actions were specified'
+        echo
         ShowPackageAbbreviations
         errorcode=2
     fi
@@ -575,9 +582,14 @@ ParseArgs()
                 errorcode=14
                 return 1
                 ;;
+            --abs)
+                EnableAbbreviationsOnly
+                errorcode=15
+                return 1
+                ;;
             -v|--version)
                 EnableVersionOnly
-                errorcode=15
+                errorcode=16
                 return 1
                 ;;
             --install-all)
@@ -674,6 +686,9 @@ ShowHelp()
         (IsQPKGUserInstallable "$package") && echo -e "\t$0 $package"
     done
 
+    echo -e "\n- Display recognised package abbreviations:"
+    echo -e "\t$0 --abs"
+
     echo -e "\n- Ensure all sherpa application dependencies are installed:"
     echo -e "\t$0 --check-all"
 
@@ -694,7 +709,6 @@ ShowPackageAbbreviations()
 
     local package_index=0
 
-    echo
     echo "- sherpa recognises these package names and abbreviations:"
 
     for package_index in "${!SHERPA_QPKG_NAME[@]}"; do
@@ -887,7 +901,7 @@ UpdateEntware()
     {
 
     if IsNotSysFilePresent $OPKG_CMD || IsNotSysFilePresent $GNU_FIND_CMD; then
-        errorcode=16
+        errorcode=17
         return 1
     fi
 
@@ -1007,7 +1021,7 @@ InstallIPKGs()
         InstallIPKGBatch "$packages"
     else
         ShowAsError "IPKG download path [$IPKG_DL_PATH] does not exist"
-        errorcode=17
+        errorcode=18
         returncode=1
     fi
 
@@ -1064,7 +1078,7 @@ InstallIPKGBatch()
             ShowAsError "download & install IPKG$(DisplayPlural "$IPKG_download_count") failed $(FormatAsExitcode $result)"
             DebugErrorFile "$log_pathfile"
 
-            errorcode=18
+            errorcode=19
             returncode=1
         fi
         DebugTimerStageEnd "$STARTSECONDS"
@@ -1129,7 +1143,7 @@ DowngradePy3()
     result=$?
 
     if [[ $result -gt 0 ]]; then
-        errorcode=19
+        errorcode=20
         returncode=1
     fi
 
@@ -1140,7 +1154,7 @@ DowngradePy3()
         if [[ $result -eq 0 ]]; then
             ShowAsDone "$(FormatAsPackageName Watcher3) selected so downgraded Python 3 IPKGs"
         else
-            errorcode=20
+            errorcode=21
             returncode=1
         fi
     fi
@@ -1191,7 +1205,7 @@ InstallPy3Modules()
                 echo "* Ugh! The usual fix is to let sherpa reinstall 'Entware' at least once."
                 echo -e "\t./sherpa.sh ew"
                 echo "If it happens again after reinstalling 'Entware', please create a new issue for this on GitHub."
-                errorcode=21
+                errorcode=22
                 return 1
             fi
         fi
@@ -1219,7 +1233,7 @@ InstallPy3Modules()
         ShowAsError "download & install $desc failed $(FormatAsResult "$result")"
         DebugErrorFile "$log_pathfile"
 
-        errorcode=22
+        errorcode=23
         returncode=1
     fi
 
@@ -1281,7 +1295,7 @@ InstallQPKG()
         ShowAsError "QPKG installation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $result)"
         DebugErrorFile "$log_pathfile"
 
-        errorcode=23
+        errorcode=24
         returncode=1
     fi
 
@@ -1351,14 +1365,14 @@ DownloadQPKG()
                 ShowAsDone "downloaded QPKG $(FormatAsFileName "$remote_filename")"
             else
                 ShowAsError "downloaded QPKG checksum incorrect $(FormatAsFileName "$local_pathfile")"
-                errorcode=24
+                errorcode=25
                 returncode=1
             fi
         else
             ShowAsError "download failed $(FormatAsFileName "$local_pathfile") $(FormatAsExitcode $result)"
             DebugErrorFile "$log_pathfile"
 
-            errorcode=25
+            errorcode=26
             returncode=1
         fi
     fi
@@ -1485,7 +1499,7 @@ LoadInstalledQPKGVars()
         done
     else
         DebugError 'QPKG not installed?'
-        errorcode=26
+        errorcode=27
         return 1
     fi
 
@@ -1521,7 +1535,7 @@ UninstallQPKG()
                 ShowAsDone "uninstalled $(FormatAsPackageName "$1")"
             else
                 ShowAsError "unable to uninstall $(FormatAsPackageName "$1") $(FormatAsExitcode $result)"
-                errorcode=27
+                errorcode=28
                 return 1
             fi
         fi
@@ -1549,11 +1563,11 @@ QPKGServiceCtl()
 
     if [[ -z $1 ]]; then
         DebugError 'action unspecified'
-        errorcode=28
+        errorcode=29
         return 1
     elif [[ -z $2 ]]; then
         DebugError 'QPKG name unspecified'
-        errorcode=29
+        errorcode=30
         return 1
     fi
 
@@ -1579,7 +1593,7 @@ QPKGServiceCtl()
                 else
                     $CAT_CMD "$qpkg_pathfile.$START_LOG_FILE" >> "$DEBUG_LOG_PATHFILE"
                 fi
-                errorcode=30
+                errorcode=31
                 return 1
             fi
             ;;
@@ -1625,7 +1639,7 @@ QPKGServiceCtl()
             ;;
         *)
             DebugError "Unrecognised action '$1'"
-            errorcode=31
+            errorcode=32
             return 1
             ;;
     esac
@@ -1653,11 +1667,11 @@ GetQPKGServiceFile()
 
     if [[ -z $output ]]; then
         DebugError "No service file configured for package $(FormatAsPackageName "$1")"
-        errorcode=32
+        errorcode=33
         returncode=1
     elif [[ ! -e $output ]]; then
         DebugError "Package service file not found $(FormatAsStdout "$output")"
-        errorcode=33
+        errorcode=34
         returncode=1
     fi
 
@@ -1932,7 +1946,7 @@ FindAllIPKGDependencies()
     [[ -z $1 ]] && return 1
 
     if IsNotSysFilePresent $OPKG_CMD || IsNotSysFilePresent $GNU_GREP_CMD; then
-        errorcode=34
+        errorcode=35
         return 1
     fi
 
@@ -2020,7 +2034,7 @@ OpenIPKGArchive()
 
     if [[ ! -e $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE ]]; then
         ShowAsError "could not locate the IPKG list file"
-        errorcode=35
+        errorcode=36
         return 1
     fi
 
@@ -2030,7 +2044,7 @@ OpenIPKGArchive()
 
     if [[ ! -e $EXTERNAL_PACKAGE_LIST_PATHFILE ]]; then
         ShowAsError "could not open the IPKG list file"
-        errorcode=36
+        errorcode=37
         return 1
     fi
 
@@ -2114,7 +2128,7 @@ IsSysFilePresent()
 
     if ! [[ -f $1 || -L $1 ]]; then
         ShowAsError "a required NAS system file is missing $(FormatAsFileName "$1")"
-        errorcode=37
+        errorcode=38
         return 1
     else
         return 0
@@ -2135,7 +2149,7 @@ IsSysSharePresent()
 
     if [[ ! -L $1 ]]; then
         ShowAsError "a required NAS system share is missing $(FormatAsFileName "$1"). Please re-create it via the QTS Control Panel -> Privilege Settings -> Shared Folders."
-        errorcode=38
+        errorcode=39
         return 1
     else
         return 0
@@ -2628,6 +2642,36 @@ IsNotSatisfyDependenciesOnly()
 
     }
 
+EnableAbbreviationsOnly()
+    {
+
+    abbreviations_only=true
+    DebugVar abbreviations_only
+
+    }
+
+DisableAbbreviationsOnly()
+    {
+
+    abbreviations_only=false
+    DebugVar abbreviations_only
+
+    }
+
+IsAbbreviationsOnly()
+    {
+
+    [[ $abbreviations_only = true ]]
+
+    }
+
+IsNotAbbreviationsOnly()
+    {
+
+    [[ $abbreviations_only != true ]]
+
+    }
+
 EnableVisibleDebugging()
     {
 
@@ -3103,6 +3147,15 @@ WriteToDisplay_NewLine()
     #   $1 = pass/fail
     #   $2 = message
 
+    # output:
+    #   stdout = overwrites previous message with updated message
+    #   $previous_length
+    #   $appended_length
+
+    local new_message=''
+    local strbuffer=''
+    local new_length=0
+
     new_message=$(printf "[ %-10s ] %s" "$1" "$2")
 
     if [[ $new_message != "$previous_msg" ]]; then
@@ -3132,7 +3185,10 @@ WriteToLog()
     #   $1 = pass/fail
     #   $2 = message
 
-    [[ -n $DEBUG_LOG_PATHFILE ]] && $TOUCH_CMD "$DEBUG_LOG_PATHFILE" && printf "[ %-4s ] %s\n" "$1" "$2" >> "$DEBUG_LOG_PATHFILE"
+    [[ -z $DEBUG_LOG_PATHFILE ]] && return 1
+
+    [[ ! -f $DEBUG_LOG_PATHFILE ]] && $TOUCH_CMD "$DEBUG_LOG_PATHFILE"
+    printf "[ %-4s ] %s\n" "$1" "$2" >> "$DEBUG_LOG_PATHFILE"
 
     }
 
@@ -3203,6 +3259,13 @@ ColoursReset()
     {
 
     echo -en "$1"'\033[0m'
+
+    }
+
+RemoveColourCodes()
+    {
+
+    $SED_CMD "s,\x1B\[[0-9;]*[a-zA-Z],,g" <<< "$1"
 
     }
 
