@@ -48,7 +48,7 @@ Init()
     DisableSatisfyDependenciesOnly
     DisableVersionOnly
     DisableLogPasteOnly
-    DisableShowAbbreviationsOnly
+    DisableShowAbbreviationsReminder
     DisableSuggestIssue
     DisableShowHelpReminder
     DisableShowDebugReminder
@@ -57,7 +57,7 @@ Init()
     ResetCodePointer
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200811g
+    readonly SCRIPT_VERSION=200811h
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -442,7 +442,7 @@ LogRuntimeParameters()
 
     if IsNotError && [[ ${#QPKGS_to_install[@]} -eq 0 && ${#QPKGS_to_uninstall[@]} -eq 0 && ${#QPKGS_to_update[@]} -eq 0 && ${#QPKGS_to_backup[@]} -eq 0 && ${#QPKGS_to_restore[@]} -eq 0 ]] && IsNotSatisfyDependenciesOnly && [[ $update_all_apps = false ]]; then
         ShowAsError 'no valid QPKGs or actions were specified'
-        EnableShowAbbreviationsOnly
+        EnableShowAbbreviationsReminder
         code_pointer=2
         return 1
     fi
@@ -587,7 +587,7 @@ ParseArgs()
                 return 1
                 ;;
             --abs)
-                EnableShowAbbreviationsOnly
+                EnableShowAbbreviationsReminder
                 code_pointer=15
                 return 1
                 ;;
@@ -1795,7 +1795,7 @@ ShowResult()
         ShowLogView
     elif IsShowHelpReminder; then
         ShowHelp
-    elif IsShowAbbreviationsOnly; then
+    elif IsShowAbbreviationsReminder; then
         ShowPackageAbbreviations
     elif IsLogPasteOnly; then
         PasteLogOnline
@@ -2507,14 +2507,19 @@ EnableShowHelpReminder()
     {
 
     EnableAbort
+    EnableShowDebugReminder
+
+    IsShowHelpReminder && return
+
     show_help_reminder=true
     DebugVar show_help_reminder
-    EnableShowDebugReminder
 
     }
 
 DisableShowHelpReminder()
     {
+
+    IsNotShowHelpReminder && return
 
     show_help_reminder=false
     DebugVar show_help_reminder
@@ -2539,6 +2544,9 @@ EnableLogViewOnly()
     {
 
     EnableAbort
+
+    IsLogViewOnly && return
+
     logview_only=true
     DebugVar logview_only
 
@@ -2546,6 +2554,8 @@ EnableLogViewOnly()
 
 DisableLogViewOnly()
     {
+
+    IsNotLogViewOnly && return
 
     logview_only=false
     DebugVar logview_only
@@ -2570,6 +2580,9 @@ EnableVersionOnly()
     {
 
     EnableAbort
+
+    IsVersionOnly && return
+
     version_only=true
     DebugVar version_only
 
@@ -2577,6 +2590,8 @@ EnableVersionOnly()
 
 DisableVersionOnly()
     {
+
+    IsNotVersionOnly && return
 
     version_only=false
     DebugVar version_only
@@ -2601,6 +2616,9 @@ EnableLogPasteOnly()
     {
 
     EnableAbort
+
+    IsLogPasteOnly && return
+
     logpaste_only=true
     DebugVar logpaste_only
 
@@ -2608,6 +2626,8 @@ EnableLogPasteOnly()
 
 DisableLogPasteOnly()
     {
+
+    IsNotLogPasteOnly && return
 
     logpaste_only=false
     DebugVar logpaste_only
@@ -2632,6 +2652,9 @@ EnableError()
     {
 
     EnableAbort
+
+    IsError && return
+
     error=true
     DebugVar error
 
@@ -2639,6 +2662,8 @@ EnableError()
 
 DisableError()
     {
+
+    IsNotError && return
 
     error=false
     DebugVar error
@@ -2662,6 +2687,8 @@ IsNotError()
 EnableAbort()
     {
 
+    IsAbort && return
+
     abort=true
     DebugVar abort
 
@@ -2669,6 +2696,8 @@ EnableAbort()
 
 DisableAbort()
     {
+
+    IsNotAbort && return
 
     abort=false
     DebugVar abort
@@ -2692,6 +2721,8 @@ IsNotAbort()
 EnableSatisfyDependenciesOnly()
     {
 
+    IsSatisfyDependenciesOnly && return
+
     satisfy_dependencies_only=true
     DebugVar satisfy_dependencies_only
 
@@ -2699,6 +2730,8 @@ EnableSatisfyDependenciesOnly()
 
 DisableSatisfyDependenciesOnly()
     {
+
+    IsNotSatisfyDependenciesOnly && return
 
     satisfy_dependencies_only=false
     DebugVar satisfy_dependencies_only
@@ -2719,39 +2752,46 @@ IsNotSatisfyDependenciesOnly()
 
     }
 
-EnableShowAbbreviationsOnly()
+EnableShowAbbreviationsReminder()
     {
 
     EnableAbort
-    show_abbreviations_only=true
-    DebugVar show_abbreviations_only
+
+    IsShowAbbreviationsReminder && return
+
+    show_abbreviations_reminder=true
+    DebugVar show_abbreviations_reminder
 
     }
 
-DisableShowAbbreviationsOnly()
+DisableShowAbbreviationsReminder()
     {
 
-    show_abbreviations_only=false
-    DebugVar show_abbreviations_only
+    IsNotShowAbbreviationsReminder && return
+
+    show_abbreviations_reminder=false
+    DebugVar show_abbreviations_reminder
 
     }
 
-IsShowAbbreviationsOnly()
+IsShowAbbreviationsReminder()
     {
 
-    [[ $show_abbreviations_only = true ]]
+    [[ $show_abbreviations_reminder = true ]]
 
     }
 
-IsNotShowAbbreviationsOnly()
+IsNotShowAbbreviationsReminder()
     {
 
-    [[ $show_abbreviations_only != true ]]
+    [[ $show_abbreviations_reminder != true ]]
 
     }
 
 EnableShowInstallerOutcome()
     {
+
+    IsShowInstallerOutcome && return
 
     show_installer_outcome=true
     DebugVar show_installer_outcome
@@ -2760,6 +2800,8 @@ EnableShowInstallerOutcome()
 
 DisableShowInstallerOutcome()
     {
+
+    IsNotShowInstallerOutcome && return
 
     show_installer_outcome=false
     DebugVar show_installer_outcome
@@ -2783,6 +2825,8 @@ IsNotShowInstallerOutcome()
 EnableShowDebugReminder()
     {
 
+    IsShowDebugReminder && return
+
     show_debug_reminder=true
     DebugVar show_debug_reminder
 
@@ -2790,6 +2834,8 @@ EnableShowDebugReminder()
 
 DisableShowDebugReminder()
     {
+
+    IsNotShowDebugReminder && return
 
     show_debug_reminder=false
     DebugVar show_debug_reminder
@@ -2813,6 +2859,8 @@ IsNotShowDebugReminder()
 EnableVisibleDebugging()
     {
 
+    IsVisibleDebugging && return
+
     show_debugging=true
     DebugVar show_debugging
 
@@ -2820,6 +2868,8 @@ EnableVisibleDebugging()
 
 DisableVisibleDebugging()
     {
+
+    IsNotVisibleDebugging && return
 
     show_debugging=false
     DebugVar show_debugging
@@ -2845,6 +2895,8 @@ EnableDevMode()
 
     EnableVisibleDebugging
 
+    IsDevMode && return
+
     dev_mode=true
     DebugVar dev_mode
 
@@ -2854,6 +2906,8 @@ DisableDevMode()
     {
 
     DisableVisibleDebugging
+
+    IsNotDevMode && return
 
     dev_mode=false
     DebugVar dev_mode
@@ -2877,6 +2931,8 @@ IsNotDevMode()
 EnableSuggestIssue()
     {
 
+    IsSuggestIssue && return
+
     suggest_issue=true
     DebugVar suggest_issue
 
@@ -2884,6 +2940,8 @@ EnableSuggestIssue()
 
 DisableSuggestIssue()
     {
+
+    IsNotSuggestIssue && return
 
     suggest_issue=false
     DebugVar suggest_issue
@@ -3247,9 +3305,9 @@ ShowAsError()
     local buffer="$1"
     local capitalised="$(tr "[a-z]" "[A-Z]" <<< "${buffer:0:1}")${buffer:1}"      # use any available 'tr' as we may not have picked one yet
 
+    EnableError
     WriteToDisplay_NewLine "$(ColourTextBrightRed fail)" "$capitalised"
     WriteToLog fail "$capitalised"
-    EnableError
 
     }
 
