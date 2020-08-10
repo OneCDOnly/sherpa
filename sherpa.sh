@@ -51,7 +51,7 @@ Init()
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200810c
+    readonly SCRIPT_VERSION=200810d
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -1795,7 +1795,8 @@ ShowResult()
 
     local RE=''
 
-    [[ -e $DEBUG_LOG_PATHFILE ]] && IsNotVisibleDebugging && IsNotVersionOnly && IsNotLogViewOnly && IsNotLogPasteOnly && IsNotAbbreviationsOnly && IsError && EnableShowDebugReminder
+    [[ -e $DEBUG_LOG_PATHFILE ]] && IsError && EnableShowDebugReminder
+    IsShowDebugReminder && IsNotVisibleDebugging && IsNotVersionOnly && IsNotLogViewOnly && IsNotLogPasteOnly && IsNotAbbreviationsOnly && DisableShowDebugReminder
 
     if IsShowInstallerOutcome; then
         if [[ -n $TARGET_APP ]]; then
