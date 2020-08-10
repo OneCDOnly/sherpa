@@ -55,7 +55,7 @@ Init()
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200811d
+    readonly SCRIPT_VERSION=200811e
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -1217,9 +1217,11 @@ InstallPy3Modules()
             pip3_cmd=/opt/bin/pip3
         elif [[ -e /opt/bin/pip3.8 ]]; then
             pip3_cmd=/opt/bin/pip3.8
+        elif [[ -e /opt/bin/pip3.7 ]]; then
+            pip3_cmd=/opt/bin/pip3.7
         else
             if IsNotSysFilePresent $pip3_cmd; then
-                echo "* Ugh! The usual fix is to let sherpa reinstall 'Entware' at least once."
+                echo "* Ugh! The usual fix for this is to let sherpa reinstall 'Entware' at least once."
                 echo -e "\t./sherpa.sh ew"
                 echo "If it happens again after reinstalling 'Entware', please create a new issue for this on GitHub."
                 errorcode=23
