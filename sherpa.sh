@@ -2,7 +2,7 @@
 #
 # sherpa.sh
 #
-# A package manager to install various Usenet media-management apps into QNAP NAS
+# A package manager to install various media-management apps into QNAP NAS
 #
 # Copyright (C) 2017-2020 OneCD [one.cd.only@gmail.com]
 #
@@ -20,11 +20,15 @@
 #
 # You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/.
 #
-# *** Style Guide ***
-# functions: CamelCase
-# variables: lowercase_with_underscores (except for 'returncode' & 'errorcode')
-# constants: UPPERCASE_WITH_UNDERSCORES (also set to readonly)
-#   indents: 1 x tab (converted to 4 x spaces to suit GitHub web-display)
+# Style Guide:
+#   functions: CamelCase
+#   variables: lowercase_with_underscores (except for 'returncode' & 'errorcode')
+#   constants: UPPERCASE_WITH_UNDERSCORES (also set to readonly)
+#     indents: 1 x tab (converted to 4 x spaces to suit GitHub web-display)
+#
+# Notes:
+#   If on-screen line-spacing is required, this should only be done by the next function that outputs to display.
+#   Display functions should never finish by putting an empty line on-screen for spacing - with the sole exception of ShowResult() as it's the last one to output anything.
 
 readonly USER_ARGS_RAW="$*"
 
@@ -51,7 +55,7 @@ Init()
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200810e
+    readonly SCRIPT_VERSION=200811
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -387,8 +391,6 @@ LogRuntimeParameters()
         return 1
     fi
 
-    local conflicting_qpkg=''
-
     IsVisibleDebugging || echo "$(ColourTextBrightWhite "$SCRIPT_FILE") ($SCRIPT_VERSION)"
 
     if IsLogViewOnly; then
@@ -407,6 +409,8 @@ LogRuntimeParameters()
         PasteLogOnline
         return 1
     fi
+
+    local conflicting_qpkg=''
 
     DebugNAS 'model' "$($GREP_CMD -v "^$" /etc/issue | $SED_CMD 's|^Welcome to ||;s|(.*||')"
     DebugNAS 'RAM' "$INSTALLED_RAM_KB kB"
@@ -685,9 +689,9 @@ ShowHelp()
 
     local package=''
 
-    echo -e "* A package manager to install various Usenet media-management apps into QNAP NAS.\n"
+    echo "* A package manager to install various media-management apps into QNAP NAS."
 
-    echo "- Each application shown below can be installed (or reinstalled) by running:"
+    echo -e "\n- Each application shown below can be installed (or reinstalled) by running:"
     for package in "${SHERPA_QPKG_NAME[@]}"; do
         (IsQPKGUserInstallable "$package") && echo -e "\t$0 $package"
     done
