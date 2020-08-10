@@ -51,13 +51,12 @@ Init()
     DisableShowAbbreviationsReminder
     DisableSuggestIssue
     DisableShowHelpReminder
-    DisableShowDebugReminder
     EnableShowInstallerOutcome
     DisableDevMode
     ResetCodePointer
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200811h
+    readonly SCRIPT_VERSION=200811i
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -1801,8 +1800,6 @@ ShowResult()
         PasteLogOnline
     fi
 
-    [[ -e $DEBUG_LOG_PATHFILE ]] && IsShowDebugReminder && EnableShowDebugReminder
-
     if IsShowInstallerOutcome; then
         if [[ -n $TARGET_APP ]]; then
             [[ $reinstall_flag = true ]] && RE='re' || RE=''
@@ -1835,7 +1832,7 @@ ShowResult()
         echo -e "\n* Remember to include a copy of your sherpa runtime debug log for analysis."
     fi
 
-    if IsShowDebugReminder; then
+    if IsShowHelpReminder; then
         echo -e "\n- View the runtime debug log:"
         echo -e "\t$0 --log"
 
@@ -2507,7 +2504,6 @@ EnableShowHelpReminder()
     {
 
     EnableAbort
-    EnableShowDebugReminder
 
     IsShowHelpReminder && return
 
@@ -2819,40 +2815,6 @@ IsNotShowInstallerOutcome()
     {
 
     [[ $show_installer_outcome != true ]]
-
-    }
-
-EnableShowDebugReminder()
-    {
-
-    IsShowDebugReminder && return
-
-    show_debug_reminder=true
-    DebugVar show_debug_reminder
-
-    }
-
-DisableShowDebugReminder()
-    {
-
-    IsNotShowDebugReminder && return
-
-    show_debug_reminder=false
-    DebugVar show_debug_reminder
-
-    }
-
-IsShowDebugReminder()
-    {
-
-    [[ $show_debug_reminder = true ]]
-
-    }
-
-IsNotShowDebugReminder()
-    {
-
-    [[ $show_debug_reminder != true ]]
 
     }
 
