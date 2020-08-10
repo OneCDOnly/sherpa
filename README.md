@@ -90,7 +90,7 @@ This will happen from time-to-time as the environment changes. If it's not shown
 Sometimes the debug log will be required. This is always created. You can view this with:
 
 ```
-cat sherpa.debug.log
+./sherpa.sh --log
 ```
 
 Or run the installer in debug-mode to see it realtime. e.g.:
