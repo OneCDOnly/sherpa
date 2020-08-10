@@ -12,4 +12,4 @@ mkdir -p "$target_path"
 cp "$source_pathfile" "$target_pathfile"
 
 # https://stackoverflow.com/questions/42869901/bash-script-to-rewrite-numbers-sequentially
-perl -i -pe 's/(\berrorcode=)\d+/$1.$i++/ge' "$source_pathfile"
+perl -i -pe 's/(\bcode_pointer=)\d+/$1.$i++/ge' "$source_pathfile"
