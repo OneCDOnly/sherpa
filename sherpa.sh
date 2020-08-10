@@ -55,7 +55,7 @@ Init()
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200811b
+    readonly SCRIPT_VERSION=200811c
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -414,7 +414,7 @@ LogRuntimeParameters()
 
     DebugNAS 'model' "$($GREP_CMD -v "^$" /etc/issue | $SED_CMD 's|^Welcome to ||;s|(.*||')"
     DebugNAS 'RAM' "$INSTALLED_RAM_KB kB"
-    if IsQPKGToBeInstalled SABnzbd || IsQPKGToBeInstalled SABnzbdplus || IsQPKGInstalled SABnzbd || IsQPKGInstalled SABnzbdplus; then
+    if IsQPKGToBeInstalled SABnzbd || IsQPKGInstalled SABnzbd || IsQPKGInstalled SABnzbdplus; then
         if [[ $INSTALLED_RAM_KB -le $MIN_RAM_KB ]]; then
             DebugNAS 'RAM' "less-than or equal-to $MIN_RAM_KB kB"
             IsNotError && ShowAsNote "QTS with 1GB RAM or less can lead to unstable SABnzbd uptimes. :("
