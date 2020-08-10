@@ -28,7 +28,7 @@
 #
 # Notes:
 #   If on-screen line-spacing is required, this should only be done by the next function that outputs to display.
-#   Display functions should never finish by putting an empty line on-screen for spacing - with the sole exception of ShowResult() as it's the last one to output anything.
+#   Display functions should never finish by putting an empty line on-screen for spacing.
 
 readonly USER_ARGS_RAW="$*"
 
@@ -55,7 +55,7 @@ Init()
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200811c
+    readonly SCRIPT_VERSION=200811d
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -1847,8 +1847,6 @@ ShowResult()
     DebugScript 'elapsed time' "$(ConvertSecsToMinutes "$(($($DATE_CMD +%s)-$([[ -n $SCRIPT_STARTSECONDS ]] && echo "$SCRIPT_STARTSECONDS" || echo "1")))")"
     DebugInfoThickSeparator
 
-    IsNotVisibleDebugging && IsNotLogViewOnly && IsNotVersionOnly && echo
-
     return 0
 
     }
@@ -3361,6 +3359,7 @@ if [[ ! -e /etc/init.d/functions ]]; then
 fi
 
 Init || exit
+
 LogRuntimeParameters
 DownloadQPKGs
 RemoveUnwantedQPKGs
@@ -3369,5 +3368,7 @@ InstallQPKGIndepsAddons
 InstallTargetQPKG
 Cleanup
 ShowResult
+
+IsNotVisibleDebugging && IsNotLogViewOnly && IsNotVersionOnly && echo
 
 exit $errorcode
