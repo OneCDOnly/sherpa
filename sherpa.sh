@@ -46,10 +46,12 @@ Init()
     DisableAbbreviationsOnly
     DisableSuggestIssue
     DisableDevMode
+    DisableShowDebugReminder
+    EnableShowInstallerOutcome
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200810
+    readonly SCRIPT_VERSION=200810b
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -64,6 +66,7 @@ Init()
     readonly PING_CMD=/bin/ping
     readonly SED_CMD=/bin/sed
     readonly SLEEP_CMD=/bin/sleep
+    readonly TAR_CMD=/bin/tar
     readonly TOUCH_CMD=/bin/touch
     readonly TR_CMD=/bin/tr
     readonly UNAME_CMD=/bin/uname
@@ -124,6 +127,7 @@ Init()
     IsNotSysFilePresent $PING_CMD && return 1
     IsNotSysFilePresent $SED_CMD && return 1
     IsNotSysFilePresent $SLEEP_CMD && return 1
+    IsNotSysFilePresent $TAR_CMD && return 1
     IsNotSysFilePresent $TOUCH_CMD && return 1
     IsNotSysFilePresent $TR_CMD && return 1
     IsNotSysFilePresent $UNAME_CMD && return 1
@@ -383,22 +387,24 @@ LogRuntimeParameters()
         return 1
     fi
 
+    local conflicting_qpkg=''
+
+    IsVisibleDebugging || echo "$(ColourTextBrightWhite "$SCRIPT_FILE") ($SCRIPT_VERSION)"
+
     if IsLogViewOnly; then
         ShowLogView
         return 1
     fi
 
-    local conflicting_qpkg=''
-
-    IsVisibleDebugging || echo -e "$(ColourTextBrightWhite "$SCRIPT_FILE") ($SCRIPT_VERSION)\n"
-
-    if IsLogPasteOnly; then
-        PasteLogOnline
-        return 1
-    fi
+    IsNotVisibleDebugging && echo
 
     if IsAbbreviationsOnly; then
         ShowPackageAbbreviations
+        return 1
+    fi
+
+    if IsLogPasteOnly; then
+        PasteLogOnline
         return 1
     fi
 
@@ -762,8 +768,6 @@ PasteLogOnline()
         ShowAsError 'no log to paste'
     fi
 
-    echo
-
     return 0
 
     }
@@ -788,10 +792,19 @@ DownloadQPKGs()
             DownloadQPKG "$package"
         done
     else
-        IsNotQPKGInstalled Entware && DownloadQPKG Entware
+        if IsNotQPKGInstalled Entware; then
+            if [[ $TARGET_APP = Entware ]]; then
+                ShowAsNote "It's not necessary to install Entware first. It will be installed on-demand with your other sherpa packages. :)"
+                DisableShowInstallerOutcome
+                errorcode=17
+                return 1
+            else
+                DownloadQPKG Entware
+            fi
+        fi
 
         # kludge: an ugly workaround until QPKG dependency checking works properly
-        (IsQPKGInstalled SABnzbd || [[ $TARGET_APP = SABnzbd ]];) && [[ $NAS_QPKG_ARCH != none ]] && IsNotQPKGInstalled Par2 && DownloadQPKG Par2
+        (IsQPKGInstalled SABnzbd || [[ $TARGET_APP = SABnzbd ]] ) && [[ $NAS_QPKG_ARCH != none ]] && IsNotQPKGInstalled Par2 && DownloadQPKG Par2
 
         [[ -n $TARGET_APP ]] && DownloadQPKG "$TARGET_APP"
     fi
@@ -818,7 +831,7 @@ RemoveUnwantedQPKGs()
     if [[ $TARGET_APP = Entware && $reinstall_flag = true ]]; then
         ShowAsNote "Reinstalling $(FormatAsPackageName Entware) will revert all IPKGs to defaults and only those required to support your sherpa apps will be reinstalled."
         ShowAsNote "The currently installed IPKG list will be saved to $(FormatAsFileName "$previous_Entware_package_list")"
-        ( IsQPKGInstalled SABnzbdplus || IsQPKGInstalled Headphones ) && ShowAsWarning "Also, the $(FormatAsPackageName SABnzbdplus) and $(FormatAsPackageName Headphones) packages CANNOT BE REINSTALLED as Python 2.7.16 is no-longer available."
+        (IsQPKGInstalled SABnzbdplus || IsQPKGInstalled Headphones) && ShowAsWarning "Also, the $(FormatAsPackageName SABnzbdplus) and $(FormatAsPackageName Headphones) packages CANNOT BE REINSTALLED as Python 2.7.16 is no-longer available."
         ShowAsQuiz "Press (y) if you agree to remove all current $(FormatAsPackageName Entware) IPKGs and their configs, or any other key to abort"
         read -rn1 response; echo
         DebugVar response
@@ -901,7 +914,7 @@ UpdateEntware()
     {
 
     if IsNotSysFilePresent $OPKG_CMD || IsNotSysFilePresent $GNU_FIND_CMD; then
-        errorcode=17
+        errorcode=18
         return 1
     fi
 
@@ -1021,7 +1034,7 @@ InstallIPKGs()
         InstallIPKGBatch "$packages"
     else
         ShowAsError "IPKG download path [$IPKG_DL_PATH] does not exist"
-        errorcode=18
+        errorcode=19
         returncode=1
     fi
 
@@ -1078,7 +1091,7 @@ InstallIPKGBatch()
             ShowAsError "download & install IPKG$(DisplayPlural "$IPKG_download_count") failed $(FormatAsExitcode $result)"
             DebugErrorFile "$log_pathfile"
 
-            errorcode=19
+            errorcode=20
             returncode=1
         fi
         DebugTimerStageEnd "$STARTSECONDS"
@@ -1143,7 +1156,7 @@ DowngradePy3()
     result=$?
 
     if [[ $result -gt 0 ]]; then
-        errorcode=20
+        errorcode=21
         returncode=1
     fi
 
@@ -1154,7 +1167,7 @@ DowngradePy3()
         if [[ $result -eq 0 ]]; then
             ShowAsDone "$(FormatAsPackageName Watcher3) selected so downgraded Python 3 IPKGs"
         else
-            errorcode=21
+            errorcode=22
             returncode=1
         fi
     fi
@@ -1205,7 +1218,7 @@ InstallPy3Modules()
                 echo "* Ugh! The usual fix is to let sherpa reinstall 'Entware' at least once."
                 echo -e "\t./sherpa.sh ew"
                 echo "If it happens again after reinstalling 'Entware', please create a new issue for this on GitHub."
-                errorcode=22
+                errorcode=23
                 return 1
             fi
         fi
@@ -1233,7 +1246,7 @@ InstallPy3Modules()
         ShowAsError "download & install $desc failed $(FormatAsResult "$result")"
         DebugErrorFile "$log_pathfile"
 
-        errorcode=23
+        errorcode=24
         returncode=1
     fi
 
@@ -1295,7 +1308,7 @@ InstallQPKG()
         ShowAsError "QPKG installation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $result)"
         DebugErrorFile "$log_pathfile"
 
-        errorcode=24
+        errorcode=25
         returncode=1
     fi
 
@@ -1365,14 +1378,14 @@ DownloadQPKG()
                 ShowAsDone "downloaded QPKG $(FormatAsFileName "$remote_filename")"
             else
                 ShowAsError "downloaded QPKG checksum incorrect $(FormatAsFileName "$local_pathfile")"
-                errorcode=25
+                errorcode=26
                 returncode=1
             fi
         else
             ShowAsError "download failed $(FormatAsFileName "$local_pathfile") $(FormatAsExitcode $result)"
             DebugErrorFile "$log_pathfile"
 
-            errorcode=26
+            errorcode=27
             returncode=1
         fi
     fi
@@ -1499,7 +1512,7 @@ LoadInstalledQPKGVars()
         done
     else
         DebugError 'QPKG not installed?'
-        errorcode=27
+        errorcode=28
         return 1
     fi
 
@@ -1535,7 +1548,7 @@ UninstallQPKG()
                 ShowAsDone "uninstalled $(FormatAsPackageName "$1")"
             else
                 ShowAsError "unable to uninstall $(FormatAsPackageName "$1") $(FormatAsExitcode $result)"
-                errorcode=28
+                errorcode=29
                 return 1
             fi
         fi
@@ -1563,11 +1576,11 @@ QPKGServiceCtl()
 
     if [[ -z $1 ]]; then
         DebugError 'action unspecified'
-        errorcode=29
+        errorcode=30
         return 1
     elif [[ -z $2 ]]; then
         DebugError 'QPKG name unspecified'
-        errorcode=30
+        errorcode=31
         return 1
     fi
 
@@ -1593,7 +1606,7 @@ QPKGServiceCtl()
                 else
                     $CAT_CMD "$qpkg_pathfile.$START_LOG_FILE" >> "$DEBUG_LOG_PATHFILE"
                 fi
-                errorcode=31
+                errorcode=32
                 return 1
             fi
             ;;
@@ -1639,7 +1652,7 @@ QPKGServiceCtl()
             ;;
         *)
             DebugError "Unrecognised action '$1'"
-            errorcode=32
+            errorcode=33
             return 1
             ;;
     esac
@@ -1667,11 +1680,11 @@ GetQPKGServiceFile()
 
     if [[ -z $output ]]; then
         DebugError "No service file configured for package $(FormatAsPackageName "$1")"
-        errorcode=33
+        errorcode=34
         returncode=1
     elif [[ ! -e $output ]]; then
         DebugError "Package service file not found $(FormatAsStdout "$output")"
-        errorcode=34
+        errorcode=35
         returncode=1
     fi
 
@@ -1764,10 +1777,15 @@ CTRL_C_Captured()
 Cleanup()
     {
 
+    DebugFuncEntry
+
     cd "$SHARE_PUBLIC_PATH" || return 1
+
+    DebugVar errorcode
 
     [[ -d $WORK_PATH ]] && IsNotError && IsNotVisibleDebugging && IsNotDevMode && rm -rf "$WORK_PATH"
 
+    DebugFuncExit
     return 0
 
     }
@@ -1777,7 +1795,13 @@ ShowResult()
 
     local RE=''
 
-    if IsNotHelpOnly && IsNotVersionOnly; then
+    if IsHelpOnly || IsVersionOnly; then
+        DisableShowInstallerOutcome
+    fi
+
+    [[ -e $DEBUG_LOG_PATHFILE ]] && IsNotVisibleDebugging && IsNotVersionOnly && IsNotLogViewOnly && IsNotLogPasteOnly && IsNotAbbreviationsOnly && EnableShowDebugReminder
+
+    if IsShowInstallerOutcome; then
         if [[ -n $TARGET_APP ]]; then
             [[ $reinstall_flag = true ]] && RE='re' || RE=''
 
@@ -1809,19 +1833,20 @@ ShowResult()
         echo -e "\n* Remember to include a copy of your sherpa runtime debug log for analysis."
     fi
 
-    DebugInfoThinSeparator
-    DebugScript 'finished' "$($DATE_CMD)"
-    DebugScript 'elapsed time' "$(ConvertSecsToMinutes "$(($($DATE_CMD +%s)-$([[ -n $SCRIPT_STARTSECONDS ]] && echo "$SCRIPT_STARTSECONDS" || echo "1")))")"
-    DebugInfoThickSeparator
-
-    if [[ -e $DEBUG_LOG_PATHFILE ]] && IsNotVisibleDebugging && IsNotVersionOnly && IsNotLogViewOnly && IsNotLogPasteOnly; then
+    if IsShowDebugReminder; then
         echo -e "\n- View the runtime debug log:"
         echo -e "\t$0 --log"
 
         echo -e "\n- Upload the runtime debug log to a public pastebin (https://termbin.com):"
         echo -e "\t$0 --paste"
-        echo
     fi
+
+    DebugInfoThinSeparator
+    DebugScript 'finished' "$($DATE_CMD)"
+    DebugScript 'elapsed time' "$(ConvertSecsToMinutes "$(($($DATE_CMD +%s)-$([[ -n $SCRIPT_STARTSECONDS ]] && echo "$SCRIPT_STARTSECONDS" || echo "1")))")"
+    DebugInfoThickSeparator
+
+    IsNotVisibleDebugging && IsNotLogViewOnly && IsNotVersionOnly && echo
 
     return 0
 
@@ -1946,7 +1971,7 @@ FindAllIPKGDependencies()
     [[ -z $1 ]] && return 1
 
     if IsNotSysFilePresent $OPKG_CMD || IsNotSysFilePresent $GNU_GREP_CMD; then
-        errorcode=35
+        errorcode=36
         return 1
     fi
 
@@ -2034,7 +2059,7 @@ OpenIPKGArchive()
 
     if [[ ! -e $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE ]]; then
         ShowAsError "could not locate the IPKG list file"
-        errorcode=36
+        errorcode=37
         return 1
     fi
 
@@ -2044,7 +2069,7 @@ OpenIPKGArchive()
 
     if [[ ! -e $EXTERNAL_PACKAGE_LIST_PATHFILE ]]; then
         ShowAsError "could not open the IPKG list file"
-        errorcode=37
+        errorcode=38
         return 1
     fi
 
@@ -2128,7 +2153,7 @@ IsSysFilePresent()
 
     if ! [[ -f $1 || -L $1 ]]; then
         ShowAsError "a required NAS system file is missing $(FormatAsFileName "$1")"
-        errorcode=38
+        errorcode=39
         return 1
     else
         return 0
@@ -2149,7 +2174,7 @@ IsSysSharePresent()
 
     if [[ ! -L $1 ]]; then
         ShowAsError "a required NAS system share is missing $(FormatAsFileName "$1"). Please re-create it via the QTS Control Panel -> Privilege Settings -> Shared Folders."
-        errorcode=39
+        errorcode=40
         return 1
     else
         return 0
@@ -2669,6 +2694,66 @@ IsNotAbbreviationsOnly()
     {
 
     [[ $abbreviations_only != true ]]
+
+    }
+
+EnableShowInstallerOutcome()
+    {
+
+    show_installer_outcome=true
+    DebugVar show_installer_outcome
+
+    }
+
+DisableShowInstallerOutcome()
+    {
+
+    show_installer_outcome=false
+    DebugVar show_installer_outcome
+
+    }
+
+IsShowInstallerOutcome()
+    {
+
+    [[ $show_installer_outcome = true ]]
+
+    }
+
+IsNotShowInstallerOutcome()
+    {
+
+    [[ $show_installer_outcome != true ]]
+
+    }
+
+EnableShowDebugReminder()
+    {
+
+    show_debug_reminder=true
+    DebugVar show_debug_reminder
+
+    }
+
+DisableShowDebugReminder()
+    {
+
+    show_debug_reminder=false
+    DebugVar show_debug_reminder
+
+    }
+
+IsShowDebugReminder()
+    {
+
+    [[ $show_debug_reminder = true ]]
+
+    }
+
+IsNotShowDebugReminder()
+    {
+
+    [[ $show_debug_reminder != true ]]
 
     }
 
