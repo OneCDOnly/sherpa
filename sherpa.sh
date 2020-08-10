@@ -55,7 +55,7 @@ Init()
     ResetErrorcode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200811
+    readonly SCRIPT_VERSION=200811b
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -334,7 +334,7 @@ Init()
 
     readonly SHERPA_COMMON_IPKGS='git git-http nano less ca-certificates python3-pip'
     readonly SHERPA_COMMON_PIPS='setuptools'
-    readonly SHERPA_COMMON_CONFLICTS='Optware Optware-NG'
+    readonly SHERPA_COMMON_CONFLICTS='Optware Optware-NG TarMT'
 
     # user-specified as arguments at runtime
     QPKGS_to_install=()
