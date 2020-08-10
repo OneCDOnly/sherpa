@@ -44,7 +44,7 @@ So, to install SABnzbd, use:
 ... and then/or:
 
 ```
-./sherpa.sh OWatcher3
+./sherpa.sh Watcher3
 
 ./sherpa.sh LazyLibrarian
 
@@ -59,6 +59,11 @@ So, to install SABnzbd, use:
 ./sherpa.sh Transmission
 
 ./sherpa.sh nzbToMedia
+```
+
+5) When you're done, delete the installer and debug log:
+```
+rm sherpa.*
 ```
 
 ---
