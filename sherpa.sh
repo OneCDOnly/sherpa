@@ -57,7 +57,7 @@ Init()
     ResetCodePointer
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200811f
+    readonly SCRIPT_VERSION=200811g
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -1789,6 +1789,7 @@ ShowResult()
     {
 
     local RE=''
+    local emoticon=''
 
     if IsLogViewOnly; then
         ShowLogView
@@ -1807,22 +1808,22 @@ ShowResult()
             [[ $reinstall_flag = true ]] && RE='re' || RE=''
 
             if IsNotError; then
-                IsVisibleDebugging && emoticon=':DD' || emoticon=''
-                ShowAsDone "$(FormatAsPackageName "$TARGET_APP") has been successfully ${RE}installed! $emoticon"
+                IsVisibleDebugging && emoticon=' :DD' || emoticon=''
+                ShowAsDone "$(FormatAsPackageName "$TARGET_APP") has been successfully ${RE}installed!$emoticon"
             else
-                IsVisibleDebugging && emoticon=':S ' || emoticon=''
-                ShowAsError "$(FormatAsPackageName "$TARGET_APP") ${RE}install failed! ${emoticon}[$code_pointer]"
+                IsVisibleDebugging && emoticon=' :S ' || emoticon=' '
+                ShowAsError "$(FormatAsPackageName "$TARGET_APP") ${RE}install failed!${emoticon}[$code_pointer]"
                 EnableSuggestIssue
             fi
         fi
 
         if IsSatisfyDependenciesOnly; then
             if IsNotError; then
-                IsVisibleDebugging && emoticon=':DD' || emoticon=''
-                ShowAsDone "all application dependencies are installed! $emoticon"
+                IsVisibleDebugging && emoticon=' :DD' || emoticon=''
+                ShowAsDone "all application dependencies are installed!$emoticon"
             else
-                IsVisibleDebugging && emoticon=':S ' || emoticon=''
-                ShowAsError "application dependency check failed! ${emoticon}[$code_pointer]"
+                IsVisibleDebugging && emoticon=' :S ' || emoticon=''
+                ShowAsError "application dependency check failed!${emoticon}[$code_pointer]"
                 EnableSuggestIssue
             fi
         fi
