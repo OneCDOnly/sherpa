@@ -56,7 +56,7 @@ Init()
     ResetCodePointer
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200811j
+    readonly SCRIPT_VERSION=200811k
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -712,10 +712,10 @@ PasteLogOnline()
     echo
 
     if [[ -n $DEBUG_LOG_PATHFILE && -e $DEBUG_LOG_PATHFILE ]]; then
-        ShowAsProc 'uploading runtime debug log'
+        ShowAsProc 'uploading sherpa log'
         link=$($CAT_CMD "$DEBUG_LOG_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
         if [[ $? -eq 0 ]]; then
-            ShowAsDone "debug log is now online at $(ColourTextBrightOrange "$($SED_CMD 's|http://|http://l.|;s|https://|https://l.|' <<< "$link")") and will be deleted in 1 month"
+            ShowAsDone "your sherpa log is now online at $(ColourTextBrightOrange "$($SED_CMD 's|http://|http://l.|;s|https://|https://l.|' <<< "$link")") and will be deleted in 1 month"
         else
             ShowAsError 'a link could not be generated. Most likely a problem occurred when talking with https://termbin.com'
         fi
@@ -1776,6 +1776,12 @@ ShowResult()
 
         echo -e "\n- Upload the sherpa log to a public pastebin (https://termbin.com):"
         echo -e "\t$0 --paste"
+
+        echo -e "\n- Install a package and show debugging information:"
+        echo -e "\t$0 <packagename> --debug"
+
+        echo -e "\n- Display the sherpa version:"
+        echo -e "\t$0 --version"
     elif IsShowAbbreviationsReminder; then
         ShowPackageAbbreviations
     elif IsLogPasteOnly; then
