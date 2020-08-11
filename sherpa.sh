@@ -48,7 +48,7 @@ Init()
     DisableDevMode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200812
+    readonly SCRIPT_VERSION=200812b
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -763,6 +763,7 @@ RemoveUnwantedQPKGs()
     IsQPKGInstalled "$TARGET_APP" && reinstall_flag=true
 
     if [[ $TARGET_APP = Entware && $reinstall_flag = true ]]; then
+        IsNotVisibleDebugging && echo
         ShowAsNote "Reinstalling $(FormatAsPackageName Entware) will revert all IPKGs to defaults and only those required to support your sherpa apps will be reinstalled."
         ShowAsNote "The currently installed IPKG list will be saved to $(FormatAsFileName "$previous_Entware_package_list")"
         (IsQPKGInstalled SABnzbdplus || IsQPKGInstalled Headphones) && ShowAsWarning "Also, the $(FormatAsPackageName SABnzbdplus) and $(FormatAsPackageName Headphones) packages CANNOT BE REINSTALLED as Python 2.7.16 is no-longer available."
@@ -3178,7 +3179,7 @@ ShowAsNote()
 ShowAsQuiz()
     {
 
-    WriteToDisplay_SameLine "$(ColourTextBrightYellow quiz)" "$1: "
+    WriteToDisplay_SameLine "$(ColourTextBrightOrange quiz)" "$1: "
     WriteToLog quiz "$1"
 
     }
