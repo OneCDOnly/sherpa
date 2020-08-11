@@ -48,7 +48,7 @@ Init()
     DisableDevMode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200812d
+    readonly SCRIPT_VERSION=200812e
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -407,12 +407,12 @@ LogRuntimeParameters()
     DebugNAS '/opt' "$([[ -L '/opt' ]] && $READLINK_CMD '/opt' || echo "<not present>")"
     DebugNAS "$SHARE_DOWNLOAD_PATH" "$([[ -L $SHARE_DOWNLOAD_PATH ]] && $READLINK_CMD "$SHARE_DOWNLOAD_PATH" || echo "<not present>")"
     DebugScript 'unparsed arguments' "$USER_ARGS_RAW"
-    DebugScript 'app(s) to install' "${QPKGS_to_install[*]}"
-    DebugScript 'app(s) to uninstall' "${QPKGS_to_uninstall[*]}"
-    DebugScript 'app(s) to reinstall' "${QPKGS_to_reinstall[*]}"
-    DebugScript 'app(s) to update' "${QPKGS_to_update[*]}"
-    DebugScript 'app(s) to backup' "${QPKGS_to_backup[*]}"
-    DebugScript 'app(s) to restore' "${QPKGS_to_restore[*]}"
+    DebugScript 'app(s) to install' "${QPKGS_to_install[*]} "
+    DebugScript 'app(s) to uninstall' "${QPKGS_to_uninstall[*]} "
+    DebugScript 'app(s) to reinstall' "${QPKGS_to_reinstall[*]} "
+    DebugScript 'app(s) to update' "${QPKGS_to_update[*]} "
+    DebugScript 'app(s) to backup' "${QPKGS_to_backup[*]} "
+    DebugScript 'app(s) to restore' "${QPKGS_to_restore[*]} "
     DebugScript 'work path' "$WORK_PATH"
     DebugQPKG 'download path' "$QPKG_DL_PATH"
     DebugIPKG 'download path' "$IPKG_DL_PATH"
