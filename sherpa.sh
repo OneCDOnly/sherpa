@@ -48,7 +48,7 @@ Init()
     DisableDevMode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200811m
+    readonly SCRIPT_VERSION=200811n
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -421,20 +421,18 @@ LogRuntimeParameters()
 
     if IsNotError && [[ $EUID -ne 0 || $USER != admin ]]; then
         ShowAsError "this script must be run as the 'admin' user. Please login via SSH as 'admin' and try again."
-        code_pointer=1
         return 1
     fi
 
     if IsNotError && [[ ${#QPKGS_to_install[@]} -eq 0 && ${#QPKGS_to_uninstall[@]} -eq 0 && ${#QPKGS_to_update[@]} -eq 0 && ${#QPKGS_to_backup[@]} -eq 0 && ${#QPKGS_to_restore[@]} -eq 0 ]] && IsNotSatisfyDependenciesOnly && [[ $update_all_apps = false ]]; then
         ShowAsError 'no valid QPKGs or actions were specified'
         EnableShowAbbreviationsReminder
-        code_pointer=2
         return 1
     fi
 
     if [[ $backup_all_apps = true && $restore_all_apps = true ]]; then
         ShowAsError 'no point running a backup then a restore operation'
-        code_pointer=3
+        code_pointer=1
         return 1
     fi
 
@@ -445,7 +443,6 @@ LogRuntimeParameters()
         if [[ $result -ne 0 ]]; then
             ShowAsError "unable to create working directory $(FormatAsFileName "$WORK_PATH") $(FormatAsExitcode $result)"
             EnableSuggestIssue
-            code_pointer=4
             return 1
         else
             cd "$WORK_PATH" || return 1
@@ -459,7 +456,6 @@ LogRuntimeParameters()
         if [[ $result -ne 0 ]]; then
             ShowAsError "unable to create QPKG download directory $(FormatAsFileName "$QPKG_DL_PATH") $(FormatAsExitcode $result)"
             EnableSuggestIssue
-            code_pointer=5
             return 1
         fi
     fi
@@ -472,7 +468,6 @@ LogRuntimeParameters()
         if [[ $result -ne 0 ]]; then
             ShowAsError "unable to create IPKG download directory $(FormatAsFileName "$IPKG_DL_PATH") $(FormatAsExitcode $result)"
             EnableSuggestIssue
-            code_pointer=6
             return 1
         else
             monitor_flag="$IPKG_DL_PATH/.monitor"
@@ -486,7 +481,6 @@ LogRuntimeParameters()
         if [[ $result -ne 0 ]]; then
             ShowAsError "unable to create IPKG cache directory $(FormatAsFileName "$IPKG_CACHE_PATH") $(FormatAsExitcode $result)"
             EnableSuggestIssue
-            code_pointer=7
             return 1
         fi
     fi
@@ -495,7 +489,6 @@ LogRuntimeParameters()
         for conflicting_qpkg in "${SHERPA_COMMON_CONFLICTS[@]}"; do
             if IsQPKGEnabled "$conflicting_qpkg"; then
                 ShowAsError "'$conflicting_qpkg' is enabled. This is an unsupported configuration."
-                code_pointer=8
                 return 1
             fi
         done
@@ -508,7 +501,6 @@ LogRuntimeParameters()
 
             if [[ $ENTWARE_VER = none ]]; then
                 ShowAsError 'Entware appears to be installed but is not visible.'
-                code_pointer=9
                 return 1
             fi
         fi
@@ -517,7 +509,6 @@ LogRuntimeParameters()
     if IsNotError; then
         if ! ($CURL_CMD $curl_insecure_arg --silent --fail https://onecdonly.github.io/sherpa/LICENSE -o LICENSE); then
             ShowAsError 'no Internet access'
-            code_pointer=10
             return 1
         fi
     fi
@@ -532,7 +523,7 @@ ParseArgs()
 
     if [[ -z $USER_ARGS_RAW ]]; then
         EnableShowHelpReminder
-        code_pointer=11
+        code_pointer=2
         return 1
     fi
 
@@ -558,27 +549,22 @@ ParseArgs()
                 ;;
             --help)
                 EnableShowHelpReminder
-                code_pointer=12
                 return 1
                 ;;
             -l|--log)
                 EnableLogViewOnly
-                code_pointer=13
                 return 1
                 ;;
             --paste)
                 EnableLogPasteOnly
-                code_pointer=14
                 return 1
                 ;;
             --abs)
                 EnableShowAbbreviationsReminder
-                code_pointer=15
                 return 1
                 ;;
             -v|--version)
                 EnableVersionOnly
-                code_pointer=16
                 return 1
                 ;;
             --install-all)
@@ -745,7 +731,6 @@ DownloadQPKGs()
                 ShowAsNote "It's not necessary to install Entware first. It will be installed on-demand with your other sherpa packages. :)"
                 EnableAbort
                 DisableShowInstallerOutcome
-                code_pointer=17
                 return 1
             else
                 DownloadQPKG Entware
@@ -863,7 +848,7 @@ UpdateEntware()
     {
 
     if IsNotSysFilePresent $OPKG_CMD || IsNotSysFilePresent $GNU_FIND_CMD; then
-        code_pointer=18
+        code_pointer=3
         return 1
     fi
 
@@ -979,7 +964,6 @@ InstallIPKGs()
         InstallIPKGBatch "$packages"
     else
         ShowAsError "IPKG download path [$IPKG_DL_PATH] does not exist"
-        code_pointer=19
         returncode=1
     fi
 
@@ -1035,8 +1019,6 @@ InstallIPKGBatch()
         else
             ShowAsError "download & install IPKG$(DisplayPlural "$IPKG_download_count") failed $(FormatAsExitcode $result)"
             DebugErrorFile "$log_pathfile"
-
-            code_pointer=20
             returncode=1
         fi
         DebugTimerStageEnd "$STARTSECONDS"
@@ -1101,7 +1083,7 @@ DowngradePy3()
     result=$?
 
     if [[ $result -gt 0 ]]; then
-        code_pointer=21
+        code_pointer=4
         returncode=1
     fi
 
@@ -1112,7 +1094,7 @@ DowngradePy3()
         if [[ $result -eq 0 ]]; then
             ShowAsDone "$(FormatAsPackageName Watcher3) selected so downgraded Python 3 IPKGs"
         else
-            code_pointer=22
+            code_pointer=5
             returncode=1
         fi
     fi
@@ -1165,7 +1147,6 @@ InstallPy3Modules()
                 echo "* Ugh! The usual fix for this is to let sherpa reinstall 'Entware' at least once."
                 echo -e "\t./sherpa.sh ew"
                 echo "If it happens again after reinstalling 'Entware', please create a new issue for this on GitHub."
-                code_pointer=23
                 return 1
             fi
         fi
@@ -1192,8 +1173,6 @@ InstallPy3Modules()
     else
         ShowAsError "download & install $desc failed $(FormatAsResult "$result")"
         DebugErrorFile "$log_pathfile"
-
-        code_pointer=24
         returncode=1
     fi
 
@@ -1255,8 +1234,6 @@ InstallQPKG()
     else
         ShowAsError "QPKG installation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $result)"
         DebugErrorFile "$log_pathfile"
-
-        code_pointer=25
         returncode=1
     fi
 
@@ -1326,14 +1303,11 @@ DownloadQPKG()
                 ShowAsDone "downloaded QPKG $(FormatAsFileName "$remote_filename")"
             else
                 ShowAsError "downloaded QPKG checksum incorrect $(FormatAsFileName "$local_pathfile")"
-                code_pointer=26
                 returncode=1
             fi
         else
             ShowAsError "download failed $(FormatAsFileName "$local_pathfile") $(FormatAsExitcode $result)"
             DebugErrorFile "$log_pathfile"
-
-            code_pointer=27
             returncode=1
         fi
     fi
@@ -1456,7 +1430,6 @@ LoadInstalledQPKGVars()
         done
     else
         DebugError 'QPKG not installed?'
-        code_pointer=28
         return 1
     fi
 
@@ -1492,7 +1465,6 @@ UninstallQPKG()
                 ShowAsDone "uninstalled $(FormatAsPackageName "$1")"
             else
                 ShowAsError "unable to uninstall $(FormatAsPackageName "$1") $(FormatAsExitcode $result)"
-                code_pointer=29
                 return 1
             fi
         fi
@@ -1520,11 +1492,11 @@ QPKGServiceCtl()
 
     if [[ -z $1 ]]; then
         DebugError 'action unspecified'
-        code_pointer=30
+        code_pointer=6
         return 1
     elif [[ -z $2 ]]; then
         DebugError 'QPKG name unspecified'
-        code_pointer=31
+        code_pointer=7
         return 1
     fi
 
@@ -1550,7 +1522,6 @@ QPKGServiceCtl()
                 else
                     $CAT_CMD "$qpkg_pathfile.$START_LOG_FILE" >> "$DEBUG_LOG_PATHFILE"
                 fi
-                code_pointer=32
                 return 1
             fi
             ;;
@@ -1596,7 +1567,6 @@ QPKGServiceCtl()
             ;;
         *)
             DebugError "Unrecognised action '$1'"
-            code_pointer=33
             return 1
             ;;
     esac
@@ -1624,11 +1594,9 @@ GetQPKGServiceFile()
 
     if [[ -z $output ]]; then
         DebugError "No service file configured for package $(FormatAsPackageName "$1")"
-        code_pointer=34
         returncode=1
     elif [[ ! -e $output ]]; then
         DebugError "Package service file not found $(FormatAsStdout "$output")"
-        code_pointer=35
         returncode=1
     fi
 
@@ -1945,7 +1913,7 @@ FindAllIPKGDependencies()
     [[ -z $1 ]] && return 1
 
     if IsNotSysFilePresent $OPKG_CMD || IsNotSysFilePresent $GNU_GREP_CMD; then
-        code_pointer=36
+        code_pointer=8
         return 1
     fi
 
@@ -2033,7 +2001,6 @@ OpenIPKGArchive()
 
     if [[ ! -e $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE ]]; then
         ShowAsError "could not locate the IPKG list file"
-        code_pointer=37
         return 1
     fi
 
@@ -2043,7 +2010,6 @@ OpenIPKGArchive()
 
     if [[ ! -e $EXTERNAL_PACKAGE_LIST_PATHFILE ]]; then
         ShowAsError "could not open the IPKG list file"
-        code_pointer=38
         return 1
     fi
 
@@ -2127,7 +2093,6 @@ IsSysFilePresent()
 
     if ! [[ -f $1 || -L $1 ]]; then
         ShowAsError "a required NAS system file is missing $(FormatAsFileName "$1")"
-        code_pointer=39
         return 1
     else
         return 0
@@ -2148,7 +2113,6 @@ IsSysSharePresent()
 
     if [[ ! -L $1 ]]; then
         ShowAsError "a required NAS system share is missing $(FormatAsFileName "$1"). Please re-create it via the QTS Control Panel -> Privilege Settings -> Shared Folders."
-        code_pointer=40
         return 1
     else
         return 0
