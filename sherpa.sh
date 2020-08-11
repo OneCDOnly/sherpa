@@ -48,7 +48,7 @@ Init()
     DisableDevMode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200812e
+    readonly SCRIPT_VERSION=200812f
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -104,6 +104,7 @@ Init()
     readonly START_LOG_FILE=start.log
     readonly STOP_LOG_FILE=stop.log
     readonly RESTART_LOG_FILE=restart.log
+    readonly UPDATE_LOG_FILE=update.log
     readonly DEFAULT_SHARES_PATHFILE=/etc/config/def_share.info
     readonly ULINUX_PATHFILE=/etc/config/uLinux.conf
     readonly PLATFORM_PATHFILE=/etc/platform.conf
@@ -857,7 +858,7 @@ UpdateEntware()
     fi
 
     local package_minutes_threshold=60
-    local log_pathfile="$WORK_PATH/entware-update.log"
+    local log_pathfile="$WORK_PATH/entware.$UPDATE_LOG_FILE"
     local msgs=''
     local result=0
 
