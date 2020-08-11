@@ -48,7 +48,7 @@ Init()
     DisableDevMode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200812c
+    readonly SCRIPT_VERSION=200812d
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -341,9 +341,9 @@ Init()
     readonly PREV_QPKG_CONFIG_FILES=(sabnzbd.ini settings.ini config.cfg config.ini) # last element is used as target filename
     readonly WORK_PATH=$SHARE_PUBLIC_PATH/${SCRIPT_FILE%.*}.tmp
     readonly DEBUG_LOG_PATHFILE=$SHARE_PUBLIC_PATH/$DEBUG_LOG_FILE
-    readonly QPKG_DL_PATH=$WORK_PATH/qpkg-downloads
-    readonly IPKG_DL_PATH=$WORK_PATH/ipkg-downloads
-    readonly IPKG_CACHE_PATH=$WORK_PATH/ipkg-cache
+    readonly QPKG_DL_PATH=$WORK_PATH/qpkg.downloads
+    readonly IPKG_DL_PATH=$WORK_PATH/ipkg.downloads
+    readonly IPKG_CACHE_PATH=$WORK_PATH/ipkg.cache
     readonly EXTERNAL_PACKAGE_LIST_PATHFILE=$WORK_PATH/Packages
 
     # internals
@@ -2004,7 +2004,7 @@ OpenIPKGArchive()
 
     CloseIPKGArchive
 
-    RunThisAndLogResults "$Z7_CMD e -o$($DIRNAME_CMD "$EXTERNAL_PACKAGE_LIST_PATHFILE") $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE" "$WORK_PATH/IPKG.list.archive.extract"
+    RunThisAndLogResults "$Z7_CMD e -o$($DIRNAME_CMD "$EXTERNAL_PACKAGE_LIST_PATHFILE") $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE" "$WORK_PATH/ipkg.list.archive.extract"
 
     if [[ ! -e $EXTERNAL_PACKAGE_LIST_PATHFILE ]]; then
         ShowAsError "could not open the IPKG list file"
