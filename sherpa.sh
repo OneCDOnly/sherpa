@@ -48,7 +48,7 @@ Init()
     DisableDevMode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200811n
+    readonly SCRIPT_VERSION=200812
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -896,19 +896,15 @@ InstallQPKGIndepsAddons()
     if IsQPKGInstalled SABnzbdplus && [[ $NAS_QPKG_ARCH != none ]]; then
         if IsNotQPKGInstalled Par2; then
             InstallQPKG Par2
-            if IsError; then
-                ShowAsWarning "$(FormatAsPackageName Par2) installation failed - but it's not essential so I'm continuing"
-            fi
+            IsError && ShowAsWarning "$(FormatAsPackageName Par2) installation failed - but it's not essential so I'm continuing"
         fi
     fi
 
     # kludge: use the same ugly workaround until QPKG dep checking works properly
-    if (IsQPKGInstalled SABnzbd || [[ $TARGET_APP = SABnzbd ]];) && [[ $NAS_QPKG_ARCH != none ]]; then
+    if (IsQPKGInstalled SABnzbd || [[ $TARGET_APP = SABnzbd ]] ) && [[ $NAS_QPKG_ARCH != none ]]; then
         if IsNotQPKGInstalled Par2; then
             InstallQPKG Par2
-            if IsError; then
-                ShowAsWarning "$(FormatAsPackageName Par2) installation failed - but it's not essential so I'm continuing"
-            fi
+            IsError && ShowAsWarning "$(FormatAsPackageName Par2) installation failed - but it's not essential so I'm continuing"
         fi
     fi
 
@@ -952,12 +948,12 @@ InstallIPKGs()
         UpdateEntware
         IsError && return
         for index in "${!SHERPA_QPKG_NAME[@]}"; do
-            if (IsQPKGInstalled "${SHERPA_QPKG_NAME[$index]}") || [[ $TARGET_APP = "${SHERPA_QPKG_NAME[$index]}" ]]; then
+            if IsQPKGInstalled "${SHERPA_QPKG_NAME[$index]}" || [[ $TARGET_APP = "${SHERPA_QPKG_NAME[$index]}" ]]; then
                 packages+=" ${SHERPA_QPKG_IPKGS[$index]}"
             fi
         done
 
-        if (IsQPKGInstalled SABnzbd) || [[ $TARGET_APP = SABnzbd ]]; then
+        if IsQPKGInstalled SABnzbd || [[ $TARGET_APP = SABnzbd ]]; then
             [[ $NAS_QPKG_ARCH = none ]] && packages+=' par2cmdline'
         fi
 
@@ -989,7 +985,7 @@ InstallIPKGBatch()
     DebugFuncEntry
     local returncode=0
     local requested_IPKGs=''
-    local log_pathfile="$IPKG_DL_PATH/IPKGs.$INSTALL_LOG_FILE"
+    local log_pathfile="$IPKG_DL_PATH/ipkgs.$INSTALL_LOG_FILE"
     local result=0
 
     requested_IPKGs="$1"
@@ -1126,7 +1122,7 @@ InstallPy3Modules()
     local returncode=0
     local packages=''
     local desc="'Python 3' modules"
-    local log_pathfile="$WORK_PATH/Py3-modules.$INSTALL_LOG_FILE"
+    local log_pathfile="$WORK_PATH/py3-modules.$INSTALL_LOG_FILE"
 
     for index in "${!SHERPA_QPKG_NAME[@]}"; do
         if (IsQPKGInstalled "${SHERPA_QPKG_NAME[$index]}") || [[ $TARGET_APP = "${SHERPA_QPKG_NAME[$index]}" ]]; then
@@ -1134,24 +1130,22 @@ InstallPy3Modules()
         fi
     done
 
-    if [[ -n ${packages// /} ]]; then
-        # sometimes, OpenWRT doesn't have a 'pip3'
-        if [[ -e /opt/bin/pip3 ]]; then
-            pip3_cmd=/opt/bin/pip3
-        elif [[ -e /opt/bin/pip3.8 ]]; then
-            pip3_cmd=/opt/bin/pip3.8
-        elif [[ -e /opt/bin/pip3.7 ]]; then
-            pip3_cmd=/opt/bin/pip3.7
-        else
-            if IsNotSysFilePresent $pip3_cmd; then
-                echo "* Ugh! The usual fix for this is to let sherpa reinstall 'Entware' at least once."
-                echo -e "\t./sherpa.sh ew"
-                echo "If it happens again after reinstalling 'Entware', please create a new issue for this on GitHub."
-                return 1
-            fi
-        fi
+    [[ -z ${packages// /} ]] && return  # nothing to install
+
+    # sometimes, OpenWRT doesn't have a 'pip3'
+    if [[ -e /opt/bin/pip3 ]]; then
+        pip3_cmd=/opt/bin/pip3
+    elif [[ -e /opt/bin/pip3.8 ]]; then
+        pip3_cmd=/opt/bin/pip3.8
+    elif [[ -e /opt/bin/pip3.7 ]]; then
+        pip3_cmd=/opt/bin/pip3.7
     else
-        return      # nothing to install
+        if IsNotSysFilePresent $pip3_cmd; then
+            echo "* Ugh! The usual fix for this is to let sherpa reinstall 'Entware' at least once."
+            echo -e "\t$0 ew"
+            echo "If it happens again after reinstalling 'Entware', please create a new issue for this on GitHub."
+            return 1
+        fi
     fi
 
     [[ -n ${SHERPA_COMMON_PIPS// /} ]] && exec_cmd="$pip3_cmd install $SHERPA_COMMON_PIPS --disable-pip-version-check"
