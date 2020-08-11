@@ -48,7 +48,7 @@ Init()
     DisableDevMode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200812b
+    readonly SCRIPT_VERSION=200812c
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -1008,7 +1008,7 @@ InstallIPKGBatch()
         trap CTRL_C_Captured INT
         _MonitorDirSize_ "$IPKG_DL_PATH" "$IPKG_download_size" &
 
-        RunThisAndLogResults "$OPKG_CMD install $ignore_space_arg --force-overwrite ${IPKG_download_list[*]} --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
+        RunThisAndLogResults "$OPKG_CMD install$ignore_space_arg --force-overwrite ${IPKG_download_list[*]} --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
         result=$?
 
         [[ -e $monitor_flag ]] && { rm "$monitor_flag"; $SLEEP_CMD 2 ;}
@@ -1051,8 +1051,8 @@ DowngradePy3()
     local pkg_version=3.7.4-2
     local pkg_arch=$($BASENAME_CMD "$source_url" | $SED_CMD 's|\-k|\-|;s|sf\-|\-|')
     local ipkg_urls=()
-    local dl_log_pathfile="$IPKG_DL_PATH/IPKGs.downgrade.$DOWNLOAD_LOG_FILE"
-    local install_log_pathfile="$IPKG_DL_PATH/IPKGs.downgrade.$INSTALL_LOG_FILE"
+    local dl_log_pathfile="$IPKG_DL_PATH/python3.downgrade.$DOWNLOAD_LOG_FILE"
+    local install_log_pathfile="$IPKG_DL_PATH/python3.downgrade.$INSTALL_LOG_FILE"
     local result=0
 
     ShowAsProc "$(FormatAsPackageName Watcher3) selected so downgrading Python 3 IPKGs"
@@ -1088,7 +1088,7 @@ DowngradePy3()
     fi
 
     if IsNotError; then
-        RunThisAndLogResults "$OPKG_CMD install --force-downgrade $IPKG_DL_PATH/*.ipk" "$install_log_pathfile"
+        RunThisAndLogResults "$OPKG_CMD install$ignore_space_arg --force-downgrade $IPKG_DL_PATH/*.ipk" "$install_log_pathfile"
         result=$?
 
         if [[ $result -eq 0 ]]; then
