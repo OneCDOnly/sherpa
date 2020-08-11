@@ -766,7 +766,8 @@ RemoveUnwantedQPKGs()
         ShowAsNote "Reinstalling $(FormatAsPackageName Entware) will revert all IPKGs to defaults and only those required to support your sherpa apps will be reinstalled."
         ShowAsNote "The currently installed IPKG list will be saved to $(FormatAsFileName "$previous_Entware_package_list")"
         (IsQPKGInstalled SABnzbdplus || IsQPKGInstalled Headphones) && ShowAsWarning "Also, the $(FormatAsPackageName SABnzbdplus) and $(FormatAsPackageName Headphones) packages CANNOT BE REINSTALLED as Python 2.7.16 is no-longer available."
-        ShowAsQuiz "Press (y) if you agree to remove all current $(FormatAsPackageName Entware) IPKGs and their configs, or any other key to abort"
+        IsNotVisibleDebugging && echo
+        ShowAsQuiz "Press 'Y' if you agree to remove all current $(FormatAsPackageName Entware) IPKGs (and their configurations), or any other key to abort"
         read -rn1 response; echo
         DebugVar response
         case ${response:0:1} in
@@ -776,10 +777,12 @@ RemoveUnwantedQPKGs()
                 UninstallQPKG Entware
                 ;;
             *)
+                EnableAbort
+                DisableShowInstallerOutcome
                 DebugInfoThinSeparator
                 DebugScript 'user abort'
                 DebugInfoThickSeparator
-                exit $code_pointer
+                return 1
                 ;;
         esac
     fi
