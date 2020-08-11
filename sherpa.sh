@@ -32,13 +32,6 @@
 
 readonly USER_ARGS_RAW="$*"
 
-ResetCodePointer()
-    {
-
-    code_pointer=0
-
-    }
-
 Init()
     {
 
@@ -53,10 +46,9 @@ Init()
     DisableShowHelpReminder
     EnableShowInstallerOutcome
     DisableDevMode
-    ResetCodePointer
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200811k
+    readonly SCRIPT_VERSION=200811m
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -377,6 +369,7 @@ LogRuntimeParameters()
     {
 
     local conflicting_qpkg=''
+    code_pointer=0
 
     DebugInfoThickSeparator
     DebugScript 'started' "$($DATE_CMD | $TR_CMD -s ' ')"
@@ -778,9 +771,9 @@ RemoveUnwantedQPKGs()
     local response=''
     local previous_Entware_package_list=$SHARE_PUBLIC_PATH/Entware.previously.installed.list
 
-    UninstallQPKG Optware || ResetCodePointer     # ignore uninstall errors
-    UninstallQPKG Entware-3x || ResetCodePointer  # ignore uninstall errors
-    UninstallQPKG Entware-ng || ResetCodePointer  # ignore uninstall errors
+    UninstallQPKG Optware
+    UninstallQPKG Entware-3x
+    UninstallQPKG Entware-ng
 
     IsQPKGInstalled "$TARGET_APP" && reinstall_flag=true
 
@@ -920,8 +913,6 @@ InstallQPKGIndepsAddons()
             InstallQPKG Par2
             if IsError; then
                 ShowAsWarning "$(FormatAsPackageName Par2) installation failed - but it's not essential so I'm continuing"
-                ResetCodePointer
-                DebugVar code_pointer
             fi
         fi
     fi
@@ -932,8 +923,6 @@ InstallQPKGIndepsAddons()
             InstallQPKG Par2
             if IsError; then
                 ShowAsWarning "$(FormatAsPackageName Par2) installation failed - but it's not essential so I'm continuing"
-                ResetCodePointer
-                DebugVar code_pointer
             fi
         fi
     fi
