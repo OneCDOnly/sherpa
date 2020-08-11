@@ -56,7 +56,7 @@ Init()
     ResetCodePointer
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200811i
+    readonly SCRIPT_VERSION=200811j
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -376,6 +376,8 @@ Init()
 LogRuntimeParameters()
     {
 
+    local conflicting_qpkg=''
+
     DebugInfoThickSeparator
     DebugScript 'started' "$($DATE_CMD | $TR_CMD -s ' ')"
     DebugScript 'version' "$SCRIPT_VERSION"
@@ -388,18 +390,9 @@ LogRuntimeParameters()
 
     ParseArgs
 
-    if IsVersionOnly; then
-        ShowVersion
-        return 1
-    else
-        IsVisibleDebugging || echo "$(ColourTextBrightWhite "$SCRIPT_FILE") ($SCRIPT_VERSION)"
-    fi
-
+    IsNotVisibleDebugging && IsNotVersionOnly && echo "$(ColourTextBrightWhite "$SCRIPT_FILE") ($SCRIPT_VERSION)"
     IsAbort && return
-
     IsNotVisibleDebugging && echo
-
-    local conflicting_qpkg=''
 
     DebugNAS 'model' "$($GREP_CMD -v "^$" /etc/issue | $SED_CMD 's|^Welcome to ||;s|(.*||')"
     DebugNAS 'RAM' "$INSTALLED_RAM_KB kB"
@@ -677,34 +670,6 @@ ParseArgs()
 
     }
 
-ShowHelp()
-    {
-
-    local package=''
-
-    echo "* A package manager to install various media-management apps into QNAP NAS."
-
-    echo -e "\n- Each application shown below can be installed (or reinstalled) by running:"
-    for package in "${SHERPA_QPKG_NAME[@]}"; do
-        (IsQPKGUserInstallable "$package") && echo -e "\t$0 $package"
-    done
-
-    echo -e "\n- Display recognised package abbreviations:"
-    echo -e "\t$0 --abs"
-
-    echo -e "\n- Ensure all sherpa application dependencies are installed:"
-    echo -e "\t$0 --check-all"
-
-    echo -e "\n- Don't check free-space on target filesystem when installing Entware packages:"
-    echo -e "\t$0 --ignore-space"
-
-    echo -e "\n- Update all sherpa-installed applications:"
-    echo -e "\t$0 --update-all"
-
-    return 0
-
-    }
-
 ShowPackageAbbreviations()
     {
 
@@ -722,16 +687,7 @@ ShowPackageAbbreviations()
 
     }
 
-ShowVersion()
-    {
-
-    echo "$SCRIPT_VERSION"
-
-    return 0
-
-    }
-
-ShowLogView()
+ShowLogViewer()
     {
 
     if [[ -n $DEBUG_LOG_PATHFILE && -e $DEBUG_LOG_PATHFILE ]]; then
@@ -1787,13 +1743,39 @@ Cleanup()
 ShowResult()
     {
 
+    local package=''
     local RE=''
     local emoticon=''
 
-    if IsLogViewOnly; then
-        ShowLogView
+    if IsVersionOnly; then
+        echo "$SCRIPT_VERSION"
+    elif IsLogViewOnly; then
+        ShowLogViewer
     elif IsShowHelpReminder; then
-        ShowHelp
+        echo -e "\n* A package manager to install various media-management apps into QNAP NAS."
+
+        echo -e "\n- Each application shown below can be installed (or re-installed) by running:"
+        for package in "${SHERPA_QPKG_NAME[@]}"; do
+            (IsQPKGUserInstallable "$package") && echo -e "\t$0 $package"
+        done
+
+        echo -e "\n- Display recognised package abbreviations:"
+        echo -e "\t$0 --abs"
+
+        echo -e "\n- Ensure all sherpa application dependencies are installed:"
+        echo -e "\t$0 --check-all"
+
+        echo -e "\n- Don't check free-space on target filesystem when installing Entware packages:"
+        echo -e "\t$0 --ignore-space"
+
+        echo -e "\n- Update all sherpa applications:"
+        echo -e "\t$0 --update-all"
+
+        echo -e "\n- View the sherpa log:"
+        echo -e "\t$0 --log"
+
+        echo -e "\n- Upload the sherpa log to a public pastebin (https://termbin.com):"
+        echo -e "\t$0 --paste"
     elif IsShowAbbreviationsReminder; then
         ShowPackageAbbreviations
     elif IsLogPasteOnly; then
@@ -1828,15 +1810,15 @@ ShowResult()
 
     if IsSuggestIssue; then
         echo -e "\n* Please consider creating a new issue for this on GitHub:\n\thttps://github.com/OneCDOnly/sherpa/issues"
-        echo -e "\n* Alternatively, post on the QNAP NAS Community Forum:\n\thttps://forum.qnap.com/viewtopic.php?f=320&t=132373"
-        echo -e "\n* Remember to include a copy of your sherpa runtime debug log for analysis."
-    fi
 
-    if IsShowHelpReminder; then
-        echo -e "\n- View the runtime debug log:"
+        echo -e "\n* Alternatively, post on the QNAP NAS Community Forum:\n\thttps://forum.qnap.com/viewtopic.php?f=320&t=132373"
+
+        echo -e "\n* Remember to include a copy of your sherpa log for analysis."
+
+        echo -e "\n- View the sherpa log:"
         echo -e "\t$0 --log"
 
-        echo -e "\n- Upload the runtime debug log to a public pastebin (https://termbin.com):"
+        echo -e "\n- Upload the sherpa log to a public pastebin (https://termbin.com):"
         echo -e "\t$0 --paste"
     fi
 
