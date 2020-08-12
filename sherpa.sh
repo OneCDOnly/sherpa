@@ -48,7 +48,7 @@ Init()
     DisableDevMode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200812f
+    readonly SCRIPT_VERSION=200813
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -674,7 +674,7 @@ ShowLogViewer()
         if [[ -e $GNU_LESS_CMD ]]; then
             LESSSECURE=1 $GNU_LESS_CMD +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$DEBUG_LOG_PATHFILE"
         else
-            $CAT_CMD "$DEBUG_LOG_PATHFILE"
+            $CAT_CMD --number "$DEBUG_LOG_PATHFILE"
         fi
     else
         echo "no log to display"
@@ -829,7 +829,7 @@ PatchBaseInit()
 
     local find_text=''
     local insert_text=''
-    local package_init_pathfile=$(GetQPKGServiceFile Entware)
+    local package_init_pathfile=$(GetQPKGServicePathFile Entware)
 
     if ($GREP_CMD -q 'opt.orig' "$package_init_pathfile"); then
         DebugInfo 'patch: do the "opt shuffle" - already done'
@@ -968,8 +968,8 @@ InstallIPKGs()
         returncode=1
     fi
 
-    # in-case 'python' has disappeared
-    [[ ! -L /opt/bin/python && -e /opt/bin/python3 ]] && ln -s /opt/bin/python3 /opt/bin/python
+    # in-case 'python' has disappeared again ...
+    [[ ! -L /opt/bin/python && -e /opt/bin/python3 ]] && $LN_CMD -s /opt/bin/python3 /opt/bin/python
 
     DebugFuncExit
     return $returncode
@@ -1100,8 +1100,8 @@ DowngradePy3()
         fi
     fi
 
-    # seems 'python' can disappear during a Python downgrade so ...
-    [[ ! -L /opt/bin/python && -e /opt/bin/python3 ]] && ln -s /opt/bin/python3 /opt/bin/python
+    # seems 'python' can disappear during a Python downgrade, so ...
+    [[ ! -L /opt/bin/python && -e /opt/bin/python3 ]] && $LN_CMD -s /opt/bin/python3 /opt/bin/python
 
     if IsError; then
         ShowAsError "Python 3 downgrade failed $(FormatAsResult "$result")"
@@ -1193,7 +1193,7 @@ RestartAllDepQPKGs()
     local package=''
 
     for package in "${SHERPA_DEP_QPKGs[@]}"; do
-        IsQPKGEnabled "$package" && QPKGServiceCtl restart "$package"
+        IsQPKGEnabled "$package" && RestartQPKGService restart "$package"
     done
 
     DebugFuncExit
@@ -1477,104 +1477,45 @@ UninstallQPKG()
 
     }
 
-QPKGServiceCtl()
+RestartQPKGService()
     {
 
-    # Used in-place of [qpkg_service] as the QTS 4.2.6 version does not offer returncodes
+    # Restarts the servive script for the QPKG named in $1
 
     # input:
-    #   $1 = action (start|stop|restart)
-    #   $2 = QPKG name
+    #   $1 = QPKG name
 
     # output:
     #   $? = 0 if successful, 1 if failed
 
     if [[ -z $1 ]]; then
-        DebugError 'action unspecified'
-        code_pointer=6
-        return 1
-    elif [[ -z $2 ]]; then
         DebugError 'QPKG name unspecified'
-        code_pointer=7
+        code_pointer=6
         return 1
     fi
 
     local result=0
     local init_pathfile=''
 
-    init_pathfile=$(GetQPKGServiceFile "$2")
+    init_pathfile=$(GetQPKGServicePathFile "$1")
 
-    case $1 in
-        start)
-            ShowAsProcLong "starting service $(FormatAsPackageName "$2")"
-            RunThisAndLogResults "$init_pathfile start" "$qpkg_pathfile.$START_LOG_FILE"
-            result=$?
+    ShowAsProc "restarting service $(FormatAsPackageName "$1")"
+    RunThisAndLogResults "$init_pathfile restart" "$DEBUG_LOG_PATHFILE"
+    result=$?
 
-            if [[ $result -eq 0 ]]; then
-                ShowAsDone "started service $(FormatAsPackageName "$2")"
-            else
-                ShowAsWarning "Could not start service $(FormatAsPackageName "$2") $(FormatAsExitcode $result)"
-                if IsVisibleDebugging; then
-                    DebugInfoThickSeparator
-                    $CAT_CMD "$qpkg_pathfile.$START_LOG_FILE"
-                    DebugInfoThickSeparator
-                else
-                    $CAT_CMD "$qpkg_pathfile.$START_LOG_FILE" >> "$DEBUG_LOG_PATHFILE"
-                fi
-                return 1
-            fi
-            ;;
-        stop)
-            ShowAsProc "stopping service $(FormatAsPackageName "$2")"
-            RunThisAndLogResults "$init_pathfile stop" "$qpkg_pathfile.$STOP_LOG_FILE"
-            result=$?
-
-            if [[ $result -eq 0 ]]; then
-                ShowAsDone "stopped service $(FormatAsPackageName "$2")"
-            else
-                ShowAsWarning "Could not stop service $(FormatAsPackageName "$2") $(FormatAsExitcode $result)"
-                if IsVisibleDebugging; then
-                    DebugInfoThickSeparator
-                    $CAT_CMD "$qpkg_pathfile.$STOP_LOG_FILE"
-                    DebugInfoThickSeparator
-                else
-                    $CAT_CMD "$qpkg_pathfile.$STOP_LOG_FILE" >> "$DEBUG_LOG_PATHFILE"
-                fi
-                # meh, continue anyway...
-                return 1
-            fi
-            ;;
-        restart)
-            ShowAsProc "restarting service $(FormatAsPackageName "$2")"
-            RunThisAndLogResults "$init_pathfile restart" "$qpkg_pathfile.$RESTART_LOG_FILE"
-            result=$?
-
-            if [[ $result -eq 0 ]]; then
-                ShowAsDone "restarted service $(FormatAsPackageName "$2")"
-            else
-                ShowAsWarning "Could not restart service $(FormatAsPackageName "$2") $(FormatAsExitcode $result)"
-                if IsVisibleDebugging; then
-                    DebugInfoThickSeparator
-                    $CAT_CMD "$qpkg_pathfile.$RESTART_LOG_FILE"
-                    DebugInfoThickSeparator
-                else
-                    $CAT_CMD "$qpkg_pathfile.$RESTART_LOG_FILE" >> "$DEBUG_LOG_PATHFILE"
-                fi
-                # meh, continue anyway...
-                return 1
-            fi
-            ;;
-        *)
-            DebugError "Unrecognised action '$1'"
-            return 1
-            ;;
-    esac
+    if [[ $result -eq 0 ]]; then
+        ShowAsDone "restarted service $(FormatAsPackageName "$1")"
+    else
+        ShowAsWarning "Could not restart service $(FormatAsPackageName "$1") $(FormatAsExitcode $result)"
+        # meh, continue anyway...
+        return 1
+    fi
 
     return 0
 
     }
 
-GetQPKGServiceFile()
+GetQPKGServicePathFile()
     {
 
     # input:
@@ -1912,7 +1853,7 @@ FindAllIPKGDependencies()
     [[ -z $1 ]] && return 1
 
     if IsNotSysFilePresent $OPKG_CMD || IsNotSysFilePresent $GNU_GREP_CMD; then
-        code_pointer=8
+        code_pointer=7
         return 1
     fi
 
