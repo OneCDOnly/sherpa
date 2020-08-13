@@ -48,7 +48,7 @@ Init()
     DisableDevMode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200813
+    readonly SCRIPT_VERSION=200813b
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -1193,7 +1193,7 @@ RestartAllDepQPKGs()
     local package=''
 
     for package in "${SHERPA_DEP_QPKGs[@]}"; do
-        IsQPKGEnabled "$package" && RestartQPKGService restart "$package"
+        IsQPKGEnabled "$package" && RestartQPKGService "$package"
     done
 
     DebugFuncExit
@@ -1480,7 +1480,7 @@ UninstallQPKG()
 RestartQPKGService()
     {
 
-    # Restarts the servive script for the QPKG named in $1
+    # Restarts the service script for the QPKG named in $1
 
     # input:
     #   $1 = QPKG name
