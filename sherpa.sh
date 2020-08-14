@@ -48,7 +48,7 @@ Init()
     DisableDevMode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200814
+    readonly SCRIPT_VERSION=200815
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -197,7 +197,7 @@ Init()
         SHERPA_QPKG_ABBRVS+=('sb sb3 sab sab3 sabnzbd3 sabnzbd')
         SHERPA_QPKG_DEPS+=('Entware Par2')
         SHERPA_QPKG_IPKGS+=('python3 python3-pyopenssl python3-cryptography python3-dev gcc unrar p7zip coreutils-nice ionice ffprobe')
-        SHERPA_QPKG_PIPS+=('sabyenc3 cheetah3 feedparser configobj cherrypy chardet')
+        SHERPA_QPKG_PIPS+=('sabyenc3 cheetah3 feedparser configobj cherrypy chardet "cheroot<8.4.4"')
 
     SHERPA_QPKG_NAME+=(nzbToMedia)
         SHERPA_QPKG_ARCH+=(all)
@@ -1495,18 +1495,24 @@ RestartQPKGService()
     fi
 
     local result=0
-    local init_pathfile=''
+    local package_init_pathfile=$(GetQPKGServicePathFile "$1")
+    local log_file=$WORK_PATH/$1.$RESTART_LOG_FILE
 
-    init_pathfile=$(GetQPKGServicePathFile "$1")
-
-    ShowAsProc "restarting service $(FormatAsPackageName "$1")"
-    RunThisAndLogResults "$init_pathfile restart" "$DEBUG_LOG_PATHFILE"
+    ShowAsProc "restarting $(FormatAsPackageName "$1")"
+    RunThisAndLogResults "$package_init_pathfile restart" "$log_file"
     result=$?
 
     if [[ $result -eq 0 ]]; then
-        ShowAsDone "restarted service $(FormatAsPackageName "$1")"
+        ShowAsDone "restarted $(FormatAsPackageName "$1")"
     else
-        ShowAsWarning "Could not restart service $(FormatAsPackageName "$1") $(FormatAsExitcode $result)"
+        ShowAsWarning "Could not restart $(FormatAsPackageName "$1") $(FormatAsExitcode $result)"
+        if IsVisibleDebugging; then
+            DebugInfoThickSeparator
+            $CAT_CMD "$log_file"
+            DebugInfoThickSeparator
+        else
+            $CAT_CMD "$log_file" >> "$DEBUG_LOG_PATHFILE"
+        fi
         # meh, continue anyway...
         return 1
     fi
