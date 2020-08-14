@@ -48,7 +48,7 @@ Init()
     DisableDevMode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200815
+    readonly SCRIPT_VERSION=200815b
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -346,6 +346,14 @@ Init()
     readonly IPKG_DL_PATH=$WORK_PATH/ipkg.downloads
     readonly IPKG_CACHE_PATH=$WORK_PATH/ipkg.cache
     readonly EXTERNAL_PACKAGE_LIST_PATHFILE=$WORK_PATH/Packages
+    readonly RUNTIME_LOCK_PATHFILE=/tmp/${SCRIPT_FILE%.*}.lock
+
+    if [[ -e $RUNTIME_LOCK_PATHFILE && -d /proc/$(<$RUNTIME_LOCK_PATHFILE) && $(</proc/"$(<$RUNTIME_LOCK_PATHFILE)"/cmdline) =~ $SCRIPT_FILE ]]; then
+        ShowAsError "an instance of $SCRIPT_FILE is already running: aborting ..."
+        return 1
+    fi
+
+    echo "$$" > "$RUNTIME_LOCK_PATHFILE"
 
     # internals
     readonly SCRIPT_STARTSECONDS=$($DATE_CMD +%s)
@@ -462,7 +470,7 @@ LogRuntimeParameters()
     fi
 
     if IsNotError; then
-        [[ -d $IPKG_DL_PATH ]] && rm -r "$IPKG_DL_PATH"
+        [[ -d $IPKG_DL_PATH ]] && rm -rf "$IPKG_DL_PATH"
         $MKDIR_CMD -p "$IPKG_DL_PATH" 2> /dev/null
         result=$?
 
@@ -809,7 +817,7 @@ InstallQPKGIndeps()
         InstallQPKG Entware && ReloadProfile
 
         # copy all files from original [/opt] into new [/opt]
-        [[ -L $opt_path && -d $opt_backup_path ]] && cp --recursive "$opt_backup_path"/* --target-directory "$opt_path" && rm -r "$opt_backup_path"
+        [[ -L $opt_path && -d $opt_backup_path ]] && cp --recursive "$opt_backup_path"/* --target-directory "$opt_path" && rm -rf "$opt_backup_path"
     else
         IsNotQPKGEnabled Entware && EnableQPKG Entware
         ReloadProfile
@@ -1012,7 +1020,7 @@ InstallIPKGBatch()
         RunThisAndLogResults "$OPKG_CMD install$ignore_space_arg --force-overwrite ${IPKG_download_list[*]} --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
         result=$?
 
-        [[ -e $monitor_flag ]] && { rm "$monitor_flag"; $SLEEP_CMD 2 ;}
+        [[ -e $monitor_flag ]] && { rm -f "$monitor_flag"; $SLEEP_CMD 2 ;}
         trap - INT
 
         if [[ $result -eq 0 ]]; then
@@ -1624,7 +1632,7 @@ GetQPKGMD5()
 CTRL_C_Captured()
     {
 
-    [[ -e $monitor_flag ]] && rm "$monitor_flag"
+    [[ -e $monitor_flag ]] && rm -f "$monitor_flag"
 
     $SLEEP_CMD 2
 
@@ -1966,7 +1974,7 @@ OpenIPKGArchive()
 CloseIPKGArchive()
     {
 
-    [[ -e $EXTERNAL_PACKAGE_LIST_PATHFILE ]] && rm "$EXTERNAL_PACKAGE_LIST_PATHFILE"
+    [[ -e $EXTERNAL_PACKAGE_LIST_PATHFILE ]] && rm -f "$EXTERNAL_PACKAGE_LIST_PATHFILE"
 
     }
 
@@ -3332,5 +3340,6 @@ Cleanup
 ShowResult
 
 IsNotVisibleDebugging && IsNotLogViewOnly && IsNotVersionOnly && echo
+[[ -e $RUNTIME_LOCK_PATHFILE ]] && rm -f "$RUNTIME_LOCK_PATHFILE"
 
 exit $code_pointer
