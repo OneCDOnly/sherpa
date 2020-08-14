@@ -3324,7 +3324,7 @@ RemoveColourCodes()
     }
 
 if [[ ! -e /etc/init.d/functions ]]; then
-    ShowAsError 'QTS functions missing. Is this a QNAP NAS?'
+    ShowAsError 'QTS functions missing (is this a QNAP NAS?): aborting ...'
     exit 1
 fi
 
