@@ -50,6 +50,7 @@ Init()
     readonly BACKUP_PATHFILE=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
     [[ -n $PYTHON ]] && export PYTHONPATH=$PYTHON
     export PATH=/opt/bin:/opt/sbin:$PATH
+    readonly UI_PORT_DEFAULT=0
     ui_port=0
     ui_port_secure=0
 
@@ -112,12 +113,9 @@ StartQPKG()
 
     DaemonIsActive && return
 
-    if [[ -n $SOURCE_GIT_URL ]]; then
-        PullGitRepo $QPKG_NAME "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_PATH" && UpdateLanguages
-        cd "$QPKG_PATH/$QPKG_NAME" || return 1
-    else
-        cd "$QPKG_PATH" || return 1
-    fi
+    [[ -n $SOURCE_GIT_URL ]] && PullGitRepo $QPKG_NAME "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_PATH" && UpdateLanguages
+
+    cd "$QPKG_PATH/$QPKG_NAME" || return 1
 
     if [[ $ui_port -eq 0 ]]; then
         DisplayErrCommitAllLogs 'unable to start daemon as no UI port was specified'
@@ -323,10 +321,10 @@ ExecuteAndLog()
 LoadUIPorts()
     {
 
-    ui_port=$($GETCFG_CMD misc port -d 0 -f "$QPKG_INI_PATHFILE")
+    ui_port=$($GETCFG_CMD misc port -d "$UI_PORT_DEFAULT" -f "$QPKG_INI_PATHFILE")
 
     if [[ $($GETCFG_CMD misc enable_https -d 0 -f "$QPKG_INI_PATHFILE") -eq 1 ]]; then
-        ui_port_secure=$($GETCFG_CMD misc https_port -d 0 -f "$QPKG_INI_PATHFILE")
+        ui_port_secure=$($GETCFG_CMD misc https_port -d "$UI_PORT_DEFAULT" -f "$QPKG_INI_PATHFILE")
     else
         ui_port_secure=0
     fi
@@ -561,7 +559,7 @@ CommitErrToSysLog()
 CommitLog()
     {
 
-    echo "$1" >> $INIT_LOG_PATHFILE
+    echo "$1" >> "$INIT_LOG_PATHFILE"
 
     }
 
@@ -597,7 +595,7 @@ SysFilePresent()
     [[ -z $1 ]] && return 1
 
     if [[ ! -e $1 ]]; then
-        FormatAsDisplayError "! A required NAS system file is missing [$1]"
+        FormatAsDisplayError "A required NAS system file is missing [$1]"
         errorcode=1
         return 1
     else
@@ -651,7 +649,7 @@ if [[ $errorcode -eq 0 ]]; then
             StopQPKG; StartQPKG || errorcode=1
             ;;
         s|status)
-            DaemonIsActive $QPKG_NAME >/dev/null || errorcode=1
+            DaemonIsActive $QPKG_NAME || errorcode=1
             ;;
         b|backup)
             BackupConfig || errorcode=1
@@ -666,7 +664,7 @@ if [[ $errorcode -eq 0 ]]; then
             if [[ -e $INIT_LOG_PATHFILE ]]; then
                 LESSSECURE=1 $GNU_LESS_CMD +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$INIT_LOG_PATHFILE"
             else
-                Display "service log not found: $(FormatAsFileName $INIT_LOG_PATHFILE)"
+                Display "service log not found: $(FormatAsFileName "$INIT_LOG_PATHFILE")"
             fi
             ;;
         v|version)

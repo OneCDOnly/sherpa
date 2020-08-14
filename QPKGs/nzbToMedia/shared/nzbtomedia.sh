@@ -95,14 +95,14 @@ StartQPKG()
     fi
 
     if [[ $($GETCFG_CMD SABnzbdplus Enable -f $QTS_QPKG_CONF_PATHFILE) = TRUE ]]; then
-        DisplayErrCommitAllLogs "unable to link from package to target: installed SABnzbdplus QPKG must be replaced with SABnzbd $SAB_MIN_VERSION or later"
+        DisplayErrCommitAllLogs "unable to link from package to target: installed $(FormatAsPackageName SABnzbdplus) QPKG must be replaced with $(FormatAsPackageName SABnzbd) $SAB_MIN_VERSION or later"
         return 1
     fi
 
     if [[ $($GETCFG_CMD SABnzbd Enable -f $QTS_QPKG_CONF_PATHFILE) = TRUE ]]; then
         local current_version=$($GETCFG_CMD SABnzbd Version -f $QTS_QPKG_CONF_PATHFILE)
         if [[ ${current_version//[!0-9]/} -lt $SAB_MIN_VERSION ]]; then
-            DisplayErrCommitAllLogs "unable to link from package to target: installed SABnzbd QPKG must first be upgraded to $SAB_MIN_VERSION or later"
+            DisplayErrCommitAllLogs "unable to link from package to target: installed $(FormatAsPackageName SABnzbd) QPKG must first be upgraded to $SAB_MIN_VERSION or later"
             return 1
         fi
     fi
@@ -409,7 +409,7 @@ SysFilePresent()
     [[ -z $1 ]] && return 1
 
     if [[ ! -e $1 ]]; then
-        echo "! A required NAS system file is missing [$1]"
+        FormatAsDisplayError "A required NAS system file is missing [$1]"
         errorcode=1
         return 1
     else
@@ -477,7 +477,7 @@ if [[ $errorcode -eq 0 ]]; then
             ;;
         l|log)
             if [[ -e $INIT_LOG_PATHFILE ]]; then
-                LESSSECURE=1 $GNU_LESS_CMD +G --quit-on-intr --tilde --prompt' use arrow-keys to scroll up-down left-right, press Q to quit' "$INIT_LOG_PATHFILE"
+                LESSSECURE=1 $GNU_LESS_CMD +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$INIT_LOG_PATHFILE"
             else
                 Display "service log not found: $(FormatAsFileName "$INIT_LOG_PATHFILE")"
             fi
