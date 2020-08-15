@@ -45,7 +45,7 @@ Init()
     readonly QPKG_VERSION=$($GETCFG_CMD $QPKG_NAME Version -f $QTS_QPKG_CONF_PATHFILE)
     readonly QPKG_INI_PATHFILE=$QPKG_PATH/config/config.ini
     local -r QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.def
-    readonly SERVICE_STATUS_PATHFILE=/var/run/$QPKG_NAME.result
+    readonly SERVICE_STATUS_PATHFILE=/var/run/$QPKG_NAME.last.operation
     readonly SERVICE_LOG_PATHFILE=/var/log/$QPKG_NAME.log
     readonly DAEMON_PID_PATHFILE=/var/run/$QPKG_NAME.pid
     local -r BACKUP_PATH=$($GETCFG_CMD SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
@@ -425,6 +425,27 @@ PortSecureResponds()
 
     }
 
+SetServiceOperationOK()
+    {
+
+    echo "ok" > "$SERVICE_STATUS_PATHFILE"
+
+    }
+
+SetServiceOperationFailed()
+    {
+
+    echo "failed" > "$SERVICE_STATUS_PATHFILE"
+
+    }
+
+RemoveServiceStatus()
+    {
+
+    [[ -e $SERVICE_STATUS_PATHFILE ]] && rm -f "$SERVICE_STATUS_PATHFILE"
+
+    }
+
 DisplayDoneCommitToLog()
     {
 
@@ -676,6 +697,7 @@ if [[ $errorcode -eq 0 ]]; then
                 LESSSECURE=1 $GNU_LESS_CMD +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$SERVICE_LOG_PATHFILE"
             else
                 Display "service log not found: $(FormatAsFileName "$SERVICE_LOG_PATHFILE")"
+                errorcode=1
             fi
             ;;
         v|version)
@@ -686,5 +708,7 @@ if [[ $errorcode -eq 0 ]]; then
             ;;
     esac
 fi
+
+[[ $errorcode -eq 0 ]] && SetServiceOperationOK || SetServiceOperationFailed
 
 exit $errorcode

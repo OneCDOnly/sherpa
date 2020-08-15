@@ -36,7 +36,7 @@ Init()
     {
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200816c
+    readonly SCRIPT_VERSION=200816d
 
     if [[ ! -e /etc/init.d/functions ]]; then
         ShowAsError 'QTS functions missing (is this a QNAP NAS?): aborting ...'
@@ -206,8 +206,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(SABnzbd)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/SABnzbd/build/SABnzbd_200816b.qpkg)
-        SHERPA_QPKG_MD5+=(0f30494e2b3d0bd286b6eb71fbf3599a)
+        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/SABnzbd/build/SABnzbd_200816c.qpkg)
+        SHERPA_QPKG_MD5+=(a7e177a29e6781c92f249e72a3c46bab)
         SHERPA_QPKG_ABBRVS+=('sb sb3 sab sab3 sabnzbd3 sabnzbd')
         SHERPA_QPKG_DEPS+=('Entware Par2')
         SHERPA_QPKG_IPKGS+=('python3 python3-pyopenssl python3-cryptography python3-dev gcc unrar p7zip coreutils-nice ionice ffprobe')
@@ -1245,6 +1245,7 @@ InstallQPKG()
 
     if [[ $result -eq 0 || $result -eq 10 ]]; then
         ShowAsDone "installed QPKG $(FormatAsFileName "$target_file")"
+        GetQPKGServiceStatus "$1"
     else
         ShowAsError "QPKG installation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $result)"
         DebugErrorFile "$log_pathfile"
@@ -1252,6 +1253,31 @@ InstallQPKG()
     fi
 
     return $returncode
+
+    }
+
+GetQPKGServiceStatus()
+    {
+
+    # $1 = QPKG name to install
+
+    [[ -z $1 ]] && return 1
+
+    if [[ -e /var/run/$1.last.operation ]]; then
+        case $(</var/run/"$1".last.operation) in
+            ok)
+                DebugInfo "$(FormatAsPackageName "$1") service started OK"
+                ;;
+            failed)
+                ShowAsError "$(FormatAsPackageName "$1") service failed to start.$([[ -e /var/log/$1.log ]] && echo " Check /var/log/$1.log for more information.")"
+                ;;
+            *)
+                DebugWarning "$(FormatAsPackageName "$1") service status is incorrect"
+                ;;
+        esac
+    else
+        DebugWarning "unable to determine status of $(FormatAsPackageName "$1") service. It may be a package earlier than 200816c that doesn't support service operation results."
+    fi
 
     }
 
@@ -1522,6 +1548,7 @@ RestartQPKGService()
 
     if [[ $result -eq 0 ]]; then
         ShowAsDone "restarted $(FormatAsPackageName "$1")"
+        GetQPKGServiceStatus "$1"
     else
         ShowAsWarning "Could not restart $(FormatAsPackageName "$1") $(FormatAsExitcode $result)"
         if IsVisibleDebugging; then
