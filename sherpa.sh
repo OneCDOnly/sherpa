@@ -36,7 +36,7 @@ Init()
     {
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200816
+    readonly SCRIPT_VERSION=200816b
 
     if [[ ! -e /etc/init.d/functions ]]; then
         ShowAsError 'QTS functions missing (is this a QNAP NAS?): aborting ...'
@@ -206,8 +206,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(SABnzbd)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/SABnzbd/build/SABnzbd_200816.qpkg)
-        SHERPA_QPKG_MD5+=(40b1708b3c3dd6a9c3b9cad4201f7b28)
+        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/SABnzbd/build/SABnzbd_200816b.qpkg)
+        SHERPA_QPKG_MD5+=(0f30494e2b3d0bd286b6eb71fbf3599a)
         SHERPA_QPKG_ABBRVS+=('sb sb3 sab sab3 sabnzbd3 sabnzbd')
         SHERPA_QPKG_DEPS+=('Entware Par2')
         SHERPA_QPKG_IPKGS+=('python3 python3-pyopenssl python3-cryptography python3-dev gcc unrar p7zip coreutils-nice ionice ffprobe')
@@ -408,7 +408,7 @@ LogRuntimeParameters()
     if IsQPKGToBeInstalled SABnzbd || IsQPKGInstalled SABnzbd || IsQPKGInstalled SABnzbdplus; then
         if [[ $INSTALLED_RAM_KB -le $MIN_RAM_KB ]]; then
             DebugNAS 'RAM' "less-than or equal-to $MIN_RAM_KB kB"
-            IsNotError && ShowAsNote "QTS with 1GB RAM or less can lead to unstable SABnzbd uptimes. :("
+            IsNotError && ShowAsNote "QTS with 1GB RAM or less can lead to unstable $(FormatAsPackageName SABnzbd) uptimes. :("
         fi
     fi
     DebugNAS 'firmware version' "$NAS_FIRMWARE"

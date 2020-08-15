@@ -58,10 +58,11 @@ Init()
     # application-specific
     readonly APP_VERSION_PATHFILE=$QPKG_REPO_PATH/sabnzbd/version.py
     readonly APP_VERSION_STORE_PATHFILE=$($DIRNAME_CMD "$APP_VERSION_PATHFILE")/version.stored
+    readonly TARGET_SCRIPT_PATHFILE=$QPKG_REPO_PATH/$TARGET_SCRIPT
 
     # specific launch arguments
     if [[ -n $PYTHON && -n $TARGET_SCRIPT ]]; then
-        readonly LAUNCHER="$PYTHON $TARGET_SCRIPT --daemon --browser 0 --config-file $QPKG_INI_PATHFILE --pidfile $STORED_PID_PATHFILE"
+        readonly LAUNCHER="$PYTHON $TARGET_SCRIPT_PATHFILE --daemon --browser 0 --config-file $QPKG_INI_PATHFILE --pidfile $STORED_PID_PATHFILE"
     else
         DisplayErrCommitAllLogs 'found nothing to launch!'
         errorcode=1
@@ -120,8 +121,6 @@ StartQPKG()
     DaemonIsActive && return
 
     [[ -n $SOURCE_GIT_URL ]] && PullGitRepo $QPKG_NAME "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_PATH" && UpdateLanguages
-
-    cd "$QPKG_REPO_PATH" || return 1
 
     if [[ $ui_port -eq 0 ]]; then
         DisplayErrCommitAllLogs 'unable to start daemon as no UI port was specified'
@@ -216,13 +215,7 @@ UpdateLanguages()
     LoadAppVersion || return 1
     [[ -e $APP_VERSION_STORE_PATHFILE && $(<"$APP_VERSION_STORE_PATHFILE") = "$app_version" ]] && return 0
 
-    local prev_path=$PWD
-
-    cd "$QPKG_REPO_PATH" || return 1
-
-    ExecuteAndLog "updating $(FormatAsPackageName $QPKG_NAME) language translations" "$PYTHON tools/make_mo.py" && echo "$app_version" > "$APP_VERSION_STORE_PATHFILE"
-
-    cd "$prev_path" || return 1
+    ExecuteAndLog "updating $(FormatAsPackageName $QPKG_NAME) language translations" "$PYTHON $QPKG_REPO_PATH/tools/make_mo.py" && echo "$app_version" > "$APP_VERSION_STORE_PATHFILE"
 
     }
 
@@ -284,7 +277,7 @@ PullGitRepo()
     if [[ ! -d ${QPKG_GIT_PATH}/.git ]]; then
         ExecuteAndLog "cloning $(FormatAsPackageName "$1") from remote repository" "$GIT_CMD clone --branch $3 $depth -c advice.detachedHead=false $GIT_HTTPS_URL $QPKG_GIT_PATH || $GIT_CMD clone --branch $3 $depth -c advice.detachedHead=false $GIT_HTTP_URL $QPKG_GIT_PATH"
     else
-        ExecuteAndLog "updating $(FormatAsPackageName "$1") from remote repository" "cd $QPKG_GIT_PATH && $GIT_CMD pull"
+        ExecuteAndLog "updating $(FormatAsPackageName "$1") from remote repository" "$GIT_CMD -C $QPKG_GIT_PATH pull"
     fi
 
     }
