@@ -36,12 +36,21 @@ Init()
     {
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200815d
+    readonly SCRIPT_VERSION=200815e
 
     if [[ ! -e /etc/init.d/functions ]]; then
         ShowAsError 'QTS functions missing (is this a QNAP NAS?): aborting ...'
         return 1
     fi
+
+    readonly RUNTIME_LOCK_PATHFILE=/tmp/${SCRIPT_FILE%.*}.lock
+
+    if [[ -e $RUNTIME_LOCK_PATHFILE && -d /proc/$(<$RUNTIME_LOCK_PATHFILE) && $(</proc/"$(<$RUNTIME_LOCK_PATHFILE)"/cmdline) =~ $SCRIPT_FILE ]]; then
+        ShowAsError "another instance of $(ColourTextBrightWhite "$SCRIPT_FILE") is running: aborting ..."
+        return 1
+    fi
+
+    echo "$$" > "$RUNTIME_LOCK_PATHFILE"
 
     DisableError
     DisableAbort
@@ -351,14 +360,6 @@ Init()
     readonly IPKG_DL_PATH=$WORK_PATH/ipkg.downloads
     readonly IPKG_CACHE_PATH=$WORK_PATH/ipkg.cache
     readonly EXTERNAL_PACKAGE_LIST_PATHFILE=$WORK_PATH/Packages
-    readonly RUNTIME_LOCK_PATHFILE=/tmp/${SCRIPT_FILE%.*}.lock
-
-    if [[ -e $RUNTIME_LOCK_PATHFILE && -d /proc/$(<$RUNTIME_LOCK_PATHFILE) && $(</proc/"$(<$RUNTIME_LOCK_PATHFILE)"/cmdline) =~ $SCRIPT_FILE ]]; then
-        ShowAsError "an instance of $SCRIPT_FILE is already running: aborting ..."
-        return 1
-    fi
-
-    echo "$$" > "$RUNTIME_LOCK_PATHFILE"
 
     # internals
     readonly SCRIPT_STARTSECONDS=$($DATE_CMD +%s)
