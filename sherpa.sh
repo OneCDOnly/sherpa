@@ -35,6 +35,14 @@ readonly USER_ARGS_RAW="$*"
 Init()
     {
 
+    readonly SCRIPT_FILE=sherpa.sh
+    readonly SCRIPT_VERSION=200815d
+
+    if [[ ! -e /etc/init.d/functions ]]; then
+        ShowAsError 'QTS functions missing (is this a QNAP NAS?): aborting ...'
+        return 1
+    fi
+
     DisableError
     DisableAbort
     DisableVisibleDebugging
@@ -46,9 +54,6 @@ Init()
     DisableShowHelpReminder
     EnableShowInstallerOutcome
     DisableDevMode
-
-    readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200815c
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -3322,11 +3327,6 @@ RemoveColourCodes()
     $SED_CMD "s,\x1B\[[0-9;]*[a-zA-Z],,g" <<< "$1"
 
     }
-
-if [[ ! -e /etc/init.d/functions ]]; then
-    ShowAsError 'QTS functions missing (is this a QNAP NAS?): aborting ...'
-    exit 1
-fi
 
 Init || exit 1
 
