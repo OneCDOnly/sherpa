@@ -36,14 +36,14 @@ Init()
     {
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200815e
+    readonly SCRIPT_VERSION=200815f
 
     if [[ ! -e /etc/init.d/functions ]]; then
         ShowAsError 'QTS functions missing (is this a QNAP NAS?): aborting ...'
         return 1
     fi
 
-    readonly RUNTIME_LOCK_PATHFILE=/tmp/${SCRIPT_FILE%.*}.lock
+    readonly RUNTIME_LOCK_PATHFILE=/tmp/$SCRIPT_FILE.pid
 
     if [[ -e $RUNTIME_LOCK_PATHFILE && -d /proc/$(<$RUNTIME_LOCK_PATHFILE) && $(</proc/"$(<$RUNTIME_LOCK_PATHFILE)"/cmdline) =~ $SCRIPT_FILE ]]; then
         ShowAsError "another instance of $(ColourTextBrightWhite "$SCRIPT_FILE") is running: aborting ..."
@@ -389,6 +389,7 @@ LogRuntimeParameters()
     DebugInfoThickSeparator
     DebugScript 'started' "$($DATE_CMD | $TR_CMD -s ' ')"
     DebugScript 'version' "$SCRIPT_VERSION"
+    DebugScript 'PID' "$$"
     DebugInfoThinSeparator
 
     DebugInfo 'Markers: (**) detected, (II) information, (WW) warning, (LL) log file,'
