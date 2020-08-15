@@ -48,7 +48,7 @@ Init()
     DisableDevMode
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200815b
+    readonly SCRIPT_VERSION=200815c
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -396,7 +396,7 @@ LogRuntimeParameters()
     IsAbort && return
     IsNotVisibleDebugging && echo
 
-    DebugNAS 'model' "$($GREP_CMD -v "^$" /etc/issue | $SED_CMD 's|^Welcome to ||;s|(.*||')"
+    DebugNAS 'model' "$(get_display_name)"
     DebugNAS 'RAM' "$INSTALLED_RAM_KB kB"
     if IsQPKGToBeInstalled SABnzbd || IsQPKGInstalled SABnzbd || IsQPKGInstalled SABnzbdplus; then
         if [[ $INSTALLED_RAM_KB -le $MIN_RAM_KB ]]; then
