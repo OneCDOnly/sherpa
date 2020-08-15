@@ -36,7 +36,7 @@ Init()
     {
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200816d
+    readonly SCRIPT_VERSION=200816e
 
     if [[ ! -e /etc/init.d/functions ]]; then
         ShowAsError 'QTS functions missing (is this a QNAP NAS?): aborting ...'
@@ -211,7 +211,7 @@ Init()
         SHERPA_QPKG_ABBRVS+=('sb sb3 sab sab3 sabnzbd3 sabnzbd')
         SHERPA_QPKG_DEPS+=('Entware Par2')
         SHERPA_QPKG_IPKGS+=('python3 python3-pyopenssl python3-cryptography python3-dev gcc unrar p7zip coreutils-nice ionice ffprobe')
-        SHERPA_QPKG_PIPS+=('sabyenc3 cheetah3 feedparser configobj cherrypy chardet "cheroot<8.4.4"')
+        SHERPA_QPKG_PIPS+=('sabyenc3 cheetah3 feedparser configobj cherrypy chardet "cheroot!=8.4.4"')
 
     SHERPA_QPKG_NAME+=(nzbToMedia)
         SHERPA_QPKG_ARCH+=(all)
