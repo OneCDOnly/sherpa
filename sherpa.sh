@@ -789,7 +789,7 @@ RemoveUnwantedQPKGs()
         DebugVar response
         case ${response:0:1} in
             y|Y)
-                echo -e "# Entware had these IPKGs installed as of: $($DATE_CMD)\n$($OPKG_CMD list-installed)" > "$previous_Entware_package_list"
+                echo "$($OPKG_CMD list-installed)" > "$previous_Entware_package_list"
                 DebugDone "saved current $(FormatAsPackageName Entware) IPKG list to $(FormatAsFileName "$previous_Entware_package_list")"
                 UninstallQPKG Entware
                 ;;
