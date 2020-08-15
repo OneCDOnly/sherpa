@@ -408,7 +408,7 @@ LogRuntimeParameters()
     if IsQPKGToBeInstalled SABnzbd || IsQPKGInstalled SABnzbd || IsQPKGInstalled SABnzbdplus; then
         if [[ $INSTALLED_RAM_KB -le $MIN_RAM_KB ]]; then
             DebugNAS 'RAM' "less-than or equal-to $MIN_RAM_KB kB"
-            IsNotError && ShowAsNote "QTS with 1GB RAM or less can lead to unstable $(FormatAsPackageName SABnzbd) uptimes. :("
+            IsNotError && ShowAsNote "QTS with 1GiB RAM-or-less can lead to unstable $(FormatAsPackageName SABnzbd) uptimes. :("
         fi
     fi
     DebugNAS 'firmware version' "$NAS_FIRMWARE"
