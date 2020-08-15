@@ -45,8 +45,9 @@ Init()
     readonly QPKG_VERSION=$($GETCFG_CMD $QPKG_NAME Version -f $QTS_QPKG_CONF_PATHFILE)
     readonly QPKG_INI_PATHFILE=$QPKG_PATH/config/config.ini
     local -r QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.def
-    readonly STORED_PID_PATHFILE=/var/run/$QPKG_NAME.pid
-    readonly INIT_LOG_PATHFILE=/var/log/$QPKG_NAME.log
+    readonly SERVICE_STATUS_PATHFILE=/var/run/$QPKG_NAME.result
+    readonly SERVICE_LOG_PATHFILE=/var/log/$QPKG_NAME.log
+    readonly DAEMON_PID_PATHFILE=/var/run/$QPKG_NAME.pid
     local -r BACKUP_PATH=$($GETCFG_CMD SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
     readonly BACKUP_PATHFILE=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
     [[ -n $PYTHON ]] && export PYTHONPATH=$PYTHON
@@ -62,7 +63,7 @@ Init()
 
     # specific launch arguments
     if [[ -n $PYTHON && -n $TARGET_SCRIPT ]]; then
-        readonly LAUNCHER="$PYTHON $TARGET_SCRIPT_PATHFILE --daemon --browser 0 --config-file $QPKG_INI_PATHFILE --pidfile $STORED_PID_PATHFILE"
+        readonly LAUNCHER="$PYTHON $TARGET_SCRIPT_PATHFILE --daemon --browser 0 --config-file $QPKG_INI_PATHFILE --pidfile $DAEMON_PID_PATHFILE"
     else
         DisplayErrCommitAllLogs 'found nothing to launch!'
         errorcode=1
@@ -156,7 +157,7 @@ StopQPKG()
 
     ! DaemonIsActive && return
 
-    PID=$(<$STORED_PID_PATHFILE)
+    PID=$(<$DAEMON_PID_PATHFILE)
 
     kill "$PID"
     DisplayWaitCommitToLog '* stopping daemon with SIGTERM:'
@@ -172,12 +173,12 @@ StopQPKG()
                 DisplayWaitCommitToLog 'failed!'
                 kill -9 "$PID" 2> /dev/null
                 DisplayCommitToLog 'sent SIGKILL.'
-                [[ -f $STORED_PID_PATHFILE ]] && rm -f $STORED_PID_PATHFILE
+                [[ -f $DAEMON_PID_PATHFILE ]] && rm -f $DAEMON_PID_PATHFILE
                 break 2
             fi
         done
 
-        [[ -f $STORED_PID_PATHFILE ]] && rm -f $STORED_PID_PATHFILE
+        [[ -f $DAEMON_PID_PATHFILE ]] && rm -f $DAEMON_PID_PATHFILE
         Display 'OK'
         CommitLog "stopped OK in $acc seconds"
         break
@@ -240,7 +241,7 @@ DaemonIsActive()
     # $? = 0 if $QPKG_NAME is active
     # $? = 1 if $QPKG_NAME is not active
 
-    if [[ -f $STORED_PID_PATHFILE && -d /proc/$(<$STORED_PID_PATHFILE) ]] && (PortResponds $ui_port); then
+    if [[ -f $DAEMON_PID_PATHFILE && -d /proc/$(<$DAEMON_PID_PATHFILE) ]] && (PortResponds $ui_port); then
         DisplayDoneCommitToLog 'daemon is active'
         return 0
     elif [[ -n $TARGET_DAEMON ]] && (ps ax | $GREP_CMD "$TARGET_DAEMON" | $GREP_CMD -vq grep) && (PortResponds $ui_port); then
@@ -248,7 +249,7 @@ DaemonIsActive()
         return 0
     else
         DisplayDoneCommitToLog 'daemon is not active'
-        [[ -f $STORED_PID_PATHFILE ]] && rm "$STORED_PID_PATHFILE"
+        [[ -f $DAEMON_PID_PATHFILE ]] && rm "$DAEMON_PID_PATHFILE"
         return 1
     fi
 
@@ -320,7 +321,7 @@ ExecuteAndLog()
         DisplayCommitToLog 'failed!'
         DisplayCommitToLog "$(FormatAsFuncMessages "$exec_msgs")"
         DisplayCommitToLog "$(FormatAsResult $result)"
-        CommitWarnToSysLog "A problem occurred while $1. Check $(FormatAsFileName "$INIT_LOG_PATHFILE") for more details."
+        CommitWarnToSysLog "A problem occurred while $1. Check $(FormatAsFileName "$SERVICE_LOG_PATHFILE") for more details."
         returncode=1
     fi
 
@@ -456,14 +457,14 @@ DisplayErrCommitToLog()
 DisplayCommitToLog()
     {
 
-    echo "$1" | $TEE_CMD -a $INIT_LOG_PATHFILE
+    echo "$1" | $TEE_CMD -a $SERVICE_LOG_PATHFILE
 
     }
 
 DisplayWaitCommitToLog()
     {
 
-    DisplayWait "$1" | $TEE_CMD -a $INIT_LOG_PATHFILE
+    DisplayWait "$1" | $TEE_CMD -a $SERVICE_LOG_PATHFILE
 
     }
 
@@ -569,7 +570,7 @@ CommitErrToSysLog()
 CommitLog()
     {
 
-    echo "$1" >> "$INIT_LOG_PATHFILE"
+    echo "$1" >> "$SERVICE_LOG_PATHFILE"
 
     }
 
@@ -671,10 +672,10 @@ if [[ $errorcode -eq 0 ]]; then
             CleanLocalClone || errorcode=1
             ;;
         l|log)
-            if [[ -e $INIT_LOG_PATHFILE ]]; then
-                LESSSECURE=1 $GNU_LESS_CMD +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$INIT_LOG_PATHFILE"
+            if [[ -e $SERVICE_LOG_PATHFILE ]]; then
+                LESSSECURE=1 $GNU_LESS_CMD +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$SERVICE_LOG_PATHFILE"
             else
-                Display "service log not found: $(FormatAsFileName "$INIT_LOG_PATHFILE")"
+                Display "service log not found: $(FormatAsFileName "$SERVICE_LOG_PATHFILE")"
             fi
             ;;
         v|version)
