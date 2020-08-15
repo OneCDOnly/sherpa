@@ -41,6 +41,7 @@ Init()
     # generic environment
     readonly QTS_QPKG_CONF_PATHFILE=/etc/config/qpkg.conf
     readonly QPKG_PATH=$($GETCFG_CMD $QPKG_NAME Install_Path -f $QTS_QPKG_CONF_PATHFILE)
+    readonly QPKG_REPO_PATH=$QPKG_PATH/$QPKG_NAME
     readonly QPKG_VERSION=$($GETCFG_CMD $QPKG_NAME Version -f $QTS_QPKG_CONF_PATHFILE)
     readonly QPKG_INI_PATHFILE=$QPKG_PATH/config/config.ini
     local -r QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.def
@@ -53,6 +54,10 @@ Init()
     readonly UI_PORT_DEFAULT=0
     ui_port=0
     ui_port_secure=0
+
+    # application-specific
+    readonly APP_VERSION_PATHFILE=$QPKG_REPO_PATH/sabnzbd/version.py
+    readonly APP_VERSION_STORE_PATHFILE=$($DIRNAME_CMD "$APP_VERSION_PATHFILE")/version.stored
 
     # specific launch arguments
     if [[ -n $PYTHON && -n $TARGET_SCRIPT ]]; then
@@ -78,6 +83,7 @@ Init()
     fi
 
     LoadUIPorts
+    LoadAppVersion
 
     [[ ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
 
@@ -115,7 +121,7 @@ StartQPKG()
 
     [[ -n $SOURCE_GIT_URL ]] && PullGitRepo $QPKG_NAME "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_PATH" && UpdateLanguages
 
-    cd "$QPKG_PATH/$QPKG_NAME" || return 1
+    cd "$QPKG_REPO_PATH" || return 1
 
     if [[ $ui_port -eq 0 ]]; then
         DisplayErrCommitAllLogs 'unable to start daemon as no UI port was specified'
@@ -207,20 +213,31 @@ UpdateLanguages()
 
     # run [tools/make_mo.py] if SABnzbd version number has changed since last run
 
-    [[ $QPKG_NAME != SABnzbd ]] && return
+    LoadAppVersion || return 1
+    [[ -e $APP_VERSION_STORE_PATHFILE && $(<"$APP_VERSION_STORE_PATHFILE") = "$app_version" ]] && return 0
 
-    local olddir=$PWD
-    local version_current_pathfile=$QPKG_PATH/$QPKG_NAME/sabnzbd/version.py
-    local version_store_pathfile=$($DIRNAME_CMD "$version_current_pathfile")/version.stored
-    local version_current_number=$($GREP_CMD '__version__ =' "$version_current_pathfile" | $SED_CMD 's|^.*"\(.*\)"|\1|')
+    local prev_path=$PWD
 
-    [[ -e $version_store_pathfile && $version_current_number = $(<"$version_store_pathfile") ]] && return 0
+    cd "$QPKG_REPO_PATH" || return 1
 
-    cd "$QPKG_PATH/$QPKG_NAME" || return 1
+    ExecuteAndLog "updating $(FormatAsPackageName $QPKG_NAME) language translations" "$PYTHON tools/make_mo.py" && echo "$app_version" > "$APP_VERSION_STORE_PATHFILE"
 
-    ExecuteAndLog "updating $(FormatAsPackageName $QPKG_NAME) language translations" "$PYTHON tools/make_mo.py" && echo "$version_current_number" > "$version_store_pathfile"
+    cd "$prev_path" || return 1
 
-    cd "$olddir" || return 1
+    }
+
+LoadAppVersion()
+    {
+
+    # Find the installed application's internal version number
+    # creates a global var: $app_version
+    # this is the installed application version (not the QPKG version)
+
+    app_version=''
+
+    [[ ! -e $APP_VERSION_PATHFILE ]] && return 1
+
+    app_version=$($GREP_CMD '__version__ =' "$APP_VERSION_PATHFILE" | $SED_CMD 's|^.*"\(.*\)"|\1|')
 
     }
 
@@ -280,7 +297,7 @@ CleanLocalClone()
     [[ -z $QPKG_PATH || -z $QPKG_NAME || -z $SOURCE_GIT_URL ]] && return 1
 
     StopQPKG
-    ExecuteAndLog 'cleaning local repo' "rm -r $QPKG_PATH/$QPKG_NAME"
+    ExecuteAndLog 'cleaning local repo' "rm -r $QPKG_REPO_PATH"
     StartQPKG
 
     }
@@ -636,7 +653,7 @@ Init
 if [[ $errorcode -eq 0 ]]; then
     if [[ -n $1 ]]; then
         CommitLog "$(SessionSeparator "'$1' requested")"
-        CommitLog "= $(date)"
+        CommitLog "= $(date), QPKG: $QPKG_VERSION, application: $app_version"
     fi
     case $1 in
         start)

@@ -36,7 +36,7 @@ Init()
     {
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200815g
+    readonly SCRIPT_VERSION=200816
 
     if [[ ! -e /etc/init.d/functions ]]; then
         ShowAsError 'QTS functions missing (is this a QNAP NAS?): aborting ...'
@@ -206,8 +206,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(SABnzbd)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/SABnzbd/build/SABnzbd_200814.qpkg)
-        SHERPA_QPKG_MD5+=(608f9dd33a7a2a60764456b6b17834e8)
+        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/SABnzbd/build/SABnzbd_200816.qpkg)
+        SHERPA_QPKG_MD5+=(40b1708b3c3dd6a9c3b9cad4201f7b28)
         SHERPA_QPKG_ABBRVS+=('sb sb3 sab sab3 sabnzbd3 sabnzbd')
         SHERPA_QPKG_DEPS+=('Entware Par2')
         SHERPA_QPKG_IPKGS+=('python3 python3-pyopenssl python3-cryptography python3-dev gcc unrar p7zip coreutils-nice ionice ffprobe')
