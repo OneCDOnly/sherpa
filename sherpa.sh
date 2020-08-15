@@ -36,7 +36,7 @@ Init()
     {
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200816e
+    readonly SCRIPT_VERSION=200816f
 
     if [[ ! -e /etc/init.d/functions ]]; then
         ShowAsError 'QTS functions missing (is this a QNAP NAS?): aborting ...'
@@ -770,7 +770,8 @@ RemoveUnwantedQPKGs()
     IsAbort && return
 
     local response=''
-    local previous_Entware_package_list=$SHARE_PUBLIC_PATH/Entware.previously.installed.list
+    local previous_pip3_module_list=$SHARE_PUBLIC_PATH/pip3.prev.installed.list
+    local previous_opkg_package_list=$SHARE_PUBLIC_PATH/opkg.prev.installed.list
 
     UninstallQPKG Optware
     UninstallQPKG Entware-3x
@@ -780,8 +781,9 @@ RemoveUnwantedQPKGs()
 
     if [[ $TARGET_APP = Entware && $reinstall_flag = true ]]; then
         IsNotVisibleDebugging && echo
-        ShowAsNote "Reinstalling $(FormatAsPackageName Entware) will revert all IPKGs to defaults and only those required to support your sherpa apps will be reinstalled."
-        ShowAsNote "The currently installed IPKG list will be saved to $(FormatAsFileName "$previous_Entware_package_list")"
+        ShowAsNote "Reinstalling $(FormatAsPackageName Entware) will remove all IPKGs and Python modules, and only those required to support your sherpa apps will be reinstalled."
+        ShowAsNote "Your installed Python module list will be saved to $(FormatAsFileName "$previous_pip3_module_list")"
+        ShowAsNote "Your installed IPKG list will be saved to $(FormatAsFileName "$previous_opkg_package_list")"
         (IsQPKGInstalled SABnzbdplus || IsQPKGInstalled Headphones) && ShowAsWarning "Also, the $(FormatAsPackageName SABnzbdplus) and $(FormatAsPackageName Headphones) packages CANNOT BE REINSTALLED as Python 2.7.16 is no-longer available."
         IsNotVisibleDebugging && echo
         ShowAsQuiz "Press 'Y' if you agree to remove all current $(FormatAsPackageName Entware) IPKGs (and their configurations), or any other key to abort"
@@ -789,8 +791,16 @@ RemoveUnwantedQPKGs()
         DebugVar response
         case ${response:0:1} in
             y|Y)
-                echo "$($OPKG_CMD list-installed)" > "$previous_Entware_package_list"
-                DebugDone "saved current $(FormatAsPackageName Entware) IPKG list to $(FormatAsFileName "$previous_Entware_package_list")"
+                ShowAsProc 'saving lists'
+
+                echo "$($pip3_cmd freeze)" > "$previous_pip3_module_list"
+                DebugDone "saved current $(FormatAsPackageName pip3) module list to $(FormatAsFileName "$previous_pip3_module_list")"
+
+                echo "$($OPKG_CMD list-installed)" > "$previous_opkg_package_list"
+                DebugDone "saved current $(FormatAsPackageName Entware) IPKG list to $(FormatAsFileName "$previous_opkg_package_list")"
+
+                ShowAsDone 'lists saved'
+
                 UninstallQPKG Entware
                 ;;
             *)
