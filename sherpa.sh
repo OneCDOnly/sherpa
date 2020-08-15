@@ -36,7 +36,7 @@ Init()
     {
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200815f
+    readonly SCRIPT_VERSION=200815g
 
     if [[ ! -e /etc/init.d/functions ]]; then
         ShowAsError 'QTS functions missing (is this a QNAP NAS?): aborting ...'
@@ -1258,10 +1258,13 @@ InstallQPKG()
 ReloadProfile()
     {
 
-    IsQPKGInstalled Entware && PATH="/opt/bin:/opt/sbin:$PATH"
+    local opkg_prefix=/opt/bin:/opt/sbin
 
-    DebugDone 'adjusted $PATH'
-    DebugVar PATH
+    if IsQPKGInstalled Entware && ! [[ $PATH =~ $opkg_prefix ]]; then
+        PATH="$opkg_prefix:$PATH"
+        DebugDone 'adjusted $PATH'
+        DebugVar PATH
+    fi
 
     return 0
 
