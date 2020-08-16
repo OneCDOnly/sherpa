@@ -36,21 +36,10 @@ Init()
     {
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200816k
+    readonly SCRIPT_VERSION=200817
 
-    if [[ ! -e /etc/init.d/functions ]]; then
-        ShowAsAbort 'QTS functions missing (is this a QNAP NAS?)'
-        return 1
-    fi
-
-    readonly RUNTIME_LOCK_PATHFILE=/var/run/$SCRIPT_FILE.pid
-
-    if [[ -e $RUNTIME_LOCK_PATHFILE && -d /proc/$(<$RUNTIME_LOCK_PATHFILE) && $(</proc/"$(<$RUNTIME_LOCK_PATHFILE)"/cmdline) =~ $SCRIPT_FILE ]]; then
-        ShowAsAbort "another instance of $(ColourTextBrightWhite "$SCRIPT_FILE") is running"
-        return 1
-    fi
-
-    echo "$$" > "$RUNTIME_LOCK_PATHFILE"
+    IsQNAP || return 1
+    IsOnlyInstance || return 1
 
     DisableError
     DisableAbort
@@ -2095,6 +2084,50 @@ RemoveDirSizeMonitorFlag()
 
     }
 
+CreateLock()
+    {
+
+    [[ -n $RUNTIME_LOCK_PATHFILE ]] && echo "$$" > "$RUNTIME_LOCK_PATHFILE"
+
+    }
+
+RemoveLock()
+    {
+
+    [[ -n $RUNTIME_LOCK_PATHFILE && -e $RUNTIME_LOCK_PATHFILE ]] && rm -f "$RUNTIME_LOCK_PATHFILE"
+
+    }
+
+IsQNAP()
+    {
+
+    # is this a QNAP NAS?
+
+    if [[ ! -e /etc/init.d/functions ]]; then
+        ShowAsAbort 'QTS functions missing (is this a QNAP NAS?)'
+        return 1
+    fi
+
+    return 0
+
+    }
+
+IsOnlyInstance()
+    {
+
+    readonly RUNTIME_LOCK_PATHFILE=/var/run/$SCRIPT_FILE.pid
+
+    if [[ -e $RUNTIME_LOCK_PATHFILE && -d /proc/$(<$RUNTIME_LOCK_PATHFILE) && -n $SCRIPT_FILE && $(</proc/"$(<$RUNTIME_LOCK_PATHFILE)"/cmdline) =~ $SCRIPT_FILE ]]; then
+        ShowAsAbort "another instance of $(ColourTextBrightWhite "$SCRIPT_FILE") is running"
+        return 1
+    else
+        CreateLock
+    fi
+
+    return 0
+
+    }
+
 IsSysFilePresent()
     {
 
@@ -3406,8 +3439,8 @@ InstallQPKGIndepsAddons
 InstallTargetQPKG
 Cleanup
 ShowResult
+RemoveLock
 
 IsNotVisibleDebugging && IsNotLogViewOnly && IsNotVersionOnly && echo
-[[ -e $RUNTIME_LOCK_PATHFILE ]] && rm -f "$RUNTIME_LOCK_PATHFILE"
 
 exit $code_pointer
