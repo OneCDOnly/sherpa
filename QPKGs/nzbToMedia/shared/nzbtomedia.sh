@@ -41,10 +41,16 @@ Init()
     readonly QPKG_VERSION=$($GETCFG_CMD $QPKG_NAME Version -f $QTS_QPKG_CONF_PATHFILE)
     readonly QPKG_INI_PATHFILE=$QPKG_PATH/$QPKG_NAME/autoProcessMedia.cfg
     readonly QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.spec
-    readonly INIT_LOG_PATHFILE=/var/log/$QPKG_NAME.log
+    readonly SERVICE_STATUS_PATHFILE=/var/run/$QPKG_NAME.last.operation
+    readonly SERVICE_LOG_PATHFILE=/var/log/$QPKG_NAME.log
     local -r BACKUP_PATH=$($GETCFG_CMD SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
     readonly BACKUP_PATHFILE=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
     readonly APPARENT_PATH=/share/$($GETCFG_CMD SHARE_DEF defDownload -d Qdownload -f /etc/config/def_share.info)/$QPKG_NAME
+
+    # application-specific
+    readonly APP_VERSION_PATHFILE=$QPKG_REPO_PATH/nzbtomedia/version.py
+    readonly APP_VERSION_STORE_PATHFILE=$($DIRNAME_CMD "$APP_VERSION_PATHFILE")/version.stored
+    readonly TARGET_SCRIPT_PATHFILE=$QPKG_REPO_PATH/$TARGET_SCRIPT
 
     if [[ -z $LANG ]]; then
         export LANG=en_US.UTF-8
@@ -54,6 +60,8 @@ Init()
 
     WaitForEntware
     errorcode=0
+
+    LoadAppVersion
 
     [[ ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
 
@@ -89,10 +97,7 @@ StartQPKG()
 
     local -r SAB_MIN_VERSION=200809
 
-    if [[ -n $SOURCE_GIT_URL ]]; then
-        PullGitRepo $QPKG_NAME "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_PATH"
-        cd "$QPKG_PATH/$QPKG_NAME" || return 1
-    fi
+    [[ -n $SOURCE_GIT_URL ]] && PullGitRepo $QPKG_NAME "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_PATH"
 
     if [[ $($GETCFG_CMD SABnzbdplus Enable -f $QTS_QPKG_CONF_PATHFILE) = TRUE ]]; then
         DisplayErrCommitAllLogs "unable to link from package to target: installed $(FormatAsPackageName SABnzbdplus) QPKG must be replaced with $(FormatAsPackageName SABnzbd) $SAB_MIN_VERSION or later"
@@ -154,6 +159,21 @@ RestoreConfig()
 
     }
 
+LoadAppVersion()
+    {
+
+    # Find the installed application's internal version number
+    # creates a global var: $app_version
+    # this is the installed application version (not the QPKG version)
+
+    app_version=''
+
+    [[ ! -e $APP_VERSION_PATHFILE ]] && return 1
+
+    app_version=$($GREP_CMD '__version__ =' "$APP_VERSION_PATHFILE" | $SED_CMD 's|^.*"\(.*\)"|\1|')
+
+    }
+
 PullGitRepo()
     {
 
@@ -177,7 +197,7 @@ PullGitRepo()
     if [[ ! -d ${QPKG_GIT_PATH}/.git ]]; then
         ExecuteAndLog "cloning $(FormatAsPackageName "$1") from remote repository" "$GIT_CMD clone --branch $3 $depth -c advice.detachedHead=false $GIT_HTTPS_URL $QPKG_GIT_PATH || $GIT_CMD clone --branch $3 $depth -c advice.detachedHead=false $GIT_HTTP_URL $QPKG_GIT_PATH"
     else
-        ExecuteAndLog "updating $(FormatAsPackageName "$1") from remote repository" "cd $QPKG_GIT_PATH && $GIT_CMD pull"
+        ExecuteAndLog "updating $(FormatAsPackageName "$1") from remote repository" "$GIT_CMD -C $QPKG_GIT_PATH pull"
     fi
 
     }
@@ -190,7 +210,7 @@ CleanLocalClone()
     [[ -z $QPKG_PATH || -z $QPKG_NAME || -z $SOURCE_GIT_URL ]] && return 1
 
     StopQPKG
-    ExecuteAndLog 'cleaning local repo' "rm -r $QPKG_PATH/$QPKG_NAME"
+    ExecuteAndLog 'cleaning local repo' "rm -r $QPKG_REPO_PATH"
     StartQPKG
 
     }
@@ -220,11 +240,32 @@ ExecuteAndLog()
         DisplayCommitToLog 'failed!'
         DisplayCommitToLog "$(FormatAsFuncMessages "$exec_msgs")"
         DisplayCommitToLog "$(FormatAsResult $result)"
-        CommitWarnToSysLog "A problem occurred while $1. Check $(FormatAsFileName "$INIT_LOG_PATHFILE") for more details."
+        CommitWarnToSysLog "A problem occurred while $1. Check $(FormatAsFileName "$SERVICE_LOG_PATHFILE") for more details."
         returncode=1
     fi
 
     return $returncode
+
+    }
+
+SetServiceOperationOK()
+    {
+
+    echo "ok" > "$SERVICE_STATUS_PATHFILE"
+
+    }
+
+SetServiceOperationFailed()
+    {
+
+    echo "failed" > "$SERVICE_STATUS_PATHFILE"
+
+    }
+
+RemoveServiceStatus()
+    {
+
+    [[ -e $SERVICE_STATUS_PATHFILE ]] && rm -f "$SERVICE_STATUS_PATHFILE"
 
     }
 
@@ -260,14 +301,14 @@ DisplayErrCommitToLog()
 DisplayCommitToLog()
     {
 
-    echo "$1" | $TEE_CMD -a $INIT_LOG_PATHFILE
+    echo "$1" | $TEE_CMD -a $SERVICE_LOG_PATHFILE
 
     }
 
 DisplayWaitCommitToLog()
     {
 
-    DisplayWait "$1" | $TEE_CMD -a $INIT_LOG_PATHFILE
+    DisplayWait "$1" | $TEE_CMD -a $SERVICE_LOG_PATHFILE
 
     }
 
@@ -373,7 +414,7 @@ CommitErrToSysLog()
 CommitLog()
     {
 
-    echo "$1" >> "$INIT_LOG_PATHFILE"
+    echo "$1" >> "$SERVICE_LOG_PATHFILE"
 
     }
 
@@ -450,7 +491,7 @@ Init
 if [[ $errorcode -eq 0 ]]; then
     if [[ -n $1 ]]; then
         CommitLog "$(SessionSeparator "'$1' requested")"
-        CommitLog "= $(date)"
+        CommitLog "= $(date), QPKG: $QPKG_VERSION, application: $app_version"
     fi
     case $1 in
         start)
@@ -476,10 +517,11 @@ if [[ $errorcode -eq 0 ]]; then
             CleanLocalClone || errorcode=1
             ;;
         l|log)
-            if [[ -e $INIT_LOG_PATHFILE ]]; then
-                LESSSECURE=1 $GNU_LESS_CMD +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$INIT_LOG_PATHFILE"
+            if [[ -e $SERVICE_LOG_PATHFILE ]]; then
+                LESSSECURE=1 $GNU_LESS_CMD +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$SERVICE_LOG_PATHFILE"
             else
-                Display "service log not found: $(FormatAsFileName "$INIT_LOG_PATHFILE")"
+                Display "service log not found: $(FormatAsFileName "$SERVICE_LOG_PATHFILE")"
+                errorcode=1
             fi
             ;;
         v|version)
@@ -490,5 +532,7 @@ if [[ $errorcode -eq 0 ]]; then
             ;;
     esac
 fi
+
+[[ $errorcode -eq 0 ]] && SetServiceOperationOK || SetServiceOperationFailed
 
 exit $errorcode
