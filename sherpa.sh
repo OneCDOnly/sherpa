@@ -731,7 +731,7 @@ DownloadQPKGs()
     else
         if IsNotQPKGInstalled Entware; then
             if [[ $TARGET_APP = Entware ]]; then
-                ShowAsNote "It's not necessary to install Entware first. It will be installed on-demand with your other sherpa packages. :)"
+                ShowAsNote "It's not necessary to install $(FormatAsPackageName Entware) first. It will be installed on-demand with your other sherpa packages. :)"
                 EnableAbort
                 DisableShowInstallerOutcome
                 return 1
@@ -1707,7 +1707,7 @@ ShowResult()
         echo -e "\n- Ensure all sherpa application dependencies are installed:"
         echo -e "\t$0 --check-all"
 
-        echo -e "\n- Don't check free-space on target filesystem when installing Entware packages:"
+        echo -e "\n- Don't check free-space on target filesystem when installing $(FormatAsPackageName Entware) packages:"
         echo -e "\t$0 --ignore-space"
 
         echo -e "\n- Update all sherpa applications:"
