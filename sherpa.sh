@@ -441,13 +441,13 @@ LogRuntimeParameters()
     fi
 
     if IsNotError && [[ ${#QPKGS_to_install[@]} -eq 0 && ${#QPKGS_to_uninstall[@]} -eq 0 && ${#QPKGS_to_update[@]} -eq 0 && ${#QPKGS_to_backup[@]} -eq 0 && ${#QPKGS_to_restore[@]} -eq 0 ]] && IsNotSatisfyDependenciesOnly && [[ $update_all_apps = false ]]; then
-        ShowAsError 'no valid QPKGs or actions were specified'
+        ShowAsError 'no valid QPKGs or actions were specified.'
         EnableShowAbbreviationsReminder
         return 1
     fi
 
     if [[ $backup_all_apps = true && $restore_all_apps = true ]]; then
-        ShowAsError 'no point running a backup then a restore operation'
+        ShowAsError 'no point running a backup then a restore operation.'
         code_pointer=1
         return 1
     fi
@@ -457,7 +457,7 @@ LogRuntimeParameters()
         result=$?
 
         if [[ $result -ne 0 ]]; then
-            ShowAsError "unable to create working directory $(FormatAsFileName "$WORK_PATH") $(FormatAsExitcode $result)"
+            ShowAsError "unable to create script working directory $(FormatAsFileName "$WORK_PATH") $(FormatAsExitcode $result)"
             EnableSuggestIssue
             return 1
         else
@@ -516,7 +516,7 @@ LogRuntimeParameters()
             DebugQPKG 'Entware installer' $ENTWARE_VER
 
             if [[ $ENTWARE_VER = none ]]; then
-                ShowAsError 'Entware appears to be installed but is not visible.'
+                ShowAsError "$(FormatAsPackageName Entware) appears to be installed but is not visible."
                 return 1
             fi
         fi
@@ -2001,7 +2001,7 @@ OpenIPKGArchive()
     # extract the 'opkg' package list file
 
     if [[ ! -e $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE ]]; then
-        ShowAsError "could not locate the IPKG list file"
+        ShowAsError 'could not locate the IPKG list file.'
         return 1
     fi
 
@@ -2010,7 +2010,7 @@ OpenIPKGArchive()
     RunThisAndLogResults "$Z7_CMD e -o$($DIRNAME_CMD "$EXTERNAL_PACKAGE_LIST_PATHFILE") $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE" "$WORK_PATH/ipkg.list.archive.extract"
 
     if [[ ! -e $EXTERNAL_PACKAGE_LIST_PATHFILE ]]; then
-        ShowAsError "could not open the IPKG list file"
+        ShowAsError 'could not open the IPKG list file.'
         return 1
     fi
 
@@ -3211,7 +3211,7 @@ ShowAsAbort()
 
     EnableError
     WriteToDisplay_NewLine "$(ColourTextBrightRed fail)" "$capitalised: aborting ..."
-    WriteToLog fail "$capitalised"
+    WriteToLog fail "$capitalised: aborting"
 
     }
 
