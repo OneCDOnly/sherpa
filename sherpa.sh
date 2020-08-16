@@ -39,14 +39,14 @@ Init()
     readonly SCRIPT_VERSION=200816h
 
     if [[ ! -e /etc/init.d/functions ]]; then
-        ShowAsError 'QTS functions missing (is this a QNAP NAS?): aborting ...'
+        ShowAsAbort 'QTS functions missing (is this a QNAP NAS?)'
         return 1
     fi
 
     readonly RUNTIME_LOCK_PATHFILE=/var/run/$SCRIPT_FILE.pid
 
     if [[ -e $RUNTIME_LOCK_PATHFILE && -d /proc/$(<$RUNTIME_LOCK_PATHFILE) && $(</proc/"$(<$RUNTIME_LOCK_PATHFILE)"/cmdline) =~ $SCRIPT_FILE ]]; then
-        ShowAsError "another instance of $(ColourTextBrightWhite "$SCRIPT_FILE") is running: aborting ..."
+        ShowAsAbort "another instance of $(ColourTextBrightWhite "$SCRIPT_FILE") is running"
         return 1
     fi
 
@@ -3203,11 +3203,23 @@ ShowAsWarning()
 
     }
 
+ShowAsAbort()
+    {
+
+    local buffer="$1"
+    local capitalised="$(tr "[a-z]" "[A-Z]" <<< "${buffer:0:1}")${buffer:1}"      # use any available 'tr'
+
+    EnableError
+    WriteToDisplay_NewLine "$(ColourTextBrightRed fail)" "$capitalised: aborting ..."
+    WriteToLog fail "$capitalised"
+
+    }
+
 ShowAsError()
     {
 
     local buffer="$1"
-    local capitalised="$(tr "[a-z]" "[A-Z]" <<< "${buffer:0:1}")${buffer:1}"      # use any available 'tr' as we may not have picked one yet
+    local capitalised="$(tr "[a-z]" "[A-Z]" <<< "${buffer:0:1}")${buffer:1}"      # use any available 'tr'
 
     EnableError
     WriteToDisplay_NewLine "$(ColourTextBrightRed fail)" "$capitalised"
