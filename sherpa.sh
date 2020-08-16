@@ -116,45 +116,45 @@ Init()
     local -r DEBUG_LOG_FILE=${SCRIPT_FILE%.*}.debug.log
 
     # check required binaries are present
-    IsSysFilePresent $AWK_CMD || return 1
-    IsSysFilePresent $CAT_CMD || return 1
-    IsSysFilePresent $CHMOD_CMD || return 1
-    IsSysFilePresent $DATE_CMD || return 1
-    IsSysFilePresent $GREP_CMD || return 1
-    IsSysFilePresent $HOSTNAME_CMD || return 1
-    IsSysFilePresent $LN_CMD || return 1
-    IsSysFilePresent $MD5SUM_CMD || return 1
-    IsSysFilePresent $MKDIR_CMD || return 1
-    IsSysFilePresent $PING_CMD || return 1
-    IsSysFilePresent $SED_CMD || return 1
-    IsSysFilePresent $SLEEP_CMD || return 1
-    IsSysFilePresent $TAR_CMD || return 1
-    IsSysFilePresent $TOUCH_CMD || return 1
-    IsSysFilePresent $TR_CMD || return 1
-    IsSysFilePresent $UNAME_CMD || return 1
-    IsSysFilePresent $UNIQ_CMD || return 1
+    IsSysFileExist $AWK_CMD || return 1
+    IsSysFileExist $CAT_CMD || return 1
+    IsSysFileExist $CHMOD_CMD || return 1
+    IsSysFileExist $DATE_CMD || return 1
+    IsSysFileExist $GREP_CMD || return 1
+    IsSysFileExist $HOSTNAME_CMD || return 1
+    IsSysFileExist $LN_CMD || return 1
+    IsSysFileExist $MD5SUM_CMD || return 1
+    IsSysFileExist $MKDIR_CMD || return 1
+    IsSysFileExist $PING_CMD || return 1
+    IsSysFileExist $SED_CMD || return 1
+    IsSysFileExist $SLEEP_CMD || return 1
+    IsSysFileExist $TAR_CMD || return 1
+    IsSysFileExist $TOUCH_CMD || return 1
+    IsSysFileExist $TR_CMD || return 1
+    IsSysFileExist $UNAME_CMD || return 1
+    IsSysFileExist $UNIQ_CMD || return 1
 
-    IsSysFilePresent $CURL_CMD || return 1
-    IsSysFilePresent $GETCFG_CMD || return 1
-    IsSysFilePresent $RMCFG_CMD || return 1
-    IsSysFilePresent $SERVICE_CMD || return 1
-    IsSysFilePresent $SETCFG_CMD || return 1
+    IsSysFileExist $CURL_CMD || return 1
+    IsSysFileExist $GETCFG_CMD || return 1
+    IsSysFileExist $RMCFG_CMD || return 1
+    IsSysFileExist $SERVICE_CMD || return 1
+    IsSysFileExist $SETCFG_CMD || return 1
 
-    IsSysFilePresent $BASENAME_CMD || return 1
-    IsSysFilePresent $CUT_CMD || return 1
-    IsSysFilePresent $DIRNAME_CMD || return 1
-    IsSysFilePresent $DU_CMD || return 1
-    IsSysFilePresent $HEAD_CMD || return 1
-    IsSysFilePresent $READLINK_CMD || return 1
-    IsSysFilePresent $SORT_CMD || return 1
-    IsSysFilePresent $TAIL_CMD || return 1
-    IsSysFilePresent $TEE_CMD || return 1
-    IsSysFilePresent $UNZIP_CMD || return 1
-    IsSysFilePresent $UPTIME_CMD || return 1
-    IsSysFilePresent $WC_CMD || return 1
+    IsSysFileExist $BASENAME_CMD || return 1
+    IsSysFileExist $CUT_CMD || return 1
+    IsSysFileExist $DIRNAME_CMD || return 1
+    IsSysFileExist $DU_CMD || return 1
+    IsSysFileExist $HEAD_CMD || return 1
+    IsSysFileExist $READLINK_CMD || return 1
+    IsSysFileExist $SORT_CMD || return 1
+    IsSysFileExist $TAIL_CMD || return 1
+    IsSysFileExist $TEE_CMD || return 1
+    IsSysFileExist $UNZIP_CMD || return 1
+    IsSysFileExist $UPTIME_CMD || return 1
+    IsSysFileExist $WC_CMD || return 1
 
-    IsSysFilePresent $Z7_CMD || return 1
-    IsSysFilePresent $ZIP_CMD || return 1
+    IsSysFileExist $Z7_CMD || return 1
+    IsSysFileExist $ZIP_CMD || return 1
 
     local -r DEFAULT_SHARE_DOWNLOAD_PATH=/share/Download
     local -r DEFAULT_SHARE_PUBLIC_PATH=/share/Public
@@ -164,14 +164,14 @@ Init()
         readonly SHARE_DOWNLOAD_PATH=$DEFAULT_SHARE_DOWNLOAD_PATH
     else
         readonly SHARE_DOWNLOAD_PATH=/share/$($GETCFG_CMD SHARE_DEF defDownload -d Qdownload -f $DEFAULT_SHARES_PATHFILE)
-        IsSysSharePresent "$SHARE_DOWNLOAD_PATH" || return 1
+        IsSysShareExist "$SHARE_DOWNLOAD_PATH" || return 1
     fi
 
     if [[ -L $DEFAULT_SHARE_PUBLIC_PATH ]]; then
         readonly SHARE_PUBLIC_PATH=$DEFAULT_SHARE_PUBLIC_PATH
     else
         readonly SHARE_PUBLIC_PATH=/share/$($GETCFG_CMD SHARE_DEF defPublic -d Qpublic -f $DEFAULT_SHARES_PATHFILE)
-        IsSysSharePresent "$SHARE_PUBLIC_PATH" || return 1
+        IsSysShareExist "$SHARE_PUBLIC_PATH" || return 1
     fi
 
     # sherpa-supported package details - parallel arrays
@@ -864,7 +864,7 @@ PatchBaseInit()
 UpdateEntware()
     {
 
-    if IsNotSysFilePresent $OPKG_CMD || IsNotSysFilePresent $GNU_FIND_CMD; then
+    if IsNotSysFileExist $OPKG_CMD || IsNotSysFileExist $GNU_FIND_CMD; then
         code_pointer=3
         return 1
     fi
@@ -1156,7 +1156,7 @@ InstallPy3Modules()
     elif [[ -e /opt/bin/pip3.7 ]]; then
         pip3_cmd=/opt/bin/pip3.7
     else
-        if IsNotSysFilePresent $pip3_cmd; then
+        if IsNotSysFileExist $pip3_cmd; then
             echo "* Ugh! The usual fix for this is to let sherpa reinstall 'Entware' at least once."
             echo -e "\t$0 ew"
             echo "If it happens again after reinstalling 'Entware', please create a new issue for this on GitHub."
@@ -1897,7 +1897,7 @@ FindAllIPKGDependencies()
 
     [[ -z $1 ]] && return 1
 
-    if IsNotSysFilePresent $OPKG_CMD || IsNotSysFilePresent $GNU_GREP_CMD; then
+    if IsNotSysFileExist $OPKG_CMD || IsNotSysFileExist $GNU_GREP_CMD; then
         code_pointer=7
         return 1
     fi
@@ -2021,7 +2021,7 @@ _MonitorDirSize_()
     #   $2 = total target bytes (100%) for specified path
 
     [[ -z $1 || ! -d $1 || -z $2 || $2 -eq 0 ]] && return
-    IsNotSysFilePresent $GNU_FIND_CMD && return
+    IsNotSysFileExist $GNU_FIND_CMD && return
 
     local target_dir="$1"
     local total_bytes=$2
@@ -2128,7 +2128,7 @@ IsOnlyInstance()
 
     }
 
-IsSysFilePresent()
+IsSysFileExist()
     {
 
     # input:
@@ -2148,7 +2148,7 @@ IsSysFilePresent()
 
     }
 
-IsNotSysFilePresent()
+IsNotSysFileExist()
     {
 
     # input:
@@ -2159,11 +2159,11 @@ IsNotSysFilePresent()
 
     [[ -z $1 ]] && return 1
 
-    ! IsSysFilePresent "$1"
+    ! IsSysFileExist "$1"
 
     }
 
-IsSysSharePresent()
+IsSysShareExist()
     {
 
     # input:
@@ -2183,7 +2183,7 @@ IsSysSharePresent()
 
     }
 
-IsNotSysSharePresent()
+IsNotSysShareExist()
     {
 
     # input:
@@ -2194,7 +2194,7 @@ IsNotSysSharePresent()
 
     [[ -z $1 ]] && return 1
 
-    ! IsSysSharePresent "$1"
+    ! IsSysShareExist "$1"
 
     }
 
