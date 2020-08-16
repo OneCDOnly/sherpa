@@ -36,7 +36,7 @@ Init()
     {
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200816j
+    readonly SCRIPT_VERSION=200816k
 
     if [[ ! -e /etc/init.d/functions ]]; then
         ShowAsAbort 'QTS functions missing (is this a QNAP NAS?)'
@@ -224,8 +224,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(NZBGet)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/NZBGet/build/NZBGet_200814.qpkg)
-        SHERPA_QPKG_MD5+=(ff7d7ffc466ae8c616a175b0a5820d04)
+        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/NZBGet/build/NZBGet_200816.qpkg)
+        SHERPA_QPKG_MD5+=(eccfc115dc8a866fc1c345d25b267253)
         SHERPA_QPKG_ABBRVS+=('ng nget nzb nzbget')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('nzbget')
@@ -278,8 +278,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(OTransmission)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/OTransmission/build/OTransmission_200814.qpkg)
-        SHERPA_QPKG_MD5+=(3ed319d34dc29dc5a268ee2aeef2f57b)
+        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/OTransmission/build/OTransmission_200816.qpkg)
+        SHERPA_QPKG_MD5+=(79953510ed2a775c8866c5afcf8513a9)
         SHERPA_QPKG_ABBRVS+=('ot otrans tm tr trans tmission transmission otransmission')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('transmission-web transmission-daemon-openssl jq')
