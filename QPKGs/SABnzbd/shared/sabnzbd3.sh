@@ -63,7 +63,7 @@ Init()
 
     # specific launch arguments
     if [[ -n $PYTHON && -n $TARGET_SCRIPT ]]; then
-        readonly LAUNCHER="$PYTHON $TARGET_SCRIPT_PATHFILE --daemon --browser 0 --config-file $QPKG_INI_PATHFILE --pidfile $DAEMON_PID_PATHFILE"
+        readonly LAUNCHER="cd $QPKG_REPO_PATH; $PYTHON $TARGET_SCRIPT_PATHFILE --daemon --browser 0 --config-file $QPKG_INI_PATHFILE --pidfile $DAEMON_PID_PATHFILE"
     else
         DisplayErrCommitAllLogs 'found nothing to launch!'
         errorcode=1
