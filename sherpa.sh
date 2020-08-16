@@ -127,45 +127,45 @@ Init()
     local -r DEBUG_LOG_FILE=${SCRIPT_FILE%.*}.debug.log
 
     # check required binaries are present
-    IsNotSysFilePresent $AWK_CMD && return 1
-    IsNotSysFilePresent $CAT_CMD && return 1
-    IsNotSysFilePresent $CHMOD_CMD && return 1
-    IsNotSysFilePresent $DATE_CMD && return 1
-    IsNotSysFilePresent $GREP_CMD && return 1
-    IsNotSysFilePresent $HOSTNAME_CMD && return 1
-    IsNotSysFilePresent $LN_CMD && return 1
-    IsNotSysFilePresent $MD5SUM_CMD && return 1
-    IsNotSysFilePresent $MKDIR_CMD && return 1
-    IsNotSysFilePresent $PING_CMD && return 1
-    IsNotSysFilePresent $SED_CMD && return 1
-    IsNotSysFilePresent $SLEEP_CMD && return 1
-    IsNotSysFilePresent $TAR_CMD && return 1
-    IsNotSysFilePresent $TOUCH_CMD && return 1
-    IsNotSysFilePresent $TR_CMD && return 1
-    IsNotSysFilePresent $UNAME_CMD && return 1
-    IsNotSysFilePresent $UNIQ_CMD && return 1
+    IsSysFilePresent $AWK_CMD || return 1
+    IsSysFilePresent $CAT_CMD || return 1
+    IsSysFilePresent $CHMOD_CMD || return 1
+    IsSysFilePresent $DATE_CMD || return 1
+    IsSysFilePresent $GREP_CMD || return 1
+    IsSysFilePresent $HOSTNAME_CMD || return 1
+    IsSysFilePresent $LN_CMD || return 1
+    IsSysFilePresent $MD5SUM_CMD || return 1
+    IsSysFilePresent $MKDIR_CMD || return 1
+    IsSysFilePresent $PING_CMD || return 1
+    IsSysFilePresent $SED_CMD || return 1
+    IsSysFilePresent $SLEEP_CMD || return 1
+    IsSysFilePresent $TAR_CMD || return 1
+    IsSysFilePresent $TOUCH_CMD || return 1
+    IsSysFilePresent $TR_CMD || return 1
+    IsSysFilePresent $UNAME_CMD || return 1
+    IsSysFilePresent $UNIQ_CMD || return 1
 
-    IsNotSysFilePresent $CURL_CMD && return 1
-    IsNotSysFilePresent $GETCFG_CMD && return 1
-    IsNotSysFilePresent $RMCFG_CMD && return 1
-    IsNotSysFilePresent $SERVICE_CMD && return 1
-    IsNotSysFilePresent $SETCFG_CMD && return 1
+    IsSysFilePresent $CURL_CMD || return 1
+    IsSysFilePresent $GETCFG_CMD || return 1
+    IsSysFilePresent $RMCFG_CMD || return 1
+    IsSysFilePresent $SERVICE_CMD || return 1
+    IsSysFilePresent $SETCFG_CMD || return 1
 
-    IsNotSysFilePresent $BASENAME_CMD && return 1
-    IsNotSysFilePresent $CUT_CMD && return 1
-    IsNotSysFilePresent $DIRNAME_CMD && return 1
-    IsNotSysFilePresent $DU_CMD && return 1
-    IsNotSysFilePresent $HEAD_CMD && return 1
-    IsNotSysFilePresent $READLINK_CMD && return 1
-    IsNotSysFilePresent $SORT_CMD && return 1
-    IsNotSysFilePresent $TAIL_CMD && return 1
-    IsNotSysFilePresent $TEE_CMD && return 1
-    IsNotSysFilePresent $UNZIP_CMD && return 1
-    IsNotSysFilePresent $UPTIME_CMD && return 1
-    IsNotSysFilePresent $WC_CMD && return 1
+    IsSysFilePresent $BASENAME_CMD || return 1
+    IsSysFilePresent $CUT_CMD || return 1
+    IsSysFilePresent $DIRNAME_CMD || return 1
+    IsSysFilePresent $DU_CMD || return 1
+    IsSysFilePresent $HEAD_CMD || return 1
+    IsSysFilePresent $READLINK_CMD || return 1
+    IsSysFilePresent $SORT_CMD || return 1
+    IsSysFilePresent $TAIL_CMD || return 1
+    IsSysFilePresent $TEE_CMD || return 1
+    IsSysFilePresent $UNZIP_CMD || return 1
+    IsSysFilePresent $UPTIME_CMD || return 1
+    IsSysFilePresent $WC_CMD || return 1
 
-    IsNotSysFilePresent $Z7_CMD && return 1
-    IsNotSysFilePresent $ZIP_CMD && return 1
+    IsSysFilePresent $Z7_CMD || return 1
+    IsSysFilePresent $ZIP_CMD || return 1
 
     local -r DEFAULT_SHARE_DOWNLOAD_PATH=/share/Download
     local -r DEFAULT_SHARE_PUBLIC_PATH=/share/Public
@@ -175,14 +175,14 @@ Init()
         readonly SHARE_DOWNLOAD_PATH=$DEFAULT_SHARE_DOWNLOAD_PATH
     else
         readonly SHARE_DOWNLOAD_PATH=/share/$($GETCFG_CMD SHARE_DEF defDownload -d Qdownload -f $DEFAULT_SHARES_PATHFILE)
-        IsNotSysSharePresent "$SHARE_DOWNLOAD_PATH" && return 1
+        IsSysSharePresent "$SHARE_DOWNLOAD_PATH" || return 1
     fi
 
     if [[ -L $DEFAULT_SHARE_PUBLIC_PATH ]]; then
         readonly SHARE_PUBLIC_PATH=$DEFAULT_SHARE_PUBLIC_PATH
     else
         readonly SHARE_PUBLIC_PATH=/share/$($GETCFG_CMD SHARE_DEF defPublic -d Qpublic -f $DEFAULT_SHARES_PATHFILE)
-        IsNotSysSharePresent "$SHARE_PUBLIC_PATH" && return 1
+        IsSysSharePresent "$SHARE_PUBLIC_PATH" || return 1
     fi
 
     # sherpa-supported package details - parallel arrays
@@ -2101,6 +2101,21 @@ IsSysFilePresent()
 
     }
 
+IsNotSysFilePresent()
+    {
+
+    # input:
+    #   $1 = pathfile to check
+
+    # output:
+    #   $? = 0 (true) or 1 (false)
+
+    [[ -z $1 ]] && return 1
+
+    ! IsSysFilePresent "$1"
+
+    }
+
 IsSysSharePresent()
     {
 
@@ -2118,6 +2133,21 @@ IsSysSharePresent()
     else
         return 0
     fi
+
+    }
+
+IsNotSysSharePresent()
+    {
+
+    # input:
+    #   $1 = symlink path to check
+
+    # output:
+    #   $? = 0 (true) or 1 (false)
+
+    [[ -z $1 ]] && return 1
+
+    ! IsSysSharePresent "$1"
 
     }
 
@@ -2267,36 +2297,6 @@ IsNotQPKGEnabled()
     [[ -z $1 ]] && return 1
 
     ! IsQPKGEnabled "$1"
-
-    }
-
-IsNotSysFilePresent()
-    {
-
-    # input:
-    #   $1 = pathfile to check
-
-    # output:
-    #   $? = 0 (true) or 1 (false)
-
-    [[ -z $1 ]] && return 1
-
-    ! IsSysFilePresent "$1"
-
-    }
-
-IsNotSysSharePresent()
-    {
-
-    # input:
-    #   $1 = symlink path to check
-
-    # output:
-    #   $? = 0 (true) or 1 (false)
-
-    [[ -z $1 ]] && return 1
-
-    ! IsSysSharePresent "$1"
 
     }
 
