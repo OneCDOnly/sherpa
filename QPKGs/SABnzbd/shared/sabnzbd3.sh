@@ -214,9 +214,10 @@ UpdateLanguages()
     # run [tools/make_mo.py] if SABnzbd version number has changed since last run
 
     LoadAppVersion || return 1
-    [[ -e $APP_VERSION_STORE_PATHFILE && $(<"$APP_VERSION_STORE_PATHFILE") = "$app_version" ]] && return 0
 
-    ExecuteAndLog "updating $(FormatAsPackageName $QPKG_NAME) language translations" "$PYTHON $QPKG_REPO_PATH/tools/make_mo.py" && echo "$app_version" > "$APP_VERSION_STORE_PATHFILE"
+    [[ -e $APP_VERSION_STORE_PATHFILE && $(<"$APP_VERSION_STORE_PATHFILE") = "$app_version" && -d $QPKG_REPO_PATH/locale ]] && return 0
+
+    ExecuteAndLog "updating $(FormatAsPackageName $QPKG_NAME) language translations" "cd $QPKG_REPO_PATH; $PYTHON $QPKG_REPO_PATH/tools/make_mo.py" && SaveAppVersion
 
     }
 
@@ -229,9 +230,16 @@ LoadAppVersion()
 
     app_version=''
 
-    [[ ! -e $APP_VERSION_PATHFILE ]] && return 1
+    [[ ! -e $APP_VERSION_PATHFILE ]] && return
 
     app_version=$($GREP_CMD '__version__ =' "$APP_VERSION_PATHFILE" | $SED_CMD 's|^.*"\(.*\)"|\1|')
+
+    }
+
+SaveAppVersion()
+    {
+
+    echo "$app_version" > "$APP_VERSION_STORE_PATHFILE"
 
     }
 
