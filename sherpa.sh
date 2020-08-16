@@ -485,8 +485,6 @@ LogRuntimeParameters()
             ShowAsError "unable to create IPKG download directory $(FormatAsFileName "$IPKG_DL_PATH") $(FormatAsExitcode $result)"
             EnableSuggestIssue
             return 1
-        else
-            monitor_flag="$IPKG_DL_PATH/.monitor"
         fi
     fi
 
@@ -793,10 +791,10 @@ RemoveUnwantedQPKGs()
             y|Y)
                 ShowAsProc 'saving lists'
 
-                echo "$($pip3_cmd freeze)" > "$previous_pip3_module_list"
+                $pip3_cmd freeze > "$previous_pip3_module_list"
                 DebugDone "saved current $(FormatAsPackageName pip3) module list to $(FormatAsFileName "$previous_pip3_module_list")"
 
-                echo "$($OPKG_CMD list-installed)" > "$previous_opkg_package_list"
+                $OPKG_CMD list-installed > "$previous_opkg_package_list"
                 DebugDone "saved current $(FormatAsPackageName Entware) IPKG list to $(FormatAsFileName "$previous_opkg_package_list")"
 
                 ShowAsDone 'lists saved'
@@ -1030,15 +1028,14 @@ InstallIPKGBatch()
         local -r STARTSECONDS=$(DebugTimerStageStart)
         ShowAsProc "downloading & installing $IPKG_download_count IPKG$(DisplayPlural "$IPKG_download_count")"
 
-        $TOUCH_CMD "$monitor_flag"
-        trap CTRL_C_Captured INT
-        _MonitorDirSize_ "$IPKG_DL_PATH" "$IPKG_download_size" &
+        CreateDirSizeMonitorFlag
+            trap CTRL_C_Captured INT
+                _MonitorDirSize_ "$IPKG_DL_PATH" "$IPKG_download_size" &
 
-        RunThisAndLogResults "$OPKG_CMD install$ignore_space_arg --force-overwrite ${IPKG_download_list[*]} --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
-        result=$?
-
-        [[ -e $monitor_flag ]] && { rm -f "$monitor_flag"; $SLEEP_CMD 2 ;}
-        trap - INT
+                RunThisAndLogResults "$OPKG_CMD install$ignore_space_arg --force-overwrite ${IPKG_download_list[*]} --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
+                result=$?
+            trap - INT
+        RemoveDirSizeMonitorFlag
 
         if [[ $result -eq 0 ]]; then
             ShowAsDone "downloaded & installed $IPKG_download_count IPKG$(DisplayPlural "$IPKG_download_count")"
@@ -1679,9 +1676,7 @@ GetQPKGMD5()
 CTRL_C_Captured()
     {
 
-    [[ -e $monitor_flag ]] && rm -f "$monitor_flag"
-
-    $SLEEP_CMD 2
+    RemoveDirSizeMonitorFlag
 
     exit
 
@@ -2029,7 +2024,7 @@ _MonitorDirSize_()
     {
 
     # * This function runs autonomously *
-    # It watches for the existence of the pathfile set in $monitor_flag
+    # It watches for the existence of $monitor_flag_pathfile
     # If that file is removed, this function dies gracefully
 
     # input:
@@ -2051,7 +2046,7 @@ _MonitorDirSize_()
     previous_length=0
     previous_msg=''
 
-    while [[ -e $monitor_flag ]]; do
+    while [[ -e $monitor_flag_pathfile ]]; do
         current_bytes=$($GNU_FIND_CMD "$target_dir" -type f -name '*.ipk' -exec $DU_CMD --bytes --total --apparent-size {} + 2> /dev/null | $GREP_CMD total$ | $CUT_CMD -f1)
         [[ -z $current_bytes ]] && current_bytes=0
 
@@ -2078,6 +2073,25 @@ _MonitorDirSize_()
     done
 
     [[ -n $progress_message ]] && ProgressUpdater ' done!'
+
+    }
+
+CreateDirSizeMonitorFlag()
+    {
+
+    monitor_flag_pathfile=$IPKG_DL_PATH/.monitor
+
+    $TOUCH_CMD "$monitor_flag_pathfile"
+
+    }
+
+RemoveDirSizeMonitorFlag()
+    {
+
+    if [[ -n $monitor_flag_pathfile && -e $monitor_flag_pathfile ]]; then
+        rm -f "$monitor_flag_pathfile"
+        $SLEEP_CMD 2
+    fi
 
     }
 
