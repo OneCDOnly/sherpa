@@ -41,11 +41,13 @@ Init()
     # generic environment
     readonly QTS_QPKG_CONF_PATHFILE=/etc/config/qpkg.conf
     readonly QPKG_PATH=$($GETCFG_CMD $QPKG_NAME Install_Path -f $QTS_QPKG_CONF_PATHFILE)
+    readonly QPKG_REPO_PATH=$QPKG_PATH/$QPKG_NAME
     readonly QPKG_VERSION=$($GETCFG_CMD $QPKG_NAME Version -f $QTS_QPKG_CONF_PATHFILE)
     readonly QPKG_INI_PATHFILE=$QPKG_PATH/config/config.ini
     local -r QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.def
-    readonly STORED_PID_PATHFILE=/var/run/$QPKG_NAME.pid
-    readonly INIT_LOG_PATHFILE=/var/log/$QPKG_NAME.log
+    readonly SERVICE_STATUS_PATHFILE=/var/run/$QPKG_NAME.last.operation
+    readonly SERVICE_LOG_PATHFILE=/var/log/$QPKG_NAME.log
+    readonly DAEMON_PID_PATHFILE=/var/run/$QPKG_NAME.pid
     local -r BACKUP_PATH=$($GETCFG_CMD SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
     readonly BACKUP_PATHFILE=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
     [[ -n $PYTHON ]] && export PYTHONPATH=$PYTHON
@@ -54,9 +56,14 @@ Init()
     ui_port=0
     ui_port_secure=0
 
+    # application-specific
+    readonly APP_VERSION_PATHFILE=$QPKG_REPO_PATH/medusa/version.py
+    readonly APP_VERSION_STORE_PATHFILE=$($DIRNAME_CMD "$APP_VERSION_PATHFILE")/version.stored
+    readonly TARGET_SCRIPT_PATHFILE=$QPKG_REPO_PATH/$TARGET_SCRIPT
+
     # specific launch arguments
     if [[ -n $PYTHON && -n $TARGET_SCRIPT ]]; then
-        readonly LAUNCHER="$PYTHON $TARGET_SCRIPT --daemon --nolaunch --datadir $($DIRNAME_CMD "$QPKG_INI_PATHFILE") --config $QPKG_INI_PATHFILE --pidfile $STORED_PID_PATHFILE"
+        readonly LAUNCHER="$PYTHON $TARGET_SCRIPT_PATHFILE --daemon --nolaunch --datadir $($DIRNAME_CMD "$QPKG_INI_PATHFILE") --config $QPKG_INI_PATHFILE --pidfile $DAEMON_PID_PATHFILE"
     else
         DisplayErrCommitAllLogs 'found nothing to launch!'
         errorcode=1
@@ -78,6 +85,7 @@ Init()
     fi
 
     LoadUIPorts
+    LoadAppVersion
 
     [[ ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
 
@@ -113,12 +121,7 @@ StartQPKG()
 
     DaemonIsActive && return
 
-    if [[ -n $SOURCE_GIT_URL ]]; then
-        PullGitRepo $QPKG_NAME "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_PATH"
-        cd "$QPKG_PATH/$QPKG_NAME" || return 1
-    else
-        cd "$QPKG_PATH" || return 1
-    fi
+    [[ -n $SOURCE_GIT_URL ]] && PullGitRepo $QPKG_NAME "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_PATH"
 
     if [[ $ui_port -eq 0 ]]; then
         DisplayErrCommitAllLogs 'unable to start daemon as no UI port was specified'
@@ -154,7 +157,7 @@ StopQPKG()
 
     ! DaemonIsActive && return
 
-    PID=$(<$STORED_PID_PATHFILE)
+    PID=$(<$DAEMON_PID_PATHFILE)
 
     kill "$PID"
     DisplayWaitCommitToLog '* stopping daemon with SIGTERM:'
@@ -170,12 +173,12 @@ StopQPKG()
                 DisplayWaitCommitToLog 'failed!'
                 kill -9 "$PID" 2> /dev/null
                 DisplayCommitToLog 'sent SIGKILL.'
-                [[ -f $STORED_PID_PATHFILE ]] && rm -f $STORED_PID_PATHFILE
+                [[ -f $DAEMON_PID_PATHFILE ]] && rm -f $DAEMON_PID_PATHFILE
                 break 2
             fi
         done
 
-        [[ -f $STORED_PID_PATHFILE ]] && rm -f $STORED_PID_PATHFILE
+        [[ -f $DAEMON_PID_PATHFILE ]] && rm -f $DAEMON_PID_PATHFILE
         Display 'OK'
         CommitLog "stopped OK in $acc seconds"
         break
@@ -205,13 +208,28 @@ RestoreConfig()
 
     }
 
+LoadAppVersion()
+    {
+
+    # Find the installed application's internal version number
+    # creates a global var: $app_version
+    # this is the installed application version (not the QPKG version)
+
+    app_version=''
+
+    [[ ! -e $APP_VERSION_PATHFILE ]] && return 1
+
+    app_version=$($GREP_CMD '__version__ =' "$APP_VERSION_PATHFILE" | $SED_CMD 's|^.*"\(.*\)"|\1|')
+
+    }
+
 DaemonIsActive()
     {
 
     # $? = 0 if $QPKG_NAME is active
     # $? = 1 if $QPKG_NAME is not active
 
-    if [[ -f $STORED_PID_PATHFILE && -d /proc/$(<$STORED_PID_PATHFILE) ]] && (PortResponds $ui_port); then
+    if [[ -f $DAEMON_PID_PATHFILE && -d /proc/$(<$DAEMON_PID_PATHFILE) ]] && (PortResponds $ui_port); then
         DisplayDoneCommitToLog 'daemon is active'
         return 0
     elif [[ -n $TARGET_DAEMON ]] && (ps ax | $GREP_CMD "$TARGET_DAEMON" | $GREP_CMD -vq grep) && (PortResponds $ui_port); then
@@ -219,7 +237,7 @@ DaemonIsActive()
         return 0
     else
         DisplayDoneCommitToLog 'daemon is not active'
-        [[ -f $STORED_PID_PATHFILE ]] && rm "$STORED_PID_PATHFILE"
+        [[ -f $DAEMON_PID_PATHFILE ]] && rm "$DAEMON_PID_PATHFILE"
         return 1
     fi
 
@@ -248,7 +266,7 @@ PullGitRepo()
     if [[ ! -d ${QPKG_GIT_PATH}/.git ]]; then
         ExecuteAndLog "cloning $(FormatAsPackageName "$1") from remote repository" "$GIT_CMD clone --branch $3 $depth -c advice.detachedHead=false $GIT_HTTPS_URL $QPKG_GIT_PATH || $GIT_CMD clone --branch $3 $depth -c advice.detachedHead=false $GIT_HTTP_URL $QPKG_GIT_PATH"
     else
-        ExecuteAndLog "updating $(FormatAsPackageName "$1") from remote repository" "cd $QPKG_GIT_PATH && $GIT_CMD pull"
+        ExecuteAndLog "updating $(FormatAsPackageName "$1") from remote repository" "$GIT_CMD -C $QPKG_GIT_PATH pull"
     fi
 
     }
@@ -261,7 +279,7 @@ CleanLocalClone()
     [[ -z $QPKG_PATH || -z $QPKG_NAME || -z $SOURCE_GIT_URL ]] && return 1
 
     StopQPKG
-    ExecuteAndLog 'cleaning local repo' "rm -r $QPKG_PATH/$QPKG_NAME"
+    ExecuteAndLog 'cleaning local repo' "rm -r $QPKG_REPO_PATH"
     StartQPKG
 
     }
@@ -291,7 +309,7 @@ ExecuteAndLog()
         DisplayCommitToLog 'failed!'
         DisplayCommitToLog "$(FormatAsFuncMessages "$exec_msgs")"
         DisplayCommitToLog "$(FormatAsResult $result)"
-        CommitWarnToSysLog "A problem occurred while $1. Check $(FormatAsFileName "$INIT_LOG_PATHFILE") for more details."
+        CommitWarnToSysLog "A problem occurred while $1. Check $(FormatAsFileName "$SERVICE_LOG_PATHFILE") for more details."
         returncode=1
     fi
 
@@ -395,6 +413,27 @@ PortSecureResponds()
 
     }
 
+SetServiceOperationOK()
+    {
+
+    echo "ok" > "$SERVICE_STATUS_PATHFILE"
+
+    }
+
+SetServiceOperationFailed()
+    {
+
+    echo "failed" > "$SERVICE_STATUS_PATHFILE"
+
+    }
+
+RemoveServiceStatus()
+    {
+
+    [[ -e $SERVICE_STATUS_PATHFILE ]] && rm -f "$SERVICE_STATUS_PATHFILE"
+
+    }
+
 DisplayDoneCommitToLog()
     {
 
@@ -427,14 +466,14 @@ DisplayErrCommitToLog()
 DisplayCommitToLog()
     {
 
-    echo "$1" | $TEE_CMD -a $INIT_LOG_PATHFILE
+    echo "$1" | $TEE_CMD -a $SERVICE_LOG_PATHFILE
 
     }
 
 DisplayWaitCommitToLog()
     {
 
-    DisplayWait "$1" | $TEE_CMD -a $INIT_LOG_PATHFILE
+    DisplayWait "$1" | $TEE_CMD -a $SERVICE_LOG_PATHFILE
 
     }
 
@@ -540,7 +579,7 @@ CommitErrToSysLog()
 CommitLog()
     {
 
-    echo "$1" >> "$INIT_LOG_PATHFILE"
+    echo "$1" >> "$SERVICE_LOG_PATHFILE"
 
     }
 
@@ -617,7 +656,7 @@ Init
 if [[ $errorcode -eq 0 ]]; then
     if [[ -n $1 ]]; then
         CommitLog "$(SessionSeparator "'$1' requested")"
-        CommitLog "= $(date)"
+        CommitLog "= $(date), QPKG: $QPKG_VERSION, application: $app_version"
     fi
     case $1 in
         start)
@@ -642,10 +681,11 @@ if [[ $errorcode -eq 0 ]]; then
             CleanLocalClone || errorcode=1
             ;;
         l|log)
-            if [[ -e $INIT_LOG_PATHFILE ]]; then
-                LESSSECURE=1 $GNU_LESS_CMD +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$INIT_LOG_PATHFILE"
+            if [[ -e $SERVICE_LOG_PATHFILE ]]; then
+                LESSSECURE=1 $GNU_LESS_CMD +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$SERVICE_LOG_PATHFILE"
             else
-                Display "service log not found: $(FormatAsFileName "$INIT_LOG_PATHFILE")"
+                Display "service log not found: $(FormatAsFileName "$SERVICE_LOG_PATHFILE")"
+                errorcode=1
             fi
             ;;
         v|version)
@@ -656,5 +696,7 @@ if [[ $errorcode -eq 0 ]]; then
             ;;
     esac
 fi
+
+[[ $errorcode -eq 0 ]] && SetServiceOperationOK || SetServiceOperationFailed
 
 exit $errorcode
