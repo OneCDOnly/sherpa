@@ -36,7 +36,7 @@ Init()
     {
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200816g
+    readonly SCRIPT_VERSION=200816h
 
     if [[ ! -e /etc/init.d/functions ]]; then
         ShowAsError 'QTS functions missing (is this a QNAP NAS?): aborting ...'
@@ -260,8 +260,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(OWatcher3)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/OWatcher3/build/OWatcher3_200814.qpkg)
-        SHERPA_QPKG_MD5+=(6c140aa9d288f4cbd3dfac1c0aec2869)
+        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/OWatcher3/build/OWatcher3_200816.qpkg)
+        SHERPA_QPKG_MD5+=(f2c2a06ae8942a4961334303e9758ed3)
         SHERPA_QPKG_ABBRVS+=('ow wat owat watch watcher owatcher watcher3 owatcher3')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python3 jq')
