@@ -36,7 +36,7 @@ Init()
     {
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200818b
+    readonly SCRIPT_VERSION=200818c
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -1845,7 +1845,7 @@ FindAllQPKGDependants()
     requested_list=$(DeDupeWords "$1")
     last_list=$requested_list
 
-    ShowAsProc 'calculating number of QPKGs required'
+    ShowAsProc 'determining QPKGs required'
     DebugInfo "requested QPKGs: $requested_list"
 
     DebugProc 'finding QPKG dependencies'
@@ -1932,7 +1932,7 @@ FindAllIPKGDependencies()
     requested_list=$(DeDupeWords "$1")
     last_list=$requested_list
 
-    ShowAsProc 'calculating number and total size of IPKGs required'
+    ShowAsProc 'determining IPKGs required'
     DebugInfo "IPKGs requested: $requested_list"
 
     OpenIPKGArchive || return 1
@@ -1978,7 +1978,7 @@ FindAllIPKGDependencies()
     IPKG_download_count=${#IPKG_download_list[@]}
 
     if [[ $IPKG_download_count -gt 0 ]]; then
-        DebugProc "calculating size of IPKG$(DisplayPlural "$IPKG_download_count") to download"
+        DebugProc "determining size of IPKG$(DisplayPlural "$IPKG_download_count") to download"
         size_array=($($GNU_GREP_CMD -w '^Package:\|^Size:' "$EXTERNAL_PACKAGE_LIST_PATHFILE" | $GNU_GREP_CMD --after-context 1 --no-group-separator ": $($SED_CMD 's/ /$ /g;s/\$ /\$\\\|: /g' <<< "${IPKG_download_list[*]}")$" | $GREP_CMD '^Size:' | $SED_CMD 's|^Size: ||'))
         IPKG_download_size=$(IFS=+; echo "$((${size_array[*]}))")       # a neat trick found here https://stackoverflow.com/a/13635566/6182835
         DebugDone 'complete'
