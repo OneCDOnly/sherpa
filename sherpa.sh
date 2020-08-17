@@ -36,7 +36,7 @@ Init()
     {
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200817c
+    readonly SCRIPT_VERSION=200817d
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -348,6 +348,7 @@ Init()
     readonly QPKG_DL_PATH=$WORK_PATH/qpkg.downloads
     readonly IPKG_DL_PATH=$WORK_PATH/ipkg.downloads
     readonly IPKG_CACHE_PATH=$WORK_PATH/ipkg.cache
+    readonly PIP_CACHE_PATH=$WORK_PATH/pip.cache
     readonly EXTERNAL_PACKAGE_LIST_PATHFILE=$WORK_PATH/Packages
 
     # internals
@@ -483,6 +484,17 @@ LogRuntimeParameters()
 
         if [[ $result -ne 0 ]]; then
             ShowAsError "unable to create IPKG cache directory $(FormatAsFileName "$IPKG_CACHE_PATH") $(FormatAsExitcode $result)"
+            EnableSuggestIssue
+            return 1
+        fi
+    fi
+
+    if IsNotError; then
+        $MKDIR_CMD -p "$PIP_CACHE_PATH" 2> /dev/null
+        result=$?
+
+        if [[ $result -ne 0 ]]; then
+            ShowAsError "unable to create PIP cache directory $(FormatAsFileName "$PIP_CACHE_PATH") $(FormatAsExitcode $result)"
             EnableSuggestIssue
             return 1
         fi
@@ -1164,12 +1176,12 @@ InstallPy3Modules()
         fi
     fi
 
-    [[ -n ${SHERPA_COMMON_PIPS// /} ]] && exec_cmd="$pip3_cmd install $SHERPA_COMMON_PIPS --disable-pip-version-check"
+    [[ -n ${SHERPA_COMMON_PIPS// /} ]] && exec_cmd="$pip3_cmd install $SHERPA_COMMON_PIPS --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
     [[ -n ${SHERPA_COMMON_PIPS// /} && -n ${packages// /} ]] && exec_cmd+=" && "
-    [[ -n ${packages// /} ]] && exec_cmd+="$pip3_cmd install $packages --disable-pip-version-check"
+    [[ -n ${packages// /} ]] && exec_cmd+="$pip3_cmd install $packages --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
 
     # kludge: force recompilation of 'sabyenc3' package so it's recognised by SABnzbd. See: https://forums.sabnzbd.org/viewtopic.php?p=121214#p121214
-    [[ $exec_cmd =~ .*sabyenc3.* ]] && exec_cmd+=" && $pip3_cmd install --force-reinstall --ignore-installed --no-binary :all: sabyenc3 --disable-pip-version-check"
+    [[ $exec_cmd =~ .*sabyenc3.* ]] && exec_cmd+=" && $pip3_cmd install --force-reinstall --ignore-installed --no-binary :all: sabyenc3 --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
 
     [[ -z $exec_cmd ]] && return
 
