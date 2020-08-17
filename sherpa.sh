@@ -36,7 +36,7 @@ Init()
     {
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200818c
+    readonly SCRIPT_VERSION=200818d
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -200,7 +200,7 @@ Init()
         SHERPA_QPKG_ABBRVS+=('sb sb3 sab sab3 sabnzbd3 sabnzbd')
         SHERPA_QPKG_DEPS+=('Entware Par2')
         SHERPA_QPKG_IPKGS+=('python3 python3-pyopenssl python3-cryptography python3-dev gcc unrar p7zip coreutils-nice ionice ffprobe')
-        SHERPA_QPKG_PIPS+=('sabyenc3 cheetah3 feedparser configobj cherrypy chardet "cheroot!=8.4.4"')
+        SHERPA_QPKG_PIPS+=('sabyenc3 cheetah3 feedparser configobj cherrypy chardet "cheroot!=8.4.4" asn1crypto')
 
     SHERPA_QPKG_NAME+=(nzbToMedia)
         SHERPA_QPKG_ARCH+=(all)
@@ -1103,6 +1103,11 @@ DowngradePy3()
     pkg_name=libffi
     pkg_version=3.2.1-4
     ipkg_urls+=(-O "${source_url}/archive/${pkg_name}_${pkg_version}_${pkg_arch}.ipk")
+
+    # and a specific version of 'cffi', so SSL UI works in SAB3
+    pkg_name=cffi
+    pkg_version=1.12.3-1
+    ipkg_urls+=(-O "${source_url}/archive/${pkg_base}-${pkg_name}_${pkg_version}_${pkg_arch}.ipk")
 
     RunThisAndLogResults "cd $IPKG_DL_PATH && $CURL_CMD $curl_insecure_arg ${ipkg_urls[*]}" "$dl_log_pathfile"
     result=$?
