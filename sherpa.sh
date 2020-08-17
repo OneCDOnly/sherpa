@@ -36,7 +36,7 @@ Init()
     {
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200818
+    readonly SCRIPT_VERSION=200818b
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -1278,7 +1278,7 @@ GetQPKGServiceStatus()
                 DebugInfo "$(FormatAsPackageName "$1") service started OK"
                 ;;
             failed)
-                ShowAsError "$(FormatAsPackageName "$1") service failed to start.$([[ -e /var/log/$1.log ]] && echo " Check /var/log/$1.log for more information.")"
+                ShowAsError "$(FormatAsPackageName "$1") service failed to start.$([[ -e /var/log/$1.log ]] && echo " Check $(FormatAsFileName /var/log/$1.log) for more information.")"
                 ;;
             *)
                 DebugWarning "$(FormatAsPackageName "$1") service status is incorrect"
