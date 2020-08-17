@@ -228,6 +228,7 @@ Init()
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python3')
         SHERPA_QPKG_PIPS+=('random_user_agent pygithub')
+        #SHERPA_QPKG_PIPS+=('backports-abc beautifulsoup4 beekeeper bencodepy cachecontrol chardet cloudscraper configobj deluge-client enzyme feedparser gntp html5lib httplib2 ifaddr imagesize imdbpie ipaddress js2py jsonrpclib-pelix kodipydent mako markdown2 new-rtorrent-python packaging profilehooks putio.py pyopenssL pyaes pygithub pymediainfo pynma pysocks python-dateutil python-twitter python3-fanart qbittorrent-api random_user_agent rarfile send2trash subliminal timeago tmdbsimple tornado tus.py tvdbsimple twilio unidecode validators')
 
     SHERPA_QPKG_NAME+=(LazyLibrarian)
         SHERPA_QPKG_ARCH+=(all)
