@@ -123,26 +123,34 @@ StartQPKG()
 
     [[ -n $SOURCE_GIT_URL ]] && PullGitRepo $QPKG_NAME "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_PATH"
 
-    if [[ $ui_port -eq 0 ]]; then
+    if [[ $ui_port -le 0 && $ui_port_secure -le 0 ]]; then
         DisplayErrCommitAllLogs 'unable to start daemon as no UI port was specified'
         return 1
-    elif ! PortAvailable $ui_port; then
-        DisplayErrCommitAllLogs "unable to start daemon as port $ui_port is already in use"
+    elif ! PortAvailable $ui_port && ! PortAvailable $ui_port_secure; then
+        DisplayErrCommitAllLogs "unable to start daemon as ports $ui_port & $ui_port_secure are already in use"
         return 1
     fi
 
-    $SETCFG_CMD $QPKG_NAME Web_Port $ui_port -f $QTS_QPKG_CONF_PATHFILE
+    # Medusa disables non-SSL access when SSL is enabled, but App Center requires Web_Port to always be non-zero.
+    # App Center Web_SSL_Port: -1 (launch QTS UI again), 0 ("unable to connect") or > 0 (only works if logged-in to QTS UI via SSL).
+    # If SSL enabled, attempt to access non-SSL via Web_Port results in "connection was reset".
+    if [[ $ui_port_secure -le 0 ]]; then
+        $SETCFG_CMD $QPKG_NAME Web_Port $ui_port -f $QTS_QPKG_CONF_PATHFILE
+        $SETCFG_CMD $QPKG_NAME Web_SSL_Port 0 -f $QTS_QPKG_CONF_PATHFILE
+    else
+        $SETCFG_CMD $QPKG_NAME Web_Port $ui_port_secure -f $QTS_QPKG_CONF_PATHFILE
+        $SETCFG_CMD $QPKG_NAME Web_SSL_Port $ui_port_secure -f $QTS_QPKG_CONF_PATHFILE
+    fi
 
     ExecuteAndLog 'starting daemon' "$LAUNCHER" log:everything || return 1
 
     if PortResponds $ui_port; then
         DisplayDoneCommitToLog "$(FormatAsPackageName $QPKG_NAME) UI is now listening on HTTP port ${ui_port}"
-    else
-        return 1
-    fi
-
-    if PortSecureResponds $ui_port_secure; then
+    elif PortSecureResponds $ui_port_secure; then
         DisplayDoneCommitToLog "$(FormatAsPackageName $QPKG_NAME) UI is now listening on HTTPS port ${ui_port_secure}"
+    else
+        DisplayErrCommitAllLogs 'no response on configured port(s)'
+        return 1
     fi
 
     return 0
@@ -229,10 +237,7 @@ DaemonIsActive()
     # $? = 0 if $QPKG_NAME is active
     # $? = 1 if $QPKG_NAME is not active
 
-    if [[ -f $DAEMON_PID_PATHFILE && -d /proc/$(<$DAEMON_PID_PATHFILE) ]] && (PortResponds $ui_port); then
-        DisplayDoneCommitToLog 'daemon is active'
-        return 0
-    elif [[ -n $TARGET_DAEMON ]] && (ps ax | $GREP_CMD "$TARGET_DAEMON" | $GREP_CMD -vq grep) && (PortResponds $ui_port); then
+    if [[ -f $DAEMON_PID_PATHFILE && -d /proc/$(<$DAEMON_PID_PATHFILE) ]] && (PortResponds $ui_port || PortSecureResponds $ui_port_secure); then
         DisplayDoneCommitToLog 'daemon is active'
         return 0
     else
@@ -324,6 +329,8 @@ LoadUIPorts()
 
     if [[ $($GETCFG_CMD General enable_https -d 0 -f "$QPKG_INI_PATHFILE") -eq 1 ]]; then
         ui_port_secure=$($GETCFG_CMD General web_port -d "$UI_PORT_DEFAULT" -f "$QPKG_INI_PATHFILE")
+        # Medusa disables non-SSL access when SSL is enabled, but App Center requires Web_Port to be non-zero
+        ui_port=0
     else
         ui_port_secure=0
     fi

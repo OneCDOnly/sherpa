@@ -36,7 +36,7 @@ Init()
     {
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200817d
+    readonly SCRIPT_VERSION=200818
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -241,11 +241,11 @@ Init()
 
     SHERPA_QPKG_NAME+=(OMedusa)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/OMedusa/build/OMedusa_200816.qpkg)
-        SHERPA_QPKG_MD5+=(76d56f9f68ae99d77e4fb6e8aa667c62)
+        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/OMedusa/build/OMedusa_200818.qpkg)
+        SHERPA_QPKG_MD5+=(b6c43c32f1dfa9d14f49fb06e4d8b7d2)
         SHERPA_QPKG_ABBRVS+=('om med omed medusa omedusa')
         SHERPA_QPKG_DEPS+=('Entware')
-        SHERPA_QPKG_IPKGS+=('python3 mediainfo')
+        SHERPA_QPKG_IPKGS+=('python3 mediainfo python3-pyopenssl')
         SHERPA_QPKG_PIPS+=('')
 
     SHERPA_QPKG_NAME+=(OWatcher3)
