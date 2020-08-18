@@ -36,7 +36,7 @@ Init()
     {
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200818g
+    readonly SCRIPT_VERSION=200819
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -195,8 +195,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(SABnzbd)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/SABnzbd/build/SABnzbd_200818.qpkg)
-        SHERPA_QPKG_MD5+=(671c2ad5116caf0c27e62db9f4ac75d6)
+        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/SABnzbd/build/SABnzbd_200819.qpkg)
+        SHERPA_QPKG_MD5+=(cd3d27c3db34727b2f823ae58ad054a5)
         SHERPA_QPKG_ABBRVS+=('sb sb3 sab sab3 sabnzbd3 sabnzbd')
         SHERPA_QPKG_DEPS+=('Entware Par2')
         SHERPA_QPKG_IPKGS+=('python3 python3-pyopenssl python3-cryptography python3-dev gcc unrar p7zip coreutils-nice ionice ffprobe')
@@ -241,8 +241,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(OMedusa)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/OMedusa/build/OMedusa_200818.qpkg)
-        SHERPA_QPKG_MD5+=(b6c43c32f1dfa9d14f49fb06e4d8b7d2)
+        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/OMedusa/build/OMedusa_200819.qpkg)
+        SHERPA_QPKG_MD5+=(7d06b29bc812ee3df54afd373f5562b2)
         SHERPA_QPKG_ABBRVS+=('om med omed medusa omedusa')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python3 mediainfo python3-pyopenssl')
