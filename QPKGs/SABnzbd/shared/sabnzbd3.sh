@@ -84,7 +84,6 @@ Init()
         cp "$QPKG_INI_DEFAULT_PATHFILE" "$QPKG_INI_PATHFILE"
     fi
 
-    LoadUIPorts
     LoadAppVersion
 
     [[ ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
@@ -124,6 +123,8 @@ StartQPKG()
     local response_flag=false
 
     [[ -n $SOURCE_GIT_URL ]] && PullGitRepo $QPKG_NAME "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_PATH"
+
+    LoadUIPorts
 
     if [[ $ui_port -le 0 && $ui_port_secure -le 0 ]]; then
         DisplayErrCommitAllLogs 'unable to start daemon as no UI port was specified'
@@ -217,7 +218,6 @@ RestoreConfig()
 
     StopQPKG
     ExecuteAndLog 'restoring configuration backup' "$TAR_CMD --extract --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config" log:everything
-    LoadUIPorts
     StartQPKG
 
     }
@@ -238,7 +238,7 @@ UpdateLanguages()
 LoadAppVersion()
     {
 
-    # Find the installed application's internal version number
+    # Find the application's internal version number
     # creates a global var: $app_version
     # this is the installed application version (not the QPKG version)
 
@@ -262,6 +262,8 @@ DaemonIsActive()
 
     # $? = 0 if $QPKG_NAME is active
     # $? = 1 if $QPKG_NAME is not active
+
+    LoadUIPorts
 
     if [[ -f $DAEMON_PID_PATHFILE && -d /proc/$(<$DAEMON_PID_PATHFILE) ]] && (PortResponds $ui_port || PortSecureResponds $ui_port_secure); then
         DisplayDoneCommitToLog 'daemon is active'
