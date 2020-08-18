@@ -63,7 +63,7 @@ Init()
 
     # specific launch arguments
     if [[ -n $PYTHON && -n $TARGET_SCRIPT ]]; then
-        readonly LAUNCHER="$PYTHON $TARGET_SCRIPT_PATHFILE --daemon --nolaunch --datadir $($DIRNAME_CMD "$QPKG_INI_PATHFILE") --config $QPKG_INI_PATHFILE --pidfile $DAEMON_PID_PATHFILE"
+        readonly LAUNCHER="cd $QPKG_REPO_PATH; $PYTHON $TARGET_SCRIPT_PATHFILE --daemon --nolaunch --datadir $($DIRNAME_CMD "$QPKG_INI_PATHFILE") --config $QPKG_INI_PATHFILE --pidfile $DAEMON_PID_PATHFILE"
     else
         DisplayErrCommitAllLogs 'found nothing to launch!'
         errorcode=1
@@ -84,7 +84,6 @@ Init()
         cp "$QPKG_INI_DEFAULT_PATHFILE" "$QPKG_INI_PATHFILE"
     fi
 
-    LoadUIPorts
     LoadAppVersion
 
     [[ ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
@@ -121,7 +120,11 @@ StartQPKG()
 
     DaemonIsActive && return
 
+    local response_flag=false
+
     [[ -n $SOURCE_GIT_URL ]] && PullGitRepo $QPKG_NAME "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_PATH"
+
+    LoadUIPorts
 
     if [[ $ui_port -le 0 && $ui_port_secure -le 0 ]]; then
         DisplayErrCommitAllLogs 'unable to start daemon as no UI port was specified'
@@ -131,9 +134,12 @@ StartQPKG()
         return 1
     fi
 
-    # Medusa disables non-SSL access when SSL is enabled, but App Center requires Web_Port to always be non-zero.
-    # App Center Web_SSL_Port: -1 (launch QTS UI again), 0 ("unable to connect") or > 0 (only works if logged-in to QTS UI via SSL).
-    # If SSL enabled, attempt to access non-SSL via Web_Port results in "connection was reset".
+    # QTS App Center requires 'Web_Port' to always be non-zero
+    # 'Web_SSL_Port' behaviour: -1 (launch QTS UI again), 0 ("unable to connect") or > 0 (only works if logged-in to QTS UI via SSL)
+    # If SSL is enabled, attempting to access with non-SSL via 'Web_Port' results in "connection was reset"
+
+    # Medusa disables non-SSL access when SSL is enabled
+
     if [[ $ui_port_secure -le 0 ]]; then
         $SETCFG_CMD $QPKG_NAME Web_Port $ui_port -f $QTS_QPKG_CONF_PATHFILE
         $SETCFG_CMD $QPKG_NAME Web_SSL_Port 0 -f $QTS_QPKG_CONF_PATHFILE
@@ -145,10 +151,18 @@ StartQPKG()
     ExecuteAndLog 'starting daemon' "$LAUNCHER" log:everything || return 1
 
     if PortResponds $ui_port; then
-        DisplayDoneCommitToLog "$(FormatAsPackageName $QPKG_NAME) UI is now listening on HTTP port ${ui_port}"
-    elif PortSecureResponds $ui_port_secure; then
-        DisplayDoneCommitToLog "$(FormatAsPackageName $QPKG_NAME) UI is now listening on HTTPS port ${ui_port_secure}"
-    else
+        DisplayDoneCommitToLog "$(FormatAsPackageName $QPKG_NAME) UI is listening on HTTP port ${ui_port}"
+        response_flag=true
+    fi
+
+    if [[ $($GETCFG_CMD General enable_https -d 0 -f "$QPKG_INI_PATHFILE") -eq 1 ]]; then
+        if PortSecureResponds $ui_port_secure; then
+            DisplayDoneCommitToLog "$(FormatAsPackageName $QPKG_NAME) UI is$([[ $response_flag = true ]] && echo " also") listening on HTTPS port ${ui_port_secure}"
+            response_flag=true
+        fi
+    fi
+
+    if [[ $response_flag = false ]]; then
         DisplayErrCommitAllLogs 'no response on configured port(s)'
         return 1
     fi
@@ -211,7 +225,6 @@ RestoreConfig()
 
     StopQPKG
     ExecuteAndLog 'restoring configuration backup' "$TAR_CMD --extract --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config" log:everything
-    LoadUIPorts
     StartQPKG
 
     }
@@ -219,15 +232,22 @@ RestoreConfig()
 LoadAppVersion()
     {
 
-    # Find the installed application's internal version number
+    # Find the application's internal version number
     # creates a global var: $app_version
     # this is the installed application version (not the QPKG version)
 
     app_version=''
 
-    [[ ! -e $APP_VERSION_PATHFILE ]] && return 1
+    [[ ! -e $APP_VERSION_PATHFILE ]] && return
 
     app_version=$($GREP_CMD '__version__ =' "$APP_VERSION_PATHFILE" | $SED_CMD 's|^.*"\(.*\)"|\1|')
+
+    }
+
+SaveAppVersion()
+    {
+
+    echo "$app_version" > "$APP_VERSION_STORE_PATHFILE"
 
     }
 
@@ -236,6 +256,8 @@ DaemonIsActive()
 
     # $? = 0 if $QPKG_NAME is active
     # $? = 1 if $QPKG_NAME is not active
+
+    LoadUIPorts
 
     if [[ -f $DAEMON_PID_PATHFILE && -d /proc/$(<$DAEMON_PID_PATHFILE) ]] && (PortResponds $ui_port || PortSecureResponds $ui_port_secure); then
         DisplayDoneCommitToLog 'daemon is active'
@@ -329,7 +351,7 @@ LoadUIPorts()
 
     if [[ $($GETCFG_CMD General enable_https -d 0 -f "$QPKG_INI_PATHFILE") -eq 1 ]]; then
         ui_port_secure=$($GETCFG_CMD General web_port -d "$UI_PORT_DEFAULT" -f "$QPKG_INI_PATHFILE")
-        # Medusa disables non-SSL access when SSL is enabled, but App Center requires Web_Port to be non-zero
+        # Medusa disables non-SSL access when SSL is enabled
         ui_port=0
     else
         ui_port_secure=0
