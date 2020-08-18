@@ -36,7 +36,7 @@ Init()
     {
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200818f
+    readonly SCRIPT_VERSION=200818g
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -801,7 +801,7 @@ RemoveUnwantedQPKGs()
         ShowAsNote "Your installed IPKG list will be saved to $(FormatAsFileName "$previous_opkg_package_list")"
         (IsQPKGInstalled SABnzbdplus || IsQPKGInstalled Headphones) && ShowAsWarning "Also, the $(FormatAsPackageName SABnzbdplus) and $(FormatAsPackageName Headphones) packages CANNOT BE REINSTALLED as Python 2.7.16 is no-longer available."
         IsNotVisibleDebugging && echo
-        ShowAsQuiz "Press 'Y' if you agree to remove all current $(FormatAsPackageName Entware) IPKGs (and their configurations), or any other key to abort"
+        ShowAsQuiz "Press 'Y' to remove all current $(FormatAsPackageName Entware) IPKGs (and their configurations), or any other key to abort"
         read -rn1 response; echo
         DebugVar response
         case ${response:0:1} in
@@ -2433,8 +2433,7 @@ RunThisAndLogResults()
     FormatAsCommand "$1" >> "$2"
     msgs=$(eval "$1" 2>&1)
     result=$?
-    FormatAsResult "$result" >> "$2"
-    FormatAsStdout "$msgs" >> "$2"
+    FormatAsResultAndStdout "$result" "$msgs" >> "$2"
 
     return $result
 
@@ -2461,8 +2460,7 @@ RunThisAndLogResultsRealtime()
     exec 5>&1
     msgs=$(eval "$1" 2>&1 | $TEE_CMD /dev/fd/5)
     result=$?
-    FormatAsResult "$result" >> "$2"
-    FormatAsStdout "$msgs" >> "$2"
+    FormatAsResultAndStdout "$result" "$msgs" >> "$2"
 
     return $result
 
@@ -2987,6 +2985,15 @@ FormatAsFileName()
 
     }
 
+FormatAsExitcode()
+    {
+
+    [[ -z $1 ]] && return 1
+
+    echo "[$1]"
+
+    }
+
 FormatAsCommand()
     {
 
@@ -3001,18 +3008,9 @@ FormatAsStdout()
 
     [[ -z $1 ]] && return 1
 
-    echo "= stdout begins next line: ▼"
+    echo "= ▼ ▼ ▼ stdout begins below ▼ ▼ ▼"
     echo "$1"
-    echo "= stdout complete: ▲"
-
-    }
-
-FormatAsExitcode()
-    {
-
-    [[ -z $1 ]] && return 1
-
-    echo "[$1]"
+    echo "= ▲ ▲ ▲ stdout is complete ▲ ▲ ▲"
 
     }
 
@@ -3026,6 +3024,22 @@ FormatAsResult()
     else
         echo "! result: $(FormatAsExitcode "$1")"
     fi
+
+    }
+
+FormatAsResultAndStdout()
+    {
+
+    [[ -z $1 || -z $2 ]] && return 1
+
+    if [[ $1 -eq 0 ]]; then
+        echo "= result: $(FormatAsExitcode "$1") ▼ ▼ ▼ stdout begins below ▼ ▼ ▼"
+    else
+        echo "! result: $(FormatAsExitcode "$1") ▼ ▼ ▼ stdout begins below ▼ ▼ ▼"
+    fi
+
+    echo "$2"
+    echo "= ▲ ▲ ▲ stdout is complete ▲ ▲ ▲"
 
     }
 
