@@ -36,7 +36,7 @@ Init()
     {
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200818d
+    readonly SCRIPT_VERSION=200818e
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -704,16 +704,31 @@ PasteLogOnline()
 
     # with thanks to https://github.com/solusipse/fiche
 
-    echo
-
     if [[ -n $DEBUG_LOG_PATHFILE && -e $DEBUG_LOG_PATHFILE ]]; then
-        ShowAsProc 'uploading sherpa log'
-        link=$($CAT_CMD "$DEBUG_LOG_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
-        if [[ $? -eq 0 ]]; then
-            ShowAsDone "your sherpa log is now online at $(ColourTextBrightOrange "$($SED_CMD 's|http://|http://l.|;s|https://|https://l.|' <<< "$link")") and will be deleted in 1 month"
-        else
-            ShowAsError 'a link could not be generated. Most likely a problem occurred when talking with https://termbin.com'
-        fi
+        IsNotVisibleDebugging && echo
+        ShowAsQuiz "Press 'Y' to post your sherpa log in a public pastebin, or any other key to abort"
+        read -rn1 response; echo
+        DebugVar response
+        case ${response:0:1} in
+            y|Y)
+                IsNotVisibleDebugging && echo
+                ShowAsProc 'uploading sherpa log'
+                link=$($CAT_CMD "$DEBUG_LOG_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
+                if [[ $? -eq 0 ]]; then
+                    ShowAsDone "your sherpa log is now online at $(ColourTextBrightOrange "$($SED_CMD 's|http://|http://l.|;s|https://|https://l.|' <<< "$link")") and will be deleted in 1 month"
+                else
+                    ShowAsError 'a link could not be generated. Most likely a problem occurred when talking with https://termbin.com'
+                fi
+                ;;
+            *)
+                EnableAbort
+                DisableShowInstallerOutcome
+                DebugInfoThinSeparator
+                DebugScript 'user abort'
+                DebugInfoThickSeparator
+                return 1
+                ;;
+        esac
     else
         ShowAsError 'no log to paste'
     fi
@@ -791,6 +806,7 @@ RemoveUnwantedQPKGs()
         DebugVar response
         case ${response:0:1} in
             y|Y)
+                IsNotVisibleDebugging && echo
                 ShowAsProc 'saving lists'
 
                 $pip3_cmd freeze > "$previous_pip3_module_list"
@@ -800,7 +816,6 @@ RemoveUnwantedQPKGs()
                 DebugDone "saved current $(FormatAsPackageName Entware) IPKG list to $(FormatAsFileName "$previous_opkg_package_list")"
 
                 ShowAsDone 'lists saved'
-
                 UninstallQPKG Entware
                 ;;
             *)
@@ -1283,7 +1298,7 @@ GetQPKGServiceStatus()
                 DebugInfo "$(FormatAsPackageName "$1") service started OK"
                 ;;
             failed)
-                ShowAsError "$(FormatAsPackageName "$1") service failed to start.$([[ -e /var/log/$1.log ]] && echo " Check $(FormatAsFileName /var/log/$1.log) for more information.")"
+                ShowAsError "$(FormatAsPackageName "$1") service failed to start.$([[ -e /var/log/$1.log ]] && echo " Check $(FormatAsFileName "/var/log/$1.log") for more information.")"
                 ;;
             *)
                 DebugWarning "$(FormatAsPackageName "$1") service status is incorrect"
