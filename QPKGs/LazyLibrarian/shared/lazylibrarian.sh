@@ -409,9 +409,14 @@ IsPortAvailable()
 
     # $1 = port to check
     # $? = 0 if available
-    # $? = 1 if already used or unspecified
+    # $? = 1 if already used
 
-    if [[ -z $1 ]] || ($LSOF_CMD -i :"$1" -sTCP:LISTEN >/dev/null 2>&1); then
+    if [[ -z $1 || $1 -eq 0 ]]; then
+        SetError
+        return 1
+    fi
+
+    if ($LSOF_CMD -i :"$1" -sTCP:LISTEN >/dev/null 2>&1); then
         return 1
     else
         return 0
@@ -435,9 +440,12 @@ IsPortResponds()
 
     # $1 = port to check
     # $? = 0 if response received
-    # $? = 1 if not OK or port unspecified
+    # $? = 1 if not OK
 
-    [[ -z $1 || $1 -eq 0 ]] && return 1
+    if [[ -z $1 || $1 -eq 0 ]]; then
+        SetError
+        return 1
+    fi
 
     local -r MAX_WAIT_SECONDS_START=100
     local acc=0
@@ -471,7 +479,10 @@ IsPortSecureResponds()
     # $? = 0 if response received
     # $? = 1 if not OK or port unspecified
 
-    [[ -z $1 || $1 -eq 0 ]] && return 1
+    if [[ -z $1 || $1 -eq 0 ]]; then
+        SetError
+        return 1
+    fi
 
     local -r MAX_WAIT_SECONDS_START=100
     local acc=0
