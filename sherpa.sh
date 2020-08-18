@@ -1190,9 +1190,9 @@ InstallPy3Modules()
         pip3_cmd=/opt/bin/pip3.7
     else
         if IsNotSysFileExist $pip3_cmd; then
-            echo "* Ugh! The usual fix for this is to let sherpa reinstall 'Entware' at least once."
+            echo "* Ugh! The usual fix for this is to let sherpa reinstall $(FormatAsPackageName Entware) at least once."
             echo -e "\t$0 ew"
-            echo "If it happens again after reinstalling 'Entware', please create a new issue for this on GitHub."
+            echo "If it happens again after reinstalling $(FormatAsPackageName Entware), please create a new issue for this on GitHub."
             return 1
         fi
     fi
