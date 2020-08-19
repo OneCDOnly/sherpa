@@ -108,6 +108,7 @@ ShowHelp()
     Display " status     - check if $(FormatAsPackageName $QPKG_NAME) is still running. Returns \$? = 0 if running, 1 if not."
     Display " backup     - backup the current $(FormatAsPackageName $QPKG_NAME) configuration to persistent storage."
     Display " restore    - restore a previously saved configuration from persistent storage. $(FormatAsPackageName $QPKG_NAME) will be stopped, then restarted."
+    Display " import     - create a backup on an installed $(FormatAsPackageName SABnzbdplus) config and restore it into $(FormatAsPackageName $QPKG_NAME)."
     [[ -n $SOURCE_GIT_URL ]] && Display " clean      - wipe the current local copy of $(FormatAsPackageName $QPKG_NAME), and download it again from remote source. Configuration will be retained."
     Display " log        - display this service script runtime log."
     Display " version    - display the package version number."
@@ -220,6 +221,28 @@ RestoreConfig()
     StopQPKG
     ExecuteAndLog 'restoring configuration backup' "$TAR_CMD --extract --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config" log:everything
     StartQPKG
+
+    }
+
+ImportFromSAB2()
+    {
+
+    if [[ -e /etc/init.d/sabnzbd.sh ]]; then
+        /etc/init.d/sabnzbd.sh stop
+    elif [[ -e /etc/init.d/sabnzbd2.sh ]]; then
+        /etc/init.d/sabnzbd2.sh stop
+    else
+        echo "! can't find a compatible version of SABnzbd2 to backup: aborting ..."
+        return 1
+    fi
+
+    ExecuteAndLog 'creating backup location' "mkdir -p $(getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup"
+
+    ExecuteAndLog "updating SABnzbd2 configuration backup for SABnzbd3" "/bin/tar --create --gzip --file=$(getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup/SABnzbd.config.tar.gz --directory=$(getcfg SABnzbdplus Install_Path -f /etc/config/qpkg.conf)/config ."
+
+    eval "$0" restore
+
+    return 0
 
     }
 
@@ -890,6 +913,9 @@ if IsNotError; then
             ;;
         v|version)
             Display "$QPKG_VERSION"
+            ;;
+        import)
+            ImportFromSAB2 || SetError
             ;;
         *)
             ShowHelp
