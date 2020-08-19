@@ -36,7 +36,7 @@ Init()
     {
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200819c
+    readonly SCRIPT_VERSION=200819d
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -425,6 +425,12 @@ LogRuntimeParameters()
     DebugIPKG 'download path' "$IPKG_DL_PATH"
     CalcNASQPKGArch
     DebugQPKG 'arch' "$NAS_QPKG_ARCH"
+    DebugInfoThinSeparator
+
+    if IsLogViewOnly || IsShowAbbreviationsReminder; then
+        SetAbort
+        return 1
+    fi
 
     if IsNotError && [[ $EUID -ne 0 || $USER != admin ]]; then
         ShowAsError "this script must be run as the 'admin' user. Please login via SSH as 'admin' and try again."
@@ -2559,8 +2565,6 @@ IsNotShowHelpReminder()
 SetLogViewOnly()
     {
 
-    SetAbort
-
     IsLogViewOnly && return
 
     logview_only=true
@@ -2770,8 +2774,6 @@ IsNotSatisfyDependenciesOnly()
 
 SetShowAbbreviationsReminder()
     {
-
-    SetAbort
 
     IsShowAbbreviationsReminder && return
 
