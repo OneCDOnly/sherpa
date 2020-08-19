@@ -2,7 +2,7 @@
 #
 # __main__.sh
 #
-# The installer for the sherpa package manager, to install various media-management apps into QNAP NAS
+# The main installer for the sherpa package manager, to install various media-management apps into QNAP NAS
 #
 # Copyright (C) 2017-2020 OneCD [one.cd.only@gmail.com]
 #
