@@ -119,13 +119,15 @@ ShowHelp()
 StartQPKG()
     {
 
+    LoadUIPorts stop
+
     IsNotDaemonActive || return
 
     local response_flag=false
 
     [[ -n $SOURCE_GIT_URL ]] && PullGitRepo $QPKG_NAME "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_PATH"
 
-    LoadUIPorts
+    LoadUIPorts start
 
     if [[ $ui_port -le 0 && $ui_port_secure -le 0 ]]; then
         DisplayErrCommitAllLogs 'unable to start daemon as no UI port was specified'
@@ -166,6 +168,8 @@ StopQPKG()
 
     local -r MAX_WAIT_SECONDS_STOP=60
     local acc=0
+
+    LoadUIPorts stop
 
     IsDaemonActive || return
 
@@ -343,7 +347,7 @@ ReWriteUIPorts()
 LoadUIPorts()
     {
 
-    case $service_operation in
+    case $1 in
         start|status)
             # Read the current application UI ports from application configuration
 
@@ -386,7 +390,6 @@ IsDaemonActive()
 
     if [[ -f $DAEMON_PID_PATHFILE && -d /proc/$(<$DAEMON_PID_PATHFILE) ]]; then
         DisplayDoneCommitToLog 'daemon is running'
-        LoadUIPorts
         if IsPortResponds "$ui_port" || IsPortSecureResponds "$ui_port_secure"; then
             DisplayDoneCommitToLog 'daemon is responding to port requests'
             return 0
@@ -853,6 +856,7 @@ if IsNotError; then
             StopQPKG; StartQPKG || SetError
             ;;
         s|status)
+            LoadUIPorts start
             IsDaemonActive $QPKG_NAME || SetError
             ;;
         b|backup)
