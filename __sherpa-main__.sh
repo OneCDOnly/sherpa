@@ -100,7 +100,7 @@ Init()
     readonly ULINUX_PATHFILE=/etc/config/uLinux.conf
     readonly PLATFORM_PATHFILE=/etc/platform.conf
     readonly EXTERNAL_PACKAGE_ARCHIVE_PATHFILE=/opt/var/opkg-lists/entware
-    readonly REMOTE_REPO_URL=https://onecdonly.github.io/sherpa
+    readonly REMOTE_REPO_URL=https://raw.githubusercontent.com/OneCDOnly/sherpa/master
 
     local -r DEBUG_LOG_FILE=${SCRIPT_NAME%.*}.debug.log
 
