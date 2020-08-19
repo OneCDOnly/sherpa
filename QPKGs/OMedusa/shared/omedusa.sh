@@ -142,13 +142,11 @@ StartQPKG()
 
     ExecuteAndLog 'starting daemon' "$LAUNCHER" log:everything || return 1
 
-    if IsPortResponds $ui_port; then
-        DisplayDoneCommitToLog "$(FormatAsPackageName $QPKG_NAME) UI is listening on HTTP port $ui_port"
-        response_flag=true
-    fi
-
     if IsSSLEnabled && IsPortSecureResponds $ui_port_secure; then
-        DisplayDoneCommitToLog "$(FormatAsPackageName $QPKG_NAME) UI is$([[ $response_flag = true ]] && echo " also") listening on HTTPS port $ui_port_secure"
+        DisplayDoneCommitToLog "$(FormatAsPackageName $QPKG_NAME) UI is listening on HTTPS port $ui_port_secure"
+        response_flag=true
+	elif IsPortResponds $ui_port; then
+        DisplayDoneCommitToLog "$(FormatAsPackageName $QPKG_NAME) UI is listening on HTTP port $ui_port"
         response_flag=true
     fi
 
