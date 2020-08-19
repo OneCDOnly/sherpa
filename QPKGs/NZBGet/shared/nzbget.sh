@@ -160,7 +160,7 @@ StartQPKG()
 StopQPKG()
     {
 
-    local -r MAX_WAIT_SECONDS_STOP=100
+    local -r MAX_WAIT_SECONDS_STOP=60
     local acc=0
 
     IsDaemonActive || return
@@ -379,14 +379,18 @@ IsDaemonActive()
     # $? = 1 if $QPKG_NAME is not active
 
     if [[ -f $DAEMON_PID_PATHFILE && -d /proc/$(<$DAEMON_PID_PATHFILE) ]]; then
+        DisplayDoneCommitToLog 'daemon is running'
         LoadUIPorts
         if IsPortResponds "$ui_port" || IsPortSecureResponds "$ui_port_secure"; then
-            DisplayDoneCommitToLog 'daemon is active'
+            DisplayDoneCommitToLog 'daemon is responding to port requests'
             return 0
+        else
+            DisplayDoneCommitToLog 'daemon is not responding to port requests'
         fi
+    else
+        DisplayDoneCommitToLog 'daemon is not running'
     fi
 
-    DisplayDoneCommitToLog 'daemon is not active'
     [[ -f $DAEMON_PID_PATHFILE ]] && rm "$DAEMON_PID_PATHFILE"
     return 1
 
@@ -474,11 +478,11 @@ IsPortResponds()
         return 1
     fi
 
-    local -r MAX_WAIT_SECONDS_START=100
+    local -r MAX_WAIT_SECONDS_START=60
     local acc=0
 
     DisplayWaitCommitToLog "* checking for UI port $1 response:"
-    DisplayWait "(waiting for upto $MAX_WAIT_SECONDS_START seconds):"
+    DisplayWait "(waiting for up to $MAX_WAIT_SECONDS_START seconds):"
 
     while true; do
         while ! $CURL_CMD --silent --fail http://localhost:"$1" >/dev/null; do
@@ -511,11 +515,11 @@ IsPortSecureResponds()
         return 1
     fi
 
-    local -r MAX_WAIT_SECONDS_START=100
+    local -r MAX_WAIT_SECONDS_START=60
     local acc=0
 
     DisplayWaitCommitToLog "* checking for secure UI port $1 response:"
-    DisplayWait "(waiting for upto $MAX_WAIT_SECONDS_START seconds):"
+    DisplayWait "(waiting for up to $MAX_WAIT_SECONDS_START seconds):"
 
     while true; do
         while ! $CURL_CMD --silent --insecure --fail https://localhost:"$1" >/dev/null; do
