@@ -142,19 +142,7 @@ StartQPKG()
 
     ExecuteAndLog 'starting daemon' "$LAUNCHER" log:everything || return 1
 
-    if IsSSLEnabled && IsPortSecureResponds $ui_port_secure; then
-        DisplayDoneCommitToLog "$(FormatAsPackageName $QPKG_NAME) UI is listening on HTTPS port $ui_port_secure"
-        response_flag=true
-	elif IsPortResponds $ui_port; then
-        DisplayDoneCommitToLog "$(FormatAsPackageName $QPKG_NAME) UI is listening on HTTP port $ui_port"
-        response_flag=true
-    fi
-
-    if [[ $response_flag = false ]]; then
-        DisplayErrCommitAllLogs 'no response on configured port(s)'
-        SetError
-        return 1
-    fi
+    CheckPorts || return 1
 
     return 0
 
@@ -372,6 +360,25 @@ LoadUIPorts()
 
     }
 
+CheckPorts()
+    {
+
+    if IsSSLEnabled && IsPortSecureResponds $ui_port_secure; then
+        DisplayDoneCommitToLog "$(FormatAsPackageName $QPKG_NAME) UI is listening on HTTPS port $ui_port_secure"
+        response_flag=true
+    elif IsPortResponds $ui_port; then
+        DisplayDoneCommitToLog "$(FormatAsPackageName $QPKG_NAME) UI is listening on HTTP port $ui_port"
+        response_flag=true
+    fi
+
+    if [[ $response_flag = false ]]; then
+        DisplayErrCommitAllLogs 'no response on configured port(s)'
+        SetError
+        return 1
+    fi
+
+    }
+
 IsSSLEnabled()
     {
 
@@ -387,12 +394,8 @@ IsDaemonActive()
 
     if [[ -f $DAEMON_PID_PATHFILE && -d /proc/$(<$DAEMON_PID_PATHFILE) ]]; then
         DisplayDoneCommitToLog 'daemon is running'
-        if IsPortResponds "$ui_port" || IsPortSecureResponds "$ui_port_secure"; then
-            DisplayDoneCommitToLog 'daemon is responding to port requests'
-            return 0
-        else
-            DisplayDoneCommitToLog 'daemon is not responding to port requests'
-        fi
+
+        CheckPorts && return
     else
         DisplayDoneCommitToLog 'daemon is not running'
     fi
