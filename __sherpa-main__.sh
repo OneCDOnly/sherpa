@@ -426,9 +426,9 @@ LogRuntimeParameters()
     DebugIPKG 'download path' "$IPKG_DL_PATH"
     CalcNASQPKGArch
     DebugQPKG 'arch' "$NAS_QPKG_ARCH"
-    DebugInfoThinSeparator
 
     if IsLogViewOnly || IsShowAbbreviationsReminder; then
+        DebugInfoThinSeparator
         SetAbort
         return 1
     fi
