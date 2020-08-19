@@ -36,22 +36,22 @@ Init()
     {
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200819
+    readonly SCRIPT_VERSION=200819b
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
 
-    DisableError
-    DisableAbort
-    DisableVisibleDebugging
-    DisableSatisfyDependenciesOnly
-    DisableVersionOnly
-    DisableLogPasteOnly
-    DisableShowAbbreviationsReminder
-    DisableSuggestIssue
-    DisableShowHelpReminder
-    EnableShowInstallerOutcome
-    DisableDevMode
+    UnsetError
+    UnsetAbort
+    UnsetVisibleDebugging
+    UnsetSatisfyDependenciesOnly
+    UnsetVersionOnly
+    UnsetLogPasteOnly
+    UnsetShowAbbreviationsReminder
+    UnsetSuggestIssue
+    UnsetShowHelpReminder
+    SetShowInstallerOutcome
+    UnsetDevMode
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -433,7 +433,7 @@ LogRuntimeParameters()
 
     if IsNotError && [[ ${#QPKGS_to_install[@]} -eq 0 && ${#QPKGS_to_uninstall[@]} -eq 0 && ${#QPKGS_to_update[@]} -eq 0 && ${#QPKGS_to_backup[@]} -eq 0 && ${#QPKGS_to_restore[@]} -eq 0 ]] && IsNotSatisfyDependenciesOnly && [[ $update_all_apps = false ]]; then
         ShowAsError 'no valid QPKGs or actions were specified.'
-        EnableShowAbbreviationsReminder
+        SetShowAbbreviationsReminder
         return 1
     fi
 
@@ -449,7 +449,7 @@ LogRuntimeParameters()
 
         if [[ $result -ne 0 ]]; then
             ShowAsError "unable to create script working directory $(FormatAsFileName "$WORK_PATH") $(FormatAsExitcode $result)"
-            EnableSuggestIssue
+            SetSuggestIssue
             return 1
         else
             cd "$WORK_PATH" || return 1
@@ -462,7 +462,7 @@ LogRuntimeParameters()
 
         if [[ $result -ne 0 ]]; then
             ShowAsError "unable to create QPKG download directory $(FormatAsFileName "$QPKG_DL_PATH") $(FormatAsExitcode $result)"
-            EnableSuggestIssue
+            SetSuggestIssue
             return 1
         fi
     fi
@@ -474,7 +474,7 @@ LogRuntimeParameters()
 
         if [[ $result -ne 0 ]]; then
             ShowAsError "unable to create IPKG download directory $(FormatAsFileName "$IPKG_DL_PATH") $(FormatAsExitcode $result)"
-            EnableSuggestIssue
+            SetSuggestIssue
             return 1
         fi
     fi
@@ -485,7 +485,7 @@ LogRuntimeParameters()
 
         if [[ $result -ne 0 ]]; then
             ShowAsError "unable to create IPKG cache directory $(FormatAsFileName "$IPKG_CACHE_PATH") $(FormatAsExitcode $result)"
-            EnableSuggestIssue
+            SetSuggestIssue
             return 1
         fi
     fi
@@ -496,7 +496,7 @@ LogRuntimeParameters()
 
         if [[ $result -ne 0 ]]; then
             ShowAsError "unable to create PIP cache directory $(FormatAsFileName "$PIP_CACHE_PATH") $(FormatAsExitcode $result)"
-            EnableSuggestIssue
+            SetSuggestIssue
             return 1
         fi
     fi
@@ -538,7 +538,7 @@ ParseArgs()
     {
 
     if [[ -z $USER_ARGS_RAW ]]; then
-        EnableShowHelpReminder
+        SetShowHelpReminder
         code_pointer=2
         return 1
     fi
@@ -551,11 +551,11 @@ ParseArgs()
     for arg in "${user_args[@]}"; do
         case $arg in
             -d|--debug)
-                EnableVisibleDebugging
+                SetVisibleDebugging
                 current_operation=''
                 ;;
             --check-all)
-                EnableSatisfyDependenciesOnly
+                SetSatisfyDependenciesOnly
                 current_operation=''
                 ;;
             --ignore-space)
@@ -564,23 +564,23 @@ ParseArgs()
                 current_operation=''
                 ;;
             --help)
-                EnableShowHelpReminder
+                SetShowHelpReminder
                 return 1
                 ;;
             -l|--log)
-                EnableLogViewOnly
+                SetLogViewOnly
                 return 1
                 ;;
             --paste)
-                EnableLogPasteOnly
+                SetLogPasteOnly
                 return 1
                 ;;
             --abs)
-                EnableShowAbbreviationsReminder
+                SetShowAbbreviationsReminder
                 return 1
                 ;;
             -v|--version)
-                EnableVersionOnly
+                SetVersionOnly
                 return 1
                 ;;
             --install-all)
@@ -721,8 +721,8 @@ PasteLogOnline()
                 fi
                 ;;
             *)
-                EnableAbort
-                DisableShowInstallerOutcome
+                SetAbort
+                UnsetShowInstallerOutcome
                 DebugInfoThinSeparator
                 DebugScript 'user abort'
                 DebugInfoThickSeparator
@@ -742,7 +742,7 @@ DownloadQPKGs()
 
     IsAbort && return
 
-    [[ -f $SHARE_PUBLIC_PATH/.sherpa.devmode ]] && EnableDevMode
+    [[ -f $SHARE_PUBLIC_PATH/.sherpa.devmode ]] && SetDevMode
 
     DebugFuncEntry
     local QPKGs_to_download=''
@@ -760,8 +760,8 @@ DownloadQPKGs()
         if IsNotQPKGInstalled Entware; then
             if [[ $TARGET_APP = Entware ]]; then
                 ShowAsNote "It's not necessary to install $(FormatAsPackageName Entware) first. It will be installed on-demand with your other sherpa packages. :)"
-                EnableAbort
-                DisableShowInstallerOutcome
+                SetAbort
+                UnsetShowInstallerOutcome
                 return 1
             else
                 DownloadQPKG Entware
@@ -819,8 +819,8 @@ RemoveUnwantedQPKGs()
                 UninstallQPKG Entware
                 ;;
             *)
-                EnableAbort
-                DisableShowInstallerOutcome
+                SetAbort
+                UnsetShowInstallerOutcome
                 DebugInfoThinSeparator
                 DebugScript 'user abort'
                 DebugInfoThickSeparator
@@ -1773,7 +1773,7 @@ ShowResult()
             else
                 IsVisibleDebugging && emoticon=' :S ' || emoticon=' '
                 ShowAsError "$(FormatAsPackageName "$TARGET_APP") ${RE}install failed!${emoticon}[$code_pointer]"
-                EnableSuggestIssue
+                SetSuggestIssue
             fi
         fi
 
@@ -1784,7 +1784,7 @@ ShowResult()
             else
                 IsVisibleDebugging && emoticon=' :S ' || emoticon=''
                 ShowAsError "application dependency check failed!${emoticon}[$code_pointer]"
-                EnableSuggestIssue
+                SetSuggestIssue
             fi
         fi
     fi
@@ -1891,7 +1891,7 @@ FindAllQPKGDependants()
 
     if [[ $complete = false ]]; then
         DebugError "QPKG dependency list is incomplete! Consider raising \$ITERATION_LIMIT [$ITERATION_LIMIT]."
-        EnableSuggestIssue
+        SetSuggestIssue
     fi
 
     all_list=$(DeDupeWords "$requested_list $dependency_list")
@@ -1975,7 +1975,7 @@ FindAllIPKGDependencies()
 
     if [[ $complete = false ]]; then
         DebugError "IPKG dependency list is incomplete! Consider raising \$ITERATION_LIMIT [$ITERATION_LIMIT]."
-        EnableSuggestIssue
+        SetSuggestIssue
     fi
 
     all_list=$(DeDupeWords "$requested_list $dependency_list")
@@ -2520,10 +2520,10 @@ ProgressUpdater()
 
     }
 
-EnableShowHelpReminder()
+SetShowHelpReminder()
     {
 
-    EnableAbort
+    SetAbort
 
     IsShowHelpReminder && return
 
@@ -2532,7 +2532,7 @@ EnableShowHelpReminder()
 
     }
 
-DisableShowHelpReminder()
+UnsetShowHelpReminder()
     {
 
     IsNotShowHelpReminder && return
@@ -2556,10 +2556,10 @@ IsNotShowHelpReminder()
 
     }
 
-EnableLogViewOnly()
+SetLogViewOnly()
     {
 
-    EnableAbort
+    SetAbort
 
     IsLogViewOnly && return
 
@@ -2568,7 +2568,7 @@ EnableLogViewOnly()
 
     }
 
-DisableLogViewOnly()
+UnsetLogViewOnly()
     {
 
     IsNotLogViewOnly && return
@@ -2592,10 +2592,10 @@ IsNotLogViewOnly()
 
     }
 
-EnableVersionOnly()
+SetVersionOnly()
     {
 
-    EnableAbort
+    SetAbort
 
     IsVersionOnly && return
 
@@ -2604,7 +2604,7 @@ EnableVersionOnly()
 
     }
 
-DisableVersionOnly()
+UnsetVersionOnly()
     {
 
     IsNotVersionOnly && return
@@ -2628,10 +2628,10 @@ IsNotVersionOnly()
 
     }
 
-EnableLogPasteOnly()
+SetLogPasteOnly()
     {
 
-    EnableAbort
+    SetAbort
 
     IsLogPasteOnly && return
 
@@ -2640,7 +2640,7 @@ EnableLogPasteOnly()
 
     }
 
-DisableLogPasteOnly()
+UnsetLogPasteOnly()
     {
 
     IsNotLogPasteOnly && return
@@ -2664,10 +2664,10 @@ IsNotLogPasteOnly()
 
     }
 
-EnableError()
+SetError()
     {
 
-    EnableAbort
+    SetAbort
 
     IsError && return
 
@@ -2676,7 +2676,7 @@ EnableError()
 
     }
 
-DisableError()
+UnsetError()
     {
 
     IsNotError && return
@@ -2700,7 +2700,7 @@ IsNotError()
 
     }
 
-EnableAbort()
+SetAbort()
     {
 
     IsAbort && return
@@ -2710,7 +2710,7 @@ EnableAbort()
 
     }
 
-DisableAbort()
+UnsetAbort()
     {
 
     IsNotAbort && return
@@ -2734,7 +2734,7 @@ IsNotAbort()
 
     }
 
-EnableSatisfyDependenciesOnly()
+SetSatisfyDependenciesOnly()
     {
 
     IsSatisfyDependenciesOnly && return
@@ -2744,7 +2744,7 @@ EnableSatisfyDependenciesOnly()
 
     }
 
-DisableSatisfyDependenciesOnly()
+UnsetSatisfyDependenciesOnly()
     {
 
     IsNotSatisfyDependenciesOnly && return
@@ -2768,10 +2768,10 @@ IsNotSatisfyDependenciesOnly()
 
     }
 
-EnableShowAbbreviationsReminder()
+SetShowAbbreviationsReminder()
     {
 
-    EnableAbort
+    SetAbort
 
     IsShowAbbreviationsReminder && return
 
@@ -2780,7 +2780,7 @@ EnableShowAbbreviationsReminder()
 
     }
 
-DisableShowAbbreviationsReminder()
+UnsetShowAbbreviationsReminder()
     {
 
     IsNotShowAbbreviationsReminder && return
@@ -2804,7 +2804,7 @@ IsNotShowAbbreviationsReminder()
 
     }
 
-EnableShowInstallerOutcome()
+SetShowInstallerOutcome()
     {
 
     IsShowInstallerOutcome && return
@@ -2814,7 +2814,7 @@ EnableShowInstallerOutcome()
 
     }
 
-DisableShowInstallerOutcome()
+UnsetShowInstallerOutcome()
     {
 
     IsNotShowInstallerOutcome && return
@@ -2838,7 +2838,7 @@ IsNotShowInstallerOutcome()
 
     }
 
-EnableVisibleDebugging()
+SetVisibleDebugging()
     {
 
     IsVisibleDebugging && return
@@ -2848,7 +2848,7 @@ EnableVisibleDebugging()
 
     }
 
-DisableVisibleDebugging()
+UnsetVisibleDebugging()
     {
 
     IsNotVisibleDebugging && return
@@ -2872,10 +2872,10 @@ IsNotVisibleDebugging()
 
     }
 
-EnableDevMode()
+SetDevMode()
     {
 
-    EnableVisibleDebugging
+    SetVisibleDebugging
 
     IsDevMode && return
 
@@ -2884,10 +2884,10 @@ EnableDevMode()
 
     }
 
-DisableDevMode()
+UnsetDevMode()
     {
 
-    DisableVisibleDebugging
+    UnsetVisibleDebugging
 
     IsNotDevMode && return
 
@@ -2910,7 +2910,7 @@ IsNotDevMode()
 
     }
 
-EnableSuggestIssue()
+SetSuggestIssue()
     {
 
     IsSuggestIssue && return
@@ -2920,7 +2920,7 @@ EnableSuggestIssue()
 
     }
 
-DisableSuggestIssue()
+UnsetSuggestIssue()
     {
 
     IsNotSuggestIssue && return
@@ -3303,7 +3303,7 @@ ShowAsAbort()
     local buffer="$1"
     local capitalised="$(tr "[a-z]" "[A-Z]" <<< "${buffer:0:1}")${buffer:1}"      # use any available 'tr'
 
-    EnableError
+    SetError
     WriteToDisplay_NewLine "$(ColourTextBrightRed fail)" "$capitalised: aborting ..."
     WriteToLog fail "$capitalised: aborting"
 
@@ -3315,7 +3315,7 @@ ShowAsError()
     local buffer="$1"
     local capitalised="$(tr "[a-z]" "[A-Z]" <<< "${buffer:0:1}")${buffer:1}"      # use any available 'tr'
 
-    EnableError
+    SetError
     WriteToDisplay_NewLine "$(ColourTextBrightRed fail)" "$capitalised"
     WriteToLog fail "$capitalised"
 
