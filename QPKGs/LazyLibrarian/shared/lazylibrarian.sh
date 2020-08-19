@@ -351,7 +351,7 @@ LoadUIPorts()
             ;;
         stop)
             # Read the current application UI ports from QTS App Center - need to do this if user changes ports via app UI
-            # Must first 'stop' application on old port(s), then 'start' on new ports()
+            # Must first 'stop' application on old ports, then 'start' on new ports
 
             ui_port=$($GETCFG_CMD $QPKG_NAME Web_Port -d 0 -f "$QTS_QPKG_CONF_PATHFILE")
             ui_port_secure=$($GETCFG_CMD $QPKG_NAME Web_SSL_Port -d 0 -f "$QTS_QPKG_CONF_PATHFILE")
@@ -364,8 +364,7 @@ LoadUIPorts()
     esac
 
     if [[ $ui_port -eq 0 ]] && IsNotDefaultConfigFound; then
-        # 'LazyLibrarian' isn't packaged with a default configuration
-        ui_port=5299
+        ui_port=5299        # 'LazyLibrarian' isn't packaged with a default configuration
         ui_port_secure=0
     fi
 

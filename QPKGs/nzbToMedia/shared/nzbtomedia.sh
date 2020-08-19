@@ -59,7 +59,6 @@ Init()
     fi
 
     WaitForEntware
-    errorcode=0
 
     LoadAppVersion
 
@@ -122,8 +121,8 @@ StartQPKG()
 
     [[ ! -L $APPARENT_PATH ]] && ln -s "$QPKG_PATH/$QPKG_NAME" "$APPARENT_PATH"
 
-    if [[ ! -f $QPKG_INI_PATHFILE && -f $QPKG_INI_DEFAULT_PATHFILE ]]; then
-        DisplayWarnCommitToLog 'no settings file found: using default'
+    if IsNotConfigFound && IsDefaultConfigFound; then
+        DisplayWarnCommitToLog 'no configuration file found: using default'
         cp "$QPKG_INI_DEFAULT_PATHFILE" "$QPKG_INI_PATHFILE"
     fi
 
@@ -150,6 +149,7 @@ RestoreConfig()
 
     if [[ ! -f $BACKUP_PATHFILE ]]; then
         DisplayErrCommitAllLogs 'unable to restore configuration: no backup file was found!'
+        SetError
         return 1
     fi
 
@@ -162,15 +162,22 @@ RestoreConfig()
 LoadAppVersion()
     {
 
-    # Find the installed application's internal version number
+    # Find the application's internal version number
     # creates a global var: $app_version
     # this is the installed application version (not the QPKG version)
 
     app_version=''
 
-    [[ ! -e $APP_VERSION_PATHFILE ]] && return 1
+    [[ ! -e $APP_VERSION_PATHFILE ]] && return
 
     app_version=$($GREP_CMD '__version__ =' "$APP_VERSION_PATHFILE" | $SED_CMD 's|^.*"\(.*\)"|\1|')
+
+    }
+
+SaveAppVersion()
+    {
+
+    echo "$app_version" > "$APP_VERSION_STORE_PATHFILE"
 
     }
 
@@ -186,7 +193,11 @@ PullGitRepo()
     local -r GIT_CMD=/opt/bin/git
 
     [[ -z $1 || -z $2 || -z $3 || -z $4 || -z $5 ]] && return 1
-    SysFilePresent "$GIT_CMD" || { errorcode=1; return 1 ;}
+
+    if IsNotSysFilePresent "$GIT_CMD"; then
+        SetError
+        return 1
+    fi
 
     local QPKG_GIT_PATH="$5/$1"
     local GIT_HTTP_URL="$2"
@@ -207,7 +218,10 @@ CleanLocalClone()
 
     # for the rare occasions the local repo becomes corrupt, it needs to be deleted and cloned again from source.
 
-    [[ -z $QPKG_PATH || -z $QPKG_NAME || -z $SOURCE_GIT_URL ]] && return 1
+    if [[ -z $QPKG_PATH || -z $QPKG_NAME || -z $SOURCE_GIT_URL ]]; then
+        SetError
+        return 1
+    fi
 
     StopQPKG
     ExecuteAndLog 'cleaning local repo' "rm -r $QPKG_REPO_PATH"
@@ -223,7 +237,10 @@ ExecuteAndLog()
     # $3 'log:everything' (optional) - if specified, the result of the command is recorded in the QTS system log.
     #                                - if unspecified, only warnings are logged in the QTS system log.
 
-    [[ -z $1 || -z $2 ]] && return 1
+    if [[ -z $1 || -z $2 ]]; then
+        SetError
+        return 1
+    fi
 
     local exec_msgs=''
     local result=0
@@ -248,6 +265,81 @@ ExecuteAndLog()
 
     }
 
+IsSysFilePresent()
+    {
+
+    # $1 = pathfile to check
+
+    if [[ -z $1 ]]; then
+        SetError
+        return 1
+    fi
+
+    if [[ ! -e $1 ]]; then
+        FormatAsDisplayError "A required NAS system file is missing [$1]"
+        SetError
+        return 1
+    else
+        return 0
+    fi
+
+    }
+
+IsNotSysFilePresent()
+    {
+
+    # $1 = pathfile to check
+
+    ! IsSysFilePresent "$1"
+
+    }
+
+IsConfigFound()
+    {
+
+    # Is there an application configuration file to read from?
+
+    [[ -e $QPKG_INI_PATHFILE ]]
+
+    }
+
+IsNotConfigFound()
+    {
+
+    ! IsConfigFound
+
+    }
+
+IsDefaultConfigFound()
+    {
+
+    # Is there a default application configuration file to read from?
+
+    [[ -e $QPKG_INI_DEFAULT_PATHFILE ]]
+
+    }
+
+IsNotDefaultConfigFound()
+    {
+
+    ! IsDefaultConfigFound
+
+    }
+
+IsError()
+    {
+
+    [[ $error_flag = true ]]
+
+    }
+
+IsNotError()
+    {
+
+    [[ $error_flag = false ]]
+
+    }
+
 SetServiceOperationOK()
     {
 
@@ -266,6 +358,24 @@ RemoveServiceStatus()
     {
 
     [[ -e $SERVICE_STATUS_PATHFILE ]] && rm -f "$SERVICE_STATUS_PATHFILE"
+
+    }
+
+SetError()
+    {
+
+    IsError && return
+
+    error_flag=true
+
+    }
+
+UnsetError()
+    {
+
+    IsNotError && return
+
+    error_flag=false
 
     }
 
@@ -427,7 +537,10 @@ CommitSysLog()
     #    2 : Warning
     #    4 : Information
 
-    [[ -z $1 || -z $2 ]] && return 1
+    if [[ -z $1 || -z $2 ]]; then
+        SetError
+        return 1
+    fi
 
     $WRITE_LOG_CMD "[$QPKG_NAME] $1" "$2"
 
@@ -439,23 +552,6 @@ SessionSeparator()
     # $1 = message
 
     printf '%0.s-' {1..20}; echo -n " $1 "; printf '%0.s-' {1..20}
-
-    }
-
-SysFilePresent()
-    {
-
-    # $1 = pathfile to check
-
-    [[ -z $1 ]] && return 1
-
-    if [[ ! -e $1 ]]; then
-        FormatAsDisplayError "A required NAS system file is missing [$1]"
-        errorcode=1
-        return 1
-    else
-        return 0
-    fi
 
     }
 
@@ -488,40 +584,41 @@ WaitForEntware()
 
 Init
 
-if [[ $errorcode -eq 0 ]]; then
+if IsNotError; then
     if [[ -n $1 ]]; then
-        CommitLog "$(SessionSeparator "'$1' requested")"
+        service_operation="$1"
+        CommitLog "$(SessionSeparator "'$service_operation' requested")"
         CommitLog "= $(date), QPKG: $QPKG_VERSION, application: $app_version"
     fi
-    case $1 in
+    case $service_operation in
         start)
-            StartQPKG || errorcode=1
+            StartQPKG || SetError
             ;;
         stop)
-            StopQPKG || errorcode=1
+            StopQPKG || SetError
             ;;
         r|restart)
-            StopQPKG; StartQPKG || errorcode=1
+            StopQPKG; StartQPKG || SetError
             ;;
         s|status)
             # always return OK, as this app is only called on-demand by other apps.
-            errorcode=0
+            true
             ;;
         b|backup)
-            BackupConfig || errorcode=1
+            BackupConfig || SetError
             ;;
         restore)
-            RestoreConfig || errorcode=1
+            RestoreConfig || SetError
             ;;
         c|clean)
-            CleanLocalClone || errorcode=1
+            CleanLocalClone || SetError
             ;;
         l|log)
             if [[ -e $SERVICE_LOG_PATHFILE ]]; then
                 LESSSECURE=1 $GNU_LESS_CMD +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$SERVICE_LOG_PATHFILE"
             else
                 Display "service log not found: $(FormatAsFileName "$SERVICE_LOG_PATHFILE")"
-                errorcode=1
+                SetError
             fi
             ;;
         v|version)
@@ -533,6 +630,10 @@ if [[ $errorcode -eq 0 ]]; then
     esac
 fi
 
-[[ $errorcode -eq 0 ]] && SetServiceOperationOK || SetServiceOperationFailed
-
-exit $errorcode
+if IsNotError; then
+    SetServiceOperationOK
+    exit
+else
+    SetServiceOperationFailed
+    exit 1
+fi
