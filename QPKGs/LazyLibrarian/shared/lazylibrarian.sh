@@ -52,7 +52,6 @@ Init()
     readonly BACKUP_PATHFILE=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
     [[ -n $PYTHON ]] && export PYTHONPATH=$PYTHON
     export PATH=/opt/bin:/opt/sbin:$PATH
-    readonly UI_PORT_DEFAULT=5299
     ui_port=0
     ui_port_secure=0
 
@@ -80,8 +79,8 @@ Init()
 
     WaitForEntware
 
-    if [[ ! -f $QPKG_INI_PATHFILE && -f $QPKG_INI_DEFAULT_PATHFILE ]]; then
-        DisplayWarnCommitToLog 'no settings file found: using default'
+    if IsNotConfigFound && IsDefaultConfigFound; then
+        DisplayWarnCommitToLog 'no configuration file found: using default'
         cp "$QPKG_INI_DEFAULT_PATHFILE" "$QPKG_INI_PATHFILE"
     fi
 
@@ -137,12 +136,7 @@ StartQPKG()
         return 1
     fi
 
-    # QTS App Center requires 'Web_Port' to always be non-zero
-    # 'Web_SSL_Port' behaviour: -1 (launch QTS UI again), 0 ("unable to connect") or > 0 (only works if logged-in to QTS UI via SSL)
-    # If SSL is enabled, attempting to access with non-SSL via 'Web_Port' results in "connection was reset"
-
-    $SETCFG_CMD $QPKG_NAME Web_Port $ui_port -f $QTS_QPKG_CONF_PATHFILE
-    $SETCFG_CMD $QPKG_NAME Web_SSL_Port $ui_port_secure -f $QTS_QPKG_CONF_PATHFILE
+    ReWriteUIPorts
 
     ExecuteAndLog 'starting daemon' "$LAUNCHER" log:everything || return 1
 
@@ -331,18 +325,56 @@ ExecuteAndLog()
 
     }
 
+ReWriteUIPorts()
+    {
+
+    # Write the current application UI ports into the QTS App Center configuration
+
+    # QTS App Center requires 'Web_Port' to always be non-zero
+    # 'Web_SSL_Port' behaviour: -1 (launch QTS UI again), 0 ("unable to connect") or > 0 (only works if logged-in to QTS UI via SSL)
+    # If SSL is enabled, attempting to access with non-SSL via 'Web_Port' results in "connection was reset"
+
+    $SETCFG_CMD $QPKG_NAME Web_Port "$ui_port" -f $QTS_QPKG_CONF_PATHFILE
+    $SETCFG_CMD $QPKG_NAME Web_SSL_Port "$ui_port_secure" -f $QTS_QPKG_CONF_PATHFILE
+
+    }
+
 LoadUIPorts()
     {
 
-    ui_port=$($GETCFG_CMD General web_port -d "$UI_PORT_DEFAULT" -f "$QPKG_INI_PATHFILE")
-    ui_port_secure=$($GETCFG_CMD General web_port -d "$UI_PORT_DEFAULT" -f "$QPKG_INI_PATHFILE")
+    case $service_operation in
+        start|status)
+            # Read the current application UI ports from application configuration
+
+            ui_port=$($GETCFG_CMD general http_port -d 0 -f "$QPKG_INI_PATHFILE")
+            ui_port_secure=$($GETCFG_CMD general http_port -d 0 -f "$QPKG_INI_PATHFILE")
+            ;;
+        stop)
+            # Read the current application UI ports from QTS App Center - need to do this if user changes ports via app UI
+            # Must first 'stop' application on old port(s), then 'start' on new ports()
+
+            ui_port=$($GETCFG_CMD $QPKG_NAME Web_Port -d 0 -f "$QTS_QPKG_CONF_PATHFILE")
+            ui_port_secure=$($GETCFG_CMD $QPKG_NAME Web_SSL_Port -d 0 -f "$QTS_QPKG_CONF_PATHFILE")
+            ;;
+        *)
+            DisplayErrCommitAllLogs "unable to load UI ports: service operation '$service_operation' unrecognised"
+            SetError
+            return 1
+            ;;
+    esac
+
+    if [[ $ui_port -eq 0 ]] && IsNotDefaultConfigFound; then
+        # 'LazyLibrarian' isn't packaged with a default configuration
+        ui_port=5299
+        ui_port_secure=0
+    fi
 
     }
 
 IsSSLEnabled()
     {
 
-    [[ $($GETCFG_CMD General enable_https -d 0 -f "$QPKG_INI_PATHFILE") -eq 1 ]]
+    [[ $($GETCFG_CMD general https_enabled -d 0 -f "$QPKG_INI_PATHFILE") -eq 1 ]]
 
     }
 
@@ -352,16 +384,17 @@ IsDaemonActive()
     # $? = 0 if $QPKG_NAME is active
     # $? = 1 if $QPKG_NAME is not active
 
-    LoadUIPorts
-
-    if [[ -f $DAEMON_PID_PATHFILE && -d /proc/$(<$DAEMON_PID_PATHFILE) ]] && (IsPortResponds "$ui_port" || IsPortSecureResponds "$ui_port_secure"); then
-        DisplayDoneCommitToLog 'daemon is active'
-        return 0
-    else
-        DisplayDoneCommitToLog 'daemon is not active'
-        [[ -f $DAEMON_PID_PATHFILE ]] && rm "$DAEMON_PID_PATHFILE"
-        return 1
+    if [[ -f $DAEMON_PID_PATHFILE && -d /proc/$(<$DAEMON_PID_PATHFILE) ]]; then
+        LoadUIPorts
+        if IsPortResponds "$ui_port" || IsPortSecureResponds "$ui_port_secure"; then
+            DisplayDoneCommitToLog 'daemon is active'
+            return 0
+        fi
     fi
+
+    DisplayDoneCommitToLog 'daemon is not active'
+    [[ -f $DAEMON_PID_PATHFILE ]] && rm "$DAEMON_PID_PATHFILE"
+    return 1
 
     }
 
@@ -506,6 +539,38 @@ IsPortSecureResponds()
         CommitLog "secure UI port responded after $acc seconds"
         return 0
     done
+
+    }
+
+IsConfigFound()
+    {
+
+    # Is there an application configuration file to read from?
+
+    [[ -e $QPKG_INI_PATHFILE ]]
+
+    }
+
+IsNotConfigFound()
+    {
+
+    ! IsConfigFound
+
+    }
+
+IsDefaultConfigFound()
+    {
+
+    # Is there a default application configuration file to read from?
+
+    [[ -e $QPKG_INI_DEFAULT_PATHFILE ]]
+
+    }
+
+IsNotDefaultConfigFound()
+    {
+
+    ! IsDefaultConfigFound
 
     }
 
@@ -769,10 +834,11 @@ Init
 
 if IsNotError; then
     if [[ -n $1 ]]; then
-        CommitLog "$(SessionSeparator "'$1' requested")"
+        service_operation="$1"
+        CommitLog "$(SessionSeparator "'$service_operation' requested")"
         CommitLog "= $(date), QPKG: $QPKG_VERSION, application: $app_version"
     fi
-    case $1 in
+    case $service_operation in
         start)
             StartQPKG || SetError
             ;;
@@ -818,4 +884,3 @@ else
     SetServiceOperationFailed
     exit 1
 fi
-
