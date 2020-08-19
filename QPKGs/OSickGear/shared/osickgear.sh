@@ -61,30 +61,30 @@ Init()
     readonly APP_VERSION_STORE_PATHFILE=$($DIRNAME_CMD "$APP_VERSION_PATHFILE")/version.stored
     readonly TARGET_SCRIPT_PATHFILE=$QPKG_REPO_PATH/$TARGET_SCRIPT
 
-    # specific launch arguments
-    if [[ -n $PYTHON && -n $TARGET_SCRIPT ]]; then
-        readonly LAUNCHER="$PYTHON $TARGET_SCRIPT_PATHFILE --daemon --nolaunch --datadir $($DIRNAME_CMD "$QPKG_INI_PATHFILE") --pidfile $DAEMON_PID_PATHFILE"
-    else
-        DisplayErrCommitAllLogs 'found nothing to launch!'
-        errorcode=1
-        return 1
-    fi
-
     if [[ -z $LANG ]]; then
         export LANG=en_US.UTF-8
         export LC_ALL=en_US.UTF-8
         export LC_CTYPE=en_US.UTF-8
     fi
 
+    UnsetError
+
+    # specific launch arguments
+    if [[ -n $PYTHON && -n $TARGET_SCRIPT ]]; then
+        readonly LAUNCHER="cd $QPKG_REPO_PATH; $PYTHON $TARGET_SCRIPT_PATHFILE --daemon --nolaunch --datadir $($DIRNAME_CMD "$QPKG_INI_PATHFILE") --pidfile $DAEMON_PID_PATHFILE"
+    else
+        DisplayErrCommitAllLogs 'found nothing to launch!'
+        SetError
+        return 1
+    fi
+
     WaitForEntware
-    errorcode=0
 
     if [[ ! -f $QPKG_INI_PATHFILE && -f $QPKG_INI_DEFAULT_PATHFILE ]]; then
         DisplayWarnCommitToLog 'no settings file found: using default'
         cp "$QPKG_INI_DEFAULT_PATHFILE" "$QPKG_INI_PATHFILE"
     fi
 
-    LoadUIPorts
     LoadAppVersion
 
     [[ ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
@@ -119,30 +119,54 @@ ShowHelp()
 StartQPKG()
     {
 
-    DaemonIsActive && return
+    IsNotDaemonActive || return
+
+    local response_flag=false
 
     [[ -n $SOURCE_GIT_URL ]] && PullGitRepo $QPKG_NAME "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_PATH"
 
-    if [[ $ui_port -eq 0 ]]; then
+    LoadUIPorts
+
+    if [[ $ui_port -le 0 && $ui_port_secure -le 0 ]]; then
         DisplayErrCommitAllLogs 'unable to start daemon as no UI port was specified'
+        SetError
         return 1
-    elif ! PortAvailable $ui_port; then
-        DisplayErrCommitAllLogs "unable to start daemon as port $ui_port is already in use"
+    elif IsNotPortAvailable $ui_port && IsNotPortAvailable $ui_port_secure; then
+        DisplayErrCommitAllLogs "unable to start daemon as ports $ui_port & $ui_port_secure are already in use"
+        SetError
         return 1
     fi
 
-    $SETCFG_CMD $QPKG_NAME Web_Port $ui_port -f $QTS_QPKG_CONF_PATHFILE
+    # QTS App Center requires 'Web_Port' to always be non-zero
+    # 'Web_SSL_Port' behaviour: -1 (launch QTS UI again), 0 ("unable to connect") or > 0 (only works if logged-in to QTS UI via SSL)
+    # If SSL is enabled, attempting to access with non-SSL via 'Web_Port' results in "connection was reset"
+
+    # Medusa disables non-SSL access when SSL is enabled
+
+    if [[ $ui_port_secure -le 0 ]]; then
+        $SETCFG_CMD $QPKG_NAME Web_Port $ui_port -f $QTS_QPKG_CONF_PATHFILE
+        $SETCFG_CMD $QPKG_NAME Web_SSL_Port 0 -f $QTS_QPKG_CONF_PATHFILE
+    else
+        $SETCFG_CMD $QPKG_NAME Web_Port $ui_port_secure -f $QTS_QPKG_CONF_PATHFILE
+        $SETCFG_CMD $QPKG_NAME Web_SSL_Port $ui_port_secure -f $QTS_QPKG_CONF_PATHFILE
+    fi
 
     ExecuteAndLog 'starting daemon' "$LAUNCHER" log:everything || return 1
 
-    if PortResponds $ui_port; then
-        DisplayDoneCommitToLog "$(FormatAsPackageName $QPKG_NAME) UI is now listening on HTTP port ${ui_port}"
-    else
-        return 1
+    if IsPortResponds $ui_port; then
+        DisplayDoneCommitToLog "$(FormatAsPackageName $QPKG_NAME) UI is listening on HTTP port $ui_port"
+        response_flag=true
     fi
 
-    if PortSecureResponds $ui_port_secure; then
-        DisplayDoneCommitToLog "$(FormatAsPackageName $QPKG_NAME) UI is now listening on HTTPS port ${ui_port_secure}"
+    if IsSSLEnabled && IsPortSecureResponds $ui_port_secure; then
+        DisplayDoneCommitToLog "$(FormatAsPackageName $QPKG_NAME) UI is$([[ $response_flag = true ]] && echo " also") listening on HTTPS port $ui_port_secure"
+        response_flag=true
+    fi
+
+    if [[ $response_flag = false ]]; then
+        DisplayErrCommitAllLogs 'no response on configured port(s)'
+        SetError
+        return 1
     fi
 
     return 0
@@ -155,7 +179,7 @@ StopQPKG()
     local -r MAX_WAIT_SECONDS_STOP=100
     local acc=0
 
-    ! DaemonIsActive && return
+    IsDaemonActive || return
 
     PID=$(<$DAEMON_PID_PATHFILE)
 
@@ -198,12 +222,12 @@ RestoreConfig()
 
     if [[ ! -f $BACKUP_PATHFILE ]]; then
         DisplayErrCommitAllLogs 'unable to restore configuration: no backup file was found!'
+        SetError
         return 1
     fi
 
     StopQPKG
     ExecuteAndLog 'restoring configuration backup' "$TAR_CMD --extract --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config" log:everything
-    LoadUIPorts
     StartQPKG
 
     }
@@ -211,35 +235,22 @@ RestoreConfig()
 LoadAppVersion()
     {
 
-    # Find the installed application's internal version number
+    # Find the application's internal version number
     # creates a global var: $app_version
     # this is the installed application version (not the QPKG version)
 
     app_version=''
 
-    [[ ! -e $APP_VERSION_PATHFILE ]] && return 1
+    [[ ! -e $APP_VERSION_PATHFILE ]] && return
 
     app_version=$($GREP_CMD '__version__ =' "$APP_VERSION_PATHFILE" | $SED_CMD 's|^.*"\(.*\)"|\1|')
 
     }
 
-DaemonIsActive()
+SaveAppVersion()
     {
 
-    # $? = 0 if $QPKG_NAME is active
-    # $? = 1 if $QPKG_NAME is not active
-
-    if [[ -f $DAEMON_PID_PATHFILE && -d /proc/$(<$DAEMON_PID_PATHFILE) ]] && (PortResponds $ui_port); then
-        DisplayDoneCommitToLog 'daemon is active'
-        return 0
-    elif [[ -n $TARGET_DAEMON ]] && (ps ax | $GREP_CMD "$TARGET_DAEMON" | $GREP_CMD -vq grep) && (PortResponds $ui_port); then
-        DisplayDoneCommitToLog 'daemon is active'
-        return 0
-    else
-        DisplayDoneCommitToLog 'daemon is not active'
-        [[ -f $DAEMON_PID_PATHFILE ]] && rm "$DAEMON_PID_PATHFILE"
-        return 1
-    fi
+    echo "$app_version" > "$APP_VERSION_STORE_PATHFILE"
 
     }
 
@@ -255,7 +266,11 @@ PullGitRepo()
     local -r GIT_CMD=/opt/bin/git
 
     [[ -z $1 || -z $2 || -z $3 || -z $4 || -z $5 ]] && return 1
-    SysFilePresent "$GIT_CMD" || { errorcode=1; return 1 ;}
+
+    if IsNotSysFilePresent "$GIT_CMD"; then
+        SetError
+        return 1
+    fi
 
     local QPKG_GIT_PATH="$5/$1"
     local GIT_HTTP_URL="$2"
@@ -276,7 +291,10 @@ CleanLocalClone()
 
     # for the rare occasions the local repo becomes corrupt, it needs to be deleted and cloned again from source.
 
-    [[ -z $QPKG_PATH || -z $QPKG_NAME || -z $SOURCE_GIT_URL ]] && return 1
+    if [[ -z $QPKG_PATH || -z $QPKG_NAME || -z $SOURCE_GIT_URL ]]; then
+        SetError
+        return 1
+    fi
 
     StopQPKG
     ExecuteAndLog 'cleaning local repo' "rm -r $QPKG_REPO_PATH"
@@ -292,7 +310,10 @@ ExecuteAndLog()
     # $3 'log:everything' (optional) - if specified, the result of the command is recorded in the QTS system log.
     #                                - if unspecified, only warnings are logged in the QTS system log.
 
-    [[ -z $1 || -z $2 ]] && return 1
+    if [[ -z $1 || -z $2 ]]; then
+        SetError
+        return 1
+    fi
 
     local exec_msgs=''
     local result=0
@@ -321,23 +342,59 @@ LoadUIPorts()
     {
 
     ui_port=$($GETCFG_CMD General web_port -d "$UI_PORT_DEFAULT" -f "$QPKG_INI_PATHFILE")
+    ui_port_secure=$($GETCFG_CMD General web_port -d "$UI_PORT_DEFAULT" -f "$QPKG_INI_PATHFILE")
 
-    if [[ $($GETCFG_CMD General enable_https -d 0 -f "$QPKG_INI_PATHFILE") -eq 1 ]]; then
-        ui_port_secure=$($GETCFG_CMD General web_port -d "$UI_PORT_DEFAULT" -f "$QPKG_INI_PATHFILE")
+    }
+
+IsSSLEnabled()
+    {
+
+    [[ $($GETCFG_CMD General enable_https -d 0 -f "$QPKG_INI_PATHFILE") -eq 1 ]]
+
+    }
+
+IsDaemonActive()
+    {
+
+    # $? = 0 if $QPKG_NAME is active
+    # $? = 1 if $QPKG_NAME is not active
+
+    LoadUIPorts
+
+    if [[ -f $DAEMON_PID_PATHFILE && -d /proc/$(<$DAEMON_PID_PATHFILE) ]] && (IsPortResponds "$ui_port" || IsPortSecureResponds "$ui_port_secure"); then
+        DisplayDoneCommitToLog 'daemon is active'
+        return 0
     else
-        ui_port_secure=0
+        DisplayDoneCommitToLog 'daemon is not active'
+        [[ -f $DAEMON_PID_PATHFILE ]] && rm "$DAEMON_PID_PATHFILE"
+        return 1
     fi
 
     }
 
-PortAvailable()
+IsNotDaemonActive()
     {
 
-    # $1 = port to check
-    # $? = 0 if available
-    # $? = 1 if already used or unspecified
+    # $? = 1 if $QPKG_NAME is active
+    # $? = 0 if $QPKG_NAME is not active
 
-    if [[ -z $1 ]] || ($LSOF_CMD -i :"$1" -sTCP:LISTEN >/dev/null 2>&1); then
+    ! IsDaemonActive
+
+    }
+
+IsSysFilePresent()
+    {
+
+    # $1 = pathfile to check
+
+    if [[ -z $1 ]]; then
+        SetError
+        return 1
+    fi
+
+    if [[ ! -e $1 ]]; then
+        FormatAsDisplayError "A required NAS system file is missing [$1]"
+        SetError
         return 1
     else
         return 0
@@ -345,14 +402,57 @@ PortAvailable()
 
     }
 
-PortResponds()
+IsNotSysFilePresent()
+    {
+
+    # $1 = pathfile to check
+
+    ! IsSysFilePresent "$1"
+
+    }
+
+IsPortAvailable()
+    {
+
+    # $1 = port to check
+    # $? = 0 if available
+    # $? = 1 if already used
+
+    if [[ -z $1 || $1 -eq 0 ]]; then
+        SetError
+        return 1
+    fi
+
+    if ($LSOF_CMD -i :"$1" -sTCP:LISTEN >/dev/null 2>&1); then
+        return 1
+    else
+        return 0
+    fi
+
+    }
+
+IsNotPortAvailable()
+    {
+
+    # $1 = port to check
+    # $? = 1 if available
+    # $? = 0 if already used or unspecified
+
+    ! IsPortAvailable "$1"
+
+    }
+
+IsPortResponds()
     {
 
     # $1 = port to check
     # $? = 0 if response received
-    # $? = 1 if not OK or port unspecified
+    # $? = 1 if not OK
 
-    [[ -z $1 || $1 -eq 0 ]] && return 1
+    if [[ -z $1 || $1 -eq 0 ]]; then
+        SetError
+        return 1
+    fi
 
     local -r MAX_WAIT_SECONDS_START=100
     local acc=0
@@ -379,14 +479,17 @@ PortResponds()
 
     }
 
-PortSecureResponds()
+IsPortSecureResponds()
     {
 
     # $1 = port to check
     # $? = 0 if response received
     # $? = 1 if not OK or port unspecified
 
-    [[ -z $1 || $1 -eq 0 ]] && return 1
+    if [[ -z $1 || $1 -eq 0 ]]; then
+        SetError
+        return 1
+    fi
 
     local -r MAX_WAIT_SECONDS_START=100
     local acc=0
@@ -413,6 +516,20 @@ PortSecureResponds()
 
     }
 
+IsError()
+    {
+
+    [[ $error_flag = true ]]
+
+    }
+
+IsNotError()
+    {
+
+    [[ $error_flag = false ]]
+
+    }
+
 SetServiceOperationOK()
     {
 
@@ -431,6 +548,24 @@ RemoveServiceStatus()
     {
 
     [[ -e $SERVICE_STATUS_PATHFILE ]] && rm -f "$SERVICE_STATUS_PATHFILE"
+
+    }
+
+SetError()
+    {
+
+    IsError && return
+
+    error_flag=true
+
+    }
+
+UnsetError()
+    {
+
+    IsNotError && return
+
+    error_flag=false
 
     }
 
@@ -592,7 +727,10 @@ CommitSysLog()
     #    2 : Warning
     #    4 : Information
 
-    [[ -z $1 || -z $2 ]] && return 1
+    if [[ -z $1 || -z $2 ]]; then
+        SetError
+        return 1
+    fi
 
     $WRITE_LOG_CMD "[$QPKG_NAME] $1" "$2"
 
@@ -604,23 +742,6 @@ SessionSeparator()
     # $1 = message
 
     printf '%0.s-' {1..20}; echo -n " $1 "; printf '%0.s-' {1..20}
-
-    }
-
-SysFilePresent()
-    {
-
-    # $1 = pathfile to check
-
-    [[ -z $1 ]] && return 1
-
-    if [[ ! -e $1 ]]; then
-        FormatAsDisplayError "A required NAS system file is missing [$1]"
-        errorcode=1
-        return 1
-    else
-        return 0
-    fi
 
     }
 
@@ -653,39 +774,39 @@ WaitForEntware()
 
 Init
 
-if [[ $errorcode -eq 0 ]]; then
+if IsNotError; then
     if [[ -n $1 ]]; then
         CommitLog "$(SessionSeparator "'$1' requested")"
         CommitLog "= $(date), QPKG: $QPKG_VERSION, application: $app_version"
     fi
     case $1 in
         start)
-            StartQPKG || errorcode=1
+            StartQPKG || SetError
             ;;
         stop)
-            StopQPKG || errorcode=1
+            StopQPKG || SetError
             ;;
         r|restart)
-            StopQPKG; StartQPKG || errorcode=1
+            StopQPKG; StartQPKG || SetError
             ;;
         s|status)
-            DaemonIsActive $QPKG_NAME || errorcode=1
+            IsDaemonActive $QPKG_NAME || SetError
             ;;
         b|backup)
-            BackupConfig || errorcode=1
+            BackupConfig || SetError
             ;;
         restore)
-            RestoreConfig || errorcode=1
+            RestoreConfig || SetError
             ;;
         c|clean)
-            CleanLocalClone || errorcode=1
+            CleanLocalClone || SetError
             ;;
         l|log)
             if [[ -e $SERVICE_LOG_PATHFILE ]]; then
                 LESSSECURE=1 $GNU_LESS_CMD +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$SERVICE_LOG_PATHFILE"
             else
                 Display "service log not found: $(FormatAsFileName "$SERVICE_LOG_PATHFILE")"
-                errorcode=1
+                SetError
             fi
             ;;
         v|version)
@@ -697,6 +818,11 @@ if [[ $errorcode -eq 0 ]]; then
     esac
 fi
 
-[[ $errorcode -eq 0 ]] && SetServiceOperationOK || SetServiceOperationFailed
+if IsNotError; then
+    SetServiceOperationOK
+    exit
+else
+    SetServiceOperationFailed
+    exit 1
+fi
 
-exit $errorcode
