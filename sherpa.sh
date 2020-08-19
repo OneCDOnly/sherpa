@@ -36,22 +36,9 @@ Init()
     {
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200819d
+    readonly SCRIPT_VERSION=200820
 
     IsQNAP || return 1
-    IsOnlyInstance || return 1
-
-    UnsetError
-    UnsetAbort
-    UnsetVisibleDebugging
-    UnsetSatisfyDependenciesOnly
-    UnsetVersionOnly
-    UnsetLogPasteOnly
-    UnsetShowAbbreviationsReminder
-    UnsetSuggestIssue
-    UnsetShowHelpReminder
-    SetShowInstallerOutcome
-    UnsetDevMode
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -112,6 +99,7 @@ Init()
     readonly ULINUX_PATHFILE=/etc/config/uLinux.conf
     readonly PLATFORM_PATHFILE=/etc/platform.conf
     readonly EXTERNAL_PACKAGE_ARCHIVE_PATHFILE=/opt/var/opkg-lists/entware
+    readonly REMOTE_REPO_URL=https://onecdonly.github.io/sherpa
 
     local -r DEBUG_LOG_FILE=${SCRIPT_FILE%.*}.debug.log
 
@@ -156,6 +144,18 @@ Init()
     IsSysFileExist $Z7_CMD || return 1
     IsSysFileExist $ZIP_CMD || return 1
 
+    UnsetError
+    UnsetAbort
+    UnsetVisibleDebugging
+    UnsetSatisfyDependenciesOnly
+    UnsetVersionOnly
+    UnsetLogPasteOnly
+    UnsetShowAbbreviationsReminder
+    UnsetSuggestIssue
+    UnsetShowHelpReminder
+    SetShowInstallerOutcome
+    UnsetDevMode
+
     local -r DEFAULT_SHARE_DOWNLOAD_PATH=/share/Download
     local -r DEFAULT_SHARE_PUBLIC_PATH=/share/Public
 
@@ -186,7 +186,7 @@ Init()
 
     SHERPA_QPKG_NAME+=(Entware)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/Entware/Entware_1.02std.qpkg)
+        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/Entware/Entware_1.02std.qpkg)
         SHERPA_QPKG_MD5+=(dbc82469933ac3049c06d4c8a023bbb9)
         SHERPA_QPKG_ABBRVS+=('ew ent entware opkg')
         SHERPA_QPKG_DEPS+=('')
@@ -195,7 +195,7 @@ Init()
 
     SHERPA_QPKG_NAME+=(SABnzbd)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/SABnzbd/build/SABnzbd_200819b.qpkg)
+        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/SABnzbd/build/SABnzbd_200819b.qpkg)
         SHERPA_QPKG_MD5+=(012e0d45aedf72f177287556ba9b12f4)
         SHERPA_QPKG_ABBRVS+=('sb sb3 sab sab3 sabnzbd3 sabnzbd')
         SHERPA_QPKG_DEPS+=('Entware Par2')
@@ -204,7 +204,7 @@ Init()
 
     SHERPA_QPKG_NAME+=(nzbToMedia)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/nzbToMedia/build/nzbToMedia_200819.qpkg)
+        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/nzbToMedia/build/nzbToMedia_200819.qpkg)
         SHERPA_QPKG_MD5+=(b2291123585c428ba24663f7ffc8b24f)
         SHERPA_QPKG_ABBRVS+=('nzb2 nzb2m nzbtom nzbto nzbtomedia')
         SHERPA_QPKG_DEPS+=('Entware')
@@ -213,7 +213,7 @@ Init()
 
     SHERPA_QPKG_NAME+=(NZBGet)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/NZBGet/build/NZBGet_200819.qpkg)
+        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/NZBGet/build/NZBGet_200819.qpkg)
         SHERPA_QPKG_MD5+=(8f5a85baa91c9fb1cab5ab7326e1b7f2)
         SHERPA_QPKG_ABBRVS+=('ng nget nzb nzbget')
         SHERPA_QPKG_DEPS+=('Entware')
@@ -222,7 +222,7 @@ Init()
 
     SHERPA_QPKG_NAME+=(SickChill)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/SickChill/build/SickChill_200819.qpkg)
+        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/SickChill/build/SickChill_200819.qpkg)
         SHERPA_QPKG_MD5+=(52e4ca00f2b6e3c1121c5499466fb2cd)
         SHERPA_QPKG_ABBRVS+=('sc sick sickc chill sickchill')
         SHERPA_QPKG_DEPS+=('Entware')
@@ -232,7 +232,7 @@ Init()
 
     SHERPA_QPKG_NAME+=(LazyLibrarian)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/LazyLibrarian/build/LazyLibrarian_200819.qpkg)
+        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/LazyLibrarian/build/LazyLibrarian_200819.qpkg)
         SHERPA_QPKG_MD5+=(ee18b1fadd6279bae240ded5f95b77c2)
         SHERPA_QPKG_ABBRVS+=('ll lazy lazylibrarian')
         SHERPA_QPKG_DEPS+=('Entware')
@@ -241,7 +241,7 @@ Init()
 
     SHERPA_QPKG_NAME+=(OMedusa)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/OMedusa/build/OMedusa_200819b.qpkg)
+        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/OMedusa/build/OMedusa_200819b.qpkg)
         SHERPA_QPKG_MD5+=(de9b07401d12b675d981cbc8c6114e0e)
         SHERPA_QPKG_ABBRVS+=('om med omed medusa omedusa')
         SHERPA_QPKG_DEPS+=('Entware')
@@ -250,7 +250,7 @@ Init()
 
     SHERPA_QPKG_NAME+=(OWatcher3)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/OWatcher3/build/OWatcher3_200819.qpkg)
+        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/OWatcher3/build/OWatcher3_200819.qpkg)
         SHERPA_QPKG_MD5+=(3aec3923b887ade5c0cea43db9ad1716)
         SHERPA_QPKG_ABBRVS+=('ow wat owat watch watcher owatcher watcher3 owatcher3')
         SHERPA_QPKG_DEPS+=('Entware')
@@ -259,7 +259,7 @@ Init()
 
     SHERPA_QPKG_NAME+=(OSickGear)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/OSickGear/build/OSickGear_200819.qpkg)
+        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/OSickGear/build/OSickGear_200819.qpkg)
         SHERPA_QPKG_MD5+=(c5b87be4b4a44abbb291e0cd060cfa1b)
         SHERPA_QPKG_ABBRVS+=('sg os osg sickg osickg gear ogear sickgear osickgear')
         SHERPA_QPKG_DEPS+=('Entware')
@@ -268,7 +268,7 @@ Init()
 
     SHERPA_QPKG_NAME+=(OTransmission)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/OTransmission/build/OTransmission_200819.qpkg)
+        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/OTransmission/build/OTransmission_200819.qpkg)
         SHERPA_QPKG_MD5+=(804477b19e7160ea3c95905839de6f43)
         SHERPA_QPKG_ABBRVS+=('ot otrans tm tr trans tmission transmission otransmission')
         SHERPA_QPKG_DEPS+=('Entware')
@@ -277,7 +277,7 @@ Init()
 
     SHERPA_QPKG_NAME+=(Par2)
         SHERPA_QPKG_ARCH+=(x86)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/Par2/Par2_0.8.1.0_x86.qpkg)
+        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/Par2/Par2_0.8.1.0_x86.qpkg)
         SHERPA_QPKG_MD5+=(996ffb92d774eb01968003debc171e91)
         SHERPA_QPKG_ABBRVS+=('')
         SHERPA_QPKG_DEPS+=('')
@@ -286,7 +286,7 @@ Init()
 
     SHERPA_QPKG_NAME+=(Par2)
         SHERPA_QPKG_ARCH+=(x64)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/Par2/Par2_0.8.1.0_x86_64.qpkg)
+        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/Par2/Par2_0.8.1.0_x86_64.qpkg)
         SHERPA_QPKG_MD5+=(520472cc87d301704f975f6eb9948e38)
         SHERPA_QPKG_ABBRVS+=('')
         SHERPA_QPKG_DEPS+=('')
@@ -295,7 +295,7 @@ Init()
 
     SHERPA_QPKG_NAME+=(Par2)
         SHERPA_QPKG_ARCH+=(x31)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/Par2/Par2_0.8.1.0_arm-x31.qpkg)
+        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/Par2/Par2_0.8.1.0_arm-x31.qpkg)
         SHERPA_QPKG_MD5+=(ce8af2e009eb87733c3b855e41a94f8e)
         SHERPA_QPKG_ABBRVS+=('')
         SHERPA_QPKG_DEPS+=('')
@@ -304,7 +304,7 @@ Init()
 
     SHERPA_QPKG_NAME+=(Par2)
         SHERPA_QPKG_ARCH+=(x41)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/Par2/Par2_0.8.1.0_arm-x41.qpkg)
+        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/Par2/Par2_0.8.1.0_arm-x41.qpkg)
         SHERPA_QPKG_MD5+=(8516e45e704875cdd2cd2bb315c4e1e6)
         SHERPA_QPKG_ABBRVS+=('')
         SHERPA_QPKG_DEPS+=('')
@@ -313,7 +313,7 @@ Init()
 
     SHERPA_QPKG_NAME+=(Par2)
         SHERPA_QPKG_ARCH+=(a64)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/master/QPKGs/Par2/Par2_0.8.1.0_arm_64.qpkg)
+        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/Par2/Par2_0.8.1.0_arm_64.qpkg)
         SHERPA_QPKG_MD5+=(4d8e99f97936a163e411aa8765595f7a)
         SHERPA_QPKG_ABBRVS+=('')
         SHERPA_QPKG_DEPS+=('')
@@ -364,6 +364,7 @@ Init()
     ignore_space_arg=''
     [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg='--insecure' || curl_insecure_arg=''
 
+    IsOnlyInstance || return 1
     CalcIndependentQPKGs
     CalcDependantQPKGs
 
@@ -529,7 +530,7 @@ LogRuntimeParameters()
     fi
 
     if IsNotError; then
-        if ! ($CURL_CMD $curl_insecure_arg --silent --fail https://onecdonly.github.io/sherpa/LICENSE -o LICENSE); then
+        if ! ($CURL_CMD $curl_insecure_arg --silent --fail $REMOTE_REPO_URL/LICENSE -o LICENSE); then
             ShowAsError 'no Internet access'
             return 1
         fi
@@ -2153,6 +2154,8 @@ IsQNAP()
 
 IsOnlyInstance()
     {
+
+    # really should be using 'flock' for this ... have to check if it's available in QTS
 
     readonly RUNTIME_LOCK_PATHFILE=/var/run/$SCRIPT_FILE.pid
 
