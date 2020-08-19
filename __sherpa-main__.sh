@@ -1738,32 +1738,32 @@ ShowResult()
 
         echo -e "\n- Each application shown below can be installed (or re-installed) by running:"
         for package in "${SHERPA_QPKG_NAME[@]}"; do
-            (IsQPKGUserInstallable "$package") && echo -e "\t$0 $package"
+            (IsQPKGUserInstallable "$package") && echo -e "\t./$SCRIPT_NAME $package"
         done
 
         echo -e "\n- Display recognised package abbreviations:"
-        echo -e "\t$0 --abs"
+        echo -e "\t./$SCRIPT_NAME --abs"
 
         echo -e "\n- Ensure all sherpa application dependencies are installed:"
-        echo -e "\t$0 --check-all"
+        echo -e "\t./$SCRIPT_NAME --check-all"
 
         echo -e "\n- Don't check free-space on target filesystem when installing $(FormatAsPackageName Entware) packages:"
-        echo -e "\t$0 --ignore-space"
+        echo -e "\t./$SCRIPT_NAME --ignore-space"
 
         echo -e "\n- Update all sherpa applications:"
-        echo -e "\t$0 --update-all"
+        echo -e "\t./$SCRIPT_NAME --update-all"
 
         echo -e "\n- View the sherpa log:"
-        echo -e "\t$0 --log"
+        echo -e "\t./$SCRIPT_NAME --log"
 
         echo -e "\n- Upload the sherpa log to a public pastebin (https://termbin.com):"
-        echo -e "\t$0 --paste"
+        echo -e "\t./$SCRIPT_NAME --paste"
 
         echo -e "\n- Install a package and show debugging information:"
-        echo -e "\t$0 <packagename> --debug"
+        echo -e "\t./$SCRIPT_NAME <packagename> --debug"
 
         echo -e "\n- Display the sherpa version:"
-        echo -e "\t$0 --version"
+        echo -e "\t./$SCRIPT_NAME --version"
     elif IsShowAbbreviationsReminder; then
         ShowPackageAbbreviations
     elif IsLogPasteOnly; then
@@ -1804,10 +1804,10 @@ ShowResult()
         echo -e "\n* Remember to include a copy of your sherpa log for analysis."
 
         echo -e "\n- View the sherpa log:"
-        echo -e "\t$0 --log"
+        echo -e "\t./$SCRIPT_NAME --log"
 
         echo -e "\n- Upload the sherpa log to a public pastebin (https://termbin.com):"
-        echo -e "\t$0 --paste"
+        echo -e "\t./$SCRIPT_NAME --paste"
     fi
 
     DebugInfoThinSeparator
