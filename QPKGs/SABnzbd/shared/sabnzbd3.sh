@@ -108,7 +108,7 @@ ShowHelp()
     Display " status     - check if $(FormatAsPackageName $QPKG_NAME) is still running. Returns \$? = 0 if running, 1 if not."
     Display " backup     - backup the current $(FormatAsPackageName $QPKG_NAME) configuration to persistent storage."
     Display " restore    - restore a previously saved configuration from persistent storage. $(FormatAsPackageName $QPKG_NAME) will be stopped, then restarted."
-    Display " import     - create a backup on an installed $(FormatAsPackageName SABnzbdplus) config and restore it into $(FormatAsPackageName $QPKG_NAME)."
+    Display " import     - create a backup of an installed $(FormatAsPackageName SABnzbdplus) config and restore it into $(FormatAsPackageName $QPKG_NAME)."
     [[ -n $SOURCE_GIT_URL ]] && Display " clean      - wipe the current local copy of $(FormatAsPackageName $QPKG_NAME), and download it again from remote source. Configuration will be retained."
     Display " log        - display this service script runtime log."
     Display " version    - display the package version number."
@@ -143,21 +143,7 @@ StartQPKG()
 
     ExecuteAndLog 'starting daemon' "$LAUNCHER" log:everything || return 1
 
-    if IsPortResponds $ui_port; then
-        DisplayDoneCommitToLog "$(FormatAsPackageName $QPKG_NAME) UI is listening on HTTP port $ui_port"
-        response_flag=true
-    fi
-
-    if IsSSLEnabled && IsPortSecureResponds $ui_port_secure; then
-        DisplayDoneCommitToLog "$(FormatAsPackageName $QPKG_NAME) UI is$([[ $response_flag = true ]] && echo " also") listening on HTTPS port $ui_port_secure"
-        response_flag=true
-    fi
-
-    if [[ $response_flag = false ]]; then
-        DisplayErrCommitAllLogs 'no response on configured port(s)'
-        SetError
-        return 1
-    fi
+    CheckPorts || return 1
 
     return 0
 
@@ -232,13 +218,11 @@ ImportFromSAB2()
     elif [[ -e /etc/init.d/sabnzbd2.sh ]]; then
         /etc/init.d/sabnzbd2.sh stop
     else
-        echo "! can't find a compatible version of SABnzbd2 to backup: aborting ..."
+        FormatAsDisplayError "can't find a compatible version of $(FormatAsPackageName SABnzbdplus) to backup"
         return 1
     fi
 
-    ExecuteAndLog 'creating backup location' "mkdir -p $(getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup"
-
-    ExecuteAndLog "updating SABnzbd2 configuration backup for SABnzbd3" "/bin/tar --create --gzip --file=$(getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup/SABnzbd.config.tar.gz --directory=$(getcfg SABnzbdplus Install_Path -f /etc/config/qpkg.conf)/config ."
+    ExecuteAndLog "updating SABnzbd2 configuration backup for SABnzbd3" "$TAR_CMD --create --gzip --file=$BACKUP_PATHFILE --directory=$(getcfg SABnzbdplus Install_Path -f /etc/config/qpkg.conf)/config ." log:everything
 
     eval "$0" restore
 
@@ -375,7 +359,36 @@ ReWriteUIPorts()
     # If SSL is enabled, attempting to access with non-SSL via 'Web_Port' results in "connection was reset"
 
     $SETCFG_CMD $QPKG_NAME Web_Port "$ui_port" -f $QTS_QPKG_CONF_PATHFILE
-    $SETCFG_CMD $QPKG_NAME Web_SSL_Port "$ui_port_secure" -f $QTS_QPKG_CONF_PATHFILE
+
+    if IsSSLEnabled; then
+        $SETCFG_CMD $QPKG_NAME Web_SSL_Port "$ui_port_secure" -f $QTS_QPKG_CONF_PATHFILE
+    else
+        $SETCFG_CMD $QPKG_NAME Web_SSL_Port 0 -f $QTS_QPKG_CONF_PATHFILE
+    fi
+
+    }
+
+CheckPorts()
+    {
+
+    local response_flag=false
+
+    if IsSSLEnabled && IsPortSecureResponds $ui_port_secure; then
+        DisplayDoneCommitToLog "$(FormatAsPackageName $QPKG_NAME) UI is listening on HTTPS port $ui_port_secure"
+        response_flag=true
+    fi
+
+    # SABnzbd can listen on both ports
+    if IsPortResponds $ui_port; then
+        DisplayDoneCommitToLog "$(FormatAsPackageName $QPKG_NAME) UI is$([[ $response_flag = true ]] && echo ' also') listening on HTTP port $ui_port"
+        response_flag=true
+    fi
+
+    if [[ $response_flag = false ]]; then
+        DisplayErrCommitAllLogs 'no response on configured port(s)'
+        SetError
+        return 1
+    fi
 
     }
 
@@ -413,7 +426,7 @@ LoadUIPorts()
 IsSSLEnabled()
     {
 
-    [[ $($GETCFG_CMD general https_enabled -d 0 -f "$QPKG_INI_PATHFILE") -eq 1 ]]
+    [[ $($GETCFG_CMD misc enable_https -d 0 -f "$QPKG_INI_PATHFILE") -eq 1 ]]
 
     }
 
@@ -425,12 +438,8 @@ IsDaemonActive()
 
     if [[ -f $DAEMON_PID_PATHFILE && -d /proc/$(<$DAEMON_PID_PATHFILE) ]]; then
         DisplayDoneCommitToLog 'daemon is running'
-        if IsPortResponds "$ui_port" || IsPortSecureResponds "$ui_port_secure"; then
-            DisplayDoneCommitToLog 'daemon is responding to port requests'
-            return 0
-        else
-            DisplayDoneCommitToLog 'daemon is not responding to port requests'
-        fi
+
+        CheckPorts && return
     else
         DisplayDoneCommitToLog 'daemon is not running'
     fi
