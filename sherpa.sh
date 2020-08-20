@@ -21,7 +21,7 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/.
 
 readonly SCRIPT_FILE=sherpa.sh
-readonly SCRIPT_VERSION=200820b
+readonly SCRIPT_VERSION=200820c
 readonly REMOTE_SCRIPT_FILE=__sherpa-main__.sh
 
 if [[ ! -e /etc/init.d/functions ]]; then
@@ -43,7 +43,7 @@ if ! ($CURL_CMD $curl_insecure_arg --silent --fail "$REMOTE_REPO_URL/$REMOTE_SCR
 fi
 
 if [[ -e "$DOWNLOAD_PATH/$REMOTE_SCRIPT_FILE" ]]; then
-    eval "sh $DOWNLOAD_PATH/$REMOTE_SCRIPT_FILE" "$*"
+    eval "/usr/bin/env bash $DOWNLOAD_PATH/$REMOTE_SCRIPT_FILE" "$*"
     rm -f "$DOWNLOAD_PATH/$REMOTE_SCRIPT_FILE"
 else
     echo '! unable to find installer: aborting ...'
