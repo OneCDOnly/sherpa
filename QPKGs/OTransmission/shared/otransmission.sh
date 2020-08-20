@@ -119,7 +119,7 @@ ShowHelp()
 StartQPKG()
     {
 
-    LoadUIPorts stop
+    LoadUIPorts stop || return
 
     IsNotDaemonActive || return
 
@@ -127,14 +127,14 @@ StartQPKG()
 
     [[ -n $SOURCE_GIT_URL ]] && PullGitRepo $QPKG_NAME "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_PATH"
 
-    LoadUIPorts start
+    LoadUIPorts start || return
 
     if [[ $ui_port -le 0 && $ui_port_secure -le 0 ]]; then
-        DisplayErrCommitAllLogs 'unable to start daemon as no UI port was specified'
+        DisplayErrCommitAllLogs 'unable to start daemon: no UI port was specified!'
         SetError
         return 1
     elif IsNotPortAvailable $ui_port && IsNotPortAvailable $ui_port_secure; then
-        DisplayErrCommitAllLogs "unable to start daemon as ports $ui_port & $ui_port_secure are already in use"
+        DisplayErrCommitAllLogs "unable to start daemon: ports $ui_port & $ui_port_secure are already in use!"
         SetError
         return 1
     fi
@@ -143,21 +143,7 @@ StartQPKG()
 
     ExecuteAndLog 'starting daemon' "$LAUNCHER" log:everything || return 1
 
-    if IsPortResponds $ui_port; then
-        DisplayDoneCommitToLog "$(FormatAsPackageName $QPKG_NAME) UI is listening on HTTP port $ui_port"
-        response_flag=true
-    fi
-
-    if IsSSLEnabled && IsPortSecureResponds $ui_port_secure; then
-        DisplayDoneCommitToLog "$(FormatAsPackageName $QPKG_NAME) UI is$([[ $response_flag = true ]] && echo " also") listening on HTTPS port $ui_port_secure"
-        response_flag=true
-    fi
-
-    if [[ $response_flag = false ]]; then
-        DisplayErrCommitAllLogs 'no response on configured port(s)'
-        SetError
-        return 1
-    fi
+    CheckPorts || return 1
 
     return 0
 
@@ -169,7 +155,7 @@ StopQPKG()
     local -r MAX_WAIT_SECONDS_STOP=60
     local acc=0
 
-    LoadUIPorts stop
+    LoadUIPorts stop || return
 
     IsDaemonActive || return
 
@@ -338,12 +324,43 @@ ReWriteUIPorts()
     # If SSL is enabled, attempting to access with non-SSL via 'Web_Port' results in "connection was reset"
 
     $SETCFG_CMD $QPKG_NAME Web_Port "$ui_port" -f $QTS_QPKG_CONF_PATHFILE
-    $SETCFG_CMD $QPKG_NAME Web_SSL_Port "$ui_port_secure" -f $QTS_QPKG_CONF_PATHFILE
+
+    if IsSSLEnabled; then
+        $SETCFG_CMD $QPKG_NAME Web_SSL_Port "$ui_port_secure" -f $QTS_QPKG_CONF_PATHFILE
+    else
+        $SETCFG_CMD $QPKG_NAME Web_SSL_Port 0 -f $QTS_QPKG_CONF_PATHFILE
+    fi
+
+    }
+
+CheckPorts()
+    {
+
+    local response_flag=false
+
+    if IsSSLEnabled && IsPortSecureResponds $ui_port_secure; then
+        DisplayDoneCommitToLog "$(FormatAsPackageName $QPKG_NAME) UI is listening on HTTPS port $ui_port_secure"
+        response_flag=true
+    fi
+
+    # SABnzbd can listen on both ports so test both
+    if IsPortResponds $ui_port; then
+        DisplayDoneCommitToLog "$(FormatAsPackageName $QPKG_NAME) UI is$([[ $response_flag = true ]] && echo ' also') listening on HTTP port $ui_port"
+        response_flag=true
+    fi
+
+    if [[ $response_flag = false ]]; then
+        DisplayErrCommitAllLogs 'no response on configured port(s)!'
+        SetError
+        return 1
+    fi
 
     }
 
 LoadUIPorts()
     {
+
+    # If user changes ports via app UI, must first 'stop' application on old ports, then 'start' on new ports
 
     case $1 in
         start|status)
@@ -353,8 +370,7 @@ LoadUIPorts()
             ui_port_secure=$($GETCFG_CMD '' SecurePort -d "$UI_PORT_DEFAULT" -f "$QPKG_INI_PATHFILE")
             ;;
         stop)
-            # Read the current application UI ports from QTS App Center - need to do this if user changes ports via app UI
-            # Must first 'stop' application on old ports, then 'start' on new ports
+            # Read the current application UI ports from QTS App Center
 
             ui_port=$($GETCFG_CMD $QPKG_NAME Web_Port -d 0 -f "$QTS_QPKG_CONF_PATHFILE")
             ui_port_secure=$($GETCFG_CMD $QPKG_NAME Web_SSL_Port -d 0 -f "$QTS_QPKG_CONF_PATHFILE")
@@ -388,12 +404,8 @@ IsDaemonActive()
 
     if [[ -f $DAEMON_PID_PATHFILE && -d /proc/$(<$DAEMON_PID_PATHFILE) ]]; then
         DisplayDoneCommitToLog 'daemon is running'
-        if IsPortResponds "$ui_port" || IsPortSecureResponds "$ui_port_secure"; then
-            DisplayDoneCommitToLog 'daemon is responding to port requests'
-            return 0
-        else
-            DisplayDoneCommitToLog 'daemon is not responding to port requests'
-        fi
+
+        CheckPorts && return
     else
         DisplayDoneCommitToLog 'daemon is not running'
     fi
@@ -840,8 +852,10 @@ Init
 if IsNotError; then
     if [[ -n $1 ]]; then
         service_operation="$1"
-        CommitLog "$(SessionSeparator "'$service_operation' requested")"
-        CommitLog "= $(date), QPKG: $QPKG_VERSION, application: $app_version"
+        if [[ $1 != log || $1 != l ]]; then
+            CommitLog "$(SessionSeparator "'$service_operation' requested")"
+            CommitLog "= $(date), QPKG: $QPKG_VERSION, application: $app_version"
+        fi
     fi
     case $service_operation in
         start)

@@ -2155,8 +2155,6 @@ IsQNAP()
 IsOnlyInstance()
     {
 
-    # really should be using 'flock' for this ... have to check if it's available in QTS
-
     readonly RUNTIME_LOCK_PATHFILE=/var/run/$SCRIPT_NAME.pid
 
     if [[ -e $RUNTIME_LOCK_PATHFILE && -d /proc/$(<$RUNTIME_LOCK_PATHFILE) && -n $SCRIPT_NAME && $(</proc/"$(<$RUNTIME_LOCK_PATHFILE)"/cmdline) =~ $SCRIPT_NAME ]]; then
