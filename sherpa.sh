@@ -24,8 +24,7 @@ Init()
     {
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200820d
-    readonly REMOTE_SCRIPT_FILE=__sherpa-main__.sh
+    readonly SCRIPT_VERSION=200820e
 
     if [[ ! -e /etc/init.d/functions ]]; then
         ShowAsAbort 'QTS functions missing (is this a QNAP NAS?)'
@@ -35,9 +34,12 @@ Init()
     readonly CURL_CMD=/sbin/curl
     readonly GETCFG_CMD=/sbin/getcfg
     readonly ULINUX_PATHFILE=/etc/config/uLinux.conf
-    readonly REMOTE_REPO_URL=https://raw.githubusercontent.com/OneCDOnly/sherpa/master
+    readonly REMOTE_URL=https://raw.githubusercontent.com/OneCDOnly/sherpa/master
+    readonly INSTALLER_SCRIPT_NAME=__sherpa-main__.sh
     readonly DOWNLOAD_PATH=/dev/shm
     readonly NAS_FIRMWARE=$($GETCFG_CMD System Version -f $ULINUX_PATHFILE)
+    readonly REMOTE_INSTALLER=$REMOTE_URL/$INSTALLER_SCRIPT_NAME
+    readonly LOCAL_INSTALLER=$DOWNLOAD_PATH/$INSTALLER_SCRIPT_NAME
     [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg='--insecure' || curl_insecure_arg=''
 
     }
@@ -109,14 +111,14 @@ ColoursReset()
 
 Init || exit 1
 
-if ! ($CURL_CMD $curl_insecure_arg --silent --fail "$REMOTE_REPO_URL/$REMOTE_SCRIPT_FILE" > "$DOWNLOAD_PATH/$REMOTE_SCRIPT_FILE"); then
+if ! ($CURL_CMD $curl_insecure_arg --silent --fail "$REMOTE_INSTALLER" > "$LOCAL_INSTALLER"); then
     ShowAsAbort 'installer download failed'
     exit 1
 fi
 
-if [[ -e $DOWNLOAD_PATH/$REMOTE_SCRIPT_FILE ]]; then
-    eval "/usr/bin/env bash" "$DOWNLOAD_PATH/$REMOTE_SCRIPT_FILE" "$*"
-    rm -f "$DOWNLOAD_PATH/$REMOTE_SCRIPT_FILE"
+if [[ -e $LOCAL_INSTALLER ]]; then
+    eval "/usr/bin/env bash" "$LOCAL_INSTALLER" "$*"
+    rm -f "$LOCAL_INSTALLER"
 else
     ShowAsAbort 'unable to find installer'
     exit 1
