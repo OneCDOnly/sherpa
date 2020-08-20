@@ -24,7 +24,7 @@ Init()
     {
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200820e
+    readonly SCRIPT_VERSION=200821
 
     if [[ ! -e /etc/init.d/functions ]]; then
         ShowAsAbort 'QTS functions missing (is this a QNAP NAS?)'
@@ -33,9 +33,9 @@ Init()
 
     local -r NAS_FIRMWARE=$(/sbin/getcfg System Version -f /etc/config/uLinux.conf)
     [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg='--insecure' || curl_insecure_arg=''
-    local -r INSTALLER_SCRIPT_NAME=__sherpa-main__.sh
-    readonly REMOTE_INSTALLER=https://raw.githubusercontent.com/OneCDOnly/sherpa/master/$INSTALLER_SCRIPT_NAME
-    readonly LOCAL_INSTALLER=/dev/shm/$INSTALLER_SCRIPT_NAME
+    local -r INSTALLER_SCRIPT_FILE=__sherpa-main__.sh
+    readonly REMOTE_INSTALLER=https://raw.githubusercontent.com/OneCDOnly/sherpa/master/$INSTALLER_SCRIPT_FILE
+    readonly LOCAL_INSTALLER=/dev/shm/$INSTALLER_SCRIPT_FILE
 
     }
 
