@@ -38,7 +38,7 @@ Init()
     {
 
     readonly SCRIPT_NAME=sherpa.sh
-    readonly SCRIPT_VERSION=200820g
+    readonly SCRIPT_VERSION=200821
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -3013,9 +3013,9 @@ FormatAsStdout()
 
     [[ -z $1 ]] && return 1
 
-    echo "= ▼ ▼ ▼ stdout begins below ▼ ▼ ▼"
+    echo '= / / / / / stdout begins below \ \ \ \ \'
     echo "$1"
-    echo "= ▲ ▲ ▲ stdout is complete ▲ ▲ ▲"
+    echo '= \ \ \ \ \ stdout is complete / / / / /'
 
     }
 
@@ -3038,13 +3038,13 @@ FormatAsResultAndStdout()
     [[ -z $1 || -z $2 ]] && return 1
 
     if [[ $1 -eq 0 ]]; then
-        echo "= result: $(FormatAsExitcode "$1") ▼ ▼ ▼ stdout begins below ▼ ▼ ▼"
+        echo "= result: $(FormatAsExitcode "$1") / / / / / stdout begins below \ \ \ \ \ "
     else
-        echo "! result: $(FormatAsExitcode "$1") ▼ ▼ ▼ stdout begins below ▼ ▼ ▼"
+        echo "! result: $(FormatAsExitcode "$1") / / / / / stdout begins below \ \ \ \ \ "
     fi
 
     echo "$2"
-    echo "= ▲ ▲ ▲ stdout is complete ▲ ▲ ▲"
+    echo '= \ \ \ \ \ stdout is complete / / / / /'
 
     }
 
