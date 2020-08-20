@@ -2,11 +2,13 @@
 #
 # __sherpa-main__.sh
 #
-# The main installer for the sherpa package manager, to install various media-management apps into QNAP NAS
+# This is the main installer for the sherpa package manager.
+#
+# A BASH script to install various media-management apps into QNAP NAS.
 #
 # Copyright (C) 2017-2020 OneCD [one.cd.only@gmail.com]
 #
-# so, blame OneCD if it all goes horribly wrong. ;)
+# So, blame OneCD if it all goes horribly wrong. ;)
 #
 # For more info: https://forum.qnap.com/viewtopic.php?f=320&t=132373
 #
@@ -36,7 +38,7 @@ Init()
     {
 
     readonly SCRIPT_NAME=sherpa.sh
-    readonly SCRIPT_VERSION=200820f
+    readonly SCRIPT_VERSION=200820g
 
     IsQNAP || return 1
     IsOnlyInstance || return 1

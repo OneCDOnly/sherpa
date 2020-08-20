@@ -2,11 +2,11 @@
 #
 # sherpa.sh
 #
-# The launcher for the sherpa package manager, to install various media-management apps into QNAP NAS
+# This is the launcher script for the sherpa package manager.
 #
 # Copyright (C) 2017-2020 OneCD [one.cd.only@gmail.com]
 #
-# so, blame OneCD if it all goes horribly wrong. ;)
+# So, blame OneCD if it all goes horribly wrong. ;)
 #
 # For more info: https://forum.qnap.com/viewtopic.php?f=320&t=132373
 #
@@ -20,32 +20,104 @@
 #
 # You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/.
 
-readonly SCRIPT_FILE=sherpa.sh
-readonly SCRIPT_VERSION=200820c
-readonly REMOTE_SCRIPT_FILE=__sherpa-main__.sh
+Init()
+    {
 
-if [[ ! -e /etc/init.d/functions ]]; then
-    echo '! QTS functions missing (is this a QNAP NAS?): aborting ...'
-    exit 1
-fi
+    readonly SCRIPT_FILE=sherpa.sh
+    readonly SCRIPT_VERSION=200820d
+    readonly REMOTE_SCRIPT_FILE=__sherpa-main__.sh
 
-readonly CURL_CMD=/sbin/curl
-readonly GETCFG_CMD=/sbin/getcfg
-readonly ULINUX_PATHFILE=/etc/config/uLinux.conf
-readonly REMOTE_REPO_URL=https://raw.githubusercontent.com/OneCDOnly/sherpa/master
-readonly DOWNLOAD_PATH=/dev/shm
-readonly NAS_FIRMWARE=$($GETCFG_CMD System Version -f $ULINUX_PATHFILE)
-[[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg='--insecure' || curl_insecure_arg=''
+    if [[ ! -e /etc/init.d/functions ]]; then
+        ShowAsAbort 'QTS functions missing (is this a QNAP NAS?)'
+        return 1
+    fi
+
+    readonly CURL_CMD=/sbin/curl
+    readonly GETCFG_CMD=/sbin/getcfg
+    readonly ULINUX_PATHFILE=/etc/config/uLinux.conf
+    readonly REMOTE_REPO_URL=https://raw.githubusercontent.com/OneCDOnly/sherpa/master
+    readonly DOWNLOAD_PATH=/dev/shm
+    readonly NAS_FIRMWARE=$($GETCFG_CMD System Version -f $ULINUX_PATHFILE)
+    [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg='--insecure' || curl_insecure_arg=''
+
+    }
+
+ShowAsAbort()
+    {
+
+    local buffer="$1"
+    local capitalised="$(tr "[a-z]" "[A-Z]" <<< "${buffer:0:1}")${buffer:1}"      # use any available 'tr'
+
+    WriteToDisplay_NewLine "$(ColourTextBrightRed fail)" "$capitalised: aborting ..."
+
+    }
+
+WriteToDisplay_NewLine()
+    {
+
+    # Updates the previous message
+
+    # input:
+    #   $1 = pass/fail
+    #   $2 = message
+
+    # output:
+    #   stdout = overwrites previous message with updated message
+    #   $previous_length
+    #   $appended_length
+
+    local new_message=''
+    local strbuffer=''
+    local new_length=0
+    previous_msg=''
+
+    new_message=$(printf "[ %-10s ] %s" "$1" "$2")
+
+    if [[ $new_message != "$previous_msg" ]]; then
+        previous_length=$((${#previous_msg}+1))
+        new_length=$((${#new_message}+1))
+
+        # jump to start of line, print new msg
+        strbuffer=$(echo -en "\r$new_message ")
+
+        # if new msg is shorter then add spaces to end to cover previous msg
+        if [[ $new_length -lt $previous_length ]]; then
+            appended_length=$((new_length-previous_length))
+            strbuffer+=$(printf "%${appended_length}s")
+        fi
+
+        echo "$strbuffer"
+    fi
+
+    return 0
+
+    }
+
+ColourTextBrightRed()
+    {
+
+    echo -en '\033[1;31m'"$(ColoursReset "$1")"
+
+    }
+
+ColoursReset()
+    {
+
+    echo -en "$1"'\033[0m'
+
+    }
+
+Init || exit 1
 
 if ! ($CURL_CMD $curl_insecure_arg --silent --fail "$REMOTE_REPO_URL/$REMOTE_SCRIPT_FILE" > "$DOWNLOAD_PATH/$REMOTE_SCRIPT_FILE"); then
-    echo '! unable to download: aborting ...'
+    ShowAsAbort 'installer download failed'
     exit 1
 fi
 
-if [[ -e "$DOWNLOAD_PATH/$REMOTE_SCRIPT_FILE" ]]; then
-    eval "/usr/bin/env bash $DOWNLOAD_PATH/$REMOTE_SCRIPT_FILE" "$*"
+if [[ -e $DOWNLOAD_PATH/$REMOTE_SCRIPT_FILE ]]; then
+    eval "/usr/bin/env bash" "$DOWNLOAD_PATH/$REMOTE_SCRIPT_FILE" "$*"
     rm -f "$DOWNLOAD_PATH/$REMOTE_SCRIPT_FILE"
 else
-    echo '! unable to find installer: aborting ...'
+    ShowAsAbort 'unable to find installer'
     exit 1
 fi
