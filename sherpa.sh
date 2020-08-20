@@ -31,14 +31,11 @@ Init()
         return 1
     fi
 
-    readonly CURL_CMD=/sbin/curl
-    readonly GETCFG_CMD=/sbin/getcfg
-    readonly ULINUX_PATHFILE=/etc/config/uLinux.conf
-    readonly INSTALLER_SCRIPT_NAME=__sherpa-main__.sh
-    readonly NAS_FIRMWARE=$($GETCFG_CMD System Version -f $ULINUX_PATHFILE)
+    local -r NAS_FIRMWARE=$(/sbin/getcfg System Version -f /etc/config/uLinux.conf)
+    [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg='--insecure' || curl_insecure_arg=''
+    local -r INSTALLER_SCRIPT_NAME=__sherpa-main__.sh
     readonly REMOTE_INSTALLER=https://raw.githubusercontent.com/OneCDOnly/sherpa/master/$INSTALLER_SCRIPT_NAME
     readonly LOCAL_INSTALLER=/dev/shm/$INSTALLER_SCRIPT_NAME
-    [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg='--insecure' || curl_insecure_arg=''
 
     }
 
@@ -109,15 +106,17 @@ ColoursReset()
 
 Init || exit 1
 
-if ! ($CURL_CMD $curl_insecure_arg --silent --fail "$REMOTE_INSTALLER" > "$LOCAL_INSTALLER"); then
+if ! (/sbin/curl $curl_insecure_arg --silent --fail "$REMOTE_INSTALLER" > "$LOCAL_INSTALLER"); then
     ShowAsAbort 'installer download failed'
     exit 1
 fi
 
-if [[ -e $LOCAL_INSTALLER ]]; then
-    eval "/usr/bin/env bash" "$LOCAL_INSTALLER" "$*"
-    rm -f "$LOCAL_INSTALLER"
-else
+if [[ ! -e $LOCAL_INSTALLER ]]; then
     ShowAsAbort 'unable to find installer'
     exit 1
 fi
+
+eval "/usr/bin/env bash" "$LOCAL_INSTALLER" "$*"
+rm -f "$LOCAL_INSTALLER"
+
+exit 0

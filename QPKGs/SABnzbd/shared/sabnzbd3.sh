@@ -120,10 +120,7 @@ StartQPKG()
     {
 
     LoadUIPorts stop || return
-
     IsNotDaemonActive || return
-
-    local response_flag=false
 
     [[ -n $SOURCE_GIT_URL ]] && PullGitRepo $QPKG_NAME "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_PATH"
 
@@ -152,12 +149,11 @@ StartQPKG()
 StopQPKG()
     {
 
+    LoadUIPorts stop || return
+    IsDaemonActive || return
+
     local -r MAX_WAIT_SECONDS_STOP=60
     local acc=0
-
-    LoadUIPorts stop || return
-
-    IsDaemonActive || return
 
     PID=$(<$DAEMON_PID_PATHFILE)
 
@@ -275,9 +271,9 @@ PullGitRepo()
     # $4 = remote depth: 'shallow' or 'single-branch'
     # $5 = local path to clone into
 
-    local -r GIT_CMD=/opt/bin/git
-
     [[ -z $1 || -z $2 || -z $3 || -z $4 || -z $5 ]] && return 1
+
+    local -r GIT_CMD=/opt/bin/git
 
     if IsNotSysFilePresent "$GIT_CMD"; then
         SetError
