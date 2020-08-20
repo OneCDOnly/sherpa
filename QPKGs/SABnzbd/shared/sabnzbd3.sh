@@ -183,6 +183,7 @@ StopQPKG()
         [[ -f $DAEMON_PID_PATHFILE ]] && rm -f $DAEMON_PID_PATHFILE
         Display 'OK'
         CommitLog "stopped OK in $acc seconds"
+#       CommitInfoToSysLog "$1: OK."
         break
     done
 
@@ -886,8 +887,10 @@ Init
 if IsNotError; then
     if [[ -n $1 ]]; then
         service_operation="$1"
-        CommitLog "$(SessionSeparator "'$service_operation' requested")"
-        CommitLog "= $(date), QPKG: $QPKG_VERSION, application: $app_version"
+        if [[ $1 != log || $1 != l ]]; then
+            CommitLog "$(SessionSeparator "'$service_operation' requested")"
+            CommitLog "= $(date), QPKG: $QPKG_VERSION, application: $app_version"
+        fi
     fi
     case $service_operation in
         start)

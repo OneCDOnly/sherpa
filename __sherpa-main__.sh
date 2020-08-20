@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# __main__.sh
+# __sherpa-main__.sh
 #
 # The main installer for the sherpa package manager, to install various media-management apps into QNAP NAS
 #
