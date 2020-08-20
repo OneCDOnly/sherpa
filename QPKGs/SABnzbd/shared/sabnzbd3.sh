@@ -215,7 +215,7 @@ ImportFromSAB2()
     elif [[ -e /etc/init.d/sabnzbd2.sh ]]; then
         /etc/init.d/sabnzbd2.sh stop
     else
-        FormatAsDisplayError "can't find a compatible version of $(FormatAsPackageName SABnzbdplus) to backup"
+        FormatAsDisplayError "can't find a compatible version of $(FormatAsPackageName SABnzbdplus) to import from"
         return 1
     fi
 
@@ -368,18 +368,23 @@ ReWriteUIPorts()
 CheckPorts()
     {
 
+    # $1 = (optional) 'either'
+    # either: if either port responds, then return
+    # <default>: check both ports for a response, then return
+
     local response_flag=false
 
     if IsSSLEnabled && IsPortSecureResponds $ui_port_secure; then
         DisplayDoneCommitToLog "$(FormatAsPackageName $QPKG_NAME) UI is listening on HTTPS port $ui_port_secure"
         response_flag=true
+        [[ $1 = either ]] && return
     fi
 
     # SABnzbd can listen on both ports so test both
-    if IsPortResponds $ui_port; then
-        DisplayDoneCommitToLog "$(FormatAsPackageName $QPKG_NAME) UI is$([[ $response_flag = true ]] && echo ' also') listening on HTTP port $ui_port"
-        response_flag=true
-    fi
+	if IsPortResponds $ui_port; then
+		DisplayDoneCommitToLog "$(FormatAsPackageName $QPKG_NAME) UI is$([[ $response_flag = true ]] && echo ' also') listening on HTTP port $ui_port"
+		response_flag=true
+	fi
 
     if [[ $response_flag = false ]]; then
         DisplayErrCommitAllLogs 'no response on configured port(s)!'
