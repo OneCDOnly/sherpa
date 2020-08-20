@@ -34,12 +34,10 @@ Init()
     readonly CURL_CMD=/sbin/curl
     readonly GETCFG_CMD=/sbin/getcfg
     readonly ULINUX_PATHFILE=/etc/config/uLinux.conf
-    readonly REMOTE_URL=https://raw.githubusercontent.com/OneCDOnly/sherpa/master
     readonly INSTALLER_SCRIPT_NAME=__sherpa-main__.sh
-    readonly DOWNLOAD_PATH=/dev/shm
     readonly NAS_FIRMWARE=$($GETCFG_CMD System Version -f $ULINUX_PATHFILE)
-    readonly REMOTE_INSTALLER=$REMOTE_URL/$INSTALLER_SCRIPT_NAME
-    readonly LOCAL_INSTALLER=$DOWNLOAD_PATH/$INSTALLER_SCRIPT_NAME
+    readonly REMOTE_INSTALLER=https://raw.githubusercontent.com/OneCDOnly/sherpa/master/$INSTALLER_SCRIPT_NAME
+    readonly LOCAL_INSTALLER=/dev/shm/$INSTALLER_SCRIPT_NAME
     [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg='--insecure' || curl_insecure_arg=''
 
     }
