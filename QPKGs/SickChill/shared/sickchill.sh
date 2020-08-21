@@ -39,6 +39,7 @@ Init()
     readonly WRITE_LOG_CMD=/sbin/write_log
 
     # generic environment
+    readonly INSTALL_LOG_FILE=install.log
     readonly QTS_QPKG_CONF_PATHFILE=/etc/config/qpkg.conf
     readonly QPKG_PATH=$($GETCFG_CMD $QPKG_NAME Install_Path -f $QTS_QPKG_CONF_PATHFILE)
     readonly QPKG_REPO_PATH=$QPKG_PATH/$QPKG_NAME
@@ -52,6 +53,7 @@ Init()
     readonly BACKUP_PATHFILE=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
     [[ -n $PYTHON ]] && export PYTHONPATH=$PYTHON
     export PATH=/opt/bin:/opt/sbin:$PATH
+    readonly PIP_CACHE_PATH=$QPKG_PATH/pip.cache
     ui_port=0
     ui_port_secure=0
 
@@ -87,6 +89,7 @@ Init()
     LoadAppVersion
 
     [[ ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
+    [[ ! -d $PIP_CACHE_PATH ]] && mkdir -p "$PIP_CACHE_PATH"
 
     return 0
 
@@ -118,14 +121,13 @@ ShowHelp()
 StartQPKG()
     {
 
+    IsError && return
     LoadUIPorts stop || return
-
     IsNotDaemonActive || return
-
-    local response_flag=false
 
     [[ -n $SOURCE_GIT_URL ]] && PullGitRepo $QPKG_NAME "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_PATH"
 
+    InstallPy3Modules || return
     LoadUIPorts start || return
 
     if [[ $ui_port -le 0 && $ui_port_secure -le 0 ]]; then
@@ -151,28 +153,28 @@ StartQPKG()
 StopQPKG()
     {
 
-    local -r MAX_WAIT_SECONDS_STOP=60
-    local acc=0
-
+    IsError && return
     LoadUIPorts stop || return
-
     IsDaemonActive || return
 
-    PID=$(<$DAEMON_PID_PATHFILE)
+    local -r MAX_WAIT_SECONDS_STOP=60
+    local acc=0
+    local pid=0
 
-    kill "$PID"
+    pid=$(<$DAEMON_PID_PATHFILE)
+    kill "$pid"
     DisplayWaitCommitToLog '* stopping daemon with SIGTERM:'
     DisplayWait "(waiting for up to $MAX_WAIT_SECONDS_STOP seconds):"
 
     while true; do
-        while [[ -d /proc/$PID ]]; do
+        while [[ -d /proc/$pid ]]; do
             sleep 1
             ((acc++))
             DisplayWait "$acc,"
 
             if [[ $acc -ge $MAX_WAIT_SECONDS_STOP ]]; then
                 DisplayWaitCommitToLog 'failed!'
-                kill -9 "$PID" 2> /dev/null
+                kill -9 "$pid" 2> /dev/null
                 DisplayCommitToLog 'sent SIGKILL.'
                 [[ -f $DAEMON_PID_PATHFILE ]] && rm -f $DAEMON_PID_PATHFILE
                 break 2
@@ -184,6 +186,31 @@ StopQPKG()
         CommitLog "stopped OK in $acc seconds"
         break
     done
+
+    }
+
+InstallPy3Modules()
+    {
+
+    [[ ! -e $QPKG_REPO_PATH/requirements.txt ]] && return
+
+    local pip3_cmd=''
+
+    # sometimes, OpenWRT doesn't have a 'pip3'
+    if [[ -e /opt/bin/pip3 ]]; then
+        pip3_cmd=/opt/bin/pip3
+    elif [[ -e /opt/bin/pip3.8 ]]; then
+        pip3_cmd=/opt/bin/pip3.8
+    elif [[ -e /opt/bin/pip3.7 ]]; then
+        pip3_cmd=/opt/bin/pip3.7
+    else
+		echo "! no 'pip3' found: can't install any modules"
+		return 1
+    fi
+
+    ExecuteAndLog 'installing Python 3 modules' "$pip3_cmd install -r $QPKG_REPO_PATH/requirements.txt --disable-pip-version-check --cache-dir $PIP_CACHE_PATH" log:everything || return 1
+
+    return 0
 
     }
 
@@ -390,6 +417,21 @@ LoadUIPorts()
 
     }
 
+ViewLog()
+    {
+
+    if [[ -e $SERVICE_LOG_PATHFILE ]]; then
+        LESSSECURE=1 $GNU_LESS_CMD +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$SERVICE_LOG_PATHFILE"
+    else
+        Display "service log not found: $(FormatAsFileName "$SERVICE_LOG_PATHFILE")"
+        SetError
+        return 1
+    fi
+
+    return 0
+
+    }
+
 IsSSLEnabled()
     {
 
@@ -412,6 +454,7 @@ IsDaemonActive()
     fi
 
     [[ -f $DAEMON_PID_PATHFILE ]] && rm "$DAEMON_PID_PATHFILE"
+
     return 1
 
     }
@@ -437,7 +480,7 @@ IsSysFilePresent()
     fi
 
     if [[ ! -e $1 ]]; then
-        FormatAsDisplayError "A required NAS system file is missing [$1]"
+        FormatAsDisplayError "A required NAS system file is missing: $(FormatAsFileName "$1")"
         SetError
         return 1
     else
@@ -504,22 +547,22 @@ IsPortResponds()
     DisplayWaitCommitToLog "* checking for UI port $1 response:"
     DisplayWait "(waiting for up to $MAX_WAIT_SECONDS_START seconds):"
 
-    while true; do
-        while ! $CURL_CMD --silent --fail http://localhost:"$1" >/dev/null; do
-            sleep 1
-            ((acc++))
-            DisplayWait "$acc,"
+    while ! $CURL_CMD --silent --fail http://localhost:"$1" >/dev/null; do
+        sleep 1
+        ((acc++))
+        DisplayWait "$acc,"
 
-            if [[ $acc -ge $MAX_WAIT_SECONDS_START ]]; then
-                DisplayCommitToLog 'failed!'
-                CommitErrToSysLog "UI port $1 failed to respond after $acc seconds"
-                return 1
-            fi
-        done
-        Display 'OK'
-        CommitLog "UI port responded after $acc seconds"
-        return 0
+        if [[ $acc -ge $MAX_WAIT_SECONDS_START ]]; then
+            DisplayCommitToLog 'failed!'
+            CommitErrToSysLog "UI port $1 failed to respond after $acc seconds"
+            return 1
+        fi
     done
+
+    Display 'OK'
+    CommitLog "UI port responded after $acc seconds"
+
+    return 0
 
     }
 
@@ -541,22 +584,22 @@ IsPortSecureResponds()
     DisplayWaitCommitToLog "* checking for secure UI port $1 response:"
     DisplayWait "(waiting for up to $MAX_WAIT_SECONDS_START seconds):"
 
-    while true; do
-        while ! $CURL_CMD --silent --insecure --fail https://localhost:"$1" >/dev/null; do
-            sleep 1
-            ((acc++))
-            DisplayWait "$acc,"
+    while ! $CURL_CMD --silent --insecure --fail https://localhost:"$1" >/dev/null; do
+        sleep 1
+        ((acc++))
+        DisplayWait "$acc,"
 
-            if [[ $acc -ge $MAX_WAIT_SECONDS_START ]]; then
-                DisplayCommitToLog 'failed!'
-                CommitErrToSysLog "secure UI port $1 failed to respond after $acc seconds"
-                return 1
-            fi
-        done
-        Display 'OK'
-        CommitLog "secure UI port responded after $acc seconds"
-        return 0
+        if [[ $acc -ge $MAX_WAIT_SECONDS_START ]]; then
+            DisplayCommitToLog 'failed!'
+            CommitErrToSysLog "secure UI port $1 failed to respond after $acc seconds"
+            return 1
+        fi
     done
+
+    Display 'OK'
+    CommitLog "secure UI port responded after $acc seconds"
+
+    return 0
 
     }
 
@@ -853,7 +896,7 @@ Init
 if IsNotError; then
     if [[ -n $1 ]]; then
         service_operation="$1"
-        if [[ $1 != log || $1 != l ]]; then
+        if [[ $1 != log && $1 != l ]]; then
             CommitLog "$(SessionSeparator "'$service_operation' requested")"
             CommitLog "= $(date), QPKG: $QPKG_VERSION, application: $app_version"
         fi
@@ -869,7 +912,7 @@ if IsNotError; then
             StopQPKG; StartQPKG || SetError
             ;;
         s|status)
-            LoadUIPorts start
+            LoadUIPorts start || SetError
             IsDaemonActive $QPKG_NAME || SetError
             ;;
         b|backup)
@@ -882,12 +925,7 @@ if IsNotError; then
             CleanLocalClone || SetError
             ;;
         l|log)
-            if [[ -e $SERVICE_LOG_PATHFILE ]]; then
-                LESSSECURE=1 $GNU_LESS_CMD +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$SERVICE_LOG_PATHFILE"
-            else
-                Display "service log not found: $(FormatAsFileName "$SERVICE_LOG_PATHFILE")"
-                SetError
-            fi
+            ViewLog
             ;;
         v|version)
             Display "$QPKG_VERSION"
@@ -898,10 +936,10 @@ if IsNotError; then
     esac
 fi
 
-if IsNotError; then
-    SetServiceOperationOK
-    exit
-else
+if IsError; then
     SetServiceOperationFailed
     exit 1
 fi
+
+SetServiceOperationOK
+exit
