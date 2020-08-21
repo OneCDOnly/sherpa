@@ -127,7 +127,7 @@ StartQPKG()
 
     [[ -n $SOURCE_GIT_URL ]] && PullGitRepo $QPKG_NAME "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_PATH"
 
-    InstallPy3Modules || return
+#     InstallPy3Modules || return
     LoadUIPorts start || return
 
     if [[ $ui_port -le 0 && $ui_port_secure -le 0 ]]; then
@@ -204,8 +204,8 @@ InstallPy3Modules()
     elif [[ -e /opt/bin/pip3.7 ]]; then
         pip3_cmd=/opt/bin/pip3.7
     else
-		echo "! no 'pip3' found: can't install any modules"
-		return 1
+        echo "! no 'pip3' found: can't install any modules"
+        return 1
     fi
 
     ExecuteAndLog 'installing Python 3 modules' "$pip3_cmd install -r $QPKG_REPO_PATH/requirements.txt --disable-pip-version-check --cache-dir $PIP_CACHE_PATH" log:everything || return 1
