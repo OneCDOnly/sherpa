@@ -38,7 +38,7 @@ Init()
     {
 
     readonly SCRIPT_NAME=sherpa.sh
-    readonly SCRIPT_VERSION=200821
+    readonly SCRIPT_VERSION=200822
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -1085,6 +1085,7 @@ DowngradePy3()
 
     # kludge: Watcher3 isn't presently compatible with Python 3.8.x so let's force a downgrade to 3.7.4
 
+    IsQPKGInstalled OWatcher3 && IsNotQPKGEnabled OWatcher3 && return
     IsNotQPKGInstalled OWatcher3 && [[ $TARGET_APP != OWatcher3 ]] && return
     [[ ! -e /opt/bin/python3 ]] && return
     [[ $(/opt/bin/python3 -V | $SED_CMD 's|[^0-9]*||g') -le 374 ]] && return
