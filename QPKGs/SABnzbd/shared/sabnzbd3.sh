@@ -121,7 +121,7 @@ StartQPKG()
 
     IsNotError || return
 
-    if [[ $service_operation != restart && $service_operation != r ]]; then
+    if [[ $service_operation != restart && $service_operation != r && $service_operation != restore ]]; then
         IsDaemonActive && return
     fi
 
