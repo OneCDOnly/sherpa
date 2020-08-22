@@ -38,7 +38,7 @@ Init()
     {
 
     readonly SCRIPT_NAME=sherpa.sh
-    readonly SCRIPT_VERSION=200823
+    readonly SCRIPT_VERSION=200823b
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -818,7 +818,7 @@ RemoveUnwantedQPKGs()
         case ${response:0:1} in
             y|Y)
                 IsNotVisibleDebugging && echo
-                ShowAsProc 'saving lists'
+                ShowAsProc 'saving package and Python module lists'
 
                 $pip3_cmd freeze > "$previous_pip3_module_list"
                 DebugDone "saved current $(FormatAsPackageName pip3) module list to $(FormatAsFileName "$previous_pip3_module_list")"
@@ -826,7 +826,7 @@ RemoveUnwantedQPKGs()
                 $OPKG_CMD list-installed > "$previous_opkg_package_list"
                 DebugDone "saved current $(FormatAsPackageName Entware) IPKG list to $(FormatAsFileName "$previous_opkg_package_list")"
 
-                ShowAsDone 'lists saved'
+                ShowAsDone 'package and Python module lists saved'
                 UninstallQPKG Entware
                 ;;
             *)
