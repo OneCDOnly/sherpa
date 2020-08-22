@@ -121,8 +121,8 @@ StartQPKG()
 
     IsNotError || return
 
-    if [[ $service_operation != restart ]]; then
-        IsNotDaemonActive || return
+    if [[ $service_operation != restart && $service_operation != r ]]; then
+        IsDaemonActive && return
     fi
 
     LoadUIPorts stop || return
@@ -153,27 +153,28 @@ StartQPKG()
 StopQPKG()
     {
 
+    IsNotError || return
     LoadUIPorts stop || return
     IsDaemonActive || return
 
     local -r MAX_WAIT_SECONDS_STOP=60
     local acc=0
+    local pid=0
 
-    PID=$(<$DAEMON_PID_PATHFILE)
-
-    kill "$PID"
+    pid=$(<$DAEMON_PID_PATHFILE)
+    kill "$pid"
     DisplayWaitCommitToLog '* stopping daemon with SIGTERM:'
     DisplayWait "(waiting for up to $MAX_WAIT_SECONDS_STOP seconds):"
 
     while true; do
-        while [[ -d /proc/$PID ]]; do
+        while [[ -d /proc/$pid ]]; do
             sleep 1
             ((acc++))
             DisplayWait "$acc,"
 
             if [[ $acc -ge $MAX_WAIT_SECONDS_STOP ]]; then
                 DisplayWaitCommitToLog 'failed!'
-                kill -9 "$PID" 2> /dev/null
+                kill -9 "$pid" 2> /dev/null
                 DisplayCommitToLog 'sent SIGKILL.'
                 [[ -f $DAEMON_PID_PATHFILE ]] && rm -f $DAEMON_PID_PATHFILE
                 break 2
@@ -935,7 +936,7 @@ if IsNotError; then
             StopQPKG || SetError
             ;;
         r|restart)
-            StopQPKG; StartQPKG || SetError
+            (eval "$0" stop && StartQPKG) || SetError
             ;;
         s|status)
             LoadUIPorts start
