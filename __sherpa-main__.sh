@@ -38,7 +38,7 @@ Init()
     {
 
     readonly SCRIPT_NAME=sherpa.sh
-    readonly SCRIPT_VERSION=200823m
+    readonly SCRIPT_VERSION=200823n
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -235,8 +235,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(LazyLibrarian)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/LazyLibrarian/build/LazyLibrarian_200823.qpkg)
-        SHERPA_QPKG_MD5+=(0bfaeae2b8c1d1d9ba7ccf6013ee6877)
+        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/LazyLibrarian/build/LazyLibrarian_200823b.qpkg)
+        SHERPA_QPKG_MD5+=(f869db136a5995c92f45703a9e6d6dad)
         SHERPA_QPKG_ABBRVS+=('ll lazy lazylibrarian')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python3-pyopenssl python3-requests')
