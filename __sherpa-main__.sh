@@ -38,7 +38,7 @@ Init()
     {
 
     readonly SCRIPT_NAME=sherpa.sh
-    readonly SCRIPT_VERSION=200823i
+    readonly SCRIPT_VERSION=200823j
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -271,8 +271,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(OTransmission)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/OTransmission/build/OTransmission_200820.qpkg)
-        SHERPA_QPKG_MD5+=(0784ed7a83e6989e40313119e715ed14)
+        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/OTransmission/build/OTransmission_200823.qpkg)
+        SHERPA_QPKG_MD5+=(31caeecc3dd4632d294b721bb820feb9)
         SHERPA_QPKG_ABBRVS+=('ot otrans tm tr trans tmission transmission otransmission')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('transmission-web transmission-daemon-openssl jq')
