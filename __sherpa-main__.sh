@@ -38,7 +38,7 @@ Init()
     {
 
     readonly SCRIPT_NAME=sherpa.sh
-    readonly SCRIPT_VERSION=200823j
+    readonly SCRIPT_VERSION=200823k
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -216,8 +216,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(NZBGet)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/NZBGet/build/NZBGet_200823.qpkg)
-        SHERPA_QPKG_MD5+=(1cbe55f8de7f626f1e30d9cc1d432f58)
+        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/NZBGet/build/NZBGet_200823b.qpkg)
+        SHERPA_QPKG_MD5+=(2a5f6cddda9b2d6176e0bb285395a925)
         SHERPA_QPKG_ABBRVS+=('ng nget nzb nzbget')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('nzbget')

@@ -259,9 +259,9 @@ LoadAppVersion()
 
     app_version=''
 
-    [[ ! -e $APP_VERSION_PATHFILE ]] && return
+    [[ ! -e $TARGET_DAEMON ]] && return 1
 
-    app_version=$($GREP_CMD '__version__ =' "$APP_VERSION_PATHFILE" | $SED_CMD 's|^.*"\(.*\)"|\1|')
+    app_version=$($TARGET_DAEMON --version  2>&1 | $SED_CMD 's|nzbget version: ||')
 
     }
 
