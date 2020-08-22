@@ -119,8 +119,13 @@ ShowHelp()
 StartQPKG()
     {
 
+    IsNotError || return
+
+    if [[ $service_operation != restart ]]; then
+        IsNotDaemonActive || return
+    fi
+
     LoadUIPorts stop || return
-    IsNotDaemonActive || return
 
     [[ -n $SOURCE_GIT_URL ]] && PullGitRepo $QPKG_NAME "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_PATH" && UpdateLanguages
 
@@ -138,6 +143,7 @@ StartQPKG()
 
     ReWriteUIPorts
     ExecuteAndLog 'starting daemon' "$LAUNCHER" log:everything || return 1
+    IsDaemonActive || return 1
     CheckPorts both || return 1
 
     return 0
@@ -181,6 +187,8 @@ StopQPKG()
         CommitInfoToSysLog "stopping daemon: OK."
         break
     done
+
+    IsNotDaemonActive || return 1
 
     }
 
@@ -914,7 +922,7 @@ Init
 if IsNotError; then
     if [[ -n $1 ]]; then
         service_operation="$1"
-        if [[ $1 != log && $1 != l ]]; then
+        if [[ $1 != log && $1 != l && $1 != status && $1 != s ]]; then
             CommitLog "$(SessionSeparator "'$service_operation' requested")"
             CommitLog "= $(date), QPKG: $QPKG_VERSION, application: $app_version"
         fi
