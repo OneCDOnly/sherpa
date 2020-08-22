@@ -38,7 +38,7 @@ Init()
     {
 
     readonly SCRIPT_NAME=sherpa.sh
-    readonly SCRIPT_VERSION=200822e
+    readonly SCRIPT_VERSION=200822f
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -399,10 +399,12 @@ LogRuntimeParameters()
 
     DebugNAS 'model' "$(get_display_name)"
     DebugNAS 'RAM' "$INSTALLED_RAM_KB kB"
-    if IsQPKGToBeInstalled SABnzbd || IsQPKGInstalled SABnzbd || IsQPKGInstalled SABnzbdplus; then
-        if [[ $INSTALLED_RAM_KB -le $MIN_RAM_KB ]]; then
-            DebugNAS 'RAM' "less-than or equal-to $MIN_RAM_KB kB"
-            IsNotError && ShowAsNote "QTS with 1GiB RAM-or-less can lead to unstable $(FormatAsPackageName SABnzbd) uptimes. :("
+    if IsNotLogViewOnly; then
+        if IsQPKGToBeInstalled SABnzbd || IsQPKGInstalled SABnzbd || IsQPKGInstalled SABnzbdplus; then
+            if [[ $INSTALLED_RAM_KB -le $MIN_RAM_KB ]]; then
+                DebugNAS 'RAM' "less-than or equal-to $MIN_RAM_KB kB"
+                IsNotError && ShowAsNote "QTS with 1GiB RAM-or-less can lead to unstable $(FormatAsPackageName SABnzbd) uptimes. :("
+            fi
         fi
     fi
     DebugNAS 'firmware version' "$NAS_FIRMWARE"
