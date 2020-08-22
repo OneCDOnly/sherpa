@@ -52,6 +52,8 @@ Init()
     readonly APP_VERSION_STORE_PATHFILE=$($DIRNAME_CMD "$APP_VERSION_PATHFILE")/version.stored
     readonly TARGET_SCRIPT_PATHFILE=$QPKG_REPO_PATH/$TARGET_SCRIPT
 
+    UnsetError
+
     if [[ -z $LANG ]]; then
         export LANG=en_US.UTF-8
         export LC_ALL=en_US.UTF-8
@@ -59,7 +61,6 @@ Init()
     fi
 
     WaitForEntware
-
     LoadAppVersion
 
     [[ ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
@@ -111,7 +112,7 @@ StartQPKG()
         fi
     fi
 
-    if [[ -d $APPARENT_PATH && ! -L $APPARENT_PATH ]]; then
+    if [[ -d $APPARENT_PATH && ! -L $APPARENT_PATH && -e "$APPARENT_PATH/$($BASENAME_CMD "$QPKG_INI_PATHFILE")" ]]; then
         # save config from original nzbToMedia install (which was created by sherpa SABnzbd QPKGs earlier than 200809)
         cp "$APPARENT_PATH/$($BASENAME_CMD "$QPKG_INI_PATHFILE")" "$QPKG_INI_PATHFILE"
 
