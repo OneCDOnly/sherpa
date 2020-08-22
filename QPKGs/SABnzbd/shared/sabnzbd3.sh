@@ -572,22 +572,22 @@ IsPortResponds()
     DisplayWaitCommitToLog "* checking for UI port $1 response:"
     DisplayWait "(waiting for up to $MAX_WAIT_SECONDS_START seconds):"
 
-    while true; do
-        while ! $CURL_CMD --silent --fail http://localhost:"$1" >/dev/null; do
-            sleep 1
-            ((acc++))
-            DisplayWait "$acc,"
+    while ! $CURL_CMD --silent --fail http://localhost:"$1" >/dev/null; do
+        sleep 1
+        ((acc++))
+        DisplayWait "$acc,"
 
-            if [[ $acc -ge $MAX_WAIT_SECONDS_START ]]; then
-                DisplayCommitToLog 'failed!'
-                CommitErrToSysLog "UI port $1 failed to respond after $acc seconds"
-                return 1
-            fi
-        done
-        Display 'OK'
-        CommitLog "UI port responded after $acc seconds"
-        return 0
+        if [[ $acc -ge $MAX_WAIT_SECONDS_START ]]; then
+            DisplayCommitToLog 'failed!'
+            CommitErrToSysLog "UI port $1 failed to respond after $acc seconds"
+            return 1
+        fi
     done
+
+    Display 'OK'
+    CommitLog "UI port responded after $acc seconds"
+
+    return 0
 
     }
 
@@ -609,22 +609,22 @@ IsPortSecureResponds()
     DisplayWaitCommitToLog "* checking for secure UI port $1 response:"
     DisplayWait "(waiting for up to $MAX_WAIT_SECONDS_START seconds):"
 
-    while true; do
-        while ! $CURL_CMD --silent --insecure --fail https://localhost:"$1" >/dev/null; do
-            sleep 1
-            ((acc++))
-            DisplayWait "$acc,"
+    while ! $CURL_CMD --silent --insecure --fail https://localhost:"$1" >/dev/null; do
+        sleep 1
+        ((acc++))
+        DisplayWait "$acc,"
 
-            if [[ $acc -ge $MAX_WAIT_SECONDS_START ]]; then
-                DisplayCommitToLog 'failed!'
-                CommitErrToSysLog "secure UI port $1 failed to respond after $acc seconds"
-                return 1
-            fi
-        done
-        Display 'OK'
-        CommitLog "secure UI port responded after $acc seconds"
-        return 0
+        if [[ $acc -ge $MAX_WAIT_SECONDS_START ]]; then
+            DisplayCommitToLog 'failed!'
+            CommitErrToSysLog "secure UI port $1 failed to respond after $acc seconds"
+            return 1
+        fi
     done
+
+    Display 'OK'
+    CommitLog "secure UI port responded after $acc seconds"
+
+    return 0
 
     }
 
@@ -968,10 +968,10 @@ if IsNotError; then
     esac
 fi
 
-if IsNotError; then
-    SetServiceOperationOK
-    exit
-else
+if IsError; then
     SetServiceOperationFailed
     exit 1
 fi
+
+SetServiceOperationOK
+exit
