@@ -395,7 +395,7 @@ LogRuntimeParameters()
 
     IsNotVisibleDebugging && IsNotVersionOnly && echo "$(ColourTextBrightWhite "$SCRIPT_NAME") ($SCRIPT_VERSION)"
     IsAbort && return
-    IsNotVisibleDebugging && echo
+    IsNotVisibleDebugging && IsNotLogViewOnly && echo
 
     DebugNAS 'model' "$(get_display_name)"
     DebugNAS 'RAM' "$INSTALLED_RAM_KB kB"
