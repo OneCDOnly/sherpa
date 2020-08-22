@@ -142,6 +142,7 @@ StartQPKG()
 
     ReWriteUIPorts
     ExecuteAndLog 'starting daemon' "$LAUNCHER" log:everything || return 1
+    sleep 5         # daemon needs time to wite a PID file
     IsDaemonActive || return 1
     CheckPorts || return 1
 
