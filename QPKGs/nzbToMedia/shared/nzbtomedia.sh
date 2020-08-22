@@ -38,8 +38,9 @@ Init()
     # generic environment
     readonly QTS_QPKG_CONF_PATHFILE=/etc/config/qpkg.conf
     readonly QPKG_PATH=$($GETCFG_CMD $QPKG_NAME Install_Path -f $QTS_QPKG_CONF_PATHFILE)
+    readonly QPKG_REPO_PATH=$QPKG_PATH/$QPKG_NAME
     readonly QPKG_VERSION=$($GETCFG_CMD $QPKG_NAME Version -f $QTS_QPKG_CONF_PATHFILE)
-    readonly QPKG_INI_PATHFILE=$QPKG_PATH/$QPKG_NAME/autoProcessMedia.cfg
+    readonly QPKG_INI_PATHFILE=$QPKG_REPO_PATH/autoProcessMedia.cfg
     readonly QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.spec
     readonly SERVICE_STATUS_PATHFILE=/var/run/$QPKG_NAME.last.operation
     readonly SERVICE_LOG_PATHFILE=/var/log/$QPKG_NAME.log
@@ -52,14 +53,13 @@ Init()
     readonly APP_VERSION_STORE_PATHFILE=$($DIRNAME_CMD "$APP_VERSION_PATHFILE")/version.stored
     readonly TARGET_SCRIPT_PATHFILE=$QPKG_REPO_PATH/$TARGET_SCRIPT
 
-    UnsetError
-
     if [[ -z $LANG ]]; then
         export LANG=en_US.UTF-8
         export LC_ALL=en_US.UTF-8
         export LC_CTYPE=en_US.UTF-8
     fi
 
+    UnsetError
     WaitForEntware
     LoadAppVersion
 
@@ -120,7 +120,7 @@ StartQPKG()
         rm -r "$APPARENT_PATH"
     fi
 
-    [[ ! -L $APPARENT_PATH ]] && ln -s "$QPKG_PATH/$QPKG_NAME" "$APPARENT_PATH"
+    [[ ! -L $APPARENT_PATH ]] && ln -s "$QPKG_REPO_PATH" "$APPARENT_PATH"
 
     if IsNotConfigFound && IsDefaultConfigFound; then
         DisplayWarnCommitToLog 'no configuration file found: using default'
@@ -141,7 +141,7 @@ StopQPKG()
 BackupConfig()
     {
 
-    ExecuteAndLog 'updating configuration backup' "$TAR_CMD --create --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/$QPKG_NAME autoProcessMedia.cfg" log:everything
+    ExecuteAndLog 'updating configuration backup' "$TAR_CMD --create --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_REPO_PATH autoProcessMedia.cfg" log:everything
 
     }
 
@@ -155,10 +155,12 @@ RestoreConfig()
     fi
 
     StopQPKG
-    ExecuteAndLog 'restoring configuration backup' "$TAR_CMD --extract --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/$QPKG_NAME" log:everything
+    ExecuteAndLog 'restoring configuration backup' "$TAR_CMD --extract --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_REPO_PATH" log:everything
     StartQPKG
 
     }
+
+#### functions specific to this app appear below ###
 
 LoadAppVersion()
     {
@@ -174,6 +176,8 @@ LoadAppVersion()
     app_version=$($GREP_CMD '__version__ =' "$APP_VERSION_PATHFILE" | $SED_CMD 's|^.*"\(.*\)"|\1|')
 
     }
+
+#### functions specific to this app appear above ###
 
 SaveAppVersion()
     {
@@ -191,9 +195,9 @@ PullGitRepo()
     # $4 = remote depth: 'shallow' or 'single-branch'
     # $5 = local path to clone into
 
-    local -r GIT_CMD=/opt/bin/git
-
     [[ -z $1 || -z $2 || -z $3 || -z $4 || -z $5 ]] && return 1
+
+    local -r GIT_CMD=/opt/bin/git
 
     if IsNotSysFilePresent "$GIT_CMD"; then
         SetError
@@ -227,6 +231,21 @@ CleanLocalClone()
     StopQPKG
     ExecuteAndLog 'cleaning local repo' "rm -r $QPKG_REPO_PATH"
     StartQPKG
+
+    }
+
+ViewLog()
+    {
+
+    if [[ -e $SERVICE_LOG_PATHFILE ]]; then
+        LESSSECURE=1 $GNU_LESS_CMD +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$SERVICE_LOG_PATHFILE"
+    else
+        Display "service log not found: $(FormatAsFileName "$SERVICE_LOG_PATHFILE")"
+        SetError
+        return 1
+    fi
+
+    return 0
 
     }
 
@@ -588,8 +607,10 @@ Init
 if IsNotError; then
     if [[ -n $1 ]]; then
         service_operation="$1"
-        CommitLog "$(SessionSeparator "'$service_operation' requested")"
-        CommitLog "= $(date), QPKG: $QPKG_VERSION, application: $app_version"
+        if [[ $1 != log && $1 != l && $1 != status && $1 != s ]]; then
+            CommitLog "$(SessionSeparator "'$service_operation' requested")"
+            CommitLog "= $(date), QPKG: $QPKG_VERSION, application: $app_version"
+        fi
     fi
     case $service_operation in
         start)
@@ -599,7 +620,7 @@ if IsNotError; then
             StopQPKG || SetError
             ;;
         r|restart)
-            StopQPKG; StartQPKG || SetError
+            { StopQPKG; StartQPKG ; } || SetError
             ;;
         s|status)
             # always return OK, as this app is only called on-demand by other apps.
@@ -612,15 +633,11 @@ if IsNotError; then
             RestoreConfig || SetError
             ;;
         c|clean)
-            CleanLocalClone || SetError
+            # only this app stores the config file in the repo location, so save it and restore again after new clone is complete
+            { BackupConfig; CleanLocalClone; RestoreConfig ;} || SetError
             ;;
         l|log)
-            if [[ -e $SERVICE_LOG_PATHFILE ]]; then
-                LESSSECURE=1 $GNU_LESS_CMD +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$SERVICE_LOG_PATHFILE"
-            else
-                Display "service log not found: $(FormatAsFileName "$SERVICE_LOG_PATHFILE")"
-                SetError
-            fi
+            ViewLog
             ;;
         v|version)
             Display "$QPKG_VERSION"
@@ -631,10 +648,10 @@ if IsNotError; then
     esac
 fi
 
-if IsNotError; then
-    SetServiceOperationOK
-    exit
-else
+if IsError; then
     SetServiceOperationFailed
     exit 1
 fi
+
+SetServiceOperationOK
+exit
