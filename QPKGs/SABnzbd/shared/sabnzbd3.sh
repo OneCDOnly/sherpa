@@ -144,7 +144,7 @@ StartQPKG()
     ReWriteUIPorts
     ExecuteAndLog 'starting daemon' "$LAUNCHER" log:everything || return 1
     IsDaemonActive || return 1
-    CheckPorts both || return 1
+    CheckPorts || return 1
 
     return 0
 
@@ -431,17 +431,14 @@ ReWriteUIPorts()
 CheckPorts()
     {
 
-    # $1 = (optional) 'either' or 'both'
-    # either: (default) if either port responds, then return
-    # both: check both ports for a response, then return
-
     local msg=''
 
     if IsSSLEnabled && IsPortSecureResponds $ui_port_secure; then
         msg="$(FormatAsPackageName $QPKG_NAME) UI is listening on HTTPS port $ui_port_secure"
     fi
 
-    if IsNotSSLEnabled || [[ $1 = both ]]; then
+    if IsNotSSLEnabled || [[ $ui_port -ne $ui_port_secure ]]; then
+        # assume $ui_port should be checked too
         if IsPortResponds $ui_port; then
             if [[ -n $msg ]]; then
                 msg+=" and on HTTP port $ui_port"
@@ -937,12 +934,12 @@ if IsNotError; then
             StopQPKG || SetError
             ;;
         r|restart)
-            (StopQPKG && StartQPKG) || SetError
+            { StopQPKG; StartQPKG ; } || SetError
             ;;
         s|status)
-            LoadUIPorts start
+            LoadUIPorts status
             if IsDaemonActive $QPKG_NAME; then
-                CheckPorts both
+                CheckPorts
             else
                 SetError
             fi
