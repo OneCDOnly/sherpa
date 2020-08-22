@@ -215,6 +215,45 @@ RestoreConfig()
 
     }
 
+#### functions specific to this app appear below ###
+
+LoadUIPorts()
+    {
+
+    # If user changes ports via app UI, must first 'stop' application on old ports, then 'start' on new ports
+
+    case $1 in
+        start|status)
+            # Read the current application UI ports from application configuration
+            ui_port=$($GETCFG_CMD misc port -d 0 -f "$QPKG_INI_PATHFILE")
+            ui_port_secure=$($GETCFG_CMD misc https_port -d 0 -f "$QPKG_INI_PATHFILE")
+            ;;
+        stop)
+            # Read the current application UI ports from QTS App Center
+            ui_port=$($GETCFG_CMD $QPKG_NAME Web_Port -d 0 -f "$QTS_QPKG_CONF_PATHFILE")
+            ui_port_secure=$($GETCFG_CMD $QPKG_NAME Web_SSL_Port -d 0 -f "$QTS_QPKG_CONF_PATHFILE")
+            ;;
+        *)
+            DisplayErrCommitAllLogs "unable to load UI ports: service operation '$service_operation' unrecognised"
+            SetError
+            return 1
+            ;;
+    esac
+
+    if [[ $ui_port -eq 0 ]] && IsNotDefaultConfigFound; then
+        ui_port=0
+        ui_port_secure=0
+    fi
+
+    }
+
+IsSSLEnabled()
+    {
+
+    [[ $($GETCFG_CMD misc enable_https -d 0 -f "$QPKG_INI_PATHFILE") -eq 1 ]]
+
+    }
+
 ImportFromSAB2()
     {
 
@@ -261,6 +300,8 @@ LoadAppVersion()
     app_version=$($GREP_CMD '__version__ =' "$APP_VERSION_PATHFILE" | $SED_CMD 's|^.*"\(.*\)"|\1|')
 
     }
+
+#### functions specific to this app appear above ###
 
 SaveAppVersion()
     {
@@ -422,45 +463,6 @@ CheckPorts()
 
     }
 
-LoadUIPorts()
-    {
-
-    # If user changes ports via app UI, must first 'stop' application on old ports, then 'start' on new ports
-
-    case $1 in
-        start|status)
-            # Read the current application UI ports from application configuration
-
-            ui_port=$($GETCFG_CMD misc port -d 0 -f "$QPKG_INI_PATHFILE")
-            ui_port_secure=$($GETCFG_CMD misc https_port -d 0 -f "$QPKG_INI_PATHFILE")
-            ;;
-        stop)
-            # Read the current application UI ports from QTS App Center
-
-            ui_port=$($GETCFG_CMD $QPKG_NAME Web_Port -d 0 -f "$QTS_QPKG_CONF_PATHFILE")
-            ui_port_secure=$($GETCFG_CMD $QPKG_NAME Web_SSL_Port -d 0 -f "$QTS_QPKG_CONF_PATHFILE")
-            ;;
-        *)
-            DisplayErrCommitAllLogs "unable to load UI ports: service operation '$service_operation' unrecognised"
-            SetError
-            return 1
-            ;;
-    esac
-
-    if [[ $ui_port -eq 0 ]] && IsNotDefaultConfigFound; then
-        ui_port=0
-        ui_port_secure=0
-    fi
-
-    }
-
-IsSSLEnabled()
-    {
-
-    [[ $($GETCFG_CMD misc enable_https -d 0 -f "$QPKG_INI_PATHFILE") -eq 1 ]]
-
-    }
-
 IsNotSSLEnabled()
     {
 
@@ -477,10 +479,9 @@ IsDaemonActive()
     if [[ -e $DAEMON_PID_PATHFILE && -d /proc/$(<$DAEMON_PID_PATHFILE) && -n $TARGET_SCRIPT_PATHFILE && $(</proc/"$(<$DAEMON_PID_PATHFILE)"/cmdline) =~ $TARGET_SCRIPT_PATHFILE ]]; then
         DisplayDoneCommitToLog "daemon is active: PID $(<$DAEMON_PID_PATHFILE)"
         return
-    else
-        DisplayDoneCommitToLog 'daemon is not active'
     fi
 
+    DisplayDoneCommitToLog 'daemon is not active'
     [[ -f $DAEMON_PID_PATHFILE ]] && rm "$DAEMON_PID_PATHFILE"
     return 1
 
@@ -936,7 +937,7 @@ if IsNotError; then
             StopQPKG || SetError
             ;;
         r|restart)
-            (eval "$0" stop && StartQPKG) || SetError
+            (StopQPKG && StartQPKG) || SetError
             ;;
         s|status)
             LoadUIPorts start
