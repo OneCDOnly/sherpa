@@ -122,7 +122,7 @@ StartQPKG()
     LoadUIPorts stop || return
     IsNotDaemonActive || return
 
-    [[ -n $SOURCE_GIT_URL ]] && PullGitRepo $QPKG_NAME "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_PATH"
+    [[ -n $SOURCE_GIT_URL ]] && PullGitRepo $QPKG_NAME "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_PATH" && UpdateLanguages
 
     LoadUIPorts start || return
 
@@ -137,10 +137,8 @@ StartQPKG()
     fi
 
     ReWriteUIPorts
-
     ExecuteAndLog 'starting daemon' "$LAUNCHER" log:everything || return 1
-
-    CheckPorts || return 1
+    CheckPorts both || return 1
 
     return 0
 
@@ -179,7 +177,8 @@ StopQPKG()
         [[ -f $DAEMON_PID_PATHFILE ]] && rm -f $DAEMON_PID_PATHFILE
         Display 'OK'
         CommitLog "stopped OK in $acc seconds"
-#       CommitInfoToSysLog "$1: OK."
+
+        CommitInfoToSysLog "stopping daemon: OK."
         break
     done
 
@@ -220,7 +219,6 @@ ImportFromSAB2()
     fi
 
     ExecuteAndLog "updating SABnzbd2 configuration backup for SABnzbd3" "$TAR_CMD --create --gzip --file=$BACKUP_PATHFILE --directory=$(getcfg SABnzbdplus Install_Path -f /etc/config/qpkg.conf)/config ." log:everything
-
     eval "$0" restore
 
     return 0
@@ -232,7 +230,7 @@ UpdateLanguages()
 
     # run [tools/make_mo.py] if SABnzbd version number has changed since last run
 
-    LoadAppVersion || return 1
+    LoadAppVersion
 
     [[ -e $APP_VERSION_STORE_PATHFILE && $(<"$APP_VERSION_STORE_PATHFILE") = "$app_version" && -d $QPKG_REPO_PATH/locale ]] && return 0
 
@@ -310,6 +308,21 @@ CleanLocalClone()
 
     }
 
+ViewLog()
+    {
+
+    if [[ -e $SERVICE_LOG_PATHFILE ]]; then
+        LESSSECURE=1 $GNU_LESS_CMD +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$SERVICE_LOG_PATHFILE"
+    else
+        Display "service log not found: $(FormatAsFileName "$SERVICE_LOG_PATHFILE")"
+        SetError
+        return 1
+    fi
+
+    return 0
+
+    }
+
 ExecuteAndLog()
     {
 
@@ -368,29 +381,35 @@ ReWriteUIPorts()
 CheckPorts()
     {
 
-    # $1 = (optional) 'either'
-    # either: if either port responds, then return
-    # <default>: check both ports for a response, then return
+    # $1 = (optional) 'either' or 'both'
+    # either: (default) if either port responds, then return
+    # both: check both ports for a response, then return
 
-    local response_flag=false
+    local msg=''
 
     if IsSSLEnabled && IsPortSecureResponds $ui_port_secure; then
-        DisplayDoneCommitToLog "$(FormatAsPackageName $QPKG_NAME) UI is listening on HTTPS port $ui_port_secure"
-        response_flag=true
-        [[ $1 = either ]] && return
+        msg="$(FormatAsPackageName $QPKG_NAME) UI is listening on HTTPS port $ui_port_secure"
     fi
 
-    # SABnzbd can listen on both ports so test both
-	if IsPortResponds $ui_port; then
-		DisplayDoneCommitToLog "$(FormatAsPackageName $QPKG_NAME) UI is$([[ $response_flag = true ]] && echo ' also') listening on HTTP port $ui_port"
-		response_flag=true
-	fi
+    if IsNotSSLEnabled || [[ $1 = both ]]; then
+        if IsPortResponds $ui_port; then
+            if [[ -n $msg ]]; then
+                msg+=" and on HTTP port $ui_port"
+            else
+                msg="$(FormatAsPackageName $QPKG_NAME) UI is listening on HTTP port $ui_port"
+            fi
+        fi
+    fi
 
-    if [[ $response_flag = false ]]; then
+    if [[ -z $msg ]]; then
         DisplayErrCommitAllLogs 'no response on configured port(s)!'
         SetError
         return 1
     fi
+
+    DisplayDoneCommitToLog "$msg"
+
+    return 0
 
     }
 
@@ -433,18 +452,24 @@ IsSSLEnabled()
 
     }
 
+IsNotSSLEnabled()
+    {
+
+    ! IsSSLEnabled
+
+    }
+
 IsDaemonActive()
     {
 
-    # $? = 0 if $QPKG_NAME is active
-    # $? = 1 if $QPKG_NAME is not active
+    # $? = 0 : $TARGET_SCRIPT_PATHFILE is in memory
+    # $? = 1 : $TARGET_SCRIPT_PATHFILE is not in memory
 
-    if [[ -f $DAEMON_PID_PATHFILE && -d /proc/$(<$DAEMON_PID_PATHFILE) ]]; then
-        DisplayDoneCommitToLog 'daemon is running'
-
-        CheckPorts && return
+    if [[ -e $DAEMON_PID_PATHFILE && -d /proc/$(<$DAEMON_PID_PATHFILE) && -n $TARGET_SCRIPT_PATHFILE && $(</proc/"$(<$DAEMON_PID_PATHFILE)"/cmdline) =~ $TARGET_SCRIPT_PATHFILE ]]; then
+        DisplayDoneCommitToLog "daemon is active: PID $(<$DAEMON_PID_PATHFILE)"
+        return
     else
-        DisplayDoneCommitToLog 'daemon is not running'
+        DisplayDoneCommitToLog 'daemon is not active'
     fi
 
     [[ -f $DAEMON_PID_PATHFILE ]] && rm "$DAEMON_PID_PATHFILE"
@@ -889,7 +914,7 @@ Init
 if IsNotError; then
     if [[ -n $1 ]]; then
         service_operation="$1"
-        if [[ $1 != log || $1 != l ]]; then
+        if [[ $1 != log && $1 != l ]]; then
             CommitLog "$(SessionSeparator "'$service_operation' requested")"
             CommitLog "= $(date), QPKG: $QPKG_VERSION, application: $app_version"
         fi
@@ -906,7 +931,11 @@ if IsNotError; then
             ;;
         s|status)
             LoadUIPorts start
-            IsDaemonActive $QPKG_NAME || SetError
+            if IsDaemonActive $QPKG_NAME; then
+                CheckPorts both
+            else
+                SetError
+            fi
             ;;
         b|backup)
             BackupConfig || SetError
@@ -918,12 +947,7 @@ if IsNotError; then
             CleanLocalClone || SetError
             ;;
         l|log)
-            if [[ -e $SERVICE_LOG_PATHFILE ]]; then
-                LESSSECURE=1 $GNU_LESS_CMD +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$SERVICE_LOG_PATHFILE"
-            else
-                Display "service log not found: $(FormatAsFileName "$SERVICE_LOG_PATHFILE")"
-                SetError
-            fi
+            ViewLog
             ;;
         v|version)
             Display "$QPKG_VERSION"
