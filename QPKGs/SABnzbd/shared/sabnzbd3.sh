@@ -153,17 +153,16 @@ StopQPKG()
     {
 
     IsNotError || return
-    IsDaemonActive || return
     LoadUIPorts stop || return
+    IsDaemonActive || return
 
-    local -r MAX_WAIT_SECONDS_STOP=60
     local acc=0
     local pid=0
 
     pid=$(<$DAEMON_PID_PATHFILE)
     kill "$pid"
     DisplayWaitCommitToLog '* stopping daemon with SIGTERM:'
-    DisplayWait "(waiting for up to $MAX_WAIT_SECONDS_STOP seconds):"
+    DisplayWait "(waiting for up to $STOP_TIMEOUT seconds):"
 
     while true; do
         while [[ -d /proc/$pid ]]; do
@@ -171,7 +170,7 @@ StopQPKG()
             ((acc++))
             DisplayWait "$acc,"
 
-            if [[ $acc -ge $MAX_WAIT_SECONDS_STOP ]]; then
+            if [[ $acc -ge $STOP_TIMEOUT ]]; then
                 DisplayWaitCommitToLog 'failed!'
                 kill -9 "$pid" 2> /dev/null
                 DisplayCommitToLog 'sent SIGKILL.'
@@ -504,7 +503,7 @@ IsSysFilePresent()
     fi
 
     if [[ ! -e $1 ]]; then
-        FormatAsDisplayError "A required NAS system file is missing [$1]"
+        FormatAsDisplayError "A required NAS system file is missing: $(FormatAsFileName "$1")"
         SetError
         return 1
     else
@@ -565,18 +564,17 @@ IsPortResponds()
         return 1
     fi
 
-    local -r MAX_WAIT_SECONDS_START=60
     local acc=0
 
     DisplayWaitCommitToLog "* checking for UI port $1 response:"
-    DisplayWait "(waiting for up to $MAX_WAIT_SECONDS_START seconds):"
+    DisplayWait "(waiting for up to $PORT_CHECK_TIMEOUT seconds):"
 
-    while ! $CURL_CMD --silent --fail http://localhost:"$1" >/dev/null; do
-        sleep 1
+    while ! $CURL_CMD --silent --fail --max-time 1 http://localhost:"$1" >/dev/null; do
+        sleep 1         # reasonably sure waiting for up-to 1 second above, then waiting for at-least 1 second here is more than 1 second. ¯\_(ツ)_/¯
         ((acc++))
         DisplayWait "$acc,"
 
-        if [[ $acc -ge $MAX_WAIT_SECONDS_START ]]; then
+        if [[ $acc -ge $PORT_CHECK_TIMEOUT ]]; then
             DisplayCommitToLog 'failed!'
             CommitErrToSysLog "UI port $1 failed to respond after $acc seconds"
             return 1
@@ -602,18 +600,17 @@ IsPortSecureResponds()
         return 1
     fi
 
-    local -r MAX_WAIT_SECONDS_START=60
     local acc=0
 
     DisplayWaitCommitToLog "* checking for secure UI port $1 response:"
-    DisplayWait "(waiting for up to $MAX_WAIT_SECONDS_START seconds):"
+    DisplayWait "(waiting for up to $PORT_CHECK_TIMEOUT seconds):"
 
-    while ! $CURL_CMD --silent --insecure --fail https://localhost:"$1" >/dev/null; do
-        sleep 1
+    while ! $CURL_CMD --silent --insecure --fail --max-time 1 https://localhost:"$1" >/dev/null; do
+        sleep 1         # reasonably sure waiting for up-to 1 second above, then waiting for at-least 1 second here is more than 1 second. ¯\_(ツ)_/¯
         ((acc++))
         DisplayWait "$acc,"
 
-        if [[ $acc -ge $MAX_WAIT_SECONDS_START ]]; then
+        if [[ $acc -ge $PORT_CHECK_TIMEOUT ]]; then
             DisplayCommitToLog 'failed!'
             CommitErrToSysLog "secure UI port $1 failed to respond after $acc seconds"
             return 1
