@@ -2,7 +2,7 @@
 
 ## Description
 
-A package manager to install various media-management apps into QNAP NAS.
+A mini package manager to install various media-management apps into QNAP NAS.
 
 **sherpa** is able to install several search and download apps but will only install **ONE app** at a time. If you elect to install an app that is already installed, the app will be fully reinstalled. App configuration will be retained.
 
@@ -69,7 +69,7 @@ rm sherpa.*
 ---
 ## Known issues
 
-1) Python 2.7.16 is no-longer available via Entware/OpenWRT so the SABnzbdplus and Headphones QPKGs can no-longer be installed. I'll need to find another Python2 source with installable modules, but I'm not hopeful.
+1) Python 2.7.16 is no-longer available via Entware/OpenWRT so the Headphones QPKG can no-longer be installed. I'll need to find another Python2 source with installable modules, but I'm not hopeful.
 
 2) Sometimes, it seems existing installations of Entware can become "difficult" to work with. So, Entware can also be reinstalled, but this should only be used as a last resort. Using:
 
