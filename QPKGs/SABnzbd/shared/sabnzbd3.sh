@@ -122,10 +122,8 @@ StartQPKG()
     IsNotError || return
 
     if [[ $service_operation != restart && $service_operation != r && $service_operation != restore ]]; then
-        IsDaemonActive && return
+        IsNotDaemonActive || return
     fi
-
-    LoadUIPorts stop || return
 
     [[ -n $SOURCE_GIT_URL ]] && PullGitRepo $QPKG_NAME "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_PATH" && UpdateLanguages
 
@@ -155,8 +153,8 @@ StopQPKG()
     {
 
     IsNotError || return
-    LoadUIPorts stop || return
     IsDaemonActive || return
+    LoadUIPorts stop || return
 
     local -r MAX_WAIT_SECONDS_STOP=60
     local acc=0
