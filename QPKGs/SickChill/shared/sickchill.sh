@@ -931,7 +931,12 @@ if IsNotError; then
     fi
     case $service_operation in
         start)
-            StartQPKG || SetError
+            # ensure those still on SickBeard.py are using the updated repo
+            if [[ ! -e $TARGET_SCRIPT_PATHFILE && -e $($DIRNAME_CMD "$TARGET_SCRIPT_PATHFILE")/SickBeard.py ]]; then
+                CleanLocalClone
+            else
+                StartQPKG || SetError
+            fi
             ;;
         stop)
             StopQPKG || SetError
