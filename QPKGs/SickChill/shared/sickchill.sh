@@ -54,6 +54,8 @@ Init()
     [[ -n $PYTHON ]] && export PYTHONPATH=$PYTHON
     export PATH=/opt/bin:/opt/sbin:$PATH
     readonly PIP_CACHE_PATH=$QPKG_PATH/pip.cache
+    readonly STOP_TIMEOUT=60
+    readonly PORT_CHECK_TIMEOUT=10
     ui_port=0
     ui_port_secure=0
 
@@ -121,9 +123,13 @@ ShowHelp()
 StartQPKG()
     {
 
-    IsError && return
+    IsNotError || return
+
+    if [[ $service_operation != restart && $service_operation != r && $service_operation != restore ]]; then
+        IsDaemonActive && return
+    fi
+
     LoadUIPorts stop || return
-    IsNotDaemonActive || return
 
     [[ -n $SOURCE_GIT_URL ]] && PullGitRepo $QPKG_NAME "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_PATH"
 
@@ -141,9 +147,9 @@ StartQPKG()
     fi
 
     ReWriteUIPorts
-
     ExecuteAndLog 'starting daemon' "$LAUNCHER" log:everything || return 1
-
+    sleep 5         # daemon needs time to wite a PID file
+    IsDaemonActive || return 1
     CheckPorts || return 1
 
     return 0
@@ -153,18 +159,17 @@ StartQPKG()
 StopQPKG()
     {
 
-    IsError && return
+    IsNotError || return
     LoadUIPorts stop || return
     IsDaemonActive || return
 
-    local -r MAX_WAIT_SECONDS_STOP=60
     local acc=0
     local pid=0
 
     pid=$(<$DAEMON_PID_PATHFILE)
     kill "$pid"
     DisplayWaitCommitToLog '* stopping daemon with SIGTERM:'
-    DisplayWait "(waiting for up to $MAX_WAIT_SECONDS_STOP seconds):"
+    DisplayWait "(waiting for up to $STOP_TIMEOUT seconds):"
 
     while true; do
         while [[ -d /proc/$pid ]]; do
@@ -172,7 +177,7 @@ StopQPKG()
             ((acc++))
             DisplayWait "$acc,"
 
-            if [[ $acc -ge $MAX_WAIT_SECONDS_STOP ]]; then
+            if [[ $acc -ge $STOP_TIMEOUT ]]; then
                 DisplayWaitCommitToLog 'failed!'
                 kill -9 "$pid" 2> /dev/null
                 DisplayCommitToLog 'sent SIGKILL.'
@@ -184,8 +189,95 @@ StopQPKG()
         [[ -f $DAEMON_PID_PATHFILE ]] && rm -f $DAEMON_PID_PATHFILE
         Display 'OK'
         CommitLog "stopped OK in $acc seconds"
+
+        CommitInfoToSysLog "stopping daemon: OK."
         break
     done
+
+    IsNotDaemonActive || return 1
+
+    }
+
+BackupConfig()
+    {
+
+    ExecuteAndLog 'updating configuration backup' "$TAR_CMD --create --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config ." log:everything
+
+    }
+
+RestoreConfig()
+    {
+
+    if [[ ! -f $BACKUP_PATHFILE ]]; then
+        DisplayErrCommitAllLogs 'unable to restore configuration: no backup file was found!'
+        SetError
+        return 1
+    fi
+
+    StopQPKG
+    ExecuteAndLog 'restoring configuration backup' "$TAR_CMD --extract --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config" log:everything
+    StartQPKG
+
+    }
+
+#### functions specific to this app appear below ###
+
+LoadUIPorts()
+    {
+
+    # If user changes ports via app UI, must first 'stop' application on old ports, then 'start' on new ports
+
+    case $1 in
+        start|status)
+            # Read the current application UI ports from application configuration
+            ui_port=$($GETCFG_CMD general web_port -d 0 -f "$QPKG_INI_PATHFILE")
+            ui_port_secure=$($GETCFG_CMD general web_port -d 0 -f "$QPKG_INI_PATHFILE")
+            ;;
+        stop)
+            # Read the current application UI ports from QTS App Center
+            ui_port=$($GETCFG_CMD $QPKG_NAME Web_Port -d 0 -f "$QTS_QPKG_CONF_PATHFILE")
+            ui_port_secure=$($GETCFG_CMD $QPKG_NAME Web_SSL_Port -d 0 -f "$QTS_QPKG_CONF_PATHFILE")
+            ;;
+        *)
+            DisplayErrCommitAllLogs "unable to load UI ports: service operation '$service_operation' unrecognised"
+            SetError
+            return 1
+            ;;
+    esac
+
+    if [[ $ui_port -eq 0 ]] && IsNotDefaultConfigFound; then
+        ui_port=0
+        ui_port_secure=0
+    fi
+
+    }
+
+IsSSLEnabled()
+    {
+
+    # SSL is considered "enabled" in SickChill if user has provided paths to a .cert and .key file pair, and ticked the "Enable HTTPS" box in web-interface.
+    # If these files are specified, but don't exist, SickChill continues startup, but without SSL enabled on UI port.
+    # Presuming the same is true if either file is invalid, but let's not check for that right now.
+
+    server_ssl_certfile=$($GETCFG_CMD general https_cert -f "$QPKG_INI_PATHFILE")
+    server_ssl_keyfile=$($GETCFG_CMD general https_key -f "$QPKG_INI_PATHFILE")
+
+    [[ -e $server_ssl_certfile && -e $server_ssl_keyfile && $($GETCFG_CMD general enable_https -d 0 -f "$QPKG_INI_PATHFILE") -eq 1 ]]
+
+    }
+
+LoadAppVersion()
+    {
+
+    # Find the application's internal version number
+    # creates a global var: $app_version
+    # this is the installed application version (not the QPKG version)
+
+    app_version=''
+
+    [[ ! -e $APP_VERSION_PATHFILE ]] && return
+
+    app_version=$($GREP_CMD '__version__ =' "$APP_VERSION_PATHFILE" | $SED_CMD 's|^.*"\(.*\)"|\1|')
 
     }
 
@@ -214,42 +306,7 @@ InstallPy3Modules()
 
     }
 
-BackupConfig()
-    {
-
-    ExecuteAndLog 'updating configuration backup' "$TAR_CMD --create --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config ." log:everything
-
-    }
-
-RestoreConfig()
-    {
-
-    if [[ ! -f $BACKUP_PATHFILE ]]; then
-        DisplayErrCommitAllLogs 'unable to restore configuration: no backup file was found!'
-        SetError
-        return 1
-    fi
-
-    StopQPKG
-    ExecuteAndLog 'restoring configuration backup' "$TAR_CMD --extract --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config" log:everything
-    StartQPKG
-
-    }
-
-LoadAppVersion()
-    {
-
-    # Find the application's internal version number
-    # creates a global var: $app_version
-    # this is the installed application version (not the QPKG version)
-
-    app_version=''
-
-    [[ ! -e $APP_VERSION_PATHFILE ]] && return
-
-    app_version=$($GREP_CMD '__version__ =' "$APP_VERSION_PATHFILE" | $SED_CMD 's|^.*"\(.*\)"|\1|')
-
-    }
+#### functions specific to this app appear above ###
 
 SaveAppVersion()
     {
@@ -267,9 +324,9 @@ PullGitRepo()
     # $4 = remote depth: 'shallow' or 'single-branch'
     # $5 = local path to clone into
 
-    local -r GIT_CMD=/opt/bin/git
-
     [[ -z $1 || -z $2 || -z $3 || -z $4 || -z $5 ]] && return 1
+
+    local -r GIT_CMD=/opt/bin/git
 
     if IsNotSysFilePresent "$GIT_CMD"; then
         SetError
@@ -303,6 +360,21 @@ CleanLocalClone()
     StopQPKG
     ExecuteAndLog 'cleaning local repo' "rm -r $QPKG_REPO_PATH"
     StartQPKG
+
+    }
+
+ViewLog()
+    {
+
+    if [[ -e $SERVICE_LOG_PATHFILE ]]; then
+        LESSSECURE=1 $GNU_LESS_CMD +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$SERVICE_LOG_PATHFILE"
+    else
+        Display "service log not found: $(FormatAsFileName "$SERVICE_LOG_PATHFILE")"
+        SetError
+        return 1
+    fi
+
+    return 0
 
     }
 
@@ -364,97 +436,55 @@ ReWriteUIPorts()
 CheckPorts()
     {
 
-    local response_flag=false
+    local msg=''
 
     if IsSSLEnabled && IsPortSecureResponds $ui_port_secure; then
-        DisplayDoneCommitToLog "$(FormatAsPackageName $QPKG_NAME) UI is listening on HTTPS port $ui_port_secure"
-        response_flag=true
+        msg="$(FormatAsPackageName $QPKG_NAME) UI is listening on HTTPS port $ui_port_secure"
     fi
 
-    # SABnzbd can listen on both ports so test both
-    if IsPortResponds $ui_port; then
-        DisplayDoneCommitToLog "$(FormatAsPackageName $QPKG_NAME) UI is$([[ $response_flag = true ]] && echo ' also') listening on HTTP port $ui_port"
-        response_flag=true
+    if IsNotSSLEnabled || [[ $ui_port -ne $ui_port_secure ]]; then
+        # assume $ui_port should be checked too
+        if IsPortResponds $ui_port; then
+            if [[ -n $msg ]]; then
+                msg+=" and on HTTP port $ui_port"
+            else
+                msg="$(FormatAsPackageName $QPKG_NAME) UI is listening on HTTP port $ui_port"
+            fi
+        fi
     fi
 
-    if [[ $response_flag = false ]]; then
+    if [[ -z $msg ]]; then
         DisplayErrCommitAllLogs 'no response on configured port(s)!'
         SetError
         return 1
     fi
 
-    }
-
-LoadUIPorts()
-    {
-
-    # If user changes ports via app UI, must first 'stop' application on old ports, then 'start' on new ports
-
-    case $1 in
-        start|status)
-            # Read the current application UI ports from application configuration
-
-            ui_port=$($GETCFG_CMD general web_port -d 0 -f "$QPKG_INI_PATHFILE")
-            ui_port_secure=$($GETCFG_CMD general web_port -d 0 -f "$QPKG_INI_PATHFILE")
-            ;;
-        stop)
-            # Read the current application UI ports from QTS App Center
-
-            ui_port=$($GETCFG_CMD $QPKG_NAME Web_Port -d 0 -f "$QTS_QPKG_CONF_PATHFILE")
-            ui_port_secure=$($GETCFG_CMD $QPKG_NAME Web_SSL_Port -d 0 -f "$QTS_QPKG_CONF_PATHFILE")
-            ;;
-        *)
-            DisplayErrCommitAllLogs "unable to load UI ports: service operation '$service_operation' unrecognised"
-            SetError
-            return 1
-            ;;
-    esac
-
-    if [[ $ui_port -eq 0 ]] && IsNotDefaultConfigFound; then
-        ui_port=0
-        ui_port_secure=0
-    fi
-
-    }
-
-ViewLog()
-    {
-
-    if [[ -e $SERVICE_LOG_PATHFILE ]]; then
-        LESSSECURE=1 $GNU_LESS_CMD +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$SERVICE_LOG_PATHFILE"
-    else
-        Display "service log not found: $(FormatAsFileName "$SERVICE_LOG_PATHFILE")"
-        SetError
-        return 1
-    fi
+    DisplayDoneCommitToLog "$msg"
 
     return 0
 
     }
 
-IsSSLEnabled()
+IsNotSSLEnabled()
     {
 
-    [[ $($GETCFG_CMD general enable_https -d 0 -f "$QPKG_INI_PATHFILE") -eq 1 ]]
+    ! IsSSLEnabled
 
     }
 
 IsDaemonActive()
     {
 
-    # $? = 0 if $QPKG_NAME is active
-    # $? = 1 if $QPKG_NAME is not active
+    # $? = 0 : $TARGET_SCRIPT_PATHFILE is in memory
+    # $? = 1 : $TARGET_SCRIPT_PATHFILE is not in memory
 
-    if [[ -f $DAEMON_PID_PATHFILE && -d /proc/$(<$DAEMON_PID_PATHFILE) ]]; then
-        DisplayDoneCommitToLog 'daemon is running'
-
-        CheckPorts && return
-    else
-        DisplayDoneCommitToLog 'daemon is not running'
+    if [[ -e $DAEMON_PID_PATHFILE && -d /proc/$(<$DAEMON_PID_PATHFILE) && -n $TARGET_SCRIPT_PATHFILE && $(</proc/"$(<$DAEMON_PID_PATHFILE)"/cmdline) =~ $TARGET_SCRIPT_PATHFILE ]]; then
+        DisplayDoneCommitToLog "daemon is active: PID $(<$DAEMON_PID_PATHFILE)"
+        return
     fi
 
+    DisplayDoneCommitToLog 'daemon is not active'
     [[ -f $DAEMON_PID_PATHFILE ]] && rm "$DAEMON_PID_PATHFILE"
-
     return 1
 
     }
@@ -541,18 +571,17 @@ IsPortResponds()
         return 1
     fi
 
-    local -r MAX_WAIT_SECONDS_START=60
     local acc=0
 
     DisplayWaitCommitToLog "* checking for UI port $1 response:"
-    DisplayWait "(waiting for up to $MAX_WAIT_SECONDS_START seconds):"
+    DisplayWait "(waiting for up to $PORT_CHECK_TIMEOUT seconds):"
 
-    while ! $CURL_CMD --silent --fail http://localhost:"$1" >/dev/null; do
-        sleep 1
+    while ! $CURL_CMD --silent --fail --max-time 1 http://localhost:"$1" >/dev/null; do
+        sleep 1         # reasonably sure waiting for up-to 1 second above, then waiting for at-least 1 second here is more than 1 second. ¯\_(ツ)_/¯
         ((acc++))
         DisplayWait "$acc,"
 
-        if [[ $acc -ge $MAX_WAIT_SECONDS_START ]]; then
+        if [[ $acc -ge $PORT_CHECK_TIMEOUT ]]; then
             DisplayCommitToLog 'failed!'
             CommitErrToSysLog "UI port $1 failed to respond after $acc seconds"
             return 1
@@ -578,18 +607,17 @@ IsPortSecureResponds()
         return 1
     fi
 
-    local -r MAX_WAIT_SECONDS_START=60
     local acc=0
 
     DisplayWaitCommitToLog "* checking for secure UI port $1 response:"
-    DisplayWait "(waiting for up to $MAX_WAIT_SECONDS_START seconds):"
+    DisplayWait "(waiting for up to $PORT_CHECK_TIMEOUT seconds):"
 
-    while ! $CURL_CMD --silent --insecure --fail https://localhost:"$1" >/dev/null; do
-        sleep 1
+    while ! $CURL_CMD --silent --insecure --fail --max-time 1 https://localhost:"$1" >/dev/null; do
+        sleep 1         # reasonably sure waiting for up-to 1 second above, then waiting for at-least 1 second here is more than 1 second. ¯\_(ツ)_/¯
         ((acc++))
         DisplayWait "$acc,"
 
-        if [[ $acc -ge $MAX_WAIT_SECONDS_START ]]; then
+        if [[ $acc -ge $PORT_CHECK_TIMEOUT ]]; then
             DisplayCommitToLog 'failed!'
             CommitErrToSysLog "secure UI port $1 failed to respond after $acc seconds"
             return 1
@@ -896,7 +924,7 @@ Init
 if IsNotError; then
     if [[ -n $1 ]]; then
         service_operation="$1"
-        if [[ $1 != log && $1 != l ]]; then
+        if [[ $1 != log && $1 != l && $1 != status && $1 != s ]]; then
             CommitLog "$(SessionSeparator "'$service_operation' requested")"
             CommitLog "= $(date), QPKG: $QPKG_VERSION, application: $app_version"
         fi
@@ -909,11 +937,15 @@ if IsNotError; then
             StopQPKG || SetError
             ;;
         r|restart)
-            StopQPKG; StartQPKG || SetError
+            { StopQPKG; StartQPKG ; } || SetError
             ;;
         s|status)
-            LoadUIPorts start || SetError
-            IsDaemonActive $QPKG_NAME || SetError
+            LoadUIPorts status
+            if IsDaemonActive $QPKG_NAME; then
+                CheckPorts
+            else
+                SetError
+            fi
             ;;
         b|backup)
             BackupConfig || SetError
