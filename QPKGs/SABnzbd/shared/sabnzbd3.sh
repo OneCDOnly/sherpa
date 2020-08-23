@@ -21,7 +21,7 @@ Init()
         # 'shallow' (depth 1) or 'single-branch' (note: 'shallow' implies a 'single-branch' too)
         readonly SOURCE_GIT_DEPTH=shallow
         readonly PYTHON=/opt/bin/python3
-        local -r TARGET_SCRIPT=SABnzbd.py
+        readonly TARGET_SCRIPT=SABnzbd.py
 
     # cherry-pick required binaries
     readonly BASENAME_CMD=/usr/bin/basename
@@ -52,6 +52,8 @@ Init()
     readonly BACKUP_PATHFILE=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
     [[ -n $PYTHON ]] && export PYTHONPATH=$PYTHON
     export PATH=/opt/bin:/opt/sbin:$PATH
+    readonly STOP_TIMEOUT=60
+    readonly PORT_CHECK_TIMEOUT=20
     ui_port=0
     ui_port_secure=0
 
@@ -133,15 +135,14 @@ StartQPKG()
         DisplayErrCommitAllLogs 'unable to start daemon: no UI port was specified!'
         SetError
         return 1
-    elif IsNotPortAvailable $ui_port && IsNotPortAvailable $ui_port_secure; then
-        DisplayErrCommitAllLogs "unable to start daemon: ports $ui_port & $ui_port_secure are already in use!"
+    elif IsNotPortAvailable $ui_port || IsNotPortAvailable $ui_port_secure; then
+        DisplayErrCommitAllLogs "unable to start daemon: ports $ui_port or $ui_port_secure are already in use!"
         SetError
         return 1
     fi
 
-    ReWriteUIPorts
     ExecuteAndLog 'starting daemon' "$LAUNCHER" log:everything || return 1
-    sleep 5         # daemon needs time to wite a PID file
+    [[ -n $TARGET_SCRIPT || -n $TARGET_DAEMON ]] && ExecuteAndLog 'waiting for PID file to be created' "sleep 5"
     IsDaemonActive || return 1
     CheckPorts || return 1
 
@@ -162,7 +163,7 @@ StopQPKG()
     pid=$(<$DAEMON_PID_PATHFILE)
     kill "$pid"
     DisplayWaitCommitToLog '* stopping daemon with SIGTERM:'
-    DisplayWait "(waiting for up to $STOP_TIMEOUT seconds):"
+    DisplayWait "(no-more than $STOP_TIMEOUT seconds):"
 
     while true; do
         while [[ -d /proc/$pid ]]; do
@@ -171,9 +172,9 @@ StopQPKG()
             DisplayWait "$acc,"
 
             if [[ $acc -ge $STOP_TIMEOUT ]]; then
-                DisplayWaitCommitToLog 'failed!'
+                DisplayCommitToLog 'failed!'
+                DisplayCommitToLog '* stopping daemon with SIGKILL'
                 kill -9 "$pid" 2> /dev/null
-                DisplayCommitToLog 'sent SIGKILL.'
                 [[ -f $DAEMON_PID_PATHFILE ]] && rm -f $DAEMON_PID_PATHFILE
                 break 2
             fi
@@ -446,6 +447,8 @@ CheckPorts()
         fi
     fi
 
+    ReWriteUIPorts
+
     if [[ -z $msg ]]; then
         DisplayErrCommitAllLogs 'no response on configured port(s)!'
         SetError
@@ -567,11 +570,11 @@ IsPortResponds()
     local acc=0
 
     DisplayWaitCommitToLog "* checking for UI port $1 response:"
-    DisplayWait "(waiting for up to $PORT_CHECK_TIMEOUT seconds):"
+    DisplayWait "(no-more than $PORT_CHECK_TIMEOUT seconds):"
 
     while ! $CURL_CMD --silent --fail --max-time 1 http://localhost:"$1" >/dev/null; do
-        sleep 1         # reasonably sure waiting for up-to 1 second above, then waiting for at-least 1 second here is more than 1 second. ¯\_(ツ)_/¯
-        ((acc++))
+        sleep 1
+        ((acc+=2))
         DisplayWait "$acc,"
 
         if [[ $acc -ge $PORT_CHECK_TIMEOUT ]]; then
@@ -603,11 +606,11 @@ IsPortSecureResponds()
     local acc=0
 
     DisplayWaitCommitToLog "* checking for secure UI port $1 response:"
-    DisplayWait "(waiting for up to $PORT_CHECK_TIMEOUT seconds):"
+    DisplayWait "(no-more than $PORT_CHECK_TIMEOUT seconds):"
 
     while ! $CURL_CMD --silent --insecure --fail --max-time 1 https://localhost:"$1" >/dev/null; do
-        sleep 1         # reasonably sure waiting for up-to 1 second above, then waiting for at-least 1 second here is more than 1 second. ¯\_(ツ)_/¯
-        ((acc++))
+        sleep 1
+        ((acc+=2))
         DisplayWait "$acc,"
 
         if [[ $acc -ge $PORT_CHECK_TIMEOUT ]]; then

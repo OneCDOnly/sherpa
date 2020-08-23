@@ -38,7 +38,7 @@ Init()
     {
 
     readonly SCRIPT_NAME=sherpa.sh
-    readonly SCRIPT_VERSION=200823r
+    readonly SCRIPT_VERSION=200824
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -198,8 +198,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(SABnzbd)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/SABnzbd/build/SABnzbd_200823b.qpkg)
-        SHERPA_QPKG_MD5+=(061d62a40c4068ed273cbbe638f70159)
+        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/SABnzbd/build/SABnzbd_200824.qpkg)
+        SHERPA_QPKG_MD5+=(52a80d7d0d9b8dbf71f56883d5f247ba)
         SHERPA_QPKG_ABBRVS+=('sb sb3 sab sab3 sabnzbd3 sabnzbd')
         SHERPA_QPKG_DEPS+=('Entware Par2')
         SHERPA_QPKG_IPKGS+=('python3 python3-pyopenssl python3-cryptography python3-dev gcc unrar p7zip coreutils-nice ionice ffprobe')
