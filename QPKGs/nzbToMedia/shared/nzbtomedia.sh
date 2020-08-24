@@ -21,6 +21,12 @@ Init()
         # 'shallow' (depth 1) or 'single-branch' (note: 'shallow' implies a 'single-branch' too)
         readonly SOURCE_GIT_DEPTH=shallow
 
+    if [[ ! -e /etc/init.d/functions ]]; then
+        FormatAsDisplayError 'QTS functions missing (is this a QNAP NAS?)'
+        SetError
+        return 1
+    fi
+
     # cherry-pick required binaries
     readonly BASENAME_CMD=/usr/bin/basename
     readonly CURL_CMD=/sbin/curl
@@ -44,9 +50,13 @@ Init()
     readonly QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.spec
     readonly SERVICE_STATUS_PATHFILE=/var/run/$QPKG_NAME.last.operation
     readonly SERVICE_LOG_PATHFILE=/var/log/$QPKG_NAME.log
+    local -r OPKG_PATH=/opt/bin:/opt/sbin
     local -r BACKUP_PATH=$($GETCFG_CMD SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
     readonly BACKUP_PATHFILE=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
     readonly APPARENT_PATH=/share/$($GETCFG_CMD SHARE_DEF defDownload -d Qdownload -f /etc/config/def_share.info)/$QPKG_NAME
+    [[ $PATH =~ $OPKG_PATH ]] && export PATH="$OPKG_PATH:$PATH"
+    readonly STOP_TIMEOUT=60
+    readonly PORT_CHECK_TIMEOUT=20
 
     # application-specific
     readonly APP_VERSION_PATHFILE=$QPKG_REPO_PATH/nzbtomedia/version.py
@@ -94,6 +104,10 @@ ShowHelp()
 
 StartQPKG()
     {
+
+    IsNotError || return
+
+    [[ ! -L $APPARENT_PATH ]] || return
 
     local -r SAB_MIN_VERSION=200809
 
@@ -296,7 +310,7 @@ IsSysFilePresent()
     fi
 
     if [[ ! -e $1 ]]; then
-        FormatAsDisplayError "A required NAS system file is missing [$1]"
+        FormatAsDisplayError "A required NAS system file is missing: $(FormatAsFileName "$1")"
         SetError
         return 1
     else
@@ -363,21 +377,14 @@ IsNotError()
 SetServiceOperationOK()
     {
 
-    echo "ok" > "$SERVICE_STATUS_PATHFILE"
+    [[ -n $SERVICE_STATUS_PATHFILE ]] && echo "ok" > "$SERVICE_STATUS_PATHFILE"
 
     }
 
 SetServiceOperationFailed()
     {
 
-    echo "failed" > "$SERVICE_STATUS_PATHFILE"
-
-    }
-
-RemoveServiceStatus()
-    {
-
-    [[ -e $SERVICE_STATUS_PATHFILE ]] && rm -f "$SERVICE_STATUS_PATHFILE"
+    [[ -n $SERVICE_STATUS_PATHFILE ]] && echo "failed" > "$SERVICE_STATUS_PATHFILE"
 
     }
 
@@ -607,7 +614,8 @@ Init
 if IsNotError; then
     if [[ -n $1 ]]; then
         service_operation="$1"
-        if [[ $1 != log && $1 != l && $1 != status && $1 != s ]]; then
+
+        if [[ $service_operation != log && $service_operation != l ]]; then
             CommitLog "$(SessionSeparator "'$service_operation' requested")"
             CommitLog "= $(date), QPKG: $QPKG_VERSION, application: $app_version"
         fi
@@ -620,7 +628,7 @@ if IsNotError; then
             StopQPKG || SetError
             ;;
         r|restart)
-            { StopQPKG; StartQPKG ; } || SetError
+            { StopQPKG; StartQPKG ;} || SetError
             ;;
         s|status)
             # always return OK, as this app is only called on-demand by other apps.
