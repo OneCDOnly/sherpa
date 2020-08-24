@@ -283,19 +283,6 @@ ImportFromSAB2()
 
     }
 
-UpdateLanguages()
-    {
-
-    # run [tools/make_mo.py] if SABnzbd version number has changed since last run
-
-    LoadAppVersion
-
-    [[ -e $APP_VERSION_STORE_PATHFILE && $(<"$APP_VERSION_STORE_PATHFILE") = "$app_version" && -d $QPKG_REPO_PATH/locale ]] && return 0
-
-    ExecuteAndLog "updating $(FormatAsPackageName $QPKG_NAME) language translations" "cd $QPKG_REPO_PATH; $PYTHON $QPKG_REPO_PATH/tools/make_mo.py" && SaveAppVersion
-
-    }
-
 LoadAppVersion()
     {
 
@@ -308,6 +295,19 @@ LoadAppVersion()
     [[ ! -e $APP_VERSION_PATHFILE ]] && return
 
     app_version=$($GREP_CMD '__version__ =' "$APP_VERSION_PATHFILE" | $SED_CMD 's|^.*"\(.*\)"|\1|')
+
+    }
+
+UpdateLanguages()
+    {
+
+    # run [tools/make_mo.py] if SABnzbd version number has changed since last run
+
+    LoadAppVersion
+
+    [[ -e $APP_VERSION_STORE_PATHFILE && $(<"$APP_VERSION_STORE_PATHFILE") = "$app_version" && -d $QPKG_REPO_PATH/locale ]] && return 0
+
+    ExecuteAndLog "updating $(FormatAsPackageName $QPKG_NAME) language translations" "cd $QPKG_REPO_PATH; $PYTHON $QPKG_REPO_PATH/tools/make_mo.py" && SaveAppVersion
 
     }
 
@@ -435,6 +435,8 @@ ReWriteUIPorts()
     else
         $SETCFG_CMD $QPKG_NAME Web_SSL_Port 0 -f $QTS_QPKG_CONF_PATHFILE
     fi
+
+    DisplayDoneCommitToLog 'App Center configuration updated with current port information'
 
     }
 
