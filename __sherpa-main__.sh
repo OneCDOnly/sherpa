@@ -2,7 +2,7 @@
 #
 # __sherpa-main__.sh
 #
-# This is the main installer for the sherpa package manager.
+# This is the main installer for the sherpa mini package manager.
 #
 # A BASH script to install various media-management apps into QNAP NAS.
 #
@@ -38,7 +38,7 @@ Init()
     {
 
     readonly SCRIPT_NAME=sherpa.sh
-    readonly SCRIPT_VERSION=200824c
+    readonly SCRIPT_VERSION=200824d
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -1739,7 +1739,7 @@ ShowResult()
     elif IsLogViewOnly; then
         ShowLogViewer
     elif IsShowHelpReminder; then
-        echo -e "\n* A package manager to install various media-management apps into QNAP NAS."
+        echo -e "\n* A mini package manager to install various media-management apps into QNAP NAS."
 
         echo -e "\n- Each application shown below can be installed (or re-installed) by running:"
         for package in "${SHERPA_QPKG_NAME[@]}"; do

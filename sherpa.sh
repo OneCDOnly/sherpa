@@ -2,7 +2,7 @@
 #
 # sherpa.sh
 #
-# This is the launcher script for the sherpa package manager.
+# This is the launcher script for the sherpa mini package manager.
 #
 # Copyright (C) 2017-2020 OneCD [one.cd.only@gmail.com]
 #
