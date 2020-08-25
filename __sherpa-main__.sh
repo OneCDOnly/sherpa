@@ -38,7 +38,7 @@ Init()
     {
 
     readonly SCRIPT_NAME=sherpa.sh
-    readonly SCRIPT_VERSION=200825e
+    readonly SCRIPT_VERSION=200825f
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -198,8 +198,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(SABnzbd)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/SABnzbd/build/SABnzbd_200825.qpkg)
-        SHERPA_QPKG_MD5+=(eda8cc49181b572ec656d80b42b90124)
+        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/SABnzbd/build/SABnzbd_200825b.qpkg)
+        SHERPA_QPKG_MD5+=(80656b15ae0e2fb5e6e7de05c9db6967)
         SHERPA_QPKG_ABBRVS+=('sb sb3 sab sab3 sabnzbd3 sabnzbd')
         SHERPA_QPKG_DEPS+=('Entware Par2')
         SHERPA_QPKG_IPKGS+=('python3 python3-pyopenssl python3-cryptography python3-dev gcc unrar p7zip coreutils-nice ionice ffprobe')
@@ -225,8 +225,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(SickChill)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/SickChill/build/SickChill_200825.qpkg)
-        SHERPA_QPKG_MD5+=(3ac8eb608e43617b8d51ff24847a756f)
+        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/SickChill/build/SickChill_200825b.qpkg)
+        SHERPA_QPKG_MD5+=(4dad296d82f07a7cf526e6adee6dfa30)
         SHERPA_QPKG_ABBRVS+=('sc sick sickc chill sickchill')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python3')

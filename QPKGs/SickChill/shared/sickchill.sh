@@ -254,13 +254,11 @@ LoadUIPorts()
             # Read the current application UI ports from application configuration
             ui_port=$($GETCFG_CMD general web_port -d 0 -f "$QPKG_INI_PATHFILE")
             ui_port_secure=$($GETCFG_CMD general web_port -d 0 -f "$QPKG_INI_PATHFILE")
-            ui_listening_address=$($GETCFG_CMD general web_host -f "$QPKG_INI_PATHFILE")
             ;;
         qts)
             # Read the current application UI ports from QTS App Center
             ui_port=$($GETCFG_CMD $QPKG_NAME Web_Port -d 0 -f "$QTS_QPKG_CONF_PATHFILE")
             ui_port_secure=$($GETCFG_CMD $QPKG_NAME Web_SSL_Port -d 0 -f "$QTS_QPKG_CONF_PATHFILE")
-            ui_listening_address=''
             ;;
         *)
             DisplayErrCommitAllLogs "unable to load UI ports: action '$1' unrecognised"
@@ -272,8 +270,10 @@ LoadUIPorts()
     if [[ $ui_port -eq 0 ]] && IsNotDefaultConfigFound; then
         ui_port=0
         ui_port_secure=0
-        ui_listening_address=''
     fi
+
+    # Always read this from the application configuration
+    ui_listening_address=$($GETCFG_CMD general web_host -f "$QPKG_INI_PATHFILE")
 
     }
 
