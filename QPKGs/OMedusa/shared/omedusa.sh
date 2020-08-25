@@ -110,7 +110,7 @@ ShowHelp()
     Display
     Display " Usage: $0 [OPTION]"
     Display
-    Display " [OPTION] can be any one of the following:"
+    Display ' [OPTION] can be any one of the following:'
     Display
     Display " start      - launch $(FormatAsPackageName $QPKG_NAME) if not already running."
     Display " stop       - shutdown $(FormatAsPackageName $QPKG_NAME) if running."
@@ -119,8 +119,8 @@ ShowHelp()
     Display " backup     - backup the current $(FormatAsPackageName $QPKG_NAME) configuration to persistent storage."
     Display " restore    - restore a previously saved configuration from persistent storage. $(FormatAsPackageName $QPKG_NAME) will be stopped, then restarted."
     [[ -n $SOURCE_GIT_URL ]] && Display " clean      - wipe the current local copy of $(FormatAsPackageName $QPKG_NAME), and download it again from remote source. Configuration will be retained."
-    Display " log        - display this service script runtime log."
-    Display " version    - display the package version number."
+    Display ' log        - display this service script runtime log.'
+    Display ' version    - display the package version number.'
     Display
 
     }
@@ -130,13 +130,14 @@ StartQPKG()
 
     IsNotError || return
 
-    if [[ $service_operation != restart && $service_operation != r && $service_operation != restore && $service_operation != clean && $service_operation != c ]]; then
+    if IsNotRestart && IsNotRestore && IsNotClean; then
+        RecordOperationToLog
         IsNotDaemonActive || return
     fi
 
     [[ -n $SOURCE_GIT_URL ]] && PullGitRepo $QPKG_NAME "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_PATH"
 
-    LoadUIPorts start || return
+    LoadUIPorts app || return
 
     if [[ $ui_port -le 0 && $ui_port_secure -le 0 ]]; then
         DisplayErrCommitAllLogs 'unable to start daemon: no UI port was specified!'
@@ -149,7 +150,7 @@ StartQPKG()
     fi
 
     ExecuteAndLog 'starting daemon' "$LAUNCHER" log:everything || return 1
-    [[ -n $TARGET_SCRIPT || -n $TARGET_DAEMON ]] && ExecuteAndLog 'waiting for PID file to be created' "sleep 5"
+    [[ -n $TARGET_SCRIPT || -n $TARGET_DAEMON ]] && ExecuteAndLog 'waiting for PID file to be created' 'sleep 5'
     IsDaemonActive || return 1
     CheckPorts || return 1
 
@@ -161,7 +162,11 @@ StopQPKG()
     {
 
     IsNotError || return
-    LoadUIPorts stop || return
+
+    if IsNotRestore && IsNotClean; then
+        RecordOperationToLog
+    fi
+
     IsDaemonActive || return
 
     local acc=0
@@ -199,15 +204,30 @@ StopQPKG()
 
     }
 
+StatusQPKG()
+    {
+
+    IsNotError || return
+    IsDaemonActive || return
+    LoadUIPorts qts
+    CheckPorts || SetError
+
+    }
+
+#### functions specific to this app appear below ###
+
 BackupConfig()
     {
 
+    RecordOperationToLog
     ExecuteAndLog 'updating configuration backup' "$TAR_CMD --create --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config ." log:everything
 
     }
 
 RestoreConfig()
     {
+
+    RecordOperationToLog
 
     if [[ ! -f $BACKUP_PATHFILE ]]; then
         DisplayErrCommitAllLogs 'unable to restore configuration: no backup file was found!'
@@ -221,28 +241,24 @@ RestoreConfig()
 
     }
 
-#### functions specific to this app appear below ###
-
 LoadUIPorts()
     {
 
     # If user changes ports via app UI, must first 'stop' application on old ports, then 'start' on new ports
 
     case $1 in
-        start|status)
+        app)
             # Read the current application UI ports from application configuration
             ui_port=$($GETCFG_CMD general web_port -d 0 -f "$QPKG_INI_PATHFILE")
             ui_port_secure=$($GETCFG_CMD general web_port -d 0 -f "$QPKG_INI_PATHFILE")
-            ui_listening_address=$($GETCFG_CMD general web_host -f "$QPKG_INI_PATHFILE")
             ;;
-        stop)
+        qts)
             # Read the current application UI ports from QTS App Center
             ui_port=$($GETCFG_CMD $QPKG_NAME Web_Port -d 0 -f "$QTS_QPKG_CONF_PATHFILE")
             ui_port_secure=$($GETCFG_CMD $QPKG_NAME Web_SSL_Port -d 0 -f "$QTS_QPKG_CONF_PATHFILE")
-            ui_listening_address=''
             ;;
         *)
-            DisplayErrCommitAllLogs "unable to load UI ports: service operation '$service_operation' unrecognised"
+            DisplayErrCommitAllLogs "unable to load UI ports: action '$1' unrecognised"
             SetError
             return 1
             ;;
@@ -251,8 +267,10 @@ LoadUIPorts()
     if [[ $ui_port -eq 0 ]] && IsNotDefaultConfigFound; then
         ui_port=0
         ui_port_secure=0
-        ui_listening_address=''
     fi
+
+    # Always read this from the application configuration
+    ui_listening_address=$($GETCFG_CMD general web_host -f "$QPKG_INI_PATHFILE")
 
     }
 
@@ -323,6 +341,8 @@ CleanLocalClone()
     {
 
     # for the rare occasions the local repo becomes corrupt, it needs to be deleted and cloned again from source.
+
+    RecordOperationToLog
 
     if [[ -z $QPKG_PATH || -z $QPKG_NAME || -z $SOURCE_GIT_URL ]]; then
         SetError
@@ -415,16 +435,16 @@ CheckPorts()
     DisplayDoneCommitToLog "daemon listening address: $ui_listening_address"
 
     if IsSSLEnabled && IsPortSecureResponds $ui_port_secure; then
-        msg="$(FormatAsPackageName $QPKG_NAME) IS listening on HTTPS port: $ui_port_secure"
+        msg="$(FormatAsPackageName $QPKG_NAME) IS listening on HTTPS port $ui_port_secure"
     fi
 
     if IsNotSSLEnabled || [[ $ui_port -ne $ui_port_secure ]]; then
         # assume $ui_port should be checked too
         if IsPortResponds $ui_port; then
             if [[ -n $msg ]]; then
-                msg+=" and on HTTP port: $ui_port"
+                msg+=" and on HTTP port $ui_port"
             else
-                msg="$(FormatAsPackageName $QPKG_NAME) IS listening on HTTP port: $ui_port"
+                msg="$(FormatAsPackageName $QPKG_NAME) IS listening on HTTP port $ui_port"
             fi
         fi
     fi
@@ -641,31 +661,33 @@ IsNotDefaultConfigFound()
 
     }
 
-IsError()
+SetServiceOperation()
     {
 
-    [[ $error_flag = true ]]
+    service_operation="$1"
 
     }
 
-IsNotError()
+SetServiceOperationResultOK()
     {
 
-    [[ $error_flag = false ]]
+    SetServiceOperationResult ok
 
     }
 
-SetServiceOperationOK()
+SetServiceOperationResultFailed()
     {
 
-    [[ -n $SERVICE_STATUS_PATHFILE ]] && echo "ok" > "$SERVICE_STATUS_PATHFILE"
+    SetServiceOperationResult failed
 
     }
 
-SetServiceOperationFailed()
+SetServiceOperationResult()
     {
 
-    [[ -n $SERVICE_STATUS_PATHFILE ]] && echo "failed" > "$SERVICE_STATUS_PATHFILE"
+    # $1 = result of operation to recorded
+
+    [[ -n $1 && -n $SERVICE_STATUS_PATHFILE ]] && echo "$1" > "$SERVICE_STATUS_PATHFILE"
 
     }
 
@@ -684,6 +706,55 @@ UnsetError()
     IsNotError && return
 
     error_flag=false
+
+    }
+
+IsError()
+    {
+
+    [[ $error_flag = true ]]
+
+    }
+
+IsNotError()
+    {
+
+    [[ $error_flag = false ]]
+
+    }
+
+IsNotRestart()
+    {
+
+    ! [[ $service_operation = restart ]]
+
+    }
+
+IsNotRestore()
+    {
+
+    ! [[ $service_operation = restore ]]
+
+    }
+
+IsNotLog()
+    {
+
+    ! [[ $service_operation = log ]]
+
+    }
+
+IsNotClean()
+    {
+
+    ! [[ $service_operation = clean ]]
+
+    }
+
+IsNotStatus()
+    {
+
+    ! [[ $service_operation = status ]]
 
     }
 
@@ -719,14 +790,16 @@ DisplayErrCommitToLog()
 DisplayCommitToLog()
     {
 
-    echo "$1" | $TEE_CMD -a $SERVICE_LOG_PATHFILE
+    Display "$1"
+    CommitLog "$1"
 
     }
 
 DisplayWaitCommitToLog()
     {
 
-    DisplayWait "$1" | $TEE_CMD -a $SERVICE_LOG_PATHFILE
+    DisplayWait "$1"
+    CommitLogWait "$1"
 
     }
 
@@ -808,6 +881,14 @@ DisplayWait()
 
     }
 
+RecordOperationToLog()
+    {
+
+    CommitLog "$(SessionSeparator "'$service_operation' requested")"
+    CommitLog "= $(date), QPKG: $QPKG_VERSION, application: $app_version"
+
+    }
+
 CommitInfoToSysLog()
     {
 
@@ -832,7 +913,18 @@ CommitErrToSysLog()
 CommitLog()
     {
 
-    echo "$1" >> "$SERVICE_LOG_PATHFILE"
+    if IsNotStatus && IsNotLog; then
+        echo "$1" >> "$SERVICE_LOG_PATHFILE"
+    fi
+
+    }
+
+CommitLogWait()
+    {
+
+    if IsNotStatus && IsNotLog; then
+        echo -n "$1 " >> "$SERVICE_LOG_PATHFILE"
+    fi
 
     }
 
@@ -893,57 +985,54 @@ WaitForEntware()
 Init
 
 if IsNotError; then
-    if [[ -n $1 ]]; then
-        service_operation="$1"
-
-        if [[ $service_operation != log && $service_operation != l ]]; then
-            CommitLog "$(SessionSeparator "'$service_operation' requested")"
-            CommitLog "= $(date), QPKG: $QPKG_VERSION, application: $app_version"
-        fi
-    fi
-    case $service_operation in
+    case $1 in
         start)
+            SetServiceOperation "$1"
             StartQPKG || SetError
             ;;
         stop)
+            SetServiceOperation "$1"
             StopQPKG || SetError
             ;;
         r|restart)
+            SetServiceOperation restart
             { StopQPKG; StartQPKG ;} || SetError
             ;;
         s|status)
-            LoadUIPorts status
-            if IsDaemonActive $QPKG_NAME; then
-                CheckPorts || SetError
-            else
-                SetError
-            fi
+            SetServiceOperation status
+            StatusQPKG || SetError
             ;;
         b|backup)
+            SetServiceOperation backup
             BackupConfig || SetError
             ;;
         restore)
+            SetServiceOperation "$1"
             RestoreConfig || SetError
             ;;
         c|clean)
+            SetServiceOperation clean
             CleanLocalClone || SetError
             ;;
         l|log)
+            SetServiceOperation log
             ViewLog
             ;;
         v|version)
+            SetServiceOperation version
             Display "$QPKG_VERSION"
             ;;
         *)
+            SetServiceOperation none
             ShowHelp
             ;;
     esac
 fi
 
 if IsError; then
-    SetServiceOperationFailed
+    SetServiceOperationResultFailed
     exit 1
 fi
 
-SetServiceOperationOK
+SetServiceOperationResultOK
 exit
