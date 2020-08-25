@@ -38,7 +38,7 @@ Init()
     {
 
     readonly SCRIPT_NAME=sherpa.sh
-    readonly SCRIPT_VERSION=200825f
+    readonly SCRIPT_VERSION=200825g
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -262,8 +262,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(OSickGear)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/OSickGear/build/OSickGear_200823.qpkg)
-        SHERPA_QPKG_MD5+=(9773fde30b11365b8dc1192bee465557)
+        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/OSickGear/build/OSickGear_200825.qpkg)
+        SHERPA_QPKG_MD5+=(48468e63d04c1c937ccf5dc1adb6d827)
         SHERPA_QPKG_ABBRVS+=('sg os osg sickg osickg gear ogear sickgear osickgear')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python3')
