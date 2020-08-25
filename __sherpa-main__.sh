@@ -38,7 +38,7 @@ Init()
     {
 
     readonly SCRIPT_NAME=sherpa.sh
-    readonly SCRIPT_VERSION=200825h
+    readonly SCRIPT_VERSION=200826
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -198,8 +198,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(SABnzbd)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/SABnzbd/build/SABnzbd_200825b.qpkg)
-        SHERPA_QPKG_MD5+=(80656b15ae0e2fb5e6e7de05c9db6967)
+        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/SABnzbd/build/SABnzbd_200826.qpkg)
+        SHERPA_QPKG_MD5+=(72cd7dcbe74e95db1f5d660bb5cd9924)
         SHERPA_QPKG_ABBRVS+=('sb sb3 sab sab3 sabnzbd3 sabnzbd')
         SHERPA_QPKG_DEPS+=('Entware Par2')
         SHERPA_QPKG_IPKGS+=('python3 python3-pyopenssl python3-cryptography python3-dev gcc unrar p7zip coreutils-nice ionice ffprobe')
@@ -225,13 +225,12 @@ Init()
 
     SHERPA_QPKG_NAME+=(SickChill)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/SickChill/build/SickChill_200825b.qpkg)
-        SHERPA_QPKG_MD5+=(4dad296d82f07a7cf526e6adee6dfa30)
+        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/SickChill/build/SickChill_200826.qpkg)
+        SHERPA_QPKG_MD5+=(7b62fa44bc83c289bf33e63c2d7fb4f6)
         SHERPA_QPKG_ABBRVS+=('sc sick sickc chill sickchill')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python3')
         SHERPA_QPKG_PIPS+=('random_user_agent pygithub slugify')
-        #SHERPA_QPKG_PIPS+=('backports-abc beautifulsoup4 beekeeper bencodepy cachecontrol chardet cloudscraper configobj deluge-client enzyme feedparser gntp html5lib httplib2 ifaddr imagesize imdbpie ipaddress js2py jsonrpclib-pelix kodipydent mako markdown2 new-rtorrent-python packaging profilehooks putio.py pyopenssL pyaes pygithub pymediainfo pynma pysocks python-dateutil python-twitter python3-fanart qbittorrent-api random_user_agent rarfile send2trash subliminal timeago tmdbsimple tornado tus.py tvdbsimple twilio unidecode validators')
 
     SHERPA_QPKG_NAME+=(LazyLibrarian)
         SHERPA_QPKG_ARCH+=(all)
@@ -244,8 +243,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(OMedusa)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/OMedusa/build/OMedusa_200825b.qpkg)
-        SHERPA_QPKG_MD5+=(12bc08d3fc3f951497d7fba872a39799)
+        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/OMedusa/build/OMedusa_200826.qpkg)
+        SHERPA_QPKG_MD5+=(eeaa452a7e116cd7bca24af01c2b1b4d)
         SHERPA_QPKG_ABBRVS+=('om med omed medusa omedusa')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python3 mediainfo python3-pyopenssl')
@@ -253,8 +252,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(OWatcher3)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/OWatcher3/build/OWatcher3_200825.qpkg)
-        SHERPA_QPKG_MD5+=(a8e46257e4c4ab8f3a34f505321090f9)
+        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/OWatcher3/build/OWatcher3_200826.qpkg)
+        SHERPA_QPKG_MD5+=(662b76f62fb6dee00541be3aebd771d9)
         SHERPA_QPKG_ABBRVS+=('ow wat owat watch watcher owatcher watcher3 owatcher3')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python3 jq')
@@ -262,8 +261,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(OSickGear)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/OSickGear/build/OSickGear_200825.qpkg)
-        SHERPA_QPKG_MD5+=(48468e63d04c1c937ccf5dc1adb6d827)
+        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/OSickGear/build/OSickGear_200826.qpkg)
+        SHERPA_QPKG_MD5+=(09fda7828039df996642266aad0a9809)
         SHERPA_QPKG_ABBRVS+=('sg os osg sickg osickg gear ogear sickgear osickgear')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python3')
