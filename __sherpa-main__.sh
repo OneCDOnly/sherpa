@@ -38,7 +38,7 @@ Init()
     {
 
     readonly SCRIPT_NAME=sherpa.sh
-    readonly SCRIPT_VERSION=200826b
+    readonly SCRIPT_VERSION=200826c
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -207,8 +207,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(nzbToMedia)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/nzbToMedia/build/nzbToMedia_200826.qpkg)
-        SHERPA_QPKG_MD5+=(d53a4c88f1e7a4008f45d45ec036fc9e)
+        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/nzbToMedia/build/nzbToMedia_200826b.qpkg)
+        SHERPA_QPKG_MD5+=(ba3a4d514351ffeeb4c0967d37235aff)
         SHERPA_QPKG_ABBRVS+=('nzb2 nzb2m nzbtom nzbto nzbtomedia')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('')
