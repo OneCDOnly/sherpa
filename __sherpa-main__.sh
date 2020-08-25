@@ -38,7 +38,7 @@ Init()
     {
 
     readonly SCRIPT_NAME=sherpa.sh
-    readonly SCRIPT_VERSION=200826d
+    readonly SCRIPT_VERSION=200826e
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -336,7 +336,7 @@ Init()
     readonly SHERPA_COMMON_PIPS='setuptools'
     readonly SHERPA_COMMON_CONFLICTS='Optware Optware-NG TarMT'
 
-    # user-specified as arguments at runtime
+    # runtime vars
     QPKGS_to_install=()
     QPKGS_to_uninstall=()
     QPKGS_to_reinstall=()
@@ -368,6 +368,8 @@ Init()
 
     CalcIndependentQPKGs
     CalcDependantQPKGs
+    CalcUserInstallableQPKGs
+    CalcInstalledQPKGs
 
     return 0
 
@@ -544,6 +546,17 @@ LogRuntimeParameters()
 
     }
 
+CheckForNewVersions()
+    {
+
+    # Check installed sherpa packages and compare version against package arrays. If new version are available, advise on-screen.
+
+#   echo ${newbase#*_}
+
+    return 0
+
+    }
+
 ParseArgs()
     {
 
@@ -675,6 +688,46 @@ ParseArgs()
 
     }
 
+ShowHelp()
+    {
+
+    local package=''
+
+    echo -e "\n* A mini package manager to install various media-management apps into QNAP NAS."
+
+    echo -e "\n- Each application shown below can be installed (or re-installed) by running:"
+    for package in "${QPKGS_user_installable[@]}"; do
+        echo -e "\t./$SCRIPT_NAME $package"
+    done
+
+    echo -e "\n- Display recognised package abbreviations:"
+    echo -e "\t./$SCRIPT_NAME --abs"
+
+    echo -e "\n- Ensure all sherpa application dependencies are installed:"
+    echo -e "\t./$SCRIPT_NAME --check-all"
+
+    echo -e "\n- Don't check free-space on target filesystem when installing $(FormatAsPackageName Entware) packages:"
+    echo -e "\t./$SCRIPT_NAME --ignore-space"
+
+    echo -e "\n- Update all sherpa applications:"
+    echo -e "\t./$SCRIPT_NAME --update-all"
+
+    echo -e "\n- View the sherpa log:"
+    echo -e "\t./$SCRIPT_NAME --log"
+
+    echo -e "\n- Upload the sherpa log to a public pastebin (https://termbin.com):"
+    echo -e "\t./$SCRIPT_NAME --paste"
+
+    echo -e "\n- Install a package and show debugging information:"
+    echo -e "\t./$SCRIPT_NAME <packagename> --debug"
+
+    echo -e "\n- Display the sherpa version:"
+    echo -e "\t./$SCRIPT_NAME --version"
+
+    return 0
+
+    }
+
 ShowPackageAbbreviations()
     {
 
@@ -744,6 +797,54 @@ PasteLogOnline()
     fi
 
     return 0
+
+    }
+
+ShowInstallerOutcome()
+    {
+
+    if [[ -n $TARGET_APP ]]; then
+        [[ $reinstall_flag = true ]] && RE='re' || RE=''
+
+        if IsNotError; then
+            IsVisibleDebugging && emoticon=' :DD' || emoticon=''
+            ShowAsDone "$(FormatAsPackageName "$TARGET_APP") has been successfully ${RE}installed!$emoticon"
+        else
+            IsVisibleDebugging && emoticon=' :S ' || emoticon=' '
+            ShowAsError "$(FormatAsPackageName "$TARGET_APP") ${RE}install failed!${emoticon}[$code_pointer]"
+            SetSuggestIssue
+        fi
+    fi
+
+    if IsSatisfyDependenciesOnly; then
+        if IsNotError; then
+            IsVisibleDebugging && emoticon=' :DD' || emoticon=''
+            ShowAsDone "all application dependencies are installed!$emoticon"
+        else
+            IsVisibleDebugging && emoticon=' :S ' || emoticon=''
+            ShowAsError "application dependency check failed!${emoticon}[$code_pointer]"
+            SetSuggestIssue
+        fi
+    fi
+
+    return 0
+
+    }
+
+ShowSuggestIssue()
+    {
+
+    echo -e "\n* Please consider creating a new issue for this on GitHub:\n\thttps://github.com/OneCDOnly/sherpa/issues"
+
+    echo -e "\n* Alternatively, post on the QNAP NAS Community Forum:\n\thttps://forum.qnap.com/viewtopic.php?f=320&t=132373"
+
+    echo -e "\n* Remember to include a copy of your sherpa log for analysis."
+
+    echo -e "\n- View the sherpa log:"
+    echo -e "\t./$SCRIPT_NAME --log"
+
+    echo -e "\n- Upload the sherpa log to a public pastebin (https://termbin.com):"
+    echo -e "\t./$SCRIPT_NAME --paste"
 
     }
 
@@ -1089,7 +1190,7 @@ DowngradePy3()
     IsQPKGInstalled OWatcher3 && IsNotQPKGEnabled OWatcher3 && return
     IsNotQPKGInstalled OWatcher3 && [[ $TARGET_APP != OWatcher3 ]] && return
     [[ ! -e /opt/bin/python3 ]] && return
-#     [[ $(/opt/bin/python3 -V | $SED_CMD 's|[^0-9]*||g') -le 374 ]] && return	# test disable: let's always downgrade Python if Watcher3 is installed
+#     [[ $(/opt/bin/python3 -V | $SED_CMD 's|[^0-9]*||g') -le 374 ]] && return  # test disable: let's always downgrade Python if Watcher3 is installed
 
     DebugFuncEntry
 
@@ -1444,7 +1545,7 @@ CalcIndependentQPKGs()
     {
 
     # Returns a list of QPKGs that don't depend on other QPKGs. These are therefore independent. They should be installed/started before any dependant QPKGs.
-    # creates a global constant: $SHERPA_INDEP_QPKGs
+    # creates a global constant array: $SHERPA_INDEP_QPKGs()
 
     SHERPA_INDEP_QPKGs=()
     local index=0
@@ -1463,7 +1564,7 @@ CalcDependantQPKGs()
     {
 
     # Returns a list of QPKGs that depend on other QPKGs. These are therefore dependant. They should be installed/started after any independent QPKGs.
-    # creates a global constant: $SHERPA_DEP_QPKGs
+    # creates a global constant array: $SHERPA_DEP_QPKGs()
 
     SHERPA_DEP_QPKGs=()
     local index=0
@@ -1473,6 +1574,42 @@ CalcDependantQPKGs()
     done
 
     readonly SHERPA_DEP_QPKGs
+
+    return 0
+
+    }
+
+CalcUserInstallableQPKGs()
+    {
+
+    # Returns a list of QPKGs that can be installed or reinstalled by the user.
+    # creates a global variable array: $QPKGS_user_installable()
+
+    QPKGS_user_installable=()
+    local package=''
+
+    for package in "${SHERPA_QPKG_NAME[@]}"; do
+        IsQPKGUserInstallable "$package" && QPKGS_user_installable+=($package)
+    done
+
+    return 0
+
+    }
+
+CalcInstalledQPKGs()
+    {
+
+    # Returns a list of QPKGs that are installed.
+    # creates a global variable array: $QPKGS_installed()
+
+    QPKGS_installed=()
+    local package=''
+
+    [[ ${#QPKGS_user_installable[@]} -eq 0 ]] && CalcUserInstallableQPKGs
+
+    for package in "${QPKGS_user_installable[@]}"; do
+        IsQPKGInstalled "$package" && QPKGS_installed+=($package)
+    done
 
     return 0
 
@@ -1729,7 +1866,6 @@ Cleanup()
 ShowResult()
     {
 
-    local package=''
     local RE=''
     local emoticon=''
 
@@ -1738,81 +1874,14 @@ ShowResult()
     elif IsLogViewOnly; then
         ShowLogViewer
     elif IsShowHelpReminder; then
-        echo -e "\n* A mini package manager to install various media-management apps into QNAP NAS."
-
-        echo -e "\n- Each application shown below can be installed (or re-installed) by running:"
-        for package in "${SHERPA_QPKG_NAME[@]}"; do
-            (IsQPKGUserInstallable "$package") && echo -e "\t./$SCRIPT_NAME $package"
-        done
-
-        echo -e "\n- Display recognised package abbreviations:"
-        echo -e "\t./$SCRIPT_NAME --abs"
-
-        echo -e "\n- Ensure all sherpa application dependencies are installed:"
-        echo -e "\t./$SCRIPT_NAME --check-all"
-
-        echo -e "\n- Don't check free-space on target filesystem when installing $(FormatAsPackageName Entware) packages:"
-        echo -e "\t./$SCRIPT_NAME --ignore-space"
-
-        echo -e "\n- Update all sherpa applications:"
-        echo -e "\t./$SCRIPT_NAME --update-all"
-
-        echo -e "\n- View the sherpa log:"
-        echo -e "\t./$SCRIPT_NAME --log"
-
-        echo -e "\n- Upload the sherpa log to a public pastebin (https://termbin.com):"
-        echo -e "\t./$SCRIPT_NAME --paste"
-
-        echo -e "\n- Install a package and show debugging information:"
-        echo -e "\t./$SCRIPT_NAME <packagename> --debug"
-
-        echo -e "\n- Display the sherpa version:"
-        echo -e "\t./$SCRIPT_NAME --version"
+        ShowHelp
     elif IsShowAbbreviationsReminder; then
         ShowPackageAbbreviations
-    elif IsLogPasteOnly; then
-        PasteLogOnline
     fi
 
-    if IsShowInstallerOutcome; then
-        if [[ -n $TARGET_APP ]]; then
-            [[ $reinstall_flag = true ]] && RE='re' || RE=''
-
-            if IsNotError; then
-                IsVisibleDebugging && emoticon=' :DD' || emoticon=''
-                ShowAsDone "$(FormatAsPackageName "$TARGET_APP") has been successfully ${RE}installed!$emoticon"
-            else
-                IsVisibleDebugging && emoticon=' :S ' || emoticon=' '
-                ShowAsError "$(FormatAsPackageName "$TARGET_APP") ${RE}install failed!${emoticon}[$code_pointer]"
-                SetSuggestIssue
-            fi
-        fi
-
-        if IsSatisfyDependenciesOnly; then
-            if IsNotError; then
-                IsVisibleDebugging && emoticon=' :DD' || emoticon=''
-                ShowAsDone "all application dependencies are installed!$emoticon"
-            else
-                IsVisibleDebugging && emoticon=' :S ' || emoticon=''
-                ShowAsError "application dependency check failed!${emoticon}[$code_pointer]"
-                SetSuggestIssue
-            fi
-        fi
-    fi
-
-    if IsSuggestIssue; then
-        echo -e "\n* Please consider creating a new issue for this on GitHub:\n\thttps://github.com/OneCDOnly/sherpa/issues"
-
-        echo -e "\n* Alternatively, post on the QNAP NAS Community Forum:\n\thttps://forum.qnap.com/viewtopic.php?f=320&t=132373"
-
-        echo -e "\n* Remember to include a copy of your sherpa log for analysis."
-
-        echo -e "\n- View the sherpa log:"
-        echo -e "\t./$SCRIPT_NAME --log"
-
-        echo -e "\n- Upload the sherpa log to a public pastebin (https://termbin.com):"
-        echo -e "\t./$SCRIPT_NAME --paste"
-    fi
+    IsLogPasteOnly && PasteLogOnline
+    IsShowInstallerOutcome && ShowInstallerOutcome
+    IsSuggestIssue && ShowSuggestIssue
 
     DebugInfoThinSeparator
     DebugScript 'finished' "$($DATE_CMD)"
@@ -3486,6 +3555,7 @@ RemoveColourCodes()
 Init || exit 1
 
 LogRuntimeParameters
+CheckForNewVersions
 DownloadQPKGs
 RemoveUnwantedQPKGs
 InstallQPKGIndeps
