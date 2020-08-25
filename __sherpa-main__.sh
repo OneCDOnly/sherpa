@@ -1090,7 +1090,7 @@ DowngradePy3()
     IsQPKGInstalled OWatcher3 && IsNotQPKGEnabled OWatcher3 && return
     IsNotQPKGInstalled OWatcher3 && [[ $TARGET_APP != OWatcher3 ]] && return
     [[ ! -e /opt/bin/python3 ]] && return
-    [[ $(/opt/bin/python3 -V | $SED_CMD 's|[^0-9]*||g') -le 374 ]] && return
+#     [[ $(/opt/bin/python3 -V | $SED_CMD 's|[^0-9]*||g') -le 374 ]] && return	# test disable: let's always downgrade Python if Watcher3 is installed
 
     DebugFuncEntry
 
@@ -1107,7 +1107,7 @@ DowngradePy3()
     local install_log_pathfile="$IPKG_DL_PATH/python3.downgrade.$INSTALL_LOG_FILE"
     local result=0
 
-    ShowAsProc "$(FormatAsPackageName Watcher3) selected so downgrading Python 3 IPKGs"
+    ShowAsProc "$(FormatAsPackageName Watcher3) is installed (or is to be) so downgrading Python 3 IPKGs"
 
     for pkg_name in "${pkg_names[@]}"; do
         ipkg_urls+=(-O "${source_url}/archive/${pkg_base}-${pkg_name}_${pkg_version}_${pkg_arch}.ipk")
