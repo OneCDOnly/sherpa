@@ -1,0 +1,574 @@
+[General]
+loglimit = 500
+logfiles = 10
+logsize = 204800
+logdir =
+loglevel = 1
+ignore_paused = 0
+name_postfix = snr, jnr, jr, sr, phd
+wishlist_tags = 1
+name_partial = 95
+reject_magsize = 0
+proxy_local =
+imp_nosplit =
+imp_autoadd_copy = 1
+comic_type =
+sort_definite = 0
+destination_copy = 0
+dir_perm = 0o755
+calibre_rename = False
+git_program =
+imp_calibre_magissue = 0
+http_root =
+launch_browser = 1
+reject_magmin = 0
+imp_comicopf = 0
+reject_publisher =
+genre_tags = 0
+mag_rename = 0
+mag_age = 31
+banned_ext = avi, mp4, mov, iso, m4v
+wall_columns = 6
+http_pass =
+ratestars = 1
+imp_preflang = en, eng, en-US, en-GB
+displaylength = 10
+reject_maxsize = 0
+imp_comiccover = 0
+ebook_dir =
+http_user =
+imp_calibre_ebook = 0
+user_agent =
+skipped_ext = fail, part, bts, !ut, torrent, magnet, nzb, unpack
+comic_single = 0
+audio_tab = 1
+imp_autoaddmag_copy = 1
+http_port = 5299
+show_genres = 0
+delete_csv = 0
+reject_maxcomic =
+imp_magopf = 1
+http_timeout = 30
+pref_unrarlib = 1
+hist_refresh = 1000
+match_ratio = 80
+calibre_pass =
+imp_calibre_magtitle = 1
+api_key =
+reject_minsize = 0
+ext_preprocess =
+toggles = 1
+name_ratio = 90
+bookstrap_theme = slate
+https_enabled = 0
+mag_tab = 1
+http_look = bookstrap
+proxy_host =
+cache_age = 30
+iss_format = $Y-$m-$d
+hide_old_notifiers = 0
+http_ext_timeout = 90
+imp_convert =
+reject_audio = epub, mobi
+book_img = 1
+wishlist_genres = 0
+calibre_use_server = 0
+proxy_type =
+reject_mags =
+download_dir =
+http_proxy = 0
+reject_comic =
+ebook_type = epub, mobi, pdf
+task_age = 2
+mag_type = pdf
+ssl_certs =
+notify_with_url = 0
+comic_img = 0
+http_host = 0.0.0.0
+max_wall = 0
+audio_dir =
+imp_magcover = 1
+notify_with_title = 0
+imp_singlebook = 0
+imp_calibre_comic = 0
+imp_autosearch = 0
+api_enabled = 0
+imp_calibredb =
+single_user = 0
+mag_single = 1
+sort_surname = 0
+imp_autoaddmag =
+imp_autoadd_magonly = 0
+blacklist_processed = 0
+series_tab = 1
+file_perm = 0o644
+comic_tab = 0
+name_partname = 95
+calibre_server =
+dload_ratio = 90
+sys_encoding =
+imp_calibre_magazine = 0
+imp_rename = 0
+user_accounts = 0
+ssl_verify = 0
+imp_autoadd =
+blacklist_failed = 1
+opf_tags = 1
+max_pages = 0
+audiobook_type = mp3
+https_cert =
+ebook_tab = 1
+reject_mincomic =
+date_format = $Y-$m-$d
+imp_monthlang =
+max_bookpages = 0
+mag_img = 1
+reject_words = audiobook, mp3
+reject_minaudio = 0
+https_key =
+imp_autoadd_bookonly = 0
+blocklist_timer = 3600
+calibre_user =
+reject_maxaudio = 0
+author_img = 1
+alternate_dir =
+admin_email =
+
+[TPB]
+tpb_dlpriority = 0
+tpb = 0
+tpb_dltypes = A,C,E,M
+tpb_host = https://pirateproxy.cc
+tpb_seeders = 0
+
+[LibraryScan]
+no_sets = 0
+no_isbn = 0
+no_noninteger_series = 0
+found_status = Open
+isbn_lookup = True
+notfound_status = Skipped
+no_lang = 0
+add_series = 1
+newauthor_audio = Skipped
+full_scan = 0
+newseries_status = Paused
+no_future = 0
+no_single_book_series = 0
+newaudio_status = Skipped
+imp_googleimage = 0
+newauthor_books = 0
+no_pubdate = 0
+newauthor_status = Skipped
+add_author = 1
+imp_ignore = 0
+newbook_status = Skipped
+
+[Torrof]
+trf_dltypes = A,E,M
+trf_dlpriority = 0
+trf_host = torrof.com
+trf = 0
+
+[Newzbin]
+newzbin = 0
+newzbin_pass =
+newzbin_uid =
+
+[Git]
+git_host = gitlab.com
+latest_version = 8db2e619930ae1c356d36a5c3bfe409672abbfa0
+current_version = 8db2e619930ae1c356d36a5c3bfe409672abbfa0
+commits_behind = 0
+git_user = LazyLibrarian
+git_branch = master
+auto_update = 0
+git_updated = 1598249526
+install_type = git
+git_repo = lazylibrarian
+
+[LIME]
+lime_host = https://www.limetorrents.cc
+lime_seeders = 0
+lime_dlpriority = 0
+lime = 0
+lime_dltypes = A,E,M
+
+[Email]
+use_email_custom_format = 0
+email_convert_from =
+email_tls = 0
+email_smtp_port = 25
+email_notify_ondownload = 0
+email_ssl = 0
+email_to =
+email_from =
+email_limit = 20
+email_smtp_password =
+email_smtp_server =
+use_email = 0
+email_smtp_user =
+email_notify_onsnatch = 0
+email_sendfile_ondownload = 0
+email_send_type =
+
+[TORRENT]
+tor_downloader_transmission = 0
+tor_downloader_synology = 0
+seed_wait = 1
+keep_seeding = 1
+torrent_dir =
+numberofseeders =
+tor_downloader_rtorrent = 0
+tor_downloader_qbittorrent = 0
+tor_downloader_blackhole = 0
+tor_downloader_utorrent = 0
+prefer_magnet = 1
+tor_downloader_deluge = 0
+tor_convert_magnet = 0
+
+[NZBGet]
+nzbget_priority = 0
+nzbget_category =
+nzbget_host =
+nzbget_user =
+nzbget_pass =
+nzbget_port = 0
+
+[SABnzbd]
+sab_port = 0
+sab_external_host =
+sab_subdir =
+sab_host =
+sab_api =
+sab_user =
+sab_cat =
+sab_pass =
+sab_delete = 1
+
+[DELUGE]
+deluge_host =
+deluge_dir =
+deluge_label =
+deluge_base =
+deluge_cert =
+deluge_pass =
+deluge_user =
+deluge_port = 0
+
+[TRANSMISSION]
+transmission_base =
+transmission_port = 0
+transmission_host =
+transmission_dir =
+transmission_pass =
+transmission_user =
+
+[Prowl]
+prowl_onsnatch = 0
+prowl_priority = 0
+prowl_apikey =
+prowl_ondownload = 0
+use_prowl = 0
+
+[WWT]
+wwt_seeders = 0
+wwt_host = https://worldwidetorrents.me
+wwt_dltypes = A,E,M
+wwt = 0
+wwt_dlpriority = 0
+
+[Twitter]
+twitter_notify_ondownload = 0
+twitter_notify_onsnatch = 0
+twitter_username =
+twitter_password =
+use_twitter = 0
+twitter_prefix =
+
+[OPDS]
+opds_page = 30
+opds_username =
+opds_metainfo = 0
+opds_authentication = 0
+opds_enabled = 0
+opds_password =
+
+[RTORRENT]
+rtorrent_host =
+rtorrent_label =
+rtorrent_dir =
+rtorrent_user =
+rtorrent_pass =
+
+[API]
+gr_secret =
+gr_user =
+gr_syncreadonly = 0
+cv_websearch = 0
+gr_aowned =
+gr_wanted =
+gr_owned =
+cv_apikey =
+gr_unique = 0
+gr_follow = 0
+lt_devkey =
+gb_country =
+gr_sync = 0
+gr_oauth_token =
+book_api = GoodReads
+gr_api = ckvsiSDsuqh7omh74ZZ6Q
+gb_api =
+gr_oauth_secret =
+gr_follownew = 0
+gr_awanted =
+gr_syncuser = 0
+
+[TRF]
+trf_seeders = 0
+
+[QBITTORRENT]
+qbittorrent_label =
+qbittorrent_user =
+qbittorrent_dir =
+qbittorrent_base =
+qbittorrent_pass =
+qbittorrent_port = 0
+qbittorrent_host =
+
+[SearchScan]
+search_maginterval = 360
+search_bookinterval = 360
+wishlist_interval = 24
+searchrss_interval = 20
+goodreads_interval = 48
+search_ratelimit = 0
+versioncheck_interval = 24
+delaysearch = 0
+search_comicinterval =
+scan_interval = 10
+
+[Pushbullet]
+pushbullet_notify_onsnatch = 0
+pushbullet_notify_ondownload = 0
+pushbullet_deviceid =
+pushbullet_token =
+use_pushbullet = 0
+
+[PostProcess]
+comic_delfolder = 0
+mag_dest_file = $IssueDate - $Title
+audiobook_dest_folder = $Author/$Title
+ebook_dest_folder = $Author/$Title
+audiobook_dest_file = $Author - $Title Part $Part of $Total
+mag_relative = 1
+mag_coverswap =
+ebook_dest_file = $Title - $Author
+mag_dest_folder = _Magazines/$Title/$IssueDate
+comic_relative = 0
+comic_dest_folder =
+one_format = 0
+mag_delfolder = 1
+
+[Growl]
+growl_ondownload = 0
+growl_host =
+growl_onsnatch = 0
+growl_password =
+use_growl = 0
+
+[USENET]
+nzb_downloader_synology = 0
+nzb_downloader_nzbget = 0
+nzb_downloader_blackhole = 0
+usenet_retention = 0
+nzb_blackholedir =
+nzb_downloader_sabnzbd = 0
+
+[AndroidPN]
+androidpn_notify_onsnatch = 0
+use_androidpn = 0
+androidpn_broadcast = 0
+androidpn_notify_ondownload = 0
+androidpn_username =
+androidpn_url =
+
+[ZOO]
+zoo_dlpriority = 0
+zoo = 0
+zoo_host = https://zooqle.com
+zoo_dltypes = A,E,M
+zoo_seeders = 0
+
+[Pushover]
+pushover_device =
+pushover_apitoken =
+pushover_priority = 0
+use_pushover = 0
+pushover_keys =
+pushover_ondownload = 0
+pushover_onsnatch = 0
+
+[Preprocess]
+write_audiotags = 0
+keep_separateaudio = 0
+keep_opf = 1
+ebook_wanted_formats = epub, mobi
+audio_options = -ab, 320k
+swap_coverpage = 0
+create_singleaudio = 0
+ebook_convert = ebook-convert
+delete_other_formats = 0
+ffmpeg = ffmpeg
+keep_jpg = 1
+
+[Telegram]
+telegram_onsnatch = 0
+telegram_userid =
+telegram_token =
+telegram_ondownload = 0
+use_telegram = 0
+
+[SYNOLOGY]
+synology_pass =
+synology_dir = Multimedia/Download
+synology_user =
+synology_port = 0
+synology_host =
+use_synology = 0
+
+[NZBMatrix]
+nzbmatrix = 0
+nzbmatrix_user =
+nzbmatrix_api =
+
+[KAT]
+kat_dltypes = A,E,M
+kat = 0
+kat_seeders = 0
+kat_host = kickass.cd
+kat_dlpriority = 0
+
+[BOK]
+bok_dllimit = 5
+bok_dlpriority = 0
+bok = 0
+bok_host = b-ok.cc
+bok_dltypes = E
+
+[UTORRENT]
+utorrent_host =
+utorrent_pass =
+utorrent_label =
+utorrent_port = 0
+utorrent_base =
+utorrent_user =
+
+[Boxcar]
+use_boxcar = 0
+boxcar_notify_ondownload = 0
+boxcar_notify_onsnatch = 0
+boxcar_token =
+
+[TDL]
+tdl_dltypes = A,E,M
+tdl_seeders = 0
+tdl_host = torrentdownloads.me
+tdl = 0
+tdl_dlpriority = 0
+
+[RSS]
+rss_podcast = 1
+rss_enabled = 1
+rss_host =
+
+[Custom]
+custom_notify_onsnatch = 0
+use_custom = 0
+custom_script =
+custom_notify_ondownload = 0
+
+[Slack]
+slack_url = https://hooks.slack.com/services/
+slack_token =
+use_slack = 0
+slack_notify_ondownload = 0
+slack_notify_onsnatch = 0
+
+[FMT]
+fmt_series = ( $FmtName $FmtNum )
+fmt_sername = $SerName
+fmt_sernum = Book #$SerNum -$$
+
+[Newznab0]
+comicsearch =
+audiocat = 3030
+extended = 1
+updated =
+manual = 0
+bookcat = 7000,7020
+enabled = 0
+magcat = 7010
+comiccat = 7030
+dltypes = A,C,E,M
+generalsearch = search
+host =
+api =
+apilimit = 0
+booksearch = book
+apicount = 0
+dlpriority = 0
+magsearch =
+audiosearch =
+dispname = Newznab0
+
+[Torznab0]
+comicsearch =
+dispname = Torznab0
+enabled = 0
+comiccat = 8020
+audiosearch =
+dlpriority = 0
+booksearch = book
+dltypes = A,C,E,M
+audiocat = 3030
+extended = 1
+apilimit = 0
+bookcat = 8000,8010
+seeders = 0
+generalsearch = search
+host =
+magsearch =
+apicount = 0
+updated =
+manual = 0
+magcat = 8030
+api =
+
+[RSS_0]
+enabled = False
+host =
+
+[GEN_0]
+enabled = False
+host =
+search =
+dlpriority = 0
+dltypes = E
+
+[IRC_0]
+enabled = False
+server =
+channel =
+botnick =
+botpass =
+dlpriority = 0
+dltypes = E
+
+[APPRISE_0]
+name = APPRISE_0
+dispname = APPRISE_0
+snatch = False
+download = False
+url =
+
