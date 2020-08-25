@@ -38,7 +38,7 @@ Init()
     {
 
     readonly SCRIPT_NAME=sherpa.sh
-    readonly SCRIPT_VERSION=200825c
+    readonly SCRIPT_VERSION=200825d
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -225,8 +225,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(SickChill)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/SickChill/build/SickChill_200824.qpkg)
-        SHERPA_QPKG_MD5+=(576053e2195c6dd598b3abeead30a375)
+        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/SickChill/build/SickChill_200825.qpkg)
+        SHERPA_QPKG_MD5+=(3ac8eb608e43617b8d51ff24847a756f)
         SHERPA_QPKG_ABBRVS+=('sc sick sickc chill sickchill')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python3')
