@@ -21,7 +21,7 @@ Init()
         # 'shallow' (depth 1) or 'single-branch' (note: 'shallow' implies a 'single-branch' too)
         readonly SOURCE_GIT_DEPTH=shallow
         readonly PYTHON=/opt/bin/python3
-        local -r TARGET_SCRIPT=start.py
+        readonly TARGET_SCRIPT=start.py
 
     if [[ ! -e /etc/init.d/functions ]]; then
         FormatAsDisplayError 'QTS functions missing (is this a QNAP NAS?)'
