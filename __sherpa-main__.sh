@@ -38,7 +38,7 @@ Init()
     {
 
     readonly SCRIPT_NAME=sherpa.sh
-    readonly SCRIPT_VERSION=200827h
+    readonly SCRIPT_VERSION=200827i
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -370,6 +370,7 @@ Init()
     CalcDependantQPKGs
     CalcUserInstallableQPKGs
     CalcInstalledQPKGs
+    CalcNASQPKGArch
 
     return 0
 
@@ -435,7 +436,6 @@ LogRuntimeParameters()
     DebugScript 'work path' "$WORK_PATH"
     DebugQPKG 'download path' "$QPKG_DL_PATH"
     DebugIPKG 'download path' "$IPKG_DL_PATH"
-    CalcNASQPKGArch
     DebugQPKG 'arch' "$NAS_QPKG_ARCH"
 
     if IsLogViewOnly || IsShowAbbreviationsReminder; then
