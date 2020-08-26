@@ -38,7 +38,7 @@ Init()
     {
 
     readonly SCRIPT_NAME=sherpa.sh
-    readonly SCRIPT_VERSION=200827b
+    readonly SCRIPT_VERSION=200827c
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -2353,7 +2353,7 @@ CheckLauncherAge()
 
     # Has the launcher script been downloaded only in the last 5 minutes?
 
-    [[ ! -e $GNU_FIND_CMD ]] || return          # can only do this with GNU 'find'. The old BusyBox 'find' in QTS 4.2.6 doesn't support '-cmin'.
+    [[ -e $GNU_FIND_CMD ]] || return          # can only do this with GNU 'find'. The old BusyBox 'find' in QTS 4.2.6 doesn't support '-cmin'.
 
     if [[ -e "$SCRIPT_NAME" && -z $($GNU_FIND_CMD "$SCRIPT_NAME" -cmin +5) ]]; then
         ShowAsNote "The $(ColourTextBrightWhite 'sherpa.sh') script does not need updating anymore. It now downloads all the latest information from the Internet everytime it's run. ;)"
