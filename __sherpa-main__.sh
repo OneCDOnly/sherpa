@@ -722,10 +722,11 @@ ShowHelp()
     for package in "${QPKGS_user_installable[@]}"; do
         echo -e "\t./$SCRIPT_NAME $package"
     done
+    echo
 
-    CheckForNewQPKGVersions
+    CheckForNewQPKGVersions || echo
 
-    echo -e "\n- Display recognised package abbreviations:"
+    echo -e "- Display recognised package abbreviations:"
     echo -e "\t./$SCRIPT_NAME --abs"
 
     echo -e "\n- Ensure all sherpa application dependencies are installed:"
