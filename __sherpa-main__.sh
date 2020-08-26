@@ -38,7 +38,7 @@ Init()
     {
 
     readonly SCRIPT_NAME=sherpa.sh
-    readonly SCRIPT_VERSION=200827i
+    readonly SCRIPT_VERSION=200827j
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -87,6 +87,7 @@ Init()
     readonly GNU_FIND_CMD=/opt/bin/find
     readonly GNU_GREP_CMD=/opt/bin/grep
     readonly GNU_LESS_CMD=/opt/bin/less
+    readonly GNU_SED_CMD=/opt/bin/sed
     readonly OPKG_CMD=/opt/bin/opkg
     pip3_cmd=/opt/bin/pip3
 
@@ -332,7 +333,7 @@ Init()
         readonly SHERPA_QPKG_IPKGS
         readonly SHERPA_QPKG_PIPS
 
-    readonly SHERPA_COMMON_IPKGS='git git-http nano less ca-certificates python3-pip'
+    readonly SHERPA_COMMON_IPKGS='git git-http nano less ca-certificates python3-pip sed'
     readonly SHERPA_COMMON_PIPS='setuptools'
     readonly SHERPA_COMMON_CONFLICTS='Optware Optware-NG TarMT'
 
@@ -445,18 +446,18 @@ LogRuntimeParameters()
     fi
 
     if IsNotError && [[ $EUID -ne 0 || $USER != admin ]]; then
-        ShowAsError "this script must be run as the 'admin' user. Please login via SSH as 'admin' and try again."
+        ShowAsError "this script must be run as the 'admin' user. Please login via SSH as 'admin' and try again"
         return 1
     fi
 
     if IsNotError && [[ ${#QPKGS_to_install[@]} -eq 0 && ${#QPKGS_to_uninstall[@]} -eq 0 && ${#QPKGS_to_update[@]} -eq 0 && ${#QPKGS_to_backup[@]} -eq 0 && ${#QPKGS_to_restore[@]} -eq 0 ]] && IsNotSatisfyDependenciesOnly && [[ $upgrade_all_apps = false ]]; then
-        ShowAsError 'no valid QPKGs or actions were specified.'
+        ShowAsError 'no valid QPKGs or actions were specified'
         SetShowAbbreviationsReminder
         return 1
     fi
 
     if [[ $backup_all_apps = true && $restore_all_apps = true ]]; then
-        ShowAsError 'no point running a backup then a restore operation.'
+        ShowAsError 'no point running a backup then a restore operation'
         code_pointer=1
         return 1
     fi
@@ -522,7 +523,7 @@ LogRuntimeParameters()
     if IsNotError; then
         for conflicting_qpkg in "${SHERPA_COMMON_CONFLICTS[@]}"; do
             if IsQPKGEnabled "$conflicting_qpkg"; then
-                ShowAsError "'$conflicting_qpkg' is enabled. This is an unsupported configuration."
+                ShowAsError "'$conflicting_qpkg' is enabled. This is an unsupported configuration"
                 return 1
             fi
         done
@@ -534,7 +535,7 @@ LogRuntimeParameters()
             DebugQPKG 'Entware installer' $ENTWARE_VER
 
             if [[ $ENTWARE_VER = none ]]; then
-                ShowAsError "$(FormatAsPackageName Entware) appears to be installed but is not visible."
+                ShowAsError "$(FormatAsPackageName Entware) appears to be installed but is not visible"
                 return 1
             fi
         fi
@@ -1441,7 +1442,7 @@ GetQPKGServiceStatus()
                 DebugInfo "$(FormatAsPackageName "$1") service started OK"
                 ;;
             failed)
-                ShowAsError "$(FormatAsPackageName "$1") service failed to start.$([[ -e /var/log/$1.log ]] && echo " Check $(FormatAsFileName "/var/log/$1.log") for more information.")"
+                ShowAsError "$(FormatAsPackageName "$1") service failed to start.$([[ -e /var/log/$1.log ]] && echo " Check $(FormatAsFileName "/var/log/$1.log") for more information")"
                 ;;
             *)
                 DebugWarning "$(FormatAsPackageName "$1") service status is incorrect"
@@ -2205,7 +2206,7 @@ OpenIPKGArchive()
     # extract the 'opkg' package list file
 
     if [[ ! -e $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE ]]; then
-        ShowAsError 'could not locate the IPKG list file.'
+        ShowAsError 'could not locate the IPKG list file'
         return 1
     fi
 
@@ -2214,7 +2215,7 @@ OpenIPKGArchive()
     RunThisAndLogResults "$Z7_CMD e -o$($DIRNAME_CMD "$EXTERNAL_PACKAGE_LIST_PATHFILE") $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE" "$WORK_PATH/ipkg.list.archive.extract"
 
     if [[ ! -e $EXTERNAL_PACKAGE_LIST_PATHFILE ]]; then
-        ShowAsError 'could not open the IPKG list file.'
+        ShowAsError 'could not open the IPKG list file'
         return 1
     fi
 
@@ -2410,7 +2411,7 @@ IsSysShareExist()
     [[ -z $1 ]] && return 1
 
     if [[ ! -L $1 ]]; then
-        ShowAsError "a required NAS system share is missing $(FormatAsFileName "$1"). Please re-create it via the QTS Control Panel -> Privilege Settings -> Shared Folders."
+        ShowAsError "a required NAS system share is missing $(FormatAsFileName "$1"). Please re-create it via the QTS Control Panel -> Privilege Settings -> Shared Folders"
         return 1
     else
         return 0
@@ -3550,8 +3551,8 @@ ShowAsError()
     local capitalised="$(tr "[a-z]" "[A-Z]" <<< "${buffer:0:1}")${buffer:1}"      # use any available 'tr'
 
     SetError
-    WriteToDisplay_NewLine "$(ColourTextBrightRed fail)" "$capitalised"
-    WriteToLog fail "$capitalised"
+    WriteToDisplay_NewLine "$(ColourTextBrightRed fail)" "$capitalised."
+    WriteToLog fail "$capitalised."
 
     }
 
@@ -3706,8 +3707,13 @@ StripANSI()
     {
 
     # found here: https://www.commandlinefu.com/commands/view/3584/remove-color-codes-special-characters-with-sed
+    # QTS 4.2.6 BusyBox 'sed' doesn't fully support regexes, so this onyl works with a real 'sed'.
 
-    $SED_CMD -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g" <<< "$1"
+    if [[ -e $GNU_SED_CMD ]]; then
+        $GNU_SED_CMD -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g" <<< "$1"
+    else
+        echo "$1"
+    fi
 
     }
 
