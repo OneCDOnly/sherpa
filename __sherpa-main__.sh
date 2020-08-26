@@ -38,7 +38,7 @@ Init()
     {
 
     readonly SCRIPT_NAME=sherpa.sh
-    readonly SCRIPT_VERSION=200827c
+    readonly SCRIPT_VERSION=200827d
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -216,8 +216,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(NZBGet)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/NZBGet/build/NZBGet_200823b.qpkg)
-        SHERPA_QPKG_MD5+=(2a5f6cddda9b2d6176e0bb285395a925)
+        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/NZBGet/build/NZBGet_200827.qpkg)
+        SHERPA_QPKG_MD5+=(607538752441e35faf31491c842cd4e5)
         SHERPA_QPKG_ABBRVS+=('ng nget nzb nzbget')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('nzbget')
@@ -270,8 +270,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(OTransmission)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/OTransmission/build/OTransmission_200823.qpkg)
-        SHERPA_QPKG_MD5+=(31caeecc3dd4632d294b721bb820feb9)
+        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/OTransmission/build/OTransmission_200827.qpkg)
+        SHERPA_QPKG_MD5+=(3800311fc1715137cf5ce1cac51c483a)
         SHERPA_QPKG_ABBRVS+=('ot otrans tm tr trans tmission transmission otransmission')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('transmission-web transmission-daemon-openssl jq')

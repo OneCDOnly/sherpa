@@ -22,6 +22,12 @@ Init()
     # additional required environment variables
         readonly TRANSMISSION_WEB_HOME=/opt/share/transmission/web
 
+    if [[ ! -e /etc/init.d/functions ]]; then
+        FormatAsDisplayError 'QTS functions missing (is this a QNAP NAS?)'
+        SetError
+        return 1
+    fi
+
     # cherry-pick required binaries
     readonly BASENAME_CMD=/usr/bin/basename
     readonly CURL_CMD=/sbin/curl
@@ -44,16 +50,20 @@ Init()
     readonly QPKG_REPO_PATH=$QPKG_PATH/$QPKG_NAME
     readonly QPKG_VERSION=$($GETCFG_CMD $QPKG_NAME Version -f $QTS_QPKG_CONF_PATHFILE)
     readonly QPKG_INI_PATHFILE=$QPKG_PATH/config/settings.json
-    local -r QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.def
+    readonly QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.def
     readonly SERVICE_STATUS_PATHFILE=/var/run/$QPKG_NAME.last.operation
     readonly SERVICE_LOG_PATHFILE=/var/log/$QPKG_NAME.log
     readonly DAEMON_PID_PATHFILE=/var/run/$QPKG_NAME.pid
+    local -r OPKG_PATH=/opt/bin:/opt/sbin
     local -r BACKUP_PATH=$($GETCFG_CMD SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
     readonly BACKUP_PATHFILE=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
     [[ -n $PYTHON ]] && export PYTHONPATH=$PYTHON
-    export PATH=/opt/bin:/opt/sbin:$PATH
+    [[ $PATH =~ $OPKG_PATH ]] && export PATH="$OPKG_PATH:$PATH"
+    readonly STOP_TIMEOUT=60
+    readonly PORT_CHECK_TIMEOUT=20
     ui_port=0
     ui_port_secure=0
+    ui_listening_address=''
 
 
     if [[ -z $LANG ]]; then
@@ -101,7 +111,7 @@ ShowHelp()
     Display
     Display " Usage: $0 [OPTION]"
     Display
-    Display " [OPTION] can be any one of the following:"
+    Display ' [OPTION] can be any one of the following:'
     Display
     Display " start      - launch $(FormatAsPackageName $QPKG_NAME) if not already running."
     Display " stop       - shutdown $(FormatAsPackageName $QPKG_NAME) if running."
@@ -110,8 +120,8 @@ ShowHelp()
     Display " backup     - backup the current $(FormatAsPackageName $QPKG_NAME) configuration to persistent storage."
     Display " restore    - restore a previously saved configuration from persistent storage. $(FormatAsPackageName $QPKG_NAME) will be stopped, then restarted."
     [[ -n $SOURCE_GIT_URL ]] && Display " clean      - wipe the current local copy of $(FormatAsPackageName $QPKG_NAME), and download it again from remote source. Configuration will be retained."
-    Display " log        - display this service script runtime log."
-    Display " version    - display the package version number."
+    Display ' log        - display this service script runtime log.'
+    Display ' version    - display the package version number.'
     Display
 
     }
@@ -121,29 +131,27 @@ StartQPKG()
 
     IsNotError || return
 
-    if [[ $service_operation != restart && $service_operation != r ]]; then
-        IsDaemonActive && return
+    if IsNotRestart && IsNotRestore && IsNotClean; then
+        RecordOperationToLog
+        IsNotDaemonActive || return
     fi
-
-    LoadUIPorts stop || return
 
     [[ -n $SOURCE_GIT_URL ]] && PullGitRepo $QPKG_NAME "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_PATH"
 
-    LoadUIPorts start || return
+    LoadUIPorts app
 
     if [[ $ui_port -le 0 && $ui_port_secure -le 0 ]]; then
         DisplayErrCommitAllLogs 'unable to start daemon: no UI port was specified!'
         SetError
         return 1
-    elif IsNotPortAvailable $ui_port && IsNotPortAvailable $ui_port_secure; then
-        DisplayErrCommitAllLogs "unable to start daemon: ports $ui_port & $ui_port_secure are already in use!"
+    elif IsNotPortAvailable $ui_port || IsNotPortAvailable $ui_port_secure; then
+        DisplayErrCommitAllLogs "unable to start daemon: ports $ui_port or $ui_port_secure are already in use!"
         SetError
         return 1
     fi
 
-    ReWriteUIPorts
     ExecuteAndLog 'starting daemon' "$LAUNCHER" log:everything || return 1
-    sleep 5         # daemon needs time to write a PID file
+    [[ -n $TARGET_SCRIPT || -n $TARGET_DAEMON ]] && ExecuteAndLog 'waiting for PID file to be created' 'sleep 5'
     IsDaemonActive || return 1
     CheckPorts || return 1
 
@@ -155,16 +163,19 @@ StopQPKG()
     {
 
     IsNotError || return
-    LoadUIPorts stop || return
+
+    if IsNotRestore && IsNotClean; then
+        RecordOperationToLog
+    fi
+
     IsDaemonActive || return
 
-    local -r MAX_WAIT_SECONDS_STOP=60
     local acc=0
     local pid=0
 
     killall "$($BASENAME_CMD "$TARGET_DAEMON")"
     DisplayWaitCommitToLog '* stopping daemon with SIGTERM:'
-    DisplayWait "(waiting for up to $MAX_WAIT_SECONDS_STOP seconds):"
+    DisplayWait "(no-more than $STOP_TIMEOUT seconds):"
 
     while true; do
         while (ps ax | $GREP_CMD $TARGET_DAEMON | $GREP_CMD -vq grep); do
@@ -172,10 +183,10 @@ StopQPKG()
             ((acc++))
             DisplayWait "$acc,"
 
-            if [[ $acc -ge $MAX_WAIT_SECONDS_STOP ]]; then
-                DisplayWaitCommitToLog 'failed!'
+            if [[ $acc -ge $STOP_TIMEOUT ]]; then
+                DisplayCommitToLog 'failed!'
+                DisplayCommitToLog '* stopping daemon with SIGKILL'
                 killall -9 "$($BASENAME_CMD "$TARGET_DAEMON")"
-                DisplayCommitToLog 'sent SIGKILL.'
                 [[ -f $DAEMON_PID_PATHFILE ]] && rm -f $DAEMON_PID_PATHFILE
                 break 2
             fi
@@ -193,15 +204,30 @@ StopQPKG()
 
     }
 
+StatusQPKG()
+    {
+
+    IsNotError || return
+    IsDaemonActive || return
+    LoadUIPorts qts
+    CheckPorts || SetError
+
+    }
+
+#### functions specific to this app appear below ###
+
 BackupConfig()
     {
 
+    RecordOperationToLog
     ExecuteAndLog 'updating configuration backup' "$TAR_CMD --create --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config ." log:everything
 
     }
 
 RestoreConfig()
     {
+
+    RecordOperationToLog
 
     if [[ ! -f $BACKUP_PATHFILE ]]; then
         DisplayErrCommitAllLogs 'unable to restore configuration: no backup file was found!'
@@ -215,36 +241,39 @@ RestoreConfig()
 
     }
 
-#### functions specific to this app appear below ###
-
 LoadUIPorts()
     {
 
     # If user changes ports via app UI, must first 'stop' application on old ports, then 'start' on new ports
 
     case $1 in
-        start|status)
+        app)
             # Read the current application UI ports from application configuration
             ui_port=$($JQ_CMD -r '."rpc-port"' < "$QPKG_INI_PATHFILE")
             # Transmission doesn't appear to contain any SSL UI ability, so ...
             ui_port_secure=0
             ;;
-        stop)
+        qts)
             # Read the current application UI ports from QTS App Center
             ui_port=$($GETCFG_CMD $QPKG_NAME Web_Port -d 0 -f "$QTS_QPKG_CONF_PATHFILE")
             ui_port_secure=$($GETCFG_CMD $QPKG_NAME Web_SSL_Port -d 0 -f "$QTS_QPKG_CONF_PATHFILE")
             ;;
         *)
-            DisplayErrCommitAllLogs "unable to load UI ports: service operation '$service_operation' unrecognised"
+            DisplayErrCommitAllLogs "unable to load UI ports: action '$1' unrecognised"
             SetError
             return 1
             ;;
     esac
 
     if [[ $ui_port -eq 0 ]] && IsNotDefaultConfigFound; then
-        ui_port=9991        # 'Transmission' isn't packaged with a default configuation
+        ui_port=0
         ui_port_secure=0
     fi
+
+    # Always read this from the application configuration
+    ui_listening_address=$($JQ_CMD -r '."rpc-bind-address"' < "$QPKG_INI_PATHFILE")
+
+    return 0
 
     }
 
@@ -267,7 +296,7 @@ LoadAppVersion()
 
     [[ ! -e $TARGET_DAEMON ]] && return 1
 
-    app_version=$($TARGET_DAEMON --version  2>&1 | $SED_CMD 's|transmission-daemon ||')
+    app_version=$($TARGET_DAEMON --version 2>&1 | $SED_CMD 's|transmission-daemon ||')
 
     }
 
@@ -348,6 +377,8 @@ ReWriteUIPorts()
         $SETCFG_CMD $QPKG_NAME Web_SSL_Port 0 -f $QTS_QPKG_CONF_PATHFILE
     fi
 
+    DisplayDoneCommitToLog 'App Center configuration updated with current port information'
+
     }
 
 CheckPorts()
@@ -355,8 +386,10 @@ CheckPorts()
 
     local msg=''
 
+    DisplayDoneCommitToLog "daemon listening address: $ui_listening_address"
+
     if IsSSLEnabled && IsPortSecureResponds $ui_port_secure; then
-        msg="$(FormatAsPackageName $QPKG_NAME) UI is listening on HTTPS port $ui_port_secure"
+        msg="$(FormatAsPackageName $QPKG_NAME) IS listening on HTTPS port $ui_port_secure"
     fi
 
     if IsNotSSLEnabled || [[ $ui_port -ne $ui_port_secure ]]; then
@@ -365,10 +398,12 @@ CheckPorts()
             if [[ -n $msg ]]; then
                 msg+=" and on HTTP port $ui_port"
             else
-                msg="$(FormatAsPackageName $QPKG_NAME) UI is listening on HTTP port $ui_port"
+                msg="$(FormatAsPackageName $QPKG_NAME) IS listening on HTTP port $ui_port"
             fi
         fi
     fi
+
+    ReWriteUIPorts
 
     if [[ -z $msg ]]; then
         DisplayErrCommitAllLogs 'no response on configured port(s)!'
@@ -392,15 +427,15 @@ IsNotSSLEnabled()
 IsDaemonActive()
     {
 
-    # $? = 0 : $TARGET_SCRIPT_PATHFILE is in memory
-    # $? = 1 : $TARGET_SCRIPT_PATHFILE is not in memory
+    # $? = 0 : $TARGET_DAEMON is in memory
+    # $? = 1 : $TARGET_DAEMON is not in memory
 
     if [[ -e $DAEMON_PID_PATHFILE && -d /proc/$(<$DAEMON_PID_PATHFILE) && -n $TARGET_DAEMON && $(</proc/"$(<$DAEMON_PID_PATHFILE)"/cmdline) =~ $TARGET_DAEMON ]]; then
-        DisplayDoneCommitToLog "daemon is active: PID $(<$DAEMON_PID_PATHFILE)"
+        DisplayDoneCommitToLog "daemon IS active: PID $(<$DAEMON_PID_PATHFILE)"
         return
     fi
 
-    DisplayDoneCommitToLog 'daemon is not active'
+    DisplayDoneCommitToLog 'daemon NOT active'
     [[ -f $DAEMON_PID_PATHFILE ]] && rm "$DAEMON_PID_PATHFILE"
     return 1
 
@@ -427,7 +462,7 @@ IsSysFilePresent()
     fi
 
     if [[ ! -e $1 ]]; then
-        FormatAsDisplayError "A required NAS system file is missing [$1]"
+        FormatAsDisplayError "A required NAS system file is missing: $(FormatAsFileName "$1")"
         SetError
         return 1
     else
@@ -452,10 +487,7 @@ IsPortAvailable()
     # $? = 0 if available
     # $? = 1 if already used
 
-    if [[ -z $1 || $1 -eq 0 ]]; then
-        SetError
-        return 1
-    fi
+    [[ -z $1 || $1 -eq 0 ]] && return
 
     if ($LSOF_CMD -i :"$1" -sTCP:LISTEN >/dev/null 2>&1); then
         return 1
@@ -470,7 +502,7 @@ IsNotPortAvailable()
 
     # $1 = port to check
     # $? = 1 if available
-    # $? = 0 if already used or unspecified
+    # $? = 0 if already used
 
     ! IsPortAvailable "$1"
 
@@ -488,18 +520,17 @@ IsPortResponds()
         return 1
     fi
 
-    local -r MAX_WAIT_SECONDS_START=60
     local acc=0
 
     DisplayWaitCommitToLog "* checking for UI port $1 response:"
-    DisplayWait "(waiting for up to $MAX_WAIT_SECONDS_START seconds):"
+    DisplayWait "(no-more than $PORT_CHECK_TIMEOUT seconds):"
 
-    while ! $CURL_CMD --silent --fail http://localhost:"$1" >/dev/null; do
+    while ! $CURL_CMD --silent --fail --max-time 1 http://localhost:"$1" >/dev/null; do
         sleep 1
-        ((acc++))
+        ((acc+=2))
         DisplayWait "$acc,"
 
-        if [[ $acc -ge $MAX_WAIT_SECONDS_START ]]; then
+        if [[ $acc -ge $PORT_CHECK_TIMEOUT ]]; then
             DisplayCommitToLog 'failed!'
             CommitErrToSysLog "UI port $1 failed to respond after $acc seconds"
             return 1
@@ -525,18 +556,17 @@ IsPortSecureResponds()
         return 1
     fi
 
-    local -r MAX_WAIT_SECONDS_START=60
     local acc=0
 
     DisplayWaitCommitToLog "* checking for secure UI port $1 response:"
-    DisplayWait "(waiting for up to $MAX_WAIT_SECONDS_START seconds):"
+    DisplayWait "(no-more than $PORT_CHECK_TIMEOUT seconds):"
 
-    while ! $CURL_CMD --silent --insecure --fail https://localhost:"$1" >/dev/null; do
+    while ! $CURL_CMD --silent --insecure --fail --max-time 1 https://localhost:"$1" >/dev/null; do
         sleep 1
-        ((acc++))
+        ((acc+=2))
         DisplayWait "$acc,"
 
-        if [[ $acc -ge $MAX_WAIT_SECONDS_START ]]; then
+        if [[ $acc -ge $PORT_CHECK_TIMEOUT ]]; then
             DisplayCommitToLog 'failed!'
             CommitErrToSysLog "secure UI port $1 failed to respond after $acc seconds"
             return 1
@@ -582,38 +612,33 @@ IsNotDefaultConfigFound()
 
     }
 
-IsError()
+SetServiceOperation()
     {
 
-    [[ $error_flag = true ]]
+    service_operation="$1"
 
     }
 
-IsNotError()
+SetServiceOperationResultOK()
     {
 
-    [[ $error_flag = false ]]
+    SetServiceOperationResult ok
 
     }
 
-SetServiceOperationOK()
+SetServiceOperationResultFailed()
     {
 
-    echo "ok" > "$SERVICE_STATUS_PATHFILE"
+    SetServiceOperationResult failed
 
     }
 
-SetServiceOperationFailed()
+SetServiceOperationResult()
     {
 
-    echo "failed" > "$SERVICE_STATUS_PATHFILE"
+    # $1 = result of operation to recorded
 
-    }
-
-RemoveServiceStatus()
-    {
-
-    [[ -e $SERVICE_STATUS_PATHFILE ]] && rm -f "$SERVICE_STATUS_PATHFILE"
+    [[ -n $1 && -n $SERVICE_STATUS_PATHFILE ]] && echo "$1" > "$SERVICE_STATUS_PATHFILE"
 
     }
 
@@ -632,6 +657,55 @@ UnsetError()
     IsNotError && return
 
     error_flag=false
+
+    }
+
+IsError()
+    {
+
+    [[ $error_flag = true ]]
+
+    }
+
+IsNotError()
+    {
+
+    [[ $error_flag = false ]]
+
+    }
+
+IsNotRestart()
+    {
+
+    ! [[ $service_operation = restart ]]
+
+    }
+
+IsNotRestore()
+    {
+
+    ! [[ $service_operation = restore ]]
+
+    }
+
+IsNotLog()
+    {
+
+    ! [[ $service_operation = log ]]
+
+    }
+
+IsNotClean()
+    {
+
+    ! [[ $service_operation = clean ]]
+
+    }
+
+IsNotStatus()
+    {
+
+    ! [[ $service_operation = status ]]
 
     }
 
@@ -667,14 +741,16 @@ DisplayErrCommitToLog()
 DisplayCommitToLog()
     {
 
-    echo "$1" | $TEE_CMD -a $SERVICE_LOG_PATHFILE
+    Display "$1"
+    CommitLog "$1"
 
     }
 
 DisplayWaitCommitToLog()
     {
 
-    DisplayWait "$1" | $TEE_CMD -a $SERVICE_LOG_PATHFILE
+    DisplayWait "$1"
+    CommitLogWait "$1"
 
     }
 
@@ -756,6 +832,14 @@ DisplayWait()
 
     }
 
+RecordOperationToLog()
+    {
+
+    CommitLog "$(SessionSeparator "'$service_operation' requested")"
+    CommitLog "= $(date), QPKG: $QPKG_VERSION, application: $app_version"
+
+    }
+
 CommitInfoToSysLog()
     {
 
@@ -780,7 +864,18 @@ CommitErrToSysLog()
 CommitLog()
     {
 
-    echo "$1" >> "$SERVICE_LOG_PATHFILE"
+    if IsNotStatus && IsNotLog; then
+        echo "$1" >> "$SERVICE_LOG_PATHFILE"
+    fi
+
+    }
+
+CommitLogWait()
+    {
+
+    if IsNotStatus && IsNotLog; then
+        echo -n "$1 " >> "$SERVICE_LOG_PATHFILE"
+    fi
 
     }
 
@@ -841,53 +936,50 @@ WaitForEntware()
 Init
 
 if IsNotError; then
-    if [[ -n $1 ]]; then
-        service_operation="$1"
-        if [[ $1 != log && $1 != l && $1 != status && $1 != s ]]; then
-            CommitLog "$(SessionSeparator "'$service_operation' requested")"
-            CommitLog "= $(date), QPKG: $QPKG_VERSION, application: $app_version"
-        fi
-    fi
-    case $service_operation in
+    case $1 in
         start)
+            SetServiceOperation "$1"
             StartQPKG || SetError
             ;;
         stop)
+            SetServiceOperation "$1"
             StopQPKG || SetError
             ;;
         r|restart)
-            { StopQPKG; StartQPKG ; } || SetError
+            SetServiceOperation restart
+            { StopQPKG; StartQPKG ;} || SetError
             ;;
         s|status)
-            LoadUIPorts status
-            if IsDaemonActive $QPKG_NAME; then
-                CheckPorts
-            else
-                SetError
-            fi
+            SetServiceOperation status
+            StatusQPKG || SetError
             ;;
         b|backup)
+            SetServiceOperation backup
             BackupConfig || SetError
             ;;
         restore)
+            SetServiceOperation "$1"
             RestoreConfig || SetError
             ;;
         l|log)
+            SetServiceOperation log
             ViewLog
             ;;
         v|version)
+            SetServiceOperation version
             Display "$QPKG_VERSION"
             ;;
         *)
+            SetServiceOperation none
             ShowHelp
             ;;
     esac
 fi
 
 if IsError; then
-    SetServiceOperationFailed
+    SetServiceOperationResultFailed
     exit 1
 fi
 
-SetServiceOperationOK
+SetServiceOperationResultOK
 exit
