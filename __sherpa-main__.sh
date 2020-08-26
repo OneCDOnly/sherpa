@@ -38,7 +38,7 @@ Init()
     {
 
     readonly SCRIPT_NAME=sherpa.sh
-    readonly SCRIPT_VERSION=200827e
+    readonly SCRIPT_VERSION=200827f
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -567,9 +567,9 @@ CheckForNewQPKGVersions()
 
     if [[ ${#QPKGS_upgradable[@]} -gt 0 ]]; then
         if [[ ${#QPKGS_upgradable[@]} -eq 1 ]]; then
-            msg="A new package is"
+            msg='A new package is'
         else
-            msg="New packages are"
+            msg='New packages are'
         fi
 
         names=${QPKGS_upgradable[*]}
@@ -1664,7 +1664,7 @@ CalcUpgradeableQPKGs()
         installed_version=$(GetInstalledQPKGVersion "$package")
         remote_version=$(GetQPKGRemoteVersion "$package")
 
-        if [[ $installed_version != $remote_version ]]; then
+        if [[ $installed_version != "$remote_version" ]]; then
             #QPKGS_upgradable+=("$package $installed_version $remote_version")
             QPKGS_upgradable+=("$package")
         fi
