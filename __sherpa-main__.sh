@@ -3571,7 +3571,6 @@ WriteToDisplay_SameLine()
     #   $1 = pass/fail
     #   $2 = message
 
-#     previous_msg=$(printf "[ %-10s ] %s" "$1" "$2")
     previous_msg=$(printf "%-10s: %s" "$1" "$2")
 
     echo -n "$previous_msg"; IsVisibleDebugging && echo
@@ -3598,7 +3597,6 @@ WriteToDisplay_NewLine()
     local strbuffer=''
     local new_length=0
 
-#     new_message=$(printf "[ %-10s ] %s" "$1" "$2")
     new_message=$(printf "%-10s: %s" "$1" "$2")
 
     if [[ $new_message != "$previous_msg" ]]; then
@@ -3630,7 +3628,7 @@ WriteToLog()
 
     [[ -z $DEBUG_LOG_PATHFILE ]] && return 1
 
-    printf "[ %-4s ] %s\n" "$1" "$2" >> "$DEBUG_LOG_PATHFILE"
+    printf "%-4s: %s\n" "$(StripANSI "$1")" "$(StripANSI "$2")" >> "$DEBUG_LOG_PATHFILE"
 
     }
 
@@ -3701,6 +3699,15 @@ ColourReset()
     {
 
     echo -en "$1"'\033[0m'
+
+    }
+
+StripANSI()
+    {
+
+    # found here: https://www.commandlinefu.com/commands/view/3584/remove-color-codes-special-characters-with-sed
+
+    $SED_CMD -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g" <<< "$1"
 
     }
 
