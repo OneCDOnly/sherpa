@@ -38,7 +38,7 @@ Init()
     {
 
     readonly SCRIPT_NAME=sherpa.sh
-    readonly SCRIPT_VERSION=200826g
+    readonly SCRIPT_VERSION=200826h
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -400,7 +400,8 @@ LogRuntimeParameters()
     fi
 
     IsAbort && return
-    CheckForNewVersions
+    CheckLauncherAge
+    CheckForNewQPKGVersions
     IsNotVisibleDebugging && IsNotLogViewOnly && echo
 
     DebugNAS 'model' "$(get_display_name)"
@@ -409,7 +410,7 @@ LogRuntimeParameters()
         if IsQPKGToBeInstalled SABnzbd || IsQPKGInstalled SABnzbd || IsQPKGInstalled SABnzbdplus; then
             if [[ $INSTALLED_RAM_KB -le $MIN_RAM_KB ]]; then
                 DebugNAS 'RAM' "less-than or equal-to $MIN_RAM_KB kB"
-                IsNotError && ShowAsNote "QTS with 1GiB RAM-or-less can lead to unstable $(FormatAsPackageName SABnzbd) uptimes. :("
+                IsNotError && ShowAsWarning "QTS with 1GiB RAM-or-less can lead to unstable $(FormatAsPackageName SABnzbd) uptimes."
             fi
         fi
     fi
@@ -551,7 +552,7 @@ LogRuntimeParameters()
 
     }
 
-CheckForNewVersions()
+CheckForNewQPKGVersions()
     {
 
     # Check installed sherpa packages and compare versions against package arrays. If new versions are available, advise on-screen.
@@ -718,7 +719,7 @@ ShowHelp()
         echo -e "\t./$SCRIPT_NAME $package"
     done
 
-    CheckForNewVersions
+    CheckForNewQPKGVersions
 
     echo -e "\n- Display recognised package abbreviations:"
     echo -e "\t./$SCRIPT_NAME --abs"
@@ -2342,6 +2343,22 @@ IsOnlyInstance()
 
     }
 
+CheckLauncherAge()
+    {
+
+    # Has the launcher script been downloaded only in the last 5 minutes?
+
+    IsSysFileExist $GNU_FIND_CMD || return          # can only do this with GNU 'find'. The old BusyBox 'find' in QTS 4.2.6 doesn't support '-cmin'.
+
+    if [[ -z $($GNU_FIND_CMD "$SCRIPT_NAME" -cmin +5) ]]; then
+        IsNotVisibleDebugging && IsNotLogViewOnly && echo
+        ShowAsNote "$(ColourTextBrightWhite 'sherpa.sh') does not need updating anymore. It now downloads all the latest information from the Internet everytime it's run. ;)"
+    fi
+
+    return 0
+
+    }
+
 IsSysFileExist()
     {
 
@@ -3548,7 +3565,8 @@ WriteToDisplay_SameLine()
     #   $1 = pass/fail
     #   $2 = message
 
-    previous_msg=$(printf "[ %-10s ] %s" "$1" "$2")
+#     previous_msg=$(printf "[ %-10s ] %s" "$1" "$2")
+    previous_msg=$(printf "%-10s: %s" "$1" "$2")
 
     echo -n "$previous_msg"; IsVisibleDebugging && echo
 
@@ -3574,7 +3592,8 @@ WriteToDisplay_NewLine()
     local strbuffer=''
     local new_length=0
 
-    new_message=$(printf "[ %-10s ] %s" "$1" "$2")
+#     new_message=$(printf "[ %-10s ] %s" "$1" "$2")
+    new_message=$(printf "%-10s: %s" "$1" "$2")
 
     if [[ $new_message != "$previous_msg" ]]; then
         previous_length=$((${#previous_msg}+1))
