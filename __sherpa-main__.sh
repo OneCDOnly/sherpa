@@ -38,7 +38,7 @@ Init()
     {
 
     readonly SCRIPT_NAME=sherpa.sh
-    readonly SCRIPT_VERSION=200826h
+    readonly SCRIPT_VERSION=200826i
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -3624,7 +3624,6 @@ WriteToLog()
 
     [[ -z $DEBUG_LOG_PATHFILE ]] && return 1
 
-    [[ ! -f $DEBUG_LOG_PATHFILE ]] && $TOUCH_CMD "$DEBUG_LOG_PATHFILE"
     printf "[ %-4s ] %s\n" "$1" "$2" >> "$DEBUG_LOG_PATHFILE"
 
     }
@@ -3632,77 +3631,70 @@ WriteToLog()
 ColourTextBrightGreen()
     {
 
-    echo -en '\033[1;32m'"$(ColoursReset "$1")"
+    echo -en '\033[1;32m'"$(ColourReset "$1")"
 
     }
 
 ColourTextBrightYellow()
     {
 
-    echo -en '\033[1;33m'"$(ColoursReset "$1")"
+    echo -en '\033[1;33m'"$(ColourReset "$1")"
 
     }
 
 ColourTextBrightYellowBlink()
     {
 
-    echo -en '\033[1;5;33m'"$(ColoursReset "$1")"
+    echo -en '\033[1;5;33m'"$(ColourReset "$1")"
 
     }
 
 ColourTextBrightOrange()
     {
 
-    echo -en '\033[1;38;5;214m'"$(ColoursReset "$1")"
+    echo -en '\033[1;38;5;214m'"$(ColourReset "$1")"
 
     }
 
 ColourTextBrightOrangeBlink()
     {
 
-    echo -en '\033[1;5;38;5;214m'"$(ColoursReset "$1")"
+    echo -en '\033[1;5;38;5;214m'"$(ColourReset "$1")"
 
     }
 
 ColourTextBrightRed()
     {
 
-    echo -en '\033[1;31m'"$(ColoursReset "$1")"
+    echo -en '\033[1;31m'"$(ColourReset "$1")"
 
     }
 
 ColourTextUnderlinedBlue()
     {
 
-    echo -en '\033[4;94m'"$(ColoursReset "$1")"
+    echo -en '\033[4;94m'"$(ColourReset "$1")"
 
     }
 
 ColourTextBlackOnCyan()
     {
 
-    echo -en '\033[30;46m'"$(ColoursReset "$1")"
+    echo -en '\033[30;46m'"$(ColourReset "$1")"
 
     }
 
 ColourTextBrightWhite()
     {
 
-    echo -en '\033[1;97m'"$(ColoursReset "$1")"
+    echo -en '\033[1;97m'"$(ColourReset "$1")"
 
     }
 
-ColoursReset()
+ColourReset()
     {
 
     echo -en "$1"'\033[0m'
-
-    }
-
-RemoveColourCodes()
-    {
-
-    $SED_CMD "s,\x1B\[[0-9;]*[a-zA-Z],,g" <<< "$1"
 
     }
 
