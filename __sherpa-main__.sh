@@ -38,7 +38,7 @@ Init()
     {
 
     readonly SCRIPT_NAME=sherpa.sh
-    readonly SCRIPT_VERSION=200826f
+    readonly SCRIPT_VERSION=200826g
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -1086,6 +1086,7 @@ InstallQPKGIndepsAddons()
 
     InstallIPKGs
     DowngradePy3
+    SetPIPInstall
     InstallPy3Modules
 
     [[ $TARGET_APP = Entware || $update_all_apps = true ]] && RestartAllDepQPKGs
@@ -1193,6 +1194,7 @@ InstallIPKGBatch()
             returncode=1
         fi
         DebugTimerStageEnd "$STARTSECONDS"
+        SetPIPInstall
     fi
 
     DebugFuncExit
@@ -1204,6 +1206,7 @@ DowngradePy3()
     {
 
     IsAbort && return
+    [[ $IPKG_download_count -eq 0 ]] && return
 
     # kludge: Watcher3 isn't presently compatible with Python 3.8.x so let's force a downgrade to 3.7.4
 
@@ -1286,6 +1289,7 @@ DowngradePy3()
     fi
 
     IsNotError && update_all_apps=true
+    SetPIPInstall
 
     DebugFuncExit
     return $returncode
@@ -1296,6 +1300,7 @@ InstallPy3Modules()
     {
 
     IsAbort && return
+    IsNotPIPInstall && return
 
     DebugFuncEntry
     local exec_cmd=''
@@ -2835,6 +2840,40 @@ IsNotLogPasteOnly()
     {
 
     [[ $logpaste_only != true ]]
+
+    }
+
+SetPIPInstall()
+    {
+
+    IsPIPInstall && return
+
+    pip3_install=true
+    DebugVar pip3_install
+
+    }
+
+UnsetPIPInstall()
+    {
+
+    IsNotPIPInstall && return
+
+    pip3_install=false
+    DebugVar pip3_install
+
+    }
+
+IsPIPInstall()
+    {
+
+    [[ $pip3_install = true ]]
+
+    }
+
+IsNotPIPInstall()
+    {
+
+    [[ $pip3_install != true ]]
 
     }
 
