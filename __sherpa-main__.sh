@@ -38,7 +38,7 @@ Init()
     {
 
     readonly SCRIPT_NAME=sherpa.sh
-    readonly SCRIPT_VERSION=200826e
+    readonly SCRIPT_VERSION=200826f
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -394,8 +394,13 @@ LogRuntimeParameters()
 
     ParseArgs
 
-    IsNotVisibleDebugging && IsNotVersionOnly && echo "$(ColourTextBrightWhite "$SCRIPT_NAME") ($SCRIPT_VERSION)"
+    if IsNotVisibleDebugging && IsNotVersionOnly; then
+        echo "$(ColourTextBrightWhite "$SCRIPT_NAME") ($SCRIPT_VERSION)"
+        echo -e "\n* A mini package manager to install various media-management apps into QNAP NAS."
+    fi
+
     IsAbort && return
+    CheckForNewVersions
     IsNotVisibleDebugging && IsNotLogViewOnly && echo
 
     DebugNAS 'model' "$(get_display_name)"
@@ -549,9 +554,24 @@ LogRuntimeParameters()
 CheckForNewVersions()
     {
 
-    # Check installed sherpa packages and compare version against package arrays. If new version are available, advise on-screen.
+    # Check installed sherpa packages and compare versions against package arrays. If new versions are available, advise on-screen.
 
-#   echo ${newbase#*_}
+    local names=''
+    local msg=''
+
+    [[ ${#QPKGS_upgradable[@]} -eq 0 ]] && CalcUpgradeableQPKGs
+
+    if [[ ${#QPKGS_upgradable[@]} -gt 0 ]]; then
+        if [[ ${#QPKGS_upgradable[@]} -eq 1 ]]; then
+            msg="A new package is"
+        else
+            msg="New packages are"
+        fi
+
+        names=${QPKGS_upgradable[*]}
+
+        echo -e "\n* $msg available for $(ColourTextBrightOrange "${names// /, }")"
+    fi
 
     return 0
 
@@ -693,12 +713,12 @@ ShowHelp()
 
     local package=''
 
-    echo -e "\n* A mini package manager to install various media-management apps into QNAP NAS."
-
     echo -e "\n- Each application shown below can be installed (or re-installed) by running:"
     for package in "${QPKGS_user_installable[@]}"; do
         echo -e "\t./$SCRIPT_NAME $package"
     done
+
+    CheckForNewVersions
 
     echo -e "\n- Display recognised package abbreviations:"
     echo -e "\t./$SCRIPT_NAME --abs"
@@ -980,7 +1000,7 @@ PatchBaseInit()
 
     local find_text=''
     local insert_text=''
-    local package_init_pathfile=$(GetQPKGServicePathFile Entware)
+    local package_init_pathfile=$(GetInstalledQPKGServicePathFile Entware)
 
     if ($GREP_CMD -q 'opt.orig' "$package_init_pathfile"); then
         DebugInfo 'patch: do the "opt shuffle" - already done'
@@ -1615,6 +1635,34 @@ CalcInstalledQPKGs()
 
     }
 
+CalcUpgradeableQPKGs()
+    {
+
+    # Returns a list of QPKGs that can be upgraded.
+    # creates a global variable array: $QPKGS_upgradable()
+
+    QPKGS_upgradable=()
+    local package=''
+    local installed_version=''
+    local remote_version=''
+
+    [[ ${#QPKGS_installed[@]} -eq 0 ]] && CalcInstalledQPKGs
+
+    for package in "${QPKGS_installed[@]}"; do
+        [[ $package = Entware ]] && continue        # kludge: ignore 'Entware' as package filename version doesn't match the QTS App Center version string
+        installed_version=$(GetInstalledQPKGVersion "$package")
+        remote_version=$(GetQPKGRemoteVersion "$package")
+
+        if [[ $installed_version != $remote_version ]]; then
+            #QPKGS_upgradable+=("$package $installed_version $remote_version")
+            QPKGS_upgradable+=("$package")
+        fi
+    done
+
+    return 0
+
+    }
+
 LoadInstalledQPKGVars()
     {
 
@@ -1716,7 +1764,7 @@ RestartQPKGService()
     fi
 
     local result=0
-    local package_init_pathfile=$(GetQPKGServicePathFile "$1")
+    local package_init_pathfile=$(GetInstalledQPKGServicePathFile "$1")
     local log_file=$WORK_PATH/$1.$RESTART_LOG_FILE
 
     ShowAsProc "restarting $(FormatAsPackageName "$1")"
@@ -1743,33 +1791,55 @@ RestartQPKGService()
 
     }
 
-GetQPKGServicePathFile()
+GetInstalledQPKGServicePathFile()
     {
 
     # input:
     #   $1 = QPKG name
 
     # output:
-    #   stdout = QPKG init pathfilename
-    #   $? = 0 if successful, 1 if failed
+    #   stdout = service pathfilename
+    #   $? = 0 if found, 1 if not
 
     [[ -z $1 ]] && return 1
+    IsNotQPKGInstalled "$1" && return 1
 
     local output=''
-    local returncode=0
 
-    output=$($GETCFG_CMD "$1" Shell -f $APP_CENTER_CONFIG_PATHFILE)
-
-    if [[ -z $output ]]; then
-        DebugError "No service file configured for package $(FormatAsPackageName "$1")"
-        returncode=1
-    elif [[ ! -e $output ]]; then
-        DebugError "Package service file not found $(FormatAsStdout "$output")"
-        returncode=1
+    if output=$($GETCFG_CMD "$1" Shell -f $APP_CENTER_CONFIG_PATHFILE); then
+        echo "$output"
+        return 0
+    else
+        echo 'unknown'
+        return 1
     fi
 
-    echo "$output"
-    return $returncode
+    }
+
+GetInstalledQPKGVersion()
+    {
+
+    # Returns the version number of an installed QPKG.
+
+    # input:
+    #   $1 = QPKG name
+
+    # output:
+    #   stdout = package version
+    #   $? = 0 if found, 1 if not
+
+    [[ -z $1 ]] && return 1
+    IsNotQPKGInstalled "$1" && return 1
+
+    local output=''
+
+    if output=$($GETCFG_CMD "$1" Version -f $APP_CENTER_CONFIG_PATHFILE); then
+        echo "$output"
+        return 0
+    else
+        echo 'unknown'
+        return 1
+    fi
 
     }
 
@@ -1813,6 +1883,32 @@ GetQPKGRemoteURL()
     done
 
     return $returncode
+
+    }
+
+GetQPKGRemoteVersion()
+    {
+
+    # input:
+    #   $1 = QPKG name
+
+    # output:
+    #   stdout = QPKG remote version
+    #   $? = 0 if successful, 1 if failed
+
+    [[ -z $1 ]] && return 1
+
+    local url=''
+    local version=''
+
+    if url=$(GetQPKGRemoteURL "$1"); then
+        version=${url#*_}; version=${version%.*}
+        echo "$version"
+        return 0
+    else
+        echo "unknown"
+        return 1
+    fi
 
     }
 
@@ -3555,7 +3651,6 @@ RemoveColourCodes()
 Init || exit 1
 
 LogRuntimeParameters
-CheckForNewVersions
 DownloadQPKGs
 RemoveUnwantedQPKGs
 InstallQPKGIndeps
@@ -3565,6 +3660,6 @@ Cleanup
 ShowResult
 RemoveLock
 
-IsNotVisibleDebugging && IsNotLogViewOnly && IsNotVersionOnly && echo
+IsNotVisibleDebugging && IsNotVersionOnly && echo
 
 exit $code_pointer
