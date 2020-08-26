@@ -24,7 +24,7 @@ Init()
     {
 
     readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200821b
+    readonly SCRIPT_VERSION=200826
 
     if [[ ! -e /etc/init.d/functions ]]; then
         ShowAsAbort 'QTS functions missing (is this a QNAP NAS?)'
@@ -68,7 +68,7 @@ WriteToDisplay_NewLine()
     local new_length=0
     previous_msg=''
 
-    new_message=$(printf "[ %-10s ] %s" "$1" "$2")
+    new_message=$(printf "%-10s: %s" "$1" "$2")
 
     if [[ $new_message != "$previous_msg" ]]; then
         previous_length=$((${#previous_msg}+1))
@@ -93,11 +93,11 @@ WriteToDisplay_NewLine()
 ColourTextBrightRed()
     {
 
-    echo -en '\033[1;31m'"$(ColoursReset "$1")"
+    echo -en '\033[1;31m'"$(ColourReset "$1")"
 
     }
 
-ColoursReset()
+ColourReset()
     {
 
     echo -en "$1"'\033[0m'
