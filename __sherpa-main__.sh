@@ -38,7 +38,7 @@ Init()
     {
 
     readonly SCRIPT_NAME=sherpa.sh
-    readonly SCRIPT_VERSION=200826i
+    readonly SCRIPT_VERSION=200826j
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -396,13 +396,13 @@ LogRuntimeParameters()
 
     if IsNotVisibleDebugging && IsNotVersionOnly; then
         echo "$(ColourTextBrightWhite "$SCRIPT_NAME") ($SCRIPT_VERSION)"
-        echo -e "\n* A mini package manager to install various media-management apps into QNAP NAS."
+        echo -e "\n* A mini package manager to install various media-management apps into QNAP NAS"
     fi
 
     IsAbort && return
+    IsNotVisibleDebugging && echo
     CheckLauncherAge
     CheckForNewQPKGVersions
-    IsNotVisibleDebugging && IsNotLogViewOnly && echo
 
     DebugNAS 'model' "$(get_display_name)"
     DebugNAS 'RAM' "$INSTALLED_RAM_KB kB"
@@ -410,7 +410,7 @@ LogRuntimeParameters()
         if IsQPKGToBeInstalled SABnzbd || IsQPKGInstalled SABnzbd || IsQPKGInstalled SABnzbdplus; then
             if [[ $INSTALLED_RAM_KB -le $MIN_RAM_KB ]]; then
                 DebugNAS 'RAM' "less-than or equal-to $MIN_RAM_KB kB"
-                IsNotError && ShowAsWarning "QTS with 1GiB RAM-or-less can lead to unstable $(FormatAsPackageName SABnzbd) uptimes."
+                IsNotError && ShowAsWarning "QTS with 1GiB RAM-or-less can lead to unstable $(FormatAsPackageName SABnzbd) uptimes"
             fi
         fi
     fi
@@ -557,6 +557,9 @@ CheckForNewQPKGVersions()
 
     # Check installed sherpa packages and compare versions against package arrays. If new versions are available, advise on-screen.
 
+    # $? = 0 if all packages are up-to-date
+    # $? = 1 if one or more packages can be upgraded
+
     local names=''
     local msg=''
 
@@ -571,7 +574,8 @@ CheckForNewQPKGVersions()
 
         names=${QPKGS_upgradable[*]}
 
-        echo -e "\n* $msg available for $(ColourTextBrightOrange "${names// /, }")"
+        ShowAsNote "$msg available for $(ColourTextBrightOrange "${names// /, }")"
+        return 1
     fi
 
     return 0
@@ -2351,8 +2355,7 @@ CheckLauncherAge()
     IsSysFileExist $GNU_FIND_CMD || return          # can only do this with GNU 'find'. The old BusyBox 'find' in QTS 4.2.6 doesn't support '-cmin'.
 
     if [[ -z $($GNU_FIND_CMD "$SCRIPT_NAME" -cmin +5) ]]; then
-        IsNotVisibleDebugging && IsNotLogViewOnly && echo
-        ShowAsNote "$(ColourTextBrightWhite 'sherpa.sh') does not need updating anymore. It now downloads all the latest information from the Internet everytime it's run. ;)"
+        ShowAsNote "The $(ColourTextBrightWhite 'sherpa.sh') script does not need updating anymore. It now downloads all the latest information from the Internet everytime it's run. ;)"
     fi
 
     return 0
@@ -2756,6 +2759,8 @@ IsNotShowHelpReminder()
 
 SetLogViewOnly()
     {
+
+    SetAbort
 
     IsLogViewOnly && return
 
@@ -3709,7 +3714,5 @@ InstallTargetQPKG
 Cleanup
 ShowResult
 RemoveLock
-
-IsNotVisibleDebugging && IsNotVersionOnly && echo
 
 exit $code_pointer
