@@ -38,7 +38,7 @@ Init()
     {
 
     readonly SCRIPT_NAME=sherpa.sh
-    readonly SCRIPT_VERSION=200827f
+    readonly SCRIPT_VERSION=200827g
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -567,9 +567,9 @@ CheckForNewQPKGVersions()
 
     if [[ ${#QPKGS_upgradable[@]} -gt 0 ]]; then
         if [[ ${#QPKGS_upgradable[@]} -eq 1 ]]; then
-            msg='A new package is'
+            msg='An upgraded package is'
         else
-            msg='New packages are'
+            msg='Upgraded packages are'
         fi
 
         names=${QPKGS_upgradable[*]}
