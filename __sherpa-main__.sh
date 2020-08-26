@@ -38,7 +38,7 @@ Init()
     {
 
     readonly SCRIPT_NAME=sherpa.sh
-    readonly SCRIPT_VERSION=200827d
+    readonly SCRIPT_VERSION=200827e
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -574,7 +574,7 @@ CheckForNewQPKGVersions()
 
         names=${QPKGS_upgradable[*]}
 
-        ShowAsNote "$msg available for $(ColourTextBrightOrange "${names// /, }")"
+        ShowAsNote "$msg available for $(ColourTextBrightYellow "${names// /, }")"
         return 1
     fi
 
