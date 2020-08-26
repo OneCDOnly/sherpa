@@ -38,7 +38,7 @@ Init()
     {
 
     readonly SCRIPT_NAME=sherpa.sh
-    readonly SCRIPT_VERSION=200827g
+    readonly SCRIPT_VERSION=200827h
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -360,7 +360,7 @@ Init()
     readonly MIN_RAM_KB=1048576
     readonly INSTALLED_RAM_KB=$($GREP_CMD MemTotal /proc/meminfo | $CUT_CMD -f2 -d':' | $SED_CMD 's|kB||;s| ||g')
     reinstall_flag=false
-    update_all_apps=false
+    upgrade_all_apps=false
     backup_all_apps=false
     restore_all_apps=false
     ignore_space_arg=''
@@ -449,7 +449,7 @@ LogRuntimeParameters()
         return 1
     fi
 
-    if IsNotError && [[ ${#QPKGS_to_install[@]} -eq 0 && ${#QPKGS_to_uninstall[@]} -eq 0 && ${#QPKGS_to_update[@]} -eq 0 && ${#QPKGS_to_backup[@]} -eq 0 && ${#QPKGS_to_restore[@]} -eq 0 ]] && IsNotSatisfyDependenciesOnly && [[ $update_all_apps = false ]]; then
+    if IsNotError && [[ ${#QPKGS_to_install[@]} -eq 0 && ${#QPKGS_to_uninstall[@]} -eq 0 && ${#QPKGS_to_update[@]} -eq 0 && ${#QPKGS_to_backup[@]} -eq 0 && ${#QPKGS_to_restore[@]} -eq 0 ]] && IsNotSatisfyDependenciesOnly && [[ $upgrade_all_apps = false ]]; then
         ShowAsError 'no valid QPKGs or actions were specified.'
         SetShowAbbreviationsReminder
         return 1
@@ -646,9 +646,9 @@ ParseArgs()
                 DebugVar reinstall_all_apps
                 current_operation=''
                 ;;
-            --update-all)
-                update_all_apps=true
-                DebugVar update_all_apps
+            --upgrade-all-apps)
+                upgrade_all_apps=true
+                DebugVar upgrade_all_apps
                 current_operation=''
                 ;;
             --backup-all)
@@ -735,8 +735,8 @@ ShowHelp()
     echo -e "\n- Don't check free-space on target filesystem when installing $(FormatAsPackageName Entware) packages:"
     echo -e "\t./$SCRIPT_NAME --ignore-space"
 
-    echo -e "\n- Update all sherpa applications:"
-    echo -e "\t./$SCRIPT_NAME --update-all"
+    echo -e "\n- Upgrade all sherpa applications (only upgrades the internal applications, not the QPKG):"
+    echo -e "\t./$SCRIPT_NAME --upgrade-all-apps"
 
     echo -e "\n- View the sherpa log:"
     echo -e "\t./$SCRIPT_NAME --log"
@@ -1095,7 +1095,7 @@ InstallQPKGIndepsAddons()
     SetPIPInstall
     InstallPy3Modules
 
-    [[ $TARGET_APP = Entware || $update_all_apps = true ]] && RestartAllDepQPKGs
+    [[ $TARGET_APP = Entware || $upgrade_all_apps = true ]] && RestartAllDepQPKGs
 
     DebugFuncExit
     return 0
@@ -1294,7 +1294,7 @@ DowngradePy3()
         DebugErrorFile "$install_log_pathfile"
     fi
 
-    IsNotError && update_all_apps=true
+    IsNotError && upgrade_all_apps=true
     SetPIPInstall
 
     DebugFuncExit
