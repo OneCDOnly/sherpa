@@ -38,7 +38,7 @@ Init()
     {
 
     readonly SCRIPT_NAME=sherpa.sh
-    readonly SCRIPT_VERSION=200827m
+    readonly SCRIPT_VERSION=200827p
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -406,29 +406,29 @@ LogRuntimeParameters()
     DebugInfo ' (EE) error, (==) processing, (--) done, (>>) f entry, (<<) f exit,'
     DebugInfo ' (vv) variable name & value, ($1) positional argument value.'
     DebugInfoThinSeparator
-    DebugNAS 'model' "$(get_display_name)"
-    DebugNAS 'RAM' "$INSTALLED_RAM_KB kB"
+    DebugHardware 'model' "$(get_display_name)"
+    DebugHardware 'RAM' "$INSTALLED_RAM_KB kB"
     if IsNotLogViewOnly; then
         if IsQPKGToBeInstalled SABnzbd || IsQPKGInstalled SABnzbd || IsQPKGInstalled SABnzbdplus; then
             if [[ $INSTALLED_RAM_KB -le $MIN_RAM_KB ]]; then
-                DebugNAS 'RAM' "less-than or equal-to $MIN_RAM_KB kB"
+                DebugHardware 'RAM' "less-than or equal-to $MIN_RAM_KB kB"
                 IsNotError && ShowAsWarning "QTS with 1GiB RAM-or-less can lead to unstable $(FormatAsPackageName SABnzbd) uptimes"
             fi
         fi
     fi
-    DebugNAS 'firmware version' "$NAS_FIRMWARE"
-    DebugNAS 'firmware build' "$($GETCFG_CMD System 'Build Number' -f $ULINUX_PATHFILE)"
-    DebugNAS 'kernel' "$($UNAME_CMD -mr)"
-    DebugNAS 'OS uptime' "$($UPTIME_CMD | $SED_CMD 's|.*up.||;s|,.*load.*||;s|^\ *||')"
-    DebugNAS 'system load' "$($UPTIME_CMD | $SED_CMD 's|.*load average: ||' | $AWK_CMD -F', ' '{print "1 min="$1 ", 5 min="$2 ", 15 min="$3}')"
-    DebugNAS 'USER' "$USER"
-    DebugNAS 'EUID' "$EUID"
-    DebugNAS 'default volume' "$($GETCFG_CMD SHARE_DEF defVolMP -f $DEFAULT_SHARES_PATHFILE)"
-    DebugNAS '$PATH' "${PATH:0:43}"
-    DebugNAS '/opt' "$([[ -L '/opt' ]] && $READLINK_CMD '/opt' || echo "<not present>")"
-    DebugNAS 'Python 3 path' "$(location=$(which python3 2>&1) && echo "$location" || echo '<not present>')"
-    DebugNAS 'Python 3 version' "$(version=$(python3 -V 2>&1) && echo "$version" || echo '<unknown>')"
-    DebugNAS "$SHARE_DOWNLOAD_PATH" "$([[ -L $SHARE_DOWNLOAD_PATH ]] && $READLINK_CMD "$SHARE_DOWNLOAD_PATH" || echo "<not present>")"
+    DebugFirmware 'firmware version' "$NAS_FIRMWARE"
+    DebugFirmware 'firmware build' "$($GETCFG_CMD System 'Build Number' -f $ULINUX_PATHFILE)"
+    DebugFirmware 'kernel' "$($UNAME_CMD -mr)"
+    DebugUserspace 'OS uptime' "$($UPTIME_CMD | $SED_CMD 's|.*up.||;s|,.*load.*||;s|^\ *||')"
+    DebugUserspace 'system load' "$($UPTIME_CMD | $SED_CMD 's|.*load average: ||' | $AWK_CMD -F', ' '{print "1 min="$1 ", 5 min="$2 ", 15 min="$3}')"
+    DebugUserspace '$USER' "$USER"
+    DebugUserspace '$EUID' "$EUID"
+    DebugUserspace 'default volume' "$($GETCFG_CMD SHARE_DEF defVolMP -f $DEFAULT_SHARES_PATHFILE)"
+    DebugUserspace '$PATH' "${PATH:0:43}"
+    DebugUserspace '/opt' "$([[ -L '/opt' ]] && $READLINK_CMD '/opt' || echo "<not present>")"
+    DebugUserspace 'Python 3 path' "$(location=$(which python3 2>&1) && echo "$location" || echo '<not present>')"
+    DebugUserspace 'Python 3 version' "$(version=$(python3 -V 2>&1) && echo "$version" || echo '<unknown>')"
+    DebugUserspace "$SHARE_DOWNLOAD_PATH" "$([[ -L $SHARE_DOWNLOAD_PATH ]] && $READLINK_CMD "$SHARE_DOWNLOAD_PATH" || echo "<not present>")"
     DebugScript 'unparsed arguments' "$USER_ARGS_RAW"
     DebugScript 'app(s) to install' "${QPKGS_to_install[*]} "
     DebugScript 'app(s) to uninstall' "${QPKGS_to_uninstall[*]} "
@@ -3353,28 +3353,28 @@ FormatAsResultAndStdout()
 DebugInfoThickSeparator()
     {
 
-    DebugInfo "$(printf '%0.s=' {1..74})"
+    DebugInfo "$(printf '%0.s=' {1..76})"
 
     }
 
 DebugInfoThinSeparator()
     {
 
-    DebugInfo "$(printf '%0.s-' {1..74})"
+    DebugInfo "$(printf '%0.s-' {1..76})"
 
     }
 
 DebugErrorThinSeparator()
     {
 
-    DebugError "$(printf '%0.s-' {1..74})"
+    DebugError "$(printf '%0.s-' {1..76})"
 
     }
 
 DebugLogThinSeparator()
     {
 
-    DebugLog "$(printf '%0.s-' {1..74})"
+    DebugLog "$(printf '%0.s-' {1..76})"
 
     }
 
@@ -3418,10 +3418,24 @@ DebugStage()
 
     }
 
-DebugNAS()
+DebugHardware()
     {
 
-    DebugDetected 'NAS' "$1" "$2"
+    DebugDetected 'HARDWARE' "$1" "$2"
+
+    }
+
+DebugFirmware()
+    {
+
+    DebugDetected 'FIRMWARE' "$1" "$2"
+
+    }
+
+DebugUserspace()
+    {
+
+    DebugDetected 'USERSPACE' "$1" "$2"
 
     }
 
@@ -3471,9 +3485,9 @@ DebugDetected()
     {
 
     if [[ -z $3 ]]; then
-        DebugThis "(**) $(printf "%-6s: %20s\n" "$1" "$2")"
+        DebugThis "(**) $(printf "%9s: %19s\n" "$1" "$2")"
     else
-        DebugThis "(**) $(printf "%-6s: %20s: %-s\n" "$1" "$2" "$3")"
+        DebugThis "(**) $(printf "%9s: %19s: %-s\n" "$1" "$2" "$3")"
     fi
 
     }
