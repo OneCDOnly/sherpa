@@ -55,8 +55,6 @@ Init()
     readonly BACKUP_PATHFILE=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
     readonly APPARENT_PATH=/share/$($GETCFG_CMD SHARE_DEF defDownload -d Qdownload -f /etc/config/def_share.info)/$QPKG_NAME
     [[ $PATH =~ $OPKG_PATH ]] && export PATH="$OPKG_PATH:$PATH"
-    readonly STOP_TIMEOUT=60
-    readonly PORT_CHECK_TIMEOUT=20
 
     # application-specific
     readonly APP_VERSION_PATHFILE=$QPKG_REPO_PATH/nzbtomedia/version.py
