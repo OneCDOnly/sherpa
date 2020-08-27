@@ -11,10 +11,20 @@ To install additional apps, run it again.
 If the installer is successful, your requested package and any required packages will be installed. Any existing installation of Entware will be used automatically. If Entware is not installed, a version appropriate to your NAS will be installed.
 
 ---
+## Before you begin
+
+This is a **command-line** package manager. If you're not comfortable using the BASH command shell, then please look at some of the fine GUI-only packaged alternatives available from the [Qnapclub Store](https://qnapclub.eu/en). You'll have a much better user-experience.
+
+
+---
 ## Current status
 
 STABLE - except for SickChill. The devs are hard-at-work migrating it to Python3. This is causing a few breakages. :(
 
+---
+## Requirements
+
+Any model QNAP NAS with at-least 1GB RAM. QTS 4.0 or-later.
 
 ---
 ## Usage
@@ -44,6 +54,8 @@ So, to install SABnzbd, use:
 ... and then/or:
 
 ```
+./sherpa.sh nzbToMedia
+
 ./sherpa.sh LazyLibrarian
 
 ./sherpa.sh Medusa
@@ -55,8 +67,6 @@ So, to install SABnzbd, use:
 ./sherpa.sh NZBGet
 
 ./sherpa.sh Transmission
-
-./sherpa.sh nzbToMedia
 ```
 
 5) When you're done, delete the installer and debug log:
@@ -67,7 +77,7 @@ rm sherpa.*
 ---
 ## Known issues
 
-1) Python 2.7.16 is no-longer available via Entware/OpenWRT so the Headphones QPKG can no-longer be installed. I'll need to find another Python2 source with installable modules, but I'm not hopeful.
+1) Python 2.7.16 is no-longer available via Entware/OpenWRT so the **Headphones** QPKG can no-longer be installed. I'll need to find another Python2 source with installable modules, but I'm not hopeful.
 
 2) Sometimes, it seems existing installations of Entware can become "difficult" to work with. So, Entware can also be reinstalled, but this should only be used as a last resort. Using:
 
@@ -75,15 +85,18 @@ rm sherpa.*
 ./sherpa.sh Entware
 ```
 
-... will force **sherpa** to uninstall your existing Entware QPKG, then install a new one. Please note: Entware will be reverted back to default, and only the IPKGs required to support your installed **sherpa** apps will be installed. All **sherpa** installed applications will be restarted afterward.
+... will force **sherpa** to uninstall your existing Entware QPKG, then install a new one. **Note:** Entware will be reverted back to default, and only the IPKGs required to support your installed **sherpa** apps will be installed. All **sherpa** installed applications will be restarted afterward.
 
 
 3) **sherpa** is incompatible with Optware-NG as it's missing a few required packages.
 
+
+4) All the latest issues can be seen on GitHub: [https://github.com/OneCDOnly/sherpa/issues](https://github.com/OneCDOnly/sherpa/issues)
+
 ---
 ## Problems?
 
-This will happen from time-to-time as the environment changes. If it's not shown above in '**Known issues**' then you may have found something new, so please add to this thread with the details of the problem you encountered. Diagnose where you can and provide a solution if you're able. The functions in this script are a community effort. ;)
+This will happen from time-to-time as the environment changes. If it's not shown above in '**Known issues**' then you may have found something new, so please add to [this thread](https://forum.qnap.com/viewtopic.php?f=320&t=132373) with the details of the problem you encountered. Diagnose where you can and provide a solution if you're able. The functions in this script are a community effort. ;)
 
 Sometimes the debug log will be required. This is always created. You can view this with:
 
