@@ -38,7 +38,7 @@ Init()
     {
 
     readonly SCRIPT_NAME=sherpa.sh
-    readonly SCRIPT_VERSION=200827k
+    readonly SCRIPT_VERSION=200827m
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -439,7 +439,7 @@ LogRuntimeParameters()
     DebugQPKG 'arch' "$NAS_QPKG_ARCH"
 
     CheckLauncherAge
-    CheckForNewQPKGVersions
+    ShowNewQPKGVersions
 
     if IsNotError && [[ $EUID -ne 0 || $USER != admin ]]; then
         ShowAsError "this script must be run as the 'admin' user. Please login via SSH as 'admin' and try again"
@@ -549,7 +549,7 @@ LogRuntimeParameters()
 
     }
 
-CheckForNewQPKGVersions()
+ShowNewQPKGVersions()
     {
 
     # Check installed sherpa packages and compare versions against package arrays. If new versions are available, advise on-screen.
@@ -721,7 +721,7 @@ ShowHelp()
     done
     echo
 
-    CheckForNewQPKGVersions || echo
+    ShowNewQPKGVersions || echo
 
     echo -e "- Display recognised package abbreviations:"
     echo -e "\t./$SCRIPT_NAME --abs"
@@ -761,7 +761,13 @@ ShowPackageAbbreviations()
     echo -e "\n- sherpa recognises these package names and abbreviations:"
 
     for package_index in "${!SHERPA_QPKG_NAME[@]}"; do
-        [[ -n ${SHERPA_QPKG_ABBRVS[$package_index]} ]] && printf "%15s: %s\n" "${SHERPA_QPKG_NAME[$package_index]}" "$($SED_CMD 's| |, |g' <<< "${SHERPA_QPKG_ABBRVS[$package_index]}")"
+        if [[ -n ${SHERPA_QPKG_ABBRVS[$package_index]} ]]; then
+            if IsQPKGUpgradable "${SHERPA_QPKG_NAME[$package_index]}"; then
+                printf "%26s: %s\n" "$(ColourTextBrightYellow "${SHERPA_QPKG_NAME[$package_index]}")" "$($SED_CMD 's| |, |g' <<< "${SHERPA_QPKG_ABBRVS[$package_index]}")"
+            else
+                printf "%15s: %s\n" "${SHERPA_QPKG_NAME[$package_index]}" "$($SED_CMD 's| |, |g' <<< "${SHERPA_QPKG_ABBRVS[$package_index]}")"
+            fi
+        fi
     done
 
     return 0
@@ -2577,6 +2583,36 @@ IsNotQPKGEnabled()
     [[ -z $1 ]] && return 1
 
     ! IsQPKGEnabled "$1"
+
+    }
+
+IsQPKGUpgradable()
+    {
+
+    # input:
+    #   $1 = QPKG name to check if upgrade available
+
+    # output:
+    #   $? = 0 (true) or 1 (false)
+
+    [[ -n $1 ]] || return 1
+
+    local package=''
+
+    [[ ${#QPKGS_upgradable[@]} -eq 0 ]] && CalcUpgradeableQPKGs
+
+    for package in "${QPKGS_upgradable[@]}"; do
+        [[ $package = "$1" ]] && return 0
+    done
+
+    return 1
+
+    }
+
+IsNotQPKGUpgradable()
+    {
+
+    ! IsQPKGUpgradable "$1"
 
     }
 
