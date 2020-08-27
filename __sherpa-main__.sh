@@ -61,6 +61,7 @@ Init()
     readonly TR_CMD=/bin/tr
     readonly UNAME_CMD=/bin/uname
     readonly UNIQ_CMD=/bin/uniq
+    readonly WHICH_CMD=/bin/which
 
     readonly CURL_CMD=/sbin/curl
     readonly GETCFG_CMD=/sbin/getcfg
@@ -425,6 +426,8 @@ LogRuntimeParameters()
     DebugNAS 'default volume' "$($GETCFG_CMD SHARE_DEF defVolMP -f $DEFAULT_SHARES_PATHFILE)"
     DebugNAS '$PATH' "${PATH:0:43}"
     DebugNAS '/opt' "$([[ -L '/opt' ]] && $READLINK_CMD '/opt' || echo "<not present>")"
+    DebugNAS 'Python 3 path' "$(location=$(which python3 2>&1) && echo "$location" || echo '<not present>')"
+    DebugNAS 'Python 3 version' "$(version=$(python3 -V 2>&1) && echo "$version" || echo '<unknown>')"
     DebugNAS "$SHARE_DOWNLOAD_PATH" "$([[ -L $SHARE_DOWNLOAD_PATH ]] && $READLINK_CMD "$SHARE_DOWNLOAD_PATH" || echo "<not present>")"
     DebugScript 'unparsed arguments' "$USER_ARGS_RAW"
     DebugScript 'app(s) to install' "${QPKGS_to_install[*]} "
@@ -3350,28 +3353,28 @@ FormatAsResultAndStdout()
 DebugInfoThickSeparator()
     {
 
-    DebugInfo "$(printf '%0.s=' {1..72})"
+    DebugInfo "$(printf '%0.s=' {1..74})"
 
     }
 
 DebugInfoThinSeparator()
     {
 
-    DebugInfo "$(printf '%0.s-' {1..72})"
+    DebugInfo "$(printf '%0.s-' {1..74})"
 
     }
 
 DebugErrorThinSeparator()
     {
 
-    DebugError "$(printf '%0.s-' {1..72})"
+    DebugError "$(printf '%0.s-' {1..74})"
 
     }
 
 DebugLogThinSeparator()
     {
 
-    DebugLog "$(printf '%0.s-' {1..72})"
+    DebugLog "$(printf '%0.s-' {1..74})"
 
     }
 
@@ -3468,9 +3471,9 @@ DebugDetected()
     {
 
     if [[ -z $3 ]]; then
-        DebugThis "(**) $(printf "%-6s: %19s\n" "$1" "$2")"
+        DebugThis "(**) $(printf "%-6s: %20s\n" "$1" "$2")"
     else
-        DebugThis "(**) $(printf "%-6s: %19s: %-s\n" "$1" "$2" "$3")"
+        DebugThis "(**) $(printf "%-6s: %20s: %-s\n" "$1" "$2" "$3")"
     fi
 
     }
