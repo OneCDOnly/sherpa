@@ -23,10 +23,11 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/.
 #
 # Style Guide:
-#   functions: CamelCase
-#   variables: lowercase_with_underscores (except for 'returncode')
-#   constants: UPPERCASE_WITH_UNDERSCORES (also set to readonly)
-#     indents: 1 x tab (converted to 4 x spaces to suit GitHub web-display)
+#         functions: CamelCase
+#         variables: lowercase_with_inline_underscores (except for 'returncode')
+# "class" variables: _lowercase_with_leading_and_inline_underscores (these should only be managed via their specific functions)
+#         constants: UPPERCASE_WITH_INLINE_UNDERSCORES (these are also set as readonly)
+#           indents: 1 x tab (converted to 4 x spaces to suit GitHub web-display)
 #
 # Notes:
 #   If on-screen line-spacing is required, this should only be done by the next function that outputs to display.
@@ -38,7 +39,7 @@ Init()
     {
 
     readonly SCRIPT_NAME=sherpa.sh
-    readonly SCRIPT_VERSION=200828c
+    readonly SCRIPT_VERSION=200828d
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -1179,14 +1180,14 @@ InstallIPKGBatch()
         local -r STARTSECONDS=$(DebugTimerStageStart)
         ShowAsProc "downloading & installing $IPKG_download_count IPKG$(DisplayPlural "$IPKG_download_count")"
 
-        CreateDirSizeMonitorFlag
+        CreateDirSizeMonitorFlagFile
             trap CTRL_C_Captured INT
                 _MonitorDirSize_ "$IPKG_DL_PATH" "$IPKG_download_size" &
 
                 RunThisAndLogResults "$OPKG_CMD install$ignore_space_arg --force-overwrite ${IPKG_download_list[*]} --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
                 result=$?
             trap - INT
-        RemoveDirSizeMonitorFlag
+        RemoveDirSizeMonitorFlagFile
 
         if [[ $result -eq 0 ]]; then
             ShowAsDone "downloaded & installed $IPKG_download_count IPKG$(DisplayPlural "$IPKG_download_count")"
@@ -1855,7 +1856,7 @@ GetQPKGMD5()
 CTRL_C_Captured()
     {
 
-    RemoveDirSizeMonitorFlag
+    RemoveDirSizeMonitorFlagFile
 
     exit
 
@@ -2187,7 +2188,7 @@ _MonitorDirSize_()
 
     }
 
-CreateDirSizeMonitorFlag()
+CreateDirSizeMonitorFlagFile()
     {
 
     monitor_flag_pathfile=$IPKG_DL_PATH/.monitor
@@ -2196,7 +2197,7 @@ CreateDirSizeMonitorFlag()
 
     }
 
-RemoveDirSizeMonitorFlag()
+RemoveDirSizeMonitorFlagFile()
     {
 
     if [[ -n $monitor_flag_pathfile && -e $monitor_flag_pathfile ]]; then
@@ -2661,8 +2662,8 @@ SetShowHelpReminder()
 
     IsShowHelpReminder && return
 
-    show_help_reminder=true
-    DebugVar show_help_reminder
+    _show_help_reminder_flag=true
+    DebugVar _show_help_reminder_flag
 
     }
 
@@ -2671,22 +2672,22 @@ UnsetShowHelpReminder()
 
     IsNotShowHelpReminder && return
 
-    show_help_reminder=false
-    DebugVar show_help_reminder
+    _show_help_reminder_flag=false
+    DebugVar _show_help_reminder_flag
 
     }
 
 IsShowHelpReminder()
     {
 
-    [[ $show_help_reminder = true ]]
+    [[ $_show_help_reminder_flag = true ]]
 
     }
 
 IsNotShowHelpReminder()
     {
 
-    [[ $show_help_reminder != true ]]
+    [[ $_show_help_reminder_flag != true ]]
 
     }
 
@@ -2697,8 +2698,8 @@ SetLogViewOnly()
 
     IsLogViewOnly && return
 
-    logview_only=true
-    DebugVar logview_only
+    _logview_only_flag=true
+    DebugVar _logview_only_flag
 
     }
 
@@ -2707,22 +2708,22 @@ UnsetLogViewOnly()
 
     IsNotLogViewOnly && return
 
-    logview_only=false
-    DebugVar logview_only
+    _logview_only_flag=false
+    DebugVar _logview_only_flag
 
     }
 
 IsLogViewOnly()
     {
 
-    [[ $logview_only = true ]]
+    [[ $_logview_only_flag = true ]]
 
     }
 
 IsNotLogViewOnly()
     {
 
-    [[ $logview_only != true ]]
+    [[ $_logview_only_flag != true ]]
 
     }
 
@@ -2733,8 +2734,8 @@ SetVersionOnly()
 
     IsVersionOnly && return
 
-    version_only=true
-    DebugVar version_only
+    _version_only_flag=true
+    DebugVar _version_only_flag
 
     }
 
@@ -2743,22 +2744,22 @@ UnsetVersionOnly()
 
     IsNotVersionOnly && return
 
-    version_only=false
-    DebugVar version_only
+    _version_only_flag=false
+    DebugVar _version_only_flag
 
     }
 
 IsVersionOnly()
     {
 
-    [[ $version_only = true ]]
+    [[ $_version_only_flag = true ]]
 
     }
 
 IsNotVersionOnly()
     {
 
-    [[ $version_only != true ]]
+    [[ $_version_only_flag != true ]]
 
     }
 
@@ -2769,8 +2770,8 @@ SetLogPasteOnly()
 
     IsLogPasteOnly && return
 
-    logpaste_only=true
-    DebugVar logpaste_only
+    _logpaste_only_flag=true
+    DebugVar _logpaste_only_flag
 
     }
 
@@ -2779,22 +2780,22 @@ UnsetLogPasteOnly()
 
     IsNotLogPasteOnly && return
 
-    logpaste_only=false
-    DebugVar logpaste_only
+    _logpaste_only_flag=false
+    DebugVar _logpaste_only_flag
 
     }
 
 IsLogPasteOnly()
     {
 
-    [[ $logpaste_only = true ]]
+    [[ $_logpaste_only_flag = true ]]
 
     }
 
 IsNotLogPasteOnly()
     {
 
-    [[ $logpaste_only != true ]]
+    [[ $_logpaste_only_flag != true ]]
 
     }
 
@@ -2803,8 +2804,8 @@ SetPIPInstall()
 
     IsPIPInstall && return
 
-    pip3_install=true
-    DebugVar pip3_install
+    _pip_install_flag=true
+    DebugVar _pip_install_flag
 
     }
 
@@ -2813,22 +2814,22 @@ UnsetPIPInstall()
 
     IsNotPIPInstall && return
 
-    pip3_install=false
-    DebugVar pip3_install
+    _pip_install_flag=false
+    DebugVar _pip_install_flag
 
     }
 
 IsPIPInstall()
     {
 
-    [[ $pip3_install = true ]]
+    [[ $_pip_install_flag = true ]]
 
     }
 
 IsNotPIPInstall()
     {
 
-    [[ $pip3_install != true ]]
+    [[ $_pip_install_flag != true ]]
 
     }
 
@@ -2839,8 +2840,8 @@ SetError()
 
     IsError && return
 
-    error=true
-    DebugVar error
+    _script_error_flag=true
+    DebugVar _script_error_flag
 
     }
 
@@ -2849,22 +2850,22 @@ UnsetError()
 
     IsNotError && return
 
-    error=false
-    DebugVar error
+    _script_error_flag=false
+    DebugVar _script_error_flag
 
     }
 
 IsError()
     {
 
-    [[ $error = true ]]
+    [[ $_script_error_flag = true ]]
 
     }
 
 IsNotError()
     {
 
-    [[ $error != true ]]
+    [[ $_script_error_flag != true ]]
 
     }
 
@@ -2873,8 +2874,8 @@ SetAbort()
 
     IsAbort && return
 
-    abort=true
-    DebugVar abort
+    _script_abort_flag=true
+    DebugVar _script_abort_flag
 
     }
 
@@ -2883,22 +2884,22 @@ UnsetAbort()
 
     IsNotAbort && return
 
-    abort=false
-    DebugVar abort
+    _script_abort_flag=false
+    DebugVar _script_abort_flag
 
     }
 
 IsAbort()
     {
 
-    [[ $abort = true ]]
+    [[ $_script_abort_flag = true ]]
 
     }
 
 IsNotAbort()
     {
 
-    [[ $abort != true ]]
+    [[ $_script_abort_flag != true ]]
 
     }
 
@@ -2907,8 +2908,8 @@ SetSatisfyDependenciesOnly()
 
     IsSatisfyDependenciesOnly && return
 
-    satisfy_dependencies_only=true
-    DebugVar satisfy_dependencies_only
+    _satisfy_dependencies_only_flag=true
+    DebugVar _satisfy_dependencies_only_flag
 
     }
 
@@ -2917,22 +2918,22 @@ UnsetSatisfyDependenciesOnly()
 
     IsNotSatisfyDependenciesOnly && return
 
-    satisfy_dependencies_only=false
-    DebugVar satisfy_dependencies_only
+    _satisfy_dependencies_only_flag=false
+    DebugVar _satisfy_dependencies_only_flag
 
     }
 
 IsSatisfyDependenciesOnly()
     {
 
-    [[ $satisfy_dependencies_only = true ]]
+    [[ $_satisfy_dependencies_only_flag = true ]]
 
     }
 
 IsNotSatisfyDependenciesOnly()
     {
 
-    [[ $satisfy_dependencies_only != true ]]
+    [[ $_satisfy_dependencies_only_flag != true ]]
 
     }
 
@@ -2943,8 +2944,8 @@ SetShowAbbreviationsReminder()
 
     IsShowAbbreviationsReminder && return
 
-    show_abbreviations_reminder=true
-    DebugVar show_abbreviations_reminder
+    _show_abbreviations_reminder_flag=true
+    DebugVar _show_abbreviations_reminder_flag
 
     }
 
@@ -2953,22 +2954,22 @@ UnsetShowAbbreviationsReminder()
 
     IsNotShowAbbreviationsReminder && return
 
-    show_abbreviations_reminder=false
-    DebugVar show_abbreviations_reminder
+    _show_abbreviations_reminder_flag=false
+    DebugVar _show_abbreviations_reminder_flag
 
     }
 
 IsShowAbbreviationsReminder()
     {
 
-    [[ $show_abbreviations_reminder = true ]]
+    [[ $_show_abbreviations_reminder_flag = true ]]
 
     }
 
 IsNotShowAbbreviationsReminder()
     {
 
-    [[ $show_abbreviations_reminder != true ]]
+    [[ $_show_abbreviations_reminder_flag != true ]]
 
     }
 
@@ -2977,8 +2978,8 @@ SetShowInstallerOutcome()
 
     IsShowInstallerOutcome && return
 
-    show_installer_outcome=true
-    DebugVar show_installer_outcome
+    _show_installer_outcome_flag=true
+    DebugVar _show_installer_outcome_flag
 
     }
 
@@ -2987,22 +2988,22 @@ UnsetShowInstallerOutcome()
 
     IsNotShowInstallerOutcome && return
 
-    show_installer_outcome=false
-    DebugVar show_installer_outcome
+    _show_installer_outcome_flag=false
+    DebugVar _show_installer_outcome_flag
 
     }
 
 IsShowInstallerOutcome()
     {
 
-    [[ $show_installer_outcome = true ]]
+    [[ $_show_installer_outcome_flag = true ]]
 
     }
 
 IsNotShowInstallerOutcome()
     {
 
-    [[ $show_installer_outcome != true ]]
+    [[ $_show_installer_outcome_flag != true ]]
 
     }
 
@@ -3011,8 +3012,8 @@ SetLogToFile()
 
     IsLogToFile && return
 
-    log_to_file=true
-    DebugVar log_to_file
+    _log_to_file_flag=true
+    DebugVar _log_to_file_flag
 
     }
 
@@ -3021,22 +3022,22 @@ UnsetLogToFile()
 
     IsNotLogToFile && return
 
-    log_to_file=false
-    DebugVar log_to_file
+    _log_to_file_flag=false
+    DebugVar _log_to_file_flag
 
     }
 
 IsLogToFile()
     {
 
-    [[ $log_to_file = true ]]
+    [[ $_log_to_file_flag = true ]]
 
     }
 
 IsNotLogToFile()
     {
 
-    [[ $log_to_file != true ]]
+    [[ $_log_to_file_flag != true ]]
 
     }
 
@@ -3045,8 +3046,8 @@ SetVisibleDebugging()
 
     IsVisibleDebugging && return
 
-    show_debugging=true
-    DebugVar show_debugging
+    _show_debugging_flag=true
+    DebugVar _show_debugging_flag
 
     }
 
@@ -3055,22 +3056,22 @@ UnsetVisibleDebugging()
 
     IsNotVisibleDebugging && return
 
-    show_debugging=false
-    DebugVar show_debugging
+    _show_debugging_flag=false
+    DebugVar _show_debugging_flag
 
     }
 
 IsVisibleDebugging()
     {
 
-    [[ $show_debugging = true ]]
+    [[ $_show_debugging_flag = true ]]
 
     }
 
 IsNotVisibleDebugging()
     {
 
-    [[ $show_debugging != true ]]
+    [[ $_show_debugging_flag != true ]]
 
     }
 
@@ -3081,8 +3082,8 @@ SetDevMode()
 
     IsDevMode && return
 
-    dev_mode=true
-    DebugVar dev_mode
+    _dev_mode_flag=true
+    DebugVar _dev_mode_flag
 
     }
 
@@ -3093,22 +3094,22 @@ UnsetDevMode()
 
     IsNotDevMode && return
 
-    dev_mode=false
-    DebugVar dev_mode
+    _dev_mode_flag=false
+    DebugVar _dev_mode_flag
 
     }
 
 IsDevMode()
     {
 
-    [[ $dev_mode = true ]]
+    [[ $_dev_mode_flag = true ]]
 
     }
 
 IsNotDevMode()
     {
 
-    [[ $dev_mode != true ]]
+    [[ $_dev_mode_flag != true ]]
 
     }
 
@@ -3117,8 +3118,8 @@ SetSuggestIssue()
 
     IsSuggestIssue && return
 
-    suggest_issue=true
-    DebugVar suggest_issue
+    _suggest_issue_flag=true
+    DebugVar _suggest_issue_flag
 
     }
 
@@ -3127,22 +3128,22 @@ UnsetSuggestIssue()
 
     IsNotSuggestIssue && return
 
-    suggest_issue=false
-    DebugVar suggest_issue
+    _suggest_issue_flag=false
+    DebugVar _suggest_issue_flag
 
     }
 
 IsSuggestIssue()
     {
 
-    [[ $suggest_issue = true ]]
+    [[ $_suggest_issue_flag = true ]]
 
     }
 
 IsNotSuggestIssue()
     {
 
-    [[ $suggest_issue != true ]]
+    [[ $_suggest_issue_flag != true ]]
 
     }
 
