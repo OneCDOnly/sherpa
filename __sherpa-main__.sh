@@ -39,7 +39,7 @@ Init()
     {
 
     readonly SCRIPT_NAME=sherpa.sh
-    readonly SCRIPT_VERSION=200828d
+    readonly SCRIPT_VERSION=200828e
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -1089,7 +1089,6 @@ InstallQPKGIndepsAddons()
     fi
 
     InstallIPKGs
-    SetPIPInstall
     InstallPy3Modules
 
     [[ $TARGET_APP = Entware || $upgrade_all_apps = true ]] && RestartAllDepQPKGs
