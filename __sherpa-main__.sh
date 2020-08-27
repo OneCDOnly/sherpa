@@ -403,7 +403,7 @@ LogRuntimeParameters()
         if IsQPKGToBeInstalled SABnzbd || IsQPKGInstalled SABnzbd || IsQPKGInstalled SABnzbdplus; then
             if [[ $INSTALLED_RAM_KB -le $MIN_RAM_KB ]]; then
                 DebugHardware 'RAM' "less-than or equal-to $MIN_RAM_KB kB"
-                IsNotError && ShowAsWarning "QTS with 1GiB RAM-or-less can lead to unstable $(FormatAsPackageName SABnzbd) uptimes"
+                IsNotError && ShowAsWarning "QTS with 1GiB RAM or-less can lead to unstable $(FormatAsPackageName SABnzbd) uptimes"
             fi
         fi
     fi
