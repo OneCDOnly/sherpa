@@ -38,7 +38,7 @@ Init()
     {
 
     readonly SCRIPT_NAME=sherpa.sh
-    readonly SCRIPT_VERSION=200828b
+    readonly SCRIPT_VERSION=200828c
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -1251,7 +1251,7 @@ InstallPy3Modules()
 
     [[ -z $exec_cmd ]] && return
 
-    ShowAsProc "downloading & installing $desc"
+    ShowAsProcLong "downloading & installing $desc"
 
     RunThisAndLogResults "$exec_cmd" "$log_pathfile"
     result=$?
