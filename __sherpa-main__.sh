@@ -38,7 +38,7 @@ Init()
     {
 
     readonly SCRIPT_NAME=sherpa.sh
-    readonly SCRIPT_VERSION=200827t
+    readonly SCRIPT_VERSION=200828
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -800,7 +800,7 @@ PasteLogOnline()
             y|Y)
                 IsNotVisibleDebugging && echo
                 ShowAsProc 'uploading sherpa log'
-                link=$($CAT_CMD "$DEBUG_LOG_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
+                link=$($TAIL_CMD -n 1000 -q "$DEBUG_LOG_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
                 if [[ $? -eq 0 ]]; then
                     ShowAsDone "your sherpa log is now online at $(ColourTextBrightOrange "$($SED_CMD 's|http://|http://l.|;s|https://|https://l.|' <<< "$link")") and will be deleted in 1 month"
                 else
