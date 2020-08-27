@@ -38,7 +38,7 @@ Init()
     {
 
     readonly SCRIPT_NAME=sherpa.sh
-    readonly SCRIPT_VERSION=200827j
+    readonly SCRIPT_VERSION=200827k
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -148,6 +148,7 @@ Init()
     IsSysFileExist $Z7_CMD || return 1
     IsSysFileExist $ZIP_CMD || return 1
 
+    UnsetLogToFile
     UnsetError
     UnsetAbort
     UnsetVisibleDebugging
@@ -383,6 +384,17 @@ LogRuntimeParameters()
     local conflicting_qpkg=''
     code_pointer=0
 
+    ParseArgs
+
+    if IsNotVisibleDebugging && IsNotVersionOnly; then
+        echo "$(ColourTextBrightWhite "$SCRIPT_NAME") ($SCRIPT_VERSION)"
+        echo -e "\n* A mini package manager to install various media-management apps into QNAP NAS."
+    fi
+
+    IsAbort && return
+    SetLogToFile
+    IsNotVisibleDebugging && echo
+
     DebugInfoThickSeparator
     DebugScript 'started' "$($DATE_CMD | $TR_CMD -s ' ')"
     DebugScript 'version' "$SCRIPT_VERSION"
@@ -393,19 +405,6 @@ LogRuntimeParameters()
     DebugInfo ' (EE) error, (==) processing, (--) done, (>>) f entry, (<<) f exit,'
     DebugInfo ' (vv) variable name & value, ($1) positional argument value.'
     DebugInfoThinSeparator
-
-    ParseArgs
-
-    if IsNotVisibleDebugging && IsNotVersionOnly; then
-        echo "$(ColourTextBrightWhite "$SCRIPT_NAME") ($SCRIPT_VERSION)"
-        echo -e "\n* A mini package manager to install various media-management apps into QNAP NAS"
-    fi
-
-    IsAbort && return
-    IsNotVisibleDebugging && echo
-    CheckLauncherAge
-    CheckForNewQPKGVersions
-
     DebugNAS 'model' "$(get_display_name)"
     DebugNAS 'RAM' "$INSTALLED_RAM_KB kB"
     if IsNotLogViewOnly; then
@@ -439,11 +438,8 @@ LogRuntimeParameters()
     DebugIPKG 'download path' "$IPKG_DL_PATH"
     DebugQPKG 'arch' "$NAS_QPKG_ARCH"
 
-    if IsLogViewOnly || IsShowAbbreviationsReminder; then
-        DebugInfoThinSeparator
-        SetAbort
-        return 1
-    fi
+    CheckLauncherAge
+    CheckForNewQPKGVersions
 
     if IsNotError && [[ $EUID -ne 0 || $USER != admin ]]; then
         ShowAsError "this script must be run as the 'admin' user. Please login via SSH as 'admin' and try again"
@@ -782,7 +778,8 @@ ShowLogViewer()
             $CAT_CMD --number "$DEBUG_LOG_PATHFILE"
         fi
     else
-        echo "no log to display"
+        IsNotVisibleDebugging && echo
+        ShowAsError 'no log to display'
     fi
 
     return 0
@@ -3008,6 +3005,8 @@ IsNotSatisfyDependenciesOnly()
 SetShowAbbreviationsReminder()
     {
 
+    SetAbort
+
     IsShowAbbreviationsReminder && return
 
     show_abbreviations_reminder=true
@@ -3070,6 +3069,40 @@ IsNotShowInstallerOutcome()
     {
 
     [[ $show_installer_outcome != true ]]
+
+    }
+
+SetLogToFile()
+    {
+
+    IsLogToFile && return
+
+    log_to_file=true
+    DebugVar log_to_file
+
+    }
+
+UnsetLogToFile()
+    {
+
+    IsNotLogToFile && return
+
+    log_to_file=false
+    DebugVar log_to_file
+
+    }
+
+IsLogToFile()
+    {
+
+    [[ $log_to_file = true ]]
+
+    }
+
+IsNotLogToFile()
+    {
+
+    [[ $log_to_file != true ]]
 
     }
 
@@ -3628,6 +3661,7 @@ WriteToLog()
     #   $2 = message
 
     [[ -z $DEBUG_LOG_PATHFILE ]] && return 1
+    IsLogToFile || return
 
     printf "%-4s: %s\n" "$(StripANSI "$1")" "$(StripANSI "$2")" >> "$DEBUG_LOG_PATHFILE"
 
@@ -3707,7 +3741,7 @@ StripANSI()
     {
 
     # found here: https://www.commandlinefu.com/commands/view/3584/remove-color-codes-special-characters-with-sed
-    # QTS 4.2.6 BusyBox 'sed' doesn't fully support regexes, so this onyl works with a real 'sed'.
+    # QTS 4.2.6 BusyBox 'sed' doesn't fully support regexes, so this only works with a real 'sed'.
 
     if [[ -e $GNU_SED_CMD ]]; then
         $GNU_SED_CMD -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g" <<< "$1"
@@ -3729,4 +3763,8 @@ Cleanup
 ShowResult
 RemoveLock
 
-exit $code_pointer
+if IsError; then
+    exit 1
+fi
+
+exit
