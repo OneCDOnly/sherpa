@@ -38,7 +38,7 @@ Init()
     {
 
     readonly SCRIPT_NAME=sherpa.sh
-    readonly SCRIPT_VERSION=200827s
+    readonly SCRIPT_VERSION=200827t
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -1088,7 +1088,6 @@ InstallQPKGIndepsAddons()
     fi
 
     InstallIPKGs
-    DowngradePy3
     SetPIPInstall
     InstallPy3Modules
 
@@ -1199,100 +1198,6 @@ InstallIPKGBatch()
         DebugTimerStageEnd "$STARTSECONDS"
         SetPIPInstall
     fi
-
-    DebugFuncExit
-    return $returncode
-
-    }
-
-DowngradePy3()
-    {
-
-    IsAbort && return
-    [[ $IPKG_download_count -eq 0 ]] && return
-
-    # kludge: Watcher3 isn't presently compatible with Python 3.8.x so let's force a downgrade to 3.7.4
-
-    IsQPKGInstalled OWatcher3 && IsNotQPKGEnabled OWatcher3 && return
-    IsNotQPKGInstalled OWatcher3 && [[ $TARGET_APP != OWatcher3 ]] && return
-    [[ ! -e /opt/bin/python3 ]] && return
-#     [[ $(/opt/bin/python3 -V | $SED_CMD 's|[^0-9]*||g') -le 374 ]] && return  # test disable: let's always downgrade Python if Watcher3 is installed
-
-    DebugFuncEntry
-
-    [[ -d $IPKG_DL_PATH ]] && rm -f "$IPKG_DL_PATH"/*.ipk
-
-    local source_url=$($GREP_CMD 'http://' /opt/etc/opkg.conf | $SED_CMD 's|^.*\(http://\)|\1|')
-    local pkg_base=python3
-    local pkg_names=(asyncio base cgi cgitb codecs ctypes dbm decimal dev distutils email gdbm lib2to3 light logging lzma multiprocessing ncurses openssl pydoc sqlite3 unittest urllib xml)
-    local pkg_name=''
-    local pkg_version=3.7.4-2
-    local pkg_arch=$($BASENAME_CMD "$source_url" | $SED_CMD 's|\-k|\-|;s|sf\-|\-|')
-    local ipkg_urls=()
-    local dl_log_pathfile="$IPKG_DL_PATH/python3.downgrade.$DOWNLOAD_LOG_FILE"
-    local install_log_pathfile="$IPKG_DL_PATH/python3.downgrade.$INSTALL_LOG_FILE"
-    local result=0
-
-    ShowAsProc "$(FormatAsPackageName Watcher3) is installed (or is to be) so downgrading Python 3 IPKGs"
-
-    for pkg_name in "${pkg_names[@]}"; do
-        ipkg_urls+=(-O "${source_url}/archive/${pkg_base}-${pkg_name}_${pkg_version}_${pkg_arch}.ipk")
-    done
-
-    # include base package
-    ipkg_urls+=(-O "${source_url}/archive/${pkg_base}_${pkg_version}_${pkg_arch}.ipk")
-
-    # also need to downgrade 'pip3' to prevent 'pip not found' error
-    pkg_name=pip
-    pkg_version=19.0.3-1
-    ipkg_urls+=(-O "${source_url}/archive/${pkg_base}-${pkg_name}_${pkg_version}_${pkg_arch}.ipk")
-
-    # and a specific version of 'cryptography', so SAB3 will restart correctly
-    pkg_name=cryptography
-    pkg_version=2.7-2
-    ipkg_urls+=(-O "${source_url}/archive/${pkg_base}-${pkg_name}_${pkg_version}_${pkg_arch}.ipk")
-
-    # and a specific version of 'libffi', so 'pip3' will keep working
-    pkg_name=libffi
-    pkg_version=3.2.1-4
-    ipkg_urls+=(-O "${source_url}/archive/${pkg_name}_${pkg_version}_${pkg_arch}.ipk")
-
-    # and a specific version of 'cffi', so SSL UI works in SAB3
-    pkg_name=cffi
-    pkg_version=1.12.3-1
-    ipkg_urls+=(-O "${source_url}/archive/${pkg_base}-${pkg_name}_${pkg_version}_${pkg_arch}.ipk")
-
-    RunThisAndLogResults "cd $IPKG_DL_PATH && $CURL_CMD $curl_insecure_arg ${ipkg_urls[*]}" "$dl_log_pathfile"
-    result=$?
-
-    if [[ $result -gt 0 ]]; then
-        code_pointer=4
-        returncode=1
-    fi
-
-    if IsNotError; then
-        RunThisAndLogResults "$OPKG_CMD install$ignore_space_arg --force-downgrade $IPKG_DL_PATH/*.ipk" "$install_log_pathfile"
-        result=$?
-
-        if [[ $result -eq 0 ]]; then
-            ShowAsDone "$(FormatAsPackageName Watcher3) selected so downgraded Python 3 IPKGs"
-        else
-            code_pointer=5
-            returncode=1
-        fi
-    fi
-
-    # seems 'python' can disappear during a Python downgrade, so ...
-    [[ ! -L /opt/bin/python && -e /opt/bin/python3 ]] && $LN_CMD -s /opt/bin/python3 /opt/bin/python
-
-    if IsError; then
-        ShowAsError "Python 3 downgrade failed $(FormatAsResult "$result")"
-        DebugErrorFile "$dl_log_pathfile"
-        DebugErrorFile "$install_log_pathfile"
-    fi
-
-    IsNotError && upgrade_all_apps=true
-    SetPIPInstall
 
     DebugFuncExit
     return $returncode
