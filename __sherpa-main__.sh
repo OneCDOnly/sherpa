@@ -38,7 +38,7 @@ Init()
     {
 
     readonly SCRIPT_NAME=sherpa.sh
-    readonly SCRIPT_VERSION=200827r
+    readonly SCRIPT_VERSION=200827s
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -252,15 +252,6 @@ Init()
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python3 mediainfo python3-pyopenssl')
         SHERPA_QPKG_PIPS+=('pyopenssl')
-
-    SHERPA_QPKG_NAME+=(OWatcher3)
-        SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/OWatcher3/build/OWatcher3_200826.qpkg)
-        SHERPA_QPKG_MD5+=(662b76f62fb6dee00541be3aebd771d9)
-        SHERPA_QPKG_ABBRVS+=('ow wat owat watch watcher owatcher watcher3 owatcher3')
-        SHERPA_QPKG_DEPS+=('Entware')
-        SHERPA_QPKG_IPKGS+=('python3 jq')
-        SHERPA_QPKG_PIPS+=('')
 
     SHERPA_QPKG_NAME+=(OSickGear)
         SHERPA_QPKG_ARCH+=(all)

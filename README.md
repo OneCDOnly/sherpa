@@ -44,8 +44,6 @@ So, to install SABnzbd, use:
 ... and then/or:
 
 ```
-./sherpa.sh Watcher3
-
 ./sherpa.sh LazyLibrarian
 
 ./sherpa.sh Medusa
@@ -154,8 +152,6 @@ This will 'stop' the QPKG, restore from the backup file (if it exists), then 'st
 * Each of these packages continues the idea of 'self-update-on-launch' that was used in Clinton Hall's wrapper scripts. These scripts are my own version and require a few packages to be installed via Entware (this is what **sherpa** does). Updating an app is easy - just restart the app via its init script. Each app is updated from GitHub and from that application's current 'master' branch.
 
 * **Medusa** will appear as 'OMedusa' in your App Center to avoid conflict with the existing **Medusa** package available in the Qnapclub Store.
-
-* **Watcher3** will appear as 'OWatcher3' in your App Center to avoid conflict with the existing **Watcher3** package available in the Qnapclub Store.
 
 * **SickGear** will appear as 'OSickGear' in your App Center to avoid conflict with the existing **SickGear** package available in the Qnapclub Store.
 
