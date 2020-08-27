@@ -38,7 +38,7 @@ Init()
     {
 
     readonly SCRIPT_NAME=sherpa.sh
-    readonly SCRIPT_VERSION=200827p
+    readonly SCRIPT_VERSION=200827q
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -939,7 +939,6 @@ RemoveUnwantedQPKGs()
     IsQPKGInstalled "$TARGET_APP" && reinstall_flag=true
 
     if [[ $TARGET_APP = Entware && $reinstall_flag = true ]]; then
-        IsNotVisibleDebugging && echo
         ShowAsNote "Reinstalling $(FormatAsPackageName Entware) will remove all IPKGs and Python modules, and only those required to support your sherpa apps will be reinstalled."
         ShowAsNote "Your installed Python module list will be saved to $(FormatAsFileName "$previous_pip3_module_list")"
         ShowAsNote "Your installed IPKG list will be saved to $(FormatAsFileName "$previous_opkg_package_list")"
@@ -3597,7 +3596,7 @@ ShowAsNote()
 ShowAsQuiz()
     {
 
-    WriteToDisplay_SameLine "$(ColourTextBrightOrange quiz)" "$1: "
+    WriteToDisplay_SameLine "$(ColourTextBrightOrangeBlink quiz)" "$1: "
     WriteToLog quiz "$1"
 
     }
