@@ -38,7 +38,7 @@ Init()
     {
 
     readonly SCRIPT_NAME=sherpa.sh
-    readonly SCRIPT_VERSION=200827q
+    readonly SCRIPT_VERSION=200827r
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -602,7 +602,7 @@ ParseArgs()
                 SetVisibleDebugging
                 current_operation=''
                 ;;
-            --check-all)
+            --check)
                 SetSatisfyDependenciesOnly
                 current_operation=''
                 ;;
@@ -730,7 +730,7 @@ ShowHelp()
     echo -e "\t./$SCRIPT_NAME --abs"
 
     echo -e "\n- Ensure all sherpa application dependencies are installed:"
-    echo -e "\t./$SCRIPT_NAME --check-all"
+    echo -e "\t./$SCRIPT_NAME --check"
 
     echo -e "\n- Don't check free-space on target filesystem when installing $(FormatAsPackageName Entware) packages:"
     echo -e "\t./$SCRIPT_NAME --ignore-space"
