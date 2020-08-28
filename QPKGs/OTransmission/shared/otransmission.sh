@@ -126,15 +126,15 @@ ShowHelp()
 StartQPKG()
     {
 
-    IsNotError || return
+    IsError && return
 
     if IsNotRestart && IsNotRestore && IsNotClean && IsNotReset; then
         RecordOperationToLog
-        IsNotDaemonActive || return
+        IsDaemonActive && return
     fi
 
     if IsRestore || IsClean || IsReset; then
-        IsRestartPending || return
+        IsNotRestartPending && return
     fi
 
     [[ -n $SOURCE_GIT_URL ]] && PullGitRepo $QPKG_NAME "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_PATH"
@@ -144,11 +144,9 @@ StartQPKG()
 
     if [[ $ui_port -le 0 && $ui_port_secure -le 0 ]]; then
         DisplayErrCommitAllLogs 'unable to start daemon: no UI port was specified!'
-        SetError
         return 1
     elif IsNotPortAvailable $ui_port || IsNotPortAvailable $ui_port_secure; then
         DisplayErrCommitAllLogs "unable to start daemon: ports $ui_port or $ui_port_secure are already in use!"
-        SetError
         return 1
     fi
 
@@ -164,13 +162,13 @@ StartQPKG()
 StopQPKG()
     {
 
-    IsNotError || return
+    IsError && return
 
     if IsNotRestore && IsNotClean && IsNotReset; then
         RecordOperationToLog
     fi
 
-    IsDaemonActive || return
+    IsNotDaemonActive && return
 
     if IsRestart || IsRestore || IsClean || IsReset; then
         SetRestartPending
@@ -430,7 +428,6 @@ CheckPorts()
             fi
         fi
     fi
-
     ReWriteUIPorts
 
     if [[ -z $msg ]]; then
@@ -515,10 +512,7 @@ IsPortAvailable()
     # $? = 0 if available
     # $? = 1 if already used
 
-    if [[ -z $1 || $1 -eq 0 ]]; then
-        SetError
-        return      # don't return 1 for Transmission, can cause a fail to 'start'
-    fi
+    [[ -z $1 || $1 -eq 0 ]] && return
 
     if ($LSOF_CMD -i :"$1" -sTCP:LISTEN >/dev/null 2>&1); then
         return 1
