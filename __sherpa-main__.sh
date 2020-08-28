@@ -40,7 +40,7 @@ Init()
 
     IsQNAP || return 1
 
-    readonly MAIN_SCRIPT_VERSION=200829h
+    readonly MAIN_SCRIPT_VERSION=200829i
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -227,8 +227,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(SickChill)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/SickChill/build/SickChill_200828.qpkg)
-        SHERPA_QPKG_MD5+=(3e294380165db8b4e9e9622a6d00cb72)
+        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/SickChill/build/SickChill_200829.qpkg)
+        SHERPA_QPKG_MD5+=(e017341be2fa8bd7956ccfed9c33673a)
         SHERPA_QPKG_ABBRVS+=('sc sick sickc chill sickchill')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python3')
