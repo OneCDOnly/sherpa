@@ -39,7 +39,7 @@ Init()
     {
 
     readonly SCRIPT_NAME=sherpa.sh
-    readonly SCRIPT_VERSION=200828j
+    readonly SCRIPT_VERSION=200828k
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -389,7 +389,7 @@ LogRuntimeParameters()
     ParseArgs
 
     if IsNotVisibleDebugging && IsNotVersionOnly; then
-        echo "$(ColourTextBrightWhite "$SCRIPT_NAME") ($SCRIPT_VERSION) A mini package manager to install various media-management apps into QNAP NAS."
+        echo "$(ColourTextBrightWhite "$SCRIPT_NAME") ($SCRIPT_VERSION) A mini package manager for QNAP NAS."
     fi
 
     IsAbort && return
