@@ -40,7 +40,7 @@ Init()
 
     IsQNAP || return 1
 
-    readonly MAIN_SCRIPT_VERSION=200829g
+    readonly MAIN_SCRIPT_VERSION=200829h
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -263,8 +263,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(OSickGear)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/OSickGear/build/OSickGear_200826.qpkg)
-        SHERPA_QPKG_MD5+=(09fda7828039df996642266aad0a9809)
+        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/OSickGear/build/OSickGear_200829.qpkg)
+        SHERPA_QPKG_MD5+=(170548a54a0e2204dc524c86ea377742)
         SHERPA_QPKG_ABBRVS+=('sg os osg sickg osickg gear ogear sickgear osickgear')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python3')

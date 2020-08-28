@@ -77,6 +77,7 @@ Init()
     fi
 
     UnsetError
+    UnsetRestartPending
 
     # specific launch arguments
     if [[ -n $PYTHON && -n $TARGET_SCRIPT ]]; then
@@ -88,12 +89,7 @@ Init()
     fi
 
     WaitForEntware
-
-    if IsNotConfigFound && IsDefaultConfigFound; then
-        DisplayWarnCommitToLog 'no configuration file found: using default'
-        cp "$QPKG_INI_DEFAULT_PATHFILE" "$QPKG_INI_PATHFILE"
-    fi
-
+    EnsureConfigFileExists
     LoadAppVersion
 
     [[ ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
@@ -112,15 +108,16 @@ ShowHelp()
     Display
     Display ' [OPTION] can be any one of the following:'
     Display
-    Display " start      - launch $(FormatAsPackageName $QPKG_NAME) if not already running."
-    Display " stop       - shutdown $(FormatAsPackageName $QPKG_NAME) if running."
-    Display " restart    - stop, then start $(FormatAsPackageName $QPKG_NAME)."
-    Display " status     - check if $(FormatAsPackageName $QPKG_NAME) is still running. Returns \$? = 0 if running, 1 if not."
-    Display " backup     - backup the current $(FormatAsPackageName $QPKG_NAME) configuration to persistent storage."
-    Display " restore    - restore a previously saved configuration from persistent storage. $(FormatAsPackageName $QPKG_NAME) will be stopped, then restarted."
-    [[ -n $SOURCE_GIT_URL ]] && Display " clean      - wipe the current local copy of $(FormatAsPackageName $QPKG_NAME), and download it again from remote source. Configuration will be retained."
-    Display ' log        - display this service script runtime log.'
-    Display ' version    - display the package version number.'
+    Display " start        - launch $(FormatAsPackageName $QPKG_NAME) if not already running."
+    Display " stop         - shutdown $(FormatAsPackageName $QPKG_NAME) if running."
+    Display " restart      - stop, then start $(FormatAsPackageName $QPKG_NAME)."
+    Display " status       - check if $(FormatAsPackageName $QPKG_NAME) is still running. Returns \$? = 0 if running, 1 if not."
+    Display " backup       - backup the current $(FormatAsPackageName $QPKG_NAME) configuration to persistent storage."
+    Display " restore      - restore a previously saved configuration from persistent storage. $(FormatAsPackageName $QPKG_NAME) will be stopped, then restarted."
+    Display " reset-config - delete the application configuration, databases and history. $(FormatAsPackageName $QPKG_NAME) will be stopped, then restarted."
+    [[ -n $SOURCE_GIT_URL ]] && Display " clean        - wipe the current local copy of $(FormatAsPackageName $QPKG_NAME), and download it again from remote source. Configuration will be retained."
+    Display ' log          - display this service script runtime log.'
+    Display ' version      - display the package version number.'
     Display
 
     }
@@ -130,13 +127,18 @@ StartQPKG()
 
     IsNotError || return
 
-    if IsNotRestart && IsNotRestore && IsNotClean; then
+    if IsNotRestart && IsNotRestore && IsNotClean && IsNotReset; then
         RecordOperationToLog
         IsNotDaemonActive || return
     fi
 
+    if IsRestore || IsClean || IsReset; then
+        IsRestartPending || return
+    fi
+
     [[ -n $SOURCE_GIT_URL ]] && PullGitRepo $QPKG_NAME "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_PATH"
 
+    EnsureConfigFileExists
     LoadUIPorts app || return
 
     if [[ $ui_port -le 0 && $ui_port_secure -le 0 ]]; then
@@ -163,14 +165,19 @@ StopQPKG()
 
     IsNotError || return
 
-    if IsNotRestore && IsNotClean; then
+    if IsNotRestore && IsNotClean && IsNotReset; then
         RecordOperationToLog
     fi
 
     IsDaemonActive || return
 
+    if IsRestart || IsRestore || IsClean || IsReset; then
+        SetRestartPending
+    fi
+
     local acc=0
     local pid=0
+    SetRestartPending
 
     pid=$(<$DAEMON_PID_PATHFILE)
     kill "$pid"
@@ -241,6 +248,17 @@ RestoreConfig()
 
     }
 
+ResetConfig()
+    {
+
+    RecordOperationToLog
+
+    StopQPKG
+    ExecuteAndLog 'resetting configuration' "mv $QPKG_INI_DEFAULT_PATHFILE $QPKG_PATH; rm -rf $QPKG_PATH/config/*; mv $QPKG_PATH/$($BASENAME_CMD "$QPKG_INI_DEFAULT_PATHFILE") $QPKG_INI_DEFAULT_PATHFILE" log:everything
+    StartQPKG
+
+    }
+
 LoadUIPorts()
     {
 
@@ -272,6 +290,8 @@ LoadUIPorts()
     # Always read this from the application configuration
     ui_listening_address=$($GETCFG_CMD general web_host -f "$QPKG_INI_PATHFILE")
 
+    return 0
+
     }
 
 IsSSLEnabled()
@@ -297,6 +317,16 @@ LoadAppVersion()
     }
 
 #### functions specific to this app appear above ###
+
+EnsureConfigFileExists()
+    {
+
+    if IsNotConfigFound && IsDefaultConfigFound; then
+        DisplayWarnCommitToLog 'no configuration file found: using default'
+        cp "$QPKG_INI_DEFAULT_PATHFILE" "$QPKG_INI_PATHFILE"
+    fi
+
+    }
 
 SaveAppVersion()
     {
@@ -350,7 +380,7 @@ CleanLocalClone()
     fi
 
     StopQPKG
-    ExecuteAndLog 'cleaning local repo' "rm -r $QPKG_REPO_PATH"
+    ExecuteAndLog 'cleaning local repository' "rm -r $QPKG_REPO_PATH"
     StartQPKG
 
     }
@@ -551,7 +581,7 @@ IsNotPortAvailable()
 
     # $1 = port to check
     # $? = 1 if available
-    # $? = 0 if already used or unspecified
+    # $? = 0 if already used
 
     ! IsPortAvailable "$1"
 
@@ -691,12 +721,44 @@ SetServiceOperationResult()
 
     }
 
+SetRestartPending()
+    {
+
+    IsRestartPending && return
+
+    _restart_pending_flag=true
+
+    }
+
+UnsetRestartPending()
+    {
+
+    IsNotRestartPending && return
+
+    _restart_pending_flag=false
+
+    }
+
+IsRestartPending()
+    {
+
+    [[ $_restart_pending_flag = true ]]
+
+    }
+
+IsNotRestartPending()
+    {
+
+    [[ $_restart_pending_flag = false ]]
+
+    }
+
 SetError()
     {
 
     IsError && return
 
-    error_flag=true
+    _error_flag=true
 
     }
 
@@ -705,28 +767,35 @@ UnsetError()
 
     IsNotError && return
 
-    error_flag=false
+    _error_flag=false
 
     }
 
 IsError()
     {
 
-    [[ $error_flag = true ]]
+    [[ $_error_flag = true ]]
 
     }
 
 IsNotError()
     {
 
-    [[ $error_flag = false ]]
+    ! IsError
+
+    }
+
+IsRestart()
+    {
+
+    [[ $service_operation = restart ]]
 
     }
 
 IsNotRestart()
     {
 
-    ! [[ $service_operation = restart ]]
+    ! IsRestart
 
     }
 
@@ -744,10 +813,45 @@ IsNotLog()
 
     }
 
+IsClean()
+    {
+
+    [[ $service_operation = clean ]]
+
+    }
+
 IsNotClean()
     {
 
-    ! [[ $service_operation = clean ]]
+    ! IsClean
+
+    }
+
+IsRestore()
+    {
+
+    [[ $service_operation = restore ]]
+
+    }
+
+IsNotRestore()
+    {
+
+    ! IsRestore
+
+    }
+
+IsReset()
+    {
+
+    [[ $service_operation = 'reset-config' ]]
+
+    }
+
+IsNotReset()
+    {
+
+    ! IsReset
 
     }
 
@@ -1005,6 +1109,10 @@ if IsNotError; then
         b|backup)
             SetServiceOperation backup
             BackupConfig || SetError
+            ;;
+        reset-config)
+            SetServiceOperation "$1"
+            ResetConfig || SetError
             ;;
         restore)
             SetServiceOperation "$1"
