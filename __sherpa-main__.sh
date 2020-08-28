@@ -39,7 +39,7 @@ Init()
     {
 
     readonly SCRIPT_NAME=sherpa.sh
-    readonly SCRIPT_VERSION=200828h
+    readonly SCRIPT_VERSION=200828i
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -206,8 +206,8 @@ Init()
         SHERPA_QPKG_MD5+=(72cd7dcbe74e95db1f5d660bb5cd9924)
         SHERPA_QPKG_ABBRVS+=('sb sb3 sab sab3 sabnzbd3 sabnzbd')
         SHERPA_QPKG_DEPS+=('Entware Par2')
-        SHERPA_QPKG_IPKGS+=('python3-asn1crypto python3-chardet python3-cryptography python3-dev python3-pyopenssl unrar p7zip coreutils-nice ionice ffprobe')
-        SHERPA_QPKG_PIPS+=('cheetah3 feedparser configobj cherrypy "cheroot!=8.4.4" sabyenc3')
+        SHERPA_QPKG_IPKGS+=('python3-asn1crypto python3-chardet python3-cryptography python3-pyopenssl unrar p7zip coreutils-nice ionice ffprobe')
+        SHERPA_QPKG_PIPS+=('cheetah3 "cheroot!=8.4.4" cherrypy configobj feedparser sabyenc3')
 
     SHERPA_QPKG_NAME+=(nzbToMedia)
         SHERPA_QPKG_ARCH+=(all)
@@ -234,7 +234,7 @@ Init()
         SHERPA_QPKG_ABBRVS+=('sc sick sickc chill sickchill')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python3')
-        SHERPA_QPKG_PIPS+=('random_user_agent pygithub slugify')
+        SHERPA_QPKG_PIPS+=('pygithub random_user_agent slugify')
 
     SHERPA_QPKG_NAME+=(LazyLibrarian)
         SHERPA_QPKG_ARCH+=(all)
@@ -261,7 +261,7 @@ Init()
         SHERPA_QPKG_ABBRVS+=('om med omed medusa omedusa')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('mediainfo python3-pyopenssl')
-        SHERPA_QPKG_PIPS+=('pyopenssl')
+        SHERPA_QPKG_PIPS+=('')
 
     SHERPA_QPKG_NAME+=(OSickGear)
         SHERPA_QPKG_ARCH+=(all)
@@ -336,8 +336,8 @@ Init()
         readonly SHERPA_QPKG_IPKGS
         readonly SHERPA_QPKG_PIPS
 
-    readonly SHERPA_COMMON_IPKGS='ca-certificates gcc git git-http less nano python3-pip sed'
-    readonly SHERPA_COMMON_PIPS='setuptools'
+    readonly SHERPA_COMMON_IPKGS='ca-certificates gcc git git-http less nano python3-dev python3-pip python3-setuptools sed'
+    readonly SHERPA_COMMON_PIPS=''
     readonly SHERPA_COMMON_CONFLICTS='Optware Optware-NG TarMT'
 
     # runtime vars
