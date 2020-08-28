@@ -40,7 +40,7 @@ Init()
 
     IsQNAP || return 1
 
-    readonly MAIN_SCRIPT_VERSION=200829f
+    readonly MAIN_SCRIPT_VERSION=200829g
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -254,8 +254,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(OMedusa)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/OMedusa/build/OMedusa_200826.qpkg)
-        SHERPA_QPKG_MD5+=(eeaa452a7e116cd7bca24af01c2b1b4d)
+        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/OMedusa/build/OMedusa_200829.qpkg)
+        SHERPA_QPKG_MD5+=(8083cd786f1820a62949e1b8a94d06b0)
         SHERPA_QPKG_ABBRVS+=('om med omed medusa omedusa')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('mediainfo python3-pyopenssl')
