@@ -39,7 +39,7 @@ Init()
     {
 
     readonly SCRIPT_NAME=sherpa.sh
-    readonly SCRIPT_VERSION=200828f
+    readonly SCRIPT_VERSION=200828g
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -719,7 +719,7 @@ ShowHelp()
 
     local package=''
 
-    echo -e "\n- Each application shown below can be installed (or re-installed) by running:"
+    echo -e "\n- Each application shown below can be installed, re-installed or upgraded by running:"
     for package in "${QPKGS_user_installable[@]}"; do
         echo -e "\t./$SCRIPT_NAME $package"
     done
