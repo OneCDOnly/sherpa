@@ -89,7 +89,6 @@ Init()
     fi
 
     WaitForEntware
-
     EnsureConfigFileExists
     LoadAppVersion
 
@@ -1126,7 +1125,6 @@ if IsNotError; then
     case $1 in
         start)
             SetServiceOperation "$1"
-
             StartQPKG || SetError
             ;;
         stop)
