@@ -39,7 +39,7 @@ Init()
     {
 
     readonly SCRIPT_NAME=sherpa.sh
-    readonly SCRIPT_VERSION=200828i
+    readonly SCRIPT_VERSION=200828j
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -389,8 +389,7 @@ LogRuntimeParameters()
     ParseArgs
 
     if IsNotVisibleDebugging && IsNotVersionOnly; then
-        echo "$(ColourTextBrightWhite "$SCRIPT_NAME") ($SCRIPT_VERSION)"
-        echo -e "\n* A mini package manager to install various media-management apps into QNAP NAS."
+        echo "$(ColourTextBrightWhite "$SCRIPT_NAME") ($SCRIPT_VERSION) A mini package manager to install various media-management apps into QNAP NAS."
     fi
 
     IsAbort && return
@@ -719,7 +718,7 @@ ShowHelp()
 
     local package=''
 
-    echo -e "\n- Each application shown below can be installed, re-installed or upgraded by running:"
+    echo -e "\n* Each application shown below can be installed, re-installed or upgraded by running:"
     for package in "${QPKGS_user_installable[@]}"; do
         echo -e "\t./$SCRIPT_NAME $package"
     done
@@ -727,28 +726,28 @@ ShowHelp()
 
     ShowNewQPKGVersions || echo
 
-    echo -e "- Display recognised package abbreviations:"
+    echo -e "* Display recognised package abbreviations:"
     echo -e "\t./$SCRIPT_NAME --abs"
 
-    echo -e "\n- Ensure all sherpa application dependencies are installed:"
+    echo -e "\n* Ensure all sherpa application dependencies are installed:"
     echo -e "\t./$SCRIPT_NAME --check"
 
-    echo -e "\n- Don't check free-space on target filesystem when installing $(FormatAsPackageName Entware) packages:"
+    echo -e "\n* Don't check free-space on target filesystem when installing $(FormatAsPackageName Entware) packages:"
     echo -e "\t./$SCRIPT_NAME --ignore-space"
 
-    echo -e "\n- Upgrade all sherpa applications (only upgrades the internal applications, not the QPKG):"
+    echo -e "\n* Upgrade all sherpa applications (only upgrades the internal applications, not the QPKG):"
     echo -e "\t./$SCRIPT_NAME --upgrade-all-apps"
 
-    echo -e "\n- View the sherpa log:"
+    echo -e "\n* View the sherpa log:"
     echo -e "\t./$SCRIPT_NAME --log"
 
-    echo -e "\n- Upload the sherpa log to a public pastebin (https://termbin.com):"
+    echo -e "\n* Upload the sherpa log to a public pastebin (https://termbin.com):"
     echo -e "\t./$SCRIPT_NAME --paste"
 
-    echo -e "\n- Install a package and show debugging information:"
+    echo -e "\n* Install a package and show debugging information:"
     echo -e "\t./$SCRIPT_NAME <packagename> --debug"
 
-    echo -e "\n- Display the sherpa version:"
+    echo -e "\n* Display the sherpa version:"
     echo -e "\t./$SCRIPT_NAME --version"
 
     return 0
@@ -762,7 +761,7 @@ ShowPackageAbbreviations()
 
     local package_index=0
 
-    echo -e "\n- sherpa recognises these package names and abbreviations:"
+    echo -e "\n* sherpa recognises these package names and abbreviations:"
 
     for package_index in "${!SHERPA_QPKG_NAME[@]}"; do
         if [[ -n ${SHERPA_QPKG_ABBRVS[$package_index]} ]]; then
