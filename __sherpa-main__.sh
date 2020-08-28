@@ -39,7 +39,7 @@ Init()
     {
 
     readonly SCRIPT_NAME=sherpa.sh
-    readonly SCRIPT_VERSION=200828e
+    readonly SCRIPT_VERSION=200828f
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -244,6 +244,15 @@ Init()
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python3-pyopenssl python3-requests')
         SHERPA_QPKG_PIPS+=('python-magic')
+
+    SHERPA_QPKG_NAME+=(Mylar3)
+        SHERPA_QPKG_ARCH+=(all)
+        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/Mylar3/build/Mylar3_200828.qpkg)
+        SHERPA_QPKG_MD5+=(ae46f91f2f2ad79734422068ba008856)
+        SHERPA_QPKG_ABBRVS+=('my omy myl mylar mylar3')
+        SHERPA_QPKG_DEPS+=('Entware')
+        SHERPA_QPKG_IPKGS+=('python3-pillow')
+        SHERPA_QPKG_PIPS+=('APScheduler>=3.6.3 beautifulsoup4>=4.8.2 cfscrape>=2.0.8 cheroot==8.2.1 CherryPy>=18.5.0 configparser>=4.0.2 feedparser>=5.2.1 Mako>=1.1.0 natsort>=3.5.2 portend>=2.6 pyinstaller>=3.5 pytz>=2019.3 requests>=2.22.0 simplejson>=3.17.0 six>=1.13.0 tzlocal>=2.0.0 urllib3>=1.25.7')
 
     SHERPA_QPKG_NAME+=(OMedusa)
         SHERPA_QPKG_ARCH+=(all)
