@@ -81,13 +81,13 @@ rm sherpa.*
 
 1) Python 2.7.16 is no-longer available via Entware/OpenWRT so the **Headphones** QPKG can no-longer be installed. I'll need to find another Python2 source with installable modules, but I'm not hopeful.
 
-2) Sometimes, it seems existing installations of Entware can become "difficult" to work with. So, Entware can also be reinstalled, but this should only be used as a last resort. Using:
+2) Sometimes, it seems existing installations of OpenWRT can become "difficult" to work with. So, Entware can also be reinstalled, but this should only be used as a last resort. Using:
 
 ```
 ./sherpa.sh Entware
 ```
 
-... will force **sherpa** to uninstall your existing Entware QPKG, then install a new one. **Note:** Entware will be reverted back to default, and only the IPKGs required to support your installed **sherpa** apps will be installed. All **sherpa** installed applications will be restarted afterward.
+... will force **sherpa** to uninstall your existing Entware QPKG, then install a new one. **Note:** OpenWRT will be reverted back to default, and only the IPKGs required to support your installed **sherpa** apps will be installed. All **sherpa** installed applications will be restarted afterward.
 
 
 3) **sherpa** is incompatible with Optware-NG as it's missing a few required packages.

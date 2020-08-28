@@ -40,7 +40,7 @@ Init()
 
     IsQNAP || return 1
 
-    readonly MAIN_SCRIPT_VERSION=200829j
+    readonly MAIN_SCRIPT_VERSION=200829k
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -410,7 +410,7 @@ LogRuntimeParameters()
         if IsQPKGToBeInstalled SABnzbd || IsQPKGInstalled SABnzbd || IsQPKGInstalled SABnzbdplus; then
             if [[ $INSTALLED_RAM_KB -le $MIN_RAM_KB ]]; then
                 DebugHardware 'RAM' "less-than or equal-to $MIN_RAM_KB kB"
-                IsNotError && ShowAsWarning "QTS with 1GiB RAM or-less may lead to unstable $(FormatAsPackageName SABnzbd) uptimes"
+#                 IsNotError && ShowAsWarning "QTS with 1GiB RAM or-less may lead to unstable $(FormatAsPackageName SABnzbd) uptimes"
             fi
         fi
     fi
