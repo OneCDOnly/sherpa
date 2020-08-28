@@ -40,7 +40,7 @@ Init()
 
     IsQNAP || return 1
 
-    readonly MAIN_SCRIPT_VERSION=200829e
+    readonly MAIN_SCRIPT_VERSION=200829f
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -218,8 +218,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(NZBGet)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/NZBGet/build/NZBGet_200827.qpkg)
-        SHERPA_QPKG_MD5+=(607538752441e35faf31491c842cd4e5)
+        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/NZBGet/build/NZBGet_200829.qpkg)
+        SHERPA_QPKG_MD5+=(ade7b04344c12d85556314680712cbb1)
         SHERPA_QPKG_ABBRVS+=('ng nget nzb nzbget')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('nzbget')
