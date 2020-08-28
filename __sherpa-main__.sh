@@ -40,7 +40,7 @@ Init()
 
     IsQNAP || return 1
 
-    readonly MAIN_SCRIPT_VERSION=200829d
+    readonly MAIN_SCRIPT_VERSION=200829e
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -200,8 +200,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(SABnzbd)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/SABnzbd/build/SABnzbd_200829.qpkg)
-        SHERPA_QPKG_MD5+=(5b419500f998654457f317b96bc75616)
+        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/SABnzbd/build/SABnzbd_200829b.qpkg)
+        SHERPA_QPKG_MD5+=(7f807b01ba9d3812078b611e25bd91d4)
         SHERPA_QPKG_ABBRVS+=('sb sb3 sab sab3 sabnzbd3 sabnzbd')
         SHERPA_QPKG_DEPS+=('Entware Par2')
         SHERPA_QPKG_IPKGS+=('python3-asn1crypto python3-chardet python3-cryptography python3-pyopenssl unrar p7zip coreutils-nice ionice ffprobe')
@@ -236,8 +236,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(LazyLibrarian)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/LazyLibrarian/build/LazyLibrarian_200829.qpkg)
-        SHERPA_QPKG_MD5+=(ba9ab10d08ccf94b85c0fb5e01343a1f)
+        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/LazyLibrarian/build/LazyLibrarian_200829b.qpkg)
+        SHERPA_QPKG_MD5+=(7068a66a6ca6e3c4705d0f59e2528b1f)
         SHERPA_QPKG_ABBRVS+=('ll lazy lazylibrarian')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python3-pyopenssl python3-requests')

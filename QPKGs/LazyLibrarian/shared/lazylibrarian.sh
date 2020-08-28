@@ -132,7 +132,7 @@ StartQPKG()
         IsNotDaemonActive || return
     fi
 
-    if IsRestart || IsRestore || IsClean || IsReset; then
+    if IsRestore || IsClean || IsReset; then
         IsRestartPending || return
     fi
 
@@ -378,7 +378,7 @@ CleanLocalClone()
     fi
 
     StopQPKG
-    ExecuteAndLog 'cleaning local repo' "rm -r $QPKG_REPO_PATH"
+    ExecuteAndLog 'cleaning local repository' "rm -r $QPKG_REPO_PATH"
     StartQPKG
 
     }
