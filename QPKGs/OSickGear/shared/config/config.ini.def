@@ -110,7 +110,7 @@ remove_filename_chars = ""
 import_default_checked_shows = 0
 extra_scripts = ""
 sg_extra_scripts = ""
-git_path = ""
+git_path = "/opt/bin/git"
 ignore_words = "regex:^(?=.*?spanish)((?!spanish.?princess).)*$, core2hd, hevc, MrLss, reenc, x265, danish, deutsch, dutch, flemish, french, german, italian, nordic, norwegian, portuguese, swedish, turkish"
 require_words = ""
 calendar_unprotected = 0
