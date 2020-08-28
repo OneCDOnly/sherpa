@@ -38,11 +38,9 @@ readonly USER_ARGS_RAW="$*"
 Init()
     {
 
-    readonly SCRIPT_NAME=sherpa.sh
-    readonly SCRIPT_VERSION=200828m
-
     IsQNAP || return 1
-    IsOnlyInstance || return 1
+
+    readonly MAIN_SCRIPT_VERSION=200828n
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -67,7 +65,6 @@ Init()
     readonly CURL_CMD=/sbin/curl
     readonly GETCFG_CMD=/sbin/getcfg
     readonly RMCFG_CMD=/sbin/rmcfg
-    readonly SERVICE_CMD=/sbin/qpkg_service
     readonly SETCFG_CMD=/sbin/setcfg
 
     readonly BASENAME_CMD=/usr/bin/basename
@@ -94,6 +91,7 @@ Init()
     pip3_cmd=/opt/bin/pip3
 
     # paths and files
+    readonly LAUNCHER_SCRIPT_NAME=sherpa.sh
     readonly APP_CENTER_CONFIG_PATHFILE=/etc/config/qpkg.conf
     readonly INSTALL_LOG_FILE=install.log
     readonly DOWNLOAD_LOG_FILE=download.log
@@ -107,7 +105,9 @@ Init()
     readonly EXTERNAL_PACKAGE_ARCHIVE_PATHFILE=/opt/var/opkg-lists/entware
     readonly REMOTE_REPO_URL=https://raw.githubusercontent.com/OneCDOnly/sherpa/master
 
-    local -r DEBUG_LOG_FILE=${SCRIPT_NAME%.*}.debug.log
+    local -r DEBUG_LOG_FILE=${LAUNCHER_SCRIPT_NAME%.*}.debug.log
+
+    IsOnlyInstance || return 1
 
     # check required binaries are present
     IsSysFileExist $AWK_CMD || return 1
@@ -127,11 +127,11 @@ Init()
     IsSysFileExist $TR_CMD || return 1
     IsSysFileExist $UNAME_CMD || return 1
     IsSysFileExist $UNIQ_CMD || return 1
+    IsSysFileExist $WHICH_CMD || return 1
 
     IsSysFileExist $CURL_CMD || return 1
     IsSysFileExist $GETCFG_CMD || return 1
     IsSysFileExist $RMCFG_CMD || return 1
-    IsSysFileExist $SERVICE_CMD || return 1
     IsSysFileExist $SETCFG_CMD || return 1
 
     IsSysFileExist $BASENAME_CMD || return 1
@@ -350,7 +350,7 @@ Init()
 
     readonly PREV_QPKG_CONFIG_DIRS=(SAB_CONFIG CONFIG Config config)                 # last element is used as target dirname
     readonly PREV_QPKG_CONFIG_FILES=(sabnzbd.ini settings.ini config.cfg config.ini) # last element is used as target filename
-    readonly WORK_PATH=$SHARE_PUBLIC_PATH/${SCRIPT_NAME%.*}.tmp
+    readonly WORK_PATH=$SHARE_PUBLIC_PATH/${LAUNCHER_SCRIPT_NAME%.*}.tmp
     readonly DEBUG_LOG_PATHFILE=$SHARE_PUBLIC_PATH/$DEBUG_LOG_FILE
     readonly QPKG_DL_PATH=$WORK_PATH/qpkg.downloads
     readonly IPKG_DL_PATH=$WORK_PATH/ipkg.downloads
@@ -389,7 +389,7 @@ LogRuntimeParameters()
     ParseArgs
 
     if IsNotVisibleDebugging && IsNotVersionOnly; then
-        echo "$(ColourTextBrightWhite "$SCRIPT_NAME") ($SCRIPT_VERSION) mini package manager for QNAP NAS"
+        echo "$(ColourTextBrightWhite "$LAUNCHER_SCRIPT_NAME") ($MAIN_SCRIPT_VERSION) mini package manager for QNAP NAS"
     fi
 
     IsAbort && return
@@ -398,7 +398,7 @@ LogRuntimeParameters()
 
     DebugInfoThickSeparator
     DebugScript 'started' "$($DATE_CMD | $TR_CMD -s ' ')"
-    DebugScript 'version' "$SCRIPT_VERSION"
+    DebugScript 'version' "$MAIN_SCRIPT_VERSION"
     DebugScript 'PID' "$$"
     DebugInfoThinSeparator
 
@@ -720,35 +720,35 @@ ShowHelp()
 
     echo -e "\n* Each application shown below may be installed, re-installed or upgraded by running:"
     for package in "${QPKGS_user_installable[@]}"; do
-        echo -e "\t./$SCRIPT_NAME $package"
+        echo -e "\t./$LAUNCHER_SCRIPT_NAME $package"
     done
     echo
 
     ShowNewQPKGVersions || echo
 
     echo -e "* Display recognised package abbreviations:"
-    echo -e "\t./$SCRIPT_NAME --abs"
+    echo -e "\t./$LAUNCHER_SCRIPT_NAME --abs"
 
     echo -e "\n* Ensure all sherpa application dependencies are installed:"
-    echo -e "\t./$SCRIPT_NAME --check"
+    echo -e "\t./$LAUNCHER_SCRIPT_NAME --check"
 
     echo -e "\n* Don't check free-space on target filesystem when installing $(FormatAsPackageName Entware) packages:"
-    echo -e "\t./$SCRIPT_NAME --ignore-space"
+    echo -e "\t./$LAUNCHER_SCRIPT_NAME --ignore-space"
 
     echo -e "\n* Upgrade all sherpa applications (only upgrades the internal applications, not the QPKG):"
-    echo -e "\t./$SCRIPT_NAME --upgrade-all-apps"
+    echo -e "\t./$LAUNCHER_SCRIPT_NAME --upgrade-all-apps"
 
     echo -e "\n* View the sherpa log:"
-    echo -e "\t./$SCRIPT_NAME --log"
+    echo -e "\t./$LAUNCHER_SCRIPT_NAME --log"
 
     echo -e "\n* Upload the sherpa log to a public pastebin (https://termbin.com):"
-    echo -e "\t./$SCRIPT_NAME --paste"
+    echo -e "\t./$LAUNCHER_SCRIPT_NAME --paste"
 
     echo -e "\n* Install a package and show debugging information:"
-    echo -e "\t./$SCRIPT_NAME <packagename> --debug"
+    echo -e "\t./$LAUNCHER_SCRIPT_NAME <packagename> --debug"
 
     echo -e "\n* Display the sherpa version:"
-    echo -e "\t./$SCRIPT_NAME --version"
+    echo -e "\t./$LAUNCHER_SCRIPT_NAME --version"
 
     return 0
 
@@ -874,10 +874,10 @@ ShowSuggestIssue()
     echo -e "\n* Remember to include a copy of your sherpa log for analysis."
 
     echo -e "\n- View the sherpa log:"
-    echo -e "\t./$SCRIPT_NAME --log"
+    echo -e "\t./$LAUNCHER_SCRIPT_NAME --log"
 
     echo -e "\n- Upload the sherpa log to a public pastebin (https://termbin.com):"
-    echo -e "\t./$SCRIPT_NAME --paste"
+    echo -e "\t./$LAUNCHER_SCRIPT_NAME --paste"
 
     }
 
@@ -1887,7 +1887,7 @@ ShowResult()
     local emoticon=''
 
     if IsVersionOnly; then
-        echo "$SCRIPT_VERSION"
+        echo "$MAIN_SCRIPT_VERSION"
     elif IsLogViewOnly; then
         ShowLogViewer
     elif IsShowHelpReminder; then
@@ -2245,10 +2245,10 @@ IsQNAP()
 IsOnlyInstance()
     {
 
-    readonly RUNTIME_LOCK_PATHFILE=/var/run/$SCRIPT_NAME.pid
+    readonly RUNTIME_LOCK_PATHFILE=/var/run/$LAUNCHER_SCRIPT_NAME.pid
 
-    if [[ -e $RUNTIME_LOCK_PATHFILE && -d /proc/$(<$RUNTIME_LOCK_PATHFILE) && -n $SCRIPT_NAME && $(</proc/"$(<$RUNTIME_LOCK_PATHFILE)"/cmdline) =~ $SCRIPT_NAME ]]; then
-        ShowAsAbort "another instance of $(ColourTextBrightWhite "$SCRIPT_NAME") is running"
+    if [[ -e $RUNTIME_LOCK_PATHFILE && -d /proc/$(<$RUNTIME_LOCK_PATHFILE) && -n $LAUNCHER_SCRIPT_NAME && $(</proc/"$(<$RUNTIME_LOCK_PATHFILE)"/cmdline) =~ $LAUNCHER_SCRIPT_NAME ]]; then
+        ShowAsAbort "another instance of $(ColourTextBrightWhite "$LAUNCHER_SCRIPT_NAME") is running"
         return 1
     else
         CreateLock
@@ -2265,7 +2265,7 @@ CheckLauncherAge()
 
     [[ -e $GNU_FIND_CMD ]] || return          # can only do this with GNU 'find'. The old BusyBox 'find' in QTS 4.2.6 doesn't support '-cmin'.
 
-    if [[ -e "$SCRIPT_NAME" && -z $($GNU_FIND_CMD "$SCRIPT_NAME" -cmin +5) ]]; then
+    if [[ -e "$LAUNCHER_SCRIPT_NAME" && -z $($GNU_FIND_CMD "$LAUNCHER_SCRIPT_NAME" -cmin +5) ]]; then
         ShowAsNote "The $(ColourTextBrightWhite 'sherpa.sh') script does not need updating anymore. It now downloads all the latest information from the Internet everytime it's run. ;)"
     fi
 
