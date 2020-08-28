@@ -389,7 +389,7 @@ LogRuntimeParameters()
     ParseArgs
 
     if IsNotVisibleDebugging && IsNotVersionOnly; then
-        echo "$(ColourTextBrightWhite "$SCRIPT_NAME") ($SCRIPT_VERSION) A mini package manager for QNAP NAS."
+        echo "$(ColourTextBrightWhite "$SCRIPT_NAME") ($SCRIPT_VERSION) mini package manager for QNAP NAS"
     fi
 
     IsAbort && return
