@@ -23,8 +23,8 @@
 Init()
     {
 
-    readonly SCRIPT_FILE=sherpa.sh
-    readonly SCRIPT_VERSION=200826
+    local -r LAUNCHER_SCRIPT_FILE=sherpa.sh
+    local -r LAUNCHER_SCRIPT_VERSION=200828
 
     if [[ ! -e /etc/init.d/functions ]]; then
         ShowAsAbort 'QTS functions missing (is this a QNAP NAS?)'
@@ -33,9 +33,9 @@ Init()
 
     local -r NAS_FIRMWARE=$(/sbin/getcfg System Version -f /etc/config/uLinux.conf)
     [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg='--insecure' || curl_insecure_arg=''
-    local -r INSTALLER_SCRIPT_FILE=__sherpa-main__.sh
-    readonly REMOTE_INSTALLER=https://raw.githubusercontent.com/OneCDOnly/sherpa/master/$INSTALLER_SCRIPT_FILE
-    readonly LOCAL_INSTALLER=/share/$INSTALLER_SCRIPT_FILE
+    local -r MAIN_SCRIPT_FILE=__sherpa-main__.sh
+    readonly REMOTE_MAIN_SCRIPT=https://raw.githubusercontent.com/OneCDOnly/sherpa/master/$MAIN_SCRIPT_FILE
+    readonly LOCAL_MAIN_SCRIPT=/share/$MAIN_SCRIPT_FILE
 
     }
 
@@ -106,17 +106,17 @@ ColourReset()
 
 Init || exit 1
 
-if ! (/sbin/curl $curl_insecure_arg --silent --fail "$REMOTE_INSTALLER" > "$LOCAL_INSTALLER"); then
+if ! (/sbin/curl $curl_insecure_arg --silent --fail "$REMOTE_MAIN_SCRIPT" > "$LOCAL_MAIN_SCRIPT"); then
     ShowAsAbort 'installer download failed'
     exit 1
 fi
 
-if [[ ! -e $LOCAL_INSTALLER ]]; then
+if [[ ! -e $LOCAL_MAIN_SCRIPT ]]; then
     ShowAsAbort 'unable to find installer'
     exit 1
 fi
 
-eval "/usr/bin/env bash" "$LOCAL_INSTALLER" "$*"
-rm -f "$LOCAL_INSTALLER"
+eval "/usr/bin/env bash" "$LOCAL_MAIN_SCRIPT" "$*"
+rm -f "$LOCAL_MAIN_SCRIPT"
 
 exit 0
