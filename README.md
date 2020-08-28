@@ -24,7 +24,7 @@ STABLE - except for SickChill. The devs are hard-at-work migrating it to Python3
 ---
 ## Requirements
 
-Any model QNAP NAS with at-least 1GB RAM. QTS 4.0 or-later.
+Any model QNAP NAS with at-least 1GB RAM and running QTS 4.0 or-later.
 
 ---
 ## Usage
@@ -37,7 +37,7 @@ Any model QNAP NAS with at-least 1GB RAM. QTS 4.0 or-later.
 cd /share/Public
 ```
 
-3) Download the installer script and make it executable:
+3) Download the installer script and make it executable (you'll only have to do this once):
 
 ```
 curl -skLO https://git.io/sherpa.sh && chmod +x sherpa.sh
