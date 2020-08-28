@@ -39,7 +39,7 @@ Init()
     {
 
     readonly SCRIPT_NAME=sherpa.sh
-    readonly SCRIPT_VERSION=200828g
+    readonly SCRIPT_VERSION=200828h
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -206,8 +206,8 @@ Init()
         SHERPA_QPKG_MD5+=(72cd7dcbe74e95db1f5d660bb5cd9924)
         SHERPA_QPKG_ABBRVS+=('sb sb3 sab sab3 sabnzbd3 sabnzbd')
         SHERPA_QPKG_DEPS+=('Entware Par2')
-        SHERPA_QPKG_IPKGS+=('python3 python3-pyopenssl python3-cryptography python3-dev gcc unrar p7zip coreutils-nice ionice ffprobe')
-        SHERPA_QPKG_PIPS+=('sabyenc3 cheetah3 feedparser configobj cherrypy chardet "cheroot!=8.4.4" asn1crypto')
+        SHERPA_QPKG_IPKGS+=('python3-asn1crypto python3-chardet python3-cryptography python3-dev python3-pyopenssl unrar p7zip coreutils-nice ionice ffprobe')
+        SHERPA_QPKG_PIPS+=('cheetah3 feedparser configobj cherrypy "cheroot!=8.4.4" sabyenc3')
 
     SHERPA_QPKG_NAME+=(nzbToMedia)
         SHERPA_QPKG_ARCH+=(all)
@@ -251,8 +251,8 @@ Init()
         SHERPA_QPKG_MD5+=(ae46f91f2f2ad79734422068ba008856)
         SHERPA_QPKG_ABBRVS+=('my omy myl mylar mylar3')
         SHERPA_QPKG_DEPS+=('Entware')
-        SHERPA_QPKG_IPKGS+=('python3-pillow')
-        SHERPA_QPKG_PIPS+=('APScheduler>=3.6.3 beautifulsoup4>=4.8.2 cfscrape>=2.0.8 cheroot==8.2.1 CherryPy>=18.5.0 configparser>=4.0.2 feedparser>=5.2.1 Mako>=1.1.0 natsort>=3.5.2 portend>=2.6 pyinstaller>=3.5 pytz>=2019.3 requests>=2.22.0 simplejson>=3.17.0 six>=1.13.0 tzlocal>=2.0.0 urllib3>=1.25.7')
+        SHERPA_QPKG_IPKGS+=('python3-mako python3-pillow python3-pyopenssl python3-pytz python3-requests python3-six python3-urllib3')
+        SHERPA_QPKG_PIPS+=('apscheduler beautifulsoup4 cfscrape cherrypy feedparser portend sabyenc3 simplejson')
 
     SHERPA_QPKG_NAME+=(OMedusa)
         SHERPA_QPKG_ARCH+=(all)
@@ -260,7 +260,7 @@ Init()
         SHERPA_QPKG_MD5+=(eeaa452a7e116cd7bca24af01c2b1b4d)
         SHERPA_QPKG_ABBRVS+=('om med omed medusa omedusa')
         SHERPA_QPKG_DEPS+=('Entware')
-        SHERPA_QPKG_IPKGS+=('python3 mediainfo python3-pyopenssl')
+        SHERPA_QPKG_IPKGS+=('mediainfo python3-pyopenssl')
         SHERPA_QPKG_PIPS+=('pyopenssl')
 
     SHERPA_QPKG_NAME+=(OSickGear)
@@ -336,7 +336,7 @@ Init()
         readonly SHERPA_QPKG_IPKGS
         readonly SHERPA_QPKG_PIPS
 
-    readonly SHERPA_COMMON_IPKGS='git git-http nano less ca-certificates python3-pip sed'
+    readonly SHERPA_COMMON_IPKGS='ca-certificates gcc git git-http less nano python3-pip sed'
     readonly SHERPA_COMMON_PIPS='setuptools'
     readonly SHERPA_COMMON_CONFLICTS='Optware Optware-NG TarMT'
 
