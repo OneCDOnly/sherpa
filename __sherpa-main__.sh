@@ -40,7 +40,7 @@ Init()
 
     IsQNAP || return 1
 
-    readonly MAIN_SCRIPT_VERSION=200829c
+    readonly MAIN_SCRIPT_VERSION=200829d
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -245,8 +245,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(Mylar3)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/Mylar3/build/Mylar3_200828.qpkg)
-        SHERPA_QPKG_MD5+=(ae46f91f2f2ad79734422068ba008856)
+        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/Mylar3/build/Mylar3_200829.qpkg)
+        SHERPA_QPKG_MD5+=(bb71d73eb8db01daec99a949a11a6db0)
         SHERPA_QPKG_ABBRVS+=('my omy myl mylar mylar3')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('python3-mako python3-pillow python3-pyopenssl python3-pytz python3-requests python3-six python3-urllib3')
