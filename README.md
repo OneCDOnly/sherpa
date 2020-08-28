@@ -64,6 +64,8 @@ So, to install SABnzbd, use:
 
 ./sherpa.sh SickGear
 
+./sherpa.sh Mylar3
+
 ./sherpa.sh NZBGet
 
 ./sherpa.sh Transmission
