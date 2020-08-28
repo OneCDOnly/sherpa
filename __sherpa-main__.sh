@@ -40,7 +40,7 @@ Init()
 
     IsQNAP || return 1
 
-    readonly MAIN_SCRIPT_VERSION=200828n
+    readonly MAIN_SCRIPT_VERSION=200828p
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -60,7 +60,6 @@ Init()
     readonly TR_CMD=/bin/tr
     readonly UNAME_CMD=/bin/uname
     readonly UNIQ_CMD=/bin/uniq
-    readonly WHICH_CMD=/bin/which
 
     readonly CURL_CMD=/sbin/curl
     readonly GETCFG_CMD=/sbin/getcfg
@@ -79,6 +78,7 @@ Init()
     readonly UNZIP_CMD=/usr/bin/unzip
     readonly UPTIME_CMD=/usr/bin/uptime
     readonly WC_CMD=/usr/bin/wc
+    readonly WHICH_CMD=/bin/bin/which
 
     readonly Z7_CMD=/usr/local/sbin/7z
     readonly ZIP_CMD=/usr/local/sbin/zip
@@ -127,7 +127,6 @@ Init()
     IsSysFileExist $TR_CMD || return 1
     IsSysFileExist $UNAME_CMD || return 1
     IsSysFileExist $UNIQ_CMD || return 1
-    IsSysFileExist $WHICH_CMD || return 1
 
     IsSysFileExist $CURL_CMD || return 1
     IsSysFileExist $GETCFG_CMD || return 1
@@ -146,6 +145,7 @@ Init()
     IsSysFileExist $UNZIP_CMD || return 1
     IsSysFileExist $UPTIME_CMD || return 1
     IsSysFileExist $WC_CMD || return 1
+    IsSysFileExist $WHICH_CMD || return 1
 
     IsSysFileExist $Z7_CMD || return 1
     IsSysFileExist $ZIP_CMD || return 1
