@@ -40,7 +40,7 @@ Init()
 
     IsQNAP || return 1
 
-    readonly MAIN_SCRIPT_VERSION=200828p
+    readonly MAIN_SCRIPT_VERSION=200828q
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -78,7 +78,6 @@ Init()
     readonly UNZIP_CMD=/usr/bin/unzip
     readonly UPTIME_CMD=/usr/bin/uptime
     readonly WC_CMD=/usr/bin/wc
-    readonly WHICH_CMD=/bin/bin/which
 
     readonly Z7_CMD=/usr/local/sbin/7z
     readonly ZIP_CMD=/usr/local/sbin/zip
@@ -145,7 +144,6 @@ Init()
     IsSysFileExist $UNZIP_CMD || return 1
     IsSysFileExist $UPTIME_CMD || return 1
     IsSysFileExist $WC_CMD || return 1
-    IsSysFileExist $WHICH_CMD || return 1
 
     IsSysFileExist $Z7_CMD || return 1
     IsSysFileExist $ZIP_CMD || return 1
