@@ -40,7 +40,7 @@ Init()
 
     IsQNAP || return 1
 
-    readonly MAIN_SCRIPT_VERSION=200829k
+    readonly MAIN_SCRIPT_VERSION=200829m
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -883,7 +883,7 @@ ShowSuggestIssue()
 
     echo -e "\n* Alternatively, post on the QNAP NAS Community Forum:\n\thttps://forum.qnap.com/viewtopic.php?f=320&t=132373"
 
-    echo -e "\n* Remember to include a copy of your sherpa log for analysis."
+    echo -e "\n$(ColourTextBrightOrange '* Please remember to include a copy of your sherpa log for analysis!')"
 
     echo -e "\n- View the sherpa log:"
     echo -e "\t./$LAUNCHER_SCRIPT_NAME --log"
