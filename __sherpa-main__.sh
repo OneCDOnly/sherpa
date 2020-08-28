@@ -39,7 +39,7 @@ Init()
     {
 
     readonly SCRIPT_NAME=sherpa.sh
-    readonly SCRIPT_VERSION=200828k
+    readonly SCRIPT_VERSION=200828m
 
     IsQNAP || return 1
     IsOnlyInstance || return 1
@@ -412,7 +412,7 @@ LogRuntimeParameters()
         if IsQPKGToBeInstalled SABnzbd || IsQPKGInstalled SABnzbd || IsQPKGInstalled SABnzbdplus; then
             if [[ $INSTALLED_RAM_KB -le $MIN_RAM_KB ]]; then
                 DebugHardware 'RAM' "less-than or equal-to $MIN_RAM_KB kB"
-                IsNotError && ShowAsWarning "QTS with 1GiB RAM or-less can lead to unstable $(FormatAsPackageName SABnzbd) uptimes"
+                IsNotError && ShowAsWarning "QTS with 1GiB RAM or-less may lead to unstable $(FormatAsPackageName SABnzbd) uptimes"
             fi
         fi
     fi
@@ -718,7 +718,7 @@ ShowHelp()
 
     local package=''
 
-    echo -e "\n* Each application shown below can be installed, re-installed or upgraded by running:"
+    echo -e "\n* Each application shown below may be installed, re-installed or upgraded by running:"
     for package in "${QPKGS_user_installable[@]}"; do
         echo -e "\t./$SCRIPT_NAME $package"
     done
@@ -3478,7 +3478,7 @@ ShowAsProc()
 ShowAsProcLong()
     {
 
-    ShowAsProc "$1 - this can take a while"
+    ShowAsProc "$1 - this may take a while"
 
     }
 
