@@ -40,7 +40,7 @@ Init()
 
     IsQNAP || return 1
 
-    readonly MAIN_SCRIPT_VERSION=200829
+    readonly MAIN_SCRIPT_VERSION=200829b
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -155,9 +155,9 @@ Init()
     UnsetSatisfyDependenciesOnly
     UnsetVersionOnly
     UnsetLogPasteOnly
-    UnsetShowAbbreviationsReminder
+    UnsetShowAbbreviations
     UnsetSuggestIssue
-    UnsetShowHelpReminder
+    UnsetShowHelp
     SetShowInstallerOutcome
     UnsetDevMode
 
@@ -449,7 +449,7 @@ LogRuntimeParameters()
 
     if IsNotError && [[ ${#QPKGS_to_install[@]} -eq 0 && ${#QPKGS_to_uninstall[@]} -eq 0 && ${#QPKGS_to_update[@]} -eq 0 && ${#QPKGS_to_backup[@]} -eq 0 && ${#QPKGS_to_restore[@]} -eq 0 ]] && IsNotSatisfyDependenciesOnly && [[ $upgrade_all_apps = false ]]; then
         ShowAsError 'no valid QPKGs or actions were specified'
-        SetShowAbbreviationsReminder
+        SetShowAbbreviations
         return 1
     fi
 
@@ -584,7 +584,7 @@ ParseArgs()
     {
 
     if [[ -z $USER_ARGS_RAW ]]; then
-        SetShowHelpReminder
+        SetShowHelp
         code_pointer=2
         return 1
     fi
@@ -610,7 +610,11 @@ ParseArgs()
                 current_operation=''
                 ;;
             --help)
-                SetShowHelpReminder
+                SetShowHelp
+                return 1
+                ;;
+            --problem)
+                SetShowProblemHelp
                 return 1
                 ;;
             -l|--log)
@@ -622,7 +626,7 @@ ParseArgs()
                 return 1
                 ;;
             --abs)
-                SetShowAbbreviationsReminder
+                SetShowAbbreviations
                 return 1
                 ;;
             -v|--version)
@@ -727,26 +731,36 @@ ShowHelp()
     echo -e "* Display recognised package abbreviations:"
     echo -e "\t./$LAUNCHER_SCRIPT_NAME --abs"
 
+    echo -e "\n* Upgrade all sherpa applications (only upgrades the internal applications, not the QPKG):"
+    echo -e "\t./$LAUNCHER_SCRIPT_NAME --upgrade-all-apps"
+
+    echo -e "\n* Display some helpful troubleshooting options:"
+    echo -e "\t./$LAUNCHER_SCRIPT_NAME --problem"
+
+    echo -e "\n* Display the sherpa version:"
+    echo -e "\t./$LAUNCHER_SCRIPT_NAME --version"
+
+    return 0
+
+    }
+
+ShowProblemHelp()
+    {
+
+    echo -e "\n* Install a package and show debugging information:"
+    echo -e "\t./$LAUNCHER_SCRIPT_NAME <packagename> --debug"
+
     echo -e "\n* Ensure all sherpa application dependencies are installed:"
     echo -e "\t./$LAUNCHER_SCRIPT_NAME --check"
 
     echo -e "\n* Don't check free-space on target filesystem when installing $(FormatAsPackageName Entware) packages:"
     echo -e "\t./$LAUNCHER_SCRIPT_NAME --ignore-space"
 
-    echo -e "\n* Upgrade all sherpa applications (only upgrades the internal applications, not the QPKG):"
-    echo -e "\t./$LAUNCHER_SCRIPT_NAME --upgrade-all-apps"
-
-    echo -e "\n* View the sherpa log:"
-    echo -e "\t./$LAUNCHER_SCRIPT_NAME --log"
-
     echo -e "\n* Upload the sherpa log to a public pastebin (https://termbin.com):"
     echo -e "\t./$LAUNCHER_SCRIPT_NAME --paste"
 
-    echo -e "\n* Install a package and show debugging information:"
-    echo -e "\t./$LAUNCHER_SCRIPT_NAME <packagename> --debug"
-
-    echo -e "\n* Display the sherpa version:"
-    echo -e "\t./$LAUNCHER_SCRIPT_NAME --version"
+    echo -e "\n* View the sherpa log:"
+    echo -e "\t./$LAUNCHER_SCRIPT_NAME --log"
 
     return 0
 
@@ -1888,9 +1902,11 @@ ShowResult()
         echo "$MAIN_SCRIPT_VERSION"
     elif IsLogViewOnly; then
         ShowLogViewer
-    elif IsShowHelpReminder; then
+    elif IsShowHelp; then
         ShowHelp
-    elif IsShowAbbreviationsReminder; then
+    elif IsShowProblemHelp; then
+        ShowProblemHelp
+    elif IsShowAbbreviations; then
         ShowPackageAbbreviations
     fi
 
@@ -2660,39 +2676,75 @@ ProgressUpdater()
 
     }
 
-SetShowHelpReminder()
+SetShowHelp()
     {
 
     SetAbort
 
-    IsShowHelpReminder && return
+    IsShowHelp && return
 
-    _show_help_reminder_flag=true
-    DebugVar _show_help_reminder_flag
-
-    }
-
-UnsetShowHelpReminder()
-    {
-
-    IsNotShowHelpReminder && return
-
-    _show_help_reminder_flag=false
-    DebugVar _show_help_reminder_flag
+    _show_help_flag=true
+    DebugVar _show_help_flag
 
     }
 
-IsShowHelpReminder()
+UnsetShowHelp()
     {
 
-    [[ $_show_help_reminder_flag = true ]]
+    IsNotShowHelp && return
+
+    _show_help_flag=false
+    DebugVar _show_help_flag
 
     }
 
-IsNotShowHelpReminder()
+IsShowHelp()
     {
 
-    [[ $_show_help_reminder_flag != true ]]
+    [[ $_show_help_flag = true ]]
+
+    }
+
+IsNotShowHelp()
+    {
+
+    [[ $_show_help_flag != true ]]
+
+    }
+
+SetShowProblemHelp()
+    {
+
+    SetAbort
+
+    IsShowProblemHelp && return
+
+    _show_problem_help_flag=true
+    DebugVar _show_problem_help_flag
+
+    }
+
+UnsetShowProblemHelp()
+    {
+
+    IsNotShowProblemHelp && return
+
+    _show_problem_help_flag=false
+    DebugVar _show_problem_help_flag
+
+    }
+
+IsShowProblemHelp()
+    {
+
+    [[ $_show_problem_help_flag = true ]]
+
+    }
+
+IsNotShowProblemHelp()
+    {
+
+    [[ $_show_problem_help_flag != true ]]
 
     }
 
@@ -2942,39 +2994,39 @@ IsNotSatisfyDependenciesOnly()
 
     }
 
-SetShowAbbreviationsReminder()
+SetShowAbbreviations()
     {
 
     SetAbort
 
-    IsShowAbbreviationsReminder && return
+    IsShowAbbreviations && return
 
-    _show_abbreviations_reminder_flag=true
-    DebugVar _show_abbreviations_reminder_flag
-
-    }
-
-UnsetShowAbbreviationsReminder()
-    {
-
-    IsNotShowAbbreviationsReminder && return
-
-    _show_abbreviations_reminder_flag=false
-    DebugVar _show_abbreviations_reminder_flag
+    _show_abbreviations_flag=true
+    DebugVar _show_abbreviations_flag
 
     }
 
-IsShowAbbreviationsReminder()
+UnsetShowAbbreviations()
     {
 
-    [[ $_show_abbreviations_reminder_flag = true ]]
+    IsNotShowAbbreviations && return
+
+    _show_abbreviations_flag=false
+    DebugVar _show_abbreviations_flag
 
     }
 
-IsNotShowAbbreviationsReminder()
+IsShowAbbreviations()
     {
 
-    [[ $_show_abbreviations_reminder_flag != true ]]
+    [[ $_show_abbreviations_flag = true ]]
+
+    }
+
+IsNotShowAbbreviations()
+    {
+
+    [[ $_show_abbreviations_flag != true ]]
 
     }
 
