@@ -290,6 +290,8 @@ LoadUIPorts()
     # Always read this from the application configuration
     ui_listening_address=$($GETCFG_CMD general http_host -f "$QPKG_INI_PATHFILE")
 
+    return 0
+
     }
 
 IsSSLEnabled()
@@ -579,7 +581,7 @@ IsNotPortAvailable()
 
     # $1 = port to check
     # $? = 1 if available
-    # $? = 0 if already used or unspecified
+    # $? = 0 if already used
 
     ! IsPortAvailable "$1"
 
