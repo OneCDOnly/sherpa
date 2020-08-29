@@ -40,7 +40,7 @@ Init()
 
     IsQNAP || return 1
 
-    readonly MAIN_SCRIPT_VERSION=200829n
+    readonly MAIN_SCRIPT_VERSION=200829p
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -596,11 +596,11 @@ ParseArgs()
 
     for arg in "${user_args[@]}"; do
         case $arg in
-            -d|--debug)
+            -d|--debug|debug)
                 SetVisibleDebugging
                 current_operation=''
                 ;;
-            --check)
+            --check|check)
                 SetSatisfyDependenciesOnly
                 current_operation=''
                 ;;
@@ -609,15 +609,15 @@ ParseArgs()
                 DebugVar ignore_space_arg
                 current_operation=''
                 ;;
-            --help)
+            --help|help)
                 SetShowHelp
                 return 1
                 ;;
-            --problem)
+            --problem|problem)
                 SetShowProblemHelp
                 return 1
                 ;;
-            -l|--log)
+            -l|--log|log)
                 SetLogViewOnly
                 return 1
                 ;;
@@ -625,11 +625,11 @@ ParseArgs()
                 SetLogPasteOnly
                 return 1
                 ;;
-            --abs)
+            --abs|abs)
                 SetShowAbbreviations
                 return 1
                 ;;
-            -v|--version)
+            -v|--version|version)
                 SetVersionOnly
                 return 1
                 ;;
