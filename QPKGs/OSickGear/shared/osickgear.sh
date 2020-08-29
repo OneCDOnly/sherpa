@@ -105,7 +105,7 @@ Init()
 ShowHelp()
     {
 
-    Display "$($BASENAME_CMD "$0") ($QPKG_VERSION) a service control script for the $(FormatAsPackageName $QPKG_NAME) QPKG"
+    Display "$(ColourTextBrightWhite "$($BASENAME_CMD "$0")") ($QPKG_VERSION) a service control script for the $(FormatAsPackageName $QPKG_NAME) QPKG"
     Display
     Display "Usage: $0 [OPTION]"
     Display
@@ -1061,6 +1061,20 @@ SessionSeparator()
     # $1 = message
 
     printf '%0.s-' {1..20}; echo -n " $1 "; printf '%0.s-' {1..20}
+
+    }
+
+ColourTextBrightWhite()
+    {
+
+    echo -en '\033[1;97m'"$(ColourReset "$1")"
+
+    }
+
+ColourReset()
+    {
+
+    echo -en "$1"'\033[0m'
 
     }
 
