@@ -364,8 +364,6 @@ PullGitRepo()
         if [[ $installed_branch != "$3" ]]; then
             DisplayDoneCommitToLog "installed git branch: $installed_branch, new git branch: $3"
             ExecuteAndLog 'new git branch was specified so cleaning local repository' "rm -r $QPKG_GIT_PATH"
-        else
-            DisplayDoneCommitToLog "installed git branch: $installed_branch"
         fi
     fi
 
@@ -374,6 +372,11 @@ PullGitRepo()
     else
         ExecuteAndLog "updating $(FormatAsPackageName "$1") from remote repository" "$GIT_CMD -C $QPKG_GIT_PATH pull"
     fi
+
+    installed_branch=$($GIT_CMD -C "$QPKG_GIT_PATH" branch | $GREP_CMD '^\*' | $SED_CMD 's|^\* ||')
+    DisplayDoneCommitToLog "installed git branch: $installed_branch"
+
+    return 0
 
     }
 
