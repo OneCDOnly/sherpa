@@ -141,6 +141,7 @@ StartQPKG()
     fi
 
     WaitForGit || return 1
+
     PullGitRepo "$QPKG_NAME" "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_PATH"
     [[ $? -eq 0 && $(type -t UpdateLanguages) = 'function' ]] && UpdateLanguages
 
@@ -350,14 +351,26 @@ PullGitRepo()
 
     [[ -z $1 || -z $2 || -z $3 || -z $4 || -z $5 ]] && return 1
 
-    local QPKG_GIT_PATH="$5/$1"
-    local GIT_HTTP_URL="$2"
-    local GIT_HTTPS_URL=${GIT_HTTP_URL/http/git}
-    [[ $4 = shallow ]] && local depth=' --depth 1'
-    [[ $4 = single-branch ]] && local depth=' --single-branch'
+    local -r QPKG_GIT_PATH="$5/$1"
+    local -r GIT_HTTP_URL="$2"
+    local -r GIT_HTTPS_URL=${GIT_HTTP_URL/http/git}
+    local installed_branch=''
+    [[ $4 = shallow ]] && local -r DEPTH=' --depth 1'
+    [[ $4 = single-branch ]] && local -r DEPTH=' --single-branch'
 
-    if [[ ! -d ${QPKG_GIT_PATH}/.git ]]; then
-        ExecuteAndLog "cloning $(FormatAsPackageName "$1") from remote repository" "$GIT_CMD clone --branch $3 $depth -c advice.detachedHead=false $GIT_HTTPS_URL $QPKG_GIT_PATH || $GIT_CMD clone --branch $3 $depth -c advice.detachedHead=false $GIT_HTTP_URL $QPKG_GIT_PATH"
+    if [[ -d $QPKG_GIT_PATH/.git ]]; then
+        installed_branch=$($GIT_CMD -C "$QPKG_GIT_PATH" branch | $GREP_CMD '^\*' | $SED_CMD 's|^\* ||')
+
+        if [[ $installed_branch != "$3" ]]; then
+            DisplayDoneCommitToLog "installed git branch: $installed_branch, new git branch: $3"
+            ExecuteAndLog 'new git branch was specified so cleaning local repository' "rm -r $QPKG_GIT_PATH"
+        else
+            DisplayDoneCommitToLog "installed git branch: $installed_branch"
+        fi
+    fi
+
+    if [[ ! -d $QPKG_GIT_PATH/.git ]]; then
+        ExecuteAndLog "cloning $(FormatAsPackageName "$1") from remote repository" "$GIT_CMD clone --branch $3 $DEPTH -c advice.detachedHead=false $GIT_HTTPS_URL $QPKG_GIT_PATH || $GIT_CMD clone --branch $3 $DEPTH -c advice.detachedHead=false $GIT_HTTP_URL $QPKG_GIT_PATH"
     else
         ExecuteAndLog "updating $(FormatAsPackageName "$1") from remote repository" "$GIT_CMD -C $QPKG_GIT_PATH pull"
     fi
@@ -367,7 +380,7 @@ PullGitRepo()
 CleanLocalClone()
     {
 
-    # for the rare occasions the local repo becomes corrupt, it needs to be deleted and cloned again from source.
+    # for occasions where the local repo needs to be deleted and cloned again from source.
 
     CommitOperationToLog
 
