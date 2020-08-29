@@ -596,11 +596,11 @@ ParseArgs()
 
     for arg in "${user_args[@]}"; do
         case $arg in
-            -d|--debug|debug)
+            -d|d|--debug|debug)
                 SetVisibleDebugging
                 current_operation=''
                 ;;
-            --check|check)
+            -c|c|--check|check)
                 SetSatisfyDependenciesOnly
                 current_operation=''
                 ;;
@@ -609,15 +609,15 @@ ParseArgs()
                 DebugVar ignore_space_arg
                 current_operation=''
                 ;;
-            --help|help)
+            -h|h|--help|help)
                 SetShowHelp
                 return 1
                 ;;
-            --problem|problem)
+            -p|p|--problem|problem)
                 SetShowProblemHelp
                 return 1
                 ;;
-            -l|--log|log)
+            -l|l|--log|log)
                 SetLogViewOnly
                 return 1
                 ;;
@@ -629,7 +629,7 @@ ParseArgs()
                 SetShowAbbreviations
                 return 1
                 ;;
-            -v|--version|version)
+            -v|v|--version|version)
                 SetVersionOnly
                 return 1
                 ;;
