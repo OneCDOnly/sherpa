@@ -756,11 +756,13 @@ ShowProblemHelp()
     echo -e "\n* Don't check free-space on target filesystem when installing $(FormatAsPackageName Entware) packages:"
     echo -e "\t./$LAUNCHER_SCRIPT_NAME --ignore-space"
 
-    echo -e "\n* Upload the sherpa log to a public pastebin (https://termbin.com):"
-    echo -e "\t./$LAUNCHER_SCRIPT_NAME --paste"
+    echo -e "\n$(ColourTextBrightOrange '* If you need help, please remember to include a copy of your sherpa log for analysis!')"
 
     echo -e "\n* View the sherpa log:"
     echo -e "\t./$LAUNCHER_SCRIPT_NAME --log"
+
+    echo -e "\n* Upload the sherpa log to a public pastebin (https://termbin.com):"
+    echo -e "\t./$LAUNCHER_SCRIPT_NAME --paste"
 
     return 0
 
@@ -883,7 +885,7 @@ ShowSuggestIssue()
 
     echo -e "\n* Alternatively, post on the QNAP NAS Community Forum:\n\thttps://forum.qnap.com/viewtopic.php?f=320&t=132373"
 
-    echo -e "\n$(ColourTextBrightOrange '* Please remember to include a copy of your sherpa log for analysis!')"
+    echo -e "\n$(ColourTextBrightOrange '* If you need help, please remember to include a copy of your sherpa log for analysis!')"
 
     echo -e "\n- View the sherpa log:"
     echo -e "\t./$LAUNCHER_SCRIPT_NAME --log"
