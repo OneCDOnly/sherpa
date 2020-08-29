@@ -2,7 +2,7 @@
 #
 # sherpa.sh
 #
-# This is the launcher script for the sherpa mini package manager.
+# This is the launcher script for the sherpa mini-package-manager.
 #
 # Copyright (C) 2017-2020 OneCD [one.cd.only@gmail.com]
 #
@@ -24,7 +24,7 @@ Init()
     {
 
     local -r LAUNCHER_SCRIPT_FILE=sherpa.sh
-    local -r LAUNCHER_SCRIPT_VERSION=200828
+    local -r LAUNCHER_SCRIPT_VERSION=200829
 
     if [[ ! -e /etc/init.d/functions ]]; then
         ShowAsAbort 'QTS functions missing (is this a QNAP NAS?)'
