@@ -40,7 +40,7 @@ Init()
 
     IsQNAP || return 1
 
-    readonly MAIN_SCRIPT_VERSION=200830b
+    readonly MAIN_SCRIPT_VERSION=200830c
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -355,6 +355,7 @@ Init()
     CalcDependantQPKGs
     CalcUserInstallableQPKGs
     CalcInstalledQPKGs
+    CalcUpgradeableQPKGs
     CalcNASQPKGArch
 
     return 0
@@ -424,7 +425,6 @@ LogRuntimeParameters()
 
     CheckLauncherAge
     ShowNewQPKGVersions
-
     if IsNotError && [[ $EUID -ne 0 || $USER != admin ]]; then
         ShowAsError "this script must be run as the 'admin' user. Please login via SSH as 'admin' and try again"
         return 1
@@ -543,8 +543,6 @@ ShowNewQPKGVersions()
 
     local names=''
     local msg=''
-
-    [[ ${#QPKGS_upgradable[@]} -eq 0 ]] && CalcUpgradeableQPKGs
 
     if [[ ${#QPKGS_upgradable[@]} -gt 0 ]]; then
         if [[ ${#QPKGS_upgradable[@]} -eq 1 ]]; then
@@ -1552,12 +1550,12 @@ CalcUpgradeableQPKGs()
     # Returns a list of QPKGs that can be upgraded.
     # creates a global variable array: $QPKGS_upgradable()
 
+    [[ ${#QPKGS_installed[@]} -gt 0 ]] || return 1
+
     QPKGS_upgradable=()
     local package=''
     local installed_version=''
     local remote_version=''
-
-    [[ ${#QPKGS_installed[@]} -eq 0 ]] && CalcInstalledQPKGs
 
     for package in "${QPKGS_installed[@]}"; do
         [[ $package = Entware ]] && continue        # kludge: ignore 'Entware' as package filename version doesn't match the QTS App Center version string
@@ -1566,7 +1564,7 @@ CalcUpgradeableQPKGs()
 
         if [[ $installed_version != "$remote_version" ]]; then
             #QPKGS_upgradable+=("$package $installed_version $remote_version")
-            QPKGS_upgradable+=("$package")
+            QPKGS_upgradable+=($package)
         fi
     done
 
@@ -2493,17 +2491,8 @@ IsQPKGUpgradable()
     # output:
     #   $? = 0 (true) or 1 (false)
 
-    [[ -n $1 ]] || return 1
-
-    local package=''
-
-    [[ ${#QPKGS_upgradable[@]} -eq 0 ]] && CalcUpgradeableQPKGs
-
-    for package in "${QPKGS_upgradable[@]}"; do
-        [[ $package = "$1" ]] && return 0
-    done
-
-    return 1
+    [[ -n $1 && ${#QPKGS_upgradable[@]} -gt 0 ]] || return 1
+    [[ ${QPKGS_upgradable[*]} =~ "$1" ]]
 
     }
 
