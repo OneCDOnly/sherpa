@@ -40,7 +40,7 @@ Init()
 
     IsQNAP || return 1
 
-    readonly MAIN_SCRIPT_VERSION=200829q
+    readonly MAIN_SCRIPT_VERSION=200829r
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -209,8 +209,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(nzbToMedia)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/nzbToMedia/build/nzbToMedia_200826b.qpkg)
-        SHERPA_QPKG_MD5+=(ba3a4d514351ffeeb4c0967d37235aff)
+        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/nzbToMedia/build/nzbToMedia_200829.qpkg)
+        SHERPA_QPKG_MD5+=(1667e519bd16074d723143d24a77f7d7)
         SHERPA_QPKG_ABBRVS+=('nzb2 nzb2m nzbtom nzbto nzbtomedia')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('')

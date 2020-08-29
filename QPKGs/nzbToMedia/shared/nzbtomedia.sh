@@ -36,6 +36,7 @@ Init()
     readonly GNU_LESS_CMD=/opt/bin/less
     readonly LSOF_CMD=/usr/sbin/lsof
     readonly SED_CMD=/bin/sed
+    readonly SETCFG_CMD=/sbin/setcfg
     readonly TAR_CMD=/bin/tar
     readonly TAIL_CMD=/usr/bin/tail
     readonly TEE_CMD=/usr/bin/tee
@@ -50,6 +51,7 @@ Init()
     readonly QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.spec
     readonly SERVICE_STATUS_PATHFILE=/var/run/$QPKG_NAME.last.operation
     readonly SERVICE_LOG_PATHFILE=/var/log/$QPKG_NAME.log
+    readonly DAEMON_PID_PATHFILE=/var/run/$QPKG_NAME.pid
     local -r OPKG_PATH=/opt/bin:/opt/sbin
     local -r BACKUP_PATH=$($GETCFG_CMD SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
     readonly BACKUP_PATHFILE=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
@@ -68,8 +70,10 @@ Init()
     fi
 
     UnsetError
-    WaitForEntware
+    UnsetRestartPending
 
+    WaitForEntware
+    EnsureConfigFileExists
     LoadAppVersion
 
     [[ ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
@@ -88,15 +92,16 @@ ShowHelp()
     Display
     Display ' [OPTION] can be any one of the following:'
     Display
-    Display " start      - launch $(FormatAsPackageName $QPKG_NAME) if not already running."
-    Display " stop       - shutdown $(FormatAsPackageName $QPKG_NAME) if running."
-    Display " restart    - stop, then start $(FormatAsPackageName $QPKG_NAME)."
-    Display " status     - check if $(FormatAsPackageName $QPKG_NAME) is still running. Returns \$? = 0 if running, 1 if not."
-    Display " backup     - backup the current $(FormatAsPackageName $QPKG_NAME) configuration to persistent storage."
-    Display " restore    - restore a previously saved configuration from persistent storage. $(FormatAsPackageName $QPKG_NAME) will be stopped, then restarted."
-    [[ -n $SOURCE_GIT_URL ]] && Display " clean      - wipe the current local copy of $(FormatAsPackageName $QPKG_NAME), and download it again from remote source. Configuration will be retained."
-    Display ' log        - display this service script runtime log.'
-    Display ' version    - display the package version number.'
+    DisplayAsHelp 'start' "launch $(FormatAsPackageName $QPKG_NAME) if not already running."
+    DisplayAsHelp 'stop' "shutdown $(FormatAsPackageName $QPKG_NAME) if running."
+    DisplayAsHelp 'restart' "stop, then start $(FormatAsPackageName $QPKG_NAME)."
+    DisplayAsHelp 'status' "check if $(FormatAsPackageName $QPKG_NAME) is still running. Returns \$? = 0 if running, 1 if not."
+    DisplayAsHelp 'backup' "backup the current $(FormatAsPackageName $QPKG_NAME) configuration to persistent storage."
+    DisplayAsHelp 'restore' "restore a previously saved configuration from persistent storage. $(FormatAsPackageName $QPKG_NAME) will be stopped, then restarted."
+    DisplayAsHelp 'reset-config' "delete the application configuration, databases and history. $(FormatAsPackageName $QPKG_NAME) will be stopped, then restarted."
+    [[ -n $SOURCE_GIT_URL ]] && DisplayAsHelp 'clean' "wipe the current local copy of $(FormatAsPackageName $QPKG_NAME), and download it again from remote source. Configuration will be retained."
+    DisplayAsHelp 'log' 'display this service script runtime log.'
+    DisplayAsHelp 'version' 'display the package version number.'
     Display
 
     }
@@ -104,9 +109,16 @@ ShowHelp()
 StartQPKG()
     {
 
-    IsNotError || return
+    IsError && return
 
-    [[ ! -L $APPARENT_PATH ]] || return
+    if IsNotRestart && IsNotRestore && IsNotClean && IsNotReset; then
+        RecordOperationToLog
+        IsDaemonActive && return
+    fi
+
+    if IsRestore || IsClean || IsReset; then
+        IsNotRestartPending && return
+    fi
 
     local -r SAB_MIN_VERSION=200809
 
@@ -149,7 +161,29 @@ StartQPKG()
 StopQPKG()
     {
 
+    IsError && return
+
+    if IsNotRestore && IsNotClean && IsNotReset; then
+        RecordOperationToLog
+    fi
+
+    IsNotDaemonActive && return
+
+    if IsRestart || IsRestore || IsClean || IsReset; then
+        SetRestartPending
+    fi
+
     [[ -L $APPARENT_PATH ]] && rm "$APPARENT_PATH"
+
+    IsNotDaemonActive || return 1
+
+    }
+
+StatusQPKG()
+    {
+
+    IsNotError || return
+    IsDaemonActive || return
 
     }
 
@@ -180,6 +214,16 @@ RestoreConfig()
 
     }
 
+ResetConfig()
+    {
+
+    RecordOperationToLog
+
+    StopQPKG
+    ExecuteAndLog 'resetting configuration' "rm $QPKG_INI_PATHFILE" log:everything
+    StartQPKG
+
+    }
 
 LoadAppVersion()
     {
@@ -197,6 +241,16 @@ LoadAppVersion()
     }
 
 #### functions specific to this app appear above ###
+
+EnsureConfigFileExists()
+    {
+
+    if IsNotConfigFound && IsDefaultConfigFound; then
+        DisplayWarnCommitToLog 'no configuration file found: using default'
+        cp "$QPKG_INI_DEFAULT_PATHFILE" "$QPKG_INI_PATHFILE"
+    fi
+
+    }
 
 SaveAppVersion()
     {
@@ -250,7 +304,7 @@ CleanLocalClone()
     fi
 
     StopQPKG
-    ExecuteAndLog 'cleaning local repo' "rm -r $QPKG_REPO_PATH"
+    ExecuteAndLog 'cleaning local repository' "rm -r $QPKG_REPO_PATH"
     StartQPKG
 
     }
@@ -303,6 +357,32 @@ ExecuteAndLog()
     fi
 
     return $returncode
+
+    }
+
+IsDaemonActive()
+    {
+
+    # $? = 0 : package is 'started'
+    # $? = 1 : package is 'stopped'
+
+    if [[ -L $APPARENT_PATH ]]; then
+        DisplayDoneCommitToLog "package IS active"
+        return
+    fi
+
+    DisplayDoneCommitToLog 'package NOT active'
+    return 1
+
+    }
+
+IsNotDaemonActive()
+    {
+
+    # $? = 1 : package is 'started'
+    # $? = 0 : package is 'stopped'
+
+    ! IsDaemonActive
 
     }
 
@@ -397,12 +477,44 @@ SetServiceOperationResult()
 
     }
 
+SetRestartPending()
+    {
+
+    IsRestartPending && return
+
+    _restart_pending_flag=true
+
+    }
+
+UnsetRestartPending()
+    {
+
+    IsNotRestartPending && return
+
+    _restart_pending_flag=false
+
+    }
+
+IsRestartPending()
+    {
+
+    [[ $_restart_pending_flag = true ]]
+
+    }
+
+IsNotRestartPending()
+    {
+
+    [[ $_restart_pending_flag = false ]]
+
+    }
+
 SetError()
     {
 
     IsError && return
 
-    error_flag=true
+    _error_flag=true
 
     }
 
@@ -411,28 +523,35 @@ UnsetError()
 
     IsNotError && return
 
-    error_flag=false
+    _error_flag=false
 
     }
 
 IsError()
     {
 
-    [[ $error_flag = true ]]
+    [[ $_error_flag = true ]]
 
     }
 
 IsNotError()
     {
 
-    [[ $error_flag = false ]]
+    ! IsError
+
+    }
+
+IsRestart()
+    {
+
+    [[ $service_operation = restart ]]
 
     }
 
 IsNotRestart()
     {
 
-    ! [[ $service_operation = restart ]]
+    ! IsRestart
 
     }
 
@@ -450,10 +569,45 @@ IsNotLog()
 
     }
 
+IsClean()
+    {
+
+    [[ $service_operation = clean ]]
+
+    }
+
 IsNotClean()
     {
 
-    ! [[ $service_operation = clean ]]
+    ! IsClean
+
+    }
+
+IsRestore()
+    {
+
+    [[ $service_operation = restore ]]
+
+    }
+
+IsNotRestore()
+    {
+
+    ! IsRestore
+
+    }
+
+IsReset()
+    {
+
+    [[ $service_operation = 'reset-config' ]]
+
+    }
+
+IsNotReset()
+    {
+
+    ! IsReset
 
     }
 
@@ -570,6 +724,13 @@ FormatAsFileName()
     {
 
     echo "($1)"
+
+    }
+
+DisplayAsHelp()
+    {
+
+    printf "\t--%-12s  %s\n" "$1" "$2"
 
     }
 
@@ -692,40 +853,44 @@ Init
 
 if IsNotError; then
     case $1 in
-        start)
+        start|--start)
             SetServiceOperation "$1"
             StartQPKG || SetError
             ;;
-        stop)
+        stop|--stop)
             SetServiceOperation "$1"
             StopQPKG || SetError
             ;;
-        r|restart)
+        r|-r|restart|--restart)
             SetServiceOperation restart
             { StopQPKG; StartQPKG ;} || SetError
             ;;
-        s|status)
+        s|-s|status|--status)
             SetServiceOperation status
-            [[ -L $APPARENT_PATH ]] || SetError
+            StatusQPKG || SetError
             ;;
-        b|backup)
+        b|-b|backup|--backup)
             SetServiceOperation backup
             BackupConfig || SetError
             ;;
-        restore)
+        reset-config|--reset-config)
+            SetServiceOperation "$1"
+            ResetConfig || SetError
+            ;;
+        restore|--restore)
             SetServiceOperation "$1"
             RestoreConfig || SetError
             ;;
-        c|clean)
+        c|-c|clean|--clean)
             SetServiceOperation clean
             # this app stores the config file in the repo location, so save it and restore again after new clone is complete
             { BackupConfig; CleanLocalClone; RestoreConfig ;} || SetError
             ;;
-        l|log)
+        l|-l|log|--log)
             SetServiceOperation log
             ViewLog
             ;;
-        v|version)
+        v|-v|version|--version)
             SetServiceOperation version
             Display "$QPKG_VERSION"
             ;;
