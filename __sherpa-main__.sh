@@ -1534,8 +1534,6 @@ CalcInstalledQPKGs()
     QPKGS_installed=()
     local package=''
 
-    [[ ${#QPKGS_user_installable[@]} -eq 0 ]] && CalcUserInstallableQPKGs
-
     for package in "${QPKGS_user_installable[@]}"; do
         IsQPKGInstalled "$package" && QPKGS_installed+=($package)
     done
@@ -1549,8 +1547,6 @@ CalcUpgradeableQPKGs()
 
     # Returns a list of QPKGs that can be upgraded.
     # creates a global variable array: $QPKGS_upgradable()
-
-    [[ ${#QPKGS_installed[@]} -gt 0 ]] || return 1
 
     QPKGS_upgradable=()
     local package=''
@@ -2491,8 +2487,7 @@ IsQPKGUpgradable()
     # output:
     #   $? = 0 (true) or 1 (false)
 
-    [[ -n $1 && ${#QPKGS_upgradable[@]} -gt 0 ]] || return 1
-    [[ ${QPKGS_upgradable[*]} =~ "$1" ]]
+    [[ -n $1 && ${#QPKGS_upgradable[@]} -gt 0 && ${QPKGS_upgradable[*]} =~ "$1" ]]
 
     }
 
