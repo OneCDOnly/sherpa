@@ -604,7 +604,7 @@ ParseArgs()
                 SetSatisfyDependenciesOnly
                 current_operation=''
                 ;;
-            --ignore-space)
+            --ignore-space|ignore-space)
                 ignore_space_arg='--force-space'
                 DebugVar ignore_space_arg
                 current_operation=''
@@ -621,7 +621,7 @@ ParseArgs()
                 SetLogViewOnly
                 return 1
                 ;;
-            --paste)
+            --paste|paste)
                 SetLogPasteOnly
                 return 1
                 ;;
