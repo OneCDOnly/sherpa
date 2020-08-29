@@ -109,7 +109,7 @@ ShowHelp()
     Display
     Display "Usage: $0 [OPTION]"
     Display
-    Display '[OPTION] can be any one of the following:'
+    Display '[OPTION] may be any one of the following:'
     Display
     DisplayAsHelp 'start' "launch $(FormatAsPackageName $QPKG_NAME) if not already running."
     DisplayAsHelp 'stop' "shutdown $(FormatAsPackageName $QPKG_NAME) if running."
