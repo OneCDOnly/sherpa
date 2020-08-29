@@ -108,17 +108,17 @@ ShowHelp()
     Display
     Display ' [OPTION] can be any one of the following:'
     Display
-    Display " start        - launch $(FormatAsPackageName $QPKG_NAME) if not already running."
-    Display " stop         - shutdown $(FormatAsPackageName $QPKG_NAME) if running."
-    Display " restart      - stop, then start $(FormatAsPackageName $QPKG_NAME)."
-    Display " status       - check if $(FormatAsPackageName $QPKG_NAME) is still running. Returns \$? = 0 if running, 1 if not."
-    Display " backup       - backup the current $(FormatAsPackageName $QPKG_NAME) configuration to persistent storage."
-    Display " restore      - restore a previously saved configuration from persistent storage. $(FormatAsPackageName $QPKG_NAME) will be stopped, then restarted."
-    Display " reset-config - delete the application configuration, databases and history. $(FormatAsPackageName $QPKG_NAME) will be stopped, then restarted."
-    Display " import       - create a backup of an installed $(FormatAsPackageName SABnzbdplus) config and restore it into $(FormatAsPackageName $QPKG_NAME)."
-    [[ -n $SOURCE_GIT_URL ]] && Display " clean        - wipe the current local copy of $(FormatAsPackageName $QPKG_NAME), and download it again from remote source. Configuration will be retained."
-    Display ' log          - display this service script runtime log.'
-    Display ' version      - display the package version number.'
+    DisplayAsHelp 'start' "launch $(FormatAsPackageName $QPKG_NAME) if not already running."
+    DisplayAsHelp 'stop' "shutdown $(FormatAsPackageName $QPKG_NAME) if running."
+    DisplayAsHelp 'restart' "stop, then start $(FormatAsPackageName $QPKG_NAME)."
+    DisplayAsHelp 'status' "check if $(FormatAsPackageName $QPKG_NAME) is still running. Returns \$? = 0 if running, 1 if not."
+    DisplayAsHelp 'backup' "backup the current $(FormatAsPackageName $QPKG_NAME) configuration to persistent storage."
+    DisplayAsHelp 'restore' "restore a previously saved configuration from persistent storage. $(FormatAsPackageName $QPKG_NAME) will be stopped, then restarted."
+    DisplayAsHelp 'reset-config' "delete the application configuration, databases and history. $(FormatAsPackageName $QPKG_NAME) will be stopped, then restarted."
+    DisplayAsHelp 'import' "create a backup of an installed $(FormatAsPackageName SABnzbdplus) config and restore it into $(FormatAsPackageName $QPKG_NAME)."
+    [[ -n $SOURCE_GIT_URL ]] && DisplayAsHelp 'clean' "wipe the current local copy of $(FormatAsPackageName $QPKG_NAME), and download it again from remote source. Configuration will be retained."
+    DisplayAsHelp 'log' 'display this service script runtime log.'
+    DisplayAsHelp 'version' 'display the package version number.'
     Display
 
     }
@@ -126,15 +126,15 @@ ShowHelp()
 StartQPKG()
     {
 
-    IsNotError || return
+    IsError && return
 
     if IsNotRestart && IsNotRestore && IsNotClean && IsNotReset; then
         RecordOperationToLog
-        IsNotDaemonActive || return
+        IsDaemonActive && return
     fi
 
     if IsRestore || IsClean || IsReset; then
-        IsRestartPending || return
+        IsNotRestartPending && return
     fi
 
     [[ -n $SOURCE_GIT_URL ]] && PullGitRepo $QPKG_NAME "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_PATH" && UpdateLanguages
@@ -144,11 +144,9 @@ StartQPKG()
 
     if [[ $ui_port -le 0 && $ui_port_secure -le 0 ]]; then
         DisplayErrCommitAllLogs 'unable to start daemon: no UI port was specified!'
-        SetError
         return 1
     elif IsNotPortAvailable $ui_port || IsNotPortAvailable $ui_port_secure; then
         DisplayErrCommitAllLogs "unable to start daemon: ports $ui_port or $ui_port_secure are already in use!"
-        SetError
         return 1
     fi
 
@@ -164,13 +162,13 @@ StartQPKG()
 StopQPKG()
     {
 
-    IsNotError || return
+    IsError && return
 
     if IsNotRestore && IsNotClean && IsNotReset; then
         RecordOperationToLog
     fi
 
-    IsDaemonActive || return
+    IsNotDaemonActive && return
 
     if IsRestart || IsRestore || IsClean || IsReset; then
         SetRestartPending
@@ -598,10 +596,7 @@ IsPortAvailable()
     # $? = 0 if available
     # $? = 1 if already used
 
-    if [[ -z $1 || $1 -eq 0 ]]; then
-        SetError
-        return 1
-    fi
+    [[ -z $1 || $1 -eq 0 ]] && return
 
     if ($LSOF_CMD -i :"$1" -sTCP:LISTEN >/dev/null 2>&1); then
         return 1
@@ -1006,6 +1001,13 @@ FormatAsFileName()
 
     }
 
+DisplayAsHelp()
+    {
+
+    printf "\t--%-12s  %s\n" "$1" "$2"
+
+    }
+
 Display()
     {
 
@@ -1125,47 +1127,47 @@ Init
 
 if IsNotError; then
     case $1 in
-        start)
+        start|--start)
             SetServiceOperation "$1"
             StartQPKG || SetError
             ;;
-        stop)
+        stop|--stop)
             SetServiceOperation "$1"
             StopQPKG || SetError
             ;;
-        r|restart)
+        r|-r|restart|--restart)
             SetServiceOperation restart
             { StopQPKG; StartQPKG ;} || SetError
             ;;
-        s|status)
+        s|-s|status|--status)
             SetServiceOperation status
             StatusQPKG || SetError
             ;;
-        b|backup)
+        b|-b|backup|--backup)
             SetServiceOperation backup
             BackupConfig || SetError
             ;;
-        reset-config)
+        reset-config|--reset-config)
             SetServiceOperation "$1"
             ResetConfig || SetError
             ;;
-        restore)
+        restore|--restore)
             SetServiceOperation "$1"
             RestoreConfig || SetError
             ;;
-        c|clean)
+        c|-c|clean|--clean)
             SetServiceOperation clean
             CleanLocalClone || SetError
             ;;
-        l|log)
+        l|-l|log|--log)
             SetServiceOperation log
             ViewLog
             ;;
-        v|version)
+        v|-v|version|--version)
             SetServiceOperation version
             Display "$QPKG_VERSION"
             ;;
-        import)
+        import|--import)
             SetServiceOperation "$1"
             ImportFromSAB2 || SetError
             ;;

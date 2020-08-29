@@ -40,7 +40,7 @@ Init()
 
     IsQNAP || return 1
 
-    readonly MAIN_SCRIPT_VERSION=200829p
+    readonly MAIN_SCRIPT_VERSION=200829q
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -200,8 +200,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(SABnzbd)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/SABnzbd/build/SABnzbd_200829b.qpkg)
-        SHERPA_QPKG_MD5+=(7f807b01ba9d3812078b611e25bd91d4)
+        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/SABnzbd/build/SABnzbd_200829c.qpkg)
+        SHERPA_QPKG_MD5+=(a12e765362dc2d7999ed3cd3b89d35fd)
         SHERPA_QPKG_ABBRVS+=('sb sb3 sab sab3 sabnzbd3 sabnzbd')
         SHERPA_QPKG_DEPS+=('Entware Par2')
         SHERPA_QPKG_IPKGS+=('python3-asn1crypto python3-chardet python3-cryptography python3-pyopenssl unrar p7zip coreutils-nice ionice ffprobe')
