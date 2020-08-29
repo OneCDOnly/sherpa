@@ -428,6 +428,7 @@ CheckPorts()
             fi
         fi
     fi
+
     ReWriteUIPorts
 
     if [[ -z $msg ]]; then
