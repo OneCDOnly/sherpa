@@ -2,7 +2,7 @@
 
 ## Description
 
-A mini package manager to install various media-management apps into QNAP NAS.
+A mini-package-manager to install various media-management apps into QNAP NAS.
 
 **sherpa** is able to install several search and download apps but will only install **ONE app** at a time. If you elect to install an app that is already installed, the app will be fully reinstalled. App configuration will be retained.
 
