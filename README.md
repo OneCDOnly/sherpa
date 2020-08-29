@@ -71,11 +71,6 @@ So, to install SABnzbd, use:
 ./sherpa.sh Transmission
 ```
 
-5) When you're done, delete the installer and debug log:
-```
-rm sherpa.*
-```
-
 ---
 ## Known issues
 
