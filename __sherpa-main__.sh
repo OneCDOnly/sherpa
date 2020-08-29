@@ -40,7 +40,7 @@ Init()
 
     IsQNAP || return 1
 
-    readonly MAIN_SCRIPT_VERSION=200829s
+    readonly MAIN_SCRIPT_VERSION=200829t
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -761,7 +761,7 @@ ShowProblemHelp()
     echo -e "\n* View the sherpa log:"
     echo -e "\t./$LAUNCHER_SCRIPT_NAME --log"
 
-    echo -e "\n* Upload the sherpa log to a public pastebin (https://termbin.com):"
+    echo -e "\n* Upload the sherpa log to the $(FormatAsURL 'termbin.com') public pastebin:"
     echo -e "\t./$LAUNCHER_SCRIPT_NAME --paste"
 
     return 0
@@ -3244,6 +3244,15 @@ FormatAsFileName()
     [[ -z $1 ]] && return 1
 
     echo "($1)"
+
+    }
+
+FormatAsURL()
+    {
+
+    [[ -z $1 ]] && return 1
+
+    echo "$(ColourTextUnderlinedBlue "https://$1")"
 
     }
 
