@@ -40,7 +40,7 @@ Init()
 
     IsQNAP || return 1
 
-    readonly MAIN_SCRIPT_VERSION=200830
+    readonly MAIN_SCRIPT_VERSION=200830b
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -739,7 +739,7 @@ ShowProblemHelp()
     echo -e "\n* Don't check free-space on target filesystem when installing $(FormatAsPackageName Entware) packages:"
     echo -e "\t./$LAUNCHER_SCRIPT_NAME --ignore-space"
 
-    echo -e "\n$(ColourTextBrightOrange '* If you need help, please remember to include a copy of your sherpa log for analysis!')"
+    echo -e "\n$(ColourTextBrightOrange '* If you need help, please include a copy of your sherpa log for analysis!')"
 
     echo -e "\n* View the sherpa log:"
     echo -e "\t./$LAUNCHER_SCRIPT_NAME --log"
@@ -1195,8 +1195,8 @@ InstallIPKGBatch()
 
         if [[ $result -eq 0 ]]; then
             ShowAsDone "downloaded & installed $IPKG_download_count IPKG$(DisplayPlural "$IPKG_download_count")"
-			# if 'python3-pip' was installed, the install all 'pip' modules too
-			[[ ${IPKG_download_list[*]} =~ python3-pip ]] && SetPIPInstall
+            # if 'python3-pip' was installed, the install all 'pip' modules too
+            [[ ${IPKG_download_list[*]} =~ python3-pip ]] && SetPIPInstall
         else
             ShowAsError "download & install IPKG$(DisplayPlural "$IPKG_download_count") failed $(FormatAsExitcode $result)"
             DebugErrorFile "$log_pathfile"
@@ -3755,6 +3755,10 @@ InstallTargetQPKG
 Cleanup
 ShowResult
 RemoveLock
+
+if (IsShowHelp || IsShowProblemHelp || IsShowAbbreviations) && IsNotVisibleDebugging; then
+    echo
+fi
 
 if IsError; then
     exit 1
