@@ -28,19 +28,24 @@ Init()
     fi
 
     # cherry-pick required binaries
-    readonly BASENAME_CMD=/usr/bin/basename
-    readonly CURL_CMD=/sbin/curl
-    readonly DIRNAME_CMD=/usr/bin/dirname
-    readonly GETCFG_CMD=/sbin/getcfg
     readonly GREP_CMD=/bin/grep
-    readonly GNU_LESS_CMD=/opt/bin/less
-    readonly LSOF_CMD=/usr/sbin/lsof
     readonly SED_CMD=/bin/sed
-    readonly SETCFG_CMD=/sbin/setcfg
     readonly TAR_CMD=/bin/tar
+
+    readonly BASENAME_CMD=/usr/bin/basename
+    readonly DIRNAME_CMD=/usr/bin/dirname
     readonly TAIL_CMD=/usr/bin/tail
     readonly TEE_CMD=/usr/bin/tee
+
+    readonly CURL_CMD=/sbin/curl
+    readonly GETCFG_CMD=/sbin/getcfg
+    readonly SETCFG_CMD=/sbin/setcfg
     readonly WRITE_LOG_CMD=/sbin/write_log
+
+    readonly LSOF_CMD=/usr/sbin/lsof
+
+    readonly GIT_CMD=/opt/bin/git
+    readonly GNU_LESS_CMD=/opt/bin/less
 
     # generic environment
     readonly QTS_QPKG_CONF_PATHFILE=/etc/config/qpkg.conf
@@ -71,9 +76,6 @@ Init()
 
     UnsetError
     UnsetRestartPending
-
-    WaitForEntware
-    EnsureConfigFileExists
     LoadAppVersion
 
     [[ ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
@@ -85,12 +87,11 @@ Init()
 ShowHelp()
     {
 
-    Display " $($BASENAME_CMD "$0") ($QPKG_VERSION)"
-    Display " A service control script for the $(FormatAsPackageName $QPKG_NAME) QPKG"
+    Display "$(ColourTextBrightWhite "$($BASENAME_CMD "$0")") ($QPKG_VERSION) a service control script for the $(FormatAsPackageName $QPKG_NAME) QPKG"
     Display
-    Display " Usage: $0 [OPTION]"
+    Display "Usage: $0 [OPTION]"
     Display
-    Display ' [OPTION] can be any one of the following:'
+    Display '[OPTION] may be any one of the following:'
     Display
     DisplayAsHelp 'start' "launch $(FormatAsPackageName $QPKG_NAME) if not already running."
     DisplayAsHelp 'stop' "shutdown $(FormatAsPackageName $QPKG_NAME) if running."
@@ -99,6 +100,7 @@ ShowHelp()
     DisplayAsHelp 'backup' "backup the current $(FormatAsPackageName $QPKG_NAME) configuration to persistent storage."
     DisplayAsHelp 'restore' "restore a previously saved configuration from persistent storage. $(FormatAsPackageName $QPKG_NAME) will be stopped, then restarted."
     DisplayAsHelp 'reset-config' "delete the application configuration, databases and history. $(FormatAsPackageName $QPKG_NAME) will be stopped, then restarted."
+    [[ $(type -t ImportFromSAB2) = 'function' ]] && DisplayAsHelp 'import' "create a backup of an installed $(FormatAsPackageName SABnzbdplus) config and restore it into $(FormatAsPackageName $QPKG_NAME)."
     [[ -n $SOURCE_GIT_URL ]] && DisplayAsHelp 'clean' "wipe the current local copy of $(FormatAsPackageName $QPKG_NAME), and download it again from remote source. Configuration will be retained."
     DisplayAsHelp 'log' 'display this service script runtime log.'
     DisplayAsHelp 'version' 'display the package version number.'
@@ -112,17 +114,26 @@ StartQPKG()
     IsError && return
 
     if IsNotRestart && IsNotRestore && IsNotClean && IsNotReset; then
-        RecordOperationToLog
+        CommitOperationToLog
         IsDaemonActive && return
     fi
 
-    if IsRestore || IsClean || IsReset; then
-        IsNotRestartPending && return
+    if [[ $QPKG_NAME = nzbToMedia ]]; then  # kludge: for nzbToMedia - when cleaning, ignore restart and start anyway to create repo and restore config
+        if IsRestore || IsReset; then
+            IsNotRestartPending && return
+        fi
+    else
+        if IsRestore || IsClean || IsReset; then
+            IsNotRestartPending && return
+        fi
     fi
 
     local -r SAB_MIN_VERSION=200809
 
-    [[ -n $SOURCE_GIT_URL ]] && PullGitRepo $QPKG_NAME "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_PATH"
+    WaitForGit || return 1
+
+    PullGitRepo "$QPKG_NAME" "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_PATH"
+    [[ $? -eq 0 && $(type -t UpdateLanguages) = 'function' ]] && UpdateLanguages
 
     if [[ $($GETCFG_CMD SABnzbdplus Enable -f $QTS_QPKG_CONF_PATHFILE) = TRUE ]]; then
         DisplayErrCommitAllLogs "unable to link from package to target: installed $(FormatAsPackageName SABnzbdplus) QPKG must be replaced with $(FormatAsPackageName SABnzbd) $SAB_MIN_VERSION or later"
@@ -148,11 +159,10 @@ StartQPKG()
     fi
 
     [[ ! -L $APPARENT_PATH ]] && ln -s "$QPKG_REPO_PATH" "$APPARENT_PATH"
+    DisplayCommitToLog '* starting package: OK'
 
-    if IsNotConfigFound && IsDefaultConfigFound; then
-        DisplayWarnCommitToLog 'no configuration file found: using default'
-        cp "$QPKG_INI_DEFAULT_PATHFILE" "$QPKG_INI_PATHFILE"
-    fi
+    EnsureConfigFileExists
+    IsDaemonActive || return 1
 
     return 0
 
@@ -164,7 +174,7 @@ StopQPKG()
     IsError && return
 
     if IsNotRestore && IsNotClean && IsNotReset; then
-        RecordOperationToLog
+        CommitOperationToLog
     fi
 
     IsNotDaemonActive && return
@@ -174,6 +184,7 @@ StopQPKG()
     fi
 
     [[ -L $APPARENT_PATH ]] && rm "$APPARENT_PATH"
+    DisplayCommitToLog '* stopping package: OK'
 
     IsNotDaemonActive || return 1
 
@@ -192,7 +203,7 @@ StatusQPKG()
 BackupConfig()
     {
 
-    RecordOperationToLog
+    CommitOperationToLog
     ExecuteAndLog 'updating configuration backup' "$TAR_CMD --create --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_REPO_PATH autoProcessMedia.cfg" log:everything
 
     }
@@ -200,7 +211,7 @@ BackupConfig()
 RestoreConfig()
     {
 
-    RecordOperationToLog
+    CommitOperationToLog
 
     if [[ ! -f $BACKUP_PATHFILE ]]; then
         DisplayErrCommitAllLogs 'unable to restore configuration: no backup file was found!'
@@ -217,7 +228,7 @@ RestoreConfig()
 ResetConfig()
     {
 
-    RecordOperationToLog
+    CommitOperationToLog
 
     StopQPKG
     ExecuteAndLog 'resetting configuration' "rm $QPKG_INI_PATHFILE" log:everything
@@ -270,33 +281,41 @@ PullGitRepo()
 
     [[ -z $1 || -z $2 || -z $3 || -z $4 || -z $5 ]] && return 1
 
-    local -r GIT_CMD=/opt/bin/git
+    local -r QPKG_GIT_PATH="$5/$1"
+    local -r GIT_HTTP_URL="$2"
+    local -r GIT_HTTPS_URL=${GIT_HTTP_URL/http/git}
+    local installed_branch=''
+    [[ $4 = shallow ]] && local -r DEPTH=' --depth 1'
+    [[ $4 = single-branch ]] && local -r DEPTH=' --single-branch'
 
-    if IsNotSysFilePresent "$GIT_CMD"; then
-        SetError
-        return 1
+    if [[ -d $QPKG_GIT_PATH/.git ]]; then
+        installed_branch=$($GIT_CMD -C "$QPKG_GIT_PATH" branch | $GREP_CMD '^\*' | $SED_CMD 's|^\* ||')
+
+        if [[ $installed_branch != "$3" ]]; then
+            DisplayDoneCommitToLog "installed git branch: $installed_branch, new git branch: $3"
+            ExecuteAndLog 'new git branch was specified so cleaning local repository' "rm -r $QPKG_GIT_PATH"
+        fi
     fi
 
-    local QPKG_GIT_PATH="$5/$1"
-    local GIT_HTTP_URL="$2"
-    local GIT_HTTPS_URL=${GIT_HTTP_URL/http/git}
-    [[ $4 = shallow ]] && local depth=' --depth 1'
-    [[ $4 = single-branch ]] && local depth=' --single-branch'
-
-    if [[ ! -d ${QPKG_GIT_PATH}/.git ]]; then
-        ExecuteAndLog "cloning $(FormatAsPackageName "$1") from remote repository" "$GIT_CMD clone --branch $3 $depth -c advice.detachedHead=false $GIT_HTTPS_URL $QPKG_GIT_PATH || $GIT_CMD clone --branch $3 $depth -c advice.detachedHead=false $GIT_HTTP_URL $QPKG_GIT_PATH"
+    if [[ ! -d $QPKG_GIT_PATH/.git ]]; then
+        ExecuteAndLog "cloning $(FormatAsPackageName "$1") from remote repository" "$GIT_CMD clone --branch $3 $DEPTH -c advice.detachedHead=false $GIT_HTTPS_URL $QPKG_GIT_PATH || $GIT_CMD clone --branch $3 $DEPTH -c advice.detachedHead=false $GIT_HTTP_URL $QPKG_GIT_PATH"
     else
         ExecuteAndLog "updating $(FormatAsPackageName "$1") from remote repository" "$GIT_CMD -C $QPKG_GIT_PATH pull"
     fi
+
+    installed_branch=$($GIT_CMD -C "$QPKG_GIT_PATH" branch | $GREP_CMD '^\*' | $SED_CMD 's|^\* ||')
+    DisplayDoneCommitToLog "installed git branch: $installed_branch"
+
+    return 0
 
     }
 
 CleanLocalClone()
     {
 
-    # for the rare occasions the local repo becomes corrupt, it needs to be deleted and cloned again from source.
+    # for occasions where the local repo needs to be deleted and cloned again from source.
 
-    RecordOperationToLog
+    CommitOperationToLog
 
     if [[ -z $QPKG_PATH || -z $QPKG_NAME || -z $SOURCE_GIT_URL ]]; then
         SetError
@@ -313,7 +332,11 @@ ViewLog()
     {
 
     if [[ -e $SERVICE_LOG_PATHFILE ]]; then
-        LESSSECURE=1 $GNU_LESS_CMD +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$SERVICE_LOG_PATHFILE"
+        if [[ -e $GNU_LESS_CMD ]]; then
+            LESSSECURE=1 $GNU_LESS_CMD +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$SERVICE_LOG_PATHFILE"
+        else
+            cat --number "$SERVICE_LOG_PATHFILE"
+        fi
     else
         Display "service log not found: $(FormatAsFileName "$SERVICE_LOG_PATHFILE")"
         SetError
@@ -730,7 +753,7 @@ FormatAsFileName()
 DisplayAsHelp()
     {
 
-    printf "\t--%-12s  %s\n" "$1" "$2"
+    printf "    --%-12s  %s\n" "$1" "$2"
 
     }
 
@@ -748,7 +771,7 @@ DisplayWait()
 
     }
 
-RecordOperationToLog()
+CommitOperationToLog()
     {
 
     CommitLog "$(SessionSeparator "'$service_operation' requested")"
@@ -822,24 +845,81 @@ SessionSeparator()
 
     }
 
-WaitForEntware()
+ColourTextBrightWhite()
     {
 
-    local -r MAX_WAIT_SECONDS_ENTWARE=300
+    echo -en '\033[1;97m'"$(ColourReset "$1")"
 
-    if [[ ! -e /opt/Entware.sh && ! -e /opt/Entware-3x.sh && ! -e /opt/Entware-ng.sh ]]; then
+    }
+
+ColourReset()
+    {
+
+    echo -en "$1"'\033[0m'
+
+    }
+
+WaitForPID()
+    {
+
+    local -r MAX_SECONDS=5
+
+    if [[ ! -e $DAEMON_PID_PATHFILE ]]; then
+        DisplayWaitCommitToLog "* waiting for $(FormatAsFileName "$DAEMON_PID_PATHFILE") to appear:"
+        DisplayWait "(no-more than $MAX_SECONDS seconds):"
+
         (
-            for ((count=1; count<=MAX_WAIT_SECONDS_ENTWARE; count++)); do
+            for ((count=1; count<=MAX_SECONDS; count++)); do
                 sleep 1
-                [[ -e /opt/Entware.sh || -e /opt/Entware-3x.sh || -e /opt/Entware-ng.sh ]] && { CommitLog "waited for Entware for $count seconds"; true; exit ;}
+                DisplayWait "$count,"
+                if [[ -e $DAEMON_PID_PATHFILE ]]; then
+                    Display 'OK'
+                    CommitLog "visible in $count second$([[ $count -ne 1 ]] && echo 's')"
+                    [[ $count -gt 1 ]] && sleep 1       # wait one more second to allow for file creation
+                    true
+                    exit    # only this sub-shell
+                fi
             done
             false
         )
 
         if [[ $? -ne 0 ]]; then
-            DisplayErrCommitAllLogs "Entware not found! (exceeded timeout: $MAX_WAIT_SECONDS_ENTWARE seconds)"
+            DisplayCommitToLog 'failed!'
+            DisplayErrCommitAllLogs "$(FormatAsFileName "$DAEMON_PID_PATHFILE") not found! (exceeded timeout: $MAX_SECONDS seconds)"
+            return 1
+        fi
+    fi
+
+    }
+
+WaitForGit()
+    {
+
+    local -r MAX_SECONDS=300
+
+    if [[ ! -e $GIT_CMD ]]; then
+        DisplayWaitCommitToLog "* waiting for $(FormatAsFileName "$GIT_CMD") to appear:"
+        DisplayWait "(no-more than $MAX_SECONDS seconds):"
+
+        (
+            for ((count=1; count<=MAX_SECONDS; count++)); do
+                sleep 1
+                DisplayWait "$count,"
+                if [[ -e $GIT_CMD ]]; then
+                    Display 'OK'
+                    CommitLog "visible in $count second$([[ $count -ne 1 ]] && echo 's')"
+                    [[ $count -gt 1 ]] && sleep 1       # wait one more second to allow for file creation
+                    true
+                    exit    # only this sub-shell
+                fi
+            done
             false
-            exit
+        )
+
+        if [[ $? -ne 0 ]]; then
+            DisplayCommitToLog 'failed!'
+            DisplayErrCommitAllLogs "$(FormatAsFileName "$GIT_CMD") not found! (exceeded timeout: $MAX_SECONDS seconds)"
+            return 1
         else
             # if here, then testfile has appeared, so reload environment
             . /etc/profile &>/dev/null
