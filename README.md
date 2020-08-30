@@ -157,7 +157,7 @@ Example: to restore SABnzbd:
 ```
 This will 'stop' the QPKG, restore from the backup file (if it exists), then 'start' the QPKG again.
 
-* The information contained therein was constructed from the efforts of many community members, both here and on the [SABnzbd forum](https://forums.sabnzbd.org/). Thank you to everyone who has contributed.
+* The information contained therein was constructed from the efforts of many community members on both the [QNAP](https://forum.qnap.com/viewtopic.php?f=320&t=132373) and [SABnzbd](https://forums.sabnzbd.org/) community forums. Thank you to everyone who has contributed.
 
 * Each of these packages continues the idea of 'self-update-on-launch' that was used in Clinton Hall's wrapper scripts. These scripts are my own version and require a few packages to be installed via Entware (this is what **sherpa** does). Updating an app is easy - just restart the app via its init script. Each app is updated from GitHub and from that application's current 'master' branch.
 
