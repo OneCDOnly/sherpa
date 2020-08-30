@@ -40,7 +40,7 @@ Init()
 
     IsQNAP || return 1
 
-    readonly MAIN_SCRIPT_VERSION=200830g
+    readonly MAIN_SCRIPT_VERSION=200830h
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -1656,7 +1656,7 @@ RestartQPKGService()
 
     if [[ -z $1 ]]; then
         DebugError 'QPKG name unspecified'
-        code_pointer=6
+        code_pointer=4
         return 1
     fi
 
@@ -2007,7 +2007,7 @@ FindAllIPKGDependencies()
     [[ -z $1 ]] && return 1
 
     if IsNotSysFileExist $OPKG_CMD || IsNotSysFileExist $GNU_GREP_CMD; then
-        code_pointer=7
+        code_pointer=5
         return 1
     fi
 
