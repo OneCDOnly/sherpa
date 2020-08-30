@@ -702,21 +702,20 @@ ShowHelp()
 
     local package=''
 
-    echo -e "\n* Each application shown below may be installed, re-installed or upgraded by running:"
+    echo -e "\nusage: ./$LAUNCHER_SCRIPT_NAME [PACKAGE] [OPTION]"
+
+    echo -e "\n* [PACKAGE] may be specified as any ONE of the following:\n"
     for package in "${QPKGS_user_installable[@]}"; do
-        echo -e "\t./$LAUNCHER_SCRIPT_NAME $package"
+        DisplayAsHelpPackageOnlyExample "$package"
     done
-    echo -e "\n* Display recognised package abbreviations:"
-    echo -e "\t./$LAUNCHER_SCRIPT_NAME --abs"
+    echo -e "\n* [OPTION] usage can be seen below:"
+    DisplayAsHelpOptionExample 'to install, reinstall or upgrade SABnzbd' 'SABnzbd'
 
-    echo -e "\n* Upgrade all sherpa applications (only upgrades the internal applications, not the QPKG):"
-    echo -e "\t./$LAUNCHER_SCRIPT_NAME --upgrade-all-apps"
+    DisplayAsHelpOptionExample 'package abbreviations can also be used. To see these' '--abs'
 
-    echo -e "\n* Display some helpful troubleshooting options:"
-    echo -e "\t./$LAUNCHER_SCRIPT_NAME --problem"
+    DisplayAsHelpOptionExample 'display some more options for troubleshooting' '--problem'
 
-    echo -e "\n* Display the sherpa version:"
-    echo -e "\t./$LAUNCHER_SCRIPT_NAME --version"
+    DisplayAsHelpOptionExample 'display the sherpa version' '--version'
 
     return 0
 
@@ -725,22 +724,20 @@ ShowHelp()
 ShowProblemHelp()
     {
 
-    echo -e "\n* Install a package and show debugging information:"
-    echo -e "\t./$LAUNCHER_SCRIPT_NAME <packagename> --debug"
+    echo -e "\n* [OPTION] usage can be seen below:"
+    DisplayAsHelpOptionExample 'install a package and show debugging information' '[PACKAGE] --debug'
 
-    echo -e "\n* Ensure all sherpa application dependencies are installed:"
-    echo -e "\t./$LAUNCHER_SCRIPT_NAME --check"
+    DisplayAsHelpOptionExample 'ensure all sherpa application dependencies are installed' '--check'
 
-    echo -e "\n* Don't check free-space on target filesystem when installing $(FormatAsPackageName Entware) packages:"
-    echo -e "\t./$LAUNCHER_SCRIPT_NAME --ignore-space"
+    DisplayAsHelpOptionExample "don't check free-space on target filesystem when installing $(FormatAsPackageName Entware) packages" '--ignore-space'
+
+    DisplayAsHelpOptionExample 'upgrade all sherpa applications (only upgrades the internal applications, not the QPKG)' '--upgrade-all-apps'
+
+    DisplayAsHelpOptionExample 'view the sherpa log' '--log'
+
+    DisplayAsHelpOptionExample "upload the sherpa log to the $(FormatAsURL 'termbin.com') public pastebin" '--paste'
 
     echo -e "\n$(ColourTextBrightOrange '* If you need help, please include a copy of your sherpa log for analysis!')"
-
-    echo -e "\n* View the sherpa log:"
-    echo -e "\t./$LAUNCHER_SCRIPT_NAME --log"
-
-    echo -e "\n* Upload the sherpa log to the $(FormatAsURL 'termbin.com') public pastebin:"
-    echo -e "\t./$LAUNCHER_SCRIPT_NAME --paste"
 
     return 0
 
@@ -753,7 +750,7 @@ ShowPackageAbbreviations()
 
     local package_index=0
 
-    echo -e "\n* sherpa recognises these package names and abbreviations:"
+    echo -e "\n* $(ColourTextBrightWhite sherpa) recognises these package names and abbreviations:"
 
     for package_index in "${!SHERPA_QPKG_NAME[@]}"; do
         if [[ -n ${SHERPA_QPKG_ABBRVS[$package_index]} ]]; then
@@ -765,6 +762,7 @@ ShowPackageAbbreviations()
         fi
     done
 
+    DisplayAsHelpOptionExample 'example: to install, reinstall or upgrade SABnzbd' 'sab'
 
     return 0
 
@@ -2350,6 +2348,26 @@ IsIPKGInstalled()
 
 # all functions below here do-not generate global or logged errors
 
+DisplayAsHelpOptionExample()
+    {
+
+    # $1 = description
+    # $2 = example syntax
+
+    printf "\n  * %s:\n       ./$LAUNCHER_SCRIPT_NAME %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$2"
+
+    }
+
+DisplayAsHelpPackageOnlyExample()
+    {
+
+    # $1 = description
+    # $2 = example syntax
+
+    printf "    %s\n" "$1"
+
+    }
+
 EnableQPKG()
     {
 
@@ -3543,8 +3561,7 @@ ShowAsWarning()
 ShowAsAbort()
     {
 
-    local buffer="$1"
-    local capitalised="$(tr "[a-z]" "[A-Z]" <<< "${buffer:0:1}")${buffer:1}"      # use any available 'tr'
+    local capitalised="$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}"      # use any available 'tr'
 
     SetError
     WriteToDisplay_NewLine "$(ColourTextBrightRed fail)" "$capitalised: aborting ..."
@@ -3555,8 +3572,7 @@ ShowAsAbort()
 ShowAsError()
     {
 
-    local buffer="$1"
-    local capitalised="$(tr "[a-z]" "[A-Z]" <<< "${buffer:0:1}")${buffer:1}"      # use any available 'tr'
+    local capitalised="$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}"      # use any available 'tr'
 
     SetError
     WriteToDisplay_NewLine "$(ColourTextBrightRed fail)" "$capitalised."
