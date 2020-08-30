@@ -40,7 +40,7 @@ Init()
 
     IsQNAP || return 1
 
-    readonly MAIN_SCRIPT_VERSION=200830h
+    readonly MAIN_SCRIPT_VERSION=200830i
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -388,19 +388,14 @@ LogRuntimeParameters()
     DebugScript 'version' "$MAIN_SCRIPT_VERSION"
     DebugScript 'PID' "$$"
     DebugInfoThinSeparator
-
     DebugInfo 'Markers: (**) detected, (II) information, (WW) warning, (LL) log file,'
     DebugInfo ' (EE) error, (==) processing, (--) done, (>>) f entry, (<<) f exit,'
     DebugInfo ' (vv) variable name & value, ($1) positional argument value.'
     DebugInfoThinSeparator
     DebugHardware 'model' "$(get_display_name)"
     DebugHardware 'RAM' "$INSTALLED_RAM_KB kB"
-    if IsNotLogViewOnly; then
-        if IsQPKGToBeInstalled SABnzbd || IsQPKGInstalled SABnzbd || IsQPKGInstalled SABnzbdplus; then
-            if [[ $INSTALLED_RAM_KB -le $MIN_RAM_KB ]]; then
-                DebugHardware 'RAM' "less-than or equal-to $MIN_RAM_KB kB"
-            fi
-        fi
+    if IsQPKGToBeInstalled SABnzbd || IsQPKGInstalled SABnzbd || IsQPKGInstalled SABnzbdplus; then
+        [[ $INSTALLED_RAM_KB -le $MIN_RAM_KB ]] && DebugHardwareWarning 'RAM' "less-than or equal-to $MIN_RAM_KB kB"
     fi
     DebugFirmware 'firmware version' "$NAS_FIRMWARE"
     DebugFirmware 'firmware build' "$($GETCFG_CMD System 'Build Number' -f $ULINUX_PATHFILE)"
@@ -427,12 +422,12 @@ LogRuntimeParameters()
     DebugIPKG 'download path' "$IPKG_DL_PATH"
     DebugQPKG 'arch' "$NAS_QPKG_ARCH"
 
-    if IsNotError && [[ $EUID -ne 0 || $USER != admin ]]; then
+    if [[ $EUID -ne 0 || $USER != admin ]]; then
         ShowAsError "this script must be run as the 'admin' user. Please login via SSH as 'admin' and try again"
         return 1
     fi
 
-    if IsNotError && [[ ${#QPKGS_to_install[@]} -eq 0 && ${#QPKGS_to_uninstall[@]} -eq 0 && ${#QPKGS_to_update[@]} -eq 0 && ${#QPKGS_to_backup[@]} -eq 0 && ${#QPKGS_to_restore[@]} -eq 0 ]] && IsNotSatisfyDependenciesOnly && [[ $upgrade_all_apps = false ]]; then
+    if [[ ${#QPKGS_to_install[@]} -eq 0 && ${#QPKGS_to_uninstall[@]} -eq 0 && ${#QPKGS_to_update[@]} -eq 0 && ${#QPKGS_to_backup[@]} -eq 0 && ${#QPKGS_to_restore[@]} -eq 0 ]] && IsNotSatisfyDependenciesOnly && [[ $upgrade_all_apps = false ]]; then
         ShowAsError 'no valid QPKGs or actions were specified'
         SetShowAbbreviations
         return 1
@@ -444,93 +439,67 @@ LogRuntimeParameters()
         return 1
     fi
 
-    if IsNotError; then
-        $MKDIR_CMD -p "$WORK_PATH" 2> /dev/null
-        result=$?
+    $MKDIR_CMD -p "$WORK_PATH" 2> /dev/null; result=$?
 
-        if [[ $result -ne 0 ]]; then
-            ShowAsError "unable to create script working directory $(FormatAsFileName "$WORK_PATH") $(FormatAsExitcode $result)"
-            SetSuggestIssue
-            return 1
-        else
-            cd "$WORK_PATH" || return 1
-        fi
+    if [[ $result -ne 0 ]]; then
+        ShowAsError "unable to create script working directory $(FormatAsFileName "$WORK_PATH") $(FormatAsExitcode $result)"
+        SetSuggestIssue
+        return 1
     fi
 
-    if IsNotError; then
-        $MKDIR_CMD -p "$QPKG_DL_PATH" 2> /dev/null
-        result=$?
+    $MKDIR_CMD -p "$QPKG_DL_PATH" 2> /dev/null; result=$?
 
-        if [[ $result -ne 0 ]]; then
-            ShowAsError "unable to create QPKG download directory $(FormatAsFileName "$QPKG_DL_PATH") $(FormatAsExitcode $result)"
-            SetSuggestIssue
-            return 1
-        fi
+    if [[ $result -ne 0 ]]; then
+        ShowAsError "unable to create QPKG download directory $(FormatAsFileName "$QPKG_DL_PATH") $(FormatAsExitcode $result)"
+        SetSuggestIssue
+        return 1
     fi
 
-    if IsNotError; then
-        [[ -d $IPKG_DL_PATH ]] && rm -rf "$IPKG_DL_PATH"
-        $MKDIR_CMD -p "$IPKG_DL_PATH" 2> /dev/null
-        result=$?
+    $MKDIR_CMD -p "$IPKG_DL_PATH" 2> /dev/null; result=$?
 
-        if [[ $result -ne 0 ]]; then
-            ShowAsError "unable to create IPKG download directory $(FormatAsFileName "$IPKG_DL_PATH") $(FormatAsExitcode $result)"
-            SetSuggestIssue
-            return 1
-        fi
+    if [[ $result -ne 0 ]]; then
+        ShowAsError "unable to create IPKG download directory $(FormatAsFileName "$IPKG_DL_PATH") $(FormatAsExitcode $result)"
+        SetSuggestIssue
+        return 1
     fi
 
-    if IsNotError; then
-        $MKDIR_CMD -p "$IPKG_CACHE_PATH" 2> /dev/null
-        result=$?
+    [[ -d $IPKG_CACHE_PATH ]] && rm -rf "$IPKG_CACHE_PATH"
+    $MKDIR_CMD -p "$IPKG_CACHE_PATH" 2> /dev/null; result=$?
 
-        if [[ $result -ne 0 ]]; then
-            ShowAsError "unable to create IPKG cache directory $(FormatAsFileName "$IPKG_CACHE_PATH") $(FormatAsExitcode $result)"
-            SetSuggestIssue
-            return 1
-        fi
+    if [[ $result -ne 0 ]]; then
+        ShowAsError "unable to create IPKG cache directory $(FormatAsFileName "$IPKG_CACHE_PATH") $(FormatAsExitcode $result)"
+        SetSuggestIssue
+        return 1
     fi
 
-    if IsNotError; then
-        $MKDIR_CMD -p "$PIP_CACHE_PATH" 2> /dev/null
-        result=$?
+    [[ -d $PIP_CACHE_PATH ]] && rm -rf "$PIP_CACHE_PATH"
+    $MKDIR_CMD -p "$PIP_CACHE_PATH" 2> /dev/null; result=$?
 
-        if [[ $result -ne 0 ]]; then
-            ShowAsError "unable to create PIP cache directory $(FormatAsFileName "$PIP_CACHE_PATH") $(FormatAsExitcode $result)"
-            SetSuggestIssue
+    if [[ $result -ne 0 ]]; then
+        ShowAsError "unable to create PIP cache directory $(FormatAsFileName "$PIP_CACHE_PATH") $(FormatAsExitcode $result)"
+        SetSuggestIssue
+        return 1
+    fi
+
+    for conflicting_qpkg in "${SHERPA_COMMON_CONFLICTS[@]}"; do
+        if IsQPKGEnabled "$conflicting_qpkg"; then
+            ShowAsError "'$conflicting_qpkg' is enabled. This is an unsupported configuration"
             return 1
         fi
-    fi
+    done
 
-    if IsNotError; then
-        for conflicting_qpkg in "${SHERPA_COMMON_CONFLICTS[@]}"; do
-            if IsQPKGEnabled "$conflicting_qpkg"; then
-                ShowAsError "'$conflicting_qpkg' is enabled. This is an unsupported configuration"
-                return 1
-            fi
-        done
-    fi
+    if IsQPKGInstalled Entware; then
+        [[ -e /opt/etc/passwd ]] && { [[ -L /opt/etc/passwd ]] && ENTWARE_VER=std || ENTWARE_VER=alt ;} || ENTWARE_VER=none
+        DebugQPKG 'Entware installer' $ENTWARE_VER
 
-    if IsNotError; then
-        if IsQPKGInstalled Entware; then
-            [[ -e /opt/etc/passwd ]] && { [[ -L /opt/etc/passwd ]] && ENTWARE_VER=std || ENTWARE_VER=alt ;} || ENTWARE_VER=none
-            DebugQPKG 'Entware installer' $ENTWARE_VER
-
-            if [[ $ENTWARE_VER = none ]]; then
-                ShowAsError "$(FormatAsPackageName Entware) appears to be installed but is not visible"
-                return 1
-            fi
-        fi
-    fi
-
-    if IsNotError; then
-        if ! ($CURL_CMD $curl_insecure_arg --silent --fail $REMOTE_REPO_URL/LICENSE -o LICENSE); then
-            ShowAsError 'no Internet access'
+        if [[ $ENTWARE_VER = none ]]; then
+            ShowAsError "$(FormatAsPackageName Entware) appears to be installed but is not visible"
             return 1
         fi
     fi
 
     DebugInfoThinSeparator
+
     return 0
 
     }
@@ -743,6 +712,21 @@ ShowProblemHelp()
 
     }
 
+ShowIssueHelp()
+    {
+
+    echo -e "\n* Please consider creating a new issue for this on GitHub:\n\thttps://github.com/OneCDOnly/sherpa/issues"
+
+    echo -e "\n* Alternatively, post on the QNAP NAS Community Forum:\n\thttps://forum.qnap.com/viewtopic.php?f=320&t=132373"
+
+    DisplayAsHelpOptionExample 'view the sherpa log' '--log'
+
+    DisplayAsHelpOptionExample "upload the sherpa log to the $(FormatAsURL 'termbin.com') public pastebin" '--paste'
+
+    echo -e "\n$(ColourTextBrightOrange '* If you need help, please include a copy of your sherpa log for analysis!')"
+
+    }
+
 ShowPackageAbbreviations()
     {
 
@@ -848,23 +832,6 @@ ShowInstallerOutcome()
     fi
 
     return 0
-
-    }
-
-ShowSuggestIssue()
-    {
-
-    echo -e "\n* Please consider creating a new issue for this on GitHub:\n\thttps://github.com/OneCDOnly/sherpa/issues"
-
-    echo -e "\n* Alternatively, post on the QNAP NAS Community Forum:\n\thttps://forum.qnap.com/viewtopic.php?f=320&t=132373"
-
-    echo -e "\n$(ColourTextBrightOrange '* If you need help, please remember to include a copy of your sherpa log for analysis!')"
-
-    echo -e "\n- View the sherpa log:"
-    echo -e "\t./$LOADER_SCRIPT_NAME --log"
-
-    echo -e "\n- Upload the sherpa log to a public pastebin (https://termbin.com):"
-    echo -e "\t./$LOADER_SCRIPT_NAME --paste"
 
     }
 
@@ -1848,8 +1815,6 @@ CTRL_C_Captured()
 Cleanup()
     {
 
-    cd "$SHARE_PUBLIC_PATH" || return 1
-
     [[ -d $WORK_PATH ]] && IsNotError && IsNotVisibleDebugging && IsNotDevMode && rm -rf "$WORK_PATH"
 
     return 0
@@ -1863,8 +1828,8 @@ ShowResult()
     local emoticon=''
 
     if IsVersionOnly; then
-        echo "\$LOADER_SCRIPT_VERSION: $LOADER_SCRIPT_VERSION"
-        echo "\$MAIN_SCRIPT_VERSION: $MAIN_SCRIPT_VERSION"
+        echo "loader version: $LOADER_SCRIPT_VERSION"
+        echo "main version: $MAIN_SCRIPT_VERSION"
     elif IsLogViewOnly; then
         ShowLogViewer
     elif IsShowHelp; then
@@ -1877,7 +1842,7 @@ ShowResult()
 
     IsLogPasteOnly && PasteLogOnline
     IsShowInstallerOutcome && ShowInstallerOutcome
-    IsSuggestIssue && ShowSuggestIssue
+    IsSuggestIssue && ShowIssueHelp
 
     DebugInfoThinSeparator
     DebugScript 'finished' "$($DATE_CMD)"
@@ -2081,7 +2046,7 @@ FindAllIPKGDependencies()
         DebugVar IPKG_download_size
         ShowAsDone "$IPKG_download_count IPKG$(DisplayPlural "$IPKG_download_count") ($(FormatAsISO "$IPKG_download_size")) to be downloaded"
     else
-        ShowAsDone 'no IPKGs are required. Woohoo!'
+        ShowAsDone 'no IPKGs are required ... woohoo!'
     fi
 
     CloseIPKGArchive
@@ -3362,6 +3327,13 @@ DebugHardware()
 
     }
 
+DebugHardwareWarning()
+    {
+
+    DebugDetectedWarning 'HARDWARE' "$1" "$2"
+
+    }
+
 DebugFirmware()
     {
 
@@ -3415,6 +3387,17 @@ DebugDone()
     {
 
     DebugThis "(--) $1"
+
+    }
+
+DebugDetectedWarning()
+    {
+
+    if [[ -z $3 ]]; then
+        DebugThis "(WW) $(printf "%9s: %19s\n" "$1" "$2")"
+    else
+        DebugThis "(WW) $(printf "%9s: %19s: %-s\n" "$1" "$2" "$3")"
+    fi
 
     }
 
@@ -3572,7 +3555,7 @@ ShowAsError()
     local capitalised="$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}"      # use any available 'tr'
 
     SetError
-    WriteToDisplay_NewLine "$(ColourTextBrightRed fail)" "$capitalised."
+    WriteToDisplay_NewLine "$(ColourTextBrightRed fail)" "$capitalised"
     WriteToLog fail "$capitalised."
 
     }
@@ -3751,7 +3734,7 @@ Cleanup
 ShowResult
 RemoveLock
 
-if (IsShowHelp || IsShowProblemHelp || IsShowAbbreviations || IsLogViewOnly ) && IsNotVisibleDebugging; then
+if (IsShowHelp || IsShowProblemHelp || IsSuggestIssue || IsShowAbbreviations || IsLogViewOnly ) && IsNotVisibleDebugging; then
     echo
 fi
 
