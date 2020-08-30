@@ -402,14 +402,41 @@ LogRuntimeParameters()
     DebugFirmware 'kernel' "$($UNAME_CMD -mr)"
     DebugUserspace 'OS uptime' "$($UPTIME_CMD | $SED_CMD 's|.*up.||;s|,.*load.*||;s|^\ *||')"
     DebugUserspace 'system load' "$($UPTIME_CMD | $SED_CMD 's|.*load average: ||' | $AWK_CMD -F', ' '{print "1 min="$1 ", 5 min="$2 ", 15 min="$3}')"
-    DebugUserspace '$USER' "$USER"
-    DebugUserspace '$EUID' "$EUID"
+
+    if [[ $USER = admin ]]; then
+        DebugUserspace '$USER' "$USER"
+    else
+        DebugUserspaceWarning '$USER' "$USER"
+    fi
+
+    if [[ $EUID -eq 0 ]]; then
+        DebugUserspace '$EUID' "$EUID"
+    else
+        DebugUserspaceWarning '$EUID' "$EUID"
+    fi
+
     DebugUserspace 'default volume' "$($GETCFG_CMD SHARE_DEF defVolMP -f $DEFAULT_SHARES_PATHFILE)"
     DebugUserspace '$PATH' "${PATH:0:43}"
-    DebugUserspace '/opt' "$([[ -L '/opt' ]] && $READLINK_CMD '/opt' || echo "<not present>")"
-    DebugUserspace 'Python 3 path' "$(location=$(which python3 2>&1) && echo "$location" || echo '<not present>')"
-    DebugUserspace 'Python 3 version' "$(version=$(python3 -V 2>&1) && echo "$version" || echo '<unknown>')"
-    DebugUserspace "$SHARE_DOWNLOAD_PATH" "$([[ -L $SHARE_DOWNLOAD_PATH ]] && $READLINK_CMD "$SHARE_DOWNLOAD_PATH" || echo "<not present>")"
+
+    if [[ -L '/opt' ]]; then
+        DebugUserspace '/opt' "$($READLINK_CMD '/opt' || echo "<not present>")"
+    else
+        DebugUserspaceWarning '/opt' '<not present>'
+    fi
+
+    if location=$(which python3 2>&1); then
+        DebugUserspace 'Python 3 path' "$location"
+        DebugUserspace 'Python 3 version' "$(version=$(python3 -V 2>&1) && echo "$version" || echo '<unknown>')"
+    else
+        DebugUserspaceWarning 'Python 3 path' '<not present>'
+    fi
+
+    if [[ -L $SHARE_DOWNLOAD_PATH ]]; then
+        DebugUserspace "$SHARE_DOWNLOAD_PATH" "$($READLINK_CMD "$SHARE_DOWNLOAD_PATH")"
+    else
+        DebugUserspaceWarning "$SHARE_DOWNLOAD_PATH" '<not present>'
+    fi
+
     DebugScript 'unparsed arguments' "$USER_ARGS_RAW"
     DebugScript 'app(s) to install' "${QPKGS_to_install[*]} "
     DebugScript 'app(s) to uninstall' "${QPKGS_to_uninstall[*]} "
@@ -3240,6 +3267,41 @@ FormatAsResult()
 
     }
 
+FormatAsScript()
+    {
+
+    echo 'SCRIPT'
+
+    }
+
+FormatAsStage()
+    {
+
+    echo 'STAGE'
+
+    }
+
+FormatAsHardware()
+    {
+
+    echo 'HARDWARE'
+
+    }
+
+FormatAsFirmware()
+    {
+
+    echo 'FIRMWARE'
+
+    }
+
+FormatAsUserspace()
+    {
+
+    echo 'USERSPACE'
+
+    }
+
 FormatAsResultAndStdout()
     {
 
@@ -3313,42 +3375,49 @@ DebugTimerStageEnd()
 DebugScript()
     {
 
-    DebugDetected 'SCRIPT' "$1" "$2"
+    DebugDetected $(FormatAsScript) "$1" "$2"
 
     }
 
 DebugStage()
     {
 
-    DebugDetected 'STAGE' "$1" "$2"
+    DebugDetected $(FormatAsStage) "$1" "$2"
 
     }
 
 DebugHardware()
     {
 
-    DebugDetected 'HARDWARE' "$1" "$2"
+    DebugDetected $(FormatAsHardware) "$1" "$2"
 
     }
 
 DebugHardwareWarning()
     {
 
-    DebugDetectedWarning 'HARDWARE' "$1" "$2"
+    DebugDetectedWarning $(FormatAsHardware) "$1" "$2"
 
     }
 
 DebugFirmware()
     {
 
-    DebugDetected 'FIRMWARE' "$1" "$2"
+    DebugDetected $(FormatAsFirmware) "$1" "$2"
 
     }
 
 DebugUserspace()
     {
 
-    DebugDetected 'USERSPACE' "$1" "$2"
+    DebugDetected $(FormatAsUserspace) "$1" "$2"
+
+    }
+
+DebugUserspaceWarning()
+    {
+
+    DebugDetectedWarning $(FormatAsUserspace) "$1" "$2"
 
     }
 
