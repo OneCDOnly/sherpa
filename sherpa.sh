@@ -2,7 +2,7 @@
 #
 # sherpa.sh
 #
-# This is the launcher script for the sherpa mini-package-manager.
+# This is the loader script for the sherpa mini-package-manager.
 #
 # Copyright (C) 2017-2020 OneCD [one.cd.only@gmail.com]
 #
@@ -25,8 +25,8 @@ Init()
 
     IsQNAP || return 1
 
-    local -r LAUNCHER_SCRIPT_FILE=sherpa.sh
-    local -r LAUNCHER_SCRIPT_VERSION=200830
+    local -r LOADER_SCRIPT_FILE=sherpa.sh
+    export LOADER_SCRIPT_VERSION=200830
 
     local -r NAS_FIRMWARE=$(/sbin/getcfg System Version -f /etc/config/uLinux.conf)
     [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg='--insecure' || curl_insecure_arg=''

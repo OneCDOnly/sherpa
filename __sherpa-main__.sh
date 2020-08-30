@@ -90,7 +90,7 @@ Init()
     pip3_cmd=/opt/bin/pip3
 
     # paths and files
-    readonly LAUNCHER_SCRIPT_NAME=sherpa.sh
+    readonly LOADER_SCRIPT_NAME=sherpa.sh
     readonly APP_CENTER_CONFIG_PATHFILE=/etc/config/qpkg.conf
     readonly INSTALL_LOG_FILE=install.log
     readonly DOWNLOAD_LOG_FILE=download.log
@@ -104,7 +104,7 @@ Init()
     readonly EXTERNAL_PACKAGE_ARCHIVE_PATHFILE=/opt/var/opkg-lists/entware
     readonly REMOTE_REPO_URL=https://raw.githubusercontent.com/OneCDOnly/sherpa/master
 
-    local -r DEBUG_LOG_FILE=${LAUNCHER_SCRIPT_NAME%.*}.debug.log
+    local -r DEBUG_LOG_FILE=${LOADER_SCRIPT_NAME%.*}.debug.log
 
     IsOnlyInstance || return 1
 
@@ -331,7 +331,7 @@ Init()
 
     readonly PREV_QPKG_CONFIG_DIRS=(SAB_CONFIG CONFIG Config config)                 # last element is used as target dirname
     readonly PREV_QPKG_CONFIG_FILES=(sabnzbd.ini settings.ini config.cfg config.ini) # last element is used as target filename
-    readonly WORK_PATH=$SHARE_PUBLIC_PATH/${LAUNCHER_SCRIPT_NAME%.*}.tmp
+    readonly WORK_PATH=$SHARE_PUBLIC_PATH/${LOADER_SCRIPT_NAME%.*}.tmp
     readonly DEBUG_LOG_PATHFILE=$SHARE_PUBLIC_PATH/$DEBUG_LOG_FILE
     readonly QPKG_DL_PATH=$WORK_PATH/qpkg.downloads
     readonly IPKG_DL_PATH=$WORK_PATH/ipkg.downloads
@@ -371,12 +371,12 @@ LogRuntimeParameters()
     ParseArgs
 
     if IsNotVisibleDebugging && IsNotVersionOnly; then
-        echo "$(ColourTextBrightWhite "$LAUNCHER_SCRIPT_NAME") ($MAIN_SCRIPT_VERSION) a mini-package-manager for QNAP NAS"
+        echo "$(ColourTextBrightWhite "$LOADER_SCRIPT_NAME") ($MAIN_SCRIPT_VERSION) a mini-package-manager for QNAP NAS"
         IsNotVisibleDebugging && echo
     fi
 
     if IsNotVersionOnly; then
-        CheckLauncherAge
+        CheckLoaderAge
         ShowNewQPKGVersions
     fi
 
@@ -702,7 +702,7 @@ ShowHelp()
 
     local package=''
 
-    echo -e "\nUsage: ./$LAUNCHER_SCRIPT_NAME [PACKAGE]* [OPTION]**"
+    echo -e "\nUsage: ./$LOADER_SCRIPT_NAME [PACKAGE]* [OPTION]**"
 
     echo -e "\n* [PACKAGE] may be specified as any ONE of the following:\n"
     for package in "${QPKGS_user_installable[@]}"; do
@@ -715,7 +715,7 @@ ShowHelp()
 
     DisplayAsHelpOptionExample 'display some more options for troubleshooting' '--problem'
 
-    DisplayAsHelpOptionExample 'display the sherpa version' '--version'
+    DisplayAsHelpOptionExample 'display the package manager script versions' '--version'
 
     return 0
 
@@ -861,10 +861,10 @@ ShowSuggestIssue()
     echo -e "\n$(ColourTextBrightOrange '* If you need help, please remember to include a copy of your sherpa log for analysis!')"
 
     echo -e "\n- View the sherpa log:"
-    echo -e "\t./$LAUNCHER_SCRIPT_NAME --log"
+    echo -e "\t./$LOADER_SCRIPT_NAME --log"
 
     echo -e "\n- Upload the sherpa log to a public pastebin (https://termbin.com):"
-    echo -e "\t./$LAUNCHER_SCRIPT_NAME --paste"
+    echo -e "\t./$LOADER_SCRIPT_NAME --paste"
 
     }
 
@@ -1863,7 +1863,8 @@ ShowResult()
     local emoticon=''
 
     if IsVersionOnly; then
-        echo "$MAIN_SCRIPT_VERSION"
+        echo "\$LOADER_SCRIPT_VERSION: $LOADER_SCRIPT_VERSION"
+        echo "\$MAIN_SCRIPT_VERSION: $MAIN_SCRIPT_VERSION"
     elif IsLogViewOnly; then
         ShowLogViewer
     elif IsShowHelp; then
@@ -2223,10 +2224,10 @@ IsQNAP()
 IsOnlyInstance()
     {
 
-    readonly RUNTIME_LOCK_PATHFILE=/var/run/$LAUNCHER_SCRIPT_NAME.pid
+    readonly RUNTIME_LOCK_PATHFILE=/var/run/$LOADER_SCRIPT_NAME.pid
 
-    if [[ -e $RUNTIME_LOCK_PATHFILE && -d /proc/$(<$RUNTIME_LOCK_PATHFILE) && -n $LAUNCHER_SCRIPT_NAME && $(</proc/"$(<$RUNTIME_LOCK_PATHFILE)"/cmdline) =~ $LAUNCHER_SCRIPT_NAME ]]; then
-        ShowAsAbort "another instance of $(ColourTextBrightWhite "$LAUNCHER_SCRIPT_NAME") is running"
+    if [[ -e $RUNTIME_LOCK_PATHFILE && -d /proc/$(<$RUNTIME_LOCK_PATHFILE) && -n $LOADER_SCRIPT_NAME && $(</proc/"$(<$RUNTIME_LOCK_PATHFILE)"/cmdline) =~ $LOADER_SCRIPT_NAME ]]; then
+        ShowAsAbort "another instance of $(ColourTextBrightWhite "$LOADER_SCRIPT_NAME") is running"
         return 1
     else
         CreateLock
@@ -2236,14 +2237,14 @@ IsOnlyInstance()
 
     }
 
-CheckLauncherAge()
+CheckLoaderAge()
     {
 
-    # Has the launcher script been downloaded only in the last 5 minutes?
+    # Has the loader script been downloaded only in the last 5 minutes?
 
     [[ -e $GNU_FIND_CMD ]] || return          # can only do this with GNU 'find'. The old BusyBox 'find' in QTS 4.2.6 doesn't support '-cmin'.
 
-    if [[ -e "$LAUNCHER_SCRIPT_NAME" && -z $($GNU_FIND_CMD "$LAUNCHER_SCRIPT_NAME" -cmin +5) ]]; then
+    if [[ -e "$LOADER_SCRIPT_NAME" && -z $($GNU_FIND_CMD "$LOADER_SCRIPT_NAME" -cmin +5) ]]; then
         ShowAsNote "The $(ColourTextBrightWhite 'sherpa.sh') script does not need updating anymore. It now downloads all the latest information from the Internet everytime it's run. ;)"
     fi
 
@@ -2350,7 +2351,7 @@ DisplayAsHelpOptionExample()
     # $1 = description
     # $2 = example syntax
 
-    printf "\n  - %s:\n       ./$LAUNCHER_SCRIPT_NAME %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$2"
+    printf "\n  - %s:\n       ./$LOADER_SCRIPT_NAME %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$2"
 
     }
 
