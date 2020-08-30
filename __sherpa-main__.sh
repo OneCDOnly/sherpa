@@ -2081,7 +2081,7 @@ FindAllIPKGDependencies()
         DebugVar IPKG_download_size
         ShowAsDone "$IPKG_download_count IPKG$(DisplayPlural "$IPKG_download_count") ($(FormatAsISO "$IPKG_download_size")) to be downloaded"
     else
-        ShowAsDone 'no IPKGs are required'
+        ShowAsDone 'no IPKGs are required. Woohoo!'
     fi
 
     CloseIPKGArchive
