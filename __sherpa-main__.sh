@@ -831,22 +831,18 @@ ShowInstallerOutcome()
         [[ $reinstall_flag = true ]] && RE='re' || RE=''
 
         if IsNotError; then
-            IsVisibleDebugging && emoticon=' :DD' || emoticon=''
-            ShowAsDone "$(FormatAsPackageName "$TARGET_APP") has been successfully ${RE}installed!$emoticon"
+            ShowAsDone "$(FormatAsPackageName "$TARGET_APP") has been successfully ${RE}installed!"
         else
-            IsVisibleDebugging && emoticon=' :S ' || emoticon=' '
-            ShowAsError "$(FormatAsPackageName "$TARGET_APP") ${RE}install failed!${emoticon}[$code_pointer]"
+            ShowAsError "$(FormatAsPackageName "$TARGET_APP") ${RE}install failed! [$code_pointer]"
             SetSuggestIssue
         fi
     fi
 
     if IsSatisfyDependenciesOnly; then
         if IsNotError; then
-            IsVisibleDebugging && emoticon=' :DD' || emoticon=''
-            ShowAsDone "all application dependencies are installed!$emoticon"
+            ShowAsDone "all application dependencies are installed!"
         else
-            IsVisibleDebugging && emoticon=' :S ' || emoticon=''
-            ShowAsError "application dependency check failed!${emoticon}[$code_pointer]"
+            ShowAsError "application dependency check failed! [$code_pointer]"
             SetSuggestIssue
         fi
     fi
