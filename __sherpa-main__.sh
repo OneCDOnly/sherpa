@@ -40,7 +40,7 @@ Init()
 
     IsQNAP || return 1
 
-    readonly MAIN_SCRIPT_VERSION=200830f
+    readonly MAIN_SCRIPT_VERSION=200830g
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -372,11 +372,16 @@ LogRuntimeParameters()
 
     if IsNotVisibleDebugging && IsNotVersionOnly; then
         echo "$(ColourTextBrightWhite "$LAUNCHER_SCRIPT_NAME") ($MAIN_SCRIPT_VERSION) a mini-package-manager for QNAP NAS"
+        IsNotVisibleDebugging && echo
+    fi
+
+    if IsNotVersionOnly; then
+        CheckLauncherAge
+        ShowNewQPKGVersions
     fi
 
     IsAbort && return
     SetLogToFile
-    IsNotVisibleDebugging && echo
 
     DebugInfoThickSeparator
     DebugScript 'started' "$($DATE_CMD | $TR_CMD -s ' ')"
@@ -394,7 +399,6 @@ LogRuntimeParameters()
         if IsQPKGToBeInstalled SABnzbd || IsQPKGInstalled SABnzbd || IsQPKGInstalled SABnzbdplus; then
             if [[ $INSTALLED_RAM_KB -le $MIN_RAM_KB ]]; then
                 DebugHardware 'RAM' "less-than or equal-to $MIN_RAM_KB kB"
-#                 IsNotError && ShowAsWarning "QTS with 1GiB RAM or-less may lead to unstable $(FormatAsPackageName SABnzbd) uptimes"
             fi
         fi
     fi
@@ -423,8 +427,6 @@ LogRuntimeParameters()
     DebugIPKG 'download path' "$IPKG_DL_PATH"
     DebugQPKG 'arch' "$NAS_QPKG_ARCH"
 
-    CheckLauncherAge
-    ShowNewQPKGVersions
     if IsNotError && [[ $EUID -ne 0 || $USER != admin ]]; then
         ShowAsError "this script must be run as the 'admin' user. Please login via SSH as 'admin' and try again"
         return 1
@@ -552,7 +554,6 @@ ShowNewQPKGVersions()
         fi
 
         names=${QPKGS_upgradable[*]}
-
         ShowAsNote "$msg available for $(ColourTextBrightYellow "${names// /, }")"
         return 1
     fi
@@ -705,11 +706,7 @@ ShowHelp()
     for package in "${QPKGS_user_installable[@]}"; do
         echo -e "\t./$LAUNCHER_SCRIPT_NAME $package"
     done
-    echo
-
-    ShowNewQPKGVersions || echo
-
-    echo -e "* Display recognised package abbreviations:"
+    echo -e "\n* Display recognised package abbreviations:"
     echo -e "\t./$LAUNCHER_SCRIPT_NAME --abs"
 
     echo -e "\n* Upgrade all sherpa applications (only upgrades the internal applications, not the QPKG):"
@@ -767,6 +764,7 @@ ShowPackageAbbreviations()
             fi
         fi
     done
+
 
     return 0
 
@@ -3031,8 +3029,8 @@ SetLogToFile()
 
     IsLogToFile && return
 
-    _log_to_file_flag=true
-    DebugVar _log_to_file_flag
+    _log_to_file=true
+    DebugVar _log_to_file
 
     }
 
@@ -3041,22 +3039,22 @@ UnsetLogToFile()
 
     IsNotLogToFile && return
 
-    _log_to_file_flag=false
-    DebugVar _log_to_file_flag
+    _log_to_file=false
+    DebugVar _log_to_file
 
     }
 
 IsLogToFile()
     {
 
-    [[ $_log_to_file_flag = true ]]
+    [[ $_log_to_file = true ]]
 
     }
 
 IsNotLogToFile()
     {
 
-    [[ $_log_to_file_flag != true ]]
+    [[ $_log_to_file != true ]]
 
     }
 
@@ -3740,12 +3738,10 @@ Cleanup
 ShowResult
 RemoveLock
 
-if (IsShowHelp || IsShowProblemHelp || IsShowAbbreviations) && IsNotVisibleDebugging; then
+if (IsShowHelp || IsShowProblemHelp || IsShowAbbreviations || IsLogViewOnly ) && IsNotVisibleDebugging; then
     echo
 fi
 
-if IsError; then
-    exit 1
-fi
+IsError && exit 1
 
 exit
