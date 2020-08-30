@@ -23,19 +23,31 @@
 Init()
     {
 
-    local -r LAUNCHER_SCRIPT_FILE=sherpa.sh
-    local -r LAUNCHER_SCRIPT_VERSION=200829
+    IsQNAP || return 1
 
-    if [[ ! -e /etc/init.d/functions ]]; then
-        ShowAsAbort 'QTS functions missing (is this a QNAP NAS?)'
-        return 1
-    fi
+    local -r LAUNCHER_SCRIPT_FILE=sherpa.sh
+    local -r LAUNCHER_SCRIPT_VERSION=200830
 
     local -r NAS_FIRMWARE=$(/sbin/getcfg System Version -f /etc/config/uLinux.conf)
     [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg='--insecure' || curl_insecure_arg=''
     local -r MAIN_SCRIPT_FILE=__sherpa-main__.sh
     readonly REMOTE_MAIN_SCRIPT=https://raw.githubusercontent.com/OneCDOnly/sherpa/master/$MAIN_SCRIPT_FILE
     readonly LOCAL_MAIN_SCRIPT=/share/$MAIN_SCRIPT_FILE
+    previous_msg=''
+
+    }
+
+IsQNAP()
+    {
+
+    # is this a QNAP NAS?
+
+    if [[ ! -e /etc/init.d/functions ]]; then
+        ShowAsAbort 'QTS functions missing (is this a QNAP NAS?)'
+        return 1
+    fi
+
+    return 0
 
     }
 
@@ -66,7 +78,6 @@ WriteToDisplay_NewLine()
     local new_message=''
     local strbuffer=''
     local new_length=0
-    previous_msg=''
 
     new_message=$(printf "%-10s: %s" "$1" "$2")
 
