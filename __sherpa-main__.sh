@@ -681,8 +681,9 @@ ShowHelp()
             DisplayAsHelpPackageOnlyExample "$package"
         fi
     done
+    DisplayAsHelpOptionExample 'example: to install, reinstall or upgrade SABnzbd' 'SABnzbd'
+
     echo -e "\n** [OPTION] usage may be seen below:"
-    DisplayAsHelpOptionExample 'to install, reinstall or upgrade SABnzbd' 'SABnzbd'
 
     DisplayAsHelpOptionExample 'package abbreviations can also be used. To see these' '--abs'
 
