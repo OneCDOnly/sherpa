@@ -30,19 +30,24 @@ Init()
     fi
 
     # cherry-pick required binaries
-    readonly BASENAME_CMD=/usr/bin/basename
-    readonly CURL_CMD=/sbin/curl
-    readonly DIRNAME_CMD=/usr/bin/dirname
-    readonly GETCFG_CMD=/sbin/getcfg
     readonly GREP_CMD=/bin/grep
-    readonly GNU_LESS_CMD=/opt/bin/less
-    readonly LSOF_CMD=/usr/sbin/lsof
     readonly SED_CMD=/bin/sed
-    readonly SETCFG_CMD=/sbin/setcfg
     readonly TAR_CMD=/bin/tar
+
+    readonly BASENAME_CMD=/usr/bin/basename
+    readonly DIRNAME_CMD=/usr/bin/dirname
     readonly TAIL_CMD=/usr/bin/tail
     readonly TEE_CMD=/usr/bin/tee
+
+    readonly CURL_CMD=/sbin/curl
+    readonly GETCFG_CMD=/sbin/getcfg
+    readonly SETCFG_CMD=/sbin/setcfg
     readonly WRITE_LOG_CMD=/sbin/write_log
+
+    readonly LSOF_CMD=/usr/sbin/lsof
+
+    readonly GIT_CMD=/opt/bin/git
+    readonly GNU_LESS_CMD=/opt/bin/less
 
     # generic environment
     readonly QTS_QPKG_CONF_PATHFILE=/etc/config/qpkg.conf
@@ -88,7 +93,6 @@ Init()
         return 1
     fi
 
-    WaitForEntware
     EnsureConfigFileExists
     LoadAppVersion
 
@@ -101,23 +105,23 @@ Init()
 ShowHelp()
     {
 
-    Display " $($BASENAME_CMD "$0") ($QPKG_VERSION)"
-    Display " A service control script for the $(FormatAsPackageName $QPKG_NAME) QPKG"
+    Display "$(ColourTextBrightWhite "$($BASENAME_CMD "$0")") ($QPKG_VERSION) a service control script for the $(FormatAsPackageName $QPKG_NAME) QPKG"
     Display
-    Display " Usage: $0 [OPTION]"
+    Display "Usage: $0 [OPTION]"
     Display
-    Display ' [OPTION] can be any one of the following:'
+    Display '[OPTION] may be any one of the following:'
     Display
-    Display " start        - launch $(FormatAsPackageName $QPKG_NAME) if not already running."
-    Display " stop         - shutdown $(FormatAsPackageName $QPKG_NAME) if running."
-    Display " restart      - stop, then start $(FormatAsPackageName $QPKG_NAME)."
-    Display " status       - check if $(FormatAsPackageName $QPKG_NAME) is still running. Returns \$? = 0 if running, 1 if not."
-    Display " backup       - backup the current $(FormatAsPackageName $QPKG_NAME) configuration to persistent storage."
-    Display " restore      - restore a previously saved configuration from persistent storage. $(FormatAsPackageName $QPKG_NAME) will be stopped, then restarted."
-    Display " reset-config - delete the application configuration, databases and history. $(FormatAsPackageName $QPKG_NAME) will be stopped, then restarted."
-    [[ -n $SOURCE_GIT_URL ]] && Display " clean        - wipe the current local copy of $(FormatAsPackageName $QPKG_NAME), and download it again from remote source. Configuration will be retained."
-    Display ' log          - display this service script runtime log.'
-    Display ' version      - display the package version number.'
+    DisplayAsHelp 'start' "launch $(FormatAsPackageName $QPKG_NAME) if not already running."
+    DisplayAsHelp 'stop' "shutdown $(FormatAsPackageName $QPKG_NAME) if running."
+    DisplayAsHelp 'restart' "stop, then start $(FormatAsPackageName $QPKG_NAME)."
+    DisplayAsHelp 'status' "check if $(FormatAsPackageName $QPKG_NAME) is still running. Returns \$? = 0 if running, 1 if not."
+    DisplayAsHelp 'backup' "backup the current $(FormatAsPackageName $QPKG_NAME) configuration to persistent storage."
+    DisplayAsHelp 'restore' "restore a previously saved configuration from persistent storage. $(FormatAsPackageName $QPKG_NAME) will be stopped, then restarted."
+    DisplayAsHelp 'reset-config' "delete the application configuration, databases and history. $(FormatAsPackageName $QPKG_NAME) will be stopped, then restarted."
+    [[ $(type -t ImportFromSAB2) = 'function' ]] && DisplayAsHelp 'import' "create a backup of an installed $(FormatAsPackageName SABnzbdplus) config and restore it into $(FormatAsPackageName $QPKG_NAME)."
+    [[ -n $SOURCE_GIT_URL ]] && DisplayAsHelp 'clean' "wipe the current local copy of $(FormatAsPackageName $QPKG_NAME), and download it again from remote source. Configuration will be retained."
+    DisplayAsHelp 'log' 'display this service script runtime log.'
+    DisplayAsHelp 'version' 'display the package version number.'
     Display
 
     }
@@ -125,34 +129,35 @@ ShowHelp()
 StartQPKG()
     {
 
-    IsNotError || return
+    IsError && return
 
     if IsNotRestart && IsNotRestore && IsNotClean && IsNotReset; then
-        RecordOperationToLog
-        IsNotDaemonActive || return
+        CommitOperationToLog
+        IsDaemonActive && return
     fi
 
     if IsRestore || IsClean || IsReset; then
-        IsRestartPending || return
+        IsNotRestartPending && return
     fi
 
-    [[ -n $SOURCE_GIT_URL ]] && PullGitRepo $QPKG_NAME "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_PATH"
+    WaitForGit || return 1
+
+    PullGitRepo "$QPKG_NAME" "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_PATH"
+    [[ $? -eq 0 && $(type -t UpdateLanguages) = 'function' ]] && UpdateLanguages
 
     EnsureConfigFileExists
     LoadUIPorts app || return
 
     if [[ $ui_port -le 0 && $ui_port_secure -le 0 ]]; then
         DisplayErrCommitAllLogs 'unable to start daemon: no UI port was specified!'
-        SetError
         return 1
     elif IsNotPortAvailable $ui_port || IsNotPortAvailable $ui_port_secure; then
         DisplayErrCommitAllLogs "unable to start daemon: ports $ui_port or $ui_port_secure are already in use!"
-        SetError
         return 1
     fi
 
     ExecuteAndLog 'starting daemon' "$LAUNCHER" log:everything || return 1
-    [[ -n $TARGET_SCRIPT || -n $TARGET_DAEMON ]] && ExecuteAndLog 'waiting for PID file to be created' 'sleep 5'
+    WaitForPID || return 1
     IsDaemonActive || return 1
     CheckPorts || return 1
 
@@ -163,13 +168,13 @@ StartQPKG()
 StopQPKG()
     {
 
-    IsNotError || return
+    IsError && return
 
     if IsNotRestore && IsNotClean && IsNotReset; then
-        RecordOperationToLog
+        CommitOperationToLog
     fi
 
-    IsDaemonActive || return
+    IsNotDaemonActive && return
 
     if IsRestart || IsRestore || IsClean || IsReset; then
         SetRestartPending
@@ -226,7 +231,7 @@ StatusQPKG()
 BackupConfig()
     {
 
-    RecordOperationToLog
+    CommitOperationToLog
     ExecuteAndLog 'updating configuration backup' "$TAR_CMD --create --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config ." log:everything
 
     }
@@ -234,7 +239,7 @@ BackupConfig()
 RestoreConfig()
     {
 
-    RecordOperationToLog
+    CommitOperationToLog
 
     if [[ ! -f $BACKUP_PATHFILE ]]; then
         DisplayErrCommitAllLogs 'unable to restore configuration: no backup file was found!'
@@ -251,7 +256,7 @@ RestoreConfig()
 ResetConfig()
     {
 
-    RecordOperationToLog
+    CommitOperationToLog
 
     StopQPKG
     ExecuteAndLog 'resetting configuration' "mv $QPKG_INI_DEFAULT_PATHFILE $QPKG_PATH; rm -rf $QPKG_PATH/config/*; mv $QPKG_PATH/$($BASENAME_CMD "$QPKG_INI_DEFAULT_PATHFILE") $QPKG_INI_DEFAULT_PATHFILE" log:everything
@@ -346,33 +351,41 @@ PullGitRepo()
 
     [[ -z $1 || -z $2 || -z $3 || -z $4 || -z $5 ]] && return 1
 
-    local -r GIT_CMD=/opt/bin/git
+    local -r QPKG_GIT_PATH="$5/$1"
+    local -r GIT_HTTP_URL="$2"
+    local -r GIT_HTTPS_URL=${GIT_HTTP_URL/http/git}
+    local installed_branch=''
+    [[ $4 = shallow ]] && local -r DEPTH=' --depth 1'
+    [[ $4 = single-branch ]] && local -r DEPTH=' --single-branch'
 
-    if IsNotSysFilePresent "$GIT_CMD"; then
-        SetError
-        return 1
+    if [[ -d $QPKG_GIT_PATH/.git ]]; then
+        installed_branch=$($GIT_CMD -C "$QPKG_GIT_PATH" branch | $GREP_CMD '^\*' | $SED_CMD 's|^\* ||')
+
+        if [[ $installed_branch != "$3" ]]; then
+            DisplayDoneCommitToLog "installed git branch: $installed_branch, new git branch: $3"
+            ExecuteAndLog 'new git branch was specified so cleaning local repository' "rm -r $QPKG_GIT_PATH"
+        fi
     fi
 
-    local QPKG_GIT_PATH="$5/$1"
-    local GIT_HTTP_URL="$2"
-    local GIT_HTTPS_URL=${GIT_HTTP_URL/http/git}
-    [[ $4 = shallow ]] && local depth=' --depth 1'
-    [[ $4 = single-branch ]] && local depth=' --single-branch'
-
-    if [[ ! -d ${QPKG_GIT_PATH}/.git ]]; then
-        ExecuteAndLog "cloning $(FormatAsPackageName "$1") from remote repository" "$GIT_CMD clone --branch $3 $depth -c advice.detachedHead=false $GIT_HTTPS_URL $QPKG_GIT_PATH || $GIT_CMD clone --branch $3 $depth -c advice.detachedHead=false $GIT_HTTP_URL $QPKG_GIT_PATH"
+    if [[ ! -d $QPKG_GIT_PATH/.git ]]; then
+        ExecuteAndLog "cloning $(FormatAsPackageName "$1") from remote repository" "$GIT_CMD clone --branch $3 $DEPTH -c advice.detachedHead=false $GIT_HTTPS_URL $QPKG_GIT_PATH || $GIT_CMD clone --branch $3 $DEPTH -c advice.detachedHead=false $GIT_HTTP_URL $QPKG_GIT_PATH"
     else
         ExecuteAndLog "updating $(FormatAsPackageName "$1") from remote repository" "$GIT_CMD -C $QPKG_GIT_PATH pull"
     fi
+
+    installed_branch=$($GIT_CMD -C "$QPKG_GIT_PATH" branch | $GREP_CMD '^\*' | $SED_CMD 's|^\* ||')
+    DisplayDoneCommitToLog "installed git branch: $installed_branch"
+
+    return 0
 
     }
 
 CleanLocalClone()
     {
 
-    # for the rare occasions the local repo becomes corrupt, it needs to be deleted and cloned again from source.
+    # for occasions where the local repo needs to be deleted and cloned again from source.
 
-    RecordOperationToLog
+    CommitOperationToLog
 
     if [[ -z $QPKG_PATH || -z $QPKG_NAME || -z $SOURCE_GIT_URL ]]; then
         SetError
@@ -389,7 +402,11 @@ ViewLog()
     {
 
     if [[ -e $SERVICE_LOG_PATHFILE ]]; then
-        LESSSECURE=1 $GNU_LESS_CMD +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$SERVICE_LOG_PATHFILE"
+        if [[ -e $GNU_LESS_CMD ]]; then
+            LESSSECURE=1 $GNU_LESS_CMD +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$SERVICE_LOG_PATHFILE"
+        else
+            cat --number "$SERVICE_LOG_PATHFILE"
+        fi
     else
         Display "service log not found: $(FormatAsFileName "$SERVICE_LOG_PATHFILE")"
         SetError
@@ -453,7 +470,7 @@ ReWriteUIPorts()
         $SETCFG_CMD $QPKG_NAME Web_SSL_Port 0 -f $QTS_QPKG_CONF_PATHFILE
     fi
 
-    DisplayDoneCommitToLog 'App Center configuration updated with current port information'
+    DisplayDoneCommitToLog 'App Center has been updated with current port information'
 
     }
 
@@ -563,10 +580,7 @@ IsPortAvailable()
     # $? = 0 if available
     # $? = 1 if already used
 
-    if [[ -z $1 || $1 -eq 0 ]]; then
-        SetError
-        return 1
-    fi
+    [[ -z $1 || $1 -eq 0 ]] && return
 
     if ($LSOF_CMD -i :"$1" -sTCP:LISTEN >/dev/null 2>&1); then
         return 1
@@ -971,6 +985,13 @@ FormatAsFileName()
 
     }
 
+DisplayAsHelp()
+    {
+
+    printf "    --%-12s  %s\n" "$1" "$2"
+
+    }
+
 Display()
     {
 
@@ -985,7 +1006,7 @@ DisplayWait()
 
     }
 
-RecordOperationToLog()
+CommitOperationToLog()
     {
 
     CommitLog "$(SessionSeparator "'$service_operation' requested")"
@@ -1059,24 +1080,81 @@ SessionSeparator()
 
     }
 
-WaitForEntware()
+ColourTextBrightWhite()
     {
 
-    local -r MAX_WAIT_SECONDS_ENTWARE=300
+    echo -en '\033[1;97m'"$(ColourReset "$1")"
 
-    if [[ ! -e /opt/Entware.sh && ! -e /opt/Entware-3x.sh && ! -e /opt/Entware-ng.sh ]]; then
+    }
+
+ColourReset()
+    {
+
+    echo -en "$1"'\033[0m'
+
+    }
+
+WaitForPID()
+    {
+
+    local -r MAX_SECONDS=5
+
+    if [[ ! -e $DAEMON_PID_PATHFILE ]]; then
+        DisplayWaitCommitToLog "* waiting for $(FormatAsFileName "$DAEMON_PID_PATHFILE") to appear:"
+        DisplayWait "(no-more than $MAX_SECONDS seconds):"
+
         (
-            for ((count=1; count<=MAX_WAIT_SECONDS_ENTWARE; count++)); do
+            for ((count=1; count<=MAX_SECONDS; count++)); do
                 sleep 1
-                [[ -e /opt/Entware.sh || -e /opt/Entware-3x.sh || -e /opt/Entware-ng.sh ]] && { CommitLog "waited for Entware for $count seconds"; true; exit ;}
+                DisplayWait "$count,"
+                if [[ -e $DAEMON_PID_PATHFILE ]]; then
+                    Display 'OK'
+                    CommitLog "visible in $count second$([[ $count -ne 1 ]] && echo 's')"
+                    [[ $count -gt 1 ]] && sleep 1       # wait one more second to allow for file creation
+                    true
+                    exit    # only this sub-shell
+                fi
             done
             false
         )
 
         if [[ $? -ne 0 ]]; then
-            DisplayErrCommitAllLogs "Entware not found! (exceeded timeout: $MAX_WAIT_SECONDS_ENTWARE seconds)"
+            DisplayCommitToLog 'failed!'
+            DisplayErrCommitAllLogs "$(FormatAsFileName "$DAEMON_PID_PATHFILE") not found! (exceeded timeout: $MAX_SECONDS seconds)"
+            return 1
+        fi
+    fi
+
+    }
+
+WaitForGit()
+    {
+
+    local -r MAX_SECONDS=300
+
+    if [[ ! -e $GIT_CMD ]]; then
+        DisplayWaitCommitToLog "* waiting for $(FormatAsFileName "$GIT_CMD") to appear:"
+        DisplayWait "(no-more than $MAX_SECONDS seconds):"
+
+        (
+            for ((count=1; count<=MAX_SECONDS; count++)); do
+                sleep 1
+                DisplayWait "$count,"
+                if [[ -e $GIT_CMD ]]; then
+                    Display 'OK'
+                    CommitLog "visible in $count second$([[ $count -ne 1 ]] && echo 's')"
+                    [[ $count -gt 1 ]] && sleep 1       # wait one more second to allow for file creation
+                    true
+                    exit    # only this sub-shell
+                fi
+            done
             false
-            exit
+        )
+
+        if [[ $? -ne 0 ]]; then
+            DisplayCommitToLog 'failed!'
+            DisplayErrCommitAllLogs "$(FormatAsFileName "$GIT_CMD") not found! (exceeded timeout: $MAX_SECONDS seconds)"
+            return 1
         else
             # if here, then testfile has appeared, so reload environment
             . /etc/profile &>/dev/null
@@ -1090,43 +1168,43 @@ Init
 
 if IsNotError; then
     case $1 in
-        start)
+        start|--start)
             SetServiceOperation "$1"
             StartQPKG || SetError
             ;;
-        stop)
+        stop|--stop)
             SetServiceOperation "$1"
             StopQPKG || SetError
             ;;
-        r|restart)
+        r|-r|restart|--restart)
             SetServiceOperation restart
             { StopQPKG; StartQPKG ;} || SetError
             ;;
-        s|status)
+        s|-s|status|--status)
             SetServiceOperation status
             StatusQPKG || SetError
             ;;
-        b|backup)
+        b|-b|backup|--backup)
             SetServiceOperation backup
             BackupConfig || SetError
             ;;
-        reset-config)
+        reset-config|--reset-config)
             SetServiceOperation "$1"
             ResetConfig || SetError
             ;;
-        restore)
+        restore|--restore)
             SetServiceOperation "$1"
             RestoreConfig || SetError
             ;;
-        c|clean)
+        c|-c|clean|--clean)
             SetServiceOperation clean
             CleanLocalClone || SetError
             ;;
-        l|log)
+        l|-l|log|--log)
             SetServiceOperation log
             ViewLog
             ;;
-        v|version)
+        v|-v|version|--version)
             SetServiceOperation version
             Display "$QPKG_VERSION"
             ;;
