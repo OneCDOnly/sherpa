@@ -796,9 +796,9 @@ PasteLogOnline()
         ShowAsQuiz "Press 'Y' to post your sherpa log in a public pastebin, or any other key to abort"
         read -rn1 response; echo
         DebugVar response
+        IsNotVisibleDebugging && echo
         case ${response:0:1} in
             y|Y)
-                IsNotVisibleDebugging && echo
                 ShowAsProc 'uploading sherpa log'
                 link=$($TAIL_CMD -n 1000 -q "$DEBUG_LOG_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
                 if [[ $? -eq 0 ]]; then
@@ -934,9 +934,9 @@ RemoveUnwantedQPKGs()
         ShowAsQuiz "Press 'Y' to remove all current $(FormatAsPackageName Entware) IPKGs (and their configurations), or any other key to abort"
         read -rn1 response; echo
         DebugVar response
+        IsNotVisibleDebugging && echo
         case ${response:0:1} in
             y|Y)
-                IsNotVisibleDebugging && echo
                 ShowAsProc 'saving package and Python module lists'
 
                 $pip3_cmd freeze > "$previous_pip3_module_list"
