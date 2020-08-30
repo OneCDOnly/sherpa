@@ -708,7 +708,7 @@ ShowHelp()
     for package in "${QPKGS_user_installable[@]}"; do
         DisplayAsHelpPackageOnlyExample "$package"
     done
-    echo -e "\n* [OPTION] usage can be seen below:"
+    echo -e "\n* [OPTION] usage may be seen below:"
     DisplayAsHelpOptionExample 'to install, reinstall or upgrade SABnzbd' 'SABnzbd'
 
     DisplayAsHelpOptionExample 'package abbreviations can also be used. To see these' '--abs'
@@ -724,7 +724,7 @@ ShowHelp()
 ShowProblemHelp()
     {
 
-    echo -e "\n* [OPTION] usage can be seen below:"
+    echo -e "\n* More [OPTION] usage may be seen below:"
     DisplayAsHelpOptionExample 'install a package and show debugging information' '[PACKAGE] --debug'
 
     DisplayAsHelpOptionExample 'ensure all sherpa application dependencies are installed' '--check'
