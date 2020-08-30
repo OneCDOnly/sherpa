@@ -40,7 +40,7 @@ Init()
 
     IsQNAP || return 1
 
-    readonly MAIN_SCRIPT_VERSION=200830i
+    readonly MAIN_SCRIPT_VERSION=200831
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -762,7 +762,6 @@ ShowLogViewer()
             $CAT_CMD --number "$DEBUG_LOG_PATHFILE"
         fi
     else
-        IsNotVisibleDebugging && echo
         ShowAsError 'no log to display'
     fi
 
@@ -3734,7 +3733,7 @@ Cleanup
 ShowResult
 RemoveLock
 
-if (IsShowHelp || IsShowProblemHelp || IsSuggestIssue || IsShowAbbreviations || IsLogViewOnly ) && IsNotVisibleDebugging; then
+if (IsShowHelp || IsShowProblemHelp || IsSuggestIssue || IsShowAbbreviations) && IsNotVisibleDebugging; then
     echo
 fi
 
