@@ -675,7 +675,11 @@ ShowHelp()
 
     echo -e "\n* [PACKAGE] may be specified as any ONE of the following:\n"
     for package in "${QPKGS_user_installable[@]}"; do
-        DisplayAsHelpPackageOnlyExample "$package"
+        if IsQPKGUpgradable "$package"; then
+            DisplayAsHelpPackageOnlyExample "$(ColourTextBrightYellow "$package")"
+        else
+            DisplayAsHelpPackageOnlyExample "$package"
+        fi
     done
     echo -e "\n** [OPTION] usage may be seen below:"
     DisplayAsHelpOptionExample 'to install, reinstall or upgrade SABnzbd' 'SABnzbd'
