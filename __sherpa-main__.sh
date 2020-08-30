@@ -702,13 +702,13 @@ ShowHelp()
 
     local package=''
 
-    echo -e "\nusage: ./$LAUNCHER_SCRIPT_NAME [PACKAGE] [OPTION]"
+    echo -e "\nUsage: ./$LAUNCHER_SCRIPT_NAME [PACKAGE]* [OPTION]**"
 
     echo -e "\n* [PACKAGE] may be specified as any ONE of the following:\n"
     for package in "${QPKGS_user_installable[@]}"; do
         DisplayAsHelpPackageOnlyExample "$package"
     done
-    echo -e "\n* [OPTION] usage may be seen below:"
+    echo -e "\n** [OPTION] usage may be seen below:"
     DisplayAsHelpOptionExample 'to install, reinstall or upgrade SABnzbd' 'SABnzbd'
 
     DisplayAsHelpOptionExample 'package abbreviations can also be used. To see these' '--abs'
@@ -724,7 +724,7 @@ ShowHelp()
 ShowProblemHelp()
     {
 
-    echo -e "\n* More [OPTION] usage may be seen below:"
+    echo -e "\n** More [OPTION] usage may be seen below:"
     DisplayAsHelpOptionExample 'install a package and show debugging information' '[PACKAGE] --debug'
 
     DisplayAsHelpOptionExample 'ensure all sherpa application dependencies are installed' '--check'
@@ -2350,7 +2350,7 @@ DisplayAsHelpOptionExample()
     # $1 = description
     # $2 = example syntax
 
-    printf "\n  * %s:\n       ./$LAUNCHER_SCRIPT_NAME %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$2"
+    printf "\n  - %s:\n       ./$LAUNCHER_SCRIPT_NAME %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$2"
 
     }
 
