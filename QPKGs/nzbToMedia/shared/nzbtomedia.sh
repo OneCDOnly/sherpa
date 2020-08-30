@@ -20,6 +20,7 @@ Init()
         readonly SOURCE_GIT_BRANCH=master
         # 'shallow' (depth 1) or 'single-branch' (note: 'shallow' implies a 'single-branch' too)
         readonly SOURCE_GIT_DEPTH=shallow
+        readonly PYTHON=/opt/bin/python3
 
     if [[ ! -e /etc/init.d/functions ]]; then
         FormatAsDisplayError 'QTS functions missing (is this a QNAP NAS?)'
@@ -60,6 +61,7 @@ Init()
     local -r OPKG_PATH=/opt/bin:/opt/sbin
     local -r BACKUP_PATH=$($GETCFG_CMD SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
     readonly BACKUP_PATHFILE=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
+    [[ -n $PYTHON ]] && export PYTHONPATH=$PYTHON
     readonly APPARENT_PATH=/share/$($GETCFG_CMD SHARE_DEF defDownload -d Qdownload -f /etc/config/def_share.info)/$QPKG_NAME
     [[ $PATH =~ $OPKG_PATH ]] && export PATH="$OPKG_PATH:$PATH"
 
