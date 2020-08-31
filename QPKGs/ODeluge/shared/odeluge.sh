@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 ####################################################################################
-# otransmission.sh
+# odeluge.sh
 #
 # Copyright (C) 2020 OneCD [one.cd.only@gmail.com]
 #
