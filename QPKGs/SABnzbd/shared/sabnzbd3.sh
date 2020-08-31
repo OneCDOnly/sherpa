@@ -146,7 +146,7 @@ StartQPKG()
     PullGitRepo "$QPKG_NAME" "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_PATH"
 
     WaitForPython || return 1
-    [[ $? -eq 0 && $(type -t UpdateLanguages) = 'function' ]] && UpdateLanguages
+    [[ $(type -t UpdateLanguages) = 'function' ]] && UpdateLanguages
 
     EnsureConfigFileExists
     LoadUIPorts app || return
