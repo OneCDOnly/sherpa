@@ -1859,8 +1859,8 @@ ShowResult()
     local emoticon=''
 
     if IsVersionOnly; then
-        echo "loader version: $LOADER_SCRIPT_VERSION"
-        echo "main version: $MAIN_SCRIPT_VERSION"
+        echo "loader: $LOADER_SCRIPT_VERSION"
+        echo "main: $MAIN_SCRIPT_VERSION"
     elif IsLogViewOnly; then
         ShowLogViewer
     elif IsShowHelp; then
