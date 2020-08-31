@@ -3705,7 +3705,7 @@ WriteToLog()
     #   $2 = message
 
     [[ -z $DEBUG_LOG_PATHFILE ]] && return 1
-    IsLogToFile || return
+    IsNotLogToFile && return
 
     printf "%-4s: %s\n" "$(StripANSI "$1")" "$(StripANSI "$2")" >> "$DEBUG_LOG_PATHFILE"
 
@@ -3785,7 +3785,7 @@ StripANSI()
     {
 
     # found here: https://www.commandlinefu.com/commands/view/3584/remove-color-codes-special-characters-with-sed
-    # QTS 4.2.6 BusyBox 'sed' doesn't fully support regexes, so this only works with a real 'sed'.
+    # QTS 4.2.6 BusyBox 'sed' doesn't fully support extended regexes, so this only works with a real 'sed'.
 
     if [[ -e $GNU_SED_CMD ]]; then
         $GNU_SED_CMD -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g" <<< "$1"
