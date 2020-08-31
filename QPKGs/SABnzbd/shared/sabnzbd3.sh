@@ -58,10 +58,16 @@ Init()
     local -r OPKG_PATH=/opt/bin:/opt/sbin
     local -r BACKUP_PATH=$($GETCFG_CMD SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
     readonly BACKUP_PATHFILE=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
-    [[ -n $PYTHON ]] && export PYTHONPATH=$PYTHON
     export PATH="$OPKG_PATH:$($SED_CMD "s|$OPKG_PATH||" <<< $PATH)"
-    readonly STOP_TIMEOUT=60
+    [[ -n $PYTHON ]] && export PYTHONPATH=$PYTHON
+
+    # all timeouts are in seconds
+    readonly DAEMON_STOP_TIMEOUT=60
     readonly PORT_CHECK_TIMEOUT=20
+    readonly GIT_APPEAR_TIMEOUT=300
+    readonly PYTHON_APPEAR_TIMEOUT=30
+    readonly PID_APPEAR_TIMEOUT=5
+
     ui_port=0
     ui_port_secure=0
     ui_listening_address=''
@@ -137,9 +143,9 @@ StartQPKG()
     fi
 
     WaitForGit || return 1
-    WaitForPython || return 1
-
     PullGitRepo "$QPKG_NAME" "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_PATH"
+
+    WaitForPython || return 1
     [[ $? -eq 0 && $(type -t UpdateLanguages) = 'function' ]] && UpdateLanguages
 
     EnsureConfigFileExists
@@ -184,7 +190,7 @@ StopQPKG()
     pid=$(<$DAEMON_PID_PATHFILE)
     kill "$pid"
     DisplayWaitCommitToLog '* stopping daemon with SIGTERM:'
-    DisplayWait "(no-more than $STOP_TIMEOUT seconds):"
+    DisplayWait "(no-more than $DAEMON_STOP_TIMEOUT seconds):"
 
     while true; do
         while [[ -d /proc/$pid ]]; do
@@ -192,7 +198,7 @@ StopQPKG()
             ((acc++))
             DisplayWait "$acc,"
 
-            if [[ $acc -ge $STOP_TIMEOUT ]]; then
+            if [[ $acc -ge $DAEMON_STOP_TIMEOUT ]]; then
                 DisplayCommitToLog 'failed!'
                 DisplayCommitToLog '* stopping daemon with SIGKILL'
                 kill -9 "$pid" 2> /dev/null
@@ -358,7 +364,7 @@ UpdateLanguages()
 WaitForGit()
     {
 
-    if WaitForFileToAppear "$GIT_CMD" 300; then
+    if WaitForFileToAppear "$GIT_CMD" "$GIT_APPEAR_TIMEOUT"; then
         . /etc/profile &>/dev/null
         . /root/.profile &>/dev/null
         return 0
@@ -371,7 +377,7 @@ WaitForGit()
 WaitForPython()
     {
 
-    if WaitForFileToAppear "$PYTHON"; then
+    if WaitForFileToAppear "$PYTHON" "$PYTHON_APPEAR_TIMEOUT"; then
         return 0
     else
         return 1
@@ -382,7 +388,7 @@ WaitForPython()
 WaitForPID()
     {
 
-    if WaitForFileToAppear "$DAEMON_PID_PATHFILE" 5; then
+    if WaitForFileToAppear "$DAEMON_PID_PATHFILE" "$PID_APPEAR_TIMEOUT"; then
         sleep 1       # wait one more second to allow file to be written-into
         return 0
     else
@@ -433,6 +439,8 @@ WaitForFileToAppear()
             return 1
         fi
     fi
+
+    DisplayDoneCommitToLog "$(FormatAsFileName "$1"): exists"
 
     return 0
 
