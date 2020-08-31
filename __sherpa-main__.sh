@@ -40,7 +40,7 @@ Init()
 
     IsQNAP || return 1
 
-    readonly MAIN_SCRIPT_VERSION=200831
+    readonly MAIN_SCRIPT_VERSION=200901
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -710,11 +710,11 @@ ShowHelp()
     done
     DisplayAsHelpOptionExample 'example: to install, reinstall or upgrade SABnzbd' 'SABnzbd'
 
-    echo -e "\n** [OPTION] usage may be seen below:"
+    echo -e "\n** [OPTION] usage examples:"
 
-    DisplayAsHelpOptionExample 'package abbreviations can also be used. To see these' '--abs'
+    DisplayAsHelpOptionExample 'package abbreviations may also be used. To see these' '--abs'
 
-    DisplayAsHelpOptionExample 'display some more options for troubleshooting' '--problem'
+    DisplayAsHelpOptionExample 'display more troubleshooting options' '--problem'
 
     DisplayAsHelpOptionExample 'display the package manager script versions' '--version'
 
@@ -725,20 +725,20 @@ ShowHelp()
 ShowProblemHelp()
     {
 
-    echo -e "\n** More [OPTION] usage may be seen below:"
+    echo -e "\n** Extended [OPTION] usage examples:"
     DisplayAsHelpOptionExample 'install a package and show debugging information' '[PACKAGE] --debug'
 
-    DisplayAsHelpOptionExample 'ensure all sherpa application dependencies are installed' '--check'
+    DisplayAsHelpOptionExample 'ensure all application dependencies are installed' '--check'
 
     DisplayAsHelpOptionExample "don't check free-space on target filesystem when installing $(FormatAsPackageName Entware) packages" '--ignore-space'
 
-    DisplayAsHelpOptionExample 'upgrade all sherpa applications (only upgrades the internal applications, not the QPKG)' '--upgrade-all-apps'
+    DisplayAsHelpOptionExample 'upgrade all applications (only upgrades the internal applications, not the QPKG)' '--upgrade-all-apps'
 
-    DisplayAsHelpOptionExample 'view the sherpa log' '--log'
+    DisplayAsHelpOptionExample 'view the log' '--log'
 
-    DisplayAsHelpOptionExample "upload the sherpa log to the $(FormatAsURL 'termbin.com') public pastebin" '--paste'
+    DisplayAsHelpOptionExample "upload the log to the $(FormatAsURL 'termbin.com') public pastebin" '--paste'
 
-    echo -e "\n$(ColourTextBrightOrange '* If you need help, please include a copy of your sherpa log for analysis!')"
+    echo -e "\n$(ColourTextBrightOrange "* If you need help, please include a copy of your") $(FormatAsTitle) $(ColourTextBrightOrange "log for analysis!")"
 
     return 0
 
@@ -751,11 +751,11 @@ ShowIssueHelp()
 
     echo -e "\n* Alternatively, post on the QNAP NAS Community Forum:\n\thttps://forum.qnap.com/viewtopic.php?f=320&t=132373"
 
-    DisplayAsHelpOptionExample 'view the sherpa log' '--log'
+    DisplayAsHelpOptionExample 'view the log' '--log'
 
-    DisplayAsHelpOptionExample "upload the sherpa log to the $(FormatAsURL 'termbin.com') public pastebin" '--paste'
+    DisplayAsHelpOptionExample "upload the log to the $(FormatAsURL 'termbin.com') public pastebin" '--paste'
 
-    echo -e "\n$(ColourTextBrightOrange '* If you need help, please include a copy of your sherpa log for analysis!')"
+    echo -e "\n$(ColourTextBrightOrange "* If you need help, please include a copy of your") $(FormatAsTitle) $(ColourTextBrightOrange "log for analysis!")"
 
     }
 
@@ -766,7 +766,7 @@ ShowPackageAbbreviations()
 
     local package_index=0
 
-    echo -e "\n* $(ColourTextBrightWhite sherpa) recognises these package names and abbreviations:"
+    echo -e "\n* $(FormatAsTitle) recognises these package names and abbreviations:"
 
     for package_index in "${!SHERPA_QPKG_NAME[@]}"; do
         if [[ -n ${SHERPA_QPKG_ABBRVS[$package_index]} ]]; then
@@ -3195,6 +3195,13 @@ FormatAsISO()
     {
 
     echo "$1" | $AWK_CMD 'BEGIN{ u[0]="B"; u[1]="kB"; u[2]="MB"; u[3]="GB"} { n = $1; i = 0; while(n > 1000) { i+=1; n= int((n/1000)+0.5) } print n u[i] } '
+
+    }
+
+FormatAsTitle()
+    {
+
+    ColourTextBrightWhite sherpa
 
     }
 
