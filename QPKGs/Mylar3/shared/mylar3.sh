@@ -15,15 +15,13 @@ Init()
     IsQNAP || return 1
 
     # specific environment
-        readonly QPKG_NAME=Mylar3
-
-    # for Python-based remote apps
-        readonly SOURCE_GIT_URL=https://github.com/mylar3/mylar3.git
-        readonly SOURCE_GIT_BRANCH=master
-        # 'shallow' (depth 1) or 'single-branch' (note: 'shallow' implies a 'single-branch' too)
-        readonly SOURCE_GIT_DEPTH=single-branch
-        readonly TARGET_SCRIPT=Mylar.py
-        readonly PYTHON=/opt/bin/python3
+    readonly QPKG_NAME=Mylar3
+    readonly SOURCE_GIT_URL=https://github.com/mylar3/mylar3.git
+    readonly SOURCE_GIT_BRANCH=master
+    # 'shallow' (depth 1) or 'single-branch' (note: 'shallow' implies a 'single-branch' too)
+    readonly SOURCE_GIT_DEPTH=single-branch
+    readonly TARGET_SCRIPT=Mylar.py
+    readonly PYTHON=/opt/bin/python3
 
     # cherry-pick required binaries
     readonly GREP_CMD=/bin/grep
@@ -44,38 +42,46 @@ Init()
 
     readonly GIT_CMD=/opt/bin/git
     readonly GNU_LESS_CMD=/opt/bin/less
+    readonly JQ_CMD=/opt/bin/jq
 
     # generic environment
     readonly QTS_QPKG_CONF_PATHFILE=/etc/config/qpkg.conf
     readonly QPKG_PATH=$($GETCFG_CMD $QPKG_NAME Install_Path -f $QTS_QPKG_CONF_PATHFILE)
     readonly QPKG_REPO_PATH=$QPKG_PATH/$QPKG_NAME
     readonly QPKG_VERSION=$($GETCFG_CMD $QPKG_NAME Version -f $QTS_QPKG_CONF_PATHFILE)
-    readonly QPKG_INI_PATHFILE=$QPKG_PATH/config/config.ini
-    readonly QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.def
     readonly SERVICE_STATUS_PATHFILE=/var/run/$QPKG_NAME.last.operation
     readonly SERVICE_LOG_PATHFILE=/var/log/$QPKG_NAME.log
-    readonly DAEMON_PID_PATHFILE=/var/run/$QPKG_NAME.pid
     local -r OPKG_PATH=/opt/bin:/opt/sbin
     local -r BACKUP_PATH=$($GETCFG_CMD SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
     readonly BACKUP_PATHFILE=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
     export PATH="$OPKG_PATH:$($SED_CMD "s|$OPKG_PATH||" <<< $PATH)"
     [[ -n $PYTHON ]] && export PYTHONPATH=$PYTHON
 
+    # application specific
+    readonly QPKG_INI_PATHFILE=$QPKG_PATH/config/config.ini
+    readonly QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.def
+    readonly DAEMON_PID_PATHFILE=/var/run/$QPKG_NAME.pid
+    readonly APP_VERSION_PATHFILE=$QPKG_REPO_PATH/mylar3/version.py
+    readonly APP_VERSION_STORE_PATHFILE=$($DIRNAME_CMD "$APP_VERSION_PATHFILE")/version.stored
+    readonly TARGET_SCRIPT_PATHFILE=$QPKG_REPO_PATH/$TARGET_SCRIPT
+    readonly LAUNCHER="cd $QPKG_REPO_PATH; $PYTHON $TARGET_SCRIPT_PATHFILE --daemon --nolaunch --datadir $($DIRNAME_CMD "$QPKG_INI_PATHFILE") --config $QPKG_INI_PATHFILE --pidfile $DAEMON_PID_PATHFILE"
+
+    if [[ -n $PYTHON ]]; then
+        readonly LAUNCH_TARGET=$PYTHON
+    elif [[ -n $TARGET_DAEMON ]]; then
+        readonly LAUNCH_TARGET=$TARGET_DAEMON
+    fi
+
     # all timeouts are in seconds
     readonly DAEMON_STOP_TIMEOUT=60
     readonly PORT_CHECK_TIMEOUT=20
     readonly GIT_APPEAR_TIMEOUT=300
-    readonly PYTHON_APPEAR_TIMEOUT=30
+    readonly LAUNCH_TARGET_APPEAR_TIMEOUT=30
     readonly PID_APPEAR_TIMEOUT=5
 
     ui_port=0
     ui_port_secure=0
     ui_listening_address=''
-
-    # application-specific
-    readonly APP_VERSION_PATHFILE=$QPKG_REPO_PATH/mylar3/version.py
-    readonly APP_VERSION_STORE_PATHFILE=$($DIRNAME_CMD "$APP_VERSION_PATHFILE")/version.stored
-    readonly TARGET_SCRIPT_PATHFILE=$QPKG_REPO_PATH/$TARGET_SCRIPT
 
     if [[ -z $LANG ]]; then
         export LANG=en_US.UTF-8
@@ -85,17 +91,8 @@ Init()
 
     UnsetError
     UnsetRestartPending
-
-    # specific launch arguments
-    if [[ -n $PYTHON && -n $TARGET_SCRIPT ]]; then
-        readonly LAUNCHER="cd $QPKG_REPO_PATH; $PYTHON $TARGET_SCRIPT_PATHFILE --daemon --nolaunch --datadir $($DIRNAME_CMD "$QPKG_INI_PATHFILE") --config $QPKG_INI_PATHFILE --pidfile $DAEMON_PID_PATHFILE"
-    else
-        DisplayErrCommitAllLogs 'found nothing to launch!'
-        SetError
-        return 1
-    fi
-
     EnsureConfigFileExists
+    DisableOpkgDaemonStart
     LoadAppVersion
 
     [[ ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
@@ -121,7 +118,7 @@ ShowHelp()
     DisplayAsHelp 'restore' "restore a previously saved configuration from persistent storage. $(FormatAsPackageName $QPKG_NAME) will be stopped, then restarted."
     DisplayAsHelp 'reset-config' "delete the application configuration, databases and history. $(FormatAsPackageName $QPKG_NAME) will be stopped, then restarted."
     [[ $(type -t ImportFromSAB2) = 'function' ]] && DisplayAsHelp 'import' "create a backup of an installed $(FormatAsPackageName SABnzbdplus) config and restore it into $(FormatAsPackageName $QPKG_NAME)."
-    [[ -n $SOURCE_GIT_URL ]] && DisplayAsHelp 'clean' "wipe the current local copy of $(FormatAsPackageName $QPKG_NAME), and download it again from remote source. Configuration will be retained."
+    [[ $(type -t CleanLocalClone) = 'function' ]] && DisplayAsHelp 'clean' "wipe the current local copy of $(FormatAsPackageName $QPKG_NAME), and download it again from remote source. Configuration will be retained."
     DisplayAsHelp 'log' 'display this service script runtime log.'
     DisplayAsHelp 'version' 'display the package version number.'
     Display
@@ -143,9 +140,9 @@ StartQPKG()
     fi
 
     WaitForGit || return 1
-    PullGitRepo "$QPKG_NAME" "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_PATH"
+    [[ $(type -t PullGitRepo) = 'function' ]] && PullGitRepo "$QPKG_NAME" "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_PATH"
 
-    WaitForPython || return 1
+    WaitForLaunchTarget || return 1
     [[ $(type -t UpdateLanguages) = 'function' ]] && UpdateLanguages
 
     EnsureConfigFileExists
@@ -326,7 +323,6 @@ LoadAppVersion()
 
 #### functions specific to this app appear above ###
 
-
 WaitForGit()
     {
 
@@ -340,10 +336,10 @@ WaitForGit()
 
     }
 
-WaitForPython()
+WaitForLaunchTarget()
     {
 
-    if WaitForFileToAppear "$PYTHON" "$PYTHON_APPEAR_TIMEOUT"; then
+    if WaitForFileToAppear "$LAUNCH_TARGET" "$LAUNCH_TARGET_APPEAR_TIMEOUT"; then
         return 0
     else
         return 1
@@ -355,7 +351,7 @@ WaitForPID()
     {
 
     if WaitForFileToAppear "$DAEMON_PID_PATHFILE" "$PID_APPEAR_TIMEOUT"; then
-        sleep 1       # wait one more second to allow file to be written-into
+        sleep 1       # wait one more second to allow file to have PID written into it
         return 0
     else
         return 1
@@ -409,6 +405,16 @@ WaitForFileToAppear()
     DisplayDoneCommitToLog "file $(FormatAsFileName "$1"): exists"
 
     return 0
+
+    }
+
+DisableOpkgDaemonStart()
+    {
+
+    if [[ -n $ORIG_DAEMON_SERVICE_SCRIPT && -x $ORIG_DAEMON_SERVICE_SCRIPT ]]; then
+        $ORIG_DAEMON_SERVICE_SCRIPT stop        # stop default daemon
+        chmod -x $ORIG_DAEMON_SERVICE_SCRIPT    # ... and ensure Entware doesn't re-launch it on startup
+    fi
 
     }
 
@@ -1238,8 +1244,13 @@ if IsNotError; then
             RestoreConfig || SetError
             ;;
         c|-c|clean|--clean)
-            SetServiceOperation clean
-            CleanLocalClone || SetError
+            if [[ $(type -t CleanLocalClone) = 'function' ]]; then
+                SetServiceOperation clean
+                CleanLocalClone || SetError
+            else
+                SetServiceOperation none
+                ShowHelp
+            fi
             ;;
         l|-l|log|--log)
             SetServiceOperation log
@@ -1248,6 +1259,15 @@ if IsNotError; then
         v|-v|version|--version)
             SetServiceOperation version
             Display "$QPKG_VERSION"
+            ;;
+        import|--import)
+            if [[ $(type -t ImportFromSAB2) = 'function' ]]; then
+                SetServiceOperation "$1"
+                ImportFromSAB2 || SetError
+            else
+                SetServiceOperation none
+                ShowHelp
+            fi
             ;;
         *)
             SetServiceOperation none
