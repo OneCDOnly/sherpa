@@ -12,6 +12,8 @@
 Init()
     {
 
+    IsQNAP || return 1
+
     # specific environment
         readonly QPKG_NAME=SickChill
 
@@ -20,14 +22,8 @@ Init()
         readonly SOURCE_GIT_BRANCH=develop
         # 'shallow' (depth 1) or 'single-branch' (note: 'shallow' implies a 'single-branch' too)
         readonly SOURCE_GIT_DEPTH=single-branch
-        readonly PYTHON=/opt/bin/python3
         readonly TARGET_SCRIPT=SickChill.py
-
-    if [[ ! -e /etc/init.d/functions ]]; then
-        FormatAsDisplayError 'QTS functions missing (is this a QNAP NAS?)'
-        SetError
-        return 1
-    fi
+        readonly PYTHON=/opt/bin/python3
 
     # cherry-pick required binaries
     readonly GREP_CMD=/bin/grep
@@ -62,10 +58,16 @@ Init()
     local -r OPKG_PATH=/opt/bin:/opt/sbin
     local -r BACKUP_PATH=$($GETCFG_CMD SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
     readonly BACKUP_PATHFILE=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
+    export PATH="$OPKG_PATH:$($SED_CMD "s|$OPKG_PATH||" <<< $PATH)"
     [[ -n $PYTHON ]] && export PYTHONPATH=$PYTHON
-    [[ $PATH =~ $OPKG_PATH ]] && export PATH="$OPKG_PATH:$PATH"
-    readonly STOP_TIMEOUT=60
+
+    # all timeouts are in seconds
+    readonly DAEMON_STOP_TIMEOUT=60
     readonly PORT_CHECK_TIMEOUT=20
+    readonly GIT_APPEAR_TIMEOUT=300
+    readonly PYTHON_APPEAR_TIMEOUT=30
+    readonly PID_APPEAR_TIMEOUT=5
+
     ui_port=0
     ui_port_secure=0
     ui_listening_address=''
@@ -141,9 +143,10 @@ StartQPKG()
     fi
 
     WaitForGit || return 1
-
     PullGitRepo "$QPKG_NAME" "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_PATH"
-    [[ $? -eq 0 && $(type -t UpdateLanguages) = 'function' ]] && UpdateLanguages
+
+    WaitForPython || return 1
+    [[ $(type -t UpdateLanguages) = 'function' ]] && UpdateLanguages
 
     EnsureConfigFileExists
     LoadUIPorts app || return
@@ -187,7 +190,7 @@ StopQPKG()
     pid=$(<$DAEMON_PID_PATHFILE)
     kill "$pid"
     DisplayWaitCommitToLog '* stopping daemon with SIGTERM:'
-    DisplayWait "(no-more than $STOP_TIMEOUT seconds):"
+    DisplayWait "(no-more than $DAEMON_STOP_TIMEOUT seconds):"
 
     while true; do
         while [[ -d /proc/$pid ]]; do
@@ -195,7 +198,7 @@ StopQPKG()
             ((acc++))
             DisplayWait "$acc,"
 
-            if [[ $acc -ge $STOP_TIMEOUT ]]; then
+            if [[ $acc -ge $DAEMON_STOP_TIMEOUT ]]; then
                 DisplayCommitToLog 'failed!'
                 DisplayCommitToLog '* stopping daemon with SIGKILL'
                 kill -9 "$pid" 2> /dev/null
@@ -330,6 +333,92 @@ LoadAppVersion()
 
 #### functions specific to this app appear above ###
 
+
+WaitForGit()
+    {
+
+    if WaitForFileToAppear "$GIT_CMD" "$GIT_APPEAR_TIMEOUT"; then
+        . /etc/profile &>/dev/null
+        . /root/.profile &>/dev/null
+        return 0
+    else
+        return 1
+    fi
+
+    }
+
+WaitForPython()
+    {
+
+    if WaitForFileToAppear "$PYTHON" "$PYTHON_APPEAR_TIMEOUT"; then
+        return 0
+    else
+        return 1
+    fi
+
+    }
+
+WaitForPID()
+    {
+
+    if WaitForFileToAppear "$DAEMON_PID_PATHFILE" "$PID_APPEAR_TIMEOUT"; then
+        sleep 1       # wait one more second to allow file to be written-into
+        return 0
+    else
+        return 1
+    fi
+
+    }
+
+WaitForFileToAppear()
+    {
+
+    # input:
+    #   $1 = pathfilename to watch for
+    #   $2 = timeout in seconds (optional) - default 30
+
+    # output:
+    #   $? = 0 (file was found) or 1 (file not found: timeout)
+
+    [[ -z $1 ]] && return
+
+    if [[ -n $2 ]]; then
+        MAX_SECONDS=$2
+    else
+        MAX_SECONDS=30
+    fi
+
+    if [[ ! -e $1 ]]; then
+        DisplayWaitCommitToLog "* waiting for $(FormatAsFileName "$1") to appear:"
+        DisplayWait "(no-more than $MAX_SECONDS seconds):"
+
+        (
+            for ((count=1; count<=MAX_SECONDS; count++)); do
+                sleep 1
+                DisplayWait "$count,"
+                if [[ -e $1 ]]; then
+                    Display 'OK'
+                    CommitLog "visible in $count second$(DisplayPlural "$count")"
+                    true
+                    exit    # only this sub-shell
+                fi
+            done
+            false
+        )
+
+        if [[ $? -ne 0 ]]; then
+            DisplayCommitToLog 'failed!'
+            DisplayErrCommitAllLogs "$(FormatAsFileName "$1") not found! (exceeded timeout: $MAX_SECONDS seconds)"
+            return 1
+        fi
+    fi
+
+    DisplayDoneCommitToLog "file $(FormatAsFileName "$1"): exists"
+
+    return 0
+
+    }
+
 EnsureConfigFileExists()
     {
 
@@ -377,7 +466,7 @@ PullGitRepo()
     if [[ ! -d $QPKG_GIT_PATH/.git ]]; then
         ExecuteAndLog "cloning $(FormatAsPackageName "$1") from remote repository" "$GIT_CMD clone --branch $3 $DEPTH -c advice.detachedHead=false $GIT_HTTPS_URL $QPKG_GIT_PATH || $GIT_CMD clone --branch $3 $DEPTH -c advice.detachedHead=false $GIT_HTTP_URL $QPKG_GIT_PATH"
     else
-        ExecuteAndLog "updating $(FormatAsPackageName "$1") from remote repository" "$GIT_CMD -C $QPKG_GIT_PATH pull"
+        ExecuteAndLog "updating $(FormatAsPackageName "$1") from remote repository" "$GIT_CMD -C $QPKG_GIT_PATH reset --hard; $GIT_CMD -C $QPKG_GIT_PATH pull"
     fi
 
     installed_branch=$($GIT_CMD -C "$QPKG_GIT_PATH" branch | $GREP_CMD '^\*' | $SED_CMD 's|^\* ||')
@@ -1013,6 +1102,21 @@ DisplayWait()
 
     }
 
+IsQNAP()
+    {
+
+    # is this a QNAP NAS?
+
+    if [[ ! -e /etc/init.d/functions ]]; then
+        FormatAsDisplayError 'QTS functions missing (is this a QNAP NAS?)'
+        SetError
+        return 1
+    fi
+
+    return 0
+
+    }
+
 CommitOperationToLog()
     {
 
@@ -1101,73 +1205,10 @@ ColourReset()
 
     }
 
-WaitForPID()
+DisplayPlural()
     {
 
-    local -r MAX_SECONDS=5
-
-    if [[ ! -e $DAEMON_PID_PATHFILE ]]; then
-        DisplayWaitCommitToLog "* waiting for $(FormatAsFileName "$DAEMON_PID_PATHFILE") to appear:"
-        DisplayWait "(no-more than $MAX_SECONDS seconds):"
-
-        (
-            for ((count=1; count<=MAX_SECONDS; count++)); do
-                sleep 1
-                DisplayWait "$count,"
-                if [[ -e $DAEMON_PID_PATHFILE ]]; then
-                    Display 'OK'
-                    CommitLog "visible in $count second$([[ $count -ne 1 ]] && echo 's')"
-                    [[ $count -gt 1 ]] && sleep 1       # wait one more second to allow for file creation
-                    true
-                    exit    # only this sub-shell
-                fi
-            done
-            false
-        )
-
-        if [[ $? -ne 0 ]]; then
-            DisplayCommitToLog 'failed!'
-            DisplayErrCommitAllLogs "$(FormatAsFileName "$DAEMON_PID_PATHFILE") not found! (exceeded timeout: $MAX_SECONDS seconds)"
-            return 1
-        fi
-    fi
-
-    }
-
-WaitForGit()
-    {
-
-    local -r MAX_SECONDS=300
-
-    if [[ ! -e $GIT_CMD ]]; then
-        DisplayWaitCommitToLog "* waiting for $(FormatAsFileName "$GIT_CMD") to appear:"
-        DisplayWait "(no-more than $MAX_SECONDS seconds):"
-
-        (
-            for ((count=1; count<=MAX_SECONDS; count++)); do
-                sleep 1
-                DisplayWait "$count,"
-                if [[ -e $GIT_CMD ]]; then
-                    Display 'OK'
-                    CommitLog "visible in $count second$([[ $count -ne 1 ]] && echo 's')"
-                    [[ $count -gt 1 ]] && sleep 1       # wait one more second to allow for file creation
-                    true
-                    exit    # only this sub-shell
-                fi
-            done
-            false
-        )
-
-        if [[ $? -ne 0 ]]; then
-            DisplayCommitToLog 'failed!'
-            DisplayErrCommitAllLogs "$(FormatAsFileName "$GIT_CMD") not found! (exceeded timeout: $MAX_SECONDS seconds)"
-            return 1
-        else
-            # if here, then testfile has appeared, so reload environment
-            . /etc/profile &>/dev/null
-            . /root/.profile &>/dev/null
-        fi
-    fi
+    [[ $1 -ne 1 ]] && echo 's'
 
     }
 
