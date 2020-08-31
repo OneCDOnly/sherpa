@@ -18,10 +18,10 @@ Init()
         readonly QPKG_NAME=SickChill
 
     # for Python-based remote apps
-        readonly SOURCE_GIT_URL=http://github.com/sickchill/sickchill.git
-        readonly SOURCE_GIT_BRANCH=develop
+        #readonly SOURCE_GIT_URL=http://github.com/sickchill/sickchill.git
+        #readonly SOURCE_GIT_BRANCH=develop
         # 'shallow' (depth 1) or 'single-branch' (note: 'shallow' implies a 'single-branch' too)
-        readonly SOURCE_GIT_DEPTH=single-branch
+        #readonly SOURCE_GIT_DEPTH=single-branch
         readonly TARGET_SCRIPT=SickChill.py
         readonly PYTHON=/opt/bin/python3
 
@@ -58,8 +58,8 @@ Init()
     local -r OPKG_PATH=/opt/bin:/opt/sbin
     local -r BACKUP_PATH=$($GETCFG_CMD SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
     readonly BACKUP_PATHFILE=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
-    export PATH="$OPKG_PATH:$($SED_CMD "s|$OPKG_PATH||" <<< $PATH)"
-    [[ -n $PYTHON ]] && export PYTHONPATH=$PYTHON
+    #export PATH="$OPKG_PATH:$($SED_CMD "s|$OPKG_PATH||" <<< $PATH)"
+    #[[ -n $PYTHON ]] && export PYTHONPATH=$PYTHON
 
     # all timeouts are in seconds
     readonly DAEMON_STOP_TIMEOUT=60
@@ -73,9 +73,9 @@ Init()
     ui_listening_address=''
 
     # application-specific
-    readonly APP_VERSION_PATHFILE=$QPKG_REPO_PATH/sickchill/version.py
-    readonly APP_VERSION_STORE_PATHFILE=$($DIRNAME_CMD "$APP_VERSION_PATHFILE")/version.stored
-    readonly TARGET_SCRIPT_PATHFILE=$QPKG_REPO_PATH/$TARGET_SCRIPT
+    #readonly APP_VERSION_PATHFILE=$QPKG_REPO_PATH/sickchill/version.py
+    #readonly APP_VERSION_STORE_PATHFILE=$($DIRNAME_CMD "$APP_VERSION_PATHFILE")/version.stored
+    #readonly TARGET_SCRIPT_PATHFILE=$QPKG_REPO_PATH/$TARGET_SCRIPT
 
     if [[ -z $LANG ]]; then
         export LANG=en_US.UTF-8
@@ -88,7 +88,7 @@ Init()
 
     # specific launch arguments
     if [[ -n $PYTHON && -n $TARGET_SCRIPT ]]; then
-        readonly LAUNCHER="cd $QPKG_REPO_PATH; $PYTHON $TARGET_SCRIPT_PATHFILE --daemon --nolaunch --datadir $($DIRNAME_CMD "$QPKG_INI_PATHFILE") --pidfile $DAEMON_PID_PATHFILE"
+        readonly LAUNCHER="$TARGET_SCRIPT --daemon --nolaunch --datadir $($DIRNAME_CMD "$QPKG_INI_PATHFILE") --pidfile $DAEMON_PID_PATHFILE"
     else
         DisplayErrCommitAllLogs 'found nothing to launch!'
         SetError
@@ -142,8 +142,8 @@ StartQPKG()
         IsNotRestartPending && return
     fi
 
-    WaitForGit || return 1
-    PullGitRepo "$QPKG_NAME" "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_PATH"
+    #WaitForGit || return 1
+    #PullGitRepo "$QPKG_NAME" "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_PATH"
 
     WaitForPython || return 1
     [[ $(type -t UpdateLanguages) = 'function' ]] && UpdateLanguages
@@ -158,6 +158,27 @@ StartQPKG()
         DisplayErrCommitAllLogs "unable to start daemon: ports $ui_port or $ui_port_secure are already in use!"
         return 1
     fi
+
+    cd $QPKG_PATH
+    if [[ ! -d $QPKG_PATH/env ]]; then 
+	$PYTHON -m pip install --upgrade pip
+	$PYTHON -m pip install --user virtualenv
+        # create venv without pip due to entware pip issues.
+	$PYTHON -m venv --without-pip env
+        # activate venev
+        source env/bin/activate
+        # Within it, invoke this well-known script to manually install pip(1) into env
+        curl https://bootstrap.pypa.io/get-pip.py | python3
+        deactivate
+        # Reactivate now including the pip(1) command.
+        source env/bin/activate
+        # And finally, upgrade pip(1) itself  
+        pip install --upgrade pip
+        deactivate
+    fi
+    source env/bin/activate
+    python3 -m pip install sickchill
+    python3 -m pip install --upgrade sickchill
 
     ExecuteAndLog 'starting daemon' "$LAUNCHER" log:everything || return 1
     WaitForPID || return 1
@@ -619,7 +640,7 @@ IsDaemonActive()
     # $? = 0 : $TARGET_SCRIPT_PATHFILE is in memory
     # $? = 1 : $TARGET_SCRIPT_PATHFILE is not in memory
 
-    if [[ -e $DAEMON_PID_PATHFILE && -d /proc/$(<$DAEMON_PID_PATHFILE) && -n $TARGET_SCRIPT_PATHFILE && $(</proc/"$(<$DAEMON_PID_PATHFILE)"/cmdline) =~ $TARGET_SCRIPT_PATHFILE ]]; then
+    if [[ -e $DAEMON_PID_PATHFILE && -d /proc/$(<$DAEMON_PID_PATHFILE) && -n $TARGET_SCRIPT && $(</proc/"$(<$DAEMON_PID_PATHFILE)"/cmdline) =~ $TARGET_SCRIPT ]]; then
         DisplayDoneCommitToLog "daemon IS active: PID $(<$DAEMON_PID_PATHFILE)"
         return
     fi
@@ -1219,7 +1240,7 @@ if IsNotError; then
         start|--start)
             SetServiceOperation "$1"
             # ensure those still on SickBeard.py are using the updated repo
-            if [[ ! -e $TARGET_SCRIPT_PATHFILE && -e $($DIRNAME_CMD "$TARGET_SCRIPT_PATHFILE")/SickBeard.py ]]; then
+            if [[ ! -e $TARGET_SCRIPT && -e $($DIRNAME_CMD "$TARGET_SCRIPT")/SickBeard.py ]]; then
                 CleanLocalClone
             else
                 StartQPKG || SetError
