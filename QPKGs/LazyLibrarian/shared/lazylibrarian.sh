@@ -54,6 +54,7 @@ Init()
     local -r OPKG_PATH=/opt/bin:/opt/sbin
     local -r BACKUP_PATH=$($GETCFG_CMD SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
     readonly BACKUP_PATHFILE=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
+    readonly APPARENT_PATH=/share/$($GETCFG_CMD SHARE_DEF defDownload -d Qdownload -f /etc/config/def_share.info)/$QPKG_NAME
     export PATH="$OPKG_PATH:$($SED_CMD "s|$OPKG_PATH||" <<< $PATH)"
     [[ -n $PYTHON ]] && export PYTHONPATH=$PYTHON
 
@@ -65,7 +66,6 @@ Init()
     readonly APP_VERSION_STORE_PATHFILE=$($DIRNAME_CMD "$APP_VERSION_PATHFILE")/version.stored
     readonly TARGET_SCRIPT_PATHFILE=$QPKG_REPO_PATH/$TARGET_SCRIPT
     readonly LAUNCHER="cd $QPKG_REPO_PATH; $PYTHON $TARGET_SCRIPT_PATHFILE --daemon --nolaunch --datadir $($DIRNAME_CMD "$QPKG_INI_PATHFILE") --config $QPKG_INI_PATHFILE --pidfile $DAEMON_PID_PATHFILE"
-    readonly APPARENT_PATH=/share/$($GETCFG_CMD SHARE_DEF defDownload -d Qdownload -f /etc/config/def_share.info)/$QPKG_NAME
 
     if [[ -n $PYTHON ]]; then
         readonly LAUNCH_TARGET=$PYTHON
@@ -136,7 +136,7 @@ StartQPKG()
         IsDaemonActive && return
     fi
 
-    if [[ -z $DAEMON_PID_PATHFILE ]]; then  # kludge: for nzbToMedia - when cleaning, ignore restart and start anyway to create repo and restore config
+    if [[ -z $DAEMON_PID_PATHFILE ]]; then  # nzbToMedia: when cleaning, ignore restart and start anyway to create repo and restore config
         if IsRestore || IsReset; then
             IsNotRestartPending && return
         fi
@@ -1224,7 +1224,12 @@ if IsNotError; then
     case $1 in
         start|--start)
             SetServiceOperation "$1"
-            StartQPKG || SetError
+            # ensure those still on SickBeard.py are using the updated repo
+            if [[ ! -e $TARGET_SCRIPT_PATHFILE && -e $($DIRNAME_CMD "$TARGET_SCRIPT_PATHFILE")/SickBeard.py ]]; then
+                CleanLocalClone
+            else
+                StartQPKG || SetError
+            fi
             ;;
         stop|--stop)
             SetServiceOperation "$1"

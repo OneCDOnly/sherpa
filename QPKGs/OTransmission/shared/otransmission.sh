@@ -51,6 +51,7 @@ Init()
     local -r OPKG_PATH=/opt/bin:/opt/sbin
     local -r BACKUP_PATH=$($GETCFG_CMD SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
     readonly BACKUP_PATHFILE=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
+    readonly APPARENT_PATH=/share/$($GETCFG_CMD SHARE_DEF defDownload -d Qdownload -f /etc/config/def_share.info)/$QPKG_NAME
     export PATH="$OPKG_PATH:$($SED_CMD "s|$OPKG_PATH||" <<< $PATH)"
     [[ -n $PYTHON ]] && export PYTHONPATH=$PYTHON
 
@@ -58,6 +59,9 @@ Init()
     readonly QPKG_INI_PATHFILE=$QPKG_PATH/config/settings.json
     readonly QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.def
     readonly DAEMON_PID_PATHFILE=/var/run/$QPKG_NAME.pid
+    readonly APP_VERSION_PATHFILE=''
+    readonly APP_VERSION_STORE_PATHFILE=$($DIRNAME_CMD "$APP_VERSION_PATHFILE")/version.stored
+    readonly TARGET_SCRIPT_PATHFILE=''
     readonly LAUNCHER="$TARGET_DAEMON --config-dir $($DIRNAME_CMD "$QPKG_INI_PATHFILE") --pid-file $DAEMON_PID_PATHFILE"
 
     if [[ -n $PYTHON ]]; then
@@ -129,8 +133,14 @@ StartQPKG()
         IsDaemonActive && return
     fi
 
-    if IsRestore || IsClean || IsReset; then
-        IsNotRestartPending && return
+    if [[ -z $DAEMON_PID_PATHFILE ]]; then  # nzbToMedia: when cleaning, ignore restart and start anyway to create repo and restore config
+        if IsRestore || IsReset; then
+            IsNotRestartPending && return
+        fi
+    else
+        if IsRestore || IsClean || IsReset; then
+            IsNotRestartPending && return
+        fi
     fi
 
     WaitForGit || return 1
@@ -1154,7 +1164,12 @@ if IsNotError; then
     case $1 in
         start|--start)
             SetServiceOperation "$1"
-            StartQPKG || SetError
+            # ensure those still on SickBeard.py are using the updated repo
+            if [[ ! -e $TARGET_SCRIPT_PATHFILE && -e $($DIRNAME_CMD "$TARGET_SCRIPT_PATHFILE")/SickBeard.py ]]; then
+                CleanLocalClone
+            else
+                StartQPKG || SetError
+            fi
             ;;
         stop|--stop)
             SetServiceOperation "$1"
@@ -1183,7 +1198,13 @@ if IsNotError; then
         c|-c|clean|--clean)
             if [[ $(type -t CleanLocalClone) = 'function' ]]; then
                 SetServiceOperation clean
-                CleanLocalClone || SetError
+
+                if [[ $($DIRNAME_CMD "$QPKG_INI_PATHFILE") = $QPKG_REPO_PATH ]]; then
+                    # nzbToMedia stores the config file in the repo location, so save it and restore again after new clone is complete
+                    { BackupConfig; CleanLocalClone; RestoreConfig ;} || SetError
+                else
+                    CleanLocalClone || SetError
+                fi
             else
                 SetServiceOperation none
                 ShowHelp

@@ -54,6 +54,7 @@ Init()
     local -r OPKG_PATH=/opt/bin:/opt/sbin
     local -r BACKUP_PATH=$($GETCFG_CMD SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
     readonly BACKUP_PATHFILE=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
+    readonly APPARENT_PATH=/share/$($GETCFG_CMD SHARE_DEF defDownload -d Qdownload -f /etc/config/def_share.info)/$QPKG_NAME
     export PATH="$OPKG_PATH:$($SED_CMD "s|$OPKG_PATH||" <<< $PATH)"
     [[ -n $PYTHON ]] && export PYTHONPATH=$PYTHON
 
@@ -65,7 +66,6 @@ Init()
     readonly APP_VERSION_STORE_PATHFILE=$($DIRNAME_CMD "$APP_VERSION_PATHFILE")/version.stored
     readonly TARGET_SCRIPT_PATHFILE=''
     readonly LAUNCHER=''
-    readonly APPARENT_PATH=/share/$($GETCFG_CMD SHARE_DEF defDownload -d Qdownload -f /etc/config/def_share.info)/$QPKG_NAME
 
     if [[ -n $PYTHON ]]; then
         readonly LAUNCH_TARGET=$PYTHON
@@ -508,6 +508,7 @@ IsDaemonActive()
     fi
 
     DisplayDoneCommitToLog 'package NOT active'
+    [[ -f $DAEMON_PID_PATHFILE ]] && rm "$DAEMON_PID_PATHFILE"
     return 1
 
     }
@@ -1000,7 +1001,12 @@ if IsNotError; then
     case $1 in
         start|--start)
             SetServiceOperation "$1"
-            StartQPKG || SetError
+            # ensure those still on SickBeard.py are using the updated repo
+            if [[ ! -e $TARGET_SCRIPT_PATHFILE && -e $($DIRNAME_CMD "$TARGET_SCRIPT_PATHFILE")/SickBeard.py ]]; then
+                CleanLocalClone
+            else
+                StartQPKG || SetError
+            fi
             ;;
         stop|--stop)
             SetServiceOperation "$1"
