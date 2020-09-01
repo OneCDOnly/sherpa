@@ -17,7 +17,8 @@ Init()
     # specific environment
     readonly QPKG_NAME=ODeluge
     readonly TARGET_DAEMON=/opt/bin/deluge-web
-    readonly ORIG_DAEMON_SERVICE_SCRIPT=/opt/etc/init.d/S80deluged
+#     readonly ORIG_DAEMON_SERVICE_SCRIPT=/opt/etc/init.d/S80deluged
+#     readonly ORIG_DAEMON_SERVICE_SCRIPT=/opt/etc/init.d/S81deluge-web
 
     # cherry-pick required binaries
     readonly GREP_CMD=/bin/grep
@@ -50,14 +51,18 @@ Init()
     local -r OPKG_PATH=/opt/bin:/opt/sbin
     local -r BACKUP_PATH=$($GETCFG_CMD SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
     readonly BACKUP_PATHFILE=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
+    readonly APPARENT_PATH=/share/$($GETCFG_CMD SHARE_DEF defDownload -d Qdownload -f /etc/config/def_share.info)/$QPKG_NAME
     export PATH="$OPKG_PATH:$($SED_CMD "s|$OPKG_PATH||" <<< $PATH)"
     [[ -n $PYTHON ]] && export PYTHONPATH=$PYTHON
 
     # application specific
-    readonly QPKG_INI_PATHFILE=$QPKG_PATH/config/config.ini
+    readonly QPKG_INI_PATHFILE=$QPKG_PATH/config/web.conf
     readonly QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.def
     readonly DAEMON_PID_PATHFILE=/var/run/$QPKG_NAME.pid
-    readonly LAUNCHER="$TARGET_DAEMON --config $($DIRNAME_CMD "$QPKG_INI_PATHFILE") --pid-file $DAEMON_PID_PATHFILE web"
+    readonly APP_VERSION_PATHFILE=''
+    readonly APP_VERSION_STORE_PATHFILE=$($DIRNAME_CMD "$APP_VERSION_PATHFILE")/version.stored
+    readonly TARGET_SCRIPT_PATHFILE=''
+    readonly LAUNCHER="$TARGET_DAEMON --config $($DIRNAME_CMD "$QPKG_INI_PATHFILE") --pidfile $DAEMON_PID_PATHFILE"
 
     if [[ -n $PYTHON ]]; then
         readonly LAUNCH_TARGET=$PYTHON
@@ -86,7 +91,7 @@ Init()
     UnsetRestartPending
     EnsureConfigFileExists
     DisableOpkgDaemonStart
-    LoadAppVersion
+#     LoadAppVersion
 
     [[ ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
 
@@ -128,8 +133,14 @@ StartQPKG()
         IsDaemonActive && return
     fi
 
-    if IsRestore || IsClean || IsReset; then
-        IsNotRestartPending && return
+    if [[ -z $DAEMON_PID_PATHFILE ]]; then  # nzbToMedia: when cleaning, ignore restart and start anyway to create repo and restore config
+        if IsRestore || IsReset; then
+            IsNotRestartPending && return
+        fi
+    else
+        if IsRestore || IsClean || IsReset; then
+            IsNotRestartPending && return
+        fi
     fi
 
     WaitForGit || return 1
@@ -264,8 +275,9 @@ LoadUIPorts()
     case $1 in
         app)
             # Read the current application UI ports from application configuration
-            ui_port=$($JQ_CMD -r '."rpc-port"' < "$QPKG_INI_PATHFILE")
-            # Transmission doesn't appear to contain any SSL UI ability, so ...
+#             ui_port=$($GETCFG_CMD '' ControlPort -d 0 -f "$QPKG_INI_PATHFILE")
+#             ui_port_secure=$($GETCFG_CMD '' SecurePort -d 0 -f "$QPKG_INI_PATHFILE")
+            ui_port=8112
             ui_port_secure=0
             ;;
         qts)
@@ -286,7 +298,7 @@ LoadUIPorts()
     fi
 
     # Always read this from the application configuration
-    ui_listening_address=$($JQ_CMD -r '."rpc-bind-address"' < "$QPKG_INI_PATHFILE")
+    ui_listening_address=$($GETCFG_CMD '' ControlIP -f "$QPKG_INI_PATHFILE")
 
     return 0
 
@@ -295,8 +307,7 @@ LoadUIPorts()
 IsSSLEnabled()
     {
 
-    # Transmission doesn't appear to contain any SSL UI ability, so ...
-    false
+    [[ $($GETCFG_CMD '' SecureControl -d no -f "$QPKG_INI_PATHFILE") = yes ]]
 
     }
 
@@ -405,6 +416,15 @@ WaitForFileToAppear()
 DisableOpkgDaemonStart()
     {
 
+    ORIG_DAEMON_SERVICE_SCRIPT=/opt/etc/init.d/S80deluged
+
+    if [[ -n $ORIG_DAEMON_SERVICE_SCRIPT && -x $ORIG_DAEMON_SERVICE_SCRIPT ]]; then
+        $ORIG_DAEMON_SERVICE_SCRIPT stop        # stop default daemon
+        chmod -x $ORIG_DAEMON_SERVICE_SCRIPT    # ... and ensure Entware doesn't re-launch it on startup
+    fi
+
+	ORIG_DAEMON_SERVICE_SCRIPT=/opt/etc/init.d/S81deluge-web
+
     if [[ -n $ORIG_DAEMON_SERVICE_SCRIPT && -x $ORIG_DAEMON_SERVICE_SCRIPT ]]; then
         $ORIG_DAEMON_SERVICE_SCRIPT stop        # stop default daemon
         chmod -x $ORIG_DAEMON_SERVICE_SCRIPT    # ... and ensure Entware doesn't re-launch it on startup
@@ -465,7 +485,7 @@ ExecuteAndLog()
     local result=0
     local returncode=0
 
-    DisplayWaitCommitToLog "* $1:"
+    DisplayWaitCommitToLog "* $1: [$2]"
     exec_msgs=$(eval "$2" 2>&1)
     result=$?
 
@@ -1153,7 +1173,12 @@ if IsNotError; then
     case $1 in
         start|--start)
             SetServiceOperation "$1"
-            StartQPKG || SetError
+            # ensure those still on SickBeard.py are using the updated repo
+            if [[ ! -e $TARGET_SCRIPT_PATHFILE && -e $($DIRNAME_CMD "$TARGET_SCRIPT_PATHFILE")/SickBeard.py ]]; then
+                CleanLocalClone
+            else
+                StartQPKG || SetError
+            fi
             ;;
         stop|--stop)
             SetServiceOperation "$1"
@@ -1182,7 +1207,13 @@ if IsNotError; then
         c|-c|clean|--clean)
             if [[ $(type -t CleanLocalClone) = 'function' ]]; then
                 SetServiceOperation clean
-                CleanLocalClone || SetError
+
+                if [[ $($DIRNAME_CMD "$QPKG_INI_PATHFILE") = $QPKG_REPO_PATH ]]; then
+                    # nzbToMedia stores the config file in the repo location, so save it and restore again after new clone is complete
+                    { BackupConfig; CleanLocalClone; RestoreConfig ;} || SetError
+                else
+                    CleanLocalClone || SetError
+                fi
             else
                 SetServiceOperation none
                 ShowHelp
