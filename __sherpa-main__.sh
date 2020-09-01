@@ -859,7 +859,9 @@ ShowInstallerOutcome()
     {
 
     if IsUpgradeAllApps; then
-        if IsNotError; then
+        if [[ ${#QPKGS_upgradable[@]} -eq 0 ]]; then
+            ShowAsDone "no QPKGs required upgrading!"
+        elif IsNotError; then
             ShowAsDone "all upgradable QPKGs were successfully upgraded!"
         else
             ShowAsError "upgrade failed! [$code_pointer]"
