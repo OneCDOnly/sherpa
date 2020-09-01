@@ -12,21 +12,16 @@
 Init()
     {
 
+    IsQNAP || return 1
+
     # specific environment
-        readonly QPKG_NAME=nzbToMedia
-
-    # for Python-based remote apps
-        readonly SOURCE_GIT_URL=https://github.com/clinton-hall/nzbToMedia.git
-        readonly SOURCE_GIT_BRANCH=master
-        # 'shallow' (depth 1) or 'single-branch' (note: 'shallow' implies a 'single-branch' too)
-        readonly SOURCE_GIT_DEPTH=shallow
-        readonly PYTHON=/opt/bin/python3
-
-    if [[ ! -e /etc/init.d/functions ]]; then
-        FormatAsDisplayError 'QTS functions missing (is this a QNAP NAS?)'
-        SetError
-        return 1
-    fi
+    readonly QPKG_NAME=nzbToMedia
+    readonly SOURCE_GIT_URL=https://github.com/clinton-hall/nzbToMedia.git
+    readonly SOURCE_GIT_BRANCH=master
+    # 'shallow' (depth 1) or 'single-branch' (note: 'shallow' implies a 'single-branch' too)
+    readonly SOURCE_GIT_DEPTH=shallow
+    readonly TARGET_SCRIPT=''
+    readonly PYTHON=/opt/bin/python3
 
     # cherry-pick required binaries
     readonly GREP_CMD=/bin/grep
@@ -47,28 +42,47 @@ Init()
 
     readonly GIT_CMD=/opt/bin/git
     readonly GNU_LESS_CMD=/opt/bin/less
+    readonly JQ_CMD=/opt/bin/jq
 
     # generic environment
     readonly QTS_QPKG_CONF_PATHFILE=/etc/config/qpkg.conf
     readonly QPKG_PATH=$($GETCFG_CMD $QPKG_NAME Install_Path -f $QTS_QPKG_CONF_PATHFILE)
     readonly QPKG_REPO_PATH=$QPKG_PATH/$QPKG_NAME
     readonly QPKG_VERSION=$($GETCFG_CMD $QPKG_NAME Version -f $QTS_QPKG_CONF_PATHFILE)
-    readonly QPKG_INI_PATHFILE=$QPKG_REPO_PATH/autoProcessMedia.cfg
-    readonly QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.spec
     readonly SERVICE_STATUS_PATHFILE=/var/run/$QPKG_NAME.last.operation
     readonly SERVICE_LOG_PATHFILE=/var/log/$QPKG_NAME.log
-    readonly DAEMON_PID_PATHFILE=/var/run/$QPKG_NAME.pid
     local -r OPKG_PATH=/opt/bin:/opt/sbin
     local -r BACKUP_PATH=$($GETCFG_CMD SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
     readonly BACKUP_PATHFILE=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
-    [[ -n $PYTHON ]] && export PYTHONPATH=$PYTHON
     export PATH="$OPKG_PATH:$($SED_CMD "s|$OPKG_PATH||" <<< $PATH)"
-    readonly APPARENT_PATH=/share/$($GETCFG_CMD SHARE_DEF defDownload -d Qdownload -f /etc/config/def_share.info)/$QPKG_NAME
+    [[ -n $PYTHON ]] && export PYTHONPATH=$PYTHON
 
-    # application-specific
+    # application specific
+    readonly QPKG_INI_PATHFILE=$QPKG_REPO_PATH/autoProcessMedia.cfg
+    readonly QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.spec
+    readonly DAEMON_PID_PATHFILE=''
     readonly APP_VERSION_PATHFILE=$QPKG_REPO_PATH/nzbtomedia/version.py
     readonly APP_VERSION_STORE_PATHFILE=$($DIRNAME_CMD "$APP_VERSION_PATHFILE")/version.stored
-    readonly TARGET_SCRIPT_PATHFILE=$QPKG_REPO_PATH/$TARGET_SCRIPT
+    readonly TARGET_SCRIPT_PATHFILE=''
+    readonly LAUNCHER=''
+    readonly APPARENT_PATH=/share/$($GETCFG_CMD SHARE_DEF defDownload -d Qdownload -f /etc/config/def_share.info)/$QPKG_NAME
+
+    if [[ -n $PYTHON ]]; then
+        readonly LAUNCH_TARGET=$PYTHON
+    elif [[ -n $TARGET_DAEMON ]]; then
+        readonly LAUNCH_TARGET=$TARGET_DAEMON
+    fi
+
+    # all timeouts are in seconds
+    readonly DAEMON_STOP_TIMEOUT=60
+    readonly PORT_CHECK_TIMEOUT=20
+    readonly GIT_APPEAR_TIMEOUT=300
+    readonly LAUNCH_TARGET_APPEAR_TIMEOUT=30
+    readonly PID_APPEAR_TIMEOUT=5
+
+    ui_port=0
+    ui_port_secure=0
+    ui_listening_address=''
 
     if [[ -z $LANG ]]; then
         export LANG=en_US.UTF-8
@@ -78,6 +92,7 @@ Init()
 
     UnsetError
     UnsetRestartPending
+    DisableOpkgDaemonStart
     LoadAppVersion
 
     [[ ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
@@ -103,7 +118,7 @@ ShowHelp()
     DisplayAsHelp 'restore' "restore a previously saved configuration from persistent storage. $(FormatAsPackageName $QPKG_NAME) will be stopped, then restarted."
     DisplayAsHelp 'reset-config' "delete the application configuration, databases and history. $(FormatAsPackageName $QPKG_NAME) will be stopped, then restarted."
     [[ $(type -t ImportFromSAB2) = 'function' ]] && DisplayAsHelp 'import' "create a backup of an installed $(FormatAsPackageName SABnzbdplus) config and restore it into $(FormatAsPackageName $QPKG_NAME)."
-    [[ -n $SOURCE_GIT_URL ]] && DisplayAsHelp 'clean' "wipe the current local copy of $(FormatAsPackageName $QPKG_NAME), and download it again from remote source. Configuration will be retained."
+    [[ $(type -t CleanLocalClone) = 'function' ]] && DisplayAsHelp 'clean' "wipe the current local copy of $(FormatAsPackageName $QPKG_NAME), and download it again from remote source. Configuration will be retained."
     DisplayAsHelp 'log' 'display this service script runtime log.'
     DisplayAsHelp 'version' 'display the package version number.'
     Display
@@ -120,7 +135,7 @@ StartQPKG()
         IsDaemonActive && return
     fi
 
-    if [[ $QPKG_NAME = nzbToMedia ]]; then  # kludge: for nzbToMedia - when cleaning, ignore restart and start anyway to create repo and restore config
+    if [[ -z $DAEMON_PID_PATHFILE ]]; then  # nzbToMedia: when cleaning, ignore restart and start anyway to create repo and restore config
         if IsRestore || IsReset; then
             IsNotRestartPending && return
         fi
@@ -133,9 +148,10 @@ StartQPKG()
     local -r SAB_MIN_VERSION=200809
 
     WaitForGit || return 1
+    [[ $(type -t PullGitRepo) = 'function' ]] && PullGitRepo "$QPKG_NAME" "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_PATH"
 
-    PullGitRepo "$QPKG_NAME" "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_PATH"
-    [[ $? -eq 0 && $(type -t UpdateLanguages) = 'function' ]] && UpdateLanguages
+    WaitForLaunchTarget || return 1
+    [[ $(type -t UpdateLanguages) = 'function' ]] && UpdateLanguages
 
     if [[ $($GETCFG_CMD SABnzbdplus Enable -f $QTS_QPKG_CONF_PATHFILE) = TRUE ]]; then
         DisplayErrCommitAllLogs "unable to link from package to target: installed $(FormatAsPackageName SABnzbdplus) QPKG must be replaced with $(FormatAsPackageName SABnzbd) $SAB_MIN_VERSION or later"
@@ -254,6 +270,101 @@ LoadAppVersion()
     }
 
 #### functions specific to this app appear above ###
+
+WaitForGit()
+    {
+
+    if WaitForFileToAppear "$GIT_CMD" "$GIT_APPEAR_TIMEOUT"; then
+        . /etc/profile &>/dev/null
+        . /root/.profile &>/dev/null
+        return 0
+    else
+        return 1
+    fi
+
+    }
+
+WaitForLaunchTarget()
+    {
+
+    if WaitForFileToAppear "$LAUNCH_TARGET" "$LAUNCH_TARGET_APPEAR_TIMEOUT"; then
+        return 0
+    else
+        return 1
+    fi
+
+    }
+
+WaitForPID()
+    {
+
+    if WaitForFileToAppear "$DAEMON_PID_PATHFILE" "$PID_APPEAR_TIMEOUT"; then
+        sleep 1       # wait one more second to allow file to have PID written into it
+        return 0
+    else
+        return 1
+    fi
+
+    }
+
+WaitForFileToAppear()
+    {
+
+    # input:
+    #   $1 = pathfilename to watch for
+    #   $2 = timeout in seconds (optional) - default 30
+
+    # output:
+    #   $? = 0 (file was found) or 1 (file not found: timeout)
+
+    [[ -z $1 ]] && return
+
+    if [[ -n $2 ]]; then
+        MAX_SECONDS=$2
+    else
+        MAX_SECONDS=30
+    fi
+
+    if [[ ! -e $1 ]]; then
+        DisplayWaitCommitToLog "* waiting for $(FormatAsFileName "$1") to appear:"
+        DisplayWait "(no-more than $MAX_SECONDS seconds):"
+
+        (
+            for ((count=1; count<=MAX_SECONDS; count++)); do
+                sleep 1
+                DisplayWait "$count,"
+                if [[ -e $1 ]]; then
+                    Display 'OK'
+                    CommitLog "visible in $count second$(DisplayPlural "$count")"
+                    true
+                    exit    # only this sub-shell
+                fi
+            done
+            false
+        )
+
+        if [[ $? -ne 0 ]]; then
+            DisplayCommitToLog 'failed!'
+            DisplayErrCommitAllLogs "$(FormatAsFileName "$1") not found! (exceeded timeout: $MAX_SECONDS seconds)"
+            return 1
+        fi
+    fi
+
+    DisplayDoneCommitToLog "file $(FormatAsFileName "$1"): exists"
+
+    return 0
+
+    }
+
+DisableOpkgDaemonStart()
+    {
+
+    if [[ -n $ORIG_DAEMON_SERVICE_SCRIPT && -x $ORIG_DAEMON_SERVICE_SCRIPT ]]; then
+        $ORIG_DAEMON_SERVICE_SCRIPT stop        # stop default daemon
+        chmod -x $ORIG_DAEMON_SERVICE_SCRIPT    # ... and ensure Entware doesn't re-launch it on startup
+    fi
+
+    }
 
 EnsureConfigFileExists()
     {
@@ -404,8 +515,8 @@ IsDaemonActive()
 IsNotDaemonActive()
     {
 
-    # $? = 1 : package is 'started'
-    # $? = 0 : package is 'stopped'
+    # $? = 1 if $QPKG_NAME is active
+    # $? = 0 if $QPKG_NAME is not active
 
     ! IsDaemonActive
 
@@ -773,6 +884,21 @@ DisplayWait()
 
     }
 
+IsQNAP()
+    {
+
+    # is this a QNAP NAS?
+
+    if [[ ! -e /etc/init.d/functions ]]; then
+        FormatAsDisplayError 'QTS functions missing (is this a QNAP NAS?)'
+        SetError
+        return 1
+    fi
+
+    return 0
+
+    }
+
 CommitOperationToLog()
     {
 
@@ -861,73 +987,10 @@ ColourReset()
 
     }
 
-WaitForPID()
+DisplayPlural()
     {
 
-    local -r MAX_SECONDS=5
-
-    if [[ ! -e $DAEMON_PID_PATHFILE ]]; then
-        DisplayWaitCommitToLog "* waiting for $(FormatAsFileName "$DAEMON_PID_PATHFILE") to appear:"
-        DisplayWait "(no-more than $MAX_SECONDS seconds):"
-
-        (
-            for ((count=1; count<=MAX_SECONDS; count++)); do
-                sleep 1
-                DisplayWait "$count,"
-                if [[ -e $DAEMON_PID_PATHFILE ]]; then
-                    Display 'OK'
-                    CommitLog "visible in $count second$([[ $count -ne 1 ]] && echo 's')"
-                    [[ $count -gt 1 ]] && sleep 1       # wait one more second to allow for file creation
-                    true
-                    exit    # only this sub-shell
-                fi
-            done
-            false
-        )
-
-        if [[ $? -ne 0 ]]; then
-            DisplayCommitToLog 'failed!'
-            DisplayErrCommitAllLogs "$(FormatAsFileName "$DAEMON_PID_PATHFILE") not found! (exceeded timeout: $MAX_SECONDS seconds)"
-            return 1
-        fi
-    fi
-
-    }
-
-WaitForGit()
-    {
-
-    local -r MAX_SECONDS=300
-
-    if [[ ! -e $GIT_CMD ]]; then
-        DisplayWaitCommitToLog "* waiting for $(FormatAsFileName "$GIT_CMD") to appear:"
-        DisplayWait "(no-more than $MAX_SECONDS seconds):"
-
-        (
-            for ((count=1; count<=MAX_SECONDS; count++)); do
-                sleep 1
-                DisplayWait "$count,"
-                if [[ -e $GIT_CMD ]]; then
-                    Display 'OK'
-                    CommitLog "visible in $count second$([[ $count -ne 1 ]] && echo 's')"
-                    [[ $count -gt 1 ]] && sleep 1       # wait one more second to allow for file creation
-                    true
-                    exit    # only this sub-shell
-                fi
-            done
-            false
-        )
-
-        if [[ $? -ne 0 ]]; then
-            DisplayCommitToLog 'failed!'
-            DisplayErrCommitAllLogs "$(FormatAsFileName "$GIT_CMD") not found! (exceeded timeout: $MAX_SECONDS seconds)"
-            return 1
-        else
-            # if here, then testfile has appeared, so reload environment
-            . /etc/profile &>/dev/null
-            . /root/.profile &>/dev/null
-        fi
-    fi
+    [[ $1 -ne 1 ]] && echo 's'
 
     }
 
@@ -964,9 +1027,19 @@ if IsNotError; then
             RestoreConfig || SetError
             ;;
         c|-c|clean|--clean)
-            SetServiceOperation clean
-            # this app stores the config file in the repo location, so save it and restore again after new clone is complete
-            { BackupConfig; CleanLocalClone; RestoreConfig ;} || SetError
+            if [[ $(type -t CleanLocalClone) = 'function' ]]; then
+                SetServiceOperation clean
+
+                if [[ $($DIRNAME_CMD "$QPKG_INI_PATHFILE") = $QPKG_REPO_PATH ]]; then
+                    # nzbToMedia stores the config file in the repo location, so save it and restore again after new clone is complete
+                    { BackupConfig; CleanLocalClone; RestoreConfig ;} || SetError
+                else
+                    CleanLocalClone || SetError
+                fi
+            else
+                SetServiceOperation none
+                ShowHelp
+            fi
             ;;
         l|-l|log|--log)
             SetServiceOperation log
@@ -975,6 +1048,15 @@ if IsNotError; then
         v|-v|version|--version)
             SetServiceOperation version
             Display "$QPKG_VERSION"
+            ;;
+        import|--import)
+            if [[ $(type -t ImportFromSAB2) = 'function' ]]; then
+                SetServiceOperation "$1"
+                ImportFromSAB2 || SetError
+            else
+                SetServiceOperation none
+                ShowHelp
+            fi
             ;;
         *)
             SetServiceOperation none
