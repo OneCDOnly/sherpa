@@ -748,7 +748,7 @@ ShowProblemHelp()
 
     DisplayAsHelpOptionExample 'restart all applications (only upgrades the internal applications, not the QPKG)' '--restart-all'
 
-#     DisplayAsHelpOptionExample 'upgrade all applications (including the QPKGs)' '--upgrade-all'
+    DisplayAsHelpOptionExample 'upgrade all QPKGs (including the internal applications)' '--upgrade-all'
 
     DisplayAsHelpOptionExample 'view the log' '--log'
 
@@ -858,7 +858,14 @@ PasteLogOnline()
 ShowInstallerOutcome()
     {
 
-    if [[ -n $TARGET_APP ]]; then
+    if IsUpgradeAllApps; then
+        if IsNotError; then
+            ShowAsDone "all upgradable QPKGs were successfully upgraded!"
+        else
+            ShowAsError "upgrade failed! [$code_pointer]"
+            SetSuggestIssue
+        fi
+    elif [[ -n $TARGET_APP ]]; then
         [[ $reinstall_flag = true ]] && RE='re' || RE=''
 
         if IsNotError; then
@@ -901,6 +908,8 @@ DownloadQPKGs()
         for package in "${QPKG_download_list[@]}"; do
             DownloadQPKG "$package"
         done
+
+        exit
     else
         if IsNotQPKGInstalled Entware; then
             if [[ $TARGET_APP = Entware ]]; then
@@ -913,10 +922,16 @@ DownloadQPKGs()
             fi
         fi
 
-        # kludge: an ugly workaround until QPKG dependency checking works properly
-        (IsQPKGInstalled SABnzbd || [[ $TARGET_APP = SABnzbd ]] ) && [[ $NAS_QPKG_ARCH != none ]] && IsNotQPKGInstalled Par2 && DownloadQPKG Par2
+        if IsUpgradeAllApps; then
+            for package in "${QPKGS_upgradable[@]}"; do
+                DownloadQPKG "$package"
+            done
+        else
+            # kludge: an ugly workaround until QPKG dependency checking works properly
+            (IsQPKGInstalled SABnzbd || [[ $TARGET_APP = SABnzbd ]] ) && [[ $NAS_QPKG_ARCH != none ]] && IsNotQPKGInstalled Par2 && DownloadQPKG Par2
 
-        [[ -n $TARGET_APP ]] && DownloadQPKG "$TARGET_APP"
+            [[ -n $TARGET_APP ]] && DownloadQPKG "$TARGET_APP"
+        fi
     fi
 
     DebugFuncExit
@@ -1113,11 +1128,19 @@ InstallTargetQPKG()
     {
 
     IsAbort && return
-    [[ -z $TARGET_APP ]] && return 1
 
-    DebugFuncEntry
+    local package=''
 
-    [[ $TARGET_APP != Entware ]] && InstallQPKG "$TARGET_APP"
+    if IsUpgradeAllApps; then
+        if [[ -n ${QPKGS_upgradable[*]} ]]; then
+            for package in "${QPKGS_upgradable[@]}"; do
+                InstallQPKG "$package"
+            done
+        fi
+    else
+        [[ -z $TARGET_APP ]] && return 1
+        [[ $TARGET_APP != Entware ]] && InstallQPKG "$TARGET_APP"
+    fi
 
     DebugFuncExit
     return 0
