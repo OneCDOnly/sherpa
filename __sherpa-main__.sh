@@ -90,7 +90,7 @@ Init()
     pip3_cmd=/opt/bin/pip3
 
     # paths and files
-    readonly LOADER_SCRIPT_NAME=sherpa.sh
+    readonly LOADER_SCRIPT_FILE=sherpa.sh
     readonly APP_CENTER_CONFIG_PATHFILE=/etc/config/qpkg.conf
     readonly INSTALL_LOG_FILE=install.log
     readonly DOWNLOAD_LOG_FILE=download.log
@@ -104,7 +104,7 @@ Init()
     readonly EXTERNAL_PACKAGE_ARCHIVE_PATHFILE=/opt/var/opkg-lists/entware
     readonly REMOTE_REPO_URL=https://raw.githubusercontent.com/OneCDOnly/sherpa/master
 
-    local -r DEBUG_LOG_FILE=${LOADER_SCRIPT_NAME%.*}.debug.log
+    local -r DEBUG_LOG_FILE=${LOADER_SCRIPT_FILE%.*}.debug.log
 
     IsOnlyInstance || return 1
 
@@ -332,7 +332,7 @@ Init()
 
     readonly PREV_QPKG_CONFIG_DIRS=(SAB_CONFIG CONFIG Config config)                 # last element is used as target dirname
     readonly PREV_QPKG_CONFIG_FILES=(sabnzbd.ini settings.ini config.cfg config.ini) # last element is used as target filename
-    readonly WORK_PATH=$SHARE_PUBLIC_PATH/${LOADER_SCRIPT_NAME%.*}.tmp
+    readonly WORK_PATH=$SHARE_PUBLIC_PATH/${LOADER_SCRIPT_FILE%.*}.tmp
     readonly DEBUG_LOG_PATHFILE=$SHARE_PUBLIC_PATH/$DEBUG_LOG_FILE
     readonly QPKG_DL_PATH=$WORK_PATH/qpkg.downloads
     readonly IPKG_DL_PATH=$WORK_PATH/ipkg.downloads
@@ -369,7 +369,7 @@ LogRuntimeParameters()
     ParseArgs
 
     if IsNotVisibleDebugging && IsNotVersionOnly; then
-        echo "$(ColourTextBrightWhite "$LOADER_SCRIPT_NAME") ($MANAGER_SCRIPT_VERSION) a mini-package-manager for QNAP NAS"
+        echo "$(ColourTextBrightWhite "$LOADER_SCRIPT_FILE") ($MANAGER_SCRIPT_VERSION) a mini-package-manager for QNAP NAS"
         IsNotVisibleDebugging && echo
     fi
 
@@ -712,7 +712,7 @@ ShowHelp()
 
     local package=''
 
-    echo -e "\nUsage: ./$LOADER_SCRIPT_NAME [PACKAGE]* [OPTION]**"
+    echo -e "\nUsage: ./$LOADER_SCRIPT_FILE [PACKAGE]* [OPTION]**"
 
     echo -e "\n* [PACKAGE] may be specified as any ONE of the following:\n"
     for package in "${QPKGS_user_installable[@]}"; do
@@ -2261,10 +2261,10 @@ IsQNAP()
 IsOnlyInstance()
     {
 
-    readonly RUNTIME_LOCK_PATHFILE=/var/run/$LOADER_SCRIPT_NAME.pid
+    readonly RUNTIME_LOCK_PATHFILE=/var/run/$LOADER_SCRIPT_FILE.pid
 
-    if [[ -e $RUNTIME_LOCK_PATHFILE && -d /proc/$(<$RUNTIME_LOCK_PATHFILE) && -n $LOADER_SCRIPT_NAME && $(</proc/"$(<$RUNTIME_LOCK_PATHFILE)"/cmdline) =~ $LOADER_SCRIPT_NAME ]]; then
-        ShowAsAbort "another instance of $(ColourTextBrightWhite "$LOADER_SCRIPT_NAME") is running"
+    if [[ -e $RUNTIME_LOCK_PATHFILE && -d /proc/$(<$RUNTIME_LOCK_PATHFILE) && -n $LOADER_SCRIPT_FILE && $(</proc/"$(<$RUNTIME_LOCK_PATHFILE)"/cmdline) =~ $LOADER_SCRIPT_FILE ]]; then
+        ShowAsAbort "another instance of $(ColourTextBrightWhite "$LOADER_SCRIPT_FILE") is running"
         return 1
     else
         CreateLock
@@ -2281,7 +2281,7 @@ CheckLoaderAge()
 
     [[ -e $GNU_FIND_CMD ]] || return          # can only do this with GNU 'find'. The old BusyBox 'find' in QTS 4.2.6 doesn't support '-cmin'.
 
-    if [[ -e "$LOADER_SCRIPT_NAME" && -z $($GNU_FIND_CMD "$LOADER_SCRIPT_NAME" -cmin +5) ]]; then
+    if [[ -e "$LOADER_SCRIPT_FILE" && -z $($GNU_FIND_CMD "$LOADER_SCRIPT_FILE" -cmin +5) ]]; then
         ShowAsNote "The $(ColourTextBrightWhite 'sherpa.sh') script does not need updating anymore. It now downloads all the latest information from the Internet everytime it's run. ;)"
     fi
 
@@ -2388,7 +2388,7 @@ DisplayAsHelpOptionExample()
     # $1 = description
     # $2 = example syntax
 
-    printf "\n  - %s:\n       ./$LOADER_SCRIPT_NAME %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$2"
+    printf "\n  - %s:\n       ./$LOADER_SCRIPT_FILE %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$2"
 
     }
 
