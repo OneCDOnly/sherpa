@@ -370,7 +370,7 @@ LogRuntimeParameters()
 
     if IsNotVisibleDebugging && IsNotVersionOnly; then
         echo "$(ColourTextBrightWhite "$LOADER_SCRIPT_FILE") ($MANAGER_SCRIPT_VERSION) a mini-package-manager for QNAP NAS"
-        IsNotVisibleDebugging && echo
+        IsNotVisibleDebugging && IsNotLogViewOnly && echo
     fi
 
     if IsNotVersionOnly; then
