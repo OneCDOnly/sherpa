@@ -2,7 +2,7 @@
 #
 # __sherpa-main__.sh
 #
-# This is the main script for the sherpa mini-package-manager.
+# This is the management script for the sherpa mini-package-manager.
 #
 # A BASH script to install various media-management apps into QNAP NAS.
 #
@@ -40,7 +40,7 @@ Init()
 
     IsQNAP || return 1
 
-    readonly MAIN_SCRIPT_VERSION=200901
+    readonly MANAGER_SCRIPT_VERSION=200902
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -152,7 +152,7 @@ Init()
     UnsetError
     UnsetAbort
     UnsetVisibleDebugging
-    UnsetSatisfyDependenciesOnly
+    UnsetCheckDependencies
     UnsetVersionOnly
     UnsetLogPasteOnly
     UnsetShowAbbreviations
@@ -324,6 +324,7 @@ Init()
     # runtime vars
     QPKGS_to_install=()
     QPKGS_to_uninstall=()
+    QPKGS_to_restart=()
     QPKGS_to_upgrade=()
     QPKGS_to_backup=()
     QPKGS_to_restore=()
@@ -345,9 +346,9 @@ Init()
     readonly MIN_RAM_KB=1048576
     readonly INSTALLED_RAM_KB=$($GREP_CMD MemTotal /proc/meminfo | $CUT_CMD -f2 -d':' | $SED_CMD 's|kB||;s| ||g')
     reinstall_flag=false
-    upgrade_all_apps=false
-    backup_all_apps=false
-    restore_all_apps=false
+#     upgrade_all_apps=false
+#     backup_all_apps=false
+#     restore_all_apps=false
     ignore_space_arg=''
     [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg='--insecure' || curl_insecure_arg=''
 
@@ -371,7 +372,7 @@ LogRuntimeParameters()
     ParseArgs
 
     if IsNotVisibleDebugging && IsNotVersionOnly; then
-        echo "$(ColourTextBrightWhite "$LOADER_SCRIPT_NAME") ($MAIN_SCRIPT_VERSION) a mini-package-manager for QNAP NAS"
+        echo "$(ColourTextBrightWhite "$LOADER_SCRIPT_NAME") ($MANAGER_SCRIPT_VERSION) a mini-package-manager for QNAP NAS"
         IsNotVisibleDebugging && echo
     fi
 
@@ -385,7 +386,7 @@ LogRuntimeParameters()
 
     DebugInfoThickSeparator
     DebugScript 'started' "$($DATE_CMD | $TR_CMD -s ' ')"
-    DebugScript 'version' "$MAIN_SCRIPT_VERSION"
+    DebugScript 'version' "$MANAGER_SCRIPT_VERSION"
     DebugScript 'PID' "$$"
     DebugInfoThinSeparator
     DebugInfo 'Markers: (**) detected, (II) information, (WW) warning, (LL) log file,'
@@ -454,13 +455,17 @@ LogRuntimeParameters()
         return 1
     fi
 
-    if [[ ${#QPKGS_to_install[@]} -eq 0 && ${#QPKGS_to_uninstall[@]} -eq 0 && ${#QPKGS_to_upgrade[@]} -eq 0 && ${#QPKGS_to_backup[@]} -eq 0 && ${#QPKGS_to_restore[@]} -eq 0 ]] && IsNotSatisfyDependenciesOnly && [[ $upgrade_all_apps = false ]]; then
-        ShowAsError 'no valid QPKGs or actions were specified'
-        SetShowAbbreviations
-        return 1
+    if [[ ${#QPKGS_to_install[@]} -eq 0 && ${#QPKGS_to_uninstall[@]} -eq 0 && ${#QPKGS_to_restart[@]} -eq 0 && ${#QPKGS_to_upgrade[@]} -eq 0 && ${#QPKGS_to_backup[@]} -eq 0 && ${#QPKGS_to_restore[@]} -eq 0 && ${#QPKGS_to_status[@]} -eq 0 ]]; then
+        if IsNotInstallAllApps && IsNotUninstallAllApps && IsNotRestartAllApps && IsNotUpgradeAllApps && IsNotBackupAllApps && IsNotRestoreAllApps && IsNotStatusAllApps; then
+            if IsNotCheckDependencies; then
+                ShowAsError 'no valid QPKGs or actions were specified'
+                SetShowAbbreviations
+                return 1
+            fi
+        fi
     fi
 
-    if [[ $backup_all_apps = true && $restore_all_apps = true ]]; then
+    if IsBackupAllApps && IsRestoreAllApps; then
         ShowAsError 'no point running a backup then a restore operation'
         code_pointer=1
         return 1
@@ -579,7 +584,7 @@ ParseArgs()
                 current_operation=''
                 ;;
             -c|c|--check|check)
-                SetSatisfyDependenciesOnly
+                SetCheckDependencies
                 current_operation=''
                 return 1
                 ;;
@@ -622,7 +627,12 @@ ParseArgs()
                 current_operation=''
                 return 1
                 ;;
-            --upgrade-all-apps)
+            --restart-all)
+                SetRestartAllApps
+                current_operation=''
+                return 1
+                ;;
+            --upgrade-all)
                 SetUpgradeAllApps
                 current_operation=''
                 return 1
@@ -647,6 +657,9 @@ ParseArgs()
                 ;;
             --uninstall)
                 current_operation=uninstall
+                ;;
+            --restart)
+                current_operation=restart
                 ;;
             --upgrade)
                 current_operation=upgrade
@@ -736,7 +749,9 @@ ShowProblemHelp()
 
     DisplayAsHelpOptionExample "don't check free-space on target filesystem when installing $(FormatAsPackageName Entware) packages" '--ignore-space'
 
-    DisplayAsHelpOptionExample 'upgrade all applications (only upgrades the internal applications, not the QPKG)' '--upgrade-all-apps'
+    DisplayAsHelpOptionExample 'restart all applications (only upgrades the internal applications, not the QPKG)' '--restart-all'
+
+#     DisplayAsHelpOptionExample 'upgrade all applications (including the QPKGs)' '--upgrade-all'
 
     DisplayAsHelpOptionExample 'view the log' '--log'
 
@@ -857,7 +872,7 @@ ShowInstallerOutcome()
         fi
     fi
 
-    if IsSatisfyDependenciesOnly; then
+    if IsCheckDependencies; then
         if IsNotError; then
             ShowAsDone "all application dependencies are installed!"
         else
@@ -1864,7 +1879,7 @@ ShowResult()
 
     if IsVersionOnly; then
         echo "loader: $LOADER_SCRIPT_VERSION"
-        echo "main: $MAIN_SCRIPT_VERSION"
+        echo "manager: $MANAGER_SCRIPT_VERSION"
     elif IsLogViewOnly; then
         ShowLogViewer
     elif IsShowHelp; then
@@ -2935,37 +2950,37 @@ IsNotAbort()
 
     }
 
-SetSatisfyDependenciesOnly()
+SetCheckDependencies()
     {
 
-    IsSatisfyDependenciesOnly && return
+    IsCheckDependencies && return
 
-    _satisfy_dependencies_only_flag=true
-    DebugVar _satisfy_dependencies_only_flag
+    _check_dependencies_flag=true
+    DebugVar _check_dependencies_flag
 
     }
 
-UnsetSatisfyDependenciesOnly()
+UnsetCheckDependencies()
     {
 
-    IsNotSatisfyDependenciesOnly && return
+    IsNotCheckDependencies && return
 
-    _satisfy_dependencies_only_flag=false
-    DebugVar _satisfy_dependencies_only_flag
+    _check_dependencies_flag=false
+    DebugVar _check_dependencies_flag
 
     }
 
-IsSatisfyDependenciesOnly()
+IsCheckDependencies()
     {
 
-    [[ $_satisfy_dependencies_only_flag = true ]]
+    [[ $_check_dependencies_flag = true ]]
 
     }
 
-IsNotSatisfyDependenciesOnly()
+IsNotCheckDependencies()
     {
 
-    [[ $_satisfy_dependencies_only_flag != true ]]
+    [[ $_check_dependencies_flag != true ]]
 
     }
 
@@ -3244,6 +3259,40 @@ IsNotUninstallAllApps()
     {
 
     [[ $_uninstall_all_apps_flag != true ]]
+
+    }
+
+SetRestartAllApps()
+    {
+
+    IsRestartAllApps && return
+
+    _restart_all_apps_flag=true
+    DebugVar _restart_all_apps_flag
+
+    }
+
+UnsetRestartAllApps()
+    {
+
+    IsNotRestartAllApps && return
+
+    _restart_all_apps_flag=false
+    DebugVar _restart_all_apps_flag
+
+    }
+
+IsRestartAllApps()
+    {
+
+    [[ $_restart_all_apps_flag = true ]]
+
+    }
+
+IsNotRestartAllApps()
+    {
+
+    [[ $_restart_all_apps_flag != true ]]
 
     }
 
@@ -3746,7 +3795,7 @@ DebugThis()
 DebugErrorFile()
     {
 
-    # Add the contents of specified pathfile $1 to the main runtime log
+    # Add the contents of specified pathfile $1 to the runtime log
 
     [[ -z $1 || ! -e $1 ]] && return 1
 
