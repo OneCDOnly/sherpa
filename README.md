@@ -19,7 +19,7 @@ This is a **command-line** package manager. If you're not comfortable using the 
 ---
 ## Current status
 
-STABLE - except for SickChill. The devs are hard-at-work migrating it to Python3. This is causing a few breakages. :(
+STABLE
 
 ---
 ## Requirements
