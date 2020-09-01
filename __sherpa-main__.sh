@@ -346,9 +346,6 @@ Init()
     readonly MIN_RAM_KB=1048576
     readonly INSTALLED_RAM_KB=$($GREP_CMD MemTotal /proc/meminfo | $CUT_CMD -f2 -d':' | $SED_CMD 's|kB||;s| ||g')
     reinstall_flag=false
-#     upgrade_all_apps=false
-#     backup_all_apps=false
-#     restore_all_apps=false
     ignore_space_arg=''
     [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg='--insecure' || curl_insecure_arg=''
 
@@ -1103,7 +1100,9 @@ InstallQPKGIndepsAddons()
     InstallIPKGs
     InstallPy3Modules
 
-    [[ $TARGET_APP = Entware || $upgrade_all_apps = true ]] && RestartAllDepQPKGs
+    if [[ $TARGET_APP = Entware ]] || IsRestartAllApps; then
+        RestartAllDepQPKGs
+    fi
 
     DebugFuncExit
     return 0
