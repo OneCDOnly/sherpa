@@ -116,7 +116,13 @@ A link will be generated to view this log online. Share it here if you need assi
 
 **Note:** your log will be **publicly accessible** to anyone who knows the link details. It will be automatically deleted after 1 month. The debug log typically won't contain any personally-identifiable information. Your public and private IP addresses, email address and so-on are not recorded. However, there is a chance some info may leak if an app generates a backtrace and this is pasted into the sherpa debug log. So, check it first before pasting online.
 
-There's now an option to check that all application dependencies have been satisfied. This will install any additional QPKGs or IPKGs to support any sherpa-installed applications present on your NAS:
+To upgrade all your sherpa QPKGs:
+
+```
+./sherpa.sh --upgrade-all
+```
+
+This option will install any additional QPKGs or IPKGs to support any sherpa-installed applications present on your NAS:
 
 ```
 ./sherpa.sh --check
