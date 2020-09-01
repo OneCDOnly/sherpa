@@ -26,13 +26,13 @@ Init()
     IsQNAP || return 1
 
     local -r LOADER_SCRIPT_FILE=sherpa.sh
-    export LOADER_SCRIPT_VERSION=200830
+    export LOADER_SCRIPT_VERSION=200902
 
     local -r NAS_FIRMWARE=$(/sbin/getcfg System Version -f /etc/config/uLinux.conf)
     [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg='--insecure' || curl_insecure_arg=''
-    local -r MAIN_SCRIPT_FILE=__sherpa-main__.sh
-    readonly REMOTE_MAIN_SCRIPT=https://raw.githubusercontent.com/OneCDOnly/sherpa/master/$MAIN_SCRIPT_FILE
-    readonly LOCAL_MAIN_SCRIPT=/share/$MAIN_SCRIPT_FILE
+    local -r MANAGER_SCRIPT_FILE=__sherpa-main__.sh
+    readonly REMOTE_MANAGER_SCRIPT=https://raw.githubusercontent.com/OneCDOnly/sherpa/master/$MANAGER_SCRIPT_FILE
+    readonly LOCAL_MANAGER_SCRIPT=/share/$MANAGER_SCRIPT_FILE
     previous_msg=''
 
     }
@@ -117,17 +117,17 @@ ColourReset()
 
 Init || exit 1
 
-if ! (/sbin/curl $curl_insecure_arg --silent --fail "$REMOTE_MAIN_SCRIPT" > "$LOCAL_MAIN_SCRIPT"); then
-    ShowAsAbort 'installer download failed'
+if ! (/sbin/curl $curl_insecure_arg --silent --fail "$REMOTE_MANAGER_SCRIPT" > "$LOCAL_MANAGER_SCRIPT"); then
+    ShowAsAbort 'manager download failed'
     exit 1
 fi
 
-if [[ ! -e $LOCAL_MAIN_SCRIPT ]]; then
-    ShowAsAbort 'unable to find installer'
+if [[ ! -e $LOCAL_MANAGER_SCRIPT ]]; then
+    ShowAsAbort 'unable to find manager'
     exit 1
 fi
 
-eval "/usr/bin/env bash" "$LOCAL_MAIN_SCRIPT" "$*"
-rm -f "$LOCAL_MAIN_SCRIPT"
+eval "/usr/bin/env bash" "$LOCAL_MANAGER_SCRIPT" "$*"
+rm -f "$LOCAL_MANAGER_SCRIPT"
 
 exit 0
