@@ -1001,8 +1001,8 @@ InstallQPKGIndeps()
 
     if IsNotQPKGInstalled Entware; then
         # rename original [/opt]
-        opt_path=/opt
-        opt_backup_path=/opt.orig
+        local opt_path=/opt
+        local opt_backup_path=/opt.orig
         [[ -d $opt_path && ! -L $opt_path && ! -e $opt_backup_path ]] && mv "$opt_path" "$opt_backup_path"
 
         InstallQPKG Entware && ReloadProfile
@@ -1387,9 +1387,9 @@ ReloadProfile()
 
     local opkg_prefix=/opt/bin:/opt/sbin
 
-    if IsQPKGInstalled Entware && ! [[ $PATH =~ $opkg_prefix ]]; then
-        PATH="$opkg_prefix:$PATH"
-        DebugDone 'adjusted $PATH'
+    if IsQPKGInstalled Entware; then
+        export PATH="$opkg_prefix:$($SED_CMD "s|$opkg_prefix||" <<< $PATH)"
+        DebugDone 'adjusted $PATH for Entware'
         DebugVar PATH
     fi
 
