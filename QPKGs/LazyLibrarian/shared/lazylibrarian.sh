@@ -65,6 +65,7 @@ Init()
     readonly APP_VERSION_STORE_PATHFILE=$($DIRNAME_CMD "$APP_VERSION_PATHFILE")/version.stored
     readonly TARGET_SCRIPT_PATHFILE=$QPKG_REPO_PATH/$TARGET_SCRIPT
     readonly LAUNCHER="cd $QPKG_REPO_PATH; $PYTHON $TARGET_SCRIPT_PATHFILE --daemon --nolaunch --datadir $($DIRNAME_CMD "$QPKG_INI_PATHFILE") --config $QPKG_INI_PATHFILE --pidfile $DAEMON_PID_PATHFILE"
+    readonly APPARENT_PATH=/share/$($GETCFG_CMD SHARE_DEF defDownload -d Qdownload -f /etc/config/def_share.info)/$QPKG_NAME
 
     if [[ -n $PYTHON ]]; then
         readonly LAUNCH_TARGET=$PYTHON
@@ -135,8 +136,14 @@ StartQPKG()
         IsDaemonActive && return
     fi
 
-    if IsRestore || IsClean || IsReset; then
-        IsNotRestartPending && return
+    if [[ -z $DAEMON_PID_PATHFILE ]]; then  # kludge: for nzbToMedia - when cleaning, ignore restart and start anyway to create repo and restore config
+        if IsRestore || IsReset; then
+            IsNotRestartPending && return
+        fi
+    else
+        if IsRestore || IsClean || IsReset; then
+            IsNotRestartPending && return
+        fi
     fi
 
     WaitForGit || return 1
@@ -1246,7 +1253,13 @@ if IsNotError; then
         c|-c|clean|--clean)
             if [[ $(type -t CleanLocalClone) = 'function' ]]; then
                 SetServiceOperation clean
-                CleanLocalClone || SetError
+
+                if [[ $($DIRNAME_CMD "$QPKG_INI_PATHFILE") = $QPKG_REPO_PATH ]]; then
+                    # nzbToMedia stores the config file in the repo location, so save it and restore again after new clone is complete
+                    { BackupConfig; CleanLocalClone; RestoreConfig ;} || SetError
+                else
+                    CleanLocalClone || SetError
+                fi
             else
                 SetServiceOperation none
                 ShowHelp
