@@ -216,7 +216,7 @@ Init()
         SHERPA_QPKG_ARCH+=(all)
         SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/NZBGet/build/NZBGet_200901b.qpkg)
         SHERPA_QPKG_MD5+=(dcd057eadd389717ac1e9647133d595b)
-        SHERPA_QPKG_ABBRVS+=('ng nzb nget nzbget')
+        SHERPA_QPKG_ABBRVS+=('ng nzb nzbg nget nzbget')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('nzbget')
 
@@ -324,10 +324,10 @@ Init()
     # runtime vars
     QPKGS_to_install=()
     QPKGS_to_uninstall=()
-    QPKGS_to_reinstall=()
-    QPKGS_to_update=()
+    QPKGS_to_upgrade=()
     QPKGS_to_backup=()
     QPKGS_to_restore=()
+    QPKGS_to_status=()
 
     readonly PREV_QPKG_CONFIG_DIRS=(SAB_CONFIG CONFIG Config config)                 # last element is used as target dirname
     readonly PREV_QPKG_CONFIG_FILES=(sabnzbd.ini settings.ini config.cfg config.ini) # last element is used as target filename
@@ -440,8 +440,8 @@ LogRuntimeParameters()
     DebugScript 'unparsed arguments' "$USER_ARGS_RAW"
     DebugScript 'app(s) to install' "${QPKGS_to_install[*]} "
     DebugScript 'app(s) to uninstall' "${QPKGS_to_uninstall[*]} "
-    DebugScript 'app(s) to reinstall' "${QPKGS_to_reinstall[*]} "
-    DebugScript 'app(s) to update' "${QPKGS_to_update[*]} "
+    DebugScript 'app(s) to reinstall' "${QPKGS_to_upgrade[*]} "
+    DebugScript 'app(s) to update' "${QPKGS_to_upgrade[*]} "
     DebugScript 'app(s) to backup' "${QPKGS_to_backup[*]} "
     DebugScript 'app(s) to restore' "${QPKGS_to_restore[*]} "
     DebugScript 'work path' "$WORK_PATH"
@@ -454,7 +454,7 @@ LogRuntimeParameters()
         return 1
     fi
 
-    if [[ ${#QPKGS_to_install[@]} -eq 0 && ${#QPKGS_to_uninstall[@]} -eq 0 && ${#QPKGS_to_update[@]} -eq 0 && ${#QPKGS_to_backup[@]} -eq 0 && ${#QPKGS_to_restore[@]} -eq 0 ]] && IsNotSatisfyDependenciesOnly && [[ $upgrade_all_apps = false ]]; then
+    if [[ ${#QPKGS_to_install[@]} -eq 0 && ${#QPKGS_to_uninstall[@]} -eq 0 && ${#QPKGS_to_upgrade[@]} -eq 0 && ${#QPKGS_to_backup[@]} -eq 0 && ${#QPKGS_to_restore[@]} -eq 0 ]] && IsNotSatisfyDependenciesOnly && [[ $upgrade_all_apps = false ]]; then
         ShowAsError 'no valid QPKGs or actions were specified'
         SetShowAbbreviations
         return 1
@@ -581,6 +581,7 @@ ParseArgs()
             -c|c|--check|check)
                 SetSatisfyDependenciesOnly
                 current_operation=''
+                return 1
                 ;;
             --ignore-space|ignore-space)
                 ignore_space_arg='--force-space'
@@ -612,34 +613,34 @@ ParseArgs()
                 return 1
                 ;;
             --install-all)
-                install_all_apps=true
-                DebugVar install_all_apps
+                SetInstallAllApps
                 current_operation=''
+                return 1
                 ;;
             --uninstall-all)
-                uninstall_all_apps=true
-                DebugVar uninstall_all_apps
+                SetUninstallAllApps
                 current_operation=''
-                ;;
-            --reinstall-all)
-                reinstall_all_apps=true
-                DebugVar reinstall_all_apps
-                current_operation=''
+                return 1
                 ;;
             --upgrade-all-apps)
-                upgrade_all_apps=true
-                DebugVar upgrade_all_apps
+                SetUpgradeAllApps
                 current_operation=''
+                return 1
                 ;;
             --backup-all)
-                backup_all_apps=true
-                DebugVar backup_all_apps
+                SetBackupAllApps
                 current_operation=''
+                return 1
                 ;;
             --restore-all)
-                restore_all_apps=true
-                DebugVar restore_all_apps
+                SetRestoreAllApps
                 current_operation=''
+                return 1
+                ;;
+            --status-all)
+                SetStatusAllApps
+                current_operation=''
+                return 1
                 ;;
             --install)
                 current_operation=install
@@ -647,17 +648,17 @@ ParseArgs()
             --uninstall)
                 current_operation=uninstall
                 ;;
-            --reinstall)
-                current_operation=reinstall
-                ;;
-            --update)
-                current_operation=update
+            --upgrade)
+                current_operation=upgrade
                 ;;
             --backup)
                 current_operation=backup
                 ;;
             --restore)
                 current_operation=restore
+                ;;
+            --status)
+                current_operation=status
                 ;;
             *)
                 target_app=$(MatchAbbrvToQPKGName "$arg")
@@ -668,16 +669,19 @@ ParseArgs()
                         QPKGS_to_uninstall+=($target_app)
                         ;;
                     reinstall)
-                        QPKGS_to_reinstall+=($target_app)
+                        QPKGS_to_upgrade+=($target_app)
                         ;;
-                    update)
-                        QPKGS_to_update+=($target_app)
+                    upgrade)
+                        QPKGS_to_upgrade+=($target_app)
                         ;;
                     backup)
                         QPKGS_to_backup+=($target_app)
                         ;;
                     restore)
                         QPKGS_to_restore+=($target_app)
+                        ;;
+                    status)
+                        QPKGS_to_status+=($target_app)
                         ;;
                     install|*)  # default
                         QPKGS_to_install+=($target_app)
@@ -878,7 +882,7 @@ DownloadQPKGs()
 
     if IsDevMode; then
         [[ ${#QPKGS_to_install[@]} -gt 0 ]] && QPKGs_to_download+="${QPKGS_to_install[*]}"
-        [[ ${#QPKGS_to_reinstall[@]} -gt 0 ]] && QPKGs_to_download+=" ${QPKGS_to_reinstall[*]}"
+        [[ ${#QPKGS_to_upgrade[@]} -gt 0 ]] && QPKGs_to_download+=" ${QPKGS_to_upgrade[*]}"
 
         FindAllQPKGDependants "$QPKGs_to_download"
 
@@ -2419,7 +2423,7 @@ IsQPKGToBeInstalled()
         [[ $package = "$1" ]] && return 0
     done
 
-    for package in "${QPKGS_to_reinstall[@]}"; do
+    for package in "${QPKGS_to_upgrade[@]}"; do
         [[ $package = "$1" ]] && return 0
     done
 
@@ -3172,6 +3176,210 @@ IsNotSuggestIssue()
     {
 
     [[ $_suggest_issue_flag != true ]]
+
+    }
+
+SetInstallAllApps()
+    {
+
+    IsInstallAllApps && return
+
+    _install_all_apps_flag=true
+    DebugVar _install_all_apps_flag
+
+    }
+
+UnsetInstallAllApps()
+    {
+
+    IsNotInstallAllApps && return
+
+    _install_all_apps_flag=false
+    DebugVar _install_all_apps_flag
+
+    }
+
+IsInstallAllApps()
+    {
+
+    [[ $_install_all_apps_flag = true ]]
+
+    }
+
+IsNotInstallAllApps()
+    {
+
+    [[ $_install_all_apps_flag != true ]]
+
+    }
+
+SetUninstallAllApps()
+    {
+
+    IsUninstallAllApps && return
+
+    _uninstall_all_apps_flag=true
+    DebugVar _uninstall_all_apps_flag
+
+    }
+
+UnsetUninstallAllApps()
+    {
+
+    IsNotUninstallAllApps && return
+
+    _uninstall_all_apps_flag=false
+    DebugVar _uninstall_all_apps_flag
+
+    }
+
+IsUninstallAllApps()
+    {
+
+    [[ $_uninstall_all_apps_flag = true ]]
+
+    }
+
+IsNotUninstallAllApps()
+    {
+
+    [[ $_uninstall_all_apps_flag != true ]]
+
+    }
+
+SetUpgradeAllApps()
+    {
+
+    IsUpgradeAllApps && return
+
+    _upgrade_all_apps_flag=true
+    DebugVar _upgrade_all_apps_flag
+
+    }
+
+UnsetUpgradeAllApps()
+    {
+
+    IsNotUpgradeAllApps && return
+
+    _upgrade_all_apps_flag=false
+    DebugVar _upgrade_all_apps_flag
+
+    }
+
+IsUpgradeAllApps()
+    {
+
+    [[ $_upgrade_all_apps_flag = true ]]
+
+    }
+
+IsNotUpgradeAllApps()
+    {
+
+    [[ $_upgrade_all_apps_flag != true ]]
+
+    }
+
+SetBackupAllApps()
+    {
+
+    IsBackupAllApps && return
+
+    _backup_all_apps_flag=true
+    DebugVar _backup_all_apps_flag
+
+    }
+
+UnsetBackupAllApps()
+    {
+
+    IsNotBackupAllApps && return
+
+    _backup_all_apps_flag=false
+    DebugVar _backup_all_apps_flag
+
+    }
+
+IsBackupAllApps()
+    {
+
+    [[ $_backup_all_apps_flag = true ]]
+
+    }
+
+IsNotBackupAllApps()
+    {
+
+    [[ $_backup_all_apps_flag != true ]]
+
+    }
+
+SetRestoreAllApps()
+    {
+
+    IsRestoreAllApps && return
+
+    _restore_all_apps_flag=true
+    DebugVar _restore_all_apps_flag
+
+    }
+
+UnsetRestoreAllApps()
+    {
+
+    IsNotRestoreAllApps && return
+
+    _restore_all_apps_flag=false
+    DebugVar _restore_all_apps_flag
+
+    }
+
+IsRestoreAllApps()
+    {
+
+    [[ $_restore_all_apps_flag = true ]]
+
+    }
+
+IsNotRestoreAllApps()
+    {
+
+    [[ $_restore_all_apps_flag != true ]]
+
+    }
+
+SetStatusAllApps()
+    {
+
+    IsStatusAllApps && return
+
+    _status_all_apps_flag=true
+    DebugVar _status_all_apps_flag
+
+    }
+
+UnsetStatusAllApps()
+    {
+
+    IsNotStatusAllApps && return
+
+    _status_all_apps_flag=false
+    DebugVar _status_all_apps_flag
+
+    }
+
+IsStatusAllApps()
+    {
+
+    [[ $_status_all_apps_flag = true ]]
+
+    }
+
+IsNotStatusAllApps()
+    {
+
+    [[ $_status_all_apps_flag != true ]]
 
     }
 
