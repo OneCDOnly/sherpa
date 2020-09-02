@@ -851,6 +851,7 @@ ShowLogViewer()
             $CAT_CMD --number "$DEBUG_LOG_PATHFILE"
         fi
     else
+        echo
         ShowAsError 'no log to display'
     fi
 
@@ -889,6 +890,7 @@ PasteLogOnline()
                 ;;
         esac
     else
+        echo
         ShowAsError 'no log to paste'
     fi
 
@@ -3735,7 +3737,7 @@ InsertLineSpace()
     {
 
     if IsNotLineSpace; then
-        if IsNotVisibleDebugging && IsNotLogViewOnly && IsNotVersionOnly; then
+        if IsNotVisibleDebugging && IsNotLogViewOnly && IsNotVersionOnly && IsNotLogPasteOnly; then
             SetLineSpace
             echo
         fi
