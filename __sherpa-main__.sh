@@ -3735,7 +3735,7 @@ InsertLineSpace()
     {
 
     if IsNotLineSpace; then
-        if IsNotVisibleDebugging && IsNotLogViewOnly; then
+        if IsNotVisibleDebugging && IsNotLogViewOnly && IsNotVersionOnly; then
             SetLineSpace
             echo
         fi
@@ -4234,9 +4234,7 @@ Cleanup
 ShowResult
 RemoveLock
 
-if (IsShowHelp || IsShowProblemHelp || IsShowTipsHelp || IsSuggestIssue || IsShowAbbreviations) && IsNotVisibleDebugging; then
-    echo
-fi
+InsertLineSpace
 
 IsError && exit 1
 
