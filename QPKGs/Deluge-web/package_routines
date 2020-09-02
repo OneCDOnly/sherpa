@@ -104,5 +104,5 @@
 # the package is removed.
 ######################################################################
 PKG_POST_REMOVE="{
-    [[ -e /opt/bin/opkg ]] && /opt/bin/opkg remove deluge deluge-ui-web > /dev/null 2>&1
+    [[ -e /opt/bin/opkg ]] && /opt/bin/opkg remove deluge-ui-web > /dev/null 2>&1
 }"

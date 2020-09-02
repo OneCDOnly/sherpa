@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 ####################################################################################
-# odeluge.sh
+# deluge-server.sh
 #
 # Copyright (C) 2020 OneCD [one.cd.only@gmail.com]
 #
@@ -15,10 +15,9 @@ Init()
     IsQNAP || return 1
 
     # specific environment
-    readonly QPKG_NAME=ODeluge
-    readonly TARGET_DAEMON=/opt/bin/deluge-web
-#     readonly ORIG_DAEMON_SERVICE_SCRIPT=/opt/etc/init.d/S80deluged
-#     readonly ORIG_DAEMON_SERVICE_SCRIPT=/opt/etc/init.d/S81deluge-web
+    readonly QPKG_NAME=Deluge-server
+    readonly TARGET_DAEMON=/opt/bin/deluged
+    readonly ORIG_DAEMON_SERVICE_SCRIPT=/opt/etc/init.d/S80deluged
 
     # cherry-pick required binaries
     readonly GREP_CMD=/bin/grep
@@ -56,13 +55,13 @@ Init()
     [[ -n $PYTHON ]] && export PYTHONPATH=$PYTHON
 
     # application specific
-    readonly QPKG_INI_PATHFILE=$QPKG_PATH/config/web.conf
+    readonly QPKG_INI_PATHFILE=$QPKG_PATH/config/core.conf
     readonly QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.def
     readonly DAEMON_PID_PATHFILE=/var/run/$QPKG_NAME.pid
     readonly APP_VERSION_PATHFILE=''
     readonly APP_VERSION_STORE_PATHFILE=$($DIRNAME_CMD "$APP_VERSION_PATHFILE")/version.stored
     readonly TARGET_SCRIPT_PATHFILE=''
-    readonly LAUNCHER="$TARGET_DAEMON --config $($DIRNAME_CMD "$QPKG_INI_PATHFILE") --pidfile $DAEMON_PID_PATHFILE"
+    readonly LAUNCHER="$TARGET_DAEMON --logfile $($DIRNAME_CMD "$QPKG_INI_PATHFILE")/$QPKG_NAME.log --pidfile $DAEMON_PID_PATHFILE"
 
     if [[ -n $PYTHON ]]; then
         readonly LAUNCH_TARGET=$PYTHON
@@ -143,27 +142,27 @@ StartQPKG()
         fi
     fi
 
-    WaitForGit || return 1
+    [[ $(type -t WaitForGit) = 'function' ]] && { WaitForGit || return 1 ;}
     [[ $(type -t PullGitRepo) = 'function' ]] && PullGitRepo "$QPKG_NAME" "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_PATH"
 
     WaitForLaunchTarget || return 1
     [[ $(type -t UpdateLanguages) = 'function' ]] && UpdateLanguages
 
     EnsureConfigFileExists
-    LoadUIPorts app || return
+#     LoadUIPorts app || return
 
-    if [[ $ui_port -le 0 && $ui_port_secure -le 0 ]]; then
-        DisplayErrCommitAllLogs 'unable to start daemon: no UI port was specified!'
-        return 1
-    elif IsNotPortAvailable $ui_port || IsNotPortAvailable $ui_port_secure; then
-        DisplayErrCommitAllLogs "unable to start daemon: ports $ui_port or $ui_port_secure are already in use!"
-        return 1
-    fi
+#     if [[ $ui_port -le 0 && $ui_port_secure -le 0 ]]; then
+#         DisplayErrCommitAllLogs 'unable to start daemon: no UI port was specified!'
+#         return 1
+#     elif IsNotPortAvailable $ui_port || IsNotPortAvailable $ui_port_secure; then
+#         DisplayErrCommitAllLogs "unable to start daemon: ports $ui_port or $ui_port_secure are already in use!"
+#         return 1
+#     fi
 
     ExecuteAndLog 'starting daemon' "$LAUNCHER" log:everything || return 1
     WaitForPID || return 1
     IsDaemonActive || return 1
-    CheckPorts || return 1
+#     CheckPorts || return 1
 
     return 0
 
@@ -224,8 +223,8 @@ StatusQPKG()
 
     IsNotError || return
     IsDaemonActive || return
-    LoadUIPorts qts
-    CheckPorts || SetError
+#     LoadUIPorts qts
+#     CheckPorts || SetError
 
     }
 
@@ -267,43 +266,6 @@ ResetConfig()
 
     }
 
-LoadUIPorts()
-    {
-
-    # If user changes ports via app UI, must first 'stop' application on old ports, then 'start' on new ports
-
-    case $1 in
-        app)
-            # Read the current application UI ports from application configuration
-#             ui_port=$($GETCFG_CMD '' ControlPort -d 0 -f "$QPKG_INI_PATHFILE")
-#             ui_port_secure=$($GETCFG_CMD '' SecurePort -d 0 -f "$QPKG_INI_PATHFILE")
-            ui_port=8112
-            ui_port_secure=0
-            ;;
-        qts)
-            # Read the current application UI ports from QTS App Center
-            ui_port=$($GETCFG_CMD $QPKG_NAME Web_Port -d 0 -f "$QTS_QPKG_CONF_PATHFILE")
-            ui_port_secure=$($GETCFG_CMD $QPKG_NAME Web_SSL_Port -d 0 -f "$QTS_QPKG_CONF_PATHFILE")
-            ;;
-        *)
-            DisplayErrCommitAllLogs "unable to load UI ports: action '$1' unrecognised"
-            SetError
-            return 1
-            ;;
-    esac
-
-    if [[ $ui_port -eq 0 ]] && IsNotDefaultConfigFound; then
-        ui_port=0
-        ui_port_secure=0
-    fi
-
-    # Always read this from the application configuration
-    ui_listening_address=$($GETCFG_CMD '' ControlIP -f "$QPKG_INI_PATHFILE")
-
-    return 0
-
-    }
-
 IsSSLEnabled()
     {
 
@@ -322,24 +284,11 @@ LoadAppVersion()
 
     [[ ! -e $TARGET_DAEMON ]] && return 1
 
-    app_version=$($TARGET_DAEMON --version 2>&1 | $SED_CMD 's|transmission-daemon ||')
+    app_version=$($TARGET_DAEMON --version 2>&1 | $SED_CMD 's|deluged ||')
 
     }
 
 #### functions specific to this app appear above ###
-
-WaitForGit()
-    {
-
-    if WaitForFileToAppear "$GIT_CMD" "$GIT_APPEAR_TIMEOUT"; then
-        . /etc/profile &>/dev/null
-        . /root/.profile &>/dev/null
-        return 0
-    else
-        return 1
-    fi
-
-    }
 
 WaitForLaunchTarget()
     {
@@ -416,15 +365,6 @@ WaitForFileToAppear()
 DisableOpkgDaemonStart()
     {
 
-    ORIG_DAEMON_SERVICE_SCRIPT=/opt/etc/init.d/S80deluged
-
-    if [[ -n $ORIG_DAEMON_SERVICE_SCRIPT && -x $ORIG_DAEMON_SERVICE_SCRIPT ]]; then
-        $ORIG_DAEMON_SERVICE_SCRIPT stop        # stop default daemon
-        chmod -x $ORIG_DAEMON_SERVICE_SCRIPT    # ... and ensure Entware doesn't re-launch it on startup
-    fi
-
-	ORIG_DAEMON_SERVICE_SCRIPT=/opt/etc/init.d/S81deluge-web
-
     if [[ -n $ORIG_DAEMON_SERVICE_SCRIPT && -x $ORIG_DAEMON_SERVICE_SCRIPT ]]; then
         $ORIG_DAEMON_SERVICE_SCRIPT stop        # stop default daemon
         chmod -x $ORIG_DAEMON_SERVICE_SCRIPT    # ... and ensure Entware doesn't re-launch it on startup
@@ -485,20 +425,11 @@ ExecuteAndLog()
     local result=0
     local returncode=0
 
-    DisplayWaitCommitToLog "* $1: [$2]"
-    exec_msgs=$(eval "$2" 2>&1)
-    result=$?
+    DisplayWaitCommitToLog "* $1:"
+    eval "$2" 2>&1
 
-    if [[ $result = 0 ]]; then
-        DisplayCommitToLog 'OK'
-        [[ $3 = log:everything ]] && CommitInfoToSysLog "$1: OK."
-    else
-        DisplayCommitToLog 'failed!'
-        DisplayCommitToLog "$(FormatAsFuncMessages "$exec_msgs")"
-        DisplayCommitToLog "$(FormatAsResult $result)"
-        CommitWarnToSysLog "A problem occurred while $1. Check $(FormatAsFileName "$SERVICE_LOG_PATHFILE") for more details."
-        returncode=1
-    fi
+    DisplayCommitToLog 'OK'
+	[[ $3 = log:everything ]] && CommitInfoToSysLog "$1: OK."
 
     return $returncode
 
