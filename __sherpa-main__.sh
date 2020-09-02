@@ -274,7 +274,7 @@ Init()
         SHERPA_QPKG_MD5+=(8480d99483baf6348652139865c4d286)
         SHERPA_QPKG_ABBRVS+=('del-server deluge-server')
         SHERPA_QPKG_DEPS+=('Entware')
-        SHERPA_QPKG_IPKGS+=('deluged')
+        SHERPA_QPKG_IPKGS+=('deluge')
 
     SHERPA_QPKG_NAME+=(Deluge-web)
         SHERPA_QPKG_ARCH+=(all)
