@@ -370,7 +370,6 @@ LogRuntimeParameters()
 
     if IsNotVisibleDebugging && IsNotVersionOnly; then
         echo "$(ColourTextBrightWhite "$LOADER_SCRIPT_FILE") ($MANAGER_SCRIPT_VERSION) a mini-package-manager for QNAP NAS"
-        IsNotVisibleDebugging && IsNotLogViewOnly && echo
     fi
 
     if IsNotVersionOnly; then
@@ -379,8 +378,9 @@ LogRuntimeParameters()
     fi
 
     IsAbort && return
-    SetLogToFile
 
+    SetLogToFile
+    InsertLineSpace
     DebugInfoThickSeparator
     DebugScript 'started' "$($DATE_CMD | $TR_CMD -s ' ')"
     DebugScript 'version' "$MANAGER_SCRIPT_VERSION"
@@ -545,6 +545,7 @@ ShowNewQPKGVersions()
     local msg=''
 
     if [[ ${#QPKGS_upgradable[@]} -gt 0 ]]; then
+        InsertLineSpace
         if [[ ${#QPKGS_upgradable[@]} -eq 1 ]]; then
             msg='An upgraded package is'
         else
@@ -2284,6 +2285,7 @@ CheckLoaderAge()
     [[ -e $GNU_FIND_CMD ]] || return          # can only do this with GNU 'find'. The old BusyBox 'find' in QTS 4.2.6 doesn't support '-cmin'.
 
     if [[ -e "$LOADER_SCRIPT_FILE" && -z $($GNU_FIND_CMD "$LOADER_SCRIPT_FILE" -cmin +5) ]]; then
+        InsertLineSpace
         ShowAsNote "The $(ColourTextBrightWhite 'sherpa.sh') script does not need updating anymore. It now downloads all the latest information from the Internet everytime it's run. ;)"
     fi
 
@@ -3456,6 +3458,40 @@ IsNotStatusAllApps()
 
     }
 
+SetLineSpace()
+    {
+
+    IsLineSpace && return
+
+    _line_space_flag=true
+    DebugVar _line_space_flag
+
+    }
+
+UnsetLineSpace()
+    {
+
+    IsNotLineSpace && return
+
+    _line_space_flag=false
+    DebugVar _line_space_flag
+
+    }
+
+IsLineSpace()
+    {
+
+    [[ $_line_space_flag = true ]]
+
+    }
+
+IsNotLineSpace()
+    {
+
+    [[ $_line_space_flag != true ]]
+
+    }
+
 ConvertSecsToMinutes()
     {
 
@@ -3603,6 +3639,20 @@ FormatAsResultAndStdout()
 
     echo "$2"
     echo '= \ \ \ \ \ stdout is complete / / / / /'
+
+    }
+
+InsertLineSpace()
+    {
+
+    if IsNotLineSpace; then
+        if IsNotVisibleDebugging && IsNotLogViewOnly; then
+            SetLineSpace
+            echo
+        fi
+    else
+        UnsetLineSpace
+    fi
 
     }
 
