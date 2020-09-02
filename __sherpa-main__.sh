@@ -631,12 +631,12 @@ ParseArgs()
                 SetVersionOnly
                 return 1
                 ;;
-            --install-all)
+            --install-all-applications)
                 SetInstallAllApps
                 current_operation=''
                 return 1
                 ;;
-            --uninstall-all)
+            --uninstall-all-applications)
                 SetUninstallAllApps
                 current_operation=''
                 return 1
@@ -941,7 +941,11 @@ DownloadQPKGs()
             fi
         fi
 
-        if IsUpgradeAllApps; then
+        if IsInstallAllApps; then
+            for package in "${QPKGS_user_installable[@]}"; do
+                DownloadQPKG "$package"
+            done
+        elif IsUpgradeAllApps; then
             for package in "${QPKGS_upgradable[@]}"; do
                 DownloadQPKG "$package"
             done
@@ -1150,7 +1154,13 @@ InstallTargetQPKG()
 
     local package=''
 
-    if IsUpgradeAllApps; then
+    if IsInstallAllApps; then
+        if [[ -n ${QPKGS_user_installable[*]} ]]; then
+            for package in "${QPKGS_user_installable[@]}"; do
+                InstallQPKG "$package"
+            done
+        fi
+    elif IsUpgradeAllApps; then
         if [[ -n ${QPKGS_upgradable[*]} ]]; then
             for package in "${QPKGS_upgradable[@]}"; do
                 InstallQPKG "$package"
