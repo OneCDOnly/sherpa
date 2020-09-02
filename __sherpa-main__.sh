@@ -950,11 +950,12 @@ DownloadQPKGs()
                 DownloadQPKG "$package"
             done
         else
-            # kludge: an ugly workaround until QPKG dependency checking works properly
-            (IsQPKGInstalled SABnzbd || [[ $TARGET_APP = SABnzbd ]] ) && [[ $NAS_QPKG_ARCH != none ]] && IsNotQPKGInstalled Par2 && DownloadQPKG Par2
 
             [[ -n $TARGET_APP ]] && DownloadQPKG "$TARGET_APP"
         fi
+
+        # kludge: an ugly workaround until QPKG dependency checking works properly
+        (IsQPKGInstalled SABnzbd || [[ $TARGET_APP = SABnzbd ]] ) && [[ $NAS_QPKG_ARCH != none ]] && IsNotQPKGInstalled Par2 && DownloadQPKG Par2
     fi
 
     DebugFuncExit
