@@ -615,6 +615,10 @@ ParseArgs()
                 SetShowProblemHelp
                 return 1
                 ;;
+            -t|t|--tips|tips)
+                SetShowTipsHelp
+                return 1
+                ;;
             -l|l|--log|log)
                 SetLogViewOnly
                 return 1
@@ -743,11 +747,9 @@ ShowHelp()
 
     echo -e "\n** [OPTION] usage examples:"
 
-    DisplayAsHelpOptionExample 'package abbreviations may also be used. To see these' '--abs'
+    DisplayAsHelpOptionExample 'display helpful tips and shortcuts' '--tips'
 
-    DisplayAsHelpOptionExample 'display more troubleshooting options' '--problem'
-
-    DisplayAsHelpOptionExample 'display the package manager script versions' '--version'
+    DisplayAsHelpOptionExample 'display troubleshooting options' '--problem'
 
     return 0
 
@@ -787,6 +789,28 @@ ShowIssueHelp()
     DisplayAsHelpOptionExample 'view the log' '--log'
 
     DisplayAsHelpOptionExample "upload the log to the $(FormatAsURL 'termbin.com') public pastebin" '--paste'
+
+    echo -e "\n$(ColourTextBrightOrange "* If you need help, please include a copy of your") $(FormatAsTitle) $(ColourTextBrightOrange "log for analysis!")"
+
+    }
+
+ShowTipsHelp()
+    {
+
+    echo -e "\n** Extended [OPTION] usage tips:"
+    DisplayAsHelpOptionExample 'install everything!' '--install-all-applications'
+
+    DisplayAsHelpOptionExample 'package abbreviations may also be used. To see these' '--abs'
+
+    DisplayAsHelpOptionExample 'ensure all application dependencies are installed' '--check'
+
+    DisplayAsHelpOptionExample 'restart all applications (only upgrades the internal applications, not the QPKG)' '--restart-all'
+
+    DisplayAsHelpOptionExample 'upgrade all QPKGs (including the internal applications)' '--upgrade-all'
+
+    DisplayAsHelpOptionExample "upload the log to the $(FormatAsURL 'termbin.com') public pastebin" '--paste'
+
+    DisplayAsHelpOptionExample 'display the package manager script versions' '--version'
 
     echo -e "\n$(ColourTextBrightOrange "* If you need help, please include a copy of your") $(FormatAsTitle) $(ColourTextBrightOrange "log for analysis!")"
 
@@ -1938,6 +1962,8 @@ ShowResult()
         ShowHelp
     elif IsShowProblemHelp; then
         ShowProblemHelp
+    elif IsShowTipsHelp; then
+        ShowTipsHelp
     elif IsShowAbbreviations; then
         ShowPackageAbbreviations
     fi
@@ -2788,6 +2814,42 @@ IsNotShowProblemHelp()
     {
 
     [[ $_show_problem_help_flag != true ]]
+
+    }
+
+SetShowTipsHelp()
+    {
+
+    SetAbort
+
+    IsShowTipsHelp && return
+
+    _show_tips_help_flag=true
+    DebugVar _show_tips_help_flag
+
+    }
+
+UnsetShowTipsHelp()
+    {
+
+    IsNotShowTipsHelp && return
+
+    _show_tips_help_flag=false
+    DebugVar _show_tips_help_flag
+
+    }
+
+IsShowTipsHelp()
+    {
+
+    [[ $_show_tips_help_flag = true ]]
+
+    }
+
+IsNotShowTipsHelp()
+    {
+
+    [[ $_show_tips_help_flag != true ]]
 
     }
 
@@ -4172,7 +4234,7 @@ Cleanup
 ShowResult
 RemoveLock
 
-if (IsShowHelp || IsShowProblemHelp || IsSuggestIssue || IsShowAbbreviations) && IsNotVisibleDebugging; then
+if (IsShowHelp || IsShowProblemHelp || IsShowTipsHelp || IsSuggestIssue || IsShowAbbreviations) && IsNotVisibleDebugging; then
     echo
 fi
 
