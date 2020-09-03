@@ -389,9 +389,9 @@ LogRuntimeParameters()
     if IsNotVisibleDebugging; then
         echo "$(ColourTextBrightWhite "$LOADER_SCRIPT_FILE") ($MANAGER_SCRIPT_VERSION) a mini-package-manager for QNAP NAS"
         DisplayLineSpace
+        CheckLoaderAge
     fi
 
-    CheckLoaderAge
     ShowNewQPKGVersions
 
     IsAbort && return
@@ -751,6 +751,7 @@ ShowHelp()
     DisplayAsHelpOptionExample 'display helpful tips and shortcuts' '--tips'
 
     DisplayAsHelpOptionExample 'display troubleshooting options' '--problem'
+    UnsetLineSpace
 
     return 0
 
@@ -776,6 +777,7 @@ ShowProblemHelp()
     DisplayAsHelpOptionExample "upload the log to the $(FormatAsURL 'termbin.com') public pastebin" '--paste'
 
     echo -e "\n$(ColourTextBrightOrange "* If you need help, please include a copy of your") $(FormatAsTitle) $(ColourTextBrightOrange "log for analysis!")"
+    UnsetLineSpace
 
     return 0
 
@@ -794,6 +796,9 @@ ShowIssueHelp()
     DisplayAsHelpOptionExample "upload the log to the $(FormatAsURL 'termbin.com') public pastebin" '--paste'
 
     echo -e "\n$(ColourTextBrightOrange "* If you need help, please include a copy of your") $(FormatAsTitle) $(ColourTextBrightOrange "log for analysis!")"
+    UnsetLineSpace
+
+    return 0
 
     }
 
@@ -817,6 +822,9 @@ ShowTipsHelp()
     DisplayAsHelpOptionExample 'display the package manager script versions' '--version'
 
     echo -e "\n$(ColourTextBrightOrange "* If you need help, please include a copy of your") $(FormatAsTitle) $(ColourTextBrightOrange "log for analysis!")"
+    UnsetLineSpace
+
+    return 0
 
     }
 
@@ -841,6 +849,7 @@ ShowPackageAbbreviations()
     done
 
     DisplayAsHelpOptionExample 'example: to install, reinstall or upgrade SABnzbd' 'sab'
+    UnsetLineSpace
 
     return 0
 
@@ -2357,10 +2366,10 @@ CheckLoaderAge()
     [[ -e $GNU_FIND_CMD ]] || return          # can only do this with GNU 'find'. The old BusyBox 'find' in QTS 4.2.6 doesn't support '-cmin'.
 
     if [[ -e "$LOADER_SCRIPT_FILE" && -z $($GNU_FIND_CMD "$LOADER_SCRIPT_FILE" -cmin +5) ]]; then
-        DisplayLineSpace
         ShowAsNote "The $(ColourTextBrightWhite 'sherpa.sh') script does not need updating anymore. It now downloads all the latest information from the Internet everytime it's run. ;)"
-        SetLineSpace
     fi
+
+    SetLineSpace
 
     return 0
 
@@ -4258,7 +4267,7 @@ InstallTargetQPKG
 Cleanup
 ShowResult
 RemoveLock
-IsNotVersionOnly && IsNotVisibleDebugging && echo
+IsNotVersionOnly && IsNotVisibleDebugging && DisplayLineSpace
 
 IsError && exit 1
 
