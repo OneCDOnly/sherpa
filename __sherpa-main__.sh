@@ -772,7 +772,7 @@ ShowProblemHelp()
 
     DisplayAsHelpOptionExample 'view the log' '--log'
 
-    DisplayAsHelpOptionExample "upload the log to the $(FormatAsURL 'termbin.com') public pastebin" '--paste'
+    DisplayAsHelpOptionExample "upload the log to the $(FormatAsURL 'https://termbin.com') public pastebin" '--paste'
 
     echo -e "\n$(ColourTextBrightOrange "* If you need help, please include a copy of your") $(FormatAsTitle) $(ColourTextBrightOrange "log for analysis!")"
     UnsetLineSpace
@@ -791,7 +791,7 @@ ShowIssueHelp()
 
     DisplayAsHelpOptionExample 'view the log' '--log'
 
-    DisplayAsHelpOptionExample "upload the log to the $(FormatAsURL 'termbin.com') public pastebin" '--paste'
+    DisplayAsHelpOptionExample "upload the log to the $(FormatAsURL 'https://termbin.com') public pastebin" '--paste'
 
     echo -e "\n$(ColourTextBrightOrange "* If you need help, please include a copy of your") $(FormatAsTitle) $(ColourTextBrightOrange "log for analysis!")"
     UnsetLineSpace
@@ -815,7 +815,7 @@ ShowTipsHelp()
 
     DisplayAsHelpOptionExample 'upgrade all QPKGs (including the internal applications)' '--upgrade-all'
 
-    DisplayAsHelpOptionExample "upload the log to the $(FormatAsURL 'termbin.com') public pastebin" '--paste'
+    DisplayAsHelpOptionExample "upload the log to the $(FormatAsURL 'https://termbin.com') public pastebin" '--paste'
 
     DisplayAsHelpOptionExample 'display the package manager script versions' '--version'
 
@@ -881,9 +881,9 @@ PasteLogOnline()
             link=$($TAIL_CMD -n 1000 -q "$DEBUG_LOG_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
 
             if [[ $? -eq 0 ]]; then
-                ShowAsDone "your sherpa log is now online at $(ColourTextBrightOrange "$($SED_CMD 's|http://|http://l.|;s|https://|https://l.|' <<< "$link")") and will be deleted in 1 month"
+                ShowAsDone "your sherpa log is now online at $(FormatAsURL "$($SED_CMD 's|http://|http://l.|;s|https://|https://l.|' <<< "$link")") and will be deleted in 1 month"
             else
-                ShowAsError "a link could not be generated. Most likely a problem occurred when talking with $(FormatAsURL "https://termbin.com")"
+                ShowAsError "a link could not be generated. Most likely a problem occurred when talking with $(FormatAsURL 'https://termbin.com')"
             fi
         else
             SetAbort
@@ -3659,7 +3659,7 @@ FormatAsURL()
 
     [[ -z $1 ]] && return 1
 
-    echo "$(ColourTextUnderlinedBlue "https://$1")"
+    echo "$(ColourTextUnderlinedBlue "$1")"
 
     }
 
