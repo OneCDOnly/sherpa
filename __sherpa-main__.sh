@@ -645,12 +645,12 @@ ParseArgs()
                 current_operation=''
                 return 1
                 ;;
-            --restart-all)
+            --restart-all|restart-all)
                 SetRestartAllApps
                 current_operation=''
                 return 1
                 ;;
-            --upgrade-all)
+            --upgrade-all|upgrade-all)
                 SetUpgradeAllApps
                 current_operation=''
                 return 1
@@ -665,7 +665,7 @@ ParseArgs()
                 current_operation=''
                 return 1
                 ;;
-            --status-all)
+            --status-all|status-all)
                 SetStatusAllApps
                 current_operation=''
                 return 1
