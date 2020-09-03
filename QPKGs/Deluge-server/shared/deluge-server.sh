@@ -386,7 +386,7 @@ EnsureConfigFileExists()
         server_auth_pathfile=$($DIRNAME_CMD "$QPKG_INI_PATHFILE")/auth
         web_auth_pathfile=$($GETCFG_CMD Deluge-web Install_Path -f "$QTS_QPKG_CONF_PATHFILE")/config/auth
 
-        if [[ ! -e $server_auth_pathfile && -e $web_auth_pathfile ]]; then
+        if [[ -e $web_auth_pathfile ]]; then        # the grass is always greener
             cp "$web_auth_pathfile" "$server_auth_pathfile"
         fi
     fi
