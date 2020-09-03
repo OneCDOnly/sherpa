@@ -40,7 +40,7 @@ Init()
 
     IsQNAP || return 1
 
-    readonly MANAGER_SCRIPT_VERSION=200903
+    readonly MANAGER_SCRIPT_VERSION=200904
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -756,7 +756,6 @@ ShowHelp()
     DisplayAsHelpOptionExample 'display helpful tips and shortcuts' '--tips'
 
     DisplayAsHelpOptionExample 'display troubleshooting options' '--problem'
-    UnsetLineSpace
 
     return 0
 
@@ -791,7 +790,7 @@ ShowProblemHelp()
 ShowIssueHelp()
     {
 
-    UnsetLineSpace
+    DisplayLineSpace
     echo -e "* Please consider creating a new issue for this on GitHub:\n\thttps://github.com/OneCDOnly/sherpa/issues"
 
     echo -e "\n* Alternatively, post on the QNAP NAS Community Forum:\n\thttps://forum.qnap.com/viewtopic.php?f=320&t=132373"
@@ -854,7 +853,6 @@ ShowPackageAbbreviations()
     done
 
     DisplayAsHelpOptionExample 'example: to install, reinstall or upgrade SABnzbd' 'sab'
-    UnsetLineSpace
 
     return 0
 
@@ -955,7 +953,6 @@ AskQuiz()
 
     [[ -z $1 ]] && return 1
 
-    UnsetLineSpace
     ShowAsQuiz "$1"
     read -rn1 response
     DebugVar response
@@ -2480,6 +2477,7 @@ DisplayAsHelpOptionExample()
     # $2 = example syntax
 
     printf "\n  - %s:\n       %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$(ColourTextBrightWhite "./$LOADER_SCRIPT_FILE $2")"
+    UnsetLineSpace
 
     }
 
