@@ -69,6 +69,10 @@ So, to install SABnzbd, use:
 ./sherpa.sh NZBGet
 
 ./sherpa.sh Transmission
+
+./sherpa.sh Deluge-server
+
+./sherpa.sh Deluge-web
 ```
 
 ---
@@ -172,3 +176,5 @@ This will 'stop' the QPKG, restore from the backup file (if it exists), then 'st
 * **SickGear** will appear as 'OSickGear' in your App Center to avoid conflict with the existing **SickGear** package available in the Qnapclub Store.
 
 * **Transmission** will appear as 'OTransmission' in your App Center to avoid conflict with the existing **Transmission** packages available.
+
+* The default login password for **Deluge-web** is 'deluge'.
