@@ -61,7 +61,7 @@ Init()
     readonly APP_VERSION_PATHFILE=''
     readonly APP_VERSION_STORE_PATHFILE=$($DIRNAME_CMD "$APP_VERSION_PATHFILE")/version.stored
     readonly TARGET_SCRIPT_PATHFILE=''
-    readonly LAUNCHER="$TARGET_DAEMON --logfile $($DIRNAME_CMD "$QPKG_INI_PATHFILE")/deluge-web.log --config $($DIRNAME_CMD "$QPKG_INI_PATHFILE")/ --pidfile $DAEMON_PID_PATHFILE"
+    readonly LAUNCHER="$TARGET_DAEMON --logfile $($DIRNAME_CMD "$QPKG_INI_PATHFILE")/$QPKG_NAME.log --config $($DIRNAME_CMD "$QPKG_INI_PATHFILE")/ --pidfile $DAEMON_PID_PATHFILE"
 
     if [[ -n $PYTHON ]]; then
         readonly LAUNCH_TARGET=$PYTHON
@@ -162,7 +162,7 @@ StartQPKG()
     ExecuteAndLog 'starting daemon' "$LAUNCHER" log:everything || return 1
     WaitForPID || return 1
     IsDaemonActive || return 1
-#     CheckPorts || return 1
+    CheckPorts || return 1
 
     return 0
 
@@ -223,8 +223,8 @@ StatusQPKG()
 
     IsNotError || return
     IsDaemonActive || return
-#     LoadUIPorts qts
-#     CheckPorts || SetError
+    LoadUIPorts qts
+    CheckPorts || SetError
 
     }
 
@@ -274,10 +274,8 @@ LoadUIPorts()
     case $1 in
         app)
             # Read the current application UI ports from application configuration
-#             ui_port=$($GETCFG_CMD '' ControlPort -d 0 -f "$QPKG_INI_PATHFILE")
-#             ui_port_secure=$($GETCFG_CMD '' SecurePort -d 0 -f "$QPKG_INI_PATHFILE")
-            ui_port=8112
-            ui_port_secure=0
+            ui_port=$($JQ_CMD -r .port < "$QPKG_INI_PATHFILE" | $TAIL_CMD -n1)
+            ui_port_secure=$($JQ_CMD -r .port < "$QPKG_INI_PATHFILE" | $TAIL_CMD -n1)
             ;;
         qts)
             # Read the current application UI ports from QTS App Center
@@ -297,7 +295,7 @@ LoadUIPorts()
     fi
 
     # Always read this from the application configuration
-    ui_listening_address=$($GETCFG_CMD '' ControlIP -f "$QPKG_INI_PATHFILE")
+    ui_listening_address=$($JQ_CMD -r .interface < "$QPKG_INI_PATHFILE" | $TAIL_CMD -n1)
 
     return 0
 
@@ -306,7 +304,7 @@ LoadUIPorts()
 IsSSLEnabled()
     {
 
-    [[ $($GETCFG_CMD '' SecureControl -d no -f "$QPKG_INI_PATHFILE") = yes ]]
+    [[ $($JQ_CMD -r .https < "$QPKG_INI_PATHFILE" | $TAIL_CMD -n1) = true ]]
 
     }
 
