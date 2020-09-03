@@ -869,29 +869,23 @@ PasteLogOnline()
     # with thanks to https://github.com/solusipse/fiche
 
     if [[ -n $DEBUG_LOG_PATHFILE && -e $DEBUG_LOG_PATHFILE ]]; then
-        UnsetLineSpace
-        ShowAsQuiz "Press 'Y' to post your sherpa log in a public pastebin, or any other key to abort"
-        read -rn1 response; ShowAsQuizDone "Press 'Y' to post your sherpa log in a public pastebin, or any other key to abort: $response"
-        DebugVar response
-        case ${response:0:1} in
-            y|Y)
-                ShowAsProc 'uploading sherpa log'
-                link=$($TAIL_CMD -n 1000 -q "$DEBUG_LOG_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
-                if [[ $? -eq 0 ]]; then
-                    ShowAsDone "your sherpa log is now online at $(ColourTextBrightOrange "$($SED_CMD 's|http://|http://l.|;s|https://|https://l.|' <<< "$link")") and will be deleted in 1 month"
-                else
-                    ShowAsError 'a link could not be generated. Most likely a problem occurred when talking with https://termbin.com'
-                fi
-                ;;
-            *)
-                SetAbort
-                UnsetShowInstallerOutcome
-                DebugInfoThinSeparator
-                DebugScript 'user abort'
-                DebugInfoThickSeparator
-                return 1
-                ;;
-        esac
+        if AskQuiz "Press 'Y' to post your sherpa log in a public pastebin, or any other key to abort"; then
+            ShowAsProc 'uploading sherpa log'
+            link=$($TAIL_CMD -n 1000 -q "$DEBUG_LOG_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
+
+            if [[ $? -eq 0 ]]; then
+                ShowAsDone "your sherpa log is now online at $(ColourTextBrightOrange "$($SED_CMD 's|http://|http://l.|;s|https://|https://l.|' <<< "$link")") and will be deleted in 1 month"
+            else
+                ShowAsError "a link could not be generated. Most likely a problem occurred when talking with $(FormatAsURL "https://termbin.com")"
+            fi
+        else
+            SetAbort
+            UnsetShowInstallerOutcome
+            DebugInfoThinSeparator
+            DebugScript 'user abort'
+            DebugInfoThickSeparator
+            return 1
+        fi
     else
         ShowAsError 'no log to paste'
     fi
@@ -933,6 +927,34 @@ ShowInstallerOutcome()
     fi
 
     return 0
+
+    }
+
+AskQuiz()
+    {
+
+    # input:
+    #   $1 = prompt
+
+    # output:
+    #   $? = 0 if "yes", 1 if "no"
+
+    [[ -z $1 ]] && return 1
+
+    UnsetLineSpace
+    ShowAsQuiz "$1"
+    read -rn1 response
+    DebugVar response
+    ShowAsQuizDone "$1: $response"
+
+    case ${response:0:1} in
+        y|Y)
+            return 0
+            ;;
+        *)
+            return 1
+            ;;
+    esac
 
     }
 
@@ -1011,31 +1033,26 @@ RemoveUnwantedQPKGs()
         ShowAsNote "Your installed IPKG list will be saved to $(FormatAsFileName "$previous_opkg_package_list")"
         ShowAsNote "Your installed Python module list will be saved to $(FormatAsFileName "$previous_pip3_module_list")"
         (IsQPKGInstalled SABnzbdplus || IsQPKGInstalled Headphones) && ShowAsWarning "Also, the $(FormatAsPackageName SABnzbdplus) and $(FormatAsPackageName Headphones) packages CANNOT BE REINSTALLED as Python 2.7.16 is no-longer available."
-        ShowAsQuiz "Press 'Y' to remove all current $(FormatAsPackageName Entware) IPKGs (and their configurations), or any other key to abort"
-        read -rn1 response; ShowAsQuizDone "Press 'Y' to remove all current $(FormatAsPackageName Entware) IPKGs (and their configurations), or any other key to abort: $response"
-        DebugVar response
-        case ${response:0:1} in
-            y|Y)
-                ShowAsProc 'saving package and Python module lists'
 
-                $pip3_cmd freeze > "$previous_pip3_module_list"
-                DebugDone "saved current $(FormatAsPackageName pip3) module list to $(FormatAsFileName "$previous_pip3_module_list")"
+        if AskQuiz "Press 'Y' to remove all current $(FormatAsPackageName Entware) IPKGs (and their configurations), or any other key to abort"; then
+            ShowAsProc 'saving package and Python module lists'
 
-                $OPKG_CMD list-installed > "$previous_opkg_package_list"
-                DebugDone "saved current $(FormatAsPackageName Entware) IPKG list to $(FormatAsFileName "$previous_opkg_package_list")"
+            $pip3_cmd freeze > "$previous_pip3_module_list"
+            DebugDone "saved current $(FormatAsPackageName pip3) module list to $(FormatAsFileName "$previous_pip3_module_list")"
 
-                ShowAsDone 'package and Python module lists saved'
-                UninstallQPKG Entware
-                ;;
-            *)
-                SetAbort
-                UnsetShowInstallerOutcome
-                DebugInfoThinSeparator
-                DebugScript 'user abort'
-                DebugInfoThickSeparator
-                return 1
-                ;;
-        esac
+            $OPKG_CMD list-installed > "$previous_opkg_package_list"
+            DebugDone "saved current $(FormatAsPackageName Entware) IPKG list to $(FormatAsFileName "$previous_opkg_package_list")"
+
+            ShowAsDone 'package and Python module lists saved'
+            UninstallQPKG Entware
+        else
+            SetAbort
+            UnsetShowInstallerOutcome
+            DebugInfoThinSeparator
+            DebugScript 'user abort'
+            DebugInfoThickSeparator
+            return 1
+        fi
     fi
 
     return 0
@@ -4017,7 +4034,7 @@ ShowAsQuiz()
     {
 
     WriteToDisplay_SameLine "$(ColourTextBrightOrangeBlink quiz)" "$1: "
-    WriteToLog quiz "$1"
+    WriteToLog quiz "$1:"
 
     }
 
@@ -4025,7 +4042,6 @@ ShowAsQuizDone()
     {
 
     WriteToDisplay_NewLine "$(ColourTextBrightOrange quiz)" "$1"
-    WriteToLog quiz "$1"
 
     }
 
