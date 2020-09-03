@@ -61,7 +61,7 @@ Init()
     readonly APP_VERSION_PATHFILE=''
     readonly APP_VERSION_STORE_PATHFILE=$($DIRNAME_CMD "$APP_VERSION_PATHFILE")/version.stored
     readonly TARGET_SCRIPT_PATHFILE=''
-    readonly LAUNCHER="$TARGET_DAEMON --logfile $($DIRNAME_CMD "$QPKG_INI_PATHFILE")/$QPKG_NAME.log --pidfile $DAEMON_PID_PATHFILE"
+    readonly LAUNCHER="$TARGET_DAEMON --logfile $($DIRNAME_CMD "$QPKG_INI_PATHFILE")/$QPKG_NAME.log --config $($DIRNAME_CMD "$QPKG_INI_PATHFILE")/ -u 0.0.0.0 --pidfile $DAEMON_PID_PATHFILE"
 
     if [[ -n $PYTHON ]]; then
         readonly LAUNCH_TARGET=$PYTHON
@@ -88,7 +88,7 @@ Init()
 
     UnsetError
     UnsetRestartPending
-    EnsureConfigFileExists
+#     EnsureConfigFileExists
     DisableOpkgDaemonStart
 #     LoadAppVersion
 
@@ -380,6 +380,17 @@ EnsureConfigFileExists()
         cp "$QPKG_INI_DEFAULT_PATHFILE" "$QPKG_INI_PATHFILE"
     fi
 
+    # Deluge-server and Deluge-web need acccess to the same auth file or to duplicate copies of it
+
+    if [[ $($GETCFG_CMD Deluge-web Enable -d FALSE -f $QTS_QPKG_CONF_PATHFILE) = TRUE ]]; then
+        server_auth_pathfile=$($DIRNAME_CMD "$QPKG_INI_PATHFILE")/auth
+        web_auth_pathfile=$($GETCFG_CMD Deluge-web Install_Path -f "$QTS_QPKG_CONF_PATHFILE")/config/auth
+
+        if [[ ! -e $server_auth_pathfile && -e $web_auth_pathfile ]]; then
+            cp "$web_auth_pathfile" "$server_auth_pathfile"
+        fi
+    fi
+
     }
 
 SaveAppVersion()
@@ -429,7 +440,7 @@ ExecuteAndLog()
     eval "$2" 2>&1
 
     DisplayCommitToLog 'OK'
-	[[ $3 = log:everything ]] && CommitInfoToSysLog "$1: OK."
+    [[ $3 = log:everything ]] && CommitInfoToSysLog "$1: OK."
 
     return $returncode
 
