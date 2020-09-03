@@ -648,12 +648,10 @@ ParseArgs()
             --restart-all|restart-all)
                 SetRestartAllApps
                 current_operation=''
-                return 1
                 ;;
             --upgrade-all|upgrade-all)
                 SetUpgradeAllApps
                 current_operation=''
-                return 1
                 ;;
             --backup-all)
                 SetBackupAllApps
@@ -734,9 +732,9 @@ ShowHelp()
     local package=''
 
     DisplayLineSpace
-    echo "Usage: ./$LOADER_SCRIPT_FILE [PACKAGE]* [OPTION]**"
+    echo "Usage: $(ColourTextBrightWhite "./$LOADER_SCRIPT_FILE") $(ColourTextBrightYellow "[PACKAGE]*") $(ColourTextBrightOrange "[OPTION]**")"
 
-    echo -e "\n* [PACKAGE] may be specified as any ONE of the following:\n"
+    echo -e "\n$(ColourTextBrightYellow "* [PACKAGE]") may be specified as any ONE of the following:\n"
     for package in "${QPKGS_user_installable[@]}"; do
         if IsQPKGUpgradable "$package"; then
             DisplayAsHelpPackageOnlyExample "$(ColourTextBrightYellow "$package")"
@@ -746,7 +744,7 @@ ShowHelp()
     done
     DisplayAsHelpOptionExample 'example: to install, reinstall or upgrade SABnzbd' 'SABnzbd'
 
-    echo -e "\n** [OPTION] usage examples:"
+    echo -e "\n$(ColourTextBrightOrange "** [OPTION]") usage examples:"
 
     DisplayAsHelpOptionExample 'display helpful tips and shortcuts' '--tips'
 
@@ -761,7 +759,7 @@ ShowProblemHelp()
     {
 
     DisplayLineSpace
-    echo -e "** Extended [OPTION] usage examples:"
+    echo -e "$(ColourTextBrightOrange "** Extended [OPTION]") usage examples:"
     DisplayAsHelpOptionExample 'install a package and show debugging information' '[PACKAGE] --debug'
 
     DisplayAsHelpOptionExample 'ensure all application dependencies are installed' '--check'
@@ -806,7 +804,7 @@ ShowTipsHelp()
     {
 
     DisplayLineSpace
-    echo -e "** Extended [OPTION] usage tips:"
+    echo -e "$(ColourTextBrightOrange "** Extended [OPTION]") usage tips:"
     DisplayAsHelpOptionExample 'install everything!' '--install-all-applications'
 
     DisplayAsHelpOptionExample 'package abbreviations may also be used. To see these' '--abs'
