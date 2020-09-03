@@ -281,7 +281,7 @@ Init()
         SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/Deluge-web/build/Deluge-web_200903b.qpkg)
         SHERPA_QPKG_MD5+=(9af19d802848387de7d6fa24906bacf5)
         SHERPA_QPKG_ABBRVS+=('del-web deluge-web')
-        SHERPA_QPKG_DEPS+=('Entware Deluge-server')
+        SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('deluge-ui-web')
 
     SHERPA_QPKG_NAME+=(Par2)
