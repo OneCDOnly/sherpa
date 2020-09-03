@@ -399,7 +399,7 @@ LogRuntimeParameters()
     SetLogToFile
     DebugInfoThickSeparator
     DebugScript 'started' "$($DATE_CMD | $TR_CMD -s ' ')"
-    DebugScript 'version' "$MANAGER_SCRIPT_VERSION"
+    DebugScript 'version' "manager: $MANAGER_SCRIPT_VERSION, loader $LOADER_SCRIPT_VERSION"
     DebugScript 'PID' "$$"
     DebugInfoThinSeparator
     DebugInfo 'Markers: (**) detected, (II) information, (WW) warning, (LL) log file,'
