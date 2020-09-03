@@ -384,19 +384,19 @@ LogRuntimeParameters()
 
     ParseArgs
 
-    if IsNotVisibleDebugging && IsNotVersionOnly; then
+    IsVersionOnly && return
+
+    if IsNotVisibleDebugging; then
         echo "$(ColourTextBrightWhite "$LOADER_SCRIPT_FILE") ($MANAGER_SCRIPT_VERSION) a mini-package-manager for QNAP NAS"
+        DisplayLineSpace
     fi
 
-    if IsNotVersionOnly; then
-        CheckLoaderAge
-        ShowNewQPKGVersions
-    fi
+    CheckLoaderAge
+    ShowNewQPKGVersions
 
     IsAbort && return
 
     SetLogToFile
-    InsertLineSpace
     DebugInfoThickSeparator
     DebugScript 'started' "$($DATE_CMD | $TR_CMD -s ' ')"
     DebugScript 'version' "$MANAGER_SCRIPT_VERSION"
@@ -561,7 +561,7 @@ ShowNewQPKGVersions()
     local msg=''
 
     if [[ ${#QPKGS_upgradable[@]} -gt 0 ]]; then
-        InsertLineSpace
+        DisplayLineSpace
         if [[ ${#QPKGS_upgradable[@]} -eq 1 ]]; then
             msg='An upgraded package is'
         else
@@ -733,7 +733,8 @@ ShowHelp()
 
     local package=''
 
-    echo -e "\nUsage: ./$LOADER_SCRIPT_FILE [PACKAGE]* [OPTION]**"
+    DisplayLineSpace
+    echo "Usage: ./$LOADER_SCRIPT_FILE [PACKAGE]* [OPTION]**"
 
     echo -e "\n* [PACKAGE] may be specified as any ONE of the following:\n"
     for package in "${QPKGS_user_installable[@]}"; do
@@ -758,7 +759,8 @@ ShowHelp()
 ShowProblemHelp()
     {
 
-    echo -e "\n** Extended [OPTION] usage examples:"
+    DisplayLineSpace
+    echo -e "** Extended [OPTION] usage examples:"
     DisplayAsHelpOptionExample 'install a package and show debugging information' '[PACKAGE] --debug'
 
     DisplayAsHelpOptionExample 'ensure all application dependencies are installed' '--check'
@@ -782,7 +784,8 @@ ShowProblemHelp()
 ShowIssueHelp()
     {
 
-    echo -e "\n* Please consider creating a new issue for this on GitHub:\n\thttps://github.com/OneCDOnly/sherpa/issues"
+    UnsetLineSpace
+    echo -e "* Please consider creating a new issue for this on GitHub:\n\thttps://github.com/OneCDOnly/sherpa/issues"
 
     echo -e "\n* Alternatively, post on the QNAP NAS Community Forum:\n\thttps://forum.qnap.com/viewtopic.php?f=320&t=132373"
 
@@ -797,7 +800,8 @@ ShowIssueHelp()
 ShowTipsHelp()
     {
 
-    echo -e "\n** Extended [OPTION] usage tips:"
+    DisplayLineSpace
+    echo -e "** Extended [OPTION] usage tips:"
     DisplayAsHelpOptionExample 'install everything!' '--install-all-applications'
 
     DisplayAsHelpOptionExample 'package abbreviations may also be used. To see these' '--abs'
@@ -823,7 +827,8 @@ ShowPackageAbbreviations()
 
     local package_index=0
 
-    echo -e "\n* $(FormatAsTitle) recognises these package names and abbreviations:"
+    DisplayLineSpace
+    echo -e "* $(FormatAsTitle) recognises these package names and abbreviations:"
 
     for package_index in "${!SHERPA_QPKG_NAME[@]}"; do
         if [[ -n ${SHERPA_QPKG_ABBRVS[$package_index]} ]]; then
@@ -836,7 +841,6 @@ ShowPackageAbbreviations()
     done
 
     DisplayAsHelpOptionExample 'example: to install, reinstall or upgrade SABnzbd' 'sab'
-    InsertLineSpace
 
     return 0
 
@@ -852,7 +856,6 @@ ShowLogViewer()
             $CAT_CMD --number "$DEBUG_LOG_PATHFILE"
         fi
     else
-        echo
         ShowAsError 'no log to display'
     fi
 
@@ -866,11 +869,10 @@ PasteLogOnline()
     # with thanks to https://github.com/solusipse/fiche
 
     if [[ -n $DEBUG_LOG_PATHFILE && -e $DEBUG_LOG_PATHFILE ]]; then
-        IsNotVisibleDebugging && echo
+        UnsetLineSpace
         ShowAsQuiz "Press 'Y' to post your sherpa log in a public pastebin, or any other key to abort"
-        read -rn1 response; echo
+        read -rn1 response; ShowAsQuizDone "Press 'Y' to post your sherpa log in a public pastebin, or any other key to abort: $response"
         DebugVar response
-        IsNotVisibleDebugging && echo
         case ${response:0:1} in
             y|Y)
                 ShowAsProc 'uploading sherpa log'
@@ -891,7 +893,6 @@ PasteLogOnline()
                 ;;
         esac
     else
-        echo
         ShowAsError 'no log to paste'
     fi
 
@@ -1010,11 +1011,9 @@ RemoveUnwantedQPKGs()
         ShowAsNote "Your installed IPKG list will be saved to $(FormatAsFileName "$previous_opkg_package_list")"
         ShowAsNote "Your installed Python module list will be saved to $(FormatAsFileName "$previous_pip3_module_list")"
         (IsQPKGInstalled SABnzbdplus || IsQPKGInstalled Headphones) && ShowAsWarning "Also, the $(FormatAsPackageName SABnzbdplus) and $(FormatAsPackageName Headphones) packages CANNOT BE REINSTALLED as Python 2.7.16 is no-longer available."
-        IsNotVisibleDebugging && echo
         ShowAsQuiz "Press 'Y' to remove all current $(FormatAsPackageName Entware) IPKGs (and their configurations), or any other key to abort"
-        read -rn1 response; echo
+        read -rn1 response; ShowAsQuizDone "Press 'Y' to remove all current $(FormatAsPackageName Entware) IPKGs (and their configurations), or any other key to abort: $response"
         DebugVar response
-        IsNotVisibleDebugging && echo
         case ${response:0:1} in
             y|Y)
                 ShowAsProc 'saving package and Python module lists'
@@ -2341,8 +2340,9 @@ CheckLoaderAge()
     [[ -e $GNU_FIND_CMD ]] || return          # can only do this with GNU 'find'. The old BusyBox 'find' in QTS 4.2.6 doesn't support '-cmin'.
 
     if [[ -e "$LOADER_SCRIPT_FILE" && -z $($GNU_FIND_CMD "$LOADER_SCRIPT_FILE" -cmin +5) ]]; then
-        InsertLineSpace
+        DisplayLineSpace
         ShowAsNote "The $(ColourTextBrightWhite 'sherpa.sh') script does not need updating anymore. It now downloads all the latest information from the Internet everytime it's run. ;)"
+        SetLineSpace
     fi
 
     return 0
@@ -2448,7 +2448,7 @@ DisplayAsHelpOptionExample()
     # $1 = description
     # $2 = example syntax
 
-    printf "\n  - %s:\n       ./$LOADER_SCRIPT_FILE %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$2"
+    printf "\n  - %s:\n       %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$(ColourTextBrightWhite "./$LOADER_SCRIPT_FILE $2")"
 
     }
 
@@ -3556,7 +3556,6 @@ SetLineSpace()
     IsLineSpace && return
 
     _line_space_flag=true
-    DebugVar _line_space_flag
 
     }
 
@@ -3566,7 +3565,6 @@ UnsetLineSpace()
     IsNotLineSpace && return
 
     _line_space_flag=false
-    DebugVar _line_space_flag
 
     }
 
@@ -3734,16 +3732,14 @@ FormatAsResultAndStdout()
 
     }
 
-InsertLineSpace()
+DisplayLineSpace()
     {
 
     if IsNotLineSpace; then
-        if IsNotVisibleDebugging && IsNotLogViewOnly && IsNotVersionOnly && IsNotLogPasteOnly; then
+        if IsNotVisibleDebugging && IsNotVersionOnly; then
             SetLineSpace
             echo
         fi
-    else
-        UnsetLineSpace
     fi
 
     }
@@ -4025,6 +4021,14 @@ ShowAsQuiz()
 
     }
 
+ShowAsQuizDone()
+    {
+
+    WriteToDisplay_NewLine "$(ColourTextBrightOrange quiz)" "$1"
+    WriteToLog quiz "$1"
+
+    }
+
 ShowAsDone()
     {
 
@@ -4082,6 +4086,7 @@ WriteToDisplay_SameLine()
     previous_msg=$(printf "%-10s: %s" "$1" "$2")
 
     echo -n "$previous_msg"; IsVisibleDebugging && echo
+    UnsetLineSpace
 
     return 0
 
@@ -4121,6 +4126,7 @@ WriteToDisplay_NewLine()
         fi
 
         echo "$strbuffer"
+        UnsetLineSpace
     fi
 
     return 0
@@ -4236,8 +4242,7 @@ InstallTargetQPKG
 Cleanup
 ShowResult
 RemoveLock
-
-InsertLineSpace
+IsNotVersionOnly && IsNotVisibleDebugging && echo
 
 IsError && exit 1
 
