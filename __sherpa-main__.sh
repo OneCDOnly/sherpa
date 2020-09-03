@@ -730,16 +730,23 @@ ShowHelp()
     {
 
     local package=''
+    local package_note=''
 
     DisplayLineSpace
     echo "Usage: $(ColourTextBrightWhite "./$LOADER_SCRIPT_FILE") $(ColourTextBrightYellow "[PACKAGE]*") $(ColourTextBrightOrange "[OPTION]**")"
 
     echo -e "\n$(ColourTextBrightYellow "* [PACKAGE]") may be specified as any ONE of the following:\n"
     for package in "${QPKGS_user_installable[@]}"; do
-        if IsQPKGUpgradable "$package"; then
-            DisplayAsHelpPackageOnlyExample "$(ColourTextBrightYellow "$package")"
+        if [[ $package = Entware ]]; then       # kludge: use this until independent package checking works.
+            package_note='(installed by-default)'
         else
-            DisplayAsHelpPackageOnlyExample "$package"
+            package_note=''
+        fi
+
+        if IsQPKGUpgradable "$package"; then
+            DisplayAsHelpPackageOnlyExample "$(ColourTextBrightYellow "$package")" "$package_note"
+        else
+            DisplayAsHelpPackageOnlyExample "$package" "$package_note"
         fi
     done
     DisplayAsHelpOptionExample 'example: to install, reinstall or upgrade SABnzbd' 'SABnzbd'
@@ -2482,7 +2489,7 @@ DisplayAsHelpPackageOnlyExample()
     # $1 = description
     # $2 = example syntax
 
-    printf "    %s\n" "$1"
+    printf "    %s\t%s\n" "$1" "$2"
 
     }
 
