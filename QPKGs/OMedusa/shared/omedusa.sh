@@ -146,7 +146,7 @@ StartQPKG()
         fi
     fi
 
-    WaitForGit || return 1
+    [[ $(type -t WaitForGit) = 'function' ]] && { WaitForGit || return 1 ;}
     [[ $(type -t PullGitRepo) = 'function' ]] && PullGitRepo "$QPKG_NAME" "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_PATH"
 
     WaitForLaunchTarget || return 1
