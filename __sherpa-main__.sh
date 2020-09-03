@@ -836,6 +836,7 @@ ShowPackageAbbreviations()
     done
 
     DisplayAsHelpOptionExample 'example: to install, reinstall or upgrade SABnzbd' 'sab'
+    InsertLineSpace
 
     return 0
 
