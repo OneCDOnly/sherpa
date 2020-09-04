@@ -733,9 +733,10 @@ ShowHelp()
     local package_note=''
 
     DisplayLineSpace
-    echo "Usage: $(ColourTextBrightWhite "./$LOADER_SCRIPT_FILE") $(ColourTextBrightYellow "[PACKAGE]*") $(ColourTextBrightOrange "[OPTION]**")"
+    echo -e "Usage: $(ColourTextBrightWhite "./$LOADER_SCRIPT_FILE") $(FormatAsHelpPackage) $(FormatAsHelpOption)\n"
 
-    echo -e "\n$(ColourTextBrightYellow "* [PACKAGE]") may be specified as any ONE of the following:\n"
+    DisplayAsHelpPackageTitle
+    echo
     for package in "${QPKGS_user_installable[@]}"; do
         if [[ $package = Entware ]]; then       # kludge: use this until independent package checking works.
             package_note='(installed by-default)'
@@ -750,8 +751,8 @@ ShowHelp()
         fi
     done
     DisplayAsHelpOptionExample 'example: to install, reinstall or upgrade SABnzbd' 'SABnzbd'
-
-    echo -e "\n$(ColourTextBrightOrange "** [OPTION]") usage examples:"
+    echo
+    DisplayAsHelpOptionTitle
 
     DisplayAsHelpOptionExample 'display helpful tips and shortcuts' '--tips'
 
@@ -765,7 +766,8 @@ ShowProblemHelp()
     {
 
     DisplayLineSpace
-    echo -e "$(ColourTextBrightOrange "** Extended [OPTION]") usage examples:"
+    DisplayAsHelpOptionTitle
+
     DisplayAsHelpOptionExample 'install a package and show debugging information' '[PACKAGE] --debug'
 
     DisplayAsHelpOptionExample 'ensure all application dependencies are installed' '--check'
@@ -799,7 +801,7 @@ ShowIssueHelp()
 
     DisplayAsHelpOptionExample "upload the log to the $(FormatAsURL 'https://termbin.com') public pastebin" '--paste'
 
-    echo -e "\n$(ColourTextBrightOrange "* If you need help, please include a copy of your") $(FormatAsTitle) $(ColourTextBrightOrange "log for analysis!")"
+    echo -e "\n$(ColourTextBrightOrange '* If you need help, please include a copy of your') $(FormatAsTitle) $(ColourTextBrightOrange 'log for analysis!')"
     UnsetLineSpace
 
     return 0
@@ -810,7 +812,7 @@ ShowTipsHelp()
     {
 
     DisplayLineSpace
-    echo -e "$(ColourTextBrightOrange "** Extended [OPTION]") usage tips:"
+    DisplayAsHelpOptionTitle
     DisplayAsHelpOptionExample 'install everything!' '--install-all-applications'
 
     DisplayAsHelpOptionExample 'package abbreviations may also be used. To see these' '--abs'
@@ -2470,13 +2472,35 @@ IsIPKGInstalled()
 
 # all functions below here do-not generate global or logged errors
 
+DisplayAsHelpPackageTitle()
+    {
+
+    # $1 = description
+    # $2 = example syntax
+
+    echo -e "$(FormatAsHelpPackage) is ONE of the following:"
+    UnsetLineSpace
+
+    }
+
+DisplayAsHelpOptionTitle()
+    {
+
+    # $1 = description
+    # $2 = example syntax
+
+    echo -e "$(FormatAsHelpOption) usage examples:"
+    UnsetLineSpace
+
+    }
+
 DisplayAsHelpOptionExample()
     {
 
     # $1 = description
     # $2 = example syntax
 
-    printf "\n  - %s:\n       %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$(ColourTextBrightWhite "./$LOADER_SCRIPT_FILE $2")"
+    printf "\n  - %s:\n       ./%s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$LOADER_SCRIPT_FILE $2"
     UnsetLineSpace
 
     }
@@ -3638,6 +3662,20 @@ FormatAsTitle()
     {
 
     ColourTextBrightWhite sherpa
+
+    }
+
+FormatAsHelpPackage()
+    {
+
+    ColourTextBrightYellow '[PACKAGE]'
+
+    }
+
+FormatAsHelpOption()
+    {
+
+    ColourTextBrightOrange '[OPTION]'
 
     }
 
