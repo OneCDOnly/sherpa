@@ -40,7 +40,7 @@ Init()
 
     IsQNAP || return 1
 
-    readonly MANAGER_SCRIPT_VERSION=200904
+    readonly MANAGER_SCRIPT_VERSION=200905
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -192,7 +192,7 @@ Init()
         SHERPA_QPKG_ARCH+=(all)
         SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/Entware/Entware_1.02std.qpkg)
         SHERPA_QPKG_MD5+=(dbc82469933ac3049c06d4c8a023bbb9)
-        SHERPA_QPKG_ABBRVS+=('ew ent entware opkg')
+        SHERPA_QPKG_ABBRVS+=('ew ent opkg entware')
         SHERPA_QPKG_DEPS+=('')
         SHERPA_QPKG_IPKGS+=('')
 
@@ -392,7 +392,7 @@ LogRuntimeParameters()
         CheckLoaderAge
     fi
 
-    ShowNewQPKGVersions
+    DisplayNewQPKGVersions
 
     IsAbort && return
 
@@ -549,7 +549,7 @@ LogRuntimeParameters()
 
     }
 
-ShowNewQPKGVersions()
+DisplayNewQPKGVersions()
     {
 
     # Check installed sherpa packages and compare versions against package arrays. If new versions are available, advise on-screen.
@@ -561,7 +561,6 @@ ShowNewQPKGVersions()
     local msg=''
 
     if [[ ${#QPKGS_upgradable[@]} -gt 0 ]]; then
-        DisplayLineSpace
         if [[ ${#QPKGS_upgradable[@]} -eq 1 ]]; then
             msg='An upgraded package is'
         else
@@ -730,33 +729,37 @@ ShowHelp()
     {
 
     local package=''
-    local package_note=''
+    local package_name_message=''
+    local package_note_message=''
 
     DisplayLineSpace
-    echo -e "Usage: $(ColourTextBrightWhite "./$LOADER_SCRIPT_FILE") $(FormatAsHelpPackage) $(FormatAsHelpOption)\n"
+    echo -e "Usage: $(ColourTextBrightWhite "./$LOADER_SCRIPT_FILE") $(FormatAsHelpPackage) $(FormatAsHelpOption)"
 
-    DisplayAsHelpPackageTitle
-    echo
+    DisplayAsTitleHelpPackage
+
     for package in "${QPKGS_user_installable[@]}"; do
-        if [[ $package = Entware ]]; then       # kludge: use this until independent package checking works.
-            package_note='(installed by-default)'
-        else
-            package_note=''
-        fi
-
         if IsQPKGUpgradable "$package"; then
-            DisplayAsHelpPackageOnlyExample "$(ColourTextBrightYellow "$package")" "$package_note"
+            package_name_message="$(ColourTextBrightYellow "$package")"
         else
-            DisplayAsHelpPackageOnlyExample "$package" "$package_note"
+            package_name_message="$package"
         fi
+
+        if [[ $package = Entware ]]; then       # kludge: use this until independent package checking works.
+            package_note_message='(installed by-default)'
+        else
+            package_note_message=''
+        fi
+
+        DisplayAsHelpPackageNameExample "$package_name_message" "$package_note_message"
     done
-    DisplayAsHelpOptionExample 'example: to install, reinstall or upgrade SABnzbd' 'SABnzbd'
+
+    DisplayAsHelpExample 'example: to install, reinstall or upgrade SABnzbd' 'SABnzbd'
     echo
-    DisplayAsHelpOptionTitle
+    DisplayAsTitleHelpOption
 
-    DisplayAsHelpOptionExample 'display helpful tips and shortcuts' '--tips'
+    DisplayAsHelpExample 'display helpful tips and shortcuts' '--tips'
 
-    DisplayAsHelpOptionExample 'display troubleshooting options' '--problem'
+    DisplayAsHelpExample 'display troubleshooting options' '--problem'
 
     return 0
 
@@ -766,23 +769,23 @@ ShowProblemHelp()
     {
 
     DisplayLineSpace
-    DisplayAsHelpOptionTitle
+    DisplayAsTitleHelpOption
 
-    DisplayAsHelpOptionExample 'install a package and show debugging information' '[PACKAGE] --debug'
+    DisplayAsHelpExample 'install a package and show debugging information' '[PACKAGE] --debug'
 
-    DisplayAsHelpOptionExample 'ensure all application dependencies are installed' '--check'
+    DisplayAsHelpExample 'ensure all application dependencies are installed' '--check'
 
-    DisplayAsHelpOptionExample "don't check free-space on target filesystem when installing $(FormatAsPackageName Entware) packages" '--ignore-space'
+    DisplayAsHelpExample "don't check free-space on target filesystem when installing $(FormatAsPackageName Entware) packages" '--ignore-space'
 
-    DisplayAsHelpOptionExample 'restart all applications (only upgrades the internal applications, not the QPKG)' '--restart-all'
+    DisplayAsHelpExample 'restart all applications (only upgrades the internal applications, not the QPKG)' '--restart-all'
 
-    DisplayAsHelpOptionExample 'upgrade all QPKGs (including the internal applications)' '--upgrade-all'
+    DisplayAsHelpExample 'upgrade all QPKGs (including the internal applications)' '--upgrade-all'
 
-    DisplayAsHelpOptionExample 'view the log' '--log'
+    DisplayAsHelpExample 'view the log' '--log'
 
-    DisplayAsHelpOptionExample "upload the log to the $(FormatAsURL 'https://termbin.com') public pastebin" '--paste'
+    DisplayAsHelpExample "upload the log to the $(FormatAsURL 'https://termbin.com') public pastebin" '--paste'
 
-    echo -e "\n$(ColourTextBrightOrange "* If you need help, please include a copy of your") $(FormatAsTitle) $(ColourTextBrightOrange "log for analysis!")"
+    echo -e "\n$(ColourTextBrightOrange "* If you need help, please include a copy of your") $(FormatAsScriptTitle) $(ColourTextBrightOrange "log for analysis!")"
     UnsetLineSpace
 
     return 0
@@ -797,11 +800,11 @@ ShowIssueHelp()
 
     echo -e "\n* Alternatively, post on the QNAP NAS Community Forum:\n\thttps://forum.qnap.com/viewtopic.php?f=320&t=132373"
 
-    DisplayAsHelpOptionExample 'view the log' '--log'
+    DisplayAsHelpExample 'view the log' '--log'
 
-    DisplayAsHelpOptionExample "upload the log to the $(FormatAsURL 'https://termbin.com') public pastebin" '--paste'
+    DisplayAsHelpExample "upload the log to the $(FormatAsURL 'https://termbin.com') public pastebin" '--paste'
 
-    echo -e "\n$(ColourTextBrightOrange '* If you need help, please include a copy of your') $(FormatAsTitle) $(ColourTextBrightOrange 'log for analysis!')"
+    echo -e "\n$(ColourTextBrightOrange '* If you need help, please include a copy of your') $(FormatAsScriptTitle) $(ColourTextBrightOrange 'log for analysis!')"
     UnsetLineSpace
 
     return 0
@@ -812,22 +815,22 @@ ShowTipsHelp()
     {
 
     DisplayLineSpace
-    DisplayAsHelpOptionTitle
-    DisplayAsHelpOptionExample 'install everything!' '--install-all-applications'
+    DisplayAsTitleHelpOption
+    DisplayAsHelpExample 'install everything!' '--install-all-applications'
 
-    DisplayAsHelpOptionExample 'package abbreviations may also be used. To see these' '--abs'
+    DisplayAsHelpExample 'package abbreviations may also be used. To see these' '--abs'
 
-    DisplayAsHelpOptionExample 'ensure all application dependencies are installed' '--check'
+    DisplayAsHelpExample 'ensure all application dependencies are installed' '--check'
 
-    DisplayAsHelpOptionExample 'restart all applications (only upgrades the internal applications, not the QPKG)' '--restart-all'
+    DisplayAsHelpExample 'restart all applications (only upgrades the internal applications, not the QPKG)' '--restart-all'
 
-    DisplayAsHelpOptionExample 'upgrade all QPKGs (including the internal applications)' '--upgrade-all'
+    DisplayAsHelpExample 'upgrade all QPKGs (including the internal applications)' '--upgrade-all'
 
-    DisplayAsHelpOptionExample "upload the log to the $(FormatAsURL 'https://termbin.com') public pastebin" '--paste'
+    DisplayAsHelpExample "upload the log to the $(FormatAsURL 'https://termbin.com') public pastebin" '--paste'
 
-    DisplayAsHelpOptionExample 'display the package manager script versions' '--version'
+    DisplayAsHelpExample 'display the package manager script versions' '--version'
 
-    echo -e "\n$(ColourTextBrightOrange "* If you need help, please include a copy of your") $(FormatAsTitle) $(ColourTextBrightOrange "log for analysis!")"
+    echo -e "\n$(ColourTextBrightOrange "* If you need help, please include a copy of your") $(FormatAsScriptTitle) $(ColourTextBrightOrange "log for analysis!")"
     UnsetLineSpace
 
     return 0
@@ -842,7 +845,7 @@ ShowPackageAbbreviations()
     local package_index=0
 
     DisplayLineSpace
-    echo -e "* $(FormatAsTitle) recognises these package names and abbreviations:"
+    echo -e "* $(FormatAsScriptTitle) recognises these package names and abbreviations:"
 
     for package_index in "${!SHERPA_QPKG_NAME[@]}"; do
         if [[ -n ${SHERPA_QPKG_ABBRVS[$package_index]} ]]; then
@@ -854,7 +857,7 @@ ShowPackageAbbreviations()
         fi
     done
 
-    DisplayAsHelpOptionExample 'example: to install, reinstall or upgrade SABnzbd' 'sab'
+    DisplayAsHelpExample 'example: to install, reinstall or upgrade SABnzbd' 'sab'
 
     return 0
 
@@ -1202,35 +1205,6 @@ InstallQPKGIndepsAddons()
 
     }
 
-InstallTargetQPKG()
-    {
-
-    IsAbort && return
-
-    local package=''
-
-    if IsInstallAllApps; then
-        if [[ -n ${QPKGS_user_installable[*]} ]]; then
-            for package in "${QPKGS_user_installable[@]}"; do
-                InstallQPKG "$package"
-            done
-        fi
-    elif IsUpgradeAllApps; then
-        if [[ -n ${QPKGS_upgradable[*]} ]]; then
-            for package in "${QPKGS_upgradable[@]}"; do
-                InstallQPKG "$package"
-            done
-        fi
-    else
-        [[ -z $TARGET_APP ]] && return 1
-        [[ $TARGET_APP != Entware ]] && InstallQPKG "$TARGET_APP"
-    fi
-
-    DebugFuncExit
-    return 0
-
-    }
-
 InstallIPKGs()
     {
 
@@ -1293,7 +1267,7 @@ InstallIPKGBatch()
 
     if [[ $IPKG_download_count -gt 0 ]]; then
         local -r STARTSECONDS=$(DebugTimerStageStart)
-        ShowAsProc "downloading & installing $IPKG_download_count IPKG$(DisplayPlural "$IPKG_download_count")"
+        ShowAsProc "downloading & installing $IPKG_download_count IPKG$(FormatAsPlural "$IPKG_download_count")"
 
         CreateDirSizeMonitorFlagFile
             trap CTRL_C_Captured INT
@@ -1305,11 +1279,11 @@ InstallIPKGBatch()
         RemoveDirSizeMonitorFlagFile
 
         if [[ $result -eq 0 ]]; then
-            ShowAsDone "downloaded & installed $IPKG_download_count IPKG$(DisplayPlural "$IPKG_download_count")"
+            ShowAsDone "downloaded & installed $IPKG_download_count IPKG$(FormatAsPlural "$IPKG_download_count")"
             # if 'python3-pip' was installed, the install all 'pip' modules too
             [[ ${IPKG_download_list[*]} =~ python3-pip ]] && SetPIPInstall
         else
-            ShowAsError "download & install IPKG$(DisplayPlural "$IPKG_download_count") failed $(FormatAsExitcode $result)"
+            ShowAsError "download & install IPKG$(FormatAsPlural "$IPKG_download_count") failed $(FormatAsExitcode $result)"
             DebugErrorFile "$log_pathfile"
             returncode=1
         fi
@@ -1399,67 +1373,52 @@ RestartAllDepQPKGs()
 
     }
 
-InstallQPKG()
+Cleanup()
     {
 
-    # $1 = QPKG name to install
+    [[ -d $WORK_PATH ]] && IsNotError && IsNotVisibleDebugging && IsNotDevMode && rm -rf "$WORK_PATH"
 
-    IsError && return
-    IsAbort && return
-
-    local target_file=''
-    local result=0
-    local returncode=0
-    local local_pathfile="$(GetQPKGPathFilename "$1")"
-
-    if [[ ${local_pathfile##*.} = zip ]]; then
-        $UNZIP_CMD -nq "$local_pathfile" -d "$QPKG_DL_PATH"
-        local_pathfile="${local_pathfile%.*}"
-    fi
-
-    local log_pathfile="$local_pathfile.$INSTALL_LOG_FILE"
-    target_file=$($BASENAME_CMD "$local_pathfile")
-
-    ShowAsProcLong "installing QPKG $(FormatAsFileName "$target_file")"
-
-    sh "$local_pathfile" > "$log_pathfile" 2>&1
-    result=$?
-
-    if [[ $result -eq 0 || $result -eq 10 ]]; then
-        ShowAsDone "installed QPKG $(FormatAsFileName "$target_file")"
-        GetQPKGServiceStatus "$1"
-    else
-        ShowAsError "QPKG installation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $result)"
-        DebugErrorFile "$log_pathfile"
-        returncode=1
-    fi
-
-    return $returncode
+    return 0
 
     }
 
-GetQPKGServiceStatus()
+ShowResult()
     {
 
-    # $1 = QPKG name to install
+    local RE=''
 
-    if [[ -e /var/run/$1.last.operation ]]; then
-        case $(</var/run/"$1".last.operation) in
-            ok)
-                DebugInfo "$(FormatAsPackageName "$1") service started OK"
-                ;;
-            failed)
-                ShowAsError "$(FormatAsPackageName "$1") service failed to start.$([[ -e /var/log/$1.log ]] && echo " Check $(FormatAsFileName "/var/log/$1.log") for more information")"
-                ;;
-            *)
-                DebugWarning "$(FormatAsPackageName "$1") service status is incorrect"
-                ;;
-        esac
-    else
-        DebugWarning "unable to determine status of $(FormatAsPackageName "$1") service. It may be a package earlier than 200816c that doesn't support service operation results."
+    if IsVersionOnly; then
+        echo "loader: $LOADER_SCRIPT_VERSION"
+        echo "manager: $MANAGER_SCRIPT_VERSION"
+    elif IsLogViewOnly; then
+        ShowLogViewer
+    elif IsShowHelp; then
+        ShowHelp
+    elif IsShowProblemHelp; then
+        ShowProblemHelp
+    elif IsShowTipsHelp; then
+        ShowTipsHelp
+    elif IsShowAbbreviations; then
+        ShowPackageAbbreviations
     fi
 
+    IsLogPasteOnly && PasteLogOnline
+    IsShowInstallerOutcome && ShowInstallerOutcome
+    IsSuggestIssue && ShowIssueHelp
+
+    DebugInfoThinSeparator
+    DebugScript 'finished' "$($DATE_CMD)"
+    DebugScript 'elapsed time' "$(ConvertSecsToMinutes "$(($($DATE_CMD +%s)-$([[ -n $SCRIPT_STARTSECONDS ]] && echo "$SCRIPT_STARTSECONDS" || echo "1")))")"
+    DebugInfoThickSeparator
+
+    return 0
+
     }
+
+
+
+
+
 
 ReloadProfile()
     {
@@ -1538,6 +1497,76 @@ DownloadQPKG()
     return $returncode
 
     }
+
+InstallQPKG()
+    {
+
+    # $1 = QPKG name to install
+
+    IsError && return
+    IsAbort && return
+
+    local target_file=''
+    local result=0
+    local returncode=0
+    local local_pathfile="$(GetQPKGPathFilename "$1")"
+
+    if [[ ${local_pathfile##*.} = zip ]]; then
+        $UNZIP_CMD -nq "$local_pathfile" -d "$QPKG_DL_PATH"
+        local_pathfile="${local_pathfile%.*}"
+    fi
+
+    local log_pathfile="$local_pathfile.$INSTALL_LOG_FILE"
+    target_file=$($BASENAME_CMD "$local_pathfile")
+
+    ShowAsProcLong "installing QPKG $(FormatAsFileName "$target_file")"
+
+    sh "$local_pathfile" > "$log_pathfile" 2>&1
+    result=$?
+
+    if [[ $result -eq 0 || $result -eq 10 ]]; then
+        ShowAsDone "installed QPKG $(FormatAsFileName "$target_file")"
+        GetQPKGServiceStatus "$1"
+    else
+        ShowAsError "QPKG installation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $result)"
+        DebugErrorFile "$log_pathfile"
+        returncode=1
+    fi
+
+    return $returncode
+
+    }
+
+InstallTargetQPKG()
+    {
+
+    IsAbort && return
+
+    local package=''
+
+    if IsInstallAllApps; then
+        if [[ -n ${QPKGS_user_installable[*]} ]]; then
+            for package in "${QPKGS_user_installable[@]}"; do
+                InstallQPKG "$package"
+            done
+        fi
+    elif IsUpgradeAllApps; then
+        if [[ -n ${QPKGS_upgradable[*]} ]]; then
+            for package in "${QPKGS_upgradable[@]}"; do
+                InstallQPKG "$package"
+            done
+        fi
+    else
+        [[ -z $TARGET_APP ]] && return 1
+        [[ $TARGET_APP != Entware ]] && InstallQPKG "$TARGET_APP"
+    fi
+
+    DebugFuncExit
+    return 0
+
+    }
+
+#### Calc... function are each run only once.
 
 CalcNASQPKGArch()
     {
@@ -1677,46 +1706,6 @@ CalcUpgradeableQPKGs()
 
     }
 
-LoadInstalledQPKGVars()
-    {
-
-    # Load variables for specified package
-
-    # input:
-    #   $1 = QPKG name
-
-    # output:
-    #   $? = 0 if successful, 1 if failed
-    #   $package_installed_path
-    #   $package_config_path
-
-    local package_name=$1
-    local prev_config_dir=''
-    local prev_config_file=''
-    local package_settings_pathfile=''
-    package_installed_path=''
-    package_config_path=''
-
-    package_installed_path=$($GETCFG_CMD "$package_name" Install_Path -f $APP_CENTER_CONFIG_PATHFILE)
-    if [[ $? -eq 0 ]]; then
-        for prev_config_dir in "${PREV_QPKG_CONFIG_DIRS[@]}"; do
-            package_config_path=$package_installed_path/$prev_config_dir
-            [[ -d $package_config_path ]] && break
-        done
-
-        for prev_config_file in "${PREV_QPKG_CONFIG_FILES[@]}"; do
-            package_settings_pathfile=$package_config_path/$prev_config_file
-            [[ -f $package_settings_pathfile ]] && break
-        done
-    else
-        DebugError 'QPKG not installed?'
-        return 1
-    fi
-
-    return 0
-
-    }
-
 UninstallQPKG()
     {
 
@@ -1796,6 +1785,46 @@ RestartQPKGService()
 
     }
 
+GetInstalledQPKGVars()
+    {
+
+    # Load variables for specified package
+
+    # input:
+    #   $1 = QPKG name
+
+    # output:
+    #   $? = 0 if successful, 1 if failed
+    #   $package_installed_path
+    #   $package_config_path
+
+    local package_name=$1
+    local prev_config_dir=''
+    local prev_config_file=''
+    local package_settings_pathfile=''
+    package_installed_path=''
+    package_config_path=''
+
+    package_installed_path=$($GETCFG_CMD "$package_name" Install_Path -f $APP_CENTER_CONFIG_PATHFILE)
+    if [[ $? -eq 0 ]]; then
+        for prev_config_dir in "${PREV_QPKG_CONFIG_DIRS[@]}"; do
+            package_config_path=$package_installed_path/$prev_config_dir
+            [[ -d $package_config_path ]] && break
+        done
+
+        for prev_config_file in "${PREV_QPKG_CONFIG_FILES[@]}"; do
+            package_settings_pathfile=$package_config_path/$prev_config_file
+            [[ -f $package_settings_pathfile ]] && break
+        done
+    else
+        DebugError 'QPKG not installed?'
+        return 1
+    fi
+
+    return 0
+
+    }
+
 GetInstalledQPKGServicePathFile()
     {
 
@@ -1842,6 +1871,29 @@ GetInstalledQPKGVersion()
     else
         echo 'unknown'
         return 1
+    fi
+
+    }
+
+GetQPKGServiceStatus()
+    {
+
+    # $1 = QPKG name to install
+
+    if [[ -e /var/run/$1.last.operation ]]; then
+        case $(</var/run/"$1".last.operation) in
+            ok)
+                DebugInfo "$(FormatAsPackageName "$1") service started OK"
+                ;;
+            failed)
+                ShowAsError "$(FormatAsPackageName "$1") service failed to start.$([[ -e /var/log/$1.log ]] && echo " Check $(FormatAsFileName "/var/log/$1.log") for more information")"
+                ;;
+            *)
+                DebugWarning "$(FormatAsPackageName "$1") service status is incorrect"
+                ;;
+        esac
+    else
+        DebugWarning "unable to determine status of $(FormatAsPackageName "$1") service. It may be a package earlier than 200816c that doesn't support service operation results."
     fi
 
     }
@@ -1934,58 +1986,6 @@ GetQPKGMD5()
 
     }
 
-CTRL_C_Captured()
-    {
-
-    RemoveDirSizeMonitorFlagFile
-
-    exit
-
-    }
-
-Cleanup()
-    {
-
-    [[ -d $WORK_PATH ]] && IsNotError && IsNotVisibleDebugging && IsNotDevMode && rm -rf "$WORK_PATH"
-
-    return 0
-
-    }
-
-ShowResult()
-    {
-
-    local RE=''
-    local emoticon=''
-
-    if IsVersionOnly; then
-        echo "loader: $LOADER_SCRIPT_VERSION"
-        echo "manager: $MANAGER_SCRIPT_VERSION"
-    elif IsLogViewOnly; then
-        ShowLogViewer
-    elif IsShowHelp; then
-        ShowHelp
-    elif IsShowProblemHelp; then
-        ShowProblemHelp
-    elif IsShowTipsHelp; then
-        ShowTipsHelp
-    elif IsShowAbbreviations; then
-        ShowPackageAbbreviations
-    fi
-
-    IsLogPasteOnly && PasteLogOnline
-    IsShowInstallerOutcome && ShowInstallerOutcome
-    IsSuggestIssue && ShowIssueHelp
-
-    DebugInfoThinSeparator
-    DebugScript 'finished' "$($DATE_CMD)"
-    DebugScript 'elapsed time' "$(ConvertSecsToMinutes "$(($($DATE_CMD +%s)-$([[ -n $SCRIPT_STARTSECONDS ]] && echo "$SCRIPT_STARTSECONDS" || echo "1")))")"
-    DebugInfoThickSeparator
-
-    return 0
-
-    }
-
 GetQPKGDeps()
     {
 
@@ -2053,7 +2053,7 @@ FindAllQPKGDependants()
             last_list=$new_list
         else
             DebugDone 'complete'
-            DebugInfo "found all QPKG dependencies in $iterations iteration$(DisplayPlural $iterations)"
+            DebugInfo "found all QPKG dependencies in $iterations iteration$(FormatAsPlural $iterations)"
             complete=true
             break
         fi
@@ -2078,7 +2078,7 @@ FindAllQPKGDependants()
     DebugTimerStageEnd "$STARTSECONDS"
 
     if [[ $QPKG_download_count -gt 0 ]]; then
-        ShowAsDone "$QPKG_download_count QPKG$(DisplayPlural "$QPKG_download_count") to be downloaded"
+        ShowAsDone "$QPKG_download_count QPKG$(FormatAsPlural "$QPKG_download_count") to be downloaded"
     else
         ShowAsDone 'no QPKGs are required'
     fi
@@ -2135,7 +2135,7 @@ FindAllIPKGDependencies()
             dependency_list+=" $last_list"
         else
             DebugDone 'complete'
-            DebugInfo "found all IPKG dependencies in $iterations iteration$(DisplayPlural $iterations)"
+            DebugInfo "found all IPKG dependencies in $iterations iteration$(FormatAsPlural $iterations)"
             complete=true
             break
         fi
@@ -2166,12 +2166,12 @@ FindAllIPKGDependencies()
     IPKG_download_count=${#IPKG_download_list[@]}
 
     if [[ $IPKG_download_count -gt 0 ]]; then
-        DebugProc "determining size of IPKG$(DisplayPlural "$IPKG_download_count") to download"
+        DebugProc "determining size of IPKG$(FormatAsPlural "$IPKG_download_count") to download"
         size_array=($($GNU_GREP_CMD -w '^Package:\|^Size:' "$EXTERNAL_PACKAGE_LIST_PATHFILE" | $GNU_GREP_CMD --after-context 1 --no-group-separator ": $($SED_CMD 's/ /$ /g;s/\$ /\$\\\|: /g' <<< "${IPKG_download_list[*]}")$" | $GREP_CMD '^Size:' | $SED_CMD 's|^Size: ||'))
         IPKG_download_size=$(IFS=+; echo "$((${size_array[*]}))")       # a neat trick found here https://stackoverflow.com/a/13635566/6182835
         DebugDone 'complete'
         DebugVar IPKG_download_size
-        ShowAsDone "$IPKG_download_count IPKG$(DisplayPlural "$IPKG_download_count") ($(FormatAsISO "$IPKG_download_size")) to be downloaded"
+        ShowAsDone "$IPKG_download_count IPKG$(FormatAsPlural "$IPKG_download_count") ($(FormatAsISO "$IPKG_download_size")) to be downloaded"
     else
         ShowAsDone 'no IPKGs are required ... woohoo!'
     fi
@@ -2299,6 +2299,19 @@ RemoveLock()
 
     }
 
+EnableQPKG()
+    {
+
+    # $1 = package name to enable
+
+    if [[ $($GETCFG_CMD "$1" Enable -u -f $APP_CENTER_CONFIG_PATHFILE) != 'TRUE' ]]; then
+        DebugProc "enabling QPKG $(FormatAsPackageName "$1")"
+        $SETCFG_CMD "$1" Enable TRUE -f $APP_CENTER_CONFIG_PATHFILE
+        DebugDone "QPKG $(FormatAsPackageName "$1") enabled"
+    fi
+
+    }
+
 IsQNAP()
     {
 
@@ -2339,8 +2352,6 @@ CheckLoaderAge()
     if [[ -e "$LOADER_SCRIPT_FILE" && -z $($GNU_FIND_CMD "$LOADER_SCRIPT_FILE" -cmin +5) ]]; then
         ShowAsNote "The $(ColourTextBrightWhite 'sherpa.sh') script does not need updating anymore. It now downloads all the latest information from the Internet everytime it's run. ;)"
     fi
-
-    SetLineSpace
 
     return 0
 
@@ -2429,18 +2440,20 @@ IsIPKGInstalled()
 
 # all functions below here do-not generate global or logged errors
 
-DisplayAsHelpPackageTitle()
+#### DisplayAs... functions are for direct screen output only.
+
+DisplayAsTitleHelpPackage()
     {
 
     # $1 = description
     # $2 = example syntax
 
-    echo -e "$(FormatAsHelpPackage) is ONE of the following:"
+    echo -e "\n$(FormatAsHelpPackage) is ONE of the following:\n"
     UnsetLineSpace
 
     }
 
-DisplayAsHelpOptionTitle()
+DisplayAsTitleHelpOption()
     {
 
     # $1 = description
@@ -2451,7 +2464,7 @@ DisplayAsHelpOptionTitle()
 
     }
 
-DisplayAsHelpOptionExample()
+DisplayAsHelpExample()
     {
 
     # $1 = description
@@ -2467,26 +2480,13 @@ DisplayAsHelpOptionExample()
 
     }
 
-DisplayAsHelpPackageOnlyExample()
+DisplayAsHelpPackageNameExample()
     {
 
     # $1 = description
     # $2 = example syntax
 
     printf "    %s\t%s\n" "$1" "$2"
-
-    }
-
-EnableQPKG()
-    {
-
-    # $1 = package name to enable
-
-    if [[ $($GETCFG_CMD "$1" Enable -u -f $APP_CENTER_CONFIG_PATHFILE) != 'TRUE' ]]; then
-        DebugProc "enabling QPKG $(FormatAsPackageName "$1")"
-        $SETCFG_CMD "$1" Enable TRUE -f $APP_CENTER_CONFIG_PATHFILE
-        DebugDone "QPKG $(FormatAsPackageName "$1") enabled"
-    fi
 
     }
 
@@ -2701,13 +2701,6 @@ DeDupeWords()
     [[ -z $1 ]] && return 1
 
     $TR_CMD ' ' '\n' <<< "$1" | $SORT_CMD | $UNIQ_CMD | $TR_CMD '\n' ' ' | $SED_CMD 's|^[[:blank:]]*||;s|[[:blank:]]*$||'
-
-    }
-
-DisplayPlural()
-    {
-
-    [[ $1 -ne 1 ]] && echo 's'
 
     }
 
@@ -3583,19 +3576,12 @@ IsNotLineSpace()
 
     }
 
-ConvertSecsToMinutes()
+#### FormatAs... functions always output formatted info to be used as part of another string. These shouldn't be used for direct screen output.
+
+FormatAsPlural()
     {
 
-    # http://stackoverflow.com/questions/12199631/convert-seconds-to-hours-minutes-seconds
-
-    # input:
-    #   $1 = a time in seconds to convert to 'hh:mm:ss'
-
-    ((h=${1}/3600))
-    ((m=(${1}%3600)/60))
-    ((s=${1}%60))
-
-    printf "%02dh:%02dm:%02ds\n" $h $m $s
+    [[ $1 -ne 1 ]] && echo 's'
 
     }
 
@@ -3606,7 +3592,7 @@ FormatAsISO()
 
     }
 
-FormatAsTitle()
+FormatAsScriptTitle()
     {
 
     ColourTextBrightWhite sherpa
@@ -3644,7 +3630,7 @@ FormatAsFileName()
 FormatAsURL()
     {
 
-    echo "$(ColourTextUnderlinedBlue "$1")"
+    ColourTextUnderlinedBlue "$1"
 
     }
 
@@ -3742,6 +3728,8 @@ DisplayLineSpace()
     fi
 
     }
+
+#### Debug... functions are used for formatted debug information output. This may be to screen, file or both.
 
 DebugInfoThickSeparator()
     {
@@ -3972,6 +3960,8 @@ DebugErrorFile()
 
     }
 
+#### ShowAs... functions output formatted info to screen and (usually) to debug log.
+
 ShowAsInfo()
     {
 
@@ -4062,6 +4052,8 @@ ShowAsError()
     WriteToLog fail "$capitalised."
 
     }
+
+### WriteAs... functions - to be determined.
 
 WriteAsDebug()
     {
@@ -4224,6 +4216,31 @@ StripANSI()
     else
         echo "$1"
     fi
+
+    }
+
+ConvertSecsToMinutes()
+    {
+
+    # http://stackoverflow.com/questions/12199631/convert-seconds-to-hours-minutes-seconds
+
+    # input:
+    #   $1 = a time in seconds to convert to 'hh:mm:ss'
+
+    ((h=${1}/3600))
+    ((m=(${1}%3600)/60))
+    ((s=${1}%60))
+
+    printf "%02dh:%02dm:%02ds\n" $h $m $s
+
+    }
+
+CTRL_C_Captured()
+    {
+
+    RemoveDirSizeMonitorFlagFile
+
+    exit
 
     }
 
