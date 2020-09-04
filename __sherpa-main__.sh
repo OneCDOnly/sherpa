@@ -953,8 +953,6 @@ AskQuiz()
     # output:
     #   $? = 0 if "yes", 1 if "no"
 
-    [[ -z $1 ]] && return 1
-
     ShowAsQuiz "$1"
     read -rn1 response
     DebugVar response
@@ -1279,8 +1277,6 @@ InstallIPKGBatch()
     # output:
     #   $? = 0 (true) or 1 (false)
 
-    [[ -z $1 ]] && return 1
-
     DebugFuncEntry
     local returncode=0
     local requested_IPKGs=''
@@ -1410,7 +1406,6 @@ InstallQPKG()
 
     IsError && return
     IsAbort && return
-    [[ -z $1 ]] && return 1
 
     local target_file=''
     local result=0
@@ -1447,8 +1442,6 @@ GetQPKGServiceStatus()
     {
 
     # $1 = QPKG name to install
-
-    [[ -z $1 ]] && return 1
 
     if [[ -e /var/run/$1.last.operation ]]; then
         case $(</var/run/"$1".last.operation) in
@@ -1493,7 +1486,6 @@ DownloadQPKG()
     #   $? = 0 if successful, 1 if failed
 
     IsError && return
-    [[ -z $1 ]] && return 1
 
     DebugFuncEntry
     local result=0
@@ -1698,8 +1690,6 @@ LoadInstalledQPKGVars()
     #   $package_installed_path
     #   $package_config_path
 
-    [[ -z $1 ]] && return 1
-
     local package_name=$1
     local prev_config_dir=''
     local prev_config_file=''
@@ -1737,7 +1727,6 @@ UninstallQPKG()
     #   $? = 0 if successful, 1 if failed
 
     IsError && return
-    [[ -z $1 ]] && return 1
 
     local result=0
 
@@ -1779,12 +1768,6 @@ RestartQPKGService()
     # output:
     #   $? = 0 if successful, 1 if failed
 
-    if [[ -z $1 ]]; then
-        DebugError 'QPKG name unspecified'
-        code_pointer=4
-        return 1
-    fi
-
     local result=0
     local package_init_pathfile=$(GetInstalledQPKGServicePathFile "$1")
     local log_file=$WORK_PATH/$1.$RESTART_LOG_FILE
@@ -1823,7 +1806,6 @@ GetInstalledQPKGServicePathFile()
     #   stdout = service pathfilename
     #   $? = 0 if found, 1 if not
 
-    [[ -z $1 ]] && return 1
     IsNotQPKGInstalled "$1" && return 1
 
     local output=''
@@ -1850,7 +1832,6 @@ GetInstalledQPKGVersion()
     #   stdout = package version
     #   $? = 0 if found, 1 if not
 
-    [[ -z $1 ]] && return 1
     IsNotQPKGInstalled "$1" && return 1
 
     local output=''
@@ -1875,8 +1856,6 @@ GetQPKGPathFilename()
     #   stdout = QPKG local filename
     #   $? = 0 if successful, 1 if failed
 
-    [[ -z $1 ]] && return 1
-
     echo "$QPKG_DL_PATH/$($BASENAME_CMD "$(GetQPKGRemoteURL "$1")")"
 
     }
@@ -1890,8 +1869,6 @@ GetQPKGRemoteURL()
     # output:
     #   stdout = QPKG remote URL
     #   $? = 0 if successful, 1 if failed
-
-    [[ -z $1 ]] && return 1
 
     local index=0
     local returncode=1
@@ -1918,8 +1895,6 @@ GetQPKGRemoteVersion()
     #   stdout = QPKG remote version
     #   $? = 0 if successful, 1 if failed
 
-    [[ -z $1 ]] && return 1
-
     local url=''
     local version=''
 
@@ -1943,8 +1918,6 @@ GetQPKGMD5()
     # output:
     #   stdout = QPKG MD5
     #   $? = 0 if successful, 1 if failed
-
-    [[ -z $1 ]] && return 1
 
     local index=0
     local returncode=1
@@ -2022,8 +1995,6 @@ GetQPKGDeps()
     # output:
     #   $? = 0 if successful, 1 if failed
 
-    [[ -z $1 ]] && return 1
-
     local index=0
 
     for index in "${!SHERPA_QPKG_NAME[@]}"; do
@@ -2048,8 +2019,6 @@ FindAllQPKGDependants()
     # output:
     #   $QPKG_download_list = name-sorted array with complete list of all QPKGs, including those originally specified.
     #   $QPKG_download_count = number of packages to be downloaded.
-
-    [[ -z $1 ]] && return 1
 
     QPKG_download_list=()
     QPKG_download_count=0
@@ -2128,8 +2097,6 @@ FindAllIPKGDependencies()
     #   $IPKG_download_list = name-sorted array with complete list of all IPKGs, including those originally specified
     #   $IPKG_download_count = number of packages to be downloaded
     #   $IPKG_download_size = byte-count of packages to be downloaded
-
-    [[ -z $1 ]] && return 1
 
     if IsNotSysFileExist $OPKG_CMD || IsNotSysFileExist $GNU_GREP_CMD; then
         code_pointer=5
@@ -2388,8 +2355,6 @@ IsSysFileExist()
     # output:
     #   $? = 0 (true) or 1 (false)
 
-    [[ -z $1 ]] && return 1
-
     if ! [[ -f $1 || -L $1 ]]; then
         ShowAsError "a required NAS system file is missing $(FormatAsFileName "$1")"
         return 1
@@ -2408,8 +2373,6 @@ IsNotSysFileExist()
     # output:
     #   $? = 0 (true) or 1 (false)
 
-    [[ -z $1 ]] && return 1
-
     ! IsSysFileExist "$1"
 
     }
@@ -2422,8 +2385,6 @@ IsSysShareExist()
 
     # output:
     #   $? = 0 (true) or 1 (false)
-
-    [[ -z $1 ]] && return 1
 
     if [[ ! -L $1 ]]; then
         ShowAsError "a required NAS system share is missing $(FormatAsFileName "$1"). Please re-create it via the QTS Control Panel -> Privilege Settings -> Shared Folders"
@@ -2443,8 +2404,6 @@ IsNotSysShareExist()
     # output:
     #   $? = 0 (true) or 1 (false)
 
-    [[ -z $1 ]] && return 1
-
     ! IsSysShareExist "$1"
 
     }
@@ -2457,8 +2416,6 @@ IsIPKGInstalled()
 
     # output:
     #   $? = 0 (true) or 1 (false)
-
-    [[ -z $1 ]] && return 1
 
     if ! ($OPKG_CMD list-installed | $GREP_CMD -q -F "$1"); then
         DebugIPKG "'$1'" 'not installed'
@@ -2500,7 +2457,12 @@ DisplayAsHelpOptionExample()
     # $1 = description
     # $2 = example syntax
 
-    printf "\n  - %s:\n       ./%s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$LOADER_SCRIPT_FILE $2"
+    if [[ ${1: -1} = '!' ]]; then
+        printf "\n  - %s \n       ./%s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$LOADER_SCRIPT_FILE $2"
+    else
+        printf "\n  - %s:\n       ./%s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$LOADER_SCRIPT_FILE $2"
+    fi
+
     UnsetLineSpace
 
     }
@@ -2520,8 +2482,6 @@ EnableQPKG()
 
     # $1 = package name to enable
 
-    [[ -z $1 ]] && return 1
-
     if [[ $($GETCFG_CMD "$1" Enable -u -f $APP_CENTER_CONFIG_PATHFILE) != 'TRUE' ]]; then
         DebugProc "enabling QPKG $(FormatAsPackageName "$1")"
         $SETCFG_CMD "$1" Enable TRUE -f $APP_CENTER_CONFIG_PATHFILE
@@ -2539,7 +2499,6 @@ IsQPKGUserInstallable()
     # output:
     #   $? = 0 (true) or 1 (false)
 
-    [[ -z $1 ]] && return 1
     [[ ${#SHERPA_QPKG_NAME[@]} -eq 0 || ${#SHERPA_QPKG_ABBRVS[@]} -eq 0 ]] && return 1
 
     local returncode=1
@@ -2565,8 +2524,6 @@ IsQPKGToBeInstalled()
     # output:
     #   $? = 0 (true) or 1 (false)
 
-    [[ -z $1 ]] && return 1
-
     local package=''
 
     for package in "${QPKGS_to_install[@]}"; do
@@ -2590,8 +2547,6 @@ IsQPKGInstalled()
     # output:
     #   $? = 0 (true) or 1 (false)
 
-    [[ -z $1 ]] && return 1
-
     [[ $($GETCFG_CMD "$1" RC_Number -d 0 -f $APP_CENTER_CONFIG_PATHFILE) -gt 0 ]]
 
     }
@@ -2604,8 +2559,6 @@ IsNotQPKGInstalled()
 
     # output:
     #   $? = 0 (true) or 1 (false)
-
-    [[ -z $1 ]] && return 1
 
     ! IsQPKGInstalled "$1"
 
@@ -2620,8 +2573,6 @@ IsQPKGEnabled()
     # output:
     #   $? = 0 (true) or 1 (false)
 
-    [[ -z $1 ]] && return 1
-
     [[ $($GETCFG_CMD "$1" Enable -u -f $APP_CENTER_CONFIG_PATHFILE) = 'TRUE' ]]
 
     }
@@ -2634,8 +2585,6 @@ IsNotQPKGEnabled()
 
     # output:
     #   $? = 0 (true) or 1 (false)
-
-    [[ -z $1 ]] && return 1
 
     ! IsQPKGEnabled "$1"
 
@@ -2671,7 +2620,6 @@ MatchAbbrvToQPKGName()
     #   $? = 0 (matched) or 1 (unmatched)
     #   stdout = matched installable package name (empty if unmatched)
 
-    [[ -z $1 ]] && return 1
     [[ ${#SHERPA_QPKG_NAME[@]} -eq 0 || ${#SHERPA_QPKG_ABBRVS[@]} -eq 0 ]] && return 1
 
     local returncode=1
@@ -3682,16 +3630,12 @@ FormatAsHelpOption()
 FormatAsPackageName()
     {
 
-    [[ -z $1 ]] && return 1
-
     echo "'$1'"
 
     }
 
 FormatAsFileName()
     {
-
-    [[ -z $1 ]] && return 1
 
     echo "($1)"
 
@@ -3700,16 +3644,12 @@ FormatAsFileName()
 FormatAsURL()
     {
 
-    [[ -z $1 ]] && return 1
-
     echo "$(ColourTextUnderlinedBlue "$1")"
 
     }
 
 FormatAsExitcode()
     {
-
-    [[ -z $1 ]] && return 1
 
     echo "[$1]"
 
@@ -3718,16 +3658,12 @@ FormatAsExitcode()
 FormatAsCommand()
     {
 
-    [[ -z $1 ]] && return 1
-
     echo "= command: '$1'"
 
     }
 
 FormatAsStdout()
     {
-
-    [[ -z $1 ]] && return 1
 
     echo '= / / / / / stdout begins below \ \ \ \ \'
     echo "$1"
@@ -3737,8 +3673,6 @@ FormatAsStdout()
 
 FormatAsResult()
     {
-
-    [[ -z $1 ]] && return 1
 
     if [[ $1 -eq 0 ]]; then
         echo "= result: $(FormatAsExitcode "$1")"
@@ -3785,8 +3719,6 @@ FormatAsUserspace()
 
 FormatAsResultAndStdout()
     {
-
-    [[ -z $1 || -z $2 ]] && return 1
 
     if [[ $1 -eq 0 ]]; then
         echo "= result: $(FormatAsExitcode "$1") / / / / / stdout begins below \ \ \ \ \ "
@@ -4025,8 +3957,6 @@ DebugErrorFile()
     {
 
     # Add the contents of specified pathfile $1 to the runtime log
-
-    [[ -z $1 || ! -e $1 ]] && return 1
 
     local linebuff=''
 
