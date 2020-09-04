@@ -1355,7 +1355,7 @@ InstallPy3Modules()
 RestartAllDepQPKGs()
     {
 
-    # restart all sherpa QPKGs except independents. Needed if user has requested each QPKG update itself, or Python 3 was downgraded.
+    # restart all sherpa QPKGs except independents. Needed if user has requested each QPKG update itself.
 
     IsAbort && return
 
@@ -1366,6 +1366,27 @@ RestartAllDepQPKGs()
 
     for package in "${SHERPA_DEP_QPKGs[@]}"; do
         IsQPKGEnabled "$package" && RestartQPKGService "$package"
+    done
+
+    DebugFuncExit
+    return 0
+
+    }
+
+RestartNotUpgradedQPKGs()
+    {
+
+    # restart all sherpa QPKGs except those that were just upgraded.
+
+    IsAbort && return
+
+    [[ -z ${SHERPA_DEP_QPKGs[*]} || ${#SHERPA_DEP_QPKGs[@]} -eq 0 ]] && return
+
+    DebugFuncEntry
+    local package=''
+
+    for package in "${SHERPA_DEP_QPKGs[@]}"; do
+        IsQPKGEnabled "$package" && ! IsQPKGUpgradable "$package" && RestartQPKGService "$package"
     done
 
     DebugFuncExit
@@ -1414,11 +1435,6 @@ ShowResult()
     return 0
 
     }
-
-
-
-
-
 
 ReloadProfile()
     {
@@ -1560,6 +1576,8 @@ InstallTargetQPKG()
         [[ -z $TARGET_APP ]] && return 1
         [[ $TARGET_APP != Entware ]] && InstallQPKG "$TARGET_APP"
     fi
+
+    IsUpgradeAllApps && RestartNotUpgradedQPKGs
 
     DebugFuncExit
     return 0
