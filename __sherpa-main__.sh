@@ -471,7 +471,7 @@ LogRuntimeParameters()
     if [[ ${#QPKGS_to_install[@]} -eq 0 && ${#QPKGS_to_uninstall[@]} -eq 0 && ${#QPKGS_to_restart[@]} -eq 0 && ${#QPKGS_to_upgrade[@]} -eq 0 && ${#QPKGS_to_backup[@]} -eq 0 && ${#QPKGS_to_restore[@]} -eq 0 && ${#QPKGS_to_status[@]} -eq 0 ]]; then
         if IsNotInstallAllApps && IsNotUninstallAllApps && IsNotRestartAllApps && IsNotUpgradeAllApps && IsNotBackupAllApps && IsNotRestoreAllApps && IsNotStatusAllApps; then
             if IsNotCheckDependencies; then
-                ShowAsError 'no valid QPKGs or actions were specified'
+                ShowAsError "no valid $(FormatAsHelpPackage) or $(FormatAsHelpOption) was specified"
                 SetShowAbbreviations
                 return 1
             fi
