@@ -438,7 +438,7 @@ LogRuntimeParameters()
         DebugUserspaceWarning '/opt' '<not present>'
     fi
 
-    if location=$(which python3 2>&1); then
+    if location=$(command -v python3 2>&1); then
         DebugUserspace 'Python 3 path' "$location"
         DebugUserspace 'Python 3 version' "$(version=$(python3 -V 2>&1) && echo "$version" || echo '<unknown>')"
     else
@@ -1442,7 +1442,7 @@ ReloadProfile()
     local opkg_prefix=/opt/bin:/opt/sbin
 
     if IsQPKGInstalled Entware; then
-        export PATH="$opkg_prefix:$($SED_CMD "s|$opkg_prefix||" <<< $PATH)"
+        export PATH="$opkg_prefix:$($SED_CMD "s|$opkg_prefix||" <<< "$PATH")"
         DebugDone 'adjusted $PATH for Entware'
         DebugVar PATH
     fi
@@ -1789,6 +1789,7 @@ RestartQPKGService()
         GetQPKGServiceStatus "$1"
     else
         ShowAsWarning "Could not restart $(FormatAsPackageName "$1") $(FormatAsExitcode $result)"
+
         if IsVisibleDebugging; then
             DebugInfoThickSeparator
             $CAT_CMD "$log_pathfile"
@@ -2618,7 +2619,7 @@ IsQPKGUpgradable()
     # output:
     #   $? = 0 (true) or 1 (false)
 
-    [[ -n $1 && ${#QPKGS_upgradable[@]} -gt 0 && ${QPKGS_upgradable[*]} =~ "$1" ]]
+    [[ -n $1 && ${#QPKGS_upgradable[@]} -gt 0 && ${QPKGS_upgradable[*]} == *"$1"* ]]
 
     }
 
@@ -3807,49 +3808,49 @@ DebugTimerStageEnd()
 DebugScript()
     {
 
-    DebugDetected $(FormatAsScript) "$1" "$2"
+    DebugDetected "$(FormatAsScript)" "$1" "$2"
 
     }
 
 DebugStage()
     {
 
-    DebugDetected $(FormatAsStage) "$1" "$2"
+    DebugDetected "$(FormatAsStage)" "$1" "$2"
 
     }
 
 DebugHardware()
     {
 
-    DebugDetected $(FormatAsHardware) "$1" "$2"
+    DebugDetected "$(FormatAsHardware)" "$1" "$2"
 
     }
 
 DebugHardwareWarning()
     {
 
-    DebugDetectedWarning $(FormatAsHardware) "$1" "$2"
+    DebugDetectedWarning "$(FormatAsHardware)" "$1" "$2"
 
     }
 
 DebugFirmware()
     {
 
-    DebugDetected $(FormatAsFirmware) "$1" "$2"
+    DebugDetected "$(FormatAsFirmware)" "$1" "$2"
 
     }
 
 DebugUserspace()
     {
 
-    DebugDetected $(FormatAsUserspace) "$1" "$2"
+    DebugDetected "$(FormatAsUserspace)" "$1" "$2"
 
     }
 
 DebugUserspaceWarning()
     {
 
-    DebugDetectedWarning $(FormatAsUserspace) "$1" "$2"
+    DebugDetectedWarning "$(FormatAsUserspace)" "$1" "$2"
 
     }
 

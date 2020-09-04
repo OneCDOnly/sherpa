@@ -25,8 +25,7 @@ Init()
 
     IsQNAP || return 1
 
-    local -r LOADER_SCRIPT_FILE=sherpa.sh
-    export LOADER_SCRIPT_VERSION=200902
+    export LOADER_SCRIPT_VERSION=200905
 
     local -r NAS_FIRMWARE=$(/sbin/getcfg System Version -f /etc/config/uLinux.conf)
     [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg='--insecure' || curl_insecure_arg=''
