@@ -1777,10 +1777,11 @@ RestartQPKGService()
 
     local result=0
     local package_init_pathfile=$(GetInstalledQPKGServicePathFile "$1")
-    local log_file=$WORK_PATH/$1.$RESTART_LOG_FILE
+    local log_pathfile=$WORK_PATH/$1.$RESTART_LOG_FILE
 
     ShowAsProc "restarting $(FormatAsPackageName "$1")"
-    RunThisAndLogResults "$package_init_pathfile restart" "$log_file"
+
+    sh "$package_init_pathfile" restart > "$log_pathfile" 2>&1
     result=$?
 
     if [[ $result -eq 0 ]]; then
@@ -1790,10 +1791,10 @@ RestartQPKGService()
         ShowAsWarning "Could not restart $(FormatAsPackageName "$1") $(FormatAsExitcode $result)"
         if IsVisibleDebugging; then
             DebugInfoThickSeparator
-            $CAT_CMD "$log_file"
+            $CAT_CMD "$log_pathfile"
             DebugInfoThickSeparator
         else
-            $CAT_CMD "$log_file" >> "$DEBUG_LOG_PATHFILE"
+            $CAT_CMD "$log_pathfile" >> "$DEBUG_LOG_PATHFILE"
         fi
         # meh, continue anyway...
         return 1
