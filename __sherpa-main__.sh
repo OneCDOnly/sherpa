@@ -1164,7 +1164,7 @@ UpdateEntware()
         fi
     else
         DebugInfo "$(FormatAsPackageName Entware) package list was updated less than $package_minutes_threshold minutes ago"
-        ShowAsDone "$(FormatAsPackageName Entware) package list is up-to-date"
+        ShowAsDone "$(FormatAsPackageName Entware) package list is up-to-date!"
     fi
 
     return 0
@@ -2173,7 +2173,7 @@ FindAllIPKGDependencies()
         DebugVar IPKG_download_size
         ShowAsDone "$IPKG_download_count IPKG$(FormatAsPlural "$IPKG_download_count") ($(FormatAsISO "$IPKG_download_size")) to be downloaded"
     else
-        ShowAsDone 'no IPKGs are required ... woohoo!'
+        ShowAsDone 'no IPKGs required ... woohoo!'
     fi
 
     CloseIPKGArchive
