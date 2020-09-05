@@ -93,7 +93,7 @@ Init()
     UnsetError
     UnsetRestartPending
     EnsureConfigFileExists
-    DisableOpkgDaemonStart
+    [[ $(type -t DisableOpkgDaemonStart) = 'function' ]] && DisableOpkgDaemonStart
     LoadAppVersion
 
     [[ ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
@@ -146,7 +146,7 @@ StartQPKG()
         fi
     fi
 
-    WaitForGit || return 1
+    [[ $(type -t WaitForGit) = 'function' ]] && { WaitForGit || return 1 ;}
     [[ $(type -t PullGitRepo) = 'function' ]] && PullGitRepo "$QPKG_NAME" "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_PATH"
 
     WaitForLaunchTarget || return 1
@@ -167,6 +167,7 @@ StartQPKG()
     WaitForPID || return 1
     IsDaemonActive || return 1
     CheckPorts || return 1
+    ExecuteAndLog 'enabling QPKG icon' "qpkg_service enable $QPKG_NAME"
 
     return 0
 
@@ -220,20 +221,13 @@ StopQPKG()
     done
 
     IsNotDaemonActive || return 1
+    ExecuteAndLog 'disabling QPKG icon' "qpkg_service disable $QPKG_NAME"
+
+    return 0
 
     }
 
-StatusQPKG()
-    {
-
-    IsNotError || return
-    IsDaemonActive || return
-    LoadUIPorts qts
-    CheckPorts || SetError
-
-    }
-
-#### functions specific to this app appear below ###
+#### customisable functions for this app appear below ###
 
 BackupConfig()
     {
@@ -328,7 +322,94 @@ LoadAppVersion()
 
     }
 
-#### functions specific to this app appear above ###
+StatusQPKG()
+    {
+
+    IsNotError || return
+    IsDaemonActive || return
+    LoadUIPorts qts
+    CheckPorts || SetError
+
+    }
+
+#### functions specific to this app appear below ###
+
+#### optional functions for this app appear below ###
+
+PullGitRepo()
+    {
+
+    # $1 = package name
+    # $2 = URL to pull/clone from
+    # $3 = remote branch or tag
+    # $4 = remote depth: 'shallow' or 'single-branch'
+    # $5 = local path to clone into
+
+    [[ -z $1 || -z $2 || -z $3 || -z $4 || -z $5 ]] && return 1
+
+    local -r QPKG_GIT_PATH="$5/$1"
+    local -r GIT_HTTP_URL="$2"
+    local -r GIT_HTTPS_URL=${GIT_HTTP_URL/http/git}
+    local installed_branch=''
+    [[ $4 = shallow ]] && local -r DEPTH=' --depth 1'
+    [[ $4 = single-branch ]] && local -r DEPTH=' --single-branch'
+
+    if [[ -d $QPKG_GIT_PATH/.git ]]; then
+        installed_branch=$($GIT_CMD -C "$QPKG_GIT_PATH" branch | $GREP_CMD '^\*' | $SED_CMD 's|^\* ||')
+
+        if [[ $installed_branch != "$3" ]]; then
+            DisplayDoneCommitToLog "installed git branch: $installed_branch, new git branch: $3"
+            ExecuteAndLog 'new git branch was specified so cleaning local repository' "rm -r $QPKG_GIT_PATH"
+        fi
+    fi
+
+    if [[ ! -d $QPKG_GIT_PATH/.git ]]; then
+        ExecuteAndLog "cloning $(FormatAsPackageName "$1") from remote repository" "$GIT_CMD clone --branch $3 $DEPTH -c advice.detachedHead=false $GIT_HTTPS_URL $QPKG_GIT_PATH || $GIT_CMD clone --branch $3 $DEPTH -c advice.detachedHead=false $GIT_HTTP_URL $QPKG_GIT_PATH"
+    else
+        ExecuteAndLog "updating $(FormatAsPackageName "$1") from remote repository" "$GIT_CMD -C $QPKG_GIT_PATH reset --hard; $GIT_CMD -C $QPKG_GIT_PATH pull"
+    fi
+
+    installed_branch=$($GIT_CMD -C "$QPKG_GIT_PATH" branch | $GREP_CMD '^\*' | $SED_CMD 's|^\* ||')
+    DisplayDoneCommitToLog "installed git branch: $installed_branch"
+
+    return 0
+
+    }
+
+CleanLocalClone()
+    {
+
+    # for occasions where the local repo needs to be deleted and cloned again from source.
+
+    CommitOperationToLog
+
+    if [[ -z $QPKG_PATH || -z $QPKG_NAME || -z $SOURCE_GIT_URL ]]; then
+        SetError
+        return 1
+    fi
+
+    StopQPKG
+    ExecuteAndLog 'cleaning local repository' "rm -r $QPKG_REPO_PATH"
+    StartQPKG
+
+    }
+
+#### end of optional functions
+
+IsQNAP()
+    {
+
+    # is this a QNAP NAS?
+
+    if [[ ! -e /etc/init.d/functions ]]; then
+        FormatAsDisplayError 'QTS functions missing (is this a QNAP NAS?)'
+        SetError
+        return 1
+    fi
+
+    return 0
+
+    }
 
 WaitForGit()
     {
@@ -394,7 +475,7 @@ WaitForFileToAppear()
                 DisplayWait "$count,"
                 if [[ -e $1 ]]; then
                     Display 'OK'
-                    CommitLog "visible in $count second$(DisplayPlural "$count")"
+                    CommitLog "visible in $count second$(FormatAsPlural "$count")"
                     true
                     exit    # only this sub-shell
                 fi
@@ -415,16 +496,6 @@ WaitForFileToAppear()
 
     }
 
-DisableOpkgDaemonStart()
-    {
-
-    if [[ -n $ORIG_DAEMON_SERVICE_SCRIPT && -x $ORIG_DAEMON_SERVICE_SCRIPT ]]; then
-        $ORIG_DAEMON_SERVICE_SCRIPT stop        # stop default daemon
-        chmod -x $ORIG_DAEMON_SERVICE_SCRIPT    # ... and ensure Entware doesn't re-launch it on startup
-    fi
-
-    }
-
 EnsureConfigFileExists()
     {
 
@@ -439,64 +510,6 @@ SaveAppVersion()
     {
 
     echo "$app_version" > "$APP_VERSION_STORE_PATHFILE"
-
-    }
-
-PullGitRepo()
-    {
-
-    # $1 = package name
-    # $2 = URL to pull/clone from
-    # $3 = remote branch or tag
-    # $4 = remote depth: 'shallow' or 'single-branch'
-    # $5 = local path to clone into
-
-    [[ -z $1 || -z $2 || -z $3 || -z $4 || -z $5 ]] && return 1
-
-    local -r QPKG_GIT_PATH="$5/$1"
-    local -r GIT_HTTP_URL="$2"
-    local -r GIT_HTTPS_URL=${GIT_HTTP_URL/http/git}
-    local installed_branch=''
-    [[ $4 = shallow ]] && local -r DEPTH=' --depth 1'
-    [[ $4 = single-branch ]] && local -r DEPTH=' --single-branch'
-
-    if [[ -d $QPKG_GIT_PATH/.git ]]; then
-        installed_branch=$($GIT_CMD -C "$QPKG_GIT_PATH" branch | $GREP_CMD '^\*' | $SED_CMD 's|^\* ||')
-
-        if [[ $installed_branch != "$3" ]]; then
-            DisplayDoneCommitToLog "installed git branch: $installed_branch, new git branch: $3"
-            ExecuteAndLog 'new git branch was specified so cleaning local repository' "rm -r $QPKG_GIT_PATH"
-        fi
-    fi
-
-    if [[ ! -d $QPKG_GIT_PATH/.git ]]; then
-        ExecuteAndLog "cloning $(FormatAsPackageName "$1") from remote repository" "$GIT_CMD clone --branch $3 $DEPTH -c advice.detachedHead=false $GIT_HTTPS_URL $QPKG_GIT_PATH || $GIT_CMD clone --branch $3 $DEPTH -c advice.detachedHead=false $GIT_HTTP_URL $QPKG_GIT_PATH"
-    else
-        ExecuteAndLog "updating $(FormatAsPackageName "$1") from remote repository" "$GIT_CMD -C $QPKG_GIT_PATH reset --hard; $GIT_CMD -C $QPKG_GIT_PATH pull"
-    fi
-
-    installed_branch=$($GIT_CMD -C "$QPKG_GIT_PATH" branch | $GREP_CMD '^\*' | $SED_CMD 's|^\* ||')
-    DisplayDoneCommitToLog "installed git branch: $installed_branch"
-
-    return 0
-
-    }
-
-CleanLocalClone()
-    {
-
-    # for occasions where the local repo needs to be deleted and cloned again from source.
-
-    CommitOperationToLog
-
-    if [[ -z $QPKG_PATH || -z $QPKG_NAME || -z $SOURCE_GIT_URL ]]; then
-        SetError
-        return 1
-    fi
-
-    StopQPKG
-    ExecuteAndLog 'cleaning local repository' "rm -r $QPKG_REPO_PATH"
-    StartQPKG
 
     }
 
@@ -1108,21 +1121,6 @@ DisplayWait()
 
     }
 
-IsQNAP()
-    {
-
-    # is this a QNAP NAS?
-
-    if [[ ! -e /etc/init.d/functions ]]; then
-        FormatAsDisplayError 'QTS functions missing (is this a QNAP NAS?)'
-        SetError
-        return 1
-    fi
-
-    return 0
-
-    }
-
 CommitOperationToLog()
     {
 
@@ -1211,7 +1209,7 @@ ColourReset()
 
     }
 
-DisplayPlural()
+FormatAsPlural()
     {
 
     [[ $1 -ne 1 ]] && echo 's'

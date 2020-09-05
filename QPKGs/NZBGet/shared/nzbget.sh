@@ -89,7 +89,7 @@ Init()
     UnsetError
     UnsetRestartPending
     EnsureConfigFileExists
-    DisableOpkgDaemonStart
+    [[ $(type -t DisableOpkgDaemonStart) = 'function' ]] && DisableOpkgDaemonStart
     LoadAppVersion
 
     [[ ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
@@ -142,7 +142,7 @@ StartQPKG()
         fi
     fi
 
-    WaitForGit || return 1
+    [[ $(type -t WaitForGit) = 'function' ]] && { WaitForGit || return 1 ;}
     [[ $(type -t PullGitRepo) = 'function' ]] && PullGitRepo "$QPKG_NAME" "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_PATH"
 
     WaitForLaunchTarget || return 1
@@ -163,6 +163,7 @@ StartQPKG()
     WaitForPID || return 1
     IsDaemonActive || return 1
     CheckPorts || return 1
+    ExecuteAndLog 'enabling QPKG icon' "qpkg_service enable $QPKG_NAME"
 
     return 0
 
@@ -215,20 +216,13 @@ StopQPKG()
     done
 
     IsNotDaemonActive || return 1
+    ExecuteAndLog 'disabling QPKG icon' "qpkg_service disable $QPKG_NAME"
+
+    return 0
 
     }
 
-StatusQPKG()
-    {
-
-    IsNotError || return
-    IsDaemonActive || return
-    LoadUIPorts qts
-    CheckPorts || SetError
-
-    }
-
-#### functions specific to this app appear below ###
+#### customisable functions for this app appear below ###
 
 BackupConfig()
     {
@@ -323,18 +317,44 @@ LoadAppVersion()
 
     }
 
-#### functions specific to this app appear above ###
-
-WaitForGit()
+StatusQPKG()
     {
 
-    if WaitForFileToAppear "$GIT_CMD" "$GIT_APPEAR_TIMEOUT"; then
-        . /etc/profile &>/dev/null
-        . /root/.profile &>/dev/null
-        return 0
-    else
+    IsNotError || return
+    IsDaemonActive || return
+    LoadUIPorts qts
+    CheckPorts || SetError
+
+    }
+
+#### functions specific to this app appear below ###
+
+#### optional functions for this app appear below ###
+
+DisableOpkgDaemonStart()
+    {
+
+    if [[ -n $ORIG_DAEMON_SERVICE_SCRIPT && -x $ORIG_DAEMON_SERVICE_SCRIPT ]]; then
+        $ORIG_DAEMON_SERVICE_SCRIPT stop        # stop default daemon
+        chmod -x $ORIG_DAEMON_SERVICE_SCRIPT    # ... and ensure Entware doesn't re-launch it on startup
+    fi
+
+    }
+
+#### end of optional functions
+
+IsQNAP()
+    {
+
+    # is this a QNAP NAS?
+
+    if [[ ! -e /etc/init.d/functions ]]; then
+        FormatAsDisplayError 'QTS functions missing (is this a QNAP NAS?)'
+        SetError
         return 1
     fi
+
+    return 0
 
     }
 
@@ -389,7 +409,7 @@ WaitForFileToAppear()
                 DisplayWait "$count,"
                 if [[ -e $1 ]]; then
                     Display 'OK'
-                    CommitLog "visible in $count second$(DisplayPlural "$count")"
+                    CommitLog "visible in $count second$(FormatAsPlural "$count")"
                     true
                     exit    # only this sub-shell
                 fi
@@ -407,16 +427,6 @@ WaitForFileToAppear()
     DisplayDoneCommitToLog "file $(FormatAsFileName "$1"): exists"
 
     return 0
-
-    }
-
-DisableOpkgDaemonStart()
-    {
-
-    if [[ -n $ORIG_DAEMON_SERVICE_SCRIPT && -x $ORIG_DAEMON_SERVICE_SCRIPT ]]; then
-        $ORIG_DAEMON_SERVICE_SCRIPT stop        # stop default daemon
-        chmod -x $ORIG_DAEMON_SERVICE_SCRIPT    # ... and ensure Entware doesn't re-launch it on startup
-    fi
 
     }
 
@@ -1045,21 +1055,6 @@ DisplayWait()
 
     }
 
-IsQNAP()
-    {
-
-    # is this a QNAP NAS?
-
-    if [[ ! -e /etc/init.d/functions ]]; then
-        FormatAsDisplayError 'QTS functions missing (is this a QNAP NAS?)'
-        SetError
-        return 1
-    fi
-
-    return 0
-
-    }
-
 CommitOperationToLog()
     {
 
@@ -1148,7 +1143,7 @@ ColourReset()
 
     }
 
-DisplayPlural()
+FormatAsPlural()
     {
 
     [[ $1 -ne 1 ]] && echo 's'

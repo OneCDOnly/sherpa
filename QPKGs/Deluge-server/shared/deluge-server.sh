@@ -89,7 +89,7 @@ Init()
     UnsetError
     UnsetRestartPending
 #     EnsureConfigFileExists
-    DisableOpkgDaemonStart
+    [[ $(type -t DisableOpkgDaemonStart) = 'function' ]] && DisableOpkgDaemonStart
 #     LoadAppVersion
 
     [[ ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
@@ -163,6 +163,7 @@ StartQPKG()
     WaitForPID || return 1
     IsDaemonActive || return 1
 #     CheckPorts || return 1
+    ExecuteAndLog 'enabling QPKG icon' "qpkg_service enable $QPKG_NAME"
 
     return 0
 
@@ -215,20 +216,13 @@ StopQPKG()
     done
 
     IsNotDaemonActive || return 1
+    ExecuteAndLog 'disabling QPKG icon' "qpkg_service disable $QPKG_NAME"
+
+    return 0
 
     }
 
-StatusQPKG()
-    {
-
-    IsNotError || return
-    IsDaemonActive || return
-#     LoadUIPorts qts
-#     CheckPorts || SetError
-
-    }
-
-#### functions specific to this app appear below ###
+#### customisable functions for this app appear below ###
 
 BackupConfig()
     {
@@ -266,6 +260,41 @@ ResetConfig()
 
     }
 
+LoadUIPorts()
+    {
+
+    # If user changes ports via app UI, must first 'stop' application on old ports, then 'start' on new ports
+
+    case $1 in
+        app)
+            # Read the current application UI ports from application configuration
+            ui_port=$($JQ_CMD -r .port < "$QPKG_INI_PATHFILE" | $TAIL_CMD -n1)
+            ui_port_secure=$($JQ_CMD -r .port < "$QPKG_INI_PATHFILE" | $TAIL_CMD -n1)
+            ;;
+        qts)
+            # Read the current application UI ports from QTS App Center
+            ui_port=$($GETCFG_CMD $QPKG_NAME Web_Port -d 0 -f "$QTS_QPKG_CONF_PATHFILE")
+            ui_port_secure=$($GETCFG_CMD $QPKG_NAME Web_SSL_Port -d 0 -f "$QTS_QPKG_CONF_PATHFILE")
+            ;;
+        *)
+            DisplayErrCommitAllLogs "unable to load UI ports: action '$1' unrecognised"
+            SetError
+            return 1
+            ;;
+    esac
+
+    if [[ $ui_port -eq 0 ]] && IsNotDefaultConfigFound; then
+        ui_port=0
+        ui_port_secure=0
+    fi
+
+    # Always read this from the application configuration
+    ui_listening_address=$($JQ_CMD -r .interface < "$QPKG_INI_PATHFILE" | $TAIL_CMD -n1)
+
+    return 0
+
+    }
+
 IsSSLEnabled()
     {
 
@@ -288,7 +317,46 @@ LoadAppVersion()
 
     }
 
-#### functions specific to this app appear above ###
+StatusQPKG()
+    {
+
+    IsNotError || return
+    IsDaemonActive || return
+#     LoadUIPorts qts
+#     CheckPorts || SetError
+
+    }
+
+#### functions specific to this app appear below ###
+
+#### optional functions for this app appear below ###
+
+DisableOpkgDaemonStart()
+    {
+
+    if [[ -n $ORIG_DAEMON_SERVICE_SCRIPT && -x $ORIG_DAEMON_SERVICE_SCRIPT ]]; then
+        $ORIG_DAEMON_SERVICE_SCRIPT stop        # stop default daemon
+        chmod -x $ORIG_DAEMON_SERVICE_SCRIPT    # ... and ensure Entware doesn't re-launch it on startup
+    fi
+
+    }
+
+#### end of optional functions
+
+IsQNAP()
+    {
+
+    # is this a QNAP NAS?
+
+    if [[ ! -e /etc/init.d/functions ]]; then
+        FormatAsDisplayError 'QTS functions missing (is this a QNAP NAS?)'
+        SetError
+        return 1
+    fi
+
+    return 0
+
+    }
 
 WaitForLaunchTarget()
     {
@@ -341,7 +409,7 @@ WaitForFileToAppear()
                 DisplayWait "$count,"
                 if [[ -e $1 ]]; then
                     Display 'OK'
-                    CommitLog "visible in $count second$(DisplayPlural "$count")"
+                    CommitLog "visible in $count second$(FormatAsPlural "$count")"
                     true
                     exit    # only this sub-shell
                 fi
@@ -359,16 +427,6 @@ WaitForFileToAppear()
     DisplayDoneCommitToLog "file $(FormatAsFileName "$1"): exists"
 
     return 0
-
-    }
-
-DisableOpkgDaemonStart()
-    {
-
-    if [[ -n $ORIG_DAEMON_SERVICE_SCRIPT && -x $ORIG_DAEMON_SERVICE_SCRIPT ]]; then
-        $ORIG_DAEMON_SERVICE_SCRIPT stop        # stop default daemon
-        chmod -x $ORIG_DAEMON_SERVICE_SCRIPT    # ... and ensure Entware doesn't re-launch it on startup
-    fi
 
     }
 
@@ -437,6 +495,7 @@ ExecuteAndLog()
     local returncode=0
 
     DisplayWaitCommitToLog "* $1:"
+    # can't launch 'deluge-web' or 'deluged' inside eval and capture output: both hang.
     eval "$2" 2>&1
 
     DisplayCommitToLog 'OK'
@@ -516,7 +575,7 @@ IsDaemonActive()
     # $? = 0 : $TARGET_DAEMON is in memory
     # $? = 1 : $TARGET_DAEMON is not in memory
 
-    if [[ -e $DAEMON_PID_PATHFILE && -d /proc/$(<$DAEMON_PID_PATHFILE) && -n $TARGET_DAEMON && $(</proc/"$(<$DAEMON_PID_PATHFILE)"/cmdline) =~ $TARGET_DAEMON ]]; then
+    if [[ -e $DAEMON_PID_PATHFILE && -d /proc/$(<$DAEMON_PID_PATHFILE) && -n $TARGET_DAEMON && $(</proc/"$(<$DAEMON_PID_PATHFILE)"/cmdline) =~ $($BASENAME_CMD "$TARGET_DAEMON") ]]; then
         DisplayDoneCommitToLog "daemon IS active: PID $(<$DAEMON_PID_PATHFILE)"
         return
     fi
@@ -999,21 +1058,6 @@ DisplayWait()
 
     }
 
-IsQNAP()
-    {
-
-    # is this a QNAP NAS?
-
-    if [[ ! -e /etc/init.d/functions ]]; then
-        FormatAsDisplayError 'QTS functions missing (is this a QNAP NAS?)'
-        SetError
-        return 1
-    fi
-
-    return 0
-
-    }
-
 CommitOperationToLog()
     {
 
@@ -1102,7 +1146,7 @@ ColourReset()
 
     }
 
-DisplayPlural()
+FormatAsPlural()
     {
 
     [[ $1 -ne 1 ]] && echo 's'
