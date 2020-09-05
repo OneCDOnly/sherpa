@@ -1219,14 +1219,23 @@ InstallIPKGs()
     if [[ -n $IPKG_DL_PATH && -d $IPKG_DL_PATH ]]; then
         UpdateEntware
         IsError && return
-        for index in "${!SHERPA_QPKG_NAME[@]}"; do
-            if IsQPKGInstalled "${SHERPA_QPKG_NAME[$index]}" || [[ $TARGET_APP = "${SHERPA_QPKG_NAME[$index]}" ]]; then
-                packages+=" ${SHERPA_QPKG_IPKGS[$index]}"
-            fi
-        done
 
-        if IsQPKGInstalled SABnzbd || [[ $TARGET_APP = SABnzbd ]]; then
+        if IsInstallAllApps; then
+            for index in "${!SHERPA_QPKG_NAME[@]}"; do
+                packages+=" ${SHERPA_QPKG_IPKGS[$index]}"
+            done
+
             [[ $NAS_QPKG_ARCH = none ]] && packages+=' par2cmdline'
+        else
+            for index in "${!SHERPA_QPKG_NAME[@]}"; do
+                if IsQPKGInstalled "${SHERPA_QPKG_NAME[$index]}" || [[ $TARGET_APP = "${SHERPA_QPKG_NAME[$index]}" ]]; then
+                    packages+=" ${SHERPA_QPKG_IPKGS[$index]}"
+                fi
+            done
+
+            if IsQPKGInstalled SABnzbd || [[ $TARGET_APP = SABnzbd ]]; then
+                [[ $NAS_QPKG_ARCH = none ]] && packages+=' par2cmdline'
+            fi
         fi
 
         InstallIPKGBatch "$packages"
