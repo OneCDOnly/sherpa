@@ -1009,6 +1009,7 @@ DownloadQPKGs()
             for package in "${QPKGS_user_installable[@]}"; do
                 DownloadQPKG "$package"
             done
+            [[ $NAS_QPKG_ARCH != none ]] && DownloadQPKG Par2   # klude: force this until QPKG dep checking works
         elif IsUpgradeAllApps; then
             for package in "${QPKGS_upgradable[@]}"; do
                 DownloadQPKG "$package"
@@ -1566,6 +1567,7 @@ InstallTargetQPKG()
             for package in "${QPKGS_user_installable[@]}"; do
                 InstallQPKG "$package"
             done
+            [[ $NAS_QPKG_ARCH != none ]] && InstallQPKG Par2    # klude: force this until QPKG dep checking works
         fi
     elif IsUpgradeAllApps; then
         if [[ -n ${QPKGS_upgradable[*]} ]]; then
