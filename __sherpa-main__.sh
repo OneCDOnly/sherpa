@@ -2363,7 +2363,7 @@ IsOnlyInstance()
     {
 
     if [[ -e $RUNTIME_LOCK_PATHFILE && -d /proc/$(<$RUNTIME_LOCK_PATHFILE) && $(</proc/"$(<$RUNTIME_LOCK_PATHFILE)"/cmdline) =~ $MANAGER_SCRIPT_FILE ]]; then
-        ShowAsAbort "another instance of $(ColourTextBrightWhite "$MANAGER_SCRIPT_FILE") is running"
+        ShowAsAbort "another instance is running"
         return 1
     else
         CreateLock
