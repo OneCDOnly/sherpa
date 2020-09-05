@@ -91,6 +91,8 @@ Init()
 
     # paths and files
     readonly LOADER_SCRIPT_FILE=sherpa.sh
+    readonly MANAGER_SCRIPT_FILE=__sherpa-main__.sh
+    local -r DEBUG_LOG_FILE=${LOADER_SCRIPT_FILE%.*}.debug.log
     readonly APP_CENTER_CONFIG_PATHFILE=/etc/config/qpkg.conf
     readonly INSTALL_LOG_FILE=install.log
     readonly DOWNLOAD_LOG_FILE=download.log
@@ -103,8 +105,7 @@ Init()
     readonly PLATFORM_PATHFILE=/etc/platform.conf
     readonly EXTERNAL_PACKAGE_ARCHIVE_PATHFILE=/opt/var/opkg-lists/entware
     readonly REMOTE_REPO_URL=https://raw.githubusercontent.com/OneCDOnly/sherpa/master
-
-    local -r DEBUG_LOG_FILE=${LOADER_SCRIPT_FILE%.*}.debug.log
+    readonly RUNTIME_LOCK_PATHFILE=/var/run/$LOADER_SCRIPT_FILE.pid
 
     IsOnlyInstance || return 1
 
@@ -2320,14 +2321,14 @@ RemoveDirSizeMonitorFlagFile()
 CreateLock()
     {
 
-    [[ -n $RUNTIME_LOCK_PATHFILE ]] && echo "$$" > "$RUNTIME_LOCK_PATHFILE"
+    echo "$$" > "$RUNTIME_LOCK_PATHFILE"
 
     }
 
 RemoveLock()
     {
 
-    [[ -n $RUNTIME_LOCK_PATHFILE && -e $RUNTIME_LOCK_PATHFILE ]] && rm -f "$RUNTIME_LOCK_PATHFILE"
+    [[ -e $RUNTIME_LOCK_PATHFILE ]] && rm -f "$RUNTIME_LOCK_PATHFILE"
 
     }
 
@@ -2361,10 +2362,8 @@ IsQNAP()
 IsOnlyInstance()
     {
 
-    readonly RUNTIME_LOCK_PATHFILE=/var/run/$LOADER_SCRIPT_FILE.pid
-
-    if [[ -e $RUNTIME_LOCK_PATHFILE && -d /proc/$(<$RUNTIME_LOCK_PATHFILE) && -n $LOADER_SCRIPT_FILE && $(</proc/"$(<$RUNTIME_LOCK_PATHFILE)"/cmdline) =~ $LOADER_SCRIPT_FILE ]]; then
-        ShowAsAbort "another instance of $(ColourTextBrightWhite "$LOADER_SCRIPT_FILE") is running"
+    if [[ -e $RUNTIME_LOCK_PATHFILE && -d /proc/$(<$RUNTIME_LOCK_PATHFILE) && $(</proc/"$(<$RUNTIME_LOCK_PATHFILE)"/cmdline) =~ $MANAGER_SCRIPT_FILE ]]; then
+        ShowAsAbort "another instance of $(ColourTextBrightWhite "$MANAGER_SCRIPT_FILE") is running"
         return 1
     else
         CreateLock
