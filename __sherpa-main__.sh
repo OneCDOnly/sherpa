@@ -1574,14 +1574,14 @@ InstallTargetQPKG()
     if IsInstallAllApps; then
         if [[ -n ${QPKGS_user_installable[*]} ]]; then
             for package in "${QPKGS_user_installable[@]}"; do
-                InstallQPKG "$package"
+                [[ $package != Entware ]] && InstallQPKG "$package"     # kludge: Entware has already been installed, don't do it again.
             done
             [[ $NAS_QPKG_ARCH != none ]] && InstallQPKG Par2    # klude: force this until QPKG dep checking works
         fi
     elif IsUpgradeAllApps; then
         if [[ -n ${QPKGS_upgradable[*]} ]]; then
             for package in "${QPKGS_upgradable[@]}"; do
-                InstallQPKG "$package"
+                [[ $package != Entware ]] && InstallQPKG "$package"     # kludge: Entware has already been installed, don't do it again.
             done
         fi
     else
