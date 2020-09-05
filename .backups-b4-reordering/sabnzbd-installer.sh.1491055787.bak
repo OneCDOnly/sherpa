@@ -1,0 +1,1531 @@
+#!/bin/bash
+#
+# sabnzbd-installer.sh
+#
+# Coded early in 2017 by OneCD and you can blame him if it all goes horribly wrong. ;)
+#
+# For more info:
+# https://forum.qnap.com/viewtopic.php?f=133&t=129696
+
+debug=false; [ ! -z "$1" ] && [ "$1" == "--debug" ] && debug=true
+
+Init()
+	{
+
+	DebugFuncEntry
+	local returncode=0
+
+	local SCRIPT_FILE="sabnzbd-installer.sh"
+	local SCRIPT_VERSION="2017.04.02"
+
+	QPKG_CONFIG_PATHFILE="/etc/config/qpkg.conf"
+	ULINUX_PATHFILE="/etc/config/uLinux.conf"
+	INSTALL_LOG_FILE="install.log"
+	DOWNLOAD_LOG_FILE="download.log"
+	DEBUG_LOG_FILE="download.log"
+	SHARE_DOWNLOAD_PATH="/share/Download"
+	SHARE_PUBLIC_PATH="/share/Public"
+	FAKE_PYTHON_PATH="/usr/bin"
+	FAKE_GIT_PATH="/Apps/bin"
+
+	FAKE_PYTHON_PATHFILE="${FAKE_PYTHON_PATH}/python2.7"
+	FAKE_GIT_PATHFILE="${FAKE_GIT_PATH}/git"
+	WORKING_PATH="${SHARE_PUBLIC_PATH}/${SCRIPT_FILE%.*}.tmp"
+	BACKUP_PATH="${WORKING_PATH}/backup"
+	QPKG_PATH="${WORKING_PATH}/qpkg-downloads"
+	IPK_PATH="${WORKING_PATH}/ipk-downloads"
+
+	# to assist with conversion from Qnapclub QPKG to Clinton's QPKG
+	FR_SAB_CONFIG_BACKUP_PATH="${BACKUP_PATH}/SAB_CONFIG"
+	AU_SAB_CONFIG_BACKUP_PATH="${BACKUP_PATH}/Config"
+
+	FR_SAB_CONFIG_BACKUP_FILE="${AU_SAB_CONFIG_BACKUP_PATH}/config.ini"
+	AU_SAB_CONFIG_BACKUP_FILE="${AU_SAB_CONFIG_BACKUP_PATH}/sabnzbd.ini"
+
+	errorcode=0
+
+	# cherry-pick binaries
+	CAT_CMD="/bin/cat"
+	GREP_CMD="/bin/grep"
+	SED_CMD="/bin/sed"
+	UNAME_CMD="/bin/uname"
+	MD5SUM_CMD="/bin/md5sum"
+	MKDIR_CMD="/bin/mkdir"
+	MV_CMD="/bin/mv"
+	RM_CMD="/bin/rm"
+	TOUCH_CMD="/bin/touch"
+	CHMOD_CMD="/bin/chmod"
+	LN_CMD="/bin/ln"
+	HOSTNAME_CMD="/bin/hostname"
+
+	SETCFG_CMD="/sbin/setcfg"
+	GETCFG_CMD="/sbin/getcfg"
+	RMCFG_CMD="/sbin/rmcfg"
+
+	HEAD_CMD="/usr/bin/head"
+	TAIL_CMD="/usr/bin/tail"
+	DIRNAME_CMD="/usr/bin/dirname"
+	BASENAME_CMD="/usr/bin/basename"
+	WGET_CMD="/usr/bin/wget"
+	WC_CMD="/usr/bin/wc"
+	CUT_CMD="/usr/bin/cut"
+	FIND_CMD="/usr/bin/find"
+
+	OPKG_CMD="/opt/bin/opkg"
+
+	echo -e "$(ColourTextBrightWhite "$SCRIPT_FILE") ($SCRIPT_VERSION)\n"
+
+	if [ "$debug" == "true" ]; then
+		DebugInfo "NAS model [$($GETCFG_CMD "System" "Model" -f "$ULINUX_PATHFILE")]"
+		DebugInfo "NAS internal model [$($GETCFG_CMD "System" "Internal Model" -f "$ULINUX_PATHFILE")]"
+		DebugInfo "firmware version [$($GETCFG_CMD "System" "Version" -f "$ULINUX_PATHFILE")]"
+		DebugInfo "firmware build [$($GETCFG_CMD "System" "Build Number" -f "$ULINUX_PATHFILE")]"
+		DebugInfo "uptime & sysload [$(uptime | tr -s ' ')]"
+		DebugInfo "PATH [$PATH]"
+		DebugInfo "Download [$(ls -l ${SHARE_DOWNLOAD_PATH}* | tr -s ' ')]"
+	fi
+
+	SystemFileMissing "$CAT_CMD" || return
+	SystemFileMissing "$GREP_CMD" || return
+	SystemFileMissing "$SED_CMD" || return
+	SystemFileMissing "$UNAME_CMD" || return
+	SystemFileMissing "$MD5SUM_CMD" || return
+	SystemFileMissing "$MKDIR_CMD" || return
+	SystemFileMissing "$MV_CMD" || return
+	SystemFileMissing "$RM_CMD" || return
+	SystemFileMissing "$TOUCH_CMD" || return
+	SystemFileMissing "$CHMOD_CMD" || return
+	SystemFileMissing "$LN_CMD" || return
+	SystemFileMissing "$HOSTNAME_CMD" || return
+
+	SystemFileMissing "$SETCFG_CMD" || return
+	SystemFileMissing "$GETCFG_CMD" || return
+	SystemFileMissing "$RMCFG_CMD" || return
+
+	SystemFileMissing "$HEAD_CMD" || return
+	SystemFileMissing "$TAIL_CMD" || return
+	SystemFileMissing "$DIRNAME_CMD" || return
+	SystemFileMissing "$BASENAME_CMD" || return
+	SystemFileMissing "$WGET_CMD" || return
+	SystemFileMissing "$WC_CMD" || return
+	SystemFileMissing "$CUT_CMD" || return
+	SystemFileMissing "$FIND_CMD" || return
+
+	SystemShareMissing "$SHARE_DOWNLOAD_PATH" || return
+	SystemShareMissing "$SHARE_PUBLIC_PATH" || return
+
+	GetClintonQPKGArch
+	CalcPreferredEntware
+
+	if [ "$errorcode" -eq "0" ]; then
+		$MKDIR_CMD -p "$WORKING_PATH" 2> /dev/null
+		result=$?
+
+		if [ "$result" -ne "0" ]; then
+			ShowError "unable to create working directory ($WORKING_PATH) [$result]"
+			errorcode=1
+			returncode=1
+		fi
+
+		cd "$WORKING_PATH"
+	fi
+
+	if [ "$errorcode" -eq "0" ]; then
+		$MKDIR_CMD -p "$QPKG_PATH" 2> /dev/null
+		result=$?
+
+		if [ "$result" -ne "0" ]; then
+			ShowError "unable to create QPKG download directory ($QPKG_PATH) [$result]"
+			errorcode=2
+			returncode=1
+		fi
+	fi
+
+	if [ "$errorcode" -eq "0" ]; then
+		$MKDIR_CMD -p "$IPK_PATH" 2> /dev/null
+		result=$?
+
+		if [ "$result" -ne "0" ]; then
+			ShowError "unable to create IPK download directory ($IPK_PATH) [$result]"
+			errorcode=3
+			returncode=1
+		fi
+	fi
+
+	DebugFuncExit
+	return $returncode
+
+	}
+
+DownloadQPKGs()
+	{
+
+	DebugFuncEntry
+	local returncode=0
+
+	if ! QPKGIsInstalled "$PREF_ENTWARE"; then
+		LoadQPKGDetails "$PREF_ENTWARE"
+		DownloadQPKG "$qpkg_url" "$qpkg_md5"
+
+	elif [ "$PREF_ENTWARE" == "Entware-3x" ]; then
+		local testfile="/opt/etc/passwd"
+		[ -e "$testfile" ] && { [ -L "$testfile" ] && ENTWARE_VER="std" || ENTWARE_VER="alt" ;} || ENTWARE_VER="none"
+
+		DebugVar "ENTWARE_VER"
+
+		if [ "$ENTWARE_VER" == "alt" ]; then
+			ShowError "Entware-3x (alt) is installed. This config has not been tested. Can't continue."
+			errorcode=4
+			returncode=1
+
+		elif [ "$ENTWARE_VER" == "none" ]; then
+			ShowError "Entware appears to be installed but is not visible. Can't continue."
+			errorcode=5
+			returncode=1
+		fi
+	fi
+
+	[ "$errorcode" -eq "0" ] && LoadQPKGDetails "SABnzbdplus" && DownloadQPKG "$qpkg_url" "$qpkg_md5" "$qpkg_file"
+
+	DebugFuncExit
+	return $returncode
+
+	}
+
+BackupConfig()
+	{
+
+	DebugFuncEntry
+	local returncode=0
+
+	if QPKGIsInstalled "QSabNZBdPlus"; then
+		LoadSABVars "QSabNZBdPlus"
+
+	elif QPKGIsInstalled "SABnzbdplus"; then
+		LoadSABVars "SABnzbdplus"
+	fi
+
+	StopSabDaemon
+
+	SAB_WAS_INSTALLED=$SAB_IS_INSTALLED
+
+	if [ "$SAB_IS_INSTALLED" == "true" ]; then
+		if [ -d "$SAB_CONFIG_PATH" ]; then
+			if [ ! -d "${BACKUP_PATH}/Config" ]; then
+				$MKDIR_CMD -p "$BACKUP_PATH" 2> /dev/null
+				result=$?
+
+				if [ "$result" -eq "0" ]; then
+					DebugDone "backup directory created ($BACKUP_PATH)"
+				else
+					ShowError "unable to create backup directory ($BACKUP_PATH) [$result]"
+					errorcode=6
+					returncode=1
+				fi
+			fi
+
+			if [ "$errorcode" -eq "0" ]; then
+				if [ ! -d "${BACKUP_PATH}/Config" ]; then
+					$MV_CMD "$SAB_CONFIG_PATH" "$BACKUP_PATH"
+					result=$?
+
+					if [ "$result" -eq "0" ]; then
+						DebugDone "created backup ($BACKUP_PATH)"
+
+						# rename 'SAB_CONFIG' as 'Config' to convert from QSabNZBdPlus -> SABnzbdplus (sheez, why can't we all agree on filenames?)
+						[ -d "$FR_SAB_CONFIG_BACKUP_PATH" ] && mv "$FR_SAB_CONFIG_BACKUP_PATH" "$AU_SAB_CONFIG_BACKUP_PATH"
+						DebugDone "renamed backup config path"
+
+						# rename 'config.ini' as 'sabnzbd.ini' to convert from QSabNZBdPlus -> SABnzbdplus
+						[ -f "$FR_SAB_CONFIG_BACKUP_FILE" ] && mv "$FR_SAB_CONFIG_BACKUP_FILE" "$AU_SAB_CONFIG_BACKUP_FILE"
+						DebugDone "renamed backup config file"
+
+					else
+						ShowError "could not create backup of ($SAB_CONFIG_PATH) [$result]"
+						errorcode=7
+						returncode=1
+					fi
+ 				else
+ 					DebugInfo "a backup set already exists [$BACKUP_PATH]"
+ 				fi
+			fi
+		fi
+	fi
+
+	DebugFuncExit
+	return $returncode
+
+	}
+
+RemoveQPKGs()
+	{
+
+	DebugFuncEntry
+
+	[ "$PREF_ENTWARE" == "Entware-3x" ] && UninstallExistingQPKG "Entware-ng"
+	[ "$errorcode" -eq "0" ] && UninstallExistingQPKG "Optware"
+	[ "$errorcode" -eq "0" ] && UninstallExistingQPKG "SABnzbdplus"
+	[ "$errorcode" -eq "0" ] && UninstallExistingQPKG "QSabNZBdPlus"
+	[ "$errorcode" -eq "0" ] && UninstallEntwarePython
+
+	DebugFuncExit
+	return 0
+
+	}
+
+UninstallEntwarePython()
+	{
+
+	# forcibly remove Python packages so they will be reinstalled
+
+	DebugFuncEntry
+	local returncode=0
+
+	if QPKGIsInstalled "$PREF_ENTWARE" ; then
+		if [ ! -f "$OPKG_CMD" ]; then
+			ShowError "opkg binary missing. Cannot continue. [$OPKG_CMD]"
+			errorcode=8
+			returncode=1
+		else
+			msg="Python through Entware"
+			DebugProc "uninstalling \"$msg\""
+			$OPKG_CMD -V0 remove python --force-removal-of-dependent-packages --force-remove 2> /dev/null
+
+			true # this is cheating ;)
+			# opkg sometimes fails with
+				# Collected errors:
+				# * pkg_run_script: Internal error: python-cryptography has a NULL tmp_unpack_dir.
+			# so, until I can reliably remove Python without error, set returncode as 'true'.
+
+			result=$?
+
+			if [ "$result" -eq "0" ]; then
+				DebugDone "\"$msg\" uninstalled"
+			else
+				ShowError "unable to uninstall \"$msg\" [$result]"
+				errorcode=9
+				returncode=1
+			fi
+		fi
+	fi
+
+	DebugFuncExit
+	return $returncode
+
+	}
+
+UpdateEntware()
+	{
+
+	DebugFuncEntry
+	local returncode=0
+
+	if [ ! -f "$OPKG_CMD" ]; then
+		ShowError "opkg binary missing. Cannot continue. [$OPKG_CMD]"
+		errorcode=10
+		returncode=1
+	else
+		DebugProc "updating Entware"
+
+		$OPKG_CMD update > /dev/null
+		result=$?
+
+		if [ "$result" -eq "0" ]; then
+			DebugDone "Entware updated"
+		else
+			DebugError "Entware update failed [$result]"
+			# meh, continue anyway...
+		fi
+	fi
+
+	DebugFuncExit
+	return $returncode
+
+	}
+
+InstallQPKGs()
+	{
+
+	DebugFuncEntry
+	local returncode=0
+
+	if [ "$errorcode" -eq "0" ]; then
+		if ! QPKGIsInstalled "$PREF_ENTWARE"; then
+			LoadQPKGDetails "$PREF_ENTWARE"
+			InstallQPKG "$qpkg_file"
+		else
+			if [ "$PREF_ENTWARE" == "Entware-3x" ]; then
+				local testfile="/opt/etc/passwd"
+				[ -e "$testfile" ] && { [ -L "$testfile" ] && ENTWARE_VER="std" || ENTWARE_VER="alt" ;} || ENTWARE_VER="none"
+
+				DebugVar "ENTWARE_VER"
+
+				if [ "$ENTWARE_VER" == "alt" ]; then
+					ShowError "Entware-3x (alt) is installed. This config has not been tested. Can't continue."
+					errorcode=11
+					returncode=1
+				else
+					UpdateEntware
+					returncode=$?
+				fi
+			fi
+		fi
+	fi
+
+	[ "$errorcode" -eq "0" ] && ReloadProfile
+	[ "$errorcode" -eq "0" ] && InstallFakeQPKGs
+	[ "$errorcode" -eq "0" ] && DownloadIPKs
+	[ "$errorcode" -eq "0" ] && InstallIPKs
+	[ "$errorcode" -eq "0" ] && InstallPIPs
+
+	if [ "$errorcode" -eq "0" ] && ! QPKGIsInstalled "SABnzbdplus"; then
+		LoadQPKGDetails "SABnzbdplus"
+		InstallQPKG "$qpkg_file"
+		LoadSABVars "SABnzbdplus"
+		StopSabDaemon
+	fi
+
+	DebugFuncExit
+	return $returncode
+
+	}
+
+InstallFakeQPKGs()
+	{
+
+	DebugFuncEntry
+
+	InstallFakeQPKG "Python" && fakeQPKG_python=true || fakeQPKG_python=false
+
+	if [ ! -f "$FAKE_PYTHON_PATHFILE" ]; then
+		$MKDIR_CMD -p "$FAKE_PYTHON_PATH"
+		$TOUCH_CMD "$FAKE_PYTHON_PATHFILE"
+		$CHMOD_CMD +x "$FAKE_PYTHON_PATHFILE"
+		fakebin_python=true
+	else
+		fakebin_python=false
+	fi
+
+	InstallFakeQPKG "git" && fakeQPKG_git=true || fakeQPKG_git=false
+
+	if [ ! -f "$FAKE_GIT_PATHFILE" ]; then
+		$MKDIR_CMD -p "$FAKE_GIT_PATH"
+		$TOUCH_CMD "$FAKE_GIT_PATHFILE"
+		$CHMOD_CMD +x "$FAKE_GIT_PATHFILE"
+		fakebin_git=true
+	else
+		fakebin_git=false
+	fi
+
+	DebugVar "fakeQPKG_python"
+	DebugVar "fakebin_python"
+	DebugVar "fakeQPKG_git"
+	DebugVar "fakebin_git"
+
+	DebugFuncExit
+
+	}
+
+InstallFakeQPKG()
+	{
+
+	# So the SABnzbd QPKG installer thinks the specified QPKG is installed
+	# $1 = QPKG name
+
+	DebugFuncEntry
+	local returncode=0
+
+	DebugThis "\$1 [$1]"
+
+	if [ -z "$1" ]; then
+		DebugError "QPKG name not specified"
+		errorcode=12
+		returncode=1
+	else
+		if ! QPKGIsInstalled "$1" ; then
+			$TOUCH_CMD "$QPKG_CONFIG_PATHFILE"
+			$SETCFG_CMD "$1" Enable TRUE -f "$QPKG_CONFIG_PATHFILE"
+			returncode=0
+		else
+			returncode=2
+		fi
+	fi
+
+	DebugFuncExit
+	return $returncode
+
+	}
+
+RemoveFakeQPKGs()
+	{
+
+	[ "$fakeQPKG_python" == "true" ] && $RMCFG_CMD "Python" -f "$QPKG_CONFIG_PATHFILE"
+	[ "$fakebin_python" == "true" ] && $RM_CMD -f "$FAKE_PYTHON_PATHFILE"
+	[ "$fakeQPKG_git" == "true" ] && $RMCFG_CMD "git" -f "$QPKG_CONFIG_PATHFILE"
+	[ "$fakebin_git" == "true" ] && $RM_CMD -f "$FAKE_GIT_PATHFILE"
+
+	}
+
+ReloadProfile()
+	{
+
+	DebugFuncEntry
+
+	. /etc/profile > /dev/null
+	. /root/.profile > /dev/null
+
+	cd "$WORKING_PATH"
+
+	DebugInfo "reloaded environment"
+
+	DebugFuncExit
+	return 0
+
+	}
+
+DownloadIPKs()
+	{
+
+	DebugFuncEntry
+	local returncode=0
+
+	local packages="gcc python python-pip python-cffi python-pyopenssl python-dev ca-certificates nano git git-http"
+	local download_cmd="$OPKG_CMD --verbosity=0 download"
+	local download_msgs=""
+
+	cd "$IPK_PATH"
+
+	ShowProc "downloading Entware IPKs"
+
+	download_msgs=$(eval $download_cmd $packages)
+	result=$?
+
+	if [ "$result" -eq "0" ]; then
+		ShowDone "downloaded Entware IPKs"
+	else
+		ShowError "Entware IPKs download failed [$result]"
+		echo "$download_msgs" > "$WORKING_PATH/ipks.$DOWNLOAD_LOG_FILE"
+		errorcode=13
+		returncode=1
+	fi
+
+	cd "$WORKING_PATH"
+
+	DebugFuncExit
+	return $returncode
+
+	}
+
+CreateWaiter()
+	{
+
+	DebugFuncEntry
+	local returncode=0
+
+	local WAITER_PATHFILE="$($DIRNAME_CMD "$SAB_INSTALLED_PATH")/wait-for-Entware.sh"
+	WAIT_FOR_PATH="/opt/${PREF_ENTWARE}.sh"
+
+	$CAT_CMD > "$WAITER_PATHFILE" << EOF
+#!/bin/sh
+
+[ ! -z "\$1" ] && timeout="\$1" || timeout=600
+[ ! -z "\$2" ] && testfile="\$2" || testfile="$WAIT_FOR_PATH"
+scriptname="\$(/usr/bin/basename \$0)"
+waitlog="/tmp/wait-counter-\${scriptname}.log"
+
+if [ ! -e "\$testfile" ]; then
+   (
+      for ((count=1; count<=timeout; count++)); do
+         sleep 1
+         [ -e "\$testfile" ] &&
+            {
+            echo "waited for \$count seconds" >> "\$waitlog"
+            true
+            exit
+            }
+
+      done
+      false
+   )
+
+   if [ "\$?" -ne "0" ]; then
+      echo "timeout exceeded!" >> "\$waitlog"
+      /sbin/write_log "[\$scriptname] Could not continue: timeout exceeded." 1
+      false
+      exit
+   fi
+
+   # if here, then testfile has appeared, so reload environment
+   . /etc/profile
+   . /root/.profile
+fi
+EOF
+
+	result=$?
+
+	if [ "$result" -eq "0" ]; then
+		DebugDone "waiter created"
+
+		if [ -f "$WAITER_PATHFILE" ]; then
+			$CHMOD_CMD +x "$WAITER_PATHFILE"
+			result=$?
+
+			if [ "$result" -eq "0" ]; then
+				DebugDone "set waiter executable"
+			else
+				ShowError "unable to set waiter as executable ($WAITER_PATHFILE) [$result]"
+				errorcode=14
+				returncode=1
+			fi
+		else
+			ShowError "waiter not found ($WAITER_PATHFILE) [$result]"
+			errorcode=15
+			returncode=1
+		fi
+	else
+		ShowError "unable to create waiter ($WAITER_PATHFILE) [$result]"
+		errorcode=16
+		returncode=1
+	fi
+
+	DebugFuncExit
+	return $returncode
+
+	}
+
+InstallIPKs()
+	{
+
+	DebugFuncEntry
+	local returncode=0
+
+	local packages="*"
+	local install_cmd="$OPKG_CMD --force-overwrite install"
+	local install_msgs=""
+
+	ShowProc "installing Entware IPKs"
+
+	install_msgs=$(eval $install_cmd ${IPK_PATH}/${packages})
+	result=$?
+
+	if [ "$result" -eq "0" ]; then
+		ShowDone "installed Entware IPKs"
+	else
+		ShowError "Entware IPKs install failed [$result]"
+		echo "$install_msgs" > "$WORKING_PATH/ipks.$INSTALL_LOG_FILE"
+		errorcode=17
+		returncode=1
+	fi
+
+	DebugFuncExit
+	return $returncode
+
+	}
+
+InstallPIPs()
+	{
+
+	DebugFuncEntry
+
+	DownloadAndExecute "pip modules" "pip install --upgrade pip setuptools && pip install http://www.golug.it/pub/yenc/yenc-0.4.0.tar.gz cheetah"
+
+	DebugFuncExit
+	return 0
+
+	}
+
+DownloadAndExecute()
+	{
+
+	# $1 = package display name
+	# $2 = command(s) to run
+
+	DebugFuncEntry
+	local returncode=0
+
+	DebugThis "\$1 [$1]"
+	DebugThis "\$2 [$2]"
+
+	ShowProc "downloading and installing '$1'"
+
+	install_msgs=$(eval $2)
+	result=$?
+
+	if [ "$result" -eq "0" ]; then
+		ShowDone "installed '$1'"
+	else
+		ShowError "\"$1\" installation failed [$result]"
+		echo "$install_msgs" > "$(echo "$1" | tr " " "_").$INSTALL_LOG_FILE"
+		errorcode=18
+		returncode=1
+	fi
+
+	DebugFuncExit
+	return $returncode
+
+	}
+
+PatchInitAll()
+	{
+
+	DebugFuncEntry
+
+	PatchInitWithPython
+	PatchInitWithWaiter
+	PatchInitDisableQPKGChecks
+	CreateGitLinks
+	CreateWaiter
+
+	DebugFuncExit
+	return 0
+
+	}
+
+PatchInitWithPython()
+	{
+
+	DebugFuncEntry
+	local returncode=0
+
+	if [ -f "$SAB_INIT_PATHFILE" ]; then
+		$SED_CMD -i 's|/usr/bin/python2.7|/opt/bin/python|' "$SAB_INIT_PATHFILE"
+		result=$?
+
+		if [ "$result" -eq "0" ]; then
+			DebugDone "patched SABnzbd init with Python"
+		else
+			ShowError "could not patch SABnzbd init ($SAB_INIT_PATHFILE) [$result]"
+			errorcode=19
+			returncode=1
+		fi
+	else
+		ShowError "SABnzbd init not found ($SAB_INIT_PATHFILE)"
+		errorcode=20
+		returncode=1
+	fi
+
+	DebugFuncExit
+	return $returncode
+
+	}
+
+PatchInitWithWaiter()
+	{
+
+	DebugFuncEntry
+	local returncode=0
+	local tag='#!/bin/sh'
+	local inserttext=". $($DIRNAME_CMD "$SAB_INSTALLED_PATH")/wait-for-Entware.sh 300"
+
+	if [ -f "$SAB_INIT_PATHFILE" ]; then
+		($GREP_CMD "$inserttext" < "$SAB_INIT_PATHFILE" > /dev/null) || $SED_CMD -i "s|$tag|$tag\n\n$inserttext|" "$SAB_INIT_PATHFILE"
+		result=$?
+
+		if [ "$result" -eq "0" ]; then
+			DebugDone "patched SABnzbd init with waiter"
+		else
+			ShowError "could not patch SABnzbd init ($SAB_INIT_PATHFILE) [$result]"
+			errorcode=21
+			returncode=1
+		fi
+	else
+		ShowError "SABnzbd init not found ($SAB_INIT_PATHFILE)"
+		errorcode=22
+		returncode=1
+	fi
+
+	DebugFuncExit
+	return $returncode
+
+	}
+
+PatchInitDisableQPKGChecks()
+	{
+
+	DebugFuncEntry
+	local returncode=0
+	local inserttext=""
+
+	if [ -f "$SAB_INIT_PATHFILE" ]; then
+		inserttext="CheckQpkgEnabled "
+		($GREP_CMD "#$inserttext" < "$SAB_INIT_PATHFILE" > /dev/null) || $SED_CMD -i "s|$inserttext|#$inserttext|" "$SAB_INIT_PATHFILE"
+
+		result=$?
+
+		if [ "$result" -eq "0" ]; then
+			DebugDone "patched SABnzbd init to disable QPKG check enable"
+		else
+			ShowError "could not patch SABnzbd init ($SAB_INIT_PATHFILE) [$result]"
+			errorcode=23
+			returncode=1
+		fi
+
+		if [ "$errorcode" -eq "0" ]; then
+			inserttext="CheckForGit "
+			($GREP_CMD "#$inserttext" < "$SAB_INIT_PATHFILE" > /dev/null) || $SED_CMD -i "s|$inserttext|#$inserttext|" "$SAB_INIT_PATHFILE"
+
+			result=$?
+
+			if [ "$result" -eq "0" ]; then
+				DebugDone "patched SABnzbd init to disable Git check"
+			else
+				ShowError "could not patch SABnzbd init ($SAB_INIT_PATHFILE) [$result]"
+				errorcode=24
+				returncode=1
+			fi
+		fi
+	else
+		ShowError "SABnzbd init not found ($SAB_INIT_PATHFILE)"
+		errorcode=25
+		returncode=1
+	fi
+
+	DebugFuncExit
+	return $returncode
+
+	}
+
+CreateGitLinks()
+	{
+
+	DebugFuncEntry
+	local returncode=0
+	local git_target_path="$($GETCFG_CMD "$PREF_ENTWARE" Install_Path -f "$QPKG_CONFIG_PATHFILE")/bin"
+	local git_binary="${git_target_path}/git"
+	local git_name_file="/Apps/bin/git"
+	local git_name_path="/Apps/git"
+
+	if QPKGIsInstalled "$PREF_ENTWARE"; then
+		$MKDIR_CMD -p "/Apps/bin"
+		[ ! -L "$git_name_file" ] && ln -s "$git_binary" "$git_name_file"
+		[ ! -L "$git_name_path" ] && ln -s "${git_target_path}/" "$git_name_path"
+	else
+		DebugError "Entware not installed, can't create git links"
+		errorcode=1
+		returncode=1
+	fi
+
+	DebugFuncExit
+	return $returncode
+
+	}
+
+CreateYENCLinks()
+	{
+
+	DebugFuncEntry
+	local ent_python_path="$($GETCFG_CMD "$PREF_ENTWARE" Install_Path -f "$QPKG_CONFIG_PATHFILE")/lib/python2.7/site-packages"
+	local sab_python_path="$($GETCFG_CMD "SABnzbdplus" Install_Path -f "$QPKG_CONFIG_PATHFILE")/$CLINTON_QPKG_ARCH/python"
+
+	$LN_CMD -fs "${ent_python_path}/yenc.py" "$sab_python_path"
+	$LN_CMD -fs "${ent_python_path}/_yenc.so" "$sab_python_path"
+
+	DebugDone "yEnc symlinks created"
+
+	DebugFuncExit
+	return 0
+
+	}
+
+RestoreConfig()
+	{
+
+	DebugFuncEntry
+	local returncode=0
+
+	if [ "$SAB_IS_INSTALLED" == "true" ]; then
+		if [ -d "$BACKUP_PATH" ]; then
+			if [ ! -d "$SAB_CONFIG_PATH" ]; then
+				$MKDIR_CMD -p "$($DIRNAME_CMD "$SAB_CONFIG_PATH")" 2> /dev/null
+			else
+				rm -r "$SAB_CONFIG_PATH" 2> /dev/null
+			fi
+
+			$MV_CMD "$AU_SAB_CONFIG_BACKUP_PATH" "$($DIRNAME_CMD "$SAB_CONFIG_PATH")"
+			result=$?
+
+			if [ "$result" -eq "0" ]; then
+				ShowDone "restored history backup ($SAB_CONFIG_PATH)"
+			else
+				ShowError "could not restore history backup to ($SAB_CONFIG_PATH) [$result]"
+				errorcode=26
+				returncode=1
+			fi
+		fi
+	else
+		ShowError "SABnzbd is not installed so can't restore backups"
+		errorcode=27
+		returncode=1
+	fi
+
+	DebugFuncExit
+	return $returncode
+
+	}
+
+DeleteTmp()
+	{
+
+	DebugFuncEntry
+
+	[ "$debug" != "true" ] && [ -d "$WORKING_PATH" ] && rm -rf "$WORKING_PATH"
+
+	DebugFuncExit
+
+	}
+
+DownloadQPKG()
+	{
+
+	# $1 = QPKG URL
+	# $2 = QPKG MD5 checksum
+	# $3 = package name (optional)
+
+	DebugFuncEntry
+	local returncode=0
+	local target_qpkg_file=""
+	local target_qpkg_pathfile=""
+	local expected_checksum=""
+
+	DebugThis "\$1 [$1]"
+	DebugThis "\$2 [$2]"
+	DebugThis "\$3 [$3]"
+
+	[ "$errorcode" -gt "0" ] && { DebugFuncExit; return ;}
+
+	if [ -z "$1" ]; then
+		DebugError "QPKG URL not specified"
+		errorcode=28
+		returncode=1
+
+	elif [ -z "$2" ]; then
+		DebugError "QPKG MD5 not specified"
+		errorcode=29
+		returncode=1
+
+	else
+		[ -z "$3" ] && target_qpkg_file=$($BASENAME_CMD "$1") || target_qpkg_file="$3"
+
+		target_qpkg_pathfile="${QPKG_PATH}/${target_qpkg_file}"
+		expected_checksum=$2
+
+		if [ -e "$target_qpkg_pathfile" ]; then
+			file_checksum=$($MD5SUM_CMD "$target_qpkg_pathfile" | $CUT_CMD -f1 -d' ')
+			result=$?
+
+			if [ "$result" -eq "0" ]; then
+				if [ "$file_checksum" == "$expected_checksum" ]; then
+					DebugDone "existing QPKG checksum correct ($target_qpkg_pathfile)"
+				else
+					DebugError "existing QPKG checksum incorrect ($target_qpkg_pathfile) [$result]"
+					DebugError "deleting ($target_qpkg_pathfile) [$result]"
+					rm -f "$target_qpkg_pathfile"
+				fi
+			else
+				ShowError "problem creating checksum from existing QPKG [$result]"
+				errorcode=30
+				returncode=1
+			fi
+		fi
+
+		if [ "$errorcode" -eq "0" ] && [ ! -e "$target_qpkg_pathfile" ]; then
+			ShowProc "downloading QPKG ($target_qpkg_file)"
+
+			$WGET_CMD --no-check-certificate --output-file "$target_qpkg_pathfile.$DOWNLOAD_LOG_FILE" "$1" --output-document "$target_qpkg_pathfile"
+			result=$?
+
+			echo -e "\nresult=[$result]" >> "$target_qpkg_pathfile.$DOWNLOAD_LOG_FILE"
+
+			if [ "$result" -eq "0" ]; then
+				file_checksum=$($MD5SUM_CMD "$target_qpkg_pathfile" | $CUT_CMD -f1 -d' ')
+				result=$?
+
+				if [ "$result" -eq "0" ]; then
+					if [ "$file_checksum" == "$expected_checksum" ]; then
+						ShowDone "downloaded QPKG checksum correct ($target_qpkg_file)"
+					else
+						ShowError "downloaded QPKG checksum incorrect ($target_qpkg_file) [$result]"
+						errorcode=31
+						returncode=1
+					fi
+				else
+					ShowError "problem creating checksum from downloaded QPKG [$result]"
+					errorcode=32
+					returncode=1
+				fi
+			else
+				ShowError "download failed ($target_qpkg_pathfile) [$result]"
+
+				if [ "$debug" == "true" ]; then
+					DebugSeparator
+					$CAT_CMD "$target_qpkg_pathfile.$DOWNLOAD_LOG_FILE"
+					DebugSeparator
+				fi
+
+				errorcode=33
+				returncode=1
+			fi
+		fi
+	fi
+
+	DebugFuncExit
+	return $returncode
+
+	}
+
+GetClintonQPKGArch()
+	{
+
+	# a "reimagining" of Clinton Hall's arch detection code ;)
+	# reduce NAS architecture down to 3 possibilities
+
+	DebugFuncEntry
+	local returncode=0
+
+	local NAS_ARCH="$($UNAME_CMD -m)"
+
+	[ "$NAS_ARCH" == "armv5tejl" ] && CLINTON_QPKG_ARCH="arm"
+	[ "$NAS_ARCH" == "armv5tel" ] && CLINTON_QPKG_ARCH="arm"
+	[ "$NAS_ARCH" == "i686" ] && CLINTON_QPKG_ARCH="x86"
+	[ "$NAS_ARCH" == "x86_64" ] && CLINTON_QPKG_ARCH="x86"
+	[ "$NAS_ARCH" == "armv7l" ] && CLINTON_QPKG_ARCH="x31"
+
+	DebugVar "NAS_ARCH"
+	DebugVar "CLINTON_QPKG_ARCH"
+
+	if [ -z "$CLINTON_QPKG_ARCH" ]; then
+		ShowError "could not determine NAS architecture ($NAS_ARCH)"
+		errorcode=34
+		returncode=1
+	fi
+
+	DebugFuncExit
+	return $returncode
+
+	}
+
+CalcPreferredEntware()
+	{
+
+	# decide which Entware is suitable for this NAS.
+
+	DebugFuncEntry
+
+	if [ "$($UNAME_CMD -m)" == "i686" ]; then
+		PREF_ENTWARE="Entware-ng"
+	else
+		PREF_ENTWARE="Entware-3x"
+	fi
+
+	DebugVar "PREF_ENTWARE"
+
+	DebugFuncExit
+	return 0
+
+	}
+
+LoadSABVars()
+	{
+
+	DebugFuncEntry
+	local returncode=0
+	local target_qpkg_name=""
+
+	if [ -z "$1" ]; then
+		DebugError "SABnzbd QPKG name not specified"
+		errorcode=35
+		returncode=1
+	else
+		target_qpkg_name="$1"
+		SAB_INSTALLED_PATH="$($GETCFG_CMD "$target_qpkg_name" Install_Path -f "$QPKG_CONFIG_PATHFILE")"
+		result=$?
+
+		DebugVar "result"
+
+		if [ "$result" -eq "0" ]; then
+			SAB_IS_INSTALLED=true
+
+			if [ "$target_qpkg_name" == "SABnzbdplus" ]; then
+				SAB_CONFIG_PATH="${SAB_INSTALLED_PATH}/Config"
+			elif [ "$target_qpkg_name" == "QSabNZBdPlus" ]; then
+				SAB_CONFIG_PATH="${SAB_INSTALLED_PATH}/SAB_CONFIG"
+			fi
+
+			SAB_INIT_PATHFILE="$($GETCFG_CMD "$target_qpkg_name" Shell -f "$QPKG_CONFIG_PATHFILE")"
+			SAB_PORT="$($GETCFG_CMD "$target_qpkg_name" Web_Port -f "$QPKG_CONFIG_PATHFILE")"
+
+
+
+
+
+		else
+			SAB_IS_INSTALLED=false
+			SAB_CONFIG_PATH=""
+			SAB_INIT_PATHFILE=""
+			SAB_PORT=""
+		fi
+	fi
+
+	DebugVar "SAB_IS_INSTALLED"
+	DebugVar "SAB_INSTALLED_PATH"
+	DebugVar "SAB_CONFIG_PATH"
+	DebugVar "SAB_INIT_PATHFILE"
+
+	DebugFuncExit
+	return 0
+
+	}
+
+InstallQPKG()
+	{
+
+	# $1 = QPKG filename as '.qpkg' or '.zip'
+
+	DebugFuncEntry
+	local returncode=0
+	local target_qpkg_file=""
+	local target_qpkg_pathfile=""
+
+	DebugThis "\$1 [$1]"
+
+	if [ -z "$1" ]; then
+		DebugError "QPKG name not specified"
+		errorcode=36
+		returncode=1
+	else
+		target_qpkg_file="$1"
+		target_qpkg_pathfile="${QPKG_PATH}/${target_qpkg_file}"
+
+		if [ "${target_qpkg_pathfile##*.}" == "zip" ]; then
+			unzip -nq "$target_qpkg_pathfile" -d "$QPKG_PATH"
+			target_qpkg_pathfile="${target_qpkg_pathfile%.*}.qpkg"
+		fi
+
+		target_qpkg_file="$(basename "$target_qpkg_pathfile")"
+
+		ShowProc "installing QPKG ($target_qpkg_file)"
+
+		install_msgs=$(eval sh "$target_qpkg_pathfile" 2>&1)
+		result=$?
+
+		echo -e "${install_msgs}\nresult=[$result]" > "$target_qpkg_pathfile.$INSTALL_LOG_FILE"
+
+		if [ "$result" -eq "0" ] || [ "$result" -eq "10" ]; then
+			ShowDone "installed QPKG ($target_qpkg_file)"
+		else
+			ShowError "QPKG installation failed ($target_qpkg_file) [$result]"
+
+			if [ "$debug" == "true" ]; then
+				DebugSeparator
+				$CAT_CMD "$target_qpkg_pathfile.$INSTALL_LOG_FILE"
+				DebugSeparator
+			fi
+
+			errorcode=37
+			returncode=1
+		fi
+	fi
+
+	DebugFuncExit
+	return $returncode
+
+	}
+
+UninstallExistingQPKG()
+	{
+
+	# $1 = QPKG name
+
+	DebugFuncEntry
+	local returncode=0
+
+	DebugThis "\$1 [$1]"
+
+	qpkg_installed_path="$($GETCFG_CMD "$1" Install_Path -f "$QPKG_CONFIG_PATHFILE")"
+	result=$?
+
+	if [ "$result" -eq "0" ]; then
+		qpkg_installed_path="$($GETCFG_CMD "$1" Install_Path -f "$QPKG_CONFIG_PATHFILE")"
+
+		if [ -e "${qpkg_installed_path}/.uninstall.sh" ]; then
+			ShowProc "uninstalling QPKG '$1'"
+
+			${qpkg_installed_path}/.uninstall.sh > /dev/null
+			result=$?
+
+			if [ "$result" -eq "0" ]; then
+				ShowDone "uninstalled QPKG '$1'"
+			else
+				ShowError "unable to uninstall QPKG \"$1\" [$result]"
+				errorcode=38
+				returncode=1
+			fi
+		fi
+
+		$RMCFG_CMD "$1" -f "$QPKG_CONFIG_PATHFILE"
+	else
+		DebugError "QPKG '$1' not installed [$result]"
+	fi
+
+	DebugFuncExit
+	return $returncode
+
+	}
+
+LoadQPKGDetails()
+	{
+
+	# $1 = QPKG name
+
+	DebugFuncEntry
+	local returncode=0
+
+	DebugThis "\$1 [$1]"
+
+	qpkg_url=""
+	qpkg_md5=""
+	qpkg_file=""
+
+	if [ -z "$1" ]; then
+		DebugError "QPKG name not specified"
+		errorcode=39
+		returncode=1
+	else
+		local base_url=""
+
+		if [ "$1" == "Entware-3x" ]; then
+			qpkg_url="http://entware-3x.zyxmon.org/binaries/other/Entware-3x_0.99std.qpkg"; qpkg_md5="3663c9e4323e694fb25897e276f55623"
+
+		elif [ "$1" == "Entware-ng" ]; then
+			qpkg_url="http://entware.zyxmon.org/binaries/other/Entware-ng_0.97.qpkg"; qpkg_md5="6c81cc37cbadd85adfb2751dc06a238f"
+
+		elif [ "$1" == "SABnzbdplus" ]; then
+			qpkg_url="http://bit.ly/2jPntF9"; qpkg_md5="03077bc11289b944d9e3a58927c269fe"; qpkg_file="SABnzbdplus_170131.qpkg"
+
+		elif [ "$1" == "SickRage" ]; then
+			qpkg_url="https://www.dropbox.com/s/j1svazqdi9ieq82/SickBeard-TVRage_151227.qpkg"; qpkg_md5="6616a16f67785d1314d4e0a5a8d3bbdb"
+
+		else
+			DebugError "QPKG name not found"
+			errorcode=40
+			returncode=1
+		fi
+
+		[ -z "$qpkg_file" ] && [ ! -z "$qpkg_url" ] && qpkg_file=$($BASENAME_CMD "$qpkg_url")
+	fi
+
+	DebugVar "qpkg_url"
+	DebugVar "qpkg_md5"
+	DebugVar "qpkg_file"
+
+	DebugFuncExit
+	return $returncode
+
+	}
+
+StopSabDaemon()
+	{
+
+	DebugFuncEntry
+	local returncode=0
+
+	if [ -f "$SAB_INIT_PATHFILE" ]; then
+		ShowProc "stopping SABnzbd daemon"
+		"$SAB_INIT_PATHFILE" stop > /dev/null 2>&1
+		result=$?
+
+		if [ "$result" -eq "0" ]; then
+			ShowDone "SABnzbd daemon stopped"
+		else
+			ShowError "could not stop SABnzbd daemon [$result]"
+			# meh, continue anyway...
+			#errorcode=41
+			returncode=1
+		fi
+	else
+		DebugError "SABnzbd init not found so could not stop daemon"
+	fi
+
+	DebugFuncExit
+	return $returncode
+
+	}
+
+StartSabDaemon()
+	{
+
+	DebugFuncEntry
+	local returncode=0
+
+	if [ -e "$SAB_INIT_PATHFILE" ]; then
+		ShowProc "starting SABnzbd daemon"
+
+		"$SAB_INIT_PATHFILE" start > /dev/null
+		result=$?
+
+		if [ "$result" -eq "0" ]; then
+			ShowDone "SABnzbd daemon started"
+		else
+			ShowError "could not start SABnzbd daemon [$result]"
+			errorcode=42
+			returncode=1
+		fi
+	else
+		DebugInfo "no init file found [$SAB_INIT_PATHFILE]"
+	fi
+
+	DebugFuncExit
+	return $returncode
+
+	}
+
+QPKGIsInstalled()
+	{
+
+	# If package has been installed, check that it has also been enabled.
+	# If not enabled, then enable it.
+	# If not installed, return 1
+
+	# $1 = package name to check/enable
+
+	DebugFuncEntry
+	local returncode=0
+
+	DebugThis "\$1 [$1]"
+
+	$GREP_CMD -F "[$1]" < "$QPKG_CONFIG_PATHFILE" > /dev/null
+	result=$?
+
+	if [ "$result" -eq "0" ]; then
+		DebugInfo "QPKG \"$1\" is installed"
+		[ "$($GETCFG_CMD "$1" Enable -u -f "$QPKG_CONFIG_PATHFILE")" != "TRUE" ] && $SETCFG_CMD "$1" Enable TRUE -f "$QPKG_CONFIG_PATHFILE"
+	else
+		DebugInfo "QPKG \"$1\" is not installed [$result]"
+		returncode=1
+	fi
+
+	DebugFuncExit
+	return $returncode
+
+	}
+
+SystemFileMissing()
+	{
+
+	# $1 = pathfile to check
+
+	[ -z "$1" ] && return 1
+
+	if [ ! -e "$1" ]; then
+		ShowError "required NAS system file missing [$1]"
+		errorcode=43
+		return 1
+	else
+		return 0
+	fi
+
+	}
+
+SystemShareMissing()
+	{
+
+	# $1 = symlink path to check
+
+	[ -z "$1" ] && return 1
+
+	if [ ! -L "$1" ]; then
+		ShowError "required NAS system share missing [$1]. Please recreate it via the NAS Control Panel."
+		errorcode=44
+		return 1
+	else
+		return 0
+	fi
+
+	}
+
+ColourTextBrightGreen()
+	{
+
+	echo -en '\E[1;32m'"$(PrintResetColours "$1")"
+
+	}
+
+ColourTextBrightOrange()
+	{
+
+	echo -en '\E[1;38;5;214m'"$(PrintResetColours "$1")"
+
+	}
+
+ColourTextBrightRed()
+	{
+
+	echo -en '\E[1;31m'"$(PrintResetColours "$1")"
+
+	}
+
+ColourTextBlackOnCyan()
+	{
+
+	echo -en '\E[30;46m'"$(PrintResetColours "$1")"
+
+	}
+
+ColourTextBrightWhite()
+	{
+
+	echo -en '\E[1;97m'"$(PrintResetColours "$1")"
+
+	}
+
+PrintResetColours()
+	{
+
+	echo -en "$1"'\E[0m'
+
+	}
+
+ShowLogLine()
+	{
+
+	# $1 = pass/fail
+	# $2 = message
+
+	printf "[ %-10s ] %-33s\n" "$1" "$2"
+
+	}
+
+ShowInfo()
+	{
+
+	ShowLogLine "$(ColourTextBrightWhite "info")" "$1"
+
+	}
+
+ShowProc()
+	{
+
+	ShowLogLine "$(ColourTextBrightOrange "proc")" "$1 ..."
+
+	}
+
+ShowDone()
+	{
+
+	ShowLogLine "$(ColourTextBrightGreen "done")" "$1"
+
+	}
+
+ShowError()
+	{
+
+	ShowLogLine "$(ColourTextBrightRed "fail")" "$1"
+
+	}
+
+ShowDebug()
+	{
+
+	ShowLogLine "$(ColourTextBlackOnCyan "dbug")" "$1"
+
+	}
+
+DebugFuncEntry()
+	{
+
+	DebugThis "\\\\ entered <${FUNCNAME[1]}>"
+
+	}
+
+DebugFuncExit()
+	{
+
+	DebugThis "// leaving <${FUNCNAME[1]}> [$errorcode]"
+
+	}
+
+DebugInfo()
+	{
+
+	DebugThis "?? $1"
+
+	}
+
+DebugProc()
+	{
+
+	DebugThis "-- $1 ..."
+
+	}
+
+DebugDone()
+	{
+
+	DebugThis "== $1"
+
+	}
+
+DebugError()
+	{
+
+	DebugThis "!! $1"
+
+	}
+
+DebugVar()
+	{
+
+	DebugThis "\$\$ $1 [${!1}]"
+
+	}
+
+DebugSeparator()
+	{
+
+	DebugThis "== ============================="
+
+	}
+
+DebugThis()
+	{
+
+	[ "$debug" == "true" ] && ShowDebug "$1"
+
+	}
+
+DisplayResult()
+	{
+
+	DebugFuncEntry
+
+	[ "$SAB_WAS_INSTALLED" == "true" ] && RE="re" || RE=""
+
+	echo
+
+	if [ "$errorcode" -eq "0" ]; then
+		[ "$debug" == "true" ] && emoticon=":DD" || emoticon=""
+		ShowDone "SABnzbd has been successfully ${RE}installed! $emoticon"
+		#ShowInfo "It should now be accessible @ http://$(hostname -i):$SAB_PORT"
+	else
+		[ "$debug" == "true" ] && emoticon=":S" || emoticon=""
+		ShowError "SABnzbd ${RE}install failed! $emoticon [$errorcode]"
+	fi
+
+	DebugFuncExit
+
+	}
+
+Init
+[ "$errorcode" -eq "0" ] && DownloadQPKGs
+[ "$errorcode" -eq "0" ] && BackupConfig
+[ "$errorcode" -eq "0" ] && RemoveQPKGs
+[ "$errorcode" -eq "0" ] && InstallQPKGs
+[ "$errorcode" -eq "0" ] && PatchInitAll
+RemoveFakeQPKGs
+[ "$errorcode" -eq "0" ] && CreateYENCLinks
+[ "$errorcode" -eq "0" ] && RestoreConfig
+[ "$errorcode" -eq "0" ] && StartSabDaemon
+[ "$errorcode" -eq "0" ] && DeleteTmp
+DisplayResult
+
+exit "$errorcode"
