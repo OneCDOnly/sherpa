@@ -40,7 +40,7 @@ Init()
 
     IsQNAP || return 1
 
-    readonly MANAGER_SCRIPT_VERSION=200905
+    readonly MANAGER_SCRIPT_VERSION=200906
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -1132,7 +1132,7 @@ PatchBaseInit()
 UpdateEntware()
     {
 
-    if IsNotSysFileExist $OPKG_CMD || IsNotSysFileExist $GNU_FIND_CMD; then
+    if IsNotSysFileExist $OPKG_CMD; then
         code_pointer=3
         return 1
     fi
@@ -1143,7 +1143,7 @@ UpdateEntware()
     local result=0
 
     # if Entware package list was updated only recently, don't run another update. Examine 'change' time as this is updated even if package list content isn't modified.
-    if [[ -e $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE ]]; then
+    if [[ -e $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE && -e $GNU_FIND_CMD ]]; then
         msgs=$($GNU_FIND_CMD "$EXTERNAL_PACKAGE_ARCHIVE_PATHFILE" -cmin +$package_minutes_threshold)        # no-output if last update was less than $package_minutes_threshold minutes ago
     else
         msgs='new install'
@@ -1426,6 +1426,7 @@ ShowResult()
     IsLogPasteOnly && PasteLogOnline
     IsShowInstallerOutcome && ShowInstallerOutcome
     IsSuggestIssue && ShowIssueHelp
+    DisplayLineSpace
 
     DebugInfoThinSeparator
     DebugScript 'finished' "$($DATE_CMD)"
@@ -4275,7 +4276,6 @@ InstallTargetQPKG
 Cleanup
 ShowResult
 RemoveLock
-IsNotVersionOnly && IsNotVisibleDebugging && DisplayLineSpace
 
 IsError && exit 1
 
