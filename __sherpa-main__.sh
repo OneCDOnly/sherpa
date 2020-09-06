@@ -388,7 +388,7 @@ LogRuntimeParameters()
     IsVersionOnly && return
 
     if IsNotVisibleDebugging; then
-        echo "$(ColourTextBrightWhite "$LOADER_SCRIPT_FILE") ($MANAGER_SCRIPT_VERSION) a mini-package-manager for QNAP NAS"
+        echo "$(ColourTextBrightWhite "$LOADER_SCRIPT_FILE") • $MANAGER_SCRIPT_VERSION • a mini-package-manager for QNAP NAS"
         DisplayLineSpace
         CheckLoaderAge
     fi
