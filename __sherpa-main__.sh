@@ -1180,18 +1180,22 @@ InstallQPKGIndepsAddons()
 
     DebugFuncEntry
 
-    if IsQPKGInstalled SABnzbdplus && [[ $NAS_QPKG_ARCH != none ]]; then
-        if IsNotQPKGInstalled Par2; then
-            InstallQPKG Par2
-            IsError && ShowAsWarning "$(FormatAsPackageName Par2) installation failed - but it's not essential so I'm continuing"
+    if IsInstallAllApps; then
+        [[ $NAS_QPKG_ARCH != none ]] && InstallQPKG Par2    # klude: force this until QPKG dep checking works
+    else
+        if IsQPKGInstalled SABnzbdplus && [[ $NAS_QPKG_ARCH != none ]]; then
+            if IsNotQPKGInstalled Par2; then
+                InstallQPKG Par2
+                IsError && ShowAsWarning "$(FormatAsPackageName Par2) installation failed - but it's not essential so I'm continuing"
+            fi
         fi
-    fi
 
-    # kludge: use the same ugly workaround until QPKG dep checking works properly
-    if (IsQPKGInstalled SABnzbd || [[ $TARGET_APP = SABnzbd ]] ) && [[ $NAS_QPKG_ARCH != none ]]; then
-        if IsNotQPKGInstalled Par2; then
-            InstallQPKG Par2
-            IsError && ShowAsWarning "$(FormatAsPackageName Par2) installation failed - but it's not essential so I'm continuing"
+        # kludge: use the same ugly workaround until QPKG dep checking works properly
+        if (IsQPKGInstalled SABnzbd || [[ $TARGET_APP = SABnzbd ]] ) && [[ $NAS_QPKG_ARCH != none ]]; then
+            if IsNotQPKGInstalled Par2; then
+                InstallQPKG Par2
+                IsError && ShowAsWarning "$(FormatAsPackageName Par2) installation failed - but it's not essential so I'm continuing"
+            fi
         fi
     fi
 
@@ -1577,7 +1581,6 @@ InstallTargetQPKG()
             for package in "${QPKGS_user_installable[@]}"; do
                 [[ $package != Entware ]] && InstallQPKG "$package"     # kludge: Entware has already been installed, don't do it again.
             done
-            [[ $NAS_QPKG_ARCH != none ]] && InstallQPKG Par2    # klude: force this until QPKG dep checking works
         fi
     elif IsUpgradeAllApps; then
         if [[ -n ${QPKGS_upgradable[*]} ]]; then
