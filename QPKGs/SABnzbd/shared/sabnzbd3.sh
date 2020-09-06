@@ -617,6 +617,8 @@ ReWriteUIPorts()
     # 'Web_SSL_Port' behaviour: -1 (launch QTS UI again), 0 ("unable to connect") or > 0 (only works if logged-in to QTS UI via SSL)
     # If SSL is enabled, attempting to access with non-SSL via 'Web_Port' results in "connection was reset"
 
+    DisplayWaitCommitToLog 'updating QPKG icon with current ports:'
+
     $SETCFG_CMD $QPKG_NAME Web_Port "$ui_port" -f $APP_CENTER_CONFIG_PATHFILE
 
     if IsSSLEnabled; then
@@ -625,7 +627,7 @@ ReWriteUIPorts()
         $SETCFG_CMD $QPKG_NAME Web_SSL_Port 0 -f $APP_CENTER_CONFIG_PATHFILE
     fi
 
-    DisplayCommitToLog 'App Center has been updated with current port information'
+    Display 'OK'
 
     }
 
@@ -736,11 +738,12 @@ IsDaemonActive()
     # $? = 1 : $TARGET_SCRIPT_PATHFILE is not in memory
 
     if [[ -e $DAEMON_PID_PATHFILE && -d /proc/$(<$DAEMON_PID_PATHFILE) && -n $TARGET_SCRIPT_PATHFILE && $(</proc/"$(<$DAEMON_PID_PATHFILE)"/cmdline) =~ $TARGET_SCRIPT_PATHFILE ]]; then
-        DisplayCommitToLog "daemon IS active: PID $(<$DAEMON_PID_PATHFILE)"
+        DisplayCommitToLog 'daemon: IS active'
+        DisplayCommitToLog "daemon PID: $(<$DAEMON_PID_PATHFILE)"
         return
     fi
 
-    DisplayCommitToLog 'daemon NOT active'
+    DisplayCommitToLog 'daemon: NOT active'
     [[ -f $DAEMON_PID_PATHFILE ]] && rm "$DAEMON_PID_PATHFILE"
     return 1
 
