@@ -144,7 +144,11 @@ This option will install any additional QPKGs or IPKGs to support any sherpa-ins
 ---
 ## Notes
 
-Supports application configuration-only backup and restore via the 'backup' and 'restore' arguments. This can be scripted via cron to create a regular backup of each app.
+* Deluge is available in two parts: a server daemon, and a web UI. You can install either or both. Both are needed if you don't already have a Deluge daemon running.
+
+* The default login password for **Deluge-web** is 'deluge'.
+
+* Supports application configuration-only backup and restore via the 'backup' and 'restore' arguments. This can be scripted via cron to create a regular backup of each app.
 
 QPKG (configuration-only) backups will be stored in a new hidden directory located under your default userdata volume called [.qpkg_config_backup/]. Hopefully, QNAP won't mess with this location (I'm looking at you Malware Remover).
 
@@ -165,16 +169,13 @@ Example: to restore SABnzbd:
 ```
 /etc/init.d/sabnzbd3.sh restore
 ```
-This will 'stop' the QPKG, restore from the backup file (if it exists), then 'start' the QPKG again.
 
 * The information contained therein was constructed from the efforts of many community members on both the [QNAP](https://forum.qnap.com/viewtopic.php?f=320&t=132373) and [SABnzbd](https://forums.sabnzbd.org/) community forums. Thank you to everyone who has contributed.
 
-* Each of these packages continues the idea of 'self-update-on-launch' that was used in Clinton Hall's wrapper scripts. These scripts are my own version and require a few packages to be installed via Entware (this is what **sherpa** does). Updating an app is easy - just restart the app via its init script. Each app is updated from GitHub and from that application's current 'master' branch.
+* Updating an app is easy - just restart it via its App Center icon. Clicking 'stop' then 'start' will force an update.
 
 * **Medusa** will appear as 'OMedusa' in your App Center to avoid conflict with the existing **Medusa** package available in the Qnapclub Store.
 
 * **SickGear** will appear as 'OSickGear' in your App Center to avoid conflict with the existing **SickGear** package available in the Qnapclub Store.
 
 * **Transmission** will appear as 'OTransmission' in your App Center to avoid conflict with the existing **Transmission** packages available.
-
-* The default login password for **Deluge-web** is 'deluge'.
