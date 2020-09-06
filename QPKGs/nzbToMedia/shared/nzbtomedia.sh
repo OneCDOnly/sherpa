@@ -45,17 +45,17 @@ Init()
     readonly JQ_CMD=/opt/bin/jq
 
     # generic environment
-    readonly QTS_QPKG_CONF_PATHFILE=/etc/config/qpkg.conf
-    readonly QPKG_PATH=$($GETCFG_CMD $QPKG_NAME Install_Path -f $QTS_QPKG_CONF_PATHFILE)
+    readonly APP_CENTER_CONFIG_PATHFILE=/etc/config/qpkg.conf
+    readonly QPKG_PATH=$($GETCFG_CMD $QPKG_NAME Install_Path -f $APP_CENTER_CONFIG_PATHFILE)
     readonly QPKG_REPO_PATH=$QPKG_PATH/$QPKG_NAME
-    readonly QPKG_VERSION=$($GETCFG_CMD $QPKG_NAME Version -f $QTS_QPKG_CONF_PATHFILE)
+    readonly QPKG_VERSION=$($GETCFG_CMD $QPKG_NAME Version -f $APP_CENTER_CONFIG_PATHFILE)
     readonly SERVICE_STATUS_PATHFILE=/var/run/$QPKG_NAME.last.operation
     readonly SERVICE_LOG_PATHFILE=/var/log/$QPKG_NAME.log
     local -r OPKG_PATH=/opt/bin:/opt/sbin
     local -r BACKUP_PATH=$($GETCFG_CMD SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
     readonly BACKUP_PATHFILE=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
     readonly APPARENT_PATH=/share/$($GETCFG_CMD SHARE_DEF defDownload -d Qdownload -f /etc/config/def_share.info)/$QPKG_NAME
-    export PATH="$OPKG_PATH:$($SED_CMD "s|$OPKG_PATH||" <<< $PATH)"
+    export PATH="$OPKG_PATH:$($SED_CMD "s|$OPKG_PATH||" <<< "$PATH")"
     [[ -n $PYTHON ]] && export PYTHONPATH=$PYTHON
 
     # application specific
@@ -154,13 +154,13 @@ StartQPKG()
     WaitForLaunchTarget || return 1
     [[ $(type -t UpdateLanguages) = 'function' ]] && UpdateLanguages
 
-    if [[ $($GETCFG_CMD SABnzbdplus Enable -f $QTS_QPKG_CONF_PATHFILE) = TRUE ]]; then
+    if [[ $($GETCFG_CMD SABnzbdplus Enable -f $APP_CENTER_CONFIG_PATHFILE) = TRUE ]]; then
         DisplayErrCommitAllLogs "unable to link from package to target: installed $(FormatAsPackageName SABnzbdplus) QPKG must be replaced with $(FormatAsPackageName SABnzbd) $SAB_MIN_VERSION or later"
         return 1
     fi
 
-    if [[ $($GETCFG_CMD SABnzbd Enable -f $QTS_QPKG_CONF_PATHFILE) = TRUE ]]; then
-        local current_version=$($GETCFG_CMD SABnzbd Version -f $QTS_QPKG_CONF_PATHFILE)
+    if [[ $($GETCFG_CMD SABnzbd Enable -f $APP_CENTER_CONFIG_PATHFILE) = TRUE ]]; then
+        local current_version=$($GETCFG_CMD SABnzbd Version -f $APP_CENTER_CONFIG_PATHFILE)
         if [[ ${current_version//[!0-9]/} -lt $SAB_MIN_VERSION ]]; then
             DisplayErrCommitAllLogs "unable to link from package to target: installed $(FormatAsPackageName SABnzbd) QPKG must first be upgraded to $SAB_MIN_VERSION or later"
             return 1
@@ -181,9 +181,10 @@ StartQPKG()
     DisplayCommitToLog '* starting package: OK'
 
     EnsureConfigFileExists
+#    WaitForPID || return 1
     IsDaemonActive || return 1
 #    CheckPorts || return 1
-    ExecuteAndLog 'enabling QPKG icon' "qpkg_service enable $QPKG_NAME"
+    EnableThisQPKGIcon
 
     return 0
 
@@ -208,7 +209,7 @@ StopQPKG()
     DisplayCommitToLog '* stopping package: OK'
 
     IsNotDaemonActive || return 1
-    ExecuteAndLog 'disabling QPKG icon' "qpkg_service disable $QPKG_NAME"
+    DisableThisQPKGIcon
 
     return 0
 
@@ -347,7 +348,7 @@ IsQNAP()
     # is this a QNAP NAS?
 
     if [[ ! -e /etc/init.d/functions ]]; then
-        FormatAsDisplayError 'QTS functions missing (is this a QNAP NAS?)'
+        Display 'QTS functions missing (is this a QNAP NAS?)'
         SetError
         return 1
     fi
@@ -411,7 +412,7 @@ WaitForFileToAppear()
     fi
 
     if [[ ! -e $1 ]]; then
-        DisplayWaitCommitToLog "* waiting for $(FormatAsFileName "$1") to appear:"
+        DisplayWaitCommitToLog "waiting for $(FormatAsFileName "$1") to appear:"
         DisplayWait "(no-more than $MAX_SECONDS seconds):"
 
         (
@@ -435,7 +436,7 @@ WaitForFileToAppear()
         fi
     fi
 
-    DisplayDoneCommitToLog "file $(FormatAsFileName "$1"): exists"
+    DisplayCommitToLog "file $(FormatAsFileName "$1"): exists"
 
     return 0
 
@@ -445,7 +446,7 @@ EnsureConfigFileExists()
     {
 
     if IsNotConfigFound && IsDefaultConfigFound; then
-        DisplayWarnCommitToLog 'no configuration file found: using default'
+        DisplayCommitToLog 'no configuration file found: using default'
         cp "$QPKG_INI_DEFAULT_PATHFILE" "$QPKG_INI_PATHFILE"
     fi
 
@@ -494,7 +495,7 @@ ExecuteAndLog()
     local result=0
     local returncode=0
 
-    DisplayWaitCommitToLog "* $1:"
+    DisplayWaitCommitToLog "$1:"
     exec_msgs=$(eval "$2" 2>&1)
     result=$?
 
@@ -513,6 +514,62 @@ ExecuteAndLog()
 
     }
 
+IsQPKGEnabled()
+    {
+
+    # input:
+    #   $1 = package name to check
+
+    # output:
+    #   $? = 0 (true) or 1 (false)
+
+    [[ $($GETCFG_CMD "$1" Enable -u -f $APP_CENTER_CONFIG_PATHFILE) = 'TRUE' ]]
+
+    }
+
+IsNotQPKGEnabled()
+    {
+
+    # input:
+    #   $1 = package name to check
+
+    # output:
+    #   $? = 0 (true) or 1 (false)
+
+    ! IsQPKGEnabled "$1"
+
+    }
+
+EnableThisQPKGIcon()
+    {
+
+    EnableQPKG "$QPKG_NAME"
+
+    }
+
+DisableThisQPKGIcon()
+    {
+
+    DisableQPKG "$QPKG_NAME"
+
+    }
+
+EnableQPKG()
+    {
+
+    # $1 = package name to enable
+
+    IsNotQPKGEnabled "$1" && ExecuteAndLog 'enabling QPKG icon' "qpkg_service enable $1"
+
+    }
+
+DisableQPKG()
+    {
+
+    IsQPKGEnabled "$QPKG_NAME" && ExecuteAndLog 'disabling QPKG icon' "qpkg_service disable $QPKG_NAME"
+
+    }
+
 IsDaemonActive()
     {
 
@@ -520,11 +577,11 @@ IsDaemonActive()
     # $? = 1 : package is 'stopped'
 
     if [[ -L $APPARENT_PATH ]]; then
-        DisplayDoneCommitToLog "package IS active"
+        DisplayCommitToLog "package: IS active"
         return
     fi
 
-    DisplayDoneCommitToLog 'package NOT active'
+    DisplayCommitToLog 'package: NOT active'
     [[ -f $DAEMON_PID_PATHFILE ]] && rm "$DAEMON_PID_PATHFILE"
     return 1
 
@@ -551,7 +608,7 @@ IsSysFilePresent()
     fi
 
     if [[ ! -e $1 ]]; then
-        FormatAsDisplayError "A required NAS system file is missing: $(FormatAsFileName "$1")"
+        Display "A required NAS system file is missing: $(FormatAsFileName "$1")"
         SetError
         return 1
     else
@@ -772,32 +829,11 @@ IsNotStatus()
 
     }
 
-DisplayDoneCommitToLog()
-    {
-
-    DisplayCommitToLog "$(FormatAsDisplayDone "$1")"
-
-    }
-
-DisplayWarnCommitToLog()
-    {
-
-    DisplayCommitToLog "$(FormatAsDisplayWarn "$1")"
-
-    }
-
 DisplayErrCommitAllLogs()
     {
 
-    DisplayErrCommitToLog "$1"
+    DisplayCommitToLog "$1"
     CommitErrToSysLog "$1"
-
-    }
-
-DisplayErrCommitToLog()
-    {
-
-    DisplayCommitToLog "$(FormatAsDisplayError "$1")"
 
     }
 
@@ -820,14 +856,14 @@ DisplayWaitCommitToLog()
 FormatAsStdout()
     {
 
-    FormatAsDisplayDone "output: \"$1\""
+    Display "output: \"$1\""
 
     }
 
 FormatAsResult()
     {
 
-    FormatAsDisplayDone "result: $(FormatAsExitcode "$1")"
+    Display "result: $(FormatAsExitcode "$1")"
 
     }
 
@@ -836,27 +872,6 @@ FormatAsFuncMessages()
 
     echo "= ${FUNCNAME[1]}()"
     FormatAsStdout "$1"
-
-    }
-
-FormatAsDisplayDone()
-    {
-
-    Display "= $1"
-
-    }
-
-FormatAsDisplayWarn()
-    {
-
-    Display "> $1"
-
-    }
-
-FormatAsDisplayError()
-    {
-
-    Display "! $1"
 
     }
 
@@ -884,7 +899,7 @@ FormatAsFileName()
 DisplayAsHelp()
     {
 
-    printf "    --%-12s  %s\n" "$1" "$2"
+    printf "  --%-12s  %s\n" "$1" "$2"
 
     }
 
@@ -905,8 +920,7 @@ DisplayWait()
 CommitOperationToLog()
     {
 
-    CommitLog "$(SessionSeparator "'$service_operation' requested")"
-    CommitLog "= $(date), QPKG: $QPKG_VERSION, application: $app_version"
+    CommitLog "$(SessionSeparator "datetime:'$(date)',request:'$service_operation',QPKG:'$QPKG_VERSION',app:'$app_version'")"
 
     }
 
@@ -972,7 +986,7 @@ SessionSeparator()
 
     # $1 = message
 
-    printf '%0.s-' {1..20}; echo -n " $1 "; printf '%0.s-' {1..20}
+    printf '%0.s>' {1..10}; echo -n " $1 "; printf '%0.s<' {1..10}
 
     }
 
@@ -1038,7 +1052,7 @@ if IsNotError; then
             if [[ $(type -t CleanLocalClone) = 'function' ]]; then
                 SetServiceOperation clean
 
-                if [[ $($DIRNAME_CMD "$QPKG_INI_PATHFILE") = $QPKG_REPO_PATH ]]; then
+                if [[ $($DIRNAME_CMD "$QPKG_INI_PATHFILE") = "$QPKG_REPO_PATH" ]]; then
                     # nzbToMedia stores the config file in the repo location, so save it and restore again after new clone is complete
                     { BackupConfig; CleanLocalClone; RestoreConfig ;} || SetError
                 else
