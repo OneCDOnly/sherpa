@@ -199,8 +199,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(SABnzbd)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/SABnzbd/build/SABnzbd_200905.qpkg)
-        SHERPA_QPKG_MD5+=(9572b8c9ae5fce463e9f553e6cf7ce9d)
+        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/SABnzbd/build/SABnzbd_200906.qpkg)
+        SHERPA_QPKG_MD5+=(8be8d6306ae753ef7342fe7172808631)
         SHERPA_QPKG_ABBRVS+=('sb sb3 sab sab3 sabnzbd3 sabnzbd')
         SHERPA_QPKG_DEPS+=('Entware Par2')
         SHERPA_QPKG_IPKGS+=('python3-asn1crypto python3-chardet python3-cryptography python3-pyopenssl unrar p7zip coreutils-nice ionice ffprobe')
@@ -2337,10 +2337,10 @@ EnableQPKG()
 
     # $1 = package name to enable
 
-    if [[ $($GETCFG_CMD "$1" Enable -u -f $APP_CENTER_CONFIG_PATHFILE) != 'TRUE' ]]; then
-        DebugProc "enabling QPKG $(FormatAsPackageName "$1")"
+    if IsNotQPKGEnabled "$1"; then
+        DebugProc "enabling QPKG icon"
         $SETCFG_CMD "$1" Enable TRUE -f $APP_CENTER_CONFIG_PATHFILE
-        DebugDone "QPKG $(FormatAsPackageName "$1") enabled"
+        DebugDone "$(FormatAsPackageName "$1") icon enabled"
     fi
 
     }
