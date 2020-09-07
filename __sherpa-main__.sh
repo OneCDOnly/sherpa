@@ -40,7 +40,7 @@ Init()
 
     IsQNAP || return 1
 
-    readonly MANAGER_SCRIPT_VERSION=200906
+    readonly MANAGER_SCRIPT_VERSION=200907
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -388,7 +388,7 @@ LogRuntimeParameters()
     IsVersionOnly && return
 
     if IsNotVisibleDebugging; then
-        echo "$(ColourTextBrightWhite "$LOADER_SCRIPT_FILE") • $MANAGER_SCRIPT_VERSION • a mini-package-manager for QNAP NAS"
+        echo "$(ColourTextBrightWhite "$LOADER_SCRIPT_FILE") $MANAGER_SCRIPT_VERSION • a mini-package-manager for QNAP NAS"
         DisplayLineSpace
         CheckLoaderAge
     fi
@@ -897,11 +897,10 @@ PasteLogOnline()
                 ShowAsError "a link could not be generated. Most likely a problem occurred when talking with $(FormatAsURL 'https://termbin.com')"
             fi
         else
-            SetAbort
-            UnsetShowInstallerOutcome
             DebugInfoThinSeparator
             DebugScript 'user abort'
-            DebugInfoThickSeparator
+            SetAbort
+            UnsetShowInstallerOutcome
             return 1
         fi
     else
@@ -1062,11 +1061,10 @@ RemoveUnwantedQPKGs()
             ShowAsDone 'package and Python module lists saved'
             UninstallQPKG Entware
         else
-            SetAbort
-            UnsetShowInstallerOutcome
             DebugInfoThinSeparator
             DebugScript 'user abort'
-            DebugInfoThickSeparator
+            SetAbort
+            UnsetShowInstallerOutcome
             return 1
         fi
     fi
@@ -2520,7 +2518,7 @@ DisplayAsHelpPackageNameExample()
     # $1 = description
     # $2 = example syntax
 
-    printf "    %s\t%s\n" "$1" "$2"
+    printf "    %-20s %s\n" "$1" "$2"
 
     }
 
