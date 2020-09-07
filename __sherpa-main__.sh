@@ -4244,8 +4244,7 @@ StripANSI()
     # QTS 4.2.6 BusyBox 'sed' doesn't fully support extended regexes, so this only works with a real 'sed'.
 
     if [[ -e $GNU_SED_CMD ]]; then
-#       $GNU_SED_CMD -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g" <<< "$1"
-        $GNU_SED_CMD -r 's/\x1b\[[0-9;]*m//g' <<< "$1"			# check if this will remove ColourTextBrightOrange from log
+        $GNU_SED_CMD -r 's/\x1b\[[0-9;]*m//g' <<< "$1"
     else
         echo "$1"
     fi
