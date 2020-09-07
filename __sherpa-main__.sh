@@ -40,7 +40,7 @@ Init()
 
     IsQNAP || return 1
 
-    readonly MANAGER_SCRIPT_VERSION=200907
+    readonly MANAGER_SCRIPT_VERSION=200908
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -207,8 +207,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(nzbToMedia)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/nzbToMedia/build/nzbToMedia_200906.qpkg)
-        SHERPA_QPKG_MD5+=(fd14e293eb29a8d84e117b23c48e1d1c)
+        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/nzbToMedia/build/nzbToMedia_200908.qpkg)
+        SHERPA_QPKG_MD5+=(a7e0dc198d539f773471e21631269d0d)
         SHERPA_QPKG_ABBRVS+=('nzb2 nzb2m nzbto nzbtom nzbtomedia')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('')
@@ -263,8 +263,8 @@ Init()
 
     SHERPA_QPKG_NAME+=(OTransmission)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/OTransmission/build/OTransmission_200906.qpkg)
-        SHERPA_QPKG_MD5+=(444e667cda3c5b74fa31101c5f0be1d1)
+        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/QPKGs/OTransmission/build/OTransmission_200908.qpkg)
+        SHERPA_QPKG_MD5+=(7e7779b4290be0fda0cef96cfc45b8ab)
         SHERPA_QPKG_ABBRVS+=('ot tm tr trans otrans tmission transmission otransmission')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('transmission-web transmission-daemon-openssl jq')
@@ -4244,7 +4244,8 @@ StripANSI()
     # QTS 4.2.6 BusyBox 'sed' doesn't fully support extended regexes, so this only works with a real 'sed'.
 
     if [[ -e $GNU_SED_CMD ]]; then
-        $GNU_SED_CMD -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g" <<< "$1"
+#       $GNU_SED_CMD -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g" <<< "$1"
+        $GNU_SED_CMD -r 's/\x1b\[[0-9;]*m//g' <<< "$1"			# check if this will remove ColourTextBrightOrange from log
     else
         echo "$1"
     fi
