@@ -178,7 +178,7 @@ StartQPKG()
     fi
 
     [[ ! -L $APPARENT_PATH ]] && ln -s "$QPKG_REPO_PATH" "$APPARENT_PATH"
-    DisplayCommitToLog '* starting package: OK'
+    DisplayCommitToLog 'start package: OK'
 
     EnsureConfigFileExists
 #    WaitForPID || return 1
@@ -206,7 +206,7 @@ StopQPKG()
     fi
 
     [[ -L $APPARENT_PATH ]] && rm "$APPARENT_PATH"
-    DisplayCommitToLog '* stopping package: OK'
+    DisplayCommitToLog 'stop package: OK'
 
     IsNotDaemonActive || return 1
     DisableThisQPKGIcon
@@ -221,7 +221,7 @@ BackupConfig()
     {
 
     CommitOperationToLog
-    ExecuteAndLog 'updating configuration backup' "$TAR_CMD --create --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_REPO_PATH autoProcessMedia.cfg" log:everything
+    ExecuteAndLog 'update configuration backup' "$TAR_CMD --create --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_REPO_PATH autoProcessMedia.cfg" log:everything
 
     }
 
@@ -237,7 +237,7 @@ RestoreConfig()
     fi
 
     StopQPKG
-    ExecuteAndLog 'restoring configuration backup' "$TAR_CMD --extract --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_REPO_PATH" log:everything
+    ExecuteAndLog 'restore configuration backup' "$TAR_CMD --extract --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_REPO_PATH" log:everything
     StartQPKG
 
     }
@@ -272,9 +272,15 @@ StatusQPKG()
     {
 
     IsNotError || return
-    IsDaemonActive || return
+
+    if IsNotDaemonActive; then
+        DisableThisQPKGIcon
+        return
+    fi
+
 #    LoadUIPorts qts
 #    CheckPorts || SetError
+    EnableThisQPKGIcon
 
     }
 
@@ -304,19 +310,19 @@ PullGitRepo()
         installed_branch=$($GIT_CMD -C "$QPKG_GIT_PATH" branch | $GREP_CMD '^\*' | $SED_CMD 's|^\* ||')
 
         if [[ $installed_branch != "$3" ]]; then
-            DisplayDoneCommitToLog "installed git branch: $installed_branch, new git branch: $3"
+            DisplayCommitToLog "current git branch: $installed_branch, new git branch: $3"
             ExecuteAndLog 'new git branch was specified so cleaning local repository' "rm -r $QPKG_GIT_PATH"
         fi
     fi
 
     if [[ ! -d $QPKG_GIT_PATH/.git ]]; then
-        ExecuteAndLog "cloning $(FormatAsPackageName "$1") from remote repository" "$GIT_CMD clone --branch $3 $DEPTH -c advice.detachedHead=false $GIT_HTTPS_URL $QPKG_GIT_PATH || $GIT_CMD clone --branch $3 $DEPTH -c advice.detachedHead=false $GIT_HTTP_URL $QPKG_GIT_PATH"
+        ExecuteAndLog "clone $(FormatAsPackageName "$1") from remote repository" "$GIT_CMD clone --branch $3 $DEPTH -c advice.detachedHead=false $GIT_HTTPS_URL $QPKG_GIT_PATH || $GIT_CMD clone --branch $3 $DEPTH -c advice.detachedHead=false $GIT_HTTP_URL $QPKG_GIT_PATH"
     else
-        ExecuteAndLog "updating $(FormatAsPackageName "$1") from remote repository" "$GIT_CMD -C $QPKG_GIT_PATH reset --hard; $GIT_CMD -C $QPKG_GIT_PATH pull"
+        ExecuteAndLog "update $(FormatAsPackageName "$1") from remote repository" "$GIT_CMD -C $QPKG_GIT_PATH reset --hard; $GIT_CMD -C $QPKG_GIT_PATH pull"
     fi
 
     installed_branch=$($GIT_CMD -C "$QPKG_GIT_PATH" branch | $GREP_CMD '^\*' | $SED_CMD 's|^\* ||')
-    DisplayDoneCommitToLog "installed git branch: $installed_branch"
+    DisplayCommitToLog "current git branch: $installed_branch"
 
     return 0
 
@@ -335,7 +341,7 @@ CleanLocalClone()
     fi
 
     StopQPKG
-    ExecuteAndLog 'cleaning local repository' "rm -r $QPKG_REPO_PATH"
+    ExecuteAndLog 'clean local repository' "rm -r $QPKG_REPO_PATH"
     StartQPKG
 
     }
@@ -412,7 +418,7 @@ WaitForFileToAppear()
     fi
 
     if [[ ! -e $1 ]]; then
-        DisplayWaitCommitToLog "waiting for $(FormatAsFileName "$1") to appear:"
+        DisplayWaitCommitToLog "wait for $(FormatAsFileName "$1") to appear:"
         DisplayWait "(no-more than $MAX_SECONDS seconds):"
 
         (
@@ -559,14 +565,14 @@ EnableQPKG()
 
     # $1 = package name to enable
 
-    IsNotQPKGEnabled "$1" && ExecuteAndLog 'enabling QPKG icon' "qpkg_service enable $1"
+    IsNotQPKGEnabled "$1" && ExecuteAndLog 'enable QPKG icon' "qpkg_service enable $1"
 
     }
 
 DisableQPKG()
     {
 
-    IsQPKGEnabled "$QPKG_NAME" && ExecuteAndLog 'disabling QPKG icon' "qpkg_service disable $QPKG_NAME"
+    IsQPKGEnabled "$QPKG_NAME" && ExecuteAndLog 'disable QPKG icon' "qpkg_service disable $1"
 
     }
 

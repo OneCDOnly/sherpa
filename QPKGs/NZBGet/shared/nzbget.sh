@@ -159,7 +159,7 @@ StartQPKG()
         return 1
     fi
 
-    ExecuteAndLog 'starting daemon' "$LAUNCHER" log:everything || return 1
+    ExecuteAndLog 'start daemon' "$LAUNCHER" log:everything || return 1
     WaitForPID || return 1
     IsDaemonActive || return 1
     CheckPorts || return 1
@@ -189,7 +189,7 @@ StopQPKG()
     SetRestartPending
 
     killall "$($BASENAME_CMD "$TARGET_DAEMON")"
-    DisplayWaitCommitToLog 'stopping daemon with SIGTERM:'
+    DisplayWaitCommitToLog 'stop daemon with SIGTERM:'
     DisplayWait "(no-more than $DAEMON_STOP_TIMEOUT seconds):"
 
     while true; do
@@ -200,7 +200,7 @@ StopQPKG()
 
             if [[ $acc -ge $DAEMON_STOP_TIMEOUT ]]; then
                 DisplayCommitToLog 'failed!'
-                DisplayCommitToLog 'stopping daemon with SIGKILL'
+                DisplayCommitToLog 'stop daemon with SIGKILL'
                 killall -9 "$($BASENAME_CMD "$TARGET_DAEMON")"
                 [[ -f $DAEMON_PID_PATHFILE ]] && rm -f $DAEMON_PID_PATHFILE
                 break 2
@@ -211,7 +211,7 @@ StopQPKG()
         Display 'OK'
         CommitLog "stopped OK in $acc seconds"
 
-        CommitInfoToSysLog "stopping daemon: OK."
+        CommitInfoToSysLog "stop daemon: OK."
         break
     done
 
@@ -228,7 +228,7 @@ BackupConfig()
     {
 
     CommitOperationToLog
-    ExecuteAndLog 'updating configuration backup' "$TAR_CMD --create --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config ." log:everything
+    ExecuteAndLog 'update configuration backup' "$TAR_CMD --create --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config ." log:everything
 
     }
 
@@ -244,7 +244,7 @@ RestoreConfig()
     fi
 
     StopQPKG
-    ExecuteAndLog 'restoring configuration backup' "$TAR_CMD --extract --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config" log:everything
+    ExecuteAndLog 'restore configuration backup' "$TAR_CMD --extract --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config" log:everything
     StartQPKG
 
     }
@@ -255,7 +255,7 @@ ResetConfig()
     CommitOperationToLog
 
     StopQPKG
-    ExecuteAndLog 'resetting configuration' "mv $QPKG_INI_DEFAULT_PATHFILE $QPKG_PATH; rm -rf $QPKG_PATH/config/*; mv $QPKG_PATH/$($BASENAME_CMD "$QPKG_INI_DEFAULT_PATHFILE") $QPKG_INI_DEFAULT_PATHFILE" log:everything
+    ExecuteAndLog 'reset configuration' "mv $QPKG_INI_DEFAULT_PATHFILE $QPKG_PATH; rm -rf $QPKG_PATH/config/*; mv $QPKG_PATH/$($BASENAME_CMD "$QPKG_INI_DEFAULT_PATHFILE") $QPKG_INI_DEFAULT_PATHFILE" log:everything
     StartQPKG
 
     }
@@ -268,13 +268,17 @@ LoadUIPorts()
     case $1 in
         app)
             # Read the current application UI ports from application configuration
+            DisplayWaitCommitToLog 'load UI ports from application:'
             ui_port=$($GETCFG_CMD '' ControlPort -d 0 -f "$QPKG_INI_PATHFILE")
             ui_port_secure=$($GETCFG_CMD '' SecurePort -d 0 -f "$QPKG_INI_PATHFILE")
+            DisplayCommitToLog 'OK'
             ;;
         qts)
             # Read the current application UI ports from QTS App Center
+            DisplayWaitCommitToLog 'load UI ports from QPKG icon:'
             ui_port=$($GETCFG_CMD $QPKG_NAME Web_Port -d 0 -f "$APP_CENTER_CONFIG_PATHFILE")
             ui_port_secure=$($GETCFG_CMD $QPKG_NAME Web_SSL_Port -d 0 -f "$APP_CENTER_CONFIG_PATHFILE")
+            DisplayCommitToLog 'OK'
             ;;
         *)
             DisplayErrCommitAllLogs "unable to load UI ports: action '$1' unrecognised"
@@ -406,7 +410,7 @@ WaitForFileToAppear()
     fi
 
     if [[ ! -e $1 ]]; then
-        DisplayWaitCommitToLog "waiting for $(FormatAsFileName "$1") to appear:"
+        DisplayWaitCommitToLog "wait for $(FormatAsFileName "$1") to appear:"
         DisplayWait "(no-more than $MAX_SECONDS seconds):"
 
         (
@@ -517,7 +521,7 @@ ReWriteUIPorts()
     # 'Web_SSL_Port' behaviour: -1 (launch QTS UI again), 0 ("unable to connect") or > 0 (only works if logged-in to QTS UI via SSL)
     # If SSL is enabled, attempting to access with non-SSL via 'Web_Port' results in "connection was reset"
 
-    DisplayWaitCommitToLog 'updating QPKG icon with current ports:'
+    DisplayWaitCommitToLog 'update QPKG icon with UI ports:'
 
     $SETCFG_CMD $QPKG_NAME Web_Port "$ui_port" -f $APP_CENTER_CONFIG_PATHFILE
 
@@ -527,7 +531,7 @@ ReWriteUIPorts()
         $SETCFG_CMD $QPKG_NAME Web_SSL_Port 0 -f $APP_CENTER_CONFIG_PATHFILE
     fi
 
-    Display 'OK'
+    DisplayCommitToLog 'OK'
 
     }
 
@@ -539,21 +543,19 @@ CheckPorts()
     DisplayCommitToLog "daemon listening address: $ui_listening_address"
 
     if IsSSLEnabled && IsPortSecureResponds $ui_port_secure; then
-        msg="$(FormatAsPackageName $QPKG_NAME) IS listening on HTTPS port $ui_port_secure"
+        msg="HTTPS port $ui_port_secure"
     fi
 
     if IsNotSSLEnabled || [[ $ui_port -ne $ui_port_secure ]]; then
         # assume $ui_port should be checked too
         if IsPortResponds $ui_port; then
             if [[ -n $msg ]]; then
-                msg+=" and on HTTP port $ui_port"
+                msg+=" and HTTP port $ui_port"
             else
-                msg="$(FormatAsPackageName $QPKG_NAME) IS listening on HTTP port $ui_port"
+                msg="HTTP port $ui_port"
             fi
         fi
     fi
-
-    ReWriteUIPorts
 
     if [[ -z $msg ]]; then
         DisplayErrCommitAllLogs 'no response on configured port(s)!'
@@ -561,7 +563,8 @@ CheckPorts()
         return 1
     fi
 
-    DisplayCommitToLog "$msg"
+    DisplayCommitToLog "$msg: OK"
+    ReWriteUIPorts
 
     return 0
 
@@ -612,14 +615,14 @@ EnableQPKG()
 
     # $1 = package name to enable
 
-    IsNotQPKGEnabled "$1" && ExecuteAndLog 'enabling QPKG icon' "qpkg_service enable $1"
+    IsNotQPKGEnabled "$1" && ExecuteAndLog 'enable QPKG icon' "qpkg_service enable $1"
 
     }
 
 DisableQPKG()
     {
 
-    IsQPKGEnabled "$QPKG_NAME" && ExecuteAndLog 'disabling QPKG icon' "qpkg_service disable $QPKG_NAME"
+    IsQPKGEnabled "$QPKG_NAME" && ExecuteAndLog 'disable QPKG icon' "qpkg_service disable $1"
 
     }
 
@@ -729,7 +732,7 @@ IsPortResponds()
 
     local acc=0
 
-    DisplayWaitCommitToLog "checking for UI port $1 response:"
+    DisplayWaitCommitToLog "check for UI port $1 response:"
     DisplayWait "(no-more than $PORT_CHECK_TIMEOUT seconds):"
 
     while ! $CURL_CMD --silent --fail --max-time 1 http://localhost:"$1" >/dev/null; do
@@ -765,7 +768,7 @@ IsPortSecureResponds()
 
     local acc=0
 
-    DisplayWaitCommitToLog "checking for secure UI port $1 response:"
+    DisplayWaitCommitToLog "check for secure UI port $1 response:"
     DisplayWait "(no-more than $PORT_CHECK_TIMEOUT seconds):"
 
     while ! $CURL_CMD --silent --insecure --fail --max-time 1 https://localhost:"$1" >/dev/null; do
