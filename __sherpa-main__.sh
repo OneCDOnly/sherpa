@@ -388,7 +388,7 @@ LogRuntimeParameters()
     IsVersionOnly && return
 
     if IsNotVisibleDebugging; then
-        echo "$(ColourTextBrightWhite "$LOADER_SCRIPT_FILE") $MANAGER_SCRIPT_VERSION • a mini-package-manager for QNAP NAS"
+        Display "$(ColourTextBrightWhite "$LOADER_SCRIPT_FILE") $MANAGER_SCRIPT_VERSION • a mini-package-manager for QNAP NAS"
         DisplayLineSpace
         CheckLoaderAge
     fi
@@ -434,7 +434,7 @@ LogRuntimeParameters()
     DebugUserspace '$PATH' "${PATH:0:43}"
 
     if [[ -L '/opt' ]]; then
-        DebugUserspace '/opt' "$($READLINK_CMD '/opt' || echo "<not present>")"
+        DebugUserspace '/opt' "$($READLINK_CMD '/opt' || echo '<not present>')"
     else
         DebugUserspaceWarning '/opt' '<not present>'
     fi
@@ -734,7 +734,7 @@ ShowHelp()
     local package_note_message=''
 
     DisplayLineSpace
-    echo -e "Usage: $(ColourTextBrightWhite "./$LOADER_SCRIPT_FILE") $(FormatAsHelpPackage) $(FormatAsHelpOption)"
+    display "Usage: $(ColourTextBrightWhite "./$LOADER_SCRIPT_FILE") $(FormatAsHelpPackage) $(FormatAsHelpOption)"
 
     DisplayAsTitleHelpPackage
 
@@ -755,7 +755,7 @@ ShowHelp()
     done
 
     DisplayAsHelpExample 'example: to install, reinstall or upgrade SABnzbd' 'SABnzbd'
-    echo
+    Display
     DisplayAsTitleHelpOption
 
     DisplayAsHelpExample 'display helpful tips and shortcuts' '--tips'
@@ -786,7 +786,7 @@ ShowProblemHelp()
 
     DisplayAsHelpExample "upload the log to the $(FormatAsURL 'https://termbin.com') public pastebin" '--paste'
 
-    echo -e "\n$(ColourTextBrightOrange "* If you need help, please include a copy of your") $(FormatAsScriptTitle) $(ColourTextBrightOrange "log for analysis!")"
+    Display "\n$(ColourTextBrightOrange "* If you need help, please include a copy of your") $(FormatAsScriptTitle) $(ColourTextBrightOrange "log for analysis!")"
     UnsetLineSpace
 
     return 0
@@ -797,15 +797,15 @@ ShowIssueHelp()
     {
 
     DisplayLineSpace
-    echo -e "* Please consider creating a new issue for this on GitHub:\n\thttps://github.com/OneCDOnly/sherpa/issues"
+    Display "* Please consider creating a new issue for this on GitHub:\n\thttps://github.com/OneCDOnly/sherpa/issues"
 
-    echo -e "\n* Alternatively, post on the QNAP NAS Community Forum:\n\thttps://forum.qnap.com/viewtopic.php?f=320&t=132373"
+    Display "\n* Alternatively, post on the QNAP NAS Community Forum:\n\thttps://forum.qnap.com/viewtopic.php?f=320&t=132373"
 
     DisplayAsHelpExample 'view the log' '--log'
 
     DisplayAsHelpExample "upload the log to the $(FormatAsURL 'https://termbin.com') public pastebin" '--paste'
 
-    echo -e "\n$(ColourTextBrightOrange '* If you need help, please include a copy of your') $(FormatAsScriptTitle) $(ColourTextBrightOrange 'log for analysis!')"
+    Display "\n$(ColourTextBrightOrange '* If you need help, please include a copy of your') $(FormatAsScriptTitle) $(ColourTextBrightOrange 'log for analysis!')"
     UnsetLineSpace
 
     return 0
@@ -2480,7 +2480,7 @@ DisplayAsTitleHelpPackage()
     # $1 = description
     # $2 = example syntax
 
-    echo -e "\n$(FormatAsHelpPackage) is ONE of the following:\n"
+    Display "\n$(FormatAsHelpPackage) is ONE of the following:\n"
     UnsetLineSpace
 
     }
@@ -2491,7 +2491,7 @@ DisplayAsTitleHelpOption()
     # $1 = description
     # $2 = example syntax
 
-    echo -e "$(FormatAsHelpOption) usage examples:"
+    Display "$(FormatAsHelpOption) usage examples:"
     UnsetLineSpace
 
     }
@@ -2519,6 +2519,20 @@ DisplayAsHelpPackageNameExample()
     # $2 = example syntax
 
     printf "    %-20s %s\n" "$1" "$2"
+
+    }
+
+Display()
+    {
+
+    echo -e "$1"
+
+    }
+
+DisplayWait()
+    {
+
+    echo -en "$1 "
 
     }
 
@@ -2663,7 +2677,7 @@ MatchAbbrvToQPKGName()
         abbs=(${SHERPA_QPKG_ABBRVS[$package_index]})
         for abb_index in "${!abbs[@]}"; do
             if [[ ${abbs[$abb_index]} = "$1" ]]; then
-                echo "${SHERPA_QPKG_NAME[$package_index]}"
+                Display "${SHERPA_QPKG_NAME[$package_index]}"
                 returncode=0
                 break 2
             fi
@@ -3755,7 +3769,7 @@ DisplayLineSpace()
     if IsNotLineSpace; then
         if IsNotVisibleDebugging && IsNotVersionOnly; then
             SetLineSpace
-            echo
+            Display
         fi
     fi
 
@@ -3997,7 +4011,7 @@ DebugErrorFile()
 ShowAsInfo()
     {
 
-    WriteToDisplay_SameLine "$(ColourTextBrightWhite info)" "$1"
+    WriteToDisplayWait "$(ColourTextBrightWhite info)" "$1"
     WriteToLog info "$1"
 
     }
@@ -4005,7 +4019,7 @@ ShowAsInfo()
 ShowAsProc()
     {
 
-    WriteToDisplay_SameLine "$(ColourTextBrightOrange proc)" "$1 ..."
+    WriteToDisplayWait "$(ColourTextBrightOrange proc)" "$1 ..."
     WriteToLog proc "$1 ..."
 
     }
@@ -4020,14 +4034,14 @@ ShowAsProcLong()
 ShowAsDebug()
     {
 
-    WriteToDisplay_SameLine "$(ColourTextBlackOnCyan dbug)" "$1"
+    WriteToDisplayWait "$(ColourTextBlackOnCyan dbug)" "$1"
 
     }
 
 ShowAsNote()
     {
 
-    WriteToDisplay_NewLine "$(ColourTextBrightYellow note)" "$1"
+    WriteToDisplayNew "$(ColourTextBrightYellow note)" "$1"
     WriteToLog note "$1"
 
     }
@@ -4035,7 +4049,7 @@ ShowAsNote()
 ShowAsQuiz()
     {
 
-    WriteToDisplay_SameLine "$(ColourTextBrightOrangeBlink quiz)" "$1: "
+    WriteToDisplayWait "$(ColourTextBrightOrangeBlink quiz)" "$1: "
     WriteToLog quiz "$1:"
 
     }
@@ -4043,14 +4057,14 @@ ShowAsQuiz()
 ShowAsQuizDone()
     {
 
-    WriteToDisplay_NewLine "$(ColourTextBrightOrange quiz)" "$1"
+    WriteToDisplayNew "$(ColourTextBrightOrange quiz)" "$1"
 
     }
 
 ShowAsDone()
     {
 
-    WriteToDisplay_NewLine "$(ColourTextBrightGreen 'done')" "$1"
+    WriteToDisplayNew "$(ColourTextBrightGreen 'done')" "$1"
     WriteToLog 'done' "$1"
 
     }
@@ -4058,7 +4072,7 @@ ShowAsDone()
 ShowAsWarning()
     {
 
-    WriteToDisplay_NewLine "$(ColourTextBrightOrangeBlink warn)" "$1"
+    WriteToDisplayNew "$(ColourTextBrightOrangeBlink warn)" "$1"
     WriteToLog warn "$1"
 
     }
@@ -4069,7 +4083,7 @@ ShowAsAbort()
     local capitalised="$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}"      # use any available 'tr'
 
     SetError
-    WriteToDisplay_NewLine "$(ColourTextBrightRed fail)" "$capitalised: aborting ..."
+    WriteToDisplayNew "$(ColourTextBrightRed fail)" "$capitalised: aborting ..."
     WriteToLog fail "$capitalised: aborting"
 
     }
@@ -4080,7 +4094,7 @@ ShowAsError()
     local capitalised="$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}"      # use any available 'tr'
 
     SetError
-    WriteToDisplay_NewLine "$(ColourTextBrightRed fail)" "$capitalised"
+    WriteToDisplayNew "$(ColourTextBrightRed fail)" "$capitalised"
     WriteToLog fail "$capitalised."
 
     }
@@ -4094,7 +4108,7 @@ WriteAsDebug()
 
     }
 
-WriteToDisplay_SameLine()
+WriteToDisplayWait()
     {
 
     # Writes a new message without newline (unless in debug mode)
@@ -4105,14 +4119,14 @@ WriteToDisplay_SameLine()
 
     previous_msg=$(printf "%-10s: %s" "$1" "$2")
 
-    echo -n "$previous_msg"; IsVisibleDebugging && echo
+    DisplayWait "$previous_msg"; IsVisibleDebugging && Display
     UnsetLineSpace
 
     return 0
 
     }
 
-WriteToDisplay_NewLine()
+WriteToDisplayNew()
     {
 
     # Updates the previous message
@@ -4145,7 +4159,7 @@ WriteToDisplay_NewLine()
             strbuffer+=$(printf "%${appended_length}s")
         fi
 
-        echo "$strbuffer"
+        Display "$strbuffer"
         UnsetLineSpace
     fi
 
