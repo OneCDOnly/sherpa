@@ -916,9 +916,9 @@ ShowInstallerOutcome()
 
     if IsUpgradeAllApps; then
         if [[ ${#QPKGS_upgradable[@]} -eq 0 ]]; then
-            ShowAsDone "no QPKGs need upgrading!"
+            ShowAsDone "no QPKGs need upgrading"
         elif IsNotError; then
-            ShowAsDone "all upgradable QPKGs were successfully upgraded!"
+            ShowAsDone "all upgradable QPKGs were successfully upgraded"
         else
             ShowAsError "upgrade failed! [$code_pointer]"
             SetSuggestIssue
@@ -927,7 +927,7 @@ ShowInstallerOutcome()
         [[ $reinstall_flag = true ]] && RE='re' || RE=''
 
         if IsNotError; then
-            ShowAsDone "$(FormatAsPackageName "$TARGET_APP") has been successfully ${RE}installed!"
+            ShowAsDone "$(FormatAsPackageName "$TARGET_APP") has been successfully ${RE}installed"
         else
             ShowAsError "$(FormatAsPackageName "$TARGET_APP") ${RE}install failed! [$code_pointer]"
             SetSuggestIssue
@@ -936,7 +936,7 @@ ShowInstallerOutcome()
 
     if IsCheckDependencies; then
         if IsNotError; then
-            ShowAsDone "all application dependencies are installed!"
+            ShowAsDone "all application dependencies are installed"
         else
             ShowAsError "application dependency check failed! [$code_pointer]"
             SetSuggestIssue
@@ -1164,7 +1164,7 @@ UpdateEntware()
         fi
     else
         DebugInfo "$(FormatAsPackageName Entware) package list was updated less than $package_minutes_threshold minutes ago"
-        ShowAsDone "$(FormatAsPackageName Entware) package list is up-to-date!"
+        ShowAsDone "$(FormatAsPackageName Entware) package list is current"
     fi
 
     return 0
@@ -2207,7 +2207,7 @@ FindAllIPKGDependencies()
         DebugVar IPKG_download_size
         ShowAsDone "$IPKG_download_count IPKG$(FormatAsPlural "$IPKG_download_count") ($(FormatAsISO "$IPKG_download_size")) to be downloaded"
     else
-        ShowAsDone 'no IPKGs required ... woohoo!'
+        ShowAsDone 'no IPKGs are required'
     fi
 
     CloseIPKGArchive
@@ -3676,7 +3676,7 @@ FormatAsFileName()
 FormatAsURL()
     {
 
-    ColourTextUnderlinedBlue "$1"
+    ColourTextUnderlinedCyan "$1"
 
     }
 
@@ -4227,6 +4227,13 @@ ColourTextUnderlinedBlue()
     {
 
     echo -en '\033[4;94m'"$(ColourReset "$1")"
+
+    }
+
+ColourTextUnderlinedCyan()
+    {
+
+    echo -en '\033[4;36m'"$(ColourReset "$1")"
 
     }
 
