@@ -734,7 +734,7 @@ ShowHelp()
     local package_note_message=''
 
     DisplayLineSpace
-    display "Usage: $(ColourTextBrightWhite "./$LOADER_SCRIPT_FILE") $(FormatAsHelpPackage) $(FormatAsHelpOption)"
+    Display "Usage: $(ColourTextBrightWhite "./$LOADER_SCRIPT_FILE") $(FormatAsHelpPackage) $(FormatAsHelpOption)"
 
     DisplayAsTitleHelpPackage
 
