@@ -1,0 +1,149 @@
+[img]https://i.imgur.com/CdmRmEt.png[/img]
+
+[b][u][size=120]Description[/size][/u][/b]
+
+A mini-package-manager to install various media-management apps into QNAP NAS.
+
+[b]sherpa[/b] is able to install several search and download apps but will only install [b]ONE app[/b] at a time. If you elect to install an app that is already installed, the app will be fully reinstalled. App configuration will be retained.
+
+To install additional apps, run it again.
+
+If the installer is successful, your requested package and any dependent packages will be installed. Any existing installation of Entware will be used automatically. If Entware is not installed, a version appropriate to your NAS will be installed.
+
+
+[b][u][size=120]Before you begin[/size][/u][/b]
+
+This is a [b]command-line[/b] package manager. If you're not comfortable using the BASH command shell, then please look at some of the fine GUI-only packaged alternatives available from the [url=https://qnapclub.eu/en]Qnapclub Store[/url]. You'll have a much better user-experience.  :wink:
+
+
+[b][u][size=120]Applications available[/size][/u][/b]
+
+[list]
+[*][url=https://github.com/sabnzbd/sabnzbd][b]SABnzbd[/b][/url]
+[*][url=https://github.com/clinton-hall/nzbToMedia][b]nzbToMedia[/b][/url]
+[*][url=https://lazylibrarian.gitlab.io/][b]LazyLibrarian[/b][/url]
+[*][url=https://github.com/pymedusa/Medusa][b]Medusa[/b][/url]
+[*][url=https://github.com/SickChill/SickChill][b]SickChill[/b][/url]
+[*][url=https://github.com/SickGear/SickGear][b]SickGear[/b][/url]
+[*][url=https://github.com/mylar3/mylar3][b]Mylar3[/b][/url]
+[*][url=https://nzbget.net/][b]NZBGet[/b][/url]
+[*][url=https://transmissionbt.com/][b]Transmission[/b][/url]
+[*][url=https://dev.deluge-torrent.org/][b]Deluge[/b][/url]
+[/list]
+
+... and the following apps will be automatically installed as required:
+[list][*][url=https://forum.qnap.com/viewtopic.php?f=351&t=124894][b]Entware[/b][/url] (standard version)
+[*][b]Git[/b] v2.22.0
+[*][b]Python[/b] v3.8.3
+[*][b]Par2[/b] or [b]Par2cmdline-MT[/b], except on ARMv5. This will use the single-thread par2 instead.
+[*][b]Cryptography[/b]
+[*][b]OpenSSL[/b]
+[/list]
+
+
+[b][u][size=120]Current status[/size][/u][/b]
+
+[list][b][size=120][color=#008000]STABLE[/color][/size][/b]
+[/list]
+
+
+[b][u][size=120]Requirements[/size][/u][/b]
+
+Any model QNAP NAS with at-least 1GB RAM and running QTS 4.0 or-later.
+
+
+[b][u][size=120]Usage[/size][/u][/b]
+
+[list=1][*][url=https://wiki.qnap.com/wiki/How_to_SSH_into_your_QNAP_device][b]SSH[/b][/url] / [url=http://www.putty.org/][b]PuTTY[/b][/url] into your NAS as the 'admin' user,
+
+[*]Change to the [b]Public[/b] share directory:
+[code]cd /share/Public[/code]
+
+[*]Download the installer and make it executable (you'll only need to do this once):
+[code]curl -skLO https://git.io/sherpa.sh && chmod +x sherpa.sh[/code]
+
+[*]Then, to install (or reinstall) an app, run [b]sherpa.sh[/b] with the name of your required app as an argument.
+
+So, to install SABnzbd, use:
+[code]./sherpa.sh SABnzbd[/code]
+Or:
+[code]./sherpa.sh nzbToMedia
+./sherpa.sh LazyLibrarian
+./sherpa.sh Medusa
+./sherpa.sh SickChill
+./sherpa.sh SickGear
+./sherpa.sh Mylar3
+./sherpa.sh NZBGet
+./sherpa.sh Transmission
+./sherpa.sh Deluge-server
+./sherpa.sh Deluge-web
+[/code][/list]
+
+
+[b][u][size=120]Known issues[/size][/u][/b]
+
+[list][*]Python 2.7.16 is no-longer available via Entware/OpenWRT so the [b]Headphones[/b] QPKG can no-longer be installed. I'll need to find another Python2 source with installable modules, but I'm not hopeful.
+[/list]
+[list][*]Sometimes, it seems existing installations of OpenWRT can become "difficult" to work with. So, Entware can also be reinstalled, but this should only be used as a last resort. Using:
+[code]./sherpa.sh Entware[/code]
+... will force [b]sherpa[/b] to uninstall your existing Entware QPKG, then install a new one. [b][color=#FF0000]Note:[/color][/b] OpenWRT will be reverted back to default, and only the IPKGs required to support your installed [b]sherpa[/b] apps will be installed. [/list]
+
+[list][*][b]sherpa[/b] is incompatible with Optware-NG as it's missing a few required packages.[/list]
+
+[list][*]All the latest issues can be seen on GitHub: https://github.com/OneCDOnly/sherpa/issues[/list]
+
+
+[b][u][size=120]Problems?[/size][/u][/b]
+
+[list]This will happen from time-to-time as the environment changes. If it's not shown above in '[b]Known issues[/b]' then you may have found something new, so please add to this thread with the details of the problem you encountered. Diagnose where you can and provide a solution if you're able. The functions in this script are a community effort. ;)
+[/list]
+[list][*]Sometimes the debug log will be required. This is always created. You can view this with:
+[code]./sherpa.sh --log[/code]
+Or run the installer in debug-mode to see it realtime. e.g.:
+[code]./sherpa.sh SABnzbd --debug[/code]
+NEW! Your debug log can now be posted online courtesy of https://termbin.com:
+[code]./sherpa.sh --paste[/code]
+A link will be generated to view this log online. Share it here if you need assistance.
+
+[b]Note:[/b] your log will be [b]publicly visible[/b] to anyone who knows the link details. It will be automatically deleted after 1 month. The debug log typically won't contain any personally-identifiable information. Your public and private IP addresses, email address and so-on are not recorded. However, there is a chance some info may leak if an app generates a backtrace and this is pasted into the sherpa debug log. So, check it first before pasting online.
+[/list]
+[list][*]To upgrade all your sherpa QPKGs:
+[code]./sherpa.sh --upgrade-all[/code]
+[/list]
+[list][*]This option will install any additional QPKGs or IPKGs to support any sherpa-installed applications present on your NAS:
+[code]./sherpa.sh --check[/code]
+[/list]
+
+
+[b][u][size=120]Firmware compatibility[/size][/u][/b]
+
+[list][*]QTS 4.4.x - [b][color=#40B000]OK[/color][/b]
+[*]QTS 4.3.x - [b][color=#40B000]OK[/color][/b]
+[*]QTS 4.2.x - [b][color=#40B000]OK[/color][/b]
+[*]QTS 4.1.x - [b][color=#FF8000]Unknown[/color][/b][/list]
+
+
+[b][u][size=120]Notes[/size][/u][/b]
+
+[list][*]Deluge is available in two parts: a server daemon, and a web UI. You can install either or both. Both are needed if you don't already have a Deluge daemon running.[/list]
+[list][*]The default login password for [b]Deluge-web[/b] is 'deluge'.[/list]
+[list][*]Supports application configuration-only backup and restore via the 'backup' and 'restore' arguments. This can be scripted via cron to create a regular backup of each app.
+
+QPKG (configuration-only) backups will be stored in a new hidden directory located under your default userdata volume called [.qpkg_config_backup/]. Hopefully, QNAP won't mess with this location (I'm looking at you Malware Remover).
+
+To jump to this path:
+[code]cd $(getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup[/code]
+Each QPKG has a single [config.tar.gz] file to backup into. Each new backup replaces the old one (so, no versioning available).
+
+Example: to backup SABnzbd:
+[code]/etc/init.d/sabnzbd3.sh backup[/code]
+
+Example: to restore SABnzbd:
+[code]/etc/init.d/sabnzbd3.sh restore[/code]
+[/list]
+[list][*]The information contained therein was constructed from the efforts of many community members, both here and on the [url=https://forums.sabnzbd.org/]SABnzbd forum[/url]. Thank you to everyone who has contributed.[/list]
+[list][*]Updating an app is easy - just restart the app via its App Center icon. Clicking 'stop' then 'start' will force an update.[/list]
+[list][*][b]Medusa[/b] will appear as 'OMedusa' in your App Center to avoid conflict with the existing [b]Medusa[/b] package available in the Qnapclub Store.[/list]
+[list][*][b]SickGear[/b] will appear as 'OSickGear' in your App Center to avoid conflict with the existing [b]SickGear[/b] package available in the Qnapclub Store.[/list]
+[list][*][b]Transmission[/b] will appear as 'OTransmission' in your App Center to avoid conflict with the existing [b]Transmission[/b] packages available.[/list]
+[list][*]The source for this project can be found on [url=https://onecdonly.github.io/sherpa/][b]GitHub[/b][/url].[/list]
