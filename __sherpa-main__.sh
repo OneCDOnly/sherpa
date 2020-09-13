@@ -842,69 +842,6 @@ AskQuiz()
 
     }
 
-DownloadQPKGs()
-    {
-
-    Abort.IsSet && return
-
-    DebugFuncEntry
-
-    for package in "${QPKGs_download_array[@]}"; do
-        DownloadQPKG "$package"
-    done
-
-    # kludge: an ugly workaround until QPKG dependency checking works properly
-#     (QPKG.Installed SABnzbd || [[ $TARGET_APP = SABnzbd ]] ) && [[ $NAS_QPKG_ARCH != none ]] && QPKG.NotInstalled Par2 && DownloadQPKG Par2
-
-    DebugFuncExit
-    return 0
-
-    }
-
-RemoveQPKGs()
-    {
-
-    Abort.IsSet && return
-
-    local response=''
-    local package=''
-    local previous_pip3_module_list=$SHARE_PUBLIC_PATH/pip3.prev.installed.list
-    local previous_opkg_package_list=$SHARE_PUBLIC_PATH/opkg.prev.installed.list
-
-    for package in "${QPKGs_to_uninstall[@]}"; do
-        UninstallQPKG "$package"
-    done
-
-    if QPKG.ToBeReinstalled Entware; then
-        ShowAsNote "Reinstalling $(FormatAsPackageName Entware) will remove all IPKGs and Python modules, and only those required to support your sherpa apps will be reinstalled."
-        ShowAsNote "Your installed IPKG list will be saved to $(FormatAsFileName "$previous_opkg_package_list")"
-        ShowAsNote "Your installed Python module list will be saved to $(FormatAsFileName "$previous_pip3_module_list")"
-        (QPKG.Installed SABnzbdplus || QPKG.Installed Headphones) && ShowAsWarning "Also, the $(FormatAsPackageName SABnzbdplus) and $(FormatAsPackageName Headphones) packages CANNOT BE REINSTALLED as Python 2.7.16 is no-longer available."
-
-        if AskQuiz "Press 'Y' to remove all current $(FormatAsPackageName Entware) IPKGs (and their configurations), or any other key to abort"; then
-            ShowAsProc 'saving package and Python module lists'
-
-            $pip3_cmd freeze > "$previous_pip3_module_list"
-            DebugDone "saved current $(FormatAsPackageName pip3) module list to $(FormatAsFileName "$previous_pip3_module_list")"
-
-            $OPKG_CMD list-installed > "$previous_opkg_package_list"
-            DebugDone "saved current $(FormatAsPackageName Entware) IPKG list to $(FormatAsFileName "$previous_opkg_package_list")"
-
-            ShowAsDone 'package and Python module lists saved'
-            UninstallQPKG Entware
-        else
-            DebugInfoThinSeparator
-            DebugScript 'user abort'
-            Abort.Set
-            SessionResult.Clear
-            return 1
-        fi
-    fi
-
-    return 0
-
-    }
-
 InstallQPKGIndeps()
     {
 
@@ -924,17 +861,17 @@ InstallQPKGIndeps()
                 local opt_backup_path=/opt.orig
                 [[ -d $opt_path && ! -L $opt_path && ! -e $opt_backup_path ]] && mv "$opt_path" "$opt_backup_path"
 
-                InstallQPKG Entware && ReloadProfile
+                QPKG.Install Entware && ReloadProfile
 
                 # copy all files from original [/opt] into new [/opt]
                 [[ -L $opt_path && -d $opt_backup_path ]] && cp --recursive "$opt_backup_path"/* --target-directory "$opt_path" && rm -rf "$opt_backup_path"
             else
-                InstallQPKG "$package"
+                QPKG.Install "$package"
             fi
         fi
     done
 
-    if QPKG.Installed Entware && QPKG.NotEnabled Entware && EnableQPKG Entware; then
+    if QPKG.Installed Entware && QPKG.NotEnabled Entware && QPKG.Enable Entware; then
         ReloadProfile
 
         [[ $NAS_QPKG_ARCH != none ]] && ($OPKG_CMD list-installed | $GREP_CMD -q par2cmdline) && $OPKG_CMD remove par2cmdline > /dev/null 2>&1
@@ -1271,109 +1208,6 @@ ReloadProfile()
 
     }
 
-DownloadQPKG()
-    {
-
-    # input:
-    #   $1 = QPKG name to download
-
-    # output:
-    #   $? = 0 if successful, 1 if failed
-
-    Error.IsSet && return
-
-    local result=0
-    local returncode=0
-    local remote_url=$(GetQPKGRemoteURL "$1")
-    local remote_filename="$($BASENAME_CMD "$remote_url")"
-    local remote_filename_md5="$(GetQPKGMD5 "$1")"
-    local local_pathfile="$QPKG_DL_PATH/$remote_filename"
-    local local_filename="$($BASENAME_CMD "$local_pathfile")"
-    local log_pathfile="$local_pathfile.$DOWNLOAD_LOG_FILE"
-
-    if [[ -e $local_pathfile ]]; then
-        if FileMatchesMD5 "$local_pathfile" "$remote_filename_md5"; then
-            DebugInfo "existing QPKG checksum correct $(FormatAsFileName "$local_filename")"
-        else
-            DebugWarning "existing QPKG checksum incorrect $(FormatAsFileName "$local_filename")"
-            DebugInfo "deleting QPKG $(FormatAsFileName "$local_filename")"
-            rm -f "$local_pathfile"
-        fi
-    fi
-
-    if Error.IsNot && [[ ! -e $local_pathfile ]]; then
-        ShowAsProc "downloading QPKG $(FormatAsFileName "$remote_filename")"
-
-        [[ -e $log_pathfile ]] && rm -f "$log_pathfile"
-
-        if DebuggingVisible.IsSet; then
-            RunThisAndLogResultsRealtime "$CURL_CMD $curl_insecure_arg --output $local_pathfile $remote_url" "$log_pathfile"
-            result=$?
-        else
-            RunThisAndLogResults "$CURL_CMD $curl_insecure_arg --output $local_pathfile $remote_url" "$log_pathfile"
-            result=$?
-        fi
-
-        if [[ $result -eq 0 ]]; then
-            if FileMatchesMD5 "$local_pathfile" "$remote_filename_md5"; then
-                ShowAsDone "downloaded QPKG $(FormatAsFileName "$remote_filename")"
-            else
-                ShowAsError "downloaded QPKG checksum incorrect $(FormatAsFileName "$local_pathfile")"
-                returncode=1
-            fi
-        else
-            ShowAsError "download failed $(FormatAsFileName "$local_pathfile") $(FormatAsExitcode $result)"
-            DebugErrorFile "$log_pathfile"
-            returncode=1
-        fi
-    fi
-
-    return $returncode
-
-    }
-
-InstallQPKG()
-    {
-
-    # $1 = QPKG name to install
-
-    Error.IsSet && return
-    Abort.IsSet && return
-
-    local target_file=''
-    local result=0
-    local returncode=0
-    local local_pathfile="$(GetQPKGPathFilename "$1")"
-    local re=''
-
-    if [[ ${local_pathfile##*.} = zip ]]; then
-        $UNZIP_CMD -nq "$local_pathfile" -d "$QPKG_DL_PATH"
-        local_pathfile="${local_pathfile%.*}"
-    fi
-
-    local log_pathfile="$local_pathfile.$INSTALL_LOG_FILE"
-    target_file=$($BASENAME_CMD "$local_pathfile")
-
-    QPKG.Installed "$1" && re='re-'
-
-    ShowAsProcLong "${re}installing QPKG $(FormatAsFileName "$target_file")"
-
-    sh "$local_pathfile" > "$log_pathfile" 2>&1
-    result=$?
-
-    if [[ $result -eq 0 || $result -eq 10 ]]; then
-        ShowAsDone "${re}installed QPKG $(FormatAsFileName "$target_file")"
-        GetQPKGServiceStatus "$1"
-    else
-        ShowAsError "QPKG ${re}installation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $result)"
-        DebugErrorFile "$log_pathfile"
-        returncode=1
-    fi
-
-    return $returncode
-
-    }
-
 InstallQPKGDeps()
     {
 
@@ -1384,26 +1218,28 @@ InstallQPKGDeps()
     if InstallAllApps.IsSet; then
         if [[ ${#QPKGS_user_installable[*]} -gt 0 ]]; then
             for package in "${QPKGS_user_installable[@]}"; do
-                [[ $package != Entware ]] && InstallQPKG "$package"     # kludge: Entware has already been installed, don't do it again.
+                [[ $package != Entware ]] && QPKG.Install "$package"     # kludge: Entware has already been installed, don't do it again.
             done
         fi
     elif UpgradeAllApps.IsSet; then
         if [[ ${#QPKGS_upgradable[*]} -gt 0 ]]; then
             for package in "${QPKGS_upgradable[@]}"; do
-                [[ $package != Entware ]] && InstallQPKG "$package"     # kludge: Entware has already been installed, don't do it again.
+                [[ $package != Entware ]] && QPKG.Install "$package"     # kludge: Entware has already been installed, don't do it again.
             done
         fi
     else
         if [[ ${#QPKGs_to_install[*]} -gt 0 ]]; then
             for package in "${SHERPA_DEP_QPKGs[@]}"; do
                 if [[ ${QPKGs_to_install[*]} == *"$package"* ]]; then
-                    InstallQPKG "$package"
+                    QPKG.Install "$package"
                 fi
             done
-        elif [[ ${#QPKGs_to_reinstall[*]} -gt 0 ]]; then
+        fi
+
+        if [[ ${#QPKGs_to_reinstall[*]} -gt 0 ]]; then
             for package in "${SHERPA_DEP_QPKGs[@]}"; do
                 if [[ ${QPKGs_to_reinstall[*]} == *"$package"* ]]; then
-                    InstallQPKG "$package"
+                    QPKG.Install "$package"
                 fi
             done
         fi
@@ -1414,8 +1250,6 @@ InstallQPKGDeps()
     return 0
 
     }
-
-#### Calc... function are each run only once.
 
 CalcNASQPKGArch()
     {
@@ -1452,6 +1286,69 @@ CalcNASQPKGArch()
     esac
 
     readonly NAS_QPKG_ARCH
+
+    return 0
+
+    }
+
+QPKGs.Download()
+    {
+
+    Abort.IsSet && return
+
+    DebugFuncEntry
+
+    for package in "${QPKGs_download_array[@]}"; do
+        QPKG.Download "$package"
+    done
+
+    # kludge: an ugly workaround until QPKG dependency checking works properly
+#     (QPKG.Installed SABnzbd || [[ $TARGET_APP = SABnzbd ]] ) && [[ $NAS_QPKG_ARCH != none ]] && QPKG.NotInstalled Par2 && QPKG.Download Par2
+
+    DebugFuncExit
+    return 0
+
+    }
+
+QPKGs.Remove()
+    {
+
+    Abort.IsSet && return
+
+    local response=''
+    local package=''
+    local previous_pip3_module_list=$SHARE_PUBLIC_PATH/pip3.prev.installed.list
+    local previous_opkg_package_list=$SHARE_PUBLIC_PATH/opkg.prev.installed.list
+
+    for package in "${QPKGs_to_uninstall[@]}"; do
+        QPKG.Uninstall "$package"
+    done
+
+    if QPKG.ToBeReinstalled Entware; then
+        ShowAsNote "Reinstalling $(FormatAsPackageName Entware) will remove all IPKGs and Python modules, and only those required to support your sherpa apps will be reinstalled."
+        ShowAsNote "Your installed IPKG list will be saved to $(FormatAsFileName "$previous_opkg_package_list")"
+        ShowAsNote "Your installed Python module list will be saved to $(FormatAsFileName "$previous_pip3_module_list")"
+        (QPKG.Installed SABnzbdplus || QPKG.Installed Headphones) && ShowAsWarning "Also, the $(FormatAsPackageName SABnzbdplus) and $(FormatAsPackageName Headphones) packages CANNOT BE REINSTALLED as Python 2.7.16 is no-longer available."
+
+        if AskQuiz "Press 'Y' to remove all current $(FormatAsPackageName Entware) IPKGs (and their configurations), or any other key to abort"; then
+            ShowAsProc 'saving package and Python module lists'
+
+            $pip3_cmd freeze > "$previous_pip3_module_list"
+            DebugDone "saved current $(FormatAsPackageName pip3) module list to $(FormatAsFileName "$previous_pip3_module_list")"
+
+            $OPKG_CMD list-installed > "$previous_opkg_package_list"
+            DebugDone "saved current $(FormatAsPackageName Entware) IPKG list to $(FormatAsFileName "$previous_opkg_package_list")"
+
+            ShowAsDone 'package and Python module lists saved'
+            QPKG.Uninstall Entware
+        else
+            DebugInfoThinSeparator
+            DebugScript 'user abort'
+            Abort.Set
+            SessionResult.Clear
+            return 1
+        fi
+    fi
 
     return 0
 
@@ -1529,7 +1426,110 @@ QPKGs.Installed.Build()
 
     }
 
-UninstallQPKG()
+QPKG.Download()
+    {
+
+    # input:
+    #   $1 = QPKG name to download
+
+    # output:
+    #   $? = 0 if successful, 1 if failed
+
+    Error.IsSet && return
+
+    local result=0
+    local returncode=0
+    local remote_url=$(GetQPKGRemoteURL "$1")
+    local remote_filename="$($BASENAME_CMD "$remote_url")"
+    local remote_filename_md5="$(GetQPKGMD5 "$1")"
+    local local_pathfile="$QPKG_DL_PATH/$remote_filename"
+    local local_filename="$($BASENAME_CMD "$local_pathfile")"
+    local log_pathfile="$local_pathfile.$DOWNLOAD_LOG_FILE"
+
+    if [[ -e $local_pathfile ]]; then
+        if FileMatchesMD5 "$local_pathfile" "$remote_filename_md5"; then
+            DebugInfo "existing QPKG checksum correct $(FormatAsFileName "$local_filename")"
+        else
+            DebugWarning "existing QPKG checksum incorrect $(FormatAsFileName "$local_filename")"
+            DebugInfo "deleting QPKG $(FormatAsFileName "$local_filename")"
+            rm -f "$local_pathfile"
+        fi
+    fi
+
+    if Error.IsNot && [[ ! -e $local_pathfile ]]; then
+        ShowAsProc "downloading QPKG $(FormatAsFileName "$remote_filename")"
+
+        [[ -e $log_pathfile ]] && rm -f "$log_pathfile"
+
+        if DebuggingVisible.IsSet; then
+            RunThisAndLogResultsRealtime "$CURL_CMD $curl_insecure_arg --output $local_pathfile $remote_url" "$log_pathfile"
+            result=$?
+        else
+            RunThisAndLogResults "$CURL_CMD $curl_insecure_arg --output $local_pathfile $remote_url" "$log_pathfile"
+            result=$?
+        fi
+
+        if [[ $result -eq 0 ]]; then
+            if FileMatchesMD5 "$local_pathfile" "$remote_filename_md5"; then
+                ShowAsDone "downloaded QPKG $(FormatAsFileName "$remote_filename")"
+            else
+                ShowAsError "downloaded QPKG checksum incorrect $(FormatAsFileName "$local_pathfile")"
+                returncode=1
+            fi
+        else
+            ShowAsError "download failed $(FormatAsFileName "$local_pathfile") $(FormatAsExitcode $result)"
+            DebugErrorFile "$log_pathfile"
+            returncode=1
+        fi
+    fi
+
+    return $returncode
+
+    }
+
+QPKG.Install()
+    {
+
+    # $1 = QPKG name to install
+
+    Error.IsSet && return
+    Abort.IsSet && return
+
+    local target_file=''
+    local result=0
+    local returncode=0
+    local local_pathfile="$(GetQPKGPathFilename "$1")"
+    local re=''
+
+    if [[ ${local_pathfile##*.} = zip ]]; then
+        $UNZIP_CMD -nq "$local_pathfile" -d "$QPKG_DL_PATH"
+        local_pathfile="${local_pathfile%.*}"
+    fi
+
+    local log_pathfile="$local_pathfile.$INSTALL_LOG_FILE"
+    target_file=$($BASENAME_CMD "$local_pathfile")
+
+    QPKG.Installed "$1" && re='re-'
+
+    ShowAsProcLong "${re}installing QPKG $(FormatAsFileName "$target_file")"
+
+    sh "$local_pathfile" > "$log_pathfile" 2>&1
+    result=$?
+
+    if [[ $result -eq 0 || $result -eq 10 ]]; then
+        ShowAsDone "${re}installed QPKG $(FormatAsFileName "$target_file")"
+        GetQPKGServiceStatus "$1"
+    else
+        ShowAsError "QPKG ${re}installation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $result)"
+        DebugErrorFile "$log_pathfile"
+        returncode=1
+    fi
+
+    return $returncode
+
+    }
+
+QPKG.Uninstall()
     {
 
     # input:
@@ -1967,7 +1967,7 @@ GetAllIPKGDepsToDownload()
     ShowAsProc 'determining IPKGs required'
     DebugInfo "IPKGs requested: $requested_list"
 
-    OpenIPKGArchive || return 1
+    IPKGs.Archive.Open || return 1
 
     DebugProc 'finding IPKG dependencies'
     while [[ $iterations -lt $ITERATION_LIMIT ]]; do
@@ -2020,11 +2020,11 @@ GetAllIPKGDepsToDownload()
         ShowAsDone 'no IPKGs are required'
     fi
 
-    CloseIPKGArchive
+    IPKGs.Archive.Close
 
     }
 
-OpenIPKGArchive()
+IPKGs.Archive.Open()
     {
 
     # extract the 'opkg' package list file
@@ -2034,7 +2034,7 @@ OpenIPKGArchive()
         return 1
     fi
 
-    CloseIPKGArchive
+    IPKGs.Archive.Close
 
     RunThisAndLogResults "$Z7_CMD e -o$($DIRNAME_CMD "$EXTERNAL_PACKAGE_LIST_PATHFILE") $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE" "$WORK_PATH/ipkg.list.archive.extract"
 
@@ -2047,7 +2047,7 @@ OpenIPKGArchive()
 
     }
 
-CloseIPKGArchive()
+IPKGs.Archive.Close()
     {
 
     [[ -e $EXTERNAL_PACKAGE_LIST_PATHFILE ]] && rm -f "$EXTERNAL_PACKAGE_LIST_PATHFILE"
@@ -2129,7 +2129,7 @@ RemoveDirSizeMonitorFlagFile()
 
     }
 
-EnableQPKG()
+QPKG.Enable()
     {
 
     # $1 = package name to enable
@@ -4938,8 +4938,8 @@ CTRL_C_Captured()
 Init || exit 1
 
 ValidateParameters
-DownloadQPKGs
-RemoveQPKGs
+QPKGs.Download
+QPKGs.Remove
 InstallQPKGIndeps
 InstallQPKGDeps
 Cleanup
