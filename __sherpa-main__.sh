@@ -35,7 +35,7 @@
 
 readonly USER_ARGS_RAW="$*"
 
-Init()
+Session.Init()
     {
 
     IsQNAP || return 1
@@ -107,7 +107,7 @@ Init()
     readonly REMOTE_REPO_URL=https://raw.githubusercontent.com/OneCDOnly/sherpa/master
     readonly RUNTIME_LOCK_PATHFILE=/var/run/$LOADER_SCRIPT_FILE.pid
 
-    LockFile.Claim || return 1
+    Session.LockFile.Claim || return 1
 
     # check required binaries are present
     IsSysFileExist $AWK_CMD || return 1
@@ -150,8 +150,8 @@ Init()
     IsSysFileExist $ZIP_CMD || return 1
 
     LogToFile.Clear
-    Error.Clear
-    Abort.Clear
+    Session.Error.Clear
+    Session.Abort.Clear
     DebuggingVisible.Clear
     CheckDependencies.Clear
     VersionView.Clear
@@ -159,7 +159,7 @@ Init()
     Help.Abbreviations.Clear
     SuggestIssue.Clear
     Help.Clear
-    SessionResult.Set
+    Session.Summary.Set
     DevMode.Clear
 
     local -r DEFAULT_SHARE_DOWNLOAD_PATH=/share/Download
@@ -381,7 +381,7 @@ Init()
 
     }
 
-ParseArguments()
+Session.ParseArguments()
     {
 
     if [[ -z $USER_ARGS_RAW ]]; then
@@ -550,14 +550,14 @@ ParseArguments()
 
     }
 
-ValidateParameters()
+Session.Validate()
     {
 
     code_pointer=0
     local package=''
     local QPKGs_initial_array=()
 
-    ParseArguments
+    Session.ParseArguments
 
     VersionView.IsSet && return
 
@@ -569,7 +569,7 @@ ValidateParameters()
 
     DisplayNewQPKGVersions
 
-    Abort.IsSet && return
+    Session.Abort.IsSet && return
 
     LogToFile.Set
     DebugInfoThickSeparator
@@ -665,8 +665,8 @@ ValidateParameters()
 
     if [[ $(QPKGs.Download.Count) -eq 1 && ${QPKGs_download_array[0]} = Entware ]] && QPKG.NotInstalled Entware; then
         ShowAsNote "It's not necessary to install $(FormatAsPackageName Entware) on its own. It will be installed as-required with your other sherpa packages. :)"
-#         Abort.Set
-#         SessionResult.Clear
+#         Session.Abort.Set
+#         Session.Summary.Clear
 #         return 1
     fi
 
@@ -805,8 +805,8 @@ PasteLogOnline()
         else
             DebugInfoThinSeparator
             DebugScript 'user abort'
-            Abort.Set
-            SessionResult.Clear
+            Session.Abort.Set
+            Session.Summary.Clear
             return 1
         fi
     else
@@ -842,12 +842,12 @@ AskQuiz()
 
     }
 
-InstallQPKGIndeps()
+QPKGs.Independents.Install()
     {
 
     # install independent QPKGs first, in the order they were declared
 
-    Abort.IsSet && return
+    Session.Abort.IsSet && return
 
     DebugFuncEntry
 
@@ -879,11 +879,11 @@ InstallQPKGIndeps()
 
     PatchBaseInit
 
-    InstallIPKGs
+    IPKGs.Install
     InstallPy3Modules
 
     if QPKG.ToBeInstalled Entware || RestartAllApps.IsSet; then
-        RestartAllDepQPKGs
+        QPKGs.Dependant.Restart
     fi
 
     DebugFuncExit
@@ -959,16 +959,16 @@ UpdateEntware()
 
     }
 
-InstallIPKGs()
+IPKGs.Install()
     {
 
-    Abort.IsSet && return
+    Session.Abort.IsSet && return
 
     local packages="$SHERPA_COMMON_IPKGS"
     local index=0
 
     UpdateEntware
-    Error.IsSet && return
+    Session.Error.IsSet && return
 
     if InstallAllApps.IsSet; then
         for index in "${!SHERPA_QPKG_NAME[@]}"; do
@@ -1051,7 +1051,7 @@ InstallIPKGBatch()
 InstallPy3Modules()
     {
 
-    Abort.IsSet && return
+    Session.Abort.IsSet && return
 #     PIPInstall.IsNot && return
 
     DebugFuncEntry
@@ -1105,12 +1105,12 @@ InstallPy3Modules()
 
     }
 
-RestartAllDepQPKGs()
+QPKGs.Dependant.Restart()
     {
 
     # restart all sherpa QPKGs except independents. Needed if user has requested each QPKG update itself.
 
-    Abort.IsSet && return
+    Session.Abort.IsSet && return
 
     [[ -z ${SHERPA_DEP_QPKGs[*]} || ${#SHERPA_DEP_QPKGs[@]} -eq 0 ]] && return
 
@@ -1131,7 +1131,7 @@ RestartNotUpgradedQPKGs()
 
     # restart all sherpa QPKGs except those that were just upgraded.
 
-    Abort.IsSet && return
+    Session.Abort.IsSet && return
 
     [[ -z ${SHERPA_DEP_QPKGs[*]} || ${#SHERPA_DEP_QPKGs[@]} -eq 0 ]] && return
 
@@ -1147,16 +1147,16 @@ RestartNotUpgradedQPKGs()
 
     }
 
-Cleanup()
+Session.Cleanup()
     {
 
-    [[ -d $WORK_PATH ]] && Error.IsNot && DebuggingVisible.IsNot && DevMode.IsNot && rm -rf "$WORK_PATH"
+    [[ -d $WORK_PATH ]] && Session.Error.IsNot && DebuggingVisible.IsNot && DevMode.IsNot && rm -rf "$WORK_PATH"
 
     return 0
 
     }
 
-ShowResult()
+Session.Result.Show()
     {
 
     if VersionView.IsSet; then
@@ -1180,7 +1180,7 @@ ShowResult()
     Help.Abbreviations.IsSet && Help.PackageAbbreviations.Show
 
     LogPaste.IsSet && PasteLogOnline
-    SessionResult.IsSet && SessionResult.Show
+    Session.Summary.IsSet && Session.Summary.Show
     SuggestIssue.IsSet && Help.Issue.Show
     DisplayLineSpace
 
@@ -1208,10 +1208,10 @@ ReloadProfile()
 
     }
 
-InstallQPKGDeps()
+QPKGs.Dependants.Install()
     {
 
-    Abort.IsSet && return
+    Session.Abort.IsSet && return
 
     local package=''
 
@@ -1294,7 +1294,7 @@ CalcNASQPKGArch()
 QPKGs.Download()
     {
 
-    Abort.IsSet && return
+    Session.Abort.IsSet && return
 
     DebugFuncEntry
 
@@ -1313,7 +1313,7 @@ QPKGs.Download()
 QPKGs.Remove()
     {
 
-    Abort.IsSet && return
+    Session.Abort.IsSet && return
 
     local response=''
     local package=''
@@ -1344,8 +1344,8 @@ QPKGs.Remove()
         else
             DebugInfoThinSeparator
             DebugScript 'user abort'
-            Abort.Set
-            SessionResult.Clear
+            Session.Abort.Set
+            Session.Summary.Clear
             return 1
         fi
     fi
@@ -1435,7 +1435,7 @@ QPKG.Download()
     # output:
     #   $? = 0 if successful, 1 if failed
 
-    Error.IsSet && return
+    Session.Error.IsSet && return
 
     local result=0
     local returncode=0
@@ -1456,7 +1456,7 @@ QPKG.Download()
         fi
     fi
 
-    if Error.IsNot && [[ ! -e $local_pathfile ]]; then
+    if Session.Error.IsNot && [[ ! -e $local_pathfile ]]; then
         ShowAsProc "downloading QPKG $(FormatAsFileName "$remote_filename")"
 
         [[ -e $log_pathfile ]] && rm -f "$log_pathfile"
@@ -1492,8 +1492,8 @@ QPKG.Install()
 
     # $1 = QPKG name to install
 
-    Error.IsSet && return
-    Abort.IsSet && return
+    Session.Error.IsSet && return
+    Session.Abort.IsSet && return
 
     local target_file=''
     local result=0
@@ -1538,7 +1538,7 @@ QPKG.Uninstall()
     # output:
     #   $? = 0 if successful, 1 if failed
 
-    Error.IsSet && return
+    Session.Error.IsSet && return
 
     local result=0
 
@@ -2156,7 +2156,7 @@ IsQNAP()
 
     }
 
-LockFile.Claim()
+Session.LockFile.Claim()
     {
 
     if [[ -e $RUNTIME_LOCK_PATHFILE && -d /proc/$(<$RUNTIME_LOCK_PATHFILE) && $(</proc/"$(<$RUNTIME_LOCK_PATHFILE)"/cmdline) =~ $MANAGER_SCRIPT_FILE ]]; then
@@ -2170,7 +2170,7 @@ LockFile.Claim()
 
     }
 
-LockFile.Release()
+Session.LockFile.Release()
     {
 
     [[ -e $RUNTIME_LOCK_PATHFILE ]] && rm -f "$RUNTIME_LOCK_PATHFILE"
@@ -2349,8 +2349,6 @@ DisplayWait()
     echo -en "$1 "
 
     }
-
-#   ### pseudo-"class" functions ... (I miss OOP) :( ###
 
 Help.Basic.Show()
     {
@@ -3000,7 +2998,7 @@ QPKGs.Download.IsNone()
 Help.Set()
     {
 
-    Abort.Set
+    Session.Abort.Set
 
     Help.IsSet && return
 
@@ -3036,7 +3034,7 @@ Help.IsNot()
 Help.Problem.Set()
     {
 
-    Abort.Set
+    Session.Abort.Set
 
     Help.Problem.IsSet && return
 
@@ -3072,7 +3070,7 @@ Help.Problem.IsNot()
 Help.Tips.Set()
     {
 
-    Abort.Set
+    Session.Abort.Set
 
     Help.Tips.IsSet && return
 
@@ -3108,7 +3106,7 @@ Help.Tips.IsNot()
 LogView.Set()
     {
 
-    Abort.Set
+    Session.Abort.Set
 
     LogView.IsSet && return
 
@@ -3144,7 +3142,7 @@ LogView.IsNot()
 VersionView.Set()
     {
 
-    Abort.Set
+    Session.Abort.Set
 
     VersionView.IsSet && return
 
@@ -3180,7 +3178,7 @@ VersionView.IsNot()
 LogPaste.Set()
     {
 
-    Abort.Set
+    Session.Abort.Set
 
     LogPaste.IsSet && return
 
@@ -3247,70 +3245,70 @@ PIPInstall.IsNot()
 
     }
 
-Error.Set()
+Session.Error.Set()
     {
 
-    Abort.Set
+    Session.Abort.Set
 
-    Error.IsSet && return
+    Session.Error.IsSet && return
 
     _script_error_flag=true
     DebugVar _script_error_flag
 
     }
 
-Error.Clear()
+Session.Error.Clear()
     {
 
-    Error.IsNot && return
+    Session.Error.IsNot && return
 
     _script_error_flag=false
     DebugVar _script_error_flag
 
     }
 
-Error.IsSet()
+Session.Error.IsSet()
     {
 
     [[ $_script_error_flag = true ]]
 
     }
 
-Error.IsNot()
+Session.Error.IsNot()
     {
 
     [[ $_script_error_flag != true ]]
 
     }
 
-Abort.Set()
+Session.Abort.Set()
     {
 
-    Abort.IsSet && return
+    Session.Abort.IsSet && return
 
     _script_abort_flag=true
     DebugVar _script_abort_flag
 
     }
 
-Abort.Clear()
+Session.Abort.Clear()
     {
 
-    Abort.IsNot && return
+    Session.Abort.IsNot && return
 
     _script_abort_flag=false
     DebugVar _script_abort_flag
 
     }
 
-Abort.IsSet()
+Session.Abort.IsSet()
     {
 
     [[ $_script_abort_flag = true ]]
 
     }
 
-Abort.IsNot()
+Session.Abort.IsNot()
     {
 
     [[ $_script_abort_flag != true ]]
@@ -3354,7 +3352,7 @@ CheckDependencies.IsNot()
 Help.Abbreviations.Set()
     {
 
-    Abort.Set
+    Session.Abort.Set
 
     Help.Abbreviations.IsSet && return
 
@@ -3390,7 +3388,7 @@ Help.Abbreviations.IsNot()
 Help.Actions.Set()
     {
 
-    Abort.Set
+    Session.Abort.Set
 
     Help.Actions.IsSet && return
 
@@ -3426,7 +3424,7 @@ Help.Actions.IsNot()
 Help.Packages.Set()
     {
 
-    Abort.Set
+    Session.Abort.Set
 
     Help.Packages.IsSet && return
 
@@ -3462,7 +3460,7 @@ Help.Packages.IsNot()
 Help.Options.Set()
     {
 
-    Abort.Set
+    Session.Abort.Set
 
     Help.Options.IsSet && return
 
@@ -3495,13 +3493,13 @@ Help.Options.IsNot()
 
     }
 
-SessionResult.Show()
+Session.Summary.Show()
     {
 
     if UpgradeAllApps.IsSet; then
         if [[ ${#QPKGS_upgradable[@]} -eq 0 ]]; then
             ShowAsDone "no QPKGs need upgrading"
-        elif Error.IsNot; then
+        elif Session.Error.IsNot; then
             ShowAsDone "all upgradable QPKGs were successfully upgraded"
         else
             ShowAsError "upgrade failed! [$code_pointer]"
@@ -3510,7 +3508,7 @@ SessionResult.Show()
 #     elif [[ -n $TARGET_APP ]]; then
 #         [[ $reinstall_flag = true ]] && RE='re' || RE=''
 #
-#         if Error.IsNot; then
+#         if Session.Error.IsNot; then
 #             ShowAsDone "$(FormatAsPackageName "$TARGET_APP") has been successfully ${RE}installed"
 #         else
 #             ShowAsError "$(FormatAsPackageName "$TARGET_APP") ${RE}install failed! [$code_pointer]"
@@ -3519,7 +3517,7 @@ SessionResult.Show()
     fi
 
     if CheckDependencies.IsSet; then
-        if Error.IsNot; then
+        if Session.Error.IsNot; then
             ShowAsDone "all application dependencies are installed"
         else
             ShowAsError "application dependency check failed! [$code_pointer]"
@@ -3531,34 +3529,34 @@ SessionResult.Show()
 
     }
 
-SessionResult.Set()
+Session.Summary.Set()
     {
 
-    SessionResult.IsSet && return
+    Session.Summary.IsSet && return
 
     _session_result_flag=true
     DebugVar _session_result_flag
 
     }
 
-SessionResult.Clear()
+Session.Summary.Clear()
     {
 
-    SessionResult.IsNot && return
+    Session.Summary.IsNot && return
 
     _session_result_flag=false
     DebugVar _session_result_flag
 
     }
 
-SessionResult.IsSet()
+Session.Summary.IsSet()
     {
 
     [[ $_session_result_flag = true ]]
 
     }
 
-SessionResult.IsNot()
+Session.Summary.IsNot()
     {
 
     [[ $_session_result_flag != true ]]
@@ -4721,7 +4719,7 @@ ShowAsAbort()
 
     local capitalised="$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}"      # use any available 'tr'
 
-    Error.Set
+    Session.Error.Set
     WriteToDisplay.New "$(ColourTextBrightRed fail)" "$capitalised: aborting ..."
     WriteToLog fail "$capitalised: aborting"
 
@@ -4732,7 +4730,7 @@ ShowAsError()
 
     local capitalised="$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}"      # use any available 'tr'
 
-    Error.Set
+    Session.Error.Set
     WriteToDisplay.New "$(ColourTextBrightRed fail)" "$capitalised"
     WriteToLog fail "$capitalised."
 
@@ -4935,14 +4933,13 @@ CTRL_C_Captured()
 
     }
 
-Init || exit 1
-
-ValidateParameters
+Session.Init || exit 1
+Session.Validate
 QPKGs.Download
 QPKGs.Remove
-InstallQPKGIndeps
-InstallQPKGDeps
-Cleanup
-ShowResult
-LockFile.Release
-Error.IsNot
+QPKGs.Independents.Install
+QPKGs.Dependants.Install
+Session.Cleanup
+Session.Result.Show
+Session.LockFile.Release
+Session.Error.IsNot
