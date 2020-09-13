@@ -335,7 +335,7 @@ Init()
         readonly SHERPA_QPKG_IPKGS
 
     readonly SHERPA_COMMON_IPKGS='ca-certificates findutils gcc git git-http less nano python3-dev python3-pip python3-setuptools sed'
-    readonly SHERPA_COMMON_PIPS='apscheduler beautifulsoup4 cfscrape cheetah3 "cheroot!=8.4.4" cherrypy configobj feedparser portend pygithub python-magic random_user_agent sabyenc3 simplejson slugify'
+    readonly SHERPA_COMMON_PIPS='apscheduler beautifulsoup4 cfscrape cheetah3 "cheroot!=8.4.4" cherrypy configobj "feedparser==5.2.1" portend pygithub python-magic random_user_agent sabyenc3 simplejson slugify'
     readonly SHERPA_COMMON_CONFLICTS='Optware Optware-NG TarMT'
 
     # runtime arrays
