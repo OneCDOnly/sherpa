@@ -40,7 +40,7 @@ Init()
 
     IsQNAP || return 1
 
-    readonly MANAGER_SCRIPT_VERSION=200908
+    readonly MANAGER_SCRIPT_VERSION=200913
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -149,18 +149,18 @@ Init()
     IsSysFileExist $Z7_CMD || return 1
     IsSysFileExist $ZIP_CMD || return 1
 
-    UnsetLogToFile
-    UnsetError
-    UnsetAbort
-    UnsetVisibleDebugging
-    UnsetCheckDependencies
-    UnsetVersionOnly
-    UnsetLogPasteOnly
-    UnsetShowAbbreviations
-    UnsetSuggestIssue
-    UnsetShowHelp
-    SetShowInstallerOutcome
-    UnsetDevMode
+    LogToFile.Clear
+    Error.Clear
+    Abort.Clear
+    DebuggingVisible.Clear
+    CheckDependencies.Clear
+    VersionView.Clear
+    LogPaste.Clear
+    Help.Abbreviations.Clear
+    SuggestIssue.Clear
+    Help.Clear
+    ShowSessionOutcome.Set
+    DevMode.Clear
 
     local -r DEFAULT_SHARE_DOWNLOAD_PATH=/share/Download
     local -r DEFAULT_SHARE_PUBLIC_PATH=/share/Public
@@ -338,14 +338,18 @@ Init()
     readonly SHERPA_COMMON_PIPS='apscheduler beautifulsoup4 cfscrape cheetah3 "cheroot!=8.4.4" cherrypy configobj feedparser portend pygithub python-magic random_user_agent sabyenc3 simplejson slugify'
     readonly SHERPA_COMMON_CONFLICTS='Optware Optware-NG TarMT'
 
-    # runtime vars
-    QPKGS_to_install=()
-    QPKGS_to_uninstall=()
-    QPKGS_to_restart=()
-    QPKGS_to_upgrade=()
-    QPKGS_to_backup=()
-    QPKGS_to_restore=()
-    QPKGS_to_status=()
+    # runtime arrays
+    QPKGs_to_install=()
+    QPKGs_already_installed=()
+    QPKGs_to_uninstall=()
+    QPKGs_already_uninstalled=()
+    QPKGs_to_reinstall=()
+    QPKGs_to_restart=()
+    QPKGs_to_upgrade=()
+    QPKGs_already_upgraded=()
+    QPKGs_to_backup=()
+    QPKGs_to_restore=()
+    QPKGs_to_status=()
 
     readonly PREV_QPKG_CONFIG_DIRS=(SAB_CONFIG CONFIG Config config)                 # last element is used as target dirname
     readonly PREV_QPKG_CONFIG_FILES=(sabnzbd.ini settings.ini config.cfg config.ini) # last element is used as target filename
@@ -362,32 +366,202 @@ Init()
     readonly NAS_FIRMWARE=$($GETCFG_CMD System Version -f $ULINUX_PATHFILE)
     readonly MIN_RAM_KB=1048576
     readonly INSTALLED_RAM_KB=$($GREP_CMD MemTotal /proc/meminfo | $CUT_CMD -f2 -d':' | $SED_CMD 's|kB||;s| ||g')
-    reinstall_flag=false
     ignore_space_arg=''
     [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg='--insecure' || curl_insecure_arg=''
 
     CalcIndependentQPKGs
     CalcDependantQPKGs
     CalcUserInstallableQPKGs
-    CalcInstalledQPKGs
-    CalcUpgradeableQPKGs
+    QPKGsInstalled.Build
+    QPKGsNotInstalled.Build
+    QPKGsUpgradable.Build
     CalcNASQPKGArch
 
     return 0
 
     }
 
-LogRuntimeParameters()
+ParseArguments()
     {
 
-    local conflicting_qpkg=''
+    if [[ -z $USER_ARGS_RAW ]]; then
+        Help.Set
+        code_pointer=2
+        return 1
+    fi
+
+    local user_args=($($TR_CMD '[A-Z]' '[a-z]' <<< "$USER_ARGS_RAW"))
+    local arg=''
+    local current_operation=''
+    local target_app=''
+
+    for arg in "${user_args[@]}"; do
+        case $arg in
+            -d|d|--debug|debug)
+                DebuggingVisible.Set
+                current_operation=''
+                ;;
+            -c|c|--check|check)
+                CheckDependencies.Set
+                current_operation=''
+                ;;
+            --ignore-space|ignore-space)
+                ignore_space_arg='--force-space'
+                DebugVar ignore_space_arg
+                current_operation=''
+                ;;
+            -h|h|--help|help)
+                Help.Set
+                return 1
+                ;;
+            -p|p|--problem|problem)
+                Help.Problem.Set
+                ;;
+            -t|t|--tips|tips)
+                Help.Tips.Set
+                ;;
+            -l|l|--log|log)
+                LogView.Set
+                return 1
+                ;;
+            --paste|paste)
+                LogPaste.Set
+                return 1
+                ;;
+            --abs|abs)
+                Help.Abbreviations.Set
+                ;;
+            --action|action|--actions|actions)
+                Help.Actions.Set
+                ;;
+            --package|package|--packages|packages)
+                Help.Packages.Set
+                ;;
+            --option|option|--options|options)
+                Help.Options.Set
+                ;;
+            -v|v|--version|version)
+                VersionView.Set
+                return 1
+                ;;
+            --install-all-applications|install-all-applications)
+                InstallAllApps.Set
+                current_operation=''
+                return 1
+                ;;
+            --uninstall-all-applications|uninstall-all-applications)
+                UninstallAllApps.Set
+                current_operation=''
+                return 1
+                ;;
+            --restart-all|restart-all)
+                RestartAllApps.Set
+                current_operation=''
+                ;;
+            --upgrade-all|upgrade-all)
+                UpgradeAllApps.Set
+                current_operation=''
+                ;;
+            --backup-all)
+                BackupAllApps.Set
+                current_operation=''
+                return 1
+                ;;
+            --restore-all)
+                RestoreAllApps.Set
+                current_operation=''
+                return 1
+                ;;
+            --status-all|status-all)
+                StatusAllApps.Set
+                current_operation=''
+                return 1
+                ;;
+            --install|install)
+                current_operation=install_
+                ;;
+            --uninstall|uninstall)
+                current_operation=uninstall_
+                ;;
+            --reinstall|reinstall)
+                current_operation=reinstall_
+                ;;
+            --restart|restart)
+                current_operation=restart_
+                ;;
+            --upgrade|upgrade)
+                current_operation=upgrade_
+                ;;
+            --backup|backup)
+                current_operation=backup_
+                ;;
+            --restore|restore)
+                current_operation=restore_
+                ;;
+            --status|status)
+                current_operation=status_
+                ;;
+            *)
+                target_app=$(MatchAbbrvToQPKGName "$arg")
+                [[ -z $target_app ]] && continue
+
+                case $current_operation in
+                    install_)
+                        if IsQPKGInstalled "$target_app"; then
+                            QPKGsAlreadyInstalled.Add "$target_app"
+                        else
+                            QPKGsInstall.Add "$target_app"
+                        fi
+                        ;;
+                    uninstall_)
+                        if IsNotQPKGInstalled "$target_app"; then
+                            QPKGsAlreadyUninstalled.Add "$target_app"
+                        else
+                            QPKGsUninstall.Add "$target_app"
+                        fi
+                        ;;
+                    reinstall_)
+                        IsQPKGInstalled "$target_app" && QPKGsReinstall.Add "$target_app"
+                        ;;
+                    restart_)
+                        IsQPKGInstalled "$target_app" && QPKGsRestart.Add "$target_app"
+                        ;;
+                    upgrade_)
+                        if IsNotQPKGUpgradable "$target_app"; then
+                            QPKGsAlreadyUpgraded.Add "$target_app"
+                        else
+                            QPKGsUpgrade.Add "$target_app"
+                        fi
+                        ;;
+                    backup_)
+                        IsQPKGInstalled "$target_app" && QPKGs_to_backup+=($target_app)
+                        ;;
+                    restore_)
+                        IsQPKGInstalled "$target_app" && QPKGs_to_restore+=($target_app)
+                        ;;
+                    status_)
+                        QPKGs_to_status+=($target_app)
+                        ;;
+                esac
+        esac
+    done
+
+    return 0
+
+    }
+
+ValidateParameters()
+    {
+
     code_pointer=0
+    local package=''
+    local QPKGs_initial_array=()
 
-    ParseArgs
+    ParseArguments
 
-    IsVersionOnly && return
+    VersionView.IsSet && return
 
-    if IsNotVisibleDebugging; then
+    if DebuggingVisible.IsNot; then
         Display "$(ColourTextBrightWhite "$LOADER_SCRIPT_FILE") $MANAGER_SCRIPT_VERSION • a mini-package-manager for QNAP NAS"
         DisplayLineSpace
         CheckLoaderAge
@@ -395,9 +569,9 @@ LogRuntimeParameters()
 
     DisplayNewQPKGVersions
 
-    IsAbort && return
+    Abort.IsSet && return
 
-    SetLogToFile
+    LogToFile.Set
     DebugInfoThickSeparator
     DebugScript 'started' "$($DATE_CMD | $TR_CMD -s ' ')"
     DebugScript 'version' "manager: $MANAGER_SCRIPT_VERSION, loader $LOADER_SCRIPT_VERSION"
@@ -430,6 +604,11 @@ LogRuntimeParameters()
         DebugUserspaceWarning '$EUID' "$EUID"
     fi
 
+    if [[ $EUID -ne 0 || $USER != admin ]]; then
+        ShowAsError "this script must be run as the 'admin' user. Please login via SSH as 'admin' and try again"
+        return 1
+    fi
+
     DebugUserspace 'default volume' "$($GETCFG_CMD SHARE_DEF defVolMP -f $DEFAULT_SHARES_PATHFILE)"
     DebugUserspace '$PATH' "${PATH:0:43}"
 
@@ -453,86 +632,12 @@ LogRuntimeParameters()
     fi
 
     DebugScript 'unparsed arguments' "$USER_ARGS_RAW"
-    DebugScript 'app(s) to install' "${QPKGS_to_install[*]} "
-    DebugScript 'app(s) to uninstall' "${QPKGS_to_uninstall[*]} "
-    DebugScript 'app(s) to reinstall' "${QPKGS_to_upgrade[*]} "
-    DebugScript 'app(s) to update' "${QPKGS_to_upgrade[*]} "
-    DebugScript 'app(s) to backup' "${QPKGS_to_backup[*]} "
-    DebugScript 'app(s) to restore' "${QPKGS_to_restore[*]} "
-    DebugScript 'work path' "$WORK_PATH"
-    DebugQPKG 'download path' "$QPKG_DL_PATH"
-    DebugIPKG 'download path' "$IPKG_DL_PATH"
-    DebugQPKG 'arch' "$NAS_QPKG_ARCH"
 
-    if [[ $EUID -ne 0 || $USER != admin ]]; then
-        ShowAsError "this script must be run as the 'admin' user. Please login via SSH as 'admin' and try again"
-        return 1
-    fi
-
-    if [[ ${#QPKGS_to_install[@]} -eq 0 && ${#QPKGS_to_uninstall[@]} -eq 0 && ${#QPKGS_to_restart[@]} -eq 0 && ${#QPKGS_to_upgrade[@]} -eq 0 && ${#QPKGS_to_backup[@]} -eq 0 && ${#QPKGS_to_restore[@]} -eq 0 && ${#QPKGS_to_status[@]} -eq 0 ]]; then
-        if IsNotInstallAllApps && IsNotUninstallAllApps && IsNotRestartAllApps && IsNotUpgradeAllApps && IsNotBackupAllApps && IsNotRestoreAllApps && IsNotStatusAllApps; then
-            if IsNotCheckDependencies; then
-                ShowAsError "no valid $(FormatAsHelpPackage) or $(FormatAsHelpOption) was specified"
-                SetShowAbbreviations
-                return 1
-            fi
-        fi
-    fi
-
-    if IsBackupAllApps && IsRestoreAllApps; then
+    if BackupAllApps.IsSet && RestoreAllApps.IsSet; then
         ShowAsError 'no point running a backup then a restore operation'
         code_pointer=1
         return 1
     fi
-
-    $MKDIR_CMD -p "$WORK_PATH" 2> /dev/null; result=$?
-
-    if [[ $result -ne 0 ]]; then
-        ShowAsError "unable to create script working directory $(FormatAsFileName "$WORK_PATH") $(FormatAsExitcode $result)"
-        SetSuggestIssue
-        return 1
-    fi
-
-    $MKDIR_CMD -p "$QPKG_DL_PATH" 2> /dev/null; result=$?
-
-    if [[ $result -ne 0 ]]; then
-        ShowAsError "unable to create QPKG download directory $(FormatAsFileName "$QPKG_DL_PATH") $(FormatAsExitcode $result)"
-        SetSuggestIssue
-        return 1
-    fi
-
-    $MKDIR_CMD -p "$IPKG_DL_PATH" 2> /dev/null; result=$?
-
-    if [[ $result -ne 0 ]]; then
-        ShowAsError "unable to create IPKG download directory $(FormatAsFileName "$IPKG_DL_PATH") $(FormatAsExitcode $result)"
-        SetSuggestIssue
-        return 1
-    fi
-
-    [[ -d $IPKG_CACHE_PATH ]] && rm -rf "$IPKG_CACHE_PATH"
-    $MKDIR_CMD -p "$IPKG_CACHE_PATH" 2> /dev/null; result=$?
-
-    if [[ $result -ne 0 ]]; then
-        ShowAsError "unable to create IPKG cache directory $(FormatAsFileName "$IPKG_CACHE_PATH") $(FormatAsExitcode $result)"
-        SetSuggestIssue
-        return 1
-    fi
-
-    [[ -d $PIP_CACHE_PATH ]] && rm -rf "$PIP_CACHE_PATH"
-    $MKDIR_CMD -p "$PIP_CACHE_PATH" 2> /dev/null; result=$?
-
-    if [[ $result -ne 0 ]]; then
-        ShowAsError "unable to create PIP cache directory $(FormatAsFileName "$PIP_CACHE_PATH") $(FormatAsExitcode $result)"
-        SetSuggestIssue
-        return 1
-    fi
-
-    for conflicting_qpkg in "${SHERPA_COMMON_CONFLICTS[@]}"; do
-        if IsQPKGEnabled "$conflicting_qpkg"; then
-            ShowAsError "'$conflicting_qpkg' is enabled. This is an unsupported configuration"
-            return 1
-        fi
-    done
 
     if IsQPKGInstalled Entware; then
         [[ -e /opt/etc/passwd ]] && { [[ -L /opt/etc/passwd ]] && ENTWARE_VER=std || ENTWARE_VER=alt ;} || ENTWARE_VER=none
@@ -543,6 +648,113 @@ LogRuntimeParameters()
             return 1
         fi
     fi
+
+    if InstallAllApps.IsSet; then
+        QPKGs_initial_array+=($(QPKGsNotInstalled.Array))
+#         [[ $NAS_QPKG_ARCH != none ]] && QPKGs_initial_array+=(Par2)   # klude: force this until QPKG dep checking works
+    elif UpgradeAllApps.IsSet; then
+        QPKGs_initial_array=($(QPKGsUpgradable.Array))
+    elif CheckDependencies.IsSet; then
+        QPKGs_initial_array+=($(QPKGsInstalled.Array))
+    else
+        QPKGs_initial_array+=(${QPKGs_to_install[*]} ${QPKGs_to_reinstall[*]} ${QPKGs_to_upgrade[*]})
+    fi
+
+    GetTheseQPKGDeps "${QPKGs_initial_array[*]}"
+    ExcludeInstalledQPKGs "$QPKG_pre_download_list"
+    DebugInfo "QPKGs required: $(QPKGsDownload.Print)"
+
+    if [[ $(QPKGsDownload.Count) -eq 1 && ${QPKGs_download_array[0]} = Entware ]] && IsNotQPKGInstalled Entware; then
+        ShowAsNote "It's not necessary to install $(FormatAsPackageName Entware) first. It will be installed on-demand with your other sherpa packages. :)"
+        Abort.Set
+        ShowSessionOutcome.Clear
+        return 1
+    fi
+
+    for package in Optware Entware-3x Entware-ng; do
+        IsQPKGInstalled "$package" && QPKGsUninstall.Add "$package"
+    done
+
+    if QPKGsAlreadyInstalled.IsAny; then
+        ShowAsNote "$(QPKGsAlreadyInstalled.Print) is already installed. Use the '--reinstall' action to reinstall."
+    elif QPKGsAlreadyUninstalled.IsAny; then
+        ShowAsNote "$(QPKGsAlreadyUninstalled.Print) is not installed"
+    elif QPKGsAlreadyUpgraded.IsAny; then
+        ShowAsNote "$(QPKGsAlreadyUpgraded.Print) is not upgradable"
+    fi
+
+    if QPKGsInstall.IsNone && QPKGsUninstall.IsNone && QPKGsReinstall.IsNone && QPKGsRestart.IsNone && QPKGsUpgrade.IsNone && [[ ${#QPKGs_to_backup[@]} -eq 0 && ${#QPKGs_to_restore[@]} -eq 0 && ${#QPKGs_to_status[@]} -eq 0 ]]; then
+        if InstallAllApps.IsNot && UninstallAllApps.IsNot && RestartAllApps.IsNot && UpgradeAllApps.IsNot && BackupAllApps.IsNot && RestoreAllApps.IsNot && StatusAllApps.IsNot; then
+            if CheckDependencies.IsNot; then
+                ShowAsError "nothing to do"
+                Help.Abbreviations.Set
+                return 1
+            fi
+        fi
+    fi
+
+    $MKDIR_CMD -p "$WORK_PATH" 2> /dev/null; result=$?
+
+    if [[ $result -ne 0 ]]; then
+        ShowAsError "unable to create script working directory $(FormatAsFileName "$WORK_PATH") $(FormatAsExitcode $result)"
+        SuggestIssue.Set
+        return 1
+    fi
+
+    $MKDIR_CMD -p "$QPKG_DL_PATH" 2> /dev/null; result=$?
+
+    if [[ $result -ne 0 ]]; then
+        ShowAsError "unable to create QPKG download directory $(FormatAsFileName "$QPKG_DL_PATH") $(FormatAsExitcode $result)"
+        SuggestIssue.Set
+        return 1
+    fi
+
+    $MKDIR_CMD -p "$IPKG_DL_PATH" 2> /dev/null; result=$?
+
+    if [[ $result -ne 0 ]]; then
+        ShowAsError "unable to create IPKG download directory $(FormatAsFileName "$IPKG_DL_PATH") $(FormatAsExitcode $result)"
+        SuggestIssue.Set
+        return 1
+    fi
+
+    [[ -d $IPKG_CACHE_PATH ]] && rm -rf "$IPKG_CACHE_PATH"
+    $MKDIR_CMD -p "$IPKG_CACHE_PATH" 2> /dev/null; result=$?
+
+    if [[ $result -ne 0 ]]; then
+        ShowAsError "unable to create IPKG cache directory $(FormatAsFileName "$IPKG_CACHE_PATH") $(FormatAsExitcode $result)"
+        SuggestIssue.Set
+        return 1
+    fi
+
+    [[ -d $PIP_CACHE_PATH ]] && rm -rf "$PIP_CACHE_PATH"
+    $MKDIR_CMD -p "$PIP_CACHE_PATH" 2> /dev/null; result=$?
+
+    if [[ $result -ne 0 ]]; then
+        ShowAsError "unable to create PIP cache directory $(FormatAsFileName "$PIP_CACHE_PATH") $(FormatAsExitcode $result)"
+        SuggestIssue.Set
+        return 1
+    fi
+
+    for package in "${SHERPA_COMMON_CONFLICTS[@]}"; do
+        if IsQPKGEnabled "$package"; then
+            ShowAsError "'$package' is enabled. This is an unsupported configuration"
+            return 1
+        fi
+    done
+
+    DebugScript 'install' "${QPKGs_to_install[*]} "
+    DebugScript 'uninstall' "${QPKGs_to_uninstall[*]} "
+    DebugScript 'reinstall' "${QPKGs_to_reinstall[*]} "
+    DebugScript 'restart' "${QPKGs_to_restart[*]} "
+    DebugScript 'upgrade' "${QPKGs_to_upgrade[*]} "
+    DebugScript 'backup' "${QPKGs_to_backup[*]} "
+    DebugScript 'restore' "${QPKGs_to_restore[*]} "
+    DebugScript 'status' "${QPKGs_to_status[*]} "
+    DebugInfoThinSeparator
+    DebugScript 'download' "${QPKGs_download_array[*]} "
+    DebugQPKG 'download path' "$QPKG_DL_PATH"
+    DebugIPKG 'download path' "$IPKG_DL_PATH"
+    DebugQPKG 'arch' "$NAS_QPKG_ARCH"
 
     DebugInfoThinSeparator
 
@@ -577,310 +789,6 @@ DisplayNewQPKGVersions()
 
     }
 
-ParseArgs()
-    {
-
-    if [[ -z $USER_ARGS_RAW ]]; then
-        SetShowHelp
-        code_pointer=2
-        return 1
-    fi
-
-    local user_args=($($TR_CMD '[A-Z]' '[a-z]' <<< "$USER_ARGS_RAW"))
-    local arg=''
-    local current_operation=''
-    local target_app=''
-
-    for arg in "${user_args[@]}"; do
-        case $arg in
-            -d|d|--debug|debug)
-                SetVisibleDebugging
-                current_operation=''
-                ;;
-            -c|c|--check|check)
-                SetCheckDependencies
-                current_operation=''
-                return 1
-                ;;
-            --ignore-space|ignore-space)
-                ignore_space_arg='--force-space'
-                DebugVar ignore_space_arg
-                current_operation=''
-                ;;
-            -h|h|--help|help)
-                SetShowHelp
-                return 1
-                ;;
-            -p|p|--problem|problem)
-                SetShowProblemHelp
-                return 1
-                ;;
-            -t|t|--tips|tips)
-                SetShowTipsHelp
-                return 1
-                ;;
-            -l|l|--log|log)
-                SetLogViewOnly
-                return 1
-                ;;
-            --paste|paste)
-                SetLogPasteOnly
-                return 1
-                ;;
-            --abs|abs)
-                SetShowAbbreviations
-                return 1
-                ;;
-            -v|v|--version|version)
-                SetVersionOnly
-                return 1
-                ;;
-            --install-all-applications)
-                SetInstallAllApps
-                current_operation=''
-                return 1
-                ;;
-            --uninstall-all-applications)
-                SetUninstallAllApps
-                current_operation=''
-                return 1
-                ;;
-            --restart-all|restart-all)
-                SetRestartAllApps
-                current_operation=''
-                ;;
-            --upgrade-all|upgrade-all)
-                SetUpgradeAllApps
-                current_operation=''
-                ;;
-            --backup-all)
-                SetBackupAllApps
-                current_operation=''
-                return 1
-                ;;
-            --restore-all)
-                SetRestoreAllApps
-                current_operation=''
-                return 1
-                ;;
-            --status-all|status-all)
-                SetStatusAllApps
-                current_operation=''
-                return 1
-                ;;
-            --install)
-                current_operation=install
-                ;;
-            --uninstall)
-                current_operation=uninstall
-                ;;
-            --restart)
-                current_operation=restart
-                ;;
-            --upgrade)
-                current_operation=upgrade
-                ;;
-            --backup)
-                current_operation=backup
-                ;;
-            --restore)
-                current_operation=restore
-                ;;
-            --status)
-                current_operation=status
-                ;;
-            *)
-                target_app=$(MatchAbbrvToQPKGName "$arg")
-                [[ -z $target_app ]] && continue
-
-                case $current_operation in
-                    uninstall)
-                        QPKGS_to_uninstall+=($target_app)
-                        ;;
-                    reinstall)
-                        QPKGS_to_upgrade+=($target_app)
-                        ;;
-                    upgrade)
-                        QPKGS_to_upgrade+=($target_app)
-                        ;;
-                    backup)
-                        QPKGS_to_backup+=($target_app)
-                        ;;
-                    restore)
-                        QPKGS_to_restore+=($target_app)
-                        ;;
-                    status)
-                        QPKGS_to_status+=($target_app)
-                        ;;
-                    install|*)  # default
-                        QPKGS_to_install+=($target_app)
-                        ;;
-                esac
-        esac
-    done
-
-    # kludge: keep this for compatibility until multi-package rollout is ready
-    TARGET_APP=${QPKGS_to_install[0]}
-
-    return 0
-
-    }
-
-ShowHelp()
-    {
-
-    local package=''
-    local package_name_message=''
-    local package_note_message=''
-
-    DisplayLineSpace
-    Display "Usage: $(ColourTextBrightWhite "./$LOADER_SCRIPT_FILE") $(FormatAsHelpPackage) $(FormatAsHelpOption)"
-
-    DisplayAsTitleHelpPackage
-
-    for package in "${QPKGS_user_installable[@]}"; do
-        if IsQPKGUpgradable "$package"; then
-            package_name_message="$(ColourTextBrightYellow "$package")"
-        else
-            package_name_message="$package"
-        fi
-
-        if [[ $package = Entware ]]; then       # kludge: use this until independent package checking works.
-            package_note_message='(installed by-default)'
-        else
-            package_note_message=''
-        fi
-
-        DisplayAsHelpPackageNameExample "$package_name_message" "$package_note_message"
-    done
-
-    DisplayAsHelpExample 'example: to install, reinstall or upgrade SABnzbd' 'SABnzbd'
-    Display
-    DisplayAsTitleHelpOption
-
-    DisplayAsHelpExample 'display helpful tips and shortcuts' '--tips'
-
-    DisplayAsHelpExample 'display troubleshooting options' '--problem'
-
-    return 0
-
-    }
-
-ShowProblemHelp()
-    {
-
-    DisplayLineSpace
-    DisplayAsTitleHelpOption
-
-    DisplayAsHelpExample 'install a package and show debugging information' '[PACKAGE] --debug'
-
-    DisplayAsHelpExample 'ensure all application dependencies are installed' '--check'
-
-    DisplayAsHelpExample "don't check free-space on target filesystem when installing $(FormatAsPackageName Entware) packages" '--ignore-space'
-
-    DisplayAsHelpExample 'restart all applications (only upgrades the internal applications, not the QPKG)' '--restart-all'
-
-    DisplayAsHelpExample 'upgrade all QPKGs (including the internal applications)' '--upgrade-all'
-
-    DisplayAsHelpExample 'view the log' '--log'
-
-    DisplayAsHelpExample "upload the log to the $(FormatAsURL 'https://termbin.com') public pastebin" '--paste'
-
-    Display "\n$(ColourTextBrightOrange "* If you need help, please include a copy of your") $(FormatAsScriptTitle) $(ColourTextBrightOrange "log for analysis!")"
-    UnsetLineSpace
-
-    return 0
-
-    }
-
-ShowIssueHelp()
-    {
-
-    DisplayLineSpace
-    Display "* Please consider creating a new issue for this on GitHub:\n\thttps://github.com/OneCDOnly/sherpa/issues"
-
-    Display "\n* Alternatively, post on the QNAP NAS Community Forum:\n\thttps://forum.qnap.com/viewtopic.php?f=320&t=132373"
-
-    DisplayAsHelpExample 'view the log' '--log'
-
-    DisplayAsHelpExample "upload the log to the $(FormatAsURL 'https://termbin.com') public pastebin" '--paste'
-
-    Display "\n$(ColourTextBrightOrange '* If you need help, please include a copy of your') $(FormatAsScriptTitle) $(ColourTextBrightOrange 'log for analysis!')"
-    UnsetLineSpace
-
-    return 0
-
-    }
-
-ShowTipsHelp()
-    {
-
-    DisplayLineSpace
-    DisplayAsTitleHelpOption
-    DisplayAsHelpExample 'install everything!' '--install-all-applications'
-
-    DisplayAsHelpExample 'package abbreviations may also be used. To see these' '--abs'
-
-    DisplayAsHelpExample 'ensure all application dependencies are installed' '--check'
-
-    DisplayAsHelpExample 'restart all applications (only upgrades the internal applications, not the QPKG)' '--restart-all'
-
-    DisplayAsHelpExample 'upgrade all QPKGs (including the internal applications)' '--upgrade-all'
-
-    DisplayAsHelpExample "upload the log to the $(FormatAsURL 'https://termbin.com') public pastebin" '--paste'
-
-    DisplayAsHelpExample 'display the package manager script versions' '--version'
-
-    echo -e "\n$(ColourTextBrightOrange "* If you need help, please include a copy of your") $(FormatAsScriptTitle) $(ColourTextBrightOrange "log for analysis!")"
-    UnsetLineSpace
-
-    return 0
-
-    }
-
-ShowPackageAbbreviations()
-    {
-
-    [[ ${#SHERPA_QPKG_NAME[@]} -eq 0 || ${#SHERPA_QPKG_ABBRVS[@]} -eq 0 ]] && return 1
-
-    local package_index=0
-
-    DisplayLineSpace
-    echo -e "* $(FormatAsScriptTitle) recognises these package names and abbreviations:"
-
-    for package_index in "${!SHERPA_QPKG_NAME[@]}"; do
-        if [[ -n ${SHERPA_QPKG_ABBRVS[$package_index]} ]]; then
-            if IsQPKGUpgradable "${SHERPA_QPKG_NAME[$package_index]}"; then
-                printf "%26s: %s\n" "$(ColourTextBrightYellow "${SHERPA_QPKG_NAME[$package_index]}")" "$($SED_CMD 's| |, |g' <<< "${SHERPA_QPKG_ABBRVS[$package_index]}")"
-            else
-                printf "%15s: %s\n" "${SHERPA_QPKG_NAME[$package_index]}" "$($SED_CMD 's| |, |g' <<< "${SHERPA_QPKG_ABBRVS[$package_index]}")"
-            fi
-        fi
-    done
-
-    DisplayAsHelpExample 'example: to install, reinstall or upgrade SABnzbd' 'sab'
-
-    return 0
-
-    }
-
-ShowLogViewer()
-    {
-
-    if [[ -n $DEBUG_LOG_PATHFILE && -e $DEBUG_LOG_PATHFILE ]]; then
-        if [[ -e $GNU_LESS_CMD ]]; then
-            LESSSECURE=1 $GNU_LESS_CMD +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$DEBUG_LOG_PATHFILE"
-        else
-            $CAT_CMD --number "$DEBUG_LOG_PATHFILE"
-        fi
-    else
-        ShowAsError 'no log to display'
-    fi
-
-    return 0
-
-    }
-
 PasteLogOnline()
     {
 
@@ -899,8 +807,8 @@ PasteLogOnline()
         else
             DebugInfoThinSeparator
             DebugScript 'user abort'
-            SetAbort
-            UnsetShowInstallerOutcome
+            Abort.Set
+            ShowSessionOutcome.Clear
             return 1
         fi
     else
@@ -911,35 +819,35 @@ PasteLogOnline()
 
     }
 
-ShowInstallerOutcome()
+ShowSessionOutcome()
     {
 
-    if IsUpgradeAllApps; then
+    if UpgradeAllApps.IsSet; then
         if [[ ${#QPKGS_upgradable[@]} -eq 0 ]]; then
             ShowAsDone "no QPKGs need upgrading"
-        elif IsNotError; then
+        elif Error.IsNot; then
             ShowAsDone "all upgradable QPKGs were successfully upgraded"
         else
             ShowAsError "upgrade failed! [$code_pointer]"
-            SetSuggestIssue
+            SuggestIssue.Set
         fi
-    elif [[ -n $TARGET_APP ]]; then
-        [[ $reinstall_flag = true ]] && RE='re' || RE=''
-
-        if IsNotError; then
-            ShowAsDone "$(FormatAsPackageName "$TARGET_APP") has been successfully ${RE}installed"
-        else
-            ShowAsError "$(FormatAsPackageName "$TARGET_APP") ${RE}install failed! [$code_pointer]"
-            SetSuggestIssue
-        fi
+#     elif [[ -n $TARGET_APP ]]; then
+#         [[ $reinstall_flag = true ]] && RE='re' || RE=''
+#
+#         if Error.IsNot; then
+#             ShowAsDone "$(FormatAsPackageName "$TARGET_APP") has been successfully ${RE}installed"
+#         else
+#             ShowAsError "$(FormatAsPackageName "$TARGET_APP") ${RE}install failed! [$code_pointer]"
+#             SuggestIssue.Set
+#         fi
     fi
 
-    if IsCheckDependencies; then
-        if IsNotError; then
+    if CheckDependencies.IsSet; then
+        if Error.IsNot; then
             ShowAsDone "all application dependencies are installed"
         else
             ShowAsError "application dependency check failed! [$code_pointer]"
-            SetSuggestIssue
+            SuggestIssue.Set
         fi
     fi
 
@@ -975,75 +883,37 @@ AskQuiz()
 DownloadQPKGs()
     {
 
-    IsAbort && return
-
-    [[ -f $SHARE_PUBLIC_PATH/.sherpa.devmode ]] && SetDevMode
+    Abort.IsSet && return
 
     DebugFuncEntry
-    local QPKGs_to_download=''
 
-    if IsDevMode; then
-        [[ ${#QPKGS_to_install[@]} -gt 0 ]] && QPKGs_to_download+="${QPKGS_to_install[*]}"
-        [[ ${#QPKGS_to_upgrade[@]} -gt 0 ]] && QPKGs_to_download+=" ${QPKGS_to_upgrade[*]}"
+    for package in "${QPKGs_download_array[@]}"; do
+        DownloadQPKG "$package"
+    done
 
-        FindAllQPKGDependants "$QPKGs_to_download"
-
-        for package in "${QPKG_download_list[@]}"; do
-            DownloadQPKG "$package"
-        done
-
-        exit
-    else
-        if IsNotQPKGInstalled Entware; then
-            if [[ $TARGET_APP = Entware ]]; then
-                ShowAsNote "It's not necessary to install $(FormatAsPackageName Entware) first. It will be installed on-demand with your other sherpa packages. :)"
-                SetAbort
-                UnsetShowInstallerOutcome
-                return 1
-            else
-                DownloadQPKG Entware
-            fi
-        fi
-
-        if IsInstallAllApps; then
-            for package in "${QPKGS_user_installable[@]}"; do
-                DownloadQPKG "$package"
-            done
-            [[ $NAS_QPKG_ARCH != none ]] && DownloadQPKG Par2   # klude: force this until QPKG dep checking works
-        elif IsUpgradeAllApps; then
-            for package in "${QPKGS_upgradable[@]}"; do
-                DownloadQPKG "$package"
-            done
-        else
-
-            [[ -n $TARGET_APP ]] && DownloadQPKG "$TARGET_APP"
-        fi
-
-        # kludge: an ugly workaround until QPKG dependency checking works properly
-        (IsQPKGInstalled SABnzbd || [[ $TARGET_APP = SABnzbd ]] ) && [[ $NAS_QPKG_ARCH != none ]] && IsNotQPKGInstalled Par2 && DownloadQPKG Par2
-    fi
+    # kludge: an ugly workaround until QPKG dependency checking works properly
+#     (IsQPKGInstalled SABnzbd || [[ $TARGET_APP = SABnzbd ]] ) && [[ $NAS_QPKG_ARCH != none ]] && IsNotQPKGInstalled Par2 && DownloadQPKG Par2
 
     DebugFuncExit
     return 0
 
     }
 
-RemoveUnwantedQPKGs()
+RemoveQPKGs()
     {
 
-    IsAbort && return
+    Abort.IsSet && return
 
     local response=''
+    local package=''
     local previous_pip3_module_list=$SHARE_PUBLIC_PATH/pip3.prev.installed.list
     local previous_opkg_package_list=$SHARE_PUBLIC_PATH/opkg.prev.installed.list
 
-    UninstallQPKG Optware
-    UninstallQPKG Entware-3x
-    UninstallQPKG Entware-ng
+    for package in "${QPKGs_to_uninstall[@]}"; do
+        UninstallQPKG "$package"
+    done
 
-    IsQPKGInstalled "$TARGET_APP" && reinstall_flag=true
-
-    if [[ $TARGET_APP = Entware && $reinstall_flag = true ]]; then
+    if IsQPKGToBeReinstalled Entware; then
         ShowAsNote "Reinstalling $(FormatAsPackageName Entware) will remove all IPKGs and Python modules, and only those required to support your sherpa apps will be reinstalled."
         ShowAsNote "Your installed IPKG list will be saved to $(FormatAsFileName "$previous_opkg_package_list")"
         ShowAsNote "Your installed Python module list will be saved to $(FormatAsFileName "$previous_pip3_module_list")"
@@ -1063,8 +933,8 @@ RemoveUnwantedQPKGs()
         else
             DebugInfoThinSeparator
             DebugScript 'user abort'
-            SetAbort
-            UnsetShowInstallerOutcome
+            Abort.Set
+            ShowSessionOutcome.Clear
             return 1
         fi
     fi
@@ -1076,28 +946,40 @@ RemoveUnwantedQPKGs()
 InstallQPKGIndeps()
     {
 
-    IsAbort && return
+    # install independent QPKGs first, in the order they were declared
+
+    Abort.IsSet && return
 
     DebugFuncEntry
 
-    if IsNotQPKGInstalled Entware; then
-        # rename original [/opt]
-        local opt_path=/opt
-        local opt_backup_path=/opt.orig
-        [[ -d $opt_path && ! -L $opt_path && ! -e $opt_backup_path ]] && mv "$opt_path" "$opt_backup_path"
+    local package=''
 
-        InstallQPKG Entware && ReloadProfile
+    for package in "${SHERPA_INDEP_QPKGs[@]}"; do
+        if [[ ${#QPKGs_to_install} -gt 0 && ${QPKGs_to_install[*]} == *"$package"* ]]; then
+            if [[ $package = Entware ]]; then
+                # rename original [/opt]
+                local opt_path=/opt
+                local opt_backup_path=/opt.orig
+                [[ -d $opt_path && ! -L $opt_path && ! -e $opt_backup_path ]] && mv "$opt_path" "$opt_backup_path"
 
-        # copy all files from original [/opt] into new [/opt]
-        [[ -L $opt_path && -d $opt_backup_path ]] && cp --recursive "$opt_backup_path"/* --target-directory "$opt_path" && rm -rf "$opt_backup_path"
-    else
-        IsNotQPKGEnabled Entware && EnableQPKG Entware
+                InstallQPKG Entware && ReloadProfile
+
+                # copy all files from original [/opt] into new [/opt]
+                [[ -L $opt_path && -d $opt_backup_path ]] && cp --recursive "$opt_backup_path"/* --target-directory "$opt_path" && rm -rf "$opt_backup_path"
+            else
+                InstallQPKG "$package"
+            fi
+        fi
+    done
+
+    if IsQPKGInstalled Entware && IsNotQPKGEnabled Entware && EnableQPKG Entware; then
         ReloadProfile
 
         [[ $NAS_QPKG_ARCH != none ]] && ($OPKG_CMD list-installed | $GREP_CMD -q par2cmdline) && $OPKG_CMD remove par2cmdline > /dev/null 2>&1
     fi
 
     PatchBaseInit
+    InstallQPKGIndepsAddons
 
     DebugFuncExit
     return 0
@@ -1174,33 +1056,13 @@ UpdateEntware()
 InstallQPKGIndepsAddons()
     {
 
-    IsAbort && return
+    Abort.IsSet && return
 
     DebugFuncEntry
-
-    if IsInstallAllApps; then
-        [[ $NAS_QPKG_ARCH != none ]] && InstallQPKG Par2    # klude: force this until QPKG dep checking works
-    else
-        if IsQPKGInstalled SABnzbdplus && [[ $NAS_QPKG_ARCH != none ]]; then
-            if IsNotQPKGInstalled Par2; then
-                InstallQPKG Par2
-                IsError && ShowAsWarning "$(FormatAsPackageName Par2) installation failed - but it's not essential so I'm continuing"
-            fi
-        fi
-
-        # kludge: use the same ugly workaround until QPKG dep checking works properly
-        if (IsQPKGInstalled SABnzbd || [[ $TARGET_APP = SABnzbd ]] ) && [[ $NAS_QPKG_ARCH != none ]]; then
-            if IsNotQPKGInstalled Par2; then
-                InstallQPKG Par2
-                IsError && ShowAsWarning "$(FormatAsPackageName Par2) installation failed - but it's not essential so I'm continuing"
-            fi
-        fi
-    fi
-
     InstallIPKGs
     InstallPy3Modules
 
-    if [[ $TARGET_APP = Entware ]] || IsRestartAllApps; then
+    if IsQPKGToBeInstalled Entware || RestartAllApps.IsSet; then
         RestartAllDepQPKGs
     fi
 
@@ -1212,46 +1074,36 @@ InstallQPKGIndepsAddons()
 InstallIPKGs()
     {
 
-    IsAbort && return
+    Abort.IsSet && return
 
-    DebugFuncEntry
-    local returncode=0
     local packages="$SHERPA_COMMON_IPKGS"
     local index=0
 
-    if [[ -n $IPKG_DL_PATH && -d $IPKG_DL_PATH ]]; then
-        UpdateEntware
-        IsError && return
+    UpdateEntware
+    Error.IsSet && return
 
-        if IsInstallAllApps; then
-            for index in "${!SHERPA_QPKG_NAME[@]}"; do
-                packages+=" ${SHERPA_QPKG_IPKGS[$index]}"
-            done
-
-            [[ $NAS_QPKG_ARCH = none ]] && packages+=' par2cmdline'
-        else
-            for index in "${!SHERPA_QPKG_NAME[@]}"; do
-                if IsQPKGInstalled "${SHERPA_QPKG_NAME[$index]}" || [[ $TARGET_APP = "${SHERPA_QPKG_NAME[$index]}" ]]; then
-                    packages+=" ${SHERPA_QPKG_IPKGS[$index]}"
-                fi
-            done
-
-            if IsQPKGInstalled SABnzbd || [[ $TARGET_APP = SABnzbd ]]; then
-                [[ $NAS_QPKG_ARCH = none ]] && packages+=' par2cmdline'
-            fi
-        fi
-
-        InstallIPKGBatch "$packages"
+    if InstallAllApps.IsSet; then
+        for index in "${!SHERPA_QPKG_NAME[@]}"; do
+            packages+=" ${SHERPA_QPKG_IPKGS[$index]}"
+        done
     else
-        ShowAsError "IPKG download path [$IPKG_DL_PATH] does not exist"
-        returncode=1
+        for index in "${!SHERPA_QPKG_NAME[@]}"; do
+            if IsQPKGToBeInstalled "${SHERPA_QPKG_NAME[$index]}" || IsQPKGInstalled "${SHERPA_QPKG_NAME[$index]}"; then
+                packages+=" ${SHERPA_QPKG_IPKGS[$index]}"
+            fi
+        done
     fi
+
+    if IsQPKGToBeInstalled SABnzbd || IsQPKGInstalled SABnzbd || IsQPKGInstalled SABnzbdplus; then
+        [[ $NAS_QPKG_ARCH = none ]] && packages+=' par2cmdline'
+    fi
+
+    InstallIPKGBatch "$packages"
 
     # in-case 'python' has disappeared again ...
     [[ ! -L /opt/bin/python && -e /opt/bin/python3 ]] && $LN_CMD -s /opt/bin/python3 /opt/bin/python
 
-    DebugFuncExit
-    return $returncode
+    return 0
 
     }
 
@@ -1276,7 +1128,7 @@ InstallIPKGBatch()
     [[ -d $IPKG_DL_PATH ]] && rm -f "$IPKG_DL_PATH"/*.ipk
     [[ -d $IPKG_CACHE_PATH ]] && rm -f "$IPKG_CACHE_PATH"/*.ipk
 
-    FindAllIPKGDependencies "$requested_IPKGs" || return 1
+    GetAllIPKGDepsToDownload "$requested_IPKGs" || return 1
 
     if [[ $IPKG_download_count -gt 0 ]]; then
         local -r STARTSECONDS=$(DebugTimerStageStart)
@@ -1294,7 +1146,7 @@ InstallIPKGBatch()
         if [[ $result -eq 0 ]]; then
             ShowAsDone "downloaded & installed $IPKG_download_count IPKG$(FormatAsPlural "$IPKG_download_count")"
             # if 'python3-pip' was installed, the install all 'pip' modules too
-            [[ ${IPKG_download_list[*]} =~ python3-pip ]] && SetPIPInstall
+            [[ ${IPKG_download_list[*]} =~ python3-pip ]] && PIPInstall.Set
         else
             ShowAsError "download & install IPKG$(FormatAsPlural "$IPKG_download_count") failed $(FormatAsExitcode $result)"
             DebugErrorFile "$log_pathfile"
@@ -1311,8 +1163,8 @@ InstallIPKGBatch()
 InstallPy3Modules()
     {
 
-    IsAbort && return
-    IsNotPIPInstall && return
+    Abort.IsSet && return
+    PIPInstall.IsNot && return
 
     DebugFuncEntry
     local exec_cmd=''
@@ -1370,7 +1222,7 @@ RestartAllDepQPKGs()
 
     # restart all sherpa QPKGs except independents. Needed if user has requested each QPKG update itself.
 
-    IsAbort && return
+    Abort.IsSet && return
 
     [[ -z ${SHERPA_DEP_QPKGs[*]} || ${#SHERPA_DEP_QPKGs[@]} -eq 0 ]] && return
 
@@ -1391,7 +1243,7 @@ RestartNotUpgradedQPKGs()
 
     # restart all sherpa QPKGs except those that were just upgraded.
 
-    IsAbort && return
+    Abort.IsSet && return
 
     [[ -z ${SHERPA_DEP_QPKGs[*]} || ${#SHERPA_DEP_QPKGs[@]} -eq 0 ]] && return
 
@@ -1410,7 +1262,7 @@ RestartNotUpgradedQPKGs()
 Cleanup()
     {
 
-    [[ -d $WORK_PATH ]] && IsNotError && IsNotVisibleDebugging && IsNotDevMode && rm -rf "$WORK_PATH"
+    [[ -d $WORK_PATH ]] && Error.IsNot && DebuggingVisible.IsNot && DevMode.IsNot && rm -rf "$WORK_PATH"
 
     return 0
 
@@ -1419,26 +1271,29 @@ Cleanup()
 ShowResult()
     {
 
-    local RE=''
-
-    if IsVersionOnly; then
+    if VersionView.IsSet; then
         echo "loader: $LOADER_SCRIPT_VERSION"
         echo "manager: $MANAGER_SCRIPT_VERSION"
-    elif IsLogViewOnly; then
-        ShowLogViewer
-    elif IsShowHelp; then
-        ShowHelp
-    elif IsShowProblemHelp; then
-        ShowProblemHelp
-    elif IsShowTipsHelp; then
-        ShowTipsHelp
-    elif IsShowAbbreviations; then
-        ShowPackageAbbreviations
     fi
 
-    IsLogPasteOnly && PasteLogOnline
-    IsShowInstallerOutcome && ShowInstallerOutcome
-    IsSuggestIssue && ShowIssueHelp
+    LogView.IsSet && LogViewer.Show
+
+    if Help.IsSet; then
+        Help.Basic.Show
+        Help.Basic.Example.Show
+        LineSpace.Clear
+    fi
+
+    Help.Actions.IsSet && Help.Actions.Show
+    Help.Packages.IsSet && Help.Packages.Show
+    Help.Options.IsSet && Help.Options.Show
+    Help.Problem.IsSet && Help.Problem.Show
+    Help.Tips.IsSet && Help.Tips.Show
+    Help.Abbreviations.IsSet && Help.PackageAbbreviations.Show
+
+    LogPaste.IsSet && PasteLogOnline
+    ShowSessionOutcome.IsSet && ShowSessionOutcome
+    SuggestIssue.IsSet && Help.Issue.Show
     DisplayLineSpace
 
     DebugInfoThinSeparator
@@ -1474,9 +1329,8 @@ DownloadQPKG()
     # output:
     #   $? = 0 if successful, 1 if failed
 
-    IsError && return
+    Error.IsSet && return
 
-    DebugFuncEntry
     local result=0
     local returncode=0
     local remote_url=$(GetQPKGRemoteURL "$1")
@@ -1496,12 +1350,12 @@ DownloadQPKG()
         fi
     fi
 
-    if IsNotError && [[ ! -e $local_pathfile ]]; then
+    if Error.IsNot && [[ ! -e $local_pathfile ]]; then
         ShowAsProc "downloading QPKG $(FormatAsFileName "$remote_filename")"
 
         [[ -e $log_pathfile ]] && rm -f "$log_pathfile"
 
-        if IsVisibleDebugging; then
+        if DebuggingVisible.IsSet; then
             RunThisAndLogResultsRealtime "$CURL_CMD $curl_insecure_arg --output $local_pathfile $remote_url" "$log_pathfile"
             result=$?
         else
@@ -1523,7 +1377,6 @@ DownloadQPKG()
         fi
     fi
 
-    DebugFuncExit
     return $returncode
 
     }
@@ -1533,13 +1386,14 @@ InstallQPKG()
 
     # $1 = QPKG name to install
 
-    IsError && return
-    IsAbort && return
+    Error.IsSet && return
+    Abort.IsSet && return
 
     local target_file=''
     local result=0
     local returncode=0
     local local_pathfile="$(GetQPKGPathFilename "$1")"
+    local re=''
 
     if [[ ${local_pathfile##*.} = zip ]]; then
         $UNZIP_CMD -nq "$local_pathfile" -d "$QPKG_DL_PATH"
@@ -1549,16 +1403,18 @@ InstallQPKG()
     local log_pathfile="$local_pathfile.$INSTALL_LOG_FILE"
     target_file=$($BASENAME_CMD "$local_pathfile")
 
-    ShowAsProcLong "installing QPKG $(FormatAsFileName "$target_file")"
+    IsQPKGInstalled "$1" && re='re-'
+
+    ShowAsProcLong "${re}installing QPKG $(FormatAsFileName "$target_file")"
 
     sh "$local_pathfile" > "$log_pathfile" 2>&1
     result=$?
 
     if [[ $result -eq 0 || $result -eq 10 ]]; then
-        ShowAsDone "installed QPKG $(FormatAsFileName "$target_file")"
+        ShowAsDone "${re}installed QPKG $(FormatAsFileName "$target_file")"
         GetQPKGServiceStatus "$1"
     else
-        ShowAsError "QPKG installation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $result)"
+        ShowAsError "QPKG ${re}installation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $result)"
         DebugErrorFile "$log_pathfile"
         returncode=1
     fi
@@ -1567,33 +1423,43 @@ InstallQPKG()
 
     }
 
-InstallTargetQPKG()
+InstallQPKGDeps()
     {
 
-    IsAbort && return
+    Abort.IsSet && return
 
     local package=''
 
-    if IsInstallAllApps; then
-        if [[ -n ${QPKGS_user_installable[*]} ]]; then
+    if InstallAllApps.IsSet; then
+        if [[ ${#QPKGS_user_installable[*]} -gt 0 ]]; then
             for package in "${QPKGS_user_installable[@]}"; do
                 [[ $package != Entware ]] && InstallQPKG "$package"     # kludge: Entware has already been installed, don't do it again.
             done
         fi
-    elif IsUpgradeAllApps; then
-        if [[ -n ${QPKGS_upgradable[*]} ]]; then
+    elif UpgradeAllApps.IsSet; then
+        if [[ ${#QPKGS_upgradable[*]} -gt 0 ]]; then
             for package in "${QPKGS_upgradable[@]}"; do
                 [[ $package != Entware ]] && InstallQPKG "$package"     # kludge: Entware has already been installed, don't do it again.
             done
         fi
     else
-        [[ -z $TARGET_APP ]] && return 1
-        [[ $TARGET_APP != Entware ]] && InstallQPKG "$TARGET_APP"
+        if [[ ${#QPKGs_to_install[*]} -gt 0 ]]; then
+            for package in "${SHERPA_DEP_QPKGs[@]}"; do
+                if [[ ${QPKGs_to_install[*]} == *"$package"* ]]; then
+                    InstallQPKG "$package"
+                fi
+            done
+        elif [[ ${#QPKGs_to_reinstall[*]} -gt 0 ]]; then
+            for package in "${SHERPA_DEP_QPKGs[@]}"; do
+                if [[ ${QPKGs_to_reinstall[*]} == *"$package"* ]]; then
+                    InstallQPKG "$package"
+                fi
+            done
+        fi
     fi
 
-    IsUpgradeAllApps && RestartNotUpgradedQPKGs
+    UpgradeAllApps.IsSet && RestartNotUpgradedQPKGs
 
-    DebugFuncExit
     return 0
 
     }
@@ -1695,43 +1561,17 @@ CalcUserInstallableQPKGs()
 
     }
 
-CalcInstalledQPKGs()
+QPKGsInstalled.Build()
     {
 
-    # Returns a list of QPKGs that are installed.
-    # creates a global variable array: $QPKGS_installed()
+    # Returns a list of installed sherpa QPKGs
+    # creates a global variable array: $QPKGs_installed()
 
-    QPKGS_installed=()
+    QPKGs_installed=()
     local package=''
 
     for package in "${QPKGS_user_installable[@]}"; do
-        IsQPKGInstalled "$package" && QPKGS_installed+=($package)
-    done
-
-    return 0
-
-    }
-
-CalcUpgradeableQPKGs()
-    {
-
-    # Returns a list of QPKGs that can be upgraded.
-    # creates a global variable array: $QPKGS_upgradable()
-
-    QPKGS_upgradable=()
-    local package=''
-    local installed_version=''
-    local remote_version=''
-
-    for package in "${QPKGS_installed[@]}"; do
-        [[ $package = Entware ]] && continue        # kludge: ignore 'Entware' as package filename version doesn't match the QTS App Center version string
-        installed_version=$(GetInstalledQPKGVersion "$package")
-        remote_version=$(GetQPKGRemoteVersion "$package")
-
-        if [[ $installed_version != "$remote_version" ]]; then
-            #QPKGS_upgradable+=("$package $installed_version $remote_version")
-            QPKGS_upgradable+=($package)
-        fi
+        IsQPKGInstalled "$package" && QPKGsInstalled.Add "$package"
     done
 
     return 0
@@ -1747,7 +1587,7 @@ UninstallQPKG()
     # output:
     #   $? = 0 if successful, 1 if failed
 
-    IsError && return
+    Error.IsSet && return
 
     local result=0
 
@@ -1804,7 +1644,7 @@ RestartQPKGService()
     else
         ShowAsWarning "Could not restart $(FormatAsPackageName "$1") $(FormatAsExitcode $result)"
 
-        if IsVisibleDebugging; then
+        if DebuggingVisible.IsSet; then
             DebugInfoThickSeparator
             $CAT_CMD "$log_pathfile"
             DebugInfoThickSeparator
@@ -2042,49 +1882,44 @@ GetQPKGDeps()
 
     }
 
-FindAllQPKGDependants()
+GetTheseQPKGDeps()
     {
 
-    # From a specified list of QPKG names, find all dependent QPKGs then generate a total qty to download.
+    # From a specified list of QPKG names, find all dependent QPKGs.
 
     # input:
     #   $1 = string with space-separated initial QPKG names.
 
     # output:
-    #   $QPKG_download_list = name-sorted array with complete list of all QPKGs, including those originally specified.
-    #   $QPKG_download_count = number of packages to be downloaded.
+    #   $QPKG_pre_download_list = name-sorted list with complete list of all QPKGs, including those originally specified.
 
-    QPKG_download_list=()
-    QPKG_download_count=0
+    QPKG_pre_download_list=''
     local requested_list=''
-    local dependency_list=''
-    local last_list=''
-    local all_list=''
-    local new_list=''
+    local last_list_array=()
+    local new_list_array=()
     local iterations=0
-    local -r ITERATION_LIMIT=6
+    local -r ITERATION_LIMIT=20
     local complete=false
-    local -r STARTSECONDS=$(DebugTimerStageStart)
 
     requested_list=$(DeDupeWords "$1")
-    last_list=$requested_list
+    last_list_array=(${requested_list})
 
-    ShowAsProc 'determining QPKGs required'
     DebugInfo "requested QPKGs: $requested_list"
 
     DebugProc 'finding QPKG dependencies'
     while [[ $iterations -lt $ITERATION_LIMIT ]]; do
         ((iterations++))
-        new_list=''
-        for package in "${last_list[@]}"; do
-            new_list+=$(GetQPKGDeps "$package")
+        new_list_array=()
+
+        for package in "${last_list_array[@]}"; do
+            new_list_array+=($(GetQPKGDeps "$package"))
         done
 
-        new_list=$(DeDupeWords "$new_list")
+        new_list_array=($(DeDupeWords "${new_list_array[*]}"))
+        dependency_list_array+=(${new_list_array[@]})
 
-        if [[ -n $new_list ]]; then
-            dependency_list+=${new_list[*]}
-            last_list=$new_list
+        if [[ ${#new_list_array[@]} -gt 0 ]]; then
+            last_list_array=(${new_list_array[*]})
         else
             DebugDone 'complete'
             DebugInfo "found all QPKG dependencies in $iterations iteration$(FormatAsPlural $iterations)"
@@ -2095,31 +1930,55 @@ FindAllQPKGDependants()
 
     if [[ $complete = false ]]; then
         DebugError "QPKG dependency list is incomplete! Consider raising \$ITERATION_LIMIT [$ITERATION_LIMIT]."
-        SetSuggestIssue
+        SuggestIssue.Set
     fi
 
-    all_list=$(DeDupeWords "$requested_list $dependency_list")
-    DebugInfo "QPKGs requested + dependencies: $all_list"
+    QPKG_pre_download_list=$(DeDupeWords "$requested_list ${dependency_list_array[*]}")
+    DebugInfo "QPKGs requested + dependencies: $QPKG_pre_download_list"
 
-    DebugProc 'excluding QPKGs already installed'
-    for element in "${all_list[@]}"; do
-        IsNotQPKGInstalled "$element" && QPKG_download_list+=($element)
-    done
-    DebugDone 'complete'
-    DebugInfo "QPKGs to download: ${QPKG_download_list[*]}"
-    QPKG_download_count=${#QPKG_download_list[@]}
-
-    DebugTimerStageEnd "$STARTSECONDS"
-
-    if [[ $QPKG_download_count -gt 0 ]]; then
-        ShowAsDone "$QPKG_download_count QPKG$(FormatAsPlural "$QPKG_download_count") to be downloaded"
-    else
-        ShowAsDone 'no QPKGs are required'
-    fi
+    return 0
 
     }
 
-FindAllIPKGDependencies()
+ExcludeInstalledQPKGs()
+    {
+
+    # From a specified list of QPKG names, exclude those already installed.
+
+    # input:
+    #   $1 = string with space-separated initial QPKG names.
+
+    # output:
+    #   $QPKGs_download_array() = name-sorted array with space-separated QPKG names, minus those already installed.
+
+    QPKGs_download_array=()
+    local requested_list=''
+    local requested_list_array=()
+    local element=''
+
+    requested_list=$(DeDupeWords "$1")
+    requested_list_array=(${requested_list})
+
+    DebugProc 'excluding QPKGs already installed'
+
+    for element in "${requested_list_array[@]}"; do
+        if IsNotQPKGInstalled "$element"; then
+            QPKGs_download_array+=($element)
+            [[ ${QPKGs_to_install[*]} != *"$element"* ]] && QPKGs_to_install+=($element)
+        elif [[ ${#QPKGs_to_reinstall[@]} -gt 0 && ${QPKGs_to_reinstall[*]} == *"$element"* ]]; then
+            QPKGs_download_array+=($element)
+        elif [[ ${#QPKGs_to_upgrade[@]} -gt 0 && ${QPKGs_to_upgrade[*]} == *"$element"* ]]; then
+            QPKGs_download_array+=($element)
+        fi
+    done
+
+    DebugDone 'complete'
+
+    return 0
+
+    }
+
+GetAllIPKGDepsToDownload()
     {
 
     # From a specified list of IPKG names, find all dependent IPKGs, exclude those already installed, then generate a total qty to download and a total download byte-size
@@ -2143,7 +2002,7 @@ FindAllIPKGDependencies()
     local requested_list=''
     local dependency_list=''
     local last_list=''
-    local all_list=''
+    local pre_download_list=''
     local element=''
     local iterations=0
     local -r ITERATION_LIMIT=20
@@ -2177,17 +2036,17 @@ FindAllIPKGDependencies()
 
     if [[ $complete = false ]]; then
         DebugError "IPKG dependency list is incomplete! Consider raising \$ITERATION_LIMIT [$ITERATION_LIMIT]."
-        SetSuggestIssue
+        SuggestIssue.Set
     fi
 
-    all_list=$(DeDupeWords "$requested_list $dependency_list")
-    DebugInfo "IPKGs requested + dependencies: $all_list"
+    pre_download_list=$(DeDupeWords "$requested_list $dependency_list")
+    DebugInfo "IPKGs requested + dependencies: $pre_download_list"
 
     DebugTimerStageEnd "$STARTSECONDS"
 
     DebugProc 'excluding IPKGs already installed'
     # shellcheck disable=SC2068
-    for element in ${all_list[@]}; do
+    for element in ${pre_download_list[@]}; do
         if [[ $element != 'ca-certs' ]]; then   # kludge: 'ca-certs' appears to be a bogus meta-package, so silently exclude it from attempted installation
             if ! $OPKG_CMD status "$element" | $GREP_CMD -q "Status:.*installed"; then
                 IPKG_download_list+=($element)
@@ -2474,14 +2333,25 @@ IsIPKGInstalled()
 
 #### DisplayAs... functions are for direct screen output only.
 
+DisplayAsTitleHelpAction()
+    {
+
+    # $1 = description
+    # $2 = example syntax
+
+    Display "\n$(FormatAsHelpAction) may be one of the following. Multiple actions are supported for application groups:\n"
+    LineSpace.Clear
+
+    }
+
 DisplayAsTitleHelpPackage()
     {
 
     # $1 = description
     # $2 = example syntax
 
-    Display "\n$(FormatAsHelpPackage) is ONE of the following:\n"
-    UnsetLineSpace
+    Display "\n$(FormatAsHelpPackages) may be one or more of the following:\n"
+    LineSpace.Clear
 
     }
 
@@ -2491,8 +2361,8 @@ DisplayAsTitleHelpOption()
     # $1 = description
     # $2 = example syntax
 
-    Display "$(FormatAsHelpOption) usage examples:"
-    UnsetLineSpace
+    Display "\n$(FormatAsHelpOptions) usage examples:"
+    LineSpace.Clear
 
     }
 
@@ -2508,7 +2378,7 @@ DisplayAsHelpExample()
         printf "\n  - %s:\n       ./%s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$LOADER_SCRIPT_FILE $2"
     fi
 
-    UnsetLineSpace
+    LineSpace.Clear
 
     }
 
@@ -2533,6 +2403,1581 @@ DisplayWait()
     {
 
     echo -en "$1 "
+
+    }
+
+#   ### pseudo-"class" functions ... (I miss OOP) :( ###
+
+Help.Basic.Show()
+    {
+
+    DisplayLineSpace
+    Display "Usage: $(ColourTextBrightWhite "./$LOADER_SCRIPT_FILE") $(FormatAsHelpAction) $(FormatAsHelpPackages) $(FormatAsHelpOptions)"
+    LineSpace.Clear
+
+    return 0
+
+    }
+
+Help.Basic.Example.Show()
+    {
+
+    DisplayAsHelpExample "for more about $(FormatAsHelpAction)" '--action'
+    DisplayAsHelpExample "for more about $(FormatAsHelpPackages)" '--packages'
+    DisplayAsHelpExample "for more about $(FormatAsHelpOptions)" '--options'
+
+    return 0
+
+    }
+
+Help.Actions.Show()
+    {
+
+    Help.Basic.Show
+
+    DisplayAsTitleHelpAction
+
+    DisplayAsHelpPackageNameExample '--install' "install all packages listed after this, unless already installed"
+    DisplayAsHelpPackageNameExample '--reinstall'
+    DisplayAsHelpPackageNameExample '--upgrade'
+#     DisplayAsHelpPackageNameExample '--uninstall'
+#     DisplayAsHelpPackageNameExample '--backup'
+#     DisplayAsHelpPackageNameExample '--restore'
+#     DisplayAsHelpPackageNameExample '--status'
+    DisplayAsHelpPackageNameExample '--install-all-applications' "install all available sherpa packages, unless already installed"
+
+    return 0
+
+    }
+
+Help.Packages.Show()
+    {
+
+    local package=''
+    local package_name_message=''
+    local package_note_message=''
+
+    Help.Basic.Show
+
+    DisplayAsTitleHelpPackage
+
+    for package in "${QPKGS_user_installable[@]}"; do
+        if IsQPKGUpgradable "$package"; then
+            package_name_message="$(ColourTextBrightYellow "$package")"
+        else
+            package_name_message="$package"
+        fi
+
+        if [[ $package = Entware ]]; then       # kludge: use this until independent package checking works.
+            package_note_message='(installed by-default)'
+        else
+            package_note_message=''
+        fi
+
+        DisplayAsHelpPackageNameExample "$package_name_message" "$package_note_message"
+    done
+
+    DisplayAsHelpExample 'example: to install SABnzbd' '--install SABnzbd'
+
+    return 0
+
+    }
+
+Help.Options.Show()
+    {
+
+    Help.Basic.Show
+
+    DisplayAsTitleHelpOption
+
+    DisplayAsHelpExample 'display helpful tips and shortcuts' '--tips'
+
+    DisplayAsHelpExample 'display troubleshooting options' '--problem'
+
+    return 0
+
+    }
+
+Help.Problem.Show()
+    {
+
+    DisplayLineSpace
+    Help.Basic.Show
+
+    DisplayAsTitleHelpOption
+
+    DisplayAsHelpExample 'install a package and show debugging information' '[PACKAGE] --debug'
+
+    DisplayAsHelpExample 'ensure all application dependencies are installed' '--check'
+
+    DisplayAsHelpExample "don't check free-space on target filesystem when installing $(FormatAsPackageName Entware) packages" '--ignore-space'
+
+    DisplayAsHelpExample 'restart all applications (only upgrades the internal applications, not the QPKG)' '--restart-all'
+
+    DisplayAsHelpExample 'upgrade all QPKGs (including the internal applications)' '--upgrade-all'
+
+    DisplayAsHelpExample 'view the log' '--log'
+
+    DisplayAsHelpExample "upload the log to the $(FormatAsURL 'https://termbin.com') public pastebin" '--paste'
+
+    Display "\n$(ColourTextBrightOrange "* If you need help, please include a copy of your") $(FormatAsScriptTitle) $(ColourTextBrightOrange "log for analysis!")"
+    LineSpace.Clear
+
+    return 0
+
+    }
+
+Help.Issue.Show()
+    {
+
+    DisplayLineSpace
+    Display "* Please consider creating a new issue for this on GitHub:\n\thttps://github.com/OneCDOnly/sherpa/issues"
+
+    Display "\n* Alternatively, post on the QNAP NAS Community Forum:\n\thttps://forum.qnap.com/viewtopic.php?f=320&t=132373"
+
+    DisplayAsHelpExample 'view the log' '--log'
+
+    DisplayAsHelpExample "upload the log to the $(FormatAsURL 'https://termbin.com') public pastebin" '--paste'
+
+    Display "\n$(ColourTextBrightOrange '* If you need help, please include a copy of your') $(FormatAsScriptTitle) $(ColourTextBrightOrange 'log for analysis!')"
+    LineSpace.Clear
+
+    return 0
+
+    }
+
+Help.Tips.Show()
+    {
+
+    DisplayLineSpace
+    DisplayAsTitleHelpOption
+    DisplayAsHelpExample 'install everything!' '--install-all-applications'
+
+    DisplayAsHelpExample 'package abbreviations may also be used. To see these' '--abs'
+
+    DisplayAsHelpExample 'ensure all application dependencies are installed' '--check'
+
+    DisplayAsHelpExample 'restart all applications (only upgrades the internal applications, not the QPKG)' '--restart-all'
+
+    DisplayAsHelpExample 'upgrade all QPKGs (including the internal applications)' '--upgrade-all'
+
+    DisplayAsHelpExample "upload the log to the $(FormatAsURL 'https://termbin.com') public pastebin" '--paste'
+
+    DisplayAsHelpExample 'display the package manager script versions' '--version'
+
+    echo -e "\n$(ColourTextBrightOrange "* If you need help, please include a copy of your") $(FormatAsScriptTitle) $(ColourTextBrightOrange "log for analysis!")"
+    LineSpace.Clear
+
+    return 0
+
+    }
+
+Help.PackageAbbreviations.Show()
+    {
+
+    [[ ${#SHERPA_QPKG_NAME[@]} -eq 0 || ${#SHERPA_QPKG_ABBRVS[@]} -eq 0 ]] && return 1
+
+    local package_index=0
+
+    Help.Basic.Show
+
+    DisplayLineSpace
+    echo -e "* $(FormatAsScriptTitle) recognises these abbreviations as $(FormatAsHelpPackages):"
+
+    for package_index in "${!SHERPA_QPKG_NAME[@]}"; do
+        if [[ -n ${SHERPA_QPKG_ABBRVS[$package_index]} ]]; then
+            if IsQPKGUpgradable "${SHERPA_QPKG_NAME[$package_index]}"; then
+                printf "%26s: %s\n" "$(ColourTextBrightYellow "${SHERPA_QPKG_NAME[$package_index]}")" "$($SED_CMD 's| |, |g' <<< "${SHERPA_QPKG_ABBRVS[$package_index]}")"
+            else
+                printf "%15s: %s\n" "${SHERPA_QPKG_NAME[$package_index]}" "$($SED_CMD 's| |, |g' <<< "${SHERPA_QPKG_ABBRVS[$package_index]}")"
+            fi
+        fi
+    done
+
+    DisplayAsHelpExample 'example: to install SABnzbd' 'install sab'
+
+    return 0
+
+    }
+
+LogViewer.Show()
+    {
+
+    if [[ -n $DEBUG_LOG_PATHFILE && -e $DEBUG_LOG_PATHFILE ]]; then
+        if [[ -e $GNU_LESS_CMD ]]; then
+            LESSSECURE=1 $GNU_LESS_CMD +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$DEBUG_LOG_PATHFILE"
+        else
+            $CAT_CMD --number "$DEBUG_LOG_PATHFILE"
+        fi
+    else
+        ShowAsError 'no log to display'
+    fi
+
+    return 0
+
+    }
+
+QPKGsInstall.Add()
+    {
+
+    [[ ${QPKGs_to_install[*]} != *"$1"* ]] && QPKGs_to_install+=("$1")
+
+    return 0
+
+    }
+
+QPKGsInstall.Array()
+    {
+
+    echo "${QPKGs_to_install[@]}"
+
+    }
+
+QPKGsInstall.Print()
+    {
+
+    echo "${QPKGs_to_install[*]}"
+
+    }
+
+QPKGsInstall.IsAny()
+    {
+
+    [[ ${#QPKGs_to_install[@]} -gt 0 ]]
+
+    }
+
+QPKGsInstall.IsNone()
+    {
+
+    [[ ${#QPKGs_to_install[@]} -eq 0 ]]
+
+    }
+
+QPKGsInstalled.Add()
+    {
+
+    [[ ${QPKGs_installed[*]} != *"$1"* ]] && QPKGs_installed+=("$1")
+
+    return 0
+
+    }
+
+QPKGsInstalled.Array()
+    {
+
+    echo "${QPKGs_installed[@]}"
+
+    }
+
+QPKGsInstalled.Print()
+    {
+
+    echo "${QPKGs_installed[*]}"
+
+    }
+
+QPKGsAlreadyInstalled.Add()
+    {
+
+    [[ ${QPKGs_already_installed[*]} != *"$1"* ]] && QPKGs_already_installed+=("$1")
+
+    return 0
+
+    }
+
+QPKGsAlreadyInstalled.Array()
+    {
+
+    echo "${QPKGs_already_installed[@]}"
+
+    }
+
+QPKGsAlreadyInstalled.Print()
+    {
+
+    echo "${QPKGs_already_installed[*]}"
+
+    }
+
+QPKGsAlreadyInstalled.IsAny()
+    {
+
+    [[ ${#QPKGs_already_installed[@]} -gt 0 ]]
+
+    }
+
+QPKGsAlreadyInstalled.IsNone()
+    {
+
+    [[ ${#QPKGs_already_installed[@]} -eq 0 ]]
+
+    }
+
+QPKGsUninstall.Add()
+    {
+
+    [[ ${QPKGs_to_uninstall[*]} != *"$1"* ]] && QPKGs_to_uninstall+=("$1")
+
+    return 0
+
+    }
+
+QPKGsUninstall.Array()
+    {
+
+    echo "${QPKGs_to_uninstall[@]}"
+
+    }
+
+QPKGsUninstall.Print()
+    {
+
+    echo "${QPKGs_to_uninstall[*]}"
+
+    }
+
+QPKGsUninstall.IsAny()
+    {
+
+    [[ ${#QPKGs_to_uninstall[@]} -gt 0 ]]
+
+    }
+
+QPKGsUninstall.IsNone()
+    {
+
+    [[ ${#QPKGs_to_uninstall[@]} -eq 0 ]]
+
+    }
+
+QPKGsAlreadyUninstalled.Add()
+    {
+
+    [[ ${QPKGs_already_uninstalled[*]} != *"$1"* ]] && QPKGs_already_uninstalled+=("$1")
+
+    return 0
+
+    }
+
+QPKGsAlreadyUninstalled.Array()
+    {
+
+    echo "${QPKGs_already_uninstalled[@]}"
+
+    }
+
+QPKGsAlreadyUninstalled.Print()
+    {
+
+    echo "${QPKGs_already_uninstalled[*]}"
+
+    }
+
+QPKGsAlreadyUninstalled.IsAny()
+    {
+
+    [[ ${#QPKGs_already_uninstalled[@]} -gt 0 ]]
+
+    }
+
+QPKGsAlreadyUninstalled.IsNone()
+    {
+
+    [[ ${#QPKGs_already_uninstalled[@]} -eq 0 ]]
+
+    }
+
+QPKGsReinstall.Add()
+    {
+
+    [[ ${QPKGs_to_reinstall[*]} != *"$1"* ]] && QPKGs_to_reinstall+=("$1")
+
+    return 0
+
+    }
+
+QPKGsReinstall.Array()
+    {
+
+    echo "${QPKGs_to_reinstall[@]}"
+
+    }
+
+QPKGsReinstall.Count()
+    {
+
+    echo "${#QPKGs_to_reinstall[@]}"
+
+    }
+
+QPKGsReinstall.Print()
+    {
+
+    echo "${QPKGs_to_reinstall[*]}"
+
+    }
+
+QPKGsReinstall.IsAny()
+    {
+
+    [[ $(QPKGsReinstall.Count) -gt 0 ]]
+
+    }
+
+QPKGsReinstall.IsNone()
+    {
+
+    [[ $(QPKGsReinstall.Count) -eq 0 ]]
+
+    }
+
+QPKGsNotInstalled.Add()
+    {
+
+    [[ ${QPKGs_not_installed[*]} != *"$1"* ]] && QPKGs_not_installed+=("$1")
+
+    return 0
+
+    }
+
+QPKGsNotInstalled.IsAny()
+    {
+
+    [[ ${#QPKGs_not_installed[@]} -gt 0 ]]
+
+    }
+
+QPKGsNotInstalled.IsNone()
+    {
+
+    [[ ${#QPKGs_not_installed[@]} -eq 0 ]]
+
+    }
+
+QPKGsNotInstalled.Build()
+    {
+
+    # Returns a list of QPKGs that can be installed.
+    # creates a global variable array: $QPKGs_not_installed()
+
+    QPKGs_not_installed=()
+    local package=''
+
+    for package in "${QPKGS_user_installable[@]}"; do
+        IsNotQPKGInstalled "$package" && QPKGsNotInstalled.Add "$package"
+    done
+
+    return 0
+
+    }
+
+QPKGsNotInstalled.Array()
+    {
+
+    echo "${QPKGs_not_installed[@]}"
+
+    }
+
+QPKGsUpgrade.Add()
+    {
+
+    [[ ${QPKGs_to_upgrade[*]} != *"$1"* ]] && QPKGs_to_upgrade+=("$1")
+
+    return 0
+
+    }
+
+QPKGsUpgrade.IsAny()
+    {
+
+    [[ ${#QPKGs_to_upgrade[@]} -gt 0 ]]
+
+    }
+
+QPKGsUpgrade.IsNone()
+    {
+
+    [[ ${#QPKGs_to_upgrade[@]} -eq 0 ]]
+
+    }
+
+QPKGsUpgradable.Build()
+    {
+
+    # Returns a list of QPKGs that can be upgraded.
+    # creates a global variable array: $QPKGS_upgradable()
+
+    QPKGS_upgradable=()
+    local package=''
+    local installed_version=''
+    local remote_version=''
+
+    for package in "${QPKGs_installed[@]}"; do
+        [[ $package = Entware ]] && continue        # kludge: ignore 'Entware' as package filename version doesn't match the QTS App Center version string
+        installed_version=$(GetInstalledQPKGVersion "$package")
+        remote_version=$(GetQPKGRemoteVersion "$package")
+
+        if [[ $installed_version != "$remote_version" ]]; then
+            #QPKGS_upgradable+=("$package $installed_version $remote_version")
+            QPKGS_upgradable+=($package)
+        fi
+    done
+
+    return 0
+
+    }
+
+QPKGsUpgradable.Array()
+    {
+
+    echo "${QPKGS_upgradable[@]}"
+
+    }
+
+QPKGsRestart.Add()
+    {
+
+    [[ ${QPKGs_to_restart[*]} != *"$1"* ]] && QPKGs_to_restart+=("$1")
+
+    return 0
+
+    }
+
+QPKGsRestart.IsAny()
+    {
+
+    [[ ${#QPKGs_to_restart[@]} -gt 0 ]]
+
+    }
+
+QPKGsRestart.IsNone()
+    {
+
+    [[ ${#QPKGs_to_restart[@]} -eq 0 ]]
+
+    }
+
+QPKGsAlreadyUpgraded.Add()
+    {
+
+    [[ ${QPKGs_already_upgraded[*]} != *"$1"* ]] && QPKGs_already_upgraded+=("$1")
+
+    return 0
+
+    }
+
+QPKGsAlreadyUpgraded.Array()
+    {
+
+    echo "${QPKGs_already_upgraded[@]}"
+
+    }
+
+QPKGsAlreadyUpgraded.Print()
+    {
+
+    echo "${QPKGs_already_upgraded[*]}"
+
+    }
+
+QPKGsAlreadyUpgraded.IsAny()
+    {
+
+    [[ ${#QPKGs_already_upgraded[@]} -gt 0 ]]
+
+    }
+
+QPKGsAlreadyUpgraded.IsNone()
+    {
+
+    [[ ${#QPKGs_already_upgraded[@]} -eq 0 ]]
+
+    }
+
+QPKGsDownload.Add()
+    {
+
+    [[ ${QPKGs_download_array[*]} != *"$1"* ]] && QPKGs_download_array+=("$1")
+
+    return 0
+
+    }
+
+QPKGsDownload.Array()
+    {
+
+    echo "${QPKGs_download_array[@]}"
+
+    }
+
+QPKGsDownload.Count()
+    {
+
+    echo "${#QPKGs_download_array[@]}"
+
+    }
+
+QPKGsDownload.Print()
+    {
+
+    echo "${QPKGs_download_array[*]}"
+
+    }
+
+QPKGsDownload.IsAny()
+    {
+
+    [[ ${#QPKGs_download_array[@]} -gt 0 ]]
+
+    }
+
+QPKGsDownload.IsNone()
+    {
+
+    [[ ${#QPKGs_download_array[@]} -eq 0 ]]
+
+    }
+
+Help.Set()
+    {
+
+    Abort.Set
+
+    Help.IsSet && return
+
+    _show_help_flag=true
+    DebugVar _show_help_flag
+
+    }
+
+Help.Clear()
+    {
+
+    Help.IsNot && return
+
+    _show_help_flag=false
+    DebugVar _show_help_flag
+
+    }
+
+Help.IsSet()
+    {
+
+    [[ $_show_help_flag = true ]]
+
+    }
+
+Help.IsNot()
+    {
+
+    [[ $_show_help_flag != true ]]
+
+    }
+
+Help.Problem.Set()
+    {
+
+    Abort.Set
+
+    Help.Problem.IsSet && return
+
+    _show_problem_help_flag=true
+    DebugVar _show_problem_help_flag
+
+    }
+
+Help.Problem.Clear()
+    {
+
+    Help.Problem.IsNot && return
+
+    _show_problem_help_flag=false
+    DebugVar _show_problem_help_flag
+
+    }
+
+Help.Problem.IsSet()
+    {
+
+    [[ $_show_problem_help_flag = true ]]
+
+    }
+
+Help.Problem.IsNot()
+    {
+
+    [[ $_show_problem_help_flag != true ]]
+
+    }
+
+Help.Tips.Set()
+    {
+
+    Abort.Set
+
+    Help.Tips.IsSet && return
+
+    _show_tips_help_flag=true
+    DebugVar _show_tips_help_flag
+
+    }
+
+Help.Tips.Clear()
+    {
+
+    Help.Tips.IsNot && return
+
+    _show_tips_help_flag=false
+    DebugVar _show_tips_help_flag
+
+    }
+
+Help.Tips.IsSet()
+    {
+
+    [[ $_show_tips_help_flag = true ]]
+
+    }
+
+Help.Tips.IsNot()
+    {
+
+    [[ $_show_tips_help_flag != true ]]
+
+    }
+
+LogView.Set()
+    {
+
+    Abort.Set
+
+    LogView.IsSet && return
+
+    _logview_only_flag=true
+    DebugVar _logview_only_flag
+
+    }
+
+LogView.Clear()
+    {
+
+    LogView.IsNot && return
+
+    _logview_only_flag=false
+    DebugVar _logview_only_flag
+
+    }
+
+LogView.IsSet()
+    {
+
+    [[ $_logview_only_flag = true ]]
+
+    }
+
+LogView.IsNot()
+    {
+
+    [[ $_logview_only_flag != true ]]
+
+    }
+
+VersionView.Set()
+    {
+
+    Abort.Set
+
+    VersionView.IsSet && return
+
+    _version_only_flag=true
+    DebugVar _version_only_flag
+
+    }
+
+VersionView.Clear()
+    {
+
+    VersionView.IsNot && return
+
+    _version_only_flag=false
+    DebugVar _version_only_flag
+
+    }
+
+VersionView.IsSet()
+    {
+
+    [[ $_version_only_flag = true ]]
+
+    }
+
+VersionView.IsNot()
+    {
+
+    [[ $_version_only_flag != true ]]
+
+    }
+
+LogPaste.Set()
+    {
+
+    Abort.Set
+
+    LogPaste.IsSet && return
+
+    _logpaste_only_flag=true
+    DebugVar _logpaste_only_flag
+
+    }
+
+LogPaste.Clear()
+    {
+
+    LogPaste.IsNot && return
+
+    _logpaste_only_flag=false
+    DebugVar _logpaste_only_flag
+
+    }
+
+LogPaste.IsSet()
+    {
+
+    [[ $_logpaste_only_flag = true ]]
+
+    }
+
+LogPaste.IsNot()
+    {
+
+    [[ $_logpaste_only_flag != true ]]
+
+    }
+
+PIPInstall.Set()
+    {
+
+    IsPIPInstall && return
+
+    _pip_install_flag=true
+    DebugVar _pip_install_flag
+
+    }
+
+PIPInstall.Clear()
+    {
+
+    PIPInstall.IsNot && return
+
+    _pip_install_flag=false
+    DebugVar _pip_install_flag
+
+    }
+
+PIPInstall.IsSet()
+    {
+
+    [[ $_pip_install_flag = true ]]
+
+    }
+
+PIPInstall.IsNot()
+    {
+
+    [[ $_pip_install_flag != true ]]
+
+    }
+
+Error.Set()
+    {
+
+    Abort.Set
+
+    Error.IsSet && return
+
+    _script_error_flag=true
+    DebugVar _script_error_flag
+
+    }
+
+Error.Clear()
+    {
+
+    Error.IsNot && return
+
+    _script_error_flag=false
+    DebugVar _script_error_flag
+
+    }
+
+Error.IsSet()
+    {
+
+    [[ $_script_error_flag = true ]]
+
+    }
+
+Error.IsNot()
+    {
+
+    [[ $_script_error_flag != true ]]
+
+    }
+
+Abort.Set()
+    {
+
+    Abort.IsSet && return
+
+    _script_abort_flag=true
+    DebugVar _script_abort_flag
+
+    }
+
+Abort.Clear()
+    {
+
+    Abort.IsNot && return
+
+    _script_abort_flag=false
+    DebugVar _script_abort_flag
+
+    }
+
+Abort.IsSet()
+    {
+
+    [[ $_script_abort_flag = true ]]
+
+    }
+
+Abort.IsNot()
+    {
+
+    [[ $_script_abort_flag != true ]]
+
+    }
+
+CheckDependencies.Set()
+    {
+
+    CheckDependencies.IsSet && return
+
+    _check_dependencies_flag=true
+    DebugVar _check_dependencies_flag
+
+    }
+
+CheckDependencies.Clear()
+    {
+
+    CheckDependencies.IsNot && return
+
+    _check_dependencies_flag=false
+    DebugVar _check_dependencies_flag
+
+    }
+
+CheckDependencies.IsSet()
+    {
+
+    [[ $_check_dependencies_flag = true ]]
+
+    }
+
+CheckDependencies.IsNot()
+    {
+
+    [[ $_check_dependencies_flag != true ]]
+
+    }
+
+Help.Abbreviations.Set()
+    {
+
+    Abort.Set
+
+    Help.Abbreviations.IsSet && return
+
+    _show_abbreviations_flag=true
+    DebugVar _show_abbreviations_flag
+
+    }
+
+Help.Abbreviations.Clear()
+    {
+
+    Help.Abbreviations.IsNot && return
+
+    _show_abbreviations_flag=false
+    DebugVar _show_abbreviations_flag
+
+    }
+
+Help.Abbreviations.IsSet()
+    {
+
+    [[ $_show_abbreviations_flag = true ]]
+
+    }
+
+Help.Abbreviations.IsNot()
+    {
+
+    [[ $_show_abbreviations_flag != true ]]
+
+    }
+
+Help.Actions.Set()
+    {
+
+    Abort.Set
+
+    Help.Actions.IsSet && return
+
+    _show_actions_flag=true
+    DebugVar _show_actions_flag
+
+    }
+
+Help.Actions.Clear()
+    {
+
+    Help.Actions.IsNot && return
+
+    _show_actions_flag=false
+    DebugVar _show_actions_flag
+
+    }
+
+Help.Actions.IsSet()
+    {
+
+    [[ $_show_actions_flag = true ]]
+
+    }
+
+Help.Actions.IsNot()
+    {
+
+    [[ $_show_actions_flag != true ]]
+
+    }
+
+Help.Packages.Set()
+    {
+
+    Abort.Set
+
+    Help.Packages.IsSet && return
+
+    _show_packages_flag=true
+    DebugVar _show_packages_flag
+
+    }
+
+Help.Packages.Clear()
+    {
+
+    Help.Packages.IsNot && return
+
+    _show_packages_flag=false
+    DebugVar _show_packages_flag
+
+    }
+
+Help.Packages.IsSet()
+    {
+
+    [[ $_show_packages_flag = true ]]
+
+    }
+
+Help.Packages.IsNot()
+    {
+
+    [[ $_show_packages_flag != true ]]
+
+    }
+
+Help.Options.Set()
+    {
+
+    Abort.Set
+
+    Help.Options.IsSet && return
+
+    _show_options_flag=true
+    DebugVar _show_options_flag
+
+    }
+
+Help.Options.Clear()
+    {
+
+    Help.Options.IsNot && return
+
+    _show_options_flag=false
+    DebugVar _show_options_flag
+
+    }
+
+Help.Options.IsSet()
+    {
+
+    [[ $_show_options_flag = true ]]
+
+    }
+
+Help.Options.IsNot()
+    {
+
+    [[ $_show_options_flag != true ]]
+
+    }
+
+ShowSessionOutcome.Set()
+    {
+
+    ShowSessionOutcome.IsSet && return
+
+    _show_session_outcome_flag=true
+    DebugVar _show_session_outcome_flag
+
+    }
+
+ShowSessionOutcome.Clear()
+    {
+
+    ShowSessionOutcome.IsNot && return
+
+    _show_session_outcome_flag=false
+    DebugVar _show_session_outcome_flag
+
+    }
+
+ShowSessionOutcome.IsSet()
+    {
+
+    [[ $_show_session_outcome_flag = true ]]
+
+    }
+
+ShowSessionOutcome.IsNot()
+    {
+
+    [[ $_show_session_outcome_flag != true ]]
+
+    }
+
+LogToFile.Set()
+    {
+
+    LogToFile.IsSet && return
+
+    _log_to_file=true
+    DebugVar _log_to_file
+
+    }
+
+LogToFile.Clear()
+    {
+
+    LogToFile.IsNot && return
+
+    _log_to_file=false
+    DebugVar _log_to_file
+
+    }
+
+LogToFile.IsSet()
+    {
+
+    [[ $_log_to_file = true ]]
+
+    }
+
+LogToFile.IsNot()
+    {
+
+    [[ $_log_to_file != true ]]
+
+    }
+
+DebuggingVisible.Set()
+    {
+
+    DebuggingVisible.IsSet && return
+
+    _show_debugging_flag=true
+    DebugVar _show_debugging_flag
+
+    }
+
+DebuggingVisible.Clear()
+    {
+
+    DebuggingVisible.IsNot && return
+
+    _show_debugging_flag=false
+    DebugVar _show_debugging_flag
+
+    }
+
+DebuggingVisible.IsSet()
+    {
+
+    [[ $_show_debugging_flag = true ]]
+
+    }
+
+DebuggingVisible.IsNot()
+    {
+
+    [[ $_show_debugging_flag != true ]]
+
+    }
+
+DevMode.Set()
+    {
+
+    DebuggingVisible.Set
+
+    DevMode.IsSet && return
+
+    _dev_mode_flag=true
+    DebugVar _dev_mode_flag
+
+    }
+
+DevMode.Clear()
+    {
+
+    DebuggingVisible.Clear
+
+    DevMode.IsNot && return
+
+    _dev_mode_flag=false
+    DebugVar _dev_mode_flag
+
+    }
+
+DevMode.IsSet()
+    {
+
+    [[ $_dev_mode_flag = true ]]
+
+    }
+
+DevMode.IsNot()
+    {
+
+    [[ $_dev_mode_flag != true ]]
+
+    }
+
+SuggestIssue.Set()
+    {
+
+    SuggestIssue.IsSet && return
+
+    _suggest_issue_flag=true
+    DebugVar _suggest_issue_flag
+
+    }
+
+SuggestIssue.Clear()
+    {
+
+    SuggestIssue.IsNot && return
+
+    _suggest_issue_flag=false
+    DebugVar _suggest_issue_flag
+
+    }
+
+SuggestIssue.IsSet()
+    {
+
+    [[ $_suggest_issue_flag = true ]]
+
+    }
+
+SuggestIssue.IsNot()
+    {
+
+    [[ $_suggest_issue_flag != true ]]
+
+    }
+
+InstallAllApps.Set()
+    {
+
+    InstallAllApps.IsSet && return
+
+    _install_all_apps_flag=true
+    DebugVar _install_all_apps_flag
+
+    }
+
+InstallAllApps.Clear()
+    {
+
+    InstallAllApps.IsNot && return
+
+    _install_all_apps_flag=false
+    DebugVar _install_all_apps_flag
+
+    }
+
+InstallAllApps.IsSet()
+    {
+
+    [[ $_install_all_apps_flag = true ]]
+
+    }
+
+InstallAllApps.IsNot()
+    {
+
+    [[ $_install_all_apps_flag != true ]]
+
+    }
+
+UninstallAllApps.Set()
+    {
+
+    UninstallAllApps.IsSet && return
+
+    _uninstall_all_apps_flag=true
+    DebugVar _uninstall_all_apps_flag
+
+    }
+
+UninstallAllApps.Clear()
+    {
+
+    UninstallAllApps.IsNot && return
+
+    _uninstall_all_apps_flag=false
+    DebugVar _uninstall_all_apps_flag
+
+    }
+
+UninstallAllApps.IsSet()
+    {
+
+    [[ $_uninstall_all_apps_flag = true ]]
+
+    }
+
+UninstallAllApps.IsNot()
+    {
+
+    [[ $_uninstall_all_apps_flag != true ]]
+
+    }
+
+RestartAllApps.Set()
+    {
+
+    RestartAllApps.IsSet && return
+
+    _restart_all_apps_flag=true
+    DebugVar _restart_all_apps_flag
+
+    }
+
+RestartAllApps.Clear()
+    {
+
+    RestartAllApps.IsNot && return
+
+    _restart_all_apps_flag=false
+    DebugVar _restart_all_apps_flag
+
+    }
+
+RestartAllApps.IsSet()
+    {
+
+    [[ $_restart_all_apps_flag = true ]]
+
+    }
+
+RestartAllApps.IsNot()
+    {
+
+    [[ $_restart_all_apps_flag != true ]]
+
+    }
+
+UpgradeAllApps.Set()
+    {
+
+    UpgradeAllApps.IsSet && return
+
+    _upgrade_all_apps_flag=true
+    DebugVar _upgrade_all_apps_flag
+
+    }
+
+UpgradeAllApps.Clear()
+    {
+
+    UpgradeAllApps.IsNot && return
+
+    _upgrade_all_apps_flag=false
+    DebugVar _upgrade_all_apps_flag
+
+    }
+
+UpgradeAllApps.IsSet()
+    {
+
+    [[ $_upgrade_all_apps_flag = true ]]
+
+    }
+
+UpgradeAllApps.IsNot()
+    {
+
+    [[ $_upgrade_all_apps_flag != true ]]
+
+    }
+
+BackupAllApps.Set()
+    {
+
+    BackupAllApps.IsSet && return
+
+    _backup_all_apps_flag=true
+    DebugVar _backup_all_apps_flag
+
+    }
+
+BackupAllApps.Clear()
+    {
+
+    BackupAllApps.IsNot && return
+
+    _backup_all_apps_flag=false
+    DebugVar _backup_all_apps_flag
+
+    }
+
+BackupAllApps.IsSet()
+    {
+
+    [[ $_backup_all_apps_flag = true ]]
+
+    }
+
+BackupAllApps.IsNot()
+    {
+
+    [[ $_backup_all_apps_flag != true ]]
+
+    }
+
+RestoreAllApps.Set()
+    {
+
+    RestoreAllApps.IsSet && return
+
+    _restore_all_apps_flag=true
+    DebugVar _restore_all_apps_flag
+
+    }
+
+RestoreAllApps.Clear()
+    {
+
+    RestoreAllApps.IsNot && return
+
+    _restore_all_apps_flag=false
+    DebugVar _restore_all_apps_flag
+
+    }
+
+RestoreAllApps.IsSet()
+    {
+
+    [[ $_restore_all_apps_flag = true ]]
+
+    }
+
+RestoreAllApps.IsNot()
+    {
+
+    [[ $_restore_all_apps_flag != true ]]
+
+    }
+
+StatusAllApps.Set()
+    {
+
+    StatusAllApps.IsSet && return
+
+    _status_all_apps_flag=true
+    DebugVar _status_all_apps_flag
+
+    }
+
+StatusAllApps.Clear()
+    {
+
+    StatusAllApps.IsNot && return
+
+    _status_all_apps_flag=false
+    DebugVar _status_all_apps_flag
+
+    }
+
+StatusAllApps.IsSet()
+    {
+
+    [[ $_status_all_apps_flag = true ]]
+
+    }
+
+StatusAllApps.IsNot()
+    {
+
+    [[ $_status_all_apps_flag != true ]]
+
+    }
+
+LineSpace.Set()
+    {
+
+    LineSpace.IsSet && return
+
+    _line_space_flag=true
+
+    }
+
+LineSpace.Clear()
+    {
+
+    LineSpace.IsNot && return
+
+    _line_space_flag=false
+
+    }
+
+LineSpace.IsSet()
+    {
+
+    [[ $_line_space_flag = true ]]
+
+    }
+
+LineSpace.IsNot()
+    {
+
+    [[ $_line_space_flag != true ]]
 
     }
 
@@ -2570,15 +4015,42 @@ IsQPKGToBeInstalled()
     # output:
     #   $? = 0 (true) or 1 (false)
 
-    local package=''
+    [[ -z $1 ]] && return 1
+    [[ ${#QPKGs_to_install[@]} -gt 0 && ${QPKGs_to_install[*]} == *"$1"* ]] && return 0
+    [[ ${#QPKGs_to_reinstall[@]} -gt 0 && ${QPKGs_to_reinstall[*]} == *"$1"* ]] && return 0
+    [[ ${#QPKGs_to_upgrade[@]} -gt 0 && ${QPKGs_to_upgrade[*]} == *"$1"* ]] && return 0
 
-    for package in "${QPKGS_to_install[@]}"; do
-        [[ $package = "$1" ]] && return 0
-    done
+    return 1
 
-    for package in "${QPKGS_to_upgrade[@]}"; do
-        [[ $package = "$1" ]] && return 0
-    done
+    }
+
+IsQPKGToBeReinstalled()
+    {
+
+    # input:
+    #   $1 = package name to check
+
+    # output:
+    #   $? = 0 (true) or 1 (false)
+
+    [[ -z $1 ]] && return 1
+    [[ ${#QPKGs_to_reinstall[@]} -gt 0 && ${QPKGs_to_reinstall[*]} == *"$1"* ]] && return 0
+
+    return 1
+
+    }
+
+IsQPKGToBeUpgraded()
+    {
+
+    # input:
+    #   $1 = package name to check
+
+    # output:
+    #   $? = 0 (true) or 1 (false)
+
+    [[ -z $1 ]] && return 1
+    [[ ${#QPKGs_to_upgrade[@]} -gt 0 && ${QPKGs_to_upgrade[*]} == *"$1"* ]] && return 0
 
     return 1
 
@@ -2788,840 +4260,6 @@ ProgressUpdater()
 
     }
 
-SetShowHelp()
-    {
-
-    SetAbort
-
-    IsShowHelp && return
-
-    _show_help_flag=true
-    DebugVar _show_help_flag
-
-    }
-
-UnsetShowHelp()
-    {
-
-    IsNotShowHelp && return
-
-    _show_help_flag=false
-    DebugVar _show_help_flag
-
-    }
-
-IsShowHelp()
-    {
-
-    [[ $_show_help_flag = true ]]
-
-    }
-
-IsNotShowHelp()
-    {
-
-    [[ $_show_help_flag != true ]]
-
-    }
-
-SetShowProblemHelp()
-    {
-
-    SetAbort
-
-    IsShowProblemHelp && return
-
-    _show_problem_help_flag=true
-    DebugVar _show_problem_help_flag
-
-    }
-
-UnsetShowProblemHelp()
-    {
-
-    IsNotShowProblemHelp && return
-
-    _show_problem_help_flag=false
-    DebugVar _show_problem_help_flag
-
-    }
-
-IsShowProblemHelp()
-    {
-
-    [[ $_show_problem_help_flag = true ]]
-
-    }
-
-IsNotShowProblemHelp()
-    {
-
-    [[ $_show_problem_help_flag != true ]]
-
-    }
-
-SetShowTipsHelp()
-    {
-
-    SetAbort
-
-    IsShowTipsHelp && return
-
-    _show_tips_help_flag=true
-    DebugVar _show_tips_help_flag
-
-    }
-
-UnsetShowTipsHelp()
-    {
-
-    IsNotShowTipsHelp && return
-
-    _show_tips_help_flag=false
-    DebugVar _show_tips_help_flag
-
-    }
-
-IsShowTipsHelp()
-    {
-
-    [[ $_show_tips_help_flag = true ]]
-
-    }
-
-IsNotShowTipsHelp()
-    {
-
-    [[ $_show_tips_help_flag != true ]]
-
-    }
-
-SetLogViewOnly()
-    {
-
-    SetAbort
-
-    IsLogViewOnly && return
-
-    _logview_only_flag=true
-    DebugVar _logview_only_flag
-
-    }
-
-UnsetLogViewOnly()
-    {
-
-    IsNotLogViewOnly && return
-
-    _logview_only_flag=false
-    DebugVar _logview_only_flag
-
-    }
-
-IsLogViewOnly()
-    {
-
-    [[ $_logview_only_flag = true ]]
-
-    }
-
-IsNotLogViewOnly()
-    {
-
-    [[ $_logview_only_flag != true ]]
-
-    }
-
-SetVersionOnly()
-    {
-
-    SetAbort
-
-    IsVersionOnly && return
-
-    _version_only_flag=true
-    DebugVar _version_only_flag
-
-    }
-
-UnsetVersionOnly()
-    {
-
-    IsNotVersionOnly && return
-
-    _version_only_flag=false
-    DebugVar _version_only_flag
-
-    }
-
-IsVersionOnly()
-    {
-
-    [[ $_version_only_flag = true ]]
-
-    }
-
-IsNotVersionOnly()
-    {
-
-    [[ $_version_only_flag != true ]]
-
-    }
-
-SetLogPasteOnly()
-    {
-
-    SetAbort
-
-    IsLogPasteOnly && return
-
-    _logpaste_only_flag=true
-    DebugVar _logpaste_only_flag
-
-    }
-
-UnsetLogPasteOnly()
-    {
-
-    IsNotLogPasteOnly && return
-
-    _logpaste_only_flag=false
-    DebugVar _logpaste_only_flag
-
-    }
-
-IsLogPasteOnly()
-    {
-
-    [[ $_logpaste_only_flag = true ]]
-
-    }
-
-IsNotLogPasteOnly()
-    {
-
-    [[ $_logpaste_only_flag != true ]]
-
-    }
-
-SetPIPInstall()
-    {
-
-    IsPIPInstall && return
-
-    _pip_install_flag=true
-    DebugVar _pip_install_flag
-
-    }
-
-UnsetPIPInstall()
-    {
-
-    IsNotPIPInstall && return
-
-    _pip_install_flag=false
-    DebugVar _pip_install_flag
-
-    }
-
-IsPIPInstall()
-    {
-
-    [[ $_pip_install_flag = true ]]
-
-    }
-
-IsNotPIPInstall()
-    {
-
-    [[ $_pip_install_flag != true ]]
-
-    }
-
-SetError()
-    {
-
-    SetAbort
-
-    IsError && return
-
-    _script_error_flag=true
-    DebugVar _script_error_flag
-
-    }
-
-UnsetError()
-    {
-
-    IsNotError && return
-
-    _script_error_flag=false
-    DebugVar _script_error_flag
-
-    }
-
-IsError()
-    {
-
-    [[ $_script_error_flag = true ]]
-
-    }
-
-IsNotError()
-    {
-
-    [[ $_script_error_flag != true ]]
-
-    }
-
-SetAbort()
-    {
-
-    IsAbort && return
-
-    _script_abort_flag=true
-    DebugVar _script_abort_flag
-
-    }
-
-UnsetAbort()
-    {
-
-    IsNotAbort && return
-
-    _script_abort_flag=false
-    DebugVar _script_abort_flag
-
-    }
-
-IsAbort()
-    {
-
-    [[ $_script_abort_flag = true ]]
-
-    }
-
-IsNotAbort()
-    {
-
-    [[ $_script_abort_flag != true ]]
-
-    }
-
-SetCheckDependencies()
-    {
-
-    IsCheckDependencies && return
-
-    _check_dependencies_flag=true
-    DebugVar _check_dependencies_flag
-
-    }
-
-UnsetCheckDependencies()
-    {
-
-    IsNotCheckDependencies && return
-
-    _check_dependencies_flag=false
-    DebugVar _check_dependencies_flag
-
-    }
-
-IsCheckDependencies()
-    {
-
-    [[ $_check_dependencies_flag = true ]]
-
-    }
-
-IsNotCheckDependencies()
-    {
-
-    [[ $_check_dependencies_flag != true ]]
-
-    }
-
-SetShowAbbreviations()
-    {
-
-    SetAbort
-
-    IsShowAbbreviations && return
-
-    _show_abbreviations_flag=true
-    DebugVar _show_abbreviations_flag
-
-    }
-
-UnsetShowAbbreviations()
-    {
-
-    IsNotShowAbbreviations && return
-
-    _show_abbreviations_flag=false
-    DebugVar _show_abbreviations_flag
-
-    }
-
-IsShowAbbreviations()
-    {
-
-    [[ $_show_abbreviations_flag = true ]]
-
-    }
-
-IsNotShowAbbreviations()
-    {
-
-    [[ $_show_abbreviations_flag != true ]]
-
-    }
-
-SetShowInstallerOutcome()
-    {
-
-    IsShowInstallerOutcome && return
-
-    _show_installer_outcome_flag=true
-    DebugVar _show_installer_outcome_flag
-
-    }
-
-UnsetShowInstallerOutcome()
-    {
-
-    IsNotShowInstallerOutcome && return
-
-    _show_installer_outcome_flag=false
-    DebugVar _show_installer_outcome_flag
-
-    }
-
-IsShowInstallerOutcome()
-    {
-
-    [[ $_show_installer_outcome_flag = true ]]
-
-    }
-
-IsNotShowInstallerOutcome()
-    {
-
-    [[ $_show_installer_outcome_flag != true ]]
-
-    }
-
-SetLogToFile()
-    {
-
-    IsLogToFile && return
-
-    _log_to_file=true
-    DebugVar _log_to_file
-
-    }
-
-UnsetLogToFile()
-    {
-
-    IsNotLogToFile && return
-
-    _log_to_file=false
-    DebugVar _log_to_file
-
-    }
-
-IsLogToFile()
-    {
-
-    [[ $_log_to_file = true ]]
-
-    }
-
-IsNotLogToFile()
-    {
-
-    [[ $_log_to_file != true ]]
-
-    }
-
-SetVisibleDebugging()
-    {
-
-    IsVisibleDebugging && return
-
-    _show_debugging_flag=true
-    DebugVar _show_debugging_flag
-
-    }
-
-UnsetVisibleDebugging()
-    {
-
-    IsNotVisibleDebugging && return
-
-    _show_debugging_flag=false
-    DebugVar _show_debugging_flag
-
-    }
-
-IsVisibleDebugging()
-    {
-
-    [[ $_show_debugging_flag = true ]]
-
-    }
-
-IsNotVisibleDebugging()
-    {
-
-    [[ $_show_debugging_flag != true ]]
-
-    }
-
-SetDevMode()
-    {
-
-    SetVisibleDebugging
-
-    IsDevMode && return
-
-    _dev_mode_flag=true
-    DebugVar _dev_mode_flag
-
-    }
-
-UnsetDevMode()
-    {
-
-    UnsetVisibleDebugging
-
-    IsNotDevMode && return
-
-    _dev_mode_flag=false
-    DebugVar _dev_mode_flag
-
-    }
-
-IsDevMode()
-    {
-
-    [[ $_dev_mode_flag = true ]]
-
-    }
-
-IsNotDevMode()
-    {
-
-    [[ $_dev_mode_flag != true ]]
-
-    }
-
-SetSuggestIssue()
-    {
-
-    IsSuggestIssue && return
-
-    _suggest_issue_flag=true
-    DebugVar _suggest_issue_flag
-
-    }
-
-UnsetSuggestIssue()
-    {
-
-    IsNotSuggestIssue && return
-
-    _suggest_issue_flag=false
-    DebugVar _suggest_issue_flag
-
-    }
-
-IsSuggestIssue()
-    {
-
-    [[ $_suggest_issue_flag = true ]]
-
-    }
-
-IsNotSuggestIssue()
-    {
-
-    [[ $_suggest_issue_flag != true ]]
-
-    }
-
-SetInstallAllApps()
-    {
-
-    IsInstallAllApps && return
-
-    _install_all_apps_flag=true
-    DebugVar _install_all_apps_flag
-
-    }
-
-UnsetInstallAllApps()
-    {
-
-    IsNotInstallAllApps && return
-
-    _install_all_apps_flag=false
-    DebugVar _install_all_apps_flag
-
-    }
-
-IsInstallAllApps()
-    {
-
-    [[ $_install_all_apps_flag = true ]]
-
-    }
-
-IsNotInstallAllApps()
-    {
-
-    [[ $_install_all_apps_flag != true ]]
-
-    }
-
-SetUninstallAllApps()
-    {
-
-    IsUninstallAllApps && return
-
-    _uninstall_all_apps_flag=true
-    DebugVar _uninstall_all_apps_flag
-
-    }
-
-UnsetUninstallAllApps()
-    {
-
-    IsNotUninstallAllApps && return
-
-    _uninstall_all_apps_flag=false
-    DebugVar _uninstall_all_apps_flag
-
-    }
-
-IsUninstallAllApps()
-    {
-
-    [[ $_uninstall_all_apps_flag = true ]]
-
-    }
-
-IsNotUninstallAllApps()
-    {
-
-    [[ $_uninstall_all_apps_flag != true ]]
-
-    }
-
-SetRestartAllApps()
-    {
-
-    IsRestartAllApps && return
-
-    _restart_all_apps_flag=true
-    DebugVar _restart_all_apps_flag
-
-    }
-
-UnsetRestartAllApps()
-    {
-
-    IsNotRestartAllApps && return
-
-    _restart_all_apps_flag=false
-    DebugVar _restart_all_apps_flag
-
-    }
-
-IsRestartAllApps()
-    {
-
-    [[ $_restart_all_apps_flag = true ]]
-
-    }
-
-IsNotRestartAllApps()
-    {
-
-    [[ $_restart_all_apps_flag != true ]]
-
-    }
-
-SetUpgradeAllApps()
-    {
-
-    IsUpgradeAllApps && return
-
-    _upgrade_all_apps_flag=true
-    DebugVar _upgrade_all_apps_flag
-
-    }
-
-UnsetUpgradeAllApps()
-    {
-
-    IsNotUpgradeAllApps && return
-
-    _upgrade_all_apps_flag=false
-    DebugVar _upgrade_all_apps_flag
-
-    }
-
-IsUpgradeAllApps()
-    {
-
-    [[ $_upgrade_all_apps_flag = true ]]
-
-    }
-
-IsNotUpgradeAllApps()
-    {
-
-    [[ $_upgrade_all_apps_flag != true ]]
-
-    }
-
-SetBackupAllApps()
-    {
-
-    IsBackupAllApps && return
-
-    _backup_all_apps_flag=true
-    DebugVar _backup_all_apps_flag
-
-    }
-
-UnsetBackupAllApps()
-    {
-
-    IsNotBackupAllApps && return
-
-    _backup_all_apps_flag=false
-    DebugVar _backup_all_apps_flag
-
-    }
-
-IsBackupAllApps()
-    {
-
-    [[ $_backup_all_apps_flag = true ]]
-
-    }
-
-IsNotBackupAllApps()
-    {
-
-    [[ $_backup_all_apps_flag != true ]]
-
-    }
-
-SetRestoreAllApps()
-    {
-
-    IsRestoreAllApps && return
-
-    _restore_all_apps_flag=true
-    DebugVar _restore_all_apps_flag
-
-    }
-
-UnsetRestoreAllApps()
-    {
-
-    IsNotRestoreAllApps && return
-
-    _restore_all_apps_flag=false
-    DebugVar _restore_all_apps_flag
-
-    }
-
-IsRestoreAllApps()
-    {
-
-    [[ $_restore_all_apps_flag = true ]]
-
-    }
-
-IsNotRestoreAllApps()
-    {
-
-    [[ $_restore_all_apps_flag != true ]]
-
-    }
-
-SetStatusAllApps()
-    {
-
-    IsStatusAllApps && return
-
-    _status_all_apps_flag=true
-    DebugVar _status_all_apps_flag
-
-    }
-
-UnsetStatusAllApps()
-    {
-
-    IsNotStatusAllApps && return
-
-    _status_all_apps_flag=false
-    DebugVar _status_all_apps_flag
-
-    }
-
-IsStatusAllApps()
-    {
-
-    [[ $_status_all_apps_flag = true ]]
-
-    }
-
-IsNotStatusAllApps()
-    {
-
-    [[ $_status_all_apps_flag != true ]]
-
-    }
-
-SetLineSpace()
-    {
-
-    IsLineSpace && return
-
-    _line_space_flag=true
-
-    }
-
-UnsetLineSpace()
-    {
-
-    IsNotLineSpace && return
-
-    _line_space_flag=false
-
-    }
-
-IsLineSpace()
-    {
-
-    [[ $_line_space_flag = true ]]
-
-    }
-
-IsNotLineSpace()
-    {
-
-    [[ $_line_space_flag != true ]]
-
-    }
-
 #### FormatAs... functions always output formatted info to be used as part of another string. These shouldn't be used for direct screen output.
 
 FormatAsPlural()
@@ -3645,17 +4283,24 @@ FormatAsScriptTitle()
 
     }
 
-FormatAsHelpPackage()
+FormatAsHelpAction()
     {
 
-    ColourTextBrightYellow '[PACKAGE]'
+    ColourTextBrightYellow '[ACTION]'
 
     }
 
-FormatAsHelpOption()
+FormatAsHelpPackages()
     {
 
-    ColourTextBrightOrange '[OPTION]'
+    ColourTextBrightOrange '[PACKAGES]'
+
+    }
+
+FormatAsHelpOptions()
+    {
+
+    ColourTextBrightRed '[OPTIONS]'
 
     }
 
@@ -3766,9 +4411,9 @@ FormatAsResultAndStdout()
 DisplayLineSpace()
     {
 
-    if IsNotLineSpace; then
-        if IsNotVisibleDebugging && IsNotVersionOnly; then
-            SetLineSpace
+    if LineSpace.IsNot; then
+        if DebuggingVisible.IsNot && VersionView.IsNot; then
+            LineSpace.Set
             Display
         fi
     fi
@@ -3813,7 +4458,7 @@ DebugTimerStageStart()
 
     $DATE_CMD +%s
 
-    if IsNotVisibleDebugging; then
+    if DebuggingVisible.IsNot; then
         DebugInfoThinSeparator
         DebugStage 'start stage timer'
     fi
@@ -3982,7 +4627,7 @@ DebugVar()
 DebugThis()
     {
 
-    IsVisibleDebugging && ShowAsDebug "$1"
+    DebuggingVisible.IsSet && ShowAsDebug "$1"
     WriteAsDebug "$1"
 
     }
@@ -4082,7 +4727,7 @@ ShowAsAbort()
 
     local capitalised="$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}"      # use any available 'tr'
 
-    SetError
+    Error.Set
     WriteToDisplayNew "$(ColourTextBrightRed fail)" "$capitalised: aborting ..."
     WriteToLog fail "$capitalised: aborting"
 
@@ -4093,7 +4738,7 @@ ShowAsError()
 
     local capitalised="$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}"      # use any available 'tr'
 
-    SetError
+    Error.Set
     WriteToDisplayNew "$(ColourTextBrightRed fail)" "$capitalised"
     WriteToLog fail "$capitalised."
 
@@ -4119,8 +4764,8 @@ WriteToDisplayWait()
 
     previous_msg=$(printf "%-10s: %s" "$1" "$2")
 
-    DisplayWait "$previous_msg"; IsVisibleDebugging && Display
-    UnsetLineSpace
+    DisplayWait "$previous_msg"; DebuggingVisible.IsSet && Display
+    LineSpace.Clear
 
     return 0
 
@@ -4160,7 +4805,7 @@ WriteToDisplayNew()
         fi
 
         Display "$strbuffer"
-        UnsetLineSpace
+        LineSpace.Clear
     fi
 
     return 0
@@ -4175,7 +4820,7 @@ WriteToLog()
     #   $2 = message
 
     [[ -z $DEBUG_LOG_PATHFILE ]] && return 1
-    IsNotLogToFile && return
+    LogToFile.IsNot && return
 
     printf "%-4s: %s\n" "$(StripANSI "$1")" "$(StripANSI "$2")" >> "$DEBUG_LOG_PATHFILE"
 
@@ -4261,7 +4906,6 @@ ColourReset()
 StripANSI()
     {
 
-    # found here: https://www.commandlinefu.com/commands/view/3584/remove-color-codes-special-characters-with-sed
     # QTS 4.2.6 BusyBox 'sed' doesn't fully support extended regexes, so this only works with a real 'sed'.
 
     if [[ -e $GNU_SED_CMD ]]; then
@@ -4299,16 +4943,12 @@ CTRL_C_Captured()
 
 Init || exit 1
 
-LogRuntimeParameters
+ValidateParameters
 DownloadQPKGs
-RemoveUnwantedQPKGs
+RemoveQPKGs
 InstallQPKGIndeps
-InstallQPKGIndepsAddons
-InstallTargetQPKG
+InstallQPKGDeps
 Cleanup
 ShowResult
 RemoveLock
-
-IsError && exit 1
-
-exit
+Error.IsNot
