@@ -4,7 +4,7 @@
 
 A mini-package-manager to install various media-management apps into QNAP NAS.
 
-**sherpa** is able to install several search and download apps. App configuration will be retained wqhen upgrading or reinstalling apps.
+**sherpa** is able to install several search and download apps. App configuration will be retained when upgrading or reinstalling apps.
 
 If the installer is successful, your requested packages will be installed. Any existing installation of Entware will be used automatically. If Entware is not installed, a version appropriate to your NAS will be installed.
 
@@ -64,23 +64,28 @@ So, to install SABnzbd and SickChill, use:
 ... or:
 
 ```
-./sherpa.sh nzbToMedia
+./sherpa.sh --install nzbToMedia
 
-./sherpa.sh LazyLibrarian
+./sherpa.sh --install LazyLibrarian
 
-./sherpa.sh Medusa
+./sherpa.sh --install Medusa
 
-./sherpa.sh SickGear
+./sherpa.sh --install SickGear
 
-./sherpa.sh Mylar3
+./sherpa.sh --install Mylar3
 
-./sherpa.sh NZBGet
+./sherpa.sh --install NZBGet
 
-./sherpa.sh Transmission
+./sherpa.sh --install Transmission
 
-./sherpa.sh Deluge-server
+./sherpa.sh --install Deluge-server
 
-./sherpa.sh Deluge-web
+./sherpa.sh --install Deluge-web
+```
+
+Or, install everything!
+```
+./sherpa.sh --install-all-applications
 ```
 
 ---

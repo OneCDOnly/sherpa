@@ -4,11 +4,11 @@
 
 A mini-package-manager to install various media-management apps into QNAP NAS.
 
-[b]sherpa[/b] is able to install several search and download apps but will only install [b]ONE app[/b] at a time. If you elect to install an app that is already installed, the app will be fully reinstalled. App configuration will be retained.
+[b]sherpa[/b] is able to install several search and download apps. App configuration will be retained when upgrading or reinstalling apps.
 
 To install additional apps, run it again.
 
-If the installer is successful, your requested package and any dependent packages will be installed. Any existing installation of Entware will be used automatically. If Entware is not installed, a version appropriate to your NAS will be installed.
+If the installer is successful, your requested packages will be installed. Any existing installation of Entware will be used automatically. If Entware is not installed, a version appropriate to your NAS will be installed.
 
 
 [b][u][size=120]Before you begin[/size][/u][/b]
@@ -64,20 +64,24 @@ Any model QNAP NAS with at-least 1GB RAM and running QTS 4.0 or-later.
 
 [*]Then, to install (or reinstall) an app, run [b]sherpa.sh[/b] with the name of your required app as an argument.
 
-So, to install SABnzbd, use:
-[code]./sherpa.sh SABnzbd[/code]
-Or:
-[code]./sherpa.sh nzbToMedia
-./sherpa.sh LazyLibrarian
-./sherpa.sh Medusa
-./sherpa.sh SickChill
-./sherpa.sh SickGear
-./sherpa.sh Mylar3
-./sherpa.sh NZBGet
-./sherpa.sh Transmission
-./sherpa.sh Deluge-server
-./sherpa.sh Deluge-web
-[/code][/list]
+So, to install SABnzbd and SickChill, use:
+[code]./sherpa.sh --install SABnzbd SickChill[/code]
+... or:
+[code]./sherpa.sh --install nzbToMedia
+./sherpa.sh --install LazyLibrarian
+./sherpa.sh --install Medusa
+./sherpa.sh --install SickChill
+./sherpa.sh --install SickGear
+./sherpa.sh --install Mylar3
+./sherpa.sh --install NZBGet
+./sherpa.sh --install Transmission
+./sherpa.sh --install Deluge-server
+./sherpa.sh --install Deluge-web
+[/code]
+
+Or, install everything!
+[code]./sherpa.sh --install-all-applications[/code]
+[/list]
 
 
 [b][u][size=120]Known issues[/size][/u][/b]
