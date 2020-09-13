@@ -666,9 +666,9 @@ ValidateParameters()
 
     if [[ $(QPKGsDownload.Count) -eq 1 && ${QPKGs_download_array[0]} = Entware ]] && IsNotQPKGInstalled Entware; then
         ShowAsNote "It's not necessary to install $(FormatAsPackageName Entware) first. It will be installed on-demand with your other sherpa packages. :)"
-        Abort.Set
-        ShowSessionOutcome.Clear
-        return 1
+#         Abort.Set
+#         ShowSessionOutcome.Clear
+#         return 1
     fi
 
     for package in Optware Entware-3x Entware-ng; do
