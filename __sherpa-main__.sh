@@ -107,7 +107,7 @@ Init()
     readonly REMOTE_REPO_URL=https://raw.githubusercontent.com/OneCDOnly/sherpa/master
     readonly RUNTIME_LOCK_PATHFILE=/var/run/$LOADER_SCRIPT_FILE.pid
 
-    IsOnlyInstance || return 1
+    LockFile.Claim || return 1
 
     # check required binaries are present
     IsSysFileExist $AWK_CMD || return 1
@@ -369,7 +369,7 @@ Init()
     ignore_space_arg=''
     [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg='--insecure' || curl_insecure_arg=''
 
-    CalcIndependentQPKGs
+    QPKGsIndependent.Build
     CalcDependantQPKGs
     CalcUserInstallableQPKGs
     QPKGsInstalled.Build
@@ -955,7 +955,7 @@ InstallQPKGIndeps()
     local package=''
 
     for package in "${SHERPA_INDEP_QPKGs[@]}"; do
-        if [[ ${#QPKGs_to_install} -gt 0 && ${QPKGs_to_install[*]} == *"$package"* ]]; then
+        if [[ $(QPKGsInstall.Count) -gt 0 && ${QPKGs_to_install[*]} == *"$package"* ]]; then
             if [[ $package = Entware ]]; then
                 # rename original [/opt]
                 local opt_path=/opt
@@ -979,10 +979,17 @@ InstallQPKGIndeps()
     fi
 
     PatchBaseInit
-    InstallQPKGIndepsAddons
+
+    InstallIPKGs
+    InstallPy3Modules
+
+    if IsQPKGToBeInstalled Entware || RestartAllApps.IsSet; then
+        RestartAllDepQPKGs
+    fi
 
     DebugFuncExit
     return 0
+
 
     }
 
@@ -1049,24 +1056,6 @@ UpdateEntware()
         ShowAsDone "$(FormatAsPackageName Entware) package list is current"
     fi
 
-    return 0
-
-    }
-
-InstallQPKGIndepsAddons()
-    {
-
-    Abort.IsSet && return
-
-    DebugFuncEntry
-    InstallIPKGs
-    InstallPy3Modules
-
-    if IsQPKGToBeInstalled Entware || RestartAllApps.IsSet; then
-        RestartAllDepQPKGs
-    fi
-
-    DebugFuncExit
     return 0
 
     }
@@ -1506,7 +1495,7 @@ CalcNASQPKGArch()
 
     }
 
-CalcIndependentQPKGs()
+QPKGsIndependent.Build()
     {
 
     # Returns a list of QPKGs that don't depend on other QPKGs. These are therefore independent. They should be installed/started before any dependant QPKGs.
@@ -2178,20 +2167,6 @@ RemoveDirSizeMonitorFlagFile()
 
     }
 
-CreateLock()
-    {
-
-    echo "$$" > "$RUNTIME_LOCK_PATHFILE"
-
-    }
-
-RemoveLock()
-    {
-
-    [[ -e $RUNTIME_LOCK_PATHFILE ]] && rm -f "$RUNTIME_LOCK_PATHFILE"
-
-    }
-
 EnableQPKG()
     {
 
@@ -2219,17 +2194,24 @@ IsQNAP()
 
     }
 
-IsOnlyInstance()
+LockFile.Claim()
     {
 
     if [[ -e $RUNTIME_LOCK_PATHFILE && -d /proc/$(<$RUNTIME_LOCK_PATHFILE) && $(</proc/"$(<$RUNTIME_LOCK_PATHFILE)"/cmdline) =~ $MANAGER_SCRIPT_FILE ]]; then
         ShowAsAbort "another instance is running"
         return 1
     else
-        CreateLock
+        echo "$$" > "$RUNTIME_LOCK_PATHFILE"
     fi
 
     return 0
+
+    }
+
+LockFile.Release()
+    {
+
+    [[ -e $RUNTIME_LOCK_PATHFILE ]] && rm -f "$RUNTIME_LOCK_PATHFILE"
 
     }
 
@@ -2633,6 +2615,13 @@ QPKGsInstall.Array()
 
     }
 
+QPKGsInstall.Count()
+    {
+
+    echo "${#QPKGs_to_install[@]}"
+
+    }
+
 QPKGsInstall.Print()
     {
 
@@ -2643,14 +2632,14 @@ QPKGsInstall.Print()
 QPKGsInstall.IsAny()
     {
 
-    [[ ${#QPKGs_to_install[@]} -gt 0 ]]
+    [[ $(QPKGsInstall.Count) -gt 0 ]]
 
     }
 
 QPKGsInstall.IsNone()
     {
 
-    [[ ${#QPKGs_to_install[@]} -eq 0 ]]
+    [[ $(QPKGsInstall.Count) -eq 0 ]]
 
     }
 
@@ -2885,6 +2874,13 @@ QPKGsUpgrade.Add()
     [[ ${QPKGs_to_upgrade[*]} != *"$1"* ]] && QPKGs_to_upgrade+=("$1")
 
     return 0
+
+    }
+
+QPKGsUpgrade.Count()
+    {
+
+    echo "${#QPKGs_to_upgrade[@]}"
 
     }
 
@@ -4016,9 +4012,9 @@ IsQPKGToBeInstalled()
     #   $? = 0 (true) or 1 (false)
 
     [[ -z $1 ]] && return 1
-    [[ ${#QPKGs_to_install[@]} -gt 0 && ${QPKGs_to_install[*]} == *"$1"* ]] && return 0
-    [[ ${#QPKGs_to_reinstall[@]} -gt 0 && ${QPKGs_to_reinstall[*]} == *"$1"* ]] && return 0
-    [[ ${#QPKGs_to_upgrade[@]} -gt 0 && ${QPKGs_to_upgrade[*]} == *"$1"* ]] && return 0
+    [[ $(QPKGsInstall.Count) -gt 0 && ${QPKGs_to_install[*]} == *"$1"* ]] && return 0
+    [[ $(QPKGsReinstall.Count) -gt 0 && ${QPKGs_to_reinstall[*]} == *"$1"* ]] && return 0
+    [[ $(QPKGsUpgrade.Count) -gt 0 && ${QPKGs_to_upgrade[*]} == *"$1"* ]] && return 0
 
     return 1
 
@@ -4656,7 +4652,7 @@ DebugErrorFile()
 ShowAsInfo()
     {
 
-    WriteToDisplayWait "$(ColourTextBrightWhite info)" "$1"
+    WriteToDisplay.Wait "$(ColourTextBrightWhite info)" "$1"
     WriteToLog info "$1"
 
     }
@@ -4664,7 +4660,7 @@ ShowAsInfo()
 ShowAsProc()
     {
 
-    WriteToDisplayWait "$(ColourTextBrightOrange proc)" "$1 ..."
+    WriteToDisplay.Wait "$(ColourTextBrightOrange proc)" "$1 ..."
     WriteToLog proc "$1 ..."
 
     }
@@ -4679,14 +4675,14 @@ ShowAsProcLong()
 ShowAsDebug()
     {
 
-    WriteToDisplayWait "$(ColourTextBlackOnCyan dbug)" "$1"
+    WriteToDisplay.Wait "$(ColourTextBlackOnCyan dbug)" "$1"
 
     }
 
 ShowAsNote()
     {
 
-    WriteToDisplayNew "$(ColourTextBrightYellow note)" "$1"
+    WriteToDisplay.New "$(ColourTextBrightYellow note)" "$1"
     WriteToLog note "$1"
 
     }
@@ -4694,7 +4690,7 @@ ShowAsNote()
 ShowAsQuiz()
     {
 
-    WriteToDisplayWait "$(ColourTextBrightOrangeBlink quiz)" "$1: "
+    WriteToDisplay.Wait "$(ColourTextBrightOrangeBlink quiz)" "$1: "
     WriteToLog quiz "$1:"
 
     }
@@ -4702,14 +4698,14 @@ ShowAsQuiz()
 ShowAsQuizDone()
     {
 
-    WriteToDisplayNew "$(ColourTextBrightOrange quiz)" "$1"
+    WriteToDisplay.New "$(ColourTextBrightOrange quiz)" "$1"
 
     }
 
 ShowAsDone()
     {
 
-    WriteToDisplayNew "$(ColourTextBrightGreen 'done')" "$1"
+    WriteToDisplay.New "$(ColourTextBrightGreen 'done')" "$1"
     WriteToLog 'done' "$1"
 
     }
@@ -4717,7 +4713,7 @@ ShowAsDone()
 ShowAsWarning()
     {
 
-    WriteToDisplayNew "$(ColourTextBrightOrangeBlink warn)" "$1"
+    WriteToDisplay.New "$(ColourTextBrightOrangeBlink warn)" "$1"
     WriteToLog warn "$1"
 
     }
@@ -4728,7 +4724,7 @@ ShowAsAbort()
     local capitalised="$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}"      # use any available 'tr'
 
     Error.Set
-    WriteToDisplayNew "$(ColourTextBrightRed fail)" "$capitalised: aborting ..."
+    WriteToDisplay.New "$(ColourTextBrightRed fail)" "$capitalised: aborting ..."
     WriteToLog fail "$capitalised: aborting"
 
     }
@@ -4739,7 +4735,7 @@ ShowAsError()
     local capitalised="$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}"      # use any available 'tr'
 
     Error.Set
-    WriteToDisplayNew "$(ColourTextBrightRed fail)" "$capitalised"
+    WriteToDisplay.New "$(ColourTextBrightRed fail)" "$capitalised"
     WriteToLog fail "$capitalised."
 
     }
@@ -4753,7 +4749,7 @@ WriteAsDebug()
 
     }
 
-WriteToDisplayWait()
+WriteToDisplay.Wait()
     {
 
     # Writes a new message without newline (unless in debug mode)
@@ -4771,7 +4767,7 @@ WriteToDisplayWait()
 
     }
 
-WriteToDisplayNew()
+WriteToDisplay.New()
     {
 
     # Updates the previous message
@@ -4950,5 +4946,5 @@ InstallQPKGIndeps
 InstallQPKGDeps
 Cleanup
 ShowResult
-RemoveLock
+LockFile.Release
 Error.IsNot
