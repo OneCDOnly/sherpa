@@ -369,12 +369,12 @@ Init()
     ignore_space_arg=''
     [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg='--insecure' || curl_insecure_arg=''
 
-    QPKGsIndependent.Build
-    CalcDependantQPKGs
-    CalcUserInstallableQPKGs
-    QPKGsInstalled.Build
-    QPKGsNotInstalled.Build
-    QPKGsUpgradable.Build
+    QPKGs.Independent.Build
+    QPKGs.Dependant.Build
+    QPKGs.Installable.Build
+    QPKGs.Installed.Build
+    QPKGs.NotInstalled.Build
+    QPKGs.Upgradable.Build
     CalcNASQPKGArch
 
     return 0
@@ -507,37 +507,37 @@ ParseArguments()
 
                 case $current_operation in
                     install_)
-                        if IsQPKGInstalled "$target_app"; then
-                            QPKGsAlreadyInstalled.Add "$target_app"
+                        if QPKG.Installed "$target_app"; then
+                            QPKGs.AlreadyInstalled.Add "$target_app"
                         else
-                            QPKGsInstall.Add "$target_app"
+                            QPKGs.Install.Add "$target_app"
                         fi
                         ;;
                     uninstall_)
-                        if IsNotQPKGInstalled "$target_app"; then
-                            QPKGsAlreadyUninstalled.Add "$target_app"
+                        if QPKG.NotInstalled "$target_app"; then
+                            QPKGs.AlreadyUninstalled.Add "$target_app"
                         else
-                            QPKGsUninstall.Add "$target_app"
+                            QPKGs.Uninstall.Add "$target_app"
                         fi
                         ;;
                     reinstall_)
-                        IsQPKGInstalled "$target_app" && QPKGsReinstall.Add "$target_app"
+                        QPKG.Installed "$target_app" && QPKGs.Reinstall.Add "$target_app"
                         ;;
                     restart_)
-                        IsQPKGInstalled "$target_app" && QPKGsRestart.Add "$target_app"
+                        QPKG.Installed "$target_app" && QPKGs.Restart.Add "$target_app"
                         ;;
                     upgrade_)
-                        if IsNotQPKGUpgradable "$target_app"; then
-                            QPKGsAlreadyUpgraded.Add "$target_app"
+                        if QPKG.NotUpgradable "$target_app"; then
+                            QPKGs.AlreadyUpgraded.Add "$target_app"
                         else
-                            QPKGsUpgrade.Add "$target_app"
+                            QPKGs.Upgrade.Add "$target_app"
                         fi
                         ;;
                     backup_)
-                        IsQPKGInstalled "$target_app" && QPKGs_to_backup+=($target_app)
+                        QPKG.Installed "$target_app" && QPKGs_to_backup+=($target_app)
                         ;;
                     restore_)
-                        IsQPKGInstalled "$target_app" && QPKGs_to_restore+=($target_app)
+                        QPKG.Installed "$target_app" && QPKGs_to_restore+=($target_app)
                         ;;
                     status_)
                         QPKGs_to_status+=($target_app)
@@ -583,7 +583,7 @@ ValidateParameters()
     DebugInfoThinSeparator
     DebugHardware 'model' "$(get_display_name)"
     DebugHardware 'RAM' "$INSTALLED_RAM_KB kB"
-    if IsQPKGToBeInstalled SABnzbd || IsQPKGInstalled SABnzbd || IsQPKGInstalled SABnzbdplus; then
+    if QPKG.ToBeInstalled SABnzbd || QPKG.Installed SABnzbd || QPKG.Installed SABnzbdplus; then
         [[ $INSTALLED_RAM_KB -le $MIN_RAM_KB ]] && DebugHardwareWarning 'RAM' "less-than or equal-to $MIN_RAM_KB kB"
     fi
     DebugFirmware 'firmware version' "$NAS_FIRMWARE"
@@ -639,7 +639,7 @@ ValidateParameters()
         return 1
     fi
 
-    if IsQPKGInstalled Entware; then
+    if QPKG.Installed Entware; then
         [[ -e /opt/etc/passwd ]] && { [[ -L /opt/etc/passwd ]] && ENTWARE_VER=std || ENTWARE_VER=alt ;} || ENTWARE_VER=none
         DebugQPKG 'Entware installer' $ENTWARE_VER
 
@@ -650,9 +650,9 @@ ValidateParameters()
     fi
 
     if InstallAllApps.IsSet; then
-        QPKGs_initial_array+=($(QPKGsNotInstalled.Array))
+        QPKGs_initial_array+=($(QPKGs.NotInstalled.Array))
     elif UpgradeAllApps.IsSet; then
-        QPKGs_initial_array=($(QPKGsUpgradable.Array))
+        QPKGs_initial_array=($(QPKGs.Upgradable.Array))
     elif CheckDependencies.IsSet; then
         QPKGs_initial_array+=($(QPKGsInstalled.Array))
     else
@@ -661,9 +661,9 @@ ValidateParameters()
 
     GetTheseQPKGDeps "${QPKGs_initial_array[*]}"
     ExcludeInstalledQPKGs "$QPKG_pre_download_list"
-    DebugInfo "QPKGs required: $(QPKGsDownload.Print)"
+    DebugInfo "QPKGs required: $(QPKGs.Download.Print)"
 
-    if [[ $(QPKGsDownload.Count) -eq 1 && ${QPKGs_download_array[0]} = Entware ]] && IsNotQPKGInstalled Entware; then
+    if [[ $(QPKGs.Download.Count) -eq 1 && ${QPKGs_download_array[0]} = Entware ]] && QPKG.NotInstalled Entware; then
         ShowAsNote "It's not necessary to install $(FormatAsPackageName Entware) on its own. It will be installed as-required with your other sherpa packages. :)"
 #         Abort.Set
 #         SessionResult.Clear
@@ -671,18 +671,18 @@ ValidateParameters()
     fi
 
     for package in Optware Entware-3x Entware-ng; do
-        IsQPKGInstalled "$package" && QPKGsUninstall.Add "$package"
+        QPKG.Installed "$package" && QPKGs.Uninstall.Add "$package"
     done
 
-    if QPKGsAlreadyInstalled.IsAny; then
-        ShowAsNote "$(QPKGsAlreadyInstalled.Print) is already installed. Use the '--reinstall' action to reinstall."
-    elif QPKGsAlreadyUninstalled.IsAny; then
-        ShowAsNote "$(QPKGsAlreadyUninstalled.Print) is not installed"
-    elif QPKGsAlreadyUpgraded.IsAny; then
-        ShowAsNote "$(QPKGsAlreadyUpgraded.Print) is not upgradable"
+    if QPKGs.AlreadyInstalled.IsAny; then
+        ShowAsNote "$(QPKGs.AlreadyInstalled.Print) is already installed. Use the '--reinstall' action to reinstall."
+    elif QPKGs.AlreadyUninstalled.IsAny; then
+        ShowAsNote "$(QPKGs.AlreadyUninstalled.Print) is not installed"
+    elif QPKGs.AlreadyUpgraded.IsAny; then
+        ShowAsNote "$(QPKGs.AlreadyUpgraded.Print) is not upgradable"
     fi
 
-    if QPKGsInstall.IsNone && QPKGsUninstall.IsNone && QPKGsReinstall.IsNone && QPKGsRestart.IsNone && QPKGsUpgrade.IsNone && [[ ${#QPKGs_to_backup[@]} -eq 0 && ${#QPKGs_to_restore[@]} -eq 0 && ${#QPKGs_to_status[@]} -eq 0 ]]; then
+    if QPKGs.Install.IsNone && QPKGs.Uninstall.IsNone && QPKGs.Reinstall.IsNone && QPKGs.Restart.IsNone && QPKGs.Upgrade.IsNone && [[ ${#QPKGs_to_backup[@]} -eq 0 && ${#QPKGs_to_restore[@]} -eq 0 && ${#QPKGs_to_status[@]} -eq 0 ]]; then
         if InstallAllApps.IsNot && UninstallAllApps.IsNot && RestartAllApps.IsNot && UpgradeAllApps.IsNot && BackupAllApps.IsNot && RestoreAllApps.IsNot && StatusAllApps.IsNot; then
             if CheckDependencies.IsNot; then
                 ShowAsError "nothing to do"
@@ -734,7 +734,7 @@ ValidateParameters()
     fi
 
     for package in "${SHERPA_COMMON_CONFLICTS[@]}"; do
-        if IsQPKGEnabled "$package"; then
+        if QPKG.Enabled "$package"; then
             ShowAsError "'$package' is enabled. This is an unsupported configuration"
             return 1
         fi
@@ -854,7 +854,7 @@ DownloadQPKGs()
     done
 
     # kludge: an ugly workaround until QPKG dependency checking works properly
-#     (IsQPKGInstalled SABnzbd || [[ $TARGET_APP = SABnzbd ]] ) && [[ $NAS_QPKG_ARCH != none ]] && IsNotQPKGInstalled Par2 && DownloadQPKG Par2
+#     (QPKG.Installed SABnzbd || [[ $TARGET_APP = SABnzbd ]] ) && [[ $NAS_QPKG_ARCH != none ]] && QPKG.NotInstalled Par2 && DownloadQPKG Par2
 
     DebugFuncExit
     return 0
@@ -875,11 +875,11 @@ RemoveQPKGs()
         UninstallQPKG "$package"
     done
 
-    if IsQPKGToBeReinstalled Entware; then
+    if QPKG.ToBeReinstalled Entware; then
         ShowAsNote "Reinstalling $(FormatAsPackageName Entware) will remove all IPKGs and Python modules, and only those required to support your sherpa apps will be reinstalled."
         ShowAsNote "Your installed IPKG list will be saved to $(FormatAsFileName "$previous_opkg_package_list")"
         ShowAsNote "Your installed Python module list will be saved to $(FormatAsFileName "$previous_pip3_module_list")"
-        (IsQPKGInstalled SABnzbdplus || IsQPKGInstalled Headphones) && ShowAsWarning "Also, the $(FormatAsPackageName SABnzbdplus) and $(FormatAsPackageName Headphones) packages CANNOT BE REINSTALLED as Python 2.7.16 is no-longer available."
+        (QPKG.Installed SABnzbdplus || QPKG.Installed Headphones) && ShowAsWarning "Also, the $(FormatAsPackageName SABnzbdplus) and $(FormatAsPackageName Headphones) packages CANNOT BE REINSTALLED as Python 2.7.16 is no-longer available."
 
         if AskQuiz "Press 'Y' to remove all current $(FormatAsPackageName Entware) IPKGs (and their configurations), or any other key to abort"; then
             ShowAsProc 'saving package and Python module lists'
@@ -917,7 +917,7 @@ InstallQPKGIndeps()
     local package=''
 
     for package in "${SHERPA_INDEP_QPKGs[@]}"; do
-        if [[ $(QPKGsInstall.Count) -gt 0 && ${QPKGs_to_install[*]} == *"$package"* ]]; then
+        if [[ $(QPKGs.Install.Count) -gt 0 && ${QPKGs_to_install[*]} == *"$package"* ]]; then
             if [[ $package = Entware ]]; then
                 # rename original [/opt]
                 local opt_path=/opt
@@ -934,7 +934,7 @@ InstallQPKGIndeps()
         fi
     done
 
-    if IsQPKGInstalled Entware && IsNotQPKGEnabled Entware && EnableQPKG Entware; then
+    if QPKG.Installed Entware && QPKG.NotEnabled Entware && EnableQPKG Entware; then
         ReloadProfile
 
         [[ $NAS_QPKG_ARCH != none ]] && ($OPKG_CMD list-installed | $GREP_CMD -q par2cmdline) && $OPKG_CMD remove par2cmdline > /dev/null 2>&1
@@ -945,7 +945,7 @@ InstallQPKGIndeps()
     InstallIPKGs
     InstallPy3Modules
 
-    if IsQPKGToBeInstalled Entware || RestartAllApps.IsSet; then
+    if QPKG.ToBeInstalled Entware || RestartAllApps.IsSet; then
         RestartAllDepQPKGs
     fi
 
@@ -1039,13 +1039,13 @@ InstallIPKGs()
         done
     else
         for index in "${!SHERPA_QPKG_NAME[@]}"; do
-            if IsQPKGToBeInstalled "${SHERPA_QPKG_NAME[$index]}" || IsQPKGInstalled "${SHERPA_QPKG_NAME[$index]}"; then
+            if QPKG.ToBeInstalled "${SHERPA_QPKG_NAME[$index]}" || QPKG.Installed "${SHERPA_QPKG_NAME[$index]}"; then
                 packages+=" ${SHERPA_QPKG_IPKGS[$index]}"
             fi
         done
     fi
 
-    if IsQPKGToBeInstalled SABnzbd || IsQPKGInstalled SABnzbd || IsQPKGInstalled SABnzbdplus; then
+    if QPKG.ToBeInstalled SABnzbd || QPKG.Installed SABnzbd || QPKG.Installed SABnzbdplus; then
         [[ $NAS_QPKG_ARCH = none ]] && packages+=' par2cmdline'
     fi
 
@@ -1181,7 +1181,7 @@ RestartAllDepQPKGs()
     local package=''
 
     for package in "${SHERPA_DEP_QPKGs[@]}"; do
-        IsQPKGEnabled "$package" && RestartQPKGService "$package"
+        QPKG.Enabled "$package" && RestartQPKGService "$package"
     done
 
     DebugFuncExit
@@ -1202,7 +1202,7 @@ RestartNotUpgradedQPKGs()
     local package=''
 
     for package in "${SHERPA_DEP_QPKGs[@]}"; do
-        IsQPKGEnabled "$package" && ! IsQPKGUpgradable "$package" && RestartQPKGService "$package"
+        QPKG.Enabled "$package" && ! QPKG.Upgradable "$package" && RestartQPKGService "$package"
     done
 
     DebugFuncExit
@@ -1261,7 +1261,7 @@ ReloadProfile()
 
     local opkg_prefix=/opt/bin:/opt/sbin
 
-    if IsQPKGInstalled Entware; then
+    if QPKG.Installed Entware; then
         export PATH="$opkg_prefix:$($SED_CMD "s|$opkg_prefix||" <<< "$PATH")"
         DebugDone 'adjusted $PATH for Entware'
         DebugVar PATH
@@ -1354,7 +1354,7 @@ InstallQPKG()
     local log_pathfile="$local_pathfile.$INSTALL_LOG_FILE"
     target_file=$($BASENAME_CMD "$local_pathfile")
 
-    IsQPKGInstalled "$1" && re='re-'
+    QPKG.Installed "$1" && re='re-'
 
     ShowAsProcLong "${re}installing QPKG $(FormatAsFileName "$target_file")"
 
@@ -1457,7 +1457,7 @@ CalcNASQPKGArch()
 
     }
 
-QPKGsIndependent.Build()
+QPKGs.Independent.Build()
     {
 
     # Returns a list of QPKGs that don't depend on other QPKGs. These are therefore independent. They should be installed/started before any dependant QPKGs.
@@ -1476,7 +1476,7 @@ QPKGsIndependent.Build()
 
     }
 
-CalcDependantQPKGs()
+QPKGs.Dependant.Build()
     {
 
     # Returns a list of QPKGs that depend on other QPKGs. These are therefore dependant. They should be installed/started after any independent QPKGs.
@@ -1495,7 +1495,7 @@ CalcDependantQPKGs()
 
     }
 
-CalcUserInstallableQPKGs()
+QPKGs.Installable.Build()
     {
 
     # Returns a list of QPKGs that can be installed or reinstalled by the user.
@@ -1505,14 +1505,14 @@ CalcUserInstallableQPKGs()
     local package=''
 
     for package in "${SHERPA_QPKG_NAME[@]}"; do
-        IsQPKGUserInstallable "$package" && QPKGS_user_installable+=($package)
+        QPKG.Installable "$package" && QPKGS_user_installable+=($package)
     done
 
     return 0
 
     }
 
-QPKGsInstalled.Build()
+QPKGs.Installed.Build()
     {
 
     # Returns a list of installed sherpa QPKGs
@@ -1522,7 +1522,7 @@ QPKGsInstalled.Build()
     local package=''
 
     for package in "${QPKGS_user_installable[@]}"; do
-        IsQPKGInstalled "$package" && QPKGsInstalled.Add "$package"
+        QPKG.Installed "$package" && QPKGs.Installed.Add "$package"
     done
 
     return 0
@@ -1660,7 +1660,7 @@ GetInstalledQPKGServicePathFile()
     #   stdout = service pathfilename
     #   $? = 0 if found, 1 if not
 
-    IsNotQPKGInstalled "$1" && return 1
+    QPKG.NotInstalled "$1" && return 1
 
     local output=''
 
@@ -1686,7 +1686,7 @@ GetInstalledQPKGVersion()
     #   stdout = package version
     #   $? = 0 if found, 1 if not
 
-    IsNotQPKGInstalled "$1" && return 1
+    QPKG.NotInstalled "$1" && return 1
 
     local output=''
 
@@ -1913,7 +1913,7 @@ ExcludeInstalledQPKGs()
     DebugProc 'excluding QPKGs already installed'
 
     for element in "${requested_list_array[@]}"; do
-        if IsNotQPKGInstalled "$element"; then
+        if QPKG.NotInstalled "$element"; then
             QPKGs_download_array+=($element)
             [[ ${QPKGs_to_install[*]} != *"$element"* ]] && QPKGs_to_install+=($element)
         elif [[ ${#QPKGs_to_reinstall[@]} -gt 0 && ${QPKGs_to_reinstall[*]} == *"$element"* ]]; then
@@ -2134,7 +2134,7 @@ EnableQPKG()
 
     # $1 = package name to enable
 
-    if IsNotQPKGEnabled "$1"; then
+    if QPKG.NotEnabled "$1"; then
         DebugProc "enabling QPKG icon"
         $SETCFG_CMD "$1" Enable TRUE -f $APP_CENTER_CONFIG_PATHFILE
         DebugDone "$(FormatAsPackageName "$1") icon enabled"
@@ -2406,7 +2406,7 @@ Help.Packages.Show()
     DisplayAsTitleHelpPackage
 
     for package in "${QPKGS_user_installable[@]}"; do
-        if IsQPKGUpgradable "$package"; then
+        if QPKG.Upgradable "$package"; then
             package_name_message="$(ColourTextBrightYellow "$package")"
         else
             package_name_message="$package"
@@ -2530,7 +2530,7 @@ Help.PackageAbbreviations.Show()
 
     for package_index in "${!SHERPA_QPKG_NAME[@]}"; do
         if [[ -n ${SHERPA_QPKG_ABBRVS[$package_index]} ]]; then
-            if IsQPKGUpgradable "${SHERPA_QPKG_NAME[$package_index]}"; then
+            if QPKG.Upgradable "${SHERPA_QPKG_NAME[$package_index]}"; then
                 printf "%26s: %s\n" "$(ColourTextBrightYellow "${SHERPA_QPKG_NAME[$package_index]}")" "$($SED_CMD 's| |, |g' <<< "${SHERPA_QPKG_ABBRVS[$package_index]}")"
             else
                 printf "%15s: %s\n" "${SHERPA_QPKG_NAME[$package_index]}" "$($SED_CMD 's| |, |g' <<< "${SHERPA_QPKG_ABBRVS[$package_index]}")"
@@ -2561,7 +2561,7 @@ LogViewer.Show()
 
     }
 
-QPKGsInstall.Add()
+QPKGs.Install.Add()
     {
 
     [[ ${QPKGs_to_install[*]} != *"$1"* ]] && QPKGs_to_install+=("$1")
@@ -2570,42 +2570,42 @@ QPKGsInstall.Add()
 
     }
 
-QPKGsInstall.Array()
+QPKGs.Install.Array()
     {
 
     echo "${QPKGs_to_install[@]}"
 
     }
 
-QPKGsInstall.Count()
+QPKGs.Install.Count()
     {
 
     echo "${#QPKGs_to_install[@]}"
 
     }
 
-QPKGsInstall.Print()
+QPKGs.Install.Print()
     {
 
     echo "${QPKGs_to_install[*]}"
 
     }
 
-QPKGsInstall.IsAny()
+QPKGs.Install.IsAny()
     {
 
-    [[ $(QPKGsInstall.Count) -gt 0 ]]
+    [[ $(QPKGs.Install.Count) -gt 0 ]]
 
     }
 
-QPKGsInstall.IsNone()
+QPKGs.Install.IsNone()
     {
 
-    [[ $(QPKGsInstall.Count) -eq 0 ]]
+    [[ $(QPKGs.Install.Count) -eq 0 ]]
 
     }
 
-QPKGsInstalled.Add()
+QPKGs.Installed.Add()
     {
 
     [[ ${QPKGs_installed[*]} != *"$1"* ]] && QPKGs_installed+=("$1")
@@ -2628,7 +2628,7 @@ QPKGsInstalled.Print()
 
     }
 
-QPKGsAlreadyInstalled.Add()
+QPKGs.AlreadyInstalled.Add()
     {
 
     [[ ${QPKGs_already_installed[*]} != *"$1"* ]] && QPKGs_already_installed+=("$1")
@@ -2637,35 +2637,35 @@ QPKGsAlreadyInstalled.Add()
 
     }
 
-QPKGsAlreadyInstalled.Array()
+QPKGs.AlreadyInstalled.Array()
     {
 
     echo "${QPKGs_already_installed[@]}"
 
     }
 
-QPKGsAlreadyInstalled.Print()
+QPKGs.AlreadyInstalled.Print()
     {
 
     echo "${QPKGs_already_installed[*]}"
 
     }
 
-QPKGsAlreadyInstalled.IsAny()
+QPKGs.AlreadyInstalled.IsAny()
     {
 
     [[ ${#QPKGs_already_installed[@]} -gt 0 ]]
 
     }
 
-QPKGsAlreadyInstalled.IsNone()
+QPKGs.AlreadyInstalled.IsNone()
     {
 
     [[ ${#QPKGs_already_installed[@]} -eq 0 ]]
 
     }
 
-QPKGsUninstall.Add()
+QPKGs.Uninstall.Add()
     {
 
     [[ ${QPKGs_to_uninstall[*]} != *"$1"* ]] && QPKGs_to_uninstall+=("$1")
@@ -2674,35 +2674,35 @@ QPKGsUninstall.Add()
 
     }
 
-QPKGsUninstall.Array()
+QPKGs.Uninstall.Array()
     {
 
     echo "${QPKGs_to_uninstall[@]}"
 
     }
 
-QPKGsUninstall.Print()
+QPKGs.Uninstall.Print()
     {
 
     echo "${QPKGs_to_uninstall[*]}"
 
     }
 
-QPKGsUninstall.IsAny()
+QPKGs.Uninstall.IsAny()
     {
 
     [[ ${#QPKGs_to_uninstall[@]} -gt 0 ]]
 
     }
 
-QPKGsUninstall.IsNone()
+QPKGs.Uninstall.IsNone()
     {
 
     [[ ${#QPKGs_to_uninstall[@]} -eq 0 ]]
 
     }
 
-QPKGsAlreadyUninstalled.Add()
+QPKGs.AlreadyUninstalled.Add()
     {
 
     [[ ${QPKGs_already_uninstalled[*]} != *"$1"* ]] && QPKGs_already_uninstalled+=("$1")
@@ -2711,35 +2711,35 @@ QPKGsAlreadyUninstalled.Add()
 
     }
 
-QPKGsAlreadyUninstalled.Array()
+QPKGs.AlreadyUninstalled.Array()
     {
 
     echo "${QPKGs_already_uninstalled[@]}"
 
     }
 
-QPKGsAlreadyUninstalled.Print()
+QPKGs.AlreadyUninstalled.Print()
     {
 
     echo "${QPKGs_already_uninstalled[*]}"
 
     }
 
-QPKGsAlreadyUninstalled.IsAny()
+QPKGs.AlreadyUninstalled.IsAny()
     {
 
     [[ ${#QPKGs_already_uninstalled[@]} -gt 0 ]]
 
     }
 
-QPKGsAlreadyUninstalled.IsNone()
+QPKGs.AlreadyUninstalled.IsNone()
     {
 
     [[ ${#QPKGs_already_uninstalled[@]} -eq 0 ]]
 
     }
 
-QPKGsReinstall.Add()
+QPKGs.Reinstall.Add()
     {
 
     [[ ${QPKGs_to_reinstall[*]} != *"$1"* ]] && QPKGs_to_reinstall+=("$1")
@@ -2748,42 +2748,42 @@ QPKGsReinstall.Add()
 
     }
 
-QPKGsReinstall.Array()
+QPKGs.Reinstall.Array()
     {
 
     echo "${QPKGs_to_reinstall[@]}"
 
     }
 
-QPKGsReinstall.Count()
+QPKGs.Reinstall.Count()
     {
 
     echo "${#QPKGs_to_reinstall[@]}"
 
     }
 
-QPKGsReinstall.Print()
+QPKGs.Reinstall.Print()
     {
 
     echo "${QPKGs_to_reinstall[*]}"
 
     }
 
-QPKGsReinstall.IsAny()
+QPKGs.Reinstall.IsAny()
     {
 
-    [[ $(QPKGsReinstall.Count) -gt 0 ]]
+    [[ $(QPKGs.Reinstall.Count) -gt 0 ]]
 
     }
 
-QPKGsReinstall.IsNone()
+QPKGs.Reinstall.IsNone()
     {
 
-    [[ $(QPKGsReinstall.Count) -eq 0 ]]
+    [[ $(QPKGs.Reinstall.Count) -eq 0 ]]
 
     }
 
-QPKGsNotInstalled.Add()
+QPKGs.NotInstalled.Add()
     {
 
     [[ ${QPKGs_not_installed[*]} != *"$1"* ]] && QPKGs_not_installed+=("$1")
@@ -2792,21 +2792,21 @@ QPKGsNotInstalled.Add()
 
     }
 
-QPKGsNotInstalled.IsAny()
+QPKGs.NotInstalled.IsAny()
     {
 
     [[ ${#QPKGs_not_installed[@]} -gt 0 ]]
 
     }
 
-QPKGsNotInstalled.IsNone()
+QPKGs.NotInstalled.IsNone()
     {
 
     [[ ${#QPKGs_not_installed[@]} -eq 0 ]]
 
     }
 
-QPKGsNotInstalled.Build()
+QPKGs.NotInstalled.Build()
     {
 
     # Returns a list of QPKGs that can be installed.
@@ -2816,21 +2816,21 @@ QPKGsNotInstalled.Build()
     local package=''
 
     for package in "${QPKGS_user_installable[@]}"; do
-        IsNotQPKGInstalled "$package" && QPKGsNotInstalled.Add "$package"
+        QPKG.NotInstalled "$package" && QPKGs.NotInstalled.Add "$package"
     done
 
     return 0
 
     }
 
-QPKGsNotInstalled.Array()
+QPKGs.NotInstalled.Array()
     {
 
     echo "${QPKGs_not_installed[@]}"
 
     }
 
-QPKGsUpgrade.Add()
+QPKGs.Upgrade.Add()
     {
 
     [[ ${QPKGs_to_upgrade[*]} != *"$1"* ]] && QPKGs_to_upgrade+=("$1")
@@ -2839,28 +2839,28 @@ QPKGsUpgrade.Add()
 
     }
 
-QPKGsUpgrade.Count()
+QPKGs.Upgrade.Count()
     {
 
     echo "${#QPKGs_to_upgrade[@]}"
 
     }
 
-QPKGsUpgrade.IsAny()
+QPKGs.Upgrade.IsAny()
     {
 
     [[ ${#QPKGs_to_upgrade[@]} -gt 0 ]]
 
     }
 
-QPKGsUpgrade.IsNone()
+QPKGs.Upgrade.IsNone()
     {
 
     [[ ${#QPKGs_to_upgrade[@]} -eq 0 ]]
 
     }
 
-QPKGsUpgradable.Build()
+QPKGs.Upgradable.Build()
     {
 
     # Returns a list of QPKGs that can be upgraded.
@@ -2886,14 +2886,14 @@ QPKGsUpgradable.Build()
 
     }
 
-QPKGsUpgradable.Array()
+QPKGs.Upgradable.Array()
     {
 
     echo "${QPKGS_upgradable[@]}"
 
     }
 
-QPKGsRestart.Add()
+QPKGs.Restart.Add()
     {
 
     [[ ${QPKGs_to_restart[*]} != *"$1"* ]] && QPKGs_to_restart+=("$1")
@@ -2902,21 +2902,21 @@ QPKGsRestart.Add()
 
     }
 
-QPKGsRestart.IsAny()
+QPKGs.Restart.IsAny()
     {
 
     [[ ${#QPKGs_to_restart[@]} -gt 0 ]]
 
     }
 
-QPKGsRestart.IsNone()
+QPKGs.Restart.IsNone()
     {
 
     [[ ${#QPKGs_to_restart[@]} -eq 0 ]]
 
     }
 
-QPKGsAlreadyUpgraded.Add()
+QPKGs.AlreadyUpgraded.Add()
     {
 
     [[ ${QPKGs_already_upgraded[*]} != *"$1"* ]] && QPKGs_already_upgraded+=("$1")
@@ -2925,35 +2925,35 @@ QPKGsAlreadyUpgraded.Add()
 
     }
 
-QPKGsAlreadyUpgraded.Array()
+QPKGs.AlreadyUpgraded.Array()
     {
 
     echo "${QPKGs_already_upgraded[@]}"
 
     }
 
-QPKGsAlreadyUpgraded.Print()
+QPKGs.AlreadyUpgraded.Print()
     {
 
     echo "${QPKGs_already_upgraded[*]}"
 
     }
 
-QPKGsAlreadyUpgraded.IsAny()
+QPKGs.AlreadyUpgraded.IsAny()
     {
 
     [[ ${#QPKGs_already_upgraded[@]} -gt 0 ]]
 
     }
 
-QPKGsAlreadyUpgraded.IsNone()
+QPKGs.AlreadyUpgraded.IsNone()
     {
 
     [[ ${#QPKGs_already_upgraded[@]} -eq 0 ]]
 
     }
 
-QPKGsDownload.Add()
+QPKGs.Download.Add()
     {
 
     [[ ${QPKGs_download_array[*]} != *"$1"* ]] && QPKGs_download_array+=("$1")
@@ -2962,35 +2962,35 @@ QPKGsDownload.Add()
 
     }
 
-QPKGsDownload.Array()
+QPKGs.Download.Array()
     {
 
     echo "${QPKGs_download_array[@]}"
 
     }
 
-QPKGsDownload.Count()
+QPKGs.Download.Count()
     {
 
     echo "${#QPKGs_download_array[@]}"
 
     }
 
-QPKGsDownload.Print()
+QPKGs.Download.Print()
     {
 
     echo "${QPKGs_download_array[*]}"
 
     }
 
-QPKGsDownload.IsAny()
+QPKGs.Download.IsAny()
     {
 
     [[ ${#QPKGs_download_array[@]} -gt 0 ]]
 
     }
 
-QPKGsDownload.IsNone()
+QPKGs.Download.IsNone()
     {
 
     [[ ${#QPKGs_download_array[@]} -eq 0 ]]
@@ -3975,7 +3975,7 @@ LineSpace.IsNot()
 
     }
 
-IsQPKGUserInstallable()
+QPKG.Installable()
     {
 
     # input:
@@ -4000,7 +4000,7 @@ IsQPKGUserInstallable()
 
     }
 
-IsQPKGToBeInstalled()
+QPKG.ToBeInstalled()
     {
 
     # input:
@@ -4010,15 +4010,15 @@ IsQPKGToBeInstalled()
     #   $? = 0 (true) or 1 (false)
 
     [[ -z $1 ]] && return 1
-    [[ $(QPKGsInstall.Count) -gt 0 && ${QPKGs_to_install[*]} == *"$1"* ]] && return 0
-    [[ $(QPKGsReinstall.Count) -gt 0 && ${QPKGs_to_reinstall[*]} == *"$1"* ]] && return 0
-    [[ $(QPKGsUpgrade.Count) -gt 0 && ${QPKGs_to_upgrade[*]} == *"$1"* ]] && return 0
+    [[ $(QPKGs.Install.Count) -gt 0 && ${QPKGs_to_install[*]} == *"$1"* ]] && return 0
+    [[ $(QPKGs.Reinstall.Count) -gt 0 && ${QPKGs_to_reinstall[*]} == *"$1"* ]] && return 0
+    [[ $(QPKGs.Upgrade.Count) -gt 0 && ${QPKGs_to_upgrade[*]} == *"$1"* ]] && return 0
 
     return 1
 
     }
 
-IsQPKGToBeReinstalled()
+QPKG.ToBeReinstalled()
     {
 
     # input:
@@ -4034,7 +4034,7 @@ IsQPKGToBeReinstalled()
 
     }
 
-IsQPKGToBeUpgraded()
+QPKG.ToBeUpgraded()
     {
 
     # input:
@@ -4050,7 +4050,7 @@ IsQPKGToBeUpgraded()
 
     }
 
-IsQPKGInstalled()
+QPKG.Installed()
     {
 
     # input:
@@ -4063,7 +4063,7 @@ IsQPKGInstalled()
 
     }
 
-IsNotQPKGInstalled()
+QPKG.NotInstalled()
     {
 
     # input:
@@ -4072,11 +4072,11 @@ IsNotQPKGInstalled()
     # output:
     #   $? = 0 (true) or 1 (false)
 
-    ! IsQPKGInstalled "$1"
+    ! QPKG.Installed "$1"
 
     }
 
-IsQPKGEnabled()
+QPKG.Enabled()
     {
 
     # input:
@@ -4089,7 +4089,7 @@ IsQPKGEnabled()
 
     }
 
-IsNotQPKGEnabled()
+QPKG.NotEnabled()
     {
 
     # input:
@@ -4098,11 +4098,11 @@ IsNotQPKGEnabled()
     # output:
     #   $? = 0 (true) or 1 (false)
 
-    ! IsQPKGEnabled "$1"
+    ! QPKG.Enabled "$1"
 
     }
 
-IsQPKGUpgradable()
+QPKG.Upgradable()
     {
 
     # input:
@@ -4115,10 +4115,10 @@ IsQPKGUpgradable()
 
     }
 
-IsNotQPKGUpgradable()
+QPKG.NotUpgradable()
     {
 
-    ! IsQPKGUpgradable "$1"
+    ! QPKG.Upgradable "$1"
 
     }
 
