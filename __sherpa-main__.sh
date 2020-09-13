@@ -1097,7 +1097,7 @@ InstallIPKGBatch()
         if [[ $result -eq 0 ]]; then
             ShowAsDone "downloaded & installed $IPKG_download_count IPKG$(FormatAsPlural "$IPKG_download_count")"
             # if 'python3-pip' was installed, the install all 'pip' modules too
-            [[ ${IPKG_download_list[*]} =~ python3-pip ]] && PIPInstall.Set
+#             [[ ${IPKG_download_list[*]} =~ python3-pip ]] && PIPInstall.Set
         else
             ShowAsError "download & install IPKG$(FormatAsPlural "$IPKG_download_count") failed $(FormatAsExitcode $result)"
             DebugErrorFile "$log_pathfile"
@@ -1115,7 +1115,7 @@ InstallPy3Modules()
     {
 
     Abort.IsSet && return
-    PIPInstall.IsNot && return
+#     PIPInstall.IsNot && return
 
     DebugFuncEntry
     local exec_cmd=''
