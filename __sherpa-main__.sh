@@ -3258,7 +3258,7 @@ LogPaste.IsNot()
 PIPInstall.Set()
     {
 
-    IsPIPInstall && return
+    PIPInstall.IsSet && return
 
     _pip_install_flag=true
     DebugVar _pip_install_flag
