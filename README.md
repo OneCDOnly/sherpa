@@ -4,11 +4,9 @@
 
 A mini-package-manager to install various media-management apps into QNAP NAS.
 
-**sherpa** is able to install several search and download apps but will only install **ONE app** at a time. If you elect to install an app that is already installed, the app will be fully reinstalled. App configuration will be retained.
+**sherpa** is able to install several search and download apps. App configuration will be retained wqhen upgrading or reinstalling apps.
 
-To install additional apps, run it again.
-
-If the installer is successful, your requested package and any required packages will be installed. Any existing installation of Entware will be used automatically. If Entware is not installed, a version appropriate to your NAS will be installed.
+If the installer is successful, your requested packages will be installed. Any existing installation of Entware will be used automatically. If Entware is not installed, a version appropriate to your NAS will be installed.
 
 ---
 ## Before you begin
@@ -55,15 +53,15 @@ cd /share/Public
 curl -skLO https://git.io/sherpa.sh && chmod +x sherpa.sh
 ```
 
-4) Then, to install (or reinstall) an app, run **sherpa.sh** with the name of your required app as an argument.
+4) Then, to install (or reinstall) an app, run **sherpa.sh** with the name of your required apps as arguments.
 
-So, to install SABnzbd, use:
+So, to install SABnzbd and SickChill, use:
 
 ```
-./sherpa.sh SABnzbd
+./sherpa.sh --install SABnzbd SickChill
 ```
 
-... and then/or:
+... or:
 
 ```
 ./sherpa.sh nzbToMedia
@@ -71,8 +69,6 @@ So, to install SABnzbd, use:
 ./sherpa.sh LazyLibrarian
 
 ./sherpa.sh Medusa
-
-./sherpa.sh SickChill
 
 ./sherpa.sh SickGear
 
