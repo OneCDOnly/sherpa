@@ -40,7 +40,7 @@ Init()
 
     IsQNAP || return 1
 
-    readonly MANAGER_SCRIPT_VERSION=200913
+    readonly MANAGER_SCRIPT_VERSION=200914
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -159,7 +159,7 @@ Init()
     Help.Abbreviations.Clear
     SuggestIssue.Clear
     Help.Clear
-    ShowSessionOutcome.Set
+    SessionResult.Set
     DevMode.Clear
 
     local -r DEFAULT_SHARE_DOWNLOAD_PATH=/share/Download
@@ -651,7 +651,6 @@ ValidateParameters()
 
     if InstallAllApps.IsSet; then
         QPKGs_initial_array+=($(QPKGsNotInstalled.Array))
-#         [[ $NAS_QPKG_ARCH != none ]] && QPKGs_initial_array+=(Par2)   # klude: force this until QPKG dep checking works
     elif UpgradeAllApps.IsSet; then
         QPKGs_initial_array=($(QPKGsUpgradable.Array))
     elif CheckDependencies.IsSet; then
@@ -665,9 +664,9 @@ ValidateParameters()
     DebugInfo "QPKGs required: $(QPKGsDownload.Print)"
 
     if [[ $(QPKGsDownload.Count) -eq 1 && ${QPKGs_download_array[0]} = Entware ]] && IsNotQPKGInstalled Entware; then
-        ShowAsNote "It's not necessary to install $(FormatAsPackageName Entware) first. It will be installed on-demand with your other sherpa packages. :)"
+        ShowAsNote "It's not necessary to install $(FormatAsPackageName Entware) on its own. It will be installed as-required with your other sherpa packages. :)"
 #         Abort.Set
-#         ShowSessionOutcome.Clear
+#         SessionResult.Clear
 #         return 1
     fi
 
@@ -687,7 +686,6 @@ ValidateParameters()
         if InstallAllApps.IsNot && UninstallAllApps.IsNot && RestartAllApps.IsNot && UpgradeAllApps.IsNot && BackupAllApps.IsNot && RestoreAllApps.IsNot && StatusAllApps.IsNot; then
             if CheckDependencies.IsNot; then
                 ShowAsError "nothing to do"
-                Help.Abbreviations.Set
                 return 1
             fi
         fi
@@ -808,47 +806,11 @@ PasteLogOnline()
             DebugInfoThinSeparator
             DebugScript 'user abort'
             Abort.Set
-            ShowSessionOutcome.Clear
+            SessionResult.Clear
             return 1
         fi
     else
         ShowAsError 'no log to paste'
-    fi
-
-    return 0
-
-    }
-
-ShowSessionOutcome()
-    {
-
-    if UpgradeAllApps.IsSet; then
-        if [[ ${#QPKGS_upgradable[@]} -eq 0 ]]; then
-            ShowAsDone "no QPKGs need upgrading"
-        elif Error.IsNot; then
-            ShowAsDone "all upgradable QPKGs were successfully upgraded"
-        else
-            ShowAsError "upgrade failed! [$code_pointer]"
-            SuggestIssue.Set
-        fi
-#     elif [[ -n $TARGET_APP ]]; then
-#         [[ $reinstall_flag = true ]] && RE='re' || RE=''
-#
-#         if Error.IsNot; then
-#             ShowAsDone "$(FormatAsPackageName "$TARGET_APP") has been successfully ${RE}installed"
-#         else
-#             ShowAsError "$(FormatAsPackageName "$TARGET_APP") ${RE}install failed! [$code_pointer]"
-#             SuggestIssue.Set
-#         fi
-    fi
-
-    if CheckDependencies.IsSet; then
-        if Error.IsNot; then
-            ShowAsDone "all application dependencies are installed"
-        else
-            ShowAsError "application dependency check failed! [$code_pointer]"
-            SuggestIssue.Set
-        fi
     fi
 
     return 0
@@ -934,7 +896,7 @@ RemoveQPKGs()
             DebugInfoThinSeparator
             DebugScript 'user abort'
             Abort.Set
-            ShowSessionOutcome.Clear
+            SessionResult.Clear
             return 1
         fi
     fi
@@ -1261,8 +1223,8 @@ ShowResult()
     {
 
     if VersionView.IsSet; then
-        echo "loader: $LOADER_SCRIPT_VERSION"
-        echo "manager: $MANAGER_SCRIPT_VERSION"
+        Display "loader: $LOADER_SCRIPT_VERSION"
+        Display "manager: $MANAGER_SCRIPT_VERSION"
     fi
 
     LogView.IsSet && LogViewer.Show
@@ -1281,7 +1243,7 @@ ShowResult()
     Help.Abbreviations.IsSet && Help.PackageAbbreviations.Show
 
     LogPaste.IsSet && PasteLogOnline
-    ShowSessionOutcome.IsSet && ShowSessionOutcome
+    SessionResult.IsSet && SessionResult.Show
     SuggestIssue.IsSet && Help.Issue.Show
     DisplayLineSpace
 
@@ -3533,37 +3495,73 @@ Help.Options.IsNot()
 
     }
 
-ShowSessionOutcome.Set()
+SessionResult.Show()
     {
 
-    ShowSessionOutcome.IsSet && return
+    if UpgradeAllApps.IsSet; then
+        if [[ ${#QPKGS_upgradable[@]} -eq 0 ]]; then
+            ShowAsDone "no QPKGs need upgrading"
+        elif Error.IsNot; then
+            ShowAsDone "all upgradable QPKGs were successfully upgraded"
+        else
+            ShowAsError "upgrade failed! [$code_pointer]"
+            SuggestIssue.Set
+        fi
+#     elif [[ -n $TARGET_APP ]]; then
+#         [[ $reinstall_flag = true ]] && RE='re' || RE=''
+#
+#         if Error.IsNot; then
+#             ShowAsDone "$(FormatAsPackageName "$TARGET_APP") has been successfully ${RE}installed"
+#         else
+#             ShowAsError "$(FormatAsPackageName "$TARGET_APP") ${RE}install failed! [$code_pointer]"
+#             SuggestIssue.Set
+#         fi
+    fi
 
-    _show_session_outcome_flag=true
-    DebugVar _show_session_outcome_flag
+    if CheckDependencies.IsSet; then
+        if Error.IsNot; then
+            ShowAsDone "all application dependencies are installed"
+        else
+            ShowAsError "application dependency check failed! [$code_pointer]"
+            SuggestIssue.Set
+        fi
+    fi
+
+    return 0
 
     }
 
-ShowSessionOutcome.Clear()
+SessionResult.Set()
     {
 
-    ShowSessionOutcome.IsNot && return
+    SessionResult.IsSet && return
 
-    _show_session_outcome_flag=false
-    DebugVar _show_session_outcome_flag
+    _session_result_flag=true
+    DebugVar _session_result_flag
 
     }
 
-ShowSessionOutcome.IsSet()
+SessionResult.Clear()
     {
 
-    [[ $_show_session_outcome_flag = true ]]
+    SessionResult.IsNot && return
+
+    _session_result_flag=false
+    DebugVar _session_result_flag
 
     }
 
-ShowSessionOutcome.IsNot()
+SessionResult.IsSet()
     {
 
-    [[ $_show_session_outcome_flag != true ]]
+    [[ $_session_result_flag = true ]]
+
+    }
+
+SessionResult.IsNot()
+    {
+
+    [[ $_session_result_flag != true ]]
 
     }
 
