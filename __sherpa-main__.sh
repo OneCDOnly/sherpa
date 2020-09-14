@@ -40,7 +40,7 @@ Session.Init()
 
     IsQNAP || return 1
 
-    readonly MANAGER_SCRIPT_VERSION=200914
+    readonly MANAGER_SCRIPT_VERSION=200915
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -1243,6 +1243,12 @@ QPKGs.Dependants.Install()
                 fi
             done
         fi
+
+        if [[ ${#QPKGS_upgradable[*]} -gt 0 ]]; then
+            for package in "${QPKGS_upgradable[@]}"; do
+                [[ $package != Entware ]] && QPKG.Install "$package"     # kludge: Entware has already been installed, don't do it again.
+            done
+        fi
     fi
 
     UpgradeAllApps.IsSet && RestartNotUpgradedQPKGs
@@ -1918,7 +1924,7 @@ ExcludeInstalledQPKGs()
             [[ ${QPKGs_to_install[*]} != *"$element"* ]] && QPKGs_to_install+=($element)
         elif [[ ${#QPKGs_to_reinstall[@]} -gt 0 && ${QPKGs_to_reinstall[*]} == *"$element"* ]]; then
             QPKGs_download_array+=($element)
-        elif [[ ${#QPKGs_to_upgrade[@]} -gt 0 && ${QPKGs_to_upgrade[*]} == *"$element"* ]]; then
+        elif [[ ${#QPKGS_upgradable[@]} -gt 0 && ${QPKGS_upgradable[*]} == *"$element"* ]]; then
             QPKGs_download_array+=($element)
         fi
     done
@@ -2380,13 +2386,14 @@ Help.Actions.Show()
     DisplayAsTitleHelpAction
 
     DisplayAsHelpPackageNameExample '--install' "install all packages listed after this, unless already installed"
+    DisplayAsHelpPackageNameExample '--install-all-applications' "install all available sherpa packages, unless already installed"
     DisplayAsHelpPackageNameExample '--reinstall'
     DisplayAsHelpPackageNameExample '--upgrade'
-#     DisplayAsHelpPackageNameExample '--uninstall'
+    DisplayAsHelpPackageNameExample '--upgrade-all' "upgrade all available sherpa packages"
+    DisplayAsHelpPackageNameExample '--uninstall'
 #     DisplayAsHelpPackageNameExample '--backup'
 #     DisplayAsHelpPackageNameExample '--restore'
 #     DisplayAsHelpPackageNameExample '--status'
-    DisplayAsHelpPackageNameExample '--install-all-applications' "install all available sherpa packages, unless already installed"
 
     return 0
 
