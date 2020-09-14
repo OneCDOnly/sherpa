@@ -760,6 +760,52 @@ Session.Validate()
 
     }
 
+Session.Cleanup()
+    {
+
+    [[ -d $WORK_PATH ]] && Session.Error.IsNot && DebuggingVisible.IsNot && DevMode.IsNot && rm -rf "$WORK_PATH"
+
+    return 0
+
+    }
+
+Session.Result.Show()
+    {
+
+    if VersionView.IsSet; then
+        Display "loader: $LOADER_SCRIPT_VERSION"
+        Display "manager: $MANAGER_SCRIPT_VERSION"
+    fi
+
+    LogView.IsSet && LogViewer.Show
+
+    if Help.IsSet; then
+        Help.Basic.Show
+        Help.Basic.Example.Show
+        LineSpace.Clear
+    fi
+
+    Help.Actions.IsSet && Help.Actions.Show
+    Help.Packages.IsSet && Help.Packages.Show
+    Help.Options.IsSet && Help.Options.Show
+    Help.Problem.IsSet && Help.Problem.Show
+    Help.Tips.IsSet && Help.Tips.Show
+    Help.Abbreviations.IsSet && Help.PackageAbbreviations.Show
+
+    LogPaste.IsSet && PasteLogOnline
+    Session.Summary.IsSet && Session.Summary.Show
+    SuggestIssue.IsSet && Help.Issue.Show
+    DisplayLineSpace
+
+    DebugInfoThinSeparator
+    DebugScript 'finished' "$($DATE_CMD)"
+    DebugScript 'elapsed time' "$(ConvertSecsToMinutes "$(($($DATE_CMD +%s)-$([[ -n $SCRIPT_STARTSECONDS ]] && echo "$SCRIPT_STARTSECONDS" || echo "1")))")"
+    DebugInfoThickSeparator
+
+    return 0
+
+    }
+
 DisplayNewQPKGVersions()
     {
 
@@ -1143,52 +1189,6 @@ RestartNotUpgradedQPKGs()
     done
 
     DebugFuncExit
-    return 0
-
-    }
-
-Session.Cleanup()
-    {
-
-    [[ -d $WORK_PATH ]] && Session.Error.IsNot && DebuggingVisible.IsNot && DevMode.IsNot && rm -rf "$WORK_PATH"
-
-    return 0
-
-    }
-
-Session.Result.Show()
-    {
-
-    if VersionView.IsSet; then
-        Display "loader: $LOADER_SCRIPT_VERSION"
-        Display "manager: $MANAGER_SCRIPT_VERSION"
-    fi
-
-    LogView.IsSet && LogViewer.Show
-
-    if Help.IsSet; then
-        Help.Basic.Show
-        Help.Basic.Example.Show
-        LineSpace.Clear
-    fi
-
-    Help.Actions.IsSet && Help.Actions.Show
-    Help.Packages.IsSet && Help.Packages.Show
-    Help.Options.IsSet && Help.Options.Show
-    Help.Problem.IsSet && Help.Problem.Show
-    Help.Tips.IsSet && Help.Tips.Show
-    Help.Abbreviations.IsSet && Help.PackageAbbreviations.Show
-
-    LogPaste.IsSet && PasteLogOnline
-    Session.Summary.IsSet && Session.Summary.Show
-    SuggestIssue.IsSet && Help.Issue.Show
-    DisplayLineSpace
-
-    DebugInfoThinSeparator
-    DebugScript 'finished' "$($DATE_CMD)"
-    DebugScript 'elapsed time' "$(ConvertSecsToMinutes "$(($($DATE_CMD +%s)-$([[ -n $SCRIPT_STARTSECONDS ]] && echo "$SCRIPT_STARTSECONDS" || echo "1")))")"
-    DebugInfoThickSeparator
-
     return 0
 
     }
