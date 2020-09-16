@@ -40,7 +40,7 @@ Session.Init()
 
     IsQNAP || return 1
 
-    readonly MANAGER_SCRIPT_VERSION=200916
+    readonly MANAGER_SCRIPT_VERSION=200917
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -4201,10 +4201,19 @@ RunThisAndLogResultsRealtime()
 
     local msgs=''
     local result=0
+    local acc=0
 
     FormatAsCommand "$1" >> "$2"
     exec 5>&1
-    $SLEEP_CMD 1        # just in-case 'exec' is taking its sweet time to create the new file descriptor
+    while [[ ! -e /dev/fd/5 ]]; do  # in-case 'exec' is taking its sweet time to create the new file descriptor
+        ((acc++))
+        if [[ $acc -gt 10 ]]; then
+            ShowAsError 'unable to create file descriptor'
+            SuggestIssue.Set
+            return 1
+        fi
+        $SLEEP_CMD 1
+    done
     msgs=$(eval "$1" 2>&1 | $TEE_CMD /dev/fd/5)
     result=$?
     FormatAsResultAndStdout "$result" "$msgs" >> "$2"
