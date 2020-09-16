@@ -40,7 +40,7 @@ Session.Init()
 
     IsQNAP || return 1
 
-    readonly MANAGER_SCRIPT_VERSION=200915
+    readonly MANAGER_SCRIPT_VERSION=200916
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -3035,7 +3035,7 @@ Help.IsSet()
 Help.IsNot()
     {
 
-    [[ $_show_help_flag = false ]]
+    [[ $_show_help_flag != true ]]
 
     }
 
@@ -3071,7 +3071,7 @@ Help.Problem.IsSet()
 Help.Problem.IsNot()
     {
 
-    [[ $_show_problem_help_flag = false ]]
+    [[ $_show_problem_help_flag != true ]]
 
     }
 
@@ -3107,7 +3107,7 @@ Help.Tips.IsSet()
 Help.Tips.IsNot()
     {
 
-    [[ $_show_tips_help_flag = false ]]
+    [[ $_show_tips_help_flag != true ]]
 
     }
 
@@ -3143,7 +3143,7 @@ LogView.IsSet()
 LogView.IsNot()
     {
 
-    [[ $_logview_only_flag = false ]]
+    [[ $_logview_only_flag != true ]]
 
     }
 
@@ -3179,7 +3179,7 @@ VersionView.IsSet()
 VersionView.IsNot()
     {
 
-    [[ $_version_only_flag = false ]]
+    [[ $_version_only_flag != true ]]
 
     }
 
@@ -3215,7 +3215,7 @@ LogPaste.IsSet()
 LogPaste.IsNot()
     {
 
-    [[ $_logpaste_only_flag = false ]]
+    [[ $_logpaste_only_flag != true ]]
 
     }
 
@@ -3249,7 +3249,7 @@ PIPInstall.IsSet()
 PIPInstall.IsNot()
     {
 
-    [[ $_pip_install_flag = false ]]
+    [[ $_pip_install_flag != true ]]
 
     }
 
@@ -3285,7 +3285,7 @@ Session.Error.IsSet()
 Session.Error.IsNot()
     {
 
-    [[ $_script_error_flag = false ]]
+    [[ $_script_error_flag != true ]]
 
     }
 
@@ -3319,7 +3319,7 @@ Session.Abort.IsSet()
 Session.Abort.IsNot()
     {
 
-    [[ $_script_abort_flag = false ]]
+    [[ $_script_abort_flag != true ]]
 
     }
 
@@ -3353,7 +3353,7 @@ CheckDependencies.IsSet()
 CheckDependencies.IsNot()
     {
 
-    [[ $_check_dependencies_flag = false ]]
+    [[ $_check_dependencies_flag != true ]]
 
     }
 
@@ -3389,7 +3389,7 @@ Help.Abbreviations.IsSet()
 Help.Abbreviations.IsNot()
     {
 
-    [[ $_show_abbreviations_flag = false ]]
+    [[ $_show_abbreviations_flag != true ]]
 
     }
 
@@ -3425,7 +3425,7 @@ Help.Actions.IsSet()
 Help.Actions.IsNot()
     {
 
-    [[ $_show_actions_flag = false ]]
+    [[ $_show_actions_flag != true ]]
 
     }
 
@@ -3461,7 +3461,7 @@ Help.Packages.IsSet()
 Help.Packages.IsNot()
     {
 
-    [[ $_show_packages_flag = false ]]
+    [[ $_show_packages_flag != true ]]
 
     }
 
@@ -3497,7 +3497,7 @@ Help.Options.IsSet()
 Help.Options.IsNot()
     {
 
-    [[ $_show_options_flag = false ]]
+    [[ $_show_options_flag != true ]]
 
     }
 
@@ -3567,7 +3567,7 @@ Session.Summary.IsSet()
 Session.Summary.IsNot()
     {
 
-    [[ $_session_result_flag = false ]]
+    [[ $_session_result_flag != true ]]
 
     }
 
@@ -3635,7 +3635,7 @@ DebuggingVisible.IsSet()
 DebuggingVisible.IsNot()
     {
 
-    [[ $_show_debugging_flag = false ]]
+    [[ $_show_debugging_flag != true ]]
 
     }
 
@@ -3673,7 +3673,7 @@ DevMode.IsSet()
 DevMode.IsNot()
     {
 
-    [[ $_dev_mode_flag = false ]]
+    [[ $_dev_mode_flag != true ]]
 
     }
 
@@ -3707,7 +3707,7 @@ SuggestIssue.IsSet()
 SuggestIssue.IsNot()
     {
 
-    [[ $_suggest_issue_flag = false ]]
+    [[ $_suggest_issue_flag != true ]]
 
     }
 
@@ -3741,7 +3741,7 @@ InstallAllApps.IsSet()
 InstallAllApps.IsNot()
     {
 
-    [[ $_install_all_apps_flag = false ]]
+    [[ $_install_all_apps_flag != true ]]
 
     }
 
@@ -3775,7 +3775,7 @@ UninstallAllApps.IsSet()
 UninstallAllApps.IsNot()
     {
 
-    [[ $_uninstall_all_apps_flag = false ]]
+    [[ $_uninstall_all_apps_flag != true ]]
 
     }
 
@@ -3809,7 +3809,7 @@ RestartAllApps.IsSet()
 RestartAllApps.IsNot()
     {
 
-    [[ $_restart_all_apps_flag = false ]]
+    [[ $_restart_all_apps_flag != true ]]
 
     }
 
@@ -3843,7 +3843,7 @@ UpgradeAllApps.IsSet()
 UpgradeAllApps.IsNot()
     {
 
-    [[ $_upgrade_all_apps_flag = false ]]
+    [[ $_upgrade_all_apps_flag != true ]]
 
     }
 
@@ -3877,7 +3877,7 @@ BackupAllApps.IsSet()
 BackupAllApps.IsNot()
     {
 
-    [[ $_backup_all_apps_flag = false ]]
+    [[ $_backup_all_apps_flag != true ]]
 
     }
 
@@ -3911,7 +3911,7 @@ RestoreAllApps.IsSet()
 RestoreAllApps.IsNot()
     {
 
-    [[ $_restore_all_apps_flag = false ]]
+    [[ $_restore_all_apps_flag != true ]]
 
     }
 
@@ -3945,7 +3945,7 @@ StatusAllApps.IsSet()
 StatusAllApps.IsNot()
     {
 
-    [[ $_status_all_apps_flag = false ]]
+    [[ $_status_all_apps_flag != true ]]
 
     }
 
@@ -3977,7 +3977,7 @@ LineSpace.IsSet()
 LineSpace.IsNot()
     {
 
-    [[ $_line_space_flag = false ]]
+    [[ $_line_space_flag != true ]]
 
     }
 
