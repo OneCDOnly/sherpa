@@ -510,13 +510,19 @@ Session.ParseArguments()
                         fi
                         ;;
                     reinstall_)
-                        QPKG.Installed "$target_app" && QPKGs.Reinstall.Add "$target_app"
+                        if QPKG.Installed "$target_app"; then
+                            QPKGs.Reinstall.Add "$target_app"
+                        else
+                            QPKGs.Install.Add "$target_app"
+                        fi
                         ;;
                     restart_)
                         QPKG.Installed "$target_app" && QPKGs.Restart.Add "$target_app"
                         ;;
                     upgrade_)
-                        if QPKG.NotUpgradable "$target_app"; then
+                        if QPKG.NotInstalled "$target_app"; then
+                            QPKGs.Install.Add "$target_app"
+                        elif QPKG.NotUpgradable "$target_app"; then
                             QPKGs.AlreadyUpgraded.Add "$target_app"
                         else
                             QPKGs.Upgrade.Add "$target_app"
