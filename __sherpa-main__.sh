@@ -149,18 +149,7 @@ Session.Init()
     IsSysFileExist $Z7_CMD || return 1
     IsSysFileExist $ZIP_CMD || return 1
 
-    LogToFile.Clear
-    Session.Error.Clear
-    Session.Abort.Clear
-    DebuggingVisible.Clear
-    CheckDependencies.Clear
-    VersionView.Clear
-    LogPaste.Clear
-    Help.Abbreviations.Clear
-    SuggestIssue.Clear
-    Help.Clear
     Session.Summary.Set
-    DevMode.Clear
 
     local -r DEFAULT_SHARE_DOWNLOAD_PATH=/share/Download
     local -r DEFAULT_SHARE_PUBLIC_PATH=/share/Public
@@ -3586,8 +3575,8 @@ LogToFile.Set()
 
     LogToFile.IsSet && return
 
-    _log_to_file=true
-    DebugVar _log_to_file
+    _log_to_file_flag=true
+    DebugVar _log_to_file_flag
 
     }
 
@@ -3596,22 +3585,22 @@ LogToFile.Clear()
 
     LogToFile.IsNot && return
 
-    _log_to_file=false
-    DebugVar _log_to_file
+    _log_to_file_flag=false
+    DebugVar _log_to_file_flag
 
     }
 
 LogToFile.IsSet()
     {
 
-    [[ $_log_to_file = true ]]
+    [[ $_log_to_file_flag = true ]]
 
     }
 
 LogToFile.IsNot()
     {
 
-    [[ $_log_to_file = false ]]
+    [[ $_log_to_file_flag != true ]]
 
     }
 
