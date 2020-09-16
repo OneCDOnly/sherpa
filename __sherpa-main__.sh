@@ -2343,6 +2343,16 @@ DisplayAsHelpPackageNameExample()
 
     }
 
+DisplayAsHelpActionExample()
+    {
+
+    # $1 = description
+    # $2 = example syntax
+
+    printf "    %-28s %s\n" "$1" "$2"
+
+    }
+
 Display()
     {
 
@@ -2386,15 +2396,15 @@ Help.Actions.Show()
 
     DisplayAsTitleHelpAction
 
-    DisplayAsHelpPackageNameExample '--install' "install all packages listed after this, unless already installed"
-    DisplayAsHelpPackageNameExample '--install-all-applications' "install all available sherpa packages, unless already installed"
-    DisplayAsHelpPackageNameExample '--reinstall'
-    DisplayAsHelpPackageNameExample '--upgrade'
-    DisplayAsHelpPackageNameExample '--upgrade-all' "upgrade all available sherpa packages"
-    DisplayAsHelpPackageNameExample '--uninstall'
-#     DisplayAsHelpPackageNameExample '--backup'
-#     DisplayAsHelpPackageNameExample '--restore'
-#     DisplayAsHelpPackageNameExample '--status'
+    DisplayAsHelpActionExample '--install' "install all packages listed after this, unless already installed"
+    DisplayAsHelpActionExample '--install-all-applications' "install all available sherpa packages, unless already installed"
+    DisplayAsHelpActionExample '--reinstall'
+    DisplayAsHelpActionExample '--upgrade'
+    DisplayAsHelpActionExample '--upgrade-all' "upgrade all available sherpa packages"
+    DisplayAsHelpActionExample '--uninstall'
+#     DisplayAsHelpActionExample '--backup'
+#     DisplayAsHelpActionExample '--restore'
+#     DisplayAsHelpActionExample '--status'
 
     return 0
 
