@@ -762,7 +762,7 @@
   calendar_unprotected = 0
   calendar_icons = 0
   no_restart = 0
-  developer = 1
+  developer = 0
   display_all_seasons = 1
   ended_shows_update_interval = 7
   news_last_read = 1970-01-01

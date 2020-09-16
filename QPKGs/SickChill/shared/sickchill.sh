@@ -17,7 +17,7 @@ Init()
     # specific environment
     readonly QPKG_NAME=SickChill
     readonly SOURCE_GIT_URL=http://github.com/sickchill/sickchill.git
-    readonly SOURCE_GIT_BRANCH=develop
+    readonly SOURCE_GIT_BRANCH=master
     # 'shallow' (depth 1) or 'single-branch' (note: 'shallow' implies a 'single-branch' too)
     readonly SOURCE_GIT_DEPTH=single-branch
     readonly TARGET_SCRIPT=SickChill.py
