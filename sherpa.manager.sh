@@ -2285,7 +2285,7 @@ DisplayAsTitleHelpPackage()
     # $1 = description
     # $2 = example syntax
 
-    Display "\n$(FormatAsHelpPackages) may be one or more of the following:\n"
+    Display "\n$(FormatAsHelpPackages) may be one or more of the following (space-separated):\n"
     LineSpace.Clear
 
     }
@@ -2308,9 +2308,9 @@ DisplayAsHelpExample()
     # $2 = example syntax
 
     if [[ ${1: -1} = '!' ]]; then
-        printf "\n  - %s \n       %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$PROJECT_NAME $2"
+        printf "\n  - %s \n       %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$(FormatAsScriptTitle) $2"
     else
-        printf "\n  - %s:\n       %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$PROJECT_NAME $2"
+        printf "\n  - %s:\n       %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$(FormatAsScriptTitle) $2"
     fi
 
     LineSpace.Clear
@@ -2380,11 +2380,11 @@ Help.Actions.Show()
 
     DisplayAsTitleHelpAction
 
-    DisplayAsHelpActionExample '--install' "install all packages listed after this, unless already installed"
-    DisplayAsHelpActionExample '--install-all-applications' "install all available $PROJECT_NAME packages, unless already installed"
-    DisplayAsHelpActionExample '--reinstall'
-    DisplayAsHelpActionExample '--upgrade'
-    DisplayAsHelpActionExample '--upgrade-all' "upgrade all available $PROJECT_NAME packages"
+    DisplayAsHelpActionExample '--install' "install the following $(FormatAsHelpPackages)"
+    DisplayAsHelpActionExample '--install-all-applications' "install all available $(FormatAsScriptTitle) $(FormatAsHelpPackages)"
+    DisplayAsHelpActionExample '--reinstall' "reinstall the following $(FormatAsHelpPackages)"
+    DisplayAsHelpActionExample '--upgrade' "upgrade the following $(FormatAsHelpPackages)"
+    DisplayAsHelpActionExample '--upgrade-all' "upgrade all available $(FormatAsScriptTitle) $(FormatAsHelpPackages)"
 #     DisplayAsHelpActionExample '--uninstall'
 #     DisplayAsHelpActionExample '--backup'
 #     DisplayAsHelpActionExample '--restore'
@@ -2450,15 +2450,15 @@ Help.Problem.Show()
 
     DisplayAsTitleHelpOption
 
-    DisplayAsHelpExample 'install a package and show debugging information' '[PACKAGE] --debug'
+    DisplayAsHelpExample 'install a package and show debugging information' "$(FormatAsHelpPackages) --debug"
 
     DisplayAsHelpExample 'ensure all application dependencies are installed' '--check'
 
     DisplayAsHelpExample "don't check free-space on target filesystem when installing $(FormatAsPackageName Entware) packages" '--ignore-space'
 
-    DisplayAsHelpExample 'restart all applications (only upgrades the internal applications, not the QPKG)' '--restart-all'
+    DisplayAsHelpExample 'restart all installed applications (only upgrades the internal applications, not the QPKG)' '--restart-all'
 
-    DisplayAsHelpExample 'upgrade all QPKGs (including the internal applications)' '--upgrade-all'
+    DisplayAsHelpExample 'upgrade all installed QPKGs (including the internal applications)' '--upgrade-all'
 
     DisplayAsHelpExample 'view the log' '--log'
 
@@ -2540,7 +2540,7 @@ Help.PackageAbbreviations.Show()
         fi
     done
 
-    DisplayAsHelpExample 'example: to install SABnzbd' 'install sab'
+    DisplayAsHelpExample 'example: to install SABnzbd, Mylar3 and nzbToMedia all-at-once' 'install sab my nzb2'
 
     return 0
 
