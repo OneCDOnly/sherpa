@@ -920,11 +920,13 @@ QPKGs.Independents.Install()
         [[ $NAS_QPKG_ARCH != none ]] && ($OPKG_CMD list-installed | $GREP_CMD -q par2cmdline) && $OPKG_CMD remove par2cmdline > /dev/null 2>&1
     fi
 
-    if QPKG.Installed Entware; then
-        PatchBaseInit
-
-        IPKGs.Install
-        InstallPy3Modules
+    if [[ $(QPKGs.Install.Count) -gt 0 || $(QPKGs.Reinstall.Count) -gt 0 || $(CheckDependencies.Set) = true ]]; then
+        if QPKG.Installed Entware; then
+            PatchBaseInit
+            IPKGInstall.Set
+            IPKGs.Install
+            PIP.Install
+        fi
     fi
 
     if QPKG.ToBeInstalled Entware || RestartAllApps.IsSet; then
@@ -1007,6 +1009,7 @@ IPKGs.Install()
     {
 
     Session.Abort.IsSet && return
+    IPKGInstall.IsNot && return
 
     local packages="$SHERPA_COMMON_IPKGS"
     local index=0
@@ -1091,7 +1094,7 @@ InstallIPKGBatch()
 
     }
 
-InstallPy3Modules()
+PIP.Install()
     {
 
     Session.Abort.IsSet && return
@@ -3182,6 +3185,40 @@ LogPaste.IsNot()
     {
 
     [[ $_logpaste_only_flag != true ]]
+
+    }
+
+IPKGInstall.Set()
+    {
+
+    IPKGInstall.IsSet && return
+
+    _ipkg_install_flag=true
+    DebugVar _ipkg_install_flag
+
+    }
+
+IPKGInstall.Clear()
+    {
+
+    IPKGInstall.IsNot && return
+
+    _ipkg_install_flag=false
+    DebugVar _ipkg_install_flag
+
+    }
+
+IPKGInstall.IsSet()
+    {
+
+    [[ $_ipkg_install_flag = true ]]
+
+    }
+
+IPKGInstall.IsNot()
+    {
+
+    [[ $_ipkg_install_flag != true ]]
 
     }
 
