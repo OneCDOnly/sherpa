@@ -340,9 +340,9 @@ Session.Init()
     readonly PREV_QPKG_CONFIG_DIRS=(SAB_CONFIG CONFIG Config config)                 # last element is used as target dirname
     readonly PREV_QPKG_CONFIG_FILES=(sabnzbd.ini settings.ini config.cfg config.ini) # last element is used as target filename
 
-    if QPKG.Installed sherpa; then
-        readonly WORK_PATH=$($GETCFG_CMD sherpa Install_Path -f $APP_CENTER_CONFIG_PATHFILE)/$PROJECT_NAME.tmp
-        readonly DEBUG_LOG_PATHFILE=$($GETCFG_CMD sherpa Install_Path -f $APP_CENTER_CONFIG_PATHFILE)/$DEBUG_LOG_FILE
+    if QPKG.Installed $PROJECT_NAME; then
+        readonly WORK_PATH=$($GETCFG_CMD $PROJECT_NAME Install_Path -f $APP_CENTER_CONFIG_PATHFILE)/$PROJECT_NAME.tmp
+        readonly DEBUG_LOG_PATHFILE=$($GETCFG_CMD $PROJECT_NAME Install_Path -f $APP_CENTER_CONFIG_PATHFILE)/$DEBUG_LOG_FILE
     else
         readonly WORK_PATH=$SHARE_PUBLIC_PATH/$PROJECT_NAME.tmp
         readonly DEBUG_LOG_PATHFILE=$SHARE_PUBLIC_PATH/$DEBUG_LOG_FILE
@@ -561,9 +561,8 @@ Session.Validate()
     VersionView.IsSet && return
 
     if DebuggingVisible.IsNot; then
-        Display "$(ColourTextBrightWhite "$PROJECT_NAME") $MANAGER_SCRIPT_VERSION • a mini-package-manager for QNAP NAS"
+        Display "$(FormatAsScriptTitle) $MANAGER_SCRIPT_VERSION • a mini-package-manager for QNAP NAS"
         DisplayLineSpace
-#         CheckLoaderAge
     fi
 
     DisplayNewQPKGVersions
@@ -663,7 +662,7 @@ Session.Validate()
     DebugInfo "QPKGs required: $(QPKGs.Download.Print)"
 
     if [[ $(QPKGs.Download.Count) -eq 1 && ${QPKGs_download_array[0]} = Entware ]] && QPKG.NotInstalled Entware; then
-        ShowAsNote "It's not necessary to install $(FormatAsPackageName Entware) on its own. It will be installed as-required with your other sherpa packages. :)"
+        ShowAsNote "It's not necessary to install $(FormatAsPackageName Entware) on its own. It will be installed as-required with your other $PROJECT_NAME packages. :)"
 #         Session.Abort.Set
 #         Session.Summary.Clear
 #         return 1
@@ -772,6 +771,7 @@ Session.Result.Show()
     {
 
     if VersionView.IsSet; then
+        QPKG.Installed $PROJECT_NAME && Display "package: $(GetInstalledQPKGVersion $PROJECT_NAME)"
         Display "loader: $LOADER_SCRIPT_VERSION"
         Display "manager: $MANAGER_SCRIPT_VERSION"
     fi
@@ -838,12 +838,12 @@ PasteLogOnline()
     # with thanks to https://github.com/solusipse/fiche
 
     if [[ -n $DEBUG_LOG_PATHFILE && -e $DEBUG_LOG_PATHFILE ]]; then
-        if AskQuiz "Press 'Y' to post your sherpa log in a public pastebin, or any other key to abort"; then
-            ShowAsProc 'uploading sherpa log'
+        if AskQuiz "Press 'Y' to post your $PROJECT_NAME log in a public pastebin, or any other key to abort"; then
+            ShowAsProc "uploading $PROJECT_NAME log"
             link=$($TAIL_CMD -n 1000 -q "$DEBUG_LOG_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
 
             if [[ $? -eq 0 ]]; then
-                ShowAsDone "your sherpa log is now online at $(FormatAsURL "$($SED_CMD 's|http://|http://l.|;s|https://|https://l.|' <<< "$link")") and will be deleted in 1 month"
+                ShowAsDone "your $PROJECT_NAME log is now online at $(FormatAsURL "$($SED_CMD 's|http://|http://l.|;s|https://|https://l.|' <<< "$link")") and will be deleted in 1 month"
             else
                 ShowAsError "a link could not be generated. Most likely a problem occurred when talking with $(FormatAsURL 'https://termbin.com')"
             fi
@@ -1117,7 +1117,7 @@ InstallPy3Modules()
         pip3_cmd=/opt/bin/pip3.7
     else
         if IsNotSysFileExist $pip3_cmd; then
-            echo "* Ugh! The usual fix for this is to let sherpa reinstall $(FormatAsPackageName Entware) at least once."
+            echo "* Ugh! The usual fix for this is to let $PROJECT_NAME reinstall $(FormatAsPackageName Entware) at least once."
             echo -e "\t$0 ew"
             echo "If it happens again after reinstalling $(FormatAsPackageName Entware), please create a new issue for this on GitHub."
             return 1
@@ -1331,7 +1331,7 @@ QPKGs.Remove()
     done
 
     if QPKG.ToBeReinstalled Entware; then
-        ShowAsNote "Reinstalling $(FormatAsPackageName Entware) will remove all IPKGs and Python modules, and only those required to support your sherpa apps will be reinstalled."
+        ShowAsNote "Reinstalling $(FormatAsPackageName Entware) will remove all IPKGs and Python modules, and only those required to support your $PROJECT_NAME apps will be reinstalled."
         ShowAsNote "Your installed IPKG list will be saved to $(FormatAsFileName "$previous_opkg_package_list")"
         ShowAsNote "Your installed Python module list will be saved to $(FormatAsFileName "$previous_pip3_module_list")"
         (QPKG.Installed SABnzbdplus || QPKG.Installed Headphones) && ShowAsWarning "Also, the $(FormatAsPackageName SABnzbdplus) and $(FormatAsPackageName Headphones) packages CANNOT BE REINSTALLED as Python 2.7.16 is no-longer available."
@@ -2183,21 +2183,6 @@ Session.LockFile.Release()
 
     }
 
-CheckLoaderAge()
-    {
-
-    # Has the loader script been downloaded only in the last 5 minutes?
-
-    [[ -e $GNU_FIND_CMD ]] || return          # can only do this with GNU 'find'. The old BusyBox 'find' in QTS 4.2.6 doesn't support '-cmin'.
-
-    if [[ -e "$LOADER_SCRIPT_FILE" && -z $($GNU_FIND_CMD "$LOADER_SCRIPT_FILE" -cmin +5) ]]; then
-        ShowAsNote "The $(ColourTextBrightWhite 'sherpa.sh') script does not need updating anymore. It now downloads all the latest information from the Internet everytime it's run. ;)"
-    fi
-
-    return 0
-
-    }
-
 IsSysFileExist()
     {
 
@@ -2370,7 +2355,7 @@ Help.Basic.Show()
     {
 
     DisplayLineSpace
-    Display "Usage: $(ColourTextBrightWhite "$PROJECT_NAME") $(FormatAsHelpAction) $(FormatAsHelpPackages) $(FormatAsHelpOptions)"
+    Display "Usage: $(FormatAsScriptTitle) $(FormatAsHelpAction) $(FormatAsHelpPackages) $(FormatAsHelpOptions)"
     LineSpace.Clear
 
     return 0
@@ -2396,11 +2381,11 @@ Help.Actions.Show()
     DisplayAsTitleHelpAction
 
     DisplayAsHelpActionExample '--install' "install all packages listed after this, unless already installed"
-    DisplayAsHelpActionExample '--install-all-applications' "install all available sherpa packages, unless already installed"
+    DisplayAsHelpActionExample '--install-all-applications' "install all available $PROJECT_NAME packages, unless already installed"
     DisplayAsHelpActionExample '--reinstall'
     DisplayAsHelpActionExample '--upgrade'
-    DisplayAsHelpActionExample '--upgrade-all' "upgrade all available sherpa packages"
-    DisplayAsHelpActionExample '--uninstall'
+    DisplayAsHelpActionExample '--upgrade-all' "upgrade all available $PROJECT_NAME packages"
+#     DisplayAsHelpActionExample '--uninstall'
 #     DisplayAsHelpActionExample '--backup'
 #     DisplayAsHelpActionExample '--restore'
 #     DisplayAsHelpActionExample '--status'
@@ -4298,7 +4283,7 @@ FormatAsISO()
 FormatAsScriptTitle()
     {
 
-    ColourTextBrightWhite sherpa
+    ColourTextBrightWhite "$PROJECT_NAME"
 
     }
 
