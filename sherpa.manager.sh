@@ -2493,8 +2493,10 @@ Help.Issue.Show()
 Help.Tips.Show()
     {
 
-    DisplayLineSpace
+    Help.Basic.Show
+
     DisplayAsTitleHelpOption
+
     DisplayAsHelpExample 'install everything!' '--install-all-applications'
 
     DisplayAsHelpExample 'package abbreviations may also be used. To see these' '--abs'
