@@ -580,27 +580,27 @@ Session.Validate()
     DebugInfo '(==) processing, (--) done, (>>) f entry, (<<) f exit, (vv) variable name & value,'
     DebugInfo '($1) positional argument value'
     DebugInfoThinSeparator
-    DebugHardware 'model' "$(get_display_name)"
-    DebugHardware 'RAM' "$INSTALLED_RAM_KB kB"
+    DebugHardware.OK 'model' "$(get_display_name)"
+    DebugHardware.OK 'RAM' "$INSTALLED_RAM_KB kB"
     if QPKG.ToBeInstalled SABnzbd || QPKG.Installed SABnzbd || QPKG.Installed SABnzbdplus; then
-        [[ $INSTALLED_RAM_KB -le $MIN_RAM_KB ]] && DebugHardwareWarning 'RAM' "less-than or equal-to $MIN_RAM_KB kB"
+        [[ $INSTALLED_RAM_KB -le $MIN_RAM_KB ]] && DebugHardware.Warning 'RAM' "less-than or equal-to $MIN_RAM_KB kB"
     fi
     DebugFirmware 'firmware version' "$NAS_FIRMWARE"
     DebugFirmware 'firmware build' "$($GETCFG_CMD System 'Build Number' -f $ULINUX_PATHFILE)"
     DebugFirmware 'kernel' "$($UNAME_CMD -mr)"
-    DebugUserspace 'OS uptime' "$($UPTIME_CMD | $SED_CMD 's|.*up.||;s|,.*load.*||;s|^\ *||')"
-    DebugUserspace 'system load' "$($UPTIME_CMD | $SED_CMD 's|.*load average: ||' | $AWK_CMD -F', ' '{print "1 min="$1 ", 5 min="$2 ", 15 min="$3}')"
+    DebugUserspace.OK 'OS uptime' "$($UPTIME_CMD | $SED_CMD 's|.*up.||;s|,.*load.*||;s|^\ *||')"
+    DebugUserspace.OK 'system load' "$($UPTIME_CMD | $SED_CMD 's|.*load average: ||' | $AWK_CMD -F', ' '{print "1 min="$1 ", 5 min="$2 ", 15 min="$3}')"
 
     if [[ $USER = admin ]]; then
-        DebugUserspace '$USER' "$USER"
+        DebugUserspace.OK '$USER' "$USER"
     else
-        DebugUserspaceWarning '$USER' "$USER"
+        DebugUserspace.Warning '$USER' "$USER"
     fi
 
     if [[ $EUID -eq 0 ]]; then
-        DebugUserspace '$EUID' "$EUID"
+        DebugUserspace.OK '$EUID' "$EUID"
     else
-        DebugUserspaceWarning '$EUID' "$EUID"
+        DebugUserspace.Warning '$EUID' "$EUID"
     fi
 
     if [[ $EUID -ne 0 || $USER != admin ]]; then
@@ -608,26 +608,26 @@ Session.Validate()
         return 1
     fi
 
-    DebugUserspace 'default volume' "$($GETCFG_CMD SHARE_DEF defVolMP -f $DEFAULT_SHARES_PATHFILE)"
-    DebugUserspace '$PATH' "${PATH:0:53}"
+    DebugUserspace.OK 'default volume' "$($GETCFG_CMD SHARE_DEF defVolMP -f $DEFAULT_SHARES_PATHFILE)"
+    DebugUserspace.OK '$PATH' "${PATH:0:53}"
 
     if [[ -L '/opt' ]]; then
-        DebugUserspace '/opt' "$($READLINK_CMD '/opt' || echo '<not present>')"
+        DebugUserspace.OK '/opt' "$($READLINK_CMD '/opt' || echo '<not present>')"
     else
-        DebugUserspaceWarning '/opt' '<not present>'
+        DebugUserspace.Warning '/opt' '<not present>'
     fi
 
     if location=$(command -v python3 2>&1); then
-        DebugUserspace 'Python 3 path' "$location"
-        DebugUserspace 'Python 3 version' "$(version=$(python3 -V 2>&1) && echo "$version" || echo '<unknown>')"
+        DebugUserspace.OK 'Python 3 path' "$location"
+        DebugUserspace.OK 'Python 3 version' "$(version=$(python3 -V 2>&1) && echo "$version" || echo '<unknown>')"
     else
-        DebugUserspaceWarning 'Python 3 path' '<not present>'
+        DebugUserspace.Warning 'Python 3 path' '<not present>'
     fi
 
     if [[ -L $SHARE_DOWNLOAD_PATH ]]; then
-        DebugUserspace "$SHARE_DOWNLOAD_PATH" "$($READLINK_CMD "$SHARE_DOWNLOAD_PATH")"
+        DebugUserspace.OK "$SHARE_DOWNLOAD_PATH" "$($READLINK_CMD "$SHARE_DOWNLOAD_PATH")"
     else
-        DebugUserspaceWarning "$SHARE_DOWNLOAD_PATH" '<not present>'
+        DebugUserspace.Warning "$SHARE_DOWNLOAD_PATH" '<not present>'
     fi
 
     DebugScript 'unparsed arguments' "$USER_ARGS_RAW"
@@ -4492,63 +4492,63 @@ DebugTimerStageEnd()
 DebugScript()
     {
 
-    DebugDetected "$(FormatAsScript)" "$1" "$2"
+    DebugDetected.OK "$(FormatAsScript)" "$1" "$2"
 
     }
 
 DebugStage()
     {
 
-    DebugDetected "$(FormatAsStage)" "$1" "$2"
+    DebugDetected.OK "$(FormatAsStage)" "$1" "$2"
 
     }
 
-DebugHardware()
+DebugHardware.OK()
     {
 
-    DebugDetected "$(FormatAsHardware)" "$1" "$2"
+    DebugDetected.OK "$(FormatAsHardware)" "$1" "$2"
 
     }
 
-DebugHardwareWarning()
+DebugHardware.Warning()
     {
 
-    DebugDetectedWarning "$(FormatAsHardware)" "$1" "$2"
+    DebugDetected.Warning "$(FormatAsHardware)" "$1" "$2"
 
     }
 
 DebugFirmware()
     {
 
-    DebugDetected "$(FormatAsFirmware)" "$1" "$2"
+    DebugDetected.OK "$(FormatAsFirmware)" "$1" "$2"
 
     }
 
-DebugUserspace()
+DebugUserspace.OK()
     {
 
-    DebugDetected "$(FormatAsUserspace)" "$1" "$2"
+    DebugDetected.OK "$(FormatAsUserspace)" "$1" "$2"
 
     }
 
-DebugUserspaceWarning()
+DebugUserspace.Warning()
     {
 
-    DebugDetectedWarning "$(FormatAsUserspace)" "$1" "$2"
+    DebugDetected.Warning "$(FormatAsUserspace)" "$1" "$2"
 
     }
 
 DebugQPKG()
     {
 
-    DebugDetected 'QPKG' "$1" "$2"
+    DebugDetected.OK 'QPKG' "$1" "$2"
 
     }
 
 DebugIPKG()
     {
 
-    DebugDetected 'IPKG' "$1" "$2"
+    DebugDetected.OK 'IPKG' "$1" "$2"
 
     }
 
@@ -4580,13 +4580,32 @@ DebugDone()
 
     }
 
-DebugDetectedWarning()
+DebugDetected.Warning()
     {
 
-    if [[ -z $3 ]]; then
-        DebugThis "(WW) $(printf "%9s: %19s\n" "$1" "$2")"
+    if [[ -z $3 ]]; then                # if $3 is nothing, then assume only 2 fields are required
+        DebugWarning "$(printf "%9s: %19s\n" "$1" "$2")"
+    elif [[ $3 = ' ' ]]; then           # if $3 is only a whitespace then print $2 with trailing colon but no third field
+        DebugWarning "$(printf "%9s: %19s:\n" "$1" "$2")"
+    elif [[ ${3: -1} = ' ' ]]; then     # if $3 has a trailing whitespace then print $3 without the trailing whitespace
+        DebugWarning "$(printf "%9s: %19s: %-s\n" "$1" "$2" "$($SED_CMD 's| *$||' <<< "$3")")"
     else
-        DebugThis "(WW) $(printf "%9s: %19s: %-s\n" "$1" "$2" "$3")"
+        DebugWarning "$(printf "%9s: %19s: %-s\n" "$1" "$2" "$3")"
+    fi
+
+    }
+
+DebugDetected.OK()
+    {
+
+    if [[ -z $3 ]]; then                # if $3 is nothing, then assume only 2 fields are required
+        DebugDetected "$(printf "%9s: %19s\n" "$1" "$2")"
+    elif [[ $3 = ' ' ]]; then           # if $3 is only a whitespace then print $2 with trailing colon but no third field
+        DebugDetected "$(printf "%9s: %19s:\n" "$1" "$2")"
+    elif [[ ${3: -1} = ' ' ]]; then     # if $3 has a trailing whitespace then print $3 without the trailing whitespace
+        DebugDetected "$(printf "%9s: %19s: %-s\n" "$1" "$2" "$($SED_CMD 's| *$||' <<< "$3")")"
+    else
+        DebugDetected "$(printf "%9s: %19s: %-s\n" "$1" "$2" "$3")"
     fi
 
     }
@@ -4594,11 +4613,7 @@ DebugDetectedWarning()
 DebugDetected()
     {
 
-    if [[ -z $3 ]]; then
-        DebugThis "(**) $(printf "%9s: %19s\n" "$1" "$2")"
-    else
-        DebugThis "(**) $(printf "%9s: %19s: %-s\n" "$1" "$2" "$3")"
-    fi
+    DebugThis "(**) $1"
 
     }
 
