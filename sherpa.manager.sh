@@ -500,10 +500,10 @@ Session.ParseArguments()
 
                 case $current_operation in
                     install_)
-                        if QPKG.Installed "$target_app"; then
-                            QPKGs.AlreadyInstalled.Add "$target_app"
-                        else
+                        if QPKG.NotInstalled "$target_app"; then
                             QPKGs.Install.Add "$target_app"
+                        else
+                            QPKGs.Reinstall.Add "$target_app"
                         fi
                         ;;
                     uninstall_)
@@ -514,10 +514,10 @@ Session.ParseArguments()
                         fi
                         ;;
                     reinstall_)
-                        if QPKG.Installed "$target_app"; then
-                            QPKGs.Reinstall.Add "$target_app"
-                        else
+                        if QPKG.NotInstalled "$target_app"; then
                             QPKGs.Install.Add "$target_app"
+                        else
+                            QPKGs.Reinstall.Add "$target_app"
                         fi
                         ;;
                     restart_)
