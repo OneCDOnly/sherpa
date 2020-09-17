@@ -54,25 +54,25 @@ Any model QNAP NAS with at-least 1GB RAM and running QTS 4.0 or-later.
 
 [b][u][size=120]Usage[/size][/u][/b]
 
-[list=1][*]Install the [b]sherpa[/b] QPKG. Available here:
+[list=1][*]Install the [b]sherpa[/b] QPKG. Available here:[attachment=0]sherpa_200917.qpkg.zip[/attachment]
 
-[*][url=https://wiki.qnap.com/wiki/How_to_SSH_into_your_QNAP_device][b]SSH[/b][/url] / [url=http://www.putty.org/][b]PuTTY[/b][/url] into your NAS as the 'admin' user,
+[*][url=https://wiki.qnap.com/wiki/How_to_SSH_into_your_QNAP_device][b]SSH[/b][/url] into your NAS as the 'admin' user,
 
-[*]Then, to install (or reinstall) an app, run [b]sherpa[/b] with the name of your required app as an argument.
+[*]Then, to install an app, run [b]sherpa[/b] with the name of your required app as an argument.
 
-So, to install SABnzbd and SickChill, use:
-[code]sherpa --install SABnzbd SickChill[/code]
+For example: to install SABnzbd and SickChill, use:
+[code]sherpa install SABnzbd SickChill[/code]
 ... or:
-[code]sherpa --install nzbToMedia
-sherpa --install LazyLibrarian
-sherpa --install Medusa
-sherpa --install SickChill
-sherpa --install SickGear
-sherpa --install Mylar3
-sherpa --install NZBGet
-sherpa --install Transmission
-sherpa --install Deluge-server
-sherpa --install Deluge-web
+[code]sherpa install nzbToMedia
+sherpa install LazyLibrarian
+sherpa install Medusa
+sherpa install SickChill
+sherpa install SickGear
+sherpa install Mylar3
+sherpa install NZBGet
+sherpa install Transmission
+sherpa install Deluge-server
+sherpa install Deluge-web
 [/code]
 
 Or, install everything!
@@ -85,7 +85,7 @@ Or, install everything!
 [list][*]Python 2.7.16 is no-longer available via Entware/OpenWRT so the [b]Headphones[/b] QPKG can no-longer be installed. I'll need to find another Python2 source with installable modules, but I'm not hopeful.
 [/list]
 [list][*]Sometimes, it seems existing installations of OpenWRT can become "difficult" to work with. So, Entware can also be reinstalled, but this should only be used as a last resort. Using:
-[code]sherpa Entware[/code]
+[code]sherpa reinstall Entware[/code]
 ... will force [b]sherpa[/b] to uninstall your existing Entware QPKG, then install a new one. [b][color=#FF0000]Note:[/color][/b] OpenWRT will be reverted back to default, and only the IPKGs required to support your installed [b]sherpa[/b] apps will be installed. [/list]
 
 [list][*][b]sherpa[/b] is incompatible with Optware-NG as it's missing a few required packages.[/list]
@@ -98,20 +98,20 @@ Or, install everything!
 [list]This will happen from time-to-time as the environment changes. If it's not shown above in '[b]Known issues[/b]' then you may have found something new, so please add to this thread with the details of the problem you encountered. Diagnose where you can and provide a solution if you're able. The functions in this script are a community effort. ;)
 [/list]
 [list][*]Sometimes the debug log will be required. This is always created. You can view this with:
-[code]sherpa --log[/code]
+[code]sherpa log[/code]
 Or run the installer in debug-mode to see it realtime. e.g.:
 [code]sherpa install SABnzbd --debug[/code]
 NEW! Your debug log can now be posted online courtesy of https://termbin.com:
-[code]sherpa --paste[/code]
+[code]sherpa paste[/code]
 A link will be generated to view this log online. Share it here if you need assistance.
 
 [b]Note:[/b] your log will be [b]publicly visible[/b] to anyone who knows the link details. It will be automatically deleted after 1 month. The debug log typically won't contain any personally-identifiable information. Your public and private IP addresses, email address and so-on are not recorded. However, there is a chance some info may leak if an app generates a backtrace and this is pasted into the sherpa debug log. So, check it first before pasting online.
 [/list]
 [list][*]To upgrade all your sherpa QPKGs:
-[code]sherpa --upgrade-all[/code]
+[code]sherpa upgrade-all[/code]
 [/list]
 [list][*]This option will install any additional QPKGs or IPKGs to support any sherpa-installed applications present on your NAS:
-[code]sherpa --check[/code]
+[code]sherpa check[/code]
 [/list]
 
 
