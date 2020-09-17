@@ -341,8 +341,8 @@ Session.Init()
     readonly PREV_QPKG_CONFIG_FILES=(sabnzbd.ini settings.ini config.cfg config.ini) # last element is used as target filename
 
     if QPKG.Installed sherpa; then
-        readonly WORK_PATH=$(QPKG.Install_Path)/$PROJECT_NAME.tmp
-        readonly DEBUG_LOG_PATHFILE=$(QPKG.Install_Path)/$DEBUG_LOG_FILE
+        readonly WORK_PATH=$($GETCFG_CMD sherpa Install_Path -f $APP_CENTER_CONFIG_PATHFILE)/$PROJECT_NAME.tmp
+        readonly DEBUG_LOG_PATHFILE=$($GETCFG_CMD sherpa Install_Path -f $APP_CENTER_CONFIG_PATHFILE)/$DEBUG_LOG_FILE
     else
         readonly WORK_PATH=$SHARE_PUBLIC_PATH/$PROJECT_NAME.tmp
         readonly DEBUG_LOG_PATHFILE=$SHARE_PUBLIC_PATH/$DEBUG_LOG_FILE
