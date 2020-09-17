@@ -41,9 +41,9 @@ Any model QNAP NAS with at-least 1GB RAM and running QTS 4.0 or-later.
 
 1) Install the sherpa QPKG. Available here: 
 
-1) [SSH](https://wiki.qnap.com/wiki/How_to_SSH_into_your_QNAP_device) into your NAS as the 'admin' user,
+1) [SSH](https://www.qnap.com/en/how-to/knowledge-base/article/how-to-access-qnap-nas-by-ssh/) into your NAS as the 'admin' user,
 
-4) Then, to install (or reinstall) an app, run **sherpa** with the name of your required apps as arguments.
+4) Then, to install apps, run **sherpa** with the names of your required apps as arguments.
 
 For example: to install SABnzbd and SickChill, use:
 
