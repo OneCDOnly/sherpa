@@ -36,7 +36,7 @@ Session.Init()
 
     IsQNAP || return 1
 
-    readonly MANAGER_SCRIPT_VERSION=200917
+    readonly MANAGER_SCRIPT_VERSION=200918
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -342,9 +342,11 @@ Session.Init()
     if QPKG.Installed $PROJECT_NAME; then
         readonly WORK_PATH=$($GETCFG_CMD $PROJECT_NAME Install_Path -f $APP_CENTER_CONFIG_PATHFILE)/$PROJECT_NAME.tmp
         readonly DEBUG_LOG_PATHFILE=$($GETCFG_CMD $PROJECT_NAME Install_Path -f $APP_CENTER_CONFIG_PATHFILE)/$DEBUG_LOG_FILE
+        readonly PACKAGE_VERSION=$(GetInstalledQPKGVersion $PROJECT_NAME)
     else
         readonly WORK_PATH=$SHARE_PUBLIC_PATH/$PROJECT_NAME.tmp
         readonly DEBUG_LOG_PATHFILE=$SHARE_PUBLIC_PATH/$DEBUG_LOG_FILE
+        readonly PACKAGE_VERSION=''
     fi
 
     readonly QPKG_DL_PATH=$WORK_PATH/qpkg.downloads
@@ -571,12 +573,12 @@ Session.Validate()
     LogToFile.Set
     DebugInfoThickSeparator
     DebugScript 'started' "$($DATE_CMD | $TR_CMD -s ' ')"
-    DebugScript 'version' "manager: $MANAGER_SCRIPT_VERSION, loader $LOADER_SCRIPT_VERSION"
+    DebugScript 'version' "package: $PACKAGE_VERSION, manager: $MANAGER_SCRIPT_VERSION, loader $LOADER_SCRIPT_VERSION"
     DebugScript 'PID' "$$"
     DebugInfoThinSeparator
-    DebugInfo 'Markers: (**) detected, (II) information, (WW) warning, (LL) log file,'
-    DebugInfo ' (EE) error, (==) processing, (--) done, (>>) f entry, (<<) f exit,'
-    DebugInfo ' (vv) variable name & value, ($1) positional argument value.'
+    DebugInfo 'Markers: (**) detected, (II) information, (WW) warning, (EE) error, (LL) log file,'
+    DebugInfo '(==) processing, (--) done, (>>) f entry, (<<) f exit, (vv) variable name & value,'
+    DebugInfo '($1) positional argument value'
     DebugInfoThinSeparator
     DebugHardware 'model' "$(get_display_name)"
     DebugHardware 'RAM' "$INSTALLED_RAM_KB kB"
@@ -607,7 +609,7 @@ Session.Validate()
     fi
 
     DebugUserspace 'default volume' "$($GETCFG_CMD SHARE_DEF defVolMP -f $DEFAULT_SHARES_PATHFILE)"
-    DebugUserspace '$PATH' "${PATH:0:43}"
+    DebugUserspace '$PATH' "${PATH:0:53}"
 
     if [[ -L '/opt' ]]; then
         DebugUserspace '/opt' "$($READLINK_CMD '/opt' || echo '<not present>')"
@@ -767,7 +769,7 @@ Session.Result.Show()
     {
 
     if VersionView.IsSet; then
-        QPKG.Installed $PROJECT_NAME && Display "package: $(GetInstalledQPKGVersion $PROJECT_NAME)"
+        Display "package: $PACKAGE_VERSION"
         Display "loader: $LOADER_SCRIPT_VERSION"
         Display "manager: $MANAGER_SCRIPT_VERSION"
     fi
@@ -2386,6 +2388,7 @@ Help.Actions.Show()
 #     DisplayAsHelpActionExample '--backup'
 #     DisplayAsHelpActionExample '--restore'
 #     DisplayAsHelpActionExample '--status'
+#     DisplayAsHelpActionExample '--status-all'
 
     return 0
 
@@ -4391,28 +4394,28 @@ DisplayLineSpace()
 DebugInfoThickSeparator()
     {
 
-    DebugInfo "$(printf '%0.s=' {1..76})"
+    DebugInfo "$(printf '%0.s=' {1..86})"
 
     }
 
 DebugInfoThinSeparator()
     {
 
-    DebugInfo "$(printf '%0.s-' {1..76})"
+    DebugInfo "$(printf '%0.s-' {1..86})"
 
     }
 
 DebugErrorThinSeparator()
     {
 
-    DebugError "$(printf '%0.s-' {1..76})"
+    DebugError "$(printf '%0.s-' {1..86})"
 
     }
 
 DebugLogThinSeparator()
     {
 
-    DebugLog "$(printf '%0.s-' {1..76})"
+    DebugLog "$(printf '%0.s-' {1..86})"
 
     }
 
