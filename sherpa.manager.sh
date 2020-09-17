@@ -339,8 +339,15 @@ Session.Init()
 
     readonly PREV_QPKG_CONFIG_DIRS=(SAB_CONFIG CONFIG Config config)                 # last element is used as target dirname
     readonly PREV_QPKG_CONFIG_FILES=(sabnzbd.ini settings.ini config.cfg config.ini) # last element is used as target filename
-    readonly WORK_PATH=$SHARE_PUBLIC_PATH/$PROJECT_NAME.tmp
-    readonly DEBUG_LOG_PATHFILE=$SHARE_PUBLIC_PATH/$DEBUG_LOG_FILE
+
+    if QPKG.Installed sherpa; then
+        readonly WORK_PATH=$(QPKG.Install_Path)/$PROJECT_NAME.tmp
+        readonly DEBUG_LOG_PATHFILE=$(QPKG.Install_Path)/$DEBUG_LOG_FILE
+    else
+        readonly WORK_PATH=$SHARE_PUBLIC_PATH/$PROJECT_NAME.tmp
+        readonly DEBUG_LOG_PATHFILE=$SHARE_PUBLIC_PATH/$DEBUG_LOG_FILE
+    fi
+
     readonly QPKG_DL_PATH=$WORK_PATH/qpkg.downloads
     readonly IPKG_DL_PATH=$WORK_PATH/ipkg.downloads
     readonly IPKG_CACHE_PATH=$WORK_PATH/ipkg.cache
@@ -2316,9 +2323,9 @@ DisplayAsHelpExample()
     # $2 = example syntax
 
     if [[ ${1: -1} = '!' ]]; then
-        printf "\n  - %s \n       ./%s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$PROJECT_NAME $2"
+        printf "\n  - %s \n       %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$PROJECT_NAME $2"
     else
-        printf "\n  - %s:\n       ./%s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$PROJECT_NAME $2"
+        printf "\n  - %s:\n       %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$PROJECT_NAME $2"
     fi
 
     LineSpace.Clear
