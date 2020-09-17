@@ -2387,14 +2387,14 @@ Help.Actions.Show()
 
     DisplayAsTitleHelpAction
 
-    DisplayAsHelpActionExample '--install' "install the following $(FormatAsHelpPackages)"
-    DisplayAsHelpActionExample '--install-all-applications' "install all available $(FormatAsScriptTitle) $(FormatAsHelpPackages)"
-    DisplayAsHelpActionExample '--reinstall' "reinstall the following $(FormatAsHelpPackages)"
-    DisplayAsHelpActionExample '--upgrade' "upgrade the following $(FormatAsHelpPackages)"
-    DisplayAsHelpActionExample '--upgrade-all' "upgrade all available $(FormatAsHelpPackages)"
-    DisplayAsHelpActionExample '--restart' "upgrade the following $(FormatAsHelpPackages), this will upgrade the internal application"
-    DisplayAsHelpActionExample '--restart-all' "restart all available $(FormatAsHelpPackages), this will upgrade the internal applications"
-#     DisplayAsHelpActionExample '--uninstall'
+    DisplayAsHelpActionExample '--install' "install the following packages"
+    DisplayAsHelpActionExample '--install-all-applications' "install all available $(FormatAsScriptTitle) packages"
+    DisplayAsHelpActionExample '--reinstall' "reinstall the following packages"
+    DisplayAsHelpActionExample '--upgrade' "upgrade the following packages"
+    DisplayAsHelpActionExample '--upgrade-all' "upgrade all available packages"
+    DisplayAsHelpActionExample '--restart' "upgrade the following packages, this will upgrade the internal application"
+    DisplayAsHelpActionExample '--restart-all' "restart all available packages, this will upgrade the internal applications"
+    DisplayAsHelpActionExample '--uninstall' "uninstall the following packages"
 #     DisplayAsHelpActionExample '--backup'
 #     DisplayAsHelpActionExample '--restore'
 #     DisplayAsHelpActionExample '--status'
