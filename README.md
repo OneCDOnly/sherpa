@@ -39,7 +39,7 @@ Any model QNAP NAS with at-least 1GB RAM and running QTS 4.0 or-later.
 ---
 ## Usage
 
-1) Install the sherpa QPKG. Available here: 
+1) Install the new **sherpa** QPKG! Available [here](https://forum.qnap.com/viewtopic.php?p=613448#p613448).
 
 1) [SSH](https://www.qnap.com/en/how-to/knowledge-base/article/how-to-access-qnap-nas-by-ssh/) into your NAS as the 'admin' user,
 
