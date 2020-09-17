@@ -920,7 +920,7 @@ QPKGs.Independents.Install()
         [[ $NAS_QPKG_ARCH != none ]] && ($OPKG_CMD list-installed | $GREP_CMD -q par2cmdline) && $OPKG_CMD remove par2cmdline > /dev/null 2>&1
     fi
 
-    if [[ $(QPKGs.Install.Count) -gt 0 || $(QPKGs.Reinstall.Count) -gt 0 || $(CheckDependencies.Set) = true ]]; then
+    if QPKGs.Install.IsAny || QPKGs.Reinstall.IsAny || QPKGs.Upgrade.IsAny || CheckDependencies.IsSet; then
         if QPKG.Installed Entware; then
             PatchBaseInit
             IPKGInstall.Set
