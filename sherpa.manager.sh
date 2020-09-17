@@ -1161,7 +1161,7 @@ QPKGs.Dependant.Restart()
     local package=''
 
     for package in "${SHERPA_DEP_QPKGs[@]}"; do
-        QPKG.Enabled "$package" && RestartQPKGService "$package"
+        QPKG.Enabled "$package" && QPKG.Restart "$package"
     done
 
     DebugFuncExit
@@ -1182,7 +1182,7 @@ RestartNotUpgradedQPKGs()
     local package=''
 
     for package in "${SHERPA_DEP_QPKGs[@]}"; do
-        QPKG.Enabled "$package" && ! QPKG.Upgradable "$package" && RestartQPKGService "$package"
+        QPKG.Enabled "$package" && ! QPKG.Upgradable "$package" && QPKG.Restart "$package"
     done
 
     DebugFuncExit
@@ -1224,6 +1224,7 @@ QPKGs.Dependants.Install()
                 [[ $package != Entware ]] && QPKG.Install "$package"     # kludge: Entware has already been installed, don't do it again.
             done
         fi
+        RestartNotUpgradedQPKGs
     else
         if [[ ${#QPKGs_to_install[*]} -gt 0 ]]; then
             for package in "${SHERPA_DEP_QPKGs[@]}"; do
@@ -1243,12 +1244,18 @@ QPKGs.Dependants.Install()
 
         if [[ ${#QPKGS_upgradable[*]} -gt 0 ]]; then
             for package in "${QPKGS_upgradable[@]}"; do
-                [[ $package != Entware ]] && QPKG.Install "$package"     # kludge: Entware has already been installed, don't do it again.
+                QPKG.Install "$package"
+            done
+        fi
+
+        if [[ ${#QPKGs_to_restart[*]} -gt 0 ]]; then
+            for package in "${SHERPA_DEP_QPKGs[@]}"; do
+                if [[ ${QPKGs_to_restart[*]} == *"$package"* ]]; then
+                    QPKG.Restart "$package"
+                fi
             done
         fi
     fi
-
-    UpgradeAllApps.IsSet && RestartNotUpgradedQPKGs
 
     return 0
 
@@ -1572,7 +1579,7 @@ QPKG.Uninstall()
 
     }
 
-RestartQPKGService()
+QPKG.Restart()
     {
 
     # Restarts the service script for the QPKG named in $1
@@ -2381,9 +2388,9 @@ Help.Actions.Show()
     DisplayAsHelpActionExample '--install-all-applications' "install all available $(FormatAsScriptTitle) $(FormatAsHelpPackages)"
     DisplayAsHelpActionExample '--reinstall' "reinstall the following $(FormatAsHelpPackages)"
     DisplayAsHelpActionExample '--upgrade' "upgrade the following $(FormatAsHelpPackages)"
-    DisplayAsHelpActionExample '--upgrade-all' "upgrade all available $(FormatAsScriptTitle) $(FormatAsHelpPackages)"
-#     DisplayAsHelpActionExample '--restart'
-#     DisplayAsHelpActionExample '--restart-all'
+    DisplayAsHelpActionExample '--upgrade-all' "upgrade all available $(FormatAsHelpPackages)"
+    DisplayAsHelpActionExample '--restart' "upgrade the following $(FormatAsHelpPackages), this will upgrade the internal application"
+    DisplayAsHelpActionExample '--restart-all' "restart all available $(FormatAsHelpPackages), this will upgrade the internal applications"
 #     DisplayAsHelpActionExample '--uninstall'
 #     DisplayAsHelpActionExample '--backup'
 #     DisplayAsHelpActionExample '--restore'
