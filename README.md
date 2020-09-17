@@ -6,7 +6,7 @@ A mini-package-manager to install various media-management apps into QNAP NAS.
 
 **sherpa** is able to install several search and download apps. App configuration will be retained when upgrading or reinstalling apps.
 
-If the installer is successful, your requested packages will be installed. Any existing installation of Entware will be used automatically. If Entware is not installed, a version appropriate to your NAS will be installed.
+Any existing installation of Entware will be used automatically. If Entware is not installed, a version appropriate to your NAS will be installed.
 
 ---
 ## Before you begin
