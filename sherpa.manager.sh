@@ -326,7 +326,6 @@ Session.Init()
 
     # runtime arrays
     QPKGs_to_install=()
-    QPKGs_already_installed=()
     QPKGs_to_uninstall=()
     QPKGs_already_uninstalled=()
     QPKGs_to_reinstall=()
@@ -651,8 +650,10 @@ Session.Validate()
         QPKGs_initial_array+=($(QPKGs.NotInstalled.Array))
     elif UpgradeAllApps.IsSet; then
         QPKGs_initial_array=($(QPKGs.Upgradable.Array))
+        PIPInstall.Set
     elif CheckDependencies.IsSet; then
         QPKGs_initial_array+=($(QPKGsInstalled.Array))
+        PIPInstall.Set
     else
         QPKGs_initial_array+=(${QPKGs_to_install[*]} ${QPKGs_to_reinstall[*]} ${QPKGs_to_upgrade[*]})
     fi
@@ -663,18 +664,13 @@ Session.Validate()
 
     if [[ $(QPKGs.Download.Count) -eq 1 && ${QPKGs_download_array[0]} = Entware ]] && QPKG.NotInstalled Entware; then
         ShowAsNote "It's not necessary to install $(FormatAsPackageName Entware) on its own. It will be installed as-required with your other $PROJECT_NAME packages. :)"
-#         Session.Abort.Set
-#         Session.Summary.Clear
-#         return 1
     fi
 
     for package in Optware Entware-3x Entware-ng; do
         QPKG.Installed "$package" && QPKGs.Uninstall.Add "$package"
     done
 
-    if QPKGs.AlreadyInstalled.IsAny; then
-        ShowAsNote "$(QPKGs.AlreadyInstalled.Print) is already installed. Use the '--reinstall' action to reinstall."
-    elif QPKGs.AlreadyUninstalled.IsAny; then
+    if QPKGs.AlreadyUninstalled.IsAny; then
         ShowAsNote "$(QPKGs.AlreadyUninstalled.Print) is not installed"
     elif QPKGs.AlreadyUpgraded.IsAny; then
         ShowAsNote "$(QPKGs.AlreadyUpgraded.Print) is not upgradable"
@@ -1079,8 +1075,7 @@ InstallIPKGBatch()
 
         if [[ $result -eq 0 ]]; then
             ShowAsDone "downloaded & installed $IPKG_download_count IPKG$(FormatAsPlural "$IPKG_download_count")"
-            # if 'python3-pip' was installed, the install all 'pip' modules too
-#             [[ ${IPKG_download_list[*]} =~ python3-pip ]] && PIPInstall.Set
+            PIPInstall.Set
         else
             ShowAsError "download & install IPKG$(FormatAsPlural "$IPKG_download_count") failed $(FormatAsExitcode $result)"
             DebugErrorFile "$log_pathfile"
@@ -1098,7 +1093,7 @@ InstallPy3Modules()
     {
 
     Session.Abort.IsSet && return
-#     PIPInstall.IsNot && return
+    PIPInstall.IsNot && return
 
     DebugFuncEntry
     local exec_cmd=''
@@ -2385,6 +2380,8 @@ Help.Actions.Show()
     DisplayAsHelpActionExample '--reinstall' "reinstall the following $(FormatAsHelpPackages)"
     DisplayAsHelpActionExample '--upgrade' "upgrade the following $(FormatAsHelpPackages)"
     DisplayAsHelpActionExample '--upgrade-all' "upgrade all available $(FormatAsScriptTitle) $(FormatAsHelpPackages)"
+#     DisplayAsHelpActionExample '--restart'
+#     DisplayAsHelpActionExample '--restart-all'
 #     DisplayAsHelpActionExample '--uninstall'
 #     DisplayAsHelpActionExample '--backup'
 #     DisplayAsHelpActionExample '--restore'
@@ -2627,43 +2624,6 @@ QPKGsInstalled.Print()
     {
 
     echo "${QPKGs_installed[*]}"
-
-    }
-
-QPKGs.AlreadyInstalled.Add()
-    {
-
-    [[ ${QPKGs_already_installed[*]} != *"$1"* ]] && QPKGs_already_installed+=("$1")
-
-    return 0
-
-    }
-
-QPKGs.AlreadyInstalled.Array()
-    {
-
-    echo "${QPKGs_already_installed[@]}"
-
-    }
-
-QPKGs.AlreadyInstalled.Print()
-    {
-
-    echo "${QPKGs_already_installed[*]}"
-
-    }
-
-QPKGs.AlreadyInstalled.IsAny()
-    {
-
-    [[ ${#QPKGs_already_installed[@]} -gt 0 ]]
-
-    }
-
-QPKGs.AlreadyInstalled.IsNone()
-    {
-
-    [[ ${#QPKGs_already_installed[@]} -eq 0 ]]
 
     }
 
