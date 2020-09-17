@@ -39,53 +39,43 @@ Any model QNAP NAS with at-least 1GB RAM and running QTS 4.0 or-later.
 ---
 ## Usage
 
+1) Install the sherpa QPKG. Available here: 
+
 1) [SSH](https://wiki.qnap.com/wiki/How_to_SSH_into_your_QNAP_device) / [PuTTY](http://www.putty.org/) into your NAS as the 'admin' user,
 
-2) Change to the **Public** share directory:
-
-```
-cd /share/Public
-```
-
-3) Download the installer script and make it executable (you'll only need to do this once):
-
-```
-curl -skLO https://git.io/sherpa.sh && chmod +x sherpa.sh
-```
-
-4) Then, to install (or reinstall) an app, run **sherpa.sh** with the name of your required apps as arguments.
+4) Then, to install (or reinstall) an app, run **sherpa** with the name of your required apps as arguments.
 
 So, to install SABnzbd and SickChill, use:
 
 ```
-./sherpa.sh --install SABnzbd SickChill
+sherpa --install SABnzbd SickChill
 ```
 
 ... or:
 
 ```
-./sherpa.sh --install nzbToMedia
+sherpa --install nzbToMedia
 
-./sherpa.sh --install LazyLibrarian
+sherpa --install LazyLibrarian
 
-./sherpa.sh --install Medusa
+sherpa --install Medusa
 
-./sherpa.sh --install SickGear
+sherpa --install SickGear
 
-./sherpa.sh --install Mylar3
+sherpa --install Mylar3
 
-./sherpa.sh --install NZBGet
+sherpa --install NZBGet
 
-./sherpa.sh --install Transmission
+sherpa --install Transmission
 
-./sherpa.sh --install Deluge-server
+sherpa --install Deluge-server
 
-./sherpa.sh --install Deluge-web
+sherpa --install Deluge-web
 ```
 
 Or, install everything!
 ```
-./sherpa.sh --install-all-applications
+sherpa --install-all-applications
 ```
 
 ---
@@ -96,7 +86,7 @@ Or, install everything!
 2) Sometimes, it seems existing installations of OpenWRT can become "difficult" to work with. So, Entware can also be reinstalled, but this should only be used as a last resort. Using:
 
 ```
-./sherpa.sh Entware
+sherpa Entware
 ```
 
 ... will force **sherpa** to uninstall your existing Entware QPKG, then install a new one. **Note:** OpenWRT will be reverted back to default, and only the IPKGs required to support your installed **sherpa** apps will be installed. All **sherpa** installed applications will be restarted afterward.
@@ -115,18 +105,18 @@ This will happen from time-to-time as the environment changes. If it's not shown
 Sometimes the debug log will be required. This is always created. You can view this with:
 
 ```
-./sherpa.sh --log
+sherpa --log
 ```
 
 Or run the installer in debug-mode to see it realtime. e.g.:
 
 ```
-./sherpa.sh SABnzbd --debug
+sherpa install SABnzbd --debug
 ```
 NEW! Your debug log can now be posted online courtesy of [https://termbin.com](https://termbin.com):
 
 ```
-./sherpa.sh --paste
+sherpa --paste
 ```
 
 A link will be generated to view this log online. Share it here if you need assistance.
@@ -136,13 +126,13 @@ A link will be generated to view this log online. Share it here if you need assi
 To upgrade all your sherpa QPKGs:
 
 ```
-./sherpa.sh --upgrade-all
+sherpa --upgrade-all
 ```
 
 This option will install any additional QPKGs or IPKGs to support any sherpa-installed applications present on your NAS:
 
 ```
-./sherpa.sh --check
+sherpa --check
 ```
 
 

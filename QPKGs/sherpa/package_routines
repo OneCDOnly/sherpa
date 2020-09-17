@@ -98,3 +98,13 @@
 # All package specific functions shall call 'err_log MSG' if an error
 # is detected that shall terminate the installation.
 ######################################################################
+######################################################################
+# Define any package specific operations that shall be performed when
+# the package is installed.
+######################################################################
+pkg_post_install()
+	{
+
+	$CMD_SETCFG -f $SYS_QPKG_CONFIG_FILE $QPKG_NAME Web_Port $($CMD_GETCFG System "Web Access Port")
+
+	}
