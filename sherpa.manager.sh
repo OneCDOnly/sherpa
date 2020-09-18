@@ -508,11 +508,7 @@ Session.ParseArguments()
                         fi
                         ;;
                     uninstall_)
-                        if QPKG.NotInstalled "$target_app"; then
-                            QPKGs.AlreadyUninstalled.Add "$target_app"
-                        else
-                            QPKGs.Uninstall.Add "$target_app"
-                        fi
+                        QPKGs.Uninstall.Add "$target_app"
                         ;;
                     reinstall_)
                         if QPKG.NotInstalled "$target_app"; then
@@ -522,13 +518,11 @@ Session.ParseArguments()
                         fi
                         ;;
                     restart_)
-                        QPKG.Installed "$target_app" && QPKGs.Restart.Add "$target_app"
+                        QPKGs.Restart.Add "$target_app"
                         ;;
                     upgrade_)
                         if QPKG.NotInstalled "$target_app"; then
                             QPKGs.Install.Add "$target_app"
-                        elif QPKG.NotUpgradable "$target_app"; then
-                            QPKGs.AlreadyUpgraded.Add "$target_app"
                         else
                             QPKGs.Upgrade.Add "$target_app"
                         fi
@@ -672,16 +666,10 @@ Session.Validate()
         QPKG.Installed "$package" && QPKGs.Uninstall.Add "$package"
     done
 
-    if QPKGs.AlreadyUninstalled.IsAny; then
-        ShowAsNote "$(QPKGs.AlreadyUninstalled.Print) is not installed"
-    elif QPKGs.AlreadyUpgraded.IsAny; then
-        ShowAsNote "$(QPKGs.AlreadyUpgraded.Print) is not upgradable"
-    fi
-
     if QPKGs.Install.IsNone && QPKGs.Uninstall.IsNone && QPKGs.Reinstall.IsNone && QPKGs.Restart.IsNone && QPKGs.Upgrade.IsNone && [[ ${#QPKGs_to_backup[@]} -eq 0 && ${#QPKGs_to_restore[@]} -eq 0 && ${#QPKGs_to_status[@]} -eq 0 ]]; then
         if InstallAllApps.IsNot && UninstallAllApps.IsNot && RestartAllApps.IsNot && UpgradeAllApps.IsNot && BackupAllApps.IsNot && RestoreAllApps.IsNot && StatusAllApps.IsNot; then
             if CheckDependencies.IsNot; then
-                ShowAsError "nothing to do"
+                ShowAsError 'nothing to do'
                 return 1
             fi
         fi
@@ -1128,7 +1116,7 @@ PIP.Install()
     [[ -n ${SHERPA_COMMON_PIPS// /} && -n ${packages// /} ]] && exec_cmd+=" && "
     [[ -n ${packages// /} ]] && exec_cmd+="$pip3_cmd install $packages --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
 
-    # kludge: force recompilation of 'sabyenc3' package so it's recognised by SABnzbd. See: https://forums.sabnzbd.org/viewtopic.php?p=121214#p121214
+    # KLUDGE: force recompilation of 'sabyenc3' package so it's recognised by SABnzbd. See: https://forums.sabnzbd.org/viewtopic.php?p=121214#p121214
     [[ $exec_cmd =~ sabyenc3 ]] && exec_cmd+=" && $pip3_cmd install --force-reinstall --ignore-installed --no-binary :all: sabyenc3 --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
 
     [[ -z $exec_cmd ]] && return
@@ -1218,13 +1206,13 @@ QPKGs.Dependants.Install()
     if InstallAllApps.IsSet; then
         if [[ ${#QPKGS_user_installable[*]} -gt 0 ]]; then
             for package in "${QPKGS_user_installable[@]}"; do
-                [[ $package != Entware ]] && QPKG.Install "$package"     # kludge: Entware has already been installed, don't do it again.
+                [[ $package != Entware ]] && QPKG.Install "$package"     # KLUDGE: Entware has already been installed, don't do it again.
             done
         fi
     elif UpgradeAllApps.IsSet; then
         if [[ ${#QPKGS_upgradable[*]} -gt 0 ]]; then
             for package in "${QPKGS_upgradable[@]}"; do
-                [[ $package != Entware ]] && QPKG.Install "$package"     # kludge: Entware has already been installed, don't do it again.
+                [[ $package != Entware ]] && QPKG.Install "$package"     # KLUDGE: Entware has already been installed, don't do it again.
             done
         fi
         RestartNotUpgradedQPKGs
@@ -1254,7 +1242,15 @@ QPKGs.Dependants.Install()
         if [[ ${#QPKGs_to_restart[*]} -gt 0 ]]; then
             for package in "${SHERPA_DEP_QPKGs[@]}"; do
                 if [[ ${QPKGs_to_restart[*]} == *"$package"* ]]; then
-                    QPKG.Restart "$package"
+                    if QPKG.Installed "$package"; then
+                        if QPKG.ToNotBeInstalled "$package" && QPKG.ToNotBeReinstalled "$package"; then
+                            QPKG.Restart "$package"
+                        else
+                            ShowAsNote "no-need to restart $(FormatAsPackageName "$package") as it was just installed"
+                        fi
+                    else
+                        ShowAsNote "unable to restart $(FormatAsPackageName "$package") as it's not installed"
+                    fi
                 fi
             done
         fi
@@ -1315,7 +1311,7 @@ QPKGs.Download()
         QPKG.Download "$package"
     done
 
-    # kludge: an ugly workaround until QPKG dependency checking works properly
+    # KLUDGE: an ugly workaround until QPKG dependency checking works properly
 #     (QPKG.Installed SABnzbd || [[ $TARGET_APP = SABnzbd ]] ) && [[ $NAS_QPKG_ARCH != none ]] && QPKG.NotInstalled Par2 && QPKG.Download Par2
 
     DebugFuncExit
@@ -1334,7 +1330,11 @@ QPKGs.Remove()
     local previous_opkg_package_list=$SHARE_PUBLIC_PATH/opkg.prev.installed.list
 
     for package in "${QPKGs_to_uninstall[@]}"; do
-        QPKG.Uninstall "$package"
+        if QPKG.Installed "$package"; then
+            QPKG.Uninstall "$package"
+        else
+            ShowAsNote "unable to uninstall $(FormatAsPackageName "$package") as it's not installed"
+        fi
     done
 
     if QPKG.ToBeReinstalled Entware; then
@@ -2011,7 +2011,7 @@ GetAllIPKGDepsToDownload()
     DebugProc 'excluding IPKGs already installed'
     # shellcheck disable=SC2068
     for element in ${pre_download_list[@]}; do
-        if [[ $element != 'ca-certs' ]]; then   # kludge: 'ca-certs' appears to be a bogus meta-package, so silently exclude it from attempted installation
+        if [[ $element != 'ca-certs' ]]; then   # KLUDGE: 'ca-certs' appears to be a bogus meta-package, so silently exclude it from attempted installation
             if ! $OPKG_CMD status "$element" | $GREP_CMD -q "Status:.*installed"; then
                 IPKG_download_list+=($element)
             fi
@@ -2422,7 +2422,7 @@ Help.Packages.Show()
             package_name_message="$package"
         fi
 
-        if [[ $package = Entware ]]; then       # kludge: use this until independent package checking works.
+        if [[ $package = Entware ]]; then       # KLUDGE: use this until independent package checking works.
             package_note_message='(installed by-default)'
         else
             package_note_message=''
@@ -2677,43 +2677,6 @@ QPKGs.Uninstall.IsNone()
 
     }
 
-QPKGs.AlreadyUninstalled.Add()
-    {
-
-    [[ ${QPKGs_already_uninstalled[*]} != *"$1"* ]] && QPKGs_already_uninstalled+=("$1")
-
-    return 0
-
-    }
-
-QPKGs.AlreadyUninstalled.Array()
-    {
-
-    echo "${QPKGs_already_uninstalled[@]}"
-
-    }
-
-QPKGs.AlreadyUninstalled.Print()
-    {
-
-    echo "${QPKGs_already_uninstalled[*]}"
-
-    }
-
-QPKGs.AlreadyUninstalled.IsAny()
-    {
-
-    [[ ${#QPKGs_already_uninstalled[@]} -gt 0 ]]
-
-    }
-
-QPKGs.AlreadyUninstalled.IsNone()
-    {
-
-    [[ ${#QPKGs_already_uninstalled[@]} -eq 0 ]]
-
-    }
-
 QPKGs.Reinstall.Add()
     {
 
@@ -2847,7 +2810,7 @@ QPKGs.Upgradable.Build()
     local remote_version=''
 
     for package in "${QPKGs_installed[@]}"; do
-        [[ $package = Entware ]] && continue        # kludge: ignore 'Entware' as package filename version doesn't match the QTS App Center version string
+        [[ $package = Entware ]] && continue        # KLUDGE: ignore 'Entware' as package filename version doesn't match the QTS App Center version string
         installed_version=$(GetInstalledQPKGVersion "$package")
         remote_version=$(GetQPKGRemoteVersion "$package")
 
@@ -2888,43 +2851,6 @@ QPKGs.Restart.IsNone()
     {
 
     [[ ${#QPKGs_to_restart[@]} -eq 0 ]]
-
-    }
-
-QPKGs.AlreadyUpgraded.Add()
-    {
-
-    [[ ${QPKGs_already_upgraded[*]} != *"$1"* ]] && QPKGs_already_upgraded+=("$1")
-
-    return 0
-
-    }
-
-QPKGs.AlreadyUpgraded.Array()
-    {
-
-    echo "${QPKGs_already_upgraded[@]}"
-
-    }
-
-QPKGs.AlreadyUpgraded.Print()
-    {
-
-    echo "${QPKGs_already_upgraded[*]}"
-
-    }
-
-QPKGs.AlreadyUpgraded.IsAny()
-    {
-
-    [[ ${#QPKGs_already_upgraded[@]} -gt 0 ]]
-
-    }
-
-QPKGs.AlreadyUpgraded.IsNone()
-    {
-
-    [[ ${#QPKGs_already_upgraded[@]} -eq 0 ]]
 
     }
 
@@ -4027,6 +3953,19 @@ QPKG.ToBeInstalled()
 
     }
 
+QPKG.ToNotBeInstalled()
+    {
+
+    # input:
+    #   $1 = package name to check
+
+    # output:
+    #   $? = 0 (true) or 1 (false)
+
+    ! QPKG.ToBeInstalled "$1"
+
+    }
+
 QPKG.ToBeReinstalled()
     {
 
@@ -4043,6 +3982,19 @@ QPKG.ToBeReinstalled()
 
     }
 
+QPKG.ToNotBeReinstalled()
+    {
+
+    # input:
+    #   $1 = package name to check
+
+    # output:
+    #   $? = 0 (true) or 1 (false)
+
+    ! QPKG.ToBeReinstalled "$1"
+
+    }
+
 QPKG.ToBeUpgraded()
     {
 
@@ -4056,6 +4008,48 @@ QPKG.ToBeUpgraded()
     [[ ${#QPKGs_to_upgrade[@]} -gt 0 && ${QPKGs_to_upgrade[*]} == *"$1"* ]] && return 0
 
     return 1
+
+    }
+
+QPKG.ToNotBeUpgraded()
+    {
+
+    # input:
+    #   $1 = package name to check
+
+    # output:
+    #   $? = 0 (true) or 1 (false)
+
+    ! QPKG.ToBeUpgraded "$1"
+
+    }
+
+QPKG.ToBeRestarted()
+    {
+
+    # input:
+    #   $1 = package name to check
+
+    # output:
+    #   $? = 0 (true) or 1 (false)
+
+    [[ -z $1 ]] && return 1
+    [[ ${#QPKGs_to_restart[@]} -gt 0 && ${QPKGs_to_restart[*]} == *"$1"* ]] && return 0
+
+    return 1
+
+    }
+
+QPKG.ToNotBeRestarted()
+    {
+
+    # input:
+    #   $1 = package name to check
+
+    # output:
+    #   $? = 0 (true) or 1 (false)
+
+    ! QPKG.ToBeRestarted "$1"
 
     }
 
