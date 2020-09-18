@@ -338,17 +338,9 @@ Session.Init()
 
     readonly PREV_QPKG_CONFIG_DIRS=(SAB_CONFIG CONFIG Config config)                 # last element is used as target dirname
     readonly PREV_QPKG_CONFIG_FILES=(sabnzbd.ini settings.ini config.cfg config.ini) # last element is used as target filename
-
-    if QPKG.Installed $PROJECT_NAME; then
-        readonly WORK_PATH=$($GETCFG_CMD $PROJECT_NAME Install_Path -f $APP_CENTER_CONFIG_PATHFILE)/$PROJECT_NAME.tmp
-        readonly DEBUG_LOG_PATHFILE=$($GETCFG_CMD $PROJECT_NAME Install_Path -f $APP_CENTER_CONFIG_PATHFILE)/$DEBUG_LOG_FILE
-        readonly PACKAGE_VERSION=$(GetInstalledQPKGVersion $PROJECT_NAME)
-    else
-        readonly WORK_PATH=$SHARE_PUBLIC_PATH/$PROJECT_NAME.tmp
-        readonly DEBUG_LOG_PATHFILE=$SHARE_PUBLIC_PATH/$DEBUG_LOG_FILE
-        readonly PACKAGE_VERSION=''
-    fi
-
+    readonly WORK_PATH=$($GETCFG_CMD $PROJECT_NAME Install_Path -f $APP_CENTER_CONFIG_PATHFILE)/$PROJECT_NAME.tmp
+    readonly DEBUG_LOG_PATHFILE=$($GETCFG_CMD $PROJECT_NAME Install_Path -f $APP_CENTER_CONFIG_PATHFILE)/$DEBUG_LOG_FILE
+    readonly PACKAGE_VERSION=$(GetInstalledQPKGVersion $PROJECT_NAME)
     readonly QPKG_DL_PATH=$WORK_PATH/qpkg.downloads
     readonly IPKG_DL_PATH=$WORK_PATH/ipkg.downloads
     readonly IPKG_CACHE_PATH=$WORK_PATH/ipkg.cache
@@ -762,15 +754,6 @@ Session.Validate()
     DebugIPKG 'download path' "$IPKG_DL_PATH"
     DebugQPKG 'arch' "$NAS_QPKG_ARCH"
     DebugInfoThinSeparator
-
-    return 0
-
-    }
-
-Session.Cleanup()
-    {
-
-    [[ -d $WORK_PATH ]] && Session.Error.IsNot && DebuggingVisible.IsNot && DevMode.IsNot && rm -rf "$WORK_PATH"
 
     return 0
 
@@ -4982,7 +4965,6 @@ QPKGs.Download
 QPKGs.Remove
 QPKGs.Independents.Install
 QPKGs.Dependants.Install
-Session.Cleanup
 Session.Result.Show
 Session.LockFile.Release
 Session.Error.IsNot
