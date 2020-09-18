@@ -442,13 +442,13 @@ Session.ParseArguments()
                 VersionView.Set
                 return 1
                 ;;
-            --install-all-applications|install-all-applications)
+            --install-all|install-all)
                 InstallAllApps.Set
                 current_operation=''
                 operation_force=false
                 return 1
                 ;;
-            --uninstall-all-applications|uninstall-all-applications)
+            --uninstall-all-applications-please|uninstall-all-applications-please)
                 UninstallAllApps.Set
                 current_operation=''
                 operation_force=false
@@ -2363,7 +2363,7 @@ DisplayAsHelpActionExample()
     # $1 = description
     # $2 = example syntax
 
-    printf "    %-28s %s\n" "$1" "$2"
+    printf "    %-35s %s\n" "$1" "$2"
 
     }
 
@@ -2411,13 +2411,14 @@ Help.Actions.Show()
     DisplayAsTitleHelpAction
 
     DisplayAsHelpActionExample '--install' "install the following packages"
-    DisplayAsHelpActionExample '--install-all-applications' "install all available $(FormatAsScriptTitle) packages"
+    DisplayAsHelpActionExample '--install-all' "install all available $(FormatAsScriptTitle) packages"
     DisplayAsHelpActionExample '--reinstall' "reinstall the following packages"
     DisplayAsHelpActionExample '--upgrade' "upgrade the following packages"
     DisplayAsHelpActionExample '--upgrade-all' "upgrade all available packages"
     DisplayAsHelpActionExample '--restart' "upgrade the following packages, this will upgrade the internal application"
     DisplayAsHelpActionExample '--restart-all' "restart all available packages, this will upgrade the internal applications"
     DisplayAsHelpActionExample '--uninstall' "uninstall the following packages"
+    DisplayAsHelpActionExample '--uninstall-all-applications-please' "uninstall everything!"
 #     DisplayAsHelpActionExample '--backup'
 #     DisplayAsHelpActionExample '--restore'
 #     DisplayAsHelpActionExample '--status'
