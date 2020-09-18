@@ -338,13 +338,13 @@ Session.Init()
 
     readonly PREV_QPKG_CONFIG_DIRS=(SAB_CONFIG CONFIG Config config)                 # last element is used as target dirname
     readonly PREV_QPKG_CONFIG_FILES=(sabnzbd.ini settings.ini config.cfg config.ini) # last element is used as target filename
-    readonly WORK_PATH=$($GETCFG_CMD $PROJECT_NAME Install_Path -f $APP_CENTER_CONFIG_PATHFILE)/$PROJECT_NAME.tmp
+    readonly WORK_PATH=$($GETCFG_CMD $PROJECT_NAME Install_Path -f $APP_CENTER_CONFIG_PATHFILE)/repo
     readonly DEBUG_LOG_PATHFILE=$($GETCFG_CMD $PROJECT_NAME Install_Path -f $APP_CENTER_CONFIG_PATHFILE)/$DEBUG_LOG_FILE
     readonly PACKAGE_VERSION=$(GetInstalledQPKGVersion $PROJECT_NAME)
-    readonly QPKG_DL_PATH=$WORK_PATH/qpkg.downloads
-    readonly IPKG_DL_PATH=$WORK_PATH/ipkg.downloads
-    readonly IPKG_CACHE_PATH=$WORK_PATH/ipkg.cache
-    readonly PIP_CACHE_PATH=$WORK_PATH/pip.cache
+    readonly QPKG_DL_PATH=$WORK_PATH/qpkgs
+    readonly IPKG_DL_PATH=$WORK_PATH/ipkgs.downloads
+    readonly IPKG_CACHE_PATH=$WORK_PATH/ipkgs.cache
+    readonly PIP_CACHE_PATH=$WORK_PATH/pips.cache
     readonly EXTERNAL_PACKAGE_LIST_PATHFILE=$WORK_PATH/Packages
 
     # internals
@@ -4181,7 +4181,7 @@ RunThisAndLogResults()
     local msgs=''
     local result=0
 
-    FormatAsCommand "$1" >> "$2"
+    FormatAsCommand "$1" > "$2"
     msgs=$(eval "$1" 2>&1)
     result=$?
     FormatAsResultAndStdout "$result" "$msgs" >> "$2"
@@ -4206,7 +4206,7 @@ RunThisAndLogResultsRealtime()
 
     local buffer=/var/log/execd.log
 
-    FormatAsCommand "$1" >> "$2"
+    FormatAsCommand "$1" > "$2"
     eval "$1" 2>&1 | $TEE_CMD "$buffer"
     result=$?
     FormatAsResultAndStdout "$result" "$(<"$buffer")" >> "$2"
