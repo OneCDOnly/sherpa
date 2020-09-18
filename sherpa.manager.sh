@@ -387,6 +387,7 @@ Session.ParseArguments()
     local user_args=($($TR_CMD '[A-Z]' '[a-z]' <<< "$USER_ARGS_RAW"))
     local arg=''
     local current_operation=''
+    local operation_force=false
     local target_app=''
 
     for arg in "${user_args[@]}"; do
@@ -398,6 +399,9 @@ Session.ParseArguments()
             -c|c|--check|check)
                 CheckDependencies.Set
                 current_operation=''
+                ;;
+            --force|force)
+                operation_force=true
                 ;;
             --ignore-space|ignore-space)
                 ignore_space_arg='--force-space'
@@ -441,59 +445,74 @@ Session.ParseArguments()
             --install-all-applications|install-all-applications)
                 InstallAllApps.Set
                 current_operation=''
+                operation_force=false
                 return 1
                 ;;
             --uninstall-all-applications|uninstall-all-applications)
                 UninstallAllApps.Set
                 current_operation=''
+                operation_force=false
                 return 1
                 ;;
             --restart-all|restart-all)
                 RestartAllApps.Set
                 current_operation=''
+                operation_force=false
                 ;;
             --upgrade-all|upgrade-all)
                 UpgradeAllApps.Set
                 current_operation=''
+                operation_force=false
                 ;;
             --backup-all)
                 BackupAllApps.Set
                 current_operation=''
+                operation_force=false
                 return 1
                 ;;
             --restore-all)
                 RestoreAllApps.Set
                 current_operation=''
+                operation_force=false
                 return 1
                 ;;
             --status-all|status-all)
                 StatusAllApps.Set
                 current_operation=''
+                operation_force=false
                 return 1
                 ;;
             --install|install)
                 current_operation=install_
+                operation_force=false
                 ;;
             --uninstall|uninstall)
                 current_operation=uninstall_
+                operation_force=false
                 ;;
             --reinstall|reinstall)
                 current_operation=reinstall_
+                operation_force=false
                 ;;
             --restart|restart)
                 current_operation=restart_
+                operation_force=false
                 ;;
             --upgrade|upgrade)
                 current_operation=upgrade_
+                operation_force=false
                 ;;
             --backup|backup)
                 current_operation=backup_
+                operation_force=false
                 ;;
             --restore|restore)
                 current_operation=restore_
+                operation_force=false
                 ;;
             --status|status)
                 current_operation=status_
+                operation_force=false
                 ;;
             *)
                 target_app=$(MatchAbbrvToQPKGName "$arg")
@@ -523,6 +542,10 @@ Session.ParseArguments()
                     upgrade_)
                         if QPKG.NotInstalled "$target_app"; then
                             QPKGs.Install.Add "$target_app"
+                        elif [[ ${QPKGS_upgradable[*]} != *"$target_app"* ]]; then
+                            if [[ $operation_force = true ]]; then
+                                QPKGs.Reinstall.Add "$target_app"
+                            fi
                         else
                             QPKGs.Upgrade.Add "$target_app"
                         fi
