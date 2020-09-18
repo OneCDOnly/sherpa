@@ -75,7 +75,7 @@ sherpa install Deluge-web
 
 Or, install everything!
 ```
-sherpa --install-all-applications
+sherpa --install-all
 ```
 
 ---
