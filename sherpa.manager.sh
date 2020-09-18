@@ -685,6 +685,7 @@ Session.Validate()
         if InstallAllApps.IsNot && UninstallAllApps.IsNot && RestartAllApps.IsNot && UpgradeAllApps.IsNot && BackupAllApps.IsNot && RestoreAllApps.IsNot && StatusAllApps.IsNot; then
             if CheckDependencies.IsNot; then
                 ShowAsError 'nothing to do'
+                Help.Set
                 return 1
             fi
         fi
