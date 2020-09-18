@@ -4217,28 +4217,17 @@ RunThisAndLogResultsRealtime()
     #   $2 = pathfilename to record this operation in
 
     # output:
-    #   $? = result code of command string
+    #   $? = result code of executed command
 
     [[ -z $1 || -z $2 ]] && return 1
 
-    local msgs=''
-    local result=0
-    local acc=0
+    local buffer=/var/log/execd.log
 
     FormatAsCommand "$1" >> "$2"
-    exec 5>&1
-    while [[ ! -e /dev/fd/5 ]]; do  # in-case 'exec' is taking its sweet time to create the new file descriptor
-        ((acc++))
-        if [[ $acc -gt 10 ]]; then
-            ShowAsError 'unable to create file descriptor'
-            SuggestIssue.Set
-            return 1
-        fi
-        $SLEEP_CMD 1
-    done
-    msgs=$(eval "$1" 2>&1 | $TEE_CMD /dev/fd/5)
+    eval "$1" 2>&1 | $TEE_CMD "$buffer"
     result=$?
-    FormatAsResultAndStdout "$result" "$msgs" >> "$2"
+    FormatAsResultAndStdout "$result" "$(<"$buffer")" >> "$2"
+    [[ -e $buffer ]] && rm -f "$buffer"
 
     return $result
 
