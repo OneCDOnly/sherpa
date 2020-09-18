@@ -36,7 +36,7 @@ Session.Init()
 
     IsQNAP || return 1
 
-    readonly MANAGER_SCRIPT_VERSION=200918
+    readonly MANAGER_SCRIPT_VERSION=200919
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -4773,9 +4773,9 @@ ShowAsAbort()
 
     local capitalised="$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}"      # use any available 'tr'
 
-    Session.Error.Set
     WriteToDisplay.New "$(ColourTextBrightRed fail)" "$capitalised: aborting ..."
     WriteToLog fail "$capitalised: aborting"
+    Session.Error.Set
 
     }
 
@@ -4784,9 +4784,9 @@ ShowAsError()
 
     local capitalised="$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}"      # use any available 'tr'
 
-    Session.Error.Set
     WriteToDisplay.New "$(ColourTextBrightRed fail)" "$capitalised"
     WriteToLog fail "$capitalised."
+    Session.Error.Set
 
     }
 
