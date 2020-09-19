@@ -2288,7 +2288,7 @@ DisplayAsTitleHelpAction()
     # $1 = description
     # $2 = example syntax
 
-    Display "\n$(FormatAsHelpAction) may be one of the following:\n"
+    Display "\n* $(FormatAsHelpAction) usage examples:"
     LineSpace.Clear
 
     }
@@ -2299,7 +2299,7 @@ DisplayAsTitleHelpPackage()
     # $1 = description
     # $2 = example syntax
 
-    Display "\n$(FormatAsHelpPackages) may be one or more of the following (space-separated):\n"
+    Display "\n* $(FormatAsHelpPackages) may be one or more of the following (space-separated):\n"
     LineSpace.Clear
 
     }
@@ -2310,12 +2310,12 @@ DisplayAsTitleHelpOption()
     # $1 = description
     # $2 = example syntax
 
-    Display "\n$(FormatAsHelpOptions) usage examples:"
+    Display "\n* $(FormatAsHelpOptions) usage examples:"
     LineSpace.Clear
 
     }
 
-DisplayAsHelpExample()
+DisplayAsIndentedHelpExample()
     {
 
     # $1 = description
@@ -2331,6 +2331,22 @@ DisplayAsHelpExample()
 
     }
 
+DisplayAsHelpExample()
+    {
+
+    # $1 = description
+    # $2 = example syntax
+
+    if [[ ${1: -1} = '!' ]]; then
+        printf "\n* %s \n       %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$(FormatAsScriptTitle) $2"
+    else
+        printf "\n* %s:\n       %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$(FormatAsScriptTitle) $2"
+    fi
+
+    LineSpace.Clear
+
+    }
+
 DisplayAsHelpPackageNameExample()
     {
 
@@ -2338,16 +2354,6 @@ DisplayAsHelpPackageNameExample()
     # $2 = example syntax
 
     printf "    %-20s %s\n" "$1" "$2"
-
-    }
-
-DisplayAsHelpActionExample()
-    {
-
-    # $1 = description
-    # $2 = example syntax
-
-    printf "    %-35s %s\n" "$1" "$2"
 
     }
 
@@ -2379,9 +2385,9 @@ Help.Basic.Show()
 Help.Basic.Example.Show()
     {
 
-    DisplayAsHelpExample "for more about $(FormatAsHelpAction)" '--actions'
-    DisplayAsHelpExample "for more about $(FormatAsHelpPackages)" '--packages'
-    DisplayAsHelpExample "for more about $(FormatAsHelpOptions)" '--options'
+    DisplayAsIndentedHelpExample "for more about $(FormatAsHelpAction)" '--actions'
+    DisplayAsIndentedHelpExample "for more about $(FormatAsHelpPackages)" '--packages'
+    DisplayAsIndentedHelpExample "for more about $(FormatAsHelpOptions)" '--options'
 
     return 0
 
@@ -2394,21 +2400,21 @@ Help.Actions.Show()
 
     DisplayAsTitleHelpAction
 
-    DisplayAsHelpActionExample '--install' "install the following packages"
-    DisplayAsHelpActionExample '--install-all' "install all available $(FormatAsScriptTitle) packages"
-    DisplayAsHelpActionExample '--reinstall' "reinstall the following packages"
-    DisplayAsHelpActionExample '--upgrade' "upgrade the following packages"
-    DisplayAsHelpActionExample '--upgrade-all' "upgrade all available packages"
-    DisplayAsHelpActionExample '--restart' "upgrade the following packages, this will upgrade the internal application"
-    DisplayAsHelpActionExample '--restart-all' "restart all available packages, this will upgrade the internal applications"
-    DisplayAsHelpActionExample '--uninstall' "uninstall the following packages"
-    DisplayAsHelpActionExample '--uninstall-all-applications-please' "uninstall everything!"
-#     DisplayAsHelpActionExample '--backup'
-#     DisplayAsHelpActionExample '--restore'
-#     DisplayAsHelpActionExample '--status'
-#     DisplayAsHelpActionExample '--status-all'
+    DisplayAsIndentedHelpExample "install the following packages" "--install $(FormatAsHelpPackages)"
+    DisplayAsIndentedHelpExample "install all available $(FormatAsScriptTitle) packages" '--install-all'
+    DisplayAsIndentedHelpExample "reinstall the following packages" "--reinstall $(FormatAsHelpPackages)"
+    DisplayAsIndentedHelpExample "upgrade the following packages" "--upgrade $(FormatAsHelpPackages)"
+    DisplayAsIndentedHelpExample "upgrade all available packages" '--upgrade-all'
+    DisplayAsIndentedHelpExample "upgrade the following packages and the internal applications" "--restart $(FormatAsHelpPackages)"
+    DisplayAsIndentedHelpExample "restart all packages, which will also upgrade the internal applications" '--restart-all'
+    DisplayAsIndentedHelpExample "uninstall the following packages" "--uninstall $(FormatAsHelpPackages)"
+    DisplayAsIndentedHelpExample "uninstall everything!" '--uninstall-all-applications-please'
+#     DisplayAsIndentedHelpExample '--backup'
+#     DisplayAsIndentedHelpExample '--restore'
+#     DisplayAsIndentedHelpExample '--status'
+#     DisplayAsIndentedHelpExample '--status-all'
 
-    DisplayAsHelpExample 'However, multiple actions are supported like this example' '--install sabnzbd sickchill --uninstall lazy nzbget --upgrade nzbtomedia --restart transmission'
+    DisplayAsHelpExample 'However, multiple actions are supported like this' '--install sabnzbd sickchill --uninstall lazy nzbget --upgrade nzbtomedia --restart transmission'
 
     return 0
 
@@ -2441,7 +2447,7 @@ Help.Packages.Show()
         DisplayAsHelpPackageNameExample "$package_name_message" "$package_note_message"
     done
 
-    DisplayAsHelpExample 'example: to install SABnzbd' '--install SABnzbd'
+    DisplayAsIndentedHelpExample 'example: to install SABnzbd' '--install SABnzbd'
 
     return 0
 
@@ -2454,9 +2460,9 @@ Help.Options.Show()
 
     DisplayAsTitleHelpOption
 
-    DisplayAsHelpExample 'display helpful tips and shortcuts' '--tips'
+    DisplayAsIndentedHelpExample 'display helpful tips and shortcuts' '--tips'
 
-    DisplayAsHelpExample 'display troubleshooting options' '--problems'
+    DisplayAsIndentedHelpExample 'display troubleshooting options' '--problems'
 
     return 0
 
@@ -2470,19 +2476,19 @@ Help.Problems.Show()
 
     DisplayAsTitleHelpOption
 
-    DisplayAsHelpExample 'install a package and show debugging information' "$(FormatAsHelpPackages) --debug"
+    DisplayAsIndentedHelpExample 'install a package and show debugging information' "$(FormatAsHelpPackages) --debug"
 
-    DisplayAsHelpExample 'ensure all application dependencies are installed' '--check'
+    DisplayAsIndentedHelpExample 'ensure all application dependencies are installed' '--check'
 
-    DisplayAsHelpExample "don't check free-space on target filesystem when installing $(FormatAsPackageName Entware) packages" '--ignore-space'
+    DisplayAsIndentedHelpExample "don't check free-space on target filesystem when installing $(FormatAsPackageName Entware) packages" '--ignore-space'
 
-    DisplayAsHelpExample 'restart all installed applications (only upgrades the internal applications, not the QPKG)' '--restart-all'
+    DisplayAsIndentedHelpExample 'restart all installed applications (only upgrades the internal applications, not the QPKG)' '--restart-all'
 
-    DisplayAsHelpExample 'upgrade all installed QPKGs (including the internal applications)' '--upgrade-all'
+    DisplayAsIndentedHelpExample 'upgrade all installed QPKGs (including the internal applications)' '--upgrade-all'
 
-    DisplayAsHelpExample 'view the log' '--log'
+    DisplayAsIndentedHelpExample 'view the log' '--log'
 
-    DisplayAsHelpExample "upload the log to the $(FormatAsURL 'https://termbin.com') public pastebin" '--paste'
+    DisplayAsIndentedHelpExample "upload the log to the $(FormatAsURL 'https://termbin.com') public pastebin" '--paste'
 
     Display "\n$(ColourTextBrightOrange "* If you need help, please include a copy of your") $(FormatAsScriptTitle) $(ColourTextBrightOrange "log for analysis!")"
     LineSpace.Clear
@@ -2499,9 +2505,9 @@ Help.Issue.Show()
 
     Display "\n* Alternatively, post on the QNAP NAS Community Forum:\n\thttps://forum.qnap.com/viewtopic.php?f=320&t=132373"
 
-    DisplayAsHelpExample 'view the log' '--log'
+    DisplayAsIndentedHelpExample 'view the log' '--log'
 
-    DisplayAsHelpExample "upload the log to the $(FormatAsURL 'https://termbin.com') public pastebin" '--paste'
+    DisplayAsIndentedHelpExample "upload the log to the $(FormatAsURL 'https://termbin.com') public pastebin" '--paste'
 
     Display "\n$(ColourTextBrightOrange '* If you need help, please include a copy of your') $(FormatAsScriptTitle) $(ColourTextBrightOrange 'log for analysis!')"
     LineSpace.Clear
@@ -2517,19 +2523,19 @@ Help.Tips.Show()
 
     DisplayAsTitleHelpOption
 
-    DisplayAsHelpExample 'install everything!' '--install-all-applications'
+    DisplayAsIndentedHelpExample 'install everything!' '--install-all-applications'
 
-    DisplayAsHelpExample 'package abbreviations may also be used. To see these' '--abs'
+    DisplayAsIndentedHelpExample 'package abbreviations may also be used. To see these' '--abs'
 
-    DisplayAsHelpExample 'ensure all application dependencies are installed' '--check'
+    DisplayAsIndentedHelpExample 'ensure all application dependencies are installed' '--check'
 
-    DisplayAsHelpExample 'restart all applications (only upgrades the internal applications, not the QPKG)' '--restart-all'
+    DisplayAsIndentedHelpExample 'restart all applications (only upgrades the internal applications, not the QPKG)' '--restart-all'
 
-    DisplayAsHelpExample 'upgrade all QPKGs (including the internal applications)' '--upgrade-all'
+    DisplayAsIndentedHelpExample 'upgrade all QPKGs (including the internal applications)' '--upgrade-all'
 
-    DisplayAsHelpExample "upload the log to the $(FormatAsURL 'https://termbin.com') public pastebin" '--paste'
+    DisplayAsIndentedHelpExample "upload the log to the $(FormatAsURL 'https://termbin.com') public pastebin" '--paste'
 
-    DisplayAsHelpExample 'display the package manager script versions' '--version'
+    DisplayAsIndentedHelpExample 'display the package manager script versions' '--version'
 
     echo -e "\n$(ColourTextBrightOrange "* If you need help, please include a copy of your") $(FormatAsScriptTitle) $(ColourTextBrightOrange "log for analysis!")"
     LineSpace.Clear
@@ -2560,7 +2566,7 @@ Help.PackageAbbreviations.Show()
         fi
     done
 
-    DisplayAsHelpExample 'example: to install SABnzbd, Mylar3 and nzbToMedia all-at-once' 'install sab my nzb2'
+    DisplayAsIndentedHelpExample 'example: to install SABnzbd, Mylar3 and nzbToMedia all-at-once' 'install sab my nzb2'
 
     return 0
 
