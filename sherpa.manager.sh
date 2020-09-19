@@ -36,7 +36,7 @@ Session.Init()
 
     IsQNAP || return 1
 
-    readonly MANAGER_SCRIPT_VERSION=200919
+    readonly MANAGER_SCRIPT_VERSION=200920
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -145,6 +145,43 @@ Session.Init()
 
     IsSysFileExist $Z7_CMD || return 1
     IsSysFileExist $ZIP_CMD || return 1
+
+    # create some shiny new virtual objects!
+
+    # user-selected options
+    Objects.Create User.Opts.Help.Show.Abbreviations
+    Objects.Create User.Opts.Help.Show.Actions
+    Objects.Create User.Opts.Help.Show.Basic
+    Objects.Create User.Opts.Help.Show.Options
+    Objects.Create User.Opts.Help.Show.Packages
+    Objects.Create User.Opts.Help.Show.Problems
+    Objects.Create User.Opts.Help.Show.Tips
+
+    Objects.Create User.Opts.Check.Dependencies
+    Objects.Create User.Opts.Versions.View
+
+    Objects.Create User.Opts.Log.Paste
+    Objects.Create User.Opts.Log.View
+
+    Objects.Create User.Opts.Apps.List.Installed
+    Objects.Create User.Opts.Apps.List.NotInstalled
+    Objects.Create User.Opts.Apps.All.Backup
+    Objects.Create User.Opts.Apps.All.Install
+    Objects.Create User.Opts.Apps.All.Restart
+    Objects.Create User.Opts.Apps.All.Restore
+    Objects.Create User.Opts.Apps.All.Status
+    Objects.Create User.Opts.Apps.All.Uninstall
+    Objects.Create User.Opts.Apps.All.Upgrade
+
+    # script flags
+    Objects.Create Session.Abort
+    Objects.Create Session.Debugging.LogToFile
+    Objects.Create Session.Debugging.Visible
+    Objects.Create Session.Ipkgs.Install
+    Objects.Create Session.LineSpace
+    Objects.Create Session.Pips.Install
+    Objects.Create Session.SuggestIssue
+    Objects.Create Session.Summary
 
     Session.Summary.Set
 
@@ -325,16 +362,14 @@ Session.Init()
     readonly SHERPA_COMMON_CONFLICTS='Optware Optware-NG TarMT'
 
     # runtime arrays
+    QPKGs_to_backup=()
     QPKGs_to_install=()
-    QPKGs_to_uninstall=()
-    QPKGs_already_uninstalled=()
     QPKGs_to_reinstall=()
     QPKGs_to_restart=()
-    QPKGs_to_upgrade=()
-    QPKGs_already_upgraded=()
-    QPKGs_to_backup=()
     QPKGs_to_restore=()
     QPKGs_to_status=()
+    QPKGs_to_uninstall=()
+    QPKGs_to_upgrade=()
 
     readonly PREV_QPKG_CONFIG_DIRS=(SAB_CONFIG CONFIG Config config)                 # last element is used as target dirname
     readonly PREV_QPKG_CONFIG_FILES=(sabnzbd.ini settings.ini config.cfg config.ini) # last element is used as target filename
@@ -364,22 +399,6 @@ Session.Init()
     QPKGs.Upgradable.Build
     CalcNASQPKGArch
 
-    # create some shiny new virtual objects:
-    Objects.Create User.Opts.Check.Dependencies
-    Objects.Create User.Opts.Show.Versions
-    Objects.Create User.Opts.Help.Show.Problems
-    Objects.Create User.Opts.Help.Show.Tips
-    Objects.Create User.Opts.Help.Show.Abbreviations
-    Objects.Create User.Opts.Log.Paste
-    Objects.Create User.Opts.Log.View
-    Objects.Create User.Opts.List.Installed
-    Objects.Create User.Opts.List.NotInstalled
-    Objects.Create User.Opts.All.Install
-    Objects.Create User.Opts.All.Uninstall
-    Objects.Create User.Opts.All.Restart
-
-    Objects.Create Script.Flags.Pips.Install
-
     return 0
 
     }
@@ -388,7 +407,8 @@ Session.ParseArguments()
     {
 
     if [[ -z $USER_ARGS_RAW ]]; then
-        Help.Set
+        User.Opts.Help.Show.Basic.Set
+        Session.Abort.Set
         code_pointer=2
         return 1
     fi
@@ -402,11 +422,7 @@ Session.ParseArguments()
     for arg in "${user_args[@]}"; do
         case $arg in
             -d|d|--debug|debug)
-                DebuggingVisible.Set
-                current_operation=''
-                ;;
-            -c|c|--check|check|--check-all|check-all)
-                User.Opts.Check.Dependencies.Set
+                Session.Debugging.Visible.Set
                 current_operation=''
                 ;;
             --force|force)
@@ -418,16 +434,19 @@ Session.ParseArguments()
                 current_operation=''
                 ;;
             -h|h|--help|help)
-                Help.Set
+                User.Opts.Help.Show.Basic.Set
+                Session.Abort.Set
                 return 1
                 ;;
             -p|p|--problems|problems|--problem|problem)
                 User.Opts.Help.Show.Problems.Set
                 Session.Abort.Set
+                return 1
                 ;;
             -t|t|--tips|tips)
                 User.Opts.Help.Show.Tips.Set
                 Session.Abort.Set
+                return 1
                 ;;
             -l|l|--log|log)
                 User.Opts.Log.View.Set
@@ -435,11 +454,11 @@ Session.ParseArguments()
                 return 1
                 ;;
             --list-installed|list-installed)
-                User.Opts.List.Installed.Set
+                User.Opts.Apps.List.Installed.Set
                 return 1
                 ;;
             --list-not-installed|list-not-installed)
-                User.Opts.List.NotInstalled.Set
+                User.Opts.Apps.List.NotInstalled.Set
                 return 1
                 ;;
             --paste|paste)
@@ -450,44 +469,55 @@ Session.ParseArguments()
             --abs|abs)
                 User.Opts.Help.Show.Abbreviations.Set
                 Session.Abort.Set
+                return 1
                 ;;
             -a|a|--action|action|--actions|actions)
-                Help.Actions.Set
-                ;;
-            --package|package|--packages|packages)
-                Help.Packages.Set
-                ;;
-            -o|o|--option|option|--options|options)
-                Help.Options.Set
-                ;;
-            -v|v|--version|version)
-                User.Opts.Show.Versions.Set
+                User.Opts.Help.Show.Actions.Set
                 Session.Abort.Set
                 return 1
                 ;;
+            --package|package|--packages|packages)
+                User.Opts.Help.Show.Packages.Set
+                Session.Abort.Set
+                return 1
+                ;;
+            -o|o|--option|option|--options|options)
+                User.Opts.Help.Show.Options.Set
+                Session.Abort.Set
+                return 1
+                ;;
+            -v|v|--version|version)
+                User.Opts.Versions.View.Set
+                Session.Abort.Set
+                return 1
+                ;;
+            -c|c|--check|check|--check-all|check-all)
+                User.Opts.Check.Dependencies.Set
+                return 1
+                ;;
             --install-all|install-all)
-                User.Opts.All.Install.Set
+                User.Opts.Apps.All.Install.Set
                 return 1
                 ;;
             --uninstall-all-applications-please|uninstall-all-applications-please)
-                User.Opts.All.Uninstall.Set
+                User.Opts.Apps.All.Uninstall.Set
                 ;;
             --restart-all|restart-all)
-                User.Opts.All.Restart.Set
+                User.Opts.Apps.All.Restart.Set
                 ;;
             --upgrade-all|upgrade-all)
-                UpgradeAllApps.Set
+                User.Opts.Apps.All.Upgrade.Set
                 ;;
             --backup-all)
-                BackupAllApps.Set
+                User.Opts.Apps.All.Backup.Set
                 return 1
                 ;;
             --restore-all)
-                RestoreAllApps.Set
+                User.Opts.Apps.All.Restore.Set
                 return 1
                 ;;
             --status-all|status-all)
-                StatusAllApps.Set
+                User.Opts.Apps.All.Status.Set
                 return 1
                 ;;
             --install|install)
@@ -584,9 +614,9 @@ Session.Validate()
 
     Session.ParseArguments
 
-    (User.Opts.Show.Versions.IsSet || User.Opts.List.Installed.IsSet || User.Opts.List.NotInstalled.IsSet) && return
+    (User.Opts.Versions.View.IsSet || User.Opts.Apps.List.Installed.IsSet || User.Opts.Apps.List.NotInstalled.IsSet) && return
 
-    if DebuggingVisible.IsNot; then
+    if Session.Debugging.Visible.IsNot; then
         Display "$(FormatAsScriptTitle) $MANAGER_SCRIPT_VERSION • a mini-package-manager for QNAP NAS"
         DisplayLineSpace
     fi
@@ -595,7 +625,7 @@ Session.Validate()
 
     Session.Abort.IsSet && return
 
-    LogToFile.Set
+    Session.Debugging.LogToFile.Set
     DebugInfoThickSeparator
     DebugScript 'started' "$($DATE_CMD | $TR_CMD -s ' ')"
     DebugScript 'version' "package: $PACKAGE_VERSION, manager: $MANAGER_SCRIPT_VERSION, loader $LOADER_SCRIPT_VERSION"
@@ -657,7 +687,7 @@ Session.Validate()
 
     DebugScript 'unparsed arguments' "$USER_ARGS_RAW"
 
-    if BackupAllApps.IsSet && RestoreAllApps.IsSet; then
+    if User.Opts.Apps.All.Backup.IsSet && User.Opts.Apps.All.Restore.IsSet; then
         ShowAsError 'no point running a backup then a restore operation'
         code_pointer=1
         return 1
@@ -673,14 +703,14 @@ Session.Validate()
         fi
     fi
 
-    if User.Opts.All.Install.IsSet; then
+    if User.Opts.Apps.All.Install.IsSet; then
         QPKGs_initial_array+=($(QPKGs.NotInstalled.Array))
-    elif UpgradeAllApps.IsSet; then
+    elif User.Opts.Apps.All.Upgrade.IsSet; then
         QPKGs_initial_array=($(QPKGs.Upgradable.Array))
-        Script.Flags.Pips.Install.Set
+        Session.Pips.Install.Set
     elif User.Opts.Check.Dependencies.IsSet; then
         QPKGs_initial_array+=($(QPKGs.Installed.Array))
-        Script.Flags.Pips.Install.Set
+        Session.Pips.Install.Set
     else
         QPKGs_initial_array+=(${QPKGs_to_install[*]} ${QPKGs_to_reinstall[*]} ${QPKGs_to_upgrade[*]})
     fi
@@ -697,17 +727,18 @@ Session.Validate()
         QPKG.Installed "$package" && QPKGs.Uninstall.Add "$package"
     done
 
-    if User.Opts.All.Uninstall.IsSet; then
+    if User.Opts.Apps.All.Uninstall.IsSet; then
         for package in "${SHERPA_QPKG_NAME[@]}"; do
             QPKG.Installed "$package" && QPKGs.Uninstall.Add "$package"
         done
     fi
 
     if QPKGs.Install.IsNone && QPKGs.Uninstall.IsNone && QPKGs.Reinstall.IsNone && QPKGs.Restart.IsNone && QPKGs.Upgrade.IsNone && [[ ${#QPKGs_to_backup[@]} -eq 0 && ${#QPKGs_to_restore[@]} -eq 0 && ${#QPKGs_to_status[@]} -eq 0 ]]; then
-        if User.Opts.All.Install.IsNot && User.Opts.All.Uninstall.IsNot && User.Opts.All.Restart.IsNot && UpgradeAllApps.IsNot && BackupAllApps.IsNot && RestoreAllApps.IsNot; then
-            if StatusAllApps.IsNot && User.Opts.Check.Dependencies.IsNot && User.Opts.List.Installed.IsNot; then
+        if User.Opts.Apps.All.Install.IsNot && User.Opts.Apps.All.Uninstall.IsNot && User.Opts.Apps.All.Restart.IsNot && User.Opts.Apps.All.Upgrade.IsNot && User.Opts.Apps.All.Backup.IsNot && User.Opts.Apps.All.Restore.IsNot; then
+            if User.Opts.Apps.All.Status.IsNot && User.Opts.Check.Dependencies.IsNot && User.Opts.Apps.List.Installed.IsNot; then
                 ShowAsError 'nothing to do'
-                Help.Set
+                User.Opts.Help.Show.Basic.Set
+                Session.Abort.Set
                 return 1
             fi
         fi
@@ -717,7 +748,7 @@ Session.Validate()
 
     if [[ $result -ne 0 ]]; then
         ShowAsError "unable to create script working directory $(FormatAsFileName "$WORK_PATH") $(FormatAsExitcode $result)"
-        SuggestIssue.Set
+        Session.SuggestIssue.Set
         return 1
     fi
 
@@ -725,7 +756,7 @@ Session.Validate()
 
     if [[ $result -ne 0 ]]; then
         ShowAsError "unable to create QPKG download directory $(FormatAsFileName "$QPKG_DL_PATH") $(FormatAsExitcode $result)"
-        SuggestIssue.Set
+        Session.SuggestIssue.Set
         return 1
     fi
 
@@ -733,7 +764,7 @@ Session.Validate()
 
     if [[ $result -ne 0 ]]; then
         ShowAsError "unable to create IPKG download directory $(FormatAsFileName "$IPKG_DL_PATH") $(FormatAsExitcode $result)"
-        SuggestIssue.Set
+        Session.SuggestIssue.Set
         return 1
     fi
 
@@ -742,7 +773,7 @@ Session.Validate()
 
     if [[ $result -ne 0 ]]; then
         ShowAsError "unable to create IPKG cache directory $(FormatAsFileName "$IPKG_CACHE_PATH") $(FormatAsExitcode $result)"
-        SuggestIssue.Set
+        Session.SuggestIssue.Set
         return 1
     fi
 
@@ -751,7 +782,7 @@ Session.Validate()
 
     if [[ $result -ne 0 ]]; then
         ShowAsError "unable to create PIP cache directory $(FormatAsFileName "$PIP_CACHE_PATH") $(FormatAsExitcode $result)"
-        SuggestIssue.Set
+        Session.SuggestIssue.Set
         return 1
     fi
 
@@ -785,32 +816,32 @@ Session.Validate()
 Session.Result.Show()
     {
 
-    if User.Opts.Show.Versions.IsSet; then
+    if User.Opts.Versions.View.IsSet; then
         Display "package: $PACKAGE_VERSION"
         Display "loader: $LOADER_SCRIPT_VERSION"
         Display "manager: $MANAGER_SCRIPT_VERSION"
     fi
 
     User.Opts.Log.View.IsSet && LogViewer.Show
-    User.Opts.List.Installed.IsSet && QPKGs.Installed.Show
-    User.Opts.List.NotInstalled.IsSet && QPKGs.NotInstalled.Show
+    User.Opts.Apps.List.Installed.IsSet && QPKGs.Installed.Show
+    User.Opts.Apps.List.NotInstalled.IsSet && QPKGs.NotInstalled.Show
 
-    if Help.IsSet; then
+    if User.Opts.Help.Show.Basic.IsSet; then
         Help.Basic.Show
         Help.Basic.Example.Show
-        LineSpace.Clear
+        Session.LineSpace.Clear
     fi
 
-    Help.Actions.IsSet && Help.Actions.Show
-    Help.Packages.IsSet && Help.Packages.Show
-    Help.Options.IsSet && Help.Options.Show
+    User.Opts.Help.Show.Actions.IsSet && Help.Actions.Show
+    User.Opts.Help.Show.Packages.IsSet && Help.Packages.Show
+    User.Opts.Help.Show.Options.IsSet && Help.Options.Show
     User.Opts.Help.Show.Problems.IsSet && Help.Problems.Show
     User.Opts.Help.Show.Tips.IsSet && Help.Tips.Show
     User.Opts.Help.Show.Abbreviations.IsSet && Help.PackageAbbreviations.Show
 
     User.Opts.Log.Paste.IsSet && PasteLogOnline
     Session.Summary.IsSet && Session.Summary.Show
-    SuggestIssue.IsSet && Help.Issue.Show
+    Session.SuggestIssue.IsSet && Help.Issue.Show
     DisplayLineSpace
 
     DebugInfoThinSeparator
@@ -942,13 +973,13 @@ QPKGs.Independents.Install()
     if QPKGs.Install.IsAny || QPKGs.Reinstall.IsAny || QPKGs.Upgrade.IsAny || User.Opts.Check.Dependencies.IsSet; then
         if QPKG.Installed Entware; then
             PatchBaseInit
-            IPKGInstall.Set
+            Session.Ipkgs.Install.Set
             IPKGs.Install
             PIP.Install
         fi
     fi
 
-    if QPKG.ToBeInstalled Entware || User.Opts.All.Restart.IsSet; then
+    if QPKG.ToBeInstalled Entware || User.Opts.Apps.All.Restart.IsSet; then
         QPKGs.Dependant.Restart
     fi
 
@@ -1028,7 +1059,7 @@ IPKGs.Install()
     {
 
     Session.Abort.IsSet && return
-    IPKGInstall.IsNot && return
+    Session.Ipkgs.Install.IsNot && return
 
     local packages="$SHERPA_COMMON_IPKGS"
     local index=0
@@ -1036,7 +1067,7 @@ IPKGs.Install()
     UpdateEntware
     Session.Error.IsSet && return
 
-    if User.Opts.All.Install.IsSet; then
+    if User.Opts.Apps.All.Install.IsSet; then
         for index in "${!SHERPA_QPKG_NAME[@]}"; do
             packages+=" ${SHERPA_QPKG_IPKGS[$index]}"
         done
@@ -1099,7 +1130,7 @@ InstallIPKGBatch()
 
         if [[ $result -eq 0 ]]; then
             ShowAsDone "downloaded & installed $IPKG_download_count IPKG$(FormatAsPlural "$IPKG_download_count")"
-            Script.Flags.Pips.Install.Set
+            Session.Pips.Install.Set
         else
             ShowAsError "download & install IPKG$(FormatAsPlural "$IPKG_download_count") failed $(FormatAsExitcode $result)"
             DebugErrorFile "$log_pathfile"
@@ -1117,7 +1148,7 @@ PIP.Install()
     {
 
     Session.Abort.IsSet && return
-    Script.Flags.Pips.Install.IsNot && return
+    Session.Pips.Install.IsNot && return
 
     DebugFuncEntry
     local exec_cmd=''
@@ -1234,13 +1265,13 @@ QPKGs.Dependants.Install()
 
     local package=''
 
-    if User.Opts.All.Install.IsSet; then
+    if User.Opts.Apps.All.Install.IsSet; then
         if [[ ${#QPKGS_user_installable[*]} -gt 0 ]]; then
             for package in "${QPKGS_user_installable[@]}"; do
                 [[ $package != Entware ]] && QPKG.Install "$package"     # KLUDGE: Entware has already been installed, don't do it again.
             done
         fi
-    elif UpgradeAllApps.IsSet; then
+    elif User.Opts.Apps.All.Upgrade.IsSet; then
         if [[ ${#QPKGS_upgradable[*]} -gt 0 ]]; then
             for package in "${QPKGS_upgradable[@]}"; do
                 [[ $package != Entware ]] && QPKG.Install "$package"     # KLUDGE: Entware has already been installed, don't do it again.
@@ -1535,7 +1566,7 @@ QPKG.Download()
 
         [[ -e $log_pathfile ]] && rm -f "$log_pathfile"
 
-        if DebuggingVisible.IsSet; then
+        if Session.Debugging.Visible.IsSet; then
             RunThisAndLogResultsRealtime "$CURL_CMD $curl_insecure_arg --output $local_pathfile $remote_url" "$log_pathfile"
             result=$?
         else
@@ -1669,7 +1700,7 @@ QPKG.Restart()
     else
         ShowAsWarning "Could not restart $(FormatAsPackageName "$1") $(FormatAsExitcode $result)"
 
-        if DebuggingVisible.IsSet; then
+        if Session.Debugging.Visible.IsSet; then
             DebugInfoThickSeparator
             $CAT_CMD "$log_pathfile"
             DebugInfoThickSeparator
@@ -1956,7 +1987,7 @@ GetTheseQPKGDeps()
 
     if [[ $complete = false ]]; then
         DebugError "QPKG dependency list is incomplete! Consider raising \$ITERATION_LIMIT [$ITERATION_LIMIT]."
-        SuggestIssue.Set
+        Session.SuggestIssue.Set
     fi
 
     QPKG_pre_download_list=$(DeDupeWords "$requested_list ${dependency_list_array[*]}")
@@ -2063,7 +2094,7 @@ GetAllIPKGDepsToDownload()
 
     if [[ $complete = false ]]; then
         DebugError "IPKG dependency list is incomplete! Consider raising \$ITERATION_LIMIT [$ITERATION_LIMIT]."
-        SuggestIssue.Set
+        Session.SuggestIssue.Set
     fi
 
     pre_download_list=$(DeDupeWords "$requested_list $dependency_list")
@@ -2342,7 +2373,7 @@ DisplayAsTitleHelpAction()
     {
 
     Display "\n* $(FormatAsHelpActions) usage examples:"
-    LineSpace.Clear
+    Session.LineSpace.Clear
 
     }
 
@@ -2350,7 +2381,7 @@ DisplayAsTitleHelpPackage()
     {
 
     Display "\n* $(FormatAsHelpPackages) may be one or more of the following (space-separated):\n"
-    LineSpace.Clear
+    Session.LineSpace.Clear
 
     }
 
@@ -2358,7 +2389,7 @@ DisplayAsTitleHelpOption()
     {
 
     Display "\n* $(FormatAsHelpOptions) usage examples:"
-    LineSpace.Clear
+    Session.LineSpace.Clear
 
     }
 
@@ -2366,7 +2397,7 @@ DisplayAsTitleHelpProblem()
     {
 
     Display "\n* usage examples when dealing with problems:"
-    LineSpace.Clear
+    Session.LineSpace.Clear
 
     }
 
@@ -2374,7 +2405,7 @@ DisplayAsTitleHelpTip()
     {
 
     Display "\n* helpful tips and shortcuts:"
-    LineSpace.Clear
+    Session.LineSpace.Clear
 
     }
 
@@ -2382,7 +2413,7 @@ DisplayAsTitleInstalledQPKGs()
     {
 
     Display "\n* these packages are currently installed:"
-    LineSpace.Clear
+    Session.LineSpace.Clear
 
     }
 
@@ -2398,7 +2429,7 @@ DisplayAsIndentedHelpExample()
         printf "\n  - %s:\n       # %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$PROJECT_NAME $2"
     fi
 
-    LineSpace.Clear
+    Session.LineSpace.Clear
 
     }
 
@@ -2414,7 +2445,7 @@ DisplayAsHelpExample()
         printf "\n* %s:\n       # %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$PROJECT_NAME $2"
     fi
 
-    LineSpace.Clear
+    Session.LineSpace.Clear
 
     }
 
@@ -2447,7 +2478,7 @@ Help.Basic.Show()
 
     DisplayLineSpace
     Display "Usage: $(FormatAsScriptTitle) $(FormatAsHelpActions) $(FormatAsHelpPackages) $(FormatAsHelpOptions)"
-    LineSpace.Clear
+    Session.LineSpace.Clear
 
     return 0
 
@@ -2582,7 +2613,7 @@ Help.Problems.Show()
     DisplayAsIndentedHelpExample "upload the most-recent $LOG_TAIL_LINES entries in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" '--paste'
 
     Display "\n$(ColourTextBrightOrange "* If you need help, please include a copy of your") $(FormatAsScriptTitle) $(ColourTextBrightOrange "log for analysis!")"
-    LineSpace.Clear
+    Session.LineSpace.Clear
 
     return 0
 
@@ -2601,7 +2632,7 @@ Help.Issue.Show()
     DisplayAsIndentedHelpExample "upload the most-recent $LOG_TAIL_LINES entries in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" '--paste'
 
     Display "\n$(ColourTextBrightOrange '* If you need help, please include a copy of your') $(FormatAsScriptTitle) $(ColourTextBrightOrange 'log for analysis!')"
-    LineSpace.Clear
+    Session.LineSpace.Clear
 
     return 0
 
@@ -2629,7 +2660,7 @@ Help.Tips.Show()
     DisplayAsIndentedHelpExample 'display all package-manager scripts versions' '--version'
 
     echo -e "\n$(ColourTextBrightOrange "* If you need help, please include a copy of your") $(FormatAsScriptTitle) $(ColourTextBrightOrange "log for analysis!")"
-    LineSpace.Clear
+    Session.LineSpace.Clear
 
     return 0
 
@@ -3012,76 +3043,6 @@ QPKGs.Download.IsNone()
 
     }
 
-Help.Set()
-    {
-
-    Session.Abort.Set
-
-    Help.IsSet && return
-
-    _show_help_flag=true
-    DebugVar _show_help_flag
-
-    }
-
-Help.Clear()
-    {
-
-    Help.IsNot && return
-
-    _show_help_flag=false
-    DebugVar _show_help_flag
-
-    }
-
-Help.IsSet()
-    {
-
-    [[ $_show_help_flag = true ]]
-
-    }
-
-Help.IsNot()
-    {
-
-    [[ $_show_help_flag != true ]]
-
-    }
-
-IPKGInstall.Set()
-    {
-
-    IPKGInstall.IsSet && return
-
-    _ipkg_install_flag=true
-    DebugVar _ipkg_install_flag
-
-    }
-
-IPKGInstall.Clear()
-    {
-
-    IPKGInstall.IsNot && return
-
-    _ipkg_install_flag=false
-    DebugVar _ipkg_install_flag
-
-    }
-
-IPKGInstall.IsSet()
-    {
-
-    [[ $_ipkg_install_flag = true ]]
-
-    }
-
-IPKGInstall.IsNot()
-    {
-
-    [[ $_ipkg_install_flag != true ]]
-
-    }
-
 Session.Error.Set()
     {
 
@@ -3090,16 +3051,6 @@ Session.Error.Set()
     Session.Error.IsSet && return
 
     _script_error_flag=true
-    DebugVar _script_error_flag
-
-    }
-
-Session.Error.Clear()
-    {
-
-    Session.Error.IsNot && return
-
-    _script_error_flag=false
     DebugVar _script_error_flag
 
     }
@@ -3118,169 +3069,18 @@ Session.Error.IsNot()
 
     }
 
-Session.Abort.Set()
-    {
-
-    Session.Abort.IsSet && return
-
-    _script_abort_flag=true
-    DebugVar _script_abort_flag
-
-    }
-
-Session.Abort.Clear()
-    {
-
-    Session.Abort.IsNot && return
-
-    _script_abort_flag=false
-    DebugVar _script_abort_flag
-
-    }
-
-Session.Abort.IsSet()
-    {
-
-    [[ $_script_abort_flag = true ]]
-
-    }
-
-Session.Abort.IsNot()
-    {
-
-    [[ $_script_abort_flag != true ]]
-
-    }
-
-Help.Actions.Set()
-    {
-
-    Session.Abort.Set
-
-    Help.Actions.IsSet && return
-
-    _show_actions_flag=true
-    DebugVar _show_actions_flag
-
-    }
-
-Help.Actions.Clear()
-    {
-
-    Help.Actions.IsNot && return
-
-    _show_actions_flag=false
-    DebugVar _show_actions_flag
-
-    }
-
-Help.Actions.IsSet()
-    {
-
-    [[ $_show_actions_flag = true ]]
-
-    }
-
-Help.Actions.IsNot()
-    {
-
-    [[ $_show_actions_flag != true ]]
-
-    }
-
-Help.Packages.Set()
-    {
-
-    Session.Abort.Set
-
-    Help.Packages.IsSet && return
-
-    _show_packages_flag=true
-    DebugVar _show_packages_flag
-
-    }
-
-Help.Packages.Clear()
-    {
-
-    Help.Packages.IsNot && return
-
-    _show_packages_flag=false
-    DebugVar _show_packages_flag
-
-    }
-
-Help.Packages.IsSet()
-    {
-
-    [[ $_show_packages_flag = true ]]
-
-    }
-
-Help.Packages.IsNot()
-    {
-
-    [[ $_show_packages_flag != true ]]
-
-    }
-
-Help.Options.Set()
-    {
-
-    Session.Abort.Set
-
-    Help.Options.IsSet && return
-
-    _show_options_flag=true
-    DebugVar _show_options_flag
-
-    }
-
-Help.Options.Clear()
-    {
-
-    Help.Options.IsNot && return
-
-    _show_options_flag=false
-    DebugVar _show_options_flag
-
-    }
-
-Help.Options.IsSet()
-    {
-
-    [[ $_show_options_flag = true ]]
-
-    }
-
-Help.Options.IsNot()
-    {
-
-    [[ $_show_options_flag != true ]]
-
-    }
-
 Session.Summary.Show()
     {
 
-    if UpgradeAllApps.IsSet; then
+    if User.Opts.Apps.All.Upgrade.IsSet; then
         if [[ ${#QPKGS_upgradable[@]} -eq 0 ]]; then
             ShowAsDone "no QPKGs need upgrading"
         elif Session.Error.IsNot; then
             ShowAsDone "all upgradable QPKGs were successfully upgraded"
         else
             ShowAsError "upgrade failed! [$code_pointer]"
-            SuggestIssue.Set
+            Session.SuggestIssue.Set
         fi
-#     elif [[ -n $TARGET_APP ]]; then
-#         [[ $reinstall_flag = true ]] && RE='re' || RE=''
-#
-#         if Session.Error.IsNot; then
-#             ShowAsDone "$(FormatAsPackageName "$TARGET_APP") has been successfully ${RE}installed"
-#         else
-#             ShowAsError "$(FormatAsPackageName "$TARGET_APP") ${RE}install failed! [$code_pointer]"
-#             SuggestIssue.Set
-#         fi
     fi
 
     if User.Opts.Check.Dependencies.IsSet; then
@@ -3288,353 +3088,11 @@ Session.Summary.Show()
             ShowAsDone "all application dependencies are installed"
         else
             ShowAsError "application dependency check failed! [$code_pointer]"
-            SuggestIssue.Set
+            Session.SuggestIssue.Set
         fi
     fi
 
     return 0
-
-    }
-
-Session.Summary.Set()
-    {
-
-    Session.Summary.IsSet && return
-
-    _session_result_flag=true
-    DebugVar _session_result_flag
-
-    }
-
-Session.Summary.Clear()
-    {
-
-    Session.Summary.IsNot && return
-
-    _session_result_flag=false
-    DebugVar _session_result_flag
-
-    }
-
-Session.Summary.IsSet()
-    {
-
-    [[ $_session_result_flag = true ]]
-
-    }
-
-Session.Summary.IsNot()
-    {
-
-    [[ $_session_result_flag != true ]]
-
-    }
-
-LogToFile.Set()
-    {
-
-    LogToFile.IsSet && return
-
-    _log_to_file_flag=true
-    DebugVar _log_to_file_flag
-
-    }
-
-LogToFile.Clear()
-    {
-
-    LogToFile.IsNot && return
-
-    _log_to_file_flag=false
-    DebugVar _log_to_file_flag
-
-    }
-
-LogToFile.IsSet()
-    {
-
-    [[ $_log_to_file_flag = true ]]
-
-    }
-
-LogToFile.IsNot()
-    {
-
-    [[ $_log_to_file_flag != true ]]
-
-    }
-
-DebuggingVisible.Set()
-    {
-
-    DebuggingVisible.IsSet && return
-
-    _show_debugging_flag=true
-    DebugVar _show_debugging_flag
-
-    }
-
-DebuggingVisible.Clear()
-    {
-
-    DebuggingVisible.IsNot && return
-
-    _show_debugging_flag=false
-    DebugVar _show_debugging_flag
-
-    }
-
-DebuggingVisible.IsSet()
-    {
-
-    [[ $_show_debugging_flag = true ]]
-
-    }
-
-DebuggingVisible.IsNot()
-    {
-
-    [[ $_show_debugging_flag != true ]]
-
-    }
-
-DevMode.Set()
-    {
-
-    DebuggingVisible.Set
-
-    DevMode.IsSet && return
-
-    _dev_mode_flag=true
-    DebugVar _dev_mode_flag
-
-    }
-
-DevMode.Clear()
-    {
-
-    DebuggingVisible.Clear
-
-    DevMode.IsNot && return
-
-    _dev_mode_flag=false
-    DebugVar _dev_mode_flag
-
-    }
-
-DevMode.IsSet()
-    {
-
-    [[ $_dev_mode_flag = true ]]
-
-    }
-
-DevMode.IsNot()
-    {
-
-    [[ $_dev_mode_flag != true ]]
-
-    }
-
-SuggestIssue.Set()
-    {
-
-    SuggestIssue.IsSet && return
-
-    _suggest_issue_flag=true
-    DebugVar _suggest_issue_flag
-
-    }
-
-SuggestIssue.Clear()
-    {
-
-    SuggestIssue.IsNot && return
-
-    _suggest_issue_flag=false
-    DebugVar _suggest_issue_flag
-
-    }
-
-SuggestIssue.IsSet()
-    {
-
-    [[ $_suggest_issue_flag = true ]]
-
-    }
-
-SuggestIssue.IsNot()
-    {
-
-    [[ $_suggest_issue_flag != true ]]
-
-    }
-
-UpgradeAllApps.Set()
-    {
-
-    UpgradeAllApps.IsSet && return
-
-    _upgrade_all_apps_flag=true
-    DebugVar _upgrade_all_apps_flag
-
-    }
-
-UpgradeAllApps.Clear()
-    {
-
-    UpgradeAllApps.IsNot && return
-
-    _upgrade_all_apps_flag=false
-    DebugVar _upgrade_all_apps_flag
-
-    }
-
-UpgradeAllApps.IsSet()
-    {
-
-    [[ $_upgrade_all_apps_flag = true ]]
-
-    }
-
-UpgradeAllApps.IsNot()
-    {
-
-    [[ $_upgrade_all_apps_flag != true ]]
-
-    }
-
-BackupAllApps.Set()
-    {
-
-    BackupAllApps.IsSet && return
-
-    _backup_all_apps_flag=true
-    DebugVar _backup_all_apps_flag
-
-    }
-
-BackupAllApps.Clear()
-    {
-
-    BackupAllApps.IsNot && return
-
-    _backup_all_apps_flag=false
-    DebugVar _backup_all_apps_flag
-
-    }
-
-BackupAllApps.IsSet()
-    {
-
-    [[ $_backup_all_apps_flag = true ]]
-
-    }
-
-BackupAllApps.IsNot()
-    {
-
-    [[ $_backup_all_apps_flag != true ]]
-
-    }
-
-RestoreAllApps.Set()
-    {
-
-    RestoreAllApps.IsSet && return
-
-    _restore_all_apps_flag=true
-    DebugVar _restore_all_apps_flag
-
-    }
-
-RestoreAllApps.Clear()
-    {
-
-    RestoreAllApps.IsNot && return
-
-    _restore_all_apps_flag=false
-    DebugVar _restore_all_apps_flag
-
-    }
-
-RestoreAllApps.IsSet()
-    {
-
-    [[ $_restore_all_apps_flag = true ]]
-
-    }
-
-RestoreAllApps.IsNot()
-    {
-
-    [[ $_restore_all_apps_flag != true ]]
-
-    }
-
-StatusAllApps.Set()
-    {
-
-    StatusAllApps.IsSet && return
-
-    _status_all_apps_flag=true
-    DebugVar _status_all_apps_flag
-
-    }
-
-StatusAllApps.Clear()
-    {
-
-    StatusAllApps.IsNot && return
-
-    _status_all_apps_flag=false
-    DebugVar _status_all_apps_flag
-
-    }
-
-StatusAllApps.IsSet()
-    {
-
-    [[ $_status_all_apps_flag = true ]]
-
-    }
-
-StatusAllApps.IsNot()
-    {
-
-    [[ $_status_all_apps_flag != true ]]
-
-    }
-
-LineSpace.Set()
-    {
-
-    LineSpace.IsSet && return
-
-    _line_space_flag=true
-
-    }
-
-LineSpace.Clear()
-    {
-
-    LineSpace.IsNot && return
-
-    _line_space_flag=false
-
-    }
-
-LineSpace.IsSet()
-    {
-
-    [[ $_line_space_flag = true ]]
-
-    }
-
-LineSpace.IsNot()
-    {
-
-    [[ $_line_space_flag != true ]]
 
     }
 
@@ -3720,64 +3178,6 @@ QPKG.ToNotBeReinstalled()
     #   $? = 0 (true) or 1 (false)
 
     ! QPKG.ToBeReinstalled "$1"
-
-    }
-
-QPKG.ToBeUpgraded()
-    {
-
-    # input:
-    #   $1 = package name to check
-
-    # output:
-    #   $? = 0 (true) or 1 (false)
-
-    [[ -z $1 ]] && return 1
-    [[ ${#QPKGs_to_upgrade[@]} -gt 0 && ${QPKGs_to_upgrade[*]} == *"$1"* ]] && return 0
-
-    return 1
-
-    }
-
-QPKG.ToNotBeUpgraded()
-    {
-
-    # input:
-    #   $1 = package name to check
-
-    # output:
-    #   $? = 0 (true) or 1 (false)
-
-    ! QPKG.ToBeUpgraded "$1"
-
-    }
-
-QPKG.ToBeRestarted()
-    {
-
-    # input:
-    #   $1 = package name to check
-
-    # output:
-    #   $? = 0 (true) or 1 (false)
-
-    [[ -z $1 ]] && return 1
-    [[ ${#QPKGs_to_restart[@]} -gt 0 && ${QPKGs_to_restart[*]} == *"$1"* ]] && return 0
-
-    return 1
-
-    }
-
-QPKG.ToNotBeRestarted()
-    {
-
-    # input:
-    #   $1 = package name to check
-
-    # output:
-    #   $? = 0 (true) or 1 (false)
-
-    ! QPKG.ToBeRestarted "$1"
 
     }
 
@@ -4135,9 +3535,9 @@ FormatAsResultAndStdout()
 DisplayLineSpace()
     {
 
-    if LineSpace.IsNot; then
-        if DebuggingVisible.IsNot && User.Opts.Show.Versions.IsNot && User.Opts.List.Installed.IsNot && User.Opts.List.NotInstalled.IsNot; then
-            LineSpace.Set
+    if Session.LineSpace.IsNot; then
+        if Session.Debugging.Visible.IsNot && User.Opts.Versions.View.IsNot && User.Opts.Apps.List.Installed.IsNot && User.Opts.Apps.List.NotInstalled.IsNot; then
+            Session.LineSpace.Set
             Display
         fi
     fi
@@ -4182,7 +3582,7 @@ DebugTimerStageStart()
 
     $DATE_CMD +%s
 
-    if DebuggingVisible.IsNot; then
+    if Session.Debugging.Visible.IsNot; then
         DebugInfoThinSeparator
         DebugStage 'start stage timer'
     fi
@@ -4366,7 +3766,7 @@ DebugVar()
 DebugThis()
     {
 
-    DebuggingVisible.IsSet && ShowAsDebug "$1"
+    Session.Debugging.Visible.IsSet && ShowAsDebug "$1"
     WriteAsDebug "$1"
 
     }
@@ -4503,8 +3903,8 @@ WriteToDisplay.Wait()
 
     previous_msg=$(printf "%-10s: %s" "$1" "$2")
 
-    DisplayWait "$previous_msg"; DebuggingVisible.IsSet && Display
-    LineSpace.Clear
+    DisplayWait "$previous_msg"; Session.Debugging.Visible.IsSet && Display
+    Session.LineSpace.Clear
 
     return 0
 
@@ -4544,7 +3944,7 @@ WriteToDisplay.New()
         fi
 
         Display "$strbuffer"
-        LineSpace.Clear
+        Session.LineSpace.Clear
     fi
 
     return 0
@@ -4559,7 +3959,7 @@ WriteToLog()
     #   $2 = message
 
     [[ -z $DEBUG_LOG_PATHFILE ]] && return 1
-    LogToFile.IsNot && return
+    Session.Debugging.LogToFile.IsNot && return
 
     printf "%-4s: %s\n" "$(StripANSI "$1")" "$(StripANSI "$2")" >> "$DEBUG_LOG_PATHFILE"
 
