@@ -1886,6 +1886,7 @@ GetTheseQPKGDeps()
     local complete=false
 
     requested_list=$(DeDupeWords "$1")
+    [[ -z $requested_list ]] && return
     last_list_array=(${requested_list})
 
     DebugInfo "requested QPKGs: $requested_list"
@@ -1941,6 +1942,7 @@ ExcludeInstalledQPKGs()
     local element=''
 
     requested_list=$(DeDupeWords "$1")
+    [[ -z $requested_list ]] && return
     requested_list_array=(${requested_list})
 
     DebugProc 'excluding QPKGs already installed'
