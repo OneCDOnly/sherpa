@@ -176,14 +176,14 @@ Session.Init()
 
     # script flags
     Objects.Create Session.Abort
-    Objects.Create Session.Debugging.LogToFile
+    Objects.Create Session.Debugging.ToFile
     Objects.Create Session.Debugging.Visible
+    Objects.Create Session.Display.Clean
     Objects.Create Session.Ipkgs.Install
     Objects.Create Session.LineSpace
     Objects.Create Session.Pips.Install
     Objects.Create Session.SuggestIssue
     Objects.Create Session.Summary
-    Objects.Create Session.Display.Clean
 
     Session.Summary.Set
     Session.Debugging.Visible.Description = "Display on-screen live debugging information."
@@ -637,7 +637,7 @@ Session.Validate()
 
     Session.Abort.IsSet && return
 
-    Session.Debugging.LogToFile.Set
+    Session.Debugging.ToFile.Set
     DebugInfoThickSeparator
     DebugScript 'started' "$($DATE_CMD | $TR_CMD -s ' ')"
     DebugScript 'version' "package: $PACKAGE_VERSION, manager: $MANAGER_SCRIPT_VERSION, loader $LOADER_SCRIPT_VERSION"
@@ -1275,6 +1275,8 @@ QPKGs.Dependants.Install()
 
     Session.Abort.IsSet && return
 
+    DebugFuncEntry
+
     local package=''
 
     if User.Opts.Apps.All.Install.IsSet; then
@@ -1307,9 +1309,11 @@ QPKGs.Dependants.Install()
             done
         fi
 
-        if [[ ${#QPKGS_upgradable[*]} -gt 0 ]]; then
-            for package in "${QPKGS_upgradable[@]}"; do
-                QPKG.Install "$package"
+        if [[ ${#QPKGs_to_upgrade[*]} -gt 0 ]]; then
+            for package in "${SHERPA_DEP_QPKGs[@]}"; do
+                if [[ ${QPKGS_upgradable[*]} == *"$package"* ]]; then
+                    QPKG.Install "$package"
+                fi
             done
         fi
 
@@ -1330,6 +1334,7 @@ QPKGs.Dependants.Install()
         fi
     fi
 
+    DebugFuncExit
     return 0
 
     }
@@ -3974,7 +3979,7 @@ WriteToLog()
     #   $2 = message
 
     [[ -z $DEBUG_LOG_PATHFILE ]] && return 1
-    Session.Debugging.LogToFile.IsNot && return
+    Session.Debugging.ToFile.IsNot && return
 
     printf "%-4s: %s\n" "$(StripANSI "$1")" "$(StripANSI "$2")" >> "$DEBUG_LOG_PATHFILE"
 
