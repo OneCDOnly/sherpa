@@ -404,8 +404,8 @@ Session.ParseArguments()
                 Help.Set
                 return 1
                 ;;
-            -p|p|--problem|problem)
-                Help.Problem.Set
+            -p|p|--problems|problems|--problem|problem)
+                Help.Problems.Set
                 ;;
             -t|t|--tips|tips)
                 Help.Tips.Set
@@ -780,7 +780,7 @@ Session.Result.Show()
     Help.Actions.IsSet && Help.Actions.Show
     Help.Packages.IsSet && Help.Packages.Show
     Help.Options.IsSet && Help.Options.Show
-    Help.Problem.IsSet && Help.Problem.Show
+    Help.Problems.IsSet && Help.Problems.Show
     Help.Tips.IsSet && Help.Tips.Show
     Help.Abbreviations.IsSet && Help.PackageAbbreviations.Show
 
@@ -2288,7 +2288,7 @@ DisplayAsTitleHelpAction()
     # $1 = description
     # $2 = example syntax
 
-    Display "\n$(FormatAsHelpAction) may be one of the following. Multiple actions are supported for application groups:\n"
+    Display "\n$(FormatAsHelpAction) may be one of the following:\n"
     LineSpace.Clear
 
     }
@@ -2379,7 +2379,7 @@ Help.Basic.Show()
 Help.Basic.Example.Show()
     {
 
-    DisplayAsHelpExample "for more about $(FormatAsHelpAction)" '--action'
+    DisplayAsHelpExample "for more about $(FormatAsHelpAction)" '--actions'
     DisplayAsHelpExample "for more about $(FormatAsHelpPackages)" '--packages'
     DisplayAsHelpExample "for more about $(FormatAsHelpOptions)" '--options'
 
@@ -2407,6 +2407,8 @@ Help.Actions.Show()
 #     DisplayAsHelpActionExample '--restore'
 #     DisplayAsHelpActionExample '--status'
 #     DisplayAsHelpActionExample '--status-all'
+
+    DisplayAsHelpExample 'However, multiple actions are supported like this example' '--install sabnzbd sickchill --uninstall lazy nzbget --upgrade nzbtomedia --restart transmission'
 
     return 0
 
@@ -2454,13 +2456,13 @@ Help.Options.Show()
 
     DisplayAsHelpExample 'display helpful tips and shortcuts' '--tips'
 
-    DisplayAsHelpExample 'display troubleshooting options' '--problem'
+    DisplayAsHelpExample 'display troubleshooting options' '--problems'
 
     return 0
 
     }
 
-Help.Problem.Show()
+Help.Problems.Show()
     {
 
     DisplayLineSpace
@@ -2942,36 +2944,36 @@ Help.IsNot()
 
     }
 
-Help.Problem.Set()
+Help.Problems.Set()
     {
 
     Session.Abort.Set
 
-    Help.Problem.IsSet && return
+    Help.Problems.IsSet && return
 
     _show_problem_help_flag=true
     DebugVar _show_problem_help_flag
 
     }
 
-Help.Problem.Clear()
+Help.Problems.Clear()
     {
 
-    Help.Problem.IsNot && return
+    Help.Problems.IsNot && return
 
     _show_problem_help_flag=false
     DebugVar _show_problem_help_flag
 
     }
 
-Help.Problem.IsSet()
+Help.Problems.IsSet()
     {
 
     [[ $_show_problem_help_flag = true ]]
 
     }
 
-Help.Problem.IsNot()
+Help.Problems.IsNot()
     {
 
     [[ $_show_problem_help_flag != true ]]
@@ -4290,21 +4292,21 @@ FormatAsScriptTitle()
 FormatAsHelpAction()
     {
 
-    ColourTextBrightYellow '[ACTION]'
+    ColourTextBrightYellow '[actions]'
 
     }
 
 FormatAsHelpPackages()
     {
 
-    ColourTextBrightOrange '[PACKAGES]'
+    ColourTextBrightOrange '[packages]'
 
     }
 
 FormatAsHelpOptions()
     {
 
-    ColourTextBrightRed '[OPTIONS]'
+    ColourTextBrightRed '[options]'
 
     }
 
