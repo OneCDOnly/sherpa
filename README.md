@@ -132,7 +132,7 @@ sherpa upgrade-all
 This option will install any additional QPKGs or IPKGs to support any sherpa-installed applications present on your NAS:
 
 ```
-sherpa check
+sherpa check-all
 ```
 
 

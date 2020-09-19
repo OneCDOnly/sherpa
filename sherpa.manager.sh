@@ -388,7 +388,7 @@ Session.ParseArguments()
                 DebuggingVisible.Set
                 current_operation=''
                 ;;
-            -c|c|--check|check)
+            -c|c|--check|check|--check-all|check-all)
                 CheckDependencies.Set
                 current_operation=''
                 ;;
@@ -421,13 +421,13 @@ Session.ParseArguments()
             --abs|abs)
                 Help.Abbreviations.Set
                 ;;
-            --action|action|--actions|actions)
+            -a|a|--action|action|--actions|actions)
                 Help.Actions.Set
                 ;;
             --package|package|--packages|packages)
                 Help.Packages.Set
                 ;;
-            --option|option|--options|options)
+            -o|o|--option|option|--options|options)
                 Help.Options.Set
                 ;;
             -v|v|--version|version)
@@ -2330,6 +2330,17 @@ DisplayAsTitleHelpOption()
 
     }
 
+DisplayAsTitleHelpProblem()
+    {
+
+    # $1 = description
+    # $2 = example syntax
+
+    Display "\n* usage examples when dealing with problems:"
+    LineSpace.Clear
+
+    }
+
 DisplayAsIndentedHelpExample()
     {
 
@@ -2421,7 +2432,7 @@ Help.Actions.Show()
 
     DisplayAsIndentedHelpExample "reinstall the following packages" "--reinstall $(FormatAsHelpPackages)"
 
-    DisplayAsIndentedHelpExample "upgrade the following packages" "--upgrade $(FormatAsHelpPackages)"
+    DisplayAsIndentedHelpExample "upgrade the following packages" "--upgrade $(FormatAsHelpPackages) $(FormatAsHelpOptions)"
 
     DisplayAsIndentedHelpExample 'upgrade all installed packages (including the internal applications)' '--upgrade-all'
 
@@ -2432,6 +2443,8 @@ Help.Actions.Show()
     DisplayAsIndentedHelpExample "uninstall the following packages" "--uninstall $(FormatAsHelpPackages)"
 
     DisplayAsIndentedHelpExample "uninstall everything! (except $(FormatAsPackageName Par2) and $(FormatAsPackageName Entware) for now)" '--uninstall-all-packages-please'
+
+    DisplayAsIndentedHelpExample 'ensure all application dependencies are installed' '--check-all'
 
 #     DisplayAsIndentedHelpExample '--backup'
 
@@ -2487,6 +2500,10 @@ Help.Options.Show()
 
     DisplayAsTitleHelpOption
 
+    DisplayAsIndentedHelpExample 'process one or more packages and show live debugging information' "$(FormatAsHelpActions) $(FormatAsHelpPackages) --debug"
+
+    DisplayAsIndentedHelpExample 'force-upgrade the following packages' "--upgrade $(FormatAsHelpPackages) --force"
+
     DisplayAsIndentedHelpExample 'display helpful tips and shortcuts' '--tips'
 
     DisplayAsIndentedHelpExample 'display troubleshooting options' '--problems'
@@ -2501,11 +2518,11 @@ Help.Problems.Show()
     DisplayLineSpace
     Help.Basic.Show
 
-    DisplayAsTitleHelpOption
+    DisplayAsTitleHelpProblem
 
     DisplayAsIndentedHelpExample 'process one or more packages and show live debugging information' "$(FormatAsHelpActions) $(FormatAsHelpPackages) --debug"
 
-    DisplayAsIndentedHelpExample 'ensure all application dependencies are installed' '--check'
+    DisplayAsIndentedHelpExample 'ensure all application dependencies are installed' '--check-all'
 
     DisplayAsIndentedHelpExample "don't check free-space on target filesystem when installing $(FormatAsPackageName Entware) packages" '--ignore-space'
 
