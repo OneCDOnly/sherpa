@@ -444,7 +444,6 @@ Session.ParseArguments()
                 UninstallAllApps.Set
                 current_operation=''
                 operation_force=false
-                return 1
                 ;;
             --restart-all|restart-all)
                 RestartAllApps.Set
@@ -2288,7 +2287,7 @@ DisplayAsTitleHelpAction()
     # $1 = description
     # $2 = example syntax
 
-    Display "\n* $(FormatAsHelpAction) usage examples:"
+    Display "\n* $(FormatAsHelpActions) usage examples:"
     LineSpace.Clear
 
     }
@@ -2375,7 +2374,7 @@ Help.Basic.Show()
     {
 
     DisplayLineSpace
-    Display "Usage: $(FormatAsScriptTitle) $(FormatAsHelpAction) $(FormatAsHelpPackages) $(FormatAsHelpOptions)"
+    Display "Usage: $(FormatAsScriptTitle) $(FormatAsHelpActions) $(FormatAsHelpPackages) $(FormatAsHelpOptions)"
     LineSpace.Clear
 
     return 0
@@ -2385,7 +2384,7 @@ Help.Basic.Show()
 Help.Basic.Example.Show()
     {
 
-    DisplayAsIndentedHelpExample "for more about $(FormatAsHelpAction)" '--actions'
+    DisplayAsIndentedHelpExample "for more about $(FormatAsHelpActions)" '--actions'
     DisplayAsIndentedHelpExample "for more about $(FormatAsHelpPackages)" '--packages'
     DisplayAsIndentedHelpExample "for more about $(FormatAsHelpOptions)" '--options'
 
@@ -2401,17 +2400,28 @@ Help.Actions.Show()
     DisplayAsTitleHelpAction
 
     DisplayAsIndentedHelpExample "install the following packages" "--install $(FormatAsHelpPackages)"
+
     DisplayAsIndentedHelpExample "install all available $(FormatAsScriptTitle) packages" '--install-all'
+
     DisplayAsIndentedHelpExample "reinstall the following packages" "--reinstall $(FormatAsHelpPackages)"
+
     DisplayAsIndentedHelpExample "upgrade the following packages" "--upgrade $(FormatAsHelpPackages)"
-    DisplayAsIndentedHelpExample "upgrade all available packages" '--upgrade-all'
+
+    DisplayAsIndentedHelpExample 'upgrade all installed packages (including the internal applications)' '--upgrade-all'
+
     DisplayAsIndentedHelpExample "upgrade the following packages and the internal applications" "--restart $(FormatAsHelpPackages)"
-    DisplayAsIndentedHelpExample "restart all packages, which will also upgrade the internal applications" '--restart-all'
+
+    DisplayAsIndentedHelpExample 'restart all packages (only upgrades the internal applications, not the packages)' '--restart-all'
+
     DisplayAsIndentedHelpExample "uninstall the following packages" "--uninstall $(FormatAsHelpPackages)"
-    DisplayAsIndentedHelpExample "uninstall everything!" '--uninstall-all-applications-please'
+
+    DisplayAsIndentedHelpExample "uninstall everything!" '--uninstall-all-packages-please'
 #     DisplayAsIndentedHelpExample '--backup'
+
 #     DisplayAsIndentedHelpExample '--restore'
+
 #     DisplayAsIndentedHelpExample '--status'
+
 #     DisplayAsIndentedHelpExample '--status-all'
 
     DisplayAsHelpExample 'However, multiple actions are supported like this' '--install sabnzbd sickchill --uninstall lazy nzbget --upgrade nzbtomedia --restart transmission'
@@ -2476,15 +2486,15 @@ Help.Problems.Show()
 
     DisplayAsTitleHelpOption
 
-    DisplayAsIndentedHelpExample 'install a package and show debugging information' "$(FormatAsHelpPackages) --debug"
+    DisplayAsIndentedHelpExample 'process one or more packages and show live debugging information' "$(FormatAsHelpActions) $(FormatAsHelpPackages) --debug"
 
     DisplayAsIndentedHelpExample 'ensure all application dependencies are installed' '--check'
 
     DisplayAsIndentedHelpExample "don't check free-space on target filesystem when installing $(FormatAsPackageName Entware) packages" '--ignore-space'
 
-    DisplayAsIndentedHelpExample 'restart all installed applications (only upgrades the internal applications, not the QPKG)' '--restart-all'
+    DisplayAsIndentedHelpExample 'restart all installed packages (upgrades the internal applications, not the packages)' '--restart-all'
 
-    DisplayAsIndentedHelpExample 'upgrade all installed QPKGs (including the internal applications)' '--upgrade-all'
+    DisplayAsIndentedHelpExample 'upgrade all installed packages (including the internal applications)' '--upgrade-all'
 
     DisplayAsIndentedHelpExample 'view the log' '--log'
 
@@ -2529,7 +2539,7 @@ Help.Tips.Show()
 
     DisplayAsIndentedHelpExample 'ensure all application dependencies are installed' '--check'
 
-    DisplayAsIndentedHelpExample 'restart all applications (only upgrades the internal applications, not the QPKG)' '--restart-all'
+    DisplayAsIndentedHelpExample 'restart all applications (upgrades the internal applications, not the QPKG)' '--restart-all'
 
     DisplayAsIndentedHelpExample 'upgrade all QPKGs (including the internal applications)' '--upgrade-all'
 
@@ -4295,7 +4305,7 @@ FormatAsScriptTitle()
 
     }
 
-FormatAsHelpAction()
+FormatAsHelpActions()
     {
 
     ColourTextBrightYellow '[actions]'
