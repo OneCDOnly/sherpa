@@ -4114,20 +4114,18 @@ Objects.Create()
     [[ $(type -t Objects.Index) != 'function' ]] && [[ -z $1 || $1 != Objects ]] && Objects.Create Objects
 
     local public_function_name="$1"
-    local safe_var_name_prefix="$(tr '[A-Z]' '[a-z]' <<< "${public_function_name//./_}")"
+    local safe_function_name="$(tr '[A-Z]' '[a-z]' <<< "${public_function_name//./_}")"
 
-    _placehold_index_="_object_${safe_var_name_prefix}_index_integer"
-    _placehold_description_="_object_${safe_var_name_prefix}_description_string"
-    _placehold_value_="_object_${safe_var_name_prefix}_value_integer"
-    _placehold_text_="_object_${safe_var_name_prefix}_text_string"
-    _placehold_set_switch_="_object_${safe_var_name_prefix}_set_boolean"
-    _placehold_enable_switch_="_object_${safe_var_name_prefix}_enable_boolean"
-    _placehold_list_array_="_object_${safe_var_name_prefix}_list_array"
-    _placehold_list_pointer_="_object_${safe_var_name_prefix}_array_index_integer"
+    _placehold_index_="_object_${safe_function_name}_index_integer"
+    _placehold_description_="_object_${safe_function_name}_description_string"
+    _placehold_value_="_object_${safe_function_name}_value_integer"
+    _placehold_text_="_object_${safe_function_name}_text_string"
+    _placehold_set_switch_="_object_${safe_function_name}_set_boolean"
+    _placehold_enable_switch_="_object_${safe_function_name}_enable_boolean"
+    _placehold_list_array_="_object_${safe_function_name}_list_array"
+    _placehold_list_pointer_="_object_${safe_function_name}_array_index_integer"
 
-    if [[ $(type -t Objects.Index) = 'function' ]]; then
-        Objects.Items.Add "$public_function_name"
-    fi
+    [[ $(type -t Objects.Index) = 'function' ]] && Objects.Items.Add "$public_function_name"
 
     object_functions='
         '$public_function_name'.Clear()
