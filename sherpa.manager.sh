@@ -680,6 +680,12 @@ Session.Validate()
         QPKG.Installed "$package" && QPKGs.Uninstall.Add "$package"
     done
 
+    if UninstallAllApps.IsSet; then
+        for package in "${SHERPA_QPKG_NAME[@]}"; do
+            QPKG.Installed "$package" && QPKGs.Uninstall.Add "$package"
+        done
+    fi
+
     if QPKGs.Install.IsNone && QPKGs.Uninstall.IsNone && QPKGs.Reinstall.IsNone && QPKGs.Restart.IsNone && QPKGs.Upgrade.IsNone && [[ ${#QPKGs_to_backup[@]} -eq 0 && ${#QPKGs_to_restore[@]} -eq 0 && ${#QPKGs_to_status[@]} -eq 0 ]]; then
         if InstallAllApps.IsNot && UninstallAllApps.IsNot && RestartAllApps.IsNot && UpgradeAllApps.IsNot && BackupAllApps.IsNot && RestoreAllApps.IsNot && StatusAllApps.IsNot; then
             if CheckDependencies.IsNot; then
@@ -1335,13 +1341,21 @@ QPKGs.Remove()
     local previous_pip3_module_list=$SHARE_PUBLIC_PATH/pip3.prev.installed.list
     local previous_opkg_package_list=$SHARE_PUBLIC_PATH/opkg.prev.installed.list
 
-    for package in "${QPKGs_to_uninstall[@]}"; do
-        if QPKG.Installed "$package"; then
-            QPKG.Uninstall "$package"
-        else
-            ShowAsNote "unable to uninstall $(FormatAsPackageName "$package") as it's not installed"
+    local count="${#SHERPA_QPKG_NAME[@]}"
+    local index=0
+
+    # remove dependant packages first
+    for package in "${SHERPA_DEP_QPKGs[@]}"; do
+        if [[ ${QPKGs_to_uninstall[*]} == *"$package"* ]]; then
+            if QPKG.Installed "$package"; then
+                QPKG.Uninstall "$package"
+            else
+                ShowAsNote "unable to uninstall $(FormatAsPackageName "$package") as it's not installed"
+            fi
         fi
     done
+
+    # TOFIX: still need something here to remove independent packages if they're in the $QPKGs_to_uninstall array
 
     if QPKG.ToBeReinstalled Entware; then
         ShowAsNote "Reinstalling $(FormatAsPackageName Entware) will remove all IPKGs and Python modules, and only those required to support your $PROJECT_NAME apps will be reinstalled."
@@ -2415,7 +2429,8 @@ Help.Actions.Show()
 
     DisplayAsIndentedHelpExample "uninstall the following packages" "--uninstall $(FormatAsHelpPackages)"
 
-    DisplayAsIndentedHelpExample "uninstall everything!" '--uninstall-all-packages-please'
+    DisplayAsIndentedHelpExample "uninstall everything! (except $(FormatAsPackageName Par2) and $(FormatAsPackageName Entware) for now)" '--uninstall-all-packages-please'
+
 #     DisplayAsIndentedHelpExample '--backup'
 
 #     DisplayAsIndentedHelpExample '--restore'
@@ -2424,7 +2439,7 @@ Help.Actions.Show()
 
 #     DisplayAsIndentedHelpExample '--status-all'
 
-    DisplayAsHelpExample 'However, multiple actions are supported like this' '--install sabnzbd sickchill --uninstall lazy nzbget --upgrade nzbtomedia --restart transmission'
+    DisplayAsHelpExample 'multiple actions are supported like this' '--install sabnzbd sickchill --uninstall lazy nzbget --upgrade nzbtomedia --restart transmission'
 
     return 0
 
