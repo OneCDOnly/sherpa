@@ -186,8 +186,9 @@ Session.Init()
     Objects.Create Session.Display.Clean
 
     Session.Summary.Set
-    Session.Debugging.Visible.Description = 'display on-screen live debugging information'
-    Session.Display.Clean.Description = 'disable display of script title and trailing linespace. If set, output is suitable for script processing'
+    Session.Debugging.Visible.Description = "Display on-screen live debugging information."
+    Session.Display.Clean.Description = "Disable display of script title and trailing linespace. If 'set', output is suitable for script processing."
+    Session.LineSpace.Description = "Keeps track of the display empty linespacing flag. If 'set', an empty linespace has been printed to screen."
 
     local -r DEFAULT_SHARE_DOWNLOAD_PATH=/share/Download
     local -r DEFAULT_SHARE_PUBLIC_PATH=/share/Public
@@ -629,7 +630,7 @@ Session.Validate()
 
     if Session.Debugging.Visible.IsNot; then
         Display "$(FormatAsScriptTitle) $MANAGER_SCRIPT_VERSION • a mini-package-manager for QNAP NAS"
-        DisplayLineSpace
+        DisplayLineSpaceAndSet
     fi
 
     DisplayNewQPKGVersions
@@ -841,7 +842,6 @@ Session.Result.Show()
     if User.Opts.Help.Show.Basic.IsSet; then
         Help.Basic.Show
         Help.Basic.Example.Show
-        Session.LineSpace.Clear
     fi
 
     User.Opts.Help.Show.Actions.IsSet && Help.Actions.Show
@@ -854,7 +854,7 @@ Session.Result.Show()
     User.Opts.Log.Paste.IsSet && PasteLogOnline
     Session.Summary.IsSet && Session.Summary.Show
     Session.SuggestIssue.IsSet && Help.Issue.Show
-    DisplayLineSpace
+    DisplayLineSpaceAndSet
 
     DebugInfoThinSeparator
     DebugScript 'finished' "$($DATE_CMD)"
@@ -2396,7 +2396,6 @@ DisplayAsTitleHelpAction()
     {
 
     Display "\n* $(FormatAsHelpActions) usage examples:"
-    Session.LineSpace.Clear
 
     }
 
@@ -2404,7 +2403,6 @@ DisplayAsTitleHelpPackage()
     {
 
     Display "\n* $(FormatAsHelpPackages) may be one or more of the following (space-separated):\n"
-    Session.LineSpace.Clear
 
     }
 
@@ -2412,7 +2410,6 @@ DisplayAsTitleHelpOption()
     {
 
     Display "\n* $(FormatAsHelpOptions) usage examples:"
-    Session.LineSpace.Clear
 
     }
 
@@ -2420,7 +2417,6 @@ DisplayAsTitleHelpProblem()
     {
 
     Display "\n* usage examples when dealing with problems:"
-    Session.LineSpace.Clear
 
     }
 
@@ -2428,7 +2424,6 @@ DisplayAsTitleHelpTip()
     {
 
     Display "\n* helpful tips and shortcuts:"
-    Session.LineSpace.Clear
 
     }
 
@@ -2436,7 +2431,6 @@ DisplayAsTitleInstalledQPKGs()
     {
 
     Display "\n* these packages are currently installed:"
-    Session.LineSpace.Clear
 
     }
 
@@ -2486,6 +2480,7 @@ Display()
     {
 
     echo -e "$1"
+    Session.LineSpace.Clear
 
     }
 
@@ -2499,9 +2494,8 @@ DisplayWait()
 Help.Basic.Show()
     {
 
-    DisplayLineSpace
+    DisplayLineSpaceAndSet
     Display "Usage: $(FormatAsScriptTitle) $(FormatAsHelpActions) $(FormatAsHelpPackages) $(FormatAsHelpOptions)"
-    Session.LineSpace.Clear
 
     return 0
 
@@ -2620,7 +2614,7 @@ Help.Options.Show()
 Help.Problems.Show()
     {
 
-    DisplayLineSpace
+    DisplayLineSpaceAndSet
     Help.Basic.Show
 
     DisplayAsTitleHelpProblem
@@ -2638,7 +2632,6 @@ Help.Problems.Show()
     DisplayAsIndentedHelpExample "upload the most-recent $LOG_TAIL_LINES entries in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" '--paste'
 
     Display "\n$(ColourTextBrightOrange "* If you need help, please include a copy of your") $(FormatAsScriptTitle) $(ColourTextBrightOrange "log for analysis!")"
-    Session.LineSpace.Clear
 
     return 0
 
@@ -2647,7 +2640,7 @@ Help.Problems.Show()
 Help.Issue.Show()
     {
 
-    DisplayLineSpace
+    DisplayLineSpaceAndSet
     Display "* Please consider creating a new issue for this on GitHub:\n\thttps://github.com/OneCDOnly/sherpa/issues"
 
     Display "\n* Alternatively, post on the QNAP NAS Community Forum:\n\thttps://forum.qnap.com/viewtopic.php?f=320&t=132373"
@@ -2657,7 +2650,6 @@ Help.Issue.Show()
     DisplayAsIndentedHelpExample "upload the most-recent $LOG_TAIL_LINES entries in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" '--paste'
 
     Display "\n$(ColourTextBrightOrange '* If you need help, please include a copy of your') $(FormatAsScriptTitle) $(ColourTextBrightOrange 'log for analysis!')"
-    Session.LineSpace.Clear
 
     return 0
 
@@ -2685,7 +2677,6 @@ Help.Tips.Show()
     DisplayAsIndentedHelpExample 'display all package-manager scripts versions' '--version'
 
     echo -e "\n$(ColourTextBrightOrange "* If you need help, please include a copy of your") $(FormatAsScriptTitle) $(ColourTextBrightOrange "log for analysis!")"
-    Session.LineSpace.Clear
 
     return 0
 
@@ -2700,7 +2691,7 @@ Help.PackageAbbreviations.Show()
 
     Help.Basic.Show
 
-    DisplayLineSpace
+    DisplayLineSpaceAndSet
     echo -e "* $(FormatAsScriptTitle) recognises these abbreviations as $(FormatAsHelpPackages):"
 
     for package_index in "${!SHERPA_QPKG_NAME[@]}"; do
@@ -3557,12 +3548,14 @@ FormatAsResultAndStdout()
 
     }
 
-DisplayLineSpace()
+DisplayLineSpaceAndSet()
     {
 
-    if Session.LineSpace.IsNot && Session.Display.Clean.IsNot && Session.Debugging.Visible.IsNot; then
-        Session.LineSpace.Set
-        Display
+    if Session.LineSpace.IsNot; then
+        if Session.Debugging.Visible.IsNot && Session.Display.Clean.IsNot; then
+            Display
+            Session.LineSpace.Set
+        fi
     fi
 
     }
@@ -3927,7 +3920,7 @@ WriteToDisplay.Wait()
     previous_msg=$(printf "%-10s: %s" "$1" "$2")
 
     DisplayWait "$previous_msg"; Session.Debugging.Visible.IsSet && Display
-    Session.LineSpace.Clear
+
 
     return 0
 
@@ -3967,7 +3960,6 @@ WriteToDisplay.New()
         fi
 
         Display "$strbuffer"
-        Session.LineSpace.Clear
     fi
 
     return 0
@@ -4130,14 +4122,14 @@ Objects.Create()
     object_functions='
         '$public_function_name'.Clear()
             {
-            [[ '$_placehold_set_switch_' != true ]] && return
+            [[ $'$_placehold_set_switch_' != "true" ]] && return
             '$_placehold_set_switch_'=false
             DebugVar '$_placehold_set_switch_'
             }
 
         '$public_function_name'.Description()
             {
-            if [[ -n $1 && $1 = '=' ]]; then
+            if [[ -n $1 && $1 = "=" ]]; then
                 '$_placehold_description_'="$2"
             else
                 echo -n "'$_placehold_description_'"
@@ -4146,14 +4138,14 @@ Objects.Create()
 
         '$public_function_name'.Disable()
             {
-            [[ '$_placehold_enable_switch_' != true ]] && return
+            [[ $'$_placehold_enable_switch_' != "true" ]] && return
             '$_placehold_enable_switch_'=false
             DebugVar '$_placehold_enable_switch_'
             }
 
         '$public_function_name'.Enable()
             {
-            [[ $'$_placehold_enable_switch_' = true ]] && return
+            [[ $'$_placehold_enable_switch_' = "true" ]] && return
             '$_placehold_enable_switch_'=true
             DebugVar '$_placehold_enable_switch_'
             }
@@ -4195,22 +4187,22 @@ Objects.Create()
 
         '$public_function_name'.IsDisabled()
             {
-            [[ $'$_placehold_enable_switch_' != true ]]
+            [[ $'$_placehold_enable_switch_' != "true" ]]
             }
 
         '$public_function_name'.IsEnabled()
             {
-            [[ $'$_placehold_enable_switch_' = true ]]
+            [[ $'$_placehold_enable_switch_' = "true" ]]
             }
 
         '$public_function_name'.IsNot()
             {
-            [[ $'$_placehold_set_switch_' != true ]]
+            [[ $'$_placehold_set_switch_' != "true" ]]
             }
 
         '$public_function_name'.IsSet()
             {
-            [[ $'$_placehold_set_switch_' = true ]]
+            [[ $'$_placehold_set_switch_' = "true" ]]
             }
 
         '$public_function_name'.Items.Add()
@@ -4264,7 +4256,7 @@ Objects.Create()
 
         '$public_function_name'.Set()
             {
-            [[ $'$_placehold_set_switch_' = true ]] && return
+            [[ $'$_placehold_set_switch_' = "true" ]] && return
             '$_placehold_set_switch_'=true
             DebugVar '$_placehold_set_switch_'
             }
