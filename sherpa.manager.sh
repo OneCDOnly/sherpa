@@ -2196,7 +2196,7 @@ Session.LockFile.Claim()
     {
 
     if [[ -e $RUNTIME_LOCK_PATHFILE && -d /proc/$(<$RUNTIME_LOCK_PATHFILE) && $(</proc/"$(<$RUNTIME_LOCK_PATHFILE)"/cmdline) =~ $MANAGER_SCRIPT_FILE ]]; then
-        ShowAsAbort "another instance is running"
+        ShowAsAbort 'another instance is running'
         return 1
     else
         echo "$$" > "$RUNTIME_LOCK_PATHFILE"
@@ -2438,21 +2438,21 @@ Help.Actions.Show()
 
     DisplayAsTitleHelpAction
 
-    DisplayAsIndentedHelpExample "install the following packages" "--install $(FormatAsHelpPackages)"
+    DisplayAsIndentedHelpExample 'install the following packages' "--install $(FormatAsHelpPackages)"
 
-    DisplayAsIndentedHelpExample "install everything!" '--install-all'
+    DisplayAsIndentedHelpExample 'install everything!' '--install-all'
 
-    DisplayAsIndentedHelpExample "reinstall the following packages" "--reinstall $(FormatAsHelpPackages)"
+    DisplayAsIndentedHelpExample 'reinstall the following packages' "--reinstall $(FormatAsHelpPackages)"
 
-    DisplayAsIndentedHelpExample "upgrade the following packages" "--upgrade $(FormatAsHelpPackages) $(FormatAsHelpOptions)"
+    DisplayAsIndentedHelpExample 'upgrade the following packages' "--upgrade $(FormatAsHelpPackages) $(FormatAsHelpOptions)"
 
     DisplayAsIndentedHelpExample 'upgrade all installed packages (including the internal applications)' '--upgrade-all'
 
-    DisplayAsIndentedHelpExample "upgrade the following packages and the internal applications" "--restart $(FormatAsHelpPackages)"
+    DisplayAsIndentedHelpExample 'upgrade the following packages and the internal applications' "--restart $(FormatAsHelpPackages)"
 
     DisplayAsIndentedHelpExample 'restart all packages (only upgrades the internal applications, not the packages)' '--restart-all'
 
-    DisplayAsIndentedHelpExample "uninstall the following packages" "--uninstall $(FormatAsHelpPackages)"
+    DisplayAsIndentedHelpExample 'uninstall the following packages' "--uninstall $(FormatAsHelpPackages)"
 
     DisplayAsIndentedHelpExample "uninstall everything! (except $(FormatAsPackageName Par2) and $(FormatAsPackageName Entware) for now)" '--uninstall-all-packages-please'
 
