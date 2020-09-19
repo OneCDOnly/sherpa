@@ -52,7 +52,8 @@ Any model QNAP NAS with at-least 1GB RAM and running QTS 4.0 or-later.
 
 [b][u][size=120]Usage[/size][/u][/b]
 
-[list=1][*]Install the new [b]sherpa[/b] QPKG! Available here:[attachment=0]sherpa_200917.qpkg.zip[/attachment]
+[list=1][*]Install the new [b]sherpa[/b] QPKG! Available from [url=https://github.com/OneCDOnly/sherpa/raw/master/QPKGs/sherpa/build/sherpa_200917.qpkg]GitHub[/url].
+
 
 [*][url=https://www.qnap.com/en/how-to/knowledge-base/article/how-to-access-qnap-nas-by-ssh/][b]SSH[/b][/url] into your NAS as the 'admin' user,
 
@@ -74,14 +75,12 @@ sherpa install Deluge-web
 [/code]
 
 Or, install everything!
-[code]sherpa --install-all-applications[/code]
+[code]sherpa --install-all[/code]
 [/list]
 
 
 [b][u][size=120]Known issues[/size][/u][/b]
 
-[list][*]Python 2.7.16 is no-longer available via Entware/OpenWRT so the [b]Headphones[/b] QPKG can no-longer be installed. I'll need to find another Python2 source with installable modules, but I'm not hopeful.
-[/list]
 [list][*]Sometimes, it seems existing installations of OpenWRT can become "difficult" to work with. So, Entware can also be reinstalled, but this should only be used as a last resort. Using:
 [code]sherpa reinstall Entware[/code]
 ... will force [b]sherpa[/b] to uninstall your existing Entware QPKG, then install a new one. [b][color=#FF0000]Note:[/color][/b] OpenWRT will be reverted back to default, and only the IPKGs required to support your installed [b]sherpa[/b] apps will be installed. [/list]

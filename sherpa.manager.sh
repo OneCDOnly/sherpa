@@ -415,6 +415,14 @@ Session.ParseArguments()
                 LogView.Set
                 return 1
                 ;;
+            --list-installed|list-installed)
+                ListInstalledApps.Set
+                return 1
+                ;;
+            --list-not-installed|list-not-installed)
+                ListNotInstalledApps.Set
+                return 1
+                ;;
             --paste|paste)
                 LogPaste.Set
                 return 1
@@ -437,41 +445,27 @@ Session.ParseArguments()
                 ;;
             --install-all|install-all)
                 InstallAllApps.Set
-                current_operation=''
-                operation_force=false
                 return 1
                 ;;
             --uninstall-all-applications-please|uninstall-all-applications-please)
                 UninstallAllApps.Set
-                current_operation=''
-                operation_force=false
                 ;;
             --restart-all|restart-all)
                 RestartAllApps.Set
-                current_operation=''
-                operation_force=false
                 ;;
             --upgrade-all|upgrade-all)
                 UpgradeAllApps.Set
-                current_operation=''
-                operation_force=false
                 ;;
             --backup-all)
                 BackupAllApps.Set
-                current_operation=''
-                operation_force=false
                 return 1
                 ;;
             --restore-all)
                 RestoreAllApps.Set
-                current_operation=''
-                operation_force=false
                 return 1
                 ;;
             --status-all|status-all)
                 StatusAllApps.Set
-                current_operation=''
-                operation_force=false
                 return 1
                 ;;
             --install|install)
@@ -568,7 +562,7 @@ Session.Validate()
 
     Session.ParseArguments
 
-    VersionView.IsSet && return
+    (VersionView.IsSet || ListInstalledApps.IsSet || ListNotInstalledApps.IsSet) && return
 
     if DebuggingVisible.IsNot; then
         Display "$(FormatAsScriptTitle) $MANAGER_SCRIPT_VERSION • a mini-package-manager for QNAP NAS"
@@ -663,7 +657,7 @@ Session.Validate()
         QPKGs_initial_array=($(QPKGs.Upgradable.Array))
         PIPInstall.Set
     elif CheckDependencies.IsSet; then
-        QPKGs_initial_array+=($(QPKGsInstalled.Array))
+        QPKGs_initial_array+=($(QPKGs.Installed.Array))
         PIPInstall.Set
     else
         QPKGs_initial_array+=(${QPKGs_to_install[*]} ${QPKGs_to_reinstall[*]} ${QPKGs_to_upgrade[*]})
@@ -688,8 +682,8 @@ Session.Validate()
     fi
 
     if QPKGs.Install.IsNone && QPKGs.Uninstall.IsNone && QPKGs.Reinstall.IsNone && QPKGs.Restart.IsNone && QPKGs.Upgrade.IsNone && [[ ${#QPKGs_to_backup[@]} -eq 0 && ${#QPKGs_to_restore[@]} -eq 0 && ${#QPKGs_to_status[@]} -eq 0 ]]; then
-        if InstallAllApps.IsNot && UninstallAllApps.IsNot && RestartAllApps.IsNot && UpgradeAllApps.IsNot && BackupAllApps.IsNot && RestoreAllApps.IsNot && StatusAllApps.IsNot; then
-            if CheckDependencies.IsNot; then
+        if InstallAllApps.IsNot && UninstallAllApps.IsNot && RestartAllApps.IsNot && UpgradeAllApps.IsNot && BackupAllApps.IsNot && RestoreAllApps.IsNot; then
+            if StatusAllApps.IsNot && CheckDependencies.IsNot && ListInstalledApps.IsNot; then
                 ShowAsError 'nothing to do'
                 Help.Set
                 return 1
@@ -776,6 +770,8 @@ Session.Result.Show()
     fi
 
     LogView.IsSet && LogViewer.Show
+    ListInstalledApps.IsSet && QPKGs.Installed.Show
+    ListNotInstalledApps.IsSet && QPKGs.NotInstalled.Show
 
     if Help.IsSet; then
         Help.Basic.Show
@@ -1388,6 +1384,28 @@ QPKGs.Remove()
 
     }
 
+QPKGs.Installed.Show()
+    {
+
+    for package in $(QPKGs.Installed.Print); do
+        echo "$package"
+    done
+
+    return 0
+
+    }
+
+QPKGs.NotInstalled.Show()
+    {
+
+    for package in $(QPKGs.NotInstalled.Print); do
+        echo "$package"
+    done
+
+    return 0
+
+    }
+
 QPKGs.Independent.Build()
     {
 
@@ -1446,7 +1464,7 @@ QPKGs.Installable.Build()
 QPKGs.Installed.Build()
     {
 
-    # Returns a list of installed sherpa QPKGs
+    # Returns a list of user installed sherpa QPKGs
     # creates a global variable array: $QPKGs_installed()
 
     QPKGs_installed=()
@@ -2301,9 +2319,6 @@ IsIPKGInstalled()
 DisplayAsTitleHelpAction()
     {
 
-    # $1 = description
-    # $2 = example syntax
-
     Display "\n* $(FormatAsHelpActions) usage examples:"
     LineSpace.Clear
 
@@ -2311,9 +2326,6 @@ DisplayAsTitleHelpAction()
 
 DisplayAsTitleHelpPackage()
     {
-
-    # $1 = description
-    # $2 = example syntax
 
     Display "\n* $(FormatAsHelpPackages) may be one or more of the following (space-separated):\n"
     LineSpace.Clear
@@ -2323,9 +2335,6 @@ DisplayAsTitleHelpPackage()
 DisplayAsTitleHelpOption()
     {
 
-    # $1 = description
-    # $2 = example syntax
-
     Display "\n* $(FormatAsHelpOptions) usage examples:"
     LineSpace.Clear
 
@@ -2333,9 +2342,6 @@ DisplayAsTitleHelpOption()
 
 DisplayAsTitleHelpProblem()
     {
-
-    # $1 = description
-    # $2 = example syntax
 
     Display "\n* usage examples when dealing with problems:"
     LineSpace.Clear
@@ -2345,10 +2351,15 @@ DisplayAsTitleHelpProblem()
 DisplayAsTitleHelpTip()
     {
 
-    # $1 = description
-    # $2 = example syntax
-
     Display "\n* helpful tips and shortcuts:"
+    LineSpace.Clear
+
+    }
+
+DisplayAsTitleInstalledQPKGs()
+    {
+
+    Display "\n* these packages are currently installed:"
     LineSpace.Clear
 
     }
@@ -2455,6 +2466,10 @@ Help.Actions.Show()
     DisplayAsIndentedHelpExample 'uninstall the following packages' "--uninstall $(FormatAsHelpPackages)"
 
     DisplayAsIndentedHelpExample "uninstall everything! (except $(FormatAsPackageName Par2) and $(FormatAsPackageName Entware) for now)" '--uninstall-all-packages-please'
+
+    DisplayAsIndentedHelpExample 'list all installed packages' '--list-installed'
+
+    DisplayAsIndentedHelpExample 'list all packages that are not installed' '--list-not-installed'
 
     DisplayAsIndentedHelpExample 'ensure all application dependencies are installed' '--check-all'
 
@@ -2696,17 +2711,24 @@ QPKGs.Installed.Add()
 
     }
 
-QPKGsInstalled.Array()
+QPKGs.Installed.Array()
     {
 
     echo "${QPKGs_installed[@]}"
 
     }
 
-QPKGsInstalled.Print()
+QPKGs.Installed.Print()
     {
 
     echo "${QPKGs_installed[*]}"
+
+    }
+
+QPKGs.NotInstalled.Print()
+    {
+
+    echo "${QPKGs_not_installed[*]}"
 
     }
 
@@ -3744,6 +3766,74 @@ InstallAllApps.IsNot()
 
     }
 
+ListInstalledApps.Set()
+    {
+
+    ListInstalledApps.IsSet && return
+
+    _list_installed_apps_flag=true
+    DebugVar _list_installed_apps_flag
+
+    }
+
+ListInstalledApps.Clear()
+    {
+
+    ListInstalledApps.IsNot && return
+
+    _list_installed_apps_flag=false
+    DebugVar _list_installed_apps_flag
+
+    }
+
+ListInstalledApps.IsSet()
+    {
+
+    [[ $_list_installed_apps_flag = true ]]
+
+    }
+
+ListInstalledApps.IsNot()
+    {
+
+    [[ $_list_installed_apps_flag != true ]]
+
+    }
+
+ListNotInstalledApps.Set()
+    {
+
+    ListNotInstalledApps.IsSet && return
+
+    _list_not_installed_apps_flag=true
+    DebugVar _list_installed_apps_flag
+
+    }
+
+ListNotInstalledApps.Clear()
+    {
+
+    ListNotInstalledApps.IsNot && return
+
+    _list_not_installed_apps_flag=false
+    DebugVar _list_installed_apps_flag
+
+    }
+
+ListNotInstalledApps.IsSet()
+    {
+
+    [[ $_list_not_installed_apps_flag = true ]]
+
+    }
+
+ListNotInstalledApps.IsNot()
+    {
+
+    [[ $_list_not_installed_apps_flag != true ]]
+
+    }
+
 UninstallAllApps.Set()
     {
 
@@ -4478,7 +4568,7 @@ DisplayLineSpace()
     {
 
     if LineSpace.IsNot; then
-        if DebuggingVisible.IsNot && VersionView.IsNot; then
+        if DebuggingVisible.IsNot && VersionView.IsNot && ListInstalledApps.IsNot && ListNotInstalledApps.IsNot; then
             LineSpace.Set
             Display
         fi
