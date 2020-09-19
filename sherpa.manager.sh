@@ -364,6 +364,22 @@ Session.Init()
     QPKGs.Upgradable.Build
     CalcNASQPKGArch
 
+    # create some shiny new virtual objects:
+    Objects.Create User.Opts.Check.Dependencies
+    Objects.Create User.Opts.Show.Versions
+    Objects.Create User.Opts.Help.Show.Problems
+    Objects.Create User.Opts.Help.Show.Tips
+    Objects.Create User.Opts.Help.Show.Abbreviations
+    Objects.Create User.Opts.Log.Paste
+    Objects.Create User.Opts.Log.View
+    Objects.Create User.Opts.List.Installed
+    Objects.Create User.Opts.List.NotInstalled
+    Objects.Create User.Opts.All.Install
+    Objects.Create User.Opts.All.Uninstall
+    Objects.Create User.Opts.All.Restart
+
+    Objects.Create Script.Flags.Pips.Install
+
     return 0
 
     }
@@ -390,7 +406,7 @@ Session.ParseArguments()
                 current_operation=''
                 ;;
             -c|c|--check|check|--check-all|check-all)
-                CheckDependencies.Set
+                User.Opts.Check.Dependencies.Set
                 current_operation=''
                 ;;
             --force|force)
@@ -406,29 +422,34 @@ Session.ParseArguments()
                 return 1
                 ;;
             -p|p|--problems|problems|--problem|problem)
-                Help.Problems.Set
+                User.Opts.Help.Show.Problems.Set
+                Session.Abort.Set
                 ;;
             -t|t|--tips|tips)
-                Help.Tips.Set
+                User.Opts.Help.Show.Tips.Set
+                Session.Abort.Set
                 ;;
             -l|l|--log|log)
-                LogView.Set
+                User.Opts.Log.View.Set
+                Session.Abort.Set
                 return 1
                 ;;
             --list-installed|list-installed)
-                ListInstalledApps.Set
+                User.Opts.List.Installed.Set
                 return 1
                 ;;
             --list-not-installed|list-not-installed)
-                ListNotInstalledApps.Set
+                User.Opts.List.NotInstalled.Set
                 return 1
                 ;;
             --paste|paste)
-                LogPaste.Set
+                User.Opts.Log.Paste.Set
+                Session.Abort.Set
                 return 1
                 ;;
             --abs|abs)
-                Help.Abbreviations.Set
+                User.Opts.Help.Show.Abbreviations.Set
+                Session.Abort.Set
                 ;;
             -a|a|--action|action|--actions|actions)
                 Help.Actions.Set
@@ -440,18 +461,19 @@ Session.ParseArguments()
                 Help.Options.Set
                 ;;
             -v|v|--version|version)
-                VersionView.Set
+                User.Opts.Show.Versions.Set
+                Session.Abort.Set
                 return 1
                 ;;
             --install-all|install-all)
-                InstallAllApps.Set
+                User.Opts.All.Install.Set
                 return 1
                 ;;
             --uninstall-all-applications-please|uninstall-all-applications-please)
-                UninstallAllApps.Set
+                User.Opts.All.Uninstall.Set
                 ;;
             --restart-all|restart-all)
-                RestartAllApps.Set
+                User.Opts.All.Restart.Set
                 ;;
             --upgrade-all|upgrade-all)
                 UpgradeAllApps.Set
@@ -562,7 +584,7 @@ Session.Validate()
 
     Session.ParseArguments
 
-    (VersionView.IsSet || ListInstalledApps.IsSet || ListNotInstalledApps.IsSet) && return
+    (User.Opts.Show.Versions.IsSet || User.Opts.List.Installed.IsSet || User.Opts.List.NotInstalled.IsSet) && return
 
     if DebuggingVisible.IsNot; then
         Display "$(FormatAsScriptTitle) $MANAGER_SCRIPT_VERSION • a mini-package-manager for QNAP NAS"
@@ -651,14 +673,14 @@ Session.Validate()
         fi
     fi
 
-    if InstallAllApps.IsSet; then
+    if User.Opts.All.Install.IsSet; then
         QPKGs_initial_array+=($(QPKGs.NotInstalled.Array))
     elif UpgradeAllApps.IsSet; then
         QPKGs_initial_array=($(QPKGs.Upgradable.Array))
-        PIPInstall.Set
-    elif CheckDependencies.IsSet; then
+        Script.Flags.Pips.Install.Set
+    elif User.Opts.Check.Dependencies.IsSet; then
         QPKGs_initial_array+=($(QPKGs.Installed.Array))
-        PIPInstall.Set
+        Script.Flags.Pips.Install.Set
     else
         QPKGs_initial_array+=(${QPKGs_to_install[*]} ${QPKGs_to_reinstall[*]} ${QPKGs_to_upgrade[*]})
     fi
@@ -675,15 +697,15 @@ Session.Validate()
         QPKG.Installed "$package" && QPKGs.Uninstall.Add "$package"
     done
 
-    if UninstallAllApps.IsSet; then
+    if User.Opts.All.Uninstall.IsSet; then
         for package in "${SHERPA_QPKG_NAME[@]}"; do
             QPKG.Installed "$package" && QPKGs.Uninstall.Add "$package"
         done
     fi
 
     if QPKGs.Install.IsNone && QPKGs.Uninstall.IsNone && QPKGs.Reinstall.IsNone && QPKGs.Restart.IsNone && QPKGs.Upgrade.IsNone && [[ ${#QPKGs_to_backup[@]} -eq 0 && ${#QPKGs_to_restore[@]} -eq 0 && ${#QPKGs_to_status[@]} -eq 0 ]]; then
-        if InstallAllApps.IsNot && UninstallAllApps.IsNot && RestartAllApps.IsNot && UpgradeAllApps.IsNot && BackupAllApps.IsNot && RestoreAllApps.IsNot; then
-            if StatusAllApps.IsNot && CheckDependencies.IsNot && ListInstalledApps.IsNot; then
+        if User.Opts.All.Install.IsNot && User.Opts.All.Uninstall.IsNot && User.Opts.All.Restart.IsNot && UpgradeAllApps.IsNot && BackupAllApps.IsNot && RestoreAllApps.IsNot; then
+            if StatusAllApps.IsNot && User.Opts.Check.Dependencies.IsNot && User.Opts.List.Installed.IsNot; then
                 ShowAsError 'nothing to do'
                 Help.Set
                 return 1
@@ -763,15 +785,15 @@ Session.Validate()
 Session.Result.Show()
     {
 
-    if VersionView.IsSet; then
+    if User.Opts.Show.Versions.IsSet; then
         Display "package: $PACKAGE_VERSION"
         Display "loader: $LOADER_SCRIPT_VERSION"
         Display "manager: $MANAGER_SCRIPT_VERSION"
     fi
 
-    LogView.IsSet && LogViewer.Show
-    ListInstalledApps.IsSet && QPKGs.Installed.Show
-    ListNotInstalledApps.IsSet && QPKGs.NotInstalled.Show
+    User.Opts.Log.View.IsSet && LogViewer.Show
+    User.Opts.List.Installed.IsSet && QPKGs.Installed.Show
+    User.Opts.List.NotInstalled.IsSet && QPKGs.NotInstalled.Show
 
     if Help.IsSet; then
         Help.Basic.Show
@@ -782,11 +804,11 @@ Session.Result.Show()
     Help.Actions.IsSet && Help.Actions.Show
     Help.Packages.IsSet && Help.Packages.Show
     Help.Options.IsSet && Help.Options.Show
-    Help.Problems.IsSet && Help.Problems.Show
-    Help.Tips.IsSet && Help.Tips.Show
-    Help.Abbreviations.IsSet && Help.PackageAbbreviations.Show
+    User.Opts.Help.Show.Problems.IsSet && Help.Problems.Show
+    User.Opts.Help.Show.Tips.IsSet && Help.Tips.Show
+    User.Opts.Help.Show.Abbreviations.IsSet && Help.PackageAbbreviations.Show
 
-    LogPaste.IsSet && PasteLogOnline
+    User.Opts.Log.Paste.IsSet && PasteLogOnline
     Session.Summary.IsSet && Session.Summary.Show
     SuggestIssue.IsSet && Help.Issue.Show
     DisplayLineSpace
@@ -917,7 +939,7 @@ QPKGs.Independents.Install()
         [[ $NAS_QPKG_ARCH != none ]] && ($OPKG_CMD list-installed | $GREP_CMD -q par2cmdline) && $OPKG_CMD remove par2cmdline > /dev/null 2>&1
     fi
 
-    if QPKGs.Install.IsAny || QPKGs.Reinstall.IsAny || QPKGs.Upgrade.IsAny || CheckDependencies.IsSet; then
+    if QPKGs.Install.IsAny || QPKGs.Reinstall.IsAny || QPKGs.Upgrade.IsAny || User.Opts.Check.Dependencies.IsSet; then
         if QPKG.Installed Entware; then
             PatchBaseInit
             IPKGInstall.Set
@@ -926,7 +948,7 @@ QPKGs.Independents.Install()
         fi
     fi
 
-    if QPKG.ToBeInstalled Entware || RestartAllApps.IsSet; then
+    if QPKG.ToBeInstalled Entware || User.Opts.All.Restart.IsSet; then
         QPKGs.Dependant.Restart
     fi
 
@@ -1014,7 +1036,7 @@ IPKGs.Install()
     UpdateEntware
     Session.Error.IsSet && return
 
-    if InstallAllApps.IsSet; then
+    if User.Opts.All.Install.IsSet; then
         for index in "${!SHERPA_QPKG_NAME[@]}"; do
             packages+=" ${SHERPA_QPKG_IPKGS[$index]}"
         done
@@ -1077,7 +1099,7 @@ InstallIPKGBatch()
 
         if [[ $result -eq 0 ]]; then
             ShowAsDone "downloaded & installed $IPKG_download_count IPKG$(FormatAsPlural "$IPKG_download_count")"
-            PIPInstall.Set
+            Script.Flags.Pips.Install.Set
         else
             ShowAsError "download & install IPKG$(FormatAsPlural "$IPKG_download_count") failed $(FormatAsExitcode $result)"
             DebugErrorFile "$log_pathfile"
@@ -1095,7 +1117,7 @@ PIP.Install()
     {
 
     Session.Abort.IsSet && return
-    PIPInstall.IsNot && return
+    Script.Flags.Pips.Install.IsNot && return
 
     DebugFuncEntry
     local exec_cmd=''
@@ -1212,7 +1234,7 @@ QPKGs.Dependants.Install()
 
     local package=''
 
-    if InstallAllApps.IsSet; then
+    if User.Opts.All.Install.IsSet; then
         if [[ ${#QPKGS_user_installable[*]} -gt 0 ]]; then
             for package in "${QPKGS_user_installable[@]}"; do
                 [[ $package != Entware ]] && QPKG.Install "$package"     # KLUDGE: Entware has already been installed, don't do it again.
@@ -3026,186 +3048,6 @@ Help.IsNot()
 
     }
 
-Help.Problems.Set()
-    {
-
-    Session.Abort.Set
-
-    Help.Problems.IsSet && return
-
-    _show_problem_help_flag=true
-    DebugVar _show_problem_help_flag
-
-    }
-
-Help.Problems.Clear()
-    {
-
-    Help.Problems.IsNot && return
-
-    _show_problem_help_flag=false
-    DebugVar _show_problem_help_flag
-
-    }
-
-Help.Problems.IsSet()
-    {
-
-    [[ $_show_problem_help_flag = true ]]
-
-    }
-
-Help.Problems.IsNot()
-    {
-
-    [[ $_show_problem_help_flag != true ]]
-
-    }
-
-Help.Tips.Set()
-    {
-
-    Session.Abort.Set
-
-    Help.Tips.IsSet && return
-
-    _show_tips_help_flag=true
-    DebugVar _show_tips_help_flag
-
-    }
-
-Help.Tips.Clear()
-    {
-
-    Help.Tips.IsNot && return
-
-    _show_tips_help_flag=false
-    DebugVar _show_tips_help_flag
-
-    }
-
-Help.Tips.IsSet()
-    {
-
-    [[ $_show_tips_help_flag = true ]]
-
-    }
-
-Help.Tips.IsNot()
-    {
-
-    [[ $_show_tips_help_flag != true ]]
-
-    }
-
-LogView.Set()
-    {
-
-    Session.Abort.Set
-
-    LogView.IsSet && return
-
-    _logview_only_flag=true
-    DebugVar _logview_only_flag
-
-    }
-
-LogView.Clear()
-    {
-
-    LogView.IsNot && return
-
-    _logview_only_flag=false
-    DebugVar _logview_only_flag
-
-    }
-
-LogView.IsSet()
-    {
-
-    [[ $_logview_only_flag = true ]]
-
-    }
-
-LogView.IsNot()
-    {
-
-    [[ $_logview_only_flag != true ]]
-
-    }
-
-VersionView.Set()
-    {
-
-    Session.Abort.Set
-
-    VersionView.IsSet && return
-
-    _version_only_flag=true
-    DebugVar _version_only_flag
-
-    }
-
-VersionView.Clear()
-    {
-
-    VersionView.IsNot && return
-
-    _version_only_flag=false
-    DebugVar _version_only_flag
-
-    }
-
-VersionView.IsSet()
-    {
-
-    [[ $_version_only_flag = true ]]
-
-    }
-
-VersionView.IsNot()
-    {
-
-    [[ $_version_only_flag != true ]]
-
-    }
-
-LogPaste.Set()
-    {
-
-    Session.Abort.Set
-
-    LogPaste.IsSet && return
-
-    _logpaste_only_flag=true
-    DebugVar _logpaste_only_flag
-
-    }
-
-LogPaste.Clear()
-    {
-
-    LogPaste.IsNot && return
-
-    _logpaste_only_flag=false
-    DebugVar _logpaste_only_flag
-
-    }
-
-LogPaste.IsSet()
-    {
-
-    [[ $_logpaste_only_flag = true ]]
-
-    }
-
-LogPaste.IsNot()
-    {
-
-    [[ $_logpaste_only_flag != true ]]
-
-    }
-
 IPKGInstall.Set()
     {
 
@@ -3237,40 +3079,6 @@ IPKGInstall.IsNot()
     {
 
     [[ $_ipkg_install_flag != true ]]
-
-    }
-
-PIPInstall.Set()
-    {
-
-    PIPInstall.IsSet && return
-
-    _pip_install_flag=true
-    DebugVar _pip_install_flag
-
-    }
-
-PIPInstall.Clear()
-    {
-
-    PIPInstall.IsNot && return
-
-    _pip_install_flag=false
-    DebugVar _pip_install_flag
-
-    }
-
-PIPInstall.IsSet()
-    {
-
-    [[ $_pip_install_flag = true ]]
-
-    }
-
-PIPInstall.IsNot()
-    {
-
-    [[ $_pip_install_flag != true ]]
 
     }
 
@@ -3341,76 +3149,6 @@ Session.Abort.IsNot()
     {
 
     [[ $_script_abort_flag != true ]]
-
-    }
-
-CheckDependencies.Set()
-    {
-
-    CheckDependencies.IsSet && return
-
-    _check_dependencies_flag=true
-    DebugVar _check_dependencies_flag
-
-    }
-
-CheckDependencies.Clear()
-    {
-
-    CheckDependencies.IsNot && return
-
-    _check_dependencies_flag=false
-    DebugVar _check_dependencies_flag
-
-    }
-
-CheckDependencies.IsSet()
-    {
-
-    [[ $_check_dependencies_flag = true ]]
-
-    }
-
-CheckDependencies.IsNot()
-    {
-
-    [[ $_check_dependencies_flag != true ]]
-
-    }
-
-Help.Abbreviations.Set()
-    {
-
-    Session.Abort.Set
-
-    Help.Abbreviations.IsSet && return
-
-    _show_abbreviations_flag=true
-    DebugVar _show_abbreviations_flag
-
-    }
-
-Help.Abbreviations.Clear()
-    {
-
-    Help.Abbreviations.IsNot && return
-
-    _show_abbreviations_flag=false
-    DebugVar _show_abbreviations_flag
-
-    }
-
-Help.Abbreviations.IsSet()
-    {
-
-    [[ $_show_abbreviations_flag = true ]]
-
-    }
-
-Help.Abbreviations.IsNot()
-    {
-
-    [[ $_show_abbreviations_flag != true ]]
 
     }
 
@@ -3545,7 +3283,7 @@ Session.Summary.Show()
 #         fi
     fi
 
-    if CheckDependencies.IsSet; then
+    if User.Opts.Check.Dependencies.IsSet; then
         if Session.Error.IsNot; then
             ShowAsDone "all application dependencies are installed"
         else
@@ -3729,176 +3467,6 @@ SuggestIssue.IsNot()
     {
 
     [[ $_suggest_issue_flag != true ]]
-
-    }
-
-InstallAllApps.Set()
-    {
-
-    InstallAllApps.IsSet && return
-
-    _install_all_apps_flag=true
-    DebugVar _install_all_apps_flag
-
-    }
-
-InstallAllApps.Clear()
-    {
-
-    InstallAllApps.IsNot && return
-
-    _install_all_apps_flag=false
-    DebugVar _install_all_apps_flag
-
-    }
-
-InstallAllApps.IsSet()
-    {
-
-    [[ $_install_all_apps_flag = true ]]
-
-    }
-
-InstallAllApps.IsNot()
-    {
-
-    [[ $_install_all_apps_flag != true ]]
-
-    }
-
-ListInstalledApps.Set()
-    {
-
-    ListInstalledApps.IsSet && return
-
-    _list_installed_apps_flag=true
-    DebugVar _list_installed_apps_flag
-
-    }
-
-ListInstalledApps.Clear()
-    {
-
-    ListInstalledApps.IsNot && return
-
-    _list_installed_apps_flag=false
-    DebugVar _list_installed_apps_flag
-
-    }
-
-ListInstalledApps.IsSet()
-    {
-
-    [[ $_list_installed_apps_flag = true ]]
-
-    }
-
-ListInstalledApps.IsNot()
-    {
-
-    [[ $_list_installed_apps_flag != true ]]
-
-    }
-
-ListNotInstalledApps.Set()
-    {
-
-    ListNotInstalledApps.IsSet && return
-
-    _list_not_installed_apps_flag=true
-    DebugVar _list_installed_apps_flag
-
-    }
-
-ListNotInstalledApps.Clear()
-    {
-
-    ListNotInstalledApps.IsNot && return
-
-    _list_not_installed_apps_flag=false
-    DebugVar _list_installed_apps_flag
-
-    }
-
-ListNotInstalledApps.IsSet()
-    {
-
-    [[ $_list_not_installed_apps_flag = true ]]
-
-    }
-
-ListNotInstalledApps.IsNot()
-    {
-
-    [[ $_list_not_installed_apps_flag != true ]]
-
-    }
-
-UninstallAllApps.Set()
-    {
-
-    UninstallAllApps.IsSet && return
-
-    _uninstall_all_apps_flag=true
-    DebugVar _uninstall_all_apps_flag
-
-    }
-
-UninstallAllApps.Clear()
-    {
-
-    UninstallAllApps.IsNot && return
-
-    _uninstall_all_apps_flag=false
-    DebugVar _uninstall_all_apps_flag
-
-    }
-
-UninstallAllApps.IsSet()
-    {
-
-    [[ $_uninstall_all_apps_flag = true ]]
-
-    }
-
-UninstallAllApps.IsNot()
-    {
-
-    [[ $_uninstall_all_apps_flag != true ]]
-
-    }
-
-RestartAllApps.Set()
-    {
-
-    RestartAllApps.IsSet && return
-
-    _restart_all_apps_flag=true
-    DebugVar _restart_all_apps_flag
-
-    }
-
-RestartAllApps.Clear()
-    {
-
-    RestartAllApps.IsNot && return
-
-    _restart_all_apps_flag=false
-    DebugVar _restart_all_apps_flag
-
-    }
-
-RestartAllApps.IsSet()
-    {
-
-    [[ $_restart_all_apps_flag = true ]]
-
-    }
-
-RestartAllApps.IsNot()
-    {
-
-    [[ $_restart_all_apps_flag != true ]]
 
     }
 
@@ -4568,7 +4136,7 @@ DisplayLineSpace()
     {
 
     if LineSpace.IsNot; then
-        if DebuggingVisible.IsNot && VersionView.IsNot && ListInstalledApps.IsNot && ListNotInstalledApps.IsNot; then
+        if DebuggingVisible.IsNot && User.Opts.Show.Versions.IsNot && User.Opts.List.Installed.IsNot && User.Opts.List.NotInstalled.IsNot; then
             LineSpace.Set
             Display
         fi
@@ -5109,6 +4677,228 @@ CTRL_C_Captured()
     RemoveDirSizeMonitorFlagFile
 
     exit
+
+    }
+
+Objects.Create()
+    {
+
+    if [[ $(type -t "$1.Index") = 'function' ]]; then
+        echo "unable to create new virtual object '$1': already exists" 1>&2
+        return 1
+    fi
+
+    [[ $(type -t Objects.Index) != 'function' ]] && [[ -z $1 || $1 != Objects ]] && Objects.Create Objects
+
+    local public_function_name="$1"
+    local safe_var_name_prefix="$(tr '[A-Z]' '[a-z]' <<< "${public_function_name//./_}")"
+    local user_args=()
+
+    _placehold_index_="_object_${safe_var_name_prefix}_index_integer"
+    _placehold_description_="_object_${safe_var_name_prefix}_description_string"
+    _placehold_value_="_object_${safe_var_name_prefix}_value_integer"
+    _placehold_text_="_object_${safe_var_name_prefix}_text_string"
+    _placehold_set_switch_="_object_${safe_var_name_prefix}_set_boolean"
+    _placehold_enable_switch_="_object_${safe_var_name_prefix}_enable_boolean"
+    _placehold_list_array_="_object_${safe_var_name_prefix}_list_array"
+    _placehold_list_pointer_="_object_${safe_var_name_prefix}_array_index_integer"
+
+    if [[ $(type -t Objects.Index) = 'function' ]]; then
+        Objects.Items.Add "$public_function_name"
+    fi
+
+    object_functions='
+        '$public_function_name'.Clear()
+            {
+            [[ '$_placehold_set_switch_' = false ]] && return
+            '$_placehold_set_switch_'=false
+            DebugVar '$_placehold_set_switch_'
+            }
+
+        '$public_function_name'.Description()
+            {
+            if [[ -n $1 && $1 = '=' ]]; then
+                '$_placehold_description_'="$2"
+            else
+                echo -n "'$_placehold_description_'"
+            fi
+            }
+
+        '$public_function_name'.Disable()
+            {
+            [[ '$_placehold_enable_switch_' = false ]] && return
+            '$_placehold_enable_switch_'=false
+            }
+
+        '$public_function_name'.Enable()
+            {
+            [[ $'$_placehold_enable_switch_' = true ]] && return
+            '$_placehold_enable_switch_'=true
+            }
+
+        '$public_function_name'.Env()
+            {
+            echo "* object internal environment *"
+            echo "object index: '\'\$$_placehold_index_\''"
+            echo "object name: '\'$public_function_name\''"
+            echo "object description: '\'\$$_placehold_description_\''"
+            echo "object value: '\'\$$_placehold_value_\''"
+            echo "object text: '\'\$$_placehold_text_\''"
+            echo "object set: '\'\$$_placehold_set_switch_\''"
+            echo "object enable: '\'\$$_placehold_enable_switch_\''"
+            echo "object list: '\'\${$_placehold_list_array_[*]}\''"
+            echo "object list pointer: '\'\$$_placehold_list_pointer_\''"
+            }
+
+        '$public_function_name'.Index()
+            {
+            if [[ ${FUNCNAME[1]} = 'Objects.Create' ]]; then
+                '$_placehold_index_'=1
+            else
+                echo $'$_placehold_index_'
+            fi
+            }
+
+        '$public_function_name'.Init()
+            {
+            '$_placehold_index_'=$(Objects.Items.Count)
+            '$_placehold_description_'=''
+            '$_placehold_value_'=0
+            '$_placehold_text_'=''
+            '$_placehold_set_switch_'=false
+            '$_placehold_enable_switch_'=false
+            '$_placehold_list_array_'+=()
+            '$_placehold_list_pointer_'=1
+            }
+
+        '$public_function_name'.IsDisabled()
+            {
+            [[ $'$_placehold_enable_switch_' = true ]]
+            }
+
+        '$public_function_name'.IsEnabled()
+            {
+            [[ $'$_placehold_enable_switch_' = false ]]
+            }
+
+        '$public_function_name'.IsNot()
+            {
+            [[ $'$_placehold_set_switch_' = false ]]
+            }
+
+        '$public_function_name'.IsSet()
+            {
+            [[ $'$_placehold_set_switch_' = true ]]
+            }
+
+        '$public_function_name'.Items.Add()
+            {
+            '$_placehold_list_array_'+=("$1")
+            }
+
+        '$public_function_name'.Items.Count()
+            {
+            echo "${#'$_placehold_list_array_'[@]}"
+            }
+
+        '$public_function_name'.Items.First()
+            {
+            echo "${'$_placehold_list_array_'[0]}"
+            }
+
+        '$public_function_name'.Items.Enumerate()
+            {
+            (('$_placehold_list_pointer_'++))
+            if [[ $'$_placehold_list_pointer_' -gt ${#'$_placehold_list_array_'[@]} ]]; then
+                '$_placehold_list_pointer_'=1
+            fi
+            }
+
+        '$public_function_name'.Items.GetCurrent()
+            {
+            echo -n "${'$_placehold_list_array_'[(('$_placehold_list_pointer_'-1))]}"
+            }
+
+        '$public_function_name'.Items.GetThis()
+            {
+            local -i index="$1"
+            [[ $index -lt 1 ]] && index=1
+            [[ $index -gt ${#'$_placehold_list_array_'[@]} ]] && index=${#'$_placehold_list_array_'[@]}
+            echo -n "${'$_placehold_list_array_'[((index-1))]}"
+            }
+
+        '$public_function_name'.Items.Pointer()
+            {
+            if [[ -n $1 && $1 = "=" ]]; then
+                if [[ $2 -gt ${#'$_placehold_list_array_'[@]} ]]; then
+                    '$_placehold_list_pointer_'=${#'$_placehold_list_array_'[@]}
+                else
+                    '$_placehold_list_pointer_'=$2
+                fi
+            else
+                echo -n $'$_placehold_list_pointer_'
+            fi
+            }
+
+        '$public_function_name'.Set()
+            {
+            [[ $'$_placehold_set_switch_' = true ]] && return
+            '$_placehold_set_switch_'=true
+            DebugVar '$_placehold_set_switch_'
+            }
+
+        '$public_function_name'.Text()
+            {
+            if [[ -n $1 && $1 = "=" ]]; then
+                '$_placehold_text_'="$2"
+            else
+                echo -n "$'$_placehold_text_'"
+            fi
+            }
+
+        '$public_function_name'.Value()
+            {
+            if [[ -n $1 && $1 = "=" ]]; then
+                '$_placehold_value_'=$2
+            else
+                echo -n $'$_placehold_value_'
+            fi
+            }
+
+        '$public_function_name'.Value.Decrement()
+            {
+            local -i amount
+            if [[ -n $1 && $1 = "by" ]]; then
+                amount=$2
+            else
+                amount=1
+            fi
+            '$_placehold_value_'=$(('$_placehold_value_'-amount))
+            }
+
+        '$public_function_name'.Value.Increment()
+            {
+            local -i amount
+            if [[ -n $1 && $1 = "by" ]]; then
+                amount=$2
+            else
+                amount=1
+            fi
+            '$_placehold_value_'=$(('$_placehold_value_'+amount))
+            }
+    '
+    eval "$object_functions"
+
+    $public_function_name.Init
+
+    if [[ $public_function_name = Objects ]]; then
+        $public_function_name.Index
+        $public_function_name.Description = 'this object holds metadata on every other object'
+        $public_function_name.Value = 1
+        $public_function_name.Items.Add 'Objects'
+    fi
+
+    return 0
 
     }
 
