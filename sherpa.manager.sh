@@ -351,6 +351,7 @@ Session.Init()
     readonly SCRIPT_STARTSECONDS=$($DATE_CMD +%s)
     readonly NAS_FIRMWARE=$($GETCFG_CMD System Version -f $ULINUX_PATHFILE)
     readonly MIN_RAM_KB=1048576
+    readonly LOG_TAIL_LINES=1000
     readonly INSTALLED_RAM_KB=$($GREP_CMD MemTotal /proc/meminfo | $CUT_CMD -f2 -d':' | $SED_CMD 's|kB||;s| ||g')
     ignore_space_arg=''
     [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg='--insecure' || curl_insecure_arg=''
@@ -836,12 +837,12 @@ PasteLogOnline()
     # with thanks to https://github.com/solusipse/fiche
 
     if [[ -n $DEBUG_LOG_PATHFILE && -e $DEBUG_LOG_PATHFILE ]]; then
-        if AskQuiz "Press 'Y' to post your $PROJECT_NAME log in a public pastebin, or any other key to abort"; then
-            ShowAsProc "uploading $PROJECT_NAME log"
-            link=$($TAIL_CMD -n 1000 -q "$DEBUG_LOG_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
+        if AskQuiz "Press 'Y' to post the most-recent $LOG_TAIL_LINES entries in your $(FormatAsScriptTitle) log to a public pastebin, or any other key to abort"; then
+            ShowAsProc "uploading $(FormatAsScriptTitle) log"
+            link=$($TAIL_CMD -n $LOG_TAIL_LINES -q "$DEBUG_LOG_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
 
             if [[ $? -eq 0 ]]; then
-                ShowAsDone "your $PROJECT_NAME log is now online at $(FormatAsURL "$($SED_CMD 's|http://|http://l.|;s|https://|https://l.|' <<< "$link")") and will be deleted in 1 month"
+                ShowAsDone "your $(FormatAsScriptTitle) log is now online at $(FormatAsURL "$($SED_CMD 's|http://|http://l.|;s|https://|https://l.|' <<< "$link")") and will be deleted in 1 month"
             else
                 ShowAsError "a link could not be generated. Most likely a problem occurred when talking with $(FormatAsURL 'https://termbin.com')"
             fi
@@ -2050,7 +2051,7 @@ GetAllIPKGDepsToDownload()
         IPKG_download_size=$(IFS=+; echo "$((${size_array[*]}))")       # a neat trick found here https://stackoverflow.com/a/13635566/6182835
         DebugDone 'complete'
         DebugVar IPKG_download_size
-        ShowAsDone "$IPKG_download_count IPKG$(FormatAsPlural "$IPKG_download_count") ($(FormatAsISO "$IPKG_download_size")) to be downloaded"
+        ShowAsDone "$IPKG_download_count IPKG$(FormatAsPlural "$IPKG_download_count") ($(FormatAsISOBytes "$IPKG_download_size")) to be downloaded"
     else
         ShowAsDone 'no IPKGs are required'
     fi
@@ -2127,7 +2128,7 @@ _MonitorDirSize_()
         fi
 
         percent="$((200*(current_bytes)/(total_bytes) % 2 + 100*(current_bytes)/(total_bytes)))%"
-        progress_message=" $percent ($(FormatAsISO "$current_bytes")/$(FormatAsISO "$total_bytes"))"
+        progress_message=" $percent ($(FormatAsISOBytes "$current_bytes")/$(FormatAsISOBytes "$total_bytes"))"
 
         if [[ $stall_seconds -ge $stall_seconds_threshold ]]; then
             if [[ $stall_seconds -lt 60 ]]; then
@@ -2341,6 +2342,17 @@ DisplayAsTitleHelpProblem()
 
     }
 
+DisplayAsTitleHelpTip()
+    {
+
+    # $1 = description
+    # $2 = example syntax
+
+    Display "\n* helpful tips and shortcuts:"
+    LineSpace.Clear
+
+    }
+
 DisplayAsIndentedHelpExample()
     {
 
@@ -2348,9 +2360,9 @@ DisplayAsIndentedHelpExample()
     # $2 = example syntax
 
     if [[ ${1: -1} = '!' ]]; then
-        printf "\n  - %s \n       %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$(FormatAsScriptTitle) $2"
+        printf "\n  - %s \n       # %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$(FormatAsScriptTitle) $2"
     else
-        printf "\n  - %s:\n       %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$(FormatAsScriptTitle) $2"
+        printf "\n  - %s:\n       # %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$(FormatAsScriptTitle) $2"
     fi
 
     LineSpace.Clear
@@ -2428,7 +2440,7 @@ Help.Actions.Show()
 
     DisplayAsIndentedHelpExample "install the following packages" "--install $(FormatAsHelpPackages)"
 
-    DisplayAsIndentedHelpExample "install all available $(FormatAsScriptTitle) packages" '--install-all'
+    DisplayAsIndentedHelpExample "install everything!" '--install-all'
 
     DisplayAsIndentedHelpExample "reinstall the following packages" "--reinstall $(FormatAsHelpPackages)"
 
@@ -2528,11 +2540,9 @@ Help.Problems.Show()
 
     DisplayAsIndentedHelpExample 'restart all installed packages (upgrades the internal applications, not the packages)' '--restart-all'
 
-    DisplayAsIndentedHelpExample 'upgrade all installed packages (including the internal applications)' '--upgrade-all'
+    DisplayAsIndentedHelpExample "view the $(FormatAsScriptTitle) debug log" '--log'
 
-    DisplayAsIndentedHelpExample 'view the log' '--log'
-
-    DisplayAsIndentedHelpExample "upload the log to the $(FormatAsURL 'https://termbin.com') public pastebin" '--paste'
+    DisplayAsIndentedHelpExample "upload the most-recent $LOG_TAIL_LINES entries in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" '--paste'
 
     Display "\n$(ColourTextBrightOrange "* If you need help, please include a copy of your") $(FormatAsScriptTitle) $(ColourTextBrightOrange "log for analysis!")"
     LineSpace.Clear
@@ -2565,21 +2575,21 @@ Help.Tips.Show()
 
     Help.Basic.Show
 
-    DisplayAsTitleHelpOption
+    DisplayAsTitleHelpTip
 
-    DisplayAsIndentedHelpExample 'install everything!' '--install-all-applications'
+    DisplayAsIndentedHelpExample "install all available $(FormatAsScriptTitle) packages" '--install-all'
 
     DisplayAsIndentedHelpExample 'package abbreviations may also be used. To see these' '--abs'
 
-    DisplayAsIndentedHelpExample 'ensure all application dependencies are installed' '--check'
+    DisplayAsIndentedHelpExample 'ensure all application dependencies are installed' '--check-all'
 
-    DisplayAsIndentedHelpExample 'restart all applications (upgrades the internal applications, not the QPKG)' '--restart-all'
+    DisplayAsIndentedHelpExample 'restart all packages (only upgrades the internal applications, not the packages)' '--restart-all'
 
-    DisplayAsIndentedHelpExample 'upgrade all QPKGs (including the internal applications)' '--upgrade-all'
+    DisplayAsIndentedHelpExample 'upgrade all installed packages (including the internal applications)' '--upgrade-all'
 
-    DisplayAsIndentedHelpExample "upload the log to the $(FormatAsURL 'https://termbin.com') public pastebin" '--paste'
+    DisplayAsIndentedHelpExample "upload the most-recent $LOG_TAIL_LINES entries in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" '--paste'
 
-    DisplayAsIndentedHelpExample 'display the package manager script versions' '--version'
+    DisplayAsIndentedHelpExample 'display all package-manager scripts versions' '--version'
 
     echo -e "\n$(ColourTextBrightOrange "* If you need help, please include a copy of your") $(FormatAsScriptTitle) $(ColourTextBrightOrange "log for analysis!")"
     LineSpace.Clear
@@ -4325,7 +4335,7 @@ FormatAsPlural()
 
     }
 
-FormatAsISO()
+FormatAsISOBytes()
     {
 
     echo "$1" | $AWK_CMD 'BEGIN{ u[0]="B"; u[1]="kB"; u[2]="MB"; u[3]="GB"} { n = $1; i = 0; while(n > 1000) { i+=1; n= int((n/1000)+0.5) } print n u[i] } '
