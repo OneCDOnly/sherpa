@@ -167,6 +167,7 @@ Session.Init()
     Objects.Create User.Opts.Apps.List.NotInstalled
     Objects.Create User.Opts.Apps.All.Backup
     Objects.Create User.Opts.Apps.All.Install
+    Objects.Create User.Opts.Apps.All.List
     Objects.Create User.Opts.Apps.All.Restart
     Objects.Create User.Opts.Apps.All.Restore
     Objects.Create User.Opts.Apps.All.Status
@@ -182,8 +183,11 @@ Session.Init()
     Objects.Create Session.Pips.Install
     Objects.Create Session.SuggestIssue
     Objects.Create Session.Summary
+    Objects.Create Session.Display.Clean
 
     Session.Summary.Set
+    Session.Debugging.Visible.Description = 'display on-screen live debugging information'
+    Session.Display.Clean.Description = 'disable display of script title and trailing linespace. If set, output is suitable for script processing'
 
     local -r DEFAULT_SHARE_DOWNLOAD_PATH=/share/Download
     local -r DEFAULT_SHARE_PUBLIC_PATH=/share/Public
@@ -455,10 +459,17 @@ Session.ParseArguments()
                 ;;
             --list-installed|list-installed)
                 User.Opts.Apps.List.Installed.Set
+                Session.Display.Clean.Set
                 return 1
                 ;;
             --list-not-installed|list-not-installed)
                 User.Opts.Apps.List.NotInstalled.Set
+                Session.Display.Clean.Set
+                return 1
+                ;;
+            --list|list)
+                User.Opts.Apps.All.List.Set
+                Session.Display.Clean.Set
                 return 1
                 ;;
             --paste|paste)
@@ -488,12 +499,13 @@ Session.ParseArguments()
                 ;;
             -v|v|--version|version)
                 User.Opts.Versions.View.Set
+                Session.Display.Clean.Set
                 Session.Abort.Set
                 return 1
                 ;;
             -c|c|--check|check|--check-all|check-all)
                 User.Opts.Check.Dependencies.Set
-                return 1
+                current_operation=''
                 ;;
             --install-all|install-all)
                 User.Opts.Apps.All.Install.Set
@@ -613,8 +625,7 @@ Session.Validate()
     local QPKGs_initial_array=()
 
     Session.ParseArguments
-
-    (User.Opts.Versions.View.IsSet || User.Opts.Apps.List.Installed.IsSet || User.Opts.Apps.List.NotInstalled.IsSet) && return
+    Session.Display.Clean.IsSet && return
 
     if Session.Debugging.Visible.IsNot; then
         Display "$(FormatAsScriptTitle) $MANAGER_SCRIPT_VERSION • a mini-package-manager for QNAP NAS"
@@ -825,6 +836,7 @@ Session.Result.Show()
     User.Opts.Log.View.IsSet && LogViewer.Show
     User.Opts.Apps.List.Installed.IsSet && QPKGs.Installed.Show
     User.Opts.Apps.List.NotInstalled.IsSet && QPKGs.NotInstalled.Show
+    User.Opts.Apps.All.List.IsSet && QPKGs.All.Show
 
     if User.Opts.Help.Show.Basic.IsSet; then
         Help.Basic.Show
@@ -1452,6 +1464,17 @@ QPKGs.NotInstalled.Show()
     {
 
     for package in $(QPKGs.NotInstalled.Print); do
+        echo "$package"
+    done
+
+    return 0
+
+    }
+
+QPKGs.All.Show()
+    {
+
+    for package in "${QPKGS_user_installable[@]}"; do
         echo "$package"
     done
 
@@ -2524,6 +2547,8 @@ Help.Actions.Show()
 
     DisplayAsIndentedHelpExample 'list all packages that are not installed' '--list-not-installed'
 
+    DisplayAsIndentedHelpExample 'list all installable packages' '--list'
+
     DisplayAsIndentedHelpExample 'ensure all application dependencies are installed' '--check-all'
 
 #     DisplayAsIndentedHelpExample '--backup'
@@ -3535,11 +3560,9 @@ FormatAsResultAndStdout()
 DisplayLineSpace()
     {
 
-    if Session.LineSpace.IsNot; then
-        if Session.Debugging.Visible.IsNot && User.Opts.Versions.View.IsNot && User.Opts.Apps.List.Installed.IsNot && User.Opts.Apps.List.NotInstalled.IsNot; then
-            Session.LineSpace.Set
-            Display
-        fi
+    if Session.LineSpace.IsNot && Session.Display.Clean.IsNot && Session.Debugging.Visible.IsNot; then
+        Session.LineSpace.Set
+        Display
     fi
 
     }
@@ -4110,7 +4133,7 @@ Objects.Create()
     object_functions='
         '$public_function_name'.Clear()
             {
-            [[ '$_placehold_set_switch_' = false ]] && return
+            [[ '$_placehold_set_switch_' != true ]] && return
             '$_placehold_set_switch_'=false
             DebugVar '$_placehold_set_switch_'
             }
@@ -4126,14 +4149,16 @@ Objects.Create()
 
         '$public_function_name'.Disable()
             {
-            [[ '$_placehold_enable_switch_' = false ]] && return
+            [[ '$_placehold_enable_switch_' != true ]] && return
             '$_placehold_enable_switch_'=false
+            DebugVar '$_placehold_enable_switch_'
             }
 
         '$public_function_name'.Enable()
             {
             [[ $'$_placehold_enable_switch_' = true ]] && return
             '$_placehold_enable_switch_'=true
+            DebugVar '$_placehold_enable_switch_'
             }
 
         '$public_function_name'.Env()
@@ -4173,17 +4198,17 @@ Objects.Create()
 
         '$public_function_name'.IsDisabled()
             {
-            [[ $'$_placehold_enable_switch_' = true ]]
+            [[ $'$_placehold_enable_switch_' != true ]]
             }
 
         '$public_function_name'.IsEnabled()
             {
-            [[ $'$_placehold_enable_switch_' = false ]]
+            [[ $'$_placehold_enable_switch_' = true ]]
             }
 
         '$public_function_name'.IsNot()
             {
-            [[ $'$_placehold_set_switch_' = false ]]
+            [[ $'$_placehold_set_switch_' != true ]]
             }
 
         '$public_function_name'.IsSet()
