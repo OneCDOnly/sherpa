@@ -4115,7 +4115,6 @@ Objects.Create()
 
     local public_function_name="$1"
     local safe_var_name_prefix="$(tr '[A-Z]' '[a-z]' <<< "${public_function_name//./_}")"
-    local user_args=()
 
     _placehold_index_="_object_${safe_var_name_prefix}_index_integer"
     _placehold_description_="_object_${safe_var_name_prefix}_description_string"
