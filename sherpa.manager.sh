@@ -2376,9 +2376,9 @@ DisplayAsHelpExample()
     # $2 = example syntax
 
     if [[ ${1: -1} = '!' ]]; then
-        printf "\n* %s \n       %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$(FormatAsScriptTitle) $2"
+        printf "\n* %s \n       # %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$(FormatAsScriptTitle) $2"
     else
-        printf "\n* %s:\n       %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$(FormatAsScriptTitle) $2"
+        printf "\n* %s:\n       # %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$(FormatAsScriptTitle) $2"
     fi
 
     LineSpace.Clear
@@ -2559,9 +2559,9 @@ Help.Issue.Show()
 
     Display "\n* Alternatively, post on the QNAP NAS Community Forum:\n\thttps://forum.qnap.com/viewtopic.php?f=320&t=132373"
 
-    DisplayAsIndentedHelpExample 'view the log' '--log'
+    DisplayAsIndentedHelpExample "view the $(FormatAsScriptTitle) debug log" '--log'
 
-    DisplayAsIndentedHelpExample "upload the log to the $(FormatAsURL 'https://termbin.com') public pastebin" '--paste'
+    DisplayAsIndentedHelpExample "upload the most-recent $LOG_TAIL_LINES entries in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" '--paste'
 
     Display "\n$(ColourTextBrightOrange '* If you need help, please include a copy of your') $(FormatAsScriptTitle) $(ColourTextBrightOrange 'log for analysis!')"
     LineSpace.Clear
@@ -2620,7 +2620,7 @@ Help.PackageAbbreviations.Show()
         fi
     done
 
-    DisplayAsIndentedHelpExample 'example: to install SABnzbd, Mylar3 and nzbToMedia all-at-once' 'install sab my nzb2'
+    DisplayAsHelpExample 'example: to install SABnzbd, Mylar3 and nzbToMedia all-at-once' 'install sab my nzb2'
 
     return 0
 
