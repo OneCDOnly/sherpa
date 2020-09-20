@@ -2315,7 +2315,7 @@ IsSysFileExist()
     #   $? = 0 (true) or 1 (false)
 
     if ! [[ -f $1 || -L $1 ]]; then
-        ShowAsError "a required NAS system file is missing $(FormatAsFileName "$1")"
+        ShowAsAbort "a required NAS system file is missing $(FormatAsFileName "$1")"
         return 1
     else
         return 0
@@ -2333,37 +2333,6 @@ IsNotSysFileExist()
     #   $? = 0 (true) or 1 (false)
 
     ! IsSysFileExist "$1"
-
-    }
-
-IsSysShareExist()
-    {
-
-    # input:
-    #   $1 = symlink path to check
-
-    # output:
-    #   $? = 0 (true) or 1 (false)
-
-    if [[ ! -L $1 ]]; then
-        ShowAsError "a required NAS system share is missing $(FormatAsFileName "$1"). Please re-create it via the QTS Control Panel -> Privilege Settings -> Shared Folders"
-        return 1
-    else
-        return 0
-    fi
-
-    }
-
-IsNotSysShareExist()
-    {
-
-    # input:
-    #   $1 = symlink path to check
-
-    # output:
-    #   $? = 0 (true) or 1 (false)
-
-    ! IsSysShareExist "$1"
 
     }
 
