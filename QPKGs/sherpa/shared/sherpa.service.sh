@@ -17,30 +17,18 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/.
 
 readonly PROJECT_NAME=sherpa
-readonly CONFIG_PATHFILE=/etc/config/qpkg.conf
-
-# cherry-pick required binaries
-readonly LN_CMD=/bin/ln
-readonly TOUCH_CMD=/bin/touch
-readonly GETCFG_CMD=/sbin/getcfg
-
-if [[ ! -e $CONFIG_PATHFILE ]]; then
-    echo "file not found [$CONFIG_PATHFILE]"
-    exit 1
-fi
-
-readonly QPKG_PATH=$($GETCFG_CMD $PROJECT_NAME Install_Path -f $CONFIG_PATHFILE)
+readonly QPKG_PATH=$(/sbin/getcfg $PROJECT_NAME Install_Path -f /etc/config/qpkg.conf)
 readonly REAL_LOG_PATHFILE=$QPKG_PATH/$PROJECT_NAME.debug.log
 readonly GUI_LOG_PATHFILE=/home/httpd/$PROJECT_NAME.debug.log
 readonly REAL_LOADER_SCRIPT_PATHNAME=$QPKG_PATH/$PROJECT_NAME.loader.sh
 readonly APPARENT_LOADER_SCRIPT_PATHNAME=/usr/sbin/$PROJECT_NAME
 
-[[ ! -e $REAL_LOG_PATHFILE ]] && $TOUCH_CMD "$REAL_LOG_PATHFILE"
+[[ ! -e $REAL_LOG_PATHFILE ]] && /bin/touch "$REAL_LOG_PATHFILE"
 
 case $1 in
     start)
-        [[ ! -L $APPARENT_LOADER_SCRIPT_PATHNAME ]] && $LN_CMD -s "$REAL_LOADER_SCRIPT_PATHNAME" "$APPARENT_LOADER_SCRIPT_PATHNAME"
-        [[ ! -L $GUI_LOG_PATHFILE ]] && $LN_CMD -s "$REAL_LOG_PATHFILE" "$GUI_LOG_PATHFILE"
+        [[ ! -L $APPARENT_LOADER_SCRIPT_PATHNAME ]] && /bin/ln -s "$REAL_LOADER_SCRIPT_PATHNAME" "$APPARENT_LOADER_SCRIPT_PATHNAME"
+        [[ ! -L $GUI_LOG_PATHFILE ]] && /bin/ln -s "$REAL_LOG_PATHFILE" "$GUI_LOG_PATHFILE"
         ;;
     stop)
         [[ -L $APPARENT_LOADER_SCRIPT_PATHNAME ]] && rm -f "$APPARENT_LOADER_SCRIPT_PATHNAME"

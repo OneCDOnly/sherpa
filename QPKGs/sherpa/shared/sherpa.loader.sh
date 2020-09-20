@@ -23,13 +23,15 @@ Init()
 
     IsQNAP || return 1
 
-    export LOADER_SCRIPT_VERSION=200905
+    export LOADER_SCRIPT_VERSION=200921
 
+    local -r PROJECT_NAME=sherpa
     local -r NAS_FIRMWARE=$(/sbin/getcfg System Version -f /etc/config/uLinux.conf)
+    local -r QPKG_PATH=$(/sbin/getcfg $PROJECT_NAME Install_Path -f /etc/config/qpkg.conf)
     [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg='--insecure' || curl_insecure_arg=''
     local -r MANAGER_SCRIPT_FILE=sherpa.manager.sh
     readonly REMOTE_MANAGER_SCRIPT=https://raw.githubusercontent.com/OneCDOnly/sherpa/master/$MANAGER_SCRIPT_FILE
-    readonly LOCAL_MANAGER_SCRIPT=/share/$MANAGER_SCRIPT_FILE
+    readonly LOCAL_MANAGER_SCRIPT=$QPKG_PATH/repo/$MANAGER_SCRIPT_FILE
     previous_msg=''
 
     }
@@ -48,17 +50,27 @@ IsQNAP()
 
     }
 
+ShowAsWarning()
+    {
+
+    local buffer="$1"
+    local capitalised="$(tr "[a-z]" "[A-Z]" <<< "${buffer:0:1}")${buffer:1}"
+
+    WriteToDisplay.New "$(ColourTextBrightOrange warn)" "$capitalised"
+
+    }
+
 ShowAsAbort()
     {
 
     local buffer="$1"
-    local capitalised="$(tr "[a-z]" "[A-Z]" <<< "${buffer:0:1}")${buffer:1}"      # use any available 'tr'
+    local capitalised="$(tr "[a-z]" "[A-Z]" <<< "${buffer:0:1}")${buffer:1}"
 
-    WriteToDisplay_NewLine "$(ColourTextBrightRed fail)" "$capitalised: aborting ..."
+    WriteToDisplay.New "$(ColourTextBrightRed fail)" "$capitalised: aborting ..."
 
     }
 
-WriteToDisplay_NewLine()
+WriteToDisplay.New()
     {
 
     # Updates the previous message
@@ -98,6 +110,13 @@ WriteToDisplay_NewLine()
 
     }
 
+ColourTextBrightOrange()
+    {
+
+    echo -en '\033[1;38;5;214m'"$(ColourReset "$1")"
+
+    }
+
 ColourTextBrightRed()
     {
 
@@ -115,8 +134,7 @@ ColourReset()
 Init || exit 1
 
 if ! (/sbin/curl $curl_insecure_arg --silent --fail "$REMOTE_MANAGER_SCRIPT" > "$LOCAL_MANAGER_SCRIPT"); then
-    ShowAsAbort 'manager download failed'
-    exit 1
+    ShowAsWarning 'manager download failed'
 fi
 
 if [[ ! -e $LOCAL_MANAGER_SCRIPT ]]; then
@@ -125,6 +143,5 @@ if [[ ! -e $LOCAL_MANAGER_SCRIPT ]]; then
 fi
 
 eval "/usr/bin/env bash" "$LOCAL_MANAGER_SCRIPT" "$*"
-rm -f "$LOCAL_MANAGER_SCRIPT"
 
 exit 0
