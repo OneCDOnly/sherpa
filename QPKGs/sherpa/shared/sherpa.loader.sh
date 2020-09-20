@@ -34,6 +34,8 @@ Init()
     readonly LOCAL_MANAGER_SCRIPT=$QPKG_PATH/repo/$MANAGER_SCRIPT_FILE
     previous_msg=''
 
+    [[ ! -d $QPKG_PATH/repo ]] && mkdir -p $QPKG_PATH/repo
+
     }
 
 IsQNAP()
