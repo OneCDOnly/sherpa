@@ -146,10 +146,7 @@ Session.Init()
     IsSysFileExist $Z7_CMD || return 1
     IsSysFileExist $ZIP_CMD || return 1
 
-    # create some shiny new virtual objects!
-
-    # TODO use a "building virtual objects" display as the first line, which is then overwritten by title line. Building objects is slow. :(
-    # echo -n "building virtual objects ... "
+    ShowAsProc "building virtual objects"
 
     # user-selected options
     Objects.Create User.Opts.Help.Show.Abbreviations
@@ -189,7 +186,7 @@ Session.Init()
     Objects.Create Session.SuggestIssue
     Objects.Create Session.Summary
 
-    # echo "done."
+    CR
 
     Session.Summary.Set
     Session.Debugging.Visible.Description = "Display on-screen live debugging information."
@@ -213,6 +210,8 @@ Session.Init()
         readonly SHARE_PUBLIC_PATH=/share/$($GETCFG_CMD SHARE_DEF defPublic -d Qpublic -f $DEFAULT_SHARES_PATHFILE)
         IsSysShareExist "$SHARE_PUBLIC_PATH" || return 1
     fi
+
+    ShowAsProc "building arrays"
 
     # sherpa-supported package details - parallel arrays
     SHERPA_QPKG_NAME=()         # internal QPKG name
@@ -408,6 +407,9 @@ Session.Init()
     QPKGs.Installed.Build
     QPKGs.NotInstalled.Build
     QPKGs.Upgradable.Build
+
+    CR
+
     CalcNASQPKGArch
 
     return 0
@@ -2493,6 +2495,15 @@ DisplayAsHelpPackageNameExample()
 
     }
 
+CR()
+    {
+
+    # reset cursor to start-of-line, erasing previous characters
+
+    echo -en "\033[2K\r"
+
+    }
+
 Display()
     {
 
@@ -3951,8 +3962,7 @@ WriteToDisplay.Wait()
 
     previous_msg=$(printf "%-10s: %s" "$1" "$2")
 
-    DisplayWait "$previous_msg"; Session.Debugging.Visible.IsSet && Display
-
+    DisplayWait "$previous_msg"; [[ $(type -t Session.Debugging.Visible) = 'function' ]] && Session.Debugging.Visible.IsSet && Display
 
     return 0
 
