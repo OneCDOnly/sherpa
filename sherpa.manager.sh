@@ -4155,10 +4155,7 @@ Objects.Create()
 
     _placehold_index_="_object_${safe_function_name}_index_integer"
     _placehold_description_="_object_${safe_function_name}_description_string"
-    _placehold_value_="_object_${safe_function_name}_value_integer"
-    _placehold_text_="_object_${safe_function_name}_text_string"
     _placehold_set_switch_="_object_${safe_function_name}_set_boolean"
-    _placehold_enable_switch_="_object_${safe_function_name}_enable_boolean"
     _placehold_list_array_="_object_${safe_function_name}_list_array"
     _placehold_list_pointer_="_object_${safe_function_name}_array_index_integer"
 
@@ -4181,30 +4178,13 @@ Objects.Create()
             fi
             }
 
-        '$public_function_name'.Disable()
-            {
-            [[ $'$_placehold_enable_switch_' != "true" ]] && return
-            '$_placehold_enable_switch_'=false
-            DebugVar '$_placehold_enable_switch_'
-            }
-
-        '$public_function_name'.Enable()
-            {
-            [[ $'$_placehold_enable_switch_' = "true" ]] && return
-            '$_placehold_enable_switch_'=true
-            DebugVar '$_placehold_enable_switch_'
-            }
-
         '$public_function_name'.Env()
             {
             echo "* object internal environment *"
             echo "object index: '\'\$$_placehold_index_\''"
             echo "object name: '\'$public_function_name\''"
             echo "object description: '\'\$$_placehold_description_\''"
-            echo "object value: '\'\$$_placehold_value_\''"
-            echo "object text: '\'\$$_placehold_text_\''"
             echo "object set: '\'\$$_placehold_set_switch_\''"
-            echo "object enable: '\'\$$_placehold_enable_switch_\''"
             echo "object list: '\'\${$_placehold_list_array_[*]}\''"
             echo "object list pointer: '\'\$$_placehold_list_pointer_\''"
             }
@@ -4222,22 +4202,9 @@ Objects.Create()
             {
             '$_placehold_index_'=$(Objects.Items.Count)
             '$_placehold_description_'=''
-            '$_placehold_value_'=0
-            '$_placehold_text_'=''
             '$_placehold_set_switch_'=false
-            '$_placehold_enable_switch_'=false
             '$_placehold_list_array_'+=()
             '$_placehold_list_pointer_'=1
-            }
-
-        '$public_function_name'.IsDisabled()
-            {
-            [[ $'$_placehold_enable_switch_' != "true" ]]
-            }
-
-        '$public_function_name'.IsEnabled()
-            {
-            [[ $'$_placehold_enable_switch_' = "true" ]]
             }
 
         '$public_function_name'.IsNot()
@@ -4260,32 +4227,6 @@ Objects.Create()
             echo "${#'$_placehold_list_array_'[@]}"
             }
 
-        '$public_function_name'.Items.First()
-            {
-            echo "${'$_placehold_list_array_'[0]}"
-            }
-
-        '$public_function_name'.Items.Enumerate()
-            {
-            (('$_placehold_list_pointer_'++))
-            if [[ $'$_placehold_list_pointer_' -gt ${#'$_placehold_list_array_'[@]} ]]; then
-                '$_placehold_list_pointer_'=1
-            fi
-            }
-
-        '$public_function_name'.Items.GetCurrent()
-            {
-            echo -n "${'$_placehold_list_array_'[(('$_placehold_list_pointer_'-1))]}"
-            }
-
-        '$public_function_name'.Items.GetThis()
-            {
-            local -i index="$1"
-            [[ $index -lt 1 ]] && index=1
-            [[ $index -gt ${#'$_placehold_list_array_'[@]} ]] && index=${#'$_placehold_list_array_'[@]}
-            echo -n "${'$_placehold_list_array_'[((index-1))]}"
-            }
-
         '$public_function_name'.Items.Pointer()
             {
             if [[ -n $1 && $1 = "=" ]]; then
@@ -4306,45 +4247,6 @@ Objects.Create()
             DebugVar '$_placehold_set_switch_'
             }
 
-        '$public_function_name'.Text()
-            {
-            if [[ -n $1 && $1 = "=" ]]; then
-                '$_placehold_text_'="$2"
-            else
-                echo -n "$'$_placehold_text_'"
-            fi
-            }
-
-        '$public_function_name'.Value()
-            {
-            if [[ -n $1 && $1 = "=" ]]; then
-                '$_placehold_value_'=$2
-            else
-                echo -n $'$_placehold_value_'
-            fi
-            }
-
-        '$public_function_name'.Value.Decrement()
-            {
-            local -i amount
-            if [[ -n $1 && $1 = "by" ]]; then
-                amount=$2
-            else
-                amount=1
-            fi
-            '$_placehold_value_'=$(('$_placehold_value_'-amount))
-            }
-
-        '$public_function_name'.Value.Increment()
-            {
-            local -i amount
-            if [[ -n $1 && $1 = "by" ]]; then
-                amount=$2
-            else
-                amount=1
-            fi
-            '$_placehold_value_'=$(('$_placehold_value_'+amount))
-            }
     '
     eval "$object_functions"
 
@@ -4353,7 +4255,6 @@ Objects.Create()
     if [[ $public_function_name = Objects ]]; then
         $public_function_name.Index
         $public_function_name.Description = 'this object holds metadata on every other object'
-        $public_function_name.Value = 1
         $public_function_name.Items.Add 'Objects'
     fi
 
