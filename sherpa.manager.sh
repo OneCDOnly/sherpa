@@ -620,11 +620,10 @@ Session.Validate()
 
     if Session.Debug.To.Screen.IsNot; then
         Display "$(FormatAsScriptTitle) $MANAGER_SCRIPT_VERSION • a mini-package-manager for QNAP NAS"
-        DisplayLineSpaceAndSet
+        DisplayLineSpaceIfNoneAlready
     fi
 
     DisplayNewQPKGVersions
-
     Session.Abort.IsSet && return
 
     DebugInfoThickSeparator
@@ -838,7 +837,7 @@ Session.Results()
     User.Opts.Log.Paste.IsSet && PasteLogOnline
     Session.Summary.IsSet && Session.Summary.Show
     Session.SuggestIssue.IsSet && Help.Issue.Show
-    DisplayLineSpaceAndSet
+    DisplayLineSpaceIfNoneAlready
 
     DebugInfoThinSeparator
     DebugScript 'finished' "$($DATE_CMD)"
@@ -2389,48 +2388,6 @@ IsIPKGInstalled()
 
 #### DisplayAs... functions are for direct screen output only.
 
-DisplayAsTitleHelpAction()
-    {
-
-    Display "\n* $(FormatAsHelpActions) usage examples:"
-
-    }
-
-DisplayAsTitleHelpPackage()
-    {
-
-    Display "\n* $(FormatAsHelpPackages) may be one or more of the following (space-separated):\n"
-
-    }
-
-DisplayAsTitleHelpOption()
-    {
-
-    Display "\n* $(FormatAsHelpOptions) usage examples:"
-
-    }
-
-DisplayAsTitleHelpProblem()
-    {
-
-    Display "\n* usage examples when dealing with problems:"
-
-    }
-
-DisplayAsTitleHelpTip()
-    {
-
-    Display "\n* helpful tips and shortcuts:"
-
-    }
-
-DisplayAsTitleInstalledQPKGs()
-    {
-
-    Display "\n* these packages are currently installed:"
-
-    }
-
 DisplayAsIndentedHelpExample()
     {
 
@@ -2502,7 +2459,7 @@ DisplayWait()
 Help.Basic.Show()
     {
 
-    DisplayLineSpaceAndSet
+    DisplayLineSpaceIfNoneAlready
     Display "Usage: $(FormatAsScriptTitle) $(FormatAsHelpActions) $(FormatAsHelpPackages) $(FormatAsHelpOptions)"
 
     return 0
@@ -2528,8 +2485,8 @@ Help.Actions.Show()
     {
 
     Help.Basic.Show
-
-    DisplayAsTitleHelpAction
+    DisplayLineSpaceIfNoneAlready
+    Display "* $(FormatAsHelpActions) usage examples:"
 
     DisplayAsIndentedHelpExample 'install the following packages' "--install $(FormatAsHelpPackages)"
 
@@ -2559,8 +2516,8 @@ Help.ActionsAll.Show()
     {
 
     Help.Basic.Show
-
-    DisplayAsTitleHelpAction
+    DisplayLineSpaceIfNoneAlready
+    Display "* $(FormatAsHelpActions) usage examples:"
 
     DisplayAsIndentedHelpExample 'install everything!' '--install-all'
 
@@ -2596,8 +2553,8 @@ Help.Packages.Show()
     local package_note_message=''
 
     Help.Basic.Show
-
-    DisplayAsTitleHelpPackage
+    DisplayLineSpaceIfNoneAlready
+    Display "* $(FormatAsHelpPackages) may be one or more of the following (space-separated):\n"
 
     for package in "${QPKGS_user_installable[@]}"; do
         if QPKG.Upgradable "$package"; then
@@ -2625,8 +2582,8 @@ Help.Options.Show()
     {
 
     Help.Basic.Show
-
-    DisplayAsTitleHelpOption
+    DisplayLineSpaceIfNoneAlready
+    Display "* $(FormatAsHelpOptions) usage examples:"
 
     DisplayAsIndentedHelpExample 'process one or more packages and show live debugging information' "$(FormatAsHelpActions) $(FormatAsHelpPackages) --debug"
 
@@ -2643,10 +2600,9 @@ Help.Options.Show()
 Help.Problems.Show()
     {
 
-    DisplayLineSpaceAndSet
     Help.Basic.Show
-
-    DisplayAsTitleHelpProblem
+    DisplayLineSpaceIfNoneAlready
+    Display "* usage examples when dealing with problems:"
 
     DisplayAsIndentedHelpExample 'process one or more packages and show live debugging information' "$(FormatAsHelpActions) $(FormatAsHelpPackages) --debug"
 
@@ -2669,7 +2625,7 @@ Help.Problems.Show()
 Help.Issue.Show()
     {
 
-    DisplayLineSpaceAndSet
+    DisplayLineSpaceIfNoneAlready
     Display "* Please consider creating a new issue for this on GitHub:\n\thttps://github.com/OneCDOnly/sherpa/issues"
 
     Display "\n* Alternatively, post on the QNAP NAS Community Forum:\n\thttps://forum.qnap.com/viewtopic.php?f=320&t=132373"
@@ -2688,8 +2644,8 @@ Help.Tips.Show()
     {
 
     Help.Basic.Show
-
-    DisplayAsTitleHelpTip
+    DisplayLineSpaceIfNoneAlready
+    Display "* helpful tips and shortcuts:"
 
     DisplayAsIndentedHelpExample "install all available $(FormatAsScriptTitle) packages" '--install-all'
 
@@ -2720,7 +2676,7 @@ Help.PackageAbbreviations.Show()
 
     Help.Basic.Show
 
-    DisplayLineSpaceAndSet
+    DisplayLineSpaceIfNoneAlready
     echo -e "* $(FormatAsScriptTitle) recognises these abbreviations as $(FormatAsHelpPackages):"
 
     for package_index in "${!SHERPA_QPKG_NAME[@]}"; do
@@ -3607,11 +3563,14 @@ FormatAsResultAndStdout()
 
     }
 
-DisplayLineSpaceAndSet()
+DisplayLineSpaceIfNoneAlready()
     {
 
     if Session.LineSpace.IsNot && Session.Debug.To.Screen.IsNot && Session.Display.Clean.IsNot; then
-        Display
+        echo
+        Session.LineSpace.Set
+    else
+        Session.LineSpace.Clear
     fi
 
     }
