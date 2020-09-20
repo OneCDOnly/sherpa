@@ -588,8 +588,8 @@ Session.ParseArguments()
                     upgrade_)
                         if QPKG.NotInstalled "$target_app"; then
                             QPKGs.Install.Add "$target_app"
-                        elif [[ ${QPKGS_upgradable[*]} != *"$target_app"* ]]; then
-                            [[ $operation_force = true ]] && QPKGs.ForceUpgrade.Add "$target_app"
+                        elif [[ $operation_force = true ]]; then
+                            QPKGs.ForceUpgrade.Add "$target_app"
                         else
                             QPKGs.Upgrade.Add "$target_app"
                         fi
