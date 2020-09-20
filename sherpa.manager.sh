@@ -2576,6 +2576,8 @@ Help.Packages.Show()
 
     DisplayAsIndentedHelpExample 'example: to install SABnzbd' '--install SABnzbd'
 
+    DisplayAsIndentedHelpExample 'package abbreviations may also be used. To see these' '--abs'
+
     return 0
 
     }
