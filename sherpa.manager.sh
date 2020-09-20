@@ -36,7 +36,7 @@ Session.Init()
 
     IsQNAP || return 1
 
-    readonly MANAGER_SCRIPT_VERSION=200920
+    readonly MANAGER_SCRIPT_VERSION=200921
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -87,7 +87,8 @@ Session.Init()
 
     # paths and files
     readonly PROJECT_NAME=sherpa
-    readonly LOADER_SCRIPT_FILE=$PROJECT_NAME.loader.sh
+    readonly PACKAGE_VERSION=$(GetInstalledQPKGVersion $PROJECT_NAME)
+    local -r LOADER_SCRIPT_FILE=$PROJECT_NAME.loader.sh
     readonly MANAGER_SCRIPT_FILE=$PROJECT_NAME.manager.sh
     local -r DEBUG_LOG_FILE=$PROJECT_NAME.debug.log
     readonly APP_CENTER_CONFIG_PATHFILE=/etc/config/qpkg.conf
@@ -98,10 +99,12 @@ Session.Init()
     readonly RESTART_LOG_FILE=restart.log
     readonly UPDATE_LOG_FILE=update.log
     readonly DEFAULT_SHARES_PATHFILE=/etc/config/def_share.info
-    readonly ULINUX_PATHFILE=/etc/config/uLinux.conf
+    local -r ULINUX_PATHFILE=/etc/config/uLinux.conf
     readonly PLATFORM_PATHFILE=/etc/platform.conf
     readonly EXTERNAL_PACKAGE_ARCHIVE_PATHFILE=/opt/var/opkg-lists/entware
-    readonly REMOTE_REPO_URL=https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/master
+    local -r REMOTE_REPO_URL=https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/master
+    readonly PREV_QPKG_CONFIG_DIRS=(SAB_CONFIG CONFIG Config config)                 # last element is used as target dirname
+    readonly PREV_QPKG_CONFIG_FILES=(sabnzbd.ini settings.ini config.cfg config.ini) # last element is used as target filename
     readonly RUNTIME_LOCK_PATHFILE=/var/run/$LOADER_SCRIPT_FILE.pid
 
     Session.LockFile.Claim || return 1
@@ -149,16 +152,16 @@ Session.Init()
     ShowAsProc "building virtual objects"
 
     # user-selected options
-    Objects.Create User.Opts.Help.Show.Abbreviations
-    Objects.Create User.Opts.Help.Show.Actions
-    Objects.Create User.Opts.Help.Show.ActionsAll
-    Objects.Create User.Opts.Help.Show.Basic
-    Objects.Create User.Opts.Help.Show.Options
-    Objects.Create User.Opts.Help.Show.Packages
-    Objects.Create User.Opts.Help.Show.Problems
-    Objects.Create User.Opts.Help.Show.Tips
+    Objects.Create User.Opts.Help.Abbreviations
+    Objects.Create User.Opts.Help.Actions
+    Objects.Create User.Opts.Help.ActionsAll
+    Objects.Create User.Opts.Help.Basic
+    Objects.Create User.Opts.Help.Options
+    Objects.Create User.Opts.Help.Packages
+    Objects.Create User.Opts.Help.Problems
+    Objects.Create User.Opts.Help.Tips
 
-    Objects.Create User.Opts.Check.Dependencies
+    Objects.Create User.Opts.Dependencies.Check
     Objects.Create User.Opts.Versions.View
 
     Objects.Create User.Opts.Log.Paste
@@ -186,32 +189,49 @@ Session.Init()
     Objects.Create Session.SuggestIssue
     Objects.Create Session.Summary
 
-    CR
+    # enable debug mode early if possible
+    if [[ $USER_ARGS_RAW == *"debug"* ]]; then
+        Display
+        Session.Debug.To.Screen.Set
+    else
+        CR
+    fi
 
     Session.Summary.Set
     Session.Debug.To.Screen.Description = "Display on-screen live debugging information."
     Session.Display.Clean.Description = "Disable display of script title and trailing linespace. If 'set', output is suitable for script processing."
     Session.LineSpace.Description = "Keeps track of the display empty linespacing flag. If 'set', an empty linespace has been printed to screen."
 
-    local -r DEFAULT_SHARE_DOWNLOAD_PATH=/share/Download
-    local -r DEFAULT_SHARE_PUBLIC_PATH=/share/Public
+    readonly WORK_PATH=$($GETCFG_CMD $PROJECT_NAME Install_Path -f $APP_CENTER_CONFIG_PATHFILE)/repo
+    readonly DEBUG_LOG_PATHFILE=$($GETCFG_CMD $PROJECT_NAME Install_Path -f $APP_CENTER_CONFIG_PATHFILE)/$DEBUG_LOG_FILE
+    readonly QPKG_DL_PATH=$WORK_PATH/qpkgs
+    readonly IPKG_DL_PATH=$WORK_PATH/ipkgs.downloads
+    readonly IPKG_CACHE_PATH=$WORK_PATH/ipkgs.cache
+    readonly PIP_CACHE_PATH=$WORK_PATH/pips.cache
+    readonly EXTERNAL_PACKAGE_LIST_PATHFILE=$WORK_PATH/Packages
 
-    # check required system paths are present
-    if [[ -L $DEFAULT_SHARE_DOWNLOAD_PATH ]]; then
-        readonly SHARE_DOWNLOAD_PATH=$DEFAULT_SHARE_DOWNLOAD_PATH
-    else
-        readonly SHARE_DOWNLOAD_PATH=/share/$($GETCFG_CMD SHARE_DEF defDownload -d Qdownload -f $DEFAULT_SHARES_PATHFILE)
-        IsSysShareExist "$SHARE_DOWNLOAD_PATH" || return 1
-    fi
-
-    if [[ -L $DEFAULT_SHARE_PUBLIC_PATH ]]; then
-        readonly SHARE_PUBLIC_PATH=$DEFAULT_SHARE_PUBLIC_PATH
-    else
-        readonly SHARE_PUBLIC_PATH=/share/$($GETCFG_CMD SHARE_DEF defPublic -d Qpublic -f $DEFAULT_SHARES_PATHFILE)
-        IsSysShareExist "$SHARE_PUBLIC_PATH" || return 1
-    fi
+    # internals
+    readonly SCRIPT_STARTSECONDS=$($DATE_CMD +%s)
+    readonly NAS_FIRMWARE=$($GETCFG_CMD System Version -f $ULINUX_PATHFILE)
+    readonly NAS_BUILD=$($GETCFG_CMD System 'Build Number' -f $ULINUX_PATHFILE)
+    readonly INSTALLED_RAM_KB=$($GREP_CMD MemTotal /proc/meminfo | $CUT_CMD -f2 -d':' | $SED_CMD 's|kB||;s| ||g')
+    readonly MIN_RAM_KB=1048576
+    readonly LOG_TAIL_LINES=1000
+    ignore_space_arg=''
+    [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg='--insecure' || curl_insecure_arg=''
 
     ShowAsProc "building arrays"
+
+    # runtime arrays
+    QPKGs_to_backup=()
+    QPKGs_to_install=()
+    QPKGs_to_reinstall=()
+    QPKGs_to_restart=()
+    QPKGs_to_restore=()
+    QPKGs_to_status=()
+    QPKGs_to_uninstall=()
+    QPKGs_to_upgrade=()
+    QPKGs_to_force_upgrade=()
 
     # sherpa-supported package details - parallel arrays
     SHERPA_QPKG_NAME=()         # internal QPKG name
@@ -371,36 +391,6 @@ Session.Init()
     readonly SHERPA_COMMON_PIPS='apscheduler beautifulsoup4 cfscrape cheetah3 "cheroot!=8.4.4" cherrypy configobj "feedparser==5.2.1" portend pygithub python-magic random_user_agent sabyenc3 simplejson slugify'
     readonly SHERPA_COMMON_CONFLICTS='Optware Optware-NG TarMT'
 
-    # runtime arrays
-    QPKGs_to_backup=()
-    QPKGs_to_install=()
-    QPKGs_to_reinstall=()
-    QPKGs_to_restart=()
-    QPKGs_to_restore=()
-    QPKGs_to_status=()
-    QPKGs_to_uninstall=()
-    QPKGs_to_upgrade=()
-
-    readonly PREV_QPKG_CONFIG_DIRS=(SAB_CONFIG CONFIG Config config)                 # last element is used as target dirname
-    readonly PREV_QPKG_CONFIG_FILES=(sabnzbd.ini settings.ini config.cfg config.ini) # last element is used as target filename
-    readonly WORK_PATH=$($GETCFG_CMD $PROJECT_NAME Install_Path -f $APP_CENTER_CONFIG_PATHFILE)/repo
-    readonly DEBUG_LOG_PATHFILE=$($GETCFG_CMD $PROJECT_NAME Install_Path -f $APP_CENTER_CONFIG_PATHFILE)/$DEBUG_LOG_FILE
-    readonly PACKAGE_VERSION=$(GetInstalledQPKGVersion $PROJECT_NAME)
-    readonly QPKG_DL_PATH=$WORK_PATH/qpkgs
-    readonly IPKG_DL_PATH=$WORK_PATH/ipkgs.downloads
-    readonly IPKG_CACHE_PATH=$WORK_PATH/ipkgs.cache
-    readonly PIP_CACHE_PATH=$WORK_PATH/pips.cache
-    readonly EXTERNAL_PACKAGE_LIST_PATHFILE=$WORK_PATH/Packages
-
-    # internals
-    readonly SCRIPT_STARTSECONDS=$($DATE_CMD +%s)
-    readonly NAS_FIRMWARE=$($GETCFG_CMD System Version -f $ULINUX_PATHFILE)
-    readonly MIN_RAM_KB=1048576
-    readonly LOG_TAIL_LINES=1000
-    readonly INSTALLED_RAM_KB=$($GREP_CMD MemTotal /proc/meminfo | $CUT_CMD -f2 -d':' | $SED_CMD 's|kB||;s| ||g')
-    ignore_space_arg=''
-    [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg='--insecure' || curl_insecure_arg=''
-
     QPKGs.Independent.Build
     QPKGs.Dependant.Build
     QPKGs.Installable.Build
@@ -408,8 +398,7 @@ Session.Init()
     QPKGs.NotInstalled.Build
     QPKGs.Upgradable.Build
 
-    CR
-
+    Session.Debug.To.Screen.IsNot && CR
     CalcNASQPKGArch
 
     return 0
@@ -420,7 +409,7 @@ Session.ParseArguments()
     {
 
     if [[ -z $USER_ARGS_RAW ]]; then
-        User.Opts.Help.Show.Basic.Set
+        User.Opts.Help.Basic.Set
         Session.Abort.Set
         code_pointer=2
         return 1
@@ -447,15 +436,15 @@ Session.ParseArguments()
                 current_operation=''
                 ;;
             -h|h|--help|help)
-                User.Opts.Help.Show.Basic.Set
+                User.Opts.Help.Basic.Set
                 Session.Abort.Set
                 ;;
             -p|p|--problems|problems|--problem|problem)
-                User.Opts.Help.Show.Problems.Set
+                User.Opts.Help.Problems.Set
                 Session.Abort.Set
                 ;;
             -t|t|--tips|tips)
-                User.Opts.Help.Show.Tips.Set
+                User.Opts.Help.Tips.Set
                 Session.Abort.Set
                 ;;
             -l|l|--log|log)
@@ -479,23 +468,23 @@ Session.ParseArguments()
                 Session.Abort.Set
                 ;;
             --abs|abs)
-                User.Opts.Help.Show.Abbreviations.Set
+                User.Opts.Help.Abbreviations.Set
                 Session.Abort.Set
                 ;;
             -a|a|--action|action|--actions|actions)
-                User.Opts.Help.Show.Actions.Set
+                User.Opts.Help.Actions.Set
                 Session.Abort.Set
                 ;;
             --action-all|action-all|--actions-all|actions-all)
-                User.Opts.Help.Show.ActionsAll.Set
+                User.Opts.Help.ActionsAll.Set
                 Session.Abort.Set
                 ;;
             --package|package|--packages|packages)
-                User.Opts.Help.Show.Packages.Set
+                User.Opts.Help.Packages.Set
                 Session.Abort.Set
                 ;;
             -o|o|--option|option|--options|options)
-                User.Opts.Help.Show.Options.Set
+                User.Opts.Help.Options.Set
                 Session.Abort.Set
                 ;;
             -v|v|--version|version)
@@ -504,29 +493,36 @@ Session.ParseArguments()
                 Session.Abort.Set
                 ;;
             -c|c|--check|check|--check-all|check-all)
-                User.Opts.Check.Dependencies.Set
+                User.Opts.Dependencies.Check.Set
                 current_operation=''
                 ;;
             --install-all|install-all)
                 User.Opts.Apps.All.Install.Set
+                current_operation=''
                 ;;
             --uninstall-all-applications-please|uninstall-all-applications-please)
                 User.Opts.Apps.All.Uninstall.Set
+                current_operation=''
                 ;;
             --restart-all|restart-all)
                 User.Opts.Apps.All.Restart.Set
+                current_operation=''
                 ;;
             --upgrade-all|upgrade-all)
                 User.Opts.Apps.All.Upgrade.Set
+                current_operation=''
                 ;;
             --backup-all)
                 User.Opts.Apps.All.Backup.Set
+                current_operation=''
                 ;;
             --restore-all)
                 User.Opts.Apps.All.Restore.Set
+                current_operation=''
                 ;;
             --status-all|status-all)
                 User.Opts.Apps.All.Status.Set
+                current_operation=''
                 ;;
             --install|install)
                 current_operation=install_
@@ -589,9 +585,7 @@ Session.ParseArguments()
                         if QPKG.NotInstalled "$target_app"; then
                             QPKGs.Install.Add "$target_app"
                         elif [[ ${QPKGS_upgradable[*]} != *"$target_app"* ]]; then
-                            if [[ $operation_force = true ]]; then
-                                QPKGs.Reinstall.Add "$target_app"
-                            fi
+                            [[ $operation_force = true ]] && QPKGs.ForceUpgrade.Add "$target_app"
                         else
                             QPKGs.Upgrade.Add "$target_app"
                         fi
@@ -620,6 +614,7 @@ Session.Validate()
     local package=''
     local QPKGs_initial_array=()
 
+    Session.Debug.To.File.Set
     Session.ParseArguments
     Session.Display.Clean.IsSet && return
 
@@ -632,7 +627,6 @@ Session.Validate()
 
     Session.Abort.IsSet && return
 
-    Session.Debug.To.File.Set
     DebugInfoThickSeparator
     DebugScript 'started' "$($DATE_CMD | $TR_CMD -s ' ')"
     DebugScript 'version' "package: $PACKAGE_VERSION, manager: $MANAGER_SCRIPT_VERSION, loader $LOADER_SCRIPT_VERSION"
@@ -648,7 +642,7 @@ Session.Validate()
         [[ $INSTALLED_RAM_KB -le $MIN_RAM_KB ]] && DebugHardware.Warning 'RAM' "less-than or equal-to $MIN_RAM_KB kB"
     fi
     DebugFirmware 'firmware version' "$NAS_FIRMWARE"
-    DebugFirmware 'firmware build' "$($GETCFG_CMD System 'Build Number' -f $ULINUX_PATHFILE)"
+    DebugFirmware 'firmware build' "$NAS_BUILD"
     DebugFirmware 'kernel' "$($UNAME_CMD -mr)"
     DebugUserspace.OK 'OS uptime' "$($UPTIME_CMD | $SED_CMD 's|.*up.||;s|,.*load.*||;s|^\ *||')"
     DebugUserspace.OK 'system load' "$($UPTIME_CMD | $SED_CMD 's|.*load average: ||' | $AWK_CMD -F', ' '{print "1 min="$1 ", 5 min="$2 ", 15 min="$3}')"
@@ -686,12 +680,6 @@ Session.Validate()
         DebugUserspace.Warning 'Python 3 path' '<not present>'
     fi
 
-    if [[ -L $SHARE_DOWNLOAD_PATH ]]; then
-        DebugUserspace.OK "$SHARE_DOWNLOAD_PATH" "$($READLINK_CMD "$SHARE_DOWNLOAD_PATH")"
-    else
-        DebugUserspace.Warning "$SHARE_DOWNLOAD_PATH" '<not present>'
-    fi
-
     DebugScript 'unparsed arguments' "$USER_ARGS_RAW"
 
     if User.Opts.Apps.All.Backup.IsSet && User.Opts.Apps.All.Restore.IsSet; then
@@ -715,7 +703,7 @@ Session.Validate()
     elif User.Opts.Apps.All.Upgrade.IsSet; then
         QPKGs_initial_array=($(QPKGs.Upgradable.Array))
         Session.Pips.Install.Set
-    elif User.Opts.Check.Dependencies.IsSet; then
+    elif User.Opts.Dependencies.Check.IsSet; then
         QPKGs_initial_array+=($(QPKGs.Installed.Array))
         Session.Pips.Install.Set
     else
@@ -742,9 +730,9 @@ Session.Validate()
 
     if QPKGs.Install.IsNone && QPKGs.Uninstall.IsNone && QPKGs.Reinstall.IsNone && QPKGs.Restart.IsNone && QPKGs.Upgrade.IsNone && [[ ${#QPKGs_to_backup[@]} -eq 0 && ${#QPKGs_to_restore[@]} -eq 0 && ${#QPKGs_to_status[@]} -eq 0 ]]; then
         if User.Opts.Apps.All.Install.IsNot && User.Opts.Apps.All.Uninstall.IsNot && User.Opts.Apps.All.Restart.IsNot && User.Opts.Apps.All.Upgrade.IsNot && User.Opts.Apps.All.Backup.IsNot && User.Opts.Apps.All.Restore.IsNot; then
-            if User.Opts.Apps.All.Status.IsNot && User.Opts.Check.Dependencies.IsNot && User.Opts.Apps.List.Installed.IsNot; then
+            if User.Opts.Apps.All.Status.IsNot && User.Opts.Dependencies.Check.IsNot && User.Opts.Apps.List.Installed.IsNot; then
                 ShowAsError 'nothing to do'
-                User.Opts.Help.Show.Basic.Set
+                User.Opts.Help.Basic.Set
                 Session.Abort.Set
                 return 1
             fi
@@ -820,7 +808,7 @@ Session.Validate()
 
     }
 
-Session.Show.Results()
+Session.Results()
     {
 
     if User.Opts.Versions.View.IsSet; then
@@ -834,18 +822,18 @@ Session.Show.Results()
     User.Opts.Apps.List.NotInstalled.IsSet && QPKGs.NotInstalled.Show
     User.Opts.Apps.All.List.IsSet && QPKGs.All.Show
 
-    if User.Opts.Help.Show.Basic.IsSet; then
+    if User.Opts.Help.Basic.IsSet; then
         Help.Basic.Show
         Help.Basic.Example.Show
     fi
 
-    User.Opts.Help.Show.Actions.IsSet && Help.Actions.Show
-    User.Opts.Help.Show.ActionsAll.IsSet && Help.ActionsAll.Show
-    User.Opts.Help.Show.Packages.IsSet && Help.Packages.Show
-    User.Opts.Help.Show.Options.IsSet && Help.Options.Show
-    User.Opts.Help.Show.Problems.IsSet && Help.Problems.Show
-    User.Opts.Help.Show.Tips.IsSet && Help.Tips.Show
-    User.Opts.Help.Show.Abbreviations.IsSet && Help.PackageAbbreviations.Show
+    User.Opts.Help.Actions.IsSet && Help.Actions.Show
+    User.Opts.Help.ActionsAll.IsSet && Help.ActionsAll.Show
+    User.Opts.Help.Packages.IsSet && Help.Packages.Show
+    User.Opts.Help.Options.IsSet && Help.Options.Show
+    User.Opts.Help.Problems.IsSet && Help.Problems.Show
+    User.Opts.Help.Tips.IsSet && Help.Tips.Show
+    User.Opts.Help.Abbreviations.IsSet && Help.PackageAbbreviations.Show
 
     User.Opts.Log.Paste.IsSet && PasteLogOnline
     Session.Summary.IsSet && Session.Summary.Show
@@ -860,88 +848,6 @@ Session.Show.Results()
     Session.LockFile.Release
 
     return 0
-
-    }
-
-DisplayNewQPKGVersions()
-    {
-
-    # Check installed sherpa packages and compare versions against package arrays. If new versions are available, advise on-screen.
-
-    # $? = 0 if all packages are up-to-date
-    # $? = 1 if one or more packages can be upgraded
-
-    local names=''
-    local msg=''
-
-    if [[ ${#QPKGS_upgradable[@]} -gt 0 ]]; then
-        if [[ ${#QPKGS_upgradable[@]} -eq 1 ]]; then
-            msg='An upgraded package is'
-        else
-            msg='Upgraded packages are'
-        fi
-
-        names=${QPKGS_upgradable[*]}
-        ShowAsNote "$msg available for $(ColourTextBrightYellow "${names// /, }")"
-        return 1
-    fi
-
-    return 0
-
-    }
-
-PasteLogOnline()
-    {
-
-    # with thanks to https://github.com/solusipse/fiche
-
-    if [[ -n $DEBUG_LOG_PATHFILE && -e $DEBUG_LOG_PATHFILE ]]; then
-        if AskQuiz "Press 'Y' to post the most-recent $LOG_TAIL_LINES entries in your $(FormatAsScriptTitle) log to a public pastebin, or any other key to abort"; then
-            ShowAsProc "uploading $(FormatAsScriptTitle) log"
-            link=$($TAIL_CMD -n $LOG_TAIL_LINES -q "$DEBUG_LOG_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
-
-            if [[ $? -eq 0 ]]; then
-                ShowAsDone "your $(FormatAsScriptTitle) log is now online at $(FormatAsURL "$($SED_CMD 's|http://|http://l.|;s|https://|https://l.|' <<< "$link")") and will be deleted in 1 month"
-            else
-                ShowAsError "a link could not be generated. Most likely a problem occurred when talking with $(FormatAsURL 'https://termbin.com')"
-            fi
-        else
-            DebugInfoThinSeparator
-            DebugScript 'user abort'
-            Session.Abort.Set
-            Session.Summary.Clear
-            return 1
-        fi
-    else
-        ShowAsError 'no log to paste'
-    fi
-
-    return 0
-
-    }
-
-AskQuiz()
-    {
-
-    # input:
-    #   $1 = prompt
-
-    # output:
-    #   $? = 0 if "yes", 1 if "no"
-
-    ShowAsQuiz "$1"
-    read -rn1 response
-    DebugVar response
-    ShowAsQuizDone "$1: $response"
-
-    case ${response:0:1} in
-        y|Y)
-            return 0
-            ;;
-        *)
-            return 1
-            ;;
-    esac
 
     }
 
@@ -980,7 +886,7 @@ QPKGs.Install.Independents()
         [[ $NAS_QPKG_ARCH != none ]] && ($OPKG_CMD list-installed | $GREP_CMD -q par2cmdline) && $OPKG_CMD remove par2cmdline > /dev/null 2>&1
     fi
 
-    if QPKGs.Install.IsAny || QPKGs.Reinstall.IsAny || QPKGs.Upgrade.IsAny || User.Opts.Check.Dependencies.IsSet; then
+    if QPKGs.Install.IsAny || QPKGs.Reinstall.IsAny || QPKGs.Upgrade.IsAny || User.Opts.Dependencies.Check.IsSet; then
         if QPKG.Installed Entware; then
             PatchBaseInit
             Session.Ipkgs.Install.Set
@@ -995,219 +901,6 @@ QPKGs.Install.Independents()
 
     DebugFuncExit
     return 0
-
-    }
-
-PatchBaseInit()
-    {
-
-    local find_text=''
-    local insert_text=''
-    local package_init_pathfile=$(GetInstalledQPKGServicePathFile Entware)
-
-    if ($GREP_CMD -q 'opt.orig' "$package_init_pathfile"); then
-        DebugInfo 'patch: do the "opt shuffle" - already done'
-    else
-        find_text='/bin/rm -rf /opt'
-        insert_text='opt_path="/opt"; opt_backup_path="/opt.orig"; [ -d "$opt_path" ] \&\& [ ! -L "$opt_path" ] \&\& [ ! -e "$opt_backup_path" ] \&\& mv "$opt_path" "$opt_backup_path"'
-        $SED_CMD -i "s|$find_text|$insert_text\n$find_text|" "$package_init_pathfile"
-
-        find_text='/bin/ln -sf $QPKG_DIR /opt'
-        insert_text=$(echo -e "\t")'[ -L "$opt_path" ] \&\& [ -d "$opt_backup_path" ] \&\& cp "$opt_backup_path"/* --target-directory "$opt_path" \&\& rm -r "$opt_backup_path"'
-        $SED_CMD -i "s|$find_text|$find_text\n$insert_text\n|" "$package_init_pathfile"
-
-        DebugDone 'patch: do the "opt shuffle"'
-    fi
-
-    return 0
-
-    }
-
-UpdateEntware()
-    {
-
-    if IsNotSysFileExist $OPKG_CMD; then
-        code_pointer=3
-        return 1
-    fi
-
-    local package_minutes_threshold=60
-    local log_pathfile="$WORK_PATH/entware.$UPDATE_LOG_FILE"
-    local msgs=''
-    local result=0
-
-    # if Entware package list was updated only recently, don't run another update. Examine 'change' time as this is updated even if package list content isn't modified.
-    if [[ -e $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE && -e $GNU_FIND_CMD ]]; then
-        msgs=$($GNU_FIND_CMD "$EXTERNAL_PACKAGE_ARCHIVE_PATHFILE" -cmin +$package_minutes_threshold)        # no-output if last update was less than $package_minutes_threshold minutes ago
-    else
-        msgs='new install'
-    fi
-
-    if [[ -n $msgs ]]; then
-        ShowAsProc "updating $(FormatAsPackageName Entware) package list"
-
-        RunThisAndLogResults "$OPKG_CMD update" "$log_pathfile"
-        result=$?
-
-        if [[ $result -eq 0 ]]; then
-            ShowAsDone "updated $(FormatAsPackageName Entware) package list"
-        else
-            ShowAsWarning "Unable to update $(FormatAsPackageName Entware) package list $(FormatAsExitcode $result)"
-            DebugErrorFile "$log_pathfile"
-            # meh, continue anyway with old list ...
-        fi
-    else
-        DebugInfo "$(FormatAsPackageName Entware) package list was updated less than $package_minutes_threshold minutes ago"
-        ShowAsDone "$(FormatAsPackageName Entware) package list is current"
-    fi
-
-    return 0
-
-    }
-
-IPKGs.Install()
-    {
-
-    Session.Abort.IsSet && return
-    Session.Ipkgs.Install.IsNot && return
-
-    local packages="$SHERPA_COMMON_IPKGS"
-    local index=0
-
-    UpdateEntware
-    Session.Error.IsSet && return
-
-    if User.Opts.Apps.All.Install.IsSet; then
-        for index in "${!SHERPA_QPKG_NAME[@]}"; do
-            packages+=" ${SHERPA_QPKG_IPKGS[$index]}"
-        done
-    else
-        for index in "${!SHERPA_QPKG_NAME[@]}"; do
-            if QPKG.ToBeInstalled "${SHERPA_QPKG_NAME[$index]}" || QPKG.Installed "${SHERPA_QPKG_NAME[$index]}"; then
-                packages+=" ${SHERPA_QPKG_IPKGS[$index]}"
-            fi
-        done
-    fi
-
-    if QPKG.ToBeInstalled SABnzbd || QPKG.Installed SABnzbd || QPKG.Installed SABnzbdplus; then
-        [[ $NAS_QPKG_ARCH = none ]] && packages+=' par2cmdline'
-    fi
-
-    InstallIPKGBatch "$packages"
-
-    # in-case 'python' has disappeared again ...
-    [[ ! -L /opt/bin/python && -e /opt/bin/python3 ]] && $LN_CMD -s /opt/bin/python3 /opt/bin/python
-
-    return 0
-
-    }
-
-InstallIPKGBatch()
-    {
-
-    # input:
-    #   $1 = whitespace-separated string containing list of IPKG names to download and install
-
-    # output:
-    #   $? = 0 (true) or 1 (false)
-
-    DebugFuncEntry
-    local returncode=0
-    local requested_IPKGs=''
-    local log_pathfile="$IPKG_DL_PATH/ipkgs.$INSTALL_LOG_FILE"
-    local result=0
-
-    requested_IPKGs="$1"
-
-    # errors can occur due to incompatible IPKGs (tried installing Entware-3x, then Entware-ng), so delete them first
-    [[ -d $IPKG_DL_PATH ]] && rm -f "$IPKG_DL_PATH"/*.ipk
-    [[ -d $IPKG_CACHE_PATH ]] && rm -f "$IPKG_CACHE_PATH"/*.ipk
-
-    GetAllIPKGDepsToDownload "$requested_IPKGs" || return 1
-
-    if [[ $IPKG_download_count -gt 0 ]]; then
-        local -r STARTSECONDS=$(DebugTimerStageStart)
-        ShowAsProc "downloading & installing $IPKG_download_count IPKG$(FormatAsPlural "$IPKG_download_count")"
-
-        CreateDirSizeMonitorFlagFile
-            trap CTRL_C_Captured INT
-                _MonitorDirSize_ "$IPKG_DL_PATH" "$IPKG_download_size" &
-
-                RunThisAndLogResults "$OPKG_CMD install$ignore_space_arg --force-overwrite ${IPKG_download_list[*]} --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
-                result=$?
-            trap - INT
-        RemoveDirSizeMonitorFlagFile
-
-        if [[ $result -eq 0 ]]; then
-            ShowAsDone "downloaded & installed $IPKG_download_count IPKG$(FormatAsPlural "$IPKG_download_count")"
-            Session.Pips.Install.Set
-        else
-            ShowAsError "download & install IPKG$(FormatAsPlural "$IPKG_download_count") failed $(FormatAsExitcode $result)"
-            DebugErrorFile "$log_pathfile"
-            returncode=1
-        fi
-        DebugTimerStageEnd "$STARTSECONDS"
-    fi
-
-    DebugFuncExit
-    return $returncode
-
-    }
-
-PIP.Install()
-    {
-
-    Session.Abort.IsSet && return
-    Session.Pips.Install.IsNot && return
-
-    DebugFuncEntry
-    local exec_cmd=''
-    local result=0
-    local returncode=0
-    local packages=''
-    local desc="'Python 3' modules"
-    local log_pathfile="$WORK_PATH/py3-modules.$INSTALL_LOG_FILE"
-
-    # sometimes, OpenWRT doesn't have a 'pip3'
-    if [[ -e /opt/bin/pip3 ]]; then
-        pip3_cmd=/opt/bin/pip3
-    elif [[ -e /opt/bin/pip3.8 ]]; then
-        pip3_cmd=/opt/bin/pip3.8
-    elif [[ -e /opt/bin/pip3.7 ]]; then
-        pip3_cmd=/opt/bin/pip3.7
-    else
-        if IsNotSysFileExist $pip3_cmd; then
-            echo "* Ugh! The usual fix for this is to let $PROJECT_NAME reinstall $(FormatAsPackageName Entware) at least once."
-            echo -e "\t$0 ew"
-            echo "If it happens again after reinstalling $(FormatAsPackageName Entware), please create a new issue for this on GitHub."
-            return 1
-        fi
-    fi
-
-    [[ -n ${SHERPA_COMMON_PIPS// /} ]] && exec_cmd="$pip3_cmd install $SHERPA_COMMON_PIPS --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
-    [[ -n ${SHERPA_COMMON_PIPS// /} && -n ${packages// /} ]] && exec_cmd+=" && "
-    [[ -n ${packages// /} ]] && exec_cmd+="$pip3_cmd install $packages --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
-
-    # KLUDGE: force recompilation of 'sabyenc3' package so it's recognised by SABnzbd. See: https://forums.sabnzbd.org/viewtopic.php?p=121214#p121214
-    [[ $exec_cmd =~ sabyenc3 ]] && exec_cmd+=" && $pip3_cmd install --force-reinstall --ignore-installed --no-binary :all: sabyenc3 --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
-
-    [[ -z $exec_cmd ]] && return
-
-    ShowAsProcLong "downloading & installing $desc"
-
-    RunThisAndLogResults "$exec_cmd" "$log_pathfile"
-    result=$?
-
-    if [[ $result -eq 0 ]]; then
-        ShowAsDone "downloaded & installed $desc"
-    else
-        ShowAsError "download & install $desc failed $(FormatAsResult "$result")"
-        DebugErrorFile "$log_pathfile"
-        returncode=1
-    fi
-
-    DebugFuncExit
-    return $returncode
 
     }
 
@@ -1232,7 +925,7 @@ QPKGs.Dependant.Restart()
 
     }
 
-RestartNotUpgradedQPKGs()
+QPKGs.RestartNotUpgraded()
     {
 
     # restart all sherpa QPKGs except those that were just upgraded.
@@ -1249,21 +942,6 @@ RestartNotUpgradedQPKGs()
     done
 
     DebugFuncExit
-    return 0
-
-    }
-
-ReloadProfile()
-    {
-
-    local opkg_prefix=/opt/bin:/opt/sbin
-
-    if QPKG.Installed Entware; then
-        export PATH="$opkg_prefix:$($SED_CMD "s|$opkg_prefix||" <<< "$PATH")"
-        DebugDone 'adjusted $PATH for Entware'
-        DebugVar PATH
-    fi
-
     return 0
 
     }
@@ -1289,7 +967,7 @@ QPKGs.Install.Dependants()
                 [[ $package != Entware ]] && QPKG.Install "$package"     # KLUDGE: Entware has already been installed, don't do it again.
             done
         fi
-        RestartNotUpgradedQPKGs
+        QPKGs.RestartNotUpgraded
     else
         if [[ ${#QPKGs_to_install[*]} -gt 0 ]]; then
             for package in "${SHERPA_DEP_QPKGs[@]}"; do
@@ -1307,10 +985,16 @@ QPKGs.Install.Dependants()
             done
         fi
 
-        if [[ ${#QPKGs_to_upgrade[*]} -gt 0 ]]; then
+        if QPKGs.Upgrade.IsAny || QPKGs.ForceUpgrade.IsAny; then
             for package in "${SHERPA_DEP_QPKGs[@]}"; do
-                if [[ ${QPKGS_upgradable[*]} == *"$package"* ]]; then
+                if [[ ${QPKGs_to_force_upgrade[*]} == *"$package"* ]]; then
                     QPKG.Install "$package"
+                elif [[ ${QPKGs_to_upgrade[*]} == *"$package"* ]]; then
+                    if [[ ${QPKGS_upgradable[*]} == *"$package"* ]]; then
+                        QPKG.Install "$package"
+                    else
+                        ShowAsNote "unable to upgrade $(FormatAsPackageName "$package") as it's not upgradable"
+                    fi
                 fi
             done
         fi
@@ -1333,46 +1017,6 @@ QPKGs.Install.Dependants()
     fi
 
     DebugFuncExit
-    return 0
-
-    }
-
-CalcNASQPKGArch()
-    {
-
-    # Decide which package arch is suitable for this NAS. Only needed for Stephane's packages.
-    # creates a global constant: $NAS_QPKG_ARCH
-
-    case $($UNAME_CMD -m) in
-        x86_64)
-            [[ ${NAS_FIRMWARE//.} -ge 430 ]] && NAS_QPKG_ARCH=x64 || NAS_QPKG_ARCH=x86
-            ;;
-        i686|x86)
-            NAS_QPKG_ARCH=x86
-            ;;
-        armv7l)
-            case $($GETCFG_CMD '' Platform -f $PLATFORM_PATHFILE) in
-                ARM_MS)
-                    NAS_QPKG_ARCH=x31
-                    ;;
-                ARM_AL)
-                    NAS_QPKG_ARCH=x41
-                    ;;
-                *)
-                    NAS_QPKG_ARCH=none
-                    ;;
-            esac
-            ;;
-        aarch64)
-            NAS_QPKG_ARCH=a64
-            ;;
-        *)
-            NAS_QPKG_ARCH=none
-            ;;
-    esac
-
-    readonly NAS_QPKG_ARCH
-
     return 0
 
     }
@@ -1403,8 +1047,8 @@ QPKGs.Remove()
 
     local response=''
     local package=''
-    local previous_pip3_module_list=$SHARE_PUBLIC_PATH/pip3.prev.installed.list
-    local previous_opkg_package_list=$SHARE_PUBLIC_PATH/opkg.prev.installed.list
+    local previous_pip3_module_list=$WORK_PATH/pip3.prev.installed.list
+    local previous_opkg_package_list=$WORK_PATH/opkg.prev.installed.list
 
     local count="${#SHERPA_QPKG_NAME[@]}"
     local index=0
@@ -1557,187 +1201,261 @@ QPKGs.Installed.Build()
 
     }
 
-QPKG.Download()
+DisplayNewQPKGVersions()
     {
 
-    # input:
-    #   $1 = QPKG name to download
+    # Check installed sherpa packages and compare versions against package arrays. If new versions are available, advise on-screen.
 
-    # output:
-    #   $? = 0 if successful, 1 if failed
+    # $? = 0 if all packages are up-to-date
+    # $? = 1 if one or more packages can be upgraded
 
-    Session.Error.IsSet && return
+    local names=''
+    local msg=''
 
-    local result=0
-    local returncode=0
-    local remote_url=$(GetQPKGRemoteURL "$1")
-    local remote_filename="$($BASENAME_CMD "$remote_url")"
-    local remote_filename_md5="$(GetQPKGMD5 "$1")"
-    local local_pathfile="$QPKG_DL_PATH/$remote_filename"
-    local local_filename="$($BASENAME_CMD "$local_pathfile")"
-    local log_pathfile="$local_pathfile.$DOWNLOAD_LOG_FILE"
-
-    if [[ -e $local_pathfile ]]; then
-        if FileMatchesMD5 "$local_pathfile" "$remote_filename_md5"; then
-            DebugInfo "existing QPKG checksum correct $(FormatAsFileName "$local_filename")"
+    if [[ ${#QPKGS_upgradable[@]} -gt 0 ]]; then
+        if [[ ${#QPKGS_upgradable[@]} -eq 1 ]]; then
+            msg='An upgraded package is'
         else
-            DebugWarning "existing QPKG checksum incorrect $(FormatAsFileName "$local_filename")"
-            DebugInfo "deleting QPKG $(FormatAsFileName "$local_filename")"
-            rm -f "$local_pathfile"
-        fi
-    fi
-
-    if Session.Error.IsNot && [[ ! -e $local_pathfile ]]; then
-        ShowAsProc "downloading QPKG $(FormatAsFileName "$remote_filename")"
-
-        [[ -e $log_pathfile ]] && rm -f "$log_pathfile"
-
-        if Session.Debug.To.Screen.IsSet; then
-            RunThisAndLogResultsRealtime "$CURL_CMD $curl_insecure_arg --output $local_pathfile $remote_url" "$log_pathfile"
-            result=$?
-        else
-            RunThisAndLogResults "$CURL_CMD $curl_insecure_arg --output $local_pathfile $remote_url" "$log_pathfile"
-            result=$?
+            msg='Upgraded packages are'
         fi
 
-        if [[ $result -eq 0 ]]; then
-            if FileMatchesMD5 "$local_pathfile" "$remote_filename_md5"; then
-                ShowAsDone "downloaded QPKG $(FormatAsFileName "$remote_filename")"
-            else
-                ShowAsError "downloaded QPKG checksum incorrect $(FormatAsFileName "$local_pathfile")"
-                returncode=1
-            fi
-        else
-            ShowAsError "download failed $(FormatAsFileName "$local_pathfile") $(FormatAsExitcode $result)"
-            DebugErrorFile "$log_pathfile"
-            returncode=1
-        fi
-    fi
-
-    return $returncode
-
-    }
-
-QPKG.Install()
-    {
-
-    # $1 = QPKG name to install
-
-    Session.Error.IsSet && return
-    Session.Abort.IsSet && return
-
-    local target_file=''
-    local result=0
-    local returncode=0
-    local local_pathfile="$(GetQPKGPathFilename "$1")"
-    local re=''
-
-    if [[ ${local_pathfile##*.} = zip ]]; then
-        $UNZIP_CMD -nq "$local_pathfile" -d "$QPKG_DL_PATH"
-        local_pathfile="${local_pathfile%.*}"
-    fi
-
-    local log_pathfile="$local_pathfile.$INSTALL_LOG_FILE"
-    target_file=$($BASENAME_CMD "$local_pathfile")
-
-    QPKG.Installed "$1" && re='re-'
-
-    ShowAsProcLong "${re}installing QPKG $(FormatAsFileName "$target_file")"
-
-    sh "$local_pathfile" > "$log_pathfile" 2>&1
-    result=$?
-
-    if [[ $result -eq 0 || $result -eq 10 ]]; then
-        ShowAsDone "${re}installed QPKG $(FormatAsFileName "$target_file")"
-        GetQPKGServiceStatus "$1"
-    else
-        ShowAsError "QPKG ${re}installation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $result)"
-        DebugErrorFile "$log_pathfile"
-        returncode=1
-    fi
-
-    return $returncode
-
-    }
-
-QPKG.Uninstall()
-    {
-
-    # input:
-    #   $1 = QPKG name
-
-    # output:
-    #   $? = 0 if successful, 1 if failed
-
-    Session.Error.IsSet && return
-
-    local result=0
-
-    qpkg_installed_path="$($GETCFG_CMD "$1" Install_Path -f $APP_CENTER_CONFIG_PATHFILE)"
-    result=$?
-
-    if [[ $result -eq 0 ]]; then
-        if [[ -e $qpkg_installed_path/.uninstall.sh ]]; then
-            ShowAsProc "uninstalling $(FormatAsPackageName "$1")"
-
-            "$qpkg_installed_path"/.uninstall.sh > /dev/null
-            result=$?
-
-            if [[ $result -eq 0 ]]; then
-                ShowAsDone "uninstalled $(FormatAsPackageName "$1")"
-            else
-                ShowAsError "unable to uninstall $(FormatAsPackageName "$1") $(FormatAsExitcode $result)"
-                return 1
-            fi
-        fi
-
-        $RMCFG_CMD "$1" -f $APP_CENTER_CONFIG_PATHFILE
-    else
-        DebugQPKG "$(FormatAsPackageName "$1")" "not installed $(FormatAsExitcode $result)"
-    fi
-
-    return 0
-
-    }
-
-QPKG.Restart()
-    {
-
-    # Restarts the service script for the QPKG named in $1
-
-    # input:
-    #   $1 = QPKG name
-
-    # output:
-    #   $? = 0 if successful, 1 if failed
-
-    local result=0
-    local package_init_pathfile=$(GetInstalledQPKGServicePathFile "$1")
-    local log_pathfile=$WORK_PATH/$1.$RESTART_LOG_FILE
-
-    ShowAsProc "restarting $(FormatAsPackageName "$1")"
-
-    sh "$package_init_pathfile" restart > "$log_pathfile" 2>&1
-    result=$?
-
-    if [[ $result -eq 0 ]]; then
-        ShowAsDone "restarted $(FormatAsPackageName "$1")"
-        GetQPKGServiceStatus "$1"
-    else
-        ShowAsWarning "Could not restart $(FormatAsPackageName "$1") $(FormatAsExitcode $result)"
-
-        if Session.Debug.To.Screen.IsSet; then
-            DebugInfoThickSeparator
-            $CAT_CMD "$log_pathfile"
-            DebugInfoThickSeparator
-        else
-            $CAT_CMD "$log_pathfile" >> "$DEBUG_LOG_PATHFILE"
-        fi
-        # meh, continue anyway...
+        names=${QPKGS_upgradable[*]}
+        ShowAsNote "$msg available for $(ColourTextBrightYellow "${names// /, }")"
         return 1
     fi
 
     return 0
+
+    }
+
+PasteLogOnline()
+    {
+
+    # with thanks to https://github.com/solusipse/fiche
+
+    if [[ -n $DEBUG_LOG_PATHFILE && -e $DEBUG_LOG_PATHFILE ]]; then
+        if AskQuiz "Press 'Y' to post the most-recent $LOG_TAIL_LINES entries in your $(FormatAsScriptTitle) log to a public pastebin, or any other key to abort"; then
+            ShowAsProc "uploading $(FormatAsScriptTitle) log"
+            link=$($TAIL_CMD -n $LOG_TAIL_LINES -q "$DEBUG_LOG_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
+
+            if [[ $? -eq 0 ]]; then
+                ShowAsDone "your $(FormatAsScriptTitle) log is now online at $(FormatAsURL "$($SED_CMD 's|http://|http://l.|;s|https://|https://l.|' <<< "$link")") and will be deleted in 1 month"
+            else
+                ShowAsError "a link could not be generated. Most likely a problem occurred when talking with $(FormatAsURL 'https://termbin.com')"
+            fi
+        else
+            DebugInfoThinSeparator
+            DebugScript 'user abort'
+            Session.Abort.Set
+            Session.Summary.Clear
+            return 1
+        fi
+    else
+        ShowAsError 'no log to paste'
+    fi
+
+    return 0
+
+    }
+
+AskQuiz()
+    {
+
+    # input:
+    #   $1 = prompt
+
+    # output:
+    #   $? = 0 if "yes", 1 if "no"
+
+    ShowAsQuiz "$1"
+    read -rn1 response
+    DebugVar response
+    ShowAsQuizDone "$1: $response"
+
+    case ${response:0:1} in
+        y|Y)
+            return 0
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+
+    }
+
+PatchBaseInit()
+    {
+
+    local find_text=''
+    local insert_text=''
+    local package_init_pathfile=$(GetInstalledQPKGServicePathFile Entware)
+
+    if ($GREP_CMD -q 'opt.orig' "$package_init_pathfile"); then
+        DebugInfo 'patch: do the "opt shuffle" - already done'
+    else
+        find_text='/bin/rm -rf /opt'
+        insert_text='opt_path="/opt"; opt_backup_path="/opt.orig"; [ -d "$opt_path" ] \&\& [ ! -L "$opt_path" ] \&\& [ ! -e "$opt_backup_path" ] \&\& mv "$opt_path" "$opt_backup_path"'
+        $SED_CMD -i "s|$find_text|$insert_text\n$find_text|" "$package_init_pathfile"
+
+        find_text='/bin/ln -sf $QPKG_DIR /opt'
+        insert_text=$(echo -e "\t")'[ -L "$opt_path" ] \&\& [ -d "$opt_backup_path" ] \&\& cp "$opt_backup_path"/* --target-directory "$opt_path" \&\& rm -r "$opt_backup_path"'
+        $SED_CMD -i "s|$find_text|$find_text\n$insert_text\n|" "$package_init_pathfile"
+
+        DebugDone 'patch: do the "opt shuffle"'
+    fi
+
+    return 0
+
+    }
+
+UpdateEntware()
+    {
+
+    if IsNotSysFileExist $OPKG_CMD; then
+        code_pointer=3
+        return 1
+    fi
+
+    local package_minutes_threshold=60
+    local log_pathfile="$WORK_PATH/entware.$UPDATE_LOG_FILE"
+    local msgs=''
+    local result=0
+
+    # if Entware package list was updated only recently, don't run another update. Examine 'change' time as this is updated even if package list content isn't modified.
+    if [[ -e $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE && -e $GNU_FIND_CMD ]]; then
+        msgs=$($GNU_FIND_CMD "$EXTERNAL_PACKAGE_ARCHIVE_PATHFILE" -cmin +$package_minutes_threshold)        # no-output if last update was less than $package_minutes_threshold minutes ago
+    else
+        msgs='new install'
+    fi
+
+    if [[ -n $msgs ]]; then
+        ShowAsProc "updating $(FormatAsPackageName Entware) package list"
+
+        RunThisAndLogResults "$OPKG_CMD update" "$log_pathfile"
+        result=$?
+
+        if [[ $result -eq 0 ]]; then
+            ShowAsDone "updated $(FormatAsPackageName Entware) package list"
+        else
+            ShowAsWarning "Unable to update $(FormatAsPackageName Entware) package list $(FormatAsExitcode $result)"
+            DebugErrorFile "$log_pathfile"
+            # meh, continue anyway with old list ...
+        fi
+    else
+        DebugInfo "$(FormatAsPackageName Entware) package list was updated less than $package_minutes_threshold minutes ago"
+        ShowAsDone "$(FormatAsPackageName Entware) package list is current"
+    fi
+
+    return 0
+
+    }
+
+InstallIPKGBatch()
+    {
+
+    # input:
+    #   $1 = whitespace-separated string containing list of IPKG names to download and install
+
+    # output:
+    #   $? = 0 (true) or 1 (false)
+
+    DebugFuncEntry
+    local returncode=0
+    local requested_IPKGs=''
+    local log_pathfile="$IPKG_DL_PATH/ipkgs.$INSTALL_LOG_FILE"
+    local result=0
+
+    requested_IPKGs="$1"
+
+    # errors can occur due to incompatible IPKGs (tried installing Entware-3x, then Entware-ng), so delete them first
+    [[ -d $IPKG_DL_PATH ]] && rm -f "$IPKG_DL_PATH"/*.ipk
+    [[ -d $IPKG_CACHE_PATH ]] && rm -f "$IPKG_CACHE_PATH"/*.ipk
+
+    GetAllIPKGDepsToDownload "$requested_IPKGs" || return 1
+
+    if [[ $IPKG_download_count -gt 0 ]]; then
+        local -r STARTSECONDS=$(DebugTimerStageStart)
+        ShowAsProc "downloading & installing $IPKG_download_count IPKG$(FormatAsPlural "$IPKG_download_count")"
+
+        CreateDirSizeMonitorFlagFile
+            trap CTRL_C_Captured INT
+                _MonitorDirSize_ "$IPKG_DL_PATH" "$IPKG_download_size" &
+
+                RunThisAndLogResults "$OPKG_CMD install$ignore_space_arg --force-overwrite ${IPKG_download_list[*]} --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
+                result=$?
+            trap - INT
+        RemoveDirSizeMonitorFlagFile
+
+        if [[ $result -eq 0 ]]; then
+            ShowAsDone "downloaded & installed $IPKG_download_count IPKG$(FormatAsPlural "$IPKG_download_count")"
+            Session.Pips.Install.Set
+        else
+            ShowAsError "download & install IPKG$(FormatAsPlural "$IPKG_download_count") failed $(FormatAsExitcode $result)"
+            DebugErrorFile "$log_pathfile"
+            returncode=1
+        fi
+        DebugTimerStageEnd "$STARTSECONDS"
+    fi
+
+    DebugFuncExit
+    return $returncode
+
+    }
+
+PIP.Install()
+    {
+
+    Session.Abort.IsSet && return
+    Session.Pips.Install.IsNot && return
+
+    DebugFuncEntry
+    local exec_cmd=''
+    local result=0
+    local returncode=0
+    local packages=''
+    local desc="'Python 3' modules"
+    local log_pathfile="$WORK_PATH/py3-modules.$INSTALL_LOG_FILE"
+
+    # sometimes, OpenWRT doesn't have a 'pip3'
+    if [[ -e /opt/bin/pip3 ]]; then
+        pip3_cmd=/opt/bin/pip3
+    elif [[ -e /opt/bin/pip3.8 ]]; then
+        pip3_cmd=/opt/bin/pip3.8
+    elif [[ -e /opt/bin/pip3.7 ]]; then
+        pip3_cmd=/opt/bin/pip3.7
+    else
+        if IsNotSysFileExist $pip3_cmd; then
+            echo "* Ugh! The usual fix for this is to let $PROJECT_NAME reinstall $(FormatAsPackageName Entware) at least once."
+            echo -e "\t$0 ew"
+            echo "If it happens again after reinstalling $(FormatAsPackageName Entware), please create a new issue for this on GitHub."
+            return 1
+        fi
+    fi
+
+    [[ -n ${SHERPA_COMMON_PIPS// /} ]] && exec_cmd="$pip3_cmd install $SHERPA_COMMON_PIPS --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
+    [[ -n ${SHERPA_COMMON_PIPS// /} && -n ${packages// /} ]] && exec_cmd+=" && "
+    [[ -n ${packages// /} ]] && exec_cmd+="$pip3_cmd install $packages --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
+
+    # KLUDGE: force recompilation of 'sabyenc3' package so it's recognised by SABnzbd. See: https://forums.sabnzbd.org/viewtopic.php?p=121214#p121214
+    [[ $exec_cmd =~ sabyenc3 ]] && exec_cmd+=" && $pip3_cmd install --force-reinstall --ignore-installed --no-binary :all: sabyenc3 --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
+
+    [[ -z $exec_cmd ]] && return
+
+    ShowAsProcLong "downloading & installing $desc"
+
+    RunThisAndLogResults "$exec_cmd" "$log_pathfile"
+    result=$?
+
+    if [[ $result -eq 0 ]]; then
+        ShowAsDone "downloaded & installed $desc"
+    else
+        ShowAsError "download & install $desc failed $(FormatAsResult "$result")"
+        DebugErrorFile "$log_pathfile"
+        returncode=1
+    fi
+
+    DebugFuncExit
+    return $returncode
 
     }
 
@@ -1964,6 +1682,203 @@ GetQPKGDeps()
 
     }
 
+QPKG.Download()
+    {
+
+    # input:
+    #   $1 = QPKG name to download
+
+    # output:
+    #   $? = 0 if successful, 1 if failed
+
+    Session.Error.IsSet && return
+
+    local result=0
+    local returncode=0
+    local remote_url=$(GetQPKGRemoteURL "$1")
+    local remote_filename="$($BASENAME_CMD "$remote_url")"
+    local remote_filename_md5="$(GetQPKGMD5 "$1")"
+    local local_pathfile="$QPKG_DL_PATH/$remote_filename"
+    local local_filename="$($BASENAME_CMD "$local_pathfile")"
+    local log_pathfile="$local_pathfile.$DOWNLOAD_LOG_FILE"
+
+    if [[ -e $local_pathfile ]]; then
+        if FileMatchesMD5 "$local_pathfile" "$remote_filename_md5"; then
+            DebugInfo "existing QPKG checksum correct $(FormatAsFileName "$local_filename")"
+        else
+            DebugWarning "existing QPKG checksum incorrect $(FormatAsFileName "$local_filename")"
+            DebugInfo "deleting QPKG $(FormatAsFileName "$local_filename")"
+            rm -f "$local_pathfile"
+        fi
+    fi
+
+    if Session.Error.IsNot && [[ ! -e $local_pathfile ]]; then
+        ShowAsProc "downloading QPKG $(FormatAsFileName "$remote_filename")"
+
+        [[ -e $log_pathfile ]] && rm -f "$log_pathfile"
+
+        if Session.Debug.To.Screen.IsSet; then
+            RunThisAndLogResultsRealtime "$CURL_CMD $curl_insecure_arg --output $local_pathfile $remote_url" "$log_pathfile"
+            result=$?
+        else
+            RunThisAndLogResults "$CURL_CMD $curl_insecure_arg --output $local_pathfile $remote_url" "$log_pathfile"
+            result=$?
+        fi
+
+        if [[ $result -eq 0 ]]; then
+            if FileMatchesMD5 "$local_pathfile" "$remote_filename_md5"; then
+                ShowAsDone "downloaded QPKG $(FormatAsFileName "$remote_filename")"
+            else
+                ShowAsError "downloaded QPKG checksum incorrect $(FormatAsFileName "$local_pathfile")"
+                returncode=1
+            fi
+        else
+            ShowAsError "download failed $(FormatAsFileName "$local_pathfile") $(FormatAsExitcode $result)"
+            DebugErrorFile "$log_pathfile"
+            returncode=1
+        fi
+    fi
+
+    return $returncode
+
+    }
+
+QPKG.Install()
+    {
+
+    # $1 = QPKG name to install
+
+    Session.Error.IsSet && return
+    Session.Abort.IsSet && return
+
+    local target_file=''
+    local result=0
+    local returncode=0
+    local local_pathfile="$(GetQPKGPathFilename "$1")"
+    local re=''
+
+    if [[ ${local_pathfile##*.} = zip ]]; then
+        $UNZIP_CMD -nq "$local_pathfile" -d "$QPKG_DL_PATH"
+        local_pathfile="${local_pathfile%.*}"
+    fi
+
+    local log_pathfile="$local_pathfile.$INSTALL_LOG_FILE"
+    target_file=$($BASENAME_CMD "$local_pathfile")
+
+    QPKG.Installed "$1" && re='re-'
+
+    ShowAsProcLong "${re}installing QPKG $(FormatAsFileName "$target_file")"
+
+    sh "$local_pathfile" > "$log_pathfile" 2>&1
+    result=$?
+
+    if [[ $result -eq 0 || $result -eq 10 ]]; then
+        ShowAsDone "${re}installed QPKG $(FormatAsFileName "$target_file")"
+        GetQPKGServiceStatus "$1"
+    else
+        ShowAsError "QPKG ${re}installation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $result)"
+        DebugErrorFile "$log_pathfile"
+        returncode=1
+    fi
+
+    return $returncode
+
+    }
+
+QPKG.Uninstall()
+    {
+
+    # input:
+    #   $1 = QPKG name
+
+    # output:
+    #   $? = 0 if successful, 1 if failed
+
+    Session.Error.IsSet && return
+
+    local result=0
+
+    qpkg_installed_path="$($GETCFG_CMD "$1" Install_Path -f $APP_CENTER_CONFIG_PATHFILE)"
+    result=$?
+
+    if [[ $result -eq 0 ]]; then
+        if [[ -e $qpkg_installed_path/.uninstall.sh ]]; then
+            ShowAsProc "uninstalling $(FormatAsPackageName "$1")"
+
+            "$qpkg_installed_path"/.uninstall.sh > /dev/null
+            result=$?
+
+            if [[ $result -eq 0 ]]; then
+                ShowAsDone "uninstalled $(FormatAsPackageName "$1")"
+            else
+                ShowAsError "unable to uninstall $(FormatAsPackageName "$1") $(FormatAsExitcode $result)"
+                return 1
+            fi
+        fi
+
+        $RMCFG_CMD "$1" -f $APP_CENTER_CONFIG_PATHFILE
+    else
+        DebugQPKG "$(FormatAsPackageName "$1")" "not installed $(FormatAsExitcode $result)"
+    fi
+
+    return 0
+
+    }
+
+QPKG.Restart()
+    {
+
+    # Restarts the service script for the QPKG named in $1
+
+    # input:
+    #   $1 = QPKG name
+
+    # output:
+    #   $? = 0 if successful, 1 if failed
+
+    local result=0
+    local package_init_pathfile=$(GetInstalledQPKGServicePathFile "$1")
+    local log_pathfile=$WORK_PATH/$1.$RESTART_LOG_FILE
+
+    ShowAsProc "restarting $(FormatAsPackageName "$1")"
+
+    sh "$package_init_pathfile" restart > "$log_pathfile" 2>&1
+    result=$?
+
+    if [[ $result -eq 0 ]]; then
+        ShowAsDone "restarted $(FormatAsPackageName "$1")"
+        GetQPKGServiceStatus "$1"
+    else
+        ShowAsWarning "Could not restart $(FormatAsPackageName "$1") $(FormatAsExitcode $result)"
+
+        if Session.Debug.To.Screen.IsSet; then
+            DebugInfoThickSeparator
+            $CAT_CMD "$log_pathfile"
+            DebugInfoThickSeparator
+        else
+            $CAT_CMD "$log_pathfile" >> "$DEBUG_LOG_PATHFILE"
+        fi
+        # meh, continue anyway...
+        return 1
+    fi
+
+    return 0
+
+    }
+
+QPKG.Enable()
+    {
+
+    # $1 = package name to enable
+
+    if QPKG.NotEnabled "$1"; then
+        DebugProc "enabling QPKG icon"
+        $SETCFG_CMD "$1" Enable TRUE -f $APP_CENTER_CONFIG_PATHFILE
+        DebugDone "$(FormatAsPackageName "$1") icon enabled"
+    fi
+
+    }
+
 GetTheseQPKGDeps()
     {
 
@@ -2157,6 +2072,98 @@ GetAllIPKGDepsToDownload()
 
     }
 
+CalcNASQPKGArch()
+    {
+
+    # Decide which package arch is suitable for this NAS. Only needed for Stephane's packages.
+    # creates a global constant: $NAS_QPKG_ARCH
+
+    case $($UNAME_CMD -m) in
+        x86_64)
+            [[ ${NAS_FIRMWARE//.} -ge 430 ]] && NAS_QPKG_ARCH=x64 || NAS_QPKG_ARCH=x86
+            ;;
+        i686|x86)
+            NAS_QPKG_ARCH=x86
+            ;;
+        armv7l)
+            case $($GETCFG_CMD '' Platform -f $PLATFORM_PATHFILE) in
+                ARM_MS)
+                    NAS_QPKG_ARCH=x31
+                    ;;
+                ARM_AL)
+                    NAS_QPKG_ARCH=x41
+                    ;;
+                *)
+                    NAS_QPKG_ARCH=none
+                    ;;
+            esac
+            ;;
+        aarch64)
+            NAS_QPKG_ARCH=a64
+            ;;
+        *)
+            NAS_QPKG_ARCH=none
+            ;;
+    esac
+
+    readonly NAS_QPKG_ARCH
+
+    return 0
+
+    }
+
+ReloadProfile()
+    {
+
+    local opkg_prefix=/opt/bin:/opt/sbin
+
+    if QPKG.Installed Entware; then
+        export PATH="$opkg_prefix:$($SED_CMD "s|$opkg_prefix||" <<< "$PATH")"
+        DebugDone 'adjusted $PATH for Entware'
+        DebugVar PATH
+    fi
+
+    return 0
+
+    }
+
+IPKGs.Install()
+    {
+
+    Session.Abort.IsSet && return
+    Session.Ipkgs.Install.IsNot && return
+
+    local packages="$SHERPA_COMMON_IPKGS"
+    local index=0
+
+    UpdateEntware
+    Session.Error.IsSet && return
+
+    if User.Opts.Apps.All.Install.IsSet; then
+        for index in "${!SHERPA_QPKG_NAME[@]}"; do
+            packages+=" ${SHERPA_QPKG_IPKGS[$index]}"
+        done
+    else
+        for index in "${!SHERPA_QPKG_NAME[@]}"; do
+            if QPKG.ToBeInstalled "${SHERPA_QPKG_NAME[$index]}" || QPKG.Installed "${SHERPA_QPKG_NAME[$index]}"; then
+                packages+=" ${SHERPA_QPKG_IPKGS[$index]}"
+            fi
+        done
+    fi
+
+    if QPKG.ToBeInstalled SABnzbd || QPKG.Installed SABnzbd || QPKG.Installed SABnzbdplus; then
+        [[ $NAS_QPKG_ARCH = none ]] && packages+=' par2cmdline'
+    fi
+
+    InstallIPKGBatch "$packages"
+
+    # in-case 'python' has disappeared again ...
+    [[ ! -L /opt/bin/python && -e /opt/bin/python3 ]] && $LN_CMD -s /opt/bin/python3 /opt/bin/python
+
+    return 0
+
+    }
+
 IPKGs.Archive.Open()
     {
 
@@ -2258,19 +2265,6 @@ RemoveDirSizeMonitorFlagFile()
     if [[ -n $monitor_flag_pathfile && -e $monitor_flag_pathfile ]]; then
         rm -f "$monitor_flag_pathfile"
         $SLEEP_CMD 2
-    fi
-
-    }
-
-QPKG.Enable()
-    {
-
-    # $1 = package name to enable
-
-    if QPKG.NotEnabled "$1"; then
-        DebugProc "enabling QPKG icon"
-        $SETCFG_CMD "$1" Enable TRUE -f $APP_CENTER_CONFIG_PATHFILE
-        DebugDone "$(FormatAsPackageName "$1") icon enabled"
     fi
 
     }
@@ -2486,7 +2480,7 @@ CR()
 
     # reset cursor to start-of-line, erasing previous characters
 
-    echo -en "\033[2K\r"
+    echo -en "\033[1K\r"
 
     }
 
@@ -2519,8 +2513,11 @@ Help.Basic.Example.Show()
     {
 
     DisplayAsIndentedHelpExample "to learn more about available $(FormatAsHelpActions), type" '--actions'
+
     DisplayAsIndentedHelpExample '' '--actions-all'
+
     DisplayAsIndentedHelpExample "to learn more about available $(FormatAsHelpPackages), type" '--packages'
+
     DisplayAsIndentedHelpExample "or, for more about available $(FormatAsHelpOptions), type" '--options'
 
     return 0
@@ -2991,6 +2988,36 @@ QPKGs.Upgrade.IsNone()
 
     }
 
+QPKGs.ForceUpgrade.Add()
+    {
+
+    [[ ${QPKGs_to_force_upgrade[*]} != *"$1"* ]] && QPKGs_to_force_upgrade+=("$1")
+
+    return 0
+
+    }
+
+QPKGs.ForceUpgrade.Count()
+    {
+
+    echo "${#QPKGs_to_force_upgrade[@]}"
+
+    }
+
+QPKGs.ForceUpgrade.IsAny()
+    {
+
+    [[ ${#QPKGs_to_force_upgrade[@]} -gt 0 ]]
+
+    }
+
+QPKGs.ForceUpgrade.IsNone()
+    {
+
+    [[ ${#QPKGs_to_force_upgrade[@]} -eq 0 ]]
+
+    }
+
 QPKGs.Upgradable.Build()
     {
 
@@ -3131,7 +3158,7 @@ Session.Summary.Show()
         fi
     fi
 
-    if User.Opts.Check.Dependencies.IsSet; then
+    if User.Opts.Dependencies.Check.IsSet; then
         if Session.Error.IsNot; then
             ShowAsDone "all application dependencies are installed"
         else
@@ -3585,7 +3612,6 @@ DisplayLineSpaceAndSet()
 
     if Session.LineSpace.IsNot && Session.Debug.To.Screen.IsNot && Session.Display.Clean.IsNot; then
         Display
-        Session.LineSpace.Set
     fi
 
     }
@@ -4254,5 +4280,5 @@ QPKGs.Download
 QPKGs.Remove
 QPKGs.Install.Independents
 QPKGs.Install.Dependants
-Session.Show.Results
+Session.Results
 Session.Error.IsNot
