@@ -449,73 +449,59 @@ Session.ParseArguments()
             -h|h|--help|help)
                 User.Opts.Help.Show.Basic.Set
                 Session.Abort.Set
-                return 1
                 ;;
             -p|p|--problems|problems|--problem|problem)
                 User.Opts.Help.Show.Problems.Set
                 Session.Abort.Set
-                return 1
                 ;;
             -t|t|--tips|tips)
                 User.Opts.Help.Show.Tips.Set
                 Session.Abort.Set
-                return 1
                 ;;
             -l|l|--log|log)
                 User.Opts.Log.View.Set
                 Session.Abort.Set
-                return 1
                 ;;
             --list-installed|list-installed)
                 User.Opts.Apps.List.Installed.Set
                 Session.Display.Clean.Set
-                return 1
                 ;;
             --list-not-installed|list-not-installed)
                 User.Opts.Apps.List.NotInstalled.Set
                 Session.Display.Clean.Set
-                return 1
                 ;;
             --list|list)
                 User.Opts.Apps.All.List.Set
                 Session.Display.Clean.Set
-                return 1
                 ;;
             --paste|paste)
                 User.Opts.Log.Paste.Set
                 Session.Abort.Set
-                return 1
                 ;;
             --abs|abs)
                 User.Opts.Help.Show.Abbreviations.Set
                 Session.Abort.Set
-                return 1
                 ;;
             -a|a|--action|action|--actions|actions)
                 User.Opts.Help.Show.Actions.Set
                 Session.Abort.Set
-                return 1
                 ;;
             --action-all|action-all|--actions-all|actions-all)
                 User.Opts.Help.Show.ActionsAll.Set
                 Session.Abort.Set
-                return 1
                 ;;
             --package|package|--packages|packages)
                 User.Opts.Help.Show.Packages.Set
                 Session.Abort.Set
-                return 1
                 ;;
             -o|o|--option|option|--options|options)
                 User.Opts.Help.Show.Options.Set
                 Session.Abort.Set
-                return 1
                 ;;
             -v|v|--version|version)
                 User.Opts.Versions.View.Set
                 Session.Display.Clean.Set
                 Session.Abort.Set
-                return 1
                 ;;
             -c|c|--check|check|--check-all|check-all)
                 User.Opts.Check.Dependencies.Set
@@ -523,7 +509,6 @@ Session.ParseArguments()
                 ;;
             --install-all|install-all)
                 User.Opts.Apps.All.Install.Set
-                return 1
                 ;;
             --uninstall-all-applications-please|uninstall-all-applications-please)
                 User.Opts.Apps.All.Uninstall.Set
@@ -536,15 +521,12 @@ Session.ParseArguments()
                 ;;
             --backup-all)
                 User.Opts.Apps.All.Backup.Set
-                return 1
                 ;;
             --restore-all)
                 User.Opts.Apps.All.Restore.Set
-                return 1
                 ;;
             --status-all|status-all)
                 User.Opts.Apps.All.Status.Set
-                return 1
                 ;;
             --install|install)
                 current_operation=install_
