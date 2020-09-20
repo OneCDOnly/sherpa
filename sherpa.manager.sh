@@ -40,6 +40,7 @@ Session.Init()
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
+    readonly BUSYBOX_CMD=/bin/busybox
     readonly CAT_CMD=/bin/cat
     readonly CHMOD_CMD=/bin/chmod
     readonly DATE_CMD=/bin/date
@@ -69,6 +70,7 @@ Session.Init()
     readonly HEAD_CMD=/usr/bin/head
     readonly READLINK_CMD=/usr/bin/readlink
     readonly SORT_CMD=/usr/bin/sort
+    [[ ! -e $SORT_CMD ]] && $LN_CMD -s "$BUSYBOX_CMD" "$SORT_CMD"   # sometimes, 'sort' goes missing from QTS. Don't know why.
     readonly TAIL_CMD=/usr/bin/tail
     readonly TEE_CMD=/usr/bin/tee
     readonly UNZIP_CMD=/usr/bin/unzip
