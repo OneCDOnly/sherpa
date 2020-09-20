@@ -87,11 +87,11 @@ Session.Init()
 
     # paths and files
     readonly PROJECT_NAME=sherpa
-    readonly PACKAGE_VERSION=$(GetInstalledQPKGVersion $PROJECT_NAME)
     local -r LOADER_SCRIPT_FILE=$PROJECT_NAME.loader.sh
     readonly MANAGER_SCRIPT_FILE=$PROJECT_NAME.manager.sh
     local -r DEBUG_LOG_FILE=$PROJECT_NAME.debug.log
     readonly APP_CENTER_CONFIG_PATHFILE=/etc/config/qpkg.conf
+    readonly PACKAGE_VERSION=$(GetInstalledQPKGVersion "$PROJECT_NAME")
     readonly INSTALL_LOG_FILE=install.log
     readonly DOWNLOAD_LOG_FILE=download.log
     readonly START_LOG_FILE=start.log
