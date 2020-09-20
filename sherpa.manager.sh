@@ -991,6 +991,8 @@ QPKGs.Install.Dependants()
             done
         fi
 
+        QPKGs.Upgradable.Build
+
         if QPKGs.Upgrade.IsAny || QPKGs.ForceUpgrade.IsAny; then
             for package in "${SHERPA_DEP_QPKGs[@]}"; do
                 if [[ ${QPKGs_to_force_upgrade[*]} == *"$package"* ]]; then
