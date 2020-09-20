@@ -2447,7 +2447,7 @@ Display()
     {
 
     echo -e "$1"
-    Session.LineSpace.Clear
+    [[ $(type -t Session.LineSpace.Index) = 'function' ]] && Session.LineSpace.Clear
 
     }
 
@@ -3081,8 +3081,7 @@ QPKGs.Download.IsNone()
 Session.Error.Set()
     {
 
-    Session.Abort.Set
-
+    [[ $(type -t Session.Abort.Index) = 'function' ]] && Session.Abort.Set
     Session.Error.IsSet && return
 
     _script_error_flag=true
@@ -3801,7 +3800,7 @@ DebugVar()
 DebugThis()
     {
 
-    Session.Debug.To.Screen.IsSet && ShowAsDebug "$1"
+    [[ $(type -t Session.Debug.To.Screen.Index) = 'function' ]] && Session.Debug.To.Screen.IsSet && ShowAsDebug "$1"
     WriteAsDebug "$1"
 
     }
