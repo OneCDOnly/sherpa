@@ -100,6 +100,7 @@ Session.Init()
     readonly STOP_LOG_FILE=stop.log
     readonly RESTART_LOG_FILE=restart.log
     readonly UPDATE_LOG_FILE=update.log
+    readonly UPGRADE_LOG_FILE=upgrade.log
     readonly DEFAULT_SHARES_PATHFILE=/etc/config/def_share.info
     local -r ULINUX_PATHFILE=/etc/config/uLinux.conf
     readonly PLATFORM_PATHFILE=/etc/platform.conf
@@ -709,7 +710,7 @@ Session.Validate()
         QPKGs_initial_array+=($(QPKGs.Installed.Array))
         Session.Pips.Install.Set
     else
-        QPKGs_initial_array+=(${QPKGs_to_install[*]} ${QPKGs_to_reinstall[*]} ${QPKGs_to_upgrade[*]})
+        QPKGs_initial_array+=(${QPKGs_to_install[*]} ${QPKGs_to_reinstall[*]} ${QPKGs_to_upgrade[*]} ${QPKGs_to_force_upgrade[*]})
     fi
 
     GetTheseQPKGDeps "${QPKGs_initial_array[*]}"
@@ -730,7 +731,7 @@ Session.Validate()
         done
     fi
 
-    if QPKGs.Install.IsNone && QPKGs.Uninstall.IsNone && QPKGs.Reinstall.IsNone && QPKGs.Restart.IsNone && QPKGs.Upgrade.IsNone && [[ ${#QPKGs_to_backup[@]} -eq 0 && ${#QPKGs_to_restore[@]} -eq 0 && ${#QPKGs_to_status[@]} -eq 0 ]]; then
+    if QPKGs.Install.IsNone && QPKGs.Uninstall.IsNone && QPKGs.Reinstall.IsNone && QPKGs.Restart.IsNone && QPKGs.Upgrade.IsNone && QPKGs.ForceUpgrade.IsNone && [[ ${#QPKGs_to_backup[@]} -eq 0 && ${#QPKGs_to_restore[@]} -eq 0 && ${#QPKGs_to_status[@]} -eq 0 ]]; then
         if User.Opts.Apps.All.Install.IsNot && User.Opts.Apps.All.Uninstall.IsNot && User.Opts.Apps.All.Restart.IsNot && User.Opts.Apps.All.Upgrade.IsNot && User.Opts.Apps.All.Backup.IsNot && User.Opts.Apps.All.Restore.IsNot; then
             if User.Opts.Apps.All.Status.IsNot && User.Opts.Dependencies.Check.IsNot && User.Opts.Apps.List.Installed.IsNot; then
                 ShowAsError 'nothing to do'
@@ -796,6 +797,7 @@ Session.Validate()
     DebugScript 'reinstall' "${QPKGs_to_reinstall[*]} "
     DebugScript 'restart' "${QPKGs_to_restart[*]} "
     DebugScript 'upgrade' "${QPKGs_to_upgrade[*]} "
+    DebugScript 'forced-upgrade' "${QPKGs_to_force_upgrade[*]} "
     DebugScript 'backup' "${QPKGs_to_backup[*]} "
     DebugScript 'restore' "${QPKGs_to_restore[*]} "
     DebugScript 'status' "${QPKGs_to_status[*]} "
@@ -992,10 +994,10 @@ QPKGs.Install.Dependants()
         if QPKGs.Upgrade.IsAny || QPKGs.ForceUpgrade.IsAny; then
             for package in "${SHERPA_DEP_QPKGs[@]}"; do
                 if [[ ${QPKGs_to_force_upgrade[*]} == *"$package"* ]]; then
-                    QPKG.Install "$package"
+                    QPKG.Upgrade "$package" --forced
                 elif [[ ${QPKGs_to_upgrade[*]} == *"$package"* ]]; then
                     if [[ ${QPKGS_upgradable[*]} == *"$package"* ]]; then
-                        QPKG.Install "$package"
+                        QPKG.Upgrade "$package"
                     else
                         ShowAsNote "unable to upgrade $(FormatAsPackageName "$package") as it's not upgradable"
                     fi
@@ -1806,6 +1808,54 @@ QPKG.Install()
 
     }
 
+QPKG.Upgrade()
+    {
+
+    # $1 = QPKG name to upgrade
+
+    Session.Error.IsSet && return
+    Session.Abort.IsSet && return
+
+    if [[ -z $1 ]]; then
+        DebugError "no package name specified "
+        code_pointer=8
+        return 1
+    fi
+
+    local prefix=''
+    local target_file=''
+    local result=0
+    local returncode=0
+    local local_pathfile="$(GetQPKGPathFilename "$1")"
+
+    [[ -n $2 && $2 = '--forced' ]] && prefix='force-'
+
+    if [[ ${local_pathfile##*.} = zip ]]; then
+        $UNZIP_CMD -nq "$local_pathfile" -d "$QPKG_DL_PATH"
+        local_pathfile="${local_pathfile%.*}"
+    fi
+
+    local log_pathfile="$local_pathfile.$UPGRADE_LOG_FILE"
+    target_file=$($BASENAME_CMD "$local_pathfile")
+
+    ShowAsProcLong "${prefix}upgrading QPKG $(FormatAsFileName "$target_file")"
+
+    sh "$local_pathfile" > "$log_pathfile" 2>&1
+    result=$?
+
+    if [[ $result -eq 0 || $result -eq 10 ]]; then
+        ShowAsDone "${prefix}upgraded QPKG $(FormatAsFileName "$target_file")"
+        GetQPKGServiceStatus "$1"
+    else
+        ShowAsError "QPKG ${prefix}upgrade failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $result)"
+        DebugErrorFile "$log_pathfile"
+        returncode=1
+    fi
+
+    return $returncode
+
+    }
+
 QPKG.Uninstall()
     {
 
@@ -2006,6 +2056,8 @@ ExcludeInstalledQPKGs()
         elif [[ ${#QPKGs_to_reinstall[@]} -gt 0 && ${QPKGs_to_reinstall[*]} == *"$element"* ]]; then
             QPKGs_download_array+=($element)
         elif [[ ${#QPKGS_upgradable[@]} -gt 0 && ${QPKGS_upgradable[*]} == *"$element"* ]]; then
+            QPKGs_download_array+=($element)
+        elif [[ ${#QPKGs_to_force_upgrade[@]} -gt 0 && ${QPKGs_to_force_upgrade[*]} == *"$element"* ]]; then
             QPKGs_download_array+=($element)
         fi
     done
