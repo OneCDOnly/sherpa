@@ -148,9 +148,13 @@ Session.Init()
 
     # create some shiny new virtual objects!
 
+    # TODO use a "building virtual objects" display as the first line, which is then overwritten by title line. Building objects is slow. :(
+    # echo -n "building virtual objects ... "
+
     # user-selected options
     Objects.Create User.Opts.Help.Show.Abbreviations
     Objects.Create User.Opts.Help.Show.Actions
+    Objects.Create User.Opts.Help.Show.ActionsAll
     Objects.Create User.Opts.Help.Show.Basic
     Objects.Create User.Opts.Help.Show.Options
     Objects.Create User.Opts.Help.Show.Packages
@@ -184,6 +188,8 @@ Session.Init()
     Objects.Create Session.Pips.Install
     Objects.Create Session.SuggestIssue
     Objects.Create Session.Summary
+
+    # echo "done."
 
     Session.Summary.Set
     Session.Debugging.Visible.Description = "Display on-screen live debugging information."
@@ -485,6 +491,11 @@ Session.ParseArguments()
                 ;;
             -a|a|--action|action|--actions|actions)
                 User.Opts.Help.Show.Actions.Set
+                Session.Abort.Set
+                return 1
+                ;;
+            --action-all|action-all|--actions-all|actions-all)
+                User.Opts.Help.Show.ActionsAll.Set
                 Session.Abort.Set
                 return 1
                 ;;
@@ -845,6 +856,7 @@ Session.Result.Show()
     fi
 
     User.Opts.Help.Show.Actions.IsSet && Help.Actions.Show
+    User.Opts.Help.Show.ActionsAll.IsSet && Help.ActionsAll.Show
     User.Opts.Help.Show.Packages.IsSet && Help.Packages.Show
     User.Opts.Help.Show.Options.IsSet && Help.Options.Show
     User.Opts.Help.Show.Problems.IsSet && Help.Problems.Show
@@ -1422,7 +1434,7 @@ QPKGs.Remove()
         fi
     done
 
-    # TOFIX: still need something here to remove independent packages if they're in the $QPKGs_to_uninstall array
+    # TODO: still need something here to remove independent packages if they're in the $QPKGs_to_uninstall array
 
     if QPKG.ToBeReinstalled Entware; then
         ShowAsNote "Reinstalling $(FormatAsPackageName Entware) will remove all IPKGs and Python modules, and only those required to support your $PROJECT_NAME apps will be reinstalled."
@@ -2526,39 +2538,56 @@ Help.Actions.Show()
 
     DisplayAsIndentedHelpExample 'install the following packages' "--install $(FormatAsHelpPackages)"
 
-    DisplayAsIndentedHelpExample 'install everything!' '--install-all'
+    DisplayAsIndentedHelpExample 'uninstall the following packages' "--uninstall $(FormatAsHelpPackages)"
 
     DisplayAsIndentedHelpExample 'reinstall the following packages' "--reinstall $(FormatAsHelpPackages)"
 
     DisplayAsIndentedHelpExample 'upgrade the following packages' "--upgrade $(FormatAsHelpPackages) $(FormatAsHelpOptions)"
 
-    DisplayAsIndentedHelpExample 'upgrade all installed packages (including the internal applications)' '--upgrade-all'
-
     DisplayAsIndentedHelpExample 'upgrade the following packages and the internal applications' "--restart $(FormatAsHelpPackages)"
+
+#   DisplayAsIndentedHelpExample '--backup'
+#
+#   DisplayAsIndentedHelpExample '--restore'
+#
+#   DisplayAsIndentedHelpExample '--status'
+
+    DisplayAsHelpExample 'actions affecting all packages can be seen with' '--actions-all'
+
+    DisplayAsHelpExample 'multiple actions are supported like this' '--install sabnzbd sickchill --uninstall lazy nzbget --upgrade nzbtomedia --restart transmission'
+
+    return 0
+
+    }
+
+Help.ActionsAll.Show()
+    {
+
+    Help.Basic.Show
+
+    DisplayAsTitleHelpAction
+
+    DisplayAsIndentedHelpExample 'install everything!' '--install-all'
+
+    DisplayAsIndentedHelpExample "uninstall everything! (except $(FormatAsPackageName Par2) and $(FormatAsPackageName Entware) for now)" '--uninstall-all-packages-please'
+
+    DisplayAsIndentedHelpExample 'upgrade all installed packages (including the internal applications)' '--upgrade-all'
 
     DisplayAsIndentedHelpExample 'restart all packages (only upgrades the internal applications, not the packages)' '--restart-all'
 
-    DisplayAsIndentedHelpExample 'uninstall the following packages' "--uninstall $(FormatAsHelpPackages)"
+    DisplayAsIndentedHelpExample 'ensure all application dependencies are installed' '--check-all'
 
-    DisplayAsIndentedHelpExample "uninstall everything! (except $(FormatAsPackageName Par2) and $(FormatAsPackageName Entware) for now)" '--uninstall-all-packages-please'
+    DisplayAsIndentedHelpExample 'list all installable packages' '--list'
 
     DisplayAsIndentedHelpExample 'list all installed packages' '--list-installed'
 
     DisplayAsIndentedHelpExample 'list all packages that are not installed' '--list-not-installed'
 
-    DisplayAsIndentedHelpExample 'list all installable packages' '--list'
-
-    DisplayAsIndentedHelpExample 'ensure all application dependencies are installed' '--check-all'
-
-#     DisplayAsIndentedHelpExample '--backup'
-
-#     DisplayAsIndentedHelpExample '--restore'
-
-#     DisplayAsIndentedHelpExample '--status'
-
-#     DisplayAsIndentedHelpExample '--status-all'
-
-    DisplayAsHelpExample 'multiple actions are supported like this' '--install sabnzbd sickchill --uninstall lazy nzbget --upgrade nzbtomedia --restart transmission'
+#   DisplayAsIndentedHelpExample '--backup-all'
+#
+#   DisplayAsIndentedHelpExample '--restore-all'
+#
+#   DisplayAsIndentedHelpExample '--status-all'
 
     return 0
 
@@ -3556,11 +3585,9 @@ FormatAsResultAndStdout()
 DisplayLineSpaceAndSet()
     {
 
-    if Session.LineSpace.IsNot; then
-        if Session.Debugging.Visible.IsNot && Session.Display.Clean.IsNot; then
-            Display
-            Session.LineSpace.Set
-        fi
+    if Session.LineSpace.IsNot && Session.Debugging.Visible.IsNot && Session.Display.Clean.IsNot; then
+        Display
+        Session.LineSpace.Set
     fi
 
     }
