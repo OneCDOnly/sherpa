@@ -820,7 +820,7 @@ Session.Validate()
 
     }
 
-Session.Result.Show()
+Session.Show.Results()
     {
 
     if User.Opts.Versions.View.IsSet; then
@@ -856,6 +856,8 @@ Session.Result.Show()
     DebugScript 'finished' "$($DATE_CMD)"
     DebugScript 'elapsed time' "$(ConvertSecsToMinutes "$(($($DATE_CMD +%s)-$([[ -n $SCRIPT_STARTSECONDS ]] && echo "$SCRIPT_STARTSECONDS" || echo "1")))")"
     DebugInfoThickSeparator
+
+    Session.LockFile.Release
 
     return 0
 
@@ -943,7 +945,7 @@ AskQuiz()
 
     }
 
-QPKGs.Independents.Install()
+QPKGs.Install.Independents()
     {
 
     # install independent QPKGs first, in the order they were declared
@@ -1266,7 +1268,7 @@ ReloadProfile()
 
     }
 
-QPKGs.Dependants.Install()
+QPKGs.Install.Dependants()
     {
 
     Session.Abort.IsSet && return
@@ -4250,8 +4252,7 @@ Session.Init || exit 1
 Session.Validate
 QPKGs.Download
 QPKGs.Remove
-QPKGs.Independents.Install
-QPKGs.Dependants.Install
-Session.Result.Show
-Session.LockFile.Release
+QPKGs.Install.Independents
+QPKGs.Install.Dependants
+Session.Show.Results
 Session.Error.IsNot
