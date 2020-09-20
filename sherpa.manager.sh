@@ -3867,6 +3867,7 @@ ShowAsProc()
 
     WriteToDisplay.Wait "$(ColourTextBrightOrange proc)" "$1 ..."
     WriteToLog proc "$1 ..."
+    Session.Debugging.Visible.IsSet && Display
 
     }
 
@@ -3880,7 +3881,7 @@ ShowAsProcLong()
 ShowAsDebug()
     {
 
-    WriteToDisplay.Wait "$(ColourTextBlackOnCyan dbug)" "$1"
+    WriteToDisplay.New "$(ColourTextBlackOnCyan dbug)" "$1"
 
     }
 
@@ -3957,7 +3958,7 @@ WriteAsDebug()
 WriteToDisplay.Wait()
     {
 
-    # Writes a new message without newline (unless in debug mode)
+    # Writes a new message without newline
 
     # input:
     #   $1 = pass/fail
@@ -3965,7 +3966,7 @@ WriteToDisplay.Wait()
 
     previous_msg=$(printf "%-10s: %s" "$1" "$2")
 
-    DisplayWait "$previous_msg"; [[ $(type -t Session.Debugging.Visible) = 'function' ]] && Session.Debugging.Visible.IsSet && Display
+    DisplayWait "$previous_msg"
 
     return 0
 
