@@ -220,6 +220,7 @@ Session.Init()
     readonly MIN_RAM_KB=1048576
     readonly LOG_TAIL_LINES=1000
     ignore_space_arg=''
+    code_pointer=0
     [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg='--insecure' || curl_insecure_arg=''
 
     ShowAsProc "building arrays"
@@ -413,7 +414,7 @@ Session.ParseArguments()
     if [[ -z $USER_ARGS_RAW ]]; then
         User.Opts.Help.Basic.Set
         Session.Abort.Set
-        code_pointer=2
+        code_pointer=1
         return 1
     fi
 
@@ -612,7 +613,7 @@ Session.ParseArguments()
 Session.Validate()
     {
 
-    code_pointer=0
+    code_pointer=2
     local package=''
     local QPKGs_initial_array=()
 
@@ -685,7 +686,7 @@ Session.Validate()
 
     if User.Opts.Apps.All.Backup.IsSet && User.Opts.Apps.All.Restore.IsSet; then
         ShowAsError 'no point running a backup then a restore operation'
-        code_pointer=1
+        code_pointer=3
         return 1
     fi
 
@@ -876,7 +877,9 @@ QPKGs.Install.Independents()
                 # copy all files from original [/opt] into new [/opt]
                 [[ -L $opt_path && -d $opt_backup_path ]] && cp --recursive "$opt_backup_path"/* --target-directory "$opt_path" && rm -rf "$opt_backup_path"
             else
-                QPKG.Install "$package"
+                if [[ $NAS_QPKG_ARCH != none ]]; then
+                    QPKG.Install "$package"
+                fi
             fi
         fi
     done
@@ -1032,9 +1035,6 @@ QPKGs.Download()
     for package in "${QPKGs_download_array[@]}"; do
         QPKG.Download "$package"
     done
-
-    # KLUDGE: an ugly workaround until QPKG dependency checking works properly
-#     (QPKG.Installed SABnzbd || [[ $TARGET_APP = SABnzbd ]] ) && [[ $NAS_QPKG_ARCH != none ]] && QPKG.NotInstalled Par2 && QPKG.Download Par2
 
     DebugFuncExit
     return 0
@@ -1313,7 +1313,7 @@ UpdateEntware()
     {
 
     if IsNotSysFileExist $OPKG_CMD; then
-        code_pointer=3
+        code_pointer=4
         return 1
     fi
 
@@ -1598,17 +1598,15 @@ GetQPKGRemoteURL()
     #   $? = 0 if successful, 1 if failed
 
     local index=0
-    local returncode=1
 
     for index in "${!SHERPA_QPKG_NAME[@]}"; do
         if [[ $1 = "${SHERPA_QPKG_NAME[$index]}" ]] && [[ ${SHERPA_QPKG_ARCH[$index]} = all || ${SHERPA_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
             echo "${SHERPA_QPKG_URL[$index]}"
-            returncode=0
-            break
+            return 0
         fi
     done
 
-    return $returncode
+    return 1
 
     }
 
@@ -1694,6 +1692,12 @@ QPKG.Download()
 
     Session.Error.IsSet && return
 
+    if [[ -z $1 ]]; then
+        DebugError "no package name specified"
+        code_pointer=5
+        return 1
+    fi
+
     local result=0
     local returncode=0
     local remote_url=$(GetQPKGRemoteURL "$1")
@@ -1702,6 +1706,16 @@ QPKG.Download()
     local local_pathfile="$QPKG_DL_PATH/$remote_filename"
     local local_filename="$($BASENAME_CMD "$local_pathfile")"
     local log_pathfile="$local_pathfile.$DOWNLOAD_LOG_FILE"
+
+    if [[ -z $remote_url ]]; then
+        DebugWarning "no URL found for this package [$1]"
+        code_pointer=6
+        return
+    elif [[ -z $remote_filename_md5 ]]; then
+        DebugWarning "no remote MD5 found for this package [$1]"
+        code_pointer=7
+        return
+    fi
 
     if [[ -e $local_pathfile ]]; then
         if FileMatchesMD5 "$local_pathfile" "$remote_filename_md5"; then
@@ -1752,6 +1766,12 @@ QPKG.Install()
     Session.Error.IsSet && return
     Session.Abort.IsSet && return
 
+    if [[ -z $1 ]]; then
+        DebugError "no package name specified "
+        code_pointer=8
+        return 1
+    fi
+
     local target_file=''
     local result=0
     local returncode=0
@@ -1797,6 +1817,12 @@ QPKG.Uninstall()
 
     Session.Error.IsSet && return
 
+    if [[ -z $1 ]]; then
+        DebugError "no package name specified "
+        code_pointer=9
+        return 1
+    fi
+
     local result=0
 
     qpkg_installed_path="$($GETCFG_CMD "$1" Install_Path -f $APP_CENTER_CONFIG_PATHFILE)"
@@ -1837,6 +1863,12 @@ QPKG.Restart()
     # output:
     #   $? = 0 if successful, 1 if failed
 
+    if [[ -z $1 ]]; then
+        DebugError "no package name specified "
+        code_pointer=10
+        return 1
+    fi
+
     local result=0
     local package_init_pathfile=$(GetInstalledQPKGServicePathFile "$1")
     local log_pathfile=$WORK_PATH/$1.$RESTART_LOG_FILE
@@ -1871,6 +1903,12 @@ QPKG.Enable()
     {
 
     # $1 = package name to enable
+
+    if [[ -z $1 ]]; then
+        DebugError "no package name specified "
+        code_pointer=11
+        return 1
+    fi
 
     if QPKG.NotEnabled "$1"; then
         DebugProc "enabling QPKG icon"
@@ -1992,7 +2030,7 @@ GetAllIPKGDepsToDownload()
     #   $IPKG_download_size = byte-count of packages to be downloaded
 
     if IsNotSysFileExist $OPKG_CMD || IsNotSysFileExist $GNU_GREP_CMD; then
-        code_pointer=5
+        code_pointer=12
         return 1
     fi
 
