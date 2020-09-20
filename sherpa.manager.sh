@@ -164,8 +164,6 @@ Session.Init()
     Objects.Create User.Opts.Log.Paste
     Objects.Create User.Opts.Log.View
 
-    Objects.Create User.Opts.Apps.List.Installed
-    Objects.Create User.Opts.Apps.List.NotInstalled
     Objects.Create User.Opts.Apps.All.Backup
     Objects.Create User.Opts.Apps.All.Install
     Objects.Create User.Opts.Apps.All.List
@@ -174,11 +172,13 @@ Session.Init()
     Objects.Create User.Opts.Apps.All.Status
     Objects.Create User.Opts.Apps.All.Uninstall
     Objects.Create User.Opts.Apps.All.Upgrade
+    Objects.Create User.Opts.Apps.List.Installed
+    Objects.Create User.Opts.Apps.List.NotInstalled
 
     # script flags
     Objects.Create Session.Abort
-    Objects.Create Session.Debugging.ToFile
-    Objects.Create Session.Debugging.Visible
+    Objects.Create Session.Debug.To.File
+    Objects.Create Session.Debug.To.Screen
     Objects.Create Session.Display.Clean
     Objects.Create Session.Ipkgs.Install
     Objects.Create Session.LineSpace
@@ -189,7 +189,7 @@ Session.Init()
     CR
 
     Session.Summary.Set
-    Session.Debugging.Visible.Description = "Display on-screen live debugging information."
+    Session.Debug.To.Screen.Description = "Display on-screen live debugging information."
     Session.Display.Clean.Description = "Disable display of script title and trailing linespace. If 'set', output is suitable for script processing."
     Session.LineSpace.Description = "Keeps track of the display empty linespacing flag. If 'set', an empty linespace has been printed to screen."
 
@@ -435,7 +435,7 @@ Session.ParseArguments()
     for arg in "${user_args[@]}"; do
         case $arg in
             -d|d|--debug|debug)
-                Session.Debugging.Visible.Set
+                Session.Debug.To.Screen.Set
                 current_operation=''
                 ;;
             --force|force)
@@ -623,7 +623,7 @@ Session.Validate()
     Session.ParseArguments
     Session.Display.Clean.IsSet && return
 
-    if Session.Debugging.Visible.IsNot; then
+    if Session.Debug.To.Screen.IsNot; then
         Display "$(FormatAsScriptTitle) $MANAGER_SCRIPT_VERSION • a mini-package-manager for QNAP NAS"
         DisplayLineSpaceAndSet
     fi
@@ -632,7 +632,7 @@ Session.Validate()
 
     Session.Abort.IsSet && return
 
-    Session.Debugging.ToFile.Set
+    Session.Debug.To.File.Set
     DebugInfoThickSeparator
     DebugScript 'started' "$($DATE_CMD | $TR_CMD -s ' ')"
     DebugScript 'version' "package: $PACKAGE_VERSION, manager: $MANAGER_SCRIPT_VERSION, loader $LOADER_SCRIPT_VERSION"
@@ -1590,7 +1590,7 @@ QPKG.Download()
 
         [[ -e $log_pathfile ]] && rm -f "$log_pathfile"
 
-        if Session.Debugging.Visible.IsSet; then
+        if Session.Debug.To.Screen.IsSet; then
             RunThisAndLogResultsRealtime "$CURL_CMD $curl_insecure_arg --output $local_pathfile $remote_url" "$log_pathfile"
             result=$?
         else
@@ -1724,7 +1724,7 @@ QPKG.Restart()
     else
         ShowAsWarning "Could not restart $(FormatAsPackageName "$1") $(FormatAsExitcode $result)"
 
-        if Session.Debugging.Visible.IsSet; then
+        if Session.Debug.To.Screen.IsSet; then
             DebugInfoThickSeparator
             $CAT_CMD "$log_pathfile"
             DebugInfoThickSeparator
@@ -3581,7 +3581,7 @@ FormatAsResultAndStdout()
 DisplayLineSpaceAndSet()
     {
 
-    if Session.LineSpace.IsNot && Session.Debugging.Visible.IsNot && Session.Display.Clean.IsNot; then
+    if Session.LineSpace.IsNot && Session.Debug.To.Screen.IsNot && Session.Display.Clean.IsNot; then
         Display
         Session.LineSpace.Set
     fi
@@ -3626,7 +3626,7 @@ DebugTimerStageStart()
 
     $DATE_CMD +%s
 
-    if Session.Debugging.Visible.IsNot; then
+    if Session.Debug.To.Screen.IsNot; then
         DebugInfoThinSeparator
         DebugStage 'start stage timer'
     fi
@@ -3810,7 +3810,7 @@ DebugVar()
 DebugThis()
     {
 
-    Session.Debugging.Visible.IsSet && ShowAsDebug "$1"
+    Session.Debug.To.Screen.IsSet && ShowAsDebug "$1"
     WriteAsDebug "$1"
 
     }
@@ -3849,7 +3849,8 @@ ShowAsProc()
 
     WriteToDisplay.Wait "$(ColourTextBrightOrange proc)" "$1 ..."
     WriteToLog proc "$1 ..."
-    [[ $(type -t Session.Debugging.Visible) = 'function' ]] && Session.Debugging.Visible.IsSet && Display
+
+    [[ $(type -t Session.Debug.To.Screen.Index) = 'function' ]] && Session.Debug.To.Screen.IsSet && Display
 
     }
 
@@ -4002,7 +4003,7 @@ WriteToLog()
     #   $2 = message
 
     [[ -z $DEBUG_LOG_PATHFILE ]] && return 1
-    Session.Debugging.ToFile.IsNot && return
+    Session.Debug.To.File.IsNot && return
 
     printf "%-4s: %s\n" "$(StripANSI "$1")" "$(StripANSI "$2")" >> "$DEBUG_LOG_PATHFILE"
 
@@ -4136,11 +4137,11 @@ Objects.Create()
     local public_function_name="$1"
     local safe_function_name="$(tr '[A-Z]' '[a-z]' <<< "${public_function_name//./_}")"
 
-    _placehold_index_="_object_${safe_function_name}_index_integer"
-    _placehold_description_="_object_${safe_function_name}_description_string"
-    _placehold_set_switch_="_object_${safe_function_name}_set_boolean"
-    _placehold_list_array_="_object_${safe_function_name}_list_array"
-    _placehold_list_pointer_="_object_${safe_function_name}_array_index_integer"
+    _placehold_index_="_${safe_function_name}_index_"
+    _placehold_description_="_${safe_function_name}_description_"
+    _placehold_set_switch_="_${safe_function_name}_set_"
+    _placehold_list_array_="_${safe_function_name}_list_"
+    _placehold_list_pointer_="_${safe_function_name}_array_index_"
 
     [[ $(type -t Objects.Index) = 'function' ]] && Objects.Items.Add "$public_function_name"
 
