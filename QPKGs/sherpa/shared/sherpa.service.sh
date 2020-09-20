@@ -16,31 +16,26 @@
 #
 # You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/.
 
-Init()
-    {
+readonly PROJECT_NAME=sherpa
+readonly CONFIG_PATHFILE=/etc/config/qpkg.conf
 
-    readonly PROJECT_NAME=sherpa
-    readonly CONFIG_PATHFILE=/etc/config/qpkg.conf
+# cherry-pick required binaries
+readonly LN_CMD=/bin/ln
+readonly TOUCH_CMD=/bin/touch
+readonly GETCFG_CMD=/sbin/getcfg
 
-    # cherry-pick required binaries
-    readonly LN_CMD=/bin/ln
-    readonly TOUCH_CMD=/bin/touch
+if [[ ! -e $CONFIG_PATHFILE ]]; then
+    echo "file not found [$CONFIG_PATHFILE]"
+    exit 1
+fi
 
-    readonly GETCFG_CMD=/sbin/getcfg
+readonly QPKG_PATH=$($GETCFG_CMD $PROJECT_NAME Install_Path -f $CONFIG_PATHFILE)
+readonly REAL_LOG_PATHFILE=$QPKG_PATH/$PROJECT_NAME.debug.log
+readonly GUI_LOG_PATHFILE=/home/httpd/$PROJECT_NAME.debug.log
+readonly REAL_LOADER_SCRIPT_PATHNAME=$QPKG_PATH/$PROJECT_NAME.loader.sh
+readonly APPARENT_LOADER_SCRIPT_PATHNAME=/usr/sbin/$PROJECT_NAME
 
-    [[ ! -e $CONFIG_PATHFILE ]] && { echo "file not found [$CONFIG_PATHFILE]"; exit 1 ;}
-
-    local -r QPKG_PATH=$($GETCFG_CMD $PROJECT_NAME Install_Path -f $CONFIG_PATHFILE)
-    readonly REAL_LOG_PATHFILE=$QPKG_PATH/$PROJECT_NAME.debug.log
-    readonly GUI_LOG_PATHFILE=/home/httpd/$PROJECT_NAME.debug.log
-    readonly REAL_LOADER_SCRIPT_PATHNAME=$QPKG_PATH/$PROJECT_NAME.loader.sh
-    readonly APPARENT_LOADER_SCRIPT_PATHNAME=/usr/sbin/$PROJECT_NAME
-
-    [[ ! -e $REAL_LOG_PATHFILE ]] && $TOUCH_CMD "$REAL_LOG_PATHFILE"
-
-    }
-
-Init
+[[ ! -e $REAL_LOG_PATHFILE ]] && $TOUCH_CMD "$REAL_LOG_PATHFILE"
 
 case $1 in
     start)
