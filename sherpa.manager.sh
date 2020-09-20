@@ -2459,7 +2459,9 @@ DisplayAsIndentedHelpExample()
     # $1 = description
     # $2 = example syntax
 
-    if [[ ${1: -1} = '!' ]]; then
+    if [[ -z $1 ]]; then
+        printf "       # %s\n" "$PROJECT_NAME $2"
+    elif [[ ${1: -1} = '!' ]]; then
         printf "\n  - %s \n       # %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$PROJECT_NAME $2"
     else
         printf "\n  - %s:\n       # %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$PROJECT_NAME $2"
@@ -2532,9 +2534,10 @@ Help.Basic.Show()
 Help.Basic.Example.Show()
     {
 
-    DisplayAsIndentedHelpExample "for more about $(FormatAsHelpActions)" '--actions'
-    DisplayAsIndentedHelpExample "for more about $(FormatAsHelpPackages)" '--packages'
-    DisplayAsIndentedHelpExample "for more about $(FormatAsHelpOptions)" '--options'
+    DisplayAsIndentedHelpExample "to learn more about available $(FormatAsHelpActions), type" '--actions'
+    DisplayAsIndentedHelpExample '' '--actions-all'
+    DisplayAsIndentedHelpExample "to learn more about available $(FormatAsHelpPackages), type" '--packages'
+    DisplayAsIndentedHelpExample "or, for more about available $(FormatAsHelpOptions), type" '--options'
 
     return 0
 
