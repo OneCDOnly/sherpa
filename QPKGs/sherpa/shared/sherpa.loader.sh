@@ -36,6 +36,8 @@ Init()
 
     [[ ! -d $QPKG_PATH/repo ]] && mkdir -p $QPKG_PATH/repo
 
+    return 0
+
     }
 
 IsQNAP()
@@ -69,6 +71,8 @@ ShowAsAbort()
     local capitalised="$(tr "[a-z]" "[A-Z]" <<< "${buffer:0:1}")${buffer:1}"
 
     WriteToDisplay.New "$(ColourTextBrightRed fail)" "$capitalised: aborting ..."
+
+    return 0
 
     }
 
