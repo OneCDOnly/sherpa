@@ -3867,7 +3867,7 @@ ShowAsProc()
 
     WriteToDisplay.Wait "$(ColourTextBrightOrange proc)" "$1 ..."
     WriteToLog proc "$1 ..."
-    Session.Debugging.Visible.IsSet && Display
+    [[ $(type -t Session.Debugging.Visible) = 'function' ]] && Session.Debugging.Visible.IsSet && Display
 
     }
 
