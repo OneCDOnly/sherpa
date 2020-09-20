@@ -544,7 +544,7 @@ Session.ParseArguments()
                 current_operation=restart_
                 operation_force=false
                 ;;
-            --upgrade|upgrade)
+            --up|up|--upgrade|upgrade)
                 current_operation=upgrade_
                 operation_force=false
                 ;;
@@ -999,7 +999,7 @@ QPKGs.Install.Dependants()
                     if [[ ${QPKGS_upgradable[*]} == *"$package"* ]]; then
                         QPKG.Upgrade "$package"
                     else
-                        ShowAsNote "unable to upgrade $(FormatAsPackageName "$package") as it's not upgradable"
+                        ShowAsNote "unable to upgrade $(FormatAsPackageName "$package") as it's not upgradable. Use the '--force' if you really want this."
                     fi
                 fi
             done
