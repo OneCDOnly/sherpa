@@ -2569,11 +2569,11 @@ Help.Actions.Show()
 
     DisplayAsIndentedHelpExample 'reinstall the following packages' "--reinstall $(FormatAsHelpPackages)"
 
-    DisplayAsIndentedHelpExample 'upgrade the following packages' "--upgrade $(FormatAsHelpPackages)"
+    DisplayAsIndentedHelpExample 'upgrade the following packages and the internal applications' "--upgrade $(FormatAsHelpPackages)"
 
-    DisplayAsIndentedHelpExample 'force-upgrade the following packages' "--upgrade --force $(FormatAsHelpPackages)"
+    DisplayAsIndentedHelpExample 'force-upgrade the following packages and the internal applications' "--upgrade --force $(FormatAsHelpPackages)"
 
-    DisplayAsIndentedHelpExample 'upgrade the following packages and the internal applications' "--restart $(FormatAsHelpPackages)"
+    DisplayAsIndentedHelpExample 'upgrade the internal applications only' "--restart $(FormatAsHelpPackages)"
 
 #   DisplayAsIndentedHelpExample '--backup'
 #
@@ -2581,7 +2581,7 @@ Help.Actions.Show()
 #
 #   DisplayAsIndentedHelpExample '--status'
 
-    DisplayAsHelpExample "$(FormatAsHelpActions) affecting all packages can be seen with" '--actions-all'
+    DisplayAsHelpExample "$(FormatAsHelpActions) to affect all packages can be seen with" '--actions-all'
 
     DisplayAsHelpExample "multiple $(FormatAsHelpActions) are supported like this" '--install sabnzbd sickchill --uninstall lazy nzbget --upgrade nzbtomedia --restart transmission'
 
