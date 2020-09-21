@@ -7,7 +7,9 @@ A mini-package-manager to install various media-management apps into QNAP NAS.
 ---
 ## Before you begin
 
-This is a **command-line** package manager. If you're not comfortable using the BASH command shell, then please look at some of the fine GUI-only packaged alternatives available from the [Qnapclub Store](https://qnapclub.eu/en). You'll have a much better user-experience.
+This is a **command-line** package manager. If you're unfamiliar with SSH, then please look at some of the fine GUI-only packaged alternatives available from the [Qnapclub Store](https://qnapclub.eu/en) instead. You'll have a much better user-experience.
+
+Package management via **sherpa** provides extra features like easy application backup and upgrading, and can be automated via cron.
 
 ---
 ## Applications available
