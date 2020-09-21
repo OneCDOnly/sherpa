@@ -501,7 +501,7 @@ Session.ParseArguments()
                 User.Opts.Apps.All.Install.Set
                 action=''
                 ;;
-            --uninstall-all-applications-please|uninstall-all-applications-please)
+            --uninstall-all-packages-please|uninstall-all-packages-please)
                 User.Opts.Apps.All.Uninstall.Set
                 action=''
                 ;;
