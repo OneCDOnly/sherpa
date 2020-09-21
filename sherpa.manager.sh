@@ -4462,18 +4462,18 @@ Objects.Create()
 
     _placehold_index_="_${safe_function_name}_index_"
     _placehold_description_="_${safe_function_name}_description_"
-    _placehold_set_switch_="_${safe_function_name}_set_"
+    _placehold_flag_="_${safe_function_name}_flag_"
     _placehold_list_array_="_${safe_function_name}_list_"
-    _placehold_list_pointer_="_${safe_function_name}_array_index_"
+    _placehold_list_index_="_${safe_function_name}_list_index_"
 
     [[ $(type -t Objects.Index) = 'function' ]] && Objects.Items.Add "$public_function_name"
 
     object_functions='
         '$public_function_name'.Clear()
             {
-            [[ $'$_placehold_set_switch_' != "true" ]] && return
-            '$_placehold_set_switch_'=false
-            DebugVar '$_placehold_set_switch_'
+            [[ $'$_placehold_flag_' != "true" ]] && return
+            '$_placehold_flag_'=false
+            DebugVar '$_placehold_flag_'
             }
 
         '$public_function_name'.Description()
@@ -4491,9 +4491,9 @@ Objects.Create()
             echo "object index: '\'\$$_placehold_index_\''"
             echo "object name: '\'$public_function_name\''"
             echo "object description: '\'\$$_placehold_description_\''"
-            echo "object set: '\'\$$_placehold_set_switch_\''"
+            echo "object set: '\'\$$_placehold_flag_\''"
             echo "object list: '\'\${$_placehold_list_array_[*]}\''"
-            echo "object list pointer: '\'\$$_placehold_list_pointer_\''"
+            echo "object list pointer: '\'\$$_placehold_list_index_\''"
             }
 
         '$public_function_name'.Index()
@@ -4509,19 +4509,19 @@ Objects.Create()
             {
             '$_placehold_index_'=$(Objects.Items.Count)
             '$_placehold_description_'=''
-            '$_placehold_set_switch_'=false
+            '$_placehold_flag_'=false
             '$_placehold_list_array_'+=()
-            '$_placehold_list_pointer_'=1
+            '$_placehold_list_index_'=1
             }
 
         '$public_function_name'.IsNot()
             {
-            [[ $'$_placehold_set_switch_' != "true" ]]
+            [[ $'$_placehold_flag_' != "true" ]]
             }
 
         '$public_function_name'.IsSet()
             {
-            [[ $'$_placehold_set_switch_' = "true" ]]
+            [[ $'$_placehold_flag_' = "true" ]]
             }
 
         '$public_function_name'.Items.Add()
@@ -4538,20 +4538,20 @@ Objects.Create()
             {
             if [[ -n $1 && $1 = "=" ]]; then
                 if [[ $2 -gt ${#'$_placehold_list_array_'[@]} ]]; then
-                    '$_placehold_list_pointer_'=${#'$_placehold_list_array_'[@]}
+                    '$_placehold_list_index_'=${#'$_placehold_list_array_'[@]}
                 else
-                    '$_placehold_list_pointer_'=$2
+                    '$_placehold_list_index_'=$2
                 fi
             else
-                echo -n $'$_placehold_list_pointer_'
+                echo -n $'$_placehold_list_index_'
             fi
             }
 
         '$public_function_name'.Set()
             {
-            [[ $'$_placehold_set_switch_' = "true" ]] && return
-            '$_placehold_set_switch_'=true
-            DebugVar '$_placehold_set_switch_'
+            [[ $'$_placehold_flag_' = "true" ]] && return
+            '$_placehold_flag_'=true
+            DebugVar '$_placehold_flag_'
             }
 
     '
