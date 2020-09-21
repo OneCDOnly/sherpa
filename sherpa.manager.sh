@@ -1040,6 +1040,7 @@ Packages.Backup()
                 fi
             done
         fi
+        DisplayAsSyntaxExample "the default backup location can be accessed by running" "cd $BACKUP_PATH"
     else
         if [[ ${#QPKGs_to_backup[*]} -gt 0 ]]; then
             for package in "${SHERPA_DEP_QPKGs[@]}"; do
@@ -1051,10 +1052,9 @@ Packages.Backup()
                     fi
                 fi
             done
+            DisplayAsSyntaxExample "the default backup location can be accessed by running" "cd $BACKUP_PATH"
         fi
     fi
-
-    DisplayAsSyntaxExample "the default backup location can be accessed by running" "cd $BACKUP_PATH"
 
     DebugFuncExit
     return 0
@@ -1078,6 +1078,7 @@ Packages.Restore()
                 fi
             done
         fi
+        DisplayAsSyntaxExample "the default backup location can be accessed by running" "cd $BACKUP_PATH"
     else
         if [[ ${#QPKGs_to_restore[*]} -gt 0 ]]; then
             for package in "${SHERPA_DEP_QPKGs[@]}"; do
@@ -1089,10 +1090,9 @@ Packages.Restore()
                     fi
                 fi
             done
+            DisplayAsSyntaxExample "the default backup location can be accessed by running" "cd $BACKUP_PATH"
         fi
     fi
-
-    DisplayAsSyntaxExample "the default backup location can be accessed by running" "cd $BACKUP_PATH"
 
     DebugFuncExit
     return 0
