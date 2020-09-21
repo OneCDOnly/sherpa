@@ -36,7 +36,7 @@ Session.Init()
 
     IsQNAP || return 1
 
-    readonly MANAGER_SCRIPT_VERSION=200921
+    readonly MANAGER_SCRIPT_VERSION=200922
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -54,7 +54,6 @@ Session.Init()
     readonly SLEEP_CMD=/bin/sleep
     readonly TAR_CMD=/bin/tar
     readonly TOUCH_CMD=/bin/touch
-    readonly TR_CMD=/bin/tr
     readonly UNAME_CMD=/bin/uname
     readonly UNIQ_CMD=/bin/uniq
 
@@ -70,7 +69,6 @@ Session.Init()
     readonly HEAD_CMD=/usr/bin/head
     readonly READLINK_CMD=/usr/bin/readlink
     readonly SORT_CMD=/usr/bin/sort
-    [[ ! -e $SORT_CMD ]] && $LN_CMD -s "$BUSYBOX_CMD" "$SORT_CMD"   # sometimes, 'sort' goes missing from QTS. Don't know why.
     readonly TAIL_CMD=/usr/bin/tail
     readonly TEE_CMD=/usr/bin/tee
     readonly UNZIP_CMD=/usr/bin/unzip
@@ -85,7 +83,6 @@ Session.Init()
     readonly GNU_LESS_CMD=/opt/bin/less
     readonly GNU_SED_CMD=/opt/bin/sed
     readonly OPKG_CMD=/opt/bin/opkg
-    pip3_cmd=/opt/bin/pip3
 
     # paths and files
     readonly PROJECT_NAME=sherpa
@@ -93,7 +90,6 @@ Session.Init()
     readonly MANAGER_SCRIPT_FILE=$PROJECT_NAME.manager.sh
     local -r DEBUG_LOG_FILE=$PROJECT_NAME.debug.log
     readonly APP_CENTER_CONFIG_PATHFILE=/etc/config/qpkg.conf
-    readonly PACKAGE_VERSION=$(GetInstalledQPKGVersion "$PROJECT_NAME")
     readonly INSTALL_LOG_FILE=install.log
     readonly DOWNLOAD_LOG_FILE=download.log
     readonly START_LOG_FILE=start.log
@@ -109,6 +105,8 @@ Session.Init()
     readonly PREV_QPKG_CONFIG_DIRS=(SAB_CONFIG CONFIG Config config)                 # last element is used as target dirname
     readonly PREV_QPKG_CONFIG_FILES=(sabnzbd.ini settings.ini config.cfg config.ini) # last element is used as target filename
     readonly RUNTIME_LOCK_PATHFILE=/var/run/$LOADER_SCRIPT_FILE.pid
+    [[ ! -e $SORT_CMD ]] && $LN_CMD -s "$BUSYBOX_CMD" "$SORT_CMD"   # sometimes, 'sort' goes missing from QTS. Don't know why.
+    pip3_cmd=/opt/bin/pip3
 
     Session.LockFile.Claim || return 1
 
@@ -127,7 +125,6 @@ Session.Init()
     IsSysFileExist $SLEEP_CMD || return 1
     IsSysFileExist $TAR_CMD || return 1
     IsSysFileExist $TOUCH_CMD || return 1
-    IsSysFileExist $TR_CMD || return 1
     IsSysFileExist $UNAME_CMD || return 1
     IsSysFileExist $UNIQ_CMD || return 1
 
@@ -194,14 +191,17 @@ Session.Init()
     Objects.Create Session.Summary
 
     # enable debug mode early if possible
-    [[ $USER_ARGS_RAW == *"debug"* ]] && Session.Debug.To.Screen.Set
-    SmartCR
+    if [[ $USER_ARGS_RAW == *"debug"* ]]; then
+        Display
+        Session.Debug.To.Screen.Set
+    fi
 
     Session.Summary.Set
     Session.Debug.To.Screen.Description = "Display on-screen live debugging information."
     Session.Display.Clean.Description = "Disable display of script title and trailing linespace. If 'set', output is suitable for script processing."
     Session.LineSpace.Description = "Keeps track of the display empty linespacing flag. If 'set', an empty linespace has been printed to screen."
 
+    readonly PACKAGE_VERSION=$(GetInstalledQPKGVersion "$PROJECT_NAME")
     readonly WORK_PATH=$($GETCFG_CMD $PROJECT_NAME Install_Path -f $APP_CENTER_CONFIG_PATHFILE)/repo
     readonly DEBUG_LOG_PATHFILE=$($GETCFG_CMD $PROJECT_NAME Install_Path -f $APP_CENTER_CONFIG_PATHFILE)/$DEBUG_LOG_FILE
     readonly QPKG_DL_PATH=$WORK_PATH/qpkgs
@@ -221,10 +221,12 @@ Session.Init()
     code_pointer=0
     [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg='--insecure' || curl_insecure_arg=''
 
+    SmartCR
     ShowAsProc "building arrays"
 
     # runtime arrays
     QPKGs_to_backup=()
+    QPKGs_to_force_upgrade=()
     QPKGs_to_install=()
     QPKGs_to_reinstall=()
     QPKGs_to_restart=()
@@ -232,7 +234,6 @@ Session.Init()
     QPKGs_to_status=()
     QPKGs_to_uninstall=()
     QPKGs_to_upgrade=()
-    QPKGs_to_force_upgrade=()
 
     # sherpa-supported package details - parallel arrays
     SHERPA_QPKG_NAME=()         # internal QPKG name
@@ -398,8 +399,8 @@ Session.Init()
     QPKGs.Installed.Build
     QPKGs.NotInstalled.Build
     QPKGs.Upgradable.Build
-    SmartCR
     CalcNASQPKGArch
+    SmartCR
 
     return 0
 
@@ -415,7 +416,7 @@ Session.ParseArguments()
         return 1
     fi
 
-    local user_args=($($TR_CMD '[A-Z]' '[a-z]' <<< "$USER_ARGS_RAW"))
+    local user_args=($(tr '[A-Z]' '[a-z]' <<< "$USER_ARGS_RAW"))
     local arg=''
     local action='install_'     # make 'install' the default action. This is a user-convenience only.
     local action_force=false
@@ -436,11 +437,11 @@ Session.ParseArguments()
                 User.Opts.Help.Basic.Set
                 Session.Abort.Set
                 ;;
-            -p|p|--problems|problems|--problem|problem)
+            -p|p|--problem|problem|--problems|problems)
                 User.Opts.Help.Problems.Set
                 Session.Abort.Set
                 ;;
-            -t|t|--tips|tips)
+            -t|t|--tip|tip|--tips|tips)
                 User.Opts.Help.Tips.Set
                 Session.Abort.Set
                 ;;
@@ -456,7 +457,7 @@ Session.ParseArguments()
                 User.Opts.Apps.List.NotInstalled.Set
                 Session.Display.Clean.Set
                 ;;
-            --list|list)
+            --list|list|--list-all|list-all)
                 User.Opts.Apps.All.List.Set
                 Session.Display.Clean.Set
                 ;;
@@ -509,11 +510,11 @@ Session.ParseArguments()
                 User.Opts.Apps.All.Upgrade.Set
                 action=''
                 ;;
-            --backup-all)
+            --backup-all|backup-all)
                 User.Opts.Apps.All.Backup.Set
                 action=''
                 ;;
-            --restore-all)
+            --restore-all|restore-all)
                 User.Opts.Apps.All.Restore.Set
                 action=''
                 ;;
@@ -627,7 +628,7 @@ Session.Validate()
     Session.Abort.IsSet && return
 
     DebugInfoThickSeparator
-    DebugScript 'started' "$($DATE_CMD | $TR_CMD -s ' ')"
+    DebugScript 'started' "$($DATE_CMD | tr -s ' ')"
     DebugScript 'version' "package: $PACKAGE_VERSION, manager: $MANAGER_SCRIPT_VERSION, loader $LOADER_SCRIPT_VERSION"
     DebugScript 'PID' "$$"
     DebugInfoThinSeparator
@@ -637,9 +638,11 @@ Session.Validate()
     DebugInfoThinSeparator
     DebugHardware.OK 'model' "$(get_display_name)"
     DebugHardware.OK 'RAM' "$INSTALLED_RAM_KB kB"
+
     if QPKG.ToBeInstalled SABnzbd || QPKG.Installed SABnzbd || QPKG.Installed SABnzbdplus; then
         [[ $INSTALLED_RAM_KB -le $MIN_RAM_KB ]] && DebugHardware.Warning 'RAM' "less-than or equal-to $MIN_RAM_KB kB"
     fi
+
     DebugFirmware 'firmware version' "$NAS_FIRMWARE"
     DebugFirmware 'firmware build' "$NAS_BUILD"
     DebugFirmware 'kernel' "$($UNAME_CMD -mr)"
@@ -714,7 +717,7 @@ Session.Validate()
     DebugInfo "QPKGs required: $(Packages.Download.Print)"
 
     if [[ $(Packages.Download.Count) -eq 1 && ${QPKGs_download_array[0]} = Entware ]] && QPKG.NotInstalled Entware; then
-        ShowAsNote "It's not necessary to install $(FormatAsPackageName Entware) on its own. It will be installed as-required with your other $PROJECT_NAME packages. :)"
+        ShowAsNote "It's not necessary to install $(FormatAsPackageName Entware) on its own. It will be installed as-required with your other $(FormatAsScriptTitle) packages. :)"
     fi
 
     for package in Optware Entware-3x Entware-ng; do
@@ -815,30 +818,39 @@ Session.Results()
         Display "package: $PACKAGE_VERSION"
         Display "loader: $LOADER_SCRIPT_VERSION"
         Display "manager: $MANAGER_SCRIPT_VERSION"
+    elif User.Opts.Log.View.IsSet; then
+        LogViewer.Show
+    elif User.Opts.Apps.List.Installed.IsSet; then
+        QPKGs.Installed.Show
+    elif User.Opts.Apps.List.NotInstalled.IsSet; then
+        QPKGs.NotInstalled.Show
+    elif User.Opts.Apps.All.List.IsSet; then
+        QPKGs.All.Show
     fi
-
-    User.Opts.Log.View.IsSet && LogViewer.Show
-    User.Opts.Apps.List.Installed.IsSet && QPKGs.Installed.Show
-    User.Opts.Apps.List.NotInstalled.IsSet && QPKGs.NotInstalled.Show
-    User.Opts.Apps.All.List.IsSet && QPKGs.All.Show
 
     if User.Opts.Help.Basic.IsSet; then
         Help.Basic.Show
         Help.Basic.Example.Show
+    elif User.Opts.Help.Actions.IsSet; then
+        Help.Actions.Show
+    elif User.Opts.Help.ActionsAll.IsSet; then
+        Help.ActionsAll.Show
+    elif User.Opts.Help.Packages.IsSet; then
+        Help.Packages.Show
+    elif User.Opts.Help.Options.IsSet; then
+        Help.Options.Show
+    elif User.Opts.Help.Problems.IsSet; then
+        Help.Problems.Show
+    elif User.Opts.Help.Tips.IsSet; then
+        Help.Tips.Show
+    elif User.Opts.Help.Abbreviations.IsSet; then
+        Help.PackageAbbreviations.Show
     fi
-
-    User.Opts.Help.Actions.IsSet && Help.Actions.Show
-    User.Opts.Help.ActionsAll.IsSet && Help.ActionsAll.Show
-    User.Opts.Help.Packages.IsSet && Help.Packages.Show
-    User.Opts.Help.Options.IsSet && Help.Options.Show
-    User.Opts.Help.Problems.IsSet && Help.Problems.Show
-    User.Opts.Help.Tips.IsSet && Help.Tips.Show
-    User.Opts.Help.Abbreviations.IsSet && Help.PackageAbbreviations.Show
 
     User.Opts.Log.Paste.IsSet && PasteLogOnline
     Session.Summary.IsSet && Session.Summary.Show
     Session.SuggestIssue.IsSet && Help.Issue.Show
-    DisplayLineSpaceIfNoneAlready
+    DisplayLineSpaceIfNoneAlready       # final on-screen line space
 
     DebugInfoThinSeparator
     DebugScript 'finished' "$($DATE_CMD)"
@@ -2122,7 +2134,7 @@ GetAllIPKGDepsToDownload()
     while [[ $iterations -lt $ITERATION_LIMIT ]]; do
         ((iterations++))
         # shellcheck disable=SC2086
-        last_list=$($OPKG_CMD depends -A $last_list | $GREP_CMD -v 'depends on:' | $SED_CMD 's|^[[:blank:]]*||;s|[[:blank:]]*$||' | $TR_CMD ' ' '\n' | $SORT_CMD | $UNIQ_CMD)
+        last_list=$($OPKG_CMD depends -A $last_list | $GREP_CMD -v 'depends on:' | $SED_CMD 's|^[[:blank:]]*||;s|[[:blank:]]*$||' | tr ' ' '\n' | $SORT_CMD | $UNIQ_CMD)
 
         if [[ -n $last_list ]]; then
             dependency_list+=" $last_list"
@@ -2510,8 +2522,6 @@ SmartCR()
 
     if Session.Debug.To.Screen.IsNot; then
         echo -en "\033[1K\r"
-    else
-        Display
     fi
 
     }
@@ -3449,7 +3459,7 @@ DeDupeWords()
 
     [[ -z $1 ]] && return 1
 
-    $TR_CMD ' ' '\n' <<< "$1" | $SORT_CMD | $UNIQ_CMD | $TR_CMD '\n' ' ' | $SED_CMD 's|^[[:blank:]]*||;s|[[:blank:]]*$||'
+    tr ' ' '\n' <<< "$1" | $SORT_CMD | $UNIQ_CMD | tr '\n' ' ' | $SED_CMD 's|^[[:blank:]]*||;s|[[:blank:]]*$||'
 
     }
 
@@ -3479,10 +3489,10 @@ ProgressUpdater()
         if [[ $current_length -lt $previous_length ]]; then
             appended_length=$((current_length-previous_length))
             # backspace to start of previous msg, print new msg, add additional spaces, then backspace to end of msg
-            printf "%${previous_length}s" | $TR_CMD ' ' '\b'; echo -n "$1 "; printf "%${appended_length}s"; printf "%${appended_length}s" | $TR_CMD ' ' '\b'
+            printf "%${previous_length}s" | tr ' ' '\b'; echo -n "$1 "; printf "%${appended_length}s"; printf "%${appended_length}s" | tr ' ' '\b'
         else
             # backspace to start of previous msg, print new msg
-            printf "%${previous_length}s" | $TR_CMD ' ' '\b'; echo -n "$1 "
+            printf "%${previous_length}s" | tr ' ' '\b'; echo -n "$1 "
         fi
 
         previous_length=$current_length
