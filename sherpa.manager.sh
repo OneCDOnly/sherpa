@@ -178,6 +178,7 @@ Session.Init()
     Objects.Create User.Opts.Apps.All.Status
     Objects.Create User.Opts.Apps.All.Uninstall
     Objects.Create User.Opts.Apps.All.Upgrade
+
     Objects.Create User.Opts.Apps.List.Installed
     Objects.Create User.Opts.Apps.List.NotInstalled
 
@@ -193,12 +194,8 @@ Session.Init()
     Objects.Create Session.Summary
 
     # enable debug mode early if possible
-    if [[ $USER_ARGS_RAW == *"debug"* ]]; then
-        Display
-        Session.Debug.To.Screen.Set
-    else
-        CR
-    fi
+    [[ $USER_ARGS_RAW == *"debug"* ]] && Session.Debug.To.Screen.Set
+    SmartCR
 
     Session.Summary.Set
     Session.Debug.To.Screen.Description = "Display on-screen live debugging information."
@@ -401,8 +398,7 @@ Session.Init()
     QPKGs.Installed.Build
     QPKGs.NotInstalled.Build
     QPKGs.Upgradable.Build
-
-    Session.Debug.To.Screen.IsNot && CR
+    SmartCR
     CalcNASQPKGArch
 
     return 0
@@ -2497,12 +2493,16 @@ DisplayAsHelpPackageNameExample()
 
     }
 
-CR()
+SmartCR()
     {
 
     # reset cursor to start-of-line, erasing previous characters
 
-    echo -en "\033[1K\r"
+    if Session.Debug.To.Screen.IsNot; then
+        echo -en "\033[1K\r"
+    else
+        Display
+    fi
 
     }
 
