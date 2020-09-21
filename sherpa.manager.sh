@@ -888,8 +888,6 @@ Packages.Install.Independents()
 
     if QPKG.Installed Entware && QPKG.NotEnabled Entware && QPKG.Enable Entware; then
         ReloadProfile
-
-        [[ $NAS_QPKG_ARCH != none ]] && ($OPKG_CMD list-installed | $GREP_CMD -q par2cmdline) && $OPKG_CMD remove par2cmdline > /dev/null 2>&1
     fi
 
     if QPKGs.Install.IsAny || QPKGs.Reinstall.IsAny || QPKGs.Upgrade.IsAny || User.Opts.Dependencies.Check.IsSet; then
@@ -1096,6 +1094,8 @@ Packages.Uninstall()
             return 1
         fi
     fi
+
+    [[ $NAS_QPKG_ARCH != none ]] && (QPKG.ToBeInstalled Par2 || QPKG.Installed Par2) && ($OPKG_CMD list-installed | $GREP_CMD -q par2cmdline) && $OPKG_CMD remove par2cmdline > /dev/null 2>&1
 
     return 0
 
