@@ -2683,9 +2683,9 @@ DisplayAsProjectSyntaxIndentedExample()
     if [[ -z $1 ]]; then
         printf "       # %s\n" "$PROJECT_NAME $2"
     elif [[ ${1: -1} = '!' ]]; then
-        printf "\n  - %s \n       # %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$PROJECT_NAME $2"
+        printf "\n   %s \n       # %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$PROJECT_NAME $2"
     else
-        printf "\n  - %s:\n       # %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$PROJECT_NAME $2"
+        printf "\n   %s:\n       # %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$PROJECT_NAME $2"
     fi
 
     Session.LineSpace.Clear
@@ -2717,9 +2717,9 @@ DisplayAsSyntaxIndentedExample()
     if [[ -z $1 ]]; then
         printf "       # %s\n" "$2"
     elif [[ ${1: -1} = '!' ]]; then
-        printf "\n  - %s \n       # %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$2"
+        printf "\n   %s \n       # %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$2"
     else
-        printf "\n  - %s:\n       # %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$2"
+        printf "\n   %s:\n       # %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$2"
     fi
 
     Session.LineSpace.Clear
@@ -2732,7 +2732,7 @@ DisplayAsHelpPackageNameExample()
     # $1 = description
     # $2 = example syntax
 
-    printf "    %-20s %s\n" "$1" "$2"
+    printf "   %-20s %s\n" "$1" "$2"
 
     }
 
@@ -2878,7 +2878,7 @@ Help.Packages.Show()
         DisplayAsHelpPackageNameExample "$package_name_message" "$package_note_message"
     done
 
-    DisplayAsProjectSyntaxIndentedExample "example: to install $(FormatAsPackageName SABnzbd)" '--install SABnzbd'
+    DisplayAsProjectSyntaxExample "example: to install $(FormatAsPackageName SABnzbd)" '--install SABnzbd'
 
     DisplayAsProjectSyntaxExample "abbreviations may also be used to specify $(FormatAsHelpPackages). To see these" '--abs'
 
