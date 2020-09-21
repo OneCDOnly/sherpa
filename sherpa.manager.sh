@@ -715,9 +715,9 @@ Session.Validate()
 
     GetTheseQPKGDeps "${QPKGs_initial_array[*]}"
     ExcludeInstalledQPKGs "$QPKG_pre_download_list"
-    DebugInfo "QPKGs required: $(QPKGs.Download.Print)"
+    DebugInfo "QPKGs required: $(Packages.Download.Print)"
 
-    if [[ $(QPKGs.Download.Count) -eq 1 && ${QPKGs_download_array[0]} = Entware ]] && QPKG.NotInstalled Entware; then
+    if [[ $(Packages.Download.Count) -eq 1 && ${QPKGs_download_array[0]} = Entware ]] && QPKG.NotInstalled Entware; then
         ShowAsNote "It's not necessary to install $(FormatAsPackageName Entware) on its own. It will be installed as-required with your other $PROJECT_NAME packages. :)"
     fi
 
@@ -855,7 +855,7 @@ Session.Results()
 
     }
 
-QPKGs.Install.Independents()
+Packages.Install.Independents()
     {
 
     # install independent QPKGs first, in the order they were declared
@@ -952,7 +952,7 @@ QPKGs.RestartNotUpgraded()
 
     }
 
-QPKGs.Install.Dependants()
+Packages.Install.Dependants()
     {
 
     Session.Abort.IsSet && return
@@ -1029,7 +1029,7 @@ QPKGs.Install.Dependants()
 
     }
 
-QPKGs.Download()
+Packages.Download()
     {
 
     Session.Abort.IsSet && return
@@ -1045,7 +1045,7 @@ QPKGs.Download()
 
     }
 
-QPKGs.Remove()
+Packages.Uninstall()
     {
 
     Session.Abort.IsSet && return
@@ -1723,16 +1723,16 @@ QPKG.Download()
 
     if [[ -e $local_pathfile ]]; then
         if FileMatchesMD5 "$local_pathfile" "$remote_filename_md5"; then
-            DebugInfo "existing QPKG checksum correct $(FormatAsFileName "$local_filename")"
+            DebugInfo "existing package checksum correct $(FormatAsFileName "$local_filename")"
         else
-            DebugWarning "existing QPKG checksum incorrect $(FormatAsFileName "$local_filename")"
-            DebugInfo "deleting QPKG $(FormatAsFileName "$local_filename")"
+            DebugWarning "existing package checksum incorrect $(FormatAsFileName "$local_filename")"
+            DebugInfo "deleting $(FormatAsFileName "$local_filename")"
             rm -f "$local_pathfile"
         fi
     fi
 
     if Session.Error.IsNot && [[ ! -e $local_pathfile ]]; then
-        ShowAsProc "downloading QPKG $(FormatAsFileName "$remote_filename")"
+        ShowAsProc "downloading $(FormatAsFileName "$remote_filename")"
 
         [[ -e $log_pathfile ]] && rm -f "$log_pathfile"
 
@@ -1746,9 +1746,9 @@ QPKG.Download()
 
         if [[ $result -eq 0 ]]; then
             if FileMatchesMD5 "$local_pathfile" "$remote_filename_md5"; then
-                ShowAsDone "downloaded QPKG $(FormatAsFileName "$remote_filename")"
+                ShowAsDone "downloaded $(FormatAsFileName "$remote_filename")"
             else
-                ShowAsError "downloaded QPKG checksum incorrect $(FormatAsFileName "$local_pathfile")"
+                ShowAsError "downloaded package checksum incorrect $(FormatAsFileName "$local_pathfile")"
                 returncode=1
             fi
         else
@@ -1792,16 +1792,16 @@ QPKG.Install()
 
     QPKG.Installed "$1" && re='re-'
 
-    ShowAsProcLong "${re}installing QPKG $(FormatAsFileName "$target_file")"
+    ShowAsProcLong "${re}installing $(FormatAsFileName "$target_file")"
 
     sh "$local_pathfile" > "$log_pathfile" 2>&1
     result=$?
 
     if [[ $result -eq 0 || $result -eq 10 ]]; then
-        ShowAsDone "${re}installed QPKG $(FormatAsFileName "$target_file")"
+        ShowAsDone "${re}installed $(FormatAsFileName "$target_file")"
         GetQPKGServiceStatus "$1"
     else
-        ShowAsError "QPKG ${re}installation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $result)"
+        ShowAsError "${re}installation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $result)"
         DebugErrorFile "$log_pathfile"
         returncode=1
     fi
@@ -1840,16 +1840,16 @@ QPKG.Upgrade()
     local log_pathfile="$local_pathfile.$UPGRADE_LOG_FILE"
     target_file=$($BASENAME_CMD "$local_pathfile")
 
-    ShowAsProcLong "${prefix}upgrading QPKG $(FormatAsFileName "$target_file")"
+    ShowAsProcLong "${prefix}upgrading $(FormatAsFileName "$target_file")"
 
     sh "$local_pathfile" > "$log_pathfile" 2>&1
     result=$?
 
     if [[ $result -eq 0 || $result -eq 10 ]]; then
-        ShowAsDone "${prefix}upgraded QPKG $(FormatAsFileName "$target_file")"
+        ShowAsDone "${prefix}upgraded $(FormatAsFileName "$target_file")"
         GetQPKGServiceStatus "$1"
     else
-        ShowAsError "QPKG ${prefix}upgrade failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $result)"
+        ShowAsError "${prefix}upgrade failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $result)"
         DebugErrorFile "$log_pathfile"
         returncode=1
     fi
@@ -1963,7 +1963,7 @@ QPKG.Enable()
     fi
 
     if QPKG.NotEnabled "$1"; then
-        DebugProc "enabling QPKG icon"
+        DebugProc "enabling package icon"
         $SETCFG_CMD "$1" Enable TRUE -f $APP_CENTER_CONFIG_PATHFILE
         DebugDone "$(FormatAsPackageName "$1") icon enabled"
     fi
@@ -3095,7 +3095,7 @@ QPKGs.Restart.IsNone()
 
     }
 
-QPKGs.Download.Add()
+Packages.Download.Add()
     {
 
     [[ ${QPKGs_download_array[*]} != *"$1"* ]] && QPKGs_download_array+=("$1")
@@ -3104,35 +3104,35 @@ QPKGs.Download.Add()
 
     }
 
-QPKGs.Download.Array()
+Packages.Download.Array()
     {
 
     echo "${QPKGs_download_array[@]}"
 
     }
 
-QPKGs.Download.Count()
+Packages.Download.Count()
     {
 
     echo "${#QPKGs_download_array[@]}"
 
     }
 
-QPKGs.Download.Print()
+Packages.Download.Print()
     {
 
     echo "${QPKGs_download_array[*]}"
 
     }
 
-QPKGs.Download.IsAny()
+Packages.Download.IsAny()
     {
 
     [[ ${#QPKGs_download_array[@]} -gt 0 ]]
 
     }
 
-QPKGs.Download.IsNone()
+Packages.Download.IsNone()
     {
 
     [[ ${#QPKGs_download_array[@]} -eq 0 ]]
@@ -4299,9 +4299,9 @@ Objects.Create()
 
 Session.Init || exit 1
 Session.Validate
-QPKGs.Download
-QPKGs.Remove
-QPKGs.Install.Independents
-QPKGs.Install.Dependants
+Packages.Download
+Packages.Uninstall
+Packages.Install.Independents
+Packages.Install.Dependants
 Session.Results
 Session.Error.IsNot
