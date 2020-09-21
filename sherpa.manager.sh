@@ -903,6 +903,8 @@ Packages.Install.Independents()
         QPKGs.Dependant.Restart
     fi
 
+    QPKG.ToBeInstalled Par2 && QPKG.Installed SABnzbd && QPKGs.Restart.Add SABnzbd  # KLUDGE: only until dep restarting is fixed
+
     DebugFuncExit
     return 0
 
