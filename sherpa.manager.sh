@@ -421,23 +421,20 @@ Session.ParseArguments()
 
     local user_args=($($TR_CMD '[A-Z]' '[a-z]' <<< "$USER_ARGS_RAW"))
     local arg=''
-    local current_operation=''
-    local operation_force=false
-    local target_app=''
+    local action='install_'     # make 'install' the default action. This is a user-convenience only.
+    local action_force=false
+    local target_package=''
 
     for arg in "${user_args[@]}"; do
         case $arg in
             -d|d|--debug|debug)
                 Session.Debug.To.Screen.Set
-                current_operation=''
-                ;;
-            --force|force)
-                operation_force=true
+                action=''
                 ;;
             --ignore-space|ignore-space)
                 ignore_space_arg='--force-space'
                 DebugVar ignore_space_arg
-                current_operation=''
+                action=''
                 ;;
             -h|h|--help|help)
                 User.Opts.Help.Basic.Set
@@ -498,110 +495,113 @@ Session.ParseArguments()
                 ;;
             -c|c|--check|check|--check-all|check-all)
                 User.Opts.Dependencies.Check.Set
-                current_operation=''
+                action=''
                 ;;
             --install-all|install-all)
                 User.Opts.Apps.All.Install.Set
-                current_operation=''
+                action=''
                 ;;
             --uninstall-all-applications-please|uninstall-all-applications-please)
                 User.Opts.Apps.All.Uninstall.Set
-                current_operation=''
+                action=''
                 ;;
             --restart-all|restart-all)
                 User.Opts.Apps.All.Restart.Set
-                current_operation=''
+                action=''
                 ;;
             --upgrade-all|upgrade-all)
                 User.Opts.Apps.All.Upgrade.Set
-                current_operation=''
+                action=''
                 ;;
             --backup-all)
                 User.Opts.Apps.All.Backup.Set
-                current_operation=''
+                action=''
                 ;;
             --restore-all)
                 User.Opts.Apps.All.Restore.Set
-                current_operation=''
+                action=''
                 ;;
             --status-all|status-all)
                 User.Opts.Apps.All.Status.Set
-                current_operation=''
+                action=''
                 ;;
             --install|install)
-                current_operation=install_
-                operation_force=false
+                action=install_
+                action_force=false
                 ;;
             --uninstall|uninstall)
-                current_operation=uninstall_
-                operation_force=false
+                action=uninstall_
+                action_force=false
                 ;;
             --reinstall|reinstall)
-                current_operation=reinstall_
-                operation_force=false
+                action=reinstall_
+                action_force=false
                 ;;
             --restart|restart)
-                current_operation=restart_
-                operation_force=false
+                action=restart_
+                action_force=false
                 ;;
             --up|up|--upgrade|upgrade)
-                current_operation=upgrade_
-                operation_force=false
+                action=upgrade_
+                action_force=false
                 ;;
             --backup|backup)
-                current_operation=backup_
-                operation_force=false
+                action=backup_
+                action_force=false
                 ;;
             --restore|restore)
-                current_operation=restore_
-                operation_force=false
+                action=restore_
+                action_force=false
                 ;;
             --status|status)
-                current_operation=status_
-                operation_force=false
+                action=status_
+                action_force=false
+                ;;
+            --force|force)
+                action_force=true
                 ;;
             *)
-                target_app=$(MatchAbbrvToQPKGName "$arg")
-                [[ -z $target_app ]] && continue
+                target_package=$(MatchAbbrvToQPKGName "$arg")
+                [[ -z $target_package ]] && continue
 
-                case $current_operation in
+                case $action in
                     install_)
-                        if QPKG.NotInstalled "$target_app"; then
-                            QPKGs.Install.Add "$target_app"
+                        if QPKG.NotInstalled "$target_package"; then
+                            QPKGs.Install.Add "$target_package"
                         else
-                            QPKGs.Reinstall.Add "$target_app"
+                            QPKGs.Reinstall.Add "$target_package"
                         fi
                         ;;
                     uninstall_)
-                        QPKGs.Uninstall.Add "$target_app"
+                        QPKGs.Uninstall.Add "$target_package"
                         ;;
                     reinstall_)
-                        if QPKG.NotInstalled "$target_app"; then
-                            QPKGs.Install.Add "$target_app"
+                        if QPKG.NotInstalled "$target_package"; then
+                            QPKGs.Install.Add "$target_package"
                         else
-                            QPKGs.Reinstall.Add "$target_app"
+                            QPKGs.Reinstall.Add "$target_package"
                         fi
                         ;;
                     restart_)
-                        QPKGs.Restart.Add "$target_app"
+                        QPKGs.Restart.Add "$target_package"
                         ;;
                     upgrade_)
-                        if QPKG.NotInstalled "$target_app"; then
-                            QPKGs.Install.Add "$target_app"
-                        elif [[ $operation_force = true ]]; then
-                            QPKGs.ForceUpgrade.Add "$target_app"
+                        if QPKG.NotInstalled "$target_package"; then
+                            QPKGs.Install.Add "$target_package"
+                        elif [[ $action_force = true ]]; then
+                            QPKGs.ForceUpgrade.Add "$target_package"
                         else
-                            QPKGs.Upgrade.Add "$target_app"
+                            QPKGs.Upgrade.Add "$target_package"
                         fi
                         ;;
                     backup_)
-                        QPKG.Installed "$target_app" && QPKGs_to_backup+=($target_app)
+                        QPKG.Installed "$target_package" && QPKGs_to_backup+=($target_package)
                         ;;
                     restore_)
-                        QPKG.Installed "$target_app" && QPKGs_to_restore+=($target_app)
+                        QPKG.Installed "$target_package" && QPKGs_to_restore+=($target_package)
                         ;;
                     status_)
-                        QPKGs_to_status+=($target_app)
+                        QPKGs_to_status+=($target_package)
                         ;;
                 esac
         esac
