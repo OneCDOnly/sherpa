@@ -400,7 +400,6 @@ Session.Init()
     QPKGs.NotInstalled.Build
     QPKGs.Upgradable.Build
     CalcNASQPKGArch
-    SmartCR
 
     return 0
 
@@ -617,6 +616,7 @@ Session.Validate()
 
     Session.Debug.To.File.Set
     Session.ParseArguments
+    SmartCR
     Session.Display.Clean.IsSet && return
 
     if Session.Debug.To.Screen.IsNot; then
@@ -2520,9 +2520,7 @@ SmartCR()
 
     # reset cursor to start-of-line, erasing previous characters
 
-    if Session.Debug.To.Screen.IsNot; then
-        echo -en "\033[1K\r"
-    fi
+    Session.Debug.To.Screen.IsNot && echo -en "\033[1K\r"
 
     }
 
