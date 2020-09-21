@@ -2569,7 +2569,9 @@ Help.Actions.Show()
 
     DisplayAsIndentedHelpExample 'reinstall the following packages' "--reinstall $(FormatAsHelpPackages)"
 
-    DisplayAsIndentedHelpExample 'upgrade the following packages' "--upgrade $(FormatAsHelpPackages) $(FormatAsHelpOptions)"
+    DisplayAsIndentedHelpExample 'upgrade the following packages' "--upgrade $(FormatAsHelpPackages)"
+
+    DisplayAsIndentedHelpExample 'force-upgrade the following packages' "--upgrade --force $(FormatAsHelpPackages)"
 
     DisplayAsIndentedHelpExample 'upgrade the following packages and the internal applications' "--restart $(FormatAsHelpPackages)"
 
@@ -2579,9 +2581,9 @@ Help.Actions.Show()
 #
 #   DisplayAsIndentedHelpExample '--status'
 
-    DisplayAsHelpExample 'actions affecting all packages can be seen with' '--actions-all'
+    DisplayAsHelpExample "$(FormatAsHelpActions) affecting all packages can be seen with" '--actions-all'
 
-    DisplayAsHelpExample 'multiple actions are supported like this' '--install sabnzbd sickchill --uninstall lazy nzbget --upgrade nzbtomedia --restart transmission'
+    DisplayAsHelpExample "multiple $(FormatAsHelpActions) are supported like this" '--install sabnzbd sickchill --uninstall lazy nzbget --upgrade nzbtomedia --restart transmission'
 
     return 0
 
@@ -2647,9 +2649,9 @@ Help.Packages.Show()
         DisplayAsHelpPackageNameExample "$package_name_message" "$package_note_message"
     done
 
-    DisplayAsIndentedHelpExample 'example: to install SABnzbd' '--install SABnzbd'
+    DisplayAsIndentedHelpExample "example: to install $(FormatAsPackageName SABnzbd)" '--install SABnzbd'
 
-    DisplayAsIndentedHelpExample 'package abbreviations may also be used. To see these' '--abs'
+    DisplayAsHelpExample "abbreviations may also be used to specify $(FormatAsHelpPackages). To see these" '--abs'
 
     return 0
 
@@ -2663,8 +2665,6 @@ Help.Options.Show()
     Display "* $(FormatAsHelpOptions) usage examples:"
 
     DisplayAsIndentedHelpExample 'process one or more packages and show live debugging information' "$(FormatAsHelpActions) $(FormatAsHelpPackages) --debug"
-
-    DisplayAsIndentedHelpExample 'force-upgrade the following packages' "--upgrade $(FormatAsHelpPackages) --force"
 
     DisplayAsIndentedHelpExample 'display helpful tips and shortcuts' '--tips'
 
@@ -2766,7 +2766,7 @@ Help.PackageAbbreviations.Show()
         fi
     done
 
-    DisplayAsHelpExample 'example: to install SABnzbd, Mylar3 and nzbToMedia all-at-once' 'install sab my nzb2'
+    DisplayAsHelpExample "example: to install $(FormatAsPackageName SABnzbd), $(FormatAsPackageName Mylar3) and $(FormatAsPackageName nzbToMedia) all-at-once" 'install sab my nzb2'
 
     return 0
 
