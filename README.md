@@ -4,10 +4,6 @@
 
 A mini-package-manager to install various media-management apps into QNAP NAS.
 
-**sherpa** is able to install several search and download apps. App configuration will be retained when upgrading or reinstalling apps.
-
-Any existing installation of Entware will be used automatically. If Entware is not installed, a version appropriate to your NAS will be installed.
-
 ---
 ## Before you begin
 
@@ -27,11 +23,6 @@ This is a **command-line** package manager. If you're not comfortable using the 
 [![Deluge](images/Deluge-web.gif)](https://dev.deluge-torrent.org/)
 
 ---
-## Current status
-
-STABLE
-
----
 ## Requirements
 
 Any model QNAP NAS with at-least 1GB RAM and running QTS 4.0 or-later.
@@ -39,44 +30,17 @@ Any model QNAP NAS with at-least 1GB RAM and running QTS 4.0 or-later.
 ---
 ## Usage
 
-1) Install the latest **sherpa** QPKG! Available [here](https://github.com/OneCDOnly/sherpa/tree/master/QPKGs/sherpa/build).
+1) Install the **sherpa** QPKG, available [here](https://github.com/OneCDOnly/sherpa/tree/master/QPKGs/sherpa/build).
 
 1) [SSH](https://www.qnap.com/en/how-to/knowledge-base/article/how-to-access-qnap-nas-by-ssh/) into your NAS as the 'admin' user,
 
-4) Then, to install apps, run **sherpa** with the names of your required apps as arguments.
-
-For example: to install SABnzbd and SickChill, use:
+4) Then at the command prompt, run:
 
 ```
-sherpa install SABnzbd SickChill
+sherpa
 ```
 
-... or:
-
-```
-sherpa install nzbToMedia
-
-sherpa install LazyLibrarian
-
-sherpa install Medusa
-
-sherpa install SickGear
-
-sherpa install Mylar3
-
-sherpa install NZBGet
-
-sherpa install Transmission
-
-sherpa install Deluge-server
-
-sherpa install Deluge-web
-```
-
-Or, install everything!
-```
-sherpa --install-all
-```
+... and follow the help from there.
 
 ---
 ## Known issues
@@ -135,15 +99,6 @@ This option will install any additional QPKGs or IPKGs to support any sherpa-ins
 sherpa check-all
 ```
 
-
----
-## Firmware compatibility
-
-* QTS 4.4.x - **OK**
-* QTS 4.3.x - **OK**
-* QTS 4.2.x - **OK**
-* QTS 4.1.x or earlier - **Unknown**
-
 ---
 ## Notes
 
@@ -163,8 +118,11 @@ cd $(getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backu
 
 Each QPKG has a single [config.tar.gz] file to backup into. Each new backup replaces the old one (so, no versioning available).
 
-Example: to backup SABnzbd:
-
+Example: to backup SABnzbd, you can use **sherpa**:
+```
+sherpa backup sab
+```
+... or use the QPKG service script:
 ```
 /etc/init.d/sabnzbd3.sh backup
 ```
