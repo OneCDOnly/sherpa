@@ -151,7 +151,7 @@ Session.Init()
     IsSysFileExist $Z7_CMD || return 1
     IsSysFileExist $ZIP_CMD || return 1
 
-    ShowAsProc "building virtual objects"
+    ShowAsProc "building objects"
 
     # user-selected options
     Objects.Create User.Opts.Help.Abbreviations
@@ -223,9 +223,6 @@ Session.Init()
     ignore_space_arg=''
     code_pointer=0
     [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg='--insecure' || curl_insecure_arg=''
-
-    SmartCR
-    ShowAsProc "building arrays"
 
     # runtime arrays
     QPKGs_to_backup=()
