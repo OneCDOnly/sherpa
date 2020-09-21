@@ -97,6 +97,8 @@ Session.Init()
     readonly RESTART_LOG_FILE=restart.log
     readonly UPDATE_LOG_FILE=update.log
     readonly UPGRADE_LOG_FILE=upgrade.log
+    readonly BACKUP_LOG_FILE=backup.log
+    readonly RESTORE_LOG_FILE=restore.log
     readonly DEFAULT_SHARES_PATHFILE=/etc/config/def_share.info
     local -r ULINUX_PATHFILE=/etc/config/uLinux.conf
     readonly PLATFORM_PATHFILE=/etc/platform.conf
@@ -204,6 +206,7 @@ Session.Init()
     readonly PACKAGE_VERSION=$(GetInstalledQPKGVersion "$PROJECT_NAME")
     readonly WORK_PATH=$($GETCFG_CMD $PROJECT_NAME Install_Path -f $APP_CENTER_CONFIG_PATHFILE)/repo
     readonly DEBUG_LOG_PATHFILE=$($GETCFG_CMD $PROJECT_NAME Install_Path -f $APP_CENTER_CONFIG_PATHFILE)/$DEBUG_LOG_FILE
+    readonly BACKUP_PATH=$($GETCFG_CMD SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
     readonly QPKG_DL_PATH=$WORK_PATH/qpkgs
     readonly IPKG_DL_PATH=$WORK_PATH/ipkgs.downloads
     readonly IPKG_CACHE_PATH=$WORK_PATH/ipkgs.cache
@@ -591,10 +594,10 @@ Session.ParseArguments()
                         fi
                         ;;
                     backup_)
-                        QPKG.Installed "$target_package" && QPKGs_to_backup+=($target_package)
+                        QPKGs.Backup.Add "$target_package"
                         ;;
                     restore_)
-                        QPKG.Installed "$target_package" && QPKGs_to_restore+=($target_package)
+                        QPKGs.Restore.Add "$target_package"
                         ;;
                     status_)
                         QPKGs_to_status+=($target_package)
@@ -612,7 +615,7 @@ Session.Validate()
 
     code_pointer=2
     local package=''
-    local QPKGs_initial_array=()
+    local QPKGs_initial_download_array=()
 
     Session.Debug.To.File.Set
     Session.ParseArguments
@@ -701,18 +704,18 @@ Session.Validate()
     fi
 
     if User.Opts.Apps.All.Install.IsSet; then
-        QPKGs_initial_array+=($(QPKGs.NotInstalled.Array))
+        QPKGs_initial_download_array+=($(QPKGs.NotInstalled.Array))
     elif User.Opts.Apps.All.Upgrade.IsSet; then
-        QPKGs_initial_array=($(QPKGs.Upgradable.Array))
+        QPKGs_initial_download_array=($(QPKGs.Upgradable.Array))
         Session.Pips.Install.Set
     elif User.Opts.Dependencies.Check.IsSet; then
-        QPKGs_initial_array+=($(QPKGs.Installed.Array))
+        QPKGs_initial_download_array+=($(QPKGs.Installed.Array))
         Session.Pips.Install.Set
     else
-        QPKGs_initial_array+=(${QPKGs_to_install[*]} ${QPKGs_to_reinstall[*]} ${QPKGs_to_upgrade[*]} ${QPKGs_to_force_upgrade[*]})
+        QPKGs_initial_download_array+=(${QPKGs_to_install[*]} ${QPKGs_to_reinstall[*]} ${QPKGs_to_upgrade[*]} ${QPKGs_to_force_upgrade[*]})
     fi
 
-    GetTheseQPKGDeps "${QPKGs_initial_array[*]}"
+    GetTheseQPKGDeps "${QPKGs_initial_download_array[*]}"
     ExcludeInstalledQPKGs "$QPKG_pre_download_list"
     DebugInfo "QPKGs required: $(Packages.Download.Print)"
 
@@ -730,9 +733,9 @@ Session.Validate()
         done
     fi
 
-    if QPKGs.Install.IsNone && QPKGs.Uninstall.IsNone && QPKGs.Reinstall.IsNone && QPKGs.Restart.IsNone && QPKGs.Upgrade.IsNone && QPKGs.ForceUpgrade.IsNone && [[ ${#QPKGs_to_backup[@]} -eq 0 && ${#QPKGs_to_restore[@]} -eq 0 && ${#QPKGs_to_status[@]} -eq 0 ]]; then
-        if User.Opts.Apps.All.Install.IsNot && User.Opts.Apps.All.Uninstall.IsNot && User.Opts.Apps.All.Restart.IsNot && User.Opts.Apps.All.Upgrade.IsNot && User.Opts.Apps.All.Backup.IsNot && User.Opts.Apps.All.Restore.IsNot; then
-            if User.Opts.Apps.All.Status.IsNot && User.Opts.Dependencies.Check.IsNot && User.Opts.Apps.List.Installed.IsNot; then
+    if QPKGs.Install.IsNone && QPKGs.Uninstall.IsNone && QPKGs.Reinstall.IsNone && QPKGs.Restart.IsNone && QPKGs.Upgrade.IsNone && QPKGs.ForceUpgrade.IsNone && QPKGs.Backup.IsNone && QPKGs.Restore.IsNone && [[ ${#QPKGs_to_status[@]} -eq 0 ]]; then
+        if User.Opts.Apps.All.Install.IsNot && User.Opts.Apps.All.Uninstall.IsNot && User.Opts.Apps.All.Restart.IsNot && User.Opts.Apps.All.Upgrade.IsNot && User.Opts.Apps.All.Backup.IsNot && User.Opts.Apps.All.Restore.IsNot && User.Opts.Apps.All.Status.IsNot; then
+            if User.Opts.Dependencies.Check.IsNot && User.Opts.Apps.List.Installed.IsNot; then
                 ShowAsError 'nothing to do'
                 User.Opts.Help.Basic.Set
                 Session.Abort.Set
@@ -811,58 +814,6 @@ Session.Validate()
 
     }
 
-Session.Results()
-    {
-
-    if User.Opts.Versions.View.IsSet; then
-        Display "package: $PACKAGE_VERSION"
-        Display "loader: $LOADER_SCRIPT_VERSION"
-        Display "manager: $MANAGER_SCRIPT_VERSION"
-    elif User.Opts.Log.View.IsSet; then
-        LogViewer.Show
-    elif User.Opts.Apps.List.Installed.IsSet; then
-        QPKGs.Installed.Show
-    elif User.Opts.Apps.List.NotInstalled.IsSet; then
-        QPKGs.NotInstalled.Show
-    elif User.Opts.Apps.All.List.IsSet; then
-        QPKGs.All.Show
-    fi
-
-    if User.Opts.Help.Basic.IsSet; then
-        Help.Basic.Show
-        Help.Basic.Example.Show
-    elif User.Opts.Help.Actions.IsSet; then
-        Help.Actions.Show
-    elif User.Opts.Help.ActionsAll.IsSet; then
-        Help.ActionsAll.Show
-    elif User.Opts.Help.Packages.IsSet; then
-        Help.Packages.Show
-    elif User.Opts.Help.Options.IsSet; then
-        Help.Options.Show
-    elif User.Opts.Help.Problems.IsSet; then
-        Help.Problems.Show
-    elif User.Opts.Help.Tips.IsSet; then
-        Help.Tips.Show
-    elif User.Opts.Help.Abbreviations.IsSet; then
-        Help.PackageAbbreviations.Show
-    fi
-
-    User.Opts.Log.Paste.IsSet && PasteLogOnline
-    Session.Summary.IsSet && Session.Summary.Show
-    Session.SuggestIssue.IsSet && Help.Issue.Show
-    DisplayLineSpaceIfNoneAlready       # final on-screen line space
-
-    DebugInfoThinSeparator
-    DebugScript 'finished' "$($DATE_CMD)"
-    DebugScript 'elapsed time' "$(ConvertSecsToMinutes "$(($($DATE_CMD +%s)-$([[ -n $SCRIPT_STARTSECONDS ]] && echo "$SCRIPT_STARTSECONDS" || echo "1")))")"
-    DebugInfoThickSeparator
-
-    Session.LockFile.Release
-
-    return 0
-
-    }
-
 Packages.Install.Independents()
     {
 
@@ -912,48 +863,6 @@ Packages.Install.Independents()
     fi
 
     QPKG.ToBeInstalled Par2 && QPKG.Installed SABnzbd && QPKGs.Restart.Add SABnzbd  # KLUDGE: only until dep restarting is fixed
-
-    DebugFuncExit
-    return 0
-
-    }
-
-QPKGs.Dependant.Restart()
-    {
-
-    # restart all sherpa QPKGs except independents. Needed if user has requested each QPKG update itself.
-
-    Session.Abort.IsSet && return
-
-    [[ -z ${SHERPA_DEP_QPKGs[*]} || ${#SHERPA_DEP_QPKGs[@]} -eq 0 ]] && return
-
-    DebugFuncEntry
-    local package=''
-
-    for package in "${SHERPA_DEP_QPKGs[@]}"; do
-        QPKG.Enabled "$package" && QPKG.Restart "$package"
-    done
-
-    DebugFuncExit
-    return 0
-
-    }
-
-QPKGs.RestartNotUpgraded()
-    {
-
-    # restart all sherpa QPKGs except those that were just upgraded.
-
-    Session.Abort.IsSet && return
-
-    [[ -z ${SHERPA_DEP_QPKGs[*]} || ${#SHERPA_DEP_QPKGs[@]} -eq 0 ]] && return
-
-    DebugFuncEntry
-    local package=''
-
-    for package in "${SHERPA_DEP_QPKGs[@]}"; do
-        QPKG.Enabled "$package" && ! QPKG.Upgradable "$package" && QPKG.Restart "$package"
-    done
 
     DebugFuncExit
     return 0
@@ -1058,6 +967,8 @@ Packages.Uninstall()
 
     Session.Abort.IsSet && return
 
+    DebugFuncEntry
+
     local response=''
     local package=''
     local previous_pip3_module_list=$WORK_PATH/pip3.prev.installed.list
@@ -1107,6 +1018,177 @@ Packages.Uninstall()
 
     [[ $NAS_QPKG_ARCH != none ]] && (QPKG.ToBeInstalled Par2 || QPKG.Installed Par2) && ($OPKG_CMD list-installed | $GREP_CMD -q par2cmdline) && $OPKG_CMD remove par2cmdline > /dev/null 2>&1
 
+    DebugFuncExit
+    return 0
+
+    }
+
+Packages.Backup()
+    {
+
+    Session.Abort.IsSet && return
+
+    DebugFuncEntry
+
+    local package=''
+
+    if User.Opts.Apps.All.Backup.IsSet; then
+        if [[ ${#QPKGs_installed[*]} -gt 0 ]]; then
+            for package in "${SHERPA_DEP_QPKGs[@]}"; do
+                if QPKG.Installed "$package"; then
+                    QPKG.Backup "$package"
+                fi
+            done
+        fi
+    else
+        if [[ ${#QPKGs_to_backup[*]} -gt 0 ]]; then
+            for package in "${SHERPA_DEP_QPKGs[@]}"; do
+                if [[ ${QPKGs_to_backup[*]} == *"$package"* ]]; then
+                    if QPKG.Installed "$package"; then
+                        QPKG.Backup "$package"
+                    else
+                        ShowAsNote "unable to backup $(FormatAsPackageName "$package") configuration as it's not installed"
+                    fi
+                fi
+            done
+        fi
+    fi
+
+    DisplayAsSyntaxExample "the default backup location can be accessed by running" "cd $BACKUP_PATH"
+
+    DebugFuncExit
+    return 0
+
+    }
+
+Packages.Restore()
+    {
+
+    Session.Abort.IsSet && return
+
+    DebugFuncEntry
+
+    local package=''
+
+    if User.Opts.Apps.All.Restore.IsSet; then
+        if [[ ${#QPKGs_installed[*]} -gt 0 ]]; then
+            for package in "${SHERPA_DEP_QPKGs[@]}"; do
+                if QPKG.Installed "$package"; then
+                    QPKG.Restore "$package"
+                fi
+            done
+        fi
+    else
+        if [[ ${#QPKGs_to_restore[*]} -gt 0 ]]; then
+            for package in "${SHERPA_DEP_QPKGs[@]}"; do
+                if [[ ${QPKGs_to_restore[*]} == *"$package"* ]]; then
+                    if QPKG.Installed "$package"; then
+                        QPKG.Restore "$package"
+                    else
+                        ShowAsNote "unable to restore $(FormatAsPackageName "$package") configuration as it's not installed"
+                    fi
+                fi
+            done
+        fi
+    fi
+
+    DisplayAsSyntaxExample "the default backup location can be accessed by running" "cd $BACKUP_PATH"
+
+    DebugFuncExit
+    return 0
+
+    }
+
+Session.Results()
+    {
+
+    if User.Opts.Versions.View.IsSet; then
+        Display "package: $PACKAGE_VERSION"
+        Display "loader: $LOADER_SCRIPT_VERSION"
+        Display "manager: $MANAGER_SCRIPT_VERSION"
+    elif User.Opts.Log.View.IsSet; then
+        LogViewer.Show
+    elif User.Opts.Apps.List.Installed.IsSet; then
+        QPKGs.Installed.Show
+    elif User.Opts.Apps.List.NotInstalled.IsSet; then
+        QPKGs.NotInstalled.Show
+    elif User.Opts.Apps.All.List.IsSet; then
+        QPKGs.All.Show
+    fi
+
+    if User.Opts.Help.Basic.IsSet; then
+        Help.Basic.Show
+        Help.Basic.Example.Show
+    elif User.Opts.Help.Actions.IsSet; then
+        Help.Actions.Show
+    elif User.Opts.Help.ActionsAll.IsSet; then
+        Help.ActionsAll.Show
+    elif User.Opts.Help.Packages.IsSet; then
+        Help.Packages.Show
+    elif User.Opts.Help.Options.IsSet; then
+        Help.Options.Show
+    elif User.Opts.Help.Problems.IsSet; then
+        Help.Problems.Show
+    elif User.Opts.Help.Tips.IsSet; then
+        Help.Tips.Show
+    elif User.Opts.Help.Abbreviations.IsSet; then
+        Help.PackageAbbreviations.Show
+    fi
+
+    User.Opts.Log.Paste.IsSet && PasteLogOnline
+    Session.Summary.IsSet && Session.Summary.Show
+    Session.SuggestIssue.IsSet && Help.Issue.Show
+    DisplayLineSpaceIfNoneAlready       # final on-screen line space
+
+    DebugInfoThinSeparator
+    DebugScript 'finished' "$($DATE_CMD)"
+    DebugScript 'elapsed time' "$(ConvertSecsToMinutes "$(($($DATE_CMD +%s)-$([[ -n $SCRIPT_STARTSECONDS ]] && echo "$SCRIPT_STARTSECONDS" || echo "1")))")"
+    DebugInfoThickSeparator
+
+    Session.LockFile.Release
+
+    return 0
+
+    }
+
+QPKGs.Dependant.Restart()
+    {
+
+    # restart all sherpa QPKGs except independents. Needed if user has requested each QPKG update itself.
+
+    Session.Abort.IsSet && return
+
+    [[ -z ${SHERPA_DEP_QPKGs[*]} || ${#SHERPA_DEP_QPKGs[@]} -eq 0 ]] && return
+
+    DebugFuncEntry
+    local package=''
+
+    for package in "${SHERPA_DEP_QPKGs[@]}"; do
+        QPKG.Enabled "$package" && QPKG.Restart "$package"
+    done
+
+    DebugFuncExit
+    return 0
+
+    }
+
+QPKGs.RestartNotUpgraded()
+    {
+
+    # restart all sherpa QPKGs except those that were just upgraded.
+
+    Session.Abort.IsSet && return
+
+    [[ -z ${SHERPA_DEP_QPKGs[*]} || ${#SHERPA_DEP_QPKGs[@]} -eq 0 ]] && return
+
+    DebugFuncEntry
+    local package=''
+
+    for package in "${SHERPA_DEP_QPKGs[@]}"; do
+        QPKG.Enabled "$package" && ! QPKG.Upgradable "$package" && QPKG.Restart "$package"
+    done
+
+    DebugFuncExit
     return 0
 
     }
@@ -1592,7 +1674,7 @@ GetQPKGServiceStatus()
                 ;;
         esac
     else
-        DebugWarning "unable to determine status of $(FormatAsPackageName "$1") service. It may be a package earlier than 200816c that doesn't support service operation results."
+        DebugWarning "unable to get status of $(FormatAsPackageName "$1") service. It may be a non-sherpa package, or a package earlier than 200816c that doesn't support service results."
     fi
 
     }
@@ -1840,7 +1922,7 @@ QPKG.Upgrade()
 
     if [[ -z $1 ]]; then
         DebugError "no package name specified "
-        code_pointer=8
+        code_pointer=9
         return 1
     fi
 
@@ -1891,34 +1973,32 @@ QPKG.Uninstall()
 
     if [[ -z $1 ]]; then
         DebugError "no package name specified "
-        code_pointer=9
+        code_pointer=10
+        return 1
+    elif QPKG.NotInstalled "$1"; then
+        DebugQPKG "$(FormatAsPackageName "$1")" "not installed"
+        code_pointer=11
         return 1
     fi
 
     local result=0
+    local qpkg_installed_path="$($GETCFG_CMD "$1" Install_Path -f $APP_CENTER_CONFIG_PATHFILE)"
 
-    qpkg_installed_path="$($GETCFG_CMD "$1" Install_Path -f $APP_CENTER_CONFIG_PATHFILE)"
-    result=$?
+    if [[ -e $qpkg_installed_path/.uninstall.sh ]]; then
+        ShowAsProc "uninstalling $(FormatAsPackageName "$1")"
 
-    if [[ $result -eq 0 ]]; then
-        if [[ -e $qpkg_installed_path/.uninstall.sh ]]; then
-            ShowAsProc "uninstalling $(FormatAsPackageName "$1")"
+        "$qpkg_installed_path"/.uninstall.sh > /dev/null
+        result=$?
 
-            "$qpkg_installed_path"/.uninstall.sh > /dev/null
-            result=$?
-
-            if [[ $result -eq 0 ]]; then
-                ShowAsDone "uninstalled $(FormatAsPackageName "$1")"
-            else
-                ShowAsError "unable to uninstall $(FormatAsPackageName "$1") $(FormatAsExitcode $result)"
-                return 1
-            fi
+        if [[ $result -eq 0 ]]; then
+            ShowAsDone "uninstalled $(FormatAsPackageName "$1")"
+        else
+            ShowAsError "unable to uninstall $(FormatAsPackageName "$1") $(FormatAsExitcode $result)"
+            return 1
         fi
-
-        $RMCFG_CMD "$1" -f $APP_CENTER_CONFIG_PATHFILE
-    else
-        DebugQPKG "$(FormatAsPackageName "$1")" "not installed $(FormatAsExitcode $result)"
     fi
+
+    $RMCFG_CMD "$1" -f $APP_CENTER_CONFIG_PATHFILE
 
     return 0
 
@@ -1937,7 +2017,11 @@ QPKG.Restart()
 
     if [[ -z $1 ]]; then
         DebugError "no package name specified "
-        code_pointer=10
+        code_pointer=12
+        return 1
+    elif QPKG.NotInstalled "$1"; then
+        DebugQPKG "$(FormatAsPackageName "$1")" "not installed"
+        code_pointer=13
         return 1
     fi
 
@@ -1963,7 +2047,6 @@ QPKG.Restart()
         else
             $CAT_CMD "$log_pathfile" >> "$DEBUG_LOG_PATHFILE"
         fi
-        # meh, continue anyway...
         return 1
     fi
 
@@ -1978,7 +2061,11 @@ QPKG.Enable()
 
     if [[ -z $1 ]]; then
         DebugError "no package name specified "
-        code_pointer=11
+        code_pointer=14
+        return 1
+    elif QPKG.NotInstalled "$1"; then
+        DebugQPKG "$(FormatAsPackageName "$1")" "not installed"
+        code_pointer=15
         return 1
     fi
 
@@ -1987,6 +2074,106 @@ QPKG.Enable()
         $SETCFG_CMD "$1" Enable TRUE -f $APP_CENTER_CONFIG_PATHFILE
         DebugDone "$(FormatAsPackageName "$1") icon enabled"
     fi
+
+    }
+
+QPKG.Backup()
+    {
+
+    # calls the service script for the QPKG named in $1 and runs a backup operation
+
+    # input:
+    #   $1 = QPKG name
+
+    # output:
+    #   $? = 0 if successful, 1 if failed
+
+    if [[ -z $1 ]]; then
+        DebugError "no package name specified "
+        code_pointer=16
+        return 1
+    elif QPKG.NotInstalled "$1"; then
+        DebugQPKG "$(FormatAsPackageName "$1")" "not installed"
+        code_pointer=17
+        return 1
+    fi
+
+    local result=0
+    local package_init_pathfile=$(GetInstalledQPKGServicePathFile "$1")
+    local log_pathfile=$WORK_PATH/$1.$BACKUP_LOG_FILE
+
+    ShowAsProc "backing-up $(FormatAsPackageName "$1") configuration"
+
+    sh "$package_init_pathfile" backup > "$log_pathfile" 2>&1
+    result=$?
+
+    if [[ $result -eq 0 ]]; then
+        ShowAsDone "backed-up $(FormatAsPackageName "$1") configuration"
+        GetQPKGServiceStatus "$1"
+    else
+        ShowAsWarning "Could not backup $(FormatAsPackageName "$1") configuration $(FormatAsExitcode $result)"
+
+        if Session.Debug.To.Screen.IsSet; then
+            DebugInfoThickSeparator
+            $CAT_CMD "$log_pathfile"
+            DebugInfoThickSeparator
+        else
+            $CAT_CMD "$log_pathfile" >> "$DEBUG_LOG_PATHFILE"
+        fi
+        return 1
+    fi
+
+    return 0
+
+    }
+
+QPKG.Restore()
+    {
+
+    # calls the service script for the QPKG named in $1 and runs a restore operation
+
+    # input:
+    #   $1 = QPKG name
+
+    # output:
+    #   $? = 0 if successful, 1 if failed
+
+    if [[ -z $1 ]]; then
+        DebugError "no package name specified "
+        code_pointer=18
+        return 1
+    elif QPKG.NotInstalled "$1"; then
+        DebugQPKG "$(FormatAsPackageName "$1")" "not installed"
+        code_pointer=19
+        return 1
+    fi
+
+    local result=0
+    local package_init_pathfile=$(GetInstalledQPKGServicePathFile "$1")
+    local log_pathfile=$WORK_PATH/$1.$RESTORE_LOG_FILE
+
+    ShowAsProc "restoring $(FormatAsPackageName "$1") configuration"
+
+    sh "$package_init_pathfile" restore > "$log_pathfile" 2>&1
+    result=$?
+
+    if [[ $result -eq 0 ]]; then
+        ShowAsDone "restored $(FormatAsPackageName "$1") configuration"
+        GetQPKGServiceStatus "$1"
+    else
+        ShowAsWarning "Could not restore $(FormatAsPackageName "$1") configuration $(FormatAsExitcode $result)"
+
+        if Session.Debug.To.Screen.IsSet; then
+            DebugInfoThickSeparator
+            $CAT_CMD "$log_pathfile"
+            DebugInfoThickSeparator
+        else
+            $CAT_CMD "$log_pathfile" >> "$DEBUG_LOG_PATHFILE"
+        fi
+        return 1
+    fi
+
+    return 0
 
     }
 
@@ -2104,7 +2291,7 @@ GetAllIPKGDepsToDownload()
     #   $IPKG_download_size = byte-count of packages to be downloaded
 
     if IsNotSysFileExist $OPKG_CMD || IsNotSysFileExist $GNU_GREP_CMD; then
-        code_pointer=12
+        code_pointer=20
         return 1
     fi
 
@@ -2471,7 +2658,23 @@ IsIPKGInstalled()
 
 #### DisplayAs... functions are for direct screen output only.
 
-DisplayAsIndentedHelpExample()
+DisplayAsProjectSyntaxExample()
+    {
+
+    # $1 = description
+    # $2 = example syntax
+
+    if [[ ${1: -1} = '!' ]]; then
+        printf "\n* %s \n       # %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$PROJECT_NAME $2"
+    else
+        printf "\n* %s:\n       # %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$PROJECT_NAME $2"
+    fi
+
+    Session.LineSpace.Clear
+
+    }
+
+DisplayAsProjectSyntaxIndentedExample()
     {
 
     # $1 = description
@@ -2489,16 +2692,34 @@ DisplayAsIndentedHelpExample()
 
     }
 
-DisplayAsHelpExample()
+DisplayAsSyntaxExample()
     {
 
     # $1 = description
     # $2 = example syntax
 
     if [[ ${1: -1} = '!' ]]; then
-        printf "\n* %s \n       # %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$PROJECT_NAME $2"
+        printf "\n* %s \n       # %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$2"
     else
-        printf "\n* %s:\n       # %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$PROJECT_NAME $2"
+        printf "\n* %s:\n       # %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$2"
+    fi
+
+    Session.LineSpace.Clear
+
+    }
+
+DisplayAsSyntaxIndentedExample()
+    {
+
+    # $1 = description
+    # $2 = example syntax
+
+    if [[ -z $1 ]]; then
+        printf "       # %s\n" "$2"
+    elif [[ ${1: -1} = '!' ]]; then
+        printf "\n  - %s \n       # %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$2"
+    else
+        printf "\n  - %s:\n       # %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$2"
     fi
 
     Session.LineSpace.Clear
@@ -2552,13 +2773,13 @@ Help.Basic.Show()
 Help.Basic.Example.Show()
     {
 
-    DisplayAsIndentedHelpExample "to learn more about available $(FormatAsHelpActions), type" '--actions'
+    DisplayAsProjectSyntaxIndentedExample "to learn more about available $(FormatAsHelpActions), type" '--actions'
 
-    DisplayAsIndentedHelpExample '' '--actions-all'
+    DisplayAsProjectSyntaxIndentedExample '' '--actions-all'
 
-    DisplayAsIndentedHelpExample "to learn more about available $(FormatAsHelpPackages), type" '--packages'
+    DisplayAsProjectSyntaxIndentedExample "to learn more about available $(FormatAsHelpPackages), type" '--packages'
 
-    DisplayAsIndentedHelpExample "or, for more about available $(FormatAsHelpOptions), type" '--options'
+    DisplayAsProjectSyntaxIndentedExample "or, for more about available $(FormatAsHelpOptions), type" '--options'
 
     return 0
 
@@ -2571,27 +2792,27 @@ Help.Actions.Show()
     DisplayLineSpaceIfNoneAlready
     Display "* $(FormatAsHelpActions) usage examples:"
 
-    DisplayAsIndentedHelpExample 'install the following packages' "--install $(FormatAsHelpPackages)"
+    DisplayAsProjectSyntaxIndentedExample 'install the following packages' "--install $(FormatAsHelpPackages)"
 
-    DisplayAsIndentedHelpExample 'uninstall the following packages' "--uninstall $(FormatAsHelpPackages)"
+    DisplayAsProjectSyntaxIndentedExample 'uninstall the following packages' "--uninstall $(FormatAsHelpPackages)"
 
-    DisplayAsIndentedHelpExample 'reinstall the following packages' "--reinstall $(FormatAsHelpPackages)"
+    DisplayAsProjectSyntaxIndentedExample 'reinstall the following packages' "--reinstall $(FormatAsHelpPackages)"
 
-    DisplayAsIndentedHelpExample 'upgrade the following packages and the internal applications' "--upgrade $(FormatAsHelpPackages)"
+    DisplayAsProjectSyntaxIndentedExample 'upgrade the following packages and the internal applications' "--upgrade $(FormatAsHelpPackages)"
 
-    DisplayAsIndentedHelpExample 'force-upgrade the following packages and the internal applications' "--upgrade --force $(FormatAsHelpPackages)"
+    DisplayAsProjectSyntaxIndentedExample 'force-upgrade the following packages and the internal applications' "--upgrade --force $(FormatAsHelpPackages)"
 
-    DisplayAsIndentedHelpExample 'upgrade the internal applications only' "--restart $(FormatAsHelpPackages)"
+    DisplayAsProjectSyntaxIndentedExample 'upgrade the internal applications only' "--restart $(FormatAsHelpPackages)"
 
-#   DisplayAsIndentedHelpExample '--backup'
-#
-#   DisplayAsIndentedHelpExample '--restore'
-#
-#   DisplayAsIndentedHelpExample '--status'
+    DisplayAsProjectSyntaxIndentedExample 'backup the internal application configurations to the default backup location' "--backup $(FormatAsHelpPackages)"
 
-    DisplayAsHelpExample "$(FormatAsHelpActions) to affect all packages can be seen with" '--actions-all'
+    DisplayAsProjectSyntaxIndentedExample 'restore the internal application configurations from the default backup location' "--restore $(FormatAsHelpPackages)"
 
-    DisplayAsHelpExample "multiple $(FormatAsHelpActions) are supported like this" '--install sabnzbd sickchill --uninstall lazy nzbget --upgrade nzbtomedia --restart transmission'
+#   DisplayAsProjectSyntaxIndentedExample '--status'
+
+    DisplayAsProjectSyntaxExample "$(FormatAsHelpActions) to affect all packages can be seen with" '--actions-all'
+
+    DisplayAsProjectSyntaxExample "multiple $(FormatAsHelpActions) are supported like this" '--install sabnzbd sickchill --uninstall lazy nzbget --upgrade nzbtomedia --restart transmission'
 
     return 0
 
@@ -2604,27 +2825,27 @@ Help.ActionsAll.Show()
     DisplayLineSpaceIfNoneAlready
     Display "* $(FormatAsHelpActions) usage examples:"
 
-    DisplayAsIndentedHelpExample 'install everything!' '--install-all'
+    DisplayAsProjectSyntaxIndentedExample 'install everything!' '--install-all'
 
-    DisplayAsIndentedHelpExample "uninstall everything! (except $(FormatAsPackageName Par2) and $(FormatAsPackageName Entware) for now)" '--uninstall-all-packages-please'
+    DisplayAsProjectSyntaxIndentedExample "uninstall everything! (except $(FormatAsPackageName Par2) and $(FormatAsPackageName Entware) for now)" '--uninstall-all-packages-please'
 
-    DisplayAsIndentedHelpExample 'upgrade all installed packages (including the internal applications)' '--upgrade-all'
+    DisplayAsProjectSyntaxIndentedExample 'upgrade all installed packages (including the internal applications)' '--upgrade-all'
 
-    DisplayAsIndentedHelpExample 'restart all packages (only upgrades the internal applications, not the packages)' '--restart-all'
+    DisplayAsProjectSyntaxIndentedExample 'restart all packages (only upgrades the internal applications, not the packages)' '--restart-all'
 
-    DisplayAsIndentedHelpExample 'ensure all application dependencies are installed' '--check-all'
+    DisplayAsProjectSyntaxIndentedExample 'ensure all application dependencies are installed' '--check-all'
 
-    DisplayAsIndentedHelpExample 'list all installable packages' '--list'
+    DisplayAsProjectSyntaxIndentedExample 'list all installable packages' '--list'
 
-    DisplayAsIndentedHelpExample 'list all installed packages' '--list-installed'
+    DisplayAsProjectSyntaxIndentedExample 'list all installed packages' '--list-installed'
 
-    DisplayAsIndentedHelpExample 'list all packages that are not installed' '--list-not-installed'
+    DisplayAsProjectSyntaxIndentedExample 'list all packages that are not installed' '--list-not-installed'
 
-#   DisplayAsIndentedHelpExample '--backup-all'
-#
-#   DisplayAsIndentedHelpExample '--restore-all'
-#
-#   DisplayAsIndentedHelpExample '--status-all'
+    DisplayAsProjectSyntaxIndentedExample 'backup all application configurations to the default backup location' '--backup-all'
+
+    DisplayAsProjectSyntaxIndentedExample 'restore all application configurations from the default backup location' '--restore-all'
+
+#   DisplayAsProjectSyntaxIndentedExample '--status-all'
 
     return 0
 
@@ -2657,9 +2878,9 @@ Help.Packages.Show()
         DisplayAsHelpPackageNameExample "$package_name_message" "$package_note_message"
     done
 
-    DisplayAsIndentedHelpExample "example: to install $(FormatAsPackageName SABnzbd)" '--install SABnzbd'
+    DisplayAsProjectSyntaxIndentedExample "example: to install $(FormatAsPackageName SABnzbd)" '--install SABnzbd'
 
-    DisplayAsHelpExample "abbreviations may also be used to specify $(FormatAsHelpPackages). To see these" '--abs'
+    DisplayAsProjectSyntaxExample "abbreviations may also be used to specify $(FormatAsHelpPackages). To see these" '--abs'
 
     return 0
 
@@ -2672,11 +2893,11 @@ Help.Options.Show()
     DisplayLineSpaceIfNoneAlready
     Display "* $(FormatAsHelpOptions) usage examples:"
 
-    DisplayAsIndentedHelpExample 'process one or more packages and show live debugging information' "$(FormatAsHelpActions) $(FormatAsHelpPackages) --debug"
+    DisplayAsProjectSyntaxIndentedExample 'process one or more packages and show live debugging information' "$(FormatAsHelpActions) $(FormatAsHelpPackages) --debug"
 
-    DisplayAsIndentedHelpExample 'display helpful tips and shortcuts' '--tips'
+    DisplayAsProjectSyntaxIndentedExample 'display helpful tips and shortcuts' '--tips'
 
-    DisplayAsIndentedHelpExample 'display troubleshooting options' '--problems'
+    DisplayAsProjectSyntaxIndentedExample 'display troubleshooting options' '--problems'
 
     return 0
 
@@ -2689,17 +2910,17 @@ Help.Problems.Show()
     DisplayLineSpaceIfNoneAlready
     Display "* usage examples when dealing with problems:"
 
-    DisplayAsIndentedHelpExample 'process one or more packages and show live debugging information' "$(FormatAsHelpActions) $(FormatAsHelpPackages) --debug"
+    DisplayAsProjectSyntaxIndentedExample 'process one or more packages and show live debugging information' "$(FormatAsHelpActions) $(FormatAsHelpPackages) --debug"
 
-    DisplayAsIndentedHelpExample 'ensure all application dependencies are installed' '--check-all'
+    DisplayAsProjectSyntaxIndentedExample 'ensure all application dependencies are installed' '--check-all'
 
-    DisplayAsIndentedHelpExample "don't check free-space on target filesystem when installing $(FormatAsPackageName Entware) packages" '--ignore-space'
+    DisplayAsProjectSyntaxIndentedExample "don't check free-space on target filesystem when installing $(FormatAsPackageName Entware) packages" '--ignore-space'
 
-    DisplayAsIndentedHelpExample 'restart all installed packages (upgrades the internal applications, not the packages)' '--restart-all'
+    DisplayAsProjectSyntaxIndentedExample 'restart all installed packages (upgrades the internal applications, not the packages)' '--restart-all'
 
-    DisplayAsIndentedHelpExample "view the $(FormatAsScriptTitle) debug log" '--log'
+    DisplayAsProjectSyntaxIndentedExample "view the $(FormatAsScriptTitle) debug log" '--log'
 
-    DisplayAsIndentedHelpExample "upload the most-recent $LOG_TAIL_LINES entries in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" '--paste'
+    DisplayAsProjectSyntaxIndentedExample "upload the most-recent $LOG_TAIL_LINES entries in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" '--paste'
 
     Display "\n$(ColourTextBrightOrange "* If you need help, please include a copy of your") $(FormatAsScriptTitle) $(ColourTextBrightOrange "log for analysis!")"
 
@@ -2715,9 +2936,9 @@ Help.Issue.Show()
 
     Display "\n* Alternatively, post on the QNAP NAS Community Forum:\n\thttps://forum.qnap.com/viewtopic.php?f=320&t=132373"
 
-    DisplayAsIndentedHelpExample "view the $(FormatAsScriptTitle) debug log" '--log'
+    DisplayAsProjectSyntaxIndentedExample "view the $(FormatAsScriptTitle) debug log" '--log'
 
-    DisplayAsIndentedHelpExample "upload the most-recent $LOG_TAIL_LINES entries in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" '--paste'
+    DisplayAsProjectSyntaxIndentedExample "upload the most-recent $LOG_TAIL_LINES entries in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" '--paste'
 
     Display "\n$(ColourTextBrightOrange '* If you need help, please include a copy of your') $(FormatAsScriptTitle) $(ColourTextBrightOrange 'log for analysis!')"
 
@@ -2732,19 +2953,21 @@ Help.Tips.Show()
     DisplayLineSpaceIfNoneAlready
     Display "* helpful tips and shortcuts:"
 
-    DisplayAsIndentedHelpExample "install all available $(FormatAsScriptTitle) packages" '--install-all'
+    DisplayAsProjectSyntaxIndentedExample "install all available $(FormatAsScriptTitle) packages" '--install-all'
 
-    DisplayAsIndentedHelpExample 'package abbreviations may also be used. To see these' '--abs'
+    DisplayAsProjectSyntaxIndentedExample 'package abbreviations may also be used. To see these' '--abs'
 
-    DisplayAsIndentedHelpExample 'ensure all application dependencies are installed' '--check-all'
+    DisplayAsProjectSyntaxIndentedExample 'ensure all application dependencies are installed' '--check-all'
 
-    DisplayAsIndentedHelpExample 'restart all packages (only upgrades the internal applications, not the packages)' '--restart-all'
+    DisplayAsProjectSyntaxIndentedExample 'restart all packages (only upgrades the internal applications, not the packages)' '--restart-all'
 
-    DisplayAsIndentedHelpExample 'upgrade all installed packages (including the internal applications)' '--upgrade-all'
+    DisplayAsProjectSyntaxIndentedExample 'upgrade all installed packages (including the internal applications)' '--upgrade-all'
 
-    DisplayAsIndentedHelpExample "upload the most-recent $LOG_TAIL_LINES entries in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" '--paste'
+    DisplayAsProjectSyntaxIndentedExample "upload the most-recent $LOG_TAIL_LINES entries in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" '--paste'
 
-    DisplayAsIndentedHelpExample 'display all package-manager scripts versions' '--version'
+    DisplayAsProjectSyntaxIndentedExample 'display all package-manager scripts versions' '--version'
+
+    DisplayAsSyntaxExample "the default application backup location can be accessed by running" "cd $BACKUP_PATH"
 
     echo -e "\n$(ColourTextBrightOrange "* If you need help, please include a copy of your") $(FormatAsScriptTitle) $(ColourTextBrightOrange "log for analysis!")"
 
@@ -2774,7 +2997,7 @@ Help.PackageAbbreviations.Show()
         fi
     done
 
-    DisplayAsHelpExample "example: to install $(FormatAsPackageName SABnzbd), $(FormatAsPackageName Mylar3) and $(FormatAsPackageName nzbToMedia) all-at-once" 'install sab my nzb2'
+    DisplayAsProjectSyntaxExample "example: to install $(FormatAsPackageName SABnzbd), $(FormatAsPackageName Mylar3) and $(FormatAsPackageName nzbToMedia) all-at-once" 'install sab my nzb2'
 
     return 0
 
@@ -2803,13 +3026,6 @@ QPKGs.Install.Add()
     [[ ${QPKGs_to_install[*]} != *"$1"* ]] && QPKGs_to_install+=("$1")
 
     return 0
-
-    }
-
-QPKGs.Install.Array()
-    {
-
-    echo "${QPKGs_to_install[@]}"
 
     }
 
@@ -2880,13 +3096,6 @@ QPKGs.Uninstall.Add()
 
     }
 
-QPKGs.Uninstall.Array()
-    {
-
-    echo "${QPKGs_to_uninstall[@]}"
-
-    }
-
 QPKGs.Uninstall.Print()
     {
 
@@ -2914,13 +3123,6 @@ QPKGs.Reinstall.Add()
     [[ ${QPKGs_to_reinstall[*]} != *"$1"* ]] && QPKGs_to_reinstall+=("$1")
 
     return 0
-
-    }
-
-QPKGs.Reinstall.Array()
-    {
-
-    echo "${QPKGs_to_reinstall[@]}"
 
     }
 
@@ -3115,19 +3317,72 @@ QPKGs.Restart.IsNone()
 
     }
 
+QPKGs.Backup.Add()
+    {
+
+    [[ ${QPKGs_to_backup[*]} != *"$1"* ]] && QPKGs_to_backup+=("$1")
+
+    return 0
+
+    }
+
+QPKGs.Backup.Count()
+    {
+
+    echo "${#QPKGs_to_backup[@]}"
+
+    }
+
+QPKGs.Backup.IsAny()
+    {
+
+    [[ ${#QPKGs_to_backup[@]} -gt 0 ]]
+
+    }
+
+QPKGs.Backup.IsNone()
+    {
+
+    [[ ${#QPKGs_to_backup[@]} -eq 0 ]]
+
+    }
+
+QPKGs.Restore.Add()
+    {
+
+    [[ ${QPKGs_to_restore[*]} != *"$1"* ]] && QPKGs_to_restore+=("$1")
+
+    return 0
+
+    }
+
+QPKGs.Restore.Count()
+    {
+
+    echo "${#QPKGs_to_restore[@]}"
+
+    }
+
+QPKGs.Restore.IsAny()
+    {
+
+    [[ ${#QPKGs_to_restore[@]} -gt 0 ]]
+
+    }
+
+QPKGs.Restore.IsNone()
+    {
+
+    [[ ${#QPKGs_to_restore[@]} -eq 0 ]]
+
+    }
+
 Packages.Download.Add()
     {
 
     [[ ${QPKGs_download_array[*]} != *"$1"* ]] && QPKGs_download_array+=("$1")
 
     return 0
-
-    }
-
-Packages.Download.Array()
-    {
-
-    echo "${QPKGs_download_array[@]}"
 
     }
 
@@ -4323,5 +4578,7 @@ Packages.Download
 Packages.Uninstall
 Packages.Install.Independents
 Packages.Install.Dependants
+Packages.Backup
+Packages.Restore
 Session.Results
 Session.Error.IsNot
