@@ -1212,19 +1212,28 @@ DisplayNewQPKGVersions()
     # $? = 0 if all packages are up-to-date
     # $? = 1 if one or more packages can be upgraded
 
-    local names=''
     local msg=''
+    local packages_left_to_upgrade=()
+    local package_names=''
 
     if [[ ${#QPKGS_upgradable[@]} -gt 0 ]]; then
-        if [[ ${#QPKGS_upgradable[@]} -eq 1 ]]; then
+        for package in "${QPKGS_upgradable[@]}"; do
+            if [[ ${QPKGs_to_upgrade[*]} != *"$package"* ]]; then
+                packages_left_to_upgrade+=("$package")
+            fi
+        done
+
+        if [[ ${#packages_left_to_upgrade[@]} -eq 0 ]]; then
+            return 0
+        elif [[ ${#packages_left_to_upgrade[@]} -eq 1 ]]; then
             msg='An upgraded package is'
         else
             msg='Upgraded packages are'
         fi
 
-        names=${QPKGS_upgradable[*]}
+        package_names=${packages_left_to_upgrade[*]}
 
-        ShowAsNote "$msg available for $(ColourTextBrightYellow "${names// /, }")"
+        ShowAsNote "$msg available for $(ColourTextBrightYellow "${package_names// /, }")"
         return 1
     fi
 
