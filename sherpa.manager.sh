@@ -610,7 +610,6 @@ Session.ParseArguments()
 Session.Validate()
     {
 
-    code_pointer=2
     local package=''
     local QPKGs_initial_download_array=()
 
@@ -686,7 +685,7 @@ Session.Validate()
 
     if User.Opts.Apps.All.Backup.IsSet && User.Opts.Apps.All.Restore.IsSet; then
         ShowAsError 'no point running a backup then a restore operation'
-        code_pointer=3
+        code_pointer=2
         return 1
     fi
 
@@ -699,6 +698,8 @@ Session.Validate()
             return 1
         fi
     fi
+
+    DebugInfoThinSeparator
 
     if User.Opts.Apps.All.Install.IsSet; then
         QPKGs_initial_download_array+=($(QPKGs.NotInstalled.Array))
@@ -1416,7 +1417,7 @@ UpdateEntware()
     {
 
     if IsNotSysFileExist $OPKG_CMD; then
-        code_pointer=4
+        code_pointer=3
         return 1
     fi
 
@@ -1797,7 +1798,7 @@ QPKG.Download()
 
     if [[ -z $1 ]]; then
         DebugError "no package name specified"
-        code_pointer=5
+        code_pointer=4
         return 1
     fi
 
@@ -1812,11 +1813,11 @@ QPKG.Download()
 
     if [[ -z $remote_url ]]; then
         DebugWarning "no URL found for this package [$1]"
-        code_pointer=6
+        code_pointer=5
         return
     elif [[ -z $remote_filename_md5 ]]; then
         DebugWarning "no remote MD5 found for this package [$1]"
-        code_pointer=7
+        code_pointer=6
         return
     fi
 
@@ -1871,7 +1872,7 @@ QPKG.Install()
 
     if [[ -z $1 ]]; then
         DebugError "no package name specified "
-        code_pointer=8
+        code_pointer=7
         return 1
     fi
 
@@ -1919,7 +1920,7 @@ QPKG.Upgrade()
 
     if [[ -z $1 ]]; then
         DebugError "no package name specified "
-        code_pointer=9
+        code_pointer=8
         return 1
     fi
 
@@ -1970,11 +1971,11 @@ QPKG.Uninstall()
 
     if [[ -z $1 ]]; then
         DebugError "no package name specified "
-        code_pointer=10
+        code_pointer=9
         return 1
     elif QPKG.NotInstalled "$1"; then
         DebugQPKG "$(FormatAsPackageName "$1")" "not installed"
-        code_pointer=11
+        code_pointer=10
         return 1
     fi
 
@@ -2014,11 +2015,11 @@ QPKG.Restart()
 
     if [[ -z $1 ]]; then
         DebugError "no package name specified "
-        code_pointer=12
+        code_pointer=11
         return 1
     elif QPKG.NotInstalled "$1"; then
         DebugQPKG "$(FormatAsPackageName "$1")" "not installed"
-        code_pointer=13
+        code_pointer=12
         return 1
     fi
 
@@ -2058,11 +2059,11 @@ QPKG.Enable()
 
     if [[ -z $1 ]]; then
         DebugError "no package name specified "
-        code_pointer=14
+        code_pointer=13
         return 1
     elif QPKG.NotInstalled "$1"; then
         DebugQPKG "$(FormatAsPackageName "$1")" "not installed"
-        code_pointer=15
+        code_pointer=14
         return 1
     fi
 
@@ -2087,11 +2088,11 @@ QPKG.Backup()
 
     if [[ -z $1 ]]; then
         DebugError "no package name specified "
-        code_pointer=16
+        code_pointer=15
         return 1
     elif QPKG.NotInstalled "$1"; then
         DebugQPKG "$(FormatAsPackageName "$1")" "not installed"
-        code_pointer=17
+        code_pointer=16
         return 1
     fi
 
@@ -2137,11 +2138,11 @@ QPKG.Restore()
 
     if [[ -z $1 ]]; then
         DebugError "no package name specified "
-        code_pointer=18
+        code_pointer=17
         return 1
     elif QPKG.NotInstalled "$1"; then
         DebugQPKG "$(FormatAsPackageName "$1")" "not installed"
-        code_pointer=19
+        code_pointer=18
         return 1
     fi
 
@@ -2288,7 +2289,7 @@ GetAllIPKGDepsToDownload()
     #   $IPKG_download_size = byte-count of packages to be downloaded
 
     if IsNotSysFileExist $OPKG_CMD || IsNotSysFileExist $GNU_GREP_CMD; then
-        code_pointer=20
+        code_pointer=19
         return 1
     fi
 
