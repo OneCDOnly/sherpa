@@ -619,7 +619,7 @@ Session.Validate()
         DisplayLineSpaceIfNoneAlready
     fi
 
-    DisplayNewQPKGVersions
+    User.Opts.Apps.All.Upgrade.IsNot && DisplayNewQPKGVersions
     Session.Abort.IsSet && return
 
     DebugInfoThickSeparator
@@ -713,8 +713,14 @@ Session.Validate()
 
     if User.Opts.Apps.All.Install.IsSet; then
         QPKGs_initial_download_array+=($(QPKGs.NotInstalled.Array))
+        for package in "${QPKGs_initial_download_array[@]}"; do
+            QPKGs.Install.Add "$package"
+        done
     elif User.Opts.Apps.All.Upgrade.IsSet; then
         QPKGs_initial_download_array=($(QPKGs.Upgradable.Array))
+        for package in "${QPKGs_initial_download_array[@]}"; do
+            QPKGs.Upgrade.Add "$package"
+        done
         Session.Pips.Install.Set
     elif User.Opts.Dependencies.Check.IsSet; then
         QPKGs_initial_download_array+=($(QPKGs.Installed.Array))
@@ -895,7 +901,7 @@ Packages.Install.Dependants()
     elif User.Opts.Apps.All.Upgrade.IsSet; then
         if [[ ${#QPKGS_upgradable[*]} -gt 0 ]]; then
             for package in "${QPKGS_upgradable[@]}"; do
-                [[ $package != Entware ]] && QPKG.Install "$package"     # KLUDGE: Entware has already been installed, don't do it again.
+                [[ $package != Entware ]] && QPKG.Upgrade "$package"     # KLUDGE: Entware has already been installed, don't do it again.
             done
         fi
         QPKGs.RestartNotUpgraded
