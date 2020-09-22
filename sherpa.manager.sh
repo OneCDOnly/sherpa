@@ -822,6 +822,121 @@ Session.Validate()
 
     }
 
+Packages.Download()
+    {
+
+    Session.Abort.IsSet && return
+
+    DebugFuncEntry
+
+    for package in "${QPKGs_download_array[@]}"; do
+        QPKG.Download "$package"
+    done
+
+    DebugFuncExit
+    return 0
+
+    }
+
+Packages.Backup()
+    {
+
+    Session.Abort.IsSet && return
+
+    DebugFuncEntry
+
+    local package=''
+
+    if User.Opts.Apps.All.Backup.IsSet; then
+        if [[ ${#QPKGs_installed[*]} -gt 0 ]]; then
+            for package in "${SHERPA_DEP_QPKGs[@]}"; do
+                if QPKG.Installed "$package"; then
+                    QPKG.Backup "$package"
+                fi
+            done
+        fi
+        DisplayAsSyntaxExample "the default backup location can be accessed by running" "cd $(Session.Backup.Path)"
+    else
+        if [[ ${#QPKGs_to_backup[*]} -gt 0 ]]; then
+            for package in "${SHERPA_DEP_QPKGs[@]}"; do
+                if [[ ${QPKGs_to_backup[*]} == *"$package"* ]]; then
+                    if QPKG.Installed "$package"; then
+                        QPKG.Backup "$package"
+                    else
+                        ShowAsNote "unable to backup $(FormatAsPackageName "$package") configuration as it's not installed"
+                    fi
+                fi
+            done
+            DisplayAsSyntaxExample "the default backup location can be accessed by running" "cd $(Session.Backup.Path)"
+        fi
+    fi
+
+    DebugFuncExit
+    return 0
+
+    }
+
+Packages.Uninstall()
+    {
+
+    Session.Abort.IsSet && return
+
+    DebugFuncEntry
+
+    local response=''
+    local package=''
+    local previous_pip3_module_list=$WORK_PATH/pip3.prev.installed.list
+    local previous_opkg_package_list=$WORK_PATH/opkg.prev.installed.list
+
+    local count="${#SHERPA_QPKG_NAME[@]}"
+    local index=0
+
+    # remove dependant packages first
+    for package in "${SHERPA_DEP_QPKGs[@]}"; do
+        if [[ ${QPKGs_to_uninstall[*]} == *"$package"* ]]; then
+            if QPKG.Installed "$package"; then
+                QPKG.Uninstall "$package"
+            else
+                ShowAsNote "unable to uninstall $(FormatAsPackageName "$package") as it's not installed"
+            fi
+        fi
+    done
+
+    # TODO: still need something here to remove independent packages if they're in the $QPKGs_to_uninstall array
+
+    if QPKG.ToBeReinstalled Entware; then
+        ShowAsNote "Reinstalling $(FormatAsPackageName Entware) will remove all IPKGs and Python modules, and only those required to support your $PROJECT_NAME apps will be reinstalled."
+        ShowAsNote "Your installed IPKG list will be saved to $(FormatAsFileName "$previous_opkg_package_list")"
+        ShowAsNote "Your installed Python module list will be saved to $(FormatAsFileName "$previous_pip3_module_list")"
+        (QPKG.Installed SABnzbdplus || QPKG.Installed Headphones) && ShowAsWarning "Also, the $(FormatAsPackageName SABnzbdplus) and $(FormatAsPackageName Headphones) packages CANNOT BE REINSTALLED as Python 2.7.16 is no-longer available."
+
+        if AskQuiz "Press 'Y' to remove all current $(FormatAsPackageName Entware) IPKGs (and their configurations), or any other key to abort"; then
+            ShowAsProc 'saving package and Python module lists'
+
+            $pip3_cmd freeze > "$previous_pip3_module_list"
+            DebugDone "saved current $(FormatAsPackageName pip3) module list to $(FormatAsFileName "$previous_pip3_module_list")"
+
+            $OPKG_CMD list-installed > "$previous_opkg_package_list"
+            DebugDone "saved current $(FormatAsPackageName Entware) IPKG list to $(FormatAsFileName "$previous_opkg_package_list")"
+
+            ShowAsDone 'package and Python module lists saved'
+            QPKG.Uninstall Entware
+        else
+            DebugInfoThinSeparator
+            DebugScript 'user abort'
+            Session.Abort.Set
+            Session.Summary.Clear
+            return 1
+        fi
+    fi
+
+    [[ $NAS_QPKG_ARCH != none ]] && (QPKG.ToBeInstalled Par2 || QPKG.Installed Par2) && ($OPKG_CMD list-installed | $GREP_CMD -q par2cmdline) && $OPKG_CMD remove par2cmdline > /dev/null 2>&1
+
+    DebugFuncExit
+    return 0
+
+    }
+
 Packages.Install.Independents()
     {
 
@@ -898,7 +1013,6 @@ Packages.Install.Dependants()
                 [[ $package != Entware ]] && QPKG.Upgrade "$package"     # KLUDGE: Entware has already been installed, don't do it again.
             done
         fi
-        QPKGs.RestartNotUpgraded
     else
         if [[ ${#QPKGs_to_install[*]} -gt 0 ]]; then
             for package in "${SHERPA_DEP_QPKGs[@]}"; do
@@ -931,22 +1045,6 @@ Packages.Install.Dependants()
                 fi
             done
         fi
-
-        if [[ ${#QPKGs_to_restart[*]} -gt 0 ]]; then
-            for package in "${SHERPA_DEP_QPKGs[@]}"; do
-                if [[ ${QPKGs_to_restart[*]} == *"$package"* ]]; then
-                    if QPKG.Installed "$package"; then
-                        if QPKG.ToNotBeInstalled "$package" && QPKG.ToNotBeReinstalled "$package"; then
-                            QPKG.Restart "$package"
-                        else
-                            ShowAsNote "no-need to restart $(FormatAsPackageName "$package") as it was just installed"
-                        fi
-                    else
-                        ShowAsNote "unable to restart $(FormatAsPackageName "$package") as it's not installed"
-                    fi
-                fi
-            done
-        fi
     fi
 
     DebugFuncExit
@@ -954,114 +1052,29 @@ Packages.Install.Dependants()
 
     }
 
-Packages.Download()
+Packages.Restart()
     {
 
     Session.Abort.IsSet && return
 
     DebugFuncEntry
 
-    for package in "${QPKGs_download_array[@]}"; do
-        QPKG.Download "$package"
-    done
-
-    DebugFuncExit
-    return 0
-
-    }
-
-Packages.Uninstall()
-    {
-
-    Session.Abort.IsSet && return
-
-    DebugFuncEntry
-
-    local response=''
-    local package=''
-    local previous_pip3_module_list=$WORK_PATH/pip3.prev.installed.list
-    local previous_opkg_package_list=$WORK_PATH/opkg.prev.installed.list
-
-    local count="${#SHERPA_QPKG_NAME[@]}"
-    local index=0
-
-    # remove dependant packages first
-    for package in "${SHERPA_DEP_QPKGs[@]}"; do
-        if [[ ${QPKGs_to_uninstall[*]} == *"$package"* ]]; then
-            if QPKG.Installed "$package"; then
-                QPKG.Uninstall "$package"
-            else
-                ShowAsNote "unable to uninstall $(FormatAsPackageName "$package") as it's not installed"
-            fi
-        fi
-    done
-
-    # TODO: still need something here to remove independent packages if they're in the $QPKGs_to_uninstall array
-
-    if QPKG.ToBeReinstalled Entware; then
-        ShowAsNote "Reinstalling $(FormatAsPackageName Entware) will remove all IPKGs and Python modules, and only those required to support your $PROJECT_NAME apps will be reinstalled."
-        ShowAsNote "Your installed IPKG list will be saved to $(FormatAsFileName "$previous_opkg_package_list")"
-        ShowAsNote "Your installed Python module list will be saved to $(FormatAsFileName "$previous_pip3_module_list")"
-        (QPKG.Installed SABnzbdplus || QPKG.Installed Headphones) && ShowAsWarning "Also, the $(FormatAsPackageName SABnzbdplus) and $(FormatAsPackageName Headphones) packages CANNOT BE REINSTALLED as Python 2.7.16 is no-longer available."
-
-        if AskQuiz "Press 'Y' to remove all current $(FormatAsPackageName Entware) IPKGs (and their configurations), or any other key to abort"; then
-            ShowAsProc 'saving package and Python module lists'
-
-            $pip3_cmd freeze > "$previous_pip3_module_list"
-            DebugDone "saved current $(FormatAsPackageName pip3) module list to $(FormatAsFileName "$previous_pip3_module_list")"
-
-            $OPKG_CMD list-installed > "$previous_opkg_package_list"
-            DebugDone "saved current $(FormatAsPackageName Entware) IPKG list to $(FormatAsFileName "$previous_opkg_package_list")"
-
-            ShowAsDone 'package and Python module lists saved'
-            QPKG.Uninstall Entware
-        else
-            DebugInfoThinSeparator
-            DebugScript 'user abort'
-            Session.Abort.Set
-            Session.Summary.Clear
-            return 1
-        fi
-    fi
-
-    [[ $NAS_QPKG_ARCH != none ]] && (QPKG.ToBeInstalled Par2 || QPKG.Installed Par2) && ($OPKG_CMD list-installed | $GREP_CMD -q par2cmdline) && $OPKG_CMD remove par2cmdline > /dev/null 2>&1
-
-    DebugFuncExit
-    return 0
-
-    }
-
-Packages.Backup()
-    {
-
-    Session.Abort.IsSet && return
-
-    DebugFuncEntry
-
-    local package=''
-
-    if User.Opts.Apps.All.Backup.IsSet; then
-        if [[ ${#QPKGs_installed[*]} -gt 0 ]]; then
-            for package in "${SHERPA_DEP_QPKGs[@]}"; do
+    if User.Opts.Apps.All.Upgrade.IsSet; then
+        QPKGs.RestartNotUpgraded
+    elif [[ ${#QPKGs_to_restart[*]} -gt 0 ]]; then
+        for package in "${SHERPA_DEP_QPKGs[@]}"; do
+            if [[ ${QPKGs_to_restart[*]} == *"$package"* ]]; then
                 if QPKG.Installed "$package"; then
-                    QPKG.Backup "$package"
-                fi
-            done
-        fi
-        DisplayAsSyntaxExample "the default backup location can be accessed by running" "cd $(Session.Backup.Path)"
-    else
-        if [[ ${#QPKGs_to_backup[*]} -gt 0 ]]; then
-            for package in "${SHERPA_DEP_QPKGs[@]}"; do
-                if [[ ${QPKGs_to_backup[*]} == *"$package"* ]]; then
-                    if QPKG.Installed "$package"; then
-                        QPKG.Backup "$package"
+                    if QPKG.ToNotBeInstalled "$package" && QPKG.ToNotBeReinstalled "$package"; then
+                        QPKG.Restart "$package"
                     else
-                        ShowAsNote "unable to backup $(FormatAsPackageName "$package") configuration as it's not installed"
+                        ShowAsNote "no-need to restart $(FormatAsPackageName "$package") as it was just installed"
                     fi
+                else
+                    ShowAsNote "unable to restart $(FormatAsPackageName "$package") as it's not installed"
                 fi
-            done
-            DisplayAsSyntaxExample "the default backup location can be accessed by running" "cd $(Session.Backup.Path)"
-        fi
+            fi
+        done
     fi
 
     DebugFuncExit
@@ -4635,10 +4648,11 @@ Objects.Create()
 Session.Init || exit 1
 Session.Validate
 Packages.Download
+Packages.Backup
 Packages.Uninstall
 Packages.Install.Independents
 Packages.Install.Dependants
-Packages.Backup
+Packages.Restart
 Packages.Restore
 Session.Results
 Session.Error.IsNot
