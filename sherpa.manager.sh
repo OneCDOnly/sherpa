@@ -37,7 +37,7 @@ Session.Init()
     IsQNAP || return 1
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=200922
+    readonly MANAGER_SCRIPT_VERSION=200923
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -419,7 +419,7 @@ Session.ParseArguments()
 
     local user_args=($(tr '[A-Z]' '[a-z]' <<< "$USER_ARGS_RAW"))
     local arg=''
-    local action='install_'     # make 'install' the default action. This is a user-convenience only.
+    local action='install_'     # make 'install' the default action. A user-convenience to simulate the previous script behaviour.
     local action_force=false
     local target_package=''
 
@@ -673,34 +673,9 @@ Session.Validate()
         DebugUserspace.Warning '/opt' '<not present>'
     fi
 
-    if location=$(command -v python 2>&1); then
-        DebugUserspace.OK "'python' path" "$location"
-        DebugUserspace.OK "'python' version" "$(version=$(python -V 2>&1) && echo "$version" || echo '<unknown>')"
-    else
-        DebugUserspace.Warning "'python' path" '<not present>'
-    fi
-
-    if location=$(command -v python2 2>&1); then
-        DebugUserspace.OK "'python2' path" "$location"
-        DebugUserspace.OK "'python2' version" "$(version=$(python2 -V 2>&1) && echo "$version" || echo '<unknown>')"
-    else
-        DebugUserspace.Warning "'python' path" '<not present>'
-    fi
-
-    if location=$(command -v python3 2>&1); then
-        DebugUserspace.OK "'python3' path" "$location"
-        DebugUserspace.OK "'python3' version" "$(version=$(python3 -V 2>&1) && echo "$version" || echo '<unknown>')"
-    else
-        DebugUserspace.Warning "'python3' path" '<not present>'
-    fi
-
-    DebugScript 'unparsed arguments' "$USER_ARGS_RAW"
-
-    if User.Opts.Apps.All.Backup.IsSet && User.Opts.Apps.All.Restore.IsSet; then
-        ShowAsError 'no point running a backup then a restore operation'
-        code_pointer=2
-        return 1
-    fi
+    CheckPythonPathAndVersion python
+    CheckPythonPathAndVersion python2
+    CheckPythonPathAndVersion python3
 
     if QPKG.Installed Entware; then
         [[ -e /opt/etc/passwd ]] && { [[ -L /opt/etc/passwd ]] && ENTWARE_VER=std || ENTWARE_VER=alt ;} || ENTWARE_VER=none
@@ -713,6 +688,13 @@ Session.Validate()
     fi
 
     DebugInfoThinSeparator
+    DebugScript 'unparsed arguments' "$USER_ARGS_RAW"
+
+    if User.Opts.Apps.All.Backup.IsSet && User.Opts.Apps.All.Restore.IsSet; then
+        ShowAsError 'no point running a backup then a restore operation'
+        code_pointer=2
+        return 1
+    fi
 
     if User.Opts.Apps.All.Install.IsSet; then
         QPKGs_initial_download_array+=($(QPKGs.NotInstalled.Array))
@@ -1310,7 +1292,7 @@ QPKGs.Installable.Build()
 QPKGs.Installed.Build()
     {
 
-    # Returns a list of user installed sherpa QPKGs
+    # Returns a list of user-installed sherpa QPKGs
     # creates a global variable array: $QPKGs_installed()
 
     QPKGs_installed=()
@@ -2641,6 +2623,22 @@ Session.LockFile.Release()
 
     }
 
+CheckPythonPathAndVersion()
+    {
+
+    [[ -z $1 ]] && return
+
+    if location=$(command -v $1 2>&1); then
+        DebugUserspace.OK "default '$1' path" "$location"
+        DebugUserspace.OK "default '$1' version" "$(version=$($1 -V 2>&1) && echo "$version" || echo '<unknown>')"
+    else
+        DebugUserspace.Warning "default '$1' path" '<not present>'
+    fi
+
+    return 0
+
+    }
+
 IsSysFileExist()
     {
 
@@ -3958,28 +3956,28 @@ DisplayLineSpaceIfNoneAlready()
 DebugInfoThickSeparator()
     {
 
-    DebugInfo "$(printf '%0.s=' {1..86})"
+    DebugInfo "$(printf '%0.s=' {1..92})"
 
     }
 
 DebugInfoThinSeparator()
     {
 
-    DebugInfo "$(printf '%0.s-' {1..86})"
+    DebugInfo "$(printf '%0.s-' {1..92})"
 
     }
 
 DebugErrorThinSeparator()
     {
 
-    DebugError "$(printf '%0.s-' {1..86})"
+    DebugError "$(printf '%0.s-' {1..92})"
 
     }
 
 DebugLogThinSeparator()
     {
 
-    DebugLog "$(printf '%0.s-' {1..86})"
+    DebugLog "$(printf '%0.s-' {1..92})"
 
     }
 
@@ -4119,13 +4117,13 @@ DebugDetected.OK()
     {
 
     if [[ -z $3 ]]; then                # if $3 is nothing, then assume only 2 fields are required
-        DebugDetected "$(printf "%9s: %19s\n" "$1" "$2")"
+        DebugDetected "$(printf "%9s: %25s\n" "$1" "$2")"
     elif [[ $3 = ' ' ]]; then           # if $3 is only a whitespace then print $2 with trailing colon but no third field
-        DebugDetected "$(printf "%9s: %19s:\n" "$1" "$2")"
+        DebugDetected "$(printf "%9s: %25s:\n" "$1" "$2")"
     elif [[ ${3: -1} = ' ' ]]; then     # if $3 has a trailing whitespace then print $3 without the trailing whitespace
-        DebugDetected "$(printf "%9s: %19s: %-s\n" "$1" "$2" "$($SED_CMD 's| *$||' <<< "$3")")"
+        DebugDetected "$(printf "%9s: %25s: %-s\n" "$1" "$2" "$($SED_CMD 's| *$||' <<< "$3")")"
     else
-        DebugDetected "$(printf "%9s: %19s: %-s\n" "$1" "$2" "$3")"
+        DebugDetected "$(printf "%9s: %25s: %-s\n" "$1" "$2" "$3")"
     fi
 
     }
