@@ -207,6 +207,7 @@ Session.Init()
     readonly PACKAGE_VERSION=$(GetInstalledQPKGVersion "$PROJECT_NAME")
     readonly WORK_PATH=$($GETCFG_CMD $PROJECT_NAME Install_Path -f $APP_CENTER_CONFIG_PATHFILE)/repo
     readonly DEBUG_LOG_PATHFILE=$($GETCFG_CMD $PROJECT_NAME Install_Path -f $APP_CENTER_CONFIG_PATHFILE)/$DEBUG_LOG_FILE
+    readonly PACKAGE_LOGS_PATH=$WORK_PATH/logs
     Session.Backup.Path = $($GETCFG_CMD SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
     readonly QPKG_DL_PATH=$WORK_PATH/qpkgs
     readonly IPKG_DL_PATH=$WORK_PATH/ipkgs.downloads
@@ -767,6 +768,14 @@ Session.Validate()
         return 1
     fi
 
+    mkdir -p "$PACKAGE_LOGS_PATH" 2> /dev/null; result=$?
+
+    if [[ $result -ne 0 ]]; then
+        ShowAsError "unable to create package logs directory $(FormatAsFileName "$PACKAGE_LOGS_PATH") $(FormatAsExitcode $result)"
+        Session.SuggestIssue.Set
+        return 1
+    fi
+
     mkdir -p "$QPKG_DL_PATH" 2> /dev/null; result=$?
 
     if [[ $result -ne 0 ]]; then
@@ -820,6 +829,7 @@ Session.Validate()
     DebugScript 'status' "${QPKGs_to_status[*]} "
     DebugInfoThinSeparator
     DebugScript 'download' "${QPKGs_download_array[*]} "
+    DebugQPKG 'logs path' "$PACKAGE_LOGS_PATH"
     DebugQPKG 'download path' "$QPKG_DL_PATH"
     DebugIPKG 'download path' "$IPKG_DL_PATH"
     DebugQPKG 'arch' "$NAS_QPKG_ARCH"
@@ -1484,7 +1494,7 @@ InstallIPKGBatch()
     DebugFuncEntry
     local returncode=0
     local requested_IPKGs=''
-    local log_pathfile="$IPKG_DL_PATH/ipkgs.$INSTALL_LOG_FILE"
+    local log_pathfile=$PACKAGE_LOGS_PATH/ipkgs.$INSTALL_LOG_FILE
     local result=0
 
     requested_IPKGs="$1"
@@ -1536,7 +1546,7 @@ PIP.Install()
     local returncode=0
     local packages=''
     local desc="'Python 3' modules"
-    local log_pathfile="$WORK_PATH/py3-modules.$INSTALL_LOG_FILE"
+    local log_pathfile=$PACKAGE_LOGS_PATH/py3-modules.$INSTALL_LOG_FILE
 
     # sometimes, OpenWRT doesn't have a 'pip3'
     if [[ -e /opt/bin/pip3 ]]; then
@@ -1822,11 +1832,11 @@ QPKG.Download()
     local result=0
     local returncode=0
     local remote_url=$(GetQPKGRemoteURL "$1")
-    local remote_filename="$($BASENAME_CMD "$remote_url")"
-    local remote_filename_md5="$(GetQPKGMD5 "$1")"
-    local local_pathfile="$QPKG_DL_PATH/$remote_filename"
-    local local_filename="$($BASENAME_CMD "$local_pathfile")"
-    local log_pathfile="$local_pathfile.$DOWNLOAD_LOG_FILE"
+    local remote_filename=$($BASENAME_CMD "$remote_url")
+    local remote_filename_md5=$(GetQPKGMD5 "$1")
+    local local_pathfile=$QPKG_DL_PATH/$remote_filename
+    local local_filename=$($BASENAME_CMD "$local_pathfile")
+    local log_pathfile=$PACKAGE_LOGS_PATH/$local_filename.$DOWNLOAD_LOG_FILE
 
     if [[ -z $remote_url ]]; then
         DebugWarning "no URL found for this package [$1]"
@@ -1907,11 +1917,11 @@ QPKG.Install()
 
     target_file=$($BASENAME_CMD "$local_pathfile")
 
-    if QPKG.Installed "$1"; then
-        log_pathfile="$local_pathfile.$REINSTALL_LOG_FILE"
-        re='re-'
+    if QPKG.NotInstalled "$1"; then
+        log_pathfile=$PACKAGE_LOGS_PATH/$target_file.$INSTALL_LOG_FILE
     else
-        log_pathfile="$local_pathfile.$INSTALL_LOG_FILE"
+        log_pathfile=$PACKAGE_LOGS_PATH/$target_file.$REINSTALL_LOG_FILE
+        re='re-'
     fi
 
     ShowAsProcLong "${re}installing $(FormatAsFileName "$target_file")"
@@ -1959,8 +1969,9 @@ QPKG.Upgrade()
         local_pathfile="${local_pathfile%.*}"
     fi
 
-    local log_pathfile="$local_pathfile.$UPGRADE_LOG_FILE"
     target_file=$($BASENAME_CMD "$local_pathfile")
+
+    local log_pathfile=$PACKAGE_LOGS_PATH/$target_file.$UPGRADE_LOG_FILE
 
     ShowAsProcLong "${prefix}upgrading $(FormatAsFileName "$target_file")"
 
@@ -2047,7 +2058,7 @@ QPKG.Restart()
 
     local result=0
     local package_init_pathfile=$(GetInstalledQPKGServicePathFile "$1")
-    local log_pathfile=$WORK_PATH/$1.$RESTART_LOG_FILE
+    local log_pathfile=$PACKAGE_LOGS_PATH/$1.$RESTART_LOG_FILE
 
     ShowAsProc "restarting $(FormatAsPackageName "$1")"
 
@@ -2120,7 +2131,7 @@ QPKG.Backup()
 
     local result=0
     local package_init_pathfile=$(GetInstalledQPKGServicePathFile "$1")
-    local log_pathfile=$WORK_PATH/$1.$BACKUP_LOG_FILE
+    local log_pathfile=$PACKAGE_LOGS_PATH/$1.$BACKUP_LOG_FILE
 
     ShowAsProc "backing-up $(FormatAsPackageName "$1") configuration"
 
@@ -2170,7 +2181,7 @@ QPKG.Restore()
 
     local result=0
     local package_init_pathfile=$(GetInstalledQPKGServicePathFile "$1")
-    local log_pathfile=$WORK_PATH/$1.$RESTORE_LOG_FILE
+    local log_pathfile=$PACKAGE_LOGS_PATH/$1.$RESTORE_LOG_FILE
 
     ShowAsProc "restoring $(FormatAsPackageName "$1") configuration"
 
