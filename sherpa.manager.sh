@@ -205,9 +205,10 @@ Session.Init()
     Session.LineSpace.Description = "Keeps track of the display empty linespacing flag. If 'set', an empty linespace has been printed to screen."
 
     readonly PACKAGE_VERSION=$(GetInstalledQPKGVersion "$PROJECT_NAME")
-    readonly WORK_PATH=$($GETCFG_CMD $PROJECT_NAME Install_Path -f $APP_CENTER_CONFIG_PATHFILE)/repo
-    readonly DEBUG_LOG_PATHFILE=$($GETCFG_CMD $PROJECT_NAME Install_Path -f $APP_CENTER_CONFIG_PATHFILE)/$DEBUG_LOG_FILE
-    readonly PACKAGE_LOGS_PATH=$WORK_PATH/logs
+    local -r SHERPA_PATH=$($GETCFG_CMD $PROJECT_NAME Install_Path -f $APP_CENTER_CONFIG_PATHFILE)
+    readonly WORK_PATH=$SHERPA_PATH/cache
+    readonly PACKAGE_LOGS_PATH=$SHERPA_PATH/logs
+    readonly DEBUG_LOG_PATHFILE=$SHERPA_PATH/$DEBUG_LOG_FILE
     Session.Backup.Path = $($GETCFG_CMD SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
     readonly QPKG_DL_PATH=$WORK_PATH/qpkgs
     readonly IPKG_DL_PATH=$WORK_PATH/ipkgs.downloads
