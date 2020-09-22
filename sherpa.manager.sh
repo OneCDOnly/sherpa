@@ -132,6 +132,7 @@ Session.Init()
     local -r DEBUG_LOG_FILE=$PROJECT_NAME.debug.log
     readonly APP_CENTER_CONFIG_PATHFILE=/etc/config/qpkg.conf
     readonly INSTALL_LOG_FILE=install.log
+    readonly REINSTALL_LOG_FILE=reinstall.log
     readonly DOWNLOAD_LOG_FILE=download.log
     readonly START_LOG_FILE=start.log
     readonly STOP_LOG_FILE=stop.log
@@ -1896,6 +1897,7 @@ QPKG.Install()
     local result=0
     local returncode=0
     local local_pathfile="$(GetQPKGPathFilename "$1")"
+    local log_pathfile=''
     local re=''
 
     if [[ ${local_pathfile##*.} = zip ]]; then
@@ -1903,10 +1905,14 @@ QPKG.Install()
         local_pathfile="${local_pathfile%.*}"
     fi
 
-    local log_pathfile="$local_pathfile.$INSTALL_LOG_FILE"
     target_file=$($BASENAME_CMD "$local_pathfile")
 
-    QPKG.Installed "$1" && re='re-'
+    if QPKG.Installed "$1"; then
+        log_pathfile="$local_pathfile.$REINSTALL_LOG_FILE"
+        re='re-'
+    else
+        log_pathfile="$local_pathfile.$INSTALL_LOG_FILE"
+    fi
 
     ShowAsProcLong "${re}installing $(FormatAsFileName "$target_file")"
 
