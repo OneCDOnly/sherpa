@@ -560,25 +560,18 @@ Session.ParseArguments()
                 [[ -z $target_package ]] && continue
 
                 case $action in
-                    install_)
-                        if QPKG.NotInstalled "$target_package"; then
-                            QPKGs.Install.Add "$target_package"
-                        else
-                            QPKGs.Reinstall.Add "$target_package"
-                        fi
+                    backup_)
+                        QPKGs.Backup.Add "$target_package"
                         ;;
                     uninstall_)
                         QPKGs.Uninstall.Add "$target_package"
                         ;;
-                    reinstall_)
+                    install_|reinstall_)
                         if QPKG.NotInstalled "$target_package"; then
                             QPKGs.Install.Add "$target_package"
                         else
                             QPKGs.Reinstall.Add "$target_package"
                         fi
-                        ;;
-                    restart_)
-                        QPKGs.Restart.Add "$target_package"
                         ;;
                     upgrade_)
                         if QPKG.NotInstalled "$target_package"; then
@@ -589,11 +582,11 @@ Session.ParseArguments()
                             QPKGs.Upgrade.Add "$target_package"
                         fi
                         ;;
-                    backup_)
-                        QPKGs.Backup.Add "$target_package"
-                        ;;
                     restore_)
                         QPKGs.Restore.Add "$target_package"
+                        ;;
+                    restart_)
+                        QPKGs.Restart.Add "$target_package"
                         ;;
                     status_)
                         QPKGs_to_status+=($target_package)
@@ -696,6 +689,7 @@ Session.Validate()
         return 1
     fi
 
+    # build an initial package download list. Items on this list will be skipped at download-time if they can be found in local cache.
     if User.Opts.Apps.All.Install.IsSet; then
         QPKGs_initial_download_array+=($(QPKGs.NotInstalled.Array))
         for package in "${QPKGs_initial_download_array[@]}"; do
@@ -801,17 +795,17 @@ Session.Validate()
     done
 
     DebugInfoThinSeparator
-    DebugScript 'install' "${QPKGs_to_install[*]} "
-    DebugScript 'uninstall' "${QPKGs_to_uninstall[*]} "
-    DebugScript 'reinstall' "${QPKGs_to_reinstall[*]} "
-    DebugScript 'restart' "${QPKGs_to_restart[*]} "
-    DebugScript 'upgrade' "${QPKGs_to_upgrade[*]} "
-    DebugScript 'forced-upgrade' "${QPKGs_to_force_upgrade[*]} "
+    DebugScript 'download' "${QPKGs_download_array[*]} "
     DebugScript 'backup' "${QPKGs_to_backup[*]} "
+    DebugScript 'uninstall' "${QPKGs_to_uninstall[*]} "
+    DebugScript 'forced-upgrade' "${QPKGs_to_force_upgrade[*]} "
+    DebugScript 'upgrade' "${QPKGs_to_upgrade[*]} "
+    DebugScript 'install' "${QPKGs_to_install[*]} "
+    DebugScript 'reinstall' "${QPKGs_to_reinstall[*]} "
     DebugScript 'restore' "${QPKGs_to_restore[*]} "
+    DebugScript 'restart' "${QPKGs_to_restart[*]} "
     DebugScript 'status' "${QPKGs_to_status[*]} "
     DebugInfoThinSeparator
-    DebugScript 'download' "${QPKGs_download_array[*]} "
     DebugQPKG 'logs path' "$PACKAGE_LOGS_PATH"
     DebugQPKG 'download path' "$QPKG_DL_PATH"
     DebugIPKG 'download path' "$IPKG_DL_PATH"
@@ -3348,6 +3342,15 @@ QPKGs.Restart.Add()
     {
 
     [[ ${QPKGs_to_restart[*]} != *"$1"* ]] && QPKGs_to_restart+=("$1")
+
+    return 0
+
+    }
+
+QPKGs.Restart.Remove()
+    {
+
+    [[ ${QPKGs_to_restart[*]} == *"$1"* ]] && QPKGs_to_restart=("${QPKGs_to_restart[@]/$1}")
 
     return 0
 
