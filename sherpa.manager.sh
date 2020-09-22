@@ -393,7 +393,7 @@ Session.Init()
 
     readonly SHERPA_COMMON_IPKGS='ca-certificates findutils gcc git git-http less nano python3-dev python3-pip python3-setuptools sed'
     readonly SHERPA_COMMON_PIPS='apscheduler beautifulsoup4 cfscrape cheetah3 "cheroot!=8.4.4" cherrypy configobj "feedparser==5.2.1" portend pygithub python-magic random_user_agent sabyenc3 simplejson slugify'
-    readonly SHERPA_COMMON_CONFLICTS='Optware Optware-NG TarMT'
+    readonly SHERPA_COMMON_CONFLICTS='Optware Optware-NG TarMT Python QPython2'
 
     QPKGs.Independent.Build
     QPKGs.Dependant.Build
@@ -785,7 +785,7 @@ Session.Validate()
 
     for package in "${SHERPA_COMMON_CONFLICTS[@]}"; do
         if QPKG.Enabled "$package"; then
-            ShowAsError "'$package' is enabled. This is an unsupported configuration"
+            ShowAsError "'$package' is installed and enabled. One-or-more $(FormatAsScriptTitle) applications are incompatible with this package"
             return 1
         fi
     done
