@@ -1052,36 +1052,6 @@ Packages.Install.Dependants()
 
     }
 
-Packages.Restart()
-    {
-
-    Session.Abort.IsSet && return
-
-    DebugFuncEntry
-
-    if User.Opts.Apps.All.Upgrade.IsSet; then
-        QPKGs.RestartNotUpgraded
-    elif [[ ${#QPKGs_to_restart[*]} -gt 0 ]]; then
-        for package in "${SHERPA_DEP_QPKGs[@]}"; do
-            if [[ ${QPKGs_to_restart[*]} == *"$package"* ]]; then
-                if QPKG.Installed "$package"; then
-                    if QPKG.ToNotBeInstalled "$package" && QPKG.ToNotBeReinstalled "$package"; then
-                        QPKG.Restart "$package"
-                    else
-                        ShowAsNote "no-need to restart $(FormatAsPackageName "$package") as it was just installed"
-                    fi
-                else
-                    ShowAsNote "unable to restart $(FormatAsPackageName "$package") as it's not installed"
-                fi
-            fi
-        done
-    fi
-
-    DebugFuncExit
-    return 0
-
-    }
-
 Packages.Restore()
     {
 
@@ -1113,6 +1083,36 @@ Packages.Restore()
             done
             DisplayAsSyntaxExample "the default backup location can be accessed by running" "cd $(Session.Backup.Path)"
         fi
+    fi
+
+    DebugFuncExit
+    return 0
+
+    }
+
+Packages.Restart()
+    {
+
+    Session.Abort.IsSet && return
+
+    DebugFuncEntry
+
+    if User.Opts.Apps.All.Upgrade.IsSet; then
+        QPKGs.RestartNotUpgraded
+    elif [[ ${#QPKGs_to_restart[*]} -gt 0 ]]; then
+        for package in "${SHERPA_DEP_QPKGs[@]}"; do
+            if [[ ${QPKGs_to_restart[*]} == *"$package"* ]]; then
+                if QPKG.Installed "$package"; then
+                    if QPKG.ToNotBeInstalled "$package" && QPKG.ToNotBeReinstalled "$package"; then
+                        QPKG.Restart "$package"
+                    else
+                        ShowAsNote "no-need to restart $(FormatAsPackageName "$package") as it was just installed"
+                    fi
+                else
+                    ShowAsNote "unable to restart $(FormatAsPackageName "$package") as it's not installed"
+                fi
+            fi
+        done
     fi
 
     DebugFuncExit
@@ -4652,7 +4652,7 @@ Packages.Backup
 Packages.Uninstall
 Packages.Install.Independents
 Packages.Install.Dependants
-Packages.Restart
 Packages.Restore
+Packages.Restart
 Session.Results
 Session.Error.IsNot
