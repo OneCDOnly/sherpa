@@ -2892,6 +2892,8 @@ Help.Options.Show()
 
     DisplayAsProjectSyntaxIndentedExample 'process one or more packages and show live debugging information' "$(FormatAsHelpActions) $(FormatAsHelpPackages) --debug"
 
+    DisplayAsProjectSyntaxIndentedExample "don't check free-space on target filesystem when installing $(FormatAsPackageName Entware) packages" "$(FormatAsHelpActions) $(FormatAsHelpPackages) --ignore-space"
+
     DisplayAsProjectSyntaxIndentedExample 'display helpful tips and shortcuts' '--tips'
 
     DisplayAsProjectSyntaxIndentedExample 'display troubleshooting options' '--problems'
@@ -2911,7 +2913,7 @@ Help.Problems.Show()
 
     DisplayAsProjectSyntaxIndentedExample 'ensure all application dependencies are installed' '--check-all'
 
-    DisplayAsProjectSyntaxIndentedExample "don't check free-space on target filesystem when installing $(FormatAsPackageName Entware) packages" '--ignore-space'
+    DisplayAsProjectSyntaxIndentedExample "don't check free-space on target filesystem when installing $(FormatAsPackageName Entware) packages" "$(FormatAsHelpActions) $(FormatAsHelpPackages) --ignore-space"
 
     DisplayAsProjectSyntaxIndentedExample 'restart all installed packages (upgrades the internal applications, not the packages)' '--restart-all'
 
