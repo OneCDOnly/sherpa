@@ -36,6 +36,7 @@ Session.Init()
 
     IsQNAP || return 1
 
+    readonly PROJECT_NAME=sherpa
     readonly MANAGER_SCRIPT_VERSION=200922
 
     # cherry-pick required binaries
@@ -46,9 +47,7 @@ Session.Init()
     readonly DATE_CMD=/bin/date
     readonly GREP_CMD=/bin/grep
     readonly HOSTNAME_CMD=/bin/hostname
-    readonly LN_CMD=/bin/ln
     readonly MD5SUM_CMD=/bin/md5sum
-    readonly MKDIR_CMD=/bin/mkdir
     readonly PING_CMD=/bin/ping
     readonly SED_CMD=/bin/sed
     readonly SLEEP_CMD=/bin/sleep
@@ -78,50 +77,15 @@ Session.Init()
     readonly Z7_CMD=/usr/local/sbin/7z
     readonly ZIP_CMD=/usr/local/sbin/zip
 
-    readonly GNU_FIND_CMD=/opt/bin/find
-    readonly GNU_GREP_CMD=/opt/bin/grep
-    readonly GNU_LESS_CMD=/opt/bin/less
-    readonly GNU_SED_CMD=/opt/bin/sed
-    readonly OPKG_CMD=/opt/bin/opkg
-
-    # paths and files
-    readonly PROJECT_NAME=sherpa
-    local -r LOADER_SCRIPT_FILE=$PROJECT_NAME.loader.sh
-    readonly MANAGER_SCRIPT_FILE=$PROJECT_NAME.manager.sh
-    local -r DEBUG_LOG_FILE=$PROJECT_NAME.debug.log
-    readonly APP_CENTER_CONFIG_PATHFILE=/etc/config/qpkg.conf
-    readonly INSTALL_LOG_FILE=install.log
-    readonly DOWNLOAD_LOG_FILE=download.log
-    readonly START_LOG_FILE=start.log
-    readonly STOP_LOG_FILE=stop.log
-    readonly RESTART_LOG_FILE=restart.log
-    readonly UPDATE_LOG_FILE=update.log
-    readonly UPGRADE_LOG_FILE=upgrade.log
-    readonly BACKUP_LOG_FILE=backup.log
-    readonly RESTORE_LOG_FILE=restore.log
-    readonly DEFAULT_SHARES_PATHFILE=/etc/config/def_share.info
-    local -r ULINUX_PATHFILE=/etc/config/uLinux.conf
-    readonly PLATFORM_PATHFILE=/etc/platform.conf
-    readonly EXTERNAL_PACKAGE_ARCHIVE_PATHFILE=/opt/var/opkg-lists/entware
-    local -r REMOTE_REPO_URL=https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/master/QPKGs
-    readonly PREV_QPKG_CONFIG_DIRS=(SAB_CONFIG CONFIG Config config)                 # last element is used as target dirname
-    readonly PREV_QPKG_CONFIG_FILES=(sabnzbd.ini settings.ini config.cfg config.ini) # last element is used as target filename
-    readonly RUNTIME_LOCK_PATHFILE=/var/run/$LOADER_SCRIPT_FILE.pid
-    [[ ! -e $SORT_CMD ]] && $LN_CMD -s "$BUSYBOX_CMD" "$SORT_CMD"   # sometimes, 'sort' goes missing from QTS. Don't know why.
-    pip3_cmd=/opt/bin/pip3
-
-    Session.LockFile.Claim || return 1
-
     # check required binaries are present
     IsSysFileExist $AWK_CMD || return 1
+    IsSysFileExist $BUSYBOX_CMD || return 1
     IsSysFileExist $CAT_CMD || return 1
     IsSysFileExist $CHMOD_CMD || return 1
     IsSysFileExist $DATE_CMD || return 1
     IsSysFileExist $GREP_CMD || return 1
     IsSysFileExist $HOSTNAME_CMD || return 1
-    IsSysFileExist $LN_CMD || return 1
     IsSysFileExist $MD5SUM_CMD || return 1
-    IsSysFileExist $MKDIR_CMD || return 1
     IsSysFileExist $PING_CMD || return 1
     IsSysFileExist $SED_CMD || return 1
     IsSysFileExist $SLEEP_CMD || return 1
@@ -141,6 +105,7 @@ Session.Init()
     IsSysFileExist $DU_CMD || return 1
     IsSysFileExist $HEAD_CMD || return 1
     IsSysFileExist $READLINK_CMD || return 1
+    [[ ! -e $SORT_CMD ]] && ln -s "$BUSYBOX_CMD" "$SORT_CMD"   # sometimes, 'sort' goes missing from QTS. Don't know why.
     IsSysFileExist $SORT_CMD || return 1
     IsSysFileExist $TAIL_CMD || return 1
     IsSysFileExist $TEE_CMD || return 1
@@ -151,7 +116,38 @@ Session.Init()
     IsSysFileExist $Z7_CMD || return 1
     IsSysFileExist $ZIP_CMD || return 1
 
+    readonly GNU_FIND_CMD=/opt/bin/find
+    readonly GNU_GREP_CMD=/opt/bin/grep
+    readonly GNU_LESS_CMD=/opt/bin/less
+    readonly GNU_SED_CMD=/opt/bin/sed
+    readonly OPKG_CMD=/opt/bin/opkg
+
+    # paths and files
+    local -r LOADER_SCRIPT_FILE=$PROJECT_NAME.loader.sh
+    readonly MANAGER_SCRIPT_FILE=$PROJECT_NAME.manager.sh
+
+    Session.LockFile.Claim /var/run/$LOADER_SCRIPT_FILE.pid || return 1
     ShowAsProc "building objects"
+
+    local -r DEBUG_LOG_FILE=$PROJECT_NAME.debug.log
+    readonly APP_CENTER_CONFIG_PATHFILE=/etc/config/qpkg.conf
+    readonly INSTALL_LOG_FILE=install.log
+    readonly DOWNLOAD_LOG_FILE=download.log
+    readonly START_LOG_FILE=start.log
+    readonly STOP_LOG_FILE=stop.log
+    readonly RESTART_LOG_FILE=restart.log
+    readonly UPDATE_LOG_FILE=update.log
+    readonly UPGRADE_LOG_FILE=upgrade.log
+    readonly BACKUP_LOG_FILE=backup.log
+    readonly RESTORE_LOG_FILE=restore.log
+    readonly DEFAULT_SHARES_PATHFILE=/etc/config/def_share.info
+    local -r ULINUX_PATHFILE=/etc/config/uLinux.conf
+    readonly PLATFORM_PATHFILE=/etc/platform.conf
+    readonly EXTERNAL_PACKAGE_ARCHIVE_PATHFILE=/opt/var/opkg-lists/entware
+    local -r REMOTE_REPO_URL=https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/master/QPKGs
+    readonly PREV_QPKG_CONFIG_DIRS=(SAB_CONFIG CONFIG Config config)                 # last element is used as target dirname
+    readonly PREV_QPKG_CONFIG_FILES=(sabnzbd.ini settings.ini config.cfg config.ini) # last element is used as target filename
+    pip3_cmd=/opt/bin/pip3
 
     # user-selected options
     Objects.Create User.Opts.Help.Abbreviations
@@ -184,6 +180,7 @@ Session.Init()
 
     # script flags
     Objects.Create Session.Abort
+    Objects.Create Session.Backup
     Objects.Create Session.Debug.To.File
     Objects.Create Session.Debug.To.Screen
     Objects.Create Session.Display.Clean
@@ -209,7 +206,7 @@ Session.Init()
     readonly PACKAGE_VERSION=$(GetInstalledQPKGVersion "$PROJECT_NAME")
     readonly WORK_PATH=$($GETCFG_CMD $PROJECT_NAME Install_Path -f $APP_CENTER_CONFIG_PATHFILE)/repo
     readonly DEBUG_LOG_PATHFILE=$($GETCFG_CMD $PROJECT_NAME Install_Path -f $APP_CENTER_CONFIG_PATHFILE)/$DEBUG_LOG_FILE
-    readonly BACKUP_PATH=$($GETCFG_CMD SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
+    Session.Backup.Path = $($GETCFG_CMD SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
     readonly QPKG_DL_PATH=$WORK_PATH/qpkgs
     readonly IPKG_DL_PATH=$WORK_PATH/ipkgs.downloads
     readonly IPKG_CACHE_PATH=$WORK_PATH/ipkgs.cache
@@ -673,11 +670,25 @@ Session.Validate()
         DebugUserspace.Warning '/opt' '<not present>'
     fi
 
-    if location=$(command -v python3 2>&1); then
-        DebugUserspace.OK 'Python 3 path' "$location"
-        DebugUserspace.OK 'Python 3 version' "$(version=$(python3 -V 2>&1) && echo "$version" || echo '<unknown>')"
+    if location=$(command -v python 2>&1); then
+        DebugUserspace.OK "'python' path" "$location"
+        DebugUserspace.OK "'python' version" "$(version=$(python -V 2>&1) && echo "$version" || echo '<unknown>')"
     else
-        DebugUserspace.Warning 'Python 3 path' '<not present>'
+        DebugUserspace.Warning "'python' path" '<not present>'
+    fi
+
+    if location=$(command -v python2 2>&1); then
+        DebugUserspace.OK "'python2' path" "$location"
+        DebugUserspace.OK "'python2' version" "$(version=$(python2 -V 2>&1) && echo "$version" || echo '<unknown>')"
+    else
+        DebugUserspace.Warning "'python' path" '<not present>'
+    fi
+
+    if location=$(command -v python3 2>&1); then
+        DebugUserspace.OK "'python3' path" "$location"
+        DebugUserspace.OK "'python3' version" "$(version=$(python3 -V 2>&1) && echo "$version" || echo '<unknown>')"
+    else
+        DebugUserspace.Warning "'python3' path" '<not present>'
     fi
 
     DebugScript 'unparsed arguments' "$USER_ARGS_RAW"
@@ -714,7 +725,7 @@ Session.Validate()
 
     GetTheseQPKGDeps "${QPKGs_initial_download_array[*]}"
     ExcludeInstalledQPKGs "$QPKG_pre_download_list"
-    DebugInfo "QPKGs required: $(Packages.Download.Print)"
+    DebugInfo "initial QPKGs required: $(Packages.Download.Print)"
 
     if [[ $(Packages.Download.Count) -eq 1 && ${QPKGs_download_array[0]} = Entware ]] && QPKG.NotInstalled Entware; then
         ShowAsNote "It's not necessary to install $(FormatAsPackageName Entware) on its own. It will be installed as-required with your other $(FormatAsScriptTitle) packages. :)"
@@ -731,8 +742,8 @@ Session.Validate()
     fi
 
     if QPKGs.Install.IsNone && QPKGs.Uninstall.IsNone && QPKGs.Reinstall.IsNone && QPKGs.Restart.IsNone && QPKGs.Upgrade.IsNone && QPKGs.ForceUpgrade.IsNone && QPKGs.Backup.IsNone && QPKGs.Restore.IsNone && [[ ${#QPKGs_to_status[@]} -eq 0 ]]; then
-        if User.Opts.Apps.All.Install.IsNot && User.Opts.Apps.All.Uninstall.IsNot && User.Opts.Apps.All.Restart.IsNot && User.Opts.Apps.All.Upgrade.IsNot && User.Opts.Apps.All.Backup.IsNot && User.Opts.Apps.All.Restore.IsNot && User.Opts.Apps.All.Status.IsNot; then
-            if User.Opts.Dependencies.Check.IsNot && User.Opts.Apps.List.Installed.IsNot; then
+        if User.Opts.Apps.All.Install.IsNot && User.Opts.Apps.All.Uninstall.IsNot && User.Opts.Apps.All.Restart.IsNot && User.Opts.Apps.All.Upgrade.IsNot && User.Opts.Apps.All.Backup.IsNot && User.Opts.Apps.All.Restore.IsNot && User.Opts.Apps.All.Status.IsNot && User.Opts.Apps.All.List.IsNot; then
+            if User.Opts.Dependencies.Check.IsNot && User.Opts.Apps.List.Installed.IsNot && User.Opts.Apps.List.NotInstalled.IsNot && Session.Debug.To.Screen.IsNot && User.Opts.IgnoreFreeSpace.IsNot; then
                 ShowAsError 'nothing to do'
                 User.Opts.Help.Basic.Set
                 Session.Abort.Set
@@ -741,7 +752,7 @@ Session.Validate()
         fi
     fi
 
-    $MKDIR_CMD -p "$WORK_PATH" 2> /dev/null; result=$?
+    mkdir -p "$WORK_PATH" 2> /dev/null; result=$?
 
     if [[ $result -ne 0 ]]; then
         ShowAsError "unable to create script working directory $(FormatAsFileName "$WORK_PATH") $(FormatAsExitcode $result)"
@@ -749,7 +760,7 @@ Session.Validate()
         return 1
     fi
 
-    $MKDIR_CMD -p "$QPKG_DL_PATH" 2> /dev/null; result=$?
+    mkdir -p "$QPKG_DL_PATH" 2> /dev/null; result=$?
 
     if [[ $result -ne 0 ]]; then
         ShowAsError "unable to create QPKG download directory $(FormatAsFileName "$QPKG_DL_PATH") $(FormatAsExitcode $result)"
@@ -757,7 +768,7 @@ Session.Validate()
         return 1
     fi
 
-    $MKDIR_CMD -p "$IPKG_DL_PATH" 2> /dev/null; result=$?
+    mkdir -p "$IPKG_DL_PATH" 2> /dev/null; result=$?
 
     if [[ $result -ne 0 ]]; then
         ShowAsError "unable to create IPKG download directory $(FormatAsFileName "$IPKG_DL_PATH") $(FormatAsExitcode $result)"
@@ -766,7 +777,7 @@ Session.Validate()
     fi
 
     [[ -d $IPKG_CACHE_PATH ]] && rm -rf "$IPKG_CACHE_PATH"
-    $MKDIR_CMD -p "$IPKG_CACHE_PATH" 2> /dev/null; result=$?
+    mkdir -p "$IPKG_CACHE_PATH" 2> /dev/null; result=$?
 
     if [[ $result -ne 0 ]]; then
         ShowAsError "unable to create IPKG cache directory $(FormatAsFileName "$IPKG_CACHE_PATH") $(FormatAsExitcode $result)"
@@ -775,7 +786,7 @@ Session.Validate()
     fi
 
     [[ -d $PIP_CACHE_PATH ]] && rm -rf "$PIP_CACHE_PATH"
-    $MKDIR_CMD -p "$PIP_CACHE_PATH" 2> /dev/null; result=$?
+    mkdir -p "$PIP_CACHE_PATH" 2> /dev/null; result=$?
 
     if [[ $result -ne 0 ]]; then
         ShowAsError "unable to create PIP cache directory $(FormatAsFileName "$PIP_CACHE_PATH") $(FormatAsExitcode $result)"
@@ -1037,7 +1048,7 @@ Packages.Backup()
                 fi
             done
         fi
-        DisplayAsSyntaxExample "the default backup location can be accessed by running" "cd $BACKUP_PATH"
+        DisplayAsSyntaxExample "the default backup location can be accessed by running" "cd $(Session.Backup.Path)"
     else
         if [[ ${#QPKGs_to_backup[*]} -gt 0 ]]; then
             for package in "${SHERPA_DEP_QPKGs[@]}"; do
@@ -1049,7 +1060,7 @@ Packages.Backup()
                     fi
                 fi
             done
-            DisplayAsSyntaxExample "the default backup location can be accessed by running" "cd $BACKUP_PATH"
+            DisplayAsSyntaxExample "the default backup location can be accessed by running" "cd $(Session.Backup.Path)"
         fi
     fi
 
@@ -1075,7 +1086,7 @@ Packages.Restore()
                 fi
             done
         fi
-        DisplayAsSyntaxExample "the default backup location can be accessed by running" "cd $BACKUP_PATH"
+        DisplayAsSyntaxExample "the default backup location can be accessed by running" "cd $(Session.Backup.Path)"
     else
         if [[ ${#QPKGs_to_restore[*]} -gt 0 ]]; then
             for package in "${SHERPA_DEP_QPKGs[@]}"; do
@@ -1087,7 +1098,7 @@ Packages.Restore()
                     fi
                 fi
             done
-            DisplayAsSyntaxExample "the default backup location can be accessed by running" "cd $BACKUP_PATH"
+            DisplayAsSyntaxExample "the default backup location can be accessed by running" "cd $(Session.Backup.Path)"
         fi
     fi
 
@@ -2455,7 +2466,7 @@ IPKGs.Install()
     InstallIPKGBatch "$packages"
 
     # in-case 'python' has disappeared again ...
-    [[ ! -L /opt/bin/python && -e /opt/bin/python3 ]] && $LN_CMD -s /opt/bin/python3 /opt/bin/python
+    [[ ! -L /opt/bin/python && -e /opt/bin/python3 ]] && ln -s /opt/bin/python3 /opt/bin/python
 
     return 0
 
@@ -2583,6 +2594,10 @@ IsQNAP()
 Session.LockFile.Claim()
     {
 
+    [[ -z $1 ]] && return 1
+
+    readonly RUNTIME_LOCK_PATHFILE="$1"
+
     if [[ -e $RUNTIME_LOCK_PATHFILE && -d /proc/$(<$RUNTIME_LOCK_PATHFILE) && $(</proc/"$(<$RUNTIME_LOCK_PATHFILE)"/cmdline) =~ $MANAGER_SCRIPT_FILE ]]; then
         ShowAsAbort 'another instance is running'
         return 1
@@ -2597,6 +2612,7 @@ Session.LockFile.Claim()
 Session.LockFile.Release()
     {
 
+    [[ -z $RUNTIME_LOCK_PATHFILE ]] && return 1
     [[ -e $RUNTIME_LOCK_PATHFILE ]] && rm -f "$RUNTIME_LOCK_PATHFILE"
 
     }
@@ -2966,7 +2982,7 @@ Help.Tips.Show()
 
     DisplayAsProjectSyntaxIndentedExample 'display all package-manager scripts versions' '--version'
 
-    DisplayAsSyntaxExample "the default application backup location can be accessed by running" "cd $BACKUP_PATH"
+    DisplayAsSyntaxExample "the default application backup location can be accessed by running" "cd $(Session.Backup.Path)"
 
     echo -e "\n$(ColourTextBrightOrange "* If you need help, please include a copy of your") $(FormatAsScriptTitle) $(ColourTextBrightOrange "log for analysis!")"
 
@@ -4468,6 +4484,7 @@ Objects.Create()
     _placehold_flag_="_${safe_function_name}_flag_"
     _placehold_list_array_="_${safe_function_name}_list_"
     _placehold_list_index_="_${safe_function_name}_list_index_"
+    _placehold_path_="_object_${safe_function_name}_path_"
 
     [[ $(type -t Objects.Index) = 'function' ]] && Objects.Items.Add "$public_function_name"
 
@@ -4491,13 +4508,14 @@ Objects.Create()
         '$public_function_name'.Env()
             {
             echo "* object internal environment *"
-            echo "object index: '\'\$$_placehold_index_\''"
-            echo "object name: '\'$public_function_name\''"
-            echo "object description: '\'\$$_placehold_description_\''"
-            echo "object set: '\'\$$_placehold_flag_\''"
-            echo "object text: '\'\$$_placehold_text_\''"
-            echo "object list: '\'\${$_placehold_list_array_[*]}\''"
-            echo "object list pointer: '\'\$$_placehold_list_index_\''"
+            echo "Index: '\'\$$_placehold_index_\''"
+            echo "Name: '\'$public_function_name\''"
+            echo "Description: '\'\$$_placehold_description_\''"
+            echo "Set: '\'\$$_placehold_flag_\''"
+            echo "Text: '\'\$$_placehold_text_\''"
+            echo "List: '\'\${$_placehold_list_array_[*]}\''"
+            echo "List pointer: '\'\$$_placehold_list_index_\''"
+            echo "Path: '\'\$$_placehold_path_\''"
             }
 
         '$public_function_name'.Index()
@@ -4517,6 +4535,7 @@ Objects.Create()
             '$_placehold_list_array_'+=()
             '$_placehold_list_index_'=1
             '$_placehold_text_'=''
+            '$_placehold_path_'=''
             }
 
         '$public_function_name'.IsNot()
@@ -4552,6 +4571,15 @@ Objects.Create()
             fi
             }
 
+        '$public_function_name'.Path()
+            {
+            if [[ -n $1 && $1 = "=" ]]; then
+                '$_placehold_path_'="$2"
+            else
+                echo -n "$'$_placehold_path_'"
+            fi
+            }
+
         '$public_function_name'.Set()
             {
             [[ $'$_placehold_flag_' = "true" ]] && return
@@ -4567,7 +4595,6 @@ Objects.Create()
                 echo -n "$'$_placehold_text_'"
             fi
             }
-
     '
     eval "$object_functions"
 
