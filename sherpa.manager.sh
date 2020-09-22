@@ -164,6 +164,7 @@ Session.Init()
     Objects.Create User.Opts.Help.Tips
 
     Objects.Create User.Opts.Dependencies.Check
+    Objects.Create User.Opts.IgnoreFreeSpace
     Objects.Create User.Opts.Versions.View
 
     Objects.Create User.Opts.Log.Paste
@@ -198,6 +199,8 @@ Session.Init()
         Session.Debug.To.Screen.Set
     fi
 
+    User.Opts.IgnoreFreeSpace.Text = ' --force-space'
+
     Session.Summary.Set
     Session.Debug.To.Screen.Description = "Display on-screen live debugging information."
     Session.Display.Clean.Description = "Disable display of script title and trailing linespace. If 'set', output is suitable for script processing."
@@ -220,7 +223,6 @@ Session.Init()
     readonly INSTALLED_RAM_KB=$($GREP_CMD MemTotal /proc/meminfo | $CUT_CMD -f2 -d':' | $SED_CMD 's|kB||;s| ||g')
     readonly MIN_RAM_KB=1048576
     readonly LOG_TAIL_LINES=1000
-    ignore_space_arg=''
     code_pointer=0
     [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg='--insecure' || curl_insecure_arg=''
 
@@ -425,12 +427,9 @@ Session.ParseArguments()
         case $arg in
             -d|d|--debug|debug)
                 Session.Debug.To.Screen.Set
-                action=''
                 ;;
             --ignore-space|ignore-space)
-                ignore_space_arg='--force-space'
-                DebugVar ignore_space_arg
-                action=''
+                User.Opts.IgnoreFreeSpace.Set
                 ;;
             -h|h|--help|help)
                 User.Opts.Help.Basic.Set
@@ -1486,7 +1485,7 @@ InstallIPKGBatch()
             trap CTRL_C_Captured INT
                 _MonitorDirSize_ "$IPKG_DL_PATH" "$IPKG_download_size" &
 
-                RunThisAndLogResults "$OPKG_CMD install$ignore_space_arg --force-overwrite ${IPKG_download_list[*]} --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
+                RunThisAndLogResults "$OPKG_CMD install$(User.Opts.IgnoreFreeSpace.IsSet && User.Opts.IgnoreFreeSpace.Text) --force-overwrite ${IPKG_download_list[*]} --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
                 result=$?
             trap - INT
         RemoveDirSizeMonitorFlagFile
@@ -4463,6 +4462,7 @@ Objects.Create()
 
     _placehold_index_="_${safe_function_name}_index_"
     _placehold_description_="_${safe_function_name}_description_"
+    _placehold_text_="_object_${safe_function_name}_text_"
     _placehold_flag_="_${safe_function_name}_flag_"
     _placehold_list_array_="_${safe_function_name}_list_"
     _placehold_list_index_="_${safe_function_name}_list_index_"
@@ -4493,6 +4493,7 @@ Objects.Create()
             echo "object name: '\'$public_function_name\''"
             echo "object description: '\'\$$_placehold_description_\''"
             echo "object set: '\'\$$_placehold_flag_\''"
+            echo "object text: '\'\$$_placehold_text_\''"
             echo "object list: '\'\${$_placehold_list_array_[*]}\''"
             echo "object list pointer: '\'\$$_placehold_list_index_\''"
             }
@@ -4513,6 +4514,7 @@ Objects.Create()
             '$_placehold_flag_'=false
             '$_placehold_list_array_'+=()
             '$_placehold_list_index_'=1
+            '$_placehold_text_'=''
             }
 
         '$public_function_name'.IsNot()
@@ -4553,6 +4555,15 @@ Objects.Create()
             [[ $'$_placehold_flag_' = "true" ]] && return
             '$_placehold_flag_'=true
             DebugVar '$_placehold_flag_'
+            }
+
+        '$public_function_name'.Text()
+            {
+            if [[ -n $1 && $1 = "=" ]]; then
+                '$_placehold_text_'="$2"
+            else
+                echo -n "$'$_placehold_text_'"
+            fi
             }
 
     '
