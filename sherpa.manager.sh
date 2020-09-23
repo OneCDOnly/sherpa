@@ -676,7 +676,6 @@ Session.Validate()
     fi
 
     DebugUserspace.OK 'default volume' "$($GETCFG_CMD SHARE_DEF defVolMP -f $DEFAULT_SHARES_PATHFILE)"
-    DebugUserspace.OK '$PATH' "${PATH:0:53}"
 
     if [[ -L '/opt' ]]; then
         DebugUserspace.OK '/opt' "$($READLINK_CMD '/opt' || echo '<not present>')"
@@ -684,6 +683,7 @@ Session.Validate()
         DebugUserspace.Warning '/opt' '<not present>'
     fi
 
+    DebugUserspace.OK '$PATH' "${PATH:0:54}"
     CheckPythonPathAndVersion python
     CheckPythonPathAndVersion python2
     CheckPythonPathAndVersion python3
@@ -703,7 +703,7 @@ Session.Validate()
     DebugQPKG 'logs path' "$PACKAGE_LOGS_PATH"
     DebugQPKG 'download path' "$QPKG_DL_PATH"
     DebugIPKG 'download path' "$IPKG_DL_PATH"
-
+    DebugQPKG 'upgradable package(s)' "${QPKGS_upgradable[*]}"
     DebugInfoThinSeparator
     Packages.Assignment.Check
     DebugInfoThinSeparator
