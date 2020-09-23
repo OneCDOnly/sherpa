@@ -2862,7 +2862,7 @@ Help.ActionsAll.Show()
 
     DisplayAsProjectSyntaxIndentedExample 'upgrade all installed packages (including the internal applications)' '--upgrade-all'
 
-    DisplayAsProjectSyntaxIndentedExample 'restart all packages (only upgrades the internal applications, not the packages)' '--restart-all'
+    DisplayAsProjectSyntaxIndentedExample 'restart all installed packages (only upgrades the internal applications, not the packages)' '--restart-all'
 
     DisplayAsProjectSyntaxIndentedExample 'ensure all application dependencies are installed' '--check-all'
 
