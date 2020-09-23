@@ -1443,7 +1443,7 @@ UpdateEntware()
     fi
 
     local package_minutes_threshold=60
-    local log_pathfile="$WORK_PATH/entware.$UPDATE_LOG_FILE"
+    local log_pathfile="$PACKAGE_LOGS_PATH/entware.$UPDATE_LOG_FILE"
     local msgs=''
     local result=0
 
