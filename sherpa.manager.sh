@@ -179,6 +179,7 @@ Session.Init()
 
     Objects.Create User.Opts.Apps.List.Installed
     Objects.Create User.Opts.Apps.List.NotInstalled
+    Objects.Create User.Opts.Apps.List.Upgradable
 
     # script flags
     Objects.Create Session.Abort
@@ -406,7 +407,7 @@ Session.Init()
     CalcNASQPKGArch
 
     Session.ParseArguments
-    User.Opts.Log.View.IsNot && User.Opts.Versions.View.IsNot && User.Opts.Apps.All.List.IsNot && User.Opts.Apps.List.Installed.IsNot && User.Opts.Apps.List.NotInstalled.IsNot && Session.Debug.To.File.Set
+    User.Opts.Log.View.IsNot && User.Opts.Versions.View.IsNot && User.Opts.Apps.All.List.IsNot && User.Opts.Apps.List.Installed.IsNot && User.Opts.Apps.List.NotInstalled.IsNot && User.Opts.Apps.List.Upgradable.IsNot && Session.Debug.To.File.Set
     SmartCR
 
     Session.Display.Clean.IsSet && return
@@ -440,6 +441,10 @@ Session.ParseArguments()
 
     for arg in "${user_args[@]}"; do
         case $arg in
+            --abs|abs)
+                User.Opts.Help.Abbreviations.Set
+                Session.Abort.Set
+                ;;
             -d|d|--debug|debug)
                 Session.Debug.To.Screen.Set
                 ;;
@@ -450,39 +455,12 @@ Session.ParseArguments()
                 User.Opts.Help.Basic.Set
                 Session.Abort.Set
                 ;;
-            -p|p|--problem|problem|--problems|problems)
-                User.Opts.Help.Problems.Set
-                Session.Abort.Set
-                ;;
-            -t|t|--tip|tip|--tips|tips)
-                User.Opts.Help.Tips.Set
-                Session.Abort.Set
-                ;;
             -l|l|--log|log)
                 User.Opts.Log.View.Set
                 Session.Abort.Set
                 ;;
-            --list-installed|list-installed)
-                User.Opts.Apps.List.Installed.Set
-                Session.Display.Clean.Set
-                Session.Abort.Set
-                ;;
-            --list-not-installed|list-not-installed)
-                User.Opts.Apps.List.NotInstalled.Set
-                Session.Display.Clean.Set
-                Session.Abort.Set
-                ;;
-            --list|list|--list-all|list-all)
-                User.Opts.Apps.All.List.Set
-                Session.Display.Clean.Set
-                Session.Abort.Set
-                ;;
             --paste|paste)
                 User.Opts.Log.Paste.Set
-                Session.Abort.Set
-                ;;
-            --abs|abs)
-                User.Opts.Help.Abbreviations.Set
                 Session.Abort.Set
                 ;;
             -a|a|--action|action|--actions|actions)
@@ -499,6 +477,34 @@ Session.ParseArguments()
                 ;;
             -o|o|--option|option|--options|options)
                 User.Opts.Help.Options.Set
+                Session.Abort.Set
+                ;;
+            -p|p|--problem|problem|--problems|problems)
+                User.Opts.Help.Problems.Set
+                Session.Abort.Set
+                ;;
+            -t|t|--tip|tip|--tips|tips)
+                User.Opts.Help.Tips.Set
+                Session.Abort.Set
+                ;;
+            --list|list|--list-all|list-all|all)
+                User.Opts.Apps.All.List.Set
+                Session.Display.Clean.Set
+                Session.Abort.Set
+                ;;
+            --list-installed|list-installed|installed)
+                User.Opts.Apps.List.Installed.Set
+                Session.Display.Clean.Set
+                Session.Abort.Set
+                ;;
+            --list-not-installed|list-not-installed|not-installed)
+                User.Opts.Apps.List.NotInstalled.Set
+                Session.Display.Clean.Set
+                Session.Abort.Set
+                ;;
+            --list-upgradable|list-upgradable|upgradable)
+                User.Opts.Apps.List.Upgradable.Set
+                Session.Display.Clean.Set
                 Session.Abort.Set
                 ;;
             -v|v|--version|version)
@@ -715,7 +721,7 @@ Session.Validate()
 
     if QPKGs.ToBackup.IsNone && QPKGs.ToUninstall.IsNone && QPKGs.ToForceUpgrade.IsNone && QPKGs.ToUpgrade.IsNone && QPKGs.ToInstall.IsNone && QPKGs.ToReinstall.IsNone && QPKGs.ToRestore.IsNone && QPKGs.ToRestart.IsNone && QPKGs.ToStatus.IsNone; then
         if User.Opts.Apps.All.Install.IsNot && User.Opts.Apps.All.Uninstall.IsNot && User.Opts.Apps.All.Restart.IsNot && User.Opts.Apps.All.Upgrade.IsNot && User.Opts.Apps.All.Backup.IsNot && User.Opts.Apps.All.Restore.IsNot && User.Opts.Apps.All.Status.IsNot && User.Opts.Apps.All.List.IsNot; then
-            if User.Opts.Dependencies.Check.IsNot && User.Opts.Apps.List.Installed.IsNot && User.Opts.Apps.List.NotInstalled.IsNot && Session.Debug.To.Screen.IsNot && User.Opts.IgnoreFreeSpace.IsNot; then
+            if User.Opts.Dependencies.Check.IsNot && User.Opts.Apps.List.Installed.IsNot && User.Opts.Apps.List.NotInstalled.IsNot &&  User.Opts.Apps.List.Upgradable.IsNot && Session.Debug.To.Screen.IsNot && User.Opts.IgnoreFreeSpace.IsNot; then
                 ShowAsError 'nothing to do'
                 User.Opts.Help.Basic.Set
                 Session.Abort.Set
@@ -1249,6 +1255,8 @@ Session.Results()
         QPKGs.Installed.Show
     elif User.Opts.Apps.List.NotInstalled.IsSet; then
         QPKGs.NotInstalled.Show
+    elif User.Opts.Apps.List.Upgradable.IsSet; then
+        QPKGs.Upgradable.Show
     elif User.Opts.Apps.All.List.IsSet; then
         QPKGs.All.Show
     fi
@@ -1347,6 +1355,17 @@ QPKGs.NotInstalled.Show()
     {
 
     for package in $(QPKGs.NotInstalled.Print); do
+        echo "$package"
+    done
+
+    return 0
+
+    }
+
+QPKGs.Upgradable.Show()
+    {
+
+    for package in $(QPKGs.Upgradable.Print); do
         echo "$package"
     done
 
@@ -3044,9 +3063,11 @@ Help.ActionsAll.Show()
 
     DisplayAsProjectSyntaxIndentedExample 'list all installable packages' '--list'
 
-    DisplayAsProjectSyntaxIndentedExample 'list all installed packages' '--list-installed'
+    DisplayAsProjectSyntaxIndentedExample 'list only installed packages' '--list-installed'
 
-    DisplayAsProjectSyntaxIndentedExample 'list all packages that are not installed' '--list-not-installed'
+    DisplayAsProjectSyntaxIndentedExample 'list only packages not installed' '--list-not-installed'
+
+    DisplayAsProjectSyntaxIndentedExample 'list only upgradable packages' '--list-upgradable'
 
     DisplayAsProjectSyntaxIndentedExample 'backup all application configurations to the default backup location' '--backup-all'
 
@@ -3559,6 +3580,13 @@ QPKGs.Upgradable.Array()
     {
 
     echo "${QPKGS_upgradable[@]}"
+
+    }
+
+QPKGs.Upgradable.Print()
+    {
+
+    echo "${QPKGS_upgradable[*]}"
 
     }
 
