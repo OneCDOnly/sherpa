@@ -2506,7 +2506,7 @@ IPKGs.Install()
         done
     else
         for index in "${!SHERPA_QPKG_NAME[@]}"; do
-            if QPKG.ToBeInstalled "${SHERPA_QPKG_NAME[$index]}" || QPKG.Installed "${SHERPA_QPKG_NAME[$index]}"; then
+            if QPKG.ToBeInstalled "${SHERPA_QPKG_NAME[$index]}" || QPKG.Installed "${SHERPA_QPKG_NAME[$index]}" || QPKG.ToBeUpgraded "${SHERPA_QPKG_NAME[$index]}"; then
                 packages+=" ${SHERPA_QPKG_IPKGS[$index]}"
             fi
         done
@@ -3913,8 +3913,6 @@ QPKG.ToBeInstalled()
 
     [[ -z $1 ]] && return 1
     [[ $(QPKGs.ToInstall.Count) -gt 0 && ${QPKGs_to_install[*]} == *"$1"* ]] && return 0
-    [[ $(QPKGs.ToReinstall.Count) -gt 0 && ${QPKGs_to_reinstall[*]} == *"$1"* ]] && return 0
-    [[ $(QPKGs.ToUpgrade.Count) -gt 0 && ${QPKGs_to_upgrade[*]} == *"$1"* ]] && return 0
 
     return 1
 
@@ -3943,7 +3941,7 @@ QPKG.ToBeReinstalled()
     #   $? = 0 (true) or 1 (false)
 
     [[ -z $1 ]] && return 1
-    [[ ${#QPKGs_to_reinstall[@]} -gt 0 && ${QPKGs_to_reinstall[*]} == *"$1"* ]] && return 0
+    [[ $(QPKGs.ToReinstall.Count) -gt 0 && ${QPKGs_to_reinstall[*]} == *"$1"* ]] && return 0
 
     return 1
 
@@ -3959,6 +3957,35 @@ QPKG.ToNotBeReinstalled()
     #   $? = 0 (true) or 1 (false)
 
     ! QPKG.ToBeReinstalled "$1"
+
+    }
+
+QPKG.ToBeUpgraded()
+    {
+
+    # input:
+    #   $1 = package name to check
+
+    # output:
+    #   $? = 0 (true) or 1 (false)
+
+    [[ -z $1 ]] && return 1
+    [[ $(QPKGs.ToUpgrade.Count) -gt 0 && ${QPKGs_to_upgrade[*]} == *"$1"* ]] && return 0
+
+    return 1
+
+    }
+
+QPKG.ToNotBeUpgraded()
+    {
+
+    # input:
+    #   $1 = package name to check
+
+    # output:
+    #   $? = 0 (true) or 1 (false)
+
+    ! QPKG.ToBeUpgraded "$1"
 
     }
 
