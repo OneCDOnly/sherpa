@@ -848,7 +848,7 @@ Packages.Assignment.Check()
 
     if User.Opts.Apps.All.Reinstall.IsSet; then
         if QPKGs.Installed.IsAny; then
-            for package in "${QPKGS_user_installable[@]}"; do
+            for package in "${QPKGs_installed[@]}"; do
                 if [[ $package != Entware ]]; then      # KLUDGE: ignore Entware as it needs to be handled separately.
                     QPKGs.ToReinstall.Add "$package"
                 fi
@@ -2915,7 +2915,7 @@ Help.ActionsAll.Show()
 
     DisplayAsProjectSyntaxIndentedExample "uninstall everything! (except $(FormatAsPackageName Par2) and $(FormatAsPackageName Entware) for now)" '--uninstall-all-packages-please'
 
-    DisplayAsProjectSyntaxIndentedExample 'reinstall all installed packages' '--reinstall-all'
+    DisplayAsProjectSyntaxIndentedExample "reinstall all installed packages (except $(FormatAsPackageName Entware) for now)" '--reinstall-all'
 
     DisplayAsProjectSyntaxIndentedExample 'upgrade all installed packages (including the internal applications)' '--upgrade-all'
 
@@ -2927,7 +2927,7 @@ Help.ActionsAll.Show()
 
     DisplayAsProjectSyntaxIndentedExample 'list only installed packages' '--list-installed'
 
-    DisplayAsProjectSyntaxIndentedExample 'list only packages not installed' '--list-not-installed'
+    DisplayAsProjectSyntaxIndentedExample 'list only packages that are not installed' '--list-not-installed'
 
     DisplayAsProjectSyntaxIndentedExample 'list only upgradable packages' '--list-upgradable'
 
