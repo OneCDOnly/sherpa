@@ -3309,12 +3309,22 @@ QPKGs.Installable.Build()
     local package=''
 
     for package in "${SHERPA_QPKG_NAME[@]}"; do
-        QPKG.Installable "$package" && QPKGS_user_installable+=($package)
+        QPKG.Installable "$package" && QPKGs.Installable.Add "$package"
     done
 
     return 0
 
     }
+
+QPKGs.Installable.Add()
+    {
+
+    [[ ${QPKGS_user_installable[*]} != *"$1"* ]] && QPKGS_user_installable+=("$1")
+
+    return 0
+
+    }
+
 
 QPKGs.ToInstall.Add()
     {
