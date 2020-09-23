@@ -2902,7 +2902,9 @@ DisplayAsProjectSyntaxIndentedExample()
     # $1 = description
     # $2 = example syntax
 
-    if [[ -z $1 ]]; then
+    if [[ -z $2 ]]; then
+        printf "\n   %s \n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}"
+    elif [[ -z $1 ]]; then
         printf "       # %s\n" "$PROJECT_NAME $2"
     elif [[ ${1: -1} = '!' ]]; then
         printf "\n   %s \n       # %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$PROJECT_NAME $2"
@@ -3185,9 +3187,11 @@ Help.Tips.Show()
     DisplayLineSpaceIfNoneAlready
     Display "* helpful tips and shortcuts:"
 
+    DisplayAsProjectSyntaxIndentedExample "the leading '--' characters before $(FormatAsHelpActions) and $(FormatAsHelpOptions) are optional"
+
     DisplayAsProjectSyntaxIndentedExample "install all available $(FormatAsScriptTitle) packages" '--install-all'
 
-    DisplayAsProjectSyntaxIndentedExample 'package abbreviations may also be used. To see these' '--abs'
+    DisplayAsProjectSyntaxIndentedExample 'package abbreviations also work. To see these' '--abs'
 
     DisplayAsProjectSyntaxIndentedExample 'ensure all application dependencies are installed' '--check-all'
 
