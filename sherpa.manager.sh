@@ -520,7 +520,7 @@ Session.ParseArguments()
                 User.Opts.Apps.All.Install.Set
                 action=''
                 ;;
-            --uninstall-all-packages-please|uninstall-all-packages-please)
+            --uninstall-all-packages-please|uninstall-all-packages-please|--remove-all-packages-please|remove-all-packages-please)
                 User.Opts.Apps.All.Uninstall.Set
                 action=''
                 ;;
@@ -552,7 +552,7 @@ Session.ParseArguments()
                 action=install_
                 action_force=false
                 ;;
-            --uninstall|uninstall)
+            --uninstall|uninstall|--remove|remove)
                 action=uninstall_
                 action_force=false
                 ;;
