@@ -405,8 +405,8 @@ Session.Init()
     QPKGs.Upgradable.Build
     CalcNASQPKGArch
 
-    Session.Debug.To.File.Set
     Session.ParseArguments
+    User.Opts.Log.View.IsNot && User.Opts.Versions.View.IsNot && Session.Debug.To.File.Set
     SmartCR
 
     Session.Display.Clean.IsSet && return
