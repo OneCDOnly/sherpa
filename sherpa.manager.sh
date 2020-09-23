@@ -603,12 +603,11 @@ Session.ParseArguments()
                             QPKGs.ToUpgrade.Add "$target_package"
                         fi
                         ;;
-                    install_|reinstall_)
-                        if QPKG.NotInstalled "$target_package"; then
-                            QPKGs.ToInstall.Add "$target_package"
-                        else
-                            QPKGs.ToReinstall.Add "$target_package"
-                        fi
+                    install_)
+                        QPKGs.ToInstall.Add "$target_package"
+                        ;;
+                    reinstall_)
+                        QPKGs.ToReinstall.Add "$target_package"
                         ;;
                     restart_)
                         QPKGs.ToRestart.Add "$target_package"
@@ -716,7 +715,6 @@ Session.Validate()
 
     if QPKGs.ToInstall.IsAny || QPKGs.ToReinstall.IsAny || QPKGs.ToForceUpgrade.IsAny || QPKGs.ToUpgrade.IsAny || User.Opts.Dependencies.Check.IsSet; then
         Session.Ipkgs.Install.Set
-        Session.Pips.Install.Set
     fi
 
     if QPKGs.ToBackup.IsNone && QPKGs.ToUninstall.IsNone && QPKGs.ToForceUpgrade.IsNone && QPKGs.ToUpgrade.IsNone && QPKGs.ToInstall.IsNone && QPKGs.ToReinstall.IsNone && QPKGs.ToRestore.IsNone && QPKGs.ToRestart.IsNone && QPKGs.ToStatus.IsNone; then
@@ -1097,8 +1095,6 @@ Packages.Install.Independents()
 
     DebugFuncEntry
 
-    local package=''
-
     if QPKGs.ToInstall.IsAny || QPKGs.ToReinstall.IsAny; then
         for package in "${SHERPA_INDEP_QPKGs[@]}"; do
             if  [[ ${QPKGs_to_install[*]} == *"$package"* || ${QPKGs_to_reinstall[*]} == *"$package"* ]]; then
@@ -1114,7 +1110,11 @@ Packages.Install.Independents()
                     [[ -L $opt_path && -d $opt_backup_path ]] && cp --recursive "$opt_backup_path"/* --target-directory "$opt_path" && rm -rf "$opt_backup_path"
                 else
                     if [[ $NAS_QPKG_ARCH != none ]]; then
-                        QPKG.Install "$package"
+                        if [[ ${QPKGs_to_install[*]} == *"$package"* ]]; then
+                            QPKG.Install "$package"
+                        elif [[ ${QPKGs_to_reinstall[*]} == *"$package"* ]]; then
+                            QPKG.Reinstall "$package"
+                        fi
                     fi
                 fi
             fi
@@ -1166,7 +1166,11 @@ Packages.Install.Dependants()
     if QPKGs.ToInstall.IsAny; then
         for package in "${SHERPA_DEP_QPKGs[@]}"; do
             if [[ ${QPKGs_to_install[*]} == *"$package"* ]]; then
-                QPKG.Install "$package"
+                if QPKG.NotInstalled "$package"; then
+                    QPKG.Install "$package"
+                else
+                    ShowAsNote "unable to install $(FormatAsPackageName "$package") as it's already installed"
+                fi
             fi
         done
     fi
@@ -1174,7 +1178,11 @@ Packages.Install.Dependants()
     if QPKGs.ToReinstall.IsAny; then
         for package in "${SHERPA_DEP_QPKGs[@]}"; do
             if [[ ${QPKGs_to_reinstall[*]} == *"$package"* ]]; then
-                QPKG.Install "$package"
+                if QPKG.Installed "$package"; then
+                    QPKG.Reinstall "$package"
+                else
+                    ShowAsNote "unable to reinstall $(FormatAsPackageName "$package") as it's not installed"
+                fi
             fi
         done
     fi
@@ -1500,6 +1508,7 @@ InstallIPKGBatch()
             returncode=1
         fi
         DebugTimerStageEnd "$STARTSECONDS"
+        Session.Pips.Install.Set
     fi
 
     DebugFuncExit
@@ -1874,6 +1883,10 @@ QPKG.Install()
         DebugError "no package name specified "
         code_pointer=7
         return 1
+    elif QPKG.Installed "$1"; then
+        DebugQPKG "$(FormatAsPackageName "$1")" "already installed"
+        code_pointer=8
+        return 1
     fi
 
     local target_file=''
@@ -1881,7 +1894,6 @@ QPKG.Install()
     local returncode=0
     local local_pathfile="$(GetQPKGPathFilename "$1")"
     local log_pathfile=''
-    local re=''
 
     if [[ ${local_pathfile##*.} = zip ]]; then
         $UNZIP_CMD -nq "$local_pathfile" -d "$QPKG_DL_PATH"
@@ -1889,24 +1901,68 @@ QPKG.Install()
     fi
 
     target_file=$($BASENAME_CMD "$local_pathfile")
+    log_pathfile=$PACKAGE_LOGS_PATH/$target_file.$INSTALL_LOG_FILE
 
-    if QPKG.NotInstalled "$1"; then
-        log_pathfile=$PACKAGE_LOGS_PATH/$target_file.$INSTALL_LOG_FILE
-    else
-        log_pathfile=$PACKAGE_LOGS_PATH/$target_file.$REINSTALL_LOG_FILE
-        re='re-'
-    fi
-
-    ShowAsProcLong "${re}installing $(FormatAsFileName "$target_file")"
+    ShowAsProcLong "installing $(FormatAsFileName "$target_file")"
 
     sh "$local_pathfile" > "$log_pathfile" 2>&1
     result=$?
 
     if [[ $result -eq 0 || $result -eq 10 ]]; then
-        ShowAsDone "${re}installed $(FormatAsFileName "$target_file")"
+        ShowAsDone "installed $(FormatAsFileName "$target_file")"
         GetQPKGServiceStatus "$1"
     else
-        ShowAsError "${re}installation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $result)"
+        ShowAsError "installation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $result)"
+        DebugErrorFile "$log_pathfile"
+        returncode=1
+    fi
+
+    return $returncode
+
+    }
+
+QPKG.Reinstall()
+    {
+
+    # $1 = QPKG name to install
+
+    Session.Error.IsSet && return
+    Session.SkipPackageProcessing.IsSet && return
+
+    if [[ -z $1 ]]; then
+        DebugError "no package name specified "
+        code_pointer=9
+        return 1
+    elif QPKG.NotInstalled "$1"; then
+        DebugQPKG "$(FormatAsPackageName "$1")" "not installed"
+        code_pointer=10
+        return 1
+    fi
+
+    local target_file=''
+    local result=0
+    local returncode=0
+    local local_pathfile="$(GetQPKGPathFilename "$1")"
+    local log_pathfile=''
+
+    if [[ ${local_pathfile##*.} = zip ]]; then
+        $UNZIP_CMD -nq "$local_pathfile" -d "$QPKG_DL_PATH"
+        local_pathfile="${local_pathfile%.*}"
+    fi
+
+    target_file=$($BASENAME_CMD "$local_pathfile")
+    log_pathfile=$PACKAGE_LOGS_PATH/$target_file.$REINSTALL_LOG_FILE
+
+    ShowAsProcLong "re-installing $(FormatAsFileName "$target_file")"
+
+    sh "$local_pathfile" > "$log_pathfile" 2>&1
+    result=$?
+
+    if [[ $result -eq 0 || $result -eq 10 ]]; then
+        ShowAsDone "re-installed $(FormatAsFileName "$target_file")"
+        GetQPKGServiceStatus "$1"
+    else
+        ShowAsError "$re-installation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $result)"
         DebugErrorFile "$log_pathfile"
         returncode=1
     fi
@@ -1925,7 +1981,7 @@ QPKG.Upgrade()
 
     if [[ -z $1 ]]; then
         DebugError "no package name specified "
-        code_pointer=8
+        code_pointer=11
         return 1
     fi
 
@@ -1977,11 +2033,11 @@ QPKG.Uninstall()
 
     if [[ -z $1 ]]; then
         DebugError "no package name specified "
-        code_pointer=9
+        code_pointer=12
         return 1
     elif QPKG.NotInstalled "$1"; then
         DebugQPKG "$(FormatAsPackageName "$1")" "not installed"
-        code_pointer=10
+        code_pointer=13
         return 1
     fi
 
@@ -2021,11 +2077,11 @@ QPKG.Restart()
 
     if [[ -z $1 ]]; then
         DebugError "no package name specified "
-        code_pointer=11
+        code_pointer=14
         return 1
     elif QPKG.NotInstalled "$1"; then
         DebugQPKG "$(FormatAsPackageName "$1")" "not installed"
-        code_pointer=12
+        code_pointer=15
         return 1
     fi
 
@@ -2065,11 +2121,11 @@ QPKG.Enable()
 
     if [[ -z $1 ]]; then
         DebugError "no package name specified "
-        code_pointer=13
+        code_pointer=16
         return 1
     elif QPKG.NotInstalled "$1"; then
         DebugQPKG "$(FormatAsPackageName "$1")" "not installed"
-        code_pointer=14
+        code_pointer=17
         return 1
     fi
 
@@ -2094,11 +2150,11 @@ QPKG.Backup()
 
     if [[ -z $1 ]]; then
         DebugError "no package name specified "
-        code_pointer=15
+        code_pointer=18
         return 1
     elif QPKG.NotInstalled "$1"; then
         DebugQPKG "$(FormatAsPackageName "$1")" "not installed"
-        code_pointer=16
+        code_pointer=19
         return 1
     fi
 
@@ -2144,11 +2200,11 @@ QPKG.Restore()
 
     if [[ -z $1 ]]; then
         DebugError "no package name specified "
-        code_pointer=17
+        code_pointer=20
         return 1
     elif QPKG.NotInstalled "$1"; then
         DebugQPKG "$(FormatAsPackageName "$1")" "not installed"
-        code_pointer=18
+        code_pointer=21
         return 1
     fi
 
@@ -2265,7 +2321,8 @@ ExcludeInstalledQPKGs()
     for element in "${requested_list_array[@]}"; do
         if QPKG.NotInstalled "$element"; then
             QPKGs_download_array+=($element)
-            [[ ${QPKGs_to_install[*]} != *"$element"* ]] && QPKGs_to_install+=($element)
+        elif [[ ${#QPKGs_to_install[@]} -gt 0 && ${QPKGs_to_install[*]} == *"$element"* ]]; then
+            QPKGs_download_array+=($element)
         elif [[ ${#QPKGs_to_reinstall[@]} -gt 0 && ${QPKGs_to_reinstall[*]} == *"$element"* ]]; then
             QPKGs_download_array+=($element)
         elif [[ ${#QPKGS_upgradable[@]} -gt 0 && ${QPKGS_upgradable[*]} == *"$element"* ]]; then
@@ -2295,7 +2352,7 @@ GetAllIPKGDepsToDownload()
     #   $IPKG_download_size = byte-count of packages to be downloaded
 
     if IsNotSysFileExist $OPKG_CMD || IsNotSysFileExist $GNU_GREP_CMD; then
-        code_pointer=19
+        code_pointer=22
         return 1
     fi
 
@@ -2823,7 +2880,7 @@ Help.Actions.Show()
 
     DisplayAsProjectSyntaxIndentedExample 'uninstall the following packages' "--uninstall $(FormatAsHelpPackages)"
 
-    DisplayAsProjectSyntaxIndentedExample 'reinstall the following packages (if not installed, will be installed)' "--reinstall $(FormatAsHelpPackages)"
+    DisplayAsProjectSyntaxIndentedExample 'reinstall the following packages' "--reinstall $(FormatAsHelpPackages)"
 
     DisplayAsProjectSyntaxIndentedExample 'upgrade the following packages and the internal applications' "--upgrade $(FormatAsHelpPackages)"
 
@@ -2858,7 +2915,7 @@ Help.ActionsAll.Show()
 
     DisplayAsProjectSyntaxIndentedExample "uninstall everything! (except $(FormatAsPackageName Par2) and $(FormatAsPackageName Entware) for now)" '--uninstall-all-packages-please'
 
-    DisplayAsProjectSyntaxIndentedExample 'reinstall all packages (if not installed, will be installed)' '--reinstall-all'
+    DisplayAsProjectSyntaxIndentedExample 'reinstall all installed packages' '--reinstall-all'
 
     DisplayAsProjectSyntaxIndentedExample 'upgrade all installed packages (including the internal applications)' '--upgrade-all'
 
@@ -3177,6 +3234,7 @@ QPKGs.Download.Build()
     fi
 
     GetTheseQPKGDeps "${QPKGs_initial_download_array[*]}"
+
     ExcludeInstalledQPKGs "$QPKG_pre_download_list"
 
     if [[ $(Packages.Download.Count) -eq 1 && ${QPKGs_download_array[0]} = Entware ]] && QPKG.NotInstalled Entware; then
