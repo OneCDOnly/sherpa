@@ -878,7 +878,7 @@ Packages.Assignment.Check()
 
     if User.Opts.Apps.All.Uninstall.IsSet; then
         if QPKGs.Installed.IsAny; then
-            for package in "${SHERPA_QPKG_NAME[@]}"; do
+            for package in "${QPKGs_installed[@]}"; do
                 if [[ $package != Entware ]]; then      # KLUDGE: ignore Entware as it needs to be handled separately.
                     QPKGs.ToUninstall.Add "$package"
                 fi
@@ -1038,8 +1038,8 @@ Packages.Uninstall()
     local previous_pip3_module_list=$WORK_PATH/pip3.prev.installed.list
     local previous_opkg_package_list=$WORK_PATH/opkg.prev.installed.list
 
-    # remove dependant packages first
     if QPKGs.ToUninstall.IsAny; then
+        # remove dependant packages first
         for package in "${SHERPA_DEP_QPKGs[@]}"; do
             if [[ ${QPKGs_to_uninstall[*]} == *"$package"* ]]; then
                 if QPKG.Installed "$package"; then
@@ -1049,9 +1049,22 @@ Packages.Uninstall()
                 fi
             fi
         done
-    fi
 
-    # TODO: still need something here to then remove independent packages if they're in the $QPKGs_to_uninstall array
+        # then the independent packages last
+        for package in "${SHERPA_INDEP_QPKGs[@]}"; do
+            if [[ ${QPKGs_to_uninstall[*]} == *"$package"* ]]; then
+                if [[ $package != Entware ]]; then      # KLUDGE: ignore Entware as it needs to be handled separately.
+                    if QPKG.Installed "$package"; then
+                        QPKG.Uninstall "$package"
+                    else
+                        ShowAsNote "unable to uninstall $(FormatAsPackageName "$package") as it's not installed"
+                    fi
+                fi
+            fi
+        done
+
+        # TODO: still need something here to remove Entware if it's in the $QPKGs_to_uninstall array
+    fi
 
     if QPKG.ToBeReinstalled Entware; then
         ShowAsNote "Reinstalling $(FormatAsPackageName Entware) will remove all IPKGs and Python modules, and only those required to support your $PROJECT_NAME apps will be reinstalled."
