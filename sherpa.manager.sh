@@ -681,6 +681,7 @@ Session.Validate()
     CheckPythonPathAndVersion python
     CheckPythonPathAndVersion python2
     CheckPythonPathAndVersion python3
+    DebugUserspace.OK 'unparsed user arguments' "$USER_ARGS_RAW"
 
     if QPKG.Installed Entware; then
         [[ -e /opt/etc/passwd ]] && { [[ -L /opt/etc/passwd ]] && ENTWARE_VER=std || ENTWARE_VER=alt ;} || ENTWARE_VER=none
@@ -693,13 +694,10 @@ Session.Validate()
     fi
 
     DebugQPKG 'arch' "$NAS_QPKG_ARCH"
-
     DebugQPKG 'logs path' "$PACKAGE_LOGS_PATH"
     DebugQPKG 'download path' "$QPKG_DL_PATH"
     DebugIPKG 'download path' "$IPKG_DL_PATH"
 
-    DebugInfoThinSeparator
-    DebugScript 'unparsed user arguments' "$USER_ARGS_RAW"
     DebugInfoThinSeparator
     Packages.Assignment.Check
     DebugInfoThinSeparator
