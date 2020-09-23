@@ -1,5 +1,7 @@
 ![icon](images/sherpa.wide.png)
 
+*The world's first multiple-action CLI package-manager!*
+
 ## Description
 
 A mini-package-manager to install various media-management apps into QNAP NAS.
