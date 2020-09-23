@@ -406,7 +406,7 @@ Session.Init()
     CalcNASQPKGArch
 
     Session.ParseArguments
-    User.Opts.Log.View.IsNot && User.Opts.Versions.View.IsNot && Session.Debug.To.File.Set
+    User.Opts.Log.View.IsNot && User.Opts.Versions.View.IsNot && User.Opts.Apps.All.List.IsNot && User.Opts.Apps.List.Installed.IsNot && User.Opts.Apps.List.NotInstalled.IsNot && Session.Debug.To.File.Set
     SmartCR
 
     Session.Display.Clean.IsSet && return
