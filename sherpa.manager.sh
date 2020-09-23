@@ -898,8 +898,8 @@ Packages.Assignment.Check()
     #   7. uninstall
     #   6. force-upgrade
     #   5. upgrade
-    #   4. reinstall
-    #   3. install
+    #   4. install
+    #   3. reinstall
     #   2. restore
     #   1. restart          (lowest: least-important)
 
@@ -938,18 +938,18 @@ Packages.Assignment.Check()
         done
     fi
 
-    if QPKGs.ToReinstall.IsAny; then
+    if QPKGs.ToInstall.IsAny; then
         for package in "${SHERPA_DEP_QPKGs[@]}"; do
-            if [[ ${QPKGs_to_reinstall[*]} == *"$package"* ]]; then
-                QPKGs.ToInstall.Remove "$package"
+            if [[ ${QPKGs_to_install[*]} == *"$package"* ]]; then
                 QPKGs.ToRestart.Remove "$package"
             fi
         done
     fi
 
-    if QPKGs.ToInstall.IsAny; then
+    if QPKGs.ToReinstall.IsAny; then
         for package in "${SHERPA_DEP_QPKGs[@]}"; do
-            if [[ ${QPKGs_to_install[*]} == *"$package"* ]]; then
+            if [[ ${QPKGs_to_reinstall[*]} == *"$package"* ]]; then
+                QPKGs.ToInstall.Remove "$package"
                 QPKGs.ToRestart.Remove "$package"
             fi
         done
@@ -1154,17 +1154,17 @@ Packages.Install.Dependants()
         done
     fi
 
-    if QPKGs.ToReinstall.IsAny; then
+    if QPKGs.ToInstall.IsAny; then
         for package in "${SHERPA_DEP_QPKGs[@]}"; do
-            if [[ ${QPKGs_to_reinstall[*]} == *"$package"* ]]; then
+            if [[ ${QPKGs_to_install[*]} == *"$package"* ]]; then
                 QPKG.Install "$package"
             fi
         done
     fi
 
-    if QPKGs.ToInstall.IsAny; then
+    if QPKGs.ToReinstall.IsAny; then
         for package in "${SHERPA_DEP_QPKGs[@]}"; do
-            if [[ ${QPKGs_to_install[*]} == *"$package"* ]]; then
+            if [[ ${QPKGs_to_reinstall[*]} == *"$package"* ]]; then
                 QPKG.Install "$package"
             fi
         done
