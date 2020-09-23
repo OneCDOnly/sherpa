@@ -497,7 +497,7 @@ Session.ParseArguments()
                 Session.Display.Clean.Set
                 Session.SkipPackageProcessing.Set
                 ;;
-            --list-installable|list-installable|--list-not-installed|list-not-installed|not-installed)
+            --list-installable|list-installable|--list-not-installed|list-not-installed|not-installed|--installable|installable)
                 User.Opts.Apps.List.NotInstalled.Set
                 Session.Display.Clean.Set
                 Session.SkipPackageProcessing.Set
