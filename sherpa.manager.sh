@@ -37,7 +37,7 @@ Session.Init()
     IsQNAP || return 1
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=200923
+    readonly MANAGER_SCRIPT_VERSION=200924
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -146,8 +146,8 @@ Session.Init()
     readonly PLATFORM_PATHFILE=/etc/platform.conf
     readonly EXTERNAL_PACKAGE_ARCHIVE_PATHFILE=/opt/var/opkg-lists/entware
     local -r REMOTE_REPO_URL=https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/master/QPKGs
-    readonly PREV_QPKG_CONFIG_DIRS=(SAB_CONFIG CONFIG Config config)                 # last element is used as target dirname
-    readonly PREV_QPKG_CONFIG_FILES=(sabnzbd.ini settings.ini config.cfg config.ini) # last element is used as target filename
+    readonly PREV_QPKG_CONFIG_DIRS=(SAB_CONFIG CONFIG Config config)                                # last element is used as target dirname
+    readonly PREV_QPKG_CONFIG_FILES=(sabnzbd.ini sickbeard.conf settings.ini config.cfg config.ini) # last element is used as target filename
     pip3_cmd=/opt/bin/pip3
 
     # user-selected options
@@ -703,7 +703,7 @@ Session.Validate()
     DebugQPKG 'logs path' "$PACKAGE_LOGS_PATH"
     DebugQPKG 'download path' "$QPKG_DL_PATH"
     DebugIPKG 'download path' "$IPKG_DL_PATH"
-    DebugQPKG 'upgradable package(s)' "${QPKGS_upgradable[*]}"
+    DebugQPKG 'upgradable package(s)' "${QPKGS_upgradable[*]} "
     DebugInfoThinSeparator
     Packages.Assignment.Check
     DebugInfoThinSeparator
@@ -880,7 +880,7 @@ Packages.Assignment.Check()
 
     if User.Opts.Apps.All.Uninstall.IsSet; then
         if QPKGs.Installed.IsAny; then
-            for package in "${QPKGs_installed[@]}"; do
+            for package in "${SHERPA_QPKG_NAME[@]}"; do
                 if [[ $package != Entware ]]; then      # KLUDGE: ignore Entware as it needs to be handled separately.
                     QPKGs.ToUninstall.Add "$package"
                 fi
@@ -1246,9 +1246,7 @@ Session.Results()
     {
 
     if User.Opts.Versions.View.IsSet; then
-        Display "package: $PACKAGE_VERSION"
-        Display "loader: $LOADER_SCRIPT_VERSION"
-        Display "manager: $MANAGER_SCRIPT_VERSION"
+        Versions.Show
     elif User.Opts.Log.View.IsSet; then
         LogViewer.Show
     elif User.Opts.Apps.List.Installed.IsSet; then
@@ -3262,6 +3260,15 @@ LogViewer.Show()
     fi
 
     return 0
+
+    }
+
+Versions.Show()
+    {
+
+    Display "package: $PACKAGE_VERSION"
+    Display "loader: $LOADER_SCRIPT_VERSION"
+    Display "manager: $MANAGER_SCRIPT_VERSION"
 
     }
 
