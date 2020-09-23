@@ -2823,7 +2823,7 @@ Help.Actions.Show()
 
     DisplayAsProjectSyntaxIndentedExample 'uninstall the following packages' "--uninstall $(FormatAsHelpPackages)"
 
-    DisplayAsProjectSyntaxIndentedExample 'reinstall the following packages' "--reinstall $(FormatAsHelpPackages)"
+    DisplayAsProjectSyntaxIndentedExample 'reinstall the following packages (if not installed, will be installed)' "--reinstall $(FormatAsHelpPackages)"
 
     DisplayAsProjectSyntaxIndentedExample 'upgrade the following packages and the internal applications' "--upgrade $(FormatAsHelpPackages)"
 
@@ -2858,7 +2858,7 @@ Help.ActionsAll.Show()
 
     DisplayAsProjectSyntaxIndentedExample "uninstall everything! (except $(FormatAsPackageName Par2) and $(FormatAsPackageName Entware) for now)" '--uninstall-all-packages-please'
 
-    DisplayAsProjectSyntaxIndentedExample 'reinstall all installed packages' '--reinstall-all'
+    DisplayAsProjectSyntaxIndentedExample 'reinstall all packages (if not installed, will be installed)' '--reinstall-all'
 
     DisplayAsProjectSyntaxIndentedExample 'upgrade all installed packages (including the internal applications)' '--upgrade-all'
 
