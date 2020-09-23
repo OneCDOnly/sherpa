@@ -1296,201 +1296,6 @@ Session.Results()
 
     }
 
-QPKGs.Dependant.Restart()
-    {
-
-    # restart all sherpa QPKGs except independents. Needed if user has requested each QPKG update itself.
-
-    Session.SkipPackageProcessing.IsSet && return
-
-    [[ -z ${SHERPA_DEP_QPKGs[*]} || ${#SHERPA_DEP_QPKGs[@]} -eq 0 ]] && return
-
-    DebugFuncEntry
-    local package=''
-
-    for package in "${SHERPA_DEP_QPKGs[@]}"; do
-        QPKG.Enabled "$package" && QPKG.Restart "$package"
-    done
-
-    DebugFuncExit
-    return 0
-
-    }
-
-QPKGs.RestartNotUpgraded()
-    {
-
-    # restart all sherpa QPKGs except those that were just upgraded.
-
-    Session.SkipPackageProcessing.IsSet && return
-
-    [[ -z ${SHERPA_DEP_QPKGs[*]} || ${#SHERPA_DEP_QPKGs[@]} -eq 0 ]] && return
-
-    DebugFuncEntry
-    local package=''
-
-    for package in "${SHERPA_DEP_QPKGs[@]}"; do
-        QPKG.Enabled "$package" && ! QPKG.Upgradable "$package" && QPKG.Restart "$package"
-    done
-
-    DebugFuncExit
-    return 0
-
-    }
-
-QPKGs.Installed.Show()
-    {
-
-    for package in $(QPKGs.Installed.Print); do
-        echo "$package"
-    done
-
-    return 0
-
-    }
-
-QPKGs.NotInstalled.Show()
-    {
-
-    for package in $(QPKGs.NotInstalled.Print); do
-        echo "$package"
-    done
-
-    return 0
-
-    }
-
-QPKGs.Upgradable.Show()
-    {
-
-    for package in $(QPKGs.Upgradable.Print); do
-        echo "$package"
-    done
-
-    return 0
-
-    }
-
-QPKGs.All.Show()
-    {
-
-    for package in "${QPKGS_user_installable[@]}"; do
-        echo "$package"
-    done
-
-    return 0
-
-    }
-
-QPKGs.Download.Build()
-    {
-
-    local QPKGs_initial_download_array=()
-
-    # build an initial package download list. Items on this list will be skipped at download-time if they can be found in local cache.
-    if User.Opts.Apps.All.Install.IsSet; then
-        QPKGs_initial_download_array+=($(QPKGs.NotInstalled.Array))
-        for package in "${QPKGs_initial_download_array[@]}"; do
-            QPKGs.ToInstall.Add "$package"
-        done
-    elif User.Opts.Apps.All.Upgrade.IsSet; then
-        QPKGs_initial_download_array=($(QPKGs.Upgradable.Array))
-        for package in "${QPKGs_initial_download_array[@]}"; do
-            QPKGs.ToUpgrade.Add "$package"
-        done
-        Session.Pips.Install.Set
-    elif User.Opts.Dependencies.Check.IsSet; then
-        QPKGs_initial_download_array+=($(QPKGs.Installed.Array))
-        Session.Pips.Install.Set
-    else
-        QPKGs_initial_download_array+=(${QPKGs_to_install[*]} ${QPKGs_to_reinstall[*]} ${QPKGs_to_upgrade[*]} ${QPKGs_to_force_upgrade[*]})
-    fi
-
-    GetTheseQPKGDeps "${QPKGs_initial_download_array[*]}"
-    ExcludeInstalledQPKGs "$QPKG_pre_download_list"
-
-    if [[ $(Packages.Download.Count) -eq 1 && ${QPKGs_download_array[0]} = Entware ]] && QPKG.NotInstalled Entware; then
-        ShowAsNote "It's not necessary to install $(FormatAsPackageName Entware) on its own. It will be installed as-required with your other $(FormatAsScriptTitle) packages. :)"
-    fi
-
-    DebugScript 'download' "${QPKGs_download_array[*]} "
-
-    return 0
-
-    }
-
-QPKGs.Independent.Build()
-    {
-
-    # Returns a list of QPKGs that don't depend on other QPKGs. These are therefore independent. They should be installed/started before any dependant QPKGs.
-    # creates a global constant array: $SHERPA_INDEP_QPKGs()
-
-    SHERPA_INDEP_QPKGs=()
-    local index=0
-
-    for index in "${!SHERPA_QPKG_NAME[@]}"; do
-        [[ -z ${SHERPA_QPKG_DEPS[$index]} && ! ${SHERPA_INDEP_QPKGs[*]} =~ ${SHERPA_QPKG_NAME[$index]} ]] && SHERPA_INDEP_QPKGs+=(${SHERPA_QPKG_NAME[$index]})
-    done
-
-    readonly SHERPA_INDEP_QPKGs
-
-    return 0
-
-    }
-
-QPKGs.Dependant.Build()
-    {
-
-    # Returns a list of QPKGs that depend on other QPKGs. These are therefore dependant. They should be installed/started after any independent QPKGs.
-    # creates a global constant array: $SHERPA_DEP_QPKGs()
-
-    SHERPA_DEP_QPKGs=()
-    local index=0
-
-    for index in "${!SHERPA_QPKG_NAME[@]}"; do
-        [[ -n ${SHERPA_QPKG_DEPS[$index]} && ! ${SHERPA_DEP_QPKGs[*]} =~ ${SHERPA_QPKG_NAME[$index]} ]] && SHERPA_DEP_QPKGs+=(${SHERPA_QPKG_NAME[$index]})
-    done
-
-    readonly SHERPA_DEP_QPKGs
-
-    return 0
-
-    }
-
-QPKGs.Installable.Build()
-    {
-
-    # Returns a list of QPKGs that can be installed or reinstalled by the user.
-    # creates a global variable array: $QPKGS_user_installable()
-
-    QPKGS_user_installable=()
-    local package=''
-
-    for package in "${SHERPA_QPKG_NAME[@]}"; do
-        QPKG.Installable "$package" && QPKGS_user_installable+=($package)
-    done
-
-    return 0
-
-    }
-
-QPKGs.Installed.Build()
-    {
-
-    # Returns a list of user-installed sherpa QPKGs
-    # creates a global variable array: $QPKGs_installed()
-
-    QPKGs_installed=()
-    local package=''
-
-    for package in "${QPKGS_user_installable[@]}"; do
-        QPKG.Installed "$package" && QPKGs.Installed.Add "$package"
-    done
-
-    return 0
-
-    }
-
 DisplayNewQPKGVersions()
     {
 
@@ -3272,6 +3077,173 @@ Versions.Show()
 
     }
 
+QPKGs.Dependant.Restart()
+    {
+
+    # restart all sherpa QPKGs except independents. Needed if user has requested each QPKG update itself.
+
+    Session.SkipPackageProcessing.IsSet && return
+
+    [[ -z ${SHERPA_DEP_QPKGs[*]} || ${#SHERPA_DEP_QPKGs[@]} -eq 0 ]] && return
+
+    DebugFuncEntry
+    local package=''
+
+    for package in "${SHERPA_DEP_QPKGs[@]}"; do
+        QPKG.Enabled "$package" && QPKG.Restart "$package"
+    done
+
+    DebugFuncExit
+    return 0
+
+    }
+
+QPKGs.RestartNotUpgraded()
+    {
+
+    # restart all sherpa QPKGs except those that were just upgraded.
+
+    Session.SkipPackageProcessing.IsSet && return
+
+    [[ -z ${SHERPA_DEP_QPKGs[*]} || ${#SHERPA_DEP_QPKGs[@]} -eq 0 ]] && return
+
+    DebugFuncEntry
+    local package=''
+
+    for package in "${SHERPA_DEP_QPKGs[@]}"; do
+        QPKG.Enabled "$package" && ! QPKG.Upgradable "$package" && QPKG.Restart "$package"
+    done
+
+    DebugFuncExit
+    return 0
+
+    }
+
+QPKGs.NotInstalled.Show()
+    {
+
+    for package in $(QPKGs.NotInstalled.Print); do
+        echo "$package"
+    done
+
+    return 0
+
+    }
+
+QPKGs.Upgradable.Show()
+    {
+
+    for package in $(QPKGs.Upgradable.Print); do
+        echo "$package"
+    done
+
+    return 0
+
+    }
+
+QPKGs.All.Show()
+    {
+
+    for package in "${QPKGS_user_installable[@]}"; do
+        echo "$package"
+    done
+
+    return 0
+
+    }
+
+QPKGs.Download.Build()
+    {
+
+    local QPKGs_initial_download_array=()
+
+    # build an initial package download list. Items on this list will be skipped at download-time if they can be found in local cache.
+    if User.Opts.Apps.All.Install.IsSet; then
+        QPKGs_initial_download_array+=($(QPKGs.NotInstalled.Array))
+        for package in "${QPKGs_initial_download_array[@]}"; do
+            QPKGs.ToInstall.Add "$package"
+        done
+    elif User.Opts.Apps.All.Upgrade.IsSet; then
+        QPKGs_initial_download_array=($(QPKGs.Upgradable.Array))
+        for package in "${QPKGs_initial_download_array[@]}"; do
+            QPKGs.ToUpgrade.Add "$package"
+        done
+        Session.Pips.Install.Set
+    elif User.Opts.Dependencies.Check.IsSet; then
+        QPKGs_initial_download_array+=($(QPKGs.Installed.Array))
+        Session.Pips.Install.Set
+    else
+        QPKGs_initial_download_array+=(${QPKGs_to_install[*]} ${QPKGs_to_reinstall[*]} ${QPKGs_to_upgrade[*]} ${QPKGs_to_force_upgrade[*]})
+    fi
+
+    GetTheseQPKGDeps "${QPKGs_initial_download_array[*]}"
+    ExcludeInstalledQPKGs "$QPKG_pre_download_list"
+
+    if [[ $(Packages.Download.Count) -eq 1 && ${QPKGs_download_array[0]} = Entware ]] && QPKG.NotInstalled Entware; then
+        ShowAsNote "It's not necessary to install $(FormatAsPackageName Entware) on its own. It will be installed as-required with your other $(FormatAsScriptTitle) packages. :)"
+    fi
+
+    DebugScript 'initial package download' "${QPKGs_download_array[*]} "
+
+    return 0
+
+    }
+
+QPKGs.Independent.Build()
+    {
+
+    # Returns a list of QPKGs that don't depend on other QPKGs. These are therefore independent. They should be installed/started before any dependant QPKGs.
+    # creates a global constant array: $SHERPA_INDEP_QPKGs()
+
+    SHERPA_INDEP_QPKGs=()
+    local index=0
+
+    for index in "${!SHERPA_QPKG_NAME[@]}"; do
+        [[ -z ${SHERPA_QPKG_DEPS[$index]} && ! ${SHERPA_INDEP_QPKGs[*]} =~ ${SHERPA_QPKG_NAME[$index]} ]] && SHERPA_INDEP_QPKGs+=(${SHERPA_QPKG_NAME[$index]})
+    done
+
+    readonly SHERPA_INDEP_QPKGs
+
+    return 0
+
+    }
+
+QPKGs.Dependant.Build()
+    {
+
+    # Returns a list of QPKGs that depend on other QPKGs. These are therefore dependant. They should be installed/started after any independent QPKGs.
+    # creates a global constant array: $SHERPA_DEP_QPKGs()
+
+    SHERPA_DEP_QPKGs=()
+    local index=0
+
+    for index in "${!SHERPA_QPKG_NAME[@]}"; do
+        [[ -n ${SHERPA_QPKG_DEPS[$index]} && ! ${SHERPA_DEP_QPKGs[*]} =~ ${SHERPA_QPKG_NAME[$index]} ]] && SHERPA_DEP_QPKGs+=(${SHERPA_QPKG_NAME[$index]})
+    done
+
+    readonly SHERPA_DEP_QPKGs
+
+    return 0
+
+    }
+
+QPKGs.Installable.Build()
+    {
+
+    # Returns a list of QPKGs that can be installed or reinstalled by the user.
+    # creates a global variable array: $QPKGS_user_installable()
+
+    QPKGS_user_installable=()
+    local package=''
+
+    for package in "${SHERPA_QPKG_NAME[@]}"; do
+        QPKG.Installable "$package" && QPKGS_user_installable+=($package)
+    done
+
+    return 0
+
+    }
+
 QPKGs.ToInstall.Add()
     {
 
@@ -3327,13 +3299,6 @@ QPKGs.Installed.Add()
 
     }
 
-QPKGs.Installed.Count()
-    {
-
-    echo "${#QPKGs_installed[@]}"
-
-    }
-
 QPKGs.Installed.Array()
     {
 
@@ -3341,10 +3306,27 @@ QPKGs.Installed.Array()
 
     }
 
-QPKGs.Installed.Print()
+QPKGs.Installed.Build()
     {
 
-    echo "${QPKGs_installed[*]}"
+    # Returns a list of user-installed sherpa QPKGs
+    # creates a global variable array: $QPKGs_installed()
+
+    QPKGs_installed=()
+    local package=''
+
+    for package in "${SHERPA_QPKG_NAME[@]}"; do
+        QPKG.Installed "$package" && QPKGs.Installed.Add "$package"
+    done
+
+    return 0
+
+    }
+
+QPKGs.Installed.Count()
+    {
+
+    echo "${#QPKGs_installed[@]}"
 
     }
 
@@ -3359,6 +3341,24 @@ QPKGs.Installed.IsNone()
     {
 
     [[ $(QPKGs.Installed.Count) -eq 0 ]]
+
+    }
+
+QPKGs.Installed.Print()
+    {
+
+    echo "${QPKGs_installed[*]}"
+
+    }
+
+QPKGs.Installed.Show()
+    {
+
+    for package in $(QPKGs.Installed.Print); do
+        echo "$package"
+    done
+
+    return 0
 
     }
 
