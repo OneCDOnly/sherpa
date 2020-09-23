@@ -497,7 +497,7 @@ Session.ParseArguments()
                 Session.Display.Clean.Set
                 Session.SkipPackageProcessing.Set
                 ;;
-            --list-not-installed|list-not-installed|not-installed)
+            --list-installable|list-installable|--list-not-installed|list-not-installed|not-installed)
                 User.Opts.Apps.List.NotInstalled.Set
                 Session.Display.Clean.Set
                 Session.SkipPackageProcessing.Set
@@ -2941,7 +2941,7 @@ Help.ActionsAll.Show()
 
     DisplayAsProjectSyntaxIndentedExample 'list only installed packages' '--list-installed'
 
-    DisplayAsProjectSyntaxIndentedExample 'list only packages that are not installed' '--list-not-installed'
+    DisplayAsProjectSyntaxIndentedExample 'list only packages that are not installed' '--list-installable'
 
     DisplayAsProjectSyntaxIndentedExample 'list only upgradable packages' '--list-upgradable'
 
