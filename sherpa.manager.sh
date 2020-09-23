@@ -409,6 +409,15 @@ Session.Init()
     Session.ParseArguments
     SmartCR
 
+    Session.Display.Clean.IsSet && return
+
+    if Session.Debug.To.Screen.IsNot; then
+        Display "$(FormatAsScriptTitle) $MANAGER_SCRIPT_VERSION • a mini-package-manager for QNAP NAS"
+        DisplayLineSpaceIfNoneAlready
+    fi
+
+    User.Opts.Apps.All.Upgrade.IsNot && DisplayNewQPKGVersions
+
     return 0
 
     }
@@ -615,18 +624,11 @@ Session.ParseArguments()
 Session.Validate()
     {
 
-    local package=''
+    Session.Abort.IsSet && return
 
-    Session.Display.Clean.IsSet && return
     DebugFuncEntry
 
-    if Session.Debug.To.Screen.IsNot; then
-        Display "$(FormatAsScriptTitle) $MANAGER_SCRIPT_VERSION • a mini-package-manager for QNAP NAS"
-        DisplayLineSpaceIfNoneAlready
-    fi
-
-    User.Opts.Apps.All.Upgrade.IsNot && DisplayNewQPKGVersions
-    Session.Abort.IsSet && return
+    local package=''
 
     DebugInfoThickSeparator
     DebugScript 'started' "$($DATE_CMD | tr -s ' ')"
@@ -690,16 +692,22 @@ Session.Validate()
         fi
     fi
 
+    DebugQPKG 'arch' "$NAS_QPKG_ARCH"
+
+    DebugQPKG 'logs path' "$PACKAGE_LOGS_PATH"
+    DebugQPKG 'download path' "$QPKG_DL_PATH"
+    DebugIPKG 'download path' "$IPKG_DL_PATH"
+
     DebugInfoThinSeparator
-    DebugScript 'unparsed arguments' "$USER_ARGS_RAW"
+    DebugScript 'unparsed user arguments' "$USER_ARGS_RAW"
+    DebugInfoThinSeparator
+    Packages.Assignment.Check
 
     if User.Opts.Apps.All.Backup.IsSet && User.Opts.Apps.All.Restore.IsSet; then
         ShowAsError 'no point running a backup then a restore operation'
         code_pointer=2
         return 1
     fi
-
-    Packages.Assignment.Check
 
     if QPKGs.ToInstall.IsAny || QPKGs.ToReinstall.IsAny || QPKGs.ToForceUpgrade.IsAny || QPKGs.ToUpgrade.IsAny || User.Opts.Dependencies.Check.IsSet; then
         Session.Ipkgs.Install.Set
@@ -718,6 +726,7 @@ Session.Validate()
     fi
 
     QPKGs.Download.Build
+    DebugInfoThinSeparator
 
     mkdir -p "$WORK_PATH" 2> /dev/null; result=$?
 
@@ -776,24 +785,6 @@ Session.Validate()
         fi
     done
 
-    DebugInfoThinSeparator
-    DebugScript 'download' "${QPKGs_download_array[*]} "
-    DebugScript 'backup' "${QPKGs_to_backup[*]} "
-    DebugScript 'uninstall' "${QPKGs_to_uninstall[*]} "
-    DebugScript 'forced-upgrade' "${QPKGs_to_force_upgrade[*]} "
-    DebugScript 'upgrade' "${QPKGs_to_upgrade[*]} "
-    DebugScript 'install' "${QPKGs_to_install[*]} "
-    DebugScript 'reinstall' "${QPKGs_to_reinstall[*]} "
-    DebugScript 'restore' "${QPKGs_to_restore[*]} "
-    DebugScript 'restart' "${QPKGs_to_restart[*]} "
-    DebugScript 'status' "${QPKGs_to_status[*]} "
-    DebugInfoThinSeparator
-    DebugQPKG 'logs path' "$PACKAGE_LOGS_PATH"
-    DebugQPKG 'download path' "$QPKG_DL_PATH"
-    DebugIPKG 'download path' "$IPKG_DL_PATH"
-    DebugQPKG 'arch' "$NAS_QPKG_ARCH"
-    DebugInfoThinSeparator
-
     DebugFuncExit
     return 0
 
@@ -818,7 +809,6 @@ Packages.Assignment.Check()
 
     Session.Abort.IsSet && return
 
-    DebugFuncEntry
     local package=''
 
     # add packages to appropriate lists:
@@ -975,7 +965,16 @@ Packages.Assignment.Check()
 
     # don't need to independently check the 'restart' list as it is checked by the previous conditions.
 
-    DebugFuncExit
+    DebugScript 'backup' "${QPKGs_to_backup[*]} "
+    DebugScript 'uninstall' "${QPKGs_to_uninstall[*]} "
+    DebugScript 'forced-upgrade' "${QPKGs_to_force_upgrade[*]} "
+    DebugScript 'upgrade' "${QPKGs_to_upgrade[*]} "
+    DebugScript 'install' "${QPKGs_to_install[*]} "
+    DebugScript 'reinstall' "${QPKGs_to_reinstall[*]} "
+    DebugScript 'restore' "${QPKGs_to_restore[*]} "
+    DebugScript 'restart' "${QPKGs_to_restart[*]} "
+    DebugScript 'status' "${QPKGs_to_status[*]} "
+
     return 0
 
     }
@@ -1370,8 +1369,6 @@ QPKGs.All.Show()
 QPKGs.Download.Build()
     {
 
-    DebugFuncEntry
-
     local QPKGs_initial_download_array=()
 
     # build an initial package download list. Items on this list will be skipped at download-time if they can be found in local cache.
@@ -1400,7 +1397,8 @@ QPKGs.Download.Build()
         ShowAsNote "It's not necessary to install $(FormatAsPackageName Entware) on its own. It will be installed as-required with your other $(FormatAsScriptTitle) packages. :)"
     fi
 
-    DebugFuncExit
+    DebugScript 'download' "${QPKGs_download_array[*]} "
+
     return 0
 
     }
