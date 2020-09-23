@@ -182,7 +182,6 @@ Session.Init()
     Objects.Create User.Opts.Apps.List.Upgradable
 
     # script flags
-    Objects.Create Session.Abort
     Objects.Create Session.Backup
     Objects.Create Session.Debug.To.File
     Objects.Create Session.Debug.To.Screen
@@ -191,6 +190,7 @@ Session.Init()
     Objects.Create Session.LineSpace
     Objects.Create Session.Pips.Install
     Objects.Create Session.ShowBackupLocation
+    Objects.Create Session.SkipPackageProcessing
     Objects.Create Session.SuggestIssue
     Objects.Create Session.Summary
 
@@ -407,7 +407,7 @@ Session.Init()
     CalcNASQPKGArch
 
     Session.ParseArguments
-    User.Opts.Log.View.IsNot && User.Opts.Versions.View.IsNot && User.Opts.Apps.All.List.IsNot && User.Opts.Apps.List.Installed.IsNot && User.Opts.Apps.List.NotInstalled.IsNot && User.Opts.Apps.List.Upgradable.IsNot && Session.Debug.To.File.Set
+    Session.SkipPackageProcessing.IsNot && Session.Debug.To.File.Set
     SmartCR
 
     Session.Display.Clean.IsSet && return
@@ -428,7 +428,7 @@ Session.ParseArguments()
 
     if [[ -z $USER_ARGS_RAW ]]; then
         User.Opts.Help.Basic.Set
-        Session.Abort.Set
+        Session.SkipPackageProcessing.Set
         code_pointer=1
         return 1
     fi
@@ -443,7 +443,7 @@ Session.ParseArguments()
         case $arg in
             --abs|abs)
                 User.Opts.Help.Abbreviations.Set
-                Session.Abort.Set
+                Session.SkipPackageProcessing.Set
                 ;;
             -d|d|--debug|debug)
                 Session.Debug.To.Screen.Set
@@ -453,64 +453,64 @@ Session.ParseArguments()
                 ;;
             -h|h|--help|help)
                 User.Opts.Help.Basic.Set
-                Session.Abort.Set
+                Session.SkipPackageProcessing.Set
                 ;;
             -l|l|--log|log)
                 User.Opts.Log.View.Set
-                Session.Abort.Set
+                Session.SkipPackageProcessing.Set
                 ;;
             --paste|paste)
                 User.Opts.Log.Paste.Set
-                Session.Abort.Set
+                Session.SkipPackageProcessing.Set
                 ;;
             -a|a|--action|action|--actions|actions)
                 User.Opts.Help.Actions.Set
-                Session.Abort.Set
+                Session.SkipPackageProcessing.Set
                 ;;
             --action-all|action-all|--actions-all|actions-all)
                 User.Opts.Help.ActionsAll.Set
-                Session.Abort.Set
+                Session.SkipPackageProcessing.Set
                 ;;
             --package|package|--packages|packages)
                 User.Opts.Help.Packages.Set
-                Session.Abort.Set
+                Session.SkipPackageProcessing.Set
                 ;;
             -o|o|--option|option|--options|options)
                 User.Opts.Help.Options.Set
-                Session.Abort.Set
+                Session.SkipPackageProcessing.Set
                 ;;
             -p|p|--problem|problem|--problems|problems)
                 User.Opts.Help.Problems.Set
-                Session.Abort.Set
+                Session.SkipPackageProcessing.Set
                 ;;
             -t|t|--tip|tip|--tips|tips)
                 User.Opts.Help.Tips.Set
-                Session.Abort.Set
+                Session.SkipPackageProcessing.Set
                 ;;
             --list|list|--list-all|list-all|all)
                 User.Opts.Apps.All.List.Set
                 Session.Display.Clean.Set
-                Session.Abort.Set
+                Session.SkipPackageProcessing.Set
                 ;;
             --list-installed|list-installed|installed)
                 User.Opts.Apps.List.Installed.Set
                 Session.Display.Clean.Set
-                Session.Abort.Set
+                Session.SkipPackageProcessing.Set
                 ;;
             --list-not-installed|list-not-installed|not-installed)
                 User.Opts.Apps.List.NotInstalled.Set
                 Session.Display.Clean.Set
-                Session.Abort.Set
+                Session.SkipPackageProcessing.Set
                 ;;
             --list-upgradable|list-upgradable|upgradable)
                 User.Opts.Apps.List.Upgradable.Set
                 Session.Display.Clean.Set
-                Session.Abort.Set
+                Session.SkipPackageProcessing.Set
                 ;;
             -v|v|--version|version)
                 User.Opts.Versions.View.Set
                 Session.Display.Clean.Set
-                Session.Abort.Set
+                Session.SkipPackageProcessing.Set
                 ;;
             -c|c|--check|check|--check-all|check-all)
                 User.Opts.Dependencies.Check.Set
@@ -630,7 +630,7 @@ Session.ParseArguments()
 Session.Validate()
     {
 
-    Session.Abort.IsSet && return
+    Session.SkipPackageProcessing.IsSet && return
 
     DebugFuncEntry
 
@@ -724,7 +724,7 @@ Session.Validate()
             if User.Opts.Dependencies.Check.IsNot && User.Opts.Apps.List.Installed.IsNot && User.Opts.Apps.List.NotInstalled.IsNot &&  User.Opts.Apps.List.Upgradable.IsNot && Session.Debug.To.Screen.IsNot && User.Opts.IgnoreFreeSpace.IsNot; then
                 ShowAsError 'nothing to do'
                 User.Opts.Help.Basic.Set
-                Session.Abort.Set
+                Session.SkipPackageProcessing.Set
                 return 1
             fi
         fi
@@ -812,7 +812,7 @@ Packages.Assignment.Check()
 
     #   0. status           (none: packages in this list should always be processed if requested)
 
-    Session.Abort.IsSet && return
+    Session.SkipPackageProcessing.IsSet && return
 
     local package=''
 
@@ -987,7 +987,7 @@ Packages.Assignment.Check()
 Packages.Download()
     {
 
-    Session.Abort.IsSet && return
+    Session.SkipPackageProcessing.IsSet && return
 
     DebugFuncEntry
 
@@ -1003,7 +1003,7 @@ Packages.Download()
 Packages.Backup()
     {
 
-    Session.Abort.IsSet && return
+    Session.SkipPackageProcessing.IsSet && return
 
     DebugFuncEntry
 
@@ -1031,7 +1031,7 @@ Packages.Backup()
 Packages.Uninstall()
     {
 
-    Session.Abort.IsSet && return
+    Session.SkipPackageProcessing.IsSet && return
 
     DebugFuncEntry
 
@@ -1075,7 +1075,7 @@ Packages.Uninstall()
         else
             DebugInfoThinSeparator
             DebugScript 'user abort'
-            Session.Abort.Set
+            Session.SkipPackageProcessing.Set
             Session.Summary.Clear
             return 1
         fi
@@ -1091,9 +1091,9 @@ Packages.Uninstall()
 Packages.Install.Independents()
     {
 
-    # install independent QPKGs first, in the order they were declared
+    Session.SkipPackageProcessing.IsSet && return
 
-    Session.Abort.IsSet && return
+    # install independent QPKGs first, in the order they were declared
 
     DebugFuncEntry
 
@@ -1143,7 +1143,7 @@ Packages.Install.Independents()
 Packages.Install.Dependants()
     {
 
-    Session.Abort.IsSet && return
+    Session.SkipPackageProcessing.IsSet && return
 
     DebugFuncEntry
 
@@ -1187,7 +1187,7 @@ Packages.Install.Dependants()
 Packages.Restore()
     {
 
-    Session.Abort.IsSet && return
+    Session.SkipPackageProcessing.IsSet && return
 
     DebugFuncEntry
 
@@ -1215,7 +1215,7 @@ Packages.Restore()
 Packages.Restart()
     {
 
-    Session.Abort.IsSet && return
+    Session.SkipPackageProcessing.IsSet && return
 
     DebugFuncEntry
 
@@ -1303,7 +1303,7 @@ QPKGs.Dependant.Restart()
 
     # restart all sherpa QPKGs except independents. Needed if user has requested each QPKG update itself.
 
-    Session.Abort.IsSet && return
+    Session.SkipPackageProcessing.IsSet && return
 
     [[ -z ${SHERPA_DEP_QPKGs[*]} || ${#SHERPA_DEP_QPKGs[@]} -eq 0 ]] && return
 
@@ -1324,7 +1324,7 @@ QPKGs.RestartNotUpgraded()
 
     # restart all sherpa QPKGs except those that were just upgraded.
 
-    Session.Abort.IsSet && return
+    Session.SkipPackageProcessing.IsSet && return
 
     [[ -z ${SHERPA_DEP_QPKGs[*]} || ${#SHERPA_DEP_QPKGs[@]} -eq 0 ]] && return
 
@@ -1548,7 +1548,7 @@ PasteLogOnline()
         else
             DebugInfoThinSeparator
             DebugScript 'user abort'
-            Session.Abort.Set
+            Session.SkipPackageProcessing.Set
             Session.Summary.Clear
             return 1
         fi
@@ -1707,7 +1707,7 @@ InstallIPKGBatch()
 PIP.Install()
     {
 
-    Session.Abort.IsSet && return
+    Session.SkipPackageProcessing.IsSet && return
     Session.Pips.Install.IsNot && return
 
     DebugFuncEntry
@@ -2065,7 +2065,7 @@ QPKG.Install()
     # $1 = QPKG name to install
 
     Session.Error.IsSet && return
-    Session.Abort.IsSet && return
+    Session.SkipPackageProcessing.IsSet && return
 
     if [[ -z $1 ]]; then
         DebugError "no package name specified "
@@ -2118,7 +2118,7 @@ QPKG.Upgrade()
     # $1 = QPKG name to upgrade
 
     Session.Error.IsSet && return
-    Session.Abort.IsSet && return
+    Session.SkipPackageProcessing.IsSet && return
 
     if [[ -z $1 ]]; then
         DebugError "no package name specified "
@@ -2631,7 +2631,7 @@ ReloadProfile()
 IPKGs.Install()
     {
 
-    Session.Abort.IsSet && return
+    Session.SkipPackageProcessing.IsSet && return
     Session.Ipkgs.Install.IsNot && return
 
     local packages="$SHERPA_COMMON_IPKGS"
@@ -3759,7 +3759,7 @@ Packages.Download.IsNone()
 Session.Error.Set()
     {
 
-    [[ $(type -t Session.Abort.Index) = 'function' ]] && Session.Abort.Set
+    [[ $(type -t Session.SkipPackageProcessing.Index) = 'function' ]] && Session.SkipPackageProcessing.Set
     Session.Error.IsSet && return
 
     _script_error_flag=true
