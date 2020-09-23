@@ -2334,6 +2334,7 @@ ExcludeInstalledQPKGs()
     for element in "${requested_list_array[@]}"; do
         if QPKG.NotInstalled "$element"; then
             QPKGs_download_array+=($element)
+            QPKGs.ToInstall.Add "$package"
         elif [[ ${#QPKGs_to_install[@]} -gt 0 && ${QPKGs_to_install[*]} == *"$element"* ]]; then
             QPKGs_download_array+=($element)
         elif [[ ${#QPKGs_to_reinstall[@]} -gt 0 && ${QPKGs_to_reinstall[*]} == *"$element"* ]]; then
