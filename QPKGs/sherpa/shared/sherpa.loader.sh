@@ -23,7 +23,7 @@ Init()
 
     IsQNAP || return 1
 
-    export LOADER_SCRIPT_VERSION=200921
+    export LOADER_SCRIPT_VERSION=200923
 
     local -r PROJECT_NAME=sherpa
     local -r NAS_FIRMWARE=$(/sbin/getcfg System Version -f /etc/config/uLinux.conf)
@@ -31,10 +31,10 @@ Init()
     [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg='--insecure' || curl_insecure_arg=''
     local -r MANAGER_SCRIPT_FILE=sherpa.manager.sh
     readonly REMOTE_MANAGER_SCRIPT=https://raw.githubusercontent.com/OneCDOnly/sherpa/master/$MANAGER_SCRIPT_FILE
-    readonly LOCAL_MANAGER_SCRIPT=$QPKG_PATH/repo/$MANAGER_SCRIPT_FILE
+    readonly LOCAL_MANAGER_SCRIPT=$QPKG_PATH/cache/$MANAGER_SCRIPT_FILE
     previous_msg=''
 
-    [[ ! -d $QPKG_PATH/repo ]] && mkdir -p $QPKG_PATH/repo
+    [[ ! -d $QPKG_PATH/cache ]] && mkdir -p $QPKG_PATH/cache
 
     return 0
 
