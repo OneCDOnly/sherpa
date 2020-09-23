@@ -1079,9 +1079,9 @@ Packages.Uninstall()
             Session.Summary.Clear
             return 1
         fi
+    else
+        [[ $NAS_QPKG_ARCH != none ]] && (QPKG.ToBeInstalled Par2 || QPKG.Installed Par2) && ($OPKG_CMD list-installed | $GREP_CMD -q par2cmdline) && $OPKG_CMD remove par2cmdline > /dev/null 2>&1
     fi
-
-    [[ $NAS_QPKG_ARCH != none ]] && (QPKG.ToBeInstalled Par2 || QPKG.Installed Par2) && ($OPKG_CMD list-installed | $GREP_CMD -q par2cmdline) && $OPKG_CMD remove par2cmdline > /dev/null 2>&1
 
     DebugFuncExit
     return 0
