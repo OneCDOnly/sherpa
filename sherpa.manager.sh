@@ -702,6 +702,7 @@ Session.Validate()
     DebugScript 'unparsed user arguments' "$USER_ARGS_RAW"
     DebugInfoThinSeparator
     Packages.Assignment.Check
+    DebugInfoThinSeparator
 
     if User.Opts.Apps.All.Backup.IsSet && User.Opts.Apps.All.Restore.IsSet; then
         ShowAsError 'no point running a backup then a restore operation'
@@ -3018,7 +3019,7 @@ Help.Actions.Show()
 
     Help.BackupLocation.Show
 
-    DisplayAsProjectSyntaxExample "multiple $(FormatAsHelpActions) are supported like this" '--install sabnzbd sickchill --uninstall lazy nzbget --upgrade nzbtomedia --restart transmission'
+    DisplayAsProjectSyntaxExample "multiple $(FormatAsHelpActions) are supported like this" '--install sabnzbd sickchill --restart transmission --uninstall lazy nzbget --upgrade nzbtomedia'
 
     return 0
 
