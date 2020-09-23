@@ -814,8 +814,8 @@ Packages.Assignment.Check()
     # add packages to appropriate lists as required:
 
     if User.Opts.Apps.All.Backup.IsSet; then
-        if [[ ${#QPKGs_installed[*]} -gt 0 ]]; then
-            for package in "${QPKGS_user_installable[@]}"; do
+        if QPKGs.Installed.IsAny; then
+            for package in "${QPKGs_installed[@]}"; do
                 if [[ $package != Entware ]]; then      # KLUDGE: ignore Entware as it needs to be handled separately.
                     QPKGs.ToBackup.Add "$package"
                 fi
@@ -824,8 +824,8 @@ Packages.Assignment.Check()
     fi
 
     if User.Opts.Apps.All.Restore.IsSet; then
-        if [[ ${#QPKGs_installed[*]} -gt 0 ]]; then
-            for package in "${QPKGS_user_installable[@]}"; do
+        if QPKGs.Installed.IsAny; then
+            for package in "${QPKGs_installed[@]}"; do
                 if [[ $package != Entware ]]; then      # KLUDGE: ignore Entware as it needs to be handled separately.
                     QPKGs.ToRestore.Add "$package"
                 fi
@@ -844,7 +844,7 @@ Packages.Assignment.Check()
     fi
 
     if User.Opts.Apps.All.Reinstall.IsSet; then
-        if [[ ${#QPKGs_installed[*]} -gt 0 ]]; then
+        if QPKGs.Installed.IsAny; then
             for package in "${QPKGS_user_installable[@]}"; do
                 if [[ $package != Entware ]]; then      # KLUDGE: ignore Entware as it needs to be handled separately.
                     QPKGs.ToReinstall.Add "$package"
@@ -864,8 +864,8 @@ Packages.Assignment.Check()
     fi
 
     if User.Opts.Apps.All.Restart.IsSet; then
-        if [[ ${#QPKGs_installed[*]} -gt 0 ]]; then
-            for package in "${QPKGS_user_installable[@]}"; do
+        if QPKGs.Installed.IsAny; then
+            for package in "${QPKGs_installed[@]}"; do
                 if [[ $package != Entware ]]; then      # KLUDGE: ignore Entware as it needs to be handled separately.
                     QPKGs.ToRestart.Add "$package"
                 fi
@@ -874,8 +874,8 @@ Packages.Assignment.Check()
     fi
 
     if User.Opts.Apps.All.Uninstall.IsSet; then
-        if [[ ${#QPKGs_installed[*]} -gt 0 ]]; then
-            for package in "${QPKGS_user_installable[@]}"; do
+        if QPKGs.Installed.IsAny; then
+            for package in "${QPKGs_installed[@]}"; do
                 if [[ $package != Entware ]]; then      # KLUDGE: ignore Entware as it needs to be handled separately.
                     QPKGs.ToUninstall.Add "$package"
                 fi
@@ -884,7 +884,7 @@ Packages.Assignment.Check()
     fi
 
     if User.Opts.Apps.All.Status.IsSet; then
-        if [[ ${#QPKGs_installed[*]} -gt 0 ]]; then
+        if QPKGs.Installed.IsAny; then
             for package in "${QPKGS_user_installable[@]}"; do
                 if [[ $package != Entware ]]; then      # KLUDGE: ignore Entware as it needs to be handled separately.
                     QPKGs.ToStatus.Add "$package"
@@ -3276,6 +3276,13 @@ QPKGs.Installed.Add()
 
     }
 
+QPKGs.Installed.Count()
+    {
+
+    echo "${#QPKGs_installed[@]}"
+
+    }
+
 QPKGs.Installed.Array()
     {
 
@@ -3287,6 +3294,20 @@ QPKGs.Installed.Print()
     {
 
     echo "${QPKGs_installed[*]}"
+
+    }
+
+QPKGs.Installed.IsAny()
+    {
+
+    [[ $(QPKGs.Installed.Count) -gt 0 ]]
+
+    }
+
+QPKGs.Installed.IsNone()
+    {
+
+    [[ $(QPKGs.Installed.Count) -eq 0 ]]
 
     }
 
