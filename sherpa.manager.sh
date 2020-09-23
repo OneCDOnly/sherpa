@@ -349,7 +349,7 @@ Session.Init()
         SHERPA_QPKG_ARCH+=(x86)
         SHERPA_QPKG_URL+=($REMOTE_REPO_URL/Par2/Par2_0.8.1.0_x86.qpkg)
         SHERPA_QPKG_MD5+=(996ffb92d774eb01968003debc171e91)
-        SHERPA_QPKG_ABBRVS+=('')
+        SHERPA_QPKG_ABBRVS+=('par par2')        # these apply to all 'Par2' packages
         SHERPA_QPKG_DEPS+=('')
         SHERPA_QPKG_IPKGS+=('')
 
@@ -2927,7 +2927,7 @@ Help.ActionsAll.Show()
 
     DisplayAsProjectSyntaxIndentedExample 'install everything!' '--install-all'
 
-    DisplayAsProjectSyntaxIndentedExample "uninstall everything! (except $(FormatAsPackageName Par2) and $(FormatAsPackageName Entware) for now)" '--uninstall-all-packages-please'
+    DisplayAsProjectSyntaxIndentedExample "uninstall everything! (except $(FormatAsPackageName Entware) for now)" '--uninstall-all-packages-please'
 
     DisplayAsProjectSyntaxIndentedExample "reinstall all installed packages (except $(FormatAsPackageName Entware) for now)" '--reinstall-all'
 
