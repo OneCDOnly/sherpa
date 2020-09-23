@@ -169,8 +169,8 @@ Session.Init()
 
     Objects.Create User.Opts.Apps.All.Backup
     Objects.Create User.Opts.Apps.All.Install
-    Objects.Create User.Opts.Apps.All.Reinstall
     Objects.Create User.Opts.Apps.All.List
+    Objects.Create User.Opts.Apps.All.Reinstall
     Objects.Create User.Opts.Apps.All.Restart
     Objects.Create User.Opts.Apps.All.Restore
     Objects.Create User.Opts.Apps.All.Status
@@ -189,6 +189,7 @@ Session.Init()
     Objects.Create Session.Ipkgs.Install
     Objects.Create Session.LineSpace
     Objects.Create Session.Pips.Install
+    Objects.Create Session.ShowBackupLocation
     Objects.Create Session.SuggestIssue
     Objects.Create Session.Summary
 
@@ -697,9 +698,8 @@ Session.Validate()
     fi
 
     Packages.Assignment.Check
-    QPKGs.Download.Build
 
-    if QPKGs.ToInstall.IsNone && QPKGs.ToUninstall.IsNone && QPKGs.ToReinstall.IsNone && QPKGs.ToRestart.IsNone && QPKGs.ToUpgrade.IsNone && QPKGs.ToForceUpgrade.IsNone && QPKGs.ToBackup.IsNone && QPKGs.ToRestore.IsNone && QPKGs.ToStatus.IsNone ; then
+    if QPKGs.ToBackup.IsNone && QPKGs.ToUninstall.IsNone && QPKGs.ToForceUpgrade.IsNone && QPKGs.ToUpgrade.IsNone && QPKGs.ToInstall.IsNone && QPKGs.ToReinstall.IsNone && QPKGs.ToRestore.IsNone && QPKGs.ToRestart.IsNone && QPKGs.ToStatus.IsNone; then
         if User.Opts.Apps.All.Install.IsNot && User.Opts.Apps.All.Uninstall.IsNot && User.Opts.Apps.All.Restart.IsNot && User.Opts.Apps.All.Upgrade.IsNot && User.Opts.Apps.All.Backup.IsNot && User.Opts.Apps.All.Restore.IsNot && User.Opts.Apps.All.Status.IsNot && User.Opts.Apps.All.List.IsNot; then
             if User.Opts.Dependencies.Check.IsNot && User.Opts.Apps.List.Installed.IsNot && User.Opts.Apps.List.NotInstalled.IsNot && Session.Debug.To.Screen.IsNot && User.Opts.IgnoreFreeSpace.IsNot; then
                 ShowAsError 'nothing to do'
@@ -709,6 +709,8 @@ Session.Validate()
             fi
         fi
     fi
+
+    QPKGs.Download.Build
 
     mkdir -p "$WORK_PATH" 2> /dev/null; result=$?
 
@@ -811,7 +813,7 @@ Packages.Assignment.Check()
     DebugFuncEntry
     local package=''
 
-    # add packages to appropriate lists as required:
+    # add packages to appropriate lists:
 
     if User.Opts.Apps.All.Backup.IsSet; then
         if QPKGs.Installed.IsAny; then
@@ -905,7 +907,7 @@ Packages.Assignment.Check()
 
     #   0. status           (none: packages in this list should always be processed if requested)
 
-    # remove duplicate entries from lists by following package processing priority order:
+    # remove duplicate and redundant entries from lists by following package processing priority order:
 
     # don't check the 'backup' list as this has the highest-priority and should always be processed.
 
@@ -921,8 +923,8 @@ Packages.Assignment.Check()
         for package in "${SHERPA_DEP_QPKGs[@]}"; do
             if [[ ${QPKGs_to_force_upgrade[*]} == *"$package"* ]]; then
                 QPKGs.ToUpgrade.Remove "$package"
-                QPKGs.ToReinstall.Remove "$package"
                 QPKGs.ToInstall.Remove "$package"
+                QPKGs.ToReinstall.Remove "$package"
                 QPKGs.ToRestart.Remove "$package"
             fi
         done
@@ -931,8 +933,8 @@ Packages.Assignment.Check()
     if QPKGs.ToUpgrade.IsAny; then
         for package in "${SHERPA_DEP_QPKGs[@]}"; do
             if [[ ${QPKGs_to_upgrade[*]} == *"$package"* ]]; then
-                QPKGs.ToReinstall.Remove "$package"
                 QPKGs.ToInstall.Remove "$package"
+                QPKGs.ToReinstall.Remove "$package"
                 QPKGs.ToRestart.Remove "$package"
             fi
         done
@@ -1007,7 +1009,7 @@ Packages.Backup()
         done
     fi
 
-#     DisplayAsSyntaxExample "the default backup location can be accessed by running" "cd $(Session.Backup.Path)"
+    Session.ShowBackupLocation.Set
 
     DebugFuncExit
     return 0
@@ -1196,7 +1198,7 @@ Packages.Restore()
         done
     fi
 
-#     DisplayAsSyntaxExample "the default backup location can be accessed by running" "cd $(Session.Backup.Path)"
+    Session.ShowBackupLocation.Set
 
     DebugFuncExit
     return 0
@@ -1268,6 +1270,8 @@ Session.Results()
     elif User.Opts.Help.Abbreviations.IsSet; then
         Help.PackageAbbreviations.Show
     fi
+
+    Session.ShowBackupLocation.IsSet && Help.BackupLocation.Show
 
     User.Opts.Log.Paste.IsSet && PasteLogOnline
     Session.Summary.IsSet && Session.Summary.Show
@@ -3009,6 +3013,8 @@ Help.Actions.Show()
 
     DisplayAsProjectSyntaxExample "$(FormatAsHelpActions) to affect all packages can be seen with" '--actions-all'
 
+    Help.BackupLocation.Show
+
     DisplayAsProjectSyntaxExample "multiple $(FormatAsHelpActions) are supported like this" '--install sabnzbd sickchill --uninstall lazy nzbget --upgrade nzbtomedia --restart transmission'
 
     return 0
@@ -3045,6 +3051,8 @@ Help.ActionsAll.Show()
     DisplayAsProjectSyntaxIndentedExample 'restore all application configurations from the default backup location' '--restore-all'
 
 #   DisplayAsProjectSyntaxIndentedExample '--status-all'
+
+    Help.BackupLocation.Show
 
     return 0
 
@@ -3168,7 +3176,7 @@ Help.Tips.Show()
 
     DisplayAsProjectSyntaxIndentedExample 'display all package-manager scripts versions' '--version'
 
-    DisplayAsSyntaxExample "the default application backup location can be accessed by running" "cd $(Session.Backup.Path)"
+    Help.BackupLocation.Show
 
     echo -e "\n$(ColourTextBrightOrange "* If you need help, please include a copy of your") $(FormatAsScriptTitle) $(ColourTextBrightOrange "log for analysis!")"
 
@@ -3199,6 +3207,15 @@ Help.PackageAbbreviations.Show()
     done
 
     DisplayAsProjectSyntaxExample "example: to install $(FormatAsPackageName SABnzbd), $(FormatAsPackageName Mylar3) and $(FormatAsPackageName nzbToMedia) all-at-once" 'install sab my nzb2'
+
+    return 0
+
+    }
+
+Help.BackupLocation.Show()
+    {
+
+    DisplayAsSyntaxExample "the default backup location can be accessed by running" "cd $(Session.Backup.Path)"
 
     return 0
 
