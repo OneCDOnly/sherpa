@@ -405,6 +405,10 @@ Session.Init()
     QPKGs.Upgradable.Build
     CalcNASQPKGArch
 
+    Session.Debug.To.File.Set
+    Session.ParseArguments
+    SmartCR
+
     return 0
 
     }
@@ -613,10 +617,8 @@ Session.Validate()
 
     local package=''
 
-    Session.Debug.To.File.Set
-    Session.ParseArguments
-    SmartCR
     Session.Display.Clean.IsSet && return
+    DebugFuncEntry
 
     if Session.Debug.To.Screen.IsNot; then
         Display "$(FormatAsScriptTitle) $MANAGER_SCRIPT_VERSION • a mini-package-manager for QNAP NAS"
@@ -698,6 +700,11 @@ Session.Validate()
     fi
 
     Packages.Assignment.Check
+
+    if QPKGs.ToInstall.IsAny || QPKGs.ToReinstall.IsAny || QPKGs.ToForceUpgrade.IsAny || QPKGs.ToUpgrade.IsAny || User.Opts.Dependencies.Check.IsSet; then
+        Session.Ipkgs.Install.Set
+        Session.Pips.Install.Set
+    fi
 
     if QPKGs.ToBackup.IsNone && QPKGs.ToUninstall.IsNone && QPKGs.ToForceUpgrade.IsNone && QPKGs.ToUpgrade.IsNone && QPKGs.ToInstall.IsNone && QPKGs.ToReinstall.IsNone && QPKGs.ToRestore.IsNone && QPKGs.ToRestart.IsNone && QPKGs.ToStatus.IsNone; then
         if User.Opts.Apps.All.Install.IsNot && User.Opts.Apps.All.Uninstall.IsNot && User.Opts.Apps.All.Restart.IsNot && User.Opts.Apps.All.Upgrade.IsNot && User.Opts.Apps.All.Backup.IsNot && User.Opts.Apps.All.Restore.IsNot && User.Opts.Apps.All.Status.IsNot && User.Opts.Apps.All.List.IsNot; then
@@ -787,6 +794,7 @@ Session.Validate()
     DebugQPKG 'arch' "$NAS_QPKG_ARCH"
     DebugInfoThinSeparator
 
+    DebugFuncExit
     return 0
 
     }
@@ -1007,9 +1015,9 @@ Packages.Backup()
                 fi
             fi
         done
-    fi
 
-    Session.ShowBackupLocation.Set
+        Session.ShowBackupLocation.Set
+    fi
 
     DebugFuncExit
     return 0
@@ -1109,17 +1117,12 @@ Packages.Install.Independents()
         done
     fi
 
-    if QPKG.Installed Entware && QPKG.NotEnabled Entware && QPKG.Enable Entware; then
-        ReloadProfile
-    fi
+    QPKG.Installed Entware && QPKG.NotEnabled Entware && QPKG.Enable Entware && ReloadProfile
 
-    if QPKGs.ToInstall.IsAny || QPKGs.ToReinstall.IsAny || QPKGs.ToUpgrade.IsAny || User.Opts.Dependencies.Check.IsSet; then
-        if QPKG.Installed Entware; then
-            PatchBaseInit
-            Session.Ipkgs.Install.Set
-            IPKGs.Install
-            PIP.Install
-        fi
+    if QPKG.Installed Entware; then
+        PatchBaseInit
+        IPKGs.Install
+        PIP.Install
     fi
 
     if QPKG.ToBeInstalled Entware || User.Opts.Apps.All.Restart.IsSet; then
@@ -1196,9 +1199,9 @@ Packages.Restore()
                 fi
             fi
         done
-    fi
 
-    Session.ShowBackupLocation.Set
+        Session.ShowBackupLocation.Set
+    fi
 
     DebugFuncExit
     return 0
@@ -1367,6 +1370,8 @@ QPKGs.All.Show()
 QPKGs.Download.Build()
     {
 
+    DebugFuncEntry
+
     local QPKGs_initial_download_array=()
 
     # build an initial package download list. Items on this list will be skipped at download-time if they can be found in local cache.
@@ -1390,12 +1395,12 @@ QPKGs.Download.Build()
 
     GetTheseQPKGDeps "${QPKGs_initial_download_array[*]}"
     ExcludeInstalledQPKGs "$QPKG_pre_download_list"
-    DebugInfo "initial QPKGs required: $(Packages.Download.Print)"
 
     if [[ $(Packages.Download.Count) -eq 1 && ${QPKGs_download_array[0]} = Entware ]] && QPKG.NotInstalled Entware; then
         ShowAsNote "It's not necessary to install $(FormatAsPackageName Entware) on its own. It will be installed as-required with your other $(FormatAsScriptTitle) packages. :)"
     fi
 
+    DebugFuncExit
     return 0
 
     }
