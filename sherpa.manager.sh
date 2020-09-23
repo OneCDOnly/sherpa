@@ -3573,7 +3573,7 @@ QPKGs.Upgradable.Build()
     local remote_version=''
 
     for package in "${QPKGs_installed[@]}"; do
-        [[ $package = Entware ]] && continue        # KLUDGE: ignore 'Entware' as package filename version doesn't match the QTS App Center version string
+        [[ $package = Entware || $package = Par2 ]] && continue        # KLUDGE: ignore 'Entware' as package filename version doesn't match the QTS App Center version string
         installed_version=$(GetInstalledQPKGVersion "$package")
         remote_version=$(GetQPKGRemoteVersion "$package")
 
