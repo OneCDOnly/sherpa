@@ -1138,7 +1138,7 @@ Packages.Install.Independents()
         PIP.Install
     fi
 
-    if QPKG.ToBeInstalled Entware || User.Opts.Apps.All.Restart.IsSet; then
+    if QPKG.ToBeReinstalled Entware || User.Opts.Apps.All.Restart.IsSet; then
         QPKGs.Dependant.Restart
     fi
 
@@ -1899,7 +1899,6 @@ QPKG.Install()
         return 1
     elif QPKG.Installed "$1"; then
         DebugQPKG "$(FormatAsPackageName "$1")" "already installed"
-        code_pointer=8
         return 1
     fi
 
