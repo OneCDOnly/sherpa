@@ -595,9 +595,7 @@ Session.ParseArguments()
                         QPKGs.ToRestore.Add "$target_package"
                         ;;
                     upgrade_)
-                        if QPKG.NotInstalled "$target_package"; then
-                            QPKGs.ToInstall.Add "$target_package"
-                        elif [[ $action_force = true ]]; then
+                        if [[ $action_force = true ]]; then
                             QPKGs.ToForceUpgrade.Add "$target_package"
                         else
                             QPKGs.ToUpgrade.Add "$target_package"
@@ -1167,10 +1165,14 @@ Packages.Install.Dependants()
             if [[ ${QPKGs_to_force_upgrade[*]} == *"$package"* ]]; then
                 QPKG.Upgrade "$package" --forced
             elif [[ ${QPKGs_to_upgrade[*]} == *"$package"* ]]; then
-                if [[ ${QPKGS_upgradable[*]} == *"$package"* ]]; then
-                    QPKG.Upgrade "$package"
+                if QPKG.Installed "$package"; then
+                    if [[ ${QPKGS_upgradable[*]} == *"$package"* ]]; then
+                        QPKG.Upgrade "$package"
+                    else
+                        ShowAsNote "unable to upgrade $(FormatAsPackageName "$package") as it's not upgradable. Use the '--force' if you really want this."
+                    fi
                 else
-                    ShowAsNote "unable to upgrade $(FormatAsPackageName "$package") as it's not upgradable. Use the '--force' if you really want this."
+                    ShowAsNote "unable to upgrade $(FormatAsPackageName "$package") as it's not installed"
                 fi
             fi
         done
@@ -2796,7 +2798,9 @@ DisplayAsSyntaxExample()
     # $1 = description
     # $2 = example syntax
 
-    if [[ ${1: -1} = '!' ]]; then
+    if [[ -z $2 && ${1: -1} = ':' ]]; then
+        printf "\n* %s\n" "$1"
+    elif [[ ${1: -1} = '!' ]]; then
         printf "\n* %s \n       # %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$2"
     else
         printf "\n* %s:\n       # %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$2"
@@ -2812,7 +2816,9 @@ DisplayAsSyntaxIndentedExample()
     # $1 = description
     # $2 = example syntax
 
-    if [[ -z $1 ]]; then
+    if [[ -z $2 && ${1: -1} = ':' ]]; then
+        printf "       %s\n" "$1"
+    elif [[ -z $1 ]]; then
         printf "       # %s\n" "$2"
     elif [[ ${1: -1} = '!' ]]; then
         printf "\n   %s \n       # %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$2"
@@ -2823,6 +2829,43 @@ DisplayAsSyntaxIndentedExample()
     Session.LineSpace.Clear
 
     }
+
+DisplayAsIndentedExample()
+    {
+
+    # $1 = description
+    # $2 = example syntax
+
+    if [[ -z $2 && ${1: -1} = ':' ]]; then
+        printf "       %s\n" "$1"
+    elif [[ -z $1 ]]; then
+        printf "       %s\n" "$2"
+    elif [[ ${1: -1} = '!' ]]; then
+        printf "\n   %s \n       %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$2"
+    else
+        printf "\n   %s:\n       %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$2"
+    fi
+
+    Session.LineSpace.Clear
+
+    }
+
+DisplayAsInfoExample()
+    {
+
+    # $1 = description
+    # $2 = example syntax
+
+    if [[ ${1: -1} = '!' ]]; then
+        printf "\n* %s \n       %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$2"
+    else
+        printf "\n* %s:\n       %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$2"
+    fi
+
+    Session.LineSpace.Clear
+
+    }
+
 
 DisplayAsHelpPackageNameExample()
     {
@@ -2906,13 +2949,15 @@ Help.Actions.Show()
 
     DisplayAsProjectSyntaxIndentedExample 'restore the internal application configurations from the default backup location' "--restore $(FormatAsHelpPackages)"
 
-#   DisplayAsProjectSyntaxIndentedExample '--status'
+    #DisplayAsProjectSyntaxIndentedExample '--status'
 
     DisplayAsProjectSyntaxExample "$(FormatAsHelpActions) to affect all packages can be seen with" '--actions-all'
 
     Help.BackupLocation.Show
 
     DisplayAsProjectSyntaxExample "multiple $(FormatAsHelpActions) are supported like this" '--install sabnzbd sickchill --restart transmission --uninstall lazy nzbget --upgrade nzbtomedia'
+
+    DisplayAsInfoExample "$(FormatAsHelpActions) may be specified in any order, but the package processing order-of-operations is (first ► last)" 'backup ► uninstall ► force-upgrade ► upgrade ► install ► reinstall ► restore ► restart'
 
     return 0
 
