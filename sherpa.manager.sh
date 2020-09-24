@@ -215,8 +215,8 @@ Session.Init()
     Session.Backup.Path = $($GETCFG_CMD SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
     readonly QPKG_DL_PATH=$WORK_PATH/qpkgs
     readonly IPKG_DL_PATH=$WORK_PATH/ipkgs.downloads
-    readonly IPKG_CACHE_PATH=$WORK_PATH/ipkgs.cache
-    readonly PIP_CACHE_PATH=$WORK_PATH/pips.cache
+    readonly IPKG_CACHE_PATH=$WORK_PATH/ipkgs
+    readonly PIP_CACHE_PATH=$WORK_PATH/pips
     readonly EXTERNAL_PACKAGE_LIST_PATHFILE=$WORK_PATH/Packages
 
     # internals
@@ -711,7 +711,7 @@ Session.Validate()
         return 1
     fi
 
-    if QPKGs.ToInstall.IsAny || QPKGs.ToReinstall.IsAny || QPKGs.ToForceUpgrade.IsAny || QPKGs.ToUpgrade.IsAny || User.Opts.Dependencies.Check.IsSet; then
+    if QPKGs.ToInstall.IsAny || QPKGs.ToForceUpgrade.IsAny || User.Opts.Apps.All.Upgrade.IsSet || User.Opts.Dependencies.Check.IsSet; then
         Session.Ipkgs.Install.Set
     fi
 
@@ -1523,7 +1523,6 @@ InstallIPKGBatch()
             returncode=1
         fi
         DebugTimerStageEnd "$STARTSECONDS"
-        Session.Pips.Install.Set
     fi
 
     DebugFuncExit
@@ -3284,10 +3283,8 @@ QPKGs.Download.Build()
         for package in "${QPKGs_initial_download_array[@]}"; do
             QPKGs.ToUpgrade.Add "$package"
         done
-        Session.Pips.Install.Set
     elif User.Opts.Dependencies.Check.IsSet; then
         QPKGs_initial_download_array+=($(QPKGs.Installed.Array))
-        Session.Pips.Install.Set
     else
         QPKGs_initial_download_array+=(${QPKGs_to_install[*]} ${QPKGs_to_reinstall[*]} ${QPKGs_to_upgrade[*]} ${QPKGs_to_force_upgrade[*]})
     fi
@@ -3728,6 +3725,20 @@ QPKGs.Upgradable.Print()
 
     }
 
+QPKGs.Upgradable.IsAny()
+    {
+
+    [[ ${#QPKGS_upgradable[@]} -gt 0 ]]
+
+    }
+
+QPKGs.Upgradable.IsNone()
+    {
+
+    [[ ${#QPKGS_upgradable[@]} -eq 0 ]]
+
+    }
+
 QPKGs.ToRestart.Add()
     {
 
@@ -3923,7 +3934,7 @@ Session.Summary.Show()
     {
 
     if User.Opts.Apps.All.Upgrade.IsSet; then
-        if [[ ${#QPKGS_upgradable[@]} -eq 0 ]]; then
+        if QPKGs.Upgradable.IsNone; then
             ShowAsDone "no QPKGs need upgrading"
         elif Session.Error.IsNot; then
             ShowAsDone "all upgradable QPKGs were successfully upgraded"
