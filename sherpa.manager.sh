@@ -257,6 +257,46 @@ Session.Init()
         SHERPA_QPKG_DEPS+=('')
         SHERPA_QPKG_IPKGS+=('')
 
+    SHERPA_QPKG_NAME+=(Par2)
+        SHERPA_QPKG_ARCH+=(x86)
+        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/Par2/Par2_0.8.1.0_x86.qpkg)
+        SHERPA_QPKG_MD5+=(996ffb92d774eb01968003debc171e91)
+        SHERPA_QPKG_ABBRVS+=('par par2')        # these apply to all 'Par2' packages
+        SHERPA_QPKG_DEPS+=('')
+        SHERPA_QPKG_IPKGS+=('')
+
+    SHERPA_QPKG_NAME+=(Par2)
+        SHERPA_QPKG_ARCH+=(x64)
+        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/Par2/Par2_0.8.1.0_x86_64.qpkg)
+        SHERPA_QPKG_MD5+=(520472cc87d301704f975f6eb9948e38)
+        SHERPA_QPKG_ABBRVS+=('')
+        SHERPA_QPKG_DEPS+=('')
+        SHERPA_QPKG_IPKGS+=('')
+
+    SHERPA_QPKG_NAME+=(Par2)
+        SHERPA_QPKG_ARCH+=(x31)
+        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/Par2/Par2_0.8.1.0_arm-x31.qpkg)
+        SHERPA_QPKG_MD5+=(ce8af2e009eb87733c3b855e41a94f8e)
+        SHERPA_QPKG_ABBRVS+=('')
+        SHERPA_QPKG_DEPS+=('')
+        SHERPA_QPKG_IPKGS+=('')
+
+    SHERPA_QPKG_NAME+=(Par2)
+        SHERPA_QPKG_ARCH+=(x41)
+        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/Par2/Par2_0.8.1.0_arm-x41.qpkg)
+        SHERPA_QPKG_MD5+=(8516e45e704875cdd2cd2bb315c4e1e6)
+        SHERPA_QPKG_ABBRVS+=('')
+        SHERPA_QPKG_DEPS+=('')
+        SHERPA_QPKG_IPKGS+=('')
+
+    SHERPA_QPKG_NAME+=(Par2)
+        SHERPA_QPKG_ARCH+=(a64)
+        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/Par2/Par2_0.8.1.0_arm_64.qpkg)
+        SHERPA_QPKG_MD5+=(4d8e99f97936a163e411aa8765595f7a)
+        SHERPA_QPKG_ABBRVS+=('')
+        SHERPA_QPKG_DEPS+=('')
+        SHERPA_QPKG_IPKGS+=('')
+
     SHERPA_QPKG_NAME+=(SABnzbd)
         SHERPA_QPKG_ARCH+=(all)
         SHERPA_QPKG_URL+=($REMOTE_REPO_URL/SABnzbd/build/SABnzbd_200922.qpkg)
@@ -344,46 +384,6 @@ Session.Init()
         SHERPA_QPKG_ABBRVS+=('del-web deluge-web')
         SHERPA_QPKG_DEPS+=('Entware')
         SHERPA_QPKG_IPKGS+=('deluge-ui-web')
-
-    SHERPA_QPKG_NAME+=(Par2)
-        SHERPA_QPKG_ARCH+=(x86)
-        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/Par2/Par2_0.8.1.0_x86.qpkg)
-        SHERPA_QPKG_MD5+=(996ffb92d774eb01968003debc171e91)
-        SHERPA_QPKG_ABBRVS+=('par par2')        # these apply to all 'Par2' packages
-        SHERPA_QPKG_DEPS+=('')
-        SHERPA_QPKG_IPKGS+=('')
-
-    SHERPA_QPKG_NAME+=(Par2)
-        SHERPA_QPKG_ARCH+=(x64)
-        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/Par2/Par2_0.8.1.0_x86_64.qpkg)
-        SHERPA_QPKG_MD5+=(520472cc87d301704f975f6eb9948e38)
-        SHERPA_QPKG_ABBRVS+=('')
-        SHERPA_QPKG_DEPS+=('')
-        SHERPA_QPKG_IPKGS+=('')
-
-    SHERPA_QPKG_NAME+=(Par2)
-        SHERPA_QPKG_ARCH+=(x31)
-        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/Par2/Par2_0.8.1.0_arm-x31.qpkg)
-        SHERPA_QPKG_MD5+=(ce8af2e009eb87733c3b855e41a94f8e)
-        SHERPA_QPKG_ABBRVS+=('')
-        SHERPA_QPKG_DEPS+=('')
-        SHERPA_QPKG_IPKGS+=('')
-
-    SHERPA_QPKG_NAME+=(Par2)
-        SHERPA_QPKG_ARCH+=(x41)
-        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/Par2/Par2_0.8.1.0_arm-x41.qpkg)
-        SHERPA_QPKG_MD5+=(8516e45e704875cdd2cd2bb315c4e1e6)
-        SHERPA_QPKG_ABBRVS+=('')
-        SHERPA_QPKG_DEPS+=('')
-        SHERPA_QPKG_IPKGS+=('')
-
-    SHERPA_QPKG_NAME+=(Par2)
-        SHERPA_QPKG_ARCH+=(a64)
-        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/Par2/Par2_0.8.1.0_arm_64.qpkg)
-        SHERPA_QPKG_MD5+=(4d8e99f97936a163e411aa8765595f7a)
-        SHERPA_QPKG_ABBRVS+=('')
-        SHERPA_QPKG_DEPS+=('')
-        SHERPA_QPKG_IPKGS+=('')
 
     # package arrays are now full, so lock them
     readonly SHERPA_QPKG_NAME
@@ -817,9 +817,7 @@ Packages.Assignment.Check()
     if User.Opts.Apps.All.Backup.IsSet; then
         if QPKGs.Installed.IsAny; then
             for package in "${QPKGs_installed[@]}"; do
-                if [[ $package != Entware ]]; then      # KLUDGE: ignore Entware as it needs to be handled separately.
-                    QPKGs.ToBackup.Add "$package"
-                fi
+                QPKGs.ToBackup.Add "$package"
             done
         fi
     fi
@@ -827,9 +825,7 @@ Packages.Assignment.Check()
     if User.Opts.Apps.All.Restore.IsSet; then
         if QPKGs.Installed.IsAny; then
             for package in "${QPKGs_installed[@]}"; do
-                if [[ $package != Entware ]]; then      # KLUDGE: ignore Entware as it needs to be handled separately.
-                    QPKGs.ToRestore.Add "$package"
-                fi
+                QPKGs.ToRestore.Add "$package"
             done
         fi
     fi
@@ -1006,13 +1002,15 @@ Packages.Backup()
     local package=''
 
     if QPKGs.ToBackup.IsAny; then
-        for package in "${SHERPA_DEP_QPKGs[@]}"; do
-            if [[ ${QPKGs_to_backup[*]} == *"$package"* ]]; then
-                if QPKG.Installed "$package"; then
-                    QPKG.Backup "$package"
+        for package in "${QPKGs_to_backup[@]}"; do
+            if QPKG.Installed "$package"; then
+                if [[ ${SHERPA_INDEP_QPKGs[*]} == *"$package"* ]]; then
+                    ShowAsNote "unable to backup $(FormatAsPackageName "$package") configuration as it's unsupported"
                 else
-                    ShowAsNote "unable to backup $(FormatAsPackageName "$package") configuration as it's not installed"
+                    QPKG.Backup "$package"
                 fi
+            else
+                ShowAsNote "unable to backup $(FormatAsPackageName "$package") configuration as it's not installed"
             fi
         done
 
@@ -1217,13 +1215,15 @@ Packages.Restore()
     local package=''
 
     if QPKGs.ToRestore.IsAny; then
-        for package in "${SHERPA_DEP_QPKGs[@]}"; do
-            if [[ ${QPKGs_to_restore[*]} == *"$package"* ]]; then
-                if QPKG.Installed "$package"; then
-                    QPKG.Restore "$package"
+        for package in "${QPKGs_to_restore[@]}"; do
+            if QPKG.Installed "$package"; then
+                if [[ ${SHERPA_INDEP_QPKGs[*]} == *"$package"* ]]; then
+                    ShowAsNote "unable to restore $(FormatAsPackageName "$package") configuration as it's unsupported"
                 else
-                    ShowAsNote "unable to restore $(FormatAsPackageName "$package") configuration as it's not installed"
+                    QPKG.Restore "$package"
                 fi
+            else
+                ShowAsNote "unable to restore $(FormatAsPackageName "$package") configuration as it's not installed"
             fi
         done
 
