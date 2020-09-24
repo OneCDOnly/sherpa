@@ -1847,9 +1847,9 @@ QPKG.Download()
 
     if [[ -e $local_pathfile ]]; then
         if FileMatchesMD5 "$local_pathfile" "$remote_filename_md5"; then
-            DebugInfo "existing package checksum correct $(FormatAsFileName "$local_filename")"
+            DebugInfo "local package checksum correct $(FormatAsFileName "$local_filename") so skipping download"
         else
-            DebugWarning "existing package checksum incorrect $(FormatAsFileName "$local_filename")"
+            DebugWarning "local package checksum incorrect $(FormatAsFileName "$local_filename")"
             DebugInfo "deleting $(FormatAsFileName "$local_filename")"
             rm -f "$local_pathfile"
         fi
