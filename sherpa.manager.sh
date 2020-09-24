@@ -2375,7 +2375,7 @@ GetAllIPKGDepsToDownload()
     IPKG_download_count=0
     IPKG_download_size=0
     local requested_list=''
-    local dependency_list=''
+    local dependency_accumulator=()
     local last_list=''
     local pre_download_list=''
     local element=''
@@ -2396,11 +2396,12 @@ GetAllIPKGDepsToDownload()
     DebugProc 'finding IPKG dependencies'
     while [[ $iterations -lt $ITERATION_LIMIT ]]; do
         ((iterations++))
+        DebugProc "iteration $iterations"
         # shellcheck disable=SC2086
-        last_list=$($OPKG_CMD depends -A $last_list | $GREP_CMD -v 'depends on:' | $SED_CMD 's|^[[:blank:]]*||;s|[[:blank:]]*$||' | tr ' ' '\n' | $SORT_CMD | $UNIQ_CMD)
+        last_list=$($OPKG_CMD depends -A $last_list | $GREP_CMD -v 'depends on:' | tr ' ' '\n' | $SORT_CMD | $UNIQ_CMD)
 
         if [[ -n $last_list ]]; then
-            dependency_list+=" $last_list"
+            dependency_accumulator+=(${last_list[@]})
         else
             DebugDone 'complete'
             DebugInfo "found all IPKG dependencies in $iterations iteration$(FormatAsPlural $iterations)"
@@ -2414,7 +2415,7 @@ GetAllIPKGDepsToDownload()
         Session.SuggestIssue.Set
     fi
 
-    pre_download_list=$(DeDupeWords "$requested_list $dependency_list")
+    pre_download_list=$(DeDupeWords "$requested_list ${dependency_accumulator[*]}")
     DebugInfo "IPKGs requested + dependencies: $pre_download_list"
 
     DebugTimerStageEnd "$STARTSECONDS"
