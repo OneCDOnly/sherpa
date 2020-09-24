@@ -2423,9 +2423,13 @@ GetAllIPKGDepsToDownload()
     DebugProc 'excluding IPKGs already installed'
     # shellcheck disable=SC2068
     for element in ${pre_download_list[@]}; do
-        if [[ $element != 'ca-certs' ]]; then   # KLUDGE: 'ca-certs' appears to be a bogus meta-package, so silently exclude it from attempted installation
-            if ! $OPKG_CMD status "$element" | $GREP_CMD -q "Status:.*installed"; then
-                IPKG_download_list+=($element)
+        if [[ $element != 'ca-certs' ]]; then       # KLUDGE: 'ca-certs' appears to be a bogus meta-package, so silently exclude it from attempted installation.
+            if [[ $element != 'libjpeg' ]]; then    # KLUDGE: 'libjpeg' appears to have been replaced by 'libjpeg-turbo', but many packages still list 'libjpeg' as a dependency, so replace it with 'libjpeg-turbo'.
+                if ! $OPKG_CMD status "$element" | $GREP_CMD -q "Status:.*installed"; then
+                    IPKG_download_list+=($element)
+                fi
+            elif ! $OPKG_CMD status 'libjpeg-turbo' | $GREP_CMD -q "Status:.*installed"; then
+                [[ ${IPKG_download_list[*]} != *libjpeg-turbo* ]] && IPKG_download_list+=(libjpeg-turbo)
             fi
         fi
     done
