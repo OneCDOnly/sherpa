@@ -37,7 +37,7 @@ Session.Init()
     IsQNAP || return 1
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=200924
+    readonly MANAGER_SCRIPT_VERSION=200925
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -630,7 +630,6 @@ Session.Validate()
     Session.SkipPackageProcessing.IsSet && return
 
     DebugFuncEntry
-
     local package=''
 
     DebugInfoThickSeparator
@@ -716,8 +715,8 @@ Session.Validate()
     fi
 
     if QPKGs.ToBackup.IsNone && QPKGs.ToUninstall.IsNone && QPKGs.ToForceUpgrade.IsNone && QPKGs.ToUpgrade.IsNone && QPKGs.ToInstall.IsNone && QPKGs.ToReinstall.IsNone && QPKGs.ToRestore.IsNone && QPKGs.ToRestart.IsNone && QPKGs.ToStatus.IsNone; then
-        if User.Opts.Apps.All.Install.IsNot && User.Opts.Apps.All.Uninstall.IsNot && User.Opts.Apps.All.Restart.IsNot && User.Opts.Apps.All.Upgrade.IsNot && User.Opts.Apps.All.Backup.IsNot && User.Opts.Apps.All.Restore.IsNot && User.Opts.Apps.All.Status.IsNot && User.Opts.Apps.All.List.IsNot; then
-            if User.Opts.Dependencies.Check.IsNot && User.Opts.Apps.List.Installed.IsNot && User.Opts.Apps.List.NotInstalled.IsNot &&  User.Opts.Apps.List.Upgradable.IsNot && Session.Debug.To.Screen.IsNot && User.Opts.IgnoreFreeSpace.IsNot; then
+        if User.Opts.Apps.All.Install.IsNot && User.Opts.Apps.All.Uninstall.IsNot && User.Opts.Apps.All.Restart.IsNot && User.Opts.Apps.All.Upgrade.IsNot && User.Opts.Apps.All.Backup.IsNot && User.Opts.Apps.All.Restore.IsNot && User.Opts.Apps.All.Status.IsNot; then
+            if User.Opts.Dependencies.Check.IsNot && Session.Debug.To.Screen.IsNot && User.Opts.IgnoreFreeSpace.IsNot; then
                 ShowAsError 'nothing to do'
                 User.Opts.Help.Basic.Set
                 Session.SkipPackageProcessing.Set
@@ -938,6 +937,7 @@ Packages.Assignment.Check()
     if QPKGs.ToInstall.IsAny; then
         for package in "${SHERPA_DEP_QPKGs[@]}"; do
             if [[ ${QPKGs_to_install[*]} == *"$package"* ]]; then
+                QPKGs.ToReinstall.Remove "$package"
                 QPKGs.ToRestart.Remove "$package"
             fi
         done
@@ -946,7 +946,6 @@ Packages.Assignment.Check()
     if QPKGs.ToReinstall.IsAny; then
         for package in "${SHERPA_DEP_QPKGs[@]}"; do
             if [[ ${QPKGs_to_reinstall[*]} == *"$package"* ]]; then
-                QPKGs.ToInstall.Remove "$package"
                 QPKGs.ToRestart.Remove "$package"
             fi
         done
@@ -982,6 +981,7 @@ Packages.Download()
     Session.SkipPackageProcessing.IsSet && return
 
     DebugFuncEntry
+    local package=''
 
     for package in "${QPKGs_download_array[@]}"; do
         QPKG.Download "$package"
@@ -998,7 +998,6 @@ Packages.Backup()
     Session.SkipPackageProcessing.IsSet && return
 
     DebugFuncEntry
-
     local package=''
 
     if QPKGs.ToBackup.IsAny; then
@@ -1028,7 +1027,6 @@ Packages.Uninstall()
     Session.SkipPackageProcessing.IsSet && return
 
     DebugFuncEntry
-
     local response=''
     local package=''
     local previous_pip3_module_list=$WORK_PATH/pip3.prev.installed.list
@@ -1130,9 +1128,8 @@ Packages.Install.Independents()
         done
     fi
 
-    QPKG.Installed Entware && QPKG.NotEnabled Entware && QPKG.Enable Entware && ReloadProfile
-
     if QPKG.Installed Entware; then
+        QPKG.NotEnabled Entware && QPKG.Enable Entware && ReloadProfile
         PatchBaseInit
         IPKGs.Install
         PIP.Install
@@ -1155,7 +1152,6 @@ Packages.Install.Dependants()
     Session.SkipPackageProcessing.IsSet && return
 
     DebugFuncEntry
-
     local package=''
 
     if QPKGs.ToUpgrade.IsAny || QPKGs.ToForceUpgrade.IsAny; then
@@ -1211,7 +1207,6 @@ Packages.Restore()
     Session.SkipPackageProcessing.IsSet && return
 
     DebugFuncEntry
-
     local package=''
 
     if QPKGs.ToRestore.IsAny; then
@@ -1271,7 +1266,9 @@ Session.Results()
     if User.Opts.Versions.View.IsSet; then
         Versions.Show
     elif User.Opts.Log.View.IsSet; then
-        LogViewer.Show
+        Log.View.Show
+    elif User.Opts.Log.Paste.IsSet; then
+        Log.Paste.Online
     elif User.Opts.Apps.List.Installed.IsSet; then
         QPKGs.Installed.Show
     elif User.Opts.Apps.List.NotInstalled.IsSet; then
@@ -1303,7 +1300,6 @@ Session.Results()
 
     Session.ShowBackupLocation.IsSet && Help.BackupLocation.Show
 
-    User.Opts.Log.Paste.IsSet && PasteLogOnline
     Session.Summary.IsSet && Session.Summary.Show
     Session.SuggestIssue.IsSet && Help.Issue.Show
     DisplayLineSpaceIfNoneAlready       # final on-screen line space
@@ -1356,7 +1352,7 @@ DisplayNewQPKGVersions()
 
     }
 
-PasteLogOnline()
+Log.Paste.Online()
     {
 
     # with thanks to https://github.com/solusipse/fiche
@@ -1489,17 +1485,14 @@ InstallIPKGBatch()
 
     DebugFuncEntry
     local returncode=0
-    local requested_IPKGs=''
     local log_pathfile=$PACKAGE_LOGS_PATH/ipkgs.$INSTALL_LOG_FILE
     local result=0
-
-    requested_IPKGs="$1"
 
     # errors can occur due to incompatible IPKGs (tried installing Entware-3x, then Entware-ng), so delete them first
     [[ -d $IPKG_DL_PATH ]] && rm -f "$IPKG_DL_PATH"/*.ipk
     [[ -d $IPKG_CACHE_PATH ]] && rm -f "$IPKG_CACHE_PATH"/*.ipk
 
-    GetAllIPKGDepsToDownload "$requested_IPKGs" || return 1
+    GetAllIPKGDepsToDownload "$1" || return 1
 
     if [[ $IPKG_download_count -gt 0 ]]; then
         local -r STARTSECONDS=$(DebugTimerStageStart)
@@ -1600,28 +1593,24 @@ GetInstalledQPKGVars()
     #   $package_installed_path
     #   $package_config_path
 
-    local package_name=$1
+    QPKG.NotInstalled "$1" && return 1
+
+    package_installed_path=''
+    package_config_path=''
     local prev_config_dir=''
     local prev_config_file=''
     local package_settings_pathfile=''
-    package_installed_path=''
-    package_config_path=''
+    package_installed_path=$($GETCFG_CMD "$1" Install_Path -f $APP_CENTER_CONFIG_PATHFILE)
 
-    package_installed_path=$($GETCFG_CMD "$package_name" Install_Path -f $APP_CENTER_CONFIG_PATHFILE)
-    if [[ $? -eq 0 ]]; then
-        for prev_config_dir in "${PREV_QPKG_CONFIG_DIRS[@]}"; do
-            package_config_path=$package_installed_path/$prev_config_dir
-            [[ -d $package_config_path ]] && break
-        done
+    for prev_config_dir in "${PREV_QPKG_CONFIG_DIRS[@]}"; do
+        package_config_path=$package_installed_path/$prev_config_dir
+        [[ -d $package_config_path ]] && break
+    done
 
-        for prev_config_file in "${PREV_QPKG_CONFIG_FILES[@]}"; do
-            package_settings_pathfile=$package_config_path/$prev_config_file
-            [[ -f $package_settings_pathfile ]] && break
-        done
-    else
-        DebugError 'QPKG not installed?'
-        return 1
-    fi
+    for prev_config_file in "${PREV_QPKG_CONFIG_FILES[@]}"; do
+        package_settings_pathfile=$package_config_path/$prev_config_file
+        [[ -f $package_settings_pathfile ]] && break
+    done
 
     return 0
 
@@ -1944,11 +1933,11 @@ QPKG.Reinstall()
 
     if [[ -z $1 ]]; then
         DebugError "no package name specified "
-        code_pointer=9
+        code_pointer=8
         return 1
     elif QPKG.NotInstalled "$1"; then
         DebugQPKG "$(FormatAsPackageName "$1")" "not installed"
-        code_pointer=10
+        code_pointer=9
         return 1
     fi
 
@@ -1994,7 +1983,7 @@ QPKG.Upgrade()
 
     if [[ -z $1 ]]; then
         DebugError "no package name specified "
-        code_pointer=11
+        code_pointer=10
         return 1
     fi
 
@@ -2003,7 +1992,6 @@ QPKG.Upgrade()
     local result=0
     local returncode=0
     local local_pathfile="$(GetQPKGPathFilename "$1")"
-
     [[ -n $2 && $2 = '--forced' ]] && prefix='force-'
 
     if [[ ${local_pathfile##*.} = zip ]]; then
@@ -2046,11 +2034,11 @@ QPKG.Uninstall()
 
     if [[ -z $1 ]]; then
         DebugError "no package name specified "
-        code_pointer=12
+        code_pointer=11
         return 1
     elif QPKG.NotInstalled "$1"; then
         DebugQPKG "$(FormatAsPackageName "$1")" "not installed"
-        code_pointer=13
+        code_pointer=12
         return 1
     fi
 
@@ -2090,11 +2078,11 @@ QPKG.Restart()
 
     if [[ -z $1 ]]; then
         DebugError "no package name specified "
-        code_pointer=14
+        code_pointer=13
         return 1
     elif QPKG.NotInstalled "$1"; then
         DebugQPKG "$(FormatAsPackageName "$1")" "not installed"
-        code_pointer=15
+        code_pointer=14
         return 1
     fi
 
@@ -2134,11 +2122,11 @@ QPKG.Enable()
 
     if [[ -z $1 ]]; then
         DebugError "no package name specified "
-        code_pointer=16
+        code_pointer=15
         return 1
     elif QPKG.NotInstalled "$1"; then
         DebugQPKG "$(FormatAsPackageName "$1")" "not installed"
-        code_pointer=17
+        code_pointer=16
         return 1
     fi
 
@@ -2163,11 +2151,11 @@ QPKG.Backup()
 
     if [[ -z $1 ]]; then
         DebugError "no package name specified "
-        code_pointer=18
+        code_pointer=17
         return 1
     elif QPKG.NotInstalled "$1"; then
         DebugQPKG "$(FormatAsPackageName "$1")" "not installed"
-        code_pointer=19
+        code_pointer=18
         return 1
     fi
 
@@ -2213,11 +2201,11 @@ QPKG.Restore()
 
     if [[ -z $1 ]]; then
         DebugError "no package name specified "
-        code_pointer=20
+        code_pointer=19
         return 1
     elif QPKG.NotInstalled "$1"; then
         DebugQPKG "$(FormatAsPackageName "$1")" "not installed"
-        code_pointer=21
+        code_pointer=20
         return 1
     fi
 
@@ -2278,6 +2266,7 @@ GetTheseQPKGDeps()
     DebugProc 'finding QPKG dependencies'
     while [[ $iterations -lt $ITERATION_LIMIT ]]; do
         ((iterations++))
+        DebugProc "iteration $iterations"
         new_list_array=()
 
         for package in "${last_list_array[@]}"; do
@@ -2335,13 +2324,13 @@ ExcludeInstalledQPKGs()
         if QPKG.NotInstalled "$element"; then
             QPKGs_download_array+=($element)
             QPKGs.ToInstall.Add "$package"
-        elif [[ ${#QPKGs_to_install[@]} -gt 0 && ${QPKGs_to_install[*]} == *"$element"* ]]; then
+        elif QPKGs.ToInstall.IsAny && [[ ${QPKGs_to_install[*]} == *"$element"* ]]; then
             QPKGs_download_array+=($element)
-        elif [[ ${#QPKGs_to_reinstall[@]} -gt 0 && ${QPKGs_to_reinstall[*]} == *"$element"* ]]; then
+        elif QPKGs.ToReinstall.IsAny && [[ ${QPKGs_to_reinstall[*]} == *"$element"* ]]; then
             QPKGs_download_array+=($element)
-        elif [[ ${#QPKGS_upgradable[@]} -gt 0 && ${QPKGS_upgradable[*]} == *"$element"* ]]; then
+        elif QPKGs.ToUpgrade.IsAny && [[ ${QPKGs_to_upgrade[*]} == *"$element"* ]]; then
             QPKGs_download_array+=($element)
-        elif [[ ${#QPKGs_to_force_upgrade[@]} -gt 0 && ${QPKGs_to_force_upgrade[*]} == *"$element"* ]]; then
+        elif QPKGs.ToForceUpgrade.IsAny && [[ ${QPKGs_to_force_upgrade[*]} == *"$element"* ]]; then
             QPKGs_download_array+=($element)
         fi
     done
@@ -2366,7 +2355,7 @@ GetAllIPKGDepsToDownload()
     #   $IPKG_download_size = byte-count of packages to be downloaded
 
     if IsNotSysFileExist $OPKG_CMD || IsNotSysFileExist $GNU_GREP_CMD; then
-        code_pointer=22
+        code_pointer=21
         return 1
     fi
 
@@ -2374,8 +2363,8 @@ GetAllIPKGDepsToDownload()
     IPKG_download_count=0
     IPKG_download_size=0
     local requested_list=''
-    local dependency_accumulator=()
     local last_list=''
+    local dependency_accumulator=()
     local pre_download_list=''
     local element=''
     local iterations=0
@@ -2440,7 +2429,7 @@ GetAllIPKGDepsToDownload()
     if [[ $IPKG_download_count -gt 0 ]]; then
         DebugProc "determining size of IPKG$(FormatAsPlural "$IPKG_download_count") to download"
         size_array=($($GNU_GREP_CMD -w '^Package:\|^Size:' "$EXTERNAL_PACKAGE_LIST_PATHFILE" | $GNU_GREP_CMD --after-context 1 --no-group-separator ": $($SED_CMD 's/ /$ /g;s/\$ /\$\\\|: /g' <<< "${IPKG_download_list[*]}")$" | $GREP_CMD '^Size:' | $SED_CMD 's|^Size: ||'))
-        IPKG_download_size=$(IFS=+; echo "$((${size_array[*]}))")       # a neat trick found here https://stackoverflow.com/a/13635566/6182835
+        IPKG_download_size=$(IFS=+; echo "$((${size_array[*]}))")   # a neat trick found here https://stackoverflow.com/a/13635566/6182835
         DebugDone 'complete'
         DebugVar IPKG_download_size
         ShowAsDone "$IPKG_download_count IPKG$(FormatAsPlural "$IPKG_download_count") ($(FormatAsISOBytes "$IPKG_download_size")) to be downloaded"
@@ -2512,12 +2501,11 @@ IPKGs.Install()
 
     Session.SkipPackageProcessing.IsSet && return
     Session.Ipkgs.Install.IsNot && return
+    UpdateEntware
+    Session.Error.IsSet && return
 
     local packages="$SHERPA_COMMON_IPKGS"
     local index=0
-
-    UpdateEntware
-    Session.Error.IsSet && return
 
     if User.Opts.Apps.All.Install.IsSet; then
         for index in "${!SHERPA_QPKG_NAME[@]}"; do
@@ -3170,7 +3158,7 @@ Help.BackupLocation.Show()
 
     }
 
-LogViewer.Show()
+Log.View.Show()
     {
 
     if [[ -n $DEBUG_LOG_PATHFILE && -e $DEBUG_LOG_PATHFILE ]]; then
