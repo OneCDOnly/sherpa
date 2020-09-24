@@ -4460,7 +4460,8 @@ DebugTimerStageStart()
     # output:
     #   stdout = current time in seconds
 
-    $DATE_CMD +%s
+#     $DATE_CMD +%s
+    $DATE_CMD +%s%N
 
     if Session.Debug.To.Screen.IsNot; then
         DebugInfoThinSeparator
@@ -4475,7 +4476,9 @@ DebugTimerStageEnd()
     # input:
     #   $1 = start time in seconds
 
-    DebugStage 'elapsed time' "$(ConvertSecsToMinutes "$(($($DATE_CMD +%s)-$([[ -n $1 ]] && echo "$1" || echo "1")))")"
+#     DebugStage 'elapsed time' "$(ConvertSecsToMinutes "$(($($DATE_CMD +%s)-$([[ -n $1 ]] && echo "$1" || echo "1")))")"
+    DebugStage 'elapsed time' "$((($($DATE_CMD +%s%N) - $1)/1000000)) milliseconds" # using this method: https://stackoverflow.com/a/16961051/14072675
+
     DebugInfoThinSeparator
 
     }
