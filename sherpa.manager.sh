@@ -2841,7 +2841,7 @@ Display()
     {
 
     echo -e "$1"
-    [[ $(type -t Session.LineSpace.Index) = 'function' ]] && Session.LineSpace.Clear
+    [[ $(type -t Session.LineSpace.Init) = 'function' ]] && Session.LineSpace.Clear
 
     }
 
@@ -3862,7 +3862,7 @@ Packages.Download.IsNone()
 Session.Error.Set()
     {
 
-    [[ $(type -t Session.SkipPackageProcessing.Index) = 'function' ]] && Session.SkipPackageProcessing.Set
+    [[ $(type -t Session.SkipPackageProcessing.Init) = 'function' ]] && Session.SkipPackageProcessing.Set
     Session.Error.IsSet && return
 
     _script_error_flag=true
@@ -4582,7 +4582,7 @@ DebugVar()
 DebugThis()
     {
 
-    [[ $(type -t Session.Debug.To.Screen.Index) = 'function' ]] && Session.Debug.To.Screen.IsSet && ShowAsDebug "$1"
+    [[ $(type -t Session.Debug.To.Screen.Init) = 'function' ]] && Session.Debug.To.Screen.IsSet && ShowAsDebug "$1"
     WriteAsDebug "$1"
 
     }
@@ -4622,7 +4622,7 @@ ShowAsProc()
     WriteToDisplay.Wait "$(ColourTextBrightOrange proc)" "$1 ..."
     WriteToLog proc "$1 ..."
 
-    [[ $(type -t Session.Debug.To.Screen.Index) = 'function' ]] && Session.Debug.To.Screen.IsSet && Display
+    [[ $(type -t Session.Debug.To.Screen.Init) = 'function' ]] && Session.Debug.To.Screen.IsSet && Display
 
     }
 
