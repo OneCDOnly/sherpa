@@ -38,7 +38,7 @@ Session.Init()
     DebugFuncEntry
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=200926
+    readonly MANAGER_SCRIPT_VERSION=200927
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -126,7 +126,6 @@ Session.Init()
     readonly MANAGER_SCRIPT_FILE=$PROJECT_NAME.manager.sh
 
     Session.LockFile.Claim /var/run/$LOADER_SCRIPT_FILE.pid || return 1
-    ShowAsProc "building objects"
 
     local -r DEBUG_LOG_FILE=$PROJECT_NAME.debug.log
     readonly APP_CENTER_CONFIG_PATHFILE=/etc/config/qpkg.conf
@@ -148,50 +147,12 @@ Session.Init()
     readonly PREV_QPKG_CONFIG_DIRS=(SAB_CONFIG CONFIG Config config)                                # last element is used as target dirname
     readonly PREV_QPKG_CONFIG_FILES=(sabnzbd.ini sickbeard.conf settings.ini config.cfg config.ini) # last element is used as target filename
     pip3_cmd=/opt/bin/pip3
+    readonly PACKAGE_VERSION=$(GetInstalledQPKGVersion "$PROJECT_NAME")
+    local -r SHERPA_PATH=$($GETCFG_CMD $PROJECT_NAME Install_Path -f $APP_CENTER_CONFIG_PATHFILE)
+    readonly WORK_PATH=$SHERPA_PATH/cache
+    readonly COMPILED_OBJECTS=$WORK_PATH/compiled.objects
 
-    # user-selected options
-    Objects.Create User.Opts.Help.Abbreviations
-    Objects.Create User.Opts.Help.Actions
-    Objects.Create User.Opts.Help.ActionsAll
-    Objects.Create User.Opts.Help.Basic
-    Objects.Create User.Opts.Help.Options
-    Objects.Create User.Opts.Help.Packages
-    Objects.Create User.Opts.Help.Problems
-    Objects.Create User.Opts.Help.Tips
-
-    Objects.Create User.Opts.Dependencies.Check
-    Objects.Create User.Opts.IgnoreFreeSpace
-    Objects.Create User.Opts.Versions.View
-
-    Objects.Create User.Opts.Log.Paste
-    Objects.Create User.Opts.Log.View
-
-    Objects.Create User.Opts.Apps.All.Backup
-    Objects.Create User.Opts.Apps.All.Install
-    Objects.Create User.Opts.Apps.All.List
-    Objects.Create User.Opts.Apps.All.Reinstall
-    Objects.Create User.Opts.Apps.All.Restart
-    Objects.Create User.Opts.Apps.All.Restore
-    Objects.Create User.Opts.Apps.All.Status
-    Objects.Create User.Opts.Apps.All.Uninstall
-    Objects.Create User.Opts.Apps.All.Upgrade
-
-    Objects.Create User.Opts.Apps.List.Installed
-    Objects.Create User.Opts.Apps.List.NotInstalled
-    Objects.Create User.Opts.Apps.List.Upgradable
-
-    # script flags
-    Objects.Create Session.Backup
-    Objects.Create Session.Debug.To.File
-    Objects.Create Session.Debug.To.Screen
-    Objects.Create Session.Display.Clean
-    Objects.Create Session.Ipkgs.Install
-    Objects.Create Session.LineSpace
-    Objects.Create Session.Pips.Install
-    Objects.Create Session.ShowBackupLocation
-    Objects.Create Session.SkipPackageProcessing
-    Objects.Create Session.SuggestIssue
-    Objects.Create Session.Summary
+    Objects.Compile
 
     # enable debug mode early if possible
     if [[ $USER_ARGS_RAW == *"debug"* ]]; then
@@ -200,15 +161,10 @@ Session.Init()
     fi
 
     User.Opts.IgnoreFreeSpace.Text = ' --force-space'
-
     Session.Summary.Set
     Session.Debug.To.Screen.Description = "Display on-screen live debugging information."
     Session.Display.Clean.Description = "Disable display of script title and trailing linespace. If 'set', output is suitable for script processing."
     Session.LineSpace.Description = "Keeps track of the display empty linespacing flag. If 'set', an empty linespace has been printed to screen."
-
-    readonly PACKAGE_VERSION=$(GetInstalledQPKGVersion "$PROJECT_NAME")
-    local -r SHERPA_PATH=$($GETCFG_CMD $PROJECT_NAME Install_Path -f $APP_CENTER_CONFIG_PATHFILE)
-    readonly WORK_PATH=$SHERPA_PATH/cache
     readonly PACKAGE_LOGS_PATH=$SHERPA_PATH/logs
     readonly DEBUG_LOG_PATHFILE=$SHERPA_PATH/$DEBUG_LOG_FILE
     Session.Backup.Path = $($GETCFG_CMD SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
@@ -4940,146 +4896,263 @@ CTRL_C_Captured()
 
     }
 
-Objects.Create()
+Objects.Add()
     {
 
-    if [[ $(type -t "$1.Index") = 'function' ]]; then
-        echo "unable to create new virtual object '$1': already exists" 1>&2
-        return 1
-    fi
-
-    [[ $(type -t Objects.Index) != 'function' ]] && [[ -z $1 || $1 != Objects ]] && Objects.Create Objects
+    # $1: object name to create
 
     local public_function_name="$1"
-    local safe_function_name="$(tr '[A-Z]' '[a-z]' <<< "${public_function_name//./_}")"
+    local safe_function_name="$(tr '[A-Z]' '[a-z]' <<< "${public_function_name//[.-]/_}")"
 
-    _placehold_index_="_${safe_function_name}_index_"
-    _placehold_description_="_${safe_function_name}_description_"
+    _placehold_description_="_object_${safe_function_name}_description_"
+    _placehold_value_="_object_${safe_function_name}_value_"
     _placehold_text_="_object_${safe_function_name}_text_"
-    _placehold_flag_="_${safe_function_name}_flag_"
-    _placehold_list_array_="_${safe_function_name}_list_"
-    _placehold_list_index_="_${safe_function_name}_list_index_"
+    _placehold_flag_="_object_${safe_function_name}_flag_"
+    _placehold_enable_="_object_${safe_function_name}_enable_"
+    _placehold_list_array_="_object_${safe_function_name}_list_"
+    _placehold_list_index_="_object_${safe_function_name}_list_index_"
     _placehold_path_="_object_${safe_function_name}_path_"
 
-    [[ $(type -t Objects.Index) = 'function' ]] && Objects.Items.Add "$public_function_name"
+    echo $public_function_name'.Clear()
+    {
+    [[ $'$_placehold_flag_' != "true" ]] && return
+    '$_placehold_flag_'=false
+    }
 
-    object_functions='
-        '$public_function_name'.Clear()
-            {
-            [[ $'$_placehold_flag_' != "true" ]] && return
-            '$_placehold_flag_'=false
-            DebugVar '$_placehold_flag_'
-            }
-
-        '$public_function_name'.Description()
-            {
-            if [[ -n $1 && $1 = "=" ]]; then
-                '$_placehold_description_'="$2"
-            else
-                echo -n "'$_placehold_description_'"
-            fi
-            }
-
-        '$public_function_name'.Env()
-            {
-            echo "* object internal environment *"
-            echo "Index: '\'\$$_placehold_index_\''"
-            echo "Name: '\'$public_function_name\''"
-            echo "Description: '\'\$$_placehold_description_\''"
-            echo "Set: '\'\$$_placehold_flag_\''"
-            echo "Text: '\'\$$_placehold_text_\''"
-            echo "List: '\'\${$_placehold_list_array_[*]}\''"
-            echo "List pointer: '\'\$$_placehold_list_index_\''"
-            echo "Path: '\'\$$_placehold_path_\''"
-            }
-
-        '$public_function_name'.Index()
-            {
-            if [[ ${FUNCNAME[1]} = 'Objects.Create' ]]; then
-                '$_placehold_index_'=1
-            else
-                echo $'$_placehold_index_'
-            fi
-            }
-
-        '$public_function_name'.Init()
-            {
-            '$_placehold_index_'=$(Objects.Items.Count)
-            '$_placehold_description_'=''
-            '$_placehold_flag_'=false
-            '$_placehold_list_array_'+=()
-            '$_placehold_list_index_'=1
-            '$_placehold_text_'=''
-            '$_placehold_path_'=''
-            }
-
-        '$public_function_name'.IsNot()
-            {
-            [[ $'$_placehold_flag_' != "true" ]]
-            }
-
-        '$public_function_name'.IsSet()
-            {
-            [[ $'$_placehold_flag_' = "true" ]]
-            }
-
-        '$public_function_name'.Items.Add()
-            {
-            '$_placehold_list_array_'+=("$1")
-            }
-
-        '$public_function_name'.Items.Count()
-            {
-            echo "${#'$_placehold_list_array_'[@]}"
-            }
-
-        '$public_function_name'.Items.Pointer()
-            {
-            if [[ -n $1 && $1 = "=" ]]; then
-                if [[ $2 -gt ${#'$_placehold_list_array_'[@]} ]]; then
-                    '$_placehold_list_index_'=${#'$_placehold_list_array_'[@]}
-                else
-                    '$_placehold_list_index_'=$2
-                fi
-            else
-                echo -n $'$_placehold_list_index_'
-            fi
-            }
-
-        '$public_function_name'.Path()
-            {
-            if [[ -n $1 && $1 = "=" ]]; then
-                '$_placehold_path_'="$2"
-            else
-                echo -n "$'$_placehold_path_'"
-            fi
-            }
-
-        '$public_function_name'.Set()
-            {
-            [[ $'$_placehold_flag_' = "true" ]] && return
-            '$_placehold_flag_'=true
-            DebugVar '$_placehold_flag_'
-            }
-
-        '$public_function_name'.Text()
-            {
-            if [[ -n $1 && $1 = "=" ]]; then
-                '$_placehold_text_'="$2"
-            else
-                echo -n "$'$_placehold_text_'"
-            fi
-            }
-    '
-    eval "$object_functions"
-
-    $public_function_name.Init
-
-    if [[ $public_function_name = Objects ]]; then
-        $public_function_name.Index
-        $public_function_name.Description = 'this object holds metadata on every other object'
-        $public_function_name.Items.Add 'Objects'
+'$public_function_name'.Description()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        '$_placehold_description_'="$2"
+    else
+        echo -n "'$_placehold_description_'"
     fi
+    }
+
+'$public_function_name'.Disable()
+    {
+    [[ $'$_placehold_enable_' != "true" ]] && return
+    '$_placehold_enable_'=false
+    }
+
+'$public_function_name'.Enable()
+    {
+    [[ $'$_placehold_enable_' = "true" ]] && return
+    '$_placehold_enable_'=true
+    }
+
+'$public_function_name'.Env()
+    {
+    echo "* object internal environment *"
+    echo "Name: '\'$public_function_name\''"
+    echo "Description: '\'\$$_placehold_description_\''"
+    echo "Value: '\'\$$_placehold_value_\''"
+    echo "Text: '\'\$$_placehold_text_\''"
+    echo "Flag: '\'\$$_placehold_flag_\''"
+    echo "Enable: '\'\$$_placehold_enable_\''"
+    echo "List: '\'\${$_placehold_list_array_[*]}\''"
+    echo "List pointer: '\'\$$_placehold_list_index_\''"
+    echo "Path: '\'\$$_placehold_path_\''"
+    }
+
+'$public_function_name'.Init()
+    {
+    '$_placehold_description_'=''
+    '$_placehold_value_'=0
+    '$_placehold_text_'=''
+    '$_placehold_flag_'=false
+    '$_placehold_enable_'=false
+    '$_placehold_list_array_'+=()
+    '$_placehold_list_index_'=1
+    '$_placehold_path_'=''
+    }
+
+'$public_function_name'.IsDisabled()
+    {
+    [[ $'$_placehold_enable_' != "true" ]]
+    }
+
+'$public_function_name'.IsEnabled()
+    {
+    [[ $'$_placehold_enable_' = "true" ]]
+    }
+
+'$public_function_name'.IsNot()
+    {
+    [[ $'$_placehold_flag_' != "true" ]]
+    }
+
+'$public_function_name'.IsSet()
+    {
+    [[ $'$_placehold_flag_' = "true" ]]
+    }
+
+'$public_function_name'.Items.Add()
+    {
+    '$_placehold_list_array_'+=("$1")
+    }
+
+'$public_function_name'.Items.Count()
+    {
+    echo "${#'$_placehold_list_array_'[@]}"
+    }
+
+'$public_function_name'.Items.First()
+    {
+    echo "${'$_placehold_list_array_'[0]}"
+    }
+
+'$public_function_name'.Items.Enumerate()
+    {
+    (('$_placehold_list_index_'++))
+    if [[ $'$_placehold_list_index_' -gt ${#'$_placehold_list_array_'[@]} ]]; then
+        '$_placehold_list_index_'=1
+    fi
+    }
+
+'$public_function_name'.Items.GetCurrent()
+    {
+    echo -n "${'$_placehold_list_array_'[(('$_placehold_list_index_'-1))]}"
+    }
+
+'$public_function_name'.Items.GetThis()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#'$_placehold_list_array_'[@]} ]] && index=${#'$_placehold_list_array_'[@]}
+    echo -n "${'$_placehold_list_array_'[((index-1))]}"
+    }
+
+'$public_function_name'.Items.Index()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        if [[ $2 -gt ${#'$_placehold_list_array_'[@]} ]]; then
+            '$_placehold_list_index_'=${#'$_placehold_list_array_'[@]}
+        else
+            '$_placehold_list_index_'=$2
+        fi
+    else
+        echo -n $'$_placehold_list_index_'
+    fi
+    }
+
+'$public_function_name'.Path()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        '$_placehold_path_'="$2"
+    else
+        echo -n "$'$_placehold_path_'"
+    fi
+    }
+
+'$public_function_name'.Set()
+    {
+    [[ $'$_placehold_flag_' = "true" ]] && return
+    '$_placehold_flag_'=true
+    }
+
+'$public_function_name'.Text()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        '$_placehold_text_'="$2"
+    else
+        echo -n "$'$_placehold_text_'"
+    fi
+    }
+
+'$public_function_name'.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        '$_placehold_value_'=$2
+    else
+        echo -n $'$_placehold_value_'
+    fi
+    }
+
+'$public_function_name'.Value.Decrement()
+    {
+    local -i amount
+    if [[ -n $1 && $1 = "by" ]]; then
+        amount=$2
+    else
+        amount=1
+    fi
+    '$_placehold_value_'=$(('$_placehold_value_'-amount))
+    }
+
+'$public_function_name'.Value.Increment()
+    {
+    local -i amount
+    if [[ -n $1 && $1 = "by" ]]; then
+        amount=$2
+    else
+        amount=1
+    fi
+    '$_placehold_value_'=$(('$_placehold_value_'+amount))
+    }
+
+'$public_function_name'.Init
+' >> $COMPILED_OBJECTS
+
+    return 0
+
+    }
+
+Objects.Compile()
+    {
+
+    local reference_hash=1196e75d309944ac682573d26f2aa381
+
+    [[ -e $COMPILED_OBJECTS ]] && ! FileMatchesMD5 "$COMPILED_OBJECTS" "$reference_hash" && rm -f "$COMPILED_OBJECTS"
+
+    if [[ ! -e $COMPILED_OBJECTS ]]; then
+        ShowAsProc "compiling objects"
+
+        # user-selected options
+        Objects.Add User.Opts.Help.Abbreviations
+        Objects.Add User.Opts.Help.Actions
+        Objects.Add User.Opts.Help.ActionsAll
+        Objects.Add User.Opts.Help.Basic
+        Objects.Add User.Opts.Help.Options
+        Objects.Add User.Opts.Help.Packages
+        Objects.Add User.Opts.Help.Problems
+        Objects.Add User.Opts.Help.Tips
+
+        Objects.Add User.Opts.Dependencies.Check
+        Objects.Add User.Opts.IgnoreFreeSpace
+        Objects.Add User.Opts.Versions.View
+
+        Objects.Add User.Opts.Log.Paste
+        Objects.Add User.Opts.Log.View
+
+        Objects.Add User.Opts.Apps.All.Backup
+        Objects.Add User.Opts.Apps.All.Install
+        Objects.Add User.Opts.Apps.All.List
+        Objects.Add User.Opts.Apps.All.Reinstall
+        Objects.Add User.Opts.Apps.All.Restart
+        Objects.Add User.Opts.Apps.All.Restore
+        Objects.Add User.Opts.Apps.All.Status
+        Objects.Add User.Opts.Apps.All.Uninstall
+        Objects.Add User.Opts.Apps.All.Upgrade
+
+        Objects.Add User.Opts.Apps.List.Installed
+        Objects.Add User.Opts.Apps.List.NotInstalled
+        Objects.Add User.Opts.Apps.List.Upgradable
+
+        # script flags
+        Objects.Add Session.Backup
+        Objects.Add Session.Debug.To.File
+        Objects.Add Session.Debug.To.Screen
+        Objects.Add Session.Display.Clean
+        Objects.Add Session.Ipkgs.Install
+        Objects.Add Session.LineSpace
+        Objects.Add Session.Pips.Install
+        Objects.Add Session.ShowBackupLocation
+        Objects.Add Session.SkipPackageProcessing
+        Objects.Add Session.SuggestIssue
+        Objects.Add Session.Summary
+    fi
+
+    . "$COMPILED_OBJECTS"
 
     return 0
 
