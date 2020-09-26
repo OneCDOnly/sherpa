@@ -37,8 +37,6 @@ Session.Init()
     IsQNAP || return 1
     DebugFuncEntry
 
-    local -r STARTSECONDS=$(DebugTimerStageStart)
-
     readonly PROJECT_NAME=sherpa
     readonly MANAGER_SCRIPT_VERSION=200926
 
@@ -420,7 +418,6 @@ Session.Init()
         User.Opts.Apps.All.Upgrade.IsNot && DisplayNewQPKGVersions
     fi
 
-    DebugTimerStageEnd "$STARTSECONDS"
     DebugFuncExit
     return 0
 
@@ -1502,7 +1499,6 @@ InstallIPKGBatch()
     GetAllIPKGDepsToDownload "$1" || return 1
 
     if [[ $IPKG_download_count -gt 0 ]]; then
-        local -r STARTSECONDS=$(DebugTimerStageStart)
         ShowAsProc "downloading & installing $IPKG_download_count IPKG$(FormatAsPlural "$IPKG_download_count")"
 
         CreateDirSizeMonitorFlagFile
@@ -1522,7 +1518,6 @@ InstallIPKGBatch()
             DebugErrorFile "$log_pathfile"
             returncode=1
         fi
-        DebugTimerStageEnd "$STARTSECONDS"
     fi
 
     DebugFuncExit
@@ -2366,6 +2361,8 @@ GetAllIPKGDepsToDownload()
         return 1
     fi
 
+    DebugFuncEntry
+
     IPKG_download_list=()
     IPKG_download_count=0
     IPKG_download_size=0
@@ -2377,7 +2374,6 @@ GetAllIPKGDepsToDownload()
     local iterations=0
     local -r ITERATION_LIMIT=20
     local complete=false
-    local -r STARTSECONDS=$(DebugTimerStageStart)
 
     # remove duplicate entries
     requested_list=$(DeDupeWords "$1")
@@ -2413,8 +2409,6 @@ GetAllIPKGDepsToDownload()
     pre_download_list=$(DeDupeWords "$requested_list ${dependency_accumulator[*]}")
     DebugInfo "IPKGs requested + dependencies: $pre_download_list"
 
-    DebugTimerStageEnd "$STARTSECONDS"
-
     DebugProc 'excluding IPKGs already installed'
     # shellcheck disable=SC2068
     for element in ${pre_download_list[@]}; do
@@ -2445,6 +2439,9 @@ GetAllIPKGDepsToDownload()
     fi
 
     IPKGs.Archive.Close
+
+    DebugFuncExit
+    return 0
 
     }
 
