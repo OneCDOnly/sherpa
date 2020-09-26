@@ -631,6 +631,7 @@ Session.Validate()
         return 1
     fi
 
+    DebugUserspace.OK 'BASH' "$(bash --version | $HEAD_CMD -n1)"
     DebugUserspace.OK 'default volume' "$($GETCFG_CMD SHARE_DEF defVolMP -f $DEFAULT_SHARES_PATHFILE)"
 
     if [[ -L '/opt' ]]; then
