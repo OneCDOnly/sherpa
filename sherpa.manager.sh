@@ -4917,6 +4917,7 @@ Objects.Add()
     {
     [[ $'$_placehold_flag_' != "true" ]] && return
     '$_placehold_flag_'=false
+    DebugVar '$_placehold_flag_'
     }
 
 '$public_function_name'.Description()
@@ -4932,12 +4933,14 @@ Objects.Add()
     {
     [[ $'$_placehold_enable_' != "true" ]] && return
     '$_placehold_enable_'=false
+    DebugVar '$_placehold_enable_'
     }
 
 '$public_function_name'.Enable()
     {
     [[ $'$_placehold_enable_' = "true" ]] && return
     '$_placehold_enable_'=true
+    DebugVar '$_placehold_enable_'
     }
 
 '$public_function_name'.Env()
@@ -5048,6 +5051,7 @@ Objects.Add()
     {
     [[ $'$_placehold_flag_' = "true" ]] && return
     '$_placehold_flag_'=true
+    DebugVar '$_placehold_flag_'
     }
 
 '$public_function_name'.Text()
@@ -5100,7 +5104,7 @@ Objects.Add()
 Objects.Compile()
     {
 
-    local reference_hash=1196e75d309944ac682573d26f2aa381
+    local reference_hash=43fb740d1dd2b4c72ad63333461efc7f
 
     [[ -e $COMPILED_OBJECTS ]] && ! FileMatchesMD5 "$COMPILED_OBJECTS" "$reference_hash" && rm -f "$COMPILED_OBJECTS"
 
