@@ -37,7 +37,7 @@ Session.Init()
     IsQNAP || return 1
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=200925
+    readonly MANAGER_SCRIPT_VERSION=200926
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -2912,6 +2912,8 @@ Help.Basic.Example.Show()
     DisplayAsProjectSyntaxIndentedExample "to learn more about available $(FormatAsHelpPackages), type" '--packages'
 
     DisplayAsProjectSyntaxIndentedExample "or, for more about available $(FormatAsHelpOptions), type" '--options'
+
+    echo -e "\nThere's also $(FormatAsURL 'https://github.com/OneCDOnly/sherpa/wiki')"
 
     return 0
 
