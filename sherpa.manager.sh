@@ -35,6 +35,7 @@ Session.Init()
     {
 
     IsQNAP || return 1
+    local -r STARTSECONDS=$(DebugTimerStageStart)
 
     readonly PROJECT_NAME=sherpa
     readonly MANAGER_SCRIPT_VERSION=200926
@@ -44,7 +45,6 @@ Session.Init()
     readonly BUSYBOX_CMD=/bin/busybox
     readonly CAT_CMD=/bin/cat
     readonly CHMOD_CMD=/bin/chmod
-    readonly DATE_CMD=/bin/date
     readonly GREP_CMD=/bin/grep
     readonly HOSTNAME_CMD=/bin/hostname
     readonly MD5SUM_CMD=/bin/md5sum
@@ -82,7 +82,6 @@ Session.Init()
     IsSysFileExist $BUSYBOX_CMD || return 1
     IsSysFileExist $CAT_CMD || return 1
     IsSysFileExist $CHMOD_CMD || return 1
-    IsSysFileExist $DATE_CMD || return 1
     IsSysFileExist $GREP_CMD || return 1
     IsSysFileExist $HOSTNAME_CMD || return 1
     IsSysFileExist $MD5SUM_CMD || return 1
@@ -220,7 +219,7 @@ Session.Init()
     readonly EXTERNAL_PACKAGE_LIST_PATHFILE=$WORK_PATH/Packages
 
     # internals
-    readonly SCRIPT_STARTSECONDS=$($DATE_CMD +%s)
+    readonly SCRIPT_STARTSECONDS=$(date +%s)
     readonly NAS_FIRMWARE=$($GETCFG_CMD System Version -f $ULINUX_PATHFILE)
     readonly NAS_BUILD=$($GETCFG_CMD System 'Build Number' -f $ULINUX_PATHFILE)
     readonly INSTALLED_RAM_KB=$($GREP_CMD MemTotal /proc/meminfo | $CUT_CMD -f2 -d':' | $SED_CMD 's|kB||;s| ||g')
@@ -410,15 +409,17 @@ Session.Init()
     Session.SkipPackageProcessing.IsNot && Session.Debug.To.File.Set
     SmartCR
 
-    Session.Display.Clean.IsSet && return
+    if Session.Display.Clean.IsNot; then
+        if Session.Debug.To.Screen.IsNot; then
+            Display "$(FormatAsScriptTitle) $MANAGER_SCRIPT_VERSION • a mini-package-manager for QNAP NAS"
+            DisplayLineSpaceIfNoneAlready
+        fi
 
-    if Session.Debug.To.Screen.IsNot; then
-        Display "$(FormatAsScriptTitle) $MANAGER_SCRIPT_VERSION • a mini-package-manager for QNAP NAS"
-        DisplayLineSpaceIfNoneAlready
+        User.Opts.Apps.All.Upgrade.IsNot && DisplayNewQPKGVersions
     fi
 
-    User.Opts.Apps.All.Upgrade.IsNot && DisplayNewQPKGVersions
-
+    DebugTimerStageEnd "$STARTSECONDS"
+    DebugFuncExit
     return 0
 
     }
@@ -426,12 +427,15 @@ Session.Init()
 Session.ParseArguments()
     {
 
+
     if [[ -z $USER_ARGS_RAW ]]; then
         User.Opts.Help.Basic.Set
         Session.SkipPackageProcessing.Set
         code_pointer=1
         return 1
     fi
+
+    DebugFuncEntry
 
     local user_args=($(tr '[A-Z]' '[a-z]' <<< "$USER_ARGS_RAW"))
     local arg=''
@@ -620,6 +624,7 @@ Session.ParseArguments()
         esac
     done
 
+    DebugFuncExit
     return 0
 
     }
@@ -633,7 +638,7 @@ Session.Validate()
     local package=''
 
     DebugInfoThickSeparator
-    DebugScript 'started' "$($DATE_CMD | tr -s ' ')"
+    DebugScript 'started' "$(date | tr -s ' ')"
     DebugScript 'version' "package: $PACKAGE_VERSION, manager: $MANAGER_SCRIPT_VERSION, loader $LOADER_SCRIPT_VERSION"
     DebugScript 'PID' "$$"
     DebugInfoThinSeparator
@@ -1305,8 +1310,8 @@ Session.Results()
     DisplayLineSpaceIfNoneAlready       # final on-screen line space
 
     DebugInfoThinSeparator
-    DebugScript 'finished' "$($DATE_CMD)"
-    DebugScript 'elapsed time' "$(ConvertSecsToMinutes "$(($($DATE_CMD +%s)-$([[ -n $SCRIPT_STARTSECONDS ]] && echo "$SCRIPT_STARTSECONDS" || echo "1")))")"
+    DebugScript 'finished' "$(date)"
+    DebugScript 'elapsed time' "$(ConvertSecsToMinutes "$(($(date +%s)-$([[ -n $SCRIPT_STARTSECONDS ]] && echo "$SCRIPT_STARTSECONDS" || echo "1")))")"
     DebugInfoThickSeparator
 
     Session.LockFile.Release
@@ -1358,7 +1363,7 @@ Log.Paste.Online()
     # with thanks to https://github.com/solusipse/fiche
 
     if [[ -n $DEBUG_LOG_PATHFILE && -e $DEBUG_LOG_PATHFILE ]]; then
-        if AskQuiz "Press 'Y' to post the most-recent $LOG_TAIL_LINES entries in your $(FormatAsScriptTitle) log to a public pastebin, or any other key to abort"; then
+        if AskQuiz "Press 'Y' to post the most-recent $(printf "%'.f" $LOG_TAIL_LINES) entries in your $(FormatAsScriptTitle) log to a public pastebin, or any other key to abort"; then
             ShowAsProc "uploading $(FormatAsScriptTitle) log"
             link=$($TAIL_CMD -n $LOG_TAIL_LINES -q "$DEBUG_LOG_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
 
@@ -3066,7 +3071,7 @@ Help.Problems.Show()
 
     DisplayAsProjectSyntaxIndentedExample "view the $(FormatAsScriptTitle) debug log" '--log'
 
-    DisplayAsProjectSyntaxIndentedExample "upload the most-recent $LOG_TAIL_LINES entries in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" '--paste'
+    DisplayAsProjectSyntaxIndentedExample "upload the most-recent $(printf "%'.f" $LOG_TAIL_LINES) entries in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" '--paste'
 
     Display "\n$(ColourTextBrightOrange "* If you need help, please include a copy of your") $(FormatAsScriptTitle) $(ColourTextBrightOrange "log for analysis!")"
 
@@ -3084,7 +3089,7 @@ Help.Issue.Show()
 
     DisplayAsProjectSyntaxIndentedExample "view the $(FormatAsScriptTitle) debug log" '--log'
 
-    DisplayAsProjectSyntaxIndentedExample "upload the most-recent $LOG_TAIL_LINES entries in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" '--paste'
+    DisplayAsProjectSyntaxIndentedExample "upload the most-recent $(printf "%'.f" $LOG_TAIL_LINES) entries in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" '--paste'
 
     Display "\n$(ColourTextBrightOrange '* If you need help, please include a copy of your') $(FormatAsScriptTitle) $(ColourTextBrightOrange 'log for analysis!')"
 
@@ -3111,7 +3116,7 @@ Help.Tips.Show()
 
     DisplayAsProjectSyntaxIndentedExample 'upgrade all installed packages (including the internal applications)' '--upgrade-all'
 
-    DisplayAsProjectSyntaxIndentedExample "upload the most-recent $LOG_TAIL_LINES entries in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" '--paste'
+    DisplayAsProjectSyntaxIndentedExample "upload the most-recent $(printf "%'.f" $LOG_TAIL_LINES) entries in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" '--paste'
 
     DisplayAsProjectSyntaxIndentedExample 'display all package-manager scripts versions' '--version'
 
@@ -4460,15 +4465,10 @@ DebugTimerStageStart()
     {
 
     # output:
-    #   stdout = current time in seconds
+    #   stdout = current time in nanoseconds
 
-#     $DATE_CMD +%s
-    $DATE_CMD +%s%N
-
-    if Session.Debug.To.Screen.IsNot; then
-        DebugInfoThinSeparator
-        DebugStage 'start stage timer'
-    fi
+    date +%s%N
+    DebugStage 'reset timer'
 
     }
 
@@ -4476,12 +4476,9 @@ DebugTimerStageEnd()
     {
 
     # input:
-    #   $1 = start time in seconds
+    #   $1 = start time in nanoseconds
 
-#     DebugStage 'elapsed time' "$(ConvertSecsToMinutes "$(($($DATE_CMD +%s)-$([[ -n $1 ]] && echo "$1" || echo "1")))")"
-    DebugStage 'elapsed time' "$((($($DATE_CMD +%s%N) - $1)/1000000)) milliseconds" # using this method: https://stackoverflow.com/a/16961051/14072675
-
-    DebugInfoThinSeparator
+    DebugStage 'elapsed time' "$(printf "%'.f" $((($(date +%s%N) - $1)/1000000))) milliseconds" # using this method: https://stackoverflow.com/a/16961051/14072675
 
     }
 
