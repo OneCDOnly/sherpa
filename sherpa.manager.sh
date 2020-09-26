@@ -4460,38 +4460,10 @@ DebugLogThinSeparator()
 
     }
 
-DebugTimerStageStart()
-    {
-
-    # output:
-    #   stdout = current time in nanoseconds
-
-    date +%s%N
-    DebugStage 'reset timer'
-
-    }
-
-DebugTimerStageEnd()
-    {
-
-    # input:
-    #   $1 = start time in nanoseconds
-
-    DebugStage 'elapsed time' "$(printf "%'.f" $((($(date +%s%N) - $1)/1000000))) milliseconds" # using this method: https://stackoverflow.com/a/16961051/14072675
-
-    }
-
 DebugScript()
     {
 
     DebugDetected.OK "$(FormatAsScript)" "$1" "$2"
-
-    }
-
-DebugStage()
-    {
-
-    DebugDetected.OK "$(FormatAsStage)" "$1" "$2"
 
     }
 
