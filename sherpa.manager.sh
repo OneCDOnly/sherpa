@@ -35,6 +35,8 @@ Session.Init()
     {
 
     IsQNAP || return 1
+    DebugFuncEntry
+
     local -r STARTSECONDS=$(DebugTimerStageStart)
 
     readonly PROJECT_NAME=sherpa
@@ -4548,6 +4550,10 @@ DebugIPKG()
 DebugFuncEntry()
     {
 
+    local var_name="${FUNCNAME[1]}_STARTSECONDS"
+    local var_safe_name="${var_name//[.-]/_}"
+    eval "$var_safe_name=$(date +%s%N)"
+
     DebugThis "(>>) ${FUNCNAME[1]}()"
 
     }
@@ -4555,7 +4561,10 @@ DebugFuncEntry()
 DebugFuncExit()
     {
 
-    DebugThis "(<<) ${FUNCNAME[1]}() [$code_pointer]"
+    local var_name="${FUNCNAME[1]}_STARTSECONDS"
+    local var_safe_name="${var_name//[.-]/_}"
+
+    DebugThis "(<<) ${FUNCNAME[1]}() [$code_pointer]: $(printf "%'.f" $((($(date +%s%N) - ${!var_safe_name})/1000000))) ms"
 
     }
 
