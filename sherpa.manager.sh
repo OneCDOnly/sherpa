@@ -602,10 +602,10 @@ Session.Validate()
     DebugInfo '($1) positional argument value'
     DebugInfoThinSeparator
     DebugHardware.OK 'model' "$(get_display_name)"
-    DebugHardware.OK 'RAM' "$INSTALLED_RAM_KB kB"
+    DebugHardware.OK 'RAM' "$(printf "%'.f" $INSTALLED_RAM_KB) kB"
 
     if QPKG.ToBeInstalled SABnzbd || QPKG.Installed SABnzbd || QPKG.Installed SABnzbdplus; then
-        [[ $INSTALLED_RAM_KB -le $MIN_RAM_KB ]] && DebugHardware.Warning 'RAM' "less-than or equal-to $MIN_RAM_KB kB"
+        [[ $INSTALLED_RAM_KB -le $MIN_RAM_KB ]] && DebugHardware.Warning 'RAM' "less-than or equal-to $(printf "%'.f" $MIN_RAM_KB) kB"
     fi
 
     DebugFirmware 'firmware version' "$NAS_FIRMWARE"
