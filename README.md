@@ -45,3 +45,5 @@ sherpa
 ```
 
 ... and follow the help from there.
+
+Checkout the wiki for more information: [https://github.com/OneCDOnly/sherpa/wiki](https://github.com/OneCDOnly/sherpa/wiki)
