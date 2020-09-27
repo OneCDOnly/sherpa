@@ -39,7 +39,7 @@ Session.Init()
     readonly SCRIPT_STARTSECONDS=$(date +%s)
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=200927
+    readonly MANAGER_SCRIPT_VERSION=200928
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -2324,7 +2324,7 @@ GetAllIPKGDepsToDownload()
     IPKG_download_count=0
     IPKG_download_size=0
     local requested_list=''
-    local last_list=''
+    local this_list=()
     local dependency_accumulator=()
     local pre_download_list=''
     local element=''
@@ -2334,7 +2334,7 @@ GetAllIPKGDepsToDownload()
 
     # remove duplicate entries
     requested_list=$(DeDupeWords "$1")
-    last_list=$requested_list
+    this_list=($requested_list)
 
     ShowAsProc 'determining IPKGs required'
     DebugInfo "IPKGs requested: $requested_list"
@@ -2345,16 +2345,19 @@ GetAllIPKGDepsToDownload()
     while [[ $iterations -lt $ITERATION_LIMIT ]]; do
         ((iterations++))
         DebugProc "iteration $iterations"
-        # shellcheck disable=SC2086
-        last_list=$($OPKG_CMD depends -A $last_list | $GREP_CMD -v 'depends on:' | tr ' ' '\n' | $SORT_CMD | $UNIQ_CMD)
 
-        if [[ -n $last_list ]]; then
-            dependency_accumulator+=(${last_list[@]})
-        else
+        local IPKG_titles=$(printf '^Package: %s$\|' "${this_list[@]}")
+        IPKG_titles=${IPKG_titles%??}       # remove last 2 characters
+
+        this_list=($($GNU_GREP_CMD --word-regexp --after-context 1 --no-group-separator '^Package:\|^Depends:' "$EXTERNAL_PACKAGE_LIST_PATHFILE" | $GNU_GREP_CMD -vG '^Section:\|^Version:' | $GNU_GREP_CMD --word-regexp --after-context 1 --no-group-separator "$IPKG_titles" | $GNU_GREP_CMD -vG "$IPKG_titles" | $GNU_GREP_CMD -vG '^Package: ' | $SED_CMD 's|^Depends: ||;s|, |\n|g' | $SORT_CMD | $UNIQ_CMD))
+
+        if [[ ${#this_list[@]} -eq 0 ]]; then
             DebugDone 'complete'
             DebugInfo "found all IPKG dependencies in $iterations iteration$(FormatAsPlural $iterations)"
             complete=true
             break
+        else
+            dependency_accumulator+=(${this_list[*]})
         fi
     done
 
