@@ -1087,6 +1087,7 @@ Packages.Install.Independents()
                 fi
             fi
         done
+        Session.Ipkgs.Install.Set
     fi
 
     if QPKG.Installed Entware; then
