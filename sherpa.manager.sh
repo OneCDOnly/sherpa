@@ -36,6 +36,7 @@ Session.Init()
 
     IsQNAP || return 1
     DebugFuncEntry
+    readonly SCRIPT_STARTSECONDS=$(date +%s)
 
     readonly PROJECT_NAME=sherpa
     readonly MANAGER_SCRIPT_VERSION=200927
@@ -143,13 +144,11 @@ Session.Init()
     local -r ULINUX_PATHFILE=/etc/config/uLinux.conf
     readonly PLATFORM_PATHFILE=/etc/platform.conf
     readonly EXTERNAL_PACKAGE_ARCHIVE_PATHFILE=/opt/var/opkg-lists/entware
-    local -r REMOTE_REPO_URL=https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/master/QPKGs
     readonly PREV_QPKG_CONFIG_DIRS=(SAB_CONFIG CONFIG Config config)                                # last element is used as target dirname
     readonly PREV_QPKG_CONFIG_FILES=(sabnzbd.ini sickbeard.conf settings.ini config.cfg config.ini) # last element is used as target filename
-    pip3_cmd=/opt/bin/pip3
-    readonly PACKAGE_VERSION=$(GetInstalledQPKGVersion "$PROJECT_NAME")
-    local -r SHERPA_PATH=$($GETCFG_CMD $PROJECT_NAME Install_Path -f $APP_CENTER_CONFIG_PATHFILE)
-    readonly WORK_PATH=$SHERPA_PATH/cache
+    local -r REMOTE_REPO_URL=https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/master/QPKGs
+    local -r PROJECT_PATH=$($GETCFG_CMD $PROJECT_NAME Install_Path -f $APP_CENTER_CONFIG_PATHFILE)
+    readonly WORK_PATH=$PROJECT_PATH/cache
     readonly COMPILED_OBJECTS=$WORK_PATH/compiled.objects
 
     Objects.Compile
@@ -165,9 +164,9 @@ Session.Init()
     Session.Debug.To.Screen.Description = "Display on-screen live debugging information."
     Session.Display.Clean.Description = "Disable display of script title and trailing linespace. If 'set', output is suitable for script processing."
     Session.LineSpace.Description = "Keeps track of the display empty linespacing flag. If 'set', an empty linespace has been printed to screen."
-    readonly PACKAGE_LOGS_PATH=$SHERPA_PATH/logs
-    readonly DEBUG_LOG_PATHFILE=$SHERPA_PATH/$DEBUG_LOG_FILE
-    Session.Backup.Path = $($GETCFG_CMD SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
+    readonly PACKAGE_LOGS_PATH=$PROJECT_PATH/logs
+    readonly DEBUG_LOG_PATHFILE=$PROJECT_PATH/$DEBUG_LOG_FILE
+    Session.Backup.Path = $($GETCFG_CMD SHARE_DEF defVolMP -f $DEFAULT_SHARES_PATHFILE)/.qpkg_config_backup
     readonly QPKG_DL_PATH=$WORK_PATH/qpkgs
     readonly IPKG_DL_PATH=$WORK_PATH/ipkgs.downloads
     readonly IPKG_CACHE_PATH=$WORK_PATH/ipkgs
@@ -175,13 +174,14 @@ Session.Init()
     readonly EXTERNAL_PACKAGE_LIST_PATHFILE=$WORK_PATH/Packages
 
     # internals
-    readonly SCRIPT_STARTSECONDS=$(date +%s)
     readonly NAS_FIRMWARE=$($GETCFG_CMD System Version -f $ULINUX_PATHFILE)
+    readonly PACKAGE_VERSION=$(GetInstalledQPKGVersion "$PROJECT_NAME")
     readonly NAS_BUILD=$($GETCFG_CMD System 'Build Number' -f $ULINUX_PATHFILE)
     readonly INSTALLED_RAM_KB=$($GREP_CMD MemTotal /proc/meminfo | $CUT_CMD -f2 -d':' | $SED_CMD 's|kB||;s| ||g')
     readonly MIN_RAM_KB=1048576
     readonly LOG_TAIL_LINES=1000
     code_pointer=0
+    pip3_cmd=/opt/bin/pip3
     [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg='--insecure' || curl_insecure_arg=''
 
     # runtime arrays
