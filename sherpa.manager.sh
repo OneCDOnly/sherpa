@@ -1030,11 +1030,15 @@ Packages.Uninstall()
         if AskQuiz "Press 'Y' to remove all current $(FormatAsPackageName Entware) IPKGs (and their configurations), or any other key to abort"; then
             ShowAsProc 'saving package and Python module lists'
 
-            $pip3_cmd freeze > "$previous_pip3_module_list"
-            DebugDone "saved current $(FormatAsPackageName pip3) module list to $(FormatAsFileName "$previous_pip3_module_list")"
+            if [[ -e $pip3_cmd ]]; then
+                $pip3_cmd freeze > "$previous_pip3_module_list"
+                DebugDone "saved current $(FormatAsPackageName pip3) module list to $(FormatAsFileName "$previous_pip3_module_list")"
+            fi
 
-            $OPKG_CMD list-installed > "$previous_opkg_package_list"
-            DebugDone "saved current $(FormatAsPackageName Entware) IPKG list to $(FormatAsFileName "$previous_opkg_package_list")"
+            if [[ -e $OPKG_CMD ]]; then
+                $OPKG_CMD list-installed > "$previous_opkg_package_list"
+                DebugDone "saved current $(FormatAsPackageName Entware) IPKG list to $(FormatAsFileName "$previous_opkg_package_list")"
+            fi
 
             ShowAsDone 'package and Python module lists saved'
             QPKG.Uninstall Entware
@@ -1046,7 +1050,7 @@ Packages.Uninstall()
             return 1
         fi
     else
-        [[ $NAS_QPKG_ARCH != none ]] && (QPKG.ToBeInstalled Par2 || QPKG.Installed Par2) && ($OPKG_CMD list-installed | $GREP_CMD -q par2cmdline) && $OPKG_CMD remove par2cmdline > /dev/null 2>&1
+        [[ -e $OPKG_CMD && $NAS_QPKG_ARCH != none ]] && (QPKG.ToBeInstalled Par2 || QPKG.Installed Par2) && ($OPKG_CMD list-installed | $GREP_CMD -q par2cmdline) && $OPKG_CMD remove par2cmdline > /dev/null 2>&1
     fi
 
     DebugFuncExit
@@ -1128,7 +1132,7 @@ Packages.Install.Dependants()
                         ShowAsNote "unable to upgrade $(FormatAsPackageName "$package") as it's not upgradable. Use the '--force' if you really want this."
                     fi
                 else
-                    ShowAsNote "unable to upgrade $(FormatAsPackageName "$package") as it's not installed"
+                    ShowAsNote "unable to upgrade $(FormatAsPackageName "$package") as it's not installed. Use '--install' instead."
                 fi
             fi
         done
@@ -1140,7 +1144,7 @@ Packages.Install.Dependants()
                 if QPKG.NotInstalled "$package"; then
                     QPKG.Install "$package"
                 else
-                    ShowAsNote "unable to install $(FormatAsPackageName "$package") as it's already installed"
+                    ShowAsNote "unable to install $(FormatAsPackageName "$package") as it's already installed. Use '--reinstall' instead."
                 fi
             fi
         done
@@ -1152,7 +1156,7 @@ Packages.Install.Dependants()
                 if QPKG.Installed "$package"; then
                     QPKG.Reinstall "$package"
                 else
-                    ShowAsNote "unable to reinstall $(FormatAsPackageName "$package") as it's not installed"
+                    ShowAsNote "unable to reinstall $(FormatAsPackageName "$package") as it's not installed. Use '--install' instead."
                 fi
             fi
         done
