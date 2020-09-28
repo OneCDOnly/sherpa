@@ -404,7 +404,7 @@ Session.ParseArguments()
                 User.Opts.Help.Abbreviations.Set
                 Session.SkipPackageProcessing.Set
                 ;;
-            -d|d|--debug|debug)
+            -d|d|--debug|debug|--verbose|verbose)
                 Session.Debug.To.Screen.Set
                 ;;
             --ignore-space|ignore-space)
