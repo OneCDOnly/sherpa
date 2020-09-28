@@ -475,7 +475,7 @@ Session.ParseArguments()
                 User.Opts.Dependencies.Check.Set
                 action=''
                 ;;
-            --install-all|install-all)
+            --install-all|install-all|--install-all-packages|install-all-packages)
                 User.Opts.Apps.All.Install.Set
                 action=''
                 ;;
