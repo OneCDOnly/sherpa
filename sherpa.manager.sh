@@ -148,20 +148,23 @@ Session.Init()
     readonly PREV_QPKG_CONFIG_FILES=(sabnzbd.ini sickbeard.conf settings.ini config.cfg config.ini) # last element is used as target filename
     local -r REMOTE_REPO_URL=https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/master/QPKGs
     local -r PROJECT_PATH=$($GETCFG_CMD $PROJECT_NAME Install_Path -f $APP_CENTER_CONFIG_PATHFILE)
+    readonly DEBUG_LOG_PATHFILE=$PROJECT_PATH/$DEBUG_LOG_FILE
     readonly WORK_PATH=$PROJECT_PATH/cache
     readonly COMPILED_OBJECTS=$WORK_PATH/compiled.objects
+    readonly PACKAGE_LOGS_PATH=$PROJECT_PATH/logs
+    readonly QPKG_DL_PATH=$WORK_PATH/qpkgs
+    readonly IPKG_DL_PATH=$WORK_PATH/ipkgs.downloads
+    readonly IPKG_CACHE_PATH=$WORK_PATH/ipkgs
+    readonly PIP_CACHE_PATH=$WORK_PATH/pips
 
-    mkdir -p "$WORK_PATH" 2> /dev/null; result=$?
-
-    if [[ $result -ne 0 ]]; then
-        ShowAsError "unable to create script working directory $(FormatAsFileName "$WORK_PATH") $(FormatAsExitcode $result)"
+    if ! MakePath "$WORK_PATH" "work"; then
         DebugFuncExit; return 1
     fi
 
     Objects.Compile
 
     # enable debug mode early if possible
-    if [[ $USER_ARGS_RAW == *"debug"* ]]; then
+    if [[ $USER_ARGS_RAW == *"debug"* || $USER_ARGS_RAW == *"verbose"* ]]; then
         Display
         Session.Debug.To.Screen.Set
     fi
@@ -171,16 +174,34 @@ Session.Init()
     Session.Debug.To.Screen.Description = "Display on-screen live debugging information."
     Session.Display.Clean.Description = "Disable display of script title and trailing linespace. If 'set', output is suitable for script processing."
     Session.LineSpace.Description = "Keeps track of the display empty linespacing flag. If 'set', an empty linespace has been printed to screen."
-    readonly PACKAGE_LOGS_PATH=$PROJECT_PATH/logs
-    readonly DEBUG_LOG_PATHFILE=$PROJECT_PATH/$DEBUG_LOG_FILE
-    Session.Backup.Path = $($GETCFG_CMD SHARE_DEF defVolMP -f $DEFAULT_SHARES_PATHFILE)/.qpkg_config_backup
-    readonly QPKG_DL_PATH=$WORK_PATH/qpkgs
-    readonly IPKG_DL_PATH=$WORK_PATH/ipkgs.downloads
-    readonly IPKG_CACHE_PATH=$WORK_PATH/ipkgs
-    readonly PIP_CACHE_PATH=$WORK_PATH/pips
-    readonly EXTERNAL_PACKAGE_LIST_PATHFILE=$WORK_PATH/Packages
 
-    # internals
+    if ! MakePath "$PACKAGE_LOGS_PATH" "package logs"; then
+        DebugFuncExit; return 1
+    fi
+
+    Session.Backup.Path = $($GETCFG_CMD SHARE_DEF defVolMP -f $DEFAULT_SHARES_PATHFILE)/.qpkg_config_backup
+
+    if ! MakePath "$QPKG_DL_PATH" "QPKG download"; then
+        DebugFuncExit; return 1
+    fi
+
+    if ! MakePath "$IPKG_DL_PATH" "IPKG download"; then
+        DebugFuncExit; return 1
+    fi
+
+    [[ -d $IPKG_CACHE_PATH ]] && rm -rf "$IPKG_CACHE_PATH"
+
+    if ! MakePath "$IPKG_CACHE_PATH" "IPKG cache"; then
+        DebugFuncExit; return 1
+    fi
+
+    [[ -d $PIP_CACHE_PATH ]] && rm -rf "$PIP_CACHE_PATH"
+
+    if ! MakePath "$PIP_CACHE_PATH" "PIP cache"; then
+        DebugFuncExit; return 1
+    fi
+
+    readonly EXTERNAL_PACKAGE_LIST_PATHFILE=$WORK_PATH/Packages
     readonly NAS_FIRMWARE=$($GETCFG_CMD System Version -f $ULINUX_PATHFILE)
     readonly PACKAGE_VERSION=$(GetInstalledQPKGVersion "$PROJECT_NAME")
     readonly NAS_BUILD=$($GETCFG_CMD System 'Build Number' -f $ULINUX_PATHFILE)
@@ -693,56 +714,25 @@ Session.Validate()
     QPKGs.Download.Build
     DebugInfoMinorSeparator
 
-    mkdir -p "$PACKAGE_LOGS_PATH" 2> /dev/null; result=$?
-
-    if [[ $result -ne 0 ]]; then
-        ShowAsError "unable to create package logs directory $(FormatAsFileName "$PACKAGE_LOGS_PATH") $(FormatAsExitcode $result)"
-        Session.SuggestIssue.Set
+    if ! Packages.Conflicts.Check; then
         DebugFuncExit; return 1
     fi
 
-    mkdir -p "$QPKG_DL_PATH" 2> /dev/null; result=$?
+    DebugFuncExit; return 0
 
-    if [[ $result -ne 0 ]]; then
-        ShowAsError "unable to create QPKG download directory $(FormatAsFileName "$QPKG_DL_PATH") $(FormatAsExitcode $result)"
-        Session.SuggestIssue.Set
-        DebugFuncExit; return 1
-    fi
+    }
 
-    mkdir -p "$IPKG_DL_PATH" 2> /dev/null; result=$?
-
-    if [[ $result -ne 0 ]]; then
-        ShowAsError "unable to create IPKG download directory $(FormatAsFileName "$IPKG_DL_PATH") $(FormatAsExitcode $result)"
-        Session.SuggestIssue.Set
-        DebugFuncExit; return 1
-    fi
-
-    [[ -d $IPKG_CACHE_PATH ]] && rm -rf "$IPKG_CACHE_PATH"
-    mkdir -p "$IPKG_CACHE_PATH" 2> /dev/null; result=$?
-
-    if [[ $result -ne 0 ]]; then
-        ShowAsError "unable to create IPKG cache directory $(FormatAsFileName "$IPKG_CACHE_PATH") $(FormatAsExitcode $result)"
-        Session.SuggestIssue.Set
-        DebugFuncExit; return 1
-    fi
-
-    [[ -d $PIP_CACHE_PATH ]] && rm -rf "$PIP_CACHE_PATH"
-    mkdir -p "$PIP_CACHE_PATH" 2> /dev/null; result=$?
-
-    if [[ $result -ne 0 ]]; then
-        ShowAsError "unable to create PIP cache directory $(FormatAsFileName "$PIP_CACHE_PATH") $(FormatAsExitcode $result)"
-        Session.SuggestIssue.Set
-        DebugFuncExit; return 1
-    fi
+Packages.Conflicts.Check()
+    {
 
     for package in "${SHERPA_COMMON_CONFLICTS[@]}"; do
         if QPKG.Enabled "$package"; then
             ShowAsError "'$package' is installed and enabled. One-or-more $(FormatAsScriptTitle) applications are incompatible with this package"
-            DebugFuncExit; return 1
+            return 1
         fi
     done
 
-    DebugFuncExit; return 0
+    return 0
 
     }
 
@@ -2817,7 +2807,6 @@ DisplayAsInfoExample()
 
     }
 
-
 DisplayAsHelpPackageNameExample()
     {
 
@@ -4086,6 +4075,23 @@ QPKG.NotUpgradable()
 
     }
 
+MakePath()
+    {
+
+    [[ -z $1 || -z $2 ]] && return 1
+
+    mkdir -p "$1" 2> /dev/null; result=$?
+
+    if [[ $result -ne 0 ]]; then
+        ShowAsError "unable to create $2 path $(FormatAsFileName "$1") $(FormatAsExitcode $result)"
+        [[ $(type -t Session.SuggestIssue.Init) = 'function' ]] && Session.SuggestIssue.Set
+        return 1
+    fi
+
+    return 0
+
+    }
+
 MatchAbbrvToQPKGName()
     {
 
@@ -4764,7 +4770,7 @@ WriteToLog()
     #   $2 = message
 
     [[ -z $DEBUG_LOG_PATHFILE ]] && return 1
-    Session.Debug.To.File.IsNot && return
+    [[ $(type -t Session.Debug.To.File.Init) = 'function' ]] && Session.Debug.To.File.IsNot && return
 
     printf "%-4s: %s\n" "$(StripANSI "$1")" "$(StripANSI "$2")" >> "$DEBUG_LOG_PATHFILE"
 
