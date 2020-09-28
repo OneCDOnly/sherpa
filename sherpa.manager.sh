@@ -4537,10 +4537,17 @@ DebugFuncEntry()
 DebugFuncExit()
     {
 
-    local var_name="${FUNCNAME[1]}_STARTSECONDS"
-    local var_safe_name="${var_name//[.-]/_}"
+    local var_name=${FUNCNAME[1]}_STARTSECONDS
+    local var_safe_name=${var_name//[.-]/_}
+    local diff_milliseconds=$((($(date +%s%N) - ${!var_safe_name})/1000000))
 
-    DebugThis "(<<) ${FUNCNAME[1]}() [$code_pointer]: $(printf "%'.f" $((($(date +%s%N) - ${!var_safe_name})/1000000))) ms"
+    if [[ $diff_milliseconds -lt 30000 ]]; then
+        elapsed_time=$(printf "%'.f ms" $diff_milliseconds)
+    else
+        elapsed_time=$(ConvertSecsToMinutes "$(($diff_milliseconds/1000))")
+    fi
+
+    DebugThis "(<<) ${FUNCNAME[1]}() [$code_pointer]: $elapsed_time"
 
     }
 
