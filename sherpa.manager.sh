@@ -39,7 +39,7 @@ Session.Init()
     readonly SCRIPT_STARTSECONDS=$(date +%s)
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=200928
+    readonly MANAGER_SCRIPT_VERSION=200929
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -150,6 +150,13 @@ Session.Init()
     local -r PROJECT_PATH=$($GETCFG_CMD $PROJECT_NAME Install_Path -f $APP_CENTER_CONFIG_PATHFILE)
     readonly WORK_PATH=$PROJECT_PATH/cache
     readonly COMPILED_OBJECTS=$WORK_PATH/compiled.objects
+
+    mkdir -p "$WORK_PATH" 2> /dev/null; result=$?
+
+    if [[ $result -ne 0 ]]; then
+        ShowAsError "unable to create script working directory $(FormatAsFileName "$WORK_PATH") $(FormatAsExitcode $result)"
+        DebugFuncExit; return 1
+    fi
 
     Objects.Compile
 
@@ -383,8 +390,7 @@ Session.Init()
         User.Opts.Apps.All.Upgrade.IsNot && DisplayNewQPKGVersions
     fi
 
-    DebugFuncExit
-    return 0
+    DebugFuncExit; return 0
 
     }
 
@@ -397,8 +403,7 @@ Session.ParseArguments()
         User.Opts.Help.Basic.Set
         Session.SkipPackageProcessing.Set
         code_pointer=1
-        DebugFuncExit
-        return 1
+        DebugFuncExit; return 1
     fi
 
     local user_args=($(tr '[A-Z]' '[a-z]' <<< "$USER_ARGS_RAW"))
@@ -588,8 +593,7 @@ Session.ParseArguments()
         esac
     done
 
-    DebugFuncExit
-    return 0
+    DebugFuncExit; return 0
 
     }
 
@@ -605,7 +609,7 @@ Session.Validate()
     DebugHardware.OK 'RAM' "$(printf "%'.f kB" $INSTALLED_RAM_KB)"
 
     if QPKG.ToBeInstalled SABnzbd || QPKG.Installed SABnzbd || QPKG.Installed SABnzbdplus; then
-        [[ $INSTALLED_RAM_KB -le $MIN_RAM_KB ]] && DebugHardware.Warning 'RAM' "less-than or equal-to $(printf "%'.f" $MIN_RAM_KB) kB"
+        [[ $INSTALLED_RAM_KB -le $MIN_RAM_KB ]] && DebugHardware.Warning 'RAM' "less-than or equal-to $(printf "%'.f kB" $MIN_RAM_KB)"
     fi
 
     DebugFirmware 'firmware version' "$NAS_FIRMWARE"
@@ -628,7 +632,7 @@ Session.Validate()
 
     if [[ $EUID -ne 0 || $USER != admin ]]; then
         ShowAsError "this script must be run as the 'admin' user. Please login via SSH as 'admin' and try again"
-        return 1
+        DebugFuncExit; return 1
     fi
 
     DebugUserspace.OK 'BASH' "$(bash --version | $HEAD_CMD -n1)"
@@ -652,7 +656,7 @@ Session.Validate()
 
         if [[ $ENTWARE_VER = none ]]; then
             ShowAsError "$(FormatAsPackageName Entware) appears to be installed but is not visible"
-            return 1
+            DebugFuncExit; return 1
         fi
     fi
 
@@ -668,7 +672,7 @@ Session.Validate()
     if User.Opts.Apps.All.Backup.IsSet && User.Opts.Apps.All.Restore.IsSet; then
         ShowAsError 'no point running a backup then a restore operation'
         code_pointer=2
-        return 1
+        DebugFuncExit; return 1
     fi
 
     if QPKGs.ToInstall.IsAny || QPKGs.ToForceUpgrade.IsAny || User.Opts.Apps.All.Upgrade.IsSet || User.Opts.Dependencies.Check.IsSet; then
@@ -681,7 +685,7 @@ Session.Validate()
                 ShowAsError 'nothing to do'
                 User.Opts.Help.Basic.Set
                 Session.SkipPackageProcessing.Set
-                return 1
+                DebugFuncExit; return 1
             fi
         fi
     fi
@@ -689,20 +693,12 @@ Session.Validate()
     QPKGs.Download.Build
     DebugInfoMinorSeparator
 
-    mkdir -p "$WORK_PATH" 2> /dev/null; result=$?
-
-    if [[ $result -ne 0 ]]; then
-        ShowAsError "unable to create script working directory $(FormatAsFileName "$WORK_PATH") $(FormatAsExitcode $result)"
-        Session.SuggestIssue.Set
-        return 1
-    fi
-
     mkdir -p "$PACKAGE_LOGS_PATH" 2> /dev/null; result=$?
 
     if [[ $result -ne 0 ]]; then
         ShowAsError "unable to create package logs directory $(FormatAsFileName "$PACKAGE_LOGS_PATH") $(FormatAsExitcode $result)"
         Session.SuggestIssue.Set
-        return 1
+        DebugFuncExit; return 1
     fi
 
     mkdir -p "$QPKG_DL_PATH" 2> /dev/null; result=$?
@@ -710,7 +706,7 @@ Session.Validate()
     if [[ $result -ne 0 ]]; then
         ShowAsError "unable to create QPKG download directory $(FormatAsFileName "$QPKG_DL_PATH") $(FormatAsExitcode $result)"
         Session.SuggestIssue.Set
-        return 1
+        DebugFuncExit; return 1
     fi
 
     mkdir -p "$IPKG_DL_PATH" 2> /dev/null; result=$?
@@ -718,7 +714,7 @@ Session.Validate()
     if [[ $result -ne 0 ]]; then
         ShowAsError "unable to create IPKG download directory $(FormatAsFileName "$IPKG_DL_PATH") $(FormatAsExitcode $result)"
         Session.SuggestIssue.Set
-        return 1
+        DebugFuncExit; return 1
     fi
 
     [[ -d $IPKG_CACHE_PATH ]] && rm -rf "$IPKG_CACHE_PATH"
@@ -727,7 +723,7 @@ Session.Validate()
     if [[ $result -ne 0 ]]; then
         ShowAsError "unable to create IPKG cache directory $(FormatAsFileName "$IPKG_CACHE_PATH") $(FormatAsExitcode $result)"
         Session.SuggestIssue.Set
-        return 1
+        DebugFuncExit; return 1
     fi
 
     [[ -d $PIP_CACHE_PATH ]] && rm -rf "$PIP_CACHE_PATH"
@@ -736,18 +732,17 @@ Session.Validate()
     if [[ $result -ne 0 ]]; then
         ShowAsError "unable to create PIP cache directory $(FormatAsFileName "$PIP_CACHE_PATH") $(FormatAsExitcode $result)"
         Session.SuggestIssue.Set
-        return 1
+        DebugFuncExit; return 1
     fi
 
     for package in "${SHERPA_COMMON_CONFLICTS[@]}"; do
         if QPKG.Enabled "$package"; then
             ShowAsError "'$package' is installed and enabled. One-or-more $(FormatAsScriptTitle) applications are incompatible with this package"
-            return 1
+            DebugFuncExit; return 1
         fi
     done
 
-    DebugFuncExit
-    return 0
+    DebugFuncExit; return 0
 
     }
 
@@ -769,6 +764,7 @@ Packages.Assignment.Check()
     #   0. status           (none: packages in this list should always be processed if requested)
 
     Session.SkipPackageProcessing.IsSet && return
+    DebugFuncEntry
     local package=''
 
     # add packages to appropriate lists:
@@ -931,7 +927,7 @@ Packages.Assignment.Check()
     DebugScript 'restart' "${QPKGs_to_restart[*]} "
     DebugScript 'status' "${QPKGs_to_status[*]} "
 
-    return 0
+    DebugFuncExit; return 0
 
     }
 
@@ -946,8 +942,7 @@ Packages.Download()
         QPKG.Download "$package"
     done
 
-    DebugFuncExit
-    return 0
+    DebugFuncExit; return 0
 
     }
 
@@ -974,8 +969,7 @@ Packages.Backup()
         Session.ShowBackupLocation.Set
     fi
 
-    DebugFuncExit
-    return 0
+    DebugFuncExit; return 0
 
     }
 
@@ -1043,14 +1037,13 @@ Packages.Uninstall()
             DebugScript 'user abort'
             Session.SkipPackageProcessing.Set
             Session.Summary.Clear
-            return 1
+            DebugFuncExit; return 1
         fi
     else
         [[ -e $OPKG_CMD && $NAS_QPKG_ARCH != none ]] && (QPKG.ToBeInstalled Par2 || QPKG.Installed Par2) && ($OPKG_CMD list-installed | $GREP_CMD -q par2cmdline) && $OPKG_CMD remove par2cmdline > /dev/null 2>&1
     fi
 
-    DebugFuncExit
-    return 0
+    DebugFuncExit; return 0
 
     }
 
@@ -1102,8 +1095,7 @@ Packages.Install.Independents()
 
     QPKG.ToBeInstalled Par2 && QPKG.Installed SABnzbd && QPKGs.ToRestart.Add SABnzbd  # KLUDGE: only until dep restarting is fixed
 
-    DebugFuncExit
-    return 0
+    DebugFuncExit; return 0
 
     }
 
@@ -1156,8 +1148,7 @@ Packages.Install.Dependants()
         done
     fi
 
-    DebugFuncExit
-    return 0
+    DebugFuncExit; return 0
 
     }
 
@@ -1184,8 +1175,7 @@ Packages.Restore()
         Session.ShowBackupLocation.Set
     fi
 
-    DebugFuncExit
-    return 0
+    DebugFuncExit; return 0
 
     }
 
@@ -1213,8 +1203,7 @@ Packages.Restart()
         done
     fi
 
-    DebugFuncExit
-    return 0
+    DebugFuncExit; return 0
 
     }
 
@@ -1455,7 +1444,7 @@ InstallIPKGBatch()
     if [[ $IPKG_download_count -gt 0 ]]; then
         ShowAsProc "downloading & installing $IPKG_download_count IPKG$(FormatAsPlural "$IPKG_download_count")"
 
-        CreateDirSizeMonitorFlagFile
+        CreateDirSizeMonitorFlagFile $IPKG_DL_PATH/.monitor
             trap CTRL_C_Captured INT
                 _MonitorDirSize_ "$IPKG_DL_PATH" "$IPKG_download_size" &
 
@@ -1474,8 +1463,7 @@ InstallIPKGBatch()
         fi
     fi
 
-    DebugFuncExit
-    return $returncode
+    DebugFuncExit; return $returncode
 
     }
 
@@ -1504,7 +1492,7 @@ PIP.Install()
             echo "* Ugh! The usual fix for this is to let $PROJECT_NAME reinstall $(FormatAsPackageName Entware) at least once."
             echo -e "\t$0 ew"
             echo "If it happens again after reinstalling $(FormatAsPackageName Entware), please create a new issue for this on GitHub."
-            return 1
+            DebugFuncExit; return 1
         fi
     fi
 
@@ -1530,8 +1518,7 @@ PIP.Install()
         returncode=1
     fi
 
-    DebugFuncExit
-    return $returncode
+    DebugFuncExit; return $returncode
 
     }
 
@@ -1764,7 +1751,7 @@ QPKG.Download()
     if [[ -z $1 ]]; then
         DebugError "no package name specified"
         code_pointer=4
-        return 1
+        DebugFuncExit; return 1
     fi
 
     local result=0
@@ -1779,11 +1766,11 @@ QPKG.Download()
     if [[ -z $remote_url ]]; then
         DebugWarning "no URL found for this package [$1]"
         code_pointer=5
-        return
+        DebugFuncExit; return
     elif [[ -z $remote_filename_md5 ]]; then
         DebugWarning "no remote MD5 found for this package [$1]"
         code_pointer=6
-        return
+        DebugFuncExit; return
     fi
 
     if [[ -e $local_pathfile ]]; then
@@ -1823,8 +1810,7 @@ QPKG.Download()
         fi
     fi
 
-    DebugFuncExit
-    return $returncode
+    DebugFuncExit; return $returncode
 
     }
 
@@ -1840,10 +1826,10 @@ QPKG.Install()
     if [[ -z $1 ]]; then
         DebugError "no package name specified "
         code_pointer=7
-        return 1
+        DebugFuncExit; return 1
     elif QPKG.Installed "$1"; then
         DebugQPKG "$(FormatAsPackageName "$1")" "already installed"
-        return 1
+        DebugFuncExit; return 1
     fi
 
     local target_file=''
@@ -1874,8 +1860,7 @@ QPKG.Install()
         returncode=1
     fi
 
-    DebugFuncExit
-    return $returncode
+    DebugFuncExit; return $returncode
 
     }
 
@@ -1891,11 +1876,11 @@ QPKG.Reinstall()
     if [[ -z $1 ]]; then
         DebugError "no package name specified "
         code_pointer=8
-        return 1
+        DebugFuncExit; return 1
     elif QPKG.NotInstalled "$1"; then
         DebugQPKG "$(FormatAsPackageName "$1")" "not installed"
         code_pointer=9
-        return 1
+        DebugFuncExit; return 1
     fi
 
     local target_file=''
@@ -1926,8 +1911,7 @@ QPKG.Reinstall()
         returncode=1
     fi
 
-    DebugFuncExit
-    return $returncode
+    DebugFuncExit; return $returncode
 
     }
 
@@ -1943,7 +1927,7 @@ QPKG.Upgrade()
     if [[ -z $1 ]]; then
         DebugError "no package name specified "
         code_pointer=10
-        return 1
+        DebugFuncExit; return 1
     fi
 
     local prefix=''
@@ -1981,8 +1965,7 @@ QPKG.Upgrade()
         returncode=1
     fi
 
-    DebugFuncExit
-    return $returncode
+    DebugFuncExit; return $returncode
 
     }
 
@@ -2001,13 +1984,11 @@ QPKG.Uninstall()
     if [[ -z $1 ]]; then
         DebugError "no package name specified "
         code_pointer=11
-        DebugFuncExit
-        return 1
+        DebugFuncExit; return 1
     elif QPKG.NotInstalled "$1"; then
         DebugQPKG "$(FormatAsPackageName "$1")" "not installed"
         code_pointer=12
-        DebugFuncExit
-        return 1
+        DebugFuncExit; return 1
     fi
 
     local result=0
@@ -2023,15 +2004,13 @@ QPKG.Uninstall()
             ShowAsDone "uninstalled $(FormatAsPackageName "$1")"
         else
             ShowAsError "unable to uninstall $(FormatAsPackageName "$1") $(FormatAsExitcode $result)"
-            DebugFuncExit
-            return 1
+            DebugFuncExit; return 1
         fi
     fi
 
     $RMCFG_CMD "$1" -f $APP_CENTER_CONFIG_PATHFILE
 
-    DebugFuncExit
-    return 0
+    DebugFuncExit; return 0
 
     }
 
@@ -2051,13 +2030,11 @@ QPKG.Restart()
     if [[ -z $1 ]]; then
         DebugError "no package name specified "
         code_pointer=13
-        DebugFuncExit
-        return 1
+        DebugFuncExit; return 1
     elif QPKG.NotInstalled "$1"; then
         DebugQPKG "$(FormatAsPackageName "$1")" "not installed"
         code_pointer=14
-        DebugFuncExit
-        return 1
+        DebugFuncExit; return 1
     fi
 
     local result=0
@@ -2082,12 +2059,10 @@ QPKG.Restart()
         else
             $CAT_CMD "$log_pathfile" >> "$DEBUG_LOG_PATHFILE"
         fi
-        DebugFuncExit
-        return 1
+        DebugFuncExit; return 1
     fi
 
-    DebugFuncExit
-    return 0
+    DebugFuncExit; return 0
 
     }
 
@@ -2101,13 +2076,11 @@ QPKG.Enable()
     if [[ -z $1 ]]; then
         DebugError "no package name specified "
         code_pointer=15
-        DebugFuncExit
-        return 1
+        DebugFuncExit; return 1
     elif QPKG.NotInstalled "$1"; then
         DebugQPKG "$(FormatAsPackageName "$1")" "not installed"
         code_pointer=16
-        DebugFuncExit
-        return 1
+        DebugFuncExit; return 1
     fi
 
     if QPKG.NotEnabled "$1"; then
@@ -2116,8 +2089,7 @@ QPKG.Enable()
         DebugDone "$(FormatAsPackageName "$1") icon enabled"
     fi
 
-    DebugFuncExit
-    return 0
+    DebugFuncExit; return 0
 
     }
 
@@ -2137,13 +2109,11 @@ QPKG.Backup()
     if [[ -z $1 ]]; then
         DebugError "no package name specified "
         code_pointer=17
-        DebugFuncExit
-        return 1
+        DebugFuncExit; return 1
     elif QPKG.NotInstalled "$1"; then
         DebugQPKG "$(FormatAsPackageName "$1")" "not installed"
         code_pointer=18
-        DebugFuncExit
-        return 1
+        DebugFuncExit; return 1
     fi
 
     local result=0
@@ -2168,12 +2138,10 @@ QPKG.Backup()
         else
             $CAT_CMD "$log_pathfile" >> "$DEBUG_LOG_PATHFILE"
         fi
-        DebugFuncExit
-        return 1
+        DebugFuncExit; return 1
     fi
 
-    DebugFuncExit
-    return 0
+    DebugFuncExit; return 0
 
     }
 
@@ -2193,13 +2161,11 @@ QPKG.Restore()
     if [[ -z $1 ]]; then
         DebugError "no package name specified "
         code_pointer=19
-        DebugFuncExit
-        return 1
+        DebugFuncExit; return 1
     elif QPKG.NotInstalled "$1"; then
         DebugQPKG "$(FormatAsPackageName "$1")" "not installed"
         code_pointer=20
-        DebugFuncExit
-        return 1
+        DebugFuncExit; return 1
     fi
 
     local result=0
@@ -2224,12 +2190,10 @@ QPKG.Restore()
         else
             $CAT_CMD "$log_pathfile" >> "$DEBUG_LOG_PATHFILE"
         fi
-        DebugFuncExit
-        return 1
+        DebugFuncExit; return 1
     fi
 
-    DebugFuncExit
-    return 0
+    DebugFuncExit; return 0
 
     }
 
@@ -2372,7 +2336,9 @@ GetAllIPKGDepsToDownload()
     ShowAsProc 'determining IPKGs required'
     DebugInfo "IPKGs requested: $requested_list"
 
-    IPKGs.Archive.Open || return 1
+    if ! IPKGs.Archive.Open; then
+        DebugFuncExit; return 1
+    fi
 
     DebugProc 'finding IPKG dependencies'
     while [[ $iterations -lt $ITERATION_LIMIT ]]; do
@@ -2433,8 +2399,7 @@ GetAllIPKGDepsToDownload()
 
     IPKGs.Archive.Close
 
-    DebugFuncExit
-    return 0
+    DebugFuncExit; return 0
 
     }
 
@@ -2562,7 +2527,7 @@ _MonitorDirSize_()
     {
 
     # * This function runs autonomously *
-    # It watches for the existence of $monitor_flag_pathfile
+    # It watches for the existence of $MONITOR_FLAG_PATHFILE
     # If that file is removed, this function dies gracefully
 
     # input:
@@ -2584,7 +2549,7 @@ _MonitorDirSize_()
     previous_length=0
     previous_msg=''
 
-    while [[ -e $monitor_flag_pathfile ]]; do
+    while [[ -e $MONITOR_FLAG_PATHFILE ]]; do
         current_bytes=$($GNU_FIND_CMD "$target_dir" -type f -name '*.ipk' -exec $DU_CMD --bytes --total --apparent-size {} + 2> /dev/null | $GREP_CMD total$ | $CUT_CMD -f1)
         [[ -z $current_bytes ]] && current_bytes=0
 
@@ -2617,17 +2582,17 @@ _MonitorDirSize_()
 CreateDirSizeMonitorFlagFile()
     {
 
-    monitor_flag_pathfile=$IPKG_DL_PATH/.monitor
-
-    $TOUCH_CMD "$monitor_flag_pathfile"
+    [[ -z $1 ]] && return 1
+    readonly MONITOR_FLAG_PATHFILE="$1"
+    $TOUCH_CMD "$MONITOR_FLAG_PATHFILE"
 
     }
 
 RemoveDirSizeMonitorFlagFile()
     {
 
-    if [[ -n $monitor_flag_pathfile && -e $monitor_flag_pathfile ]]; then
-        rm -f "$monitor_flag_pathfile"
+    if [[ -n $MONITOR_FLAG_PATHFILE && -e $MONITOR_FLAG_PATHFILE ]]; then
+        rm -f "$MONITOR_FLAG_PATHFILE"
         $SLEEP_CMD 2
     fi
 
@@ -2651,7 +2616,6 @@ Session.LockFile.Claim()
     {
 
     [[ -z $1 ]] && return 1
-
     readonly RUNTIME_LOCK_PATHFILE="$1"
 
     if [[ -e $RUNTIME_LOCK_PATHFILE && -d /proc/$(<$RUNTIME_LOCK_PATHFILE) && $(</proc/"$(<$RUNTIME_LOCK_PATHFILE)"/cmdline) =~ $MANAGER_SCRIPT_FILE ]]; then
@@ -3194,8 +3158,7 @@ QPKGs.Dependant.Restart()
         QPKG.Enabled "$package" && QPKG.Restart "$package"
     done
 
-    DebugFuncExit
-    return 0
+    DebugFuncExit; return 0
 
     }
 
@@ -3214,8 +3177,7 @@ QPKGs.RestartNotUpgraded()
         QPKG.Enabled "$package" && ! QPKG.Upgradable "$package" && QPKG.Restart "$package"
     done
 
-    DebugFuncExit
-    return 0
+    DebugFuncExit; return 0
 
     }
 
@@ -4225,7 +4187,6 @@ FileMatchesMD5()
     #   $2 = MD5 checksum to compare against
 
     [[ -z $1 || -z $2 ]] && return 1
-
     [[ $($MD5SUM_CMD "$1" | $CUT_CMD -f1 -d' ') = "$2" ]]
 
     }
@@ -4428,13 +4389,6 @@ DebugInfoMinorSeparator()
     {
 
     DebugInfo "$(printf '%0.s-' {1..92})"
-
-    }
-
-DebugErrorMinorSeparator()
-    {
-
-    DebugError "$(printf '%0.s-' {1..92})"
 
     }
 
