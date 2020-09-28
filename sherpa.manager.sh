@@ -363,6 +363,15 @@ Session.Init()
 
     Session.ParseArguments
     Session.SkipPackageProcessing.IsNot && Session.Debug.To.File.Set
+    DebugInfoMajorSeparator
+    DebugScript 'started' "$(date | tr -s ' ')"
+    DebugScript 'version' "package: $PACKAGE_VERSION, manager: $MANAGER_SCRIPT_VERSION, loader $LOADER_SCRIPT_VERSION"
+    DebugScript 'PID' "$$"
+    DebugInfoMinorSeparator
+    DebugInfo 'Markers: (**) detected, (II) information, (WW) warning, (EE) error, (LL) log file,'
+    DebugInfo '(==) processing, (--) done, (>>) f entry, (<<) f exit, (vv) variable name & value,'
+    DebugInfo '($1) positional argument value'
+    DebugInfoMinorSeparator
     SmartCR
 
     if Session.Display.Clean.IsNot; then
@@ -382,15 +391,15 @@ Session.Init()
 Session.ParseArguments()
     {
 
+    DebugFuncEntry
 
     if [[ -z $USER_ARGS_RAW ]]; then
         User.Opts.Help.Basic.Set
         Session.SkipPackageProcessing.Set
         code_pointer=1
+        DebugFuncExit
         return 1
     fi
-
-    DebugFuncEntry
 
     local user_args=($(tr '[A-Z]' '[a-z]' <<< "$USER_ARGS_RAW"))
     local arg=''
@@ -588,21 +597,12 @@ Session.Validate()
     {
 
     Session.SkipPackageProcessing.IsSet && return
-
     DebugFuncEntry
     local package=''
 
-    DebugInfoThickSeparator
-    DebugScript 'started' "$(date | tr -s ' ')"
-    DebugScript 'version' "package: $PACKAGE_VERSION, manager: $MANAGER_SCRIPT_VERSION, loader $LOADER_SCRIPT_VERSION"
-    DebugScript 'PID' "$$"
-    DebugInfoThinSeparator
-    DebugInfo 'Markers: (**) detected, (II) information, (WW) warning, (EE) error, (LL) log file,'
-    DebugInfo '(==) processing, (--) done, (>>) f entry, (<<) f exit, (vv) variable name & value,'
-    DebugInfo '($1) positional argument value'
-    DebugInfoThinSeparator
+    DebugInfoMinorSeparator
     DebugHardware.OK 'model' "$(get_display_name)"
-    DebugHardware.OK 'RAM' "$(printf "%'.f" $INSTALLED_RAM_KB) kB"
+    DebugHardware.OK 'RAM' "$(printf "%'.f kB" $INSTALLED_RAM_KB)"
 
     if QPKG.ToBeInstalled SABnzbd || QPKG.Installed SABnzbd || QPKG.Installed SABnzbdplus; then
         [[ $INSTALLED_RAM_KB -le $MIN_RAM_KB ]] && DebugHardware.Warning 'RAM' "less-than or equal-to $(printf "%'.f" $MIN_RAM_KB) kB"
@@ -661,9 +661,9 @@ Session.Validate()
     DebugQPKG 'download path' "$QPKG_DL_PATH"
     DebugIPKG 'download path' "$IPKG_DL_PATH"
     DebugQPKG 'upgradable package(s)' "${QPKGS_upgradable[*]} "
-    DebugInfoThinSeparator
+    DebugInfoMinorSeparator
     Packages.Assignment.Check
-    DebugInfoThinSeparator
+    DebugInfoMinorSeparator
 
     if User.Opts.Apps.All.Backup.IsSet && User.Opts.Apps.All.Restore.IsSet; then
         ShowAsError 'no point running a backup then a restore operation'
@@ -687,7 +687,7 @@ Session.Validate()
     fi
 
     QPKGs.Download.Build
-    DebugInfoThinSeparator
+    DebugInfoMinorSeparator
 
     mkdir -p "$WORK_PATH" 2> /dev/null; result=$?
 
@@ -769,7 +769,6 @@ Packages.Assignment.Check()
     #   0. status           (none: packages in this list should always be processed if requested)
 
     Session.SkipPackageProcessing.IsSet && return
-
     local package=''
 
     # add packages to appropriate lists:
@@ -940,7 +939,6 @@ Packages.Download()
     {
 
     Session.SkipPackageProcessing.IsSet && return
-
     DebugFuncEntry
     local package=''
 
@@ -957,7 +955,6 @@ Packages.Backup()
     {
 
     Session.SkipPackageProcessing.IsSet && return
-
     DebugFuncEntry
     local package=''
 
@@ -986,7 +983,6 @@ Packages.Uninstall()
     {
 
     Session.SkipPackageProcessing.IsSet && return
-
     DebugFuncEntry
     local response=''
     local package=''
@@ -1043,7 +1039,7 @@ Packages.Uninstall()
             ShowAsDone 'package and Python module lists saved'
             QPKG.Uninstall Entware
         else
-            DebugInfoThinSeparator
+            DebugInfoMinorSeparator
             DebugScript 'user abort'
             Session.SkipPackageProcessing.Set
             Session.Summary.Clear
@@ -1062,10 +1058,9 @@ Packages.Install.Independents()
     {
 
     Session.SkipPackageProcessing.IsSet && return
+    DebugFuncEntry
 
     # install independent QPKGs first, in the order they were declared
-
-    DebugFuncEntry
 
     if QPKGs.ToInstall.IsAny || QPKGs.ToReinstall.IsAny; then
         for package in "${SHERPA_INDEP_QPKGs[@]}"; do
@@ -1170,7 +1165,6 @@ Packages.Restore()
     {
 
     Session.SkipPackageProcessing.IsSet && return
-
     DebugFuncEntry
     local package=''
 
@@ -1199,7 +1193,6 @@ Packages.Restart()
     {
 
     Session.SkipPackageProcessing.IsSet && return
-
     DebugFuncEntry
 
     if User.Opts.Apps.All.Upgrade.IsSet; then
@@ -1269,10 +1262,10 @@ Session.Results()
     Session.SuggestIssue.IsSet && Help.Issue.Show
     DisplayLineSpaceIfNoneAlready       # final on-screen line space
 
-    DebugInfoThinSeparator
+    DebugInfoMinorSeparator
     DebugScript 'finished' "$(date)"
-    DebugScript 'elapsed time' "$(ConvertSecsToMinutes "$(($(date +%s)-$([[ -n $SCRIPT_STARTSECONDS ]] && echo "$SCRIPT_STARTSECONDS" || echo "1")))")"
-    DebugInfoThickSeparator
+    DebugScript 'elapsed time' "$(ConvertSecsToHoursMinutesSecs "$(($(date +%s)-$([[ -n $SCRIPT_STARTSECONDS ]] && echo "$SCRIPT_STARTSECONDS" || echo "1")))")"
+    DebugInfoMajorSeparator
 
     Session.LockFile.Release
 
@@ -1333,7 +1326,7 @@ Log.Paste.Online()
                 ShowAsError "a link could not be generated. Most likely a problem occurred when talking with $(FormatAsURL 'https://termbin.com')"
             fi
         else
-            DebugInfoThinSeparator
+            DebugInfoMinorSeparator
             DebugScript 'user abort'
             Session.SkipPackageProcessing.Set
             Session.Summary.Clear
@@ -1491,7 +1484,6 @@ PIP.Install()
 
     Session.SkipPackageProcessing.IsSet && return
     Session.Pips.Install.IsNot && return
-
     DebugFuncEntry
     local exec_cmd=''
     local result=0
@@ -1557,7 +1549,6 @@ GetInstalledQPKGVars()
     #   $package_config_path
 
     QPKG.NotInstalled "$1" && return 1
-
     package_installed_path=''
     package_config_path=''
     local prev_config_dir=''
@@ -1590,7 +1581,6 @@ GetInstalledQPKGServicePathFile()
     #   $? = 0 if found, 1 if not
 
     QPKG.NotInstalled "$1" && return 1
-
     local output=''
 
     if output=$($GETCFG_CMD "$1" Shell -f $APP_CENTER_CONFIG_PATHFILE); then
@@ -1616,7 +1606,6 @@ GetInstalledQPKGVersion()
     #   $? = 0 if found, 1 if not
 
     QPKG.NotInstalled "$1" && return 1
-
     local output=''
 
     if output=$($GETCFG_CMD "$1" Version -f $APP_CENTER_CONFIG_PATHFILE); then
@@ -2087,9 +2076,9 @@ QPKG.Restart()
         ShowAsWarning "Could not restart $(FormatAsPackageName "$1") $(FormatAsExitcode $result)"
 
         if Session.Debug.To.Screen.IsSet; then
-            DebugInfoThickSeparator
+            DebugInfoMajorSeparator
             $CAT_CMD "$log_pathfile"
-            DebugInfoThickSeparator
+            DebugInfoMajorSeparator
         else
             $CAT_CMD "$log_pathfile" >> "$DEBUG_LOG_PATHFILE"
         fi
@@ -2173,9 +2162,9 @@ QPKG.Backup()
         ShowAsWarning "Could not backup $(FormatAsPackageName "$1") configuration $(FormatAsExitcode $result)"
 
         if Session.Debug.To.Screen.IsSet; then
-            DebugInfoThickSeparator
+            DebugInfoMajorSeparator
             $CAT_CMD "$log_pathfile"
-            DebugInfoThickSeparator
+            DebugInfoMajorSeparator
         else
             $CAT_CMD "$log_pathfile" >> "$DEBUG_LOG_PATHFILE"
         fi
@@ -2229,9 +2218,9 @@ QPKG.Restore()
         ShowAsWarning "Could not restore $(FormatAsPackageName "$1") configuration $(FormatAsExitcode $result)"
 
         if Session.Debug.To.Screen.IsSet; then
-            DebugInfoThickSeparator
+            DebugInfoMajorSeparator
             $CAT_CMD "$log_pathfile"
-            DebugInfoThickSeparator
+            DebugInfoMajorSeparator
         else
             $CAT_CMD "$log_pathfile" >> "$DEBUG_LOG_PATHFILE"
         fi
@@ -2319,7 +2308,6 @@ ExcludeInstalledQPKGs()
     local requested_list=''
     local requested_list_array=()
     local element=''
-
     requested_list=$(DeDupeWords "$1")
     [[ -z $requested_list ]] && return
     requested_list_array=(${requested_list})
@@ -2342,7 +2330,6 @@ ExcludeInstalledQPKGs()
     done
 
     DebugDone 'complete'
-
     return 0
 
     }
@@ -2366,7 +2353,6 @@ GetAllIPKGDepsToDownload()
     fi
 
     DebugFuncEntry
-
     IPKG_download_list=()
     IPKG_download_count=0
     IPKG_download_size=0
@@ -2514,7 +2500,6 @@ IPKGs.Install()
     Session.Ipkgs.Install.IsNot && return
     UpdateEntware
     Session.Error.IsSet && return
-
     local packages="$SHERPA_COMMON_IPKGS"
     local index=0
 
@@ -2617,7 +2602,7 @@ _MonitorDirSize_()
             if [[ $stall_seconds -lt 60 ]]; then
                 progress_message+=" stalled for $stall_seconds seconds"
             else
-                progress_message+=" stalled for $(ConvertSecsToMinutes $stall_seconds)"
+                progress_message+=" stalled for $(ConvertSecsToHoursMinutesSecs $stall_seconds)"
             fi
         fi
 
@@ -3140,9 +3125,7 @@ Help.PackageAbbreviations.Show()
     [[ ${#SHERPA_QPKG_NAME[@]} -eq 0 || ${#SHERPA_QPKG_ABBRVS[@]} -eq 0 ]] && return 1
 
     local package_index=0
-
     Help.Basic.Show
-
     DisplayLineSpaceIfNoneAlready
     echo -e "* $(FormatAsScriptTitle) recognises these abbreviations as $(FormatAsHelpPackages):"
 
@@ -3203,9 +3186,7 @@ QPKGs.Dependant.Restart()
     # restart all sherpa QPKGs except independents. Needed if user has requested each QPKG update itself.
 
     Session.SkipPackageProcessing.IsSet && return
-
     [[ -z ${SHERPA_DEP_QPKGs[*]} || ${#SHERPA_DEP_QPKGs[@]} -eq 0 ]] && return
-
     DebugFuncEntry
     local package=''
 
@@ -3224,7 +3205,6 @@ QPKGs.RestartNotUpgraded()
     # restart all sherpa QPKGs except those that were just upgraded.
 
     Session.SkipPackageProcessing.IsSet && return
-
     [[ -z ${SHERPA_DEP_QPKGs[*]} || ${#SHERPA_DEP_QPKGs[@]} -eq 0 ]] && return
 
     DebugFuncEntry
@@ -3295,7 +3275,6 @@ QPKGs.Download.Build()
     fi
 
     GetTheseQPKGDeps "${QPKGs_initial_download_array[*]}"
-
     ExcludeInstalledQPKGs "$QPKG_pre_download_list"
 
     if [[ $(Packages.Download.Count) -eq 1 && ${QPKGs_download_array[0]} = Entware ]] && QPKG.NotInstalled Entware; then
@@ -3915,7 +3894,6 @@ Session.Error.Set()
 
     [[ $(type -t Session.SkipPackageProcessing.Init) = 'function' ]] && Session.SkipPackageProcessing.Set
     Session.Error.IsSet && return
-
     _script_error_flag=true
     DebugVar _script_error_flag
 
@@ -4439,28 +4417,28 @@ DisplayLineSpaceIfNoneAlready()
 
 #### Debug... functions are used for formatted debug information output. This may be to screen, file or both.
 
-DebugInfoThickSeparator()
+DebugInfoMajorSeparator()
     {
 
     DebugInfo "$(printf '%0.s=' {1..92})"
 
     }
 
-DebugInfoThinSeparator()
+DebugInfoMinorSeparator()
     {
 
     DebugInfo "$(printf '%0.s-' {1..92})"
 
     }
 
-DebugErrorThinSeparator()
+DebugErrorMinorSeparator()
     {
 
     DebugError "$(printf '%0.s-' {1..92})"
 
     }
 
-DebugLogThinSeparator()
+DebugLogMinorSeparator()
     {
 
     DebugLog "$(printf '%0.s-' {1..92})"
@@ -4540,11 +4518,12 @@ DebugFuncExit()
     local var_name=${FUNCNAME[1]}_STARTSECONDS
     local var_safe_name=${var_name//[.-]/_}
     local diff_milliseconds=$((($(date +%s%N) - ${!var_safe_name})/1000000))
+    local elapsed_time=''
 
     if [[ $diff_milliseconds -lt 30000 ]]; then
         elapsed_time=$(printf "%'.f ms" $diff_milliseconds)
     else
-        elapsed_time=$(ConvertSecsToMinutes "$(($diff_milliseconds/1000))")
+        elapsed_time=$(ConvertSecsToHoursMinutesSecs "$(($diff_milliseconds/1000))")
     fi
 
     DebugThis "(<<) ${FUNCNAME[1]}() [$code_pointer]: $elapsed_time"
@@ -4652,15 +4631,15 @@ DebugErrorFile()
 
     local linebuff=''
 
-    DebugLogThinSeparator
+    DebugLogMinorSeparator
     DebugLog "$1"
-    DebugLogThinSeparator
+    DebugLogMinorSeparator
 
     while read -r linebuff; do
         DebugLog "$linebuff"
     done < "$1"
 
-    DebugLogThinSeparator
+    DebugLogMinorSeparator
 
     }
 
@@ -4679,7 +4658,6 @@ ShowAsProc()
 
     WriteToDisplay.Wait "$(ColourTextBrightOrange proc)" "$1 ..."
     WriteToLog proc "$1 ..."
-
     [[ $(type -t Session.Debug.To.Screen.Init) = 'function' ]] && Session.Debug.To.Screen.IsSet && Display
 
     }
@@ -4778,7 +4756,6 @@ WriteToDisplay.Wait()
     #   $2 = message
 
     previous_msg=$(printf "%-10s: %s" "$1" "$2")
-
     DisplayWait "$previous_msg"
 
     return 0
@@ -4929,7 +4906,7 @@ StripANSI()
 
     }
 
-ConvertSecsToMinutes()
+ConvertSecsToHoursMinutesSecs()
     {
 
     # http://stackoverflow.com/questions/12199631/convert-seconds-to-hours-minutes-seconds
