@@ -36,9 +36,9 @@ Any model QNAP NAS with at-least 1GB RAM and running QTS 4.0 or-later.
 
 1) Install the **sherpa** QPKG, available [here](https://github.com/OneCDOnly/sherpa/tree/master/QPKGs/sherpa/build).
 
-1) [SSH](https://www.qnap.com/en/how-to/knowledge-base/article/how-to-access-qnap-nas-by-ssh/) into your NAS as the 'admin' user,
+2) [SSH](https://www.qnap.com/en/how-to/knowledge-base/article/how-to-access-qnap-nas-by-ssh/) into your NAS as the 'admin' user,
 
-4) Then at the command prompt, run:
+3) Then at the command prompt, run:
 
 ```
 sherpa
@@ -46,4 +46,5 @@ sherpa
 
 ... and follow the help from there.
 
+---
 Checkout the wiki for more information: [https://github.com/OneCDOnly/sherpa/wiki](https://github.com/OneCDOnly/sherpa/wiki)
