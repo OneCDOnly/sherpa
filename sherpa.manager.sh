@@ -157,7 +157,7 @@ Session.Init()
     readonly IPKG_CACHE_PATH=$WORK_PATH/ipkgs
     readonly PIP_CACHE_PATH=$WORK_PATH/pips
 
-    if ! MakePath "$WORK_PATH" "work"; then
+    if ! MakePath "$WORK_PATH" 'work'; then
         DebugFuncExit; return 1
     fi
 
@@ -175,32 +175,32 @@ Session.Init()
     Session.Display.Clean.Description = "Disable display of script title and trailing linespace. If 'set', output is suitable for script processing."
     Session.LineSpace.Description = "Keeps track of the display empty linespacing flag. If 'set', an empty linespace has been printed to screen."
 
-    if ! MakePath "$PACKAGE_LOGS_PATH" "package logs"; then
+    if ! MakePath "$PACKAGE_LOGS_PATH" 'package logs'; then
         DebugFuncExit; return 1
     fi
 
     Session.Backup.Path = $($GETCFG_CMD SHARE_DEF defVolMP -f $DEFAULT_SHARES_PATHFILE)/.qpkg_config_backup
 
-    if ! MakePath "$QPKG_DL_PATH" "QPKG download"; then
+    if ! MakePath "$QPKG_DL_PATH" 'QPKG download'; then
         DebugFuncExit; return 1
     fi
 
     # errors can occur due to incompatible IPKGs (tried installing Entware-3x, then Entware-ng), so delete them first
     [[ -d $IPKG_DL_PATH ]] && rm -rf "$IPKG_DL_PATH"
 
-    if ! MakePath "$IPKG_DL_PATH" "IPKG download"; then
+    if ! MakePath "$IPKG_DL_PATH" 'IPKG download'; then
         DebugFuncExit; return 1
     fi
 
     [[ -d $IPKG_CACHE_PATH ]] && rm -rf "$IPKG_CACHE_PATH"
 
-    if ! MakePath "$IPKG_CACHE_PATH" "IPKG cache"; then
+    if ! MakePath "$IPKG_CACHE_PATH" 'IPKG cache'; then
         DebugFuncExit; return 1
     fi
 
     [[ -d $PIP_CACHE_PATH ]] && rm -rf "$PIP_CACHE_PATH"
 
-    if ! MakePath "$PIP_CACHE_PATH" "PIP cache"; then
+    if ! MakePath "$PIP_CACHE_PATH" 'PIP cache'; then
         DebugFuncExit; return 1
     fi
 
@@ -1273,7 +1273,7 @@ DisplayNewQPKGVersions()
     local packages_left_to_upgrade=()
     local package_names=''
 
-    if [[ ${#QPKGS_upgradable[@]} -gt 0 ]]; then
+    if QPKGs.Upgradable.IsAny; then
         for package in "${QPKGS_upgradable[@]}"; do
             if [[ ${QPKGs_to_upgrade[*]} != *"$package"* ]]; then
                 packages_left_to_upgrade+=("$package")
