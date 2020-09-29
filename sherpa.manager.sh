@@ -666,6 +666,8 @@ Session.Validate()
     CheckPythonPathAndVersion python
     DebugUserspace.OK 'unparsed user arguments' "$USER_ARGS_RAW"
 
+    DebugScript 'logs path' "$PACKAGE_LOGS_PATH"
+    DebugScript 'work path' "$WORK_PATH"
     if QPKG.Installed Entware; then
         [[ -e /opt/etc/passwd ]] && { [[ -L /opt/etc/passwd ]] && ENTWARE_VER=std || ENTWARE_VER=alt ;} || ENTWARE_VER=none
         DebugQPKG 'Entware installer' $ENTWARE_VER
@@ -677,9 +679,6 @@ Session.Validate()
     fi
 
     DebugQPKG 'arch' "$NAS_QPKG_ARCH"
-    DebugQPKG 'logs path' "$PACKAGE_LOGS_PATH"
-    DebugQPKG 'download path' "$QPKG_DL_PATH"
-    DebugIPKG 'download path' "$IPKG_DL_PATH"
     DebugQPKG 'upgradable package(s)' "${QPKGS_upgradable[*]} "
     DebugInfoMinorSeparator
     Packages.Assignment.Check
