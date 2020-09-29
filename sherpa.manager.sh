@@ -222,7 +222,6 @@ Session.Init()
     QPKGs_to_reinstall=()
     QPKGs_to_restart=()
     QPKGs_to_restore=()
-    QPKGs_to_status=()
     QPKGs_to_uninstall=()
     QPKGs_to_upgrade=()
 
@@ -545,10 +544,6 @@ Session.ParseArguments()
                 User.Opts.Apps.All.Restore.Set
                 action=''
                 ;;
-            --status-all|status-all)
-                User.Opts.Apps.All.Status.Set
-                action=''
-                ;;
             --install|install)
                 action=install_
                 action_force=false
@@ -575,10 +570,6 @@ Session.ParseArguments()
                 ;;
             --restore|restore)
                 action=restore_
-                action_force=false
-                ;;
-            --status|status)
-                action=status_
                 action_force=false
                 ;;
             --force|force)
@@ -613,9 +604,6 @@ Session.ParseArguments()
                         ;;
                     uninstall_)
                         QPKGs.ToUninstall.Add "$target_package"
-                        ;;
-                    status_)
-                        QPKGs.ToStatus.Add "$target_package"
                         ;;
                 esac
         esac
@@ -707,8 +695,8 @@ Session.Validate()
         Session.Ipkgs.Install.Set
     fi
 
-    if QPKGs.ToBackup.IsNone && QPKGs.ToUninstall.IsNone && QPKGs.ToForceUpgrade.IsNone && QPKGs.ToUpgrade.IsNone && QPKGs.ToInstall.IsNone && QPKGs.ToReinstall.IsNone && QPKGs.ToRestore.IsNone && QPKGs.ToRestart.IsNone && QPKGs.ToStatus.IsNone; then
-        if User.Opts.Apps.All.Install.IsNot && User.Opts.Apps.All.Uninstall.IsNot && User.Opts.Apps.All.Restart.IsNot && User.Opts.Apps.All.Upgrade.IsNot && User.Opts.Apps.All.Backup.IsNot && User.Opts.Apps.All.Restore.IsNot && User.Opts.Apps.All.Status.IsNot; then
+    if QPKGs.ToBackup.IsNone && QPKGs.ToUninstall.IsNone && QPKGs.ToForceUpgrade.IsNone && QPKGs.ToUpgrade.IsNone && QPKGs.ToInstall.IsNone && QPKGs.ToReinstall.IsNone && QPKGs.ToRestore.IsNone && QPKGs.ToRestart.IsNone; then
+        if User.Opts.Apps.All.Install.IsNot && User.Opts.Apps.All.Uninstall.IsNot && User.Opts.Apps.All.Restart.IsNot && User.Opts.Apps.All.Upgrade.IsNot && User.Opts.Apps.All.Backup.IsNot && User.Opts.Apps.All.Restore.IsNot; then
             if User.Opts.Dependencies.Check.IsNot && Session.Debug.To.Screen.IsNot && User.Opts.IgnoreFreeSpace.IsNot; then
                 ShowAsError 'nothing to do'
                 User.Opts.Help.Basic.Set
@@ -757,8 +745,6 @@ Packages.Assignment.Check()
     #   3. install
     #   2. restart
     #   1. uninstall        (lowest: least-important)
-
-    #   0. status           (none: packages in this list should always be processed if requested)
 
     Session.SkipPackageProcessing.IsSet && return
     DebugFuncEntry
@@ -832,16 +818,6 @@ Packages.Assignment.Check()
         fi
     fi
 
-    if User.Opts.Apps.All.Status.IsSet; then
-        if QPKGs.Installed.IsAny; then
-            for package in "${QPKGS_user_installable[@]}"; do
-                if [[ $package != Entware ]]; then      # KLUDGE: ignore Entware as it needs to be handled separately.
-                    QPKGs.ToStatus.Add "$package"
-                fi
-            done
-        fi
-    fi
-
     # However, package processing priorities need to be:
     #   8. backup           (highest: most-important)
     #   7. uninstall
@@ -851,8 +827,6 @@ Packages.Assignment.Check()
     #   3. reinstall
     #   2. restore
     #   1. restart          (lowest: least-important)
-
-    #   0. status           (none: packages in this list should always be processed if requested)
 
     # remove duplicate and redundant entries from lists by following package processing priority order:
 
@@ -922,7 +896,6 @@ Packages.Assignment.Check()
     DebugScript 'reinstall' "${QPKGs_to_reinstall[*]} "
     DebugScript 'restore' "${QPKGs_to_restore[*]} "
     DebugScript 'restart' "${QPKGs_to_restart[*]} "
-    DebugScript 'status' "${QPKGs_to_status[*]} "
 
     DebugFuncExit; return 0
 
@@ -2946,8 +2919,6 @@ Help.Actions.Show()
 
     DisplayAsProjectSyntaxIndentedExample 'restore the internal application configurations from the default backup location' "--restore $(FormatAsHelpPackages)"
 
-    #DisplayAsProjectSyntaxIndentedExample '--status'
-
     DisplayAsProjectSyntaxExample "$(FormatAsHelpActions) to affect all packages can be seen with" '--actions-all'
 
     Help.BackupLocation.Show
@@ -2990,8 +2961,6 @@ Help.ActionsAll.Show()
     DisplayAsProjectSyntaxIndentedExample 'backup all application configurations to the default backup location' '--backup-all'
 
     DisplayAsProjectSyntaxIndentedExample 'restore all application configurations from the default backup location' '--restore-all'
-
-#   DisplayAsProjectSyntaxIndentedExample '--status-all'
 
     Help.BackupLocation.Show
 
@@ -3820,43 +3789,6 @@ QPKGs.ToRestore.IsNone()
     {
 
     [[ ${#QPKGs_to_restore[@]} -eq 0 ]]
-
-    }
-
-QPKGs.ToStatus.Add()
-    {
-
-    [[ ${QPKGs_to_status[*]} != *"$1"* ]] && QPKGs_to_status+=("$1")
-
-    return 0
-
-    }
-
-QPKGs.ToStatus.Count()
-    {
-
-    echo "${#QPKGs_to_status[@]}"
-
-    }
-
-QPKGs.ToStatus.Print()
-    {
-
-    echo "${QPKGs_to_status[*]}"
-
-    }
-
-QPKGs.ToStatus.IsAny()
-    {
-
-    [[ $(QPKGs.ToStatus.Count) -gt 0 ]]
-
-    }
-
-QPKGs.ToStatus.IsNone()
-    {
-
-    [[ $(QPKGs.ToStatus.Count) -eq 0 ]]
 
     }
 
@@ -5156,7 +5088,7 @@ Objects.Add()
 Objects.Compile()
     {
 
-    local reference_hash=41fdaeecb9d4150914f2c355c2af164a
+    local reference_hash=75d41edc8cf92904667881c948c8c1ed
 
     [[ -e $COMPILED_OBJECTS ]] && ! FileMatchesMD5 "$COMPILED_OBJECTS" "$reference_hash" && rm -f "$COMPILED_OBJECTS"
 
@@ -5187,7 +5119,6 @@ Objects.Compile()
         Objects.Add User.Opts.Apps.All.Reinstall
         Objects.Add User.Opts.Apps.All.Restart
         Objects.Add User.Opts.Apps.All.Restore
-        Objects.Add User.Opts.Apps.All.Status
         Objects.Add User.Opts.Apps.All.Uninstall
         Objects.Add User.Opts.Apps.All.Upgrade
 
