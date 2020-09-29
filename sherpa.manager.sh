@@ -1771,6 +1771,7 @@ QPKG.Download()
     local local_pathfile=$QPKG_DL_PATH/$remote_filename
     local local_filename=$($BASENAME_CMD "$local_pathfile")
     local log_pathfile=$PACKAGE_LOGS_PATH/$local_filename.$DOWNLOAD_LOG_FILE
+    local skip_log=false
 
     if [[ -z $remote_url ]]; then
         DebugWarning "no URL found for this package [$1]"
@@ -1785,6 +1786,7 @@ QPKG.Download()
     if [[ -e $local_pathfile ]]; then
         if FileMatchesMD5 "$local_pathfile" "$remote_filename_md5"; then
             DebugInfo "local package checksum correct $(FormatAsFileName "$local_filename") so skipping download"
+            skip_log=true
         else
             DebugWarning "local package checksum incorrect $(FormatAsFileName "$local_filename")"
             DebugInfo "deleting $(FormatAsFileName "$local_filename")"
@@ -1817,7 +1819,7 @@ QPKG.Download()
         fi
     fi
 
-    AddFileToDebug "$log_pathfile"
+    ! $skip_log && AddFileToDebug "$log_pathfile"
     DebugFuncExit; return $result
 
     }
