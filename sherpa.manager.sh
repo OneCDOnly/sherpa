@@ -453,6 +453,10 @@ Session.ParseArguments()
                 User.Opts.Log.View.Set
                 Session.SkipPackageProcessing.Set
                 ;;
+            --clean|clean)
+                User.Opts.Clean.Set
+                Session.SkipPackageProcessing.Set
+                ;;
             --paste|paste)
                 User.Opts.Log.Paste.Set
                 Session.SkipPackageProcessing.Set
@@ -1206,6 +1210,8 @@ Session.Results()
         Log.View.Show
     elif User.Opts.Log.Paste.IsSet; then
         Log.Paste.Online
+    elif User.Opts.Clean.IsSet; then
+        Clean.Cache
     elif User.Opts.Apps.List.Installed.IsSet; then
         QPKGs.Installed.Show
     elif User.Opts.Apps.List.NotInstalled.IsSet; then
@@ -1314,6 +1320,16 @@ Log.Paste.Online()
     else
         ShowAsError 'no log to paste'
     fi
+
+    return 0
+
+    }
+
+Clean.Cache()
+    {
+
+    [[ -d $WORK_PATH ]] && rm -rf $WORK_PATH
+    ShowAsDone "work path cleared"
 
     return 0
 
@@ -3010,6 +3026,8 @@ Help.Problems.Show()
     DisplayAsProjectSyntaxIndentedExample 'ensure all application dependencies are installed' '--check-all'
 
     DisplayAsProjectSyntaxIndentedExample "don't check free-space on target filesystem when installing $(FormatAsPackageName Entware) packages" "$(FormatAsHelpActions) $(FormatAsHelpPackages) --ignore-space"
+
+    DisplayAsProjectSyntaxIndentedExample "clean the $(FormatAsScriptTitle) cache" '--clean'
 
     DisplayAsProjectSyntaxIndentedExample 'restart all installed packages (upgrades the internal applications, not the packages)' '--restart-all'
 
@@ -5119,6 +5137,7 @@ Objects.Compile()
         Objects.Add User.Opts.Dependencies.Check
         Objects.Add User.Opts.IgnoreFreeSpace
         Objects.Add User.Opts.Versions.View
+        Objects.Add User.Opts.Clean
 
         Objects.Add User.Opts.Log.Paste
         Objects.Add User.Opts.Log.View
