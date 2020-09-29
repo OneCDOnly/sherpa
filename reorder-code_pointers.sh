@@ -1,7 +1,7 @@
 #!/bin/bash
 
 base_path="${HOME}/scripts/nas/sherpa"
-target_path="${base_path}/backups-b4-reordering"
+target_path="${base_path}/.backups-b4-reordering"
 source_file="sherpa.manager.sh"
 source_pathfile="$base_path/$source_file"
 target_pathfile="$target_path/$source_file.$(date +%s).bak"
