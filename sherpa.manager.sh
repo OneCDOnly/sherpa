@@ -4287,6 +4287,13 @@ FormatAsExitcode()
 
     }
 
+FormatAsLogFilename()
+    {
+
+    echo "= log file: '$1'"
+
+    }
+
 FormatAsCommand()
     {
 
@@ -4585,8 +4592,7 @@ AddFileToDebug()
     local linebuff=''
 
     DebugLogMinorSeparator
-    DebugLog "$1"
-    DebugLogMinorSeparator
+    DebugLog "$(FormatAsLogFilename "$1")"
 
     while read -r linebuff; do
         DebugLog "$linebuff"
