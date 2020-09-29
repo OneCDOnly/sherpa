@@ -1390,7 +1390,7 @@ UpdateEntware()
             ShowAsDone "updated $(FormatAsPackageName Entware) package list"
         else
             ShowAsWarning "Unable to update $(FormatAsPackageName Entware) package list $(FormatAsExitcode $result)"
-            DebugErrorFile "$log_pathfile"
+            AddFileToDebug "$log_pathfile"
             # meh, continue anyway with old list ...
         fi
     else
@@ -1412,9 +1412,8 @@ InstallIPKGBatch()
     #   $? = 0 (true) or 1 (false)
 
     DebugFuncEntry
-    local returncode=0
-    local log_pathfile=$PACKAGE_LOGS_PATH/ipkgs.$INSTALL_LOG_FILE
     local result=0
+    local log_pathfile=$PACKAGE_LOGS_PATH/ipkgs.$INSTALL_LOG_FILE
 
     GetAllIPKGDepsToDownload "$1" || return 1
 
@@ -1435,12 +1434,11 @@ InstallIPKGBatch()
             Session.Pips.Install.Set
         else
             ShowAsError "download & install IPKG$(FormatAsPlural "$IPKG_download_count") failed $(FormatAsExitcode $result)"
-            DebugErrorFile "$log_pathfile"
-            returncode=1
+            AddFileToDebug "$log_pathfile"
         fi
     fi
 
-    DebugFuncExit; return $returncode
+    DebugFuncExit; return $result
 
     }
 
@@ -1451,9 +1449,8 @@ UpgradeIPKGBatch()
     #   $? = 0 (true) or 1 (false)
 
     DebugFuncEntry
-    local returncode=0
-    local log_pathfile=$PACKAGE_LOGS_PATH/ipkgs.$UPGRADE_LOG_FILE
     local result=0
+    local log_pathfile=$PACKAGE_LOGS_PATH/ipkgs.$UPGRADE_LOG_FILE
 
     IPKG_download_list=($($OPKG_CMD list-upgradable | $CUT_CMD -f1 -d' '))
 
@@ -1474,12 +1471,11 @@ UpgradeIPKGBatch()
             Session.Pips.Install.Set
         else
             ShowAsError "download & upgrade IPKG$(FormatAsPlural "$IPKG_download_count") failed $(FormatAsExitcode $result)"
-            DebugErrorFile "$log_pathfile"
-            returncode=1
+            AddFileToDebug "$log_pathfile"
         fi
     fi
 
-    DebugFuncExit; return $returncode
+    DebugFuncExit; return $result
 
     }
 
@@ -1491,7 +1487,6 @@ PIP.Install()
     DebugFuncEntry
     local exec_cmd=''
     local result=0
-    local returncode=0
     local packages=''
     local desc="'Python 3' modules"
     local log_pathfile=$PACKAGE_LOGS_PATH/py3-modules.$INSTALL_LOG_FILE
@@ -1530,11 +1525,10 @@ PIP.Install()
         ShowAsDone "downloaded & installed $desc"
     else
         ShowAsError "download & install $desc failed $(FormatAsResult "$result")"
-        DebugErrorFile "$log_pathfile"
-        returncode=1
+        AddFileToDebug "$log_pathfile"
     fi
 
-    DebugFuncExit; return $returncode
+    DebugFuncExit; return $result
 
     }
 
@@ -1771,7 +1765,6 @@ QPKG.Download()
     fi
 
     local result=0
-    local returncode=0
     local remote_url=$(GetQPKGRemoteURL "$1")
     local remote_filename=$($BASENAME_CMD "$remote_url")
     local remote_filename_md5=$(GetQPKGMD5 "$1")
@@ -1817,16 +1810,15 @@ QPKG.Download()
                 ShowAsDone "downloaded $(FormatAsFileName "$remote_filename")"
             else
                 ShowAsError "downloaded package checksum incorrect $(FormatAsFileName "$local_pathfile")"
-                returncode=1
+                result=1
             fi
         else
             ShowAsError "download failed $(FormatAsFileName "$local_pathfile") $(FormatAsExitcode $result)"
-            DebugErrorFile "$log_pathfile"
-            returncode=1
         fi
     fi
 
-    DebugFuncExit; return $returncode
+    AddFileToDebug "$log_pathfile"
+    DebugFuncExit; return $result
 
     }
 
@@ -1850,7 +1842,6 @@ QPKG.Install()
 
     local target_file=''
     local result=0
-    local returncode=0
     local local_pathfile="$(GetQPKGPathFilename "$1")"
     local log_pathfile=''
 
@@ -1864,19 +1855,23 @@ QPKG.Install()
 
     ShowAsProcLong "installing $(FormatAsPackageName "$1")"
 
-    sh "$local_pathfile" > "$log_pathfile" 2>&1
-    result=$?
+    if Session.Debug.To.Screen.IsSet; then
+        RunThisAndLogResultsRealtime "sh $local_pathfile" "$log_pathfile"
+        result=$?
+    else
+        RunThisAndLogResults "sh $local_pathfile" "$log_pathfile"
+        result=$?
+    fi
 
     if [[ $result -eq 0 || $result -eq 10 ]]; then
         ShowAsDone "installed $(FormatAsPackageName "$1")"
         GetQPKGServiceStatus "$1"
     else
         ShowAsError "installation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $result)"
-        DebugErrorFile "$log_pathfile"
-        returncode=1
     fi
 
-    DebugFuncExit; return $returncode
+    AddFileToDebug "$log_pathfile"
+    DebugFuncExit; return $result
 
     }
 
@@ -1901,7 +1896,6 @@ QPKG.Reinstall()
 
     local target_file=''
     local result=0
-    local returncode=0
     local local_pathfile="$(GetQPKGPathFilename "$1")"
     local log_pathfile=''
 
@@ -1915,19 +1909,23 @@ QPKG.Reinstall()
 
     ShowAsProcLong "re-installing $(FormatAsPackageName "$1")"
 
-    sh "$local_pathfile" > "$log_pathfile" 2>&1
-    result=$?
+    if Session.Debug.To.Screen.IsSet; then
+        RunThisAndLogResultsRealtime "sh $local_pathfile" "$log_pathfile"
+        result=$?
+    else
+        RunThisAndLogResults "sh $local_pathfile" "$log_pathfile"
+        result=$?
+    fi
 
     if [[ $result -eq 0 || $result -eq 10 ]]; then
         ShowAsDone "re-installed $(FormatAsPackageName "$1")"
         GetQPKGServiceStatus "$1"
     else
         ShowAsError "$re-installation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $result)"
-        DebugErrorFile "$log_pathfile"
-        returncode=1
     fi
 
-    DebugFuncExit; return $returncode
+    AddFileToDebug "$log_pathfile"
+    DebugFuncExit; return $result
 
     }
 
@@ -1948,7 +1946,6 @@ QPKG.Upgrade()
 
     local prefix=''
     local result=0
-    local returncode=0
     local previous_version='null'
     local current_version='null'
     local local_pathfile="$(GetQPKGPathFilename "$1")"
@@ -1964,8 +1961,15 @@ QPKG.Upgrade()
     QPKG.Installed "$1" && previous_version=$(GetInstalledQPKGVersion "$1")
 
     ShowAsProcLong "${prefix}upgrading $(FormatAsPackageName "$1")"
-    sh "$local_pathfile" > "$log_pathfile" 2>&1
-    result=$?
+
+    if Session.Debug.To.Screen.IsSet; then
+        RunThisAndLogResultsRealtime "sh $local_pathfile" "$log_pathfile"
+        result=$?
+    else
+        RunThisAndLogResults "sh $local_pathfile" "$log_pathfile"
+        result=$?
+    fi
+
     current_version=$(GetInstalledQPKGVersion "$1")
 
     if [[ $result -eq 0 || $result -eq 10 ]]; then
@@ -1977,11 +1981,10 @@ QPKG.Upgrade()
         GetQPKGServiceStatus "$1"
     else
         ShowAsError "${prefix}upgrade failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $result)"
-        DebugErrorFile "$log_pathfile"
-        returncode=1
     fi
 
-    DebugFuncExit; return $returncode
+    AddFileToDebug "$log_pathfile"
+    DebugFuncExit; return $result
 
     }
 
@@ -2020,13 +2023,11 @@ QPKG.Uninstall()
             ShowAsDone "uninstalled $(FormatAsPackageName "$1")"
         else
             ShowAsError "unable to uninstall $(FormatAsPackageName "$1") $(FormatAsExitcode $result)"
-            DebugFuncExit; return 1
         fi
     fi
 
     $RMCFG_CMD "$1" -f $APP_CENTER_CONFIG_PATHFILE
-
-    DebugFuncExit; return 0
+    DebugFuncExit; return $result
 
     }
 
@@ -2059,26 +2060,23 @@ QPKG.Restart()
 
     ShowAsProc "restarting $(FormatAsPackageName "$1")"
 
-    sh "$package_init_pathfile" restart > "$log_pathfile" 2>&1
-    result=$?
+    if Session.Debug.To.Screen.IsSet; then
+        RunThisAndLogResultsRealtime "sh $package_init_pathfile restart" "$log_pathfile"
+        result=$?
+    else
+        RunThisAndLogResults "sh $package_init_pathfile restart" "$log_pathfile"
+        result=$?
+    fi
 
     if [[ $result -eq 0 ]]; then
         ShowAsDone "restarted $(FormatAsPackageName "$1")"
         GetQPKGServiceStatus "$1"
     else
         ShowAsWarning "Could not restart $(FormatAsPackageName "$1") $(FormatAsExitcode $result)"
-
-        if Session.Debug.To.Screen.IsSet; then
-            DebugInfoMajorSeparator
-            $CAT_CMD "$log_pathfile"
-            DebugInfoMajorSeparator
-        else
-            $CAT_CMD "$log_pathfile" >> "$DEBUG_LOG_PATHFILE"
-        fi
-        DebugFuncExit; return 1
     fi
 
-    DebugFuncExit; return 0
+    AddFileToDebug "$log_pathfile"
+    DebugFuncExit; return $result
 
     }
 
@@ -2138,26 +2136,23 @@ QPKG.Backup()
 
     ShowAsProc "backing-up $(FormatAsPackageName "$1") configuration"
 
-    sh "$package_init_pathfile" backup > "$log_pathfile" 2>&1
-    result=$?
+    if Session.Debug.To.Screen.IsSet; then
+        RunThisAndLogResultsRealtime "sh $package_init_pathfile backup" "$log_pathfile"
+        result=$?
+    else
+        RunThisAndLogResults "sh $package_init_pathfile backup" "$log_pathfile"
+        result=$?
+    fi
 
     if [[ $result -eq 0 ]]; then
         ShowAsDone "backed-up $(FormatAsPackageName "$1") configuration"
         GetQPKGServiceStatus "$1"
     else
         ShowAsWarning "Could not backup $(FormatAsPackageName "$1") configuration $(FormatAsExitcode $result)"
-
-        if Session.Debug.To.Screen.IsSet; then
-            DebugInfoMajorSeparator
-            $CAT_CMD "$log_pathfile"
-            DebugInfoMajorSeparator
-        else
-            $CAT_CMD "$log_pathfile" >> "$DEBUG_LOG_PATHFILE"
-        fi
-        DebugFuncExit; return 1
     fi
 
-    DebugFuncExit; return 0
+    AddFileToDebug "$log_pathfile"
+    DebugFuncExit; return $result
 
     }
 
@@ -2190,26 +2185,23 @@ QPKG.Restore()
 
     ShowAsProc "restoring $(FormatAsPackageName "$1") configuration"
 
-    sh "$package_init_pathfile" restore > "$log_pathfile" 2>&1
-    result=$?
+    if Session.Debug.To.Screen.IsSet; then
+        RunThisAndLogResultsRealtime "sh $package_init_pathfile restore" "$log_pathfile"
+        result=$?
+    else
+        RunThisAndLogResults "sh $package_init_pathfile restore" "$log_pathfile"
+        result=$?
+    fi
 
     if [[ $result -eq 0 ]]; then
         ShowAsDone "restored $(FormatAsPackageName "$1") configuration"
         GetQPKGServiceStatus "$1"
     else
         ShowAsWarning "Could not restore $(FormatAsPackageName "$1") configuration $(FormatAsExitcode $result)"
-
-        if Session.Debug.To.Screen.IsSet; then
-            DebugInfoMajorSeparator
-            $CAT_CMD "$log_pathfile"
-            DebugInfoMajorSeparator
-        else
-            $CAT_CMD "$log_pathfile" >> "$DEBUG_LOG_PATHFILE"
-        fi
-        DebugFuncExit; return 1
     fi
 
-    DebugFuncExit; return 0
+    AddFileToDebug "$log_pathfile"
+    DebugFuncExit; return $result
 
     }
 
@@ -4126,13 +4118,14 @@ RunThisAndLogResults()
 
     [[ -z $1 || -z $2 ]] && return 1
 
-    local msgs=''
+    local msgs=/var/log/execd.log
     local result=0
 
     FormatAsCommand "$1" > "$2"
-    msgs=$(eval "$1" 2>&1)
+    eval "$1" >> "$msgs" 2>&1
     result=$?
-    FormatAsResultAndStdout "$result" "$msgs" >> "$2"
+    FormatAsResultAndStdout "$result" "$(<"$msgs")" >> "$2"
+    [[ -e $msgs ]] && rm -f "$msgs"
 
     return $result
 
@@ -4152,13 +4145,14 @@ RunThisAndLogResultsRealtime()
 
     [[ -z $1 || -z $2 ]] && return 1
 
-    local buffer=/var/log/execd.log
+    local msgs=/var/log/execd.log
+    local result=0
 
     FormatAsCommand "$1" > "$2"
-    eval "$1" 2>&1 | $TEE_CMD "$buffer"
+    $1 > >($TEE_CMD -a "$msgs") 2>&1
     result=$?
-    FormatAsResultAndStdout "$result" "$(<"$buffer")" >> "$2"
-    [[ -e $buffer ]] && rm -f "$buffer"
+    FormatAsResultAndStdout "$result" "$(<"$msgs")" >> "$2"
+    [[ -e $msgs ]] && rm -f "$msgs"
 
     return $result
 
@@ -4348,13 +4342,13 @@ FormatAsResultAndStdout()
     {
 
     if [[ $1 -eq 0 ]]; then
-        echo "= result: $(FormatAsExitcode "$1") / / / / / stdout begins below \ \ \ \ \ "
+        echo "= result: $(FormatAsExitcode "$1") ***** stdout/stderr begins below *****"
     else
-        echo "! result: $(FormatAsExitcode "$1") / / / / / stdout begins below \ \ \ \ \ "
+        echo "! result: $(FormatAsExitcode "$1") ***** stdout/stderr begins below *****"
     fi
 
     echo "$2"
-    echo '= \ \ \ \ \ stdout is complete / / / / /'
+    echo '= ***** stdout/stderr is complete *****'
 
     }
 
@@ -4572,7 +4566,7 @@ DebugThis()
 
     }
 
-DebugErrorFile()
+AddFileToDebug()
     {
 
     # Add the contents of specified pathfile $1 to the runtime log
