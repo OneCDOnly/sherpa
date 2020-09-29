@@ -39,7 +39,7 @@ Session.Init()
     readonly SCRIPT_STARTSECONDS=$(date +%s)
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=200929
+    readonly MANAGER_SCRIPT_VERSION=200930
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -394,7 +394,7 @@ Session.Init()
     Session.ParseArguments
     Session.SkipPackageProcessing.IsNot && Session.Debug.To.File.Set
     DebugInfoMajorSeparator
-    DebugScript 'started' "$(date | tr -s ' ')"
+    DebugScript 'started' "$(date -d @$SCRIPT_STARTSECONDS | tr -s ' ')"
     DebugScript 'version' "package: $PACKAGE_VERSION, manager: $MANAGER_SCRIPT_VERSION, loader $LOADER_SCRIPT_VERSION"
     DebugScript 'PID' "$$"
     DebugInfoMinorSeparator
