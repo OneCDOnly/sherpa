@@ -185,6 +185,9 @@ Session.Init()
         DebugFuncExit; return 1
     fi
 
+    # errors can occur due to incompatible IPKGs (tried installing Entware-3x, then Entware-ng), so delete them first
+    [[ -d $IPKG_DL_PATH ]] && rm -rf "$IPKG_DL_PATH"
+
     if ! MakePath "$IPKG_DL_PATH" "IPKG download"; then
         DebugFuncExit; return 1
     fi
@@ -1441,10 +1444,6 @@ InstallIPKGBatch()
     local log_pathfile=$PACKAGE_LOGS_PATH/ipkgs.$INSTALL_LOG_FILE
     local result=0
 
-    # errors can occur due to incompatible IPKGs (tried installing Entware-3x, then Entware-ng), so delete them first
-    [[ -d $IPKG_DL_PATH ]] && rm -f "$IPKG_DL_PATH"/*.ipk
-    [[ -d $IPKG_CACHE_PATH ]] && rm -f "$IPKG_CACHE_PATH"/*.ipk
-
     GetAllIPKGDepsToDownload "$1" || return 1
 
     if [[ $IPKG_download_count -gt 0 ]]; then
@@ -1464,6 +1463,45 @@ InstallIPKGBatch()
             Session.Pips.Install.Set
         else
             ShowAsError "download & install IPKG$(FormatAsPlural "$IPKG_download_count") failed $(FormatAsExitcode $result)"
+            DebugErrorFile "$log_pathfile"
+            returncode=1
+        fi
+    fi
+
+    DebugFuncExit; return $returncode
+
+    }
+
+UpgradeIPKGBatch()
+    {
+
+    # output:
+    #   $? = 0 (true) or 1 (false)
+
+    DebugFuncEntry
+    local returncode=0
+    local log_pathfile=$PACKAGE_LOGS_PATH/ipkgs.$UPGRADE_LOG_FILE
+    local result=0
+
+    IPKG_download_list=($($OPKG_CMD list-upgradable | $CUT_CMD -f1 -d' '))
+
+    if [[ $IPKG_download_count -gt 0 ]]; then
+        ShowAsProc "downloading & upgrading $IPKG_download_count IPKG$(FormatAsPlural "$IPKG_download_count")"
+
+        CreateDirSizeMonitorFlagFile $IPKG_DL_PATH/.monitor
+            trap CTRL_C_Captured INT
+                _MonitorDirSize_ "$IPKG_DL_PATH" "$IPKG_download_size" &
+
+                RunThisAndLogResults "$OPKG_CMD upgrade$(User.Opts.IgnoreFreeSpace.IsSet && User.Opts.IgnoreFreeSpace.Text) --force-overwrite ${IPKG_download_list[*]} --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
+                result=$?
+            trap - INT
+        RemoveDirSizeMonitorFlagFile
+
+        if [[ $result -eq 0 ]]; then
+            ShowAsDone "downloaded & upgraded $IPKG_download_count IPKG$(FormatAsPlural "$IPKG_download_count")"
+            Session.Pips.Install.Set
+        else
+            ShowAsError "download & upgrade IPKG$(FormatAsPlural "$IPKG_download_count") failed $(FormatAsExitcode $result)"
             DebugErrorFile "$log_pathfile"
             returncode=1
         fi
@@ -2490,6 +2528,7 @@ IPKGs.Install()
         [[ $NAS_QPKG_ARCH = none ]] && packages+=' par2cmdline'
     fi
 
+    UpgradeIPKGBatch
     InstallIPKGBatch "$packages"
 
     # in-case 'python' has disappeared again ...
@@ -5117,7 +5156,7 @@ Objects.Add()
 Objects.Compile()
     {
 
-    local reference_hash=43fb740d1dd2b4c72ad63333461efc7f
+    local reference_hash=41fdaeecb9d4150914f2c355c2af164a
 
     [[ -e $COMPILED_OBJECTS ]] && ! FileMatchesMD5 "$COMPILED_OBJECTS" "$reference_hash" && rm -f "$COMPILED_OBJECTS"
 
