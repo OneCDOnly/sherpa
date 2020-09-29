@@ -132,6 +132,7 @@ Session.Init()
     readonly APP_CENTER_CONFIG_PATHFILE=/etc/config/qpkg.conf
     readonly INSTALL_LOG_FILE=install.log
     readonly REINSTALL_LOG_FILE=reinstall.log
+    readonly UNINSTALL_LOG_FILE=uninstall.log
     readonly DOWNLOAD_LOG_FILE=download.log
     readonly START_LOG_FILE=start.log
     readonly STOP_LOG_FILE=stop.log
@@ -2014,21 +2015,29 @@ QPKG.Uninstall()
 
     local result=0
     local qpkg_installed_path="$($GETCFG_CMD "$1" Install_Path -f $APP_CENTER_CONFIG_PATHFILE)"
+    local log_pathfile=$PACKAGE_LOGS_PATH/$1.$UNINSTALL_LOG_FILE
 
     if [[ -e $qpkg_installed_path/.uninstall.sh ]]; then
         ShowAsProc "uninstalling $(FormatAsPackageName "$1")"
 
-        "$qpkg_installed_path"/.uninstall.sh > /dev/null
-        result=$?
+        if Session.Debug.To.Screen.IsSet; then
+            RunThisAndLogResultsRealtime "sh $qpkg_installed_path/.uninstall.sh " "$log_pathfile"
+            result=$?
+        else
+            RunThisAndLogResults "sh $qpkg_installed_path/.uninstall.sh " "$log_pathfile"
+            result=$?
+        fi
 
         if [[ $result -eq 0 ]]; then
             ShowAsDone "uninstalled $(FormatAsPackageName "$1")"
+            $RMCFG_CMD "$1" -f $APP_CENTER_CONFIG_PATHFILE
+            DebugDone "removed icon information from App Center"
         else
             ShowAsError "unable to uninstall $(FormatAsPackageName "$1") $(FormatAsExitcode $result)"
         fi
     fi
 
-    $RMCFG_CMD "$1" -f $APP_CENTER_CONFIG_PATHFILE
+    AddFileToDebug "$log_pathfile"
     DebugFuncExit; return $result
 
     }
