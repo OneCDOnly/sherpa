@@ -39,7 +39,7 @@ Session.Init()
     readonly SCRIPT_STARTSECONDS=$(date +%s)
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=200930
+    readonly MANAGER_SCRIPT_VERSION=201001
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -157,6 +157,7 @@ Session.Init()
     readonly IPKG_DL_PATH=$WORK_PATH/ipkgs.downloads
     readonly IPKG_CACHE_PATH=$WORK_PATH/ipkgs
     readonly PIP_CACHE_PATH=$WORK_PATH/pips
+    readonly OBJECT_REF_HASH=c9c6248c4bc69f2d86af2dbac21d8183
 
     if ! MakePath "$WORK_PATH" 'work'; then
         DebugFuncExit; return 1
@@ -432,7 +433,7 @@ Session.ParseArguments()
 
     local user_args=($(tr '[A-Z]' '[a-z]' <<< "$USER_ARGS_RAW"))
     local arg=''
-    local action='install_'     # make 'install' the default action. A user-convenience to simulate the previous script behaviour.
+    local action='install_'     # make 'install' the default action. A user-convenience to emulate the previous script behaviour.
     local action_force=false
     local target_package=''
 
@@ -489,7 +490,7 @@ Session.ParseArguments()
                 Session.SkipPackageProcessing.Set
                 ;;
             --list|list|--list-all|list-all|all)
-                User.Opts.Apps.All.List.Set
+                User.Opts.Apps.List.All.Set
                 Session.Display.Clean.Set
                 Session.SkipPackageProcessing.Set
                 ;;
@@ -669,6 +670,8 @@ Session.Validate()
 
     DebugScript 'logs path' "$PACKAGE_LOGS_PATH"
     DebugScript 'work path' "$WORK_PATH"
+    DebugScript 'object reference hash' "$OBJECT_REF_HASH"
+
     if QPKG.Installed Entware; then
         [[ -e /opt/etc/passwd ]] && { [[ -L /opt/etc/passwd ]] && ENTWARE_VER=std || ENTWARE_VER=alt ;} || ENTWARE_VER=none
         DebugQPKG 'Entware installer' $ENTWARE_VER
@@ -1194,7 +1197,7 @@ Session.Results()
         QPKGs.NotInstalled.Show
     elif User.Opts.Apps.List.Upgradable.IsSet; then
         QPKGs.Upgradable.Show
-    elif User.Opts.Apps.All.List.IsSet; then
+    elif User.Opts.Apps.List.All.IsSet; then
         QPKGs.All.Show
     fi
 
@@ -5126,9 +5129,7 @@ Objects.Add()
 Objects.Compile()
     {
 
-    local reference_hash=75d41edc8cf92904667881c948c8c1ed
-
-    [[ -e $COMPILED_OBJECTS ]] && ! FileMatchesMD5 "$COMPILED_OBJECTS" "$reference_hash" && rm -f "$COMPILED_OBJECTS"
+    [[ -e $COMPILED_OBJECTS ]] && ! FileMatchesMD5 "$COMPILED_OBJECTS" "$OBJECT_REF_HASH" && rm -f "$COMPILED_OBJECTS"
 
     if [[ ! -e $COMPILED_OBJECTS ]]; then
         ShowAsProc "compiling objects"
@@ -5143,23 +5144,23 @@ Objects.Compile()
         Objects.Add User.Opts.Help.Problems
         Objects.Add User.Opts.Help.Tips
 
+        Objects.Add User.Opts.Clean
         Objects.Add User.Opts.Dependencies.Check
         Objects.Add User.Opts.IgnoreFreeSpace
         Objects.Add User.Opts.Versions.View
-        Objects.Add User.Opts.Clean
 
         Objects.Add User.Opts.Log.Paste
         Objects.Add User.Opts.Log.View
 
         Objects.Add User.Opts.Apps.All.Backup
         Objects.Add User.Opts.Apps.All.Install
-        Objects.Add User.Opts.Apps.All.List
         Objects.Add User.Opts.Apps.All.Reinstall
         Objects.Add User.Opts.Apps.All.Restart
         Objects.Add User.Opts.Apps.All.Restore
         Objects.Add User.Opts.Apps.All.Uninstall
         Objects.Add User.Opts.Apps.All.Upgrade
 
+        Objects.Add User.Opts.Apps.List.All
         Objects.Add User.Opts.Apps.List.Installed
         Objects.Add User.Opts.Apps.List.NotInstalled
         Objects.Add User.Opts.Apps.List.Upgradable
