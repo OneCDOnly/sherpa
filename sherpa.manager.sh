@@ -769,7 +769,7 @@ Packages.Assignment.Check()
     fi
 
     if User.Opts.Apps.All.Upgrade.IsSet; then
-        if [[ ${#QPKGS_upgradable[*]} -gt 0 ]]; then
+        if QPKGs.Upgradable.IsAny; then
             for package in "${QPKGS_upgradable[@]}"; do
                 if [[ $package != Entware ]]; then      # KLUDGE: ignore Entware as it needs to be handled separately.
                     QPKGs.ToUpgrade.Add "$package"
@@ -789,7 +789,7 @@ Packages.Assignment.Check()
     fi
 
     if User.Opts.Apps.All.Install.IsSet; then
-        if [[ ${#QPKGS_user_installable[*]} -gt 0 ]]; then
+        if QPKGs.Installable.IsAny; then
             for package in "${QPKGS_user_installable[@]}"; do
                 if [[ $package != Entware ]]; then      # KLUDGE: ignore Entware as it needs to be handled separately.
                     QPKGs.ToInstall.Add "$package"
@@ -1157,7 +1157,7 @@ Packages.Restart()
 
     if User.Opts.Apps.All.Upgrade.IsSet; then
         QPKGs.RestartNotUpgraded
-    elif [[ ${#QPKGs_to_restart[*]} -gt 0 ]]; then
+    elif QPKGs.ToRestart.IsAny; then
         for package in "${SHERPA_DEP_QPKGs[@]}"; do
             if [[ ${QPKGs_to_restart[*]} == *"$package"* ]]; then
                 if QPKG.Installed "$package"; then
@@ -3209,17 +3209,6 @@ QPKGs.NotInstalled.Show()
 
     }
 
-QPKGs.Upgradable.Show()
-    {
-
-    for package in $(QPKGs.Upgradable.Print); do
-        echo "$package"
-    done
-
-    return 0
-
-    }
-
 QPKGs.All.Show()
     {
 
@@ -3304,6 +3293,15 @@ QPKGs.Dependant.Build()
 
     }
 
+QPKGs.Installable.Add()
+    {
+
+    [[ ${QPKGS_user_installable[*]} != *"$1"* ]] && QPKGS_user_installable+=("$1")
+
+    return 0
+
+    }
+
 QPKGs.Installable.Build()
     {
 
@@ -3321,15 +3319,26 @@ QPKGs.Installable.Build()
 
     }
 
-QPKGs.Installable.Add()
+QPKGs.Installable.Count()
     {
 
-    [[ ${QPKGS_user_installable[*]} != *"$1"* ]] && QPKGS_user_installable+=("$1")
-
-    return 0
+    echo "${#QPKGS_user_installable[@]}"
 
     }
 
+QPKGs.Installable.IsAny()
+    {
+
+    [[ $(QPKGs.Installable.Count) -gt 0 ]]
+
+    }
+
+QPKGs.Installable.IsNone()
+    {
+
+    [[ $(QPKGs.Installable.Count) -eq 0 ]]
+
+    }
 
 QPKGs.ToInstall.Add()
     {
@@ -3702,6 +3711,17 @@ QPKGs.Upgradable.IsNone()
 
     }
 
+QPKGs.Upgradable.Show()
+    {
+
+    for package in $(QPKGs.Upgradable.Print); do
+        echo "$package"
+    done
+
+    return 0
+
+    }
+
 QPKGs.ToRestart.Add()
     {
 
@@ -4055,7 +4075,7 @@ QPKG.Upgradable()
     # output:
     #   $? = 0 (true) or 1 (false)
 
-    [[ -n $1 && ${#QPKGS_upgradable[@]} -gt 0 && ${QPKGS_upgradable[*]} == *"$1"* ]]
+    [[ -n $1 ]] && QPKGs.Upgradable.IsAny && [[ ${QPKGS_upgradable[*]} == *"$1"* ]]
 
     }
 
