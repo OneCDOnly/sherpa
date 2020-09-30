@@ -2237,8 +2237,9 @@ GetTheseQPKGDeps()
 
     requested_list=$(DeDupeWords "$1")
     [[ -z $requested_list ]] && return
-    last_list_array=(${requested_list})
 
+    DebugFuncEntry
+    last_list_array=(${requested_list})
     DebugInfo "requested QPKGs: $requested_list"
 
     DebugProc 'finding QPKG dependencies'
@@ -2272,7 +2273,7 @@ GetTheseQPKGDeps()
     QPKG_pre_download_list=$(DeDupeWords "$requested_list ${dependency_list_array[*]}")
     DebugInfo "QPKGs requested + dependencies: $QPKG_pre_download_list"
 
-    return 0
+    DebugFuncExit; return 0
 
     }
 
@@ -3223,6 +3224,7 @@ QPKGs.All.Show()
 QPKGs.Download.Build()
     {
 
+    DebugFuncEntry
     local QPKGs_initial_download_array=()
 
     # build an initial package download list. Items on this list will be skipped at download-time if they can be found in local cache.
@@ -3251,7 +3253,7 @@ QPKGs.Download.Build()
 
     DebugScript 'initial package download' "${QPKGs_download_array[*]} "
 
-    return 0
+    DebugFuncExit; return 0
 
     }
 
