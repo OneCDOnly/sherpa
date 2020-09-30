@@ -1515,7 +1515,9 @@ PIP.Install()
     # KLUDGE: force recompilation of 'sabyenc3' package so it's recognised by SABnzbd. See: https://forums.sabnzbd.org/viewtopic.php?p=121214#p121214
     [[ $exec_cmd =~ sabyenc3 ]] && exec_cmd+=" && $pip3_cmd install --force-reinstall --ignore-installed --no-binary :all: sabyenc3 --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
 
-    [[ -z $exec_cmd ]] && return
+    if [[ -z $exec_cmd ]]; then
+        DebugFuncExit; return 0
+    fi
 
     ShowAsProcLong "downloading & installing $desc"
 
@@ -2665,7 +2667,11 @@ CheckPythonPathAndVersion()
 
     if location=$(command -v $1 2>&1); then
         DebugUserspace.OK "default '$1' path" "$location"
-        DebugUserspace.OK "default '$1' version" "$(version=$($1 -V 2>&1) && echo "$version" || echo '<unknown>')"
+        if version=$($1 -V 2>&1); then
+            DebugUserspace.OK "default '$1' version" "$version"
+        else
+            DebugUserspace.Warning "default '$1' version" '<unknown>'
+        fi
     else
         DebugUserspace.Warning "default '$1' path" '<not present>'
     fi
