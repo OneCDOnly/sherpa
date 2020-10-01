@@ -51,6 +51,7 @@ Session.Init()
     readonly MD5SUM_CMD=/bin/md5sum
     readonly PING_CMD=/bin/ping
     readonly SED_CMD=/bin/sed
+    readonly SH_CMD=/bin/sh
     readonly SLEEP_CMD=/bin/sleep
     readonly TAR_CMD=/bin/tar
     readonly TOUCH_CMD=/bin/touch
@@ -1873,10 +1874,10 @@ QPKG.Install()
     ShowAsProcLong "installing $(FormatAsPackageName "$1")"
 
     if Session.Debug.To.Screen.IsSet; then
-        RunThisAndLogResultsRealtime "sh $local_pathfile" "$log_pathfile"
+        RunThisAndLogResultsRealtime "$SH_CMD $local_pathfile" "$log_pathfile"
         result=$?
     else
-        RunThisAndLogResults "sh $local_pathfile" "$log_pathfile"
+        RunThisAndLogResults "$SH_CMD $local_pathfile" "$log_pathfile"
         result=$?
     fi
 
@@ -1927,10 +1928,10 @@ QPKG.Reinstall()
     ShowAsProcLong "re-installing $(FormatAsPackageName "$1")"
 
     if Session.Debug.To.Screen.IsSet; then
-        RunThisAndLogResultsRealtime "sh $local_pathfile" "$log_pathfile"
+        RunThisAndLogResultsRealtime "$SH_CMD $local_pathfile" "$log_pathfile"
         result=$?
     else
-        RunThisAndLogResults "sh $local_pathfile" "$log_pathfile"
+        RunThisAndLogResults "$SH_CMD $local_pathfile" "$log_pathfile"
         result=$?
     fi
 
@@ -1980,10 +1981,10 @@ QPKG.Upgrade()
     ShowAsProcLong "${prefix}upgrading $(FormatAsPackageName "$1")"
 
     if Session.Debug.To.Screen.IsSet; then
-        RunThisAndLogResultsRealtime "sh $local_pathfile" "$log_pathfile"
+        RunThisAndLogResultsRealtime "$SH_CMD $local_pathfile" "$log_pathfile"
         result=$?
     else
-        RunThisAndLogResults "sh $local_pathfile" "$log_pathfile"
+        RunThisAndLogResults "$SH_CMD $local_pathfile" "$log_pathfile"
         result=$?
     fi
 
@@ -2035,10 +2036,10 @@ QPKG.Uninstall()
         ShowAsProc "uninstalling $(FormatAsPackageName "$1")"
 
         if Session.Debug.To.Screen.IsSet; then
-            RunThisAndLogResultsRealtime "sh $qpkg_installed_path/.uninstall.sh " "$log_pathfile"
+            RunThisAndLogResultsRealtime "$SH_CMD $qpkg_installed_path/.uninstall.sh " "$log_pathfile"
             result=$?
         else
-            RunThisAndLogResults "sh $qpkg_installed_path/.uninstall.sh " "$log_pathfile"
+            RunThisAndLogResults "$SH_CMD $qpkg_installed_path/.uninstall.sh " "$log_pathfile"
             result=$?
         fi
 
@@ -2086,10 +2087,10 @@ QPKG.Restart()
     ShowAsProc "restarting $(FormatAsPackageName "$1")"
 
     if Session.Debug.To.Screen.IsSet; then
-        RunThisAndLogResultsRealtime "sh $package_init_pathfile restart" "$log_pathfile"
+        RunThisAndLogResultsRealtime "$SH_CMD $package_init_pathfile restart" "$log_pathfile"
         result=$?
     else
-        RunThisAndLogResults "sh $package_init_pathfile restart" "$log_pathfile"
+        RunThisAndLogResults "$SH_CMD $package_init_pathfile restart" "$log_pathfile"
         result=$?
     fi
 
@@ -2162,10 +2163,10 @@ QPKG.Backup()
     ShowAsProc "backing-up $(FormatAsPackageName "$1") configuration"
 
     if Session.Debug.To.Screen.IsSet; then
-        RunThisAndLogResultsRealtime "sh $package_init_pathfile backup" "$log_pathfile"
+        RunThisAndLogResultsRealtime "$SH_CMD $package_init_pathfile backup" "$log_pathfile"
         result=$?
     else
-        RunThisAndLogResults "sh $package_init_pathfile backup" "$log_pathfile"
+        RunThisAndLogResults "$SH_CMD $package_init_pathfile backup" "$log_pathfile"
         result=$?
     fi
 
@@ -2211,10 +2212,10 @@ QPKG.Restore()
     ShowAsProc "restoring $(FormatAsPackageName "$1") configuration"
 
     if Session.Debug.To.Screen.IsSet; then
-        RunThisAndLogResultsRealtime "sh $package_init_pathfile restore" "$log_pathfile"
+        RunThisAndLogResultsRealtime "$SH_CMD $package_init_pathfile restore" "$log_pathfile"
         result=$?
     else
-        RunThisAndLogResults "sh $package_init_pathfile restore" "$log_pathfile"
+        RunThisAndLogResults "$SH_CMD $package_init_pathfile restore" "$log_pathfile"
         result=$?
     fi
 
