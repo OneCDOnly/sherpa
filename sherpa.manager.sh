@@ -1270,9 +1270,9 @@ DisplayNewQPKGVersions()
         done
 
         if [[ ${#packages_left_to_upgrade[@]} -eq 1 ]]; then
-            msg='An upgraded package is'
+            msg='an upgraded package is'
         else
-            msg='Upgraded packages are'
+            msg='upgraded packages are'
         fi
 
         ShowAsNote "$msg available for $package_names_formatted"
