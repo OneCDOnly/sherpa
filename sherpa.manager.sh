@@ -39,7 +39,7 @@ Session.Init()
     readonly SCRIPT_STARTSECONDS=$(date +%s)
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=201001
+    readonly MANAGER_SCRIPT_VERSION=201002
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -1057,7 +1057,8 @@ Packages.Install.Independents()
     fi
 
     if QPKG.Installed Entware; then
-        QPKG.NotEnabled Entware && QPKG.Enable Entware && ReloadProfile
+        QPKG.NotEnabled Entware && QPKG.Enable Entware
+        ReloadProfile
         PatchBaseInit
         IPKGs.Install
         PIP.Install
