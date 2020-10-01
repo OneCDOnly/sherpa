@@ -1246,8 +1246,9 @@ DisplayNewQPKGVersions()
     # $? = 1 if one or more packages can be upgraded
 
     local msg=''
+    local index=0
     local packages_left_to_upgrade=()
-    local package_names=''
+    local package_names_formatted=''
 
     if QPKGs.Upgradable.IsAny; then
         for package in "${QPKGS_upgradable[@]}"; do
@@ -1256,17 +1257,25 @@ DisplayNewQPKGVersions()
             fi
         done
 
-        if [[ ${#packages_left_to_upgrade[@]} -eq 0 ]]; then
-            return 0
-        elif [[ ${#packages_left_to_upgrade[@]} -eq 1 ]]; then
+        [[ ${#packages_left_to_upgrade[@]} -eq 0 ]] && return 0
+
+        for ((index=0;index<=((${#packages_left_to_upgrade[@]}-1));index++)); do
+            package_names_formatted+=$(ColourTextBrightYellow "${packages_left_to_upgrade[$index]}")
+
+            if [[ $(($index+2)) -lt ${#packages_left_to_upgrade[@]} ]]; then
+                package_names_formatted+=', '
+            elif [[ $(($index+2)) -eq ${#packages_left_to_upgrade[@]} ]]; then
+                package_names_formatted+=' & '
+            fi
+        done
+
+        if [[ ${#packages_left_to_upgrade[@]} -eq 1 ]]; then
             msg='An upgraded package is'
         else
             msg='Upgraded packages are'
         fi
 
-        package_names=${packages_left_to_upgrade[*]}
-
-        ShowAsNote "$msg available for $(ColourTextBrightYellow "${package_names// /, }")"
+        ShowAsNote "$msg available for $package_names_formatted"
         return 1
     fi
 
