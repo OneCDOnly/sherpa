@@ -1534,7 +1534,6 @@ PIP.Install()
     fi
 
     ShowAsProcLong "downloading & installing $desc"
-
     RunThisAndLogResults "$exec_cmd" "$log_pathfile"
     result=$?
 
@@ -1542,9 +1541,9 @@ PIP.Install()
         ShowAsDone "downloaded & installed $desc"
     else
         ShowAsError "download & install $desc failed $(FormatAsResult "$result")"
-        AddFileToDebug "$log_pathfile"
     fi
 
+    AddFileToDebug "$log_pathfile"
     DebugFuncExit; return $result
 
     }
