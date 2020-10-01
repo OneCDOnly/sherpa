@@ -1026,12 +1026,18 @@ Packages.Install.Independents()
 
     Session.SkipPackageProcessing.IsSet && return
     DebugFuncEntry
+    local package=''
+
+    # ensure required independent packages are installed too
+    for package in "${SHERPA_INDEP_QPKGs[@]}"; do
+        [[ ${QPKGs_not_installed[*]} == *"$package"* && ${QPKGs_download_array[*]} == *"$package"* ]] && QPKGs.ToInstall.Add "$package"
+    done
 
     # install independent QPKGs first, in the order they were declared
 
-    if QPKGs.ToInstall.IsAny || QPKGs.ToReinstall.IsAny; then
+    if QPKGs.ToInstall.IsAny || QPKGs.ToReinstall.IsAny || User.Opts.Dependencies.Check.IsSet; then
         for package in "${SHERPA_INDEP_QPKGs[@]}"; do
-            if  [[ ${QPKGs_to_install[*]} == *"$package"* || ${QPKGs_to_reinstall[*]} == *"$package"* ]]; then
+            if [[ ${QPKGs_to_install[*]} == *"$package"* || ${QPKGs_to_reinstall[*]} == *"$package"* ]]; then
                 if [[ $package = Entware ]]; then
                     # rename original [/opt]
                     local opt_path=/opt
@@ -3245,6 +3251,7 @@ QPKGs.Download.Build()
 
     DebugFuncEntry
     local QPKGs_initial_download_array=()
+    local package=''
 
     # build an initial package download list. Items on this list will be skipped at download-time if they can be found in local cache.
     if User.Opts.Apps.All.Install.IsSet; then
