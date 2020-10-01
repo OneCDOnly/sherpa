@@ -371,7 +371,7 @@ Session.Init()
         SHERPA_QPKG_MD5+=(774191bbdcd31e6494abba4192b51d7a)
         SHERPA_QPKG_ABBRVS+=('del-web deluge-web')
         SHERPA_QPKG_DEPS+=('Entware')
-        SHERPA_QPKG_IPKGS+=('deluge-ui-web')
+        SHERPA_QPKG_IPKGS+=('deluge-ui-web jq')
 
     # package arrays are now full, so lock them
     readonly SHERPA_QPKG_NAME
