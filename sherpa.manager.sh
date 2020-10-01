@@ -3267,7 +3267,7 @@ QPKGs.Download.Build()
     ExcludeInstalledQPKGs "$QPKG_pre_download_list"
 
     if [[ $(Packages.Download.Count) -eq 1 && ${QPKGs_download_array[0]} = Entware ]] && QPKG.NotInstalled Entware; then
-        ShowAsNote "It's not necessary to install $(FormatAsPackageName Entware) on its own. It will be installed as-required with your other $(FormatAsScriptTitle) packages. :)"
+        ShowAsNote "It's not necessary to install $(FormatAsPackageName Entware) on its own. It will be installed as-required with your other sherpa packages. :)"  # don't colourise title here as ANSI codes can't be removed without Entware being installed with its GNU utils.
     fi
 
     DebugScript 'initial package download' "${QPKGs_download_array[*]} "
