@@ -1260,7 +1260,7 @@ DisplayNewQPKGVersions()
         [[ ${#packages_left_to_upgrade[@]} -eq 0 ]] && return 0
 
         for ((index=0;index<=((${#packages_left_to_upgrade[@]}-1));index++)); do
-            package_names_formatted+=$(ColourTextBrightYellow "${packages_left_to_upgrade[$index]}")
+            package_names_formatted+=$(ColourTextBrightOrange "${packages_left_to_upgrade[$index]}")
 
             if [[ $(($index+2)) -lt ${#packages_left_to_upgrade[@]} ]]; then
                 package_names_formatted+=', '
@@ -3002,7 +3002,7 @@ Help.Packages.Show()
 
     for package in "${QPKGS_user_installable[@]}"; do
         if QPKG.Upgradable "$package"; then
-            package_name_message="$(ColourTextBrightYellow "$package")"
+            package_name_message="$(ColourTextBrightOrange "$package")"
         else
             package_name_message="$package"
         fi
@@ -3132,7 +3132,7 @@ Help.PackageAbbreviations.Show()
     for package_index in "${!SHERPA_QPKG_NAME[@]}"; do
         if [[ -n ${SHERPA_QPKG_ABBRVS[$package_index]} ]]; then
             if QPKG.Upgradable "${SHERPA_QPKG_NAME[$package_index]}"; then
-                printf "%26s: %s\n" "$(ColourTextBrightYellow "${SHERPA_QPKG_NAME[$package_index]}")" "$($SED_CMD 's| |, |g' <<< "${SHERPA_QPKG_ABBRVS[$package_index]}")"
+                printf "%32s: %s\n" "$(ColourTextBrightOrange "${SHERPA_QPKG_NAME[$package_index]}")" "$($SED_CMD 's| |, |g' <<< "${SHERPA_QPKG_ABBRVS[$package_index]}")"
             else
                 printf "%15s: %s\n" "${SHERPA_QPKG_NAME[$package_index]}" "$($SED_CMD 's| |, |g' <<< "${SHERPA_QPKG_ABBRVS[$package_index]}")"
             fi
