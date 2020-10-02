@@ -36,16 +36,17 @@ Session.Init()
 
     IsQNAP || return 1
     DebugFuncEntry
-    readonly SCRIPT_STARTSECONDS=$(date +%s)
+    readonly SCRIPT_STARTSECONDS=$(/bin/date +%s)
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=201002
+    readonly MANAGER_SCRIPT_VERSION=201003
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
     readonly BUSYBOX_CMD=/bin/busybox
     readonly CAT_CMD=/bin/cat
     readonly CHMOD_CMD=/bin/chmod
+    readonly DATE_CMD=/bin/date
     readonly GREP_CMD=/bin/grep
     readonly HOSTNAME_CMD=/bin/hostname
     readonly MD5SUM_CMD=/bin/md5sum
@@ -84,6 +85,7 @@ Session.Init()
     IsSysFileExist $BUSYBOX_CMD || return 1
     IsSysFileExist $CAT_CMD || return 1
     IsSysFileExist $CHMOD_CMD || return 1
+    IsSysFileExist $DATE_CMD || return 1
     IsSysFileExist $GREP_CMD || return 1
     IsSysFileExist $HOSTNAME_CMD || return 1
     IsSysFileExist $MD5SUM_CMD || return 1
@@ -388,7 +390,7 @@ Session.Init()
     Session.ParseArguments
     Session.SkipPackageProcessing.IsNot && Session.Debug.To.File.Set
     DebugInfoMajorSeparator
-    DebugScript 'started' "$(date -d @$SCRIPT_STARTSECONDS | tr -s ' ')"
+    DebugScript 'started' "$($DATE_CMD -d @$SCRIPT_STARTSECONDS | tr -s ' ')"
     DebugScript 'version' "package: $PACKAGE_VERSION, manager: $MANAGER_SCRIPT_VERSION, loader $LOADER_SCRIPT_VERSION"
     DebugScript 'PID' "$$"
     DebugInfoMinorSeparator
@@ -1226,8 +1228,8 @@ Session.Results()
     DisplayLineSpaceIfNoneAlready       # final on-screen line space
 
     DebugInfoMinorSeparator
-    DebugScript 'finished' "$(date)"
-    DebugScript 'elapsed time' "$(ConvertSecsToHoursMinutesSecs "$(($(date +%s)-$([[ -n $SCRIPT_STARTSECONDS ]] && echo "$SCRIPT_STARTSECONDS" || echo "1")))")"
+    DebugScript 'finished' "$($DATE_CMD)"
+    DebugScript 'elapsed time' "$(ConvertSecsToHoursMinutesSecs "$(($($DATE_CMD +%s)-$([[ -n $SCRIPT_STARTSECONDS ]] && echo "$SCRIPT_STARTSECONDS" || echo "1")))")"
     DebugInfoMajorSeparator
 
     Session.LockFile.Release
@@ -4140,7 +4142,7 @@ DebugFuncEntry()
 
     local var_name="${FUNCNAME[1]}_STARTSECONDS"
     local var_safe_name="${var_name//[.-]/_}"
-    eval "$var_safe_name=$(date +%s%N)"
+    eval "$var_safe_name=$(/bin/date +%s%N)"    # hardcode 'date' here as this function is called before binaries are cherry-picked.
 
     DebugThis "(>>) ${FUNCNAME[1]}()"
 
@@ -4151,7 +4153,7 @@ DebugFuncExit()
 
     local var_name=${FUNCNAME[1]}_STARTSECONDS
     local var_safe_name=${var_name//[.-]/_}
-    local diff_milliseconds=$((($(date +%s%N) - ${!var_safe_name})/1000000))
+    local diff_milliseconds=$((($($DATE_CMD +%s%N) - ${!var_safe_name})/1000000))
     local elapsed_time=''
 
     if [[ $diff_milliseconds -lt 30000 ]]; then
@@ -4822,7 +4824,6 @@ Objects.Compile()
         # lists
         Objects.Add QPKGs.Installed
         Objects.Add QPKGs.JustInstalled
-        Objects.Add QPKGs.Upgradable
         Objects.Add QPKGs.ToBackup
         Objects.Add QPKGs.ToForceUpgrade
         Objects.Add QPKGs.ToInstall
@@ -4831,6 +4832,7 @@ Objects.Compile()
         Objects.Add QPKGs.ToRestore
         Objects.Add QPKGs.ToUninstall
         Objects.Add QPKGs.ToUpgrade
+        Objects.Add QPKGs.Upgradable
 
         # flags
         Objects.Add Session.Backup
