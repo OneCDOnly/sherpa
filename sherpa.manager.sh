@@ -158,7 +158,7 @@ Session.Init()
     readonly IPKG_DL_PATH=$WORK_PATH/ipkgs.downloads
     readonly IPKG_CACHE_PATH=$WORK_PATH/ipkgs
     readonly PIP_CACHE_PATH=$WORK_PATH/pips
-    readonly OBJECT_REF_HASH=c9c6248c4bc69f2d86af2dbac21d8183
+    readonly OBJECT_REF_HASH=8075a8deca2cbb43fa7500ebb4c3e451
 
     if ! MakePath "$WORK_PATH" 'work'; then
         DebugFuncExit; return 1
@@ -221,7 +221,6 @@ Session.Init()
     # runtime arrays
     QPKGs_to_backup=()
     QPKGs_to_force_upgrade=()
-    QPKGs_to_install=()
     QPKGs_to_reinstall=()
     QPKGs_to_restart=()
     QPKGs_to_restore=()
@@ -597,7 +596,7 @@ Session.ParseArguments()
                         fi
                         ;;
                     install_)
-                        QPKGs.ToInstall.Add "$target_package"
+                        QPKGs.ToInstall.AddUniq "$target_package"
                         ;;
                     reinstall_)
                         QPKGs.ToReinstall.Add "$target_package"
@@ -796,7 +795,7 @@ Packages.Assignment.Check()
         if QPKGs.Installable.IsAny; then
             for package in "${QPKGS_user_installable[@]}"; do
                 if [[ $package != Entware ]]; then      # KLUDGE: ignore Entware as it needs to be handled separately.
-                    QPKGs.ToInstall.Add "$package"
+                    QPKGs.ToInstall.AddUniq "$package"
                 fi
             done
         fi
@@ -838,7 +837,7 @@ Packages.Assignment.Check()
 
     if QPKGs.ToUninstall.IsAny; then
         for package in "${SHERPA_DEP_QPKGs[@]}"; do
-            if [[ ${QPKGs_to_install[*]} == *"$package"* ]]; then
+            if QPKGs.ToInstall.Exist "$package"; then
                 QPKGs.ToRestart.Remove "$package"
             fi
         done
@@ -867,7 +866,7 @@ Packages.Assignment.Check()
 
     if QPKGs.ToInstall.IsAny; then
         for package in "${SHERPA_DEP_QPKGs[@]}"; do
-            if [[ ${QPKGs_to_install[*]} == *"$package"* ]]; then
+            if QPKGs.ToInstall.Exist "$package"; then
                 QPKGs.ToReinstall.Remove "$package"
                 QPKGs.ToRestart.Remove "$package"
             fi
@@ -896,7 +895,7 @@ Packages.Assignment.Check()
     DebugScript 'uninstall' "${QPKGs_to_uninstall[*]} "
     DebugScript 'forced-upgrade' "${QPKGs_to_force_upgrade[*]} "
     DebugScript 'upgrade' "${QPKGs_to_upgrade[*]} "
-    DebugScript 'install' "${QPKGs_to_install[*]} "
+    DebugScript 'install' "$(QPKGs.ToInstall.List) "
     DebugScript 'reinstall' "${QPKGs_to_reinstall[*]} "
     DebugScript 'restore' "${QPKGs_to_restore[*]} "
     DebugScript 'restart' "${QPKGs_to_restart[*]} "
@@ -1030,14 +1029,14 @@ Packages.Install.Independents()
 
     # ensure required independent packages are installed too
     for package in "${SHERPA_INDEP_QPKGs[@]}"; do
-        [[ ${QPKGs_not_installed[*]} == *"$package"* && ${QPKGs_download_array[*]} == *"$package"* ]] && QPKGs.ToInstall.Add "$package"
+        [[ ${QPKGs_not_installed[*]} == *"$package"* && ${QPKGs_download_array[*]} == *"$package"* ]] && QPKGs.ToInstall.AddUniq "$package"
     done
 
     # install independent QPKGs first, in the order they were declared
 
     if QPKGs.ToInstall.IsAny || QPKGs.ToReinstall.IsAny || User.Opts.Dependencies.Check.IsSet; then
         for package in "${SHERPA_INDEP_QPKGs[@]}"; do
-            if [[ ${QPKGs_to_install[*]} == *"$package"* || ${QPKGs_to_reinstall[*]} == *"$package"* ]]; then
+            if QPKGs.ToInstall.Exist "$package" || [[ ${QPKGs_to_reinstall[*]} == *"$package"* ]]; then
                 if [[ $package = Entware ]]; then
                     # rename original [/opt]
                     local opt_path=/opt
@@ -1050,7 +1049,7 @@ Packages.Install.Independents()
                     [[ -L $opt_path && -d $opt_backup_path ]] && cp --recursive "$opt_backup_path"/* --target-directory "$opt_path" && rm -rf "$opt_backup_path"
                 else
                     if [[ $NAS_QPKG_ARCH != none ]]; then
-                        if [[ ${QPKGs_to_install[*]} == *"$package"* ]]; then
+                        if QPKGs.ToInstall.Exist "$package"; then
                             QPKG.Install "$package"
                         elif [[ ${QPKGs_to_reinstall[*]} == *"$package"* ]]; then
                             QPKG.Reinstall "$package"
@@ -1070,7 +1069,7 @@ Packages.Install.Independents()
         PIP.Install
     fi
 
-    if QPKG.ToBeReinstalled Entware || User.Opts.Apps.All.Restart.IsSet; then
+    if QPKGs.JustInstalled.Exist Entware || User.Opts.Apps.All.Restart.IsSet; then
         QPKGs.Dependant.Restart
     fi
 
@@ -1107,7 +1106,7 @@ Packages.Install.Dependants()
 
     if QPKGs.ToInstall.IsAny; then
         for package in "${SHERPA_DEP_QPKGs[@]}"; do
-            if [[ ${QPKGs_to_install[*]} == *"$package"* ]]; then
+            if QPKGs.ToInstall.Exist "$package"; then
                 if QPKG.NotInstalled "$package"; then
                     QPKG.Install "$package"
                 else
@@ -1890,6 +1889,7 @@ QPKG.Install()
     if [[ $result -eq 0 || $result -eq 10 ]]; then
         ShowAsDone "installed $(FormatAsPackageName "$1")"
         GetQPKGServiceStatus "$1"
+        QPKGs.JustInstalled.Add "$1"
     else
         ShowAsError "installation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $result)"
     fi
@@ -2312,25 +2312,25 @@ ExcludeInstalledQPKGs()
     QPKGs_download_array=()
     local requested_list=''
     local requested_list_array=()
-    local element=''
+    local package=''
     requested_list=$(DeDupeWords "$1")
     [[ -z $requested_list ]] && return
     requested_list_array=(${requested_list})
 
     DebugProc 'excluding QPKGs already installed'
 
-    for element in "${requested_list_array[@]}"; do
-        if QPKG.NotInstalled "$element"; then
-            QPKGs_download_array+=($element)
-            QPKGs.ToInstall.Add "$package"
-        elif QPKGs.ToInstall.IsAny && [[ ${QPKGs_to_install[*]} == *"$element"* ]]; then
-            QPKGs_download_array+=($element)
-        elif QPKGs.ToReinstall.IsAny && [[ ${QPKGs_to_reinstall[*]} == *"$element"* ]]; then
-            QPKGs_download_array+=($element)
-        elif QPKGs.ToUpgrade.IsAny && [[ ${QPKGs_to_upgrade[*]} == *"$element"* ]]; then
-            QPKGs_download_array+=($element)
-        elif QPKGs.ToForceUpgrade.IsAny && [[ ${QPKGs_to_force_upgrade[*]} == *"$element"* ]]; then
-            QPKGs_download_array+=($element)
+    for package in "${requested_list_array[@]}"; do
+        if QPKG.NotInstalled "$package"; then
+            QPKGs_download_array+=($package)
+            QPKGs.ToInstall.AddUniq "$package"
+        elif QPKGs.ToInstall.IsAny && QPKGs.ToInstall.Exist "$package"; then
+            QPKGs_download_array+=($package)
+        elif QPKGs.ToReinstall.IsAny && [[ ${QPKGs_to_reinstall[*]} == *"$package"* ]]; then
+            QPKGs_download_array+=($package)
+        elif QPKGs.ToUpgrade.IsAny && [[ ${QPKGs_to_upgrade[*]} == *"$package"* ]]; then
+            QPKGs_download_array+=($package)
+        elif QPKGs.ToForceUpgrade.IsAny && [[ ${QPKGs_to_force_upgrade[*]} == *"$package"* ]]; then
+            QPKGs_download_array+=($package)
         fi
     done
 
@@ -3257,7 +3257,7 @@ QPKGs.Download.Build()
     if User.Opts.Apps.All.Install.IsSet; then
         QPKGs_initial_download_array+=($(QPKGs.NotInstalled.Array))
         for package in "${QPKGs_initial_download_array[@]}"; do
-            QPKGs.ToInstall.Add "$package"
+            QPKGs.ToInstall.AddUniq "$package"
         done
     elif User.Opts.Apps.All.Upgrade.IsSet; then
         QPKGs_initial_download_array=($(QPKGs.Upgradable.Array))
@@ -3267,7 +3267,7 @@ QPKGs.Download.Build()
     elif User.Opts.Dependencies.Check.IsSet; then
         QPKGs_initial_download_array+=($(QPKGs.Installed.Array))
     else
-        QPKGs_initial_download_array+=(${QPKGs_to_install[*]} ${QPKGs_to_reinstall[*]} ${QPKGs_to_upgrade[*]} ${QPKGs_to_force_upgrade[*]})
+        QPKGs_initial_download_array+=($(QPKGs.ToInstall.List) ${QPKGs_to_reinstall[*]} ${QPKGs_to_upgrade[*]} ${QPKGs_to_force_upgrade[*]})
     fi
 
     GetTheseQPKGDeps "${QPKGs_initial_download_array[*]}"
@@ -3365,52 +3365,6 @@ QPKGs.Installable.IsNone()
     {
 
     [[ $(QPKGs.Installable.Count) -eq 0 ]]
-
-    }
-
-QPKGs.ToInstall.Add()
-    {
-
-    [[ ${QPKGs_to_install[*]} != *"$1"* ]] && QPKGs_to_install+=("$1")
-
-    return 0
-
-    }
-
-QPKGs.ToInstall.Remove()
-    {
-
-    [[ ${QPKGs_to_install[*]} == *"$1"* ]] && QPKGs_to_install=("${QPKGs_to_install[@]/$1}")
-
-    return 0
-
-    }
-
-QPKGs.ToInstall.Count()
-    {
-
-    echo "${#QPKGs_to_install[@]}"
-
-    }
-
-QPKGs.ToInstall.Print()
-    {
-
-    echo "${QPKGs_to_install[*]}"
-
-    }
-
-QPKGs.ToInstall.IsAny()
-    {
-
-    [[ $(QPKGs.ToInstall.Count) -gt 0 ]]
-
-    }
-
-QPKGs.ToInstall.IsNone()
-    {
-
-    [[ $(QPKGs.ToInstall.Count) -eq 0 ]]
 
     }
 
@@ -3965,7 +3919,7 @@ QPKG.ToBeInstalled()
     #   $? = 0 (true) or 1 (false)
 
     [[ -z $1 ]] && return 1
-    [[ $(QPKGs.ToInstall.Count) -gt 0 && ${QPKGs_to_install[*]} == *"$1"* ]] && return 0
+    QPKGs.ToInstall.Exist "$1" && return 0
 
     return 1
 
@@ -4951,17 +4905,32 @@ Objects.Add()
     _placehold_text_="_object_${safe_function_name}_text_"
     _placehold_flag_="_object_${safe_function_name}_flag_"
     _placehold_enable_="_object_${safe_function_name}_enable_"
-    _placehold_list_array_="_object_${safe_function_name}_list_"
-    _placehold_list_index_="_object_${safe_function_name}_list_index_"
+    _placehold_array_="_object_${safe_function_name}_array_"
+    _placehold_array_index_="_object_${safe_function_name}_array_index_"
     _placehold_path_="_object_${safe_function_name}_path_"
 
-    echo $public_function_name'.Clear()
+echo $public_function_name'.Add()
+    {
+    '$_placehold_array_'+=("$1")
+    }
+'$public_function_name'.AddUniq()
+    {
+    [[ $'$_placehold_array_' != *"$1"* ]] && '$_placehold_array_'+=("$1")
+    }
+'$public_function_name'.Array()
+    {
+    echo -n "${'$_placehold_array_'[@]}"
+    }
+'$public_function_name'.Clear()
     {
     [[ $'$_placehold_flag_' != "true" ]] && return
     '$_placehold_flag_'=false
     DebugVar '$_placehold_flag_'
     }
-
+'$public_function_name'.Count()
+    {
+    echo "${#'$_placehold_array_'[@]}"
+    }
 '$public_function_name'.Description()
     {
     if [[ -n $1 && $1 = "=" ]]; then
@@ -4970,21 +4939,25 @@ Objects.Add()
         echo -n "'$_placehold_description_'"
     fi
     }
-
 '$public_function_name'.Disable()
     {
     [[ $'$_placehold_enable_' != "true" ]] && return
     '$_placehold_enable_'=false
     DebugVar '$_placehold_enable_'
     }
-
 '$public_function_name'.Enable()
     {
     [[ $'$_placehold_enable_' = "true" ]] && return
     '$_placehold_enable_'=true
     DebugVar '$_placehold_enable_'
     }
-
+'$public_function_name'.Enumerate()
+    {
+    (('$_placehold_array_index_'++))
+    if [[ $'$_placehold_array_index_' -gt ${#'$_placehold_array_'[@]} ]]; then
+        '$_placehold_array_index_'=1
+    fi
+    }
 '$public_function_name'.Env()
     {
     echo "* object internal environment *"
@@ -4994,11 +4967,41 @@ Objects.Add()
     echo "Text: '\'\$$_placehold_text_\''"
     echo "Flag: '\'\$$_placehold_flag_\''"
     echo "Enable: '\'\$$_placehold_enable_\''"
-    echo "List: '\'\${$_placehold_list_array_[*]}\''"
-    echo "List pointer: '\'\$$_placehold_list_index_\''"
+    echo "Array: '\'\${$_placehold_array_[*]}\''"
+    echo "Array index: '\'\$$_placehold_array_index_\''"
     echo "Path: '\'\$$_placehold_path_\''"
     }
-
+'$public_function_name'.Exist()
+    {
+    [[ ${'$_placehold_array_'[*]} == *"$1"* ]]
+    }
+'$public_function_name'.First()
+    {
+    echo "${'$_placehold_array_'[0]}"
+    }
+'$public_function_name'.GetCurrent()
+    {
+    echo -n "${'$_placehold_array_'[(('$_placehold_array_index_'-1))]}"
+    }
+'$public_function_name'.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#'$_placehold_array_'[@]} ]] && index=${#'$_placehold_array_'[@]}
+    echo -n "${'$_placehold_array_'[((index-1))]}"
+    }
+'$public_function_name'.Index()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        if [[ $2 -gt ${#'$_placehold_array_'[@]} ]]; then
+            '$_placehold_array_index_'=${#'$_placehold_array_'[@]}
+        else
+            '$_placehold_array_index_'=$2
+        fi
+    else
+        echo -n $'$_placehold_array_index_'
+    fi
+    }
 '$public_function_name'.Init()
     {
     '$_placehold_description_'=''
@@ -5006,80 +5009,38 @@ Objects.Add()
     '$_placehold_text_'=''
     '$_placehold_flag_'=false
     '$_placehold_enable_'=false
-    '$_placehold_list_array_'+=()
-    '$_placehold_list_index_'=1
+    '$_placehold_array_'+=()
+    '$_placehold_array_index_'=1
     '$_placehold_path_'=''
     }
-
+'$public_function_name'.IsAny()
+    {
+    [[ ${#'$_placehold_array_'[@]} -gt 0 ]]
+    }
 '$public_function_name'.IsDisabled()
     {
     [[ $'$_placehold_enable_' != "true" ]]
     }
-
 '$public_function_name'.IsEnabled()
     {
     [[ $'$_placehold_enable_' = "true" ]]
     }
-
+'$public_function_name'.IsNone()
+    {
+    [[ ${#'$_placehold_array_'[@]} -eq 0 ]]
+    }
 '$public_function_name'.IsNot()
     {
     [[ $'$_placehold_flag_' != "true" ]]
     }
-
 '$public_function_name'.IsSet()
     {
     [[ $'$_placehold_flag_' = "true" ]]
     }
-
-'$public_function_name'.Items.Add()
+'$public_function_name'.List()
     {
-    '$_placehold_list_array_'+=("$1")
+    echo -n "${'$_placehold_array_'[*]}"
     }
-
-'$public_function_name'.Items.Count()
-    {
-    echo "${#'$_placehold_list_array_'[@]}"
-    }
-
-'$public_function_name'.Items.First()
-    {
-    echo "${'$_placehold_list_array_'[0]}"
-    }
-
-'$public_function_name'.Items.Enumerate()
-    {
-    (('$_placehold_list_index_'++))
-    if [[ $'$_placehold_list_index_' -gt ${#'$_placehold_list_array_'[@]} ]]; then
-        '$_placehold_list_index_'=1
-    fi
-    }
-
-'$public_function_name'.Items.GetCurrent()
-    {
-    echo -n "${'$_placehold_list_array_'[(('$_placehold_list_index_'-1))]}"
-    }
-
-'$public_function_name'.Items.GetThis()
-    {
-    local -i index="$1"
-    [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#'$_placehold_list_array_'[@]} ]] && index=${#'$_placehold_list_array_'[@]}
-    echo -n "${'$_placehold_list_array_'[((index-1))]}"
-    }
-
-'$public_function_name'.Items.Index()
-    {
-    if [[ -n $1 && $1 = "=" ]]; then
-        if [[ $2 -gt ${#'$_placehold_list_array_'[@]} ]]; then
-            '$_placehold_list_index_'=${#'$_placehold_list_array_'[@]}
-        else
-            '$_placehold_list_index_'=$2
-        fi
-    else
-        echo -n $'$_placehold_list_index_'
-    fi
-    }
-
 '$public_function_name'.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
@@ -5088,14 +5049,16 @@ Objects.Add()
         echo -n "$'$_placehold_path_'"
     fi
     }
-
+'$public_function_name'.Remove()
+    {
+    [[ ${'$_placehold_array_'[*]} == *"$1"* ]] && '$_placehold_array_'=("${'$_placehold_array_'[@]/$1}")
+    }
 '$public_function_name'.Set()
     {
     [[ $'$_placehold_flag_' = "true" ]] && return
     '$_placehold_flag_'=true
     DebugVar '$_placehold_flag_'
     }
-
 '$public_function_name'.Text()
     {
     if [[ -n $1 && $1 = "=" ]]; then
@@ -5104,7 +5067,6 @@ Objects.Add()
         echo -n "$'$_placehold_text_'"
     fi
     }
-
 '$public_function_name'.Value()
     {
     if [[ -n $1 && $1 = "=" ]]; then
@@ -5113,7 +5075,6 @@ Objects.Add()
         echo -n $'$_placehold_value_'
     fi
     }
-
 '$public_function_name'.Value.Decrement()
     {
     local -i amount
@@ -5124,7 +5085,6 @@ Objects.Add()
     fi
     '$_placehold_value_'=$(('$_placehold_value_'-amount))
     }
-
 '$public_function_name'.Value.Increment()
     {
     local -i amount
@@ -5135,7 +5095,6 @@ Objects.Add()
     fi
     '$_placehold_value_'=$(('$_placehold_value_'+amount))
     }
-
 '$public_function_name'.Init
 ' >> $COMPILED_OBJECTS
 
@@ -5181,6 +5140,10 @@ Objects.Compile()
         Objects.Add User.Opts.Apps.List.Installed
         Objects.Add User.Opts.Apps.List.NotInstalled
         Objects.Add User.Opts.Apps.List.Upgradable
+
+        # script objects
+        Objects.Add QPKGs.JustInstalled
+        Objects.Add QPKGs.ToInstall
 
         # script flags
         Objects.Add Session.Backup
