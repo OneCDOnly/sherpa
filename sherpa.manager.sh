@@ -4781,7 +4781,7 @@ Objects.Compile()
 
     if [[ ! -e $COMPILED_OBJECTS ]]; then
         if ! $CURL_CMD $curl_insecure_arg --silent --fail "$REMOTE_COMPILED_OBJECTS" > "$COMPILED_OBJECTS"; then
-            rm "$COMPILED_OBJECTS"
+            [[ ! -s $COMPILED_OBJECTS ]] && rm -f "$COMPILED_OBJECTS"
         fi
     fi
 
