@@ -153,12 +153,13 @@ Session.Init()
     readonly DEBUG_LOG_PATHFILE=$PROJECT_PATH/$DEBUG_LOG_FILE
     readonly WORK_PATH=$PROJECT_PATH/cache
     readonly COMPILED_OBJECTS=$WORK_PATH/compiled.objects
+    readonly REMOTE_COMPILED_OBJECTS=https://raw.githubusercontent.com/OneCDOnly/sherpa/master/$($BASENAME_CMD "$COMPILED_OBJECTS")
     readonly PACKAGE_LOGS_PATH=$PROJECT_PATH/logs
     readonly QPKG_DL_PATH=$WORK_PATH/qpkgs
     readonly IPKG_DL_PATH=$WORK_PATH/ipkgs.downloads
     readonly IPKG_CACHE_PATH=$WORK_PATH/ipkgs
     readonly PIP_CACHE_PATH=$WORK_PATH/pips
-    readonly OBJECT_REF_HASH=8075a8deca2cbb43fa7500ebb4c3e451
+    readonly OBJECT_REF_HASH=8ed27a925444e4444ea56bc8f1e3a421
 
     if ! MakePath "$WORK_PATH" 'work'; then
         DebugFuncExit; return 1
@@ -217,15 +218,6 @@ Session.Init()
     code_pointer=0
     pip3_cmd=/opt/bin/pip3
     [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg='--insecure' || curl_insecure_arg=''
-
-    # runtime arrays
-    QPKGs_to_backup=()
-    QPKGs_to_force_upgrade=()
-    QPKGs_to_reinstall=()
-    QPKGs_to_restart=()
-    QPKGs_to_restore=()
-    QPKGs_to_uninstall=()
-    QPKGs_to_upgrade=()
 
     # sherpa-supported package details - parallel arrays
     SHERPA_QPKG_NAME=()         # internal QPKG name
@@ -596,7 +588,7 @@ Session.ParseArguments()
                         fi
                         ;;
                     install_)
-                        QPKGs.ToInstall.AddUniq "$target_package"
+                        QPKGs.ToInstall.Add "$target_package"
                         ;;
                     reinstall_)
                         QPKGs.ToReinstall.Add "$target_package"
@@ -683,7 +675,7 @@ Session.Validate()
     fi
 
     DebugQPKG 'arch' "$NAS_QPKG_ARCH"
-    DebugQPKG 'upgradable package(s)' "${QPKGS_upgradable[*]} "
+    DebugQPKG 'upgradable package(s)' "$(QPKGs.Upgradable.List) "
     DebugInfoMinorSeparator
     Packages.Assignment.Check
     DebugInfoMinorSeparator
@@ -757,7 +749,7 @@ Packages.Assignment.Check()
 
     if User.Opts.Apps.All.Backup.IsSet; then
         if QPKGs.Installed.IsAny; then
-            for package in "${QPKGs_installed[@]}"; do
+            for package in $(QPKGs.Installed.Array); do
                 QPKGs.ToBackup.Add "$package"
             done
         fi
@@ -765,7 +757,7 @@ Packages.Assignment.Check()
 
     if User.Opts.Apps.All.Restore.IsSet; then
         if QPKGs.Installed.IsAny; then
-            for package in "${QPKGs_installed[@]}"; do
+            for package in $(QPKGs.Installed.Array); do
                 QPKGs.ToRestore.Add "$package"
             done
         fi
@@ -773,7 +765,7 @@ Packages.Assignment.Check()
 
     if User.Opts.Apps.All.Upgrade.IsSet; then
         if QPKGs.Upgradable.IsAny; then
-            for package in "${QPKGS_upgradable[@]}"; do
+            for package in $(QPKGs.Upgradable.Array); do
                 if [[ $package != Entware ]]; then      # KLUDGE: ignore Entware as it needs to be handled separately.
                     QPKGs.ToUpgrade.Add "$package"
                 fi
@@ -783,7 +775,7 @@ Packages.Assignment.Check()
 
     if User.Opts.Apps.All.Reinstall.IsSet; then
         if QPKGs.Installed.IsAny; then
-            for package in "${QPKGs_installed[@]}"; do
+            for package in $(QPKGs.Installed.Array); do
                 if [[ $package != Entware ]]; then      # KLUDGE: ignore Entware as it needs to be handled separately.
                     QPKGs.ToReinstall.Add "$package"
                 fi
@@ -795,7 +787,7 @@ Packages.Assignment.Check()
         if QPKGs.Installable.IsAny; then
             for package in "${QPKGS_user_installable[@]}"; do
                 if [[ $package != Entware ]]; then      # KLUDGE: ignore Entware as it needs to be handled separately.
-                    QPKGs.ToInstall.AddUniq "$package"
+                    QPKGs.ToInstall.Add "$package"
                 fi
             done
         fi
@@ -803,7 +795,7 @@ Packages.Assignment.Check()
 
     if User.Opts.Apps.All.Restart.IsSet; then
         if QPKGs.Installed.IsAny; then
-            for package in "${QPKGs_installed[@]}"; do
+            for package in $(QPKGs.Installed.Array); do
                 if [[ $package != Entware ]]; then      # KLUDGE: ignore Entware as it needs to be handled separately.
                     QPKGs.ToRestart.Add "$package"
                 fi
@@ -813,7 +805,7 @@ Packages.Assignment.Check()
 
     if User.Opts.Apps.All.Uninstall.IsSet; then
         if QPKGs.Installed.IsAny; then
-            for package in "${QPKGs_installed[@]}"; do
+            for package in $(QPKGs.Installed.Array); do
                 if [[ $package != Entware ]]; then      # KLUDGE: ignore Entware as it needs to be handled separately.
                     QPKGs.ToUninstall.Add "$package"
                 fi
@@ -845,7 +837,7 @@ Packages.Assignment.Check()
 
     if QPKGs.ToForceUpgrade.IsAny; then
         for package in "${SHERPA_DEP_QPKGs[@]}"; do
-            if [[ ${QPKGs_to_force_upgrade[*]} == *"$package"* ]]; then
+            if QPKGs.ToForceUpgrade.Exist "$package"; then
                 QPKGs.ToUpgrade.Remove "$package"
                 QPKGs.ToInstall.Remove "$package"
                 QPKGs.ToReinstall.Remove "$package"
@@ -856,7 +848,7 @@ Packages.Assignment.Check()
 
     if QPKGs.ToUpgrade.IsAny; then
         for package in "${SHERPA_DEP_QPKGs[@]}"; do
-            if [[ ${QPKGs_to_upgrade[*]} == *"$package"* ]]; then
+            if QPKGs.ToUpgrade.Exist "$package"; then
                 QPKGs.ToInstall.Remove "$package"
                 QPKGs.ToReinstall.Remove "$package"
                 QPKGs.ToRestart.Remove "$package"
@@ -875,7 +867,7 @@ Packages.Assignment.Check()
 
     if QPKGs.ToReinstall.IsAny; then
         for package in "${SHERPA_DEP_QPKGs[@]}"; do
-            if [[ ${QPKGs_to_reinstall[*]} == *"$package"* ]]; then
+            if QPKGs.ToReinstall.Exist "$package"; then
                 QPKGs.ToRestart.Remove "$package"
             fi
         done
@@ -883,7 +875,7 @@ Packages.Assignment.Check()
 
     if QPKGs.ToRestore.IsAny; then
         for package in "${SHERPA_DEP_QPKGs[@]}"; do
-            if [[ ${QPKGs_to_restore[*]} == *"$package"* ]]; then
+            if QPKGs.ToRestore.Exist "$package"; then
                 QPKGs.ToRestart.Remove "$package"
             fi
         done
@@ -891,14 +883,14 @@ Packages.Assignment.Check()
 
     # don't need to independently check the 'restart' list as it is checked by the previous conditions.
 
-    DebugScript 'backup' "${QPKGs_to_backup[*]} "
-    DebugScript 'uninstall' "${QPKGs_to_uninstall[*]} "
-    DebugScript 'forced-upgrade' "${QPKGs_to_force_upgrade[*]} "
-    DebugScript 'upgrade' "${QPKGs_to_upgrade[*]} "
+    DebugScript 'backup' "$(QPKGs.ToBackup.List) "
+    DebugScript 'uninstall' "$(QPKGs.ToUninstall.List) "
+    DebugScript 'forced-upgrade' "$(QPKGs.ToForceUpgrade.List) "
+    DebugScript 'upgrade' "$(QPKGs.ToUpgrade.List) "
     DebugScript 'install' "$(QPKGs.ToInstall.List) "
-    DebugScript 'reinstall' "${QPKGs_to_reinstall[*]} "
-    DebugScript 'restore' "${QPKGs_to_restore[*]} "
-    DebugScript 'restart' "${QPKGs_to_restart[*]} "
+    DebugScript 'reinstall' "$(QPKGs.ToReinstall.List) "
+    DebugScript 'restore' "$(QPKGs.ToRestore.List) "
+    DebugScript 'restart' "$(QPKGs.ToRestart.List) "
 
     DebugFuncExit; return 0
 
@@ -927,7 +919,7 @@ Packages.Backup()
     local package=''
 
     if QPKGs.ToBackup.IsAny; then
-        for package in "${QPKGs_to_backup[@]}"; do
+        for package in $(QPKGs.ToBackup.Array); do
             if QPKG.Installed "$package"; then
                 if [[ ${SHERPA_INDEP_QPKGs[*]} == *"$package"* ]]; then
                     ShowAsNote "unable to backup $(FormatAsPackageName "$package") configuration as it's unsupported"
@@ -959,7 +951,7 @@ Packages.Uninstall()
     if QPKGs.ToUninstall.IsAny; then
         # remove dependant packages first
         for package in "${SHERPA_DEP_QPKGs[@]}"; do
-            if [[ ${QPKGs_to_uninstall[*]} == *"$package"* ]]; then
+            if QPKGs.ToUninstall.Exist "$package"; then
                 if QPKG.Installed "$package"; then
                     QPKG.Uninstall "$package"
                 else
@@ -970,7 +962,7 @@ Packages.Uninstall()
 
         # then the independent packages last
         for package in "${SHERPA_INDEP_QPKGs[@]}"; do
-            if [[ ${QPKGs_to_uninstall[*]} == *"$package"* ]]; then
+            if QPKGs.ToUninstall.Exist "$package"; then
                 if [[ $package != Entware ]]; then      # KLUDGE: ignore Entware as it needs to be handled separately.
                     if QPKG.Installed "$package"; then
                         QPKG.Uninstall "$package"
@@ -981,7 +973,7 @@ Packages.Uninstall()
             fi
         done
 
-        # TODO: still need something here to remove Entware if it's in the $QPKGs_to_uninstall array
+        # TODO: still need something here to remove Entware if it's in the QPKGs.ToUninstall array
     fi
 
     if QPKG.ToBeReinstalled Entware; then
@@ -1029,14 +1021,14 @@ Packages.Install.Independents()
 
     # ensure required independent packages are installed too
     for package in "${SHERPA_INDEP_QPKGs[@]}"; do
-        [[ ${QPKGs_not_installed[*]} == *"$package"* && ${QPKGs_download_array[*]} == *"$package"* ]] && QPKGs.ToInstall.AddUniq "$package"
+        [[ ${QPKGs_not_installed[*]} == *"$package"* && ${QPKGs_download_array[*]} == *"$package"* ]] && QPKGs.ToInstall.Add "$package"
     done
 
     # install independent QPKGs first, in the order they were declared
 
     if QPKGs.ToInstall.IsAny || QPKGs.ToReinstall.IsAny || User.Opts.Dependencies.Check.IsSet; then
         for package in "${SHERPA_INDEP_QPKGs[@]}"; do
-            if QPKGs.ToInstall.Exist "$package" || [[ ${QPKGs_to_reinstall[*]} == *"$package"* ]]; then
+            if QPKGs.ToInstall.Exist "$package" || QPKGs.ToReinstall.Exist "$package"; then
                 if [[ $package = Entware ]]; then
                     # rename original [/opt]
                     local opt_path=/opt
@@ -1051,7 +1043,7 @@ Packages.Install.Independents()
                     if [[ $NAS_QPKG_ARCH != none ]]; then
                         if QPKGs.ToInstall.Exist "$package"; then
                             QPKG.Install "$package"
-                        elif [[ ${QPKGs_to_reinstall[*]} == *"$package"* ]]; then
+                        elif QPKGs.ToReinstall.Exist "$package"; then
                             QPKG.Reinstall "$package"
                         fi
                     fi
@@ -1088,11 +1080,11 @@ Packages.Install.Dependants()
 
     if QPKGs.ToUpgrade.IsAny || QPKGs.ToForceUpgrade.IsAny; then
         for package in "${SHERPA_DEP_QPKGs[@]}"; do
-            if [[ ${QPKGs_to_force_upgrade[*]} == *"$package"* ]]; then
+            if QPKGs.ToForceUpgrade.Exist "$package"; then
                 QPKG.Upgrade "$package" --forced
-            elif [[ ${QPKGs_to_upgrade[*]} == *"$package"* ]]; then
+            elif QPKGs.ToUpgrade.Exist "$package"; then
                 if QPKG.Installed "$package"; then
-                    if [[ ${QPKGS_upgradable[*]} == *"$package"* ]]; then
+                    if QPKG.Upgradable "$package"; then
                         QPKG.Upgrade "$package"
                     else
                         ShowAsNote "unable to upgrade $(FormatAsPackageName "$package") as it's not upgradable. Use the '--force' if you really want this."
@@ -1118,7 +1110,7 @@ Packages.Install.Dependants()
 
     if QPKGs.ToReinstall.IsAny; then
         for package in "${SHERPA_DEP_QPKGs[@]}"; do
-            if [[ ${QPKGs_to_reinstall[*]} == *"$package"* ]]; then
+            if QPKGs.ToReinstall.Exist "$package"; then
                 if QPKG.Installed "$package"; then
                     QPKG.Reinstall "$package"
                 else
@@ -1140,7 +1132,7 @@ Packages.Restore()
     local package=''
 
     if QPKGs.ToRestore.IsAny; then
-        for package in "${QPKGs_to_restore[@]}"; do
+        for package in $(QPKGs.ToRestore.Array); do
             if QPKG.Installed "$package"; then
                 if [[ ${SHERPA_INDEP_QPKGs[*]} == *"$package"* ]]; then
                     ShowAsNote "unable to restore $(FormatAsPackageName "$package") configuration as it's unsupported"
@@ -1169,7 +1161,7 @@ Packages.Restart()
         QPKGs.RestartNotUpgraded
     elif QPKGs.ToRestart.IsAny; then
         for package in "${SHERPA_DEP_QPKGs[@]}"; do
-            if [[ ${QPKGs_to_restart[*]} == *"$package"* ]]; then
+            if QPKGs.ToRestart.Exist "$package"; then
                 if QPKG.Installed "$package"; then
                     if QPKG.ToNotBeInstalled "$package" && QPKG.ToNotBeReinstalled "$package"; then
                         QPKG.Restart "$package"
@@ -1258,8 +1250,8 @@ DisplayNewQPKGVersions()
     local package_names_formatted=''
 
     if QPKGs.Upgradable.IsAny; then
-        for package in "${QPKGS_upgradable[@]}"; do
-            if [[ ${QPKGs_to_upgrade[*]} != *"$package"* ]]; then
+        for package in $(QPKGs.Upgradable.Array); do
+            if ! QPKGs.ToUpgrade.Exist "$package"; then
                 packages_left_to_upgrade+=("$package")
             fi
         done
@@ -2322,14 +2314,14 @@ ExcludeInstalledQPKGs()
     for package in "${requested_list_array[@]}"; do
         if QPKG.NotInstalled "$package"; then
             QPKGs_download_array+=($package)
-            QPKGs.ToInstall.AddUniq "$package"
-        elif QPKGs.ToInstall.IsAny && QPKGs.ToInstall.Exist "$package"; then
+            QPKGs.ToInstall.Add "$package"
+        elif QPKGs.ToInstall.Exist "$package"; then
             QPKGs_download_array+=($package)
-        elif QPKGs.ToReinstall.IsAny && [[ ${QPKGs_to_reinstall[*]} == *"$package"* ]]; then
+        elif QPKGs.ToReinstall.Exist "$package"; then
             QPKGs_download_array+=($package)
-        elif QPKGs.ToUpgrade.IsAny && [[ ${QPKGs_to_upgrade[*]} == *"$package"* ]]; then
+        elif QPKGs.ToUpgrade.Exist "$package"; then
             QPKGs_download_array+=($package)
-        elif QPKGs.ToForceUpgrade.IsAny && [[ ${QPKGs_to_force_upgrade[*]} == *"$package"* ]]; then
+        elif QPKGs.ToForceUpgrade.Exist "$package"; then
             QPKGs_download_array+=($package)
         fi
     done
@@ -3257,7 +3249,7 @@ QPKGs.Download.Build()
     if User.Opts.Apps.All.Install.IsSet; then
         QPKGs_initial_download_array+=($(QPKGs.NotInstalled.Array))
         for package in "${QPKGs_initial_download_array[@]}"; do
-            QPKGs.ToInstall.AddUniq "$package"
+            QPKGs.ToInstall.Add "$package"
         done
     elif User.Opts.Apps.All.Upgrade.IsSet; then
         QPKGs_initial_download_array=($(QPKGs.Upgradable.Array))
@@ -3267,7 +3259,7 @@ QPKGs.Download.Build()
     elif User.Opts.Dependencies.Check.IsSet; then
         QPKGs_initial_download_array+=($(QPKGs.Installed.Array))
     else
-        QPKGs_initial_download_array+=($(QPKGs.ToInstall.List) ${QPKGs_to_reinstall[*]} ${QPKGs_to_upgrade[*]} ${QPKGs_to_force_upgrade[*]})
+        QPKGs_initial_download_array+=($(QPKGs.ToInstall.List) $(QPKGs.ToReinstall.List) $(QPKGs.ToUpgrade.List) $(QPKGs.ToForceUpgrade.List))
     fi
 
     GetTheseQPKGDeps "${QPKGs_initial_download_array[*]}"
@@ -3368,29 +3360,11 @@ QPKGs.Installable.IsNone()
 
     }
 
-QPKGs.Installed.Add()
-    {
-
-    [[ ${QPKGs_installed[*]} != *"$1"* ]] && QPKGs_installed+=("$1")
-
-    return 0
-
-    }
-
-QPKGs.Installed.Array()
-    {
-
-    echo "${QPKGs_installed[@]}"
-
-    }
-
 QPKGs.Installed.Build()
     {
 
-    # Returns a list of user-installed sherpa QPKGs
-    # creates a global variable array: $QPKGs_installed()
+    # Builds a list of user-installed sherpa QPKGs
 
-    QPKGs_installed=()
     local package=''
 
     for package in "${SHERPA_QPKG_NAME[@]}"; do
@@ -3401,38 +3375,10 @@ QPKGs.Installed.Build()
 
     }
 
-QPKGs.Installed.Count()
-    {
-
-    echo "${#QPKGs_installed[@]}"
-
-    }
-
-QPKGs.Installed.IsAny()
-    {
-
-    [[ $(QPKGs.Installed.Count) -gt 0 ]]
-
-    }
-
-QPKGs.Installed.IsNone()
-    {
-
-    [[ $(QPKGs.Installed.Count) -eq 0 ]]
-
-    }
-
-QPKGs.Installed.Print()
-    {
-
-    echo "${QPKGs_installed[*]}"
-
-    }
-
 QPKGs.Installed.Show()
     {
 
-    for package in $(QPKGs.Installed.Print); do
+    for package in $(QPKGs.Installed.Array); do
         echo "$package"
     done
 
@@ -3444,82 +3390,6 @@ QPKGs.NotInstalled.Print()
     {
 
     echo "${QPKGs_not_installed[*]}"
-
-    }
-
-QPKGs.ToUninstall.Add()
-    {
-
-    [[ ${QPKGs_to_uninstall[*]} != *"$1"* ]] && QPKGs_to_uninstall+=("$1")
-
-    return 0
-
-    }
-
-QPKGs.ToUninstall.Print()
-    {
-
-    echo "${QPKGs_to_uninstall[*]}"
-
-    }
-
-QPKGs.ToUninstall.IsAny()
-    {
-
-    [[ ${#QPKGs_to_uninstall[@]} -gt 0 ]]
-
-    }
-
-QPKGs.ToUninstall.IsNone()
-    {
-
-    [[ ${#QPKGs_to_uninstall[@]} -eq 0 ]]
-
-    }
-
-QPKGs.ToReinstall.Add()
-    {
-
-    [[ ${QPKGs_to_reinstall[*]} != *"$1"* ]] && QPKGs_to_reinstall+=("$1")
-
-    return 0
-
-    }
-
-QPKGs.ToReinstall.Remove()
-    {
-
-    [[ ${QPKGs_to_reinstall[*]} == *"$1"* ]] && QPKGs_to_reinstall=("${QPKGs_to_reinstall[@]/$1}")
-
-    return 0
-
-    }
-
-QPKGs.ToReinstall.Count()
-    {
-
-    echo "${#QPKGs_to_reinstall[@]}"
-
-    }
-
-QPKGs.ToReinstall.Print()
-    {
-
-    echo "${QPKGs_to_reinstall[*]}"
-
-    }
-
-QPKGs.ToReinstall.IsAny()
-    {
-
-    [[ $(QPKGs.ToReinstall.Count) -gt 0 ]]
-
-    }
-
-QPKGs.ToReinstall.IsNone()
-    {
-
-    [[ $(QPKGs.ToReinstall.Count) -eq 0 ]]
 
     }
 
@@ -3570,94 +3440,23 @@ QPKGs.NotInstalled.Array()
 
     }
 
-QPKGs.ToUpgrade.Add()
-    {
-
-    [[ ${QPKGs_to_upgrade[*]} != *"$1"* ]] && QPKGs_to_upgrade+=("$1")
-
-    return 0
-
-    }
-
-QPKGs.ToUpgrade.Remove()
-    {
-
-    [[ ${QPKGs_to_upgrade[*]} == *"$1"* ]] && QPKGs_to_upgrade=("${QPKGs_to_upgrade[@]/$1}")
-
-    return 0
-
-    }
-
-QPKGs.ToUpgrade.Count()
-    {
-
-    echo "${#QPKGs_to_upgrade[@]}"
-
-    }
-
-QPKGs.ToUpgrade.IsAny()
-    {
-
-    [[ ${#QPKGs_to_upgrade[@]} -gt 0 ]]
-
-    }
-
-QPKGs.ToUpgrade.IsNone()
-    {
-
-    [[ ${#QPKGs_to_upgrade[@]} -eq 0 ]]
-
-    }
-
-QPKGs.ToForceUpgrade.Add()
-    {
-
-    [[ ${QPKGs_to_force_upgrade[*]} != *"$1"* ]] && QPKGs_to_force_upgrade+=("$1")
-
-    return 0
-
-    }
-
-QPKGs.ToForceUpgrade.Count()
-    {
-
-    echo "${#QPKGs_to_force_upgrade[@]}"
-
-    }
-
-QPKGs.ToForceUpgrade.IsAny()
-    {
-
-    [[ ${#QPKGs_to_force_upgrade[@]} -gt 0 ]]
-
-    }
-
-QPKGs.ToForceUpgrade.IsNone()
-    {
-
-    [[ ${#QPKGs_to_force_upgrade[@]} -eq 0 ]]
-
-    }
-
 QPKGs.Upgradable.Build()
     {
 
-    # Returns a list of QPKGs that can be upgraded.
-    # creates a global variable array: $QPKGS_upgradable()
+    # Returns a list of QPKGs that can be upgraded
 
-    QPKGS_upgradable=()
     local package=''
     local installed_version=''
     local remote_version=''
 
-    for package in "${QPKGs_installed[@]}"; do
+    for package in $(QPKGs.Installed.Array); do
         [[ $package = Entware || $package = Par2 ]] && continue        # KLUDGE: ignore 'Entware' as package filename version doesn't match the QTS App Center version string
         installed_version=$(GetInstalledQPKGVersion "$package")
         remote_version=$(GetQPKGRemoteVersion "$package")
 
         if [[ $installed_version != "$remote_version" ]]; then
-            #QPKGS_upgradable+=("$package $installed_version $remote_version")
-            QPKGS_upgradable+=($package)
+            #QPKGs.Upgradable.Add "$package $installed_version $remote_version"
+            QPKGs.Upgradable.Add "$package"
         fi
     done
 
@@ -3665,134 +3464,14 @@ QPKGs.Upgradable.Build()
 
     }
 
-QPKGs.Upgradable.Array()
-    {
-
-    echo "${QPKGS_upgradable[@]}"
-
-    }
-
-QPKGs.Upgradable.Print()
-    {
-
-    echo "${QPKGS_upgradable[*]}"
-
-    }
-
-QPKGs.Upgradable.IsAny()
-    {
-
-    [[ ${#QPKGS_upgradable[@]} -gt 0 ]]
-
-    }
-
-QPKGs.Upgradable.IsNone()
-    {
-
-    [[ ${#QPKGS_upgradable[@]} -eq 0 ]]
-
-    }
-
 QPKGs.Upgradable.Show()
     {
 
-    for package in $(QPKGs.Upgradable.Print); do
+    for package in $(QPKGs.Upgradable.Array); do
         echo "$package"
     done
 
     return 0
-
-    }
-
-QPKGs.ToRestart.Add()
-    {
-
-    [[ ${QPKGs_to_restart[*]} != *"$1"* ]] && QPKGs_to_restart+=("$1")
-
-    return 0
-
-    }
-
-QPKGs.ToRestart.Remove()
-    {
-
-    [[ ${QPKGs_to_restart[*]} == *"$1"* ]] && QPKGs_to_restart=("${QPKGs_to_restart[@]/$1}")
-
-    return 0
-
-    }
-
-QPKGs.ToRestart.IsAny()
-    {
-
-    [[ ${#QPKGs_to_restart[@]} -gt 0 ]]
-
-    }
-
-QPKGs.ToRestart.IsNone()
-    {
-
-    [[ ${#QPKGs_to_restart[@]} -eq 0 ]]
-
-    }
-
-QPKGs.ToBackup.Add()
-    {
-
-    [[ ${QPKGs_to_backup[*]} != *"$1"* ]] && QPKGs_to_backup+=("$1")
-
-    return 0
-
-    }
-
-QPKGs.ToBackup.Count()
-    {
-
-    echo "${#QPKGs_to_backup[@]}"
-
-    }
-
-QPKGs.ToBackup.IsAny()
-    {
-
-    [[ ${#QPKGs_to_backup[@]} -gt 0 ]]
-
-    }
-
-QPKGs.ToBackup.IsNone()
-    {
-
-    [[ ${#QPKGs_to_backup[@]} -eq 0 ]]
-
-    }
-
-QPKGs.ToRestore.Add()
-    {
-
-    [[ ${QPKGs_to_restore[*]} != *"$1"* ]] && QPKGs_to_restore+=("$1")
-
-    return 0
-
-    }
-
-QPKGs.ToRestore.Count()
-    {
-
-    echo "${#QPKGs_to_restore[@]}"
-
-    }
-
-QPKGs.ToRestore.IsAny()
-    {
-
-    [[ ${#QPKGs_to_restore[@]} -gt 0 ]]
-
-    }
-
-QPKGs.ToRestore.IsNone()
-    {
-
-    [[ ${#QPKGs_to_restore[@]} -eq 0 ]]
 
     }
 
@@ -3948,7 +3627,7 @@ QPKG.ToBeReinstalled()
     #   $? = 0 (true) or 1 (false)
 
     [[ -z $1 ]] && return 1
-    [[ $(QPKGs.ToReinstall.Count) -gt 0 && ${QPKGs_to_reinstall[*]} == *"$1"* ]] && return 0
+    QPKGs.ToReinstall.Exist "$1" && return 0
 
     return 1
 
@@ -3977,7 +3656,7 @@ QPKG.ToBeUpgraded()
     #   $? = 0 (true) or 1 (false)
 
     [[ -z $1 ]] && return 1
-    [[ $(QPKGs.ToUpgrade.Count) -gt 0 && ${QPKGs_to_upgrade[*]} == *"$1"* ]] && return 0
+    QPKGs.ToUpgrade.Exist "$1" && return 0
 
     return 1
 
@@ -4057,14 +3736,7 @@ QPKG.Upgradable()
     # output:
     #   $? = 0 (true) or 1 (false)
 
-    [[ -n $1 ]] && QPKGs.Upgradable.IsAny && [[ ${QPKGS_upgradable[*]} == *"$1"* ]]
-
-    }
-
-QPKG.NotUpgradable()
-    {
-
-    ! QPKG.Upgradable "$1"
+    [[ -n $1 ]] && QPKGs.Upgradable.Exist "$1"
 
     }
 
@@ -4911,11 +4583,7 @@ Objects.Add()
 
 echo $public_function_name'.Add()
     {
-    '$_placehold_array_'+=("$1")
-    }
-'$public_function_name'.AddUniq()
-    {
-    [[ $'$_placehold_array_' != *"$1"* ]] && '$_placehold_array_'+=("$1")
+    [[ ${'$_placehold_array_'[*]} != *"$1"* ]] && '$_placehold_array_'+=("$1")
     }
 '$public_function_name'.Array()
     {
@@ -5105,7 +4773,17 @@ echo $public_function_name'.Add()
 Objects.Compile()
     {
 
-    [[ -e $COMPILED_OBJECTS ]] && ! FileMatchesMD5 "$COMPILED_OBJECTS" "$OBJECT_REF_HASH" && rm -f "$COMPILED_OBJECTS"
+    if [[ -e $COMPILED_OBJECTS ]]; then
+        if ! FileMatchesMD5 "$COMPILED_OBJECTS" "$OBJECT_REF_HASH"; then
+            rm -f "$COMPILED_OBJECTS"
+        fi
+    fi
+
+    if [[ ! -e $COMPILED_OBJECTS ]]; then
+        if ! $CURL_CMD $curl_insecure_arg --silent --fail "$REMOTE_COMPILED_OBJECTS" > "$COMPILED_OBJECTS"; then
+            rm "$COMPILED_OBJECTS"
+        fi
+    fi
 
     if [[ ! -e $COMPILED_OBJECTS ]]; then
         ShowAsProc "compiling objects"
@@ -5141,11 +4819,20 @@ Objects.Compile()
         Objects.Add User.Opts.Apps.List.NotInstalled
         Objects.Add User.Opts.Apps.List.Upgradable
 
-        # script objects
+        # lists
+        Objects.Add QPKGs.Installed
         Objects.Add QPKGs.JustInstalled
+        Objects.Add QPKGs.Upgradable
+        Objects.Add QPKGs.ToBackup
+        Objects.Add QPKGs.ToForceUpgrade
         Objects.Add QPKGs.ToInstall
+        Objects.Add QPKGs.ToReinstall
+        Objects.Add QPKGs.ToRestart
+        Objects.Add QPKGs.ToRestore
+        Objects.Add QPKGs.ToUninstall
+        Objects.Add QPKGs.ToUpgrade
 
-        # script flags
+        # flags
         Objects.Add Session.Backup
         Objects.Add Session.Debug.To.File
         Objects.Add Session.Debug.To.Screen
