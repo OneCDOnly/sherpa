@@ -356,7 +356,7 @@ Session.Init()
         SHERPA_QPKG_MD5+=(633bc7ff090346a0e8c204fe7b19a382)
         SHERPA_QPKG_ABBRVS+=('deluge del-server deluge-server')
         SHERPA_QPKG_DEPS+=('Entware')
-        SHERPA_QPKG_IPKGS+=('deluge')
+        SHERPA_QPKG_IPKGS+=('deluge jq')
 
     SHERPA_QPKG_NAME+=(Deluge-web)
         SHERPA_QPKG_ARCH+=(all)
