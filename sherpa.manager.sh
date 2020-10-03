@@ -1574,476 +1574,6 @@ GetQPKGDeps()
 
     }
 
-QPKG.Download()
-    {
-
-    # input:
-    #   $1 = QPKG name to download
-
-    # output:
-    #   $? = 0 if successful, 1 if failed
-
-    Session.Error.IsSet && return
-    DebugFuncEntry
-
-    if [[ -z $1 ]]; then
-        DebugError "no package name specified"
-        code_pointer=4
-        DebugFuncExit; return 1
-    fi
-
-    local result=0
-    local remote_url=$(GetQPKGRemoteURL "$1")
-    local remote_filename=$($BASENAME_CMD "$remote_url")
-    local remote_filename_md5=$(GetQPKGMD5 "$1")
-    local local_pathfile=$QPKG_DL_PATH/$remote_filename
-    local local_filename=$($BASENAME_CMD "$local_pathfile")
-    local log_pathfile=$PACKAGE_LOGS_PATH/$local_filename.$DOWNLOAD_LOG_FILE
-    local skip_log=false
-
-    if [[ -z $remote_url ]]; then
-        DebugWarning "no URL found for this package [$1]"
-        code_pointer=5
-        DebugFuncExit; return
-    elif [[ -z $remote_filename_md5 ]]; then
-        DebugWarning "no remote MD5 found for this package [$1]"
-        code_pointer=6
-        DebugFuncExit; return
-    fi
-
-    if [[ -e $local_pathfile ]]; then
-        if FileMatchesMD5 "$local_pathfile" "$remote_filename_md5"; then
-            DebugInfo "local package checksum correct $(FormatAsFileName "$local_filename") so skipping download"
-            skip_log=true
-        else
-            DebugWarning "local package checksum incorrect $(FormatAsFileName "$local_filename")"
-            DebugInfo "deleting $(FormatAsFileName "$local_filename")"
-            rm -f "$local_pathfile"
-        fi
-    fi
-
-    if Session.Error.IsNot && [[ ! -e $local_pathfile ]]; then
-        ShowAsProc "downloading $(FormatAsFileName "$remote_filename")"
-
-        [[ -e $log_pathfile ]] && rm -f "$log_pathfile"
-
-        if Session.Debug.To.Screen.IsSet; then
-            RunThisAndLogResultsRealtime "$CURL_CMD $curl_insecure_arg --output $local_pathfile $remote_url" "$log_pathfile"
-            result=$?
-        else
-            RunThisAndLogResults "$CURL_CMD $curl_insecure_arg --output $local_pathfile $remote_url" "$log_pathfile"
-            result=$?
-        fi
-
-        if [[ $result -eq 0 ]]; then
-            if FileMatchesMD5 "$local_pathfile" "$remote_filename_md5"; then
-                ShowAsDone "downloaded $(FormatAsFileName "$remote_filename")"
-            else
-                ShowAsError "downloaded package checksum incorrect $(FormatAsFileName "$local_pathfile")"
-                result=1
-            fi
-        else
-            ShowAsError "download failed $(FormatAsFileName "$local_pathfile") $(FormatAsExitcode $result)"
-        fi
-    fi
-
-    ! $skip_log && AddFileToDebug "$log_pathfile"
-    DebugFuncExit; return $result
-
-    }
-
-QPKG.Install()
-    {
-
-    # $1 = QPKG name to install
-
-    Session.Error.IsSet && return
-    Session.SkipPackageProcessing.IsSet && return
-    DebugFuncEntry
-
-    if [[ -z $1 ]]; then
-        DebugError "no package name specified "
-        code_pointer=7
-        DebugFuncExit; return 1
-    elif QPKG.Installed "$1"; then
-        DebugQPKG "$(FormatAsPackageName "$1")" "already installed"
-        DebugFuncExit; return 1
-    fi
-
-    local target_file=''
-    local result=0
-    local local_pathfile="$(GetQPKGPathFilename "$1")"
-    local log_pathfile=''
-
-    if [[ ${local_pathfile##*.} = zip ]]; then
-        $UNZIP_CMD -nq "$local_pathfile" -d "$QPKG_DL_PATH"
-        local_pathfile="${local_pathfile%.*}"
-    fi
-
-    target_file=$($BASENAME_CMD "$local_pathfile")
-    log_pathfile=$PACKAGE_LOGS_PATH/$target_file.$INSTALL_LOG_FILE
-
-    ShowAsProcLong "installing $(FormatAsPackageName "$1")"
-
-    if Session.Debug.To.Screen.IsSet; then
-        RunThisAndLogResultsRealtime "$SH_CMD $local_pathfile" "$log_pathfile"
-        result=$?
-    else
-        RunThisAndLogResults "$SH_CMD $local_pathfile" "$log_pathfile"
-        result=$?
-    fi
-
-    if [[ $result -eq 0 || $result -eq 10 ]]; then
-        ShowAsDone "installed $(FormatAsPackageName "$1")"
-        GetQPKGServiceStatus "$1"
-        QPKGs.JustInstalled.Add "$1"
-    else
-        ShowAsError "installation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $result)"
-    fi
-
-    AddFileToDebug "$log_pathfile"
-    DebugFuncExit; return $result
-
-    }
-
-QPKG.Reinstall()
-    {
-
-    # $1 = QPKG name to install
-
-    Session.Error.IsSet && return
-    Session.SkipPackageProcessing.IsSet && return
-    DebugFuncEntry
-
-    if [[ -z $1 ]]; then
-        DebugError "no package name specified "
-        code_pointer=8
-        DebugFuncExit; return 1
-    elif QPKG.NotInstalled "$1"; then
-        DebugQPKG "$(FormatAsPackageName "$1")" "not installed"
-        code_pointer=9
-        DebugFuncExit; return 1
-    fi
-
-    local target_file=''
-    local result=0
-    local local_pathfile="$(GetQPKGPathFilename "$1")"
-    local log_pathfile=''
-
-    if [[ ${local_pathfile##*.} = zip ]]; then
-        $UNZIP_CMD -nq "$local_pathfile" -d "$QPKG_DL_PATH"
-        local_pathfile="${local_pathfile%.*}"
-    fi
-
-    target_file=$($BASENAME_CMD "$local_pathfile")
-    log_pathfile=$PACKAGE_LOGS_PATH/$target_file.$REINSTALL_LOG_FILE
-
-    ShowAsProcLong "re-installing $(FormatAsPackageName "$1")"
-
-    if Session.Debug.To.Screen.IsSet; then
-        RunThisAndLogResultsRealtime "$SH_CMD $local_pathfile" "$log_pathfile"
-        result=$?
-    else
-        RunThisAndLogResults "$SH_CMD $local_pathfile" "$log_pathfile"
-        result=$?
-    fi
-
-    if [[ $result -eq 0 || $result -eq 10 ]]; then
-        ShowAsDone "re-installed $(FormatAsPackageName "$1")"
-        GetQPKGServiceStatus "$1"
-    else
-        ShowAsError "$re-installation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $result)"
-    fi
-
-    AddFileToDebug "$log_pathfile"
-    DebugFuncExit; return $result
-
-    }
-
-QPKG.Upgrade()
-    {
-
-    # $1 = QPKG name to upgrade
-
-    Session.Error.IsSet && return
-    Session.SkipPackageProcessing.IsSet && return
-    DebugFuncEntry
-
-    if [[ -z $1 ]]; then
-        DebugError "no package name specified "
-        code_pointer=10
-        DebugFuncExit; return 1
-    fi
-
-    local prefix=''
-    local result=0
-    local previous_version='null'
-    local current_version='null'
-    local local_pathfile="$(GetQPKGPathFilename "$1")"
-    [[ -n $2 && $2 = '--forced' ]] && prefix='force-'
-
-    if [[ ${local_pathfile##*.} = zip ]]; then
-        $UNZIP_CMD -nq "$local_pathfile" -d "$QPKG_DL_PATH"
-        local_pathfile="${local_pathfile%.*}"
-    fi
-
-    local target_file=$($BASENAME_CMD "$local_pathfile")
-    local log_pathfile=$PACKAGE_LOGS_PATH/$target_file.$UPGRADE_LOG_FILE
-    QPKG.Installed "$1" && previous_version=$(GetInstalledQPKGVersion "$1")
-
-    ShowAsProcLong "${prefix}upgrading $(FormatAsPackageName "$1")"
-
-    if Session.Debug.To.Screen.IsSet; then
-        RunThisAndLogResultsRealtime "$SH_CMD $local_pathfile" "$log_pathfile"
-        result=$?
-    else
-        RunThisAndLogResults "$SH_CMD $local_pathfile" "$log_pathfile"
-        result=$?
-    fi
-
-    current_version=$(GetInstalledQPKGVersion "$1")
-
-    if [[ $result -eq 0 || $result -eq 10 ]]; then
-        if [[ $current_version = $previous_version ]]; then
-            DebugDone "${prefix}upgraded $(FormatAsPackageName "$1") and installed version is $current_version"
-        else
-            ShowAsDone "${prefix}upgraded $(FormatAsPackageName "$1") from $previous_version to $current_version"
-        fi
-        GetQPKGServiceStatus "$1"
-    else
-        ShowAsError "${prefix}upgrade failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $result)"
-    fi
-
-    AddFileToDebug "$log_pathfile"
-    DebugFuncExit; return $result
-
-    }
-
-QPKG.Uninstall()
-    {
-
-    # input:
-    #   $1 = QPKG name
-
-    # output:
-    #   $? = 0 if successful, 1 if failed
-
-    Session.Error.IsSet && return
-    DebugFuncEntry
-
-    if [[ -z $1 ]]; then
-        DebugError "no package name specified "
-        code_pointer=11
-        DebugFuncExit; return 1
-    elif QPKG.NotInstalled "$1"; then
-        DebugQPKG "$(FormatAsPackageName "$1")" "not installed"
-        code_pointer=12
-        DebugFuncExit; return 1
-    fi
-
-    local result=0
-    local qpkg_installed_path="$($GETCFG_CMD "$1" Install_Path -f $APP_CENTER_CONFIG_PATHFILE)"
-    local log_pathfile=$PACKAGE_LOGS_PATH/$1.$UNINSTALL_LOG_FILE
-
-    if [[ -e $qpkg_installed_path/.uninstall.sh ]]; then
-        ShowAsProc "uninstalling $(FormatAsPackageName "$1")"
-
-        if Session.Debug.To.Screen.IsSet; then
-            RunThisAndLogResultsRealtime "$SH_CMD $qpkg_installed_path/.uninstall.sh " "$log_pathfile"
-            result=$?
-        else
-            RunThisAndLogResults "$SH_CMD $qpkg_installed_path/.uninstall.sh " "$log_pathfile"
-            result=$?
-        fi
-
-        if [[ $result -eq 0 ]]; then
-            ShowAsDone "uninstalled $(FormatAsPackageName "$1")"
-            $RMCFG_CMD "$1" -f $APP_CENTER_CONFIG_PATHFILE
-            DebugDone "removed icon information from App Center"
-        else
-            ShowAsError "unable to uninstall $(FormatAsPackageName "$1") $(FormatAsExitcode $result)"
-        fi
-    fi
-
-    AddFileToDebug "$log_pathfile"
-    DebugFuncExit; return $result
-
-    }
-
-QPKG.Restart()
-    {
-
-    # Restarts the service script for the QPKG named in $1
-
-    # input:
-    #   $1 = QPKG name
-
-    # output:
-    #   $? = 0 if successful, 1 if failed
-
-    DebugFuncEntry
-
-    if [[ -z $1 ]]; then
-        DebugError "no package name specified "
-        code_pointer=13
-        DebugFuncExit; return 1
-    elif QPKG.NotInstalled "$1"; then
-        DebugQPKG "$(FormatAsPackageName "$1")" "not installed"
-        code_pointer=14
-        DebugFuncExit; return 1
-    fi
-
-    local result=0
-    local package_init_pathfile=$(GetInstalledQPKGServicePathFile "$1")
-    local log_pathfile=$PACKAGE_LOGS_PATH/$1.$RESTART_LOG_FILE
-
-    ShowAsProc "restarting $(FormatAsPackageName "$1")"
-
-    if Session.Debug.To.Screen.IsSet; then
-        RunThisAndLogResultsRealtime "$SH_CMD $package_init_pathfile restart" "$log_pathfile"
-        result=$?
-    else
-        RunThisAndLogResults "$SH_CMD $package_init_pathfile restart" "$log_pathfile"
-        result=$?
-    fi
-
-    if [[ $result -eq 0 ]]; then
-        ShowAsDone "restarted $(FormatAsPackageName "$1")"
-        GetQPKGServiceStatus "$1"
-    else
-        ShowAsWarning "Could not restart $(FormatAsPackageName "$1") $(FormatAsExitcode $result)"
-    fi
-
-    AddFileToDebug "$log_pathfile"
-    DebugFuncExit; return $result
-
-    }
-
-QPKG.Enable()
-    {
-
-    # $1 = package name to enable
-
-    DebugFuncEntry
-
-    if [[ -z $1 ]]; then
-        DebugError "no package name specified "
-        code_pointer=15
-        DebugFuncExit; return 1
-    elif QPKG.NotInstalled "$1"; then
-        DebugQPKG "$(FormatAsPackageName "$1")" "not installed"
-        code_pointer=16
-        DebugFuncExit; return 1
-    fi
-
-    if QPKG.NotEnabled "$1"; then
-        DebugProc "enabling package icon"
-        $SETCFG_CMD "$1" Enable TRUE -f $APP_CENTER_CONFIG_PATHFILE
-        DebugDone "$(FormatAsPackageName "$1") icon enabled"
-    fi
-
-    DebugFuncExit; return 0
-
-    }
-
-QPKG.Backup()
-    {
-
-    # calls the service script for the QPKG named in $1 and runs a backup operation
-
-    # input:
-    #   $1 = QPKG name
-
-    # output:
-    #   $? = 0 if successful, 1 if failed
-
-    DebugFuncEntry
-
-    if [[ -z $1 ]]; then
-        DebugError "no package name specified "
-        code_pointer=17
-        DebugFuncExit; return 1
-    elif QPKG.NotInstalled "$1"; then
-        DebugQPKG "$(FormatAsPackageName "$1")" "not installed"
-        code_pointer=18
-        DebugFuncExit; return 1
-    fi
-
-    local result=0
-    local package_init_pathfile=$(GetInstalledQPKGServicePathFile "$1")
-    local log_pathfile=$PACKAGE_LOGS_PATH/$1.$BACKUP_LOG_FILE
-
-    ShowAsProc "backing-up $(FormatAsPackageName "$1") configuration"
-
-    if Session.Debug.To.Screen.IsSet; then
-        RunThisAndLogResultsRealtime "$SH_CMD $package_init_pathfile backup" "$log_pathfile"
-        result=$?
-    else
-        RunThisAndLogResults "$SH_CMD $package_init_pathfile backup" "$log_pathfile"
-        result=$?
-    fi
-
-    if [[ $result -eq 0 ]]; then
-        ShowAsDone "backed-up $(FormatAsPackageName "$1") configuration"
-        GetQPKGServiceStatus "$1"
-    else
-        ShowAsWarning "Could not backup $(FormatAsPackageName "$1") configuration $(FormatAsExitcode $result)"
-    fi
-
-    AddFileToDebug "$log_pathfile"
-    DebugFuncExit; return $result
-
-    }
-
-QPKG.Restore()
-    {
-
-    # calls the service script for the QPKG named in $1 and runs a restore operation
-
-    # input:
-    #   $1 = QPKG name
-
-    # output:
-    #   $? = 0 if successful, 1 if failed
-
-    DebugFuncEntry
-
-    if [[ -z $1 ]]; then
-        DebugError "no package name specified "
-        code_pointer=19
-        DebugFuncExit; return 1
-    elif QPKG.NotInstalled "$1"; then
-        DebugQPKG "$(FormatAsPackageName "$1")" "not installed"
-        code_pointer=20
-        DebugFuncExit; return 1
-    fi
-
-    local result=0
-    local package_init_pathfile=$(GetInstalledQPKGServicePathFile "$1")
-    local log_pathfile=$PACKAGE_LOGS_PATH/$1.$RESTORE_LOG_FILE
-
-    ShowAsProc "restoring $(FormatAsPackageName "$1") configuration"
-
-    if Session.Debug.To.Screen.IsSet; then
-        RunThisAndLogResultsRealtime "$SH_CMD $package_init_pathfile restore" "$log_pathfile"
-        result=$?
-    else
-        RunThisAndLogResults "$SH_CMD $package_init_pathfile restore" "$log_pathfile"
-        result=$?
-    fi
-
-    if [[ $result -eq 0 ]]; then
-        ShowAsDone "restored $(FormatAsPackageName "$1") configuration"
-        GetQPKGServiceStatus "$1"
-    else
-        ShowAsWarning "Could not restore $(FormatAsPackageName "$1") configuration $(FormatAsExitcode $result)"
-    fi
-
-    AddFileToDebug "$log_pathfile"
-    DebugFuncExit; return $result
-
-    }
-
 GetTheseQPKGDeps()
     {
 
@@ -3268,7 +2798,7 @@ QPKGs.InstallationState.Build()
     local package=''
 
     for package in "${SHERPA_QPKG_NAME[@]}"; do
-        QPKG.Installable "$package" && QPKGs.Installable.Add "$package"
+        QPKG.UserInstallable "$package" && QPKGs.Installable.Add "$package"
 
         if QPKG.Installed "$package"; then
             QPKGs.Installed.Add "$package"
@@ -3409,7 +2939,477 @@ Session.Summary.Show()
 
     }
 
-QPKG.Installable()
+QPKG.Download()
+    {
+
+    # input:
+    #   $1 = QPKG name to download
+
+    # output:
+    #   $? = 0 if successful, 1 if failed
+
+    Session.Error.IsSet && return
+    DebugFuncEntry
+
+    if [[ -z $1 ]]; then
+        DebugError "no package name specified"
+        code_pointer=4
+        DebugFuncExit; return 1
+    fi
+
+    local result=0
+    local remote_url=$(GetQPKGRemoteURL "$1")
+    local remote_filename=$($BASENAME_CMD "$remote_url")
+    local remote_filename_md5=$(GetQPKGMD5 "$1")
+    local local_pathfile=$QPKG_DL_PATH/$remote_filename
+    local local_filename=$($BASENAME_CMD "$local_pathfile")
+    local log_pathfile=$PACKAGE_LOGS_PATH/$local_filename.$DOWNLOAD_LOG_FILE
+    local skip_log=false
+
+    if [[ -z $remote_url ]]; then
+        DebugWarning "no URL found for this package [$1]"
+        code_pointer=5
+        DebugFuncExit; return
+    elif [[ -z $remote_filename_md5 ]]; then
+        DebugWarning "no remote MD5 found for this package [$1]"
+        code_pointer=6
+        DebugFuncExit; return
+    fi
+
+    if [[ -e $local_pathfile ]]; then
+        if FileMatchesMD5 "$local_pathfile" "$remote_filename_md5"; then
+            DebugInfo "local package checksum correct $(FormatAsFileName "$local_filename") so skipping download"
+            skip_log=true
+        else
+            DebugWarning "local package checksum incorrect $(FormatAsFileName "$local_filename")"
+            DebugInfo "deleting $(FormatAsFileName "$local_filename")"
+            rm -f "$local_pathfile"
+        fi
+    fi
+
+    if Session.Error.IsNot && [[ ! -e $local_pathfile ]]; then
+        ShowAsProc "downloading $(FormatAsFileName "$remote_filename")"
+
+        [[ -e $log_pathfile ]] && rm -f "$log_pathfile"
+
+        if Session.Debug.To.Screen.IsSet; then
+            RunThisAndLogResultsRealtime "$CURL_CMD $curl_insecure_arg --output $local_pathfile $remote_url" "$log_pathfile"
+            result=$?
+        else
+            RunThisAndLogResults "$CURL_CMD $curl_insecure_arg --output $local_pathfile $remote_url" "$log_pathfile"
+            result=$?
+        fi
+
+        if [[ $result -eq 0 ]]; then
+            if FileMatchesMD5 "$local_pathfile" "$remote_filename_md5"; then
+                ShowAsDone "downloaded $(FormatAsFileName "$remote_filename")"
+            else
+                ShowAsError "downloaded package checksum incorrect $(FormatAsFileName "$local_pathfile")"
+                result=1
+            fi
+        else
+            ShowAsError "download failed $(FormatAsFileName "$local_pathfile") $(FormatAsExitcode $result)"
+        fi
+    fi
+
+    ! $skip_log && AddFileToDebug "$log_pathfile"
+    DebugFuncExit; return $result
+
+    }
+
+QPKG.Install()
+    {
+
+    # $1 = QPKG name to install
+
+    Session.Error.IsSet && return
+    Session.SkipPackageProcessing.IsSet && return
+    DebugFuncEntry
+
+    if [[ -z $1 ]]; then
+        DebugError "no package name specified "
+        code_pointer=7
+        DebugFuncExit; return 1
+    elif QPKG.Installed "$1"; then
+        DebugQPKG "$(FormatAsPackageName "$1")" "already installed"
+        DebugFuncExit; return 1
+    fi
+
+    local target_file=''
+    local result=0
+    local local_pathfile="$(GetQPKGPathFilename "$1")"
+    local log_pathfile=''
+
+    if [[ ${local_pathfile##*.} = zip ]]; then
+        $UNZIP_CMD -nq "$local_pathfile" -d "$QPKG_DL_PATH"
+        local_pathfile="${local_pathfile%.*}"
+    fi
+
+    target_file=$($BASENAME_CMD "$local_pathfile")
+    log_pathfile=$PACKAGE_LOGS_PATH/$target_file.$INSTALL_LOG_FILE
+
+    ShowAsProcLong "installing $(FormatAsPackageName "$1")"
+
+    if Session.Debug.To.Screen.IsSet; then
+        RunThisAndLogResultsRealtime "$SH_CMD $local_pathfile" "$log_pathfile"
+        result=$?
+    else
+        RunThisAndLogResults "$SH_CMD $local_pathfile" "$log_pathfile"
+        result=$?
+    fi
+
+    if [[ $result -eq 0 || $result -eq 10 ]]; then
+        ShowAsDone "installed $(FormatAsPackageName "$1")"
+        GetQPKGServiceStatus "$1"
+        QPKGs.JustInstalled.Add "$1"
+    else
+        ShowAsError "installation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $result)"
+    fi
+
+    AddFileToDebug "$log_pathfile"
+    DebugFuncExit; return $result
+
+    }
+
+QPKG.Reinstall()
+    {
+
+    # $1 = QPKG name to install
+
+    Session.Error.IsSet && return
+    Session.SkipPackageProcessing.IsSet && return
+    DebugFuncEntry
+
+    if [[ -z $1 ]]; then
+        DebugError "no package name specified "
+        code_pointer=8
+        DebugFuncExit; return 1
+    elif QPKG.NotInstalled "$1"; then
+        DebugQPKG "$(FormatAsPackageName "$1")" "not installed"
+        code_pointer=9
+        DebugFuncExit; return 1
+    fi
+
+    local target_file=''
+    local result=0
+    local local_pathfile="$(GetQPKGPathFilename "$1")"
+    local log_pathfile=''
+
+    if [[ ${local_pathfile##*.} = zip ]]; then
+        $UNZIP_CMD -nq "$local_pathfile" -d "$QPKG_DL_PATH"
+        local_pathfile="${local_pathfile%.*}"
+    fi
+
+    target_file=$($BASENAME_CMD "$local_pathfile")
+    log_pathfile=$PACKAGE_LOGS_PATH/$target_file.$REINSTALL_LOG_FILE
+
+    ShowAsProcLong "re-installing $(FormatAsPackageName "$1")"
+
+    if Session.Debug.To.Screen.IsSet; then
+        RunThisAndLogResultsRealtime "$SH_CMD $local_pathfile" "$log_pathfile"
+        result=$?
+    else
+        RunThisAndLogResults "$SH_CMD $local_pathfile" "$log_pathfile"
+        result=$?
+    fi
+
+    if [[ $result -eq 0 || $result -eq 10 ]]; then
+        ShowAsDone "re-installed $(FormatAsPackageName "$1")"
+        GetQPKGServiceStatus "$1"
+    else
+        ShowAsError "$re-installation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $result)"
+    fi
+
+    AddFileToDebug "$log_pathfile"
+    DebugFuncExit; return $result
+
+    }
+
+QPKG.Upgrade()
+    {
+
+    # $1 = QPKG name to upgrade
+
+    Session.Error.IsSet && return
+    Session.SkipPackageProcessing.IsSet && return
+    DebugFuncEntry
+
+    if [[ -z $1 ]]; then
+        DebugError "no package name specified "
+        code_pointer=10
+        DebugFuncExit; return 1
+    fi
+
+    local prefix=''
+    local result=0
+    local previous_version='null'
+    local current_version='null'
+    local local_pathfile="$(GetQPKGPathFilename "$1")"
+    [[ -n $2 && $2 = '--forced' ]] && prefix='force-'
+
+    if [[ ${local_pathfile##*.} = zip ]]; then
+        $UNZIP_CMD -nq "$local_pathfile" -d "$QPKG_DL_PATH"
+        local_pathfile="${local_pathfile%.*}"
+    fi
+
+    local target_file=$($BASENAME_CMD "$local_pathfile")
+    local log_pathfile=$PACKAGE_LOGS_PATH/$target_file.$UPGRADE_LOG_FILE
+    QPKG.Installed "$1" && previous_version=$(GetInstalledQPKGVersion "$1")
+
+    ShowAsProcLong "${prefix}upgrading $(FormatAsPackageName "$1")"
+
+    if Session.Debug.To.Screen.IsSet; then
+        RunThisAndLogResultsRealtime "$SH_CMD $local_pathfile" "$log_pathfile"
+        result=$?
+    else
+        RunThisAndLogResults "$SH_CMD $local_pathfile" "$log_pathfile"
+        result=$?
+    fi
+
+    current_version=$(GetInstalledQPKGVersion "$1")
+
+    if [[ $result -eq 0 || $result -eq 10 ]]; then
+        if [[ $current_version = $previous_version ]]; then
+            DebugDone "${prefix}upgraded $(FormatAsPackageName "$1") and installed version is $current_version"
+        else
+            ShowAsDone "${prefix}upgraded $(FormatAsPackageName "$1") from $previous_version to $current_version"
+        fi
+        GetQPKGServiceStatus "$1"
+    else
+        ShowAsError "${prefix}upgrade failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $result)"
+    fi
+
+    AddFileToDebug "$log_pathfile"
+    DebugFuncExit; return $result
+
+    }
+
+QPKG.Uninstall()
+    {
+
+    # input:
+    #   $1 = QPKG name
+
+    # output:
+    #   $? = 0 if successful, 1 if failed
+
+    Session.Error.IsSet && return
+    DebugFuncEntry
+
+    if [[ -z $1 ]]; then
+        DebugError "no package name specified "
+        code_pointer=11
+        DebugFuncExit; return 1
+    elif QPKG.NotInstalled "$1"; then
+        DebugQPKG "$(FormatAsPackageName "$1")" "not installed"
+        code_pointer=12
+        DebugFuncExit; return 1
+    fi
+
+    local result=0
+    local qpkg_installed_path="$($GETCFG_CMD "$1" Install_Path -f $APP_CENTER_CONFIG_PATHFILE)"
+    local log_pathfile=$PACKAGE_LOGS_PATH/$1.$UNINSTALL_LOG_FILE
+
+    if [[ -e $qpkg_installed_path/.uninstall.sh ]]; then
+        ShowAsProc "uninstalling $(FormatAsPackageName "$1")"
+
+        if Session.Debug.To.Screen.IsSet; then
+            RunThisAndLogResultsRealtime "$SH_CMD $qpkg_installed_path/.uninstall.sh " "$log_pathfile"
+            result=$?
+        else
+            RunThisAndLogResults "$SH_CMD $qpkg_installed_path/.uninstall.sh " "$log_pathfile"
+            result=$?
+        fi
+
+        if [[ $result -eq 0 ]]; then
+            ShowAsDone "uninstalled $(FormatAsPackageName "$1")"
+            $RMCFG_CMD "$1" -f $APP_CENTER_CONFIG_PATHFILE
+            DebugDone "removed icon information from App Center"
+        else
+            ShowAsError "unable to uninstall $(FormatAsPackageName "$1") $(FormatAsExitcode $result)"
+        fi
+    fi
+
+    AddFileToDebug "$log_pathfile"
+    DebugFuncExit; return $result
+
+    }
+
+QPKG.Restart()
+    {
+
+    # Restarts the service script for the QPKG named in $1
+
+    # input:
+    #   $1 = QPKG name
+
+    # output:
+    #   $? = 0 if successful, 1 if failed
+
+    DebugFuncEntry
+
+    if [[ -z $1 ]]; then
+        DebugError "no package name specified "
+        code_pointer=13
+        DebugFuncExit; return 1
+    elif QPKG.NotInstalled "$1"; then
+        DebugQPKG "$(FormatAsPackageName "$1")" "not installed"
+        code_pointer=14
+        DebugFuncExit; return 1
+    fi
+
+    local result=0
+    local package_init_pathfile=$(GetInstalledQPKGServicePathFile "$1")
+    local log_pathfile=$PACKAGE_LOGS_PATH/$1.$RESTART_LOG_FILE
+
+    ShowAsProc "restarting $(FormatAsPackageName "$1")"
+
+    if Session.Debug.To.Screen.IsSet; then
+        RunThisAndLogResultsRealtime "$SH_CMD $package_init_pathfile restart" "$log_pathfile"
+        result=$?
+    else
+        RunThisAndLogResults "$SH_CMD $package_init_pathfile restart" "$log_pathfile"
+        result=$?
+    fi
+
+    if [[ $result -eq 0 ]]; then
+        ShowAsDone "restarted $(FormatAsPackageName "$1")"
+        GetQPKGServiceStatus "$1"
+    else
+        ShowAsWarning "Could not restart $(FormatAsPackageName "$1") $(FormatAsExitcode $result)"
+    fi
+
+    AddFileToDebug "$log_pathfile"
+    DebugFuncExit; return $result
+
+    }
+
+QPKG.Enable()
+    {
+
+    # $1 = package name to enable
+
+    DebugFuncEntry
+
+    if [[ -z $1 ]]; then
+        DebugError "no package name specified "
+        code_pointer=15
+        DebugFuncExit; return 1
+    elif QPKG.NotInstalled "$1"; then
+        DebugQPKG "$(FormatAsPackageName "$1")" "not installed"
+        code_pointer=16
+        DebugFuncExit; return 1
+    fi
+
+    if QPKG.NotEnabled "$1"; then
+        DebugProc "enabling package icon"
+        $SETCFG_CMD "$1" Enable TRUE -f $APP_CENTER_CONFIG_PATHFILE
+        DebugDone "$(FormatAsPackageName "$1") icon enabled"
+    fi
+
+    DebugFuncExit; return 0
+
+    }
+
+QPKG.Backup()
+    {
+
+    # calls the service script for the QPKG named in $1 and runs a backup operation
+
+    # input:
+    #   $1 = QPKG name
+
+    # output:
+    #   $? = 0 if successful, 1 if failed
+
+    DebugFuncEntry
+
+    if [[ -z $1 ]]; then
+        DebugError "no package name specified "
+        code_pointer=17
+        DebugFuncExit; return 1
+    elif QPKG.NotInstalled "$1"; then
+        DebugQPKG "$(FormatAsPackageName "$1")" "not installed"
+        code_pointer=18
+        DebugFuncExit; return 1
+    fi
+
+    local result=0
+    local package_init_pathfile=$(GetInstalledQPKGServicePathFile "$1")
+    local log_pathfile=$PACKAGE_LOGS_PATH/$1.$BACKUP_LOG_FILE
+
+    ShowAsProc "backing-up $(FormatAsPackageName "$1") configuration"
+
+    if Session.Debug.To.Screen.IsSet; then
+        RunThisAndLogResultsRealtime "$SH_CMD $package_init_pathfile backup" "$log_pathfile"
+        result=$?
+    else
+        RunThisAndLogResults "$SH_CMD $package_init_pathfile backup" "$log_pathfile"
+        result=$?
+    fi
+
+    if [[ $result -eq 0 ]]; then
+        ShowAsDone "backed-up $(FormatAsPackageName "$1") configuration"
+        GetQPKGServiceStatus "$1"
+    else
+        ShowAsWarning "Could not backup $(FormatAsPackageName "$1") configuration $(FormatAsExitcode $result)"
+    fi
+
+    AddFileToDebug "$log_pathfile"
+    DebugFuncExit; return $result
+
+    }
+
+QPKG.Restore()
+    {
+
+    # calls the service script for the QPKG named in $1 and runs a restore operation
+
+    # input:
+    #   $1 = QPKG name
+
+    # output:
+    #   $? = 0 if successful, 1 if failed
+
+    DebugFuncEntry
+
+    if [[ -z $1 ]]; then
+        DebugError "no package name specified "
+        code_pointer=19
+        DebugFuncExit; return 1
+    elif QPKG.NotInstalled "$1"; then
+        DebugQPKG "$(FormatAsPackageName "$1")" "not installed"
+        code_pointer=20
+        DebugFuncExit; return 1
+    fi
+
+    local result=0
+    local package_init_pathfile=$(GetInstalledQPKGServicePathFile "$1")
+    local log_pathfile=$PACKAGE_LOGS_PATH/$1.$RESTORE_LOG_FILE
+
+    ShowAsProc "restoring $(FormatAsPackageName "$1") configuration"
+
+    if Session.Debug.To.Screen.IsSet; then
+        RunThisAndLogResultsRealtime "$SH_CMD $package_init_pathfile restore" "$log_pathfile"
+        result=$?
+    else
+        RunThisAndLogResults "$SH_CMD $package_init_pathfile restore" "$log_pathfile"
+        result=$?
+    fi
+
+    if [[ $result -eq 0 ]]; then
+        ShowAsDone "restored $(FormatAsPackageName "$1") configuration"
+        GetQPKGServiceStatus "$1"
+    else
+        ShowAsWarning "Could not restore $(FormatAsPackageName "$1") configuration $(FormatAsExitcode $result)"
+    fi
+
+    AddFileToDebug "$log_pathfile"
+    DebugFuncExit; return $result
+
+    }
+
+QPKG.UserInstallable()
     {
 
     # input:
@@ -3443,10 +3443,7 @@ QPKG.ToBeInstalled()
     # output:
     #   $? = 0 (true) or 1 (false)
 
-    [[ -z $1 ]] && return 1
-    QPKGs.ToInstall.Exist "$1" && return 0
-
-    return 1
+    [[ -n $1 ]] && QPKGs.ToInstall.Exist "$1"
 
     }
 
@@ -3472,10 +3469,7 @@ QPKG.ToBeReinstalled()
     # output:
     #   $? = 0 (true) or 1 (false)
 
-    [[ -z $1 ]] && return 1
-    QPKGs.ToReinstall.Exist "$1" && return 0
-
-    return 1
+    [[ -n $1 ]] && QPKGs.ToReinstall.Exist "$1"
 
     }
 
@@ -3501,10 +3495,7 @@ QPKG.ToBeUpgraded()
     # output:
     #   $? = 0 (true) or 1 (false)
 
-    [[ -z $1 ]] && return 1
-    QPKGs.ToUpgrade.Exist "$1" && return 0
-
-    return 1
+    [[ -n $1 ]] && QPKGs.ToUpgrade.Exist "$1"
 
     }
 
