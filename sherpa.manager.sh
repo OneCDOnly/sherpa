@@ -676,6 +676,7 @@ Session.Validate()
     DebugQPKG 'arch' "$NAS_QPKG_ARCH"
     DebugQPKG 'upgradable package(s)' "$(QPKGs.Upgradable.List) "
     DebugInfoMinorSeparator
+    User.Opts.Dependencies.Check.IsSet      # force this
     QPKGs.Assignment.Check
     DebugInfoMinorSeparator
 
@@ -2963,14 +2964,14 @@ Session.Summary.Show()
         fi
     fi
 
-    if User.Opts.Dependencies.Check.IsSet; then
-        if Session.Error.IsNot; then
-            ShowAsDone "all application dependencies are installed"
-        else
-            ShowAsError "application dependency check failed! [$code_pointer]"
-            Session.SuggestIssue.Set
-        fi
-    fi
+#     if User.Opts.Dependencies.Check.IsSet; then
+#         if Session.Error.IsNot; then
+#             ShowAsDone "all application dependencies are installed"
+#         else
+#             ShowAsError "application dependency check failed! [$code_pointer]"
+#             Session.SuggestIssue.Set
+#         fi
+#     fi
 
     return 0
 
