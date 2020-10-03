@@ -160,26 +160,6 @@ User.Opts.Help.Abbreviations.Value()
         echo -n $_object_user_opts_help_abbreviations_value_
     fi
     }
-User.Opts.Help.Abbreviations.Value.Decrement()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_user_opts_help_abbreviations_value_=$((_object_user_opts_help_abbreviations_value_-amount))
-    }
-User.Opts.Help.Abbreviations.Value.Increment()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_user_opts_help_abbreviations_value_=$((_object_user_opts_help_abbreviations_value_+amount))
-    }
 User.Opts.Help.Abbreviations.Init
 
 User.Opts.Help.Actions.Add()
@@ -343,26 +323,6 @@ User.Opts.Help.Actions.Value()
     else
         echo -n $_object_user_opts_help_actions_value_
     fi
-    }
-User.Opts.Help.Actions.Value.Decrement()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_user_opts_help_actions_value_=$((_object_user_opts_help_actions_value_-amount))
-    }
-User.Opts.Help.Actions.Value.Increment()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_user_opts_help_actions_value_=$((_object_user_opts_help_actions_value_+amount))
     }
 User.Opts.Help.Actions.Init
 
@@ -528,26 +488,6 @@ User.Opts.Help.ActionsAll.Value()
         echo -n $_object_user_opts_help_actionsall_value_
     fi
     }
-User.Opts.Help.ActionsAll.Value.Decrement()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_user_opts_help_actionsall_value_=$((_object_user_opts_help_actionsall_value_-amount))
-    }
-User.Opts.Help.ActionsAll.Value.Increment()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_user_opts_help_actionsall_value_=$((_object_user_opts_help_actionsall_value_+amount))
-    }
 User.Opts.Help.ActionsAll.Init
 
 User.Opts.Help.Basic.Add()
@@ -711,26 +651,6 @@ User.Opts.Help.Basic.Value()
     else
         echo -n $_object_user_opts_help_basic_value_
     fi
-    }
-User.Opts.Help.Basic.Value.Decrement()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_user_opts_help_basic_value_=$((_object_user_opts_help_basic_value_-amount))
-    }
-User.Opts.Help.Basic.Value.Increment()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_user_opts_help_basic_value_=$((_object_user_opts_help_basic_value_+amount))
     }
 User.Opts.Help.Basic.Init
 
@@ -896,26 +816,6 @@ User.Opts.Help.Options.Value()
         echo -n $_object_user_opts_help_options_value_
     fi
     }
-User.Opts.Help.Options.Value.Decrement()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_user_opts_help_options_value_=$((_object_user_opts_help_options_value_-amount))
-    }
-User.Opts.Help.Options.Value.Increment()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_user_opts_help_options_value_=$((_object_user_opts_help_options_value_+amount))
-    }
 User.Opts.Help.Options.Init
 
 User.Opts.Help.Packages.Add()
@@ -1079,26 +979,6 @@ User.Opts.Help.Packages.Value()
     else
         echo -n $_object_user_opts_help_packages_value_
     fi
-    }
-User.Opts.Help.Packages.Value.Decrement()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_user_opts_help_packages_value_=$((_object_user_opts_help_packages_value_-amount))
-    }
-User.Opts.Help.Packages.Value.Increment()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_user_opts_help_packages_value_=$((_object_user_opts_help_packages_value_+amount))
     }
 User.Opts.Help.Packages.Init
 
@@ -1264,26 +1144,6 @@ User.Opts.Help.Problems.Value()
         echo -n $_object_user_opts_help_problems_value_
     fi
     }
-User.Opts.Help.Problems.Value.Decrement()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_user_opts_help_problems_value_=$((_object_user_opts_help_problems_value_-amount))
-    }
-User.Opts.Help.Problems.Value.Increment()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_user_opts_help_problems_value_=$((_object_user_opts_help_problems_value_+amount))
-    }
 User.Opts.Help.Problems.Init
 
 User.Opts.Help.Tips.Add()
@@ -1447,26 +1307,6 @@ User.Opts.Help.Tips.Value()
     else
         echo -n $_object_user_opts_help_tips_value_
     fi
-    }
-User.Opts.Help.Tips.Value.Decrement()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_user_opts_help_tips_value_=$((_object_user_opts_help_tips_value_-amount))
-    }
-User.Opts.Help.Tips.Value.Increment()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_user_opts_help_tips_value_=$((_object_user_opts_help_tips_value_+amount))
     }
 User.Opts.Help.Tips.Init
 
@@ -1632,26 +1472,6 @@ User.Opts.Clean.Value()
         echo -n $_object_user_opts_clean_value_
     fi
     }
-User.Opts.Clean.Value.Decrement()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_user_opts_clean_value_=$((_object_user_opts_clean_value_-amount))
-    }
-User.Opts.Clean.Value.Increment()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_user_opts_clean_value_=$((_object_user_opts_clean_value_+amount))
-    }
 User.Opts.Clean.Init
 
 User.Opts.Dependencies.Check.Add()
@@ -1815,26 +1635,6 @@ User.Opts.Dependencies.Check.Value()
     else
         echo -n $_object_user_opts_dependencies_check_value_
     fi
-    }
-User.Opts.Dependencies.Check.Value.Decrement()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_user_opts_dependencies_check_value_=$((_object_user_opts_dependencies_check_value_-amount))
-    }
-User.Opts.Dependencies.Check.Value.Increment()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_user_opts_dependencies_check_value_=$((_object_user_opts_dependencies_check_value_+amount))
     }
 User.Opts.Dependencies.Check.Init
 
@@ -2000,26 +1800,6 @@ User.Opts.IgnoreFreeSpace.Value()
         echo -n $_object_user_opts_ignorefreespace_value_
     fi
     }
-User.Opts.IgnoreFreeSpace.Value.Decrement()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_user_opts_ignorefreespace_value_=$((_object_user_opts_ignorefreespace_value_-amount))
-    }
-User.Opts.IgnoreFreeSpace.Value.Increment()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_user_opts_ignorefreespace_value_=$((_object_user_opts_ignorefreespace_value_+amount))
-    }
 User.Opts.IgnoreFreeSpace.Init
 
 User.Opts.Versions.View.Add()
@@ -2183,26 +1963,6 @@ User.Opts.Versions.View.Value()
     else
         echo -n $_object_user_opts_versions_view_value_
     fi
-    }
-User.Opts.Versions.View.Value.Decrement()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_user_opts_versions_view_value_=$((_object_user_opts_versions_view_value_-amount))
-    }
-User.Opts.Versions.View.Value.Increment()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_user_opts_versions_view_value_=$((_object_user_opts_versions_view_value_+amount))
     }
 User.Opts.Versions.View.Init
 
@@ -2368,26 +2128,6 @@ User.Opts.Log.Paste.Value()
         echo -n $_object_user_opts_log_paste_value_
     fi
     }
-User.Opts.Log.Paste.Value.Decrement()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_user_opts_log_paste_value_=$((_object_user_opts_log_paste_value_-amount))
-    }
-User.Opts.Log.Paste.Value.Increment()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_user_opts_log_paste_value_=$((_object_user_opts_log_paste_value_+amount))
-    }
 User.Opts.Log.Paste.Init
 
 User.Opts.Log.View.Add()
@@ -2551,26 +2291,6 @@ User.Opts.Log.View.Value()
     else
         echo -n $_object_user_opts_log_view_value_
     fi
-    }
-User.Opts.Log.View.Value.Decrement()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_user_opts_log_view_value_=$((_object_user_opts_log_view_value_-amount))
-    }
-User.Opts.Log.View.Value.Increment()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_user_opts_log_view_value_=$((_object_user_opts_log_view_value_+amount))
     }
 User.Opts.Log.View.Init
 
@@ -2736,26 +2456,6 @@ User.Opts.Apps.All.Backup.Value()
         echo -n $_object_user_opts_apps_all_backup_value_
     fi
     }
-User.Opts.Apps.All.Backup.Value.Decrement()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_user_opts_apps_all_backup_value_=$((_object_user_opts_apps_all_backup_value_-amount))
-    }
-User.Opts.Apps.All.Backup.Value.Increment()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_user_opts_apps_all_backup_value_=$((_object_user_opts_apps_all_backup_value_+amount))
-    }
 User.Opts.Apps.All.Backup.Init
 
 User.Opts.Apps.All.Install.Add()
@@ -2919,26 +2619,6 @@ User.Opts.Apps.All.Install.Value()
     else
         echo -n $_object_user_opts_apps_all_install_value_
     fi
-    }
-User.Opts.Apps.All.Install.Value.Decrement()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_user_opts_apps_all_install_value_=$((_object_user_opts_apps_all_install_value_-amount))
-    }
-User.Opts.Apps.All.Install.Value.Increment()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_user_opts_apps_all_install_value_=$((_object_user_opts_apps_all_install_value_+amount))
     }
 User.Opts.Apps.All.Install.Init
 
@@ -3104,26 +2784,6 @@ User.Opts.Apps.All.Reinstall.Value()
         echo -n $_object_user_opts_apps_all_reinstall_value_
     fi
     }
-User.Opts.Apps.All.Reinstall.Value.Decrement()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_user_opts_apps_all_reinstall_value_=$((_object_user_opts_apps_all_reinstall_value_-amount))
-    }
-User.Opts.Apps.All.Reinstall.Value.Increment()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_user_opts_apps_all_reinstall_value_=$((_object_user_opts_apps_all_reinstall_value_+amount))
-    }
 User.Opts.Apps.All.Reinstall.Init
 
 User.Opts.Apps.All.Restart.Add()
@@ -3287,26 +2947,6 @@ User.Opts.Apps.All.Restart.Value()
     else
         echo -n $_object_user_opts_apps_all_restart_value_
     fi
-    }
-User.Opts.Apps.All.Restart.Value.Decrement()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_user_opts_apps_all_restart_value_=$((_object_user_opts_apps_all_restart_value_-amount))
-    }
-User.Opts.Apps.All.Restart.Value.Increment()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_user_opts_apps_all_restart_value_=$((_object_user_opts_apps_all_restart_value_+amount))
     }
 User.Opts.Apps.All.Restart.Init
 
@@ -3472,26 +3112,6 @@ User.Opts.Apps.All.Restore.Value()
         echo -n $_object_user_opts_apps_all_restore_value_
     fi
     }
-User.Opts.Apps.All.Restore.Value.Decrement()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_user_opts_apps_all_restore_value_=$((_object_user_opts_apps_all_restore_value_-amount))
-    }
-User.Opts.Apps.All.Restore.Value.Increment()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_user_opts_apps_all_restore_value_=$((_object_user_opts_apps_all_restore_value_+amount))
-    }
 User.Opts.Apps.All.Restore.Init
 
 User.Opts.Apps.All.Uninstall.Add()
@@ -3655,26 +3275,6 @@ User.Opts.Apps.All.Uninstall.Value()
     else
         echo -n $_object_user_opts_apps_all_uninstall_value_
     fi
-    }
-User.Opts.Apps.All.Uninstall.Value.Decrement()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_user_opts_apps_all_uninstall_value_=$((_object_user_opts_apps_all_uninstall_value_-amount))
-    }
-User.Opts.Apps.All.Uninstall.Value.Increment()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_user_opts_apps_all_uninstall_value_=$((_object_user_opts_apps_all_uninstall_value_+amount))
     }
 User.Opts.Apps.All.Uninstall.Init
 
@@ -3840,26 +3440,6 @@ User.Opts.Apps.All.Upgrade.Value()
         echo -n $_object_user_opts_apps_all_upgrade_value_
     fi
     }
-User.Opts.Apps.All.Upgrade.Value.Decrement()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_user_opts_apps_all_upgrade_value_=$((_object_user_opts_apps_all_upgrade_value_-amount))
-    }
-User.Opts.Apps.All.Upgrade.Value.Increment()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_user_opts_apps_all_upgrade_value_=$((_object_user_opts_apps_all_upgrade_value_+amount))
-    }
 User.Opts.Apps.All.Upgrade.Init
 
 User.Opts.Apps.List.All.Add()
@@ -4023,26 +3603,6 @@ User.Opts.Apps.List.All.Value()
     else
         echo -n $_object_user_opts_apps_list_all_value_
     fi
-    }
-User.Opts.Apps.List.All.Value.Decrement()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_user_opts_apps_list_all_value_=$((_object_user_opts_apps_list_all_value_-amount))
-    }
-User.Opts.Apps.List.All.Value.Increment()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_user_opts_apps_list_all_value_=$((_object_user_opts_apps_list_all_value_+amount))
     }
 User.Opts.Apps.List.All.Init
 
@@ -4208,26 +3768,6 @@ User.Opts.Apps.List.Installed.Value()
         echo -n $_object_user_opts_apps_list_installed_value_
     fi
     }
-User.Opts.Apps.List.Installed.Value.Decrement()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_user_opts_apps_list_installed_value_=$((_object_user_opts_apps_list_installed_value_-amount))
-    }
-User.Opts.Apps.List.Installed.Value.Increment()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_user_opts_apps_list_installed_value_=$((_object_user_opts_apps_list_installed_value_+amount))
-    }
 User.Opts.Apps.List.Installed.Init
 
 User.Opts.Apps.List.NotInstalled.Add()
@@ -4391,26 +3931,6 @@ User.Opts.Apps.List.NotInstalled.Value()
     else
         echo -n $_object_user_opts_apps_list_notinstalled_value_
     fi
-    }
-User.Opts.Apps.List.NotInstalled.Value.Decrement()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_user_opts_apps_list_notinstalled_value_=$((_object_user_opts_apps_list_notinstalled_value_-amount))
-    }
-User.Opts.Apps.List.NotInstalled.Value.Increment()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_user_opts_apps_list_notinstalled_value_=$((_object_user_opts_apps_list_notinstalled_value_+amount))
     }
 User.Opts.Apps.List.NotInstalled.Init
 
@@ -4576,27 +4096,663 @@ User.Opts.Apps.List.Upgradable.Value()
         echo -n $_object_user_opts_apps_list_upgradable_value_
     fi
     }
-User.Opts.Apps.List.Upgradable.Value.Decrement()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_user_opts_apps_list_upgradable_value_=$((_object_user_opts_apps_list_upgradable_value_-amount))
-    }
-User.Opts.Apps.List.Upgradable.Value.Increment()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_user_opts_apps_list_upgradable_value_=$((_object_user_opts_apps_list_upgradable_value_+amount))
-    }
 User.Opts.Apps.List.Upgradable.Init
+
+QPKGs.Dependant.Add()
+    {
+    [[ ${_object_qpkgs_dependant_array_[*]} != *"$1"* ]] && _object_qpkgs_dependant_array_+=("$1")
+    }
+QPKGs.Dependant.Array()
+    {
+    echo -n "${_object_qpkgs_dependant_array_[@]}"
+    }
+QPKGs.Dependant.Clear()
+    {
+    [[ $_object_qpkgs_dependant_flag_ != "true" ]] && return
+    _object_qpkgs_dependant_flag_=false
+    DebugVar _object_qpkgs_dependant_flag_
+    }
+QPKGs.Dependant.Count()
+    {
+    echo "${#_object_qpkgs_dependant_array_[@]}"
+    }
+QPKGs.Dependant.Description()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_dependant_description_="$2"
+    else
+        echo -n "_object_qpkgs_dependant_description_"
+    fi
+    }
+QPKGs.Dependant.Disable()
+    {
+    [[ $_object_qpkgs_dependant_enable_ != "true" ]] && return
+    _object_qpkgs_dependant_enable_=false
+    DebugVar _object_qpkgs_dependant_enable_
+    }
+QPKGs.Dependant.Enable()
+    {
+    [[ $_object_qpkgs_dependant_enable_ = "true" ]] && return
+    _object_qpkgs_dependant_enable_=true
+    DebugVar _object_qpkgs_dependant_enable_
+    }
+QPKGs.Dependant.Enumerate()
+    {
+    ((_object_qpkgs_dependant_array_index_++))
+    if [[ $_object_qpkgs_dependant_array_index_ -gt ${#_object_qpkgs_dependant_array_[@]} ]]; then
+        _object_qpkgs_dependant_array_index_=1
+    fi
+    }
+QPKGs.Dependant.Env()
+    {
+    echo "* object internal environment *"
+    echo "Name: 'QPKGs.Dependant'"
+    echo "Description: '$_object_qpkgs_dependant_description_'"
+    echo "Value: '$_object_qpkgs_dependant_value_'"
+    echo "Text: '$_object_qpkgs_dependant_text_'"
+    echo "Flag: '$_object_qpkgs_dependant_flag_'"
+    echo "Enable: '$_object_qpkgs_dependant_enable_'"
+    echo "Array: '${_object_qpkgs_dependant_array_[*]}'"
+    echo "Array index: '$_object_qpkgs_dependant_array_index_'"
+    echo "Path: '$_object_qpkgs_dependant_path_'"
+    }
+QPKGs.Dependant.Exist()
+    {
+    [[ ${_object_qpkgs_dependant_array_[*]} == *"$1"* ]]
+    }
+QPKGs.Dependant.First()
+    {
+    echo "${_object_qpkgs_dependant_array_[0]}"
+    }
+QPKGs.Dependant.GetCurrent()
+    {
+    echo -n "${_object_qpkgs_dependant_array_[((_object_qpkgs_dependant_array_index_-1))]}"
+    }
+QPKGs.Dependant.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_qpkgs_dependant_array_[@]} ]] && index=${#_object_qpkgs_dependant_array_[@]}
+    echo -n "${_object_qpkgs_dependant_array_[((index-1))]}"
+    }
+QPKGs.Dependant.Index()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        if [[ $2 -gt ${#_object_qpkgs_dependant_array_[@]} ]]; then
+            _object_qpkgs_dependant_array_index_=${#_object_qpkgs_dependant_array_[@]}
+        else
+            _object_qpkgs_dependant_array_index_=$2
+        fi
+    else
+        echo -n $_object_qpkgs_dependant_array_index_
+    fi
+    }
+QPKGs.Dependant.Init()
+    {
+    _object_qpkgs_dependant_description_=
+    _object_qpkgs_dependant_value_=0
+    _object_qpkgs_dependant_text_=
+    _object_qpkgs_dependant_flag_=false
+    _object_qpkgs_dependant_enable_=false
+    _object_qpkgs_dependant_array_+=()
+    _object_qpkgs_dependant_array_index_=1
+    _object_qpkgs_dependant_path_=
+    }
+QPKGs.Dependant.IsAny()
+    {
+    [[ ${#_object_qpkgs_dependant_array_[@]} -gt 0 ]]
+    }
+QPKGs.Dependant.IsDisabled()
+    {
+    [[ $_object_qpkgs_dependant_enable_ != "true" ]]
+    }
+QPKGs.Dependant.IsEnabled()
+    {
+    [[ $_object_qpkgs_dependant_enable_ = "true" ]]
+    }
+QPKGs.Dependant.IsNone()
+    {
+    [[ ${#_object_qpkgs_dependant_array_[@]} -eq 0 ]]
+    }
+QPKGs.Dependant.IsNot()
+    {
+    [[ $_object_qpkgs_dependant_flag_ != "true" ]]
+    }
+QPKGs.Dependant.IsSet()
+    {
+    [[ $_object_qpkgs_dependant_flag_ = "true" ]]
+    }
+QPKGs.Dependant.List()
+    {
+    echo -n "${_object_qpkgs_dependant_array_[*]}"
+    }
+QPKGs.Dependant.Path()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_dependant_path_="$2"
+    else
+        echo -n "$_object_qpkgs_dependant_path_"
+    fi
+    }
+QPKGs.Dependant.Remove()
+    {
+    [[ ${_object_qpkgs_dependant_array_[*]} == *"$1"* ]] && _object_qpkgs_dependant_array_=("${_object_qpkgs_dependant_array_[@]/$1}")
+    }
+QPKGs.Dependant.Set()
+    {
+    [[ $_object_qpkgs_dependant_flag_ = "true" ]] && return
+    _object_qpkgs_dependant_flag_=true
+    DebugVar _object_qpkgs_dependant_flag_
+    }
+QPKGs.Dependant.Text()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_dependant_text_="$2"
+    else
+        echo -n "$_object_qpkgs_dependant_text_"
+    fi
+    }
+QPKGs.Dependant.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_dependant_value_=$2
+    else
+        echo -n $_object_qpkgs_dependant_value_
+    fi
+    }
+QPKGs.Dependant.Init
+
+QPKGs.Download.Add()
+    {
+    [[ ${_object_qpkgs_download_array_[*]} != *"$1"* ]] && _object_qpkgs_download_array_+=("$1")
+    }
+QPKGs.Download.Array()
+    {
+    echo -n "${_object_qpkgs_download_array_[@]}"
+    }
+QPKGs.Download.Clear()
+    {
+    [[ $_object_qpkgs_download_flag_ != "true" ]] && return
+    _object_qpkgs_download_flag_=false
+    DebugVar _object_qpkgs_download_flag_
+    }
+QPKGs.Download.Count()
+    {
+    echo "${#_object_qpkgs_download_array_[@]}"
+    }
+QPKGs.Download.Description()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_download_description_="$2"
+    else
+        echo -n "_object_qpkgs_download_description_"
+    fi
+    }
+QPKGs.Download.Disable()
+    {
+    [[ $_object_qpkgs_download_enable_ != "true" ]] && return
+    _object_qpkgs_download_enable_=false
+    DebugVar _object_qpkgs_download_enable_
+    }
+QPKGs.Download.Enable()
+    {
+    [[ $_object_qpkgs_download_enable_ = "true" ]] && return
+    _object_qpkgs_download_enable_=true
+    DebugVar _object_qpkgs_download_enable_
+    }
+QPKGs.Download.Enumerate()
+    {
+    ((_object_qpkgs_download_array_index_++))
+    if [[ $_object_qpkgs_download_array_index_ -gt ${#_object_qpkgs_download_array_[@]} ]]; then
+        _object_qpkgs_download_array_index_=1
+    fi
+    }
+QPKGs.Download.Env()
+    {
+    echo "* object internal environment *"
+    echo "Name: 'QPKGs.Download'"
+    echo "Description: '$_object_qpkgs_download_description_'"
+    echo "Value: '$_object_qpkgs_download_value_'"
+    echo "Text: '$_object_qpkgs_download_text_'"
+    echo "Flag: '$_object_qpkgs_download_flag_'"
+    echo "Enable: '$_object_qpkgs_download_enable_'"
+    echo "Array: '${_object_qpkgs_download_array_[*]}'"
+    echo "Array index: '$_object_qpkgs_download_array_index_'"
+    echo "Path: '$_object_qpkgs_download_path_'"
+    }
+QPKGs.Download.Exist()
+    {
+    [[ ${_object_qpkgs_download_array_[*]} == *"$1"* ]]
+    }
+QPKGs.Download.First()
+    {
+    echo "${_object_qpkgs_download_array_[0]}"
+    }
+QPKGs.Download.GetCurrent()
+    {
+    echo -n "${_object_qpkgs_download_array_[((_object_qpkgs_download_array_index_-1))]}"
+    }
+QPKGs.Download.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_qpkgs_download_array_[@]} ]] && index=${#_object_qpkgs_download_array_[@]}
+    echo -n "${_object_qpkgs_download_array_[((index-1))]}"
+    }
+QPKGs.Download.Index()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        if [[ $2 -gt ${#_object_qpkgs_download_array_[@]} ]]; then
+            _object_qpkgs_download_array_index_=${#_object_qpkgs_download_array_[@]}
+        else
+            _object_qpkgs_download_array_index_=$2
+        fi
+    else
+        echo -n $_object_qpkgs_download_array_index_
+    fi
+    }
+QPKGs.Download.Init()
+    {
+    _object_qpkgs_download_description_=
+    _object_qpkgs_download_value_=0
+    _object_qpkgs_download_text_=
+    _object_qpkgs_download_flag_=false
+    _object_qpkgs_download_enable_=false
+    _object_qpkgs_download_array_+=()
+    _object_qpkgs_download_array_index_=1
+    _object_qpkgs_download_path_=
+    }
+QPKGs.Download.IsAny()
+    {
+    [[ ${#_object_qpkgs_download_array_[@]} -gt 0 ]]
+    }
+QPKGs.Download.IsDisabled()
+    {
+    [[ $_object_qpkgs_download_enable_ != "true" ]]
+    }
+QPKGs.Download.IsEnabled()
+    {
+    [[ $_object_qpkgs_download_enable_ = "true" ]]
+    }
+QPKGs.Download.IsNone()
+    {
+    [[ ${#_object_qpkgs_download_array_[@]} -eq 0 ]]
+    }
+QPKGs.Download.IsNot()
+    {
+    [[ $_object_qpkgs_download_flag_ != "true" ]]
+    }
+QPKGs.Download.IsSet()
+    {
+    [[ $_object_qpkgs_download_flag_ = "true" ]]
+    }
+QPKGs.Download.List()
+    {
+    echo -n "${_object_qpkgs_download_array_[*]}"
+    }
+QPKGs.Download.Path()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_download_path_="$2"
+    else
+        echo -n "$_object_qpkgs_download_path_"
+    fi
+    }
+QPKGs.Download.Remove()
+    {
+    [[ ${_object_qpkgs_download_array_[*]} == *"$1"* ]] && _object_qpkgs_download_array_=("${_object_qpkgs_download_array_[@]/$1}")
+    }
+QPKGs.Download.Set()
+    {
+    [[ $_object_qpkgs_download_flag_ = "true" ]] && return
+    _object_qpkgs_download_flag_=true
+    DebugVar _object_qpkgs_download_flag_
+    }
+QPKGs.Download.Text()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_download_text_="$2"
+    else
+        echo -n "$_object_qpkgs_download_text_"
+    fi
+    }
+QPKGs.Download.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_download_value_=$2
+    else
+        echo -n $_object_qpkgs_download_value_
+    fi
+    }
+QPKGs.Download.Init
+
+QPKGs.Independent.Add()
+    {
+    [[ ${_object_qpkgs_independent_array_[*]} != *"$1"* ]] && _object_qpkgs_independent_array_+=("$1")
+    }
+QPKGs.Independent.Array()
+    {
+    echo -n "${_object_qpkgs_independent_array_[@]}"
+    }
+QPKGs.Independent.Clear()
+    {
+    [[ $_object_qpkgs_independent_flag_ != "true" ]] && return
+    _object_qpkgs_independent_flag_=false
+    DebugVar _object_qpkgs_independent_flag_
+    }
+QPKGs.Independent.Count()
+    {
+    echo "${#_object_qpkgs_independent_array_[@]}"
+    }
+QPKGs.Independent.Description()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_independent_description_="$2"
+    else
+        echo -n "_object_qpkgs_independent_description_"
+    fi
+    }
+QPKGs.Independent.Disable()
+    {
+    [[ $_object_qpkgs_independent_enable_ != "true" ]] && return
+    _object_qpkgs_independent_enable_=false
+    DebugVar _object_qpkgs_independent_enable_
+    }
+QPKGs.Independent.Enable()
+    {
+    [[ $_object_qpkgs_independent_enable_ = "true" ]] && return
+    _object_qpkgs_independent_enable_=true
+    DebugVar _object_qpkgs_independent_enable_
+    }
+QPKGs.Independent.Enumerate()
+    {
+    ((_object_qpkgs_independent_array_index_++))
+    if [[ $_object_qpkgs_independent_array_index_ -gt ${#_object_qpkgs_independent_array_[@]} ]]; then
+        _object_qpkgs_independent_array_index_=1
+    fi
+    }
+QPKGs.Independent.Env()
+    {
+    echo "* object internal environment *"
+    echo "Name: 'QPKGs.Independent'"
+    echo "Description: '$_object_qpkgs_independent_description_'"
+    echo "Value: '$_object_qpkgs_independent_value_'"
+    echo "Text: '$_object_qpkgs_independent_text_'"
+    echo "Flag: '$_object_qpkgs_independent_flag_'"
+    echo "Enable: '$_object_qpkgs_independent_enable_'"
+    echo "Array: '${_object_qpkgs_independent_array_[*]}'"
+    echo "Array index: '$_object_qpkgs_independent_array_index_'"
+    echo "Path: '$_object_qpkgs_independent_path_'"
+    }
+QPKGs.Independent.Exist()
+    {
+    [[ ${_object_qpkgs_independent_array_[*]} == *"$1"* ]]
+    }
+QPKGs.Independent.First()
+    {
+    echo "${_object_qpkgs_independent_array_[0]}"
+    }
+QPKGs.Independent.GetCurrent()
+    {
+    echo -n "${_object_qpkgs_independent_array_[((_object_qpkgs_independent_array_index_-1))]}"
+    }
+QPKGs.Independent.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_qpkgs_independent_array_[@]} ]] && index=${#_object_qpkgs_independent_array_[@]}
+    echo -n "${_object_qpkgs_independent_array_[((index-1))]}"
+    }
+QPKGs.Independent.Index()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        if [[ $2 -gt ${#_object_qpkgs_independent_array_[@]} ]]; then
+            _object_qpkgs_independent_array_index_=${#_object_qpkgs_independent_array_[@]}
+        else
+            _object_qpkgs_independent_array_index_=$2
+        fi
+    else
+        echo -n $_object_qpkgs_independent_array_index_
+    fi
+    }
+QPKGs.Independent.Init()
+    {
+    _object_qpkgs_independent_description_=
+    _object_qpkgs_independent_value_=0
+    _object_qpkgs_independent_text_=
+    _object_qpkgs_independent_flag_=false
+    _object_qpkgs_independent_enable_=false
+    _object_qpkgs_independent_array_+=()
+    _object_qpkgs_independent_array_index_=1
+    _object_qpkgs_independent_path_=
+    }
+QPKGs.Independent.IsAny()
+    {
+    [[ ${#_object_qpkgs_independent_array_[@]} -gt 0 ]]
+    }
+QPKGs.Independent.IsDisabled()
+    {
+    [[ $_object_qpkgs_independent_enable_ != "true" ]]
+    }
+QPKGs.Independent.IsEnabled()
+    {
+    [[ $_object_qpkgs_independent_enable_ = "true" ]]
+    }
+QPKGs.Independent.IsNone()
+    {
+    [[ ${#_object_qpkgs_independent_array_[@]} -eq 0 ]]
+    }
+QPKGs.Independent.IsNot()
+    {
+    [[ $_object_qpkgs_independent_flag_ != "true" ]]
+    }
+QPKGs.Independent.IsSet()
+    {
+    [[ $_object_qpkgs_independent_flag_ = "true" ]]
+    }
+QPKGs.Independent.List()
+    {
+    echo -n "${_object_qpkgs_independent_array_[*]}"
+    }
+QPKGs.Independent.Path()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_independent_path_="$2"
+    else
+        echo -n "$_object_qpkgs_independent_path_"
+    fi
+    }
+QPKGs.Independent.Remove()
+    {
+    [[ ${_object_qpkgs_independent_array_[*]} == *"$1"* ]] && _object_qpkgs_independent_array_=("${_object_qpkgs_independent_array_[@]/$1}")
+    }
+QPKGs.Independent.Set()
+    {
+    [[ $_object_qpkgs_independent_flag_ = "true" ]] && return
+    _object_qpkgs_independent_flag_=true
+    DebugVar _object_qpkgs_independent_flag_
+    }
+QPKGs.Independent.Text()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_independent_text_="$2"
+    else
+        echo -n "$_object_qpkgs_independent_text_"
+    fi
+    }
+QPKGs.Independent.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_independent_value_=$2
+    else
+        echo -n $_object_qpkgs_independent_value_
+    fi
+    }
+QPKGs.Independent.Init
+
+QPKGs.Installable.Add()
+    {
+    [[ ${_object_qpkgs_installable_array_[*]} != *"$1"* ]] && _object_qpkgs_installable_array_+=("$1")
+    }
+QPKGs.Installable.Array()
+    {
+    echo -n "${_object_qpkgs_installable_array_[@]}"
+    }
+QPKGs.Installable.Clear()
+    {
+    [[ $_object_qpkgs_installable_flag_ != "true" ]] && return
+    _object_qpkgs_installable_flag_=false
+    DebugVar _object_qpkgs_installable_flag_
+    }
+QPKGs.Installable.Count()
+    {
+    echo "${#_object_qpkgs_installable_array_[@]}"
+    }
+QPKGs.Installable.Description()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_installable_description_="$2"
+    else
+        echo -n "_object_qpkgs_installable_description_"
+    fi
+    }
+QPKGs.Installable.Disable()
+    {
+    [[ $_object_qpkgs_installable_enable_ != "true" ]] && return
+    _object_qpkgs_installable_enable_=false
+    DebugVar _object_qpkgs_installable_enable_
+    }
+QPKGs.Installable.Enable()
+    {
+    [[ $_object_qpkgs_installable_enable_ = "true" ]] && return
+    _object_qpkgs_installable_enable_=true
+    DebugVar _object_qpkgs_installable_enable_
+    }
+QPKGs.Installable.Enumerate()
+    {
+    ((_object_qpkgs_installable_array_index_++))
+    if [[ $_object_qpkgs_installable_array_index_ -gt ${#_object_qpkgs_installable_array_[@]} ]]; then
+        _object_qpkgs_installable_array_index_=1
+    fi
+    }
+QPKGs.Installable.Env()
+    {
+    echo "* object internal environment *"
+    echo "Name: 'QPKGs.Installable'"
+    echo "Description: '$_object_qpkgs_installable_description_'"
+    echo "Value: '$_object_qpkgs_installable_value_'"
+    echo "Text: '$_object_qpkgs_installable_text_'"
+    echo "Flag: '$_object_qpkgs_installable_flag_'"
+    echo "Enable: '$_object_qpkgs_installable_enable_'"
+    echo "Array: '${_object_qpkgs_installable_array_[*]}'"
+    echo "Array index: '$_object_qpkgs_installable_array_index_'"
+    echo "Path: '$_object_qpkgs_installable_path_'"
+    }
+QPKGs.Installable.Exist()
+    {
+    [[ ${_object_qpkgs_installable_array_[*]} == *"$1"* ]]
+    }
+QPKGs.Installable.First()
+    {
+    echo "${_object_qpkgs_installable_array_[0]}"
+    }
+QPKGs.Installable.GetCurrent()
+    {
+    echo -n "${_object_qpkgs_installable_array_[((_object_qpkgs_installable_array_index_-1))]}"
+    }
+QPKGs.Installable.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_qpkgs_installable_array_[@]} ]] && index=${#_object_qpkgs_installable_array_[@]}
+    echo -n "${_object_qpkgs_installable_array_[((index-1))]}"
+    }
+QPKGs.Installable.Index()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        if [[ $2 -gt ${#_object_qpkgs_installable_array_[@]} ]]; then
+            _object_qpkgs_installable_array_index_=${#_object_qpkgs_installable_array_[@]}
+        else
+            _object_qpkgs_installable_array_index_=$2
+        fi
+    else
+        echo -n $_object_qpkgs_installable_array_index_
+    fi
+    }
+QPKGs.Installable.Init()
+    {
+    _object_qpkgs_installable_description_=
+    _object_qpkgs_installable_value_=0
+    _object_qpkgs_installable_text_=
+    _object_qpkgs_installable_flag_=false
+    _object_qpkgs_installable_enable_=false
+    _object_qpkgs_installable_array_+=()
+    _object_qpkgs_installable_array_index_=1
+    _object_qpkgs_installable_path_=
+    }
+QPKGs.Installable.IsAny()
+    {
+    [[ ${#_object_qpkgs_installable_array_[@]} -gt 0 ]]
+    }
+QPKGs.Installable.IsDisabled()
+    {
+    [[ $_object_qpkgs_installable_enable_ != "true" ]]
+    }
+QPKGs.Installable.IsEnabled()
+    {
+    [[ $_object_qpkgs_installable_enable_ = "true" ]]
+    }
+QPKGs.Installable.IsNone()
+    {
+    [[ ${#_object_qpkgs_installable_array_[@]} -eq 0 ]]
+    }
+QPKGs.Installable.IsNot()
+    {
+    [[ $_object_qpkgs_installable_flag_ != "true" ]]
+    }
+QPKGs.Installable.IsSet()
+    {
+    [[ $_object_qpkgs_installable_flag_ = "true" ]]
+    }
+QPKGs.Installable.List()
+    {
+    echo -n "${_object_qpkgs_installable_array_[*]}"
+    }
+QPKGs.Installable.Path()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_installable_path_="$2"
+    else
+        echo -n "$_object_qpkgs_installable_path_"
+    fi
+    }
+QPKGs.Installable.Remove()
+    {
+    [[ ${_object_qpkgs_installable_array_[*]} == *"$1"* ]] && _object_qpkgs_installable_array_=("${_object_qpkgs_installable_array_[@]/$1}")
+    }
+QPKGs.Installable.Set()
+    {
+    [[ $_object_qpkgs_installable_flag_ = "true" ]] && return
+    _object_qpkgs_installable_flag_=true
+    DebugVar _object_qpkgs_installable_flag_
+    }
+QPKGs.Installable.Text()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_installable_text_="$2"
+    else
+        echo -n "$_object_qpkgs_installable_text_"
+    fi
+    }
+QPKGs.Installable.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_installable_value_=$2
+    else
+        echo -n $_object_qpkgs_installable_value_
+    fi
+    }
+QPKGs.Installable.Init
 
 QPKGs.Installed.Add()
     {
@@ -4759,26 +4915,6 @@ QPKGs.Installed.Value()
     else
         echo -n $_object_qpkgs_installed_value_
     fi
-    }
-QPKGs.Installed.Value.Decrement()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_qpkgs_installed_value_=$((_object_qpkgs_installed_value_-amount))
-    }
-QPKGs.Installed.Value.Increment()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_qpkgs_installed_value_=$((_object_qpkgs_installed_value_+amount))
     }
 QPKGs.Installed.Init
 
@@ -4944,211 +5080,171 @@ QPKGs.JustInstalled.Value()
         echo -n $_object_qpkgs_justinstalled_value_
     fi
     }
-QPKGs.JustInstalled.Value.Decrement()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_qpkgs_justinstalled_value_=$((_object_qpkgs_justinstalled_value_-amount))
-    }
-QPKGs.JustInstalled.Value.Increment()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_qpkgs_justinstalled_value_=$((_object_qpkgs_justinstalled_value_+amount))
-    }
 QPKGs.JustInstalled.Init
 
-QPKGs.Upgradable.Add()
+QPKGs.NotInstalled.Add()
     {
-    [[ ${_object_qpkgs_upgradable_array_[*]} != *"$1"* ]] && _object_qpkgs_upgradable_array_+=("$1")
+    [[ ${_object_qpkgs_notinstalled_array_[*]} != *"$1"* ]] && _object_qpkgs_notinstalled_array_+=("$1")
     }
-QPKGs.Upgradable.Array()
+QPKGs.NotInstalled.Array()
     {
-    echo -n "${_object_qpkgs_upgradable_array_[@]}"
+    echo -n "${_object_qpkgs_notinstalled_array_[@]}"
     }
-QPKGs.Upgradable.Clear()
+QPKGs.NotInstalled.Clear()
     {
-    [[ $_object_qpkgs_upgradable_flag_ != "true" ]] && return
-    _object_qpkgs_upgradable_flag_=false
-    DebugVar _object_qpkgs_upgradable_flag_
+    [[ $_object_qpkgs_notinstalled_flag_ != "true" ]] && return
+    _object_qpkgs_notinstalled_flag_=false
+    DebugVar _object_qpkgs_notinstalled_flag_
     }
-QPKGs.Upgradable.Count()
+QPKGs.NotInstalled.Count()
     {
-    echo "${#_object_qpkgs_upgradable_array_[@]}"
+    echo "${#_object_qpkgs_notinstalled_array_[@]}"
     }
-QPKGs.Upgradable.Description()
+QPKGs.NotInstalled.Description()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_qpkgs_upgradable_description_="$2"
+        _object_qpkgs_notinstalled_description_="$2"
     else
-        echo -n "_object_qpkgs_upgradable_description_"
+        echo -n "_object_qpkgs_notinstalled_description_"
     fi
     }
-QPKGs.Upgradable.Disable()
+QPKGs.NotInstalled.Disable()
     {
-    [[ $_object_qpkgs_upgradable_enable_ != "true" ]] && return
-    _object_qpkgs_upgradable_enable_=false
-    DebugVar _object_qpkgs_upgradable_enable_
+    [[ $_object_qpkgs_notinstalled_enable_ != "true" ]] && return
+    _object_qpkgs_notinstalled_enable_=false
+    DebugVar _object_qpkgs_notinstalled_enable_
     }
-QPKGs.Upgradable.Enable()
+QPKGs.NotInstalled.Enable()
     {
-    [[ $_object_qpkgs_upgradable_enable_ = "true" ]] && return
-    _object_qpkgs_upgradable_enable_=true
-    DebugVar _object_qpkgs_upgradable_enable_
+    [[ $_object_qpkgs_notinstalled_enable_ = "true" ]] && return
+    _object_qpkgs_notinstalled_enable_=true
+    DebugVar _object_qpkgs_notinstalled_enable_
     }
-QPKGs.Upgradable.Enumerate()
+QPKGs.NotInstalled.Enumerate()
     {
-    ((_object_qpkgs_upgradable_array_index_++))
-    if [[ $_object_qpkgs_upgradable_array_index_ -gt ${#_object_qpkgs_upgradable_array_[@]} ]]; then
-        _object_qpkgs_upgradable_array_index_=1
+    ((_object_qpkgs_notinstalled_array_index_++))
+    if [[ $_object_qpkgs_notinstalled_array_index_ -gt ${#_object_qpkgs_notinstalled_array_[@]} ]]; then
+        _object_qpkgs_notinstalled_array_index_=1
     fi
     }
-QPKGs.Upgradable.Env()
+QPKGs.NotInstalled.Env()
     {
     echo "* object internal environment *"
-    echo "Name: 'QPKGs.Upgradable'"
-    echo "Description: '$_object_qpkgs_upgradable_description_'"
-    echo "Value: '$_object_qpkgs_upgradable_value_'"
-    echo "Text: '$_object_qpkgs_upgradable_text_'"
-    echo "Flag: '$_object_qpkgs_upgradable_flag_'"
-    echo "Enable: '$_object_qpkgs_upgradable_enable_'"
-    echo "Array: '${_object_qpkgs_upgradable_array_[*]}'"
-    echo "Array index: '$_object_qpkgs_upgradable_array_index_'"
-    echo "Path: '$_object_qpkgs_upgradable_path_'"
+    echo "Name: 'QPKGs.NotInstalled'"
+    echo "Description: '$_object_qpkgs_notinstalled_description_'"
+    echo "Value: '$_object_qpkgs_notinstalled_value_'"
+    echo "Text: '$_object_qpkgs_notinstalled_text_'"
+    echo "Flag: '$_object_qpkgs_notinstalled_flag_'"
+    echo "Enable: '$_object_qpkgs_notinstalled_enable_'"
+    echo "Array: '${_object_qpkgs_notinstalled_array_[*]}'"
+    echo "Array index: '$_object_qpkgs_notinstalled_array_index_'"
+    echo "Path: '$_object_qpkgs_notinstalled_path_'"
     }
-QPKGs.Upgradable.Exist()
+QPKGs.NotInstalled.Exist()
     {
-    [[ ${_object_qpkgs_upgradable_array_[*]} == *"$1"* ]]
+    [[ ${_object_qpkgs_notinstalled_array_[*]} == *"$1"* ]]
     }
-QPKGs.Upgradable.First()
+QPKGs.NotInstalled.First()
     {
-    echo "${_object_qpkgs_upgradable_array_[0]}"
+    echo "${_object_qpkgs_notinstalled_array_[0]}"
     }
-QPKGs.Upgradable.GetCurrent()
+QPKGs.NotInstalled.GetCurrent()
     {
-    echo -n "${_object_qpkgs_upgradable_array_[((_object_qpkgs_upgradable_array_index_-1))]}"
+    echo -n "${_object_qpkgs_notinstalled_array_[((_object_qpkgs_notinstalled_array_index_-1))]}"
     }
-QPKGs.Upgradable.GetItem()
+QPKGs.NotInstalled.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_qpkgs_upgradable_array_[@]} ]] && index=${#_object_qpkgs_upgradable_array_[@]}
-    echo -n "${_object_qpkgs_upgradable_array_[((index-1))]}"
+    [[ $index -gt ${#_object_qpkgs_notinstalled_array_[@]} ]] && index=${#_object_qpkgs_notinstalled_array_[@]}
+    echo -n "${_object_qpkgs_notinstalled_array_[((index-1))]}"
     }
-QPKGs.Upgradable.Index()
+QPKGs.NotInstalled.Index()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        if [[ $2 -gt ${#_object_qpkgs_upgradable_array_[@]} ]]; then
-            _object_qpkgs_upgradable_array_index_=${#_object_qpkgs_upgradable_array_[@]}
+        if [[ $2 -gt ${#_object_qpkgs_notinstalled_array_[@]} ]]; then
+            _object_qpkgs_notinstalled_array_index_=${#_object_qpkgs_notinstalled_array_[@]}
         else
-            _object_qpkgs_upgradable_array_index_=$2
+            _object_qpkgs_notinstalled_array_index_=$2
         fi
     else
-        echo -n $_object_qpkgs_upgradable_array_index_
+        echo -n $_object_qpkgs_notinstalled_array_index_
     fi
     }
-QPKGs.Upgradable.Init()
+QPKGs.NotInstalled.Init()
     {
-    _object_qpkgs_upgradable_description_=
-    _object_qpkgs_upgradable_value_=0
-    _object_qpkgs_upgradable_text_=
-    _object_qpkgs_upgradable_flag_=false
-    _object_qpkgs_upgradable_enable_=false
-    _object_qpkgs_upgradable_array_+=()
-    _object_qpkgs_upgradable_array_index_=1
-    _object_qpkgs_upgradable_path_=
+    _object_qpkgs_notinstalled_description_=
+    _object_qpkgs_notinstalled_value_=0
+    _object_qpkgs_notinstalled_text_=
+    _object_qpkgs_notinstalled_flag_=false
+    _object_qpkgs_notinstalled_enable_=false
+    _object_qpkgs_notinstalled_array_+=()
+    _object_qpkgs_notinstalled_array_index_=1
+    _object_qpkgs_notinstalled_path_=
     }
-QPKGs.Upgradable.IsAny()
+QPKGs.NotInstalled.IsAny()
     {
-    [[ ${#_object_qpkgs_upgradable_array_[@]} -gt 0 ]]
+    [[ ${#_object_qpkgs_notinstalled_array_[@]} -gt 0 ]]
     }
-QPKGs.Upgradable.IsDisabled()
+QPKGs.NotInstalled.IsDisabled()
     {
-    [[ $_object_qpkgs_upgradable_enable_ != "true" ]]
+    [[ $_object_qpkgs_notinstalled_enable_ != "true" ]]
     }
-QPKGs.Upgradable.IsEnabled()
+QPKGs.NotInstalled.IsEnabled()
     {
-    [[ $_object_qpkgs_upgradable_enable_ = "true" ]]
+    [[ $_object_qpkgs_notinstalled_enable_ = "true" ]]
     }
-QPKGs.Upgradable.IsNone()
+QPKGs.NotInstalled.IsNone()
     {
-    [[ ${#_object_qpkgs_upgradable_array_[@]} -eq 0 ]]
+    [[ ${#_object_qpkgs_notinstalled_array_[@]} -eq 0 ]]
     }
-QPKGs.Upgradable.IsNot()
+QPKGs.NotInstalled.IsNot()
     {
-    [[ $_object_qpkgs_upgradable_flag_ != "true" ]]
+    [[ $_object_qpkgs_notinstalled_flag_ != "true" ]]
     }
-QPKGs.Upgradable.IsSet()
+QPKGs.NotInstalled.IsSet()
     {
-    [[ $_object_qpkgs_upgradable_flag_ = "true" ]]
+    [[ $_object_qpkgs_notinstalled_flag_ = "true" ]]
     }
-QPKGs.Upgradable.List()
+QPKGs.NotInstalled.List()
     {
-    echo -n "${_object_qpkgs_upgradable_array_[*]}"
+    echo -n "${_object_qpkgs_notinstalled_array_[*]}"
     }
-QPKGs.Upgradable.Path()
+QPKGs.NotInstalled.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_qpkgs_upgradable_path_="$2"
+        _object_qpkgs_notinstalled_path_="$2"
     else
-        echo -n "$_object_qpkgs_upgradable_path_"
+        echo -n "$_object_qpkgs_notinstalled_path_"
     fi
     }
-QPKGs.Upgradable.Remove()
+QPKGs.NotInstalled.Remove()
     {
-    [[ ${_object_qpkgs_upgradable_array_[*]} == *"$1"* ]] && _object_qpkgs_upgradable_array_=("${_object_qpkgs_upgradable_array_[@]/$1}")
+    [[ ${_object_qpkgs_notinstalled_array_[*]} == *"$1"* ]] && _object_qpkgs_notinstalled_array_=("${_object_qpkgs_notinstalled_array_[@]/$1}")
     }
-QPKGs.Upgradable.Set()
+QPKGs.NotInstalled.Set()
     {
-    [[ $_object_qpkgs_upgradable_flag_ = "true" ]] && return
-    _object_qpkgs_upgradable_flag_=true
-    DebugVar _object_qpkgs_upgradable_flag_
+    [[ $_object_qpkgs_notinstalled_flag_ = "true" ]] && return
+    _object_qpkgs_notinstalled_flag_=true
+    DebugVar _object_qpkgs_notinstalled_flag_
     }
-QPKGs.Upgradable.Text()
+QPKGs.NotInstalled.Text()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_qpkgs_upgradable_text_="$2"
+        _object_qpkgs_notinstalled_text_="$2"
     else
-        echo -n "$_object_qpkgs_upgradable_text_"
+        echo -n "$_object_qpkgs_notinstalled_text_"
     fi
     }
-QPKGs.Upgradable.Value()
+QPKGs.NotInstalled.Value()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_qpkgs_upgradable_value_=$2
+        _object_qpkgs_notinstalled_value_=$2
     else
-        echo -n $_object_qpkgs_upgradable_value_
+        echo -n $_object_qpkgs_notinstalled_value_
     fi
     }
-QPKGs.Upgradable.Value.Decrement()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_qpkgs_upgradable_value_=$((_object_qpkgs_upgradable_value_-amount))
-    }
-QPKGs.Upgradable.Value.Increment()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_qpkgs_upgradable_value_=$((_object_qpkgs_upgradable_value_+amount))
-    }
-QPKGs.Upgradable.Init
+QPKGs.NotInstalled.Init
 
 QPKGs.ToBackup.Add()
     {
@@ -5311,26 +5407,6 @@ QPKGs.ToBackup.Value()
     else
         echo -n $_object_qpkgs_tobackup_value_
     fi
-    }
-QPKGs.ToBackup.Value.Decrement()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_qpkgs_tobackup_value_=$((_object_qpkgs_tobackup_value_-amount))
-    }
-QPKGs.ToBackup.Value.Increment()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_qpkgs_tobackup_value_=$((_object_qpkgs_tobackup_value_+amount))
     }
 QPKGs.ToBackup.Init
 
@@ -5496,26 +5572,6 @@ QPKGs.ToForceUpgrade.Value()
         echo -n $_object_qpkgs_toforceupgrade_value_
     fi
     }
-QPKGs.ToForceUpgrade.Value.Decrement()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_qpkgs_toforceupgrade_value_=$((_object_qpkgs_toforceupgrade_value_-amount))
-    }
-QPKGs.ToForceUpgrade.Value.Increment()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_qpkgs_toforceupgrade_value_=$((_object_qpkgs_toforceupgrade_value_+amount))
-    }
 QPKGs.ToForceUpgrade.Init
 
 QPKGs.ToInstall.Add()
@@ -5679,26 +5735,6 @@ QPKGs.ToInstall.Value()
     else
         echo -n $_object_qpkgs_toinstall_value_
     fi
-    }
-QPKGs.ToInstall.Value.Decrement()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_qpkgs_toinstall_value_=$((_object_qpkgs_toinstall_value_-amount))
-    }
-QPKGs.ToInstall.Value.Increment()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_qpkgs_toinstall_value_=$((_object_qpkgs_toinstall_value_+amount))
     }
 QPKGs.ToInstall.Init
 
@@ -5864,26 +5900,6 @@ QPKGs.ToReinstall.Value()
         echo -n $_object_qpkgs_toreinstall_value_
     fi
     }
-QPKGs.ToReinstall.Value.Decrement()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_qpkgs_toreinstall_value_=$((_object_qpkgs_toreinstall_value_-amount))
-    }
-QPKGs.ToReinstall.Value.Increment()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_qpkgs_toreinstall_value_=$((_object_qpkgs_toreinstall_value_+amount))
-    }
 QPKGs.ToReinstall.Init
 
 QPKGs.ToRestart.Add()
@@ -6047,26 +6063,6 @@ QPKGs.ToRestart.Value()
     else
         echo -n $_object_qpkgs_torestart_value_
     fi
-    }
-QPKGs.ToRestart.Value.Decrement()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_qpkgs_torestart_value_=$((_object_qpkgs_torestart_value_-amount))
-    }
-QPKGs.ToRestart.Value.Increment()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_qpkgs_torestart_value_=$((_object_qpkgs_torestart_value_+amount))
     }
 QPKGs.ToRestart.Init
 
@@ -6232,26 +6228,6 @@ QPKGs.ToRestore.Value()
         echo -n $_object_qpkgs_torestore_value_
     fi
     }
-QPKGs.ToRestore.Value.Decrement()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_qpkgs_torestore_value_=$((_object_qpkgs_torestore_value_-amount))
-    }
-QPKGs.ToRestore.Value.Increment()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_qpkgs_torestore_value_=$((_object_qpkgs_torestore_value_+amount))
-    }
 QPKGs.ToRestore.Init
 
 QPKGs.ToUninstall.Add()
@@ -6415,26 +6391,6 @@ QPKGs.ToUninstall.Value()
     else
         echo -n $_object_qpkgs_touninstall_value_
     fi
-    }
-QPKGs.ToUninstall.Value.Decrement()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_qpkgs_touninstall_value_=$((_object_qpkgs_touninstall_value_-amount))
-    }
-QPKGs.ToUninstall.Value.Increment()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_qpkgs_touninstall_value_=$((_object_qpkgs_touninstall_value_+amount))
     }
 QPKGs.ToUninstall.Init
 
@@ -6600,27 +6556,171 @@ QPKGs.ToUpgrade.Value()
         echo -n $_object_qpkgs_toupgrade_value_
     fi
     }
-QPKGs.ToUpgrade.Value.Decrement()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_qpkgs_toupgrade_value_=$((_object_qpkgs_toupgrade_value_-amount))
-    }
-QPKGs.ToUpgrade.Value.Increment()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_qpkgs_toupgrade_value_=$((_object_qpkgs_toupgrade_value_+amount))
-    }
 QPKGs.ToUpgrade.Init
+
+QPKGs.Upgradable.Add()
+    {
+    [[ ${_object_qpkgs_upgradable_array_[*]} != *"$1"* ]] && _object_qpkgs_upgradable_array_+=("$1")
+    }
+QPKGs.Upgradable.Array()
+    {
+    echo -n "${_object_qpkgs_upgradable_array_[@]}"
+    }
+QPKGs.Upgradable.Clear()
+    {
+    [[ $_object_qpkgs_upgradable_flag_ != "true" ]] && return
+    _object_qpkgs_upgradable_flag_=false
+    DebugVar _object_qpkgs_upgradable_flag_
+    }
+QPKGs.Upgradable.Count()
+    {
+    echo "${#_object_qpkgs_upgradable_array_[@]}"
+    }
+QPKGs.Upgradable.Description()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_upgradable_description_="$2"
+    else
+        echo -n "_object_qpkgs_upgradable_description_"
+    fi
+    }
+QPKGs.Upgradable.Disable()
+    {
+    [[ $_object_qpkgs_upgradable_enable_ != "true" ]] && return
+    _object_qpkgs_upgradable_enable_=false
+    DebugVar _object_qpkgs_upgradable_enable_
+    }
+QPKGs.Upgradable.Enable()
+    {
+    [[ $_object_qpkgs_upgradable_enable_ = "true" ]] && return
+    _object_qpkgs_upgradable_enable_=true
+    DebugVar _object_qpkgs_upgradable_enable_
+    }
+QPKGs.Upgradable.Enumerate()
+    {
+    ((_object_qpkgs_upgradable_array_index_++))
+    if [[ $_object_qpkgs_upgradable_array_index_ -gt ${#_object_qpkgs_upgradable_array_[@]} ]]; then
+        _object_qpkgs_upgradable_array_index_=1
+    fi
+    }
+QPKGs.Upgradable.Env()
+    {
+    echo "* object internal environment *"
+    echo "Name: 'QPKGs.Upgradable'"
+    echo "Description: '$_object_qpkgs_upgradable_description_'"
+    echo "Value: '$_object_qpkgs_upgradable_value_'"
+    echo "Text: '$_object_qpkgs_upgradable_text_'"
+    echo "Flag: '$_object_qpkgs_upgradable_flag_'"
+    echo "Enable: '$_object_qpkgs_upgradable_enable_'"
+    echo "Array: '${_object_qpkgs_upgradable_array_[*]}'"
+    echo "Array index: '$_object_qpkgs_upgradable_array_index_'"
+    echo "Path: '$_object_qpkgs_upgradable_path_'"
+    }
+QPKGs.Upgradable.Exist()
+    {
+    [[ ${_object_qpkgs_upgradable_array_[*]} == *"$1"* ]]
+    }
+QPKGs.Upgradable.First()
+    {
+    echo "${_object_qpkgs_upgradable_array_[0]}"
+    }
+QPKGs.Upgradable.GetCurrent()
+    {
+    echo -n "${_object_qpkgs_upgradable_array_[((_object_qpkgs_upgradable_array_index_-1))]}"
+    }
+QPKGs.Upgradable.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_qpkgs_upgradable_array_[@]} ]] && index=${#_object_qpkgs_upgradable_array_[@]}
+    echo -n "${_object_qpkgs_upgradable_array_[((index-1))]}"
+    }
+QPKGs.Upgradable.Index()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        if [[ $2 -gt ${#_object_qpkgs_upgradable_array_[@]} ]]; then
+            _object_qpkgs_upgradable_array_index_=${#_object_qpkgs_upgradable_array_[@]}
+        else
+            _object_qpkgs_upgradable_array_index_=$2
+        fi
+    else
+        echo -n $_object_qpkgs_upgradable_array_index_
+    fi
+    }
+QPKGs.Upgradable.Init()
+    {
+    _object_qpkgs_upgradable_description_=
+    _object_qpkgs_upgradable_value_=0
+    _object_qpkgs_upgradable_text_=
+    _object_qpkgs_upgradable_flag_=false
+    _object_qpkgs_upgradable_enable_=false
+    _object_qpkgs_upgradable_array_+=()
+    _object_qpkgs_upgradable_array_index_=1
+    _object_qpkgs_upgradable_path_=
+    }
+QPKGs.Upgradable.IsAny()
+    {
+    [[ ${#_object_qpkgs_upgradable_array_[@]} -gt 0 ]]
+    }
+QPKGs.Upgradable.IsDisabled()
+    {
+    [[ $_object_qpkgs_upgradable_enable_ != "true" ]]
+    }
+QPKGs.Upgradable.IsEnabled()
+    {
+    [[ $_object_qpkgs_upgradable_enable_ = "true" ]]
+    }
+QPKGs.Upgradable.IsNone()
+    {
+    [[ ${#_object_qpkgs_upgradable_array_[@]} -eq 0 ]]
+    }
+QPKGs.Upgradable.IsNot()
+    {
+    [[ $_object_qpkgs_upgradable_flag_ != "true" ]]
+    }
+QPKGs.Upgradable.IsSet()
+    {
+    [[ $_object_qpkgs_upgradable_flag_ = "true" ]]
+    }
+QPKGs.Upgradable.List()
+    {
+    echo -n "${_object_qpkgs_upgradable_array_[*]}"
+    }
+QPKGs.Upgradable.Path()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_upgradable_path_="$2"
+    else
+        echo -n "$_object_qpkgs_upgradable_path_"
+    fi
+    }
+QPKGs.Upgradable.Remove()
+    {
+    [[ ${_object_qpkgs_upgradable_array_[*]} == *"$1"* ]] && _object_qpkgs_upgradable_array_=("${_object_qpkgs_upgradable_array_[@]/$1}")
+    }
+QPKGs.Upgradable.Set()
+    {
+    [[ $_object_qpkgs_upgradable_flag_ = "true" ]] && return
+    _object_qpkgs_upgradable_flag_=true
+    DebugVar _object_qpkgs_upgradable_flag_
+    }
+QPKGs.Upgradable.Text()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_upgradable_text_="$2"
+    else
+        echo -n "$_object_qpkgs_upgradable_text_"
+    fi
+    }
+QPKGs.Upgradable.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_upgradable_value_=$2
+    else
+        echo -n $_object_qpkgs_upgradable_value_
+    fi
+    }
+QPKGs.Upgradable.Init
 
 Session.Backup.Add()
     {
@@ -6783,26 +6883,6 @@ Session.Backup.Value()
     else
         echo -n $_object_session_backup_value_
     fi
-    }
-Session.Backup.Value.Decrement()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_session_backup_value_=$((_object_session_backup_value_-amount))
-    }
-Session.Backup.Value.Increment()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_session_backup_value_=$((_object_session_backup_value_+amount))
     }
 Session.Backup.Init
 
@@ -6968,26 +7048,6 @@ Session.Debug.To.File.Value()
         echo -n $_object_session_debug_to_file_value_
     fi
     }
-Session.Debug.To.File.Value.Decrement()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_session_debug_to_file_value_=$((_object_session_debug_to_file_value_-amount))
-    }
-Session.Debug.To.File.Value.Increment()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_session_debug_to_file_value_=$((_object_session_debug_to_file_value_+amount))
-    }
 Session.Debug.To.File.Init
 
 Session.Debug.To.Screen.Add()
@@ -7151,26 +7211,6 @@ Session.Debug.To.Screen.Value()
     else
         echo -n $_object_session_debug_to_screen_value_
     fi
-    }
-Session.Debug.To.Screen.Value.Decrement()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_session_debug_to_screen_value_=$((_object_session_debug_to_screen_value_-amount))
-    }
-Session.Debug.To.Screen.Value.Increment()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_session_debug_to_screen_value_=$((_object_session_debug_to_screen_value_+amount))
     }
 Session.Debug.To.Screen.Init
 
@@ -7336,26 +7376,6 @@ Session.Display.Clean.Value()
         echo -n $_object_session_display_clean_value_
     fi
     }
-Session.Display.Clean.Value.Decrement()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_session_display_clean_value_=$((_object_session_display_clean_value_-amount))
-    }
-Session.Display.Clean.Value.Increment()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_session_display_clean_value_=$((_object_session_display_clean_value_+amount))
-    }
 Session.Display.Clean.Init
 
 Session.Ipkgs.Install.Add()
@@ -7519,26 +7539,6 @@ Session.Ipkgs.Install.Value()
     else
         echo -n $_object_session_ipkgs_install_value_
     fi
-    }
-Session.Ipkgs.Install.Value.Decrement()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_session_ipkgs_install_value_=$((_object_session_ipkgs_install_value_-amount))
-    }
-Session.Ipkgs.Install.Value.Increment()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_session_ipkgs_install_value_=$((_object_session_ipkgs_install_value_+amount))
     }
 Session.Ipkgs.Install.Init
 
@@ -7704,26 +7704,6 @@ Session.LineSpace.Value()
         echo -n $_object_session_linespace_value_
     fi
     }
-Session.LineSpace.Value.Decrement()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_session_linespace_value_=$((_object_session_linespace_value_-amount))
-    }
-Session.LineSpace.Value.Increment()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_session_linespace_value_=$((_object_session_linespace_value_+amount))
-    }
 Session.LineSpace.Init
 
 Session.Pips.Install.Add()
@@ -7887,26 +7867,6 @@ Session.Pips.Install.Value()
     else
         echo -n $_object_session_pips_install_value_
     fi
-    }
-Session.Pips.Install.Value.Decrement()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_session_pips_install_value_=$((_object_session_pips_install_value_-amount))
-    }
-Session.Pips.Install.Value.Increment()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_session_pips_install_value_=$((_object_session_pips_install_value_+amount))
     }
 Session.Pips.Install.Init
 
@@ -8072,26 +8032,6 @@ Session.ShowBackupLocation.Value()
         echo -n $_object_session_showbackuplocation_value_
     fi
     }
-Session.ShowBackupLocation.Value.Decrement()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_session_showbackuplocation_value_=$((_object_session_showbackuplocation_value_-amount))
-    }
-Session.ShowBackupLocation.Value.Increment()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_session_showbackuplocation_value_=$((_object_session_showbackuplocation_value_+amount))
-    }
 Session.ShowBackupLocation.Init
 
 Session.SkipPackageProcessing.Add()
@@ -8255,26 +8195,6 @@ Session.SkipPackageProcessing.Value()
     else
         echo -n $_object_session_skippackageprocessing_value_
     fi
-    }
-Session.SkipPackageProcessing.Value.Decrement()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_session_skippackageprocessing_value_=$((_object_session_skippackageprocessing_value_-amount))
-    }
-Session.SkipPackageProcessing.Value.Increment()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_session_skippackageprocessing_value_=$((_object_session_skippackageprocessing_value_+amount))
     }
 Session.SkipPackageProcessing.Init
 
@@ -8440,26 +8360,6 @@ Session.SuggestIssue.Value()
         echo -n $_object_session_suggestissue_value_
     fi
     }
-Session.SuggestIssue.Value.Decrement()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_session_suggestissue_value_=$((_object_session_suggestissue_value_-amount))
-    }
-Session.SuggestIssue.Value.Increment()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_session_suggestissue_value_=$((_object_session_suggestissue_value_+amount))
-    }
 Session.SuggestIssue.Init
 
 Session.Summary.Add()
@@ -8623,26 +8523,6 @@ Session.Summary.Value()
     else
         echo -n $_object_session_summary_value_
     fi
-    }
-Session.Summary.Value.Decrement()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_session_summary_value_=$((_object_session_summary_value_-amount))
-    }
-Session.Summary.Value.Increment()
-    {
-    local -i amount
-    if [[ -n $1 && $1 = "by" ]]; then
-        amount=$2
-    else
-        amount=1
-    fi
-    _object_session_summary_value_=$((_object_session_summary_value_+amount))
     }
 Session.Summary.Init
 
