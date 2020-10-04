@@ -641,6 +641,7 @@ Session.Validate()
 
     if [[ $EUID -ne 0 || $USER != admin ]]; then
         ShowAsError "this script must be run as the 'admin' user. Please login via SSH as 'admin' and try again"
+        Session.SkipPackageProcessing.Set
         DebugFuncExit; return 1
     fi
 
@@ -669,6 +670,7 @@ Session.Validate()
 
         if [[ $ENTWARE_VER = none ]]; then
             ShowAsError "$(FormatAsPackageName Entware) appears to be installed but is not visible"
+            Session.SkipPackageProcessing.Set
             DebugFuncExit; return 1
         fi
     fi
@@ -679,13 +681,23 @@ Session.Validate()
     QPKGs.Assignment.Check
     DebugInfoMinorSeparator
 
+    if [[ $(QPKGs.Installed.Count) -eq 0 && $(QPKGs.ToInstall.Count) -eq 1 && $(QPKGs.ToInstall.First) = Entware ]]; then
+        ShowAsNote "It's not necessary to install $(FormatAsPackageName Entware) on its own. It will be installed as-required with your other sherpa packages. :)"  # don't colourise title here as ANSI codes can't be removed without Entware being installed with its GNU utils.
+        code_pointer=2
+        Session.SkipPackageProcessing.Set
+        DebugFuncExit; return 1
+    fi
+
     if User.Opts.Apps.All.Backup.IsSet && User.Opts.Apps.All.Restore.IsSet; then
         ShowAsError 'no point running a backup then a restore operation'
-        code_pointer=2
+        code_pointer=3
+        Session.SkipPackageProcessing.Set
         DebugFuncExit; return 1
     fi
 
     if ! QPKGs.Conflicts.Check; then
+        code_pointer=4
+        Session.SkipPackageProcessing.Set
         DebugFuncExit; return 1
     fi
 
@@ -1196,7 +1208,7 @@ UpdateEntware()
     {
 
     if IsNotSysFileExist $OPKG_CMD; then
-        code_pointer=3
+        code_pointer=5
         return 1
     fi
 
@@ -1660,7 +1672,7 @@ GetAllIPKGDepsToDownload()
     #   $IPKG_download_size = byte-count of packages to be downloaded
 
     if IsNotSysFileExist $OPKG_CMD || IsNotSysFileExist $GNU_GREP_CMD; then
-        code_pointer=21
+        code_pointer=6
         return 1
     fi
 
@@ -2547,45 +2559,44 @@ QPKGs.Assignment.Check()
         done
     fi
 
-    if User.Opts.Apps.All.Uninstall.IsSet; then
-        for package in $(QPKGs.Installed.Array); do
-            QPKGs.ToUninstall.Add $package
-        done
-    fi
-
     if User.Opts.Apps.All.Upgrade.IsSet; then
         for package in $(QPKGs.Upgradable.Array); do
             QPKGs.ToUpgrade.Add $package
         done
     fi
 
-    # check for independent packages that require installation
-    for package in $(QPKGs.Installed.Array); do
-        installer_acc+=($(QPKG.Get.Independencies $package))
-    done
+    if User.Opts.Apps.All.Uninstall.IsSet; then
+        for package in $(QPKGs.Installed.Array); do
+            QPKGs.ToUninstall.Add $package
+        done
+    else
+        # check for independent packages that require installation
+        for package in $(QPKGs.Installed.Array); do
+            installer_acc+=($(QPKG.Get.Independencies $package))
+        done
 
-    for package in $(QPKGs.ToInstall.Array); do
-        installer_acc+=($(QPKG.Get.Independencies $package))
-    done
+        for package in $(QPKGs.ToInstall.Array); do
+            installer_acc+=($(QPKG.Get.Independencies $package))
+        done
 
+        for package in $(QPKGs.ToReinstall.Array); do
+            installer_acc+=($(QPKG.Get.Independencies $package))
+        done
 
-    for package in $(QPKGs.ToReinstall.Array); do
-        installer_acc+=($(QPKG.Get.Independencies $package))
-    done
+        for package in $(QPKGs.ToUpgrade.Array); do
+            installer_acc+=($(QPKG.Get.Independencies $package))
+        done
 
-    for package in $(QPKGs.ToUpgrade.Array); do
-        installer_acc+=($(QPKG.Get.Independencies $package))
-    done
+        for package in $(QPKGs.ToForceUpgrade.Array); do
+            installer_acc+=($(QPKG.Get.Independencies $package))
+        done
 
-    for package in $(QPKGs.ToForceUpgrade.Array); do
-        installer_acc+=($(QPKG.Get.Independencies $package))
-    done
-
-    for package in "${installer_acc[@]}"; do
-        if QPKGs.NotInstalled.Exist $package || QPKGs.ToUninstall.Exist $package; then
-            QPKGs.ToInstall.Add $package
-        fi
-    done
+        for package in "${installer_acc[@]}"; do
+            if QPKGs.NotInstalled.Exist $package || QPKGs.ToUninstall.Exist $package; then
+                QPKGs.ToInstall.Add $package
+            fi
+        done
+    fi
 
     if User.Opts.Apps.All.Install.IsSet; then
         for package in $(QPKGs.Installable.Array); do
@@ -2686,10 +2697,6 @@ QPKGs.Assignment.Check()
         QPKGs.ToDownload.Add $package
     done
 
-#     if [[ $(QPKGs.ToDownload.Count) -eq 1 && $(QPKGs.ToDownload.First) = Entware ]] && QPKG.NotInstalled Entware; then
-#         ShowAsNote "It's not necessary to install $(FormatAsPackageName Entware) on its own. It will be installed as-required with your other sherpa packages. :)"  # don't colourise title here as ANSI codes can't be removed without Entware being installed with its GNU utils.
-#     fi
-
     DebugScript 'to backup' "$(QPKGs.ToBackup.List) "
     DebugScript 'to uninstall' "$(QPKGs.ToUninstall.List) "
     DebugScript 'to force-upgrade' "$(QPKGs.ToForceUpgrade.List) "
@@ -2699,7 +2706,6 @@ QPKGs.Assignment.Check()
     DebugScript 'to restore' "$(QPKGs.ToRestore.List) "
     DebugScript 'to restart' "$(QPKGs.ToRestart.List) "
     DebugScript 'to download' "$(QPKGs.ToDownload.List) "
-    DebugInfoMinorSeparator
     DebugFuncExit; return 0
 
     }
@@ -2925,7 +2931,7 @@ QPKG.Download()
 
     if [[ -z $1 ]]; then
         DebugError "no package name specified"
-        code_pointer=4
+        code_pointer=7
         DebugFuncExit; return 1
     fi
 
@@ -2940,11 +2946,11 @@ QPKG.Download()
 
     if [[ -z $remote_url ]]; then
         DebugWarning "no URL found for this package [$1]"
-        code_pointer=5
+        code_pointer=8
         DebugFuncExit; return
     elif [[ -z $remote_filename_md5 ]]; then
         DebugWarning "no remote MD5 found for this package [$1]"
-        code_pointer=6
+        code_pointer=9
         DebugFuncExit; return
     fi
 
@@ -3000,7 +3006,7 @@ QPKG.Install()
 
     if [[ -z $1 ]]; then
         DebugError "no package name specified "
-        code_pointer=7
+        code_pointer=10
         DebugFuncExit; return 1
     elif QPKG.Installed "$1"; then
         DebugQPKG "$(FormatAsPackageName "$1")" "already installed"
@@ -3055,11 +3061,11 @@ QPKG.Reinstall()
 
     if [[ -z $1 ]]; then
         DebugError "no package name specified "
-        code_pointer=8
+        code_pointer=11
         DebugFuncExit; return 1
     elif QPKG.NotInstalled "$1"; then
         DebugQPKG "$(FormatAsPackageName "$1")" "not installed"
-        code_pointer=9
+        code_pointer=12
         DebugFuncExit; return 1
     fi
 
@@ -3111,7 +3117,7 @@ QPKG.Upgrade()
 
     if [[ -z $1 ]]; then
         DebugError "no package name specified "
-        code_pointer=10
+        code_pointer=13
         DebugFuncExit; return 1
     fi
 
@@ -3175,11 +3181,11 @@ QPKG.Uninstall()
 
     if [[ -z $1 ]]; then
         DebugError "no package name specified "
-        code_pointer=11
+        code_pointer=14
         DebugFuncExit; return 1
     elif QPKG.NotInstalled "$1"; then
         DebugQPKG "$(FormatAsPackageName "$1")" "not installed"
-        code_pointer=12
+        code_pointer=15
         DebugFuncExit; return 1
     fi
 
@@ -3227,11 +3233,11 @@ QPKG.Restart()
 
     if [[ -z $1 ]]; then
         DebugError "no package name specified "
-        code_pointer=13
+        code_pointer=16
         DebugFuncExit; return 1
     elif QPKG.NotInstalled "$1"; then
         DebugQPKG "$(FormatAsPackageName "$1")" "not installed"
-        code_pointer=14
+        code_pointer=17
         DebugFuncExit; return 1
     fi
 
@@ -3270,11 +3276,11 @@ QPKG.Enable()
 
     if [[ -z $1 ]]; then
         DebugError "no package name specified "
-        code_pointer=15
+        code_pointer=18
         DebugFuncExit; return 1
     elif QPKG.NotInstalled "$1"; then
         DebugQPKG "$(FormatAsPackageName "$1")" "not installed"
-        code_pointer=16
+        code_pointer=19
         DebugFuncExit; return 1
     fi
 
@@ -3303,11 +3309,11 @@ QPKG.Backup()
 
     if [[ -z $1 ]]; then
         DebugError "no package name specified "
-        code_pointer=17
+        code_pointer=20
         DebugFuncExit; return 1
     elif QPKG.NotInstalled "$1"; then
         DebugQPKG "$(FormatAsPackageName "$1")" "not installed"
-        code_pointer=18
+        code_pointer=21
         DebugFuncExit; return 1
     fi
 
@@ -3352,11 +3358,11 @@ QPKG.Restore()
 
     if [[ -z $1 ]]; then
         DebugError "no package name specified "
-        code_pointer=19
+        code_pointer=22
         DebugFuncExit; return 1
     elif QPKG.NotInstalled "$1"; then
         DebugQPKG "$(FormatAsPackageName "$1")" "not installed"
-        code_pointer=20
+        code_pointer=23
         DebugFuncExit; return 1
     fi
 
