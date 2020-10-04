@@ -162,6 +162,7 @@ Session.Init()
     readonly IPKG_CACHE_PATH=$WORK_PATH/ipkgs
     readonly PIP_CACHE_PATH=$WORK_PATH/pips
     readonly OBJECT_REF_HASH=2eee41cc6194c6fa411c11e82c9e5bad
+    debug_log_datawidth=92
 
     if ! MakePath "$WORK_PATH" 'work'; then
         DebugFuncExit; return 1
@@ -3795,21 +3796,21 @@ DisplayLineSpaceIfNoneAlready()
 DebugInfoMajorSeparator()
     {
 
-    DebugInfo "$(printf '%0.s=' {1..92})"
+    DebugInfo "$(eval printf '%0.s=' {1..$debug_log_datawidth})"    # 'seq' is unavailable in QTS, so must resort to 'eval' trickery instead
 
     }
 
 DebugInfoMinorSeparator()
     {
 
-    DebugInfo "$(printf '%0.s-' {1..92})"
+    DebugInfo "$(eval printf '%0.s-' {1..$debug_log_datawidth})"    # 'seq' is unavailable in QTS, so must resort to 'eval' trickery instead
 
     }
 
-DebugLogMinorSeparator()
+DebugExtLogMinorSeparator()
     {
 
-    DebugLog "$(printf '%0.s-' {1..92})"
+    DebugLog "$(eval printf '%0.s-' {1..$debug_log_datawidth})"     # 'seq' is unavailable in QTS, so must resort to 'eval' trickery instead
 
     }
 
@@ -4000,7 +4001,7 @@ AddFileToDebug()
     local linebuff=''
     local screen_debug=false
 
-    DebugLogMinorSeparator
+    DebugExtLogMinorSeparator
     DebugLog 'adding external log to main log ...'
 
     if Session.Debug.To.Screen.IsSet; then      # prevent external log contents appearing onscreen again - it's already been seen "live".
@@ -4015,7 +4016,7 @@ AddFileToDebug()
     done < "$1"
 
     [[ $screen_debug = true ]] && Session.Debug.To.Screen.Set
-    DebugLogMinorSeparator
+    DebugExtLogMinorSeparator
 
     }
 
