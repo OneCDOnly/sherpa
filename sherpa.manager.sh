@@ -676,7 +676,6 @@ Session.Validate()
     DebugQPKG 'arch' "$NAS_QPKG_ARCH"
     DebugQPKG 'upgradable package(s)' "$(QPKGs.Upgradable.List) "
     DebugInfoMinorSeparator
-    #User.Opts.Dependencies.Check.IsSet      # force this
     QPKGs.Assignment.Check
     DebugInfoMinorSeparator
 
@@ -690,10 +689,6 @@ Session.Validate()
         DebugFuncExit; return 1
     fi
 
-    if QPKGs.ToInstall.IsAny || QPKGs.ToForceUpgrade.IsAny || User.Opts.Apps.All.Upgrade.IsSet || User.Opts.Dependencies.Check.IsSet; then
-        Session.Ipkgs.Install.Set
-    fi
-
     if QPKGs.ToBackup.IsNone && QPKGs.ToUninstall.IsNone && QPKGs.ToForceUpgrade.IsNone && QPKGs.ToUpgrade.IsNone && QPKGs.ToInstall.IsNone && QPKGs.ToReinstall.IsNone && QPKGs.ToRestore.IsNone && QPKGs.ToRestart.IsNone; then
         if User.Opts.Apps.All.Install.IsNot && User.Opts.Apps.All.Uninstall.IsNot && User.Opts.Apps.All.Restart.IsNot && User.Opts.Apps.All.Upgrade.IsNot && User.Opts.Apps.All.Backup.IsNot && User.Opts.Apps.All.Restore.IsNot; then
             if User.Opts.Dependencies.Check.IsNot && Session.Debug.To.Screen.IsNot && User.Opts.IgnoreFreeSpace.IsNot; then
@@ -703,6 +698,15 @@ Session.Validate()
                 DebugFuncExit; return 1
             fi
         fi
+    fi
+
+    if QPKGs.ToInstall.IsAny || QPKGs.ToForceUpgrade.IsAny || User.Opts.Apps.All.Upgrade.IsSet; then
+        Session.Ipkgs.Install.Set
+    fi
+
+    if User.Opts.Dependencies.Check.IsSet; then
+        Session.Ipkgs.Install.Set
+        Session.Pips.Install.Set
     fi
 
     DebugFuncExit; return 0
@@ -846,6 +850,7 @@ Packages.Install.Independents()
 
                     # copy all files from original [/opt] into new [/opt]
                     [[ -L $opt_path && -d $opt_backup_path ]] && cp --recursive "$opt_backup_path"/* --target-directory "$opt_path" && rm -rf "$opt_backup_path"
+                    Session.Pips.Install.Set
                 else
                     if [[ $NAS_QPKG_ARCH != none ]]; then
                         if QPKGs.ToInstall.Exist $package; then
@@ -1258,7 +1263,6 @@ InstallIPKGBatch()
 
         if [[ $result -eq 0 ]]; then
             ShowAsDone "downloaded & installed $IPKG_download_count IPKG$(FormatAsPlural "$IPKG_download_count")"
-            Session.Pips.Install.Set
         else
             ShowAsError "download & install IPKG$(FormatAsPlural "$IPKG_download_count") failed $(FormatAsExitcode $result)"
             AddFileToDebug "$log_pathfile"
@@ -1295,7 +1299,6 @@ UpgradeIPKGBatch()
 
         if [[ $result -eq 0 ]]; then
             ShowAsDone "downloaded & upgraded $IPKG_download_count IPKG$(FormatAsPlural "$IPKG_download_count")"
-            Session.Pips.Install.Set
         else
             ShowAsError "download & upgrade IPKG$(FormatAsPlural "$IPKG_download_count") failed $(FormatAsExitcode $result)"
             AddFileToDebug "$log_pathfile"
