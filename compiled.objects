@@ -4262,169 +4262,169 @@ QPKGs.Dependant.Value()
     }
 QPKGs.Dependant.Init
 
-QPKGs.Download.Add()
+QPKGs.ToDownload.Add()
     {
-    [[ ${_object_qpkgs_download_array_[*]} != *"$1"* ]] && _object_qpkgs_download_array_+=("$1")
+    [[ ${_object_qpkgs_todownload_array_[*]} != *"$1"* ]] && _object_qpkgs_todownload_array_+=("$1")
     }
-QPKGs.Download.Array()
+QPKGs.ToDownload.Array()
     {
-    echo -n "${_object_qpkgs_download_array_[@]}"
+    echo -n "${_object_qpkgs_todownload_array_[@]}"
     }
-QPKGs.Download.Clear()
+QPKGs.ToDownload.Clear()
     {
-    [[ $_object_qpkgs_download_flag_ != "true" ]] && return
-    _object_qpkgs_download_flag_=false
-    DebugVar _object_qpkgs_download_flag_
+    [[ $_object_qpkgs_todownload_flag_ != "true" ]] && return
+    _object_qpkgs_todownload_flag_=false
+    DebugVar _object_qpkgs_todownload_flag_
     }
-QPKGs.Download.Count()
+QPKGs.ToDownload.Count()
     {
-    echo "${#_object_qpkgs_download_array_[@]}"
+    echo "${#_object_qpkgs_todownload_array_[@]}"
     }
-QPKGs.Download.Description()
+QPKGs.ToDownload.Description()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_qpkgs_download_description_="$2"
+        _object_qpkgs_todownload_description_="$2"
     else
-        echo -n "_object_qpkgs_download_description_"
+        echo -n "_object_qpkgs_todownload_description_"
     fi
     }
-QPKGs.Download.Disable()
+QPKGs.ToDownload.Disable()
     {
-    [[ $_object_qpkgs_download_enable_ != "true" ]] && return
-    _object_qpkgs_download_enable_=false
-    DebugVar _object_qpkgs_download_enable_
+    [[ $_object_qpkgs_todownload_enable_ != "true" ]] && return
+    _object_qpkgs_todownload_enable_=false
+    DebugVar _object_qpkgs_todownload_enable_
     }
-QPKGs.Download.Enable()
+QPKGs.ToDownload.Enable()
     {
-    [[ $_object_qpkgs_download_enable_ = "true" ]] && return
-    _object_qpkgs_download_enable_=true
-    DebugVar _object_qpkgs_download_enable_
+    [[ $_object_qpkgs_todownload_enable_ = "true" ]] && return
+    _object_qpkgs_todownload_enable_=true
+    DebugVar _object_qpkgs_todownload_enable_
     }
-QPKGs.Download.Enumerate()
+QPKGs.ToDownload.Enumerate()
     {
-    ((_object_qpkgs_download_array_index_++))
-    if [[ $_object_qpkgs_download_array_index_ -gt ${#_object_qpkgs_download_array_[@]} ]]; then
-        _object_qpkgs_download_array_index_=1
+    ((_object_qpkgs_todownload_array_index_++))
+    if [[ $_object_qpkgs_todownload_array_index_ -gt ${#_object_qpkgs_todownload_array_[@]} ]]; then
+        _object_qpkgs_todownload_array_index_=1
     fi
     }
-QPKGs.Download.Env()
+QPKGs.ToDownload.Env()
     {
     echo "* object internal environment *"
-    echo "Name: 'QPKGs.Download'"
-    echo "Description: '$_object_qpkgs_download_description_'"
-    echo "Value: '$_object_qpkgs_download_value_'"
-    echo "Text: '$_object_qpkgs_download_text_'"
-    echo "Flag: '$_object_qpkgs_download_flag_'"
-    echo "Enable: '$_object_qpkgs_download_enable_'"
-    echo "Array: '${_object_qpkgs_download_array_[*]}'"
-    echo "Array index: '$_object_qpkgs_download_array_index_'"
-    echo "Path: '$_object_qpkgs_download_path_'"
+    echo "Name: 'QPKGs.ToDownload'"
+    echo "Description: '$_object_qpkgs_todownload_description_'"
+    echo "Value: '$_object_qpkgs_todownload_value_'"
+    echo "Text: '$_object_qpkgs_todownload_text_'"
+    echo "Flag: '$_object_qpkgs_todownload_flag_'"
+    echo "Enable: '$_object_qpkgs_todownload_enable_'"
+    echo "Array: '${_object_qpkgs_todownload_array_[*]}'"
+    echo "Array index: '$_object_qpkgs_todownload_array_index_'"
+    echo "Path: '$_object_qpkgs_todownload_path_'"
     }
-QPKGs.Download.Exist()
+QPKGs.ToDownload.Exist()
     {
-    [[ ${_object_qpkgs_download_array_[*]} == *"$1"* ]]
+    [[ ${_object_qpkgs_todownload_array_[*]} == *"$1"* ]]
     }
-QPKGs.Download.First()
+QPKGs.ToDownload.First()
     {
-    echo "${_object_qpkgs_download_array_[0]}"
+    echo "${_object_qpkgs_todownload_array_[0]}"
     }
-QPKGs.Download.GetCurrent()
+QPKGs.ToDownload.GetCurrent()
     {
-    echo -n "${_object_qpkgs_download_array_[((_object_qpkgs_download_array_index_-1))]}"
+    echo -n "${_object_qpkgs_todownload_array_[((_object_qpkgs_todownload_array_index_-1))]}"
     }
-QPKGs.Download.GetItem()
+QPKGs.ToDownload.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_qpkgs_download_array_[@]} ]] && index=${#_object_qpkgs_download_array_[@]}
-    echo -n "${_object_qpkgs_download_array_[((index-1))]}"
+    [[ $index -gt ${#_object_qpkgs_todownload_array_[@]} ]] && index=${#_object_qpkgs_todownload_array_[@]}
+    echo -n "${_object_qpkgs_todownload_array_[((index-1))]}"
     }
-QPKGs.Download.Index()
+QPKGs.ToDownload.Index()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        if [[ $2 -gt ${#_object_qpkgs_download_array_[@]} ]]; then
-            _object_qpkgs_download_array_index_=${#_object_qpkgs_download_array_[@]}
+        if [[ $2 -gt ${#_object_qpkgs_todownload_array_[@]} ]]; then
+            _object_qpkgs_todownload_array_index_=${#_object_qpkgs_todownload_array_[@]}
         else
-            _object_qpkgs_download_array_index_=$2
+            _object_qpkgs_todownload_array_index_=$2
         fi
     else
-        echo -n $_object_qpkgs_download_array_index_
+        echo -n $_object_qpkgs_todownload_array_index_
     fi
     }
-QPKGs.Download.Init()
+QPKGs.ToDownload.Init()
     {
-    _object_qpkgs_download_description_=
-    _object_qpkgs_download_value_=0
-    _object_qpkgs_download_text_=
-    _object_qpkgs_download_flag_=false
-    _object_qpkgs_download_enable_=false
-    _object_qpkgs_download_array_+=()
-    _object_qpkgs_download_array_index_=1
-    _object_qpkgs_download_path_=
+    _object_qpkgs_todownload_description_=
+    _object_qpkgs_todownload_value_=0
+    _object_qpkgs_todownload_text_=
+    _object_qpkgs_todownload_flag_=false
+    _object_qpkgs_todownload_enable_=false
+    _object_qpkgs_todownload_array_+=()
+    _object_qpkgs_todownload_array_index_=1
+    _object_qpkgs_todownload_path_=
     }
-QPKGs.Download.IsAny()
+QPKGs.ToDownload.IsAny()
     {
-    [[ ${#_object_qpkgs_download_array_[@]} -gt 0 ]]
+    [[ ${#_object_qpkgs_todownload_array_[@]} -gt 0 ]]
     }
-QPKGs.Download.IsDisabled()
+QPKGs.ToDownload.IsDisabled()
     {
-    [[ $_object_qpkgs_download_enable_ != "true" ]]
+    [[ $_object_qpkgs_todownload_enable_ != "true" ]]
     }
-QPKGs.Download.IsEnabled()
+QPKGs.ToDownload.IsEnabled()
     {
-    [[ $_object_qpkgs_download_enable_ = "true" ]]
+    [[ $_object_qpkgs_todownload_enable_ = "true" ]]
     }
-QPKGs.Download.IsNone()
+QPKGs.ToDownload.IsNone()
     {
-    [[ ${#_object_qpkgs_download_array_[@]} -eq 0 ]]
+    [[ ${#_object_qpkgs_todownload_array_[@]} -eq 0 ]]
     }
-QPKGs.Download.IsNot()
+QPKGs.ToDownload.IsNot()
     {
-    [[ $_object_qpkgs_download_flag_ != "true" ]]
+    [[ $_object_qpkgs_todownload_flag_ != "true" ]]
     }
-QPKGs.Download.IsSet()
+QPKGs.ToDownload.IsSet()
     {
-    [[ $_object_qpkgs_download_flag_ = "true" ]]
+    [[ $_object_qpkgs_todownload_flag_ = "true" ]]
     }
-QPKGs.Download.List()
+QPKGs.ToDownload.List()
     {
-    echo -n "${_object_qpkgs_download_array_[*]}"
+    echo -n "${_object_qpkgs_todownload_array_[*]}"
     }
-QPKGs.Download.Path()
+QPKGs.ToDownload.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_qpkgs_download_path_="$2"
+        _object_qpkgs_todownload_path_="$2"
     else
-        echo -n "$_object_qpkgs_download_path_"
+        echo -n "$_object_qpkgs_todownload_path_"
     fi
     }
-QPKGs.Download.Remove()
+QPKGs.ToDownload.Remove()
     {
-    [[ ${_object_qpkgs_download_array_[*]} == *"$1"* ]] && _object_qpkgs_download_array_=("${_object_qpkgs_download_array_[@]/$1}")
+    [[ ${_object_qpkgs_todownload_array_[*]} == *"$1"* ]] && _object_qpkgs_todownload_array_=("${_object_qpkgs_todownload_array_[@]/$1}")
     }
-QPKGs.Download.Set()
+QPKGs.ToDownload.Set()
     {
-    [[ $_object_qpkgs_download_flag_ = "true" ]] && return
-    _object_qpkgs_download_flag_=true
-    DebugVar _object_qpkgs_download_flag_
+    [[ $_object_qpkgs_todownload_flag_ = "true" ]] && return
+    _object_qpkgs_todownload_flag_=true
+    DebugVar _object_qpkgs_todownload_flag_
     }
-QPKGs.Download.Text()
+QPKGs.ToDownload.Text()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_qpkgs_download_text_="$2"
+        _object_qpkgs_todownload_text_="$2"
     else
-        echo -n "$_object_qpkgs_download_text_"
+        echo -n "$_object_qpkgs_todownload_text_"
     fi
     }
-QPKGs.Download.Value()
+QPKGs.ToDownload.Value()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_qpkgs_download_value_=$2
+        _object_qpkgs_todownload_value_=$2
     else
-        echo -n $_object_qpkgs_download_value_
+        echo -n $_object_qpkgs_todownload_value_
     fi
     }
-QPKGs.Download.Init
+QPKGs.ToDownload.Init
 
 QPKGs.Independent.Add()
     {
