@@ -676,7 +676,7 @@ Session.Validate()
     DebugQPKG 'arch' "$NAS_QPKG_ARCH"
     DebugQPKG 'upgradable package(s)' "$(QPKGs.Upgradable.List) "
     DebugInfoMinorSeparator
-#     User.Opts.Dependencies.Check.IsSet      # force this
+    #User.Opts.Dependencies.Check.IsSet      # force this
     QPKGs.Assignment.Check
     DebugInfoMinorSeparator
 
@@ -2557,6 +2557,10 @@ QPKGs.Assignment.Check()
     fi
 
     # check for independent packages that require installation
+    for package in $(QPKGs.Installed.Array); do
+        installer_acc+=($(QPKG.Get.Independencies $package))
+    done
+
     for package in $(QPKGs.ToInstall.Array); do
         installer_acc+=($(QPKG.Get.Independencies $package))
     done
