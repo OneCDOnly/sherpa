@@ -3984,6 +3984,7 @@ AddFileToDebug()
     local linebuff=''
 
     DebugLogMinorSeparator
+    DebugLog 'adding external log to main log ...'
     DebugLog "$(FormatAsLogFilename "$1")"
 
     while read -r linebuff; do
