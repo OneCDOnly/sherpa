@@ -4494,26 +4494,27 @@ echo $public_function_name'.Add()
 
     }
 
+Objects.CheckLocal()
+    {
+
+    [[ -e $COMPILED_OBJECTS ]] && ! FileMatchesMD5 "$COMPILED_OBJECTS" "$OBJECT_REF_HASH" && rm -f "$COMPILED_OBJECTS"
+
+    }
+
+Objects.CheckRemote()
+    {
+
+    [[ ! -e $COMPILED_OBJECTS ]] && ! $CURL_CMD $curl_insecure_arg --silent --fail "$REMOTE_COMPILED_OBJECTS" > "$COMPILED_OBJECTS" && [[ ! -s $COMPILED_OBJECTS ]] && rm -f "$COMPILED_OBJECTS"
+
+    }
+
+
 Objects.Compile()
     {
 
-    if [[ -e $COMPILED_OBJECTS ]]; then
-        if ! FileMatchesMD5 "$COMPILED_OBJECTS" "$OBJECT_REF_HASH"; then
-            rm -f "$COMPILED_OBJECTS"
-        fi
-    fi
-
-    if [[ ! -e $COMPILED_OBJECTS ]]; then
-        if ! $CURL_CMD $curl_insecure_arg --silent --fail "$REMOTE_COMPILED_OBJECTS" > "$COMPILED_OBJECTS"; then
-            [[ ! -s $COMPILED_OBJECTS ]] && rm -f "$COMPILED_OBJECTS"
-        fi
-    fi
-
-    if [[ -e $COMPILED_OBJECTS ]]; then
-        if ! FileMatchesMD5 "$COMPILED_OBJECTS" "$OBJECT_REF_HASH"; then
-            rm -f "$COMPILED_OBJECTS"
-        fi
-    fi
+    Objects.CheckLocal
+    Objects.CheckRemote
+    Objects.CheckLocal
 
     if [[ ! -e $COMPILED_OBJECTS ]]; then
         ShowAsProc "compiling objects"
