@@ -2568,6 +2568,7 @@ QPKGs.Assignment.Check()
         installer_acc+=($(QPKG.Get.Independencies $package))
     done
 
+
     for package in $(QPKGs.ToReinstall.Array); do
         installer_acc+=($(QPKG.Get.Independencies $package))
     done
@@ -2580,9 +2581,10 @@ QPKGs.Assignment.Check()
         installer_acc+=($(QPKG.Get.Independencies $package))
     done
 
-    # ... but only add them if not already installed
     for package in "${installer_acc[@]}"; do
-        QPKGs.NotInstalled.Exist $package && QPKGs.ToInstall.Add $package
+        if QPKGs.NotInstalled.Exist $package || QPKGs.ToUninstall.Exist $package; then
+            QPKGs.ToInstall.Add $package
+        fi
     done
 
     if User.Opts.Apps.All.Install.IsSet; then
@@ -2615,7 +2617,7 @@ QPKGs.Assignment.Check()
 
     if QPKGs.ToUninstall.IsAny; then
         for package in $(QPKGs.Dependant.Array); do
-            if QPKGs.ToInstall.Exist $package; then
+            if QPKGs.ToUninstall.Exist $package; then
                 QPKGs.ToRestart.Remove $package
             fi
         done
