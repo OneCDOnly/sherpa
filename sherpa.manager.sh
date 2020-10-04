@@ -654,11 +654,16 @@ Session.Validate()
         DebugUserspace.Warning '/opt' '<not present>'
     fi
 
-    DebugUserspace.OK '$PATH' "${PATH:0:54}"
+    if [[ ${#PATH} -le 54 ]]; then
+        DebugUserspace.OK '$PATH' "$PATH"
+    else
+        DebugUserspace.OK '$PATH' "${PATH:0:51}..."
+    fi
+
     CheckPythonPathAndVersion python2
     CheckPythonPathAndVersion python3
     CheckPythonPathAndVersion python
-    DebugUserspace.OK 'unparsed user arguments' "$USER_ARGS_RAW"
+    DebugUserspace.OK 'unparsed user arguments' "'$USER_ARGS_RAW'"
 
     DebugScript 'logs path' "$PACKAGE_LOGS_PATH"
     DebugScript 'work path' "$WORK_PATH"
