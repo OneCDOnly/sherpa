@@ -3998,15 +3998,23 @@ AddFileToDebug()
     # Add the contents of specified pathfile $1 to the runtime log
 
     local linebuff=''
+    local screen_debug=false
 
     DebugLogMinorSeparator
     DebugLog 'adding external log to main log ...'
+
+    if Session.Debug.To.Screen.IsSet; then      # prevent external log contents appearing onscreen again - it's already been seen "live".
+        screen_debug=true
+        Session.Debug.To.Screen.Clear
+    fi
+
     DebugLog "$(FormatAsLogFilename "$1")"
 
     while read -r linebuff; do
         DebugLog "$linebuff"
     done < "$1"
 
+    [[ $screen_debug = true ]] && Session.Debug.To.Screen.Set
     DebugLogMinorSeparator
 
     }
