@@ -2685,15 +2685,15 @@ QPKGs.Assignment.Check()
 #         ShowAsNote "It's not necessary to install $(FormatAsPackageName Entware) on its own. It will be installed as-required with your other sherpa packages. :)"  # don't colourise title here as ANSI codes can't be removed without Entware being installed with its GNU utils.
 #     fi
 
-    DebugScript 'backup' "$(QPKGs.ToBackup.List) "
-    DebugScript 'uninstall' "$(QPKGs.ToUninstall.List) "
-    DebugScript 'forced-upgrade' "$(QPKGs.ToForceUpgrade.List) "
-    DebugScript 'upgrade' "$(QPKGs.ToUpgrade.List) "
-    DebugScript 'install' "$(QPKGs.ToInstall.List) "
-    DebugScript 'reinstall' "$(QPKGs.ToReinstall.List) "
-    DebugScript 'restore' "$(QPKGs.ToRestore.List) "
-    DebugScript 'restart' "$(QPKGs.ToRestart.List) "
-    DebugScript 'download' "$(QPKGs.ToDownload.List) "
+    DebugScript 'to backup' "$(QPKGs.ToBackup.List) "
+    DebugScript 'to uninstall' "$(QPKGs.ToUninstall.List) "
+    DebugScript 'to force-upgrade' "$(QPKGs.ToForceUpgrade.List) "
+    DebugScript 'to upgrade' "$(QPKGs.ToUpgrade.List) "
+    DebugScript 'to install' "$(QPKGs.ToInstall.List) "
+    DebugScript 'to reinstall' "$(QPKGs.ToReinstall.List) "
+    DebugScript 'to restore' "$(QPKGs.ToRestore.List) "
+    DebugScript 'to restart' "$(QPKGs.ToRestart.List) "
+    DebugScript 'to download' "$(QPKGs.ToDownload.List) "
     DebugInfoMinorSeparator
     DebugFuncExit; return 0
 
