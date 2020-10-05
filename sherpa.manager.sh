@@ -39,7 +39,7 @@ Session.Init()
     readonly SCRIPT_STARTSECONDS=$(/bin/date +%s)
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=201005
+    readonly MANAGER_SCRIPT_VERSION=201006
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -161,7 +161,7 @@ Session.Init()
     readonly IPKG_DL_PATH=$WORK_PATH/ipkgs.downloads
     readonly IPKG_CACHE_PATH=$WORK_PATH/ipkgs
     readonly PIP_CACHE_PATH=$WORK_PATH/pips
-    readonly OBJECT_REF_HASH=deddcd98ffffb5fe1c45adf3e8d21b7d
+    readonly OBJECT_REF_HASH=fcd1f7583b67ab9696b8425ce78a2171
     debug_log_datawidth=92
 
     if ! MakePath "$WORK_PATH" 'work'; then
@@ -178,9 +178,6 @@ Session.Init()
 
     User.Opts.IgnoreFreeSpace.Text = ' --force-space'
     Session.Summary.Set
-    Session.Debug.To.Screen.Description = "Display on-screen live debugging information."
-    Session.Display.Clean.Description = "Disable display of script title and trailing linespace. If 'set', output is suitable for script processing."
-    Session.LineSpace.Description = "Keeps track of the display empty linespacing flag. If 'set', an empty linespace has been printed to screen."
 
     if ! MakePath "$PACKAGE_LOGS_PATH" 'package logs'; then
         DebugFuncExit; return 1
@@ -4388,7 +4385,6 @@ Objects.Add()
     local public_function_name=$1
     local safe_function_name="$(tr '[A-Z]' '[a-z]' <<< "${public_function_name//[.-]/_}")"
 
-    _placehold_description_="_object_${safe_function_name}_description_"
     _placehold_value_="_object_${safe_function_name}_value_"
     _placehold_text_="_object_${safe_function_name}_text_"
     _placehold_flag_="_object_${safe_function_name}_flag_"
@@ -4415,14 +4411,6 @@ echo $public_function_name'.Add()
     {
     echo "${#'$_placehold_array_'[@]}"
     }
-'$public_function_name'.Description()
-    {
-    if [[ -n $1 && $1 = "=" ]]; then
-        '$_placehold_description_'="$2"
-    else
-        echo -n "'$_placehold_description_'"
-    fi
-    }
 '$public_function_name'.Disable()
     {
     [[ $'$_placehold_enable_' != "true" ]] && return
@@ -4441,19 +4429,6 @@ echo $public_function_name'.Add()
     if [[ $'$_placehold_array_index_' -gt ${#'$_placehold_array_'[@]} ]]; then
         '$_placehold_array_index_'=1
     fi
-    }
-'$public_function_name'.Env()
-    {
-    echo "* object internal environment *"
-    echo "Name: '\'$public_function_name\''"
-    echo "Description: '\'\$$_placehold_description_\''"
-    echo "Value: '\'\$$_placehold_value_\''"
-    echo "Text: '\'\$$_placehold_text_\''"
-    echo "Flag: '\'\$$_placehold_flag_\''"
-    echo "Enable: '\'\$$_placehold_enable_\''"
-    echo "Array: '\'\${$_placehold_array_[*]}\''"
-    echo "Array index: '\'\$$_placehold_array_index_\''"
-    echo "Path: '\'\$$_placehold_path_\''"
     }
 '$public_function_name'.Exist()
     {
@@ -4488,14 +4463,13 @@ echo $public_function_name'.Add()
     }
 '$public_function_name'.Init()
     {
-    '$_placehold_description_'=''
     '$_placehold_value_'=0
-    '$_placehold_text_'=''
+    '$_placehold_text_'=""
     '$_placehold_flag_'=false
     '$_placehold_enable_'=false
     '$_placehold_array_'+=()
     '$_placehold_array_index_'=1
-    '$_placehold_path_'=''
+    '$_placehold_path_'=""
     }
 '$public_function_name'.IsAny()
     {
