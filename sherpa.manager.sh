@@ -3563,18 +3563,18 @@ RunThisAndLogResults()
     #   $? = result code of command string
 
     [[ -z $1 || -z $2 ]] && return 1
+    DebugFuncEntry
 
     local msgs=/var/log/execd.log
     local result=0
 
     FormatAsCommand "$1" > "$2"
-#     eval "$1" >> "$msgs" 2>&1
     $1 >> "$msgs" 2>&1
     result=$?
     FormatAsResultAndStdout "$result" "$(<"$msgs")" >> "$2"
     [[ -e $msgs ]] && rm -f "$msgs"
 
-    return $result
+    DebugFuncExit; return $result
 
     }
 
@@ -3591,6 +3591,7 @@ RunThisAndLogResultsRealtime()
     #   $? = result code of executed command
 
     [[ -z $1 || -z $2 ]] && return 1
+    DebugFuncEntry
 
     local msgs=/var/log/execd.log
     local result=0
@@ -3606,7 +3607,7 @@ RunThisAndLogResultsRealtime()
         FormatAsResultAndStdout "$result" "<null>" >> "$2"
     fi
 
-    return $result
+    DebugFuncExit; return $result
 
     }
 
