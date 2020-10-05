@@ -161,7 +161,7 @@ Session.Init()
     readonly IPKG_DL_PATH=$WORK_PATH/ipkgs.downloads
     readonly IPKG_CACHE_PATH=$WORK_PATH/ipkgs
     readonly PIP_CACHE_PATH=$WORK_PATH/pips
-    readonly OBJECT_REF_HASH=2eee41cc6194c6fa411c11e82c9e5bad
+    readonly OBJECT_REF_HASH=a554d726a9b9d74a9ef9329756b5f82b
     debug_log_datawidth=92
 
     if ! MakePath "$WORK_PATH" 'work'; then
@@ -377,7 +377,7 @@ Session.Init()
         readonly SHERPA_QPKG_IPKGS
 
     readonly SHERPA_COMMON_IPKGS='ca-certificates findutils gcc git git-http less nano python3-dev python3-pip python3-setuptools sed'
-    readonly SHERPA_COMMON_PIPS='apscheduler beautifulsoup4 cfscrape cheetah3 "cheroot!=8.4.4" cherrypy configobj "feedparser==5.2.1" portend pygithub python-magic random_user_agent sabyenc3 simplejson slugify'
+    readonly SHERPA_COMMON_PIPS='apscheduler beautifulsoup4 cfscrape cheetah3 cheroot!=8.4.4 cherrypy configobj feedparser==5.2.1 portend pygithub python-magic random_user_agent sabyenc3 simplejson slugify'
     readonly SHERPA_COMMON_CONFLICTS='Optware Optware-NG TarMT Python QPython2'
 
     QPKGs.DepAndIndep.Build
@@ -718,13 +718,17 @@ Session.Validate()
         fi
     fi
 
+    if QPKGs.ToInstall.Exist SABnzbd; then
+        Session.PIPs.Install.Set        # need to ensure 'sabyenc' module is also installed
+    fi
+
     if QPKGs.ToInstall.IsAny || QPKGs.ToForceUpgrade.IsAny || User.Opts.Apps.All.Upgrade.IsSet; then
-        Session.Ipkgs.Install.Set
+        Session.IPKGs.Install.Set
     fi
 
     if User.Opts.Dependencies.Check.IsSet; then
-        Session.Ipkgs.Install.Set
-        Session.Pips.Install.Set
+        Session.IPKGs.Install.Set
+        Session.PIPs.Install.Set
     fi
 
     DebugFuncExit; return 0
@@ -868,7 +872,7 @@ Packages.Install.Independents()
 
                     # copy all files from original [/opt] into new [/opt]
                     [[ -L $opt_path && -d $opt_backup_path ]] && cp --recursive "$opt_backup_path"/* --target-directory "$opt_path" && rm -rf "$opt_backup_path"
-                    Session.Pips.Install.Set
+                    Session.PIPs.Install.Set
                 else
                     if [[ $NAS_QPKG_ARCH != none ]]; then
                         if QPKGs.ToInstall.Exist $package; then
@@ -880,7 +884,7 @@ Packages.Install.Independents()
                 fi
             fi
         done
-        Session.Ipkgs.Install.Set
+        Session.IPKGs.Install.Set
     fi
 
     if QPKG.Installed Entware; then
@@ -888,7 +892,7 @@ Packages.Install.Independents()
         ReloadProfile
         PatchBaseInit
         IPKGs.Install
-        PIP.Install
+        PIPs.Install
     fi
 
     DebugFuncExit; return 0
@@ -1327,17 +1331,14 @@ UpgradeIPKGBatch()
 
     }
 
-PIP.Install()
+PIPs.Install()
     {
 
     Session.SkipPackageProcessing.IsSet && return
-    Session.Pips.Install.IsNot && return
+    Session.PIPs.Install.IsNot && return
     DebugFuncEntry
     local exec_cmd=''
     local result=0
-    local packages=''
-    local desc="'Python 3' modules"
-    local log_pathfile=$PACKAGE_LOGS_PATH/py3-modules.$INSTALL_LOG_FILE
 
     # sometimes, OpenWRT doesn't have a 'pip3'
     if [[ -e /opt/bin/pip3 ]]; then
@@ -1356,19 +1357,18 @@ PIP.Install()
     fi
 
     [[ -n ${SHERPA_COMMON_PIPS// /} ]] && exec_cmd="$pip3_cmd install $SHERPA_COMMON_PIPS --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
-    [[ -n ${SHERPA_COMMON_PIPS// /} && -n ${packages// /} ]] && exec_cmd+=" && "
-    [[ -n ${packages// /} ]] && exec_cmd+="$pip3_cmd install $packages --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
 
-    # KLUDGE: force recompilation of 'sabyenc3' package so it's recognised by SABnzbd. See: https://forums.sabnzbd.org/viewtopic.php?p=121214#p121214
-    [[ $exec_cmd =~ sabyenc3 ]] && exec_cmd+=" && $pip3_cmd install --force-reinstall --ignore-installed --no-binary :all: sabyenc3 --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
-
-    if [[ -z $exec_cmd ]]; then
-        DebugFuncExit; return 0
-    fi
-
+    local desc="'Python 3' assorted modules"
+    local log_pathfile=$PACKAGE_LOGS_PATH/py3-modules.assorted.$INSTALL_LOG_FILE
     ShowAsProcLong "downloading & installing $desc"
-    RunThisAndLogResults "$exec_cmd" "$log_pathfile"
-    result=$?
+
+    if Session.Debug.To.Screen.IsSet; then
+        RunThisAndLogResultsRealtime "$exec_cmd" "$log_pathfile"
+        result=$?
+    else
+        RunThisAndLogResults "$exec_cmd" "$log_pathfile"
+        result=$?
+    fi
 
     if [[ $result -eq 0 ]]; then
         ShowAsDone "downloaded & installed $desc"
@@ -1377,6 +1377,32 @@ PIP.Install()
     fi
 
     AddFileToDebug "$log_pathfile"
+
+    if QPKG.Installed SABnzbd || QPKGs.ToInstall.Exist SABnzbd; then
+        # KLUDGE: force recompilation of 'sabyenc3' package so it's recognised by SABnzbd. See: https://forums.sabnzbd.org/viewtopic.php?p=121214#p121214
+        exec_cmd="$pip3_cmd install --force-reinstall --ignore-installed --no-binary :all: sabyenc3 --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
+
+        desc="'Python 3' SABnzbd module"
+        log_pathfile=$PACKAGE_LOGS_PATH/py3-modules.sabnzbd.$INSTALL_LOG_FILE
+        ShowAsProcLong "downloading & installing $desc"
+
+        if Session.Debug.To.Screen.IsSet; then
+            RunThisAndLogResultsRealtime "$exec_cmd" "$log_pathfile"
+            result=$?
+        else
+            RunThisAndLogResults "$exec_cmd" "$log_pathfile"
+            result=$?
+        fi
+
+        if [[ $result -eq 0 ]]; then
+            ShowAsDone "downloaded & installed $desc"
+        else
+            ShowAsError "download & install $desc failed $(FormatAsResult "$result")"
+        fi
+
+        AddFileToDebug "$log_pathfile"
+    fi
+
     DebugFuncExit; return $result
 
     }
@@ -1828,7 +1854,7 @@ IPKGs.Install()
     {
 
     Session.SkipPackageProcessing.IsSet && return
-    Session.Ipkgs.Install.IsNot && return
+    Session.IPKGs.Install.IsNot && return
     UpdateEntware
     Session.Error.IsSet && return
     local packages=$SHERPA_COMMON_IPKGS
@@ -3542,7 +3568,8 @@ RunThisAndLogResults()
     local result=0
 
     FormatAsCommand "$1" > "$2"
-    eval "$1" >> "$msgs" 2>&1
+#     eval "$1" >> "$msgs" 2>&1
+    $1 >> "$msgs" 2>&1
     result=$?
     FormatAsResultAndStdout "$result" "$(<"$msgs")" >> "$2"
     [[ -e $msgs ]] && rm -f "$msgs"
@@ -3571,8 +3598,13 @@ RunThisAndLogResultsRealtime()
     FormatAsCommand "$1" > "$2"
     $1 > >($TEE_CMD -a "$msgs") 2>&1
     result=$?
-    FormatAsResultAndStdout "$result" "$(<"$msgs")" >> "$2"
-    [[ -e $msgs ]] && rm -f "$msgs"
+
+    if [[ -e $msgs ]]; then
+        FormatAsResultAndStdout "$result" "$(<"$msgs")" >> "$2"
+        rm -f "$msgs"
+    else
+        FormatAsResultAndStdout "$result" "<null>" >> "$2"
+    fi
 
     return $result
 
@@ -4508,7 +4540,6 @@ Objects.CheckRemote()
 
     }
 
-
 Objects.Compile()
     {
 
@@ -4573,9 +4604,9 @@ Objects.Compile()
         Objects.Add Session.Debug.To.File
         Objects.Add Session.Debug.To.Screen
         Objects.Add Session.Display.Clean
-        Objects.Add Session.Ipkgs.Install
+        Objects.Add Session.IPKGs.Install
         Objects.Add Session.LineSpace
-        Objects.Add Session.Pips.Install
+        Objects.Add Session.PIPs.Install
         Objects.Add Session.ShowBackupLocation
         Objects.Add Session.SkipPackageProcessing
         Objects.Add Session.SuggestIssue

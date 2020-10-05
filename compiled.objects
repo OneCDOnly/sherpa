@@ -7378,25 +7378,25 @@ Session.Display.Clean.Value()
     }
 Session.Display.Clean.Init
 
-Session.Ipkgs.Install.Add()
+Session.IPKGs.Install.Add()
     {
     [[ ${_object_session_ipkgs_install_array_[*]} != *"$1"* ]] && _object_session_ipkgs_install_array_+=("$1")
     }
-Session.Ipkgs.Install.Array()
+Session.IPKGs.Install.Array()
     {
     echo -n "${_object_session_ipkgs_install_array_[@]}"
     }
-Session.Ipkgs.Install.Clear()
+Session.IPKGs.Install.Clear()
     {
     [[ $_object_session_ipkgs_install_flag_ != "true" ]] && return
     _object_session_ipkgs_install_flag_=false
     DebugVar _object_session_ipkgs_install_flag_
     }
-Session.Ipkgs.Install.Count()
+Session.IPKGs.Install.Count()
     {
     echo "${#_object_session_ipkgs_install_array_[@]}"
     }
-Session.Ipkgs.Install.Description()
+Session.IPKGs.Install.Description()
     {
     if [[ -n $1 && $1 = "=" ]]; then
         _object_session_ipkgs_install_description_="$2"
@@ -7404,29 +7404,29 @@ Session.Ipkgs.Install.Description()
         echo -n "_object_session_ipkgs_install_description_"
     fi
     }
-Session.Ipkgs.Install.Disable()
+Session.IPKGs.Install.Disable()
     {
     [[ $_object_session_ipkgs_install_enable_ != "true" ]] && return
     _object_session_ipkgs_install_enable_=false
     DebugVar _object_session_ipkgs_install_enable_
     }
-Session.Ipkgs.Install.Enable()
+Session.IPKGs.Install.Enable()
     {
     [[ $_object_session_ipkgs_install_enable_ = "true" ]] && return
     _object_session_ipkgs_install_enable_=true
     DebugVar _object_session_ipkgs_install_enable_
     }
-Session.Ipkgs.Install.Enumerate()
+Session.IPKGs.Install.Enumerate()
     {
     ((_object_session_ipkgs_install_array_index_++))
     if [[ $_object_session_ipkgs_install_array_index_ -gt ${#_object_session_ipkgs_install_array_[@]} ]]; then
         _object_session_ipkgs_install_array_index_=1
     fi
     }
-Session.Ipkgs.Install.Env()
+Session.IPKGs.Install.Env()
     {
     echo "* object internal environment *"
-    echo "Name: 'Session.Ipkgs.Install'"
+    echo "Name: 'Session.IPKGs.Install'"
     echo "Description: '$_object_session_ipkgs_install_description_'"
     echo "Value: '$_object_session_ipkgs_install_value_'"
     echo "Text: '$_object_session_ipkgs_install_text_'"
@@ -7436,26 +7436,26 @@ Session.Ipkgs.Install.Env()
     echo "Array index: '$_object_session_ipkgs_install_array_index_'"
     echo "Path: '$_object_session_ipkgs_install_path_'"
     }
-Session.Ipkgs.Install.Exist()
+Session.IPKGs.Install.Exist()
     {
     [[ ${_object_session_ipkgs_install_array_[*]} == *"$1"* ]]
     }
-Session.Ipkgs.Install.First()
+Session.IPKGs.Install.First()
     {
     echo "${_object_session_ipkgs_install_array_[0]}"
     }
-Session.Ipkgs.Install.GetCurrent()
+Session.IPKGs.Install.GetCurrent()
     {
     echo -n "${_object_session_ipkgs_install_array_[((_object_session_ipkgs_install_array_index_-1))]}"
     }
-Session.Ipkgs.Install.GetItem()
+Session.IPKGs.Install.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
     [[ $index -gt ${#_object_session_ipkgs_install_array_[@]} ]] && index=${#_object_session_ipkgs_install_array_[@]}
     echo -n "${_object_session_ipkgs_install_array_[((index-1))]}"
     }
-Session.Ipkgs.Install.Index()
+Session.IPKGs.Install.Index()
     {
     if [[ -n $1 && $1 = "=" ]]; then
         if [[ $2 -gt ${#_object_session_ipkgs_install_array_[@]} ]]; then
@@ -7467,7 +7467,7 @@ Session.Ipkgs.Install.Index()
         echo -n $_object_session_ipkgs_install_array_index_
     fi
     }
-Session.Ipkgs.Install.Init()
+Session.IPKGs.Install.Init()
     {
     _object_session_ipkgs_install_description_=
     _object_session_ipkgs_install_value_=0
@@ -7478,35 +7478,35 @@ Session.Ipkgs.Install.Init()
     _object_session_ipkgs_install_array_index_=1
     _object_session_ipkgs_install_path_=
     }
-Session.Ipkgs.Install.IsAny()
+Session.IPKGs.Install.IsAny()
     {
     [[ ${#_object_session_ipkgs_install_array_[@]} -gt 0 ]]
     }
-Session.Ipkgs.Install.IsDisabled()
+Session.IPKGs.Install.IsDisabled()
     {
     [[ $_object_session_ipkgs_install_enable_ != "true" ]]
     }
-Session.Ipkgs.Install.IsEnabled()
+Session.IPKGs.Install.IsEnabled()
     {
     [[ $_object_session_ipkgs_install_enable_ = "true" ]]
     }
-Session.Ipkgs.Install.IsNone()
+Session.IPKGs.Install.IsNone()
     {
     [[ ${#_object_session_ipkgs_install_array_[@]} -eq 0 ]]
     }
-Session.Ipkgs.Install.IsNot()
+Session.IPKGs.Install.IsNot()
     {
     [[ $_object_session_ipkgs_install_flag_ != "true" ]]
     }
-Session.Ipkgs.Install.IsSet()
+Session.IPKGs.Install.IsSet()
     {
     [[ $_object_session_ipkgs_install_flag_ = "true" ]]
     }
-Session.Ipkgs.Install.List()
+Session.IPKGs.Install.List()
     {
     echo -n "${_object_session_ipkgs_install_array_[*]}"
     }
-Session.Ipkgs.Install.Path()
+Session.IPKGs.Install.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
         _object_session_ipkgs_install_path_="$2"
@@ -7514,17 +7514,17 @@ Session.Ipkgs.Install.Path()
         echo -n "$_object_session_ipkgs_install_path_"
     fi
     }
-Session.Ipkgs.Install.Remove()
+Session.IPKGs.Install.Remove()
     {
     [[ ${_object_session_ipkgs_install_array_[*]} == *"$1"* ]] && _object_session_ipkgs_install_array_=("${_object_session_ipkgs_install_array_[@]/$1}")
     }
-Session.Ipkgs.Install.Set()
+Session.IPKGs.Install.Set()
     {
     [[ $_object_session_ipkgs_install_flag_ = "true" ]] && return
     _object_session_ipkgs_install_flag_=true
     DebugVar _object_session_ipkgs_install_flag_
     }
-Session.Ipkgs.Install.Text()
+Session.IPKGs.Install.Text()
     {
     if [[ -n $1 && $1 = "=" ]]; then
         _object_session_ipkgs_install_text_="$2"
@@ -7532,7 +7532,7 @@ Session.Ipkgs.Install.Text()
         echo -n "$_object_session_ipkgs_install_text_"
     fi
     }
-Session.Ipkgs.Install.Value()
+Session.IPKGs.Install.Value()
     {
     if [[ -n $1 && $1 = "=" ]]; then
         _object_session_ipkgs_install_value_=$2
@@ -7540,7 +7540,7 @@ Session.Ipkgs.Install.Value()
         echo -n $_object_session_ipkgs_install_value_
     fi
     }
-Session.Ipkgs.Install.Init
+Session.IPKGs.Install.Init
 
 Session.LineSpace.Add()
     {
@@ -7706,25 +7706,25 @@ Session.LineSpace.Value()
     }
 Session.LineSpace.Init
 
-Session.Pips.Install.Add()
+Session.PIPs.Install.Add()
     {
     [[ ${_object_session_pips_install_array_[*]} != *"$1"* ]] && _object_session_pips_install_array_+=("$1")
     }
-Session.Pips.Install.Array()
+Session.PIPs.Install.Array()
     {
     echo -n "${_object_session_pips_install_array_[@]}"
     }
-Session.Pips.Install.Clear()
+Session.PIPs.Install.Clear()
     {
     [[ $_object_session_pips_install_flag_ != "true" ]] && return
     _object_session_pips_install_flag_=false
     DebugVar _object_session_pips_install_flag_
     }
-Session.Pips.Install.Count()
+Session.PIPs.Install.Count()
     {
     echo "${#_object_session_pips_install_array_[@]}"
     }
-Session.Pips.Install.Description()
+Session.PIPs.Install.Description()
     {
     if [[ -n $1 && $1 = "=" ]]; then
         _object_session_pips_install_description_="$2"
@@ -7732,29 +7732,29 @@ Session.Pips.Install.Description()
         echo -n "_object_session_pips_install_description_"
     fi
     }
-Session.Pips.Install.Disable()
+Session.PIPs.Install.Disable()
     {
     [[ $_object_session_pips_install_enable_ != "true" ]] && return
     _object_session_pips_install_enable_=false
     DebugVar _object_session_pips_install_enable_
     }
-Session.Pips.Install.Enable()
+Session.PIPs.Install.Enable()
     {
     [[ $_object_session_pips_install_enable_ = "true" ]] && return
     _object_session_pips_install_enable_=true
     DebugVar _object_session_pips_install_enable_
     }
-Session.Pips.Install.Enumerate()
+Session.PIPs.Install.Enumerate()
     {
     ((_object_session_pips_install_array_index_++))
     if [[ $_object_session_pips_install_array_index_ -gt ${#_object_session_pips_install_array_[@]} ]]; then
         _object_session_pips_install_array_index_=1
     fi
     }
-Session.Pips.Install.Env()
+Session.PIPs.Install.Env()
     {
     echo "* object internal environment *"
-    echo "Name: 'Session.Pips.Install'"
+    echo "Name: 'Session.PIPs.Install'"
     echo "Description: '$_object_session_pips_install_description_'"
     echo "Value: '$_object_session_pips_install_value_'"
     echo "Text: '$_object_session_pips_install_text_'"
@@ -7764,26 +7764,26 @@ Session.Pips.Install.Env()
     echo "Array index: '$_object_session_pips_install_array_index_'"
     echo "Path: '$_object_session_pips_install_path_'"
     }
-Session.Pips.Install.Exist()
+Session.PIPs.Install.Exist()
     {
     [[ ${_object_session_pips_install_array_[*]} == *"$1"* ]]
     }
-Session.Pips.Install.First()
+Session.PIPs.Install.First()
     {
     echo "${_object_session_pips_install_array_[0]}"
     }
-Session.Pips.Install.GetCurrent()
+Session.PIPs.Install.GetCurrent()
     {
     echo -n "${_object_session_pips_install_array_[((_object_session_pips_install_array_index_-1))]}"
     }
-Session.Pips.Install.GetItem()
+Session.PIPs.Install.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
     [[ $index -gt ${#_object_session_pips_install_array_[@]} ]] && index=${#_object_session_pips_install_array_[@]}
     echo -n "${_object_session_pips_install_array_[((index-1))]}"
     }
-Session.Pips.Install.Index()
+Session.PIPs.Install.Index()
     {
     if [[ -n $1 && $1 = "=" ]]; then
         if [[ $2 -gt ${#_object_session_pips_install_array_[@]} ]]; then
@@ -7795,7 +7795,7 @@ Session.Pips.Install.Index()
         echo -n $_object_session_pips_install_array_index_
     fi
     }
-Session.Pips.Install.Init()
+Session.PIPs.Install.Init()
     {
     _object_session_pips_install_description_=
     _object_session_pips_install_value_=0
@@ -7806,35 +7806,35 @@ Session.Pips.Install.Init()
     _object_session_pips_install_array_index_=1
     _object_session_pips_install_path_=
     }
-Session.Pips.Install.IsAny()
+Session.PIPs.Install.IsAny()
     {
     [[ ${#_object_session_pips_install_array_[@]} -gt 0 ]]
     }
-Session.Pips.Install.IsDisabled()
+Session.PIPs.Install.IsDisabled()
     {
     [[ $_object_session_pips_install_enable_ != "true" ]]
     }
-Session.Pips.Install.IsEnabled()
+Session.PIPs.Install.IsEnabled()
     {
     [[ $_object_session_pips_install_enable_ = "true" ]]
     }
-Session.Pips.Install.IsNone()
+Session.PIPs.Install.IsNone()
     {
     [[ ${#_object_session_pips_install_array_[@]} -eq 0 ]]
     }
-Session.Pips.Install.IsNot()
+Session.PIPs.Install.IsNot()
     {
     [[ $_object_session_pips_install_flag_ != "true" ]]
     }
-Session.Pips.Install.IsSet()
+Session.PIPs.Install.IsSet()
     {
     [[ $_object_session_pips_install_flag_ = "true" ]]
     }
-Session.Pips.Install.List()
+Session.PIPs.Install.List()
     {
     echo -n "${_object_session_pips_install_array_[*]}"
     }
-Session.Pips.Install.Path()
+Session.PIPs.Install.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
         _object_session_pips_install_path_="$2"
@@ -7842,17 +7842,17 @@ Session.Pips.Install.Path()
         echo -n "$_object_session_pips_install_path_"
     fi
     }
-Session.Pips.Install.Remove()
+Session.PIPs.Install.Remove()
     {
     [[ ${_object_session_pips_install_array_[*]} == *"$1"* ]] && _object_session_pips_install_array_=("${_object_session_pips_install_array_[@]/$1}")
     }
-Session.Pips.Install.Set()
+Session.PIPs.Install.Set()
     {
     [[ $_object_session_pips_install_flag_ = "true" ]] && return
     _object_session_pips_install_flag_=true
     DebugVar _object_session_pips_install_flag_
     }
-Session.Pips.Install.Text()
+Session.PIPs.Install.Text()
     {
     if [[ -n $1 && $1 = "=" ]]; then
         _object_session_pips_install_text_="$2"
@@ -7860,7 +7860,7 @@ Session.Pips.Install.Text()
         echo -n "$_object_session_pips_install_text_"
     fi
     }
-Session.Pips.Install.Value()
+Session.PIPs.Install.Value()
     {
     if [[ -n $1 && $1 = "=" ]]; then
         _object_session_pips_install_value_=$2
@@ -7868,7 +7868,7 @@ Session.Pips.Install.Value()
         echo -n $_object_session_pips_install_value_
     fi
     }
-Session.Pips.Install.Init
+Session.PIPs.Install.Init
 
 Session.ShowBackupLocation.Add()
     {
