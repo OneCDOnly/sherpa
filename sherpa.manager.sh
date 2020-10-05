@@ -380,11 +380,6 @@ Session.Init()
     readonly SHERPA_COMMON_PIPS='apscheduler beautifulsoup4 cfscrape cheetah3 cheroot!=8.4.4 cherrypy configobj feedparser==5.2.1 portend pygithub python-magic random_user_agent sabyenc3 simplejson slugify'
     readonly SHERPA_COMMON_CONFLICTS='Optware Optware-NG TarMT Python QPython2'
 
-    QPKGs.DepAndIndep.Build
-    QPKGs.InstallationState.Build
-    QPKGs.Upgradable.Build
-    CalcNASQPKGArch
-
     Session.ParseArguments
     Session.SkipPackageProcessing.IsNot && Session.Debug.To.File.Set
     DebugInfoMajorSeparator
@@ -684,6 +679,8 @@ Session.Validate()
             DebugFuncExit; return 1
         fi
     fi
+
+    QPKGs.StateLists.Build
 
     DebugQPKG 'arch' "$NAS_QPKG_ARCH"
     DebugQPKG 'upgradable package(s)' "$(QPKGs.Upgradable.List) "
@@ -1039,12 +1036,16 @@ Session.Results()
     elif User.Opts.Clean.IsSet; then
         Clean.Cache
     elif User.Opts.Apps.List.Installed.IsSet; then
+        QPKGs.StateLists.Build
         QPKGs.Installed.Show
     elif User.Opts.Apps.List.NotInstalled.IsSet; then
+        QPKGs.StateLists.Build
         QPKGs.NotInstalled.Show
     elif User.Opts.Apps.List.Upgradable.IsSet; then
+        QPKGs.StateLists.Build
         QPKGs.Upgradable.Show
     elif User.Opts.Apps.List.All.IsSet; then
+        QPKGs.StateLists.Build
         QPKGs.All.Show
     fi
 
@@ -2570,6 +2571,16 @@ Versions.Show()
     Display "package: $PACKAGE_VERSION"
     Display "loader: $LOADER_SCRIPT_VERSION"
     Display "manager: $MANAGER_SCRIPT_VERSION"
+
+    }
+
+QPKGs.StateLists.Build()
+    {
+
+    QPKGs.DepAndIndep.Build
+    QPKGs.InstallationState.Build
+    QPKGs.Upgradable.Build
+    CalcNASQPKGArch
 
     }
 
