@@ -161,7 +161,7 @@ Session.Init()
     readonly IPKG_DL_PATH=$WORK_PATH/ipkgs.downloads
     readonly IPKG_CACHE_PATH=$WORK_PATH/ipkgs
     readonly PIP_CACHE_PATH=$WORK_PATH/pips
-    readonly OBJECT_REF_HASH=a554d726a9b9d74a9ef9329756b5f82b
+    readonly OBJECT_REF_HASH=deddcd98ffffb5fe1c45adf3e8d21b7d
     debug_log_datawidth=92
 
     if ! MakePath "$WORK_PATH" 'work'; then
@@ -446,7 +446,11 @@ Session.ParseArguments()
                 Session.SkipPackageProcessing.Set
                 ;;
             -l|l|--log|log)
-                User.Opts.Log.View.Set
+                User.Opts.Log.Whole.View.Set
+                Session.SkipPackageProcessing.Set
+                ;;
+            --log-last|log-last|--last|last|--last-log|last-log)
+                User.Opts.Log.Last.View.Set
                 Session.SkipPackageProcessing.Set
                 ;;
             --clean|clean)
@@ -454,7 +458,7 @@ Session.ParseArguments()
                 Session.SkipPackageProcessing.Set
                 ;;
             --paste|paste)
-                User.Opts.Log.Paste.Set
+                User.Opts.Log.Tail.Paste.Set
                 Session.SkipPackageProcessing.Set
                 ;;
             -a|a|--action|action|--actions|actions)
@@ -1026,10 +1030,12 @@ Session.Results()
 
     if User.Opts.Versions.View.IsSet; then
         Versions.Show
-    elif User.Opts.Log.View.IsSet; then
+    elif User.Opts.Log.Whole.View.IsSet; then
         Log.View.Show
-    elif User.Opts.Log.Paste.IsSet; then
+    elif User.Opts.Log.Tail.Paste.IsSet; then
         Log.Paste.Online
+    elif User.Opts.Log.Last.View.IsSet; then
+        Log.Last.Show
     elif User.Opts.Clean.IsSet; then
         Clean.Cache
     elif User.Opts.Apps.List.Installed.IsSet; then
@@ -2411,7 +2417,9 @@ Help.Problems.Show()
 
     DisplayAsProjectSyntaxIndentedExample 'restart all installed packages (upgrades the internal applications, not the packages)' '--restart-all'
 
-    DisplayAsProjectSyntaxIndentedExample "view the $(FormatAsScriptTitle) debug log" '--log'
+    DisplayAsProjectSyntaxIndentedExample "view only the most recent $(FormatAsScriptTitle) session log" '--last-log'
+
+    DisplayAsProjectSyntaxIndentedExample "view the entire $(FormatAsScriptTitle) session log" '--log'
 
     DisplayAsProjectSyntaxIndentedExample "upload the most-recent $(printf "%'.f" $LOG_TAIL_LINES) entries in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" '--paste'
 
@@ -2517,6 +2525,40 @@ Log.View.Show()
     else
         ShowAsError 'no log to display'
     fi
+
+    return 0
+
+    }
+
+Log.Last.Show()
+    {
+
+    # view only the last sherpa session
+
+    local session_tail_pathfile=$($DIRNAME_CMD $DEBUG_LOG_PATHFILE)/session.tail.tmp
+    local session_last_pathfile=$($DIRNAME_CMD $DEBUG_LOG_PATHFILE)/session.last.log
+    local -i start_line=0
+    local -i end_line=0
+
+    $TAIL_CMD -n1000 "$DEBUG_LOG_PATHFILE" > "$session_tail_pathfile"   # trim main log first so there's less to 'grep'
+
+    if [[ -n $DEBUG_LOG_PATHFILE && -e $DEBUG_LOG_PATHFILE ]]; then
+        start_line=$(($($GREP_CMD -n 'SCRIPT:.*started:' "$session_tail_pathfile" | $TAIL_CMD -n1 | $CUT_CMD -d':' -f1)-1))
+        end_line=$(($($GREP_CMD -n 'SCRIPT:.*finished:' "$session_tail_pathfile" | $TAIL_CMD -n1 | $CUT_CMD -d':' -f1)+2))
+        [[ $start_line -gt $end_line ]] && end_line=$($WC_CMD -l "$DEBUG_LOG_PATHFILE" | $CUT_CMD -d' ' -f1)
+
+        $SED_CMD "$start_line,$end_line!d" "$session_tail_pathfile" > "$session_last_pathfile"
+
+        if [[ -e $GNU_LESS_CMD ]]; then
+            LESSSECURE=1 $GNU_LESS_CMD +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$session_last_pathfile"
+        else
+            $CAT_CMD --number "$session_last_pathfile"
+        fi
+    else
+        ShowAsError 'no log to display'
+    fi
+
+    [[ -e $session_tail_pathfile ]] && rm -rf "$session_tail_pathfile"
 
     return 0
 
@@ -4551,8 +4593,9 @@ Objects.Compile()
         Objects.Add User.Opts.IgnoreFreeSpace
         Objects.Add User.Opts.Versions.View
 
-        Objects.Add User.Opts.Log.Paste
-        Objects.Add User.Opts.Log.View
+        Objects.Add User.Opts.Log.Last.View
+        Objects.Add User.Opts.Log.Tail.Paste
+        Objects.Add User.Opts.Log.Whole.View
 
         Objects.Add User.Opts.Apps.All.Backup
         Objects.Add User.Opts.Apps.All.Install

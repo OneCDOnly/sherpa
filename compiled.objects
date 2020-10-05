@@ -1966,333 +1966,497 @@ User.Opts.Versions.View.Value()
     }
 User.Opts.Versions.View.Init
 
-User.Opts.Log.Paste.Add()
+User.Opts.Log.Last.View.Add()
     {
-    [[ ${_object_user_opts_log_paste_array_[*]} != *"$1"* ]] && _object_user_opts_log_paste_array_+=("$1")
+    [[ ${_object_user_opts_log_last_view_array_[*]} != *"$1"* ]] && _object_user_opts_log_last_view_array_+=("$1")
     }
-User.Opts.Log.Paste.Array()
+User.Opts.Log.Last.View.Array()
     {
-    echo -n "${_object_user_opts_log_paste_array_[@]}"
+    echo -n "${_object_user_opts_log_last_view_array_[@]}"
     }
-User.Opts.Log.Paste.Clear()
+User.Opts.Log.Last.View.Clear()
     {
-    [[ $_object_user_opts_log_paste_flag_ != "true" ]] && return
-    _object_user_opts_log_paste_flag_=false
-    DebugVar _object_user_opts_log_paste_flag_
+    [[ $_object_user_opts_log_last_view_flag_ != "true" ]] && return
+    _object_user_opts_log_last_view_flag_=false
+    DebugVar _object_user_opts_log_last_view_flag_
     }
-User.Opts.Log.Paste.Count()
+User.Opts.Log.Last.View.Count()
     {
-    echo "${#_object_user_opts_log_paste_array_[@]}"
+    echo "${#_object_user_opts_log_last_view_array_[@]}"
     }
-User.Opts.Log.Paste.Description()
+User.Opts.Log.Last.View.Description()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_user_opts_log_paste_description_="$2"
+        _object_user_opts_log_last_view_description_="$2"
     else
-        echo -n "_object_user_opts_log_paste_description_"
+        echo -n "_object_user_opts_log_last_view_description_"
     fi
     }
-User.Opts.Log.Paste.Disable()
+User.Opts.Log.Last.View.Disable()
     {
-    [[ $_object_user_opts_log_paste_enable_ != "true" ]] && return
-    _object_user_opts_log_paste_enable_=false
-    DebugVar _object_user_opts_log_paste_enable_
+    [[ $_object_user_opts_log_last_view_enable_ != "true" ]] && return
+    _object_user_opts_log_last_view_enable_=false
+    DebugVar _object_user_opts_log_last_view_enable_
     }
-User.Opts.Log.Paste.Enable()
+User.Opts.Log.Last.View.Enable()
     {
-    [[ $_object_user_opts_log_paste_enable_ = "true" ]] && return
-    _object_user_opts_log_paste_enable_=true
-    DebugVar _object_user_opts_log_paste_enable_
+    [[ $_object_user_opts_log_last_view_enable_ = "true" ]] && return
+    _object_user_opts_log_last_view_enable_=true
+    DebugVar _object_user_opts_log_last_view_enable_
     }
-User.Opts.Log.Paste.Enumerate()
+User.Opts.Log.Last.View.Enumerate()
     {
-    ((_object_user_opts_log_paste_array_index_++))
-    if [[ $_object_user_opts_log_paste_array_index_ -gt ${#_object_user_opts_log_paste_array_[@]} ]]; then
-        _object_user_opts_log_paste_array_index_=1
+    ((_object_user_opts_log_last_view_array_index_++))
+    if [[ $_object_user_opts_log_last_view_array_index_ -gt ${#_object_user_opts_log_last_view_array_[@]} ]]; then
+        _object_user_opts_log_last_view_array_index_=1
     fi
     }
-User.Opts.Log.Paste.Env()
+User.Opts.Log.Last.View.Env()
     {
     echo "* object internal environment *"
-    echo "Name: 'User.Opts.Log.Paste'"
-    echo "Description: '$_object_user_opts_log_paste_description_'"
-    echo "Value: '$_object_user_opts_log_paste_value_'"
-    echo "Text: '$_object_user_opts_log_paste_text_'"
-    echo "Flag: '$_object_user_opts_log_paste_flag_'"
-    echo "Enable: '$_object_user_opts_log_paste_enable_'"
-    echo "Array: '${_object_user_opts_log_paste_array_[*]}'"
-    echo "Array index: '$_object_user_opts_log_paste_array_index_'"
-    echo "Path: '$_object_user_opts_log_paste_path_'"
+    echo "Name: 'User.Opts.Log.Last.View'"
+    echo "Description: '$_object_user_opts_log_last_view_description_'"
+    echo "Value: '$_object_user_opts_log_last_view_value_'"
+    echo "Text: '$_object_user_opts_log_last_view_text_'"
+    echo "Flag: '$_object_user_opts_log_last_view_flag_'"
+    echo "Enable: '$_object_user_opts_log_last_view_enable_'"
+    echo "Array: '${_object_user_opts_log_last_view_array_[*]}'"
+    echo "Array index: '$_object_user_opts_log_last_view_array_index_'"
+    echo "Path: '$_object_user_opts_log_last_view_path_'"
     }
-User.Opts.Log.Paste.Exist()
+User.Opts.Log.Last.View.Exist()
     {
-    [[ ${_object_user_opts_log_paste_array_[*]} == *"$1"* ]]
+    [[ ${_object_user_opts_log_last_view_array_[*]} == *"$1"* ]]
     }
-User.Opts.Log.Paste.First()
+User.Opts.Log.Last.View.First()
     {
-    echo "${_object_user_opts_log_paste_array_[0]}"
+    echo "${_object_user_opts_log_last_view_array_[0]}"
     }
-User.Opts.Log.Paste.GetCurrent()
+User.Opts.Log.Last.View.GetCurrent()
     {
-    echo -n "${_object_user_opts_log_paste_array_[((_object_user_opts_log_paste_array_index_-1))]}"
+    echo -n "${_object_user_opts_log_last_view_array_[((_object_user_opts_log_last_view_array_index_-1))]}"
     }
-User.Opts.Log.Paste.GetItem()
+User.Opts.Log.Last.View.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_user_opts_log_paste_array_[@]} ]] && index=${#_object_user_opts_log_paste_array_[@]}
-    echo -n "${_object_user_opts_log_paste_array_[((index-1))]}"
+    [[ $index -gt ${#_object_user_opts_log_last_view_array_[@]} ]] && index=${#_object_user_opts_log_last_view_array_[@]}
+    echo -n "${_object_user_opts_log_last_view_array_[((index-1))]}"
     }
-User.Opts.Log.Paste.Index()
+User.Opts.Log.Last.View.Index()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        if [[ $2 -gt ${#_object_user_opts_log_paste_array_[@]} ]]; then
-            _object_user_opts_log_paste_array_index_=${#_object_user_opts_log_paste_array_[@]}
+        if [[ $2 -gt ${#_object_user_opts_log_last_view_array_[@]} ]]; then
+            _object_user_opts_log_last_view_array_index_=${#_object_user_opts_log_last_view_array_[@]}
         else
-            _object_user_opts_log_paste_array_index_=$2
+            _object_user_opts_log_last_view_array_index_=$2
         fi
     else
-        echo -n $_object_user_opts_log_paste_array_index_
+        echo -n $_object_user_opts_log_last_view_array_index_
     fi
     }
-User.Opts.Log.Paste.Init()
+User.Opts.Log.Last.View.Init()
     {
-    _object_user_opts_log_paste_description_=
-    _object_user_opts_log_paste_value_=0
-    _object_user_opts_log_paste_text_=
-    _object_user_opts_log_paste_flag_=false
-    _object_user_opts_log_paste_enable_=false
-    _object_user_opts_log_paste_array_+=()
-    _object_user_opts_log_paste_array_index_=1
-    _object_user_opts_log_paste_path_=
+    _object_user_opts_log_last_view_description_=
+    _object_user_opts_log_last_view_value_=0
+    _object_user_opts_log_last_view_text_=
+    _object_user_opts_log_last_view_flag_=false
+    _object_user_opts_log_last_view_enable_=false
+    _object_user_opts_log_last_view_array_+=()
+    _object_user_opts_log_last_view_array_index_=1
+    _object_user_opts_log_last_view_path_=
     }
-User.Opts.Log.Paste.IsAny()
+User.Opts.Log.Last.View.IsAny()
     {
-    [[ ${#_object_user_opts_log_paste_array_[@]} -gt 0 ]]
+    [[ ${#_object_user_opts_log_last_view_array_[@]} -gt 0 ]]
     }
-User.Opts.Log.Paste.IsDisabled()
+User.Opts.Log.Last.View.IsDisabled()
     {
-    [[ $_object_user_opts_log_paste_enable_ != "true" ]]
+    [[ $_object_user_opts_log_last_view_enable_ != "true" ]]
     }
-User.Opts.Log.Paste.IsEnabled()
+User.Opts.Log.Last.View.IsEnabled()
     {
-    [[ $_object_user_opts_log_paste_enable_ = "true" ]]
+    [[ $_object_user_opts_log_last_view_enable_ = "true" ]]
     }
-User.Opts.Log.Paste.IsNone()
+User.Opts.Log.Last.View.IsNone()
     {
-    [[ ${#_object_user_opts_log_paste_array_[@]} -eq 0 ]]
+    [[ ${#_object_user_opts_log_last_view_array_[@]} -eq 0 ]]
     }
-User.Opts.Log.Paste.IsNot()
+User.Opts.Log.Last.View.IsNot()
     {
-    [[ $_object_user_opts_log_paste_flag_ != "true" ]]
+    [[ $_object_user_opts_log_last_view_flag_ != "true" ]]
     }
-User.Opts.Log.Paste.IsSet()
+User.Opts.Log.Last.View.IsSet()
     {
-    [[ $_object_user_opts_log_paste_flag_ = "true" ]]
+    [[ $_object_user_opts_log_last_view_flag_ = "true" ]]
     }
-User.Opts.Log.Paste.List()
+User.Opts.Log.Last.View.List()
     {
-    echo -n "${_object_user_opts_log_paste_array_[*]}"
+    echo -n "${_object_user_opts_log_last_view_array_[*]}"
     }
-User.Opts.Log.Paste.Path()
+User.Opts.Log.Last.View.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_user_opts_log_paste_path_="$2"
+        _object_user_opts_log_last_view_path_="$2"
     else
-        echo -n "$_object_user_opts_log_paste_path_"
+        echo -n "$_object_user_opts_log_last_view_path_"
     fi
     }
-User.Opts.Log.Paste.Remove()
+User.Opts.Log.Last.View.Remove()
     {
-    [[ ${_object_user_opts_log_paste_array_[*]} == *"$1"* ]] && _object_user_opts_log_paste_array_=("${_object_user_opts_log_paste_array_[@]/$1}")
+    [[ ${_object_user_opts_log_last_view_array_[*]} == *"$1"* ]] && _object_user_opts_log_last_view_array_=("${_object_user_opts_log_last_view_array_[@]/$1}")
     }
-User.Opts.Log.Paste.Set()
+User.Opts.Log.Last.View.Set()
     {
-    [[ $_object_user_opts_log_paste_flag_ = "true" ]] && return
-    _object_user_opts_log_paste_flag_=true
-    DebugVar _object_user_opts_log_paste_flag_
+    [[ $_object_user_opts_log_last_view_flag_ = "true" ]] && return
+    _object_user_opts_log_last_view_flag_=true
+    DebugVar _object_user_opts_log_last_view_flag_
     }
-User.Opts.Log.Paste.Text()
+User.Opts.Log.Last.View.Text()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_user_opts_log_paste_text_="$2"
+        _object_user_opts_log_last_view_text_="$2"
     else
-        echo -n "$_object_user_opts_log_paste_text_"
+        echo -n "$_object_user_opts_log_last_view_text_"
     fi
     }
-User.Opts.Log.Paste.Value()
+User.Opts.Log.Last.View.Value()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_user_opts_log_paste_value_=$2
+        _object_user_opts_log_last_view_value_=$2
     else
-        echo -n $_object_user_opts_log_paste_value_
+        echo -n $_object_user_opts_log_last_view_value_
     fi
     }
-User.Opts.Log.Paste.Init
+User.Opts.Log.Last.View.Init
 
-User.Opts.Log.View.Add()
+User.Opts.Log.Tail.Paste.Add()
     {
-    [[ ${_object_user_opts_log_view_array_[*]} != *"$1"* ]] && _object_user_opts_log_view_array_+=("$1")
+    [[ ${_object_user_opts_log_tail_paste_array_[*]} != *"$1"* ]] && _object_user_opts_log_tail_paste_array_+=("$1")
     }
-User.Opts.Log.View.Array()
+User.Opts.Log.Tail.Paste.Array()
     {
-    echo -n "${_object_user_opts_log_view_array_[@]}"
+    echo -n "${_object_user_opts_log_tail_paste_array_[@]}"
     }
-User.Opts.Log.View.Clear()
+User.Opts.Log.Tail.Paste.Clear()
     {
-    [[ $_object_user_opts_log_view_flag_ != "true" ]] && return
-    _object_user_opts_log_view_flag_=false
-    DebugVar _object_user_opts_log_view_flag_
+    [[ $_object_user_opts_log_tail_paste_flag_ != "true" ]] && return
+    _object_user_opts_log_tail_paste_flag_=false
+    DebugVar _object_user_opts_log_tail_paste_flag_
     }
-User.Opts.Log.View.Count()
+User.Opts.Log.Tail.Paste.Count()
     {
-    echo "${#_object_user_opts_log_view_array_[@]}"
+    echo "${#_object_user_opts_log_tail_paste_array_[@]}"
     }
-User.Opts.Log.View.Description()
+User.Opts.Log.Tail.Paste.Description()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_user_opts_log_view_description_="$2"
+        _object_user_opts_log_tail_paste_description_="$2"
     else
-        echo -n "_object_user_opts_log_view_description_"
+        echo -n "_object_user_opts_log_tail_paste_description_"
     fi
     }
-User.Opts.Log.View.Disable()
+User.Opts.Log.Tail.Paste.Disable()
     {
-    [[ $_object_user_opts_log_view_enable_ != "true" ]] && return
-    _object_user_opts_log_view_enable_=false
-    DebugVar _object_user_opts_log_view_enable_
+    [[ $_object_user_opts_log_tail_paste_enable_ != "true" ]] && return
+    _object_user_opts_log_tail_paste_enable_=false
+    DebugVar _object_user_opts_log_tail_paste_enable_
     }
-User.Opts.Log.View.Enable()
+User.Opts.Log.Tail.Paste.Enable()
     {
-    [[ $_object_user_opts_log_view_enable_ = "true" ]] && return
-    _object_user_opts_log_view_enable_=true
-    DebugVar _object_user_opts_log_view_enable_
+    [[ $_object_user_opts_log_tail_paste_enable_ = "true" ]] && return
+    _object_user_opts_log_tail_paste_enable_=true
+    DebugVar _object_user_opts_log_tail_paste_enable_
     }
-User.Opts.Log.View.Enumerate()
+User.Opts.Log.Tail.Paste.Enumerate()
     {
-    ((_object_user_opts_log_view_array_index_++))
-    if [[ $_object_user_opts_log_view_array_index_ -gt ${#_object_user_opts_log_view_array_[@]} ]]; then
-        _object_user_opts_log_view_array_index_=1
+    ((_object_user_opts_log_tail_paste_array_index_++))
+    if [[ $_object_user_opts_log_tail_paste_array_index_ -gt ${#_object_user_opts_log_tail_paste_array_[@]} ]]; then
+        _object_user_opts_log_tail_paste_array_index_=1
     fi
     }
-User.Opts.Log.View.Env()
+User.Opts.Log.Tail.Paste.Env()
     {
     echo "* object internal environment *"
-    echo "Name: 'User.Opts.Log.View'"
-    echo "Description: '$_object_user_opts_log_view_description_'"
-    echo "Value: '$_object_user_opts_log_view_value_'"
-    echo "Text: '$_object_user_opts_log_view_text_'"
-    echo "Flag: '$_object_user_opts_log_view_flag_'"
-    echo "Enable: '$_object_user_opts_log_view_enable_'"
-    echo "Array: '${_object_user_opts_log_view_array_[*]}'"
-    echo "Array index: '$_object_user_opts_log_view_array_index_'"
-    echo "Path: '$_object_user_opts_log_view_path_'"
+    echo "Name: 'User.Opts.Log.Tail.Paste'"
+    echo "Description: '$_object_user_opts_log_tail_paste_description_'"
+    echo "Value: '$_object_user_opts_log_tail_paste_value_'"
+    echo "Text: '$_object_user_opts_log_tail_paste_text_'"
+    echo "Flag: '$_object_user_opts_log_tail_paste_flag_'"
+    echo "Enable: '$_object_user_opts_log_tail_paste_enable_'"
+    echo "Array: '${_object_user_opts_log_tail_paste_array_[*]}'"
+    echo "Array index: '$_object_user_opts_log_tail_paste_array_index_'"
+    echo "Path: '$_object_user_opts_log_tail_paste_path_'"
     }
-User.Opts.Log.View.Exist()
+User.Opts.Log.Tail.Paste.Exist()
     {
-    [[ ${_object_user_opts_log_view_array_[*]} == *"$1"* ]]
+    [[ ${_object_user_opts_log_tail_paste_array_[*]} == *"$1"* ]]
     }
-User.Opts.Log.View.First()
+User.Opts.Log.Tail.Paste.First()
     {
-    echo "${_object_user_opts_log_view_array_[0]}"
+    echo "${_object_user_opts_log_tail_paste_array_[0]}"
     }
-User.Opts.Log.View.GetCurrent()
+User.Opts.Log.Tail.Paste.GetCurrent()
     {
-    echo -n "${_object_user_opts_log_view_array_[((_object_user_opts_log_view_array_index_-1))]}"
+    echo -n "${_object_user_opts_log_tail_paste_array_[((_object_user_opts_log_tail_paste_array_index_-1))]}"
     }
-User.Opts.Log.View.GetItem()
+User.Opts.Log.Tail.Paste.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_user_opts_log_view_array_[@]} ]] && index=${#_object_user_opts_log_view_array_[@]}
-    echo -n "${_object_user_opts_log_view_array_[((index-1))]}"
+    [[ $index -gt ${#_object_user_opts_log_tail_paste_array_[@]} ]] && index=${#_object_user_opts_log_tail_paste_array_[@]}
+    echo -n "${_object_user_opts_log_tail_paste_array_[((index-1))]}"
     }
-User.Opts.Log.View.Index()
+User.Opts.Log.Tail.Paste.Index()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        if [[ $2 -gt ${#_object_user_opts_log_view_array_[@]} ]]; then
-            _object_user_opts_log_view_array_index_=${#_object_user_opts_log_view_array_[@]}
+        if [[ $2 -gt ${#_object_user_opts_log_tail_paste_array_[@]} ]]; then
+            _object_user_opts_log_tail_paste_array_index_=${#_object_user_opts_log_tail_paste_array_[@]}
         else
-            _object_user_opts_log_view_array_index_=$2
+            _object_user_opts_log_tail_paste_array_index_=$2
         fi
     else
-        echo -n $_object_user_opts_log_view_array_index_
+        echo -n $_object_user_opts_log_tail_paste_array_index_
     fi
     }
-User.Opts.Log.View.Init()
+User.Opts.Log.Tail.Paste.Init()
     {
-    _object_user_opts_log_view_description_=
-    _object_user_opts_log_view_value_=0
-    _object_user_opts_log_view_text_=
-    _object_user_opts_log_view_flag_=false
-    _object_user_opts_log_view_enable_=false
-    _object_user_opts_log_view_array_+=()
-    _object_user_opts_log_view_array_index_=1
-    _object_user_opts_log_view_path_=
+    _object_user_opts_log_tail_paste_description_=
+    _object_user_opts_log_tail_paste_value_=0
+    _object_user_opts_log_tail_paste_text_=
+    _object_user_opts_log_tail_paste_flag_=false
+    _object_user_opts_log_tail_paste_enable_=false
+    _object_user_opts_log_tail_paste_array_+=()
+    _object_user_opts_log_tail_paste_array_index_=1
+    _object_user_opts_log_tail_paste_path_=
     }
-User.Opts.Log.View.IsAny()
+User.Opts.Log.Tail.Paste.IsAny()
     {
-    [[ ${#_object_user_opts_log_view_array_[@]} -gt 0 ]]
+    [[ ${#_object_user_opts_log_tail_paste_array_[@]} -gt 0 ]]
     }
-User.Opts.Log.View.IsDisabled()
+User.Opts.Log.Tail.Paste.IsDisabled()
     {
-    [[ $_object_user_opts_log_view_enable_ != "true" ]]
+    [[ $_object_user_opts_log_tail_paste_enable_ != "true" ]]
     }
-User.Opts.Log.View.IsEnabled()
+User.Opts.Log.Tail.Paste.IsEnabled()
     {
-    [[ $_object_user_opts_log_view_enable_ = "true" ]]
+    [[ $_object_user_opts_log_tail_paste_enable_ = "true" ]]
     }
-User.Opts.Log.View.IsNone()
+User.Opts.Log.Tail.Paste.IsNone()
     {
-    [[ ${#_object_user_opts_log_view_array_[@]} -eq 0 ]]
+    [[ ${#_object_user_opts_log_tail_paste_array_[@]} -eq 0 ]]
     }
-User.Opts.Log.View.IsNot()
+User.Opts.Log.Tail.Paste.IsNot()
     {
-    [[ $_object_user_opts_log_view_flag_ != "true" ]]
+    [[ $_object_user_opts_log_tail_paste_flag_ != "true" ]]
     }
-User.Opts.Log.View.IsSet()
+User.Opts.Log.Tail.Paste.IsSet()
     {
-    [[ $_object_user_opts_log_view_flag_ = "true" ]]
+    [[ $_object_user_opts_log_tail_paste_flag_ = "true" ]]
     }
-User.Opts.Log.View.List()
+User.Opts.Log.Tail.Paste.List()
     {
-    echo -n "${_object_user_opts_log_view_array_[*]}"
+    echo -n "${_object_user_opts_log_tail_paste_array_[*]}"
     }
-User.Opts.Log.View.Path()
+User.Opts.Log.Tail.Paste.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_user_opts_log_view_path_="$2"
+        _object_user_opts_log_tail_paste_path_="$2"
     else
-        echo -n "$_object_user_opts_log_view_path_"
+        echo -n "$_object_user_opts_log_tail_paste_path_"
     fi
     }
-User.Opts.Log.View.Remove()
+User.Opts.Log.Tail.Paste.Remove()
     {
-    [[ ${_object_user_opts_log_view_array_[*]} == *"$1"* ]] && _object_user_opts_log_view_array_=("${_object_user_opts_log_view_array_[@]/$1}")
+    [[ ${_object_user_opts_log_tail_paste_array_[*]} == *"$1"* ]] && _object_user_opts_log_tail_paste_array_=("${_object_user_opts_log_tail_paste_array_[@]/$1}")
     }
-User.Opts.Log.View.Set()
+User.Opts.Log.Tail.Paste.Set()
     {
-    [[ $_object_user_opts_log_view_flag_ = "true" ]] && return
-    _object_user_opts_log_view_flag_=true
-    DebugVar _object_user_opts_log_view_flag_
+    [[ $_object_user_opts_log_tail_paste_flag_ = "true" ]] && return
+    _object_user_opts_log_tail_paste_flag_=true
+    DebugVar _object_user_opts_log_tail_paste_flag_
     }
-User.Opts.Log.View.Text()
+User.Opts.Log.Tail.Paste.Text()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_user_opts_log_view_text_="$2"
+        _object_user_opts_log_tail_paste_text_="$2"
     else
-        echo -n "$_object_user_opts_log_view_text_"
+        echo -n "$_object_user_opts_log_tail_paste_text_"
     fi
     }
-User.Opts.Log.View.Value()
+User.Opts.Log.Tail.Paste.Value()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_user_opts_log_view_value_=$2
+        _object_user_opts_log_tail_paste_value_=$2
     else
-        echo -n $_object_user_opts_log_view_value_
+        echo -n $_object_user_opts_log_tail_paste_value_
     fi
     }
-User.Opts.Log.View.Init
+User.Opts.Log.Tail.Paste.Init
+
+User.Opts.Log.Whole.View.Add()
+    {
+    [[ ${_object_user_opts_log_whole_view_array_[*]} != *"$1"* ]] && _object_user_opts_log_whole_view_array_+=("$1")
+    }
+User.Opts.Log.Whole.View.Array()
+    {
+    echo -n "${_object_user_opts_log_whole_view_array_[@]}"
+    }
+User.Opts.Log.Whole.View.Clear()
+    {
+    [[ $_object_user_opts_log_whole_view_flag_ != "true" ]] && return
+    _object_user_opts_log_whole_view_flag_=false
+    DebugVar _object_user_opts_log_whole_view_flag_
+    }
+User.Opts.Log.Whole.View.Count()
+    {
+    echo "${#_object_user_opts_log_whole_view_array_[@]}"
+    }
+User.Opts.Log.Whole.View.Description()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_log_whole_view_description_="$2"
+    else
+        echo -n "_object_user_opts_log_whole_view_description_"
+    fi
+    }
+User.Opts.Log.Whole.View.Disable()
+    {
+    [[ $_object_user_opts_log_whole_view_enable_ != "true" ]] && return
+    _object_user_opts_log_whole_view_enable_=false
+    DebugVar _object_user_opts_log_whole_view_enable_
+    }
+User.Opts.Log.Whole.View.Enable()
+    {
+    [[ $_object_user_opts_log_whole_view_enable_ = "true" ]] && return
+    _object_user_opts_log_whole_view_enable_=true
+    DebugVar _object_user_opts_log_whole_view_enable_
+    }
+User.Opts.Log.Whole.View.Enumerate()
+    {
+    ((_object_user_opts_log_whole_view_array_index_++))
+    if [[ $_object_user_opts_log_whole_view_array_index_ -gt ${#_object_user_opts_log_whole_view_array_[@]} ]]; then
+        _object_user_opts_log_whole_view_array_index_=1
+    fi
+    }
+User.Opts.Log.Whole.View.Env()
+    {
+    echo "* object internal environment *"
+    echo "Name: 'User.Opts.Log.Whole.View'"
+    echo "Description: '$_object_user_opts_log_whole_view_description_'"
+    echo "Value: '$_object_user_opts_log_whole_view_value_'"
+    echo "Text: '$_object_user_opts_log_whole_view_text_'"
+    echo "Flag: '$_object_user_opts_log_whole_view_flag_'"
+    echo "Enable: '$_object_user_opts_log_whole_view_enable_'"
+    echo "Array: '${_object_user_opts_log_whole_view_array_[*]}'"
+    echo "Array index: '$_object_user_opts_log_whole_view_array_index_'"
+    echo "Path: '$_object_user_opts_log_whole_view_path_'"
+    }
+User.Opts.Log.Whole.View.Exist()
+    {
+    [[ ${_object_user_opts_log_whole_view_array_[*]} == *"$1"* ]]
+    }
+User.Opts.Log.Whole.View.First()
+    {
+    echo "${_object_user_opts_log_whole_view_array_[0]}"
+    }
+User.Opts.Log.Whole.View.GetCurrent()
+    {
+    echo -n "${_object_user_opts_log_whole_view_array_[((_object_user_opts_log_whole_view_array_index_-1))]}"
+    }
+User.Opts.Log.Whole.View.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_user_opts_log_whole_view_array_[@]} ]] && index=${#_object_user_opts_log_whole_view_array_[@]}
+    echo -n "${_object_user_opts_log_whole_view_array_[((index-1))]}"
+    }
+User.Opts.Log.Whole.View.Index()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        if [[ $2 -gt ${#_object_user_opts_log_whole_view_array_[@]} ]]; then
+            _object_user_opts_log_whole_view_array_index_=${#_object_user_opts_log_whole_view_array_[@]}
+        else
+            _object_user_opts_log_whole_view_array_index_=$2
+        fi
+    else
+        echo -n $_object_user_opts_log_whole_view_array_index_
+    fi
+    }
+User.Opts.Log.Whole.View.Init()
+    {
+    _object_user_opts_log_whole_view_description_=
+    _object_user_opts_log_whole_view_value_=0
+    _object_user_opts_log_whole_view_text_=
+    _object_user_opts_log_whole_view_flag_=false
+    _object_user_opts_log_whole_view_enable_=false
+    _object_user_opts_log_whole_view_array_+=()
+    _object_user_opts_log_whole_view_array_index_=1
+    _object_user_opts_log_whole_view_path_=
+    }
+User.Opts.Log.Whole.View.IsAny()
+    {
+    [[ ${#_object_user_opts_log_whole_view_array_[@]} -gt 0 ]]
+    }
+User.Opts.Log.Whole.View.IsDisabled()
+    {
+    [[ $_object_user_opts_log_whole_view_enable_ != "true" ]]
+    }
+User.Opts.Log.Whole.View.IsEnabled()
+    {
+    [[ $_object_user_opts_log_whole_view_enable_ = "true" ]]
+    }
+User.Opts.Log.Whole.View.IsNone()
+    {
+    [[ ${#_object_user_opts_log_whole_view_array_[@]} -eq 0 ]]
+    }
+User.Opts.Log.Whole.View.IsNot()
+    {
+    [[ $_object_user_opts_log_whole_view_flag_ != "true" ]]
+    }
+User.Opts.Log.Whole.View.IsSet()
+    {
+    [[ $_object_user_opts_log_whole_view_flag_ = "true" ]]
+    }
+User.Opts.Log.Whole.View.List()
+    {
+    echo -n "${_object_user_opts_log_whole_view_array_[*]}"
+    }
+User.Opts.Log.Whole.View.Path()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_log_whole_view_path_="$2"
+    else
+        echo -n "$_object_user_opts_log_whole_view_path_"
+    fi
+    }
+User.Opts.Log.Whole.View.Remove()
+    {
+    [[ ${_object_user_opts_log_whole_view_array_[*]} == *"$1"* ]] && _object_user_opts_log_whole_view_array_=("${_object_user_opts_log_whole_view_array_[@]/$1}")
+    }
+User.Opts.Log.Whole.View.Set()
+    {
+    [[ $_object_user_opts_log_whole_view_flag_ = "true" ]] && return
+    _object_user_opts_log_whole_view_flag_=true
+    DebugVar _object_user_opts_log_whole_view_flag_
+    }
+User.Opts.Log.Whole.View.Text()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_log_whole_view_text_="$2"
+    else
+        echo -n "$_object_user_opts_log_whole_view_text_"
+    fi
+    }
+User.Opts.Log.Whole.View.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_log_whole_view_value_=$2
+    else
+        echo -n $_object_user_opts_log_whole_view_value_
+    fi
+    }
+User.Opts.Log.Whole.View.Init
 
 User.Opts.Apps.All.Backup.Add()
     {
