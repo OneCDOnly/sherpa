@@ -422,147 +422,147 @@ Session.ParseArguments()
     local target_package=''
 
     for arg in "${user_args[@]}"; do
-        case $arg in
-            --abs|abs)
+        case ${arg/--/} in
+            abs)
                 User.Opts.Help.Abbreviations.Set
                 Session.SkipPackageProcessing.Set
                 ;;
-            -d|d|--debug|debug|--verbose|verbose)
+            d|debug|verbose)
                 Session.Debug.To.Screen.Set
                 ;;
-            --ignore-space|ignore-space)
+            ignore-space)
                 User.Opts.IgnoreFreeSpace.Set
                 ;;
-            -h|h|--help|help)
+            h|help)
                 User.Opts.Help.Basic.Set
                 Session.SkipPackageProcessing.Set
                 ;;
-            -l|l|--log|log)
+            l|log|view-log)
                 User.Opts.Log.Whole.View.Set
                 Session.SkipPackageProcessing.Set
                 ;;
-            --log-last|log-last|--last|last|--last-log|last-log)
+            log-last|last|last-log|view-last|last-view|view)
                 User.Opts.Log.Last.View.Set
                 Session.SkipPackageProcessing.Set
                 ;;
-            --clean|clean)
+            clean)
                 User.Opts.Clean.Set
                 Session.SkipPackageProcessing.Set
                 ;;
-            --paste|paste)
+            paste)
                 User.Opts.Log.Tail.Paste.Set
                 Session.SkipPackageProcessing.Set
                 ;;
-            -a|a|--action|action|--actions|actions)
+            a|action|actions)
                 User.Opts.Help.Actions.Set
                 Session.SkipPackageProcessing.Set
                 ;;
-            --action-all|action-all|--actions-all|actions-all)
+            action-all|actions-all)
                 User.Opts.Help.ActionsAll.Set
                 Session.SkipPackageProcessing.Set
                 ;;
-            --package|package|--packages|packages)
+            package|packages)
                 User.Opts.Help.Packages.Set
                 Session.SkipPackageProcessing.Set
                 ;;
-            -o|o|--option|option|--options|options)
+            o|option|options)
                 User.Opts.Help.Options.Set
                 Session.SkipPackageProcessing.Set
                 ;;
-            -p|p|--problem|problem|--problems|problems)
+            p|problem|problems)
                 User.Opts.Help.Problems.Set
                 Session.SkipPackageProcessing.Set
                 ;;
-            -t|t|--tip|tip|--tips|tips)
+            t|tip|tips)
                 User.Opts.Help.Tips.Set
                 Session.SkipPackageProcessing.Set
                 ;;
-            --list|list|--list-all|list-all|all)
+            list|list-all|all)
                 User.Opts.Apps.List.All.Set
                 Session.Display.Clean.Set
                 Session.SkipPackageProcessing.Set
                 ;;
-            --list-installed|list-installed|installed)
+            list-installed|installed)
                 User.Opts.Apps.List.Installed.Set
                 Session.Display.Clean.Set
                 Session.SkipPackageProcessing.Set
                 ;;
-            --list-installable|list-installable|--list-not-installed|list-not-installed|not-installed|--installable|installable)
+            list-installable|list-not-installed|not-installed|installable)
                 User.Opts.Apps.List.NotInstalled.Set
                 Session.Display.Clean.Set
                 Session.SkipPackageProcessing.Set
                 ;;
-            --list-upgradable|list-upgradable|upgradable)
+            list-upgradable|upgradable)
                 User.Opts.Apps.List.Upgradable.Set
                 Session.Display.Clean.Set
                 Session.SkipPackageProcessing.Set
                 ;;
-            -v|v|--version|version)
+            v|version)
                 User.Opts.Versions.View.Set
                 Session.Display.Clean.Set
                 Session.SkipPackageProcessing.Set
                 ;;
-            -c|c|--check|check|--check-all|check-all)
+            c|check|check-all)
                 User.Opts.Dependencies.Check.Set
                 action=''
                 ;;
-            --install-all|install-all|--install-all-packages|install-all-packages)
+            install-all|install-all-packages|install-all-applications)
                 User.Opts.Apps.All.Install.Set
                 action=''
                 ;;
-            --uninstall-all-packages-please|uninstall-all-packages-please|--remove-all-packages-please|remove-all-packages-please)
+            uninstall-all-packages-please|uninstall-all-applications-please|remove-all-packages-please|remove-all-applications-please)
                 User.Opts.Apps.All.Uninstall.Set
                 action=''
                 ;;
-            --reinstall-all|reinstall-all)
+            reinstall-all)
                 User.Opts.Apps.All.Reinstall.Set
                 action=''
                 ;;
-            --restart-all|restart-all)
+            restart-all)
                 User.Opts.Apps.All.Restart.Set
                 action=''
                 ;;
-            --upgrade-all|upgrade-all)
+            upgrade-all)
                 User.Opts.Apps.All.Upgrade.Set
                 action=''
                 ;;
-            --backup-all|backup-all)
+            backup-all)
                 User.Opts.Apps.All.Backup.Set
                 action=''
                 ;;
-            --restore-all|restore-all)
+            restore-all)
                 User.Opts.Apps.All.Restore.Set
                 action=''
                 ;;
-            --install|install)
+            install)
                 action=install_
                 action_force=false
                 ;;
-            --uninstall|uninstall|--remove|remove)
+            uninstall|remove)
                 action=uninstall_
                 action_force=false
                 ;;
-            --reinstall|reinstall)
+            reinstall)
                 action=reinstall_
                 action_force=false
                 ;;
-            --restart|restart)
+            restart)
                 action=restart_
                 action_force=false
                 ;;
-            --up|up|--upgrade|upgrade)
+            up|upgrade)
                 action=upgrade_
                 action_force=false
                 ;;
-            --backup|backup)
+            backup)
                 action=backup_
                 action_force=false
                 ;;
-            --restore|restore)
+            restore)
                 action=restore_
                 action_force=false
                 ;;
-            --force|force)
+            force)
                 action_force=true
                 ;;
             *)
@@ -915,10 +915,10 @@ Packages.Install.Dependants()
                     if QPKGs.Upgradable.Exist $package; then
                         QPKG.Upgrade $package
                     else
-                        ShowAsNote "unable to upgrade $(FormatAsPackageName $package) as it's not upgradable. Use the '--force' if you really want this."
+                        ShowAsNote "unable to upgrade $(FormatAsPackageName $package) as it's not upgradable. Use the 'force' if you really want this."
                     fi
                 else
-                    ShowAsNote "unable to upgrade $(FormatAsPackageName $package) as it's not installed. Use '--install' instead."
+                    ShowAsNote "unable to upgrade $(FormatAsPackageName $package) as it's not installed. Use 'install' instead."
                 fi
             fi
         done
@@ -930,7 +930,7 @@ Packages.Install.Dependants()
                 if QPKG.NotInstalled $package; then
                     QPKG.Install $package
                 else
-                    ShowAsNote "unable to install $(FormatAsPackageName $package) as it's already installed. Use '--reinstall' instead."
+                    ShowAsNote "unable to install $(FormatAsPackageName $package) as it's already installed. Use 'reinstall' instead."
                 fi
             fi
         done
@@ -942,7 +942,7 @@ Packages.Install.Dependants()
                 if QPKG.Installed $package; then
                     QPKG.Reinstall $package
                 else
-                    ShowAsNote "unable to reinstall $(FormatAsPackageName $package) as it's not installed. Use '--install' instead."
+                    ShowAsNote "unable to reinstall $(FormatAsPackageName $package) as it's not installed. Use 'install' instead."
                 fi
             fi
         done
@@ -2260,13 +2260,13 @@ Help.Basic.Show()
 Help.Basic.Example.Show()
     {
 
-    DisplayAsProjectSyntaxIndentedExample "to learn more about available $(FormatAsHelpActions), type" '--actions'
+    DisplayAsProjectSyntaxIndentedExample "to learn more about available $(FormatAsHelpActions), type" 'actions'
 
-    DisplayAsProjectSyntaxIndentedExample '' '--actions-all'
+    DisplayAsProjectSyntaxIndentedExample '' 'actions-all'
 
-    DisplayAsProjectSyntaxIndentedExample "to learn more about available $(FormatAsHelpPackages), type" '--packages'
+    DisplayAsProjectSyntaxIndentedExample "to learn more about available $(FormatAsHelpPackages), type" 'packages'
 
-    DisplayAsProjectSyntaxIndentedExample "or, for more about available $(FormatAsHelpOptions), type" '--options'
+    DisplayAsProjectSyntaxIndentedExample "or, for more about available $(FormatAsHelpOptions), type" 'options'
 
     echo -e "\nThere's also $(FormatAsURL 'https://github.com/OneCDOnly/sherpa/wiki')"
 
@@ -2281,27 +2281,27 @@ Help.Actions.Show()
     DisplayLineSpaceIfNoneAlready
     Display "* $(FormatAsHelpActions) usage examples:"
 
-    DisplayAsProjectSyntaxIndentedExample 'install the following packages' "--install $(FormatAsHelpPackages)"
+    DisplayAsProjectSyntaxIndentedExample 'install the following packages' "install $(FormatAsHelpPackages)"
 
-    DisplayAsProjectSyntaxIndentedExample 'uninstall the following packages' "--uninstall $(FormatAsHelpPackages)"
+    DisplayAsProjectSyntaxIndentedExample 'uninstall the following packages' "uninstall $(FormatAsHelpPackages)"
 
-    DisplayAsProjectSyntaxIndentedExample 'reinstall the following packages' "--reinstall $(FormatAsHelpPackages)"
+    DisplayAsProjectSyntaxIndentedExample 'reinstall the following packages' "reinstall $(FormatAsHelpPackages)"
 
-    DisplayAsProjectSyntaxIndentedExample 'upgrade the following packages and the internal applications' "--upgrade $(FormatAsHelpPackages)"
+    DisplayAsProjectSyntaxIndentedExample 'upgrade the following packages and the internal applications' "upgrade $(FormatAsHelpPackages)"
 
-    DisplayAsProjectSyntaxIndentedExample 'force-upgrade the following packages and the internal applications' "--upgrade --force $(FormatAsHelpPackages)"
+    DisplayAsProjectSyntaxIndentedExample 'force-upgrade the following packages and the internal applications' "upgrade force $(FormatAsHelpPackages)"
 
-    DisplayAsProjectSyntaxIndentedExample 'upgrade the internal applications only' "--restart $(FormatAsHelpPackages)"
+    DisplayAsProjectSyntaxIndentedExample 'upgrade the internal applications only' "restart $(FormatAsHelpPackages)"
 
-    DisplayAsProjectSyntaxIndentedExample 'backup the internal application configurations to the default backup location' "--backup $(FormatAsHelpPackages)"
+    DisplayAsProjectSyntaxIndentedExample 'backup the internal application configurations to the default backup location' "backup $(FormatAsHelpPackages)"
 
-    DisplayAsProjectSyntaxIndentedExample 'restore the internal application configurations from the default backup location' "--restore $(FormatAsHelpPackages)"
+    DisplayAsProjectSyntaxIndentedExample 'restore the internal application configurations from the default backup location' "restore $(FormatAsHelpPackages)"
 
-    DisplayAsProjectSyntaxExample "$(FormatAsHelpActions) to affect all packages can be seen with" '--actions-all'
+    DisplayAsProjectSyntaxExample "$(FormatAsHelpActions) to affect all packages can be seen with" 'actions-all'
 
     Help.BackupLocation.Show
 
-    DisplayAsProjectSyntaxExample "multiple $(FormatAsHelpActions) are supported like this" '--install sabnzbd sickchill --restart transmission --uninstall lazy nzbget --upgrade nzbtomedia'
+    DisplayAsProjectSyntaxExample "multiple $(FormatAsHelpActions) are supported like this" 'install sabnzbd sickchill restart transmission uninstall lazy nzbget upgrade nzbtomedia'
 
     DisplayAsInfoExample "$(FormatAsHelpActions) may be specified in any order, but the package processing order-of-operations is (first ► last)" 'backup ► uninstall ► force-upgrade ► upgrade ► install ► reinstall ► restore ► restart'
 
@@ -2316,29 +2316,29 @@ Help.ActionsAll.Show()
     DisplayLineSpaceIfNoneAlready
     Display "* $(FormatAsHelpActions) usage examples:"
 
-    DisplayAsProjectSyntaxIndentedExample 'install everything!' '--install-all'
+    DisplayAsProjectSyntaxIndentedExample 'install everything!' 'install-all'
 
-    DisplayAsProjectSyntaxIndentedExample "uninstall everything! (except $(FormatAsPackageName Entware) for now)" '--uninstall-all-packages-please'
+    DisplayAsProjectSyntaxIndentedExample "uninstall everything! (except $(FormatAsPackageName Entware) for now)" 'uninstall-all-packages-please'
 
-    DisplayAsProjectSyntaxIndentedExample "reinstall all installed packages (except $(FormatAsPackageName Entware) for now)" '--reinstall-all'
+    DisplayAsProjectSyntaxIndentedExample "reinstall all installed packages (except $(FormatAsPackageName Entware) for now)" 'reinstall-all'
 
-    DisplayAsProjectSyntaxIndentedExample 'upgrade all installed packages (including the internal applications)' '--upgrade-all'
+    DisplayAsProjectSyntaxIndentedExample 'upgrade all installed packages (including the internal applications)' 'upgrade-all'
 
-    DisplayAsProjectSyntaxIndentedExample 'restart all installed packages (only upgrades the internal applications, not the packages)' '--restart-all'
+    DisplayAsProjectSyntaxIndentedExample 'restart all installed packages (only upgrades the internal applications, not the packages)' 'restart-all'
 
-    DisplayAsProjectSyntaxIndentedExample 'ensure all application dependencies are installed' '--check-all'
+    DisplayAsProjectSyntaxIndentedExample 'ensure all application dependencies are installed' 'check-all'
 
-    DisplayAsProjectSyntaxIndentedExample 'list all installable packages' '--list'
+    DisplayAsProjectSyntaxIndentedExample 'list all installable packages' 'list'
 
-    DisplayAsProjectSyntaxIndentedExample 'list only installed packages' '--list-installed'
+    DisplayAsProjectSyntaxIndentedExample 'list only installed packages' 'list-installed'
 
-    DisplayAsProjectSyntaxIndentedExample 'list only packages that are not installed' '--list-installable'
+    DisplayAsProjectSyntaxIndentedExample 'list only packages that are not installed' 'list-installable'
 
-    DisplayAsProjectSyntaxIndentedExample 'list only upgradable packages' '--list-upgradable'
+    DisplayAsProjectSyntaxIndentedExample 'list only upgradable packages' 'list-upgradable'
 
-    DisplayAsProjectSyntaxIndentedExample 'backup all application configurations to the default backup location' '--backup-all'
+    DisplayAsProjectSyntaxIndentedExample 'backup all application configurations to the default backup location' 'backup-all'
 
-    DisplayAsProjectSyntaxIndentedExample 'restore all application configurations from the default backup location' '--restore-all'
+    DisplayAsProjectSyntaxIndentedExample 'restore all application configurations from the default backup location' 'restore-all'
 
     Help.BackupLocation.Show
 
@@ -2373,9 +2373,9 @@ Help.Packages.Show()
         DisplayAsHelpPackageNameExample "$package_name_message" "$package_note_message"
     done
 
-    DisplayAsProjectSyntaxExample "example: to install $(FormatAsPackageName SABnzbd)" '--install SABnzbd'
+    DisplayAsProjectSyntaxExample "example: to install $(FormatAsPackageName SABnzbd)" 'install SABnzbd'
 
-    DisplayAsProjectSyntaxExample "abbreviations may also be used to specify $(FormatAsHelpPackages). To see these" '--abs'
+    DisplayAsProjectSyntaxExample "abbreviations may also be used to specify $(FormatAsHelpPackages). To see these" 'abs'
 
     return 0
 
@@ -2388,13 +2388,13 @@ Help.Options.Show()
     DisplayLineSpaceIfNoneAlready
     Display "* $(FormatAsHelpOptions) usage examples:"
 
-    DisplayAsProjectSyntaxIndentedExample 'process one or more packages and show live debugging information' "$(FormatAsHelpActions) $(FormatAsHelpPackages) --debug"
+    DisplayAsProjectSyntaxIndentedExample 'process one or more packages and show live debugging information' "$(FormatAsHelpActions) $(FormatAsHelpPackages) debug"
 
-    DisplayAsProjectSyntaxIndentedExample "don't check free-space on target filesystem when installing $(FormatAsPackageName Entware) packages" "$(FormatAsHelpActions) $(FormatAsHelpPackages) --ignore-space"
+    DisplayAsProjectSyntaxIndentedExample "don't check free-space on target filesystem when installing $(FormatAsPackageName Entware) packages" "$(FormatAsHelpActions) $(FormatAsHelpPackages) ignore-space"
 
-    DisplayAsProjectSyntaxIndentedExample 'display helpful tips and shortcuts' '--tips'
+    DisplayAsProjectSyntaxIndentedExample 'display helpful tips and shortcuts' 'tips'
 
-    DisplayAsProjectSyntaxIndentedExample 'display troubleshooting options' '--problems'
+    DisplayAsProjectSyntaxIndentedExample 'display troubleshooting options' 'problems'
 
     return 0
 
@@ -2407,21 +2407,21 @@ Help.Problems.Show()
     DisplayLineSpaceIfNoneAlready
     Display "* usage examples when dealing with problems:"
 
-    DisplayAsProjectSyntaxIndentedExample 'process one or more packages and show live debugging information' "$(FormatAsHelpActions) $(FormatAsHelpPackages) --debug"
+    DisplayAsProjectSyntaxIndentedExample 'process one or more packages and show live debugging information' "$(FormatAsHelpActions) $(FormatAsHelpPackages) debug"
 
-    DisplayAsProjectSyntaxIndentedExample 'ensure all application dependencies are installed' '--check-all'
+    DisplayAsProjectSyntaxIndentedExample 'ensure all application dependencies are installed' 'check-all'
 
-    DisplayAsProjectSyntaxIndentedExample "don't check free-space on target filesystem when installing $(FormatAsPackageName Entware) packages" "$(FormatAsHelpActions) $(FormatAsHelpPackages) --ignore-space"
+    DisplayAsProjectSyntaxIndentedExample "don't check free-space on target filesystem when installing $(FormatAsPackageName Entware) packages" "$(FormatAsHelpActions) $(FormatAsHelpPackages) ignore-space"
 
-    DisplayAsProjectSyntaxIndentedExample "clean the $(FormatAsScriptTitle) cache" '--clean'
+    DisplayAsProjectSyntaxIndentedExample "clean the $(FormatAsScriptTitle) cache" 'clean'
 
-    DisplayAsProjectSyntaxIndentedExample 'restart all installed packages (upgrades the internal applications, not the packages)' '--restart-all'
+    DisplayAsProjectSyntaxIndentedExample 'restart all installed packages (upgrades the internal applications, not the packages)' 'restart-all'
 
-    DisplayAsProjectSyntaxIndentedExample "view only the most recent $(FormatAsScriptTitle) session log" '--last-log'
+    DisplayAsProjectSyntaxIndentedExample "view only the most recent $(FormatAsScriptTitle) session log" 'last'
 
-    DisplayAsProjectSyntaxIndentedExample "view the entire $(FormatAsScriptTitle) session log" '--log'
+    DisplayAsProjectSyntaxIndentedExample "view the entire $(FormatAsScriptTitle) session log" 'log'
 
-    DisplayAsProjectSyntaxIndentedExample "upload the most-recent $(printf "%'.f" $LOG_TAIL_LINES) entries in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" '--paste'
+    DisplayAsProjectSyntaxIndentedExample "upload the most-recent $(printf "%'.f" $LOG_TAIL_LINES) entries in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste'
 
     Display "\n$(ColourTextBrightOrange "* If you need help, please include a copy of your") $(FormatAsScriptTitle) $(ColourTextBrightOrange "log for analysis!")"
 
@@ -2437,9 +2437,11 @@ Help.Issue.Show()
 
     Display "\n* Alternatively, post on the QNAP NAS Community Forum:\n\thttps://forum.qnap.com/viewtopic.php?f=320&t=132373"
 
-    DisplayAsProjectSyntaxIndentedExample "view the $(FormatAsScriptTitle) debug log" '--log'
+    DisplayAsProjectSyntaxIndentedExample "view only the most recent $(FormatAsScriptTitle) session log" 'last'
 
-    DisplayAsProjectSyntaxIndentedExample "upload the most-recent $(printf "%'.f" $LOG_TAIL_LINES) entries in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" '--paste'
+    DisplayAsProjectSyntaxIndentedExample "view the entire $(FormatAsScriptTitle) session log" 'log'
+
+    DisplayAsProjectSyntaxIndentedExample "upload the most-recent $(printf "%'.f" $LOG_TAIL_LINES) entries in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste'
 
     Display "\n$(ColourTextBrightOrange '* If you need help, please include a copy of your') $(FormatAsScriptTitle) $(ColourTextBrightOrange 'log for analysis!')"
 
@@ -2454,21 +2456,19 @@ Help.Tips.Show()
     DisplayLineSpaceIfNoneAlready
     Display "* helpful tips and shortcuts:"
 
-    DisplayAsProjectSyntaxIndentedExample "the leading '--' characters before $(FormatAsHelpActions) and $(FormatAsHelpOptions) are optional"
+    DisplayAsProjectSyntaxIndentedExample "install all available $(FormatAsScriptTitle) packages" 'install-all'
 
-    DisplayAsProjectSyntaxIndentedExample "install all available $(FormatAsScriptTitle) packages" '--install-all'
+    DisplayAsProjectSyntaxIndentedExample 'package abbreviations also work. To see these' 'abs'
 
-    DisplayAsProjectSyntaxIndentedExample 'package abbreviations also work. To see these' '--abs'
+    DisplayAsProjectSyntaxIndentedExample 'ensure all application dependencies are installed' 'check-all'
 
-    DisplayAsProjectSyntaxIndentedExample 'ensure all application dependencies are installed' '--check-all'
+    DisplayAsProjectSyntaxIndentedExample 'restart all packages (only upgrades the internal applications, not the packages)' 'restart-all'
 
-    DisplayAsProjectSyntaxIndentedExample 'restart all packages (only upgrades the internal applications, not the packages)' '--restart-all'
+    DisplayAsProjectSyntaxIndentedExample 'upgrade all installed packages (including the internal applications)' 'upgrade-all'
 
-    DisplayAsProjectSyntaxIndentedExample 'upgrade all installed packages (including the internal applications)' '--upgrade-all'
+    DisplayAsProjectSyntaxIndentedExample "upload the most-recent $(printf "%'.f" $LOG_TAIL_LINES) entries in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste'
 
-    DisplayAsProjectSyntaxIndentedExample "upload the most-recent $(printf "%'.f" $LOG_TAIL_LINES) entries in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" '--paste'
-
-    DisplayAsProjectSyntaxIndentedExample 'display all package-manager scripts versions' '--version'
+    DisplayAsProjectSyntaxIndentedExample 'display all package-manager scripts versions' 'version'
 
     Help.BackupLocation.Show
 
