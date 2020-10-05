@@ -1244,7 +1244,6 @@ UpdateEntware()
             ShowAsDone "updated $(FormatAsPackageName Entware) package list"
         else
             ShowAsWarning "Unable to update $(FormatAsPackageName Entware) package list $(FormatAsExitcode $result)"
-            AddFileToDebug "$log_pathfile"
             # meh, continue anyway with old list ...
         fi
     else
@@ -1287,7 +1286,6 @@ InstallIPKGBatch()
             ShowAsDone "downloaded & installed $IPKG_download_count IPKG$(FormatAsPlural "$IPKG_download_count")"
         else
             ShowAsError "download & install IPKG$(FormatAsPlural "$IPKG_download_count") failed $(FormatAsExitcode $result)"
-            AddFileToDebug "$log_pathfile"
         fi
     fi
 
@@ -1323,7 +1321,6 @@ UpgradeIPKGBatch()
             ShowAsDone "downloaded & upgraded $IPKG_download_count IPKG$(FormatAsPlural "$IPKG_download_count")"
         else
             ShowAsError "download & upgrade IPKG$(FormatAsPlural "$IPKG_download_count") failed $(FormatAsExitcode $result)"
-            AddFileToDebug "$log_pathfile"
         fi
     fi
 
@@ -1376,8 +1373,6 @@ PIPs.Install()
         ShowAsError "download & install $desc failed $(FormatAsResult "$result")"
     fi
 
-    AddFileToDebug "$log_pathfile"
-
     if QPKG.Installed SABnzbd || QPKGs.ToInstall.Exist SABnzbd; then
         # KLUDGE: force recompilation of 'sabyenc3' package so it's recognised by SABnzbd. See: https://forums.sabnzbd.org/viewtopic.php?p=121214#p121214
         exec_cmd="$pip3_cmd install --force-reinstall --ignore-installed --no-binary :all: sabyenc3 --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
@@ -1399,8 +1394,6 @@ PIPs.Install()
         else
             ShowAsError "download & install $desc failed $(FormatAsResult "$result")"
         fi
-
-        AddFileToDebug "$log_pathfile"
     fi
 
     DebugFuncExit; return $result
@@ -2974,7 +2967,6 @@ QPKG.Download()
     local local_pathfile=$QPKG_DL_PATH/$remote_filename
     local local_filename=$($BASENAME_CMD "$local_pathfile")
     local log_pathfile=$PACKAGE_LOGS_PATH/$local_filename.$DOWNLOAD_LOG_FILE
-    local skip_log=false
 
     if [[ -z $remote_url ]]; then
         DebugWarning "no URL found for this package [$1]"
@@ -2989,7 +2981,6 @@ QPKG.Download()
     if [[ -e $local_pathfile ]]; then
         if FileMatchesMD5 "$local_pathfile" "$remote_filename_md5"; then
             DebugInfo "local package checksum correct $(FormatAsFileName "$local_filename") so skipping download"
-            skip_log=true
         else
             DebugWarning "local package checksum incorrect $(FormatAsFileName "$local_filename")"
             DebugInfo "deleting $(FormatAsFileName "$local_filename")"
@@ -3022,7 +3013,6 @@ QPKG.Download()
         fi
     fi
 
-    ! $skip_log && AddFileToDebug "$log_pathfile"
     DebugFuncExit; return $result
 
     }
@@ -3077,7 +3067,6 @@ QPKG.Install()
         ShowAsError "installation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $result)"
     fi
 
-    AddFileToDebug "$log_pathfile"
     DebugFuncExit; return $result
 
     }
@@ -3133,7 +3122,6 @@ QPKG.Reinstall()
         ShowAsError "$re-installation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $result)"
     fi
 
-    AddFileToDebug "$log_pathfile"
     DebugFuncExit; return $result
 
     }
@@ -3194,7 +3182,6 @@ QPKG.Upgrade()
         ShowAsError "${prefix}upgrade failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $result)"
     fi
 
-    AddFileToDebug "$log_pathfile"
     DebugFuncExit; return $result
 
     }
@@ -3245,7 +3232,6 @@ QPKG.Uninstall()
         fi
     fi
 
-    AddFileToDebug "$log_pathfile"
     DebugFuncExit; return $result
 
     }
@@ -3294,7 +3280,6 @@ QPKG.Restart()
         ShowAsWarning "Could not restart $(FormatAsPackageName "$1") $(FormatAsExitcode $result)"
     fi
 
-    AddFileToDebug "$log_pathfile"
     DebugFuncExit; return $result
 
     }
@@ -3370,7 +3355,6 @@ QPKG.Backup()
         ShowAsWarning "Could not backup $(FormatAsPackageName "$1") configuration $(FormatAsExitcode $result)"
     fi
 
-    AddFileToDebug "$log_pathfile"
     DebugFuncExit; return $result
 
     }
@@ -3419,7 +3403,6 @@ QPKG.Restore()
         ShowAsWarning "Could not restore $(FormatAsPackageName "$1") configuration $(FormatAsExitcode $result)"
     fi
 
-    AddFileToDebug "$log_pathfile"
     DebugFuncExit; return $result
 
     }
@@ -3574,6 +3557,7 @@ RunThisAndLogResults()
     FormatAsResultAndStdout "$result" "$(<"$msgs")" >> "$2"
     [[ -e $msgs ]] && rm -f "$msgs"
 
+    AddFileToDebug "$2"
     DebugFuncExit; return $result
 
     }
@@ -3607,6 +3591,7 @@ RunThisAndLogResultsRealtime()
         FormatAsResultAndStdout "$result" "<null>" >> "$2"
     fi
 
+    AddFileToDebug "$2"
     DebugFuncExit; return $result
 
     }
