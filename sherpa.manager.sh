@@ -682,7 +682,9 @@ Session.Validate()
 
     QPKGs.StateLists.Build
 
+    CalcNASQPKGArch
     DebugQPKG 'arch' "$NAS_QPKG_ARCH"
+
     DebugQPKG 'upgradable package(s)' "$(QPKGs.Upgradable.List) "
     DebugInfoMinorSeparator
     QPKGs.Assignment.Check
@@ -2580,7 +2582,6 @@ QPKGs.StateLists.Build()
     QPKGs.DepAndIndep.Build
     QPKGs.InstallationState.Build
     QPKGs.Upgradable.Build
-    CalcNASQPKGArch
 
     }
 
