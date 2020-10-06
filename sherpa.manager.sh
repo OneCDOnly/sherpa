@@ -164,7 +164,7 @@ Session.Init()
     readonly IPKG_DL_PATH=$WORK_PATH/ipkgs.downloads
     readonly IPKG_CACHE_PATH=$WORK_PATH/ipkgs
     readonly PIP_CACHE_PATH=$WORK_PATH/pips
-    readonly COMPILED_OBJECTS_HASH=ac19b0c171c644c43ae6ca5a31029318
+    readonly COMPILED_OBJECTS_HASH=ad7209e8d5cdf095a7c26981673b9a8c
     readonly DEBUG_LOG_DATAWIDTH=92
 
     if ! MakePath "$WORK_PATH" 'work'; then
@@ -4626,15 +4626,15 @@ Objects.Compile()
         Objects.Add User.Opts.Apps.List.Upgradable
 
         # lists
-        Objects.Add QPKGs.Names
         Objects.Add QPKGs.Dependant
-        Objects.Add QPKGs.ToDownload
         Objects.Add QPKGs.Independent
         Objects.Add QPKGs.Installable
         Objects.Add QPKGs.Installed
         Objects.Add QPKGs.JustInstalled
+        Objects.Add QPKGs.Names
         Objects.Add QPKGs.NotInstalled
         Objects.Add QPKGs.ToBackup
+        Objects.Add QPKGs.ToDownload
         Objects.Add QPKGs.ToForceUpgrade
         Objects.Add QPKGs.ToInstall
         Objects.Add QPKGs.ToReinstall
