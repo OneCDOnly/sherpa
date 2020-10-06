@@ -157,11 +157,13 @@ Session.Init()
     readonly COMPILED_OBJECTS=$WORK_PATH/compiled.objects
     readonly REMOTE_COMPILED_OBJECTS=https://raw.githubusercontent.com/OneCDOnly/sherpa/master/$($BASENAME_CMD "$COMPILED_OBJECTS")
     readonly PACKAGE_LOGS_PATH=$PROJECT_PATH/logs
+    readonly SESSION_LAST_PATHFILE=$PACKAGE_LOGS_PATH/session.last.log
+    readonly SESSION_TAIL_PATHFILE=$PACKAGE_LOGS_PATH/session.tail.log
     readonly QPKG_DL_PATH=$WORK_PATH/qpkgs
     readonly IPKG_DL_PATH=$WORK_PATH/ipkgs.downloads
     readonly IPKG_CACHE_PATH=$WORK_PATH/ipkgs
     readonly PIP_CACHE_PATH=$WORK_PATH/pips
-    readonly OBJECT_REF_HASH=fcd1f7583b67ab9696b8425ce78a2171
+    readonly OBJECT_REF_HASH=ebe7599941e299a952877f446862ae25
     debug_log_datawidth=92
 
     if ! MakePath "$WORK_PATH" 'work'; then
@@ -437,11 +439,11 @@ Session.ParseArguments()
                 User.Opts.Help.Basic.Set
                 Session.SkipPackageProcessing.Set
                 ;;
-            l|log|view-log)
+            log|view-log|log-view)
                 User.Opts.Log.Whole.View.Set
                 Session.SkipPackageProcessing.Set
                 ;;
-            log-last|last|last-log|view-last|last-view|view)
+            l|log-last|last|last-log|view-last|last-view)
                 User.Opts.Log.Last.View.Set
                 Session.SkipPackageProcessing.Set
                 ;;
@@ -451,6 +453,10 @@ Session.ParseArguments()
                 ;;
             paste)
                 User.Opts.Log.Tail.Paste.Set
+                Session.SkipPackageProcessing.Set
+                ;;
+            p)
+                User.Opts.Log.Last.Paste.Set
                 Session.SkipPackageProcessing.Set
                 ;;
             a|action|actions)
@@ -1027,9 +1033,11 @@ Session.Results()
     if User.Opts.Versions.View.IsSet; then
         Versions.Show
     elif User.Opts.Log.Whole.View.IsSet; then
-        Log.View.Show
+        Log.Whole.View
     elif User.Opts.Log.Tail.Paste.IsSet; then
-        Log.Paste.Online
+        Log.Whole.Paste.Online
+    elif User.Opts.Log.Last.Paste.IsSet; then
+        Log.Last.Paste.Online
     elif User.Opts.Log.Last.View.IsSet; then
         Log.Last.Show
     elif User.Opts.Clean.IsSet; then
@@ -1130,15 +1138,17 @@ DisplayNewQPKGVersions()
 
     }
 
-Log.Paste.Online()
+Log.Whole.Paste.Online()
     {
 
     # with thanks to https://github.com/solusipse/fiche
 
-    if [[ -n $DEBUG_LOG_PATHFILE && -e $DEBUG_LOG_PATHFILE ]]; then
+    ExtractTailFromLog
+
+    if [[ -e $SESSION_TAIL_PATHFILE ]]; then
         if AskQuiz "Press 'Y' to post the most-recent $(printf "%'.f" $LOG_TAIL_LINES) entries in your $(FormatAsScriptTitle) log to a public pastebin, or any other key to abort"; then
             ShowAsProc "uploading $(FormatAsScriptTitle) log"
-            link=$($TAIL_CMD -n $LOG_TAIL_LINES -q "$DEBUG_LOG_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
+            link=$($CAT_CMD -n "$SESSION_TAIL_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
 
             if [[ $? -eq 0 ]]; then
                 ShowAsDone "your $(FormatAsScriptTitle) log is now online at $(FormatAsURL "$($SED_CMD 's|http://|http://l.|;s|https://|https://l.|' <<< "$link")") and will be deleted in 1 month"
@@ -1148,7 +1158,37 @@ Log.Paste.Online()
         else
             DebugInfoMinorSeparator
             DebugScript 'user abort'
-            Session.SkipPackageProcessing.Set
+            Session.Summary.Clear
+            return 1
+        fi
+    else
+        ShowAsError 'no log to paste'
+    fi
+
+    return 0
+
+    }
+
+Log.Last.Paste.Online()
+    {
+
+    # with thanks to https://github.com/solusipse/fiche
+
+    ExtractLastSessionFromLog
+
+    if [[ -e $SESSION_LAST_PATHFILE ]]; then
+        if AskQuiz "Press 'Y' to post the most-recent session in your $(FormatAsScriptTitle) log to a public pastebin, or any other key to abort"; then
+            ShowAsProc "uploading $(FormatAsScriptTitle) log"
+            link=$($CAT_CMD "$SESSION_LAST_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
+
+            if [[ $? -eq 0 ]]; then
+                ShowAsDone "your $(FormatAsScriptTitle) log is now online at $(FormatAsURL "$($SED_CMD 's|http://|http://l.|;s|https://|https://l.|' <<< "$link")") and will be deleted in 1 month"
+            else
+                ShowAsError "a link could not be generated. Most likely a problem occurred when talking with $(FormatAsURL 'https://termbin.com')"
+            fi
+        else
+            DebugInfoMinorSeparator
+            DebugScript 'user abort'
             Session.Summary.Clear
             return 1
         fi
@@ -2513,17 +2553,17 @@ Help.BackupLocation.Show()
 
     }
 
-Log.View.Show()
+Log.Whole.View()
     {
 
-    if [[ -n $DEBUG_LOG_PATHFILE && -e $DEBUG_LOG_PATHFILE ]]; then
+    if [[ -e $DEBUG_LOG_PATHFILE ]]; then
         if [[ -e $GNU_LESS_CMD ]]; then
             LESSSECURE=1 $GNU_LESS_CMD +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$DEBUG_LOG_PATHFILE"
         else
             $CAT_CMD --number "$DEBUG_LOG_PATHFILE"
         fi
     else
-        ShowAsError 'no log to display'
+        ShowAsError 'no session log to display'
     fi
 
     return 0
@@ -2535,30 +2575,52 @@ Log.Last.Show()
 
     # view only the last sherpa session
 
-    local session_tail_pathfile=$($DIRNAME_CMD $DEBUG_LOG_PATHFILE)/session.tail.tmp
-    local session_last_pathfile=$($DIRNAME_CMD $DEBUG_LOG_PATHFILE)/session.last.log
+    ExtractLastSessionFromLog
+
+    if [[ -e $SESSION_LAST_PATHFILE ]]; then
+        if [[ -e $GNU_LESS_CMD ]]; then
+            LESSSECURE=1 $GNU_LESS_CMD +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$SESSION_LAST_PATHFILE"
+        else
+            $CAT_CMD --number "$SESSION_LAST_PATHFILE"
+        fi
+    else
+        ShowAsError 'no last session log to display'
+    fi
+
+    return 0
+
+    }
+
+ExtractLastSessionFromLog()
+    {
+
     local -i start_line=0
     local -i end_line=0
 
-    $TAIL_CMD -n1000 "$DEBUG_LOG_PATHFILE" > "$session_tail_pathfile"   # trim main log first so there's less to 'grep'
+    ExtractTailFromLog
 
-    if [[ -n $DEBUG_LOG_PATHFILE && -e $DEBUG_LOG_PATHFILE ]]; then
-        start_line=$(($($GREP_CMD -n 'SCRIPT:.*started:' "$session_tail_pathfile" | $TAIL_CMD -n1 | $CUT_CMD -d':' -f1)-1))
-        end_line=$(($($GREP_CMD -n 'SCRIPT:.*finished:' "$session_tail_pathfile" | $TAIL_CMD -n1 | $CUT_CMD -d':' -f1)+2))
-        [[ $start_line -gt $end_line ]] && end_line=$($WC_CMD -l "$DEBUG_LOG_PATHFILE" | $CUT_CMD -d' ' -f1)
+    if [[ -e $SESSION_TAIL_PATHFILE ]]; then
+        start_line=$(($($GREP_CMD -n 'SCRIPT:.*started:' "$SESSION_TAIL_PATHFILE" | $TAIL_CMD -n1 | $CUT_CMD -d':' -f1)-1))
+        end_line=$(($($GREP_CMD -n 'SCRIPT:.*finished:' "$SESSION_TAIL_PATHFILE" | $TAIL_CMD -n1 | $CUT_CMD -d':' -f1)+2))
+        [[ $start_line -gt $end_line ]] && end_line=$($WC_CMD -l "$SESSION_TAIL_PATHFILE" | $CUT_CMD -d' ' -f1)
 
-        $SED_CMD "$start_line,$end_line!d" "$session_tail_pathfile" > "$session_last_pathfile"
-
-        if [[ -e $GNU_LESS_CMD ]]; then
-            LESSSECURE=1 $GNU_LESS_CMD +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$session_last_pathfile"
-        else
-            $CAT_CMD --number "$session_last_pathfile"
-        fi
+        $SED_CMD "$start_line,$end_line!d" "$SESSION_TAIL_PATHFILE" > "$SESSION_LAST_PATHFILE"
     else
-        ShowAsError 'no log to display'
+        [[ -e $SESSION_LAST_PATHFILE ]] && rm -rf "$SESSION_LAST_PATHFILE"
     fi
 
-    [[ -e $session_tail_pathfile ]] && rm -rf "$session_tail_pathfile"
+    return 0
+
+    }
+
+ExtractTailFromLog()
+    {
+
+    if [[ -e $DEBUG_LOG_PATHFILE ]]; then
+        $TAIL_CMD -n${LOG_TAIL_LINES} "$DEBUG_LOG_PATHFILE" > "$SESSION_TAIL_PATHFILE"   # trim main log first so there's less to 'grep'
+    else
+        [[ -e $SESSION_TAIL_PATHFILE ]] && rm -rf "$SESSION_TAIL_PATHFILE"
+    fi
 
     return 0
 
@@ -4579,6 +4641,7 @@ Objects.Compile()
         Objects.Add User.Opts.IgnoreFreeSpace
         Objects.Add User.Opts.Versions.View
 
+        Objects.Add User.Opts.Log.Last.Paste
         Objects.Add User.Opts.Log.Last.View
         Objects.Add User.Opts.Log.Tail.Paste
         Objects.Add User.Opts.Log.Whole.View
