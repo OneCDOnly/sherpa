@@ -1977,14 +1977,14 @@ CheckPythonPathAndVersion()
     [[ -z $1 ]] && return
 
     if location=$(command -v $1 2>&1); then
-        DebugUserspace.OK "default '$1' path" "$location"
+        DebugUserspace.OK "'$1' path" "$location"
         if version=$($1 -V 2>&1); then
-            DebugUserspace.OK "default '$1' version" "$version"
+            DebugUserspace.OK "'$1' version" "$version"
         else
             DebugUserspace.Warning "default '$1' version" '<unknown>'
         fi
     else
-        DebugUserspace.Warning "default '$1' path" '<not present>'
+        DebugUserspace.Warning "'$1' path" '<not present>'
     fi
 
     return 0
@@ -2646,7 +2646,7 @@ QPKGs.Assignment.Check()
     local installer_acc=()
     local download_acc=()
 
-    # start by adding packages to lists as required
+    # start by adding packages to lists as required:
 
     if User.Opts.Apps.All.Backup.IsSet; then
         for package in $(QPKGs.Installed.Array); do
@@ -2775,7 +2775,7 @@ QPKGs.Assignment.Check()
         done
     fi
 
-    # don't need to independently check the 'restart' list as it is checked by the previous conditions.
+    # don't need to separately check the 'restart' list as it has been checked by the previous conditions.
 
     # build an initial package download list. Items on this list will be skipped at download-time if they can be found in local cache.
 
@@ -2792,6 +2792,7 @@ QPKGs.Assignment.Check()
         QPKGs.ToDownload.Add $package
     done
 
+    DebugScript 'to download' "$(QPKGs.ToDownload.ListComma) "
     DebugScript 'to backup' "$(QPKGs.ToBackup.ListComma) "
     DebugScript 'to uninstall' "$(QPKGs.ToUninstall.ListComma) "
     DebugScript 'to force-upgrade' "$(QPKGs.ToForceUpgrade.ListComma) "
@@ -2800,7 +2801,6 @@ QPKGs.Assignment.Check()
     DebugScript 'to reinstall' "$(QPKGs.ToReinstall.ListComma) "
     DebugScript 'to restore' "$(QPKGs.ToRestore.ListComma) "
     DebugScript 'to restart' "$(QPKGs.ToRestart.ListComma) "
-    DebugScript 'to download' "$(QPKGs.ToDownload.ListComma) "
     DebugFuncExit; return 0
 
     }
@@ -4014,13 +4014,13 @@ DebugDetected.Warning()
     {
 
     if [[ -z $3 ]]; then                # if $3 is nothing, then assume only 2 fields are required
-        DebugWarning "$(printf "%9s: %25s\n" "$1" "$2")"
+        DebugWarning "$(printf "%9s: %23s\n" "$1" "$2")"
     elif [[ $3 = ' ' ]]; then           # if $3 is only a whitespace then print $2 with trailing colon but no third field
-        DebugWarning "$(printf "%9s: %25s:\n" "$1" "$2")"
+        DebugWarning "$(printf "%9s: %23s:\n" "$1" "$2")"
     elif [[ ${3: -1} = ' ' ]]; then     # if $3 has a trailing whitespace then print $3 without the trailing whitespace
-        DebugWarning "$(printf "%9s: %25s: %-s\n" "$1" "$2" "$($SED_CMD 's| *$||' <<< "$3")")"
+        DebugWarning "$(printf "%9s: %23s: %-s\n" "$1" "$2" "$($SED_CMD 's| *$||' <<< "$3")")"
     else
-        DebugWarning "$(printf "%9s: %25s: %-s\n" "$1" "$2" "$3")"
+        DebugWarning "$(printf "%9s: %23s: %-s\n" "$1" "$2" "$3")"
     fi
 
     }
@@ -4029,13 +4029,13 @@ DebugDetected.OK()
     {
 
     if [[ -z $3 ]]; then                # if $3 is nothing, then assume only 2 fields are required
-        DebugDetected "$(printf "%9s: %25s\n" "$1" "$2")"
+        DebugDetected "$(printf "%9s: %23s\n" "$1" "$2")"
     elif [[ $3 = ' ' ]]; then           # if $3 is only a whitespace then print $2 with trailing colon but no third field
-        DebugDetected "$(printf "%9s: %25s:\n" "$1" "$2")"
+        DebugDetected "$(printf "%9s: %23s:\n" "$1" "$2")"
     elif [[ ${3: -1} = ' ' ]]; then     # if $3 has a trailing whitespace then print $3 without the trailing whitespace
-        DebugDetected "$(printf "%9s: %25s: %-s\n" "$1" "$2" "$($SED_CMD 's| *$||' <<< "$3")")"
+        DebugDetected "$(printf "%9s: %23s: %-s\n" "$1" "$2" "$($SED_CMD 's| *$||' <<< "$3")")"
     else
-        DebugDetected "$(printf "%9s: %25s: %-s\n" "$1" "$2" "$3")"
+        DebugDetected "$(printf "%9s: %23s: %-s\n" "$1" "$2" "$3")"
     fi
 
     }
