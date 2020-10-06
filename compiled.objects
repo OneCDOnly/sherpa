@@ -8,7 +8,7 @@ User.Opts.Help.Abbreviations.Array()
     }
 User.Opts.Help.Abbreviations.Clear()
     {
-    [[ $_object_user_opts_help_abbreviations_flag_ != "true" ]] && return
+    [[ $_object_user_opts_help_abbreviations_flag_ != 'true' ]] && return
     _object_user_opts_help_abbreviations_flag_=false
     DebugVar _object_user_opts_help_abbreviations_flag_
     }
@@ -18,13 +18,13 @@ User.Opts.Help.Abbreviations.Count()
     }
 User.Opts.Help.Abbreviations.Disable()
     {
-    [[ $_object_user_opts_help_abbreviations_enable_ != "true" ]] && return
+    [[ $_object_user_opts_help_abbreviations_enable_ != 'true' ]] && return
     _object_user_opts_help_abbreviations_enable_=false
     DebugVar _object_user_opts_help_abbreviations_enable_
     }
 User.Opts.Help.Abbreviations.Enable()
     {
-    [[ $_object_user_opts_help_abbreviations_enable_ = "true" ]] && return
+    [[ $_object_user_opts_help_abbreviations_enable_ = 'true' ]] && return
     _object_user_opts_help_abbreviations_enable_=true
     DebugVar _object_user_opts_help_abbreviations_enable_
     }
@@ -56,7 +56,7 @@ User.Opts.Help.Abbreviations.GetItem()
     }
 User.Opts.Help.Abbreviations.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_user_opts_help_abbreviations_array_[@]} ]]; then
             _object_user_opts_help_abbreviations_array_index_=${#_object_user_opts_help_abbreviations_array_[@]}
         else
@@ -69,12 +69,12 @@ User.Opts.Help.Abbreviations.Index()
 User.Opts.Help.Abbreviations.Init()
     {
     _object_user_opts_help_abbreviations_value_=0
-    _object_user_opts_help_abbreviations_text_=""
+    _object_user_opts_help_abbreviations_text_=''
     _object_user_opts_help_abbreviations_flag_=false
     _object_user_opts_help_abbreviations_enable_=false
     _object_user_opts_help_abbreviations_array_+=()
     _object_user_opts_help_abbreviations_array_index_=1
-    _object_user_opts_help_abbreviations_path_=""
+    _object_user_opts_help_abbreviations_path_=''
     }
 User.Opts.Help.Abbreviations.IsAny()
     {
@@ -82,11 +82,11 @@ User.Opts.Help.Abbreviations.IsAny()
     }
 User.Opts.Help.Abbreviations.IsDisabled()
     {
-    [[ $_object_user_opts_help_abbreviations_enable_ != "true" ]]
+    [[ $_object_user_opts_help_abbreviations_enable_ != 'true' ]]
     }
 User.Opts.Help.Abbreviations.IsEnabled()
     {
-    [[ $_object_user_opts_help_abbreviations_enable_ = "true" ]]
+    [[ $_object_user_opts_help_abbreviations_enable_ = 'true' ]]
     }
 User.Opts.Help.Abbreviations.IsNone()
     {
@@ -94,15 +94,19 @@ User.Opts.Help.Abbreviations.IsNone()
     }
 User.Opts.Help.Abbreviations.IsNot()
     {
-    [[ $_object_user_opts_help_abbreviations_flag_ != "true" ]]
+    [[ $_object_user_opts_help_abbreviations_flag_ != 'true' ]]
     }
 User.Opts.Help.Abbreviations.IsSet()
     {
-    [[ $_object_user_opts_help_abbreviations_flag_ = "true" ]]
+    [[ $_object_user_opts_help_abbreviations_flag_ = 'true' ]]
     }
 User.Opts.Help.Abbreviations.List()
     {
     echo -n "${_object_user_opts_help_abbreviations_array_[*]}"
+    }
+User.Opts.Help.Abbreviations.ListComma()
+    {
+    echo -n "${_object_user_opts_help_abbreviations_array_[*]}" | tr ' ' ','
     }
 User.Opts.Help.Abbreviations.Path()
     {
@@ -118,7 +122,7 @@ User.Opts.Help.Abbreviations.Remove()
     }
 User.Opts.Help.Abbreviations.Set()
     {
-    [[ $_object_user_opts_help_abbreviations_flag_ = "true" ]] && return
+    [[ $_object_user_opts_help_abbreviations_flag_ = 'true' ]] && return
     _object_user_opts_help_abbreviations_flag_=true
     DebugVar _object_user_opts_help_abbreviations_flag_
     }
@@ -150,7 +154,7 @@ User.Opts.Help.Actions.Array()
     }
 User.Opts.Help.Actions.Clear()
     {
-    [[ $_object_user_opts_help_actions_flag_ != "true" ]] && return
+    [[ $_object_user_opts_help_actions_flag_ != 'true' ]] && return
     _object_user_opts_help_actions_flag_=false
     DebugVar _object_user_opts_help_actions_flag_
     }
@@ -160,13 +164,13 @@ User.Opts.Help.Actions.Count()
     }
 User.Opts.Help.Actions.Disable()
     {
-    [[ $_object_user_opts_help_actions_enable_ != "true" ]] && return
+    [[ $_object_user_opts_help_actions_enable_ != 'true' ]] && return
     _object_user_opts_help_actions_enable_=false
     DebugVar _object_user_opts_help_actions_enable_
     }
 User.Opts.Help.Actions.Enable()
     {
-    [[ $_object_user_opts_help_actions_enable_ = "true" ]] && return
+    [[ $_object_user_opts_help_actions_enable_ = 'true' ]] && return
     _object_user_opts_help_actions_enable_=true
     DebugVar _object_user_opts_help_actions_enable_
     }
@@ -198,7 +202,7 @@ User.Opts.Help.Actions.GetItem()
     }
 User.Opts.Help.Actions.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_user_opts_help_actions_array_[@]} ]]; then
             _object_user_opts_help_actions_array_index_=${#_object_user_opts_help_actions_array_[@]}
         else
@@ -211,12 +215,12 @@ User.Opts.Help.Actions.Index()
 User.Opts.Help.Actions.Init()
     {
     _object_user_opts_help_actions_value_=0
-    _object_user_opts_help_actions_text_=""
+    _object_user_opts_help_actions_text_=''
     _object_user_opts_help_actions_flag_=false
     _object_user_opts_help_actions_enable_=false
     _object_user_opts_help_actions_array_+=()
     _object_user_opts_help_actions_array_index_=1
-    _object_user_opts_help_actions_path_=""
+    _object_user_opts_help_actions_path_=''
     }
 User.Opts.Help.Actions.IsAny()
     {
@@ -224,11 +228,11 @@ User.Opts.Help.Actions.IsAny()
     }
 User.Opts.Help.Actions.IsDisabled()
     {
-    [[ $_object_user_opts_help_actions_enable_ != "true" ]]
+    [[ $_object_user_opts_help_actions_enable_ != 'true' ]]
     }
 User.Opts.Help.Actions.IsEnabled()
     {
-    [[ $_object_user_opts_help_actions_enable_ = "true" ]]
+    [[ $_object_user_opts_help_actions_enable_ = 'true' ]]
     }
 User.Opts.Help.Actions.IsNone()
     {
@@ -236,15 +240,19 @@ User.Opts.Help.Actions.IsNone()
     }
 User.Opts.Help.Actions.IsNot()
     {
-    [[ $_object_user_opts_help_actions_flag_ != "true" ]]
+    [[ $_object_user_opts_help_actions_flag_ != 'true' ]]
     }
 User.Opts.Help.Actions.IsSet()
     {
-    [[ $_object_user_opts_help_actions_flag_ = "true" ]]
+    [[ $_object_user_opts_help_actions_flag_ = 'true' ]]
     }
 User.Opts.Help.Actions.List()
     {
     echo -n "${_object_user_opts_help_actions_array_[*]}"
+    }
+User.Opts.Help.Actions.ListComma()
+    {
+    echo -n "${_object_user_opts_help_actions_array_[*]}" | tr ' ' ','
     }
 User.Opts.Help.Actions.Path()
     {
@@ -260,7 +268,7 @@ User.Opts.Help.Actions.Remove()
     }
 User.Opts.Help.Actions.Set()
     {
-    [[ $_object_user_opts_help_actions_flag_ = "true" ]] && return
+    [[ $_object_user_opts_help_actions_flag_ = 'true' ]] && return
     _object_user_opts_help_actions_flag_=true
     DebugVar _object_user_opts_help_actions_flag_
     }
@@ -292,7 +300,7 @@ User.Opts.Help.ActionsAll.Array()
     }
 User.Opts.Help.ActionsAll.Clear()
     {
-    [[ $_object_user_opts_help_actionsall_flag_ != "true" ]] && return
+    [[ $_object_user_opts_help_actionsall_flag_ != 'true' ]] && return
     _object_user_opts_help_actionsall_flag_=false
     DebugVar _object_user_opts_help_actionsall_flag_
     }
@@ -302,13 +310,13 @@ User.Opts.Help.ActionsAll.Count()
     }
 User.Opts.Help.ActionsAll.Disable()
     {
-    [[ $_object_user_opts_help_actionsall_enable_ != "true" ]] && return
+    [[ $_object_user_opts_help_actionsall_enable_ != 'true' ]] && return
     _object_user_opts_help_actionsall_enable_=false
     DebugVar _object_user_opts_help_actionsall_enable_
     }
 User.Opts.Help.ActionsAll.Enable()
     {
-    [[ $_object_user_opts_help_actionsall_enable_ = "true" ]] && return
+    [[ $_object_user_opts_help_actionsall_enable_ = 'true' ]] && return
     _object_user_opts_help_actionsall_enable_=true
     DebugVar _object_user_opts_help_actionsall_enable_
     }
@@ -340,7 +348,7 @@ User.Opts.Help.ActionsAll.GetItem()
     }
 User.Opts.Help.ActionsAll.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_user_opts_help_actionsall_array_[@]} ]]; then
             _object_user_opts_help_actionsall_array_index_=${#_object_user_opts_help_actionsall_array_[@]}
         else
@@ -353,12 +361,12 @@ User.Opts.Help.ActionsAll.Index()
 User.Opts.Help.ActionsAll.Init()
     {
     _object_user_opts_help_actionsall_value_=0
-    _object_user_opts_help_actionsall_text_=""
+    _object_user_opts_help_actionsall_text_=''
     _object_user_opts_help_actionsall_flag_=false
     _object_user_opts_help_actionsall_enable_=false
     _object_user_opts_help_actionsall_array_+=()
     _object_user_opts_help_actionsall_array_index_=1
-    _object_user_opts_help_actionsall_path_=""
+    _object_user_opts_help_actionsall_path_=''
     }
 User.Opts.Help.ActionsAll.IsAny()
     {
@@ -366,11 +374,11 @@ User.Opts.Help.ActionsAll.IsAny()
     }
 User.Opts.Help.ActionsAll.IsDisabled()
     {
-    [[ $_object_user_opts_help_actionsall_enable_ != "true" ]]
+    [[ $_object_user_opts_help_actionsall_enable_ != 'true' ]]
     }
 User.Opts.Help.ActionsAll.IsEnabled()
     {
-    [[ $_object_user_opts_help_actionsall_enable_ = "true" ]]
+    [[ $_object_user_opts_help_actionsall_enable_ = 'true' ]]
     }
 User.Opts.Help.ActionsAll.IsNone()
     {
@@ -378,15 +386,19 @@ User.Opts.Help.ActionsAll.IsNone()
     }
 User.Opts.Help.ActionsAll.IsNot()
     {
-    [[ $_object_user_opts_help_actionsall_flag_ != "true" ]]
+    [[ $_object_user_opts_help_actionsall_flag_ != 'true' ]]
     }
 User.Opts.Help.ActionsAll.IsSet()
     {
-    [[ $_object_user_opts_help_actionsall_flag_ = "true" ]]
+    [[ $_object_user_opts_help_actionsall_flag_ = 'true' ]]
     }
 User.Opts.Help.ActionsAll.List()
     {
     echo -n "${_object_user_opts_help_actionsall_array_[*]}"
+    }
+User.Opts.Help.ActionsAll.ListComma()
+    {
+    echo -n "${_object_user_opts_help_actionsall_array_[*]}" | tr ' ' ','
     }
 User.Opts.Help.ActionsAll.Path()
     {
@@ -402,7 +414,7 @@ User.Opts.Help.ActionsAll.Remove()
     }
 User.Opts.Help.ActionsAll.Set()
     {
-    [[ $_object_user_opts_help_actionsall_flag_ = "true" ]] && return
+    [[ $_object_user_opts_help_actionsall_flag_ = 'true' ]] && return
     _object_user_opts_help_actionsall_flag_=true
     DebugVar _object_user_opts_help_actionsall_flag_
     }
@@ -434,7 +446,7 @@ User.Opts.Help.Basic.Array()
     }
 User.Opts.Help.Basic.Clear()
     {
-    [[ $_object_user_opts_help_basic_flag_ != "true" ]] && return
+    [[ $_object_user_opts_help_basic_flag_ != 'true' ]] && return
     _object_user_opts_help_basic_flag_=false
     DebugVar _object_user_opts_help_basic_flag_
     }
@@ -444,13 +456,13 @@ User.Opts.Help.Basic.Count()
     }
 User.Opts.Help.Basic.Disable()
     {
-    [[ $_object_user_opts_help_basic_enable_ != "true" ]] && return
+    [[ $_object_user_opts_help_basic_enable_ != 'true' ]] && return
     _object_user_opts_help_basic_enable_=false
     DebugVar _object_user_opts_help_basic_enable_
     }
 User.Opts.Help.Basic.Enable()
     {
-    [[ $_object_user_opts_help_basic_enable_ = "true" ]] && return
+    [[ $_object_user_opts_help_basic_enable_ = 'true' ]] && return
     _object_user_opts_help_basic_enable_=true
     DebugVar _object_user_opts_help_basic_enable_
     }
@@ -482,7 +494,7 @@ User.Opts.Help.Basic.GetItem()
     }
 User.Opts.Help.Basic.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_user_opts_help_basic_array_[@]} ]]; then
             _object_user_opts_help_basic_array_index_=${#_object_user_opts_help_basic_array_[@]}
         else
@@ -495,12 +507,12 @@ User.Opts.Help.Basic.Index()
 User.Opts.Help.Basic.Init()
     {
     _object_user_opts_help_basic_value_=0
-    _object_user_opts_help_basic_text_=""
+    _object_user_opts_help_basic_text_=''
     _object_user_opts_help_basic_flag_=false
     _object_user_opts_help_basic_enable_=false
     _object_user_opts_help_basic_array_+=()
     _object_user_opts_help_basic_array_index_=1
-    _object_user_opts_help_basic_path_=""
+    _object_user_opts_help_basic_path_=''
     }
 User.Opts.Help.Basic.IsAny()
     {
@@ -508,11 +520,11 @@ User.Opts.Help.Basic.IsAny()
     }
 User.Opts.Help.Basic.IsDisabled()
     {
-    [[ $_object_user_opts_help_basic_enable_ != "true" ]]
+    [[ $_object_user_opts_help_basic_enable_ != 'true' ]]
     }
 User.Opts.Help.Basic.IsEnabled()
     {
-    [[ $_object_user_opts_help_basic_enable_ = "true" ]]
+    [[ $_object_user_opts_help_basic_enable_ = 'true' ]]
     }
 User.Opts.Help.Basic.IsNone()
     {
@@ -520,15 +532,19 @@ User.Opts.Help.Basic.IsNone()
     }
 User.Opts.Help.Basic.IsNot()
     {
-    [[ $_object_user_opts_help_basic_flag_ != "true" ]]
+    [[ $_object_user_opts_help_basic_flag_ != 'true' ]]
     }
 User.Opts.Help.Basic.IsSet()
     {
-    [[ $_object_user_opts_help_basic_flag_ = "true" ]]
+    [[ $_object_user_opts_help_basic_flag_ = 'true' ]]
     }
 User.Opts.Help.Basic.List()
     {
     echo -n "${_object_user_opts_help_basic_array_[*]}"
+    }
+User.Opts.Help.Basic.ListComma()
+    {
+    echo -n "${_object_user_opts_help_basic_array_[*]}" | tr ' ' ','
     }
 User.Opts.Help.Basic.Path()
     {
@@ -544,7 +560,7 @@ User.Opts.Help.Basic.Remove()
     }
 User.Opts.Help.Basic.Set()
     {
-    [[ $_object_user_opts_help_basic_flag_ = "true" ]] && return
+    [[ $_object_user_opts_help_basic_flag_ = 'true' ]] && return
     _object_user_opts_help_basic_flag_=true
     DebugVar _object_user_opts_help_basic_flag_
     }
@@ -576,7 +592,7 @@ User.Opts.Help.Options.Array()
     }
 User.Opts.Help.Options.Clear()
     {
-    [[ $_object_user_opts_help_options_flag_ != "true" ]] && return
+    [[ $_object_user_opts_help_options_flag_ != 'true' ]] && return
     _object_user_opts_help_options_flag_=false
     DebugVar _object_user_opts_help_options_flag_
     }
@@ -586,13 +602,13 @@ User.Opts.Help.Options.Count()
     }
 User.Opts.Help.Options.Disable()
     {
-    [[ $_object_user_opts_help_options_enable_ != "true" ]] && return
+    [[ $_object_user_opts_help_options_enable_ != 'true' ]] && return
     _object_user_opts_help_options_enable_=false
     DebugVar _object_user_opts_help_options_enable_
     }
 User.Opts.Help.Options.Enable()
     {
-    [[ $_object_user_opts_help_options_enable_ = "true" ]] && return
+    [[ $_object_user_opts_help_options_enable_ = 'true' ]] && return
     _object_user_opts_help_options_enable_=true
     DebugVar _object_user_opts_help_options_enable_
     }
@@ -624,7 +640,7 @@ User.Opts.Help.Options.GetItem()
     }
 User.Opts.Help.Options.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_user_opts_help_options_array_[@]} ]]; then
             _object_user_opts_help_options_array_index_=${#_object_user_opts_help_options_array_[@]}
         else
@@ -637,12 +653,12 @@ User.Opts.Help.Options.Index()
 User.Opts.Help.Options.Init()
     {
     _object_user_opts_help_options_value_=0
-    _object_user_opts_help_options_text_=""
+    _object_user_opts_help_options_text_=''
     _object_user_opts_help_options_flag_=false
     _object_user_opts_help_options_enable_=false
     _object_user_opts_help_options_array_+=()
     _object_user_opts_help_options_array_index_=1
-    _object_user_opts_help_options_path_=""
+    _object_user_opts_help_options_path_=''
     }
 User.Opts.Help.Options.IsAny()
     {
@@ -650,11 +666,11 @@ User.Opts.Help.Options.IsAny()
     }
 User.Opts.Help.Options.IsDisabled()
     {
-    [[ $_object_user_opts_help_options_enable_ != "true" ]]
+    [[ $_object_user_opts_help_options_enable_ != 'true' ]]
     }
 User.Opts.Help.Options.IsEnabled()
     {
-    [[ $_object_user_opts_help_options_enable_ = "true" ]]
+    [[ $_object_user_opts_help_options_enable_ = 'true' ]]
     }
 User.Opts.Help.Options.IsNone()
     {
@@ -662,15 +678,19 @@ User.Opts.Help.Options.IsNone()
     }
 User.Opts.Help.Options.IsNot()
     {
-    [[ $_object_user_opts_help_options_flag_ != "true" ]]
+    [[ $_object_user_opts_help_options_flag_ != 'true' ]]
     }
 User.Opts.Help.Options.IsSet()
     {
-    [[ $_object_user_opts_help_options_flag_ = "true" ]]
+    [[ $_object_user_opts_help_options_flag_ = 'true' ]]
     }
 User.Opts.Help.Options.List()
     {
     echo -n "${_object_user_opts_help_options_array_[*]}"
+    }
+User.Opts.Help.Options.ListComma()
+    {
+    echo -n "${_object_user_opts_help_options_array_[*]}" | tr ' ' ','
     }
 User.Opts.Help.Options.Path()
     {
@@ -686,7 +706,7 @@ User.Opts.Help.Options.Remove()
     }
 User.Opts.Help.Options.Set()
     {
-    [[ $_object_user_opts_help_options_flag_ = "true" ]] && return
+    [[ $_object_user_opts_help_options_flag_ = 'true' ]] && return
     _object_user_opts_help_options_flag_=true
     DebugVar _object_user_opts_help_options_flag_
     }
@@ -718,7 +738,7 @@ User.Opts.Help.Packages.Array()
     }
 User.Opts.Help.Packages.Clear()
     {
-    [[ $_object_user_opts_help_packages_flag_ != "true" ]] && return
+    [[ $_object_user_opts_help_packages_flag_ != 'true' ]] && return
     _object_user_opts_help_packages_flag_=false
     DebugVar _object_user_opts_help_packages_flag_
     }
@@ -728,13 +748,13 @@ User.Opts.Help.Packages.Count()
     }
 User.Opts.Help.Packages.Disable()
     {
-    [[ $_object_user_opts_help_packages_enable_ != "true" ]] && return
+    [[ $_object_user_opts_help_packages_enable_ != 'true' ]] && return
     _object_user_opts_help_packages_enable_=false
     DebugVar _object_user_opts_help_packages_enable_
     }
 User.Opts.Help.Packages.Enable()
     {
-    [[ $_object_user_opts_help_packages_enable_ = "true" ]] && return
+    [[ $_object_user_opts_help_packages_enable_ = 'true' ]] && return
     _object_user_opts_help_packages_enable_=true
     DebugVar _object_user_opts_help_packages_enable_
     }
@@ -766,7 +786,7 @@ User.Opts.Help.Packages.GetItem()
     }
 User.Opts.Help.Packages.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_user_opts_help_packages_array_[@]} ]]; then
             _object_user_opts_help_packages_array_index_=${#_object_user_opts_help_packages_array_[@]}
         else
@@ -779,12 +799,12 @@ User.Opts.Help.Packages.Index()
 User.Opts.Help.Packages.Init()
     {
     _object_user_opts_help_packages_value_=0
-    _object_user_opts_help_packages_text_=""
+    _object_user_opts_help_packages_text_=''
     _object_user_opts_help_packages_flag_=false
     _object_user_opts_help_packages_enable_=false
     _object_user_opts_help_packages_array_+=()
     _object_user_opts_help_packages_array_index_=1
-    _object_user_opts_help_packages_path_=""
+    _object_user_opts_help_packages_path_=''
     }
 User.Opts.Help.Packages.IsAny()
     {
@@ -792,11 +812,11 @@ User.Opts.Help.Packages.IsAny()
     }
 User.Opts.Help.Packages.IsDisabled()
     {
-    [[ $_object_user_opts_help_packages_enable_ != "true" ]]
+    [[ $_object_user_opts_help_packages_enable_ != 'true' ]]
     }
 User.Opts.Help.Packages.IsEnabled()
     {
-    [[ $_object_user_opts_help_packages_enable_ = "true" ]]
+    [[ $_object_user_opts_help_packages_enable_ = 'true' ]]
     }
 User.Opts.Help.Packages.IsNone()
     {
@@ -804,15 +824,19 @@ User.Opts.Help.Packages.IsNone()
     }
 User.Opts.Help.Packages.IsNot()
     {
-    [[ $_object_user_opts_help_packages_flag_ != "true" ]]
+    [[ $_object_user_opts_help_packages_flag_ != 'true' ]]
     }
 User.Opts.Help.Packages.IsSet()
     {
-    [[ $_object_user_opts_help_packages_flag_ = "true" ]]
+    [[ $_object_user_opts_help_packages_flag_ = 'true' ]]
     }
 User.Opts.Help.Packages.List()
     {
     echo -n "${_object_user_opts_help_packages_array_[*]}"
+    }
+User.Opts.Help.Packages.ListComma()
+    {
+    echo -n "${_object_user_opts_help_packages_array_[*]}" | tr ' ' ','
     }
 User.Opts.Help.Packages.Path()
     {
@@ -828,7 +852,7 @@ User.Opts.Help.Packages.Remove()
     }
 User.Opts.Help.Packages.Set()
     {
-    [[ $_object_user_opts_help_packages_flag_ = "true" ]] && return
+    [[ $_object_user_opts_help_packages_flag_ = 'true' ]] && return
     _object_user_opts_help_packages_flag_=true
     DebugVar _object_user_opts_help_packages_flag_
     }
@@ -860,7 +884,7 @@ User.Opts.Help.Problems.Array()
     }
 User.Opts.Help.Problems.Clear()
     {
-    [[ $_object_user_opts_help_problems_flag_ != "true" ]] && return
+    [[ $_object_user_opts_help_problems_flag_ != 'true' ]] && return
     _object_user_opts_help_problems_flag_=false
     DebugVar _object_user_opts_help_problems_flag_
     }
@@ -870,13 +894,13 @@ User.Opts.Help.Problems.Count()
     }
 User.Opts.Help.Problems.Disable()
     {
-    [[ $_object_user_opts_help_problems_enable_ != "true" ]] && return
+    [[ $_object_user_opts_help_problems_enable_ != 'true' ]] && return
     _object_user_opts_help_problems_enable_=false
     DebugVar _object_user_opts_help_problems_enable_
     }
 User.Opts.Help.Problems.Enable()
     {
-    [[ $_object_user_opts_help_problems_enable_ = "true" ]] && return
+    [[ $_object_user_opts_help_problems_enable_ = 'true' ]] && return
     _object_user_opts_help_problems_enable_=true
     DebugVar _object_user_opts_help_problems_enable_
     }
@@ -908,7 +932,7 @@ User.Opts.Help.Problems.GetItem()
     }
 User.Opts.Help.Problems.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_user_opts_help_problems_array_[@]} ]]; then
             _object_user_opts_help_problems_array_index_=${#_object_user_opts_help_problems_array_[@]}
         else
@@ -921,12 +945,12 @@ User.Opts.Help.Problems.Index()
 User.Opts.Help.Problems.Init()
     {
     _object_user_opts_help_problems_value_=0
-    _object_user_opts_help_problems_text_=""
+    _object_user_opts_help_problems_text_=''
     _object_user_opts_help_problems_flag_=false
     _object_user_opts_help_problems_enable_=false
     _object_user_opts_help_problems_array_+=()
     _object_user_opts_help_problems_array_index_=1
-    _object_user_opts_help_problems_path_=""
+    _object_user_opts_help_problems_path_=''
     }
 User.Opts.Help.Problems.IsAny()
     {
@@ -934,11 +958,11 @@ User.Opts.Help.Problems.IsAny()
     }
 User.Opts.Help.Problems.IsDisabled()
     {
-    [[ $_object_user_opts_help_problems_enable_ != "true" ]]
+    [[ $_object_user_opts_help_problems_enable_ != 'true' ]]
     }
 User.Opts.Help.Problems.IsEnabled()
     {
-    [[ $_object_user_opts_help_problems_enable_ = "true" ]]
+    [[ $_object_user_opts_help_problems_enable_ = 'true' ]]
     }
 User.Opts.Help.Problems.IsNone()
     {
@@ -946,15 +970,19 @@ User.Opts.Help.Problems.IsNone()
     }
 User.Opts.Help.Problems.IsNot()
     {
-    [[ $_object_user_opts_help_problems_flag_ != "true" ]]
+    [[ $_object_user_opts_help_problems_flag_ != 'true' ]]
     }
 User.Opts.Help.Problems.IsSet()
     {
-    [[ $_object_user_opts_help_problems_flag_ = "true" ]]
+    [[ $_object_user_opts_help_problems_flag_ = 'true' ]]
     }
 User.Opts.Help.Problems.List()
     {
     echo -n "${_object_user_opts_help_problems_array_[*]}"
+    }
+User.Opts.Help.Problems.ListComma()
+    {
+    echo -n "${_object_user_opts_help_problems_array_[*]}" | tr ' ' ','
     }
 User.Opts.Help.Problems.Path()
     {
@@ -970,7 +998,7 @@ User.Opts.Help.Problems.Remove()
     }
 User.Opts.Help.Problems.Set()
     {
-    [[ $_object_user_opts_help_problems_flag_ = "true" ]] && return
+    [[ $_object_user_opts_help_problems_flag_ = 'true' ]] && return
     _object_user_opts_help_problems_flag_=true
     DebugVar _object_user_opts_help_problems_flag_
     }
@@ -1002,7 +1030,7 @@ User.Opts.Help.Tips.Array()
     }
 User.Opts.Help.Tips.Clear()
     {
-    [[ $_object_user_opts_help_tips_flag_ != "true" ]] && return
+    [[ $_object_user_opts_help_tips_flag_ != 'true' ]] && return
     _object_user_opts_help_tips_flag_=false
     DebugVar _object_user_opts_help_tips_flag_
     }
@@ -1012,13 +1040,13 @@ User.Opts.Help.Tips.Count()
     }
 User.Opts.Help.Tips.Disable()
     {
-    [[ $_object_user_opts_help_tips_enable_ != "true" ]] && return
+    [[ $_object_user_opts_help_tips_enable_ != 'true' ]] && return
     _object_user_opts_help_tips_enable_=false
     DebugVar _object_user_opts_help_tips_enable_
     }
 User.Opts.Help.Tips.Enable()
     {
-    [[ $_object_user_opts_help_tips_enable_ = "true" ]] && return
+    [[ $_object_user_opts_help_tips_enable_ = 'true' ]] && return
     _object_user_opts_help_tips_enable_=true
     DebugVar _object_user_opts_help_tips_enable_
     }
@@ -1050,7 +1078,7 @@ User.Opts.Help.Tips.GetItem()
     }
 User.Opts.Help.Tips.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_user_opts_help_tips_array_[@]} ]]; then
             _object_user_opts_help_tips_array_index_=${#_object_user_opts_help_tips_array_[@]}
         else
@@ -1063,12 +1091,12 @@ User.Opts.Help.Tips.Index()
 User.Opts.Help.Tips.Init()
     {
     _object_user_opts_help_tips_value_=0
-    _object_user_opts_help_tips_text_=""
+    _object_user_opts_help_tips_text_=''
     _object_user_opts_help_tips_flag_=false
     _object_user_opts_help_tips_enable_=false
     _object_user_opts_help_tips_array_+=()
     _object_user_opts_help_tips_array_index_=1
-    _object_user_opts_help_tips_path_=""
+    _object_user_opts_help_tips_path_=''
     }
 User.Opts.Help.Tips.IsAny()
     {
@@ -1076,11 +1104,11 @@ User.Opts.Help.Tips.IsAny()
     }
 User.Opts.Help.Tips.IsDisabled()
     {
-    [[ $_object_user_opts_help_tips_enable_ != "true" ]]
+    [[ $_object_user_opts_help_tips_enable_ != 'true' ]]
     }
 User.Opts.Help.Tips.IsEnabled()
     {
-    [[ $_object_user_opts_help_tips_enable_ = "true" ]]
+    [[ $_object_user_opts_help_tips_enable_ = 'true' ]]
     }
 User.Opts.Help.Tips.IsNone()
     {
@@ -1088,15 +1116,19 @@ User.Opts.Help.Tips.IsNone()
     }
 User.Opts.Help.Tips.IsNot()
     {
-    [[ $_object_user_opts_help_tips_flag_ != "true" ]]
+    [[ $_object_user_opts_help_tips_flag_ != 'true' ]]
     }
 User.Opts.Help.Tips.IsSet()
     {
-    [[ $_object_user_opts_help_tips_flag_ = "true" ]]
+    [[ $_object_user_opts_help_tips_flag_ = 'true' ]]
     }
 User.Opts.Help.Tips.List()
     {
     echo -n "${_object_user_opts_help_tips_array_[*]}"
+    }
+User.Opts.Help.Tips.ListComma()
+    {
+    echo -n "${_object_user_opts_help_tips_array_[*]}" | tr ' ' ','
     }
 User.Opts.Help.Tips.Path()
     {
@@ -1112,7 +1144,7 @@ User.Opts.Help.Tips.Remove()
     }
 User.Opts.Help.Tips.Set()
     {
-    [[ $_object_user_opts_help_tips_flag_ = "true" ]] && return
+    [[ $_object_user_opts_help_tips_flag_ = 'true' ]] && return
     _object_user_opts_help_tips_flag_=true
     DebugVar _object_user_opts_help_tips_flag_
     }
@@ -1144,7 +1176,7 @@ User.Opts.Clean.Array()
     }
 User.Opts.Clean.Clear()
     {
-    [[ $_object_user_opts_clean_flag_ != "true" ]] && return
+    [[ $_object_user_opts_clean_flag_ != 'true' ]] && return
     _object_user_opts_clean_flag_=false
     DebugVar _object_user_opts_clean_flag_
     }
@@ -1154,13 +1186,13 @@ User.Opts.Clean.Count()
     }
 User.Opts.Clean.Disable()
     {
-    [[ $_object_user_opts_clean_enable_ != "true" ]] && return
+    [[ $_object_user_opts_clean_enable_ != 'true' ]] && return
     _object_user_opts_clean_enable_=false
     DebugVar _object_user_opts_clean_enable_
     }
 User.Opts.Clean.Enable()
     {
-    [[ $_object_user_opts_clean_enable_ = "true" ]] && return
+    [[ $_object_user_opts_clean_enable_ = 'true' ]] && return
     _object_user_opts_clean_enable_=true
     DebugVar _object_user_opts_clean_enable_
     }
@@ -1192,7 +1224,7 @@ User.Opts.Clean.GetItem()
     }
 User.Opts.Clean.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_user_opts_clean_array_[@]} ]]; then
             _object_user_opts_clean_array_index_=${#_object_user_opts_clean_array_[@]}
         else
@@ -1205,12 +1237,12 @@ User.Opts.Clean.Index()
 User.Opts.Clean.Init()
     {
     _object_user_opts_clean_value_=0
-    _object_user_opts_clean_text_=""
+    _object_user_opts_clean_text_=''
     _object_user_opts_clean_flag_=false
     _object_user_opts_clean_enable_=false
     _object_user_opts_clean_array_+=()
     _object_user_opts_clean_array_index_=1
-    _object_user_opts_clean_path_=""
+    _object_user_opts_clean_path_=''
     }
 User.Opts.Clean.IsAny()
     {
@@ -1218,11 +1250,11 @@ User.Opts.Clean.IsAny()
     }
 User.Opts.Clean.IsDisabled()
     {
-    [[ $_object_user_opts_clean_enable_ != "true" ]]
+    [[ $_object_user_opts_clean_enable_ != 'true' ]]
     }
 User.Opts.Clean.IsEnabled()
     {
-    [[ $_object_user_opts_clean_enable_ = "true" ]]
+    [[ $_object_user_opts_clean_enable_ = 'true' ]]
     }
 User.Opts.Clean.IsNone()
     {
@@ -1230,15 +1262,19 @@ User.Opts.Clean.IsNone()
     }
 User.Opts.Clean.IsNot()
     {
-    [[ $_object_user_opts_clean_flag_ != "true" ]]
+    [[ $_object_user_opts_clean_flag_ != 'true' ]]
     }
 User.Opts.Clean.IsSet()
     {
-    [[ $_object_user_opts_clean_flag_ = "true" ]]
+    [[ $_object_user_opts_clean_flag_ = 'true' ]]
     }
 User.Opts.Clean.List()
     {
     echo -n "${_object_user_opts_clean_array_[*]}"
+    }
+User.Opts.Clean.ListComma()
+    {
+    echo -n "${_object_user_opts_clean_array_[*]}" | tr ' ' ','
     }
 User.Opts.Clean.Path()
     {
@@ -1254,7 +1290,7 @@ User.Opts.Clean.Remove()
     }
 User.Opts.Clean.Set()
     {
-    [[ $_object_user_opts_clean_flag_ = "true" ]] && return
+    [[ $_object_user_opts_clean_flag_ = 'true' ]] && return
     _object_user_opts_clean_flag_=true
     DebugVar _object_user_opts_clean_flag_
     }
@@ -1286,7 +1322,7 @@ User.Opts.Dependencies.Check.Array()
     }
 User.Opts.Dependencies.Check.Clear()
     {
-    [[ $_object_user_opts_dependencies_check_flag_ != "true" ]] && return
+    [[ $_object_user_opts_dependencies_check_flag_ != 'true' ]] && return
     _object_user_opts_dependencies_check_flag_=false
     DebugVar _object_user_opts_dependencies_check_flag_
     }
@@ -1296,13 +1332,13 @@ User.Opts.Dependencies.Check.Count()
     }
 User.Opts.Dependencies.Check.Disable()
     {
-    [[ $_object_user_opts_dependencies_check_enable_ != "true" ]] && return
+    [[ $_object_user_opts_dependencies_check_enable_ != 'true' ]] && return
     _object_user_opts_dependencies_check_enable_=false
     DebugVar _object_user_opts_dependencies_check_enable_
     }
 User.Opts.Dependencies.Check.Enable()
     {
-    [[ $_object_user_opts_dependencies_check_enable_ = "true" ]] && return
+    [[ $_object_user_opts_dependencies_check_enable_ = 'true' ]] && return
     _object_user_opts_dependencies_check_enable_=true
     DebugVar _object_user_opts_dependencies_check_enable_
     }
@@ -1334,7 +1370,7 @@ User.Opts.Dependencies.Check.GetItem()
     }
 User.Opts.Dependencies.Check.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_user_opts_dependencies_check_array_[@]} ]]; then
             _object_user_opts_dependencies_check_array_index_=${#_object_user_opts_dependencies_check_array_[@]}
         else
@@ -1347,12 +1383,12 @@ User.Opts.Dependencies.Check.Index()
 User.Opts.Dependencies.Check.Init()
     {
     _object_user_opts_dependencies_check_value_=0
-    _object_user_opts_dependencies_check_text_=""
+    _object_user_opts_dependencies_check_text_=''
     _object_user_opts_dependencies_check_flag_=false
     _object_user_opts_dependencies_check_enable_=false
     _object_user_opts_dependencies_check_array_+=()
     _object_user_opts_dependencies_check_array_index_=1
-    _object_user_opts_dependencies_check_path_=""
+    _object_user_opts_dependencies_check_path_=''
     }
 User.Opts.Dependencies.Check.IsAny()
     {
@@ -1360,11 +1396,11 @@ User.Opts.Dependencies.Check.IsAny()
     }
 User.Opts.Dependencies.Check.IsDisabled()
     {
-    [[ $_object_user_opts_dependencies_check_enable_ != "true" ]]
+    [[ $_object_user_opts_dependencies_check_enable_ != 'true' ]]
     }
 User.Opts.Dependencies.Check.IsEnabled()
     {
-    [[ $_object_user_opts_dependencies_check_enable_ = "true" ]]
+    [[ $_object_user_opts_dependencies_check_enable_ = 'true' ]]
     }
 User.Opts.Dependencies.Check.IsNone()
     {
@@ -1372,15 +1408,19 @@ User.Opts.Dependencies.Check.IsNone()
     }
 User.Opts.Dependencies.Check.IsNot()
     {
-    [[ $_object_user_opts_dependencies_check_flag_ != "true" ]]
+    [[ $_object_user_opts_dependencies_check_flag_ != 'true' ]]
     }
 User.Opts.Dependencies.Check.IsSet()
     {
-    [[ $_object_user_opts_dependencies_check_flag_ = "true" ]]
+    [[ $_object_user_opts_dependencies_check_flag_ = 'true' ]]
     }
 User.Opts.Dependencies.Check.List()
     {
     echo -n "${_object_user_opts_dependencies_check_array_[*]}"
+    }
+User.Opts.Dependencies.Check.ListComma()
+    {
+    echo -n "${_object_user_opts_dependencies_check_array_[*]}" | tr ' ' ','
     }
 User.Opts.Dependencies.Check.Path()
     {
@@ -1396,7 +1436,7 @@ User.Opts.Dependencies.Check.Remove()
     }
 User.Opts.Dependencies.Check.Set()
     {
-    [[ $_object_user_opts_dependencies_check_flag_ = "true" ]] && return
+    [[ $_object_user_opts_dependencies_check_flag_ = 'true' ]] && return
     _object_user_opts_dependencies_check_flag_=true
     DebugVar _object_user_opts_dependencies_check_flag_
     }
@@ -1428,7 +1468,7 @@ User.Opts.IgnoreFreeSpace.Array()
     }
 User.Opts.IgnoreFreeSpace.Clear()
     {
-    [[ $_object_user_opts_ignorefreespace_flag_ != "true" ]] && return
+    [[ $_object_user_opts_ignorefreespace_flag_ != 'true' ]] && return
     _object_user_opts_ignorefreespace_flag_=false
     DebugVar _object_user_opts_ignorefreespace_flag_
     }
@@ -1438,13 +1478,13 @@ User.Opts.IgnoreFreeSpace.Count()
     }
 User.Opts.IgnoreFreeSpace.Disable()
     {
-    [[ $_object_user_opts_ignorefreespace_enable_ != "true" ]] && return
+    [[ $_object_user_opts_ignorefreespace_enable_ != 'true' ]] && return
     _object_user_opts_ignorefreespace_enable_=false
     DebugVar _object_user_opts_ignorefreespace_enable_
     }
 User.Opts.IgnoreFreeSpace.Enable()
     {
-    [[ $_object_user_opts_ignorefreespace_enable_ = "true" ]] && return
+    [[ $_object_user_opts_ignorefreespace_enable_ = 'true' ]] && return
     _object_user_opts_ignorefreespace_enable_=true
     DebugVar _object_user_opts_ignorefreespace_enable_
     }
@@ -1476,7 +1516,7 @@ User.Opts.IgnoreFreeSpace.GetItem()
     }
 User.Opts.IgnoreFreeSpace.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_user_opts_ignorefreespace_array_[@]} ]]; then
             _object_user_opts_ignorefreespace_array_index_=${#_object_user_opts_ignorefreespace_array_[@]}
         else
@@ -1489,12 +1529,12 @@ User.Opts.IgnoreFreeSpace.Index()
 User.Opts.IgnoreFreeSpace.Init()
     {
     _object_user_opts_ignorefreespace_value_=0
-    _object_user_opts_ignorefreespace_text_=""
+    _object_user_opts_ignorefreespace_text_=''
     _object_user_opts_ignorefreespace_flag_=false
     _object_user_opts_ignorefreespace_enable_=false
     _object_user_opts_ignorefreespace_array_+=()
     _object_user_opts_ignorefreespace_array_index_=1
-    _object_user_opts_ignorefreespace_path_=""
+    _object_user_opts_ignorefreespace_path_=''
     }
 User.Opts.IgnoreFreeSpace.IsAny()
     {
@@ -1502,11 +1542,11 @@ User.Opts.IgnoreFreeSpace.IsAny()
     }
 User.Opts.IgnoreFreeSpace.IsDisabled()
     {
-    [[ $_object_user_opts_ignorefreespace_enable_ != "true" ]]
+    [[ $_object_user_opts_ignorefreespace_enable_ != 'true' ]]
     }
 User.Opts.IgnoreFreeSpace.IsEnabled()
     {
-    [[ $_object_user_opts_ignorefreespace_enable_ = "true" ]]
+    [[ $_object_user_opts_ignorefreespace_enable_ = 'true' ]]
     }
 User.Opts.IgnoreFreeSpace.IsNone()
     {
@@ -1514,15 +1554,19 @@ User.Opts.IgnoreFreeSpace.IsNone()
     }
 User.Opts.IgnoreFreeSpace.IsNot()
     {
-    [[ $_object_user_opts_ignorefreespace_flag_ != "true" ]]
+    [[ $_object_user_opts_ignorefreespace_flag_ != 'true' ]]
     }
 User.Opts.IgnoreFreeSpace.IsSet()
     {
-    [[ $_object_user_opts_ignorefreespace_flag_ = "true" ]]
+    [[ $_object_user_opts_ignorefreespace_flag_ = 'true' ]]
     }
 User.Opts.IgnoreFreeSpace.List()
     {
     echo -n "${_object_user_opts_ignorefreespace_array_[*]}"
+    }
+User.Opts.IgnoreFreeSpace.ListComma()
+    {
+    echo -n "${_object_user_opts_ignorefreespace_array_[*]}" | tr ' ' ','
     }
 User.Opts.IgnoreFreeSpace.Path()
     {
@@ -1538,7 +1582,7 @@ User.Opts.IgnoreFreeSpace.Remove()
     }
 User.Opts.IgnoreFreeSpace.Set()
     {
-    [[ $_object_user_opts_ignorefreespace_flag_ = "true" ]] && return
+    [[ $_object_user_opts_ignorefreespace_flag_ = 'true' ]] && return
     _object_user_opts_ignorefreespace_flag_=true
     DebugVar _object_user_opts_ignorefreespace_flag_
     }
@@ -1570,7 +1614,7 @@ User.Opts.Versions.View.Array()
     }
 User.Opts.Versions.View.Clear()
     {
-    [[ $_object_user_opts_versions_view_flag_ != "true" ]] && return
+    [[ $_object_user_opts_versions_view_flag_ != 'true' ]] && return
     _object_user_opts_versions_view_flag_=false
     DebugVar _object_user_opts_versions_view_flag_
     }
@@ -1580,13 +1624,13 @@ User.Opts.Versions.View.Count()
     }
 User.Opts.Versions.View.Disable()
     {
-    [[ $_object_user_opts_versions_view_enable_ != "true" ]] && return
+    [[ $_object_user_opts_versions_view_enable_ != 'true' ]] && return
     _object_user_opts_versions_view_enable_=false
     DebugVar _object_user_opts_versions_view_enable_
     }
 User.Opts.Versions.View.Enable()
     {
-    [[ $_object_user_opts_versions_view_enable_ = "true" ]] && return
+    [[ $_object_user_opts_versions_view_enable_ = 'true' ]] && return
     _object_user_opts_versions_view_enable_=true
     DebugVar _object_user_opts_versions_view_enable_
     }
@@ -1618,7 +1662,7 @@ User.Opts.Versions.View.GetItem()
     }
 User.Opts.Versions.View.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_user_opts_versions_view_array_[@]} ]]; then
             _object_user_opts_versions_view_array_index_=${#_object_user_opts_versions_view_array_[@]}
         else
@@ -1631,12 +1675,12 @@ User.Opts.Versions.View.Index()
 User.Opts.Versions.View.Init()
     {
     _object_user_opts_versions_view_value_=0
-    _object_user_opts_versions_view_text_=""
+    _object_user_opts_versions_view_text_=''
     _object_user_opts_versions_view_flag_=false
     _object_user_opts_versions_view_enable_=false
     _object_user_opts_versions_view_array_+=()
     _object_user_opts_versions_view_array_index_=1
-    _object_user_opts_versions_view_path_=""
+    _object_user_opts_versions_view_path_=''
     }
 User.Opts.Versions.View.IsAny()
     {
@@ -1644,11 +1688,11 @@ User.Opts.Versions.View.IsAny()
     }
 User.Opts.Versions.View.IsDisabled()
     {
-    [[ $_object_user_opts_versions_view_enable_ != "true" ]]
+    [[ $_object_user_opts_versions_view_enable_ != 'true' ]]
     }
 User.Opts.Versions.View.IsEnabled()
     {
-    [[ $_object_user_opts_versions_view_enable_ = "true" ]]
+    [[ $_object_user_opts_versions_view_enable_ = 'true' ]]
     }
 User.Opts.Versions.View.IsNone()
     {
@@ -1656,15 +1700,19 @@ User.Opts.Versions.View.IsNone()
     }
 User.Opts.Versions.View.IsNot()
     {
-    [[ $_object_user_opts_versions_view_flag_ != "true" ]]
+    [[ $_object_user_opts_versions_view_flag_ != 'true' ]]
     }
 User.Opts.Versions.View.IsSet()
     {
-    [[ $_object_user_opts_versions_view_flag_ = "true" ]]
+    [[ $_object_user_opts_versions_view_flag_ = 'true' ]]
     }
 User.Opts.Versions.View.List()
     {
     echo -n "${_object_user_opts_versions_view_array_[*]}"
+    }
+User.Opts.Versions.View.ListComma()
+    {
+    echo -n "${_object_user_opts_versions_view_array_[*]}" | tr ' ' ','
     }
 User.Opts.Versions.View.Path()
     {
@@ -1680,7 +1728,7 @@ User.Opts.Versions.View.Remove()
     }
 User.Opts.Versions.View.Set()
     {
-    [[ $_object_user_opts_versions_view_flag_ = "true" ]] && return
+    [[ $_object_user_opts_versions_view_flag_ = 'true' ]] && return
     _object_user_opts_versions_view_flag_=true
     DebugVar _object_user_opts_versions_view_flag_
     }
@@ -1712,7 +1760,7 @@ User.Opts.Log.Last.Paste.Array()
     }
 User.Opts.Log.Last.Paste.Clear()
     {
-    [[ $_object_user_opts_log_last_paste_flag_ != "true" ]] && return
+    [[ $_object_user_opts_log_last_paste_flag_ != 'true' ]] && return
     _object_user_opts_log_last_paste_flag_=false
     DebugVar _object_user_opts_log_last_paste_flag_
     }
@@ -1722,13 +1770,13 @@ User.Opts.Log.Last.Paste.Count()
     }
 User.Opts.Log.Last.Paste.Disable()
     {
-    [[ $_object_user_opts_log_last_paste_enable_ != "true" ]] && return
+    [[ $_object_user_opts_log_last_paste_enable_ != 'true' ]] && return
     _object_user_opts_log_last_paste_enable_=false
     DebugVar _object_user_opts_log_last_paste_enable_
     }
 User.Opts.Log.Last.Paste.Enable()
     {
-    [[ $_object_user_opts_log_last_paste_enable_ = "true" ]] && return
+    [[ $_object_user_opts_log_last_paste_enable_ = 'true' ]] && return
     _object_user_opts_log_last_paste_enable_=true
     DebugVar _object_user_opts_log_last_paste_enable_
     }
@@ -1760,7 +1808,7 @@ User.Opts.Log.Last.Paste.GetItem()
     }
 User.Opts.Log.Last.Paste.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_user_opts_log_last_paste_array_[@]} ]]; then
             _object_user_opts_log_last_paste_array_index_=${#_object_user_opts_log_last_paste_array_[@]}
         else
@@ -1773,12 +1821,12 @@ User.Opts.Log.Last.Paste.Index()
 User.Opts.Log.Last.Paste.Init()
     {
     _object_user_opts_log_last_paste_value_=0
-    _object_user_opts_log_last_paste_text_=""
+    _object_user_opts_log_last_paste_text_=''
     _object_user_opts_log_last_paste_flag_=false
     _object_user_opts_log_last_paste_enable_=false
     _object_user_opts_log_last_paste_array_+=()
     _object_user_opts_log_last_paste_array_index_=1
-    _object_user_opts_log_last_paste_path_=""
+    _object_user_opts_log_last_paste_path_=''
     }
 User.Opts.Log.Last.Paste.IsAny()
     {
@@ -1786,11 +1834,11 @@ User.Opts.Log.Last.Paste.IsAny()
     }
 User.Opts.Log.Last.Paste.IsDisabled()
     {
-    [[ $_object_user_opts_log_last_paste_enable_ != "true" ]]
+    [[ $_object_user_opts_log_last_paste_enable_ != 'true' ]]
     }
 User.Opts.Log.Last.Paste.IsEnabled()
     {
-    [[ $_object_user_opts_log_last_paste_enable_ = "true" ]]
+    [[ $_object_user_opts_log_last_paste_enable_ = 'true' ]]
     }
 User.Opts.Log.Last.Paste.IsNone()
     {
@@ -1798,15 +1846,19 @@ User.Opts.Log.Last.Paste.IsNone()
     }
 User.Opts.Log.Last.Paste.IsNot()
     {
-    [[ $_object_user_opts_log_last_paste_flag_ != "true" ]]
+    [[ $_object_user_opts_log_last_paste_flag_ != 'true' ]]
     }
 User.Opts.Log.Last.Paste.IsSet()
     {
-    [[ $_object_user_opts_log_last_paste_flag_ = "true" ]]
+    [[ $_object_user_opts_log_last_paste_flag_ = 'true' ]]
     }
 User.Opts.Log.Last.Paste.List()
     {
     echo -n "${_object_user_opts_log_last_paste_array_[*]}"
+    }
+User.Opts.Log.Last.Paste.ListComma()
+    {
+    echo -n "${_object_user_opts_log_last_paste_array_[*]}" | tr ' ' ','
     }
 User.Opts.Log.Last.Paste.Path()
     {
@@ -1822,7 +1874,7 @@ User.Opts.Log.Last.Paste.Remove()
     }
 User.Opts.Log.Last.Paste.Set()
     {
-    [[ $_object_user_opts_log_last_paste_flag_ = "true" ]] && return
+    [[ $_object_user_opts_log_last_paste_flag_ = 'true' ]] && return
     _object_user_opts_log_last_paste_flag_=true
     DebugVar _object_user_opts_log_last_paste_flag_
     }
@@ -1854,7 +1906,7 @@ User.Opts.Log.Last.View.Array()
     }
 User.Opts.Log.Last.View.Clear()
     {
-    [[ $_object_user_opts_log_last_view_flag_ != "true" ]] && return
+    [[ $_object_user_opts_log_last_view_flag_ != 'true' ]] && return
     _object_user_opts_log_last_view_flag_=false
     DebugVar _object_user_opts_log_last_view_flag_
     }
@@ -1864,13 +1916,13 @@ User.Opts.Log.Last.View.Count()
     }
 User.Opts.Log.Last.View.Disable()
     {
-    [[ $_object_user_opts_log_last_view_enable_ != "true" ]] && return
+    [[ $_object_user_opts_log_last_view_enable_ != 'true' ]] && return
     _object_user_opts_log_last_view_enable_=false
     DebugVar _object_user_opts_log_last_view_enable_
     }
 User.Opts.Log.Last.View.Enable()
     {
-    [[ $_object_user_opts_log_last_view_enable_ = "true" ]] && return
+    [[ $_object_user_opts_log_last_view_enable_ = 'true' ]] && return
     _object_user_opts_log_last_view_enable_=true
     DebugVar _object_user_opts_log_last_view_enable_
     }
@@ -1902,7 +1954,7 @@ User.Opts.Log.Last.View.GetItem()
     }
 User.Opts.Log.Last.View.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_user_opts_log_last_view_array_[@]} ]]; then
             _object_user_opts_log_last_view_array_index_=${#_object_user_opts_log_last_view_array_[@]}
         else
@@ -1915,12 +1967,12 @@ User.Opts.Log.Last.View.Index()
 User.Opts.Log.Last.View.Init()
     {
     _object_user_opts_log_last_view_value_=0
-    _object_user_opts_log_last_view_text_=""
+    _object_user_opts_log_last_view_text_=''
     _object_user_opts_log_last_view_flag_=false
     _object_user_opts_log_last_view_enable_=false
     _object_user_opts_log_last_view_array_+=()
     _object_user_opts_log_last_view_array_index_=1
-    _object_user_opts_log_last_view_path_=""
+    _object_user_opts_log_last_view_path_=''
     }
 User.Opts.Log.Last.View.IsAny()
     {
@@ -1928,11 +1980,11 @@ User.Opts.Log.Last.View.IsAny()
     }
 User.Opts.Log.Last.View.IsDisabled()
     {
-    [[ $_object_user_opts_log_last_view_enable_ != "true" ]]
+    [[ $_object_user_opts_log_last_view_enable_ != 'true' ]]
     }
 User.Opts.Log.Last.View.IsEnabled()
     {
-    [[ $_object_user_opts_log_last_view_enable_ = "true" ]]
+    [[ $_object_user_opts_log_last_view_enable_ = 'true' ]]
     }
 User.Opts.Log.Last.View.IsNone()
     {
@@ -1940,15 +1992,19 @@ User.Opts.Log.Last.View.IsNone()
     }
 User.Opts.Log.Last.View.IsNot()
     {
-    [[ $_object_user_opts_log_last_view_flag_ != "true" ]]
+    [[ $_object_user_opts_log_last_view_flag_ != 'true' ]]
     }
 User.Opts.Log.Last.View.IsSet()
     {
-    [[ $_object_user_opts_log_last_view_flag_ = "true" ]]
+    [[ $_object_user_opts_log_last_view_flag_ = 'true' ]]
     }
 User.Opts.Log.Last.View.List()
     {
     echo -n "${_object_user_opts_log_last_view_array_[*]}"
+    }
+User.Opts.Log.Last.View.ListComma()
+    {
+    echo -n "${_object_user_opts_log_last_view_array_[*]}" | tr ' ' ','
     }
 User.Opts.Log.Last.View.Path()
     {
@@ -1964,7 +2020,7 @@ User.Opts.Log.Last.View.Remove()
     }
 User.Opts.Log.Last.View.Set()
     {
-    [[ $_object_user_opts_log_last_view_flag_ = "true" ]] && return
+    [[ $_object_user_opts_log_last_view_flag_ = 'true' ]] && return
     _object_user_opts_log_last_view_flag_=true
     DebugVar _object_user_opts_log_last_view_flag_
     }
@@ -1996,7 +2052,7 @@ User.Opts.Log.Tail.Paste.Array()
     }
 User.Opts.Log.Tail.Paste.Clear()
     {
-    [[ $_object_user_opts_log_tail_paste_flag_ != "true" ]] && return
+    [[ $_object_user_opts_log_tail_paste_flag_ != 'true' ]] && return
     _object_user_opts_log_tail_paste_flag_=false
     DebugVar _object_user_opts_log_tail_paste_flag_
     }
@@ -2006,13 +2062,13 @@ User.Opts.Log.Tail.Paste.Count()
     }
 User.Opts.Log.Tail.Paste.Disable()
     {
-    [[ $_object_user_opts_log_tail_paste_enable_ != "true" ]] && return
+    [[ $_object_user_opts_log_tail_paste_enable_ != 'true' ]] && return
     _object_user_opts_log_tail_paste_enable_=false
     DebugVar _object_user_opts_log_tail_paste_enable_
     }
 User.Opts.Log.Tail.Paste.Enable()
     {
-    [[ $_object_user_opts_log_tail_paste_enable_ = "true" ]] && return
+    [[ $_object_user_opts_log_tail_paste_enable_ = 'true' ]] && return
     _object_user_opts_log_tail_paste_enable_=true
     DebugVar _object_user_opts_log_tail_paste_enable_
     }
@@ -2044,7 +2100,7 @@ User.Opts.Log.Tail.Paste.GetItem()
     }
 User.Opts.Log.Tail.Paste.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_user_opts_log_tail_paste_array_[@]} ]]; then
             _object_user_opts_log_tail_paste_array_index_=${#_object_user_opts_log_tail_paste_array_[@]}
         else
@@ -2057,12 +2113,12 @@ User.Opts.Log.Tail.Paste.Index()
 User.Opts.Log.Tail.Paste.Init()
     {
     _object_user_opts_log_tail_paste_value_=0
-    _object_user_opts_log_tail_paste_text_=""
+    _object_user_opts_log_tail_paste_text_=''
     _object_user_opts_log_tail_paste_flag_=false
     _object_user_opts_log_tail_paste_enable_=false
     _object_user_opts_log_tail_paste_array_+=()
     _object_user_opts_log_tail_paste_array_index_=1
-    _object_user_opts_log_tail_paste_path_=""
+    _object_user_opts_log_tail_paste_path_=''
     }
 User.Opts.Log.Tail.Paste.IsAny()
     {
@@ -2070,11 +2126,11 @@ User.Opts.Log.Tail.Paste.IsAny()
     }
 User.Opts.Log.Tail.Paste.IsDisabled()
     {
-    [[ $_object_user_opts_log_tail_paste_enable_ != "true" ]]
+    [[ $_object_user_opts_log_tail_paste_enable_ != 'true' ]]
     }
 User.Opts.Log.Tail.Paste.IsEnabled()
     {
-    [[ $_object_user_opts_log_tail_paste_enable_ = "true" ]]
+    [[ $_object_user_opts_log_tail_paste_enable_ = 'true' ]]
     }
 User.Opts.Log.Tail.Paste.IsNone()
     {
@@ -2082,15 +2138,19 @@ User.Opts.Log.Tail.Paste.IsNone()
     }
 User.Opts.Log.Tail.Paste.IsNot()
     {
-    [[ $_object_user_opts_log_tail_paste_flag_ != "true" ]]
+    [[ $_object_user_opts_log_tail_paste_flag_ != 'true' ]]
     }
 User.Opts.Log.Tail.Paste.IsSet()
     {
-    [[ $_object_user_opts_log_tail_paste_flag_ = "true" ]]
+    [[ $_object_user_opts_log_tail_paste_flag_ = 'true' ]]
     }
 User.Opts.Log.Tail.Paste.List()
     {
     echo -n "${_object_user_opts_log_tail_paste_array_[*]}"
+    }
+User.Opts.Log.Tail.Paste.ListComma()
+    {
+    echo -n "${_object_user_opts_log_tail_paste_array_[*]}" | tr ' ' ','
     }
 User.Opts.Log.Tail.Paste.Path()
     {
@@ -2106,7 +2166,7 @@ User.Opts.Log.Tail.Paste.Remove()
     }
 User.Opts.Log.Tail.Paste.Set()
     {
-    [[ $_object_user_opts_log_tail_paste_flag_ = "true" ]] && return
+    [[ $_object_user_opts_log_tail_paste_flag_ = 'true' ]] && return
     _object_user_opts_log_tail_paste_flag_=true
     DebugVar _object_user_opts_log_tail_paste_flag_
     }
@@ -2138,7 +2198,7 @@ User.Opts.Log.Whole.View.Array()
     }
 User.Opts.Log.Whole.View.Clear()
     {
-    [[ $_object_user_opts_log_whole_view_flag_ != "true" ]] && return
+    [[ $_object_user_opts_log_whole_view_flag_ != 'true' ]] && return
     _object_user_opts_log_whole_view_flag_=false
     DebugVar _object_user_opts_log_whole_view_flag_
     }
@@ -2148,13 +2208,13 @@ User.Opts.Log.Whole.View.Count()
     }
 User.Opts.Log.Whole.View.Disable()
     {
-    [[ $_object_user_opts_log_whole_view_enable_ != "true" ]] && return
+    [[ $_object_user_opts_log_whole_view_enable_ != 'true' ]] && return
     _object_user_opts_log_whole_view_enable_=false
     DebugVar _object_user_opts_log_whole_view_enable_
     }
 User.Opts.Log.Whole.View.Enable()
     {
-    [[ $_object_user_opts_log_whole_view_enable_ = "true" ]] && return
+    [[ $_object_user_opts_log_whole_view_enable_ = 'true' ]] && return
     _object_user_opts_log_whole_view_enable_=true
     DebugVar _object_user_opts_log_whole_view_enable_
     }
@@ -2186,7 +2246,7 @@ User.Opts.Log.Whole.View.GetItem()
     }
 User.Opts.Log.Whole.View.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_user_opts_log_whole_view_array_[@]} ]]; then
             _object_user_opts_log_whole_view_array_index_=${#_object_user_opts_log_whole_view_array_[@]}
         else
@@ -2199,12 +2259,12 @@ User.Opts.Log.Whole.View.Index()
 User.Opts.Log.Whole.View.Init()
     {
     _object_user_opts_log_whole_view_value_=0
-    _object_user_opts_log_whole_view_text_=""
+    _object_user_opts_log_whole_view_text_=''
     _object_user_opts_log_whole_view_flag_=false
     _object_user_opts_log_whole_view_enable_=false
     _object_user_opts_log_whole_view_array_+=()
     _object_user_opts_log_whole_view_array_index_=1
-    _object_user_opts_log_whole_view_path_=""
+    _object_user_opts_log_whole_view_path_=''
     }
 User.Opts.Log.Whole.View.IsAny()
     {
@@ -2212,11 +2272,11 @@ User.Opts.Log.Whole.View.IsAny()
     }
 User.Opts.Log.Whole.View.IsDisabled()
     {
-    [[ $_object_user_opts_log_whole_view_enable_ != "true" ]]
+    [[ $_object_user_opts_log_whole_view_enable_ != 'true' ]]
     }
 User.Opts.Log.Whole.View.IsEnabled()
     {
-    [[ $_object_user_opts_log_whole_view_enable_ = "true" ]]
+    [[ $_object_user_opts_log_whole_view_enable_ = 'true' ]]
     }
 User.Opts.Log.Whole.View.IsNone()
     {
@@ -2224,15 +2284,19 @@ User.Opts.Log.Whole.View.IsNone()
     }
 User.Opts.Log.Whole.View.IsNot()
     {
-    [[ $_object_user_opts_log_whole_view_flag_ != "true" ]]
+    [[ $_object_user_opts_log_whole_view_flag_ != 'true' ]]
     }
 User.Opts.Log.Whole.View.IsSet()
     {
-    [[ $_object_user_opts_log_whole_view_flag_ = "true" ]]
+    [[ $_object_user_opts_log_whole_view_flag_ = 'true' ]]
     }
 User.Opts.Log.Whole.View.List()
     {
     echo -n "${_object_user_opts_log_whole_view_array_[*]}"
+    }
+User.Opts.Log.Whole.View.ListComma()
+    {
+    echo -n "${_object_user_opts_log_whole_view_array_[*]}" | tr ' ' ','
     }
 User.Opts.Log.Whole.View.Path()
     {
@@ -2248,7 +2312,7 @@ User.Opts.Log.Whole.View.Remove()
     }
 User.Opts.Log.Whole.View.Set()
     {
-    [[ $_object_user_opts_log_whole_view_flag_ = "true" ]] && return
+    [[ $_object_user_opts_log_whole_view_flag_ = 'true' ]] && return
     _object_user_opts_log_whole_view_flag_=true
     DebugVar _object_user_opts_log_whole_view_flag_
     }
@@ -2280,7 +2344,7 @@ User.Opts.Apps.All.Backup.Array()
     }
 User.Opts.Apps.All.Backup.Clear()
     {
-    [[ $_object_user_opts_apps_all_backup_flag_ != "true" ]] && return
+    [[ $_object_user_opts_apps_all_backup_flag_ != 'true' ]] && return
     _object_user_opts_apps_all_backup_flag_=false
     DebugVar _object_user_opts_apps_all_backup_flag_
     }
@@ -2290,13 +2354,13 @@ User.Opts.Apps.All.Backup.Count()
     }
 User.Opts.Apps.All.Backup.Disable()
     {
-    [[ $_object_user_opts_apps_all_backup_enable_ != "true" ]] && return
+    [[ $_object_user_opts_apps_all_backup_enable_ != 'true' ]] && return
     _object_user_opts_apps_all_backup_enable_=false
     DebugVar _object_user_opts_apps_all_backup_enable_
     }
 User.Opts.Apps.All.Backup.Enable()
     {
-    [[ $_object_user_opts_apps_all_backup_enable_ = "true" ]] && return
+    [[ $_object_user_opts_apps_all_backup_enable_ = 'true' ]] && return
     _object_user_opts_apps_all_backup_enable_=true
     DebugVar _object_user_opts_apps_all_backup_enable_
     }
@@ -2328,7 +2392,7 @@ User.Opts.Apps.All.Backup.GetItem()
     }
 User.Opts.Apps.All.Backup.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_user_opts_apps_all_backup_array_[@]} ]]; then
             _object_user_opts_apps_all_backup_array_index_=${#_object_user_opts_apps_all_backup_array_[@]}
         else
@@ -2341,12 +2405,12 @@ User.Opts.Apps.All.Backup.Index()
 User.Opts.Apps.All.Backup.Init()
     {
     _object_user_opts_apps_all_backup_value_=0
-    _object_user_opts_apps_all_backup_text_=""
+    _object_user_opts_apps_all_backup_text_=''
     _object_user_opts_apps_all_backup_flag_=false
     _object_user_opts_apps_all_backup_enable_=false
     _object_user_opts_apps_all_backup_array_+=()
     _object_user_opts_apps_all_backup_array_index_=1
-    _object_user_opts_apps_all_backup_path_=""
+    _object_user_opts_apps_all_backup_path_=''
     }
 User.Opts.Apps.All.Backup.IsAny()
     {
@@ -2354,11 +2418,11 @@ User.Opts.Apps.All.Backup.IsAny()
     }
 User.Opts.Apps.All.Backup.IsDisabled()
     {
-    [[ $_object_user_opts_apps_all_backup_enable_ != "true" ]]
+    [[ $_object_user_opts_apps_all_backup_enable_ != 'true' ]]
     }
 User.Opts.Apps.All.Backup.IsEnabled()
     {
-    [[ $_object_user_opts_apps_all_backup_enable_ = "true" ]]
+    [[ $_object_user_opts_apps_all_backup_enable_ = 'true' ]]
     }
 User.Opts.Apps.All.Backup.IsNone()
     {
@@ -2366,15 +2430,19 @@ User.Opts.Apps.All.Backup.IsNone()
     }
 User.Opts.Apps.All.Backup.IsNot()
     {
-    [[ $_object_user_opts_apps_all_backup_flag_ != "true" ]]
+    [[ $_object_user_opts_apps_all_backup_flag_ != 'true' ]]
     }
 User.Opts.Apps.All.Backup.IsSet()
     {
-    [[ $_object_user_opts_apps_all_backup_flag_ = "true" ]]
+    [[ $_object_user_opts_apps_all_backup_flag_ = 'true' ]]
     }
 User.Opts.Apps.All.Backup.List()
     {
     echo -n "${_object_user_opts_apps_all_backup_array_[*]}"
+    }
+User.Opts.Apps.All.Backup.ListComma()
+    {
+    echo -n "${_object_user_opts_apps_all_backup_array_[*]}" | tr ' ' ','
     }
 User.Opts.Apps.All.Backup.Path()
     {
@@ -2390,7 +2458,7 @@ User.Opts.Apps.All.Backup.Remove()
     }
 User.Opts.Apps.All.Backup.Set()
     {
-    [[ $_object_user_opts_apps_all_backup_flag_ = "true" ]] && return
+    [[ $_object_user_opts_apps_all_backup_flag_ = 'true' ]] && return
     _object_user_opts_apps_all_backup_flag_=true
     DebugVar _object_user_opts_apps_all_backup_flag_
     }
@@ -2422,7 +2490,7 @@ User.Opts.Apps.All.Install.Array()
     }
 User.Opts.Apps.All.Install.Clear()
     {
-    [[ $_object_user_opts_apps_all_install_flag_ != "true" ]] && return
+    [[ $_object_user_opts_apps_all_install_flag_ != 'true' ]] && return
     _object_user_opts_apps_all_install_flag_=false
     DebugVar _object_user_opts_apps_all_install_flag_
     }
@@ -2432,13 +2500,13 @@ User.Opts.Apps.All.Install.Count()
     }
 User.Opts.Apps.All.Install.Disable()
     {
-    [[ $_object_user_opts_apps_all_install_enable_ != "true" ]] && return
+    [[ $_object_user_opts_apps_all_install_enable_ != 'true' ]] && return
     _object_user_opts_apps_all_install_enable_=false
     DebugVar _object_user_opts_apps_all_install_enable_
     }
 User.Opts.Apps.All.Install.Enable()
     {
-    [[ $_object_user_opts_apps_all_install_enable_ = "true" ]] && return
+    [[ $_object_user_opts_apps_all_install_enable_ = 'true' ]] && return
     _object_user_opts_apps_all_install_enable_=true
     DebugVar _object_user_opts_apps_all_install_enable_
     }
@@ -2470,7 +2538,7 @@ User.Opts.Apps.All.Install.GetItem()
     }
 User.Opts.Apps.All.Install.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_user_opts_apps_all_install_array_[@]} ]]; then
             _object_user_opts_apps_all_install_array_index_=${#_object_user_opts_apps_all_install_array_[@]}
         else
@@ -2483,12 +2551,12 @@ User.Opts.Apps.All.Install.Index()
 User.Opts.Apps.All.Install.Init()
     {
     _object_user_opts_apps_all_install_value_=0
-    _object_user_opts_apps_all_install_text_=""
+    _object_user_opts_apps_all_install_text_=''
     _object_user_opts_apps_all_install_flag_=false
     _object_user_opts_apps_all_install_enable_=false
     _object_user_opts_apps_all_install_array_+=()
     _object_user_opts_apps_all_install_array_index_=1
-    _object_user_opts_apps_all_install_path_=""
+    _object_user_opts_apps_all_install_path_=''
     }
 User.Opts.Apps.All.Install.IsAny()
     {
@@ -2496,11 +2564,11 @@ User.Opts.Apps.All.Install.IsAny()
     }
 User.Opts.Apps.All.Install.IsDisabled()
     {
-    [[ $_object_user_opts_apps_all_install_enable_ != "true" ]]
+    [[ $_object_user_opts_apps_all_install_enable_ != 'true' ]]
     }
 User.Opts.Apps.All.Install.IsEnabled()
     {
-    [[ $_object_user_opts_apps_all_install_enable_ = "true" ]]
+    [[ $_object_user_opts_apps_all_install_enable_ = 'true' ]]
     }
 User.Opts.Apps.All.Install.IsNone()
     {
@@ -2508,15 +2576,19 @@ User.Opts.Apps.All.Install.IsNone()
     }
 User.Opts.Apps.All.Install.IsNot()
     {
-    [[ $_object_user_opts_apps_all_install_flag_ != "true" ]]
+    [[ $_object_user_opts_apps_all_install_flag_ != 'true' ]]
     }
 User.Opts.Apps.All.Install.IsSet()
     {
-    [[ $_object_user_opts_apps_all_install_flag_ = "true" ]]
+    [[ $_object_user_opts_apps_all_install_flag_ = 'true' ]]
     }
 User.Opts.Apps.All.Install.List()
     {
     echo -n "${_object_user_opts_apps_all_install_array_[*]}"
+    }
+User.Opts.Apps.All.Install.ListComma()
+    {
+    echo -n "${_object_user_opts_apps_all_install_array_[*]}" | tr ' ' ','
     }
 User.Opts.Apps.All.Install.Path()
     {
@@ -2532,7 +2604,7 @@ User.Opts.Apps.All.Install.Remove()
     }
 User.Opts.Apps.All.Install.Set()
     {
-    [[ $_object_user_opts_apps_all_install_flag_ = "true" ]] && return
+    [[ $_object_user_opts_apps_all_install_flag_ = 'true' ]] && return
     _object_user_opts_apps_all_install_flag_=true
     DebugVar _object_user_opts_apps_all_install_flag_
     }
@@ -2564,7 +2636,7 @@ User.Opts.Apps.All.Reinstall.Array()
     }
 User.Opts.Apps.All.Reinstall.Clear()
     {
-    [[ $_object_user_opts_apps_all_reinstall_flag_ != "true" ]] && return
+    [[ $_object_user_opts_apps_all_reinstall_flag_ != 'true' ]] && return
     _object_user_opts_apps_all_reinstall_flag_=false
     DebugVar _object_user_opts_apps_all_reinstall_flag_
     }
@@ -2574,13 +2646,13 @@ User.Opts.Apps.All.Reinstall.Count()
     }
 User.Opts.Apps.All.Reinstall.Disable()
     {
-    [[ $_object_user_opts_apps_all_reinstall_enable_ != "true" ]] && return
+    [[ $_object_user_opts_apps_all_reinstall_enable_ != 'true' ]] && return
     _object_user_opts_apps_all_reinstall_enable_=false
     DebugVar _object_user_opts_apps_all_reinstall_enable_
     }
 User.Opts.Apps.All.Reinstall.Enable()
     {
-    [[ $_object_user_opts_apps_all_reinstall_enable_ = "true" ]] && return
+    [[ $_object_user_opts_apps_all_reinstall_enable_ = 'true' ]] && return
     _object_user_opts_apps_all_reinstall_enable_=true
     DebugVar _object_user_opts_apps_all_reinstall_enable_
     }
@@ -2612,7 +2684,7 @@ User.Opts.Apps.All.Reinstall.GetItem()
     }
 User.Opts.Apps.All.Reinstall.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_user_opts_apps_all_reinstall_array_[@]} ]]; then
             _object_user_opts_apps_all_reinstall_array_index_=${#_object_user_opts_apps_all_reinstall_array_[@]}
         else
@@ -2625,12 +2697,12 @@ User.Opts.Apps.All.Reinstall.Index()
 User.Opts.Apps.All.Reinstall.Init()
     {
     _object_user_opts_apps_all_reinstall_value_=0
-    _object_user_opts_apps_all_reinstall_text_=""
+    _object_user_opts_apps_all_reinstall_text_=''
     _object_user_opts_apps_all_reinstall_flag_=false
     _object_user_opts_apps_all_reinstall_enable_=false
     _object_user_opts_apps_all_reinstall_array_+=()
     _object_user_opts_apps_all_reinstall_array_index_=1
-    _object_user_opts_apps_all_reinstall_path_=""
+    _object_user_opts_apps_all_reinstall_path_=''
     }
 User.Opts.Apps.All.Reinstall.IsAny()
     {
@@ -2638,11 +2710,11 @@ User.Opts.Apps.All.Reinstall.IsAny()
     }
 User.Opts.Apps.All.Reinstall.IsDisabled()
     {
-    [[ $_object_user_opts_apps_all_reinstall_enable_ != "true" ]]
+    [[ $_object_user_opts_apps_all_reinstall_enable_ != 'true' ]]
     }
 User.Opts.Apps.All.Reinstall.IsEnabled()
     {
-    [[ $_object_user_opts_apps_all_reinstall_enable_ = "true" ]]
+    [[ $_object_user_opts_apps_all_reinstall_enable_ = 'true' ]]
     }
 User.Opts.Apps.All.Reinstall.IsNone()
     {
@@ -2650,15 +2722,19 @@ User.Opts.Apps.All.Reinstall.IsNone()
     }
 User.Opts.Apps.All.Reinstall.IsNot()
     {
-    [[ $_object_user_opts_apps_all_reinstall_flag_ != "true" ]]
+    [[ $_object_user_opts_apps_all_reinstall_flag_ != 'true' ]]
     }
 User.Opts.Apps.All.Reinstall.IsSet()
     {
-    [[ $_object_user_opts_apps_all_reinstall_flag_ = "true" ]]
+    [[ $_object_user_opts_apps_all_reinstall_flag_ = 'true' ]]
     }
 User.Opts.Apps.All.Reinstall.List()
     {
     echo -n "${_object_user_opts_apps_all_reinstall_array_[*]}"
+    }
+User.Opts.Apps.All.Reinstall.ListComma()
+    {
+    echo -n "${_object_user_opts_apps_all_reinstall_array_[*]}" | tr ' ' ','
     }
 User.Opts.Apps.All.Reinstall.Path()
     {
@@ -2674,7 +2750,7 @@ User.Opts.Apps.All.Reinstall.Remove()
     }
 User.Opts.Apps.All.Reinstall.Set()
     {
-    [[ $_object_user_opts_apps_all_reinstall_flag_ = "true" ]] && return
+    [[ $_object_user_opts_apps_all_reinstall_flag_ = 'true' ]] && return
     _object_user_opts_apps_all_reinstall_flag_=true
     DebugVar _object_user_opts_apps_all_reinstall_flag_
     }
@@ -2706,7 +2782,7 @@ User.Opts.Apps.All.Restart.Array()
     }
 User.Opts.Apps.All.Restart.Clear()
     {
-    [[ $_object_user_opts_apps_all_restart_flag_ != "true" ]] && return
+    [[ $_object_user_opts_apps_all_restart_flag_ != 'true' ]] && return
     _object_user_opts_apps_all_restart_flag_=false
     DebugVar _object_user_opts_apps_all_restart_flag_
     }
@@ -2716,13 +2792,13 @@ User.Opts.Apps.All.Restart.Count()
     }
 User.Opts.Apps.All.Restart.Disable()
     {
-    [[ $_object_user_opts_apps_all_restart_enable_ != "true" ]] && return
+    [[ $_object_user_opts_apps_all_restart_enable_ != 'true' ]] && return
     _object_user_opts_apps_all_restart_enable_=false
     DebugVar _object_user_opts_apps_all_restart_enable_
     }
 User.Opts.Apps.All.Restart.Enable()
     {
-    [[ $_object_user_opts_apps_all_restart_enable_ = "true" ]] && return
+    [[ $_object_user_opts_apps_all_restart_enable_ = 'true' ]] && return
     _object_user_opts_apps_all_restart_enable_=true
     DebugVar _object_user_opts_apps_all_restart_enable_
     }
@@ -2754,7 +2830,7 @@ User.Opts.Apps.All.Restart.GetItem()
     }
 User.Opts.Apps.All.Restart.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_user_opts_apps_all_restart_array_[@]} ]]; then
             _object_user_opts_apps_all_restart_array_index_=${#_object_user_opts_apps_all_restart_array_[@]}
         else
@@ -2767,12 +2843,12 @@ User.Opts.Apps.All.Restart.Index()
 User.Opts.Apps.All.Restart.Init()
     {
     _object_user_opts_apps_all_restart_value_=0
-    _object_user_opts_apps_all_restart_text_=""
+    _object_user_opts_apps_all_restart_text_=''
     _object_user_opts_apps_all_restart_flag_=false
     _object_user_opts_apps_all_restart_enable_=false
     _object_user_opts_apps_all_restart_array_+=()
     _object_user_opts_apps_all_restart_array_index_=1
-    _object_user_opts_apps_all_restart_path_=""
+    _object_user_opts_apps_all_restart_path_=''
     }
 User.Opts.Apps.All.Restart.IsAny()
     {
@@ -2780,11 +2856,11 @@ User.Opts.Apps.All.Restart.IsAny()
     }
 User.Opts.Apps.All.Restart.IsDisabled()
     {
-    [[ $_object_user_opts_apps_all_restart_enable_ != "true" ]]
+    [[ $_object_user_opts_apps_all_restart_enable_ != 'true' ]]
     }
 User.Opts.Apps.All.Restart.IsEnabled()
     {
-    [[ $_object_user_opts_apps_all_restart_enable_ = "true" ]]
+    [[ $_object_user_opts_apps_all_restart_enable_ = 'true' ]]
     }
 User.Opts.Apps.All.Restart.IsNone()
     {
@@ -2792,15 +2868,19 @@ User.Opts.Apps.All.Restart.IsNone()
     }
 User.Opts.Apps.All.Restart.IsNot()
     {
-    [[ $_object_user_opts_apps_all_restart_flag_ != "true" ]]
+    [[ $_object_user_opts_apps_all_restart_flag_ != 'true' ]]
     }
 User.Opts.Apps.All.Restart.IsSet()
     {
-    [[ $_object_user_opts_apps_all_restart_flag_ = "true" ]]
+    [[ $_object_user_opts_apps_all_restart_flag_ = 'true' ]]
     }
 User.Opts.Apps.All.Restart.List()
     {
     echo -n "${_object_user_opts_apps_all_restart_array_[*]}"
+    }
+User.Opts.Apps.All.Restart.ListComma()
+    {
+    echo -n "${_object_user_opts_apps_all_restart_array_[*]}" | tr ' ' ','
     }
 User.Opts.Apps.All.Restart.Path()
     {
@@ -2816,7 +2896,7 @@ User.Opts.Apps.All.Restart.Remove()
     }
 User.Opts.Apps.All.Restart.Set()
     {
-    [[ $_object_user_opts_apps_all_restart_flag_ = "true" ]] && return
+    [[ $_object_user_opts_apps_all_restart_flag_ = 'true' ]] && return
     _object_user_opts_apps_all_restart_flag_=true
     DebugVar _object_user_opts_apps_all_restart_flag_
     }
@@ -2848,7 +2928,7 @@ User.Opts.Apps.All.Restore.Array()
     }
 User.Opts.Apps.All.Restore.Clear()
     {
-    [[ $_object_user_opts_apps_all_restore_flag_ != "true" ]] && return
+    [[ $_object_user_opts_apps_all_restore_flag_ != 'true' ]] && return
     _object_user_opts_apps_all_restore_flag_=false
     DebugVar _object_user_opts_apps_all_restore_flag_
     }
@@ -2858,13 +2938,13 @@ User.Opts.Apps.All.Restore.Count()
     }
 User.Opts.Apps.All.Restore.Disable()
     {
-    [[ $_object_user_opts_apps_all_restore_enable_ != "true" ]] && return
+    [[ $_object_user_opts_apps_all_restore_enable_ != 'true' ]] && return
     _object_user_opts_apps_all_restore_enable_=false
     DebugVar _object_user_opts_apps_all_restore_enable_
     }
 User.Opts.Apps.All.Restore.Enable()
     {
-    [[ $_object_user_opts_apps_all_restore_enable_ = "true" ]] && return
+    [[ $_object_user_opts_apps_all_restore_enable_ = 'true' ]] && return
     _object_user_opts_apps_all_restore_enable_=true
     DebugVar _object_user_opts_apps_all_restore_enable_
     }
@@ -2896,7 +2976,7 @@ User.Opts.Apps.All.Restore.GetItem()
     }
 User.Opts.Apps.All.Restore.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_user_opts_apps_all_restore_array_[@]} ]]; then
             _object_user_opts_apps_all_restore_array_index_=${#_object_user_opts_apps_all_restore_array_[@]}
         else
@@ -2909,12 +2989,12 @@ User.Opts.Apps.All.Restore.Index()
 User.Opts.Apps.All.Restore.Init()
     {
     _object_user_opts_apps_all_restore_value_=0
-    _object_user_opts_apps_all_restore_text_=""
+    _object_user_opts_apps_all_restore_text_=''
     _object_user_opts_apps_all_restore_flag_=false
     _object_user_opts_apps_all_restore_enable_=false
     _object_user_opts_apps_all_restore_array_+=()
     _object_user_opts_apps_all_restore_array_index_=1
-    _object_user_opts_apps_all_restore_path_=""
+    _object_user_opts_apps_all_restore_path_=''
     }
 User.Opts.Apps.All.Restore.IsAny()
     {
@@ -2922,11 +3002,11 @@ User.Opts.Apps.All.Restore.IsAny()
     }
 User.Opts.Apps.All.Restore.IsDisabled()
     {
-    [[ $_object_user_opts_apps_all_restore_enable_ != "true" ]]
+    [[ $_object_user_opts_apps_all_restore_enable_ != 'true' ]]
     }
 User.Opts.Apps.All.Restore.IsEnabled()
     {
-    [[ $_object_user_opts_apps_all_restore_enable_ = "true" ]]
+    [[ $_object_user_opts_apps_all_restore_enable_ = 'true' ]]
     }
 User.Opts.Apps.All.Restore.IsNone()
     {
@@ -2934,15 +3014,19 @@ User.Opts.Apps.All.Restore.IsNone()
     }
 User.Opts.Apps.All.Restore.IsNot()
     {
-    [[ $_object_user_opts_apps_all_restore_flag_ != "true" ]]
+    [[ $_object_user_opts_apps_all_restore_flag_ != 'true' ]]
     }
 User.Opts.Apps.All.Restore.IsSet()
     {
-    [[ $_object_user_opts_apps_all_restore_flag_ = "true" ]]
+    [[ $_object_user_opts_apps_all_restore_flag_ = 'true' ]]
     }
 User.Opts.Apps.All.Restore.List()
     {
     echo -n "${_object_user_opts_apps_all_restore_array_[*]}"
+    }
+User.Opts.Apps.All.Restore.ListComma()
+    {
+    echo -n "${_object_user_opts_apps_all_restore_array_[*]}" | tr ' ' ','
     }
 User.Opts.Apps.All.Restore.Path()
     {
@@ -2958,7 +3042,7 @@ User.Opts.Apps.All.Restore.Remove()
     }
 User.Opts.Apps.All.Restore.Set()
     {
-    [[ $_object_user_opts_apps_all_restore_flag_ = "true" ]] && return
+    [[ $_object_user_opts_apps_all_restore_flag_ = 'true' ]] && return
     _object_user_opts_apps_all_restore_flag_=true
     DebugVar _object_user_opts_apps_all_restore_flag_
     }
@@ -2990,7 +3074,7 @@ User.Opts.Apps.All.Uninstall.Array()
     }
 User.Opts.Apps.All.Uninstall.Clear()
     {
-    [[ $_object_user_opts_apps_all_uninstall_flag_ != "true" ]] && return
+    [[ $_object_user_opts_apps_all_uninstall_flag_ != 'true' ]] && return
     _object_user_opts_apps_all_uninstall_flag_=false
     DebugVar _object_user_opts_apps_all_uninstall_flag_
     }
@@ -3000,13 +3084,13 @@ User.Opts.Apps.All.Uninstall.Count()
     }
 User.Opts.Apps.All.Uninstall.Disable()
     {
-    [[ $_object_user_opts_apps_all_uninstall_enable_ != "true" ]] && return
+    [[ $_object_user_opts_apps_all_uninstall_enable_ != 'true' ]] && return
     _object_user_opts_apps_all_uninstall_enable_=false
     DebugVar _object_user_opts_apps_all_uninstall_enable_
     }
 User.Opts.Apps.All.Uninstall.Enable()
     {
-    [[ $_object_user_opts_apps_all_uninstall_enable_ = "true" ]] && return
+    [[ $_object_user_opts_apps_all_uninstall_enable_ = 'true' ]] && return
     _object_user_opts_apps_all_uninstall_enable_=true
     DebugVar _object_user_opts_apps_all_uninstall_enable_
     }
@@ -3038,7 +3122,7 @@ User.Opts.Apps.All.Uninstall.GetItem()
     }
 User.Opts.Apps.All.Uninstall.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_user_opts_apps_all_uninstall_array_[@]} ]]; then
             _object_user_opts_apps_all_uninstall_array_index_=${#_object_user_opts_apps_all_uninstall_array_[@]}
         else
@@ -3051,12 +3135,12 @@ User.Opts.Apps.All.Uninstall.Index()
 User.Opts.Apps.All.Uninstall.Init()
     {
     _object_user_opts_apps_all_uninstall_value_=0
-    _object_user_opts_apps_all_uninstall_text_=""
+    _object_user_opts_apps_all_uninstall_text_=''
     _object_user_opts_apps_all_uninstall_flag_=false
     _object_user_opts_apps_all_uninstall_enable_=false
     _object_user_opts_apps_all_uninstall_array_+=()
     _object_user_opts_apps_all_uninstall_array_index_=1
-    _object_user_opts_apps_all_uninstall_path_=""
+    _object_user_opts_apps_all_uninstall_path_=''
     }
 User.Opts.Apps.All.Uninstall.IsAny()
     {
@@ -3064,11 +3148,11 @@ User.Opts.Apps.All.Uninstall.IsAny()
     }
 User.Opts.Apps.All.Uninstall.IsDisabled()
     {
-    [[ $_object_user_opts_apps_all_uninstall_enable_ != "true" ]]
+    [[ $_object_user_opts_apps_all_uninstall_enable_ != 'true' ]]
     }
 User.Opts.Apps.All.Uninstall.IsEnabled()
     {
-    [[ $_object_user_opts_apps_all_uninstall_enable_ = "true" ]]
+    [[ $_object_user_opts_apps_all_uninstall_enable_ = 'true' ]]
     }
 User.Opts.Apps.All.Uninstall.IsNone()
     {
@@ -3076,15 +3160,19 @@ User.Opts.Apps.All.Uninstall.IsNone()
     }
 User.Opts.Apps.All.Uninstall.IsNot()
     {
-    [[ $_object_user_opts_apps_all_uninstall_flag_ != "true" ]]
+    [[ $_object_user_opts_apps_all_uninstall_flag_ != 'true' ]]
     }
 User.Opts.Apps.All.Uninstall.IsSet()
     {
-    [[ $_object_user_opts_apps_all_uninstall_flag_ = "true" ]]
+    [[ $_object_user_opts_apps_all_uninstall_flag_ = 'true' ]]
     }
 User.Opts.Apps.All.Uninstall.List()
     {
     echo -n "${_object_user_opts_apps_all_uninstall_array_[*]}"
+    }
+User.Opts.Apps.All.Uninstall.ListComma()
+    {
+    echo -n "${_object_user_opts_apps_all_uninstall_array_[*]}" | tr ' ' ','
     }
 User.Opts.Apps.All.Uninstall.Path()
     {
@@ -3100,7 +3188,7 @@ User.Opts.Apps.All.Uninstall.Remove()
     }
 User.Opts.Apps.All.Uninstall.Set()
     {
-    [[ $_object_user_opts_apps_all_uninstall_flag_ = "true" ]] && return
+    [[ $_object_user_opts_apps_all_uninstall_flag_ = 'true' ]] && return
     _object_user_opts_apps_all_uninstall_flag_=true
     DebugVar _object_user_opts_apps_all_uninstall_flag_
     }
@@ -3132,7 +3220,7 @@ User.Opts.Apps.All.Upgrade.Array()
     }
 User.Opts.Apps.All.Upgrade.Clear()
     {
-    [[ $_object_user_opts_apps_all_upgrade_flag_ != "true" ]] && return
+    [[ $_object_user_opts_apps_all_upgrade_flag_ != 'true' ]] && return
     _object_user_opts_apps_all_upgrade_flag_=false
     DebugVar _object_user_opts_apps_all_upgrade_flag_
     }
@@ -3142,13 +3230,13 @@ User.Opts.Apps.All.Upgrade.Count()
     }
 User.Opts.Apps.All.Upgrade.Disable()
     {
-    [[ $_object_user_opts_apps_all_upgrade_enable_ != "true" ]] && return
+    [[ $_object_user_opts_apps_all_upgrade_enable_ != 'true' ]] && return
     _object_user_opts_apps_all_upgrade_enable_=false
     DebugVar _object_user_opts_apps_all_upgrade_enable_
     }
 User.Opts.Apps.All.Upgrade.Enable()
     {
-    [[ $_object_user_opts_apps_all_upgrade_enable_ = "true" ]] && return
+    [[ $_object_user_opts_apps_all_upgrade_enable_ = 'true' ]] && return
     _object_user_opts_apps_all_upgrade_enable_=true
     DebugVar _object_user_opts_apps_all_upgrade_enable_
     }
@@ -3180,7 +3268,7 @@ User.Opts.Apps.All.Upgrade.GetItem()
     }
 User.Opts.Apps.All.Upgrade.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_user_opts_apps_all_upgrade_array_[@]} ]]; then
             _object_user_opts_apps_all_upgrade_array_index_=${#_object_user_opts_apps_all_upgrade_array_[@]}
         else
@@ -3193,12 +3281,12 @@ User.Opts.Apps.All.Upgrade.Index()
 User.Opts.Apps.All.Upgrade.Init()
     {
     _object_user_opts_apps_all_upgrade_value_=0
-    _object_user_opts_apps_all_upgrade_text_=""
+    _object_user_opts_apps_all_upgrade_text_=''
     _object_user_opts_apps_all_upgrade_flag_=false
     _object_user_opts_apps_all_upgrade_enable_=false
     _object_user_opts_apps_all_upgrade_array_+=()
     _object_user_opts_apps_all_upgrade_array_index_=1
-    _object_user_opts_apps_all_upgrade_path_=""
+    _object_user_opts_apps_all_upgrade_path_=''
     }
 User.Opts.Apps.All.Upgrade.IsAny()
     {
@@ -3206,11 +3294,11 @@ User.Opts.Apps.All.Upgrade.IsAny()
     }
 User.Opts.Apps.All.Upgrade.IsDisabled()
     {
-    [[ $_object_user_opts_apps_all_upgrade_enable_ != "true" ]]
+    [[ $_object_user_opts_apps_all_upgrade_enable_ != 'true' ]]
     }
 User.Opts.Apps.All.Upgrade.IsEnabled()
     {
-    [[ $_object_user_opts_apps_all_upgrade_enable_ = "true" ]]
+    [[ $_object_user_opts_apps_all_upgrade_enable_ = 'true' ]]
     }
 User.Opts.Apps.All.Upgrade.IsNone()
     {
@@ -3218,15 +3306,19 @@ User.Opts.Apps.All.Upgrade.IsNone()
     }
 User.Opts.Apps.All.Upgrade.IsNot()
     {
-    [[ $_object_user_opts_apps_all_upgrade_flag_ != "true" ]]
+    [[ $_object_user_opts_apps_all_upgrade_flag_ != 'true' ]]
     }
 User.Opts.Apps.All.Upgrade.IsSet()
     {
-    [[ $_object_user_opts_apps_all_upgrade_flag_ = "true" ]]
+    [[ $_object_user_opts_apps_all_upgrade_flag_ = 'true' ]]
     }
 User.Opts.Apps.All.Upgrade.List()
     {
     echo -n "${_object_user_opts_apps_all_upgrade_array_[*]}"
+    }
+User.Opts.Apps.All.Upgrade.ListComma()
+    {
+    echo -n "${_object_user_opts_apps_all_upgrade_array_[*]}" | tr ' ' ','
     }
 User.Opts.Apps.All.Upgrade.Path()
     {
@@ -3242,7 +3334,7 @@ User.Opts.Apps.All.Upgrade.Remove()
     }
 User.Opts.Apps.All.Upgrade.Set()
     {
-    [[ $_object_user_opts_apps_all_upgrade_flag_ = "true" ]] && return
+    [[ $_object_user_opts_apps_all_upgrade_flag_ = 'true' ]] && return
     _object_user_opts_apps_all_upgrade_flag_=true
     DebugVar _object_user_opts_apps_all_upgrade_flag_
     }
@@ -3274,7 +3366,7 @@ User.Opts.Apps.List.All.Array()
     }
 User.Opts.Apps.List.All.Clear()
     {
-    [[ $_object_user_opts_apps_list_all_flag_ != "true" ]] && return
+    [[ $_object_user_opts_apps_list_all_flag_ != 'true' ]] && return
     _object_user_opts_apps_list_all_flag_=false
     DebugVar _object_user_opts_apps_list_all_flag_
     }
@@ -3284,13 +3376,13 @@ User.Opts.Apps.List.All.Count()
     }
 User.Opts.Apps.List.All.Disable()
     {
-    [[ $_object_user_opts_apps_list_all_enable_ != "true" ]] && return
+    [[ $_object_user_opts_apps_list_all_enable_ != 'true' ]] && return
     _object_user_opts_apps_list_all_enable_=false
     DebugVar _object_user_opts_apps_list_all_enable_
     }
 User.Opts.Apps.List.All.Enable()
     {
-    [[ $_object_user_opts_apps_list_all_enable_ = "true" ]] && return
+    [[ $_object_user_opts_apps_list_all_enable_ = 'true' ]] && return
     _object_user_opts_apps_list_all_enable_=true
     DebugVar _object_user_opts_apps_list_all_enable_
     }
@@ -3322,7 +3414,7 @@ User.Opts.Apps.List.All.GetItem()
     }
 User.Opts.Apps.List.All.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_user_opts_apps_list_all_array_[@]} ]]; then
             _object_user_opts_apps_list_all_array_index_=${#_object_user_opts_apps_list_all_array_[@]}
         else
@@ -3335,12 +3427,12 @@ User.Opts.Apps.List.All.Index()
 User.Opts.Apps.List.All.Init()
     {
     _object_user_opts_apps_list_all_value_=0
-    _object_user_opts_apps_list_all_text_=""
+    _object_user_opts_apps_list_all_text_=''
     _object_user_opts_apps_list_all_flag_=false
     _object_user_opts_apps_list_all_enable_=false
     _object_user_opts_apps_list_all_array_+=()
     _object_user_opts_apps_list_all_array_index_=1
-    _object_user_opts_apps_list_all_path_=""
+    _object_user_opts_apps_list_all_path_=''
     }
 User.Opts.Apps.List.All.IsAny()
     {
@@ -3348,11 +3440,11 @@ User.Opts.Apps.List.All.IsAny()
     }
 User.Opts.Apps.List.All.IsDisabled()
     {
-    [[ $_object_user_opts_apps_list_all_enable_ != "true" ]]
+    [[ $_object_user_opts_apps_list_all_enable_ != 'true' ]]
     }
 User.Opts.Apps.List.All.IsEnabled()
     {
-    [[ $_object_user_opts_apps_list_all_enable_ = "true" ]]
+    [[ $_object_user_opts_apps_list_all_enable_ = 'true' ]]
     }
 User.Opts.Apps.List.All.IsNone()
     {
@@ -3360,15 +3452,19 @@ User.Opts.Apps.List.All.IsNone()
     }
 User.Opts.Apps.List.All.IsNot()
     {
-    [[ $_object_user_opts_apps_list_all_flag_ != "true" ]]
+    [[ $_object_user_opts_apps_list_all_flag_ != 'true' ]]
     }
 User.Opts.Apps.List.All.IsSet()
     {
-    [[ $_object_user_opts_apps_list_all_flag_ = "true" ]]
+    [[ $_object_user_opts_apps_list_all_flag_ = 'true' ]]
     }
 User.Opts.Apps.List.All.List()
     {
     echo -n "${_object_user_opts_apps_list_all_array_[*]}"
+    }
+User.Opts.Apps.List.All.ListComma()
+    {
+    echo -n "${_object_user_opts_apps_list_all_array_[*]}" | tr ' ' ','
     }
 User.Opts.Apps.List.All.Path()
     {
@@ -3384,7 +3480,7 @@ User.Opts.Apps.List.All.Remove()
     }
 User.Opts.Apps.List.All.Set()
     {
-    [[ $_object_user_opts_apps_list_all_flag_ = "true" ]] && return
+    [[ $_object_user_opts_apps_list_all_flag_ = 'true' ]] && return
     _object_user_opts_apps_list_all_flag_=true
     DebugVar _object_user_opts_apps_list_all_flag_
     }
@@ -3416,7 +3512,7 @@ User.Opts.Apps.List.Installed.Array()
     }
 User.Opts.Apps.List.Installed.Clear()
     {
-    [[ $_object_user_opts_apps_list_installed_flag_ != "true" ]] && return
+    [[ $_object_user_opts_apps_list_installed_flag_ != 'true' ]] && return
     _object_user_opts_apps_list_installed_flag_=false
     DebugVar _object_user_opts_apps_list_installed_flag_
     }
@@ -3426,13 +3522,13 @@ User.Opts.Apps.List.Installed.Count()
     }
 User.Opts.Apps.List.Installed.Disable()
     {
-    [[ $_object_user_opts_apps_list_installed_enable_ != "true" ]] && return
+    [[ $_object_user_opts_apps_list_installed_enable_ != 'true' ]] && return
     _object_user_opts_apps_list_installed_enable_=false
     DebugVar _object_user_opts_apps_list_installed_enable_
     }
 User.Opts.Apps.List.Installed.Enable()
     {
-    [[ $_object_user_opts_apps_list_installed_enable_ = "true" ]] && return
+    [[ $_object_user_opts_apps_list_installed_enable_ = 'true' ]] && return
     _object_user_opts_apps_list_installed_enable_=true
     DebugVar _object_user_opts_apps_list_installed_enable_
     }
@@ -3464,7 +3560,7 @@ User.Opts.Apps.List.Installed.GetItem()
     }
 User.Opts.Apps.List.Installed.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_user_opts_apps_list_installed_array_[@]} ]]; then
             _object_user_opts_apps_list_installed_array_index_=${#_object_user_opts_apps_list_installed_array_[@]}
         else
@@ -3477,12 +3573,12 @@ User.Opts.Apps.List.Installed.Index()
 User.Opts.Apps.List.Installed.Init()
     {
     _object_user_opts_apps_list_installed_value_=0
-    _object_user_opts_apps_list_installed_text_=""
+    _object_user_opts_apps_list_installed_text_=''
     _object_user_opts_apps_list_installed_flag_=false
     _object_user_opts_apps_list_installed_enable_=false
     _object_user_opts_apps_list_installed_array_+=()
     _object_user_opts_apps_list_installed_array_index_=1
-    _object_user_opts_apps_list_installed_path_=""
+    _object_user_opts_apps_list_installed_path_=''
     }
 User.Opts.Apps.List.Installed.IsAny()
     {
@@ -3490,11 +3586,11 @@ User.Opts.Apps.List.Installed.IsAny()
     }
 User.Opts.Apps.List.Installed.IsDisabled()
     {
-    [[ $_object_user_opts_apps_list_installed_enable_ != "true" ]]
+    [[ $_object_user_opts_apps_list_installed_enable_ != 'true' ]]
     }
 User.Opts.Apps.List.Installed.IsEnabled()
     {
-    [[ $_object_user_opts_apps_list_installed_enable_ = "true" ]]
+    [[ $_object_user_opts_apps_list_installed_enable_ = 'true' ]]
     }
 User.Opts.Apps.List.Installed.IsNone()
     {
@@ -3502,15 +3598,19 @@ User.Opts.Apps.List.Installed.IsNone()
     }
 User.Opts.Apps.List.Installed.IsNot()
     {
-    [[ $_object_user_opts_apps_list_installed_flag_ != "true" ]]
+    [[ $_object_user_opts_apps_list_installed_flag_ != 'true' ]]
     }
 User.Opts.Apps.List.Installed.IsSet()
     {
-    [[ $_object_user_opts_apps_list_installed_flag_ = "true" ]]
+    [[ $_object_user_opts_apps_list_installed_flag_ = 'true' ]]
     }
 User.Opts.Apps.List.Installed.List()
     {
     echo -n "${_object_user_opts_apps_list_installed_array_[*]}"
+    }
+User.Opts.Apps.List.Installed.ListComma()
+    {
+    echo -n "${_object_user_opts_apps_list_installed_array_[*]}" | tr ' ' ','
     }
 User.Opts.Apps.List.Installed.Path()
     {
@@ -3526,7 +3626,7 @@ User.Opts.Apps.List.Installed.Remove()
     }
 User.Opts.Apps.List.Installed.Set()
     {
-    [[ $_object_user_opts_apps_list_installed_flag_ = "true" ]] && return
+    [[ $_object_user_opts_apps_list_installed_flag_ = 'true' ]] && return
     _object_user_opts_apps_list_installed_flag_=true
     DebugVar _object_user_opts_apps_list_installed_flag_
     }
@@ -3558,7 +3658,7 @@ User.Opts.Apps.List.NotInstalled.Array()
     }
 User.Opts.Apps.List.NotInstalled.Clear()
     {
-    [[ $_object_user_opts_apps_list_notinstalled_flag_ != "true" ]] && return
+    [[ $_object_user_opts_apps_list_notinstalled_flag_ != 'true' ]] && return
     _object_user_opts_apps_list_notinstalled_flag_=false
     DebugVar _object_user_opts_apps_list_notinstalled_flag_
     }
@@ -3568,13 +3668,13 @@ User.Opts.Apps.List.NotInstalled.Count()
     }
 User.Opts.Apps.List.NotInstalled.Disable()
     {
-    [[ $_object_user_opts_apps_list_notinstalled_enable_ != "true" ]] && return
+    [[ $_object_user_opts_apps_list_notinstalled_enable_ != 'true' ]] && return
     _object_user_opts_apps_list_notinstalled_enable_=false
     DebugVar _object_user_opts_apps_list_notinstalled_enable_
     }
 User.Opts.Apps.List.NotInstalled.Enable()
     {
-    [[ $_object_user_opts_apps_list_notinstalled_enable_ = "true" ]] && return
+    [[ $_object_user_opts_apps_list_notinstalled_enable_ = 'true' ]] && return
     _object_user_opts_apps_list_notinstalled_enable_=true
     DebugVar _object_user_opts_apps_list_notinstalled_enable_
     }
@@ -3606,7 +3706,7 @@ User.Opts.Apps.List.NotInstalled.GetItem()
     }
 User.Opts.Apps.List.NotInstalled.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_user_opts_apps_list_notinstalled_array_[@]} ]]; then
             _object_user_opts_apps_list_notinstalled_array_index_=${#_object_user_opts_apps_list_notinstalled_array_[@]}
         else
@@ -3619,12 +3719,12 @@ User.Opts.Apps.List.NotInstalled.Index()
 User.Opts.Apps.List.NotInstalled.Init()
     {
     _object_user_opts_apps_list_notinstalled_value_=0
-    _object_user_opts_apps_list_notinstalled_text_=""
+    _object_user_opts_apps_list_notinstalled_text_=''
     _object_user_opts_apps_list_notinstalled_flag_=false
     _object_user_opts_apps_list_notinstalled_enable_=false
     _object_user_opts_apps_list_notinstalled_array_+=()
     _object_user_opts_apps_list_notinstalled_array_index_=1
-    _object_user_opts_apps_list_notinstalled_path_=""
+    _object_user_opts_apps_list_notinstalled_path_=''
     }
 User.Opts.Apps.List.NotInstalled.IsAny()
     {
@@ -3632,11 +3732,11 @@ User.Opts.Apps.List.NotInstalled.IsAny()
     }
 User.Opts.Apps.List.NotInstalled.IsDisabled()
     {
-    [[ $_object_user_opts_apps_list_notinstalled_enable_ != "true" ]]
+    [[ $_object_user_opts_apps_list_notinstalled_enable_ != 'true' ]]
     }
 User.Opts.Apps.List.NotInstalled.IsEnabled()
     {
-    [[ $_object_user_opts_apps_list_notinstalled_enable_ = "true" ]]
+    [[ $_object_user_opts_apps_list_notinstalled_enable_ = 'true' ]]
     }
 User.Opts.Apps.List.NotInstalled.IsNone()
     {
@@ -3644,15 +3744,19 @@ User.Opts.Apps.List.NotInstalled.IsNone()
     }
 User.Opts.Apps.List.NotInstalled.IsNot()
     {
-    [[ $_object_user_opts_apps_list_notinstalled_flag_ != "true" ]]
+    [[ $_object_user_opts_apps_list_notinstalled_flag_ != 'true' ]]
     }
 User.Opts.Apps.List.NotInstalled.IsSet()
     {
-    [[ $_object_user_opts_apps_list_notinstalled_flag_ = "true" ]]
+    [[ $_object_user_opts_apps_list_notinstalled_flag_ = 'true' ]]
     }
 User.Opts.Apps.List.NotInstalled.List()
     {
     echo -n "${_object_user_opts_apps_list_notinstalled_array_[*]}"
+    }
+User.Opts.Apps.List.NotInstalled.ListComma()
+    {
+    echo -n "${_object_user_opts_apps_list_notinstalled_array_[*]}" | tr ' ' ','
     }
 User.Opts.Apps.List.NotInstalled.Path()
     {
@@ -3668,7 +3772,7 @@ User.Opts.Apps.List.NotInstalled.Remove()
     }
 User.Opts.Apps.List.NotInstalled.Set()
     {
-    [[ $_object_user_opts_apps_list_notinstalled_flag_ = "true" ]] && return
+    [[ $_object_user_opts_apps_list_notinstalled_flag_ = 'true' ]] && return
     _object_user_opts_apps_list_notinstalled_flag_=true
     DebugVar _object_user_opts_apps_list_notinstalled_flag_
     }
@@ -3700,7 +3804,7 @@ User.Opts.Apps.List.Upgradable.Array()
     }
 User.Opts.Apps.List.Upgradable.Clear()
     {
-    [[ $_object_user_opts_apps_list_upgradable_flag_ != "true" ]] && return
+    [[ $_object_user_opts_apps_list_upgradable_flag_ != 'true' ]] && return
     _object_user_opts_apps_list_upgradable_flag_=false
     DebugVar _object_user_opts_apps_list_upgradable_flag_
     }
@@ -3710,13 +3814,13 @@ User.Opts.Apps.List.Upgradable.Count()
     }
 User.Opts.Apps.List.Upgradable.Disable()
     {
-    [[ $_object_user_opts_apps_list_upgradable_enable_ != "true" ]] && return
+    [[ $_object_user_opts_apps_list_upgradable_enable_ != 'true' ]] && return
     _object_user_opts_apps_list_upgradable_enable_=false
     DebugVar _object_user_opts_apps_list_upgradable_enable_
     }
 User.Opts.Apps.List.Upgradable.Enable()
     {
-    [[ $_object_user_opts_apps_list_upgradable_enable_ = "true" ]] && return
+    [[ $_object_user_opts_apps_list_upgradable_enable_ = 'true' ]] && return
     _object_user_opts_apps_list_upgradable_enable_=true
     DebugVar _object_user_opts_apps_list_upgradable_enable_
     }
@@ -3748,7 +3852,7 @@ User.Opts.Apps.List.Upgradable.GetItem()
     }
 User.Opts.Apps.List.Upgradable.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_user_opts_apps_list_upgradable_array_[@]} ]]; then
             _object_user_opts_apps_list_upgradable_array_index_=${#_object_user_opts_apps_list_upgradable_array_[@]}
         else
@@ -3761,12 +3865,12 @@ User.Opts.Apps.List.Upgradable.Index()
 User.Opts.Apps.List.Upgradable.Init()
     {
     _object_user_opts_apps_list_upgradable_value_=0
-    _object_user_opts_apps_list_upgradable_text_=""
+    _object_user_opts_apps_list_upgradable_text_=''
     _object_user_opts_apps_list_upgradable_flag_=false
     _object_user_opts_apps_list_upgradable_enable_=false
     _object_user_opts_apps_list_upgradable_array_+=()
     _object_user_opts_apps_list_upgradable_array_index_=1
-    _object_user_opts_apps_list_upgradable_path_=""
+    _object_user_opts_apps_list_upgradable_path_=''
     }
 User.Opts.Apps.List.Upgradable.IsAny()
     {
@@ -3774,11 +3878,11 @@ User.Opts.Apps.List.Upgradable.IsAny()
     }
 User.Opts.Apps.List.Upgradable.IsDisabled()
     {
-    [[ $_object_user_opts_apps_list_upgradable_enable_ != "true" ]]
+    [[ $_object_user_opts_apps_list_upgradable_enable_ != 'true' ]]
     }
 User.Opts.Apps.List.Upgradable.IsEnabled()
     {
-    [[ $_object_user_opts_apps_list_upgradable_enable_ = "true" ]]
+    [[ $_object_user_opts_apps_list_upgradable_enable_ = 'true' ]]
     }
 User.Opts.Apps.List.Upgradable.IsNone()
     {
@@ -3786,15 +3890,19 @@ User.Opts.Apps.List.Upgradable.IsNone()
     }
 User.Opts.Apps.List.Upgradable.IsNot()
     {
-    [[ $_object_user_opts_apps_list_upgradable_flag_ != "true" ]]
+    [[ $_object_user_opts_apps_list_upgradable_flag_ != 'true' ]]
     }
 User.Opts.Apps.List.Upgradable.IsSet()
     {
-    [[ $_object_user_opts_apps_list_upgradable_flag_ = "true" ]]
+    [[ $_object_user_opts_apps_list_upgradable_flag_ = 'true' ]]
     }
 User.Opts.Apps.List.Upgradable.List()
     {
     echo -n "${_object_user_opts_apps_list_upgradable_array_[*]}"
+    }
+User.Opts.Apps.List.Upgradable.ListComma()
+    {
+    echo -n "${_object_user_opts_apps_list_upgradable_array_[*]}" | tr ' ' ','
     }
 User.Opts.Apps.List.Upgradable.Path()
     {
@@ -3810,7 +3918,7 @@ User.Opts.Apps.List.Upgradable.Remove()
     }
 User.Opts.Apps.List.Upgradable.Set()
     {
-    [[ $_object_user_opts_apps_list_upgradable_flag_ = "true" ]] && return
+    [[ $_object_user_opts_apps_list_upgradable_flag_ = 'true' ]] && return
     _object_user_opts_apps_list_upgradable_flag_=true
     DebugVar _object_user_opts_apps_list_upgradable_flag_
     }
@@ -3842,7 +3950,7 @@ QPKGs.Dependant.Array()
     }
 QPKGs.Dependant.Clear()
     {
-    [[ $_object_qpkgs_dependant_flag_ != "true" ]] && return
+    [[ $_object_qpkgs_dependant_flag_ != 'true' ]] && return
     _object_qpkgs_dependant_flag_=false
     DebugVar _object_qpkgs_dependant_flag_
     }
@@ -3852,13 +3960,13 @@ QPKGs.Dependant.Count()
     }
 QPKGs.Dependant.Disable()
     {
-    [[ $_object_qpkgs_dependant_enable_ != "true" ]] && return
+    [[ $_object_qpkgs_dependant_enable_ != 'true' ]] && return
     _object_qpkgs_dependant_enable_=false
     DebugVar _object_qpkgs_dependant_enable_
     }
 QPKGs.Dependant.Enable()
     {
-    [[ $_object_qpkgs_dependant_enable_ = "true" ]] && return
+    [[ $_object_qpkgs_dependant_enable_ = 'true' ]] && return
     _object_qpkgs_dependant_enable_=true
     DebugVar _object_qpkgs_dependant_enable_
     }
@@ -3890,7 +3998,7 @@ QPKGs.Dependant.GetItem()
     }
 QPKGs.Dependant.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_qpkgs_dependant_array_[@]} ]]; then
             _object_qpkgs_dependant_array_index_=${#_object_qpkgs_dependant_array_[@]}
         else
@@ -3903,12 +4011,12 @@ QPKGs.Dependant.Index()
 QPKGs.Dependant.Init()
     {
     _object_qpkgs_dependant_value_=0
-    _object_qpkgs_dependant_text_=""
+    _object_qpkgs_dependant_text_=''
     _object_qpkgs_dependant_flag_=false
     _object_qpkgs_dependant_enable_=false
     _object_qpkgs_dependant_array_+=()
     _object_qpkgs_dependant_array_index_=1
-    _object_qpkgs_dependant_path_=""
+    _object_qpkgs_dependant_path_=''
     }
 QPKGs.Dependant.IsAny()
     {
@@ -3916,11 +4024,11 @@ QPKGs.Dependant.IsAny()
     }
 QPKGs.Dependant.IsDisabled()
     {
-    [[ $_object_qpkgs_dependant_enable_ != "true" ]]
+    [[ $_object_qpkgs_dependant_enable_ != 'true' ]]
     }
 QPKGs.Dependant.IsEnabled()
     {
-    [[ $_object_qpkgs_dependant_enable_ = "true" ]]
+    [[ $_object_qpkgs_dependant_enable_ = 'true' ]]
     }
 QPKGs.Dependant.IsNone()
     {
@@ -3928,15 +4036,19 @@ QPKGs.Dependant.IsNone()
     }
 QPKGs.Dependant.IsNot()
     {
-    [[ $_object_qpkgs_dependant_flag_ != "true" ]]
+    [[ $_object_qpkgs_dependant_flag_ != 'true' ]]
     }
 QPKGs.Dependant.IsSet()
     {
-    [[ $_object_qpkgs_dependant_flag_ = "true" ]]
+    [[ $_object_qpkgs_dependant_flag_ = 'true' ]]
     }
 QPKGs.Dependant.List()
     {
     echo -n "${_object_qpkgs_dependant_array_[*]}"
+    }
+QPKGs.Dependant.ListComma()
+    {
+    echo -n "${_object_qpkgs_dependant_array_[*]}" | tr ' ' ','
     }
 QPKGs.Dependant.Path()
     {
@@ -3952,7 +4064,7 @@ QPKGs.Dependant.Remove()
     }
 QPKGs.Dependant.Set()
     {
-    [[ $_object_qpkgs_dependant_flag_ = "true" ]] && return
+    [[ $_object_qpkgs_dependant_flag_ = 'true' ]] && return
     _object_qpkgs_dependant_flag_=true
     DebugVar _object_qpkgs_dependant_flag_
     }
@@ -3984,7 +4096,7 @@ QPKGs.Independent.Array()
     }
 QPKGs.Independent.Clear()
     {
-    [[ $_object_qpkgs_independent_flag_ != "true" ]] && return
+    [[ $_object_qpkgs_independent_flag_ != 'true' ]] && return
     _object_qpkgs_independent_flag_=false
     DebugVar _object_qpkgs_independent_flag_
     }
@@ -3994,13 +4106,13 @@ QPKGs.Independent.Count()
     }
 QPKGs.Independent.Disable()
     {
-    [[ $_object_qpkgs_independent_enable_ != "true" ]] && return
+    [[ $_object_qpkgs_independent_enable_ != 'true' ]] && return
     _object_qpkgs_independent_enable_=false
     DebugVar _object_qpkgs_independent_enable_
     }
 QPKGs.Independent.Enable()
     {
-    [[ $_object_qpkgs_independent_enable_ = "true" ]] && return
+    [[ $_object_qpkgs_independent_enable_ = 'true' ]] && return
     _object_qpkgs_independent_enable_=true
     DebugVar _object_qpkgs_independent_enable_
     }
@@ -4032,7 +4144,7 @@ QPKGs.Independent.GetItem()
     }
 QPKGs.Independent.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_qpkgs_independent_array_[@]} ]]; then
             _object_qpkgs_independent_array_index_=${#_object_qpkgs_independent_array_[@]}
         else
@@ -4045,12 +4157,12 @@ QPKGs.Independent.Index()
 QPKGs.Independent.Init()
     {
     _object_qpkgs_independent_value_=0
-    _object_qpkgs_independent_text_=""
+    _object_qpkgs_independent_text_=''
     _object_qpkgs_independent_flag_=false
     _object_qpkgs_independent_enable_=false
     _object_qpkgs_independent_array_+=()
     _object_qpkgs_independent_array_index_=1
-    _object_qpkgs_independent_path_=""
+    _object_qpkgs_independent_path_=''
     }
 QPKGs.Independent.IsAny()
     {
@@ -4058,11 +4170,11 @@ QPKGs.Independent.IsAny()
     }
 QPKGs.Independent.IsDisabled()
     {
-    [[ $_object_qpkgs_independent_enable_ != "true" ]]
+    [[ $_object_qpkgs_independent_enable_ != 'true' ]]
     }
 QPKGs.Independent.IsEnabled()
     {
-    [[ $_object_qpkgs_independent_enable_ = "true" ]]
+    [[ $_object_qpkgs_independent_enable_ = 'true' ]]
     }
 QPKGs.Independent.IsNone()
     {
@@ -4070,15 +4182,19 @@ QPKGs.Independent.IsNone()
     }
 QPKGs.Independent.IsNot()
     {
-    [[ $_object_qpkgs_independent_flag_ != "true" ]]
+    [[ $_object_qpkgs_independent_flag_ != 'true' ]]
     }
 QPKGs.Independent.IsSet()
     {
-    [[ $_object_qpkgs_independent_flag_ = "true" ]]
+    [[ $_object_qpkgs_independent_flag_ = 'true' ]]
     }
 QPKGs.Independent.List()
     {
     echo -n "${_object_qpkgs_independent_array_[*]}"
+    }
+QPKGs.Independent.ListComma()
+    {
+    echo -n "${_object_qpkgs_independent_array_[*]}" | tr ' ' ','
     }
 QPKGs.Independent.Path()
     {
@@ -4094,7 +4210,7 @@ QPKGs.Independent.Remove()
     }
 QPKGs.Independent.Set()
     {
-    [[ $_object_qpkgs_independent_flag_ = "true" ]] && return
+    [[ $_object_qpkgs_independent_flag_ = 'true' ]] && return
     _object_qpkgs_independent_flag_=true
     DebugVar _object_qpkgs_independent_flag_
     }
@@ -4126,7 +4242,7 @@ QPKGs.Installable.Array()
     }
 QPKGs.Installable.Clear()
     {
-    [[ $_object_qpkgs_installable_flag_ != "true" ]] && return
+    [[ $_object_qpkgs_installable_flag_ != 'true' ]] && return
     _object_qpkgs_installable_flag_=false
     DebugVar _object_qpkgs_installable_flag_
     }
@@ -4136,13 +4252,13 @@ QPKGs.Installable.Count()
     }
 QPKGs.Installable.Disable()
     {
-    [[ $_object_qpkgs_installable_enable_ != "true" ]] && return
+    [[ $_object_qpkgs_installable_enable_ != 'true' ]] && return
     _object_qpkgs_installable_enable_=false
     DebugVar _object_qpkgs_installable_enable_
     }
 QPKGs.Installable.Enable()
     {
-    [[ $_object_qpkgs_installable_enable_ = "true" ]] && return
+    [[ $_object_qpkgs_installable_enable_ = 'true' ]] && return
     _object_qpkgs_installable_enable_=true
     DebugVar _object_qpkgs_installable_enable_
     }
@@ -4174,7 +4290,7 @@ QPKGs.Installable.GetItem()
     }
 QPKGs.Installable.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_qpkgs_installable_array_[@]} ]]; then
             _object_qpkgs_installable_array_index_=${#_object_qpkgs_installable_array_[@]}
         else
@@ -4187,12 +4303,12 @@ QPKGs.Installable.Index()
 QPKGs.Installable.Init()
     {
     _object_qpkgs_installable_value_=0
-    _object_qpkgs_installable_text_=""
+    _object_qpkgs_installable_text_=''
     _object_qpkgs_installable_flag_=false
     _object_qpkgs_installable_enable_=false
     _object_qpkgs_installable_array_+=()
     _object_qpkgs_installable_array_index_=1
-    _object_qpkgs_installable_path_=""
+    _object_qpkgs_installable_path_=''
     }
 QPKGs.Installable.IsAny()
     {
@@ -4200,11 +4316,11 @@ QPKGs.Installable.IsAny()
     }
 QPKGs.Installable.IsDisabled()
     {
-    [[ $_object_qpkgs_installable_enable_ != "true" ]]
+    [[ $_object_qpkgs_installable_enable_ != 'true' ]]
     }
 QPKGs.Installable.IsEnabled()
     {
-    [[ $_object_qpkgs_installable_enable_ = "true" ]]
+    [[ $_object_qpkgs_installable_enable_ = 'true' ]]
     }
 QPKGs.Installable.IsNone()
     {
@@ -4212,15 +4328,19 @@ QPKGs.Installable.IsNone()
     }
 QPKGs.Installable.IsNot()
     {
-    [[ $_object_qpkgs_installable_flag_ != "true" ]]
+    [[ $_object_qpkgs_installable_flag_ != 'true' ]]
     }
 QPKGs.Installable.IsSet()
     {
-    [[ $_object_qpkgs_installable_flag_ = "true" ]]
+    [[ $_object_qpkgs_installable_flag_ = 'true' ]]
     }
 QPKGs.Installable.List()
     {
     echo -n "${_object_qpkgs_installable_array_[*]}"
+    }
+QPKGs.Installable.ListComma()
+    {
+    echo -n "${_object_qpkgs_installable_array_[*]}" | tr ' ' ','
     }
 QPKGs.Installable.Path()
     {
@@ -4236,7 +4356,7 @@ QPKGs.Installable.Remove()
     }
 QPKGs.Installable.Set()
     {
-    [[ $_object_qpkgs_installable_flag_ = "true" ]] && return
+    [[ $_object_qpkgs_installable_flag_ = 'true' ]] && return
     _object_qpkgs_installable_flag_=true
     DebugVar _object_qpkgs_installable_flag_
     }
@@ -4268,7 +4388,7 @@ QPKGs.Installed.Array()
     }
 QPKGs.Installed.Clear()
     {
-    [[ $_object_qpkgs_installed_flag_ != "true" ]] && return
+    [[ $_object_qpkgs_installed_flag_ != 'true' ]] && return
     _object_qpkgs_installed_flag_=false
     DebugVar _object_qpkgs_installed_flag_
     }
@@ -4278,13 +4398,13 @@ QPKGs.Installed.Count()
     }
 QPKGs.Installed.Disable()
     {
-    [[ $_object_qpkgs_installed_enable_ != "true" ]] && return
+    [[ $_object_qpkgs_installed_enable_ != 'true' ]] && return
     _object_qpkgs_installed_enable_=false
     DebugVar _object_qpkgs_installed_enable_
     }
 QPKGs.Installed.Enable()
     {
-    [[ $_object_qpkgs_installed_enable_ = "true" ]] && return
+    [[ $_object_qpkgs_installed_enable_ = 'true' ]] && return
     _object_qpkgs_installed_enable_=true
     DebugVar _object_qpkgs_installed_enable_
     }
@@ -4316,7 +4436,7 @@ QPKGs.Installed.GetItem()
     }
 QPKGs.Installed.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_qpkgs_installed_array_[@]} ]]; then
             _object_qpkgs_installed_array_index_=${#_object_qpkgs_installed_array_[@]}
         else
@@ -4329,12 +4449,12 @@ QPKGs.Installed.Index()
 QPKGs.Installed.Init()
     {
     _object_qpkgs_installed_value_=0
-    _object_qpkgs_installed_text_=""
+    _object_qpkgs_installed_text_=''
     _object_qpkgs_installed_flag_=false
     _object_qpkgs_installed_enable_=false
     _object_qpkgs_installed_array_+=()
     _object_qpkgs_installed_array_index_=1
-    _object_qpkgs_installed_path_=""
+    _object_qpkgs_installed_path_=''
     }
 QPKGs.Installed.IsAny()
     {
@@ -4342,11 +4462,11 @@ QPKGs.Installed.IsAny()
     }
 QPKGs.Installed.IsDisabled()
     {
-    [[ $_object_qpkgs_installed_enable_ != "true" ]]
+    [[ $_object_qpkgs_installed_enable_ != 'true' ]]
     }
 QPKGs.Installed.IsEnabled()
     {
-    [[ $_object_qpkgs_installed_enable_ = "true" ]]
+    [[ $_object_qpkgs_installed_enable_ = 'true' ]]
     }
 QPKGs.Installed.IsNone()
     {
@@ -4354,15 +4474,19 @@ QPKGs.Installed.IsNone()
     }
 QPKGs.Installed.IsNot()
     {
-    [[ $_object_qpkgs_installed_flag_ != "true" ]]
+    [[ $_object_qpkgs_installed_flag_ != 'true' ]]
     }
 QPKGs.Installed.IsSet()
     {
-    [[ $_object_qpkgs_installed_flag_ = "true" ]]
+    [[ $_object_qpkgs_installed_flag_ = 'true' ]]
     }
 QPKGs.Installed.List()
     {
     echo -n "${_object_qpkgs_installed_array_[*]}"
+    }
+QPKGs.Installed.ListComma()
+    {
+    echo -n "${_object_qpkgs_installed_array_[*]}" | tr ' ' ','
     }
 QPKGs.Installed.Path()
     {
@@ -4378,7 +4502,7 @@ QPKGs.Installed.Remove()
     }
 QPKGs.Installed.Set()
     {
-    [[ $_object_qpkgs_installed_flag_ = "true" ]] && return
+    [[ $_object_qpkgs_installed_flag_ = 'true' ]] && return
     _object_qpkgs_installed_flag_=true
     DebugVar _object_qpkgs_installed_flag_
     }
@@ -4410,7 +4534,7 @@ QPKGs.JustInstalled.Array()
     }
 QPKGs.JustInstalled.Clear()
     {
-    [[ $_object_qpkgs_justinstalled_flag_ != "true" ]] && return
+    [[ $_object_qpkgs_justinstalled_flag_ != 'true' ]] && return
     _object_qpkgs_justinstalled_flag_=false
     DebugVar _object_qpkgs_justinstalled_flag_
     }
@@ -4420,13 +4544,13 @@ QPKGs.JustInstalled.Count()
     }
 QPKGs.JustInstalled.Disable()
     {
-    [[ $_object_qpkgs_justinstalled_enable_ != "true" ]] && return
+    [[ $_object_qpkgs_justinstalled_enable_ != 'true' ]] && return
     _object_qpkgs_justinstalled_enable_=false
     DebugVar _object_qpkgs_justinstalled_enable_
     }
 QPKGs.JustInstalled.Enable()
     {
-    [[ $_object_qpkgs_justinstalled_enable_ = "true" ]] && return
+    [[ $_object_qpkgs_justinstalled_enable_ = 'true' ]] && return
     _object_qpkgs_justinstalled_enable_=true
     DebugVar _object_qpkgs_justinstalled_enable_
     }
@@ -4458,7 +4582,7 @@ QPKGs.JustInstalled.GetItem()
     }
 QPKGs.JustInstalled.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_qpkgs_justinstalled_array_[@]} ]]; then
             _object_qpkgs_justinstalled_array_index_=${#_object_qpkgs_justinstalled_array_[@]}
         else
@@ -4471,12 +4595,12 @@ QPKGs.JustInstalled.Index()
 QPKGs.JustInstalled.Init()
     {
     _object_qpkgs_justinstalled_value_=0
-    _object_qpkgs_justinstalled_text_=""
+    _object_qpkgs_justinstalled_text_=''
     _object_qpkgs_justinstalled_flag_=false
     _object_qpkgs_justinstalled_enable_=false
     _object_qpkgs_justinstalled_array_+=()
     _object_qpkgs_justinstalled_array_index_=1
-    _object_qpkgs_justinstalled_path_=""
+    _object_qpkgs_justinstalled_path_=''
     }
 QPKGs.JustInstalled.IsAny()
     {
@@ -4484,11 +4608,11 @@ QPKGs.JustInstalled.IsAny()
     }
 QPKGs.JustInstalled.IsDisabled()
     {
-    [[ $_object_qpkgs_justinstalled_enable_ != "true" ]]
+    [[ $_object_qpkgs_justinstalled_enable_ != 'true' ]]
     }
 QPKGs.JustInstalled.IsEnabled()
     {
-    [[ $_object_qpkgs_justinstalled_enable_ = "true" ]]
+    [[ $_object_qpkgs_justinstalled_enable_ = 'true' ]]
     }
 QPKGs.JustInstalled.IsNone()
     {
@@ -4496,15 +4620,19 @@ QPKGs.JustInstalled.IsNone()
     }
 QPKGs.JustInstalled.IsNot()
     {
-    [[ $_object_qpkgs_justinstalled_flag_ != "true" ]]
+    [[ $_object_qpkgs_justinstalled_flag_ != 'true' ]]
     }
 QPKGs.JustInstalled.IsSet()
     {
-    [[ $_object_qpkgs_justinstalled_flag_ = "true" ]]
+    [[ $_object_qpkgs_justinstalled_flag_ = 'true' ]]
     }
 QPKGs.JustInstalled.List()
     {
     echo -n "${_object_qpkgs_justinstalled_array_[*]}"
+    }
+QPKGs.JustInstalled.ListComma()
+    {
+    echo -n "${_object_qpkgs_justinstalled_array_[*]}" | tr ' ' ','
     }
 QPKGs.JustInstalled.Path()
     {
@@ -4520,7 +4648,7 @@ QPKGs.JustInstalled.Remove()
     }
 QPKGs.JustInstalled.Set()
     {
-    [[ $_object_qpkgs_justinstalled_flag_ = "true" ]] && return
+    [[ $_object_qpkgs_justinstalled_flag_ = 'true' ]] && return
     _object_qpkgs_justinstalled_flag_=true
     DebugVar _object_qpkgs_justinstalled_flag_
     }
@@ -4552,7 +4680,7 @@ QPKGs.Names.Array()
     }
 QPKGs.Names.Clear()
     {
-    [[ $_object_qpkgs_names_flag_ != "true" ]] && return
+    [[ $_object_qpkgs_names_flag_ != 'true' ]] && return
     _object_qpkgs_names_flag_=false
     DebugVar _object_qpkgs_names_flag_
     }
@@ -4562,13 +4690,13 @@ QPKGs.Names.Count()
     }
 QPKGs.Names.Disable()
     {
-    [[ $_object_qpkgs_names_enable_ != "true" ]] && return
+    [[ $_object_qpkgs_names_enable_ != 'true' ]] && return
     _object_qpkgs_names_enable_=false
     DebugVar _object_qpkgs_names_enable_
     }
 QPKGs.Names.Enable()
     {
-    [[ $_object_qpkgs_names_enable_ = "true" ]] && return
+    [[ $_object_qpkgs_names_enable_ = 'true' ]] && return
     _object_qpkgs_names_enable_=true
     DebugVar _object_qpkgs_names_enable_
     }
@@ -4600,7 +4728,7 @@ QPKGs.Names.GetItem()
     }
 QPKGs.Names.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_qpkgs_names_array_[@]} ]]; then
             _object_qpkgs_names_array_index_=${#_object_qpkgs_names_array_[@]}
         else
@@ -4613,12 +4741,12 @@ QPKGs.Names.Index()
 QPKGs.Names.Init()
     {
     _object_qpkgs_names_value_=0
-    _object_qpkgs_names_text_=""
+    _object_qpkgs_names_text_=''
     _object_qpkgs_names_flag_=false
     _object_qpkgs_names_enable_=false
     _object_qpkgs_names_array_+=()
     _object_qpkgs_names_array_index_=1
-    _object_qpkgs_names_path_=""
+    _object_qpkgs_names_path_=''
     }
 QPKGs.Names.IsAny()
     {
@@ -4626,11 +4754,11 @@ QPKGs.Names.IsAny()
     }
 QPKGs.Names.IsDisabled()
     {
-    [[ $_object_qpkgs_names_enable_ != "true" ]]
+    [[ $_object_qpkgs_names_enable_ != 'true' ]]
     }
 QPKGs.Names.IsEnabled()
     {
-    [[ $_object_qpkgs_names_enable_ = "true" ]]
+    [[ $_object_qpkgs_names_enable_ = 'true' ]]
     }
 QPKGs.Names.IsNone()
     {
@@ -4638,15 +4766,19 @@ QPKGs.Names.IsNone()
     }
 QPKGs.Names.IsNot()
     {
-    [[ $_object_qpkgs_names_flag_ != "true" ]]
+    [[ $_object_qpkgs_names_flag_ != 'true' ]]
     }
 QPKGs.Names.IsSet()
     {
-    [[ $_object_qpkgs_names_flag_ = "true" ]]
+    [[ $_object_qpkgs_names_flag_ = 'true' ]]
     }
 QPKGs.Names.List()
     {
     echo -n "${_object_qpkgs_names_array_[*]}"
+    }
+QPKGs.Names.ListComma()
+    {
+    echo -n "${_object_qpkgs_names_array_[*]}" | tr ' ' ','
     }
 QPKGs.Names.Path()
     {
@@ -4662,7 +4794,7 @@ QPKGs.Names.Remove()
     }
 QPKGs.Names.Set()
     {
-    [[ $_object_qpkgs_names_flag_ = "true" ]] && return
+    [[ $_object_qpkgs_names_flag_ = 'true' ]] && return
     _object_qpkgs_names_flag_=true
     DebugVar _object_qpkgs_names_flag_
     }
@@ -4694,7 +4826,7 @@ QPKGs.NotInstalled.Array()
     }
 QPKGs.NotInstalled.Clear()
     {
-    [[ $_object_qpkgs_notinstalled_flag_ != "true" ]] && return
+    [[ $_object_qpkgs_notinstalled_flag_ != 'true' ]] && return
     _object_qpkgs_notinstalled_flag_=false
     DebugVar _object_qpkgs_notinstalled_flag_
     }
@@ -4704,13 +4836,13 @@ QPKGs.NotInstalled.Count()
     }
 QPKGs.NotInstalled.Disable()
     {
-    [[ $_object_qpkgs_notinstalled_enable_ != "true" ]] && return
+    [[ $_object_qpkgs_notinstalled_enable_ != 'true' ]] && return
     _object_qpkgs_notinstalled_enable_=false
     DebugVar _object_qpkgs_notinstalled_enable_
     }
 QPKGs.NotInstalled.Enable()
     {
-    [[ $_object_qpkgs_notinstalled_enable_ = "true" ]] && return
+    [[ $_object_qpkgs_notinstalled_enable_ = 'true' ]] && return
     _object_qpkgs_notinstalled_enable_=true
     DebugVar _object_qpkgs_notinstalled_enable_
     }
@@ -4742,7 +4874,7 @@ QPKGs.NotInstalled.GetItem()
     }
 QPKGs.NotInstalled.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_qpkgs_notinstalled_array_[@]} ]]; then
             _object_qpkgs_notinstalled_array_index_=${#_object_qpkgs_notinstalled_array_[@]}
         else
@@ -4755,12 +4887,12 @@ QPKGs.NotInstalled.Index()
 QPKGs.NotInstalled.Init()
     {
     _object_qpkgs_notinstalled_value_=0
-    _object_qpkgs_notinstalled_text_=""
+    _object_qpkgs_notinstalled_text_=''
     _object_qpkgs_notinstalled_flag_=false
     _object_qpkgs_notinstalled_enable_=false
     _object_qpkgs_notinstalled_array_+=()
     _object_qpkgs_notinstalled_array_index_=1
-    _object_qpkgs_notinstalled_path_=""
+    _object_qpkgs_notinstalled_path_=''
     }
 QPKGs.NotInstalled.IsAny()
     {
@@ -4768,11 +4900,11 @@ QPKGs.NotInstalled.IsAny()
     }
 QPKGs.NotInstalled.IsDisabled()
     {
-    [[ $_object_qpkgs_notinstalled_enable_ != "true" ]]
+    [[ $_object_qpkgs_notinstalled_enable_ != 'true' ]]
     }
 QPKGs.NotInstalled.IsEnabled()
     {
-    [[ $_object_qpkgs_notinstalled_enable_ = "true" ]]
+    [[ $_object_qpkgs_notinstalled_enable_ = 'true' ]]
     }
 QPKGs.NotInstalled.IsNone()
     {
@@ -4780,15 +4912,19 @@ QPKGs.NotInstalled.IsNone()
     }
 QPKGs.NotInstalled.IsNot()
     {
-    [[ $_object_qpkgs_notinstalled_flag_ != "true" ]]
+    [[ $_object_qpkgs_notinstalled_flag_ != 'true' ]]
     }
 QPKGs.NotInstalled.IsSet()
     {
-    [[ $_object_qpkgs_notinstalled_flag_ = "true" ]]
+    [[ $_object_qpkgs_notinstalled_flag_ = 'true' ]]
     }
 QPKGs.NotInstalled.List()
     {
     echo -n "${_object_qpkgs_notinstalled_array_[*]}"
+    }
+QPKGs.NotInstalled.ListComma()
+    {
+    echo -n "${_object_qpkgs_notinstalled_array_[*]}" | tr ' ' ','
     }
 QPKGs.NotInstalled.Path()
     {
@@ -4804,7 +4940,7 @@ QPKGs.NotInstalled.Remove()
     }
 QPKGs.NotInstalled.Set()
     {
-    [[ $_object_qpkgs_notinstalled_flag_ = "true" ]] && return
+    [[ $_object_qpkgs_notinstalled_flag_ = 'true' ]] && return
     _object_qpkgs_notinstalled_flag_=true
     DebugVar _object_qpkgs_notinstalled_flag_
     }
@@ -4836,7 +4972,7 @@ QPKGs.ToBackup.Array()
     }
 QPKGs.ToBackup.Clear()
     {
-    [[ $_object_qpkgs_tobackup_flag_ != "true" ]] && return
+    [[ $_object_qpkgs_tobackup_flag_ != 'true' ]] && return
     _object_qpkgs_tobackup_flag_=false
     DebugVar _object_qpkgs_tobackup_flag_
     }
@@ -4846,13 +4982,13 @@ QPKGs.ToBackup.Count()
     }
 QPKGs.ToBackup.Disable()
     {
-    [[ $_object_qpkgs_tobackup_enable_ != "true" ]] && return
+    [[ $_object_qpkgs_tobackup_enable_ != 'true' ]] && return
     _object_qpkgs_tobackup_enable_=false
     DebugVar _object_qpkgs_tobackup_enable_
     }
 QPKGs.ToBackup.Enable()
     {
-    [[ $_object_qpkgs_tobackup_enable_ = "true" ]] && return
+    [[ $_object_qpkgs_tobackup_enable_ = 'true' ]] && return
     _object_qpkgs_tobackup_enable_=true
     DebugVar _object_qpkgs_tobackup_enable_
     }
@@ -4884,7 +5020,7 @@ QPKGs.ToBackup.GetItem()
     }
 QPKGs.ToBackup.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_qpkgs_tobackup_array_[@]} ]]; then
             _object_qpkgs_tobackup_array_index_=${#_object_qpkgs_tobackup_array_[@]}
         else
@@ -4897,12 +5033,12 @@ QPKGs.ToBackup.Index()
 QPKGs.ToBackup.Init()
     {
     _object_qpkgs_tobackup_value_=0
-    _object_qpkgs_tobackup_text_=""
+    _object_qpkgs_tobackup_text_=''
     _object_qpkgs_tobackup_flag_=false
     _object_qpkgs_tobackup_enable_=false
     _object_qpkgs_tobackup_array_+=()
     _object_qpkgs_tobackup_array_index_=1
-    _object_qpkgs_tobackup_path_=""
+    _object_qpkgs_tobackup_path_=''
     }
 QPKGs.ToBackup.IsAny()
     {
@@ -4910,11 +5046,11 @@ QPKGs.ToBackup.IsAny()
     }
 QPKGs.ToBackup.IsDisabled()
     {
-    [[ $_object_qpkgs_tobackup_enable_ != "true" ]]
+    [[ $_object_qpkgs_tobackup_enable_ != 'true' ]]
     }
 QPKGs.ToBackup.IsEnabled()
     {
-    [[ $_object_qpkgs_tobackup_enable_ = "true" ]]
+    [[ $_object_qpkgs_tobackup_enable_ = 'true' ]]
     }
 QPKGs.ToBackup.IsNone()
     {
@@ -4922,15 +5058,19 @@ QPKGs.ToBackup.IsNone()
     }
 QPKGs.ToBackup.IsNot()
     {
-    [[ $_object_qpkgs_tobackup_flag_ != "true" ]]
+    [[ $_object_qpkgs_tobackup_flag_ != 'true' ]]
     }
 QPKGs.ToBackup.IsSet()
     {
-    [[ $_object_qpkgs_tobackup_flag_ = "true" ]]
+    [[ $_object_qpkgs_tobackup_flag_ = 'true' ]]
     }
 QPKGs.ToBackup.List()
     {
     echo -n "${_object_qpkgs_tobackup_array_[*]}"
+    }
+QPKGs.ToBackup.ListComma()
+    {
+    echo -n "${_object_qpkgs_tobackup_array_[*]}" | tr ' ' ','
     }
 QPKGs.ToBackup.Path()
     {
@@ -4946,7 +5086,7 @@ QPKGs.ToBackup.Remove()
     }
 QPKGs.ToBackup.Set()
     {
-    [[ $_object_qpkgs_tobackup_flag_ = "true" ]] && return
+    [[ $_object_qpkgs_tobackup_flag_ = 'true' ]] && return
     _object_qpkgs_tobackup_flag_=true
     DebugVar _object_qpkgs_tobackup_flag_
     }
@@ -4978,7 +5118,7 @@ QPKGs.ToDownload.Array()
     }
 QPKGs.ToDownload.Clear()
     {
-    [[ $_object_qpkgs_todownload_flag_ != "true" ]] && return
+    [[ $_object_qpkgs_todownload_flag_ != 'true' ]] && return
     _object_qpkgs_todownload_flag_=false
     DebugVar _object_qpkgs_todownload_flag_
     }
@@ -4988,13 +5128,13 @@ QPKGs.ToDownload.Count()
     }
 QPKGs.ToDownload.Disable()
     {
-    [[ $_object_qpkgs_todownload_enable_ != "true" ]] && return
+    [[ $_object_qpkgs_todownload_enable_ != 'true' ]] && return
     _object_qpkgs_todownload_enable_=false
     DebugVar _object_qpkgs_todownload_enable_
     }
 QPKGs.ToDownload.Enable()
     {
-    [[ $_object_qpkgs_todownload_enable_ = "true" ]] && return
+    [[ $_object_qpkgs_todownload_enable_ = 'true' ]] && return
     _object_qpkgs_todownload_enable_=true
     DebugVar _object_qpkgs_todownload_enable_
     }
@@ -5026,7 +5166,7 @@ QPKGs.ToDownload.GetItem()
     }
 QPKGs.ToDownload.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_qpkgs_todownload_array_[@]} ]]; then
             _object_qpkgs_todownload_array_index_=${#_object_qpkgs_todownload_array_[@]}
         else
@@ -5039,12 +5179,12 @@ QPKGs.ToDownload.Index()
 QPKGs.ToDownload.Init()
     {
     _object_qpkgs_todownload_value_=0
-    _object_qpkgs_todownload_text_=""
+    _object_qpkgs_todownload_text_=''
     _object_qpkgs_todownload_flag_=false
     _object_qpkgs_todownload_enable_=false
     _object_qpkgs_todownload_array_+=()
     _object_qpkgs_todownload_array_index_=1
-    _object_qpkgs_todownload_path_=""
+    _object_qpkgs_todownload_path_=''
     }
 QPKGs.ToDownload.IsAny()
     {
@@ -5052,11 +5192,11 @@ QPKGs.ToDownload.IsAny()
     }
 QPKGs.ToDownload.IsDisabled()
     {
-    [[ $_object_qpkgs_todownload_enable_ != "true" ]]
+    [[ $_object_qpkgs_todownload_enable_ != 'true' ]]
     }
 QPKGs.ToDownload.IsEnabled()
     {
-    [[ $_object_qpkgs_todownload_enable_ = "true" ]]
+    [[ $_object_qpkgs_todownload_enable_ = 'true' ]]
     }
 QPKGs.ToDownload.IsNone()
     {
@@ -5064,15 +5204,19 @@ QPKGs.ToDownload.IsNone()
     }
 QPKGs.ToDownload.IsNot()
     {
-    [[ $_object_qpkgs_todownload_flag_ != "true" ]]
+    [[ $_object_qpkgs_todownload_flag_ != 'true' ]]
     }
 QPKGs.ToDownload.IsSet()
     {
-    [[ $_object_qpkgs_todownload_flag_ = "true" ]]
+    [[ $_object_qpkgs_todownload_flag_ = 'true' ]]
     }
 QPKGs.ToDownload.List()
     {
     echo -n "${_object_qpkgs_todownload_array_[*]}"
+    }
+QPKGs.ToDownload.ListComma()
+    {
+    echo -n "${_object_qpkgs_todownload_array_[*]}" | tr ' ' ','
     }
 QPKGs.ToDownload.Path()
     {
@@ -5088,7 +5232,7 @@ QPKGs.ToDownload.Remove()
     }
 QPKGs.ToDownload.Set()
     {
-    [[ $_object_qpkgs_todownload_flag_ = "true" ]] && return
+    [[ $_object_qpkgs_todownload_flag_ = 'true' ]] && return
     _object_qpkgs_todownload_flag_=true
     DebugVar _object_qpkgs_todownload_flag_
     }
@@ -5120,7 +5264,7 @@ QPKGs.ToForceUpgrade.Array()
     }
 QPKGs.ToForceUpgrade.Clear()
     {
-    [[ $_object_qpkgs_toforceupgrade_flag_ != "true" ]] && return
+    [[ $_object_qpkgs_toforceupgrade_flag_ != 'true' ]] && return
     _object_qpkgs_toforceupgrade_flag_=false
     DebugVar _object_qpkgs_toforceupgrade_flag_
     }
@@ -5130,13 +5274,13 @@ QPKGs.ToForceUpgrade.Count()
     }
 QPKGs.ToForceUpgrade.Disable()
     {
-    [[ $_object_qpkgs_toforceupgrade_enable_ != "true" ]] && return
+    [[ $_object_qpkgs_toforceupgrade_enable_ != 'true' ]] && return
     _object_qpkgs_toforceupgrade_enable_=false
     DebugVar _object_qpkgs_toforceupgrade_enable_
     }
 QPKGs.ToForceUpgrade.Enable()
     {
-    [[ $_object_qpkgs_toforceupgrade_enable_ = "true" ]] && return
+    [[ $_object_qpkgs_toforceupgrade_enable_ = 'true' ]] && return
     _object_qpkgs_toforceupgrade_enable_=true
     DebugVar _object_qpkgs_toforceupgrade_enable_
     }
@@ -5168,7 +5312,7 @@ QPKGs.ToForceUpgrade.GetItem()
     }
 QPKGs.ToForceUpgrade.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_qpkgs_toforceupgrade_array_[@]} ]]; then
             _object_qpkgs_toforceupgrade_array_index_=${#_object_qpkgs_toforceupgrade_array_[@]}
         else
@@ -5181,12 +5325,12 @@ QPKGs.ToForceUpgrade.Index()
 QPKGs.ToForceUpgrade.Init()
     {
     _object_qpkgs_toforceupgrade_value_=0
-    _object_qpkgs_toforceupgrade_text_=""
+    _object_qpkgs_toforceupgrade_text_=''
     _object_qpkgs_toforceupgrade_flag_=false
     _object_qpkgs_toforceupgrade_enable_=false
     _object_qpkgs_toforceupgrade_array_+=()
     _object_qpkgs_toforceupgrade_array_index_=1
-    _object_qpkgs_toforceupgrade_path_=""
+    _object_qpkgs_toforceupgrade_path_=''
     }
 QPKGs.ToForceUpgrade.IsAny()
     {
@@ -5194,11 +5338,11 @@ QPKGs.ToForceUpgrade.IsAny()
     }
 QPKGs.ToForceUpgrade.IsDisabled()
     {
-    [[ $_object_qpkgs_toforceupgrade_enable_ != "true" ]]
+    [[ $_object_qpkgs_toforceupgrade_enable_ != 'true' ]]
     }
 QPKGs.ToForceUpgrade.IsEnabled()
     {
-    [[ $_object_qpkgs_toforceupgrade_enable_ = "true" ]]
+    [[ $_object_qpkgs_toforceupgrade_enable_ = 'true' ]]
     }
 QPKGs.ToForceUpgrade.IsNone()
     {
@@ -5206,15 +5350,19 @@ QPKGs.ToForceUpgrade.IsNone()
     }
 QPKGs.ToForceUpgrade.IsNot()
     {
-    [[ $_object_qpkgs_toforceupgrade_flag_ != "true" ]]
+    [[ $_object_qpkgs_toforceupgrade_flag_ != 'true' ]]
     }
 QPKGs.ToForceUpgrade.IsSet()
     {
-    [[ $_object_qpkgs_toforceupgrade_flag_ = "true" ]]
+    [[ $_object_qpkgs_toforceupgrade_flag_ = 'true' ]]
     }
 QPKGs.ToForceUpgrade.List()
     {
     echo -n "${_object_qpkgs_toforceupgrade_array_[*]}"
+    }
+QPKGs.ToForceUpgrade.ListComma()
+    {
+    echo -n "${_object_qpkgs_toforceupgrade_array_[*]}" | tr ' ' ','
     }
 QPKGs.ToForceUpgrade.Path()
     {
@@ -5230,7 +5378,7 @@ QPKGs.ToForceUpgrade.Remove()
     }
 QPKGs.ToForceUpgrade.Set()
     {
-    [[ $_object_qpkgs_toforceupgrade_flag_ = "true" ]] && return
+    [[ $_object_qpkgs_toforceupgrade_flag_ = 'true' ]] && return
     _object_qpkgs_toforceupgrade_flag_=true
     DebugVar _object_qpkgs_toforceupgrade_flag_
     }
@@ -5262,7 +5410,7 @@ QPKGs.ToInstall.Array()
     }
 QPKGs.ToInstall.Clear()
     {
-    [[ $_object_qpkgs_toinstall_flag_ != "true" ]] && return
+    [[ $_object_qpkgs_toinstall_flag_ != 'true' ]] && return
     _object_qpkgs_toinstall_flag_=false
     DebugVar _object_qpkgs_toinstall_flag_
     }
@@ -5272,13 +5420,13 @@ QPKGs.ToInstall.Count()
     }
 QPKGs.ToInstall.Disable()
     {
-    [[ $_object_qpkgs_toinstall_enable_ != "true" ]] && return
+    [[ $_object_qpkgs_toinstall_enable_ != 'true' ]] && return
     _object_qpkgs_toinstall_enable_=false
     DebugVar _object_qpkgs_toinstall_enable_
     }
 QPKGs.ToInstall.Enable()
     {
-    [[ $_object_qpkgs_toinstall_enable_ = "true" ]] && return
+    [[ $_object_qpkgs_toinstall_enable_ = 'true' ]] && return
     _object_qpkgs_toinstall_enable_=true
     DebugVar _object_qpkgs_toinstall_enable_
     }
@@ -5310,7 +5458,7 @@ QPKGs.ToInstall.GetItem()
     }
 QPKGs.ToInstall.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_qpkgs_toinstall_array_[@]} ]]; then
             _object_qpkgs_toinstall_array_index_=${#_object_qpkgs_toinstall_array_[@]}
         else
@@ -5323,12 +5471,12 @@ QPKGs.ToInstall.Index()
 QPKGs.ToInstall.Init()
     {
     _object_qpkgs_toinstall_value_=0
-    _object_qpkgs_toinstall_text_=""
+    _object_qpkgs_toinstall_text_=''
     _object_qpkgs_toinstall_flag_=false
     _object_qpkgs_toinstall_enable_=false
     _object_qpkgs_toinstall_array_+=()
     _object_qpkgs_toinstall_array_index_=1
-    _object_qpkgs_toinstall_path_=""
+    _object_qpkgs_toinstall_path_=''
     }
 QPKGs.ToInstall.IsAny()
     {
@@ -5336,11 +5484,11 @@ QPKGs.ToInstall.IsAny()
     }
 QPKGs.ToInstall.IsDisabled()
     {
-    [[ $_object_qpkgs_toinstall_enable_ != "true" ]]
+    [[ $_object_qpkgs_toinstall_enable_ != 'true' ]]
     }
 QPKGs.ToInstall.IsEnabled()
     {
-    [[ $_object_qpkgs_toinstall_enable_ = "true" ]]
+    [[ $_object_qpkgs_toinstall_enable_ = 'true' ]]
     }
 QPKGs.ToInstall.IsNone()
     {
@@ -5348,15 +5496,19 @@ QPKGs.ToInstall.IsNone()
     }
 QPKGs.ToInstall.IsNot()
     {
-    [[ $_object_qpkgs_toinstall_flag_ != "true" ]]
+    [[ $_object_qpkgs_toinstall_flag_ != 'true' ]]
     }
 QPKGs.ToInstall.IsSet()
     {
-    [[ $_object_qpkgs_toinstall_flag_ = "true" ]]
+    [[ $_object_qpkgs_toinstall_flag_ = 'true' ]]
     }
 QPKGs.ToInstall.List()
     {
     echo -n "${_object_qpkgs_toinstall_array_[*]}"
+    }
+QPKGs.ToInstall.ListComma()
+    {
+    echo -n "${_object_qpkgs_toinstall_array_[*]}" | tr ' ' ','
     }
 QPKGs.ToInstall.Path()
     {
@@ -5372,7 +5524,7 @@ QPKGs.ToInstall.Remove()
     }
 QPKGs.ToInstall.Set()
     {
-    [[ $_object_qpkgs_toinstall_flag_ = "true" ]] && return
+    [[ $_object_qpkgs_toinstall_flag_ = 'true' ]] && return
     _object_qpkgs_toinstall_flag_=true
     DebugVar _object_qpkgs_toinstall_flag_
     }
@@ -5404,7 +5556,7 @@ QPKGs.ToReinstall.Array()
     }
 QPKGs.ToReinstall.Clear()
     {
-    [[ $_object_qpkgs_toreinstall_flag_ != "true" ]] && return
+    [[ $_object_qpkgs_toreinstall_flag_ != 'true' ]] && return
     _object_qpkgs_toreinstall_flag_=false
     DebugVar _object_qpkgs_toreinstall_flag_
     }
@@ -5414,13 +5566,13 @@ QPKGs.ToReinstall.Count()
     }
 QPKGs.ToReinstall.Disable()
     {
-    [[ $_object_qpkgs_toreinstall_enable_ != "true" ]] && return
+    [[ $_object_qpkgs_toreinstall_enable_ != 'true' ]] && return
     _object_qpkgs_toreinstall_enable_=false
     DebugVar _object_qpkgs_toreinstall_enable_
     }
 QPKGs.ToReinstall.Enable()
     {
-    [[ $_object_qpkgs_toreinstall_enable_ = "true" ]] && return
+    [[ $_object_qpkgs_toreinstall_enable_ = 'true' ]] && return
     _object_qpkgs_toreinstall_enable_=true
     DebugVar _object_qpkgs_toreinstall_enable_
     }
@@ -5452,7 +5604,7 @@ QPKGs.ToReinstall.GetItem()
     }
 QPKGs.ToReinstall.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_qpkgs_toreinstall_array_[@]} ]]; then
             _object_qpkgs_toreinstall_array_index_=${#_object_qpkgs_toreinstall_array_[@]}
         else
@@ -5465,12 +5617,12 @@ QPKGs.ToReinstall.Index()
 QPKGs.ToReinstall.Init()
     {
     _object_qpkgs_toreinstall_value_=0
-    _object_qpkgs_toreinstall_text_=""
+    _object_qpkgs_toreinstall_text_=''
     _object_qpkgs_toreinstall_flag_=false
     _object_qpkgs_toreinstall_enable_=false
     _object_qpkgs_toreinstall_array_+=()
     _object_qpkgs_toreinstall_array_index_=1
-    _object_qpkgs_toreinstall_path_=""
+    _object_qpkgs_toreinstall_path_=''
     }
 QPKGs.ToReinstall.IsAny()
     {
@@ -5478,11 +5630,11 @@ QPKGs.ToReinstall.IsAny()
     }
 QPKGs.ToReinstall.IsDisabled()
     {
-    [[ $_object_qpkgs_toreinstall_enable_ != "true" ]]
+    [[ $_object_qpkgs_toreinstall_enable_ != 'true' ]]
     }
 QPKGs.ToReinstall.IsEnabled()
     {
-    [[ $_object_qpkgs_toreinstall_enable_ = "true" ]]
+    [[ $_object_qpkgs_toreinstall_enable_ = 'true' ]]
     }
 QPKGs.ToReinstall.IsNone()
     {
@@ -5490,15 +5642,19 @@ QPKGs.ToReinstall.IsNone()
     }
 QPKGs.ToReinstall.IsNot()
     {
-    [[ $_object_qpkgs_toreinstall_flag_ != "true" ]]
+    [[ $_object_qpkgs_toreinstall_flag_ != 'true' ]]
     }
 QPKGs.ToReinstall.IsSet()
     {
-    [[ $_object_qpkgs_toreinstall_flag_ = "true" ]]
+    [[ $_object_qpkgs_toreinstall_flag_ = 'true' ]]
     }
 QPKGs.ToReinstall.List()
     {
     echo -n "${_object_qpkgs_toreinstall_array_[*]}"
+    }
+QPKGs.ToReinstall.ListComma()
+    {
+    echo -n "${_object_qpkgs_toreinstall_array_[*]}" | tr ' ' ','
     }
 QPKGs.ToReinstall.Path()
     {
@@ -5514,7 +5670,7 @@ QPKGs.ToReinstall.Remove()
     }
 QPKGs.ToReinstall.Set()
     {
-    [[ $_object_qpkgs_toreinstall_flag_ = "true" ]] && return
+    [[ $_object_qpkgs_toreinstall_flag_ = 'true' ]] && return
     _object_qpkgs_toreinstall_flag_=true
     DebugVar _object_qpkgs_toreinstall_flag_
     }
@@ -5546,7 +5702,7 @@ QPKGs.ToRestart.Array()
     }
 QPKGs.ToRestart.Clear()
     {
-    [[ $_object_qpkgs_torestart_flag_ != "true" ]] && return
+    [[ $_object_qpkgs_torestart_flag_ != 'true' ]] && return
     _object_qpkgs_torestart_flag_=false
     DebugVar _object_qpkgs_torestart_flag_
     }
@@ -5556,13 +5712,13 @@ QPKGs.ToRestart.Count()
     }
 QPKGs.ToRestart.Disable()
     {
-    [[ $_object_qpkgs_torestart_enable_ != "true" ]] && return
+    [[ $_object_qpkgs_torestart_enable_ != 'true' ]] && return
     _object_qpkgs_torestart_enable_=false
     DebugVar _object_qpkgs_torestart_enable_
     }
 QPKGs.ToRestart.Enable()
     {
-    [[ $_object_qpkgs_torestart_enable_ = "true" ]] && return
+    [[ $_object_qpkgs_torestart_enable_ = 'true' ]] && return
     _object_qpkgs_torestart_enable_=true
     DebugVar _object_qpkgs_torestart_enable_
     }
@@ -5594,7 +5750,7 @@ QPKGs.ToRestart.GetItem()
     }
 QPKGs.ToRestart.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_qpkgs_torestart_array_[@]} ]]; then
             _object_qpkgs_torestart_array_index_=${#_object_qpkgs_torestart_array_[@]}
         else
@@ -5607,12 +5763,12 @@ QPKGs.ToRestart.Index()
 QPKGs.ToRestart.Init()
     {
     _object_qpkgs_torestart_value_=0
-    _object_qpkgs_torestart_text_=""
+    _object_qpkgs_torestart_text_=''
     _object_qpkgs_torestart_flag_=false
     _object_qpkgs_torestart_enable_=false
     _object_qpkgs_torestart_array_+=()
     _object_qpkgs_torestart_array_index_=1
-    _object_qpkgs_torestart_path_=""
+    _object_qpkgs_torestart_path_=''
     }
 QPKGs.ToRestart.IsAny()
     {
@@ -5620,11 +5776,11 @@ QPKGs.ToRestart.IsAny()
     }
 QPKGs.ToRestart.IsDisabled()
     {
-    [[ $_object_qpkgs_torestart_enable_ != "true" ]]
+    [[ $_object_qpkgs_torestart_enable_ != 'true' ]]
     }
 QPKGs.ToRestart.IsEnabled()
     {
-    [[ $_object_qpkgs_torestart_enable_ = "true" ]]
+    [[ $_object_qpkgs_torestart_enable_ = 'true' ]]
     }
 QPKGs.ToRestart.IsNone()
     {
@@ -5632,15 +5788,19 @@ QPKGs.ToRestart.IsNone()
     }
 QPKGs.ToRestart.IsNot()
     {
-    [[ $_object_qpkgs_torestart_flag_ != "true" ]]
+    [[ $_object_qpkgs_torestart_flag_ != 'true' ]]
     }
 QPKGs.ToRestart.IsSet()
     {
-    [[ $_object_qpkgs_torestart_flag_ = "true" ]]
+    [[ $_object_qpkgs_torestart_flag_ = 'true' ]]
     }
 QPKGs.ToRestart.List()
     {
     echo -n "${_object_qpkgs_torestart_array_[*]}"
+    }
+QPKGs.ToRestart.ListComma()
+    {
+    echo -n "${_object_qpkgs_torestart_array_[*]}" | tr ' ' ','
     }
 QPKGs.ToRestart.Path()
     {
@@ -5656,7 +5816,7 @@ QPKGs.ToRestart.Remove()
     }
 QPKGs.ToRestart.Set()
     {
-    [[ $_object_qpkgs_torestart_flag_ = "true" ]] && return
+    [[ $_object_qpkgs_torestart_flag_ = 'true' ]] && return
     _object_qpkgs_torestart_flag_=true
     DebugVar _object_qpkgs_torestart_flag_
     }
@@ -5688,7 +5848,7 @@ QPKGs.ToRestore.Array()
     }
 QPKGs.ToRestore.Clear()
     {
-    [[ $_object_qpkgs_torestore_flag_ != "true" ]] && return
+    [[ $_object_qpkgs_torestore_flag_ != 'true' ]] && return
     _object_qpkgs_torestore_flag_=false
     DebugVar _object_qpkgs_torestore_flag_
     }
@@ -5698,13 +5858,13 @@ QPKGs.ToRestore.Count()
     }
 QPKGs.ToRestore.Disable()
     {
-    [[ $_object_qpkgs_torestore_enable_ != "true" ]] && return
+    [[ $_object_qpkgs_torestore_enable_ != 'true' ]] && return
     _object_qpkgs_torestore_enable_=false
     DebugVar _object_qpkgs_torestore_enable_
     }
 QPKGs.ToRestore.Enable()
     {
-    [[ $_object_qpkgs_torestore_enable_ = "true" ]] && return
+    [[ $_object_qpkgs_torestore_enable_ = 'true' ]] && return
     _object_qpkgs_torestore_enable_=true
     DebugVar _object_qpkgs_torestore_enable_
     }
@@ -5736,7 +5896,7 @@ QPKGs.ToRestore.GetItem()
     }
 QPKGs.ToRestore.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_qpkgs_torestore_array_[@]} ]]; then
             _object_qpkgs_torestore_array_index_=${#_object_qpkgs_torestore_array_[@]}
         else
@@ -5749,12 +5909,12 @@ QPKGs.ToRestore.Index()
 QPKGs.ToRestore.Init()
     {
     _object_qpkgs_torestore_value_=0
-    _object_qpkgs_torestore_text_=""
+    _object_qpkgs_torestore_text_=''
     _object_qpkgs_torestore_flag_=false
     _object_qpkgs_torestore_enable_=false
     _object_qpkgs_torestore_array_+=()
     _object_qpkgs_torestore_array_index_=1
-    _object_qpkgs_torestore_path_=""
+    _object_qpkgs_torestore_path_=''
     }
 QPKGs.ToRestore.IsAny()
     {
@@ -5762,11 +5922,11 @@ QPKGs.ToRestore.IsAny()
     }
 QPKGs.ToRestore.IsDisabled()
     {
-    [[ $_object_qpkgs_torestore_enable_ != "true" ]]
+    [[ $_object_qpkgs_torestore_enable_ != 'true' ]]
     }
 QPKGs.ToRestore.IsEnabled()
     {
-    [[ $_object_qpkgs_torestore_enable_ = "true" ]]
+    [[ $_object_qpkgs_torestore_enable_ = 'true' ]]
     }
 QPKGs.ToRestore.IsNone()
     {
@@ -5774,15 +5934,19 @@ QPKGs.ToRestore.IsNone()
     }
 QPKGs.ToRestore.IsNot()
     {
-    [[ $_object_qpkgs_torestore_flag_ != "true" ]]
+    [[ $_object_qpkgs_torestore_flag_ != 'true' ]]
     }
 QPKGs.ToRestore.IsSet()
     {
-    [[ $_object_qpkgs_torestore_flag_ = "true" ]]
+    [[ $_object_qpkgs_torestore_flag_ = 'true' ]]
     }
 QPKGs.ToRestore.List()
     {
     echo -n "${_object_qpkgs_torestore_array_[*]}"
+    }
+QPKGs.ToRestore.ListComma()
+    {
+    echo -n "${_object_qpkgs_torestore_array_[*]}" | tr ' ' ','
     }
 QPKGs.ToRestore.Path()
     {
@@ -5798,7 +5962,7 @@ QPKGs.ToRestore.Remove()
     }
 QPKGs.ToRestore.Set()
     {
-    [[ $_object_qpkgs_torestore_flag_ = "true" ]] && return
+    [[ $_object_qpkgs_torestore_flag_ = 'true' ]] && return
     _object_qpkgs_torestore_flag_=true
     DebugVar _object_qpkgs_torestore_flag_
     }
@@ -5830,7 +5994,7 @@ QPKGs.ToUninstall.Array()
     }
 QPKGs.ToUninstall.Clear()
     {
-    [[ $_object_qpkgs_touninstall_flag_ != "true" ]] && return
+    [[ $_object_qpkgs_touninstall_flag_ != 'true' ]] && return
     _object_qpkgs_touninstall_flag_=false
     DebugVar _object_qpkgs_touninstall_flag_
     }
@@ -5840,13 +6004,13 @@ QPKGs.ToUninstall.Count()
     }
 QPKGs.ToUninstall.Disable()
     {
-    [[ $_object_qpkgs_touninstall_enable_ != "true" ]] && return
+    [[ $_object_qpkgs_touninstall_enable_ != 'true' ]] && return
     _object_qpkgs_touninstall_enable_=false
     DebugVar _object_qpkgs_touninstall_enable_
     }
 QPKGs.ToUninstall.Enable()
     {
-    [[ $_object_qpkgs_touninstall_enable_ = "true" ]] && return
+    [[ $_object_qpkgs_touninstall_enable_ = 'true' ]] && return
     _object_qpkgs_touninstall_enable_=true
     DebugVar _object_qpkgs_touninstall_enable_
     }
@@ -5878,7 +6042,7 @@ QPKGs.ToUninstall.GetItem()
     }
 QPKGs.ToUninstall.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_qpkgs_touninstall_array_[@]} ]]; then
             _object_qpkgs_touninstall_array_index_=${#_object_qpkgs_touninstall_array_[@]}
         else
@@ -5891,12 +6055,12 @@ QPKGs.ToUninstall.Index()
 QPKGs.ToUninstall.Init()
     {
     _object_qpkgs_touninstall_value_=0
-    _object_qpkgs_touninstall_text_=""
+    _object_qpkgs_touninstall_text_=''
     _object_qpkgs_touninstall_flag_=false
     _object_qpkgs_touninstall_enable_=false
     _object_qpkgs_touninstall_array_+=()
     _object_qpkgs_touninstall_array_index_=1
-    _object_qpkgs_touninstall_path_=""
+    _object_qpkgs_touninstall_path_=''
     }
 QPKGs.ToUninstall.IsAny()
     {
@@ -5904,11 +6068,11 @@ QPKGs.ToUninstall.IsAny()
     }
 QPKGs.ToUninstall.IsDisabled()
     {
-    [[ $_object_qpkgs_touninstall_enable_ != "true" ]]
+    [[ $_object_qpkgs_touninstall_enable_ != 'true' ]]
     }
 QPKGs.ToUninstall.IsEnabled()
     {
-    [[ $_object_qpkgs_touninstall_enable_ = "true" ]]
+    [[ $_object_qpkgs_touninstall_enable_ = 'true' ]]
     }
 QPKGs.ToUninstall.IsNone()
     {
@@ -5916,15 +6080,19 @@ QPKGs.ToUninstall.IsNone()
     }
 QPKGs.ToUninstall.IsNot()
     {
-    [[ $_object_qpkgs_touninstall_flag_ != "true" ]]
+    [[ $_object_qpkgs_touninstall_flag_ != 'true' ]]
     }
 QPKGs.ToUninstall.IsSet()
     {
-    [[ $_object_qpkgs_touninstall_flag_ = "true" ]]
+    [[ $_object_qpkgs_touninstall_flag_ = 'true' ]]
     }
 QPKGs.ToUninstall.List()
     {
     echo -n "${_object_qpkgs_touninstall_array_[*]}"
+    }
+QPKGs.ToUninstall.ListComma()
+    {
+    echo -n "${_object_qpkgs_touninstall_array_[*]}" | tr ' ' ','
     }
 QPKGs.ToUninstall.Path()
     {
@@ -5940,7 +6108,7 @@ QPKGs.ToUninstall.Remove()
     }
 QPKGs.ToUninstall.Set()
     {
-    [[ $_object_qpkgs_touninstall_flag_ = "true" ]] && return
+    [[ $_object_qpkgs_touninstall_flag_ = 'true' ]] && return
     _object_qpkgs_touninstall_flag_=true
     DebugVar _object_qpkgs_touninstall_flag_
     }
@@ -5972,7 +6140,7 @@ QPKGs.ToUpgrade.Array()
     }
 QPKGs.ToUpgrade.Clear()
     {
-    [[ $_object_qpkgs_toupgrade_flag_ != "true" ]] && return
+    [[ $_object_qpkgs_toupgrade_flag_ != 'true' ]] && return
     _object_qpkgs_toupgrade_flag_=false
     DebugVar _object_qpkgs_toupgrade_flag_
     }
@@ -5982,13 +6150,13 @@ QPKGs.ToUpgrade.Count()
     }
 QPKGs.ToUpgrade.Disable()
     {
-    [[ $_object_qpkgs_toupgrade_enable_ != "true" ]] && return
+    [[ $_object_qpkgs_toupgrade_enable_ != 'true' ]] && return
     _object_qpkgs_toupgrade_enable_=false
     DebugVar _object_qpkgs_toupgrade_enable_
     }
 QPKGs.ToUpgrade.Enable()
     {
-    [[ $_object_qpkgs_toupgrade_enable_ = "true" ]] && return
+    [[ $_object_qpkgs_toupgrade_enable_ = 'true' ]] && return
     _object_qpkgs_toupgrade_enable_=true
     DebugVar _object_qpkgs_toupgrade_enable_
     }
@@ -6020,7 +6188,7 @@ QPKGs.ToUpgrade.GetItem()
     }
 QPKGs.ToUpgrade.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_qpkgs_toupgrade_array_[@]} ]]; then
             _object_qpkgs_toupgrade_array_index_=${#_object_qpkgs_toupgrade_array_[@]}
         else
@@ -6033,12 +6201,12 @@ QPKGs.ToUpgrade.Index()
 QPKGs.ToUpgrade.Init()
     {
     _object_qpkgs_toupgrade_value_=0
-    _object_qpkgs_toupgrade_text_=""
+    _object_qpkgs_toupgrade_text_=''
     _object_qpkgs_toupgrade_flag_=false
     _object_qpkgs_toupgrade_enable_=false
     _object_qpkgs_toupgrade_array_+=()
     _object_qpkgs_toupgrade_array_index_=1
-    _object_qpkgs_toupgrade_path_=""
+    _object_qpkgs_toupgrade_path_=''
     }
 QPKGs.ToUpgrade.IsAny()
     {
@@ -6046,11 +6214,11 @@ QPKGs.ToUpgrade.IsAny()
     }
 QPKGs.ToUpgrade.IsDisabled()
     {
-    [[ $_object_qpkgs_toupgrade_enable_ != "true" ]]
+    [[ $_object_qpkgs_toupgrade_enable_ != 'true' ]]
     }
 QPKGs.ToUpgrade.IsEnabled()
     {
-    [[ $_object_qpkgs_toupgrade_enable_ = "true" ]]
+    [[ $_object_qpkgs_toupgrade_enable_ = 'true' ]]
     }
 QPKGs.ToUpgrade.IsNone()
     {
@@ -6058,15 +6226,19 @@ QPKGs.ToUpgrade.IsNone()
     }
 QPKGs.ToUpgrade.IsNot()
     {
-    [[ $_object_qpkgs_toupgrade_flag_ != "true" ]]
+    [[ $_object_qpkgs_toupgrade_flag_ != 'true' ]]
     }
 QPKGs.ToUpgrade.IsSet()
     {
-    [[ $_object_qpkgs_toupgrade_flag_ = "true" ]]
+    [[ $_object_qpkgs_toupgrade_flag_ = 'true' ]]
     }
 QPKGs.ToUpgrade.List()
     {
     echo -n "${_object_qpkgs_toupgrade_array_[*]}"
+    }
+QPKGs.ToUpgrade.ListComma()
+    {
+    echo -n "${_object_qpkgs_toupgrade_array_[*]}" | tr ' ' ','
     }
 QPKGs.ToUpgrade.Path()
     {
@@ -6082,7 +6254,7 @@ QPKGs.ToUpgrade.Remove()
     }
 QPKGs.ToUpgrade.Set()
     {
-    [[ $_object_qpkgs_toupgrade_flag_ = "true" ]] && return
+    [[ $_object_qpkgs_toupgrade_flag_ = 'true' ]] && return
     _object_qpkgs_toupgrade_flag_=true
     DebugVar _object_qpkgs_toupgrade_flag_
     }
@@ -6114,7 +6286,7 @@ QPKGs.Upgradable.Array()
     }
 QPKGs.Upgradable.Clear()
     {
-    [[ $_object_qpkgs_upgradable_flag_ != "true" ]] && return
+    [[ $_object_qpkgs_upgradable_flag_ != 'true' ]] && return
     _object_qpkgs_upgradable_flag_=false
     DebugVar _object_qpkgs_upgradable_flag_
     }
@@ -6124,13 +6296,13 @@ QPKGs.Upgradable.Count()
     }
 QPKGs.Upgradable.Disable()
     {
-    [[ $_object_qpkgs_upgradable_enable_ != "true" ]] && return
+    [[ $_object_qpkgs_upgradable_enable_ != 'true' ]] && return
     _object_qpkgs_upgradable_enable_=false
     DebugVar _object_qpkgs_upgradable_enable_
     }
 QPKGs.Upgradable.Enable()
     {
-    [[ $_object_qpkgs_upgradable_enable_ = "true" ]] && return
+    [[ $_object_qpkgs_upgradable_enable_ = 'true' ]] && return
     _object_qpkgs_upgradable_enable_=true
     DebugVar _object_qpkgs_upgradable_enable_
     }
@@ -6162,7 +6334,7 @@ QPKGs.Upgradable.GetItem()
     }
 QPKGs.Upgradable.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_qpkgs_upgradable_array_[@]} ]]; then
             _object_qpkgs_upgradable_array_index_=${#_object_qpkgs_upgradable_array_[@]}
         else
@@ -6175,12 +6347,12 @@ QPKGs.Upgradable.Index()
 QPKGs.Upgradable.Init()
     {
     _object_qpkgs_upgradable_value_=0
-    _object_qpkgs_upgradable_text_=""
+    _object_qpkgs_upgradable_text_=''
     _object_qpkgs_upgradable_flag_=false
     _object_qpkgs_upgradable_enable_=false
     _object_qpkgs_upgradable_array_+=()
     _object_qpkgs_upgradable_array_index_=1
-    _object_qpkgs_upgradable_path_=""
+    _object_qpkgs_upgradable_path_=''
     }
 QPKGs.Upgradable.IsAny()
     {
@@ -6188,11 +6360,11 @@ QPKGs.Upgradable.IsAny()
     }
 QPKGs.Upgradable.IsDisabled()
     {
-    [[ $_object_qpkgs_upgradable_enable_ != "true" ]]
+    [[ $_object_qpkgs_upgradable_enable_ != 'true' ]]
     }
 QPKGs.Upgradable.IsEnabled()
     {
-    [[ $_object_qpkgs_upgradable_enable_ = "true" ]]
+    [[ $_object_qpkgs_upgradable_enable_ = 'true' ]]
     }
 QPKGs.Upgradable.IsNone()
     {
@@ -6200,15 +6372,19 @@ QPKGs.Upgradable.IsNone()
     }
 QPKGs.Upgradable.IsNot()
     {
-    [[ $_object_qpkgs_upgradable_flag_ != "true" ]]
+    [[ $_object_qpkgs_upgradable_flag_ != 'true' ]]
     }
 QPKGs.Upgradable.IsSet()
     {
-    [[ $_object_qpkgs_upgradable_flag_ = "true" ]]
+    [[ $_object_qpkgs_upgradable_flag_ = 'true' ]]
     }
 QPKGs.Upgradable.List()
     {
     echo -n "${_object_qpkgs_upgradable_array_[*]}"
+    }
+QPKGs.Upgradable.ListComma()
+    {
+    echo -n "${_object_qpkgs_upgradable_array_[*]}" | tr ' ' ','
     }
 QPKGs.Upgradable.Path()
     {
@@ -6224,7 +6400,7 @@ QPKGs.Upgradable.Remove()
     }
 QPKGs.Upgradable.Set()
     {
-    [[ $_object_qpkgs_upgradable_flag_ = "true" ]] && return
+    [[ $_object_qpkgs_upgradable_flag_ = 'true' ]] && return
     _object_qpkgs_upgradable_flag_=true
     DebugVar _object_qpkgs_upgradable_flag_
     }
@@ -6256,7 +6432,7 @@ Session.Backup.Array()
     }
 Session.Backup.Clear()
     {
-    [[ $_object_session_backup_flag_ != "true" ]] && return
+    [[ $_object_session_backup_flag_ != 'true' ]] && return
     _object_session_backup_flag_=false
     DebugVar _object_session_backup_flag_
     }
@@ -6266,13 +6442,13 @@ Session.Backup.Count()
     }
 Session.Backup.Disable()
     {
-    [[ $_object_session_backup_enable_ != "true" ]] && return
+    [[ $_object_session_backup_enable_ != 'true' ]] && return
     _object_session_backup_enable_=false
     DebugVar _object_session_backup_enable_
     }
 Session.Backup.Enable()
     {
-    [[ $_object_session_backup_enable_ = "true" ]] && return
+    [[ $_object_session_backup_enable_ = 'true' ]] && return
     _object_session_backup_enable_=true
     DebugVar _object_session_backup_enable_
     }
@@ -6304,7 +6480,7 @@ Session.Backup.GetItem()
     }
 Session.Backup.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_session_backup_array_[@]} ]]; then
             _object_session_backup_array_index_=${#_object_session_backup_array_[@]}
         else
@@ -6317,12 +6493,12 @@ Session.Backup.Index()
 Session.Backup.Init()
     {
     _object_session_backup_value_=0
-    _object_session_backup_text_=""
+    _object_session_backup_text_=''
     _object_session_backup_flag_=false
     _object_session_backup_enable_=false
     _object_session_backup_array_+=()
     _object_session_backup_array_index_=1
-    _object_session_backup_path_=""
+    _object_session_backup_path_=''
     }
 Session.Backup.IsAny()
     {
@@ -6330,11 +6506,11 @@ Session.Backup.IsAny()
     }
 Session.Backup.IsDisabled()
     {
-    [[ $_object_session_backup_enable_ != "true" ]]
+    [[ $_object_session_backup_enable_ != 'true' ]]
     }
 Session.Backup.IsEnabled()
     {
-    [[ $_object_session_backup_enable_ = "true" ]]
+    [[ $_object_session_backup_enable_ = 'true' ]]
     }
 Session.Backup.IsNone()
     {
@@ -6342,15 +6518,19 @@ Session.Backup.IsNone()
     }
 Session.Backup.IsNot()
     {
-    [[ $_object_session_backup_flag_ != "true" ]]
+    [[ $_object_session_backup_flag_ != 'true' ]]
     }
 Session.Backup.IsSet()
     {
-    [[ $_object_session_backup_flag_ = "true" ]]
+    [[ $_object_session_backup_flag_ = 'true' ]]
     }
 Session.Backup.List()
     {
     echo -n "${_object_session_backup_array_[*]}"
+    }
+Session.Backup.ListComma()
+    {
+    echo -n "${_object_session_backup_array_[*]}" | tr ' ' ','
     }
 Session.Backup.Path()
     {
@@ -6366,7 +6546,7 @@ Session.Backup.Remove()
     }
 Session.Backup.Set()
     {
-    [[ $_object_session_backup_flag_ = "true" ]] && return
+    [[ $_object_session_backup_flag_ = 'true' ]] && return
     _object_session_backup_flag_=true
     DebugVar _object_session_backup_flag_
     }
@@ -6398,7 +6578,7 @@ Session.Debug.To.File.Array()
     }
 Session.Debug.To.File.Clear()
     {
-    [[ $_object_session_debug_to_file_flag_ != "true" ]] && return
+    [[ $_object_session_debug_to_file_flag_ != 'true' ]] && return
     _object_session_debug_to_file_flag_=false
     DebugVar _object_session_debug_to_file_flag_
     }
@@ -6408,13 +6588,13 @@ Session.Debug.To.File.Count()
     }
 Session.Debug.To.File.Disable()
     {
-    [[ $_object_session_debug_to_file_enable_ != "true" ]] && return
+    [[ $_object_session_debug_to_file_enable_ != 'true' ]] && return
     _object_session_debug_to_file_enable_=false
     DebugVar _object_session_debug_to_file_enable_
     }
 Session.Debug.To.File.Enable()
     {
-    [[ $_object_session_debug_to_file_enable_ = "true" ]] && return
+    [[ $_object_session_debug_to_file_enable_ = 'true' ]] && return
     _object_session_debug_to_file_enable_=true
     DebugVar _object_session_debug_to_file_enable_
     }
@@ -6446,7 +6626,7 @@ Session.Debug.To.File.GetItem()
     }
 Session.Debug.To.File.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_session_debug_to_file_array_[@]} ]]; then
             _object_session_debug_to_file_array_index_=${#_object_session_debug_to_file_array_[@]}
         else
@@ -6459,12 +6639,12 @@ Session.Debug.To.File.Index()
 Session.Debug.To.File.Init()
     {
     _object_session_debug_to_file_value_=0
-    _object_session_debug_to_file_text_=""
+    _object_session_debug_to_file_text_=''
     _object_session_debug_to_file_flag_=false
     _object_session_debug_to_file_enable_=false
     _object_session_debug_to_file_array_+=()
     _object_session_debug_to_file_array_index_=1
-    _object_session_debug_to_file_path_=""
+    _object_session_debug_to_file_path_=''
     }
 Session.Debug.To.File.IsAny()
     {
@@ -6472,11 +6652,11 @@ Session.Debug.To.File.IsAny()
     }
 Session.Debug.To.File.IsDisabled()
     {
-    [[ $_object_session_debug_to_file_enable_ != "true" ]]
+    [[ $_object_session_debug_to_file_enable_ != 'true' ]]
     }
 Session.Debug.To.File.IsEnabled()
     {
-    [[ $_object_session_debug_to_file_enable_ = "true" ]]
+    [[ $_object_session_debug_to_file_enable_ = 'true' ]]
     }
 Session.Debug.To.File.IsNone()
     {
@@ -6484,15 +6664,19 @@ Session.Debug.To.File.IsNone()
     }
 Session.Debug.To.File.IsNot()
     {
-    [[ $_object_session_debug_to_file_flag_ != "true" ]]
+    [[ $_object_session_debug_to_file_flag_ != 'true' ]]
     }
 Session.Debug.To.File.IsSet()
     {
-    [[ $_object_session_debug_to_file_flag_ = "true" ]]
+    [[ $_object_session_debug_to_file_flag_ = 'true' ]]
     }
 Session.Debug.To.File.List()
     {
     echo -n "${_object_session_debug_to_file_array_[*]}"
+    }
+Session.Debug.To.File.ListComma()
+    {
+    echo -n "${_object_session_debug_to_file_array_[*]}" | tr ' ' ','
     }
 Session.Debug.To.File.Path()
     {
@@ -6508,7 +6692,7 @@ Session.Debug.To.File.Remove()
     }
 Session.Debug.To.File.Set()
     {
-    [[ $_object_session_debug_to_file_flag_ = "true" ]] && return
+    [[ $_object_session_debug_to_file_flag_ = 'true' ]] && return
     _object_session_debug_to_file_flag_=true
     DebugVar _object_session_debug_to_file_flag_
     }
@@ -6540,7 +6724,7 @@ Session.Debug.To.Screen.Array()
     }
 Session.Debug.To.Screen.Clear()
     {
-    [[ $_object_session_debug_to_screen_flag_ != "true" ]] && return
+    [[ $_object_session_debug_to_screen_flag_ != 'true' ]] && return
     _object_session_debug_to_screen_flag_=false
     DebugVar _object_session_debug_to_screen_flag_
     }
@@ -6550,13 +6734,13 @@ Session.Debug.To.Screen.Count()
     }
 Session.Debug.To.Screen.Disable()
     {
-    [[ $_object_session_debug_to_screen_enable_ != "true" ]] && return
+    [[ $_object_session_debug_to_screen_enable_ != 'true' ]] && return
     _object_session_debug_to_screen_enable_=false
     DebugVar _object_session_debug_to_screen_enable_
     }
 Session.Debug.To.Screen.Enable()
     {
-    [[ $_object_session_debug_to_screen_enable_ = "true" ]] && return
+    [[ $_object_session_debug_to_screen_enable_ = 'true' ]] && return
     _object_session_debug_to_screen_enable_=true
     DebugVar _object_session_debug_to_screen_enable_
     }
@@ -6588,7 +6772,7 @@ Session.Debug.To.Screen.GetItem()
     }
 Session.Debug.To.Screen.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_session_debug_to_screen_array_[@]} ]]; then
             _object_session_debug_to_screen_array_index_=${#_object_session_debug_to_screen_array_[@]}
         else
@@ -6601,12 +6785,12 @@ Session.Debug.To.Screen.Index()
 Session.Debug.To.Screen.Init()
     {
     _object_session_debug_to_screen_value_=0
-    _object_session_debug_to_screen_text_=""
+    _object_session_debug_to_screen_text_=''
     _object_session_debug_to_screen_flag_=false
     _object_session_debug_to_screen_enable_=false
     _object_session_debug_to_screen_array_+=()
     _object_session_debug_to_screen_array_index_=1
-    _object_session_debug_to_screen_path_=""
+    _object_session_debug_to_screen_path_=''
     }
 Session.Debug.To.Screen.IsAny()
     {
@@ -6614,11 +6798,11 @@ Session.Debug.To.Screen.IsAny()
     }
 Session.Debug.To.Screen.IsDisabled()
     {
-    [[ $_object_session_debug_to_screen_enable_ != "true" ]]
+    [[ $_object_session_debug_to_screen_enable_ != 'true' ]]
     }
 Session.Debug.To.Screen.IsEnabled()
     {
-    [[ $_object_session_debug_to_screen_enable_ = "true" ]]
+    [[ $_object_session_debug_to_screen_enable_ = 'true' ]]
     }
 Session.Debug.To.Screen.IsNone()
     {
@@ -6626,15 +6810,19 @@ Session.Debug.To.Screen.IsNone()
     }
 Session.Debug.To.Screen.IsNot()
     {
-    [[ $_object_session_debug_to_screen_flag_ != "true" ]]
+    [[ $_object_session_debug_to_screen_flag_ != 'true' ]]
     }
 Session.Debug.To.Screen.IsSet()
     {
-    [[ $_object_session_debug_to_screen_flag_ = "true" ]]
+    [[ $_object_session_debug_to_screen_flag_ = 'true' ]]
     }
 Session.Debug.To.Screen.List()
     {
     echo -n "${_object_session_debug_to_screen_array_[*]}"
+    }
+Session.Debug.To.Screen.ListComma()
+    {
+    echo -n "${_object_session_debug_to_screen_array_[*]}" | tr ' ' ','
     }
 Session.Debug.To.Screen.Path()
     {
@@ -6650,7 +6838,7 @@ Session.Debug.To.Screen.Remove()
     }
 Session.Debug.To.Screen.Set()
     {
-    [[ $_object_session_debug_to_screen_flag_ = "true" ]] && return
+    [[ $_object_session_debug_to_screen_flag_ = 'true' ]] && return
     _object_session_debug_to_screen_flag_=true
     DebugVar _object_session_debug_to_screen_flag_
     }
@@ -6682,7 +6870,7 @@ Session.Display.Clean.Array()
     }
 Session.Display.Clean.Clear()
     {
-    [[ $_object_session_display_clean_flag_ != "true" ]] && return
+    [[ $_object_session_display_clean_flag_ != 'true' ]] && return
     _object_session_display_clean_flag_=false
     DebugVar _object_session_display_clean_flag_
     }
@@ -6692,13 +6880,13 @@ Session.Display.Clean.Count()
     }
 Session.Display.Clean.Disable()
     {
-    [[ $_object_session_display_clean_enable_ != "true" ]] && return
+    [[ $_object_session_display_clean_enable_ != 'true' ]] && return
     _object_session_display_clean_enable_=false
     DebugVar _object_session_display_clean_enable_
     }
 Session.Display.Clean.Enable()
     {
-    [[ $_object_session_display_clean_enable_ = "true" ]] && return
+    [[ $_object_session_display_clean_enable_ = 'true' ]] && return
     _object_session_display_clean_enable_=true
     DebugVar _object_session_display_clean_enable_
     }
@@ -6730,7 +6918,7 @@ Session.Display.Clean.GetItem()
     }
 Session.Display.Clean.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_session_display_clean_array_[@]} ]]; then
             _object_session_display_clean_array_index_=${#_object_session_display_clean_array_[@]}
         else
@@ -6743,12 +6931,12 @@ Session.Display.Clean.Index()
 Session.Display.Clean.Init()
     {
     _object_session_display_clean_value_=0
-    _object_session_display_clean_text_=""
+    _object_session_display_clean_text_=''
     _object_session_display_clean_flag_=false
     _object_session_display_clean_enable_=false
     _object_session_display_clean_array_+=()
     _object_session_display_clean_array_index_=1
-    _object_session_display_clean_path_=""
+    _object_session_display_clean_path_=''
     }
 Session.Display.Clean.IsAny()
     {
@@ -6756,11 +6944,11 @@ Session.Display.Clean.IsAny()
     }
 Session.Display.Clean.IsDisabled()
     {
-    [[ $_object_session_display_clean_enable_ != "true" ]]
+    [[ $_object_session_display_clean_enable_ != 'true' ]]
     }
 Session.Display.Clean.IsEnabled()
     {
-    [[ $_object_session_display_clean_enable_ = "true" ]]
+    [[ $_object_session_display_clean_enable_ = 'true' ]]
     }
 Session.Display.Clean.IsNone()
     {
@@ -6768,15 +6956,19 @@ Session.Display.Clean.IsNone()
     }
 Session.Display.Clean.IsNot()
     {
-    [[ $_object_session_display_clean_flag_ != "true" ]]
+    [[ $_object_session_display_clean_flag_ != 'true' ]]
     }
 Session.Display.Clean.IsSet()
     {
-    [[ $_object_session_display_clean_flag_ = "true" ]]
+    [[ $_object_session_display_clean_flag_ = 'true' ]]
     }
 Session.Display.Clean.List()
     {
     echo -n "${_object_session_display_clean_array_[*]}"
+    }
+Session.Display.Clean.ListComma()
+    {
+    echo -n "${_object_session_display_clean_array_[*]}" | tr ' ' ','
     }
 Session.Display.Clean.Path()
     {
@@ -6792,7 +6984,7 @@ Session.Display.Clean.Remove()
     }
 Session.Display.Clean.Set()
     {
-    [[ $_object_session_display_clean_flag_ = "true" ]] && return
+    [[ $_object_session_display_clean_flag_ = 'true' ]] && return
     _object_session_display_clean_flag_=true
     DebugVar _object_session_display_clean_flag_
     }
@@ -6824,7 +7016,7 @@ Session.IPKGs.Install.Array()
     }
 Session.IPKGs.Install.Clear()
     {
-    [[ $_object_session_ipkgs_install_flag_ != "true" ]] && return
+    [[ $_object_session_ipkgs_install_flag_ != 'true' ]] && return
     _object_session_ipkgs_install_flag_=false
     DebugVar _object_session_ipkgs_install_flag_
     }
@@ -6834,13 +7026,13 @@ Session.IPKGs.Install.Count()
     }
 Session.IPKGs.Install.Disable()
     {
-    [[ $_object_session_ipkgs_install_enable_ != "true" ]] && return
+    [[ $_object_session_ipkgs_install_enable_ != 'true' ]] && return
     _object_session_ipkgs_install_enable_=false
     DebugVar _object_session_ipkgs_install_enable_
     }
 Session.IPKGs.Install.Enable()
     {
-    [[ $_object_session_ipkgs_install_enable_ = "true" ]] && return
+    [[ $_object_session_ipkgs_install_enable_ = 'true' ]] && return
     _object_session_ipkgs_install_enable_=true
     DebugVar _object_session_ipkgs_install_enable_
     }
@@ -6872,7 +7064,7 @@ Session.IPKGs.Install.GetItem()
     }
 Session.IPKGs.Install.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_session_ipkgs_install_array_[@]} ]]; then
             _object_session_ipkgs_install_array_index_=${#_object_session_ipkgs_install_array_[@]}
         else
@@ -6885,12 +7077,12 @@ Session.IPKGs.Install.Index()
 Session.IPKGs.Install.Init()
     {
     _object_session_ipkgs_install_value_=0
-    _object_session_ipkgs_install_text_=""
+    _object_session_ipkgs_install_text_=''
     _object_session_ipkgs_install_flag_=false
     _object_session_ipkgs_install_enable_=false
     _object_session_ipkgs_install_array_+=()
     _object_session_ipkgs_install_array_index_=1
-    _object_session_ipkgs_install_path_=""
+    _object_session_ipkgs_install_path_=''
     }
 Session.IPKGs.Install.IsAny()
     {
@@ -6898,11 +7090,11 @@ Session.IPKGs.Install.IsAny()
     }
 Session.IPKGs.Install.IsDisabled()
     {
-    [[ $_object_session_ipkgs_install_enable_ != "true" ]]
+    [[ $_object_session_ipkgs_install_enable_ != 'true' ]]
     }
 Session.IPKGs.Install.IsEnabled()
     {
-    [[ $_object_session_ipkgs_install_enable_ = "true" ]]
+    [[ $_object_session_ipkgs_install_enable_ = 'true' ]]
     }
 Session.IPKGs.Install.IsNone()
     {
@@ -6910,15 +7102,19 @@ Session.IPKGs.Install.IsNone()
     }
 Session.IPKGs.Install.IsNot()
     {
-    [[ $_object_session_ipkgs_install_flag_ != "true" ]]
+    [[ $_object_session_ipkgs_install_flag_ != 'true' ]]
     }
 Session.IPKGs.Install.IsSet()
     {
-    [[ $_object_session_ipkgs_install_flag_ = "true" ]]
+    [[ $_object_session_ipkgs_install_flag_ = 'true' ]]
     }
 Session.IPKGs.Install.List()
     {
     echo -n "${_object_session_ipkgs_install_array_[*]}"
+    }
+Session.IPKGs.Install.ListComma()
+    {
+    echo -n "${_object_session_ipkgs_install_array_[*]}" | tr ' ' ','
     }
 Session.IPKGs.Install.Path()
     {
@@ -6934,7 +7130,7 @@ Session.IPKGs.Install.Remove()
     }
 Session.IPKGs.Install.Set()
     {
-    [[ $_object_session_ipkgs_install_flag_ = "true" ]] && return
+    [[ $_object_session_ipkgs_install_flag_ = 'true' ]] && return
     _object_session_ipkgs_install_flag_=true
     DebugVar _object_session_ipkgs_install_flag_
     }
@@ -6966,7 +7162,7 @@ Session.LineSpace.Array()
     }
 Session.LineSpace.Clear()
     {
-    [[ $_object_session_linespace_flag_ != "true" ]] && return
+    [[ $_object_session_linespace_flag_ != 'true' ]] && return
     _object_session_linespace_flag_=false
     DebugVar _object_session_linespace_flag_
     }
@@ -6976,13 +7172,13 @@ Session.LineSpace.Count()
     }
 Session.LineSpace.Disable()
     {
-    [[ $_object_session_linespace_enable_ != "true" ]] && return
+    [[ $_object_session_linespace_enable_ != 'true' ]] && return
     _object_session_linespace_enable_=false
     DebugVar _object_session_linespace_enable_
     }
 Session.LineSpace.Enable()
     {
-    [[ $_object_session_linespace_enable_ = "true" ]] && return
+    [[ $_object_session_linespace_enable_ = 'true' ]] && return
     _object_session_linespace_enable_=true
     DebugVar _object_session_linespace_enable_
     }
@@ -7014,7 +7210,7 @@ Session.LineSpace.GetItem()
     }
 Session.LineSpace.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_session_linespace_array_[@]} ]]; then
             _object_session_linespace_array_index_=${#_object_session_linespace_array_[@]}
         else
@@ -7027,12 +7223,12 @@ Session.LineSpace.Index()
 Session.LineSpace.Init()
     {
     _object_session_linespace_value_=0
-    _object_session_linespace_text_=""
+    _object_session_linespace_text_=''
     _object_session_linespace_flag_=false
     _object_session_linespace_enable_=false
     _object_session_linespace_array_+=()
     _object_session_linespace_array_index_=1
-    _object_session_linespace_path_=""
+    _object_session_linespace_path_=''
     }
 Session.LineSpace.IsAny()
     {
@@ -7040,11 +7236,11 @@ Session.LineSpace.IsAny()
     }
 Session.LineSpace.IsDisabled()
     {
-    [[ $_object_session_linespace_enable_ != "true" ]]
+    [[ $_object_session_linespace_enable_ != 'true' ]]
     }
 Session.LineSpace.IsEnabled()
     {
-    [[ $_object_session_linespace_enable_ = "true" ]]
+    [[ $_object_session_linespace_enable_ = 'true' ]]
     }
 Session.LineSpace.IsNone()
     {
@@ -7052,15 +7248,19 @@ Session.LineSpace.IsNone()
     }
 Session.LineSpace.IsNot()
     {
-    [[ $_object_session_linespace_flag_ != "true" ]]
+    [[ $_object_session_linespace_flag_ != 'true' ]]
     }
 Session.LineSpace.IsSet()
     {
-    [[ $_object_session_linespace_flag_ = "true" ]]
+    [[ $_object_session_linespace_flag_ = 'true' ]]
     }
 Session.LineSpace.List()
     {
     echo -n "${_object_session_linespace_array_[*]}"
+    }
+Session.LineSpace.ListComma()
+    {
+    echo -n "${_object_session_linespace_array_[*]}" | tr ' ' ','
     }
 Session.LineSpace.Path()
     {
@@ -7076,7 +7276,7 @@ Session.LineSpace.Remove()
     }
 Session.LineSpace.Set()
     {
-    [[ $_object_session_linespace_flag_ = "true" ]] && return
+    [[ $_object_session_linespace_flag_ = 'true' ]] && return
     _object_session_linespace_flag_=true
     DebugVar _object_session_linespace_flag_
     }
@@ -7108,7 +7308,7 @@ Session.PIPs.Install.Array()
     }
 Session.PIPs.Install.Clear()
     {
-    [[ $_object_session_pips_install_flag_ != "true" ]] && return
+    [[ $_object_session_pips_install_flag_ != 'true' ]] && return
     _object_session_pips_install_flag_=false
     DebugVar _object_session_pips_install_flag_
     }
@@ -7118,13 +7318,13 @@ Session.PIPs.Install.Count()
     }
 Session.PIPs.Install.Disable()
     {
-    [[ $_object_session_pips_install_enable_ != "true" ]] && return
+    [[ $_object_session_pips_install_enable_ != 'true' ]] && return
     _object_session_pips_install_enable_=false
     DebugVar _object_session_pips_install_enable_
     }
 Session.PIPs.Install.Enable()
     {
-    [[ $_object_session_pips_install_enable_ = "true" ]] && return
+    [[ $_object_session_pips_install_enable_ = 'true' ]] && return
     _object_session_pips_install_enable_=true
     DebugVar _object_session_pips_install_enable_
     }
@@ -7156,7 +7356,7 @@ Session.PIPs.Install.GetItem()
     }
 Session.PIPs.Install.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_session_pips_install_array_[@]} ]]; then
             _object_session_pips_install_array_index_=${#_object_session_pips_install_array_[@]}
         else
@@ -7169,12 +7369,12 @@ Session.PIPs.Install.Index()
 Session.PIPs.Install.Init()
     {
     _object_session_pips_install_value_=0
-    _object_session_pips_install_text_=""
+    _object_session_pips_install_text_=''
     _object_session_pips_install_flag_=false
     _object_session_pips_install_enable_=false
     _object_session_pips_install_array_+=()
     _object_session_pips_install_array_index_=1
-    _object_session_pips_install_path_=""
+    _object_session_pips_install_path_=''
     }
 Session.PIPs.Install.IsAny()
     {
@@ -7182,11 +7382,11 @@ Session.PIPs.Install.IsAny()
     }
 Session.PIPs.Install.IsDisabled()
     {
-    [[ $_object_session_pips_install_enable_ != "true" ]]
+    [[ $_object_session_pips_install_enable_ != 'true' ]]
     }
 Session.PIPs.Install.IsEnabled()
     {
-    [[ $_object_session_pips_install_enable_ = "true" ]]
+    [[ $_object_session_pips_install_enable_ = 'true' ]]
     }
 Session.PIPs.Install.IsNone()
     {
@@ -7194,15 +7394,19 @@ Session.PIPs.Install.IsNone()
     }
 Session.PIPs.Install.IsNot()
     {
-    [[ $_object_session_pips_install_flag_ != "true" ]]
+    [[ $_object_session_pips_install_flag_ != 'true' ]]
     }
 Session.PIPs.Install.IsSet()
     {
-    [[ $_object_session_pips_install_flag_ = "true" ]]
+    [[ $_object_session_pips_install_flag_ = 'true' ]]
     }
 Session.PIPs.Install.List()
     {
     echo -n "${_object_session_pips_install_array_[*]}"
+    }
+Session.PIPs.Install.ListComma()
+    {
+    echo -n "${_object_session_pips_install_array_[*]}" | tr ' ' ','
     }
 Session.PIPs.Install.Path()
     {
@@ -7218,7 +7422,7 @@ Session.PIPs.Install.Remove()
     }
 Session.PIPs.Install.Set()
     {
-    [[ $_object_session_pips_install_flag_ = "true" ]] && return
+    [[ $_object_session_pips_install_flag_ = 'true' ]] && return
     _object_session_pips_install_flag_=true
     DebugVar _object_session_pips_install_flag_
     }
@@ -7250,7 +7454,7 @@ Session.ShowBackupLocation.Array()
     }
 Session.ShowBackupLocation.Clear()
     {
-    [[ $_object_session_showbackuplocation_flag_ != "true" ]] && return
+    [[ $_object_session_showbackuplocation_flag_ != 'true' ]] && return
     _object_session_showbackuplocation_flag_=false
     DebugVar _object_session_showbackuplocation_flag_
     }
@@ -7260,13 +7464,13 @@ Session.ShowBackupLocation.Count()
     }
 Session.ShowBackupLocation.Disable()
     {
-    [[ $_object_session_showbackuplocation_enable_ != "true" ]] && return
+    [[ $_object_session_showbackuplocation_enable_ != 'true' ]] && return
     _object_session_showbackuplocation_enable_=false
     DebugVar _object_session_showbackuplocation_enable_
     }
 Session.ShowBackupLocation.Enable()
     {
-    [[ $_object_session_showbackuplocation_enable_ = "true" ]] && return
+    [[ $_object_session_showbackuplocation_enable_ = 'true' ]] && return
     _object_session_showbackuplocation_enable_=true
     DebugVar _object_session_showbackuplocation_enable_
     }
@@ -7298,7 +7502,7 @@ Session.ShowBackupLocation.GetItem()
     }
 Session.ShowBackupLocation.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_session_showbackuplocation_array_[@]} ]]; then
             _object_session_showbackuplocation_array_index_=${#_object_session_showbackuplocation_array_[@]}
         else
@@ -7311,12 +7515,12 @@ Session.ShowBackupLocation.Index()
 Session.ShowBackupLocation.Init()
     {
     _object_session_showbackuplocation_value_=0
-    _object_session_showbackuplocation_text_=""
+    _object_session_showbackuplocation_text_=''
     _object_session_showbackuplocation_flag_=false
     _object_session_showbackuplocation_enable_=false
     _object_session_showbackuplocation_array_+=()
     _object_session_showbackuplocation_array_index_=1
-    _object_session_showbackuplocation_path_=""
+    _object_session_showbackuplocation_path_=''
     }
 Session.ShowBackupLocation.IsAny()
     {
@@ -7324,11 +7528,11 @@ Session.ShowBackupLocation.IsAny()
     }
 Session.ShowBackupLocation.IsDisabled()
     {
-    [[ $_object_session_showbackuplocation_enable_ != "true" ]]
+    [[ $_object_session_showbackuplocation_enable_ != 'true' ]]
     }
 Session.ShowBackupLocation.IsEnabled()
     {
-    [[ $_object_session_showbackuplocation_enable_ = "true" ]]
+    [[ $_object_session_showbackuplocation_enable_ = 'true' ]]
     }
 Session.ShowBackupLocation.IsNone()
     {
@@ -7336,15 +7540,19 @@ Session.ShowBackupLocation.IsNone()
     }
 Session.ShowBackupLocation.IsNot()
     {
-    [[ $_object_session_showbackuplocation_flag_ != "true" ]]
+    [[ $_object_session_showbackuplocation_flag_ != 'true' ]]
     }
 Session.ShowBackupLocation.IsSet()
     {
-    [[ $_object_session_showbackuplocation_flag_ = "true" ]]
+    [[ $_object_session_showbackuplocation_flag_ = 'true' ]]
     }
 Session.ShowBackupLocation.List()
     {
     echo -n "${_object_session_showbackuplocation_array_[*]}"
+    }
+Session.ShowBackupLocation.ListComma()
+    {
+    echo -n "${_object_session_showbackuplocation_array_[*]}" | tr ' ' ','
     }
 Session.ShowBackupLocation.Path()
     {
@@ -7360,7 +7568,7 @@ Session.ShowBackupLocation.Remove()
     }
 Session.ShowBackupLocation.Set()
     {
-    [[ $_object_session_showbackuplocation_flag_ = "true" ]] && return
+    [[ $_object_session_showbackuplocation_flag_ = 'true' ]] && return
     _object_session_showbackuplocation_flag_=true
     DebugVar _object_session_showbackuplocation_flag_
     }
@@ -7392,7 +7600,7 @@ Session.SkipPackageProcessing.Array()
     }
 Session.SkipPackageProcessing.Clear()
     {
-    [[ $_object_session_skippackageprocessing_flag_ != "true" ]] && return
+    [[ $_object_session_skippackageprocessing_flag_ != 'true' ]] && return
     _object_session_skippackageprocessing_flag_=false
     DebugVar _object_session_skippackageprocessing_flag_
     }
@@ -7402,13 +7610,13 @@ Session.SkipPackageProcessing.Count()
     }
 Session.SkipPackageProcessing.Disable()
     {
-    [[ $_object_session_skippackageprocessing_enable_ != "true" ]] && return
+    [[ $_object_session_skippackageprocessing_enable_ != 'true' ]] && return
     _object_session_skippackageprocessing_enable_=false
     DebugVar _object_session_skippackageprocessing_enable_
     }
 Session.SkipPackageProcessing.Enable()
     {
-    [[ $_object_session_skippackageprocessing_enable_ = "true" ]] && return
+    [[ $_object_session_skippackageprocessing_enable_ = 'true' ]] && return
     _object_session_skippackageprocessing_enable_=true
     DebugVar _object_session_skippackageprocessing_enable_
     }
@@ -7440,7 +7648,7 @@ Session.SkipPackageProcessing.GetItem()
     }
 Session.SkipPackageProcessing.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_session_skippackageprocessing_array_[@]} ]]; then
             _object_session_skippackageprocessing_array_index_=${#_object_session_skippackageprocessing_array_[@]}
         else
@@ -7453,12 +7661,12 @@ Session.SkipPackageProcessing.Index()
 Session.SkipPackageProcessing.Init()
     {
     _object_session_skippackageprocessing_value_=0
-    _object_session_skippackageprocessing_text_=""
+    _object_session_skippackageprocessing_text_=''
     _object_session_skippackageprocessing_flag_=false
     _object_session_skippackageprocessing_enable_=false
     _object_session_skippackageprocessing_array_+=()
     _object_session_skippackageprocessing_array_index_=1
-    _object_session_skippackageprocessing_path_=""
+    _object_session_skippackageprocessing_path_=''
     }
 Session.SkipPackageProcessing.IsAny()
     {
@@ -7466,11 +7674,11 @@ Session.SkipPackageProcessing.IsAny()
     }
 Session.SkipPackageProcessing.IsDisabled()
     {
-    [[ $_object_session_skippackageprocessing_enable_ != "true" ]]
+    [[ $_object_session_skippackageprocessing_enable_ != 'true' ]]
     }
 Session.SkipPackageProcessing.IsEnabled()
     {
-    [[ $_object_session_skippackageprocessing_enable_ = "true" ]]
+    [[ $_object_session_skippackageprocessing_enable_ = 'true' ]]
     }
 Session.SkipPackageProcessing.IsNone()
     {
@@ -7478,15 +7686,19 @@ Session.SkipPackageProcessing.IsNone()
     }
 Session.SkipPackageProcessing.IsNot()
     {
-    [[ $_object_session_skippackageprocessing_flag_ != "true" ]]
+    [[ $_object_session_skippackageprocessing_flag_ != 'true' ]]
     }
 Session.SkipPackageProcessing.IsSet()
     {
-    [[ $_object_session_skippackageprocessing_flag_ = "true" ]]
+    [[ $_object_session_skippackageprocessing_flag_ = 'true' ]]
     }
 Session.SkipPackageProcessing.List()
     {
     echo -n "${_object_session_skippackageprocessing_array_[*]}"
+    }
+Session.SkipPackageProcessing.ListComma()
+    {
+    echo -n "${_object_session_skippackageprocessing_array_[*]}" | tr ' ' ','
     }
 Session.SkipPackageProcessing.Path()
     {
@@ -7502,7 +7714,7 @@ Session.SkipPackageProcessing.Remove()
     }
 Session.SkipPackageProcessing.Set()
     {
-    [[ $_object_session_skippackageprocessing_flag_ = "true" ]] && return
+    [[ $_object_session_skippackageprocessing_flag_ = 'true' ]] && return
     _object_session_skippackageprocessing_flag_=true
     DebugVar _object_session_skippackageprocessing_flag_
     }
@@ -7534,7 +7746,7 @@ Session.SuggestIssue.Array()
     }
 Session.SuggestIssue.Clear()
     {
-    [[ $_object_session_suggestissue_flag_ != "true" ]] && return
+    [[ $_object_session_suggestissue_flag_ != 'true' ]] && return
     _object_session_suggestissue_flag_=false
     DebugVar _object_session_suggestissue_flag_
     }
@@ -7544,13 +7756,13 @@ Session.SuggestIssue.Count()
     }
 Session.SuggestIssue.Disable()
     {
-    [[ $_object_session_suggestissue_enable_ != "true" ]] && return
+    [[ $_object_session_suggestissue_enable_ != 'true' ]] && return
     _object_session_suggestissue_enable_=false
     DebugVar _object_session_suggestissue_enable_
     }
 Session.SuggestIssue.Enable()
     {
-    [[ $_object_session_suggestissue_enable_ = "true" ]] && return
+    [[ $_object_session_suggestissue_enable_ = 'true' ]] && return
     _object_session_suggestissue_enable_=true
     DebugVar _object_session_suggestissue_enable_
     }
@@ -7582,7 +7794,7 @@ Session.SuggestIssue.GetItem()
     }
 Session.SuggestIssue.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_session_suggestissue_array_[@]} ]]; then
             _object_session_suggestissue_array_index_=${#_object_session_suggestissue_array_[@]}
         else
@@ -7595,12 +7807,12 @@ Session.SuggestIssue.Index()
 Session.SuggestIssue.Init()
     {
     _object_session_suggestissue_value_=0
-    _object_session_suggestissue_text_=""
+    _object_session_suggestissue_text_=''
     _object_session_suggestissue_flag_=false
     _object_session_suggestissue_enable_=false
     _object_session_suggestissue_array_+=()
     _object_session_suggestissue_array_index_=1
-    _object_session_suggestissue_path_=""
+    _object_session_suggestissue_path_=''
     }
 Session.SuggestIssue.IsAny()
     {
@@ -7608,11 +7820,11 @@ Session.SuggestIssue.IsAny()
     }
 Session.SuggestIssue.IsDisabled()
     {
-    [[ $_object_session_suggestissue_enable_ != "true" ]]
+    [[ $_object_session_suggestissue_enable_ != 'true' ]]
     }
 Session.SuggestIssue.IsEnabled()
     {
-    [[ $_object_session_suggestissue_enable_ = "true" ]]
+    [[ $_object_session_suggestissue_enable_ = 'true' ]]
     }
 Session.SuggestIssue.IsNone()
     {
@@ -7620,15 +7832,19 @@ Session.SuggestIssue.IsNone()
     }
 Session.SuggestIssue.IsNot()
     {
-    [[ $_object_session_suggestissue_flag_ != "true" ]]
+    [[ $_object_session_suggestissue_flag_ != 'true' ]]
     }
 Session.SuggestIssue.IsSet()
     {
-    [[ $_object_session_suggestissue_flag_ = "true" ]]
+    [[ $_object_session_suggestissue_flag_ = 'true' ]]
     }
 Session.SuggestIssue.List()
     {
     echo -n "${_object_session_suggestissue_array_[*]}"
+    }
+Session.SuggestIssue.ListComma()
+    {
+    echo -n "${_object_session_suggestissue_array_[*]}" | tr ' ' ','
     }
 Session.SuggestIssue.Path()
     {
@@ -7644,7 +7860,7 @@ Session.SuggestIssue.Remove()
     }
 Session.SuggestIssue.Set()
     {
-    [[ $_object_session_suggestissue_flag_ = "true" ]] && return
+    [[ $_object_session_suggestissue_flag_ = 'true' ]] && return
     _object_session_suggestissue_flag_=true
     DebugVar _object_session_suggestissue_flag_
     }
@@ -7676,7 +7892,7 @@ Session.Summary.Array()
     }
 Session.Summary.Clear()
     {
-    [[ $_object_session_summary_flag_ != "true" ]] && return
+    [[ $_object_session_summary_flag_ != 'true' ]] && return
     _object_session_summary_flag_=false
     DebugVar _object_session_summary_flag_
     }
@@ -7686,13 +7902,13 @@ Session.Summary.Count()
     }
 Session.Summary.Disable()
     {
-    [[ $_object_session_summary_enable_ != "true" ]] && return
+    [[ $_object_session_summary_enable_ != 'true' ]] && return
     _object_session_summary_enable_=false
     DebugVar _object_session_summary_enable_
     }
 Session.Summary.Enable()
     {
-    [[ $_object_session_summary_enable_ = "true" ]] && return
+    [[ $_object_session_summary_enable_ = 'true' ]] && return
     _object_session_summary_enable_=true
     DebugVar _object_session_summary_enable_
     }
@@ -7724,7 +7940,7 @@ Session.Summary.GetItem()
     }
 Session.Summary.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '=' ]]; then
         if [[ $2 -gt ${#_object_session_summary_array_[@]} ]]; then
             _object_session_summary_array_index_=${#_object_session_summary_array_[@]}
         else
@@ -7737,12 +7953,12 @@ Session.Summary.Index()
 Session.Summary.Init()
     {
     _object_session_summary_value_=0
-    _object_session_summary_text_=""
+    _object_session_summary_text_=''
     _object_session_summary_flag_=false
     _object_session_summary_enable_=false
     _object_session_summary_array_+=()
     _object_session_summary_array_index_=1
-    _object_session_summary_path_=""
+    _object_session_summary_path_=''
     }
 Session.Summary.IsAny()
     {
@@ -7750,11 +7966,11 @@ Session.Summary.IsAny()
     }
 Session.Summary.IsDisabled()
     {
-    [[ $_object_session_summary_enable_ != "true" ]]
+    [[ $_object_session_summary_enable_ != 'true' ]]
     }
 Session.Summary.IsEnabled()
     {
-    [[ $_object_session_summary_enable_ = "true" ]]
+    [[ $_object_session_summary_enable_ = 'true' ]]
     }
 Session.Summary.IsNone()
     {
@@ -7762,15 +7978,19 @@ Session.Summary.IsNone()
     }
 Session.Summary.IsNot()
     {
-    [[ $_object_session_summary_flag_ != "true" ]]
+    [[ $_object_session_summary_flag_ != 'true' ]]
     }
 Session.Summary.IsSet()
     {
-    [[ $_object_session_summary_flag_ = "true" ]]
+    [[ $_object_session_summary_flag_ = 'true' ]]
     }
 Session.Summary.List()
     {
     echo -n "${_object_session_summary_array_[*]}"
+    }
+Session.Summary.ListComma()
+    {
+    echo -n "${_object_session_summary_array_[*]}" | tr ' ' ','
     }
 Session.Summary.Path()
     {
@@ -7786,7 +8006,7 @@ Session.Summary.Remove()
     }
 Session.Summary.Set()
     {
-    [[ $_object_session_summary_flag_ = "true" ]] && return
+    [[ $_object_session_summary_flag_ = 'true' ]] && return
     _object_session_summary_flag_=true
     DebugVar _object_session_summary_flag_
     }

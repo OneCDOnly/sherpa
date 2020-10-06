@@ -164,7 +164,7 @@ Session.Init()
     readonly IPKG_DL_PATH=$WORK_PATH/ipkgs.downloads
     readonly IPKG_CACHE_PATH=$WORK_PATH/ipkgs
     readonly PIP_CACHE_PATH=$WORK_PATH/pips
-    readonly COMPILED_OBJECTS_HASH=ad7209e8d5cdf095a7c26981673b9a8c
+    readonly COMPILED_OBJECTS_HASH=3d4ca09e595455cd336c5442e3c65030
     readonly DEBUG_LOG_DATAWIDTH=92
 
     if ! MakePath "$WORK_PATH" 'work'; then
@@ -2792,15 +2792,15 @@ QPKGs.Assignment.Check()
         QPKGs.ToDownload.Add $package
     done
 
-    DebugScript 'to backup' "$(QPKGs.ToBackup.List) "
-    DebugScript 'to uninstall' "$(QPKGs.ToUninstall.List) "
-    DebugScript 'to force-upgrade' "$(QPKGs.ToForceUpgrade.List) "
-    DebugScript 'to upgrade' "$(QPKGs.ToUpgrade.List) "
-    DebugScript 'to install' "$(QPKGs.ToInstall.List) "
-    DebugScript 'to reinstall' "$(QPKGs.ToReinstall.List) "
-    DebugScript 'to restore' "$(QPKGs.ToRestore.List) "
-    DebugScript 'to restart' "$(QPKGs.ToRestart.List) "
-    DebugScript 'to download' "$(QPKGs.ToDownload.List) "
+    DebugScript 'to backup' "$(QPKGs.ToBackup.ListComma) "
+    DebugScript 'to uninstall' "$(QPKGs.ToUninstall.ListComma) "
+    DebugScript 'to force-upgrade' "$(QPKGs.ToForceUpgrade.ListComma) "
+    DebugScript 'to upgrade' "$(QPKGs.ToUpgrade.ListComma) "
+    DebugScript 'to install' "$(QPKGs.ToInstall.ListComma) "
+    DebugScript 'to reinstall' "$(QPKGs.ToReinstall.ListComma) "
+    DebugScript 'to restore' "$(QPKGs.ToRestore.ListComma) "
+    DebugScript 'to restart' "$(QPKGs.ToRestart.ListComma) "
+    DebugScript 'to download' "$(QPKGs.ToDownload.ListComma) "
     DebugFuncExit; return 0
 
     }
@@ -4431,7 +4431,7 @@ echo $public_function_name'.Add()
     }
 '$public_function_name'.Clear()
     {
-    [[ $'$_placeholder_flag_' != "true" ]] && return
+    [[ $'$_placeholder_flag_' != '\'true\'' ]] && return
     '$_placeholder_flag_'=false
     DebugVar '$_placeholder_flag_'
     }
@@ -4441,13 +4441,13 @@ echo $public_function_name'.Add()
     }
 '$public_function_name'.Disable()
     {
-    [[ $'$_placeholder_enable_' != "true" ]] && return
+    [[ $'$_placeholder_enable_' != '\'true\'' ]] && return
     '$_placeholder_enable_'=false
     DebugVar '$_placeholder_enable_'
     }
 '$public_function_name'.Enable()
     {
-    [[ $'$_placeholder_enable_' = "true" ]] && return
+    [[ $'$_placeholder_enable_' = '\'true\'' ]] && return
     '$_placeholder_enable_'=true
     DebugVar '$_placeholder_enable_'
     }
@@ -4479,7 +4479,7 @@ echo $public_function_name'.Add()
     }
 '$public_function_name'.Index()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n $1 && $1 = '\'=\'' ]]; then
         if [[ $2 -gt ${#'$_placeholder_array_'[@]} ]]; then
             '$_placeholder_array_index_'=${#'$_placeholder_array_'[@]}
         else
@@ -4492,12 +4492,12 @@ echo $public_function_name'.Add()
 '$public_function_name'.Init()
     {
     '$_placeholder_value_'=0
-    '$_placeholder_text_'=""
+    '$_placeholder_text_'='\'\''
     '$_placeholder_flag_'=false
     '$_placeholder_enable_'=false
     '$_placeholder_array_'+=()
     '$_placeholder_array_index_'=1
-    '$_placeholder_path_'=""
+    '$_placeholder_path_'='\'\''
     }
 '$public_function_name'.IsAny()
     {
@@ -4505,11 +4505,11 @@ echo $public_function_name'.Add()
     }
 '$public_function_name'.IsDisabled()
     {
-    [[ $'$_placeholder_enable_' != "true" ]]
+    [[ $'$_placeholder_enable_' != '\'true\'' ]]
     }
 '$public_function_name'.IsEnabled()
     {
-    [[ $'$_placeholder_enable_' = "true" ]]
+    [[ $'$_placeholder_enable_' = '\'true\'' ]]
     }
 '$public_function_name'.IsNone()
     {
@@ -4517,15 +4517,19 @@ echo $public_function_name'.Add()
     }
 '$public_function_name'.IsNot()
     {
-    [[ $'$_placeholder_flag_' != "true" ]]
+    [[ $'$_placeholder_flag_' != '\'true\'' ]]
     }
 '$public_function_name'.IsSet()
     {
-    [[ $'$_placeholder_flag_' = "true" ]]
+    [[ $'$_placeholder_flag_' = '\'true\'' ]]
     }
 '$public_function_name'.List()
     {
     echo -n "${'$_placeholder_array_'[*]}"
+    }
+'$public_function_name'.ListComma()
+    {
+    echo -n "${'$_placeholder_array_'[*]}" | tr '\' \'' '\',\''
     }
 '$public_function_name'.Path()
     {
@@ -4541,7 +4545,7 @@ echo $public_function_name'.Add()
     }
 '$public_function_name'.Set()
     {
-    [[ $'$_placeholder_flag_' = "true" ]] && return
+    [[ $'$_placeholder_flag_' = '\'true\'' ]] && return
     '$_placeholder_flag_'=true
     DebugVar '$_placeholder_flag_'
     }
