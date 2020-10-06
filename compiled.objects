@@ -3832,6 +3832,148 @@ User.Opts.Apps.List.Upgradable.Value()
     }
 User.Opts.Apps.List.Upgradable.Init
 
+QPKGs.Names.Add()
+    {
+    [[ ${_object_qpkgs_names_array_[*]} != *"$1"* ]] && _object_qpkgs_names_array_+=("$1")
+    }
+QPKGs.Names.Array()
+    {
+    echo -n "${_object_qpkgs_names_array_[@]}"
+    }
+QPKGs.Names.Clear()
+    {
+    [[ $_object_qpkgs_names_flag_ != "true" ]] && return
+    _object_qpkgs_names_flag_=false
+    DebugVar _object_qpkgs_names_flag_
+    }
+QPKGs.Names.Count()
+    {
+    echo "${#_object_qpkgs_names_array_[@]}"
+    }
+QPKGs.Names.Disable()
+    {
+    [[ $_object_qpkgs_names_enable_ != "true" ]] && return
+    _object_qpkgs_names_enable_=false
+    DebugVar _object_qpkgs_names_enable_
+    }
+QPKGs.Names.Enable()
+    {
+    [[ $_object_qpkgs_names_enable_ = "true" ]] && return
+    _object_qpkgs_names_enable_=true
+    DebugVar _object_qpkgs_names_enable_
+    }
+QPKGs.Names.Enumerate()
+    {
+    ((_object_qpkgs_names_array_index_++))
+    if [[ $_object_qpkgs_names_array_index_ -gt ${#_object_qpkgs_names_array_[@]} ]]; then
+        _object_qpkgs_names_array_index_=1
+    fi
+    }
+QPKGs.Names.Exist()
+    {
+    [[ ${_object_qpkgs_names_array_[*]} == *"$1"* ]]
+    }
+QPKGs.Names.First()
+    {
+    echo "${_object_qpkgs_names_array_[0]}"
+    }
+QPKGs.Names.GetCurrent()
+    {
+    echo -n "${_object_qpkgs_names_array_[((_object_qpkgs_names_array_index_-1))]}"
+    }
+QPKGs.Names.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_qpkgs_names_array_[@]} ]] && index=${#_object_qpkgs_names_array_[@]}
+    echo -n "${_object_qpkgs_names_array_[((index-1))]}"
+    }
+QPKGs.Names.Index()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        if [[ $2 -gt ${#_object_qpkgs_names_array_[@]} ]]; then
+            _object_qpkgs_names_array_index_=${#_object_qpkgs_names_array_[@]}
+        else
+            _object_qpkgs_names_array_index_=$2
+        fi
+    else
+        echo -n $_object_qpkgs_names_array_index_
+    fi
+    }
+QPKGs.Names.Init()
+    {
+    _object_qpkgs_names_value_=0
+    _object_qpkgs_names_text_=""
+    _object_qpkgs_names_flag_=false
+    _object_qpkgs_names_enable_=false
+    _object_qpkgs_names_array_+=()
+    _object_qpkgs_names_array_index_=1
+    _object_qpkgs_names_path_=""
+    }
+QPKGs.Names.IsAny()
+    {
+    [[ ${#_object_qpkgs_names_array_[@]} -gt 0 ]]
+    }
+QPKGs.Names.IsDisabled()
+    {
+    [[ $_object_qpkgs_names_enable_ != "true" ]]
+    }
+QPKGs.Names.IsEnabled()
+    {
+    [[ $_object_qpkgs_names_enable_ = "true" ]]
+    }
+QPKGs.Names.IsNone()
+    {
+    [[ ${#_object_qpkgs_names_array_[@]} -eq 0 ]]
+    }
+QPKGs.Names.IsNot()
+    {
+    [[ $_object_qpkgs_names_flag_ != "true" ]]
+    }
+QPKGs.Names.IsSet()
+    {
+    [[ $_object_qpkgs_names_flag_ = "true" ]]
+    }
+QPKGs.Names.List()
+    {
+    echo -n "${_object_qpkgs_names_array_[*]}"
+    }
+QPKGs.Names.Path()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_names_path_="$2"
+    else
+        echo -n "$_object_qpkgs_names_path_"
+    fi
+    }
+QPKGs.Names.Remove()
+    {
+    [[ ${_object_qpkgs_names_array_[*]} == *"$1"* ]] && _object_qpkgs_names_array_=("${_object_qpkgs_names_array_[@]/$1}")
+    }
+QPKGs.Names.Set()
+    {
+    [[ $_object_qpkgs_names_flag_ = "true" ]] && return
+    _object_qpkgs_names_flag_=true
+    DebugVar _object_qpkgs_names_flag_
+    }
+QPKGs.Names.Text()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_names_text_="$2"
+    else
+        echo -n "$_object_qpkgs_names_text_"
+    fi
+    }
+QPKGs.Names.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_names_value_=$2
+    else
+        echo -n $_object_qpkgs_names_value_
+    fi
+    }
+QPKGs.Names.Init
+
 QPKGs.Dependant.Add()
     {
     [[ ${_object_qpkgs_dependant_array_[*]} != *"$1"* ]] && _object_qpkgs_dependant_array_+=("$1")

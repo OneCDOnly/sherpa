@@ -164,7 +164,7 @@ Session.Init()
     readonly IPKG_DL_PATH=$WORK_PATH/ipkgs.downloads
     readonly IPKG_CACHE_PATH=$WORK_PATH/ipkgs
     readonly PIP_CACHE_PATH=$WORK_PATH/pips
-    readonly COMPILED_OBJECTS_HASH=ebe7599941e299a952877f446862ae25
+    readonly COMPILED_OBJECTS_HASH=ac19b0c171c644c43ae6ca5a31029318
     readonly DEBUG_LOG_DATAWIDTH=92
 
     if ! MakePath "$WORK_PATH" 'work'; then
@@ -219,6 +219,7 @@ Session.Init()
     readonly LOG_TAIL_LINES=2000    # a full download and install of everything generates a session around 1600 lines
     code_pointer=0
     pip3_cmd=/opt/bin/pip3
+    local package=''
     [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg='--insecure' || curl_insecure_arg=''
 
     # sherpa-supported package details - parallel arrays
@@ -374,6 +375,10 @@ Session.Init()
         readonly SHERPA_QPKG_ABBRVS
         readonly SHERPA_QPKG_DEPS
         readonly SHERPA_QPKG_IPKGS
+
+    for package in "${SHERPA_QPKG_NAME[@]}"; do
+        QPKGs.Names.Add $package
+    done
 
     readonly SHERPA_COMMON_IPKGS='ca-certificates findutils gcc git git-http less nano python3-dev python3-pip python3-setuptools sed'
     readonly SHERPA_COMMON_PIPS='apscheduler beautifulsoup4 cfscrape cheetah3 cheroot!=8.4.4 cherrypy configobj feedparser==5.2.1 portend pygithub python-magic random_user_agent sabyenc3 simplejson slugify'
@@ -1052,7 +1057,6 @@ Session.Results()
         QPKGs.StateLists.Build
         QPKGs.Upgradable.Show
     elif User.Opts.Apps.List.All.IsSet; then
-        QPKGs.StateLists.Build
         QPKGs.All.Show
     fi
 
@@ -2597,15 +2601,6 @@ Versions.Show()
 
     }
 
-QPKGs.StateLists.Build()
-    {
-
-    QPKGs.DepAndIndep.Build
-    QPKGs.InstallationState.Build
-    QPKGs.Upgradable.Build
-
-    }
-
 QPKGs.Conflicts.Check()
     {
 
@@ -2846,6 +2841,15 @@ QPKGs.NotUpgraded.Restart()
 
     }
 
+QPKGs.StateLists.Build()
+    {
+
+    QPKGs.DepAndIndep.Build
+    QPKGs.InstallationState.Build
+    QPKGs.Upgradable.Build
+
+    }
+
 QPKGs.DepAndIndep.Build()
     {
 
@@ -2856,10 +2860,10 @@ QPKGs.DepAndIndep.Build()
     local index=0
 
     for index in "${!SHERPA_QPKG_NAME[@]}"; do
-        if [[ -z ${SHERPA_QPKG_DEPS[$index]} ]]; then
-            QPKGs.Independent.Add "${SHERPA_QPKG_NAME[$index]}"
-        else
+        if [[ -n ${SHERPA_QPKG_DEPS[$index]} ]]; then
             QPKGs.Dependant.Add "${SHERPA_QPKG_NAME[$index]}"
+        else
+            QPKGs.Independent.Add "${SHERPA_QPKG_NAME[$index]}"
         fi
     done
 
@@ -2875,7 +2879,7 @@ QPKGs.InstallationState.Build()
     DebugFuncEntry
     local package=''
 
-    for package in "${SHERPA_QPKG_NAME[@]}"; do
+    for package in $(QPKGs.Names.Array); do
         QPKG.UserInstallable $package && QPKGs.Installable.Add $package
 
         if QPKG.Installed $package; then
@@ -2919,7 +2923,7 @@ QPKGs.All.Show()
 
     local package=''
 
-    for package in $(QPKGs.Installable.Array); do
+    for package in $(QPKGs.Names.Array); do
         echo $package
     done
 
@@ -4622,6 +4626,7 @@ Objects.Compile()
         Objects.Add User.Opts.Apps.List.Upgradable
 
         # lists
+        Objects.Add QPKGs.Names
         Objects.Add QPKGs.Dependant
         Objects.Add QPKGs.ToDownload
         Objects.Add QPKGs.Independent
