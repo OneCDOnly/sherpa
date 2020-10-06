@@ -1035,11 +1035,11 @@ Session.Results()
     elif User.Opts.Log.Whole.View.IsSet; then
         Log.Whole.View
     elif User.Opts.Log.Tail.Paste.IsSet; then
-        Log.Whole.Paste.Online
+        Log.Tail.Paste.Online
     elif User.Opts.Log.Last.Paste.IsSet; then
         Log.Last.Paste.Online
     elif User.Opts.Log.Last.View.IsSet; then
-        Log.Last.Show
+        Log.Last.View
     elif User.Opts.Clean.IsSet; then
         Clean.Cache
     elif User.Opts.Apps.List.Installed.IsSet; then
@@ -1132,68 +1132,6 @@ DisplayNewQPKGVersions()
 
         ShowAsNote "$msg available for $names_formatted"
         return 1
-    fi
-
-    return 0
-
-    }
-
-Log.Whole.Paste.Online()
-    {
-
-    # with thanks to https://github.com/solusipse/fiche
-
-    ExtractTailFromLog
-
-    if [[ -e $SESSION_TAIL_PATHFILE ]]; then
-        if AskQuiz "Press 'Y' to post the most-recent $(printf "%'.f" $LOG_TAIL_LINES) entries in your $(FormatAsScriptTitle) log to a public pastebin, or any other key to abort"; then
-            ShowAsProc "uploading $(FormatAsScriptTitle) log"
-            link=$($CAT_CMD -n "$SESSION_TAIL_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
-
-            if [[ $? -eq 0 ]]; then
-                ShowAsDone "your $(FormatAsScriptTitle) log is now online at $(FormatAsURL "$($SED_CMD 's|http://|http://l.|;s|https://|https://l.|' <<< "$link")") and will be deleted in 1 month"
-            else
-                ShowAsError "a link could not be generated. Most likely a problem occurred when talking with $(FormatAsURL 'https://termbin.com')"
-            fi
-        else
-            DebugInfoMinorSeparator
-            DebugScript 'user abort'
-            Session.Summary.Clear
-            return 1
-        fi
-    else
-        ShowAsError 'no log to paste'
-    fi
-
-    return 0
-
-    }
-
-Log.Last.Paste.Online()
-    {
-
-    # with thanks to https://github.com/solusipse/fiche
-
-    ExtractLastSessionFromLog
-
-    if [[ -e $SESSION_LAST_PATHFILE ]]; then
-        if AskQuiz "Press 'Y' to post the most-recent session in your $(FormatAsScriptTitle) log to a public pastebin, or any other key to abort"; then
-            ShowAsProc "uploading $(FormatAsScriptTitle) log"
-            link=$($CAT_CMD "$SESSION_LAST_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
-
-            if [[ $? -eq 0 ]]; then
-                ShowAsDone "your $(FormatAsScriptTitle) log is now online at $(FormatAsURL "$($SED_CMD 's|http://|http://l.|;s|https://|https://l.|' <<< "$link")") and will be deleted in 1 month"
-            else
-                ShowAsError "a link could not be generated. Most likely a problem occurred when talking with $(FormatAsURL 'https://termbin.com')"
-            fi
-        else
-            DebugInfoMinorSeparator
-            DebugScript 'user abort'
-            Session.Summary.Clear
-            return 1
-        fi
-    else
-        ShowAsError 'no log to paste'
     fi
 
     return 0
@@ -2572,12 +2510,12 @@ Log.Whole.View()
 
     }
 
-Log.Last.Show()
+Log.Last.View()
     {
 
     # view only the last sherpa session
 
-    ExtractLastSessionFromLog
+    ExtractLastSessionFromTail
 
     if [[ -e $SESSION_LAST_PATHFILE ]]; then
         if [[ -e $GNU_LESS_CMD ]]; then
@@ -2593,7 +2531,69 @@ Log.Last.Show()
 
     }
 
-ExtractLastSessionFromLog()
+Log.Tail.Paste.Online()
+    {
+
+    # with thanks to https://github.com/solusipse/fiche
+
+    ExtractTailFromLog
+
+    if [[ -e $SESSION_TAIL_PATHFILE ]]; then
+        if AskQuiz "Press 'Y' to post the most-recent $(printf "%'.f" $LOG_TAIL_LINES) entries in your $(FormatAsScriptTitle) log to a public pastebin, or any other key to abort"; then
+            ShowAsProc "uploading $(FormatAsScriptTitle) log"
+            link=$($CAT_CMD -n "$SESSION_TAIL_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
+
+            if [[ $? -eq 0 ]]; then
+                ShowAsDone "your $(FormatAsScriptTitle) log is now online at $(FormatAsURL "$($SED_CMD 's|http://|http://l.|;s|https://|https://l.|' <<< "$link")") and will be deleted in 1 month"
+            else
+                ShowAsError "a link could not be generated. Most likely a problem occurred when talking with $(FormatAsURL 'https://termbin.com')"
+            fi
+        else
+            DebugInfoMinorSeparator
+            DebugScript 'user abort'
+            Session.Summary.Clear
+            return 1
+        fi
+    else
+        ShowAsError 'no log to paste'
+    fi
+
+    return 0
+
+    }
+
+Log.Last.Paste.Online()
+    {
+
+    # with thanks to https://github.com/solusipse/fiche
+
+    ExtractLastSessionFromTail
+
+    if [[ -e $SESSION_LAST_PATHFILE ]]; then
+        if AskQuiz "Press 'Y' to post the most-recent session in your $(FormatAsScriptTitle) log to a public pastebin, or any other key to abort"; then
+            ShowAsProc "uploading $(FormatAsScriptTitle) log"
+            link=$($CAT_CMD "$SESSION_LAST_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
+
+            if [[ $? -eq 0 ]]; then
+                ShowAsDone "your $(FormatAsScriptTitle) log is now online at $(FormatAsURL "$($SED_CMD 's|http://|http://l.|;s|https://|https://l.|' <<< "$link")") and will be deleted in 1 month"
+            else
+                ShowAsError "a link could not be generated. Most likely a problem occurred when talking with $(FormatAsURL 'https://termbin.com')"
+            fi
+        else
+            DebugInfoMinorSeparator
+            DebugScript 'user abort'
+            Session.Summary.Clear
+            return 1
+        fi
+    else
+        ShowAsError 'no log to paste'
+    fi
+
+    return 0
+
+    }
+
+ExtractLastSessionFromTail()
     {
 
     local -i start_line=0
