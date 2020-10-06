@@ -39,7 +39,7 @@ Session.Init()
     readonly SCRIPT_STARTSECONDS=$(/bin/date +%s)
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=201006
+    readonly MANAGER_SCRIPT_VERSION=201007
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -150,21 +150,22 @@ Session.Init()
     readonly EXTERNAL_PACKAGE_ARCHIVE_PATHFILE=/opt/var/opkg-lists/entware
     readonly PREV_QPKG_CONFIG_DIRS=(SAB_CONFIG CONFIG Config config)                                # last element is used as target dirname
     readonly PREV_QPKG_CONFIG_FILES=(sabnzbd.ini sickbeard.conf settings.ini config.cfg config.ini) # last element is used as target filename
-    local -r REMOTE_REPO_URL=https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/master/QPKGs
+    local -r PROJECT_REPO_URL=https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/master/QPKGs
     local -r PROJECT_PATH=$($GETCFG_CMD $PROJECT_NAME Install_Path -f $APP_CENTER_CONFIG_PATHFILE)
     readonly DEBUG_LOG_PATHFILE=$PROJECT_PATH/$DEBUG_LOG_FILE
     readonly WORK_PATH=$PROJECT_PATH/cache
-    readonly COMPILED_OBJECTS=$WORK_PATH/compiled.objects
-    readonly REMOTE_COMPILED_OBJECTS=https://raw.githubusercontent.com/OneCDOnly/sherpa/master/$($BASENAME_CMD "$COMPILED_OBJECTS")
-    readonly PACKAGE_LOGS_PATH=$PROJECT_PATH/logs
-    readonly SESSION_LAST_PATHFILE=$PACKAGE_LOGS_PATH/session.last.log
-    readonly SESSION_TAIL_PATHFILE=$PACKAGE_LOGS_PATH/session.tail.log
+    readonly COMPILED_OBJECTS_URL=https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/master/compiled.objects
+    readonly COMPILED_OBJECTS_PATHFILE=$WORK_PATH/compiled.objects
+    readonly EXTERNAL_PACKAGE_LIST_PATHFILE=$WORK_PATH/Packages
+    readonly LOGS_PATH=$PROJECT_PATH/logs
+    readonly SESSION_LAST_PATHFILE=$LOGS_PATH/session.last.log
+    readonly SESSION_TAIL_PATHFILE=$LOGS_PATH/session.tail.log
     readonly QPKG_DL_PATH=$WORK_PATH/qpkgs
     readonly IPKG_DL_PATH=$WORK_PATH/ipkgs.downloads
     readonly IPKG_CACHE_PATH=$WORK_PATH/ipkgs
     readonly PIP_CACHE_PATH=$WORK_PATH/pips
-    readonly OBJECT_REF_HASH=ebe7599941e299a952877f446862ae25
-    debug_log_datawidth=92
+    readonly COMPILED_OBJECTS_HASH=ebe7599941e299a952877f446862ae25
+    readonly DEBUG_LOG_DATAWIDTH=92
 
     if ! MakePath "$WORK_PATH" 'work'; then
         DebugFuncExit; return 1
@@ -181,7 +182,7 @@ Session.Init()
     User.Opts.IgnoreFreeSpace.Text = ' --force-space'
     Session.Summary.Set
 
-    if ! MakePath "$PACKAGE_LOGS_PATH" 'package logs'; then
+    if ! MakePath "$LOGS_PATH" 'logs'; then
         DebugFuncExit; return 1
     fi
 
@@ -210,7 +211,6 @@ Session.Init()
         DebugFuncExit; return 1
     fi
 
-    readonly EXTERNAL_PACKAGE_LIST_PATHFILE=$WORK_PATH/Packages
     readonly NAS_FIRMWARE=$($GETCFG_CMD System Version -f $ULINUX_PATHFILE)
     readonly PACKAGE_VERSION=$(QPKG.Get.InstalledVersion "$PROJECT_NAME")
     readonly NAS_BUILD=$($GETCFG_CMD System 'Build Number' -f $ULINUX_PATHFILE)
@@ -232,7 +232,7 @@ Session.Init()
 
     SHERPA_QPKG_NAME+=(Entware)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/Entware/Entware_1.02std.qpkg)
+        SHERPA_QPKG_URL+=($PROJECT_REPO_URL/Entware/Entware_1.02std.qpkg)
         SHERPA_QPKG_MD5+=(dbc82469933ac3049c06d4c8a023bbb9)
         SHERPA_QPKG_ABBRVS+=('ew ent opkg entware')
         SHERPA_QPKG_DEPS+=('')
@@ -240,7 +240,7 @@ Session.Init()
 
     SHERPA_QPKG_NAME+=(Par2)
         SHERPA_QPKG_ARCH+=(x86)
-        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/Par2/Par2_0.8.1.0_x86.qpkg)
+        SHERPA_QPKG_URL+=($PROJECT_REPO_URL/Par2/Par2_0.8.1.0_x86.qpkg)
         SHERPA_QPKG_MD5+=(996ffb92d774eb01968003debc171e91)
         SHERPA_QPKG_ABBRVS+=('par par2')        # these apply to all 'Par2' packages
         SHERPA_QPKG_DEPS+=('')
@@ -248,7 +248,7 @@ Session.Init()
 
     SHERPA_QPKG_NAME+=(Par2)
         SHERPA_QPKG_ARCH+=(x64)
-        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/Par2/Par2_0.8.1.0_x86_64.qpkg)
+        SHERPA_QPKG_URL+=($PROJECT_REPO_URL/Par2/Par2_0.8.1.0_x86_64.qpkg)
         SHERPA_QPKG_MD5+=(520472cc87d301704f975f6eb9948e38)
         SHERPA_QPKG_ABBRVS+=('')
         SHERPA_QPKG_DEPS+=('')
@@ -256,7 +256,7 @@ Session.Init()
 
     SHERPA_QPKG_NAME+=(Par2)
         SHERPA_QPKG_ARCH+=(x31)
-        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/Par2/Par2_0.8.1.0_arm-x31.qpkg)
+        SHERPA_QPKG_URL+=($PROJECT_REPO_URL/Par2/Par2_0.8.1.0_arm-x31.qpkg)
         SHERPA_QPKG_MD5+=(ce8af2e009eb87733c3b855e41a94f8e)
         SHERPA_QPKG_ABBRVS+=('')
         SHERPA_QPKG_DEPS+=('')
@@ -264,7 +264,7 @@ Session.Init()
 
     SHERPA_QPKG_NAME+=(Par2)
         SHERPA_QPKG_ARCH+=(x41)
-        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/Par2/Par2_0.8.1.0_arm-x41.qpkg)
+        SHERPA_QPKG_URL+=($PROJECT_REPO_URL/Par2/Par2_0.8.1.0_arm-x41.qpkg)
         SHERPA_QPKG_MD5+=(8516e45e704875cdd2cd2bb315c4e1e6)
         SHERPA_QPKG_ABBRVS+=('')
         SHERPA_QPKG_DEPS+=('')
@@ -272,7 +272,7 @@ Session.Init()
 
     SHERPA_QPKG_NAME+=(Par2)
         SHERPA_QPKG_ARCH+=(a64)
-        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/Par2/Par2_0.8.1.0_arm_64.qpkg)
+        SHERPA_QPKG_URL+=($PROJECT_REPO_URL/Par2/Par2_0.8.1.0_arm_64.qpkg)
         SHERPA_QPKG_MD5+=(4d8e99f97936a163e411aa8765595f7a)
         SHERPA_QPKG_ABBRVS+=('')
         SHERPA_QPKG_DEPS+=('')
@@ -280,7 +280,7 @@ Session.Init()
 
     SHERPA_QPKG_NAME+=(SABnzbd)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/SABnzbd/build/SABnzbd_200922.qpkg)
+        SHERPA_QPKG_URL+=($PROJECT_REPO_URL/SABnzbd/build/SABnzbd_200922.qpkg)
         SHERPA_QPKG_MD5+=(23af2f4260163bcc9995d12fdef39c79)
         SHERPA_QPKG_ABBRVS+=('sb sb3 sab sab3 sabnzbd3 sabnzbd')
         SHERPA_QPKG_DEPS+=('Entware Par2')
@@ -288,7 +288,7 @@ Session.Init()
 
     SHERPA_QPKG_NAME+=(nzbToMedia)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/nzbToMedia/build/nzbToMedia_200922.qpkg)
+        SHERPA_QPKG_URL+=($PROJECT_REPO_URL/nzbToMedia/build/nzbToMedia_200922.qpkg)
         SHERPA_QPKG_MD5+=(19acc62689c862b942bc52f417ce218e)
         SHERPA_QPKG_ABBRVS+=('nzb2 nzb2m nzbto nzbtom nzbtomedia')
         SHERPA_QPKG_DEPS+=('Entware')
@@ -296,7 +296,7 @@ Session.Init()
 
     SHERPA_QPKG_NAME+=(SickChill)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/SickChill/build/SickChill_200916.qpkg)
+        SHERPA_QPKG_URL+=($PROJECT_REPO_URL/SickChill/build/SickChill_200916.qpkg)
         SHERPA_QPKG_MD5+=(ade1d1c67355bf7d8e73543384cc1c61)
         SHERPA_QPKG_ABBRVS+=('sc sick sickc chill sickchill')
         SHERPA_QPKG_DEPS+=('Entware')
@@ -304,7 +304,7 @@ Session.Init()
 
     SHERPA_QPKG_NAME+=(LazyLibrarian)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/LazyLibrarian/build/LazyLibrarian_200922.qpkg)
+        SHERPA_QPKG_URL+=($PROJECT_REPO_URL/LazyLibrarian/build/LazyLibrarian_200922.qpkg)
         SHERPA_QPKG_MD5+=(21203435b4f3c2575a72aeae57992692)
         SHERPA_QPKG_ABBRVS+=('ll lazy lazylibrarian')
         SHERPA_QPKG_DEPS+=('Entware')
@@ -312,7 +312,7 @@ Session.Init()
 
     SHERPA_QPKG_NAME+=(OMedusa)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/OMedusa/build/OMedusa_200922.qpkg)
+        SHERPA_QPKG_URL+=($PROJECT_REPO_URL/OMedusa/build/OMedusa_200922.qpkg)
         SHERPA_QPKG_MD5+=(1cd38aacce12f6172a7ac42abd9e9809)
         SHERPA_QPKG_ABBRVS+=('om med omed medusa omedusa')
         SHERPA_QPKG_DEPS+=('Entware')
@@ -320,7 +320,7 @@ Session.Init()
 
     SHERPA_QPKG_NAME+=(OSickGear)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/OSickGear/build/OSickGear_200922.qpkg)
+        SHERPA_QPKG_URL+=($PROJECT_REPO_URL/OSickGear/build/OSickGear_200922.qpkg)
         SHERPA_QPKG_MD5+=(2635e0c2c51067bdd2c2b63d4d88193c)
         SHERPA_QPKG_ABBRVS+=('sg os osg sickg gear ogear osickg sickgear osickgear')
         SHERPA_QPKG_DEPS+=('Entware')
@@ -328,7 +328,7 @@ Session.Init()
 
     SHERPA_QPKG_NAME+=(Mylar3)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/Mylar3/build/Mylar3_200922.qpkg)
+        SHERPA_QPKG_URL+=($PROJECT_REPO_URL/Mylar3/build/Mylar3_200922.qpkg)
         SHERPA_QPKG_MD5+=(8412e8f92b1df4a3cdad9a56edd8b4e0)
         SHERPA_QPKG_ABBRVS+=('my omy myl mylar mylar3')
         SHERPA_QPKG_DEPS+=('Entware')
@@ -336,7 +336,7 @@ Session.Init()
 
     SHERPA_QPKG_NAME+=(NZBGet)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/NZBGet/build/NZBGet_200922.qpkg)
+        SHERPA_QPKG_URL+=($PROJECT_REPO_URL/NZBGet/build/NZBGet_200922.qpkg)
         SHERPA_QPKG_MD5+=(097f0893eeaf34a4c9f1414b97bcbb67)
         SHERPA_QPKG_ABBRVS+=('ng nzb nzbg nget nzbget')
         SHERPA_QPKG_DEPS+=('Entware')
@@ -344,7 +344,7 @@ Session.Init()
 
     SHERPA_QPKG_NAME+=(OTransmission)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/OTransmission/build/OTransmission_200922.qpkg)
+        SHERPA_QPKG_URL+=($PROJECT_REPO_URL/OTransmission/build/OTransmission_200922.qpkg)
         SHERPA_QPKG_MD5+=(ec9fd927ca8333bafc5984911d781406)
         SHERPA_QPKG_ABBRVS+=('ot tm tr trans otrans tmission transmission otransmission')
         SHERPA_QPKG_DEPS+=('Entware')
@@ -352,7 +352,7 @@ Session.Init()
 
     SHERPA_QPKG_NAME+=(Deluge-server)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/Deluge-server/build/Deluge-server_200922.qpkg)
+        SHERPA_QPKG_URL+=($PROJECT_REPO_URL/Deluge-server/build/Deluge-server_200922.qpkg)
         SHERPA_QPKG_MD5+=(633bc7ff090346a0e8c204fe7b19a382)
         SHERPA_QPKG_ABBRVS+=('deluge del-server deluge-server')
         SHERPA_QPKG_DEPS+=('Entware')
@@ -360,7 +360,7 @@ Session.Init()
 
     SHERPA_QPKG_NAME+=(Deluge-web)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($REMOTE_REPO_URL/Deluge-web/build/Deluge-web_200922.qpkg)
+        SHERPA_QPKG_URL+=($PROJECT_REPO_URL/Deluge-web/build/Deluge-web_200922.qpkg)
         SHERPA_QPKG_MD5+=(774191bbdcd31e6494abba4192b51d7a)
         SHERPA_QPKG_ABBRVS+=('del-web deluge-web')
         SHERPA_QPKG_DEPS+=('Entware')
@@ -423,8 +423,8 @@ Session.ParseArguments()
     local action_force=false
     local target_package=''
 
-    for arg in "${user_args[@]}"; do
-        case ${arg/--/} in
+    for arg in "${user_args[@]/--/}"; do
+        case $arg in
             abs)
                 User.Opts.Help.Abbreviations.Set
                 Session.SkipPackageProcessing.Set
@@ -668,9 +668,9 @@ Session.Validate()
     CheckPythonPathAndVersion python
     DebugUserspace.OK 'unparsed user arguments' "'$USER_ARGS_RAW'"
 
-    DebugScript 'logs path' "$PACKAGE_LOGS_PATH"
+    DebugScript 'logs path' "$LOGS_PATH"
     DebugScript 'work path' "$WORK_PATH"
-    DebugScript 'object reference hash' "$OBJECT_REF_HASH"
+    DebugScript 'object reference hash' "$COMPILED_OBJECTS_HASH"
 
     if QPKG.Installed Entware; then
         [[ -e /opt/etc/passwd ]] && { [[ -L /opt/etc/passwd ]] && ENTWARE_VER=std || ENTWARE_VER=alt ;} || ENTWARE_VER=none
@@ -1207,7 +1207,7 @@ UpdateEntware()
     fi
 
     local package_minutes_threshold=60
-    local log_pathfile=$PACKAGE_LOGS_PATH/entware.$UPDATE_LOG_FILE
+    local log_pathfile=$LOGS_PATH/entware.$UPDATE_LOG_FILE
     local msgs=''
     local result=0
 
@@ -1250,7 +1250,7 @@ InstallIPKGBatch()
 
     DebugFuncEntry
     local result=0
-    local log_pathfile=$PACKAGE_LOGS_PATH/ipkgs.$INSTALL_LOG_FILE
+    local log_pathfile=$LOGS_PATH/ipkgs.$INSTALL_LOG_FILE
 
     GetAllIPKGDepsToDownload "$1" || return 1
 
@@ -1285,7 +1285,7 @@ UpgradeIPKGBatch()
 
     DebugFuncEntry
     local result=0
-    local log_pathfile=$PACKAGE_LOGS_PATH/ipkgs.$UPGRADE_LOG_FILE
+    local log_pathfile=$LOGS_PATH/ipkgs.$UPGRADE_LOG_FILE
 
     IPKG_download_list=($($OPKG_CMD list-upgradable | $CUT_CMD -f1 -d' '))
 
@@ -1340,7 +1340,7 @@ PIPs.Install()
     [[ -n ${SHERPA_COMMON_PIPS// /} ]] && exec_cmd="$pip3_cmd install $SHERPA_COMMON_PIPS --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
 
     local desc="'Python 3' assorted modules"
-    local log_pathfile=$PACKAGE_LOGS_PATH/py3-modules.assorted.$INSTALL_LOG_FILE
+    local log_pathfile=$LOGS_PATH/py3-modules.assorted.$INSTALL_LOG_FILE
     ShowAsProcLong "downloading & installing $desc"
 
     if Session.Debug.To.Screen.IsSet; then
@@ -1362,7 +1362,7 @@ PIPs.Install()
         exec_cmd="$pip3_cmd install --force-reinstall --ignore-installed --no-binary :all: sabyenc3 --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
 
         desc="'Python 3' SABnzbd module"
-        log_pathfile=$PACKAGE_LOGS_PATH/py3-modules.sabnzbd.$INSTALL_LOG_FILE
+        log_pathfile=$LOGS_PATH/py3-modules.sabnzbd.$INSTALL_LOG_FILE
         ShowAsProcLong "downloading & installing $desc"
 
         if Session.Debug.To.Screen.IsSet; then
@@ -1624,46 +1624,6 @@ QPKG.Get.Dependencies()
     else
         return 1
     fi
-
-    }
-
-ExcludeInstalledQPKGs()
-    {
-
-    # From a specified list of QPKG names, exclude those already installed.
-
-    # input:
-    #   $1 = string with space-separated initial QPKG names.
-
-    # output:
-    #   QPKGs.ToDownload = name-sorted array with space-separated QPKG names, minus those already installed.
-
-    local requested_list=''
-    local requested_list_array=()
-    local package=''
-    requested_list=$(DeDupeWords "$1")
-    [[ -z $requested_list ]] && return
-    requested_list_array=(${requested_list})
-
-    DebugProc 'excluding QPKGs already installed'
-
-    for package in "${requested_list_array[@]}"; do
-        if QPKG.NotInstalled $package; then
-            QPKGs.ToDownload.Add $package
-            QPKGs.ToInstall.Add $package
-        elif QPKGs.ToInstall.Exist $package; then
-            QPKGs.ToDownload.Add $package
-        elif QPKGs.ToReinstall.Exist $package; then
-            QPKGs.ToDownload.Add $package
-        elif QPKGs.ToUpgrade.Exist $package; then
-            QPKGs.ToDownload.Add $package
-        elif QPKGs.ToForceUpgrade.Exist $package; then
-            QPKGs.ToDownload.Add $package
-        fi
-    done
-
-    DebugDone 'complete'
-    return 0
 
     }
 
@@ -3081,7 +3041,7 @@ QPKG.Download()
     local remote_filename_md5=$(QPKG.Get.MD5 "$1")
     local local_pathfile=$QPKG_DL_PATH/$remote_filename
     local local_filename=$($BASENAME_CMD "$local_pathfile")
-    local log_pathfile=$PACKAGE_LOGS_PATH/$local_filename.$DOWNLOAD_LOG_FILE
+    local log_pathfile=$LOGS_PATH/$local_filename.$DOWNLOAD_LOG_FILE
 
     if [[ -z $remote_url ]]; then
         DebugWarning "no URL found for this package [$1]"
@@ -3161,7 +3121,7 @@ QPKG.Install()
     fi
 
     target_file=$($BASENAME_CMD "$local_pathfile")
-    log_pathfile=$PACKAGE_LOGS_PATH/$target_file.$INSTALL_LOG_FILE
+    log_pathfile=$LOGS_PATH/$target_file.$INSTALL_LOG_FILE
 
     ShowAsProcLong "installing $(FormatAsPackageName "$1")"
 
@@ -3216,7 +3176,7 @@ QPKG.Reinstall()
     fi
 
     target_file=$($BASENAME_CMD "$local_pathfile")
-    log_pathfile=$PACKAGE_LOGS_PATH/$target_file.$REINSTALL_LOG_FILE
+    log_pathfile=$LOGS_PATH/$target_file.$REINSTALL_LOG_FILE
 
     ShowAsProcLong "re-installing $(FormatAsPackageName "$1")"
 
@@ -3269,7 +3229,7 @@ QPKG.Upgrade()
     fi
 
     local target_file=$($BASENAME_CMD "$local_pathfile")
-    local log_pathfile=$PACKAGE_LOGS_PATH/$target_file.$UPGRADE_LOG_FILE
+    local log_pathfile=$LOGS_PATH/$target_file.$UPGRADE_LOG_FILE
     QPKG.Installed "$1" && previous_version=$(QPKG.Get.InstalledVersion "$1")
 
     ShowAsProcLong "${prefix}upgrading $(FormatAsPackageName "$1")"
@@ -3325,7 +3285,7 @@ QPKG.Uninstall()
 
     local result=0
     local qpkg_installed_path=$($GETCFG_CMD "$1" Install_Path -f $APP_CENTER_CONFIG_PATHFILE)
-    local log_pathfile=$PACKAGE_LOGS_PATH/$1.$UNINSTALL_LOG_FILE
+    local log_pathfile=$LOGS_PATH/$1.$UNINSTALL_LOG_FILE
 
     if [[ -e $qpkg_installed_path/.uninstall.sh ]]; then
         ShowAsProc "uninstalling $(FormatAsPackageName "$1")"
@@ -3376,7 +3336,7 @@ QPKG.Restart()
 
     local result=0
     local package_init_pathfile=$(GetInstalledQPKGServicePathFile "$1")
-    local log_pathfile=$PACKAGE_LOGS_PATH/$1.$RESTART_LOG_FILE
+    local log_pathfile=$LOGS_PATH/$1.$RESTART_LOG_FILE
 
     ShowAsProc "restarting $(FormatAsPackageName "$1")"
 
@@ -3451,7 +3411,7 @@ QPKG.Backup()
 
     local result=0
     local package_init_pathfile=$(GetInstalledQPKGServicePathFile "$1")
-    local log_pathfile=$PACKAGE_LOGS_PATH/$1.$BACKUP_LOG_FILE
+    local log_pathfile=$LOGS_PATH/$1.$BACKUP_LOG_FILE
 
     ShowAsProc "backing-up $(FormatAsPackageName "$1") configuration"
 
@@ -3499,7 +3459,7 @@ QPKG.Restore()
 
     local result=0
     local package_init_pathfile=$(GetInstalledQPKGServicePathFile "$1")
-    local log_pathfile=$PACKAGE_LOGS_PATH/$1.$RESTORE_LOG_FILE
+    local log_pathfile=$LOGS_PATH/$1.$RESTORE_LOG_FILE
 
     ShowAsProc "restoring $(FormatAsPackageName "$1") configuration"
 
@@ -3929,21 +3889,21 @@ DisplayLineSpaceIfNoneAlready()
 DebugInfoMajorSeparator()
     {
 
-    DebugInfo "$(eval printf '%0.s=' {1..$debug_log_datawidth})"    # 'seq' is unavailable in QTS, so must resort to 'eval' trickery instead
+    DebugInfo "$(eval printf '%0.s=' {1..$DEBUG_LOG_DATAWIDTH})"    # 'seq' is unavailable in QTS, so must resort to 'eval' trickery instead
 
     }
 
 DebugInfoMinorSeparator()
     {
 
-    DebugInfo "$(eval printf '%0.s-' {1..$debug_log_datawidth})"    # 'seq' is unavailable in QTS, so must resort to 'eval' trickery instead
+    DebugInfo "$(eval printf '%0.s-' {1..$DEBUG_LOG_DATAWIDTH})"    # 'seq' is unavailable in QTS, so must resort to 'eval' trickery instead
 
     }
 
 DebugExtLogMinorSeparator()
     {
 
-    DebugLog "$(eval printf '%0.s-' {1..$debug_log_datawidth})"     # 'seq' is unavailable in QTS, so must resort to 'eval' trickery instead
+    DebugLog "$(eval printf '%0.s-' {1..$DEBUG_LOG_DATAWIDTH})"     # 'seq' is unavailable in QTS, so must resort to 'eval' trickery instead
 
     }
 
@@ -4449,156 +4409,156 @@ Objects.Add()
     local public_function_name=$1
     local safe_function_name="$(tr '[A-Z]' '[a-z]' <<< "${public_function_name//[.-]/_}")"
 
-    _placehold_value_="_object_${safe_function_name}_value_"
-    _placehold_text_="_object_${safe_function_name}_text_"
-    _placehold_flag_="_object_${safe_function_name}_flag_"
-    _placehold_enable_="_object_${safe_function_name}_enable_"
-    _placehold_array_="_object_${safe_function_name}_array_"
-    _placehold_array_index_="_object_${safe_function_name}_array_index_"
-    _placehold_path_="_object_${safe_function_name}_path_"
+    _placeholder_value_="_object_${safe_function_name}_value_"
+    _placeholder_text_="_object_${safe_function_name}_text_"
+    _placeholder_flag_="_object_${safe_function_name}_flag_"
+    _placeholder_enable_="_object_${safe_function_name}_enable_"
+    _placeholder_array_="_object_${safe_function_name}_array_"
+    _placeholder_array_index_="_object_${safe_function_name}_array_index_"
+    _placeholder_path_="_object_${safe_function_name}_path_"
 
 echo $public_function_name'.Add()
     {
-    [[ ${'$_placehold_array_'[*]} != *"$1"* ]] && '$_placehold_array_'+=("$1")
+    [[ ${'$_placeholder_array_'[*]} != *"$1"* ]] && '$_placeholder_array_'+=("$1")
     }
 '$public_function_name'.Array()
     {
-    echo -n "${'$_placehold_array_'[@]}"
+    echo -n "${'$_placeholder_array_'[@]}"
     }
 '$public_function_name'.Clear()
     {
-    [[ $'$_placehold_flag_' != "true" ]] && return
-    '$_placehold_flag_'=false
-    DebugVar '$_placehold_flag_'
+    [[ $'$_placeholder_flag_' != "true" ]] && return
+    '$_placeholder_flag_'=false
+    DebugVar '$_placeholder_flag_'
     }
 '$public_function_name'.Count()
     {
-    echo "${#'$_placehold_array_'[@]}"
+    echo "${#'$_placeholder_array_'[@]}"
     }
 '$public_function_name'.Disable()
     {
-    [[ $'$_placehold_enable_' != "true" ]] && return
-    '$_placehold_enable_'=false
-    DebugVar '$_placehold_enable_'
+    [[ $'$_placeholder_enable_' != "true" ]] && return
+    '$_placeholder_enable_'=false
+    DebugVar '$_placeholder_enable_'
     }
 '$public_function_name'.Enable()
     {
-    [[ $'$_placehold_enable_' = "true" ]] && return
-    '$_placehold_enable_'=true
-    DebugVar '$_placehold_enable_'
+    [[ $'$_placeholder_enable_' = "true" ]] && return
+    '$_placeholder_enable_'=true
+    DebugVar '$_placeholder_enable_'
     }
 '$public_function_name'.Enumerate()
     {
-    (('$_placehold_array_index_'++))
-    if [[ $'$_placehold_array_index_' -gt ${#'$_placehold_array_'[@]} ]]; then
-        '$_placehold_array_index_'=1
+    (('$_placeholder_array_index_'++))
+    if [[ $'$_placeholder_array_index_' -gt ${#'$_placeholder_array_'[@]} ]]; then
+        '$_placeholder_array_index_'=1
     fi
     }
 '$public_function_name'.Exist()
     {
-    [[ ${'$_placehold_array_'[*]} == *"$1"* ]]
+    [[ ${'$_placeholder_array_'[*]} == *"$1"* ]]
     }
 '$public_function_name'.First()
     {
-    echo "${'$_placehold_array_'[0]}"
+    echo "${'$_placeholder_array_'[0]}"
     }
 '$public_function_name'.GetCurrent()
     {
-    echo -n "${'$_placehold_array_'[(('$_placehold_array_index_'-1))]}"
+    echo -n "${'$_placeholder_array_'[(('$_placeholder_array_index_'-1))]}"
     }
 '$public_function_name'.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#'$_placehold_array_'[@]} ]] && index=${#'$_placehold_array_'[@]}
-    echo -n "${'$_placehold_array_'[((index-1))]}"
+    [[ $index -gt ${#'$_placeholder_array_'[@]} ]] && index=${#'$_placeholder_array_'[@]}
+    echo -n "${'$_placeholder_array_'[((index-1))]}"
     }
 '$public_function_name'.Index()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        if [[ $2 -gt ${#'$_placehold_array_'[@]} ]]; then
-            '$_placehold_array_index_'=${#'$_placehold_array_'[@]}
+        if [[ $2 -gt ${#'$_placeholder_array_'[@]} ]]; then
+            '$_placeholder_array_index_'=${#'$_placeholder_array_'[@]}
         else
-            '$_placehold_array_index_'=$2
+            '$_placeholder_array_index_'=$2
         fi
     else
-        echo -n $'$_placehold_array_index_'
+        echo -n $'$_placeholder_array_index_'
     fi
     }
 '$public_function_name'.Init()
     {
-    '$_placehold_value_'=0
-    '$_placehold_text_'=""
-    '$_placehold_flag_'=false
-    '$_placehold_enable_'=false
-    '$_placehold_array_'+=()
-    '$_placehold_array_index_'=1
-    '$_placehold_path_'=""
+    '$_placeholder_value_'=0
+    '$_placeholder_text_'=""
+    '$_placeholder_flag_'=false
+    '$_placeholder_enable_'=false
+    '$_placeholder_array_'+=()
+    '$_placeholder_array_index_'=1
+    '$_placeholder_path_'=""
     }
 '$public_function_name'.IsAny()
     {
-    [[ ${#'$_placehold_array_'[@]} -gt 0 ]]
+    [[ ${#'$_placeholder_array_'[@]} -gt 0 ]]
     }
 '$public_function_name'.IsDisabled()
     {
-    [[ $'$_placehold_enable_' != "true" ]]
+    [[ $'$_placeholder_enable_' != "true" ]]
     }
 '$public_function_name'.IsEnabled()
     {
-    [[ $'$_placehold_enable_' = "true" ]]
+    [[ $'$_placeholder_enable_' = "true" ]]
     }
 '$public_function_name'.IsNone()
     {
-    [[ ${#'$_placehold_array_'[@]} -eq 0 ]]
+    [[ ${#'$_placeholder_array_'[@]} -eq 0 ]]
     }
 '$public_function_name'.IsNot()
     {
-    [[ $'$_placehold_flag_' != "true" ]]
+    [[ $'$_placeholder_flag_' != "true" ]]
     }
 '$public_function_name'.IsSet()
     {
-    [[ $'$_placehold_flag_' = "true" ]]
+    [[ $'$_placeholder_flag_' = "true" ]]
     }
 '$public_function_name'.List()
     {
-    echo -n "${'$_placehold_array_'[*]}"
+    echo -n "${'$_placeholder_array_'[*]}"
     }
 '$public_function_name'.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        '$_placehold_path_'="$2"
+        '$_placeholder_path_'="$2"
     else
-        echo -n "$'$_placehold_path_'"
+        echo -n "$'$_placeholder_path_'"
     fi
     }
 '$public_function_name'.Remove()
     {
-    [[ ${'$_placehold_array_'[*]} == *"$1"* ]] && '$_placehold_array_'=("${'$_placehold_array_'[@]/$1}")
+    [[ ${'$_placeholder_array_'[*]} == *"$1"* ]] && '$_placeholder_array_'=("${'$_placeholder_array_'[@]/$1}")
     }
 '$public_function_name'.Set()
     {
-    [[ $'$_placehold_flag_' = "true" ]] && return
-    '$_placehold_flag_'=true
-    DebugVar '$_placehold_flag_'
+    [[ $'$_placeholder_flag_' = "true" ]] && return
+    '$_placeholder_flag_'=true
+    DebugVar '$_placeholder_flag_'
     }
 '$public_function_name'.Text()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        '$_placehold_text_'="$2"
+        '$_placeholder_text_'="$2"
     else
-        echo -n "$'$_placehold_text_'"
+        echo -n "$'$_placeholder_text_'"
     fi
     }
 '$public_function_name'.Value()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        '$_placehold_value_'=$2
+        '$_placeholder_value_'=$2
     else
-        echo -n $'$_placehold_value_'
+        echo -n $'$_placeholder_value_'
     fi
     }
 '$public_function_name'.Init
-' >> $COMPILED_OBJECTS
+' >> $COMPILED_OBJECTS_PATHFILE
 
     return 0
 
@@ -4607,14 +4567,14 @@ echo $public_function_name'.Add()
 Objects.CheckLocal()
     {
 
-    [[ -e $COMPILED_OBJECTS ]] && ! FileMatchesMD5 "$COMPILED_OBJECTS" "$OBJECT_REF_HASH" && rm -f "$COMPILED_OBJECTS"
+    [[ -e $COMPILED_OBJECTS_PATHFILE ]] && ! FileMatchesMD5 "$COMPILED_OBJECTS_PATHFILE" "$COMPILED_OBJECTS_HASH" && rm -f "$COMPILED_OBJECTS_PATHFILE"
 
     }
 
 Objects.CheckRemote()
     {
 
-    [[ ! -e $COMPILED_OBJECTS ]] && ! $CURL_CMD $curl_insecure_arg --silent --fail "$REMOTE_COMPILED_OBJECTS" > "$COMPILED_OBJECTS" && [[ ! -s $COMPILED_OBJECTS ]] && rm -f "$COMPILED_OBJECTS"
+    [[ ! -e $COMPILED_OBJECTS_PATHFILE ]] && ! $CURL_CMD $curl_insecure_arg --silent --fail "$COMPILED_OBJECTS_URL" > "$COMPILED_OBJECTS_PATHFILE" && [[ ! -s $COMPILED_OBJECTS_PATHFILE ]] && rm -f "$COMPILED_OBJECTS_PATHFILE"
 
     }
 
@@ -4625,7 +4585,7 @@ Objects.Compile()
     Objects.CheckRemote
     Objects.CheckLocal
 
-    if [[ ! -e $COMPILED_OBJECTS ]]; then
+    if [[ ! -e $COMPILED_OBJECTS_PATHFILE ]]; then
         ShowAsProc "compiling objects"
 
         # user-selected options
@@ -4693,7 +4653,7 @@ Objects.Compile()
         Objects.Add Session.Summary
     fi
 
-    . "$COMPILED_OBJECTS"
+    . "$COMPILED_OBJECTS_PATHFILE"
 
     return 0
 
