@@ -216,7 +216,7 @@ Session.Init()
     readonly NAS_BUILD=$($GETCFG_CMD System 'Build Number' -f $ULINUX_PATHFILE)
     readonly INSTALLED_RAM_KB=$($GREP_CMD MemTotal /proc/meminfo | $CUT_CMD -f2 -d':' | $SED_CMD 's|kB||;s| ||g')
     readonly MIN_RAM_KB=1048576
-    readonly LOG_TAIL_LINES=1000
+    readonly LOG_TAIL_LINES=2000    # a full download and install of everything generates a session around 1600 lines
     code_pointer=0
     pip3_cmd=/opt/bin/pip3
     [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg='--insecure' || curl_insecure_arg=''
@@ -451,11 +451,11 @@ Session.ParseArguments()
                 User.Opts.Clean.Set
                 Session.SkipPackageProcessing.Set
                 ;;
-            paste)
+            paste|paste-whole)
                 User.Opts.Log.Tail.Paste.Set
                 Session.SkipPackageProcessing.Set
                 ;;
-            p)
+            p|paste-last)
                 User.Opts.Log.Last.Paste.Set
                 Session.SkipPackageProcessing.Set
                 ;;
@@ -1204,7 +1204,7 @@ Clean.Cache()
     {
 
     [[ -d $WORK_PATH ]] && rm -rf $WORK_PATH
-    ShowAsDone "work path cleared"
+    ShowAsDone "work path cleaned"
 
     return 0
 
