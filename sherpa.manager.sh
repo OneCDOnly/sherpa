@@ -164,7 +164,7 @@ Session.Init()
     readonly IPKG_DL_PATH=$WORK_PATH/ipkgs.downloads
     readonly IPKG_CACHE_PATH=$WORK_PATH/ipkgs
     readonly PIP_CACHE_PATH=$WORK_PATH/pips
-    readonly COMPILED_OBJECTS_HASH=3d4ca09e595455cd336c5442e3c65030
+    readonly COMPILED_OBJECTS_HASH=bb57ce3bbaed54891669f64782bff598
     readonly DEBUG_LOG_DATAWIDTH=92
 
     if ! MakePath "$WORK_PATH" 'work'; then
@@ -181,6 +181,7 @@ Session.Init()
 
     User.Opts.IgnoreFreeSpace.Text = ' --force-space'
     Session.Summary.Set
+    Session.LineSpace.DontLogChanges
 
     if ! MakePath "$LOGS_PATH" 'logs'; then
         DebugFuncExit; return 1
@@ -4416,6 +4417,7 @@ Objects.Add()
     _placeholder_value_="_object_${safe_function_name}_value_"
     _placeholder_text_="_object_${safe_function_name}_text_"
     _placeholder_flag_="_object_${safe_function_name}_flag_"
+    _placeholder_log_changes_flag_="_object_${safe_function_name}_changes_flag_"
     _placeholder_enable_="_object_${safe_function_name}_enable_"
     _placeholder_array_="_object_${safe_function_name}_array_"
     _placeholder_array_index_="_object_${safe_function_name}_array_index_"
@@ -4433,7 +4435,7 @@ echo $public_function_name'.Add()
     {
     [[ $'$_placeholder_flag_' != '\'true\'' ]] && return
     '$_placeholder_flag_'=false
-    DebugVar '$_placeholder_flag_'
+    [[ $'$_placeholder_log_changes_flag_' = '\'true\'' ]] && DebugVar '$_placeholder_flag_'
     }
 '$public_function_name'.Count()
     {
@@ -4443,13 +4445,18 @@ echo $public_function_name'.Add()
     {
     [[ $'$_placeholder_enable_' != '\'true\'' ]] && return
     '$_placeholder_enable_'=false
-    DebugVar '$_placeholder_enable_'
+    [[ $'$_placeholder_log_changes_flag_' = '\'true\'' ]] && DebugVar '$_placeholder_enable_'
+    }
+'$public_function_name'.DontLogChanges()
+    {
+    [[ $'$_placeholder_log_changes_flag_' != '\'true\'' ]] && return
+    '$_placeholder_log_changes_flag_'=false
     }
 '$public_function_name'.Enable()
     {
     [[ $'$_placeholder_enable_' = '\'true\'' ]] && return
     '$_placeholder_enable_'=true
-    DebugVar '$_placeholder_enable_'
+    [[ $'$_placeholder_log_changes_flag_' = '\'true\'' ]] && DebugVar '$_placeholder_enable_'
     }
 '$public_function_name'.Enumerate()
     {
@@ -4494,6 +4501,7 @@ echo $public_function_name'.Add()
     '$_placeholder_value_'=0
     '$_placeholder_text_'='\'\''
     '$_placeholder_flag_'=false
+    '$_placeholder_log_changes_flag_'=true
     '$_placeholder_enable_'=false
     '$_placeholder_array_'+=()
     '$_placeholder_array_index_'=1
@@ -4531,6 +4539,11 @@ echo $public_function_name'.Add()
     {
     echo -n "${'$_placeholder_array_'[*]}" | tr '\' \'' '\',\''
     }
+'$public_function_name'.LogChanges()
+    {
+    [[ $'$_placeholder_log_changes_flag_' = '\'true\'' ]] && return
+    '$_placeholder_log_changes_flag_'=true
+    }
 '$public_function_name'.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
@@ -4547,7 +4560,7 @@ echo $public_function_name'.Add()
     {
     [[ $'$_placeholder_flag_' = '\'true\'' ]] && return
     '$_placeholder_flag_'=true
-    DebugVar '$_placeholder_flag_'
+    [[ $'$_placeholder_log_changes_flag_' = '\'true\'' ]] && DebugVar '$_placeholder_flag_'
     }
 '$public_function_name'.Text()
     {
