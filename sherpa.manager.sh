@@ -3987,12 +3987,12 @@ DebugFuncExit()
     local elapsed_time=''
 
     if [[ $diff_milliseconds -lt 30000 ]]; then
-        elapsed_time=$(printf "%'.f ms" $diff_milliseconds)
+        elapsed_time=$(printf "%'.fms" $diff_milliseconds)
     else
         elapsed_time=$(ConvertSecsToHoursMinutesSecs "$(($diff_milliseconds/1000))")
     fi
 
-    DebugThis "(<<) ${FUNCNAME[1]}() [$code_pointer]: $elapsed_time"
+    DebugThis "(<<) ${FUNCNAME[1]}()|$code_pointer|$elapsed_time"
 
     }
 
