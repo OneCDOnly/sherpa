@@ -148,8 +148,6 @@ Session.Init()
     local -r ULINUX_PATHFILE=/etc/config/uLinux.conf
     readonly PLATFORM_PATHFILE=/etc/platform.conf
     readonly EXTERNAL_PACKAGE_ARCHIVE_PATHFILE=/opt/var/opkg-lists/entware
-    readonly PREV_QPKG_CONFIG_DIRS=(SAB_CONFIG CONFIG Config config)                                # last element is used as target dirname
-    readonly PREV_QPKG_CONFIG_FILES=(sabnzbd.ini sickbeard.conf settings.ini config.cfg config.ini) # last element is used as target filename
     local -r PROJECT_REPO_URL=https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/master/QPKGs
     local -r PROJECT_PATH=$($GETCFG_CMD $PROJECT_NAME Install_Path -f $APP_CENTER_CONFIG_PATHFILE)
     readonly DEBUG_LOG_PATHFILE=$PROJECT_PATH/$DEBUG_LOG_FILE
@@ -187,7 +185,7 @@ Session.Init()
         DebugFuncExit; return 1
     fi
 
-    Session.Backup.Path = $($GETCFG_CMD SHARE_DEF defVolMP -f $DEFAULT_SHARES_PATHFILE)/.qpkg_config_backup
+    Session.Backup.Path = "$($GETCFG_CMD SHARE_DEF defVolMP -f $DEFAULT_SHARES_PATHFILE)/.qpkg_config_backup"
 
     if ! MakePath "$QPKG_DL_PATH" 'QPKG download'; then
         DebugFuncExit; return 1
@@ -213,7 +211,7 @@ Session.Init()
     fi
 
     readonly NAS_FIRMWARE=$($GETCFG_CMD System Version -f $ULINUX_PATHFILE)
-    readonly PACKAGE_VERSION=$(QPKG.Get.InstalledVersion "$PROJECT_NAME")
+    readonly PACKAGE_VERSION=$(QPKG.InstalledVersion "$PROJECT_NAME")
     readonly NAS_BUILD=$($GETCFG_CMD System 'Build Number' -f $ULINUX_PATHFILE)
     readonly INSTALLED_RAM_KB=$($GREP_CMD MemTotal /proc/meminfo | $CUT_CMD -f2 -d':' | $SED_CMD 's|kB||;s| ||g')
     readonly MIN_RAM_KB=1048576
@@ -221,7 +219,7 @@ Session.Init()
     code_pointer=0
     pip3_cmd=/opt/bin/pip3
     local package=''
-    [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg='--insecure' || curl_insecure_arg=''
+    [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg=' --insecure' || curl_insecure_arg=''
 
     # sherpa-supported package details - parallel arrays
     SHERPA_QPKG_NAME=()         # internal QPKG name
@@ -404,7 +402,7 @@ Session.Init()
             DisplayLineSpaceIfNoneAlready
         fi
 
-        User.Opts.Apps.All.Upgrade.IsNot && DisplayNewQPKGVersions
+        User.Opts.Apps.All.Upgrade.IsNot && QPKGs.NewVersions.Show
     fi
 
     DebugFuncExit; return 0
@@ -481,7 +479,7 @@ Session.ParseArguments()
                 User.Opts.Help.Options.Set
                 Session.SkipPackageProcessing.Set
                 ;;
-            p|problem|problems)
+            problem|problems)
                 User.Opts.Help.Problems.Set
                 Session.SkipPackageProcessing.Set
                 ;;
@@ -880,7 +878,7 @@ Packages.Install.Independents()
                     local opt_backup_path=/opt.orig
                     [[ -d $opt_path && ! -L $opt_path && ! -e $opt_backup_path ]] && mv "$opt_path" "$opt_backup_path"
 
-                    QPKG.Install Entware && ReloadProfile
+                    QPKG.Install Entware && Session.AdjustPathEnv
 
                     # copy all files from original [/opt] into new [/opt]
                     [[ -L $opt_path && -d $opt_backup_path ]] && cp --recursive "$opt_backup_path"/* --target-directory "$opt_path" && rm -rf "$opt_backup_path"
@@ -901,8 +899,8 @@ Packages.Install.Independents()
 
     if QPKG.Installed Entware; then
         QPKG.NotEnabled Entware && QPKG.Enable Entware
-        ReloadProfile
-        PatchBaseInit
+        Session.AdjustPathEnv
+        Entware.Patch.Service
         IPKGs.Install
         PIPs.Install
     fi
@@ -1097,52 +1095,6 @@ Session.Results()
 
     }
 
-DisplayNewQPKGVersions()
-    {
-
-    # Check installed sherpa packages and compare versions against package arrays. If new versions are available, advise on-screen.
-
-    # $? = 0 if all packages are up-to-date
-    # $? = 1 if one or more packages can be upgraded
-
-    local msg=''
-    local index=0
-    local left_to_upgrade=()
-    local names_formatted=''
-
-    if QPKGs.Upgradable.IsAny; then
-        for package in $(QPKGs.Upgradable.Array); do
-            if ! QPKGs.ToUpgrade.Exist $package; then
-                left_to_upgrade+=($package)
-            fi
-        done
-
-        [[ ${#left_to_upgrade[@]} -eq 0 ]] && return 0
-
-        for ((index=0;index<=((${#left_to_upgrade[@]}-1));index++)); do
-            names_formatted+=$(ColourTextBrightOrange "${left_to_upgrade[$index]}")
-
-            if [[ $(($index+2)) -lt ${#left_to_upgrade[@]} ]]; then
-                names_formatted+=', '
-            elif [[ $(($index+2)) -eq ${#left_to_upgrade[@]} ]]; then
-                names_formatted+=' & '
-            fi
-        done
-
-        if [[ ${#left_to_upgrade[@]} -eq 1 ]]; then
-            msg='an upgraded package is'
-        else
-            msg='upgraded packages are'
-        fi
-
-        ShowAsNote "$msg available for $names_formatted"
-        return 1
-    fi
-
-    return 0
-
-    }
-
 Clean.Cache()
     {
 
@@ -1178,12 +1130,12 @@ AskQuiz()
 
     }
 
-PatchBaseInit()
+Entware.Patch.Service()
     {
 
     local find_text=''
     local insert_text=''
-    local package_init_pathfile=$(GetInstalledQPKGServicePathFile Entware)
+    local package_init_pathfile=$(QPKG.ServicePathFile Entware)
 
     if ($GREP_CMD -q 'opt.orig' "$package_init_pathfile"); then
         DebugInfo 'patch: do the "opt shuffle" - already done'
@@ -1203,7 +1155,7 @@ PatchBaseInit()
 
     }
 
-UpdateEntware()
+Entware.Update()
     {
 
     if IsNotSysFileExist $OPKG_CMD; then
@@ -1241,79 +1193,6 @@ UpdateEntware()
     fi
 
     return 0
-
-    }
-
-InstallIPKGBatch()
-    {
-
-    # input:
-    #   $1 = whitespace-separated string containing list of IPKG names to download and install
-
-    # output:
-    #   $? = 0 (true) or 1 (false)
-
-    DebugFuncEntry
-    local result=0
-    local log_pathfile=$LOGS_PATH/ipkgs.$INSTALL_LOG_FILE
-
-    GetAllIPKGDepsToDownload "$1" || return 1
-
-    if [[ $IPKG_download_count -gt 0 ]]; then
-        ShowAsProc "downloading & installing $IPKG_download_count IPKG$(FormatAsPlural "$IPKG_download_count")"
-
-        CreateDirSizeMonitorFlagFile $IPKG_DL_PATH/.monitor
-            trap CTRL_C_Captured INT
-                _MonitorDirSize_ "$IPKG_DL_PATH" "$IPKG_download_size" &
-
-                RunThisAndLogResults "$OPKG_CMD install$(User.Opts.IgnoreFreeSpace.IsSet && User.Opts.IgnoreFreeSpace.Text) --force-overwrite ${IPKG_download_list[*]} --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
-                result=$?
-            trap - INT
-        RemoveDirSizeMonitorFlagFile
-
-        if [[ $result -eq 0 ]]; then
-            ShowAsDone "downloaded & installed $IPKG_download_count IPKG$(FormatAsPlural "$IPKG_download_count")"
-        else
-            ShowAsError "download & install IPKG$(FormatAsPlural "$IPKG_download_count") failed $(FormatAsExitcode $result)"
-        fi
-    fi
-
-    DebugFuncExit; return $result
-
-    }
-
-UpgradeIPKGBatch()
-    {
-
-    # output:
-    #   $? = 0 (true) or 1 (false)
-
-    DebugFuncEntry
-    local result=0
-    local log_pathfile=$LOGS_PATH/ipkgs.$UPGRADE_LOG_FILE
-
-    IPKG_download_list=($($OPKG_CMD list-upgradable | $CUT_CMD -f1 -d' '))
-
-    if [[ $IPKG_download_count -gt 0 ]]; then
-        ShowAsProc "downloading & upgrading $IPKG_download_count IPKG$(FormatAsPlural "$IPKG_download_count")"
-
-        CreateDirSizeMonitorFlagFile $IPKG_DL_PATH/.monitor
-            trap CTRL_C_Captured INT
-                _MonitorDirSize_ "$IPKG_DL_PATH" "$IPKG_download_size" &
-
-                RunThisAndLogResults "$OPKG_CMD upgrade$(User.Opts.IgnoreFreeSpace.IsSet && User.Opts.IgnoreFreeSpace.Text) --force-overwrite ${IPKG_download_list[*]} --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
-                result=$?
-            trap - INT
-        RemoveDirSizeMonitorFlagFile
-
-        if [[ $result -eq 0 ]]; then
-            ShowAsDone "downloaded & upgraded $IPKG_download_count IPKG$(FormatAsPlural "$IPKG_download_count")"
-        else
-            ShowAsError "download & upgrade IPKG$(FormatAsPlural "$IPKG_download_count") failed $(FormatAsExitcode $result)"
-        fi
-    fi
-
-    DebugFuncExit; return $result
 
     }
 
@@ -1389,250 +1268,7 @@ PIPs.Install()
 
     }
 
-GetInstalledQPKGVars()
-    {
-
-    # Load variables for specified package
-
-    # input:
-    #   $1 = QPKG name
-
-    # output:
-    #   $? = 0 if successful, 1 if failed
-    #   $package_installed_path
-    #   $package_config_path
-
-    QPKG.NotInstalled "$1" && return 1
-    package_installed_path=''
-    package_config_path=''
-    local prev_config_dir=''
-    local prev_config_file=''
-    local package_settings_pathfile=''
-    package_installed_path=$($GETCFG_CMD "$1" Install_Path -f $APP_CENTER_CONFIG_PATHFILE)
-
-    for prev_config_dir in "${PREV_QPKG_CONFIG_DIRS[@]}"; do
-        package_config_path=$package_installed_path/$prev_config_dir
-        [[ -d $package_config_path ]] && break
-    done
-
-    for prev_config_file in "${PREV_QPKG_CONFIG_FILES[@]}"; do
-        package_settings_pathfile=$package_config_path/$prev_config_file
-        [[ -f $package_settings_pathfile ]] && break
-    done
-
-    return 0
-
-    }
-
-GetInstalledQPKGServicePathFile()
-    {
-
-    # input:
-    #   $1 = QPKG name
-
-    # output:
-    #   stdout = service pathfilename
-    #   $? = 0 if found, 1 if not
-
-    QPKG.NotInstalled "$1" && return 1
-    local output=''
-
-    if output=$($GETCFG_CMD "$1" Shell -f $APP_CENTER_CONFIG_PATHFILE); then
-        echo "$output"
-        return 0
-    else
-        echo 'unknown'
-        return 1
-    fi
-
-    }
-
-QPKG.Get.InstalledVersion()
-    {
-
-    # Returns the version number of an installed QPKG.
-
-    # input:
-    #   $1 = QPKG name
-
-    # output:
-    #   stdout = package version
-    #   $? = 0 if found, 1 if not
-
-    QPKG.NotInstalled "$1" && return 1
-    local output=''
-
-    if output=$($GETCFG_CMD "$1" Version -f $APP_CENTER_CONFIG_PATHFILE); then
-        echo "$output"
-        return 0
-    else
-        echo 'unknown'
-        return 1
-    fi
-
-    }
-
-GetQPKGServiceStatus()
-    {
-
-    # $1 = QPKG name to install
-
-    if [[ -e /var/run/$1.last.operation ]]; then
-        case $(</var/run/"$1".last.operation) in
-            ok)
-                DebugInfo "$(FormatAsPackageName "$1") service started OK"
-                ;;
-            failed)
-                ShowAsError "$(FormatAsPackageName "$1") service failed to start.$([[ -e /var/log/$1.log ]] && echo " Check $(FormatAsFileName "/var/log/$1.log") for more information")"
-                ;;
-            *)
-                DebugWarning "$(FormatAsPackageName "$1") service status is incorrect"
-                ;;
-        esac
-    else
-        DebugWarning "unable to get status of $(FormatAsPackageName "$1") service. It may be a non-sherpa package, or a package earlier than 200816c that doesn't support service results."
-    fi
-
-    }
-
-QPKG.Get.PathFilename()
-    {
-
-    # input:
-    #   $1 = QPKG name
-
-    # output:
-    #   stdout = QPKG local filename
-    #   $? = 0 if successful, 1 if failed
-
-    echo "$QPKG_DL_PATH/$($BASENAME_CMD "$(QPKG.Get.RemoteURL "$1")")"
-
-    }
-
-QPKG.Get.RemoteURL()
-    {
-
-    # input:
-    #   $1 = QPKG name
-
-    # output:
-    #   stdout = QPKG remote URL
-    #   $? = 0 if successful, 1 if failed
-
-    local index=0
-
-    for index in "${!SHERPA_QPKG_NAME[@]}"; do
-        if [[ $1 = "${SHERPA_QPKG_NAME[$index]}" ]] && [[ ${SHERPA_QPKG_ARCH[$index]} = all || ${SHERPA_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
-            echo "${SHERPA_QPKG_URL[$index]}"
-            return 0
-        fi
-    done
-
-    return 1
-
-    }
-
-QPKG.Get.RemoteVersion()
-    {
-
-    # input:
-    #   $1 = QPKG name
-
-    # output:
-    #   stdout = QPKG remote version
-    #   $? = 0 if successful, 1 if failed
-
-    local url=''
-    local version=''
-
-    if url=$(QPKG.Get.RemoteURL "$1"); then
-        version=${url#*_}; version=${version%.*}
-        echo "$version"
-        return 0
-    else
-        echo "unknown"
-        return 1
-    fi
-
-    }
-
-QPKG.Get.MD5()
-    {
-
-    # input:
-    #   $1 = QPKG name
-
-    # output:
-    #   stdout = QPKG MD5
-    #   $? = 0 if successful, 1 if failed
-
-    local index=0
-    local returncode=1
-
-    for index in "${!SHERPA_QPKG_NAME[@]}"; do
-        if [[ $1 = "${SHERPA_QPKG_NAME[$index]}" ]] && [[ ${SHERPA_QPKG_ARCH[$index]} = all || ${SHERPA_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
-            echo "${SHERPA_QPKG_MD5[$index]}"
-            returncode=0
-            break
-        fi
-    done
-
-    return $returncode
-
-    }
-
-QPKG.Get.Independencies()
-    {
-
-    # input:
-    #   $1 = dependant QPKG name to return independencies for
-
-    # output:
-    #   $? = 0 if successful, 1 if failed
-
-    local index=0
-
-    for index in "${!SHERPA_QPKG_NAME[@]}"; do
-        if [[ ${SHERPA_QPKG_NAME[$index]} = "$1" ]]; then
-            echo "${SHERPA_QPKG_DEPS[$index]}"
-            return 0
-        fi
-    done
-
-    return 1
-
-    }
-
-QPKG.Get.Dependencies()
-    {
-
-    # input:
-    #   $1 = independent QPKG name to return dependants for
-
-    # output:
-    #   $? = 0 if successful, 1 if failed
-
-    local index=0
-    local acc=()
-
-    if QPKGs.Independent.Exist $1; then
-        for index in "${!SHERPA_QPKG_NAME[@]}"; do
-            if [[ ${SHERPA_QPKG_DEPS[$index]} == *"$1"* ]]; then
-                [[ ${acc[*]} != ${SHERPA_QPKG_NAME[$index]} ]] && acc+=(${SHERPA_QPKG_NAME[$index]})
-            fi
-        done
-    fi
-
-    if [[ ${#acc[@]} -gt 0 ]]; then
-        echo "${acc[@]}"
-        return 0
-    else
-        return 1
-    fi
-
-    }
-
-GetAllIPKGDepsToDownload()
+CalcAllIPKGDepsToDownload()
     {
 
     # From a specified list of IPKG names, find all dependent IPKGs, exclude those already installed, then generate a total qty to download and a total download byte-size
@@ -1777,7 +1413,7 @@ CalcNASQPKGArch()
 
     }
 
-ReloadProfile()
+Session.AdjustPathEnv()
     {
 
     local opkg_prefix=/opt/bin:/opt/sbin
@@ -1797,8 +1433,9 @@ IPKGs.Install()
 
     Session.SkipPackageProcessing.IsSet && return
     Session.IPKGs.Install.IsNot && return
-    UpdateEntware
+    Entware.Update
     Session.Error.IsSet && return
+    DebugFuncEntry
     local packages=$SHERPA_COMMON_IPKGS
     local index=0
 
@@ -1818,13 +1455,86 @@ IPKGs.Install()
         [[ $NAS_QPKG_ARCH = none ]] && packages+=' par2cmdline'
     fi
 
-    UpgradeIPKGBatch
-    InstallIPKGBatch "$packages"
+    IPKGs.Upgrade.Batch
+    IPKGs.Install.Batch "$packages"
 
     # in-case 'python' has disappeared again ...
     [[ ! -L /opt/bin/python && -e /opt/bin/python3 ]] && ln -s /opt/bin/python3 /opt/bin/python
 
-    return 0
+    DebugFuncExit; return 0
+
+    }
+
+IPKGs.Upgrade.Batch()
+    {
+
+    # output:
+    #   $? = 0 (true) or 1 (false)
+
+    DebugFuncEntry
+    local result=0
+    local log_pathfile=$LOGS_PATH/ipkgs.$UPGRADE_LOG_FILE
+
+    IPKG_download_list=($($OPKG_CMD list-upgradable | $CUT_CMD -f1 -d' '))
+
+    if [[ $IPKG_download_count -gt 0 ]]; then
+        ShowAsProc "downloading & upgrading $IPKG_download_count IPKG$(FormatAsPlural "$IPKG_download_count")"
+
+        CreateDirSizeMonitorFlagFile $IPKG_DL_PATH/.monitor
+            trap CTRL_C_Captured INT
+                _MonitorDirSize_ "$IPKG_DL_PATH" "$IPKG_download_size" &
+
+                RunThisAndLogResults "$OPKG_CMD upgrade$(User.Opts.IgnoreFreeSpace.IsSet && User.Opts.IgnoreFreeSpace.Text) --force-overwrite ${IPKG_download_list[*]} --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
+                result=$?
+            trap - INT
+        RemoveDirSizeMonitorFlagFile
+
+        if [[ $result -eq 0 ]]; then
+            ShowAsDone "downloaded & upgraded $IPKG_download_count IPKG$(FormatAsPlural "$IPKG_download_count")"
+        else
+            ShowAsError "download & upgrade IPKG$(FormatAsPlural "$IPKG_download_count") failed $(FormatAsExitcode $result)"
+        fi
+    fi
+
+    DebugFuncExit; return $result
+
+    }
+
+IPKGs.Install.Batch()
+    {
+
+    # input:
+    #   $1 = whitespace-separated string containing list of IPKG names to download and install
+
+    # output:
+    #   $? = 0 (true) or 1 (false)
+
+    DebugFuncEntry
+    local result=0
+    local log_pathfile=$LOGS_PATH/ipkgs.$INSTALL_LOG_FILE
+
+    CalcAllIPKGDepsToDownload "$1" || return 1
+
+    if [[ $IPKG_download_count -gt 0 ]]; then
+        ShowAsProc "downloading & installing $IPKG_download_count IPKG$(FormatAsPlural "$IPKG_download_count")"
+
+        CreateDirSizeMonitorFlagFile $IPKG_DL_PATH/.monitor
+            trap CTRL_C_Captured INT
+                _MonitorDirSize_ "$IPKG_DL_PATH" "$IPKG_download_size" &
+
+                RunThisAndLogResults "$OPKG_CMD install$(User.Opts.IgnoreFreeSpace.IsSet && User.Opts.IgnoreFreeSpace.Text) --force-overwrite ${IPKG_download_list[*]} --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
+                result=$?
+            trap - INT
+        RemoveDirSizeMonitorFlagFile
+
+        if [[ $result -eq 0 ]]; then
+            ShowAsDone "downloaded & installed $IPKG_download_count IPKG$(FormatAsPlural "$IPKG_download_count")"
+        else
+            ShowAsError "download & install IPKG$(FormatAsPlural "$IPKG_download_count") failed $(FormatAsExitcode $result)"
+        fi
+    fi
+
+    DebugFuncExit; return $result
 
     }
 
@@ -2041,10 +1751,6 @@ IsIPKGInstalled()
     fi
 
     }
-
-# all functions below here do-not generate global or logged errors
-
-#### DisplayAs... functions are for direct screen output only.
 
 DisplayAsProjectSyntaxExample()
     {
@@ -2348,7 +2054,7 @@ Help.Problems.Show()
 
     Help.Basic.Show
     DisplayLineSpaceIfNoneAlready
-    Display "* usage examples when dealing with problems:"
+    Display '* usage examples when dealing with problems:'
 
     DisplayAsProjectSyntaxIndentedExample 'process one or more packages and show live debugging information' "$(FormatAsHelpActions) $(FormatAsHelpPackages) debug"
 
@@ -2399,7 +2105,7 @@ Help.Tips.Show()
 
     Help.Basic.Show
     DisplayLineSpaceIfNoneAlready
-    Display "* helpful tips and shortcuts:"
+    Display '* helpful tips and shortcuts:'
 
     DisplayAsProjectSyntaxIndentedExample "install all available $(FormatAsScriptTitle) packages" 'install-all'
 
@@ -2417,7 +2123,7 @@ Help.Tips.Show()
 
     Help.BackupLocation.Show
 
-    echo -e "\n$(ColourTextBrightOrange "* If you need help, please include a copy of your") $(FormatAsScriptTitle) $(ColourTextBrightOrange "log for analysis!")"
+    echo -e "\n$(ColourTextBrightOrange '* If you need help, please include a copy of your') $(FormatAsScriptTitle) $(ColourTextBrightOrange 'log for analysis!')"
 
     return 0
 
@@ -2452,7 +2158,7 @@ Help.PackageAbbreviations.Show()
 Help.BackupLocation.Show()
     {
 
-    DisplayAsSyntaxExample "the default backup location can be accessed by running" "cd $(Session.Backup.Path)"
+    DisplayAsSyntaxExample 'the default backup location can be accessed by running' "cd $(Session.Backup.Path)"
 
     return 0
 
@@ -2552,6 +2258,52 @@ Log.Last.Paste.Online()
         fi
     else
         ShowAsError 'no log to paste'
+    fi
+
+    return 0
+
+    }
+
+QPKGs.NewVersions.Show()
+    {
+
+    # Check installed sherpa packages and compare versions against package arrays. If new versions are available, advise on-screen.
+
+    # $? = 0 if all packages are up-to-date
+    # $? = 1 if one or more packages can be upgraded
+
+    local msg=''
+    local index=0
+    local left_to_upgrade=()
+    local names_formatted=''
+
+    if QPKGs.Upgradable.IsAny; then
+        for package in $(QPKGs.Upgradable.Array); do
+            if ! QPKGs.ToUpgrade.Exist $package; then
+                left_to_upgrade+=($package)
+            fi
+        done
+
+        [[ ${#left_to_upgrade[@]} -eq 0 ]] && return 0
+
+        for ((index=0;index<=((${#left_to_upgrade[@]}-1));index++)); do
+            names_formatted+=$(ColourTextBrightOrange "${left_to_upgrade[$index]}")
+
+            if [[ $((index+2)) -lt ${#left_to_upgrade[@]} ]]; then
+                names_formatted+=', '
+            elif [[ $((index+2)) -eq ${#left_to_upgrade[@]} ]]; then
+                names_formatted+=' & '
+            fi
+        done
+
+        if [[ ${#left_to_upgrade[@]} -eq 1 ]]; then
+            msg='an upgraded package is'
+        else
+            msg='upgraded packages are'
+        fi
+
+        ShowAsNote "$msg available for $names_formatted"
+        return 1
     fi
 
     return 0
@@ -2906,8 +2658,8 @@ QPKGs.Upgradable.Build()
 
     for package in $(QPKGs.Installed.Array); do
         [[ $package = Entware || $package = Par2 ]] && continue        # KLUDGE: ignore 'Entware' as package filename version doesn't match the QTS App Center version string
-        installed_version=$(QPKG.Get.InstalledVersion $package)
-        remote_version=$(QPKG.Get.RemoteVersion $package)
+        installed_version=$(QPKG.InstalledVersion $package)
+        remote_version=$(QPKG.RemoteVersion $package)
 
         if [[ $installed_version != "$remote_version" ]]; then
             #QPKGs.Upgradable.Add "$package $installed_version $remote_version"
@@ -3000,25 +2752,224 @@ Session.Summary.Show()
 
     if User.Opts.Apps.All.Upgrade.IsSet; then
         if QPKGs.Upgradable.IsNone; then
-            ShowAsDone "no QPKGs need upgrading"
+            ShowAsDone 'no QPKGs need upgrading'
         elif Session.Error.IsNot; then
-            ShowAsDone "all upgradable QPKGs were successfully upgraded"
+            ShowAsDone 'all upgradable QPKGs were successfully upgraded'
         else
             ShowAsError "upgrade failed! [$code_pointer]"
             Session.SuggestIssue.Set
         fi
     fi
 
-#     if User.Opts.Dependencies.Check.IsSet; then
-#         if Session.Error.IsNot; then
-#             ShowAsDone "all application dependencies are installed"
-#         else
-#             ShowAsError "application dependency check failed! [$code_pointer]"
-#             Session.SuggestIssue.Set
-#         fi
-#     fi
-
     return 0
+
+    }
+
+QPKG.ServicePathFile()
+    {
+
+    # input:
+    #   $1 = QPKG name
+
+    # output:
+    #   stdout = service pathfilename
+    #   $? = 0 if found, 1 if not
+
+    QPKG.NotInstalled "$1" && return 1
+    local output=''
+
+    if output=$($GETCFG_CMD "$1" Shell -f $APP_CENTER_CONFIG_PATHFILE); then
+        echo "$output"
+        return 0
+    else
+        echo 'unknown'
+        return 1
+    fi
+
+    }
+
+QPKG.InstalledVersion()
+    {
+
+    # Returns the version number of an installed QPKG.
+
+    # input:
+    #   $1 = QPKG name
+
+    # output:
+    #   stdout = package version
+    #   $? = 0 if found, 1 if not
+
+    QPKG.NotInstalled "$1" && return 1
+    local output=''
+
+    if output=$($GETCFG_CMD "$1" Version -f $APP_CENTER_CONFIG_PATHFILE); then
+        echo "$output"
+        return 0
+    else
+        echo 'unknown'
+        return 1
+    fi
+
+    }
+
+QPKG.ServiceStatus()
+    {
+
+    # $1 = QPKG name to install
+
+    if [[ -e /var/run/$1.last.operation ]]; then
+        case $(</var/run/"$1".last.operation) in
+            ok)
+                DebugInfo "$(FormatAsPackageName "$1") service started OK"
+                ;;
+            failed)
+                ShowAsError "$(FormatAsPackageName "$1") service failed to start.$([[ -e /var/log/$1.log ]] && echo " Check $(FormatAsFileName "/var/log/$1.log") for more information")"
+                ;;
+            *)
+                DebugWarning "$(FormatAsPackageName "$1") service status is incorrect"
+                ;;
+        esac
+    else
+        DebugWarning "unable to get status of $(FormatAsPackageName "$1") service. It may be a non-sherpa package, or a package earlier than 200816c that doesn't support service results."
+    fi
+
+    }
+
+QPKG.PathFilename()
+    {
+
+    # input:
+    #   $1 = QPKG name
+
+    # output:
+    #   stdout = QPKG local filename
+    #   $? = 0 if successful, 1 if failed
+
+    echo "$QPKG_DL_PATH/$($BASENAME_CMD "$(QPKG.RemoteURL "$1")")"
+
+    }
+
+QPKG.RemoteURL()
+    {
+
+    # input:
+    #   $1 = QPKG name
+
+    # output:
+    #   stdout = QPKG remote URL
+    #   $? = 0 if successful, 1 if failed
+
+    local index=0
+
+    for index in "${!SHERPA_QPKG_NAME[@]}"; do
+        if [[ $1 = "${SHERPA_QPKG_NAME[$index]}" ]] && [[ ${SHERPA_QPKG_ARCH[$index]} = all || ${SHERPA_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
+            echo "${SHERPA_QPKG_URL[$index]}"
+            return 0
+        fi
+    done
+
+    return 1
+
+    }
+
+QPKG.RemoteVersion()
+    {
+
+    # input:
+    #   $1 = QPKG name
+
+    # output:
+    #   stdout = QPKG remote version
+    #   $? = 0 if successful, 1 if failed
+
+    local url=''
+    local version=''
+
+    if url=$(QPKG.RemoteURL "$1"); then
+        version=${url#*_}; version=${version%.*}
+        echo "$version"
+        return 0
+    else
+        echo "unknown"
+        return 1
+    fi
+
+    }
+
+QPKG.MD5()
+    {
+
+    # input:
+    #   $1 = QPKG name
+
+    # output:
+    #   stdout = QPKG MD5
+    #   $? = 0 if successful, 1 if failed
+
+    local index=0
+    local returncode=1
+
+    for index in "${!SHERPA_QPKG_NAME[@]}"; do
+        if [[ $1 = "${SHERPA_QPKG_NAME[$index]}" ]] && [[ ${SHERPA_QPKG_ARCH[$index]} = all || ${SHERPA_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
+            echo "${SHERPA_QPKG_MD5[$index]}"
+            returncode=0
+            break
+        fi
+    done
+
+    return $returncode
+
+    }
+
+QPKG.Get.Independencies()
+    {
+
+    # input:
+    #   $1 = dependant QPKG name to return independencies for
+
+    # output:
+    #   $? = 0 if successful, 1 if failed
+
+    local index=0
+
+    for index in "${!SHERPA_QPKG_NAME[@]}"; do
+        if [[ ${SHERPA_QPKG_NAME[$index]} = "$1" ]]; then
+            echo "${SHERPA_QPKG_DEPS[$index]}"
+            return 0
+        fi
+    done
+
+    return 1
+
+    }
+
+QPKG.Get.Dependencies()
+    {
+
+    # input:
+    #   $1 = independent QPKG name to return dependants for
+
+    # output:
+    #   $? = 0 if successful, 1 if failed
+
+    local index=0
+    local acc=()
+
+    if QPKGs.Independent.Exist $1; then
+        for index in "${!SHERPA_QPKG_NAME[@]}"; do
+            if [[ ${SHERPA_QPKG_DEPS[$index]} == *"$1"* ]]; then
+                [[ ${acc[*]} != "${SHERPA_QPKG_NAME[$index]}" ]] && acc+=(${SHERPA_QPKG_NAME[$index]})
+            fi
+        done
+    fi
+
+    if [[ ${#acc[@]} -gt 0 ]]; then
+        echo "${acc[@]}"
+        return 0
+    else
+        return 1
+    fi
 
     }
 
@@ -3035,25 +2986,25 @@ QPKG.Download()
     DebugFuncEntry
 
     if [[ -z $1 ]]; then
-        DebugError "no package name specified"
+        DebugError 'no package name specified'
         code_pointer=7
         DebugFuncExit; return 1
     fi
 
     local result=0
-    local remote_url=$(QPKG.Get.RemoteURL "$1")
+    local remote_url=$(QPKG.RemoteURL "$1")
     local remote_filename=$($BASENAME_CMD "$remote_url")
-    local remote_filename_md5=$(QPKG.Get.MD5 "$1")
+    local remote_filename_md5=$(QPKG.MD5 "$1")
     local local_pathfile=$QPKG_DL_PATH/$remote_filename
     local local_filename=$($BASENAME_CMD "$local_pathfile")
     local log_pathfile=$LOGS_PATH/$local_filename.$DOWNLOAD_LOG_FILE
 
     if [[ -z $remote_url ]]; then
-        DebugWarning "no URL found for this package [$1]"
+        DebugWarning "no URL found for this package $(FormatAsPackageName "$1")"
         code_pointer=8
         DebugFuncExit; return
     elif [[ -z $remote_filename_md5 ]]; then
-        DebugWarning "no remote MD5 found for this package [$1]"
+        DebugWarning "no remote MD5 found for this package $(FormatAsPackageName "$1")"
         code_pointer=9
         DebugFuncExit; return
     fi
@@ -3074,10 +3025,10 @@ QPKG.Download()
         [[ -e $log_pathfile ]] && rm -f "$log_pathfile"
 
         if Session.Debug.To.Screen.IsSet; then
-            RunThisAndLogResultsRealtime "$CURL_CMD $curl_insecure_arg --output $local_pathfile $remote_url" "$log_pathfile"
+            RunThisAndLogResultsRealtime "$CURL_CMD${curl_insecure_arg} --output $local_pathfile $remote_url" "$log_pathfile"
             result=$?
         else
-            RunThisAndLogResults "$CURL_CMD $curl_insecure_arg --output $local_pathfile $remote_url" "$log_pathfile"
+            RunThisAndLogResults "$CURL_CMD${curl_insecure_arg} --output $local_pathfile $remote_url" "$log_pathfile"
             result=$?
         fi
 
@@ -3107,17 +3058,17 @@ QPKG.Install()
     DebugFuncEntry
 
     if [[ -z $1 ]]; then
-        DebugError "no package name specified "
+        DebugError 'no package name specified'
         code_pointer=10
         DebugFuncExit; return 1
     elif QPKG.Installed "$1"; then
-        DebugQPKG "$(FormatAsPackageName "$1")" "already installed"
+        DebugQPKG "$(FormatAsPackageName "$1")" 'already installed'
         DebugFuncExit; return 1
     fi
 
     local target_file=''
     local result=0
-    local local_pathfile=$(QPKG.Get.PathFilename "$1")
+    local local_pathfile=$(QPKG.PathFilename "$1")
     local log_pathfile=''
 
     if [[ ${local_pathfile##*.} = zip ]]; then
@@ -3140,7 +3091,7 @@ QPKG.Install()
 
     if [[ $result -eq 0 || $result -eq 10 ]]; then
         ShowAsDone "installed $(FormatAsPackageName "$1")"
-        GetQPKGServiceStatus "$1"
+        QPKG.ServiceStatus "$1"
         QPKGs.JustInstalled.Add "$1"
         QPKGs.ToRestart.Remove "$1"
     else
@@ -3161,18 +3112,18 @@ QPKG.Reinstall()
     DebugFuncEntry
 
     if [[ -z $1 ]]; then
-        DebugError "no package name specified "
+        DebugError 'no package name specified'
         code_pointer=11
         DebugFuncExit; return 1
     elif QPKG.NotInstalled "$1"; then
-        DebugQPKG "$(FormatAsPackageName "$1")" "not installed"
+        DebugQPKG "$(FormatAsPackageName "$1")" 'not installed'
         code_pointer=12
         DebugFuncExit; return 1
     fi
 
     local target_file=''
     local result=0
-    local local_pathfile=$(QPKG.Get.PathFilename "$1")
+    local local_pathfile=$(QPKG.PathFilename "$1")
     local log_pathfile=''
 
     if [[ ${local_pathfile##*.} = zip ]]; then
@@ -3195,11 +3146,11 @@ QPKG.Reinstall()
 
     if [[ $result -eq 0 || $result -eq 10 ]]; then
         ShowAsDone "re-installed $(FormatAsPackageName "$1")"
-        GetQPKGServiceStatus "$1"
+        QPKG.ServiceStatus "$1"
         QPKGs.JustInstalled.Add "$1"
         QPKGs.ToRestart.Remove "$1"
     else
-        ShowAsError "$re-installation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $result)"
+        ShowAsError "re-installation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $result)"
     fi
 
     DebugFuncExit; return $result
@@ -3216,7 +3167,7 @@ QPKG.Upgrade()
     DebugFuncEntry
 
     if [[ -z $1 ]]; then
-        DebugError "no package name specified "
+        DebugError 'no package name specified'
         code_pointer=13
         DebugFuncExit; return 1
     fi
@@ -3225,7 +3176,7 @@ QPKG.Upgrade()
     local result=0
     local previous_version='null'
     local current_version='null'
-    local local_pathfile=$(QPKG.Get.PathFilename "$1")
+    local local_pathfile=$(QPKG.PathFilename "$1")
     [[ -n $2 && $2 = '--forced' ]] && prefix='force-'
 
     if [[ ${local_pathfile##*.} = zip ]]; then
@@ -3235,7 +3186,7 @@ QPKG.Upgrade()
 
     local target_file=$($BASENAME_CMD "$local_pathfile")
     local log_pathfile=$LOGS_PATH/$target_file.$UPGRADE_LOG_FILE
-    QPKG.Installed "$1" && previous_version=$(QPKG.Get.InstalledVersion "$1")
+    QPKG.Installed "$1" && previous_version=$(QPKG.InstalledVersion "$1")
 
     ShowAsProcLong "${prefix}upgrading $(FormatAsPackageName "$1")"
 
@@ -3247,15 +3198,15 @@ QPKG.Upgrade()
         result=$?
     fi
 
-    current_version=$(QPKG.Get.InstalledVersion "$1")
+    current_version=$(QPKG.InstalledVersion "$1")
 
     if [[ $result -eq 0 || $result -eq 10 ]]; then
-        if [[ $current_version = $previous_version ]]; then
+        if [[ $current_version = "$previous_version" ]]; then
             DebugDone "${prefix}upgraded $(FormatAsPackageName "$1") and installed version is $current_version"
         else
             ShowAsDone "${prefix}upgraded $(FormatAsPackageName "$1") from $previous_version to $current_version"
         fi
-        GetQPKGServiceStatus "$1"
+        QPKG.ServiceStatus "$1"
         QPKGs.JustInstalled.Add "$1"
         QPKGs.ToRestart.Remove "$1"
     else
@@ -3279,11 +3230,11 @@ QPKG.Uninstall()
     DebugFuncEntry
 
     if [[ -z $1 ]]; then
-        DebugError "no package name specified "
+        DebugError 'no package name specified'
         code_pointer=14
         DebugFuncExit; return 1
     elif QPKG.NotInstalled "$1"; then
-        DebugQPKG "$(FormatAsPackageName "$1")" "not installed"
+        DebugQPKG "$(FormatAsPackageName "$1")" 'not installed'
         code_pointer=15
         DebugFuncExit; return 1
     fi
@@ -3296,17 +3247,17 @@ QPKG.Uninstall()
         ShowAsProc "uninstalling $(FormatAsPackageName "$1")"
 
         if Session.Debug.To.Screen.IsSet; then
-            RunThisAndLogResultsRealtime "$SH_CMD $qpkg_installed_path/.uninstall.sh " "$log_pathfile"
+            RunThisAndLogResultsRealtime "$SH_CMD $qpkg_installed_path/.uninstall.sh" "$log_pathfile"
             result=$?
         else
-            RunThisAndLogResults "$SH_CMD $qpkg_installed_path/.uninstall.sh " "$log_pathfile"
+            RunThisAndLogResults "$SH_CMD $qpkg_installed_path/.uninstall.sh" "$log_pathfile"
             result=$?
         fi
 
         if [[ $result -eq 0 ]]; then
             ShowAsDone "uninstalled $(FormatAsPackageName "$1")"
             $RMCFG_CMD "$1" -f $APP_CENTER_CONFIG_PATHFILE
-            DebugDone "removed icon information from App Center"
+            DebugDone 'removed icon information from App Center'
         else
             ShowAsError "unable to uninstall $(FormatAsPackageName "$1") $(FormatAsExitcode $result)"
         fi
@@ -3330,17 +3281,17 @@ QPKG.Restart()
     DebugFuncEntry
 
     if [[ -z $1 ]]; then
-        DebugError "no package name specified "
+        DebugError 'no package name specified'
         code_pointer=16
         DebugFuncExit; return 1
     elif QPKG.NotInstalled "$1"; then
-        DebugQPKG "$(FormatAsPackageName "$1")" "not installed"
+        DebugQPKG "$(FormatAsPackageName "$1")" 'not installed'
         code_pointer=17
         DebugFuncExit; return 1
     fi
 
     local result=0
-    local package_init_pathfile=$(GetInstalledQPKGServicePathFile "$1")
+    local package_init_pathfile=$(QPKG.ServicePathFile "$1")
     local log_pathfile=$LOGS_PATH/$1.$RESTART_LOG_FILE
 
     ShowAsProc "restarting $(FormatAsPackageName "$1")"
@@ -3355,7 +3306,7 @@ QPKG.Restart()
 
     if [[ $result -eq 0 ]]; then
         ShowAsDone "restarted $(FormatAsPackageName "$1")"
-        GetQPKGServiceStatus "$1"
+        QPKG.ServiceStatus "$1"
     else
         ShowAsWarning "Could not restart $(FormatAsPackageName "$1") $(FormatAsExitcode $result)"
     fi
@@ -3372,17 +3323,17 @@ QPKG.Enable()
     DebugFuncEntry
 
     if [[ -z $1 ]]; then
-        DebugError "no package name specified "
+        DebugError 'no package name specified'
         code_pointer=18
         DebugFuncExit; return 1
     elif QPKG.NotInstalled "$1"; then
-        DebugQPKG "$(FormatAsPackageName "$1")" "not installed"
+        DebugQPKG "$(FormatAsPackageName "$1")" 'not installed'
         code_pointer=19
         DebugFuncExit; return 1
     fi
 
     if QPKG.NotEnabled "$1"; then
-        DebugProc "enabling package icon"
+        DebugProc 'enabling package icon'
         $SETCFG_CMD "$1" Enable TRUE -f $APP_CENTER_CONFIG_PATHFILE
         DebugDone "$(FormatAsPackageName "$1") icon enabled"
     fi
@@ -3405,17 +3356,17 @@ QPKG.Backup()
     DebugFuncEntry
 
     if [[ -z $1 ]]; then
-        DebugError "no package name specified "
+        DebugError 'no package name specified'
         code_pointer=20
         DebugFuncExit; return 1
     elif QPKG.NotInstalled "$1"; then
-        DebugQPKG "$(FormatAsPackageName "$1")" "not installed"
+        DebugQPKG "$(FormatAsPackageName "$1")" 'not installed'
         code_pointer=21
         DebugFuncExit; return 1
     fi
 
     local result=0
-    local package_init_pathfile=$(GetInstalledQPKGServicePathFile "$1")
+    local package_init_pathfile=$(QPKG.ServicePathFile "$1")
     local log_pathfile=$LOGS_PATH/$1.$BACKUP_LOG_FILE
 
     ShowAsProc "backing-up $(FormatAsPackageName "$1") configuration"
@@ -3430,7 +3381,7 @@ QPKG.Backup()
 
     if [[ $result -eq 0 ]]; then
         ShowAsDone "backed-up $(FormatAsPackageName "$1") configuration"
-        GetQPKGServiceStatus "$1"
+        QPKG.ServiceStatus "$1"
     else
         ShowAsWarning "Could not backup $(FormatAsPackageName "$1") configuration $(FormatAsExitcode $result)"
     fi
@@ -3453,17 +3404,17 @@ QPKG.Restore()
     DebugFuncEntry
 
     if [[ -z $1 ]]; then
-        DebugError "no package name specified "
+        DebugError 'no package name specified'
         code_pointer=22
         DebugFuncExit; return 1
     elif QPKG.NotInstalled "$1"; then
-        DebugQPKG "$(FormatAsPackageName "$1")" "not installed"
+        DebugQPKG "$(FormatAsPackageName "$1")" 'not installed'
         code_pointer=23
         DebugFuncExit; return 1
     fi
 
     local result=0
-    local package_init_pathfile=$(GetInstalledQPKGServicePathFile "$1")
+    local package_init_pathfile=$(QPKG.ServicePathFile "$1")
     local log_pathfile=$LOGS_PATH/$1.$RESTORE_LOG_FILE
 
     ShowAsProc "restoring $(FormatAsPackageName "$1") configuration"
@@ -3478,7 +3429,7 @@ QPKG.Restore()
 
     if [[ $result -eq 0 ]]; then
         ShowAsDone "restored $(FormatAsPackageName "$1") configuration"
-        GetQPKGServiceStatus "$1"
+        QPKG.ServiceStatus "$1"
     else
         ShowAsWarning "Could not restore $(FormatAsPackageName "$1") configuration $(FormatAsExitcode $result)"
     fi
@@ -3808,15 +3759,6 @@ FormatAsCommand()
 
     }
 
-FormatAsStdout()
-    {
-
-    echo '= / / / / / stdout begins below \ \ \ \ \'
-    echo "$1"
-    echo '= \ \ \ \ \ stdout is complete / / / / /'
-
-    }
-
 FormatAsResult()
     {
 
@@ -3894,21 +3836,21 @@ DisplayLineSpaceIfNoneAlready()
 DebugInfoMajorSeparator()
     {
 
-    DebugInfo "$(eval printf '%0.s=' {1..$DEBUG_LOG_DATAWIDTH})"    # 'seq' is unavailable in QTS, so must resort to 'eval' trickery instead
+    DebugInfo "$(eval printf '%0.s=' "{1..$DEBUG_LOG_DATAWIDTH}")"    # 'seq' is unavailable in QTS, so must resort to 'eval' trickery instead
 
     }
 
 DebugInfoMinorSeparator()
     {
 
-    DebugInfo "$(eval printf '%0.s-' {1..$DEBUG_LOG_DATAWIDTH})"    # 'seq' is unavailable in QTS, so must resort to 'eval' trickery instead
+    DebugInfo "$(eval printf '%0.s-' "{1..$DEBUG_LOG_DATAWIDTH}")"    # 'seq' is unavailable in QTS, so must resort to 'eval' trickery instead
 
     }
 
 DebugExtLogMinorSeparator()
     {
 
-    DebugLog "$(eval printf '%0.s-' {1..$DEBUG_LOG_DATAWIDTH})"     # 'seq' is unavailable in QTS, so must resort to 'eval' trickery instead
+    DebugLog "$(eval printf '%0.s-' "{1..$DEBUG_LOG_DATAWIDTH}")"     # 'seq' is unavailable in QTS, so must resort to 'eval' trickery instead
 
     }
 
@@ -3990,7 +3932,7 @@ DebugFuncExit()
     if [[ $diff_milliseconds -lt 30000 ]]; then
         elapsed_time=$(printf "%'.fms" $diff_milliseconds)
     else
-        elapsed_time=$(ConvertSecsToHoursMinutesSecs "$(($diff_milliseconds/1000))")
+        elapsed_time=$(ConvertSecsToHoursMinutesSecs "$((diff_milliseconds/1000))")
     fi
 
     DebugThis "(<<) ${FUNCNAME[1]}()|$code_pointer|$elapsed_time"
@@ -4579,7 +4521,7 @@ echo $public_function_name'.Add()
     fi
     }
 '$public_function_name'.Init
-' >> $COMPILED_OBJECTS_PATHFILE
+' >> "$COMPILED_OBJECTS_PATHFILE"
 
     return 0
 
@@ -4595,7 +4537,7 @@ Objects.CheckLocal()
 Objects.CheckRemote()
     {
 
-    [[ ! -e $COMPILED_OBJECTS_PATHFILE ]] && ! $CURL_CMD $curl_insecure_arg --silent --fail "$COMPILED_OBJECTS_URL" > "$COMPILED_OBJECTS_PATHFILE" && [[ ! -s $COMPILED_OBJECTS_PATHFILE ]] && rm -f "$COMPILED_OBJECTS_PATHFILE"
+    [[ ! -e $COMPILED_OBJECTS_PATHFILE ]] && ! $CURL_CMD${curl_insecure_arg} --silent --fail "$COMPILED_OBJECTS_URL" > "$COMPILED_OBJECTS_PATHFILE" && [[ ! -s $COMPILED_OBJECTS_PATHFILE ]] && rm -f "$COMPILED_OBJECTS_PATHFILE"
 
     }
 
@@ -4607,7 +4549,7 @@ Objects.Compile()
     Objects.CheckLocal
 
     if [[ ! -e $COMPILED_OBJECTS_PATHFILE ]]; then
-        ShowAsProc "compiling objects"
+        ShowAsProc 'compiling objects'
 
         # user-selected options
         Objects.Add User.Opts.Help.Abbreviations
