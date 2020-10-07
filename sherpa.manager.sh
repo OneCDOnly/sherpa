@@ -687,10 +687,8 @@ Session.Validate()
         fi
     fi
 
-    CalcNASQPKGArch
+    Session.Calc.QPKGArch
     DebugQPKG 'arch' "$NAS_QPKG_ARCH"
-
-    QPKGs.StateLists.Build
 
     DebugQPKG 'upgradable package(s)' "$(QPKGs.Upgradable.List) "
     DebugInfoMinorSeparator
@@ -1370,61 +1368,6 @@ CalcAllIPKGDepsToDownload()
     IPKGs.Archive.Close
 
     DebugFuncExit; return 0
-
-    }
-
-CalcNASQPKGArch()
-    {
-
-    # Decide which package arch is suitable for this NAS. Only needed for Stephane's packages.
-    # creates a global constant: $NAS_QPKG_ARCH
-
-    case $($UNAME_CMD -m) in
-        x86_64)
-            [[ ${NAS_FIRMWARE//.} -ge 430 ]] && NAS_QPKG_ARCH=x64 || NAS_QPKG_ARCH=x86
-            ;;
-        i686|x86)
-            NAS_QPKG_ARCH=x86
-            ;;
-        armv7l)
-            case $($GETCFG_CMD '' Platform -f $PLATFORM_PATHFILE) in
-                ARM_MS)
-                    NAS_QPKG_ARCH=x31
-                    ;;
-                ARM_AL)
-                    NAS_QPKG_ARCH=x41
-                    ;;
-                *)
-                    NAS_QPKG_ARCH=none
-                    ;;
-            esac
-            ;;
-        aarch64)
-            NAS_QPKG_ARCH=a64
-            ;;
-        *)
-            NAS_QPKG_ARCH=none
-            ;;
-    esac
-
-    readonly NAS_QPKG_ARCH
-
-    return 0
-
-    }
-
-Session.AdjustPathEnv()
-    {
-
-    local opkg_prefix=/opt/bin:/opt/sbin
-
-    if QPKG.Installed Entware; then
-        export PATH="$opkg_prefix:$($SED_CMD "s|$opkg_prefix||" <<< "$PATH")"
-        DebugDone 'adjusted $PATH for Entware'
-        DebugVar PATH
-    fi
-
-    return 0
 
     }
 
@@ -2298,6 +2241,8 @@ QPKGs.NewVersions.Show()
     local left_to_upgrade=()
     local names_formatted=''
 
+    QPKGs.StateLists.Build
+
     for package in $(QPKGs.Upgradable.Array); do
         if ! QPKGs.ToUpgrade.Exist $package; then
             left_to_upgrade+=($package)
@@ -2672,6 +2617,61 @@ QPKGs.Upgradable.Show()
     for package in $(QPKGs.Upgradable.Array); do
         echo $package
     done
+
+    return 0
+
+    }
+
+Session.Calc.QPKGArch()
+    {
+
+    # Decide which package arch is suitable for this NAS. Only needed for Stephane's packages.
+    # creates a global constant: $NAS_QPKG_ARCH
+
+    case $($UNAME_CMD -m) in
+        x86_64)
+            [[ ${NAS_FIRMWARE//.} -ge 430 ]] && NAS_QPKG_ARCH=x64 || NAS_QPKG_ARCH=x86
+            ;;
+        i686|x86)
+            NAS_QPKG_ARCH=x86
+            ;;
+        armv7l)
+            case $($GETCFG_CMD '' Platform -f $PLATFORM_PATHFILE) in
+                ARM_MS)
+                    NAS_QPKG_ARCH=x31
+                    ;;
+                ARM_AL)
+                    NAS_QPKG_ARCH=x41
+                    ;;
+                *)
+                    NAS_QPKG_ARCH=none
+                    ;;
+            esac
+            ;;
+        aarch64)
+            NAS_QPKG_ARCH=a64
+            ;;
+        *)
+            NAS_QPKG_ARCH=none
+            ;;
+    esac
+
+    readonly NAS_QPKG_ARCH
+
+    return 0
+
+    }
+
+Session.AdjustPathEnv()
+    {
+
+    local opkg_prefix=/opt/bin:/opt/sbin
+
+    if QPKG.Installed Entware; then
+        export PATH="$opkg_prefix:$($SED_CMD "s|$opkg_prefix||" <<< "$PATH")"
+        DebugDone 'adjusted $PATH for Entware'
+        DebugVar PATH
+    fi
 
     return 0
 
