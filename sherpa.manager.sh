@@ -1399,7 +1399,7 @@ PIPs.Install()
 
     }
 
-CalcAllIPKGDepsToDownload()
+CalcAllIPKGDepsToInstall()
     {
 
     # From a specified list of IPKG names, find all dependent IPKGs, exclude those already installed, then generate a total qty to download and a total download byte-size
@@ -1499,6 +1499,53 @@ CalcAllIPKGDepsToDownload()
     fi
 
     IPKGs.Archive.Close
+
+    DebugFuncExit; return 0
+
+    }
+
+CalcAllIPKGDepsToUninstall()
+    {
+
+    # From a specified list of IPKG names, exclude those already installed, then generate a total qty to uninstall
+
+    # input:
+    #   $1 = string with space-separated initial IPKG names
+
+    # output:
+    #   $IPKG_uninstall_list = name-sorted array with complete list of all IPKGs
+    #   $IPKG_uninstall_count = number of packages to be uninstalled
+
+    if IsNotSysFileExist $OPKG_CMD || IsNotSysFileExist $GNU_GREP_CMD; then
+        code_pointer=6
+        return 1
+    fi
+
+    DebugFuncEntry
+    IPKG_uninstall_list=()
+    IPKG_uninstall_count=0
+    local pre_uninstall_list=''
+    local element=''
+
+    pre_uninstall_list=$(DeDupeWords "$1")
+    DebugInfo "IPKGs to uninstall: $pre_uninstall_list"
+
+    DebugProc 'excluding IPKGs already installed'
+    # shellcheck disable=SC2068
+    for element in ${pre_uninstall_list[@]}; do
+        if $OPKG_CMD status "$element" | $GREP_CMD -q "Status:.*installed"; then
+            IPKG_uninstall_list+=($element)
+        fi
+    done
+    DebugDone 'complete'
+    DebugInfo "IPKGs to uninstall: ${IPKG_uninstall_list[*]}"
+
+    IPKG_uninstall_count=${#IPKG_uninstall_list[@]}
+
+    if [[ $IPKG_uninstall_count -gt 0 ]]; then
+        DebugDone 'complete'
+        ShowAsDone "$IPKG_uninstall_count IPKG$(FormatAsPlural "$IPKG_uninstall_count") to be uninstalled"
+    fi
 
     DebugFuncExit; return 0
 
@@ -1614,7 +1661,7 @@ IPKGs.Install.Batch()
     local result=0
     local log_pathfile=$LOGS_PATH/ipkgs.$INSTALL_LOG_FILE
 
-    CalcAllIPKGDepsToDownload "$1" || return 1
+    CalcAllIPKGDepsToInstall "$1" || return 1
 
     if [[ $IPKG_download_count -gt 0 ]]; then
         ShowAsProc "downloading & installing $IPKG_download_count IPKG$(FormatAsPlural "$IPKG_download_count")"
@@ -1650,24 +1697,25 @@ IPKGs.Uninstall.Batch()
 
     DebugFuncEntry
     local result=0
-    local list_acc=($1)
     local log_pathfile=$LOGS_PATH/ipkgs.$UNINSTALL_LOG_FILE
 
-    if [[ ${#list_acc[@]} -gt 0 ]]; then
-        ShowAsProc "uninstalling ${#list_acc[@]} IPKG$(FormatAsPlural "${#list_acc[@]}")"
+    CalcAllIPKGDepsToUninstall "$1" || return 1
+
+    if [[ $IPKG_uninstall_count -gt 0 ]]; then
+        ShowAsProc "uninstalling $IPKG_uninstall_count IPKG$(FormatAsPlural "$IPKG_uninstall_count")"
 
         if Session.Debug.To.Screen.IsSet; then
-            RunThisAndLogResultsRealtime "$OPKG_CMD remove ${list_acc[*]}" "$log_pathfile"
+            RunThisAndLogResultsRealtime "$OPKG_CMD remove ${IPKG_uninstall_list[*]}" "$log_pathfile"
             result=$?
         else
-            RunThisAndLogResults "$OPKG_CMD remove ${list_acc[*]}" "$log_pathfile"
+            RunThisAndLogResults "$OPKG_CMD remove ${IPKG_uninstall_list[*]}" "$log_pathfile"
             result=$?
         fi
 
         if [[ $result -eq 0 ]]; then
-            ShowAsDone "uninstalled ${#list_acc[@]} IPKG$(FormatAsPlural "${#list_acc[@]}")"
+            ShowAsDone "uninstalled $IPKG_uninstall_count IPKG$(FormatAsPlural "$IPKG_uninstall_count")"
         else
-            ShowAsError "uninstall IPKG$(FormatAsPlural "${#list_acc[@]}") failed $(FormatAsExitcode $result)"
+            ShowAsError "uninstall IPKG$(FormatAsPlural "$IPKG_uninstall_count") failed $(FormatAsExitcode $result)"
         fi
     fi
 
