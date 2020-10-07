@@ -4237,6 +4237,163 @@ User.Opts.Apps.List.Upgradable.Value()
     }
 User.Opts.Apps.List.Upgradable.Init
 
+IPKGs.ToUninstall.Add()
+    {
+    [[ ${_object_ipkgs_touninstall_array_[*]} != *"$1"* ]] && _object_ipkgs_touninstall_array_+=("$1")
+    }
+IPKGs.ToUninstall.Array()
+    {
+    echo -n "${_object_ipkgs_touninstall_array_[@]}"
+    }
+IPKGs.ToUninstall.Clear()
+    {
+    [[ $_object_ipkgs_touninstall_flag_ != 'true' ]] && return
+    _object_ipkgs_touninstall_flag_=false
+    [[ $_object_ipkgs_touninstall_changes_flag_ = 'true' ]] && DebugVar _object_ipkgs_touninstall_flag_
+    }
+IPKGs.ToUninstall.Count()
+    {
+    echo "${#_object_ipkgs_touninstall_array_[@]}"
+    }
+IPKGs.ToUninstall.Disable()
+    {
+    [[ $_object_ipkgs_touninstall_enable_ != 'true' ]] && return
+    _object_ipkgs_touninstall_enable_=false
+    [[ $_object_ipkgs_touninstall_changes_flag_ = 'true' ]] && DebugVar _object_ipkgs_touninstall_enable_
+    }
+IPKGs.ToUninstall.DontLogChanges()
+    {
+    [[ $_object_ipkgs_touninstall_changes_flag_ != 'true' ]] && return
+    _object_ipkgs_touninstall_changes_flag_=false
+    }
+IPKGs.ToUninstall.Enable()
+    {
+    [[ $_object_ipkgs_touninstall_enable_ = 'true' ]] && return
+    _object_ipkgs_touninstall_enable_=true
+    [[ $_object_ipkgs_touninstall_changes_flag_ = 'true' ]] && DebugVar _object_ipkgs_touninstall_enable_
+    }
+IPKGs.ToUninstall.Enumerate()
+    {
+    ((_object_ipkgs_touninstall_array_index_++))
+    if [[ $_object_ipkgs_touninstall_array_index_ -gt ${#_object_ipkgs_touninstall_array_[@]} ]]; then
+        _object_ipkgs_touninstall_array_index_=1
+    fi
+    }
+IPKGs.ToUninstall.Exist()
+    {
+    [[ ${_object_ipkgs_touninstall_array_[*]} == *"$1"* ]]
+    }
+IPKGs.ToUninstall.First()
+    {
+    echo "${_object_ipkgs_touninstall_array_[0]}"
+    }
+IPKGs.ToUninstall.GetCurrent()
+    {
+    echo -n "${_object_ipkgs_touninstall_array_[((_object_ipkgs_touninstall_array_index_-1))]}"
+    }
+IPKGs.ToUninstall.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_ipkgs_touninstall_array_[@]} ]] && index=${#_object_ipkgs_touninstall_array_[@]}
+    echo -n "${_object_ipkgs_touninstall_array_[((index-1))]}"
+    }
+IPKGs.ToUninstall.Index()
+    {
+    if [[ -n $1 && $1 = '=' ]]; then
+        if [[ $2 -gt ${#_object_ipkgs_touninstall_array_[@]} ]]; then
+            _object_ipkgs_touninstall_array_index_=${#_object_ipkgs_touninstall_array_[@]}
+        else
+            _object_ipkgs_touninstall_array_index_=$2
+        fi
+    else
+        echo -n $_object_ipkgs_touninstall_array_index_
+    fi
+    }
+IPKGs.ToUninstall.Init()
+    {
+    _object_ipkgs_touninstall_value_=0
+    _object_ipkgs_touninstall_text_=''
+    _object_ipkgs_touninstall_flag_=false
+    _object_ipkgs_touninstall_changes_flag_=true
+    _object_ipkgs_touninstall_enable_=false
+    _object_ipkgs_touninstall_array_+=()
+    _object_ipkgs_touninstall_array_index_=1
+    _object_ipkgs_touninstall_path_=''
+    }
+IPKGs.ToUninstall.IsAny()
+    {
+    [[ ${#_object_ipkgs_touninstall_array_[@]} -gt 0 ]]
+    }
+IPKGs.ToUninstall.IsDisabled()
+    {
+    [[ $_object_ipkgs_touninstall_enable_ != 'true' ]]
+    }
+IPKGs.ToUninstall.IsEnabled()
+    {
+    [[ $_object_ipkgs_touninstall_enable_ = 'true' ]]
+    }
+IPKGs.ToUninstall.IsNone()
+    {
+    [[ ${#_object_ipkgs_touninstall_array_[@]} -eq 0 ]]
+    }
+IPKGs.ToUninstall.IsNot()
+    {
+    [[ $_object_ipkgs_touninstall_flag_ != 'true' ]]
+    }
+IPKGs.ToUninstall.IsSet()
+    {
+    [[ $_object_ipkgs_touninstall_flag_ = 'true' ]]
+    }
+IPKGs.ToUninstall.List()
+    {
+    echo -n "${_object_ipkgs_touninstall_array_[*]}"
+    }
+IPKGs.ToUninstall.ListComma()
+    {
+    echo -n "${_object_ipkgs_touninstall_array_[*]}" | tr ' ' ','
+    }
+IPKGs.ToUninstall.LogChanges()
+    {
+    [[ $_object_ipkgs_touninstall_changes_flag_ = 'true' ]] && return
+    _object_ipkgs_touninstall_changes_flag_=true
+    }
+IPKGs.ToUninstall.Path()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_ipkgs_touninstall_path_="$2"
+    else
+        echo -n "$_object_ipkgs_touninstall_path_"
+    fi
+    }
+IPKGs.ToUninstall.Remove()
+    {
+    [[ ${_object_ipkgs_touninstall_array_[*]} == *"$1"* ]] && _object_ipkgs_touninstall_array_=("${_object_ipkgs_touninstall_array_[@]/$1}")
+    }
+IPKGs.ToUninstall.Set()
+    {
+    [[ $_object_ipkgs_touninstall_flag_ = 'true' ]] && return
+    _object_ipkgs_touninstall_flag_=true
+    [[ $_object_ipkgs_touninstall_changes_flag_ = 'true' ]] && DebugVar _object_ipkgs_touninstall_flag_
+    }
+IPKGs.ToUninstall.Text()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_ipkgs_touninstall_text_="$2"
+    else
+        echo -n "$_object_ipkgs_touninstall_text_"
+    fi
+    }
+IPKGs.ToUninstall.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_ipkgs_touninstall_value_=$2
+    else
+        echo -n $_object_ipkgs_touninstall_value_
+    fi
+    }
+IPKGs.ToUninstall.Init
+
 QPKGs.Dependant.Add()
     {
     [[ ${_object_qpkgs_dependant_array_[*]} != *"$1"* ]] && _object_qpkgs_dependant_array_+=("$1")
