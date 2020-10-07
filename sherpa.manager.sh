@@ -1544,12 +1544,12 @@ IPKGs.Install()
 
     if User.Opts.Apps.All.Install.IsSet; then
         for index in "${!SHERPA_QPKG_NAME[@]}"; do
-            [[ ${SHERPA_QPKG_ARCH[$index]} = $NAS_QPKG_ARCH ]] && packages_acc+=(${SHERPA_QPKG_IPKGS_ADD[$index]})
+            [[ ${SHERPA_QPKG_ARCH[$index]} = $NAS_QPKG_ARCH || ${SHERPA_QPKG_ARCH[$index]} = all ]] && packages_acc+=(${SHERPA_QPKG_IPKGS_ADD[$index]})
         done
     else
         for index in "${!SHERPA_QPKG_NAME[@]}"; do
             if QPKGs.ToInstall.Exist "${SHERPA_QPKG_NAME[$index]}" || QPKG.Installed "${SHERPA_QPKG_NAME[$index]}" || QPKGs.ToUpgrade.Exist "${SHERPA_QPKG_NAME[$index]}" || QPKGs.ToForceUpgrade.Exist "${SHERPA_QPKG_NAME[$index]}"; then
-                [[ ${SHERPA_QPKG_ARCH[$index]} = $NAS_QPKG_ARCH ]] && packages_acc+=(${SHERPA_QPKG_IPKGS_ADD[$index]})
+                [[ ${SHERPA_QPKG_ARCH[$index]} = $NAS_QPKG_ARCH || ${SHERPA_QPKG_ARCH[$index]} = all ]] && packages_acc+=(${SHERPA_QPKG_IPKGS_ADD[$index]})
             fi
         done
     fi
