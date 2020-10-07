@@ -1653,25 +1653,6 @@ IsNotSysFileExist()
 
     }
 
-IsIPKGInstalled()
-    {
-
-    # input:
-    #   $1 = package name to check
-
-    # output:
-    #   $? = 0 (true) or 1 (false)
-
-    if ! ($OPKG_CMD list-installed | $GREP_CMD -q -F "$1"); then
-        DebugIPKG "'$1'" 'not installed'
-        return 1
-    else
-        DebugIPKG "'$1'" 'installed'
-        return 0
-    fi
-
-    }
-
 DisplayAsProjectSyntaxExample()
     {
 
@@ -1720,46 +1701,6 @@ DisplayAsSyntaxExample()
         printf "\n* %s \n       # %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$2"
     else
         printf "\n* %s:\n       # %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$2"
-    fi
-
-    Session.LineSpace.Clear
-
-    }
-
-DisplayAsSyntaxIndentedExample()
-    {
-
-    # $1 = description
-    # $2 = example syntax
-
-    if [[ -z $2 && ${1: -1} = ':' ]]; then
-        printf "       %s\n" "$1"
-    elif [[ -z $1 ]]; then
-        printf "       # %s\n" "$2"
-    elif [[ ${1: -1} = '!' ]]; then
-        printf "\n   %s \n       # %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$2"
-    else
-        printf "\n   %s:\n       # %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$2"
-    fi
-
-    Session.LineSpace.Clear
-
-    }
-
-DisplayAsIndentedExample()
-    {
-
-    # $1 = description
-    # $2 = example syntax
-
-    if [[ -z $2 && ${1: -1} = ':' ]]; then
-        printf "       %s\n" "$1"
-    elif [[ -z $1 ]]; then
-        printf "       %s\n" "$2"
-    elif [[ ${1: -1} = '!' ]]; then
-        printf "\n   %s \n       %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$2"
-    else
-        printf "\n   %s:\n       %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$2"
     fi
 
     Session.LineSpace.Clear
@@ -3754,13 +3695,6 @@ FormatAsScript()
 
     }
 
-FormatAsStage()
-    {
-
-    echo 'STAGE'
-
-    }
-
 FormatAsHardware()
     {
 
@@ -3877,13 +3811,6 @@ DebugQPKG()
     {
 
     DebugDetected.OK 'QPKG' "$1" "$2"
-
-    }
-
-DebugIPKG()
-    {
-
-    DebugDetected.OK 'IPKG' "$1" "$2"
 
     }
 
@@ -4038,14 +3965,6 @@ AddFileToDebug()
     }
 
 #### ShowAs... functions output formatted info to screen and (usually) to debug log.
-
-ShowAsInfo()
-    {
-
-    WriteToDisplay.Wait "$(ColourTextBrightWhite info)" "$1"
-    WriteToLog info "$1"
-
-    }
 
 ShowAsProc()
     {
@@ -4224,13 +4143,6 @@ ColourTextBrightYellow()
 
     }
 
-ColourTextBrightYellowBlink()
-    {
-
-    echo -en '\033[1;5;33m'"$(ColourReset "$1")"
-
-    }
-
 ColourTextBrightOrange()
     {
 
@@ -4249,13 +4161,6 @@ ColourTextBrightRed()
     {
 
     echo -en '\033[1;31m'"$(ColourReset "$1")"
-
-    }
-
-ColourTextUnderlinedBlue()
-    {
-
-    echo -en '\033[4;94m'"$(ColourReset "$1")"
 
     }
 
