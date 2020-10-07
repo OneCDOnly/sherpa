@@ -39,7 +39,7 @@ Session.Init()
     readonly SCRIPT_STARTSECONDS=$(/bin/date +%s)
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=201007
+    readonly MANAGER_SCRIPT_VERSION=201008
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -278,6 +278,14 @@ Session.Init()
         SHERPA_QPKG_DEPS+=('')
         SHERPA_QPKG_IPKGS+=('')
 
+    SHERPA_QPKG_NAME+=(Par2)
+        SHERPA_QPKG_ARCH+=(none)
+        SHERPA_QPKG_URL+=('')
+        SHERPA_QPKG_MD5+=('')
+        SHERPA_QPKG_ABBRVS+=('')
+        SHERPA_QPKG_DEPS+=('')
+        SHERPA_QPKG_IPKGS+=('par2cmdline')
+
     SHERPA_QPKG_NAME+=(SABnzbd)
         SHERPA_QPKG_ARCH+=(all)
         SHERPA_QPKG_URL+=($PROJECT_REPO_URL/SABnzbd/build/SABnzbd_200922.qpkg)
@@ -402,7 +410,7 @@ Session.Init()
             DisplayLineSpaceIfNoneAlready
         fi
 
-        User.Opts.Apps.All.Upgrade.IsNot && QPKGs.NewVersions.Show
+        User.Opts.Apps.All.Upgrade.IsNot && User.Opts.Apps.All.Uninstall.IsNot && QPKGs.NewVersions.Show
     fi
 
     DebugFuncExit; return 0
@@ -624,7 +632,7 @@ Session.Validate()
     DebugHardware.OK 'model' "$(get_display_name)"
     DebugHardware.OK 'RAM' "$(printf "%'.f kB" $INSTALLED_RAM_KB)"
 
-    if QPKGs.ToInstall.Exist SABnzbd || QPKG.Installed SABnzbd || QPKG.Installed SABnzbdplus; then
+    if QPKGs.ToInstall.Exist SABnzbd || QPKG.Installed SABnzbd; then
         [[ $INSTALLED_RAM_KB -le $MIN_RAM_KB ]] && DebugHardware.Warning 'RAM' "less-than or equal-to $(printf "%'.f kB" $MIN_RAM_KB)"
     fi
 
@@ -851,8 +859,6 @@ Packages.Uninstall()
             Session.Summary.Clear
             DebugFuncExit; return 1
         fi
-    else
-        [[ -e $OPKG_CMD && $NAS_QPKG_ARCH != none ]] && (QPKGs.ToInstall.Exist Par2 || QPKG.Installed Par2) && ($OPKG_CMD list-installed | $GREP_CMD -q par2cmdline) && $OPKG_CMD remove par2cmdline > /dev/null 2>&1
     fi
 
     DebugFuncExit; return 0
@@ -1379,27 +1385,23 @@ IPKGs.Install()
     Entware.Update
     Session.Error.IsSet && return
     DebugFuncEntry
-    local packages=$SHERPA_COMMON_IPKGS
+    local packages_acc=($SHERPA_COMMON_IPKGS)
     local index=0
 
     if User.Opts.Apps.All.Install.IsSet; then
         for index in "${!SHERPA_QPKG_NAME[@]}"; do
-            packages+=" ${SHERPA_QPKG_IPKGS[$index]}"
+            packages_acc+=(${SHERPA_QPKG_IPKGS[$index]})
         done
     else
         for index in "${!SHERPA_QPKG_NAME[@]}"; do
             if QPKGs.ToInstall.Exist "${SHERPA_QPKG_NAME[$index]}" || QPKG.Installed "${SHERPA_QPKG_NAME[$index]}" || QPKGs.ToUpgrade.Exist "${SHERPA_QPKG_NAME[$index]}"; then
-                packages+=" ${SHERPA_QPKG_IPKGS[$index]}"
+                packages_acc+=(${SHERPA_QPKG_IPKGS[$index]})
             fi
         done
     fi
 
-    if QPKGs.ToInstall.Exist SABnzbd || QPKG.Installed SABnzbd || QPKG.Installed SABnzbdplus; then
-        [[ $NAS_QPKG_ARCH = none ]] && packages+=' par2cmdline'
-    fi
-
     IPKGs.Upgrade.Batch
-    IPKGs.Install.Batch "$packages"
+    IPKGs.Install.Batch "${packages_acc[*]}"
 
     # in-case 'python' has disappeared again ...
     [[ ! -L /opt/bin/python && -e /opt/bin/python3 ]] && ln -s /opt/bin/python3 /opt/bin/python
@@ -1410,6 +1412,8 @@ IPKGs.Install()
 
 IPKGs.Upgrade.Batch()
     {
+
+    # upgrade all installed IPKGs
 
     # output:
     #   $? = 0 (success) or 1 (failed)
