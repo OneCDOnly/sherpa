@@ -687,10 +687,10 @@ Session.Validate()
         fi
     fi
 
-    QPKGs.StateLists.Build
-
     CalcNASQPKGArch
     DebugQPKG 'arch' "$NAS_QPKG_ARCH"
+
+    QPKGs.StateLists.Build
 
     DebugQPKG 'upgradable package(s)' "$(QPKGs.Upgradable.List) "
     DebugInfoMinorSeparator
@@ -1469,7 +1469,7 @@ IPKGs.Upgrade.Batch()
     {
 
     # output:
-    #   $? = 0 (true) or 1 (false)
+    #   $? = 0 (success) or 1 (failed)
 
     DebugFuncEntry
     local result=0
@@ -1507,7 +1507,7 @@ IPKGs.Install.Batch()
     #   $1 = whitespace-separated string containing list of IPKG names to download and install
 
     # output:
-    #   $? = 0 (true) or 1 (false)
+    #   $? = 0 (success) or 1 (failed)
 
     DebugFuncEntry
     local result=0
@@ -1542,6 +1542,9 @@ IPKGs.Archive.Open()
     {
 
     # extract the 'opkg' package list file
+
+    # output:
+    #   $? = 0 (success) or 1 (failed)
 
     if [[ ! -e $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE ]]; then
         ShowAsError 'could not locate the IPKG list file'
@@ -1582,7 +1585,6 @@ _MonitorDirSize_()
     [[ -z $1 || ! -d $1 || -z $2 || $2 -eq 0 ]] && return
     IsNotSysFileExist $GNU_FIND_CMD && return
 
-    local target_dir=$1
     local total_bytes=$2
     local last_bytes=0
     local stall_seconds=0
@@ -1595,7 +1597,7 @@ _MonitorDirSize_()
     previous_msg=''
 
     while [[ -e $MONITOR_FLAG_PATHFILE ]]; do
-        current_bytes=$($GNU_FIND_CMD "$target_dir" -type f -name '*.ipk' -exec $DU_CMD --bytes --total --apparent-size {} + 2> /dev/null | $GREP_CMD total$ | $CUT_CMD -f1)
+        current_bytes=$($GNU_FIND_CMD "$1" -type f -name '*.ipk' -exec $DU_CMD --bytes --total --apparent-size {} + 2> /dev/null | $GREP_CMD total$ | $CUT_CMD -f1)
         [[ -z $current_bytes ]] && current_bytes=0
 
         if [[ $current_bytes -ne $last_bytes ]]; then
@@ -1654,31 +1656,6 @@ IsQNAP()
     fi
 
     return 0
-
-    }
-
-Session.LockFile.Claim()
-    {
-
-    [[ -z $1 ]] && return 1
-    readonly RUNTIME_LOCK_PATHFILE=$1
-
-    if [[ -e $RUNTIME_LOCK_PATHFILE && -d /proc/$(<$RUNTIME_LOCK_PATHFILE) && $(</proc/"$(<$RUNTIME_LOCK_PATHFILE)"/cmdline) =~ $MANAGER_SCRIPT_FILE ]]; then
-        ShowAsAbort 'another instance is running'
-        return 1
-    else
-        echo "$$" > "$RUNTIME_LOCK_PATHFILE"
-    fi
-
-    return 0
-
-    }
-
-Session.LockFile.Release()
-    {
-
-    [[ -z $RUNTIME_LOCK_PATHFILE ]] && return 1
-    [[ -e $RUNTIME_LOCK_PATHFILE ]] && rm -f "$RUNTIME_LOCK_PATHFILE"
 
     }
 
@@ -2205,13 +2182,12 @@ Log.Last.View()
 Log.Tail.Paste.Online()
     {
 
-    # with thanks to https://github.com/solusipse/fiche
-
     ExtractTailFromLog
 
     if [[ -e $SESSION_TAIL_PATHFILE ]]; then
         if AskQuiz "Press 'Y' to post the most-recent $(printf "%'.f" $LOG_TAIL_LINES) entries in your $(FormatAsScriptTitle) log to a public pastebin, or any other key to abort"; then
             ShowAsProc "uploading $(FormatAsScriptTitle) log"
+            # with thanks to https://github.com/solusipse/fiche
             link=$($CAT_CMD -n "$SESSION_TAIL_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
 
             if [[ $? -eq 0 ]]; then
@@ -2226,7 +2202,7 @@ Log.Tail.Paste.Online()
             return 1
         fi
     else
-        ShowAsError 'no log to paste'
+        ShowAsError 'no tail log to paste'
     fi
 
     return 0
@@ -2236,13 +2212,12 @@ Log.Tail.Paste.Online()
 Log.Last.Paste.Online()
     {
 
-    # with thanks to https://github.com/solusipse/fiche
-
     ExtractLastSessionFromTail
 
     if [[ -e $SESSION_LAST_PATHFILE ]]; then
         if AskQuiz "Press 'Y' to post the most-recent session in your $(FormatAsScriptTitle) log to a public pastebin, or any other key to abort"; then
             ShowAsProc "uploading $(FormatAsScriptTitle) log"
+            # with thanks to https://github.com/solusipse/fiche
             link=$($CAT_CMD "$SESSION_LAST_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
 
             if [[ $? -eq 0 ]]; then
@@ -2257,53 +2232,7 @@ Log.Last.Paste.Online()
             return 1
         fi
     else
-        ShowAsError 'no log to paste'
-    fi
-
-    return 0
-
-    }
-
-QPKGs.NewVersions.Show()
-    {
-
-    # Check installed sherpa packages and compare versions against package arrays. If new versions are available, advise on-screen.
-
-    # $? = 0 if all packages are up-to-date
-    # $? = 1 if one or more packages can be upgraded
-
-    local msg=''
-    local index=0
-    local left_to_upgrade=()
-    local names_formatted=''
-
-    if QPKGs.Upgradable.IsAny; then
-        for package in $(QPKGs.Upgradable.Array); do
-            if ! QPKGs.ToUpgrade.Exist $package; then
-                left_to_upgrade+=($package)
-            fi
-        done
-
-        [[ ${#left_to_upgrade[@]} -eq 0 ]] && return 0
-
-        for ((index=0;index<=((${#left_to_upgrade[@]}-1));index++)); do
-            names_formatted+=$(ColourTextBrightOrange "${left_to_upgrade[$index]}")
-
-            if [[ $((index+2)) -lt ${#left_to_upgrade[@]} ]]; then
-                names_formatted+=', '
-            elif [[ $((index+2)) -eq ${#left_to_upgrade[@]} ]]; then
-                names_formatted+=' & '
-            fi
-        done
-
-        if [[ ${#left_to_upgrade[@]} -eq 1 ]]; then
-            msg='an upgraded package is'
-        else
-            msg='upgraded packages are'
-        fi
-
-        ShowAsNote "$msg available for $names_formatted"
-        return 1
+        ShowAsError 'no last session log to paste'
     fi
 
     return 0
@@ -2351,6 +2280,50 @@ Versions.Show()
     Display "package: $PACKAGE_VERSION"
     Display "loader: $LOADER_SCRIPT_VERSION"
     Display "manager: $MANAGER_SCRIPT_VERSION"
+
+    return 0
+
+    }
+
+QPKGs.NewVersions.Show()
+    {
+
+    # Check installed QPKGs and compare versions against package arrays. If new versions are available, advise on-screen.
+
+    # $? = 0 if all packages are up-to-date
+    # $? = 1 if one or more packages can be upgraded
+
+    local msg=''
+    local index=0
+    local left_to_upgrade=()
+    local names_formatted=''
+
+    for package in $(QPKGs.Upgradable.Array); do
+        if ! QPKGs.ToUpgrade.Exist $package; then
+            left_to_upgrade+=($package)
+        fi
+    done
+
+    [[ ${#left_to_upgrade[@]} -eq 0 ]] && return 0
+
+    for ((index=0;index<=((${#left_to_upgrade[@]}-1));index++)); do
+        names_formatted+=$(ColourTextBrightOrange "${left_to_upgrade[$index]}")
+
+        if [[ $((index+2)) -lt ${#left_to_upgrade[@]} ]]; then
+            names_formatted+=', '
+        elif [[ $((index+2)) -eq ${#left_to_upgrade[@]} ]]; then
+            names_formatted+=' & '
+        fi
+    done
+
+    if [[ ${#left_to_upgrade[@]} -eq 1 ]]; then
+        msg='an upgraded package is'
+    else
+        msg='upgraded packages are'
+    fi
+
+    ShowAsNote "$msg available for $names_formatted"
+    return 1
 
     }
 
@@ -2558,30 +2531,11 @@ QPKGs.Assignment.Check()
 
     }
 
-QPKGs.Dependant.Restart()
-    {
-
-    # restart all sherpa QPKGs except independents. Needed if user has requested each QPKG update itself.
-
-    Session.SkipPackageProcessing.IsSet && return
-    QPKGs.Dependant.IsNone && return
-    DebugFuncEntry
-    local package=''
-
-    for package in $(QPKGs.Dependant.Array); do
-        QPKG.Enabled $package && QPKG.Restart $package
-    done
-
-    DebugFuncExit; return 0
-
-    }
-
 QPKGs.NotUpgraded.Restart()
     {
 
     # restart all sherpa QPKGs except those that were just upgraded.
 
-    Session.SkipPackageProcessing.IsSet && return
     QPKGs.Dependant.IsNone && return
     DebugFuncEntry
     local package=''
@@ -2627,7 +2581,7 @@ QPKGs.DepAndIndep.Build()
 QPKGs.InstallationState.Build()
     {
 
-    # Returns a list of QPKGs that can be installed or reinstalled by the user.
+    # Builds a list of QPKGs that can be installed or reinstalled by the user.
 
     DebugFuncEntry
     local package=''
@@ -2649,7 +2603,7 @@ QPKGs.InstallationState.Build()
 QPKGs.Upgradable.Build()
     {
 
-    # Returns a list of QPKGs that can be upgraded
+    # Builds a list of QPKGs that can be upgraded
 
     DebugFuncEntry
     local package=''
@@ -2659,7 +2613,7 @@ QPKGs.Upgradable.Build()
     for package in $(QPKGs.Installed.Array); do
         [[ $package = Entware || $package = Par2 ]] && continue        # KLUDGE: ignore 'Entware' as package filename version doesn't match the QTS App Center version string
         installed_version=$(QPKG.InstalledVersion $package)
-        remote_version=$(QPKG.RemoteVersion $package)
+        remote_version=$(QPKG.URLVersion $package)
 
         if [[ $installed_version != "$remote_version" ]]; then
             #QPKGs.Upgradable.Add "$package $installed_version $remote_version"
@@ -2765,6 +2719,31 @@ Session.Summary.Show()
 
     }
 
+Session.LockFile.Claim()
+    {
+
+    [[ -z $1 ]] && return 1
+    readonly RUNTIME_LOCK_PATHFILE=$1
+
+    if [[ -e $RUNTIME_LOCK_PATHFILE && -d /proc/$(<$RUNTIME_LOCK_PATHFILE) && $(</proc/"$(<$RUNTIME_LOCK_PATHFILE)"/cmdline) =~ $MANAGER_SCRIPT_FILE ]]; then
+        ShowAsAbort 'another instance is running'
+        return 1
+    else
+        echo "$$" > "$RUNTIME_LOCK_PATHFILE"
+    fi
+
+    return 0
+
+    }
+
+Session.LockFile.Release()
+    {
+
+    [[ -z $RUNTIME_LOCK_PATHFILE ]] && return 1
+    [[ -e $RUNTIME_LOCK_PATHFILE ]] && rm -f "$RUNTIME_LOCK_PATHFILE"
+
+    }
+
 QPKG.ServicePathFile()
     {
 
@@ -2846,11 +2825,11 @@ QPKG.PathFilename()
     #   stdout = QPKG local filename
     #   $? = 0 if successful, 1 if failed
 
-    echo "$QPKG_DL_PATH/$($BASENAME_CMD "$(QPKG.RemoteURL "$1")")"
+    echo "$QPKG_DL_PATH/$($BASENAME_CMD "$(QPKG.URL "$1")")"
 
     }
 
-QPKG.RemoteURL()
+QPKG.URL()
     {
 
     # input:
@@ -2873,7 +2852,7 @@ QPKG.RemoteURL()
 
     }
 
-QPKG.RemoteVersion()
+QPKG.URLVersion()
     {
 
     # input:
@@ -2886,12 +2865,12 @@ QPKG.RemoteVersion()
     local url=''
     local version=''
 
-    if url=$(QPKG.RemoteURL "$1"); then
+    if url=$(QPKG.URL "$1"); then
         version=${url#*_}; version=${version%.*}
         echo "$version"
         return 0
     else
-        echo "unknown"
+        echo 'unknown'
         return 1
     fi
 
@@ -2908,17 +2887,15 @@ QPKG.MD5()
     #   $? = 0 if successful, 1 if failed
 
     local index=0
-    local returncode=1
 
     for index in "${!SHERPA_QPKG_NAME[@]}"; do
         if [[ $1 = "${SHERPA_QPKG_NAME[$index]}" ]] && [[ ${SHERPA_QPKG_ARCH[$index]} = all || ${SHERPA_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
             echo "${SHERPA_QPKG_MD5[$index]}"
-            returncode=0
-            break
+            return 0
         fi
     done
 
-    return $returncode
+    return 1
 
     }
 
@@ -2992,9 +2969,9 @@ QPKG.Download()
     fi
 
     local result=0
-    local remote_url=$(QPKG.RemoteURL "$1")
+    local remote_url=$(QPKG.URL "$1")
     local remote_filename=$($BASENAME_CMD "$remote_url")
-    local remote_filename_md5=$(QPKG.MD5 "$1")
+    local remote_md5=$(QPKG.MD5 "$1")
     local local_pathfile=$QPKG_DL_PATH/$remote_filename
     local local_filename=$($BASENAME_CMD "$local_pathfile")
     local log_pathfile=$LOGS_PATH/$local_filename.$DOWNLOAD_LOG_FILE
@@ -3003,14 +2980,14 @@ QPKG.Download()
         DebugWarning "no URL found for this package $(FormatAsPackageName "$1")"
         code_pointer=8
         DebugFuncExit; return
-    elif [[ -z $remote_filename_md5 ]]; then
-        DebugWarning "no remote MD5 found for this package $(FormatAsPackageName "$1")"
+    elif [[ -z $remote_md5 ]]; then
+        DebugWarning "no checksum found for this package $(FormatAsPackageName "$1")"
         code_pointer=9
         DebugFuncExit; return
     fi
 
     if [[ -e $local_pathfile ]]; then
-        if FileMatchesMD5 "$local_pathfile" "$remote_filename_md5"; then
+        if FileMatchesMD5 "$local_pathfile" "$remote_md5"; then
             DebugInfo "local package $(FormatAsFileName "$local_filename") checksum correct, so skipping download"
         else
             DebugWarning "local package $(FormatAsFileName "$local_filename") checksum incorrect"
@@ -3033,7 +3010,7 @@ QPKG.Download()
         fi
 
         if [[ $result -eq 0 ]]; then
-            if FileMatchesMD5 "$local_pathfile" "$remote_filename_md5"; then
+            if FileMatchesMD5 "$local_pathfile" "$remote_md5"; then
                 ShowAsDone "downloaded $(FormatAsFileName "$remote_filename")"
             else
                 ShowAsError "downloaded package $(FormatAsFileName "$local_pathfile") checksum incorrect"
