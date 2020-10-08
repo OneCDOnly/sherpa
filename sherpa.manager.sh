@@ -166,7 +166,7 @@ Session.Init()
     readonly IPKG_DL_PATH=$WORK_PATH/ipkgs.downloads
     readonly IPKG_CACHE_PATH=$WORK_PATH/ipkgs
     readonly PIP_CACHE_PATH=$WORK_PATH/pips
-    readonly COMPILED_OBJECTS_HASH=b6a7d2377ac6c42d228263853ae3093f
+    readonly COMPILED_OBJECTS_HASH=a3b73573a7d09ae4c16ef45616c51b21
     readonly DEBUG_LOG_DATAWIDTH=92
 
     if ! MakePath "$WORK_PATH" 'work'; then
@@ -1423,19 +1423,13 @@ CalcAllIPKGDepsToInstall()
     # input:
     #   $1 = string with space-separated initial IPKG names
 
-    # output:
-    #   $IPKG_download_list = name-sorted array with complete list of all IPKGs, including those originally specified
-    #   $IPKG_download_size = byte-count of packages to be downloaded
-
     if IsNotSysFileExist $OPKG_CMD || IsNotSysFileExist $GNU_GREP_CMD; then
         code_pointer=6
         return 1
     fi
 
     DebugFuncEntry
-    IPKG_download_list=()
-    IPKG_download_size=0
-    local IPKG_download_count=0
+    local download_count=0
     local requested_list=''
     local this_list=()
     local dependency_accumulator=()
@@ -1490,25 +1484,25 @@ CalcAllIPKGDepsToInstall()
         if [[ $element != 'ca-certs' ]]; then       # KLUDGE: 'ca-certs' appears to be a bogus meta-package, so silently exclude it from attempted installation.
             if [[ $element != 'libjpeg' ]]; then    # KLUDGE: 'libjpeg' appears to have been replaced by 'libjpeg-turbo', but many packages still list 'libjpeg' as a dependency, so replace it with 'libjpeg-turbo'.
                 if ! $OPKG_CMD status "$element" | $GREP_CMD -q "Status:.*installed"; then
-                    IPKG_download_list+=($element)
+                    IPKGs.ToDownload.Add $element
                 fi
             elif ! $OPKG_CMD status 'libjpeg-turbo' | $GREP_CMD -q "Status:.*installed"; then
-                [[ ${IPKG_download_list[*]} != *libjpeg-turbo* ]] && IPKG_download_list+=(libjpeg-turbo)
+                IPKGs.ToDownload.Add libjpeg-turbo
             fi
         fi
     done
     DebugDone 'complete'
-    DebugInfo "IPKGs to download: ${IPKG_download_list[*]}"
+    DebugInfo "IPKGs to download: $(IPKGs.ToDownload.List)"
 
-    IPKG_download_count=${#IPKG_download_list[@]}
+    download_count=$(IPKGs.ToDownload.Count)
 
-    if [[ $IPKG_download_count -gt 0 ]]; then
-        DebugProc "determining size of IPKG$(FormatAsPlural "$IPKG_download_count") to download"
-        size_array=($($GNU_GREP_CMD -w '^Package:\|^Size:' "$EXTERNAL_PACKAGE_LIST_PATHFILE" | $GNU_GREP_CMD --after-context 1 --no-group-separator ": $($SED_CMD 's/ /$ /g;s/\$ /\$\\\|: /g' <<< "${IPKG_download_list[*]}")$" | $GREP_CMD '^Size:' | $SED_CMD 's|^Size: ||'))
-        IPKG_download_size=$(IFS=+; echo "$((${size_array[*]}))")   # a neat trick found here https://stackoverflow.com/a/13635566/6182835
+    if [[ $download_count -gt 0 ]]; then
+        DebugProc "determining size of IPKG$(FormatAsPlural "$download_count") to download"
+        size_array=($($GNU_GREP_CMD -w '^Package:\|^Size:' "$EXTERNAL_PACKAGE_LIST_PATHFILE" | $GNU_GREP_CMD --after-context 1 --no-group-separator ": $($SED_CMD 's/ /$ /g;s/\$ /\$\\\|: /g' <<< "$(IPKGs.ToDownload.List)")$" | $GREP_CMD '^Size:' | $SED_CMD 's|^Size: ||'))
+        IPKGs.ToDownload.Value = $(IFS=+; echo "$((${size_array[*]}))")   # a neat sizing shortcut found here https://stackoverflow.com/a/13635566/6182835
         DebugDone 'complete'
-        DebugVar IPKG_download_size
-        ShowAsDone "$IPKG_download_count IPKG$(FormatAsPlural "$IPKG_download_count") ($(FormatAsISOBytes "$IPKG_download_size")) to be downloaded"
+        DebugInfo "IPKG download size: $(IPKGs.ToDownload.Value)"
+        ShowAsDone "$download_count IPKG$(FormatAsPlural "$download_count") ($(FormatAsISOBytes "$(IPKGs.ToDownload.Value)")) to be downloaded"
     else
         ShowAsDone 'no IPKGs are required'
     fi
@@ -1527,18 +1521,14 @@ CalcAllIPKGDepsToUninstall()
     # input:
     #   $1 = string with space-separated initial IPKG names
 
-    # output:
-    #   $IPKG_uninstall_list = name-sorted array with complete list of all IPKGs
-
     if IsNotSysFileExist $OPKG_CMD || IsNotSysFileExist $GNU_GREP_CMD; then
         code_pointer=7
         return 1
     fi
 
     DebugFuncEntry
-    IPKG_uninstall_list=()
     local pre_uninstall_list=''
-    local IPKG_uninstall_count=0
+    local uninstall_count=0
     local element=''
 
     pre_uninstall_list=$(DeDupeWords "$1")
@@ -1548,18 +1538,52 @@ CalcAllIPKGDepsToUninstall()
     # shellcheck disable=SC2068
     for element in ${pre_uninstall_list[@]}; do
         if $OPKG_CMD status "$element" | $GREP_CMD -q "Status:.*installed"; then
-            IPKG_uninstall_list+=($element)
+            IPKGs.ToUninstall.Add $element
         fi
     done
     DebugDone 'complete'
-    DebugInfo "IPKGs to uninstall: ${IPKG_uninstall_list[*]}"
+    DebugInfo "IPKGs to uninstall: $(IPKGs.ToUninstall.ListComma)"
 
-    IPKG_uninstall_count=${#IPKG_uninstall_list[@]}
+    uninstall_count=$(IPKGs.ToUninstall.Count)
 
-    if [[ $IPKG_uninstall_count -gt 0 ]]; then
+    if [[ $uninstall_count -gt 0 ]]; then
         DebugDone 'complete'
-        ShowAsDone "$IPKG_uninstall_count IPKG$(FormatAsPlural "$IPKG_uninstall_count") to be uninstalled"
+        ShowAsDone "$uninstall_count IPKG$(FormatAsPlural "$uninstall_count") to be uninstalled"
     fi
+
+    DebugFuncExit; return 0
+
+    }
+
+IPKGs.Install()
+    {
+
+    Session.SkipPackageProcessing.IsSet && return
+    Session.IPKGs.Install.IsNot && return
+    Entware.Update
+    Session.Error.IsSet && return
+    DebugFuncEntry
+    local index=0
+
+    IPKGs.ToInstall.Add "$SHERPA_COMMON_IPKGS_ADD"
+
+    if User.Opts.Apps.All.Install.IsSet; then
+        for index in "${!SHERPA_QPKG_NAME[@]}"; do
+            [[ ${SHERPA_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${SHERPA_QPKG_ARCH[$index]} = all ]] && IPKGs.ToInstall.Add "${SHERPA_QPKG_IPKGS_ADD[$index]}"
+        done
+    else
+        for index in "${!SHERPA_QPKG_NAME[@]}"; do
+            if QPKGs.ToInstall.Exist "${SHERPA_QPKG_NAME[$index]}" || QPKG.Installed "${SHERPA_QPKG_NAME[$index]}" || QPKGs.ToUpgrade.Exist "${SHERPA_QPKG_NAME[$index]}" || QPKGs.ToForceUpgrade.Exist "${SHERPA_QPKG_NAME[$index]}"; then
+                [[ ${SHERPA_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${SHERPA_QPKG_ARCH[$index]} = all ]] && IPKGs.ToInstall.Add "${SHERPA_QPKG_IPKGS_ADD[$index]}"
+            fi
+        done
+    fi
+
+    IPKGs.Upgrade.Batch
+    IPKGs.Install.Batch "$(IPKGs.ToInstall.List)"
+
+    # in-case 'python' has disappeared again ...
+    [[ ! -L /opt/bin/python && -e /opt/bin/python3 ]] && ln -s /opt/bin/python3 /opt/bin/python
 
     DebugFuncExit; return 0
 
@@ -1575,92 +1599,19 @@ IPKGs.Uninstall()
 
     if User.Opts.Apps.All.Install.IsSet; then
         for index in "${!SHERPA_QPKG_NAME[@]}"; do
-            IPKGs.ToUninstall.Add ${SHERPA_QPKG_IPKGS_REMOVE[$index]}
+            IPKGs.ToUninstall.Add "${SHERPA_QPKG_IPKGS_REMOVE[$index]}"
         done
     else
         for index in "${!SHERPA_QPKG_NAME[@]}"; do
             if QPKGs.ToInstall.Exist "${SHERPA_QPKG_NAME[$index]}" || QPKG.Installed "${SHERPA_QPKG_NAME[$index]}" || QPKGs.ToUpgrade.Exist "${SHERPA_QPKG_NAME[$index]}" || QPKGs.ToUninstall.Exist "${SHERPA_QPKG_NAME[$index]}"; then
-                IPKGs.ToUninstall.Add ${SHERPA_QPKG_IPKGS_REMOVE[$index]}
+                IPKGs.ToUninstall.Add "${SHERPA_QPKG_IPKGS_REMOVE[$index]}"
             fi
         done
     fi
 
-    DebugIPKG 'to uninstall' "$(IPKGs.ToUninstall.ListComma) "
-    IPKGs.Uninstall.Batch "$(IPKGs.ToUninstall.Array)"
+    IPKGs.Uninstall.Batch "$(IPKGs.ToUninstall.List)"
 
     DebugFuncExit; return 0
-
-    }
-
-IPKGs.Install()
-    {
-
-    Session.SkipPackageProcessing.IsSet && return
-    Session.IPKGs.Install.IsNot && return
-    Entware.Update
-    Session.Error.IsSet && return
-    DebugFuncEntry
-    local packages_acc=($SHERPA_COMMON_IPKGS_ADD)
-    local index=0
-
-    if User.Opts.Apps.All.Install.IsSet; then
-        for index in "${!SHERPA_QPKG_NAME[@]}"; do
-            [[ ${SHERPA_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${SHERPA_QPKG_ARCH[$index]} = all ]] && packages_acc+=(${SHERPA_QPKG_IPKGS_ADD[$index]})
-        done
-    else
-        for index in "${!SHERPA_QPKG_NAME[@]}"; do
-            if QPKGs.ToInstall.Exist "${SHERPA_QPKG_NAME[$index]}" || QPKG.Installed "${SHERPA_QPKG_NAME[$index]}" || QPKGs.ToUpgrade.Exist "${SHERPA_QPKG_NAME[$index]}" || QPKGs.ToForceUpgrade.Exist "${SHERPA_QPKG_NAME[$index]}"; then
-                [[ ${SHERPA_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${SHERPA_QPKG_ARCH[$index]} = all ]] && packages_acc+=(${SHERPA_QPKG_IPKGS_ADD[$index]})
-            fi
-        done
-    fi
-
-    IPKGs.Upgrade.Batch
-    IPKGs.Install.Batch "${packages_acc[*]}"
-
-    # in-case 'python' has disappeared again ...
-    [[ ! -L /opt/bin/python && -e /opt/bin/python3 ]] && ln -s /opt/bin/python3 /opt/bin/python
-
-    DebugFuncExit; return 0
-
-    }
-
-IPKGs.Upgrade.Batch()
-    {
-
-    # upgrade all installed IPKGs
-
-    # output:
-    #   $? = 0 (success) or 1 (failed)
-
-    DebugFuncEntry
-    local IPKG_download_count=0
-    local log_pathfile=$LOGS_PATH/ipkgs.$UPGRADE_LOG_FILE
-    local result=0
-
-    IPKG_download_list=($($OPKG_CMD list-upgradable | $CUT_CMD -f1 -d' '))
-    IPKG_download_count=${#IPKG_download_list[@]}
-
-    if [[ $IPKG_download_count -gt 0 ]]; then
-        ShowAsProc "downloading & upgrading $IPKG_download_count IPKG$(FormatAsPlural "$IPKG_download_count")"
-
-        CreateDirSizeMonitorFlagFile $IPKG_DL_PATH/.monitor
-            trap CTRL_C_Captured INT
-                _MonitorDirSize_ "$IPKG_DL_PATH" "$IPKG_download_size" &
-
-                RunThisAndLogResults "$OPKG_CMD upgrade$(User.Opts.IgnoreFreeSpace.IsSet && User.Opts.IgnoreFreeSpace.Text) --force-overwrite ${IPKG_download_list[*]} --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
-                result=$?
-            trap - INT
-        RemoveDirSizeMonitorFlagFile
-
-        if [[ $result -eq 0 ]]; then
-            ShowAsDone "downloaded & upgraded $IPKG_download_count IPKG$(FormatAsPlural "$IPKG_download_count")"
-        else
-            ShowAsError "download & upgrade IPKG$(FormatAsPlural "$IPKG_download_count") failed $(FormatAsExitcode $result)"
-        fi
-    fi
-
-    DebugFuncExit; return $result
 
     }
 
@@ -1674,29 +1625,29 @@ IPKGs.Install.Batch()
     #   $? = 0 (success) or 1 (failed)
 
     DebugFuncEntry
-    local IPKG_download_count=0
+    local download_count=0
     local log_pathfile=$LOGS_PATH/ipkgs.$INSTALL_LOG_FILE
     local result=0
 
     CalcAllIPKGDepsToInstall "$1" || return 1
-    IPKG_download_count=${#IPKG_download_list[@]}
+    download_count=$(IPKGs.ToDownload.Count)
 
-    if [[ $IPKG_download_count -gt 0 ]]; then
-        ShowAsProc "downloading & installing $IPKG_download_count IPKG$(FormatAsPlural "$IPKG_download_count")"
+    if [[ $download_count -gt 0 ]]; then
+        ShowAsProc "downloading & installing $download_count IPKG$(FormatAsPlural "$download_count")"
 
         CreateDirSizeMonitorFlagFile $IPKG_DL_PATH/.monitor
             trap CTRL_C_Captured INT
-                _MonitorDirSize_ "$IPKG_DL_PATH" "$IPKG_download_size" &
+                _MonitorDirSize_ "$IPKG_DL_PATH" "$(IPKGs.ToDownload.Value)" &
 
-                RunThisAndLogResults "$OPKG_CMD install$(User.Opts.IgnoreFreeSpace.IsSet && User.Opts.IgnoreFreeSpace.Text) --force-overwrite ${IPKG_download_list[*]} --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
+                RunThisAndLogResults "$OPKG_CMD install$(User.Opts.IgnoreFreeSpace.IsSet && User.Opts.IgnoreFreeSpace.Text) --force-overwrite $(IPKGs.ToDownload.List) --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
                 result=$?
             trap - INT
         RemoveDirSizeMonitorFlagFile
 
         if [[ $result -eq 0 ]]; then
-            ShowAsDone "downloaded & installed $IPKG_download_count IPKG$(FormatAsPlural "$IPKG_download_count")"
+            ShowAsDone "downloaded & installed $download_count IPKG$(FormatAsPlural "$download_count")"
         else
-            ShowAsError "download & install IPKG$(FormatAsPlural "$IPKG_download_count") failed $(FormatAsExitcode $result)"
+            ShowAsError "download & install IPKG$(FormatAsPlural "$download_count") failed $(FormatAsExitcode $result)"
         fi
     fi
 
@@ -1708,34 +1659,73 @@ IPKGs.Uninstall.Batch()
     {
 
     # input:
-    #   $1 = whitespace-separated string containing list of IPKG names to uninstall from Entware
+    #   $1 = whitespace-separated string containing list of IPKG names to uninstall
 
     # output:
     #   $? = 0 (success) or 1 (failed)
 
     DebugFuncEntry
-    local IPKG_uninstall_count=0
+    local uninstall_count=0
     local log_pathfile=$LOGS_PATH/ipkgs.$UNINSTALL_LOG_FILE
     local result=0
 
     CalcAllIPKGDepsToUninstall "$1" || return 1
-    IPKG_uninstall_count=${#IPKG_uninstall_list[@]}
+    uninstall_count=$(IPKGs.ToUninstall.Count)
 
-    if [[ $IPKG_uninstall_count -gt 0 ]]; then
-        ShowAsProc "uninstalling $IPKG_uninstall_count IPKG$(FormatAsPlural "$IPKG_uninstall_count")"
+    if [[ $uninstall_count -gt 0 ]]; then
+        ShowAsProc "uninstalling $uninstall_count IPKG$(FormatAsPlural "$uninstall_count")"
 
         if Session.Debug.To.Screen.IsSet; then
-            RunThisAndLogResultsRealtime "$OPKG_CMD remove ${IPKG_uninstall_list[*]}" "$log_pathfile"
+            RunThisAndLogResultsRealtime "$OPKG_CMD remove $(IPKGs.ToUninstall.List)" "$log_pathfile"
             result=$?
         else
-            RunThisAndLogResults "$OPKG_CMD remove ${IPKG_uninstall_list[*]}" "$log_pathfile"
+            RunThisAndLogResults "$OPKG_CMD remove $(IPKGs.ToUninstall.List)" "$log_pathfile"
             result=$?
         fi
 
         if [[ $result -eq 0 ]]; then
-            ShowAsDone "uninstalled $IPKG_uninstall_count IPKG$(FormatAsPlural "$IPKG_uninstall_count")"
+            ShowAsDone "uninstalled $uninstall_count IPKG$(FormatAsPlural "$uninstall_count")"
         else
-            ShowAsError "uninstall IPKG$(FormatAsPlural "$IPKG_uninstall_count") failed $(FormatAsExitcode $result)"
+            ShowAsError "uninstall IPKG$(FormatAsPlural "$uninstall_count") failed $(FormatAsExitcode $result)"
+        fi
+    fi
+
+    DebugFuncExit; return $result
+
+    }
+
+IPKGs.Upgrade.Batch()
+    {
+
+    # upgrade all installed IPKGs
+
+    # output:
+    #   $? = 0 (success) or 1 (failed)
+
+    DebugFuncEntry
+    local download_count=0
+    local log_pathfile=$LOGS_PATH/ipkgs.$UPGRADE_LOG_FILE
+    local result=0
+
+    IPKGs.ToDownload.Add "$($OPKG_CMD list-upgradable | $CUT_CMD -f1 -d' ')"
+    download_count=$(IPKGs.ToDownload.Count)
+
+    if [[ $download_count -gt 0 ]]; then
+        ShowAsProc "downloading & upgrading $download_count IPKG$(FormatAsPlural "$download_count")"
+
+        CreateDirSizeMonitorFlagFile $IPKG_DL_PATH/.monitor
+            trap CTRL_C_Captured INT
+                _MonitorDirSize_ "$IPKG_DL_PATH" "$(IPKGs.ToDownload.Value)" &
+
+                RunThisAndLogResults "$OPKG_CMD upgrade$(User.Opts.IgnoreFreeSpace.IsSet && User.Opts.IgnoreFreeSpace.Text) --force-overwrite $(IPKGs.ToDownload.List) --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
+                result=$?
+            trap - INT
+        RemoveDirSizeMonitorFlagFile
+
+        if [[ $result -eq 0 ]]; then
+            ShowAsDone "downloaded & upgraded $download_count IPKG$(FormatAsPlural "$download_count")"
+        else
+            ShowAsError "download & upgrade IPKG$(FormatAsPlural "$download_count") failed $(FormatAsExitcode $result)"
         fi
     fi
 
@@ -4560,6 +4550,7 @@ Objects.Add()
     local public_function_name=$1
     local safe_function_name="$(tr '[A-Z]' '[a-z]' <<< "${public_function_name//[.-]/_}")"
 
+    _placeholder_value_="_object_${safe_function_name}_value_"
     _placeholder_text_="_object_${safe_function_name}_text_"
     _placeholder_flag_="_object_${safe_function_name}_flag_"
     _placeholder_log_changes_flag_="_object_${safe_function_name}_changes_flag_"
@@ -4613,6 +4604,7 @@ echo $public_function_name'.Add()
     }
 '$public_function_name'.Init()
     {
+    '$_placeholder_value_'=0
     '$_placeholder_text_'='\'\''
     '$_placeholder_flag_'=false
     '$_placeholder_log_changes_flag_'=true
@@ -4684,6 +4676,14 @@ echo $public_function_name'.Add()
         echo -n "$'$_placeholder_text_'"
     fi
     }
+'$public_function_name'.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        '$_placeholder_value_'=$2
+    else
+        echo -n $'$_placeholder_value_'
+    fi
+    }
 '$public_function_name'.Init
 ' >> "$COMPILED_OBJECTS_PATHFILE"
 
@@ -4751,6 +4751,7 @@ Objects.Compile()
         Objects.Add User.Opts.Apps.List.Upgradable
 
         # lists
+        Objects.Add IPKGs.ToDownload
         Objects.Add IPKGs.ToInstall
         Objects.Add IPKGs.ToUninstall
 

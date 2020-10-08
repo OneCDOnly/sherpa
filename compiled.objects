@@ -43,6 +43,7 @@ User.Opts.Help.Abbreviations.First()
     }
 User.Opts.Help.Abbreviations.Init()
     {
+    _object_user_opts_help_abbreviations_value_=0
     _object_user_opts_help_abbreviations_text_=''
     _object_user_opts_help_abbreviations_flag_=false
     _object_user_opts_help_abbreviations_changes_flag_=true
@@ -114,6 +115,14 @@ User.Opts.Help.Abbreviations.Text()
         echo -n "$_object_user_opts_help_abbreviations_text_"
     fi
     }
+User.Opts.Help.Abbreviations.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_help_abbreviations_value_=$2
+    else
+        echo -n $_object_user_opts_help_abbreviations_value_
+    fi
+    }
 User.Opts.Help.Abbreviations.Init
 
 User.Opts.Help.Actions.Add()
@@ -161,6 +170,7 @@ User.Opts.Help.Actions.First()
     }
 User.Opts.Help.Actions.Init()
     {
+    _object_user_opts_help_actions_value_=0
     _object_user_opts_help_actions_text_=''
     _object_user_opts_help_actions_flag_=false
     _object_user_opts_help_actions_changes_flag_=true
@@ -232,6 +242,14 @@ User.Opts.Help.Actions.Text()
         echo -n "$_object_user_opts_help_actions_text_"
     fi
     }
+User.Opts.Help.Actions.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_help_actions_value_=$2
+    else
+        echo -n $_object_user_opts_help_actions_value_
+    fi
+    }
 User.Opts.Help.Actions.Init
 
 User.Opts.Help.ActionsAll.Add()
@@ -279,6 +297,7 @@ User.Opts.Help.ActionsAll.First()
     }
 User.Opts.Help.ActionsAll.Init()
     {
+    _object_user_opts_help_actionsall_value_=0
     _object_user_opts_help_actionsall_text_=''
     _object_user_opts_help_actionsall_flag_=false
     _object_user_opts_help_actionsall_changes_flag_=true
@@ -350,6 +369,14 @@ User.Opts.Help.ActionsAll.Text()
         echo -n "$_object_user_opts_help_actionsall_text_"
     fi
     }
+User.Opts.Help.ActionsAll.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_help_actionsall_value_=$2
+    else
+        echo -n $_object_user_opts_help_actionsall_value_
+    fi
+    }
 User.Opts.Help.ActionsAll.Init
 
 User.Opts.Help.Basic.Add()
@@ -397,6 +424,7 @@ User.Opts.Help.Basic.First()
     }
 User.Opts.Help.Basic.Init()
     {
+    _object_user_opts_help_basic_value_=0
     _object_user_opts_help_basic_text_=''
     _object_user_opts_help_basic_flag_=false
     _object_user_opts_help_basic_changes_flag_=true
@@ -468,6 +496,14 @@ User.Opts.Help.Basic.Text()
         echo -n "$_object_user_opts_help_basic_text_"
     fi
     }
+User.Opts.Help.Basic.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_help_basic_value_=$2
+    else
+        echo -n $_object_user_opts_help_basic_value_
+    fi
+    }
 User.Opts.Help.Basic.Init
 
 User.Opts.Help.Options.Add()
@@ -515,6 +551,7 @@ User.Opts.Help.Options.First()
     }
 User.Opts.Help.Options.Init()
     {
+    _object_user_opts_help_options_value_=0
     _object_user_opts_help_options_text_=''
     _object_user_opts_help_options_flag_=false
     _object_user_opts_help_options_changes_flag_=true
@@ -586,6 +623,14 @@ User.Opts.Help.Options.Text()
         echo -n "$_object_user_opts_help_options_text_"
     fi
     }
+User.Opts.Help.Options.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_help_options_value_=$2
+    else
+        echo -n $_object_user_opts_help_options_value_
+    fi
+    }
 User.Opts.Help.Options.Init
 
 User.Opts.Help.Packages.Add()
@@ -633,6 +678,7 @@ User.Opts.Help.Packages.First()
     }
 User.Opts.Help.Packages.Init()
     {
+    _object_user_opts_help_packages_value_=0
     _object_user_opts_help_packages_text_=''
     _object_user_opts_help_packages_flag_=false
     _object_user_opts_help_packages_changes_flag_=true
@@ -704,6 +750,14 @@ User.Opts.Help.Packages.Text()
         echo -n "$_object_user_opts_help_packages_text_"
     fi
     }
+User.Opts.Help.Packages.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_help_packages_value_=$2
+    else
+        echo -n $_object_user_opts_help_packages_value_
+    fi
+    }
 User.Opts.Help.Packages.Init
 
 User.Opts.Help.Problems.Add()
@@ -751,6 +805,7 @@ User.Opts.Help.Problems.First()
     }
 User.Opts.Help.Problems.Init()
     {
+    _object_user_opts_help_problems_value_=0
     _object_user_opts_help_problems_text_=''
     _object_user_opts_help_problems_flag_=false
     _object_user_opts_help_problems_changes_flag_=true
@@ -822,6 +877,14 @@ User.Opts.Help.Problems.Text()
         echo -n "$_object_user_opts_help_problems_text_"
     fi
     }
+User.Opts.Help.Problems.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_help_problems_value_=$2
+    else
+        echo -n $_object_user_opts_help_problems_value_
+    fi
+    }
 User.Opts.Help.Problems.Init
 
 User.Opts.Help.Tips.Add()
@@ -869,6 +932,7 @@ User.Opts.Help.Tips.First()
     }
 User.Opts.Help.Tips.Init()
     {
+    _object_user_opts_help_tips_value_=0
     _object_user_opts_help_tips_text_=''
     _object_user_opts_help_tips_flag_=false
     _object_user_opts_help_tips_changes_flag_=true
@@ -940,6 +1004,14 @@ User.Opts.Help.Tips.Text()
         echo -n "$_object_user_opts_help_tips_text_"
     fi
     }
+User.Opts.Help.Tips.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_help_tips_value_=$2
+    else
+        echo -n $_object_user_opts_help_tips_value_
+    fi
+    }
 User.Opts.Help.Tips.Init
 
 User.Opts.Clean.Add()
@@ -987,6 +1059,7 @@ User.Opts.Clean.First()
     }
 User.Opts.Clean.Init()
     {
+    _object_user_opts_clean_value_=0
     _object_user_opts_clean_text_=''
     _object_user_opts_clean_flag_=false
     _object_user_opts_clean_changes_flag_=true
@@ -1058,6 +1131,14 @@ User.Opts.Clean.Text()
         echo -n "$_object_user_opts_clean_text_"
     fi
     }
+User.Opts.Clean.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_clean_value_=$2
+    else
+        echo -n $_object_user_opts_clean_value_
+    fi
+    }
 User.Opts.Clean.Init
 
 User.Opts.Dependencies.Check.Add()
@@ -1105,6 +1186,7 @@ User.Opts.Dependencies.Check.First()
     }
 User.Opts.Dependencies.Check.Init()
     {
+    _object_user_opts_dependencies_check_value_=0
     _object_user_opts_dependencies_check_text_=''
     _object_user_opts_dependencies_check_flag_=false
     _object_user_opts_dependencies_check_changes_flag_=true
@@ -1176,6 +1258,14 @@ User.Opts.Dependencies.Check.Text()
         echo -n "$_object_user_opts_dependencies_check_text_"
     fi
     }
+User.Opts.Dependencies.Check.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_dependencies_check_value_=$2
+    else
+        echo -n $_object_user_opts_dependencies_check_value_
+    fi
+    }
 User.Opts.Dependencies.Check.Init
 
 User.Opts.IgnoreFreeSpace.Add()
@@ -1223,6 +1313,7 @@ User.Opts.IgnoreFreeSpace.First()
     }
 User.Opts.IgnoreFreeSpace.Init()
     {
+    _object_user_opts_ignorefreespace_value_=0
     _object_user_opts_ignorefreespace_text_=''
     _object_user_opts_ignorefreespace_flag_=false
     _object_user_opts_ignorefreespace_changes_flag_=true
@@ -1294,6 +1385,14 @@ User.Opts.IgnoreFreeSpace.Text()
         echo -n "$_object_user_opts_ignorefreespace_text_"
     fi
     }
+User.Opts.IgnoreFreeSpace.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_ignorefreespace_value_=$2
+    else
+        echo -n $_object_user_opts_ignorefreespace_value_
+    fi
+    }
 User.Opts.IgnoreFreeSpace.Init
 
 User.Opts.Versions.View.Add()
@@ -1341,6 +1440,7 @@ User.Opts.Versions.View.First()
     }
 User.Opts.Versions.View.Init()
     {
+    _object_user_opts_versions_view_value_=0
     _object_user_opts_versions_view_text_=''
     _object_user_opts_versions_view_flag_=false
     _object_user_opts_versions_view_changes_flag_=true
@@ -1412,6 +1512,14 @@ User.Opts.Versions.View.Text()
         echo -n "$_object_user_opts_versions_view_text_"
     fi
     }
+User.Opts.Versions.View.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_versions_view_value_=$2
+    else
+        echo -n $_object_user_opts_versions_view_value_
+    fi
+    }
 User.Opts.Versions.View.Init
 
 User.Opts.Log.Last.Paste.Add()
@@ -1459,6 +1567,7 @@ User.Opts.Log.Last.Paste.First()
     }
 User.Opts.Log.Last.Paste.Init()
     {
+    _object_user_opts_log_last_paste_value_=0
     _object_user_opts_log_last_paste_text_=''
     _object_user_opts_log_last_paste_flag_=false
     _object_user_opts_log_last_paste_changes_flag_=true
@@ -1530,6 +1639,14 @@ User.Opts.Log.Last.Paste.Text()
         echo -n "$_object_user_opts_log_last_paste_text_"
     fi
     }
+User.Opts.Log.Last.Paste.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_log_last_paste_value_=$2
+    else
+        echo -n $_object_user_opts_log_last_paste_value_
+    fi
+    }
 User.Opts.Log.Last.Paste.Init
 
 User.Opts.Log.Last.View.Add()
@@ -1577,6 +1694,7 @@ User.Opts.Log.Last.View.First()
     }
 User.Opts.Log.Last.View.Init()
     {
+    _object_user_opts_log_last_view_value_=0
     _object_user_opts_log_last_view_text_=''
     _object_user_opts_log_last_view_flag_=false
     _object_user_opts_log_last_view_changes_flag_=true
@@ -1648,6 +1766,14 @@ User.Opts.Log.Last.View.Text()
         echo -n "$_object_user_opts_log_last_view_text_"
     fi
     }
+User.Opts.Log.Last.View.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_log_last_view_value_=$2
+    else
+        echo -n $_object_user_opts_log_last_view_value_
+    fi
+    }
 User.Opts.Log.Last.View.Init
 
 User.Opts.Log.Tail.Paste.Add()
@@ -1695,6 +1821,7 @@ User.Opts.Log.Tail.Paste.First()
     }
 User.Opts.Log.Tail.Paste.Init()
     {
+    _object_user_opts_log_tail_paste_value_=0
     _object_user_opts_log_tail_paste_text_=''
     _object_user_opts_log_tail_paste_flag_=false
     _object_user_opts_log_tail_paste_changes_flag_=true
@@ -1766,6 +1893,14 @@ User.Opts.Log.Tail.Paste.Text()
         echo -n "$_object_user_opts_log_tail_paste_text_"
     fi
     }
+User.Opts.Log.Tail.Paste.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_log_tail_paste_value_=$2
+    else
+        echo -n $_object_user_opts_log_tail_paste_value_
+    fi
+    }
 User.Opts.Log.Tail.Paste.Init
 
 User.Opts.Log.Whole.View.Add()
@@ -1813,6 +1948,7 @@ User.Opts.Log.Whole.View.First()
     }
 User.Opts.Log.Whole.View.Init()
     {
+    _object_user_opts_log_whole_view_value_=0
     _object_user_opts_log_whole_view_text_=''
     _object_user_opts_log_whole_view_flag_=false
     _object_user_opts_log_whole_view_changes_flag_=true
@@ -1884,6 +2020,14 @@ User.Opts.Log.Whole.View.Text()
         echo -n "$_object_user_opts_log_whole_view_text_"
     fi
     }
+User.Opts.Log.Whole.View.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_log_whole_view_value_=$2
+    else
+        echo -n $_object_user_opts_log_whole_view_value_
+    fi
+    }
 User.Opts.Log.Whole.View.Init
 
 User.Opts.Apps.All.Backup.Add()
@@ -1931,6 +2075,7 @@ User.Opts.Apps.All.Backup.First()
     }
 User.Opts.Apps.All.Backup.Init()
     {
+    _object_user_opts_apps_all_backup_value_=0
     _object_user_opts_apps_all_backup_text_=''
     _object_user_opts_apps_all_backup_flag_=false
     _object_user_opts_apps_all_backup_changes_flag_=true
@@ -2002,6 +2147,14 @@ User.Opts.Apps.All.Backup.Text()
         echo -n "$_object_user_opts_apps_all_backup_text_"
     fi
     }
+User.Opts.Apps.All.Backup.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_apps_all_backup_value_=$2
+    else
+        echo -n $_object_user_opts_apps_all_backup_value_
+    fi
+    }
 User.Opts.Apps.All.Backup.Init
 
 User.Opts.Apps.All.Install.Add()
@@ -2049,6 +2202,7 @@ User.Opts.Apps.All.Install.First()
     }
 User.Opts.Apps.All.Install.Init()
     {
+    _object_user_opts_apps_all_install_value_=0
     _object_user_opts_apps_all_install_text_=''
     _object_user_opts_apps_all_install_flag_=false
     _object_user_opts_apps_all_install_changes_flag_=true
@@ -2120,6 +2274,14 @@ User.Opts.Apps.All.Install.Text()
         echo -n "$_object_user_opts_apps_all_install_text_"
     fi
     }
+User.Opts.Apps.All.Install.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_apps_all_install_value_=$2
+    else
+        echo -n $_object_user_opts_apps_all_install_value_
+    fi
+    }
 User.Opts.Apps.All.Install.Init
 
 User.Opts.Apps.All.Reinstall.Add()
@@ -2167,6 +2329,7 @@ User.Opts.Apps.All.Reinstall.First()
     }
 User.Opts.Apps.All.Reinstall.Init()
     {
+    _object_user_opts_apps_all_reinstall_value_=0
     _object_user_opts_apps_all_reinstall_text_=''
     _object_user_opts_apps_all_reinstall_flag_=false
     _object_user_opts_apps_all_reinstall_changes_flag_=true
@@ -2238,6 +2401,14 @@ User.Opts.Apps.All.Reinstall.Text()
         echo -n "$_object_user_opts_apps_all_reinstall_text_"
     fi
     }
+User.Opts.Apps.All.Reinstall.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_apps_all_reinstall_value_=$2
+    else
+        echo -n $_object_user_opts_apps_all_reinstall_value_
+    fi
+    }
 User.Opts.Apps.All.Reinstall.Init
 
 User.Opts.Apps.All.Restart.Add()
@@ -2285,6 +2456,7 @@ User.Opts.Apps.All.Restart.First()
     }
 User.Opts.Apps.All.Restart.Init()
     {
+    _object_user_opts_apps_all_restart_value_=0
     _object_user_opts_apps_all_restart_text_=''
     _object_user_opts_apps_all_restart_flag_=false
     _object_user_opts_apps_all_restart_changes_flag_=true
@@ -2356,6 +2528,14 @@ User.Opts.Apps.All.Restart.Text()
         echo -n "$_object_user_opts_apps_all_restart_text_"
     fi
     }
+User.Opts.Apps.All.Restart.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_apps_all_restart_value_=$2
+    else
+        echo -n $_object_user_opts_apps_all_restart_value_
+    fi
+    }
 User.Opts.Apps.All.Restart.Init
 
 User.Opts.Apps.All.Restore.Add()
@@ -2403,6 +2583,7 @@ User.Opts.Apps.All.Restore.First()
     }
 User.Opts.Apps.All.Restore.Init()
     {
+    _object_user_opts_apps_all_restore_value_=0
     _object_user_opts_apps_all_restore_text_=''
     _object_user_opts_apps_all_restore_flag_=false
     _object_user_opts_apps_all_restore_changes_flag_=true
@@ -2474,6 +2655,14 @@ User.Opts.Apps.All.Restore.Text()
         echo -n "$_object_user_opts_apps_all_restore_text_"
     fi
     }
+User.Opts.Apps.All.Restore.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_apps_all_restore_value_=$2
+    else
+        echo -n $_object_user_opts_apps_all_restore_value_
+    fi
+    }
 User.Opts.Apps.All.Restore.Init
 
 User.Opts.Apps.All.Start.Add()
@@ -2521,6 +2710,7 @@ User.Opts.Apps.All.Start.First()
     }
 User.Opts.Apps.All.Start.Init()
     {
+    _object_user_opts_apps_all_start_value_=0
     _object_user_opts_apps_all_start_text_=''
     _object_user_opts_apps_all_start_flag_=false
     _object_user_opts_apps_all_start_changes_flag_=true
@@ -2592,6 +2782,14 @@ User.Opts.Apps.All.Start.Text()
         echo -n "$_object_user_opts_apps_all_start_text_"
     fi
     }
+User.Opts.Apps.All.Start.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_apps_all_start_value_=$2
+    else
+        echo -n $_object_user_opts_apps_all_start_value_
+    fi
+    }
 User.Opts.Apps.All.Start.Init
 
 User.Opts.Apps.All.Stop.Add()
@@ -2639,6 +2837,7 @@ User.Opts.Apps.All.Stop.First()
     }
 User.Opts.Apps.All.Stop.Init()
     {
+    _object_user_opts_apps_all_stop_value_=0
     _object_user_opts_apps_all_stop_text_=''
     _object_user_opts_apps_all_stop_flag_=false
     _object_user_opts_apps_all_stop_changes_flag_=true
@@ -2710,6 +2909,14 @@ User.Opts.Apps.All.Stop.Text()
         echo -n "$_object_user_opts_apps_all_stop_text_"
     fi
     }
+User.Opts.Apps.All.Stop.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_apps_all_stop_value_=$2
+    else
+        echo -n $_object_user_opts_apps_all_stop_value_
+    fi
+    }
 User.Opts.Apps.All.Stop.Init
 
 User.Opts.Apps.All.Uninstall.Add()
@@ -2757,6 +2964,7 @@ User.Opts.Apps.All.Uninstall.First()
     }
 User.Opts.Apps.All.Uninstall.Init()
     {
+    _object_user_opts_apps_all_uninstall_value_=0
     _object_user_opts_apps_all_uninstall_text_=''
     _object_user_opts_apps_all_uninstall_flag_=false
     _object_user_opts_apps_all_uninstall_changes_flag_=true
@@ -2828,6 +3036,14 @@ User.Opts.Apps.All.Uninstall.Text()
         echo -n "$_object_user_opts_apps_all_uninstall_text_"
     fi
     }
+User.Opts.Apps.All.Uninstall.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_apps_all_uninstall_value_=$2
+    else
+        echo -n $_object_user_opts_apps_all_uninstall_value_
+    fi
+    }
 User.Opts.Apps.All.Uninstall.Init
 
 User.Opts.Apps.All.Upgrade.Add()
@@ -2875,6 +3091,7 @@ User.Opts.Apps.All.Upgrade.First()
     }
 User.Opts.Apps.All.Upgrade.Init()
     {
+    _object_user_opts_apps_all_upgrade_value_=0
     _object_user_opts_apps_all_upgrade_text_=''
     _object_user_opts_apps_all_upgrade_flag_=false
     _object_user_opts_apps_all_upgrade_changes_flag_=true
@@ -2946,6 +3163,14 @@ User.Opts.Apps.All.Upgrade.Text()
         echo -n "$_object_user_opts_apps_all_upgrade_text_"
     fi
     }
+User.Opts.Apps.All.Upgrade.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_apps_all_upgrade_value_=$2
+    else
+        echo -n $_object_user_opts_apps_all_upgrade_value_
+    fi
+    }
 User.Opts.Apps.All.Upgrade.Init
 
 User.Opts.Apps.List.All.Add()
@@ -2993,6 +3218,7 @@ User.Opts.Apps.List.All.First()
     }
 User.Opts.Apps.List.All.Init()
     {
+    _object_user_opts_apps_list_all_value_=0
     _object_user_opts_apps_list_all_text_=''
     _object_user_opts_apps_list_all_flag_=false
     _object_user_opts_apps_list_all_changes_flag_=true
@@ -3064,6 +3290,14 @@ User.Opts.Apps.List.All.Text()
         echo -n "$_object_user_opts_apps_list_all_text_"
     fi
     }
+User.Opts.Apps.List.All.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_apps_list_all_value_=$2
+    else
+        echo -n $_object_user_opts_apps_list_all_value_
+    fi
+    }
 User.Opts.Apps.List.All.Init
 
 User.Opts.Apps.List.Installed.Add()
@@ -3111,6 +3345,7 @@ User.Opts.Apps.List.Installed.First()
     }
 User.Opts.Apps.List.Installed.Init()
     {
+    _object_user_opts_apps_list_installed_value_=0
     _object_user_opts_apps_list_installed_text_=''
     _object_user_opts_apps_list_installed_flag_=false
     _object_user_opts_apps_list_installed_changes_flag_=true
@@ -3182,6 +3417,14 @@ User.Opts.Apps.List.Installed.Text()
         echo -n "$_object_user_opts_apps_list_installed_text_"
     fi
     }
+User.Opts.Apps.List.Installed.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_apps_list_installed_value_=$2
+    else
+        echo -n $_object_user_opts_apps_list_installed_value_
+    fi
+    }
 User.Opts.Apps.List.Installed.Init
 
 User.Opts.Apps.List.NotInstalled.Add()
@@ -3229,6 +3472,7 @@ User.Opts.Apps.List.NotInstalled.First()
     }
 User.Opts.Apps.List.NotInstalled.Init()
     {
+    _object_user_opts_apps_list_notinstalled_value_=0
     _object_user_opts_apps_list_notinstalled_text_=''
     _object_user_opts_apps_list_notinstalled_flag_=false
     _object_user_opts_apps_list_notinstalled_changes_flag_=true
@@ -3300,6 +3544,14 @@ User.Opts.Apps.List.NotInstalled.Text()
         echo -n "$_object_user_opts_apps_list_notinstalled_text_"
     fi
     }
+User.Opts.Apps.List.NotInstalled.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_apps_list_notinstalled_value_=$2
+    else
+        echo -n $_object_user_opts_apps_list_notinstalled_value_
+    fi
+    }
 User.Opts.Apps.List.NotInstalled.Init
 
 User.Opts.Apps.List.Upgradable.Add()
@@ -3347,6 +3599,7 @@ User.Opts.Apps.List.Upgradable.First()
     }
 User.Opts.Apps.List.Upgradable.Init()
     {
+    _object_user_opts_apps_list_upgradable_value_=0
     _object_user_opts_apps_list_upgradable_text_=''
     _object_user_opts_apps_list_upgradable_flag_=false
     _object_user_opts_apps_list_upgradable_changes_flag_=true
@@ -3418,7 +3671,142 @@ User.Opts.Apps.List.Upgradable.Text()
         echo -n "$_object_user_opts_apps_list_upgradable_text_"
     fi
     }
+User.Opts.Apps.List.Upgradable.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_apps_list_upgradable_value_=$2
+    else
+        echo -n $_object_user_opts_apps_list_upgradable_value_
+    fi
+    }
 User.Opts.Apps.List.Upgradable.Init
+
+IPKGs.ToDownload.Add()
+    {
+    [[ ${_object_ipkgs_todownload_array_[*]} != *"$1"* ]] && _object_ipkgs_todownload_array_+=("$1")
+    }
+IPKGs.ToDownload.Array()
+    {
+    echo -n "${_object_ipkgs_todownload_array_[@]}"
+    }
+IPKGs.ToDownload.Clear()
+    {
+    [[ $_object_ipkgs_todownload_flag_ != 'true' ]] && return
+    _object_ipkgs_todownload_flag_=false
+    [[ $_object_ipkgs_todownload_changes_flag_ = 'true' ]] && DebugVar _object_ipkgs_todownload_flag_
+    }
+IPKGs.ToDownload.Count()
+    {
+    echo "${#_object_ipkgs_todownload_array_[@]}"
+    }
+IPKGs.ToDownload.Disable()
+    {
+    [[ $_object_ipkgs_todownload_enable_ != 'true' ]] && return
+    _object_ipkgs_todownload_enable_=false
+    [[ $_object_ipkgs_todownload_changes_flag_ = 'true' ]] && DebugVar _object_ipkgs_todownload_enable_
+    }
+IPKGs.ToDownload.DontLogChanges()
+    {
+    [[ $_object_ipkgs_todownload_changes_flag_ != 'true' ]] && return
+    _object_ipkgs_todownload_changes_flag_=false
+    }
+IPKGs.ToDownload.Enable()
+    {
+    [[ $_object_ipkgs_todownload_enable_ = 'true' ]] && return
+    _object_ipkgs_todownload_enable_=true
+    [[ $_object_ipkgs_todownload_changes_flag_ = 'true' ]] && DebugVar _object_ipkgs_todownload_enable_
+    }
+IPKGs.ToDownload.Exist()
+    {
+    [[ ${_object_ipkgs_todownload_array_[*]} == *"$1"* ]]
+    }
+IPKGs.ToDownload.First()
+    {
+    echo "${_object_ipkgs_todownload_array_[0]}"
+    }
+IPKGs.ToDownload.Init()
+    {
+    _object_ipkgs_todownload_value_=0
+    _object_ipkgs_todownload_text_=''
+    _object_ipkgs_todownload_flag_=false
+    _object_ipkgs_todownload_changes_flag_=true
+    _object_ipkgs_todownload_enable_=false
+    _object_ipkgs_todownload_array_+=()
+    _object_ipkgs_todownload_array_index_=1
+    _object_ipkgs_todownload_path_=''
+    }
+IPKGs.ToDownload.IsAny()
+    {
+    [[ ${#_object_ipkgs_todownload_array_[@]} -gt 0 ]]
+    }
+IPKGs.ToDownload.IsDisabled()
+    {
+    [[ $_object_ipkgs_todownload_enable_ != 'true' ]]
+    }
+IPKGs.ToDownload.IsEnabled()
+    {
+    [[ $_object_ipkgs_todownload_enable_ = 'true' ]]
+    }
+IPKGs.ToDownload.IsNone()
+    {
+    [[ ${#_object_ipkgs_todownload_array_[@]} -eq 0 ]]
+    }
+IPKGs.ToDownload.IsNot()
+    {
+    [[ $_object_ipkgs_todownload_flag_ != 'true' ]]
+    }
+IPKGs.ToDownload.IsSet()
+    {
+    [[ $_object_ipkgs_todownload_flag_ = 'true' ]]
+    }
+IPKGs.ToDownload.List()
+    {
+    echo -n "${_object_ipkgs_todownload_array_[*]}"
+    }
+IPKGs.ToDownload.ListComma()
+    {
+    echo -n "${_object_ipkgs_todownload_array_[*]}" | tr ' ' ','
+    }
+IPKGs.ToDownload.LogChanges()
+    {
+    [[ $_object_ipkgs_todownload_changes_flag_ = 'true' ]] && return
+    _object_ipkgs_todownload_changes_flag_=true
+    }
+IPKGs.ToDownload.Path()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_ipkgs_todownload_path_="$2"
+    else
+        echo -n "$_object_ipkgs_todownload_path_"
+    fi
+    }
+IPKGs.ToDownload.Remove()
+    {
+    [[ ${_object_ipkgs_todownload_array_[*]} == *"$1"* ]] && _object_ipkgs_todownload_array_=("${_object_ipkgs_todownload_array_[@]/$1}")
+    }
+IPKGs.ToDownload.Set()
+    {
+    [[ $_object_ipkgs_todownload_flag_ = 'true' ]] && return
+    _object_ipkgs_todownload_flag_=true
+    [[ $_object_ipkgs_todownload_changes_flag_ = 'true' ]] && DebugVar _object_ipkgs_todownload_flag_
+    }
+IPKGs.ToDownload.Text()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_ipkgs_todownload_text_="$2"
+    else
+        echo -n "$_object_ipkgs_todownload_text_"
+    fi
+    }
+IPKGs.ToDownload.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_ipkgs_todownload_value_=$2
+    else
+        echo -n $_object_ipkgs_todownload_value_
+    fi
+    }
+IPKGs.ToDownload.Init
 
 IPKGs.ToInstall.Add()
     {
@@ -3465,6 +3853,7 @@ IPKGs.ToInstall.First()
     }
 IPKGs.ToInstall.Init()
     {
+    _object_ipkgs_toinstall_value_=0
     _object_ipkgs_toinstall_text_=''
     _object_ipkgs_toinstall_flag_=false
     _object_ipkgs_toinstall_changes_flag_=true
@@ -3536,6 +3925,14 @@ IPKGs.ToInstall.Text()
         echo -n "$_object_ipkgs_toinstall_text_"
     fi
     }
+IPKGs.ToInstall.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_ipkgs_toinstall_value_=$2
+    else
+        echo -n $_object_ipkgs_toinstall_value_
+    fi
+    }
 IPKGs.ToInstall.Init
 
 IPKGs.ToUninstall.Add()
@@ -3583,6 +3980,7 @@ IPKGs.ToUninstall.First()
     }
 IPKGs.ToUninstall.Init()
     {
+    _object_ipkgs_touninstall_value_=0
     _object_ipkgs_touninstall_text_=''
     _object_ipkgs_touninstall_flag_=false
     _object_ipkgs_touninstall_changes_flag_=true
@@ -3654,6 +4052,14 @@ IPKGs.ToUninstall.Text()
         echo -n "$_object_ipkgs_touninstall_text_"
     fi
     }
+IPKGs.ToUninstall.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_ipkgs_touninstall_value_=$2
+    else
+        echo -n $_object_ipkgs_touninstall_value_
+    fi
+    }
 IPKGs.ToUninstall.Init
 
 QPKGs.Dependant.Add()
@@ -3701,6 +4107,7 @@ QPKGs.Dependant.First()
     }
 QPKGs.Dependant.Init()
     {
+    _object_qpkgs_dependant_value_=0
     _object_qpkgs_dependant_text_=''
     _object_qpkgs_dependant_flag_=false
     _object_qpkgs_dependant_changes_flag_=true
@@ -3772,6 +4179,14 @@ QPKGs.Dependant.Text()
         echo -n "$_object_qpkgs_dependant_text_"
     fi
     }
+QPKGs.Dependant.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_dependant_value_=$2
+    else
+        echo -n $_object_qpkgs_dependant_value_
+    fi
+    }
 QPKGs.Dependant.Init
 
 QPKGs.Independent.Add()
@@ -3819,6 +4234,7 @@ QPKGs.Independent.First()
     }
 QPKGs.Independent.Init()
     {
+    _object_qpkgs_independent_value_=0
     _object_qpkgs_independent_text_=''
     _object_qpkgs_independent_flag_=false
     _object_qpkgs_independent_changes_flag_=true
@@ -3890,6 +4306,14 @@ QPKGs.Independent.Text()
         echo -n "$_object_qpkgs_independent_text_"
     fi
     }
+QPKGs.Independent.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_independent_value_=$2
+    else
+        echo -n $_object_qpkgs_independent_value_
+    fi
+    }
 QPKGs.Independent.Init
 
 QPKGs.Installable.Add()
@@ -3937,6 +4361,7 @@ QPKGs.Installable.First()
     }
 QPKGs.Installable.Init()
     {
+    _object_qpkgs_installable_value_=0
     _object_qpkgs_installable_text_=''
     _object_qpkgs_installable_flag_=false
     _object_qpkgs_installable_changes_flag_=true
@@ -4008,6 +4433,14 @@ QPKGs.Installable.Text()
         echo -n "$_object_qpkgs_installable_text_"
     fi
     }
+QPKGs.Installable.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_installable_value_=$2
+    else
+        echo -n $_object_qpkgs_installable_value_
+    fi
+    }
 QPKGs.Installable.Init
 
 QPKGs.Installed.Add()
@@ -4055,6 +4488,7 @@ QPKGs.Installed.First()
     }
 QPKGs.Installed.Init()
     {
+    _object_qpkgs_installed_value_=0
     _object_qpkgs_installed_text_=''
     _object_qpkgs_installed_flag_=false
     _object_qpkgs_installed_changes_flag_=true
@@ -4126,6 +4560,14 @@ QPKGs.Installed.Text()
         echo -n "$_object_qpkgs_installed_text_"
     fi
     }
+QPKGs.Installed.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_installed_value_=$2
+    else
+        echo -n $_object_qpkgs_installed_value_
+    fi
+    }
 QPKGs.Installed.Init
 
 QPKGs.JustInstalled.Add()
@@ -4173,6 +4615,7 @@ QPKGs.JustInstalled.First()
     }
 QPKGs.JustInstalled.Init()
     {
+    _object_qpkgs_justinstalled_value_=0
     _object_qpkgs_justinstalled_text_=''
     _object_qpkgs_justinstalled_flag_=false
     _object_qpkgs_justinstalled_changes_flag_=true
@@ -4244,6 +4687,14 @@ QPKGs.JustInstalled.Text()
         echo -n "$_object_qpkgs_justinstalled_text_"
     fi
     }
+QPKGs.JustInstalled.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_justinstalled_value_=$2
+    else
+        echo -n $_object_qpkgs_justinstalled_value_
+    fi
+    }
 QPKGs.JustInstalled.Init
 
 QPKGs.Names.Add()
@@ -4291,6 +4742,7 @@ QPKGs.Names.First()
     }
 QPKGs.Names.Init()
     {
+    _object_qpkgs_names_value_=0
     _object_qpkgs_names_text_=''
     _object_qpkgs_names_flag_=false
     _object_qpkgs_names_changes_flag_=true
@@ -4362,6 +4814,14 @@ QPKGs.Names.Text()
         echo -n "$_object_qpkgs_names_text_"
     fi
     }
+QPKGs.Names.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_names_value_=$2
+    else
+        echo -n $_object_qpkgs_names_value_
+    fi
+    }
 QPKGs.Names.Init
 
 QPKGs.NotInstalled.Add()
@@ -4409,6 +4869,7 @@ QPKGs.NotInstalled.First()
     }
 QPKGs.NotInstalled.Init()
     {
+    _object_qpkgs_notinstalled_value_=0
     _object_qpkgs_notinstalled_text_=''
     _object_qpkgs_notinstalled_flag_=false
     _object_qpkgs_notinstalled_changes_flag_=true
@@ -4480,6 +4941,14 @@ QPKGs.NotInstalled.Text()
         echo -n "$_object_qpkgs_notinstalled_text_"
     fi
     }
+QPKGs.NotInstalled.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_notinstalled_value_=$2
+    else
+        echo -n $_object_qpkgs_notinstalled_value_
+    fi
+    }
 QPKGs.NotInstalled.Init
 
 QPKGs.Upgradable.Add()
@@ -4527,6 +4996,7 @@ QPKGs.Upgradable.First()
     }
 QPKGs.Upgradable.Init()
     {
+    _object_qpkgs_upgradable_value_=0
     _object_qpkgs_upgradable_text_=''
     _object_qpkgs_upgradable_flag_=false
     _object_qpkgs_upgradable_changes_flag_=true
@@ -4598,6 +5068,14 @@ QPKGs.Upgradable.Text()
         echo -n "$_object_qpkgs_upgradable_text_"
     fi
     }
+QPKGs.Upgradable.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_upgradable_value_=$2
+    else
+        echo -n $_object_qpkgs_upgradable_value_
+    fi
+    }
 QPKGs.Upgradable.Init
 
 QPKGs.ToBackup.Add()
@@ -4645,6 +5123,7 @@ QPKGs.ToBackup.First()
     }
 QPKGs.ToBackup.Init()
     {
+    _object_qpkgs_tobackup_value_=0
     _object_qpkgs_tobackup_text_=''
     _object_qpkgs_tobackup_flag_=false
     _object_qpkgs_tobackup_changes_flag_=true
@@ -4716,6 +5195,14 @@ QPKGs.ToBackup.Text()
         echo -n "$_object_qpkgs_tobackup_text_"
     fi
     }
+QPKGs.ToBackup.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_tobackup_value_=$2
+    else
+        echo -n $_object_qpkgs_tobackup_value_
+    fi
+    }
 QPKGs.ToBackup.Init
 
 QPKGs.ToDownload.Add()
@@ -4763,6 +5250,7 @@ QPKGs.ToDownload.First()
     }
 QPKGs.ToDownload.Init()
     {
+    _object_qpkgs_todownload_value_=0
     _object_qpkgs_todownload_text_=''
     _object_qpkgs_todownload_flag_=false
     _object_qpkgs_todownload_changes_flag_=true
@@ -4834,6 +5322,14 @@ QPKGs.ToDownload.Text()
         echo -n "$_object_qpkgs_todownload_text_"
     fi
     }
+QPKGs.ToDownload.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_todownload_value_=$2
+    else
+        echo -n $_object_qpkgs_todownload_value_
+    fi
+    }
 QPKGs.ToDownload.Init
 
 QPKGs.ToForceUpgrade.Add()
@@ -4881,6 +5377,7 @@ QPKGs.ToForceUpgrade.First()
     }
 QPKGs.ToForceUpgrade.Init()
     {
+    _object_qpkgs_toforceupgrade_value_=0
     _object_qpkgs_toforceupgrade_text_=''
     _object_qpkgs_toforceupgrade_flag_=false
     _object_qpkgs_toforceupgrade_changes_flag_=true
@@ -4952,6 +5449,14 @@ QPKGs.ToForceUpgrade.Text()
         echo -n "$_object_qpkgs_toforceupgrade_text_"
     fi
     }
+QPKGs.ToForceUpgrade.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_toforceupgrade_value_=$2
+    else
+        echo -n $_object_qpkgs_toforceupgrade_value_
+    fi
+    }
 QPKGs.ToForceUpgrade.Init
 
 QPKGs.ToInstall.Add()
@@ -4999,6 +5504,7 @@ QPKGs.ToInstall.First()
     }
 QPKGs.ToInstall.Init()
     {
+    _object_qpkgs_toinstall_value_=0
     _object_qpkgs_toinstall_text_=''
     _object_qpkgs_toinstall_flag_=false
     _object_qpkgs_toinstall_changes_flag_=true
@@ -5070,6 +5576,14 @@ QPKGs.ToInstall.Text()
         echo -n "$_object_qpkgs_toinstall_text_"
     fi
     }
+QPKGs.ToInstall.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_toinstall_value_=$2
+    else
+        echo -n $_object_qpkgs_toinstall_value_
+    fi
+    }
 QPKGs.ToInstall.Init
 
 QPKGs.ToReinstall.Add()
@@ -5117,6 +5631,7 @@ QPKGs.ToReinstall.First()
     }
 QPKGs.ToReinstall.Init()
     {
+    _object_qpkgs_toreinstall_value_=0
     _object_qpkgs_toreinstall_text_=''
     _object_qpkgs_toreinstall_flag_=false
     _object_qpkgs_toreinstall_changes_flag_=true
@@ -5188,6 +5703,14 @@ QPKGs.ToReinstall.Text()
         echo -n "$_object_qpkgs_toreinstall_text_"
     fi
     }
+QPKGs.ToReinstall.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_toreinstall_value_=$2
+    else
+        echo -n $_object_qpkgs_toreinstall_value_
+    fi
+    }
 QPKGs.ToReinstall.Init
 
 QPKGs.ToRestart.Add()
@@ -5235,6 +5758,7 @@ QPKGs.ToRestart.First()
     }
 QPKGs.ToRestart.Init()
     {
+    _object_qpkgs_torestart_value_=0
     _object_qpkgs_torestart_text_=''
     _object_qpkgs_torestart_flag_=false
     _object_qpkgs_torestart_changes_flag_=true
@@ -5306,6 +5830,14 @@ QPKGs.ToRestart.Text()
         echo -n "$_object_qpkgs_torestart_text_"
     fi
     }
+QPKGs.ToRestart.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_torestart_value_=$2
+    else
+        echo -n $_object_qpkgs_torestart_value_
+    fi
+    }
 QPKGs.ToRestart.Init
 
 QPKGs.ToRestore.Add()
@@ -5353,6 +5885,7 @@ QPKGs.ToRestore.First()
     }
 QPKGs.ToRestore.Init()
     {
+    _object_qpkgs_torestore_value_=0
     _object_qpkgs_torestore_text_=''
     _object_qpkgs_torestore_flag_=false
     _object_qpkgs_torestore_changes_flag_=true
@@ -5424,6 +5957,14 @@ QPKGs.ToRestore.Text()
         echo -n "$_object_qpkgs_torestore_text_"
     fi
     }
+QPKGs.ToRestore.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_torestore_value_=$2
+    else
+        echo -n $_object_qpkgs_torestore_value_
+    fi
+    }
 QPKGs.ToRestore.Init
 
 QPKGs.ToStart.Add()
@@ -5471,6 +6012,7 @@ QPKGs.ToStart.First()
     }
 QPKGs.ToStart.Init()
     {
+    _object_qpkgs_tostart_value_=0
     _object_qpkgs_tostart_text_=''
     _object_qpkgs_tostart_flag_=false
     _object_qpkgs_tostart_changes_flag_=true
@@ -5542,6 +6084,14 @@ QPKGs.ToStart.Text()
         echo -n "$_object_qpkgs_tostart_text_"
     fi
     }
+QPKGs.ToStart.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_tostart_value_=$2
+    else
+        echo -n $_object_qpkgs_tostart_value_
+    fi
+    }
 QPKGs.ToStart.Init
 
 QPKGs.ToStop.Add()
@@ -5589,6 +6139,7 @@ QPKGs.ToStop.First()
     }
 QPKGs.ToStop.Init()
     {
+    _object_qpkgs_tostop_value_=0
     _object_qpkgs_tostop_text_=''
     _object_qpkgs_tostop_flag_=false
     _object_qpkgs_tostop_changes_flag_=true
@@ -5660,6 +6211,14 @@ QPKGs.ToStop.Text()
         echo -n "$_object_qpkgs_tostop_text_"
     fi
     }
+QPKGs.ToStop.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_tostop_value_=$2
+    else
+        echo -n $_object_qpkgs_tostop_value_
+    fi
+    }
 QPKGs.ToStop.Init
 
 QPKGs.ToUninstall.Add()
@@ -5707,6 +6266,7 @@ QPKGs.ToUninstall.First()
     }
 QPKGs.ToUninstall.Init()
     {
+    _object_qpkgs_touninstall_value_=0
     _object_qpkgs_touninstall_text_=''
     _object_qpkgs_touninstall_flag_=false
     _object_qpkgs_touninstall_changes_flag_=true
@@ -5778,6 +6338,14 @@ QPKGs.ToUninstall.Text()
         echo -n "$_object_qpkgs_touninstall_text_"
     fi
     }
+QPKGs.ToUninstall.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_touninstall_value_=$2
+    else
+        echo -n $_object_qpkgs_touninstall_value_
+    fi
+    }
 QPKGs.ToUninstall.Init
 
 QPKGs.ToUpgrade.Add()
@@ -5825,6 +6393,7 @@ QPKGs.ToUpgrade.First()
     }
 QPKGs.ToUpgrade.Init()
     {
+    _object_qpkgs_toupgrade_value_=0
     _object_qpkgs_toupgrade_text_=''
     _object_qpkgs_toupgrade_flag_=false
     _object_qpkgs_toupgrade_changes_flag_=true
@@ -5896,6 +6465,14 @@ QPKGs.ToUpgrade.Text()
         echo -n "$_object_qpkgs_toupgrade_text_"
     fi
     }
+QPKGs.ToUpgrade.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_toupgrade_value_=$2
+    else
+        echo -n $_object_qpkgs_toupgrade_value_
+    fi
+    }
 QPKGs.ToUpgrade.Init
 
 Session.Backup.Add()
@@ -5943,6 +6520,7 @@ Session.Backup.First()
     }
 Session.Backup.Init()
     {
+    _object_session_backup_value_=0
     _object_session_backup_text_=''
     _object_session_backup_flag_=false
     _object_session_backup_changes_flag_=true
@@ -6014,6 +6592,14 @@ Session.Backup.Text()
         echo -n "$_object_session_backup_text_"
     fi
     }
+Session.Backup.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_session_backup_value_=$2
+    else
+        echo -n $_object_session_backup_value_
+    fi
+    }
 Session.Backup.Init
 
 Session.Debug.To.File.Add()
@@ -6061,6 +6647,7 @@ Session.Debug.To.File.First()
     }
 Session.Debug.To.File.Init()
     {
+    _object_session_debug_to_file_value_=0
     _object_session_debug_to_file_text_=''
     _object_session_debug_to_file_flag_=false
     _object_session_debug_to_file_changes_flag_=true
@@ -6132,6 +6719,14 @@ Session.Debug.To.File.Text()
         echo -n "$_object_session_debug_to_file_text_"
     fi
     }
+Session.Debug.To.File.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_session_debug_to_file_value_=$2
+    else
+        echo -n $_object_session_debug_to_file_value_
+    fi
+    }
 Session.Debug.To.File.Init
 
 Session.Debug.To.Screen.Add()
@@ -6179,6 +6774,7 @@ Session.Debug.To.Screen.First()
     }
 Session.Debug.To.Screen.Init()
     {
+    _object_session_debug_to_screen_value_=0
     _object_session_debug_to_screen_text_=''
     _object_session_debug_to_screen_flag_=false
     _object_session_debug_to_screen_changes_flag_=true
@@ -6250,6 +6846,14 @@ Session.Debug.To.Screen.Text()
         echo -n "$_object_session_debug_to_screen_text_"
     fi
     }
+Session.Debug.To.Screen.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_session_debug_to_screen_value_=$2
+    else
+        echo -n $_object_session_debug_to_screen_value_
+    fi
+    }
 Session.Debug.To.Screen.Init
 
 Session.Display.Clean.Add()
@@ -6297,6 +6901,7 @@ Session.Display.Clean.First()
     }
 Session.Display.Clean.Init()
     {
+    _object_session_display_clean_value_=0
     _object_session_display_clean_text_=''
     _object_session_display_clean_flag_=false
     _object_session_display_clean_changes_flag_=true
@@ -6368,6 +6973,14 @@ Session.Display.Clean.Text()
         echo -n "$_object_session_display_clean_text_"
     fi
     }
+Session.Display.Clean.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_session_display_clean_value_=$2
+    else
+        echo -n $_object_session_display_clean_value_
+    fi
+    }
 Session.Display.Clean.Init
 
 Session.IPKGs.Install.Add()
@@ -6415,6 +7028,7 @@ Session.IPKGs.Install.First()
     }
 Session.IPKGs.Install.Init()
     {
+    _object_session_ipkgs_install_value_=0
     _object_session_ipkgs_install_text_=''
     _object_session_ipkgs_install_flag_=false
     _object_session_ipkgs_install_changes_flag_=true
@@ -6486,6 +7100,14 @@ Session.IPKGs.Install.Text()
         echo -n "$_object_session_ipkgs_install_text_"
     fi
     }
+Session.IPKGs.Install.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_session_ipkgs_install_value_=$2
+    else
+        echo -n $_object_session_ipkgs_install_value_
+    fi
+    }
 Session.IPKGs.Install.Init
 
 Session.LineSpace.Add()
@@ -6533,6 +7155,7 @@ Session.LineSpace.First()
     }
 Session.LineSpace.Init()
     {
+    _object_session_linespace_value_=0
     _object_session_linespace_text_=''
     _object_session_linespace_flag_=false
     _object_session_linespace_changes_flag_=true
@@ -6604,6 +7227,14 @@ Session.LineSpace.Text()
         echo -n "$_object_session_linespace_text_"
     fi
     }
+Session.LineSpace.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_session_linespace_value_=$2
+    else
+        echo -n $_object_session_linespace_value_
+    fi
+    }
 Session.LineSpace.Init
 
 Session.PIPs.Install.Add()
@@ -6651,6 +7282,7 @@ Session.PIPs.Install.First()
     }
 Session.PIPs.Install.Init()
     {
+    _object_session_pips_install_value_=0
     _object_session_pips_install_text_=''
     _object_session_pips_install_flag_=false
     _object_session_pips_install_changes_flag_=true
@@ -6722,6 +7354,14 @@ Session.PIPs.Install.Text()
         echo -n "$_object_session_pips_install_text_"
     fi
     }
+Session.PIPs.Install.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_session_pips_install_value_=$2
+    else
+        echo -n $_object_session_pips_install_value_
+    fi
+    }
 Session.PIPs.Install.Init
 
 Session.ShowBackupLocation.Add()
@@ -6769,6 +7409,7 @@ Session.ShowBackupLocation.First()
     }
 Session.ShowBackupLocation.Init()
     {
+    _object_session_showbackuplocation_value_=0
     _object_session_showbackuplocation_text_=''
     _object_session_showbackuplocation_flag_=false
     _object_session_showbackuplocation_changes_flag_=true
@@ -6840,6 +7481,14 @@ Session.ShowBackupLocation.Text()
         echo -n "$_object_session_showbackuplocation_text_"
     fi
     }
+Session.ShowBackupLocation.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_session_showbackuplocation_value_=$2
+    else
+        echo -n $_object_session_showbackuplocation_value_
+    fi
+    }
 Session.ShowBackupLocation.Init
 
 Session.SkipPackageProcessing.Add()
@@ -6887,6 +7536,7 @@ Session.SkipPackageProcessing.First()
     }
 Session.SkipPackageProcessing.Init()
     {
+    _object_session_skippackageprocessing_value_=0
     _object_session_skippackageprocessing_text_=''
     _object_session_skippackageprocessing_flag_=false
     _object_session_skippackageprocessing_changes_flag_=true
@@ -6958,6 +7608,14 @@ Session.SkipPackageProcessing.Text()
         echo -n "$_object_session_skippackageprocessing_text_"
     fi
     }
+Session.SkipPackageProcessing.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_session_skippackageprocessing_value_=$2
+    else
+        echo -n $_object_session_skippackageprocessing_value_
+    fi
+    }
 Session.SkipPackageProcessing.Init
 
 Session.SuggestIssue.Add()
@@ -7005,6 +7663,7 @@ Session.SuggestIssue.First()
     }
 Session.SuggestIssue.Init()
     {
+    _object_session_suggestissue_value_=0
     _object_session_suggestissue_text_=''
     _object_session_suggestissue_flag_=false
     _object_session_suggestissue_changes_flag_=true
@@ -7076,6 +7735,14 @@ Session.SuggestIssue.Text()
         echo -n "$_object_session_suggestissue_text_"
     fi
     }
+Session.SuggestIssue.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_session_suggestissue_value_=$2
+    else
+        echo -n $_object_session_suggestissue_value_
+    fi
+    }
 Session.SuggestIssue.Init
 
 Session.Summary.Add()
@@ -7123,6 +7790,7 @@ Session.Summary.First()
     }
 Session.Summary.Init()
     {
+    _object_session_summary_value_=0
     _object_session_summary_text_=''
     _object_session_summary_flag_=false
     _object_session_summary_changes_flag_=true
@@ -7192,6 +7860,14 @@ Session.Summary.Text()
         _object_session_summary_text_="$2"
     else
         echo -n "$_object_session_summary_text_"
+    fi
+    }
+Session.Summary.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_session_summary_value_=$2
+    else
+        echo -n $_object_session_summary_value_
     fi
     }
 Session.Summary.Init
