@@ -39,7 +39,7 @@ Session.Init()
     readonly SCRIPT_STARTSECONDS=$(/bin/date +%s)
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=201008
+    readonly MANAGER_SCRIPT_VERSION=201009
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -166,7 +166,7 @@ Session.Init()
     readonly IPKG_DL_PATH=$WORK_PATH/ipkgs.downloads
     readonly IPKG_CACHE_PATH=$WORK_PATH/ipkgs
     readonly PIP_CACHE_PATH=$WORK_PATH/pips
-    readonly COMPILED_OBJECTS_HASH=f5f81bd700b5d8e66c94dc579ecb97dc
+    readonly COMPILED_OBJECTS_HASH=75c62d88abe049e40a7fccefc0d66f1d
     readonly DEBUG_LOG_DATAWIDTH=92
 
     if ! MakePath "$WORK_PATH" 'work'; then
@@ -731,13 +731,20 @@ Session.Validate()
     DebugScript 'object reference hash' "$COMPILED_OBJECTS_HASH"
 
     if QPKG.Installed Entware; then
-        [[ -e /opt/etc/passwd ]] && { [[ -L /opt/etc/passwd ]] && ENTWARE_VER=std || ENTWARE_VER=alt ;} || ENTWARE_VER=none
+        if [[ -e /opt/etc/passwd ]]; then
+            if [[ -L /opt/etc/passwd ]]; then
+                ENTWARE_VER=std
+            else
+                ENTWARE_VER=alt
+            fi
+        else
+            ENTWARE_VER=none
+        fi
+
         DebugQPKG 'Entware installer' $ENTWARE_VER
 
         if [[ $ENTWARE_VER = none ]]; then
-            ShowAsError "$(FormatAsPackageName Entware) appears to be installed but is not visible"
-            Session.SkipPackageProcessing.Set
-            DebugFuncExit; return 1
+            DebugWarning "$(FormatAsPackageName Entware) appears to be installed but is not visible"
         fi
     fi
 
@@ -848,10 +855,14 @@ Packages.Uninstall()
     local package=''
     local previous_pip3_module_list=$WORK_PATH/pip3.prev.installed.list
     local previous_opkg_package_list=$WORK_PATH/opkg.prev.installed.list
+    local index=0
 
     if QPKGs.ToUninstall.IsAny; then
         # remove dependant packages first
-        for package in $(QPKGs.Dependant.Array); do
+
+        for ((index=$(QPKGs.Dependant.Count); index>=1; index--)); do       # uninstall packages in reverse of declared order
+            package=$(QPKGs.Dependant.GetItem $index)
+
             if QPKGs.ToUninstall.Exist $package; then
                 if QPKG.Installed $package; then
                     QPKG.Uninstall $package
@@ -862,7 +873,9 @@ Packages.Uninstall()
         done
 
         # then the independent packages last
-        for package in $(QPKGs.Independent.Array); do
+        for ((index=$(QPKGs.Independent.Count); index>=1; index--)); do     # uninstall packages in reverse of declared order
+            package=$(QPKGs.Independent.GetItem $index)
+
             if QPKGs.ToUninstall.Exist $package; then
                 if [[ $package != Entware ]]; then      # KLUDGE: ignore Entware as it needs to be handled separately.
                     if QPKG.Installed $package; then
@@ -921,6 +934,7 @@ Packages.Stop()
     DebugFuncEntry
     local package=''
     local acc=()
+    local index=0
 
     # if an independent has been selected for 'stop', need to stop all dependants too
     for package in $(QPKGs.ToStop.Array); do
@@ -936,7 +950,9 @@ Packages.Stop()
     fi
 
     if QPKGs.ToStop.IsAny; then
-        for package in $(QPKGs.Dependant.Array); do
+        for ((index=$(QPKGs.Dependant.Count); index>=1; index--)); do       # stop packages in reverse of declared order
+            package=$(QPKGs.Dependant.GetItem $index)
+
             if QPKGs.ToStop.Exist $package; then
                 if QPKG.Installed $package; then
                     QPKG.Stop $package
@@ -946,12 +962,13 @@ Packages.Stop()
             fi
         done
 
-        for package in $(QPKGs.Independent.Array); do
+        for ((index=$(QPKGs.Independent.Count); index>=1; index--)); do     # stop packages in reverse of declared order
+            package=$(QPKGs.Independent.GetItem $index)
+
             if QPKGs.ToStop.Exist $package; then
                 if QPKG.Installed $package; then
                     QPKG.Stop $package
-                    # independents don't use the same service scripts as other sherpa packages, so they must be enabled/disabled externally
-                    QPKG.Disable $package
+                    QPKG.Disable $package   # independents don't have the same service scripts as other sherpa packages, so they must be enabled/disabled externally
                 else
                     ShowAsNote "unable to stop $(FormatAsPackageName $package) as it's not installed"
                 fi
@@ -1155,8 +1172,7 @@ Packages.Start()
         for package in $(QPKGs.Independent.Array); do
             if QPKGs.ToStart.Exist $package; then
                 if QPKG.Installed $package; then
-                    # independents don't use the same service scripts as other sherpa packages, so they must be enabled/disabled externally
-                    QPKG.Enable $package
+                    QPKG.Enable $package    # independents don't have the same service scripts as other sherpa packages, so they must be enabled/disabled externally
                     QPKG.Start $package
                 else
                     ShowAsNote "unable to start $(FormatAsPackageName $package) as it's not installed"
@@ -1555,6 +1571,7 @@ IPKGs.Install()
 
     Session.SkipPackageProcessing.IsSet && return
     Session.IPKGs.Install.IsNot && return
+    ! QPKG.Enabled Entware && return
     Entware.Update
     Session.Error.IsSet && return
     DebugFuncEntry
@@ -1588,6 +1605,7 @@ IPKGs.Uninstall()
     {
 
     Session.SkipPackageProcessing.IsSet && return
+    ! QPKG.Enabled Entware && return
     Session.Error.IsSet && return
     DebugFuncEntry
     local index=0
@@ -4590,6 +4608,13 @@ echo $public_function_name'.Add()
 '$public_function_name'.First()
     {
     echo "${'$_placeholder_array_'[0]}"
+    }
+'$public_function_name'.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#'$_placeholder_array_'[@]} ]] && index=${#'$_placeholder_array_'[@]}
+    echo -n "${'$_placeholder_array_'[((index-1))]}"
     }
 '$public_function_name'.Init()
     {

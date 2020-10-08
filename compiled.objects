@@ -41,6 +41,13 @@ User.Opts.Help.Abbreviations.First()
     {
     echo "${_object_user_opts_help_abbreviations_array_[0]}"
     }
+User.Opts.Help.Abbreviations.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_user_opts_help_abbreviations_array_[@]} ]] && index=${#_object_user_opts_help_abbreviations_array_[@]}
+    echo -n "${_object_user_opts_help_abbreviations_array_[((index-1))]}"
+    }
 User.Opts.Help.Abbreviations.Init()
     {
     _object_user_opts_help_abbreviations_value_=0
@@ -168,6 +175,13 @@ User.Opts.Help.Actions.Exist()
 User.Opts.Help.Actions.First()
     {
     echo "${_object_user_opts_help_actions_array_[0]}"
+    }
+User.Opts.Help.Actions.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_user_opts_help_actions_array_[@]} ]] && index=${#_object_user_opts_help_actions_array_[@]}
+    echo -n "${_object_user_opts_help_actions_array_[((index-1))]}"
     }
 User.Opts.Help.Actions.Init()
     {
@@ -297,6 +311,13 @@ User.Opts.Help.ActionsAll.First()
     {
     echo "${_object_user_opts_help_actionsall_array_[0]}"
     }
+User.Opts.Help.ActionsAll.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_user_opts_help_actionsall_array_[@]} ]] && index=${#_object_user_opts_help_actionsall_array_[@]}
+    echo -n "${_object_user_opts_help_actionsall_array_[((index-1))]}"
+    }
 User.Opts.Help.ActionsAll.Init()
     {
     _object_user_opts_help_actionsall_value_=0
@@ -424,6 +445,13 @@ User.Opts.Help.Basic.Exist()
 User.Opts.Help.Basic.First()
     {
     echo "${_object_user_opts_help_basic_array_[0]}"
+    }
+User.Opts.Help.Basic.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_user_opts_help_basic_array_[@]} ]] && index=${#_object_user_opts_help_basic_array_[@]}
+    echo -n "${_object_user_opts_help_basic_array_[((index-1))]}"
     }
 User.Opts.Help.Basic.Init()
     {
@@ -553,6 +581,13 @@ User.Opts.Help.Options.First()
     {
     echo "${_object_user_opts_help_options_array_[0]}"
     }
+User.Opts.Help.Options.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_user_opts_help_options_array_[@]} ]] && index=${#_object_user_opts_help_options_array_[@]}
+    echo -n "${_object_user_opts_help_options_array_[((index-1))]}"
+    }
 User.Opts.Help.Options.Init()
     {
     _object_user_opts_help_options_value_=0
@@ -680,6 +715,13 @@ User.Opts.Help.Packages.Exist()
 User.Opts.Help.Packages.First()
     {
     echo "${_object_user_opts_help_packages_array_[0]}"
+    }
+User.Opts.Help.Packages.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_user_opts_help_packages_array_[@]} ]] && index=${#_object_user_opts_help_packages_array_[@]}
+    echo -n "${_object_user_opts_help_packages_array_[((index-1))]}"
     }
 User.Opts.Help.Packages.Init()
     {
@@ -809,6 +851,13 @@ User.Opts.Help.Problems.First()
     {
     echo "${_object_user_opts_help_problems_array_[0]}"
     }
+User.Opts.Help.Problems.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_user_opts_help_problems_array_[@]} ]] && index=${#_object_user_opts_help_problems_array_[@]}
+    echo -n "${_object_user_opts_help_problems_array_[((index-1))]}"
+    }
 User.Opts.Help.Problems.Init()
     {
     _object_user_opts_help_problems_value_=0
@@ -936,6 +985,13 @@ User.Opts.Help.Tips.Exist()
 User.Opts.Help.Tips.First()
     {
     echo "${_object_user_opts_help_tips_array_[0]}"
+    }
+User.Opts.Help.Tips.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_user_opts_help_tips_array_[@]} ]] && index=${#_object_user_opts_help_tips_array_[@]}
+    echo -n "${_object_user_opts_help_tips_array_[((index-1))]}"
     }
 User.Opts.Help.Tips.Init()
     {
@@ -1065,6 +1121,13 @@ User.Opts.Clean.First()
     {
     echo "${_object_user_opts_clean_array_[0]}"
     }
+User.Opts.Clean.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_user_opts_clean_array_[@]} ]] && index=${#_object_user_opts_clean_array_[@]}
+    echo -n "${_object_user_opts_clean_array_[((index-1))]}"
+    }
 User.Opts.Clean.Init()
     {
     _object_user_opts_clean_value_=0
@@ -1192,6 +1255,13 @@ User.Opts.Dependencies.Check.Exist()
 User.Opts.Dependencies.Check.First()
     {
     echo "${_object_user_opts_dependencies_check_array_[0]}"
+    }
+User.Opts.Dependencies.Check.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_user_opts_dependencies_check_array_[@]} ]] && index=${#_object_user_opts_dependencies_check_array_[@]}
+    echo -n "${_object_user_opts_dependencies_check_array_[((index-1))]}"
     }
 User.Opts.Dependencies.Check.Init()
     {
@@ -1321,6 +1391,13 @@ User.Opts.IgnoreFreeSpace.First()
     {
     echo "${_object_user_opts_ignorefreespace_array_[0]}"
     }
+User.Opts.IgnoreFreeSpace.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_user_opts_ignorefreespace_array_[@]} ]] && index=${#_object_user_opts_ignorefreespace_array_[@]}
+    echo -n "${_object_user_opts_ignorefreespace_array_[((index-1))]}"
+    }
 User.Opts.IgnoreFreeSpace.Init()
     {
     _object_user_opts_ignorefreespace_value_=0
@@ -1448,6 +1525,13 @@ User.Opts.Versions.View.Exist()
 User.Opts.Versions.View.First()
     {
     echo "${_object_user_opts_versions_view_array_[0]}"
+    }
+User.Opts.Versions.View.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_user_opts_versions_view_array_[@]} ]] && index=${#_object_user_opts_versions_view_array_[@]}
+    echo -n "${_object_user_opts_versions_view_array_[((index-1))]}"
     }
 User.Opts.Versions.View.Init()
     {
@@ -1577,6 +1661,13 @@ User.Opts.Log.Last.Paste.First()
     {
     echo "${_object_user_opts_log_last_paste_array_[0]}"
     }
+User.Opts.Log.Last.Paste.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_user_opts_log_last_paste_array_[@]} ]] && index=${#_object_user_opts_log_last_paste_array_[@]}
+    echo -n "${_object_user_opts_log_last_paste_array_[((index-1))]}"
+    }
 User.Opts.Log.Last.Paste.Init()
     {
     _object_user_opts_log_last_paste_value_=0
@@ -1704,6 +1795,13 @@ User.Opts.Log.Last.View.Exist()
 User.Opts.Log.Last.View.First()
     {
     echo "${_object_user_opts_log_last_view_array_[0]}"
+    }
+User.Opts.Log.Last.View.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_user_opts_log_last_view_array_[@]} ]] && index=${#_object_user_opts_log_last_view_array_[@]}
+    echo -n "${_object_user_opts_log_last_view_array_[((index-1))]}"
     }
 User.Opts.Log.Last.View.Init()
     {
@@ -1833,6 +1931,13 @@ User.Opts.Log.Tail.Paste.First()
     {
     echo "${_object_user_opts_log_tail_paste_array_[0]}"
     }
+User.Opts.Log.Tail.Paste.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_user_opts_log_tail_paste_array_[@]} ]] && index=${#_object_user_opts_log_tail_paste_array_[@]}
+    echo -n "${_object_user_opts_log_tail_paste_array_[((index-1))]}"
+    }
 User.Opts.Log.Tail.Paste.Init()
     {
     _object_user_opts_log_tail_paste_value_=0
@@ -1960,6 +2065,13 @@ User.Opts.Log.Whole.View.Exist()
 User.Opts.Log.Whole.View.First()
     {
     echo "${_object_user_opts_log_whole_view_array_[0]}"
+    }
+User.Opts.Log.Whole.View.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_user_opts_log_whole_view_array_[@]} ]] && index=${#_object_user_opts_log_whole_view_array_[@]}
+    echo -n "${_object_user_opts_log_whole_view_array_[((index-1))]}"
     }
 User.Opts.Log.Whole.View.Init()
     {
@@ -2089,6 +2201,13 @@ User.Opts.Apps.All.Backup.First()
     {
     echo "${_object_user_opts_apps_all_backup_array_[0]}"
     }
+User.Opts.Apps.All.Backup.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_user_opts_apps_all_backup_array_[@]} ]] && index=${#_object_user_opts_apps_all_backup_array_[@]}
+    echo -n "${_object_user_opts_apps_all_backup_array_[((index-1))]}"
+    }
 User.Opts.Apps.All.Backup.Init()
     {
     _object_user_opts_apps_all_backup_value_=0
@@ -2216,6 +2335,13 @@ User.Opts.Apps.All.Install.Exist()
 User.Opts.Apps.All.Install.First()
     {
     echo "${_object_user_opts_apps_all_install_array_[0]}"
+    }
+User.Opts.Apps.All.Install.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_user_opts_apps_all_install_array_[@]} ]] && index=${#_object_user_opts_apps_all_install_array_[@]}
+    echo -n "${_object_user_opts_apps_all_install_array_[((index-1))]}"
     }
 User.Opts.Apps.All.Install.Init()
     {
@@ -2345,6 +2471,13 @@ User.Opts.Apps.All.Reinstall.First()
     {
     echo "${_object_user_opts_apps_all_reinstall_array_[0]}"
     }
+User.Opts.Apps.All.Reinstall.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_user_opts_apps_all_reinstall_array_[@]} ]] && index=${#_object_user_opts_apps_all_reinstall_array_[@]}
+    echo -n "${_object_user_opts_apps_all_reinstall_array_[((index-1))]}"
+    }
 User.Opts.Apps.All.Reinstall.Init()
     {
     _object_user_opts_apps_all_reinstall_value_=0
@@ -2472,6 +2605,13 @@ User.Opts.Apps.All.Restart.Exist()
 User.Opts.Apps.All.Restart.First()
     {
     echo "${_object_user_opts_apps_all_restart_array_[0]}"
+    }
+User.Opts.Apps.All.Restart.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_user_opts_apps_all_restart_array_[@]} ]] && index=${#_object_user_opts_apps_all_restart_array_[@]}
+    echo -n "${_object_user_opts_apps_all_restart_array_[((index-1))]}"
     }
 User.Opts.Apps.All.Restart.Init()
     {
@@ -2601,6 +2741,13 @@ User.Opts.Apps.All.Restore.First()
     {
     echo "${_object_user_opts_apps_all_restore_array_[0]}"
     }
+User.Opts.Apps.All.Restore.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_user_opts_apps_all_restore_array_[@]} ]] && index=${#_object_user_opts_apps_all_restore_array_[@]}
+    echo -n "${_object_user_opts_apps_all_restore_array_[((index-1))]}"
+    }
 User.Opts.Apps.All.Restore.Init()
     {
     _object_user_opts_apps_all_restore_value_=0
@@ -2728,6 +2875,13 @@ User.Opts.Apps.All.Start.Exist()
 User.Opts.Apps.All.Start.First()
     {
     echo "${_object_user_opts_apps_all_start_array_[0]}"
+    }
+User.Opts.Apps.All.Start.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_user_opts_apps_all_start_array_[@]} ]] && index=${#_object_user_opts_apps_all_start_array_[@]}
+    echo -n "${_object_user_opts_apps_all_start_array_[((index-1))]}"
     }
 User.Opts.Apps.All.Start.Init()
     {
@@ -2857,6 +3011,13 @@ User.Opts.Apps.All.Stop.First()
     {
     echo "${_object_user_opts_apps_all_stop_array_[0]}"
     }
+User.Opts.Apps.All.Stop.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_user_opts_apps_all_stop_array_[@]} ]] && index=${#_object_user_opts_apps_all_stop_array_[@]}
+    echo -n "${_object_user_opts_apps_all_stop_array_[((index-1))]}"
+    }
 User.Opts.Apps.All.Stop.Init()
     {
     _object_user_opts_apps_all_stop_value_=0
@@ -2984,6 +3145,13 @@ User.Opts.Apps.All.Uninstall.Exist()
 User.Opts.Apps.All.Uninstall.First()
     {
     echo "${_object_user_opts_apps_all_uninstall_array_[0]}"
+    }
+User.Opts.Apps.All.Uninstall.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_user_opts_apps_all_uninstall_array_[@]} ]] && index=${#_object_user_opts_apps_all_uninstall_array_[@]}
+    echo -n "${_object_user_opts_apps_all_uninstall_array_[((index-1))]}"
     }
 User.Opts.Apps.All.Uninstall.Init()
     {
@@ -3113,6 +3281,13 @@ User.Opts.Apps.All.Upgrade.First()
     {
     echo "${_object_user_opts_apps_all_upgrade_array_[0]}"
     }
+User.Opts.Apps.All.Upgrade.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_user_opts_apps_all_upgrade_array_[@]} ]] && index=${#_object_user_opts_apps_all_upgrade_array_[@]}
+    echo -n "${_object_user_opts_apps_all_upgrade_array_[((index-1))]}"
+    }
 User.Opts.Apps.All.Upgrade.Init()
     {
     _object_user_opts_apps_all_upgrade_value_=0
@@ -3240,6 +3415,13 @@ User.Opts.Apps.List.All.Exist()
 User.Opts.Apps.List.All.First()
     {
     echo "${_object_user_opts_apps_list_all_array_[0]}"
+    }
+User.Opts.Apps.List.All.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_user_opts_apps_list_all_array_[@]} ]] && index=${#_object_user_opts_apps_list_all_array_[@]}
+    echo -n "${_object_user_opts_apps_list_all_array_[((index-1))]}"
     }
 User.Opts.Apps.List.All.Init()
     {
@@ -3369,6 +3551,13 @@ User.Opts.Apps.List.Installed.First()
     {
     echo "${_object_user_opts_apps_list_installed_array_[0]}"
     }
+User.Opts.Apps.List.Installed.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_user_opts_apps_list_installed_array_[@]} ]] && index=${#_object_user_opts_apps_list_installed_array_[@]}
+    echo -n "${_object_user_opts_apps_list_installed_array_[((index-1))]}"
+    }
 User.Opts.Apps.List.Installed.Init()
     {
     _object_user_opts_apps_list_installed_value_=0
@@ -3496,6 +3685,13 @@ User.Opts.Apps.List.NotInstalled.Exist()
 User.Opts.Apps.List.NotInstalled.First()
     {
     echo "${_object_user_opts_apps_list_notinstalled_array_[0]}"
+    }
+User.Opts.Apps.List.NotInstalled.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_user_opts_apps_list_notinstalled_array_[@]} ]] && index=${#_object_user_opts_apps_list_notinstalled_array_[@]}
+    echo -n "${_object_user_opts_apps_list_notinstalled_array_[((index-1))]}"
     }
 User.Opts.Apps.List.NotInstalled.Init()
     {
@@ -3625,6 +3821,13 @@ User.Opts.Apps.List.Upgradable.First()
     {
     echo "${_object_user_opts_apps_list_upgradable_array_[0]}"
     }
+User.Opts.Apps.List.Upgradable.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_user_opts_apps_list_upgradable_array_[@]} ]] && index=${#_object_user_opts_apps_list_upgradable_array_[@]}
+    echo -n "${_object_user_opts_apps_list_upgradable_array_[((index-1))]}"
+    }
 User.Opts.Apps.List.Upgradable.Init()
     {
     _object_user_opts_apps_list_upgradable_value_=0
@@ -3752,6 +3955,13 @@ IPKGs.ToDownload.Exist()
 IPKGs.ToDownload.First()
     {
     echo "${_object_ipkgs_todownload_array_[0]}"
+    }
+IPKGs.ToDownload.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_ipkgs_todownload_array_[@]} ]] && index=${#_object_ipkgs_todownload_array_[@]}
+    echo -n "${_object_ipkgs_todownload_array_[((index-1))]}"
     }
 IPKGs.ToDownload.Init()
     {
@@ -3881,6 +4091,13 @@ IPKGs.ToInstall.First()
     {
     echo "${_object_ipkgs_toinstall_array_[0]}"
     }
+IPKGs.ToInstall.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_ipkgs_toinstall_array_[@]} ]] && index=${#_object_ipkgs_toinstall_array_[@]}
+    echo -n "${_object_ipkgs_toinstall_array_[((index-1))]}"
+    }
 IPKGs.ToInstall.Init()
     {
     _object_ipkgs_toinstall_value_=0
@@ -4008,6 +4225,13 @@ IPKGs.ToUninstall.Exist()
 IPKGs.ToUninstall.First()
     {
     echo "${_object_ipkgs_touninstall_array_[0]}"
+    }
+IPKGs.ToUninstall.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_ipkgs_touninstall_array_[@]} ]] && index=${#_object_ipkgs_touninstall_array_[@]}
+    echo -n "${_object_ipkgs_touninstall_array_[((index-1))]}"
     }
 IPKGs.ToUninstall.Init()
     {
@@ -4137,6 +4361,13 @@ QPKGs.Dependant.First()
     {
     echo "${_object_qpkgs_dependant_array_[0]}"
     }
+QPKGs.Dependant.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_qpkgs_dependant_array_[@]} ]] && index=${#_object_qpkgs_dependant_array_[@]}
+    echo -n "${_object_qpkgs_dependant_array_[((index-1))]}"
+    }
 QPKGs.Dependant.Init()
     {
     _object_qpkgs_dependant_value_=0
@@ -4264,6 +4495,13 @@ QPKGs.Independent.Exist()
 QPKGs.Independent.First()
     {
     echo "${_object_qpkgs_independent_array_[0]}"
+    }
+QPKGs.Independent.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_qpkgs_independent_array_[@]} ]] && index=${#_object_qpkgs_independent_array_[@]}
+    echo -n "${_object_qpkgs_independent_array_[((index-1))]}"
     }
 QPKGs.Independent.Init()
     {
@@ -4393,6 +4631,13 @@ QPKGs.Installable.First()
     {
     echo "${_object_qpkgs_installable_array_[0]}"
     }
+QPKGs.Installable.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_qpkgs_installable_array_[@]} ]] && index=${#_object_qpkgs_installable_array_[@]}
+    echo -n "${_object_qpkgs_installable_array_[((index-1))]}"
+    }
 QPKGs.Installable.Init()
     {
     _object_qpkgs_installable_value_=0
@@ -4520,6 +4765,13 @@ QPKGs.Installed.Exist()
 QPKGs.Installed.First()
     {
     echo "${_object_qpkgs_installed_array_[0]}"
+    }
+QPKGs.Installed.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_qpkgs_installed_array_[@]} ]] && index=${#_object_qpkgs_installed_array_[@]}
+    echo -n "${_object_qpkgs_installed_array_[((index-1))]}"
     }
 QPKGs.Installed.Init()
     {
@@ -4649,6 +4901,13 @@ QPKGs.JustInstalled.First()
     {
     echo "${_object_qpkgs_justinstalled_array_[0]}"
     }
+QPKGs.JustInstalled.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_qpkgs_justinstalled_array_[@]} ]] && index=${#_object_qpkgs_justinstalled_array_[@]}
+    echo -n "${_object_qpkgs_justinstalled_array_[((index-1))]}"
+    }
 QPKGs.JustInstalled.Init()
     {
     _object_qpkgs_justinstalled_value_=0
@@ -4776,6 +5035,13 @@ QPKGs.Names.Exist()
 QPKGs.Names.First()
     {
     echo "${_object_qpkgs_names_array_[0]}"
+    }
+QPKGs.Names.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_qpkgs_names_array_[@]} ]] && index=${#_object_qpkgs_names_array_[@]}
+    echo -n "${_object_qpkgs_names_array_[((index-1))]}"
     }
 QPKGs.Names.Init()
     {
@@ -4905,6 +5171,13 @@ QPKGs.NotInstalled.First()
     {
     echo "${_object_qpkgs_notinstalled_array_[0]}"
     }
+QPKGs.NotInstalled.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_qpkgs_notinstalled_array_[@]} ]] && index=${#_object_qpkgs_notinstalled_array_[@]}
+    echo -n "${_object_qpkgs_notinstalled_array_[((index-1))]}"
+    }
 QPKGs.NotInstalled.Init()
     {
     _object_qpkgs_notinstalled_value_=0
@@ -5032,6 +5305,13 @@ QPKGs.Upgradable.Exist()
 QPKGs.Upgradable.First()
     {
     echo "${_object_qpkgs_upgradable_array_[0]}"
+    }
+QPKGs.Upgradable.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_qpkgs_upgradable_array_[@]} ]] && index=${#_object_qpkgs_upgradable_array_[@]}
+    echo -n "${_object_qpkgs_upgradable_array_[((index-1))]}"
     }
 QPKGs.Upgradable.Init()
     {
@@ -5161,6 +5441,13 @@ QPKGs.ToBackup.First()
     {
     echo "${_object_qpkgs_tobackup_array_[0]}"
     }
+QPKGs.ToBackup.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_qpkgs_tobackup_array_[@]} ]] && index=${#_object_qpkgs_tobackup_array_[@]}
+    echo -n "${_object_qpkgs_tobackup_array_[((index-1))]}"
+    }
 QPKGs.ToBackup.Init()
     {
     _object_qpkgs_tobackup_value_=0
@@ -5288,6 +5575,13 @@ QPKGs.ToDownload.Exist()
 QPKGs.ToDownload.First()
     {
     echo "${_object_qpkgs_todownload_array_[0]}"
+    }
+QPKGs.ToDownload.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_qpkgs_todownload_array_[@]} ]] && index=${#_object_qpkgs_todownload_array_[@]}
+    echo -n "${_object_qpkgs_todownload_array_[((index-1))]}"
     }
 QPKGs.ToDownload.Init()
     {
@@ -5417,6 +5711,13 @@ QPKGs.ToForceUpgrade.First()
     {
     echo "${_object_qpkgs_toforceupgrade_array_[0]}"
     }
+QPKGs.ToForceUpgrade.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_qpkgs_toforceupgrade_array_[@]} ]] && index=${#_object_qpkgs_toforceupgrade_array_[@]}
+    echo -n "${_object_qpkgs_toforceupgrade_array_[((index-1))]}"
+    }
 QPKGs.ToForceUpgrade.Init()
     {
     _object_qpkgs_toforceupgrade_value_=0
@@ -5544,6 +5845,13 @@ QPKGs.ToInstall.Exist()
 QPKGs.ToInstall.First()
     {
     echo "${_object_qpkgs_toinstall_array_[0]}"
+    }
+QPKGs.ToInstall.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_qpkgs_toinstall_array_[@]} ]] && index=${#_object_qpkgs_toinstall_array_[@]}
+    echo -n "${_object_qpkgs_toinstall_array_[((index-1))]}"
     }
 QPKGs.ToInstall.Init()
     {
@@ -5673,6 +5981,13 @@ QPKGs.ToReinstall.First()
     {
     echo "${_object_qpkgs_toreinstall_array_[0]}"
     }
+QPKGs.ToReinstall.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_qpkgs_toreinstall_array_[@]} ]] && index=${#_object_qpkgs_toreinstall_array_[@]}
+    echo -n "${_object_qpkgs_toreinstall_array_[((index-1))]}"
+    }
 QPKGs.ToReinstall.Init()
     {
     _object_qpkgs_toreinstall_value_=0
@@ -5800,6 +6115,13 @@ QPKGs.ToRestart.Exist()
 QPKGs.ToRestart.First()
     {
     echo "${_object_qpkgs_torestart_array_[0]}"
+    }
+QPKGs.ToRestart.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_qpkgs_torestart_array_[@]} ]] && index=${#_object_qpkgs_torestart_array_[@]}
+    echo -n "${_object_qpkgs_torestart_array_[((index-1))]}"
     }
 QPKGs.ToRestart.Init()
     {
@@ -5929,6 +6251,13 @@ QPKGs.ToRestore.First()
     {
     echo "${_object_qpkgs_torestore_array_[0]}"
     }
+QPKGs.ToRestore.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_qpkgs_torestore_array_[@]} ]] && index=${#_object_qpkgs_torestore_array_[@]}
+    echo -n "${_object_qpkgs_torestore_array_[((index-1))]}"
+    }
 QPKGs.ToRestore.Init()
     {
     _object_qpkgs_torestore_value_=0
@@ -6056,6 +6385,13 @@ QPKGs.ToStart.Exist()
 QPKGs.ToStart.First()
     {
     echo "${_object_qpkgs_tostart_array_[0]}"
+    }
+QPKGs.ToStart.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_qpkgs_tostart_array_[@]} ]] && index=${#_object_qpkgs_tostart_array_[@]}
+    echo -n "${_object_qpkgs_tostart_array_[((index-1))]}"
     }
 QPKGs.ToStart.Init()
     {
@@ -6185,6 +6521,13 @@ QPKGs.ToStop.First()
     {
     echo "${_object_qpkgs_tostop_array_[0]}"
     }
+QPKGs.ToStop.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_qpkgs_tostop_array_[@]} ]] && index=${#_object_qpkgs_tostop_array_[@]}
+    echo -n "${_object_qpkgs_tostop_array_[((index-1))]}"
+    }
 QPKGs.ToStop.Init()
     {
     _object_qpkgs_tostop_value_=0
@@ -6312,6 +6655,13 @@ QPKGs.ToUninstall.Exist()
 QPKGs.ToUninstall.First()
     {
     echo "${_object_qpkgs_touninstall_array_[0]}"
+    }
+QPKGs.ToUninstall.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_qpkgs_touninstall_array_[@]} ]] && index=${#_object_qpkgs_touninstall_array_[@]}
+    echo -n "${_object_qpkgs_touninstall_array_[((index-1))]}"
     }
 QPKGs.ToUninstall.Init()
     {
@@ -6441,6 +6791,13 @@ QPKGs.ToUpgrade.First()
     {
     echo "${_object_qpkgs_toupgrade_array_[0]}"
     }
+QPKGs.ToUpgrade.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_qpkgs_toupgrade_array_[@]} ]] && index=${#_object_qpkgs_toupgrade_array_[@]}
+    echo -n "${_object_qpkgs_toupgrade_array_[((index-1))]}"
+    }
 QPKGs.ToUpgrade.Init()
     {
     _object_qpkgs_toupgrade_value_=0
@@ -6568,6 +6925,13 @@ Session.Backup.Exist()
 Session.Backup.First()
     {
     echo "${_object_session_backup_array_[0]}"
+    }
+Session.Backup.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_session_backup_array_[@]} ]] && index=${#_object_session_backup_array_[@]}
+    echo -n "${_object_session_backup_array_[((index-1))]}"
     }
 Session.Backup.Init()
     {
@@ -6697,6 +7061,13 @@ Session.Debug.To.File.First()
     {
     echo "${_object_session_debug_to_file_array_[0]}"
     }
+Session.Debug.To.File.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_session_debug_to_file_array_[@]} ]] && index=${#_object_session_debug_to_file_array_[@]}
+    echo -n "${_object_session_debug_to_file_array_[((index-1))]}"
+    }
 Session.Debug.To.File.Init()
     {
     _object_session_debug_to_file_value_=0
@@ -6824,6 +7195,13 @@ Session.Debug.To.Screen.Exist()
 Session.Debug.To.Screen.First()
     {
     echo "${_object_session_debug_to_screen_array_[0]}"
+    }
+Session.Debug.To.Screen.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_session_debug_to_screen_array_[@]} ]] && index=${#_object_session_debug_to_screen_array_[@]}
+    echo -n "${_object_session_debug_to_screen_array_[((index-1))]}"
     }
 Session.Debug.To.Screen.Init()
     {
@@ -6953,6 +7331,13 @@ Session.Display.Clean.First()
     {
     echo "${_object_session_display_clean_array_[0]}"
     }
+Session.Display.Clean.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_session_display_clean_array_[@]} ]] && index=${#_object_session_display_clean_array_[@]}
+    echo -n "${_object_session_display_clean_array_[((index-1))]}"
+    }
 Session.Display.Clean.Init()
     {
     _object_session_display_clean_value_=0
@@ -7080,6 +7465,13 @@ Session.IPKGs.Install.Exist()
 Session.IPKGs.Install.First()
     {
     echo "${_object_session_ipkgs_install_array_[0]}"
+    }
+Session.IPKGs.Install.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_session_ipkgs_install_array_[@]} ]] && index=${#_object_session_ipkgs_install_array_[@]}
+    echo -n "${_object_session_ipkgs_install_array_[((index-1))]}"
     }
 Session.IPKGs.Install.Init()
     {
@@ -7209,6 +7601,13 @@ Session.LineSpace.First()
     {
     echo "${_object_session_linespace_array_[0]}"
     }
+Session.LineSpace.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_session_linespace_array_[@]} ]] && index=${#_object_session_linespace_array_[@]}
+    echo -n "${_object_session_linespace_array_[((index-1))]}"
+    }
 Session.LineSpace.Init()
     {
     _object_session_linespace_value_=0
@@ -7336,6 +7735,13 @@ Session.PIPs.Install.Exist()
 Session.PIPs.Install.First()
     {
     echo "${_object_session_pips_install_array_[0]}"
+    }
+Session.PIPs.Install.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_session_pips_install_array_[@]} ]] && index=${#_object_session_pips_install_array_[@]}
+    echo -n "${_object_session_pips_install_array_[((index-1))]}"
     }
 Session.PIPs.Install.Init()
     {
@@ -7465,6 +7871,13 @@ Session.ShowBackupLocation.First()
     {
     echo "${_object_session_showbackuplocation_array_[0]}"
     }
+Session.ShowBackupLocation.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_session_showbackuplocation_array_[@]} ]] && index=${#_object_session_showbackuplocation_array_[@]}
+    echo -n "${_object_session_showbackuplocation_array_[((index-1))]}"
+    }
 Session.ShowBackupLocation.Init()
     {
     _object_session_showbackuplocation_value_=0
@@ -7592,6 +8005,13 @@ Session.SkipPackageProcessing.Exist()
 Session.SkipPackageProcessing.First()
     {
     echo "${_object_session_skippackageprocessing_array_[0]}"
+    }
+Session.SkipPackageProcessing.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_session_skippackageprocessing_array_[@]} ]] && index=${#_object_session_skippackageprocessing_array_[@]}
+    echo -n "${_object_session_skippackageprocessing_array_[((index-1))]}"
     }
 Session.SkipPackageProcessing.Init()
     {
@@ -7721,6 +8141,13 @@ Session.SuggestIssue.First()
     {
     echo "${_object_session_suggestissue_array_[0]}"
     }
+Session.SuggestIssue.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_session_suggestissue_array_[@]} ]] && index=${#_object_session_suggestissue_array_[@]}
+    echo -n "${_object_session_suggestissue_array_[((index-1))]}"
+    }
 Session.SuggestIssue.Init()
     {
     _object_session_suggestissue_value_=0
@@ -7848,6 +8275,13 @@ Session.Summary.Exist()
 Session.Summary.First()
     {
     echo "${_object_session_summary_array_[0]}"
+    }
+Session.Summary.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_session_summary_array_[@]} ]] && index=${#_object_session_summary_array_[@]}
+    echo -n "${_object_session_summary_array_[((index-1))]}"
     }
 Session.Summary.Init()
     {
