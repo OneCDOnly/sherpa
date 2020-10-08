@@ -61,6 +61,7 @@ Session.Init()
 
     readonly CURL_CMD=/sbin/curl
     readonly GETCFG_CMD=/sbin/getcfg
+    readonly QPKG_SERVICE_CMD=/sbin/qpkg_service
     readonly RMCFG_CMD=/sbin/rmcfg
     readonly SETCFG_CMD=/sbin/setcfg
 
@@ -99,6 +100,7 @@ Session.Init()
 
     IsSysFileExist $CURL_CMD || return 1
     IsSysFileExist $GETCFG_CMD || return 1
+    IsSysFileExist $QPKG_SERVICE_CMD || return 1
     IsSysFileExist $RMCFG_CMD || return 1
     IsSysFileExist $SETCFG_CMD || return 1
 
@@ -144,6 +146,8 @@ Session.Init()
     readonly UPGRADE_LOG_FILE=upgrade.log
     readonly BACKUP_LOG_FILE=backup.log
     readonly RESTORE_LOG_FILE=restore.log
+    readonly ENABLE_LOG_FILE=enable.log
+    readonly DISABLE_LOG_FILE=disable.log
     readonly DEFAULT_SHARES_PATHFILE=/etc/config/def_share.info
     local -r ULINUX_PATHFILE=/etc/config/uLinux.conf
     readonly PLATFORM_PATHFILE=/etc/platform.conf
@@ -765,7 +769,7 @@ Session.Validate()
         DebugFuncExit; return 1
     fi
 
-    if QPKGs.ToBackup.IsNone && QPKGs.ToUninstall.IsNone && QPKGs.ToForceUpgrade.IsNone && QPKGs.ToUpgrade.IsNone && QPKGs.ToInstall.IsNone && QPKGs.ToReinstall.IsNone && QPKGs.ToRestore.IsNone && QPKGs.ToRestart.IsNone; then
+    if QPKGs.ToBackup.IsNone && QPKGs.ToUninstall.IsNone && QPKGs.ToForceUpgrade.IsNone && QPKGs.ToUpgrade.IsNone && QPKGs.ToInstall.IsNone && QPKGs.ToReinstall.IsNone && QPKGs.ToRestore.IsNone && QPKGs.ToRestart.IsNone && QPKGs.ToStart.IsNone && QPKGs.ToStop.IsNone; then
         if User.Opts.Apps.All.Install.IsNot && User.Opts.Apps.All.Uninstall.IsNot && User.Opts.Apps.All.Restart.IsNot && User.Opts.Apps.All.Upgrade.IsNot && User.Opts.Apps.All.Backup.IsNot && User.Opts.Apps.All.Restore.IsNot; then
             if User.Opts.Dependencies.Check.IsNot && Session.Debug.To.Screen.IsNot && User.Opts.IgnoreFreeSpace.IsNot; then
                 ShowAsError 'nothing to do'
@@ -945,6 +949,8 @@ Packages.Stop()
             if QPKGs.ToStop.Exist $package; then
                 if QPKG.Installed $package; then
                     QPKG.Stop $package
+                    # independents don't use the same service scripts as other sherpa packages, so they must be enabled/disabled externally
+                    QPKG.Disable $package
                 else
                     ShowAsNote "unable to stop $(FormatAsPackageName $package) as it's not installed"
                 fi
@@ -992,8 +998,7 @@ Packages.Install.Independents()
         Session.IPKGs.Install.Set
     fi
 
-    if QPKG.Installed Entware; then
-        QPKG.NotEnabled Entware && QPKG.Enable Entware
+    if QPKG.Installed Entware && QPKG.Enabled Entware; then
         Session.AdjustPathEnv
         Entware.Patch.Service
         IPKGs.Install
@@ -1135,9 +1140,11 @@ Packages.Start()
     local acc=()
 
     if QPKGs.ToStart.IsAny; then
-        for package in $(QPKGs.Dependant.Array); do
+        for package in $(QPKGs.Independent.Array); do
             if QPKGs.ToStart.Exist $package; then
                 if QPKG.Installed $package; then
+                    # independents don't use the same service scripts as other sherpa packages, so they must be enabled/disabled externally
+                    QPKG.Enable $package
                     QPKG.Start $package
                 else
                     ShowAsNote "unable to start $(FormatAsPackageName $package) as it's not installed"
@@ -1145,7 +1152,7 @@ Packages.Start()
             fi
         done
 
-        for package in $(QPKGs.Independent.Array); do
+        for package in $(QPKGs.Dependant.Array); do
             if QPKGs.ToStart.Exist $package; then
                 if QPKG.Installed $package; then
                     QPKG.Start $package
@@ -3465,16 +3472,15 @@ QPKG.Start()
     fi
 
     local result=0
-    local package_init_pathfile=$(QPKG.ServicePathFile "$1")
     local log_pathfile=$LOGS_PATH/$1.$START_LOG_FILE
 
     ShowAsProc "starting $(FormatAsPackageName "$1")"
 
     if Session.Debug.To.Screen.IsSet; then
-        RunThisAndLogResultsRealtime "$SH_CMD $package_init_pathfile start" "$log_pathfile"
+        RunThisAndLogResultsRealtime "$QPKG_SERVICE_CMD start $1" "$log_pathfile"
         result=$?
     else
-        RunThisAndLogResults "$SH_CMD $package_init_pathfile start" "$log_pathfile"
+        RunThisAndLogResults "$QPKG_SERVICE_CMD start $1" "$log_pathfile"
         result=$?
     fi
 
@@ -3513,16 +3519,15 @@ QPKG.Stop()
     fi
 
     local result=0
-    local package_init_pathfile=$(QPKG.ServicePathFile "$1")
     local log_pathfile=$LOGS_PATH/$1.$STOP_LOG_FILE
 
     ShowAsProc "stopping $(FormatAsPackageName "$1")"
 
     if Session.Debug.To.Screen.IsSet; then
-        RunThisAndLogResultsRealtime "$SH_CMD $package_init_pathfile stop" "$log_pathfile"
+        RunThisAndLogResultsRealtime "$QPKG_SERVICE_CMD stop $1" "$log_pathfile"
         result=$?
     else
-        RunThisAndLogResults "$SH_CMD $package_init_pathfile stop" "$log_pathfile"
+        RunThisAndLogResults "$QPKG_SERVICE_CMD stop $1" "$log_pathfile"
         result=$?
     fi
 
@@ -3554,10 +3559,63 @@ QPKG.Enable()
         DebugFuncExit; return 1
     fi
 
+    local result=0
+    local log_pathfile=$LOGS_PATH/$1.$ENABLE_LOG_FILE
+
     if QPKG.NotEnabled "$1"; then
-        DebugProc 'enabling package icon'
-        $SETCFG_CMD "$1" Enable TRUE -f $APP_CENTER_CONFIG_PATHFILE
-        DebugDone "$(FormatAsPackageName "$1") icon enabled"
+        if Session.Debug.To.Screen.IsSet; then
+            RunThisAndLogResultsRealtime "$QPKG_SERVICE_CMD enable $1" "$log_pathfile"
+            result=$?
+        else
+            RunThisAndLogResults "$QPKG_SERVICE_CMD enable $1" "$log_pathfile"
+            result=$?
+        fi
+
+        if [[ $result -eq 0 ]]; then
+            QPKG.ServiceStatus "$1"
+        else
+            ShowAsWarning "Could not enable $(FormatAsPackageName "$1") $(FormatAsExitcode $result)"
+        fi
+    fi
+
+    DebugFuncExit; return 0
+
+    }
+
+QPKG.Disable()
+    {
+
+    # $1 = package name to disable
+
+    DebugFuncEntry
+
+    if [[ -z $1 ]]; then
+        DebugError 'no package name specified'
+        code_pointer=22
+        DebugFuncExit; return 1
+    elif QPKG.NotInstalled "$1"; then
+        DebugQPKG "$(FormatAsPackageName "$1")" 'not installed'
+        code_pointer=23
+        DebugFuncExit; return 1
+    fi
+
+    local result=0
+    local log_pathfile=$LOGS_PATH/$1.$DISABLE_LOG_FILE
+
+    if QPKG.Enabled "$1"; then
+        if Session.Debug.To.Screen.IsSet; then
+            RunThisAndLogResultsRealtime "$QPKG_SERVICE_CMD disable $1" "$log_pathfile"
+            result=$?
+        else
+            RunThisAndLogResults "$QPKG_SERVICE_CMD disable $1" "$log_pathfile"
+            result=$?
+        fi
+
+        if [[ $result -eq 0 ]]; then
+            QPKG.ServiceStatus "$1"
+        else
+            ShowAsWarning "Could not disable $(FormatAsPackageName "$1") $(FormatAsExitcode $result)"
+        fi
     fi
 
     DebugFuncExit; return 0
@@ -4827,11 +4885,11 @@ Session.Validate
 Packages.Download
 Packages.Backup
 Packages.Uninstall
-# Packages.Stop
+Packages.Stop
 Packages.Install.Independents
 Packages.Install.Dependants
 Packages.Restore
 Packages.Restart
-# Packages.Start
+Packages.Start
 Session.Results
 Session.Error.IsNot
