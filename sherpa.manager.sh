@@ -1195,13 +1195,10 @@ Session.Results()
     elif User.Opts.Clean.IsSet; then
         Clean.Cache
     elif User.Opts.Apps.List.Installed.IsSet; then
-        QPKGs.StateLists.Build
         QPKGs.Installed.Show
     elif User.Opts.Apps.List.NotInstalled.IsSet; then
-        QPKGs.StateLists.Build
         QPKGs.NotInstalled.Show
     elif User.Opts.Apps.List.Upgradable.IsSet; then
-        QPKGs.StateLists.Build
         QPKGs.Upgradable.Show
     elif User.Opts.Apps.List.All.IsSet; then
         QPKGs.All.Show
@@ -2534,6 +2531,7 @@ QPKGs.Assignment.Check()
     local package=''
     local installer_acc=()
     local download_acc=()
+    QPKGs.StateLists.Build
 
     # start by adding packages to lists as required:
 
@@ -2759,6 +2757,7 @@ QPKGs.Installed.Show()
     {
 
     local package=''
+    QPKGs.StateLists.Build
 
     for package in $(QPKGs.Installed.Array); do
         echo $package
@@ -2772,6 +2771,7 @@ QPKGs.NotInstalled.Show()
     {
 
     local package=''
+    QPKGs.StateLists.Build
 
     for package in $(QPKGs.NotInstalled.Array); do
         echo $package
@@ -2785,6 +2785,7 @@ QPKGs.Upgradable.Show()
     {
 
     local package=''
+    QPKGs.StateLists.Build
 
     for package in $(QPKGs.Upgradable.Array); do
         echo $package
