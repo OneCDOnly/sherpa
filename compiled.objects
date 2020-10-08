@@ -48,7 +48,7 @@ User.Opts.Help.Abbreviations.Init()
     _object_user_opts_help_abbreviations_flag_=false
     _object_user_opts_help_abbreviations_changes_flag_=true
     _object_user_opts_help_abbreviations_enable_=false
-    _object_user_opts_help_abbreviations_array_+=()
+    _object_user_opts_help_abbreviations_array_=()
     _object_user_opts_help_abbreviations_array_index_=1
     _object_user_opts_help_abbreviations_path_=''
     }
@@ -100,6 +100,7 @@ User.Opts.Help.Abbreviations.Path()
 User.Opts.Help.Abbreviations.Remove()
     {
     [[ ${_object_user_opts_help_abbreviations_array_[*]} == *"$1"* ]] && _object_user_opts_help_abbreviations_array_=("${_object_user_opts_help_abbreviations_array_[@]/$1}")
+    [[ -z ${_object_user_opts_help_abbreviations_array_[*]} ]] && _object_user_opts_help_abbreviations_array_=()
     }
 User.Opts.Help.Abbreviations.Set()
     {
@@ -175,7 +176,7 @@ User.Opts.Help.Actions.Init()
     _object_user_opts_help_actions_flag_=false
     _object_user_opts_help_actions_changes_flag_=true
     _object_user_opts_help_actions_enable_=false
-    _object_user_opts_help_actions_array_+=()
+    _object_user_opts_help_actions_array_=()
     _object_user_opts_help_actions_array_index_=1
     _object_user_opts_help_actions_path_=''
     }
@@ -227,6 +228,7 @@ User.Opts.Help.Actions.Path()
 User.Opts.Help.Actions.Remove()
     {
     [[ ${_object_user_opts_help_actions_array_[*]} == *"$1"* ]] && _object_user_opts_help_actions_array_=("${_object_user_opts_help_actions_array_[@]/$1}")
+    [[ -z ${_object_user_opts_help_actions_array_[*]} ]] && _object_user_opts_help_actions_array_=()
     }
 User.Opts.Help.Actions.Set()
     {
@@ -302,7 +304,7 @@ User.Opts.Help.ActionsAll.Init()
     _object_user_opts_help_actionsall_flag_=false
     _object_user_opts_help_actionsall_changes_flag_=true
     _object_user_opts_help_actionsall_enable_=false
-    _object_user_opts_help_actionsall_array_+=()
+    _object_user_opts_help_actionsall_array_=()
     _object_user_opts_help_actionsall_array_index_=1
     _object_user_opts_help_actionsall_path_=''
     }
@@ -354,6 +356,7 @@ User.Opts.Help.ActionsAll.Path()
 User.Opts.Help.ActionsAll.Remove()
     {
     [[ ${_object_user_opts_help_actionsall_array_[*]} == *"$1"* ]] && _object_user_opts_help_actionsall_array_=("${_object_user_opts_help_actionsall_array_[@]/$1}")
+    [[ -z ${_object_user_opts_help_actionsall_array_[*]} ]] && _object_user_opts_help_actionsall_array_=()
     }
 User.Opts.Help.ActionsAll.Set()
     {
@@ -429,7 +432,7 @@ User.Opts.Help.Basic.Init()
     _object_user_opts_help_basic_flag_=false
     _object_user_opts_help_basic_changes_flag_=true
     _object_user_opts_help_basic_enable_=false
-    _object_user_opts_help_basic_array_+=()
+    _object_user_opts_help_basic_array_=()
     _object_user_opts_help_basic_array_index_=1
     _object_user_opts_help_basic_path_=''
     }
@@ -481,6 +484,7 @@ User.Opts.Help.Basic.Path()
 User.Opts.Help.Basic.Remove()
     {
     [[ ${_object_user_opts_help_basic_array_[*]} == *"$1"* ]] && _object_user_opts_help_basic_array_=("${_object_user_opts_help_basic_array_[@]/$1}")
+    [[ -z ${_object_user_opts_help_basic_array_[*]} ]] && _object_user_opts_help_basic_array_=()
     }
 User.Opts.Help.Basic.Set()
     {
@@ -556,7 +560,7 @@ User.Opts.Help.Options.Init()
     _object_user_opts_help_options_flag_=false
     _object_user_opts_help_options_changes_flag_=true
     _object_user_opts_help_options_enable_=false
-    _object_user_opts_help_options_array_+=()
+    _object_user_opts_help_options_array_=()
     _object_user_opts_help_options_array_index_=1
     _object_user_opts_help_options_path_=''
     }
@@ -608,6 +612,7 @@ User.Opts.Help.Options.Path()
 User.Opts.Help.Options.Remove()
     {
     [[ ${_object_user_opts_help_options_array_[*]} == *"$1"* ]] && _object_user_opts_help_options_array_=("${_object_user_opts_help_options_array_[@]/$1}")
+    [[ -z ${_object_user_opts_help_options_array_[*]} ]] && _object_user_opts_help_options_array_=()
     }
 User.Opts.Help.Options.Set()
     {
@@ -683,7 +688,7 @@ User.Opts.Help.Packages.Init()
     _object_user_opts_help_packages_flag_=false
     _object_user_opts_help_packages_changes_flag_=true
     _object_user_opts_help_packages_enable_=false
-    _object_user_opts_help_packages_array_+=()
+    _object_user_opts_help_packages_array_=()
     _object_user_opts_help_packages_array_index_=1
     _object_user_opts_help_packages_path_=''
     }
@@ -735,6 +740,7 @@ User.Opts.Help.Packages.Path()
 User.Opts.Help.Packages.Remove()
     {
     [[ ${_object_user_opts_help_packages_array_[*]} == *"$1"* ]] && _object_user_opts_help_packages_array_=("${_object_user_opts_help_packages_array_[@]/$1}")
+    [[ -z ${_object_user_opts_help_packages_array_[*]} ]] && _object_user_opts_help_packages_array_=()
     }
 User.Opts.Help.Packages.Set()
     {
@@ -810,7 +816,7 @@ User.Opts.Help.Problems.Init()
     _object_user_opts_help_problems_flag_=false
     _object_user_opts_help_problems_changes_flag_=true
     _object_user_opts_help_problems_enable_=false
-    _object_user_opts_help_problems_array_+=()
+    _object_user_opts_help_problems_array_=()
     _object_user_opts_help_problems_array_index_=1
     _object_user_opts_help_problems_path_=''
     }
@@ -862,6 +868,7 @@ User.Opts.Help.Problems.Path()
 User.Opts.Help.Problems.Remove()
     {
     [[ ${_object_user_opts_help_problems_array_[*]} == *"$1"* ]] && _object_user_opts_help_problems_array_=("${_object_user_opts_help_problems_array_[@]/$1}")
+    [[ -z ${_object_user_opts_help_problems_array_[*]} ]] && _object_user_opts_help_problems_array_=()
     }
 User.Opts.Help.Problems.Set()
     {
@@ -937,7 +944,7 @@ User.Opts.Help.Tips.Init()
     _object_user_opts_help_tips_flag_=false
     _object_user_opts_help_tips_changes_flag_=true
     _object_user_opts_help_tips_enable_=false
-    _object_user_opts_help_tips_array_+=()
+    _object_user_opts_help_tips_array_=()
     _object_user_opts_help_tips_array_index_=1
     _object_user_opts_help_tips_path_=''
     }
@@ -989,6 +996,7 @@ User.Opts.Help.Tips.Path()
 User.Opts.Help.Tips.Remove()
     {
     [[ ${_object_user_opts_help_tips_array_[*]} == *"$1"* ]] && _object_user_opts_help_tips_array_=("${_object_user_opts_help_tips_array_[@]/$1}")
+    [[ -z ${_object_user_opts_help_tips_array_[*]} ]] && _object_user_opts_help_tips_array_=()
     }
 User.Opts.Help.Tips.Set()
     {
@@ -1064,7 +1072,7 @@ User.Opts.Clean.Init()
     _object_user_opts_clean_flag_=false
     _object_user_opts_clean_changes_flag_=true
     _object_user_opts_clean_enable_=false
-    _object_user_opts_clean_array_+=()
+    _object_user_opts_clean_array_=()
     _object_user_opts_clean_array_index_=1
     _object_user_opts_clean_path_=''
     }
@@ -1116,6 +1124,7 @@ User.Opts.Clean.Path()
 User.Opts.Clean.Remove()
     {
     [[ ${_object_user_opts_clean_array_[*]} == *"$1"* ]] && _object_user_opts_clean_array_=("${_object_user_opts_clean_array_[@]/$1}")
+    [[ -z ${_object_user_opts_clean_array_[*]} ]] && _object_user_opts_clean_array_=()
     }
 User.Opts.Clean.Set()
     {
@@ -1191,7 +1200,7 @@ User.Opts.Dependencies.Check.Init()
     _object_user_opts_dependencies_check_flag_=false
     _object_user_opts_dependencies_check_changes_flag_=true
     _object_user_opts_dependencies_check_enable_=false
-    _object_user_opts_dependencies_check_array_+=()
+    _object_user_opts_dependencies_check_array_=()
     _object_user_opts_dependencies_check_array_index_=1
     _object_user_opts_dependencies_check_path_=''
     }
@@ -1243,6 +1252,7 @@ User.Opts.Dependencies.Check.Path()
 User.Opts.Dependencies.Check.Remove()
     {
     [[ ${_object_user_opts_dependencies_check_array_[*]} == *"$1"* ]] && _object_user_opts_dependencies_check_array_=("${_object_user_opts_dependencies_check_array_[@]/$1}")
+    [[ -z ${_object_user_opts_dependencies_check_array_[*]} ]] && _object_user_opts_dependencies_check_array_=()
     }
 User.Opts.Dependencies.Check.Set()
     {
@@ -1318,7 +1328,7 @@ User.Opts.IgnoreFreeSpace.Init()
     _object_user_opts_ignorefreespace_flag_=false
     _object_user_opts_ignorefreespace_changes_flag_=true
     _object_user_opts_ignorefreespace_enable_=false
-    _object_user_opts_ignorefreespace_array_+=()
+    _object_user_opts_ignorefreespace_array_=()
     _object_user_opts_ignorefreespace_array_index_=1
     _object_user_opts_ignorefreespace_path_=''
     }
@@ -1370,6 +1380,7 @@ User.Opts.IgnoreFreeSpace.Path()
 User.Opts.IgnoreFreeSpace.Remove()
     {
     [[ ${_object_user_opts_ignorefreespace_array_[*]} == *"$1"* ]] && _object_user_opts_ignorefreespace_array_=("${_object_user_opts_ignorefreespace_array_[@]/$1}")
+    [[ -z ${_object_user_opts_ignorefreespace_array_[*]} ]] && _object_user_opts_ignorefreespace_array_=()
     }
 User.Opts.IgnoreFreeSpace.Set()
     {
@@ -1445,7 +1456,7 @@ User.Opts.Versions.View.Init()
     _object_user_opts_versions_view_flag_=false
     _object_user_opts_versions_view_changes_flag_=true
     _object_user_opts_versions_view_enable_=false
-    _object_user_opts_versions_view_array_+=()
+    _object_user_opts_versions_view_array_=()
     _object_user_opts_versions_view_array_index_=1
     _object_user_opts_versions_view_path_=''
     }
@@ -1497,6 +1508,7 @@ User.Opts.Versions.View.Path()
 User.Opts.Versions.View.Remove()
     {
     [[ ${_object_user_opts_versions_view_array_[*]} == *"$1"* ]] && _object_user_opts_versions_view_array_=("${_object_user_opts_versions_view_array_[@]/$1}")
+    [[ -z ${_object_user_opts_versions_view_array_[*]} ]] && _object_user_opts_versions_view_array_=()
     }
 User.Opts.Versions.View.Set()
     {
@@ -1572,7 +1584,7 @@ User.Opts.Log.Last.Paste.Init()
     _object_user_opts_log_last_paste_flag_=false
     _object_user_opts_log_last_paste_changes_flag_=true
     _object_user_opts_log_last_paste_enable_=false
-    _object_user_opts_log_last_paste_array_+=()
+    _object_user_opts_log_last_paste_array_=()
     _object_user_opts_log_last_paste_array_index_=1
     _object_user_opts_log_last_paste_path_=''
     }
@@ -1624,6 +1636,7 @@ User.Opts.Log.Last.Paste.Path()
 User.Opts.Log.Last.Paste.Remove()
     {
     [[ ${_object_user_opts_log_last_paste_array_[*]} == *"$1"* ]] && _object_user_opts_log_last_paste_array_=("${_object_user_opts_log_last_paste_array_[@]/$1}")
+    [[ -z ${_object_user_opts_log_last_paste_array_[*]} ]] && _object_user_opts_log_last_paste_array_=()
     }
 User.Opts.Log.Last.Paste.Set()
     {
@@ -1699,7 +1712,7 @@ User.Opts.Log.Last.View.Init()
     _object_user_opts_log_last_view_flag_=false
     _object_user_opts_log_last_view_changes_flag_=true
     _object_user_opts_log_last_view_enable_=false
-    _object_user_opts_log_last_view_array_+=()
+    _object_user_opts_log_last_view_array_=()
     _object_user_opts_log_last_view_array_index_=1
     _object_user_opts_log_last_view_path_=''
     }
@@ -1751,6 +1764,7 @@ User.Opts.Log.Last.View.Path()
 User.Opts.Log.Last.View.Remove()
     {
     [[ ${_object_user_opts_log_last_view_array_[*]} == *"$1"* ]] && _object_user_opts_log_last_view_array_=("${_object_user_opts_log_last_view_array_[@]/$1}")
+    [[ -z ${_object_user_opts_log_last_view_array_[*]} ]] && _object_user_opts_log_last_view_array_=()
     }
 User.Opts.Log.Last.View.Set()
     {
@@ -1826,7 +1840,7 @@ User.Opts.Log.Tail.Paste.Init()
     _object_user_opts_log_tail_paste_flag_=false
     _object_user_opts_log_tail_paste_changes_flag_=true
     _object_user_opts_log_tail_paste_enable_=false
-    _object_user_opts_log_tail_paste_array_+=()
+    _object_user_opts_log_tail_paste_array_=()
     _object_user_opts_log_tail_paste_array_index_=1
     _object_user_opts_log_tail_paste_path_=''
     }
@@ -1878,6 +1892,7 @@ User.Opts.Log.Tail.Paste.Path()
 User.Opts.Log.Tail.Paste.Remove()
     {
     [[ ${_object_user_opts_log_tail_paste_array_[*]} == *"$1"* ]] && _object_user_opts_log_tail_paste_array_=("${_object_user_opts_log_tail_paste_array_[@]/$1}")
+    [[ -z ${_object_user_opts_log_tail_paste_array_[*]} ]] && _object_user_opts_log_tail_paste_array_=()
     }
 User.Opts.Log.Tail.Paste.Set()
     {
@@ -1953,7 +1968,7 @@ User.Opts.Log.Whole.View.Init()
     _object_user_opts_log_whole_view_flag_=false
     _object_user_opts_log_whole_view_changes_flag_=true
     _object_user_opts_log_whole_view_enable_=false
-    _object_user_opts_log_whole_view_array_+=()
+    _object_user_opts_log_whole_view_array_=()
     _object_user_opts_log_whole_view_array_index_=1
     _object_user_opts_log_whole_view_path_=''
     }
@@ -2005,6 +2020,7 @@ User.Opts.Log.Whole.View.Path()
 User.Opts.Log.Whole.View.Remove()
     {
     [[ ${_object_user_opts_log_whole_view_array_[*]} == *"$1"* ]] && _object_user_opts_log_whole_view_array_=("${_object_user_opts_log_whole_view_array_[@]/$1}")
+    [[ -z ${_object_user_opts_log_whole_view_array_[*]} ]] && _object_user_opts_log_whole_view_array_=()
     }
 User.Opts.Log.Whole.View.Set()
     {
@@ -2080,7 +2096,7 @@ User.Opts.Apps.All.Backup.Init()
     _object_user_opts_apps_all_backup_flag_=false
     _object_user_opts_apps_all_backup_changes_flag_=true
     _object_user_opts_apps_all_backup_enable_=false
-    _object_user_opts_apps_all_backup_array_+=()
+    _object_user_opts_apps_all_backup_array_=()
     _object_user_opts_apps_all_backup_array_index_=1
     _object_user_opts_apps_all_backup_path_=''
     }
@@ -2132,6 +2148,7 @@ User.Opts.Apps.All.Backup.Path()
 User.Opts.Apps.All.Backup.Remove()
     {
     [[ ${_object_user_opts_apps_all_backup_array_[*]} == *"$1"* ]] && _object_user_opts_apps_all_backup_array_=("${_object_user_opts_apps_all_backup_array_[@]/$1}")
+    [[ -z ${_object_user_opts_apps_all_backup_array_[*]} ]] && _object_user_opts_apps_all_backup_array_=()
     }
 User.Opts.Apps.All.Backup.Set()
     {
@@ -2207,7 +2224,7 @@ User.Opts.Apps.All.Install.Init()
     _object_user_opts_apps_all_install_flag_=false
     _object_user_opts_apps_all_install_changes_flag_=true
     _object_user_opts_apps_all_install_enable_=false
-    _object_user_opts_apps_all_install_array_+=()
+    _object_user_opts_apps_all_install_array_=()
     _object_user_opts_apps_all_install_array_index_=1
     _object_user_opts_apps_all_install_path_=''
     }
@@ -2259,6 +2276,7 @@ User.Opts.Apps.All.Install.Path()
 User.Opts.Apps.All.Install.Remove()
     {
     [[ ${_object_user_opts_apps_all_install_array_[*]} == *"$1"* ]] && _object_user_opts_apps_all_install_array_=("${_object_user_opts_apps_all_install_array_[@]/$1}")
+    [[ -z ${_object_user_opts_apps_all_install_array_[*]} ]] && _object_user_opts_apps_all_install_array_=()
     }
 User.Opts.Apps.All.Install.Set()
     {
@@ -2334,7 +2352,7 @@ User.Opts.Apps.All.Reinstall.Init()
     _object_user_opts_apps_all_reinstall_flag_=false
     _object_user_opts_apps_all_reinstall_changes_flag_=true
     _object_user_opts_apps_all_reinstall_enable_=false
-    _object_user_opts_apps_all_reinstall_array_+=()
+    _object_user_opts_apps_all_reinstall_array_=()
     _object_user_opts_apps_all_reinstall_array_index_=1
     _object_user_opts_apps_all_reinstall_path_=''
     }
@@ -2386,6 +2404,7 @@ User.Opts.Apps.All.Reinstall.Path()
 User.Opts.Apps.All.Reinstall.Remove()
     {
     [[ ${_object_user_opts_apps_all_reinstall_array_[*]} == *"$1"* ]] && _object_user_opts_apps_all_reinstall_array_=("${_object_user_opts_apps_all_reinstall_array_[@]/$1}")
+    [[ -z ${_object_user_opts_apps_all_reinstall_array_[*]} ]] && _object_user_opts_apps_all_reinstall_array_=()
     }
 User.Opts.Apps.All.Reinstall.Set()
     {
@@ -2461,7 +2480,7 @@ User.Opts.Apps.All.Restart.Init()
     _object_user_opts_apps_all_restart_flag_=false
     _object_user_opts_apps_all_restart_changes_flag_=true
     _object_user_opts_apps_all_restart_enable_=false
-    _object_user_opts_apps_all_restart_array_+=()
+    _object_user_opts_apps_all_restart_array_=()
     _object_user_opts_apps_all_restart_array_index_=1
     _object_user_opts_apps_all_restart_path_=''
     }
@@ -2513,6 +2532,7 @@ User.Opts.Apps.All.Restart.Path()
 User.Opts.Apps.All.Restart.Remove()
     {
     [[ ${_object_user_opts_apps_all_restart_array_[*]} == *"$1"* ]] && _object_user_opts_apps_all_restart_array_=("${_object_user_opts_apps_all_restart_array_[@]/$1}")
+    [[ -z ${_object_user_opts_apps_all_restart_array_[*]} ]] && _object_user_opts_apps_all_restart_array_=()
     }
 User.Opts.Apps.All.Restart.Set()
     {
@@ -2588,7 +2608,7 @@ User.Opts.Apps.All.Restore.Init()
     _object_user_opts_apps_all_restore_flag_=false
     _object_user_opts_apps_all_restore_changes_flag_=true
     _object_user_opts_apps_all_restore_enable_=false
-    _object_user_opts_apps_all_restore_array_+=()
+    _object_user_opts_apps_all_restore_array_=()
     _object_user_opts_apps_all_restore_array_index_=1
     _object_user_opts_apps_all_restore_path_=''
     }
@@ -2640,6 +2660,7 @@ User.Opts.Apps.All.Restore.Path()
 User.Opts.Apps.All.Restore.Remove()
     {
     [[ ${_object_user_opts_apps_all_restore_array_[*]} == *"$1"* ]] && _object_user_opts_apps_all_restore_array_=("${_object_user_opts_apps_all_restore_array_[@]/$1}")
+    [[ -z ${_object_user_opts_apps_all_restore_array_[*]} ]] && _object_user_opts_apps_all_restore_array_=()
     }
 User.Opts.Apps.All.Restore.Set()
     {
@@ -2715,7 +2736,7 @@ User.Opts.Apps.All.Start.Init()
     _object_user_opts_apps_all_start_flag_=false
     _object_user_opts_apps_all_start_changes_flag_=true
     _object_user_opts_apps_all_start_enable_=false
-    _object_user_opts_apps_all_start_array_+=()
+    _object_user_opts_apps_all_start_array_=()
     _object_user_opts_apps_all_start_array_index_=1
     _object_user_opts_apps_all_start_path_=''
     }
@@ -2767,6 +2788,7 @@ User.Opts.Apps.All.Start.Path()
 User.Opts.Apps.All.Start.Remove()
     {
     [[ ${_object_user_opts_apps_all_start_array_[*]} == *"$1"* ]] && _object_user_opts_apps_all_start_array_=("${_object_user_opts_apps_all_start_array_[@]/$1}")
+    [[ -z ${_object_user_opts_apps_all_start_array_[*]} ]] && _object_user_opts_apps_all_start_array_=()
     }
 User.Opts.Apps.All.Start.Set()
     {
@@ -2842,7 +2864,7 @@ User.Opts.Apps.All.Stop.Init()
     _object_user_opts_apps_all_stop_flag_=false
     _object_user_opts_apps_all_stop_changes_flag_=true
     _object_user_opts_apps_all_stop_enable_=false
-    _object_user_opts_apps_all_stop_array_+=()
+    _object_user_opts_apps_all_stop_array_=()
     _object_user_opts_apps_all_stop_array_index_=1
     _object_user_opts_apps_all_stop_path_=''
     }
@@ -2894,6 +2916,7 @@ User.Opts.Apps.All.Stop.Path()
 User.Opts.Apps.All.Stop.Remove()
     {
     [[ ${_object_user_opts_apps_all_stop_array_[*]} == *"$1"* ]] && _object_user_opts_apps_all_stop_array_=("${_object_user_opts_apps_all_stop_array_[@]/$1}")
+    [[ -z ${_object_user_opts_apps_all_stop_array_[*]} ]] && _object_user_opts_apps_all_stop_array_=()
     }
 User.Opts.Apps.All.Stop.Set()
     {
@@ -2969,7 +2992,7 @@ User.Opts.Apps.All.Uninstall.Init()
     _object_user_opts_apps_all_uninstall_flag_=false
     _object_user_opts_apps_all_uninstall_changes_flag_=true
     _object_user_opts_apps_all_uninstall_enable_=false
-    _object_user_opts_apps_all_uninstall_array_+=()
+    _object_user_opts_apps_all_uninstall_array_=()
     _object_user_opts_apps_all_uninstall_array_index_=1
     _object_user_opts_apps_all_uninstall_path_=''
     }
@@ -3021,6 +3044,7 @@ User.Opts.Apps.All.Uninstall.Path()
 User.Opts.Apps.All.Uninstall.Remove()
     {
     [[ ${_object_user_opts_apps_all_uninstall_array_[*]} == *"$1"* ]] && _object_user_opts_apps_all_uninstall_array_=("${_object_user_opts_apps_all_uninstall_array_[@]/$1}")
+    [[ -z ${_object_user_opts_apps_all_uninstall_array_[*]} ]] && _object_user_opts_apps_all_uninstall_array_=()
     }
 User.Opts.Apps.All.Uninstall.Set()
     {
@@ -3096,7 +3120,7 @@ User.Opts.Apps.All.Upgrade.Init()
     _object_user_opts_apps_all_upgrade_flag_=false
     _object_user_opts_apps_all_upgrade_changes_flag_=true
     _object_user_opts_apps_all_upgrade_enable_=false
-    _object_user_opts_apps_all_upgrade_array_+=()
+    _object_user_opts_apps_all_upgrade_array_=()
     _object_user_opts_apps_all_upgrade_array_index_=1
     _object_user_opts_apps_all_upgrade_path_=''
     }
@@ -3148,6 +3172,7 @@ User.Opts.Apps.All.Upgrade.Path()
 User.Opts.Apps.All.Upgrade.Remove()
     {
     [[ ${_object_user_opts_apps_all_upgrade_array_[*]} == *"$1"* ]] && _object_user_opts_apps_all_upgrade_array_=("${_object_user_opts_apps_all_upgrade_array_[@]/$1}")
+    [[ -z ${_object_user_opts_apps_all_upgrade_array_[*]} ]] && _object_user_opts_apps_all_upgrade_array_=()
     }
 User.Opts.Apps.All.Upgrade.Set()
     {
@@ -3223,7 +3248,7 @@ User.Opts.Apps.List.All.Init()
     _object_user_opts_apps_list_all_flag_=false
     _object_user_opts_apps_list_all_changes_flag_=true
     _object_user_opts_apps_list_all_enable_=false
-    _object_user_opts_apps_list_all_array_+=()
+    _object_user_opts_apps_list_all_array_=()
     _object_user_opts_apps_list_all_array_index_=1
     _object_user_opts_apps_list_all_path_=''
     }
@@ -3275,6 +3300,7 @@ User.Opts.Apps.List.All.Path()
 User.Opts.Apps.List.All.Remove()
     {
     [[ ${_object_user_opts_apps_list_all_array_[*]} == *"$1"* ]] && _object_user_opts_apps_list_all_array_=("${_object_user_opts_apps_list_all_array_[@]/$1}")
+    [[ -z ${_object_user_opts_apps_list_all_array_[*]} ]] && _object_user_opts_apps_list_all_array_=()
     }
 User.Opts.Apps.List.All.Set()
     {
@@ -3350,7 +3376,7 @@ User.Opts.Apps.List.Installed.Init()
     _object_user_opts_apps_list_installed_flag_=false
     _object_user_opts_apps_list_installed_changes_flag_=true
     _object_user_opts_apps_list_installed_enable_=false
-    _object_user_opts_apps_list_installed_array_+=()
+    _object_user_opts_apps_list_installed_array_=()
     _object_user_opts_apps_list_installed_array_index_=1
     _object_user_opts_apps_list_installed_path_=''
     }
@@ -3402,6 +3428,7 @@ User.Opts.Apps.List.Installed.Path()
 User.Opts.Apps.List.Installed.Remove()
     {
     [[ ${_object_user_opts_apps_list_installed_array_[*]} == *"$1"* ]] && _object_user_opts_apps_list_installed_array_=("${_object_user_opts_apps_list_installed_array_[@]/$1}")
+    [[ -z ${_object_user_opts_apps_list_installed_array_[*]} ]] && _object_user_opts_apps_list_installed_array_=()
     }
 User.Opts.Apps.List.Installed.Set()
     {
@@ -3477,7 +3504,7 @@ User.Opts.Apps.List.NotInstalled.Init()
     _object_user_opts_apps_list_notinstalled_flag_=false
     _object_user_opts_apps_list_notinstalled_changes_flag_=true
     _object_user_opts_apps_list_notinstalled_enable_=false
-    _object_user_opts_apps_list_notinstalled_array_+=()
+    _object_user_opts_apps_list_notinstalled_array_=()
     _object_user_opts_apps_list_notinstalled_array_index_=1
     _object_user_opts_apps_list_notinstalled_path_=''
     }
@@ -3529,6 +3556,7 @@ User.Opts.Apps.List.NotInstalled.Path()
 User.Opts.Apps.List.NotInstalled.Remove()
     {
     [[ ${_object_user_opts_apps_list_notinstalled_array_[*]} == *"$1"* ]] && _object_user_opts_apps_list_notinstalled_array_=("${_object_user_opts_apps_list_notinstalled_array_[@]/$1}")
+    [[ -z ${_object_user_opts_apps_list_notinstalled_array_[*]} ]] && _object_user_opts_apps_list_notinstalled_array_=()
     }
 User.Opts.Apps.List.NotInstalled.Set()
     {
@@ -3604,7 +3632,7 @@ User.Opts.Apps.List.Upgradable.Init()
     _object_user_opts_apps_list_upgradable_flag_=false
     _object_user_opts_apps_list_upgradable_changes_flag_=true
     _object_user_opts_apps_list_upgradable_enable_=false
-    _object_user_opts_apps_list_upgradable_array_+=()
+    _object_user_opts_apps_list_upgradable_array_=()
     _object_user_opts_apps_list_upgradable_array_index_=1
     _object_user_opts_apps_list_upgradable_path_=''
     }
@@ -3656,6 +3684,7 @@ User.Opts.Apps.List.Upgradable.Path()
 User.Opts.Apps.List.Upgradable.Remove()
     {
     [[ ${_object_user_opts_apps_list_upgradable_array_[*]} == *"$1"* ]] && _object_user_opts_apps_list_upgradable_array_=("${_object_user_opts_apps_list_upgradable_array_[@]/$1}")
+    [[ -z ${_object_user_opts_apps_list_upgradable_array_[*]} ]] && _object_user_opts_apps_list_upgradable_array_=()
     }
 User.Opts.Apps.List.Upgradable.Set()
     {
@@ -3731,7 +3760,7 @@ IPKGs.ToDownload.Init()
     _object_ipkgs_todownload_flag_=false
     _object_ipkgs_todownload_changes_flag_=true
     _object_ipkgs_todownload_enable_=false
-    _object_ipkgs_todownload_array_+=()
+    _object_ipkgs_todownload_array_=()
     _object_ipkgs_todownload_array_index_=1
     _object_ipkgs_todownload_path_=''
     }
@@ -3783,6 +3812,7 @@ IPKGs.ToDownload.Path()
 IPKGs.ToDownload.Remove()
     {
     [[ ${_object_ipkgs_todownload_array_[*]} == *"$1"* ]] && _object_ipkgs_todownload_array_=("${_object_ipkgs_todownload_array_[@]/$1}")
+    [[ -z ${_object_ipkgs_todownload_array_[*]} ]] && _object_ipkgs_todownload_array_=()
     }
 IPKGs.ToDownload.Set()
     {
@@ -3858,7 +3888,7 @@ IPKGs.ToInstall.Init()
     _object_ipkgs_toinstall_flag_=false
     _object_ipkgs_toinstall_changes_flag_=true
     _object_ipkgs_toinstall_enable_=false
-    _object_ipkgs_toinstall_array_+=()
+    _object_ipkgs_toinstall_array_=()
     _object_ipkgs_toinstall_array_index_=1
     _object_ipkgs_toinstall_path_=''
     }
@@ -3910,6 +3940,7 @@ IPKGs.ToInstall.Path()
 IPKGs.ToInstall.Remove()
     {
     [[ ${_object_ipkgs_toinstall_array_[*]} == *"$1"* ]] && _object_ipkgs_toinstall_array_=("${_object_ipkgs_toinstall_array_[@]/$1}")
+    [[ -z ${_object_ipkgs_toinstall_array_[*]} ]] && _object_ipkgs_toinstall_array_=()
     }
 IPKGs.ToInstall.Set()
     {
@@ -3985,7 +4016,7 @@ IPKGs.ToUninstall.Init()
     _object_ipkgs_touninstall_flag_=false
     _object_ipkgs_touninstall_changes_flag_=true
     _object_ipkgs_touninstall_enable_=false
-    _object_ipkgs_touninstall_array_+=()
+    _object_ipkgs_touninstall_array_=()
     _object_ipkgs_touninstall_array_index_=1
     _object_ipkgs_touninstall_path_=''
     }
@@ -4037,6 +4068,7 @@ IPKGs.ToUninstall.Path()
 IPKGs.ToUninstall.Remove()
     {
     [[ ${_object_ipkgs_touninstall_array_[*]} == *"$1"* ]] && _object_ipkgs_touninstall_array_=("${_object_ipkgs_touninstall_array_[@]/$1}")
+    [[ -z ${_object_ipkgs_touninstall_array_[*]} ]] && _object_ipkgs_touninstall_array_=()
     }
 IPKGs.ToUninstall.Set()
     {
@@ -4112,7 +4144,7 @@ QPKGs.Dependant.Init()
     _object_qpkgs_dependant_flag_=false
     _object_qpkgs_dependant_changes_flag_=true
     _object_qpkgs_dependant_enable_=false
-    _object_qpkgs_dependant_array_+=()
+    _object_qpkgs_dependant_array_=()
     _object_qpkgs_dependant_array_index_=1
     _object_qpkgs_dependant_path_=''
     }
@@ -4164,6 +4196,7 @@ QPKGs.Dependant.Path()
 QPKGs.Dependant.Remove()
     {
     [[ ${_object_qpkgs_dependant_array_[*]} == *"$1"* ]] && _object_qpkgs_dependant_array_=("${_object_qpkgs_dependant_array_[@]/$1}")
+    [[ -z ${_object_qpkgs_dependant_array_[*]} ]] && _object_qpkgs_dependant_array_=()
     }
 QPKGs.Dependant.Set()
     {
@@ -4239,7 +4272,7 @@ QPKGs.Independent.Init()
     _object_qpkgs_independent_flag_=false
     _object_qpkgs_independent_changes_flag_=true
     _object_qpkgs_independent_enable_=false
-    _object_qpkgs_independent_array_+=()
+    _object_qpkgs_independent_array_=()
     _object_qpkgs_independent_array_index_=1
     _object_qpkgs_independent_path_=''
     }
@@ -4291,6 +4324,7 @@ QPKGs.Independent.Path()
 QPKGs.Independent.Remove()
     {
     [[ ${_object_qpkgs_independent_array_[*]} == *"$1"* ]] && _object_qpkgs_independent_array_=("${_object_qpkgs_independent_array_[@]/$1}")
+    [[ -z ${_object_qpkgs_independent_array_[*]} ]] && _object_qpkgs_independent_array_=()
     }
 QPKGs.Independent.Set()
     {
@@ -4366,7 +4400,7 @@ QPKGs.Installable.Init()
     _object_qpkgs_installable_flag_=false
     _object_qpkgs_installable_changes_flag_=true
     _object_qpkgs_installable_enable_=false
-    _object_qpkgs_installable_array_+=()
+    _object_qpkgs_installable_array_=()
     _object_qpkgs_installable_array_index_=1
     _object_qpkgs_installable_path_=''
     }
@@ -4418,6 +4452,7 @@ QPKGs.Installable.Path()
 QPKGs.Installable.Remove()
     {
     [[ ${_object_qpkgs_installable_array_[*]} == *"$1"* ]] && _object_qpkgs_installable_array_=("${_object_qpkgs_installable_array_[@]/$1}")
+    [[ -z ${_object_qpkgs_installable_array_[*]} ]] && _object_qpkgs_installable_array_=()
     }
 QPKGs.Installable.Set()
     {
@@ -4493,7 +4528,7 @@ QPKGs.Installed.Init()
     _object_qpkgs_installed_flag_=false
     _object_qpkgs_installed_changes_flag_=true
     _object_qpkgs_installed_enable_=false
-    _object_qpkgs_installed_array_+=()
+    _object_qpkgs_installed_array_=()
     _object_qpkgs_installed_array_index_=1
     _object_qpkgs_installed_path_=''
     }
@@ -4545,6 +4580,7 @@ QPKGs.Installed.Path()
 QPKGs.Installed.Remove()
     {
     [[ ${_object_qpkgs_installed_array_[*]} == *"$1"* ]] && _object_qpkgs_installed_array_=("${_object_qpkgs_installed_array_[@]/$1}")
+    [[ -z ${_object_qpkgs_installed_array_[*]} ]] && _object_qpkgs_installed_array_=()
     }
 QPKGs.Installed.Set()
     {
@@ -4620,7 +4656,7 @@ QPKGs.JustInstalled.Init()
     _object_qpkgs_justinstalled_flag_=false
     _object_qpkgs_justinstalled_changes_flag_=true
     _object_qpkgs_justinstalled_enable_=false
-    _object_qpkgs_justinstalled_array_+=()
+    _object_qpkgs_justinstalled_array_=()
     _object_qpkgs_justinstalled_array_index_=1
     _object_qpkgs_justinstalled_path_=''
     }
@@ -4672,6 +4708,7 @@ QPKGs.JustInstalled.Path()
 QPKGs.JustInstalled.Remove()
     {
     [[ ${_object_qpkgs_justinstalled_array_[*]} == *"$1"* ]] && _object_qpkgs_justinstalled_array_=("${_object_qpkgs_justinstalled_array_[@]/$1}")
+    [[ -z ${_object_qpkgs_justinstalled_array_[*]} ]] && _object_qpkgs_justinstalled_array_=()
     }
 QPKGs.JustInstalled.Set()
     {
@@ -4747,7 +4784,7 @@ QPKGs.Names.Init()
     _object_qpkgs_names_flag_=false
     _object_qpkgs_names_changes_flag_=true
     _object_qpkgs_names_enable_=false
-    _object_qpkgs_names_array_+=()
+    _object_qpkgs_names_array_=()
     _object_qpkgs_names_array_index_=1
     _object_qpkgs_names_path_=''
     }
@@ -4799,6 +4836,7 @@ QPKGs.Names.Path()
 QPKGs.Names.Remove()
     {
     [[ ${_object_qpkgs_names_array_[*]} == *"$1"* ]] && _object_qpkgs_names_array_=("${_object_qpkgs_names_array_[@]/$1}")
+    [[ -z ${_object_qpkgs_names_array_[*]} ]] && _object_qpkgs_names_array_=()
     }
 QPKGs.Names.Set()
     {
@@ -4874,7 +4912,7 @@ QPKGs.NotInstalled.Init()
     _object_qpkgs_notinstalled_flag_=false
     _object_qpkgs_notinstalled_changes_flag_=true
     _object_qpkgs_notinstalled_enable_=false
-    _object_qpkgs_notinstalled_array_+=()
+    _object_qpkgs_notinstalled_array_=()
     _object_qpkgs_notinstalled_array_index_=1
     _object_qpkgs_notinstalled_path_=''
     }
@@ -4926,6 +4964,7 @@ QPKGs.NotInstalled.Path()
 QPKGs.NotInstalled.Remove()
     {
     [[ ${_object_qpkgs_notinstalled_array_[*]} == *"$1"* ]] && _object_qpkgs_notinstalled_array_=("${_object_qpkgs_notinstalled_array_[@]/$1}")
+    [[ -z ${_object_qpkgs_notinstalled_array_[*]} ]] && _object_qpkgs_notinstalled_array_=()
     }
 QPKGs.NotInstalled.Set()
     {
@@ -5001,7 +5040,7 @@ QPKGs.Upgradable.Init()
     _object_qpkgs_upgradable_flag_=false
     _object_qpkgs_upgradable_changes_flag_=true
     _object_qpkgs_upgradable_enable_=false
-    _object_qpkgs_upgradable_array_+=()
+    _object_qpkgs_upgradable_array_=()
     _object_qpkgs_upgradable_array_index_=1
     _object_qpkgs_upgradable_path_=''
     }
@@ -5053,6 +5092,7 @@ QPKGs.Upgradable.Path()
 QPKGs.Upgradable.Remove()
     {
     [[ ${_object_qpkgs_upgradable_array_[*]} == *"$1"* ]] && _object_qpkgs_upgradable_array_=("${_object_qpkgs_upgradable_array_[@]/$1}")
+    [[ -z ${_object_qpkgs_upgradable_array_[*]} ]] && _object_qpkgs_upgradable_array_=()
     }
 QPKGs.Upgradable.Set()
     {
@@ -5128,7 +5168,7 @@ QPKGs.ToBackup.Init()
     _object_qpkgs_tobackup_flag_=false
     _object_qpkgs_tobackup_changes_flag_=true
     _object_qpkgs_tobackup_enable_=false
-    _object_qpkgs_tobackup_array_+=()
+    _object_qpkgs_tobackup_array_=()
     _object_qpkgs_tobackup_array_index_=1
     _object_qpkgs_tobackup_path_=''
     }
@@ -5180,6 +5220,7 @@ QPKGs.ToBackup.Path()
 QPKGs.ToBackup.Remove()
     {
     [[ ${_object_qpkgs_tobackup_array_[*]} == *"$1"* ]] && _object_qpkgs_tobackup_array_=("${_object_qpkgs_tobackup_array_[@]/$1}")
+    [[ -z ${_object_qpkgs_tobackup_array_[*]} ]] && _object_qpkgs_tobackup_array_=()
     }
 QPKGs.ToBackup.Set()
     {
@@ -5255,7 +5296,7 @@ QPKGs.ToDownload.Init()
     _object_qpkgs_todownload_flag_=false
     _object_qpkgs_todownload_changes_flag_=true
     _object_qpkgs_todownload_enable_=false
-    _object_qpkgs_todownload_array_+=()
+    _object_qpkgs_todownload_array_=()
     _object_qpkgs_todownload_array_index_=1
     _object_qpkgs_todownload_path_=''
     }
@@ -5307,6 +5348,7 @@ QPKGs.ToDownload.Path()
 QPKGs.ToDownload.Remove()
     {
     [[ ${_object_qpkgs_todownload_array_[*]} == *"$1"* ]] && _object_qpkgs_todownload_array_=("${_object_qpkgs_todownload_array_[@]/$1}")
+    [[ -z ${_object_qpkgs_todownload_array_[*]} ]] && _object_qpkgs_todownload_array_=()
     }
 QPKGs.ToDownload.Set()
     {
@@ -5382,7 +5424,7 @@ QPKGs.ToForceUpgrade.Init()
     _object_qpkgs_toforceupgrade_flag_=false
     _object_qpkgs_toforceupgrade_changes_flag_=true
     _object_qpkgs_toforceupgrade_enable_=false
-    _object_qpkgs_toforceupgrade_array_+=()
+    _object_qpkgs_toforceupgrade_array_=()
     _object_qpkgs_toforceupgrade_array_index_=1
     _object_qpkgs_toforceupgrade_path_=''
     }
@@ -5434,6 +5476,7 @@ QPKGs.ToForceUpgrade.Path()
 QPKGs.ToForceUpgrade.Remove()
     {
     [[ ${_object_qpkgs_toforceupgrade_array_[*]} == *"$1"* ]] && _object_qpkgs_toforceupgrade_array_=("${_object_qpkgs_toforceupgrade_array_[@]/$1}")
+    [[ -z ${_object_qpkgs_toforceupgrade_array_[*]} ]] && _object_qpkgs_toforceupgrade_array_=()
     }
 QPKGs.ToForceUpgrade.Set()
     {
@@ -5509,7 +5552,7 @@ QPKGs.ToInstall.Init()
     _object_qpkgs_toinstall_flag_=false
     _object_qpkgs_toinstall_changes_flag_=true
     _object_qpkgs_toinstall_enable_=false
-    _object_qpkgs_toinstall_array_+=()
+    _object_qpkgs_toinstall_array_=()
     _object_qpkgs_toinstall_array_index_=1
     _object_qpkgs_toinstall_path_=''
     }
@@ -5561,6 +5604,7 @@ QPKGs.ToInstall.Path()
 QPKGs.ToInstall.Remove()
     {
     [[ ${_object_qpkgs_toinstall_array_[*]} == *"$1"* ]] && _object_qpkgs_toinstall_array_=("${_object_qpkgs_toinstall_array_[@]/$1}")
+    [[ -z ${_object_qpkgs_toinstall_array_[*]} ]] && _object_qpkgs_toinstall_array_=()
     }
 QPKGs.ToInstall.Set()
     {
@@ -5636,7 +5680,7 @@ QPKGs.ToReinstall.Init()
     _object_qpkgs_toreinstall_flag_=false
     _object_qpkgs_toreinstall_changes_flag_=true
     _object_qpkgs_toreinstall_enable_=false
-    _object_qpkgs_toreinstall_array_+=()
+    _object_qpkgs_toreinstall_array_=()
     _object_qpkgs_toreinstall_array_index_=1
     _object_qpkgs_toreinstall_path_=''
     }
@@ -5688,6 +5732,7 @@ QPKGs.ToReinstall.Path()
 QPKGs.ToReinstall.Remove()
     {
     [[ ${_object_qpkgs_toreinstall_array_[*]} == *"$1"* ]] && _object_qpkgs_toreinstall_array_=("${_object_qpkgs_toreinstall_array_[@]/$1}")
+    [[ -z ${_object_qpkgs_toreinstall_array_[*]} ]] && _object_qpkgs_toreinstall_array_=()
     }
 QPKGs.ToReinstall.Set()
     {
@@ -5763,7 +5808,7 @@ QPKGs.ToRestart.Init()
     _object_qpkgs_torestart_flag_=false
     _object_qpkgs_torestart_changes_flag_=true
     _object_qpkgs_torestart_enable_=false
-    _object_qpkgs_torestart_array_+=()
+    _object_qpkgs_torestart_array_=()
     _object_qpkgs_torestart_array_index_=1
     _object_qpkgs_torestart_path_=''
     }
@@ -5815,6 +5860,7 @@ QPKGs.ToRestart.Path()
 QPKGs.ToRestart.Remove()
     {
     [[ ${_object_qpkgs_torestart_array_[*]} == *"$1"* ]] && _object_qpkgs_torestart_array_=("${_object_qpkgs_torestart_array_[@]/$1}")
+    [[ -z ${_object_qpkgs_torestart_array_[*]} ]] && _object_qpkgs_torestart_array_=()
     }
 QPKGs.ToRestart.Set()
     {
@@ -5890,7 +5936,7 @@ QPKGs.ToRestore.Init()
     _object_qpkgs_torestore_flag_=false
     _object_qpkgs_torestore_changes_flag_=true
     _object_qpkgs_torestore_enable_=false
-    _object_qpkgs_torestore_array_+=()
+    _object_qpkgs_torestore_array_=()
     _object_qpkgs_torestore_array_index_=1
     _object_qpkgs_torestore_path_=''
     }
@@ -5942,6 +5988,7 @@ QPKGs.ToRestore.Path()
 QPKGs.ToRestore.Remove()
     {
     [[ ${_object_qpkgs_torestore_array_[*]} == *"$1"* ]] && _object_qpkgs_torestore_array_=("${_object_qpkgs_torestore_array_[@]/$1}")
+    [[ -z ${_object_qpkgs_torestore_array_[*]} ]] && _object_qpkgs_torestore_array_=()
     }
 QPKGs.ToRestore.Set()
     {
@@ -6017,7 +6064,7 @@ QPKGs.ToStart.Init()
     _object_qpkgs_tostart_flag_=false
     _object_qpkgs_tostart_changes_flag_=true
     _object_qpkgs_tostart_enable_=false
-    _object_qpkgs_tostart_array_+=()
+    _object_qpkgs_tostart_array_=()
     _object_qpkgs_tostart_array_index_=1
     _object_qpkgs_tostart_path_=''
     }
@@ -6069,6 +6116,7 @@ QPKGs.ToStart.Path()
 QPKGs.ToStart.Remove()
     {
     [[ ${_object_qpkgs_tostart_array_[*]} == *"$1"* ]] && _object_qpkgs_tostart_array_=("${_object_qpkgs_tostart_array_[@]/$1}")
+    [[ -z ${_object_qpkgs_tostart_array_[*]} ]] && _object_qpkgs_tostart_array_=()
     }
 QPKGs.ToStart.Set()
     {
@@ -6144,7 +6192,7 @@ QPKGs.ToStop.Init()
     _object_qpkgs_tostop_flag_=false
     _object_qpkgs_tostop_changes_flag_=true
     _object_qpkgs_tostop_enable_=false
-    _object_qpkgs_tostop_array_+=()
+    _object_qpkgs_tostop_array_=()
     _object_qpkgs_tostop_array_index_=1
     _object_qpkgs_tostop_path_=''
     }
@@ -6196,6 +6244,7 @@ QPKGs.ToStop.Path()
 QPKGs.ToStop.Remove()
     {
     [[ ${_object_qpkgs_tostop_array_[*]} == *"$1"* ]] && _object_qpkgs_tostop_array_=("${_object_qpkgs_tostop_array_[@]/$1}")
+    [[ -z ${_object_qpkgs_tostop_array_[*]} ]] && _object_qpkgs_tostop_array_=()
     }
 QPKGs.ToStop.Set()
     {
@@ -6271,7 +6320,7 @@ QPKGs.ToUninstall.Init()
     _object_qpkgs_touninstall_flag_=false
     _object_qpkgs_touninstall_changes_flag_=true
     _object_qpkgs_touninstall_enable_=false
-    _object_qpkgs_touninstall_array_+=()
+    _object_qpkgs_touninstall_array_=()
     _object_qpkgs_touninstall_array_index_=1
     _object_qpkgs_touninstall_path_=''
     }
@@ -6323,6 +6372,7 @@ QPKGs.ToUninstall.Path()
 QPKGs.ToUninstall.Remove()
     {
     [[ ${_object_qpkgs_touninstall_array_[*]} == *"$1"* ]] && _object_qpkgs_touninstall_array_=("${_object_qpkgs_touninstall_array_[@]/$1}")
+    [[ -z ${_object_qpkgs_touninstall_array_[*]} ]] && _object_qpkgs_touninstall_array_=()
     }
 QPKGs.ToUninstall.Set()
     {
@@ -6398,7 +6448,7 @@ QPKGs.ToUpgrade.Init()
     _object_qpkgs_toupgrade_flag_=false
     _object_qpkgs_toupgrade_changes_flag_=true
     _object_qpkgs_toupgrade_enable_=false
-    _object_qpkgs_toupgrade_array_+=()
+    _object_qpkgs_toupgrade_array_=()
     _object_qpkgs_toupgrade_array_index_=1
     _object_qpkgs_toupgrade_path_=''
     }
@@ -6450,6 +6500,7 @@ QPKGs.ToUpgrade.Path()
 QPKGs.ToUpgrade.Remove()
     {
     [[ ${_object_qpkgs_toupgrade_array_[*]} == *"$1"* ]] && _object_qpkgs_toupgrade_array_=("${_object_qpkgs_toupgrade_array_[@]/$1}")
+    [[ -z ${_object_qpkgs_toupgrade_array_[*]} ]] && _object_qpkgs_toupgrade_array_=()
     }
 QPKGs.ToUpgrade.Set()
     {
@@ -6525,7 +6576,7 @@ Session.Backup.Init()
     _object_session_backup_flag_=false
     _object_session_backup_changes_flag_=true
     _object_session_backup_enable_=false
-    _object_session_backup_array_+=()
+    _object_session_backup_array_=()
     _object_session_backup_array_index_=1
     _object_session_backup_path_=''
     }
@@ -6577,6 +6628,7 @@ Session.Backup.Path()
 Session.Backup.Remove()
     {
     [[ ${_object_session_backup_array_[*]} == *"$1"* ]] && _object_session_backup_array_=("${_object_session_backup_array_[@]/$1}")
+    [[ -z ${_object_session_backup_array_[*]} ]] && _object_session_backup_array_=()
     }
 Session.Backup.Set()
     {
@@ -6652,7 +6704,7 @@ Session.Debug.To.File.Init()
     _object_session_debug_to_file_flag_=false
     _object_session_debug_to_file_changes_flag_=true
     _object_session_debug_to_file_enable_=false
-    _object_session_debug_to_file_array_+=()
+    _object_session_debug_to_file_array_=()
     _object_session_debug_to_file_array_index_=1
     _object_session_debug_to_file_path_=''
     }
@@ -6704,6 +6756,7 @@ Session.Debug.To.File.Path()
 Session.Debug.To.File.Remove()
     {
     [[ ${_object_session_debug_to_file_array_[*]} == *"$1"* ]] && _object_session_debug_to_file_array_=("${_object_session_debug_to_file_array_[@]/$1}")
+    [[ -z ${_object_session_debug_to_file_array_[*]} ]] && _object_session_debug_to_file_array_=()
     }
 Session.Debug.To.File.Set()
     {
@@ -6779,7 +6832,7 @@ Session.Debug.To.Screen.Init()
     _object_session_debug_to_screen_flag_=false
     _object_session_debug_to_screen_changes_flag_=true
     _object_session_debug_to_screen_enable_=false
-    _object_session_debug_to_screen_array_+=()
+    _object_session_debug_to_screen_array_=()
     _object_session_debug_to_screen_array_index_=1
     _object_session_debug_to_screen_path_=''
     }
@@ -6831,6 +6884,7 @@ Session.Debug.To.Screen.Path()
 Session.Debug.To.Screen.Remove()
     {
     [[ ${_object_session_debug_to_screen_array_[*]} == *"$1"* ]] && _object_session_debug_to_screen_array_=("${_object_session_debug_to_screen_array_[@]/$1}")
+    [[ -z ${_object_session_debug_to_screen_array_[*]} ]] && _object_session_debug_to_screen_array_=()
     }
 Session.Debug.To.Screen.Set()
     {
@@ -6906,7 +6960,7 @@ Session.Display.Clean.Init()
     _object_session_display_clean_flag_=false
     _object_session_display_clean_changes_flag_=true
     _object_session_display_clean_enable_=false
-    _object_session_display_clean_array_+=()
+    _object_session_display_clean_array_=()
     _object_session_display_clean_array_index_=1
     _object_session_display_clean_path_=''
     }
@@ -6958,6 +7012,7 @@ Session.Display.Clean.Path()
 Session.Display.Clean.Remove()
     {
     [[ ${_object_session_display_clean_array_[*]} == *"$1"* ]] && _object_session_display_clean_array_=("${_object_session_display_clean_array_[@]/$1}")
+    [[ -z ${_object_session_display_clean_array_[*]} ]] && _object_session_display_clean_array_=()
     }
 Session.Display.Clean.Set()
     {
@@ -7033,7 +7088,7 @@ Session.IPKGs.Install.Init()
     _object_session_ipkgs_install_flag_=false
     _object_session_ipkgs_install_changes_flag_=true
     _object_session_ipkgs_install_enable_=false
-    _object_session_ipkgs_install_array_+=()
+    _object_session_ipkgs_install_array_=()
     _object_session_ipkgs_install_array_index_=1
     _object_session_ipkgs_install_path_=''
     }
@@ -7085,6 +7140,7 @@ Session.IPKGs.Install.Path()
 Session.IPKGs.Install.Remove()
     {
     [[ ${_object_session_ipkgs_install_array_[*]} == *"$1"* ]] && _object_session_ipkgs_install_array_=("${_object_session_ipkgs_install_array_[@]/$1}")
+    [[ -z ${_object_session_ipkgs_install_array_[*]} ]] && _object_session_ipkgs_install_array_=()
     }
 Session.IPKGs.Install.Set()
     {
@@ -7160,7 +7216,7 @@ Session.LineSpace.Init()
     _object_session_linespace_flag_=false
     _object_session_linespace_changes_flag_=true
     _object_session_linespace_enable_=false
-    _object_session_linespace_array_+=()
+    _object_session_linespace_array_=()
     _object_session_linespace_array_index_=1
     _object_session_linespace_path_=''
     }
@@ -7212,6 +7268,7 @@ Session.LineSpace.Path()
 Session.LineSpace.Remove()
     {
     [[ ${_object_session_linespace_array_[*]} == *"$1"* ]] && _object_session_linespace_array_=("${_object_session_linespace_array_[@]/$1}")
+    [[ -z ${_object_session_linespace_array_[*]} ]] && _object_session_linespace_array_=()
     }
 Session.LineSpace.Set()
     {
@@ -7287,7 +7344,7 @@ Session.PIPs.Install.Init()
     _object_session_pips_install_flag_=false
     _object_session_pips_install_changes_flag_=true
     _object_session_pips_install_enable_=false
-    _object_session_pips_install_array_+=()
+    _object_session_pips_install_array_=()
     _object_session_pips_install_array_index_=1
     _object_session_pips_install_path_=''
     }
@@ -7339,6 +7396,7 @@ Session.PIPs.Install.Path()
 Session.PIPs.Install.Remove()
     {
     [[ ${_object_session_pips_install_array_[*]} == *"$1"* ]] && _object_session_pips_install_array_=("${_object_session_pips_install_array_[@]/$1}")
+    [[ -z ${_object_session_pips_install_array_[*]} ]] && _object_session_pips_install_array_=()
     }
 Session.PIPs.Install.Set()
     {
@@ -7414,7 +7472,7 @@ Session.ShowBackupLocation.Init()
     _object_session_showbackuplocation_flag_=false
     _object_session_showbackuplocation_changes_flag_=true
     _object_session_showbackuplocation_enable_=false
-    _object_session_showbackuplocation_array_+=()
+    _object_session_showbackuplocation_array_=()
     _object_session_showbackuplocation_array_index_=1
     _object_session_showbackuplocation_path_=''
     }
@@ -7466,6 +7524,7 @@ Session.ShowBackupLocation.Path()
 Session.ShowBackupLocation.Remove()
     {
     [[ ${_object_session_showbackuplocation_array_[*]} == *"$1"* ]] && _object_session_showbackuplocation_array_=("${_object_session_showbackuplocation_array_[@]/$1}")
+    [[ -z ${_object_session_showbackuplocation_array_[*]} ]] && _object_session_showbackuplocation_array_=()
     }
 Session.ShowBackupLocation.Set()
     {
@@ -7541,7 +7600,7 @@ Session.SkipPackageProcessing.Init()
     _object_session_skippackageprocessing_flag_=false
     _object_session_skippackageprocessing_changes_flag_=true
     _object_session_skippackageprocessing_enable_=false
-    _object_session_skippackageprocessing_array_+=()
+    _object_session_skippackageprocessing_array_=()
     _object_session_skippackageprocessing_array_index_=1
     _object_session_skippackageprocessing_path_=''
     }
@@ -7593,6 +7652,7 @@ Session.SkipPackageProcessing.Path()
 Session.SkipPackageProcessing.Remove()
     {
     [[ ${_object_session_skippackageprocessing_array_[*]} == *"$1"* ]] && _object_session_skippackageprocessing_array_=("${_object_session_skippackageprocessing_array_[@]/$1}")
+    [[ -z ${_object_session_skippackageprocessing_array_[*]} ]] && _object_session_skippackageprocessing_array_=()
     }
 Session.SkipPackageProcessing.Set()
     {
@@ -7668,7 +7728,7 @@ Session.SuggestIssue.Init()
     _object_session_suggestissue_flag_=false
     _object_session_suggestissue_changes_flag_=true
     _object_session_suggestissue_enable_=false
-    _object_session_suggestissue_array_+=()
+    _object_session_suggestissue_array_=()
     _object_session_suggestissue_array_index_=1
     _object_session_suggestissue_path_=''
     }
@@ -7720,6 +7780,7 @@ Session.SuggestIssue.Path()
 Session.SuggestIssue.Remove()
     {
     [[ ${_object_session_suggestissue_array_[*]} == *"$1"* ]] && _object_session_suggestissue_array_=("${_object_session_suggestissue_array_[@]/$1}")
+    [[ -z ${_object_session_suggestissue_array_[*]} ]] && _object_session_suggestissue_array_=()
     }
 Session.SuggestIssue.Set()
     {
@@ -7795,7 +7856,7 @@ Session.Summary.Init()
     _object_session_summary_flag_=false
     _object_session_summary_changes_flag_=true
     _object_session_summary_enable_=false
-    _object_session_summary_array_+=()
+    _object_session_summary_array_=()
     _object_session_summary_array_index_=1
     _object_session_summary_path_=''
     }
@@ -7847,6 +7908,7 @@ Session.Summary.Path()
 Session.Summary.Remove()
     {
     [[ ${_object_session_summary_array_[*]} == *"$1"* ]] && _object_session_summary_array_=("${_object_session_summary_array_[@]/$1}")
+    [[ -z ${_object_session_summary_array_[*]} ]] && _object_session_summary_array_=()
     }
 Session.Summary.Set()
     {

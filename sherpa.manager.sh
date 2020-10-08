@@ -166,7 +166,7 @@ Session.Init()
     readonly IPKG_DL_PATH=$WORK_PATH/ipkgs.downloads
     readonly IPKG_CACHE_PATH=$WORK_PATH/ipkgs
     readonly PIP_CACHE_PATH=$WORK_PATH/pips
-    readonly COMPILED_OBJECTS_HASH=a3b73573a7d09ae4c16ef45616c51b21
+    readonly COMPILED_OBJECTS_HASH=f5f81bd700b5d8e66c94dc579ecb97dc
     readonly DEBUG_LOG_DATAWIDTH=92
 
     if ! MakePath "$WORK_PATH" 'work'; then
@@ -1420,16 +1420,13 @@ CalcAllIPKGDepsToInstall()
 
     # From a specified list of IPKG names, find all dependent IPKGs, exclude those already installed, then generate a total qty to download and a total download byte-size
 
-    # input:
-    #   $1 = string with space-separated initial IPKG names
-
     if IsNotSysFileExist $OPKG_CMD || IsNotSysFileExist $GNU_GREP_CMD; then
         code_pointer=6
         return 1
     fi
 
     DebugFuncEntry
-    local download_count=0
+    local package_count=0
     local requested_list=''
     local this_list=()
     local dependency_accumulator=()
@@ -1440,10 +1437,10 @@ CalcAllIPKGDepsToInstall()
     local complete=false
 
     # remove duplicate entries
-    requested_list=$(DeDupeWords "$1")
+    requested_list=$(DeDupeWords "$(IPKGs.ToInstall.List)")
     this_list=($requested_list)
 
-    ShowAsProc 'determining IPKGs required'
+    ShowAsProc 'calculating IPKGs required'
     DebugInfo "IPKGs requested: $requested_list"
 
     if ! IPKGs.Archive.Open; then
@@ -1494,15 +1491,15 @@ CalcAllIPKGDepsToInstall()
     DebugDone 'complete'
     DebugInfo "IPKGs to download: $(IPKGs.ToDownload.List)"
 
-    download_count=$(IPKGs.ToDownload.Count)
+    package_count=$(IPKGs.ToDownload.Count)
 
-    if [[ $download_count -gt 0 ]]; then
-        DebugProc "determining size of IPKG$(FormatAsPlural "$download_count") to download"
+    if [[ $package_count -gt 0 ]]; then
+        DebugProc "determining size of IPKG$(FormatAsPlural "$package_count") to download"
         size_array=($($GNU_GREP_CMD -w '^Package:\|^Size:' "$EXTERNAL_PACKAGE_LIST_PATHFILE" | $GNU_GREP_CMD --after-context 1 --no-group-separator ": $($SED_CMD 's/ /$ /g;s/\$ /\$\\\|: /g' <<< "$(IPKGs.ToDownload.List)")$" | $GREP_CMD '^Size:' | $SED_CMD 's|^Size: ||'))
         IPKGs.ToDownload.Value = $(IFS=+; echo "$((${size_array[*]}))")   # a neat sizing shortcut found here https://stackoverflow.com/a/13635566/6182835
         DebugDone 'complete'
         DebugInfo "IPKG download size: $(IPKGs.ToDownload.Value)"
-        ShowAsDone "$download_count IPKG$(FormatAsPlural "$download_count") ($(FormatAsISOBytes "$(IPKGs.ToDownload.Value)")) to be downloaded"
+        ShowAsDone "$package_count IPKG$(FormatAsPlural "$package_count") ($(FormatAsISOBytes "$(IPKGs.ToDownload.Value)")) to be downloaded"
     else
         ShowAsDone 'no IPKGs are required'
     fi
@@ -1518,37 +1515,35 @@ CalcAllIPKGDepsToUninstall()
 
     # From a specified list of IPKG names, exclude those already installed, then generate a total qty to uninstall
 
-    # input:
-    #   $1 = string with space-separated initial IPKG names
-
     if IsNotSysFileExist $OPKG_CMD || IsNotSysFileExist $GNU_GREP_CMD; then
         code_pointer=7
         return 1
     fi
 
     DebugFuncEntry
-    local pre_uninstall_list=''
-    local uninstall_count=0
+    local requested_list=''
+    local package_count=0
     local element=''
 
-    pre_uninstall_list=$(DeDupeWords "$1")
-    DebugInfo "IPKGs to uninstall: $pre_uninstall_list"
+    requested_list=$(DeDupeWords "$(IPKGs.ToUninstall.List)")
 
-    DebugProc 'excluding IPKGs already installed'
+    DebugInfo "IPKGs requested: $requested_list"
+    DebugProc 'excluding IPKGs not installed'
+
     # shellcheck disable=SC2068
-    for element in ${pre_uninstall_list[@]}; do
-        if $OPKG_CMD status "$element" | $GREP_CMD -q "Status:.*installed"; then
-            IPKGs.ToUninstall.Add $element
+    for element in "$requested_list"; do
+        if ! $OPKG_CMD status "$element" | $GREP_CMD -q "Status:.*installed"; then
+            IPKGs.ToUninstall.Remove "$element"
         fi
     done
+
     DebugDone 'complete'
     DebugInfo "IPKGs to uninstall: $(IPKGs.ToUninstall.ListComma)"
+    package_count=$(IPKGs.ToUninstall.Count)
 
-    uninstall_count=$(IPKGs.ToUninstall.Count)
-
-    if [[ $uninstall_count -gt 0 ]]; then
+    if [[ $package_count -gt 0 ]]; then
         DebugDone 'complete'
-        ShowAsDone "$uninstall_count IPKG$(FormatAsPlural "$uninstall_count") to be uninstalled"
+        ShowAsDone "$package_count IPKG$(FormatAsPlural "$package_count") to be uninstalled"
     fi
 
     DebugFuncExit; return 0
@@ -1580,7 +1575,7 @@ IPKGs.Install()
     fi
 
     IPKGs.Upgrade.Batch
-    IPKGs.Install.Batch "$(IPKGs.ToInstall.List)"
+    IPKGs.Install.Batch
 
     # in-case 'python' has disappeared again ...
     [[ ! -L /opt/bin/python && -e /opt/bin/python3 ]] && ln -s /opt/bin/python3 /opt/bin/python
@@ -1609,7 +1604,7 @@ IPKGs.Uninstall()
         done
     fi
 
-    IPKGs.Uninstall.Batch "$(IPKGs.ToUninstall.List)"
+    IPKGs.Uninstall.Batch
 
     DebugFuncExit; return 0
 
@@ -1618,22 +1613,19 @@ IPKGs.Uninstall()
 IPKGs.Install.Batch()
     {
 
-    # input:
-    #   $1 = whitespace-separated string containing list of IPKG names to download and install
-
     # output:
     #   $? = 0 (success) or 1 (failed)
 
     DebugFuncEntry
-    local download_count=0
+    local package_count=0
     local log_pathfile=$LOGS_PATH/ipkgs.$INSTALL_LOG_FILE
     local result=0
 
-    CalcAllIPKGDepsToInstall "$1" || return 1
-    download_count=$(IPKGs.ToDownload.Count)
+    CalcAllIPKGDepsToInstall || return 1
+    package_count=$(IPKGs.ToDownload.Count)
 
-    if [[ $download_count -gt 0 ]]; then
-        ShowAsProc "downloading & installing $download_count IPKG$(FormatAsPlural "$download_count")"
+    if [[ $package_count -gt 0 ]]; then
+        ShowAsProc "downloading & installing $package_count IPKG$(FormatAsPlural "$package_count")"
 
         CreateDirSizeMonitorFlagFile $IPKG_DL_PATH/.monitor
             trap CTRL_C_Captured INT
@@ -1645,9 +1637,9 @@ IPKGs.Install.Batch()
         RemoveDirSizeMonitorFlagFile
 
         if [[ $result -eq 0 ]]; then
-            ShowAsDone "downloaded & installed $download_count IPKG$(FormatAsPlural "$download_count")"
+            ShowAsDone "downloaded & installed $package_count IPKG$(FormatAsPlural "$package_count")"
         else
-            ShowAsError "download & install IPKG$(FormatAsPlural "$download_count") failed $(FormatAsExitcode $result)"
+            ShowAsError "download & install IPKG$(FormatAsPlural "$package_count") failed $(FormatAsExitcode $result)"
         fi
     fi
 
@@ -1658,22 +1650,19 @@ IPKGs.Install.Batch()
 IPKGs.Uninstall.Batch()
     {
 
-    # input:
-    #   $1 = whitespace-separated string containing list of IPKG names to uninstall
-
     # output:
     #   $? = 0 (success) or 1 (failed)
 
     DebugFuncEntry
-    local uninstall_count=0
+    local package_count=0
     local log_pathfile=$LOGS_PATH/ipkgs.$UNINSTALL_LOG_FILE
     local result=0
 
-    CalcAllIPKGDepsToUninstall "$1" || return 1
-    uninstall_count=$(IPKGs.ToUninstall.Count)
+    CalcAllIPKGDepsToUninstall || return 1
+    package_count=$(IPKGs.ToUninstall.Count)
 
-    if [[ $uninstall_count -gt 0 ]]; then
-        ShowAsProc "uninstalling $uninstall_count IPKG$(FormatAsPlural "$uninstall_count")"
+    if [[ $package_count -gt 0 ]]; then
+        ShowAsProc "uninstalling $package_count IPKG$(FormatAsPlural "$package_count")"
 
         if Session.Debug.To.Screen.IsSet; then
             RunThisAndLogResultsRealtime "$OPKG_CMD remove $(IPKGs.ToUninstall.List)" "$log_pathfile"
@@ -1684,9 +1673,9 @@ IPKGs.Uninstall.Batch()
         fi
 
         if [[ $result -eq 0 ]]; then
-            ShowAsDone "uninstalled $uninstall_count IPKG$(FormatAsPlural "$uninstall_count")"
+            ShowAsDone "uninstalled $package_count IPKG$(FormatAsPlural "$package_count")"
         else
-            ShowAsError "uninstall IPKG$(FormatAsPlural "$uninstall_count") failed $(FormatAsExitcode $result)"
+            ShowAsError "uninstall IPKG$(FormatAsPlural "$package_count") failed $(FormatAsExitcode $result)"
         fi
     fi
 
@@ -1703,15 +1692,15 @@ IPKGs.Upgrade.Batch()
     #   $? = 0 (success) or 1 (failed)
 
     DebugFuncEntry
-    local download_count=0
+    local package_count=0
     local log_pathfile=$LOGS_PATH/ipkgs.$UPGRADE_LOG_FILE
     local result=0
 
     IPKGs.ToDownload.Add "$($OPKG_CMD list-upgradable | $CUT_CMD -f1 -d' ')"
-    download_count=$(IPKGs.ToDownload.Count)
+    package_count=$(IPKGs.ToDownload.Count)
 
-    if [[ $download_count -gt 0 ]]; then
-        ShowAsProc "downloading & upgrading $download_count IPKG$(FormatAsPlural "$download_count")"
+    if [[ $package_count -gt 0 ]]; then
+        ShowAsProc "downloading & upgrading $package_count IPKG$(FormatAsPlural "$package_count")"
 
         CreateDirSizeMonitorFlagFile $IPKG_DL_PATH/.monitor
             trap CTRL_C_Captured INT
@@ -1723,9 +1712,9 @@ IPKGs.Upgrade.Batch()
         RemoveDirSizeMonitorFlagFile
 
         if [[ $result -eq 0 ]]; then
-            ShowAsDone "downloaded & upgraded $download_count IPKG$(FormatAsPlural "$download_count")"
+            ShowAsDone "downloaded & upgraded $package_count IPKG$(FormatAsPlural "$package_count")"
         else
-            ShowAsError "download & upgrade IPKG$(FormatAsPlural "$download_count") failed $(FormatAsExitcode $result)"
+            ShowAsError "download & upgrade IPKG$(FormatAsPlural "$package_count") failed $(FormatAsExitcode $result)"
         fi
     fi
 
@@ -4609,7 +4598,7 @@ echo $public_function_name'.Add()
     '$_placeholder_flag_'=false
     '$_placeholder_log_changes_flag_'=true
     '$_placeholder_enable_'=false
-    '$_placeholder_array_'+=()
+    '$_placeholder_array_'=()
     '$_placeholder_array_index_'=1
     '$_placeholder_path_'='\'\''
     }
@@ -4661,6 +4650,7 @@ echo $public_function_name'.Add()
 '$public_function_name'.Remove()
     {
     [[ ${'$_placeholder_array_'[*]} == *"$1"* ]] && '$_placeholder_array_'=("${'$_placeholder_array_'[@]/$1}")
+    [[ -z ${'$_placeholder_array_'[*]} ]] && '$_placeholder_array_'=()
     }
 '$public_function_name'.Set()
     {
