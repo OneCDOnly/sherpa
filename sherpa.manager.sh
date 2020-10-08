@@ -758,14 +758,12 @@ Session.Validate()
 
     if [[ $(QPKGs.Installed.Count) -eq 0 && $(QPKGs.ToInstall.Count) -eq 1 && $(QPKGs.ToInstall.First) = Entware ]]; then
         ShowAsNote "It's not necessary to install $(FormatAsPackageName Entware) on its own. It will be installed as-required with your other sherpa packages. :)"  # don't colourise title here as ANSI codes can't be removed without Entware being installed with its GNU utils.
-        code_pointer=2
         Session.SkipPackageProcessing.Set
         DebugFuncExit; return 1
     fi
 
     if User.Opts.Apps.All.Backup.IsSet && User.Opts.Apps.All.Restore.IsSet; then
         ShowAsError 'no point running a backup then a restore operation'
-        code_pointer=3
         Session.SkipPackageProcessing.Set
         DebugFuncExit; return 1
     fi
@@ -883,7 +881,6 @@ Packages.Uninstall()
     fi
 
     QPKG.Installed Entware && IPKGs.Uninstall
-
     DebugFuncExit; return 0
 
     }
@@ -1630,7 +1627,6 @@ IPKGs.Uninstall()
     fi
 
     IPKGs.Uninstall.Batch
-
     DebugFuncExit; return 0
 
     }
@@ -2549,33 +2545,6 @@ QPKGs.Assignment.Check()
         for package in $(QPKGs.Installed.Array); do
             QPKGs.ToUninstall.Add $package
         done
-    else
-        # check for independent packages that require installation
-        for package in $(QPKGs.Installed.Array); do
-            installer_acc+=($(QPKG.Get.Independencies $package))
-        done
-
-        for package in $(QPKGs.ToInstall.Array); do
-            installer_acc+=($(QPKG.Get.Independencies $package))
-        done
-
-        for package in $(QPKGs.ToReinstall.Array); do
-            installer_acc+=($(QPKG.Get.Independencies $package))
-        done
-
-        for package in $(QPKGs.ToUpgrade.Array); do
-            installer_acc+=($(QPKG.Get.Independencies $package))
-        done
-
-        for package in $(QPKGs.ToForceUpgrade.Array); do
-            installer_acc+=($(QPKG.Get.Independencies $package))
-        done
-
-        for package in "${installer_acc[@]}"; do
-            if QPKGs.NotInstalled.Exist $package || QPKGs.ToUninstall.Exist $package; then
-                QPKGs.ToInstall.Add $package
-            fi
-        done
     fi
 
     if User.Opts.Apps.All.Stop.IsSet; then
@@ -2589,6 +2558,33 @@ QPKGs.Assignment.Check()
             QPKGs.ToUpgrade.Add $package
         done
     fi
+
+#         # check for independent packages that require installation
+#         for package in $(QPKGs.Installed.Array); do
+#             installer_acc+=($(QPKG.Get.Independencies $package))
+#         done
+#
+#         for package in $(QPKGs.ToInstall.Array); do
+#             installer_acc+=($(QPKG.Get.Independencies $package))
+#         done
+#
+#         for package in $(QPKGs.ToReinstall.Array); do
+#             installer_acc+=($(QPKG.Get.Independencies $package))
+#         done
+#
+#         for package in $(QPKGs.ToUpgrade.Array); do
+#             installer_acc+=($(QPKG.Get.Independencies $package))
+#         done
+#
+#         for package in $(QPKGs.ToForceUpgrade.Array); do
+#             installer_acc+=($(QPKG.Get.Independencies $package))
+#         done
+#
+#         for package in "${installer_acc[@]}"; do
+#             if QPKGs.NotInstalled.Exist $package || QPKGs.ToUninstall.Exist $package; then
+#                 QPKGs.ToInstall.Add $package
+#             fi
+#         done
 
     if User.Opts.Apps.All.Install.IsSet; then
         for package in $(QPKGs.Installable.Array); do
@@ -2635,6 +2631,16 @@ QPKGs.Assignment.Check()
         QPKGs.ToDownload.Add $package
     done
 
+    QPKGs.Assignment.List
+    DebugFuncExit; return 0
+
+    }
+
+QPKGs.Assignment.List()
+    {
+
+    DebugFuncEntry
+
     DebugQPKG 'to download' "$(QPKGs.ToDownload.ListComma) "
     DebugQPKG 'to backup' "$(QPKGs.ToBackup.ListComma) "
     DebugQPKG 'to uninstall' "$(QPKGs.ToUninstall.ListComma) "
@@ -2646,6 +2652,7 @@ QPKGs.Assignment.Check()
     DebugQPKG 'to restore' "$(QPKGs.ToRestore.ListComma) "
     DebugQPKG 'to restart' "$(QPKGs.ToRestart.ListComma) "
     DebugQPKG 'to start' "$(QPKGs.ToStart.ListComma) "
+
     DebugFuncExit; return 0
 
     }
