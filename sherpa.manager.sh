@@ -922,6 +922,7 @@ Packages.Stop()
     local package=''
     local acc=()
 
+    # if an independent has been selected for 'stop', need to stop all dependants too
     for package in $(QPKGs.ToStop.Array); do
         if QPKGs.Independent.Exist $package && QPKG.Installed $package; then
             acc+=($(QPKG.Get.Dependencies $package))
@@ -1137,6 +1138,18 @@ Packages.Start()
     Session.SkipPackageProcessing.IsSet && return
     DebugFuncEntry
     local package=''
+    local acc=()
+
+    # if a dependant has been selected for 'start', need to start independents too
+    for package in $(QPKGs.ToStart.Array); do
+        acc+=($(QPKG.Get.Independencies $package))
+    done
+
+    if [[ ${#acc[@]} -gt 0 ]]; then
+        for package in "${acc[@]}"; do
+            QPKG.Installed $package && QPKGs.ToStart.Add $package
+        done
+    fi
 
     if QPKGs.ToStart.IsAny; then
         for package in $(QPKGs.Independent.Array); do
