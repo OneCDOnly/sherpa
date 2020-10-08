@@ -787,14 +787,6 @@ Session.Validate()
         fi
     fi
 
-    if QPKGs.ToInstall.Exist SABnzbd; then
-        Session.PIPs.Install.Set        # need to ensure 'sabyenc' module is also installed
-    fi
-
-    if QPKGs.ToInstall.IsAny || QPKGs.ToForceUpgrade.IsAny || User.Opts.Apps.All.Upgrade.IsSet; then
-        Session.IPKGs.Install.Set
-    fi
-
     if User.Opts.Dependencies.Check.IsSet; then
         Session.IPKGs.Install.Set
         Session.PIPs.Install.Set
@@ -888,40 +880,9 @@ Packages.Uninstall()
         done
 
         # TODO: still need something here to remove Entware if it's in the QPKGs.ToUninstall array
-
     fi
 
     QPKG.Installed Entware && IPKGs.Uninstall
-
-    if QPKGs.ToReinstall.Exist Entware; then
-        ShowAsNote "Reinstalling $(FormatAsPackageName Entware) will remove all IPKGs and Python modules, and only those required to support your $PROJECT_NAME apps will be reinstalled."
-        ShowAsNote "Your installed IPKG list will be saved to $(FormatAsFileName "$previous_opkg_package_list")"
-        ShowAsNote "Your installed Python module list will be saved to $(FormatAsFileName "$previous_pip3_module_list")"
-        (QPKG.Installed SABnzbdplus || QPKG.Installed Headphones) && ShowAsWarning "Also, the $(FormatAsPackageName SABnzbdplus) and $(FormatAsPackageName Headphones) packages CANNOT BE REINSTALLED as Python 2.7.16 is no-longer available."
-
-        if AskQuiz "Press 'Y' to remove all current $(FormatAsPackageName Entware) IPKGs (and their configurations), or any other key to abort"; then
-            ShowAsProc 'saving package and Python module lists'
-
-            if [[ -e $pip3_cmd ]]; then
-                $pip3_cmd freeze > "$previous_pip3_module_list"
-                DebugDone "saved current $(FormatAsPackageName pip3) module list to $(FormatAsFileName "$previous_pip3_module_list")"
-            fi
-
-            if [[ -e $OPKG_CMD ]]; then
-                $OPKG_CMD list-installed > "$previous_opkg_package_list"
-                DebugDone "saved current $(FormatAsPackageName Entware) IPKG list to $(FormatAsFileName "$previous_opkg_package_list")"
-            fi
-
-            ShowAsDone 'package and Python module lists saved'
-            QPKG.Uninstall Entware
-        else
-            DebugInfoMinorSeparator
-            DebugScript 'user abort'
-            Session.SkipPackageProcessing.Set
-            Session.Summary.Clear
-            DebugFuncExit; return 1
-        fi
-    fi
 
     DebugFuncExit; return 0
 
@@ -983,40 +944,86 @@ Packages.Stop()
 Packages.Install.Independents()
     {
 
+    # install independent QPKGs first
+
     Session.SkipPackageProcessing.IsSet && return
     DebugFuncEntry
     local package=''
 
-    # install independent QPKGs first, in the order they were declared
-    if QPKGs.ToInstall.IsAny || QPKGs.ToReinstall.IsAny || User.Opts.Dependencies.Check.IsSet; then
+    if QPKGs.ToInstall.IsAny || User.Opts.Dependencies.Check.IsSet; then
         for package in $(QPKGs.Independent.Array); do
-            if QPKGs.ToInstall.Exist $package || QPKGs.ToReinstall.Exist $package; then
-                if [[ $package = Entware ]]; then
-                    # rename original [/opt]
-                    local opt_path=/opt
-                    local opt_backup_path=/opt.orig
-                    [[ -d $opt_path && ! -L $opt_path && ! -e $opt_backup_path ]] && mv "$opt_path" "$opt_backup_path"
+            if QPKGs.ToInstall.Exist $package; then
+                if QPKG.NotInstalled $package; then
+                    if [[ $package = Entware ]]; then
+                        # rename original [/opt]
+                        local opt_path=/opt
+                        local opt_backup_path=/opt.orig
+                        [[ -d $opt_path && ! -L $opt_path && ! -e $opt_backup_path ]] && mv "$opt_path" "$opt_backup_path"
+                        QPKG.Install Entware && Session.AdjustPathEnv
 
-                    QPKG.Install Entware && Session.AdjustPathEnv
-
-                    # copy all files from original [/opt] into new [/opt]
-                    [[ -L $opt_path && -d $opt_backup_path ]] && cp --recursive "$opt_backup_path"/* --target-directory "$opt_path" && rm -rf "$opt_backup_path"
-                    Session.PIPs.Install.Set
-                else
-                    if [[ $NAS_QPKG_ARCH != none ]]; then
-                        if QPKGs.ToInstall.Exist $package; then
-                            QPKG.Install $package
-                        elif QPKGs.ToReinstall.Exist $package; then
-                            QPKG.Reinstall $package
+                        # copy all files from original [/opt] into new [/opt]
+                        [[ -L $opt_path && -d $opt_backup_path ]] && cp --recursive "$opt_backup_path"/* --target-directory "$opt_path" && rm -rf "$opt_backup_path"
+                        Session.PIPs.Install.Set
+                    else
+                        if [[ $NAS_QPKG_ARCH != none ]]; then
+                            if QPKGs.ToInstall.Exist $package; then
+                                QPKG.Install $package
+                            fi
                         fi
                     fi
+                else
+                    ShowAsNote "unable to install $(FormatAsPackageName $package) as it's already installed. Use 'reinstall' instead."
                 fi
             fi
         done
-        Session.IPKGs.Install.Set
     fi
 
-    if QPKG.Installed Entware && QPKG.Enabled Entware; then
+    if QPKGs.ToReinstall.IsAny; then
+        for package in $(QPKGs.Independent.Array); do
+            if QPKGs.ToReinstall.Exist $package; then
+                if QPKG.Installed $package; then
+                    if [[ $package = Entware ]]; then
+                        ShowAsNote "Reinstalling $(FormatAsPackageName Entware) will remove all IPKGs and Python modules, and only those required to support your $PROJECT_NAME apps will be reinstalled."
+                        ShowAsNote "Your installed IPKG list will be saved to $(FormatAsFileName "$previous_opkg_package_list")"
+                        ShowAsNote "Your installed Python module list will be saved to $(FormatAsFileName "$previous_pip3_module_list")"
+                        (QPKG.Installed SABnzbdplus || QPKG.Installed Headphones) && ShowAsWarning "Also, the $(FormatAsPackageName SABnzbdplus) and $(FormatAsPackageName Headphones) packages CANNOT BE REINSTALLED as Python 2.7.16 is no-longer available."
+
+                        if AskQuiz "Press 'Y' to remove all current $(FormatAsPackageName Entware) IPKGs (and their configurations), or any other key to abort"; then
+                            ShowAsProc 'saving package and Python module lists'
+
+                            if [[ -e $pip3_cmd ]]; then
+                                $pip3_cmd freeze > "$previous_pip3_module_list"
+                                DebugDone "saved current $(FormatAsPackageName pip3) module list to $(FormatAsFileName "$previous_pip3_module_list")"
+                            fi
+
+                            if [[ -e $OPKG_CMD ]]; then
+                                $OPKG_CMD list-installed > "$previous_opkg_package_list"
+                                DebugDone "saved current $(FormatAsPackageName Entware) IPKG list to $(FormatAsFileName "$previous_opkg_package_list")"
+                            fi
+
+                            ShowAsDone 'package and Python module lists saved'
+                            QPKG.Uninstall Entware
+                        else
+                            DebugInfoMinorSeparator
+                            DebugScript 'user abort'
+                            Session.SkipPackageProcessing.Set
+                            Session.Summary.Clear
+                            DebugFuncExit; return 1
+                        fi
+                    else
+                        QPKG.Reinstall $package
+                    fi
+                else
+                    ShowAsNote "unable to reinstall $(FormatAsPackageName $package) as it's not installed. Use 'install' instead."
+                fi
+            fi
+        done
+    fi
+
+    QPKGs.JustInstalled.IsAny && Session.IPKGs.Install.Set
+    QPKGs.JustInstalled.Exist SABnzbd && Session.PIPs.Install.Set   # need to ensure 'sabyenc' module is also installed
+
+    if QPKG.Enabled Entware; then
         Session.AdjustPathEnv
         Entware.Patch.Service
         IPKGs.Install
