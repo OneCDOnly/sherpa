@@ -134,7 +134,6 @@ Session.Init()
     Session.LockFile.Claim /var/run/$LOADER_SCRIPT_FILE.pid || return 1
 
     local -r DEBUG_LOG_FILE=$PROJECT_NAME.debug.log
-    readonly APP_CENTER_CONFIG_PATHFILE=/etc/config/qpkg.conf
     readonly INSTALL_LOG_FILE=install.log
     readonly REINSTALL_LOG_FILE=reinstall.log
     readonly UNINSTALL_LOG_FILE=uninstall.log
@@ -153,6 +152,7 @@ Session.Init()
     readonly PLATFORM_PATHFILE=/etc/platform.conf
     readonly EXTERNAL_PACKAGE_ARCHIVE_PATHFILE=/opt/var/opkg-lists/entware
     local -r PROJECT_REPO_URL=https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/master/QPKGs
+    readonly APP_CENTER_CONFIG_PATHFILE=/etc/config/qpkg.conf
     local -r PROJECT_PATH=$($GETCFG_CMD $PROJECT_NAME Install_Path -f $APP_CENTER_CONFIG_PATHFILE)
     readonly DEBUG_LOG_PATHFILE=$PROJECT_PATH/$DEBUG_LOG_FILE
     readonly WORK_PATH=$PROJECT_PATH/cache
@@ -166,7 +166,7 @@ Session.Init()
     readonly IPKG_DL_PATH=$WORK_PATH/ipkgs.downloads
     readonly IPKG_CACHE_PATH=$WORK_PATH/ipkgs
     readonly PIP_CACHE_PATH=$WORK_PATH/pips
-    readonly COMPILED_OBJECTS_HASH=7edc896de57959e31c509df07603a416
+    readonly COMPILED_OBJECTS_HASH=b6a7d2377ac6c42d228263853ae3093f
     readonly DEBUG_LOG_DATAWIDTH=92
 
     if ! MakePath "$WORK_PATH" 'work'; then
@@ -1137,7 +1137,6 @@ Packages.Start()
     Session.SkipPackageProcessing.IsSet && return
     DebugFuncEntry
     local package=''
-    local acc=()
 
     if QPKGs.ToStart.IsAny; then
         for package in $(QPKGs.Independent.Array); do
@@ -1416,7 +1415,6 @@ CalcAllIPKGDepsToInstall()
 
     # output:
     #   $IPKG_download_list = name-sorted array with complete list of all IPKGs, including those originally specified
-    #   $IPKG_download_count = number of packages to be downloaded
     #   $IPKG_download_size = byte-count of packages to be downloaded
 
     if IsNotSysFileExist $OPKG_CMD || IsNotSysFileExist $GNU_GREP_CMD; then
@@ -1426,8 +1424,8 @@ CalcAllIPKGDepsToInstall()
 
     DebugFuncEntry
     IPKG_download_list=()
-    IPKG_download_count=0
     IPKG_download_size=0
+    local IPKG_download_count=0
     local requested_list=''
     local this_list=()
     local dependency_accumulator=()
@@ -1521,17 +1519,16 @@ CalcAllIPKGDepsToUninstall()
 
     # output:
     #   $IPKG_uninstall_list = name-sorted array with complete list of all IPKGs
-    #   $IPKG_uninstall_count = number of packages to be uninstalled
 
     if IsNotSysFileExist $OPKG_CMD || IsNotSysFileExist $GNU_GREP_CMD; then
-        code_pointer=6
+        code_pointer=7
         return 1
     fi
 
     DebugFuncEntry
     IPKG_uninstall_list=()
-    IPKG_uninstall_count=0
     local pre_uninstall_list=''
+    local IPKG_uninstall_count=0
     local element=''
 
     pre_uninstall_list=$(DeDupeWords "$1")
@@ -1598,12 +1595,12 @@ IPKGs.Install()
 
     if User.Opts.Apps.All.Install.IsSet; then
         for index in "${!SHERPA_QPKG_NAME[@]}"; do
-            [[ ${SHERPA_QPKG_ARCH[$index]} = $NAS_QPKG_ARCH || ${SHERPA_QPKG_ARCH[$index]} = all ]] && packages_acc+=(${SHERPA_QPKG_IPKGS_ADD[$index]})
+            [[ ${SHERPA_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${SHERPA_QPKG_ARCH[$index]} = all ]] && packages_acc+=(${SHERPA_QPKG_IPKGS_ADD[$index]})
         done
     else
         for index in "${!SHERPA_QPKG_NAME[@]}"; do
             if QPKGs.ToInstall.Exist "${SHERPA_QPKG_NAME[$index]}" || QPKG.Installed "${SHERPA_QPKG_NAME[$index]}" || QPKGs.ToUpgrade.Exist "${SHERPA_QPKG_NAME[$index]}" || QPKGs.ToForceUpgrade.Exist "${SHERPA_QPKG_NAME[$index]}"; then
-                [[ ${SHERPA_QPKG_ARCH[$index]} = $NAS_QPKG_ARCH || ${SHERPA_QPKG_ARCH[$index]} = all ]] && packages_acc+=(${SHERPA_QPKG_IPKGS_ADD[$index]})
+                [[ ${SHERPA_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${SHERPA_QPKG_ARCH[$index]} = all ]] && packages_acc+=(${SHERPA_QPKG_IPKGS_ADD[$index]})
             fi
         done
     fi
@@ -1627,10 +1624,12 @@ IPKGs.Upgrade.Batch()
     #   $? = 0 (success) or 1 (failed)
 
     DebugFuncEntry
-    local result=0
+    local IPKG_download_count=0
     local log_pathfile=$LOGS_PATH/ipkgs.$UPGRADE_LOG_FILE
+    local result=0
 
     IPKG_download_list=($($OPKG_CMD list-upgradable | $CUT_CMD -f1 -d' '))
+    IPKG_download_count=${#IPKG_download_list[@]}
 
     if [[ $IPKG_download_count -gt 0 ]]; then
         ShowAsProc "downloading & upgrading $IPKG_download_count IPKG$(FormatAsPlural "$IPKG_download_count")"
@@ -1665,10 +1664,12 @@ IPKGs.Install.Batch()
     #   $? = 0 (success) or 1 (failed)
 
     DebugFuncEntry
-    local result=0
+    local IPKG_download_count=0
     local log_pathfile=$LOGS_PATH/ipkgs.$INSTALL_LOG_FILE
+    local result=0
 
     CalcAllIPKGDepsToInstall "$1" || return 1
+    IPKG_download_count=${#IPKG_download_list[@]}
 
     if [[ $IPKG_download_count -gt 0 ]]; then
         ShowAsProc "downloading & installing $IPKG_download_count IPKG$(FormatAsPlural "$IPKG_download_count")"
@@ -1703,10 +1704,12 @@ IPKGs.Uninstall.Batch()
     #   $? = 0 (success) or 1 (failed)
 
     DebugFuncEntry
-    local result=0
+    local IPKG_uninstall_count=0
     local log_pathfile=$LOGS_PATH/ipkgs.$UNINSTALL_LOG_FILE
+    local result=0
 
     CalcAllIPKGDepsToUninstall "$1" || return 1
+    IPKG_uninstall_count=${#IPKG_uninstall_list[@]}
 
     if [[ $IPKG_uninstall_count -gt 0 ]]; then
         ShowAsProc "uninstalling $IPKG_uninstall_count IPKG$(FormatAsPlural "$IPKG_uninstall_count")"
@@ -3119,8 +3122,6 @@ QPKG.Download()
     DebugFuncEntry
 
     if [[ -z $1 ]]; then
-        DebugError 'no package name specified'
-        code_pointer=7
         DebugFuncExit; return 1
     fi
 
@@ -3191,11 +3192,6 @@ QPKG.Install()
     DebugFuncEntry
 
     if [[ -z $1 ]]; then
-        DebugError 'no package name specified'
-        code_pointer=10
-        DebugFuncExit; return 1
-    elif QPKG.Installed "$1"; then
-        DebugQPKG "$(FormatAsPackageName "$1")" 'already installed'
         DebugFuncExit; return 1
     fi
 
@@ -3245,12 +3241,6 @@ QPKG.Reinstall()
     DebugFuncEntry
 
     if [[ -z $1 ]]; then
-        DebugError 'no package name specified'
-        code_pointer=11
-        DebugFuncExit; return 1
-    elif QPKG.NotInstalled "$1"; then
-        DebugQPKG "$(FormatAsPackageName "$1")" 'not installed'
-        code_pointer=12
         DebugFuncExit; return 1
     fi
 
@@ -3300,8 +3290,6 @@ QPKG.Upgrade()
     DebugFuncEntry
 
     if [[ -z $1 ]]; then
-        DebugError 'no package name specified'
-        code_pointer=13
         DebugFuncExit; return 1
     fi
 
@@ -3363,12 +3351,6 @@ QPKG.Uninstall()
     DebugFuncEntry
 
     if [[ -z $1 ]]; then
-        DebugError 'no package name specified'
-        code_pointer=14
-        DebugFuncExit; return 1
-    elif QPKG.NotInstalled "$1"; then
-        DebugQPKG "$(FormatAsPackageName "$1")" 'not installed'
-        code_pointer=15
         DebugFuncExit; return 1
     fi
 
@@ -3414,26 +3396,19 @@ QPKG.Restart()
     DebugFuncEntry
 
     if [[ -z $1 ]]; then
-        DebugError 'no package name specified'
-        code_pointer=16
-        DebugFuncExit; return 1
-    elif QPKG.NotInstalled "$1"; then
-        DebugQPKG "$(FormatAsPackageName "$1")" 'not installed'
-        code_pointer=17
         DebugFuncExit; return 1
     fi
 
     local result=0
-    local package_init_pathfile=$(QPKG.ServicePathFile "$1")
     local log_pathfile=$LOGS_PATH/$1.$RESTART_LOG_FILE
 
     ShowAsProc "restarting $(FormatAsPackageName "$1")"
 
     if Session.Debug.To.Screen.IsSet; then
-        RunThisAndLogResultsRealtime "$SH_CMD $package_init_pathfile restart" "$log_pathfile"
+        RunThisAndLogResultsRealtime "$QPKG_SERVICE_CMD restart $1" "$log_pathfile"
         result=$?
     else
-        RunThisAndLogResults "$SH_CMD $package_init_pathfile restart" "$log_pathfile"
+        RunThisAndLogResults "$QPKG_SERVICE_CMD restart $1" "$log_pathfile"
         result=$?
     fi
 
@@ -3462,12 +3437,6 @@ QPKG.Start()
     DebugFuncEntry
 
     if [[ -z $1 ]]; then
-        DebugError 'no package name specified'
-        code_pointer=18
-        DebugFuncExit; return 1
-    elif QPKG.NotInstalled "$1"; then
-        DebugQPKG "$(FormatAsPackageName "$1")" 'not installed'
-        code_pointer=19
         DebugFuncExit; return 1
     fi
 
@@ -3509,12 +3478,6 @@ QPKG.Stop()
     DebugFuncEntry
 
     if [[ -z $1 ]]; then
-        DebugError 'no package name specified'
-        code_pointer=20
-        DebugFuncExit; return 1
-    elif QPKG.NotInstalled "$1"; then
-        DebugQPKG "$(FormatAsPackageName "$1")" 'not installed'
-        code_pointer=21
         DebugFuncExit; return 1
     fi
 
@@ -3550,12 +3513,6 @@ QPKG.Enable()
     DebugFuncEntry
 
     if [[ -z $1 ]]; then
-        DebugError 'no package name specified'
-        code_pointer=22
-        DebugFuncExit; return 1
-    elif QPKG.NotInstalled "$1"; then
-        DebugQPKG "$(FormatAsPackageName "$1")" 'not installed'
-        code_pointer=23
         DebugFuncExit; return 1
     fi
 
@@ -3590,12 +3547,6 @@ QPKG.Disable()
     DebugFuncEntry
 
     if [[ -z $1 ]]; then
-        DebugError 'no package name specified'
-        code_pointer=22
-        DebugFuncExit; return 1
-    elif QPKG.NotInstalled "$1"; then
-        DebugQPKG "$(FormatAsPackageName "$1")" 'not installed'
-        code_pointer=23
         DebugFuncExit; return 1
     fi
 
@@ -3636,12 +3587,6 @@ QPKG.Backup()
     DebugFuncEntry
 
     if [[ -z $1 ]]; then
-        DebugError 'no package name specified'
-        code_pointer=24
-        DebugFuncExit; return 1
-    elif QPKG.NotInstalled "$1"; then
-        DebugQPKG "$(FormatAsPackageName "$1")" 'not installed'
-        code_pointer=25
         DebugFuncExit; return 1
     fi
 
@@ -3684,12 +3629,6 @@ QPKG.Restore()
     DebugFuncEntry
 
     if [[ -z $1 ]]; then
-        DebugError 'no package name specified'
-        code_pointer=26
-        DebugFuncExit; return 1
-    elif QPKG.NotInstalled "$1"; then
-        DebugQPKG "$(FormatAsPackageName "$1")" 'not installed'
-        code_pointer=27
         DebugFuncExit; return 1
     fi
 
@@ -4607,7 +4546,6 @@ Objects.Add()
     local public_function_name=$1
     local safe_function_name="$(tr '[A-Z]' '[a-z]' <<< "${public_function_name//[.-]/_}")"
 
-    _placeholder_value_="_object_${safe_function_name}_value_"
     _placeholder_text_="_object_${safe_function_name}_text_"
     _placeholder_flag_="_object_${safe_function_name}_flag_"
     _placeholder_log_changes_flag_="_object_${safe_function_name}_changes_flag_"
@@ -4651,13 +4589,6 @@ echo $public_function_name'.Add()
     '$_placeholder_enable_'=true
     [[ $'$_placeholder_log_changes_flag_' = '\'true\'' ]] && DebugVar '$_placeholder_enable_'
     }
-'$public_function_name'.Enumerate()
-    {
-    (('$_placeholder_array_index_'++))
-    if [[ $'$_placeholder_array_index_' -gt ${#'$_placeholder_array_'[@]} ]]; then
-        '$_placeholder_array_index_'=1
-    fi
-    }
 '$public_function_name'.Exist()
     {
     [[ ${'$_placeholder_array_'[*]} == *"$1"* ]]
@@ -4666,32 +4597,8 @@ echo $public_function_name'.Add()
     {
     echo "${'$_placeholder_array_'[0]}"
     }
-'$public_function_name'.GetCurrent()
-    {
-    echo -n "${'$_placeholder_array_'[(('$_placeholder_array_index_'-1))]}"
-    }
-'$public_function_name'.GetItem()
-    {
-    local -i index="$1"
-    [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#'$_placeholder_array_'[@]} ]] && index=${#'$_placeholder_array_'[@]}
-    echo -n "${'$_placeholder_array_'[((index-1))]}"
-    }
-'$public_function_name'.Index()
-    {
-    if [[ -n $1 && $1 = '\'=\'' ]]; then
-        if [[ $2 -gt ${#'$_placeholder_array_'[@]} ]]; then
-            '$_placeholder_array_index_'=${#'$_placeholder_array_'[@]}
-        else
-            '$_placeholder_array_index_'=$2
-        fi
-    else
-        echo -n $'$_placeholder_array_index_'
-    fi
-    }
 '$public_function_name'.Init()
     {
-    '$_placeholder_value_'=0
     '$_placeholder_text_'='\'\''
     '$_placeholder_flag_'=false
     '$_placeholder_log_changes_flag_'=true
@@ -4763,14 +4670,6 @@ echo $public_function_name'.Add()
         echo -n "$'$_placeholder_text_'"
     fi
     }
-'$public_function_name'.Value()
-    {
-    if [[ -n $1 && $1 = "=" ]]; then
-        '$_placeholder_value_'=$2
-    else
-        echo -n $'$_placeholder_value_'
-    fi
-    }
 '$public_function_name'.Init
 ' >> "$COMPILED_OBJECTS_PATHFILE"
 
@@ -4838,6 +4737,7 @@ Objects.Compile()
         Objects.Add User.Opts.Apps.List.Upgradable
 
         # lists
+        Objects.Add IPKGs.ToInstall
         Objects.Add IPKGs.ToUninstall
 
         Objects.Add QPKGs.Dependant
@@ -4847,6 +4747,8 @@ Objects.Compile()
         Objects.Add QPKGs.JustInstalled
         Objects.Add QPKGs.Names
         Objects.Add QPKGs.NotInstalled
+        Objects.Add QPKGs.Upgradable
+
         Objects.Add QPKGs.ToBackup
         Objects.Add QPKGs.ToDownload
         Objects.Add QPKGs.ToForceUpgrade
@@ -4858,7 +4760,6 @@ Objects.Compile()
         Objects.Add QPKGs.ToStop
         Objects.Add QPKGs.ToUninstall
         Objects.Add QPKGs.ToUpgrade
-        Objects.Add QPKGs.Upgradable
 
         # flags
         Objects.Add Session.Backup
