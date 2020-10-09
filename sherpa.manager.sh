@@ -1352,6 +1352,8 @@ AskQuiz()
 Entware.Patch.Service()
     {
 
+    local tab=$'\t'
+    local prefix_text="# following line was inserted by $PROJECT_NAME"
     local find_text=''
     local insert_text=''
     local package_init_pathfile=$(QPKG.ServicePathFile Entware)
@@ -1359,20 +1361,20 @@ Entware.Patch.Service()
     if ($GREP_CMD -q 'opt.orig' "$package_init_pathfile"); then
         DebugInfo 'patch: do the "opt shuffle" - already done'
     else
-        # ensure existing files are movied out of the way ...
-        find_text='/bin/rm -rf /opt'
+        # ensure existing files are moved out of the way before creating /opt symlink
+        find_text='# sym-link $QPKG_DIR to /opt'
         insert_text='opt_path="/opt"; opt_backup_path="/opt.orig"; [[ -d "$opt_path" \&\& ! -L "$opt_path" \&\& ! -e "$opt_backup_path" ]] \&\& mv "$opt_path" "$opt_backup_path"'
-        $SED_CMD -i "s|$find_text|$insert_text\n$find_text|" "$package_init_pathfile"
+        $SED_CMD -i "s|$find_text|$find_text\n\n${tab}${prefix_text}\n${tab}${insert_text}\n|" "$package_init_pathfile"
 
-        # ... then restored after creating symlink
+        # ... then restored after creating /opt symlink
         find_text='/bin/ln -sf $QPKG_DIR /opt'
-        insert_text=$(echo -e "\t")'[[ -L "$opt_path" \&\& -d "$opt_backup_path" ]] \&\& cp "$opt_backup_path"/* --target-directory "$opt_path" \&\& rm -r "$opt_backup_path"'
-        $SED_CMD -i "s|$find_text|$find_text\n$insert_text\n|" "$package_init_pathfile"
+        insert_text='[[ -L "$opt_path" \&\& -d "$opt_backup_path" ]] \&\& cp "$opt_backup_path"/* --target-directory "$opt_path" \&\& rm -r "$opt_backup_path"'
+        $SED_CMD -i "s|$find_text|$find_text\n\n${tab}${prefix_text}\n${tab}${insert_text}\n|" "$package_init_pathfile"
 
-        # ensure symlink is removed when Entware is stopped
+        # ... and ensure /opt symlink is removed when Entware is stopped
         find_text='/bin/sync'
-        insert_text=$(echo -e "\t")'[[ -L /opt ]] \&\& rm /opt'
-        $SED_CMD -i "s|$find_text|$find_text\n$insert_text\n|" "$package_init_pathfile"
+        insert_text='[[ -L /opt ]] \&\& rm /opt'
+        $SED_CMD -i "s|$find_text|$find_text\n\n${tab}${prefix_text}\n${tab}${insert_text}\n|" "$package_init_pathfile"
 
         DebugDone 'patch: do the "opt shuffle"'
     fi
