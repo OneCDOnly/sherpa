@@ -1814,9 +1814,11 @@ IPKGs.Archive.Open()
     # output:
     #   $? = 0 (success) or 1 (failed)
 
+    DebugFuncEntry
+
     if [[ ! -e $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE ]]; then
         ShowAsError 'could not locate the IPKG list file'
-        return 1
+        DebugFuncExit; return 1
     fi
 
     IPKGs.Archive.Close
@@ -1831,10 +1833,10 @@ IPKGs.Archive.Open()
 
     if [[ ! -e $EXTERNAL_PACKAGE_LIST_PATHFILE ]]; then
         ShowAsError 'could not open the IPKG list file'
-        return 1
+        DebugFuncExit; return 1
     fi
 
-    return 0
+    DebugFuncExit; return 0
 
     }
 
