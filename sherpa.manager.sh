@@ -1371,11 +1371,6 @@ Entware.Patch.Service()
         insert_text='[[ -L "$opt_path" \&\& -d "$opt_backup_path" ]] \&\& cp "$opt_backup_path"/* --target-directory "$opt_path" \&\& rm -r "$opt_backup_path"'
         $SED_CMD -i "s|$find_text|$find_text\n\n${tab}${prefix_text}\n${tab}${insert_text}\n|" "$package_init_pathfile"
 
-        # ... and ensure /opt symlink is removed when Entware is stopped
-        find_text='/bin/sync'
-        insert_text='[[ -L /opt ]] \&\& rm /opt'
-        $SED_CMD -i "s|$find_text|$find_text\n\n${tab}${prefix_text}\n${tab}${insert_text}\n|" "$package_init_pathfile"
-
         DebugDone 'patch: do the "opt shuffle"'
     fi
 
@@ -4908,6 +4903,7 @@ Packages.Download
 Packages.Backup
 Packages.Uninstall
 Packages.Stop
+Packages.Reinstall.Independents
 Packages.Install.Independents
 Packages.Start.Independents
 Packages.Upgrade.Dependants
