@@ -1305,12 +1305,19 @@ Entware.Patch.Service()
     if ($GREP_CMD -q 'opt.orig' "$package_init_pathfile"); then
         DebugInfo 'patch: do the "opt shuffle" - already done'
     else
+        # ensure existing files are movied out of the way ...
         find_text='/bin/rm -rf /opt'
-        insert_text='opt_path="/opt"; opt_backup_path="/opt.orig"; [ -d "$opt_path" ] \&\& [ ! -L "$opt_path" ] \&\& [ ! -e "$opt_backup_path" ] \&\& mv "$opt_path" "$opt_backup_path"'
+        insert_text='opt_path="/opt"; opt_backup_path="/opt.orig"; [[ -d "$opt_path" \&\& ! -L "$opt_path" \&\& ! -e "$opt_backup_path" ]] \&\& mv "$opt_path" "$opt_backup_path"'
         $SED_CMD -i "s|$find_text|$insert_text\n$find_text|" "$package_init_pathfile"
 
+        # ... then restored after creating symlink
         find_text='/bin/ln -sf $QPKG_DIR /opt'
-        insert_text=$(echo -e "\t")'[ -L "$opt_path" ] \&\& [ -d "$opt_backup_path" ] \&\& cp "$opt_backup_path"/* --target-directory "$opt_path" \&\& rm -r "$opt_backup_path"'
+        insert_text=$(echo -e "\t")'[[ -L "$opt_path" \&\& -d "$opt_backup_path" ]] \&\& cp "$opt_backup_path"/* --target-directory "$opt_path" \&\& rm -r "$opt_backup_path"'
+        $SED_CMD -i "s|$find_text|$find_text\n$insert_text\n|" "$package_init_pathfile"
+
+        # ensure symlink is removed when Entware is stopped
+        find_text='/bin/sync'
+        insert_text=$(echo -e "\t")'[[ -L /opt ]] \&\& rm /opt'
         $SED_CMD -i "s|$find_text|$find_text\n$insert_text\n|" "$package_init_pathfile"
 
         DebugDone 'patch: do the "opt shuffle"'
@@ -2560,6 +2567,10 @@ QPKGs.Assignment.Check()
     fi
 
     # check for independent packages that require installation
+    for package in $(QPKGs.Installed.Array); do
+        ! QPKGs.ToUninstall.Exist $package && installer_acc+=($(QPKG.Get.Independencies $package))
+    done
+
     for package in $(QPKGs.ToInstall.Array); do
         installer_acc+=($(QPKG.Get.Independencies $package))
     done
