@@ -769,7 +769,7 @@ Session.Validate()
     fi
 
     if ! QPKGs.Conflicts.Check; then
-        code_pointer=4
+        code_pointer=2
         Session.SkipPackageProcessing.Set
         DebugFuncExit; return 1
     fi
@@ -1324,7 +1324,7 @@ Entware.Update()
     {
 
     if IsNotSysFileExist $OPKG_CMD; then
-        code_pointer=5
+        code_pointer=3
         return 1
     fi
 
@@ -1441,7 +1441,7 @@ CalcAllIPKGDepsToInstall()
     # From a specified list of IPKG names, find all dependent IPKGs, exclude those already installed, then generate a total qty to download and a total download byte-size
 
     if IsNotSysFileExist $OPKG_CMD || IsNotSysFileExist $GNU_GREP_CMD; then
-        code_pointer=6
+        code_pointer=4
         return 1
     fi
 
@@ -1536,7 +1536,7 @@ CalcAllIPKGDepsToUninstall()
     # From a specified list of IPKG names, exclude those already installed, then generate a total qty to uninstall
 
     if IsNotSysFileExist $OPKG_CMD || IsNotSysFileExist $GNU_GREP_CMD; then
-        code_pointer=7
+        code_pointer=5
         return 1
     fi
 
@@ -2559,32 +2559,26 @@ QPKGs.Assignment.Check()
         done
     fi
 
-#         # check for independent packages that require installation
-#         for package in $(QPKGs.Installed.Array); do
-#             installer_acc+=($(QPKG.Get.Independencies $package))
-#         done
-#
-#         for package in $(QPKGs.ToInstall.Array); do
-#             installer_acc+=($(QPKG.Get.Independencies $package))
-#         done
-#
-#         for package in $(QPKGs.ToReinstall.Array); do
-#             installer_acc+=($(QPKG.Get.Independencies $package))
-#         done
-#
-#         for package in $(QPKGs.ToUpgrade.Array); do
-#             installer_acc+=($(QPKG.Get.Independencies $package))
-#         done
-#
-#         for package in $(QPKGs.ToForceUpgrade.Array); do
-#             installer_acc+=($(QPKG.Get.Independencies $package))
-#         done
-#
-#         for package in "${installer_acc[@]}"; do
-#             if QPKGs.NotInstalled.Exist $package || QPKGs.ToUninstall.Exist $package; then
-#                 QPKGs.ToInstall.Add $package
-#             fi
-#         done
+    # check for independent packages that require installation
+    for package in $(QPKGs.ToInstall.Array); do
+        installer_acc+=($(QPKG.Get.Independencies $package))
+    done
+
+    for package in $(QPKGs.ToReinstall.Array); do
+        installer_acc+=($(QPKG.Get.Independencies $package))
+    done
+
+    for package in $(QPKGs.ToUpgrade.Array); do
+        installer_acc+=($(QPKG.Get.Independencies $package))
+    done
+
+    for package in $(QPKGs.ToForceUpgrade.Array); do
+        installer_acc+=($(QPKG.Get.Independencies $package))
+    done
+
+    for package in "${installer_acc[@]}"; do
+        ! QPKG.Installed $package && QPKGs.ToInstall.Add $package
+    done
 
     if User.Opts.Apps.All.Install.IsSet; then
         for package in $(QPKGs.Installable.Array); do
@@ -3160,11 +3154,11 @@ QPKG.Download()
 
     if [[ -z $remote_url ]]; then
         DebugWarning "no URL found for this package $(FormatAsPackageName "$1")"
-        code_pointer=8
+        code_pointer=6
         DebugFuncExit; return
     elif [[ -z $remote_md5 ]]; then
         DebugWarning "no checksum found for this package $(FormatAsPackageName "$1")"
-        code_pointer=9
+        code_pointer=7
         DebugFuncExit; return
     fi
 
