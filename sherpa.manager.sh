@@ -836,6 +836,66 @@ Packages.Backup()
 
     }
 
+Packages.Stop()
+    {
+
+    Session.SkipPackageProcessing.IsSet && return
+    DebugFuncEntry
+    local package=''
+    local acc=()
+    local index=0
+
+    # if an independent has been selected for 'stop', need to stop all dependants too
+    for package in $(QPKGs.ToStop.Array); do
+        if QPKGs.Independent.Exist $package && QPKG.Installed $package; then
+            acc+=($(QPKG.Get.Dependencies $package))
+        fi
+    done
+
+    # if an independent has been selected for 'uninstall', need to stop all dependants too
+    for package in $(QPKGs.ToUninstall.Array); do
+        if QPKGs.Independent.Exist $package && QPKG.Installed $package; then
+            acc+=($(QPKG.Get.Dependencies $package))
+        fi
+    done
+
+    if [[ ${#acc[@]} -gt 0 ]]; then
+        for package in "${acc[@]}"; do
+            QPKG.Installed $package && QPKGs.ToStop.Add $package
+        done
+    fi
+
+    if QPKGs.ToStop.IsAny; then
+        for ((index=$(QPKGs.Dependant.Count); index>=1; index--)); do       # stop packages in reverse of declared order
+            package=$(QPKGs.Dependant.GetItem $index)
+
+            if QPKGs.ToStop.Exist $package; then
+                if QPKG.Installed $package; then
+                    QPKG.Stop $package
+                else
+                    ShowAsNote "unable to stop $(FormatAsPackageName $package) as it's not installed"
+                fi
+            fi
+        done
+
+        for ((index=$(QPKGs.Independent.Count); index>=1; index--)); do     # stop packages in reverse of declared order
+            package=$(QPKGs.Independent.GetItem $index)
+
+            if QPKGs.ToStop.Exist $package; then
+                if QPKG.Installed $package; then
+                    QPKG.Stop $package
+                    QPKG.Disable $package   # independents don't have the same service scripts as other sherpa packages, so they must be enabled/disabled externally
+                else
+                    ShowAsNote "unable to stop $(FormatAsPackageName $package) as it's not installed"
+                fi
+            fi
+        done
+    fi
+
+    DebugFuncExit; return 0
+
+    }
+
 Packages.Uninstall()
     {
 
@@ -881,59 +941,6 @@ Packages.Uninstall()
     fi
 
     QPKG.Installed Entware && IPKGs.Uninstall
-    DebugFuncExit; return 0
-
-    }
-
-Packages.Stop()
-    {
-
-    Session.SkipPackageProcessing.IsSet && return
-    DebugFuncEntry
-    local package=''
-    local acc=()
-    local index=0
-
-    # if an independent has been selected for 'stop', need to stop all dependants too
-    for package in $(QPKGs.ToStop.Array); do
-        if QPKGs.Independent.Exist $package && QPKG.Installed $package; then
-            acc+=($(QPKG.Get.Dependencies $package))
-        fi
-    done
-
-    if [[ ${#acc[@]} -gt 0 ]]; then
-        for package in "${acc[@]}"; do
-            QPKG.Installed $package && QPKGs.ToStop.Add $package
-        done
-    fi
-
-    if QPKGs.ToStop.IsAny; then
-        for ((index=$(QPKGs.Dependant.Count); index>=1; index--)); do       # stop packages in reverse of declared order
-            package=$(QPKGs.Dependant.GetItem $index)
-
-            if QPKGs.ToStop.Exist $package; then
-                if QPKG.Installed $package; then
-                    QPKG.Stop $package
-                else
-                    ShowAsNote "unable to stop $(FormatAsPackageName $package) as it's not installed"
-                fi
-            fi
-        done
-
-        for ((index=$(QPKGs.Independent.Count); index>=1; index--)); do     # stop packages in reverse of declared order
-            package=$(QPKGs.Independent.GetItem $index)
-
-            if QPKGs.ToStop.Exist $package; then
-                if QPKG.Installed $package; then
-                    QPKG.Stop $package
-                    QPKG.Disable $package   # independents don't have the same service scripts as other sherpa packages, so they must be enabled/disabled externally
-                else
-                    ShowAsNote "unable to stop $(FormatAsPackageName $package) as it's not installed"
-                fi
-            fi
-        done
-    fi
-
     DebugFuncExit; return 0
 
     }
@@ -2587,9 +2594,9 @@ QPKGs.Assignment.Check()
 
     # However, package processing priorities need to be:
     #  17. backup                   (highest: most-important)
-    #  16. uninstall
-    #  15. stop dependants
-    #  14. stop independents
+    #  16. stop dependants
+    #  15. stop independents
+    #  14. uninstall
     #  13. force-upgrade independents
     #  12. upgrade independents
     #  11. reinstall independents
@@ -4925,8 +4932,8 @@ Session.Init || exit 1
 Session.Validate
 Packages.Download
 Packages.Backup
-Packages.Uninstall
 Packages.Stop
+Packages.Uninstall
 Packages.Reinstall.Independents
 Packages.Install.Independents
 Packages.Start.Independents
