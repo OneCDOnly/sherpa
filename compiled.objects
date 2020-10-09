@@ -3508,6 +3508,276 @@ User.Opts.Apps.List.All.Value()
     }
 User.Opts.Apps.List.All.Init
 
+User.Opts.Apps.List.Dependant.Add()
+    {
+    [[ ${_object_user_opts_apps_list_dependant_array_[*]} != *"$1"* ]] && _object_user_opts_apps_list_dependant_array_+=("$1")
+    }
+User.Opts.Apps.List.Dependant.Array()
+    {
+    echo -n "${_object_user_opts_apps_list_dependant_array_[@]}"
+    }
+User.Opts.Apps.List.Dependant.Clear()
+    {
+    [[ $_object_user_opts_apps_list_dependant_flag_ != 'true' ]] && return
+    _object_user_opts_apps_list_dependant_flag_=false
+    [[ $_object_user_opts_apps_list_dependant_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_dependant_flag_
+    }
+User.Opts.Apps.List.Dependant.Count()
+    {
+    echo "${#_object_user_opts_apps_list_dependant_array_[@]}"
+    }
+User.Opts.Apps.List.Dependant.Disable()
+    {
+    [[ $_object_user_opts_apps_list_dependant_enable_ != 'true' ]] && return
+    _object_user_opts_apps_list_dependant_enable_=false
+    [[ $_object_user_opts_apps_list_dependant_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_dependant_enable_
+    }
+User.Opts.Apps.List.Dependant.DontLogChanges()
+    {
+    [[ $_object_user_opts_apps_list_dependant_changes_flag_ != 'true' ]] && return
+    _object_user_opts_apps_list_dependant_changes_flag_=false
+    }
+User.Opts.Apps.List.Dependant.Enable()
+    {
+    [[ $_object_user_opts_apps_list_dependant_enable_ = 'true' ]] && return
+    _object_user_opts_apps_list_dependant_enable_=true
+    [[ $_object_user_opts_apps_list_dependant_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_dependant_enable_
+    }
+User.Opts.Apps.List.Dependant.Exist()
+    {
+    [[ ${_object_user_opts_apps_list_dependant_array_[*]} == *"$1"* ]]
+    }
+User.Opts.Apps.List.Dependant.First()
+    {
+    echo "${_object_user_opts_apps_list_dependant_array_[0]}"
+    }
+User.Opts.Apps.List.Dependant.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_user_opts_apps_list_dependant_array_[@]} ]] && index=${#_object_user_opts_apps_list_dependant_array_[@]}
+    echo -n "${_object_user_opts_apps_list_dependant_array_[((index-1))]}"
+    }
+User.Opts.Apps.List.Dependant.Init()
+    {
+    _object_user_opts_apps_list_dependant_value_=0
+    _object_user_opts_apps_list_dependant_text_=''
+    _object_user_opts_apps_list_dependant_flag_=false
+    _object_user_opts_apps_list_dependant_changes_flag_=true
+    _object_user_opts_apps_list_dependant_enable_=false
+    _object_user_opts_apps_list_dependant_array_=()
+    _object_user_opts_apps_list_dependant_array_index_=1
+    _object_user_opts_apps_list_dependant_path_=''
+    }
+User.Opts.Apps.List.Dependant.IsAny()
+    {
+    [[ ${#_object_user_opts_apps_list_dependant_array_[@]} -gt 0 ]]
+    }
+User.Opts.Apps.List.Dependant.IsDisabled()
+    {
+    [[ $_object_user_opts_apps_list_dependant_enable_ != 'true' ]]
+    }
+User.Opts.Apps.List.Dependant.IsEnabled()
+    {
+    [[ $_object_user_opts_apps_list_dependant_enable_ = 'true' ]]
+    }
+User.Opts.Apps.List.Dependant.IsNone()
+    {
+    [[ ${#_object_user_opts_apps_list_dependant_array_[@]} -eq 0 ]]
+    }
+User.Opts.Apps.List.Dependant.IsNot()
+    {
+    [[ $_object_user_opts_apps_list_dependant_flag_ != 'true' ]]
+    }
+User.Opts.Apps.List.Dependant.IsSet()
+    {
+    [[ $_object_user_opts_apps_list_dependant_flag_ = 'true' ]]
+    }
+User.Opts.Apps.List.Dependant.List()
+    {
+    echo -n "${_object_user_opts_apps_list_dependant_array_[*]}"
+    }
+User.Opts.Apps.List.Dependant.ListComma()
+    {
+    echo -n "${_object_user_opts_apps_list_dependant_array_[*]}" | tr ' ' ','
+    }
+User.Opts.Apps.List.Dependant.LogChanges()
+    {
+    [[ $_object_user_opts_apps_list_dependant_changes_flag_ = 'true' ]] && return
+    _object_user_opts_apps_list_dependant_changes_flag_=true
+    }
+User.Opts.Apps.List.Dependant.Path()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_apps_list_dependant_path_="$2"
+    else
+        echo -n "$_object_user_opts_apps_list_dependant_path_"
+    fi
+    }
+User.Opts.Apps.List.Dependant.Remove()
+    {
+    [[ ${_object_user_opts_apps_list_dependant_array_[*]} == *"$1"* ]] && _object_user_opts_apps_list_dependant_array_=("${_object_user_opts_apps_list_dependant_array_[@]/$1}")
+    [[ -z ${_object_user_opts_apps_list_dependant_array_[*]} ]] && _object_user_opts_apps_list_dependant_array_=()
+    }
+User.Opts.Apps.List.Dependant.Set()
+    {
+    [[ $_object_user_opts_apps_list_dependant_flag_ = 'true' ]] && return
+    _object_user_opts_apps_list_dependant_flag_=true
+    [[ $_object_user_opts_apps_list_dependant_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_dependant_flag_
+    }
+User.Opts.Apps.List.Dependant.Text()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_apps_list_dependant_text_="$2"
+    else
+        echo -n "$_object_user_opts_apps_list_dependant_text_"
+    fi
+    }
+User.Opts.Apps.List.Dependant.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_apps_list_dependant_value_=$2
+    else
+        echo -n $_object_user_opts_apps_list_dependant_value_
+    fi
+    }
+User.Opts.Apps.List.Dependant.Init
+
+User.Opts.Apps.List.Independent.Add()
+    {
+    [[ ${_object_user_opts_apps_list_independent_array_[*]} != *"$1"* ]] && _object_user_opts_apps_list_independent_array_+=("$1")
+    }
+User.Opts.Apps.List.Independent.Array()
+    {
+    echo -n "${_object_user_opts_apps_list_independent_array_[@]}"
+    }
+User.Opts.Apps.List.Independent.Clear()
+    {
+    [[ $_object_user_opts_apps_list_independent_flag_ != 'true' ]] && return
+    _object_user_opts_apps_list_independent_flag_=false
+    [[ $_object_user_opts_apps_list_independent_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_independent_flag_
+    }
+User.Opts.Apps.List.Independent.Count()
+    {
+    echo "${#_object_user_opts_apps_list_independent_array_[@]}"
+    }
+User.Opts.Apps.List.Independent.Disable()
+    {
+    [[ $_object_user_opts_apps_list_independent_enable_ != 'true' ]] && return
+    _object_user_opts_apps_list_independent_enable_=false
+    [[ $_object_user_opts_apps_list_independent_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_independent_enable_
+    }
+User.Opts.Apps.List.Independent.DontLogChanges()
+    {
+    [[ $_object_user_opts_apps_list_independent_changes_flag_ != 'true' ]] && return
+    _object_user_opts_apps_list_independent_changes_flag_=false
+    }
+User.Opts.Apps.List.Independent.Enable()
+    {
+    [[ $_object_user_opts_apps_list_independent_enable_ = 'true' ]] && return
+    _object_user_opts_apps_list_independent_enable_=true
+    [[ $_object_user_opts_apps_list_independent_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_independent_enable_
+    }
+User.Opts.Apps.List.Independent.Exist()
+    {
+    [[ ${_object_user_opts_apps_list_independent_array_[*]} == *"$1"* ]]
+    }
+User.Opts.Apps.List.Independent.First()
+    {
+    echo "${_object_user_opts_apps_list_independent_array_[0]}"
+    }
+User.Opts.Apps.List.Independent.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_user_opts_apps_list_independent_array_[@]} ]] && index=${#_object_user_opts_apps_list_independent_array_[@]}
+    echo -n "${_object_user_opts_apps_list_independent_array_[((index-1))]}"
+    }
+User.Opts.Apps.List.Independent.Init()
+    {
+    _object_user_opts_apps_list_independent_value_=0
+    _object_user_opts_apps_list_independent_text_=''
+    _object_user_opts_apps_list_independent_flag_=false
+    _object_user_opts_apps_list_independent_changes_flag_=true
+    _object_user_opts_apps_list_independent_enable_=false
+    _object_user_opts_apps_list_independent_array_=()
+    _object_user_opts_apps_list_independent_array_index_=1
+    _object_user_opts_apps_list_independent_path_=''
+    }
+User.Opts.Apps.List.Independent.IsAny()
+    {
+    [[ ${#_object_user_opts_apps_list_independent_array_[@]} -gt 0 ]]
+    }
+User.Opts.Apps.List.Independent.IsDisabled()
+    {
+    [[ $_object_user_opts_apps_list_independent_enable_ != 'true' ]]
+    }
+User.Opts.Apps.List.Independent.IsEnabled()
+    {
+    [[ $_object_user_opts_apps_list_independent_enable_ = 'true' ]]
+    }
+User.Opts.Apps.List.Independent.IsNone()
+    {
+    [[ ${#_object_user_opts_apps_list_independent_array_[@]} -eq 0 ]]
+    }
+User.Opts.Apps.List.Independent.IsNot()
+    {
+    [[ $_object_user_opts_apps_list_independent_flag_ != 'true' ]]
+    }
+User.Opts.Apps.List.Independent.IsSet()
+    {
+    [[ $_object_user_opts_apps_list_independent_flag_ = 'true' ]]
+    }
+User.Opts.Apps.List.Independent.List()
+    {
+    echo -n "${_object_user_opts_apps_list_independent_array_[*]}"
+    }
+User.Opts.Apps.List.Independent.ListComma()
+    {
+    echo -n "${_object_user_opts_apps_list_independent_array_[*]}" | tr ' ' ','
+    }
+User.Opts.Apps.List.Independent.LogChanges()
+    {
+    [[ $_object_user_opts_apps_list_independent_changes_flag_ = 'true' ]] && return
+    _object_user_opts_apps_list_independent_changes_flag_=true
+    }
+User.Opts.Apps.List.Independent.Path()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_apps_list_independent_path_="$2"
+    else
+        echo -n "$_object_user_opts_apps_list_independent_path_"
+    fi
+    }
+User.Opts.Apps.List.Independent.Remove()
+    {
+    [[ ${_object_user_opts_apps_list_independent_array_[*]} == *"$1"* ]] && _object_user_opts_apps_list_independent_array_=("${_object_user_opts_apps_list_independent_array_[@]/$1}")
+    [[ -z ${_object_user_opts_apps_list_independent_array_[*]} ]] && _object_user_opts_apps_list_independent_array_=()
+    }
+User.Opts.Apps.List.Independent.Set()
+    {
+    [[ $_object_user_opts_apps_list_independent_flag_ = 'true' ]] && return
+    _object_user_opts_apps_list_independent_flag_=true
+    [[ $_object_user_opts_apps_list_independent_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_independent_flag_
+    }
+User.Opts.Apps.List.Independent.Text()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_apps_list_independent_text_="$2"
+    else
+        echo -n "$_object_user_opts_apps_list_independent_text_"
+    fi
+    }
+User.Opts.Apps.List.Independent.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_apps_list_independent_value_=$2
+    else
+        echo -n $_object_user_opts_apps_list_independent_value_
+    fi
+    }
+User.Opts.Apps.List.Independent.Init
+
 User.Opts.Apps.List.Installed.Add()
     {
     [[ ${_object_user_opts_apps_list_installed_array_[*]} != *"$1"* ]] && _object_user_opts_apps_list_installed_array_+=("$1")

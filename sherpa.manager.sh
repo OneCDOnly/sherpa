@@ -166,7 +166,7 @@ Session.Init()
     readonly IPKG_DL_PATH=$WORK_PATH/ipkgs.downloads
     readonly IPKG_CACHE_PATH=$WORK_PATH/ipkgs
     readonly PIP_CACHE_PATH=$WORK_PATH/pips
-    readonly COMPILED_OBJECTS_HASH=f04cacb17ff619978f74a888bb52df64
+    readonly COMPILED_OBJECTS_HASH=bdaee00575d614893ffb498a874d2050
     readonly DEBUG_LOG_DATAWIDTH=92
 
     if ! MakePath "$WORK_PATH" 'work'; then
@@ -536,6 +536,16 @@ Session.ParseArguments()
                 ;;
             list-upgradable|upgradable)
                 User.Opts.Apps.List.Upgradable.Set
+                Session.Display.Clean.Set
+                Session.SkipPackageProcessing.Set
+                ;;
+            list-independent|independent)
+                User.Opts.Apps.List.Independent.Set
+                Session.Display.Clean.Set
+                Session.SkipPackageProcessing.Set
+                ;;
+            list-dependant|dependant)
+                User.Opts.Apps.List.Dependant.Set
                 Session.Display.Clean.Set
                 Session.SkipPackageProcessing.Set
                 ;;
@@ -1283,6 +1293,10 @@ Session.Results()
         QPKGs.Upgradable.Show
     elif User.Opts.Apps.List.All.IsSet; then
         QPKGs.All.Show
+    elif User.Opts.Apps.List.Independent.IsSet; then
+        QPKGs.Independent.Show
+    elif User.Opts.Apps.List.Dependant.IsSet; then
+        QPKGs.Dependant.Show
     fi
 
     if User.Opts.Help.Basic.IsSet; then
@@ -2190,8 +2204,6 @@ Help.ActionsAll.Show()
 
     DisplayAsProjectSyntaxIndentedExample 'list only installed packages' 'list-installed'
 
-    DisplayAsProjectSyntaxIndentedExample 'list only packages that are not installed' 'list-installable'
-
     DisplayAsProjectSyntaxIndentedExample 'list only upgradable packages' 'list-upgradable'
 
     DisplayAsProjectSyntaxIndentedExample 'backup all application configurations to the default backup location' 'backup-all'
@@ -2325,6 +2337,12 @@ Help.Tips.Show()
     DisplayAsProjectSyntaxIndentedExample 'restart all packages (only upgrades the internal applications, not the packages)' 'restart-all'
 
     DisplayAsProjectSyntaxIndentedExample 'upgrade all installed packages (including the internal applications)' 'upgrade-all'
+
+    DisplayAsProjectSyntaxIndentedExample 'list only packages that are not installed' 'list-installable'
+
+    DisplayAsProjectSyntaxIndentedExample 'list only independent packages' 'list-independent'
+
+    DisplayAsProjectSyntaxIndentedExample 'list only dependant packages' 'list-dependant'
 
     DisplayAsProjectSyntaxIndentedExample "upload the most-recent $(printf "%'.f" $LOG_TAIL_LINES) entries in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste'
 
@@ -2882,6 +2900,34 @@ QPKGs.Upgradable.Show()
     QPKGs.StateLists.Build
 
     for package in $(QPKGs.Upgradable.Array); do
+        echo $package
+    done
+
+    return 0
+
+    }
+
+QPKGs.Independent.Show()
+    {
+
+    local package=''
+    QPKGs.StateLists.Build
+
+    for package in $(QPKGs.Independent.Array); do
+        echo $package
+    done
+
+    return 0
+
+    }
+
+QPKGs.Dependant.Show()
+    {
+
+    local package=''
+    QPKGs.StateLists.Build
+
+    for package in $(QPKGs.Dependant.Array); do
         echo $package
     done
 
@@ -4877,6 +4923,8 @@ Objects.Compile()
         Objects.Add User.Opts.Apps.All.Upgrade
 
         Objects.Add User.Opts.Apps.List.All
+        Objects.Add User.Opts.Apps.List.Dependant
+        Objects.Add User.Opts.Apps.List.Independent
         Objects.Add User.Opts.Apps.List.Installed
         Objects.Add User.Opts.Apps.List.NotInstalled
         Objects.Add User.Opts.Apps.List.Upgradable
