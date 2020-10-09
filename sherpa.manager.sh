@@ -1028,8 +1028,8 @@ Packages.Install.Independents()
         done
     fi
 
-    QPKGs.JustInstalled.IsAny && Session.IPKGs.Install.Set
-    QPKGs.JustInstalled.Exist SABnzbd && Session.PIPs.Install.Set   # need to ensure 'sabyenc' module is also installed
+    QPKGs.ToInstall.IsAny && Session.IPKGs.Install.Set
+    QPKGs.ToInstall.Exist SABnzbd && Session.PIPs.Install.Set   # need to ensure 'sabyenc' module is also installed
 
     if QPKG.Enabled Entware; then
         Session.AdjustPathEnv
@@ -1401,8 +1401,13 @@ Entware.Update()
     if [[ -n $msgs ]]; then
         ShowAsProc "updating $(FormatAsPackageName Entware) package list"
 
-        RunThisAndLogResults "$OPKG_CMD update" "$log_pathfile"
-        result=$?
+        if Session.Debug.To.Screen.IsSet; then
+            RunThisAndLogResultsRealtime "$OPKG_CMD update" "$log_pathfile" log:failure-only
+            result=$?
+        else
+            RunThisAndLogResults "$OPKG_CMD update" "$log_pathfile" log:failure-only
+            result=$?
+        fi
 
         if [[ $result -eq 0 ]]; then
             ShowAsDone "updated $(FormatAsPackageName Entware) package list"
@@ -1816,7 +1821,13 @@ IPKGs.Archive.Open()
 
     IPKGs.Archive.Close
 
-    RunThisAndLogResults "$Z7_CMD e -o$($DIRNAME_CMD "$EXTERNAL_PACKAGE_LIST_PATHFILE") $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE" "$WORK_PATH/ipkg.list.archive.extract"
+    if Session.Debug.To.Screen.IsSet; then
+        RunThisAndLogResultsRealtime "$Z7_CMD e -o$($DIRNAME_CMD "$EXTERNAL_PACKAGE_LIST_PATHFILE") $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE" "$WORK_PATH/ipkg.list.archive.extract" log:failure-only
+        result=$?
+    else
+        RunThisAndLogResults "$Z7_CMD e -o$($DIRNAME_CMD "$EXTERNAL_PACKAGE_LIST_PATHFILE") $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE" "$WORK_PATH/ipkg.list.archive.extract" log:failure-only
+        result=$?
+    fi
 
     if [[ ! -e $EXTERNAL_PACKAGE_LIST_PATHFILE ]]; then
         ShowAsError 'could not open the IPKG list file'
@@ -3894,6 +3905,8 @@ RunThisAndLogResults()
     # input:
     #   $1 = command string to execute
     #   $2 = pathfilename to record this operation in
+    #   $3 'log:failure-only' (optional) - if specified, stdout & stderr are only recorded in the specified log if the command failed.
+    #                                    - if unspecified, stdout & stderr is always recorded.
 
     # output:
     #   $? = result code of command string
@@ -3904,13 +3917,17 @@ RunThisAndLogResults()
     local msgs=/var/log/execd.log
     local result=0
 
+
     FormatAsCommand "$1" > "$2"
     $1 >> "$msgs" 2>&1
     result=$?
     FormatAsResultAndStdout "$result" "$(<"$msgs")" >> "$2"
     [[ -e $msgs ]] && rm -f "$msgs"
 
-    AddFileToDebug "$2"
+    if [[ $result -eq 0 ]] || [[ $result -ne 0 && $3 = log:failure-only ]]; then
+        AddFileToDebug "$2"
+    fi
+
     DebugFuncExit; return $result
 
     }
@@ -3923,6 +3940,8 @@ RunThisAndLogResultsRealtime()
     # input:
     #   $1 = command string to execute
     #   $2 = pathfilename to record this operation in
+    #   $3 'log:failure-only' (optional) - if specified, stdout & stderr are only recorded in the specified log if the command failed.
+    #                                    - if unspecified, stdout & stderr is always recorded.
 
     # output:
     #   $? = result code of executed command
@@ -3944,7 +3963,10 @@ RunThisAndLogResultsRealtime()
         FormatAsResultAndStdout "$result" "<null>" >> "$2"
     fi
 
-    AddFileToDebug "$2"
+    if [[ $result -eq 0 ]] || [[ $result -ne 0 && $3 = log:failure-only ]]; then
+        AddFileToDebug "$2"
+    fi
+
     DebugFuncExit; return $result
 
     }
