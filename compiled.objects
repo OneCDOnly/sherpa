@@ -4993,6 +4993,141 @@ QPKGs.JustInstalled.Value()
     }
 QPKGs.JustInstalled.Init
 
+QPKGs.JustStarted.Add()
+    {
+    [[ ${_object_qpkgs_juststarted_array_[*]} != *"$1"* ]] && _object_qpkgs_juststarted_array_+=("$1")
+    }
+QPKGs.JustStarted.Array()
+    {
+    echo -n "${_object_qpkgs_juststarted_array_[@]}"
+    }
+QPKGs.JustStarted.Clear()
+    {
+    [[ $_object_qpkgs_juststarted_flag_ != 'true' ]] && return
+    _object_qpkgs_juststarted_flag_=false
+    [[ $_object_qpkgs_juststarted_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_juststarted_flag_
+    }
+QPKGs.JustStarted.Count()
+    {
+    echo "${#_object_qpkgs_juststarted_array_[@]}"
+    }
+QPKGs.JustStarted.Disable()
+    {
+    [[ $_object_qpkgs_juststarted_enable_ != 'true' ]] && return
+    _object_qpkgs_juststarted_enable_=false
+    [[ $_object_qpkgs_juststarted_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_juststarted_enable_
+    }
+QPKGs.JustStarted.DontLogChanges()
+    {
+    [[ $_object_qpkgs_juststarted_changes_flag_ != 'true' ]] && return
+    _object_qpkgs_juststarted_changes_flag_=false
+    }
+QPKGs.JustStarted.Enable()
+    {
+    [[ $_object_qpkgs_juststarted_enable_ = 'true' ]] && return
+    _object_qpkgs_juststarted_enable_=true
+    [[ $_object_qpkgs_juststarted_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_juststarted_enable_
+    }
+QPKGs.JustStarted.Exist()
+    {
+    [[ ${_object_qpkgs_juststarted_array_[*]} == *"$1"* ]]
+    }
+QPKGs.JustStarted.First()
+    {
+    echo "${_object_qpkgs_juststarted_array_[0]}"
+    }
+QPKGs.JustStarted.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_qpkgs_juststarted_array_[@]} ]] && index=${#_object_qpkgs_juststarted_array_[@]}
+    echo -n "${_object_qpkgs_juststarted_array_[((index-1))]}"
+    }
+QPKGs.JustStarted.Init()
+    {
+    _object_qpkgs_juststarted_value_=0
+    _object_qpkgs_juststarted_text_=''
+    _object_qpkgs_juststarted_flag_=false
+    _object_qpkgs_juststarted_changes_flag_=true
+    _object_qpkgs_juststarted_enable_=false
+    _object_qpkgs_juststarted_array_=()
+    _object_qpkgs_juststarted_array_index_=1
+    _object_qpkgs_juststarted_path_=''
+    }
+QPKGs.JustStarted.IsAny()
+    {
+    [[ ${#_object_qpkgs_juststarted_array_[@]} -gt 0 ]]
+    }
+QPKGs.JustStarted.IsDisabled()
+    {
+    [[ $_object_qpkgs_juststarted_enable_ != 'true' ]]
+    }
+QPKGs.JustStarted.IsEnabled()
+    {
+    [[ $_object_qpkgs_juststarted_enable_ = 'true' ]]
+    }
+QPKGs.JustStarted.IsNone()
+    {
+    [[ ${#_object_qpkgs_juststarted_array_[@]} -eq 0 ]]
+    }
+QPKGs.JustStarted.IsNot()
+    {
+    [[ $_object_qpkgs_juststarted_flag_ != 'true' ]]
+    }
+QPKGs.JustStarted.IsSet()
+    {
+    [[ $_object_qpkgs_juststarted_flag_ = 'true' ]]
+    }
+QPKGs.JustStarted.List()
+    {
+    echo -n "${_object_qpkgs_juststarted_array_[*]}"
+    }
+QPKGs.JustStarted.ListComma()
+    {
+    echo -n "${_object_qpkgs_juststarted_array_[*]}" | tr ' ' ','
+    }
+QPKGs.JustStarted.LogChanges()
+    {
+    [[ $_object_qpkgs_juststarted_changes_flag_ = 'true' ]] && return
+    _object_qpkgs_juststarted_changes_flag_=true
+    }
+QPKGs.JustStarted.Path()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_juststarted_path_="$2"
+    else
+        echo -n "$_object_qpkgs_juststarted_path_"
+    fi
+    }
+QPKGs.JustStarted.Remove()
+    {
+    [[ ${_object_qpkgs_juststarted_array_[*]} == *"$1"* ]] && _object_qpkgs_juststarted_array_=("${_object_qpkgs_juststarted_array_[@]/$1}")
+    [[ -z ${_object_qpkgs_juststarted_array_[*]} ]] && _object_qpkgs_juststarted_array_=()
+    }
+QPKGs.JustStarted.Set()
+    {
+    [[ $_object_qpkgs_juststarted_flag_ = 'true' ]] && return
+    _object_qpkgs_juststarted_flag_=true
+    [[ $_object_qpkgs_juststarted_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_juststarted_flag_
+    }
+QPKGs.JustStarted.Text()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_juststarted_text_="$2"
+    else
+        echo -n "$_object_qpkgs_juststarted_text_"
+    fi
+    }
+QPKGs.JustStarted.Value()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_juststarted_value_=$2
+    else
+        echo -n $_object_qpkgs_juststarted_value_
+    fi
+    }
+QPKGs.JustStarted.Init
+
 QPKGs.Names.Add()
     {
     [[ ${_object_qpkgs_names_array_[*]} != *"$1"* ]] && _object_qpkgs_names_array_+=("$1")
