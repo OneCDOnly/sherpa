@@ -39,7 +39,7 @@ Session.Init()
     readonly SCRIPT_STARTSECONDS=$(/bin/date +%s)
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=201010
+    readonly MANAGER_SCRIPT_VERSION=201011
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -852,28 +852,7 @@ Packages.Stop()
     Session.SkipPackageProcessing.IsSet && return
     DebugFuncEntry
     local package=''
-    local acc=()
     local index=0
-
-    # if an independent has been selected for 'stop', need to stop all dependants too
-    for package in $(QPKGs.ToStop.Array); do
-        if QPKGs.Independent.Exist $package && QPKG.Installed $package; then
-            acc+=($(QPKG.Get.Dependencies $package))
-        fi
-    done
-
-    # if an independent has been selected for 'uninstall', need to stop all dependants too
-    for package in $(QPKGs.ToUninstall.Array); do
-        if QPKGs.Independent.Exist $package && QPKG.Installed $package; then
-            acc+=($(QPKG.Get.Dependencies $package))
-        fi
-    done
-
-    if [[ ${#acc[@]} -gt 0 ]]; then
-        for package in "${acc[@]}"; do
-            QPKG.Installed $package && QPKGs.ToStop.Add $package
-        done
-    fi
 
     if QPKGs.ToStop.IsAny; then
         for ((index=$(QPKGs.Dependant.Count); index>=1; index--)); do       # stop packages in reverse of declared order
@@ -911,15 +890,10 @@ Packages.Uninstall()
 
     Session.SkipPackageProcessing.IsSet && return
     DebugFuncEntry
-    local response=''
     local package=''
-    local previous_pip3_module_list=$WORK_PATH/pip3.prev.installed.list
-    local previous_opkg_package_list=$WORK_PATH/opkg.prev.installed.list
     local index=0
 
     if QPKGs.ToUninstall.IsAny; then
-        # remove dependant packages first
-
         for ((index=$(QPKGs.Dependant.Count); index>=1; index--)); do       # uninstall packages in reverse of declared order
             package=$(QPKGs.Dependant.GetItem $index)
 
@@ -932,7 +906,6 @@ Packages.Uninstall()
             fi
         done
 
-        # then the independent packages last
         for ((index=$(QPKGs.Independent.Count); index>=1; index--)); do     # uninstall packages in reverse of declared order
             package=$(QPKGs.Independent.GetItem $index)
 
@@ -961,6 +934,8 @@ Packages.Reinstall.Independents()
     Session.SkipPackageProcessing.IsSet && return
     DebugFuncEntry
     local package=''
+    local previous_pip3_module_list=$WORK_PATH/pip3.prev.installed.list
+    local previous_opkg_package_list=$WORK_PATH/opkg.prev.installed.list
 
     if QPKGs.ToReinstall.IsAny; then
         for package in $(QPKGs.Independent.Array); do
@@ -1010,8 +985,6 @@ Packages.Reinstall.Independents()
 
 Packages.Install.Independents()
     {
-
-    # install independent QPKGs first
 
     Session.SkipPackageProcessing.IsSet && return
     DebugFuncEntry
@@ -1356,6 +1329,8 @@ AskQuiz()
 
     # output:
     #   $? = 0 if "yes", 1 if "no"
+
+    local response=''
 
     ShowAsQuiz "$1"
     read -rn1 response
@@ -2615,6 +2590,7 @@ QPKGs.Assignment.Check()
     local package=''
     local installer_acc=()
     local download_acc=()
+    local stop_acc=()
     QPKGs.StateLists.Build
 
     # start by adding packages to lists as required:
@@ -2625,21 +2601,53 @@ QPKGs.Assignment.Check()
         done
     fi
 
-    if User.Opts.Apps.All.Uninstall.IsSet; then
-        for package in $(QPKGs.Installed.Array); do
-            QPKGs.ToUninstall.Add $package
-        done
-    fi
-
     if User.Opts.Apps.All.Stop.IsSet; then
         for package in $(QPKGs.Installed.Array); do
             QPKGs.ToStop.Add $package
         done
     fi
 
+    if User.Opts.Apps.All.Uninstall.IsSet; then
+        for package in $(QPKGs.Installed.Array); do
+            QPKGs.ToUninstall.Add $package
+        done
+    fi
+
+    # if an independent has been selected for 'stop', need to stop all dependants first
+    for package in $(QPKGs.ToStop.Array); do
+        if QPKGs.Independent.Exist $package && QPKG.Installed $package; then
+            stop_acc+=($(QPKG.Get.Dependencies $package))
+        fi
+    done
+
+    # if an independent has been selected for 'uninstall', need to stop all dependants first
+    for package in $(QPKGs.ToUninstall.Array); do
+        if QPKGs.Independent.Exist $package && QPKG.Installed $package; then
+            stop_acc+=($(QPKG.Get.Dependencies $package))
+        fi
+    done
+
+    if [[ ${#stop_acc[@]} -gt 0 ]]; then
+        for package in "${stop_acc[@]}"; do
+            QPKG.Installed $package && QPKGs.ToStop.Add $package
+        done
+    fi
+
     if User.Opts.Apps.All.Upgrade.IsSet; then
         for package in $(QPKGs.Upgradable.Array); do
             QPKGs.ToUpgrade.Add $package
+        done
+    fi
+
+    if User.Opts.Apps.All.Reinstall.IsSet; then
+        for package in $(QPKGs.Installed.Array); do
+            QPKGs.ToReinstall.Add $package
+        done
+    fi
+
+    if User.Opts.Apps.All.Install.IsSet; then
+        for package in $(QPKGs.Installable.Array); do
+            QPKGs.ToInstall.Add $package
         done
     fi
 
@@ -2668,18 +2676,6 @@ QPKGs.Assignment.Check()
         ! QPKG.Installed $package && QPKGs.ToInstall.Add $package
     done
 
-    if User.Opts.Apps.All.Install.IsSet; then
-        for package in $(QPKGs.Installable.Array); do
-            QPKGs.ToInstall.Add $package
-        done
-    fi
-
-    if User.Opts.Apps.All.Reinstall.IsSet; then
-        for package in $(QPKGs.Installed.Array); do
-            QPKGs.ToReinstall.Add $package
-        done
-    fi
-
     if User.Opts.Apps.All.Restore.IsSet; then
         for package in $(QPKGs.Installed.Array); do
             QPKGs.ToRestore.Add $package
@@ -2699,14 +2695,13 @@ QPKGs.Assignment.Check()
     fi
 
     # build an initial package download list. Items on this list will be skipped at download-time if they can be found in local cache.
-
     if User.Opts.Dependencies.Check.IsSet; then
         download_acc+=($(QPKGs.Installed.Array))
     else
-        download_acc+=($(QPKGs.ToInstall.List))
-        download_acc+=($(QPKGs.ToReinstall.List))
-        download_acc+=($(QPKGs.ToUpgrade.List))
         download_acc+=($(QPKGs.ToForceUpgrade.List))
+        download_acc+=($(QPKGs.ToUpgrade.List))
+        download_acc+=($(QPKGs.ToReinstall.List))
+        download_acc+=($(QPKGs.ToInstall.List))
     fi
 
     for package in "${download_acc[@]}"; do
