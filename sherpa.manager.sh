@@ -3961,7 +3961,7 @@ RunThisAndLogResults()
     FormatAsResultAndStdout "$result" "$(<"$msgs")" >> "$2"
     [[ -e $msgs ]] && rm -f "$msgs"
 
-    if [[ $result -eq 0 && $3 != log:failure-only ]] || [[ $reset -ne 0 ]]; then
+    if [[ $result -eq 0 && $3 != log:failure-only ]] || [[ $result -ne 0 ]]; then
         AddFileToDebug "$2"
     fi
 
@@ -4000,7 +4000,7 @@ RunThisAndLogResultsRealtime()
         FormatAsResultAndStdout "$result" "<null>" >> "$2"
     fi
 
-    if [[ $result -eq 0 && $3 != log:failure-only ]] || [[ $reset -ne 0 ]]; then
+    if [[ $result -eq 0 && $3 != log:failure-only ]] || [[ $result -ne 0 ]]; then
         AddFileToDebug "$2"
     fi
 
