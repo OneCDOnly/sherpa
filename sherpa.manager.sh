@@ -2133,7 +2133,7 @@ Help.Basic.Example.Show()
 
     DisplayAsProjectSyntaxIndentedExample "or, for more about available $(FormatAsHelpOptions), type" 'options'
 
-    echo -e "\nThere's also $(FormatAsURL 'https://github.com/OneCDOnly/sherpa/wiki')"
+    echo -e "\nThere's even more here: $(FormatAsURL 'https://github.com/OneCDOnly/sherpa/wiki')"
 
     return 0
 
@@ -2154,25 +2154,13 @@ Help.Actions.Show()
 
     DisplayAsProjectSyntaxIndentedExample 'upgrade the following packages and the internal applications' "upgrade $(FormatAsHelpPackages)"
 
-    DisplayAsProjectSyntaxIndentedExample 'force-upgrade the following packages and the internal applications' "upgrade force $(FormatAsHelpPackages)"
-
-    DisplayAsProjectSyntaxIndentedExample 'start the following packages and enable package icons' "start $(FormatAsHelpPackages)"
-
-    DisplayAsProjectSyntaxIndentedExample 'stop the following packages and disable package icons' "stop $(FormatAsHelpPackages)"
-
-    DisplayAsProjectSyntaxIndentedExample 'upgrade the internal applications only' "restart $(FormatAsHelpPackages)"
-
     DisplayAsProjectSyntaxIndentedExample 'backup the internal application configurations to the default backup location' "backup $(FormatAsHelpPackages)"
 
     DisplayAsProjectSyntaxIndentedExample 'restore the internal application configurations from the default backup location' "restore $(FormatAsHelpPackages)"
 
     DisplayAsProjectSyntaxExample "$(FormatAsHelpActions) to affect all packages can be seen with" 'actions-all'
 
-    Help.BackupLocation.Show
-
     DisplayAsProjectSyntaxExample "multiple $(FormatAsHelpActions) are supported like this" 'install sabnzbd sickchill restart transmission uninstall lazy nzbget upgrade nzbtomedia'
-
-    DisplayAsInfoExample "$(FormatAsHelpActions) may be specified in any order, but the package processing order-of-operations is (first ► last)" 'backup ► uninstall ► force-upgrade ► upgrade ► install ► reinstall ► restore ► restart'
 
     return 0
 
@@ -2193,13 +2181,7 @@ Help.ActionsAll.Show()
 
     DisplayAsProjectSyntaxIndentedExample 'upgrade all installed packages (including the internal applications)' 'upgrade-all'
 
-    DisplayAsProjectSyntaxIndentedExample 'start all installed packages and enable package icons' 'start-all'
-
-    DisplayAsProjectSyntaxIndentedExample 'stop all installed packages and disable package icons' 'stop-all'
-
     DisplayAsProjectSyntaxIndentedExample 'restart all installed packages (only upgrades the internal applications, not the packages)' 'restart-all'
-
-    DisplayAsProjectSyntaxIndentedExample 'ensure all application dependencies are installed' 'check-all'
 
     DisplayAsProjectSyntaxIndentedExample 'list all installable packages' 'list'
 
@@ -2286,7 +2268,15 @@ Help.Problems.Show()
 
     DisplayAsProjectSyntaxIndentedExample "clean the $(FormatAsScriptTitle) cache" 'clean'
 
+    DisplayAsProjectSyntaxIndentedExample 'force-upgrade the following packages and the internal applications' "upgrade force $(FormatAsHelpPackages)"
+
     DisplayAsProjectSyntaxIndentedExample 'restart all installed packages (upgrades the internal applications, not the packages)' 'restart-all'
+
+    DisplayAsProjectSyntaxIndentedExample 'ensure all application dependencies are installed' 'check-all'
+
+    DisplayAsProjectSyntaxIndentedExample 'start the following packages and enable package icons' "start $(FormatAsHelpPackages)"
+
+    DisplayAsProjectSyntaxIndentedExample 'stop the following packages and disable package icons' "stop $(FormatAsHelpPackages)"
 
     DisplayAsProjectSyntaxIndentedExample "view only the most recent $(FormatAsScriptTitle) session log" 'l'
 
@@ -2333,25 +2323,15 @@ Help.Tips.Show()
 
     DisplayAsProjectSyntaxIndentedExample 'package abbreviations also work. To see these' 'abs'
 
-    DisplayAsProjectSyntaxIndentedExample 'ensure all application dependencies are installed' 'check-all'
-
     DisplayAsProjectSyntaxIndentedExample 'restart all packages (only upgrades the internal applications, not the packages)' 'restart-all'
-
-    DisplayAsProjectSyntaxIndentedExample 'upgrade all installed packages (including the internal applications)' 'upgrade-all'
 
     DisplayAsProjectSyntaxIndentedExample 'list only packages that are not installed' 'list-installable'
 
-    DisplayAsProjectSyntaxIndentedExample 'list only independent packages' 'list-independent'
+    DisplayAsProjectSyntaxIndentedExample "view only the most recent $(FormatAsScriptTitle) session log" 'l'
 
-    DisplayAsProjectSyntaxIndentedExample 'list only dependant packages' 'list-dependant'
-
-    DisplayAsProjectSyntaxIndentedExample "upload the most-recent $(printf "%'.f" $LOG_TAIL_LINES) entries in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste'
-
-    DisplayAsProjectSyntaxIndentedExample 'display all package-manager scripts versions' 'version'
+    DisplayAsProjectSyntaxIndentedExample 'upgrade the internal applications only' "restart $(FormatAsHelpPackages)"
 
     Help.BackupLocation.Show
-
-    echo -e "\n$(ColourTextBrightOrange '* If you need help, please include a copy of your') $(FormatAsScriptTitle) $(ColourTextBrightOrange 'log for analysis!')"
 
     return 0
 
