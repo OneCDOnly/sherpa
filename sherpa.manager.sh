@@ -166,7 +166,7 @@ Session.Init()
     readonly IPKG_DL_PATH=$WORK_PATH/ipkgs.downloads
     readonly IPKG_CACHE_PATH=$WORK_PATH/ipkgs
     readonly PIP_CACHE_PATH=$WORK_PATH/pips
-    readonly COMPILED_OBJECTS_HASH=bdaee00575d61d4893ffb498a874d2050
+    readonly COMPILED_OBJECTS_HASH=91507e9b27e29bcfdd83a00626b58e6b
     readonly DEBUG_LOG_DATAWIDTH=92
 
     if ! MakePath "$WORK_PATH" 'work'; then
@@ -3977,7 +3977,7 @@ RunThisAndLogResults()
     FormatAsResultAndStdout "$result" "$(<"$msgs")" >> "$2"
     [[ -e $msgs ]] && rm -f "$msgs"
 
-    if [[ $result -eq 0 ]] || [[ $result -ne 0 && $3 = log:failure-only ]]; then
+    if [[ $result -eq 0 && $3 != log:failure-only ]] || [[ $reset -ne 0 ]]; then
         AddFileToDebug "$2"
     fi
 
@@ -4016,7 +4016,7 @@ RunThisAndLogResultsRealtime()
         FormatAsResultAndStdout "$result" "<null>" >> "$2"
     fi
 
-    if [[ $result -eq 0 ]] || [[ $result -ne 0 && $3 = log:failure-only ]]; then
+    if [[ $result -eq 0 && $3 != log:failure-only ]] || [[ $reset -ne 0 ]]; then
         AddFileToDebug "$2"
     fi
 
