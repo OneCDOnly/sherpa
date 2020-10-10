@@ -166,7 +166,7 @@ Session.Init()
     readonly IPKG_DL_PATH=$WORK_PATH/ipkgs.downloads
     readonly IPKG_CACHE_PATH=$WORK_PATH/ipkgs
     readonly PIP_CACHE_PATH=$WORK_PATH/pips
-    readonly COMPILED_OBJECTS_HASH=bdaee00575d614893ffb498a874d2050
+    readonly COMPILED_OBJECTS_HASH=bdaee00575d61d4893ffb498a874d2050
     readonly DEBUG_LOG_DATAWIDTH=92
 
     if ! MakePath "$WORK_PATH" 'work'; then
@@ -1599,10 +1599,10 @@ CalcAllIPKGDepsToInstall()
     if [[ $package_count -gt 0 ]]; then
         DebugProc "determining size of IPKG$(FormatAsPlural "$package_count") to download"
         size_array=($($GNU_GREP_CMD -w '^Package:\|^Size:' "$EXTERNAL_PACKAGE_LIST_PATHFILE" | $GNU_GREP_CMD --after-context 1 --no-group-separator ": $($SED_CMD 's/ /$ /g;s/\$ /\$\\\|: /g' <<< "$(IPKGs.ToDownload.List)")$" | $GREP_CMD '^Size:' | $SED_CMD 's|^Size: ||'))
-        IPKGs.ToDownload.Value = "$(IFS=+; echo "$((${size_array[*]}))")"   # a neat sizing shortcut found here https://stackoverflow.com/a/13635566/6182835
+        IPKGs.ToDownload.Size = "$(IFS=+; echo "$((${size_array[*]}))")"   # a neat sizing shortcut found here https://stackoverflow.com/a/13635566/6182835
         DebugDone 'complete'
-        DebugInfo "IPKG download size: $(IPKGs.ToDownload.Value)"
-        ShowAsDone "$package_count IPKG$(FormatAsPlural "$package_count") ($(FormatAsISOBytes "$(IPKGs.ToDownload.Value)")) to be downloaded"
+        DebugInfo "IPKG download size: $(IPKGs.ToDownload.Size)"
+        ShowAsDone "$package_count IPKG$(FormatAsPlural "$package_count") ($(FormatAsISOBytes "$(IPKGs.ToDownload.Size)")) to be downloaded"
     else
         ShowAsDone 'no IPKGs are required'
     fi
@@ -1732,7 +1732,7 @@ IPKGs.Install.Batch()
 
         CreateDirSizeMonitorFlagFile $IPKG_DL_PATH/.monitor
             trap CTRL_C_Captured INT
-                _MonitorDirSize_ "$IPKG_DL_PATH" "$(IPKGs.ToDownload.Value)" &
+                _MonitorDirSize_ "$IPKG_DL_PATH" "$(IPKGs.ToDownload.Size)" &
 
                 RunThisAndLogResults "$OPKG_CMD install$(User.Opts.IgnoreFreeSpace.IsSet && User.Opts.IgnoreFreeSpace.Text) --force-overwrite $(IPKGs.ToDownload.List) --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
                 result=$?
@@ -1807,7 +1807,7 @@ IPKGs.Upgrade.Batch()
 
         CreateDirSizeMonitorFlagFile $IPKG_DL_PATH/.monitor
             trap CTRL_C_Captured INT
-                _MonitorDirSize_ "$IPKG_DL_PATH" "$(IPKGs.ToDownload.Value)" &
+                _MonitorDirSize_ "$IPKG_DL_PATH" "$(IPKGs.ToDownload.Size)" &
 
                 RunThisAndLogResults "$OPKG_CMD upgrade$(User.Opts.IgnoreFreeSpace.IsSet && User.Opts.IgnoreFreeSpace.Text) --force-overwrite $(IPKGs.ToDownload.List) --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
                 result=$?
@@ -4717,7 +4717,7 @@ Objects.Add()
     local public_function_name=$1
     local safe_function_name="$(tr '[A-Z]' '[a-z]' <<< "${public_function_name//[.-]/_}")"
 
-    _placeholder_value_="_object_${safe_function_name}_value_"
+    _placeholder_size_="_object_${safe_function_name}_size_"
     _placeholder_text_="_object_${safe_function_name}_text_"
     _placeholder_flag_="_object_${safe_function_name}_flag_"
     _placeholder_log_changes_flag_="_object_${safe_function_name}_changes_flag_"
@@ -4778,7 +4778,7 @@ echo $public_function_name'.Add()
     }
 '$public_function_name'.Init()
     {
-    '$_placeholder_value_'=0
+    '$_placeholder_size_'=0
     '$_placeholder_text_'='\'\''
     '$_placeholder_flag_'=false
     '$_placeholder_log_changes_flag_'=true
@@ -4843,20 +4843,20 @@ echo $public_function_name'.Add()
     '$_placeholder_flag_'=true
     [[ $'$_placeholder_log_changes_flag_' = '\'true\'' ]] && DebugVar '$_placeholder_flag_'
     }
+'$public_function_name'.Size()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        '$_placeholder_size_'=$2
+    else
+        echo -n $'$_placeholder_size_'
+    fi
+    }
 '$public_function_name'.Text()
     {
     if [[ -n $1 && $1 = "=" ]]; then
         '$_placeholder_text_'="$2"
     else
         echo -n "$'$_placeholder_text_'"
-    fi
-    }
-'$public_function_name'.Value()
-    {
-    if [[ -n $1 && $1 = "=" ]]; then
-        '$_placeholder_value_'=$2
-    else
-        echo -n $'$_placeholder_value_'
     fi
     }
 '$public_function_name'.Init
