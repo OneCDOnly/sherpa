@@ -1580,8 +1580,7 @@ CalcAllIPKGDepsToInstall()
     DebugInfo "IPKGs requested + dependencies: $pre_download_list"
 
     DebugProc 'excluding IPKGs already installed'
-    # shellcheck disable=SC2068
-    for element in ${pre_download_list[@]}; do
+    for element in $pre_download_list; do
         if [[ $element != 'ca-certs' ]]; then       # KLUDGE: 'ca-certs' appears to be a bogus meta-package, so silently exclude it from attempted installation.
             if [[ $element != 'libjpeg' ]]; then    # KLUDGE: 'libjpeg' appears to have been replaced by 'libjpeg-turbo', but many packages still list 'libjpeg' as a dependency, so replace it with 'libjpeg-turbo'.
                 if ! $OPKG_CMD status "$element" | $GREP_CMD -q "Status:.*installed"; then
@@ -1600,7 +1599,7 @@ CalcAllIPKGDepsToInstall()
     if [[ $package_count -gt 0 ]]; then
         DebugProc "determining size of IPKG$(FormatAsPlural "$package_count") to download"
         size_array=($($GNU_GREP_CMD -w '^Package:\|^Size:' "$EXTERNAL_PACKAGE_LIST_PATHFILE" | $GNU_GREP_CMD --after-context 1 --no-group-separator ": $($SED_CMD 's/ /$ /g;s/\$ /\$\\\|: /g' <<< "$(IPKGs.ToDownload.List)")$" | $GREP_CMD '^Size:' | $SED_CMD 's|^Size: ||'))
-        IPKGs.ToDownload.Value = $(IFS=+; echo "$((${size_array[*]}))")   # a neat sizing shortcut found here https://stackoverflow.com/a/13635566/6182835
+        IPKGs.ToDownload.Value = "$(IFS=+; echo "$((${size_array[*]}))")"   # a neat sizing shortcut found here https://stackoverflow.com/a/13635566/6182835
         DebugDone 'complete'
         DebugInfo "IPKG download size: $(IPKGs.ToDownload.Value)"
         ShowAsDone "$package_count IPKG$(FormatAsPlural "$package_count") ($(FormatAsISOBytes "$(IPKGs.ToDownload.Value)")) to be downloaded"
@@ -1634,8 +1633,7 @@ CalcAllIPKGDepsToUninstall()
     DebugInfo "IPKGs requested: $requested_list"
     DebugProc 'excluding IPKGs not installed'
 
-    # shellcheck disable=SC2068
-    for element in "$requested_list"; do
+    for element in $requested_list; do
         if ! $OPKG_CMD status "$element" | $GREP_CMD -q "Status:.*installed"; then
             IPKGs.ToUninstall.Remove "$element"
         fi
