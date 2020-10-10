@@ -928,6 +928,24 @@ Packages.Uninstall()
 
     }
 
+Packages.Force-upgrade.Independents()
+    {
+
+    # placeholder function
+
+    :
+
+    }
+
+Packages.Upgrade.Independents()
+    {
+
+    # placeholder function
+
+    :
+
+    }
+
 Packages.Reinstall.Independents()
     {
 
@@ -1018,20 +1036,16 @@ Packages.Install.Independents()
         done
     fi
 
-    if QPKGs.ToInstall.IsAny || QPKGs.ToReinstall.IsAny; then
-        Session.IPKGs.Install.Set
-    fi
-
-    QPKGs.ToInstall.Exist SABnzbd && Session.PIPs.Install.Set   # need to ensure 'sabyenc' module is also installed
-
-    if QPKG.Enabled Entware; then
-        Session.AdjustPathEnv
-        Entware.Patch.Service
-        IPKGs.Install
-        PIPs.Install
-    fi
-
     DebugFuncExit; return 0
+
+    }
+
+Packages.Restore.Independents()
+    {
+
+    # placeholder function
+
+    :
 
     }
 
@@ -1065,6 +1079,29 @@ Packages.Start.Independents()
                 fi
             fi
         done
+    fi
+
+    DebugFuncExit; return 0
+
+    }
+
+Packages.Start.Addons()
+    {
+
+    Session.SkipPackageProcessing.IsSet && return
+    DebugFuncEntry
+
+    if QPKGs.ToInstall.IsAny || QPKGs.ToReinstall.IsAny; then
+        Session.IPKGs.Install.Set
+    fi
+
+    QPKGs.ToInstall.Exist SABnzbd && Session.PIPs.Install.Set   # need to ensure 'sabyenc' module is also installed
+
+    if QPKG.Enabled Entware; then
+        Session.AdjustPathEnv
+        Entware.Patch.Service
+        IPKGs.Install
+        PIPs.Install
     fi
 
     DebugFuncExit; return 0
@@ -1146,7 +1183,7 @@ Packages.Install.Dependants()
 
     }
 
-Packages.Restore()
+Packages.Restore.Dependants()
     {
 
     Session.SkipPackageProcessing.IsSet && return
@@ -2591,6 +2628,7 @@ QPKGs.Assignment.Check()
     local installer_acc=()
     local download_acc=()
     local stop_acc=()
+    local start_acc=()
     QPKGs.StateLists.Build
 
     # start by adding packages to lists as required:
@@ -2681,6 +2719,31 @@ QPKGs.Assignment.Check()
             QPKGs.ToRestore.Add $package
         done
     fi
+
+    # check for independent packages that require starting
+    for package in $(QPKGs.ToStart.Array); do
+        ! QPKGs.ToUninstall.Exist $package && ! QPKGs.ToStop.Exist $package && start_acc+=($(QPKG.Get.Independencies $package))
+    done
+
+    for package in $(QPKGs.ToInstall.Array); do
+        start_acc+=($(QPKG.Get.Independencies $package))
+    done
+
+    for package in $(QPKGs.ToReinstall.Array); do
+        start_acc+=($(QPKG.Get.Independencies $package))
+    done
+
+    for package in $(QPKGs.ToUpgrade.Array); do
+        start_acc+=($(QPKG.Get.Independencies $package))
+    done
+
+    for package in $(QPKGs.ToForceUpgrade.Array); do
+        start_acc+=($(QPKG.Get.Independencies $package))
+    done
+
+    for package in "${start_acc[@]}"; do
+        QPKGs.ToStart.Add $package
+    done
 
     if User.Opts.Apps.All.Start.IsSet; then
         for package in $(QPKGs.Installed.Array); do
@@ -4958,14 +5021,18 @@ Packages.Download
 Packages.Backup
 Packages.Stop
 Packages.Uninstall
+Packages.Force-upgrade.Independents
+Packages.Upgrade.Independents
 Packages.Reinstall.Independents
 Packages.Install.Independents
+Packages.Restore.Independents
 Packages.Start.Independents
+Packages.Start.Addons
 Packages.Upgrade.Dependants
 Packages.Reinstall.Dependants
 Packages.Install.Dependants
 Packages.Start.Dependants
-Packages.Restore
+Packages.Restore.Dependants
 Packages.Restart
 Session.Results
 Session.Error.IsNot
