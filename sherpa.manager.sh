@@ -2525,9 +2525,10 @@ ExtractTailFromLog()
 Versions.Show()
     {
 
-    Display "package: $PACKAGE_VERSION"
-    Display "loader: $LOADER_SCRIPT_VERSION"
+    Display "objects hash: $COMPILED_OBJECTS_HASH"
     Display "manager: $MANAGER_SCRIPT_VERSION"
+    Display "loader: $LOADER_SCRIPT_VERSION"
+    Display "package: $PACKAGE_VERSION"
 
     return 0
 
