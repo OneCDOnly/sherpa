@@ -1045,7 +1045,10 @@ Packages.Install.Independents()
         done
     fi
 
-    QPKGs.ToInstall.IsAny && Session.IPKGs.Install.Set
+    if QPKGs.ToInstall.IsAny || QPKGs.ToReinstall.IsAny; then
+        Session.IPKGs.Install.Set
+    fi
+
     QPKGs.ToInstall.Exist SABnzbd && Session.PIPs.Install.Set   # need to ensure 'sabyenc' module is also installed
 
     if QPKG.Enabled Entware; then
