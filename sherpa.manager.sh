@@ -2593,15 +2593,14 @@ QPKGs.Assignment.Check()
     #   1. uninstall        (lowest: least-important)
 
     # However, package processing priorities need to be:
-    #  17. backup                   (highest: most-important)
-    #  16. stop dependants
-    #  15. stop independents
-    #  14. uninstall
-    #  13. force-upgrade independents
-    #  12. upgrade independents
-    #  11. reinstall independents
-    #  10. install independents
-    #   9. restore independents
+    #  16. backup                   (highest: most-important)
+    #  15. stop dependants
+    #  14. stop independents
+    #  13. uninstall
+    #  12. force-upgrade independents
+    #  11. upgrade independents
+    #  10. reinstall independents
+    #   9. install independents
     #   8. start independents
     #   7. force-upgrade dependants
     #   6. upgrade dependants
