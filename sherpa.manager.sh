@@ -39,7 +39,7 @@ Session.Init()
     readonly SCRIPT_STARTSECONDS=$(/bin/date +%s)
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=201011
+    readonly MANAGER_SCRIPT_VERSION=201019
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -166,7 +166,7 @@ Session.Init()
     readonly IPKG_DL_PATH=$WORK_PATH/ipkgs.downloads
     readonly IPKG_CACHE_PATH=$WORK_PATH/ipkgs
     readonly PIP_CACHE_PATH=$WORK_PATH/pips
-    readonly COMPILED_OBJECTS_HASH=91507e9b27e29bcfdd83a00626b58e6b
+    readonly COMPILED_OBJECTS_HASH=a7804e08f41d962a08fab384c557f865
     readonly DEBUG_LOG_DATAWIDTH=92
 
     if ! MakePath "$WORK_PATH" 'work'; then
@@ -740,26 +740,8 @@ Session.Validate()
     DebugScript 'work path' "$WORK_PATH"
     DebugScript 'object reference hash' "$COMPILED_OBJECTS_HASH"
 
-    if QPKG.Installed Entware; then
-        if [[ -e /opt/etc/passwd ]]; then
-            if [[ -L /opt/etc/passwd ]]; then
-                ENTWARE_VER=std
-            else
-                ENTWARE_VER=alt
-            fi
-        else
-            ENTWARE_VER=none
-        fi
-
-        DebugQPKG 'Entware installer' $ENTWARE_VER
-
-        if [[ $ENTWARE_VER = none ]]; then
-            DebugWarning "$(FormatAsPackageName Entware) appears to be installed but is not visible"
-        fi
-    fi
-
+    Session.Calc.EntwareType
     Session.Calc.QPKGArch
-    DebugQPKG 'arch' "$NAS_QPKG_ARCH"
 
     DebugQPKG 'upgradable package(s)' "$(QPKGs.Upgradable.List) "
     DebugInfoMinorSeparator
@@ -2633,23 +2615,9 @@ QPKGs.Assignment.Check()
 
     # start by adding packages to lists as required:
 
-    if User.Opts.Apps.All.Backup.IsSet; then
-        for package in $(QPKGs.Installed.Array); do
-            QPKGs.ToBackup.Add $package
-        done
-    fi
-
-    if User.Opts.Apps.All.Stop.IsSet; then
-        for package in $(QPKGs.Installed.Array); do
-            QPKGs.ToStop.Add $package
-        done
-    fi
-
-    if User.Opts.Apps.All.Uninstall.IsSet; then
-        for package in $(QPKGs.Installed.Array); do
-            QPKGs.ToUninstall.Add $package
-        done
-    fi
+    User.Opts.Apps.All.Backup.IsSet && QPKGs.ToBackup.Add "$(QPKGs.Installed.Array)"
+    User.Opts.Apps.All.Stop.IsSet && QPKGs.ToStop.Add "$(QPKGs.Installed.Array)"
+    User.Opts.Apps.All.Uninstall.IsSet && QPKGs.ToUninstall.Add "$(QPKGs.Installed.Array)"
 
     # if an independent has been selected for 'stop', need to stop all dependants first
     for package in $(QPKGs.ToStop.Array); do
@@ -2671,23 +2639,9 @@ QPKGs.Assignment.Check()
         done
     fi
 
-    if User.Opts.Apps.All.Upgrade.IsSet; then
-        for package in $(QPKGs.Upgradable.Array); do
-            QPKGs.ToUpgrade.Add $package
-        done
-    fi
-
-    if User.Opts.Apps.All.Reinstall.IsSet; then
-        for package in $(QPKGs.Installed.Array); do
-            QPKGs.ToReinstall.Add $package
-        done
-    fi
-
-    if User.Opts.Apps.All.Install.IsSet; then
-        for package in $(QPKGs.Installable.Array); do
-            QPKGs.ToInstall.Add $package
-        done
-    fi
+    User.Opts.Apps.All.Upgrade.IsSet && QPKGs.ToUpgrade.Add "$(QPKGs.Upgradable.Array)"
+    User.Opts.Apps.All.Reinstall.IsSet && QPKGs.ToReinstall.Add "$(QPKGs.Installed.Array)"
+    User.Opts.Apps.All.Install.IsSet && QPKGs.ToInstall.Add "$(QPKGs.Installable.Array)"
 
     # check for independent packages that require installation
     for package in $(QPKGs.Installed.Array); do
@@ -2714,11 +2668,7 @@ QPKGs.Assignment.Check()
         ! QPKG.Installed $package && QPKGs.ToInstall.Add $package
     done
 
-    if User.Opts.Apps.All.Restore.IsSet; then
-        for package in $(QPKGs.Installed.Array); do
-            QPKGs.ToRestore.Add $package
-        done
-    fi
+    User.Opts.Apps.All.Restore.IsSet && QPKGs.ToRestore.Add "$(QPKGs.Installed.Array)"
 
     # check for independent packages that require starting
     for package in $(QPKGs.ToStart.Array); do
@@ -2741,35 +2691,20 @@ QPKGs.Assignment.Check()
         start_acc+=($(QPKG.Get.Independencies $package))
     done
 
-    for package in "${start_acc[@]}"; do
-        QPKGs.ToStart.Add $package
-    done
+    QPKGs.ToStart.Add "${start_acc[*]}"
 
-    if User.Opts.Apps.All.Start.IsSet; then
-        for package in $(QPKGs.Installed.Array); do
-            QPKGs.ToStart.Add $package
-        done
-    fi
-
-    if User.Opts.Apps.All.Restart.IsSet; then
-        for package in $(QPKGs.Installed.Array); do
-            QPKGs.ToRestart.Add $package
-        done
-    fi
+    User.Opts.Apps.All.Start.IsSet && QPKGs.ToStart.Add "$(QPKGs.Installed.Array)"
+    User.Opts.Apps.All.Restart.IsSet && QPKGs.ToRestart.Add "$(QPKGs.Installed.Array)"
 
     # build an initial package download list. Items on this list will be skipped at download-time if they can be found in local cache.
     if User.Opts.Dependencies.Check.IsSet; then
-        download_acc+=($(QPKGs.Installed.Array))
+        QPKGs.ToDownload.Add "$(QPKGs.Installed.Array)"
     else
-        download_acc+=($(QPKGs.ToForceUpgrade.List))
-        download_acc+=($(QPKGs.ToUpgrade.List))
-        download_acc+=($(QPKGs.ToReinstall.List))
-        download_acc+=($(QPKGs.ToInstall.List))
+        QPKGs.ToDownload.Add "$(QPKGs.ToForceUpgrade.Array)"
+        QPKGs.ToDownload.Add "$(QPKGs.ToUpgrade.Array)"
+        QPKGs.ToDownload.Add "$(QPKGs.ToReinstall.Array)"
+        QPKGs.ToDownload.Add "$(QPKGs.ToInstall.Array)"
     fi
-
-    for package in "${download_acc[@]}"; do
-        QPKGs.ToDownload.Add $package
-    done
 
     QPKGs.Assignment.List
     DebugFuncExit; return 0
@@ -3009,8 +2944,32 @@ Session.Calc.QPKGArch()
     esac
 
     readonly NAS_QPKG_ARCH
+    DebugQPKG 'arch' "$NAS_QPKG_ARCH"
 
     return 0
+
+    }
+
+Session.Calc.EntwareType()
+    {
+
+    if QPKG.Installed Entware; then
+        if [[ -e /opt/etc/passwd ]]; then
+            if [[ -L /opt/etc/passwd ]]; then
+                ENTWARE_VER=std
+            else
+                ENTWARE_VER=alt
+            fi
+        else
+            ENTWARE_VER=none
+        fi
+
+        DebugQPKG 'Entware installer' $ENTWARE_VER
+
+        if [[ $ENTWARE_VER = none ]]; then
+            DebugWarning "$(FormatAsPackageName Entware) appears to be installed but is not visible"
+        fi
+    fi
 
     }
 
@@ -4769,7 +4728,10 @@ Objects.Add()
 
 echo $public_function_name'.Add()
     {
-    [[ ${'$_placeholder_array_'[*]} != *"$1"* ]] && '$_placeholder_array_'+=("$1")
+    local item='\'\''
+    for item in "$1"; do
+        [[ ${'$_placeholder_array_'[*]} != *"$item"* ]] && '$_placeholder_array_'+=("$item")
+    done
     }
 '$public_function_name'.Array()
     {
