@@ -39,7 +39,7 @@ Session.Init()
     readonly SCRIPT_STARTSECONDS=$(/bin/date +%s)
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=201019
+    readonly MANAGER_SCRIPT_VERSION=201025
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -237,8 +237,8 @@ Session.Init()
 
     SHERPA_QPKG_NAME+=(Entware)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($PROJECT_REPO_URL/Entware/Entware_1.02std.qpkg)
-        SHERPA_QPKG_MD5+=(dbc82469933ac3049c06d4c8a023bbb9)
+        SHERPA_QPKG_URL+=($PROJECT_REPO_URL/Entware/Entware_1.03std.qpkg)
+        SHERPA_QPKG_MD5+=(da2d9f8d3442dd665ce04b9b932c9d8e)
         SHERPA_QPKG_ABBRVS+=('ew ent opkg entware')
         SHERPA_QPKG_INDEPS+=('')
         SHERPA_QPKG_IPKGS_ADD+=('')
