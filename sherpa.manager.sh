@@ -961,7 +961,19 @@ Packages.Reinstall.Independents()
                             fi
 
                             ShowAsDone 'package and Python module lists saved'
+
+                            # rename original [/opt]
+                            local opt_path=/opt
+                            local opt_backup_path=/opt.orig
+                            [[ -d $opt_path && ! -L $opt_path && ! -e $opt_backup_path ]] && mv "$opt_path" "$opt_backup_path"
                             QPKG.Uninstall Entware
+
+                            QPKG.Install Entware && Session.AdjustPathEnv
+                            QPKGs.ToReinstall.Add Entware       # re-add this back to reinstall list as it was (quite-rightly) removed by the std QPKG.Install function
+
+                            # copy all files from original [/opt] into new [/opt]
+                            [[ -L $opt_path && -d $opt_backup_path ]] && cp --recursive "$opt_backup_path"/* --target-directory "$opt_path" && rm -rf "$opt_backup_path"
+                            Session.PIPs.Install.Set
                         else
                             DebugInfoMinorSeparator
                             DebugScript 'user abort'
@@ -1067,7 +1079,7 @@ Packages.Start.Independents()
 
     }
 
-Packages.Start.Addons()
+Packages.Install.Addons()
     {
 
     Session.SkipPackageProcessing.IsSet && return
@@ -1461,7 +1473,7 @@ PIPs.Install()
     else
         if IsNotSysFileExist $pip3_cmd; then
             echo "* Ugh! The usual fix for this is to let $PROJECT_NAME reinstall $(FormatAsPackageName Entware) at least once."
-            echo -e "\t$0 ew"
+            echo -e "\t$0 reinstall ew"
             echo "If it happens again after reinstalling $(FormatAsPackageName Entware), please create a new issue for this on GitHub."
             DebugFuncExit; return 1
         fi
@@ -4989,7 +5001,7 @@ Packages.Reinstall.Independents
 Packages.Install.Independents
 Packages.Restore.Independents
 Packages.Start.Independents
-Packages.Start.Addons
+Packages.Install.Addons
 Packages.Upgrade.Dependants
 Packages.Reinstall.Dependants
 Packages.Install.Dependants
