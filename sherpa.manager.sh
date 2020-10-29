@@ -39,7 +39,7 @@ Session.Init()
     readonly SCRIPT_STARTSECONDS=$(/bin/date +%s)
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=201025
+    readonly MANAGER_SCRIPT_VERSION=201029
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -126,6 +126,8 @@ Session.Init()
     readonly GNU_LESS_CMD=/opt/bin/less
     readonly GNU_SED_CMD=/opt/bin/sed
     readonly OPKG_CMD=/opt/bin/opkg
+
+    [[ ! -e /dev/fd ]] && ln -s /proc/self/fd /dev/fd   # sometimes, '/dev/fd' isn't created by QTS. Don't know why.
 
     # paths and files
     local -r LOADER_SCRIPT_FILE=$PROJECT_NAME.loader.sh
