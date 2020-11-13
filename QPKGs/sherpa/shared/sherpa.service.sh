@@ -34,7 +34,11 @@ case $1 in
         [[ -L $APPARENT_LOADER_SCRIPT_PATHNAME ]] && rm -f "$APPARENT_LOADER_SCRIPT_PATHNAME"
         [[ -L $GUI_LOG_PATHFILE ]] && rm -f "$GUI_LOG_PATHFILE"
         ;;
+    restart)
+        $0 stop
+        $0 start
+        ;;
     *)
-        echo -e "\n Usage: $0 {start|stop}\n"
+        echo -e "\n Usage: $0 {start|stop|restart}\n"
         ;;
 esac
