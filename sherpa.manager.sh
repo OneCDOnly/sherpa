@@ -2081,22 +2081,6 @@ DisplayAsSyntaxExample()
 
     }
 
-DisplayAsInfoExample()
-    {
-
-    # $1 = description
-    # $2 = example syntax
-
-    if [[ ${1: -1} = '!' ]]; then
-        printf "\n* %s \n       %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$2"
-    else
-        printf "\n* %s:\n       %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$2"
-    fi
-
-    Session.LineSpace.Clear
-
-    }
-
 DisplayAsHelpPackageNameExample()
     {
 
@@ -2633,7 +2617,6 @@ QPKGs.Assignment.Check()
     DebugFuncEntry
     local package=''
     local installer_acc=()
-    local download_acc=()
     local stop_acc=()
     local start_acc=()
     QPKGs.StateLists.Build
