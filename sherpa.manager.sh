@@ -1916,13 +1916,12 @@ _MonitorDirSize_()
 
         percent="$((200*(current_bytes)/(total_bytes) % 2 + 100*(current_bytes)/(total_bytes)))%"
         progress_message=" $percent ($(FormatAsISOBytes "$current_bytes")/$(FormatAsISOBytes "$total_bytes"))"
-        stall_message=''
 
         if [[ $stall_seconds -ge $stall_seconds_threshold ]]; then
             if [[ $stall_seconds -lt 60 ]]; then
-                stall_message+=" stalled for $stall_seconds seconds"
+                stall_message=" stalled for $stall_seconds seconds"
             else
-                stall_message+=" stalled for $(ConvertSecsToHoursMinutesSecs $stall_seconds)"
+                stall_message=" stalled for $(ConvertSecsToHoursMinutesSecs $stall_seconds)"
             fi
 
             if [[ $stall_seconds -ge 90 ]]; then
