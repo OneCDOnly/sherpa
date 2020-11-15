@@ -750,12 +750,6 @@ Session.Validate()
     QPKGs.Assignment.Check
     DebugInfoMinorSeparator
 
-    if [[ $(QPKGs.Installed.Count) -eq 0 && $(QPKGs.ToInstall.Count) -eq 1 && $(QPKGs.ToInstall.First) = Entware ]]; then
-        ShowAsNote "It's not necessary to install $(FormatAsPackageName Entware) on its own. It will be installed as-required with your other sherpa packages. :)"  # don't colourise title here as ANSI codes can't be removed without Entware being installed with its GNU utils.
-        Session.SkipPackageProcessing.Set
-        DebugFuncExit; return 1
-    fi
-
     if User.Opts.Apps.All.Backup.IsSet && User.Opts.Apps.All.Restore.IsSet; then
         ShowAsError 'no point running a backup then a restore operation'
         Session.SkipPackageProcessing.Set
