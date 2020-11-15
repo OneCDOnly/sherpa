@@ -39,7 +39,7 @@ Session.Init()
     readonly SCRIPT_STARTSECONDS=$(/bin/date +%s)
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=201115
+    readonly MANAGER_SCRIPT_VERSION=201116
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -153,12 +153,12 @@ Session.Init()
     local -r ULINUX_PATHFILE=/etc/config/uLinux.conf
     readonly PLATFORM_PATHFILE=/etc/platform.conf
     readonly EXTERNAL_PACKAGE_ARCHIVE_PATHFILE=/opt/var/opkg-lists/entware
-    local -r PROJECT_REPO_URL=https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/master/QPKGs
+    local -r PROJECT_REPO_URL=https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs
     readonly APP_CENTER_CONFIG_PATHFILE=/etc/config/qpkg.conf
     local -r PROJECT_PATH=$($GETCFG_CMD $PROJECT_NAME Install_Path -f $APP_CENTER_CONFIG_PATHFILE)
     readonly DEBUG_LOG_PATHFILE=$PROJECT_PATH/$DEBUG_LOG_FILE
     readonly WORK_PATH=$PROJECT_PATH/cache
-    readonly COMPILED_OBJECTS_URL=https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/master/compiled.objects
+    readonly COMPILED_OBJECTS_URL=https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/compiled.objects
     readonly COMPILED_OBJECTS_PATHFILE=$WORK_PATH/compiled.objects
     readonly EXTERNAL_PACKAGE_LIST_PATHFILE=$WORK_PATH/Packages
     readonly LOGS_PATH=$PROJECT_PATH/logs
