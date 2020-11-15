@@ -39,7 +39,7 @@ Session.Init()
     readonly SCRIPT_STARTSECONDS=$(/bin/date +%s)
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=201029
+    readonly MANAGER_SCRIPT_VERSION=201115
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -1895,6 +1895,7 @@ _MonitorDirSize_()
     local last_bytes=0
     local stall_seconds=0
     local stall_seconds_threshold=4
+    local stall_message=''
     local current_bytes=0
     local percent=''
 
@@ -1915,14 +1916,25 @@ _MonitorDirSize_()
 
         percent="$((200*(current_bytes)/(total_bytes) % 2 + 100*(current_bytes)/(total_bytes)))%"
         progress_message=" $percent ($(FormatAsISOBytes "$current_bytes")/$(FormatAsISOBytes "$total_bytes"))"
+        stall_message=''
 
         if [[ $stall_seconds -ge $stall_seconds_threshold ]]; then
             if [[ $stall_seconds -lt 60 ]]; then
-                progress_message+=" stalled for $stall_seconds seconds"
+                stall_message+=" stalled for $stall_seconds seconds"
             else
-                progress_message+=" stalled for $(ConvertSecsToHoursMinutesSecs $stall_seconds)"
+                stall_message+=" stalled for $(ConvertSecsToHoursMinutesSecs $stall_seconds)"
+            fi
+
+            if [[ $stall_seconds -ge 90 ]]; then
+                stall_message=$(ColourTextBrightRed "$stall_message: cancel with CTRL+C and try again later")
+            elif [[ $stall_seconds -ge 45 ]]; then
+                stall_message=$(ColourTextBrightOrange "$stall_message")
+            elif [[ $stall_seconds -ge 20 ]]; then
+                stall_message=$(ColourTextBrightYellow "$stall_message")
             fi
         fi
+
+        [[ -n $stall_message ]] && progress_message+="$stall_message"
 
         ProgressUpdater "$progress_message"
         $SLEEP_CMD 1
@@ -4066,7 +4078,7 @@ ProgressUpdater()
     #   $1 = message to display
 
     if [[ $1 != "$previous_msg" ]]; then
-        temp=$1
+        temp=$(StripANSI "$1")
         current_length=$((${#temp}+1))
 
         if [[ $current_length -lt $previous_length ]]; then
