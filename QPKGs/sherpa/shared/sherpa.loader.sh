@@ -30,7 +30,7 @@ Init()
     local -r QPKG_PATH=$(/sbin/getcfg $PROJECT_NAME Install_Path -f /etc/config/qpkg.conf)
     [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg='--insecure' || curl_insecure_arg=''
     local -r MANAGER_SCRIPT_FILE=sherpa.manager.sh
-    readonly REMOTE_MANAGER_SCRIPT=https://raw.githubusercontent.com/OneCDOnly/sherpa/master/$MANAGER_SCRIPT_FILE
+    readonly REMOTE_MANAGER_SCRIPT=https://raw.githubusercontent.com/OneCDOnly/sherpa/main/$MANAGER_SCRIPT_FILE
     readonly LOCAL_MANAGER_SCRIPT=$QPKG_PATH/cache/$MANAGER_SCRIPT_FILE
     previous_msg=''
 
