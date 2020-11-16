@@ -1925,6 +1925,8 @@ _MonitorDirSize_()
             elif [[ $stall_seconds -ge 20 ]]; then
                 stall_message=$(ColourTextBrightYellow "$stall_message")
             fi
+        else
+            stall_message=''
         fi
 
         [[ -n $stall_message ]] && progress_message+="$stall_message"
