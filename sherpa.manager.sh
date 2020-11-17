@@ -3918,20 +3918,18 @@ RunThisAndLogResults()
     FormatAsCommand "$1" > "$2"
 
     if Session.Debug.To.Screen.IsSet; then
-        $1 > >($TEE_CMD -a "$msgs") 2>&1
+        $1 > >($TEE_CMD "$msgs") 2>&1
         result=$?
-
-        if [[ -e $msgs ]]; then
-            FormatAsResultAndStdout "$result" "$(<"$msgs")" >> "$2"
-            rm -f "$msgs"
-        else
-            FormatAsResultAndStdout "$result" "<null>" >> "$2"
-        fi
     else
-        $1 >> "$msgs" 2>&1
+        $1 > "$msgs" 2>&1
         result=$?
+    fi
+
+    if [[ -e $msgs ]]; then
         FormatAsResultAndStdout "$result" "$(<"$msgs")" >> "$2"
-        [[ -e $msgs ]] && rm -f "$msgs"
+        rm -f "$msgs"
+    else
+        FormatAsResultAndStdout "$result" "<null>" >> "$2"
     fi
 
     if [[ $result -eq 0 && $3 != log:failure-only ]] || [[ $result -ne 0 ]]; then
