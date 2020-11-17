@@ -39,7 +39,7 @@ Session.Init()
     readonly SCRIPT_STARTSECONDS=$(/bin/date +%s)
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=201116
+    readonly MANAGER_SCRIPT_VERSION=201117
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -1895,7 +1895,7 @@ _MonitorDirSize_()
 
     progress_message=''
     previous_length=0
-    previous_msg=''
+    previous_clean_msg=''
 
     while [[ -e $MONITOR_FLAG_PATHFILE ]]; do
         current_bytes=$($GNU_FIND_CMD "$1" -type f -name '*.ipk' -exec $DU_CMD --bytes --total --apparent-size {} + 2> /dev/null | $GREP_CMD total$ | $CUT_CMD -f1)
@@ -1936,6 +1936,32 @@ _MonitorDirSize_()
     done
 
     [[ -n $progress_message ]] && ProgressUpdater ' done!'
+
+    }
+
+ProgressUpdater()
+    {
+
+    # input:
+    #   $1 = message to display
+
+    this_clean_msg=$(StripANSI "$1")
+
+    if [[ $this_clean_msg != "$previous_clean_msg" ]]; then
+        this_length=$((${#this_clean_msg}+1))
+
+        if [[ $this_length -lt $previous_length ]]; then
+            blanking_length=$((this_length-previous_length))
+            # backspace to start of previous msg, print new msg, add additional spaces, then backspace to end of msg
+            printf "%${previous_length}s" | tr ' ' '\b'; echo -n "$1 "; printf "%${blanking_length}s"; printf "%${blanking_length}s" | tr ' ' '\b'
+        else
+            # backspace to start of previous msg, print new msg
+            printf "%${previous_length}s" | tr ' ' '\b'; echo -n "$1 "
+        fi
+
+        previous_length=$this_length
+        previous_clean_msg=$this_clean_msg
+    fi
 
     }
 
@@ -4049,31 +4075,6 @@ FileMatchesMD5()
 
     }
 
-ProgressUpdater()
-    {
-
-    # input:
-    #   $1 = message to display
-
-    if [[ $1 != "$previous_msg" ]]; then
-        temp=$(StripANSI "$1")
-        current_length=$((${#temp}+1))
-
-        if [[ $current_length -lt $previous_length ]]; then
-            appended_length=$((current_length-previous_length))
-            # backspace to start of previous msg, print new msg, add additional spaces, then backspace to end of msg
-            printf "%${previous_length}s" | tr ' ' '\b'; echo -n "$1 "; printf "%${appended_length}s"; printf "%${appended_length}s" | tr ' ' '\b'
-        else
-            # backspace to start of previous msg, print new msg
-            printf "%${previous_length}s" | tr ' ' '\b'; echo -n "$1 "
-        fi
-
-        previous_length=$current_length
-        previous_msg=$1
-    fi
-
-    }
-
 #### FormatAs... functions always output formatted info to be used as part of another string. These shouldn't be used for direct screen output.
 
 FormatAsPlural()
@@ -4570,25 +4571,25 @@ WriteToDisplay.New()
     # output:
     #   stdout = overwrites previous message with updated message
     #   $previous_length
-    #   $appended_length
 
-    local new_message=''
+    local this_message=''
     local strbuffer=''
-    local new_length=0
+    local this_length=0
+    local blanking_length=0
 
-    new_message=$(printf "%-10s: %s" "$1" "$2")
+    this_message=$(printf "%-10s: %s" "$1" "$2")
 
-    if [[ $new_message != "$previous_msg" ]]; then
+    if [[ $this_message != "$previous_msg" ]]; then
         previous_length=$((${#previous_msg}+1))
-        new_length=$((${#new_message}+1))
+        this_length=$((${#this_message}+1))
 
         # jump to start of line, print new msg
-        strbuffer=$(echo -en "\r$new_message ")
+        strbuffer=$(echo -en "\r$this_message ")
 
         # if new msg is shorter then add spaces to end to cover previous msg
-        if [[ $new_length -lt $previous_length ]]; then
-            appended_length=$((new_length-previous_length))
-            strbuffer+=$(printf "%${appended_length}s")
+        if [[ $this_length -lt $previous_length ]]; then
+            blanking_length=$((this_length-previous_length))
+            strbuffer+=$(printf "%${blanking_length}s")
         fi
 
         Display "$strbuffer"
