@@ -1355,7 +1355,7 @@ AskQuiz()
     #   $1 = prompt
 
     # output:
-    #   $? = 0 if "yes", 1 if "no"
+    #   $? = 0 if "y", 1 if anything else
 
     local response=''
 
@@ -1598,7 +1598,6 @@ CalcAllIPKGDepsToInstall()
     fi
 
     IPKGs.Archive.Close
-
     DebugFuncExit; return 0
 
     }
