@@ -39,7 +39,7 @@ Session.Init()
     readonly SCRIPT_STARTSECONDS=$(/bin/date +%s)
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=201117
+    readonly MANAGER_SCRIPT_VERSION=201118
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -1427,13 +1427,8 @@ Entware.Update()
     if [[ -n $msgs ]]; then
         ShowAsProc "updating $(FormatAsPackageName Entware) package list"
 
-        if Session.Debug.To.Screen.IsSet; then
-            RunThisAndLogResultsRealtime "$OPKG_CMD update" "$log_pathfile" log:failure-only
-            result=$?
-        else
-            RunThisAndLogResults "$OPKG_CMD update" "$log_pathfile" log:failure-only
-            result=$?
-        fi
+        RunThisAndLogResults "$OPKG_CMD update" "$log_pathfile" log:failure-only
+        result=$?
 
         if [[ $result -eq 0 ]]; then
             ShowAsDone "updated $(FormatAsPackageName Entware) package list"
@@ -1481,13 +1476,8 @@ PIPs.Install()
     local log_pathfile=$LOGS_PATH/py3-modules.assorted.$INSTALL_LOG_FILE
     ShowAsProcLong "downloading & installing $desc"
 
-    if Session.Debug.To.Screen.IsSet; then
-        RunThisAndLogResultsRealtime "$exec_cmd" "$log_pathfile"
-        result=$?
-    else
-        RunThisAndLogResults "$exec_cmd" "$log_pathfile"
-        result=$?
-    fi
+    RunThisAndLogResults "$exec_cmd" "$log_pathfile"
+    result=$?
 
     if [[ $result -eq 0 ]]; then
         ShowAsDone "downloaded & installed $desc"
@@ -1503,13 +1493,8 @@ PIPs.Install()
         log_pathfile=$LOGS_PATH/py3-modules.sabnzbd.$INSTALL_LOG_FILE
         ShowAsProcLong "downloading & installing $desc"
 
-        if Session.Debug.To.Screen.IsSet; then
-            RunThisAndLogResultsRealtime "$exec_cmd" "$log_pathfile"
-            result=$?
-        else
-            RunThisAndLogResults "$exec_cmd" "$log_pathfile"
-            result=$?
-        fi
+        RunThisAndLogResults "$exec_cmd" "$log_pathfile"
+        result=$?
 
         if [[ $result -eq 0 ]]; then
             ShowAsDone "downloaded & installed $desc"
@@ -1772,13 +1757,8 @@ IPKGs.Uninstall.Batch()
     if [[ $package_count -gt 0 ]]; then
         ShowAsProc "uninstalling $package_count IPKG$(FormatAsPlural "$package_count")"
 
-        if Session.Debug.To.Screen.IsSet; then
-            RunThisAndLogResultsRealtime "$OPKG_CMD remove $(IPKGs.ToUninstall.List)" "$log_pathfile"
-            result=$?
-        else
-            RunThisAndLogResults "$OPKG_CMD remove $(IPKGs.ToUninstall.List)" "$log_pathfile"
-            result=$?
-        fi
+        RunThisAndLogResults "$OPKG_CMD remove $(IPKGs.ToUninstall.List)" "$log_pathfile"
+        result=$?
 
         if [[ $result -eq 0 ]]; then
             ShowAsDone "uninstalled $package_count IPKG$(FormatAsPlural "$package_count")"
@@ -1847,13 +1827,8 @@ IPKGs.Archive.Open()
 
     IPKGs.Archive.Close
 
-    if Session.Debug.To.Screen.IsSet; then
-        RunThisAndLogResultsRealtime "$Z7_CMD e -o$($DIRNAME_CMD "$EXTERNAL_PACKAGE_LIST_PATHFILE") $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE" "$WORK_PATH/ipkg.list.archive.extract" log:failure-only
-        result=$?
-    else
-        RunThisAndLogResults "$Z7_CMD e -o$($DIRNAME_CMD "$EXTERNAL_PACKAGE_LIST_PATHFILE") $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE" "$WORK_PATH/ipkg.list.archive.extract" log:failure-only
-        result=$?
-    fi
+    RunThisAndLogResults "$Z7_CMD e -o$($DIRNAME_CMD "$EXTERNAL_PACKAGE_LIST_PATHFILE") $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE" "$WORK_PATH/ipkg.list.archive.extract" log:failure-only
+    result=$?
 
     if [[ ! -e $EXTERNAL_PACKAGE_LIST_PATHFILE ]]; then
         ShowAsError 'could not open the IPKG list file'
@@ -3340,13 +3315,8 @@ QPKG.Download()
 
         [[ -e $log_pathfile ]] && rm -f "$log_pathfile"
 
-        if Session.Debug.To.Screen.IsSet; then
-            RunThisAndLogResultsRealtime "$CURL_CMD${curl_insecure_arg} --output $local_pathfile $remote_url" "$log_pathfile"
-            result=$?
-        else
-            RunThisAndLogResults "$CURL_CMD${curl_insecure_arg} --output $local_pathfile $remote_url" "$log_pathfile"
-            result=$?
-        fi
+        RunThisAndLogResults "$CURL_CMD${curl_insecure_arg} --output $local_pathfile $remote_url" "$log_pathfile"
+        result=$?
 
         if [[ $result -eq 0 ]]; then
             if FileMatchesMD5 "$local_pathfile" "$remote_md5"; then
@@ -3392,13 +3362,8 @@ QPKG.Install()
 
     ShowAsProcLong "installing $(FormatAsPackageName "$1")"
 
-    if Session.Debug.To.Screen.IsSet; then
-        RunThisAndLogResultsRealtime "$SH_CMD $local_pathfile" "$log_pathfile"
-        result=$?
-    else
-        RunThisAndLogResults "$SH_CMD $local_pathfile" "$log_pathfile"
-        result=$?
-    fi
+    RunThisAndLogResults "$SH_CMD $local_pathfile" "$log_pathfile"
+    result=$?
 
     if [[ $result -eq 0 || $result -eq 10 ]]; then
         ShowAsDone "installed $(FormatAsPackageName "$1")"
@@ -3444,13 +3409,8 @@ QPKG.Reinstall()
 
     ShowAsProcLong "re-installing $(FormatAsPackageName "$1")"
 
-    if Session.Debug.To.Screen.IsSet; then
-        RunThisAndLogResultsRealtime "$SH_CMD $local_pathfile" "$log_pathfile"
-        result=$?
-    else
-        RunThisAndLogResults "$SH_CMD $local_pathfile" "$log_pathfile"
-        result=$?
-    fi
+    RunThisAndLogResults "$SH_CMD $local_pathfile" "$log_pathfile"
+    result=$?
 
     if [[ $result -eq 0 || $result -eq 10 ]]; then
         ShowAsDone "re-installed $(FormatAsPackageName "$1")"
@@ -3499,13 +3459,8 @@ QPKG.Upgrade()
 
     ShowAsProcLong "${prefix}upgrading $(FormatAsPackageName "$1")"
 
-    if Session.Debug.To.Screen.IsSet; then
-        RunThisAndLogResultsRealtime "$SH_CMD $local_pathfile" "$log_pathfile"
-        result=$?
-    else
-        RunThisAndLogResults "$SH_CMD $local_pathfile" "$log_pathfile"
-        result=$?
-    fi
+    RunThisAndLogResults "$SH_CMD $local_pathfile" "$log_pathfile"
+    result=$?
 
     current_version=$(QPKG.InstalledVersion "$1")
 
@@ -3553,13 +3508,8 @@ QPKG.Uninstall()
     if [[ -e $qpkg_installed_path/.uninstall.sh ]]; then
         ShowAsProc "uninstalling $(FormatAsPackageName "$1")"
 
-        if Session.Debug.To.Screen.IsSet; then
-            RunThisAndLogResultsRealtime "$SH_CMD $qpkg_installed_path/.uninstall.sh" "$log_pathfile"
-            result=$?
-        else
-            RunThisAndLogResults "$SH_CMD $qpkg_installed_path/.uninstall.sh" "$log_pathfile"
-            result=$?
-        fi
+        RunThisAndLogResults "$SH_CMD $qpkg_installed_path/.uninstall.sh" "$log_pathfile"
+        result=$?
 
         if [[ $result -eq 0 ]]; then
             ShowAsDone "uninstalled $(FormatAsPackageName "$1")"
@@ -3596,13 +3546,8 @@ QPKG.Restart()
 
     ShowAsProc "restarting $(FormatAsPackageName "$1")"
 
-    if Session.Debug.To.Screen.IsSet; then
-        RunThisAndLogResultsRealtime "$QPKG_SERVICE_CMD restart $1" "$log_pathfile"
-        result=$?
-    else
-        RunThisAndLogResults "$QPKG_SERVICE_CMD restart $1" "$log_pathfile"
-        result=$?
-    fi
+    RunThisAndLogResults "$QPKG_SERVICE_CMD restart $1" "$log_pathfile"
+    result=$?
 
     if [[ $result -eq 0 ]]; then
         ShowAsDone "restarted $(FormatAsPackageName "$1")"
@@ -3639,13 +3584,8 @@ QPKG.Start()
 
     ShowAsProc "starting $(FormatAsPackageName "$1")"
 
-    if Session.Debug.To.Screen.IsSet; then
-        RunThisAndLogResultsRealtime "$QPKG_SERVICE_CMD start $1" "$log_pathfile"
-        result=$?
-    else
-        RunThisAndLogResults "$QPKG_SERVICE_CMD start $1" "$log_pathfile"
-        result=$?
-    fi
+    RunThisAndLogResults "$QPKG_SERVICE_CMD start $1" "$log_pathfile"
+    result=$?
 
     if [[ $result -eq 0 ]]; then
         ShowAsDone "started $(FormatAsPackageName "$1")"
@@ -3682,13 +3622,8 @@ QPKG.Stop()
 
     ShowAsProc "stopping $(FormatAsPackageName "$1")"
 
-    if Session.Debug.To.Screen.IsSet; then
-        RunThisAndLogResultsRealtime "$QPKG_SERVICE_CMD stop $1" "$log_pathfile"
-        result=$?
-    else
-        RunThisAndLogResults "$QPKG_SERVICE_CMD stop $1" "$log_pathfile"
-        result=$?
-    fi
+    RunThisAndLogResults "$QPKG_SERVICE_CMD stop $1" "$log_pathfile"
+    result=$?
 
     if [[ $result -eq 0 ]]; then
         ShowAsDone "stopped $(FormatAsPackageName "$1")"
@@ -3717,13 +3652,8 @@ QPKG.Enable()
     local log_pathfile=$LOGS_PATH/$1.$ENABLE_LOG_FILE
 
     if QPKG.NotEnabled "$1"; then
-        if Session.Debug.To.Screen.IsSet; then
-            RunThisAndLogResultsRealtime "$QPKG_SERVICE_CMD enable $1" "$log_pathfile"
-            result=$?
-        else
-            RunThisAndLogResults "$QPKG_SERVICE_CMD enable $1" "$log_pathfile"
-            result=$?
-        fi
+        RunThisAndLogResults "$QPKG_SERVICE_CMD enable $1" "$log_pathfile"
+        result=$?
 
         if [[ $result -eq 0 ]]; then
             QPKG.ServiceStatus "$1"
@@ -3751,13 +3681,8 @@ QPKG.Disable()
     local log_pathfile=$LOGS_PATH/$1.$DISABLE_LOG_FILE
 
     if QPKG.Enabled "$1"; then
-        if Session.Debug.To.Screen.IsSet; then
-            RunThisAndLogResultsRealtime "$QPKG_SERVICE_CMD disable $1" "$log_pathfile"
-            result=$?
-        else
-            RunThisAndLogResults "$QPKG_SERVICE_CMD disable $1" "$log_pathfile"
-            result=$?
-        fi
+        RunThisAndLogResults "$QPKG_SERVICE_CMD disable $1" "$log_pathfile"
+        result=$?
 
         if [[ $result -eq 0 ]]; then
             QPKG.ServiceStatus "$1"
@@ -3793,13 +3718,8 @@ QPKG.Backup()
 
     ShowAsProc "backing-up $(FormatAsPackageName "$1") configuration"
 
-    if Session.Debug.To.Screen.IsSet; then
-        RunThisAndLogResultsRealtime "$SH_CMD $package_init_pathfile backup" "$log_pathfile"
-        result=$?
-    else
-        RunThisAndLogResults "$SH_CMD $package_init_pathfile backup" "$log_pathfile"
-        result=$?
-    fi
+    RunThisAndLogResults "$SH_CMD $package_init_pathfile backup" "$log_pathfile"
+    result=$?
 
     if [[ $result -eq 0 ]]; then
         ShowAsDone "backed-up $(FormatAsPackageName "$1") configuration"
@@ -3835,13 +3755,8 @@ QPKG.Restore()
 
     ShowAsProc "restoring $(FormatAsPackageName "$1") configuration"
 
-    if Session.Debug.To.Screen.IsSet; then
-        RunThisAndLogResultsRealtime "$SH_CMD $package_init_pathfile restore" "$log_pathfile"
-        result=$?
-    else
-        RunThisAndLogResults "$SH_CMD $package_init_pathfile restore" "$log_pathfile"
-        result=$?
-    fi
+    RunThisAndLogResults "$SH_CMD $package_init_pathfile restore" "$log_pathfile"
+    result=$?
 
     if [[ $result -eq 0 ]]; then
         ShowAsDone "restored $(FormatAsPackageName "$1") configuration"
@@ -3983,42 +3898,7 @@ MatchAbbrvToQPKGName()
 RunThisAndLogResults()
     {
 
-    # Run a command string and log the results
-
-    # input:
-    #   $1 = command string to execute
-    #   $2 = pathfilename to record this operation in
-    #   $3 'log:failure-only' (optional) - if specified, stdout & stderr are only recorded in the specified log if the command failed.
-    #                                    - if unspecified, stdout & stderr is always recorded.
-
-    # output:
-    #   $? = result code of command string
-
-    [[ -z $1 || -z $2 ]] && return 1
-    DebugFuncEntry
-
-    local msgs=/var/log/execd.log
-    local result=0
-
-
-    FormatAsCommand "$1" > "$2"
-    $1 >> "$msgs" 2>&1
-    result=$?
-    FormatAsResultAndStdout "$result" "$(<"$msgs")" >> "$2"
-    [[ -e $msgs ]] && rm -f "$msgs"
-
-    if [[ $result -eq 0 && $3 != log:failure-only ]] || [[ $result -ne 0 ]]; then
-        AddFileToDebug "$2"
-    fi
-
-    DebugFuncExit; return $result
-
-    }
-
-RunThisAndLogResultsRealtime()
-    {
-
-    # Run a command string, show and log the results
+    # Run a command string, log the results, and show onscreen if required
 
     # input:
     #   $1 = command string to execute
@@ -4036,14 +3916,22 @@ RunThisAndLogResultsRealtime()
     local result=0
 
     FormatAsCommand "$1" > "$2"
-    $1 > >($TEE_CMD -a "$msgs") 2>&1
-    result=$?
 
-    if [[ -e $msgs ]]; then
-        FormatAsResultAndStdout "$result" "$(<"$msgs")" >> "$2"
-        rm -f "$msgs"
+    if Session.Debug.To.Screen.IsSet; then
+        $1 > >($TEE_CMD -a "$msgs") 2>&1
+        result=$?
+
+        if [[ -e $msgs ]]; then
+            FormatAsResultAndStdout "$result" "$(<"$msgs")" >> "$2"
+            rm -f "$msgs"
+        else
+            FormatAsResultAndStdout "$result" "<null>" >> "$2"
+        fi
     else
-        FormatAsResultAndStdout "$result" "<null>" >> "$2"
+        $1 >> "$msgs" 2>&1
+        result=$?
+        FormatAsResultAndStdout "$result" "$(<"$msgs")" >> "$2"
+        [[ -e $msgs ]] && rm -f "$msgs"
     fi
 
     if [[ $result -eq 0 && $3 != log:failure-only ]] || [[ $result -ne 0 ]]; then
