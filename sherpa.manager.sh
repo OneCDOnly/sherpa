@@ -20,7 +20,7 @@
 #
 # Style Guide:
 #         functions: CamelCase
-#         variables: lowercase_with_inline_underscores (except for 'returncode')
+#         variables: lowercase_with_inline_underscores (except for 'returncode', 'resultcode', 'exitcode')
 # "class" variables: _lowercase_with_leading_and_inline_underscores (these should only be managed via their specific functions)
 #         constants: UPPERCASE_WITH_INLINE_UNDERSCORES (these are also set as readonly)
 #           indents: 1 x tab (converted to 4 x spaces to suit GitHub web-display)
@@ -1415,7 +1415,7 @@ Entware.Update()
     local package_minutes_threshold=60
     local log_pathfile=$LOGS_PATH/entware.$UPDATE_LOG_FILE
     local msgs=''
-    local result=0
+    local resultcode=0
 
     # if Entware package list was updated only recently, don't run another update. Examine 'change' time as this is updated even if package list content isn't modified.
     if [[ -e $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE && -e $GNU_FIND_CMD ]]; then
@@ -1427,13 +1427,13 @@ Entware.Update()
     if [[ -n $msgs ]]; then
         ShowAsProc "updating $(FormatAsPackageName Entware) package list"
 
-        RunThisAndLogResults "$OPKG_CMD update" "$log_pathfile" log:failure-only
-        result=$?
+        RunAndLogResults "$OPKG_CMD update" "$log_pathfile" log:failure-only
+        resultcode=$?
 
-        if [[ $result -eq 0 ]]; then
+        if [[ $resultcode -eq 0 ]]; then
             ShowAsDone "updated $(FormatAsPackageName Entware) package list"
         else
-            ShowAsWarning "Unable to update $(FormatAsPackageName Entware) package list $(FormatAsExitcode $result)"
+            ShowAsWarning "Unable to update $(FormatAsPackageName Entware) package list $(FormatAsExitcode $resultcode)"
             # meh, continue anyway with old list ...
         fi
     else
@@ -1452,7 +1452,7 @@ PIPs.Install()
     Session.PIPs.Install.IsNot && return
     DebugFuncEntry
     local exec_cmd=''
-    local result=0
+    local resultcode=0
 
     # sometimes, OpenWRT doesn't have a 'pip3'
     if [[ -e /opt/bin/pip3 ]]; then
@@ -1476,13 +1476,13 @@ PIPs.Install()
     local log_pathfile=$LOGS_PATH/py3-modules.assorted.$INSTALL_LOG_FILE
     ShowAsProcLong "downloading & installing $desc"
 
-    RunThisAndLogResults "$exec_cmd" "$log_pathfile"
-    result=$?
+    RunAndLogResults "$exec_cmd" "$log_pathfile"
+    resultcode=$?
 
-    if [[ $result -eq 0 ]]; then
+    if [[ $resultcode -eq 0 ]]; then
         ShowAsDone "downloaded & installed $desc"
     else
-        ShowAsError "download & install $desc failed $(FormatAsResult "$result")"
+        ShowAsError "download & install $desc failed $(FormatAsResult "$resultcode")"
     fi
 
     if QPKG.Installed SABnzbd || QPKGs.ToInstall.Exist SABnzbd; then
@@ -1493,19 +1493,19 @@ PIPs.Install()
         log_pathfile=$LOGS_PATH/py3-modules.sabnzbd.$INSTALL_LOG_FILE
         ShowAsProcLong "downloading & installing $desc"
 
-        RunThisAndLogResults "$exec_cmd" "$log_pathfile"
-        result=$?
+        RunAndLogResults "$exec_cmd" "$log_pathfile"
+        resultcode=$?
 
-        if [[ $result -eq 0 ]]; then
+        if [[ $resultcode -eq 0 ]]; then
             ShowAsDone "downloaded & installed $desc"
             QPKGs.ToRestart.Add SABnzbd
 
         else
-            ShowAsError "download & install $desc failed $(FormatAsResult "$result")"
+            ShowAsError "download & install $desc failed $(FormatAsResult "$resultcode")"
         fi
     fi
 
-    DebugFuncExit; return $result
+    DebugFuncExit; return $resultcode
 
     }
 
@@ -1712,7 +1712,7 @@ IPKGs.Install.Batch()
     DebugFuncEntry
     local package_count=0
     local log_pathfile=$LOGS_PATH/ipkgs.$INSTALL_LOG_FILE
-    local result=0
+    local resultcode=0
 
     CalcAllIPKGDepsToInstall || return 1
     package_count=$(IPKGs.ToDownload.Count)
@@ -1724,19 +1724,19 @@ IPKGs.Install.Batch()
             trap CTRL_C_Captured INT
                 _MonitorDirSize_ "$IPKG_DL_PATH" "$(IPKGs.ToDownload.Size)" &
 
-                RunThisAndLogResults "$OPKG_CMD install$(User.Opts.IgnoreFreeSpace.IsSet && User.Opts.IgnoreFreeSpace.Text) --force-overwrite $(IPKGs.ToDownload.List) --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
-                result=$?
+                RunAndLogResults "$OPKG_CMD install$(User.Opts.IgnoreFreeSpace.IsSet && User.Opts.IgnoreFreeSpace.Text) --force-overwrite $(IPKGs.ToDownload.List) --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
+                resultcode=$?
             trap - INT
         RemoveDirSizeMonitorFlagFile
 
-        if [[ $result -eq 0 ]]; then
+        if [[ $resultcode -eq 0 ]]; then
             ShowAsDone "downloaded & installed $package_count IPKG$(FormatAsPlural "$package_count")"
         else
-            ShowAsError "download & install IPKG$(FormatAsPlural "$package_count") failed $(FormatAsExitcode $result)"
+            ShowAsError "download & install IPKG$(FormatAsPlural "$package_count") failed $(FormatAsExitcode $resultcode)"
         fi
     fi
 
-    DebugFuncExit; return $result
+    DebugFuncExit; return $resultcode
 
     }
 
@@ -1749,7 +1749,7 @@ IPKGs.Uninstall.Batch()
     DebugFuncEntry
     local package_count=0
     local log_pathfile=$LOGS_PATH/ipkgs.$UNINSTALL_LOG_FILE
-    local result=0
+    local resultcode=0
 
     CalcAllIPKGDepsToUninstall || return 1
     package_count=$(IPKGs.ToUninstall.Count)
@@ -1757,17 +1757,17 @@ IPKGs.Uninstall.Batch()
     if [[ $package_count -gt 0 ]]; then
         ShowAsProc "uninstalling $package_count IPKG$(FormatAsPlural "$package_count")"
 
-        RunThisAndLogResults "$OPKG_CMD remove $(IPKGs.ToUninstall.List)" "$log_pathfile"
-        result=$?
+        RunAndLogResults "$OPKG_CMD remove $(IPKGs.ToUninstall.List)" "$log_pathfile"
+        resultcode=$?
 
-        if [[ $result -eq 0 ]]; then
+        if [[ $resultcode -eq 0 ]]; then
             ShowAsDone "uninstalled $package_count IPKG$(FormatAsPlural "$package_count")"
         else
-            ShowAsError "uninstall IPKG$(FormatAsPlural "$package_count") failed $(FormatAsExitcode $result)"
+            ShowAsError "uninstall IPKG$(FormatAsPlural "$package_count") failed $(FormatAsExitcode $resultcode)"
         fi
     fi
 
-    DebugFuncExit; return $result
+    DebugFuncExit; return $resultcode
 
     }
 
@@ -1782,7 +1782,7 @@ IPKGs.Upgrade.Batch()
     DebugFuncEntry
     local package_count=0
     local log_pathfile=$LOGS_PATH/ipkgs.$UPGRADE_LOG_FILE
-    local result=0
+    local resultcode=0
 
     IPKGs.ToDownload.Add "$($OPKG_CMD list-upgradable | $CUT_CMD -f1 -d' ')"
     package_count=$(IPKGs.ToDownload.Count)
@@ -1794,19 +1794,19 @@ IPKGs.Upgrade.Batch()
             trap CTRL_C_Captured INT
                 _MonitorDirSize_ "$IPKG_DL_PATH" "$(IPKGs.ToDownload.Size)" &
 
-                RunThisAndLogResults "$OPKG_CMD upgrade$(User.Opts.IgnoreFreeSpace.IsSet && User.Opts.IgnoreFreeSpace.Text) --force-overwrite $(IPKGs.ToDownload.List) --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
-                result=$?
+                RunAndLogResults "$OPKG_CMD upgrade$(User.Opts.IgnoreFreeSpace.IsSet && User.Opts.IgnoreFreeSpace.Text) --force-overwrite $(IPKGs.ToDownload.List) --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
+                resultcode=$?
             trap - INT
         RemoveDirSizeMonitorFlagFile
 
-        if [[ $result -eq 0 ]]; then
+        if [[ $resultcode -eq 0 ]]; then
             ShowAsDone "downloaded & upgraded $package_count IPKG$(FormatAsPlural "$package_count")"
         else
-            ShowAsError "download & upgrade IPKG$(FormatAsPlural "$package_count") failed $(FormatAsExitcode $result)"
+            ShowAsError "download & upgrade IPKG$(FormatAsPlural "$package_count") failed $(FormatAsExitcode $resultcode)"
         fi
     fi
 
-    DebugFuncExit; return $result
+    DebugFuncExit; return $resultcode
 
     }
 
@@ -1827,8 +1827,8 @@ IPKGs.Archive.Open()
 
     IPKGs.Archive.Close
 
-    RunThisAndLogResults "$Z7_CMD e -o$($DIRNAME_CMD "$EXTERNAL_PACKAGE_LIST_PATHFILE") $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE" "$WORK_PATH/ipkg.list.archive.extract" log:failure-only
-    result=$?
+    RunAndLogResults "$Z7_CMD e -o$($DIRNAME_CMD "$EXTERNAL_PACKAGE_LIST_PATHFILE") $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE" "$WORK_PATH/ipkg.list.archive.extract" log:failure-only
+    resultcode=$?
 
     if [[ ! -e $EXTERNAL_PACKAGE_LIST_PATHFILE ]]; then
         ShowAsError 'could not open the IPKG list file'
@@ -3282,7 +3282,7 @@ QPKG.Download()
         DebugFuncExit; return 1
     fi
 
-    local result=0
+    local resultcode=0
     local remote_url=$(QPKG.URL "$1")
     local remote_filename=$($BASENAME_CMD "$remote_url")
     local remote_md5=$(QPKG.MD5 "$1")
@@ -3315,22 +3315,22 @@ QPKG.Download()
 
         [[ -e $log_pathfile ]] && rm -f "$log_pathfile"
 
-        RunThisAndLogResults "$CURL_CMD${curl_insecure_arg} --output $local_pathfile $remote_url" "$log_pathfile"
-        result=$?
+        RunAndLogResults "$CURL_CMD${curl_insecure_arg} --output $local_pathfile $remote_url" "$log_pathfile"
+        resultcode=$?
 
-        if [[ $result -eq 0 ]]; then
+        if [[ $resultcode -eq 0 ]]; then
             if FileMatchesMD5 "$local_pathfile" "$remote_md5"; then
                 ShowAsDone "downloaded $(FormatAsFileName "$remote_filename")"
             else
                 ShowAsError "downloaded package $(FormatAsFileName "$local_pathfile") checksum incorrect"
-                result=1
+                resultcode=1
             fi
         else
-            ShowAsError "download failed $(FormatAsFileName "$local_pathfile") $(FormatAsExitcode $result)"
+            ShowAsError "download failed $(FormatAsFileName "$local_pathfile") $(FormatAsExitcode $resultcode)"
         fi
     fi
 
-    DebugFuncExit; return $result
+    DebugFuncExit; return $resultcode
 
     }
 
@@ -3348,7 +3348,7 @@ QPKG.Install()
     fi
 
     local target_file=''
-    local result=0
+    local resultcode=0
     local local_pathfile=$(QPKG.PathFilename "$1")
     local log_pathfile=''
 
@@ -3362,10 +3362,10 @@ QPKG.Install()
 
     ShowAsProcLong "installing $(FormatAsPackageName "$1")"
 
-    RunThisAndLogResults "$SH_CMD $local_pathfile" "$log_pathfile"
-    result=$?
+    RunAndLogResults "$SH_CMD $local_pathfile" "$log_pathfile"
+    resultcode=$?
 
-    if [[ $result -eq 0 || $result -eq 10 ]]; then
+    if [[ $resultcode -eq 0 || $resultcode -eq 10 ]]; then
         ShowAsDone "installed $(FormatAsPackageName "$1")"
         QPKG.ServiceStatus "$1"
         QPKGs.JustInstalled.Add "$1"
@@ -3374,10 +3374,10 @@ QPKG.Install()
         QPKGs.ToReinstall.Remove "$1"
         QPKGs.ToRestart.Remove "$1"
     else
-        ShowAsError "installation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $result)"
+        ShowAsError "installation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $resultcode)"
     fi
 
-    DebugFuncExit; return $result
+    DebugFuncExit; return $resultcode
 
     }
 
@@ -3395,7 +3395,7 @@ QPKG.Reinstall()
     fi
 
     local target_file=''
-    local result=0
+    local resultcode=0
     local local_pathfile=$(QPKG.PathFilename "$1")
     local log_pathfile=''
 
@@ -3409,10 +3409,10 @@ QPKG.Reinstall()
 
     ShowAsProcLong "re-installing $(FormatAsPackageName "$1")"
 
-    RunThisAndLogResults "$SH_CMD $local_pathfile" "$log_pathfile"
-    result=$?
+    RunAndLogResults "$SH_CMD $local_pathfile" "$log_pathfile"
+    resultcode=$?
 
-    if [[ $result -eq 0 || $result -eq 10 ]]; then
+    if [[ $resultcode -eq 0 || $resultcode -eq 10 ]]; then
         ShowAsDone "re-installed $(FormatAsPackageName "$1")"
         QPKG.ServiceStatus "$1"
         QPKGs.JustInstalled.Add "$1"
@@ -3421,10 +3421,10 @@ QPKG.Reinstall()
         QPKGs.ToInstall.Remove "$1"
         QPKGs.ToRestart.Remove "$1"
     else
-        ShowAsError "re-installation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $result)"
+        ShowAsError "re-installation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $resultcode)"
     fi
 
-    DebugFuncExit; return $result
+    DebugFuncExit; return $resultcode
 
     }
 
@@ -3442,7 +3442,7 @@ QPKG.Upgrade()
     fi
 
     local prefix=''
-    local result=0
+    local resultcode=0
     local previous_version='null'
     local current_version='null'
     local local_pathfile=$(QPKG.PathFilename "$1")
@@ -3459,12 +3459,12 @@ QPKG.Upgrade()
 
     ShowAsProcLong "${prefix}upgrading $(FormatAsPackageName "$1")"
 
-    RunThisAndLogResults "$SH_CMD $local_pathfile" "$log_pathfile"
-    result=$?
+    RunAndLogResults "$SH_CMD $local_pathfile" "$log_pathfile"
+    resultcode=$?
 
     current_version=$(QPKG.InstalledVersion "$1")
 
-    if [[ $result -eq 0 || $result -eq 10 ]]; then
+    if [[ $resultcode -eq 0 || $resultcode -eq 10 ]]; then
         if [[ $current_version = "$previous_version" ]]; then
             DebugDone "${prefix}upgraded $(FormatAsPackageName "$1") and installed version is $current_version"
         else
@@ -3478,10 +3478,10 @@ QPKG.Upgrade()
         QPKGs.ToReinstall.Remove "$1"
         QPKGs.ToRestart.Remove "$1"
     else
-        ShowAsError "${prefix}upgrade failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $result)"
+        ShowAsError "${prefix}upgrade failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $resultcode)"
     fi
 
-    DebugFuncExit; return $result
+    DebugFuncExit; return $resultcode
 
     }
 
@@ -3501,26 +3501,26 @@ QPKG.Uninstall()
         DebugFuncExit; return 1
     fi
 
-    local result=0
+    local resultcode=0
     local qpkg_installed_path=$($GETCFG_CMD "$1" Install_Path -f $APP_CENTER_CONFIG_PATHFILE)
     local log_pathfile=$LOGS_PATH/$1.$UNINSTALL_LOG_FILE
 
     if [[ -e $qpkg_installed_path/.uninstall.sh ]]; then
         ShowAsProc "uninstalling $(FormatAsPackageName "$1")"
 
-        RunThisAndLogResults "$SH_CMD $qpkg_installed_path/.uninstall.sh" "$log_pathfile"
-        result=$?
+        RunAndLogResults "$SH_CMD $qpkg_installed_path/.uninstall.sh" "$log_pathfile"
+        resultcode=$?
 
-        if [[ $result -eq 0 ]]; then
+        if [[ $resultcode -eq 0 ]]; then
             ShowAsDone "uninstalled $(FormatAsPackageName "$1")"
             $RMCFG_CMD "$1" -f $APP_CENTER_CONFIG_PATHFILE
             DebugDone 'removed icon information from App Center'
         else
-            ShowAsError "unable to uninstall $(FormatAsPackageName "$1") $(FormatAsExitcode $result)"
+            ShowAsError "unable to uninstall $(FormatAsPackageName "$1") $(FormatAsExitcode $resultcode)"
         fi
     fi
 
-    DebugFuncExit; return $result
+    DebugFuncExit; return $resultcode
 
     }
 
@@ -3541,24 +3541,24 @@ QPKG.Restart()
         DebugFuncExit; return 1
     fi
 
-    local result=0
+    local resultcode=0
     local log_pathfile=$LOGS_PATH/$1.$RESTART_LOG_FILE
 
     ShowAsProc "restarting $(FormatAsPackageName "$1")"
 
-    RunThisAndLogResults "$QPKG_SERVICE_CMD restart $1" "$log_pathfile"
-    result=$?
+    RunAndLogResults "$QPKG_SERVICE_CMD restart $1" "$log_pathfile"
+    resultcode=$?
 
-    if [[ $result -eq 0 ]]; then
+    if [[ $resultcode -eq 0 ]]; then
         ShowAsDone "restarted $(FormatAsPackageName "$1")"
         QPKG.ServiceStatus "$1"
         QPKGs.JustStarted.Add "$1"
         QPKGs.ToStart.Remove "$1"
     else
-        ShowAsWarning "Could not restart $(FormatAsPackageName "$1") $(FormatAsExitcode $result)"
+        ShowAsWarning "Could not restart $(FormatAsPackageName "$1") $(FormatAsExitcode $resultcode)"
     fi
 
-    DebugFuncExit; return $result
+    DebugFuncExit; return $resultcode
 
     }
 
@@ -3579,24 +3579,24 @@ QPKG.Start()
         DebugFuncExit; return 1
     fi
 
-    local result=0
+    local resultcode=0
     local log_pathfile=$LOGS_PATH/$1.$START_LOG_FILE
 
     ShowAsProc "starting $(FormatAsPackageName "$1")"
 
-    RunThisAndLogResults "$QPKG_SERVICE_CMD start $1" "$log_pathfile"
-    result=$?
+    RunAndLogResults "$QPKG_SERVICE_CMD start $1" "$log_pathfile"
+    resultcode=$?
 
-    if [[ $result -eq 0 ]]; then
+    if [[ $resultcode -eq 0 ]]; then
         ShowAsDone "started $(FormatAsPackageName "$1")"
         QPKG.ServiceStatus "$1"
         QPKGs.JustStarted.Add "$1"
         QPKGs.ToRestart.Remove "$1"
     else
-        ShowAsWarning "Could not start $(FormatAsPackageName "$1") $(FormatAsExitcode $result)"
+        ShowAsWarning "Could not start $(FormatAsPackageName "$1") $(FormatAsExitcode $resultcode)"
     fi
 
-    DebugFuncExit; return $result
+    DebugFuncExit; return $resultcode
 
     }
 
@@ -3617,23 +3617,23 @@ QPKG.Stop()
         DebugFuncExit; return 1
     fi
 
-    local result=0
+    local resultcode=0
     local log_pathfile=$LOGS_PATH/$1.$STOP_LOG_FILE
 
     ShowAsProc "stopping $(FormatAsPackageName "$1")"
 
-    RunThisAndLogResults "$QPKG_SERVICE_CMD stop $1" "$log_pathfile"
-    result=$?
+    RunAndLogResults "$QPKG_SERVICE_CMD stop $1" "$log_pathfile"
+    resultcode=$?
 
-    if [[ $result -eq 0 ]]; then
+    if [[ $resultcode -eq 0 ]]; then
         ShowAsDone "stopped $(FormatAsPackageName "$1")"
         QPKG.ServiceStatus "$1"
         QPKGs.JustStarted.Remove "$1"
     else
-        ShowAsWarning "Could not stop $(FormatAsPackageName "$1") $(FormatAsExitcode $result)"
+        ShowAsWarning "Could not stop $(FormatAsPackageName "$1") $(FormatAsExitcode $resultcode)"
     fi
 
-    DebugFuncExit; return $result
+    DebugFuncExit; return $resultcode
 
     }
 
@@ -3648,17 +3648,17 @@ QPKG.Enable()
         DebugFuncExit; return 1
     fi
 
-    local result=0
+    local resultcode=0
     local log_pathfile=$LOGS_PATH/$1.$ENABLE_LOG_FILE
 
     if QPKG.NotEnabled "$1"; then
-        RunThisAndLogResults "$QPKG_SERVICE_CMD enable $1" "$log_pathfile"
-        result=$?
+        RunAndLogResults "$QPKG_SERVICE_CMD enable $1" "$log_pathfile"
+        resultcode=$?
 
-        if [[ $result -eq 0 ]]; then
+        if [[ $resultcode -eq 0 ]]; then
             QPKG.ServiceStatus "$1"
         else
-            ShowAsWarning "Could not enable $(FormatAsPackageName "$1") $(FormatAsExitcode $result)"
+            ShowAsWarning "Could not enable $(FormatAsPackageName "$1") $(FormatAsExitcode $resultcode)"
         fi
     fi
 
@@ -3677,17 +3677,17 @@ QPKG.Disable()
         DebugFuncExit; return 1
     fi
 
-    local result=0
+    local resultcode=0
     local log_pathfile=$LOGS_PATH/$1.$DISABLE_LOG_FILE
 
     if QPKG.Enabled "$1"; then
-        RunThisAndLogResults "$QPKG_SERVICE_CMD disable $1" "$log_pathfile"
-        result=$?
+        RunAndLogResults "$QPKG_SERVICE_CMD disable $1" "$log_pathfile"
+        resultcode=$?
 
-        if [[ $result -eq 0 ]]; then
+        if [[ $resultcode -eq 0 ]]; then
             QPKG.ServiceStatus "$1"
         else
-            ShowAsWarning "Could not disable $(FormatAsPackageName "$1") $(FormatAsExitcode $result)"
+            ShowAsWarning "Could not disable $(FormatAsPackageName "$1") $(FormatAsExitcode $resultcode)"
         fi
     fi
 
@@ -3712,23 +3712,23 @@ QPKG.Backup()
         DebugFuncExit; return 1
     fi
 
-    local result=0
+    local resultcode=0
     local package_init_pathfile=$(QPKG.ServicePathFile "$1")
     local log_pathfile=$LOGS_PATH/$1.$BACKUP_LOG_FILE
 
     ShowAsProc "backing-up $(FormatAsPackageName "$1") configuration"
 
-    RunThisAndLogResults "$SH_CMD $package_init_pathfile backup" "$log_pathfile"
-    result=$?
+    RunAndLogResults "$SH_CMD $package_init_pathfile backup" "$log_pathfile"
+    resultcode=$?
 
-    if [[ $result -eq 0 ]]; then
+    if [[ $resultcode -eq 0 ]]; then
         ShowAsDone "backed-up $(FormatAsPackageName "$1") configuration"
         QPKG.ServiceStatus "$1"
     else
-        ShowAsWarning "Could not backup $(FormatAsPackageName "$1") configuration $(FormatAsExitcode $result)"
+        ShowAsWarning "Could not backup $(FormatAsPackageName "$1") configuration $(FormatAsExitcode $resultcode)"
     fi
 
-    DebugFuncExit; return $result
+    DebugFuncExit; return $resultcode
 
     }
 
@@ -3749,23 +3749,23 @@ QPKG.Restore()
         DebugFuncExit; return 1
     fi
 
-    local result=0
+    local resultcode=0
     local package_init_pathfile=$(QPKG.ServicePathFile "$1")
     local log_pathfile=$LOGS_PATH/$1.$RESTORE_LOG_FILE
 
     ShowAsProc "restoring $(FormatAsPackageName "$1") configuration"
 
-    RunThisAndLogResults "$SH_CMD $package_init_pathfile restore" "$log_pathfile"
-    result=$?
+    RunAndLogResults "$SH_CMD $package_init_pathfile restore" "$log_pathfile"
+    resultcode=$?
 
-    if [[ $result -eq 0 ]]; then
+    if [[ $resultcode -eq 0 ]]; then
         ShowAsDone "restored $(FormatAsPackageName "$1") configuration"
         QPKG.ServiceStatus "$1"
     else
-        ShowAsWarning "Could not restore $(FormatAsPackageName "$1") configuration $(FormatAsExitcode $result)"
+        ShowAsWarning "Could not restore $(FormatAsPackageName "$1") configuration $(FormatAsExitcode $resultcode)"
     fi
 
-    DebugFuncExit; return $result
+    DebugFuncExit; return $resultcode
 
     }
 
@@ -3851,10 +3851,10 @@ MakePath()
 
     [[ -z $1 || -z $2 ]] && return 1
 
-    mkdir -p "$1" 2> /dev/null; result=$?
+    mkdir -p "$1" 2> /dev/null; resultcode=$?
 
-    if [[ $result -ne 0 ]]; then
-        ShowAsError "unable to create $2 path $(FormatAsFileName "$1") $(FormatAsExitcode $result)"
+    if [[ $resultcode -ne 0 ]]; then
+        ShowAsError "unable to create $2 path $(FormatAsFileName "$1") $(FormatAsExitcode $resultcode)"
         [[ $(type -t Session.SuggestIssue.Init) = 'function' ]] && Session.SuggestIssue.Set
         return 1
     fi
@@ -3895,48 +3895,50 @@ MatchAbbrvToQPKGName()
 
     }
 
-RunThisAndLogResults()
+RunAndLogResults()
     {
 
     # Run a command string, log the results, and show onscreen if required
 
     # input:
     #   $1 = command string to execute
-    #   $2 = pathfilename to record this operation in
-    #   $3 'log:failure-only' (optional) - if specified, stdout & stderr are only recorded in the specified log if the command failed.
-    #                                    - if unspecified, stdout & stderr is always recorded.
+    #   $2 = pathfilename to record command string ($1) stdout and stderr
+    #   $3 = 'log:failure-only' (optional) - if specified, stdout & stderr are only recorded in the specified log if the command failed
+    #                                      - if unspecified, stdout & stderr is always recorded
 
     # output:
-    #   $? = result code of executed command
+    #   stdout = command string stdout and stderr if script is in 'debug' mode
+    #   pathfilename ($2) = command string ($1) stdout and stderr
+    #   $? = resultcode of command string
 
     [[ -z $1 || -z $2 ]] && return 1
     DebugFuncEntry
 
     local msgs=/var/log/execd.log
-    local result=0
+    local resultcode=0
 
     FormatAsCommand "$1" > "$2"
 
     if Session.Debug.To.Screen.IsSet; then
         $1 > >($TEE_CMD "$msgs") 2>&1
-        result=$?
+        resultcode=$?
     else
         $1 > "$msgs" 2>&1
-        result=$?
+        resultcode=$?
     fi
 
     if [[ -e $msgs ]]; then
-        FormatAsResultAndStdout "$result" "$(<"$msgs")" >> "$2"
+        FormatAsResultAndStdout "$resultcode" "$(<"$msgs")" >> "$2"
         rm -f "$msgs"
     else
-        FormatAsResultAndStdout "$result" "<null>" >> "$2"
+        FormatAsResultAndStdout "$resultcode" "<null>" >> "$2"
     fi
 
-    if [[ $result -eq 0 && $3 != log:failure-only ]] || [[ $result -ne 0 ]]; then
+    if [[ $resultcode -eq 0 && $3 != log:failure-only ]] || [[ $resultcode -ne 0 ]]; then
         AddFileToDebug "$2"
     fi
 
-    DebugFuncExit; return $result
+    DebugFuncExit; return $resultcode
 
     }
 
@@ -4051,9 +4053,9 @@ FormatAsResult()
     {
 
     if [[ $1 -eq 0 ]]; then
-        echo "= result: $(FormatAsExitcode "$1")"
+        echo "= resultcode: $(FormatAsExitcode "$1")"
     else
-        echo "! result: $(FormatAsExitcode "$1")"
+        echo "! resultcode: $(FormatAsExitcode "$1")"
     fi
 
     }
@@ -4090,9 +4092,9 @@ FormatAsResultAndStdout()
     {
 
     if [[ $1 -eq 0 ]]; then
-        echo "= result: $(FormatAsExitcode "$1") ***** stdout/stderr begins below *****"
+        echo "= resultcode: $(FormatAsExitcode "$1") ***** stdout/stderr begins below *****"
     else
-        echo "! result: $(FormatAsExitcode "$1") ***** stdout/stderr begins below *****"
+        echo "! resultcode: $(FormatAsExitcode "$1") ***** stdout/stderr begins below *****"
     fi
 
     echo "$2"
