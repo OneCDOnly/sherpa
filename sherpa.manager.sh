@@ -1384,7 +1384,7 @@ Entware.Patch.Service()
     local insert_text=''
     local package_init_pathfile=$(QPKG.ServicePathFile Entware)
 
-    if ($GREP_CMD -q 'opt.orig' "$package_init_pathfile"); then
+    if $GREP_CMD -q 'opt.orig' "$package_init_pathfile"; then
         DebugInfo 'patch: do the "opt shuffle" - already done'
     else
         # ensure existing files are moved out of the way before creating /opt symlink
