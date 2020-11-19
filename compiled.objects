@@ -1,8 +1,9 @@
 User.Opts.Help.Abbreviations.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_user_opts_help_abbreviations_array_[*]} != *"$item"* ]] && _object_user_opts_help_abbreviations_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_user_opts_help_abbreviations_array_[*]} " != *"$item"* ]] && _object_user_opts_help_abbreviations_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 User.Opts.Help.Abbreviations.Array()
@@ -90,7 +91,7 @@ User.Opts.Help.Abbreviations.List()
     {
     echo -n "${_object_user_opts_help_abbreviations_array_[*]}"
     }
-User.Opts.Help.Abbreviations.ListComma()
+User.Opts.Help.Abbreviations.ListCSV()
     {
     echo -n "${_object_user_opts_help_abbreviations_array_[*]}" | tr ' ' ','
     }
@@ -138,9 +139,10 @@ User.Opts.Help.Abbreviations.Init
 
 User.Opts.Help.Actions.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_user_opts_help_actions_array_[*]} != *"$item"* ]] && _object_user_opts_help_actions_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_user_opts_help_actions_array_[*]} " != *"$item"* ]] && _object_user_opts_help_actions_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 User.Opts.Help.Actions.Array()
@@ -228,7 +230,7 @@ User.Opts.Help.Actions.List()
     {
     echo -n "${_object_user_opts_help_actions_array_[*]}"
     }
-User.Opts.Help.Actions.ListComma()
+User.Opts.Help.Actions.ListCSV()
     {
     echo -n "${_object_user_opts_help_actions_array_[*]}" | tr ' ' ','
     }
@@ -276,9 +278,10 @@ User.Opts.Help.Actions.Init
 
 User.Opts.Help.ActionsAll.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_user_opts_help_actionsall_array_[*]} != *"$item"* ]] && _object_user_opts_help_actionsall_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_user_opts_help_actionsall_array_[*]} " != *"$item"* ]] && _object_user_opts_help_actionsall_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 User.Opts.Help.ActionsAll.Array()
@@ -366,7 +369,7 @@ User.Opts.Help.ActionsAll.List()
     {
     echo -n "${_object_user_opts_help_actionsall_array_[*]}"
     }
-User.Opts.Help.ActionsAll.ListComma()
+User.Opts.Help.ActionsAll.ListCSV()
     {
     echo -n "${_object_user_opts_help_actionsall_array_[*]}" | tr ' ' ','
     }
@@ -414,9 +417,10 @@ User.Opts.Help.ActionsAll.Init
 
 User.Opts.Help.Basic.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_user_opts_help_basic_array_[*]} != *"$item"* ]] && _object_user_opts_help_basic_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_user_opts_help_basic_array_[*]} " != *"$item"* ]] && _object_user_opts_help_basic_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 User.Opts.Help.Basic.Array()
@@ -504,7 +508,7 @@ User.Opts.Help.Basic.List()
     {
     echo -n "${_object_user_opts_help_basic_array_[*]}"
     }
-User.Opts.Help.Basic.ListComma()
+User.Opts.Help.Basic.ListCSV()
     {
     echo -n "${_object_user_opts_help_basic_array_[*]}" | tr ' ' ','
     }
@@ -552,9 +556,10 @@ User.Opts.Help.Basic.Init
 
 User.Opts.Help.Options.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_user_opts_help_options_array_[*]} != *"$item"* ]] && _object_user_opts_help_options_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_user_opts_help_options_array_[*]} " != *"$item"* ]] && _object_user_opts_help_options_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 User.Opts.Help.Options.Array()
@@ -642,7 +647,7 @@ User.Opts.Help.Options.List()
     {
     echo -n "${_object_user_opts_help_options_array_[*]}"
     }
-User.Opts.Help.Options.ListComma()
+User.Opts.Help.Options.ListCSV()
     {
     echo -n "${_object_user_opts_help_options_array_[*]}" | tr ' ' ','
     }
@@ -690,9 +695,10 @@ User.Opts.Help.Options.Init
 
 User.Opts.Help.Packages.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_user_opts_help_packages_array_[*]} != *"$item"* ]] && _object_user_opts_help_packages_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_user_opts_help_packages_array_[*]} " != *"$item"* ]] && _object_user_opts_help_packages_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 User.Opts.Help.Packages.Array()
@@ -780,7 +786,7 @@ User.Opts.Help.Packages.List()
     {
     echo -n "${_object_user_opts_help_packages_array_[*]}"
     }
-User.Opts.Help.Packages.ListComma()
+User.Opts.Help.Packages.ListCSV()
     {
     echo -n "${_object_user_opts_help_packages_array_[*]}" | tr ' ' ','
     }
@@ -828,9 +834,10 @@ User.Opts.Help.Packages.Init
 
 User.Opts.Help.Problems.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_user_opts_help_problems_array_[*]} != *"$item"* ]] && _object_user_opts_help_problems_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_user_opts_help_problems_array_[*]} " != *"$item"* ]] && _object_user_opts_help_problems_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 User.Opts.Help.Problems.Array()
@@ -918,7 +925,7 @@ User.Opts.Help.Problems.List()
     {
     echo -n "${_object_user_opts_help_problems_array_[*]}"
     }
-User.Opts.Help.Problems.ListComma()
+User.Opts.Help.Problems.ListCSV()
     {
     echo -n "${_object_user_opts_help_problems_array_[*]}" | tr ' ' ','
     }
@@ -966,9 +973,10 @@ User.Opts.Help.Problems.Init
 
 User.Opts.Help.Tips.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_user_opts_help_tips_array_[*]} != *"$item"* ]] && _object_user_opts_help_tips_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_user_opts_help_tips_array_[*]} " != *"$item"* ]] && _object_user_opts_help_tips_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 User.Opts.Help.Tips.Array()
@@ -1056,7 +1064,7 @@ User.Opts.Help.Tips.List()
     {
     echo -n "${_object_user_opts_help_tips_array_[*]}"
     }
-User.Opts.Help.Tips.ListComma()
+User.Opts.Help.Tips.ListCSV()
     {
     echo -n "${_object_user_opts_help_tips_array_[*]}" | tr ' ' ','
     }
@@ -1104,9 +1112,10 @@ User.Opts.Help.Tips.Init
 
 User.Opts.Clean.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_user_opts_clean_array_[*]} != *"$item"* ]] && _object_user_opts_clean_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_user_opts_clean_array_[*]} " != *"$item"* ]] && _object_user_opts_clean_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 User.Opts.Clean.Array()
@@ -1194,7 +1203,7 @@ User.Opts.Clean.List()
     {
     echo -n "${_object_user_opts_clean_array_[*]}"
     }
-User.Opts.Clean.ListComma()
+User.Opts.Clean.ListCSV()
     {
     echo -n "${_object_user_opts_clean_array_[*]}" | tr ' ' ','
     }
@@ -1242,9 +1251,10 @@ User.Opts.Clean.Init
 
 User.Opts.Dependencies.Check.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_user_opts_dependencies_check_array_[*]} != *"$item"* ]] && _object_user_opts_dependencies_check_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_user_opts_dependencies_check_array_[*]} " != *"$item"* ]] && _object_user_opts_dependencies_check_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 User.Opts.Dependencies.Check.Array()
@@ -1332,7 +1342,7 @@ User.Opts.Dependencies.Check.List()
     {
     echo -n "${_object_user_opts_dependencies_check_array_[*]}"
     }
-User.Opts.Dependencies.Check.ListComma()
+User.Opts.Dependencies.Check.ListCSV()
     {
     echo -n "${_object_user_opts_dependencies_check_array_[*]}" | tr ' ' ','
     }
@@ -1380,9 +1390,10 @@ User.Opts.Dependencies.Check.Init
 
 User.Opts.IgnoreFreeSpace.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_user_opts_ignorefreespace_array_[*]} != *"$item"* ]] && _object_user_opts_ignorefreespace_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_user_opts_ignorefreespace_array_[*]} " != *"$item"* ]] && _object_user_opts_ignorefreespace_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 User.Opts.IgnoreFreeSpace.Array()
@@ -1470,7 +1481,7 @@ User.Opts.IgnoreFreeSpace.List()
     {
     echo -n "${_object_user_opts_ignorefreespace_array_[*]}"
     }
-User.Opts.IgnoreFreeSpace.ListComma()
+User.Opts.IgnoreFreeSpace.ListCSV()
     {
     echo -n "${_object_user_opts_ignorefreespace_array_[*]}" | tr ' ' ','
     }
@@ -1518,9 +1529,10 @@ User.Opts.IgnoreFreeSpace.Init
 
 User.Opts.Versions.View.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_user_opts_versions_view_array_[*]} != *"$item"* ]] && _object_user_opts_versions_view_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_user_opts_versions_view_array_[*]} " != *"$item"* ]] && _object_user_opts_versions_view_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 User.Opts.Versions.View.Array()
@@ -1608,7 +1620,7 @@ User.Opts.Versions.View.List()
     {
     echo -n "${_object_user_opts_versions_view_array_[*]}"
     }
-User.Opts.Versions.View.ListComma()
+User.Opts.Versions.View.ListCSV()
     {
     echo -n "${_object_user_opts_versions_view_array_[*]}" | tr ' ' ','
     }
@@ -1656,9 +1668,10 @@ User.Opts.Versions.View.Init
 
 User.Opts.Log.Last.Paste.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_user_opts_log_last_paste_array_[*]} != *"$item"* ]] && _object_user_opts_log_last_paste_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_user_opts_log_last_paste_array_[*]} " != *"$item"* ]] && _object_user_opts_log_last_paste_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 User.Opts.Log.Last.Paste.Array()
@@ -1746,7 +1759,7 @@ User.Opts.Log.Last.Paste.List()
     {
     echo -n "${_object_user_opts_log_last_paste_array_[*]}"
     }
-User.Opts.Log.Last.Paste.ListComma()
+User.Opts.Log.Last.Paste.ListCSV()
     {
     echo -n "${_object_user_opts_log_last_paste_array_[*]}" | tr ' ' ','
     }
@@ -1794,9 +1807,10 @@ User.Opts.Log.Last.Paste.Init
 
 User.Opts.Log.Last.View.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_user_opts_log_last_view_array_[*]} != *"$item"* ]] && _object_user_opts_log_last_view_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_user_opts_log_last_view_array_[*]} " != *"$item"* ]] && _object_user_opts_log_last_view_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 User.Opts.Log.Last.View.Array()
@@ -1884,7 +1898,7 @@ User.Opts.Log.Last.View.List()
     {
     echo -n "${_object_user_opts_log_last_view_array_[*]}"
     }
-User.Opts.Log.Last.View.ListComma()
+User.Opts.Log.Last.View.ListCSV()
     {
     echo -n "${_object_user_opts_log_last_view_array_[*]}" | tr ' ' ','
     }
@@ -1932,9 +1946,10 @@ User.Opts.Log.Last.View.Init
 
 User.Opts.Log.Tail.Paste.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_user_opts_log_tail_paste_array_[*]} != *"$item"* ]] && _object_user_opts_log_tail_paste_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_user_opts_log_tail_paste_array_[*]} " != *"$item"* ]] && _object_user_opts_log_tail_paste_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 User.Opts.Log.Tail.Paste.Array()
@@ -2022,7 +2037,7 @@ User.Opts.Log.Tail.Paste.List()
     {
     echo -n "${_object_user_opts_log_tail_paste_array_[*]}"
     }
-User.Opts.Log.Tail.Paste.ListComma()
+User.Opts.Log.Tail.Paste.ListCSV()
     {
     echo -n "${_object_user_opts_log_tail_paste_array_[*]}" | tr ' ' ','
     }
@@ -2070,9 +2085,10 @@ User.Opts.Log.Tail.Paste.Init
 
 User.Opts.Log.Whole.View.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_user_opts_log_whole_view_array_[*]} != *"$item"* ]] && _object_user_opts_log_whole_view_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_user_opts_log_whole_view_array_[*]} " != *"$item"* ]] && _object_user_opts_log_whole_view_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 User.Opts.Log.Whole.View.Array()
@@ -2160,7 +2176,7 @@ User.Opts.Log.Whole.View.List()
     {
     echo -n "${_object_user_opts_log_whole_view_array_[*]}"
     }
-User.Opts.Log.Whole.View.ListComma()
+User.Opts.Log.Whole.View.ListCSV()
     {
     echo -n "${_object_user_opts_log_whole_view_array_[*]}" | tr ' ' ','
     }
@@ -2208,9 +2224,10 @@ User.Opts.Log.Whole.View.Init
 
 User.Opts.Apps.All.Backup.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_user_opts_apps_all_backup_array_[*]} != *"$item"* ]] && _object_user_opts_apps_all_backup_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_user_opts_apps_all_backup_array_[*]} " != *"$item"* ]] && _object_user_opts_apps_all_backup_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 User.Opts.Apps.All.Backup.Array()
@@ -2298,7 +2315,7 @@ User.Opts.Apps.All.Backup.List()
     {
     echo -n "${_object_user_opts_apps_all_backup_array_[*]}"
     }
-User.Opts.Apps.All.Backup.ListComma()
+User.Opts.Apps.All.Backup.ListCSV()
     {
     echo -n "${_object_user_opts_apps_all_backup_array_[*]}" | tr ' ' ','
     }
@@ -2346,9 +2363,10 @@ User.Opts.Apps.All.Backup.Init
 
 User.Opts.Apps.All.Install.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_user_opts_apps_all_install_array_[*]} != *"$item"* ]] && _object_user_opts_apps_all_install_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_user_opts_apps_all_install_array_[*]} " != *"$item"* ]] && _object_user_opts_apps_all_install_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 User.Opts.Apps.All.Install.Array()
@@ -2436,7 +2454,7 @@ User.Opts.Apps.All.Install.List()
     {
     echo -n "${_object_user_opts_apps_all_install_array_[*]}"
     }
-User.Opts.Apps.All.Install.ListComma()
+User.Opts.Apps.All.Install.ListCSV()
     {
     echo -n "${_object_user_opts_apps_all_install_array_[*]}" | tr ' ' ','
     }
@@ -2484,9 +2502,10 @@ User.Opts.Apps.All.Install.Init
 
 User.Opts.Apps.All.Reinstall.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_user_opts_apps_all_reinstall_array_[*]} != *"$item"* ]] && _object_user_opts_apps_all_reinstall_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_user_opts_apps_all_reinstall_array_[*]} " != *"$item"* ]] && _object_user_opts_apps_all_reinstall_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 User.Opts.Apps.All.Reinstall.Array()
@@ -2574,7 +2593,7 @@ User.Opts.Apps.All.Reinstall.List()
     {
     echo -n "${_object_user_opts_apps_all_reinstall_array_[*]}"
     }
-User.Opts.Apps.All.Reinstall.ListComma()
+User.Opts.Apps.All.Reinstall.ListCSV()
     {
     echo -n "${_object_user_opts_apps_all_reinstall_array_[*]}" | tr ' ' ','
     }
@@ -2622,9 +2641,10 @@ User.Opts.Apps.All.Reinstall.Init
 
 User.Opts.Apps.All.Restart.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_user_opts_apps_all_restart_array_[*]} != *"$item"* ]] && _object_user_opts_apps_all_restart_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_user_opts_apps_all_restart_array_[*]} " != *"$item"* ]] && _object_user_opts_apps_all_restart_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 User.Opts.Apps.All.Restart.Array()
@@ -2712,7 +2732,7 @@ User.Opts.Apps.All.Restart.List()
     {
     echo -n "${_object_user_opts_apps_all_restart_array_[*]}"
     }
-User.Opts.Apps.All.Restart.ListComma()
+User.Opts.Apps.All.Restart.ListCSV()
     {
     echo -n "${_object_user_opts_apps_all_restart_array_[*]}" | tr ' ' ','
     }
@@ -2760,9 +2780,10 @@ User.Opts.Apps.All.Restart.Init
 
 User.Opts.Apps.All.Restore.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_user_opts_apps_all_restore_array_[*]} != *"$item"* ]] && _object_user_opts_apps_all_restore_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_user_opts_apps_all_restore_array_[*]} " != *"$item"* ]] && _object_user_opts_apps_all_restore_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 User.Opts.Apps.All.Restore.Array()
@@ -2850,7 +2871,7 @@ User.Opts.Apps.All.Restore.List()
     {
     echo -n "${_object_user_opts_apps_all_restore_array_[*]}"
     }
-User.Opts.Apps.All.Restore.ListComma()
+User.Opts.Apps.All.Restore.ListCSV()
     {
     echo -n "${_object_user_opts_apps_all_restore_array_[*]}" | tr ' ' ','
     }
@@ -2898,9 +2919,10 @@ User.Opts.Apps.All.Restore.Init
 
 User.Opts.Apps.All.Start.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_user_opts_apps_all_start_array_[*]} != *"$item"* ]] && _object_user_opts_apps_all_start_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_user_opts_apps_all_start_array_[*]} " != *"$item"* ]] && _object_user_opts_apps_all_start_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 User.Opts.Apps.All.Start.Array()
@@ -2988,7 +3010,7 @@ User.Opts.Apps.All.Start.List()
     {
     echo -n "${_object_user_opts_apps_all_start_array_[*]}"
     }
-User.Opts.Apps.All.Start.ListComma()
+User.Opts.Apps.All.Start.ListCSV()
     {
     echo -n "${_object_user_opts_apps_all_start_array_[*]}" | tr ' ' ','
     }
@@ -3036,9 +3058,10 @@ User.Opts.Apps.All.Start.Init
 
 User.Opts.Apps.All.Stop.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_user_opts_apps_all_stop_array_[*]} != *"$item"* ]] && _object_user_opts_apps_all_stop_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_user_opts_apps_all_stop_array_[*]} " != *"$item"* ]] && _object_user_opts_apps_all_stop_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 User.Opts.Apps.All.Stop.Array()
@@ -3126,7 +3149,7 @@ User.Opts.Apps.All.Stop.List()
     {
     echo -n "${_object_user_opts_apps_all_stop_array_[*]}"
     }
-User.Opts.Apps.All.Stop.ListComma()
+User.Opts.Apps.All.Stop.ListCSV()
     {
     echo -n "${_object_user_opts_apps_all_stop_array_[*]}" | tr ' ' ','
     }
@@ -3174,9 +3197,10 @@ User.Opts.Apps.All.Stop.Init
 
 User.Opts.Apps.All.Uninstall.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_user_opts_apps_all_uninstall_array_[*]} != *"$item"* ]] && _object_user_opts_apps_all_uninstall_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_user_opts_apps_all_uninstall_array_[*]} " != *"$item"* ]] && _object_user_opts_apps_all_uninstall_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 User.Opts.Apps.All.Uninstall.Array()
@@ -3264,7 +3288,7 @@ User.Opts.Apps.All.Uninstall.List()
     {
     echo -n "${_object_user_opts_apps_all_uninstall_array_[*]}"
     }
-User.Opts.Apps.All.Uninstall.ListComma()
+User.Opts.Apps.All.Uninstall.ListCSV()
     {
     echo -n "${_object_user_opts_apps_all_uninstall_array_[*]}" | tr ' ' ','
     }
@@ -3312,9 +3336,10 @@ User.Opts.Apps.All.Uninstall.Init
 
 User.Opts.Apps.All.Upgrade.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_user_opts_apps_all_upgrade_array_[*]} != *"$item"* ]] && _object_user_opts_apps_all_upgrade_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_user_opts_apps_all_upgrade_array_[*]} " != *"$item"* ]] && _object_user_opts_apps_all_upgrade_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 User.Opts.Apps.All.Upgrade.Array()
@@ -3402,7 +3427,7 @@ User.Opts.Apps.All.Upgrade.List()
     {
     echo -n "${_object_user_opts_apps_all_upgrade_array_[*]}"
     }
-User.Opts.Apps.All.Upgrade.ListComma()
+User.Opts.Apps.All.Upgrade.ListCSV()
     {
     echo -n "${_object_user_opts_apps_all_upgrade_array_[*]}" | tr ' ' ','
     }
@@ -3450,9 +3475,10 @@ User.Opts.Apps.All.Upgrade.Init
 
 User.Opts.Apps.List.All.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_user_opts_apps_list_all_array_[*]} != *"$item"* ]] && _object_user_opts_apps_list_all_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_user_opts_apps_list_all_array_[*]} " != *"$item"* ]] && _object_user_opts_apps_list_all_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 User.Opts.Apps.List.All.Array()
@@ -3540,7 +3566,7 @@ User.Opts.Apps.List.All.List()
     {
     echo -n "${_object_user_opts_apps_list_all_array_[*]}"
     }
-User.Opts.Apps.List.All.ListComma()
+User.Opts.Apps.List.All.ListCSV()
     {
     echo -n "${_object_user_opts_apps_list_all_array_[*]}" | tr ' ' ','
     }
@@ -3588,9 +3614,10 @@ User.Opts.Apps.List.All.Init
 
 User.Opts.Apps.List.Dependant.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_user_opts_apps_list_dependant_array_[*]} != *"$item"* ]] && _object_user_opts_apps_list_dependant_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_user_opts_apps_list_dependant_array_[*]} " != *"$item"* ]] && _object_user_opts_apps_list_dependant_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 User.Opts.Apps.List.Dependant.Array()
@@ -3678,7 +3705,7 @@ User.Opts.Apps.List.Dependant.List()
     {
     echo -n "${_object_user_opts_apps_list_dependant_array_[*]}"
     }
-User.Opts.Apps.List.Dependant.ListComma()
+User.Opts.Apps.List.Dependant.ListCSV()
     {
     echo -n "${_object_user_opts_apps_list_dependant_array_[*]}" | tr ' ' ','
     }
@@ -3726,9 +3753,10 @@ User.Opts.Apps.List.Dependant.Init
 
 User.Opts.Apps.List.Independent.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_user_opts_apps_list_independent_array_[*]} != *"$item"* ]] && _object_user_opts_apps_list_independent_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_user_opts_apps_list_independent_array_[*]} " != *"$item"* ]] && _object_user_opts_apps_list_independent_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 User.Opts.Apps.List.Independent.Array()
@@ -3816,7 +3844,7 @@ User.Opts.Apps.List.Independent.List()
     {
     echo -n "${_object_user_opts_apps_list_independent_array_[*]}"
     }
-User.Opts.Apps.List.Independent.ListComma()
+User.Opts.Apps.List.Independent.ListCSV()
     {
     echo -n "${_object_user_opts_apps_list_independent_array_[*]}" | tr ' ' ','
     }
@@ -3864,9 +3892,10 @@ User.Opts.Apps.List.Independent.Init
 
 User.Opts.Apps.List.Installed.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_user_opts_apps_list_installed_array_[*]} != *"$item"* ]] && _object_user_opts_apps_list_installed_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_user_opts_apps_list_installed_array_[*]} " != *"$item"* ]] && _object_user_opts_apps_list_installed_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 User.Opts.Apps.List.Installed.Array()
@@ -3954,7 +3983,7 @@ User.Opts.Apps.List.Installed.List()
     {
     echo -n "${_object_user_opts_apps_list_installed_array_[*]}"
     }
-User.Opts.Apps.List.Installed.ListComma()
+User.Opts.Apps.List.Installed.ListCSV()
     {
     echo -n "${_object_user_opts_apps_list_installed_array_[*]}" | tr ' ' ','
     }
@@ -4002,9 +4031,10 @@ User.Opts.Apps.List.Installed.Init
 
 User.Opts.Apps.List.NotInstalled.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_user_opts_apps_list_notinstalled_array_[*]} != *"$item"* ]] && _object_user_opts_apps_list_notinstalled_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_user_opts_apps_list_notinstalled_array_[*]} " != *"$item"* ]] && _object_user_opts_apps_list_notinstalled_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 User.Opts.Apps.List.NotInstalled.Array()
@@ -4092,7 +4122,7 @@ User.Opts.Apps.List.NotInstalled.List()
     {
     echo -n "${_object_user_opts_apps_list_notinstalled_array_[*]}"
     }
-User.Opts.Apps.List.NotInstalled.ListComma()
+User.Opts.Apps.List.NotInstalled.ListCSV()
     {
     echo -n "${_object_user_opts_apps_list_notinstalled_array_[*]}" | tr ' ' ','
     }
@@ -4140,9 +4170,10 @@ User.Opts.Apps.List.NotInstalled.Init
 
 User.Opts.Apps.List.Upgradable.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_user_opts_apps_list_upgradable_array_[*]} != *"$item"* ]] && _object_user_opts_apps_list_upgradable_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_user_opts_apps_list_upgradable_array_[*]} " != *"$item"* ]] && _object_user_opts_apps_list_upgradable_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 User.Opts.Apps.List.Upgradable.Array()
@@ -4230,7 +4261,7 @@ User.Opts.Apps.List.Upgradable.List()
     {
     echo -n "${_object_user_opts_apps_list_upgradable_array_[*]}"
     }
-User.Opts.Apps.List.Upgradable.ListComma()
+User.Opts.Apps.List.Upgradable.ListCSV()
     {
     echo -n "${_object_user_opts_apps_list_upgradable_array_[*]}" | tr ' ' ','
     }
@@ -4278,9 +4309,10 @@ User.Opts.Apps.List.Upgradable.Init
 
 IPKGs.ToDownload.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_ipkgs_todownload_array_[*]} != *"$item"* ]] && _object_ipkgs_todownload_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_ipkgs_todownload_array_[*]} " != *"$item"* ]] && _object_ipkgs_todownload_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 IPKGs.ToDownload.Array()
@@ -4368,7 +4400,7 @@ IPKGs.ToDownload.List()
     {
     echo -n "${_object_ipkgs_todownload_array_[*]}"
     }
-IPKGs.ToDownload.ListComma()
+IPKGs.ToDownload.ListCSV()
     {
     echo -n "${_object_ipkgs_todownload_array_[*]}" | tr ' ' ','
     }
@@ -4416,9 +4448,10 @@ IPKGs.ToDownload.Init
 
 IPKGs.ToInstall.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_ipkgs_toinstall_array_[*]} != *"$item"* ]] && _object_ipkgs_toinstall_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_ipkgs_toinstall_array_[*]} " != *"$item"* ]] && _object_ipkgs_toinstall_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 IPKGs.ToInstall.Array()
@@ -4506,7 +4539,7 @@ IPKGs.ToInstall.List()
     {
     echo -n "${_object_ipkgs_toinstall_array_[*]}"
     }
-IPKGs.ToInstall.ListComma()
+IPKGs.ToInstall.ListCSV()
     {
     echo -n "${_object_ipkgs_toinstall_array_[*]}" | tr ' ' ','
     }
@@ -4554,9 +4587,10 @@ IPKGs.ToInstall.Init
 
 IPKGs.ToUninstall.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_ipkgs_touninstall_array_[*]} != *"$item"* ]] && _object_ipkgs_touninstall_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_ipkgs_touninstall_array_[*]} " != *"$item"* ]] && _object_ipkgs_touninstall_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 IPKGs.ToUninstall.Array()
@@ -4644,7 +4678,7 @@ IPKGs.ToUninstall.List()
     {
     echo -n "${_object_ipkgs_touninstall_array_[*]}"
     }
-IPKGs.ToUninstall.ListComma()
+IPKGs.ToUninstall.ListCSV()
     {
     echo -n "${_object_ipkgs_touninstall_array_[*]}" | tr ' ' ','
     }
@@ -4692,9 +4726,10 @@ IPKGs.ToUninstall.Init
 
 QPKGs.Dependant.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_qpkgs_dependant_array_[*]} != *"$item"* ]] && _object_qpkgs_dependant_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_qpkgs_dependant_array_[*]} " != *"$item"* ]] && _object_qpkgs_dependant_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 QPKGs.Dependant.Array()
@@ -4782,7 +4817,7 @@ QPKGs.Dependant.List()
     {
     echo -n "${_object_qpkgs_dependant_array_[*]}"
     }
-QPKGs.Dependant.ListComma()
+QPKGs.Dependant.ListCSV()
     {
     echo -n "${_object_qpkgs_dependant_array_[*]}" | tr ' ' ','
     }
@@ -4830,9 +4865,10 @@ QPKGs.Dependant.Init
 
 QPKGs.Independent.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_qpkgs_independent_array_[*]} != *"$item"* ]] && _object_qpkgs_independent_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_qpkgs_independent_array_[*]} " != *"$item"* ]] && _object_qpkgs_independent_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 QPKGs.Independent.Array()
@@ -4920,7 +4956,7 @@ QPKGs.Independent.List()
     {
     echo -n "${_object_qpkgs_independent_array_[*]}"
     }
-QPKGs.Independent.ListComma()
+QPKGs.Independent.ListCSV()
     {
     echo -n "${_object_qpkgs_independent_array_[*]}" | tr ' ' ','
     }
@@ -4968,9 +5004,10 @@ QPKGs.Independent.Init
 
 QPKGs.Installable.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_qpkgs_installable_array_[*]} != *"$item"* ]] && _object_qpkgs_installable_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_qpkgs_installable_array_[*]} " != *"$item"* ]] && _object_qpkgs_installable_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 QPKGs.Installable.Array()
@@ -5058,7 +5095,7 @@ QPKGs.Installable.List()
     {
     echo -n "${_object_qpkgs_installable_array_[*]}"
     }
-QPKGs.Installable.ListComma()
+QPKGs.Installable.ListCSV()
     {
     echo -n "${_object_qpkgs_installable_array_[*]}" | tr ' ' ','
     }
@@ -5106,9 +5143,10 @@ QPKGs.Installable.Init
 
 QPKGs.Installed.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_qpkgs_installed_array_[*]} != *"$item"* ]] && _object_qpkgs_installed_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_qpkgs_installed_array_[*]} " != *"$item"* ]] && _object_qpkgs_installed_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 QPKGs.Installed.Array()
@@ -5196,7 +5234,7 @@ QPKGs.Installed.List()
     {
     echo -n "${_object_qpkgs_installed_array_[*]}"
     }
-QPKGs.Installed.ListComma()
+QPKGs.Installed.ListCSV()
     {
     echo -n "${_object_qpkgs_installed_array_[*]}" | tr ' ' ','
     }
@@ -5244,9 +5282,10 @@ QPKGs.Installed.Init
 
 QPKGs.JustInstalled.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_qpkgs_justinstalled_array_[*]} != *"$item"* ]] && _object_qpkgs_justinstalled_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_qpkgs_justinstalled_array_[*]} " != *"$item"* ]] && _object_qpkgs_justinstalled_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 QPKGs.JustInstalled.Array()
@@ -5334,7 +5373,7 @@ QPKGs.JustInstalled.List()
     {
     echo -n "${_object_qpkgs_justinstalled_array_[*]}"
     }
-QPKGs.JustInstalled.ListComma()
+QPKGs.JustInstalled.ListCSV()
     {
     echo -n "${_object_qpkgs_justinstalled_array_[*]}" | tr ' ' ','
     }
@@ -5382,9 +5421,10 @@ QPKGs.JustInstalled.Init
 
 QPKGs.JustStarted.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_qpkgs_juststarted_array_[*]} != *"$item"* ]] && _object_qpkgs_juststarted_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_qpkgs_juststarted_array_[*]} " != *"$item"* ]] && _object_qpkgs_juststarted_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 QPKGs.JustStarted.Array()
@@ -5472,7 +5512,7 @@ QPKGs.JustStarted.List()
     {
     echo -n "${_object_qpkgs_juststarted_array_[*]}"
     }
-QPKGs.JustStarted.ListComma()
+QPKGs.JustStarted.ListCSV()
     {
     echo -n "${_object_qpkgs_juststarted_array_[*]}" | tr ' ' ','
     }
@@ -5520,9 +5560,10 @@ QPKGs.JustStarted.Init
 
 QPKGs.Names.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_qpkgs_names_array_[*]} != *"$item"* ]] && _object_qpkgs_names_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_qpkgs_names_array_[*]} " != *"$item"* ]] && _object_qpkgs_names_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 QPKGs.Names.Array()
@@ -5610,7 +5651,7 @@ QPKGs.Names.List()
     {
     echo -n "${_object_qpkgs_names_array_[*]}"
     }
-QPKGs.Names.ListComma()
+QPKGs.Names.ListCSV()
     {
     echo -n "${_object_qpkgs_names_array_[*]}" | tr ' ' ','
     }
@@ -5658,9 +5699,10 @@ QPKGs.Names.Init
 
 QPKGs.NotInstalled.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_qpkgs_notinstalled_array_[*]} != *"$item"* ]] && _object_qpkgs_notinstalled_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_qpkgs_notinstalled_array_[*]} " != *"$item"* ]] && _object_qpkgs_notinstalled_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 QPKGs.NotInstalled.Array()
@@ -5748,7 +5790,7 @@ QPKGs.NotInstalled.List()
     {
     echo -n "${_object_qpkgs_notinstalled_array_[*]}"
     }
-QPKGs.NotInstalled.ListComma()
+QPKGs.NotInstalled.ListCSV()
     {
     echo -n "${_object_qpkgs_notinstalled_array_[*]}" | tr ' ' ','
     }
@@ -5796,9 +5838,10 @@ QPKGs.NotInstalled.Init
 
 QPKGs.Upgradable.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_qpkgs_upgradable_array_[*]} != *"$item"* ]] && _object_qpkgs_upgradable_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_qpkgs_upgradable_array_[*]} " != *"$item"* ]] && _object_qpkgs_upgradable_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 QPKGs.Upgradable.Array()
@@ -5886,7 +5929,7 @@ QPKGs.Upgradable.List()
     {
     echo -n "${_object_qpkgs_upgradable_array_[*]}"
     }
-QPKGs.Upgradable.ListComma()
+QPKGs.Upgradable.ListCSV()
     {
     echo -n "${_object_qpkgs_upgradable_array_[*]}" | tr ' ' ','
     }
@@ -5934,9 +5977,10 @@ QPKGs.Upgradable.Init
 
 QPKGs.ToBackup.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_qpkgs_tobackup_array_[*]} != *"$item"* ]] && _object_qpkgs_tobackup_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_qpkgs_tobackup_array_[*]} " != *"$item"* ]] && _object_qpkgs_tobackup_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 QPKGs.ToBackup.Array()
@@ -6024,7 +6068,7 @@ QPKGs.ToBackup.List()
     {
     echo -n "${_object_qpkgs_tobackup_array_[*]}"
     }
-QPKGs.ToBackup.ListComma()
+QPKGs.ToBackup.ListCSV()
     {
     echo -n "${_object_qpkgs_tobackup_array_[*]}" | tr ' ' ','
     }
@@ -6072,9 +6116,10 @@ QPKGs.ToBackup.Init
 
 QPKGs.ToDownload.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_qpkgs_todownload_array_[*]} != *"$item"* ]] && _object_qpkgs_todownload_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_qpkgs_todownload_array_[*]} " != *"$item"* ]] && _object_qpkgs_todownload_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 QPKGs.ToDownload.Array()
@@ -6162,7 +6207,7 @@ QPKGs.ToDownload.List()
     {
     echo -n "${_object_qpkgs_todownload_array_[*]}"
     }
-QPKGs.ToDownload.ListComma()
+QPKGs.ToDownload.ListCSV()
     {
     echo -n "${_object_qpkgs_todownload_array_[*]}" | tr ' ' ','
     }
@@ -6210,9 +6255,10 @@ QPKGs.ToDownload.Init
 
 QPKGs.ToForceUpgrade.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_qpkgs_toforceupgrade_array_[*]} != *"$item"* ]] && _object_qpkgs_toforceupgrade_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_qpkgs_toforceupgrade_array_[*]} " != *"$item"* ]] && _object_qpkgs_toforceupgrade_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 QPKGs.ToForceUpgrade.Array()
@@ -6300,7 +6346,7 @@ QPKGs.ToForceUpgrade.List()
     {
     echo -n "${_object_qpkgs_toforceupgrade_array_[*]}"
     }
-QPKGs.ToForceUpgrade.ListComma()
+QPKGs.ToForceUpgrade.ListCSV()
     {
     echo -n "${_object_qpkgs_toforceupgrade_array_[*]}" | tr ' ' ','
     }
@@ -6348,9 +6394,10 @@ QPKGs.ToForceUpgrade.Init
 
 QPKGs.ToInstall.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_qpkgs_toinstall_array_[*]} != *"$item"* ]] && _object_qpkgs_toinstall_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_qpkgs_toinstall_array_[*]} " != *"$item"* ]] && _object_qpkgs_toinstall_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 QPKGs.ToInstall.Array()
@@ -6438,7 +6485,7 @@ QPKGs.ToInstall.List()
     {
     echo -n "${_object_qpkgs_toinstall_array_[*]}"
     }
-QPKGs.ToInstall.ListComma()
+QPKGs.ToInstall.ListCSV()
     {
     echo -n "${_object_qpkgs_toinstall_array_[*]}" | tr ' ' ','
     }
@@ -6486,9 +6533,10 @@ QPKGs.ToInstall.Init
 
 QPKGs.ToReinstall.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_qpkgs_toreinstall_array_[*]} != *"$item"* ]] && _object_qpkgs_toreinstall_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_qpkgs_toreinstall_array_[*]} " != *"$item"* ]] && _object_qpkgs_toreinstall_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 QPKGs.ToReinstall.Array()
@@ -6576,7 +6624,7 @@ QPKGs.ToReinstall.List()
     {
     echo -n "${_object_qpkgs_toreinstall_array_[*]}"
     }
-QPKGs.ToReinstall.ListComma()
+QPKGs.ToReinstall.ListCSV()
     {
     echo -n "${_object_qpkgs_toreinstall_array_[*]}" | tr ' ' ','
     }
@@ -6624,9 +6672,10 @@ QPKGs.ToReinstall.Init
 
 QPKGs.ToRestart.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_qpkgs_torestart_array_[*]} != *"$item"* ]] && _object_qpkgs_torestart_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_qpkgs_torestart_array_[*]} " != *"$item"* ]] && _object_qpkgs_torestart_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 QPKGs.ToRestart.Array()
@@ -6714,7 +6763,7 @@ QPKGs.ToRestart.List()
     {
     echo -n "${_object_qpkgs_torestart_array_[*]}"
     }
-QPKGs.ToRestart.ListComma()
+QPKGs.ToRestart.ListCSV()
     {
     echo -n "${_object_qpkgs_torestart_array_[*]}" | tr ' ' ','
     }
@@ -6762,9 +6811,10 @@ QPKGs.ToRestart.Init
 
 QPKGs.ToRestore.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_qpkgs_torestore_array_[*]} != *"$item"* ]] && _object_qpkgs_torestore_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_qpkgs_torestore_array_[*]} " != *"$item"* ]] && _object_qpkgs_torestore_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 QPKGs.ToRestore.Array()
@@ -6852,7 +6902,7 @@ QPKGs.ToRestore.List()
     {
     echo -n "${_object_qpkgs_torestore_array_[*]}"
     }
-QPKGs.ToRestore.ListComma()
+QPKGs.ToRestore.ListCSV()
     {
     echo -n "${_object_qpkgs_torestore_array_[*]}" | tr ' ' ','
     }
@@ -6900,9 +6950,10 @@ QPKGs.ToRestore.Init
 
 QPKGs.ToStart.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_qpkgs_tostart_array_[*]} != *"$item"* ]] && _object_qpkgs_tostart_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_qpkgs_tostart_array_[*]} " != *"$item"* ]] && _object_qpkgs_tostart_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 QPKGs.ToStart.Array()
@@ -6990,7 +7041,7 @@ QPKGs.ToStart.List()
     {
     echo -n "${_object_qpkgs_tostart_array_[*]}"
     }
-QPKGs.ToStart.ListComma()
+QPKGs.ToStart.ListCSV()
     {
     echo -n "${_object_qpkgs_tostart_array_[*]}" | tr ' ' ','
     }
@@ -7038,9 +7089,10 @@ QPKGs.ToStart.Init
 
 QPKGs.ToStop.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_qpkgs_tostop_array_[*]} != *"$item"* ]] && _object_qpkgs_tostop_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_qpkgs_tostop_array_[*]} " != *"$item"* ]] && _object_qpkgs_tostop_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 QPKGs.ToStop.Array()
@@ -7128,7 +7180,7 @@ QPKGs.ToStop.List()
     {
     echo -n "${_object_qpkgs_tostop_array_[*]}"
     }
-QPKGs.ToStop.ListComma()
+QPKGs.ToStop.ListCSV()
     {
     echo -n "${_object_qpkgs_tostop_array_[*]}" | tr ' ' ','
     }
@@ -7176,9 +7228,10 @@ QPKGs.ToStop.Init
 
 QPKGs.ToUninstall.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_qpkgs_touninstall_array_[*]} != *"$item"* ]] && _object_qpkgs_touninstall_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_qpkgs_touninstall_array_[*]} " != *"$item"* ]] && _object_qpkgs_touninstall_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 QPKGs.ToUninstall.Array()
@@ -7266,7 +7319,7 @@ QPKGs.ToUninstall.List()
     {
     echo -n "${_object_qpkgs_touninstall_array_[*]}"
     }
-QPKGs.ToUninstall.ListComma()
+QPKGs.ToUninstall.ListCSV()
     {
     echo -n "${_object_qpkgs_touninstall_array_[*]}" | tr ' ' ','
     }
@@ -7314,9 +7367,10 @@ QPKGs.ToUninstall.Init
 
 QPKGs.ToUpgrade.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_qpkgs_toupgrade_array_[*]} != *"$item"* ]] && _object_qpkgs_toupgrade_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_qpkgs_toupgrade_array_[*]} " != *"$item"* ]] && _object_qpkgs_toupgrade_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 QPKGs.ToUpgrade.Array()
@@ -7404,7 +7458,7 @@ QPKGs.ToUpgrade.List()
     {
     echo -n "${_object_qpkgs_toupgrade_array_[*]}"
     }
-QPKGs.ToUpgrade.ListComma()
+QPKGs.ToUpgrade.ListCSV()
     {
     echo -n "${_object_qpkgs_toupgrade_array_[*]}" | tr ' ' ','
     }
@@ -7452,9 +7506,10 @@ QPKGs.ToUpgrade.Init
 
 Session.Backup.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_session_backup_array_[*]} != *"$item"* ]] && _object_session_backup_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_session_backup_array_[*]} " != *"$item"* ]] && _object_session_backup_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 Session.Backup.Array()
@@ -7542,7 +7597,7 @@ Session.Backup.List()
     {
     echo -n "${_object_session_backup_array_[*]}"
     }
-Session.Backup.ListComma()
+Session.Backup.ListCSV()
     {
     echo -n "${_object_session_backup_array_[*]}" | tr ' ' ','
     }
@@ -7590,9 +7645,10 @@ Session.Backup.Init
 
 Session.Debug.To.File.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_session_debug_to_file_array_[*]} != *"$item"* ]] && _object_session_debug_to_file_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_session_debug_to_file_array_[*]} " != *"$item"* ]] && _object_session_debug_to_file_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 Session.Debug.To.File.Array()
@@ -7680,7 +7736,7 @@ Session.Debug.To.File.List()
     {
     echo -n "${_object_session_debug_to_file_array_[*]}"
     }
-Session.Debug.To.File.ListComma()
+Session.Debug.To.File.ListCSV()
     {
     echo -n "${_object_session_debug_to_file_array_[*]}" | tr ' ' ','
     }
@@ -7728,9 +7784,10 @@ Session.Debug.To.File.Init
 
 Session.Debug.To.Screen.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_session_debug_to_screen_array_[*]} != *"$item"* ]] && _object_session_debug_to_screen_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_session_debug_to_screen_array_[*]} " != *"$item"* ]] && _object_session_debug_to_screen_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 Session.Debug.To.Screen.Array()
@@ -7818,7 +7875,7 @@ Session.Debug.To.Screen.List()
     {
     echo -n "${_object_session_debug_to_screen_array_[*]}"
     }
-Session.Debug.To.Screen.ListComma()
+Session.Debug.To.Screen.ListCSV()
     {
     echo -n "${_object_session_debug_to_screen_array_[*]}" | tr ' ' ','
     }
@@ -7866,9 +7923,10 @@ Session.Debug.To.Screen.Init
 
 Session.Display.Clean.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_session_display_clean_array_[*]} != *"$item"* ]] && _object_session_display_clean_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_session_display_clean_array_[*]} " != *"$item"* ]] && _object_session_display_clean_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 Session.Display.Clean.Array()
@@ -7956,7 +8014,7 @@ Session.Display.Clean.List()
     {
     echo -n "${_object_session_display_clean_array_[*]}"
     }
-Session.Display.Clean.ListComma()
+Session.Display.Clean.ListCSV()
     {
     echo -n "${_object_session_display_clean_array_[*]}" | tr ' ' ','
     }
@@ -8004,9 +8062,10 @@ Session.Display.Clean.Init
 
 Session.IPKGs.Install.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_session_ipkgs_install_array_[*]} != *"$item"* ]] && _object_session_ipkgs_install_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_session_ipkgs_install_array_[*]} " != *"$item"* ]] && _object_session_ipkgs_install_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 Session.IPKGs.Install.Array()
@@ -8094,7 +8153,7 @@ Session.IPKGs.Install.List()
     {
     echo -n "${_object_session_ipkgs_install_array_[*]}"
     }
-Session.IPKGs.Install.ListComma()
+Session.IPKGs.Install.ListCSV()
     {
     echo -n "${_object_session_ipkgs_install_array_[*]}" | tr ' ' ','
     }
@@ -8142,9 +8201,10 @@ Session.IPKGs.Install.Init
 
 Session.LineSpace.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_session_linespace_array_[*]} != *"$item"* ]] && _object_session_linespace_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_session_linespace_array_[*]} " != *"$item"* ]] && _object_session_linespace_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 Session.LineSpace.Array()
@@ -8232,7 +8292,7 @@ Session.LineSpace.List()
     {
     echo -n "${_object_session_linespace_array_[*]}"
     }
-Session.LineSpace.ListComma()
+Session.LineSpace.ListCSV()
     {
     echo -n "${_object_session_linespace_array_[*]}" | tr ' ' ','
     }
@@ -8280,9 +8340,10 @@ Session.LineSpace.Init
 
 Session.PIPs.Install.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_session_pips_install_array_[*]} != *"$item"* ]] && _object_session_pips_install_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_session_pips_install_array_[*]} " != *"$item"* ]] && _object_session_pips_install_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 Session.PIPs.Install.Array()
@@ -8370,7 +8431,7 @@ Session.PIPs.Install.List()
     {
     echo -n "${_object_session_pips_install_array_[*]}"
     }
-Session.PIPs.Install.ListComma()
+Session.PIPs.Install.ListCSV()
     {
     echo -n "${_object_session_pips_install_array_[*]}" | tr ' ' ','
     }
@@ -8418,9 +8479,10 @@ Session.PIPs.Install.Init
 
 Session.ShowBackupLocation.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_session_showbackuplocation_array_[*]} != *"$item"* ]] && _object_session_showbackuplocation_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_session_showbackuplocation_array_[*]} " != *"$item"* ]] && _object_session_showbackuplocation_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 Session.ShowBackupLocation.Array()
@@ -8508,7 +8570,7 @@ Session.ShowBackupLocation.List()
     {
     echo -n "${_object_session_showbackuplocation_array_[*]}"
     }
-Session.ShowBackupLocation.ListComma()
+Session.ShowBackupLocation.ListCSV()
     {
     echo -n "${_object_session_showbackuplocation_array_[*]}" | tr ' ' ','
     }
@@ -8556,9 +8618,10 @@ Session.ShowBackupLocation.Init
 
 Session.SkipPackageProcessing.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_session_skippackageprocessing_array_[*]} != *"$item"* ]] && _object_session_skippackageprocessing_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_session_skippackageprocessing_array_[*]} " != *"$item"* ]] && _object_session_skippackageprocessing_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 Session.SkipPackageProcessing.Array()
@@ -8646,7 +8709,7 @@ Session.SkipPackageProcessing.List()
     {
     echo -n "${_object_session_skippackageprocessing_array_[*]}"
     }
-Session.SkipPackageProcessing.ListComma()
+Session.SkipPackageProcessing.ListCSV()
     {
     echo -n "${_object_session_skippackageprocessing_array_[*]}" | tr ' ' ','
     }
@@ -8694,9 +8757,10 @@ Session.SkipPackageProcessing.Init
 
 Session.SuggestIssue.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_session_suggestissue_array_[*]} != *"$item"* ]] && _object_session_suggestissue_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_session_suggestissue_array_[*]} " != *"$item"* ]] && _object_session_suggestissue_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 Session.SuggestIssue.Array()
@@ -8784,7 +8848,7 @@ Session.SuggestIssue.List()
     {
     echo -n "${_object_session_suggestissue_array_[*]}"
     }
-Session.SuggestIssue.ListComma()
+Session.SuggestIssue.ListCSV()
     {
     echo -n "${_object_session_suggestissue_array_[*]}" | tr ' ' ','
     }
@@ -8832,9 +8896,10 @@ Session.SuggestIssue.Init
 
 Session.Summary.Add()
     {
+    local array=(${1})
     local item=''
-    for item in "$1"; do
-        [[ ${_object_session_summary_array_[*]} != *"$item"* ]] && _object_session_summary_array_+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${_object_session_summary_array_[*]} " != *"$item"* ]] && _object_session_summary_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 Session.Summary.Array()
@@ -8922,7 +8987,7 @@ Session.Summary.List()
     {
     echo -n "${_object_session_summary_array_[*]}"
     }
-Session.Summary.ListComma()
+Session.Summary.ListCSV()
     {
     echo -n "${_object_session_summary_array_[*]}" | tr ' ' ','
     }

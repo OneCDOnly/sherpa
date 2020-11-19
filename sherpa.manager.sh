@@ -39,7 +39,7 @@ Session.Init()
     readonly SCRIPT_STARTSECONDS=$(/bin/date +%s)
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=201118
+    readonly MANAGER_SCRIPT_VERSION=201119
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -168,7 +168,7 @@ Session.Init()
     readonly IPKG_DL_PATH=$WORK_PATH/ipkgs.downloads
     readonly IPKG_CACHE_PATH=$WORK_PATH/ipkgs
     readonly PIP_CACHE_PATH=$WORK_PATH/pips
-    readonly COMPILED_OBJECTS_HASH=a7804e08f41d962a08fab384c557f865
+    readonly COMPILED_OBJECTS_HASH=5b68e69eb1b9fa16f588ce0a87a73e0a
     readonly DEBUG_LOG_DATAWIDTH=92
 
     if ! MakePath "$WORK_PATH" 'work'; then
@@ -1629,7 +1629,7 @@ CalcAllIPKGDepsToUninstall()
     done
 
     DebugDone 'complete'
-    DebugInfo "IPKGs to uninstall: $(IPKGs.ToUninstall.ListComma)"
+    DebugInfo "IPKGs to uninstall: $(IPKGs.ToUninstall.ListCSV)"
     package_count=$(IPKGs.ToUninstall.Count)
 
     if [[ $package_count -gt 0 ]]; then
@@ -2720,17 +2720,17 @@ QPKGs.Assignment.List()
 
     DebugFuncEntry
 
-    DebugQPKG 'to download' "$(QPKGs.ToDownload.ListComma) "
-    DebugQPKG 'to backup' "$(QPKGs.ToBackup.ListComma) "
-    DebugQPKG 'to uninstall' "$(QPKGs.ToUninstall.ListComma) "
-    DebugQPKG 'to stop' "$(QPKGs.ToStop.ListComma) "
-    DebugQPKG 'to force-upgrade' "$(QPKGs.ToForceUpgrade.ListComma) "
-    DebugQPKG 'to upgrade' "$(QPKGs.ToUpgrade.ListComma) "
-    DebugQPKG 'to reinstall' "$(QPKGs.ToReinstall.ListComma) "
-    DebugQPKG 'to install' "$(QPKGs.ToInstall.ListComma) "
-    DebugQPKG 'to restore' "$(QPKGs.ToRestore.ListComma) "
-    DebugQPKG 'to start' "$(QPKGs.ToStart.ListComma) "
-    DebugQPKG 'to restart' "$(QPKGs.ToRestart.ListComma) "
+    DebugQPKG 'to download' "$(QPKGs.ToDownload.ListCSV) "
+    DebugQPKG 'to backup' "$(QPKGs.ToBackup.ListCSV) "
+    DebugQPKG 'to uninstall' "$(QPKGs.ToUninstall.ListCSV) "
+    DebugQPKG 'to stop' "$(QPKGs.ToStop.ListCSV) "
+    DebugQPKG 'to force-upgrade' "$(QPKGs.ToForceUpgrade.ListCSV) "
+    DebugQPKG 'to upgrade' "$(QPKGs.ToUpgrade.ListCSV) "
+    DebugQPKG 'to reinstall' "$(QPKGs.ToReinstall.ListCSV) "
+    DebugQPKG 'to install' "$(QPKGs.ToInstall.ListCSV) "
+    DebugQPKG 'to restore' "$(QPKGs.ToRestore.ListCSV) "
+    DebugQPKG 'to start' "$(QPKGs.ToStart.ListCSV) "
+    DebugQPKG 'to restart' "$(QPKGs.ToRestart.ListCSV) "
 
     DebugFuncExit; return 0
 
@@ -4620,9 +4620,10 @@ Objects.Add()
 
 echo $public_function_name'.Add()
     {
+    local array=(${1})
     local item='\'\''
-    for item in "$1"; do
-        [[ ${'$_placeholder_array_'[*]} != *"$item"* ]] && '$_placeholder_array_'+=("$item")
+    for item in "${array[@]}"; do
+        [[ " ${'$_placeholder_array_'[*]} " != *"$item"* ]] && '$_placeholder_array_'+=("$item")  # https://stackoverflow.com/a/41395983/14072675
     done
     }
 '$public_function_name'.Array()
@@ -4710,7 +4711,7 @@ echo $public_function_name'.Add()
     {
     echo -n "${'$_placeholder_array_'[*]}"
     }
-'$public_function_name'.ListComma()
+'$public_function_name'.ListCSV()
     {
     echo -n "${'$_placeholder_array_'[*]}" | tr '\' \'' '\',\''
     }
