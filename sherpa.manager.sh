@@ -39,7 +39,7 @@ Session.Init()
     readonly SCRIPT_STARTSECONDS=$(/bin/date +%s)
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=201119
+    readonly MANAGER_SCRIPT_VERSION=201122
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -1092,6 +1092,9 @@ Packages.Install.Addons()
         Entware.Patch.Service
         IPKGs.Install
         PIPs.Install
+    else
+        # test if other packages are to be installed here. If so, and Entware isn't enabled, then abort with error.
+        :
     fi
 
     DebugFuncExit; return 0
@@ -3919,6 +3922,7 @@ RunAndLogResults()
     FormatAsCommand "$1" > "$2"
 
     if Session.Debug.To.Screen.IsSet; then
+        DebugCommand.Proc "$1"
         $1 > >($TEE_CMD "$msgs") 2>&1
         resultcode=$?
     else
@@ -4175,6 +4179,13 @@ DebugUserspace.Warning()
     {
 
     DebugDetected.Warning "$(FormatAsUserspace)" "$1" "$2"
+
+    }
+
+DebugCommand.Proc()
+    {
+
+    DebugProc "executing '$1'"
 
     }
 
