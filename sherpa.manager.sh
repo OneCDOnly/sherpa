@@ -37,6 +37,7 @@ Session.Init()
     IsQNAP || return 1
     DebugFuncEntry
     readonly SCRIPT_STARTSECONDS=$(/bin/date +%s)
+    export LC_ALL=C
 
     readonly PROJECT_NAME=sherpa
     readonly MANAGER_SCRIPT_VERSION=201124
@@ -133,7 +134,7 @@ Session.Init()
     local -r LOADER_SCRIPT_FILE=$PROJECT_NAME.loader.sh
     readonly MANAGER_SCRIPT_FILE=$PROJECT_NAME.manager.sh
 
-    Session.LockFile.Claim /var/run/$LOADER_SCRIPT_FILE.pid || return 1
+    Session.LockFile.Claim /var/run/"$LOADER_SCRIPT_FILE".pid || return 1
 
     local -r DEBUG_LOG_FILE=$PROJECT_NAME.debug.log
     readonly INSTALL_LOG_FILE=install.log
@@ -155,7 +156,7 @@ Session.Init()
     readonly EXTERNAL_PACKAGE_ARCHIVE_PATHFILE=/opt/var/opkg-lists/entware
     local -r PROJECT_REPO_URL=https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs
     readonly APP_CENTER_CONFIG_PATHFILE=/etc/config/qpkg.conf
-    local -r PROJECT_PATH=$($GETCFG_CMD $PROJECT_NAME Install_Path -f "$APP_CENTER_CONFIG_PATHFILE")
+    local -r PROJECT_PATH=$($GETCFG_CMD "$PROJECT_NAME" Install_Path -f "$APP_CENTER_CONFIG_PATHFILE")
     readonly DEBUG_LOG_PATHFILE=$PROJECT_PATH/$DEBUG_LOG_FILE
     readonly WORK_PATH=$PROJECT_PATH/cache
     readonly COMPILED_OBJECTS_URL=https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/compiled.objects
@@ -168,7 +169,7 @@ Session.Init()
     readonly IPKG_DL_PATH=$WORK_PATH/ipkgs.downloads
     readonly IPKG_CACHE_PATH=$WORK_PATH/ipkgs
     readonly PIP_CACHE_PATH=$WORK_PATH/pips
-    readonly COMPILED_OBJECTS_HASH=0832e1c417a5ab7473538a7c6c4c3cb3
+    readonly COMPILED_OBJECTS_HASH=2cac0f9a823dde1c96947b13b8c86f99
     readonly DEBUG_LOG_DATAWIDTH=92
 
     if ! MakePath "$WORK_PATH" 'work'; then
@@ -191,7 +192,7 @@ Session.Init()
         DebugFuncExit; return 1
     fi
 
-    Session.Backup.Path = "$($GETCFG_CMD SHARE_DEF defVolMP -f $DEFAULT_SHARES_PATHFILE)/.qpkg_config_backup"
+    Session.Backup.Path = "$($GETCFG_CMD SHARE_DEF defVolMP -f "$DEFAULT_SHARES_PATHFILE")/.qpkg_config_backup"
 
     if ! MakePath "$QPKG_DL_PATH" 'QPKG download'; then
         DebugFuncExit; return 1
@@ -216,9 +217,9 @@ Session.Init()
         DebugFuncExit; return 1
     fi
 
-    readonly NAS_FIRMWARE=$($GETCFG_CMD System Version -f $ULINUX_PATHFILE)
+    readonly NAS_FIRMWARE=$($GETCFG_CMD System Version -f "$ULINUX_PATHFILE")
     readonly PACKAGE_VERSION=$(QPKG.InstalledVersion "$PROJECT_NAME")
-    readonly NAS_BUILD=$($GETCFG_CMD System 'Build Number' -f $ULINUX_PATHFILE)
+    readonly NAS_BUILD=$($GETCFG_CMD System 'Build Number' -f "$ULINUX_PATHFILE")
     readonly INSTALLED_RAM_KB=$($GREP_CMD MemTotal /proc/meminfo | $CUT_CMD -f2 -d':' | $SED_CMD 's|kB||;s| ||g')
     readonly MIN_RAM_KB=1048576
     readonly LOG_TAIL_LINES=2000    # a full download and install of everything generates a session around 1600 lines
@@ -719,7 +720,7 @@ Session.Validate()
     fi
 
     DebugUserspace.OK 'BASH' "$(bash --version | $HEAD_CMD -n1)"
-    DebugUserspace.OK 'default volume' "$($GETCFG_CMD SHARE_DEF defVolMP -f $DEFAULT_SHARES_PATHFILE)"
+    DebugUserspace.OK 'default volume' "$($GETCFG_CMD SHARE_DEF defVolMP -f "$DEFAULT_SHARES_PATHFILE")"
 
     if [[ -L '/opt' ]]; then
         DebugUserspace.OK '/opt' "$($READLINK_CMD '/opt' || echo '<not present>')"
@@ -1466,9 +1467,9 @@ PIPs.Install()
         pip3_cmd=/opt/bin/pip3.7
     else
         if IsNotSysFileExist $pip3_cmd; then
-            echo "* Ugh! The usual fix for this is to let $PROJECT_NAME reinstall $(FormatAsPackageName Entware) at least once."
-            echo -e "\t$0 reinstall ew"
-            echo "If it happens again after reinstalling $(FormatAsPackageName Entware), please create a new issue for this on GitHub."
+            Display "* Ugh! The usual fix for this is to let $PROJECT_NAME reinstall $(FormatAsPackageName Entware) at least once."
+            Display "\t$0 reinstall ew"
+            Display "If it happens again after reinstalling $(FormatAsPackageName Entware), please create a new issue for this on GitHub."
             DebugFuncExit; return 1
         fi
     fi
@@ -1859,6 +1860,9 @@ _MonitorDirSize_()
     #   $1 = directory to monitor the size of
     #   $2 = total target bytes (100%) for specified path
 
+    # output:
+    #   stdout = "percentage downloaded (downloaded bytes/total expected bytes)"
+
     [[ -z $1 || ! -d $1 || -z $2 || $2 -eq 0 ]] && return
     IsNotSysFileExist $GNU_FIND_CMD && return
 
@@ -1889,24 +1893,29 @@ _MonitorDirSize_()
         progress_message=" $percent ($(FormatAsISOBytes "$current_bytes")/$(FormatAsISOBytes "$total_bytes"))"
 
         if [[ $stall_seconds -ge $stall_seconds_threshold ]]; then
+            # append a message showing time that download has stalled for
             if [[ $stall_seconds -lt 60 ]]; then
                 stall_message=" stalled for $stall_seconds seconds"
             else
                 stall_message=" stalled for $(ConvertSecsToHoursMinutesSecs $stall_seconds)"
             fi
 
+            # add a suggestion to cancel if download has stalled for too long
             if [[ $stall_seconds -ge 90 ]]; then
-                stall_message=$(ColourTextBrightRed "$stall_message: cancel with CTRL+C and try again later")
-            elif [[ $stall_seconds -ge 45 ]]; then
-                stall_message=$(ColourTextBrightOrange "$stall_message")
-            elif [[ $stall_seconds -ge 20 ]]; then
-                stall_message=$(ColourTextBrightYellow "$stall_message")
+                stall_message="$stall_message: cancel with CTRL+C and try again later"
             fi
-        else
-            stall_message=''
-        fi
 
-        [[ -n $stall_message ]] && progress_message+=$stall_message
+            # colourise if required
+#             if [[ $stall_seconds -ge 90 ]]; then
+#                 stall_message=$(ColourTextBrightRed "$stall_message")
+#             elif [[ $stall_seconds -ge 45 ]]; then
+#                 stall_message=$(ColourTextBrightOrange "$stall_message")
+#             elif [[ $stall_seconds -ge 20 ]]; then
+#                 stall_message=$(ColourTextBrightYellow "$stall_message")
+#             fi
+
+            progress_message+=$stall_message
+        fi
 
         ProgressUpdater "$progress_message"
         $SLEEP_CMD 1
@@ -1930,10 +1939,10 @@ ProgressUpdater()
         if [[ $this_length -lt $previous_length ]]; then
             blanking_length=$((this_length-previous_length))
             # backspace to start of previous msg, print new msg, add additional spaces, then backspace to end of msg
-            printf "%${previous_length}s" | tr ' ' '\b'; echo -n "$1 "; printf "%${blanking_length}s"; printf "%${blanking_length}s" | tr ' ' '\b'
+            printf "%${previous_length}s" | tr ' ' '\b'; DisplayWait "$1"; printf "%${blanking_length}s"; printf "%${blanking_length}s" | tr ' ' '\b'
         else
             # backspace to start of previous msg, print new msg
-            printf "%${previous_length}s" | tr ' ' '\b'; echo -n "$1 "
+            printf "%${previous_length}s" | tr ' ' '\b'; DisplayWait "$1"
         fi
 
         previous_length=$this_length
@@ -2135,7 +2144,7 @@ Help.Basic.Example.Show()
 
     DisplayAsProjectSyntaxIndentedExample "or, for more about available $(FormatAsHelpOptions), type" 'options'
 
-    echo -e "\nThere's even more here: $(FormatAsURL 'https://github.com/OneCDOnly/sherpa/wiki')"
+    Display "\nThere's even more here: $(FormatAsURL 'https://github.com/OneCDOnly/sherpa/wiki')"
 
     return 0
 
@@ -2347,7 +2356,7 @@ Help.PackageAbbreviations.Show()
     local package_index=0
     Help.Basic.Show
     DisplayLineSpaceIfNoneAlready
-    echo -e "* $(FormatAsScriptTitle) recognises these abbreviations as $(FormatAsHelpPackages):"
+    Display "* $(FormatAsScriptTitle) recognises these abbreviations as $(FormatAsHelpPackages):"
 
     for package_index in "${!SHERPA_QPKG_NAME[@]}"; do
         if [[ -n ${SHERPA_QPKG_ABBRVS[$package_index]} ]]; then
@@ -2839,7 +2848,7 @@ QPKGs.All.Show()
     local package=''
 
     for package in $(QPKGs.Names.Array); do
-        echo "$package"
+        Display "$package"
     done
 
     return 0
@@ -2853,7 +2862,7 @@ QPKGs.Installed.Show()
     QPKGs.StateLists.Build
 
     for package in $(QPKGs.Installed.Array); do
-        echo "$package"
+        Display "$package"
     done
 
     return 0
@@ -2867,7 +2876,7 @@ QPKGs.NotInstalled.Show()
     QPKGs.StateLists.Build
 
     for package in $(QPKGs.NotInstalled.Array); do
-        echo "$package"
+        Display "$package"
     done
 
     return 0
@@ -2881,7 +2890,7 @@ QPKGs.Upgradable.Show()
     QPKGs.StateLists.Build
 
     for package in $(QPKGs.Upgradable.Array); do
-        echo "$package"
+        Display "$package"
     done
 
     return 0
@@ -2895,7 +2904,7 @@ QPKGs.Independent.Show()
     QPKGs.StateLists.Build
 
     for package in $(QPKGs.Independent.Array); do
-        echo "$package"
+        Display "$package"
     done
 
     return 0
@@ -2909,7 +2918,7 @@ QPKGs.Dependant.Show()
     QPKGs.StateLists.Build
 
     for package in $(QPKGs.Dependant.Array); do
-        echo "$package"
+        Display "$package"
     done
 
     return 0
@@ -4680,7 +4689,7 @@ echo $public_function_name'.Add()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#'$_placeholder_array_'[@]} ]] && index="${#'$_placeholder_array_'[@]}"
+    [[ $index -gt ${#'$_placeholder_array_'[@]} ]] && index=${#'$_placeholder_array_'[@]}
     echo -n "${'$_placeholder_array_'[((index-1))]}"
     }
 '$public_function_name'.Init()
@@ -4734,7 +4743,7 @@ echo $public_function_name'.Add()
 '$public_function_name'.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        '$_placeholder_path_'="$2"
+        '$_placeholder_path_'=$2
     else
         echo -n "$'$_placeholder_path_'"
     fi

@@ -49,7 +49,7 @@ User.Opts.Help.Abbreviations.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_user_opts_help_abbreviations_array_[@]} ]] && index="${#_object_user_opts_help_abbreviations_array_[@]}"
+    [[ $index -gt ${#_object_user_opts_help_abbreviations_array_[@]} ]] && index=${#_object_user_opts_help_abbreviations_array_[@]}
     echo -n "${_object_user_opts_help_abbreviations_array_[((index-1))]}"
     }
 User.Opts.Help.Abbreviations.Init()
@@ -103,7 +103,7 @@ User.Opts.Help.Abbreviations.LogChanges()
 User.Opts.Help.Abbreviations.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_user_opts_help_abbreviations_path_="$2"
+        _object_user_opts_help_abbreviations_path_=$2
     else
         echo -n "$_object_user_opts_help_abbreviations_path_"
     fi
@@ -188,7 +188,7 @@ User.Opts.Help.Actions.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_user_opts_help_actions_array_[@]} ]] && index="${#_object_user_opts_help_actions_array_[@]}"
+    [[ $index -gt ${#_object_user_opts_help_actions_array_[@]} ]] && index=${#_object_user_opts_help_actions_array_[@]}
     echo -n "${_object_user_opts_help_actions_array_[((index-1))]}"
     }
 User.Opts.Help.Actions.Init()
@@ -242,7 +242,7 @@ User.Opts.Help.Actions.LogChanges()
 User.Opts.Help.Actions.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_user_opts_help_actions_path_="$2"
+        _object_user_opts_help_actions_path_=$2
     else
         echo -n "$_object_user_opts_help_actions_path_"
     fi
@@ -327,7 +327,7 @@ User.Opts.Help.ActionsAll.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_user_opts_help_actionsall_array_[@]} ]] && index="${#_object_user_opts_help_actionsall_array_[@]}"
+    [[ $index -gt ${#_object_user_opts_help_actionsall_array_[@]} ]] && index=${#_object_user_opts_help_actionsall_array_[@]}
     echo -n "${_object_user_opts_help_actionsall_array_[((index-1))]}"
     }
 User.Opts.Help.ActionsAll.Init()
@@ -381,7 +381,7 @@ User.Opts.Help.ActionsAll.LogChanges()
 User.Opts.Help.ActionsAll.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_user_opts_help_actionsall_path_="$2"
+        _object_user_opts_help_actionsall_path_=$2
     else
         echo -n "$_object_user_opts_help_actionsall_path_"
     fi
@@ -466,7 +466,7 @@ User.Opts.Help.Basic.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_user_opts_help_basic_array_[@]} ]] && index="${#_object_user_opts_help_basic_array_[@]}"
+    [[ $index -gt ${#_object_user_opts_help_basic_array_[@]} ]] && index=${#_object_user_opts_help_basic_array_[@]}
     echo -n "${_object_user_opts_help_basic_array_[((index-1))]}"
     }
 User.Opts.Help.Basic.Init()
@@ -520,7 +520,7 @@ User.Opts.Help.Basic.LogChanges()
 User.Opts.Help.Basic.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_user_opts_help_basic_path_="$2"
+        _object_user_opts_help_basic_path_=$2
     else
         echo -n "$_object_user_opts_help_basic_path_"
     fi
@@ -605,7 +605,7 @@ User.Opts.Help.Options.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_user_opts_help_options_array_[@]} ]] && index="${#_object_user_opts_help_options_array_[@]}"
+    [[ $index -gt ${#_object_user_opts_help_options_array_[@]} ]] && index=${#_object_user_opts_help_options_array_[@]}
     echo -n "${_object_user_opts_help_options_array_[((index-1))]}"
     }
 User.Opts.Help.Options.Init()
@@ -659,7 +659,7 @@ User.Opts.Help.Options.LogChanges()
 User.Opts.Help.Options.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_user_opts_help_options_path_="$2"
+        _object_user_opts_help_options_path_=$2
     else
         echo -n "$_object_user_opts_help_options_path_"
     fi
@@ -744,7 +744,7 @@ User.Opts.Help.Packages.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_user_opts_help_packages_array_[@]} ]] && index="${#_object_user_opts_help_packages_array_[@]}"
+    [[ $index -gt ${#_object_user_opts_help_packages_array_[@]} ]] && index=${#_object_user_opts_help_packages_array_[@]}
     echo -n "${_object_user_opts_help_packages_array_[((index-1))]}"
     }
 User.Opts.Help.Packages.Init()
@@ -798,7 +798,7 @@ User.Opts.Help.Packages.LogChanges()
 User.Opts.Help.Packages.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_user_opts_help_packages_path_="$2"
+        _object_user_opts_help_packages_path_=$2
     else
         echo -n "$_object_user_opts_help_packages_path_"
     fi
@@ -883,7 +883,7 @@ User.Opts.Help.Problems.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_user_opts_help_problems_array_[@]} ]] && index="${#_object_user_opts_help_problems_array_[@]}"
+    [[ $index -gt ${#_object_user_opts_help_problems_array_[@]} ]] && index=${#_object_user_opts_help_problems_array_[@]}
     echo -n "${_object_user_opts_help_problems_array_[((index-1))]}"
     }
 User.Opts.Help.Problems.Init()
@@ -937,7 +937,7 @@ User.Opts.Help.Problems.LogChanges()
 User.Opts.Help.Problems.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_user_opts_help_problems_path_="$2"
+        _object_user_opts_help_problems_path_=$2
     else
         echo -n "$_object_user_opts_help_problems_path_"
     fi
@@ -1022,7 +1022,7 @@ User.Opts.Help.Tips.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_user_opts_help_tips_array_[@]} ]] && index="${#_object_user_opts_help_tips_array_[@]}"
+    [[ $index -gt ${#_object_user_opts_help_tips_array_[@]} ]] && index=${#_object_user_opts_help_tips_array_[@]}
     echo -n "${_object_user_opts_help_tips_array_[((index-1))]}"
     }
 User.Opts.Help.Tips.Init()
@@ -1076,7 +1076,7 @@ User.Opts.Help.Tips.LogChanges()
 User.Opts.Help.Tips.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_user_opts_help_tips_path_="$2"
+        _object_user_opts_help_tips_path_=$2
     else
         echo -n "$_object_user_opts_help_tips_path_"
     fi
@@ -1161,7 +1161,7 @@ User.Opts.Clean.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_user_opts_clean_array_[@]} ]] && index="${#_object_user_opts_clean_array_[@]}"
+    [[ $index -gt ${#_object_user_opts_clean_array_[@]} ]] && index=${#_object_user_opts_clean_array_[@]}
     echo -n "${_object_user_opts_clean_array_[((index-1))]}"
     }
 User.Opts.Clean.Init()
@@ -1215,7 +1215,7 @@ User.Opts.Clean.LogChanges()
 User.Opts.Clean.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_user_opts_clean_path_="$2"
+        _object_user_opts_clean_path_=$2
     else
         echo -n "$_object_user_opts_clean_path_"
     fi
@@ -1300,7 +1300,7 @@ User.Opts.Dependencies.Check.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_user_opts_dependencies_check_array_[@]} ]] && index="${#_object_user_opts_dependencies_check_array_[@]}"
+    [[ $index -gt ${#_object_user_opts_dependencies_check_array_[@]} ]] && index=${#_object_user_opts_dependencies_check_array_[@]}
     echo -n "${_object_user_opts_dependencies_check_array_[((index-1))]}"
     }
 User.Opts.Dependencies.Check.Init()
@@ -1354,7 +1354,7 @@ User.Opts.Dependencies.Check.LogChanges()
 User.Opts.Dependencies.Check.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_user_opts_dependencies_check_path_="$2"
+        _object_user_opts_dependencies_check_path_=$2
     else
         echo -n "$_object_user_opts_dependencies_check_path_"
     fi
@@ -1439,7 +1439,7 @@ User.Opts.IgnoreFreeSpace.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_user_opts_ignorefreespace_array_[@]} ]] && index="${#_object_user_opts_ignorefreespace_array_[@]}"
+    [[ $index -gt ${#_object_user_opts_ignorefreespace_array_[@]} ]] && index=${#_object_user_opts_ignorefreespace_array_[@]}
     echo -n "${_object_user_opts_ignorefreespace_array_[((index-1))]}"
     }
 User.Opts.IgnoreFreeSpace.Init()
@@ -1493,7 +1493,7 @@ User.Opts.IgnoreFreeSpace.LogChanges()
 User.Opts.IgnoreFreeSpace.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_user_opts_ignorefreespace_path_="$2"
+        _object_user_opts_ignorefreespace_path_=$2
     else
         echo -n "$_object_user_opts_ignorefreespace_path_"
     fi
@@ -1578,7 +1578,7 @@ User.Opts.Versions.View.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_user_opts_versions_view_array_[@]} ]] && index="${#_object_user_opts_versions_view_array_[@]}"
+    [[ $index -gt ${#_object_user_opts_versions_view_array_[@]} ]] && index=${#_object_user_opts_versions_view_array_[@]}
     echo -n "${_object_user_opts_versions_view_array_[((index-1))]}"
     }
 User.Opts.Versions.View.Init()
@@ -1632,7 +1632,7 @@ User.Opts.Versions.View.LogChanges()
 User.Opts.Versions.View.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_user_opts_versions_view_path_="$2"
+        _object_user_opts_versions_view_path_=$2
     else
         echo -n "$_object_user_opts_versions_view_path_"
     fi
@@ -1717,7 +1717,7 @@ User.Opts.Log.Last.Paste.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_user_opts_log_last_paste_array_[@]} ]] && index="${#_object_user_opts_log_last_paste_array_[@]}"
+    [[ $index -gt ${#_object_user_opts_log_last_paste_array_[@]} ]] && index=${#_object_user_opts_log_last_paste_array_[@]}
     echo -n "${_object_user_opts_log_last_paste_array_[((index-1))]}"
     }
 User.Opts.Log.Last.Paste.Init()
@@ -1771,7 +1771,7 @@ User.Opts.Log.Last.Paste.LogChanges()
 User.Opts.Log.Last.Paste.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_user_opts_log_last_paste_path_="$2"
+        _object_user_opts_log_last_paste_path_=$2
     else
         echo -n "$_object_user_opts_log_last_paste_path_"
     fi
@@ -1856,7 +1856,7 @@ User.Opts.Log.Last.View.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_user_opts_log_last_view_array_[@]} ]] && index="${#_object_user_opts_log_last_view_array_[@]}"
+    [[ $index -gt ${#_object_user_opts_log_last_view_array_[@]} ]] && index=${#_object_user_opts_log_last_view_array_[@]}
     echo -n "${_object_user_opts_log_last_view_array_[((index-1))]}"
     }
 User.Opts.Log.Last.View.Init()
@@ -1910,7 +1910,7 @@ User.Opts.Log.Last.View.LogChanges()
 User.Opts.Log.Last.View.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_user_opts_log_last_view_path_="$2"
+        _object_user_opts_log_last_view_path_=$2
     else
         echo -n "$_object_user_opts_log_last_view_path_"
     fi
@@ -1995,7 +1995,7 @@ User.Opts.Log.Tail.Paste.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_user_opts_log_tail_paste_array_[@]} ]] && index="${#_object_user_opts_log_tail_paste_array_[@]}"
+    [[ $index -gt ${#_object_user_opts_log_tail_paste_array_[@]} ]] && index=${#_object_user_opts_log_tail_paste_array_[@]}
     echo -n "${_object_user_opts_log_tail_paste_array_[((index-1))]}"
     }
 User.Opts.Log.Tail.Paste.Init()
@@ -2049,7 +2049,7 @@ User.Opts.Log.Tail.Paste.LogChanges()
 User.Opts.Log.Tail.Paste.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_user_opts_log_tail_paste_path_="$2"
+        _object_user_opts_log_tail_paste_path_=$2
     else
         echo -n "$_object_user_opts_log_tail_paste_path_"
     fi
@@ -2134,7 +2134,7 @@ User.Opts.Log.Whole.View.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_user_opts_log_whole_view_array_[@]} ]] && index="${#_object_user_opts_log_whole_view_array_[@]}"
+    [[ $index -gt ${#_object_user_opts_log_whole_view_array_[@]} ]] && index=${#_object_user_opts_log_whole_view_array_[@]}
     echo -n "${_object_user_opts_log_whole_view_array_[((index-1))]}"
     }
 User.Opts.Log.Whole.View.Init()
@@ -2188,7 +2188,7 @@ User.Opts.Log.Whole.View.LogChanges()
 User.Opts.Log.Whole.View.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_user_opts_log_whole_view_path_="$2"
+        _object_user_opts_log_whole_view_path_=$2
     else
         echo -n "$_object_user_opts_log_whole_view_path_"
     fi
@@ -2273,7 +2273,7 @@ User.Opts.Apps.All.Backup.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_user_opts_apps_all_backup_array_[@]} ]] && index="${#_object_user_opts_apps_all_backup_array_[@]}"
+    [[ $index -gt ${#_object_user_opts_apps_all_backup_array_[@]} ]] && index=${#_object_user_opts_apps_all_backup_array_[@]}
     echo -n "${_object_user_opts_apps_all_backup_array_[((index-1))]}"
     }
 User.Opts.Apps.All.Backup.Init()
@@ -2327,7 +2327,7 @@ User.Opts.Apps.All.Backup.LogChanges()
 User.Opts.Apps.All.Backup.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_user_opts_apps_all_backup_path_="$2"
+        _object_user_opts_apps_all_backup_path_=$2
     else
         echo -n "$_object_user_opts_apps_all_backup_path_"
     fi
@@ -2412,7 +2412,7 @@ User.Opts.Apps.All.Install.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_user_opts_apps_all_install_array_[@]} ]] && index="${#_object_user_opts_apps_all_install_array_[@]}"
+    [[ $index -gt ${#_object_user_opts_apps_all_install_array_[@]} ]] && index=${#_object_user_opts_apps_all_install_array_[@]}
     echo -n "${_object_user_opts_apps_all_install_array_[((index-1))]}"
     }
 User.Opts.Apps.All.Install.Init()
@@ -2466,7 +2466,7 @@ User.Opts.Apps.All.Install.LogChanges()
 User.Opts.Apps.All.Install.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_user_opts_apps_all_install_path_="$2"
+        _object_user_opts_apps_all_install_path_=$2
     else
         echo -n "$_object_user_opts_apps_all_install_path_"
     fi
@@ -2551,7 +2551,7 @@ User.Opts.Apps.All.Reinstall.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_user_opts_apps_all_reinstall_array_[@]} ]] && index="${#_object_user_opts_apps_all_reinstall_array_[@]}"
+    [[ $index -gt ${#_object_user_opts_apps_all_reinstall_array_[@]} ]] && index=${#_object_user_opts_apps_all_reinstall_array_[@]}
     echo -n "${_object_user_opts_apps_all_reinstall_array_[((index-1))]}"
     }
 User.Opts.Apps.All.Reinstall.Init()
@@ -2605,7 +2605,7 @@ User.Opts.Apps.All.Reinstall.LogChanges()
 User.Opts.Apps.All.Reinstall.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_user_opts_apps_all_reinstall_path_="$2"
+        _object_user_opts_apps_all_reinstall_path_=$2
     else
         echo -n "$_object_user_opts_apps_all_reinstall_path_"
     fi
@@ -2690,7 +2690,7 @@ User.Opts.Apps.All.Restart.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_user_opts_apps_all_restart_array_[@]} ]] && index="${#_object_user_opts_apps_all_restart_array_[@]}"
+    [[ $index -gt ${#_object_user_opts_apps_all_restart_array_[@]} ]] && index=${#_object_user_opts_apps_all_restart_array_[@]}
     echo -n "${_object_user_opts_apps_all_restart_array_[((index-1))]}"
     }
 User.Opts.Apps.All.Restart.Init()
@@ -2744,7 +2744,7 @@ User.Opts.Apps.All.Restart.LogChanges()
 User.Opts.Apps.All.Restart.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_user_opts_apps_all_restart_path_="$2"
+        _object_user_opts_apps_all_restart_path_=$2
     else
         echo -n "$_object_user_opts_apps_all_restart_path_"
     fi
@@ -2829,7 +2829,7 @@ User.Opts.Apps.All.Restore.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_user_opts_apps_all_restore_array_[@]} ]] && index="${#_object_user_opts_apps_all_restore_array_[@]}"
+    [[ $index -gt ${#_object_user_opts_apps_all_restore_array_[@]} ]] && index=${#_object_user_opts_apps_all_restore_array_[@]}
     echo -n "${_object_user_opts_apps_all_restore_array_[((index-1))]}"
     }
 User.Opts.Apps.All.Restore.Init()
@@ -2883,7 +2883,7 @@ User.Opts.Apps.All.Restore.LogChanges()
 User.Opts.Apps.All.Restore.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_user_opts_apps_all_restore_path_="$2"
+        _object_user_opts_apps_all_restore_path_=$2
     else
         echo -n "$_object_user_opts_apps_all_restore_path_"
     fi
@@ -2968,7 +2968,7 @@ User.Opts.Apps.All.Start.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_user_opts_apps_all_start_array_[@]} ]] && index="${#_object_user_opts_apps_all_start_array_[@]}"
+    [[ $index -gt ${#_object_user_opts_apps_all_start_array_[@]} ]] && index=${#_object_user_opts_apps_all_start_array_[@]}
     echo -n "${_object_user_opts_apps_all_start_array_[((index-1))]}"
     }
 User.Opts.Apps.All.Start.Init()
@@ -3022,7 +3022,7 @@ User.Opts.Apps.All.Start.LogChanges()
 User.Opts.Apps.All.Start.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_user_opts_apps_all_start_path_="$2"
+        _object_user_opts_apps_all_start_path_=$2
     else
         echo -n "$_object_user_opts_apps_all_start_path_"
     fi
@@ -3107,7 +3107,7 @@ User.Opts.Apps.All.Stop.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_user_opts_apps_all_stop_array_[@]} ]] && index="${#_object_user_opts_apps_all_stop_array_[@]}"
+    [[ $index -gt ${#_object_user_opts_apps_all_stop_array_[@]} ]] && index=${#_object_user_opts_apps_all_stop_array_[@]}
     echo -n "${_object_user_opts_apps_all_stop_array_[((index-1))]}"
     }
 User.Opts.Apps.All.Stop.Init()
@@ -3161,7 +3161,7 @@ User.Opts.Apps.All.Stop.LogChanges()
 User.Opts.Apps.All.Stop.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_user_opts_apps_all_stop_path_="$2"
+        _object_user_opts_apps_all_stop_path_=$2
     else
         echo -n "$_object_user_opts_apps_all_stop_path_"
     fi
@@ -3246,7 +3246,7 @@ User.Opts.Apps.All.Uninstall.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_user_opts_apps_all_uninstall_array_[@]} ]] && index="${#_object_user_opts_apps_all_uninstall_array_[@]}"
+    [[ $index -gt ${#_object_user_opts_apps_all_uninstall_array_[@]} ]] && index=${#_object_user_opts_apps_all_uninstall_array_[@]}
     echo -n "${_object_user_opts_apps_all_uninstall_array_[((index-1))]}"
     }
 User.Opts.Apps.All.Uninstall.Init()
@@ -3300,7 +3300,7 @@ User.Opts.Apps.All.Uninstall.LogChanges()
 User.Opts.Apps.All.Uninstall.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_user_opts_apps_all_uninstall_path_="$2"
+        _object_user_opts_apps_all_uninstall_path_=$2
     else
         echo -n "$_object_user_opts_apps_all_uninstall_path_"
     fi
@@ -3385,7 +3385,7 @@ User.Opts.Apps.All.Upgrade.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_user_opts_apps_all_upgrade_array_[@]} ]] && index="${#_object_user_opts_apps_all_upgrade_array_[@]}"
+    [[ $index -gt ${#_object_user_opts_apps_all_upgrade_array_[@]} ]] && index=${#_object_user_opts_apps_all_upgrade_array_[@]}
     echo -n "${_object_user_opts_apps_all_upgrade_array_[((index-1))]}"
     }
 User.Opts.Apps.All.Upgrade.Init()
@@ -3439,7 +3439,7 @@ User.Opts.Apps.All.Upgrade.LogChanges()
 User.Opts.Apps.All.Upgrade.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_user_opts_apps_all_upgrade_path_="$2"
+        _object_user_opts_apps_all_upgrade_path_=$2
     else
         echo -n "$_object_user_opts_apps_all_upgrade_path_"
     fi
@@ -3524,7 +3524,7 @@ User.Opts.Apps.List.All.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_user_opts_apps_list_all_array_[@]} ]] && index="${#_object_user_opts_apps_list_all_array_[@]}"
+    [[ $index -gt ${#_object_user_opts_apps_list_all_array_[@]} ]] && index=${#_object_user_opts_apps_list_all_array_[@]}
     echo -n "${_object_user_opts_apps_list_all_array_[((index-1))]}"
     }
 User.Opts.Apps.List.All.Init()
@@ -3578,7 +3578,7 @@ User.Opts.Apps.List.All.LogChanges()
 User.Opts.Apps.List.All.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_user_opts_apps_list_all_path_="$2"
+        _object_user_opts_apps_list_all_path_=$2
     else
         echo -n "$_object_user_opts_apps_list_all_path_"
     fi
@@ -3663,7 +3663,7 @@ User.Opts.Apps.List.Dependant.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_user_opts_apps_list_dependant_array_[@]} ]] && index="${#_object_user_opts_apps_list_dependant_array_[@]}"
+    [[ $index -gt ${#_object_user_opts_apps_list_dependant_array_[@]} ]] && index=${#_object_user_opts_apps_list_dependant_array_[@]}
     echo -n "${_object_user_opts_apps_list_dependant_array_[((index-1))]}"
     }
 User.Opts.Apps.List.Dependant.Init()
@@ -3717,7 +3717,7 @@ User.Opts.Apps.List.Dependant.LogChanges()
 User.Opts.Apps.List.Dependant.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_user_opts_apps_list_dependant_path_="$2"
+        _object_user_opts_apps_list_dependant_path_=$2
     else
         echo -n "$_object_user_opts_apps_list_dependant_path_"
     fi
@@ -3802,7 +3802,7 @@ User.Opts.Apps.List.Independent.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_user_opts_apps_list_independent_array_[@]} ]] && index="${#_object_user_opts_apps_list_independent_array_[@]}"
+    [[ $index -gt ${#_object_user_opts_apps_list_independent_array_[@]} ]] && index=${#_object_user_opts_apps_list_independent_array_[@]}
     echo -n "${_object_user_opts_apps_list_independent_array_[((index-1))]}"
     }
 User.Opts.Apps.List.Independent.Init()
@@ -3856,7 +3856,7 @@ User.Opts.Apps.List.Independent.LogChanges()
 User.Opts.Apps.List.Independent.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_user_opts_apps_list_independent_path_="$2"
+        _object_user_opts_apps_list_independent_path_=$2
     else
         echo -n "$_object_user_opts_apps_list_independent_path_"
     fi
@@ -3941,7 +3941,7 @@ User.Opts.Apps.List.Installed.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_user_opts_apps_list_installed_array_[@]} ]] && index="${#_object_user_opts_apps_list_installed_array_[@]}"
+    [[ $index -gt ${#_object_user_opts_apps_list_installed_array_[@]} ]] && index=${#_object_user_opts_apps_list_installed_array_[@]}
     echo -n "${_object_user_opts_apps_list_installed_array_[((index-1))]}"
     }
 User.Opts.Apps.List.Installed.Init()
@@ -3995,7 +3995,7 @@ User.Opts.Apps.List.Installed.LogChanges()
 User.Opts.Apps.List.Installed.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_user_opts_apps_list_installed_path_="$2"
+        _object_user_opts_apps_list_installed_path_=$2
     else
         echo -n "$_object_user_opts_apps_list_installed_path_"
     fi
@@ -4080,7 +4080,7 @@ User.Opts.Apps.List.NotInstalled.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_user_opts_apps_list_notinstalled_array_[@]} ]] && index="${#_object_user_opts_apps_list_notinstalled_array_[@]}"
+    [[ $index -gt ${#_object_user_opts_apps_list_notinstalled_array_[@]} ]] && index=${#_object_user_opts_apps_list_notinstalled_array_[@]}
     echo -n "${_object_user_opts_apps_list_notinstalled_array_[((index-1))]}"
     }
 User.Opts.Apps.List.NotInstalled.Init()
@@ -4134,7 +4134,7 @@ User.Opts.Apps.List.NotInstalled.LogChanges()
 User.Opts.Apps.List.NotInstalled.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_user_opts_apps_list_notinstalled_path_="$2"
+        _object_user_opts_apps_list_notinstalled_path_=$2
     else
         echo -n "$_object_user_opts_apps_list_notinstalled_path_"
     fi
@@ -4219,7 +4219,7 @@ User.Opts.Apps.List.Upgradable.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_user_opts_apps_list_upgradable_array_[@]} ]] && index="${#_object_user_opts_apps_list_upgradable_array_[@]}"
+    [[ $index -gt ${#_object_user_opts_apps_list_upgradable_array_[@]} ]] && index=${#_object_user_opts_apps_list_upgradable_array_[@]}
     echo -n "${_object_user_opts_apps_list_upgradable_array_[((index-1))]}"
     }
 User.Opts.Apps.List.Upgradable.Init()
@@ -4273,7 +4273,7 @@ User.Opts.Apps.List.Upgradable.LogChanges()
 User.Opts.Apps.List.Upgradable.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_user_opts_apps_list_upgradable_path_="$2"
+        _object_user_opts_apps_list_upgradable_path_=$2
     else
         echo -n "$_object_user_opts_apps_list_upgradable_path_"
     fi
@@ -4358,7 +4358,7 @@ IPKGs.ToDownload.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_ipkgs_todownload_array_[@]} ]] && index="${#_object_ipkgs_todownload_array_[@]}"
+    [[ $index -gt ${#_object_ipkgs_todownload_array_[@]} ]] && index=${#_object_ipkgs_todownload_array_[@]}
     echo -n "${_object_ipkgs_todownload_array_[((index-1))]}"
     }
 IPKGs.ToDownload.Init()
@@ -4412,7 +4412,7 @@ IPKGs.ToDownload.LogChanges()
 IPKGs.ToDownload.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_ipkgs_todownload_path_="$2"
+        _object_ipkgs_todownload_path_=$2
     else
         echo -n "$_object_ipkgs_todownload_path_"
     fi
@@ -4497,7 +4497,7 @@ IPKGs.ToInstall.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_ipkgs_toinstall_array_[@]} ]] && index="${#_object_ipkgs_toinstall_array_[@]}"
+    [[ $index -gt ${#_object_ipkgs_toinstall_array_[@]} ]] && index=${#_object_ipkgs_toinstall_array_[@]}
     echo -n "${_object_ipkgs_toinstall_array_[((index-1))]}"
     }
 IPKGs.ToInstall.Init()
@@ -4551,7 +4551,7 @@ IPKGs.ToInstall.LogChanges()
 IPKGs.ToInstall.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_ipkgs_toinstall_path_="$2"
+        _object_ipkgs_toinstall_path_=$2
     else
         echo -n "$_object_ipkgs_toinstall_path_"
     fi
@@ -4636,7 +4636,7 @@ IPKGs.ToUninstall.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_ipkgs_touninstall_array_[@]} ]] && index="${#_object_ipkgs_touninstall_array_[@]}"
+    [[ $index -gt ${#_object_ipkgs_touninstall_array_[@]} ]] && index=${#_object_ipkgs_touninstall_array_[@]}
     echo -n "${_object_ipkgs_touninstall_array_[((index-1))]}"
     }
 IPKGs.ToUninstall.Init()
@@ -4690,7 +4690,7 @@ IPKGs.ToUninstall.LogChanges()
 IPKGs.ToUninstall.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_ipkgs_touninstall_path_="$2"
+        _object_ipkgs_touninstall_path_=$2
     else
         echo -n "$_object_ipkgs_touninstall_path_"
     fi
@@ -4775,7 +4775,7 @@ QPKGs.Dependant.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_qpkgs_dependant_array_[@]} ]] && index="${#_object_qpkgs_dependant_array_[@]}"
+    [[ $index -gt ${#_object_qpkgs_dependant_array_[@]} ]] && index=${#_object_qpkgs_dependant_array_[@]}
     echo -n "${_object_qpkgs_dependant_array_[((index-1))]}"
     }
 QPKGs.Dependant.Init()
@@ -4829,7 +4829,7 @@ QPKGs.Dependant.LogChanges()
 QPKGs.Dependant.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_qpkgs_dependant_path_="$2"
+        _object_qpkgs_dependant_path_=$2
     else
         echo -n "$_object_qpkgs_dependant_path_"
     fi
@@ -4914,7 +4914,7 @@ QPKGs.Independent.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_qpkgs_independent_array_[@]} ]] && index="${#_object_qpkgs_independent_array_[@]}"
+    [[ $index -gt ${#_object_qpkgs_independent_array_[@]} ]] && index=${#_object_qpkgs_independent_array_[@]}
     echo -n "${_object_qpkgs_independent_array_[((index-1))]}"
     }
 QPKGs.Independent.Init()
@@ -4968,7 +4968,7 @@ QPKGs.Independent.LogChanges()
 QPKGs.Independent.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_qpkgs_independent_path_="$2"
+        _object_qpkgs_independent_path_=$2
     else
         echo -n "$_object_qpkgs_independent_path_"
     fi
@@ -5053,7 +5053,7 @@ QPKGs.Installable.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_qpkgs_installable_array_[@]} ]] && index="${#_object_qpkgs_installable_array_[@]}"
+    [[ $index -gt ${#_object_qpkgs_installable_array_[@]} ]] && index=${#_object_qpkgs_installable_array_[@]}
     echo -n "${_object_qpkgs_installable_array_[((index-1))]}"
     }
 QPKGs.Installable.Init()
@@ -5107,7 +5107,7 @@ QPKGs.Installable.LogChanges()
 QPKGs.Installable.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_qpkgs_installable_path_="$2"
+        _object_qpkgs_installable_path_=$2
     else
         echo -n "$_object_qpkgs_installable_path_"
     fi
@@ -5192,7 +5192,7 @@ QPKGs.Installed.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_qpkgs_installed_array_[@]} ]] && index="${#_object_qpkgs_installed_array_[@]}"
+    [[ $index -gt ${#_object_qpkgs_installed_array_[@]} ]] && index=${#_object_qpkgs_installed_array_[@]}
     echo -n "${_object_qpkgs_installed_array_[((index-1))]}"
     }
 QPKGs.Installed.Init()
@@ -5246,7 +5246,7 @@ QPKGs.Installed.LogChanges()
 QPKGs.Installed.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_qpkgs_installed_path_="$2"
+        _object_qpkgs_installed_path_=$2
     else
         echo -n "$_object_qpkgs_installed_path_"
     fi
@@ -5331,7 +5331,7 @@ QPKGs.JustInstalled.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_qpkgs_justinstalled_array_[@]} ]] && index="${#_object_qpkgs_justinstalled_array_[@]}"
+    [[ $index -gt ${#_object_qpkgs_justinstalled_array_[@]} ]] && index=${#_object_qpkgs_justinstalled_array_[@]}
     echo -n "${_object_qpkgs_justinstalled_array_[((index-1))]}"
     }
 QPKGs.JustInstalled.Init()
@@ -5385,7 +5385,7 @@ QPKGs.JustInstalled.LogChanges()
 QPKGs.JustInstalled.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_qpkgs_justinstalled_path_="$2"
+        _object_qpkgs_justinstalled_path_=$2
     else
         echo -n "$_object_qpkgs_justinstalled_path_"
     fi
@@ -5470,7 +5470,7 @@ QPKGs.JustStarted.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_qpkgs_juststarted_array_[@]} ]] && index="${#_object_qpkgs_juststarted_array_[@]}"
+    [[ $index -gt ${#_object_qpkgs_juststarted_array_[@]} ]] && index=${#_object_qpkgs_juststarted_array_[@]}
     echo -n "${_object_qpkgs_juststarted_array_[((index-1))]}"
     }
 QPKGs.JustStarted.Init()
@@ -5524,7 +5524,7 @@ QPKGs.JustStarted.LogChanges()
 QPKGs.JustStarted.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_qpkgs_juststarted_path_="$2"
+        _object_qpkgs_juststarted_path_=$2
     else
         echo -n "$_object_qpkgs_juststarted_path_"
     fi
@@ -5609,7 +5609,7 @@ QPKGs.Names.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_qpkgs_names_array_[@]} ]] && index="${#_object_qpkgs_names_array_[@]}"
+    [[ $index -gt ${#_object_qpkgs_names_array_[@]} ]] && index=${#_object_qpkgs_names_array_[@]}
     echo -n "${_object_qpkgs_names_array_[((index-1))]}"
     }
 QPKGs.Names.Init()
@@ -5663,7 +5663,7 @@ QPKGs.Names.LogChanges()
 QPKGs.Names.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_qpkgs_names_path_="$2"
+        _object_qpkgs_names_path_=$2
     else
         echo -n "$_object_qpkgs_names_path_"
     fi
@@ -5748,7 +5748,7 @@ QPKGs.NotInstalled.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_qpkgs_notinstalled_array_[@]} ]] && index="${#_object_qpkgs_notinstalled_array_[@]}"
+    [[ $index -gt ${#_object_qpkgs_notinstalled_array_[@]} ]] && index=${#_object_qpkgs_notinstalled_array_[@]}
     echo -n "${_object_qpkgs_notinstalled_array_[((index-1))]}"
     }
 QPKGs.NotInstalled.Init()
@@ -5802,7 +5802,7 @@ QPKGs.NotInstalled.LogChanges()
 QPKGs.NotInstalled.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_qpkgs_notinstalled_path_="$2"
+        _object_qpkgs_notinstalled_path_=$2
     else
         echo -n "$_object_qpkgs_notinstalled_path_"
     fi
@@ -5887,7 +5887,7 @@ QPKGs.Upgradable.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_qpkgs_upgradable_array_[@]} ]] && index="${#_object_qpkgs_upgradable_array_[@]}"
+    [[ $index -gt ${#_object_qpkgs_upgradable_array_[@]} ]] && index=${#_object_qpkgs_upgradable_array_[@]}
     echo -n "${_object_qpkgs_upgradable_array_[((index-1))]}"
     }
 QPKGs.Upgradable.Init()
@@ -5941,7 +5941,7 @@ QPKGs.Upgradable.LogChanges()
 QPKGs.Upgradable.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_qpkgs_upgradable_path_="$2"
+        _object_qpkgs_upgradable_path_=$2
     else
         echo -n "$_object_qpkgs_upgradable_path_"
     fi
@@ -6026,7 +6026,7 @@ QPKGs.ToBackup.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_qpkgs_tobackup_array_[@]} ]] && index="${#_object_qpkgs_tobackup_array_[@]}"
+    [[ $index -gt ${#_object_qpkgs_tobackup_array_[@]} ]] && index=${#_object_qpkgs_tobackup_array_[@]}
     echo -n "${_object_qpkgs_tobackup_array_[((index-1))]}"
     }
 QPKGs.ToBackup.Init()
@@ -6080,7 +6080,7 @@ QPKGs.ToBackup.LogChanges()
 QPKGs.ToBackup.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_qpkgs_tobackup_path_="$2"
+        _object_qpkgs_tobackup_path_=$2
     else
         echo -n "$_object_qpkgs_tobackup_path_"
     fi
@@ -6165,7 +6165,7 @@ QPKGs.ToDownload.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_qpkgs_todownload_array_[@]} ]] && index="${#_object_qpkgs_todownload_array_[@]}"
+    [[ $index -gt ${#_object_qpkgs_todownload_array_[@]} ]] && index=${#_object_qpkgs_todownload_array_[@]}
     echo -n "${_object_qpkgs_todownload_array_[((index-1))]}"
     }
 QPKGs.ToDownload.Init()
@@ -6219,7 +6219,7 @@ QPKGs.ToDownload.LogChanges()
 QPKGs.ToDownload.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_qpkgs_todownload_path_="$2"
+        _object_qpkgs_todownload_path_=$2
     else
         echo -n "$_object_qpkgs_todownload_path_"
     fi
@@ -6304,7 +6304,7 @@ QPKGs.ToForceUpgrade.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_qpkgs_toforceupgrade_array_[@]} ]] && index="${#_object_qpkgs_toforceupgrade_array_[@]}"
+    [[ $index -gt ${#_object_qpkgs_toforceupgrade_array_[@]} ]] && index=${#_object_qpkgs_toforceupgrade_array_[@]}
     echo -n "${_object_qpkgs_toforceupgrade_array_[((index-1))]}"
     }
 QPKGs.ToForceUpgrade.Init()
@@ -6358,7 +6358,7 @@ QPKGs.ToForceUpgrade.LogChanges()
 QPKGs.ToForceUpgrade.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_qpkgs_toforceupgrade_path_="$2"
+        _object_qpkgs_toforceupgrade_path_=$2
     else
         echo -n "$_object_qpkgs_toforceupgrade_path_"
     fi
@@ -6443,7 +6443,7 @@ QPKGs.ToInstall.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_qpkgs_toinstall_array_[@]} ]] && index="${#_object_qpkgs_toinstall_array_[@]}"
+    [[ $index -gt ${#_object_qpkgs_toinstall_array_[@]} ]] && index=${#_object_qpkgs_toinstall_array_[@]}
     echo -n "${_object_qpkgs_toinstall_array_[((index-1))]}"
     }
 QPKGs.ToInstall.Init()
@@ -6497,7 +6497,7 @@ QPKGs.ToInstall.LogChanges()
 QPKGs.ToInstall.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_qpkgs_toinstall_path_="$2"
+        _object_qpkgs_toinstall_path_=$2
     else
         echo -n "$_object_qpkgs_toinstall_path_"
     fi
@@ -6582,7 +6582,7 @@ QPKGs.ToReinstall.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_qpkgs_toreinstall_array_[@]} ]] && index="${#_object_qpkgs_toreinstall_array_[@]}"
+    [[ $index -gt ${#_object_qpkgs_toreinstall_array_[@]} ]] && index=${#_object_qpkgs_toreinstall_array_[@]}
     echo -n "${_object_qpkgs_toreinstall_array_[((index-1))]}"
     }
 QPKGs.ToReinstall.Init()
@@ -6636,7 +6636,7 @@ QPKGs.ToReinstall.LogChanges()
 QPKGs.ToReinstall.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_qpkgs_toreinstall_path_="$2"
+        _object_qpkgs_toreinstall_path_=$2
     else
         echo -n "$_object_qpkgs_toreinstall_path_"
     fi
@@ -6721,7 +6721,7 @@ QPKGs.ToRestart.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_qpkgs_torestart_array_[@]} ]] && index="${#_object_qpkgs_torestart_array_[@]}"
+    [[ $index -gt ${#_object_qpkgs_torestart_array_[@]} ]] && index=${#_object_qpkgs_torestart_array_[@]}
     echo -n "${_object_qpkgs_torestart_array_[((index-1))]}"
     }
 QPKGs.ToRestart.Init()
@@ -6775,7 +6775,7 @@ QPKGs.ToRestart.LogChanges()
 QPKGs.ToRestart.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_qpkgs_torestart_path_="$2"
+        _object_qpkgs_torestart_path_=$2
     else
         echo -n "$_object_qpkgs_torestart_path_"
     fi
@@ -6860,7 +6860,7 @@ QPKGs.ToRestore.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_qpkgs_torestore_array_[@]} ]] && index="${#_object_qpkgs_torestore_array_[@]}"
+    [[ $index -gt ${#_object_qpkgs_torestore_array_[@]} ]] && index=${#_object_qpkgs_torestore_array_[@]}
     echo -n "${_object_qpkgs_torestore_array_[((index-1))]}"
     }
 QPKGs.ToRestore.Init()
@@ -6914,7 +6914,7 @@ QPKGs.ToRestore.LogChanges()
 QPKGs.ToRestore.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_qpkgs_torestore_path_="$2"
+        _object_qpkgs_torestore_path_=$2
     else
         echo -n "$_object_qpkgs_torestore_path_"
     fi
@@ -6999,7 +6999,7 @@ QPKGs.ToStart.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_qpkgs_tostart_array_[@]} ]] && index="${#_object_qpkgs_tostart_array_[@]}"
+    [[ $index -gt ${#_object_qpkgs_tostart_array_[@]} ]] && index=${#_object_qpkgs_tostart_array_[@]}
     echo -n "${_object_qpkgs_tostart_array_[((index-1))]}"
     }
 QPKGs.ToStart.Init()
@@ -7053,7 +7053,7 @@ QPKGs.ToStart.LogChanges()
 QPKGs.ToStart.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_qpkgs_tostart_path_="$2"
+        _object_qpkgs_tostart_path_=$2
     else
         echo -n "$_object_qpkgs_tostart_path_"
     fi
@@ -7138,7 +7138,7 @@ QPKGs.ToStop.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_qpkgs_tostop_array_[@]} ]] && index="${#_object_qpkgs_tostop_array_[@]}"
+    [[ $index -gt ${#_object_qpkgs_tostop_array_[@]} ]] && index=${#_object_qpkgs_tostop_array_[@]}
     echo -n "${_object_qpkgs_tostop_array_[((index-1))]}"
     }
 QPKGs.ToStop.Init()
@@ -7192,7 +7192,7 @@ QPKGs.ToStop.LogChanges()
 QPKGs.ToStop.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_qpkgs_tostop_path_="$2"
+        _object_qpkgs_tostop_path_=$2
     else
         echo -n "$_object_qpkgs_tostop_path_"
     fi
@@ -7277,7 +7277,7 @@ QPKGs.ToUninstall.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_qpkgs_touninstall_array_[@]} ]] && index="${#_object_qpkgs_touninstall_array_[@]}"
+    [[ $index -gt ${#_object_qpkgs_touninstall_array_[@]} ]] && index=${#_object_qpkgs_touninstall_array_[@]}
     echo -n "${_object_qpkgs_touninstall_array_[((index-1))]}"
     }
 QPKGs.ToUninstall.Init()
@@ -7331,7 +7331,7 @@ QPKGs.ToUninstall.LogChanges()
 QPKGs.ToUninstall.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_qpkgs_touninstall_path_="$2"
+        _object_qpkgs_touninstall_path_=$2
     else
         echo -n "$_object_qpkgs_touninstall_path_"
     fi
@@ -7416,7 +7416,7 @@ QPKGs.ToUpgrade.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_qpkgs_toupgrade_array_[@]} ]] && index="${#_object_qpkgs_toupgrade_array_[@]}"
+    [[ $index -gt ${#_object_qpkgs_toupgrade_array_[@]} ]] && index=${#_object_qpkgs_toupgrade_array_[@]}
     echo -n "${_object_qpkgs_toupgrade_array_[((index-1))]}"
     }
 QPKGs.ToUpgrade.Init()
@@ -7470,7 +7470,7 @@ QPKGs.ToUpgrade.LogChanges()
 QPKGs.ToUpgrade.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_qpkgs_toupgrade_path_="$2"
+        _object_qpkgs_toupgrade_path_=$2
     else
         echo -n "$_object_qpkgs_toupgrade_path_"
     fi
@@ -7555,7 +7555,7 @@ Session.Backup.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_session_backup_array_[@]} ]] && index="${#_object_session_backup_array_[@]}"
+    [[ $index -gt ${#_object_session_backup_array_[@]} ]] && index=${#_object_session_backup_array_[@]}
     echo -n "${_object_session_backup_array_[((index-1))]}"
     }
 Session.Backup.Init()
@@ -7609,7 +7609,7 @@ Session.Backup.LogChanges()
 Session.Backup.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_session_backup_path_="$2"
+        _object_session_backup_path_=$2
     else
         echo -n "$_object_session_backup_path_"
     fi
@@ -7694,7 +7694,7 @@ Session.Debug.To.File.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_session_debug_to_file_array_[@]} ]] && index="${#_object_session_debug_to_file_array_[@]}"
+    [[ $index -gt ${#_object_session_debug_to_file_array_[@]} ]] && index=${#_object_session_debug_to_file_array_[@]}
     echo -n "${_object_session_debug_to_file_array_[((index-1))]}"
     }
 Session.Debug.To.File.Init()
@@ -7748,7 +7748,7 @@ Session.Debug.To.File.LogChanges()
 Session.Debug.To.File.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_session_debug_to_file_path_="$2"
+        _object_session_debug_to_file_path_=$2
     else
         echo -n "$_object_session_debug_to_file_path_"
     fi
@@ -7833,7 +7833,7 @@ Session.Debug.To.Screen.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_session_debug_to_screen_array_[@]} ]] && index="${#_object_session_debug_to_screen_array_[@]}"
+    [[ $index -gt ${#_object_session_debug_to_screen_array_[@]} ]] && index=${#_object_session_debug_to_screen_array_[@]}
     echo -n "${_object_session_debug_to_screen_array_[((index-1))]}"
     }
 Session.Debug.To.Screen.Init()
@@ -7887,7 +7887,7 @@ Session.Debug.To.Screen.LogChanges()
 Session.Debug.To.Screen.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_session_debug_to_screen_path_="$2"
+        _object_session_debug_to_screen_path_=$2
     else
         echo -n "$_object_session_debug_to_screen_path_"
     fi
@@ -7972,7 +7972,7 @@ Session.Display.Clean.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_session_display_clean_array_[@]} ]] && index="${#_object_session_display_clean_array_[@]}"
+    [[ $index -gt ${#_object_session_display_clean_array_[@]} ]] && index=${#_object_session_display_clean_array_[@]}
     echo -n "${_object_session_display_clean_array_[((index-1))]}"
     }
 Session.Display.Clean.Init()
@@ -8026,7 +8026,7 @@ Session.Display.Clean.LogChanges()
 Session.Display.Clean.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_session_display_clean_path_="$2"
+        _object_session_display_clean_path_=$2
     else
         echo -n "$_object_session_display_clean_path_"
     fi
@@ -8111,7 +8111,7 @@ Session.IPKGs.Install.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_session_ipkgs_install_array_[@]} ]] && index="${#_object_session_ipkgs_install_array_[@]}"
+    [[ $index -gt ${#_object_session_ipkgs_install_array_[@]} ]] && index=${#_object_session_ipkgs_install_array_[@]}
     echo -n "${_object_session_ipkgs_install_array_[((index-1))]}"
     }
 Session.IPKGs.Install.Init()
@@ -8165,7 +8165,7 @@ Session.IPKGs.Install.LogChanges()
 Session.IPKGs.Install.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_session_ipkgs_install_path_="$2"
+        _object_session_ipkgs_install_path_=$2
     else
         echo -n "$_object_session_ipkgs_install_path_"
     fi
@@ -8250,7 +8250,7 @@ Session.LineSpace.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_session_linespace_array_[@]} ]] && index="${#_object_session_linespace_array_[@]}"
+    [[ $index -gt ${#_object_session_linespace_array_[@]} ]] && index=${#_object_session_linespace_array_[@]}
     echo -n "${_object_session_linespace_array_[((index-1))]}"
     }
 Session.LineSpace.Init()
@@ -8304,7 +8304,7 @@ Session.LineSpace.LogChanges()
 Session.LineSpace.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_session_linespace_path_="$2"
+        _object_session_linespace_path_=$2
     else
         echo -n "$_object_session_linespace_path_"
     fi
@@ -8389,7 +8389,7 @@ Session.PIPs.Install.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_session_pips_install_array_[@]} ]] && index="${#_object_session_pips_install_array_[@]}"
+    [[ $index -gt ${#_object_session_pips_install_array_[@]} ]] && index=${#_object_session_pips_install_array_[@]}
     echo -n "${_object_session_pips_install_array_[((index-1))]}"
     }
 Session.PIPs.Install.Init()
@@ -8443,7 +8443,7 @@ Session.PIPs.Install.LogChanges()
 Session.PIPs.Install.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_session_pips_install_path_="$2"
+        _object_session_pips_install_path_=$2
     else
         echo -n "$_object_session_pips_install_path_"
     fi
@@ -8528,7 +8528,7 @@ Session.ShowBackupLocation.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_session_showbackuplocation_array_[@]} ]] && index="${#_object_session_showbackuplocation_array_[@]}"
+    [[ $index -gt ${#_object_session_showbackuplocation_array_[@]} ]] && index=${#_object_session_showbackuplocation_array_[@]}
     echo -n "${_object_session_showbackuplocation_array_[((index-1))]}"
     }
 Session.ShowBackupLocation.Init()
@@ -8582,7 +8582,7 @@ Session.ShowBackupLocation.LogChanges()
 Session.ShowBackupLocation.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_session_showbackuplocation_path_="$2"
+        _object_session_showbackuplocation_path_=$2
     else
         echo -n "$_object_session_showbackuplocation_path_"
     fi
@@ -8667,7 +8667,7 @@ Session.SkipPackageProcessing.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_session_skippackageprocessing_array_[@]} ]] && index="${#_object_session_skippackageprocessing_array_[@]}"
+    [[ $index -gt ${#_object_session_skippackageprocessing_array_[@]} ]] && index=${#_object_session_skippackageprocessing_array_[@]}
     echo -n "${_object_session_skippackageprocessing_array_[((index-1))]}"
     }
 Session.SkipPackageProcessing.Init()
@@ -8721,7 +8721,7 @@ Session.SkipPackageProcessing.LogChanges()
 Session.SkipPackageProcessing.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_session_skippackageprocessing_path_="$2"
+        _object_session_skippackageprocessing_path_=$2
     else
         echo -n "$_object_session_skippackageprocessing_path_"
     fi
@@ -8806,7 +8806,7 @@ Session.SuggestIssue.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_session_suggestissue_array_[@]} ]] && index="${#_object_session_suggestissue_array_[@]}"
+    [[ $index -gt ${#_object_session_suggestissue_array_[@]} ]] && index=${#_object_session_suggestissue_array_[@]}
     echo -n "${_object_session_suggestissue_array_[((index-1))]}"
     }
 Session.SuggestIssue.Init()
@@ -8860,7 +8860,7 @@ Session.SuggestIssue.LogChanges()
 Session.SuggestIssue.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_session_suggestissue_path_="$2"
+        _object_session_suggestissue_path_=$2
     else
         echo -n "$_object_session_suggestissue_path_"
     fi
@@ -8945,7 +8945,7 @@ Session.Summary.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_session_summary_array_[@]} ]] && index="${#_object_session_summary_array_[@]}"
+    [[ $index -gt ${#_object_session_summary_array_[@]} ]] && index=${#_object_session_summary_array_[@]}
     echo -n "${_object_session_summary_array_[((index-1))]}"
     }
 Session.Summary.Init()
@@ -8999,7 +8999,7 @@ Session.Summary.LogChanges()
 Session.Summary.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_session_summary_path_="$2"
+        _object_session_summary_path_=$2
     else
         echo -n "$_object_session_summary_path_"
     fi
