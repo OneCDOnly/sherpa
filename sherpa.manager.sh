@@ -29,7 +29,7 @@
 #   If on-screen line-spacing is required, this should only be done by the next function that outputs to display.
 #   Display functions should never finish by putting an empty line on-screen for spacing.
 
-readonly USER_ARGS_RAW="$*"
+readonly USER_ARGS_RAW=$*
 
 Session.Init()
     {
@@ -39,7 +39,7 @@ Session.Init()
     readonly SCRIPT_STARTSECONDS=$(/bin/date +%s)
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=201122
+    readonly MANAGER_SCRIPT_VERSION=201124
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -155,7 +155,7 @@ Session.Init()
     readonly EXTERNAL_PACKAGE_ARCHIVE_PATHFILE=/opt/var/opkg-lists/entware
     local -r PROJECT_REPO_URL=https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs
     readonly APP_CENTER_CONFIG_PATHFILE=/etc/config/qpkg.conf
-    local -r PROJECT_PATH=$($GETCFG_CMD $PROJECT_NAME Install_Path -f $APP_CENTER_CONFIG_PATHFILE)
+    local -r PROJECT_PATH=$($GETCFG_CMD $PROJECT_NAME Install_Path -f "$APP_CENTER_CONFIG_PATHFILE")
     readonly DEBUG_LOG_PATHFILE=$PROJECT_PATH/$DEBUG_LOG_FILE
     readonly WORK_PATH=$PROJECT_PATH/cache
     readonly COMPILED_OBJECTS_URL=https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/compiled.objects
@@ -168,7 +168,7 @@ Session.Init()
     readonly IPKG_DL_PATH=$WORK_PATH/ipkgs.downloads
     readonly IPKG_CACHE_PATH=$WORK_PATH/ipkgs
     readonly PIP_CACHE_PATH=$WORK_PATH/pips
-    readonly COMPILED_OBJECTS_HASH=5b68e69eb1b9fa16f588ce0a87a73e0a
+    readonly COMPILED_OBJECTS_HASH=0832e1c417a5ab7473538a7c6c4c3cb3
     readonly DEBUG_LOG_DATAWIDTH=92
 
     if ! MakePath "$WORK_PATH" 'work'; then
@@ -239,7 +239,7 @@ Session.Init()
 
     SHERPA_QPKG_NAME+=(Entware)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($PROJECT_REPO_URL/Entware/Entware_1.03std.qpkg)
+        SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/Entware/Entware_1.03std.qpkg)
         SHERPA_QPKG_MD5+=(da2d9f8d3442dd665ce04b9b932c9d8e)
         SHERPA_QPKG_ABBRVS+=('ew ent opkg entware')
         SHERPA_QPKG_INDEPS+=('')
@@ -248,7 +248,7 @@ Session.Init()
 
     SHERPA_QPKG_NAME+=(Par2)
         SHERPA_QPKG_ARCH+=(x86)
-        SHERPA_QPKG_URL+=($PROJECT_REPO_URL/Par2/Par2_0.8.1.0_x86.qpkg)
+        SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/Par2/Par2_0.8.1.0_x86.qpkg)
         SHERPA_QPKG_MD5+=(996ffb92d774eb01968003debc171e91)
         SHERPA_QPKG_ABBRVS+=('par par2')        # these apply to all 'Par2' packages
         SHERPA_QPKG_INDEPS+=('')
@@ -257,7 +257,7 @@ Session.Init()
 
     SHERPA_QPKG_NAME+=(Par2)
         SHERPA_QPKG_ARCH+=(x64)
-        SHERPA_QPKG_URL+=($PROJECT_REPO_URL/Par2/Par2_0.8.1.0_x86_64.qpkg)
+        SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/Par2/Par2_0.8.1.0_x86_64.qpkg)
         SHERPA_QPKG_MD5+=(520472cc87d301704f975f6eb9948e38)
         SHERPA_QPKG_ABBRVS+=('')
         SHERPA_QPKG_INDEPS+=('')
@@ -266,7 +266,7 @@ Session.Init()
 
     SHERPA_QPKG_NAME+=(Par2)
         SHERPA_QPKG_ARCH+=(x31)
-        SHERPA_QPKG_URL+=($PROJECT_REPO_URL/Par2/Par2_0.8.1.0_arm-x31.qpkg)
+        SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/Par2/Par2_0.8.1.0_arm-x31.qpkg)
         SHERPA_QPKG_MD5+=(ce8af2e009eb87733c3b855e41a94f8e)
         SHERPA_QPKG_ABBRVS+=('')
         SHERPA_QPKG_INDEPS+=('')
@@ -275,7 +275,7 @@ Session.Init()
 
     SHERPA_QPKG_NAME+=(Par2)
         SHERPA_QPKG_ARCH+=(x41)
-        SHERPA_QPKG_URL+=($PROJECT_REPO_URL/Par2/Par2_0.8.1.0_arm-x41.qpkg)
+        SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/Par2/Par2_0.8.1.0_arm-x41.qpkg)
         SHERPA_QPKG_MD5+=(8516e45e704875cdd2cd2bb315c4e1e6)
         SHERPA_QPKG_ABBRVS+=('')
         SHERPA_QPKG_INDEPS+=('')
@@ -284,7 +284,7 @@ Session.Init()
 
     SHERPA_QPKG_NAME+=(Par2)
         SHERPA_QPKG_ARCH+=(a64)
-        SHERPA_QPKG_URL+=($PROJECT_REPO_URL/Par2/Par2_0.8.1.0_arm_64.qpkg)
+        SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/Par2/Par2_0.8.1.0_arm_64.qpkg)
         SHERPA_QPKG_MD5+=(4d8e99f97936a163e411aa8765595f7a)
         SHERPA_QPKG_ABBRVS+=('')
         SHERPA_QPKG_INDEPS+=('')
@@ -302,7 +302,7 @@ Session.Init()
 
     SHERPA_QPKG_NAME+=(SABnzbd)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($PROJECT_REPO_URL/SABnzbd/build/SABnzbd_200922.qpkg)
+        SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/SABnzbd/build/SABnzbd_200922.qpkg)
         SHERPA_QPKG_MD5+=(23af2f4260163bcc9995d12fdef39c79)
         SHERPA_QPKG_ABBRVS+=('sb sb3 sab sab3 sabnzbd3 sabnzbd')
         SHERPA_QPKG_INDEPS+=('Entware Par2')
@@ -311,7 +311,7 @@ Session.Init()
 
     SHERPA_QPKG_NAME+=(nzbToMedia)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($PROJECT_REPO_URL/nzbToMedia/build/nzbToMedia_200922.qpkg)
+        SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/nzbToMedia/build/nzbToMedia_200922.qpkg)
         SHERPA_QPKG_MD5+=(19acc62689c862b942bc52f417ce218e)
         SHERPA_QPKG_ABBRVS+=('nzb2 nzb2m nzbto nzbtom nzbtomedia')
         SHERPA_QPKG_INDEPS+=('Entware')
@@ -320,7 +320,7 @@ Session.Init()
 
     SHERPA_QPKG_NAME+=(SickChill)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($PROJECT_REPO_URL/SickChill/build/SickChill_200916.qpkg)
+        SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/SickChill/build/SickChill_200916.qpkg)
         SHERPA_QPKG_MD5+=(ade1d1c67355bf7d8e73543384cc1c61)
         SHERPA_QPKG_ABBRVS+=('sc sick sickc chill sickchill')
         SHERPA_QPKG_INDEPS+=('Entware')
@@ -329,7 +329,7 @@ Session.Init()
 
     SHERPA_QPKG_NAME+=(LazyLibrarian)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($PROJECT_REPO_URL/LazyLibrarian/build/LazyLibrarian_200922.qpkg)
+        SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/LazyLibrarian/build/LazyLibrarian_200922.qpkg)
         SHERPA_QPKG_MD5+=(21203435b4f3c2575a72aeae57992692)
         SHERPA_QPKG_ABBRVS+=('ll lazy lazylibrarian')
         SHERPA_QPKG_INDEPS+=('Entware')
@@ -338,7 +338,7 @@ Session.Init()
 
     SHERPA_QPKG_NAME+=(OMedusa)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($PROJECT_REPO_URL/OMedusa/build/OMedusa_200922.qpkg)
+        SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/OMedusa/build/OMedusa_200922.qpkg)
         SHERPA_QPKG_MD5+=(1cd38aacce12f6172a7ac42abd9e9809)
         SHERPA_QPKG_ABBRVS+=('om med omed medusa omedusa')
         SHERPA_QPKG_INDEPS+=('Entware')
@@ -347,7 +347,7 @@ Session.Init()
 
     SHERPA_QPKG_NAME+=(OSickGear)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($PROJECT_REPO_URL/OSickGear/build/OSickGear_200922.qpkg)
+        SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/OSickGear/build/OSickGear_200922.qpkg)
         SHERPA_QPKG_MD5+=(2635e0c2c51067bdd2c2b63d4d88193c)
         SHERPA_QPKG_ABBRVS+=('sg os osg sickg gear ogear osickg sickgear osickgear')
         SHERPA_QPKG_INDEPS+=('Entware')
@@ -356,7 +356,7 @@ Session.Init()
 
     SHERPA_QPKG_NAME+=(Mylar3)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($PROJECT_REPO_URL/Mylar3/build/Mylar3_200922.qpkg)
+        SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/Mylar3/build/Mylar3_200922.qpkg)
         SHERPA_QPKG_MD5+=(8412e8f92b1df4a3cdad9a56edd8b4e0)
         SHERPA_QPKG_ABBRVS+=('my omy myl mylar mylar3')
         SHERPA_QPKG_INDEPS+=('Entware')
@@ -365,7 +365,7 @@ Session.Init()
 
     SHERPA_QPKG_NAME+=(NZBGet)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($PROJECT_REPO_URL/NZBGet/build/NZBGet_200922.qpkg)
+        SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/NZBGet/build/NZBGet_200922.qpkg)
         SHERPA_QPKG_MD5+=(097f0893eeaf34a4c9f1414b97bcbb67)
         SHERPA_QPKG_ABBRVS+=('ng nzb nzbg nget nzbget')
         SHERPA_QPKG_INDEPS+=('Entware')
@@ -374,7 +374,7 @@ Session.Init()
 
     SHERPA_QPKG_NAME+=(OTransmission)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($PROJECT_REPO_URL/OTransmission/build/OTransmission_200922.qpkg)
+        SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/OTransmission/build/OTransmission_200922.qpkg)
         SHERPA_QPKG_MD5+=(ec9fd927ca8333bafc5984911d781406)
         SHERPA_QPKG_ABBRVS+=('ot tm tr trans otrans tmission transmission otransmission')
         SHERPA_QPKG_INDEPS+=('Entware')
@@ -383,7 +383,7 @@ Session.Init()
 
     SHERPA_QPKG_NAME+=(Deluge-server)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($PROJECT_REPO_URL/Deluge-server/build/Deluge-server_200922.qpkg)
+        SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/Deluge-server/build/Deluge-server_200922.qpkg)
         SHERPA_QPKG_MD5+=(633bc7ff090346a0e8c204fe7b19a382)
         SHERPA_QPKG_ABBRVS+=('deluge del-server deluge-server')
         SHERPA_QPKG_INDEPS+=('Entware')
@@ -392,7 +392,7 @@ Session.Init()
 
     SHERPA_QPKG_NAME+=(Deluge-web)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=($PROJECT_REPO_URL/Deluge-web/build/Deluge-web_200922.qpkg)
+        SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/Deluge-web/build/Deluge-web_200922.qpkg)
         SHERPA_QPKG_MD5+=(774191bbdcd31e6494abba4192b51d7a)
         SHERPA_QPKG_ABBRVS+=('del-web deluge-web')
         SHERPA_QPKG_INDEPS+=('Entware')
@@ -410,7 +410,7 @@ Session.Init()
         readonly SHERPA_QPKG_IPKGS_REMOVE
 
     for package in "${SHERPA_QPKG_NAME[@]}"; do
-        QPKGs.Names.Add $package
+        QPKGs.Names.Add "$package"
     done
 
     readonly SHERPA_COMMON_IPKGS_ADD='ca-certificates findutils gcc git git-http less nano python3-dev python3-pip python3-setuptools sed'
@@ -420,7 +420,7 @@ Session.Init()
     Session.ParseArguments
     Session.SkipPackageProcessing.IsNot && Session.Debug.To.File.Set
     DebugInfoMajorSeparator
-    DebugScript 'started' "$($DATE_CMD -d @$SCRIPT_STARTSECONDS | tr -s ' ')"
+    DebugScript 'started' "$($DATE_CMD -d @"$SCRIPT_STARTSECONDS" | tr -s ' ')"
     DebugScript 'version' "package: $PACKAGE_VERSION, manager: $MANAGER_SCRIPT_VERSION, loader $LOADER_SCRIPT_VERSION"
     DebugScript 'PID' "$$"
     DebugInfoMinorSeparator
@@ -455,7 +455,7 @@ Session.ParseArguments()
         DebugFuncExit; return 1
     fi
 
-    local user_args=($(tr '[A-Z]' '[a-z]' <<< "$USER_ARGS_RAW"))
+    local user_args=($(tr 'A-Z' 'a-z' <<< "$USER_ARGS_RAW"))
     local arg=''
     local action='install_'     # make 'install' the default action. A user-convenience to emulate the previous script behaviour.
     local action_force=false
@@ -688,7 +688,7 @@ Session.Validate()
 
     DebugInfoMinorSeparator
     DebugHardware.OK 'model' "$(get_display_name)"
-    DebugHardware.OK 'RAM' "$(printf "%'.f kB" $INSTALLED_RAM_KB)"
+    DebugHardware.OK 'RAM' "$(printf "%'.f kB" "$INSTALLED_RAM_KB")"
 
     if QPKGs.ToInstall.Exist SABnzbd || QPKG.Installed SABnzbd; then
         [[ $INSTALLED_RAM_KB -le $MIN_RAM_KB ]] && DebugHardware.Warning 'RAM' "less-than or equal-to $(printf "%'.f kB" $MIN_RAM_KB)"
@@ -790,7 +790,7 @@ Packages.Download()
     local package=''
 
     for package in $(QPKGs.ToDownload.Array); do
-        QPKG.Download $package
+        QPKG.Download "$package"
     done
 
     DebugFuncExit; return 0
@@ -806,14 +806,14 @@ Packages.Backup()
 
     if QPKGs.ToBackup.IsAny; then
         for package in $(QPKGs.ToBackup.Array); do
-            if QPKG.Installed $package; then
-                if QPKGs.Independent.Exist $package; then
-                    ShowAsNote "unable to backup $(FormatAsPackageName $package) configuration as it's unsupported"
+            if QPKG.Installed "$package"; then
+                if QPKGs.Independent.Exist "$package"; then
+                    ShowAsNote "unable to backup $(FormatAsPackageName "$package") configuration as it's unsupported"
                 else
-                    QPKG.Backup $package
+                    QPKG.Backup "$package"
                 fi
             else
-                ShowAsNote "unable to backup $(FormatAsPackageName $package) configuration as it's not installed"
+                ShowAsNote "unable to backup $(FormatAsPackageName "$package") configuration as it's not installed"
             fi
         done
 
@@ -836,11 +836,11 @@ Packages.Stop()
         for ((index=$(QPKGs.Dependant.Count); index>=1; index--)); do       # stop packages in reverse of declared order
             package=$(QPKGs.Dependant.GetItem $index)
 
-            if QPKGs.ToStop.Exist $package; then
-                if QPKG.Installed $package; then
-                    QPKG.Stop $package
+            if QPKGs.ToStop.Exist "$package"; then
+                if QPKG.Installed "$package"; then
+                    QPKG.Stop "$package"
                 else
-                    ShowAsNote "unable to stop $(FormatAsPackageName $package) as it's not installed"
+                    ShowAsNote "unable to stop $(FormatAsPackageName "$package") as it's not installed"
                 fi
             fi
         done
@@ -848,12 +848,12 @@ Packages.Stop()
         for ((index=$(QPKGs.Independent.Count); index>=1; index--)); do     # stop packages in reverse of declared order
             package=$(QPKGs.Independent.GetItem $index)
 
-            if QPKGs.ToStop.Exist $package; then
-                if QPKG.Installed $package; then
-                    QPKG.Stop $package
-                    QPKG.Disable $package   # independents don't have the same service scripts as other sherpa packages, so they must be enabled/disabled externally
+            if QPKGs.ToStop.Exist "$package"; then
+                if QPKG.Installed "$package"; then
+                    QPKG.Stop "$package"
+                    QPKG.Disable "$package"   # independents don't have the same service scripts as other sherpa packages, so they must be enabled/disabled externally
                 else
-                    ShowAsNote "unable to stop $(FormatAsPackageName $package) as it's not installed"
+                    ShowAsNote "unable to stop $(FormatAsPackageName "$package") as it's not installed"
                 fi
             fi
         done
@@ -875,11 +875,11 @@ Packages.Uninstall()
         for ((index=$(QPKGs.Dependant.Count); index>=1; index--)); do       # uninstall packages in reverse of declared order
             package=$(QPKGs.Dependant.GetItem $index)
 
-            if QPKGs.ToUninstall.Exist $package; then
-                if QPKG.Installed $package; then
-                    QPKG.Uninstall $package
+            if QPKGs.ToUninstall.Exist "$package"; then
+                if QPKG.Installed "$package"; then
+                    QPKG.Uninstall "$package"
                 else
-                    ShowAsNote "unable to uninstall $(FormatAsPackageName $package) as it's not installed"
+                    ShowAsNote "unable to uninstall $(FormatAsPackageName "$package") as it's not installed"
                 fi
             fi
         done
@@ -887,12 +887,12 @@ Packages.Uninstall()
         for ((index=$(QPKGs.Independent.Count); index>=1; index--)); do     # uninstall packages in reverse of declared order
             package=$(QPKGs.Independent.GetItem $index)
 
-            if QPKGs.ToUninstall.Exist $package; then
+            if QPKGs.ToUninstall.Exist "$package"; then
                 if [[ $package != Entware ]]; then      # KLUDGE: ignore Entware as it needs to be handled separately.
-                    if QPKG.Installed $package; then
-                        QPKG.Uninstall $package
+                    if QPKG.Installed "$package"; then
+                        QPKG.Uninstall "$package"
                     else
-                        ShowAsNote "unable to uninstall $(FormatAsPackageName $package) as it's not installed"
+                        ShowAsNote "unable to uninstall $(FormatAsPackageName "$package") as it's not installed"
                     fi
                 fi
             fi
@@ -935,8 +935,8 @@ Packages.Reinstall.Independents()
 
     if QPKGs.ToReinstall.IsAny; then
         for package in $(QPKGs.Independent.Array); do
-            if QPKGs.ToReinstall.Exist $package; then
-                if QPKG.Installed $package; then
+            if QPKGs.ToReinstall.Exist "$package"; then
+                if QPKG.Installed "$package"; then
                     if [[ $package = Entware ]]; then
                         ShowAsNote "Reinstalling $(FormatAsPackageName Entware) will remove all IPKGs and Python modules, and only those required to support your $PROJECT_NAME apps will be reinstalled."
                         ShowAsNote "Your installed IPKG list will be saved to $(FormatAsFileName "$previous_opkg_package_list")"
@@ -978,10 +978,10 @@ Packages.Reinstall.Independents()
                             DebugFuncExit; return 1
                         fi
                     else
-                        QPKG.Reinstall $package
+                        QPKG.Reinstall "$package"
                     fi
                 else
-                    ShowAsNote "unable to reinstall $(FormatAsPackageName $package) as it's not installed. Use 'install' instead."
+                    ShowAsNote "unable to reinstall $(FormatAsPackageName "$package") as it's not installed. Use 'install' instead."
                 fi
             fi
         done
@@ -1000,8 +1000,8 @@ Packages.Install.Independents()
 
     if QPKGs.ToInstall.IsAny || User.Opts.Dependencies.Check.IsSet; then
         for package in $(QPKGs.Independent.Array); do
-            if QPKGs.ToInstall.Exist $package; then
-                if QPKG.NotInstalled $package; then
+            if QPKGs.ToInstall.Exist "$package"; then
+                if QPKG.NotInstalled "$package"; then
                     if [[ $package = Entware ]]; then
                         # rename original [/opt]
                         local opt_path=/opt
@@ -1014,13 +1014,13 @@ Packages.Install.Independents()
                         Session.PIPs.Install.Set
                     else
                         if [[ $NAS_QPKG_ARCH != none ]]; then
-                            if QPKGs.ToInstall.Exist $package; then
-                                QPKG.Install $package
+                            if QPKGs.ToInstall.Exist "$package"; then
+                                QPKG.Install "$package"
                             fi
                         fi
                     fi
                 else
-                    ShowAsNote "unable to install $(FormatAsPackageName $package) as it's already installed. Use 'reinstall' instead."
+                    ShowAsNote "unable to install $(FormatAsPackageName "$package") as it's already installed. Use 'reinstall' instead."
                 fi
             fi
         done
@@ -1049,23 +1049,23 @@ Packages.Start.Independents()
 
     # if a dependant has been selected for 'start', need to start independents too
     for package in $(QPKGs.ToStart.Array); do
-        acc+=($(QPKG.Get.Independencies $package))
+        acc+=($(QPKG.Get.Independencies "$package"))
     done
 
     if [[ ${#acc[@]} -gt 0 ]]; then
         for package in "${acc[@]}"; do
-            QPKG.Installed $package && ! QPKGs.JustInstalled.Exist $package && QPKGs.ToStart.Add $package
+            QPKG.Installed "$package" && ! QPKGs.JustInstalled.Exist "$package" && QPKGs.ToStart.Add "$package"
         done
     fi
 
     if QPKGs.ToStart.IsAny; then
         for package in $(QPKGs.Independent.Array); do
-            if QPKGs.ToStart.Exist $package; then
-                if QPKG.Installed $package; then
-                    QPKG.Enable $package    # independents don't have the same service scripts as other sherpa packages, so they must be enabled/disabled externally
-                    QPKG.Start $package
+            if QPKGs.ToStart.Exist "$package"; then
+                if QPKG.Installed "$package"; then
+                    QPKG.Enable "$package"    # independents don't have the same service scripts as other sherpa packages, so they must be enabled/disabled externally
+                    QPKG.Start "$package"
                 else
-                    ShowAsNote "unable to start $(FormatAsPackageName $package) as it's not installed"
+                    ShowAsNote "unable to start $(FormatAsPackageName "$package") as it's not installed"
                 fi
             fi
         done
@@ -1093,7 +1093,7 @@ Packages.Install.Addons()
         IPKGs.Install
         PIPs.Install
     else
-        # test if other packages are to be installed here. If so, and Entware isn't enabled, then abort with error.
+        # TODO: test if other packages are to be installed here. If so, and Entware isn't enabled, then abort with error.
         :
     fi
 
@@ -1110,17 +1110,17 @@ Packages.Upgrade.Dependants()
 
     if QPKGs.ToUpgrade.IsAny || QPKGs.ToForceUpgrade.IsAny; then
         for package in $(QPKGs.Dependant.Array); do
-            if QPKGs.ToForceUpgrade.Exist $package; then
-                QPKG.Upgrade $package --forced
-            elif QPKGs.ToUpgrade.Exist $package; then
-                if QPKG.Installed $package; then
-                    if QPKGs.Upgradable.Exist $package; then
-                        QPKG.Upgrade $package
+            if QPKGs.ToForceUpgrade.Exist "$package"; then
+                QPKG.Upgrade "$package" --forced
+            elif QPKGs.ToUpgrade.Exist "$package"; then
+                if QPKG.Installed "$package"; then
+                    if QPKGs.Upgradable.Exist "$package"; then
+                        QPKG.Upgrade "$package"
                     else
-                        ShowAsNote "unable to upgrade $(FormatAsPackageName $package) as it's not upgradable. Use the 'force' if you really want this."
+                        ShowAsNote "unable to upgrade $(FormatAsPackageName "$package") as it's not upgradable. Use the 'force' if you really want this."
                     fi
                 else
-                    ShowAsNote "unable to upgrade $(FormatAsPackageName $package) as it's not installed. Use 'install' instead."
+                    ShowAsNote "unable to upgrade $(FormatAsPackageName "$package") as it's not installed. Use 'install' instead."
                 fi
             fi
         done
@@ -1139,11 +1139,11 @@ Packages.Reinstall.Dependants()
 
     if QPKGs.ToReinstall.IsAny; then
         for package in $(QPKGs.Dependant.Array); do
-            if QPKGs.ToReinstall.Exist $package; then
-                if QPKG.Installed $package; then
-                    QPKG.Reinstall $package
+            if QPKGs.ToReinstall.Exist "$package"; then
+                if QPKG.Installed "$package"; then
+                    QPKG.Reinstall "$package"
                 else
-                    ShowAsNote "unable to reinstall $(FormatAsPackageName $package) as it's not installed. Use 'install' instead."
+                    ShowAsNote "unable to reinstall $(FormatAsPackageName "$package") as it's not installed. Use 'install' instead."
                 fi
             fi
         done
@@ -1162,11 +1162,11 @@ Packages.Install.Dependants()
 
     if QPKGs.ToInstall.IsAny; then
         for package in $(QPKGs.Dependant.Array); do
-            if QPKGs.ToInstall.Exist $package; then
-                if QPKG.NotInstalled $package; then
-                    QPKG.Install $package
+            if QPKGs.ToInstall.Exist "$package"; then
+                if QPKG.NotInstalled "$package"; then
+                    QPKG.Install "$package"
                 else
-                    ShowAsNote "unable to install $(FormatAsPackageName $package) as it's already installed. Use 'reinstall' instead."
+                    ShowAsNote "unable to install $(FormatAsPackageName "$package") as it's already installed. Use 'reinstall' instead."
                 fi
             fi
         done
@@ -1185,14 +1185,14 @@ Packages.Restore.Dependants()
 
     if QPKGs.ToRestore.IsAny; then
         for package in $(QPKGs.ToRestore.Array); do
-            if QPKG.Installed $package; then
-                if QPKGs.Independent.Exist $package; then
-                    ShowAsNote "unable to restore $(FormatAsPackageName $package) configuration as it's unsupported"
+            if QPKG.Installed "$package"; then
+                if QPKGs.Independent.Exist "$package"; then
+                    ShowAsNote "unable to restore $(FormatAsPackageName "$package") configuration as it's unsupported"
                 else
-                    QPKG.Restore $package
+                    QPKG.Restore "$package"
                 fi
             else
-                ShowAsNote "unable to restore $(FormatAsPackageName $package) configuration as it's not installed"
+                ShowAsNote "unable to restore $(FormatAsPackageName "$package") configuration as it's not installed"
             fi
         done
 
@@ -1213,18 +1213,18 @@ Packages.Start.Dependants()
 
     if QPKGs.ToStart.IsAny; then
         for dep_package in $(QPKGs.Dependant.Array); do
-            if QPKGs.ToStart.Exist $dep_package; then
-                if ! QPKG.Installed $dep_package; then
-                    ShowAsNote "unable to start $(FormatAsPackageName $dep_package) as it's not installed"
+            if QPKGs.ToStart.Exist "$dep_package"; then
+                if ! QPKG.Installed "$dep_package"; then
+                    ShowAsNote "unable to start $(FormatAsPackageName "$dep_package") as it's not installed"
                 else
-                    for indep_package in $(QPKG.Get.Independencies $dep_package); do
-                        if ! QPKG.Installed $indep_package; then
-                            ShowAsNote "unable to start $(FormatAsPackageName $dep_package) as $(FormatAsPackageName $indep_package) is not installed"
+                    for indep_package in $(QPKG.Get.Independencies "$dep_package"); do
+                        if ! QPKG.Installed "$indep_package"; then
+                            ShowAsNote "unable to start $(FormatAsPackageName "$dep_package") as $(FormatAsPackageName "$indep_package") is not installed"
                             break
                         fi
                     done
 
-                    QPKG.Start $dep_package
+                    QPKG.Start "$dep_package"
                 fi
             fi
         done
@@ -1243,14 +1243,14 @@ Packages.Restart()
     local acc=()
 
     for package in $(QPKGs.JustInstalled.Array); do
-        if QPKGs.Independent.Exist $package; then
-            acc+=($(QPKG.Get.Dependencies $package))
+        if QPKGs.Independent.Exist "$package"; then
+            acc+=($(QPKG.Get.Dependencies "$package"))
         fi
     done
 
     if [[ ${#acc[@]} -gt 0 ]]; then
         for package in "${acc[@]}"; do
-            QPKG.Installed $package && ! QPKGs.JustInstalled.Exist $package && ! QPKGs.JustStarted.Exist $package && QPKGs.ToRestart.Add $package
+            QPKG.Installed "$package" && ! QPKGs.JustInstalled.Exist "$package" && ! QPKGs.JustStarted.Exist "$package" && QPKGs.ToRestart.Add "$package"
         done
     fi
 
@@ -1258,15 +1258,15 @@ Packages.Restart()
         QPKGs.NotUpgraded.Restart
     elif QPKGs.ToRestart.IsAny; then
         for package in $(QPKGs.Dependant.Array); do
-            if QPKGs.ToRestart.Exist $package; then
-                if ! QPKG.Installed $package; then
-                    ShowAsNote "unable to restart $(FormatAsPackageName $package) as it's not installed"
-                elif QPKGs.JustInstalled.Exist $package; then
-                    ShowAsNote "no-need to restart $(FormatAsPackageName $package) as it was just installed"
-                elif QPKGs.JustStarted.Exist $package; then
-                    ShowAsNote "no-need to restart $(FormatAsPackageName $package) as it was just started"
+            if QPKGs.ToRestart.Exist "$package"; then
+                if ! QPKG.Installed "$package"; then
+                    ShowAsNote "unable to restart $(FormatAsPackageName "$package") as it's not installed"
+                elif QPKGs.JustInstalled.Exist "$package"; then
+                    ShowAsNote "no-need to restart $(FormatAsPackageName "$package") as it was just installed"
+                elif QPKGs.JustStarted.Exist "$package"; then
+                    ShowAsNote "no-need to restart $(FormatAsPackageName "$package") as it was just started"
                 else
-                    QPKG.Restart $package
+                    QPKG.Restart "$package"
                 fi
             fi
         done
@@ -1344,7 +1344,7 @@ Session.Results()
 Clean.Cache()
     {
 
-    [[ -d $WORK_PATH ]] && rm -rf $WORK_PATH
+    [[ -d $WORK_PATH ]] && rm -rf "$WORK_PATH"
     ShowAsDone "work path cleaned"
 
     return 0
@@ -1577,7 +1577,7 @@ CalcAllIPKGDepsToInstall()
         if [[ $element != 'ca-certs' ]]; then       # KLUDGE: 'ca-certs' appears to be a bogus meta-package, so silently exclude it from attempted installation.
             if [[ $element != 'libjpeg' ]]; then    # KLUDGE: 'libjpeg' appears to have been replaced by 'libjpeg-turbo', but many packages still list 'libjpeg' as a dependency, so replace it with 'libjpeg-turbo'.
                 if ! $OPKG_CMD status "$element" | $GREP_CMD -q "Status:.*installed"; then
-                    IPKGs.ToDownload.Add $element
+                    IPKGs.ToDownload.Add "$element"
                 fi
             elif ! $OPKG_CMD status 'libjpeg-turbo' | $GREP_CMD -q "Status:.*installed"; then
                 IPKGs.ToDownload.Add libjpeg-turbo
@@ -1722,7 +1722,7 @@ IPKGs.Install.Batch()
     if [[ $package_count -gt 0 ]]; then
         ShowAsProc "downloading & installing $package_count IPKG$(FormatAsPlural "$package_count")"
 
-        CreateDirSizeMonitorFlagFile $IPKG_DL_PATH/.monitor
+        CreateDirSizeMonitorFlagFile "$IPKG_DL_PATH"/.monitor
             trap CTRL_C_Captured INT
                 _MonitorDirSize_ "$IPKG_DL_PATH" "$(IPKGs.ToDownload.Size)" &
 
@@ -1792,7 +1792,7 @@ IPKGs.Upgrade.Batch()
     if [[ $package_count -gt 0 ]]; then
         ShowAsProc "downloading & upgrading $package_count IPKG$(FormatAsPlural "$package_count")"
 
-        CreateDirSizeMonitorFlagFile $IPKG_DL_PATH/.monitor
+        CreateDirSizeMonitorFlagFile "$IPKG_DL_PATH"/.monitor
             trap CTRL_C_Captured INT
                 _MonitorDirSize_ "$IPKG_DL_PATH" "$(IPKGs.ToDownload.Size)" &
 
@@ -1906,7 +1906,7 @@ _MonitorDirSize_()
             stall_message=''
         fi
 
-        [[ -n $stall_message ]] && progress_message+="$stall_message"
+        [[ -n $stall_message ]] && progress_message+=$stall_message
 
         ProgressUpdater "$progress_message"
         $SLEEP_CMD 1
@@ -1980,7 +1980,7 @@ CheckPythonPathAndVersion()
 
     [[ -z $1 ]] && return
 
-    if location=$(command -v $1 2>&1); then
+    if location=$(command -v "$1" 2>&1); then
         DebugUserspace.OK "'$1' path" "$location"
         if version=$($1 -V 2>&1); then
             DebugUserspace.OK "'$1' version" "$version"
@@ -2033,9 +2033,9 @@ DisplayAsProjectSyntaxExample()
     # $2 = example syntax
 
     if [[ ${1: -1} = '!' ]]; then
-        printf "\n* %s \n       # %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$PROJECT_NAME $2"
+        printf "\n* %s \n       # %s\n" "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}" "$PROJECT_NAME $2"
     else
-        printf "\n* %s:\n       # %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$PROJECT_NAME $2"
+        printf "\n* %s:\n       # %s\n" "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}" "$PROJECT_NAME $2"
     fi
 
     Session.LineSpace.Clear
@@ -2049,13 +2049,13 @@ DisplayAsProjectSyntaxIndentedExample()
     # $2 = example syntax
 
     if [[ -z $2 ]]; then
-        printf "\n   %s \n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}"
+        printf "\n   %s \n" "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}"
     elif [[ -z $1 ]]; then
         printf "       # %s\n" "$PROJECT_NAME $2"
     elif [[ ${1: -1} = '!' ]]; then
-        printf "\n   %s \n       # %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$PROJECT_NAME $2"
+        printf "\n   %s \n       # %s\n" "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}" "$PROJECT_NAME $2"
     else
-        printf "\n   %s:\n       # %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$PROJECT_NAME $2"
+        printf "\n   %s:\n       # %s\n" "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}" "$PROJECT_NAME $2"
     fi
 
     Session.LineSpace.Clear
@@ -2071,9 +2071,9 @@ DisplayAsSyntaxExample()
     if [[ -z $2 && ${1: -1} = ':' ]]; then
         printf "\n* %s\n" "$1"
     elif [[ ${1: -1} = '!' ]]; then
-        printf "\n* %s \n       # %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$2"
+        printf "\n* %s \n       # %s\n" "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}" "$2"
     else
-        printf "\n* %s:\n       # %s\n" "$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}" "$2"
+        printf "\n* %s:\n       # %s\n" "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}" "$2"
     fi
 
     Session.LineSpace.Clear
@@ -2213,8 +2213,8 @@ Help.Packages.Show()
     Display "* $(FormatAsHelpPackages) may be one or more of the following (space-separated):\n"
 
     for package in $(QPKGs.Installable.Array); do
-        if QPKGs.Upgradable.Exist $package; then
-            package_name_message=$(ColourTextBrightOrange $package)
+        if QPKGs.Upgradable.Exist "$package"; then
+            package_name_message=$(ColourTextBrightOrange "$package")
         else
             package_name_message=$package
         fi
@@ -2535,8 +2535,8 @@ QPKGs.NewVersions.Show()
     QPKGs.StateLists.Build
 
     for package in $(QPKGs.Upgradable.Array); do
-        if ! QPKGs.ToUpgrade.Exist $package; then
-            left_to_upgrade+=($package)
+        if ! QPKGs.ToUpgrade.Exist "$package"; then
+            left_to_upgrade+=("$package")
         fi
     done
 
@@ -2567,7 +2567,7 @@ QPKGs.Conflicts.Check()
     {
 
     for package in "${SHERPA_COMMON_CONFLICTS[@]}"; do
-        if QPKG.Enabled $package; then
+        if QPKG.Enabled "$package"; then
             ShowAsError "'$package' is installed and enabled. One-or-more $(FormatAsScriptTitle) applications are incompatible with this package"
             return 1
         fi
@@ -2628,21 +2628,21 @@ QPKGs.Assignment.Check()
 
     # if an independent has been selected for 'stop', need to stop all dependants first
     for package in $(QPKGs.ToStop.Array); do
-        if QPKGs.Independent.Exist $package && QPKG.Installed $package; then
-            stop_acc+=($(QPKG.Get.Dependencies $package))
+        if QPKGs.Independent.Exist "$package" && QPKG.Installed "$package"; then
+            stop_acc+=($(QPKG.Get.Dependencies "$package"))
         fi
     done
 
     # if an independent has been selected for 'uninstall', need to stop all dependants first
     for package in $(QPKGs.ToUninstall.Array); do
-        if QPKGs.Independent.Exist $package && QPKG.Installed $package; then
-            stop_acc+=($(QPKG.Get.Dependencies $package))
+        if QPKGs.Independent.Exist "$package" && QPKG.Installed "$package"; then
+            stop_acc+=($(QPKG.Get.Dependencies "$package"))
         fi
     done
 
     if [[ ${#stop_acc[@]} -gt 0 ]]; then
         for package in "${stop_acc[@]}"; do
-            QPKG.Installed $package && QPKGs.ToStop.Add $package
+            QPKG.Installed "$package" && QPKGs.ToStop.Add "$package"
         done
     fi
 
@@ -2652,50 +2652,50 @@ QPKGs.Assignment.Check()
 
     # check for independent packages that require installation
     for package in $(QPKGs.Installed.Array); do
-        ! QPKGs.ToUninstall.Exist $package && installer_acc+=($(QPKG.Get.Independencies $package))
+        ! QPKGs.ToUninstall.Exist "$package" && installer_acc+=($(QPKG.Get.Independencies "$package"))
     done
 
     for package in $(QPKGs.ToInstall.Array); do
-        installer_acc+=($(QPKG.Get.Independencies $package))
+        installer_acc+=($(QPKG.Get.Independencies "$package"))
     done
 
     for package in $(QPKGs.ToReinstall.Array); do
-        installer_acc+=($(QPKG.Get.Independencies $package))
+        installer_acc+=($(QPKG.Get.Independencies "$package"))
     done
 
     for package in $(QPKGs.ToUpgrade.Array); do
-        installer_acc+=($(QPKG.Get.Independencies $package))
+        installer_acc+=($(QPKG.Get.Independencies "$package"))
     done
 
     for package in $(QPKGs.ToForceUpgrade.Array); do
-        installer_acc+=($(QPKG.Get.Independencies $package))
+        installer_acc+=($(QPKG.Get.Independencies "$package"))
     done
 
     for package in "${installer_acc[@]}"; do
-        ! QPKG.Installed $package && QPKGs.ToInstall.Add $package
+        ! QPKG.Installed "$package" && QPKGs.ToInstall.Add "$package"
     done
 
     User.Opts.Apps.All.Restore.IsSet && QPKGs.ToRestore.Add "$(QPKGs.Installed.Array)"
 
     # check for independent packages that require starting
     for package in $(QPKGs.ToStart.Array); do
-        ! QPKGs.ToUninstall.Exist $package && ! QPKGs.ToStop.Exist $package && start_acc+=($(QPKG.Get.Independencies $package))
+        ! QPKGs.ToUninstall.Exist "$package" && ! QPKGs.ToStop.Exist "$package" && start_acc+=($(QPKG.Get.Independencies "$package"))
     done
 
     for package in $(QPKGs.ToInstall.Array); do
-        start_acc+=($(QPKG.Get.Independencies $package))
+        start_acc+=($(QPKG.Get.Independencies "$package"))
     done
 
     for package in $(QPKGs.ToReinstall.Array); do
-        start_acc+=($(QPKG.Get.Independencies $package))
+        start_acc+=($(QPKG.Get.Independencies "$package"))
     done
 
     for package in $(QPKGs.ToUpgrade.Array); do
-        start_acc+=($(QPKG.Get.Independencies $package))
+        start_acc+=($(QPKG.Get.Independencies "$package"))
     done
 
     for package in $(QPKGs.ToForceUpgrade.Array); do
-        start_acc+=($(QPKG.Get.Independencies $package))
+        start_acc+=($(QPKG.Get.Independencies "$package"))
     done
 
     QPKGs.ToStart.Add "${start_acc[*]}"
@@ -2749,7 +2749,7 @@ QPKGs.NotUpgraded.Restart()
     local package=''
 
     for package in $(QPKGs.Dependant.Array); do
-        QPKG.Enabled $package && ! QPKGs.Upgradable.Exist $package && QPKG.Restart $package
+        QPKG.Enabled "$package" && ! QPKGs.Upgradable.Exist "$package" && QPKG.Restart "$package"
     done
 
     DebugFuncExit; return 0
@@ -2795,12 +2795,12 @@ QPKGs.InstallationState.Build()
     local package=''
 
     for package in $(QPKGs.Names.Array); do
-        QPKG.UserInstallable $package && QPKGs.Installable.Add $package
+        QPKG.UserInstallable "$package" && QPKGs.Installable.Add "$package"
 
-        if QPKG.Installed $package; then
-            QPKGs.Installed.Add $package
+        if QPKG.Installed "$package"; then
+            QPKGs.Installed.Add "$package"
         else
-            QPKGs.NotInstalled.Add $package
+            QPKGs.NotInstalled.Add "$package"
         fi
     done
 
@@ -2820,12 +2820,12 @@ QPKGs.Upgradable.Build()
 
     for package in $(QPKGs.Installed.Array); do
         [[ $package = Entware || $package = Par2 ]] && continue        # KLUDGE: ignore 'Entware' as package filename version doesn't match the QTS App Center version string
-        installed_version=$(QPKG.InstalledVersion $package)
-        remote_version=$(QPKG.URLVersion $package)
+        installed_version=$(QPKG.InstalledVersion "$package")
+        remote_version=$(QPKG.URLVersion "$package")
 
         if [[ $installed_version != "$remote_version" ]]; then
             #QPKGs.Upgradable.Add "$package $installed_version $remote_version"
-            QPKGs.Upgradable.Add $package
+            QPKGs.Upgradable.Add "$package"
         fi
     done
 
@@ -2839,7 +2839,7 @@ QPKGs.All.Show()
     local package=''
 
     for package in $(QPKGs.Names.Array); do
-        echo $package
+        echo "$package"
     done
 
     return 0
@@ -2853,7 +2853,7 @@ QPKGs.Installed.Show()
     QPKGs.StateLists.Build
 
     for package in $(QPKGs.Installed.Array); do
-        echo $package
+        echo "$package"
     done
 
     return 0
@@ -2867,7 +2867,7 @@ QPKGs.NotInstalled.Show()
     QPKGs.StateLists.Build
 
     for package in $(QPKGs.NotInstalled.Array); do
-        echo $package
+        echo "$package"
     done
 
     return 0
@@ -2881,7 +2881,7 @@ QPKGs.Upgradable.Show()
     QPKGs.StateLists.Build
 
     for package in $(QPKGs.Upgradable.Array); do
-        echo $package
+        echo "$package"
     done
 
     return 0
@@ -2895,7 +2895,7 @@ QPKGs.Independent.Show()
     QPKGs.StateLists.Build
 
     for package in $(QPKGs.Independent.Array); do
-        echo $package
+        echo "$package"
     done
 
     return 0
@@ -2909,7 +2909,7 @@ QPKGs.Dependant.Show()
     QPKGs.StateLists.Build
 
     for package in $(QPKGs.Dependant.Array); do
-        echo $package
+        echo "$package"
     done
 
     return 0
@@ -3043,7 +3043,7 @@ Session.LockFile.Claim()
     [[ -z $1 ]] && return 1
     readonly RUNTIME_LOCK_PATHFILE=$1
 
-    if [[ -e $RUNTIME_LOCK_PATHFILE && -d /proc/$(<$RUNTIME_LOCK_PATHFILE) && $(</proc/"$(<$RUNTIME_LOCK_PATHFILE)"/cmdline) =~ $MANAGER_SCRIPT_FILE ]]; then
+    if [[ -e $RUNTIME_LOCK_PATHFILE && -d /proc/$(<"$RUNTIME_LOCK_PATHFILE") && $(</proc/"$(<"$RUNTIME_LOCK_PATHFILE")"/cmdline) =~ $MANAGER_SCRIPT_FILE ]]; then
         ShowAsAbort 'another instance is running'
         return 1
     else
@@ -3251,7 +3251,7 @@ QPKG.Get.Dependencies()
     local index=0
     local acc=()
 
-    if QPKGs.Independent.Exist $1; then
+    if QPKGs.Independent.Exist "$1"; then
         for index in "${!SHERPA_QPKG_NAME[@]}"; do
             if [[ ${SHERPA_QPKG_INDEPS[$index]} == *"$1"* ]]; then
                 [[ ${acc[*]} != "${SHERPA_QPKG_NAME[$index]}" ]] && acc+=(${SHERPA_QPKG_NAME[$index]})
@@ -4413,7 +4413,7 @@ ShowAsWarning()
 ShowAsAbort()
     {
 
-    local capitalised="$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}"      # use any available 'tr'
+    local capitalised="$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}"      # use any available 'tr'
 
     WriteToDisplay.New "$(ColourTextBrightRed fail)" "$capitalised: aborting ..."
     WriteToLog fail "$capitalised: aborting"
@@ -4424,7 +4424,7 @@ ShowAsAbort()
 ShowAsError()
     {
 
-    local capitalised="$(tr "[a-z]" "[A-Z]" <<< "${1:0:1}")${1:1}"      # use any available 'tr'
+    local capitalised="$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}"      # use any available 'tr'
 
     WriteToDisplay.New "$(ColourTextBrightRed fail)" "$capitalised"
     WriteToLog fail "$capitalised."
@@ -4599,7 +4599,7 @@ ConvertSecsToHoursMinutesSecs()
     ((m=(${1}%3600)/60))
     ((s=${1}%60))
 
-    printf "%02dh:%02dm:%02ds\n" $h $m $s
+    printf "%02dh:%02dm:%02ds\n" "$h" "$m" "$s"
 
     }
 
@@ -4618,16 +4618,16 @@ Objects.Add()
     # $1: object name to create
 
     local public_function_name=$1
-    local safe_function_name="$(tr '[A-Z]' '[a-z]' <<< "${public_function_name//[.-]/_}")"
+    local safe_function_name="$(tr 'A-Z' 'a-z' <<< "${public_function_name//[.-]/_}")"
 
-    _placeholder_size_="_object_${safe_function_name}_size_"
-    _placeholder_text_="_object_${safe_function_name}_text_"
-    _placeholder_flag_="_object_${safe_function_name}_flag_"
-    _placeholder_log_changes_flag_="_object_${safe_function_name}_changes_flag_"
-    _placeholder_enable_="_object_${safe_function_name}_enable_"
-    _placeholder_array_="_object_${safe_function_name}_array_"
-    _placeholder_array_index_="_object_${safe_function_name}_array_index_"
-    _placeholder_path_="_object_${safe_function_name}_path_"
+    _placeholder_size_=_object_${safe_function_name}_size_
+    _placeholder_text_=_object_${safe_function_name}_text_
+    _placeholder_flag_=_object_${safe_function_name}_flag_
+    _placeholder_log_changes_flag_=_object_${safe_function_name}_changes_flag_
+    _placeholder_enable_=_object_${safe_function_name}_enable_
+    _placeholder_array_=_object_${safe_function_name}_array_
+    _placeholder_array_index_=_object_${safe_function_name}_array_index_
+    _placeholder_path_=_object_${safe_function_name}_path_
 
 echo $public_function_name'.Add()
     {
@@ -4680,7 +4680,7 @@ echo $public_function_name'.Add()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#'$_placeholder_array_'[@]} ]] && index=${#'$_placeholder_array_'[@]}
+    [[ $index -gt ${#'$_placeholder_array_'[@]} ]] && index="${#'$_placeholder_array_'[@]}"
     echo -n "${'$_placeholder_array_'[((index-1))]}"
     }
 '$public_function_name'.Init()
@@ -4761,7 +4761,7 @@ echo $public_function_name'.Add()
 '$public_function_name'.Text()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        '$_placeholder_text_'="$2"
+        '$_placeholder_text_'=$2
     else
         echo -n "$'$_placeholder_text_'"
     fi
