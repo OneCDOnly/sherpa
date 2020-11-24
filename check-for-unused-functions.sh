@@ -1,13 +1,20 @@
 #!/usr/bin/env bash
 
-echo "checking ... "
-
 target_pathfile=sherpa.manager.sh
 target_func=''
+fail=false
+
+echo -n "checking ... "
 
 # shellcheck disable=SC2013
 for target_func in $(grep '()$' "$target_pathfile" | grep -v '=\|\$' | sed 's|()||g'); do
-    [[ $(grep -ow "$target_func" < "$target_pathfile" | wc -l) -eq 1 ]] && echo "$target_func()"
+    if [[ $(grep -ow "$target_func" < "$target_pathfile" | wc -l) -eq 1 ]]; then
+        if [[ $fail = false ]]; then
+            fail=true
+            echo
+        fi
+        echo "$target_func()"
+    fi
 done
 
-echo "done!"
+[[ $fail = true ]] && echo "failed!" || echo "passed!"
