@@ -40,7 +40,7 @@ Session.Init()
     export LC_ALL=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=201124
+    readonly MANAGER_SCRIPT_VERSION=201126
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -414,7 +414,7 @@ Session.Init()
         QPKGs.Names.Add "$package"
     done
 
-    readonly SHERPA_COMMON_IPKGS_ADD='ca-certificates findutils gcc git git-http less nano python3-dev python3-pip python3-setuptools sed'
+    readonly SHERPA_COMMON_IPKGS_ADD='ca-certificates gcc git git-http less nano python3-dev python3-pip python3-setuptools'
     readonly SHERPA_COMMON_PIPS_ADD='apscheduler beautifulsoup4 cfscrape cheetah3 cheroot!=8.4.4 cherrypy configobj feedparser==5.2.1 portend pygithub python-magic random_user_agent sabyenc3 simplejson slugify'
     readonly SHERPA_COMMON_CONFLICTS='Optware Optware-NG TarMT Python QPython2'
 
@@ -931,8 +931,10 @@ Packages.Reinstall.Independents()
     Session.SkipPackageProcessing.IsSet && return
     DebugFuncEntry
     local package=''
+    local extra_packages='sed'
     local previous_pip3_module_list=$WORK_PATH/pip3.prev.installed.list
     local previous_opkg_package_list=$WORK_PATH/opkg.prev.installed.list
+    local log_pathfile=$LOGS_PATH/ipkgs.extra.$INSTALL_LOG_FILE
 
     if QPKGs.ToReinstall.IsAny; then
         for package in $(QPKGs.Independent.Array); do
@@ -971,6 +973,9 @@ Packages.Reinstall.Independents()
                             # copy all files from original [/opt] into new [/opt]
                             [[ -L $opt_path && -d $opt_backup_path ]] && cp --recursive "$opt_backup_path"/* --target-directory "$opt_path" && rm -rf "$opt_backup_path"
                             Session.PIPs.Install.Set
+
+                            # add extra package(s) needed immediately
+                            RunAndLogResults "$OPKG_CMD install$(User.Opts.IgnoreFreeSpace.IsSet && User.Opts.IgnoreFreeSpace.Text) --force-overwrite $extra_packages --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
                         else
                             DebugInfoMinorSeparator
                             DebugScript 'user abort'
@@ -998,6 +1003,8 @@ Packages.Install.Independents()
     Session.SkipPackageProcessing.IsSet && return
     DebugFuncEntry
     local package=''
+    local extra_packages='sed'
+    local log_pathfile=$LOGS_PATH/ipkgs.extra.$INSTALL_LOG_FILE
 
     if QPKGs.ToInstall.IsAny || User.Opts.Dependencies.Check.IsSet; then
         for package in $(QPKGs.Independent.Array); do
@@ -1013,6 +1020,9 @@ Packages.Install.Independents()
                         # copy all files from original [/opt] into new [/opt]
                         [[ -L $opt_path && -d $opt_backup_path ]] && cp --recursive "$opt_backup_path"/* --target-directory "$opt_path" && rm -rf "$opt_backup_path"
                         Session.PIPs.Install.Set
+
+                        # add extra package(s) needed immediately
+                        RunAndLogResults "$OPKG_CMD install$(User.Opts.IgnoreFreeSpace.IsSet && User.Opts.IgnoreFreeSpace.Text) --force-overwrite $extra_packages --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
                     else
                         if [[ $NAS_QPKG_ARCH != none ]]; then
                             if QPKGs.ToInstall.Exist "$package"; then
@@ -1714,7 +1724,7 @@ IPKGs.Install.Batch()
 
     DebugFuncEntry
     local package_count=0
-    local log_pathfile=$LOGS_PATH/ipkgs.$INSTALL_LOG_FILE
+    local log_pathfile=$LOGS_PATH/ipkgs.addons.$INSTALL_LOG_FILE
     local resultcode=0
 
     CalcAllIPKGDepsToInstall || return 1
@@ -1906,13 +1916,13 @@ _MonitorDirSize_()
             fi
 
             # colourise if required
-#             if [[ $stall_seconds -ge 90 ]]; then
-#                 stall_message=$(ColourTextBrightRed "$stall_message")
-#             elif [[ $stall_seconds -ge 45 ]]; then
-#                 stall_message=$(ColourTextBrightOrange "$stall_message")
-#             elif [[ $stall_seconds -ge 20 ]]; then
-#                 stall_message=$(ColourTextBrightYellow "$stall_message")
-#             fi
+            if [[ $stall_seconds -ge 90 ]]; then
+                stall_message=$(ColourTextBrightRed "$stall_message")
+            elif [[ $stall_seconds -ge 45 ]]; then
+                stall_message=$(ColourTextBrightOrange "$stall_message")
+            elif [[ $stall_seconds -ge 20 ]]; then
+                stall_message=$(ColourTextBrightYellow "$stall_message")
+            fi
 
             progress_message+=$stall_message
         fi
@@ -4191,6 +4201,36 @@ DebugUserspace.Warning()
 
     }
 
+DebugDetected.Warning()
+    {
+
+    if [[ -z $3 ]]; then                # if $3 is nothing, then assume only 2 fields are required
+        DebugWarning "$(printf "%9s: %23s\n" "$1" "$2")"
+    elif [[ $3 = ' ' ]]; then           # if $3 is only a whitespace then print $2 with trailing colon but no third field
+        DebugWarning "$(printf "%9s: %23s:\n" "$1" "$2")"
+    elif [[ ${3: -1} = ' ' ]]; then     # if $3 has a trailing whitespace then print $3 without the trailing whitespace
+        DebugWarning "$(printf "%9s: %23s: %-s\n" "$1" "$2" "$($SED_CMD 's| *$||' <<< "$3")")"
+    else
+        DebugWarning "$(printf "%9s: %23s: %-s\n" "$1" "$2" "$3")"
+    fi
+
+    }
+
+DebugDetected.OK()
+    {
+
+    if [[ -z $3 ]]; then                # if $3 is nothing, then assume only 2 fields are required
+        DebugDetected "$(printf "%9s: %23s\n" "$1" "$2")"
+    elif [[ $3 = ' ' ]]; then           # if $3 is only a whitespace then print $2 with trailing colon but no third field
+        DebugDetected "$(printf "%9s: %23s:\n" "$1" "$2")"
+    elif [[ ${3: -1} = ' ' ]]; then     # if $3 has a trailing whitespace then print $3 without the trailing whitespace
+        DebugDetected "$(printf "%9s: %23s: %-s\n" "$1" "$2" "$($SED_CMD 's| *$||' <<< "$3")")"
+    else
+        DebugDetected "$(printf "%9s: %23s: %-s\n" "$1" "$2" "$3")"
+    fi
+
+    }
+
 DebugCommand.Proc()
     {
 
@@ -4245,36 +4285,6 @@ DebugDone()
     {
 
     DebugThis "(--) $1"
-
-    }
-
-DebugDetected.Warning()
-    {
-
-    if [[ -z $3 ]]; then                # if $3 is nothing, then assume only 2 fields are required
-        DebugWarning "$(printf "%9s: %23s\n" "$1" "$2")"
-    elif [[ $3 = ' ' ]]; then           # if $3 is only a whitespace then print $2 with trailing colon but no third field
-        DebugWarning "$(printf "%9s: %23s:\n" "$1" "$2")"
-    elif [[ ${3: -1} = ' ' ]]; then     # if $3 has a trailing whitespace then print $3 without the trailing whitespace
-        DebugWarning "$(printf "%9s: %23s: %-s\n" "$1" "$2" "$($SED_CMD 's| *$||' <<< "$3")")"
-    else
-        DebugWarning "$(printf "%9s: %23s: %-s\n" "$1" "$2" "$3")"
-    fi
-
-    }
-
-DebugDetected.OK()
-    {
-
-    if [[ -z $3 ]]; then                # if $3 is nothing, then assume only 2 fields are required
-        DebugDetected "$(printf "%9s: %23s\n" "$1" "$2")"
-    elif [[ $3 = ' ' ]]; then           # if $3 is only a whitespace then print $2 with trailing colon but no third field
-        DebugDetected "$(printf "%9s: %23s:\n" "$1" "$2")"
-    elif [[ ${3: -1} = ' ' ]]; then     # if $3 has a trailing whitespace then print $3 without the trailing whitespace
-        DebugDetected "$(printf "%9s: %23s: %-s\n" "$1" "$2" "$($SED_CMD 's| *$||' <<< "$3")")"
-    else
-        DebugDetected "$(printf "%9s: %23s: %-s\n" "$1" "$2" "$3")"
-    fi
 
     }
 
