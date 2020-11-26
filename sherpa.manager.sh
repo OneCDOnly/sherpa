@@ -165,6 +165,8 @@ Session.Init()
     readonly LOGS_PATH=$PROJECT_PATH/logs
     readonly SESSION_LAST_PATHFILE=$LOGS_PATH/session.last.log
     readonly SESSION_TAIL_PATHFILE=$LOGS_PATH/session.tail.log
+    readonly PREVIOUS_PIP3_MODULE_LIST=$WORK_PATH/pip3.prev.installed.list
+    readonly PREVIOUS_OPKG_PACKAGE_LIST=$WORK_PATH/opkg.prev.installed.list
     readonly QPKG_DL_PATH=$WORK_PATH/qpkgs
     readonly IPKG_DL_PATH=$WORK_PATH/ipkgs.downloads
     readonly IPKG_CACHE_PATH=$WORK_PATH/ipkgs
@@ -414,6 +416,7 @@ Session.Init()
         QPKGs.Names.Add "$package"
     done
 
+    readonly SHERPA_ESSENTIAL_IPKGS_ADD='sed'
     readonly SHERPA_COMMON_IPKGS_ADD='ca-certificates gcc git git-http less nano python3-dev python3-pip python3-setuptools'
     readonly SHERPA_COMMON_PIPS_ADD='apscheduler beautifulsoup4 cfscrape cheetah3 cheroot!=8.4.4 cherrypy configobj feedparser==5.2.1 portend pygithub python-magic random_user_agent sabyenc3 simplejson slugify'
     readonly SHERPA_COMMON_CONFLICTS='Optware Optware-NG TarMT Python QPython2'
@@ -931,10 +934,6 @@ Packages.Reinstall.Independents()
     Session.SkipPackageProcessing.IsSet && return
     DebugFuncEntry
     local package=''
-    local extra_packages='sed'
-    local previous_pip3_module_list=$WORK_PATH/pip3.prev.installed.list
-    local previous_opkg_package_list=$WORK_PATH/opkg.prev.installed.list
-    local log_pathfile=$LOGS_PATH/ipkgs.extra.$INSTALL_LOG_FILE
 
     if QPKGs.ToReinstall.IsAny; then
         for package in $(QPKGs.Independent.Array); do
@@ -942,40 +941,15 @@ Packages.Reinstall.Independents()
                 if QPKG.Installed "$package"; then
                     if [[ $package = Entware ]]; then
                         ShowAsNote "Reinstalling $(FormatAsPackageName Entware) will remove all IPKGs and Python modules, and only those required to support your $PROJECT_NAME apps will be reinstalled."
-                        ShowAsNote "Your installed IPKG list will be saved to $(FormatAsFileName "$previous_opkg_package_list")"
-                        ShowAsNote "Your installed Python module list will be saved to $(FormatAsFileName "$previous_pip3_module_list")"
+                        ShowAsNote "Your installed IPKG list will be saved to $(FormatAsFileName "$PREVIOUS_OPKG_PACKAGE_LIST")"
+                        ShowAsNote "Your installed Python module list will be saved to $(FormatAsFileName "$PREVIOUS_PIP3_MODULE_LIST")"
                         (QPKG.Installed SABnzbdplus || QPKG.Installed Headphones) && ShowAsWarning "Also, the $(FormatAsPackageName SABnzbdplus) and $(FormatAsPackageName Headphones) packages CANNOT BE REINSTALLED as Python 2.7.16 is no-longer available."
 
                         if AskQuiz "Press 'Y' to remove all current $(FormatAsPackageName Entware) IPKGs (and their configurations), or any other key to abort"; then
-                            ShowAsProc 'saving package and Python module lists'
-
-                            if [[ -e $pip3_cmd ]]; then
-                                $pip3_cmd freeze > "$previous_pip3_module_list"
-                                DebugDone "saved current $(FormatAsPackageName pip3) module list to $(FormatAsFileName "$previous_pip3_module_list")"
-                            fi
-
-                            if [[ -e $OPKG_CMD ]]; then
-                                $OPKG_CMD list-installed > "$previous_opkg_package_list"
-                                DebugDone "saved current $(FormatAsPackageName Entware) IPKG list to $(FormatAsFileName "$previous_opkg_package_list")"
-                            fi
-
-                            ShowAsDone 'package and Python module lists saved'
-
-                            # rename original [/opt]
-                            local opt_path=/opt
-                            local opt_backup_path=/opt.orig
-                            [[ -d $opt_path && ! -L $opt_path && ! -e $opt_backup_path ]] && mv "$opt_path" "$opt_backup_path"
+                            Package.Save.Lists
                             QPKG.Uninstall Entware
-
-                            QPKG.Install Entware && Session.AdjustPathEnv
-                            QPKGs.ToReinstall.Add Entware       # re-add this back to reinstall list as it was (quite-rightly) removed by the std QPKG.Install function
-
-                            # copy all files from original [/opt] into new [/opt]
-                            [[ -L $opt_path && -d $opt_backup_path ]] && cp --recursive "$opt_backup_path"/* --target-directory "$opt_path" && rm -rf "$opt_backup_path"
-                            Session.PIPs.Install.Set
-
-                            # add extra package(s) needed immediately
-                            RunAndLogResults "$OPKG_CMD install$(User.Opts.IgnoreFreeSpace.IsSet && User.Opts.IgnoreFreeSpace.Text) --force-overwrite $extra_packages --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
+                            Package.Install.Entware
+                            QPKGs.ToReinstall.Add Entware   # re-add this back to reinstall list as it was (quite-rightly) removed by the std QPKG.Install function
                         else
                             DebugInfoMinorSeparator
                             DebugScript 'user abort'
@@ -1003,32 +977,15 @@ Packages.Install.Independents()
     Session.SkipPackageProcessing.IsSet && return
     DebugFuncEntry
     local package=''
-    local extra_packages='sed'
-    local log_pathfile=$LOGS_PATH/ipkgs.extra.$INSTALL_LOG_FILE
 
     if QPKGs.ToInstall.IsAny || User.Opts.Dependencies.Check.IsSet; then
         for package in $(QPKGs.Independent.Array); do
             if QPKGs.ToInstall.Exist "$package"; then
                 if QPKG.NotInstalled "$package"; then
                     if [[ $package = Entware ]]; then
-                        # rename original [/opt]
-                        local opt_path=/opt
-                        local opt_backup_path=/opt.orig
-                        [[ -d $opt_path && ! -L $opt_path && ! -e $opt_backup_path ]] && mv "$opt_path" "$opt_backup_path"
-                        QPKG.Install Entware && Session.AdjustPathEnv
-
-                        # copy all files from original [/opt] into new [/opt]
-                        [[ -L $opt_path && -d $opt_backup_path ]] && cp --recursive "$opt_backup_path"/* --target-directory "$opt_path" && rm -rf "$opt_backup_path"
-                        Session.PIPs.Install.Set
-
-                        # add extra package(s) needed immediately
-                        RunAndLogResults "$OPKG_CMD install$(User.Opts.IgnoreFreeSpace.IsSet && User.Opts.IgnoreFreeSpace.Text) --force-overwrite $extra_packages --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
+                        Package.Install.Entware
                     else
-                        if [[ $NAS_QPKG_ARCH != none ]]; then
-                            if QPKGs.ToInstall.Exist "$package"; then
-                                QPKG.Install "$package"
-                            fi
-                        fi
+                        [[ $NAS_QPKG_ARCH != none ]] && QPKGs.ToInstall.Exist "$package" && QPKG.Install "$package"
                     fi
                 else
                     ShowAsNote "unable to install $(FormatAsPackageName "$package") as it's already installed. Use 'reinstall' instead."
@@ -1284,6 +1241,45 @@ Packages.Restart()
     fi
 
     DebugFuncExit; return 0
+
+    }
+
+Package.Save.Lists()
+    {
+
+    ShowAsProc 'saving package and Python module lists'
+
+    if [[ -e $pip3_cmd ]]; then
+        $pip3_cmd freeze > "$PREVIOUS_PIP3_MODULE_LIST"
+        DebugDone "saved current $(FormatAsPackageName pip3) module list to $(FormatAsFileName "$PREVIOUS_PIP3_MODULE_LIST")"
+    fi
+
+    if [[ -e $OPKG_CMD ]]; then
+        $OPKG_CMD list-installed > "$PREVIOUS_OPKG_PACKAGE_LIST"
+        DebugDone "saved current $(FormatAsPackageName Entware) IPKG list to $(FormatAsFileName "$PREVIOUS_OPKG_PACKAGE_LIST")"
+    fi
+
+    ShowAsDone 'package and Python module lists saved'
+
+    }
+
+Package.Install.Entware()
+    {
+
+    local log_pathfile=$LOGS_PATH/ipkgs.extra.$INSTALL_LOG_FILE
+
+    # rename original [/opt]
+    local opt_path=/opt
+    local opt_backup_path=/opt.orig
+    [[ -d $opt_path && ! -L $opt_path && ! -e $opt_backup_path ]] && mv "$opt_path" "$opt_backup_path"
+    QPKG.Install Entware && Session.AdjustPathEnv
+
+    # copy all files from original [/opt] into new [/opt]
+    [[ -L $opt_path && -d $opt_backup_path ]] && cp --recursive "$opt_backup_path"/* --target-directory "$opt_path" && rm -rf "$opt_backup_path"
+    Session.PIPs.Install.Set
+
+    # add extra package(s) needed immediately
+    RunAndLogResults "$OPKG_CMD install$(User.Opts.IgnoreFreeSpace.IsSet && User.Opts.IgnoreFreeSpace.Text) --force-overwrite $SHERPA_ESSENTIAL_IPKGS_ADD --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
 
     }
 
@@ -1900,7 +1896,7 @@ _MonitorDirSize_()
         fi
 
         percent="$((200*(current_bytes)/(total_bytes) % 2 + 100*(current_bytes)/(total_bytes)))%"
-        progress_message=" $percent ($(FormatAsISOBytes "$current_bytes")/$(FormatAsISOBytes "$total_bytes"))"
+        progress_message="$percent ($(FormatAsISOBytes "$current_bytes")/$(FormatAsISOBytes "$total_bytes"))"
 
         if [[ $stall_seconds -ge $stall_seconds_threshold ]]; then
             # append a message showing time that download has stalled for
@@ -1912,7 +1908,7 @@ _MonitorDirSize_()
 
             # add a suggestion to cancel if download has stalled for too long
             if [[ $stall_seconds -ge 90 ]]; then
-                stall_message="$stall_message: cancel with CTRL+C and try again later"
+                stall_message+=": cancel with CTRL+C and try again later"
             fi
 
             # colourise if required
