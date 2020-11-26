@@ -1896,6 +1896,7 @@ _MonitorDirSize_()
         fi
 
         percent="$((200*(current_bytes)/(total_bytes) % 2 + 100*(current_bytes)/(total_bytes)))%"
+        [[ $current_bytes -lt $total_bytes && $percent = '100%' ]] && percent='99%' # ensure we don't hit 100% until the last byte is downloaded
         progress_message="$percent ($(FormatAsISOBytes "$current_bytes")/$(FormatAsISOBytes "$total_bytes"))"
 
         if [[ $stall_seconds -ge $stall_seconds_threshold ]]; then
