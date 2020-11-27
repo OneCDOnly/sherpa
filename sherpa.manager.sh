@@ -2,7 +2,8 @@
 #
 # sherpa.manager.sh - (C)opyright (C) 2017-2020 OneCD [one.cd.only@gmail.com]
 #
-# This is the management script for the sherpa mini-package-manager and is downloaded via the 'sherpa' QPKG.
+# This is the management script for the sherpa mini-package-manager.
+# It's automatically downloaded via the 'sherpa.loader.sh' script in the 'sherpa' QPKG.
 #
 # So, blame OneCD if it all goes horribly wrong. ;)
 #
@@ -40,7 +41,7 @@ Session.Init()
     export LC_ALL=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=201126
+    readonly MANAGER_SCRIPT_VERSION=201127
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
