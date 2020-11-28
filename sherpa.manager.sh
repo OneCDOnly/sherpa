@@ -914,18 +914,14 @@ Packages.Uninstall()
 Packages.Force-upgrade.Independents()
     {
 
-    # placeholder function
-
-    :
+    :   # placeholder function
 
     }
 
 Packages.Upgrade.Independents()
     {
 
-    # placeholder function
-
-    :
+    :   # placeholder function
 
     }
 
@@ -1002,9 +998,7 @@ Packages.Install.Independents()
 Packages.Restore.Independents()
     {
 
-    # placeholder function
-
-    :
+    :   # placeholder function
 
     }
 
