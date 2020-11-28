@@ -2557,7 +2557,8 @@ QPKGs.NewVersions.Show()
     QPKGs.StateLists.Build
 
     for package in $(QPKGs.Upgradable.Array); do
-        if ! QPKGs.ToUpgrade.Exist "$package"; then
+        # only show upgradable packages if they haven't been selected for upgrade in current session
+        if ! QPKGs.ToUpgrade.Exist "$package" && ! QPKGs.ToReinstall.Exist "$package"; then
             left_to_upgrade+=("$package")
         fi
     done
