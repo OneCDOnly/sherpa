@@ -51,7 +51,7 @@ Init()
     readonly QPKG_VERSION=$($GETCFG_CMD $QPKG_NAME Version -f $APP_CENTER_CONFIG_PATHFILE)
     readonly SERVICE_STATUS_PATHFILE=/var/run/$QPKG_NAME.last.operation
     readonly SERVICE_LOG_PATHFILE=/var/log/$QPKG_NAME.log
-    local -r OPKG_PATH=/opt/bin:/opt/sbin
+    readonly OPKG_PATH=/opt/bin:/opt/sbin
     local -r BACKUP_PATH=$($GETCFG_CMD SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
     readonly BACKUP_PATHFILE=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
     readonly APPARENT_PATH=/share/$($GETCFG_CMD SHARE_DEF defDownload -d Qdownload -f /etc/config/def_share.info)/$QPKG_NAME
@@ -367,8 +367,7 @@ WaitForGit()
     {
 
     if WaitForFileToAppear "$GIT_CMD" "$GIT_APPEAR_TIMEOUT"; then
-        . /etc/profile &>/dev/null
-        . /root/.profile &>/dev/null
+        export PATH="$OPKG_PATH:$($SED_CMD "s|$OPKG_PATH||" <<< "$PATH")"
         return 0
     else
         return 1
