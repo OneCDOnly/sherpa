@@ -41,7 +41,7 @@ Session.Init()
     export LC_ALL=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=201128
+    readonly MANAGER_SCRIPT_VERSION=201129
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -324,8 +324,8 @@ Session.Init()
 
     SHERPA_QPKG_NAME+=(SickChill)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/SickChill/build/SickChill_200916.qpkg)
-        SHERPA_QPKG_MD5+=(ade1d1c67355bf7d8e73543384cc1c61)
+        SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/SickChill/build/SickChill_201129.qpkg)
+        SHERPA_QPKG_MD5+=(f7aaecca42f5c79dc9ca5160cf445041)
         SHERPA_QPKG_ABBRVS+=('sc sick sickc chill sickchill')
         SHERPA_QPKG_INDEPS+=('Entware')
         SHERPA_QPKG_IPKGS_ADD+=('')
