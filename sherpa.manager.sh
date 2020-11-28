@@ -41,7 +41,7 @@ Session.Init()
     export LC_ALL=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=201127
+    readonly MANAGER_SCRIPT_VERSION=201128
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -417,8 +417,8 @@ Session.Init()
         QPKGs.Names.Add "$package"
     done
 
-    readonly SHERPA_ESSENTIAL_IPKGS_ADD='sed'
-    readonly SHERPA_COMMON_IPKGS_ADD='ca-certificates gcc git git-http less nano python3-dev python3-pip python3-setuptools'
+    readonly SHERPA_ESSENTIAL_IPKGS_ADD='findutils grep less sed'
+    readonly SHERPA_COMMON_IPKGS_ADD='ca-certificates gcc git git-http nano python3-dev python3-pip python3-setuptools'
     readonly SHERPA_COMMON_PIPS_ADD='apscheduler beautifulsoup4 cfscrape cheetah3 cheroot!=8.4.4 cherrypy configobj feedparser==5.2.1 portend pygithub python-magic random_user_agent sabyenc3 simplejson slugify'
     readonly SHERPA_COMMON_CONFLICTS='Optware Optware-NG TarMT Python QPython2'
 
@@ -1248,19 +1248,15 @@ Packages.Restart()
 Package.Save.Lists()
     {
 
-    ShowAsProc 'saving package and Python module lists'
-
     if [[ -e $pip3_cmd ]]; then
         $pip3_cmd freeze > "$PREVIOUS_PIP3_MODULE_LIST"
-        DebugDone "saved current $(FormatAsPackageName pip3) module list to $(FormatAsFileName "$PREVIOUS_PIP3_MODULE_LIST")"
+        DebugAsDone "saved current $(FormatAsPackageName pip3) module list to $(FormatAsFileName "$PREVIOUS_PIP3_MODULE_LIST")"
     fi
 
     if [[ -e $OPKG_CMD ]]; then
         $OPKG_CMD list-installed > "$PREVIOUS_OPKG_PACKAGE_LIST"
-        DebugDone "saved current $(FormatAsPackageName Entware) IPKG list to $(FormatAsFileName "$PREVIOUS_OPKG_PACKAGE_LIST")"
+        DebugAsDone "saved current $(FormatAsPackageName Entware) IPKG list to $(FormatAsFileName "$PREVIOUS_OPKG_PACKAGE_LIST")"
     fi
-
-    ShowAsDone 'package and Python module lists saved'
 
     }
 
@@ -1275,12 +1271,18 @@ Package.Install.Entware()
     [[ -d $opt_path && ! -L $opt_path && ! -e $opt_backup_path ]] && mv "$opt_path" "$opt_backup_path"
     QPKG.Install Entware && Session.AdjustPathEnv
 
+    DebugAsProc 'swapping /opt'
     # copy all files from original [/opt] into new [/opt]
     [[ -L $opt_path && -d $opt_backup_path ]] && cp --recursive "$opt_backup_path"/* --target-directory "$opt_path" && rm -rf "$opt_backup_path"
-    Session.PIPs.Install.Set
+    DebugAsDone 'complete'
 
+    ShowAsProcLong 'installing essential IPKGs'
     # add extra package(s) needed immediately
     RunAndLogResults "$OPKG_CMD install$(User.Opts.IgnoreFreeSpace.IsSet && User.Opts.IgnoreFreeSpace.Text) --force-overwrite $SHERPA_ESSENTIAL_IPKGS_ADD --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
+    ShowAsDone 'installed essential IPKGs'
+
+    # ensure PIPs are installed later
+    Session.PIPs.Install.Set
 
     }
 
@@ -1408,7 +1410,7 @@ Entware.Patch.Service()
         insert_text='[[ -L "$opt_path" \&\& -d "$opt_backup_path" ]] \&\& cp "$opt_backup_path"/* --target-directory "$opt_path" \&\& rm -r "$opt_backup_path"'
         $SED_CMD -i "s|$find_text|$find_text\n\n${tab}${prefix_text}\n${tab}${insert_text}\n|" "$package_init_pathfile"
 
-        DebugDone 'patch: do the "opt shuffle"'
+        DebugAsDone 'patch: do the "opt shuffle"'
     fi
 
     return 0
@@ -1436,20 +1438,19 @@ Entware.Update()
     fi
 
     if [[ -n $msgs ]]; then
-        ShowAsProc "updating $(FormatAsPackageName Entware) package list"
+        DebugAsProc "updating $(FormatAsPackageName Entware) package list"
 
         RunAndLogResults "$OPKG_CMD update" "$log_pathfile" log:failure-only
         resultcode=$?
 
         if [[ $resultcode -eq 0 ]]; then
-            ShowAsDone "updated $(FormatAsPackageName Entware) package list"
+            DebugAsDone "updated $(FormatAsPackageName Entware) package list"
         else
-            ShowAsWarning "Unable to update $(FormatAsPackageName Entware) package list $(FormatAsExitcode $resultcode)"
+            DebugAsWarning "Unable to update $(FormatAsPackageName Entware) package list $(FormatAsExitcode $resultcode)"
             # meh, continue anyway with old list ...
         fi
     else
         DebugInfo "$(FormatAsPackageName Entware) package list was updated less than $package_minutes_threshold minutes ago"
-        ShowAsDone "$(FormatAsPackageName Entware) package list is current"
     fi
 
     return 0
@@ -1552,10 +1553,10 @@ CalcAllIPKGDepsToInstall()
         DebugFuncExit; return 1
     fi
 
-    DebugProc 'finding IPKG dependencies'
+    DebugAsProc 'finding IPKG dependencies'
     while [[ $iterations -lt $ITERATION_LIMIT ]]; do
         ((iterations++))
-        DebugProc "iteration $iterations"
+        DebugAsProc "iteration $iterations"
 
         local IPKG_titles=$(printf '^Package: %s$\|' "${this_list[@]}")
         IPKG_titles=${IPKG_titles%??}       # remove last 2 characters
@@ -1563,7 +1564,7 @@ CalcAllIPKGDepsToInstall()
         this_list=($($GNU_GREP_CMD --word-regexp --after-context 1 --no-group-separator '^Package:\|^Depends:' "$EXTERNAL_PACKAGE_LIST_PATHFILE" | $GNU_GREP_CMD -vG '^Section:\|^Version:' | $GNU_GREP_CMD --word-regexp --after-context 1 --no-group-separator "$IPKG_titles" | $GNU_GREP_CMD -vG "$IPKG_titles" | $GNU_GREP_CMD -vG '^Package: ' | $SED_CMD 's|^Depends: ||;s|, |\n|g' | $SORT_CMD | $UNIQ_CMD))
 
         if [[ ${#this_list[@]} -eq 0 ]]; then
-            DebugDone 'complete'
+            DebugAsDone 'complete'
             DebugInfo "found all IPKG dependencies in $iterations iteration$(FormatAsPlural $iterations)"
             complete=true
             break
@@ -1580,7 +1581,7 @@ CalcAllIPKGDepsToInstall()
     pre_download_list=$(DeDupeWords "$requested_list ${dependency_accumulator[*]}")
     DebugInfo "IPKGs requested + dependencies: $pre_download_list"
 
-    DebugProc 'excluding IPKGs already installed'
+    DebugAsProc 'excluding IPKGs already installed'
     for element in $pre_download_list; do
         if [[ $element != 'ca-certs' ]]; then       # KLUDGE: 'ca-certs' appears to be a bogus meta-package, so silently exclude it from attempted installation.
             if [[ $element != 'libjpeg' ]]; then    # KLUDGE: 'libjpeg' appears to have been replaced by 'libjpeg-turbo', but many packages still list 'libjpeg' as a dependency, so replace it with 'libjpeg-turbo'.
@@ -1592,16 +1593,16 @@ CalcAllIPKGDepsToInstall()
             fi
         fi
     done
-    DebugDone 'complete'
+    DebugAsDone 'complete'
     DebugInfo "IPKGs to download: $(IPKGs.ToDownload.List)"
 
     package_count=$(IPKGs.ToDownload.Count)
 
     if [[ $package_count -gt 0 ]]; then
-        DebugProc "determining size of IPKG$(FormatAsPlural "$package_count") to download"
+        DebugAsProc "determining size of IPKG$(FormatAsPlural "$package_count") to download"
         size_array=($($GNU_GREP_CMD -w '^Package:\|^Size:' "$EXTERNAL_PACKAGE_LIST_PATHFILE" | $GNU_GREP_CMD --after-context 1 --no-group-separator ": $($SED_CMD 's/ /$ /g;s/\$ /\$\\\|: /g' <<< "$(IPKGs.ToDownload.List)")$" | $GREP_CMD '^Size:' | $SED_CMD 's|^Size: ||'))
         IPKGs.ToDownload.Size = "$(IFS=+; echo "$((${size_array[*]}))")"   # a neat sizing shortcut found here https://stackoverflow.com/a/13635566/6182835
-        DebugDone 'complete'
+        DebugAsDone 'complete'
         DebugInfo "IPKG download size: $(IPKGs.ToDownload.Size)"
         ShowAsDone "$package_count IPKG$(FormatAsPlural "$package_count") ($(FormatAsISOBytes "$(IPKGs.ToDownload.Size)")) to be downloaded"
     else
@@ -1631,7 +1632,7 @@ CalcAllIPKGDepsToUninstall()
     requested_list=$(DeDupeWords "$(IPKGs.ToUninstall.List)")
 
     DebugInfo "IPKGs requested: $requested_list"
-    DebugProc 'excluding IPKGs not installed'
+    DebugAsProc 'excluding IPKGs not installed'
 
     for element in $requested_list; do
         if ! $OPKG_CMD status "$element" | $GREP_CMD -q "Status:.*installed"; then
@@ -1639,12 +1640,12 @@ CalcAllIPKGDepsToUninstall()
         fi
     done
 
-    DebugDone 'complete'
+    DebugAsDone 'complete'
     DebugInfo "IPKGs to uninstall: $(IPKGs.ToUninstall.ListCSV)"
     package_count=$(IPKGs.ToUninstall.Count)
 
     if [[ $package_count -gt 0 ]]; then
-        DebugDone 'complete'
+        DebugAsDone 'complete'
         ShowAsDone "$package_count IPKG$(FormatAsPlural "$package_count") to be uninstalled"
     fi
 
@@ -2165,17 +2166,23 @@ Help.Actions.Show()
     DisplayLineSpaceIfNoneAlready
     Display "* $(FormatAsHelpActions) usage examples:"
 
-    DisplayAsProjectSyntaxIndentedExample 'install the following packages' "install $(FormatAsHelpPackages)"
+    DisplayAsProjectSyntaxIndentedExample 'install these packages' "install $(FormatAsHelpPackages)"
 
-    DisplayAsProjectSyntaxIndentedExample 'uninstall the following packages' "uninstall $(FormatAsHelpPackages)"
+    DisplayAsProjectSyntaxIndentedExample 'uninstall these packages' "uninstall $(FormatAsHelpPackages)"
 
-    DisplayAsProjectSyntaxIndentedExample 'reinstall the following packages' "reinstall $(FormatAsHelpPackages)"
+    DisplayAsProjectSyntaxIndentedExample 'reinstall these packages' "reinstall $(FormatAsHelpPackages)"
 
-    DisplayAsProjectSyntaxIndentedExample 'upgrade the following packages and the internal applications' "upgrade $(FormatAsHelpPackages)"
+    DisplayAsProjectSyntaxIndentedExample 'upgrade these packages (and internal applications)' "upgrade $(FormatAsHelpPackages)"
 
-    DisplayAsProjectSyntaxIndentedExample 'backup the internal application configurations to the default backup location' "backup $(FormatAsHelpPackages)"
+    DisplayAsProjectSyntaxIndentedExample 'start these packages' "start $(FormatAsHelpPackages)"
 
-    DisplayAsProjectSyntaxIndentedExample 'restore the internal application configurations from the default backup location' "restore $(FormatAsHelpPackages)"
+    DisplayAsProjectSyntaxIndentedExample 'stop these packages (and internal applications)' "stop $(FormatAsHelpPackages)"
+
+    DisplayAsProjectSyntaxIndentedExample 'restart these packages (and internal applications)' "restart $(FormatAsHelpPackages)"
+
+    DisplayAsProjectSyntaxIndentedExample 'backup these application configurations to the default backup location' "backup $(FormatAsHelpPackages)"
+
+    DisplayAsProjectSyntaxIndentedExample 'restore these application configurations from the default backup location' "restore $(FormatAsHelpPackages)"
 
     DisplayAsProjectSyntaxExample "$(FormatAsHelpActions) to affect all packages can be seen with" 'actions-all'
 
@@ -2198,9 +2205,13 @@ Help.ActionsAll.Show()
 
     DisplayAsProjectSyntaxIndentedExample "reinstall all installed packages (except $(FormatAsPackageName Entware) for now)" 'reinstall-all'
 
-    DisplayAsProjectSyntaxIndentedExample 'upgrade all installed packages (including the internal applications)' 'upgrade-all'
+    DisplayAsProjectSyntaxIndentedExample 'upgrade all installed packages (and internal applications)' 'upgrade-all'
 
-    DisplayAsProjectSyntaxIndentedExample 'restart all installed packages (only upgrades the internal applications, not the packages)' 'restart-all'
+    DisplayAsProjectSyntaxIndentedExample 'start all installed packages (upgrade internal applications, not packages)' 'start-all'
+
+    DisplayAsProjectSyntaxIndentedExample 'stop all installed packages' 'stop-all'
+
+    DisplayAsProjectSyntaxIndentedExample 'restart all installed packages (upgrade internal applications, not packages)' 'restart-all'
 
     DisplayAsProjectSyntaxIndentedExample 'list all installable packages' 'list'
 
@@ -2287,15 +2298,15 @@ Help.Problems.Show()
 
     DisplayAsProjectSyntaxIndentedExample "clean the $(FormatAsScriptTitle) cache" 'clean'
 
-    DisplayAsProjectSyntaxIndentedExample 'force-upgrade the following packages and the internal applications' "upgrade force $(FormatAsHelpPackages)"
+    DisplayAsProjectSyntaxIndentedExample 'force-upgrade these packages and the internal applications' "upgrade force $(FormatAsHelpPackages)"
 
-    DisplayAsProjectSyntaxIndentedExample 'restart all installed packages (upgrades the internal applications, not the packages)' 'restart-all'
+    DisplayAsProjectSyntaxIndentedExample 'restart all installed packages (upgrades the internal applications, not packages)' 'restart-all'
 
     DisplayAsProjectSyntaxIndentedExample 'ensure all application dependencies are installed' 'check-all'
 
-    DisplayAsProjectSyntaxIndentedExample 'start the following packages and enable package icons' "start $(FormatAsHelpPackages)"
+    DisplayAsProjectSyntaxIndentedExample 'start these packages and enable package icons' "start $(FormatAsHelpPackages)"
 
-    DisplayAsProjectSyntaxIndentedExample 'stop the following packages and disable package icons' "stop $(FormatAsHelpPackages)"
+    DisplayAsProjectSyntaxIndentedExample 'stop these packages and disable package icons' "stop $(FormatAsHelpPackages)"
 
     DisplayAsProjectSyntaxIndentedExample "view only the most recent $(FormatAsScriptTitle) session log" 'l'
 
@@ -2342,7 +2353,7 @@ Help.Tips.Show()
 
     DisplayAsProjectSyntaxIndentedExample 'package abbreviations also work. To see these' 'abs'
 
-    DisplayAsProjectSyntaxIndentedExample 'restart all packages (only upgrades the internal applications, not the packages)' 'restart-all'
+    DisplayAsProjectSyntaxIndentedExample 'restart all packages (only upgrades the internal applications, not packages)' 'restart-all'
 
     DisplayAsProjectSyntaxIndentedExample 'list only packages that are not installed' 'list-installable'
 
@@ -2991,7 +3002,7 @@ Session.Calc.EntwareType()
         DebugQPKG 'Entware installer' $ENTWARE_VER
 
         if [[ $ENTWARE_VER = none ]]; then
-            DebugWarning "$(FormatAsPackageName Entware) appears to be installed but is not visible"
+            DebugAsWarning "$(FormatAsPackageName Entware) appears to be installed but is not visible"
         fi
     fi
 
@@ -3004,7 +3015,7 @@ Session.AdjustPathEnv()
 
     if QPKG.Installed Entware; then
         export PATH="$opkg_prefix:$($SED_CMD "s|$opkg_prefix||" <<< "$PATH")"
-        DebugDone 'adjusted $PATH for Entware'
+        DebugAsDone 'adjusted $PATH for Entware'
         DebugVar PATH
     fi
 
@@ -3141,11 +3152,11 @@ QPKG.ServiceStatus()
                 ShowAsError "$(FormatAsPackageName "$1") service failed to start.$([[ -e /var/log/$1.log ]] && echo " Check $(FormatAsFileName "/var/log/$1.log") for more information")"
                 ;;
             *)
-                DebugWarning "$(FormatAsPackageName "$1") service status is incorrect"
+                DebugAsWarning "$(FormatAsPackageName "$1") service status is incorrect"
                 ;;
         esac
     else
-        DebugWarning "unable to get status of $(FormatAsPackageName "$1") service. It may be a non-sherpa package, or a package earlier than 200816c that doesn't support service results."
+        DebugAsWarning "unable to get status of $(FormatAsPackageName "$1") service. It may be a non-sherpa package, or a package earlier than 200816c that doesn't support service results."
     fi
 
     }
@@ -3310,11 +3321,11 @@ QPKG.Download()
     local log_pathfile=$LOGS_PATH/$local_filename.$DOWNLOAD_LOG_FILE
 
     if [[ -z $remote_url ]]; then
-        DebugWarning "no URL found for this package $(FormatAsPackageName "$1")"
+        DebugAsWarning "no URL found for this package $(FormatAsPackageName "$1")"
         code_pointer=6
         DebugFuncExit; return
     elif [[ -z $remote_md5 ]]; then
-        DebugWarning "no checksum found for this package $(FormatAsPackageName "$1")"
+        DebugAsWarning "no checksum found for this package $(FormatAsPackageName "$1")"
         code_pointer=7
         DebugFuncExit; return
     fi
@@ -3323,7 +3334,7 @@ QPKG.Download()
         if FileMatchesMD5 "$local_pathfile" "$remote_md5"; then
             DebugInfo "local package $(FormatAsFileName "$local_filename") checksum correct, so skipping download"
         else
-            DebugWarning "local package $(FormatAsFileName "$local_filename") checksum incorrect"
+            DebugAsWarning "local package $(FormatAsFileName "$local_filename") checksum incorrect"
             DebugInfo "deleting $(FormatAsFileName "$local_filename")"
             rm -f "$local_pathfile"
         fi
@@ -3485,7 +3496,7 @@ QPKG.Upgrade()
 
     if [[ $resultcode -eq 0 || $resultcode -eq 10 ]]; then
         if [[ $current_version = "$previous_version" ]]; then
-            DebugDone "${prefix}upgraded $(FormatAsPackageName "$1") and installed version is $current_version"
+            DebugAsDone "${prefix}upgraded $(FormatAsPackageName "$1") and installed version is $current_version"
         else
             ShowAsDone "${prefix}upgraded $(FormatAsPackageName "$1") from $previous_version to $current_version"
         fi
@@ -3533,7 +3544,7 @@ QPKG.Uninstall()
         if [[ $resultcode -eq 0 ]]; then
             ShowAsDone "uninstalled $(FormatAsPackageName "$1")"
             $RMCFG_CMD "$1" -f $APP_CENTER_CONFIG_PATHFILE
-            DebugDone 'removed icon information from App Center'
+            DebugAsDone 'removed icon information from App Center'
         else
             ShowAsError "unable to uninstall $(FormatAsPackageName "$1") $(FormatAsExitcode $resultcode)"
         fi
@@ -4203,13 +4214,13 @@ DebugDetected.Warning()
     {
 
     if [[ -z $3 ]]; then                # if $3 is nothing, then assume only 2 fields are required
-        DebugWarning "$(printf "%9s: %23s\n" "$1" "$2")"
+        DebugAsWarning "$(printf "%9s: %23s\n" "$1" "$2")"
     elif [[ $3 = ' ' ]]; then           # if $3 is only a whitespace then print $2 with trailing colon but no third field
-        DebugWarning "$(printf "%9s: %23s:\n" "$1" "$2")"
+        DebugAsWarning "$(printf "%9s: %23s:\n" "$1" "$2")"
     elif [[ ${3: -1} = ' ' ]]; then     # if $3 has a trailing whitespace then print $3 without the trailing whitespace
-        DebugWarning "$(printf "%9s: %23s: %-s\n" "$1" "$2" "$($SED_CMD 's| *$||' <<< "$3")")"
+        DebugAsWarning "$(printf "%9s: %23s: %-s\n" "$1" "$2" "$($SED_CMD 's| *$||' <<< "$3")")"
     else
-        DebugWarning "$(printf "%9s: %23s: %-s\n" "$1" "$2" "$3")"
+        DebugAsWarning "$(printf "%9s: %23s: %-s\n" "$1" "$2" "$3")"
     fi
 
     }
@@ -4232,7 +4243,7 @@ DebugDetected.OK()
 DebugCommand.Proc()
     {
 
-    DebugProc "executing '$1'"
+    DebugAsProc "executing '$1'"
 
     }
 
@@ -4272,14 +4283,14 @@ DebugFuncExit()
 
     }
 
-DebugProc()
+DebugAsProc()
     {
 
     DebugThis "(==) $1 ..."
 
     }
 
-DebugDone()
+DebugAsDone()
     {
 
     DebugThis "(--) $1"
@@ -4300,7 +4311,7 @@ DebugInfo()
 
     }
 
-DebugWarning()
+DebugAsWarning()
     {
 
     DebugThis "(WW) $1"
