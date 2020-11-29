@@ -688,6 +688,7 @@ EnableQPKG()
     # $1 = package name to enable
 
     IsNotQPKGEnabled "$1" && ExecuteAndLog 'enable QPKG icon' "qpkg_service enable $1"
+    $SETCFG_CMD "$QPKG_NAME" Status complete -f "$APP_CENTER_CONFIG_PATHFILE"
 
     }
 
