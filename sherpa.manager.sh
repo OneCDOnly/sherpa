@@ -381,7 +381,7 @@ Session.Init()
         SHERPA_QPKG_MD5+=(c39da08668672e53f8d2dfed0f746069)
         SHERPA_QPKG_ABBRVS+=('ot tm tr trans otrans tmission transmission otransmission')
         SHERPA_QPKG_INDEPS+=('Entware')
-        SHERPA_QPKG_IPKGS_ADD+=('transmission-web transmission-daemon-openssl jq')
+        SHERPA_QPKG_IPKGS_ADD+=('transmission-web jq')
         SHERPA_QPKG_IPKGS_REMOVE+=('')
 
     SHERPA_QPKG_NAME+=(Deluge-server)
