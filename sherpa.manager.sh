@@ -41,7 +41,7 @@ Session.Init()
     export LC_ALL=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=201130
+    readonly MANAGER_SCRIPT_VERSION=201206
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -183,7 +183,6 @@ Session.Init()
 
     # enable debug mode early if possible
     if [[ $USER_ARGS_RAW == *"debug"* || $USER_ARGS_RAW == *"verbose"* ]]; then
-        Display
         Session.Debug.To.Screen.Set
     fi
 
@@ -419,7 +418,7 @@ Session.Init()
 
     readonly SHERPA_ESSENTIAL_IPKGS_ADD='findutils grep less sed'
     readonly SHERPA_COMMON_IPKGS_ADD='ca-certificates gcc git git-http nano python3-dev python3-pip python3-setuptools'
-    readonly SHERPA_COMMON_PIPS_ADD='apscheduler beautifulsoup4 cfscrape cheetah3 cheroot!=8.4.4 cherrypy configobj feedparser==5.2.1 portend pygithub python-magic random_user_agent sabyenc3 simplejson slugify'
+    readonly SHERPA_COMMON_PIPS_ADD='apscheduler beautifulsoup4 cfscrape cheetah3 cheroot!=8.4.4 cherrypy configobj feedparser portend pygithub python-magic random_user_agent sabyenc3 simplejson slugify'
     readonly SHERPA_COMMON_CONFLICTS='Optware Optware-NG TarMT Python QPython2'
 
     Session.ParseArguments
@@ -778,7 +777,7 @@ Session.Validate()
         fi
     fi
 
-    if User.Opts.Dependencies.Check.IsSet; then
+    if User.Opts.Dependencies.Check.IsSet || QPKGs.ToUpgrade.Exist Entware; then
         Session.IPKGs.Install.Set
         Session.PIPs.Install.Set
     fi
@@ -1478,7 +1477,7 @@ PIPs.Install()
 
     [[ -n ${SHERPA_COMMON_PIPS_ADD// /} ]] && exec_cmd="$pip3_cmd install $SHERPA_COMMON_PIPS_ADD --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
 
-    local desc="'Python 3' assorted modules"
+    local desc="'Python 3' modules"
     local log_pathfile=$LOGS_PATH/py3-modules.assorted.$INSTALL_LOG_FILE
     ShowAsProcLong "downloading & installing $desc"
 
@@ -1495,10 +1494,29 @@ PIPs.Install()
         # KLUDGE: force recompilation of 'sabyenc3' package so it's recognised by SABnzbd. See: https://forums.sabnzbd.org/viewtopic.php?p=121214#p121214
         exec_cmd="$pip3_cmd install --force-reinstall --ignore-installed --no-binary :all: sabyenc3 --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
 
-        desc="'Python 3' SABnzbd module"
+        desc="'Python 3' SABnzbd module (compile)"
         log_pathfile=$LOGS_PATH/py3-modules.sabnzbd.$INSTALL_LOG_FILE
         ShowAsProcLong "downloading & installing $desc"
 
+        RunAndLogResults "$exec_cmd" "$log_pathfile"
+        resultcode=$?
+
+        if [[ $resultcode -eq 0 ]]; then
+            ShowAsDone "downloaded & installed $desc"
+            QPKGs.ToRestart.Add SABnzbd
+
+        else
+            ShowAsError "download & install $desc failed $(FormatAsResult "$resultcode")"
+        fi
+    fi
+
+    # KLUDGE: ensure 'feedparser' is upgraded. This was version-held at 5.2.1 for Python 3.8.5 but from Python 3.9.0 onward there's no-need for version-hold anymore.
+    if User.Opts.Dependencies.Check.IsSet || QPKGs.ToUpgrade.Exist Entware; then
+        exec_cmd="$pip3_cmd install --upgrade feedparser --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
+
+        desc="'Python 3' feedparser module (upgrade)"
+        log_pathfile=$LOGS_PATH/py3-modules.feedparser.$INSTALL_LOG_FILE
+        ShowAsProcLong "downloading & installing $desc"
         RunAndLogResults "$exec_cmd" "$log_pathfile"
         resultcode=$?
 
