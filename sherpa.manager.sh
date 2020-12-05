@@ -1477,7 +1477,7 @@ PIPs.Install()
 
     [[ -n ${SHERPA_COMMON_PIPS_ADD// /} ]] && exec_cmd="$pip3_cmd install $SHERPA_COMMON_PIPS_ADD --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
 
-    local desc="'Python 3' modules"
+    local desc="'Python3' modules"
     local log_pathfile=$LOGS_PATH/py3-modules.assorted.$INSTALL_LOG_FILE
     ShowAsProcLong "downloading & installing $desc"
 
@@ -1494,7 +1494,7 @@ PIPs.Install()
         # KLUDGE: force recompilation of 'sabyenc3' package so it's recognised by SABnzbd. See: https://forums.sabnzbd.org/viewtopic.php?p=121214#p121214
         exec_cmd="$pip3_cmd install --force-reinstall --ignore-installed --no-binary :all: sabyenc3 --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
 
-        desc="'Python 3' SABnzbd module (compile)"
+        desc="'Python3 SABnzbd' module"
         log_pathfile=$LOGS_PATH/py3-modules.sabnzbd.$INSTALL_LOG_FILE
         ShowAsProcLong "downloading & installing $desc"
 
@@ -1514,7 +1514,7 @@ PIPs.Install()
     if User.Opts.Dependencies.Check.IsSet || QPKGs.ToUpgrade.Exist Entware; then
         exec_cmd="$pip3_cmd install --upgrade feedparser --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
 
-        desc="'Python 3' feedparser module (upgrade)"
+        desc="'Python3 feedparser' module"
         log_pathfile=$LOGS_PATH/py3-modules.feedparser.$INSTALL_LOG_FILE
         ShowAsProcLong "downloading & installing $desc"
         RunAndLogResults "$exec_cmd" "$log_pathfile"
