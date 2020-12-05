@@ -1047,7 +1047,9 @@ Packages.Install.Addons()
         Session.IPKGs.Install.Set
     fi
 
-    QPKGs.ToInstall.Exist SABnzbd && Session.PIPs.Install.Set   # need to ensure 'sabyenc' module is also installed
+    if QPKG.Installed SABnzbd || QPKGs.ToInstall.Exist SABnzbd; then
+        Session.PIPs.Install.Set   # need to ensure 'sabyenc' and 'feedparser' modules are also installed/updated
+    fi
 
     if QPKG.Enabled Entware; then
         Session.AdjustPathEnv
@@ -1508,10 +1510,8 @@ PIPs.Install()
         else
             ShowAsError "download & install $desc failed $(FormatAsResult "$resultcode")"
         fi
-    fi
 
-    # KLUDGE: ensure 'feedparser' is upgraded. This was version-held at 5.2.1 for Python 3.8.5 but from Python 3.9.0 onward there's no-need for version-hold anymore.
-    if User.Opts.Dependencies.Check.IsSet || QPKGs.ToUpgrade.Exist Entware; then
+        # KLUDGE: ensure 'feedparser' is upgraded. This was version-held at 5.2.1 for Python 3.8.5 but from Python 3.9.0 onward there's no-need for version-hold anymore.
         exec_cmd="$pip3_cmd install --upgrade feedparser --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
 
         desc="'Python3 feedparser' module"
