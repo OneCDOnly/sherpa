@@ -1047,7 +1047,7 @@ Packages.Install.Addons()
         Session.IPKGs.Install.Set
     fi
 
-    if QPKG.Installed SABnzbd || QPKGs.ToInstall.Exist SABnzbd; then
+    if QPKGs.ToInstall.Exist SABnzbd || QPKGs.ToReinstall.Exist SABnzbd; then
         Session.PIPs.Install.Set   # need to ensure 'sabyenc' and 'feedparser' modules are also installed/updated
     fi
 
@@ -1492,7 +1492,7 @@ PIPs.Install()
         ShowAsError "download & install $desc failed $(FormatAsResult "$resultcode")"
     fi
 
-    if QPKG.Installed SABnzbd || QPKGs.ToInstall.Exist SABnzbd; then
+    if QPKG.Installed SABnzbd || QPKGs.ToInstall.Exist SABnzbd || QPKGs.ToReinstall.Exist SABnzbd; then
         # KLUDGE: force recompilation of 'sabyenc3' package so it's recognised by SABnzbd. See: https://forums.sabnzbd.org/viewtopic.php?p=121214#p121214
         exec_cmd="$pip3_cmd install --force-reinstall --ignore-installed --no-binary :all: sabyenc3 --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
 
