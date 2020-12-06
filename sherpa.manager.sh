@@ -41,7 +41,7 @@ Session.Init()
     export LC_ALL=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=201206
+    readonly MANAGER_SCRIPT_VERSION=201207
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -1873,7 +1873,7 @@ _MonitorDirSize_()
     {
 
     # * This function runs autonomously *
-    # It watches for the existence of $MONITOR_FLAG_PATHFILE
+    # It watches for the existence of $monitor_flag_pathfile
     # If that file is removed, this function dies gracefully
 
     # input:
@@ -1898,7 +1898,7 @@ _MonitorDirSize_()
     previous_length=0
     previous_clean_msg=''
 
-    while [[ -e $MONITOR_FLAG_PATHFILE ]]; do
+    while [[ -e $monitor_flag_pathfile ]]; do
         current_bytes=$($GNU_FIND_CMD "$1" -type f -name '*.ipk' -exec $DU_CMD --bytes --total --apparent-size {} + 2> /dev/null | $GREP_CMD total$ | $CUT_CMD -f1)
         [[ -z $current_bytes ]] && current_bytes=0
 
@@ -1976,16 +1976,17 @@ CreateDirSizeMonitorFlagFile()
     {
 
     [[ -z $1 ]] && return 1
-    readonly MONITOR_FLAG_PATHFILE=$1
-    $TOUCH_CMD "$MONITOR_FLAG_PATHFILE"
+    monitor_flag_pathfile=$1
+    $TOUCH_CMD "$monitor_flag_pathfile"
 
     }
 
 RemoveDirSizeMonitorFlagFile()
     {
 
-    if [[ -n $MONITOR_FLAG_PATHFILE && -e $MONITOR_FLAG_PATHFILE ]]; then
-        rm -f "$MONITOR_FLAG_PATHFILE"
+    if [[ -n $monitor_flag_pathfile && -e $monitor_flag_pathfile ]]; then
+        rm -f "$monitor_flag_pathfile"
+        unset -v $monitor_flag_pathfile
         $SLEEP_CMD 2
     fi
 
