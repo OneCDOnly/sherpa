@@ -41,7 +41,7 @@ Session.Init()
     export LC_ALL=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=201207
+    readonly MANAGER_SCRIPT_VERSION=201208
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -172,7 +172,7 @@ Session.Init()
     readonly IPKG_DL_PATH=$WORK_PATH/ipkgs.downloads
     readonly IPKG_CACHE_PATH=$WORK_PATH/ipkgs
     readonly PIP_CACHE_PATH=$WORK_PATH/pips
-    readonly COMPILED_OBJECTS_HASH=2cac0f9a823dde1c96947b13b8c86f99
+    readonly COMPILED_OBJECTS_HASH=e3e563d55684f20a6f82448983a9b256
     readonly DEBUG_LOG_DATAWIDTH=92
 
     if ! MakePath "$WORK_PATH" 'work'; then
@@ -641,7 +641,7 @@ Session.ParseArguments()
                 ;;
             *)
                 target_package=$(MatchAbbrvToQPKGName "$arg")
-                [[ -z $target_package ]] && continue
+                [[ -z $target_package ]] && Args.Unknown.Add "$arg"
 
                 case $action in
                     backup_)
@@ -762,6 +762,19 @@ Session.Validate()
 
     if ! QPKGs.Conflicts.Check; then
         code_pointer=2
+        Session.SkipPackageProcessing.Set
+        DebugFuncExit; return 1
+    fi
+
+    if Args.Unknown.IsAny; then
+        code_pointer=3
+        if [[ $(Args.Unknown.Count) -eq 1 ]]; then
+            ShowAsError "argument parser found an unknown argument: \"$(Args.Unknown.List)\""
+        elif [[ $(Args.Unknown.Count) -gt 1 ]]; then
+            ShowAsError "argument parser found unknown arguments: \"$(Args.Unknown.List)\""
+        fi
+
+        User.Opts.Help.Basic.Set
         Session.SkipPackageProcessing.Set
         DebugFuncExit; return 1
     fi
@@ -4877,6 +4890,8 @@ Objects.Compile()
         Objects.Add User.Opts.Apps.List.Upgradable
 
         # lists
+        Objects.Add Args.Unknown
+
         Objects.Add IPKGs.ToDownload
         Objects.Add IPKGs.ToInstall
         Objects.Add IPKGs.ToUninstall

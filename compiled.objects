@@ -4307,6 +4307,145 @@ User.Opts.Apps.List.Upgradable.Text()
     }
 User.Opts.Apps.List.Upgradable.Init
 
+Args.Unknown.Add()
+    {
+    local array=(${1})
+    local item=''
+    for item in "${array[@]}"; do
+        [[ " ${_object_args_unknown_array_[*]} " != *"$item"* ]] && _object_args_unknown_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
+    done
+    }
+Args.Unknown.Array()
+    {
+    echo -n "${_object_args_unknown_array_[@]}"
+    }
+Args.Unknown.Clear()
+    {
+    [[ $_object_args_unknown_flag_ != 'true' ]] && return
+    _object_args_unknown_flag_=false
+    [[ $_object_args_unknown_changes_flag_ = 'true' ]] && DebugVar _object_args_unknown_flag_
+    }
+Args.Unknown.Count()
+    {
+    echo "${#_object_args_unknown_array_[@]}"
+    }
+Args.Unknown.Disable()
+    {
+    [[ $_object_args_unknown_enable_ != 'true' ]] && return
+    _object_args_unknown_enable_=false
+    [[ $_object_args_unknown_changes_flag_ = 'true' ]] && DebugVar _object_args_unknown_enable_
+    }
+Args.Unknown.DontLogChanges()
+    {
+    [[ $_object_args_unknown_changes_flag_ != 'true' ]] && return
+    _object_args_unknown_changes_flag_=false
+    }
+Args.Unknown.Enable()
+    {
+    [[ $_object_args_unknown_enable_ = 'true' ]] && return
+    _object_args_unknown_enable_=true
+    [[ $_object_args_unknown_changes_flag_ = 'true' ]] && DebugVar _object_args_unknown_enable_
+    }
+Args.Unknown.Exist()
+    {
+    [[ ${_object_args_unknown_array_[*]} == *"$1"* ]]
+    }
+Args.Unknown.First()
+    {
+    echo "${_object_args_unknown_array_[0]}"
+    }
+Args.Unknown.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_args_unknown_array_[@]} ]] && index=${#_object_args_unknown_array_[@]}
+    echo -n "${_object_args_unknown_array_[((index-1))]}"
+    }
+Args.Unknown.Init()
+    {
+    _object_args_unknown_size_=0
+    _object_args_unknown_text_=''
+    _object_args_unknown_flag_=false
+    _object_args_unknown_changes_flag_=true
+    _object_args_unknown_enable_=false
+    _object_args_unknown_array_=()
+    _object_args_unknown_array_index_=1
+    _object_args_unknown_path_=''
+    }
+Args.Unknown.IsAny()
+    {
+    [[ ${#_object_args_unknown_array_[@]} -gt 0 ]]
+    }
+Args.Unknown.IsDisabled()
+    {
+    [[ $_object_args_unknown_enable_ != 'true' ]]
+    }
+Args.Unknown.IsEnabled()
+    {
+    [[ $_object_args_unknown_enable_ = 'true' ]]
+    }
+Args.Unknown.IsNone()
+    {
+    [[ ${#_object_args_unknown_array_[@]} -eq 0 ]]
+    }
+Args.Unknown.IsNot()
+    {
+    [[ $_object_args_unknown_flag_ != 'true' ]]
+    }
+Args.Unknown.IsSet()
+    {
+    [[ $_object_args_unknown_flag_ = 'true' ]]
+    }
+Args.Unknown.List()
+    {
+    echo -n "${_object_args_unknown_array_[*]}"
+    }
+Args.Unknown.ListCSV()
+    {
+    echo -n "${_object_args_unknown_array_[*]}" | tr ' ' ','
+    }
+Args.Unknown.LogChanges()
+    {
+    [[ $_object_args_unknown_changes_flag_ = 'true' ]] && return
+    _object_args_unknown_changes_flag_=true
+    }
+Args.Unknown.Path()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_args_unknown_path_=$2
+    else
+        echo -n "$_object_args_unknown_path_"
+    fi
+    }
+Args.Unknown.Remove()
+    {
+    [[ ${_object_args_unknown_array_[*]} == *"$1"* ]] && _object_args_unknown_array_=("${_object_args_unknown_array_[@]/$1}")
+    [[ -z ${_object_args_unknown_array_[*]} ]] && _object_args_unknown_array_=()
+    }
+Args.Unknown.Set()
+    {
+    [[ $_object_args_unknown_flag_ = 'true' ]] && return
+    _object_args_unknown_flag_=true
+    [[ $_object_args_unknown_changes_flag_ = 'true' ]] && DebugVar _object_args_unknown_flag_
+    }
+Args.Unknown.Size()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_args_unknown_size_=$2
+    else
+        echo -n $_object_args_unknown_size_
+    fi
+    }
+Args.Unknown.Text()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_args_unknown_text_=$2
+    else
+        echo -n "$_object_args_unknown_text_"
+    fi
+    }
+Args.Unknown.Init
+
 IPKGs.ToDownload.Add()
     {
     local array=(${1})
