@@ -1,5 +1,7 @@
 [url=https://git.io/sherpa][img]https://i.imgur.com/CdmRmEt.png[/img][/url]
 
+[i]The world's first multiple-action CLI package-manager![/i]  :D
+
 [b][u][size=120]Description[/size][/u][/b]
 
 A mini-package-manager to install various media-management apps into QNAP NAS.
@@ -27,7 +29,7 @@ Package management via [b]sherpa[/b] provides extra features like easy applicati
 
 ... and the following apps will be automatically installed as required:
 [list][*][url=https://forum.qnap.com/viewtopic.php?f=351&t=124894][b]Entware[/b][/url] (standard version)
-[*][b]Python[/b] v3.8.5
+[*][b]Python[/b] v3.9.0
 [*][b]Par2[/b] or [b]Par2cmdline-MT[/b], except on ARMv5. This will use the single-thread par2 from Entware instead.
 [/list]
 
@@ -36,6 +38,7 @@ Package management via [b]sherpa[/b] provides extra features like easy applicati
 
 [list]Any model QNAP NAS with at-least 1GB RAM and running QTS 4.0 or-later.[/list]
 
+[list][b][color=#FF0000]Strongly suggest avoiding QTS 4.5.1.1456 through QTS 4.5.1.1461[/color][/b] as these don't permit the running of unsigned 3rd-party packages and will stop all [b]sherpa[/b] QPKGs from working. If you're using QTS 4.5.1, please ensure it's at least 4.5.1.1465[/list]
 
 [b][u][size=120]Usage[/size][/u][/b]
 
@@ -49,19 +52,4 @@ Package management via [b]sherpa[/b] provides extra features like easy applicati
 
 ... and follow the help from there. ;)
 [/list]
-
-
-[b][u][size=120]For previous users[/size][/u][/b]
-
-Things are a little different now that sherpa is a QPKG. It's much faster and easier to use, but will require you to do things a little differently.
-
-[list]No-need to change into [/share/Public] (or [b]any[/b] directory in fact) before running sherpa. It works no-matter which directory you're in.
-[/list]
-[list]Just login via SSH and type "sherpa". No file extension (".sh") needed anymore. [/list]
-
-[list]But you now need to specify an "action" before presenting a package name to sherpa. This is because multiple packages (each with different actions) can be installed at-once.
-[/list]
-Example: to upgrade SickChill, type this:
-[code]sherpa upgrade sc[/code]
-
-You also won't need the old [sherpa.sh] script file, so delete that one. :D
+Checkout the wiki for more information: https://github.com/OneCDOnly/sherpa/wiki
