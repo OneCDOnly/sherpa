@@ -3502,6 +3502,10 @@ QPKG.Install()
 
     if [[ $resultcode -eq 0 || $resultcode -eq 10 ]]; then
         DebugAsDone "installed $(FormatAsPackageName "$1")"
+
+        # need this for Entware and Par2 packages as they don't add a status line to qpkg.conf
+        $SETCFG_CMD "$1" Status complete -f "$APP_CENTER_CONFIG_PATHFILE"
+
         QPKG.ServiceStatus "$1"
         QPKGs.JustInstalled.Add "$1"
         QPKGs.JustStarted.Add "$1"
@@ -3549,6 +3553,10 @@ QPKG.Reinstall()
 
     if [[ $resultcode -eq 0 || $resultcode -eq 10 ]]; then
         DebugAsDone "re-installed $(FormatAsPackageName "$1")"
+
+        # need this for Entware and Par2 packages as they don't add a status line to qpkg.conf
+        $SETCFG_CMD "$1" Status complete -f "$APP_CENTER_CONFIG_PATHFILE"
+
         QPKG.ServiceStatus "$1"
         QPKGs.JustInstalled.Add "$1"
         QPKGs.JustStarted.Add "$1"
@@ -3591,6 +3599,9 @@ QPKG.Upgrade()
     local target_file=$($BASENAME_CMD "$local_pathfile")
     local log_pathfile=$LOGS_PATH/$target_file.$UPGRADE_LOG_FILE
     QPKG.Installed "$1" && previous_version=$(QPKG.InstalledVersion "$1")
+
+    # need this for Entware and Par2 packages as they don't add a status line to qpkg.conf
+    $SETCFG_CMD "$1" Status complete -f "$APP_CENTER_CONFIG_PATHFILE"
 
     DebugAsProc "${prefix}upgrading $(FormatAsPackageName "$1")"
 
