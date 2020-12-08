@@ -4474,19 +4474,19 @@ AddFileToDebug()
 
 #### ShowAs... functions output formatted info to screen and (usually) to debug log.
 
+ShowAsProcLong()
+    {
+
+    ShowAsProc "$1 (this may take a while)"
+
+    }
+
 ShowAsProc()
     {
 
     WriteToDisplay.Wait "$(ColourTextBrightOrange proc)" "$1 ..."
     WriteToLog proc "$1 ..."
     [[ $(type -t Session.Debug.To.Screen.Init) = 'function' ]] && Session.Debug.To.Screen.IsSet && Display
-
-    }
-
-ShowAsProcLong()
-    {
-
-    ShowAsProc "$1 - this may take a while"
 
     }
 
