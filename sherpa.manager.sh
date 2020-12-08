@@ -768,12 +768,7 @@ Session.Validate()
 
     if Args.Unknown.IsAny; then
         code_pointer=3
-        if [[ $(Args.Unknown.Count) -eq 1 ]]; then
-            ShowAsError "argument parser found an unknown argument: \"$(Args.Unknown.List)\""
-        else
-            ShowAsError "argument parser found unknown arguments: \"$(Args.Unknown.List)\""
-        fi
-
+        ShowAsError "argument parser found unknown argument$(FormatAsPlural "$(Args.Unknown.Count)"): \"$(Args.Unknown.List)\""
         User.Opts.Help.Basic.Set
         Session.SkipPackageProcessing.Set
         DebugFuncExit; return 1
