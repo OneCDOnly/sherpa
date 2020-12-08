@@ -1098,10 +1098,18 @@ Packages.Install.Addons()
     fi
 
     if QPKG.Enabled Entware; then
+        if Session.IPKGs.Install.IsSet || Session.PIPs.Install.IsSet; then
+            ShowAsProcLong 'installing additional packages'
+        fi
+
         Session.AdjustPathEnv
         Entware.Patch.Service
         IPKGs.Install
         PIPs.Install
+
+        if Session.IPKGs.Install.IsSet || Session.PIPs.Install.IsSet; then
+            ShowAsDone 'installed additional packages'
+        fi
     else
         : # TODO: test if other packages are to be installed here. If so, and Entware isn't enabled, then abort with error.
     fi
@@ -1562,13 +1570,13 @@ PIPs.Install()
 
     local desc="'Python3' modules"
     local log_pathfile=$LOGS_PATH/py3-modules.assorted.$INSTALL_LOG_FILE
-    ShowAsProcLong "downloading & installing $desc"
+    DebugAsProc "downloading & installing $desc"
 
     RunAndLogResults "$exec_cmd" "$log_pathfile"
     resultcode=$?
 
     if [[ $resultcode -eq 0 ]]; then
-        ShowAsDone "downloaded & installed $desc"
+        DebugAsDone "downloaded & installed $desc"
     else
         ShowAsError "download & install $desc failed $(FormatAsResult "$resultcode")"
     fi
@@ -1579,13 +1587,13 @@ PIPs.Install()
 
         desc="'Python3 SABnzbd' module"
         log_pathfile=$LOGS_PATH/py3-modules.sabnzbd.$INSTALL_LOG_FILE
-        ShowAsProcLong "downloading & installing $desc"
+        DebugAsProc "downloading & installing $desc"
 
         RunAndLogResults "$exec_cmd" "$log_pathfile"
         resultcode=$?
 
         if [[ $resultcode -eq 0 ]]; then
-            ShowAsDone "downloaded & installed $desc"
+            DebugAsDone "downloaded & installed $desc"
             QPKGs.ToRestart.Add SABnzbd
 
         else
@@ -1597,12 +1605,12 @@ PIPs.Install()
 
         desc="'Python3 feedparser' module"
         log_pathfile=$LOGS_PATH/py3-modules.feedparser.$INSTALL_LOG_FILE
-        ShowAsProcLong "downloading & installing $desc"
+        DebugAsProc "downloading & installing $desc"
         RunAndLogResults "$exec_cmd" "$log_pathfile"
         resultcode=$?
 
         if [[ $resultcode -eq 0 ]]; then
-            ShowAsDone "downloaded & installed $desc"
+            DebugAsDone "downloaded & installed $desc"
             QPKGs.ToRestart.Add SABnzbd
 
         else
@@ -1639,7 +1647,7 @@ CalcAllIPKGDepsToInstall()
     requested_list=$(DeDupeWords "$(IPKGs.ToInstall.List)")
     this_list=($requested_list)
 
-    ShowAsProc 'calculating IPKGs required'
+    DebugAsProc 'calculating IPKGs required'
     DebugInfo "IPKGs requested: $requested_list"
 
     if ! IPKGs.Archive.Open; then
@@ -1697,9 +1705,9 @@ CalcAllIPKGDepsToInstall()
         IPKGs.ToDownload.Size = "$(IFS=+; echo "$((${size_array[*]}))")"   # a neat sizing shortcut found here https://stackoverflow.com/a/13635566/6182835
         DebugAsDone 'complete'
         DebugInfo "IPKG download size: $(IPKGs.ToDownload.Size)"
-        ShowAsDone "$package_count IPKG$(FormatAsPlural "$package_count") ($(FormatAsISOBytes "$(IPKGs.ToDownload.Size)")) to be downloaded"
+        DebugAsDone "$package_count IPKG$(FormatAsPlural "$package_count") ($(FormatAsISOBytes "$(IPKGs.ToDownload.Size)")) to be downloaded"
     else
-        ShowAsDone 'no IPKGs are required'
+        DebugAsDone 'no IPKGs are required'
     fi
 
     IPKGs.Archive.Close
@@ -1739,7 +1747,7 @@ CalcAllIPKGDepsToUninstall()
 
     if [[ $package_count -gt 0 ]]; then
         DebugAsDone 'complete'
-        ShowAsDone "$package_count IPKG$(FormatAsPlural "$package_count") to be uninstalled"
+        DebugAsDone "$package_count IPKG$(FormatAsPlural "$package_count") to be uninstalled"
     fi
 
     DebugFuncExit; return 0
@@ -1807,6 +1815,45 @@ IPKGs.Uninstall()
 
     }
 
+IPKGs.Upgrade.Batch()
+    {
+
+    # upgrade all installed IPKGs
+
+    # output:
+    #   $? = 0 (success) or 1 (failed)
+
+    DebugFuncEntry
+    local package_count=0
+    local log_pathfile=$LOGS_PATH/ipkgs.$UPGRADE_LOG_FILE
+    local resultcode=0
+
+    IPKGs.ToDownload.Add "$($OPKG_CMD list-upgradable | $CUT_CMD -f1 -d' ')"
+    package_count=$(IPKGs.ToDownload.Count)
+
+    if [[ $package_count -gt 0 ]]; then
+        DebugAsProc "downloading & upgrading $package_count IPKG$(FormatAsPlural "$package_count")"
+
+        CreateDirSizeMonitorFlagFile "$IPKG_DL_PATH"/.monitor
+            trap CTRL_C_Captured INT
+                _MonitorDirSize_ "$IPKG_DL_PATH" "$(IPKGs.ToDownload.Size)" &
+
+                RunAndLogResults "$OPKG_CMD upgrade$(User.Opts.IgnoreFreeSpace.IsSet && User.Opts.IgnoreFreeSpace.Text) --force-overwrite $(IPKGs.ToDownload.List) --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
+                resultcode=$?
+            trap - INT
+        RemoveDirSizeMonitorFlagFile
+
+        if [[ $resultcode -eq 0 ]]; then
+            DebugAsDone "downloaded & upgraded $package_count IPKG$(FormatAsPlural "$package_count")"
+        else
+            ShowAsError "download & upgrade IPKG$(FormatAsPlural "$package_count") failed $(FormatAsExitcode $resultcode)"
+        fi
+    fi
+
+    DebugFuncExit; return $resultcode
+
+    }
+
 IPKGs.Install.Batch()
     {
 
@@ -1822,7 +1869,7 @@ IPKGs.Install.Batch()
     package_count=$(IPKGs.ToDownload.Count)
 
     if [[ $package_count -gt 0 ]]; then
-        ShowAsProc "downloading & installing IPKG$(FormatAsPlural "$package_count")"
+        DebugAsProc "downloading & installing IPKG$(FormatAsPlural "$package_count")"
 
         CreateDirSizeMonitorFlagFile "$IPKG_DL_PATH"/.monitor
             trap CTRL_C_Captured INT
@@ -1834,7 +1881,7 @@ IPKGs.Install.Batch()
         RemoveDirSizeMonitorFlagFile
 
         if [[ $resultcode -eq 0 ]]; then
-            ShowAsDone "downloaded & installed $package_count IPKG$(FormatAsPlural "$package_count")"
+            DebugAsDone "downloaded & installed $package_count IPKG$(FormatAsPlural "$package_count")"
         else
             ShowAsError "download & install IPKG$(FormatAsPlural "$package_count") failed $(FormatAsExitcode $resultcode)"
         fi
@@ -1868,45 +1915,6 @@ IPKGs.Uninstall.Batch()
             ShowAsDone "uninstalled $package_count IPKG$(FormatAsPlural "$package_count")"
         else
             ShowAsError "uninstall IPKG$(FormatAsPlural "$package_count") failed $(FormatAsExitcode $resultcode)"
-        fi
-    fi
-
-    DebugFuncExit; return $resultcode
-
-    }
-
-IPKGs.Upgrade.Batch()
-    {
-
-    # upgrade all installed IPKGs
-
-    # output:
-    #   $? = 0 (success) or 1 (failed)
-
-    DebugFuncEntry
-    local package_count=0
-    local log_pathfile=$LOGS_PATH/ipkgs.$UPGRADE_LOG_FILE
-    local resultcode=0
-
-    IPKGs.ToDownload.Add "$($OPKG_CMD list-upgradable | $CUT_CMD -f1 -d' ')"
-    package_count=$(IPKGs.ToDownload.Count)
-
-    if [[ $package_count -gt 0 ]]; then
-        ShowAsProc "downloading & upgrading $package_count IPKG$(FormatAsPlural "$package_count")"
-
-        CreateDirSizeMonitorFlagFile "$IPKG_DL_PATH"/.monitor
-            trap CTRL_C_Captured INT
-                _MonitorDirSize_ "$IPKG_DL_PATH" "$(IPKGs.ToDownload.Size)" &
-
-                RunAndLogResults "$OPKG_CMD upgrade$(User.Opts.IgnoreFreeSpace.IsSet && User.Opts.IgnoreFreeSpace.Text) --force-overwrite $(IPKGs.ToDownload.List) --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
-                resultcode=$?
-            trap - INT
-        RemoveDirSizeMonitorFlagFile
-
-        if [[ $resultcode -eq 0 ]]; then
-            ShowAsDone "downloaded & upgraded $package_count IPKG$(FormatAsPlural "$package_count")"
-        else
-            ShowAsError "download & upgrade IPKG$(FormatAsPlural "$package_count") failed $(FormatAsExitcode $resultcode)"
         fi
     fi
 
