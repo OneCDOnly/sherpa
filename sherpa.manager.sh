@@ -11,6 +11,7 @@
 #
 # Tested on:
 #  GNU bash, version 3.2.57(2)-release (i686-pc-linux-gnu)
+#  GNU bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)
 #  Copyright (C) 2007 Free Software Foundation, Inc.
 #
 # This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
