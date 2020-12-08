@@ -754,12 +754,6 @@ Session.Validate()
     QPKGs.Assignment.Check
     DebugInfoMinorSeparator
 
-    if User.Opts.Apps.All.Backup.IsSet && User.Opts.Apps.All.Restore.IsSet; then
-        ShowAsError 'no point running a backup then a restore operation'
-        Session.SkipPackageProcessing.Set
-        DebugFuncExit; return 1
-    fi
-
     if ! QPKGs.Conflicts.Check; then
         code_pointer=2
         Session.SkipPackageProcessing.Set
