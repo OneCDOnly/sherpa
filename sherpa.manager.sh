@@ -750,7 +750,7 @@ Session.Validate()
     Session.Calc.EntwareType
     Session.Calc.QPKGArch
 
-    DebugQPKG 'upgradable package(s)' "$(QPKGs.Upgradable.List) "
+    DebugQPKG 'upgradable QPKG(s)' "$(QPKGs.Upgradable.List) "
     DebugInfoMinorSeparator
     QPKGs.Assignment.Check
     DebugInfoMinorSeparator
@@ -2684,9 +2684,9 @@ QPKGs.NewVersions.Show()
     done
 
     if [[ ${#left_to_upgrade[@]} -eq 1 ]]; then
-        msg='an upgraded package is'
+        msg='an upgraded QPKG is'
     else
-        msg='upgraded packages are'
+        msg='upgraded QPKGs are'
     fi
 
     ShowAsNote "$msg available for $names_formatted"
