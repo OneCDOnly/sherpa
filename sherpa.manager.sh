@@ -969,7 +969,7 @@ Packages.Reinstall.Essentials()
                         ShowAsNote "Reinstalling $(FormatAsPackageName Entware) will remove all IPKGs and Python modules, and only those required to support your $PROJECT_NAME apps will be reinstalled."
                         ShowAsNote "Your installed IPKG list will be saved to $(FormatAsFileName "$PREVIOUS_OPKG_PACKAGE_LIST")"
                         ShowAsNote "Your installed Python module list will be saved to $(FormatAsFileName "$PREVIOUS_PIP3_MODULE_LIST")"
-                        (QPKG.Installed SABnzbdplus || QPKG.Installed Headphones) && ShowAsWarning "Also, the $(FormatAsPackageName SABnzbdplus) and $(FormatAsPackageName Headphones) packages CANNOT BE REINSTALLED as Python 2.7.16 is no-longer available."
+                        (QPKG.Installed SABnzbdplus || QPKG.Installed Headphones) && ShowAsWarning "also, the $(FormatAsPackageName SABnzbdplus) and $(FormatAsPackageName Headphones) packages CANNOT BE REINSTALLED as Python 2.7.16 is no-longer available."
 
                         if AskQuiz "Press 'Y' to remove all current $(FormatAsPackageName Entware) IPKGs (and their configurations), or any other key to abort"; then
                             Package.Save.Lists
@@ -1925,7 +1925,7 @@ IPKGs.Archive.Open()
     DebugFuncEntry
 
     if [[ ! -e $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE ]]; then
-        ShowAsError 'could not locate the IPKG list file'
+        ShowAsError 'unable to locate the IPKG list file'
         DebugFuncExit; return 1
     fi
 
@@ -1935,7 +1935,7 @@ IPKGs.Archive.Open()
     resultcode=$?
 
     if [[ ! -e $EXTERNAL_PACKAGE_LIST_PATHFILE ]]; then
-        ShowAsError 'could not open the IPKG list file'
+        ShowAsError 'unable to open the IPKG list file'
         DebugFuncExit; return 1
     fi
 
@@ -3680,7 +3680,7 @@ QPKG.Restart()
         QPKGs.JustStarted.Add "$1"
         QPKGs.ToStart.Remove "$1"
     else
-        ShowAsWarning "Could not restart $(FormatAsPackageName "$1") $(FormatAsExitcode $resultcode)"
+        ShowAsWarning "unable to restart $(FormatAsPackageName "$1") $(FormatAsExitcode $resultcode)"
     fi
 
     DebugFuncExit; return $resultcode
@@ -3718,7 +3718,7 @@ QPKG.Start()
         QPKGs.JustStarted.Add "$1"
         QPKGs.ToRestart.Remove "$1"
     else
-        ShowAsWarning "Could not start $(FormatAsPackageName "$1") $(FormatAsExitcode $resultcode)"
+        ShowAsWarning "unable to start $(FormatAsPackageName "$1") $(FormatAsExitcode $resultcode)"
     fi
 
     DebugFuncExit; return $resultcode
@@ -3755,7 +3755,7 @@ QPKG.Stop()
         QPKG.ServiceStatus "$1"
         QPKGs.JustStarted.Remove "$1"
     else
-        ShowAsWarning "Could not stop $(FormatAsPackageName "$1") $(FormatAsExitcode $resultcode)"
+        ShowAsWarning "unable to stop $(FormatAsPackageName "$1") $(FormatAsExitcode $resultcode)"
     fi
 
     DebugFuncExit; return $resultcode
@@ -3786,7 +3786,7 @@ QPKG.Enable()
         if [[ $resultcode -eq 0 ]]; then
             QPKG.ServiceStatus "$1"
         else
-            ShowAsWarning "Could not enable $(FormatAsPackageName "$1") $(FormatAsExitcode $resultcode)"
+            ShowAsWarning "unable to enable $(FormatAsPackageName "$1") $(FormatAsExitcode $resultcode)"
         fi
     fi
 
@@ -3815,7 +3815,7 @@ QPKG.Disable()
         if [[ $resultcode -eq 0 ]]; then
             QPKG.ServiceStatus "$1"
         else
-            ShowAsWarning "Could not disable $(FormatAsPackageName "$1") $(FormatAsExitcode $resultcode)"
+            ShowAsWarning "unable to disable $(FormatAsPackageName "$1") $(FormatAsExitcode $resultcode)"
         fi
     fi
 
@@ -3853,7 +3853,7 @@ QPKG.Backup()
         DebugAsDone "backed-up $(FormatAsPackageName "$1") configuration"
         QPKG.ServiceStatus "$1"
     else
-        ShowAsWarning "Could not backup $(FormatAsPackageName "$1") configuration $(FormatAsExitcode $resultcode)"
+        ShowAsWarning "unable to backup $(FormatAsPackageName "$1") configuration $(FormatAsExitcode $resultcode)"
     fi
 
     DebugFuncExit; return $resultcode
@@ -3890,7 +3890,7 @@ QPKG.Restore()
         DebugAsDone "restored $(FormatAsPackageName "$1") configuration"
         QPKG.ServiceStatus "$1"
     else
-        ShowAsWarning "Could not restore $(FormatAsPackageName "$1") configuration $(FormatAsExitcode $resultcode)"
+        ShowAsWarning "unable to restore $(FormatAsPackageName "$1") configuration $(FormatAsExitcode $resultcode)"
     fi
 
     DebugFuncExit; return $resultcode
