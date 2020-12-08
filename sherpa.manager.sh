@@ -173,7 +173,7 @@ Session.Init()
     readonly IPKG_DL_PATH=$WORK_PATH/ipkgs.downloads
     readonly IPKG_CACHE_PATH=$WORK_PATH/ipkgs
     readonly PIP_CACHE_PATH=$WORK_PATH/pips
-    readonly COMPILED_OBJECTS_HASH=2f7d7be04c97e34adc2441054c57519e
+    readonly COMPILED_OBJECTS_HASH=d2739d99425b0cd4b34967e0c4e7d1ab
     readonly DEBUG_LOG_DATAWIDTH=92
 
     if ! MakePath "$WORK_PATH" 'work'; then
@@ -551,8 +551,8 @@ Session.ParseArguments()
                 Session.Display.Clean.Set
                 Session.SkipPackageProcessing.Set
                 ;;
-            list-dependant|dependant)
-                User.Opts.Apps.List.Dependant.Set
+            list-optional|optional)
+                User.Opts.Apps.List.Optional.Set
                 Session.Display.Clean.Set
                 Session.SkipPackageProcessing.Set
                 ;;
@@ -855,8 +855,8 @@ Packages.Stop()
     if QPKGs.ToStop.IsAny; then
         ShowAsProc 'stopping QPKGs'
 
-        for ((index=$(QPKGs.Dependant.Count); index>=1; index--)); do       # stop packages in reverse of declared order
-            package=$(QPKGs.Dependant.GetItem $index)
+        for ((index=$(QPKGs.Optional.Count); index>=1; index--)); do       # stop packages in reverse of declared order
+            package=$(QPKGs.Optional.GetItem $index)
 
             if QPKGs.ToStop.Exist "$package"; then
                 if QPKG.Installed "$package"; then
@@ -900,8 +900,8 @@ Packages.Uninstall()
     if QPKGs.ToUninstall.IsAny; then
         ShowAsProcLong 'uninstalling QPKGs'
 
-        for ((index=$(QPKGs.Dependant.Count); index>=1; index--)); do       # uninstall packages in reverse of declared order
-            package=$(QPKGs.Dependant.GetItem $index)
+        for ((index=$(QPKGs.Optional.Count); index>=1; index--)); do       # uninstall packages in reverse of declared order
+            package=$(QPKGs.Optional.GetItem $index)
 
             if QPKGs.ToUninstall.Exist "$package"; then
                 if QPKG.Installed "$package"; then
@@ -1049,7 +1049,7 @@ Packages.Start.Essentials()
     local package=''
     local acc=()
 
-    # if a dependant has been selected for 'start', need to start essentials too
+    # if a optional has been selected for 'start', need to start essentials too
     for package in $(QPKGs.ToStart.Array); do
         acc+=($(QPKG.Get.Essentials "$package"))
     done
@@ -1110,7 +1110,7 @@ Packages.Install.Addons()
 
     }
 
-Packages.Upgrade.Dependants()
+Packages.Upgrade.Optionals()
     {
 
     Session.SkipPackageProcessing.IsSet && return
@@ -1118,9 +1118,9 @@ Packages.Upgrade.Dependants()
     local package=''
 
     if QPKGs.ToUpgrade.IsAny || QPKGs.ToForceUpgrade.IsAny; then
-        ShowAsProc 'upgrading essential QPKGs'
+        ShowAsProc 'upgrading optional QPKGs'
 
-        for package in $(QPKGs.Dependant.Array); do
+        for package in $(QPKGs.Optional.Array); do
             if QPKGs.ToForceUpgrade.Exist "$package"; then
                 QPKG.Upgrade "$package" --forced
             elif QPKGs.ToUpgrade.Exist "$package"; then
@@ -1136,16 +1136,16 @@ Packages.Upgrade.Dependants()
             fi
         done
 
-        ShowAsDone 'upgraded essential QPKGs'
+        ShowAsDone 'upgraded optional QPKGs'
     else
-        DebugInfo 'no essential QPKGs require upgrading'
+        DebugInfo 'no optional QPKGs require upgrading'
     fi
 
     DebugFuncExit; return 0
 
     }
 
-Packages.Reinstall.Dependants()
+Packages.Reinstall.Optionals()
     {
 
     Session.SkipPackageProcessing.IsSet && return
@@ -1153,9 +1153,9 @@ Packages.Reinstall.Dependants()
     local package=''
 
     if QPKGs.ToReinstall.IsAny; then
-        ShowAsProc 'reinstalling essential QPKGs'
+        ShowAsProc 'reinstalling optional  QPKGs'
 
-        for package in $(QPKGs.Dependant.Array); do
+        for package in $(QPKGs.Optional.Array); do
             if QPKGs.ToReinstall.Exist "$package"; then
                 if QPKG.Installed "$package"; then
                     QPKG.Reinstall "$package"
@@ -1165,16 +1165,16 @@ Packages.Reinstall.Dependants()
             fi
         done
 
-        ShowAsDone 'reinstalled essential QPKGs'
+        ShowAsDone 'reinstalled optional QPKGs'
     else
-        DebugInfo 'no essential QPKGs require reinstalling'
+        DebugInfo 'no optional QPKGs require reinstalling'
     fi
 
     DebugFuncExit; return 0
 
     }
 
-Packages.Install.Dependants()
+Packages.Install.Optionals()
     {
 
     Session.SkipPackageProcessing.IsSet && return
@@ -1182,9 +1182,9 @@ Packages.Install.Dependants()
     local package=''
 
     if QPKGs.ToInstall.IsAny; then
-        ShowAsProcLong 'installing dependant QPKGs'
+        ShowAsProcLong 'installing optional QPKGs'
 
-        for package in $(QPKGs.Dependant.Array); do
+        for package in $(QPKGs.Optional.Array); do
             if QPKGs.ToInstall.Exist "$package"; then
                 if QPKG.NotInstalled "$package"; then
                     QPKG.Install "$package"
@@ -1193,16 +1193,16 @@ Packages.Install.Dependants()
                 fi
             fi
         done
-        ShowAsDone 'installed dependant QPKGs'
+        ShowAsDone 'installed optional QPKGs'
     else
-        DebugInfo 'no dependant QPKGs require installing'
+        DebugInfo 'no optional QPKGs require installing'
     fi
 
     DebugFuncExit; return 0
 
     }
 
-Packages.Restore.Dependants()
+Packages.Restore.Optionals()
     {
 
     Session.SkipPackageProcessing.IsSet && return
@@ -1210,7 +1210,7 @@ Packages.Restore.Dependants()
     local package=''
 
     if QPKGs.ToRestore.IsAny; then
-        ShowAsProc 'restoring dependant QPKG backups'
+        ShowAsProc 'restoring optional QPKG backups'
 
         for package in $(QPKGs.ToRestore.Array); do
             if QPKG.Installed "$package"; then
@@ -1225,16 +1225,16 @@ Packages.Restore.Dependants()
         done
 
         Session.ShowBackupLocation.Set
-        ShowAsDone 'restored dependant QPKG backups'
+        ShowAsDone 'restored optional QPKG backups'
     else
-        DebugInfo 'no dependant QPKGs require restoring'
+        DebugInfo 'no optional QPKGs require restoring'
     fi
 
     DebugFuncExit; return 0
 
     }
 
-Packages.Start.Dependants()
+Packages.Start.Optionals()
     {
 
     Session.SkipPackageProcessing.IsSet && return
@@ -1243,9 +1243,9 @@ Packages.Start.Dependants()
     local indep_package=''
 
     if QPKGs.ToStart.IsAny; then
-        ShowAsProc 'starting dependant QPKGs'
+        ShowAsProc 'starting optional QPKGs'
 
-        for dep_package in $(QPKGs.Dependant.Array); do
+        for dep_package in $(QPKGs.Optional.Array); do
             if QPKGs.ToStart.Exist "$dep_package"; then
                 if ! QPKG.Installed "$dep_package"; then
                     ShowAsNote "unable to start $(FormatAsPackageName "$dep_package") as it's not installed"
@@ -1262,9 +1262,9 @@ Packages.Start.Dependants()
             fi
         done
 
-        ShowAsDone 'started dependant QPKGs'
+        ShowAsDone 'started optional QPKGs'
     else
-        DebugInfo 'no dependant QPKGs require starting'
+        DebugInfo 'no optional QPKGs require starting'
     fi
 
     DebugFuncExit; return 0
@@ -1294,9 +1294,9 @@ Packages.Restart()
     if User.Opts.Apps.All.Upgrade.IsSet; then
         QPKGs.NotUpgraded.Restart
     elif QPKGs.ToRestart.IsAny; then
-        ShowAsProcLong 'restarting dependant QPKGs'
+        ShowAsProcLong 'restarting optional QPKGs'
 
-        for package in $(QPKGs.Dependant.Array); do
+        for package in $(QPKGs.Optional.Array); do
 
             if QPKGs.ToRestart.Exist "$package"; then
                 if ! QPKG.Installed "$package"; then
@@ -1312,9 +1312,9 @@ Packages.Restart()
 
         done
 
-        ShowAsDone 'restarted dependant QPKGs'
+        ShowAsDone 'restarted optional QPKGs'
     else
-        DebugInfo 'no dependant QPKGs require restarting'
+        DebugInfo 'no optional QPKGs require restarting'
     fi
 
     DebugFuncExit; return 0
@@ -1387,8 +1387,8 @@ Session.Results()
         QPKGs.All.Show
     elif User.Opts.Apps.List.Essential.IsSet; then
         QPKGs.Essential.Show
-    elif User.Opts.Apps.List.Dependant.IsSet; then
-        QPKGs.Dependant.Show
+    elif User.Opts.Apps.List.Optional.IsSet; then
+        QPKGs.Optional.Show
     fi
 
     if User.Opts.Help.Basic.IsSet; then
@@ -2396,7 +2396,7 @@ Help.Problems.Show()
 
     DisplayAsProjectSyntaxIndentedExample 'restart all installed packages (upgrades the internal applications, not packages)' 'restart-all'
 
-    DisplayAsProjectSyntaxIndentedExample 'ensure all application dependencies are installed' 'check-all'
+    DisplayAsProjectSyntaxIndentedExample 'ensure all application dependencies are satisfied' 'check-all'
 
     DisplayAsProjectSyntaxIndentedExample 'start these packages and enable package icons' "start $(FormatAsHelpPackages)"
 
@@ -2867,11 +2867,11 @@ QPKGs.NotUpgraded.Restart()
 
     # restart all sherpa QPKGs except those that were just upgraded.
 
-    QPKGs.Dependant.IsNone && return
+    QPKGs.Optional.IsNone && return
     DebugFuncEntry
     local package=''
 
-    for package in $(QPKGs.Dependant.Array); do
+    for package in $(QPKGs.Optional.Array); do
         QPKG.Enabled "$package" && ! QPKGs.Upgradable.Exist "$package" && QPKG.Restart "$package"
     done
 
@@ -2891,15 +2891,15 @@ QPKGs.StateLists.Build()
 QPKGs.DepAndIndep.Build()
     {
 
-    # Essential packages don't depend on other packages. These are therefore essential. They should be installed/started before any dependant QPKGs.
-    # Dependant packages depend on other QPKGs. These are therefore dependant. They should be installed/started after any essential QPKGs.
+    # Essential packages don't depend on other packages. These are therefore essential. They should be installed/started before any optional QPKGs.
+    # Optional packages depend on other QPKGs. These are therefore optional. They should be installed/started after any essential QPKGs.
 
     DebugFuncEntry
     local index=0
 
     for index in "${!SHERPA_QPKG_NAME[@]}"; do
         if [[ -n ${SHERPA_QPKG_ESSENTIALS[$index]} ]]; then
-            QPKGs.Dependant.Add "${SHERPA_QPKG_NAME[$index]}"
+            QPKGs.Optional.Add "${SHERPA_QPKG_NAME[$index]}"
         else
             QPKGs.Essential.Add "${SHERPA_QPKG_NAME[$index]}"
         fi
@@ -3025,13 +3025,13 @@ QPKGs.Essential.Show()
 
     }
 
-QPKGs.Dependant.Show()
+QPKGs.Optional.Show()
     {
 
     local package=''
     QPKGs.StateLists.Build
 
-    for package in $(QPKGs.Dependant.Array); do
+    for package in $(QPKGs.Optional.Array); do
         Display "$package"
     done
 
@@ -4954,10 +4954,10 @@ Objects.Compile()
         Objects.Add User.Opts.Apps.All.Upgrade
 
         Objects.Add User.Opts.Apps.List.All
-        Objects.Add User.Opts.Apps.List.Dependant
         Objects.Add User.Opts.Apps.List.Essential
         Objects.Add User.Opts.Apps.List.Installed
         Objects.Add User.Opts.Apps.List.NotInstalled
+        Objects.Add User.Opts.Apps.List.Optional
         Objects.Add User.Opts.Apps.List.Upgradable
 
         # lists
@@ -4967,7 +4967,7 @@ Objects.Compile()
         Objects.Add IPKGs.ToInstall
         Objects.Add IPKGs.ToUninstall
 
-        Objects.Add QPKGs.Dependant
+        Objects.Add QPKGs.Optional
         Objects.Add QPKGs.Essential
         Objects.Add QPKGs.Installable
         Objects.Add QPKGs.Installed
@@ -5022,11 +5022,11 @@ Packages.Install.Essentials
 Packages.Restore.Essentials
 Packages.Start.Essentials
 Packages.Install.Addons
-Packages.Upgrade.Dependants
-Packages.Reinstall.Dependants
-Packages.Install.Dependants
-Packages.Start.Dependants
-Packages.Restore.Dependants
+Packages.Upgrade.Optionals
+Packages.Reinstall.Optionals
+Packages.Install.Optionals
+Packages.Start.Optionals
+Packages.Restore.Optionals
 Packages.Restart
 Session.Results
 Session.Error.IsNot
