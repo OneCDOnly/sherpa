@@ -770,7 +770,7 @@ Session.Validate()
         code_pointer=3
         if [[ $(Args.Unknown.Count) -eq 1 ]]; then
             ShowAsError "argument parser found an unknown argument: \"$(Args.Unknown.List)\""
-        elif [[ $(Args.Unknown.Count) -gt 1 ]]; then
+        else
             ShowAsError "argument parser found unknown arguments: \"$(Args.Unknown.List)\""
         fi
 
