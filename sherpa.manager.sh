@@ -4342,8 +4342,8 @@ DebugDetected.OK()
 
     if [[ -z $3 ]]; then                # if $3 is nothing, then assume only 2 fields are required
         DebugDetected "$(printf "%9s: %23s\n" "$1" "$2")"
-    elif [[ $3 = ' ' ]]; then           # if $3 is only a whitespace then print $2 with trailing colon but no third field
-        DebugDetected "$(printf "%9s: %23s:\n" "$1" "$2")"
+    elif [[ $3 = ' ' ]]; then           # if $3 is only a whitespace then print $2 with trailing colon and '<none>' as third field
+        DebugDetected "$(printf "%9s: %23s: <none>\n" "$1" "$2")"
     elif [[ ${3: -1} = ' ' ]]; then     # if $3 has a trailing whitespace then print $3 without the trailing whitespace
         DebugDetected "$(printf "%9s: %23s: %-s\n" "$1" "$2" "$($SED_CMD 's| *$||' <<< "$3")")"
     else
