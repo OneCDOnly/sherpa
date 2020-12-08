@@ -42,7 +42,7 @@ Session.Init()
     export LC_ALL=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=201208
+    readonly MANAGER_SCRIPT_VERSION=201209
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -3775,6 +3775,9 @@ QPKG.Enable()
 
     local resultcode=0
     local log_pathfile=$LOGS_PATH/$1.$ENABLE_LOG_FILE
+
+    # need this for Entware and Par2 packages as they don't add a status line to qpkg.conf
+    $SETCFG_CMD "$1" Status complete -f "$APP_CENTER_CONFIG_PATHFILE"
 
     if QPKG.NotEnabled "$1"; then
         RunAndLogResults "$QPKG_SERVICE_CMD enable $1" "$log_pathfile"
