@@ -1161,7 +1161,7 @@ Packages.Reinstall.Optionals()
     local package=''
 
     if QPKGs.ToReinstall.IsAny; then
-        ShowAsProc 'reinstalling optional  QPKGs'
+        ShowAsProc 'reinstalling optional QPKGs'
 
         for package in $(QPKGs.Optional.Array); do
             if QPKGs.ToReinstall.Exist "$package"; then
@@ -3540,13 +3540,13 @@ QPKG.Reinstall()
     target_file=$($BASENAME_CMD "$local_pathfile")
     log_pathfile=$LOGS_PATH/$target_file.$REINSTALL_LOG_FILE
 
-    ShowAsProcLong "re-installing $(FormatAsPackageName "$1")"
+    DebugAsProc "re-installing $(FormatAsPackageName "$1")"
 
     RunAndLogResults "$SH_CMD $local_pathfile" "$log_pathfile"
     resultcode=$?
 
     if [[ $resultcode -eq 0 || $resultcode -eq 10 ]]; then
-        ShowAsDone "re-installed $(FormatAsPackageName "$1")"
+        DebugAsDone "re-installed $(FormatAsPackageName "$1")"
         QPKG.ServiceStatus "$1"
         QPKGs.JustInstalled.Add "$1"
         QPKGs.JustStarted.Add "$1"
@@ -3590,7 +3590,7 @@ QPKG.Upgrade()
     local log_pathfile=$LOGS_PATH/$target_file.$UPGRADE_LOG_FILE
     QPKG.Installed "$1" && previous_version=$(QPKG.InstalledVersion "$1")
 
-    ShowAsProcLong "${prefix}upgrading $(FormatAsPackageName "$1")"
+    DebugAsProc "${prefix}upgrading $(FormatAsPackageName "$1")"
 
     RunAndLogResults "$SH_CMD $local_pathfile" "$log_pathfile"
     resultcode=$?
@@ -3601,7 +3601,7 @@ QPKG.Upgrade()
         if [[ $current_version = "$previous_version" ]]; then
             DebugAsDone "${prefix}upgraded $(FormatAsPackageName "$1") and installed version is $current_version"
         else
-            ShowAsDone "${prefix}upgraded $(FormatAsPackageName "$1") from $previous_version to $current_version"
+            DebugAsDone "${prefix}upgraded $(FormatAsPackageName "$1") from $previous_version to $current_version"
         fi
         QPKG.ServiceStatus "$1"
         QPKGs.JustInstalled.Add "$1"
@@ -3677,6 +3677,9 @@ QPKG.Restart()
     local resultcode=0
     local log_pathfile=$LOGS_PATH/$1.$RESTART_LOG_FILE
 
+    # need this for Entware and Par2 packages as they don't add a status line to qpkg.conf
+    $SETCFG_CMD "$1" Status complete -f "$APP_CENTER_CONFIG_PATHFILE"
+
     DebugAsProc "restarting $(FormatAsPackageName "$1")"
 
     RunAndLogResults "$QPKG_SERVICE_CMD restart $1" "$log_pathfile"
@@ -3714,6 +3717,9 @@ QPKG.Start()
 
     local resultcode=0
     local log_pathfile=$LOGS_PATH/$1.$START_LOG_FILE
+
+    # need this for Entware and Par2 packages as they don't add a status line to qpkg.conf
+    $SETCFG_CMD "$1" Status complete -f "$APP_CENTER_CONFIG_PATHFILE"
 
     DebugAsProc "starting $(FormatAsPackageName "$1")"
 
