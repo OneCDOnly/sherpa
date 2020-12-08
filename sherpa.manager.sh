@@ -966,12 +966,14 @@ Packages.Reinstall.Essentials()
             if QPKGs.ToReinstall.Exist "$package"; then
                 if QPKG.Installed "$package"; then
                     if [[ $package = Entware ]]; then
-                        ShowAsNote "Reinstalling $(FormatAsPackageName Entware) will remove all IPKGs and Python modules, and only those required to support your $PROJECT_NAME apps will be reinstalled."
-                        ShowAsNote "Your installed IPKG list will be saved to $(FormatAsFileName "$PREVIOUS_OPKG_PACKAGE_LIST")"
-                        ShowAsNote "Your installed Python module list will be saved to $(FormatAsFileName "$PREVIOUS_PIP3_MODULE_LIST")"
+                        Display
+                        ShowAsNote "reinstalling $(FormatAsPackageName Entware) will remove all IPKGs and Python modules, and only those required to support your $PROJECT_NAME apps will be reinstalled."
+                        ShowAsNote "your installed IPKG list will be saved to $(FormatAsFileName "$PREVIOUS_OPKG_PACKAGE_LIST")"
+                        ShowAsNote "your installed Python module list will be saved to $(FormatAsFileName "$PREVIOUS_PIP3_MODULE_LIST")"
                         (QPKG.Installed SABnzbdplus || QPKG.Installed Headphones) && ShowAsWarning "also, the $(FormatAsPackageName SABnzbdplus) and $(FormatAsPackageName Headphones) packages CANNOT BE REINSTALLED as Python 2.7.16 is no-longer available."
 
-                        if AskQuiz "Press 'Y' to remove all current $(FormatAsPackageName Entware) IPKGs (and their configurations), or any other key to abort"; then
+                        if AskQuiz "press 'Y' to remove all current $(FormatAsPackageName Entware) IPKGs (and their configurations), or any other key to abort"; then
+                            ShowAsProc 'reinstalling Entware'
                             Package.Save.Lists
                             QPKG.Uninstall Entware
                             Package.Install.Entware
@@ -1360,10 +1362,10 @@ Package.Install.Entware()
     [[ -L $opt_path && -d $opt_backup_path ]] && cp --recursive "$opt_backup_path"/* --target-directory "$opt_path" && rm -rf "$opt_backup_path"
     DebugAsDone 'complete'
 
-    ShowAsProcLong 'installing essential IPKGs'
+    DebugAsProc 'installing essential IPKGs'
     # add extra package(s) needed immediately
     RunAndLogResults "$OPKG_CMD install$(User.Opts.IgnoreFreeSpace.IsSet && User.Opts.IgnoreFreeSpace.Text) --force-overwrite $SHERPA_ESSENTIAL_IPKGS_ADD --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
-    ShowAsDone 'installed essential IPKGs'
+    DebugAsDone 'installed essential IPKGs'
 
     # ensure PIPs are installed later
     Session.PIPs.Install.Set
