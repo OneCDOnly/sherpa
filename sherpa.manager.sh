@@ -426,7 +426,7 @@ Session.Init()
     Session.SkipPackageProcessing.IsNot && Session.Debug.To.File.Set
     DebugInfoMajorSeparator
     DebugScript 'started' "$($DATE_CMD -d @"$SCRIPT_STARTSECONDS" | tr -s ' ')"
-    DebugScript 'version' "package: $PACKAGE_VERSION, manager: $MANAGER_SCRIPT_VERSION, loader $LOADER_SCRIPT_VERSION"
+    DebugScript 'version' "package: $PACKAGE_VERSION, manager: $MANAGER_SCRIPT_VERSION, loader: $LOADER_SCRIPT_VERSION"
     DebugScript 'PID' "$$"
     DebugInfoMinorSeparator
     DebugInfo 'Markers: (**) detected, (II) information, (WW) warning, (EE) error, (LL) log file,'
