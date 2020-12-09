@@ -693,22 +693,22 @@ Session.Validate()
 
     DebugInfoMinorSeparator
     DebugHardware.OK 'model' "$(get_display_name)"
-    DebugHardware.OK 'RAM' "$(FormatAsThousands "$INSTALLED_RAM_KB") kB"
+    DebugHardware.OK 'RAM' "$(FormatAsThousands "$INSTALLED_RAM_KB")kB"
 
     if QPKGs.ToInstall.Exist SABnzbd || QPKG.Installed SABnzbd; then
-        [[ $INSTALLED_RAM_KB -le $MIN_RAM_KB ]] && DebugHardware.Warning 'RAM' "less-than or equal-to $(FormatAsThousands "$MIN_RAM_KB") kB"
+        [[ $INSTALLED_RAM_KB -le $MIN_RAM_KB ]] && DebugHardware.Warning 'RAM' "less-than or equal-to $(FormatAsThousands "$MIN_RAM_KB")kB"
     fi
 
     if [[ ${NAS_FIRMWARE//.} -ge 400 ]]; then
-        DebugFirmware.OK 'firmware version' "$NAS_FIRMWARE"
+        DebugFirmware.OK 'version' "$NAS_FIRMWARE"
     else
-        DebugFirmware.Warning 'firmware version' "$NAS_FIRMWARE"
+        DebugFirmware.Warning 'version' "$NAS_FIRMWARE"
     fi
 
     if [[ $NAS_BUILD -lt 20201015 || $NAS_BUILD -gt 20201020 ]]; then
-        DebugFirmware.OK 'firmware build' "$NAS_BUILD"
+        DebugFirmware.OK 'build' "$NAS_BUILD"
     else
-        DebugFirmware.Warning 'firmware build' "$NAS_BUILD"
+        DebugFirmware.Warning 'build' "$NAS_BUILD"
     fi
 
     DebugFirmware.OK 'kernel' "$($UNAME_CMD -mr)"
@@ -742,16 +742,19 @@ Session.Validate()
         DebugUserspace.Warning '/opt' '<not present>'
     fi
 
-    if [[ ${#PATH} -le 56 ]]; then
+    max_width=58
+    trimmed_width=$max_width-3
+
+    if [[ ${#PATH} -le $max_width ]]; then
         DebugUserspace.OK '$PATH' "$PATH"
     else
-        DebugUserspace.OK '$PATH' "${PATH:0:53}..."
+        DebugUserspace.OK '$PATH' "${PATH:0:trimmed_width}..."
     fi
 
     CheckPythonPathAndVersion python2
     CheckPythonPathAndVersion python3
     CheckPythonPathAndVersion python
-    DebugUserspace.OK 'unparsed user arguments' "'$USER_ARGS_RAW'"
+    DebugUserspace.OK 'unparsed arguments' "'$USER_ARGS_RAW'"
 
     DebugScript 'logs path' "$LOGS_PATH"
     DebugScript 'work path' "$WORK_PATH"
@@ -4364,14 +4367,17 @@ DebugUserspace.Warning()
 DebugDetected.Warning()
     {
 
+    first_column_width=9
+    second_column_width=21
+
     if [[ -z $3 ]]; then                # if $3 is nothing, then assume only 2 fields are required
-        DebugAsWarning "$(printf "%9s: %23s\n" "$1" "$2")"
+        DebugAsWarning "$(printf "%${first_column_width}s: %${second_column_width}s\n" "$1" "$2")"
     elif [[ $3 = ' ' ]]; then           # if $3 is only a whitespace then print $2 with trailing colon but no third field
-        DebugAsWarning "$(printf "%9s: %23s:\n" "$1" "$2")"
+        DebugAsWarning "$(printf "%${first_column_width}s: %${second_column_width}s:\n" "$1" "$2")"
     elif [[ ${3: -1} = ' ' ]]; then     # if $3 has a trailing whitespace then print $3 without the trailing whitespace
-        DebugAsWarning "$(printf "%9s: %23s: %-s\n" "$1" "$2" "$($SED_CMD 's| *$||' <<< "$3")")"
+        DebugAsWarning "$(printf "%${first_column_width}s: %${second_column_width}s: %-s\n" "$1" "$2" "$($SED_CMD 's| *$||' <<< "$3")")"
     else
-        DebugAsWarning "$(printf "%9s: %23s: %-s\n" "$1" "$2" "$3")"
+        DebugAsWarning "$(printf "%${first_column_width}s: %${second_column_width}s: %-s\n" "$1" "$2" "$3")"
     fi
 
     }
@@ -4379,14 +4385,18 @@ DebugDetected.Warning()
 DebugDetected.OK()
     {
 
+    first_column_width=9
+    second_column_width=21
+    third_column_width=10
+
     if [[ -z $3 ]]; then                # if $3 is nothing, then assume only 2 fields are required
-        DebugDetected "$(printf "%9s: %23s\n" "$1" "$2")"
+        DebugDetected "$(printf "%${first_column_width}s: %${second_column_width}s\n" "$1" "$2")"
     elif [[ $3 = ' ' ]]; then           # if $3 is only a whitespace then print $2 with trailing colon and '<none>' as third field
-        DebugDetected "$(printf "%9s: %23s: <none>\n" "$1" "$2")"
+        DebugDetected "$(printf "%${first_column_width}s: %${second_column_width}s: <none>\n" "$1" "$2")"
     elif [[ ${3: -1} = ' ' ]]; then     # if $3 has a trailing whitespace then print $3 without the trailing whitespace
-        DebugDetected "$(printf "%9s: %23s: %-s\n" "$1" "$2" "$($SED_CMD 's| *$||' <<< "$3")")"
+        DebugDetected "$(printf "%${first_column_width}s: %${second_column_width}s: %-s\n" "$1" "$2" "$($SED_CMD 's| *$||' <<< "$3")")"
     else
-        DebugDetected "$(printf "%9s: %23s: %-s\n" "$1" "$2" "$3")"
+        DebugDetected "$(printf "%${first_column_width}s: %${second_column_width}s: %-s\n" "$1" "$2" "$3")"
     fi
 
     }
@@ -4425,7 +4435,7 @@ DebugFuncExit()
     local elapsed_time=''
 
     if [[ $diff_milliseconds -lt 30000 ]]; then
-        elapsed_time="$(FormatAsThousands "$diff_milliseconds") ms"
+        elapsed_time="$(FormatAsThousands "$diff_milliseconds")ms"
     else
         elapsed_time=$(ConvertSecsToHoursMinutesSecs "$((diff_milliseconds/1000))")
     fi
