@@ -699,9 +699,19 @@ Session.Validate()
         [[ $INSTALLED_RAM_KB -le $MIN_RAM_KB ]] && DebugHardware.Warning 'RAM' "less-than or equal-to $(printf "%'.f kB" $MIN_RAM_KB)"
     fi
 
-    DebugFirmware 'firmware version' "$NAS_FIRMWARE"
-    DebugFirmware 'firmware build' "$NAS_BUILD"
-    DebugFirmware 'kernel' "$($UNAME_CMD -mr)"
+    if [[ ${NAS_FIRMWARE//.} -ge 400 ]]; then
+        DebugFirmware.OK 'firmware version' "$NAS_FIRMWARE"
+    else
+        DebugFirmware.Warning 'firmware version' "$NAS_FIRMWARE"
+    fi
+
+    if [[ $NAS_BUILD -lt 20201015 || $NAS_BUILD -gt 20201020 ]]; then
+        DebugFirmware.OK 'firmware build' "$NAS_BUILD"
+    else
+        DebugFirmware.Warning 'firmware build' "$NAS_BUILD"
+    fi
+
+    DebugFirmware.OK 'kernel' "$($UNAME_CMD -mr)"
     DebugUserspace.OK 'OS uptime' "$($UPTIME_CMD | $SED_CMD 's|.*up.||;s|,.*load.*||;s|^\ *||')"
     DebugUserspace.OK 'system load' "$($UPTIME_CMD | $SED_CMD 's|.*load average: ||' | $AWK_CMD -F', ' '{print "1 min="$1 ", 5 min="$2 ", 15 min="$3}')"
 
@@ -732,10 +742,10 @@ Session.Validate()
         DebugUserspace.Warning '/opt' '<not present>'
     fi
 
-    if [[ ${#PATH} -le 54 ]]; then
+    if [[ ${#PATH} -le 56 ]]; then
         DebugUserspace.OK '$PATH' "$PATH"
     else
-        DebugUserspace.OK '$PATH' "${PATH:0:51}..."
+        DebugUserspace.OK '$PATH' "${PATH:0:53}..."
     fi
 
     CheckPythonPathAndVersion python2
@@ -750,7 +760,7 @@ Session.Validate()
     Session.Calc.EntwareType
     Session.Calc.QPKGArch
 
-    DebugQPKG 'upgradable QPKG(s)' "$(QPKGs.Upgradable.List) "
+    DebugQPKG 'upgradable QPKGs' "$(QPKGs.Upgradable.List) "
     DebugInfoMinorSeparator
     QPKGs.Assignment.Check
     DebugInfoMinorSeparator
@@ -4316,10 +4326,17 @@ DebugHardware.Warning()
 
     }
 
-DebugFirmware()
+DebugFirmware.OK()
     {
 
     DebugDetected.OK "$(FormatAsFirmware)" "$1" "$2"
+
+    }
+
+DebugFirmware.Warning()
+    {
+
+    DebugDetected.Warning "$(FormatAsFirmware)" "$1" "$2"
 
     }
 
