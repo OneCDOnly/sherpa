@@ -469,7 +469,7 @@ Session.ParseArguments()
         DebugFuncExit; return 1
     fi
 
-    local user_args=($(tr 'A-Z' 'a-z' <<< "$USER_ARGS_RAW"))
+    local user_args=($(tr 'A-Z' 'a-z' <<< "${USER_ARGS_RAW//,/ }"))
     local arg=''
     local action='install_'     # make 'install' the default action. A user-convenience to emulate the previous script behaviour.
     local action_force=false
