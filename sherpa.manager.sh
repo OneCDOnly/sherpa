@@ -1101,7 +1101,7 @@ Packages.Install.Addons()
 
     if QPKG.Enabled Entware; then
         if Session.IPKGs.Install.IsSet || Session.PIPs.Install.IsSet; then
-            ShowAsProcLong 'installing additional packages'
+            ShowAsProcLong 'downloading & installing IPKGs'
         fi
 
         Session.AdjustPathEnv
@@ -1110,7 +1110,7 @@ Packages.Install.Addons()
         PIPs.Install
 
         if Session.IPKGs.Install.IsSet || Session.PIPs.Install.IsSet; then
-            ShowAsDone 'installed additional packages'
+            ShowAsDone 'downloaded & installed IPKGs'
         fi
     else
         : # TODO: test if other packages are to be installed here. If so, and Entware isn't enabled, then abort with error.
