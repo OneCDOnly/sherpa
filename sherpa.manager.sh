@@ -2896,9 +2896,13 @@ QPKGs.NotUpgraded.Restart()
     DebugFuncEntry
     local package=''
 
+    ShowAsProcLong 'restarting optional QPKGs'
+
     for package in $(QPKGs.Optional.Array); do
         QPKG.Enabled "$package" && ! QPKGs.Upgradable.Exist "$package" && QPKG.Restart "$package"
     done
+
+    ShowAsDone 'restarted optional QPKGs'
 
     DebugFuncExit; return 0
 
@@ -3172,7 +3176,7 @@ Session.Summary.Show()
 
     if User.Opts.Apps.All.Upgrade.IsSet; then
         if QPKGs.Upgradable.IsNone; then
-            ShowAsDone 'no QPKGs need upgrading'
+            ShowAsDone 'no QPKGs needed upgrading'
         elif Session.Error.IsNot; then
             ShowAsDone 'all upgradable QPKGs were successfully upgraded'
         else
