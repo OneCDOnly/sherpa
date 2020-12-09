@@ -39,7 +39,7 @@ Session.Init()
     IsQNAP || return 1
     DebugFuncEntry
     readonly SCRIPT_STARTSECONDS=$(/bin/date +%s)
-    export LC_ALL=C
+    export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
     readonly MANAGER_SCRIPT_VERSION=201209
@@ -693,10 +693,10 @@ Session.Validate()
 
     DebugInfoMinorSeparator
     DebugHardware.OK 'model' "$(get_display_name)"
-    DebugHardware.OK 'RAM' "$(printf "%'.f kB" "$INSTALLED_RAM_KB")"
+    DebugHardware.OK 'RAM' "$(FormatAsThousands "$INSTALLED_RAM_KB") kB"
 
     if QPKGs.ToInstall.Exist SABnzbd || QPKG.Installed SABnzbd; then
-        [[ $INSTALLED_RAM_KB -le $MIN_RAM_KB ]] && DebugHardware.Warning 'RAM' "less-than or equal-to $(printf "%'.f kB" $MIN_RAM_KB)"
+        [[ $INSTALLED_RAM_KB -le $MIN_RAM_KB ]] && DebugHardware.Warning 'RAM' "less-than or equal-to $(FormatAsThousands "$MIN_RAM_KB") kB"
     fi
 
     if [[ ${NAS_FIRMWARE//.} -ge 400 ]]; then
@@ -713,7 +713,7 @@ Session.Validate()
 
     DebugFirmware.OK 'kernel' "$($UNAME_CMD -mr)"
     DebugUserspace.OK 'OS uptime' "$($UPTIME_CMD | $SED_CMD 's|.*up.||;s|,.*load.*||;s|^\ *||')"
-    DebugUserspace.OK 'system load' "$($UPTIME_CMD | $SED_CMD 's|.*load average: ||' | $AWK_CMD -F', ' '{print "1 min="$1 ", 5 min="$2 ", 15 min="$3}')"
+    DebugUserspace.OK 'system load' "$($UPTIME_CMD | $SED_CMD 's|.*load average: ||' | $AWK_CMD -F', ' '{print "1 min: "$1 ", 5 min: "$2 ", 15 min: "$3}')"
 
     if [[ $USER = admin ]]; then
         DebugUserspace.OK '$USER' "$USER"
@@ -2426,11 +2426,11 @@ Help.Problems.Show()
 
     DisplayAsProjectSyntaxIndentedExample "view only the most recent $(FormatAsScriptTitle) session log" 'l'
 
-    DisplayAsProjectSyntaxIndentedExample "upload the most-recent session in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'p'
-
     DisplayAsProjectSyntaxIndentedExample "view the entire $(FormatAsScriptTitle) session log" 'log'
 
-    DisplayAsProjectSyntaxIndentedExample "upload the most-recent $(printf "%'.f" $LOG_TAIL_LINES) entries in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste'
+    DisplayAsProjectSyntaxIndentedExample "upload the most-recent session in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'p'
+
+    DisplayAsProjectSyntaxIndentedExample "upload the most-recent $(FormatAsThousands "$LOG_TAIL_LINES") entries in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste'
 
     Display "\n$(ColourTextBrightOrange "* If you need help, please include a copy of your") $(FormatAsScriptTitle) $(ColourTextBrightOrange "log for analysis!")"
 
@@ -2450,7 +2450,7 @@ Help.Issue.Show()
 
     DisplayAsProjectSyntaxIndentedExample "view the entire $(FormatAsScriptTitle) session log" 'log'
 
-    DisplayAsProjectSyntaxIndentedExample "upload the most-recent $(printf "%'.f" $LOG_TAIL_LINES) entries in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste'
+    DisplayAsProjectSyntaxIndentedExample "upload the most-recent $(FormatAsThousands "$LOG_TAIL_LINES") entries in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste'
 
     Display "\n$(ColourTextBrightOrange '* If you need help, please include a copy of your') $(FormatAsScriptTitle) $(ColourTextBrightOrange 'log for analysis!')"
 
@@ -2562,7 +2562,7 @@ Log.Tail.Paste.Online()
     ExtractTailFromLog
 
     if [[ -e $SESSION_TAIL_PATHFILE ]]; then
-        if AskQuiz "Press 'Y' to post the most-recent $(printf "%'.f" $LOG_TAIL_LINES) entries in your $(FormatAsScriptTitle) log to a public pastebin, or any other key to abort"; then
+        if AskQuiz "Press 'Y' to post the most-recent $(FormatAsThousands "$LOG_TAIL_LINES") entries in your $(FormatAsScriptTitle) log to a public pastebin, or any other key to abort"; then
             ShowAsProc "uploading $(FormatAsScriptTitle) log"
             # with thanks to https://github.com/solusipse/fiche
             link=$($CAT_CMD -n "$SESSION_TAIL_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
@@ -4140,6 +4140,13 @@ FormatAsPlural()
 
     }
 
+FormatAsThousands()
+    {
+
+    LC_NUMERIC=en_US.utf8 printf "%'.f" "$1"
+
+    }
+
 FormatAsISOBytes()
     {
 
@@ -4418,7 +4425,7 @@ DebugFuncExit()
     local elapsed_time=''
 
     if [[ $diff_milliseconds -lt 30000 ]]; then
-        elapsed_time=$(printf "%'.fms" $diff_milliseconds)
+        elapsed_time="$(FormatAsThousands "$diff_milliseconds") ms"
     else
         elapsed_time=$(ConvertSecsToHoursMinutesSecs "$((diff_milliseconds/1000))")
     fi
