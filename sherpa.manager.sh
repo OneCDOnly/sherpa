@@ -241,6 +241,15 @@ Session.Init()
         SHERPA_QPKG_IPKGS_ADD=()    # require these IPKGs to be installed
         SHERPA_QPKG_IPKGS_REMOVE=() # require these IPKGs to be uninstalled
 
+    SHERPA_QPKG_NAME+=(sherpa)
+        SHERPA_QPKG_ARCH+=(all)
+        SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/sherpa/build/sherpa_201116.qpkg)
+        SHERPA_QPKG_MD5+=(b87859e2fde88afd292e204649659ce3)
+        SHERPA_QPKG_ABBRVS+=('sherpa')
+        SHERPA_QPKG_ESSENTIALS+=('')
+        SHERPA_QPKG_IPKGS_ADD+=('')
+        SHERPA_QPKG_IPKGS_REMOVE+=('')
+
     SHERPA_QPKG_NAME+=(Entware)
         SHERPA_QPKG_ARCH+=(all)
         SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/Entware/Entware_1.03std.qpkg)
@@ -254,7 +263,7 @@ Session.Init()
         SHERPA_QPKG_ARCH+=(x86)
         SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/Par2/Par2_0.8.1.0_x86.qpkg)
         SHERPA_QPKG_MD5+=(996ffb92d774eb01968003debc171e91)
-        SHERPA_QPKG_ABBRVS+=('par par2')        # these apply to all 'Par2' packages
+        SHERPA_QPKG_ABBRVS+=('par par2')        # applies to all 'Par2' packages
         SHERPA_QPKG_ESSENTIALS+=('')
         SHERPA_QPKG_IPKGS_ADD+=('')
         SHERPA_QPKG_IPKGS_REMOVE+=('par2cmdline')
@@ -763,7 +772,7 @@ Session.Validate()
     Session.Calc.EntwareType
     Session.Calc.QPKGArch
 
-    DebugQPKG 'upgradable QPKGs' "$(QPKGs.Upgradable.List) "
+    DebugQPKG 'upgradable QPKGs' "$(QPKGs.Upgradable.ListCSV) "
     DebugInfoMinorSeparator
     QPKGs.Assignment.Check
     DebugInfoMinorSeparator
@@ -961,7 +970,47 @@ Packages.Force-upgrade.Essentials()
 Packages.Upgrade.Essentials()
     {
 
-    :   # placeholder function
+    Session.SkipPackageProcessing.IsSet && return
+    DebugFuncEntry
+    local package=''
+    local found=false
+
+    if QPKGs.ToUpgrade.IsAny || QPKGs.ToForceUpgrade.IsAny; then
+        for package in $(QPKGs.Essential.Array); do
+            if QPKGs.ToUpgrade.Exist "$package" || QPKGs.ToForceUpgrade.Exist "$package" ; then
+                found=true
+                break
+            fi
+        done
+
+        if [[ $found = true ]]; then
+            ShowAsProc 'upgrading essential QPKGs'
+
+            for package in $(QPKGs.Essential.Array); do
+                if QPKGs.ToForceUpgrade.Exist "$package"; then
+                    QPKG.Upgrade "$package" --forced
+                elif QPKGs.ToUpgrade.Exist "$package"; then
+                    if QPKG.Installed "$package"; then
+                        if QPKGs.Upgradable.Exist "$package"; then
+                            QPKG.Upgrade "$package"
+                        else
+                            ShowAsNote "unable to upgrade $(FormatAsPackageName "$package") as it's not upgradable. Use the 'force' if you really want this."
+                        fi
+                    else
+                        ShowAsNote "unable to upgrade $(FormatAsPackageName "$package") as it's not installed. Use 'install' instead."
+                    fi
+                fi
+            done
+
+            ShowAsDone 'upgraded essential QPKGs'
+        else
+            DebugInfo 'no essential QPKGs require upgrading'
+        fi
+    else
+        DebugInfo 'no QPKGs require upgrading'
+    fi
+
+    DebugFuncExit; return 0
 
     }
 
@@ -1139,29 +1188,41 @@ Packages.Upgrade.Optionals()
     Session.SkipPackageProcessing.IsSet && return
     DebugFuncEntry
     local package=''
+    local found=false
 
     if QPKGs.ToUpgrade.IsAny || QPKGs.ToForceUpgrade.IsAny; then
-        ShowAsProc 'upgrading optional QPKGs'
-
         for package in $(QPKGs.Optional.Array); do
-            if QPKGs.ToForceUpgrade.Exist "$package"; then
-                QPKG.Upgrade "$package" --forced
-            elif QPKGs.ToUpgrade.Exist "$package"; then
-                if QPKG.Installed "$package"; then
-                    if QPKGs.Upgradable.Exist "$package"; then
-                        QPKG.Upgrade "$package"
-                    else
-                        ShowAsNote "unable to upgrade $(FormatAsPackageName "$package") as it's not upgradable. Use the 'force' if you really want this."
-                    fi
-                else
-                    ShowAsNote "unable to upgrade $(FormatAsPackageName "$package") as it's not installed. Use 'install' instead."
-                fi
+            if QPKGs.ToUpgrade.Exist "$package" || QPKGs.ToForceUpgrade.Exist "$package" ; then
+                found=true
+                break
             fi
         done
 
-        ShowAsDone 'upgraded optional QPKGs'
+        if [[ $found = true ]]; then
+            ShowAsProc 'upgrading optional QPKGs'
+
+            for package in $(QPKGs.Optional.Array); do
+                if QPKGs.ToForceUpgrade.Exist "$package"; then
+                    QPKG.Upgrade "$package" --forced
+                elif QPKGs.ToUpgrade.Exist "$package"; then
+                    if QPKG.Installed "$package"; then
+                        if QPKGs.Upgradable.Exist "$package"; then
+                            QPKG.Upgrade "$package"
+                        else
+                            ShowAsNote "unable to upgrade $(FormatAsPackageName "$package") as it's not upgradable. Use the 'force' if you really want this."
+                        fi
+                    else
+                        ShowAsNote "unable to upgrade $(FormatAsPackageName "$package") as it's not installed. Use 'install' instead."
+                    fi
+                fi
+            done
+
+            ShowAsDone 'upgraded optional QPKGs'
+        else
+            DebugInfo 'no optional QPKGs require upgrading'
+        fi
     else
-        DebugInfo 'no optional QPKGs require upgrading'
+        DebugInfo 'no QPKGs require upgrading'
     fi
 
     DebugFuncExit; return 0
@@ -2355,32 +2416,29 @@ Help.Packages.Show()
     {
 
     local package=''
-    local package_name_message=''
-    local package_note_message=''
+    local package_note=''
 
     Help.Basic.Show
     DisplayLineSpaceIfNoneAlready
-    Display "* $(FormatAsHelpPackages) may be one or more of the following (space-separated):\n"
+    Display "* $(FormatAsHelpPackages) may be one-or-more of the following (space-separated):\n"
 
     for package in $(QPKGs.Installable.Array); do
         if QPKGs.Upgradable.Exist "$package"; then
-            package_name_message=$(ColourTextBrightOrange "$package")
+            package_note='(upgradable)'
+        elif QPKGs.Installed.Exist "$package"; then
+            package_note='(installed)'
         else
-            package_name_message=$package
+            package_note=''
         fi
 
-        if [[ $package = Entware ]]; then       # KLUDGE: use this until essential package checking works.
-            package_note_message='(installed by-default)'
-        else
-            package_note_message=''
-        fi
-
-        DisplayAsHelpPackageNameExample "$package_name_message" "$package_note_message"
+        DisplayAsHelpPackageNameExample "$package" "$package_note"
     done
 
     DisplayAsProjectSyntaxExample "example: to install $(FormatAsPackageName SABnzbd)" 'install SABnzbd'
 
-    DisplayAsProjectSyntaxExample "abbreviations may also be used to specify $(FormatAsHelpPackages). To see these" 'abs'
+    DisplayAsProjectSyntaxExample "example: to install both $(FormatAsPackageName SABnzbd) and $(FormatAsPackageName SickChill)" 'install SABnzbd SickChill'
+
+    DisplayAsProjectSyntaxExample "abbreviations may also be used to specify $(FormatAsHelpPackages). To list these" 'abs'
 
     return 0
 
@@ -2914,26 +2972,28 @@ QPKGs.NotUpgraded.Restart()
 QPKGs.StateLists.Build()
     {
 
-    QPKGs.DepAndIndep.Build
+    QPKGs.EssentialAndOptional.Build
     QPKGs.InstallationState.Build
     QPKGs.Upgradable.Build
 
     }
 
-QPKGs.DepAndIndep.Build()
+QPKGs.EssentialAndOptional.Build()
     {
 
-    # Essential packages don't depend on other packages. These are therefore essential. They should be installed/started before any optional QPKGs.
-    # Optional packages depend on other QPKGs. These are therefore optional. They should be installed/started after any essential QPKGs.
+    # there are only two tiers of QPKG: 'essential' and 'optional'.
+
+    # 'essential' QPKGs don't depend on other QPKGs. They should be installed/started before any 'optional' QPKGs.
+    # 'optional' QPKGs depend on other QPKGs. They should be installed/started after any 'essential' QPKGs.
 
     DebugFuncEntry
     local index=0
 
     for index in "${!SHERPA_QPKG_NAME[@]}"; do
         if [[ -n ${SHERPA_QPKG_ESSENTIALS[$index]} ]]; then
-            QPKGs.Optional.Add "${SHERPA_QPKG_NAME[$index]}"
+            QPKGs.Optional.Add "${SHERPA_QPKG_NAME[$index]}"    # if the 'SHERPA_QPKG_ESSENTIALS' field has some value, then this package is 'optional'
         else
-            QPKGs.Essential.Add "${SHERPA_QPKG_NAME[$index]}"
+            QPKGs.Essential.Add "${SHERPA_QPKG_NAME[$index]}"   # if the 'SHERPA_QPKG_ESSENTIALS' field is empty, then this package is 'essential'
         fi
     done
 
