@@ -42,7 +42,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=201209
+    readonly MANAGER_SCRIPT_VERSION=201210
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -2255,7 +2255,7 @@ Help.Basic.Show()
     {
 
     DisplayLineSpaceIfNoneAlready
-    Display "Usage: $(FormatAsScriptTitle) $(FormatAsHelpActions) $(FormatAsHelpPackages) $(FormatAsHelpOptions)"
+    Display "Usage: $(FormatAsScriptTitle) $(FormatAsHelpAction) $(FormatAsHelpPackages) $(FormatAsHelpOptions)"
 
     return 0
 
@@ -2264,7 +2264,7 @@ Help.Basic.Show()
 Help.Basic.Example.Show()
     {
 
-    DisplayAsProjectSyntaxIndentedExample "to learn more about available $(FormatAsHelpActions), type" 'actions'
+    DisplayAsProjectSyntaxIndentedExample "to list available $(FormatAsHelpAction) operations, type" 'actions'
 
     DisplayAsProjectSyntaxIndentedExample '' 'actions-all'
 
@@ -2283,7 +2283,7 @@ Help.Actions.Show()
 
     Help.Basic.Show
     DisplayLineSpaceIfNoneAlready
-    Display "* $(FormatAsHelpActions) usage examples:"
+    Display "* $(FormatAsHelpAction) usage examples:"
 
     DisplayAsProjectSyntaxIndentedExample 'install these packages' "install $(FormatAsHelpPackages)"
 
@@ -2303,9 +2303,10 @@ Help.Actions.Show()
 
     DisplayAsProjectSyntaxIndentedExample 'restore these application configurations from the default backup location' "restore $(FormatAsHelpPackages)"
 
-    DisplayAsProjectSyntaxExample "$(FormatAsHelpActions) to affect all packages can be seen with" 'actions-all'
+    DisplayAsProjectSyntaxExample "$(FormatAsHelpAction) to affect all packages can be seen with" 'actions-all'
 
-    DisplayAsProjectSyntaxExample "multiple $(FormatAsHelpActions) are supported like this" 'install sabnzbd sickchill restart transmission uninstall lazy nzbget upgrade nzbtomedia'
+    DisplayAsProjectSyntaxExample "multiple $(FormatAsHelpAction) operations are supported like this" "$(FormatAsHelpAction) $(FormatAsHelpPackages) $(FormatAsHelpAction) $(FormatAsHelpPackages)"
+    DisplayAsProjectSyntaxIndentedExample '' 'install sabnzbd sickchill restart transmission uninstall lazy nzbget upgrade nzbtomedia'
 
     return 0
 
@@ -2316,7 +2317,9 @@ Help.ActionsAll.Show()
 
     Help.Basic.Show
     DisplayLineSpaceIfNoneAlready
-    Display "* $(FormatAsHelpActions) usage examples:"
+    Display "* These $(FormatAsHelpAction) operations apply to all installed packages. If $(FormatAsHelpAction) is 'install-all' then all available packages will be affected."
+    DisplayLineSpaceIfNoneAlready
+    Display "* $(FormatAsHelpAction) usage examples:"
 
     DisplayAsProjectSyntaxIndentedExample 'install everything!' 'install-all'
 
@@ -2390,9 +2393,9 @@ Help.Options.Show()
     DisplayLineSpaceIfNoneAlready
     Display "* $(FormatAsHelpOptions) usage examples:"
 
-    DisplayAsProjectSyntaxIndentedExample 'process one or more packages and show live debugging information' "$(FormatAsHelpActions) $(FormatAsHelpPackages) debug"
+    DisplayAsProjectSyntaxIndentedExample 'process one or more packages and show live debugging information' "$(FormatAsHelpAction) $(FormatAsHelpPackages) debug"
 
-    DisplayAsProjectSyntaxIndentedExample "don't check free-space on target filesystem when installing $(FormatAsPackageName Entware) packages" "$(FormatAsHelpActions) $(FormatAsHelpPackages) ignore-space"
+    DisplayAsProjectSyntaxIndentedExample "don't check free-space on target filesystem when installing $(FormatAsPackageName Entware) packages" "$(FormatAsHelpAction) $(FormatAsHelpPackages) ignore-space"
 
     DisplayAsProjectSyntaxIndentedExample 'display helpful tips and shortcuts' 'tips'
 
@@ -2409,11 +2412,11 @@ Help.Problems.Show()
     DisplayLineSpaceIfNoneAlready
     Display '* usage examples when dealing with problems:'
 
-    DisplayAsProjectSyntaxIndentedExample 'process one or more packages and show live debugging information' "$(FormatAsHelpActions) $(FormatAsHelpPackages) debug"
+    DisplayAsProjectSyntaxIndentedExample 'process one or more packages and show live debugging information' "$(FormatAsHelpAction) $(FormatAsHelpPackages) debug"
 
     DisplayAsProjectSyntaxIndentedExample 'ensure all application dependencies are installed' 'check-all'
 
-    DisplayAsProjectSyntaxIndentedExample "don't check free-space on target filesystem when installing $(FormatAsPackageName Entware) packages" "$(FormatAsHelpActions) $(FormatAsHelpPackages) ignore-space"
+    DisplayAsProjectSyntaxIndentedExample "don't check free-space on target filesystem when installing $(FormatAsPackageName Entware) packages" "$(FormatAsHelpAction) $(FormatAsHelpPackages) ignore-space"
 
     DisplayAsProjectSyntaxIndentedExample "clean the $(FormatAsScriptTitle) cache" 'clean'
 
@@ -4168,10 +4171,10 @@ FormatAsScriptTitle()
 
     }
 
-FormatAsHelpActions()
+FormatAsHelpAction()
     {
 
-    ColourTextBrightYellow '[actions]'
+    ColourTextBrightYellow '[action]'
 
     }
 
