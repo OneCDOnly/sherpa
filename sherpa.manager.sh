@@ -1198,18 +1198,10 @@ Packages.Install.Addons()
     fi
 
     if QPKG.Enabled Entware; then
-        if Session.IPKGs.Install.IsSet || Session.PIPs.Install.IsSet; then
-            ShowAsProcLong 'downloading & installing IPKGs'
-        fi
-
         Session.AdjustPathEnv
         Entware.Patch.Service
         IPKGs.Install
         PIPs.Install
-
-        if Session.IPKGs.Install.IsSet || Session.PIPs.Install.IsSet; then
-            ShowAsDone 'downloaded & installed IPKGs'
-        fi
     else
         : # TODO: test if other packages are to be installed here. If so, and Entware isn't enabled, then abort with error.
     fi
@@ -1715,6 +1707,8 @@ PIPs.Install()
 
     [[ -n ${SHERPA_COMMON_PIPS_ADD// /} ]] && exec_cmd="$pip3_cmd install $SHERPA_COMMON_PIPS_ADD --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
 
+    ShowAsProcLong "downloading & installing PIPs"
+
     local desc="'Python3' modules"
     local log_pathfile=$LOGS_PATH/py3-modules.assorted.$INSTALL_LOG_FILE
     DebugAsProc "downloading & installing $desc"
@@ -1764,6 +1758,8 @@ PIPs.Install()
             ShowAsError "download & install $desc failed $(FormatAsResult "$resultcode")"
         fi
     fi
+
+    ShowAsDone "downloaded & installed PIPs"
 
     DebugFuncExit; return $resultcode
 
@@ -1979,7 +1975,7 @@ IPKGs.Upgrade.Batch()
     package_count=$(IPKGs.ToDownload.Count)
 
     if [[ $package_count -gt 0 ]]; then
-        DebugAsProc "downloading & upgrading $package_count IPKG$(FormatAsPlural "$package_count")"
+        ShowAsProcLong "downloading & upgrading $package_count IPKG$(FormatAsPlural "$package_count")"
 
         CreateDirSizeMonitorFlagFile "$IPKG_DL_PATH"/.monitor
             trap CTRL_C_Captured INT
@@ -1991,7 +1987,7 @@ IPKGs.Upgrade.Batch()
         RemoveDirSizeMonitorFlagFile
 
         if [[ $resultcode -eq 0 ]]; then
-            DebugAsDone "downloaded & upgraded $package_count IPKG$(FormatAsPlural "$package_count")"
+            ShowAsDone "downloaded & upgraded $package_count IPKG$(FormatAsPlural "$package_count")"
         else
             ShowAsError "download & upgrade IPKG$(FormatAsPlural "$package_count") failed $(FormatAsExitcode $resultcode)"
         fi
@@ -2016,7 +2012,7 @@ IPKGs.Install.Batch()
     package_count=$(IPKGs.ToDownload.Count)
 
     if [[ $package_count -gt 0 ]]; then
-        DebugAsProc "downloading & installing IPKG$(FormatAsPlural "$package_count")"
+        ShowAsProcLong "downloading & installing IPKG$(FormatAsPlural "$package_count")"
 
         CreateDirSizeMonitorFlagFile "$IPKG_DL_PATH"/.monitor
             trap CTRL_C_Captured INT
@@ -2028,7 +2024,7 @@ IPKGs.Install.Batch()
         RemoveDirSizeMonitorFlagFile
 
         if [[ $resultcode -eq 0 ]]; then
-            DebugAsDone "downloaded & installed $package_count IPKG$(FormatAsPlural "$package_count")"
+            ShowAsDone "downloaded & installed $package_count IPKG$(FormatAsPlural "$package_count")"
         else
             ShowAsError "download & install IPKG$(FormatAsPlural "$package_count") failed $(FormatAsExitcode $resultcode)"
         fi
