@@ -2398,9 +2398,9 @@ Help.Basic.Example.Show()
 
     DisplayAsProjectSyntaxIndentedExample '' 'actions-all'
 
-    DisplayAsProjectSyntaxIndentedExample "to learn more about available $(FormatAsHelpPackages), type" 'packages'
+    DisplayAsProjectSyntaxIndentedExample "to list available $(FormatAsHelpPackages), type" 'packages'
 
-    DisplayAsProjectSyntaxIndentedExample "or, for more about available $(FormatAsHelpOptions), type" 'options'
+    DisplayAsProjectSyntaxIndentedExample "or, for more $(FormatAsHelpOptions), type" 'options'
 
     Display "\nThere's even more here: $(FormatAsURL 'https://github.com/OneCDOnly/sherpa/wiki')"
 
@@ -2520,7 +2520,7 @@ Help.Options.Show()
     DisplayLineSpaceIfNoneAlready
     Display "* $(FormatAsHelpOptions) usage examples:"
 
-    DisplayAsProjectSyntaxIndentedExample 'process one or more packages and show live debugging information' "$(FormatAsHelpAction) $(FormatAsHelpPackages) debug"
+    DisplayAsProjectSyntaxIndentedExample 'process one-or-more packages and show live debugging information' "$(FormatAsHelpAction) $(FormatAsHelpPackages) debug"
 
     DisplayAsProjectSyntaxIndentedExample "don't check free-space on target filesystem when installing $(FormatAsPackageName Entware) packages" "$(FormatAsHelpAction) $(FormatAsHelpPackages) ignore-space"
 
@@ -2539,7 +2539,7 @@ Help.Problems.Show()
     DisplayLineSpaceIfNoneAlready
     Display '* usage examples when dealing with problems:'
 
-    DisplayAsProjectSyntaxIndentedExample 'process one or more packages and show live debugging information' "$(FormatAsHelpAction) $(FormatAsHelpPackages) debug"
+    DisplayAsProjectSyntaxIndentedExample 'process one-or-more packages and show live debugging information' "$(FormatAsHelpAction) $(FormatAsHelpPackages) debug"
 
     DisplayAsProjectSyntaxIndentedExample 'ensure all application dependencies are installed' 'check-all'
 
@@ -2802,7 +2802,7 @@ QPKGs.NewVersions.Show()
     # Check installed QPKGs and compare versions against package arrays. If new versions are available, advise on-screen.
 
     # $? = 0 if all packages are up-to-date
-    # $? = 1 if one or more packages can be upgraded
+    # $? = 1 if one-or-more packages can be upgraded
 
     local msg=''
     local index=0
