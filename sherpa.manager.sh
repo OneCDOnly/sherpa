@@ -1555,6 +1555,8 @@ PIPs.Install()
     # sometimes, OpenWRT doesn't have a 'pip3'
     if [[ -e /opt/bin/pip3 ]]; then
         pip3_cmd=/opt/bin/pip3
+    elif [[ -e /opt/bin/pip3.9 ]]; then
+        pip3_cmd=/opt/bin/pip3.9
     elif [[ -e /opt/bin/pip3.8 ]]; then
         pip3_cmd=/opt/bin/pip3.8
     elif [[ -e /opt/bin/pip3.7 ]]; then
