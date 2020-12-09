@@ -1020,45 +1020,57 @@ Packages.Reinstall.Essentials()
     Session.SkipPackageProcessing.IsSet && return
     DebugFuncEntry
     local package=''
+    local found=false
 
     if QPKGs.ToReinstall.IsAny; then
-        ShowAsProc 'reinstalling essential QPKGs'
-
-        for package in $(QPKGs.Essential.Array); do
-            if QPKGs.ToReinstall.Exist "$package"; then
-                if QPKG.Installed "$package"; then
-                    if [[ $package = Entware ]]; then
-                        Display
-                        ShowAsNote "reinstalling $(FormatAsPackageName Entware) will remove all IPKGs and Python modules, and only those required to support your $PROJECT_NAME apps will be reinstalled."
-                        ShowAsNote "your installed IPKG list will be saved to $(FormatAsFileName "$PREVIOUS_OPKG_PACKAGE_LIST")"
-                        ShowAsNote "your installed Python module list will be saved to $(FormatAsFileName "$PREVIOUS_PIP3_MODULE_LIST")"
-                        (QPKG.Installed SABnzbdplus || QPKG.Installed Headphones) && ShowAsWarning "also, the $(FormatAsPackageName SABnzbdplus) and $(FormatAsPackageName Headphones) packages CANNOT BE REINSTALLED as Python 2.7.16 is no-longer available."
-
-                        if AskQuiz "press 'Y' to remove all current $(FormatAsPackageName Entware) IPKGs (and their configurations), or any other key to abort"; then
-                            ShowAsProc 'reinstalling Entware'
-                            Package.Save.Lists
-                            QPKG.Uninstall Entware
-                            Package.Install.Entware
-                            QPKGs.ToReinstall.Add Entware   # re-add this back to reinstall list as it was (quite-rightly) removed by the std QPKG.Install function
-                        else
-                            DebugInfoMinorSeparator
-                            DebugScript 'user abort'
-                            Session.SkipPackageProcessing.Set
-                            Session.Summary.Clear
-                            DebugFuncExit; return 1
-                        fi
-                    else
-                        QPKG.Reinstall "$package"
-                    fi
-                else
-                    ShowAsNote "unable to reinstall $(FormatAsPackageName "$package") as it's not installed. Use 'install' instead."
-                fi
+        for package in $(QPKGs.ToReinstall.Array); do
+            if QPKGs.Essential.Exist "$package"; then
+                found=true
+                break
             fi
         done
 
-        ShowAsDone 'reinstalled essential QPKGs'
+        if [[ $found = true ]]; then
+            ShowAsProc 'reinstalling essential QPKGs'
+
+            for package in $(QPKGs.Essential.Array); do
+                if QPKGs.ToReinstall.Exist "$package"; then
+                    if QPKG.Installed "$package"; then
+                        if [[ $package = Entware ]]; then
+                            Display
+                            ShowAsNote "reinstalling $(FormatAsPackageName Entware) will remove all IPKGs and Python modules, and only those required to support your $PROJECT_NAME apps will be reinstalled."
+                            ShowAsNote "your installed IPKG list will be saved to $(FormatAsFileName "$PREVIOUS_OPKG_PACKAGE_LIST")"
+                            ShowAsNote "your installed Python module list will be saved to $(FormatAsFileName "$PREVIOUS_PIP3_MODULE_LIST")"
+                            (QPKG.Installed SABnzbdplus || QPKG.Installed Headphones) && ShowAsWarning "also, the $(FormatAsPackageName SABnzbdplus) and $(FormatAsPackageName Headphones) packages CANNOT BE REINSTALLED as Python 2.7.16 is no-longer available."
+
+                            if AskQuiz "press 'Y' to remove all current $(FormatAsPackageName Entware) IPKGs (and their configurations), or any other key to abort"; then
+                                ShowAsProc 'reinstalling Entware'
+                                Package.Save.Lists
+                                QPKG.Uninstall Entware
+                                Package.Install.Entware
+                                QPKGs.ToReinstall.Add Entware   # re-add this back to reinstall list as it was (quite-rightly) removed by the std QPKG.Install function
+                            else
+                                DebugInfoMinorSeparator
+                                DebugScript 'user abort'
+                                Session.SkipPackageProcessing.Set
+                                Session.Summary.Clear
+                                DebugFuncExit; return 1
+                            fi
+                        else
+                            QPKG.Reinstall "$package"
+                        fi
+                    else
+                        ShowAsNote "unable to reinstall $(FormatAsPackageName "$package") as it's not installed. Use 'install' instead."
+                    fi
+                fi
+            done
+
+            ShowAsDone 'reinstalled essential QPKGs'
+        else
+            DebugInfo 'no essential QPKGs require reinstallation'
+        fi
     else
-        DebugInfo 'no essential QPKGs require reinstallation'
+        DebugInfo 'no QPKGs require reinstallation'
     fi
 
     DebugFuncExit; return 0
@@ -1071,27 +1083,39 @@ Packages.Install.Essentials()
     Session.SkipPackageProcessing.IsSet && return
     DebugFuncEntry
     local package=''
+    local found=false
 
     if QPKGs.ToInstall.IsAny || User.Opts.Dependencies.Check.IsSet; then
-        ShowAsProcLong 'installing essential QPKGs'
-
-        for package in $(QPKGs.Essential.Array); do
-            if QPKGs.ToInstall.Exist "$package"; then
-                if QPKG.NotInstalled "$package"; then
-                    if [[ $package = Entware ]]; then
-                        Package.Install.Entware
-                    else
-                        [[ $NAS_QPKG_ARCH != none ]] && QPKGs.ToInstall.Exist "$package" && QPKG.Install "$package"
-                    fi
-                else
-                    ShowAsNote "unable to install $(FormatAsPackageName "$package") as it's already installed. Use 'reinstall' instead."
-                fi
+        for package in $(QPKGs.ToInstall.Array); do
+            if QPKGs.Essential.Exist "$package"; then
+                found=true
+                break
             fi
         done
 
-        ShowAsDone 'installed essential QPKGs'
+        if [[ $found = true ]] || User.Opts.Dependencies.Check.IsSet; then
+            ShowAsProcLong 'installing essential QPKGs'
+
+            for package in $(QPKGs.Essential.Array); do
+                if QPKGs.ToInstall.Exist "$package"; then
+                    if QPKG.NotInstalled "$package"; then
+                        if [[ $package = Entware ]]; then
+                            Package.Install.Entware
+                        else
+                            [[ $NAS_QPKG_ARCH != none ]] && QPKGs.ToInstall.Exist "$package" && QPKG.Install "$package"
+                        fi
+                    else
+                        ShowAsNote "unable to install $(FormatAsPackageName "$package") as it's already installed. Use 'reinstall' instead."
+                    fi
+                fi
+            done
+
+            ShowAsDone 'installed essential QPKGs'
+        else
+            DebugInfo 'no essential QPKGs require installation'
+        fi
     else
-        DebugInfo 'no essential QPKGs require installation'
+        DebugInfo 'no QPKGs require installation'
     fi
 
     DebugFuncExit; return 0
@@ -1112,6 +1136,7 @@ Packages.Start.Essentials()
     DebugFuncEntry
     local package=''
     local acc=()
+    local found=false
 
     # if a optional has been selected for 'start', need to start essentials too
     for package in $(QPKGs.ToStart.Array); do
@@ -1125,22 +1150,33 @@ Packages.Start.Essentials()
     fi
 
     if QPKGs.ToStart.IsAny; then
-        ShowAsProc 'starting essential QPKGs'
-
-        for package in $(QPKGs.Essential.Array); do
-            if QPKGs.ToStart.Exist "$package"; then
-                if QPKG.Installed "$package"; then
-                    QPKG.Enable "$package"    # essentials don't have the same service scripts as other sherpa packages, so they must be enabled/disabled externally
-                    QPKG.Start "$package"
-                else
-                    ShowAsNote "unable to start $(FormatAsPackageName "$package") as it's not installed"
-                fi
+        for package in $(QPKGs.ToStart.Array); do
+            if QPKGs.Essential.Exist "$package"; then
+                found=true
+                break
             fi
         done
 
-        ShowAsDone 'started essential QPKGs'
+        if [[ $found = true ]]; then
+            ShowAsProc 'starting essential QPKGs'
+
+            for package in $(QPKGs.Essential.Array); do
+                if QPKGs.ToStart.Exist "$package"; then
+                    if QPKG.Installed "$package"; then
+                        QPKG.Enable "$package"    # essentials don't have the same service scripts as other sherpa packages, so they must be enabled/disabled externally
+                        QPKG.Start "$package"
+                    else
+                        ShowAsNote "unable to start $(FormatAsPackageName "$package") as it's not installed"
+                    fi
+                fi
+            done
+
+            ShowAsDone 'started essential QPKGs'
+        else
+            DebugInfo 'no essential QPKGs require starting'
+        fi
     else
-        DebugInfo 'no essential QPKGs require starting'
+        DebugInfo 'no QPKGs require starting'
     fi
 
     DebugFuncExit; return 0
@@ -1191,12 +1227,21 @@ Packages.Upgrade.Optionals()
     local found=false
 
     if QPKGs.ToUpgrade.IsAny || QPKGs.ToForceUpgrade.IsAny; then
-        for package in $(QPKGs.Optional.Array); do
-            if QPKGs.ToUpgrade.Exist "$package" || QPKGs.ToForceUpgrade.Exist "$package" ; then
+        for package in $(QPKGs.ToUpgrade.Array); do
+            if QPKGs.Optional.Exist "$package"; then
                 found=true
                 break
             fi
         done
+
+        if [[ $found = false ]]; then
+            for package in $(QPKGs.ToForceUpgrade.Array); do
+                if QPKGs.Optional.Exist "$package"; then
+                    found=true
+                    break
+                fi
+            done
+        fi
 
         if [[ $found = true ]]; then
             ShowAsProc 'upgrading optional QPKGs'
@@ -1235,23 +1280,35 @@ Packages.Reinstall.Optionals()
     Session.SkipPackageProcessing.IsSet && return
     DebugFuncEntry
     local package=''
+    local found=false
 
     if QPKGs.ToReinstall.IsAny; then
-        ShowAsProc 'reinstalling optional QPKGs'
-
-        for package in $(QPKGs.Optional.Array); do
-            if QPKGs.ToReinstall.Exist "$package"; then
-                if QPKG.Installed "$package"; then
-                    QPKG.Reinstall "$package"
-                else
-                    ShowAsNote "unable to reinstall $(FormatAsPackageName "$package") as it's not installed. Use 'install' instead."
-                fi
+        for package in $(QPKGs.ToReinstall.Array); do
+            if QPKGs.Optional.Exist "$package"; then
+                found=true
+                break
             fi
         done
 
-        ShowAsDone 'reinstalled optional QPKGs'
+        if [[ $found = true ]]; then
+            ShowAsProc 'reinstalling optional QPKGs'
+
+            for package in $(QPKGs.Optional.Array); do
+                if QPKGs.ToReinstall.Exist "$package"; then
+                    if QPKG.Installed "$package"; then
+                        QPKG.Reinstall "$package"
+                    else
+                        ShowAsNote "unable to reinstall $(FormatAsPackageName "$package") as it's not installed. Use 'install' instead."
+                    fi
+                fi
+            done
+
+            ShowAsDone 'reinstalled optional QPKGs'
+        else
+            DebugInfo 'no optional QPKGs require reinstalling'
+        fi
     else
-        DebugInfo 'no optional QPKGs require reinstalling'
+        DebugInfo 'no QPKGs require reinstalling'
     fi
 
     DebugFuncExit; return 0
@@ -1264,22 +1321,34 @@ Packages.Install.Optionals()
     Session.SkipPackageProcessing.IsSet && return
     DebugFuncEntry
     local package=''
+    local found=false
 
     if QPKGs.ToInstall.IsAny; then
-        ShowAsProcLong 'installing optional QPKGs'
-
-        for package in $(QPKGs.Optional.Array); do
-            if QPKGs.ToInstall.Exist "$package"; then
-                if QPKG.NotInstalled "$package"; then
-                    QPKG.Install "$package"
-                else
-                    ShowAsNote "unable to install $(FormatAsPackageName "$package") as it's already installed. Use 'reinstall' instead."
-                fi
+        for package in $(QPKGs.ToInstall.Array); do
+            if QPKGs.Optional.Exist "$package"; then
+                found=true
+                break
             fi
         done
-        ShowAsDone 'installed optional QPKGs'
+
+        if [[ $found = true ]]; then
+            ShowAsProcLong 'installing optional QPKGs'
+
+            for package in $(QPKGs.Optional.Array); do
+                if QPKGs.ToInstall.Exist "$package"; then
+                    if QPKG.NotInstalled "$package"; then
+                        QPKG.Install "$package"
+                    else
+                        ShowAsNote "unable to install $(FormatAsPackageName "$package") as it's already installed. Use 'reinstall' instead."
+                    fi
+                fi
+            done
+            ShowAsDone 'installed optional QPKGs'
+        else
+            DebugInfo 'no optional QPKGs require installing'
+        fi
     else
-        DebugInfo 'no optional QPKGs require installing'
+        DebugInfo 'no QPKGs require installing'
     fi
 
     DebugFuncExit; return 0
