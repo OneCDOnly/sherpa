@@ -1797,7 +1797,7 @@ CalcAllIPKGDepsToInstall()
         DebugFuncExit; return 1
     fi
 
-    DebugAsProc 'finding IPKG dependencies'
+    ShowAsProc 'finding IPKG dependencies'
     while [[ $iterations -lt $ITERATION_LIMIT ]]; do
         ((iterations++))
         DebugAsProc "iteration $iterations"
@@ -1853,6 +1853,7 @@ CalcAllIPKGDepsToInstall()
         DebugAsDone 'no IPKGs are required'
     fi
 
+    ShowAsDone 'found IPKG dependencies'
     IPKGs.Archive.Close
     DebugFuncExit; return 0
 
