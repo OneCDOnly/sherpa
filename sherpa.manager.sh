@@ -1291,6 +1291,8 @@ Packages.Reinstall.Optionals()
                         QPKG.Reinstall "$package"
                     else
                         ShowAsNote "unable to reinstall $(FormatAsPackageName "$package") as it's not installed. Use 'install' instead."
+                        QPKGs.ToStart.Remove "$package"
+                        QPKGs.ToRestart.Remove "$package"
                     fi
                 fi
             done
@@ -1332,6 +1334,8 @@ Packages.Install.Optionals()
                         QPKG.Install "$package"
                     else
                         ShowAsNote "unable to install $(FormatAsPackageName "$package") as it's already installed. Use 'reinstall' instead."
+                        QPKGs.ToStart.Remove "$package"
+                        QPKGs.ToRestart.Remove "$package"
                     fi
                 fi
             done
@@ -1386,43 +1390,56 @@ Packages.Start.Optionals()
     DebugFuncEntry
     local dep_package=''
     local indep_package=''
+    local found=false
 
     if QPKGs.ToStart.IsAny; then
-        ShowAsProc 'starting optional QPKGs'
-
-        for dep_package in $(QPKGs.Optional.Array); do
-            if QPKGs.ToStart.Exist "$dep_package"; then
-                if ! QPKG.Installed "$dep_package"; then
-                    ShowAsNote "unable to start $(FormatAsPackageName "$dep_package") as it's not installed"
-                else
-                    for indep_package in $(QPKG.Get.Essentials "$dep_package"); do
-                        if ! QPKG.Installed "$indep_package"; then
-                            ShowAsNote "unable to start $(FormatAsPackageName "$dep_package") as $(FormatAsPackageName "$indep_package") is not installed"
-                            break
-                        fi
-                    done
-
-                    QPKG.Start "$dep_package"
-                fi
+        for package in $(QPKGs.ToStart.Array); do
+            if QPKGs.Optional.Exist "$package"; then
+                found=true
+                break
             fi
         done
 
-        ShowAsDone 'started optional QPKGs'
+        if [[ $found = true ]]; then
+            ShowAsProc 'starting optional QPKGs'
+
+            for dep_package in $(QPKGs.Optional.Array); do
+                if QPKGs.ToStart.Exist "$dep_package"; then
+                    if ! QPKG.Installed "$dep_package"; then
+                        ShowAsNote "unable to start $(FormatAsPackageName "$dep_package") as it's not installed"
+                    else
+                        for indep_package in $(QPKG.Get.Essentials "$dep_package"); do
+                            if ! QPKG.Installed "$indep_package"; then
+                                ShowAsNote "unable to start $(FormatAsPackageName "$dep_package") as $(FormatAsPackageName "$indep_package") is not installed"
+                                break
+                            fi
+                        done
+
+                        QPKG.Start "$dep_package"
+                    fi
+                fi
+            done
+
+            ShowAsDone 'started optional QPKGs'
+        else
+            DebugInfo 'no optional QPKGs require starting'
+        fi
     else
-        DebugInfo 'no optional QPKGs require starting'
+        DebugInfo 'no QPKGs require staring'
     fi
 
     DebugFuncExit; return 0
 
     }
 
-Packages.Restart()
+Packages.Restart.Optionals()
     {
 
     Session.SkipPackageProcessing.IsSet && return
     DebugFuncEntry
     local package=''
     local acc=()
+    local found=false
 
     for package in $(QPKGs.JustInstalled.Array); do
         if QPKGs.Essential.Exist "$package"; then
@@ -1439,27 +1456,36 @@ Packages.Restart()
     if User.Opts.Apps.All.Upgrade.IsSet; then
         QPKGs.NotUpgraded.Restart
     elif QPKGs.ToRestart.IsAny; then
-        ShowAsProcLong 'restarting optional QPKGs'
-
-        for package in $(QPKGs.Optional.Array); do
-
-            if QPKGs.ToRestart.Exist "$package"; then
-                if ! QPKG.Installed "$package"; then
-                    ShowAsNote "unable to restart $(FormatAsPackageName "$package") as it's not installed"
-                elif QPKGs.JustInstalled.Exist "$package"; then
-                    ShowAsNote "no-need to restart $(FormatAsPackageName "$package") as it was just installed"
-                elif QPKGs.JustStarted.Exist "$package"; then
-                    ShowAsNote "no-need to restart $(FormatAsPackageName "$package") as it was just started"
-                else
-                    QPKG.Restart "$package"
-                fi
+        for package in $(QPKGs.ToRestart.Array); do
+            if QPKGs.Optional.Exist "$package"; then
+                found=true
+                break
             fi
-
         done
 
-        ShowAsDone 'restarted optional QPKGs'
+        if [[ $found = true ]]; then
+            ShowAsProcLong 'restarting optional QPKGs'
+
+            for package in $(QPKGs.Optional.Array); do
+                if QPKGs.ToRestart.Exist "$package"; then
+                    if ! QPKG.Installed "$package"; then
+                        ShowAsNote "unable to restart $(FormatAsPackageName "$package") as it's not installed"
+                    elif QPKGs.JustInstalled.Exist "$package"; then
+                        ShowAsNote "no-need to restart $(FormatAsPackageName "$package") as it was just installed"
+                    elif QPKGs.JustStarted.Exist "$package"; then
+                        ShowAsNote "no-need to restart $(FormatAsPackageName "$package") as it was just started"
+                    else
+                        QPKG.Restart "$package"
+                    fi
+                fi
+            done
+
+            ShowAsDone 'restarted optional QPKGs'
+        else
+            DebugInfo 'no optional QPKGs require restarting'
+        fi
     else
-        DebugInfo 'no optional QPKGs require restarting'
+        DebugInfo 'no QPKGs require restaring'
     fi
 
     DebugFuncExit; return 0
@@ -1736,7 +1762,6 @@ PIPs.Install()
         if [[ $resultcode -eq 0 ]]; then
             DebugAsDone "downloaded & installed $desc"
             QPKGs.ToRestart.Add SABnzbd
-
         else
             ShowAsError "download & install $desc failed $(FormatAsResult "$resultcode")"
         fi
@@ -1753,7 +1778,6 @@ PIPs.Install()
         if [[ $resultcode -eq 0 ]]; then
             DebugAsDone "downloaded & installed $desc"
             QPKGs.ToRestart.Add SABnzbd
-
         else
             ShowAsError "download & install $desc failed $(FormatAsResult "$resultcode")"
         fi
@@ -3657,12 +3681,15 @@ QPKG.Install()
         QPKG.ServiceStatus "$1"
         QPKGs.JustInstalled.Add "$1"
         QPKGs.JustStarted.Add "$1"
-        QPKGs.ToStart.Remove "$1"
-        QPKGs.ToReinstall.Remove "$1"
-        QPKGs.ToRestart.Remove "$1"
     else
         ShowAsError "installation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $resultcode)"
+        QPKGs.JustInstalled.Remove "$1"
+        QPKGs.JustStarted.Remove "$1"
     fi
+
+    QPKGs.ToStart.Remove "$1"
+    QPKGs.ToReinstall.Remove "$1"
+    QPKGs.ToRestart.Remove "$1"
 
     DebugFuncExit; return $resultcode
 
@@ -5223,6 +5250,6 @@ Packages.Reinstall.Optionals
 Packages.Install.Optionals
 Packages.Start.Optionals
 Packages.Restore.Optionals
-Packages.Restart
+Packages.Restart.Optionals
 Session.Results
 Session.Error.IsNot
