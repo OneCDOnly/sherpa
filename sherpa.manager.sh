@@ -1425,7 +1425,7 @@ Packages.Start.Optionals()
             DebugInfo 'no optional QPKGs require starting'
         fi
     else
-        DebugInfo 'no QPKGs require staring'
+        DebugInfo 'no QPKGs require starting'
     fi
 
     DebugFuncExit; return 0
@@ -1485,7 +1485,7 @@ Packages.Restart.Optionals()
             DebugInfo 'no optional QPKGs require restarting'
         fi
     else
-        DebugInfo 'no QPKGs require restaring'
+        DebugInfo 'no QPKGs require restarting'
     fi
 
     DebugFuncExit; return 0
