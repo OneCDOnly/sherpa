@@ -42,7 +42,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=201210
+    readonly MANAGER_SCRIPT_VERSION=201211
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -817,15 +817,30 @@ Packages.Download()
     Session.SkipPackageProcessing.IsSet && return
     DebugFuncEntry
     local package=''
+    local result=0
+    local count=0
 
     if QPKGs.ToDownload.IsAny; then
         ShowAsProc "downloading $(QPKGs.ToDownload.Count) QPKG$(FormatAsPlural "$(QPKGs.ToDownload.Count)")"
 
         for package in $(QPKGs.ToDownload.Array); do
             QPKG.Download "$package"
+            result=$?
+
+            if [[ $result -eq 0 ]]; then
+                ((count++))
+            elif [[ $result -eq 10 ]]; then
+                : #package didn't need downloading
+            else
+                ShowAsNote "unable to download $(FormatAsPackageName "$package") (see log for more details)"
+            fi
         done
 
-        ShowAsDone "downloaded $(QPKGs.ToDownload.Count) QPKG$(FormatAsPlural "$(QPKGs.ToDownload.Count)")"
+        if [[ $count -gt 0 ]]; then
+            ShowAsDone "downloaded $count QPKG$(FormatAsPlural "$count")"
+        else
+            ShowAsDone 'using cached QPKGs'
+        fi
     else
         DebugInfo 'no QPKGs require download'
     fi
@@ -3675,7 +3690,7 @@ QPKG.Download()
     #   $1 = QPKG name to download
 
     # output:
-    #   $? = 0 if successful, 1 if failed
+    #   $? = 0 if successful, 1 if failed, 10 if package was already downloaded
 
     Session.Error.IsSet && return
     DebugFuncEntry
@@ -3705,6 +3720,7 @@ QPKG.Download()
     if [[ -e $local_pathfile ]]; then
         if FileMatchesMD5 "$local_pathfile" "$remote_md5"; then
             DebugInfo "local package $(FormatAsFileName "$local_filename") checksum correct, so skipping download"
+            resultcode=10
         else
             DebugAsWarning "local package $(FormatAsFileName "$local_filename") checksum incorrect"
             DebugInfo "deleting $(FormatAsFileName "$local_filename")"
