@@ -819,13 +819,13 @@ Packages.Download()
     local package=''
 
     if QPKGs.ToDownload.IsAny; then
-        ShowAsProc 'downloading QPKGs'
+        ShowAsProc "downloading $(QPKGs.ToDownload.Count) QPKG$(FormatAsPlural "$(QPKGs.ToDownload.Count)")"
 
         for package in $(QPKGs.ToDownload.Array); do
             QPKG.Download "$package"
         done
 
-        ShowAsDone 'downloaded QPKGs'
+        ShowAsDone "downloaded $(QPKGs.ToDownload.Count) QPKG$(FormatAsPlural "$(QPKGs.ToDownload.Count)")"
     else
         DebugInfo 'no QPKGs require download'
     fi
@@ -843,7 +843,7 @@ Packages.Backup()
     local fault=false
 
     if QPKGs.ToBackup.IsAny; then
-        ShowAsProc 'backing-up QPKGs'
+        ShowAsProc "backing-up $(QPKGs.ToBackup.Count) QPKG$(FormatAsPlural "$(QPKGs.ToBackup.Count)")"
 
         for package in $(QPKGs.ToBackup.Array); do
             if QPKG.Installed "$package"; then
@@ -862,7 +862,7 @@ Packages.Backup()
         done
 
         Session.ShowBackupLocation.Set
-        [[ $fault = false ]] && ShowAsDone 'backed-up QPKGs'
+        [[ $fault = false ]] && ShowAsDone "backed-up $(QPKGs.ToBackup.Count) QPKG$(FormatAsPlural "$(QPKGs.ToBackup.Count)")"
     else
         DebugInfo 'no QPKGs require backup'
     fi
@@ -881,7 +881,7 @@ Packages.Stop()
     local fault=false
 
     if QPKGs.ToStop.IsAny; then
-        ShowAsProc 'stopping QPKGs'
+        ShowAsProc "stopping $(QPKGs.ToStop.Count) QPKG$(FormatAsPlural "$(QPKGs.ToStop.Count)")"
 
         for ((index=$(QPKGs.Optional.Count); index>=1; index--)); do       # stop packages in reverse of declared order
             package=$(QPKGs.Optional.GetItem $index)
@@ -917,7 +917,7 @@ Packages.Stop()
             fi
         done
 
-        [[ $fault = false ]] && ShowAsDone 'stopped QPKGs'
+        [[ $fault = false ]] && ShowAsDone "stopped $(QPKGs.ToStop.Count) QPKG$(FormatAsPlural "$(QPKGs.ToStop.Count)")"
     else
         DebugInfo 'no QPKGs require stopping'
     fi
@@ -936,7 +936,7 @@ Packages.Uninstall()
     local fault=false
 
     if QPKGs.ToUninstall.IsAny; then
-        ShowAsProcLong 'uninstalling QPKGs'
+        ShowAsProcLong "uninstalling $(QPKGs.ToUninstall.Count) QPKG$(FormatAsPlural "$(QPKGs.ToUninstall.Count)")"
 
         for ((index=$(QPKGs.Optional.Count); index>=1; index--)); do       # uninstall packages in reverse of declared order
             package=$(QPKGs.Optional.GetItem $index)
@@ -958,7 +958,7 @@ Packages.Uninstall()
             package=$(QPKGs.Essential.GetItem $index)
 
             if QPKGs.ToUninstall.Exist "$package"; then
-                if [[ $package != Entware ]]; then      # KLUDGE: ignore Entware as it needs to be handled separately.
+                if [[ $package != Entware && $package != sherpa ]]; then  # KLUDGE: ignore 'Entware' and 'sherpa' as they need to be handled separately.
                     if QPKG.Installed "$package"; then
                         if ! QPKG.Uninstall "$package"; then
                             ShowAsError "unable to uninstall $(FormatAsPackageName "$package") (see log for more details)"
@@ -974,7 +974,7 @@ Packages.Uninstall()
 
         # TODO: still need something here to remove Entware if it's in the QPKGs.ToUninstall array
 
-        [[ $fault = false ]] && ShowAsDone 'uninstalled QPKGs'
+        [[ $fault = false ]] && ShowAsDone "uninstalled $(QPKGs.ToUninstall.Count) QPKG$(FormatAsPlural "$(QPKGs.ToUninstall.Count)")"
     else
         DebugInfo 'no QPKGs require uninstallation'
     fi
@@ -1009,7 +1009,7 @@ Packages.Upgrade.Essentials()
         done
 
         if [[ $found = true ]]; then
-            ShowAsProc 'upgrading essential QPKGs'
+            ShowAsProc "upgrading $(QPKGs.ToUpgrade.Count) QPKG$(FormatAsPlural "$(QPKGs.ToUpgrade.Count)")"
 
             for package in $(QPKGs.Essential.Array); do
                 if QPKGs.ToForceUpgrade.Exist "$package"; then
@@ -1035,7 +1035,7 @@ Packages.Upgrade.Essentials()
                 fi
             done
 
-            [[ $fault = false ]] && ShowAsDone 'upgraded essential QPKGs'
+            [[ $fault = false ]] && ShowAsDone "upgraded $(QPKGs.ToUpgrade.Count) QPKG$(FormatAsPlural "$(QPKGs.ToUpgrade.Count)")"
         else
             DebugInfo 'no essential QPKGs require upgrading'
         fi
@@ -1065,7 +1065,7 @@ Packages.Reinstall.Essentials()
         done
 
         if [[ $found = true ]]; then
-            ShowAsProc 'reinstalling essential QPKGs'
+            ShowAsProc "reinstalling $(QPKGs.ToReinstall.Count) QPKG$(FormatAsPlural "$(QPKGs.ToReinstall.Count)")"
 
             for package in $(QPKGs.Essential.Array); do
                 if QPKGs.ToReinstall.Exist "$package"; then
@@ -1103,7 +1103,7 @@ Packages.Reinstall.Essentials()
                 fi
             done
 
-            [[ $fault = false ]] && ShowAsDone 'reinstalled essential QPKGs'
+            [[ $fault = false ]] && ShowAsDone "reinstalled $(QPKGs.ToReinstall.Count) QPKG$(FormatAsPlural "$(QPKGs.ToReinstall.Count)")"
         else
             DebugInfo 'no essential QPKGs require reinstallation'
         fi
@@ -1121,33 +1121,35 @@ Packages.Install.Essentials()
     Session.SkipPackageProcessing.IsSet && return
     DebugFuncEntry
     local package=''
-    local found=false
     local fault=false
+    local target_packages=()
+    local count=0
 
     if QPKGs.ToInstall.IsAny || User.Opts.Dependencies.Check.IsSet; then
         for package in $(QPKGs.ToInstall.Array); do
-            if QPKGs.Essential.Exist "$package"; then
-                found=true
-                break
-            fi
+            QPKGs.Essential.Exist "$package" && target_packages+=("$package")
         done
 
-        if [[ $found = true ]] || User.Opts.Dependencies.Check.IsSet; then
-            ShowAsProcLong 'installing essential QPKGs'
+        if [[ ${#target_packages[@]} -gt 0 ]] || User.Opts.Dependencies.Check.IsSet; then
+            ShowAsProcLong "installing ${#target_packages[@]} essential QPKG$(FormatAsPlural "${#target_packages[@]}")"
 
-            for package in $(QPKGs.Essential.Array); do
+            for package in "${target_packages[@]}"; do
                 if QPKGs.ToInstall.Exist "$package"; then
                     if QPKG.NotInstalled "$package"; then
                         if [[ $package = Entware ]]; then
                             if ! Package.Install.Entware; then
                                 ShowAsNote "unable to install $(FormatAsPackageName "$package") (see log for more details)"
                                 fault=true
+                            else
+                                ((count++))
                             fi
                         else
                             if [[ $NAS_QPKG_ARCH != none ]] && QPKGs.ToInstall.Exist "$package"; then
                                 if ! QPKG.Install "$package"; then
                                     ShowAsNote "unable to install $(FormatAsPackageName "$package") (see log for more details)"
                                     fault=true
+                                else
+                                    ((count++))
                                 fi
                             fi
                         fi
@@ -1158,7 +1160,7 @@ Packages.Install.Essentials()
                 fi
             done
 
-            [[ $fault = false ]] && ShowAsDone 'installed essential QPKGs'
+            [[ $fault = false ]] && ShowAsDone "installed $count essential QPKG$(FormatAsPlural "$count")"
         else
             DebugInfo 'no essential QPKGs require installation'
         fi
@@ -1184,8 +1186,9 @@ Packages.Start.Essentials()
     DebugFuncEntry
     local package=''
     local acc=()
-    local found=false
     local fault=false
+    local target_packages=()
+    local count=0
 
     # if a optional has been selected for 'start', need to start essentials too
     for package in $(QPKGs.ToStart.Array); do
@@ -1200,22 +1203,21 @@ Packages.Start.Essentials()
 
     if QPKGs.ToStart.IsAny; then
         for package in $(QPKGs.ToStart.Array); do
-            if QPKGs.Essential.Exist "$package"; then
-                found=true
-                break
-            fi
+            QPKGs.Essential.Exist "$package" && target_packages+=("$package")
         done
 
-        if [[ $found = true ]]; then
-            ShowAsProc 'starting essential QPKGs'
+        if [[ ${#target_packages[@]} -gt 0 ]]; then
+            ShowAsProc "starting ${#target_packages[@]} essential QPKG$(FormatAsPlural "${#target_packages[@]}")"
 
-            for package in $(QPKGs.Essential.Array); do
+            for package in "${target_packages[@]}"; do
                 if QPKGs.ToStart.Exist "$package"; then
                     if QPKG.Installed "$package"; then
                         QPKG.Enable "$package"    # essentials don't have the same service scripts as other sherpa packages, so they must be enabled/disabled externally
                         if ! QPKG.Start "$package"; then
                             ShowAsNote "unable to start $(FormatAsPackageName "$package") (see log for more details)"
                             fault=true
+                        else
+                            ((count++))
                         fi
                     else
                         ShowAsNote "unable to start $(FormatAsPackageName "$package") as it's not installed"
@@ -1224,7 +1226,7 @@ Packages.Start.Essentials()
                 fi
             done
 
-            [[ $fault = false ]] && ShowAsDone 'started essential QPKGs'
+            [[ $fault = false ]] && ShowAsDone "started $count essential QPKG$(FormatAsPlural "$count")"
         else
             DebugInfo 'no essential QPKGs require starting'
         fi
@@ -1290,7 +1292,7 @@ Packages.Upgrade.Optionals()
         fi
 
         if [[ $found = true ]]; then
-            ShowAsProc 'upgrading optional QPKGs'
+            ShowAsProc "upgrading $(QPKGs.ToUpgrade.Count) QPKG$(FormatAsPlural "$(QPKGs.ToUpgrade.Count)")"
 
             for package in $(QPKGs.Optional.Array); do
                 if QPKGs.ToForceUpgrade.Exist "$package"; then
@@ -1316,7 +1318,7 @@ Packages.Upgrade.Optionals()
                 fi
             done
 
-            [[ $fault = false ]] && ShowAsDone 'upgraded optional QPKGs'
+            [[ $fault = false ]] && ShowAsDone "upgraded $(QPKGs.ToUpgrade.Count) QPKG$(FormatAsPlural "$(QPKGs.ToUpgrade.Count)")"
         else
             DebugInfo 'no optional QPKGs require upgrading'
         fi
@@ -1346,7 +1348,7 @@ Packages.Reinstall.Optionals()
         done
 
         if [[ $found = true ]]; then
-            ShowAsProc 'reinstalling optional QPKGs'
+            ShowAsProc "reinstalling $(QPKGs.ToReinstall.Count) QPKG$(FormatAsPlural "$(QPKGs.ToReinstall.Count)")"
 
             for package in $(QPKGs.Optional.Array); do
                 if QPKGs.ToReinstall.Exist "$package"; then
@@ -1364,7 +1366,7 @@ Packages.Reinstall.Optionals()
                 fi
             done
 
-            [[ $fault = false ]] && ShowAsDone 'reinstalled optional QPKGs'
+            [[ $fault = false ]] && ShowAsDone "reinstalled $(QPKGs.ToReinstall.Count) QPKG$(FormatAsPlural "$(QPKGs.ToReinstall.Count)")"
         else
             DebugInfo 'no optional QPKGs require reinstalling'
         fi
@@ -1382,26 +1384,26 @@ Packages.Install.Optionals()
     Session.SkipPackageProcessing.IsSet && return
     DebugFuncEntry
     local package=''
-    local found=false
     local fault=false
+    local target_packages=()
+    local count=0
 
     if QPKGs.ToInstall.IsAny; then
         for package in $(QPKGs.ToInstall.Array); do
-            if QPKGs.Optional.Exist "$package"; then
-                found=true
-                break
-            fi
+            QPKGs.Optional.Exist "$package" && target_packages+=("$package")
         done
 
-        if [[ $found = true ]]; then
-            ShowAsProcLong 'installing optional QPKGs'
+        if [[ ${#target_packages[@]} -gt 0 ]]; then
+            ShowAsProcLong "installing ${#target_packages[@]} optional QPKG$(FormatAsPlural "${#target_packages[@]}")"
 
-            for package in $(QPKGs.Optional.Array); do
+            for package in "${target_packages[@]}"; do
                 if QPKGs.ToInstall.Exist "$package"; then
                     if QPKG.NotInstalled "$package"; then
                         if ! QPKG.Install "$package"; then
                             ShowAsNote "unable to install $(FormatAsPackageName "$package") (see log for more details)"
                             fault=true
+                        else
+                            ((count++))
                         fi
                     else
                         ShowAsNote "unable to install $(FormatAsPackageName "$package") as it's already installed. Use 'reinstall' instead."
@@ -1412,7 +1414,7 @@ Packages.Install.Optionals()
                 fi
             done
 
-            [[ $fault = false ]] && ShowAsDone 'installed optional QPKGs'
+            [[ $fault = false ]] && ShowAsDone "installed $count optional QPKG$(FormatAsPlural "$count")"
         else
             DebugInfo 'no optional QPKGs require installing'
         fi
@@ -1430,24 +1432,30 @@ Packages.Restore.Optionals()
     Session.SkipPackageProcessing.IsSet && return
     DebugFuncEntry
     local package=''
+    local fault=false
 
     if QPKGs.ToRestore.IsAny; then
-        ShowAsProc 'restoring optional QPKG backups'
+        ShowAsProc "restoring $(QPKGs.ToRestore.Count) QPKG backup$(FormatAsPlural "$(QPKGs.ToRestore.Count)")"
 
         for package in $(QPKGs.ToRestore.Array); do
             if QPKG.Installed "$package"; then
                 if QPKGs.Essential.Exist "$package"; then
                     ShowAsNote "unable to restore $(FormatAsPackageName "$package") configuration as it's unsupported"
+                    fault=true
                 else
-                    QPKG.Restore "$package" || ShowAsNote "unable to restore $(FormatAsPackageName "$package") configuration (see log for more details)"
+                    if ! QPKG.Restore "$package"; then
+                        ShowAsNote "unable to restore $(FormatAsPackageName "$package") configuration (see log for more details)"
+                        fault=true
+                    fi
                 fi
             else
                 ShowAsNote "unable to restore $(FormatAsPackageName "$package") configuration as it's not installed"
+                fault=true
             fi
         done
 
         Session.ShowBackupLocation.Set
-        ShowAsDone 'restored optional QPKG backups'
+        [[ $fault = false ]] && ShowAsDone "restored $(QPKGs.ToRestore.Count) QPKG backup$(FormatAsPlural "$(QPKGs.ToRestore.Count)")"
     else
         DebugInfo 'no optional QPKGs require restoring'
     fi
@@ -1464,6 +1472,7 @@ Packages.Start.Optionals()
     local dep_package=''
     local indep_package=''
     local found=false
+    local fault=false
 
     if QPKGs.ToStart.IsAny; then
         for package in $(QPKGs.ToStart.Array); do
@@ -1474,26 +1483,32 @@ Packages.Start.Optionals()
         done
 
         if [[ $found = true ]]; then
-            ShowAsProc 'starting optional QPKGs'
+            ShowAsProc "starting $(QPKGs.ToStart.Count) QPKG$(FormatAsPlural "$(QPKGs.ToStart.Count)")"
 
             for dep_package in $(QPKGs.Optional.Array); do
                 if QPKGs.ToStart.Exist "$dep_package"; then
                     if ! QPKG.Installed "$dep_package"; then
                         ShowAsNote "unable to start $(FormatAsPackageName "$dep_package") as it's not installed"
+                        fault=true
+
                     else
                         for indep_package in $(QPKG.Get.Essentials "$dep_package"); do
                             if ! QPKG.Installed "$indep_package"; then
                                 ShowAsNote "unable to start $(FormatAsPackageName "$dep_package") as $(FormatAsPackageName "$indep_package") is not installed"
+                                fault=true
                                 break
                             fi
                         done
 
-                        QPKG.Start "$dep_package"
+                        if ! QPKG.Start "$dep_package"; then
+                            ShowAsNote "unable to start $(FormatAsPackageName "$package") (see log for more details)"
+                            fault=true
+                        fi
                     fi
                 fi
             done
 
-            ShowAsDone 'started optional QPKGs'
+            [[ $fault = false ]] && ShowAsDone "started $(QPKGs.ToStart.Count) QPKG$(FormatAsPlural "$(QPKGs.ToStart.Count)")"
         else
             DebugInfo 'no optional QPKGs require starting'
         fi
@@ -1513,6 +1528,7 @@ Packages.Restart.Optionals()
     local package=''
     local acc=()
     local found=false
+    local fault=false
 
     for package in $(QPKGs.JustInstalled.Array); do
         if QPKGs.Essential.Exist "$package"; then
@@ -1537,23 +1553,29 @@ Packages.Restart.Optionals()
         done
 
         if [[ $found = true ]]; then
-            ShowAsProcLong 'restarting optional QPKGs'
+            ShowAsProcLong "restarting $(QPKGs.ToRestart.Count) QPKG$(FormatAsPlural "$(QPKGs.ToRestart.Count)")"
 
             for package in $(QPKGs.Optional.Array); do
                 if QPKGs.ToRestart.Exist "$package"; then
                     if ! QPKG.Installed "$package"; then
                         ShowAsNote "unable to restart $(FormatAsPackageName "$package") as it's not installed"
+                        fault=true
                     elif QPKGs.JustInstalled.Exist "$package"; then
                         ShowAsNote "no-need to restart $(FormatAsPackageName "$package") as it was just installed"
+                        fault=true
                     elif QPKGs.JustStarted.Exist "$package"; then
                         ShowAsNote "no-need to restart $(FormatAsPackageName "$package") as it was just started"
+                        fault=true
                     else
-                        QPKG.Restart "$package"
+                        if ! QPKG.Restart "$package"; then
+                            ShowAsNote "unable to restart $(FormatAsPackageName "$package") (see log for more details)"
+                            fault=true
+                        fi
                     fi
                 fi
             done
 
-            ShowAsDone 'restarted optional QPKGs'
+            [[ $fault = false ]] && ShowAsDone "restarted $(QPKGs.ToRestart.Count) QPKG$(FormatAsPlural "$(QPKGs.ToRestart.Count)")"
         else
             DebugInfo 'no optional QPKGs require restarting'
         fi
@@ -2087,7 +2109,7 @@ IPKGs.Upgrade.Batch()
         if [[ $resultcode -eq 0 ]]; then
             ShowAsDone "downloaded & upgraded $package_count IPKG$(FormatAsPlural "$package_count")"
         else
-            ShowAsError "download & upgrade IPKG$(FormatAsPlural "$package_count") failed $(FormatAsExitcode $resultcode)"
+            ShowAsError "download & upgrade $package_count IPKG$(FormatAsPlural "$package_count") failed $(FormatAsExitcode $resultcode)"
         fi
     fi
 
@@ -2110,7 +2132,7 @@ IPKGs.Install.Batch()
     package_count=$(IPKGs.ToDownload.Count)
 
     if [[ $package_count -gt 0 ]]; then
-        ShowAsProcLong "downloading & installing IPKG$(FormatAsPlural "$package_count")"
+        ShowAsProcLong "downloading & installing $package_count IPKG$(FormatAsPlural "$package_count")"
 
         CreateDirSizeMonitorFlagFile "$IPKG_DL_PATH"/.monitor
             trap CTRL_C_Captured INT
@@ -2124,7 +2146,7 @@ IPKGs.Install.Batch()
         if [[ $resultcode -eq 0 ]]; then
             ShowAsDone "downloaded & installed $package_count IPKG$(FormatAsPlural "$package_count")"
         else
-            ShowAsError "download & install IPKG$(FormatAsPlural "$package_count") failed $(FormatAsExitcode $resultcode)"
+            ShowAsError "download & install $package_count IPKG$(FormatAsPlural "$package_count") failed $(FormatAsExitcode $resultcode)"
         fi
     fi
 
@@ -3754,7 +3776,7 @@ QPKG.Install()
         QPKG.ServiceStatus "$1"
         QPKGs.JustInstalled.Add "$1"
         QPKGs.JustStarted.Add "$1"
-        resultcode=0    # reset this to zero if 10 was output (10 is OK)
+        resultcode=0    # reset this to zero (0 or 10 from a QPKG install is OK)
     else
         DebugAsError "installation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $resultcode)"
         QPKGs.JustInstalled.Remove "$1"
