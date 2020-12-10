@@ -1193,8 +1193,8 @@ Packages.Install.Addons()
         Session.IPKGs.Install.Set
     fi
 
-    if QPKGs.ToInstall.Exist SABnzbd || QPKGs.ToReinstall.Exist SABnzbd; then
-        Session.PIPs.Install.Set   # need to ensure 'sabyenc' and 'feedparser' modules are also installed/updated
+    if QPKGs.ToInstall.Exist SABnzbd || QPKGs.ToReinstall.Exist SABnzbd || QPKGs.ToUpgrade.Exist SABnzbd; then
+        Session.PIPs.Install.Set   # need to ensure 'sabyenc' and 'feedparser' modules are installed/updated
     fi
 
     if QPKG.Enabled Entware; then
