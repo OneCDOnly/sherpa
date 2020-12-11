@@ -3233,19 +3233,6 @@ QPKGs.NotUpgraded.Restart()
     local package=''
     local count=0
 
-#     if QPKGs.Optional.IsAny; then
-#         for package in $(QPKGs.ToStart.Array); do
-#             QPKGs.Optional.Exist "$package" && target_packages+=("$package")
-#         done
-#
-#         if [[ ${#target_packages[@]} -gt 0 ]]; then
-#             ShowAsProc "starting ${#target_packages[@]} optional QPKG$(FormatAsPlural "${#target_packages[@]}")"
-#
-#         for package in $(QPKGs.ToRestart.Array); do
-#             QPKGs.Optional.Exist "$package" && target_packages+=("$package")
-#         done
-#
-#
     ShowAsProcLong "restarting $(QPKGs.Optional.Count) optional QPKGs"
 
     for package in $(QPKGs.Optional.Array); do
@@ -3295,7 +3282,7 @@ QPKGs.EssentialAndOptional.Build()
 QPKGs.InstallationState.Build()
     {
 
-    # Builds a list of QPKGs that can be installed or reinstalled by the user.
+    # Builds a list of QPKGs that can be installed or reinstalled by the user
 
     DebugFuncEntry
     local package=''
