@@ -42,7 +42,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=201211
+    readonly MANAGER_SCRIPT_VERSION=201212
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -245,7 +245,7 @@ Session.Init()
         SHERPA_QPKG_ARCH+=(all)
         SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/sherpa/build/sherpa_201116.qpkg)
         SHERPA_QPKG_MD5+=(b87859e2fde88afd292e204649659ce3)
-        SHERPA_QPKG_ABBRVS+=('sherpa')
+        SHERPA_QPKG_ABBRVS+=(sherpa)
         SHERPA_QPKG_ESSENTIALS+=('')
         SHERPA_QPKG_IPKGS_ADD+=('')
         SHERPA_QPKG_IPKGS_REMOVE+=('')
@@ -266,7 +266,7 @@ Session.Init()
         SHERPA_QPKG_ABBRVS+=('par par2')        # applies to all 'Par2' packages
         SHERPA_QPKG_ESSENTIALS+=('')
         SHERPA_QPKG_IPKGS_ADD+=('')
-        SHERPA_QPKG_IPKGS_REMOVE+=('par2cmdline')
+        SHERPA_QPKG_IPKGS_REMOVE+=(par2cmdline)
 
     SHERPA_QPKG_NAME+=(Par2)
         SHERPA_QPKG_ARCH+=(x64)
@@ -275,7 +275,7 @@ Session.Init()
         SHERPA_QPKG_ABBRVS+=('')
         SHERPA_QPKG_ESSENTIALS+=('')
         SHERPA_QPKG_IPKGS_ADD+=('')
-        SHERPA_QPKG_IPKGS_REMOVE+=('par2cmdline')
+        SHERPA_QPKG_IPKGS_REMOVE+=(par2cmdline)
 
     SHERPA_QPKG_NAME+=(Par2)
         SHERPA_QPKG_ARCH+=(x31)
@@ -284,7 +284,7 @@ Session.Init()
         SHERPA_QPKG_ABBRVS+=('')
         SHERPA_QPKG_ESSENTIALS+=('')
         SHERPA_QPKG_IPKGS_ADD+=('')
-        SHERPA_QPKG_IPKGS_REMOVE+=('par2cmdline')
+        SHERPA_QPKG_IPKGS_REMOVE+=(par2cmdline)
 
     SHERPA_QPKG_NAME+=(Par2)
         SHERPA_QPKG_ARCH+=(x41)
@@ -293,7 +293,7 @@ Session.Init()
         SHERPA_QPKG_ABBRVS+=('')
         SHERPA_QPKG_ESSENTIALS+=('')
         SHERPA_QPKG_IPKGS_ADD+=('')
-        SHERPA_QPKG_IPKGS_REMOVE+=('par2cmdline')
+        SHERPA_QPKG_IPKGS_REMOVE+=(par2cmdline)
 
     SHERPA_QPKG_NAME+=(Par2)
         SHERPA_QPKG_ARCH+=(a64)
@@ -302,7 +302,7 @@ Session.Init()
         SHERPA_QPKG_ABBRVS+=('')
         SHERPA_QPKG_ESSENTIALS+=('')
         SHERPA_QPKG_IPKGS_ADD+=('')
-        SHERPA_QPKG_IPKGS_REMOVE+=('par2cmdline')
+        SHERPA_QPKG_IPKGS_REMOVE+=(par2cmdline)
 
     SHERPA_QPKG_NAME+=(Par2)
         SHERPA_QPKG_ARCH+=(none)
@@ -310,7 +310,7 @@ Session.Init()
         SHERPA_QPKG_MD5+=('')
         SHERPA_QPKG_ABBRVS+=('')
         SHERPA_QPKG_ESSENTIALS+=('')
-        SHERPA_QPKG_IPKGS_ADD+=('par2cmdline')
+        SHERPA_QPKG_IPKGS_ADD+=(par2cmdline)
         SHERPA_QPKG_IPKGS_REMOVE+=('')
 
     SHERPA_QPKG_NAME+=(SABnzbd)
@@ -327,7 +327,7 @@ Session.Init()
         SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/nzbToMedia/build/nzbToMedia_201130.qpkg)
         SHERPA_QPKG_MD5+=(fda79194e66b91884217c7f1b93988a2)
         SHERPA_QPKG_ABBRVS+=('nzb2 nzb2m nzbto nzbtom nzbtomedia')
-        SHERPA_QPKG_ESSENTIALS+=('Entware')
+        SHERPA_QPKG_ESSENTIALS+=(Entware)
         SHERPA_QPKG_IPKGS_ADD+=('')
         SHERPA_QPKG_IPKGS_REMOVE+=('')
 
@@ -336,7 +336,7 @@ Session.Init()
         SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/SickChill/build/SickChill_201130.qpkg)
         SHERPA_QPKG_MD5+=(47a017ab38094aafde6ce25a69409762)
         SHERPA_QPKG_ABBRVS+=('sc sick sickc chill sickchill')
-        SHERPA_QPKG_ESSENTIALS+=('Entware')
+        SHERPA_QPKG_ESSENTIALS+=(Entware)
         SHERPA_QPKG_IPKGS_ADD+=('')
         SHERPA_QPKG_IPKGS_REMOVE+=('')
 
@@ -345,7 +345,7 @@ Session.Init()
         SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/LazyLibrarian/build/LazyLibrarian_201130.qpkg)
         SHERPA_QPKG_MD5+=(4317b410cc8cc380218d960a78686f3d)
         SHERPA_QPKG_ABBRVS+=('ll lazy lazylibrarian')
-        SHERPA_QPKG_ESSENTIALS+=('Entware')
+        SHERPA_QPKG_ESSENTIALS+=(Entware)
         SHERPA_QPKG_IPKGS_ADD+=('python3-pyopenssl python3-requests')
         SHERPA_QPKG_IPKGS_REMOVE+=('')
 
@@ -354,7 +354,7 @@ Session.Init()
         SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/OMedusa/build/OMedusa_201130.qpkg)
         SHERPA_QPKG_MD5+=(afa21ae0ef4b43022d09b2ee8f455176)
         SHERPA_QPKG_ABBRVS+=('om med omed medusa omedusa')
-        SHERPA_QPKG_ESSENTIALS+=('Entware')
+        SHERPA_QPKG_ESSENTIALS+=(Entware)
         SHERPA_QPKG_IPKGS_ADD+=('mediainfo python3-pyopenssl')
         SHERPA_QPKG_IPKGS_REMOVE+=('')
 
@@ -363,7 +363,7 @@ Session.Init()
         SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/OSickGear/build/OSickGear_201130.qpkg)
         SHERPA_QPKG_MD5+=(c735207d769d54ca375aa6da1ab1babf)
         SHERPA_QPKG_ABBRVS+=('sg os osg sickg gear ogear osickg sickgear osickgear')
-        SHERPA_QPKG_ESSENTIALS+=('Entware')
+        SHERPA_QPKG_ESSENTIALS+=(Entware)
         SHERPA_QPKG_IPKGS_ADD+=('')
         SHERPA_QPKG_IPKGS_REMOVE+=('')
 
@@ -372,7 +372,7 @@ Session.Init()
         SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/Mylar3/build/Mylar3_201130.qpkg)
         SHERPA_QPKG_MD5+=(ba959d93fa95d0bd5cd95d37a6e131f0)
         SHERPA_QPKG_ABBRVS+=('my omy myl mylar mylar3')
-        SHERPA_QPKG_ESSENTIALS+=('Entware')
+        SHERPA_QPKG_ESSENTIALS+=(Entware)
         SHERPA_QPKG_IPKGS_ADD+=('python3-mako python3-pillow python3-pyopenssl python3-pytz python3-requests python3-six python3-urllib3')
         SHERPA_QPKG_IPKGS_REMOVE+=('')
 
@@ -381,7 +381,7 @@ Session.Init()
         SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/NZBGet/build/NZBGet_201130.qpkg)
         SHERPA_QPKG_MD5+=(c7114e6e217110bc7490ad867b5bf536)
         SHERPA_QPKG_ABBRVS+=('ng nzb nzbg nget nzbget')
-        SHERPA_QPKG_ESSENTIALS+=('Entware')
+        SHERPA_QPKG_ESSENTIALS+=(Entware)
         SHERPA_QPKG_IPKGS_ADD+=('nzbget')
         SHERPA_QPKG_IPKGS_REMOVE+=('')
 
@@ -390,7 +390,7 @@ Session.Init()
         SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/OTransmission/build/OTransmission_201130.qpkg)
         SHERPA_QPKG_MD5+=(c39da08668672e53f8d2dfed0f746069)
         SHERPA_QPKG_ABBRVS+=('ot tm tr trans otrans tmission transmission otransmission')
-        SHERPA_QPKG_ESSENTIALS+=('Entware')
+        SHERPA_QPKG_ESSENTIALS+=(Entware)
         SHERPA_QPKG_IPKGS_ADD+=('transmission-web jq')
         SHERPA_QPKG_IPKGS_REMOVE+=('')
 
@@ -399,7 +399,7 @@ Session.Init()
         SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/Deluge-server/build/Deluge-server_201130.qpkg)
         SHERPA_QPKG_MD5+=(ec7ee6febaf34d894585afa4dec87798)
         SHERPA_QPKG_ABBRVS+=('deluge del-server deluge-server')
-        SHERPA_QPKG_ESSENTIALS+=('Entware')
+        SHERPA_QPKG_ESSENTIALS+=(Entware)
         SHERPA_QPKG_IPKGS_ADD+=('deluge jq')
         SHERPA_QPKG_IPKGS_REMOVE+=('')
 
@@ -408,7 +408,7 @@ Session.Init()
         SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/Deluge-web/build/Deluge-web_201130.qpkg)
         SHERPA_QPKG_MD5+=(2e77b7981360356e6457458b11e759ef)
         SHERPA_QPKG_ABBRVS+=('del-web deluge-web')
-        SHERPA_QPKG_ESSENTIALS+=('Entware')
+        SHERPA_QPKG_ESSENTIALS+=(Entware)
         SHERPA_QPKG_IPKGS_ADD+=('deluge-ui-web jq')
         SHERPA_QPKG_IPKGS_REMOVE+=('')
 
@@ -429,7 +429,7 @@ Session.Init()
     readonly SHERPA_ESSENTIAL_IPKGS_ADD='findutils grep less sed'
     readonly SHERPA_COMMON_IPKGS_ADD='ca-certificates gcc git git-http nano python3-dev python3-pip python3-setuptools'
     readonly SHERPA_COMMON_PIPS_ADD='apscheduler beautifulsoup4 cfscrape cheetah3 cheroot!=8.4.4 cherrypy configobj feedparser portend pygithub python-magic random_user_agent sabyenc3 simplejson slugify'
-    readonly SHERPA_COMMON_CONFLICTS='Optware Optware-NG TarMT Python QPython2'
+    readonly SHERPA_COMMON_QPKG_CONFLICTS='Optware Optware-NG TarMT Python QPython2'
 
     Session.ParseArguments
     Session.SkipPackageProcessing.IsNot && Session.Debug.To.File.Set
@@ -650,7 +650,7 @@ Session.ParseArguments()
                 action_force=true
                 ;;
             *)
-                target_package=$(MatchAbbrvToQPKGName "$arg")
+                target_package=$(QPKG.MatchAbbrv "$arg")
                 [[ -z $target_package ]] && Args.Unknown.Add "$arg"
 
                 case $action in
@@ -1853,7 +1853,7 @@ Entware.Update()
     {
 
     if IsNotSysFileExist $OPKG_CMD; then
-        code_pointer=3
+        code_pointer=4
         return 1
     fi
 
@@ -1980,7 +1980,7 @@ CalcAllIPKGDepsToInstall()
     # From a specified list of IPKG names, find all dependent IPKGs, exclude those already installed, then generate a total qty to download and a total download byte-size
 
     if IsNotSysFileExist $OPKG_CMD || IsNotSysFileExist $GNU_GREP_CMD; then
-        code_pointer=4
+        code_pointer=5
         return 1
     fi
 
@@ -2074,7 +2074,7 @@ CalcAllIPKGDepsToUninstall()
     # From a specified list of IPKG names, exclude those already installed, then generate a total qty to uninstall
 
     if IsNotSysFileExist $OPKG_CMD || IsNotSysFileExist $GNU_GREP_CMD; then
-        code_pointer=5
+        code_pointer=6
         return 1
     fi
 
@@ -3050,7 +3050,7 @@ QPKGs.NewVersions.Show()
 QPKGs.Conflicts.Check()
     {
 
-    for package in "${SHERPA_COMMON_CONFLICTS[@]}"; do
+    for package in "${SHERPA_COMMON_QPKG_CONFLICTS[@]}"; do
         if QPKG.Enabled "$package"; then
             ShowAsError "'$package' is installed and enabled. One-or-more $(FormatAsScriptTitle) applications are incompatible with this package"
             return 1
@@ -3787,11 +3787,11 @@ QPKG.Download()
 
     if [[ -z $remote_url ]]; then
         DebugAsWarning "no URL found for this package $(FormatAsPackageName "$1")"
-        code_pointer=6
+        code_pointer=7
         DebugFuncExit; return
     elif [[ -z $remote_md5 ]]; then
         DebugAsWarning "no checksum found for this package $(FormatAsPackageName "$1")"
-        code_pointer=7
+        code_pointer=8
         DebugFuncExit; return
     fi
 
@@ -4366,6 +4366,37 @@ QPKG.NotEnabled()
 
     }
 
+QPKG.MatchAbbrv()
+    {
+
+    # input:
+    #   $1 = a potential package abbreviation supplied by user
+
+    # output:
+    #   $? = 0 (matched) or 1 (unmatched)
+    #   stdout = matched installable package name (empty if unmatched)
+
+    local abbs=()
+    local package_index=0
+    local index=0
+    local returncode=1
+
+    for package_index in "${!SHERPA_QPKG_NAME[@]}"; do
+        abbs=(${SHERPA_QPKG_ABBRVS[$package_index]})
+
+        for index in "${!abbs[@]}"; do
+            if [[ ${abbs[$index]} = "$1" ]]; then
+                Display "${SHERPA_QPKG_NAME[$package_index]}"
+                returncode=0
+                break 2
+            fi
+        done
+    done
+
+    return $returncode
+
+    }
+
 MakePath()
     {
 
@@ -4380,38 +4411,6 @@ MakePath()
     fi
 
     return 0
-
-    }
-
-MatchAbbrvToQPKGName()
-    {
-
-    # input:
-    #   $1 = a potential package abbreviation supplied by user
-
-    # output:
-    #   $? = 0 (matched) or 1 (unmatched)
-    #   stdout = matched installable package name (empty if unmatched)
-
-    [[ ${#SHERPA_QPKG_NAME[@]} -eq 0 || ${#SHERPA_QPKG_ABBRVS[@]} -eq 0 ]] && return 1
-
-    local returncode=1
-    local abbs=()
-    local package_index=0
-    local abb_index=0
-
-    for package_index in "${!SHERPA_QPKG_NAME[@]}"; do
-        abbs=(${SHERPA_QPKG_ABBRVS[$package_index]})
-        for abb_index in "${!abbs[@]}"; do
-            if [[ ${abbs[$abb_index]} = "$1" ]]; then
-                Display "${SHERPA_QPKG_NAME[$package_index]}"
-                returncode=0
-                break 2
-            fi
-        done
-    done
-
-    return $returncode
 
     }
 
@@ -4737,7 +4736,6 @@ DebugDetected.OK()
 
     first_column_width=9
     second_column_width=21
-    third_column_width=10
 
     if [[ -z $3 ]]; then                # if $3 is nothing, then assume only 2 fields are required
         DebugDetected "$(printf "%${first_column_width}s: %${second_column_width}s\n" "$1" "$2")"
