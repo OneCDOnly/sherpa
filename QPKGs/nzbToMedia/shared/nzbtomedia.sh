@@ -17,7 +17,7 @@ Init()
     # specific environment
     readonly QPKG_NAME=nzbToMedia
     readonly SOURCE_GIT_URL=https://github.com/clinton-hall/nzbToMedia.git
-    readonly SOURCE_GIT_BRANCH=master
+    readonly SOURCE_GIT_BRANCH=nightly
     # 'shallow' (depth 1) or 'single-branch' (note: 'shallow' implies a 'single-branch' too)
     readonly SOURCE_GIT_DEPTH=shallow
     readonly TARGET_SCRIPT=''
