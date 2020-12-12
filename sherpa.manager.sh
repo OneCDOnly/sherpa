@@ -65,6 +65,7 @@ Session.Init()
     readonly CURL_CMD=/sbin/curl
     readonly GETCFG_CMD=/sbin/getcfg
     readonly QPKG_SERVICE_CMD=/sbin/qpkg_service
+    readonly APP_CENTER_NOTIFIER=/sbin/qpkg_cli     # only needed for QTS 4.5.1-and-later
     readonly RMCFG_CMD=/sbin/rmcfg
     readonly SETCFG_CMD=/sbin/setcfg
 
@@ -3420,7 +3421,9 @@ QPKGs.Upgradable.Build()
     local remote_version=''
 
     for package in $(QPKGs.Installed.Array); do
-        [[ $package = Entware || $package = Par2 ]] && continue        # KLUDGE: ignore 'Entware' as package filename version doesn't match the QTS App Center version string
+        # KLUDGE: ignore 'Entware' as package filename version doesn't match the QTS App Center version string
+        [[ $package = Entware || $package = Par2 ]] && continue
+
         installed_version=$(QPKG.InstalledVersion "$package")
         remote_version=$(QPKG.URLVersion "$package")
 
@@ -3982,7 +3985,10 @@ QPKG.Install()
     if [[ $resultcode -eq 0 || $resultcode -eq 10 ]]; then
         DebugAsDone "installed $(FormatAsPackageName "$1")"
 
-        # need this for Entware and Par2 packages as they don't add a status line to qpkg.conf
+        # KLUDGE: force-cancel notifier status as it's often wrong. :(
+        [[ -e $APP_CENTER_NOTIFIER ]] && $APP_CENTER_NOTIFIER -c "$1" > /dev/null 2>&1
+
+        # KLUDGE: need this for Entware and Par2 packages as they don't add a status line to qpkg.conf
         $SETCFG_CMD "$1" Status complete -f "$APP_CENTER_CONFIG_PATHFILE"
 
         QPKG.ServiceStatus "$1"
@@ -4037,7 +4043,7 @@ QPKG.Reinstall()
     if [[ $resultcode -eq 0 || $resultcode -eq 10 ]]; then
         DebugAsDone "re-installed $(FormatAsPackageName "$1")"
 
-        # need this for Entware and Par2 packages as they don't add a status line to qpkg.conf
+        # KLUDGE: need this for Entware and Par2 packages as they don't add a status line to qpkg.conf
         $SETCFG_CMD "$1" Status complete -f "$APP_CENTER_CONFIG_PATHFILE"
 
         QPKG.ServiceStatus "$1"
@@ -4083,7 +4089,7 @@ QPKG.Upgrade()
     local log_pathfile=$LOGS_PATH/$target_file.$UPGRADE_LOG_FILE
     QPKG.Installed "$1" && previous_version=$(QPKG.InstalledVersion "$1")
 
-    # need this for Entware and Par2 packages as they don't add a status line to qpkg.conf
+    # KLUDGE: need this for Entware and Par2 packages as they don't add a status line to qpkg.conf
     $SETCFG_CMD "$1" Status complete -f "$APP_CENTER_CONFIG_PATHFILE"
 
     DebugAsProc "${prefix}upgrading $(FormatAsPackageName "$1")"
@@ -4173,7 +4179,7 @@ QPKG.Restart()
     local resultcode=0
     local log_pathfile=$LOGS_PATH/$1.$RESTART_LOG_FILE
 
-    # need this for Entware and Par2 packages as they don't add a status line to qpkg.conf
+    # KLUDGE: need this for Entware and Par2 packages as they don't add a status line to qpkg.conf
     $SETCFG_CMD "$1" Status complete -f "$APP_CENTER_CONFIG_PATHFILE"
 
     DebugAsProc "restarting $(FormatAsPackageName "$1")"
@@ -4214,7 +4220,7 @@ QPKG.Start()
     local resultcode=0
     local log_pathfile=$LOGS_PATH/$1.$START_LOG_FILE
 
-    # need this for Entware and Par2 packages as they don't add a status line to qpkg.conf
+    # KLUDGE: need this for Entware and Par2 packages as they don't add a status line to qpkg.conf
     $SETCFG_CMD "$1" Status complete -f "$APP_CENTER_CONFIG_PATHFILE"
 
     DebugAsProc "starting $(FormatAsPackageName "$1")"
@@ -4224,6 +4230,10 @@ QPKG.Start()
 
     if [[ $resultcode -eq 0 ]]; then
         DebugAsDone "started $(FormatAsPackageName "$1")"
+
+        # KLUDGE: force-cancel notifier status as it's often wrong. :(
+        [[ -e $APP_CENTER_NOTIFIER ]] && $APP_CENTER_NOTIFIER -c "$1" > /dev/null 2>&1
+
         QPKG.ServiceStatus "$1"
         QPKGs.JustStarted.Add "$1"
         QPKGs.ToRestart.Remove "$1"
@@ -4286,7 +4296,7 @@ QPKG.Enable()
     local resultcode=0
     local log_pathfile=$LOGS_PATH/$1.$ENABLE_LOG_FILE
 
-    # need this for Entware and Par2 packages as they don't add a status line to qpkg.conf
+    # KLUDGE: need this for Entware and Par2 packages as they don't add a status line to qpkg.conf
     $SETCFG_CMD "$1" Status complete -f "$APP_CENTER_CONFIG_PATHFILE"
 
     if QPKG.NotEnabled "$1"; then
