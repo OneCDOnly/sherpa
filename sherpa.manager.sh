@@ -1093,11 +1093,9 @@ Packages.Uninstall.Essentials()
     for ((index=${#target_packages[@]}-1; index>=0; index--)); do       # uninstall packages in reverse of declared order
         package=${target_packages[$index]}
 
-        if [[ $package = Entware || $package = sherpa ]]; then  # KLUDGE: ignore 'Entware' and 'sherpa' as they need to be handled separately.
+        if [[ $package = sherpa ]]; then    # ignore 'sherpa' as it needs to be handled separately
             continue
         fi
-
-        # TODO: still need something here to remove Entware if it's in the QPKGs.ToUninstall() array
 
         if ! QPKG.Uninstall "$package"; then
             ShowAsError "unable to uninstall $(FormatAsPackageName "$package") (see log for more details)"
@@ -1113,6 +1111,8 @@ Packages.Uninstall.Essentials()
     else
         [[ $fault = false ]] && ShowAsDone "uninstalled $count essential QPKG$(FormatAsPlural "$count")"
     fi
+
+    ! QPKG.Installed Entware && Session.RemovePathToEntware
 
     DebugFuncExit; return 0
 
@@ -1312,7 +1312,7 @@ Packages.Install.Essentials()
     fi
 
     for package in $(QPKGs.Essential.Array); do
-        QPKGs.ToInstall.Exist "$package" && QPKG.Installed "$package" && target_packages+=("$package")
+        QPKGs.ToInstall.Exist "$package" && QPKG.NotInstalled "$package" && target_packages+=("$package")
     done
 
     if [[ ${#target_packages[@]} -eq 0 ]]; then
@@ -1348,6 +1348,11 @@ Packages.Install.Essentials()
         [[ $fault = false ]] && ShowAsDone "installed $count essential QPKG$(FormatAsPlural "$count")"
     else
         DebugAsDone 'no essential QPKGs required installation'
+    fi
+
+    if QPKG.Installed Entware; then
+        Session.AddPathToEntware
+        Entware.Patch.Service
     fi
 
     DebugFuncExit; return 0
@@ -1439,8 +1444,6 @@ Packages.Install.Addons()
     fi
 
     if QPKG.Enabled Entware; then
-        Session.AdjustPathEnv
-        Entware.Patch.Service
         IPKGs.Install
         PIPs.Install
     else
@@ -1830,7 +1833,7 @@ Package.Install.Entware()
     local opt_path=/opt
     local opt_backup_path=/opt.orig
     [[ -d $opt_path && ! -L $opt_path && ! -e $opt_backup_path ]] && mv "$opt_path" "$opt_backup_path"
-    QPKG.Install Entware && Session.AdjustPathEnv
+    QPKG.Install Entware && Session.AddPathToEntware
 
     DebugAsProc 'swapping /opt'
     # copy all files from original [/opt] into new [/opt]
@@ -3578,14 +3581,29 @@ Session.Calc.EntwareType()
 
     }
 
-Session.AdjustPathEnv()
+Session.AddPathToEntware()
     {
 
     local opkg_prefix=/opt/bin:/opt/sbin
 
     if QPKG.Installed Entware; then
         export PATH="$opkg_prefix:$($SED_CMD "s|$opkg_prefix||" <<< "$PATH")"
-        DebugAsDone 'adjusted $PATH for Entware'
+        DebugAsDone 'add $PATH to Entware'
+        DebugVar PATH
+    fi
+
+    return 0
+
+    }
+
+Session.RemovePathToEntware()
+    {
+
+    local opkg_prefix=/opt/bin:/opt/sbin
+
+    if QPKG.Installed Entware; then
+        export PATH="$($SED_CMD "s|$opkg_prefix||" <<< "$PATH")"
+        DebugAsDone 'remove $PATH to Entware'
         DebugVar PATH
     fi
 
