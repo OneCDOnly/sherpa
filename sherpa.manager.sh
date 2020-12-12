@@ -2169,8 +2169,10 @@ CalcAllIPKGDepsToInstall()
 
     DebugAsProc 'excluding IPKGs already installed'
     for element in $pre_download_list; do
-        if [[ $element != 'ca-certs' ]]; then       # KLUDGE: 'ca-certs' appears to be a bogus meta-package, so silently exclude it from attempted installation.
-            if [[ $element != 'libjpeg' ]]; then    # KLUDGE: 'libjpeg' appears to have been replaced by 'libjpeg-turbo', but many packages still list 'libjpeg' as a dependency, so replace it with 'libjpeg-turbo'.
+        # KLUDGE: 'ca-certs' appears to be a bogus meta-package, so silently exclude it from attempted installation.
+        if [[ $element != 'ca-certs' ]]; then
+            # KLUDGE: 'libjpeg' appears to have been replaced by 'libjpeg-turbo', but many packages still list 'libjpeg' as a dependency, so replace it with 'libjpeg-turbo'.
+            if [[ $element != 'libjpeg' ]]; then
                 if ! $OPKG_CMD status "$element" | $GREP_CMD -q "Status:.*installed"; then
                     IPKGs.ToDownload.Add "$element"
                 fi
@@ -3984,13 +3986,7 @@ QPKG.Install()
 
     if [[ $resultcode -eq 0 || $resultcode -eq 10 ]]; then
         DebugAsDone "installed $(FormatAsPackageName "$1")"
-
-        # KLUDGE: force-cancel notifier status as it's often wrong. :(
-        [[ -e $APP_CENTER_NOTIFIER ]] && $APP_CENTER_NOTIFIER -c "$1" > /dev/null 2>&1
-
-        # KLUDGE: need this for Entware and Par2 packages as they don't add a status line to qpkg.conf
-        $SETCFG_CMD "$1" Status complete -f "$APP_CENTER_CONFIG_PATHFILE"
-
+        QPKG.FixAppCenterStatus "$1"
         QPKG.ServiceStatus "$1"
         QPKGs.JustInstalled.Add "$1"
         QPKGs.JustStarted.Add "$1"
@@ -4042,10 +4038,7 @@ QPKG.Reinstall()
 
     if [[ $resultcode -eq 0 || $resultcode -eq 10 ]]; then
         DebugAsDone "re-installed $(FormatAsPackageName "$1")"
-
-        # KLUDGE: need this for Entware and Par2 packages as they don't add a status line to qpkg.conf
-        $SETCFG_CMD "$1" Status complete -f "$APP_CENTER_CONFIG_PATHFILE"
-
+        QPKG.FixAppCenterStatus "$1"
         QPKG.ServiceStatus "$1"
         QPKGs.JustInstalled.Add "$1"
         QPKGs.JustStarted.Add "$1"
@@ -4088,9 +4081,7 @@ QPKG.Upgrade()
     local target_file=$($BASENAME_CMD "$local_pathfile")
     local log_pathfile=$LOGS_PATH/$target_file.$UPGRADE_LOG_FILE
     QPKG.Installed "$1" && previous_version=$(QPKG.InstalledVersion "$1")
-
-    # KLUDGE: need this for Entware and Par2 packages as they don't add a status line to qpkg.conf
-    $SETCFG_CMD "$1" Status complete -f "$APP_CENTER_CONFIG_PATHFILE"
+    QPKG.FixAppCenterStatus "$1"
 
     DebugAsProc "${prefix}upgrading $(FormatAsPackageName "$1")"
 
@@ -4179,8 +4170,7 @@ QPKG.Restart()
     local resultcode=0
     local log_pathfile=$LOGS_PATH/$1.$RESTART_LOG_FILE
 
-    # KLUDGE: need this for Entware and Par2 packages as they don't add a status line to qpkg.conf
-    $SETCFG_CMD "$1" Status complete -f "$APP_CENTER_CONFIG_PATHFILE"
+    QPKG.FixAppCenterStatus "$1"
 
     DebugAsProc "restarting $(FormatAsPackageName "$1")"
 
@@ -4220,8 +4210,7 @@ QPKG.Start()
     local resultcode=0
     local log_pathfile=$LOGS_PATH/$1.$START_LOG_FILE
 
-    # KLUDGE: need this for Entware and Par2 packages as they don't add a status line to qpkg.conf
-    $SETCFG_CMD "$1" Status complete -f "$APP_CENTER_CONFIG_PATHFILE"
+    QPKG.FixAppCenterStatus "$1"
 
     DebugAsProc "starting $(FormatAsPackageName "$1")"
 
@@ -4230,10 +4219,7 @@ QPKG.Start()
 
     if [[ $resultcode -eq 0 ]]; then
         DebugAsDone "started $(FormatAsPackageName "$1")"
-
-        # KLUDGE: force-cancel notifier status as it's often wrong. :(
-        [[ -e $APP_CENTER_NOTIFIER ]] && $APP_CENTER_NOTIFIER -c "$1" > /dev/null 2>&1
-
+        QPKG.FixAppCenterStatus "$1"
         QPKG.ServiceStatus "$1"
         QPKGs.JustStarted.Add "$1"
         QPKGs.ToRestart.Remove "$1"
@@ -4296,8 +4282,7 @@ QPKG.Enable()
     local resultcode=0
     local log_pathfile=$LOGS_PATH/$1.$ENABLE_LOG_FILE
 
-    # KLUDGE: need this for Entware and Par2 packages as they don't add a status line to qpkg.conf
-    $SETCFG_CMD "$1" Status complete -f "$APP_CENTER_CONFIG_PATHFILE"
+    QPKG.FixAppCenterStatus "$1"
 
     if QPKG.NotEnabled "$1"; then
         RunAndLogResults "$QPKG_SERVICE_CMD enable $1" "$log_pathfile"
@@ -4522,6 +4507,31 @@ QPKG.MatchAbbrv()
     done
 
     return $returncode
+
+    }
+
+QPKG.FixAppCenterStatus()
+    {
+
+    # $1 = QPKG name to install
+
+    DebugFuncEntry
+
+    if [[ -z $1 ]]; then
+        DebugFuncExit; return 1
+    fi
+
+    if QPKG.NotInstalled "$1"; then
+        DebugFuncExit; return 0
+    fi
+
+    # KLUDGE: force-cancel QTS 4.5.1 App Center notifier status as it's often wrong. :(
+    [[ -e $APP_CENTER_NOTIFIER ]] && $APP_CENTER_NOTIFIER -c "$1" > /dev/null 2>&1
+
+    # KLUDGE: need this for 'Entware' and 'Par2' packages as they don't add a status line to qpkg.conf
+    $SETCFG_CMD "$1" Status complete -f "$APP_CENTER_CONFIG_PATHFILE"
+
+    DebugFuncExit; return 0
 
     }
 
