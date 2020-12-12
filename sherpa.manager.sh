@@ -4103,6 +4103,7 @@ QPKG.Upgrade()
         QPKGs.ToInstall.Remove "$1"
         QPKGs.ToReinstall.Remove "$1"
         QPKGs.ToRestart.Remove "$1"
+        resultcode=0    # reset this to zero (0 or 10 from a QPKG upgrade is OK)
     else
         ShowAsError "${prefix}upgrade failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $resultcode)"
     fi
