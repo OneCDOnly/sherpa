@@ -2735,7 +2735,7 @@ Help.Basic.Show()
 Help.Basic.Example.Show()
     {
 
-    DisplayAsProjectSyntaxIndentedExample "to list available $(FormatAsHelpAction) operations, type" 'actions'
+    DisplayAsProjectSyntaxIndentedExample "to list available $(FormatAsHelpAction)s, type" 'actions'
 
     DisplayAsProjectSyntaxIndentedExample '' 'actions-all'
 
@@ -2776,7 +2776,7 @@ Help.Actions.Show()
 
     DisplayAsProjectSyntaxExample "$(FormatAsHelpAction) to affect all packages can be seen with" 'actions-all'
 
-    DisplayAsProjectSyntaxExample "multiple $(FormatAsHelpAction) operations are supported like this" "$(FormatAsHelpAction) $(FormatAsHelpPackages) $(FormatAsHelpAction) $(FormatAsHelpPackages)"
+    DisplayAsProjectSyntaxExample "multiple $(FormatAsHelpAction)s are supported like this" "$(FormatAsHelpAction) $(FormatAsHelpPackages) $(FormatAsHelpAction) $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample '' 'install sabnzbd sickchill restart transmission uninstall lazy nzbget upgrade nzbtomedia'
 
     return 0
@@ -2788,7 +2788,7 @@ Help.ActionsAll.Show()
 
     Help.Basic.Show
     DisplayLineSpaceIfNoneAlready
-    Display "* These $(FormatAsHelpAction) operations apply to all installed packages. If $(FormatAsHelpAction) is 'install-all' then all available packages will be affected."
+    Display "* These $(FormatAsHelpAction)s apply to all installed packages. If $(FormatAsHelpAction) is 'install-all' then all available packages will be affected."
     DisplayLineSpaceIfNoneAlready
     Display "* $(FormatAsHelpAction) usage examples:"
 
