@@ -4514,17 +4514,10 @@ QPKG.MatchAbbrv()
 QPKG.FixAppCenterStatus()
     {
 
-    # $1 = QPKG name to install
+    # $1 = QPKG name to fix
 
-    DebugFuncEntry
-
-    if [[ -z $1 ]]; then
-        DebugFuncExit; return 1
-    fi
-
-    if QPKG.NotInstalled "$1"; then
-        DebugFuncExit; return 0
-    fi
+    [[ -z $1 ]] && return 1
+    QPKG.NotInstalled "$1" && return 0
 
     # KLUDGE: force-cancel QTS 4.5.1 App Center notifier status as it's often wrong. :(
     [[ -e $APP_CENTER_NOTIFIER ]] && $APP_CENTER_NOTIFIER -c "$1" > /dev/null 2>&1
@@ -4532,7 +4525,7 @@ QPKG.FixAppCenterStatus()
     # KLUDGE: need this for 'Entware' and 'Par2' packages as they don't add a status line to qpkg.conf
     $SETCFG_CMD "$1" Status complete -f "$APP_CENTER_CONFIG_PATHFILE"
 
-    DebugFuncExit; return 0
+    return 0
 
     }
 
