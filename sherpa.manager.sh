@@ -980,6 +980,8 @@ Packages.Stop.Essentials()
     for ((index=${#target_packages[@]}-1; index>=0; index--)); do       # process in reverse of declared order
         package=${target_packages[$index]}
 
+        [[ $package = sherpa ]] && continue     # ignore 'sherpa'
+
         if ! QPKG.Stop "$package"; then
             ShowAsError "unable to stop $(FormatAsPackageName "$package") (see log for more details)"
             fault=true
@@ -1094,9 +1096,7 @@ Packages.Uninstall.Essentials()
     for ((index=${#target_packages[@]}-1; index>=0; index--)); do       # uninstall packages in reverse of declared order
         package=${target_packages[$index]}
 
-        if [[ $package = sherpa ]]; then    # ignore 'sherpa' as it needs to be handled separately
-            continue
-        fi
+        [[ $package = sherpa ]] && continue     # ignore 'sherpa'
 
         if ! QPKG.Uninstall "$package"; then
             ShowAsError "unable to uninstall $(FormatAsPackageName "$package") (see log for more details)"
@@ -1407,6 +1407,8 @@ Packages.Start.Essentials()
     ShowAsProcLong "starting ${#target_packages[@]} essential QPKG$(FormatAsPlural "${#target_packages[@]}")"
 
     for package in "${target_packages[@]}"; do
+        [[ $package = sherpa ]] && continue     # ignore 'sherpa'
+
         if ! QPKG.Enable "$package"; then       # essentials don't have the same service scripts as other sherpa packages, so they must be enabled/disabled externally
             ShowAsNote "unable to enable $(FormatAsPackageName "$package") (see log for more details)"
             fault=true
