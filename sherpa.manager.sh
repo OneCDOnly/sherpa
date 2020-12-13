@@ -819,7 +819,7 @@ Packages.Download()
     DebugFuncEntry
     local package=''
     local result=0
-    local count=0
+    local pass_count=0
 
     if QPKGs.ToDownload.IsNone; then
         DebugInfo 'no QPKGs require download'
@@ -839,13 +839,13 @@ Packages.Download()
             continue
         fi
 
-        ((count++))
+        ((pass_count++))
     done
 
-    if [[ $count -eq 0 ]]; then
+    if [[ $pass_count -eq 0 ]]; then
         ShowAsDone 'using cached QPKGs'
     else
-        ShowAsDone "downloaded $count QPKG$(FormatAsPlural "$count")"
+        ShowAsDone "downloaded $pass_count QPKG$(FormatAsPlural "$pass_count")"
     fi
 
     DebugFuncExit; return 0
@@ -859,7 +859,7 @@ Packages.Backup()
     DebugFuncEntry
     local package=''
     local fault=false
-    local count=0
+    local pass_count=0
 
     if QPKGs.ToBackup.IsNone; then
         DebugInfo 'no QPKGs require backup'
@@ -887,13 +887,13 @@ Packages.Backup()
             continue
         fi
 
-        ((count++))
+        ((pass_count++))
     done
 
-    if [[ $count -eq 0 ]]; then
+    if [[ $pass_count -eq 0 ]]; then
         DebugAsDone 'no QPKGs required backup'
     else
-        [[ $fault = false ]] && ShowAsDone "backed-up $count QPKG$(FormatAsPlural "$count")"
+        [[ $fault = false ]] && ShowAsDone "backed-up $pass_count QPKG$(FormatAsPlural "$pass_count")"
         Session.ShowBackupLocation.Set
     fi
 
@@ -918,7 +918,7 @@ Packages.Stop.Optionals()
     local target_packages=()
     local index=0
     local fault=false
-    local count=0
+    local pass_count=0
     local tier=optional
 
     if QPKGs.ToStop.IsNone; then
@@ -952,13 +952,13 @@ Packages.Stop.Optionals()
             continue
         fi
 
-        ((count++))
+        ((pass_count++))
     done
 
-    if [[ $count -eq 0 ]]; then
+    if [[ $pass_count -eq 0 ]]; then
         DebugAsDone "no $tier QPKGs required stopping"
     else
-        [[ $fault = false ]] && ShowAsDone "stopped $count $tier QPKG$(FormatAsPlural "$count")"
+        [[ $fault = false ]] && ShowAsDone "stopped $pass_count $tier QPKG$(FormatAsPlural "$pass_count")"
     fi
 
     DebugFuncExit; return 0
@@ -974,7 +974,7 @@ Packages.Stop.Essentials()
     local target_packages=()
     local index=0
     local fault=false
-    local count=0
+    local pass_count=0
     local tier=essential
 
     if QPKGs.ToStop.IsNone; then
@@ -1014,13 +1014,13 @@ Packages.Stop.Essentials()
             continue
         fi
 
-        ((count++))
+        ((pass_count++))
     done
 
-    if [[ $count -eq 0 ]]; then
+    if [[ $pass_count -eq 0 ]]; then
         DebugAsDone "no $tier QPKGs required stopping"
     else
-        [[ $fault = false ]] && ShowAsDone "stopped $count $tier QPKG$(FormatAsPlural "$count")"
+        [[ $fault = false ]] && ShowAsDone "stopped $pass_count $tier QPKG$(FormatAsPlural "$pass_count")"
     fi
 
     DebugFuncExit; return 0
@@ -1045,7 +1045,7 @@ Packages.Uninstall.Optionals()
     local target_packages=()
     local index=0
     local fault=false
-    local count=0
+    local pass_count=0
     local tier=optional
 
     if QPKGs.ToUninstall.IsNone; then
@@ -1079,13 +1079,13 @@ Packages.Uninstall.Optionals()
             continue
         fi
 
-        ((count++))
+        ((pass_count++))
     done
 
-    if [[ $count -eq 0 ]]; then
+    if [[ $pass_count -eq 0 ]]; then
         DebugAsDone "no $tier QPKGs required uninstallation"
     else
-        [[ $fault = false ]] && ShowAsDone "uninstalled $count $tier QPKG$(FormatAsPlural "$count")"
+        [[ $fault = false ]] && ShowAsDone "uninstalled $pass_count $tier QPKG$(FormatAsPlural "$pass_count")"
     fi
 
     DebugFuncExit; return 0
@@ -1113,7 +1113,7 @@ Packages.Uninstall.Essentials()
     local target_packages=()
     local index=0
     local fault=false
-    local count=0
+    local pass_count=0
     local tier=essential
 
     if QPKGs.ToUninstall.IsNone; then
@@ -1149,13 +1149,13 @@ Packages.Uninstall.Essentials()
             continue
         fi
 
-        ((count++))
+        ((pass_count++))
     done
 
-    if [[ $count -eq 0 ]]; then
+    if [[ $pass_count -eq 0 ]]; then
         DebugAsDone "no $tier QPKGs required uninstallation"
     else
-        [[ $fault = false ]] && ShowAsDone "uninstalled $count $tier QPKG$(FormatAsPlural "$count")"
+        [[ $fault = false ]] && ShowAsDone "uninstalled $pass_count $tier QPKG$(FormatAsPlural "$pass_count")"
     fi
 
     ! QPKG.Installed Entware && Session.RemovePathToEntware
@@ -1172,7 +1172,7 @@ Packages.Force-upgrade.Essentials()
     local package=''
     local target_packages=()
     local fault=false
-    local count=0
+    local pass_count=0
     local tier=essential
 
     if QPKGs.ToForceUpgrade.IsNone; then
@@ -1204,11 +1204,11 @@ Packages.Force-upgrade.Essentials()
             continue
         fi
 
-        ((count++))
+        ((pass_count++))
     done
 
-    if [[ $count -gt 0 ]]; then
-        [[ $fault = false ]] && ShowAsDone "force-upgraded $count $tier QPKG$(FormatAsPlural "$count")"
+    if [[ $pass_count -gt 0 ]]; then
+        [[ $fault = false ]] && ShowAsDone "force-upgraded $pass_count $tier QPKG$(FormatAsPlural "$pass_count")"
     else
         DebugAsDone "no $tier QPKGs were force-upgraded"
     fi
@@ -1225,7 +1225,7 @@ Packages.Upgrade.Essentials()
     local package=''
     local target_packages=()
     local fault=false
-    local count=0
+    local pass_count=0
     local tier=essential
 
     if QPKGs.ToUpgrade.IsNone; then
@@ -1257,11 +1257,11 @@ Packages.Upgrade.Essentials()
             continue
         fi
 
-        ((count++))
+        ((pass_count++))
     done
 
-    if [[ $count -gt 0 ]]; then
-        [[ $fault = false ]] && ShowAsDone "upgraded $count $tier QPKG$(FormatAsPlural "$count")"
+    if [[ $pass_count -gt 0 ]]; then
+        [[ $fault = false ]] && ShowAsDone "upgraded $pass_count $tier QPKG$(FormatAsPlural "$pass_count")"
     else
         DebugAsDone "no $tier QPKGs were upgraded"
     fi
@@ -1278,7 +1278,7 @@ Packages.Reinstall.Essentials()
     local package=''
     local target_packages=()
     local fault=false
-    local count=0
+    local pass_count=0
     local tier=essential
 
     if QPKGs.ToReinstall.IsNone; then
@@ -1322,7 +1322,7 @@ Packages.Reinstall.Essentials()
                 fi
 
                 QPKGs.ToReinstall.Add Entware   # re-add this back to reinstall list as it was (quite-rightly) removed by the std QPKG.Install() function
-                ((count++))
+                ((pass_count++))
             else
                 DebugInfoMinorSeparator
                 DebugScript 'user abort'
@@ -1343,12 +1343,12 @@ Packages.Reinstall.Essentials()
                 continue
             fi
 
-            ((count++))
+            ((pass_count++))
         fi
     done
 
-    if [[ $count -gt 0 ]]; then
-        [[ $fault = false ]] && ShowAsDone "reinstalled $count $tier QPKG$(FormatAsPlural "$count")"
+    if [[ $pass_count -gt 0 ]]; then
+        [[ $fault = false ]] && ShowAsDone "reinstalled $pass_count $tier QPKG$(FormatAsPlural "$pass_count")"
     else
         DebugAsDone "no $tier QPKGs require reinstallation"
     fi
@@ -1365,7 +1365,7 @@ Packages.Install.Essentials()
     local package=''
     local target_packages=()
     local fault=false
-    local count=0
+    local pass_count=0
     local tier=essential
 
     if QPKGs.ToInstall.IsNone; then
@@ -1398,7 +1398,7 @@ Packages.Install.Essentials()
                 continue
             fi
 
-            ((count++))
+            ((pass_count++))
         else
             if [[ $NAS_QPKG_ARCH != none ]] && QPKGs.ToInstall.Exist "$package"; then
                 if ! QPKG.Install "$package"; then
@@ -1407,13 +1407,13 @@ Packages.Install.Essentials()
                     continue
                 fi
 
-                ((count++))
+                ((pass_count++))
             fi
         fi
     done
 
-    if [[ $count -gt 0 ]]; then
-        [[ $fault = false ]] && ShowAsDone "installed $count $tier QPKG$(FormatAsPlural "$count")"
+    if [[ $pass_count -gt 0 ]]; then
+        [[ $fault = false ]] && ShowAsDone "installed $pass_count $tier QPKG$(FormatAsPlural "$pass_count")"
     else
         DebugAsDone "no $tier QPKGs required installation"
     fi
@@ -1436,7 +1436,7 @@ Packages.Start.Essentials()
     local acc=()
     local target_packages=()
     local fault=false
-    local count=0
+    local pass_count=0
     local tier=essential
 
     if QPKGs.ToStart.IsNone; then
@@ -1479,11 +1479,11 @@ Packages.Start.Essentials()
             continue
         fi
 
-        ((count++))
+        ((pass_count++))
     done
 
-    if [[ $count -gt 0 ]]; then
-        [[ $fault = false ]] && ShowAsDone "started $count $tier QPKG$(FormatAsPlural "$count")"
+    if [[ $pass_count -gt 0 ]]; then
+        [[ $fault = false ]] && ShowAsDone "started $pass_count $tier QPKG$(FormatAsPlural "$pass_count")"
     else
         DebugAsDone "no $tier QPKGs required starting"
     fi
@@ -1508,7 +1508,7 @@ Packages.Restart.Essentials()
     local acc=()
     local target_packages=()
     local fault=false
-    local count=0
+    local pass_count=0
     local tier=essential
 
     if QPKGs.ToRestart.IsNone; then
@@ -1542,11 +1542,11 @@ Packages.Restart.Essentials()
             continue
         fi
 
-        ((count++))
+        ((pass_count++))
     done
 
-    if [[ $count -gt 0 ]]; then
-        [[ $fault = false ]] && ShowAsDone "restarted $count $tier QPKG$(FormatAsPlural "$count")"
+    if [[ $pass_count -gt 0 ]]; then
+        [[ $fault = false ]] && ShowAsDone "restarted $pass_count $tier QPKG$(FormatAsPlural "$pass_count")"
     else
         DebugAsDone "no $tier QPKGs required restarting"
     fi
@@ -1568,6 +1568,7 @@ Packages.Upgrade.Addons()
     :   # placeholder function
 
     }
+
 Packages.Reinstall.Addons()
     {
 
@@ -1629,7 +1630,7 @@ Packages.Force-upgrade.Optionals()
     local package=''
     local fault=false
     local target_packages=()
-    local count=0
+    local pass_count=0
     local tier=optional
 
     if QPKGs.ToForceUpgrade.IsNone; then
@@ -1660,11 +1661,11 @@ Packages.Force-upgrade.Optionals()
             fault=true
         fi
 
-        ((count++))
+        ((pass_count++))
     done
 
-    if [[ $count -gt 0 ]]; then
-        [[ $fault = false ]] && ShowAsDone "force-upgraded $count $tier QPKG$(FormatAsPlural "$count")"
+    if [[ $pass_count -gt 0 ]]; then
+        [[ $fault = false ]] && ShowAsDone "force-upgraded $pass_count $tier QPKG$(FormatAsPlural "$pass_count")"
     else
         DebugAsDone "no $tier QPKGs required force-upgrading"
     fi
@@ -1681,7 +1682,7 @@ Packages.Upgrade.Optionals()
     local package=''
     local fault=false
     local target_packages=()
-    local count=0
+    local pass_count=0
     local tier=optional
 
     if QPKGs.ToUpgrade.IsNone; then
@@ -1712,11 +1713,11 @@ Packages.Upgrade.Optionals()
             fault=true
         fi
 
-        ((count++))
+        ((pass_count++))
     done
 
-    if [[ $count -gt 0 ]]; then
-        [[ $fault = false ]] && ShowAsDone "upgraded $count $tier QPKG$(FormatAsPlural "$count")"
+    if [[ $pass_count -gt 0 ]]; then
+        [[ $fault = false ]] && ShowAsDone "upgraded $pass_count $tier QPKG$(FormatAsPlural "$pass_count")"
     else
         DebugAsDone "no $tier QPKGs required upgrading"
     fi
@@ -1733,7 +1734,7 @@ Packages.Reinstall.Optionals()
     local package=''
     local fault=false
     local target_packages=()
-    local count=0
+    local pass_count=0
     local tier=optional
 
     if QPKGs.ToReinstall.IsNone; then
@@ -1766,11 +1767,11 @@ Packages.Reinstall.Optionals()
             QPKGs.ToRestart.Remove "$package"
         fi
 
-        ((count++))
+        ((pass_count++))
     done
 
-    if [[ $count -gt 0 ]]; then
-        [[ $fault = false ]] && ShowAsDone "reinstalled $count $tier QPKG$(FormatAsPlural "$count")"
+    if [[ $pass_count -gt 0 ]]; then
+        [[ $fault = false ]] && ShowAsDone "reinstalled $pass_count $tier QPKG$(FormatAsPlural "$pass_count")"
     else
         DebugAsDone "no $tier QPKGs required reinstallation"
     fi
@@ -1785,9 +1786,10 @@ Packages.Install.Optionals()
     Session.SkipPackageProcessing.IsSet && return
     DebugFuncEntry
     local package=''
-    local fault=false
     local target_packages=()
-    local count=0
+    local pass_count=0
+    local fail_count=0
+    local old_fail_count=-1
     local tier=optional
 
     if QPKGs.ToInstall.IsNone; then
@@ -1804,27 +1806,35 @@ Packages.Install.Optionals()
         DebugFuncExit; return 0
     fi
 
-    ShowAsProcLong "installing ${#target_packages[@]} $tier QPKG$(FormatAsPlural "${#target_packages[@]}")"
-
     for package in "${target_packages[@]}"; do
+        if [[ $fail_count -ne $old_fail_count ]]; then
+            ShowAsProcLong "installing $((${#target_packages[@]}-fail_count)) $tier QPKG$(FormatAsPlural "$((${#target_packages[@]}-fail_count))")"
+            old_fail_count=$fail_count
+        fi
+
         if QPKG.Installed "$package"; then
             ShowAsNote "unable to install $(FormatAsPackageName "$package") as it's already installed. Use 'reinstall' instead."
-            fault=true
+            ((fail_count++))
             continue
         fi
 
         if ! QPKG.Install "$package"; then
             ShowAsNote "unable to install $(FormatAsPackageName "$package") (see log for more details)"
-            fault=true
+            ((fail_count++))
             QPKGs.ToStart.Remove "$package"
             QPKGs.ToRestart.Remove "$package"
+            continue
         fi
 
-        ((count++))
+        ((pass_count++))
     done
 
-    if [[ $count -gt 0 ]]; then
-        [[ $fault = false ]] && ShowAsDone "installed $count $tier QPKG$(FormatAsPlural "$count")"
+    if [[ $fail_count -eq ${#target_packages[@]} ]]; then
+        ShowAsNote "$fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to install"
+    elif [[ $fail_count -gt 0 ]]; then
+        ShowAsNote "installed $pass_count $tier QPKG$(FormatAsPlural "$pass_count") but $fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to install"
+    elif [[ $pass_count -gt 0 ]]; then
+        ShowAsDone "installed $pass_count $tier QPKG$(FormatAsPlural "$pass_count")"
     else
         DebugAsDone "no $tier QPKGs required installation"
     fi
@@ -1839,9 +1849,10 @@ Packages.Start.Optionals()
     Session.SkipPackageProcessing.IsSet && return
     DebugFuncEntry
     local package=''
-    local fault=false
     local target_packages=()
-    local count=0
+    local pass_count=0
+    local fail_count=0
+    local old_fail_count=-1
     local tier=optional
 
     if QPKGs.ToStart.IsNone; then
@@ -1858,26 +1869,33 @@ Packages.Start.Optionals()
         DebugFuncExit; return 0
     fi
 
-    ShowAsProcLong "starting ${#target_packages[@]} $tier QPKG$(FormatAsPlural "${#target_packages[@]}")"
-
     for package in "${target_packages[@]}"; do
+        if [[ $fail_count -ne $old_fail_count ]]; then
+            ShowAsProcLong "starting $((${#target_packages[@]}-fail_count)) $tier QPKG$(FormatAsPlural "$((${#target_packages[@]}-fail_count))")"
+            old_fail_count=$fail_count
+        fi
+
         if ! QPKG.Installed "$package"; then
             ShowAsNote "unable to start $(FormatAsPackageName "$package") as it's not installed"
-            fault=true
+            ((fail_count++))
             continue
         fi
 
         if ! QPKG.Start "$package"; then
             ShowAsNote "unable to start $(FormatAsPackageName "$package") (see log for more details)"
-            fault=true
+            ((fail_count++))
             continue
         fi
 
-        ((count++))
+        ((pass_count++))
     done
 
-    if [[ $count -gt 0 ]]; then
-        [[ $fault = false ]] && ShowAsDone "started $count $tier QPKG$(FormatAsPlural "$count")"
+    if [[ $fail_count -eq ${#target_packages[@]} ]]; then
+        ShowAsNote "$fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to start"
+    elif [[ $fail_count -gt 0 ]]; then
+        ShowAsNote "started $pass_count $tier QPKG$(FormatAsPlural "$pass_count") but $fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to start"
+    elif [[ $pass_count -gt 0 ]]; then
+        ShowAsDone "started $pass_count $tier QPKG$(FormatAsPlural "$pass_count")"
     else
         DebugAsDone "no $tier QPKGs required starting"
     fi
@@ -1892,9 +1910,10 @@ Packages.Restore.Optionals()
     Session.SkipPackageProcessing.IsSet && return
     DebugFuncEntry
     local package=''
-    local fault=false
     local target_packages=()
-    local count=0
+    local pass_count=0
+    local fail_count=0
+    local old_fail_count=-1
     local tier=optional
 
     if QPKGs.ToRestore.IsNone; then
@@ -1911,28 +1930,35 @@ Packages.Restore.Optionals()
         DebugFuncExit; return 0
     fi
 
-    ShowAsProcLong "restoring ${#target_packages[@]} $tier QPKG backup$(FormatAsPlural "${#target_packages[@]}")"
-
     for package in "${target_packages[@]}"; do
+        if [[ $fail_count -ne $old_fail_count ]]; then
+            ShowAsProcLong "restoring $((${#target_packages[@]}-fail_count)) $tier QPKG backup$(FormatAsPlural "$((${#target_packages[@]}-fail_count))")"
+            old_fail_count=$fail_count
+        fi
+
         if ! QPKG.Installed "$package"; then
             ShowAsNote "unable to restore $(FormatAsPackageName "$package") configuration as it's not installed"
-            fault=true
+            ((fail_count++))
             continue
         fi
 
         if ! QPKG.Restore "$package"; then
             ShowAsNote "unable to restore $(FormatAsPackageName "$package") configuration (see log for more details)"
-            fault=true
+            ((fail_count++))
             continue
         fi
 
-        ((count++))
+        ((pass_count++))
     done
 
-    if [[ $count -gt 0 ]]; then
-        [[ $fault = false ]] && ShowAsDone "restored $count $tier QPKG backup$(FormatAsPlural "$count")"
+    if [[ $fail_count -eq ${#target_packages[@]} ]]; then
+        ShowAsNote "$fail_count $tier QPKG backup$(FormatAsPlural "$fail_count") failed to restore"
+    elif [[ $fail_count -gt 0 ]]; then
+        ShowAsNote "restored $pass_count $tier QPKG backup$(FormatAsPlural "$pass_count") but $fail_count $tier QPKG backup$(FormatAsPlural "$fail_count") failed to restore"
+    elif [[ $pass_count -gt 0 ]]; then
+        ShowAsDone "restored $pass_count $tier QPKG backup$(FormatAsPlural "$pass_count")"
     else
-        DebugAsDone "no $tier QPKGs required restoration"
+        DebugAsDone "no $tier QPKG backups required restoration"
     fi
 
     DebugFuncExit; return 0
@@ -1946,9 +1972,10 @@ Packages.Restart.Optionals()
     DebugFuncEntry
     local acc=()
     local package=''
-    local fault=false
     local target_packages=()
-    local count=0
+    local pass_count=0
+    local fail_count=0
+    local old_fail_count=-1
     local tier=optional
 
     for package in $(QPKGs.JustInstalled.Array); do
@@ -1985,38 +2012,45 @@ Packages.Restart.Optionals()
         DebugFuncExit; return 0
     fi
 
-    ShowAsProcLong "restarting ${#target_packages[@]} $tier QPKG$(FormatAsPlural "${#target_packages[@]}")"
-
     for package in "${target_packages[@]}"; do
+        if [[ $fail_count -ne $old_fail_count ]]; then
+            ShowAsProcLong "restarting $((${#target_packages[@]}-fail_count)) $tier QPKG$(FormatAsPlural "$((${#target_packages[@]}-fail_count))")"
+            old_fail_count=$fail_count
+        fi
+
         if ! QPKG.Installed "$package"; then
             ShowAsNote "unable to restart $(FormatAsPackageName "$package") as it's not installed"
-            fault=true
+            ((fail_count++))
             continue
         fi
 
         if QPKGs.JustInstalled.Exist "$package"; then
             ShowAsNote "no-need to restart $(FormatAsPackageName "$package") as it was just installed"
-            fault=true
+            ((fail_count++))
             continue
         fi
 
         if QPKGs.JustStarted.Exist "$package"; then
             ShowAsNote "no-need to restart $(FormatAsPackageName "$package") as it was just started"
-            fault=true
+            ((fail_count++))
             continue
         fi
 
         if ! QPKG.Restart "$package"; then
             ShowAsNote "unable to restart $(FormatAsPackageName "$package") (see log for more details)"
-            fault=true
+            ((fail_count++))
             continue
         fi
 
-        ((count++))
+        ((pass_count++))
     done
 
-    if [[ $count -gt 0 ]]; then
-        [[ $fault = false ]] && ShowAsDone "restarted $count $tier QPKG$(FormatAsPlural "$count")"
+    if [[ $fail_count -eq ${#target_packages[@]} ]]; then
+        ShowAsNote "$fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to restart"
+    elif [[ $fail_count -gt 0 ]]; then
+        ShowAsNote "restarted $pass_count $tier QPKG$(FormatAsPlural "$pass_count") but $fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to restart"
+    elif [[ $pass_count -gt 0 ]]; then
+        ShowAsDone "restarted $pass_count $tier QPKG$(FormatAsPlural "$pass_count")"
     else
         DebugAsDone "no $tier QPKGs required restarting"
     fi
