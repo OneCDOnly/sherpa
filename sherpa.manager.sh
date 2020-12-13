@@ -2721,10 +2721,10 @@ CheckPythonPathAndVersion()
         if version=$($1 -V 2>&1); then
             DebugUserspace.OK "'$1' version" "$version"
         else
-            DebugUserspace.Warning "default '$1' version" '<unknown>'
+            DebugUserspace.Warning "default '$1' version" ' '
         fi
     else
-        DebugUserspace.Warning "'$1' path" '<not present>'
+        DebugUserspace.Warning "'$1' path" ' '
     fi
 
     return 0
@@ -4982,8 +4982,8 @@ DebugDetected.Warning()
 
     if [[ -z $3 ]]; then                # if $3 is nothing, then assume only 2 fields are required
         DebugAsWarning "$(printf "%${first_column_width}s: %${second_column_width}s\n" "$1" "$2")"
-    elif [[ $3 = ' ' ]]; then           # if $3 is only a whitespace then print $2 with trailing colon but no third field
-        DebugAsWarning "$(printf "%${first_column_width}s: %${second_column_width}s:\n" "$1" "$2")"
+    elif [[ $3 = ' ' ]]; then           # if $3 is only a whitespace then print $2 with trailing colon and 'none' as third field
+        DebugAsWarning "$(printf "%${first_column_width}s: %${second_column_width}s: none\n" "$1" "$2")"
     elif [[ ${3: -1} = ' ' ]]; then     # if $3 has a trailing whitespace then print $3 without the trailing whitespace
         DebugAsWarning "$(printf "%${first_column_width}s: %${second_column_width}s: %-s\n" "$1" "$2" "$($SED_CMD 's| *$||' <<< "$3")")"
     else
@@ -5000,8 +5000,8 @@ DebugDetected.OK()
 
     if [[ -z $3 ]]; then                # if $3 is nothing, then assume only 2 fields are required
         DebugDetected "$(printf "%${first_column_width}s: %${second_column_width}s\n" "$1" "$2")"
-    elif [[ $3 = ' ' ]]; then           # if $3 is only a whitespace then print $2 with trailing colon and '<none>' as third field
-        DebugDetected "$(printf "%${first_column_width}s: %${second_column_width}s: <none>\n" "$1" "$2")"
+    elif [[ $3 = ' ' ]]; then           # if $3 is only a whitespace then print $2 with trailing colon and 'none' as third field
+        DebugDetected "$(printf "%${first_column_width}s: %${second_column_width}s: none\n" "$1" "$2")"
     elif [[ ${3: -1} = ' ' ]]; then     # if $3 has a trailing whitespace then print $3 without the trailing whitespace
         DebugDetected "$(printf "%${first_column_width}s: %${second_column_width}s: %-s\n" "$1" "$2" "$($SED_CMD 's| *$||' <<< "$3")")"
     else
