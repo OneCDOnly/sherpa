@@ -2568,7 +2568,7 @@ IPKGs.Upgrade.Batch()
     package_count=$(IPKGs.ToDownload.Count)
 
     if [[ $package_count -gt 0 ]]; then
-        ShowAsProcLong "downloading & upgrading $package_count IPKG$(FormatAsPlural "$package_count")"
+        ShowAsProc "downloading & upgrading $package_count IPKG$(FormatAsPlural "$package_count")"
 
         CreateDirSizeMonitorFlagFile "$IPKG_DL_PATH"/.monitor
             trap CTRL_C_Captured INT
@@ -2605,7 +2605,7 @@ IPKGs.Install.Batch()
     package_count=$(IPKGs.ToDownload.Count)
 
     if [[ $package_count -gt 0 ]]; then
-        ShowAsProcLong "downloading & installing $package_count IPKG$(FormatAsPlural "$package_count")"
+        ShowAsProc "downloading & installing $package_count IPKG$(FormatAsPlural "$package_count")"
 
         CreateDirSizeMonitorFlagFile "$IPKG_DL_PATH"/.monitor
             trap CTRL_C_Captured INT
@@ -3509,10 +3509,11 @@ QPKGs.Assignment.Check()
 
     if [[ ${#stop_acc[@]} -gt 0 ]]; then
         for package in "${stop_acc[@]}"; do
-            ! QPKGs.ToUninstall.Exist "$package" && QPKGs.ToStop.Add "$package" # no-need to 'stop' packages that are about to be 'uninstalled'
+            ! QPKGs.ToUninstall.Exist "$package" && QPKGs.ToStop.Add "$package"
         done
     fi
 
+    User.Opts.Apps.All.Uninstall.IsSet && QPKGs.ToStop.Init # no-need to 'stop' all packages as they are about to be 'uninstalled'
     User.Opts.Apps.All.Upgrade.IsSet && QPKGs.ToUpgrade.Add "$(QPKGs.Upgradable.Array)"
     User.Opts.Apps.All.Reinstall.IsSet && QPKGs.ToReinstall.Add "$(QPKGs.Installed.Array)"
     User.Opts.Apps.All.Install.IsSet && QPKGs.ToInstall.Add "$(QPKGs.Installable.Array)"
