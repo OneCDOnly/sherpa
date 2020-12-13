@@ -3389,7 +3389,7 @@ QPKGs.Assignment.Check()
 
     if [[ ${#stop_acc[@]} -gt 0 ]]; then
         for package in "${stop_acc[@]}"; do
-            QPKG.Installed "$package" && QPKGs.ToStop.Add "$package"
+            ! QPKGs.ToUninstall.Exist "$package" && QPKGs.ToStop.Add "$package" # no-need to 'stop' packages that are about to be 'uninstalled'
         done
     fi
 
