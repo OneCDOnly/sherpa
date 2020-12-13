@@ -4863,145 +4863,6 @@ IPKGs.ToUninstall.Text()
     }
 IPKGs.ToUninstall.Init
 
-QPKGs.Optional.Add()
-    {
-    local array=(${1})
-    local item=''
-    for item in "${array[@]}"; do
-        [[ " ${_object_qpkgs_optional_array_[*]} " != *"$item"* ]] && _object_qpkgs_optional_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
-    done
-    }
-QPKGs.Optional.Array()
-    {
-    echo -n "${_object_qpkgs_optional_array_[@]}"
-    }
-QPKGs.Optional.Clear()
-    {
-    [[ $_object_qpkgs_optional_flag_ != 'true' ]] && return
-    _object_qpkgs_optional_flag_=false
-    [[ $_object_qpkgs_optional_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_optional_flag_
-    }
-QPKGs.Optional.Count()
-    {
-    echo "${#_object_qpkgs_optional_array_[@]}"
-    }
-QPKGs.Optional.Disable()
-    {
-    [[ $_object_qpkgs_optional_enable_ != 'true' ]] && return
-    _object_qpkgs_optional_enable_=false
-    [[ $_object_qpkgs_optional_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_optional_enable_
-    }
-QPKGs.Optional.DontLogChanges()
-    {
-    [[ $_object_qpkgs_optional_changes_flag_ != 'true' ]] && return
-    _object_qpkgs_optional_changes_flag_=false
-    }
-QPKGs.Optional.Enable()
-    {
-    [[ $_object_qpkgs_optional_enable_ = 'true' ]] && return
-    _object_qpkgs_optional_enable_=true
-    [[ $_object_qpkgs_optional_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_optional_enable_
-    }
-QPKGs.Optional.Exist()
-    {
-    [[ ${_object_qpkgs_optional_array_[*]} == *"$1"* ]]
-    }
-QPKGs.Optional.First()
-    {
-    echo "${_object_qpkgs_optional_array_[0]}"
-    }
-QPKGs.Optional.GetItem()
-    {
-    local -i index="$1"
-    [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_qpkgs_optional_array_[@]} ]] && index=${#_object_qpkgs_optional_array_[@]}
-    echo -n "${_object_qpkgs_optional_array_[((index-1))]}"
-    }
-QPKGs.Optional.Init()
-    {
-    _object_qpkgs_optional_size_=0
-    _object_qpkgs_optional_text_=''
-    _object_qpkgs_optional_flag_=false
-    _object_qpkgs_optional_changes_flag_=true
-    _object_qpkgs_optional_enable_=false
-    _object_qpkgs_optional_array_=()
-    _object_qpkgs_optional_array_index_=1
-    _object_qpkgs_optional_path_=''
-    }
-QPKGs.Optional.IsAny()
-    {
-    [[ ${#_object_qpkgs_optional_array_[@]} -gt 0 ]]
-    }
-QPKGs.Optional.IsDisabled()
-    {
-    [[ $_object_qpkgs_optional_enable_ != 'true' ]]
-    }
-QPKGs.Optional.IsEnabled()
-    {
-    [[ $_object_qpkgs_optional_enable_ = 'true' ]]
-    }
-QPKGs.Optional.IsNone()
-    {
-    [[ ${#_object_qpkgs_optional_array_[@]} -eq 0 ]]
-    }
-QPKGs.Optional.IsNot()
-    {
-    [[ $_object_qpkgs_optional_flag_ != 'true' ]]
-    }
-QPKGs.Optional.IsSet()
-    {
-    [[ $_object_qpkgs_optional_flag_ = 'true' ]]
-    }
-QPKGs.Optional.List()
-    {
-    echo -n "${_object_qpkgs_optional_array_[*]}"
-    }
-QPKGs.Optional.ListCSV()
-    {
-    echo -n "${_object_qpkgs_optional_array_[*]}" | tr ' ' ','
-    }
-QPKGs.Optional.LogChanges()
-    {
-    [[ $_object_qpkgs_optional_changes_flag_ = 'true' ]] && return
-    _object_qpkgs_optional_changes_flag_=true
-    }
-QPKGs.Optional.Path()
-    {
-    if [[ -n $1 && $1 = "=" ]]; then
-        _object_qpkgs_optional_path_=$2
-    else
-        echo -n "$_object_qpkgs_optional_path_"
-    fi
-    }
-QPKGs.Optional.Remove()
-    {
-    [[ ${_object_qpkgs_optional_array_[*]} == *"$1"* ]] && _object_qpkgs_optional_array_=("${_object_qpkgs_optional_array_[@]/$1}")
-    [[ -z ${_object_qpkgs_optional_array_[*]} ]] && _object_qpkgs_optional_array_=()
-    }
-QPKGs.Optional.Set()
-    {
-    [[ $_object_qpkgs_optional_flag_ = 'true' ]] && return
-    _object_qpkgs_optional_flag_=true
-    [[ $_object_qpkgs_optional_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_optional_flag_
-    }
-QPKGs.Optional.Size()
-    {
-    if [[ -n $1 && $1 = "=" ]]; then
-        _object_qpkgs_optional_size_=$2
-    else
-        echo -n $_object_qpkgs_optional_size_
-    fi
-    }
-QPKGs.Optional.Text()
-    {
-    if [[ -n $1 && $1 = "=" ]]; then
-        _object_qpkgs_optional_text_=$2
-    else
-        echo -n "$_object_qpkgs_optional_text_"
-    fi
-    }
-QPKGs.Optional.Init
-
 QPKGs.Essential.Add()
     {
     local array=(${1})
@@ -5974,6 +5835,145 @@ QPKGs.NotInstalled.Text()
     fi
     }
 QPKGs.NotInstalled.Init
+
+QPKGs.Optional.Add()
+    {
+    local array=(${1})
+    local item=''
+    for item in "${array[@]}"; do
+        [[ " ${_object_qpkgs_optional_array_[*]} " != *"$item"* ]] && _object_qpkgs_optional_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
+    done
+    }
+QPKGs.Optional.Array()
+    {
+    echo -n "${_object_qpkgs_optional_array_[@]}"
+    }
+QPKGs.Optional.Clear()
+    {
+    [[ $_object_qpkgs_optional_flag_ != 'true' ]] && return
+    _object_qpkgs_optional_flag_=false
+    [[ $_object_qpkgs_optional_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_optional_flag_
+    }
+QPKGs.Optional.Count()
+    {
+    echo "${#_object_qpkgs_optional_array_[@]}"
+    }
+QPKGs.Optional.Disable()
+    {
+    [[ $_object_qpkgs_optional_enable_ != 'true' ]] && return
+    _object_qpkgs_optional_enable_=false
+    [[ $_object_qpkgs_optional_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_optional_enable_
+    }
+QPKGs.Optional.DontLogChanges()
+    {
+    [[ $_object_qpkgs_optional_changes_flag_ != 'true' ]] && return
+    _object_qpkgs_optional_changes_flag_=false
+    }
+QPKGs.Optional.Enable()
+    {
+    [[ $_object_qpkgs_optional_enable_ = 'true' ]] && return
+    _object_qpkgs_optional_enable_=true
+    [[ $_object_qpkgs_optional_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_optional_enable_
+    }
+QPKGs.Optional.Exist()
+    {
+    [[ ${_object_qpkgs_optional_array_[*]} == *"$1"* ]]
+    }
+QPKGs.Optional.First()
+    {
+    echo "${_object_qpkgs_optional_array_[0]}"
+    }
+QPKGs.Optional.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_qpkgs_optional_array_[@]} ]] && index=${#_object_qpkgs_optional_array_[@]}
+    echo -n "${_object_qpkgs_optional_array_[((index-1))]}"
+    }
+QPKGs.Optional.Init()
+    {
+    _object_qpkgs_optional_size_=0
+    _object_qpkgs_optional_text_=''
+    _object_qpkgs_optional_flag_=false
+    _object_qpkgs_optional_changes_flag_=true
+    _object_qpkgs_optional_enable_=false
+    _object_qpkgs_optional_array_=()
+    _object_qpkgs_optional_array_index_=1
+    _object_qpkgs_optional_path_=''
+    }
+QPKGs.Optional.IsAny()
+    {
+    [[ ${#_object_qpkgs_optional_array_[@]} -gt 0 ]]
+    }
+QPKGs.Optional.IsDisabled()
+    {
+    [[ $_object_qpkgs_optional_enable_ != 'true' ]]
+    }
+QPKGs.Optional.IsEnabled()
+    {
+    [[ $_object_qpkgs_optional_enable_ = 'true' ]]
+    }
+QPKGs.Optional.IsNone()
+    {
+    [[ ${#_object_qpkgs_optional_array_[@]} -eq 0 ]]
+    }
+QPKGs.Optional.IsNot()
+    {
+    [[ $_object_qpkgs_optional_flag_ != 'true' ]]
+    }
+QPKGs.Optional.IsSet()
+    {
+    [[ $_object_qpkgs_optional_flag_ = 'true' ]]
+    }
+QPKGs.Optional.List()
+    {
+    echo -n "${_object_qpkgs_optional_array_[*]}"
+    }
+QPKGs.Optional.ListCSV()
+    {
+    echo -n "${_object_qpkgs_optional_array_[*]}" | tr ' ' ','
+    }
+QPKGs.Optional.LogChanges()
+    {
+    [[ $_object_qpkgs_optional_changes_flag_ = 'true' ]] && return
+    _object_qpkgs_optional_changes_flag_=true
+    }
+QPKGs.Optional.Path()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_optional_path_=$2
+    else
+        echo -n "$_object_qpkgs_optional_path_"
+    fi
+    }
+QPKGs.Optional.Remove()
+    {
+    [[ ${_object_qpkgs_optional_array_[*]} == *"$1"* ]] && _object_qpkgs_optional_array_=("${_object_qpkgs_optional_array_[@]/$1}")
+    [[ -z ${_object_qpkgs_optional_array_[*]} ]] && _object_qpkgs_optional_array_=()
+    }
+QPKGs.Optional.Set()
+    {
+    [[ $_object_qpkgs_optional_flag_ = 'true' ]] && return
+    _object_qpkgs_optional_flag_=true
+    [[ $_object_qpkgs_optional_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_optional_flag_
+    }
+QPKGs.Optional.Size()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_optional_size_=$2
+    else
+        echo -n $_object_qpkgs_optional_size_
+    fi
+    }
+QPKGs.Optional.Text()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_optional_text_=$2
+    else
+        echo -n "$_object_qpkgs_optional_text_"
+    fi
+    }
+QPKGs.Optional.Init
 
 QPKGs.Upgradable.Add()
     {

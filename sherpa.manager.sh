@@ -174,7 +174,7 @@ Session.Init()
     readonly IPKG_DL_PATH=$WORK_PATH/ipkgs.downloads
     readonly IPKG_CACHE_PATH=$WORK_PATH/ipkgs
     readonly PIP_CACHE_PATH=$WORK_PATH/pips
-    readonly COMPILED_OBJECTS_HASH=d2739d99425b0cd4b34967e0c4e7d1ab
+    readonly COMPILED_OBJECTS_HASH=c24358cb4387f99f18f854385e884505
     readonly DEBUG_LOG_DATAWIDTH=92
 
     if ! MakePath "$WORK_PATH" 'work'; then
@@ -5760,7 +5760,6 @@ Objects.Compile()
         Objects.Add IPKGs.ToInstall
         Objects.Add IPKGs.ToUninstall
 
-        Objects.Add QPKGs.Optional
         Objects.Add QPKGs.Essential
         Objects.Add QPKGs.Installable
         Objects.Add QPKGs.Installed
@@ -5768,6 +5767,7 @@ Objects.Compile()
         Objects.Add QPKGs.JustStarted
         Objects.Add QPKGs.Names
         Objects.Add QPKGs.NotInstalled
+        Objects.Add QPKGs.Optional
         Objects.Add QPKGs.Upgradable
 
         Objects.Add QPKGs.ToBackup
