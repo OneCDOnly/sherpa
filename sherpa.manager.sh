@@ -927,7 +927,7 @@ Packages.Stop.Optionals()
     fi
 
     for package in $(QPKGs.Optional.Array); do
-        QPKGs.ToStop.Exist "$package" && QPKG.Installed "$package" && target_packages+=("$package")
+        QPKGs.ToStop.Exist "$package" && target_packages+=("$package")
     done
 
     if [[ ${#target_packages[@]} -eq 0 ]]; then
@@ -939,6 +939,12 @@ Packages.Stop.Optionals()
 
     for ((index=${#target_packages[@]}-1; index>=0; index--)); do       # process in reverse of declared order
         package=${target_packages[$index]}
+
+        if ! QPKG.Installed "$package"; then
+            ShowAsNote "unable to stop $(FormatAsPackageName "$package") as it's not installed"
+            fault=true
+            continue
+        fi
 
         if ! QPKG.Stop "$package"; then
             ShowAsError "unable to stop $(FormatAsPackageName "$package") (see log for more details)"
@@ -977,7 +983,7 @@ Packages.Stop.Essentials()
     fi
 
     for package in $(QPKGs.Essential.Array); do
-        QPKGs.ToStop.Exist "$package" && QPKG.Installed "$package" && target_packages+=("$package")
+        QPKGs.ToStop.Exist "$package" && target_packages+=("$package")
     done
 
     if [[ ${#target_packages[@]} -eq 0 ]]; then
@@ -991,6 +997,12 @@ Packages.Stop.Essentials()
         package=${target_packages[$index]}
 
         [[ $package = sherpa ]] && continue     # ignore 'sherpa'
+
+        if ! QPKG.Installed "$package"; then
+            ShowAsNote "unable to stop $(FormatAsPackageName "$package") as it's not installed"
+            fault=true
+            continue
+        fi
 
         if ! QPKG.Stop "$package"; then
             ShowAsError "unable to stop $(FormatAsPackageName "$package") (see log for more details)"
@@ -1037,12 +1049,12 @@ Packages.Uninstall.Optionals()
     local tier=optional
 
     if QPKGs.ToUninstall.IsNone; then
-        DebugInfo 'no QPKGs require uninstallation'
+        DebugInfo 'no QPKGs require uninstalling'
         DebugFuncExit; return 0
     fi
 
     for package in $(QPKGs.Optional.Array); do
-        QPKGs.ToUninstall.Exist "$package" && QPKG.Installed "$package" && target_packages+=("$package")
+        QPKGs.ToUninstall.Exist "$package" && target_packages+=("$package")
     done
 
     if [[ ${#target_packages[@]} -eq 0 ]]; then
@@ -1054,6 +1066,12 @@ Packages.Uninstall.Optionals()
 
     for ((index=${#target_packages[@]}-1; index>=0; index--)); do       # uninstall packages in reverse of declared order
         package=${target_packages[$index]}
+
+        if ! QPKG.Installed "$package"; then
+            ShowAsNote "unable to uninstall $(FormatAsPackageName "$package") as it's not installed"
+            fault=true
+            continue
+        fi
 
         if ! QPKG.Uninstall "$package"; then
             ShowAsError "unable to uninstall $(FormatAsPackageName "$package") (see log for more details)"
@@ -1104,7 +1122,7 @@ Packages.Uninstall.Essentials()
     fi
 
     for package in $(QPKGs.Essential.Array); do
-        QPKGs.ToUninstall.Exist "$package" && QPKG.Installed "$package" && target_packages+=("$package")
+        QPKGs.ToUninstall.Exist "$package" && target_packages+=("$package")
     done
 
     if [[ ${#target_packages[@]} -eq 0 ]]; then
@@ -1118,6 +1136,12 @@ Packages.Uninstall.Essentials()
         package=${target_packages[$index]}
 
         [[ $package = sherpa ]] && continue     # ignore 'sherpa'
+
+        if ! QPKG.Installed "$package"; then
+            ShowAsNote "unable to uninstall $(FormatAsPackageName "$package") as it's not installed"
+            fault=true
+            continue
+        fi
 
         if ! QPKG.Uninstall "$package"; then
             ShowAsError "unable to uninstall $(FormatAsPackageName "$package") (see log for more details)"
@@ -1157,7 +1181,7 @@ Packages.Force-upgrade.Essentials()
     fi
 
     for package in $(QPKGs.Essential.Array); do
-        QPKGs.ToForceUpgrade.Exist "$package" && QPKG.Installed "$package" && target_packages+=("$package")
+        QPKGs.ToForceUpgrade.Exist "$package" && target_packages+=("$package")
     done
 
     if [[ ${#target_packages[@]} -eq 0 ]]; then
@@ -1168,6 +1192,12 @@ Packages.Force-upgrade.Essentials()
     ShowAsProcLong "force-upgrading ${#target_packages[@]} $tier QPKG$(FormatAsPlural "${#target_packages[@]}")"
 
     for package in "${target_packages[@]}"; do
+        if ! QPKG.Installed "$package"; then
+            ShowAsNote "unable to force-upgrade $(FormatAsPackageName "$package") as it's not installed"
+            fault=true
+            continue
+        fi
+
         if ! QPKG.Upgrade "$package" --forced; then
             ShowAsNote "unable to force-upgrade $(FormatAsPackageName "$package") (see log for more details)"
             fault=true
@@ -1204,7 +1234,7 @@ Packages.Upgrade.Essentials()
     fi
 
     for package in $(QPKGs.Essential.Array); do
-        QPKGs.ToUpgrade.Exist "$package" && QPKG.Installed "$package" && target_packages+=("$package")
+        QPKGs.ToUpgrade.Exist "$package" && target_packages+=("$package")
     done
 
     if [[ ${#target_packages[@]} -eq 0 ]]; then
@@ -1215,6 +1245,12 @@ Packages.Upgrade.Essentials()
     ShowAsProcLong "upgrading ${#target_packages[@]} $tier QPKG$(FormatAsPlural "${#target_packages[@]}")"
 
     for package in "${target_packages[@]}"; do
+        if ! QPKG.Installed "$package"; then
+            ShowAsNote "unable to upgrade $(FormatAsPackageName "$package") as it's not installed"
+            fault=true
+            continue
+        fi
+
         if ! QPKG.Upgrade "$package"; then
             ShowAsNote "unable to upgrade $(FormatAsPackageName "$package") (see log for more details)"
             fault=true
@@ -1251,7 +1287,7 @@ Packages.Reinstall.Essentials()
     fi
 
     for package in $(QPKGs.Essential.Array); do
-        QPKGs.ToReinstall.Exist "$package" && QPKG.Installed "$package" && target_packages+=("$package")
+        QPKGs.ToReinstall.Exist "$package" && target_packages+=("$package")
     done
 
     if [[ ${#target_packages[@]} -eq 0 ]]; then
@@ -1295,6 +1331,12 @@ Packages.Reinstall.Essentials()
                 DebugFuncExit; return 1
             fi
         else
+            if ! QPKG.Installed "$package"; then
+                ShowAsNote "unable to reinstall $(FormatAsPackageName "$package") as it's not installed. Use 'install' instead."
+                fault=true
+                continue
+            fi
+
             if ! QPKG.Reinstall "$package"; then
                 ShowAsNote "unable to reinstall $(FormatAsPackageName "$package") (see log for more details)"
                 fault=true
@@ -1488,6 +1530,12 @@ Packages.Restart.Essentials()
     for package in "${target_packages[@]}"; do
         [[ $package = sherpa ]] && continue     # ignore 'sherpa'
 
+        if ! QPKG.Installed "$package"; then
+            ShowAsNote "unable to restart $(FormatAsPackageName "$package") as it's not installed"
+            fault=true
+            continue
+        fi
+
         if ! QPKG.Restart "$package"; then
             ShowAsNote "unable to restart $(FormatAsPackageName "$package") (see log for more details)"
             fault=true
@@ -1601,6 +1649,12 @@ Packages.Force-upgrade.Optionals()
     ShowAsProcLong "force-upgrading ${#target_packages[@]} $tier QPKG$(FormatAsPlural "${#target_packages[@]}")"
 
     for package in "${target_packages[@]}"; do
+        if ! QPKG.Installed "$package"; then
+            ShowAsNote "unable to force-upgrade $(FormatAsPackageName "$package") as it's not installed"
+            fault=true
+            continue
+        fi
+
         if ! QPKG.Upgrade "$package" --forced; then
             ShowAsNote "unable to force-upgrade $(FormatAsPackageName "$package") (see log for more details)"
             fault=true
@@ -1647,6 +1701,12 @@ Packages.Upgrade.Optionals()
     ShowAsProcLong "upgrading ${#target_packages[@]} $tier QPKG$(FormatAsPlural "${#target_packages[@]}")"
 
     for package in "${target_packages[@]}"; do
+        if ! QPKG.Installed "$package"; then
+            ShowAsNote "unable to upgrade $(FormatAsPackageName "$package") as it's not installed"
+            fault=true
+            continue
+        fi
+
         if ! QPKG.Upgrade "$package"; then
             ShowAsNote "unable to upgrade $(FormatAsPackageName "$package") (see log for more details)"
             fault=true
@@ -1693,6 +1753,12 @@ Packages.Reinstall.Optionals()
     ShowAsProcLong "re-installing ${#target_packages[@]} $tier QPKG$(FormatAsPlural "${#target_packages[@]}")"
 
     for package in "${target_packages[@]}"; do
+        if ! QPKG.Installed "$package"; then
+            ShowAsNote "unable to reinstall $(FormatAsPackageName "$package") as it's not installed. Use 'install' instead."
+            fault=true
+            continue
+        fi
+
         if ! QPKG.Reinstall "$package"; then
             ShowAsNote "unable to reinstall $(FormatAsPackageName "$package") (see log for more details)"
             fault=true
@@ -1741,6 +1807,12 @@ Packages.Install.Optionals()
     ShowAsProcLong "installing ${#target_packages[@]} $tier QPKG$(FormatAsPlural "${#target_packages[@]}")"
 
     for package in "${target_packages[@]}"; do
+        if QPKG.Installed "$package"; then
+            ShowAsNote "unable to install $(FormatAsPackageName "$package") as it's already installed. Use 'reinstall' instead."
+            fault=true
+            continue
+        fi
+
         if ! QPKG.Install "$package"; then
             ShowAsNote "unable to install $(FormatAsPackageName "$package") (see log for more details)"
             fault=true
@@ -1789,9 +1861,16 @@ Packages.Start.Optionals()
     ShowAsProcLong "starting ${#target_packages[@]} $tier QPKG$(FormatAsPlural "${#target_packages[@]}")"
 
     for package in "${target_packages[@]}"; do
+        if ! QPKG.Installed "$package"; then
+            ShowAsNote "unable to start $(FormatAsPackageName "$package") as it's not installed"
+            fault=true
+            continue
+        fi
+
         if ! QPKG.Start "$package"; then
             ShowAsNote "unable to start $(FormatAsPackageName "$package") (see log for more details)"
             fault=true
+            continue
         fi
 
         ((count++))
@@ -1835,9 +1914,16 @@ Packages.Restore.Optionals()
     ShowAsProcLong "restoring ${#target_packages[@]} $tier QPKG backup$(FormatAsPlural "${#target_packages[@]}")"
 
     for package in "${target_packages[@]}"; do
+        if ! QPKG.Installed "$package"; then
+            ShowAsNote "unable to restore $(FormatAsPackageName "$package") configuration as it's not installed"
+            fault=true
+            continue
+        fi
+
         if ! QPKG.Restore "$package"; then
             ShowAsNote "unable to restore $(FormatAsPackageName "$package") configuration (see log for more details)"
             fault=true
+            continue
         fi
 
         ((count++))
