@@ -2588,7 +2588,7 @@ CalcAllIPKGDepsToInstall()
     this_list=($requested_list)
 
     DebugAsProc 'calculating IPKGs required'
-    DebugInfo "IPKGs requested: $requested_list"
+    DebugInfo 'IPKGs requested' "$requested_list "
 
     if ! IPKGs.Archive.Open; then
         DebugFuncExit; return 1
@@ -2621,7 +2621,7 @@ CalcAllIPKGDepsToInstall()
     fi
 
     pre_download_list=$(DeDupeWords "$requested_list ${dependency_accumulator[*]}")
-    DebugInfo "IPKGs requested + dependencies: $pre_download_list"
+    DebugInfo 'IPKGs requested + dependencies' "$pre_download_list "
     DebugAsProc 'excluding IPKGs already installed'
 
     for element in $pre_download_list; do
@@ -2639,7 +2639,7 @@ CalcAllIPKGDepsToInstall()
     done
 
     DebugAsDone 'complete'
-    DebugInfo "IPKGs to download: $(IPKGs.ToDownload.List)"
+    DebugInfo 'IPKGs to download' "$(IPKGs.ToDownload.List) "
     package_count=$(IPKGs.ToDownload.Count)
 
     if [[ $package_count -gt 0 ]]; then
@@ -2676,7 +2676,7 @@ CalcAllIPKGDepsToUninstall()
 
     requested_list=$(DeDupeWords "$(IPKGs.ToUninstall.List)")
 
-    DebugInfo "IPKGs requested: $requested_list"
+    DebugInfo 'IPKGs requested' "$requested_list "
     DebugAsProc 'excluding IPKGs not installed'
 
     for element in $requested_list; do
@@ -2684,7 +2684,7 @@ CalcAllIPKGDepsToUninstall()
     done
 
     DebugAsDone 'complete'
-    DebugInfo "IPKGs to uninstall: $(IPKGs.ToUninstall.ListCSV)"
+    DebugInfo 'IPKGs to uninstall' "$(IPKGs.ToUninstall.ListCSV) "
     package_count=$(IPKGs.ToUninstall.Count)
 
     if [[ $package_count -gt 0 ]]; then
@@ -5404,7 +5404,13 @@ DebugDetected()
 DebugInfo()
     {
 
-    DebugThis "(II) $1"
+    if [[ $2 = ' ' ]]; then           # if $2 is only a whitespace then print $1 with trailing colon and 'none' as second field
+        DebugThis "(II) $1: none"
+    elif [[ -n $2 ]]; then
+        DebugThis "(II) $1: $2"
+    else
+        DebugThis "(II) $1"
+    fi
 
     }
 
