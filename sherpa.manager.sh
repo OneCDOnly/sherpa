@@ -1409,13 +1409,13 @@ Packages.Reinstall.Essentials()
 
         if [[ $package = Entware ]]; then
             Display
-            ShowAsNote "re-installing $(FormatAsPackageName Entware) will remove all IPKGs and Python modules, and only those required to support your $PROJECT_NAME apps will be reinstalled."
+            ShowAsNote "reinstalling $(FormatAsPackageName Entware) will remove all IPKGs and Python modules, and only those required to support your $PROJECT_NAME apps will be reinstalled."
             ShowAsNote "your installed IPKG list will be saved to $(FormatAsFileName "$PREVIOUS_OPKG_PACKAGE_LIST")"
             ShowAsNote "your installed Python module list will be saved to $(FormatAsFileName "$PREVIOUS_PIP3_MODULE_LIST")"
             (QPKG.Installed SABnzbdplus || QPKG.Installed Headphones) && ShowAsWarning "also, the $(FormatAsPackageName SABnzbdplus) and $(FormatAsPackageName Headphones) packages CANNOT BE REINSTALLED as Python 2.7.16 is no-longer available."
 
             if AskQuiz "press 'Y' to remove all current $(FormatAsPackageName Entware) IPKGs (and their configurations), or any other key to abort"; then
-                ShowAsProc 're-installing Entware'
+                ShowAsProc 'reinstalling Entware'
                 Package.Save.Lists
 
                 if ! QPKG.Uninstall Entware; then
@@ -2467,7 +2467,7 @@ Entware.Update()
             DebugAsDone "updated $(FormatAsPackageName Entware) package list"
         else
             DebugAsWarning "Unable to update $(FormatAsPackageName Entware) package list $(FormatAsExitcode $resultcode)"
-            # meh, continue anyway with old list ...
+            # meh, continue anyway with existing list
         fi
     else
         DebugInfo "$(FormatAsPackageName Entware) package list was updated less than $package_minutes_threshold minutes ago"
@@ -2497,9 +2497,9 @@ PIPs.Install()
         pip3_cmd=/opt/bin/pip3.7
     else
         if IsNotSysFileExist $pip3_cmd; then
-            Display "* Ugh! The usual fix for this is to let $PROJECT_NAME reinstall $(FormatAsPackageName Entware) at least once."
+            Display "* Ugh! The usual fix for this is to let $(FormatAsScriptTitle) reinstall $(FormatAsPackageName Entware) at least once."
             Display "\t$0 reinstall ew"
-            Display "If it happens again after re-installing $(FormatAsPackageName Entware), please create a new issue for this on GitHub."
+            Display "If it happens again after reinstalling $(FormatAsPackageName Entware), please create a new issue for this on GitHub."
             DebugFuncExit; return 1
         fi
     fi
@@ -2522,7 +2522,7 @@ PIPs.Install()
     fi
 
     if QPKG.Installed SABnzbd || QPKGs.ToInstall.Exist SABnzbd || QPKGs.ToReinstall.Exist SABnzbd; then
-        # KLUDGE: force recompilation of 'sabyenc3' package so it's recognised by SABnzbd. See: https://forums.sabnzbd.org/viewtopic.php?p=121214#p121214
+        # KLUDGE: force recompilation of 'sabyenc3' package so it's recognised by SABnzbd: https://forums.sabnzbd.org/viewtopic.php?p=121214#p121214
         exec_cmd="$pip3_cmd install --force-reinstall --ignore-installed --no-binary :all: sabyenc3 --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
 
         desc="'Python3 SABnzbd' module"
@@ -4049,7 +4049,7 @@ Session.AddPathToEntware()
 
     if QPKG.Installed Entware; then
         export PATH="$opkg_prefix:$($SED_CMD "s|$opkg_prefix||" <<< "$PATH")"
-        DebugAsDone 'add $PATH to Entware'
+        DebugAsDone 'added $PATH to Entware'
         DebugVar PATH
     fi
 
@@ -4064,7 +4064,7 @@ Session.RemovePathToEntware()
 
     if QPKG.Installed Entware; then
         export PATH="$($SED_CMD "s|$opkg_prefix||" <<< "$PATH")"
-        DebugAsDone 'remove $PATH to Entware'
+        DebugAsDone 'removed $PATH to Entware'
         DebugVar PATH
     fi
 
@@ -4487,13 +4487,13 @@ QPKG.Reinstall()
     target_file=$($BASENAME_CMD "$local_pathfile")
     log_pathfile=$LOGS_PATH/$target_file.$REINSTALL_LOG_FILE
 
-    DebugAsProc "re-installing $(FormatAsPackageName "$1")"
+    DebugAsProc "reinstalling $(FormatAsPackageName "$1")"
 
     RunAndLogResults "$SH_CMD $local_pathfile" "$log_pathfile"
     resultcode=$?
 
     if [[ $resultcode -eq 0 || $resultcode -eq 10 ]]; then
-        DebugAsDone "re-installed $(FormatAsPackageName "$1")"
+        DebugAsDone "reinstalled $(FormatAsPackageName "$1")"
         QPKG.FixAppCenterStatus "$1"
         QPKG.ServiceStatus "$1"
         QPKGs.JustInstalled.Add "$1"
@@ -4502,7 +4502,7 @@ QPKG.Reinstall()
         QPKGs.ToInstall.Remove "$1"
         QPKGs.ToRestart.Remove "$1"
     else
-        ShowAsError "re-installation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $resultcode)"
+        ShowAsError "reinstallation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $resultcode)"
     fi
 
     DebugFuncExit; return $resultcode
@@ -5438,7 +5438,7 @@ DebugLog()
 DebugVar()
     {
 
-    DebugThis "(vv) \$$1: '${!1}'"
+    DebugThis "(vv) \$$1 : '${!1}'"
 
     }
 
