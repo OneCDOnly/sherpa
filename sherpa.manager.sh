@@ -2767,7 +2767,7 @@ _MonitorDirSize_()
         $SLEEP_CMD 1
     done
 
-    [[ -n $progress_message ]] && ProgressUpdater ' done!'
+    [[ -n $progress_message ]] && ProgressUpdater 'done!'
 
     }
 
