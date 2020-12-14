@@ -1520,7 +1520,6 @@ Packages.Install.Essentials()
             ((pass_count++))
         else
             if [[ $NAS_QPKG_ARCH != none ]] && QPKGs.ToInstall.Exist "$package"; then
-
                 if QPKG.Installed "$package"; then
                     ShowAsNote "unable to $action_intransitive $(FormatAsPackageName "$package") as it's already installed. Use 'reinstall' instead."
                     ((fail_count++))
@@ -1742,7 +1741,7 @@ Packages.Install.Addons()
     fi
 
     if QPKGs.ToInstall.Exist SABnzbd || QPKGs.ToReinstall.Exist SABnzbd || QPKGs.ToUpgrade.Exist SABnzbd; then
-        Session.PIPs.Install.Set   # need to ensure 'sabyenc' and 'feedparser' modules are installed/updated
+        Session.PIPs.Install.Set   # must ensure 'sabyenc' and 'feedparser' modules are installed/updated
     fi
 
     if QPKG.Enabled Entware; then
@@ -2740,19 +2739,16 @@ IPKGs.Uninstall()
     DebugFuncEntry
     local index=0
 
-    if User.Opts.Apps.All.Install.IsSet; then
-        for index in "${!SHERPA_QPKG_NAME[@]}"; do
-            IPKGs.ToUninstall.Add "${SHERPA_QPKG_IPKGS_REMOVE[$index]}"
-        done
-    else
+    if User.Opts.Apps.All.Uninstall.IsNot; then
         for index in "${!SHERPA_QPKG_NAME[@]}"; do
             if QPKGs.ToInstall.Exist "${SHERPA_QPKG_NAME[$index]}" || QPKG.Installed "${SHERPA_QPKG_NAME[$index]}" || QPKGs.ToUpgrade.Exist "${SHERPA_QPKG_NAME[$index]}" || QPKGs.ToUninstall.Exist "${SHERPA_QPKG_NAME[$index]}"; then
                 IPKGs.ToUninstall.Add "${SHERPA_QPKG_IPKGS_REMOVE[$index]}"
             fi
         done
+
+        IPKGs.Uninstall.Batch
     fi
 
-    IPKGs.Uninstall.Batch
     DebugFuncExit; return 0
 
     }
@@ -3699,27 +3695,33 @@ QPKGs.Assignment.Check()
     User.Opts.Apps.All.Stop.IsSet && QPKGs.ToStop.Add "$(QPKGs.Installed.Array)"
     User.Opts.Apps.All.Uninstall.IsSet && QPKGs.ToUninstall.Add "$(QPKGs.Installed.Array)"
 
-    # if an essential has been selected for 'stop', need to stop all dependants first
-    for package in $(QPKGs.ToStop.Array); do
-        if QPKGs.Essential.Exist "$package" && QPKG.Installed "$package"; then
-            stop_acc+=($(QPKG.Get.Dependencies "$package"))
-        fi
-    done
-
-    # if an essential has been selected for 'uninstall', need to stop all dependants first
-    for package in $(QPKGs.ToUninstall.Array); do
-        if QPKGs.Essential.Exist "$package" && QPKG.Installed "$package"; then
-            stop_acc+=($(QPKG.Get.Dependencies "$package"))
-        fi
-    done
-
-    if [[ ${#stop_acc[@]} -gt 0 ]]; then
-        for package in "${stop_acc[@]}"; do
-            ! QPKGs.ToUninstall.Exist "$package" && QPKGs.ToStop.Add "$package"
+    if User.Opts.Apps.All.Uninstall.IsSet; then
+        QPKGs.ToStop.Init   # no-need to 'stop' all packages, as they are about to be 'uninstalled'
+    else
+        # if an essential has been selected for 'stop', need to stop all 'optionals' first
+        for package in $(QPKGs.ToStop.Array); do
+            if QPKGs.Essential.Exist "$package" && QPKG.Installed "$package"; then
+                stop_acc+=($(QPKG.Get.Dependencies "$package"))
+            fi
         done
+
+        # if an essential has been selected for 'uninstall', need to stop all 'optionals' first
+        for package in $(QPKGs.ToUninstall.Array); do
+            if QPKGs.Essential.Exist "$package" && QPKG.Installed "$package"; then
+                stop_acc+=($(QPKG.Get.Dependencies "$package"))
+            fi
+        done
+
+        if [[ ${#stop_acc[@]} -gt 0 ]]; then
+            for package in "${stop_acc[@]}"; do
+                ! QPKGs.ToUninstall.Exist "$package" && QPKGs.ToStop.Add "$package"
+            done
+        fi
     fi
 
-    User.Opts.Apps.All.Uninstall.IsSet && QPKGs.ToStop.Init # no-need to 'stop' all packages as they are about to be 'uninstalled'
+    QPKGs.ToStop.Remove sherpa
+    QPKGs.ToUninstall.Remove sherpa
+
     User.Opts.Apps.All.Upgrade.IsSet && QPKGs.ToUpgrade.Add "$(QPKGs.Upgradable.Array)"
     User.Opts.Apps.All.Reinstall.IsSet && QPKGs.ToReinstall.Add "$(QPKGs.Installed.Array)"
     User.Opts.Apps.All.Install.IsSet && QPKGs.ToInstall.Add "$(QPKGs.Installable.Array)"
