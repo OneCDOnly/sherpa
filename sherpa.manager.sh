@@ -948,7 +948,7 @@ Packages.Stop.Optionals()
     local pass_count=0
     local fail_count=0
     local old_fail_count=-1
-    local tier=essential
+    local tier=optional
     local action_intransitive=stop
     local action_present=stopping
     local action_past=stopped
@@ -1099,7 +1099,7 @@ Packages.Uninstall.Optionals()
     local pass_count=0
     local fail_count=0
     local old_fail_count=-1
-    local tier=essential
+    local tier=optional
     local action_intransitive=uninstall
     local action_present=uninstalling
     local action_past=uninstalled
