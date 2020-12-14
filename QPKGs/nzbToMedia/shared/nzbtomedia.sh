@@ -167,9 +167,9 @@ StartQPKG()
         fi
     fi
 
+    # save config from original nzbToMedia install (which was created by sherpa SABnzbd QPKGs earlier than 200809)
     if [[ -d $APPARENT_PATH && ! -L $APPARENT_PATH ]]; then
         if [[ -e "$APPARENT_PATH/$($BASENAME_CMD "$QPKG_INI_PATHFILE")" ]]; then
-            # save config from original nzbToMedia install (which was created by sherpa SABnzbd QPKGs earlier than 200809)
             cp "$APPARENT_PATH/$($BASENAME_CMD "$QPKG_INI_PATHFILE")" "$QPKG_INI_PATHFILE"
         fi
 
@@ -303,6 +303,7 @@ PullGitRepo()
     local -r GIT_HTTP_URL="$2"
     local -r GIT_HTTPS_URL=${GIT_HTTP_URL/http/git}
     local installed_branch=''
+    local branch_switch=false
     [[ $4 = shallow ]] && local -r DEPTH=' --depth 1'
     [[ $4 = single-branch ]] && local -r DEPTH=' --single-branch'
 
@@ -310,8 +311,10 @@ PullGitRepo()
         installed_branch=$($GIT_CMD -C "$QPKG_GIT_PATH" branch | $GREP_CMD '^\*' | $SED_CMD 's|^\* ||')
 
         if [[ $installed_branch != "$3" ]]; then
+            branch_switch=true
             DisplayCommitToLog "current git branch: $installed_branch, new git branch: $3"
-            ExecuteAndLog 'new git branch was specified so cleaning local repository' "rm -r $QPKG_GIT_PATH"
+            BackupConfig
+            ExecuteAndLog 'new git branch was specified so clean local repository' "rm -r $QPKG_GIT_PATH"
         fi
     fi
 
@@ -323,6 +326,8 @@ PullGitRepo()
 
     installed_branch=$($GIT_CMD -C "$QPKG_GIT_PATH" branch | $GREP_CMD '^\*' | $SED_CMD 's|^\* ||')
     DisplayCommitToLog "current git branch: $installed_branch"
+
+    [[ $branch_switch = true ]] && RestoreConfig
 
     return 0
 
