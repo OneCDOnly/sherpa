@@ -3224,9 +3224,9 @@ Help.Actions.Show()
 
     DisplayAsProjectSyntaxIndentedExample 'restart these packages (and internal applications)' "restart $(FormatAsHelpPackages)"
 
-    DisplayAsProjectSyntaxIndentedExample 'backup these application configurations to the default backup location' "backup $(FormatAsHelpPackages)"
+    DisplayAsProjectSyntaxIndentedExample 'backup these application configurations to the backup location' "backup $(FormatAsHelpPackages)"
 
-    DisplayAsProjectSyntaxIndentedExample 'restore these application configurations from the default backup location' "restore $(FormatAsHelpPackages)"
+    DisplayAsProjectSyntaxIndentedExample 'restore these application configurations from the backup location' "restore $(FormatAsHelpPackages)"
 
     DisplayAsProjectSyntaxExample "$(FormatAsHelpAction) to affect all packages can be seen with" 'actions-all'
 
@@ -3266,9 +3266,9 @@ Help.ActionsAll.Show()
 
     DisplayAsProjectSyntaxIndentedExample 'list only upgradable packages' 'list-upgradable'
 
-    DisplayAsProjectSyntaxIndentedExample 'backup all application configurations to the default backup location' 'backup-all'
+    DisplayAsProjectSyntaxIndentedExample 'backup all application configurations to the backup location' 'backup-all'
 
-    DisplayAsProjectSyntaxIndentedExample 'restore all application configurations from the default backup location' 'restore-all'
+    DisplayAsProjectSyntaxIndentedExample 'restore all application configurations from the backup location' 'restore-all'
 
     Help.BackupLocation.Show
 
@@ -3440,7 +3440,7 @@ Help.PackageAbbreviations.Show()
 Help.BackupLocation.Show()
     {
 
-    DisplayAsSyntaxExample 'the default backup location can be accessed by running' "cd $(Session.Backup.Path)"
+    DisplayAsSyntaxExample 'the backup location can be accessed by running' "cd $(Session.Backup.Path)"
 
     return 0
 
