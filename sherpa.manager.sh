@@ -42,7 +42,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=201214
+    readonly MANAGER_SCRIPT_VERSION=201215
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -325,8 +325,8 @@ Session.Init()
 
     SHERPA_QPKG_NAME+=(nzbToMedia)
         SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/nzbToMedia/build/nzbToMedia_201213.qpkg)
-        SHERPA_QPKG_MD5+=(02a3bd4670d50def7db48eea34c2daf7)
+        SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/nzbToMedia/build/nzbToMedia_201215.qpkg)
+        SHERPA_QPKG_MD5+=(abdc09606d190192f3979dbf294c0ec9)
         SHERPA_QPKG_ABBRVS+=('nzb2 nzb2m nzbto nzbtom nzbtomedia')
         SHERPA_QPKG_ESSENTIALS+=(Entware)
         SHERPA_QPKG_IPKGS_ADD+=('')
