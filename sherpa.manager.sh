@@ -764,7 +764,7 @@ Session.Validate()
     CheckPythonPathAndVersion python2
     CheckPythonPathAndVersion python3
     CheckPythonPathAndVersion python
-    DebugUserspace.OK 'unparsed arguments' "'$USER_ARGS_RAW'"
+    DebugUserspace.OK 'unparsed arguments' "\"$USER_ARGS_RAW\""
 
     DebugScript 'logs path' "$LOGS_PATH"
     DebugScript 'work path' "$WORK_PATH"
@@ -786,7 +786,7 @@ Session.Validate()
 
     if Args.Unknown.IsAny; then
         code_pointer=3
-        ShowAsError "argument parser found unknown argument$(FormatAsPlural "$(Args.Unknown.Count)"): \"$(Args.Unknown.List)\""
+        ShowAsError "unknown argument$(FormatAsPlural "$(Args.Unknown.Count)"): \"$(Args.Unknown.List)\""
         User.Opts.Help.Basic.Set
         Session.SkipPackageProcessing.Set
         DebugFuncExit; return 1
@@ -3197,7 +3197,7 @@ Help.Basic.Example.Show()
 
     DisplayAsProjectSyntaxIndentedExample "or, for more $(FormatAsHelpOptions), type" 'options'
 
-    Display "\nThere's even more here: $(FormatAsURL 'https://github.com/OneCDOnly/sherpa/wiki')"
+    Display "\nThere's also the wiki: $(FormatAsURL 'https://github.com/OneCDOnly/sherpa/wiki')"
 
     return 0
 
