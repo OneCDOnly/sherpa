@@ -2597,7 +2597,6 @@ CalcAllIPKGDepsToInstall()
 
     while [[ $iterations -lt $ITERATION_LIMIT ]]; do
         ((iterations++))
-        DebugAsProc "iteration $iterations"
 
         local IPKG_titles=$(printf '^Package: %s$\|' "${this_list[@]}")
         IPKG_titles=${IPKG_titles%??}       # remove last 2 characters
