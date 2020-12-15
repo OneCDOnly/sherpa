@@ -3698,7 +3698,6 @@ QPKGs.Assignment.Build()
     local package=''
     local installer_acc=()
     local stop_acc=()
-    local start_acc=()
     QPKGs.StateLists.Build
 
     # start by adding packages to lists as required
@@ -3767,32 +3766,38 @@ QPKGs.Assignment.Build()
         ! QPKG.Installed "$package" && QPKGs.ToInstall.Add "$package"
     done
 
-    User.Opts.Apps.All.Restore.IsSet && QPKGs.ToRestore.Add "$(QPKGs.Installed.Array)"
+    if User.Opts.Apps.All.Restore.IsSet; then
+        QPKGs.ToRestore.Add "$(QPKGs.Installed.Array)"
+        QPKGs.ToRestore.Remove "$(QPKGs.Essential.Array)"
+    fi
 
-    # check for essential packages that require starting
-    for package in $(QPKGs.ToStart.Array); do
-        ! QPKGs.ToUninstall.Exist "$package" && ! QPKGs.ToStop.Exist "$package" && start_acc+=($(QPKG.Get.Essentials "$package"))
-    done
+    if User.Opts.Apps.All.Start.IsSet; then
+        QPKGs.ToStart.Add "$(QPKGs.Installed.Array)"
+    else
+        # check for essential packages that require starting
+        for package in $(QPKGs.ToStart.Array); do
+            if ! QPKGs.ToUninstall.Exist "$package" && ! QPKGs.ToStop.Exist "$package"; then
+                QPKGs.ToStart.Add "$(QPKG.Get.Essentials "$package")"
+            fi
+        done
 
-    for package in $(QPKGs.ToInstall.Array); do
-        start_acc+=($(QPKG.Get.Essentials "$package"))
-    done
+        for package in $(QPKGs.ToInstall.Array); do
+            QPKGs.ToStart.Add "$(QPKG.Get.Essentials "$package")"
+        done
 
-    for package in $(QPKGs.ToReinstall.Array); do
-        start_acc+=($(QPKG.Get.Essentials "$package"))
-    done
+        for package in $(QPKGs.ToReinstall.Array); do
+            QPKGs.ToStart.Add "$(QPKG.Get.Essentials "$package")"
+        done
 
-    for package in $(QPKGs.ToUpgrade.Array); do
-        start_acc+=($(QPKG.Get.Essentials "$package"))
-    done
+        for package in $(QPKGs.ToUpgrade.Array); do
+            QPKGs.ToStart.Add "$(QPKG.Get.Essentials "$package")"
+        done
 
-    for package in $(QPKGs.ToForceUpgrade.Array); do
-        start_acc+=($(QPKG.Get.Essentials "$package"))
-    done
+        for package in $(QPKGs.ToForceUpgrade.Array); do
+            QPKGs.ToStart.Add "$(QPKG.Get.Essentials "$package")"
+        done
+    fi
 
-    QPKGs.ToStart.Add "${start_acc[*]}"
-
-    User.Opts.Apps.All.Start.IsSet && QPKGs.ToStart.Add "$(QPKGs.Installed.Array)"
     User.Opts.Apps.All.Restart.IsSet && QPKGs.ToRestart.Add "$(QPKGs.Installed.Array)"
 
     # build an initial package download list. Items on this list will be skipped at download-time if they can be found in local cache.
