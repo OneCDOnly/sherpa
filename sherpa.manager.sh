@@ -780,7 +780,7 @@ Session.Validate()
 
     DebugQPKG 'upgradable QPKGs' "$(QPKGs.Upgradable.ListCSV) "
     DebugInfoMinorSeparator
-    QPKGs.Assignment.Check
+    QPKGs.Assignment.Build
     DebugInfoMinorSeparator
 
     if ! QPKGs.Conflicts.Check; then
@@ -894,7 +894,7 @@ Packages.Backup()
 
     for package in $(QPKGs.ToBackup.Array); do
         if [[ $fail_count -ne $old_fail_count ]]; then
-            ShowAsProcLong "$action_present $((package_count-fail_count)) QPKG$(FormatAsPlural "$((package_count-fail_count))")"
+            ShowAsProc "$action_present $((package_count-fail_count)) QPKG$(FormatAsPlural "$((package_count-fail_count))")"
             old_fail_count=$fail_count
         fi
 
@@ -3654,7 +3654,7 @@ QPKGs.Conflicts.Check()
 
     }
 
-QPKGs.Assignment.Check()
+QPKGs.Assignment.Build()
     {
 
     # Ensure packages are assigned to the correct lists
@@ -3722,7 +3722,7 @@ QPKGs.Assignment.Check()
 
         if [[ ${#stop_acc[@]} -gt 0 ]]; then
             for package in "${stop_acc[@]}"; do
-                ! QPKGs.ToUninstall.Exist "$package" && QPKGs.ToStop.Add "$package"
+                ! QPKGs.ToUninstall.Exist "$package" && QPKG.Installed "$package" && QPKGs.ToStop.Add "$package"
             done
         fi
     fi
