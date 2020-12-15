@@ -449,6 +449,7 @@ Session.Init()
         if Session.Debug.To.Screen.IsNot; then
             Display "$(FormatAsScriptTitle) $MANAGER_SCRIPT_VERSION • a mini-package-manager for QNAP NAS"
             DisplayLineSpaceIfNoneAlready
+            ShowAsProc 'stuff'
         fi
 
         User.Opts.Apps.All.Upgrade.IsNot && User.Opts.Apps.All.Uninstall.IsNot && QPKGs.NewVersions.Show
@@ -494,10 +495,12 @@ Session.ParseArguments()
                 ;;
             log|view-log|log-view)
                 User.Opts.Log.Whole.View.Set
+                Session.Display.Clean.Set
                 Session.SkipPackageProcessing.Set
                 ;;
             l|log-last|last|last-log|view-last|last-view)
                 User.Opts.Log.Last.View.Set
+                Session.Display.Clean.Set
                 Session.SkipPackageProcessing.Set
                 ;;
             clean)
@@ -3181,6 +3184,7 @@ DisplayWait()
 Help.Basic.Show()
     {
 
+    SmartCR
     DisplayLineSpaceIfNoneAlready
     Display "Usage: $(FormatAsScriptTitle) $(FormatAsHelpAction) $(FormatAsHelpPackages) $(FormatAsHelpOptions)"
 
@@ -5515,6 +5519,7 @@ ShowAsProcLong()
 ShowAsProc()
     {
 
+    SmartCR
     WriteToDisplay.Wait "$(ColourTextBrightOrange proc)" "$1 ..."
     WriteToLog proc "$1 ..."
     [[ $(type -t Session.Debug.To.Screen.Init) = 'function' ]] && Session.Debug.To.Screen.IsSet && Display
@@ -5531,6 +5536,7 @@ ShowAsDebug()
 ShowAsNote()
     {
 
+    SmartCR
     WriteToDisplay.New "$(ColourTextBrightYellow note)" "$1"
     WriteToLog note "$1"
 
@@ -5554,6 +5560,7 @@ ShowAsQuizDone()
 ShowAsDone()
     {
 
+    SmartCR
     WriteToDisplay.New "$(ColourTextBrightGreen 'done')" "$1"
     WriteToLog 'done' "$1"
 
@@ -5562,6 +5569,7 @@ ShowAsDone()
 ShowAsWarning()
     {
 
+    SmartCR
     WriteToDisplay.New "$(ColourTextBrightOrangeBlink warn)" "$1"
     WriteToLog warn "$1"
 
@@ -5580,6 +5588,8 @@ ShowAsAbort()
 
 ShowAsError()
     {
+
+    SmartCR
 
     local capitalised="$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}"      # use any available 'tr'
 
