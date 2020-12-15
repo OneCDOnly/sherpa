@@ -174,7 +174,7 @@ Session.Init()
     readonly IPKG_DL_PATH=$WORK_PATH/ipkgs.downloads
     readonly IPKG_CACHE_PATH=$WORK_PATH/ipkgs
     readonly PIP_CACHE_PATH=$WORK_PATH/pips
-    readonly COMPILED_OBJECTS_HASH=4319815c39f7eda9a033e380d2a1ef1b
+    readonly COMPILED_OBJECTS_HASH=cfef51e655e7c31a35c6eb9e6ef5a980
     readonly DEBUG_LOG_DATAWIDTH=92
 
     if ! MakePath "$WORK_PATH" 'work'; then
@@ -3162,7 +3162,7 @@ SmartCR()
 
     # reset cursor to start-of-line, erasing previous characters
 
-    Session.Debug.To.Screen.IsNot && echo -en "\033[1K\r"
+    [[ $(type -t Session.Debug.To.Screen.Init) = 'function' ]] && Session.Debug.To.Screen.IsNot && echo -en "\033[1K\r"
 
     }
 
@@ -3701,9 +3701,13 @@ QPKGs.Assignment.Build()
     local start_acc=()
     QPKGs.StateLists.Build
 
-    # start by adding packages to lists as required:
+    # start by adding packages to lists as required
 
-    User.Opts.Apps.All.Backup.IsSet && QPKGs.ToBackup.Add "$(QPKGs.Installed.Array)"
+    if User.Opts.Apps.All.Backup.IsSet; then
+        QPKGs.ToBackup.Add "$(QPKGs.Installed.Array)"
+        QPKGs.ToBackup.Remove "$(QPKGs.Essential.Array)"
+    fi
+
     User.Opts.Apps.All.Stop.IsSet && QPKGs.ToStop.Add "$(QPKGs.Installed.Array)"
     User.Opts.Apps.All.Uninstall.IsSet && QPKGs.ToUninstall.Add "$(QPKGs.Installed.Array)"
 
@@ -5802,7 +5806,7 @@ echo $public_function_name'.Add()
     local array=(${1})
     local item='\'\''
     for item in "${array[@]}"; do
-        [[ " ${'$_placeholder_array_'[*]} " != *"$item"* ]] && '$_placeholder_array_'+=("$item")  # https://stackoverflow.com/a/41395983/14072675
+        [[ " ${'$_placeholder_array_'[*]} " != *"$item"* ]] && '$_placeholder_array_'+=("$item")
     done
     }
 '$public_function_name'.Array()
@@ -5909,7 +5913,21 @@ echo $public_function_name'.Add()
     }
 '$public_function_name'.Remove()
     {
-    [[ ${'$_placeholder_array_'[*]} == *"$1"* ]] && '$_placeholder_array_'=("${'$_placeholder_array_'[@]/$1}")
+    local argument_array=(${1})
+    local temp_array=()
+    local argument='\'\''
+    local item='\'\''
+    local matched=false
+    for item in "${'$_placeholder_array_'[@]}"; do
+        matched=false
+        for argument in "${argument_array[@]}"; do
+            if [[ $argument = $item ]]; then
+                matched=true; break
+            fi
+        done
+        [[ $matched = false ]] && temp_array+=("$item")
+    done
+    '$_placeholder_array_'=("${temp_array[@]}")
     [[ -z ${'$_placeholder_array_'[*]} ]] && '$_placeholder_array_'=()
     }
 '$public_function_name'.Set()
