@@ -2384,7 +2384,7 @@ Clean.Cache()
     {
 
     [[ -d $WORK_PATH ]] && rm -rf "$WORK_PATH"
-    ShowAsDone 'work path cleaned'
+    ShowAsDone 'work path cleaned OK'
 
     return 0
 
@@ -2565,7 +2565,7 @@ PIPs.Install()
         fi
     fi
 
-    ShowAsDone "downloaded & installed PIPs"
+    ShowAsDone 'downloaded & installed PIPs OK'
 
     DebugFuncExit; return $resultcode
 
@@ -2661,7 +2661,7 @@ CalcAllIPKGDepsToInstall()
         DebugAsDone 'no IPKGs are required'
     fi
 
-    ShowAsDone 'satisfied IPKG dependencies'
+    ShowAsDone 'satisfied IPKG dependencies OK'
     IPKGs.Archive.Close
     DebugFuncExit; return 0
 
@@ -2791,7 +2791,7 @@ IPKGs.Upgrade.Batch()
         RemoveDirSizeMonitorFlagFile
 
         if [[ $resultcode -eq 0 ]]; then
-            ShowAsDone "downloaded & upgraded $package_count IPKG$(FormatAsPlural "$package_count")"
+            ShowAsDone "downloaded & upgraded $package_count IPKG$(FormatAsPlural "$package_count") OK"
         else
             ShowAsError "download & upgrade $package_count IPKG$(FormatAsPlural "$package_count") failed $(FormatAsExitcode $resultcode)"
         fi
@@ -2828,7 +2828,7 @@ IPKGs.Install.Batch()
         RemoveDirSizeMonitorFlagFile
 
         if [[ $resultcode -eq 0 ]]; then
-            ShowAsDone "downloaded & installed $package_count IPKG$(FormatAsPlural "$package_count")"
+            ShowAsDone "downloaded & installed $package_count IPKG$(FormatAsPlural "$package_count") OK"
         else
             ShowAsError "download & install $package_count IPKG$(FormatAsPlural "$package_count") failed $(FormatAsExitcode $resultcode)"
         fi
@@ -2859,7 +2859,7 @@ IPKGs.Uninstall.Batch()
         resultcode=$?
 
         if [[ $resultcode -eq 0 ]]; then
-            ShowAsDone "uninstalled $package_count IPKG$(FormatAsPlural "$package_count")"
+            ShowAsDone "uninstalled $package_count IPKG$(FormatAsPlural "$package_count") OK"
         else
             ShowAsError "uninstall IPKG$(FormatAsPlural "$package_count") failed $(FormatAsExitcode $resultcode)"
         fi
@@ -4134,7 +4134,7 @@ Session.Summary.Show()
         if QPKGs.Upgradable.IsNone; then
             ShowAsDone 'no QPKGs needed upgrading'
         elif Session.Error.IsNot; then
-            ShowAsDone 'all upgradable QPKGs were successfully upgraded'
+            ShowAsDone 'all upgradable QPKGs were upgraded OK'
         else
             ShowAsError "upgrade failed! [$code_pointer]"
             Session.SuggestIssue.Set
