@@ -42,7 +42,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=201215
+    readonly MANAGER_SCRIPT_VERSION=201216
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -546,7 +546,6 @@ Session.ParseArguments()
                 ;;
             list-backups|backups)
                 User.Opts.Apps.List.Backups.Set
-                Session.Display.Clean.Set
                 Session.SkipPackageProcessing.Set
                 ;;
             list-installed|installed)
@@ -3934,11 +3933,12 @@ QPKGs.All.Show()
 QPKGs.Backups.Show()
     {
 
-    Display "The location for $(FormatAsScriptTitle) backups is: $(Session.Backup.Path)"
+    SmartCR
+    Display "* The location for $(FormatAsScriptTitle) backups is: $(Session.Backup.Path)"
     Display
 
     if [[ -e $GNU_FIND_CMD ]]; then
-        printf 'backup file: %20sbackup date:%s\n'
+        printf '* backup file: %18s* last backup date: %s\n'
         $GNU_FIND_CMD "$(Session.Backup.Path)"/*.config.tar.gz -maxdepth 1 -printf '%-33f%Cc\n' 2>/dev/null
     else
         (cd "$(Session.Backup.Path)" && ls -1 *.config.tar.gz)
