@@ -449,7 +449,7 @@ Session.Init()
         if Session.Debug.To.Screen.IsNot; then
             Display "$(FormatAsScriptTitle) $MANAGER_SCRIPT_VERSION • a mini-package-manager for QNAP NAS"
             DisplayLineSpaceIfNoneAlready
-            ShowAsProc 'stuff'
+            ShowAsProc 'important stuff'
         fi
 
         User.Opts.Apps.All.Upgrade.IsNot && User.Opts.Apps.All.Uninstall.IsNot && QPKGs.NewVersions.Show
@@ -863,9 +863,9 @@ Packages.Download()
     if [[ $fail_count -eq $package_count ]]; then
         ShowAsNote "$fail_count QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
     elif [[ $fail_count -gt 0 ]]; then
-        ShowAsNote "$action_past $pass_count QPKG$(FormatAsPlural "$pass_count") but $fail_count QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
+        ShowAsNote "$action_past $pass_count QPKG$(FormatAsPlural "$pass_count") OK and $fail_count QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
     elif [[ $pass_count -gt 0 ]]; then
-        ShowAsDone "$action_past $pass_count QPKG$(FormatAsPlural "$pass_count")"
+        ShowAsDone "$action_past $pass_count QPKG$(FormatAsPlural "$pass_count") OK"
     else
         DebugAsDone "no QPKGs required $action_present"
     fi
@@ -925,9 +925,9 @@ Packages.Backup()
     if [[ $fail_count -eq $package_count ]]; then
         ShowAsNote "$fail_count QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
     elif [[ $fail_count -gt 0 ]]; then
-        ShowAsNote "$action_past $pass_count QPKG$(FormatAsPlural "$pass_count") but $fail_count QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
+        ShowAsNote "$action_past $pass_count QPKG$(FormatAsPlural "$pass_count") OK and $fail_count QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
     elif [[ $pass_count -gt 0 ]]; then
-        ShowAsDone "$action_past $pass_count QPKG$(FormatAsPlural "$pass_count")"
+        ShowAsDone "$action_past $pass_count QPKG$(FormatAsPlural "$pass_count") OK"
     else
         DebugAsDone "no QPKGs required $action_present"
     fi
@@ -1001,9 +1001,9 @@ Packages.Stop.Optionals()
     if [[ $fail_count -eq $package_count ]]; then
         ShowAsNote "$fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
     elif [[ $fail_count -gt 0 ]]; then
-        ShowAsNote "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count") but $fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
+        ShowAsNote "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count") OK and $fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
     elif [[ $pass_count -gt 0 ]]; then
-        ShowAsDone "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count")"
+        ShowAsDone "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count") OK"
     else
         DebugAsDone "no $tier QPKGs required $action_present"
     fi
@@ -1075,9 +1075,9 @@ Packages.Stop.Essentials()
     if [[ $fail_count -eq $package_count ]]; then
         ShowAsNote "$fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
     elif [[ $fail_count -gt 0 ]]; then
-        ShowAsNote "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count") but $fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
+        ShowAsNote "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count") OK and $fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
     elif [[ $pass_count -gt 0 ]]; then
-        ShowAsDone "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count")"
+        ShowAsDone "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count") OK"
     else
         DebugAsDone "no $tier QPKGs required $action_present"
     fi
@@ -1152,9 +1152,9 @@ Packages.Uninstall.Optionals()
     if [[ $fail_count -eq $package_count ]]; then
         ShowAsNote "$fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
     elif [[ $fail_count -gt 0 ]]; then
-        ShowAsNote "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count") but $fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
+        ShowAsNote "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count") OK and $fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
     elif [[ $pass_count -gt 0 ]]; then
-        ShowAsDone "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count")"
+        ShowAsDone "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count") OK"
     else
         DebugAsDone "no $tier QPKGs required $action_present"
     fi
@@ -1234,9 +1234,9 @@ Packages.Uninstall.Essentials()
     if [[ $fail_count -eq $package_count ]]; then
         ShowAsNote "$fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
     elif [[ $fail_count -gt 0 ]]; then
-        ShowAsNote "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count") but $fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
+        ShowAsNote "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count") OK and $fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
     elif [[ $pass_count -gt 0 ]]; then
-        ShowAsDone "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count")"
+        ShowAsDone "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count") OK"
     else
         DebugAsDone "no $tier QPKGs required $action_present"
     fi
@@ -1301,9 +1301,9 @@ Packages.Force-upgrade.Essentials()
     if [[ $fail_count -eq $package_count ]]; then
         ShowAsNote "$fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
     elif [[ $fail_count -gt 0 ]]; then
-        ShowAsNote "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count") but $fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
+        ShowAsNote "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count") OK and $fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
     elif [[ $pass_count -gt 0 ]]; then
-        ShowAsDone "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count")"
+        ShowAsDone "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count") OK"
     else
         DebugAsDone "no $tier QPKGs required $action_present"
     fi
@@ -1366,9 +1366,9 @@ Packages.Upgrade.Essentials()
     if [[ $fail_count -eq $package_count ]]; then
         ShowAsNote "$fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
     elif [[ $fail_count -gt 0 ]]; then
-        ShowAsNote "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count") but $fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
+        ShowAsNote "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count") OK and $fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
     elif [[ $pass_count -gt 0 ]]; then
-        ShowAsDone "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count")"
+        ShowAsDone "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count") OK"
     else
         DebugAsDone "no $tier QPKGs required $action_present"
     fi
@@ -1463,9 +1463,9 @@ Packages.Reinstall.Essentials()
     if [[ $fail_count -eq $package_count ]]; then
         ShowAsNote "$fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
     elif [[ $fail_count -gt 0 ]]; then
-        ShowAsNote "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count") but $fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
+        ShowAsNote "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count") OK and $fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
     elif [[ $pass_count -gt 0 ]]; then
-        ShowAsDone "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count")"
+        ShowAsDone "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count") OK"
     else
         DebugAsDone "no $tier QPKGs required $action_present"
     fi
@@ -1546,9 +1546,9 @@ Packages.Install.Essentials()
     if [[ $fail_count -eq $package_count ]]; then
         ShowAsNote "$fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
     elif [[ $fail_count -gt 0 ]]; then
-        ShowAsNote "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count") but $fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
+        ShowAsNote "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count") OK and $fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
     elif [[ $pass_count -gt 0 ]]; then
-        ShowAsDone "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count")"
+        ShowAsDone "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count") OK"
     else
         DebugAsDone "no $tier QPKGs required $action_present"
     fi
@@ -1630,9 +1630,9 @@ Packages.Start.Essentials()
     if [[ $fail_count -eq $package_count ]]; then
         ShowAsNote "$fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
     elif [[ $fail_count -gt 0 ]]; then
-        ShowAsNote "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count") but $fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
+        ShowAsNote "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count") OK and $fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
     elif [[ $pass_count -gt 0 ]]; then
-        ShowAsDone "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count")"
+        ShowAsDone "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count") OK"
     else
         DebugAsDone "no $tier QPKGs required $action_present"
     fi
@@ -1706,9 +1706,9 @@ Packages.Restart.Essentials()
     if [[ $fail_count -eq $package_count ]]; then
         ShowAsNote "$fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
     elif [[ $fail_count -gt 0 ]]; then
-        ShowAsNote "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count") but $fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
+        ShowAsNote "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count") OK and $fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
     elif [[ $pass_count -gt 0 ]]; then
-        ShowAsDone "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count")"
+        ShowAsDone "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count") OK"
     else
         DebugAsDone "no $tier QPKGs required $action_present"
     fi
@@ -1838,9 +1838,9 @@ Packages.Force-upgrade.Optionals()
     if [[ $fail_count -eq $package_count ]]; then
         ShowAsNote "$fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
     elif [[ $fail_count -gt 0 ]]; then
-        ShowAsNote "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count") but $fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
+        ShowAsNote "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count") OK and $fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
     elif [[ $pass_count -gt 0 ]]; then
-        ShowAsDone "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count")"
+        ShowAsDone "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count") OK"
     else
         DebugAsDone "no $tier QPKGs required $action_present"
     fi
@@ -1903,9 +1903,9 @@ Packages.Upgrade.Optionals()
     if [[ $fail_count -eq $package_count ]]; then
         ShowAsNote "$fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
     elif [[ $fail_count -gt 0 ]]; then
-        ShowAsNote "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count") but $fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
+        ShowAsNote "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count") OK and $fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
     elif [[ $pass_count -gt 0 ]]; then
-        ShowAsDone "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count")"
+        ShowAsDone "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count") OK"
     else
         DebugAsDone "no $tier QPKGs required $action_present"
     fi
@@ -1970,9 +1970,9 @@ Packages.Reinstall.Optionals()
     if [[ $fail_count -eq $package_count ]]; then
         ShowAsNote "$fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
     elif [[ $fail_count -gt 0 ]]; then
-        ShowAsNote "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count") but $fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
+        ShowAsNote "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count") OK and $fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
     elif [[ $pass_count -gt 0 ]]; then
-        ShowAsDone "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count")"
+        ShowAsDone "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count") OK"
     else
         DebugAsDone "no $tier QPKGs required $action_present"
     fi
@@ -2037,9 +2037,9 @@ Packages.Install.Optionals()
     if [[ $fail_count -eq $package_count ]]; then
         ShowAsNote "$fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
     elif [[ $fail_count -gt 0 ]]; then
-        ShowAsNote "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count") but $fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
+        ShowAsNote "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count") OK and $fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
     elif [[ $pass_count -gt 0 ]]; then
-        ShowAsDone "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count")"
+        ShowAsDone "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count") OK"
     else
         DebugAsDone "no $tier QPKGs required $action_present"
     fi
@@ -2102,9 +2102,9 @@ Packages.Start.Optionals()
     if [[ $fail_count -eq $package_count ]]; then
         ShowAsNote "$fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
     elif [[ $fail_count -gt 0 ]]; then
-        ShowAsNote "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count") but $fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
+        ShowAsNote "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count") OK and $fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
     elif [[ $pass_count -gt 0 ]]; then
-        ShowAsDone "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count")"
+        ShowAsDone "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count") OK"
     else
         DebugAsDone "no $tier QPKGs required $action_present"
     fi
@@ -2167,9 +2167,9 @@ Packages.Restore.Optionals()
     if [[ $fail_count -eq $package_count ]]; then
         ShowAsNote "$fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
     elif [[ $fail_count -gt 0 ]]; then
-        ShowAsNote "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count") but $fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
+        ShowAsNote "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count") OK and $fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
     elif [[ $pass_count -gt 0 ]]; then
-        ShowAsDone "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count")"
+        ShowAsDone "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count") OK"
     else
         DebugAsDone "no $tier QPKGs required $action_present"
     fi
@@ -2261,9 +2261,9 @@ Packages.Restart.Optionals()
     if [[ $fail_count -eq $package_count ]]; then
         ShowAsNote "$fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
     elif [[ $fail_count -gt 0 ]]; then
-        ShowAsNote "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count") but $fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
+        ShowAsNote "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count") OK and $fail_count $tier QPKG$(FormatAsPlural "$fail_count") failed to $action_intransitive"
     elif [[ $pass_count -gt 0 ]]; then
-        ShowAsDone "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count")"
+        ShowAsDone "$action_past $pass_count $tier QPKG$(FormatAsPlural "$pass_count") OK"
     else
         DebugAsDone "no $tier QPKGs required $action_present"
     fi
