@@ -174,7 +174,7 @@ Session.Init()
     readonly IPKG_DL_PATH=$WORK_PATH/ipkgs.downloads
     readonly IPKG_CACHE_PATH=$WORK_PATH/ipkgs
     readonly PIP_CACHE_PATH=$WORK_PATH/pips
-    readonly COMPILED_OBJECTS_HASH=c24358cb4387f99f18f854385e884505
+    readonly COMPILED_OBJECTS_HASH=4319815c39f7eda9a033e380d2a1ef1b
     readonly DEBUG_LOG_DATAWIDTH=92
 
     if ! MakePath "$WORK_PATH" 'work'; then
@@ -538,6 +538,11 @@ Session.ParseArguments()
                 ;;
             list|list-all|all)
                 User.Opts.Apps.List.All.Set
+                Session.Display.Clean.Set
+                Session.SkipPackageProcessing.Set
+                ;;
+            list-backups|backups)
+                User.Opts.Apps.List.Backups.Set
                 Session.Display.Clean.Set
                 Session.SkipPackageProcessing.Set
                 ;;
@@ -2320,6 +2325,8 @@ Session.Results()
         Log.Last.View
     elif User.Opts.Clean.IsSet; then
         Clean.Cache
+    elif User.Opts.Apps.List.Backups.IsSet; then
+        QPKGs.Backups.Show
     elif User.Opts.Apps.List.Installed.IsSet; then
         QPKGs.Installed.Show
     elif User.Opts.Apps.List.NotInstalled.IsSet; then
@@ -3223,6 +3230,8 @@ Help.Actions.Show()
 
     DisplayAsProjectSyntaxIndentedExample 'restore these application configurations from the backup location' "restore $(FormatAsHelpPackages)"
 
+    DisplayAsProjectSyntaxIndentedExample 'show application backup files' "backups"
+
     DisplayAsProjectSyntaxExample "$(FormatAsHelpAction) to affect all packages can be seen with" 'actions-all'
 
     DisplayAsProjectSyntaxExample "multiple $(FormatAsHelpAction)s are supported like this" "$(FormatAsHelpAction) $(FormatAsHelpPackages) $(FormatAsHelpAction) $(FormatAsHelpPackages)"
@@ -3904,6 +3913,22 @@ QPKGs.All.Show()
     for package in $(QPKGs.Names.Array); do
         Display "$package"
     done
+
+    return 0
+
+    }
+
+QPKGs.Backups.Show()
+    {
+
+    Display "The location for $(FormatAsScriptTitle) backups is: $(Session.Backup.Path)"
+    Display
+
+    if [[ -e $GNU_FIND_CMD ]]; then
+        $GNU_FIND_CMD "$(Session.Backup.Path)"/*.config.tar.gz -maxdepth 1 -printf 'filename: %-30fbackup date: %Ac\n'
+    else
+        (cd "$(Session.Backup.Path)" && ls -1 *.config.tar.gz)
+    fi
 
     return 0
 
@@ -5960,6 +5985,7 @@ Objects.Compile()
         Objects.Add User.Opts.Apps.All.Upgrade
 
         Objects.Add User.Opts.Apps.List.All
+        Objects.Add User.Opts.Apps.List.Backups
         Objects.Add User.Opts.Apps.List.Essential
         Objects.Add User.Opts.Apps.List.Installed
         Objects.Add User.Opts.Apps.List.NotInstalled

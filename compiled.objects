@@ -3612,6 +3612,145 @@ User.Opts.Apps.List.All.Text()
     }
 User.Opts.Apps.List.All.Init
 
+User.Opts.Apps.List.Backups.Add()
+    {
+    local array=(${1})
+    local item=''
+    for item in "${array[@]}"; do
+        [[ " ${_object_user_opts_apps_list_backups_array_[*]} " != *"$item"* ]] && _object_user_opts_apps_list_backups_array_+=("$item")  # https://stackoverflow.com/a/41395983/14072675
+    done
+    }
+User.Opts.Apps.List.Backups.Array()
+    {
+    echo -n "${_object_user_opts_apps_list_backups_array_[@]}"
+    }
+User.Opts.Apps.List.Backups.Clear()
+    {
+    [[ $_object_user_opts_apps_list_backups_flag_ != 'true' ]] && return
+    _object_user_opts_apps_list_backups_flag_=false
+    [[ $_object_user_opts_apps_list_backups_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_backups_flag_
+    }
+User.Opts.Apps.List.Backups.Count()
+    {
+    echo "${#_object_user_opts_apps_list_backups_array_[@]}"
+    }
+User.Opts.Apps.List.Backups.Disable()
+    {
+    [[ $_object_user_opts_apps_list_backups_enable_ != 'true' ]] && return
+    _object_user_opts_apps_list_backups_enable_=false
+    [[ $_object_user_opts_apps_list_backups_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_backups_enable_
+    }
+User.Opts.Apps.List.Backups.DontLogChanges()
+    {
+    [[ $_object_user_opts_apps_list_backups_changes_flag_ != 'true' ]] && return
+    _object_user_opts_apps_list_backups_changes_flag_=false
+    }
+User.Opts.Apps.List.Backups.Enable()
+    {
+    [[ $_object_user_opts_apps_list_backups_enable_ = 'true' ]] && return
+    _object_user_opts_apps_list_backups_enable_=true
+    [[ $_object_user_opts_apps_list_backups_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_backups_enable_
+    }
+User.Opts.Apps.List.Backups.Exist()
+    {
+    [[ ${_object_user_opts_apps_list_backups_array_[*]} == *"$1"* ]]
+    }
+User.Opts.Apps.List.Backups.First()
+    {
+    echo "${_object_user_opts_apps_list_backups_array_[0]}"
+    }
+User.Opts.Apps.List.Backups.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_user_opts_apps_list_backups_array_[@]} ]] && index=${#_object_user_opts_apps_list_backups_array_[@]}
+    echo -n "${_object_user_opts_apps_list_backups_array_[((index-1))]}"
+    }
+User.Opts.Apps.List.Backups.Init()
+    {
+    _object_user_opts_apps_list_backups_size_=0
+    _object_user_opts_apps_list_backups_text_=''
+    _object_user_opts_apps_list_backups_flag_=false
+    _object_user_opts_apps_list_backups_changes_flag_=true
+    _object_user_opts_apps_list_backups_enable_=false
+    _object_user_opts_apps_list_backups_array_=()
+    _object_user_opts_apps_list_backups_array_index_=1
+    _object_user_opts_apps_list_backups_path_=''
+    }
+User.Opts.Apps.List.Backups.IsAny()
+    {
+    [[ ${#_object_user_opts_apps_list_backups_array_[@]} -gt 0 ]]
+    }
+User.Opts.Apps.List.Backups.IsDisabled()
+    {
+    [[ $_object_user_opts_apps_list_backups_enable_ != 'true' ]]
+    }
+User.Opts.Apps.List.Backups.IsEnabled()
+    {
+    [[ $_object_user_opts_apps_list_backups_enable_ = 'true' ]]
+    }
+User.Opts.Apps.List.Backups.IsNone()
+    {
+    [[ ${#_object_user_opts_apps_list_backups_array_[@]} -eq 0 ]]
+    }
+User.Opts.Apps.List.Backups.IsNot()
+    {
+    [[ $_object_user_opts_apps_list_backups_flag_ != 'true' ]]
+    }
+User.Opts.Apps.List.Backups.IsSet()
+    {
+    [[ $_object_user_opts_apps_list_backups_flag_ = 'true' ]]
+    }
+User.Opts.Apps.List.Backups.List()
+    {
+    echo -n "${_object_user_opts_apps_list_backups_array_[*]}"
+    }
+User.Opts.Apps.List.Backups.ListCSV()
+    {
+    echo -n "${_object_user_opts_apps_list_backups_array_[*]}" | tr ' ' ','
+    }
+User.Opts.Apps.List.Backups.LogChanges()
+    {
+    [[ $_object_user_opts_apps_list_backups_changes_flag_ = 'true' ]] && return
+    _object_user_opts_apps_list_backups_changes_flag_=true
+    }
+User.Opts.Apps.List.Backups.Path()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_apps_list_backups_path_=$2
+    else
+        echo -n "$_object_user_opts_apps_list_backups_path_"
+    fi
+    }
+User.Opts.Apps.List.Backups.Remove()
+    {
+    [[ ${_object_user_opts_apps_list_backups_array_[*]} == *"$1"* ]] && _object_user_opts_apps_list_backups_array_=("${_object_user_opts_apps_list_backups_array_[@]/$1}")
+    [[ -z ${_object_user_opts_apps_list_backups_array_[*]} ]] && _object_user_opts_apps_list_backups_array_=()
+    }
+User.Opts.Apps.List.Backups.Set()
+    {
+    [[ $_object_user_opts_apps_list_backups_flag_ = 'true' ]] && return
+    _object_user_opts_apps_list_backups_flag_=true
+    [[ $_object_user_opts_apps_list_backups_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_backups_flag_
+    }
+User.Opts.Apps.List.Backups.Size()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_apps_list_backups_size_=$2
+    else
+        echo -n $_object_user_opts_apps_list_backups_size_
+    fi
+    }
+User.Opts.Apps.List.Backups.Text()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_apps_list_backups_text_=$2
+    else
+        echo -n "$_object_user_opts_apps_list_backups_text_"
+    fi
+    }
+User.Opts.Apps.List.Backups.Init
+
 User.Opts.Apps.List.Essential.Add()
     {
     local array=(${1})
