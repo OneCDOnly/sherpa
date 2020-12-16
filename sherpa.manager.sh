@@ -519,7 +519,7 @@ Session.ParseArguments()
                 User.Opts.Help.Actions.Set
                 Session.SkipPackageProcessing.Set
                 ;;
-            action-all|actions-all)
+            action-all|actions-all|all-action|all-actions)
                 User.Opts.Help.ActionsAll.Set
                 Session.SkipPackageProcessing.Set
                 ;;
@@ -539,16 +539,16 @@ Session.ParseArguments()
                 User.Opts.Help.Tips.Set
                 Session.SkipPackageProcessing.Set
                 ;;
-            list|list-all|all)
+            list|list-all|all|all-list)
                 User.Opts.Apps.List.All.Set
                 Session.Display.Clean.Set
                 Session.SkipPackageProcessing.Set
                 ;;
-            list-backups|backups)
+            list-backups|backups|all-backups)
                 User.Opts.Apps.List.Backups.Set
                 Session.SkipPackageProcessing.Set
                 ;;
-            list-installed|installed)
+            list-installed|installed|installed-list)
                 User.Opts.Apps.List.Installed.Set
                 Session.Display.Clean.Set
                 Session.SkipPackageProcessing.Set
@@ -558,31 +558,31 @@ Session.ParseArguments()
                 Session.Display.Clean.Set
                 Session.SkipPackageProcessing.Set
                 ;;
-            list-upgradable|upgradable)
+            list-upgradable|upgradable|upgradable-list)
                 User.Opts.Apps.List.Upgradable.Set
                 Session.Display.Clean.Set
                 Session.SkipPackageProcessing.Set
                 ;;
-            list-essential|essential)
+            list-essential|list-essentials|essential|essentials|essential-list|essentials-list)
                 User.Opts.Apps.List.Essential.Set
                 Session.Display.Clean.Set
                 Session.SkipPackageProcessing.Set
                 ;;
-            list-optional|optional)
+            list-optional|list-optionals|optional|optional-list|optionals-list)
                 User.Opts.Apps.List.Optional.Set
                 Session.Display.Clean.Set
                 Session.SkipPackageProcessing.Set
                 ;;
-            v|version)
+            v|version|versions|all-versions|versions-all)
                 User.Opts.Versions.View.Set
                 Session.Display.Clean.Set
                 Session.SkipPackageProcessing.Set
                 ;;
-            c|check|check-all)
+            c|check|check-all|all-check)
                 User.Opts.Dependencies.Check.Set
                 action=''
                 ;;
-            install-all|install-all-packages|install-all-applications)
+            install-all|install-all-packages|install-all-applications|all-install)
                 User.Opts.Apps.All.Install.Set
                 action=''
                 ;;
@@ -590,31 +590,31 @@ Session.ParseArguments()
                 User.Opts.Apps.All.Uninstall.Set
                 action=''
                 ;;
-            reinstall-all)
+            reinstall-all|all-reinstall)
                 User.Opts.Apps.All.Reinstall.Set
                 action=''
                 ;;
-            restart-all)
+            restart-all|all-restart)
                 User.Opts.Apps.All.Restart.Set
                 action=''
                 ;;
-            stop-all)
+            stop-all|all-stop)
                 User.Opts.Apps.All.Stop.Set
                 action=''
                 ;;
-            start-all)
+            start-all|all-start)
                 User.Opts.Apps.All.Start.Set
                 action=''
                 ;;
-            upgrade-all)
+            upgrade-all|all-upgrade)
                 User.Opts.Apps.All.Upgrade.Set
                 action=''
                 ;;
-            backup-all)
+            backup-all|all-backup)
                 User.Opts.Apps.All.Backup.Set
                 action=''
                 ;;
-            restore-all)
+            restore-all|all-restore)
                 User.Opts.Apps.All.Restore.Set
                 action=''
                 ;;
