@@ -22,7 +22,7 @@
 #
 # Style Guide:
 #         functions: CamelCase
-#         variables: lowercase_with_inline_underscores (except for 'returncode', 'resultcode', 'exitcode')
+#         variables: lowercase_with_inline_underscores (except for 'returncode', 'resultcode')
 # "class" variables: _lowercase_with_leading_and_inline_underscores (these should only be managed via their specific functions)
 #         constants: UPPERCASE_WITH_INLINE_UNDERSCORES (these are also set as readonly)
 #           indents: 1 x tab (converted to 4 x spaces to suit GitHub web-display)
@@ -722,7 +722,7 @@ Session.Validate()
         DebugFirmware.Warning 'version' "$NAS_FIRMWARE"
     fi
 
-    if [[ $NAS_BUILD -lt 20201015 || $NAS_BUILD -gt 20201020 ]]; then
+    if [[ $NAS_BUILD -lt 20201015 || $NAS_BUILD -gt 20201020 ]]; then   # these builds won't allow unsigned QPKGs to run at all
         DebugFirmware.OK 'build' "$NAS_BUILD"
     else
         DebugFirmware.Warning 'build' "$NAS_BUILD"
@@ -6104,7 +6104,6 @@ Process.Tier.Actions()
 
 Session.Init || exit 1
 Session.Validate
-
 Packages.Download
 Packages.Backup
 Packages.Stop
