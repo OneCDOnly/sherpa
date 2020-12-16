@@ -2754,6 +2754,9 @@ IPKGs.Uninstall()
             fi
         done
 
+        # when package ARCH is 'none', prevent 'par2cmdline' being uninstalled, then installed again later this same session. Noticed this was happening on ARMv5 models.
+        [[ $NAS_QPKG_ARCH = none ]] && IPKGs.ToUninstall.Remove par2cmdline
+
         IPKGs.Uninstall.Batch
     fi
 
