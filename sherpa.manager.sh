@@ -42,7 +42,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=201216
+    readonly MANAGER_SCRIPT_VERSION=201217
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -745,7 +745,7 @@ Session.Validate()
     fi
 
     if [[ $EUID -ne 0 || $USER != admin ]]; then
-        ShowAsErrr "this script must be run as the 'admin' user. Please login via SSH as 'admin' and try again"
+        ShowAsEror "this script must be run as the 'admin' user. Please login via SSH as 'admin' and try again"
         Session.SkipPackageProcessing.Set
         DebugFuncExit; return 1
     fi
@@ -793,7 +793,7 @@ Session.Validate()
 
     if Args.Unknown.IsAny; then
         code_pointer=3
-        ShowAsErrr "unknown argument$(FormatAsPlural "$(Args.Unknown.Count)"): \"$(Args.Unknown.List)\""
+        ShowAsEror "unknown argument$(FormatAsPlural "$(Args.Unknown.Count)"): \"$(Args.Unknown.List)\""
         User.Opts.Help.Basic.Set
         Session.SkipPackageProcessing.Set
         DebugFuncExit; return 1
@@ -802,7 +802,7 @@ Session.Validate()
     if QPKGs.ToBackup.IsNone && QPKGs.ToUninstall.IsNone && QPKGs.ToForceUpgrade.IsNone && QPKGs.ToUpgrade.IsNone && QPKGs.ToInstall.IsNone && QPKGs.ToReinstall.IsNone && QPKGs.ToRestore.IsNone && QPKGs.ToRestart.IsNone && QPKGs.ToStart.IsNone && QPKGs.ToStop.IsNone; then
         if User.Opts.Apps.All.Install.IsNot && User.Opts.Apps.All.Uninstall.IsNot && User.Opts.Apps.All.Restart.IsNot && User.Opts.Apps.All.Upgrade.IsNot && User.Opts.Apps.All.Backup.IsNot && User.Opts.Apps.All.Restore.IsNot; then
             if User.Opts.Dependencies.Check.IsNot && User.Opts.IgnoreFreeSpace.IsNot; then
-                ShowAsErrr 'nothing to do'
+                ShowAsEror 'nothing to do'
                 User.Opts.Help.Basic.Set
                 Session.SkipPackageProcessing.Set
                 DebugFuncExit; return 1
@@ -1038,7 +1038,7 @@ Packages.Stop.Essentials()
             ((fail_count++))
             continue
         elif ! QPKG.Disable "$package"; then   # essentials don't have the same service scripts as other sherpa packages, so they must be enabled/disabled externally
-            ShowAsErrr "unable to disable $(FormatAsPackageName "$package") (see log for more details)"
+            ShowAsEror "unable to disable $(FormatAsPackageName "$package") (see log for more details)"
             ((fail_count++))
             continue
         fi
@@ -2357,7 +2357,7 @@ PIPs.Install()
     if [[ $resultcode -eq 0 ]]; then
         DebugAsDone "downloaded & installed $desc"
     else
-        ShowAsErrr "download & install $desc failed $(FormatAsResult "$resultcode")"
+        ShowAsEror "download & install $desc failed $(FormatAsResult "$resultcode")"
     fi
 
     if QPKG.Installed SABnzbd || QPKGs.ToInstall.Exist SABnzbd || QPKGs.ToReinstall.Exist SABnzbd; then
@@ -2375,7 +2375,7 @@ PIPs.Install()
             DebugAsDone "downloaded & installed $desc"
             QPKGs.ToRestart.Add SABnzbd
         else
-            ShowAsErrr "download & install $desc failed $(FormatAsResult "$resultcode")"
+            ShowAsEror "download & install $desc failed $(FormatAsResult "$resultcode")"
         fi
 
         # KLUDGE: ensure 'feedparser' is upgraded. This was version-held at 5.2.1 for Python 3.8.5 but from Python 3.9.0 onward there's no-need for version-hold anymore.
@@ -2391,7 +2391,7 @@ PIPs.Install()
             DebugAsDone "downloaded & installed $desc"
             QPKGs.ToRestart.Add SABnzbd
         else
-            ShowAsErrr "download & install $desc failed $(FormatAsResult "$resultcode")"
+            ShowAsEror "download & install $desc failed $(FormatAsResult "$resultcode")"
         fi
     fi
 
@@ -2626,7 +2626,7 @@ IPKGs.Upgrade.Batch()
         if [[ $resultcode -eq 0 ]]; then
             ShowAsDone "downloaded & upgraded $package_count IPKG$(FormatAsPlural "$package_count") OK"
         else
-            ShowAsErrr "download & upgrade $package_count IPKG$(FormatAsPlural "$package_count") failed $(FormatAsExitcode $resultcode)"
+            ShowAsEror "download & upgrade $package_count IPKG$(FormatAsPlural "$package_count") failed $(FormatAsExitcode $resultcode)"
         fi
     fi
 
@@ -2663,7 +2663,7 @@ IPKGs.Install.Batch()
         if [[ $resultcode -eq 0 ]]; then
             ShowAsDone "downloaded & installed $package_count IPKG$(FormatAsPlural "$package_count") OK"
         else
-            ShowAsErrr "download & install $package_count IPKG$(FormatAsPlural "$package_count") failed $(FormatAsExitcode $resultcode)"
+            ShowAsEror "download & install $package_count IPKG$(FormatAsPlural "$package_count") failed $(FormatAsExitcode $resultcode)"
         fi
     fi
 
@@ -2694,7 +2694,7 @@ IPKGs.Uninstall.Batch()
         if [[ $resultcode -eq 0 ]]; then
             ShowAsDone "uninstalled $package_count IPKG$(FormatAsPlural "$package_count") OK"
         else
-            ShowAsErrr "uninstall IPKG$(FormatAsPlural "$package_count") failed $(FormatAsExitcode $resultcode)"
+            ShowAsEror "uninstall IPKG$(FormatAsPlural "$package_count") failed $(FormatAsExitcode $resultcode)"
         fi
     fi
 
@@ -2713,7 +2713,7 @@ IPKGs.Archive.Open()
     DebugFuncEntry
 
     if [[ ! -e $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE ]]; then
-        ShowAsErrr 'unable to locate the IPKG list file'
+        ShowAsEror 'unable to locate the IPKG list file'
         DebugFuncExit; return 1
     fi
 
@@ -2723,7 +2723,7 @@ IPKGs.Archive.Open()
     resultcode=$?
 
     if [[ ! -e $EXTERNAL_PACKAGE_LIST_PATHFILE ]]; then
-        ShowAsErrr 'unable to open the IPKG list file'
+        ShowAsEror 'unable to open the IPKG list file'
         DebugFuncExit; return 1
     fi
 
@@ -3296,7 +3296,7 @@ Log.Whole.View()
             $CAT_CMD --number "$DEBUG_LOG_PATHFILE"
         fi
     else
-        ShowAsErrr 'no session log to display'
+        ShowAsEror 'no session log to display'
     fi
 
     return 0
@@ -3317,7 +3317,7 @@ Log.Last.View()
             $CAT_CMD --number "$SESSION_LAST_PATHFILE"
         fi
     else
-        ShowAsErrr 'no last session log to display'
+        ShowAsEror 'no last session log to display'
     fi
 
     return 0
@@ -3338,7 +3338,7 @@ Log.Tail.Paste.Online()
             if [[ $? -eq 0 ]]; then
                 ShowAsDone "your $(FormatAsScriptTitle) log is now online at $(FormatAsURL "$($SED_CMD 's|http://|http://l.|;s|https://|https://l.|' <<< "$link")") and will be deleted in 1 month"
             else
-                ShowAsErrr "a link could not be generated. Most likely a problem occurred when talking with $(FormatAsURL 'https://termbin.com')"
+                ShowAsEror "a link could not be generated. Most likely a problem occurred when talking with $(FormatAsURL 'https://termbin.com')"
             fi
         else
             DebugInfoMinorSeparator
@@ -3347,7 +3347,7 @@ Log.Tail.Paste.Online()
             return 1
         fi
     else
-        ShowAsErrr 'no tail log to paste'
+        ShowAsEror 'no tail log to paste'
     fi
 
     return 0
@@ -3368,7 +3368,7 @@ Log.Last.Paste.Online()
             if [[ $? -eq 0 ]]; then
                 ShowAsDone "your $(FormatAsScriptTitle) log is now online at $(FormatAsURL "$($SED_CMD 's|http://|http://l.|;s|https://|https://l.|' <<< "$link")") and will be deleted in 1 month"
             else
-                ShowAsErrr "a link could not be generated. Most likely a problem occurred when talking with $(FormatAsURL 'https://termbin.com')"
+                ShowAsEror "a link could not be generated. Most likely a problem occurred when talking with $(FormatAsURL 'https://termbin.com')"
             fi
         else
             DebugInfoMinorSeparator
@@ -3377,7 +3377,7 @@ Log.Last.Paste.Online()
             return 1
         fi
     else
-        ShowAsErrr 'no last session log to paste'
+        ShowAsEror 'no last session log to paste'
     fi
 
     return 0
@@ -3481,7 +3481,7 @@ QPKGs.Conflicts.Check()
 
     for package in "${SHERPA_COMMON_QPKG_CONFLICTS[@]}"; do
         if QPKG.Enabled "$package"; then
-            ShowAsErrr "'$package' is installed and enabled. One-or-more $(FormatAsScriptTitle) applications are incompatible with this package"
+            ShowAsEror "'$package' is installed and enabled. One-or-more $(FormatAsScriptTitle) applications are incompatible with this package"
             return 1
         fi
     done
@@ -3978,7 +3978,7 @@ Session.Summary.Show()
         elif Session.Error.IsNot; then
             ShowAsDone 'all upgradable QPKGs were upgraded OK'
         else
-            ShowAsErrr "upgrade failed! [$code_pointer]"
+            ShowAsEror "upgrade failed! [$code_pointer]"
             Session.SuggestIssue.Set
         fi
     fi
@@ -4071,7 +4071,7 @@ QPKG.ServiceStatus()
                 DebugInfo "$(FormatAsPackageName "$1") service started OK"
                 ;;
             failed)
-                ShowAsErrr "$(FormatAsPackageName "$1") service failed to start.$([[ -e /var/log/$1.log ]] && echo " Check $(FormatAsFileName "/var/log/$1.log") for more information")"
+                ShowAsEror "$(FormatAsPackageName "$1") service failed to start.$([[ -e /var/log/$1.log ]] && echo " Check $(FormatAsFileName "/var/log/$1.log") for more information")"
                 ;;
             *)
                 DebugAsWarning "$(FormatAsPackageName "$1") service status is incorrect"
@@ -4375,7 +4375,7 @@ QPKG.Reinstall()
         QPKGs.ToInstall.Remove "$1"
         QPKGs.ToRestart.Remove "$1"
     else
-        ShowAsErrr "reinstallation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $resultcode)"
+        ShowAsEror "reinstallation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $resultcode)"
     fi
 
     DebugFuncExit; return $resultcode
@@ -4434,7 +4434,7 @@ QPKG.Upgrade()
         QPKGs.ToRestart.Remove "$1"
         resultcode=0    # reset this to zero (0 or 10 from a QPKG upgrade is OK)
     else
-        ShowAsErrr "${prefix}upgrade failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $resultcode)"
+        ShowAsEror "${prefix}upgrade failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $resultcode)"
     fi
 
     DebugFuncExit; return $resultcode
@@ -4866,7 +4866,7 @@ MakePath()
     mkdir -p "$1" 2> /dev/null; resultcode=$?
 
     if [[ $resultcode -ne 0 ]]; then
-        ShowAsErrr "unable to create $2 path $(FormatAsFileName "$1") $(FormatAsExitcode $resultcode)"
+        ShowAsEror "unable to create $2 path $(FormatAsFileName "$1") $(FormatAsExitcode $resultcode)"
         [[ $(type -t Session.SuggestIssue.Init) = 'function' ]] && Session.SuggestIssue.Set
         return 1
     fi
@@ -5447,7 +5447,7 @@ ShowAsFail()
 
     }
 
-ShowAsErrr()
+ShowAsEror()
     {
 
     # fatal error
