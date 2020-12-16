@@ -2855,7 +2855,6 @@ RemoveDirSizeMonitorFlagFile()
 
     if [[ -n $monitor_flag_pathfile && -e $monitor_flag_pathfile ]]; then
         rm -f "$monitor_flag_pathfile"
-#         unset "$monitor_flag_pathfile"
         $SLEEP_CMD 2
     fi
 
@@ -5428,8 +5427,8 @@ ShowAsAbort()
 
     local capitalised="$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}"      # use any available 'tr'
 
-    WriteToDisplay.New "$(ColourTextBrightRed fail)" "$capitalised: aborting ..."
-    WriteToLog fail "$capitalised: aborting"
+    WriteToDisplay.New "$(ColourTextBrightRed eror)" "$capitalised: aborting ..."
+    WriteToLog eror "$capitalised: aborting"
     Session.Error.Set
 
     }
@@ -5457,8 +5456,8 @@ ShowAsErrr()
 
     local capitalised="$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}"      # use any available 'tr'
 
-    WriteToDisplay.New "$(ColourTextBrightRed errr)" "$capitalised"
-    WriteToLog errr "$capitalised."
+    WriteToDisplay.New "$(ColourTextBrightRed eror)" "$capitalised"
+    WriteToLog eror "$capitalised."
     Session.Error.Set
 
     }
