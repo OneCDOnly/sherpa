@@ -2304,7 +2304,7 @@ Package.Install.Entware()
 
     DebugAsProc 'installing essential IPKGs'
     # add extra package(s) needed immediately
-    RunAndLogResults "$OPKG_CMD install$(User.Opts.IgnoreFreeSpace.IsSet && User.Opts.IgnoreFreeSpace.Text) --force-overwrite $SHERPA_ESSENTIAL_IPKGS_ADD --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
+    RunAndLog "$OPKG_CMD install$(User.Opts.IgnoreFreeSpace.IsSet && User.Opts.IgnoreFreeSpace.Text) --force-overwrite $SHERPA_ESSENTIAL_IPKGS_ADD --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
     DebugAsDone 'installed essential IPKGs'
 
     # ensure PIPs are installed later
@@ -2468,7 +2468,7 @@ Entware.Update()
     if [[ -n $msgs ]]; then
         DebugAsProc "updating $(FormatAsPackageName Entware) package list"
 
-        RunAndLogResults "$OPKG_CMD update" "$log_pathfile" log:failure-only
+        RunAndLog "$OPKG_CMD update" "$log_pathfile" log:failure-only
         resultcode=$?
 
         if [[ $resultcode -eq 0 ]]; then
@@ -2520,7 +2520,7 @@ PIPs.Install()
     local log_pathfile=$LOGS_PATH/py3-modules.assorted.$INSTALL_LOG_FILE
     DebugAsProc "downloading & installing $desc"
 
-    RunAndLogResults "$exec_cmd" "$log_pathfile"
+    RunAndLog "$exec_cmd" "$log_pathfile"
     resultcode=$?
 
     if [[ $resultcode -eq 0 ]]; then
@@ -2537,7 +2537,7 @@ PIPs.Install()
         log_pathfile=$LOGS_PATH/py3-modules.sabnzbd.$INSTALL_LOG_FILE
         DebugAsProc "downloading & installing $desc"
 
-        RunAndLogResults "$exec_cmd" "$log_pathfile"
+        RunAndLog "$exec_cmd" "$log_pathfile"
         resultcode=$?
 
         if [[ $resultcode -eq 0 ]]; then
@@ -2553,7 +2553,7 @@ PIPs.Install()
         desc="'Python3 feedparser' module"
         log_pathfile=$LOGS_PATH/py3-modules.feedparser.$INSTALL_LOG_FILE
         DebugAsProc "downloading & installing $desc"
-        RunAndLogResults "$exec_cmd" "$log_pathfile"
+        RunAndLog "$exec_cmd" "$log_pathfile"
         resultcode=$?
 
         if [[ $resultcode -eq 0 ]]; then
@@ -2784,7 +2784,7 @@ IPKGs.Upgrade.Batch()
             trap CTRL_C_Captured INT
                 _MonitorDirSize_ "$IPKG_DL_PATH" "$(IPKGs.ToDownload.Size)" &
 
-                RunAndLogResults "$OPKG_CMD upgrade$(User.Opts.IgnoreFreeSpace.IsSet && User.Opts.IgnoreFreeSpace.Text) --force-overwrite $(IPKGs.ToDownload.List) --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
+                RunAndLog "$OPKG_CMD upgrade$(User.Opts.IgnoreFreeSpace.IsSet && User.Opts.IgnoreFreeSpace.Text) --force-overwrite $(IPKGs.ToDownload.List) --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
                 resultcode=$?
             trap - INT
         RemoveDirSizeMonitorFlagFile
@@ -2821,7 +2821,7 @@ IPKGs.Install.Batch()
             trap CTRL_C_Captured INT
                 _MonitorDirSize_ "$IPKG_DL_PATH" "$(IPKGs.ToDownload.Size)" &
 
-                RunAndLogResults "$OPKG_CMD install$(User.Opts.IgnoreFreeSpace.IsSet && User.Opts.IgnoreFreeSpace.Text) --force-overwrite $(IPKGs.ToDownload.List) --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
+                RunAndLog "$OPKG_CMD install$(User.Opts.IgnoreFreeSpace.IsSet && User.Opts.IgnoreFreeSpace.Text) --force-overwrite $(IPKGs.ToDownload.List) --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
                 resultcode=$?
             trap - INT
         RemoveDirSizeMonitorFlagFile
@@ -2854,7 +2854,7 @@ IPKGs.Uninstall.Batch()
     if [[ $package_count -gt 0 ]]; then
         ShowAsProc "uninstalling $package_count IPKG$(FormatAsPlural "$package_count")"
 
-        RunAndLogResults "$OPKG_CMD remove $(IPKGs.ToUninstall.List)" "$log_pathfile"
+        RunAndLog "$OPKG_CMD remove $(IPKGs.ToUninstall.List)" "$log_pathfile"
         resultcode=$?
 
         if [[ $resultcode -eq 0 ]]; then
@@ -2885,7 +2885,7 @@ IPKGs.Archive.Open()
 
     IPKGs.Archive.Close
 
-    RunAndLogResults "$Z7_CMD e -o$($DIRNAME_CMD "$EXTERNAL_PACKAGE_LIST_PATHFILE") $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE" "$WORK_PATH/ipkg.list.archive.extract" log:failure-only
+    RunAndLog "$Z7_CMD e -o$($DIRNAME_CMD "$EXTERNAL_PACKAGE_LIST_PATHFILE") $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE" "$WORK_PATH/ipkg.list.archive.extract" log:failure-only
     resultcode=$?
 
     if [[ ! -e $EXTERNAL_PACKAGE_LIST_PATHFILE ]]; then
@@ -4430,7 +4430,7 @@ QPKG.Download()
 
         [[ -e $log_pathfile ]] && rm -f "$log_pathfile"
 
-        RunAndLogResults "$CURL_CMD${curl_insecure_arg} --output $local_pathfile $remote_url" "$log_pathfile"
+        RunAndLog "$CURL_CMD${curl_insecure_arg} --output $local_pathfile $remote_url" "$log_pathfile"
         resultcode=$?
 
         if [[ $resultcode -eq 0 ]]; then
@@ -4477,7 +4477,7 @@ QPKG.Install()
 
     DebugAsProc "installing $(FormatAsPackageName "$1")"
 
-    RunAndLogResults "$SH_CMD $local_pathfile" "$log_pathfile"
+    RunAndLog "$SH_CMD $local_pathfile" "$log_pathfile"
     resultcode=$?
 
     if [[ $resultcode -eq 0 || $resultcode -eq 10 ]]; then
@@ -4529,7 +4529,7 @@ QPKG.Reinstall()
 
     DebugAsProc "reinstalling $(FormatAsPackageName "$1")"
 
-    RunAndLogResults "$SH_CMD $local_pathfile" "$log_pathfile"
+    RunAndLog "$SH_CMD $local_pathfile" "$log_pathfile"
     resultcode=$?
 
     if [[ $resultcode -eq 0 || $resultcode -eq 10 ]]; then
@@ -4581,7 +4581,7 @@ QPKG.Upgrade()
 
     DebugAsProc "${prefix}upgrading $(FormatAsPackageName "$1")"
 
-    RunAndLogResults "$SH_CMD $local_pathfile" "$log_pathfile"
+    RunAndLog "$SH_CMD $local_pathfile" "$log_pathfile"
     resultcode=$?
 
     current_version=$(QPKG.InstalledVersion "$1")
@@ -4631,7 +4631,7 @@ QPKG.Uninstall()
     if [[ -e $qpkg_installed_path/.uninstall.sh ]]; then
         DebugAsProc "uninstalling $(FormatAsPackageName "$1")"
 
-        RunAndLogResults "$SH_CMD $qpkg_installed_path/.uninstall.sh" "$log_pathfile"
+        RunAndLog "$SH_CMD $qpkg_installed_path/.uninstall.sh" "$log_pathfile"
         resultcode=$?
 
         if [[ $resultcode -eq 0 ]]; then
@@ -4671,7 +4671,7 @@ QPKG.Restart()
 
     DebugAsProc "restarting $(FormatAsPackageName "$1")"
 
-    RunAndLogResults "$QPKG_SERVICE_CMD restart $1" "$log_pathfile"
+    RunAndLog "$QPKG_SERVICE_CMD restart $1" "$log_pathfile"
     resultcode=$?
 
     if [[ $resultcode -eq 0 ]]; then
@@ -4711,7 +4711,7 @@ QPKG.Start()
 
     DebugAsProc "starting $(FormatAsPackageName "$1")"
 
-    RunAndLogResults "$QPKG_SERVICE_CMD start $1" "$log_pathfile"
+    RunAndLog "$QPKG_SERVICE_CMD start $1" "$log_pathfile"
     resultcode=$?
 
     if [[ $resultcode -eq 0 ]]; then
@@ -4750,7 +4750,7 @@ QPKG.Stop()
 
     DebugAsProc "stopping $(FormatAsPackageName "$1")"
 
-    RunAndLogResults "$QPKG_SERVICE_CMD stop $1" "$log_pathfile"
+    RunAndLog "$QPKG_SERVICE_CMD stop $1" "$log_pathfile"
     resultcode=$?
 
     if [[ $resultcode -eq 0 ]]; then
@@ -4782,7 +4782,7 @@ QPKG.Enable()
     QPKG.FixAppCenterStatus "$1"
 
     if QPKG.NotEnabled "$1"; then
-        RunAndLogResults "$QPKG_SERVICE_CMD enable $1" "$log_pathfile"
+        RunAndLog "$QPKG_SERVICE_CMD enable $1" "$log_pathfile"
         resultcode=$?
 
         if [[ $resultcode -eq 0 ]]; then
@@ -4811,7 +4811,7 @@ QPKG.Disable()
     local log_pathfile=$LOGS_PATH/$1.$DISABLE_LOG_FILE
 
     if QPKG.Enabled "$1"; then
-        RunAndLogResults "$QPKG_SERVICE_CMD disable $1" "$log_pathfile"
+        RunAndLog "$QPKG_SERVICE_CMD disable $1" "$log_pathfile"
         resultcode=$?
 
         if [[ $resultcode -eq 0 ]]; then
@@ -4848,7 +4848,7 @@ QPKG.Backup()
 
     DebugAsProc "backing-up $(FormatAsPackageName "$1") configuration"
 
-    RunAndLogResults "$SH_CMD $package_init_pathfile backup" "$log_pathfile"
+    RunAndLog "$SH_CMD $package_init_pathfile backup" "$log_pathfile"
     resultcode=$?
 
     if [[ $resultcode -eq 0 ]]; then
@@ -4885,7 +4885,7 @@ QPKG.Restore()
 
     DebugAsProc "restoring $(FormatAsPackageName "$1") configuration"
 
-    RunAndLogResults "$SH_CMD $package_init_pathfile restore" "$log_pathfile"
+    RunAndLog "$SH_CMD $package_init_pathfile restore" "$log_pathfile"
     resultcode=$?
 
     if [[ $resultcode -eq 0 ]]; then
@@ -5042,7 +5042,7 @@ MakePath()
 
     }
 
-RunAndLogResults()
+RunAndLog()
     {
 
     # Run a command string, log the results, and show onscreen if required
