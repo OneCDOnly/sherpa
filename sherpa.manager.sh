@@ -3941,10 +3941,10 @@ QPKGs.Backups.Show()
     Display
 
     if [[ -e $GNU_FIND_CMD ]]; then
-        printf '* backup file: %18s* last backup date: %s\n'
+        printf '%-33s%s\n' '* backup file:' '* last backup date:'
         $GNU_FIND_CMD "$(Session.Backup.Path)"/*.config.tar.gz -maxdepth 1 -printf '%-33f%Cc\n' 2>/dev/null
     else
-        (cd "$(Session.Backup.Path)" && ls -1 *.config.tar.gz)
+        (cd "$(Session.Backup.Path)" && ls -1 ./*.config.tar.gz)
     fi
 
     return 0
