@@ -38,6 +38,7 @@ Session.Init()
 
     IsQNAP || return 1
     DebugFuncEntry
+    ShowAsProc 'important stuff'
     readonly SCRIPT_STARTSECONDS=$(/bin/date +%s)
     export LC_CTYPE=C
 
@@ -453,7 +454,6 @@ Session.Init()
         if Session.Debug.To.Screen.IsNot; then
             Display "$(FormatAsScriptTitle) $MANAGER_SCRIPT_VERSION • a mini-package-manager for QNAP NAS"
             DisplayLineSpaceIfNoneAlready
-            ShowAsProc 'important stuff'
         fi
 
         User.Opts.Apps.All.Upgrade.IsNot && User.Opts.Apps.All.Uninstall.IsNot && QPKGs.NewVersions.Show
