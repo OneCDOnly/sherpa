@@ -43,7 +43,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=201218
+    readonly MANAGER_SCRIPT_VERSION=201219
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -425,9 +425,7 @@ Session.Init()
         readonly SHERPA_QPKG_IPKGS_ADD
         readonly SHERPA_QPKG_IPKGS_REMOVE
 
-    for package in "${SHERPA_QPKG_NAME[@]}"; do
-        QPKGs.Names.Add "$package"
-    done
+    QPKGs.Names.Add "${SHERPA_QPKG_NAME[@]}"
 
     readonly SHERPA_ESSENTIAL_IPKGS_ADD='findutils grep less sed'
     readonly SHERPA_COMMON_IPKGS_ADD='ca-certificates gcc git git-http nano python3-dev python3-pip python3-setuptools'
