@@ -32,6 +32,7 @@ Init()
     local -r MANAGER_SCRIPT_FILE=sherpa.manager.sh
     readonly REMOTE_MANAGER_SCRIPT=https://raw.githubusercontent.com/OneCDOnly/sherpa/main/$MANAGER_SCRIPT_FILE
     readonly LOCAL_MANAGER_SCRIPT=$QPKG_PATH/cache/$MANAGER_SCRIPT_FILE
+    readonly GNU_FIND_CMD=/opt/bin/find
     previous_msg=''
 
     [[ ! -d $QPKG_PATH/cache ]] && mkdir -p $QPKG_PATH/cache
@@ -139,12 +140,23 @@ ColourReset()
 
 Init || exit 1
 
-if ! (/sbin/curl $curl_insecure_arg --silent --fail "$REMOTE_MANAGER_SCRIPT" > "$LOCAL_MANAGER_SCRIPT"); then
-    ShowAsWarning 'manager download failed'
+package_minutes_threshold=5
+
+# if management script was updated only recently, don't run another update. Examine 'change' time as this is updated even if script content isn't modified.
+if [[ -e $LOCAL_MANAGER_SCRIPT && -e $GNU_FIND_CMD ]]; then
+    msgs=$($GNU_FIND_CMD "$LOCAL_MANAGER_SCRIPT" -cmin +$package_minutes_threshold) # no-output if last update was less than $package_minutes_threshold minutes ago
+else
+    msgs="this is either a new installation, or GNU 'find' was not found"
+fi
+
+if [[ -n $msgs ]]; then
+    if ! (/sbin/curl $curl_insecure_arg --silent --fail "$REMOTE_MANAGER_SCRIPT" > "$LOCAL_MANAGER_SCRIPT"); then
+        ShowAsWarning 'manager download failed'
+    fi
 fi
 
 if [[ ! -e $LOCAL_MANAGER_SCRIPT ]]; then
-    ShowAsAbort 'unable to find manager'
+    ShowAsAbort 'unable to find management script'
     exit 1
 fi
 
