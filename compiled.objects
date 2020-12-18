@@ -2599,6 +2599,159 @@ User.Opts.Apps.All.Backup.Text()
     }
 User.Opts.Apps.All.Backup.Init
 
+User.Opts.Apps.All.ForceUpgrade.Add()
+    {
+    local array=(${1})
+    local item=''
+    for item in "${array[@]}"; do
+        [[ " ${_object_user_opts_apps_all_forceupgrade_array_[*]} " != *"$item"* ]] && _object_user_opts_apps_all_forceupgrade_array_+=("$item")
+    done
+    }
+User.Opts.Apps.All.ForceUpgrade.Array()
+    {
+    echo -n "${_object_user_opts_apps_all_forceupgrade_array_[@]}"
+    }
+User.Opts.Apps.All.ForceUpgrade.Clear()
+    {
+    [[ $_object_user_opts_apps_all_forceupgrade_flag_ != 'true' ]] && return
+    _object_user_opts_apps_all_forceupgrade_flag_=false
+    [[ $_object_user_opts_apps_all_forceupgrade_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_forceupgrade_flag_
+    }
+User.Opts.Apps.All.ForceUpgrade.Count()
+    {
+    echo "${#_object_user_opts_apps_all_forceupgrade_array_[@]}"
+    }
+User.Opts.Apps.All.ForceUpgrade.Disable()
+    {
+    [[ $_object_user_opts_apps_all_forceupgrade_enable_ != 'true' ]] && return
+    _object_user_opts_apps_all_forceupgrade_enable_=false
+    [[ $_object_user_opts_apps_all_forceupgrade_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_forceupgrade_enable_
+    }
+User.Opts.Apps.All.ForceUpgrade.DontLogChanges()
+    {
+    [[ $_object_user_opts_apps_all_forceupgrade_changes_flag_ != 'true' ]] && return
+    _object_user_opts_apps_all_forceupgrade_changes_flag_=false
+    }
+User.Opts.Apps.All.ForceUpgrade.Enable()
+    {
+    [[ $_object_user_opts_apps_all_forceupgrade_enable_ = 'true' ]] && return
+    _object_user_opts_apps_all_forceupgrade_enable_=true
+    [[ $_object_user_opts_apps_all_forceupgrade_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_forceupgrade_enable_
+    }
+User.Opts.Apps.All.ForceUpgrade.Exist()
+    {
+    [[ ${_object_user_opts_apps_all_forceupgrade_array_[*]} == *"$1"* ]]
+    }
+User.Opts.Apps.All.ForceUpgrade.First()
+    {
+    echo "${_object_user_opts_apps_all_forceupgrade_array_[0]}"
+    }
+User.Opts.Apps.All.ForceUpgrade.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_user_opts_apps_all_forceupgrade_array_[@]} ]] && index=${#_object_user_opts_apps_all_forceupgrade_array_[@]}
+    echo -n "${_object_user_opts_apps_all_forceupgrade_array_[((index-1))]}"
+    }
+User.Opts.Apps.All.ForceUpgrade.Init()
+    {
+    _object_user_opts_apps_all_forceupgrade_size_=0
+    _object_user_opts_apps_all_forceupgrade_text_=''
+    _object_user_opts_apps_all_forceupgrade_flag_=false
+    _object_user_opts_apps_all_forceupgrade_changes_flag_=true
+    _object_user_opts_apps_all_forceupgrade_enable_=false
+    _object_user_opts_apps_all_forceupgrade_array_=()
+    _object_user_opts_apps_all_forceupgrade_array_index_=1
+    _object_user_opts_apps_all_forceupgrade_path_=''
+    }
+User.Opts.Apps.All.ForceUpgrade.IsAny()
+    {
+    [[ ${#_object_user_opts_apps_all_forceupgrade_array_[@]} -gt 0 ]]
+    }
+User.Opts.Apps.All.ForceUpgrade.IsDisabled()
+    {
+    [[ $_object_user_opts_apps_all_forceupgrade_enable_ != 'true' ]]
+    }
+User.Opts.Apps.All.ForceUpgrade.IsEnabled()
+    {
+    [[ $_object_user_opts_apps_all_forceupgrade_enable_ = 'true' ]]
+    }
+User.Opts.Apps.All.ForceUpgrade.IsNone()
+    {
+    [[ ${#_object_user_opts_apps_all_forceupgrade_array_[@]} -eq 0 ]]
+    }
+User.Opts.Apps.All.ForceUpgrade.IsNot()
+    {
+    [[ $_object_user_opts_apps_all_forceupgrade_flag_ != 'true' ]]
+    }
+User.Opts.Apps.All.ForceUpgrade.IsSet()
+    {
+    [[ $_object_user_opts_apps_all_forceupgrade_flag_ = 'true' ]]
+    }
+User.Opts.Apps.All.ForceUpgrade.List()
+    {
+    echo -n "${_object_user_opts_apps_all_forceupgrade_array_[*]}"
+    }
+User.Opts.Apps.All.ForceUpgrade.ListCSV()
+    {
+    echo -n "${_object_user_opts_apps_all_forceupgrade_array_[*]}" | tr ' ' ','
+    }
+User.Opts.Apps.All.ForceUpgrade.LogChanges()
+    {
+    [[ $_object_user_opts_apps_all_forceupgrade_changes_flag_ = 'true' ]] && return
+    _object_user_opts_apps_all_forceupgrade_changes_flag_=true
+    }
+User.Opts.Apps.All.ForceUpgrade.Path()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_apps_all_forceupgrade_path_=$2
+    else
+        echo -n "$_object_user_opts_apps_all_forceupgrade_path_"
+    fi
+    }
+User.Opts.Apps.All.ForceUpgrade.Remove()
+    {
+    local argument_array=(${1})
+    local temp_array=()
+    local argument=''
+    local item=''
+    local matched=false
+    for item in "${_object_user_opts_apps_all_forceupgrade_array_[@]}"; do
+        matched=false
+        for argument in "${argument_array[@]}"; do
+            if [[ $argument = $item ]]; then
+                matched=true; break
+            fi
+        done
+        [[ $matched = false ]] && temp_array+=("$item")
+    done
+    _object_user_opts_apps_all_forceupgrade_array_=("${temp_array[@]}")
+    [[ -z ${_object_user_opts_apps_all_forceupgrade_array_[*]} ]] && _object_user_opts_apps_all_forceupgrade_array_=()
+    }
+User.Opts.Apps.All.ForceUpgrade.Set()
+    {
+    [[ $_object_user_opts_apps_all_forceupgrade_flag_ = 'true' ]] && return
+    _object_user_opts_apps_all_forceupgrade_flag_=true
+    [[ $_object_user_opts_apps_all_forceupgrade_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_forceupgrade_flag_
+    }
+User.Opts.Apps.All.ForceUpgrade.Size()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_apps_all_forceupgrade_size_=$2
+    else
+        echo -n $_object_user_opts_apps_all_forceupgrade_size_
+    fi
+    }
+User.Opts.Apps.All.ForceUpgrade.Text()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_apps_all_forceupgrade_text_=$2
+    else
+        echo -n "$_object_user_opts_apps_all_forceupgrade_text_"
+    fi
+    }
+User.Opts.Apps.All.ForceUpgrade.Init
+
 User.Opts.Apps.All.Install.Add()
     {
     local array=(${1})
