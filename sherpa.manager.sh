@@ -38,7 +38,7 @@ Session.Init()
 
     IsQNAP || return 1
     DebugFuncEntry
-    ShowAsProc 'important stuff'
+    ShowAsProc 'important stuff' >&2
     readonly SCRIPT_STARTSECONDS=$(/bin/date +%s)
     export LC_CTYPE=C
 
@@ -446,7 +446,7 @@ Session.Init()
     DebugInfo '(==) processing, (--) done, (>>) f entry, (<<) f exit, (vv) variable name & value,'
     DebugInfo '($1) positional argument value'
     DebugInfoMinorSeparator
-    SmartCR
+    SmartCR >&2
 
     if Session.Display.Clean.IsNot; then
         if Session.Debug.To.Screen.IsNot; then
