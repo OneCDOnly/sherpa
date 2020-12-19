@@ -526,7 +526,7 @@ Session.ParseArguments()
             DebugAsProc 'no operation set: checking for scopes that will run without an operation'
 
             case $arg in
-                abs|action|actions|all-actions|backups|essentials|l|last|log|option|optionals|options|package|packages|problems|tips|upgradable|version|versions)
+                abs|action|actions|all-actions|backups|essentials|installable|installed|l|last|log|option|optionals|options|package|packages|problems|tips|upgradable|version|versions)
                     operation=help_
                     scope=''
                     scope_incomplete=true
