@@ -1015,7 +1015,6 @@ Packages.Download()
     local package_count=0
     local pass_count=0
     local fail_count=0
-    local old_fail_count=-1
     local action_intransitive='update cache image for'
     local action_present='updating cache image for'
     local action_past='updated cache image for'
@@ -1029,10 +1028,7 @@ Packages.Download()
     package_count=$(QPKGs.ToDownload.Count)
 
     for package in $(QPKGs.ToDownload.Array); do
-        if [[ $fail_count -ne $old_fail_count ]]; then
-            ShowAsProc "$action_present $((package_count-fail_count)) QPKG$(FormatAsPlural "$((package_count-fail_count))")"
-            old_fail_count=$fail_count
-        fi
+        ShowAsProc "$action_present $((package_count-fail_count)) QPKG$(FormatAsPlural "$((package_count-fail_count))")" "($((pass_count+1))/$((package_count-fail_count)))"
 
         QPKG.Download "$package"
         result=$?
@@ -1060,7 +1056,6 @@ Packages.Backup()
     local package_count=0
     local pass_count=0
     local fail_count=0
-    local old_fail_count=-1
     local action_intransitive=backup
     local action_present=backing-up
     local action_past=backed-up
@@ -1073,10 +1068,7 @@ Packages.Backup()
     package_count=$(QPKGs.ToBackup.Count)
 
     for package in $(QPKGs.ToBackup.Array); do
-        if [[ $fail_count -ne $old_fail_count ]]; then
-            ShowAsProc "$action_present $((package_count-fail_count)) QPKG$(FormatAsPlural "$((package_count-fail_count))")"
-            old_fail_count=$fail_count
-        fi
+        ShowAsProc "$action_present $((package_count-fail_count)) QPKG$(FormatAsPlural "$((package_count-fail_count))")" "($((pass_count+1))/$((package_count-fail_count)))"
 
         if QPKGs.Essential.Exist "$package"; then
             ShowAsWarn "unable to $action_intransitive $(FormatAsPackageName "$package") as it's unsupported"
@@ -1123,7 +1115,6 @@ Packages.Stop.Optionals()
     local package_count=0
     local pass_count=0
     local fail_count=0
-    local old_fail_count=-1
     local tier=optional
     local action_intransitive=stop
     local action_present=stopping
@@ -1148,10 +1139,7 @@ Packages.Stop.Optionals()
     for ((index=package_count-1; index>=0; index--)); do       # process in reverse of declared order
         package=${target_packages[$index]}
 
-        if [[ $fail_count -ne $old_fail_count ]]; then
-            ShowAsProcLong "$action_present $((package_count-fail_count)) $tier QPKG$(FormatAsPlural "$((package_count-fail_count))")"
-            old_fail_count=$fail_count
-        fi
+        ShowAsProc "$action_present $((package_count-fail_count)) $tier QPKG$(FormatAsPlural "$((package_count-fail_count))")" "($((pass_count+1))/$((package_count-fail_count)))"
 
         if ! QPKG.Installed "$package"; then
             ShowAsNote "unable to $action_intransitive $(FormatAsPackageName "$package") as it's not installed"
@@ -1182,7 +1170,6 @@ Packages.Stop.Essentials()
     local package_count=0
     local pass_count=0
     local fail_count=0
-    local old_fail_count=-1
     local tier=essential
     local action_intransitive=stop
     local action_present=stopping
@@ -1207,10 +1194,7 @@ Packages.Stop.Essentials()
     for ((index=package_count-1; index>=0; index--)); do       # process in reverse of declared order
         package=${target_packages[$index]}
 
-        if [[ $fail_count -ne $old_fail_count ]]; then
-            ShowAsProcLong "$action_present $((package_count-fail_count)) $tier QPKG$(FormatAsPlural "$((package_count-fail_count))")"
-            old_fail_count=$fail_count
-        fi
+        ShowAsProc "$action_present $((package_count-fail_count)) $tier QPKG$(FormatAsPlural "$((package_count-fail_count))")" "($((pass_count+1))/$((package_count-fail_count)))"
 
         [[ $package = sherpa ]] && continue     # ignore 'sherpa'
 
@@ -1256,7 +1240,6 @@ Packages.Uninstall.Optionals()
     local package_count=0
     local pass_count=0
     local fail_count=0
-    local old_fail_count=-1
     local tier=optional
     local action_intransitive=uninstall
     local action_present=uninstalling
@@ -1281,10 +1264,7 @@ Packages.Uninstall.Optionals()
     for ((index=package_count-1; index>=0; index--)); do       # process in reverse of declared order
         package=${target_packages[$index]}
 
-        if [[ $fail_count -ne $old_fail_count ]]; then
-            ShowAsProcLong "$action_present $((package_count-fail_count)) $tier QPKG$(FormatAsPlural "$((package_count-fail_count))")"
-            old_fail_count=$fail_count
-        fi
+        ShowAsProc "$action_present $((package_count-fail_count)) $tier QPKG$(FormatAsPlural "$((package_count-fail_count))")" "($((pass_count+1))/$((package_count-fail_count)))"
 
         if ! QPKG.Installed "$package"; then
             ShowAsNote "unable to $action_intransitive $(FormatAsPackageName "$package") as it's not installed"
@@ -1327,7 +1307,6 @@ Packages.Uninstall.Essentials()
     local package_count=0
     local pass_count=0
     local fail_count=0
-    local old_fail_count=-1
     local tier=essential
     local action_intransitive=uninstall
     local action_present=uninstalling
@@ -1352,10 +1331,7 @@ Packages.Uninstall.Essentials()
     for ((index=package_count-1; index>=0; index--)); do       # process in reverse of declared order
         package=${target_packages[$index]}
 
-        if [[ $fail_count -ne $old_fail_count ]]; then
-            ShowAsProcLong "$action_present $((package_count-fail_count)) $tier QPKG$(FormatAsPlural "$((package_count-fail_count))")"
-            old_fail_count=$fail_count
-        fi
+        ShowAsProcLong "$action_present $((package_count-fail_count)) $tier QPKG$(FormatAsPlural "$((package_count-fail_count))")" "($((pass_count+1))/$((package_count-fail_count)))"
 
         [[ $package = sherpa ]] && continue     # ignore 'sherpa'
 
@@ -1388,7 +1364,6 @@ Packages.Force-upgrade.Essentials()
     local package_count=0
     local pass_count=0
     local fail_count=0
-    local old_fail_count=-1
     local tier=essential
     local action_intransitive=force-upgrade
     local action_present=force-upgrading
@@ -1411,10 +1386,7 @@ Packages.Force-upgrade.Essentials()
     package_count=${#target_packages[@]}
 
     for package in "${target_packages[@]}"; do
-        if [[ $fail_count -ne $old_fail_count ]]; then
-            ShowAsProcLong "$action_present $((package_count-fail_count)) $tier QPKG$(FormatAsPlural "$((package_count-fail_count))")"
-            old_fail_count=$fail_count
-        fi
+        ShowAsProcLong "$action_present $((package_count-fail_count)) $tier QPKG$(FormatAsPlural "$((package_count-fail_count))")" "($((pass_count+1))/$((package_count-fail_count)))"
 
         if ! QPKG.Installed "$package"; then
             ShowAsNote "unable to $action_intransitive $(FormatAsPackageName "$package") as it's not installed"
@@ -1444,7 +1416,6 @@ Packages.Upgrade.Essentials()
     local package_count=0
     local pass_count=0
     local fail_count=0
-    local old_fail_count=-1
     local tier=essential
     local action_intransitive=upgrade
     local action_present=upgrading
@@ -1467,10 +1438,7 @@ Packages.Upgrade.Essentials()
     package_count=${#target_packages[@]}
 
     for package in "${target_packages[@]}"; do
-        if [[ $fail_count -ne $old_fail_count ]]; then
-            ShowAsProcLong "$action_present $((package_count-fail_count)) $tier QPKG$(FormatAsPlural "$((package_count-fail_count))")"
-            old_fail_count=$fail_count
-        fi
+        ShowAsProcLong "$action_present $((package_count-fail_count)) $tier QPKG$(FormatAsPlural "$((package_count-fail_count))")" "($((pass_count+1))/$((package_count-fail_count)))"
 
         if ! QPKG.Installed "$package"; then
             ShowAsNote "unable to $action_intransitive $(FormatAsPackageName "$package") as it's not installed"
@@ -1500,7 +1468,6 @@ Packages.Reinstall.Essentials()
     local package_count=0
     local pass_count=0
     local fail_count=0
-    local old_fail_count=-1
     local tier=essential
     local action_intransitive=reinstall
     local action_present=reinstalling
@@ -1523,10 +1490,7 @@ Packages.Reinstall.Essentials()
     package_count=${#target_packages[@]}
 
     for package in "${target_packages[@]}"; do
-        if [[ $fail_count -ne $old_fail_count ]]; then
-            ShowAsProcLong "$action_present $((package_count-fail_count)) $tier QPKG$(FormatAsPlural "$((package_count-fail_count))")"
-            old_fail_count=$fail_count
-        fi
+        ShowAsProcLong "$action_present $((package_count-fail_count)) $tier QPKG$(FormatAsPlural "$((package_count-fail_count))")" "($((pass_count+1))/$((package_count-fail_count)))"
 
         if [[ $package = Entware ]]; then
             Display
@@ -1588,7 +1552,6 @@ Packages.Install.Essentials()
     local package_count=0
     local pass_count=0
     local fail_count=0
-    local old_fail_count=-1
     local tier=essential
     local action_intransitive=install
     local action_present=installing
@@ -1617,10 +1580,7 @@ Packages.Install.Essentials()
     package_count=${#target_packages[@]}
 
     for package in "${target_packages[@]}"; do
-        if [[ $fail_count -ne $old_fail_count ]]; then
-            ShowAsProcLong "$action_present $((package_count-fail_count)) $tier QPKG$(FormatAsPlural "$((package_count-fail_count))")"
-            old_fail_count=$fail_count
-        fi
+        ShowAsProcLong "$action_present $((package_count-fail_count)) $tier QPKG$(FormatAsPlural "$((package_count-fail_count))")" "($((pass_count+1))/$((package_count-fail_count)))"
 
         if [[ $package = Entware ]]; then
             if ! Package.Install.Entware; then
@@ -1669,7 +1629,6 @@ Packages.Start.Essentials()
     local package_count=0
     local pass_count=0
     local fail_count=0
-    local old_fail_count=-1
     local tier=essential
     local action_intransitive=start
     local action_present=starting
@@ -1703,10 +1662,7 @@ Packages.Start.Essentials()
     package_count=${#target_packages[@]}
 
     for package in "${target_packages[@]}"; do
-        if [[ $fail_count -ne $old_fail_count ]]; then
-            ShowAsProcLong "$action_present $((package_count-fail_count)) $tier QPKG$(FormatAsPlural "$((package_count-fail_count))")"
-            old_fail_count=$fail_count
-        fi
+        ShowAsProcLong "$action_present $((package_count-fail_count)) $tier QPKG$(FormatAsPlural "$((package_count-fail_count))")" "($((pass_count+1))/$((package_count-fail_count)))"
 
         [[ $package = sherpa ]] && continue     # ignore 'sherpa'
 
@@ -1746,7 +1702,6 @@ Packages.Restart.Essentials()
     local package_count=0
     local pass_count=0
     local fail_count=0
-    local old_fail_count=-1
     local tier=essential
     local action_intransitive=restart
     local action_present=restarting
@@ -1769,10 +1724,7 @@ Packages.Restart.Essentials()
     package_count=${#target_packages[@]}
 
     for package in "${target_packages[@]}"; do
-        if [[ $fail_count -ne $old_fail_count ]]; then
-            ShowAsProcLong "$action_present $((package_count-fail_count)) $tier QPKG$(FormatAsPlural "$((package_count-fail_count))")"
-            old_fail_count=$fail_count
-        fi
+        ShowAsProcLong "$action_present $((package_count-fail_count)) $tier QPKG$(FormatAsPlural "$((package_count-fail_count))")" "($((pass_count+1))/$((package_count-fail_count)))"
 
         if [[ $package = sherpa ]]; then
             ((pass_count++))
@@ -1872,7 +1824,6 @@ Packages.Force-upgrade.Optionals()
     local package_count=0
     local pass_count=0
     local fail_count=0
-    local old_fail_count=-1
     local tier=optional
     local action_intransitive=force-upgrade
     local action_present=force-upgrading
@@ -1895,10 +1846,7 @@ Packages.Force-upgrade.Optionals()
     package_count=${#target_packages[@]}
 
     for package in "${target_packages[@]}"; do
-        if [[ $fail_count -ne $old_fail_count ]]; then
-            ShowAsProcLong "$action_present $((package_count-fail_count)) $tier QPKG$(FormatAsPlural "$((package_count-fail_count))")"
-            old_fail_count=$fail_count
-        fi
+        ShowAsProcLong "$action_present $((package_count-fail_count)) $tier QPKG$(FormatAsPlural "$((package_count-fail_count))")" "($((pass_count+1))/$((package_count-fail_count)))"
 
         if ! QPKG.Installed "$package"; then
             ShowAsNote "unable to $action_intransitive $(FormatAsPackageName "$package") as it's not installed"
@@ -1928,7 +1876,6 @@ Packages.Upgrade.Optionals()
     local package_count=0
     local pass_count=0
     local fail_count=0
-    local old_fail_count=-1
     local tier=optional
     local action_intransitive=upgrade
     local action_present=upgrading
@@ -1951,10 +1898,7 @@ Packages.Upgrade.Optionals()
     package_count=${#target_packages[@]}
 
     for package in "${target_packages[@]}"; do
-        if [[ $fail_count -ne $old_fail_count ]]; then
-            ShowAsProcLong "$action_present $((package_count-fail_count)) $tier QPKG$(FormatAsPlural "$((package_count-fail_count))")"
-            old_fail_count=$fail_count
-        fi
+        ShowAsProcLong "$action_present $((package_count-fail_count)) $tier QPKG$(FormatAsPlural "$((package_count-fail_count))")" "($((pass_count+1))/$((package_count-fail_count)))"
 
         if ! QPKG.Installed "$package"; then
             ShowAsNote "unable to $action_intransitive $(FormatAsPackageName "$package") as it's not installed"
@@ -1984,7 +1928,6 @@ Packages.Reinstall.Optionals()
     local package_count=0
     local pass_count=0
     local fail_count=0
-    local old_fail_count=-1
     local tier=optional
     local action_intransitive=reinstall
     local action_present=reinstalling
@@ -2007,10 +1950,7 @@ Packages.Reinstall.Optionals()
     package_count=${#target_packages[@]}
 
     for package in "${target_packages[@]}"; do
-        if [[ $fail_count -ne $old_fail_count ]]; then
-            ShowAsProcLong "$action_present $((package_count-fail_count)) $tier QPKG$(FormatAsPlural "$((package_count-fail_count))")"
-            old_fail_count=$fail_count
-        fi
+        ShowAsProcLong "$action_present $((package_count-fail_count)) $tier QPKG$(FormatAsPlural "$((package_count-fail_count))")" "($((pass_count+1))/$((package_count-fail_count)))"
 
         if ! QPKG.Installed "$package"; then
             ShowAsNote "unable to $action_intransitive $(FormatAsPackageName "$package") as it's not installed. Use 'install' instead."
@@ -2042,7 +1982,6 @@ Packages.Install.Optionals()
     local package_count=0
     local pass_count=0
     local fail_count=0
-    local old_fail_count=-1
     local tier=optional
     local action_intransitive=install
     local action_present=installing
@@ -2065,10 +2004,7 @@ Packages.Install.Optionals()
     package_count=${#target_packages[@]}
 
     for package in "${target_packages[@]}"; do
-        if [[ $fail_count -ne $old_fail_count ]]; then
-            ShowAsProcLong "$action_present $((package_count-fail_count)) $tier QPKG$(FormatAsPlural "$((package_count-fail_count))")"
-            old_fail_count=$fail_count
-        fi
+        ShowAsProcLong "$action_present $((package_count-fail_count)) $tier QPKG$(FormatAsPlural "$((package_count-fail_count))")" "($((pass_count+1))/$((package_count-fail_count)))"
 
         if QPKG.Installed "$package"; then
             ShowAsNote "unable to $action_intransitive $(FormatAsPackageName "$package") as it's already installed. Use 'reinstall' instead."
@@ -2100,7 +2036,6 @@ Packages.Start.Optionals()
     local package_count=0
     local pass_count=0
     local fail_count=0
-    local old_fail_count=-1
     local tier=optional
     local action_intransitive=start
     local action_present=starting
@@ -2123,10 +2058,7 @@ Packages.Start.Optionals()
     package_count=${#target_packages[@]}
 
     for package in "${target_packages[@]}"; do
-        if [[ $fail_count -ne $old_fail_count ]]; then
-            ShowAsProcLong "$action_present $((package_count-fail_count)) $tier QPKG$(FormatAsPlural "$((package_count-fail_count))")"
-            old_fail_count=$fail_count
-        fi
+        ShowAsProcLong "$action_present $((package_count-fail_count)) $tier QPKG$(FormatAsPlural "$((package_count-fail_count))")" "($((pass_count+1))/$((package_count-fail_count)))"
 
         if ! QPKG.Installed "$package"; then
             ShowAsNote "unable to $action_intransitive $(FormatAsPackageName "$package") as it's not installed"
@@ -2156,7 +2088,6 @@ Packages.Restore.Optionals()
     local package_count=0
     local pass_count=0
     local fail_count=0
-    local old_fail_count=-1
     local tier=optional
     local action_intransitive='restore configuration for'
     local action_present='restoring configuration for'
@@ -2179,10 +2110,7 @@ Packages.Restore.Optionals()
     package_count=${#target_packages[@]}
 
     for package in "${target_packages[@]}"; do
-        if [[ $fail_count -ne $old_fail_count ]]; then
-            ShowAsProcLong "$action_present $((package_count-fail_count)) $tier QPKG$(FormatAsPlural "$((package_count-fail_count))")"
-            old_fail_count=$fail_count
-        fi
+        ShowAsProc "$action_present $((package_count-fail_count)) $tier QPKG$(FormatAsPlural "$((package_count-fail_count))")" "($((pass_count+1))/$((package_count-fail_count)))"
 
         if ! QPKG.Installed "$package"; then
             ShowAsNote "unable to $action_intransitive $(FormatAsPackageName "$package") as it's not installed"
@@ -2213,7 +2141,6 @@ Packages.Restart.Optionals()
     local package_count=0
     local pass_count=0
     local fail_count=0
-    local old_fail_count=-1
     local tier=optional
     local action_intransitive=restart
     local action_present=restarting
@@ -2256,10 +2183,7 @@ Packages.Restart.Optionals()
     package_count=${#target_packages[@]}
 
     for package in "${target_packages[@]}"; do
-        if [[ $fail_count -ne $old_fail_count ]]; then
-            ShowAsProcLong "$action_present $((package_count-fail_count)) $tier QPKG$(FormatAsPlural "$((package_count-fail_count))")"
-            old_fail_count=$fail_count
-        fi
+        ShowAsProc "$action_present $((package_count-fail_count)) $tier QPKG$(FormatAsPlural "$((package_count-fail_count))")" "($((pass_count+1))/$((package_count-fail_count)))"
 
         if ! QPKG.Installed "$package"; then
             ShowAsNote "unable to $action_intransitive $(FormatAsPackageName "$package") as it's not installed"
@@ -2473,7 +2397,7 @@ Entware.Update()
     {
 
     if IsNotSysFileExist $OPKG_CMD; then
-        code_pointer=4
+        code_pointer=3
         return 1
     fi
 
@@ -2600,7 +2524,7 @@ CalcAllIPKGDepsToInstall()
     # From a specified list of IPKG names, find all dependent IPKGs, exclude those already installed, then generate a total qty to download and a total download byte-size
 
     if IsNotSysFileExist $OPKG_CMD || IsNotSysFileExist $GNU_GREP_CMD; then
-        code_pointer=5
+        code_pointer=4
         return 1
     fi
 
@@ -2696,7 +2620,7 @@ CalcAllIPKGDepsToUninstall()
     # From a specified list of IPKG names, exclude those already installed, then generate a total qty to uninstall
 
     if IsNotSysFileExist $OPKG_CMD || IsNotSysFileExist $GNU_GREP_CMD; then
-        code_pointer=6
+        code_pointer=5
         return 1
     fi
 
@@ -5530,16 +5454,20 @@ AddFileToDebug()
 ShowAsProcLong()
     {
 
-    ShowAsProc "$1 (this may take a while)"
+    ShowAsProc "$1 (this may take a while)" "$2"
 
     }
 
 ShowAsProc()
     {
 
+    local suffix=''
+
+    [[ -n $2 ]] && suffix=" $2"
+
     SmartCR
-    WriteToDisplay.Wait "$(ColourTextBrightOrange proc)" "$1 ..."
-    WriteToLog proc "$1 ..."
+    WriteToDisplay.Wait "$(ColourTextBrightOrange proc)" "$1 ...$suffix"
+    WriteToLog proc "$1 ...$suffix"
     [[ $(type -t Session.Debug.To.Screen.Init) = 'function' ]] && Session.Debug.To.Screen.IsSet && Display
 
     }
