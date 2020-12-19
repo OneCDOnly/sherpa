@@ -501,7 +501,7 @@ Session.ParseArguments()
                 User.Opts.Help.ActionsAll.Set
                 Session.SkipPackageProcessing.Set
                 ;;
-            backup|install|list|paste|reinstall|remove|restart|restore|start|stop|uninstall|upgrade)
+            backup|install|reinstall|remove|restart|restore|start|stop|uninstall|upgrade)
                 operation=${arg}_
                 ;;
             backups)
@@ -511,7 +511,7 @@ Session.ParseArguments()
                 Session.Display.Clean.Clear
                 ;;
             check)
-                operation=check_        # scope is optional so need to set this so something happens
+                operation=check_        # scope is optional, so set this so a default operation can be executed later
                 Session.SkipPackageProcessing.Clear
                 User.Opts.Dependencies.Check.Set
                 ;;
@@ -526,7 +526,7 @@ Session.ParseArguments()
                 operation_force=true
                 ;;
             help)
-                operation=help_         # scope is optional so need to set this so something happens
+                operation=help_         # scope is optional, so set this so a default operation can be executed later
                 User.Opts.Help.Basic.Set
                 Session.SkipPackageProcessing.Set
                 ;;
@@ -548,12 +548,23 @@ Session.ParseArguments()
                 Session.Display.Clean.Set
                 Session.SkipPackageProcessing.Set
                 ;;
+            list)
+                operation=list_         # scope is optional, so set this so a default operation can be executed later
+                User.Opts.Apps.List.Installed.Set
+                Session.Display.Clean.Set
+                Session.SkipPackageProcessing.Set
+                ;;
             options)
                 User.Opts.Help.Options.Set
                 Session.SkipPackageProcessing.Set
                 ;;
             packages)
                 User.Opts.Help.Packages.Set
+                Session.SkipPackageProcessing.Set
+                ;;
+            paste)
+                operation=paste_        # scope is optional, so set this so a default operation can be executed later
+                User.Opts.Log.Last.Paste.Set
                 Session.SkipPackageProcessing.Set
                 ;;
             problems)
@@ -565,7 +576,7 @@ Session.ParseArguments()
                 Session.SkipPackageProcessing.Set
                 ;;
             view)
-                operation=view_         # scope is optional so need to set this so something happens
+                operation=view_         # scope is optional, so set this so a default operation can be executed later
                 User.Opts.Log.Last.View.Set
                 Session.Display.Clean.Set
                 Session.SkipPackageProcessing.Set
@@ -2348,33 +2359,39 @@ Package.Install.Entware()
 Session.Results()
     {
 
+    if User.Opts.Clean.IsSet; then
+        Clean.Cache
+    fi
+
     if Args.Unknown.IsNone; then
         if User.Opts.Versions.View.IsSet; then
             Versions.Show
         elif User.Opts.Log.Whole.View.IsSet; then
             Log.Whole.View
-        elif User.Opts.Log.Tail.Paste.IsSet; then
-            Log.Tail.Paste.Online
-        elif User.Opts.Log.Last.Paste.IsSet; then
-            Log.Last.Paste.Online
-        elif User.Opts.Log.Last.View.IsSet; then
+        elif User.Opts.Log.Last.View.IsSet; then        # default operation when scope is unspecified
             Log.Last.View
-        elif User.Opts.Clean.IsSet; then
-            Clean.Cache
-        elif User.Opts.Apps.List.Backups.IsSet; then
-            QPKGs.Backups.Show
-        elif User.Opts.Apps.List.Installed.IsSet; then
-            QPKGs.Installed.Show
+        fi
+
+        if User.Opts.Apps.List.All.IsSet; then
+            QPKGs.All.Show
         elif User.Opts.Apps.List.NotInstalled.IsSet; then
             QPKGs.NotInstalled.Show
         elif User.Opts.Apps.List.Upgradable.IsSet; then
             QPKGs.Upgradable.Show
-        elif User.Opts.Apps.List.All.IsSet; then
-            QPKGs.All.Show
         elif User.Opts.Apps.List.Essential.IsSet; then
             QPKGs.Essential.Show
         elif User.Opts.Apps.List.Optional.IsSet; then
             QPKGs.Optional.Show
+        elif User.Opts.Apps.List.Backups.IsSet; then
+            QPKGs.Backups.Show
+        elif User.Opts.Apps.List.Installed.IsSet; then  # default operation when scope is unspecified
+            QPKGs.Installed.Show
+        fi
+
+        if User.Opts.Log.Tail.Paste.IsSet; then
+            Log.Tail.Paste.Online
+        elif User.Opts.Log.Last.Paste.IsSet; then       # default operation when scope is unspecified
+            Log.Last.Paste.Online
         fi
     fi
 
@@ -2392,7 +2409,7 @@ Session.Results()
         Help.Tips.Show
     elif User.Opts.Help.Abbreviations.IsSet; then
         Help.PackageAbbreviations.Show
-    elif User.Opts.Help.Basic.IsSet; then       # only show this help if no other help screens have been requested
+    elif User.Opts.Help.Basic.IsSet; then               # default operation when scope is unspecified
         Help.Basic.Show
         Help.Basic.Example.Show
     fi
