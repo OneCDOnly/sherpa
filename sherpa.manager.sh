@@ -1694,6 +1694,11 @@ Packages.Start.Essentials()
         ((pass_count++))
     done
 
+    if QPKG.Installed Entware; then
+        Session.AddPathToEntware
+        Entware.Patch.Service
+    fi
+
     ShowAsOperationResult "$tier" "$package_count" "$fail_count" "$pass_count" "$action_past"
     DebugFuncExit; return 0
 
@@ -2623,7 +2628,7 @@ CalcAllIPKGDepsToInstall()
         DebugAsDone 'no IPKGs are required'
     fi
 
-    ShowAsDone 'satisfied IPKG dependencies OK'
+#     ShowAsDone 'satisfied IPKG dependencies OK'
     IPKGs.Archive.Close
     DebugFuncExit; return 0
 
