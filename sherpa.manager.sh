@@ -478,7 +478,7 @@ Session.ParseArguments()
 
     local user_args=($(tr 'A-Z' 'a-z' <<< "${USER_ARGS_RAW//,/ }"))
     local arg=''
-    local operation='install_'     # make 'install' the default action. A user-convenience to emulate the previous script behaviour.
+    local operation=install_    # make 'install' the default action. A user-convenience to emulate the previous script behaviour.
     local operation_force=false
     local scope=''
     local package=''
