@@ -526,7 +526,7 @@ Session.ParseArguments()
             DebugAsProc 'no operation set: checking for scopes that will run without an operation'
 
             case $arg in
-                abs|actions|all-actions|backups|essentials|l|last|log|optionals|options|packages|problems|tips|upgradable|version|versions)
+                abs|action|actions|all-actions|backups|essentials|l|last|log|option|optionals|options|package|packages|problems|tips|upgradable|version|versions)
                     operation=help_
                     scope=''
                     scope_incomplete=true
@@ -543,8 +543,13 @@ Session.ParseArguments()
             DebugAsProc 'an operation has been set: checking for valid scope variations'
 
             case $arg in
-                abs|actions|all-actions|options|problems|packages|tips)
+                abs|all-actions|problems|tips)
                     scope=${arg}_
+                    scope_incomplete=false
+                    arg_identified=true
+                    ;;
+                action|actions)
+                    scope=actions_
                     scope_incomplete=false
                     arg_identified=true
                     ;;
@@ -578,8 +583,18 @@ Session.ParseArguments()
                     scope_incomplete=false
                     arg_identified=true
                     ;;
+                option|options)
+                    scope=options_
+                    scope_incomplete=false
+                    arg_identified=true
+                    ;;
                 optional|optionals)
                     scope=optional_
+                    scope_incomplete=false
+                    arg_identified=true
+                    ;;
+                package|packages)
+                    scope=packages_
                     scope_incomplete=false
                     arg_identified=true
                     ;;
