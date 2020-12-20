@@ -3274,6 +3274,7 @@ Help.Packages.Show()
     {
 
     local package=''
+    local package_notes=()
     local package_note=''
 
     Help.Basic.Show
@@ -3281,15 +3282,17 @@ Help.Packages.Show()
     Display "* $(FormatAsHelpPackages) may be one-or-more of the following (space-separated):\n"
 
     for package in $(QPKGs.Installable.Array); do
-        if QPKGs.Upgradable.Exist "$package"; then
-            package_note='(upgradable)'
-        elif QPKGs.Installed.Exist "$package"; then
-            package_note='(installed)'
-        else
-            package_note=''
-        fi
+        package_notes=()
+        package_note=''
 
-        DisplayAsHelpPackageNameExample "$package" "$package_note"
+        QPKG.Installed "$package" && package_notes+=(installed)
+        QPKG.Enabled "$package" && package_notes+=(started)
+        QPKG.NotEnabled "$package" && package_notes+=(stopped)
+        QPKGs.Upgradable.Exist "$package" && package_notes+=(upgradable)
+
+        [[ ${#package_notes[@]} -gt 0 ]] && package_note="${package_notes[*]}"
+
+        DisplayAsHelpPackageNameExample "$package" "${package_note// /, }"
     done
 
     DisplayAsProjectSyntaxExample "example: to install $(FormatAsPackageName SABnzbd)" 'install SABnzbd'
@@ -4941,7 +4944,7 @@ QPKG.NotEnabled()
     # output:
     #   $? = 0 (true) or 1 (false)
 
-    ! QPKG.Enabled "$1"
+    [[ $($GETCFG_CMD "$1" Enable -u -f $APP_CENTER_CONFIG_PATHFILE) = 'FALSE' ]]
 
     }
 
