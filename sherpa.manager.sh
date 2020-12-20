@@ -175,7 +175,7 @@ Session.Init()
     readonly IPKG_DL_PATH=$WORK_PATH/ipkgs.downloads
     readonly IPKG_CACHE_PATH=$WORK_PATH/ipkgs
     readonly PIP_CACHE_PATH=$WORK_PATH/pips
-    readonly COMPILED_OBJECTS_HASH=87ae259018a81f04bebaab73bf6147e8
+    readonly COMPILED_OBJECTS_HASH=122a676ab9fb5cec4063381707c1dfe4
     readonly DEBUG_LOG_DATAWIDTH=92
 
     if ! MakePath "$WORK_PATH" 'work'; then
@@ -435,6 +435,8 @@ Session.Init()
     QPKGs.EssentialAndOptional.Build
     QPKGs.InstallationState.Build
     QPKGs.Upgradable.Build
+    QPKGs.Enabled.Build
+    QPKGs.NotEnabled.Build
     Session.ParseArguments
     Session.SkipPackageProcessing.IsNot && Session.Debug.To.File.Set
     DebugInfoMajorSeparator
@@ -593,8 +595,13 @@ Session.ParseArguments()
                     scope_incomplete=false
                     arg_identified=true
                     ;;
-                package|packages|status|statuses)
+                package|packages)
                     scope=packages_
+                    scope_incomplete=false
+                    arg_identified=true
+                    ;;
+                status|statuses)
+                    scope=statuses_
                     scope_incomplete=false
                     arg_identified=true
                     ;;
@@ -715,6 +722,9 @@ Session.ParseArguments()
                         ;;
                     problems_)
                         User.Opts.Help.Problems.Set
+                        ;;
+                    statuses_)
+                        User.Opts.Apps.List.Status.Set
                         ;;
                     tips_)
                         User.Opts.Help.Tips.Set
@@ -2317,6 +2327,8 @@ Session.Results()
             QPKGs.Optional.Show
         elif User.Opts.Apps.List.Backups.IsSet; then
             QPKGs.Backups.Show
+        elif User.Opts.Apps.List.Status.IsSet; then
+            QPKGs.Statuses.Show
         elif User.Opts.Apps.List.Installed.IsSet; then  # default operation when scope is unspecified
             QPKGs.Installed.Show
         fi
@@ -3894,6 +3906,38 @@ QPKGs.Upgradable.Build()
 
     }
 
+QPKGs.Enabled.Build()
+    {
+
+    # Builds a list of QPKGs that are installed and enabled in [/etc/config/qpkg.conf]
+
+    DebugFuncEntry
+    local package=''
+
+    for package in $(QPKGs.Installed.Array); do
+        QPKG.Enabled "$package" && QPKGs.Enabled.Add "$package"
+    done
+
+    DebugFuncExit; return 0
+
+    }
+
+QPKGs.NotEnabled.Build()
+    {
+
+    # Builds a list of QPKGs that are installed and disabled in [/etc/config/qpkg.conf]
+
+    DebugFuncEntry
+    local package=''
+
+    for package in $(QPKGs.Installed.Array); do
+        QPKG.NotEnabled "$package" && QPKGs.NotEnabled.Add "$package"
+    done
+
+    DebugFuncExit; return 0
+
+    }
+
 QPKGs.All.Show()
     {
 
@@ -3911,6 +3955,7 @@ QPKGs.Backups.Show()
     {
 
     SmartCR
+    DisplayLineSpaceIfNoneAlready
     Display "* The location for $(FormatAsScriptTitle) backups is: $(Session.Backup.Path)"
     Display
 
@@ -3920,6 +3965,33 @@ QPKGs.Backups.Show()
     else
         (cd "$(Session.Backup.Path)" && ls -1 ./*.config.tar.gz)
     fi
+
+    return 0
+
+    }
+
+QPKGs.Statuses.Show()
+    {
+
+    SmartCR
+    DisplayLineSpaceIfNoneAlready
+    printf '%-45s%s\n' "* $(FormatAsHelpPackages) available:" '* statuses:'
+
+    for package in $(QPKGs.Installable.Array); do
+        package_notes=()
+        package_note=''
+
+         QPKGs.Installed.Exist "$package" && package_notes+=(installed)
+         QPKGs.Enabled.Exist "$package" && package_notes+=(started)
+         QPKGs.NotEnabled.Exist "$package" && package_notes+=(stopped)
+         QPKGs.Upgradable.Exist "$package" && package_notes+=(upgradable)
+
+        [[ ${#package_notes[@]} -gt 0 ]] && package_note="${package_notes[*]}"
+
+        printf ' %-28s%s\n' "$package" "${package_note// /, }"
+    done
+
+    DisplayLineSpaceIfNoneAlready
 
     return 0
 
@@ -6062,7 +6134,7 @@ Objects.Compile()
     Objects.CheckLocal
 
     if [[ ! -e $COMPILED_OBJECTS_PATHFILE ]]; then
-        ShowAsProc 'compiling objects'
+        ShowAsProc 'compiling objects' >&2
 
         # user-selected options
         Objects.Add User.Opts.Help.Abbreviations
@@ -6101,6 +6173,7 @@ Objects.Compile()
         Objects.Add User.Opts.Apps.List.Installed
         Objects.Add User.Opts.Apps.List.NotInstalled
         Objects.Add User.Opts.Apps.List.Optional
+        Objects.Add User.Opts.Apps.List.Status
         Objects.Add User.Opts.Apps.List.Upgradable
 
         # lists
@@ -6110,12 +6183,14 @@ Objects.Compile()
         Objects.Add IPKGs.ToInstall
         Objects.Add IPKGs.ToUninstall
 
+        Objects.Add QPKGs.Enabled
         Objects.Add QPKGs.Essential
         Objects.Add QPKGs.Installable
         Objects.Add QPKGs.Installed
         Objects.Add QPKGs.JustInstalled
         Objects.Add QPKGs.JustStarted
         Objects.Add QPKGs.Names
+        Objects.Add QPKGs.NotEnabled
         Objects.Add QPKGs.NotInstalled
         Objects.Add QPKGs.Optional
         Objects.Add QPKGs.Upgradable
