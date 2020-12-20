@@ -873,10 +873,6 @@ Session.ParseArguments()
             help_)
                 User.Opts.Help.Basic.Set
                 ;;
-            list_)
-                User.Opts.Apps.List.Installed.Set
-                Session.Display.Clean.Set
-                ;;
             options_)
                 User.Opts.Help.Options.Set
                 ;;
