@@ -526,7 +526,7 @@ Session.ParseArguments()
             DebugAsProc 'no operation set: checking for scopes that will run without an operation'
 
             case $arg in
-                abs|action|actions|all-actions|backups|essentials|installable|installed|l|last|log|option|optionals|options|package|packages|problems|tips|upgradable|version|versions)
+                abs|action|actions|all-actions|backups|essentials|installable|installed|l|last|log|option|optionals|options|package|packages|problems|status|statuses|tips|upgradable|version|versions)
                     operation=help_
                     scope=''
                     scope_incomplete=true
@@ -593,7 +593,7 @@ Session.ParseArguments()
                     scope_incomplete=false
                     arg_identified=true
                     ;;
-                package|packages)
+                package|packages|status|statuses)
                     scope=packages_
                     scope_incomplete=false
                     arg_identified=true
@@ -3139,7 +3139,7 @@ DisplayAsHelpPackageNameExample()
     # $1 = description
     # $2 = example syntax
 
-    printf "   %-20s %s\n" "$1" "$2"
+    printf "   %-25s %s\n" "$1" "$2"
 
     }
 
@@ -3279,13 +3279,13 @@ Help.Packages.Show()
 
     Help.Basic.Show
     DisplayLineSpaceIfNoneAlready
-    Display "* $(FormatAsHelpPackages) may be one-or-more of the following (space-separated):\n"
+    Display "* $(FormatAsHelpPackages) may be one-or-more of the following:\n"
 
     for package in $(QPKGs.Installable.Array); do
         package_notes=()
         package_note=''
 
-        QPKG.Installed "$package" && package_notes+=(installed)
+        QPKGs.Installed.Exist "$package" && package_notes+=(installed)
         QPKG.Enabled "$package" && package_notes+=(started)
         QPKG.NotEnabled "$package" && package_notes+=(stopped)
         QPKGs.Upgradable.Exist "$package" && package_notes+=(upgradable)
