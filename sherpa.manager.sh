@@ -186,6 +186,7 @@ Session.Init()
 
     # enable debug mode early if possible
     if [[ $USER_ARGS_RAW == *"debug"* || $USER_ARGS_RAW == *"verbose"* ]]; then
+        Display >&2
         Session.Debug.To.Screen.Set
     fi
 
@@ -483,6 +484,7 @@ Session.ParseArguments()
     DebugFuncEntry
     ShowAsProc 'parsing arguments' >&2
 
+    # exit early if possible
     if [[ -z $USER_ARGS_RAW ]]; then
         User.Opts.Help.Basic.Set
         Session.SkipPackageProcessing.Set
@@ -635,6 +637,7 @@ Session.ParseArguments()
             debug|verbose)
                 Session.Debug.To.Screen.Set
                 arg_identified=true
+                scope_incomplete=false
                 ;;
             force)
                 operation_force=true
@@ -1041,7 +1044,7 @@ Session.Validate()
     if QPKGs.ToBackup.IsNone && QPKGs.ToUninstall.IsNone && QPKGs.ToForceUpgrade.IsNone && QPKGs.ToUpgrade.IsNone && QPKGs.ToInstall.IsNone && QPKGs.ToReinstall.IsNone && QPKGs.ToRestore.IsNone && QPKGs.ToRestart.IsNone && QPKGs.ToStart.IsNone && QPKGs.ToStop.IsNone; then
         if User.Opts.Apps.All.Install.IsNot && User.Opts.Apps.All.Restart.IsNot && User.Opts.Apps.All.Upgrade.IsNot && User.Opts.Apps.All.ForceUpgrade.IsNot && User.Opts.Apps.All.Backup.IsNot && User.Opts.Apps.All.Restore.IsNot && User.Opts.Apps.All.Status.IsNot; then
             if User.Opts.Dependencies.Check.IsNot && User.Opts.IgnoreFreeSpace.IsNot; then
-                ShowAsEror 'nothing to do (this usually means the provided arguments could not be decoded)'
+                ShowAsEror "I've nothing to do (usually means the arguments didn't make sense, or were incomplete)"
                 User.Opts.Help.Basic.Set
                 Session.SkipPackageProcessing.Set
                 DebugFuncExit; return 1
@@ -3743,6 +3746,7 @@ QPKGs.Assignment.Build()
         fi
     fi
 
+    # don't want to affect 'sherpa', else this script stops working
     QPKGs.ToStop.Remove sherpa
     QPKGs.ToUninstall.Remove sherpa
 
