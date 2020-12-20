@@ -176,6 +176,7 @@ Session.Init()
     readonly IPKG_CACHE_PATH=$WORK_PATH/ipkgs
     readonly PIP_CACHE_PATH=$WORK_PATH/pips
     readonly DEBUG_LOG_DATAWIDTH=92
+    readonly PACKAGE_VERSION=$(QPKG.InstalledVersion "$PROJECT_NAME")
 
     if ! MakePath "$WORK_PATH" 'work'; then
         DebugFuncExit; return 1
@@ -189,6 +190,16 @@ Session.Init()
         Display >&2
         Session.Debug.To.Screen.Set
     fi
+
+    DebugInfoMajorSeparator
+    DebugScript 'started' "$($DATE_CMD -d @"$SCRIPT_STARTSECONDS" | tr -s ' ')"
+    DebugScript 'version' "package: $PACKAGE_VERSION, manager: $MANAGER_SCRIPT_VERSION, loader: $LOADER_SCRIPT_VERSION"
+    DebugScript 'PID' "$$"
+    DebugInfoMinorSeparator
+    DebugInfo 'Markers: (**) detected, (II) information, (WW) warning, (EE) error, (LL) log file,'
+    DebugInfo '(==) processing, (--) done, (>>) f entry, (<<) f exit, (vv) variable name & value,'
+    DebugInfo '($1) positional argument value'
+    DebugInfoMinorSeparator
 
     User.Opts.IgnoreFreeSpace.Text = ' --force-space'
     Session.Summary.Set
@@ -225,7 +236,6 @@ Session.Init()
     fi
 
     readonly NAS_FIRMWARE=$($GETCFG_CMD System Version -f "$ULINUX_PATHFILE")
-    readonly PACKAGE_VERSION=$(QPKG.InstalledVersion "$PROJECT_NAME")
     readonly NAS_BUILD=$($GETCFG_CMD System 'Build Number' -f "$ULINUX_PATHFILE")
     readonly INSTALLED_RAM_KB=$($GREP_CMD MemTotal /proc/meminfo | $CUT_CMD -f2 -d':' | $SED_CMD 's|kB||;s| ||g')
     readonly MIN_RAM_KB=1048576
@@ -435,16 +445,6 @@ Session.Init()
 
     Session.BuildLists
     Session.ParseArguments
-    DebugInfoMajorSeparator
-    DebugScript 'started' "$($DATE_CMD -d @"$SCRIPT_STARTSECONDS" | tr -s ' ')"
-    DebugScript 'version' "package: $PACKAGE_VERSION, manager: $MANAGER_SCRIPT_VERSION, loader: $LOADER_SCRIPT_VERSION"
-    DebugScript 'PID' "$$"
-    DebugInfoMinorSeparator
-    DebugInfo 'Markers: (**) detected, (II) information, (WW) warning, (EE) error, (LL) log file,'
-    DebugInfo '(==) processing, (--) done, (>>) f entry, (<<) f exit, (vv) variable name & value,'
-    DebugInfo '($1) positional argument value'
-    DebugInfoMinorSeparator
-    SmartCR >&2
 
     if Session.Display.Clean.IsNot; then
         if Session.Debug.To.Screen.IsNot; then
@@ -489,7 +489,7 @@ Session.ParseArguments()
         User.Opts.Help.Basic.Set
         Session.SkipPackageProcessing.Set
         code_pointer=1
-        DebugFuncExit; return 1
+        SmartCR >&2; DebugFuncExit; return 1
     fi
 
     local user_args=($(tr 'A-Z' 'a-z' <<< "${USER_ARGS_RAW//,/ }"))
@@ -942,7 +942,7 @@ Session.ParseArguments()
         Session.SkipPackageProcessing.Set
     fi
 
-    DebugFuncExit; return 0
+    SmartCR >&2; DebugFuncExit; return 0
 
     }
 
@@ -951,12 +951,6 @@ Session.Validate()
 
     DebugFuncEntry
     local package=''
-
-    Args.Unknown.IsAny && ShowAsEror "unknown argument$(FormatAsPlural "$(Args.Unknown.Count)"): \"$(Args.Unknown.List)\""
-
-    if Session.SkipPackageProcessing.IsSet; then
-        DebugFuncExit; return 1
-    fi
 
     DebugInfoMinorSeparator
     DebugHardware.OK 'model' "$(get_display_name)"
@@ -1021,7 +1015,7 @@ Session.Validate()
     CheckPythonPathAndVersion python2
     CheckPythonPathAndVersion python3
     CheckPythonPathAndVersion python
-    DebugUserspace.OK 'unparsed arguments' "\"$USER_ARGS_RAW\""
+    DebugUserspace.OK 'raw arguments' "\"$USER_ARGS_RAW\""
 
     DebugScript 'logs path' "$LOGS_PATH"
     DebugScript 'work path' "$WORK_PATH"
@@ -1032,6 +1026,13 @@ Session.Validate()
 
     DebugQPKG 'upgradable QPKGs' "$(QPKGs.Upgradable.ListCSV) "
     DebugInfoMinorSeparator
+
+    Args.Unknown.IsAny && ShowAsEror "unknown argument$(FormatAsPlural "$(Args.Unknown.Count)"): \"$(Args.Unknown.List)\""
+
+    if Session.SkipPackageProcessing.IsSet; then
+        DebugFuncExit; return 1
+    fi
+
     QPKGs.Assignment.Build
     DebugInfoMinorSeparator
 
