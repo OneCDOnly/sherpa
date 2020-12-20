@@ -505,13 +505,21 @@ Session.ParseArguments()
 
         # identify [operation]      note: every time operation changes, clear scope
         case $arg in
-            backup|check|install|reinstall|remove|restart|restore|start|status|stop|uninstall|upgrade)
+            backup|check|install|reinstall|remove|restart|restore|start|stop|uninstall|upgrade)
                 operation=${arg}_
                 scope=''
                 scope_incomplete=true
                 arg_identified=true
                 Session.Display.Clean.Clear
                 Session.SkipPackageProcessing.Clear
+                ;;
+            status|statuses)
+                operation=status_
+                scope=''
+                scope_incomplete=true
+                arg_identified=true
+                Session.Display.Clean.Clear
+                Session.SkipPackageProcessing.Set
                 ;;
             clean|paste)
                 operation=${arg}_
@@ -540,7 +548,7 @@ Session.ParseArguments()
             DebugAsProc 'no operation set: checking for scopes that will run without an operation'
 
             case $arg in
-                abs|action|actions|all-actions|backups|essentials|installable|installed|l|last|log|option|optionals|options|package|packages|problems|status|statuses|tips|upgradable|version|versions)
+                abs|action|actions|all-actions|backups|essentials|installable|installed|l|last|log|option|optionals|options|package|packages|problems|tips|upgradable|version|versions)
                     operation=help_
                     scope=''
                     scope_incomplete=true
@@ -554,7 +562,7 @@ Session.ParseArguments()
 
         # stage 2
         if [[ -n $operation ]]; then
-            DebugAsProc 'an operation has been set: checking for valid scope variations'
+            DebugAsProc 'operation has been set: checking for valid scope variations'
 
             case $arg in
                 abs|all-actions|problems|tips)
@@ -604,16 +612,6 @@ Session.ParseArguments()
                     ;;
                 optional|optionals)
                     scope=optional_
-                    scope_incomplete=false
-                    arg_identified=true
-                    ;;
-                package|packages)
-                    scope=packages_
-                    scope_incomplete=false
-                    arg_identified=true
-                    ;;
-                status|statuses)
-                    scope=status_
                     scope_incomplete=false
                     arg_identified=true
                     ;;
@@ -827,6 +825,7 @@ Session.ParseArguments()
                     all_)
                         User.Opts.Apps.All.Status.Set
                         operation=''
+                        Session.SkipPackageProcessing.Set
                         ;;
                     essential_)
                         QPKGs.ToStatus.Add "$(QPKGs.Essential.Array)"
@@ -899,8 +898,8 @@ Session.ParseArguments()
         esac
     done
 
-    if [[ $scope_incomplete = true ]]; then
-        DebugAsProc "processing last operation '$operation' with incomplete scope"
+    if [[ -n $operation && $scope_incomplete = true ]]; then
+        DebugAsProc "processing operation '$operation' with incomplete scope"
 
         case $operation in
             abs_)
@@ -920,6 +919,9 @@ Session.ParseArguments()
                 ;;
             problems_)
                 User.Opts.Help.Problems.Set
+                ;;
+            status_)
+                User.Opts.Apps.All.Status.Set
                 ;;
             tips_)
                 User.Opts.Help.Tips.Set
@@ -3497,7 +3499,7 @@ Log.Last.View()
 
     # view only the last sherpa session
 
-    ExtractLastSessionFromTail
+    ExtractPreviousSessionFromTail
 
     if [[ -e $SESSION_LAST_PATHFILE ]]; then
         if [[ -e $GNU_LESS_CMD ]]; then
@@ -3516,7 +3518,7 @@ Log.Last.View()
 Log.Tail.Paste.Online()
     {
 
-    ExtractTailFromLog
+    ExtractFixedTailFromLog
 
     if [[ -e $SESSION_TAIL_PATHFILE ]]; then
         if AskQuiz "Press 'Y' to post the most-recent $(FormatAsThousands "$LOG_TAIL_LINES") entries in your $(FormatAsScriptTitle) log to a public pastebin, or any other key to abort"; then
@@ -3546,7 +3548,7 @@ Log.Tail.Paste.Online()
 Log.Last.Paste.Online()
     {
 
-    ExtractLastSessionFromTail
+    ExtractPreviousSessionFromTail
 
     if [[ -e $SESSION_LAST_PATHFILE ]]; then
         if AskQuiz "Press 'Y' to post the most-recent session in your $(FormatAsScriptTitle) log to a public pastebin, or any other key to abort"; then
@@ -3573,13 +3575,13 @@ Log.Last.Paste.Online()
 
     }
 
-ExtractLastSessionFromTail()
+ExtractPreviousSessionFromTail()
     {
 
     local -i start_line=0
     local -i end_line=0
 
-    ExtractTailFromLog
+    ExtractFixedTailFromLog
 
     if [[ -e $SESSION_TAIL_PATHFILE ]]; then
         start_line=$(($($GREP_CMD -n 'SCRIPT:.*started:' "$SESSION_TAIL_PATHFILE" | $TAIL_CMD -n1 | $CUT_CMD -d':' -f1)-1))
@@ -3595,7 +3597,7 @@ ExtractLastSessionFromTail()
 
     }
 
-ExtractTailFromLog()
+ExtractFixedTailFromLog()
     {
 
     if [[ -e $DEBUG_LOG_PATHFILE ]]; then
