@@ -175,7 +175,6 @@ Session.Init()
     readonly IPKG_DL_PATH=$WORK_PATH/ipkgs.downloads
     readonly IPKG_CACHE_PATH=$WORK_PATH/ipkgs
     readonly PIP_CACHE_PATH=$WORK_PATH/pips
-    readonly COMPILED_OBJECTS_HASH=04a7ce6c9cfabe0de0dd057616669631
     readonly DEBUG_LOG_DATAWIDTH=92
 
     if ! MakePath "$WORK_PATH" 'work'; then
@@ -1008,7 +1007,7 @@ Session.Validate()
 
     DebugScript 'logs path' "$LOGS_PATH"
     DebugScript 'work path' "$WORK_PATH"
-    DebugScript 'object reference hash' "$COMPILED_OBJECTS_HASH"
+    DebugScript 'object reference hash' "$(Objects.Compile hash)"
 
     Session.Calc.EntwareType
     Session.Calc.QPKGArch
@@ -3600,7 +3599,7 @@ Versions.Show()
     Display "manager: $MANAGER_SCRIPT_VERSION"
     Display "loader: $LOADER_SCRIPT_VERSION"
     Display "package: $PACKAGE_VERSION"
-    Display "objects hash: $COMPILED_OBJECTS_HASH"
+    Display "objects hash: $(Objects.Compile hash)"
 
     return 0
 
@@ -6114,7 +6113,7 @@ echo $public_function_name'.Add()
 Objects.CheckLocal()
     {
 
-    [[ -e $COMPILED_OBJECTS_PATHFILE ]] && ! FileMatchesMD5 "$COMPILED_OBJECTS_PATHFILE" "$COMPILED_OBJECTS_HASH" && rm -f "$COMPILED_OBJECTS_PATHFILE"
+    [[ -e $COMPILED_OBJECTS_PATHFILE ]] && ! FileMatchesMD5 "$COMPILED_OBJECTS_PATHFILE" "$(Objects.Compile hash)" && rm -f "$COMPILED_OBJECTS_PATHFILE"
 
     }
 
@@ -6127,6 +6126,17 @@ Objects.CheckRemote()
 
 Objects.Compile()
     {
+
+    # builds a new [compiled.objects] file in the work path
+
+    # $1 = 'hash' (optional) - if specified, only return the internal checksum
+
+    local -r COMPILED_OBJECTS_HASH=04a7ce6c9cfabe0de0dd057616669631
+
+    if [[ $1 = hash ]]; then
+        echo "$COMPILED_OBJECTS_HASH"
+        return
+    fi
 
     Objects.CheckLocal
     Objects.CheckRemote
