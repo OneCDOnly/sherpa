@@ -38,7 +38,7 @@ Session.Init()
 
     IsQNAP || return 1
     DebugFuncEntry
-    ShowAsProc 'important stuff' >&2
+    ShowAsProc 'init' >&2
     readonly SCRIPT_STARTSECONDS=$(/bin/date +%s)
     export LC_CTYPE=C
 
@@ -182,6 +182,7 @@ Session.Init()
     fi
 
     Objects.Compile
+    Session.Debug.To.File.Set
 
     # enable debug mode early if possible
     if [[ $USER_ARGS_RAW == *"debug"* || $USER_ARGS_RAW == *"verbose"* ]]; then
@@ -431,13 +432,8 @@ Session.Init()
     readonly SHERPA_COMMON_PIPS_ADD='apscheduler beautifulsoup4 cfscrape cheetah3 cheroot!=8.4.4 cherrypy configobj feedparser portend pygithub python-magic random_user_agent sabyenc3 simplejson slugify'
     readonly SHERPA_COMMON_QPKG_CONFLICTS='Optware Optware-NG TarMT Python QPython2'
 
-    QPKGs.EssentialAndOptional.Build
-    QPKGs.InstallationState.Build
-    QPKGs.Upgradable.Build
-    QPKGs.Enabled.Build
-    QPKGs.NotEnabled.Build
+    Session.BuildLists
     Session.ParseArguments
-    Session.SkipPackageProcessing.IsNot && Session.Debug.To.File.Set
     DebugInfoMajorSeparator
     DebugScript 'started' "$($DATE_CMD -d @"$SCRIPT_STARTSECONDS" | tr -s ' ')"
     DebugScript 'version' "package: $PACKAGE_VERSION, manager: $MANAGER_SCRIPT_VERSION, loader: $LOADER_SCRIPT_VERSION"
@@ -462,6 +458,22 @@ Session.Init()
 
     }
 
+Session.BuildLists()
+    {
+
+    DebugFuncEntry
+    ShowAsProc 'building lists' >&2
+
+    QPKGs.EssentialAndOptional.Build
+    QPKGs.InstallationState.Build
+    QPKGs.Upgradable.Build
+    QPKGs.Enabled.Build
+    QPKGs.NotEnabled.Build
+
+    DebugFuncExit; return 0
+
+    }
+
 Session.ParseArguments()
     {
 
@@ -469,6 +481,7 @@ Session.ParseArguments()
     #   sherpa [operation] [scope] [options]
 
     DebugFuncEntry
+    ShowAsProc 'parsing arguments' >&2
 
     if [[ -z $USER_ARGS_RAW ]]; then
         User.Opts.Help.Basic.Set
@@ -3183,7 +3196,9 @@ SmartCR()
 
     # reset cursor to start-of-line, erasing previous characters
 
-    [[ $(type -t Session.Debug.To.Screen.Init) = 'function' ]] && Session.Debug.To.Screen.IsNot && echo -en "\033[1K\r"
+    [[ $(type -t Session.Debug.To.Screen.Init) = 'function' ]] && Session.Debug.To.Screen.IsSet && return
+
+    echo -en "\033[1K\r"
 
     }
 
