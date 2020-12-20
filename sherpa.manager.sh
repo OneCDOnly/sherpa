@@ -43,7 +43,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=201220
+    readonly MANAGER_SCRIPT_VERSION=201221
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -175,7 +175,7 @@ Session.Init()
     readonly IPKG_DL_PATH=$WORK_PATH/ipkgs.downloads
     readonly IPKG_CACHE_PATH=$WORK_PATH/ipkgs
     readonly PIP_CACHE_PATH=$WORK_PATH/pips
-    readonly COMPILED_OBJECTS_HASH=122a676ab9fb5cec4063381707c1dfe4
+    readonly COMPILED_OBJECTS_HASH=04a7ce6c9cfabe0de0dd057616669631
     readonly DEBUG_LOG_DATAWIDTH=92
 
     if ! MakePath "$WORK_PATH" 'work'; then
@@ -493,7 +493,7 @@ Session.ParseArguments()
 
         # identify [operation]      note: every time operation changes, clear scope
         case $arg in
-            backup|check|install|reinstall|remove|restart|restore|start|stop|uninstall|upgrade)
+            backup|check|install|reinstall|remove|restart|restore|start|status|stop|uninstall|upgrade)
                 operation=${arg}_
                 scope=''
                 scope_incomplete=true
@@ -601,7 +601,7 @@ Session.ParseArguments()
                     arg_identified=true
                     ;;
                 status|statuses)
-                    scope=statuses_
+                    scope=status_
                     scope_incomplete=false
                     arg_identified=true
                     ;;
@@ -723,8 +723,8 @@ Session.ParseArguments()
                     problems_)
                         User.Opts.Help.Problems.Set
                         ;;
-                    statuses_)
-                        User.Opts.Apps.List.Status.Set
+                    status_)
+                        User.Opts.Apps.All.Status.Set
                         ;;
                     tips_)
                         User.Opts.Help.Tips.Set
@@ -807,6 +807,23 @@ Session.ParseArguments()
                         ;;
                     *)
                         QPKGs.ToStart.Add "$package"
+                        ;;
+                esac
+                ;;
+            status_)
+                case $scope in
+                    all_)
+                        User.Opts.Apps.All.Status.Set
+                        operation=''
+                        ;;
+                    essential_)
+                        QPKGs.ToStatus.Add "$(QPKGs.Essential.Array)"
+                        ;;
+                    optional_)
+                        QPKGs.ToStatus.Add "$(QPKGs.Optional.Array)"
+                        ;;
+                    *)
+                        QPKGs.ToStatus.Add "$package"
                         ;;
                 esac
                 ;;
@@ -1008,7 +1025,7 @@ Session.Validate()
     fi
 
     if QPKGs.ToBackup.IsNone && QPKGs.ToUninstall.IsNone && QPKGs.ToForceUpgrade.IsNone && QPKGs.ToUpgrade.IsNone && QPKGs.ToInstall.IsNone && QPKGs.ToReinstall.IsNone && QPKGs.ToRestore.IsNone && QPKGs.ToRestart.IsNone && QPKGs.ToStart.IsNone && QPKGs.ToStop.IsNone; then
-        if User.Opts.Apps.All.Install.IsNot && User.Opts.Apps.All.Restart.IsNot && User.Opts.Apps.All.Upgrade.IsNot && User.Opts.Apps.All.ForceUpgrade.IsNot && User.Opts.Apps.All.Backup.IsNot && User.Opts.Apps.All.Restore.IsNot; then
+        if User.Opts.Apps.All.Install.IsNot && User.Opts.Apps.All.Restart.IsNot && User.Opts.Apps.All.Upgrade.IsNot && User.Opts.Apps.All.ForceUpgrade.IsNot && User.Opts.Apps.All.Backup.IsNot && User.Opts.Apps.All.Restore.IsNot && User.Opts.Apps.All.Status.IsNot; then
             if User.Opts.Dependencies.Check.IsNot && User.Opts.IgnoreFreeSpace.IsNot; then
                 ShowAsEror 'nothing to do (this usually means the provided arguments could not be decoded)'
                 User.Opts.Help.Basic.Set
@@ -2258,6 +2275,13 @@ Packages.Restart.Optionals()
 
     }
 
+Packages.Status()
+    {
+
+    :
+
+    }
+
 Package.Save.Lists()
     {
 
@@ -2327,7 +2351,7 @@ Session.Results()
             QPKGs.Optional.Show
         elif User.Opts.Apps.List.Backups.IsSet; then
             QPKGs.Backups.Show
-        elif User.Opts.Apps.List.Status.IsSet; then
+        elif User.Opts.Apps.All.Status.IsSet; then
             QPKGs.Statuses.Show
         elif User.Opts.Apps.List.Installed.IsSet; then  # default operation when scope is unspecified
             QPKGs.Installed.Show
@@ -3286,30 +3310,14 @@ Help.Packages.Show()
     {
 
     local package=''
-    local package_notes=()
-    local package_note=''
 
     Help.Basic.Show
     DisplayLineSpaceIfNoneAlready
     Display "* $(FormatAsHelpPackages) may be one-or-more of the following:\n"
 
     for package in $(QPKGs.Installable.Array); do
-        package_notes=()
-        package_note=''
-
-        QPKGs.Installed.Exist "$package" && package_notes+=(installed)
-        QPKG.Enabled "$package" && package_notes+=(started)
-        QPKG.NotEnabled "$package" && package_notes+=(stopped)
-        QPKGs.Upgradable.Exist "$package" && package_notes+=(upgradable)
-
-        [[ ${#package_notes[@]} -gt 0 ]] && package_note="${package_notes[*]}"
-
-        DisplayAsHelpPackageNameExample "$package" "${package_note// /, }"
+        DisplayAsHelpPackageNameExample "$package"
     done
-
-    DisplayAsProjectSyntaxExample "example: to install $(FormatAsPackageName SABnzbd)" 'install SABnzbd'
-
-    DisplayAsProjectSyntaxExample "example: to install both $(FormatAsPackageName SABnzbd) and $(FormatAsPackageName SickChill)" 'install SABnzbd SickChill'
 
     DisplayAsProjectSyntaxExample "abbreviations may also be used to specify $(FormatAsHelpPackages). To list these" 'list abs'
 
@@ -3660,35 +3668,24 @@ QPKGs.Assignment.Build()
 
     # Ensure packages are assigned to the correct lists
 
-    # As a package manager, package importance should always be:
-    #  10. backup           (highest: most-important)
-    #   9. restore
-    #   8. force-upgrade
-    #   7. upgrade
-    #   6. reinstall
-    #   5. install
-    #   4. start
-    #   3. restart
-    #   2. stop
-    #   1. uninstall        (lowest: least-important)
-
-    # However, package processing priorities need to be:
-    #  16. backup                   (highest: most-important)
-    #  15. stop dependants
-    #  14. stop essentials
-    #  13. uninstall
-    #  12. force-upgrade essentials
-    #  11. upgrade essentials
-    #  10. reinstall essentials
-    #   9. install essentials
-    #   8. start essentials
-    #   7. force-upgrade dependants
-    #   6. upgrade dependants
-    #   5. reinstall dependants
-    #   4. install dependants
-    #   3. restore dependants
-    #   2. start dependants
-    #   1. restart                  (lowest: least-important)
+    # package processing priorities need to be:
+    #  17. backup                       (highest: most-important)
+    #  16. stop dependants
+    #  15. stop essentials
+    #  14. uninstall
+    #  13. force-upgrade essentials
+    #  12. upgrade essentials
+    #  11. reinstall essentials
+    #  10. install essentials
+    #   9. start essentials
+    #   8. force-upgrade dependants
+    #   7. upgrade dependants
+    #   6. reinstall dependants
+    #   5. install dependants
+    #   4. restore dependants
+    #   3. start dependants
+    #   2. restart
+    #   1. status                       (lowest: least-important)
 
     Session.SkipPackageProcessing.IsSet && return
     DebugFuncEntry
@@ -3796,6 +3793,7 @@ QPKGs.Assignment.Build()
     fi
 
     User.Opts.Apps.All.Restart.IsSet && QPKGs.ToRestart.Add "$(QPKGs.Installed.Array)"
+    User.Opts.Apps.All.Status.IsSet && QPKGs.ToStatus.Add "$(QPKGs.Installable.Array)"
 
     # build an initial package download list. Items on this list will be skipped at download-time if they can be found in local cache.
     if User.Opts.Dependencies.Check.IsSet; then
@@ -3817,17 +3815,18 @@ QPKGs.Assignment.List()
 
     DebugFuncEntry
 
-    DebugQPKG 'to download' "$(QPKGs.ToDownload.ListCSV) "
-    DebugQPKG 'to backup' "$(QPKGs.ToBackup.ListCSV) "
-    DebugQPKG 'to uninstall' "$(QPKGs.ToUninstall.ListCSV) "
-    DebugQPKG 'to stop' "$(QPKGs.ToStop.ListCSV) "
-    DebugQPKG 'to force-upgrade' "$(QPKGs.ToForceUpgrade.ListCSV) "
-    DebugQPKG 'to upgrade' "$(QPKGs.ToUpgrade.ListCSV) "
-    DebugQPKG 'to reinstall' "$(QPKGs.ToReinstall.ListCSV) "
-    DebugQPKG 'to install' "$(QPKGs.ToInstall.ListCSV) "
-    DebugQPKG 'to restore' "$(QPKGs.ToRestore.ListCSV) "
-    DebugQPKG 'to start' "$(QPKGs.ToStart.ListCSV) "
-    DebugQPKG 'to restart' "$(QPKGs.ToRestart.ListCSV) "
+    DebugQPKG 'download' "$(QPKGs.ToDownload.ListCSV) "
+    DebugQPKG 'backup' "$(QPKGs.ToBackup.ListCSV) "
+    DebugQPKG 'uninstall' "$(QPKGs.ToUninstall.ListCSV) "
+    DebugQPKG 'stop' "$(QPKGs.ToStop.ListCSV) "
+    DebugQPKG 'force-upgrade' "$(QPKGs.ToForceUpgrade.ListCSV) "
+    DebugQPKG 'upgrade' "$(QPKGs.ToUpgrade.ListCSV) "
+    DebugQPKG 'reinstall' "$(QPKGs.ToReinstall.ListCSV) "
+    DebugQPKG 'install' "$(QPKGs.ToInstall.ListCSV) "
+    DebugQPKG 'restore' "$(QPKGs.ToRestore.ListCSV) "
+    DebugQPKG 'start' "$(QPKGs.ToStart.ListCSV) "
+    DebugQPKG 'restart' "$(QPKGs.ToRestart.ListCSV) "
+    DebugQPKG 'status' "$(QPKGs.ToStatus.ListCSV) "
 
     DebugFuncExit; return 0
 
@@ -6163,6 +6162,7 @@ Objects.Compile()
         Objects.Add User.Opts.Apps.All.Restart
         Objects.Add User.Opts.Apps.All.Restore
         Objects.Add User.Opts.Apps.All.Start
+        Objects.Add User.Opts.Apps.All.Status
         Objects.Add User.Opts.Apps.All.Stop
         Objects.Add User.Opts.Apps.All.Uninstall
         Objects.Add User.Opts.Apps.All.Upgrade
@@ -6173,7 +6173,6 @@ Objects.Compile()
         Objects.Add User.Opts.Apps.List.Installed
         Objects.Add User.Opts.Apps.List.NotInstalled
         Objects.Add User.Opts.Apps.List.Optional
-        Objects.Add User.Opts.Apps.List.Status
         Objects.Add User.Opts.Apps.List.Upgradable
 
         # lists
@@ -6203,6 +6202,7 @@ Objects.Compile()
         Objects.Add QPKGs.ToRestart
         Objects.Add QPKGs.ToRestore
         Objects.Add QPKGs.ToStart
+        Objects.Add QPKGs.ToStatus
         Objects.Add QPKGs.ToStop
         Objects.Add QPKGs.ToUninstall
         Objects.Add QPKGs.ToUpgrade
