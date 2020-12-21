@@ -463,7 +463,7 @@ Session.BuildLists()
     {
 
     DebugFuncEntry
-    ShowAsProc 'building lists' >&2
+#     ShowAsProc 'building lists' >&2
 
     QPKGs.EssentialAndOptional.Build
     QPKGs.InstallationState.Build
@@ -482,7 +482,7 @@ Session.ParseArguments()
     #   sherpa [operation] [scope] [options]
 
     DebugFuncEntry
-    ShowAsProc 'parsing arguments' >&2
+#     ShowAsProc 'parsing arguments' >&2
 
     # exit early if possible
     if [[ -z $USER_ARGS_RAW ]]; then
@@ -955,6 +955,11 @@ Session.Validate()
     {
 
     DebugFuncEntry
+
+    if Session.SkipPackageProcessing.IsSet; then
+        DebugFuncExit; return 1
+    fi
+
     local package=''
     local max_width=58
     local trimmed_width=$max_width-3
