@@ -951,6 +951,8 @@ Session.Validate()
 
     DebugFuncEntry
     local package=''
+    local max_width=58
+    local trimmed_width=$max_width-3
 
     DebugInfoMinorSeparator
     DebugHardware.OK 'model' "$(get_display_name)"
@@ -994,7 +996,7 @@ Session.Validate()
         DebugFuncExit; return 1
     fi
 
-    DebugUserspace.OK 'BASH' "$(bash --version | $HEAD_CMD -n1)"
+    DebugUserspace.OK 'BASH' "$BASH_VERSION"
     DebugUserspace.OK 'default volume' "$($GETCFG_CMD SHARE_DEF defVolMP -f "$DEFAULT_SHARES_PATHFILE")"
 
     if [[ -L '/opt' ]]; then
@@ -1002,9 +1004,6 @@ Session.Validate()
     else
         DebugUserspace.Warning '/opt' '<not present>'
     fi
-
-    max_width=58
-    trimmed_width=$max_width-3
 
     if [[ ${#PATH} -le $max_width ]]; then
         DebugUserspace.OK '$PATH' "$PATH"
@@ -1034,7 +1033,6 @@ Session.Validate()
     fi
 
     QPKGs.Assignment.Build
-    DebugInfoMinorSeparator
 
     if ! QPKGs.Conflicts.Check; then
         code_pointer=2
@@ -3836,6 +3834,7 @@ QPKGs.Assignment.List()
 
     DebugFuncEntry
 
+    DebugInfoMinorSeparator
     DebugQPKG 'download' "$(QPKGs.ToDownload.ListCSV) "
     DebugQPKG 'backup' "$(QPKGs.ToBackup.ListCSV) "
     DebugQPKG 'uninstall' "$(QPKGs.ToUninstall.ListCSV) "
@@ -3848,6 +3847,7 @@ QPKGs.Assignment.List()
     DebugQPKG 'start' "$(QPKGs.ToStart.ListCSV) "
     DebugQPKG 'restart' "$(QPKGs.ToRestart.ListCSV) "
     DebugQPKG 'status' "$(QPKGs.ToStatus.ListCSV) "
+    DebugInfoMinorSeparator
 
     DebugFuncExit; return 0
 
