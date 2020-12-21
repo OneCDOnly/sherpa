@@ -43,7 +43,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=201221
+    readonly MANAGER_SCRIPT_VERSION=201222
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -3592,18 +3592,50 @@ Log.Last.Paste.Online()
 
     }
 
+GetSessionStart()
+    {
+
+    # $1 = count how many back? (optional)
+
+    local -i back=1
+    [[ -n $1 ]] && back=$1
+
+    echo $(($($GREP_CMD -n 'SCRIPT:.*started:' "$SESSION_TAIL_PATHFILE" | $TAIL_CMD -n${back} | $HEAD_CMD -n1 | $CUT_CMD -d':' -f1)-1))
+
+    }
+
+GetSessionFinish()
+    {
+
+    # $1 = count how many back? (optional)
+
+    local -i back=1
+#         [[ -n $1 ]] && back=$1
+
+    echo $(($($GREP_CMD -n 'SCRIPT:.*finished:' "$SESSION_TAIL_PATHFILE" | $TAIL_CMD -n${back} | $CUT_CMD -d':' -f1)+2))
+
+    }
+
 ExtractPreviousSessionFromTail()
     {
 
     local -i start_line=0
     local -i end_line=0
+    local -i old_session=1
+    local -i old_session_limit=12   # don't try to find 'started:' any further back than this many sessions
 
     ExtractFixedTailFromLog
 
     if [[ -e $SESSION_TAIL_PATHFILE ]]; then
-        start_line=$(($($GREP_CMD -n 'SCRIPT:.*started:' "$SESSION_TAIL_PATHFILE" | $TAIL_CMD -n1 | $CUT_CMD -d':' -f1)-1))
-        end_line=$(($($GREP_CMD -n 'SCRIPT:.*finished:' "$SESSION_TAIL_PATHFILE" | $TAIL_CMD -n1 | $CUT_CMD -d':' -f1)+2))
-        [[ $start_line -gt $end_line ]] && end_line=$($WC_CMD -l "$SESSION_TAIL_PATHFILE" | $CUT_CMD -d' ' -f1)
+        end_line=$(GetSessionFinish)
+        start_line=$((end_line+1))      # force an invalid condition, to be solved by the loop
+
+        while [[ $start_line -ge $end_line ]]; do
+            start_line=$(GetSessionStart "$old_session")
+
+            ((old_session++))
+            [[ $old_session -gt $old_session_limit ]] && break
+        done
 
         $SED_CMD "$start_line,$end_line!d" "$SESSION_TAIL_PATHFILE" > "$SESSION_LAST_PATHFILE"
     else
