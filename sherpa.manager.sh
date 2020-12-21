@@ -967,7 +967,36 @@ Session.Validate()
 
     DebugFuncEntry
 
-    Args.Unknown.IsAny && ShowAsEror "unknown argument$(FormatAsPlural "$(Args.Unknown.Count)"): \"$(Args.Unknown.List)\""
+    if Args.Unknown.IsAny; then
+        ShowAsEror "unknown argument$(FormatAsPlural "$(Args.Unknown.Count)"): \"$(Args.Unknown.List)\""
+
+        case $(Args.Unknown.List) in
+            uninstall-all)
+                DisplayAsProjectSyntaxExample "to uninstall all packages, use" 'force uninstall all'
+                User.Opts.Help.Basic.Clear
+                ;;
+            start-all)
+                DisplayAsProjectSyntaxExample "to start all packages, use" 'start all'
+                User.Opts.Help.Basic.Clear
+                ;;
+            stop-all)
+                DisplayAsProjectSyntaxExample "to stop all packages, use" 'stop all'
+                User.Opts.Help.Basic.Clear
+                ;;
+            restart-all)
+                DisplayAsProjectSyntaxExample "to restart all packages, use" 'restart all'
+                User.Opts.Help.Basic.Clear
+                ;;
+            backup-all)
+                DisplayAsProjectSyntaxExample "to backup all installed package configurations, use" 'backup all'
+                User.Opts.Help.Basic.Clear
+                ;;
+            restore-all)
+                DisplayAsProjectSyntaxExample "to restore all installed package configurations, use" 'restore all'
+                User.Opts.Help.Basic.Clear
+                ;;
+        esac
+    fi
 
     if Session.SkipPackageProcessing.IsSet; then
         DebugFuncExit; return 1
