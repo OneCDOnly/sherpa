@@ -1092,9 +1092,9 @@ Packages.Download()
     local fail_count=0
     local tier=''
     local runtime=''
-    local action_intransitive='update cache image for'
-    local action_present='updating cache image for'
-    local action_past='updated cache image for'
+    local action_intransitive='update cache with'
+    local action_present='updating cache with'
+    local action_past='updated cache with'
     local result=0
 
     if QPKGs.ToDownload.IsNone; then
@@ -1277,8 +1277,6 @@ Packages.Stop.Essentials()
 
         ShowAsOperationProgress "$tier" "$package_count" "$fail_count" "$pass_count" "$action_present" "$runtime"
 
-        [[ $package = sherpa ]] && continue     # ignore 'sherpa'
-
         if ! QPKG.Installed "$package"; then
             ShowAsNote "unable to $action_intransitive $(FormatAsPackageName "$package") as it's not installed"
             ((fail_count++))
@@ -1415,8 +1413,6 @@ Packages.Uninstall.Essentials()
         package=${target_packages[$index]}
 
         ShowAsOperationProgress "$tier" "$package_count" "$fail_count" "$pass_count" "$action_present" "$runtime"
-
-        [[ $package = sherpa ]] && continue     # ignore 'sherpa'
 
         if ! QPKG.Installed "$package"; then
             ShowAsNote "unable to $action_intransitive $(FormatAsPackageName "$package") as it's not installed"
@@ -1752,16 +1748,14 @@ Packages.Start.Essentials()
     for package in "${target_packages[@]}"; do
         ShowAsOperationProgress "$tier" "$package_count" "$fail_count" "$pass_count" "$action_present" "$runtime"
 
-        if [[ $package != sherpa ]]; then   # ignore 'sherpa'
-            if ! QPKG.Enable "$package"; then       # essentials don't have the same service scripts as other sherpa packages, so they must be enabled/disabled externally
-                ShowAsFail "unable to enable $(FormatAsPackageName "$package") (see log for more details)"
-                ((fail_count++))
-                continue
-            elif ! QPKG.Start "$package"; then
-                ShowAsFail "unable to $action_intransitive $(FormatAsPackageName "$package") (see log for more details)"
-                ((fail_count++))
-                continue
-            fi
+        if ! QPKG.Enable "$package"; then       # essentials don't have the same service scripts as other sherpa packages, so they must be enabled/disabled externally
+            ShowAsFail "unable to enable $(FormatAsPackageName "$package") (see log for more details)"
+            ((fail_count++))
+            continue
+        elif ! QPKG.Start "$package"; then
+            ShowAsFail "unable to $action_intransitive $(FormatAsPackageName "$package") (see log for more details)"
+            ((fail_count++))
+            continue
         fi
 
         ((pass_count++))
@@ -3766,10 +3760,6 @@ QPKGs.Assignment.Build()
         fi
     fi
 
-    # don't want to affect 'sherpa', else this script stops working
-    QPKGs.ToStop.Remove sherpa
-    QPKGs.ToUninstall.Remove sherpa
-
     User.Opts.Apps.All.ForceUpgrade.IsSet && QPKGs.ToForceUpgrade.Add "$(QPKGs.Installed.Array)"
     User.Opts.Apps.All.Upgrade.IsSet && QPKGs.ToUpgrade.Add "$(QPKGs.Upgradable.Array)"
     User.Opts.Apps.All.Reinstall.IsSet && QPKGs.ToReinstall.Add "$(QPKGs.Installed.Array)"
@@ -3834,6 +3824,11 @@ QPKGs.Assignment.Build()
 
     User.Opts.Apps.All.Restart.IsSet && QPKGs.ToRestart.Add "$(QPKGs.Installed.Array)"
     User.Opts.Apps.All.Status.IsSet && QPKGs.ToStatus.Add "$(QPKGs.Installable.Array)"
+
+    # don't want these operations to affect 'sherpa'
+    QPKGs.ToStart.Remove sherpa
+    QPKGs.ToStop.Remove sherpa
+    QPKGs.ToUninstall.Remove sherpa
 
     # build an initial package download list. Items on this list will be skipped at download-time if they can be found in local cache.
     if User.Opts.Dependencies.Check.IsSet; then
