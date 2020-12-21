@@ -4052,9 +4052,9 @@ QPKGs.Statuses.Show()
         package_note=''
 
          QPKGs.Installed.Exist "$package" && package_notes+=(installed)
-         QPKGs.Enabled.Exist "$package" && package_notes+=(started)
-         QPKGs.NotEnabled.Exist "$package" && package_notes+=(stopped)
-         QPKGs.Upgradable.Exist "$package" && package_notes+=(upgradable)
+         QPKGs.Enabled.Exist "$package" && package_notes+=($(ColourTextBrightGreen started))
+         QPKGs.NotEnabled.Exist "$package" && package_notes+=($(ColourTextBrightRed stopped))
+         QPKGs.Upgradable.Exist "$package" && package_notes+=($(ColourTextBrightOrange upgradable))
 
         [[ ${#package_notes[@]} -gt 0 ]] && package_note="${package_notes[*]}"
 
