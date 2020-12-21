@@ -3269,6 +3269,8 @@ Help.Actions.Show()
     DisplayLineSpaceIfNoneAlready
     Display "* $(FormatAsHelpAction) usage examples:"
 
+    DisplayAsProjectSyntaxIndentedExample 'show package statuses' 'status all'
+
     DisplayAsProjectSyntaxIndentedExample 'install these packages' "install $(FormatAsHelpPackages)"
 
     DisplayAsProjectSyntaxIndentedExample 'uninstall these packages' "uninstall $(FormatAsHelpPackages)"
@@ -3303,9 +3305,11 @@ Help.ActionsAll.Show()
 
     Help.Basic.Show
     DisplayLineSpaceIfNoneAlready
-    Display "* These $(FormatAsHelpAction)s apply to all installed packages. If $(FormatAsHelpAction) is 'install all' then all available packages will be affected."
+    Display "* These $(FormatAsHelpAction)s apply to all installed packages. If $(FormatAsHelpAction) is 'install all' then all available packages will be installed."
     DisplayLineSpaceIfNoneAlready
     Display "* $(FormatAsHelpAction) usage examples:"
+
+    DisplayAsProjectSyntaxIndentedExample 'show package statuses' 'status all'
 
     DisplayAsProjectSyntaxIndentedExample 'install everything!' 'install all'
 
@@ -3332,8 +3336,6 @@ Help.ActionsAll.Show()
     DisplayAsProjectSyntaxIndentedExample 'backup all application configurations to the backup location' 'backup all'
 
     DisplayAsProjectSyntaxIndentedExample 'restore all application configurations from the backup location' 'restore all'
-
-    Help.BackupLocation.Show
 
     return 0
 
