@@ -3136,6 +3136,9 @@ IsNotSysFileExist()
 
     }
 
+readonly HELP_DESC_INDENT=3
+readonly HELP_SYNTAX_INDENT=8
+
 DisplayAsProjectSyntaxExample()
     {
 
@@ -3143,9 +3146,9 @@ DisplayAsProjectSyntaxExample()
     # $2 = example syntax
 
     if [[ ${1: -1} = '!' ]]; then
-        printf "\n* %s \n       # %s\n" "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}" "$PROJECT_NAME $2"
+        printf "\n* %s \n%${HELP_SYNTAX_INDENT}s# %s\n" "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}" '' "$PROJECT_NAME $2"
     else
-        printf "\n* %s:\n       # %s\n" "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}" "$PROJECT_NAME $2"
+        printf "\n* %s:\n%${HELP_SYNTAX_INDENT}s# %s\n" "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}" '' "$PROJECT_NAME $2"
     fi
 
     Session.LineSpace.Clear
@@ -3158,14 +3161,12 @@ DisplayAsProjectSyntaxIndentedExample()
     # $1 = description
     # $2 = example syntax
 
-    if [[ -z $2 ]]; then
-        printf "\n   %s \n" "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}"
-    elif [[ -z $1 ]]; then
-        printf "       # %s\n" "$PROJECT_NAME $2"
+    if [[ -z $1 ]]; then
+        printf "%${HELP_SYNTAX_INDENT}s# %s\n" '' "$PROJECT_NAME $2"
     elif [[ ${1: -1} = '!' ]]; then
-        printf "\n   %s \n       # %s\n" "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}" "$PROJECT_NAME $2"
+        printf "\n%${HELP_DESC_INDENT}s%s \n%${HELP_SYNTAX_INDENT}s# %s\n" '' "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}" '' "$PROJECT_NAME $2"
     else
-        printf "\n   %s:\n       # %s\n" "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}" "$PROJECT_NAME $2"
+        printf "\n%${HELP_DESC_INDENT}s%s:\n%${HELP_SYNTAX_INDENT}s# %s\n" '' "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}" '' "$PROJECT_NAME $2"
     fi
 
     Session.LineSpace.Clear
@@ -3181,22 +3182,21 @@ DisplayAsSyntaxExample()
     if [[ -z $2 && ${1: -1} = ':' ]]; then
         printf "\n* %s\n" "$1"
     elif [[ ${1: -1} = '!' ]]; then
-        printf "\n* %s \n       # %s\n" "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}" "$2"
+        printf "\n* %s \n%${HELP_SYNTAX_INDENT}s# %s\n" "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}" '' "$2"
     else
-        printf "\n* %s:\n       # %s\n" "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}" "$2"
+        printf "\n* %s:\n%${HELP_SYNTAX_INDENT}s# %s\n" "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}" '' "$2"
     fi
 
     Session.LineSpace.Clear
 
     }
 
-DisplayAsHelpPackageNameExample()
+DisplayAsHelpPackageName()
     {
 
     # $1 = description
-    # $2 = example syntax
 
-    printf "   %-25s %s\n" "$1" "$2"
+    printf "%${HELP_SYNTAX_INDENT}s%s\n" '' "$1"
 
     }
 
@@ -3336,10 +3336,10 @@ Help.Packages.Show()
 
     Help.Basic.Show
     DisplayLineSpaceIfNoneAlready
-    Display "* $(FormatAsHelpPackages) may be one-or-more of the following:\n"
+    Display "* $(FormatAsHelpPackages) may be one-or-more of the following:"
 
     for package in $(QPKGs.Installable.Array); do
-        DisplayAsHelpPackageNameExample "$package"
+        DisplayAsHelpPackageName "$package"
     done
 
     DisplayAsProjectSyntaxExample "abbreviations may also be used to specify $(FormatAsHelpPackages). To list these" 'list abs'
