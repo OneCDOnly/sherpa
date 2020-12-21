@@ -63,10 +63,10 @@ Session.Init()
     readonly UNAME_CMD=/bin/uname
     readonly UNIQ_CMD=/bin/uniq
 
+    readonly APP_CENTER_NOTIFIER=/sbin/qpkg_cli     # only needed for QTS 4.5.1-and-later
     readonly CURL_CMD=/sbin/curl
     readonly GETCFG_CMD=/sbin/getcfg
     readonly QPKG_SERVICE_CMD=/sbin/qpkg_service
-    readonly APP_CENTER_NOTIFIER=/sbin/qpkg_cli     # only needed for QTS 4.5.1-and-later
     readonly RMCFG_CMD=/sbin/rmcfg
     readonly SETCFG_CMD=/sbin/setcfg
 
@@ -1752,16 +1752,16 @@ Packages.Start.Essentials()
     for package in "${target_packages[@]}"; do
         ShowAsOperationProgress "$tier" "$package_count" "$fail_count" "$pass_count" "$action_present" "$runtime"
 
-        [[ $package = sherpa ]] && continue     # ignore 'sherpa'
-
-        if ! QPKG.Enable "$package"; then       # essentials don't have the same service scripts as other sherpa packages, so they must be enabled/disabled externally
-            ShowAsFail "unable to enable $(FormatAsPackageName "$package") (see log for more details)"
-            ((fail_count++))
-            continue
-        elif ! QPKG.Start "$package"; then
-            ShowAsFail "unable to $action_intransitive $(FormatAsPackageName "$package") (see log for more details)"
-            ((fail_count++))
-            continue
+        if [[ $package != sherpa ]]; then   # ignore 'sherpa'
+            if ! QPKG.Enable "$package"; then       # essentials don't have the same service scripts as other sherpa packages, so they must be enabled/disabled externally
+                ShowAsFail "unable to enable $(FormatAsPackageName "$package") (see log for more details)"
+                ((fail_count++))
+                continue
+            elif ! QPKG.Start "$package"; then
+                ShowAsFail "unable to $action_intransitive $(FormatAsPackageName "$package") (see log for more details)"
+                ((fail_count++))
+                continue
+            fi
         fi
 
         ((pass_count++))
@@ -5734,6 +5734,8 @@ ShowAsOperationProgress()
     local total=$2
     local fails=$3
     local passes=$4
+    local tweaked_passes=$((passes+1))      # so we never show zero (e.g. 0/8 )
+    local tweaked_total=$((total-fails))    # auto-adjust upper limit to account for failures
 
     if [[ -n $1 ]]; then
         tier=" $1"
@@ -5741,17 +5743,17 @@ ShowAsOperationProgress()
         tier=''
     fi
 
-    if [[ $passes -gt $((total-fails)) ]]; then
+    if [[ $tweaked_passes -gt $tweaked_total ]]; then
+        tweaked_passes=$((tweaked_total-fails))
         percent='100%'
-        passes=$((passes-2))
     else
-        percent="$((200*(passes+1)/(total+1) % 2 + 100*(passes+1)/(total+1)))%"
+        percent="$((200*(tweaked_passes)/(tweaked_total+1) % 2 + 100*(tweaked_passes)/(tweaked_total+1)))%"
     fi
 
     if [[ $6 = long ]]; then
-        ShowAsProcLong "$5 $((total-fails))$tier QPKG$(FormatAsPlural "$((total-fails))")" "$percent ($((passes+1))/$((total-fails)))"
+        ShowAsProcLong "$5 ${tweaked_total}${tier} QPKG$(FormatAsPlural "$tweaked_total")" "$percent ($tweaked_passes/$tweaked_total)"
     else
-        ShowAsProc "$5 $((total-fails))$tier QPKG$(FormatAsPlural "$((total-fails))")" "$percent ($((passes+1))/$((total-fails)))"
+        ShowAsProc "$5 ${tweaked_total}${tier} QPKG$(FormatAsPlural "$tweaked_total")" "$percent ($tweaked_passes/$tweaked_total)"
     fi
 
     [[ $percent = '100%' ]] && sleep 1
@@ -5776,8 +5778,10 @@ ShowAsOperationResult()
     local total=$2
     local fails=$3
     local passes=$4
+    local tweaked_total=$((total-fails))
 
-    ShowAsOperationProgress "$1" "$package_count" "$fail_count" "$((pass_count+1))" "$action_present" "$6"
+    # execute with passes > total to trigger 100% message
+    ShowAsOperationProgress "$1" "$total" "$fails" "$((passes+1))" "$action_present" "$6"
 
     if [[ -n $1 ]]; then
         tier=" $1"
@@ -5785,7 +5789,7 @@ ShowAsOperationResult()
         tier=''
     fi
 
-    if [[ $fails -eq $total ]]; then
+    if [[ $fails -eq $tweaked_total ]]; then
         ShowAsFail "$5 ${fails}${tier} QPKG$(FormatAsPlural "$3") failed"
     elif [[ $fails -gt 0 ]]; then
         ShowAsWarn "$5 ${passes}${tier} QPKG$(FormatAsPlural "$passes") OK, but ${fails}${tier} QPKG$(FormatAsPlural "$fails") failed"
@@ -5794,6 +5798,7 @@ ShowAsOperationResult()
     else
         DebugAsDone "no${tier} QPKGs processed"
     fi
+
     return 0
 
     }
