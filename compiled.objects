@@ -10249,6 +10249,159 @@ Session.LineSpace.Text()
     }
 Session.LineSpace.Init
 
+Session.Lists.Built.Add()
+    {
+    local array=(${1})
+    local item=''
+    for item in "${array[@]}"; do
+        [[ " ${_object_session_lists_built_array_[*]} " != *"$item"* ]] && _object_session_lists_built_array_+=("$item")
+    done
+    }
+Session.Lists.Built.Array()
+    {
+    echo -n "${_object_session_lists_built_array_[@]}"
+    }
+Session.Lists.Built.Clear()
+    {
+    [[ $_object_session_lists_built_flag_ != 'true' ]] && return
+    _object_session_lists_built_flag_=false
+    [[ $_object_session_lists_built_changes_flag_ = 'true' ]] && DebugVar _object_session_lists_built_flag_
+    }
+Session.Lists.Built.Count()
+    {
+    echo "${#_object_session_lists_built_array_[@]}"
+    }
+Session.Lists.Built.Disable()
+    {
+    [[ $_object_session_lists_built_enable_ != 'true' ]] && return
+    _object_session_lists_built_enable_=false
+    [[ $_object_session_lists_built_changes_flag_ = 'true' ]] && DebugVar _object_session_lists_built_enable_
+    }
+Session.Lists.Built.DontLogChanges()
+    {
+    [[ $_object_session_lists_built_changes_flag_ != 'true' ]] && return
+    _object_session_lists_built_changes_flag_=false
+    }
+Session.Lists.Built.Enable()
+    {
+    [[ $_object_session_lists_built_enable_ = 'true' ]] && return
+    _object_session_lists_built_enable_=true
+    [[ $_object_session_lists_built_changes_flag_ = 'true' ]] && DebugVar _object_session_lists_built_enable_
+    }
+Session.Lists.Built.Exist()
+    {
+    [[ ${_object_session_lists_built_array_[*]} == *"$1"* ]]
+    }
+Session.Lists.Built.First()
+    {
+    echo "${_object_session_lists_built_array_[0]}"
+    }
+Session.Lists.Built.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_session_lists_built_array_[@]} ]] && index=${#_object_session_lists_built_array_[@]}
+    echo -n "${_object_session_lists_built_array_[((index-1))]}"
+    }
+Session.Lists.Built.Init()
+    {
+    _object_session_lists_built_size_=0
+    _object_session_lists_built_text_=''
+    _object_session_lists_built_flag_=false
+    _object_session_lists_built_changes_flag_=true
+    _object_session_lists_built_enable_=false
+    _object_session_lists_built_array_=()
+    _object_session_lists_built_array_index_=1
+    _object_session_lists_built_path_=''
+    }
+Session.Lists.Built.IsAny()
+    {
+    [[ ${#_object_session_lists_built_array_[@]} -gt 0 ]]
+    }
+Session.Lists.Built.IsDisabled()
+    {
+    [[ $_object_session_lists_built_enable_ != 'true' ]]
+    }
+Session.Lists.Built.IsEnabled()
+    {
+    [[ $_object_session_lists_built_enable_ = 'true' ]]
+    }
+Session.Lists.Built.IsNone()
+    {
+    [[ ${#_object_session_lists_built_array_[@]} -eq 0 ]]
+    }
+Session.Lists.Built.IsNot()
+    {
+    [[ $_object_session_lists_built_flag_ != 'true' ]]
+    }
+Session.Lists.Built.IsSet()
+    {
+    [[ $_object_session_lists_built_flag_ = 'true' ]]
+    }
+Session.Lists.Built.List()
+    {
+    echo -n "${_object_session_lists_built_array_[*]}"
+    }
+Session.Lists.Built.ListCSV()
+    {
+    echo -n "${_object_session_lists_built_array_[*]}" | tr ' ' ','
+    }
+Session.Lists.Built.LogChanges()
+    {
+    [[ $_object_session_lists_built_changes_flag_ = 'true' ]] && return
+    _object_session_lists_built_changes_flag_=true
+    }
+Session.Lists.Built.Path()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_session_lists_built_path_=$2
+    else
+        echo -n "$_object_session_lists_built_path_"
+    fi
+    }
+Session.Lists.Built.Remove()
+    {
+    local argument_array=(${1})
+    local temp_array=()
+    local argument=''
+    local item=''
+    local matched=false
+    for item in "${_object_session_lists_built_array_[@]}"; do
+        matched=false
+        for argument in "${argument_array[@]}"; do
+            if [[ $argument = $item ]]; then
+                matched=true; break
+            fi
+        done
+        [[ $matched = false ]] && temp_array+=("$item")
+    done
+    _object_session_lists_built_array_=("${temp_array[@]}")
+    [[ -z ${_object_session_lists_built_array_[*]} ]] && _object_session_lists_built_array_=()
+    }
+Session.Lists.Built.Set()
+    {
+    [[ $_object_session_lists_built_flag_ = 'true' ]] && return
+    _object_session_lists_built_flag_=true
+    [[ $_object_session_lists_built_changes_flag_ = 'true' ]] && DebugVar _object_session_lists_built_flag_
+    }
+Session.Lists.Built.Size()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_session_lists_built_size_=$2
+    else
+        echo -n $_object_session_lists_built_size_
+    fi
+    }
+Session.Lists.Built.Text()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_session_lists_built_text_=$2
+    else
+        echo -n "$_object_session_lists_built_text_"
+    fi
+    }
+Session.Lists.Built.Init
+
 Session.PIPs.Install.Add()
     {
     local array=(${1})

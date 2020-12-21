@@ -443,8 +443,15 @@ Session.Init()
     readonly SHERPA_COMMON_PIPS_ADD='apscheduler beautifulsoup4 cfscrape cheetah3 cheroot!=8.4.4 cherrypy configobj feedparser portend pygithub python-magic random_user_agent sabyenc3 simplejson slugify'
     readonly SHERPA_COMMON_QPKG_CONFLICTS='Optware Optware-NG TarMT Python QPython2'
 
-    Session.BuildLists
-    Session.ParseArguments
+    # don't build package lists if only showing basic help
+    if [[ -z $USER_ARGS_RAW ]]; then
+        User.Opts.Help.Basic.Set
+        Session.SkipPackageProcessing.Set
+    else
+        Session.ParseArguments
+    fi
+
+    SmartCR >&2
 
     if Session.Display.Clean.IsNot; then
         if Session.Debug.To.Screen.IsNot; then
@@ -471,6 +478,8 @@ Session.BuildLists()
     QPKGs.Enabled.Build
     QPKGs.NotEnabled.Build
 
+    Session.Lists.Built.Set
+
     DebugFuncExit; return 0
 
     }
@@ -483,14 +492,6 @@ Session.ParseArguments()
 
     DebugFuncEntry
 #     ShowAsProc 'parsing arguments' >&2
-
-    # exit early if possible
-    if [[ -z $USER_ARGS_RAW ]]; then
-        User.Opts.Help.Basic.Set
-        Session.SkipPackageProcessing.Set
-        code_pointer=1
-        SmartCR >&2; DebugFuncExit; return 1
-    fi
 
     local user_args=($(tr 'A-Z' 'a-z' <<< "${USER_ARGS_RAW//,/ }"))
     local arg=''
@@ -514,6 +515,7 @@ Session.ParseArguments()
                 arg_identified=true
                 Session.Display.Clean.Clear
                 Session.SkipPackageProcessing.Clear
+                Session.Lists.Built.IsNot && Session.BuildLists
                 ;;
             status|statuses)
                 operation=status_
@@ -522,6 +524,7 @@ Session.ParseArguments()
                 arg_identified=true
                 Session.Display.Clean.Clear
                 Session.SkipPackageProcessing.Set
+                Session.Lists.Built.IsNot && Session.BuildLists
                 ;;
             clean|paste)
                 operation=${arg}_
@@ -699,6 +702,7 @@ Session.ParseArguments()
                         User.Opts.Help.Actions.Set
                         ;;
                     all_)
+                        Session.Lists.Built.IsNot && Session.BuildLists
                         User.Opts.Apps.List.All.Set
                         Session.Display.Clean.Set
                         ;;
@@ -709,14 +713,17 @@ Session.ParseArguments()
                         User.Opts.Apps.List.Backups.Set
                         ;;
                     essential_)
+                        Session.Lists.Built.IsNot && Session.BuildLists
                         User.Opts.Apps.List.Essential.Set
                         Session.Display.Clean.Set
                         ;;
                     installable_)
+                        Session.Lists.Built.IsNot && Session.BuildLists
                         User.Opts.Apps.List.NotInstalled.Set
                         Session.Display.Clean.Set
                         ;;
                     installed_)
+                        Session.Lists.Built.IsNot && Session.BuildLists
                         User.Opts.Apps.List.Installed.Set
                         Session.Display.Clean.Set
                         ;;
@@ -729,6 +736,7 @@ Session.ParseArguments()
                         Session.Display.Clean.Set
                         ;;
                     optional_)
+                        Session.Lists.Built.IsNot && Session.BuildLists
                         User.Opts.Apps.List.Optional.Set
                         Session.Display.Clean.Set
                         ;;
@@ -736,18 +744,21 @@ Session.ParseArguments()
                         User.Opts.Help.Options.Set
                         ;;
                     packages_)
+                        Session.Lists.Built.IsNot && Session.BuildLists
                         User.Opts.Help.Packages.Set
                         ;;
                     problems_)
                         User.Opts.Help.Problems.Set
                         ;;
                     status_)
+                        Session.Lists.Built.IsNot && Session.BuildLists
                         User.Opts.Apps.All.Status.Set
                         ;;
                     tips_)
                         User.Opts.Help.Tips.Set
                         ;;
                     upgradable_)
+                        Session.Lists.Built.IsNot && Session.BuildLists
                         User.Opts.Apps.List.Upgradable.Set
                         Session.Display.Clean.Set
                         ;;
@@ -6163,7 +6174,7 @@ Objects.Compile()
 
     # $1 = 'hash' (optional) - if specified, only return the internal checksum
 
-    local -r COMPILED_OBJECTS_HASH=04a7ce6c9cfabe0de0dd057616669631
+    local -r COMPILED_OBJECTS_HASH=7d01ae38a9efcba7e146b0401478fee8
 
     if [[ $1 = hash ]]; then
         echo "$COMPILED_OBJECTS_HASH"
@@ -6256,6 +6267,7 @@ Objects.Compile()
         Objects.Add Session.Display.Clean
         Objects.Add Session.IPKGs.Install
         Objects.Add Session.LineSpace
+        Objects.Add Session.Lists.Built
         Objects.Add Session.PIPs.Install
         Objects.Add Session.ShowBackupLocation
         Objects.Add Session.SkipPackageProcessing
