@@ -967,6 +967,8 @@ Session.Validate()
 
     DebugFuncEntry
 
+    Args.Unknown.IsAny && ShowAsEror "unknown argument$(FormatAsPlural "$(Args.Unknown.Count)"): \"$(Args.Unknown.List)\""
+
     if Session.SkipPackageProcessing.IsSet; then
         DebugFuncExit; return 1
     fi
@@ -1046,8 +1048,6 @@ Session.Validate()
 
     DebugQPKG 'upgradable QPKGs' "$(QPKGs.Upgradable.ListCSV) "
     DebugInfoMinorSeparator
-
-    Args.Unknown.IsAny && ShowAsEror "unknown argument$(FormatAsPlural "$(Args.Unknown.Count)"): \"$(Args.Unknown.List)\""
 
     if Session.SkipPackageProcessing.IsSet; then
         DebugFuncExit; return 1
