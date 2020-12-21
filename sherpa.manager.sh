@@ -617,6 +617,11 @@ Session.ParseArguments()
                     scope_incomplete=false
                     arg_identified=true
                     ;;
+                package|packages)
+                    scope=packages_
+                    scope_incomplete=false
+                    arg_identified=true
+                    ;;
                 upgradable)
                     scope=${arg}_
                     scope_incomplete=false
