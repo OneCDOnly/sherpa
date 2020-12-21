@@ -4084,8 +4084,8 @@ QPKGs.Backups.Show()
     Display
 
     if [[ -e $GNU_FIND_CMD ]]; then
-        printf '%-33s%s\n' '* backup file:' '* last backup date:'
-        $GNU_FIND_CMD "$(Session.Backup.Path)"/*.config.tar.gz -maxdepth 1 -printf '%-33f%Cc\n' 2>/dev/null
+        printf '%-33s%-33s\n' '* backup file:' '* last backup date:'
+        $GNU_FIND_CMD "$(Session.Backup.Path)"/*.config.tar.gz -maxdepth 1 -printf ' %-33f%Cc\n' 2>/dev/null
     else
         (cd "$(Session.Backup.Path)" && ls -1 ./*.config.tar.gz)
     fi
@@ -4099,7 +4099,7 @@ QPKGs.Statuses.Show()
 
     SmartCR
     DisplayLineSpaceIfNoneAlready
-    printf '%-45s%s\n' "* $(FormatAsHelpPackages) available:" '* statuses:'
+    printf '%-28s%-30s\n' "* all packages:" '* statuses:'
 
     for package in $(QPKGs.Installable.Array); do
         package_notes=()
@@ -4112,7 +4112,7 @@ QPKGs.Statuses.Show()
 
         [[ ${#package_notes[@]} -gt 0 ]] && package_note="${package_notes[*]}"
 
-        printf ' %-28s%s\n' "$package" "${package_note// /, }"
+        printf ' %-28s%-30s\n' "$package" "${package_note// /, }"
     done
 
     DisplayLineSpaceIfNoneAlready
