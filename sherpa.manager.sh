@@ -43,7 +43,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=201222
+    readonly MANAGER_SCRIPT_VERSION=201223
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -4170,20 +4170,20 @@ QPKGs.Statuses.Show()
 
     SmartCR
     DisplayLineSpaceIfNoneAlready
-    printf '%-28s%-30s\n' "* all packages:" '* statuses:'
+    printf '%-20s%-30s\n' "* all packages:" '* statuses:'
 
     for package in $(QPKGs.Installable.Array); do
         package_notes=()
         package_note=''
 
-         QPKGs.Installed.Exist "$package" && package_notes+=(installed)
+         QPKGs.NotInstalled.Exist "$package" && package_notes+=(not-installed)
          QPKGs.Enabled.Exist "$package" && package_notes+=($(ColourTextBrightGreen started))
          QPKGs.NotEnabled.Exist "$package" && package_notes+=($(ColourTextBrightRed stopped))
          QPKGs.Upgradable.Exist "$package" && package_notes+=($(ColourTextBrightOrange upgradable))
 
         [[ ${#package_notes[@]} -gt 0 ]] && package_note="${package_notes[*]}"
 
-        printf ' %-28s%-30s\n' "$package" "${package_note// /, }"
+        printf ' %-20s%-30s\n' "$package" "${package_note// /, }"
     done
 
     DisplayLineSpaceIfNoneAlready
