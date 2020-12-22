@@ -724,6 +724,12 @@ Session.Arguments.Parse()
                         User.Opts.Apps.All.Backup.Set
                         operation=''
                         ;;
+                    essential_)
+                        QPKGs.ToBackup.Add "$(QPKGs.Essential.Array)"
+                        ;;
+                    optional_)
+                        QPKGs.ToBackup.Add "$(QPKGs.Optional.Array)"
+                        ;;
                     *)
                         QPKGs.ToBackup.Add "$package"
                         ;;
@@ -3841,21 +3847,23 @@ QPKGs.Assignment.Build()
     # Ensure packages are assigned to the correct lists
 
     # package processing priorities need to be:
-    #  17. backup                       (highest: most-important)
-    #  16. stop dependants
-    #  15. stop essentials
-    #  14. uninstall
-    #  13. force-upgrade essentials
-    #  12. upgrade essentials
-    #  11. reinstall essentials
-    #  10. install essentials
-    #   9. start essentials
+    #  19. backup all                   (highest: most-important)
+    #  18. stop dependants
+    #  17. stop essentials
+    #  16. uninstall all
+    #  15. force-upgrade essentials
+    #  14. upgrade essentials
+    #  13. reinstall essentials
+    #  12. install essentials
+    #  11. start essentials
+    #  10. restore essentials
+    #   9. restart essentials
     #   8. force-upgrade dependants
     #   7. upgrade dependants
     #   6. reinstall dependants
     #   5. install dependants
-    #   4. restore dependants
-    #   3. start dependants
+    #   4. start dependants
+    #   3. restore dependants
     #   2. restart
     #   1. status                       (lowest: least-important)
 
@@ -3869,7 +3877,6 @@ QPKGs.Assignment.Build()
 
     if User.Opts.Apps.All.Backup.IsSet; then
         QPKGs.ToBackup.Add "$(QPKGs.Installed.Array)"
-        QPKGs.ToBackup.Remove "$(QPKGs.Essential.Array)"
     fi
 
     User.Opts.Apps.All.Stop.IsSet && QPKGs.ToStop.Add "$(QPKGs.Installed.Array)"
@@ -3878,14 +3885,14 @@ QPKGs.Assignment.Build()
     if User.Opts.Apps.All.Uninstall.IsSet; then
         QPKGs.ToStop.Init   # no-need to 'stop' all packages, as they are about to be 'uninstalled'
     else
-        # if an essential has been selected for 'stop', need to stop all 'optionals' first
+        # if an 'essential' has been selected for 'stop', need to 'stop' all 'optionals' first
         for package in $(QPKGs.ToStop.Array); do
             if QPKGs.Essential.Exist "$package" && QPKG.Installed "$package"; then
                 stop_acc+=($(QPKG.Get.Dependencies "$package"))
             fi
         done
 
-        # if an essential has been selected for 'uninstall', need to stop all 'optionals' first
+        # if an 'essential' has been selected for 'uninstall', need to 'stop' all 'optionals' first
         for package in $(QPKGs.ToUninstall.Array); do
             if QPKGs.Essential.Exist "$package" && QPKG.Installed "$package"; then
                 stop_acc+=($(QPKG.Get.Dependencies "$package"))
@@ -3964,9 +3971,16 @@ QPKGs.Assignment.Build()
     User.Opts.Apps.All.Restart.IsSet && QPKGs.ToRestart.Add "$(QPKGs.Installed.Array)"
     User.Opts.Apps.All.Status.IsSet && QPKGs.ToStatus.Add "$(QPKGs.Installable.Array)"
 
-    # don't want these operations to affect 'sherpa'
+    # remove invalid packages from lists so they're not operated-on. Packages are added to these lists in Session.Arguments.Parse() and this function.
+    QPKGs.ToBackup.Remove "$(QPKGs.Essential.Array)"    # KLUDGE: remove this when permitted package action array is operational
+
+    QPKGs.ToStart.Remove "$(QPKGs.NotInstalled.Array)"
     QPKGs.ToStart.Remove sherpa
+
+    QPKGs.ToStop.Remove "$(QPKGs.NotInstalled.Array)"
     QPKGs.ToStop.Remove sherpa
+
+    QPKGs.ToUninstall.Remove "$(QPKGs.NotInstalled.Array)"
     QPKGs.ToUninstall.Remove sherpa
 
     # build an initial package download list. Items on this list will be skipped at download-time if they can be found locally.
