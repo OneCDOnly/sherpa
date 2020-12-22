@@ -535,7 +535,8 @@ Session.Arguments.Parse()
 
     DebugFuncEntry
 
-    local user_args=($(tr 'A-Z' 'a-z' <<< "${USER_ARGS_RAW//,/ }"))
+    local user_args_fixed=$(tr 'A-Z' 'a-z' <<< "${USER_ARGS_RAW//,/ }")
+    local -a user_args=(${user_args_fixed/--/})
     local arg=''
     local arg_identified=false
     local operation=''
@@ -544,7 +545,7 @@ Session.Arguments.Parse()
     local scope_incomplete=false    # some operations require a value for scope, so mark all operations as incomplete until scope has been defined.
     local package=''
 
-    for arg in "${user_args[@]/--/}"; do
+    for arg in "${user_args[@]}"; do
         DebugVar arg
         arg_identified=false
 
