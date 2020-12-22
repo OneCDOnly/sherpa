@@ -254,6 +254,7 @@ Session.Init()
         SHERPA_QPKG_URL=()          # remote QPKG URL
         SHERPA_QPKG_MD5=()          # remote QPKG MD5
         SHERPA_QPKG_ABBRVS=()       # if set, this package is user-installable, and these abbreviations may be used to specify app
+        SHERPA_QPKG_OPS=()          # these operations are permitted by the user for this package
         SHERPA_QPKG_ESSENTIALS=()   # require these QPKGs to be installed
         SHERPA_QPKG_IPKGS_ADD=()    # require these IPKGs to be installed
         SHERPA_QPKG_IPKGS_REMOVE=() # require these IPKGs to be uninstalled
@@ -264,6 +265,7 @@ Session.Init()
         SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/sherpa/build/sherpa_${SHERPA_QPKG_VERSION[${#SHERPA_QPKG_VERSION[@]}-1]}.qpkg)
         SHERPA_QPKG_MD5+=(6a84dadf9aae7269eff72166ed0d5f19)
         SHERPA_QPKG_ABBRVS+=(sherpa)
+        SHERPA_QPKG_OPS+=('upgrade')
         SHERPA_QPKG_ESSENTIALS+=('')
         SHERPA_QPKG_IPKGS_ADD+=('')
         SHERPA_QPKG_IPKGS_REMOVE+=('')
@@ -274,6 +276,7 @@ Session.Init()
         SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/Entware/Entware_${SHERPA_QPKG_VERSION[${#SHERPA_QPKG_VERSION[@]}-1]}std.qpkg)
         SHERPA_QPKG_MD5+=(da2d9f8d3442dd665ce04b9b932c9d8e)
         SHERPA_QPKG_ABBRVS+=('ew ent opkg entware')
+        SHERPA_QPKG_OPS+=('install reinstall restart start stop uninstall upgrade')
         SHERPA_QPKG_ESSENTIALS+=('')
         SHERPA_QPKG_IPKGS_ADD+=('')
         SHERPA_QPKG_IPKGS_REMOVE+=('')
@@ -284,6 +287,7 @@ Session.Init()
         SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/Par2/Par2_${SHERPA_QPKG_VERSION[${#SHERPA_QPKG_VERSION[@]}-1]}_x86.qpkg)
         SHERPA_QPKG_MD5+=(996ffb92d774eb01968003debc171e91)
         SHERPA_QPKG_ABBRVS+=('par par2')        # applies to all 'Par2' packages
+        SHERPA_QPKG_OPS+=('install reinstall restart start stop uninstall upgrade')
         SHERPA_QPKG_ESSENTIALS+=('')
         SHERPA_QPKG_IPKGS_ADD+=('')
         SHERPA_QPKG_IPKGS_REMOVE+=(par2cmdline)
@@ -294,6 +298,7 @@ Session.Init()
         SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/Par2/Par2_${SHERPA_QPKG_VERSION[${#SHERPA_QPKG_VERSION[@]}-1]}_x86_64.qpkg)
         SHERPA_QPKG_MD5+=(520472cc87d301704f975f6eb9948e38)
         SHERPA_QPKG_ABBRVS+=('')
+        SHERPA_QPKG_OPS+=('install reinstall restart start stop uninstall upgrade')
         SHERPA_QPKG_ESSENTIALS+=('')
         SHERPA_QPKG_IPKGS_ADD+=('')
         SHERPA_QPKG_IPKGS_REMOVE+=(par2cmdline)
@@ -304,6 +309,7 @@ Session.Init()
         SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/Par2/Par2_${SHERPA_QPKG_VERSION[${#SHERPA_QPKG_VERSION[@]}-1]}_arm-x31.qpkg)
         SHERPA_QPKG_MD5+=(ce8af2e009eb87733c3b855e41a94f8e)
         SHERPA_QPKG_ABBRVS+=('')
+        SHERPA_QPKG_OPS+=('install reinstall restart start stop uninstall upgrade')
         SHERPA_QPKG_ESSENTIALS+=('')
         SHERPA_QPKG_IPKGS_ADD+=('')
         SHERPA_QPKG_IPKGS_REMOVE+=(par2cmdline)
@@ -314,6 +320,7 @@ Session.Init()
         SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/Par2/Par2_${SHERPA_QPKG_VERSION[${#SHERPA_QPKG_VERSION[@]}-1]}_arm-x41.qpkg)
         SHERPA_QPKG_MD5+=(8516e45e704875cdd2cd2bb315c4e1e6)
         SHERPA_QPKG_ABBRVS+=('')
+        SHERPA_QPKG_OPS+=('install reinstall restart start stop uninstall upgrade')
         SHERPA_QPKG_ESSENTIALS+=('')
         SHERPA_QPKG_IPKGS_ADD+=('')
         SHERPA_QPKG_IPKGS_REMOVE+=(par2cmdline)
@@ -324,6 +331,7 @@ Session.Init()
         SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/Par2/Par2_${SHERPA_QPKG_VERSION[${#SHERPA_QPKG_VERSION[@]}-1]}_arm_64.qpkg)
         SHERPA_QPKG_MD5+=(4d8e99f97936a163e411aa8765595f7a)
         SHERPA_QPKG_ABBRVS+=('')
+        SHERPA_QPKG_OPS+=('install reinstall restart start stop uninstall upgrade')
         SHERPA_QPKG_ESSENTIALS+=('')
         SHERPA_QPKG_IPKGS_ADD+=('')
         SHERPA_QPKG_IPKGS_REMOVE+=(par2cmdline)
@@ -334,6 +342,7 @@ Session.Init()
         SHERPA_QPKG_URL+=('')
         SHERPA_QPKG_MD5+=('')
         SHERPA_QPKG_ABBRVS+=('')
+        SHERPA_QPKG_OPS+=('install reinstall uninstall upgrade')
         SHERPA_QPKG_ESSENTIALS+=('')
         SHERPA_QPKG_IPKGS_ADD+=(par2cmdline)
         SHERPA_QPKG_IPKGS_REMOVE+=('')
@@ -344,6 +353,7 @@ Session.Init()
         SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/SABnzbd/build/SABnzbd_${SHERPA_QPKG_VERSION[${#SHERPA_QPKG_VERSION[@]}-1]}.qpkg)
         SHERPA_QPKG_MD5+=(dd1723270972c14cdfe017fc0bd51b88)
         SHERPA_QPKG_ABBRVS+=('sb sb3 sab sab3 sabnzbd3 sabnzbd')
+        SHERPA_QPKG_OPS+=('backup install reinstall restart restore start stop uninstall upgrade')
         SHERPA_QPKG_ESSENTIALS+=('Entware Par2')
         SHERPA_QPKG_IPKGS_ADD+=('python3-asn1crypto python3-chardet python3-cryptography python3-pyopenssl unrar p7zip coreutils-nice ionice ffprobe')
         SHERPA_QPKG_IPKGS_REMOVE+=('')
@@ -354,6 +364,7 @@ Session.Init()
         SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/nzbToMedia/build/nzbToMedia_${SHERPA_QPKG_VERSION[${#SHERPA_QPKG_VERSION[@]}-1]}.qpkg)
         SHERPA_QPKG_MD5+=(91300bd3ff3ad82e8e819905aa30484d)
         SHERPA_QPKG_ABBRVS+=('nzb2 nzb2m nzbto nzbtom nzbtomedia')
+        SHERPA_QPKG_OPS+=('backup install reinstall restart restore start stop uninstall upgrade')
         SHERPA_QPKG_ESSENTIALS+=(Entware)
         SHERPA_QPKG_IPKGS_ADD+=('')
         SHERPA_QPKG_IPKGS_REMOVE+=('')
@@ -364,6 +375,7 @@ Session.Init()
         SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/SickChill/build/SickChill_${SHERPA_QPKG_VERSION[${#SHERPA_QPKG_VERSION[@]}-1]}.qpkg)
         SHERPA_QPKG_MD5+=(47a017ab38094aafde6ce25a69409762)
         SHERPA_QPKG_ABBRVS+=('sc sick sickc chill sickchill')
+        SHERPA_QPKG_OPS+=('backup install reinstall restart restore start stop uninstall upgrade')
         SHERPA_QPKG_ESSENTIALS+=(Entware)
         SHERPA_QPKG_IPKGS_ADD+=('')
         SHERPA_QPKG_IPKGS_REMOVE+=('')
@@ -374,6 +386,7 @@ Session.Init()
         SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/LazyLibrarian/build/LazyLibrarian_${SHERPA_QPKG_VERSION[${#SHERPA_QPKG_VERSION[@]}-1]}.qpkg)
         SHERPA_QPKG_MD5+=(4317b410cc8cc380218d960a78686f3d)
         SHERPA_QPKG_ABBRVS+=('ll lazy lazylibrarian')
+        SHERPA_QPKG_OPS+=('backup install reinstall restart restore start stop uninstall upgrade')
         SHERPA_QPKG_ESSENTIALS+=(Entware)
         SHERPA_QPKG_IPKGS_ADD+=('python3-pyopenssl python3-requests')
         SHERPA_QPKG_IPKGS_REMOVE+=('')
@@ -384,6 +397,7 @@ Session.Init()
         SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/OMedusa/build/OMedusa_${SHERPA_QPKG_VERSION[${#SHERPA_QPKG_VERSION[@]}-1]}.qpkg)
         SHERPA_QPKG_MD5+=(afa21ae0ef4b43022d09b2ee8f455176)
         SHERPA_QPKG_ABBRVS+=('om med omed medusa omedusa')
+        SHERPA_QPKG_OPS+=('backup install reinstall restart restore start stop uninstall upgrade')
         SHERPA_QPKG_ESSENTIALS+=(Entware)
         SHERPA_QPKG_IPKGS_ADD+=('mediainfo python3-pyopenssl')
         SHERPA_QPKG_IPKGS_REMOVE+=('')
@@ -394,6 +408,7 @@ Session.Init()
         SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/OSickGear/build/OSickGear_${SHERPA_QPKG_VERSION[${#SHERPA_QPKG_VERSION[@]}-1]}.qpkg)
         SHERPA_QPKG_MD5+=(c735207d769d54ca375aa6da1ab1babf)
         SHERPA_QPKG_ABBRVS+=('sg os osg sickg gear ogear osickg sickgear osickgear')
+        SHERPA_QPKG_OPS+=('backup install reinstall restart restore start stop uninstall upgrade')
         SHERPA_QPKG_ESSENTIALS+=(Entware)
         SHERPA_QPKG_IPKGS_ADD+=('')
         SHERPA_QPKG_IPKGS_REMOVE+=('')
@@ -404,6 +419,7 @@ Session.Init()
         SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/Mylar3/build/Mylar3_${SHERPA_QPKG_VERSION[${#SHERPA_QPKG_VERSION[@]}-1]}.qpkg)
         SHERPA_QPKG_MD5+=(ba959d93fa95d0bd5cd95d37a6e131f0)
         SHERPA_QPKG_ABBRVS+=('my omy myl mylar mylar3')
+        SHERPA_QPKG_OPS+=('backup install reinstall restart restore start stop uninstall upgrade')
         SHERPA_QPKG_ESSENTIALS+=(Entware)
         SHERPA_QPKG_IPKGS_ADD+=('python3-mako python3-pillow python3-pyopenssl python3-pytz python3-requests python3-six python3-urllib3')
         SHERPA_QPKG_IPKGS_REMOVE+=('')
@@ -414,6 +430,7 @@ Session.Init()
         SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/NZBGet/build/NZBGet_${SHERPA_QPKG_VERSION[${#SHERPA_QPKG_VERSION[@]}-1]}.qpkg)
         SHERPA_QPKG_MD5+=(c7114e6e217110bc7490ad867b5bf536)
         SHERPA_QPKG_ABBRVS+=('ng nzb nzbg nget nzbget')
+        SHERPA_QPKG_OPS+=('backup install reinstall restart restore start stop uninstall upgrade')
         SHERPA_QPKG_ESSENTIALS+=(Entware)
         SHERPA_QPKG_IPKGS_ADD+=('nzbget')
         SHERPA_QPKG_IPKGS_REMOVE+=('')
@@ -424,6 +441,7 @@ Session.Init()
         SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/OTransmission/build/OTransmission_${SHERPA_QPKG_VERSION[${#SHERPA_QPKG_VERSION[@]}-1]}.qpkg)
         SHERPA_QPKG_MD5+=(c39da08668672e53f8d2dfed0f746069)
         SHERPA_QPKG_ABBRVS+=('ot tm tr trans otrans tmission transmission otransmission')
+        SHERPA_QPKG_OPS+=('backup install reinstall restart restore start stop uninstall upgrade')
         SHERPA_QPKG_ESSENTIALS+=(Entware)
         SHERPA_QPKG_IPKGS_ADD+=('transmission-web jq')
         SHERPA_QPKG_IPKGS_REMOVE+=('')
@@ -434,6 +452,7 @@ Session.Init()
         SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/Deluge-server/build/Deluge-server_${SHERPA_QPKG_VERSION[${#SHERPA_QPKG_VERSION[@]}-1]}.qpkg)
         SHERPA_QPKG_MD5+=(ec7ee6febaf34d894585afa4dec87798)
         SHERPA_QPKG_ABBRVS+=('deluge del-server deluge-server')
+        SHERPA_QPKG_OPS+=('backup install reinstall restart restore start stop uninstall upgrade')
         SHERPA_QPKG_ESSENTIALS+=(Entware)
         SHERPA_QPKG_IPKGS_ADD+=('deluge jq')
         SHERPA_QPKG_IPKGS_REMOVE+=('')
@@ -444,6 +463,7 @@ Session.Init()
         SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/Deluge-web/build/Deluge-web_${SHERPA_QPKG_VERSION[${#SHERPA_QPKG_VERSION[@]}-1]}.qpkg)
         SHERPA_QPKG_MD5+=(2e77b7981360356e6457458b11e759ef)
         SHERPA_QPKG_ABBRVS+=('del-web deluge-web')
+        SHERPA_QPKG_OPS+=('backup install reinstall restart restore start stop uninstall upgrade')
         SHERPA_QPKG_ESSENTIALS+=(Entware)
         SHERPA_QPKG_IPKGS_ADD+=('deluge-ui-web jq')
         SHERPA_QPKG_IPKGS_REMOVE+=('')
@@ -455,6 +475,7 @@ Session.Init()
         readonly SHERPA_QPKG_URL
         readonly SHERPA_QPKG_MD5
         readonly SHERPA_QPKG_ABBRVS
+        readonly SHERPA_QPKG_OPS
         readonly SHERPA_QPKG_ESSENTIALS
         readonly SHERPA_QPKG_IPKGS_ADD
         readonly SHERPA_QPKG_IPKGS_REMOVE
@@ -1013,7 +1034,7 @@ Session.Arguments.Review()
                     User.Opts.Help.Basic.Clear
                     ;;
                 backup-all)
-                    DisplayAsProjectSyntaxExample "to backup all installed package configurations, use" 'backup all'
+                    DisplayAsProjectSyntaxExample 'to backup all installed package configurations, use' 'backup all'
                     User.Opts.Help.Basic.Clear
                     ;;
                 essential)
@@ -1025,23 +1046,23 @@ Session.Arguments.Review()
                     User.Opts.Help.Basic.Clear
                     ;;
                 restart-all)
-                    DisplayAsProjectSyntaxExample "to restart all packages, use" 'restart all'
+                    DisplayAsProjectSyntaxExample 'to restart all packages, use' 'restart all'
                     User.Opts.Help.Basic.Clear
                     ;;
                 restore-all)
-                    DisplayAsProjectSyntaxExample "to restore all installed package configurations, use" 'restore all'
+                    DisplayAsProjectSyntaxExample 'to restore all installed package configurations, use' 'restore all'
                     User.Opts.Help.Basic.Clear
                     ;;
                 start-all)
-                    DisplayAsProjectSyntaxExample "to start all packages, use" 'start all'
+                    DisplayAsProjectSyntaxExample 'to start all packages, use' 'start all'
                     User.Opts.Help.Basic.Clear
                     ;;
                 stop-all)
-                    DisplayAsProjectSyntaxExample "to stop all packages, use" 'stop all'
+                    DisplayAsProjectSyntaxExample 'to stop all packages, use' 'stop all'
                     User.Opts.Help.Basic.Clear
                     ;;
                 uninstall-all|remove-all)
-                    DisplayAsProjectSyntaxExample "to uninstall all packages, use" 'force uninstall all'
+                    DisplayAsProjectSyntaxExample 'to uninstall all packages, use' 'force uninstall all'
                     User.Opts.Help.Basic.Clear
                     ;;
             esac
@@ -3950,7 +3971,7 @@ QPKGs.Assignment.Build()
     QPKGs.ToStop.Remove sherpa
     QPKGs.ToUninstall.Remove sherpa
 
-    # build an initial package download list. Items on this list will be skipped at download-time if they can be found in local cache.
+    # build an initial package download list. Items on this list will be skipped at download-time if they can be found locally.
     if User.Opts.Dependencies.Check.IsSet; then
         QPKGs.ToDownload.Add "$(QPKGs.Installed.Array)"
     else
