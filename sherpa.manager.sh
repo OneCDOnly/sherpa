@@ -1206,7 +1206,6 @@ Packages.Download()
     local -r ACTION_INTRANSITIVE='update cache with'
     local -r ACTION_PRESENT='updating cache with'
     local -r ACTION_PAST='updated cache with'
-    local -i result=0
 
     if QPKGs.ToDownload.IsNone; then
         DebugInfo 'no QPKGs listed'
@@ -1218,10 +1217,7 @@ Packages.Download()
     for package in $(QPKGs.ToDownload.Array); do
         ShowAsOperationProgress "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$RUNTIME"
 
-        QPKG.Download "$package"
-        result=$?
-
-        if [[ $result -ne 0 && $result -ne 10 ]]; then
+        if ! QPKG.Download "$package"; then
             ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") (see log for more details)"
             ((fail_count++))
             continue
@@ -1671,8 +1667,15 @@ Packages.Reinstall.Essentials()
         DebugFuncExit; return 0
     fi
 
-    for package in $(QPKGs.Essential.Array); do
-        QPKGs.ToReinstall.Exist "$package" && target_packages+=("$package")
+    for package in $(QPKGs.ToReinstall.Array); do
+        if QPKGs.Essential.Exist "$package"; then
+            if QPKG.Installed "$package"; then
+                target_packages+=("$package")
+            else
+                QPKGs.ToReinstall.Remove "$package"
+                QPKGs.ToInstall.Add "$package"
+            fi
+        fi
     done
 
     if [[ ${#target_packages[@]} -eq 0 ]]; then
@@ -1716,11 +1719,7 @@ Packages.Reinstall.Essentials()
                 DebugFuncExit; return 1
             fi
         else
-            if ! QPKG.Installed "$package"; then
-                ShowAsNote "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") as it's not installed. Use 'install' instead."
-                ((fail_count++))
-                continue
-            elif ! QPKG.Reinstall "$package"; then
+            if ! QPKG.Reinstall "$package"; then
                 ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") (see log for more details)"
                 ((fail_count++))
                 continue
@@ -2135,13 +2134,31 @@ Packages.Reinstall.Optionals()
     local -r ACTION_PRESENT=reinstalling
     local -r ACTION_PAST=reinstalled
 
+    # first check 'install' list for items that should be reinstalled instead
+    for package in $(QPKGs.ToInstall.Array); do
+        if QPKGs.Optional.Exist "$package"; then
+            if QPKG.Installed "$package"; then
+                QPKGs.ToInstall.Remove "$package"
+                QPKGs.ToReinstall.Add "$package"
+            fi
+        fi
+    done
+
     if QPKGs.ToReinstall.IsNone; then
         DebugInfo 'no QPKGs listed'
         DebugFuncExit; return 0
     fi
 
+    # now check the 'reinstall' list for items that shoulbe installed instead
     for package in $(QPKGs.ToReinstall.Array); do
-        QPKGs.Optional.Exist "$package" && target_packages+=("$package")
+        if QPKGs.Optional.Exist "$package"; then
+            if QPKG.Installed "$package"; then
+                target_packages+=("$package")
+            else
+                QPKGs.ToReinstall.Remove "$package"
+                QPKGs.ToInstall.Add "$package"
+            fi
+        fi
     done
 
     if [[ ${#target_packages[@]} -eq 0 ]]; then
@@ -2154,11 +2171,7 @@ Packages.Reinstall.Optionals()
     for package in "${target_packages[@]}"; do
         ShowAsOperationProgress "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$RUNTIME"
 
-        if ! QPKG.Installed "$package"; then
-            ShowAsNote "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") as it's not installed. Use 'install' instead."
-            ((fail_count++))
-            continue
-        elif ! QPKG.Reinstall "$package"; then
+        if ! QPKG.Reinstall "$package"; then
             ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") (see log for more details)"
             ((fail_count++))
             QPKGs.ToStart.Remove "$package"
@@ -2209,15 +2222,9 @@ Packages.Install.Optionals()
     for package in "${target_packages[@]}"; do
         ShowAsOperationProgress "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$RUNTIME"
 
-        if QPKG.Installed "$package"; then
-            ShowAsNote "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") as it's already installed. Use 'reinstall' instead."
-            ((fail_count++))
-            continue
-        elif ! QPKG.Install "$package"; then
+        if ! QPKG.Install "$package"; then
             ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") (see log for more details)"
             ((fail_count++))
-#             QPKGs.ToStart.Remove "$package"
-#             QPKGs.ToRestart.Remove "$package"
             continue
         fi
 
@@ -3908,7 +3915,7 @@ QPKGs.Assignment.Build()
 
     User.Opts.Apps.All.ForceUpgrade.IsSet && QPKGs.ToForceUpgrade.Add "$(QPKGs.Installed.Array)"
     User.Opts.Apps.All.Upgrade.IsSet && QPKGs.ToUpgrade.Add "$(QPKGs.Upgradable.Array)"
-    User.Opts.Apps.All.Reinstall.IsSet && QPKGs.ToReinstall.Add "$(QPKGs.Installed.Array)"
+    User.Opts.Apps.All.Reinstall.IsSet && QPKGs.ToReinstall.Add "$(QPKGs.Installable.Array)"
     User.Opts.Apps.All.Install.IsSet && QPKGs.ToInstall.Add "$(QPKGs.Installable.Array)"
 
     # check for essential packages that require installation
@@ -4621,7 +4628,7 @@ QPKG.Download()
     #   $1 = QPKG name to download
 
     # output:
-    #   $? = 0 if successful, 1 if failed, 10 if package was already downloaded
+    #   $? = 0 if successful (or package was already downloaded), 1 if failed
 
     Session.Error.IsSet && return
     DebugFuncEntry
@@ -4646,7 +4653,6 @@ QPKG.Download()
     if [[ -e $local_pathfile ]]; then
         if FileMatchesMD5 "$local_pathfile" "$remote_md5"; then
             DebugInfo "local package $(FormatAsFileName "$local_filename") checksum correct, so skipping download"
-            resultcode=10
         else
             DebugAsWarning "local package $(FormatAsFileName "$local_filename") checksum incorrect"
             DebugInfo "deleting $(FormatAsFileName "$local_filename")"
@@ -4770,6 +4776,7 @@ QPKG.Reinstall()
         QPKGs.ToStart.Remove "$1"
         QPKGs.ToInstall.Remove "$1"
         QPKGs.ToRestart.Remove "$1"
+        resultcode=0    # reset this to zero (0 or 10 from a QPKG install is OK)
     else
         ShowAsEror "reinstallation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $resultcode)"
     fi
