@@ -4013,14 +4013,14 @@ QPKGs.Assignment.List()
     DebugInfoMinorSeparator
     DebugQPKG 'download' "$(QPKGs.ToDownload.ListCSV) "
     DebugQPKG 'backup' "$(QPKGs.ToBackup.ListCSV) "
-    DebugQPKG 'uninstall' "$(QPKGs.ToUninstall.ListCSV) "
     DebugQPKG 'stop' "$(QPKGs.ToStop.ListCSV) "
+    DebugQPKG 'uninstall' "$(QPKGs.ToUninstall.ListCSV) "
     DebugQPKG 'force-upgrade' "$(QPKGs.ToForceUpgrade.ListCSV) "
     DebugQPKG 'upgrade' "$(QPKGs.ToUpgrade.ListCSV) "
     DebugQPKG 'reinstall' "$(QPKGs.ToReinstall.ListCSV) "
     DebugQPKG 'install' "$(QPKGs.ToInstall.ListCSV) "
-    DebugQPKG 'restore' "$(QPKGs.ToRestore.ListCSV) "
     DebugQPKG 'start' "$(QPKGs.ToStart.ListCSV) "
+    DebugQPKG 'restore' "$(QPKGs.ToRestore.ListCSV) "
     DebugQPKG 'restart' "$(QPKGs.ToRestart.ListCSV) "
     DebugQPKG 'status' "$(QPKGs.ToStatus.ListCSV) "
     DebugInfoMinorSeparator
