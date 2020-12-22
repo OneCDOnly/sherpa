@@ -5865,21 +5865,26 @@ ShowAsEror()
 ShowAsOperationProgress()
     {
 
+    # show QPKG operations progress as percent-complete and a fraction of the total
+
     # $1 = tier (optional)
-    # $2 = total package count
+    # $2 = total count
     # $3 = fail count
     # $4 = pass count
     # $5 = action message (present-tense)
     # $6 = 'long' (optional)
 
     [[ -z $2 || -z $3 || -z $4 || -z $5 ]] && return 1
+    [[ $2 -eq 0 ]] && return 1                  # zero total, so let's get out of here
 
     local tier=''
     local total=$2
     local fails=$3
     local passes=$4
-    local tweaked_passes=$((passes+1))      # so we never show zero (e.g. 0/8 )
-    local tweaked_total=$((total-fails))    # auto-adjust upper limit to account for failures
+    local tweaked_passes=$((passes+1))          # so we never show zero (e.g. 0/8)
+    local tweaked_total=$((total-fails))        # auto-adjust upper limit to account for failures
+
+    [[ $tweaked_total -eq 0 ]] && return 1      # no-point showing a fraction of zero
 
     if [[ -n $1 ]]; then
         tier=" $1"
@@ -5917,12 +5922,12 @@ ShowAsOperationResult()
     # $6 = 'long' (optional)
 
     [[ -z $2 || -z $3 || -z $4 || -z $5 ]] && return 1
+    [[ $2 -eq 0 ]] && return 1                  # zero total, so let's get out of here
 
     local tier=''
-    local total=$2
-    local fails=$3
-    local passes=$4
-    local tweaked_total=$((total-fails))
+    local -i total=$2
+    local -i fails=$3
+    local -i passes=$4
 
     # execute with passes > total to trigger 100% message
     ShowAsOperationProgress "$1" "$total" "$fails" "$((passes+1))" "$ACTION_PRESENT" "$6"
@@ -5933,11 +5938,11 @@ ShowAsOperationResult()
         tier=''
     fi
 
-    if [[ $fails -eq $tweaked_total ]]; then
+    if [[ $passes -eq 0 ]]; then
         ShowAsFail "$5 ${fails}${tier} QPKG$(FormatAsPlural "$3") failed"
     elif [[ $fails -gt 0 ]]; then
         ShowAsWarn "$5 ${passes}${tier} QPKG$(FormatAsPlural "$passes") OK, but ${fails}${tier} QPKG$(FormatAsPlural "$fails") failed"
-    elif [[ $4 -gt 0 ]]; then
+    elif [[ $passes -gt 0 ]]; then
         ShowAsDone "$5 ${passes}${tier} QPKG$(FormatAsPlural "$passes") OK"
     else
         DebugAsDone "no${tier} QPKGs processed"
