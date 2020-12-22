@@ -1662,11 +1662,22 @@ Packages.Reinstall.Essentials()
     local -r ACTION_PRESENT=reinstalling
     local -r ACTION_PAST=reinstalled
 
+    # first check 'install' list for items that should be reinstalled instead
+    for package in $(QPKGs.ToInstall.Array); do
+        if QPKGs.Essential.Exist "$package"; then
+            if QPKG.Installed "$package"; then
+                QPKGs.ToInstall.Remove "$package"
+                QPKGs.ToReinstall.Add "$package"
+            fi
+        fi
+    done
+
     if QPKGs.ToReinstall.IsNone; then
         DebugInfo 'no QPKGs listed'
         DebugFuncExit; return 0
     fi
 
+    # now check the 'reinstall' list for items that should be installed instead
     for package in $(QPKGs.ToReinstall.Array); do
         if QPKGs.Essential.Exist "$package"; then
             if QPKG.Installed "$package"; then
@@ -2149,7 +2160,7 @@ Packages.Reinstall.Optionals()
         DebugFuncExit; return 0
     fi
 
-    # now check the 'reinstall' list for items that shoulbe installed instead
+    # now check the 'reinstall' list for items that should be installed instead
     for package in $(QPKGs.ToReinstall.Array); do
         if QPKGs.Optional.Exist "$package"; then
             if QPKG.Installed "$package"; then
