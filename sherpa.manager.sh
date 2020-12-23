@@ -1292,7 +1292,6 @@ Packages.Download()
 
     Session.SkipPackageProcessing.IsSet && return
     DebugFuncEntry
-    ShowAsProc 'downloading packages' >&2
 
     local package=''
     local -i package_count=0
@@ -1303,6 +1302,8 @@ Packages.Download()
     local -r ACTION_INTRANSITIVE='update cache with'
     local -r ACTION_PRESENT='updating cache with'
     local -r ACTION_PAST='updated cache with'
+
+    ShowAsProc 'downloading packages' >&2
 
     if QPKGs.ToDownload.IsNone; then
         DebugInfo 'no QPKGs listed'
@@ -1356,18 +1357,6 @@ Packages.Backup()
     for package in $(QPKGs.ToBackup.Array); do
         ShowAsOperationProgress "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$RUNTIME"
 
-        if QPKGs.Essential.Exist "$package"; then
-            ShowAsWarn "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") as it's unsupported"
-            ((fail_count++))
-            continue
-        fi
-
-        if ! QPKG.Installed "$package"; then
-            ShowAsNote "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") as it's not installed"
-            ((fail_count++))
-            continue
-        fi
-
         if ! QPKG.Backup "$package"; then
             ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") (see log for more details)"
             ((fail_count++))
@@ -1385,8 +1374,6 @@ Packages.Backup()
 Packages.Stop()
     {
 
-    ShowAsProc 'stopping packages' >&2
-
     Packages.ForceStop.Optionals
     Packages.Stop.Optionals
     Packages.ForceStop.Essentials
@@ -1399,6 +1386,7 @@ Packages.ForceStop.Optionals()
 
     Session.SkipPackageProcessing.IsSet && return
     DebugFuncEntry
+
     local package=''
     local -i index=0
     local -a target_packages=()
@@ -1411,28 +1399,23 @@ Packages.ForceStop.Optionals()
     local -r ACTION_PRESENT=force-stopping
     local -r ACTION_PAST=force-stopped
 
+    ShowAsProc "$ACTION_PRESENT $TIER packages" >&2
+
     if QPKGs.ToForceStop.IsNone; then
         DebugInfo 'no QPKGs listed'
         DebugFuncExit; return 0
     fi
 
     for package in $(QPKGs.ToForceStop.Array); do
-        if QPKGs.Optional.Exist "$package"; then
-            if QPKG.Installed "$package"; then
-                target_packages+=("$package")
-            else
-                ShowAsNote "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") as it's not installed"
-                QPKGs.ToForceStop.Remove "$package"
-            fi
-        fi
+        QPKGs.Optional.Exist "$package" && target_packages+=("$package")
     done
 
-    if [[ ${#target_packages[@]} -eq 0 ]]; then
+    package_count=${#target_packages[@]}
+
+    if [[ $package_count -eq 0 ]]; then
         DebugInfo "no $TIER QPKGs listed"
         DebugFuncExit; return 0
     fi
-
-    package_count=${#target_packages[@]}
 
     for ((index=package_count-1; index>=0; index--)); do       # process in reverse of declared order
         package=${target_packages[$index]}
@@ -1458,6 +1441,7 @@ Packages.Stop.Optionals()
 
     Session.SkipPackageProcessing.IsSet && return
     DebugFuncEntry
+
     local package=''
     local -i index=0
     local -a target_packages=()
@@ -1470,27 +1454,23 @@ Packages.Stop.Optionals()
     local -r ACTION_PRESENT=stopping
     local -r ACTION_PAST=stopped
 
+    ShowAsProc "$ACTION_PRESENT $TIER packages" >&2
+
     if QPKGs.ToStop.IsNone; then
         DebugInfo 'no QPKGs listed'
         DebugFuncExit; return 0
     fi
 
     for package in $(QPKGs.ToStop.Array); do
-        if QPKGs.Optional.Exist "$package"; then
-            if QPKG.Installed "$package" && QPKG.Enabled "$package"; then
-                target_packages+=("$package")
-            else
-                QPKGs.ToStop.Remove "$package"
-            fi
-        fi
+        QPKGs.Optional.Exist "$package" && QPKG.Enabled "$package" && target_packages+=("$package")
     done
 
-    if [[ ${#target_packages[@]} -eq 0 ]]; then
+    package_count=${#target_packages[@]}
+
+    if [[ $package_count -eq 0 ]]; then
         DebugInfo "no $TIER QPKGs listed"
         DebugFuncExit; return 0
     fi
-
-    package_count=${#target_packages[@]}
 
     for ((index=package_count-1; index>=0; index--)); do       # process in reverse of declared order
         package=${target_packages[$index]}
@@ -1516,6 +1496,7 @@ Packages.ForceStop.Essentials()
 
     Session.SkipPackageProcessing.IsSet && return
     DebugFuncEntry
+
     local package=''
     local -i index=0
     local -a target_packages=()
@@ -1528,29 +1509,23 @@ Packages.ForceStop.Essentials()
     local -r ACTION_PRESENT=force-stopping
     local -r ACTION_PAST=force-stopped
 
+    ShowAsProc "$ACTION_PRESENT $TIER packages" >&2
+
     if QPKGs.ToForceStop.IsNone; then
         DebugInfo 'no QPKGs listed'
         DebugFuncExit; return 0
     fi
 
     for package in $(QPKGs.ToForceStop.Array); do
-        if QPKGs.Essential.Exist "$package"; then
-            if QPKG.Installed "$package"; then
-                target_packages+=("$package")
-            else
-                QPKGs.ToForceStop.Remove "$package"
-            fi
-        fi
-
-        QPKGs.ToStop.Remove "$package"
+        QPKGs.Essential.Exist "$package" && target_packages+=("$package")
     done
 
-    if [[ ${#target_packages[@]} -eq 0 ]]; then
+    package_count=${#target_packages[@]}
+
+    if [[ $package_count -eq 0 ]]; then
         DebugInfo "no $TIER QPKGs listed"
         DebugFuncExit; return 0
     fi
-
-    package_count=${#target_packages[@]}
 
     for ((index=package_count-1; index>=0; index--)); do       # process in reverse of declared order
         package=${target_packages[$index]}
@@ -1576,6 +1551,7 @@ Packages.Stop.Essentials()
 
     Session.SkipPackageProcessing.IsSet && return
     DebugFuncEntry
+
     local package=''
     local -i index=0
     local -a target_packages=()
@@ -1588,21 +1564,23 @@ Packages.Stop.Essentials()
     local -r ACTION_PRESENT=stopping
     local -r ACTION_PAST=stopped
 
+    ShowAsProc "$ACTION_PRESENT $TIER packages" >&2
+
     if QPKGs.ToStop.IsNone; then
         DebugInfo 'no QPKGs listed'
         DebugFuncExit; return 0
     fi
 
-    for package in $(QPKGs.Essential.Array); do
-        QPKGs.ToStop.Exist "$package" && target_packages+=("$package")
+    for package in $(QPKGs.ToStop.Array); do
+        QPKGs.Essential.Exist "$package" && target_packages+=("$package")
     done
 
-    if [[ ${#target_packages[@]} -eq 0 ]]; then
+    package_count=${#target_packages[@]}
+
+    if [[ $package_count -eq 0 ]]; then
         DebugInfo "no $TIER QPKGs listed"
         DebugFuncExit; return 0
     fi
-
-    package_count=${#target_packages[@]}
 
     for ((index=package_count-1; index>=0; index--)); do       # process in reverse of declared order
         package=${target_packages[$index]}
@@ -1665,16 +1643,16 @@ Packages.Uninstall.Optionals()
         DebugFuncExit; return 0
     fi
 
-    for package in $(QPKGs.Optional.Array); do
-        QPKGs.ToUninstall.Exist "$package" && target_packages+=("$package")
+    for package in $(QPKGs.ToUninstall.Array); do
+        QPKGs.Optional.Exist "$package" && target_packages+=("$package")
     done
 
-    if [[ ${#target_packages[@]} -eq 0 ]]; then
+    package_count=${#target_packages[@]}
+
+    if [[ $package_count -eq 0 ]]; then
         DebugInfo "no $TIER QPKGs listed"
         DebugFuncExit; return 0
     fi
-
-    package_count=${#target_packages[@]}
 
     for ((index=package_count-1; index>=0; index--)); do       # process in reverse of declared order
         package=${target_packages[$index]}
@@ -1741,16 +1719,16 @@ Packages.Uninstall.Essentials()
         DebugFuncExit; return 0
     fi
 
-    for package in $(QPKGs.Essential.Array); do
-        QPKGs.ToUninstall.Exist "$package" && target_packages+=("$package")
+    for package in $(QPKGs.ToUninstall.Array); do
+        QPKGs.Essential.Exist "$package" && target_packages+=("$package")
     done
 
-    if [[ ${#target_packages[@]} -eq 0 ]]; then
+    package_count=${#target_packages[@]}
+
+    if [[ $package_count -eq 0 ]]; then
         DebugInfo "no $TIER QPKGs listed"
         DebugFuncExit; return 0
     fi
-
-    package_count=${#target_packages[@]}
 
     for ((index=package_count-1; index>=0; index--)); do       # process in reverse of declared order
         package=${target_packages[$index]}
@@ -1800,16 +1778,16 @@ Packages.Force-upgrade.Essentials()
         DebugFuncExit; return 0
     fi
 
-    for package in $(QPKGs.Essential.Array); do
-        QPKGs.ToForceUpgrade.Exist "$package" && target_packages+=("$package")
+    for package in $(QPKGs.ToForceUpgrade.Array); do
+        QPKGs.Essential.Exist "$package" && target_packages+=("$package")
     done
 
-    if [[ ${#target_packages[@]} -eq 0 ]]; then
+    package_count=${#target_packages[@]}
+
+    if [[ $package_count -eq 0 ]]; then
         DebugInfo "no $TIER QPKGs listed"
         DebugFuncExit; return 0
     fi
-
-    package_count=${#target_packages[@]}
 
     for package in "${target_packages[@]}"; do
         ShowAsOperationProgress "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$RUNTIME"
@@ -1856,16 +1834,16 @@ Packages.Upgrade.Essentials()
         DebugFuncExit; return 0
     fi
 
-    for package in $(QPKGs.Essential.Array); do
-        QPKGs.ToUpgrade.Exist "$package" && target_packages+=("$package")
+    for package in $(QPKGs.ToUpgrade.Array); do
+        QPKGs.Essential.Exist "$package" && target_packages+=("$package")
     done
 
-    if [[ ${#target_packages[@]} -eq 0 ]]; then
+    package_count=${#target_packages[@]}
+
+    if [[ $package_count -eq 0 ]]; then
         DebugInfo "no $TIER QPKGs listed"
         DebugFuncExit; return 0
     fi
-
-    package_count=${#target_packages[@]}
 
     for package in "${target_packages[@]}"; do
         ShowAsOperationProgress "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$RUNTIME"
@@ -1912,16 +1890,16 @@ Packages.Reinstall.Essentials()
         DebugFuncExit; return 0
     fi
 
-    for package in $(QPKGs.Essential.Array); do
-        QPKGs.ToReinstall.Exist "$package" && target_packages+=("$package")
+    for package in $(QPKGs.ToReinstall.Array); do
+        QPKGs.Essential.Exist "$package" && target_packages+=("$package")
     done
 
-    if [[ ${#target_packages[@]} -eq 0 ]]; then
+    package_count=${#target_packages[@]}
+
+    if [[ $package_count -eq 0 ]]; then
         DebugInfo "no $TIER QPKGs listed"
         DebugFuncExit; return 0
     fi
-
-    package_count=${#target_packages[@]}
 
     for package in "${target_packages[@]}"; do
         ShowAsOperationProgress "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$RUNTIME"
@@ -1996,16 +1974,16 @@ Packages.Install.Essentials()
         DebugFuncExit; return 0
     fi
 
-    for package in $(QPKGs.Essential.Array); do
-        QPKGs.ToInstall.Exist "$package" && target_packages+=("$package")
+    for package in $(QPKGs.ToInstall.Array); do
+        QPKGs.Essential.Exist "$package" && target_packages+=("$package")
     done
 
-    if [[ ${#target_packages[@]} -eq 0 ]]; then
+    package_count=${#target_packages[@]}
+
+    if [[ $package_count -eq 0 ]]; then
         DebugInfo "no $TIER QPKGs listed"
         DebugFuncExit; return 0
     fi
-
-    package_count=${#target_packages[@]}
 
     for package in "${target_packages[@]}"; do
         ShowAsOperationProgress "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$RUNTIME"
@@ -2046,6 +2024,13 @@ Packages.Install.Essentials()
 
     }
 
+Packages.Restore.Essentials()
+    {
+
+    :   # placeholder function
+
+    }
+
 Packages.ForceStart.Essentials()
     {
 
@@ -2070,16 +2055,16 @@ Packages.ForceStart.Essentials()
         DebugFuncExit; return 0
     fi
 
-    for package in $(QPKGs.Essential.Array); do
-        QPKGs.ToForceStart.Exist "$package" && target_packages+=("$package")
+    for package in $(QPKGs.ToForceStart.Array); do
+        QPKGs.Essential.Exist "$package" && target_packages+=("$package")
     done
 
-    if [[ ${#target_packages[@]} -eq 0 ]]; then
+    package_count=${#target_packages[@]}
+
+    if [[ $package_count -eq 0 ]]; then
         DebugInfo "no $TIER QPKGs listed"
         DebugFuncExit; return 0
     fi
-
-    package_count=${#target_packages[@]}
 
     for package in "${target_packages[@]}"; do
         ShowAsOperationProgress "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$RUNTIME"
@@ -2131,16 +2116,16 @@ Packages.Start.Essentials()
         DebugFuncExit; return 0
     fi
 
-    for package in $(QPKGs.Essential.Array); do
-        QPKGs.ToStart.Exist "$package" && QPKG.NotEnabled "$package" && target_packages+=("$package")
+    for package in $(QPKGs.ToStart.Array); do
+        QPKGs.Essential.Exist "$package" && QPKG.NotEnabled "$package" && target_packages+=("$package")
     done
 
-    if [[ ${#target_packages[@]} -eq 0 ]]; then
+    package_count=${#target_packages[@]}
+
+    if [[ $package_count -eq 0 ]]; then
         DebugInfo "no $TIER QPKGs listed"
         DebugFuncExit; return 0
     fi
-
-    package_count=${#target_packages[@]}
 
     for package in "${target_packages[@]}"; do
         ShowAsOperationProgress "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$RUNTIME"
@@ -2165,13 +2150,6 @@ Packages.Start.Essentials()
 
     ShowAsOperationResult "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PAST" "$RUNTIME"
     DebugFuncExit; return 0
-
-    }
-
-Packages.Restore.Essentials()
-    {
-
-    :   # placeholder function
 
     }
 
@@ -2206,16 +2184,16 @@ Packages.Restart.Essentials()
         DebugFuncExit; return 0
     fi
 
-    for package in $(QPKGs.Essential.Array); do
-        QPKGs.ToRestart.Exist "$package" && target_packages+=("$package")
+    for package in $(QPKGs.ToRestart.Array); do
+        QPKGs.Essential.Exist "$package" && target_packages+=("$package")
     done
 
-    if [[ ${#target_packages[@]} -eq 0 ]]; then
+    package_count=${#target_packages[@]}
+
+    if [[ $package_count -eq 0 ]]; then
         DebugInfo "no $TIER QPKGs listed"
         DebugFuncExit; return 0
     fi
-
-    package_count=${#target_packages[@]}
 
     for package in "${target_packages[@]}"; do
         ShowAsOperationProgress "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$RUNTIME"
@@ -2296,6 +2274,13 @@ Packages.Install.Addons()
 
     }
 
+Packages.Restore.Addons()
+    {
+
+    :   # placeholder function
+
+    }
+
 Packages.ForceStart.Addons()
     {
 
@@ -2304,13 +2289,6 @@ Packages.ForceStart.Addons()
     }
 
 Packages.Start.Addons()
-    {
-
-    :   # placeholder function
-
-    }
-
-Packages.Restore.Addons()
     {
 
     :   # placeholder function
@@ -2359,12 +2337,12 @@ Packages.Force-upgrade.Optionals()
         QPKGs.Optional.Exist "$package" && target_packages+=("$package")
     done
 
-    if [[ ${#target_packages[@]} -eq 0 ]]; then
+    package_count=${#target_packages[@]}
+
+    if [[ $package_count -eq 0 ]]; then
         DebugInfo "no $TIER QPKGs listed"
         DebugFuncExit; return 0
     fi
-
-    package_count=${#target_packages[@]}
 
     for package in "${target_packages[@]}"; do
         ShowAsOperationProgress "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$RUNTIME"
@@ -2411,12 +2389,12 @@ Packages.Upgrade.Optionals()
         QPKGs.Optional.Exist "$package" && target_packages+=("$package")
     done
 
-    if [[ ${#target_packages[@]} -eq 0 ]]; then
+    package_count=${#target_packages[@]}
+
+    if [[ $package_count -eq 0 ]]; then
         DebugInfo "no $TIER QPKGs listed"
         DebugFuncExit; return 0
     fi
-
-    package_count=${#target_packages[@]}
 
     for package in "${target_packages[@]}"; do
         ShowAsOperationProgress "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$RUNTIME"
@@ -2467,12 +2445,12 @@ Packages.Reinstall.Optionals()
         QPKGs.Optional.Exist "$package" && target_packages+=("$package")
     done
 
-    if [[ ${#target_packages[@]} -eq 0 ]]; then
+    package_count=${#target_packages[@]}
+
+    if [[ $package_count -eq 0 ]]; then
         DebugInfo "no $TIER QPKGs listed"
         DebugFuncExit; return 0
     fi
-
-    package_count=${#target_packages[@]}
 
     for package in "${target_packages[@]}"; do
         ShowAsOperationProgress "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$RUNTIME"
@@ -2521,17 +2499,73 @@ Packages.Install.Optionals()
         QPKGs.Optional.Exist "$package" && target_packages+=("$package")
     done
 
-    if [[ ${#target_packages[@]} -eq 0 ]]; then
+    package_count=${#target_packages[@]}
+
+    if [[ $package_count -eq 0 ]]; then
         DebugInfo "no $TIER QPKGs listed"
         DebugFuncExit; return 0
     fi
-
-    package_count=${#target_packages[@]}
 
     for package in "${target_packages[@]}"; do
         ShowAsOperationProgress "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$RUNTIME"
 
         if ! QPKG.Install "$package"; then
+            ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") (see log for more details)"
+            ((fail_count++))
+            continue
+        fi
+
+        ((pass_count++))
+    done
+
+    ShowAsOperationResult "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PAST" "$RUNTIME"
+    DebugFuncExit; return 0
+
+    }
+
+Packages.Restore.Optionals()
+    {
+
+    Session.SkipPackageProcessing.IsSet && return
+    DebugFuncEntry
+
+    local package=''
+    local -a target_packages=()
+    local -i package_count=0
+    local -i pass_count=0
+    local -i fail_count=0
+    local -r TIER=optional
+    local -r RUNTIME=''
+    local -r ACTION_INTRANSITIVE='restore configuration for'
+    local -r ACTION_PRESENT='restoring configuration for'
+    local -r ACTION_PAST='configuration restored for'
+
+    ShowAsProc "$ACTION_PRESENT $TIER packages" >&2
+
+    if QPKGs.ToRestore.IsNone; then
+        DebugInfo 'no QPKGs listed'
+        DebugFuncExit; return 0
+    fi
+
+    for package in $(QPKGs.ToRestore.Array); do
+        QPKGs.Optional.Exist "$package" && target_packages+=("$package")
+    done
+
+    package_count=${#target_packages[@]}
+
+    if [[ $package_count -eq 0 ]]; then
+        DebugInfo "no $TIER QPKGs listed"
+        DebugFuncExit; return 0
+    fi
+
+    for package in "${target_packages[@]}"; do
+        ShowAsOperationProgress "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$RUNTIME"
+
+        if ! QPKG.Installed "$package"; then
+            ShowAsNote "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") as it's not installed"
+            ((fail_count++))
+            continue
+        elif ! QPKG.Restore "$package"; then
             ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") (see log for more details)"
             ((fail_count++))
             continue
@@ -2570,24 +2604,15 @@ Packages.ForceStart.Optionals()
     fi
 
     for package in $(QPKGs.ToForceStart.Array); do
-        if QPKGs.Optional.Exist "$package"; then
-            if QPKG.Installed "$package"; then
-                target_packages+=("$package")
-            else
-                QPKGs.ToForceStart.Remove "$package"
-            fi
-        fi
-
-        QPKGs.ToRestart.Remove "$package"
-        QPKGs.ToStart.Remove "$package"
+        QPKGs.Optional.Exist "$package" && target_packages+=("$package")
     done
 
-    if [[ ${#target_packages[@]} -eq 0 ]]; then
+    package_count=${#target_packages[@]}
+
+    if [[ $package_count -eq 0 ]]; then
         DebugInfo "no $TIER QPKGs listed"
         DebugFuncExit; return 0
     fi
-
-    package_count=${#target_packages[@]}
 
     for package in "${target_packages[@]}"; do
         ShowAsOperationProgress "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$RUNTIME"
@@ -2631,84 +2656,20 @@ Packages.Start.Optionals()
     fi
 
     for package in $(QPKGs.ToStart.Array); do
-        if QPKGs.Optional.Exist "$package"; then
-            if QPKG.Installed "$package"; then
-                target_packages+=("$package")
-            else
-                QPKGs.ToStart.Remove "$package"
-            fi
-        fi
-
-        QPKGs.ToRestart.Remove "$package"
+        QPKGs.Optional.Exist "$package" && target_packages+=("$package")
     done
 
-    if [[ ${#target_packages[@]} -eq 0 ]]; then
+    package_count=${#target_packages[@]}
+
+    if [[ $package_count -eq 0 ]]; then
         DebugInfo "no $TIER QPKGs listed"
         DebugFuncExit; return 0
     fi
-
-    package_count=${#target_packages[@]}
 
     for package in "${target_packages[@]}"; do
         ShowAsOperationProgress "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$RUNTIME"
 
         if ! QPKG.Start "$package"; then
-            ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") (see log for more details)"
-            ((fail_count++))
-            continue
-        fi
-
-        ((pass_count++))
-    done
-
-    ShowAsOperationResult "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PAST" "$RUNTIME"
-    DebugFuncExit; return 0
-
-    }
-
-Packages.Restore.Optionals()
-    {
-
-    Session.SkipPackageProcessing.IsSet && return
-    DebugFuncEntry
-
-    local package=''
-    local -a target_packages=()
-    local -i package_count=0
-    local -i pass_count=0
-    local -i fail_count=0
-    local -r TIER=optional
-    local -r RUNTIME=''
-    local -r ACTION_INTRANSITIVE='restore configuration for'
-    local -r ACTION_PRESENT='restoring configuration for'
-    local -r ACTION_PAST='configuration restored for'
-
-    ShowAsProc "$ACTION_PRESENT $TIER packages" >&2
-
-    if QPKGs.ToRestore.IsNone; then
-        DebugInfo 'no QPKGs listed'
-        DebugFuncExit; return 0
-    fi
-
-    for package in $(QPKGs.ToRestore.Array); do
-        QPKGs.Optional.Exist "$package" && target_packages+=("$package")
-    done
-
-    if [[ ${#target_packages[@]} -eq 0 ]]; then
-        DebugInfo "no $TIER QPKGs listed"
-        DebugFuncExit; return 0
-    fi
-
-    package_count=${#target_packages[@]}
-
-    for package in "${target_packages[@]}"; do
-        ShowAsOperationProgress "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$RUNTIME"
-
-        if ! QPKG.Installed "$package"; then
-            ShowAsNote "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") as it's not installed"
-            ((fail_count++))
-            continue
-        elif ! QPKG.Restore "$package"; then
             ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") (see log for more details)"
             ((fail_count++))
             continue
@@ -2735,7 +2696,6 @@ Packages.Restart.Optionals()
     Session.SkipPackageProcessing.IsSet && return
     DebugFuncEntry
 
-    local -a acc=()
     local package=''
     local -a target_packages=()
     local -i package_count=0
@@ -2749,35 +2709,22 @@ Packages.Restart.Optionals()
 
     ShowAsProc "$ACTION_PRESENT $TIER packages" >&2
 
-    for package in $(QPKGs.JustInstalled.Array); do
-        if QPKGs.Essential.Exist "$package"; then
-            acc+=($(QPKG.Get.Optionals "$package"))
-        fi
-    done
-
-    if [[ ${#acc[@]} -gt 0 ]]; then
-        for package in "${acc[@]}"; do
-            QPKG.Installed "$package" && ! QPKGs.JustInstalled.Exist "$package" && ! QPKGs.JustStarted.Exist "$package" && QPKGs.ToRestart.Add "$package"
-        done
-    fi
-
-    for package in $(QPKGs.ToRestart.Array); do
-        QPKGs.Optional.Exist "$package" && target_packages+=("$package")
-    done
-
     if QPKGs.ToRestart.IsNone; then
         DebugInfo 'no QPKGs listed'
         SmartCR >&2
         DebugFuncExit; return 0
     fi
 
-    if [[ ${#target_packages[@]} -eq 0 ]]; then
-        DebugInfo "no $TIER QPKGs listed"
-        SmartCR >&2
-        DebugFuncExit; return 0
-    fi
+    for package in $(QPKGs.ToRestart.Array); do
+        QPKGs.Optional.Exist "$package" && target_packages+=("$package")
+    done
 
     package_count=${#target_packages[@]}
+
+    if [[ $package_count -eq 0 ]]; then
+        DebugInfo "no $TIER QPKGs listed"
+        DebugFuncExit; return 0
+    fi
 
     for package in "${target_packages[@]}"; do
         ShowAsOperationProgress "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$RUNTIME"
@@ -4246,25 +4193,24 @@ QPKGs.Conflicts.Check()
 #  18. upgrade essentials
 #  17. reinstall essentials
 #  16. install essentials
-#  15. force-start essentials
-#  14. start essentials
-#  13. restore essentials
+#  15. restore essentials
+#  14. force-start essentials
+#  13. start essentials
 #  12. force-restart essentials
 #  11. restart essentials
 #  10. force-upgrade optionals
 #   9. upgrade optionals
 #   8. reinstall optionals
 #   7. install optionals
-#   6. force-start optionals
-#   5. start optionals
-#   4. restore optionals
+#   6. restore optionals
+#   5. force-start optionals
+#   4. start optionals
 #   3. force-restart optionals
 #   2. restart optionals
 #   1. status                       (lowest: least-important)
 
 QPKGs.Assignment.Build()
     {
-
 
     Session.SkipPackageProcessing.IsSet && return
     DebugFuncEntry
@@ -4273,8 +4219,16 @@ QPKGs.Assignment.Build()
 
     # check for packages to be 'stopped' or 'uninstalled', and 'stop' related packages
     if User.Opts.Apps.All.Uninstall.IsSet; then
-        QPKGs.ToStop.Init       # no-need to 'stop' all packages, as they are about to be 'uninstalled'
+        QPKGs.ToForceStop.Init      # no-need to 'force-stop' all packages, as they are about to be 'uninstalled'
+        QPKGs.ToStop.Init           # no-need to 'stop' all packages, as they are about to be 'uninstalled'
     else
+        # if an 'essential' has been selected for 'force-stop', need to 'stop' all its 'optionals' first
+        for package in $(QPKGs.ToForceStop.Array); do
+            if QPKGs.Essential.Exist "$package" && QPKG.Installed "$package"; then
+                QPKGs.ToStop.Add "$(QPKG.Get.Optionals "$package")"
+            fi
+        done
+
         # if an 'essential' has been selected for 'stop', need to 'stop' all its 'optionals' first
         for package in $(QPKGs.ToStop.Array); do
             if QPKGs.Essential.Exist "$package" && QPKG.Installed "$package"; then
@@ -4353,6 +4307,11 @@ QPKGs.Assignment.Build()
 
     # remove invalid packages from lists so they're not operated-on. Packages are added to these lists in Session.Arguments.Parse() and this function.
     QPKGs.ToBackup.Remove "$(QPKGs.Essential.Array)"    # KLUDGE: remove this when permitted package action array is operational
+    QPKGs.ToBackup.Remove "$(QPKGs.NotInstalled.Array)"
+
+    QPKGs.ToForceStop.Remove "$(QPKGs.NotInstalled.Array)"
+    QPKGs.ToForceStop.Remove "$(QPKGs.ToUninstall.Array)"
+    QPKGs.ToForceStop.Remove sherpa
 
     QPKGs.ToStop.Remove "$(QPKGs.NotInstalled.Array)"
     QPKGs.ToStop.Remove "$(QPKGs.ToUninstall.Array)"
@@ -4363,11 +4322,22 @@ QPKGs.Assignment.Build()
 
     QPKGs.ToInstall.Remove "$(QPKGs.Installed.Array)"
 
+    QPKGs.ToForceStart.Remove "$(QPKGs.NotInstalled.Array)"
+    QPKGs.ToForceStart.Remove "$(QPKGs.ToInstall.Array)"
+    QPKGs.ToForceStart.Remove "$(QPKGs.ToStart.Array)"
+    QPKGs.ToForceStart.Remove "$(QPKGs.ToForceRestart.Array)"
+    QPKGs.ToForceStart.Remove sherpa
+
     QPKGs.ToStart.Remove "$(QPKGs.NotInstalled.Array)"
     QPKGs.ToStart.Remove "$(QPKGs.ToInstall.Array)"
     QPKGs.ToStart.Remove "$(QPKGs.ToForceStart.Array)"
     QPKGs.ToStart.Remove "$(QPKGs.ToForceRestart.Array)"
     QPKGs.ToStart.Remove sherpa
+
+    QPKGs.ToForceRestart.Remove "$(QPKGs.NotInstalled.Array)"
+    QPKGs.ToForceRestart.Remove "$(QPKGs.ToInstall.Array)"
+    QPKGs.ToForceRestart.Remove "$(QPKGs.ToForceStart.Array)"
+    QPKGs.ToForceRestart.Remove "$(QPKGs.ToStart.Array)"
 
     QPKGs.ToRestart.Remove "$(QPKGs.NotInstalled.Array)"
     QPKGs.ToRestart.Remove "$(QPKGs.ToInstall.Array)"
@@ -6922,9 +6892,9 @@ Process.Tier.Actions()
     Packages.Upgrade."$tier"
     Packages.Reinstall."$tier"
     Packages.Install."$tier"
+    Packages.Restore."$tier"
     Packages.ForceStart."$tier"
     Packages.Start."$tier"
-    Packages.Restore."$tier"
     Packages.ForceRestart."$tier"
     Packages.Restart."$tier"
 
