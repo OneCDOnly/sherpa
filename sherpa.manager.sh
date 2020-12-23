@@ -510,7 +510,7 @@ Session.Init()
 
     }
 
-Session.BuildLists()
+Session.Build.StateLists()
     {
 
     DebugFuncEntry
@@ -558,7 +558,7 @@ Session.Arguments.Parse()
                 arg_identified=true
                 Session.Display.Clean.Clear
                 Session.SkipPackageProcessing.Clear
-                Session.Lists.Built.IsNot && Session.BuildLists
+                Session.Lists.Built.IsNot && Session.Build.StateLists
                 ;;
             status|statuses)
                 operation=status_
@@ -567,7 +567,7 @@ Session.Arguments.Parse()
                 arg_identified=true
                 Session.Display.Clean.Clear
                 Session.SkipPackageProcessing.Set
-                Session.Lists.Built.IsNot && Session.BuildLists
+                Session.Lists.Built.IsNot && Session.Build.StateLists
                 ;;
             clean|paste)
                 operation=${arg}_
@@ -752,7 +752,7 @@ Session.Arguments.Parse()
                         User.Opts.Help.Actions.Set
                         ;;
                     all_)
-                        Session.Lists.Built.IsNot && Session.BuildLists
+                        Session.Lists.Built.IsNot && Session.Build.StateLists
                         User.Opts.Apps.List.All.Set
                         Session.Display.Clean.Set
                         ;;
@@ -763,17 +763,17 @@ Session.Arguments.Parse()
                         User.Opts.Apps.List.Backups.Set
                         ;;
                     essential_)
-                        Session.Lists.Built.IsNot && Session.BuildLists
+                        Session.Lists.Built.IsNot && Session.Build.StateLists
                         User.Opts.Apps.List.Essential.Set
                         Session.Display.Clean.Set
                         ;;
                     installable_)
-                        Session.Lists.Built.IsNot && Session.BuildLists
+                        Session.Lists.Built.IsNot && Session.Build.StateLists
                         User.Opts.Apps.List.NotInstalled.Set
                         Session.Display.Clean.Set
                         ;;
                     installed_)
-                        Session.Lists.Built.IsNot && Session.BuildLists
+                        Session.Lists.Built.IsNot && Session.Build.StateLists
                         User.Opts.Apps.List.Installed.Set
                         Session.Display.Clean.Set
                         ;;
@@ -786,7 +786,7 @@ Session.Arguments.Parse()
                         Session.Display.Clean.Set
                         ;;
                     optional_)
-                        Session.Lists.Built.IsNot && Session.BuildLists
+                        Session.Lists.Built.IsNot && Session.Build.StateLists
                         User.Opts.Apps.List.Optional.Set
                         Session.Display.Clean.Set
                         ;;
@@ -794,21 +794,21 @@ Session.Arguments.Parse()
                         User.Opts.Help.Options.Set
                         ;;
                     packages_)
-                        Session.Lists.Built.IsNot && Session.BuildLists
+                        Session.Lists.Built.IsNot && Session.Build.StateLists
                         User.Opts.Help.Packages.Set
                         ;;
                     problems_)
                         User.Opts.Help.Problems.Set
                         ;;
                     status_)
-                        Session.Lists.Built.IsNot && Session.BuildLists
+                        Session.Lists.Built.IsNot && Session.Build.StateLists
                         User.Opts.Apps.All.Status.Set
                         ;;
                     tips_)
                         User.Opts.Help.Tips.Set
                         ;;
                     upgradable_)
-                        Session.Lists.Built.IsNot && Session.BuildLists
+                        Session.Lists.Built.IsNot && Session.Build.StateLists
                         User.Opts.Apps.List.Upgradable.Set
                         Session.Display.Clean.Set
                         ;;
@@ -1303,7 +1303,7 @@ Packages.Download()
     local -r ACTION_PRESENT='updating cache with'
     local -r ACTION_PAST='updated cache with'
 
-    ShowAsProc 'downloading packages' >&2
+    ShowAsProc "checking for packages to $ACTION_INTRANSITIVE" >&2
 
     if QPKGs.ToDownload.IsNone; then
         DebugInfo 'no QPKGs listed'
@@ -1345,7 +1345,7 @@ Packages.Backup()
     local -r ACTION_PRESENT=backing-up
     local -r ACTION_PAST=backed-up
 
-    ShowAsProc 'backup packages' >&2
+    ShowAsProc "checking for packages to $ACTION_INTRANSITIVE" >&2
 
     if QPKGs.ToBackup.IsNone; then
         DebugInfo 'no QPKGs listed'
@@ -1399,7 +1399,7 @@ Packages.ForceStop.Optionals()
     local -r ACTION_PRESENT=force-stopping
     local -r ACTION_PAST=force-stopped
 
-    ShowAsProc "$ACTION_PRESENT $TIER packages" >&2
+    ShowAsProc "checking for $TIER packages to $ACTION_INTRANSITIVE" >&2
 
     if QPKGs.ToForceStop.IsNone; then
         DebugInfo 'no QPKGs listed'
@@ -1454,7 +1454,7 @@ Packages.Stop.Optionals()
     local -r ACTION_PRESENT=stopping
     local -r ACTION_PAST=stopped
 
-    ShowAsProc "$ACTION_PRESENT $TIER packages" >&2
+    ShowAsProc "checking for $TIER packages to $ACTION_INTRANSITIVE" >&2
 
     if QPKGs.ToStop.IsNone; then
         DebugInfo 'no QPKGs listed'
@@ -1509,7 +1509,7 @@ Packages.ForceStop.Essentials()
     local -r ACTION_PRESENT=force-stopping
     local -r ACTION_PAST=force-stopped
 
-    ShowAsProc "$ACTION_PRESENT $TIER packages" >&2
+    ShowAsProc "checking for $TIER packages to $ACTION_INTRANSITIVE" >&2
 
     if QPKGs.ToForceStop.IsNone; then
         DebugInfo 'no QPKGs listed'
@@ -1564,7 +1564,7 @@ Packages.Stop.Essentials()
     local -r ACTION_PRESENT=stopping
     local -r ACTION_PAST=stopped
 
-    ShowAsProc "$ACTION_PRESENT $TIER packages" >&2
+    ShowAsProc "checking for $TIER packages to $ACTION_INTRANSITIVE" >&2
 
     if QPKGs.ToStop.IsNone; then
         DebugInfo 'no QPKGs listed'
@@ -1587,11 +1587,7 @@ Packages.Stop.Essentials()
 
         ShowAsOperationProgress "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$RUNTIME"
 
-        if ! QPKG.Installed "$package"; then
-            ShowAsNote "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") as it's not installed"
-            ((fail_count++))
-            continue
-        elif ! QPKG.Stop "$package"; then
+        if ! QPKG.Stop "$package"; then
             ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") (see log for more details)"
             ((fail_count++))
             continue
@@ -1636,7 +1632,7 @@ Packages.Uninstall.Optionals()
     local -r ACTION_PRESENT=uninstalling
     local -r ACTION_PAST=uninstalled
 
-    ShowAsProc "$ACTION_PRESENT $TIER packages" >&2
+    ShowAsProc "checking for $TIER packages to $ACTION_INTRANSITIVE" >&2
 
     if QPKGs.ToUninstall.IsNone; then
         DebugInfo 'no QPKGs listed'
@@ -1659,11 +1655,7 @@ Packages.Uninstall.Optionals()
 
         ShowAsOperationProgress "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$RUNTIME"
 
-        if ! QPKG.Installed "$package"; then
-            ShowAsNote "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") as it's not installed"
-            ((fail_count++))
-            continue
-        elif ! QPKG.Uninstall "$package"; then
+        if ! QPKG.Uninstall "$package"; then
             ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") (see log for more details)"
             ((fail_count++))
             continue
@@ -1684,9 +1676,9 @@ Packages.Uninstall.Addons()
     DebugFuncEntry
 
     local -r TIER=addon
-    local -r ACTION_PRESENT=uninstalling
+    local -r ACTION_INTRANSITIVE=uninstall
 
-    ShowAsProc "$ACTION_PRESENT $TIER packages" >&2
+    ShowAsProc "checking for $TIER packages to $ACTION_INTRANSITIVE" >&2
 
     QPKG.Installed Entware && IPKGs.Uninstall
 
@@ -1712,7 +1704,7 @@ Packages.Uninstall.Essentials()
     local -r ACTION_PRESENT=uninstalling
     local -r ACTION_PAST=uninstalled
 
-    ShowAsProc "$ACTION_PRESENT $TIER packages" >&2
+    ShowAsProc "checking for $TIER packages to $ACTION_INTRANSITIVE" >&2
 
     if QPKGs.ToUninstall.IsNone; then
         DebugInfo 'no QPKGs listed'
@@ -1735,11 +1727,7 @@ Packages.Uninstall.Essentials()
 
         ShowAsOperationProgress "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$RUNTIME"
 
-        if ! QPKG.Installed "$package"; then
-            ShowAsNote "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") as it's not installed"
-            ((fail_count++))
-            continue
-        elif ! QPKG.Uninstall "$package"; then
+        if ! QPKG.Uninstall "$package"; then
             ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") (see log for more details)"
             ((fail_count++))
             continue
@@ -1771,7 +1759,7 @@ Packages.Force-upgrade.Essentials()
     local -r ACTION_PRESENT=force-upgrading
     local -r ACTION_PAST=force-upgraded
 
-    ShowAsProc "$ACTION_PRESENT $TIER packages" >&2
+    ShowAsProc "checking for $TIER packages to $ACTION_INTRANSITIVE" >&2
 
     if QPKGs.ToForceUpgrade.IsNone; then
         DebugInfo 'no QPKGs listed'
@@ -1792,11 +1780,7 @@ Packages.Force-upgrade.Essentials()
     for package in "${target_packages[@]}"; do
         ShowAsOperationProgress "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$RUNTIME"
 
-        if ! QPKG.Installed "$package"; then
-            ShowAsNote "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") as it's not installed"
-            ((fail_count++))
-            continue
-        elif ! QPKG.Upgrade "$package" --forced; then
+        if ! QPKG.Upgrade "$package" --forced; then
             ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") (see log for more details)"
             ((fail_count++))
             continue
@@ -1827,7 +1811,7 @@ Packages.Upgrade.Essentials()
     local -r ACTION_PRESENT=upgrading
     local -r ACTION_PAST=upgraded
 
-    ShowAsProc "$ACTION_PRESENT $TIER packages" >&2
+    ShowAsProc "checking for $TIER packages to $ACTION_INTRANSITIVE" >&2
 
     if QPKGs.ToUpgrade.IsNone; then
         DebugInfo 'no QPKGs listed'
@@ -1848,11 +1832,7 @@ Packages.Upgrade.Essentials()
     for package in "${target_packages[@]}"; do
         ShowAsOperationProgress "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$RUNTIME"
 
-        if ! QPKG.Installed "$package"; then
-            ShowAsNote "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") as it's not installed"
-            ((fail_count++))
-            continue
-        elif ! QPKG.Upgrade "$package"; then
+        if ! QPKG.Upgrade "$package"; then
             ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") (see log for more details)"
             ((fail_count++))
             continue
@@ -1883,7 +1863,7 @@ Packages.Reinstall.Essentials()
     local -r ACTION_PRESENT=reinstalling
     local -r ACTION_PAST=reinstalled
 
-    ShowAsProc "$ACTION_PRESENT $TIER packages" >&2
+    ShowAsProc "checking for $TIER packages to $ACTION_INTRANSITIVE" >&2
 
     if QPKGs.ToReinstall.IsNone; then
         DebugInfo 'no QPKGs listed'
@@ -1967,7 +1947,7 @@ Packages.Install.Essentials()
     local -r ACTION_PRESENT=installing
     local -r ACTION_PAST=installed
 
-    ShowAsProc "$ACTION_PRESENT $TIER packages" >&2
+    ShowAsProc "checking for $TIER packages to $ACTION_INTRANSITIVE" >&2
 
     if QPKGs.ToInstall.IsNone; then
         DebugInfo 'no QPKGs listed'
@@ -1998,11 +1978,7 @@ Packages.Install.Essentials()
             ((pass_count++))
         else
             if [[ $NAS_QPKG_ARCH != none ]] && QPKGs.ToInstall.Exist "$package"; then
-                if QPKG.Installed "$package"; then
-                    ShowAsNote "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") as it's already installed. Use 'reinstall' instead."
-                    ((fail_count++))
-                    continue
-                elif ! QPKG.Install "$package"; then
+                if ! QPKG.Install "$package"; then
                     ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") (see log for more details)"
                     ((fail_count++))
                     continue
@@ -2048,7 +2024,7 @@ Packages.ForceStart.Essentials()
     local -r ACTION_PRESENT=force-starting
     local -r ACTION_PAST=force-started
 
-    ShowAsProc "$ACTION_PRESENT $TIER packages" >&2
+    ShowAsProc "checking for $TIER packages to $ACTION_INTRANSITIVE" >&2
 
     if QPKGs.ToStart.IsNone; then
         DebugInfo 'no QPKGs listed'
@@ -2109,7 +2085,7 @@ Packages.Start.Essentials()
     local -r ACTION_PRESENT=starting
     local -r ACTION_PAST=started
 
-    ShowAsProc "$ACTION_PRESENT $TIER packages" >&2
+    ShowAsProc "checking for $TIER packages to $ACTION_INTRANSITIVE" >&2
 
     if QPKGs.ToStart.IsNone; then
         DebugInfo 'no QPKGs listed'
@@ -2177,7 +2153,7 @@ Packages.Restart.Essentials()
     local -r ACTION_PRESENT=restarting
     local -r ACTION_PAST=restarted
 
-    ShowAsProc "$ACTION_PRESENT $TIER packages" >&2
+    ShowAsProc "checking for $TIER packages to $ACTION_INTRANSITIVE" >&2
 
     if QPKGs.ToRestart.IsNone; then
         DebugInfo 'no QPKGs listed'
@@ -2198,14 +2174,7 @@ Packages.Restart.Essentials()
     for package in "${target_packages[@]}"; do
         ShowAsOperationProgress "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$RUNTIME"
 
-        if [[ $package = sherpa ]]; then
-            ((pass_count++))
-            continue
-        elif ! QPKG.Installed "$package"; then
-            ShowAsNote "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") as it's not installed"
-            ((fail_count++))
-            continue
-        elif ! QPKG.Restart "$package"; then
+        if ! QPKG.Restart "$package"; then
             ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") (see log for more details)"
             ((fail_count++))
             continue
@@ -2253,7 +2222,10 @@ Packages.Install.Addons()
     Session.SkipPackageProcessing.IsSet && return
     DebugFuncEntry
 
-    ShowAsProc 'installing addons' >&2
+    local -r TIER=addon
+    local -r ACTION_INTRANSITIVE=install
+
+    ShowAsProc "checking for $TIER packages to $ACTION_INTRANSITIVE" >&2
 
     if QPKGs.ToInstall.IsAny || QPKGs.ToReinstall.IsAny; then
         Session.IPKGs.Install.Set
@@ -2326,7 +2298,7 @@ Packages.Force-upgrade.Optionals()
     local -r ACTION_PRESENT=force-upgrading
     local -r ACTION_PAST=force-upgraded
 
-    ShowAsProc "$ACTION_PRESENT $TIER packages" >&2
+    ShowAsProc "checking for $TIER packages to $ACTION_INTRANSITIVE" >&2
 
     if QPKGs.ToForceUpgrade.IsNone; then
         DebugInfo 'no QPKGs listed'
@@ -2378,7 +2350,7 @@ Packages.Upgrade.Optionals()
     local -r ACTION_PRESENT=upgrading
     local -r ACTION_PAST=upgraded
 
-    ShowAsProc "$ACTION_PRESENT $TIER packages" >&2
+    ShowAsProc "checking for $TIER packages to $ACTION_INTRANSITIVE" >&2
 
     if QPKGs.ToUpgrade.IsNone; then
         DebugInfo 'no QPKGs listed'
@@ -2399,11 +2371,7 @@ Packages.Upgrade.Optionals()
     for package in "${target_packages[@]}"; do
         ShowAsOperationProgress "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$RUNTIME"
 
-        if ! QPKG.Installed "$package"; then
-            ShowAsNote "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") as it's not installed"
-            ((fail_count++))
-            continue
-        elif ! QPKG.Upgrade "$package"; then
+        if ! QPKG.Upgrade "$package"; then
             ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") (see log for more details)"
             ((fail_count++))
             continue
@@ -2434,7 +2402,7 @@ Packages.Reinstall.Optionals()
     local -r ACTION_PRESENT=reinstalling
     local -r ACTION_PAST=reinstalled
 
-    ShowAsProc "$ACTION_PRESENT $TIER packages" >&2
+    ShowAsProc "checking for $TIER packages to $ACTION_INTRANSITIVE" >&2
 
     if QPKGs.ToReinstall.IsNone; then
         DebugInfo 'no QPKGs listed'
@@ -2458,8 +2426,6 @@ Packages.Reinstall.Optionals()
         if ! QPKG.Reinstall "$package"; then
             ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") (see log for more details)"
             ((fail_count++))
-            QPKGs.ToStart.Remove "$package"
-            QPKGs.ToRestart.Remove "$package"
             continue
         fi
 
@@ -2488,7 +2454,7 @@ Packages.Install.Optionals()
     local -r ACTION_PRESENT=installing
     local -r ACTION_PAST=installed
 
-    ShowAsProc "$ACTION_PRESENT $TIER packages" >&2
+    ShowAsProc "checking for $TIER packages to $ACTION_INTRANSITIVE" >&2
 
     if QPKGs.ToInstall.IsNone; then
         DebugInfo 'no QPKGs listed'
@@ -2540,7 +2506,7 @@ Packages.Restore.Optionals()
     local -r ACTION_PRESENT='restoring configuration for'
     local -r ACTION_PAST='configuration restored for'
 
-    ShowAsProc "$ACTION_PRESENT $TIER packages" >&2
+    ShowAsProc "checking for $TIER packages to $ACTION_INTRANSITIVE" >&2
 
     if QPKGs.ToRestore.IsNone; then
         DebugInfo 'no QPKGs listed'
@@ -2561,11 +2527,7 @@ Packages.Restore.Optionals()
     for package in "${target_packages[@]}"; do
         ShowAsOperationProgress "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$RUNTIME"
 
-        if ! QPKG.Installed "$package"; then
-            ShowAsNote "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") as it's not installed"
-            ((fail_count++))
-            continue
-        elif ! QPKG.Restore "$package"; then
+        if ! QPKG.Restore "$package"; then
             ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") (see log for more details)"
             ((fail_count++))
             continue
@@ -2592,11 +2554,11 @@ Packages.ForceStart.Optionals()
     local -i fail_count=0
     local -r TIER=optional
     local -r RUNTIME=long
-    local -r ACTION_INTRANSITIVE=start
-    local -r ACTION_PRESENT=starting
-    local -r ACTION_PAST=started
+    local -r ACTION_INTRANSITIVE=force-start
+    local -r ACTION_PRESENT=force-starting
+    local -r ACTION_PAST=force-started
 
-    ShowAsProc "$ACTION_PRESENT $TIER packages" >&2
+    ShowAsProc "checking for $TIER packages to $ACTION_INTRANSITIVE" >&2
 
     if QPKGs.ToForceStart.IsNone; then
         DebugInfo 'no QPKGs listed'
@@ -2648,7 +2610,7 @@ Packages.Start.Optionals()
     local -r ACTION_PRESENT=starting
     local -r ACTION_PAST=started
 
-    ShowAsProc "$ACTION_PRESENT $TIER packages" >&2
+    ShowAsProc "checking for $TIER packages to $ACTION_INTRANSITIVE" >&2
 
     if QPKGs.ToStart.IsNone; then
         DebugInfo 'no QPKGs listed'
@@ -2686,7 +2648,54 @@ Packages.Start.Optionals()
 Packages.ForceRestart.Optionals()
     {
 
-    :   # placeholder function
+    Session.SkipPackageProcessing.IsSet && return
+    DebugFuncEntry
+
+    local package=''
+    local -a target_packages=()
+    local -i package_count=0
+    local -i pass_count=0
+    local -i fail_count=0
+    local -r TIER=optional
+    local -r RUNTIME=''
+    local -r ACTION_INTRANSITIVE=force-restart
+    local -r ACTION_PRESENT=force-restarting
+    local -r ACTION_PAST=force-restarted
+
+    ShowAsProc "checking for $TIER packages to $ACTION_INTRANSITIVE" >&2
+
+    if QPKGs.ToRestart.IsNone; then
+        DebugInfo 'no QPKGs listed'
+        SmartCR >&2
+        DebugFuncExit; return 0
+    fi
+
+    for package in $(QPKGs.ToForceRestart.Array); do
+        QPKGs.Optional.Exist "$package" && target_packages+=("$package")
+    done
+
+    package_count=${#target_packages[@]}
+
+    if [[ $package_count -eq 0 ]]; then
+        DebugInfo "no $TIER QPKGs listed"
+        DebugFuncExit; return 0
+    fi
+
+    for package in "${target_packages[@]}"; do
+        ShowAsOperationProgress "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$RUNTIME"
+
+        if ! QPKG.Restart "$package" --forced; then
+            ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") (see log for more details)"
+            ((fail_count++))
+            continue
+        fi
+
+        ((pass_count++))
+    done
+
+    ShowAsOperationResult "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PAST" "$RUNTIME"
+    SmartCR >&2
+    DebugFuncExit; return 0
 
     }
 
@@ -2707,7 +2716,7 @@ Packages.Restart.Optionals()
     local -r ACTION_PRESENT=restarting
     local -r ACTION_PAST=restarted
 
-    ShowAsProc "$ACTION_PRESENT $TIER packages" >&2
+    ShowAsProc "checking for $TIER packages to $ACTION_INTRANSITIVE" >&2
 
     if QPKGs.ToRestart.IsNone; then
         DebugInfo 'no QPKGs listed'
@@ -2729,19 +2738,7 @@ Packages.Restart.Optionals()
     for package in "${target_packages[@]}"; do
         ShowAsOperationProgress "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$RUNTIME"
 
-        if ! QPKG.Installed "$package"; then
-            ShowAsNote "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") as it's not installed"
-            ((fail_count++))
-            continue
-        elif QPKGs.JustInstalled.Exist "$package"; then
-            ShowAsNote "no-need to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") as it was just installed"
-            ((fail_count++))
-            continue
-        elif QPKGs.JustStarted.Exist "$package"; then
-            ShowAsNote "no-need to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") as it was just started"
-            ((fail_count++))
-            continue
-        elif ! QPKG.Restart "$package"; then
+        if ! QPKG.Restart "$package"; then
             ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") (see log for more details)"
             ((fail_count++))
             continue
@@ -4293,6 +4290,14 @@ QPKGs.Assignment.Build()
         for package in $(QPKGs.ToStart.Array); do
             QPKGs.ToStart.Add "$(QPKG.Get.Essentials "$package")"
         done
+
+        # check for 'started' packages that should be 'restarted' instead
+        for package in $(QPKGs.ToStart.Array); do
+            if QPKG.Enabled "$package"; then
+                QPKGs.ToStart.Remove "$package"
+                QPKGs.ToRestart.Add "$package"
+            fi
+        done
     fi
 
     # adjust lists for 'restart'
@@ -4302,6 +4307,14 @@ QPKGs.Assignment.Build()
         # check for 'essential' packages that require 'starting' due to any 'optionals' being 'restarted'
         for package in $(QPKGs.ToRestart.Array); do
             QPKGs.ToStart.Add "$(QPKG.Get.Essentials "$package")"
+        done
+
+        # check for 'stopped' packages that should be 'started' instead
+        for package in $(QPKGs.ToRestart.Array); do
+            if ! QPKG.Enabled "$package"; then
+                QPKGs.ToRestart.Remove "$package"
+                QPKGs.ToStart.Add "$package"
+            fi
         done
     fi
 
