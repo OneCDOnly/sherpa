@@ -2599,6 +2599,465 @@ User.Opts.Apps.All.Backup.Text()
     }
 User.Opts.Apps.All.Backup.Init
 
+User.Opts.Apps.All.ForceRestart.Add()
+    {
+    local array=(${1})
+    local item=''
+    for item in "${array[@]}"; do
+        [[ " ${_object_user_opts_apps_all_forcerestart_array_[*]} " != *"$item"* ]] && _object_user_opts_apps_all_forcerestart_array_+=("$item")
+    done
+    }
+User.Opts.Apps.All.ForceRestart.Array()
+    {
+    echo -n "${_object_user_opts_apps_all_forcerestart_array_[@]}"
+    }
+User.Opts.Apps.All.ForceRestart.Clear()
+    {
+    [[ $_object_user_opts_apps_all_forcerestart_flag_ != 'true' ]] && return
+    _object_user_opts_apps_all_forcerestart_flag_=false
+    [[ $_object_user_opts_apps_all_forcerestart_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_forcerestart_flag_
+    }
+User.Opts.Apps.All.ForceRestart.Count()
+    {
+    echo "${#_object_user_opts_apps_all_forcerestart_array_[@]}"
+    }
+User.Opts.Apps.All.ForceRestart.Disable()
+    {
+    [[ $_object_user_opts_apps_all_forcerestart_enable_ != 'true' ]] && return
+    _object_user_opts_apps_all_forcerestart_enable_=false
+    [[ $_object_user_opts_apps_all_forcerestart_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_forcerestart_enable_
+    }
+User.Opts.Apps.All.ForceRestart.DontLogChanges()
+    {
+    [[ $_object_user_opts_apps_all_forcerestart_changes_flag_ != 'true' ]] && return
+    _object_user_opts_apps_all_forcerestart_changes_flag_=false
+    }
+User.Opts.Apps.All.ForceRestart.Enable()
+    {
+    [[ $_object_user_opts_apps_all_forcerestart_enable_ = 'true' ]] && return
+    _object_user_opts_apps_all_forcerestart_enable_=true
+    [[ $_object_user_opts_apps_all_forcerestart_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_forcerestart_enable_
+    }
+User.Opts.Apps.All.ForceRestart.Exist()
+    {
+    [[ ${_object_user_opts_apps_all_forcerestart_array_[*]} == *"$1"* ]]
+    }
+User.Opts.Apps.All.ForceRestart.First()
+    {
+    echo "${_object_user_opts_apps_all_forcerestart_array_[0]}"
+    }
+User.Opts.Apps.All.ForceRestart.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_user_opts_apps_all_forcerestart_array_[@]} ]] && index=${#_object_user_opts_apps_all_forcerestart_array_[@]}
+    echo -n "${_object_user_opts_apps_all_forcerestart_array_[((index-1))]}"
+    }
+User.Opts.Apps.All.ForceRestart.Init()
+    {
+    _object_user_opts_apps_all_forcerestart_size_=0
+    _object_user_opts_apps_all_forcerestart_text_=''
+    _object_user_opts_apps_all_forcerestart_flag_=false
+    _object_user_opts_apps_all_forcerestart_changes_flag_=true
+    _object_user_opts_apps_all_forcerestart_enable_=false
+    _object_user_opts_apps_all_forcerestart_array_=()
+    _object_user_opts_apps_all_forcerestart_array_index_=1
+    _object_user_opts_apps_all_forcerestart_path_=''
+    }
+User.Opts.Apps.All.ForceRestart.IsAny()
+    {
+    [[ ${#_object_user_opts_apps_all_forcerestart_array_[@]} -gt 0 ]]
+    }
+User.Opts.Apps.All.ForceRestart.IsDisabled()
+    {
+    [[ $_object_user_opts_apps_all_forcerestart_enable_ != 'true' ]]
+    }
+User.Opts.Apps.All.ForceRestart.IsEnabled()
+    {
+    [[ $_object_user_opts_apps_all_forcerestart_enable_ = 'true' ]]
+    }
+User.Opts.Apps.All.ForceRestart.IsNone()
+    {
+    [[ ${#_object_user_opts_apps_all_forcerestart_array_[@]} -eq 0 ]]
+    }
+User.Opts.Apps.All.ForceRestart.IsNot()
+    {
+    [[ $_object_user_opts_apps_all_forcerestart_flag_ != 'true' ]]
+    }
+User.Opts.Apps.All.ForceRestart.IsSet()
+    {
+    [[ $_object_user_opts_apps_all_forcerestart_flag_ = 'true' ]]
+    }
+User.Opts.Apps.All.ForceRestart.List()
+    {
+    echo -n "${_object_user_opts_apps_all_forcerestart_array_[*]}"
+    }
+User.Opts.Apps.All.ForceRestart.ListCSV()
+    {
+    echo -n "${_object_user_opts_apps_all_forcerestart_array_[*]}" | tr ' ' ','
+    }
+User.Opts.Apps.All.ForceRestart.LogChanges()
+    {
+    [[ $_object_user_opts_apps_all_forcerestart_changes_flag_ = 'true' ]] && return
+    _object_user_opts_apps_all_forcerestart_changes_flag_=true
+    }
+User.Opts.Apps.All.ForceRestart.Path()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_apps_all_forcerestart_path_=$2
+    else
+        echo -n "$_object_user_opts_apps_all_forcerestart_path_"
+    fi
+    }
+User.Opts.Apps.All.ForceRestart.Remove()
+    {
+    local argument_array=(${1})
+    local temp_array=()
+    local argument=''
+    local item=''
+    local matched=false
+    for item in "${_object_user_opts_apps_all_forcerestart_array_[@]}"; do
+        matched=false
+        for argument in "${argument_array[@]}"; do
+            if [[ $argument = $item ]]; then
+                matched=true; break
+            fi
+        done
+        [[ $matched = false ]] && temp_array+=("$item")
+    done
+    _object_user_opts_apps_all_forcerestart_array_=("${temp_array[@]}")
+    [[ -z ${_object_user_opts_apps_all_forcerestart_array_[*]} ]] && _object_user_opts_apps_all_forcerestart_array_=()
+    }
+User.Opts.Apps.All.ForceRestart.Set()
+    {
+    [[ $_object_user_opts_apps_all_forcerestart_flag_ = 'true' ]] && return
+    _object_user_opts_apps_all_forcerestart_flag_=true
+    [[ $_object_user_opts_apps_all_forcerestart_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_forcerestart_flag_
+    }
+User.Opts.Apps.All.ForceRestart.Size()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_apps_all_forcerestart_size_=$2
+    else
+        echo -n $_object_user_opts_apps_all_forcerestart_size_
+    fi
+    }
+User.Opts.Apps.All.ForceRestart.Text()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_apps_all_forcerestart_text_=$2
+    else
+        echo -n "$_object_user_opts_apps_all_forcerestart_text_"
+    fi
+    }
+User.Opts.Apps.All.ForceRestart.Init
+
+User.Opts.Apps.All.ForceStart.Add()
+    {
+    local array=(${1})
+    local item=''
+    for item in "${array[@]}"; do
+        [[ " ${_object_user_opts_apps_all_forcestart_array_[*]} " != *"$item"* ]] && _object_user_opts_apps_all_forcestart_array_+=("$item")
+    done
+    }
+User.Opts.Apps.All.ForceStart.Array()
+    {
+    echo -n "${_object_user_opts_apps_all_forcestart_array_[@]}"
+    }
+User.Opts.Apps.All.ForceStart.Clear()
+    {
+    [[ $_object_user_opts_apps_all_forcestart_flag_ != 'true' ]] && return
+    _object_user_opts_apps_all_forcestart_flag_=false
+    [[ $_object_user_opts_apps_all_forcestart_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_forcestart_flag_
+    }
+User.Opts.Apps.All.ForceStart.Count()
+    {
+    echo "${#_object_user_opts_apps_all_forcestart_array_[@]}"
+    }
+User.Opts.Apps.All.ForceStart.Disable()
+    {
+    [[ $_object_user_opts_apps_all_forcestart_enable_ != 'true' ]] && return
+    _object_user_opts_apps_all_forcestart_enable_=false
+    [[ $_object_user_opts_apps_all_forcestart_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_forcestart_enable_
+    }
+User.Opts.Apps.All.ForceStart.DontLogChanges()
+    {
+    [[ $_object_user_opts_apps_all_forcestart_changes_flag_ != 'true' ]] && return
+    _object_user_opts_apps_all_forcestart_changes_flag_=false
+    }
+User.Opts.Apps.All.ForceStart.Enable()
+    {
+    [[ $_object_user_opts_apps_all_forcestart_enable_ = 'true' ]] && return
+    _object_user_opts_apps_all_forcestart_enable_=true
+    [[ $_object_user_opts_apps_all_forcestart_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_forcestart_enable_
+    }
+User.Opts.Apps.All.ForceStart.Exist()
+    {
+    [[ ${_object_user_opts_apps_all_forcestart_array_[*]} == *"$1"* ]]
+    }
+User.Opts.Apps.All.ForceStart.First()
+    {
+    echo "${_object_user_opts_apps_all_forcestart_array_[0]}"
+    }
+User.Opts.Apps.All.ForceStart.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_user_opts_apps_all_forcestart_array_[@]} ]] && index=${#_object_user_opts_apps_all_forcestart_array_[@]}
+    echo -n "${_object_user_opts_apps_all_forcestart_array_[((index-1))]}"
+    }
+User.Opts.Apps.All.ForceStart.Init()
+    {
+    _object_user_opts_apps_all_forcestart_size_=0
+    _object_user_opts_apps_all_forcestart_text_=''
+    _object_user_opts_apps_all_forcestart_flag_=false
+    _object_user_opts_apps_all_forcestart_changes_flag_=true
+    _object_user_opts_apps_all_forcestart_enable_=false
+    _object_user_opts_apps_all_forcestart_array_=()
+    _object_user_opts_apps_all_forcestart_array_index_=1
+    _object_user_opts_apps_all_forcestart_path_=''
+    }
+User.Opts.Apps.All.ForceStart.IsAny()
+    {
+    [[ ${#_object_user_opts_apps_all_forcestart_array_[@]} -gt 0 ]]
+    }
+User.Opts.Apps.All.ForceStart.IsDisabled()
+    {
+    [[ $_object_user_opts_apps_all_forcestart_enable_ != 'true' ]]
+    }
+User.Opts.Apps.All.ForceStart.IsEnabled()
+    {
+    [[ $_object_user_opts_apps_all_forcestart_enable_ = 'true' ]]
+    }
+User.Opts.Apps.All.ForceStart.IsNone()
+    {
+    [[ ${#_object_user_opts_apps_all_forcestart_array_[@]} -eq 0 ]]
+    }
+User.Opts.Apps.All.ForceStart.IsNot()
+    {
+    [[ $_object_user_opts_apps_all_forcestart_flag_ != 'true' ]]
+    }
+User.Opts.Apps.All.ForceStart.IsSet()
+    {
+    [[ $_object_user_opts_apps_all_forcestart_flag_ = 'true' ]]
+    }
+User.Opts.Apps.All.ForceStart.List()
+    {
+    echo -n "${_object_user_opts_apps_all_forcestart_array_[*]}"
+    }
+User.Opts.Apps.All.ForceStart.ListCSV()
+    {
+    echo -n "${_object_user_opts_apps_all_forcestart_array_[*]}" | tr ' ' ','
+    }
+User.Opts.Apps.All.ForceStart.LogChanges()
+    {
+    [[ $_object_user_opts_apps_all_forcestart_changes_flag_ = 'true' ]] && return
+    _object_user_opts_apps_all_forcestart_changes_flag_=true
+    }
+User.Opts.Apps.All.ForceStart.Path()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_apps_all_forcestart_path_=$2
+    else
+        echo -n "$_object_user_opts_apps_all_forcestart_path_"
+    fi
+    }
+User.Opts.Apps.All.ForceStart.Remove()
+    {
+    local argument_array=(${1})
+    local temp_array=()
+    local argument=''
+    local item=''
+    local matched=false
+    for item in "${_object_user_opts_apps_all_forcestart_array_[@]}"; do
+        matched=false
+        for argument in "${argument_array[@]}"; do
+            if [[ $argument = $item ]]; then
+                matched=true; break
+            fi
+        done
+        [[ $matched = false ]] && temp_array+=("$item")
+    done
+    _object_user_opts_apps_all_forcestart_array_=("${temp_array[@]}")
+    [[ -z ${_object_user_opts_apps_all_forcestart_array_[*]} ]] && _object_user_opts_apps_all_forcestart_array_=()
+    }
+User.Opts.Apps.All.ForceStart.Set()
+    {
+    [[ $_object_user_opts_apps_all_forcestart_flag_ = 'true' ]] && return
+    _object_user_opts_apps_all_forcestart_flag_=true
+    [[ $_object_user_opts_apps_all_forcestart_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_forcestart_flag_
+    }
+User.Opts.Apps.All.ForceStart.Size()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_apps_all_forcestart_size_=$2
+    else
+        echo -n $_object_user_opts_apps_all_forcestart_size_
+    fi
+    }
+User.Opts.Apps.All.ForceStart.Text()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_apps_all_forcestart_text_=$2
+    else
+        echo -n "$_object_user_opts_apps_all_forcestart_text_"
+    fi
+    }
+User.Opts.Apps.All.ForceStart.Init
+
+User.Opts.Apps.All.ForceStop.Add()
+    {
+    local array=(${1})
+    local item=''
+    for item in "${array[@]}"; do
+        [[ " ${_object_user_opts_apps_all_forcestop_array_[*]} " != *"$item"* ]] && _object_user_opts_apps_all_forcestop_array_+=("$item")
+    done
+    }
+User.Opts.Apps.All.ForceStop.Array()
+    {
+    echo -n "${_object_user_opts_apps_all_forcestop_array_[@]}"
+    }
+User.Opts.Apps.All.ForceStop.Clear()
+    {
+    [[ $_object_user_opts_apps_all_forcestop_flag_ != 'true' ]] && return
+    _object_user_opts_apps_all_forcestop_flag_=false
+    [[ $_object_user_opts_apps_all_forcestop_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_forcestop_flag_
+    }
+User.Opts.Apps.All.ForceStop.Count()
+    {
+    echo "${#_object_user_opts_apps_all_forcestop_array_[@]}"
+    }
+User.Opts.Apps.All.ForceStop.Disable()
+    {
+    [[ $_object_user_opts_apps_all_forcestop_enable_ != 'true' ]] && return
+    _object_user_opts_apps_all_forcestop_enable_=false
+    [[ $_object_user_opts_apps_all_forcestop_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_forcestop_enable_
+    }
+User.Opts.Apps.All.ForceStop.DontLogChanges()
+    {
+    [[ $_object_user_opts_apps_all_forcestop_changes_flag_ != 'true' ]] && return
+    _object_user_opts_apps_all_forcestop_changes_flag_=false
+    }
+User.Opts.Apps.All.ForceStop.Enable()
+    {
+    [[ $_object_user_opts_apps_all_forcestop_enable_ = 'true' ]] && return
+    _object_user_opts_apps_all_forcestop_enable_=true
+    [[ $_object_user_opts_apps_all_forcestop_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_forcestop_enable_
+    }
+User.Opts.Apps.All.ForceStop.Exist()
+    {
+    [[ ${_object_user_opts_apps_all_forcestop_array_[*]} == *"$1"* ]]
+    }
+User.Opts.Apps.All.ForceStop.First()
+    {
+    echo "${_object_user_opts_apps_all_forcestop_array_[0]}"
+    }
+User.Opts.Apps.All.ForceStop.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_user_opts_apps_all_forcestop_array_[@]} ]] && index=${#_object_user_opts_apps_all_forcestop_array_[@]}
+    echo -n "${_object_user_opts_apps_all_forcestop_array_[((index-1))]}"
+    }
+User.Opts.Apps.All.ForceStop.Init()
+    {
+    _object_user_opts_apps_all_forcestop_size_=0
+    _object_user_opts_apps_all_forcestop_text_=''
+    _object_user_opts_apps_all_forcestop_flag_=false
+    _object_user_opts_apps_all_forcestop_changes_flag_=true
+    _object_user_opts_apps_all_forcestop_enable_=false
+    _object_user_opts_apps_all_forcestop_array_=()
+    _object_user_opts_apps_all_forcestop_array_index_=1
+    _object_user_opts_apps_all_forcestop_path_=''
+    }
+User.Opts.Apps.All.ForceStop.IsAny()
+    {
+    [[ ${#_object_user_opts_apps_all_forcestop_array_[@]} -gt 0 ]]
+    }
+User.Opts.Apps.All.ForceStop.IsDisabled()
+    {
+    [[ $_object_user_opts_apps_all_forcestop_enable_ != 'true' ]]
+    }
+User.Opts.Apps.All.ForceStop.IsEnabled()
+    {
+    [[ $_object_user_opts_apps_all_forcestop_enable_ = 'true' ]]
+    }
+User.Opts.Apps.All.ForceStop.IsNone()
+    {
+    [[ ${#_object_user_opts_apps_all_forcestop_array_[@]} -eq 0 ]]
+    }
+User.Opts.Apps.All.ForceStop.IsNot()
+    {
+    [[ $_object_user_opts_apps_all_forcestop_flag_ != 'true' ]]
+    }
+User.Opts.Apps.All.ForceStop.IsSet()
+    {
+    [[ $_object_user_opts_apps_all_forcestop_flag_ = 'true' ]]
+    }
+User.Opts.Apps.All.ForceStop.List()
+    {
+    echo -n "${_object_user_opts_apps_all_forcestop_array_[*]}"
+    }
+User.Opts.Apps.All.ForceStop.ListCSV()
+    {
+    echo -n "${_object_user_opts_apps_all_forcestop_array_[*]}" | tr ' ' ','
+    }
+User.Opts.Apps.All.ForceStop.LogChanges()
+    {
+    [[ $_object_user_opts_apps_all_forcestop_changes_flag_ = 'true' ]] && return
+    _object_user_opts_apps_all_forcestop_changes_flag_=true
+    }
+User.Opts.Apps.All.ForceStop.Path()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_apps_all_forcestop_path_=$2
+    else
+        echo -n "$_object_user_opts_apps_all_forcestop_path_"
+    fi
+    }
+User.Opts.Apps.All.ForceStop.Remove()
+    {
+    local argument_array=(${1})
+    local temp_array=()
+    local argument=''
+    local item=''
+    local matched=false
+    for item in "${_object_user_opts_apps_all_forcestop_array_[@]}"; do
+        matched=false
+        for argument in "${argument_array[@]}"; do
+            if [[ $argument = $item ]]; then
+                matched=true; break
+            fi
+        done
+        [[ $matched = false ]] && temp_array+=("$item")
+    done
+    _object_user_opts_apps_all_forcestop_array_=("${temp_array[@]}")
+    [[ -z ${_object_user_opts_apps_all_forcestop_array_[*]} ]] && _object_user_opts_apps_all_forcestop_array_=()
+    }
+User.Opts.Apps.All.ForceStop.Set()
+    {
+    [[ $_object_user_opts_apps_all_forcestop_flag_ = 'true' ]] && return
+    _object_user_opts_apps_all_forcestop_flag_=true
+    [[ $_object_user_opts_apps_all_forcestop_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_forcestop_flag_
+    }
+User.Opts.Apps.All.ForceStop.Size()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_apps_all_forcestop_size_=$2
+    else
+        echo -n $_object_user_opts_apps_all_forcestop_size_
+    fi
+    }
+User.Opts.Apps.All.ForceStop.Text()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_apps_all_forcestop_text_=$2
+    else
+        echo -n "$_object_user_opts_apps_all_forcestop_text_"
+    fi
+    }
+User.Opts.Apps.All.ForceStop.Init
+
 User.Opts.Apps.All.ForceUpgrade.Add()
     {
     local array=(${1})
@@ -7800,6 +8259,465 @@ QPKGs.ToDownload.Text()
     fi
     }
 QPKGs.ToDownload.Init
+
+QPKGs.ToForceRestart.Add()
+    {
+    local array=(${1})
+    local item=''
+    for item in "${array[@]}"; do
+        [[ " ${_object_qpkgs_toforcerestart_array_[*]} " != *"$item"* ]] && _object_qpkgs_toforcerestart_array_+=("$item")
+    done
+    }
+QPKGs.ToForceRestart.Array()
+    {
+    echo -n "${_object_qpkgs_toforcerestart_array_[@]}"
+    }
+QPKGs.ToForceRestart.Clear()
+    {
+    [[ $_object_qpkgs_toforcerestart_flag_ != 'true' ]] && return
+    _object_qpkgs_toforcerestart_flag_=false
+    [[ $_object_qpkgs_toforcerestart_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_toforcerestart_flag_
+    }
+QPKGs.ToForceRestart.Count()
+    {
+    echo "${#_object_qpkgs_toforcerestart_array_[@]}"
+    }
+QPKGs.ToForceRestart.Disable()
+    {
+    [[ $_object_qpkgs_toforcerestart_enable_ != 'true' ]] && return
+    _object_qpkgs_toforcerestart_enable_=false
+    [[ $_object_qpkgs_toforcerestart_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_toforcerestart_enable_
+    }
+QPKGs.ToForceRestart.DontLogChanges()
+    {
+    [[ $_object_qpkgs_toforcerestart_changes_flag_ != 'true' ]] && return
+    _object_qpkgs_toforcerestart_changes_flag_=false
+    }
+QPKGs.ToForceRestart.Enable()
+    {
+    [[ $_object_qpkgs_toforcerestart_enable_ = 'true' ]] && return
+    _object_qpkgs_toforcerestart_enable_=true
+    [[ $_object_qpkgs_toforcerestart_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_toforcerestart_enable_
+    }
+QPKGs.ToForceRestart.Exist()
+    {
+    [[ ${_object_qpkgs_toforcerestart_array_[*]} == *"$1"* ]]
+    }
+QPKGs.ToForceRestart.First()
+    {
+    echo "${_object_qpkgs_toforcerestart_array_[0]}"
+    }
+QPKGs.ToForceRestart.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_qpkgs_toforcerestart_array_[@]} ]] && index=${#_object_qpkgs_toforcerestart_array_[@]}
+    echo -n "${_object_qpkgs_toforcerestart_array_[((index-1))]}"
+    }
+QPKGs.ToForceRestart.Init()
+    {
+    _object_qpkgs_toforcerestart_size_=0
+    _object_qpkgs_toforcerestart_text_=''
+    _object_qpkgs_toforcerestart_flag_=false
+    _object_qpkgs_toforcerestart_changes_flag_=true
+    _object_qpkgs_toforcerestart_enable_=false
+    _object_qpkgs_toforcerestart_array_=()
+    _object_qpkgs_toforcerestart_array_index_=1
+    _object_qpkgs_toforcerestart_path_=''
+    }
+QPKGs.ToForceRestart.IsAny()
+    {
+    [[ ${#_object_qpkgs_toforcerestart_array_[@]} -gt 0 ]]
+    }
+QPKGs.ToForceRestart.IsDisabled()
+    {
+    [[ $_object_qpkgs_toforcerestart_enable_ != 'true' ]]
+    }
+QPKGs.ToForceRestart.IsEnabled()
+    {
+    [[ $_object_qpkgs_toforcerestart_enable_ = 'true' ]]
+    }
+QPKGs.ToForceRestart.IsNone()
+    {
+    [[ ${#_object_qpkgs_toforcerestart_array_[@]} -eq 0 ]]
+    }
+QPKGs.ToForceRestart.IsNot()
+    {
+    [[ $_object_qpkgs_toforcerestart_flag_ != 'true' ]]
+    }
+QPKGs.ToForceRestart.IsSet()
+    {
+    [[ $_object_qpkgs_toforcerestart_flag_ = 'true' ]]
+    }
+QPKGs.ToForceRestart.List()
+    {
+    echo -n "${_object_qpkgs_toforcerestart_array_[*]}"
+    }
+QPKGs.ToForceRestart.ListCSV()
+    {
+    echo -n "${_object_qpkgs_toforcerestart_array_[*]}" | tr ' ' ','
+    }
+QPKGs.ToForceRestart.LogChanges()
+    {
+    [[ $_object_qpkgs_toforcerestart_changes_flag_ = 'true' ]] && return
+    _object_qpkgs_toforcerestart_changes_flag_=true
+    }
+QPKGs.ToForceRestart.Path()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_toforcerestart_path_=$2
+    else
+        echo -n "$_object_qpkgs_toforcerestart_path_"
+    fi
+    }
+QPKGs.ToForceRestart.Remove()
+    {
+    local argument_array=(${1})
+    local temp_array=()
+    local argument=''
+    local item=''
+    local matched=false
+    for item in "${_object_qpkgs_toforcerestart_array_[@]}"; do
+        matched=false
+        for argument in "${argument_array[@]}"; do
+            if [[ $argument = $item ]]; then
+                matched=true; break
+            fi
+        done
+        [[ $matched = false ]] && temp_array+=("$item")
+    done
+    _object_qpkgs_toforcerestart_array_=("${temp_array[@]}")
+    [[ -z ${_object_qpkgs_toforcerestart_array_[*]} ]] && _object_qpkgs_toforcerestart_array_=()
+    }
+QPKGs.ToForceRestart.Set()
+    {
+    [[ $_object_qpkgs_toforcerestart_flag_ = 'true' ]] && return
+    _object_qpkgs_toforcerestart_flag_=true
+    [[ $_object_qpkgs_toforcerestart_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_toforcerestart_flag_
+    }
+QPKGs.ToForceRestart.Size()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_toforcerestart_size_=$2
+    else
+        echo -n $_object_qpkgs_toforcerestart_size_
+    fi
+    }
+QPKGs.ToForceRestart.Text()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_toforcerestart_text_=$2
+    else
+        echo -n "$_object_qpkgs_toforcerestart_text_"
+    fi
+    }
+QPKGs.ToForceRestart.Init
+
+QPKGs.ToForceStart.Add()
+    {
+    local array=(${1})
+    local item=''
+    for item in "${array[@]}"; do
+        [[ " ${_object_qpkgs_toforcestart_array_[*]} " != *"$item"* ]] && _object_qpkgs_toforcestart_array_+=("$item")
+    done
+    }
+QPKGs.ToForceStart.Array()
+    {
+    echo -n "${_object_qpkgs_toforcestart_array_[@]}"
+    }
+QPKGs.ToForceStart.Clear()
+    {
+    [[ $_object_qpkgs_toforcestart_flag_ != 'true' ]] && return
+    _object_qpkgs_toforcestart_flag_=false
+    [[ $_object_qpkgs_toforcestart_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_toforcestart_flag_
+    }
+QPKGs.ToForceStart.Count()
+    {
+    echo "${#_object_qpkgs_toforcestart_array_[@]}"
+    }
+QPKGs.ToForceStart.Disable()
+    {
+    [[ $_object_qpkgs_toforcestart_enable_ != 'true' ]] && return
+    _object_qpkgs_toforcestart_enable_=false
+    [[ $_object_qpkgs_toforcestart_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_toforcestart_enable_
+    }
+QPKGs.ToForceStart.DontLogChanges()
+    {
+    [[ $_object_qpkgs_toforcestart_changes_flag_ != 'true' ]] && return
+    _object_qpkgs_toforcestart_changes_flag_=false
+    }
+QPKGs.ToForceStart.Enable()
+    {
+    [[ $_object_qpkgs_toforcestart_enable_ = 'true' ]] && return
+    _object_qpkgs_toforcestart_enable_=true
+    [[ $_object_qpkgs_toforcestart_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_toforcestart_enable_
+    }
+QPKGs.ToForceStart.Exist()
+    {
+    [[ ${_object_qpkgs_toforcestart_array_[*]} == *"$1"* ]]
+    }
+QPKGs.ToForceStart.First()
+    {
+    echo "${_object_qpkgs_toforcestart_array_[0]}"
+    }
+QPKGs.ToForceStart.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_qpkgs_toforcestart_array_[@]} ]] && index=${#_object_qpkgs_toforcestart_array_[@]}
+    echo -n "${_object_qpkgs_toforcestart_array_[((index-1))]}"
+    }
+QPKGs.ToForceStart.Init()
+    {
+    _object_qpkgs_toforcestart_size_=0
+    _object_qpkgs_toforcestart_text_=''
+    _object_qpkgs_toforcestart_flag_=false
+    _object_qpkgs_toforcestart_changes_flag_=true
+    _object_qpkgs_toforcestart_enable_=false
+    _object_qpkgs_toforcestart_array_=()
+    _object_qpkgs_toforcestart_array_index_=1
+    _object_qpkgs_toforcestart_path_=''
+    }
+QPKGs.ToForceStart.IsAny()
+    {
+    [[ ${#_object_qpkgs_toforcestart_array_[@]} -gt 0 ]]
+    }
+QPKGs.ToForceStart.IsDisabled()
+    {
+    [[ $_object_qpkgs_toforcestart_enable_ != 'true' ]]
+    }
+QPKGs.ToForceStart.IsEnabled()
+    {
+    [[ $_object_qpkgs_toforcestart_enable_ = 'true' ]]
+    }
+QPKGs.ToForceStart.IsNone()
+    {
+    [[ ${#_object_qpkgs_toforcestart_array_[@]} -eq 0 ]]
+    }
+QPKGs.ToForceStart.IsNot()
+    {
+    [[ $_object_qpkgs_toforcestart_flag_ != 'true' ]]
+    }
+QPKGs.ToForceStart.IsSet()
+    {
+    [[ $_object_qpkgs_toforcestart_flag_ = 'true' ]]
+    }
+QPKGs.ToForceStart.List()
+    {
+    echo -n "${_object_qpkgs_toforcestart_array_[*]}"
+    }
+QPKGs.ToForceStart.ListCSV()
+    {
+    echo -n "${_object_qpkgs_toforcestart_array_[*]}" | tr ' ' ','
+    }
+QPKGs.ToForceStart.LogChanges()
+    {
+    [[ $_object_qpkgs_toforcestart_changes_flag_ = 'true' ]] && return
+    _object_qpkgs_toforcestart_changes_flag_=true
+    }
+QPKGs.ToForceStart.Path()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_toforcestart_path_=$2
+    else
+        echo -n "$_object_qpkgs_toforcestart_path_"
+    fi
+    }
+QPKGs.ToForceStart.Remove()
+    {
+    local argument_array=(${1})
+    local temp_array=()
+    local argument=''
+    local item=''
+    local matched=false
+    for item in "${_object_qpkgs_toforcestart_array_[@]}"; do
+        matched=false
+        for argument in "${argument_array[@]}"; do
+            if [[ $argument = $item ]]; then
+                matched=true; break
+            fi
+        done
+        [[ $matched = false ]] && temp_array+=("$item")
+    done
+    _object_qpkgs_toforcestart_array_=("${temp_array[@]}")
+    [[ -z ${_object_qpkgs_toforcestart_array_[*]} ]] && _object_qpkgs_toforcestart_array_=()
+    }
+QPKGs.ToForceStart.Set()
+    {
+    [[ $_object_qpkgs_toforcestart_flag_ = 'true' ]] && return
+    _object_qpkgs_toforcestart_flag_=true
+    [[ $_object_qpkgs_toforcestart_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_toforcestart_flag_
+    }
+QPKGs.ToForceStart.Size()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_toforcestart_size_=$2
+    else
+        echo -n $_object_qpkgs_toforcestart_size_
+    fi
+    }
+QPKGs.ToForceStart.Text()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_toforcestart_text_=$2
+    else
+        echo -n "$_object_qpkgs_toforcestart_text_"
+    fi
+    }
+QPKGs.ToForceStart.Init
+
+QPKGs.ToForceStop.Add()
+    {
+    local array=(${1})
+    local item=''
+    for item in "${array[@]}"; do
+        [[ " ${_object_qpkgs_toforcestop_array_[*]} " != *"$item"* ]] && _object_qpkgs_toforcestop_array_+=("$item")
+    done
+    }
+QPKGs.ToForceStop.Array()
+    {
+    echo -n "${_object_qpkgs_toforcestop_array_[@]}"
+    }
+QPKGs.ToForceStop.Clear()
+    {
+    [[ $_object_qpkgs_toforcestop_flag_ != 'true' ]] && return
+    _object_qpkgs_toforcestop_flag_=false
+    [[ $_object_qpkgs_toforcestop_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_toforcestop_flag_
+    }
+QPKGs.ToForceStop.Count()
+    {
+    echo "${#_object_qpkgs_toforcestop_array_[@]}"
+    }
+QPKGs.ToForceStop.Disable()
+    {
+    [[ $_object_qpkgs_toforcestop_enable_ != 'true' ]] && return
+    _object_qpkgs_toforcestop_enable_=false
+    [[ $_object_qpkgs_toforcestop_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_toforcestop_enable_
+    }
+QPKGs.ToForceStop.DontLogChanges()
+    {
+    [[ $_object_qpkgs_toforcestop_changes_flag_ != 'true' ]] && return
+    _object_qpkgs_toforcestop_changes_flag_=false
+    }
+QPKGs.ToForceStop.Enable()
+    {
+    [[ $_object_qpkgs_toforcestop_enable_ = 'true' ]] && return
+    _object_qpkgs_toforcestop_enable_=true
+    [[ $_object_qpkgs_toforcestop_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_toforcestop_enable_
+    }
+QPKGs.ToForceStop.Exist()
+    {
+    [[ ${_object_qpkgs_toforcestop_array_[*]} == *"$1"* ]]
+    }
+QPKGs.ToForceStop.First()
+    {
+    echo "${_object_qpkgs_toforcestop_array_[0]}"
+    }
+QPKGs.ToForceStop.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_qpkgs_toforcestop_array_[@]} ]] && index=${#_object_qpkgs_toforcestop_array_[@]}
+    echo -n "${_object_qpkgs_toforcestop_array_[((index-1))]}"
+    }
+QPKGs.ToForceStop.Init()
+    {
+    _object_qpkgs_toforcestop_size_=0
+    _object_qpkgs_toforcestop_text_=''
+    _object_qpkgs_toforcestop_flag_=false
+    _object_qpkgs_toforcestop_changes_flag_=true
+    _object_qpkgs_toforcestop_enable_=false
+    _object_qpkgs_toforcestop_array_=()
+    _object_qpkgs_toforcestop_array_index_=1
+    _object_qpkgs_toforcestop_path_=''
+    }
+QPKGs.ToForceStop.IsAny()
+    {
+    [[ ${#_object_qpkgs_toforcestop_array_[@]} -gt 0 ]]
+    }
+QPKGs.ToForceStop.IsDisabled()
+    {
+    [[ $_object_qpkgs_toforcestop_enable_ != 'true' ]]
+    }
+QPKGs.ToForceStop.IsEnabled()
+    {
+    [[ $_object_qpkgs_toforcestop_enable_ = 'true' ]]
+    }
+QPKGs.ToForceStop.IsNone()
+    {
+    [[ ${#_object_qpkgs_toforcestop_array_[@]} -eq 0 ]]
+    }
+QPKGs.ToForceStop.IsNot()
+    {
+    [[ $_object_qpkgs_toforcestop_flag_ != 'true' ]]
+    }
+QPKGs.ToForceStop.IsSet()
+    {
+    [[ $_object_qpkgs_toforcestop_flag_ = 'true' ]]
+    }
+QPKGs.ToForceStop.List()
+    {
+    echo -n "${_object_qpkgs_toforcestop_array_[*]}"
+    }
+QPKGs.ToForceStop.ListCSV()
+    {
+    echo -n "${_object_qpkgs_toforcestop_array_[*]}" | tr ' ' ','
+    }
+QPKGs.ToForceStop.LogChanges()
+    {
+    [[ $_object_qpkgs_toforcestop_changes_flag_ = 'true' ]] && return
+    _object_qpkgs_toforcestop_changes_flag_=true
+    }
+QPKGs.ToForceStop.Path()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_toforcestop_path_=$2
+    else
+        echo -n "$_object_qpkgs_toforcestop_path_"
+    fi
+    }
+QPKGs.ToForceStop.Remove()
+    {
+    local argument_array=(${1})
+    local temp_array=()
+    local argument=''
+    local item=''
+    local matched=false
+    for item in "${_object_qpkgs_toforcestop_array_[@]}"; do
+        matched=false
+        for argument in "${argument_array[@]}"; do
+            if [[ $argument = $item ]]; then
+                matched=true; break
+            fi
+        done
+        [[ $matched = false ]] && temp_array+=("$item")
+    done
+    _object_qpkgs_toforcestop_array_=("${temp_array[@]}")
+    [[ -z ${_object_qpkgs_toforcestop_array_[*]} ]] && _object_qpkgs_toforcestop_array_=()
+    }
+QPKGs.ToForceStop.Set()
+    {
+    [[ $_object_qpkgs_toforcestop_flag_ = 'true' ]] && return
+    _object_qpkgs_toforcestop_flag_=true
+    [[ $_object_qpkgs_toforcestop_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_toforcestop_flag_
+    }
+QPKGs.ToForceStop.Size()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_toforcestop_size_=$2
+    else
+        echo -n $_object_qpkgs_toforcestop_size_
+    fi
+    }
+QPKGs.ToForceStop.Text()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_toforcestop_text_=$2
+    else
+        echo -n "$_object_qpkgs_toforcestop_text_"
+    fi
+    }
+QPKGs.ToForceStop.Init
 
 QPKGs.ToForceUpgrade.Add()
     {
