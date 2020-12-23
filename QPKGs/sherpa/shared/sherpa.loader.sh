@@ -140,7 +140,7 @@ ColourReset()
 
 Init || exit 1
 
-package_minutes_threshold=5
+package_minutes_threshold=1440
 
 # if management script was updated only recently, don't run another update. Examine 'change' time as this is updated even if script content isn't modified.
 if [[ -e $LOCAL_MANAGER_SCRIPT && -e $GNU_FIND_CMD ]]; then
