@@ -4249,7 +4249,7 @@ QPKGs.Assignment.Build()
         done
     fi
 
-    # check 'install' list for items that should be reinstalled instead
+    # check 'install' list for items that should be 'reinstalled' instead
     for package in $(QPKGs.ToInstall.Array); do
         if QPKG.Installed "$package"; then
             QPKGs.ToInstall.Remove "$package"
@@ -4257,7 +4257,7 @@ QPKGs.Assignment.Build()
         fi
     done
 
-    # check the 'reinstall' list for items that should be installed instead
+    # check the 'reinstall' list for items that should be 'installed' instead
     for package in $(QPKGs.ToReinstall.Array); do
         if QPKG.NotInstalled "$package"; then
             QPKGs.ToReinstall.Remove "$package"
@@ -4307,6 +4307,11 @@ QPKGs.Assignment.Build()
         # check for 'essential' packages that require 'starting' due to any 'optionals' being 'restarted'
         for package in $(QPKGs.ToRestart.Array); do
             QPKGs.ToStart.Add "$(QPKG.Get.Essentials "$package")"
+        done
+
+        # check for 'optional' packages that require 'restarting' due to any 'essentials' being 'restarted'
+        for package in $(QPKGs.ToRestart.Array); do
+            QPKGs.ToRestart.Add "$(QPKG.Get.Optionals "$package")"
         done
 
         # check for 'stopped' packages that should be 'started' instead
