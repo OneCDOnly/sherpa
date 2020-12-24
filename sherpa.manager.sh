@@ -4294,14 +4294,6 @@ QPKGs.Assignment.Build()
         for package in $(QPKGs.ToStart.Array); do
             QPKGs.ToStart.Add "$(QPKG.Get.Essentials "$package")"
         done
-
-        # check for 'started' packages that should be 'restarted' instead
-        for package in $(QPKGs.ToStart.Array); do
-            if QPKG.Enabled "$package"; then
-                QPKGs.ToStart.Remove "$package"
-                QPKGs.ToRestart.Add "$package"
-            fi
-        done
     fi
 
     # adjust lists for 'restart'
@@ -4316,14 +4308,6 @@ QPKGs.Assignment.Build()
         # check for 'optional' packages that require 'restarting' due to any 'essentials' being 'restarted'
         for package in $(QPKGs.ToRestart.Array); do
             QPKGs.ToRestart.Add "$(QPKG.Get.Optionals "$package")"
-        done
-
-        # check for 'stopped' packages that should be 'started' instead
-        for package in $(QPKGs.ToRestart.Array); do
-            if ! QPKG.Enabled "$package"; then
-                QPKGs.ToRestart.Remove "$package"
-                QPKGs.ToStart.Add "$package"
-            fi
         done
     fi
 
