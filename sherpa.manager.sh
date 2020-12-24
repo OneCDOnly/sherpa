@@ -1330,14 +1330,22 @@ Tiers.Processor()
     ! QPKG.Installed Entware && Session.RemovePathToEntware
 
     for tier in {'essential','addon','optional'}; do
-        Tier.Processor 'Upgrade' true "$tier" 'ToForceUpgrade' 'forward' 'force-upgrade' 'force-upgrading' 'force-upgraded' 'long'
-        Tier.Processor 'Upgrade' false "$tier" 'ToUpgrade' 'forward' 'upgrade' 'upgrading' 'upgraded' 'long'
-
-        if [[ $tier = essential ]]; then
+        if [[ $tier != addon ]]; then
+            Tier.Processor 'Upgrade' true "$tier" 'ToForceUpgrade' 'forward' 'upgrade' 'upgrading' 'upgraded' 'long'
+            Tier.Processor 'Upgrade' false "$tier" 'ToUpgrade' 'forward' 'upgrade' 'upgrading' 'upgraded' 'long'
             Tier.Processor 'Reinstall' false "$tier" 'ToReinstall' 'forward' 'reinstall' 'reinstalling' 'reinstalled' 'long'
             Tier.Processor 'Install' false "$tier" 'ToInstall' 'forward' 'install' 'installing' 'installed' 'long'
-        elif [[ $tier = addon ]]; then
-            ShowAsProc "checking for $tier packages to install" >&2
+
+            if [[ $tier = optional ]]; then
+                Tier.Processor 'Restore' false "$tier" 'ToRestore' 'forward' 'restore configuration for' 'restoring configuration for' 'configuration restored for' 'long'
+            fi
+
+            Tier.Processor 'Start' true "$tier" 'ToForceStart' 'forward' 'start' 'starting' 'started' 'long'
+            Tier.Processor 'Start' false "$tier" 'ToStart' 'forward' 'start' 'starting' 'started' 'long'
+            Tier.Processor 'Restart' true "$tier" 'ToForceRestart' 'forward' 'restart' 'restarting' 'restarted' 'long'
+            Tier.Processor 'Restart' false "$tier" 'ToRestart' 'forward' 'restart' 'restarting' 'restarted' 'long'
+        else
+            ShowAsProc "checking for addon packages to install" >&2
 
             if QPKGs.ToInstall.IsAny || QPKGs.ToReinstall.IsAny; then
                 Session.IPKGs.Install.Set
@@ -1353,19 +1361,7 @@ Tiers.Processor()
             else
                 : # TODO: test if other packages are to be installed here. If so, and Entware isn't enabled, then abort with error.
             fi
-        else
-            Tier.Processor 'Reinstall' false "$tier" 'ToReinstall' 'forward' 'reinstall' 'reinstalling' 'reinstalled' 'long'
-            Tier.Processor 'Install' false "$tier" 'ToInstall' 'forward' 'install' 'installing' 'installed' 'long'
-            Tier.Processor 'Restore' false "$tier" 'ToRestore' 'forward' 'restore configuration for' 'restoring configuration for' 'configuration restored for' 'long'
         fi
-
-        if [[ $tier != addon ]]; then
-            Tier.Processor 'Start' true "$tier" 'ToForceStart' 'forward' 'force-start' 'force-starting' 'force-started' 'long'
-            Tier.Processor 'Start' false "$tier" 'ToStart' 'forward' 'start' 'starting' 'started' 'long'
-        fi
-
-        Tier.Processor 'Restart' true "$tier" 'ToForceRestart' 'forward' 'force-restart' 'force-restarting' 'force-restarted' 'long'
-        Tier.Processor 'Restart' false "$tier" 'ToRestart' 'forward' 'restart' 'restarting' 'restarted' 'long'
     done
 
     SmartCR >&2
@@ -1404,16 +1400,18 @@ Tier.Processor()
     local -r TIER=$3
     local -r TARGET_OBJECT_NAME=$4
     local -r PROCESSING_DIRECTION=$5
-    local -r ACTION_INTRANSITIVE=$6
-    local -r ACTION_PRESENT=$7
-    local -r ACTION_PAST=$8
     local -r RUNTIME=$9
+    local target_operation_force=''
+    local message_prefix=''
 
     if [[ $2 = true ]]; then
         target_operation_force='--forced'
-    else
-        target_operation_force=''
+        message_prefix='force-'
     fi
+
+    local -r ACTION_INTRANSITIVE=${message_prefix}$6
+    local -r ACTION_PRESENT=${message_prefix}$7
+    local -r ACTION_PAST=${message_prefix}$8
 
     ShowAsProc "checking for $TIER packages to $ACTION_INTRANSITIVE" >&2
 
