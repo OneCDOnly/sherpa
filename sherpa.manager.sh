@@ -4428,8 +4428,8 @@ QPKG.FixAppCenterStatus()
     [[ -z $1 ]] && return 1
     QPKG.NotInstalled "$1" && return 0
 
-    # KLUDGE: force-cancel QTS 4.5.1 App Center notifier status as it's often wrong. :(
-    [[ -e $APP_CENTER_NOTIFIER ]] && $APP_CENTER_NOTIFIER -c "$1" > /dev/null 2>&1
+    # KLUDGE: 'clean' QTS 4.5.1 App Center notifier status
+    [[ -e $APP_CENTER_NOTIFIER ]] && $APP_CENTER_NOTIFIER --clean "$1" > /dev/null 2>&1
 
     # KLUDGE: need this for 'Entware' and 'Par2' packages as they don't add a status line to qpkg.conf
     $SETCFG_CMD "$1" Status complete -f "$APP_CENTER_CONFIG_PATHFILE"
