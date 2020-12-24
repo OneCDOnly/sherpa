@@ -1335,35 +1335,39 @@ Tiers.Processor()
             Tier.Processor 'Upgrade' false "$tier" 'ToUpgrade' 'forward' 'upgrade' 'upgrading' 'upgraded' 'long'
             Tier.Processor 'Reinstall' false "$tier" 'ToReinstall' 'forward' 'reinstall' 'reinstalling' 'reinstalled' 'long'
 
-            if [[ $tier = essential ]]; then
-                local log_pathfile=$LOGS_PATH/ipkgs.extra.$INSTALL_LOG_FILE
-
-                # rename original [/opt]
+            if [[ $tier = essential ]] && ! QPKG.Installed Entware && QPKGs.ToInstall.Exist Entware; then
                 local opt_path=/opt
                 local opt_backup_path=/opt.orig
-                [[ -d $opt_path && ! -L $opt_path && ! -e $opt_backup_path ]] && mv "$opt_path" "$opt_backup_path"
+
+                if [[ -d $opt_path && ! -L $opt_path && ! -e $opt_backup_path ]]; then
+                    DebugAsProc 'move original [/opt]'
+                    mv "$opt_path" "$opt_backup_path"
+                    DebugAsDone 'complete'
+                fi
             fi
 
             Tier.Processor 'Install' false "$tier" 'ToInstall' 'forward' 'install' 'installing' 'installed' 'long'
 
             if [[ $tier = essential ]]; then
+                QPKG.Installed Entware && Entware.Patch.Service
 
-                if QPKG.Installed Entware; then
-                    Entware.Patch.Service
+                local log_pathfile=$LOGS_PATH/ipkgs.extra.$INSTALL_LOG_FILE
+
+                # copy all files from original [/opt] into new [/opt]
+                if [[ -L $opt_path && -d $opt_backup_path ]]; then
+                    DebugAsProc 'swapping /opt'
+                    cp --recursive "$opt_backup_path"/* --target-directory "$opt_path" && rm -rf "$opt_backup_path"
+                    DebugAsDone 'complete'
                 fi
 
-                DebugAsProc 'swapping /opt'
-                # copy all files from original [/opt] into new [/opt]
-                [[ -L $opt_path && -d $opt_backup_path ]] && cp --recursive "$opt_backup_path"/* --target-directory "$opt_path" && rm -rf "$opt_backup_path"
-                DebugAsDone 'complete'
+                if QPKG.Installed Entware && QPKGs.ToInstall.Exist Entware; then
+                    DebugAsProc 'installing essential IPKGs'
+                    # add extra package(s) needed immediately
+                    RunAndLog "$OPKG_CMD install$(User.Opts.IgnoreFreeSpace.IsSet && User.Opts.IgnoreFreeSpace.Text) --force-overwrite $SHERPA_ESSENTIAL_IPKGS_ADD --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
+                    DebugAsDone 'installed essential IPKGs'
 
-                DebugAsProc 'installing essential IPKGs'
-                # add extra package(s) needed immediately
-                RunAndLog "$OPKG_CMD install$(User.Opts.IgnoreFreeSpace.IsSet && User.Opts.IgnoreFreeSpace.Text) --force-overwrite $SHERPA_ESSENTIAL_IPKGS_ADD --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
-                DebugAsDone 'installed essential IPKGs'
-
-                # ensure PIPs are installed later
-                Session.PIPs.Install.Set
+                    Session.PIPs.Install.Set
+                fi
             fi
 
             if [[ $tier = optional ]]; then
@@ -3280,10 +3284,10 @@ QPKGs.Statuses.Show()
         package_notes=()
         package_note=''
 
-         QPKGs.NotInstalled.Exist "$package" && package_notes+=(not-installed)
-         QPKGs.Enabled.Exist "$package" && package_notes+=($(ColourTextBrightGreen started))
-         QPKGs.NotEnabled.Exist "$package" && package_notes+=($(ColourTextBrightRed stopped))
-         QPKGs.Upgradable.Exist "$package" && package_notes+=($(ColourTextBrightOrange upgradable))
+        QPKGs.NotInstalled.Exist "$package" && package_notes+=(not-installed)
+        QPKGs.Enabled.Exist "$package" && package_notes+=($(ColourTextBrightGreen started))
+        QPKGs.NotEnabled.Exist "$package" && package_notes+=($(ColourTextBrightRed stopped))
+        QPKGs.Upgradable.Exist "$package" && package_notes+=($(ColourTextBrightOrange upgradable))
 
         [[ ${#package_notes[@]} -gt 0 ]] && package_note="${package_notes[*]}"
 
