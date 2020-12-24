@@ -1298,11 +1298,11 @@ Tiers.Processor()
     {
 
     # Tier.Processor() argument order:
-    #   $1 = target operation function      e.g. 'Start', 'Restart', etc...
+    #   $1 = $TARGET_OPERATION              e.g. 'Start', 'Restart', etc...
     #   $2 = forced operation               e.g. 'true', 'false'
-    #   $3 = $TIER                          e.g. 'essential', 'optional', 'addon'
-    #   $4 = target object name             e.g. 'ToStart', 'ToForceRestart', etc...
-    #   $5 = target processing direction    e.g. 'forward', 'backward'
+    #   $3 = $TIER                          e.g. 'essential', 'optional', 'addon', 'all'
+    #   $4 = $TARGET_OBJECT_NAME            e.g. 'ToStart', 'ToForceRestart', etc...
+    #   $5 = $PROCESSING_DIRECTION          e.g. 'forward', 'backward'
     #   $6 = $ACTION_INTRANSITIVE           e.g. 'start', etc...
     #   $7 = $ACTION_PRESENT                e.g. 'starting', etc...
     #   $8 = $ACTION_PAST                   e.g. "started', etc...
@@ -1311,13 +1311,13 @@ Tiers.Processor()
     Session.SkipPackageProcessing.IsSet && return
     DebugFuncEntry
 
-    Tier.Processor 'Download' false '' 'ToDownload' 'forward' 'update cache with' 'updating cache with' 'updated cache with' ''
+    Tier.Processor 'Download' false 'all' 'ToDownload' 'forward' 'update cache with' 'updating cache with' 'updated cache with' ''
 
-    Tier.Processor 'Backup' false '' 'ToBackup' 'forward' 'backup' 'backing-up' 'backed-up' ''
+    Tier.Processor 'Backup' false 'all' 'ToBackup' 'forward' 'backup' 'backing-up' 'backed-up' ''
 
-    Tier.Processor 'Stop' true 'optional' 'ToForceStop' 'backward' 'force-stop' 'force-stopping' 'force-stopped' ''
+    Tier.Processor 'Stop' true 'optional' 'ToForceStop' 'backward' 'stop' 'stopping' 'stopped' ''
     Tier.Processor 'Stop' false 'optional' 'ToStop' 'backward' 'stop' 'stopping' 'stopped' ''
-    Tier.Processor 'Stop' true 'essential' 'ToForceStop' 'backward' 'force-stop' 'force-stopping' 'force-stopped' ''
+    Tier.Processor 'Stop' true 'essential' 'ToForceStop' 'backward' 'stop' 'stopping' 'stopped' ''
     Tier.Processor 'Stop' false 'essential' 'ToStop' 'backward' 'stop' 'stopping' 'stopped' ''
 
     Tier.Processor 'Uninstall' false 'optional' 'ToUninstall' 'forward' 'uninstall' 'uninstalling' 'uninstalled' ''
@@ -1376,11 +1376,11 @@ Tier.Processor()
     # run a single operation on a group of packages
 
     # input:
-    #   $1 = target operation function      e.g. 'Start', 'Restart', etc...
+    #   $1 = $TARGET_OPERATION              e.g. 'Start', 'Restart', etc...
     #   $2 = forced operation               e.g. 'true', 'false'
-    #   $3 = $TIER                          e.g. 'essential', 'optional', 'addon'
-    #   $4 = target object name             e.g. 'ToStart', 'ToForceRestart', etc...
-    #   $5 = target processing direction    e.g. 'forward', 'backward'
+    #   $3 = $TIER                          e.g. 'essential', 'optional', 'addon', 'all'
+    #   $4 = $TARGET_OBJECT_NAME            e.g. 'ToStart', 'ToForceRestart', etc...
+    #   $5 = $PROCESSING_DIRECTION          e.g. 'forward', 'backward'
     #   $6 = $ACTION_INTRANSITIVE           e.g. 'start', etc...
     #   $7 = $ACTION_PRESENT                e.g. 'starting', etc...
     #   $8 = $ACTION_PAST                   e.g. "started', etc...
@@ -1413,21 +1413,25 @@ Tier.Processor()
     local -r ACTION_PRESENT=${message_prefix}$7
     local -r ACTION_PAST=${message_prefix}$8
 
-    ShowAsProc "checking for $TIER packages to $ACTION_INTRANSITIVE" >&2
+    ShowAsProc "checking for$([[ $TIER = all ]] && echo '' || echo " $TIER") packages to $ACTION_INTRANSITIVE" >&2
 
     if QPKGs.$TARGET_OBJECT_NAME.IsNone; then
         DebugInfo 'no QPKGs to process'
         DebugFuncExit; return 0
     fi
 
-    for package in $(QPKGs.$TARGET_OBJECT_NAME.Array); do
-        QPKGs.$(tr 'a-z' 'A-Z' <<< "${TIER:0:1}")${TIER:1}.Exist "$package" && target_packages+=("$package")
-    done
+    if [[ $TIER = all ]]; then
+        target_packages=($(QPKGs.$TARGET_OBJECT_NAME.Array))
+    else
+        for package in $(QPKGs.$TARGET_OBJECT_NAME.Array); do
+            QPKGs.$(tr 'a-z' 'A-Z' <<< "${TIER:0:1}")${TIER:1}.Exist "$package" && target_packages+=("$package")
+        done
+    fi
 
     package_count=${#target_packages[@]}
 
     if [[ $package_count -eq 0 ]]; then
-        DebugInfo "no $TIER QPKGs to process"
+        DebugInfo "no$([[ $TIER = all ]] && echo '' || echo " $TIER") QPKGs to process"
         DebugFuncExit; return 0
     fi
 
@@ -2894,6 +2898,7 @@ QPKGs.Conflicts.Check()
 #  22. force-stop essentials
 #  21. stop essentials
 #  20. uninstall all
+
 #  19. force-upgrade essentials
 #  18. upgrade essentials
 #  17. reinstall essentials
@@ -2903,6 +2908,7 @@ QPKGs.Conflicts.Check()
 #  13. start essentials
 #  12. force-restart essentials
 #  11. restart essentials
+
 #  10. force-upgrade optionals
 #   9. upgrade optionals
 #   8. reinstall optionals
@@ -2912,6 +2918,7 @@ QPKGs.Conflicts.Check()
 #   4. start optionals
 #   3. force-restart optionals
 #   2. restart optionals
+
 #   1. status                       (lowest: least-important)
 
 QPKGs.Assignment.Build()
@@ -2936,14 +2943,14 @@ QPKGs.Assignment.Build()
             fi
         done
 
-        # if an 'essential' has been selected for 'stop', need to 'stop' all its 'optionals' first
+        # if an 'essential' has been selected for 'stop', need to 'stop' its 'optionals' first
         for package in $(QPKGs.ToStop.Array); do
             if QPKGs.Essential.Exist "$package" && QPKG.Installed "$package"; then
                 QPKGs.ToStop.Add "$(QPKG.Get.Optionals "$package")"
             fi
         done
 
-        # if an 'essential' has been selected for 'uninstall', need to 'stop' all its 'optionals' first
+        # if an 'essential' has been selected for 'uninstall', need to 'stop' its 'optionals' first
         for package in $(QPKGs.ToUninstall.Array); do
             if QPKGs.Essential.Exist "$package" && QPKG.Installed "$package"; then
                 QPKGs.ToStop.Add "$(QPKG.Get.Optionals "$package")"
@@ -2951,6 +2958,7 @@ QPKGs.Assignment.Build()
         done
     fi
 
+    # check all items
     if User.Opts.Dependencies.Check.IsSet; then
         for package in $(QPKGs.Optional.Array); do
             if QPKG.Enabled "$package" && ! QPKGs.Upgradable.Exist "$package"; then
@@ -2959,15 +2967,27 @@ QPKGs.Assignment.Build()
         done
     fi
 
-    # check 'install' list for items that should be 'reinstalled' instead
-    for package in $(QPKGs.ToInstall.Array); do
-        if QPKG.Installed "$package"; then
-            QPKGs.ToInstall.Remove "$package"
-            QPKGs.ToReinstall.Add "$package"
+    # check 'start' list for all items that should be 'installed'
+    for package in $(QPKGs.ToStart.Array); do
+        if QPKG.NotInstalled "$package"; then
+            QPKGs.ToInstall.Add "$package"
         fi
     done
 
-    # check the 'reinstall' list for items that should be 'installed' instead
+    # check 'start' for 'essential' items that should be 'installed'
+    for package in $(QPKGs.ToStart.Array); do
+        QPKGs.ToInstall.Add "$(QPKG.Get.Essentials "$package")"
+    done
+
+#     # check 'install' list for items that should be 'reinstalled' instead
+#     for package in $(QPKGs.ToInstall.Array); do
+#         if QPKG.Installed "$package"; then
+#             QPKGs.ToInstall.Remove "$package"
+#             QPKGs.ToReinstall.Add "$package"
+#         fi
+#     done
+
+    # check 'reinstall' for all items that should be 'installed' instead
     for package in $(QPKGs.ToReinstall.Array); do
         if QPKG.NotInstalled "$package"; then
             QPKGs.ToReinstall.Remove "$package"
@@ -2985,8 +3005,9 @@ QPKGs.Assignment.Build()
     # adjust lists for 'force-start'
     if User.Opts.Apps.All.ForceStart.IsSet; then
         QPKGs.ToForceStart.Add "$(QPKGs.Installed.Array)"
+        QPKGs.ToStart.Init
     else
-        # check for essential packages that require 'force-starting'
+        # check for 'essential' items that require 'force-starting'
         for package in $(QPKGs.ToForceStart.Array); do
             QPKGs.ToForceStart.Add "$(QPKG.Get.Essentials "$package")"
         done
@@ -3067,6 +3088,10 @@ QPKGs.Assignment.Build()
         QPKGs.ToDownload.Add "$(QPKGs.ToUpgrade.Array)"
         QPKGs.ToDownload.Add "$(QPKGs.ToReinstall.Array)"
         QPKGs.ToDownload.Add "$(QPKGs.ToInstall.Array)"
+#         QPKGs.ToDownload.Add "$(QPKGs.ToForceStart.Array)"
+#         QPKGs.ToDownload.Add "$(QPKGs.ToStart.Array)"
+#         QPKGs.ToDownload.Add "$(QPKGs.ToForceRestart.Array)"
+#         QPKGs.ToDownload.Add "$(QPKGs.ToRestart.Array)"
     fi
 
     QPKGs.Assignment.List
@@ -3081,19 +3106,22 @@ QPKGs.Assignment.List()
 
     DebugInfoMinorSeparator
     DebugQPKG 'download' "$(QPKGs.ToDownload.ListCSV) "
+
     DebugQPKG 'backup' "$(QPKGs.ToBackup.ListCSV) "
     DebugQPKG 'force-stop' "$(QPKGs.ToForceStop.ListCSV) "
     DebugQPKG 'stop' "$(QPKGs.ToStop.ListCSV) "
     DebugQPKG 'uninstall' "$(QPKGs.ToUninstall.ListCSV) "
+
     DebugQPKG 'force-upgrade' "$(QPKGs.ToForceUpgrade.ListCSV) "
     DebugQPKG 'upgrade' "$(QPKGs.ToUpgrade.ListCSV) "
     DebugQPKG 'reinstall' "$(QPKGs.ToReinstall.ListCSV) "
     DebugQPKG 'install' "$(QPKGs.ToInstall.ListCSV) "
+    DebugQPKG 'restore' "$(QPKGs.ToRestore.ListCSV) "
     DebugQPKG 'force-start' "$(QPKGs.ToForceStart.ListCSV) "
     DebugQPKG 'start' "$(QPKGs.ToStart.ListCSV) "
-    DebugQPKG 'restore' "$(QPKGs.ToRestore.ListCSV) "
     DebugQPKG 'force-restart' "$(QPKGs.ToForceRestart.ListCSV) "
     DebugQPKG 'restart' "$(QPKGs.ToRestart.ListCSV) "
+
     DebugQPKG 'status' "$(QPKGs.ToStatus.ListCSV) "
     DebugInfoMinorSeparator
 
@@ -3539,7 +3567,8 @@ QPKG.Installed.Version()
 QPKG.ServiceStatus()
     {
 
-    # $1 = QPKG name to install
+    # input:
+    #   $1 = QPKG name
 
     if [[ -e /var/run/$1.last.operation ]]; then
         case $(</var/run/"$1".last.operation) in
@@ -3646,7 +3675,7 @@ QPKG.Get.Essentials()
     {
 
     # input:
-    #   $1 = user QPKG name to return esssential packages for
+    #   $1 = QPKG name to return 'esssential' packages for
 
     # output:
     #   $? = 0 if successful, 1 if failed
@@ -3668,7 +3697,7 @@ QPKG.Get.Optionals()
     {
 
     # input:
-    #   $1 = essential QPKG name to return optionals for
+    #   $1 = 'essential' QPKG name to return 'optionals' for
 
     # output:
     #   $? = 0 if successful, 1 if failed
@@ -3759,7 +3788,8 @@ QPKG.Download()
 QPKG.Install()
     {
 
-    # $1 = QPKG name to install
+    # input:
+    #   $1 = QPKG name
 
     Session.Error.IsSet && return
     Session.SkipPackageProcessing.IsSet && return
@@ -3817,7 +3847,8 @@ QPKG.Install()
 QPKG.Reinstall()
     {
 
-    # $1 = QPKG name to install
+    # input:
+    #   $1 = QPKG name
 
     Session.Error.IsSet && return
     Session.SkipPackageProcessing.IsSet && return
@@ -5068,7 +5099,7 @@ ShowAsOperationProgress()
 
     [[ $tweaked_total -eq 0 ]] && return 1      # no-point showing a fraction of zero
 
-    if [[ -n $1 ]]; then
+    if [[ -n $1 && $1 != all ]]; then
         tier=" $1"
     else
         tier=''
