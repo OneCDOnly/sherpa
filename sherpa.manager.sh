@@ -265,7 +265,7 @@ Session.Init()
         SHERPA_QPKG_URL+=("$PROJECT_REPO_URL"/sherpa/build/sherpa_${SHERPA_QPKG_VERSION[${#SHERPA_QPKG_VERSION[@]}-1]}.qpkg)
         SHERPA_QPKG_MD5+=(9cd9aa88703071441f1b4ff57335d089)
         SHERPA_QPKG_ABBRVS+=(sherpa)
-        SHERPA_QPKG_OPS+=('upgrade')
+        SHERPA_QPKG_OPS+=(upgrade)
         SHERPA_QPKG_ESSENTIALS+=('')
         SHERPA_QPKG_IPKGS_ADD+=('')
         SHERPA_QPKG_IPKGS_REMOVE+=('')
@@ -432,7 +432,7 @@ Session.Init()
         SHERPA_QPKG_ABBRVS+=('ng nzb nzbg nget nzbget')
         SHERPA_QPKG_OPS+=('backup install reinstall restart restore start stop uninstall upgrade')
         SHERPA_QPKG_ESSENTIALS+=(Entware)
-        SHERPA_QPKG_IPKGS_ADD+=('nzbget')
+        SHERPA_QPKG_IPKGS_ADD+=(nzbget)
         SHERPA_QPKG_IPKGS_REMOVE+=('')
 
     SHERPA_QPKG_NAME+=(OTransmission)
@@ -1114,7 +1114,7 @@ Session.Arguments.Parse()
         Session.SkipPackageProcessing.Set
     fi
 
-    SmartCR >&2; DebugFuncExit; return 0
+    DebugFuncExit; return 0
 
     }
 
@@ -1303,9 +1303,9 @@ Tiers.Processor()
     #   $3 = $TIER                          e.g. 'essential', 'optional', 'addon'
     #   $4 = target object name             e.g. 'ToStart', 'ToForceRestart', etc...
     #   $5 = target processing direction    e.g. 'forward', 'backward'
-    #   $6 = $ACTION_INTRANSITIVE           e.g. 'start'
-    #   $7 = $ACTION_PRESENT                e.g. 'starting'
-    #   $8 = $ACTION_PAST                   e.g. "started'
+    #   $6 = $ACTION_INTRANSITIVE           e.g. 'start', etc...
+    #   $7 = $ACTION_PRESENT                e.g. 'starting', etc...
+    #   $8 = $ACTION_PAST                   e.g. "started', etc...
     #   $9 = $RUNTIME (optional)            e.g. 'long'
 
     Session.SkipPackageProcessing.IsSet && return
@@ -1380,14 +1380,14 @@ Tier.Processor()
     # run a single operation on a group of packages
 
     # input:
-    #   $1 = $TARGET_OPERATION              e.g. 'Start', 'Restart', etc...
+    #   $1 = target operation function      e.g. 'Start', 'Restart', etc...
     #   $2 = forced operation               e.g. 'true', 'false'
     #   $3 = $TIER                          e.g. 'essential', 'optional', 'addon'
-    #   $4 = $TARGET_OBJECT_NAME            e.g. 'ToStart', 'ToForceRestart', etc...
-    #   $5 = $PROCESSING_DIRECTION          e.g. 'forward', 'backward'
-    #   $6 = $ACTION_INTRANSITIVE           e.g. 'start'
-    #   $7 = $ACTION_PRESENT                e.g. 'starting'
-    #   $8 = $ACTION_PAST                   e.g. "started'
+    #   $4 = target object name             e.g. 'ToStart', 'ToForceRestart', etc...
+    #   $5 = target processing direction    e.g. 'forward', 'backward'
+    #   $6 = $ACTION_INTRANSITIVE           e.g. 'start', etc...
+    #   $7 = $ACTION_PRESENT                e.g. 'starting', etc...
+    #   $8 = $ACTION_PAST                   e.g. "started', etc...
     #   $9 = $RUNTIME (optional)            e.g. 'long'
 
     [[ -z $1 || -z $3 || -z $4 || -z $5 || -z $6 || -z $7 || -z $8 ]] && return
