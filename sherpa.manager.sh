@@ -513,7 +513,10 @@ Session.Init()
 Session.Build.StateLists()
     {
 
+    Session.Lists.Built.IsSet && return
+
     DebugFuncEntry
+    ShowAsProc 'building package state lists' >&2
 
     QPKGs.EssentialAndOptional.Build
     QPKGs.InstallationState.Build
@@ -558,7 +561,7 @@ Session.Arguments.Parse()
                 arg_identified=true
                 Session.Display.Clean.Clear
                 Session.SkipPackageProcessing.Clear
-                Session.Lists.Built.IsNot && Session.Build.StateLists
+                Session.Build.StateLists
                 ;;
             status|statuses)
                 operation=status_
@@ -567,7 +570,7 @@ Session.Arguments.Parse()
                 arg_identified=true
                 Session.Display.Clean.Clear
                 Session.SkipPackageProcessing.Set
-                Session.Lists.Built.IsNot && Session.Build.StateLists
+                Session.Build.StateLists
                 ;;
             clean|paste)
                 operation=${arg}_
@@ -752,7 +755,7 @@ Session.Arguments.Parse()
                         User.Opts.Help.Actions.Set
                         ;;
                     all_)
-                        Session.Lists.Built.IsNot && Session.Build.StateLists
+                        Session.Build.StateLists
                         User.Opts.Apps.List.All.Set
                         Session.Display.Clean.Set
                         ;;
@@ -763,17 +766,17 @@ Session.Arguments.Parse()
                         User.Opts.Apps.List.Backups.Set
                         ;;
                     essential_)
-                        Session.Lists.Built.IsNot && Session.Build.StateLists
+                        Session.Build.StateLists
                         User.Opts.Apps.List.Essential.Set
                         Session.Display.Clean.Set
                         ;;
                     installable_)
-                        Session.Lists.Built.IsNot && Session.Build.StateLists
+                        Session.Build.StateLists
                         User.Opts.Apps.List.NotInstalled.Set
                         Session.Display.Clean.Set
                         ;;
                     installed_)
-                        Session.Lists.Built.IsNot && Session.Build.StateLists
+                        Session.Build.StateLists
                         User.Opts.Apps.List.Installed.Set
                         Session.Display.Clean.Set
                         ;;
@@ -786,7 +789,7 @@ Session.Arguments.Parse()
                         Session.Display.Clean.Set
                         ;;
                     optional_)
-                        Session.Lists.Built.IsNot && Session.Build.StateLists
+                        Session.Build.StateLists
                         User.Opts.Apps.List.Optional.Set
                         Session.Display.Clean.Set
                         ;;
@@ -794,21 +797,21 @@ Session.Arguments.Parse()
                         User.Opts.Help.Options.Set
                         ;;
                     packages_)
-                        Session.Lists.Built.IsNot && Session.Build.StateLists
+                        Session.Build.StateLists
                         User.Opts.Help.Packages.Set
                         ;;
                     problems_)
                         User.Opts.Help.Problems.Set
                         ;;
                     status_)
-                        Session.Lists.Built.IsNot && Session.Build.StateLists
+                        Session.Build.StateLists
                         User.Opts.Apps.All.Status.Set
                         ;;
                     tips_)
                         User.Opts.Help.Tips.Set
                         ;;
                     upgradable_)
-                        Session.Lists.Built.IsNot && Session.Build.StateLists
+                        Session.Build.StateLists
                         User.Opts.Apps.List.Upgradable.Set
                         Session.Display.Clean.Set
                         ;;
@@ -1115,7 +1118,7 @@ Session.Arguments.Parse()
 
     }
 
-Session.Arguments.Review()
+Session.Arguments.Suggestions()
     {
 
     DebugFuncEntry
@@ -1178,7 +1181,7 @@ Session.Validate()
     {
 
     DebugFuncEntry
-    Session.Arguments.Review
+    Session.Arguments.Suggestions
 
     if Session.SkipPackageProcessing.IsSet; then
         DebugFuncExit; return 1
@@ -1333,11 +1336,6 @@ Tiers.Processor()
         if [[ $tier = essential ]]; then
             Tier.Processor 'Reinstall' false "$tier" 'ToReinstall' 'forward' 'reinstall' 'reinstalling' 'reinstalled' 'long'
             Tier.Processor 'Install' false "$tier" 'ToInstall' 'forward' 'install' 'installing' 'installed' 'long'
-
-            if QPKG.Installed Entware; then
-                Session.AddPathToEntware
-                Entware.Patch.Service
-            fi
         elif [[ $tier = addon ]]; then
             ShowAsProc "checking for $tier packages to install" >&2
 
@@ -1364,11 +1362,6 @@ Tiers.Processor()
         if [[ $tier != addon ]]; then
             Tier.Processor 'Start' true "$tier" 'ToForceStart' 'forward' 'force-start' 'force-starting' 'force-started' 'long'
             Tier.Processor 'Start' false "$tier" 'ToStart' 'forward' 'start' 'starting' 'started' 'long'
-        fi
-
-        if [[ $tier = essential ]] && QPKG.Installed Entware; then
-            Session.AddPathToEntware
-            Entware.Patch.Service
         fi
 
         Tier.Processor 'Restart' true "$tier" 'ToForceRestart' 'forward' 'force-restart' 'force-restarting' 'force-restarted' 'long'
@@ -3793,6 +3786,11 @@ QPKG.Install()
 
     if [[ $1 = Entware ]]; then
         Package.Install.Entware
+
+        if QPKG.Installed Entware; then
+            Session.AddPathToEntware
+            Entware.Patch.Service
+        fi
     else
         DebugAsProc "installing $(FormatAsPackageName "$1")"
 
@@ -4104,6 +4102,11 @@ QPKG.Start()
         DebugAsDone "started $(FormatAsPackageName "$1")"
         QPKG.ServiceStatus "$1"
         QPKGs.ToStart.Remove "$1"
+
+        if [[ $1 = Entware ]] && QPKG.Installed Entware; then
+            Session.AddPathToEntware
+            Entware.Patch.Service
+        fi
     else
         ShowAsWarn "unable to start $(FormatAsPackageName "$1") $(FormatAsExitcode $resultcode)"
     fi
