@@ -1595,10 +1595,6 @@ Packages.Stop.Essentials()
             ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") (see log for more details)"
             ((fail_count++))
             continue
-        elif ! QPKG.Disable "$package"; then   # essentials don't have the same service scripts as other sherpa packages, so they must be enabled/disabled externally
-            ShowAsEror "unable to disable $(FormatAsPackageName "$package") (see log for more details)"
-            ((fail_count++))
-            continue
         fi
 
         ((pass_count++))
@@ -2049,11 +2045,7 @@ Packages.ForceStart.Essentials()
     for package in "${target_packages[@]}"; do
         ShowAsOperationProgress "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$RUNTIME"
 
-        if ! QPKG.Enable "$package"; then       # 'essentials' don't have the same service scripts as other sherpa packages, so they must be enabled/disabled externally
-            ShowAsFail "unable to enable $(FormatAsPackageName "$package") (see log for more details)"
-            ((fail_count++))
-            continue
-        elif ! QPKG.Start "$package"; then
+        if ! QPKG.Start "$package" --forced; then
             ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") (see log for more details)"
             ((fail_count++))
             continue
@@ -2110,11 +2102,7 @@ Packages.Start.Essentials()
     for package in "${target_packages[@]}"; do
         ShowAsOperationProgress "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$RUNTIME"
 
-        if ! QPKG.Enable "$package"; then       # 'essentials' don't have the same service scripts as other sherpa packages, so they must be enabled/disabled externally
-            ShowAsFail "unable to enable $(FormatAsPackageName "$package") (see log for more details)"
-            ((fail_count++))
-            continue
-        elif ! QPKG.Start "$package"; then
+        if ! QPKG.Start "$package"; then
             ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") (see log for more details)"
             ((fail_count++))
             continue
