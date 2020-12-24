@@ -1162,6 +1162,10 @@ Session.Arguments.Review()
                     DisplayAsProjectSyntaxExample 'to uninstall all packages, use' 'force uninstall all'
                     User.Opts.Help.Basic.Clear
                     ;;
+                upgrade-all)
+                    DisplayAsProjectSyntaxExample 'to upgrade all packages, use' 'upgrade all'
+                    User.Opts.Help.Basic.Clear
+                    ;;
             esac
         done
     fi
@@ -4358,6 +4362,8 @@ QPKGs.Assignment.Build()
     QPKGs.ToForceRestart.Remove "$(QPKGs.ToStart.Array)"
 
     QPKGs.ToRestart.Remove "$(QPKGs.NotInstalled.Array)"
+    QPKGs.ToRestart.Remove "$(QPKGs.ToUpgrade.Array)"
+    QPKGs.ToRestart.Remove "$(QPKGs.ToReinstall.Array)"
     QPKGs.ToRestart.Remove "$(QPKGs.ToInstall.Array)"
     QPKGs.ToRestart.Remove "$(QPKGs.ToForceStart.Array)"
     QPKGs.ToRestart.Remove "$(QPKGs.ToForceRestart.Array)"
@@ -5097,6 +5103,7 @@ QPKG.Install()
         QPKG.ServiceStatus "$1"
         QPKGs.JustInstalled.Add "$1"
         QPKGs.JustStarted.Add "$1"
+        QPKGs.ToInstall.Remove "$1"
         resultcode=0    # reset this to zero (0 or 10 from a QPKG install is OK)
     else
         DebugAsError "installation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $resultcode)"
@@ -5149,13 +5156,15 @@ QPKG.Reinstall()
         QPKG.ServiceStatus "$1"
         QPKGs.JustInstalled.Add "$1"
         QPKGs.JustStarted.Add "$1"
-        QPKGs.ToStart.Remove "$1"
         QPKGs.ToInstall.Remove "$1"
-        QPKGs.ToRestart.Remove "$1"
         resultcode=0    # reset this to zero (0 or 10 from a QPKG install is OK)
     else
         ShowAsEror "reinstallation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $resultcode)"
     fi
+
+    QPKGs.ToStart.Remove "$1"
+    QPKGs.ToReinstall.Remove "$1"
+    QPKGs.ToRestart.Remove "$1"
 
     DebugFuncExit; return $resultcode
 
@@ -5221,11 +5230,14 @@ QPKG.Upgrade()
         QPKG.ServiceStatus "$1"
         QPKGs.JustInstalled.Add "$1"
         QPKGs.ToInstall.Remove "$1"
-        QPKGs.ToReinstall.Remove "$1"
         resultcode=0    # reset this to zero (0 or 10 from a QPKG upgrade is OK)
     else
         ShowAsEror "${prefix}upgrade failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $resultcode)"
     fi
+
+    QPKGs.ToStart.Remove "$1"
+    QPKGs.ToReinstall.Remove "$1"
+    QPKGs.ToRestart.Remove "$1"
 
     DebugFuncExit; return $resultcode
 
