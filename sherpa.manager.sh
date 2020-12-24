@@ -3840,6 +3840,16 @@ QPKG.Install()
     QPKGs.ToReinstall.Remove "$1"
     QPKGs.ToRestart.Remove "$1"
 
+    for package in "$(QPKG.Get.Optionals "$1")"; do
+        if QPKG.Installed "$package"; then
+            if QPKG.Enabled "$package"; then
+                QPKGs.ToRestart.Add "$package"
+            else
+                QPKGs.ToStart.Add "$package"
+            fi
+        fi
+    done
+
     DebugFuncExit; return $resultcode
 
     }
