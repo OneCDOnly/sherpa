@@ -1334,7 +1334,37 @@ Tiers.Processor()
             Tier.Processor 'Upgrade' true "$tier" 'ToForceUpgrade' 'forward' 'upgrade' 'upgrading' 'upgraded' 'long'
             Tier.Processor 'Upgrade' false "$tier" 'ToUpgrade' 'forward' 'upgrade' 'upgrading' 'upgraded' 'long'
             Tier.Processor 'Reinstall' false "$tier" 'ToReinstall' 'forward' 'reinstall' 'reinstalling' 'reinstalled' 'long'
+
+            if [[ $tier = essential ]]; then
+                local log_pathfile=$LOGS_PATH/ipkgs.extra.$INSTALL_LOG_FILE
+
+                # rename original [/opt]
+                local opt_path=/opt
+                local opt_backup_path=/opt.orig
+                [[ -d $opt_path && ! -L $opt_path && ! -e $opt_backup_path ]] && mv "$opt_path" "$opt_backup_path"
+            fi
+
             Tier.Processor 'Install' false "$tier" 'ToInstall' 'forward' 'install' 'installing' 'installed' 'long'
+
+            if [[ $tier = essential ]]; then
+
+                if QPKG.Installed Entware; then
+                    Entware.Patch.Service
+                fi
+
+                DebugAsProc 'swapping /opt'
+                # copy all files from original [/opt] into new [/opt]
+                [[ -L $opt_path && -d $opt_backup_path ]] && cp --recursive "$opt_backup_path"/* --target-directory "$opt_path" && rm -rf "$opt_backup_path"
+                DebugAsDone 'complete'
+
+                DebugAsProc 'installing essential IPKGs'
+                # add extra package(s) needed immediately
+                RunAndLog "$OPKG_CMD install$(User.Opts.IgnoreFreeSpace.IsSet && User.Opts.IgnoreFreeSpace.Text) --force-overwrite $SHERPA_ESSENTIAL_IPKGS_ADD --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
+                DebugAsDone 'installed essential IPKGs'
+
+                # ensure PIPs are installed later
+                Session.PIPs.Install.Set
+            fi
 
             if [[ $tier = optional ]]; then
                 Tier.Processor 'Restore' false "$tier" 'ToRestore' 'forward' 'restore configuration for' 'restoring configuration for' 'configuration restored for' 'long'
@@ -1486,32 +1516,6 @@ Package.Save.Lists()
         $OPKG_CMD list-installed > "$PREVIOUS_OPKG_PACKAGE_LIST"
         DebugAsDone "saved current $(FormatAsPackageName Entware) IPKG list to $(FormatAsFileName "$PREVIOUS_OPKG_PACKAGE_LIST")"
     fi
-
-    }
-
-Package.Install.Entware()
-    {
-
-    local log_pathfile=$LOGS_PATH/ipkgs.extra.$INSTALL_LOG_FILE
-
-    # rename original [/opt]
-    local opt_path=/opt
-    local opt_backup_path=/opt.orig
-    [[ -d $opt_path && ! -L $opt_path && ! -e $opt_backup_path ]] && mv "$opt_path" "$opt_backup_path"
-    QPKG.Install Entware && Session.AddPathToEntware
-
-    DebugAsProc 'swapping /opt'
-    # copy all files from original [/opt] into new [/opt]
-    [[ -L $opt_path && -d $opt_backup_path ]] && cp --recursive "$opt_backup_path"/* --target-directory "$opt_path" && rm -rf "$opt_backup_path"
-    DebugAsDone 'complete'
-
-    DebugAsProc 'installing essential IPKGs'
-    # add extra package(s) needed immediately
-    RunAndLog "$OPKG_CMD install$(User.Opts.IgnoreFreeSpace.IsSet && User.Opts.IgnoreFreeSpace.Text) --force-overwrite $SHERPA_ESSENTIAL_IPKGS_ADD --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
-    DebugAsDone 'installed essential IPKGs'
-
-    # ensure PIPs are installed later
-    Session.PIPs.Install.Set
 
     }
 
@@ -3812,28 +3816,25 @@ QPKG.Install()
     target_file=$($BASENAME_CMD "$local_pathfile")
     log_pathfile=$LOGS_PATH/$target_file.$INSTALL_LOG_FILE
 
-    if [[ $1 = Entware ]]; then
-        Package.Install.Entware
+    DebugAsProc "installing $(FormatAsPackageName "$1")"
 
-        if QPKG.Installed Entware; then
+    RunAndLog "$SH_CMD $local_pathfile" "$log_pathfile"
+    resultcode=$?
+
+    if [[ $resultcode -eq 0 || $resultcode -eq 10 ]]; then
+        DebugAsDone "installed $(FormatAsPackageName "$1")"
+        QPKG.FixAppCenterStatus "$1"
+        QPKG.ServiceStatus "$1"
+#       QPKGs.ToInstall.Remove "$1"
+
+        if [[ $1 = Entware ]]; then
             Session.AddPathToEntware
             Entware.Patch.Service
         fi
+
+        resultcode=0    # reset this to zero (0 or 10 from a QPKG install is OK)
     else
-        DebugAsProc "installing $(FormatAsPackageName "$1")"
-
-        RunAndLog "$SH_CMD $local_pathfile" "$log_pathfile"
-        resultcode=$?
-
-        if [[ $resultcode -eq 0 || $resultcode -eq 10 ]]; then
-            DebugAsDone "installed $(FormatAsPackageName "$1")"
-            QPKG.FixAppCenterStatus "$1"
-            QPKG.ServiceStatus "$1"
-            QPKGs.ToInstall.Remove "$1"
-            resultcode=0    # reset this to zero (0 or 10 from a QPKG install is OK)
-        else
-            DebugAsError "installation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $resultcode)"
-        fi
+        DebugAsError "installation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $resultcode)"
     fi
 
     QPKGs.ToStart.Remove "$1"
@@ -3894,7 +3895,7 @@ QPKG.Reinstall()
 
             if ! QPKG.Uninstall Entware; then
                 ShowAsFail "unable to uninstall $(FormatAsPackageName "$package") (see log for more details)"
-            elif ! Package.Install.Entware; then
+            elif ! QPKG.Install Entware; then
                 ShowAsFail "unable to install $(FormatAsPackageName "$package") (see log for more details)"
             fi
 
@@ -4142,10 +4143,7 @@ QPKG.Start()
         QPKG.ServiceStatus "$1"
         QPKGs.ToStart.Remove "$1"
 
-        if [[ $1 = Entware ]] && QPKG.Installed Entware; then
-            Session.AddPathToEntware
-            Entware.Patch.Service
-        fi
+        [[ $1 = Entware ]] && Session.AddPathToEntware
     else
         ShowAsWarn "unable to start $(FormatAsPackageName "$1") $(FormatAsExitcode $resultcode)"
     fi
