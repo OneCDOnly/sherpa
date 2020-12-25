@@ -1330,7 +1330,24 @@ Tiers.Processor()
     ! QPKG.Installed Entware && Session.RemovePathToEntware
 
     for tier in {'essential','addon','optional'}; do
-        if [[ $tier != addon ]]; then
+        if [[ $tier = addon ]]; then
+            ShowAsProc "checking for addon packages to install" >&2
+
+            if QPKGs.ToInstall.IsAny || QPKGs.ToReinstall.IsAny; then
+                Session.IPKGs.Install.Set
+            fi
+
+            if QPKGs.ToInstall.Exist SABnzbd || QPKGs.ToReinstall.Exist SABnzbd || QPKGs.ToUpgrade.Exist SABnzbd; then
+                Session.PIPs.Install.Set   # must ensure 'sabyenc' and 'feedparser' modules are installed/updated
+            fi
+
+            if QPKG.Enabled Entware; then
+                IPKGs.Install
+                PIPs.Install
+            else
+                : # TODO: test if other packages are to be installed here. If so, and Entware isn't enabled, then abort with error.
+            fi
+        else
             Tier.Processor 'Upgrade' true "$tier" 'ToForceUpgrade' 'forward' 'upgrade' 'upgrading' 'upgraded' 'long'
             Tier.Processor 'Upgrade' false "$tier" 'ToUpgrade' 'forward' 'upgrade' 'upgrading' 'upgraded' 'long'
             Tier.Processor 'Reinstall' false "$tier" 'ToReinstall' 'forward' 'reinstall' 'reinstalling' 'reinstalled' 'long'
@@ -1378,23 +1395,6 @@ Tiers.Processor()
             Tier.Processor 'Start' false "$tier" 'ToStart' 'forward' 'start' 'starting' 'started' 'long'
             Tier.Processor 'Restart' true "$tier" 'ToForceRestart' 'forward' 'restart' 'restarting' 'restarted' 'long'
             Tier.Processor 'Restart' false "$tier" 'ToRestart' 'forward' 'restart' 'restarting' 'restarted' 'long'
-        else
-            ShowAsProc "checking for addon packages to install" >&2
-
-            if QPKGs.ToInstall.IsAny || QPKGs.ToReinstall.IsAny; then
-                Session.IPKGs.Install.Set
-            fi
-
-            if QPKGs.ToInstall.Exist SABnzbd || QPKGs.ToReinstall.Exist SABnzbd || QPKGs.ToUpgrade.Exist SABnzbd; then
-                Session.PIPs.Install.Set   # must ensure 'sabyenc' and 'feedparser' modules are installed/updated
-            fi
-
-            if QPKG.Enabled Entware; then
-                IPKGs.Install
-                PIPs.Install
-            else
-                : # TODO: test if other packages are to be installed here. If so, and Entware isn't enabled, then abort with error.
-            fi
         fi
     done
 
@@ -1411,7 +1411,7 @@ Tier.Processor()
 
     # input:
     #   $1 = $TARGET_OPERATION              e.g. 'Start', 'Restart', etc...
-    #   $2 = forced operation               e.g. 'true', 'false'
+    #   $2 = forced operation?              e.g. 'true', 'false'
     #   $3 = $TIER                          e.g. 'essential', 'optional', 'addon', 'all'
     #   $4 = $TARGET_OBJECT_NAME            e.g. 'ToStart', 'ToForceRestart', etc...
     #   $5 = $PROCESSING_DIRECTION          e.g. 'forward', 'backward'
@@ -1425,6 +1425,8 @@ Tier.Processor()
     DebugFuncEntry
 
     local package=''
+    local forced_operation=''
+    local message_prefix=''
     local -i index=0
     local -a target_packages=()
     local -i package_count=0
@@ -1435,11 +1437,9 @@ Tier.Processor()
     local -r TARGET_OBJECT_NAME=$4
     local -r PROCESSING_DIRECTION=$5
     local -r RUNTIME=$9
-    local target_operation_force=''
-    local message_prefix=''
 
     if [[ $2 = true ]]; then
-        target_operation_force='--forced'
+        forced_operation='--forced'
         message_prefix='force-'
     fi
 
@@ -1473,7 +1473,7 @@ Tier.Processor()
         for package in "${target_packages[@]}"; do                  # process list forwards
             ShowAsOperationProgress "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$RUNTIME"
 
-            if ! QPKG.$TARGET_OPERATION "$package" "$target_operation_force"; then
+            if ! QPKG.$TARGET_OPERATION "$package" "$forced_operation"; then
                 ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") (see log for more details)"
                 ((fail_count++))
                 continue
@@ -1486,7 +1486,7 @@ Tier.Processor()
             package=${target_packages[$index]}
             ShowAsOperationProgress "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$RUNTIME"
 
-            if ! QPKG.$TARGET_OPERATION "$package" "$target_operation_force"; then
+            if ! QPKG.$TARGET_OPERATION "$package" "$forced_operation"; then
                 ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") (see log for more details)"
                 ((fail_count++))
                 continue
@@ -5157,7 +5157,7 @@ ShowAsOperationResult()
     # execute with passes > total to trigger 100% message
     ShowAsOperationProgress "$1" "$total" "$fails" "$((passes+1))" "$ACTION_PRESENT" "$6"
 
-    if [[ -n $1 ]]; then
+    if [[ -n $1 && $1 != all ]]; then
         tier=" $1"
     else
         tier=''
