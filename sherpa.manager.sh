@@ -1342,6 +1342,7 @@ Tiers.Processor()
             fi
 
             if QPKG.Enabled Entware; then
+                Session.AddPathToEntware
                 IPKGs.Install
                 PIPs.Install
             else
@@ -1732,6 +1733,8 @@ PIPs.Install()
             DebugFuncExit; return 1
         fi
     fi
+
+    Session.AddPathToEntware
 
     [[ -n ${SHERPA_COMMON_PIPS_ADD// /} ]] && exec_cmd="$pip3_cmd install $SHERPA_COMMON_PIPS_ADD --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
 
@@ -2987,6 +2990,30 @@ QPKGs.Assignment.Build()
         QPKGs.ToInstall.Add "$(QPKG.Get.Essentials "$package")"
     done
 
+    # check 'upgrade' list for all items that should be 'installed'
+    for package in $(QPKGs.ToUpgrade.Array); do
+        if QPKG.NotInstalled "$package"; then
+            QPKGs.ToInstall.Add "$package"
+        fi
+    done
+
+    # check 'upgrade' for 'essential' items that should be 'installed'
+    for package in $(QPKGs.ToUpgrade.Array); do
+        QPKGs.ToInstall.Add "$(QPKG.Get.Essentials "$package")"
+    done
+
+    # check 'force-upgrade' list for all items that should be 'installed'
+    for package in $(QPKGs.ToForceUpgrade.Array); do
+        if QPKG.NotInstalled "$package"; then
+            QPKGs.ToInstall.Add "$package"
+        fi
+    done
+
+    # check 'force-upgrade' for 'essential' items that should be 'installed'
+    for package in $(QPKGs.ToForceUpgrade.Array); do
+        QPKGs.ToInstall.Add "$(QPKG.Get.Essentials "$package")"
+    done
+
 #     # check 'install' list for items that should be 'reinstalled' instead
 #     for package in $(QPKGs.ToInstall.Array); do
 #         if QPKG.Installed "$package"; then
@@ -3829,7 +3856,6 @@ QPKG.Install()
         DebugAsDone "installed $(FormatAsPackageName "$1")"
         QPKG.FixAppCenterStatus "$1"
         QPKG.ServiceStatus "$1"
-#       QPKGs.ToInstall.Remove "$1"
 
         if [[ $1 = Entware ]]; then
             Session.AddPathToEntware
@@ -3973,7 +3999,7 @@ QPKG.Upgrade()
 
     if ! QPKG.Installed "$1"; then
         DebugAsWarn "unable to upgrade $(FormatAsPackageName "$1") as it's not installed"
-        QPKG.ToUpgrade.Remove "$1"
+        QPKGs.ToUpgrade.Remove "$1"
         DebugFuncExit; return 0
     fi
 
