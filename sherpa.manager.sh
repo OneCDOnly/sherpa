@@ -1353,12 +1353,12 @@ Tiers.Processor()
             Tier.Processor 'Upgrade' false "$tier" 'ToUpgrade' 'forward' 'upgrade' 'upgrading' 'upgraded' 'long'
             Tier.Processor 'Reinstall' false "$tier" 'ToReinstall' 'forward' 'reinstall' 'reinstalling' 'reinstalled' 'long'
 
-            if [[ $tier = essential ]] && ! QPKG.Installed Entware && QPKGs.ToInstall.Exist Entware; then
+            if [[ $tier = essential ]] && ! QPKG.Installed Entware && (QPKGs.ToInstall.Exist Entware || QPKGs.ToReinstall.Exist Entware); then
                 local opt_path=/opt
                 local opt_backup_path=/opt.orig
 
                 if [[ -d $opt_path && ! -L $opt_path && ! -e $opt_backup_path ]]; then
-                    DebugAsProc 'move original [/opt]'
+                    ShowAsProc "backup original /opt" >&2
                     mv "$opt_path" "$opt_backup_path"
                     DebugAsDone 'complete'
                 fi
@@ -1366,26 +1366,22 @@ Tiers.Processor()
 
             Tier.Processor 'Install' false "$tier" 'ToInstall' 'forward' 'install' 'installing' 'installed' 'long'
 
-            if [[ $tier = essential ]]; then
-                QPKG.Installed Entware && Entware.Patch.Service
-
+            if [[ $tier = essential ]] && QPKG.Installed Entware && (QPKGs.ToInstall.Exist Entware || QPKGs.ToReinstall.Exist Entware); then
                 local log_pathfile=$LOGS_PATH/ipkgs.extra.$INSTALL_LOG_FILE
 
                 # copy all files from original [/opt] into new [/opt]
                 if [[ -L $opt_path && -d $opt_backup_path ]]; then
-                    DebugAsProc 'swapping /opt'
+                    ShowAsProc "restoring original /opt" >&2
                     cp --recursive "$opt_backup_path"/* --target-directory "$opt_path" && rm -rf "$opt_backup_path"
                     DebugAsDone 'complete'
                 fi
 
-                if QPKG.Installed Entware && QPKGs.ToInstall.Exist Entware; then
-                    DebugAsProc 'installing essential IPKGs'
-                    # add extra package(s) needed immediately
-                    RunAndLog "$OPKG_CMD install$(User.Opts.IgnoreFreeSpace.IsSet && User.Opts.IgnoreFreeSpace.Text) --force-overwrite $SHERPA_ESSENTIAL_IPKGS_ADD --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
-                    DebugAsDone 'installed essential IPKGs'
+                # add extra package(s) needed immediately
+                ShowAsProc 'installing essential IPKGs'
+                RunAndLog "$OPKG_CMD install$(User.Opts.IgnoreFreeSpace.IsSet && User.Opts.IgnoreFreeSpace.Text) --force-overwrite $SHERPA_ESSENTIAL_IPKGS_ADD --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
+                ShowAsDone 'installed essential IPKGs'
 
-                    Session.PIPs.Install.Set
-                fi
+                Session.PIPs.Install.Set
             fi
 
             if [[ $tier = optional ]]; then
@@ -3912,7 +3908,7 @@ QPKG.Reinstall()
     target_file=$($BASENAME_CMD "$local_pathfile")
     log_pathfile=$LOGS_PATH/$target_file.$REINSTALL_LOG_FILE
 
-    if [[ $1 = Entware ]]; then     # Entware is a special case. Don't install QPKG over old one. Completely remove old one and install new one.
+    if [[ $1 = Entware ]]; then # Entware is a special case: don't install QPKG over old one. Completely remove old one and install new one.
         Display
         ShowAsNote "reinstalling $(FormatAsPackageName Entware) will remove all IPKGs and Python modules, and only those required to support your $PROJECT_NAME apps will be reinstalled."
         ShowAsNote "your installed IPKG list will be saved to $(FormatAsFileName "$PREVIOUS_OPKG_PACKAGE_LIST")"
@@ -3955,8 +3951,6 @@ QPKG.Reinstall()
     fi
 
     QPKGs.ToStart.Remove "$1"
-    QPKGs.ToReinstall.Remove "$1"
-    QPKGs.ToRestart.Remove "$1"
 
     DebugFuncExit; return $resultcode
 
