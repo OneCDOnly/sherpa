@@ -43,7 +43,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=201225
+    readonly MANAGER_SCRIPT_VERSION=201226
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -2975,11 +2975,11 @@ QPKGs.Assignment.Build()
     fi
 
     # check 'start' list for all items that should be 'installed'
-    for package in $(QPKGs.ToStart.Array); do
-        if QPKG.NotInstalled "$package"; then
-            QPKGs.ToInstall.Add "$package"
-        fi
-    done
+#     for package in $(QPKGs.ToStart.Array); do
+#         if QPKG.NotInstalled "$package"; then
+#             QPKGs.ToInstall.Add "$package"
+#         fi
+#     done
 
     # check 'start' for 'essential' items that should be 'installed'
     for package in $(QPKGs.ToStart.Array); do
@@ -3858,14 +3858,14 @@ QPKG.Install()
             Entware.Patch.Service
         fi
 
+        QPKGs.ToStart.Remove "$1"
+        QPKGs.ToReinstall.Remove "$1"
+        QPKGs.ToRestart.Remove "$1"
         resultcode=0    # reset this to zero (0 or 10 from a QPKG install is OK)
     else
         DebugAsError "installation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $resultcode)"
     fi
 
-    QPKGs.ToStart.Remove "$1"
-    QPKGs.ToReinstall.Remove "$1"
-    QPKGs.ToRestart.Remove "$1"
 
     for package in "$(QPKG.Get.Optionals "$1")"; do
         if QPKG.Installed "$package"; then
