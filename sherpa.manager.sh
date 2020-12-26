@@ -1327,19 +1327,9 @@ Tiers.Processor()
 
     Tier.Processor 'Uninstall' false 'essential' 'ToUninstall' 'forward' 'uninstall' 'uninstalling' 'uninstalled' ''
 
-    ! QPKG.Installed Entware && Session.RemovePathToEntware
-
     for tier in {'essential','addon','optional'}; do
         if [[ $tier = addon ]]; then
             ShowAsProc "checking for addon packages to install" >&2
-
-            if QPKGs.ToInstall.IsAny || QPKGs.ToReinstall.IsAny; then
-                Session.IPKGs.Install.Set
-            fi
-
-            if QPKGs.ToInstall.Exist SABnzbd || QPKGs.ToReinstall.Exist SABnzbd || QPKGs.ToUpgrade.Exist SABnzbd; then
-                Session.PIPs.Install.Set   # must ensure 'sabyenc' and 'feedparser' modules are installed/updated
-            fi
 
             if QPKG.Enabled Entware; then
                 Session.AddPathToEntware
@@ -1352,37 +1342,7 @@ Tiers.Processor()
             Tier.Processor 'Upgrade' true "$tier" 'ToForceUpgrade' 'forward' 'upgrade' 'upgrading' 'upgraded' 'long'
             Tier.Processor 'Upgrade' false "$tier" 'ToUpgrade' 'forward' 'upgrade' 'upgrading' 'upgraded' 'long'
             Tier.Processor 'Reinstall' false "$tier" 'ToReinstall' 'forward' 'reinstall' 'reinstalling' 'reinstalled' 'long'
-
-            if [[ $tier = essential ]] && ! QPKG.Installed Entware && (QPKGs.ToInstall.Exist Entware || QPKGs.ToReinstall.Exist Entware); then
-                local opt_path=/opt
-                local opt_backup_path=/opt.orig
-
-                if [[ -d $opt_path && ! -L $opt_path && ! -e $opt_backup_path ]]; then
-                    ShowAsProc "backup original /opt" >&2
-                    mv "$opt_path" "$opt_backup_path"
-                    DebugAsDone 'complete'
-                fi
-            fi
-
             Tier.Processor 'Install' false "$tier" 'ToInstall' 'forward' 'install' 'installing' 'installed' 'long'
-
-            if [[ $tier = essential ]] && QPKG.Installed Entware && (QPKGs.ToInstall.Exist Entware || QPKGs.ToReinstall.Exist Entware); then
-                local log_pathfile=$LOGS_PATH/ipkgs.extra.$INSTALL_LOG_FILE
-
-                # copy all files from original [/opt] into new [/opt]
-                if [[ -L $opt_path && -d $opt_backup_path ]]; then
-                    ShowAsProc "restoring original /opt" >&2
-                    cp --recursive "$opt_backup_path"/* --target-directory "$opt_path" && rm -rf "$opt_backup_path"
-                    DebugAsDone 'complete'
-                fi
-
-                # add extra package(s) needed immediately
-                ShowAsProc 'installing essential IPKGs'
-                RunAndLog "$OPKG_CMD install$(User.Opts.IgnoreFreeSpace.IsSet && User.Opts.IgnoreFreeSpace.Text) --force-overwrite $SHERPA_ESSENTIAL_IPKGS_ADD --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
-                ShowAsDone 'installed essential IPKGs'
-
-                Session.PIPs.Install.Set
-            fi
 
             if [[ $tier = optional ]]; then
                 Tier.Processor 'Restore' false "$tier" 'ToRestore' 'forward' 'restore configuration for' 'restoring configuration for' 'configuration restored for' 'long'
@@ -2943,6 +2903,12 @@ QPKGs.Assignment.Build()
         QPKGs.ToForceStop.Init      # no-need to 'force-stop' all packages, as they are about to be 'uninstalled'
         QPKGs.ToStop.Init           # no-need to 'stop' all packages, as they are about to be 'uninstalled'
     else
+        if QPKGs.ToReinstall.Exist Entware; then    # treat Entware as a special case: complete removal and fresh install (to clear all installed IPKGs)
+            QPKGs.ToUninstall.Add Entware
+            QPKGs.ToInstall.Add Entware
+            QPKGs.ToReinstall.Remove Entware
+        fi
+
         # if an 'essential' has been selected for 'force-stop', need to 'stop' all its 'optionals' first
         for package in $(QPKGs.ToForceStop.Array); do
             if QPKGs.Essential.Exist "$package" && QPKG.Installed "$package"; then
@@ -3084,7 +3050,7 @@ QPKGs.Assignment.Build()
     QPKGs.ToUninstall.Remove "$(QPKGs.NotInstalled.Array)"
     QPKGs.ToUninstall.Remove sherpa
 
-    QPKGs.ToInstall.Remove "$(QPKGs.Installed.Array)"
+#     QPKGs.ToInstall.Remove "$(QPKGs.Installed.Array)"
 
     QPKGs.ToForceStart.Remove "$(QPKGs.NotInstalled.Array)"
     QPKGs.ToForceStart.Remove "$(QPKGs.ToInstall.Array)"
@@ -3110,6 +3076,14 @@ QPKGs.Assignment.Build()
     QPKGs.ToRestart.Remove "$(QPKGs.ToForceStart.Array)"
     QPKGs.ToRestart.Remove "$(QPKGs.ToForceRestart.Array)"
     QPKGs.ToRestart.Remove "$(QPKGs.ToStart.Array)"
+
+    if QPKGs.ToInstall.IsAny || QPKGs.ToReinstall.IsAny; then
+        Session.IPKGs.Install.Set
+    fi
+
+    if QPKGs.ToInstall.Exist SABnzbd || QPKGs.ToReinstall.Exist SABnzbd || QPKGs.ToUpgrade.Exist SABnzbd; then
+        Session.PIPs.Install.Set   # must ensure 'sabyenc' and 'feedparser' modules are installed/updated
+    fi
 
     # build an initial package download list. Items on this list will be skipped at download-time if they can be found locally.
     if User.Opts.Dependencies.Check.IsSet; then
@@ -3457,6 +3431,8 @@ Session.AddPathToEntware()
 
     local opkg_prefix=/opt/bin:/opt/sbin
 
+    [[ $PATH =~ opkg_prefix ]] && return
+
     if QPKG.Installed Entware; then
         export PATH="$opkg_prefix:$($SED_CMD "s|$opkg_prefix||" <<< "$PATH")"
         DebugAsDone 'added $PATH to Entware'
@@ -3471,6 +3447,8 @@ Session.RemovePathToEntware()
     {
 
     local opkg_prefix=/opt/bin:/opt/sbin
+
+    ! [[ $PATH =~ opkg_prefix ]] && return
 
     if QPKG.Installed Entware; then
         export PATH="$($SED_CMD "s|$opkg_prefix||" <<< "$PATH")"
@@ -3840,6 +3818,17 @@ QPKG.Install()
         local_pathfile=${local_pathfile%.*}
     fi
 
+    if [[ $1 = Entware ]] && ! QPKG.Installed Entware && QPKGs.ToInstall.Exist Entware; then
+        local opt_path=/opt
+        local opt_backup_path=/opt.orig
+
+        if [[ -d $opt_path && ! -L $opt_path && ! -e $opt_backup_path ]]; then
+            ShowAsProc "backup original /opt" >&2
+            mv "$opt_path" "$opt_backup_path"
+            DebugAsDone 'complete'
+        fi
+    fi
+
     target_file=$($BASENAME_CMD "$local_pathfile")
     log_pathfile=$LOGS_PATH/$target_file.$INSTALL_LOG_FILE
 
@@ -3856,16 +3845,32 @@ QPKG.Install()
         if [[ $1 = Entware ]]; then
             Session.AddPathToEntware
             Entware.Patch.Service
+
+            if QPKGs.ToInstall.Exist Entware; then
+                local log_pathfile=$LOGS_PATH/ipkgs.extra.$INSTALL_LOG_FILE
+
+                # copy all files from original [/opt] into new [/opt]
+                if [[ -L $opt_path && -d $opt_backup_path ]]; then
+                    ShowAsProc "restoring original /opt" >&2
+                    cp --recursive "$opt_backup_path"/* --target-directory "$opt_path" && rm -rf "$opt_backup_path"
+                    DebugAsDone 'complete'
+                fi
+
+                # add extra package(s) needed immediately
+                ShowAsProc 'installing essential IPKGs'
+                RunAndLog "$OPKG_CMD install$(User.Opts.IgnoreFreeSpace.IsSet && User.Opts.IgnoreFreeSpace.Text) --force-overwrite $SHERPA_ESSENTIAL_IPKGS_ADD --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
+                ShowAsDone 'installed essential IPKGs'
+
+                Session.PIPs.Install.Set
+            fi
         fi
 
         QPKGs.ToStart.Remove "$1"
-        QPKGs.ToReinstall.Remove "$1"
         QPKGs.ToRestart.Remove "$1"
         resultcode=0    # reset this to zero (0 or 10 from a QPKG install is OK)
     else
         DebugAsError "installation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $resultcode)"
     fi
-
 
     for package in "$(QPKG.Get.Optionals "$1")"; do
         if QPKG.Installed "$package"; then
@@ -3908,46 +3913,19 @@ QPKG.Reinstall()
     target_file=$($BASENAME_CMD "$local_pathfile")
     log_pathfile=$LOGS_PATH/$target_file.$REINSTALL_LOG_FILE
 
-    if [[ $1 = Entware ]]; then # Entware is a special case: don't install QPKG over old one. Completely remove old one and install new one.
-        Display
-        ShowAsNote "reinstalling $(FormatAsPackageName Entware) will remove all IPKGs and Python modules, and only those required to support your $PROJECT_NAME apps will be reinstalled."
-        ShowAsNote "your installed IPKG list will be saved to $(FormatAsFileName "$PREVIOUS_OPKG_PACKAGE_LIST")"
-        ShowAsNote "your installed Python module list will be saved to $(FormatAsFileName "$PREVIOUS_PIP3_MODULE_LIST")"
-        (QPKG.Installed SABnzbdplus || QPKG.Installed Headphones) && ShowAsWarn "also, the $(FormatAsPackageName SABnzbdplus) and $(FormatAsPackageName Headphones) packages CANNOT BE REINSTALLED as Python 2.7.16 is no-longer available."
+    DebugAsProc "reinstalling $(FormatAsPackageName "$1")"
 
-        if AskQuiz "press 'Y' to remove all current $(FormatAsPackageName Entware) IPKGs (and their configurations), or any other key to abort"; then
-            ShowAsProc 'reinstalling Entware'
-            Package.Save.Lists
+    RunAndLog "$SH_CMD $local_pathfile" "$log_pathfile"
+    resultcode=$?
 
-            if ! QPKG.Uninstall Entware; then
-                ShowAsFail "unable to uninstall $(FormatAsPackageName "$package") (see log for more details)"
-            elif ! QPKG.Install Entware; then
-                ShowAsFail "unable to install $(FormatAsPackageName "$package") (see log for more details)"
-            fi
-
-            QPKGs.ToReinstall.Add Entware   # re-add this back to reinstall list as it was (quite-rightly) removed by the std QPKG.Install() function
-        else
-            DebugInfoMinorSeparator
-            DebugScript 'user abort'
-            Session.SkipPackageProcessing.Set
-            Session.Summary.Clear
-            DebugFuncExit; return 1
-        fi
+    if [[ $resultcode -eq 0 || $resultcode -eq 10 ]]; then
+        DebugAsDone "reinstalled $(FormatAsPackageName "$1")"
+        QPKG.FixAppCenterStatus "$1"
+        QPKG.ServiceStatus "$1"
+        QPKGs.ToInstall.Remove "$1"
+        resultcode=0    # reset this to zero (0 or 10 from a QPKG install is OK)
     else
-        DebugAsProc "reinstalling $(FormatAsPackageName "$1")"
-
-        RunAndLog "$SH_CMD $local_pathfile" "$log_pathfile"
-        resultcode=$?
-
-        if [[ $resultcode -eq 0 || $resultcode -eq 10 ]]; then
-            DebugAsDone "reinstalled $(FormatAsPackageName "$1")"
-            QPKG.FixAppCenterStatus "$1"
-            QPKG.ServiceStatus "$1"
-            QPKGs.ToInstall.Remove "$1"
-            resultcode=0    # reset this to zero (0 or 10 from a QPKG install is OK)
-        else
-            ShowAsEror "reinstallation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $resultcode)"
-        fi
+        ShowAsEror "reinstallation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $resultcode)"
     fi
 
     QPKGs.ToStart.Remove "$1"
@@ -4054,6 +4032,8 @@ QPKG.Uninstall()
         DebugFuncExit; return 0
     fi
 
+    [[ $1 = Entware ]] && Package.Save.Lists
+
     if [[ -e $qpkg_installed_path/.uninstall.sh ]]; then
         DebugAsProc "uninstalling $(FormatAsPackageName "$1")"
 
@@ -4064,6 +4044,7 @@ QPKG.Uninstall()
             DebugAsDone "uninstalled $(FormatAsPackageName "$1")"
             $RMCFG_CMD "$1" -f $APP_CENTER_CONFIG_PATHFILE
             DebugAsDone 'removed icon information from App Center'
+            Session.RemovePathToEntware
         else
             DebugAsError "unable to uninstall $(FormatAsPackageName "$1") $(FormatAsExitcode $resultcode)"
         fi
