@@ -1549,8 +1549,30 @@ Tiers.Processor()
             if User.Opts.Apps.All.Start.IsSet; then
                 QPKGs.ToStart.Add "$(QPKGs.Installed.Array)"
             else
+                # check for 'essential' packages that require 'starting' due to any 'optionals' being 'reinstalled'
+                for package in $(QPKGs.ToReinstall.Array); do
+                    QPKGs.ToStart.Add "$(QPKG.Get.Essentials "$package")"
+                done
+
+                for package in $(QPKGs.IsReinstall.Array); do
+                    QPKGs.ToStart.Add "$(QPKG.Get.Essentials "$package")"
+                done
+
+                # check for 'essential' packages that require 'starting' due to any 'optionals' being 'installed'
+                for package in $(QPKGs.ToInstall.Array); do
+                    QPKGs.ToStart.Add "$(QPKG.Get.Essentials "$package")"
+                done
+
+                for package in $(QPKGs.IsInstall.Array); do
+                    QPKGs.ToStart.Add "$(QPKG.Get.Essentials "$package")"
+                done
+
                 # check for 'essential' packages that require 'starting' due to any 'optionals' being 'started'
                 for package in $(QPKGs.ToStart.Array); do
+                    QPKGs.ToStart.Add "$(QPKG.Get.Essentials "$package")"
+                done
+
+                for package in $(QPKGs.IsStart.Array); do
                     QPKGs.ToStart.Add "$(QPKG.Get.Essentials "$package")"
                 done
 
@@ -1605,6 +1627,14 @@ Tiers.Processor()
                 # don't 'restart' packages that are not started
                 for package in $(QPKGs.ToRestart.Array); do
                     if ! QPKG.Enabled "$package"; then
+                        QPKGs.ToRestart.Remove "$package"
+                        QPKGs.UnRestart.Add "$package"
+                    fi
+                done
+
+                # don't 'restart' packages that were just installed
+                for package in $(QPKGs.ToRestart.Array); do
+                    if ! QPKGs.IsInstall.Exist "$package"; then
                         QPKGs.ToRestart.Remove "$package"
                         QPKGs.UnRestart.Add "$package"
                     fi
@@ -3124,24 +3154,63 @@ QPKGs.Assignment.List()
     DebugFuncEntry
 
     DebugInfoMinorSeparator
-    DebugQPKG 'download' "$(QPKGs.ToDownload.ListCSV) "
+    DebugQPKG 'to download' "$(QPKGs.ToDownload.ListCSV) "
+    DebugQPKG 'is download' "$(QPKGs.IsDownload.ListCSV) "
+    DebugQPKG 'un download' "$(QPKGs.UnDownload.ListCSV) "
 
-    DebugQPKG 'backup' "$(QPKGs.ToBackup.ListCSV) "
-    DebugQPKG 'force-stop' "$(QPKGs.ToForceStop.ListCSV) "
-    DebugQPKG 'stop' "$(QPKGs.ToStop.ListCSV) "
-    DebugQPKG 'uninstall' "$(QPKGs.ToUninstall.ListCSV) "
+    DebugQPKG 'to backup' "$(QPKGs.ToBackup.ListCSV) "
+    DebugQPKG 'is backup' "$(QPKGs.IsBackup.ListCSV) "
+    DebugQPKG 'un backup' "$(QPKGs.UnBackup.ListCSV) "
 
-    DebugQPKG 'force-upgrade' "$(QPKGs.ToForceUpgrade.ListCSV) "
-    DebugQPKG 'upgrade' "$(QPKGs.ToUpgrade.ListCSV) "
-    DebugQPKG 'reinstall' "$(QPKGs.ToReinstall.ListCSV) "
-    DebugQPKG 'install' "$(QPKGs.ToInstall.ListCSV) "
-    DebugQPKG 'restore' "$(QPKGs.ToRestore.ListCSV) "
-    DebugQPKG 'force-start' "$(QPKGs.ToForceStart.ListCSV) "
-    DebugQPKG 'start' "$(QPKGs.ToStart.ListCSV) "
-    DebugQPKG 'force-restart' "$(QPKGs.ToForceRestart.ListCSV) "
-    DebugQPKG 'restart' "$(QPKGs.ToRestart.ListCSV) "
+    DebugQPKG 'to force-stop' "$(QPKGs.ToForceStop.ListCSV) "
+    DebugQPKG 'is force-stop' "$(QPKGs.IsForceStop.ListCSV) "
+    DebugQPKG 'un force-stop' "$(QPKGs.UnForceStop.ListCSV) "
 
-    DebugQPKG 'status' "$(QPKGs.ToStatus.ListCSV) "
+    DebugQPKG 'to stop' "$(QPKGs.ToStop.ListCSV) "
+    DebugQPKG 'is stop' "$(QPKGs.IsStop.ListCSV) "
+    DebugQPKG 'un stop' "$(QPKGs.UnStop.ListCSV) "
+
+    DebugQPKG 'to uninstall' "$(QPKGs.ToUninstall.ListCSV) "
+    DebugQPKG 'is uninstall' "$(QPKGs.IsUninstall.ListCSV) "
+    DebugQPKG 'un uninstall' "$(QPKGs.UnUninstall.ListCSV) "
+
+    DebugQPKG 'to force-upgrade' "$(QPKGs.ToForceUpgrade.ListCSV) "
+    DebugQPKG 'is force-upgrade' "$(QPKGs.IsForceUpgrade.ListCSV) "
+    DebugQPKG 'un force-upgrade' "$(QPKGs.UnForceUpgrade.ListCSV) "
+
+    DebugQPKG 'to upgrade' "$(QPKGs.ToUpgrade.ListCSV) "
+    DebugQPKG 'is upgrade' "$(QPKGs.IsUpgrade.ListCSV) "
+    DebugQPKG 'un upgrade' "$(QPKGs.UnUpgrade.ListCSV) "
+
+    DebugQPKG 'to reinstall' "$(QPKGs.ToReinstall.ListCSV) "
+    DebugQPKG 'is reinstall' "$(QPKGs.IsReinstall.ListCSV) "
+    DebugQPKG 'un reinstall' "$(QPKGs.UnReinstall.ListCSV) "
+
+    DebugQPKG 'to install' "$(QPKGs.ToInstall.ListCSV) "
+    DebugQPKG 'is install' "$(QPKGs.IsInstall.ListCSV) "
+    DebugQPKG 'un install' "$(QPKGs.UnInstall.ListCSV) "
+
+    DebugQPKG 'to restore' "$(QPKGs.ToRestore.ListCSV) "
+    DebugQPKG 'is restore' "$(QPKGs.IsRestore.ListCSV) "
+    DebugQPKG 'un restore' "$(QPKGs.UnRestore.ListCSV) "
+
+    DebugQPKG 'to force-start' "$(QPKGs.ToForceStart.ListCSV) "
+    DebugQPKG 'is force-start' "$(QPKGs.IsForceStart.ListCSV) "
+    DebugQPKG 'un force-start' "$(QPKGs.UnForceStart.ListCSV) "
+
+    DebugQPKG 'to start' "$(QPKGs.ToStart.ListCSV) "
+    DebugQPKG 'is start' "$(QPKGs.IsStart.ListCSV) "
+    DebugQPKG 'un start' "$(QPKGs.UnStart.ListCSV) "
+
+    DebugQPKG 'to force-restart' "$(QPKGs.ToForceRestart.ListCSV) "
+    DebugQPKG 'is force-restart' "$(QPKGs.IsForceRestart.ListCSV) "
+    DebugQPKG 'un force-restart' "$(QPKGs.UnForceRestart.ListCSV) "
+
+    DebugQPKG 'to restart' "$(QPKGs.ToRestart.ListCSV) "
+    DebugQPKG 'is restart' "$(QPKGs.IsRestart.ListCSV) "
+    DebugQPKG 'un restart' "$(QPKGs.UnRestart.ListCSV) "
+
+    DebugQPKG 'to status' "$(QPKGs.ToStatus.ListCSV) "
     DebugInfoMinorSeparator
 
     DebugFuncExit; return 0
