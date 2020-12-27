@@ -754,11 +754,6 @@ Session.Arguments.Parse()
                     actions_)
                         User.Opts.Help.Actions.Set
                         ;;
-                    all_)
-                        Session.Build.StateLists
-                        User.Opts.Apps.List.All.Set
-                        Session.Display.Clean.Set
-                        ;;
                     all-actions_)
                         User.Opts.Help.ActionsAll.Set
                         ;;
@@ -957,9 +952,9 @@ Session.Arguments.Parse()
                 esac
                 ;;
             uninstall_|remove_)
-                if [[ $operation_force = true ]]; then
+                if [[ $operation_force = true ]]; then  # this operation is dangerous, so make 'force' a requirement
                     case $scope in
-                        all_)           # this operation is dangerous, so make 'force' a requirement
+                        all_)
                             QPKGs.ToUninstall.Add "$(QPKGs.Installed.Array)"
                             User.Opts.Apps.All.Uninstall.Set
                             operation=''
@@ -1252,7 +1247,7 @@ Tiers.Processor()
         QPKGs.ToDownload.Add "$(QPKGs.ToStart.Array)"
         QPKGs.ToDownload.Add "$(QPKGs.ToRestart.Array)"
 
-        # if an item has been selected for 'installation', need to 'download' all its 'essentials' too
+        # if an item has been selected for installation, download its essentials too
         for package in $(QPKGs.ToDownload.Array); do
             QPKGs.ToDownload.Add "$(QPKG.Get.Essentials "$package")"
         done
@@ -1260,15 +1255,14 @@ Tiers.Processor()
 
     Tier.Processor 'Download' false 'all' 'ToDownload' 'forward' 'update cache with' 'updating cache with' 'updated cache with' ''
 
-    # remove invalid packages from lists so they're not operated-on. Packages are added to these lists in Session.Arguments.Parse() and this function.
     QPKGs.ToBackup.Remove "$(QPKGs.Essential.Array)"    # KLUDGE: remove this when permitted package actions array is operational
     QPKGs.ToBackup.Remove "$(QPKGs.NotInstalled.Array)"
 
     Tier.Processor 'Backup' false 'all' 'ToBackup' 'forward' 'backup' 'backing-up' 'backed-up' ''
 
-    # check for packages to be 'stopped' or 'uninstalled', and 'stop' related packages
+    # check for packages to be stopped or uninstalled, and ensure related packages are stopped
     if User.Opts.Apps.All.Uninstall.IsSet; then
-        QPKGs.ToStop.Init           # no-need to 'stop' all packages, as they are about to be 'uninstalled'
+        QPKGs.ToStop.Init           # no-need to stop all packages, as they are about to be 'uninstalled'
     else
         if QPKGs.ToReinstall.Exist Entware; then    # treat Entware as a special case: complete removal and fresh install (to clear all installed IPKGs)
             QPKGs.ToUninstall.Add Entware
@@ -1276,21 +1270,21 @@ Tiers.Processor()
             QPKGs.ToReinstall.Remove Entware
         fi
 
-        # if an 'essential' has been selected for 'stop', need to 'stop' its 'optionals' first
+        # if an essential has been selected for stop, need to stop its optionals first
         for package in $(QPKGs.ToStop.Array); do
             if QPKGs.Essential.Exist "$package" && QPKG.Installed "$package"; then
                 QPKGs.ToStop.Add "$(QPKG.Get.Optionals "$package")"
             fi
         done
 
-        # if an 'essential' has been selected for 'uninstall', need to 'stop' its 'optionals' first
+        # if an essential has been selected for uninstall, need to stop its optionals first
         for package in $(QPKGs.ToUninstall.Array); do
             if QPKGs.Essential.Exist "$package" && QPKG.Installed "$package"; then
                 QPKGs.ToStop.Add "$(QPKG.Get.Optionals "$package")"
             fi
         done
 
-        # if an 'essential' has been selected for 'install', need to 'stop' its 'optionals' first, and 'start' them again later
+        # if an essential has been selected for install, need to stop its optionals first, and start them again later
         for package in $(QPKGs.ToInstall.Array); do
             if QPKGs.Essential.Exist "$package" && QPKG.Installed "$package"; then
                 QPKGs.ToStop.Add "$(QPKG.Get.Optionals "$package")"
@@ -1298,7 +1292,7 @@ Tiers.Processor()
             fi
         done
 
-        # if an 'essential' has been selected for 'reinstall', need to 'stop' its 'optionals' first, and 'start' them again later
+        # if an essential has been selected for reinstall, need to stop its optionals first, and start them again later
         for package in $(QPKGs.ToReinstall.Array); do
             if QPKGs.Essential.Exist "$package" && QPKG.Installed "$package"; then
                 QPKGs.ToStop.Add "$(QPKG.Get.Optionals "$package")"
@@ -1307,7 +1301,7 @@ Tiers.Processor()
         done
     fi
 
-    # don't 'stop' packages that are already stopped
+    # don't stop packages that are already stopped
     for package in $(QPKGs.ToStop.Array); do
         if ! QPKG.Enabled "$package"; then
             QPKGs.ToStop.Remove "$package"
@@ -1334,7 +1328,7 @@ Tiers.Processor()
 
     Tier.Processor 'Uninstall' false 'essential' 'ToUninstall' 'forward' 'uninstall' 'uninstalling' 'uninstalled' ''
 
-    # adjust configuration restore lists to remove 'essentials' (these can't be backed-up or restored for now)
+    # adjust configuration restore lists to remove essentials (these can't be backed-up or restored for-now)
     if User.Opts.Apps.All.Restore.IsSet; then
         QPKGs.ToRestore.Add "$(QPKGs.Installed.Array)"
     fi
@@ -1363,7 +1357,7 @@ Tiers.Processor()
         else
             Tier.Processor 'Upgrade' false "$tier" 'ToUpgrade' 'forward' 'upgrade' 'upgrading' 'upgraded' 'long'
 
-            # check 'reinstall' for all items that should be 'installed' instead
+            # check reinstall for all items that should be installed instead
             for package in $(QPKGs.ToReinstall.Array); do
                 if QPKG.NotInstalled "$package"; then
                     QPKGs.ToReinstall.Remove "$package"
@@ -1371,7 +1365,7 @@ Tiers.Processor()
                 fi
             done
 
-            # check 'install' list for items that should be 'reinstalled' instead
+            # check install list for items that should be reinstalled instead
             for package in $(QPKGs.ToInstall.Array); do
                 if QPKG.Installed "$package"; then
                     QPKGs.ToInstall.Remove "$package"
@@ -1381,34 +1375,34 @@ Tiers.Processor()
 
             Tier.Processor 'Reinstall' false "$tier" 'ToReinstall' 'forward' 'reinstall' 'reinstalling' 'reinstalled' 'long'
 
-            # check 'upgrade' for 'essential' items that should be 'installed'
+            # check upgrade for essential items that should be installed
             for package in $(QPKGs.IsUpgrade.Array); do
                 QPKGs.ToInstall.Add "$(QPKG.Get.Essentials "$package")"
             done
 
-            # check 'upgrade' list for all items that should be 'installed'
+            # check upgrade list for all items that should be installed
             for package in $(QPKGs.IsUpgrade.Array); do
                 if QPKG.NotInstalled "$package"; then
                     QPKGs.ToInstall.Add "$package"
                 fi
             done
 
-            # check 'reinstall' for 'essential' items that should be 'installed'
+            # check reinstall for essential items that should be installed
             for package in $(QPKGs.ToReinstall.Array); do
                 QPKGs.ToInstall.Add "$(QPKG.Get.Essentials "$package")"
             done
 
-            # check 'install' for 'essential' items that should be 'installed'
+            # check install for essential items that should be installed
             for package in $(QPKGs.ToInstall.Array); do
                 QPKGs.ToInstall.Add "$(QPKG.Get.Essentials "$package")"
             done
 
-            # check 'start' for 'essential' items that should be 'installed'
+            # check start for essential items that should be installed
             for package in $(QPKGs.ToStart.Array); do
                 QPKGs.ToInstall.Add "$(QPKG.Get.Essentials "$package")"
             done
 
-            # check 'restart' for 'essential' items that should be 'installed'
+            # check restart for essential items that should be installed
             for package in $(QPKGs.ToRestart.Array); do
                 QPKGs.ToInstall.Add "$(QPKG.Get.Essentials "$package")"
             done
@@ -1421,11 +1415,11 @@ Tiers.Processor()
                 Tier.Processor 'Restore' false "$tier" 'ToRestore' 'forward' 'restore configuration for' 'restoring configuration for' 'configuration restored for' 'long'
             fi
 
-            # adjust lists for 'start'
+            # adjust lists for start
             if User.Opts.Apps.All.Start.IsSet; then
                 QPKGs.ToStart.Add "$(QPKGs.Installed.Array)"
             else
-                # check for 'essential' packages that require 'starting' due to any 'optionals' being 'reinstalled'
+                # check for essential packages that require starting due to any optionals being reinstalled
                 for package in $(QPKGs.ToReinstall.Array); do
                     QPKGs.ToStart.Add "$(QPKG.Get.Essentials "$package")"
                 done
@@ -1434,7 +1428,7 @@ Tiers.Processor()
                     QPKGs.ToStart.Add "$(QPKG.Get.Essentials "$package")"
                 done
 
-                # check for 'essential' packages that require 'starting' due to any 'optionals' being 'installed'
+                # check for essential packages that require starting due to any optionals being installed
                 for package in $(QPKGs.ToInstall.Array); do
                     QPKGs.ToStart.Add "$(QPKG.Get.Essentials "$package")"
                 done
@@ -1443,7 +1437,7 @@ Tiers.Processor()
                     QPKGs.ToStart.Add "$(QPKG.Get.Essentials "$package")"
                 done
 
-                # check for 'essential' packages that require 'starting' due to any 'optionals' being 'started'
+                # check for essential packages that require starting due to any optionals being started
                 for package in $(QPKGs.ToStart.Array); do
                     QPKGs.ToStart.Add "$(QPKG.Get.Essentials "$package")"
                 done
@@ -1452,13 +1446,13 @@ Tiers.Processor()
                     QPKGs.ToStart.Add "$(QPKG.Get.Essentials "$package")"
                 done
 
-                # check for 'essential' packages that require 'starting' due to any 'optionals' being 'restarted'
+                # check for essential packages that require starting due to any optionals being restarted
                 for package in $(QPKGs.ToRestart.Array); do
                     QPKGs.ToStart.Add "$(QPKG.Get.Essentials "$package")"
                 done
             fi
 
-            # don't 'start' packages that are already started
+            # don't start packages that are already started
             for package in $(QPKGs.ToStart.Array); do
                 if QPKG.Enabled "$package"; then
                     QPKGs.ToStart.Remove "$package"
@@ -1466,7 +1460,7 @@ Tiers.Processor()
                 fi
             done
 
-            # no-need to 'start' packages that are unavailable
+            # no-need to start packages that are unavailable
             QPKGs.ToStart.Remove "$(QPKGs.NotInstalled.Array)"
             QPKGs.ToStart.Remove "$(QPKGs.ToInstall.Array)"
             QPKGs.ToStart.Remove sherpa
@@ -1482,16 +1476,16 @@ Tiers.Processor()
                 done
             fi
 
-            # adjust lists for 'restart'
+            # adjust lists for restart
             if User.Opts.Apps.All.Restart.IsSet; then
                 QPKGs.ToRestart.Add "$(QPKGs.Installed.Array)"
             else
-                # check for 'optional' packages that require 'restarting' due to any 'essentials' being 'restarted'
+                # check for optional packages that require restarting due to any essentials being restarted
                 for package in $(QPKGs.ToRestart.Array); do
                     QPKGs.ToRestart.Add "$(QPKG.Get.Optionals "$package")"
                 done
 
-                # don't 'restart' packages that are not started
+                # don't restart packages that are not started
                 for package in $(QPKGs.ToRestart.Array); do
                     if ! QPKG.Enabled "$package"; then
                         QPKGs.ToRestart.Remove "$package"
@@ -1499,7 +1493,7 @@ Tiers.Processor()
                     fi
                 done
 
-                # don't 'restart' packages that were just installed
+                # don't restart packages that were just installed
                 for package in $(QPKGs.ToRestart.Array); do
                     if QPKGs.IsInstall.Exist "$package"; then
                         QPKGs.ToRestart.Remove "$package"
@@ -1508,13 +1502,11 @@ Tiers.Processor()
                 done
             fi
 
-# Session.Debug.To.Screen.Set
-# QPKGs.Assignment.List
-# exit
             Tier.Processor 'Restart' false "$tier" 'ToRestart' 'forward' 'restart' 'restarting' 'restarted' 'long'
         fi
     done
 
+    QPKGs.Assignment.List
     SmartCR >&2
 
     DebugFuncExit; return 0
@@ -1615,13 +1607,6 @@ Tier.Processor()
 
     ShowAsOperationResult "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PAST" "$RUNTIME"
     DebugFuncExit; return 0
-
-    }
-
-Packages.Status()
-    {
-
-    : # placeholder function
 
     }
 
@@ -3641,7 +3626,7 @@ QPKG.Get.Optionals()
     {
 
     # input:
-    #   $1 = 'essential' QPKG name to return 'optionals' for
+    #   $1 = 'essential' QPKG name to return optionals for
 
     # output:
     #   $? = 0 if successful, 1 if failed
