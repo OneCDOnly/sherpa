@@ -1337,6 +1337,13 @@ Tiers.Processor()
         QPKGs.ToDownload.Add "$(QPKGs.ToUpgrade.Array)"
         QPKGs.ToDownload.Add "$(QPKGs.ToReinstall.Array)"
         QPKGs.ToDownload.Add "$(QPKGs.ToInstall.Array)"
+        QPKGs.ToDownload.Add "$(QPKGs.ToStart.Array)"
+        QPKGs.ToDownload.Add "$(QPKGs.ToRestart.Array)"
+
+        # if an item has been selected for 'installation', need to 'download' all its 'essentials' too
+        for package in $(QPKGs.ToDownload.Array); do
+            QPKGs.ToDownload.Add "$(QPKG.Get.Essentials "$package")"
+        done
     fi
 
     Tier.Processor 'Download' false 'all' 'ToDownload' 'forward' 'update cache with' 'updating cache with' 'updated cache with' ''
@@ -1518,6 +1525,11 @@ Tiers.Processor()
                 QPKGs.ToInstall.Add "$(QPKG.Get.Essentials "$package")"
             done
 
+            # check 'restart' for 'essential' items that should be 'installed'
+            for package in $(QPKGs.ToRestart.Array); do
+                QPKGs.ToInstall.Add "$(QPKG.Get.Essentials "$package")"
+            done
+
             QPKGs.ToInstall.Remove "$(QPKGs.Installed.Array)"
 
             Tier.Processor 'Install' false "$tier" 'ToInstall' 'forward' 'install' 'installing' 'installed' 'long'
@@ -1634,13 +1646,16 @@ Tiers.Processor()
 
                 # don't 'restart' packages that were just installed
                 for package in $(QPKGs.ToRestart.Array); do
-                    if ! QPKGs.IsInstall.Exist "$package"; then
+                    if QPKGs.IsInstall.Exist "$package"; then
                         QPKGs.ToRestart.Remove "$package"
                         QPKGs.UnRestart.Add "$package"
                     fi
                 done
             fi
 
+# Session.Debug.To.Screen.Set
+# QPKGs.Assignment.List
+# exit
             Tier.Processor 'Restart' false "$tier" 'ToRestart' 'forward' 'restart' 'restarting' 'restarted' 'long'
         fi
     done
