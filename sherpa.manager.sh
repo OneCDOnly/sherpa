@@ -1567,7 +1567,7 @@ Tier.Processor()
         target_packages=($(QPKGs.$TARGET_OBJECT_NAME.Array))
     else
         for package in $(QPKGs.$TARGET_OBJECT_NAME.Array); do
-            QPKGs.$(tr 'a-z' 'A-Z' <<< "${TIER:0:1}")${TIER:1}.Exist "$package" && target_packages+=("$package")
+            QPKGs."$(tr 'a-z' 'A-Z' <<< "${TIER:0:1}")${TIER:1}".Exist "$package" && target_packages+=("$package")
         done
     fi
 
