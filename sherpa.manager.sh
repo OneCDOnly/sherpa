@@ -1402,6 +1402,14 @@ Tiers.Processor()
 
     Tier.Processor 'Stop' true 'optional' 'ToForceStop' 'backward' 'stop' 'stopping' 'stopped' ''
 
+    # don't 'stop' packages that are already stopped
+    for package in $(QPKGs.ToStop.Array); do
+        if ! QPKG.Enabled "$package"; then
+            QPKGs.ToStop.Remove "$package"
+            QPKGs.UnStop.Add "$package"
+        fi
+    done
+
     QPKGs.ToStop.Remove "$(QPKGs.ToForceStop.Array)"
     QPKGs.ToStop.Remove "$(QPKGs.IsStop.Array)"
     QPKGs.ToStop.Remove "$(QPKGs.NotInstalled.Array)"
@@ -1552,6 +1560,15 @@ Tiers.Processor()
                 done
             fi
 
+            # don't 'start' packages that are already started
+            for package in $(QPKGs.ToStart.Array); do
+                if QPKG.Enabled "$package"; then
+                    QPKGs.ToStart.Remove "$package"
+                    QPKGs.UnStart.Add "$package"
+                fi
+            done
+
+            # no-need to 'start' packages that are unavailable
             QPKGs.ToStart.Remove "$(QPKGs.NotInstalled.Array)"
             QPKGs.ToStart.Remove "$(QPKGs.ToInstall.Array)"
             QPKGs.ToStart.Remove "$(QPKGs.ToForceStart.Array)"
@@ -1583,6 +1600,14 @@ Tiers.Processor()
                 # check for 'optional' packages that require 'restarting' due to any 'essentials' being 'restarted'
                 for package in $(QPKGs.ToRestart.Array); do
                     QPKGs.ToRestart.Add "$(QPKG.Get.Optionals "$package")"
+                done
+
+                # don't 'restart' packages that are not started
+                for package in $(QPKGs.ToRestart.Array); do
+                    if ! QPKG.Enabled "$package"; then
+                        QPKGs.ToRestart.Remove "$package"
+                        QPKGs.UnRestart.Add "$package"
+                    fi
                 done
             fi
 
