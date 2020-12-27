@@ -1273,7 +1273,7 @@ Session.Validate()
     fi
 
     if QPKGs.ToBackup.IsNone && QPKGs.ToUninstall.IsNone && QPKGs.ToForceUpgrade.IsNone && QPKGs.ToUpgrade.IsNone && QPKGs.ToInstall.IsNone && QPKGs.ToReinstall.IsNone && QPKGs.ToRestore.IsNone && QPKGs.ToForceRestart.IsNone && QPKGs.ToRestart.IsNone && QPKGs.ToForceStart.IsNone && QPKGs.ToStart.IsNone && QPKGs.ToForceStop.IsNone && QPKGs.ToStop.IsNone; then
-        if User.Opts.Apps.All.Install.IsNot && User.Opts.Apps.All.Restart.IsNot && User.Opts.Apps.All.ForceRestart.IsNot && User.Opts.Apps.All.Upgrade.IsNot && User.Opts.Apps.All.ForceUpgrade.IsNot && User.Opts.Apps.All.Backup.IsNot && User.Opts.Apps.All.Restore.IsNot && User.Opts.Apps.All.Status.IsNot && User.Opts.Apps.All.ForceStart.IsNot && User.Opts.Apps.All.ForceStop.IsNot; then
+        if User.Opts.Apps.All.Install.IsNot && User.Opts.Apps.All.Restart.IsNot && User.Opts.Apps.All.ForceRestart.IsNot && User.Opts.Apps.All.Upgrade.IsNot && User.Opts.Apps.All.ForceUpgrade.IsNot && User.Opts.Apps.All.Backup.IsNot && User.Opts.Apps.All.Restore.IsNot && User.Opts.Apps.All.Status.IsNot && User.Opts.Apps.All.ForceStart.IsNot && User.Opts.Apps.All.ForceStop.IsNot && User.Opts.Apps.All.Start.IsNot && User.Opts.Apps.All.Stop.IsNot; then
             if User.Opts.Dependencies.Check.IsNot && User.Opts.IgnoreFreeSpace.IsNot; then
                 ShowAsEror "I've nothing to do (usually means the arguments didn't make sense, or were incomplete)"
                 User.Opts.Help.Basic.Set
