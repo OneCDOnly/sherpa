@@ -346,19 +346,6 @@ Session.Init()
         SHERPA_QPKG_IPKGS_ADD+=(par2cmdline)
         SHERPA_QPKG_IPKGS_REMOVE+=('')
 
-    SHERPA_QPKG_NAME+=(SortMyQPKGs)
-        SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_VERSION+=(201228)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/SortMyQPKGs/main/build/SortMyQPKGs_${SHERPA_QPKG_VERSION[${#SHERPA_QPKG_VERSION[@]}-1]}.qpkg)
-        SHERPA_QPKG_MD5+=(4bf84d42c86952b835ca290e42747e09)
-        SHERPA_QPKG_ABBRVS+=(sort sortmy sortmine sortmypackages sortmyqpkgs)
-        SHERPA_QPKG_OPS+=('backup install reinstall restart restore start stop uninstall upgrade')
-        SHERPA_QPKG_ESSENTIALS+=('')
-        SHERPA_QPKG_IPKGS_ADD+=('')
-        SHERPA_QPKG_IPKGS_REMOVE+=('')
-
-
-
     SHERPA_QPKG_NAME+=(Deluge-server)
         SHERPA_QPKG_ARCH+=(all)
         SHERPA_QPKG_VERSION+=(201130)
@@ -477,6 +464,17 @@ Session.Init()
         SHERPA_QPKG_ABBRVS+=('sc sick sickc chill sickchill')
         SHERPA_QPKG_OPS+=('backup install reinstall restart restore start stop uninstall upgrade')
         SHERPA_QPKG_ESSENTIALS+=(Entware)
+        SHERPA_QPKG_IPKGS_ADD+=('')
+        SHERPA_QPKG_IPKGS_REMOVE+=('')
+
+    SHERPA_QPKG_NAME+=(SortMyQPKGs)
+        SHERPA_QPKG_ARCH+=(all)
+        SHERPA_QPKG_VERSION+=(201228)
+        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/SortMyQPKGs/main/build/SortMyQPKGs_${SHERPA_QPKG_VERSION[${#SHERPA_QPKG_VERSION[@]}-1]}.qpkg)
+        SHERPA_QPKG_MD5+=(4bf84d42c86952b835ca290e42747e09)
+        SHERPA_QPKG_ABBRVS+=(sort sortmy sortmine sortmypackages sortmyqpkgs)
+        SHERPA_QPKG_OPS+=('backup install reinstall restart restore start stop uninstall upgrade')
+        SHERPA_QPKG_ESSENTIALS+=(none)      # this should stop SortMyQPKGs being recognised as an essential package
         SHERPA_QPKG_IPKGS_ADD+=('')
         SHERPA_QPKG_IPKGS_REMOVE+=('')
 
