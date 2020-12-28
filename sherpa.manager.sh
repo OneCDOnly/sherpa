@@ -4366,7 +4366,7 @@ QPKG.SupportsBackup()
     local package_index=0
 
     for package_index in "${!SHERPA_QPKG_NAME[@]}"; do
-        if [[ ${SHERPA_QPKG_NAME[$package_index]} = $1 ]]; then
+        if [[ ${SHERPA_QPKG_NAME[$package_index]} = "$1" ]]; then
             if ${SHERPA_QPKG_BACKUP_SUPPORTED[$package_index]}; then
                 return 0
             else
