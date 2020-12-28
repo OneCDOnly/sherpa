@@ -254,7 +254,7 @@ Session.Init()
         SHERPA_QPKG_MD5=()          # remote QPKG MD5
         SHERPA_QPKG_ABBRVS=()       # if set, this package is user-installable, and these abbreviations may be used to specify app
         SHERPA_QPKG_OPS=()          # these operations are permitted by the user for this package
-        SHERPA_QPKG_ESSENTIALS=()   # require these QPKGs to be installed
+        SHERPA_QPKG_ESSENTIALS=()   # require these QPKGs to be installed. Use 'none' if package is optional.
         SHERPA_QPKG_IPKGS_ADD=()    # require these IPKGs to be installed
         SHERPA_QPKG_IPKGS_REMOVE=() # require these IPKGs to be uninstalled
 
@@ -474,7 +474,7 @@ Session.Init()
         SHERPA_QPKG_MD5+=(4bf84d42c86952b835ca290e42747e09)
         SHERPA_QPKG_ABBRVS+=(sort sortmy sortmine sortmypackages sortmyqpkgs)
         SHERPA_QPKG_OPS+=('backup install reinstall restart restore start stop uninstall upgrade')
-        SHERPA_QPKG_ESSENTIALS+=(none)      # this should stop SortMyQPKGs being recognised as an essential package
+        SHERPA_QPKG_ESSENTIALS+=(none)
         SHERPA_QPKG_IPKGS_ADD+=('')
         SHERPA_QPKG_IPKGS_REMOVE+=('')
 
@@ -3071,49 +3071,49 @@ QPKGs.Assignment.List()
     DebugFuncEntry
 
     DebugInfoMinorSeparator
-    DebugQPKG 'ToDownload' "$(QPKGs.ToDownload.ListCSV) "
-    DebugQPKG 'IsDownload' "$(QPKGs.IsDownload.ListCSV) "
-    DebugQPKG 'UnDownload' "$(QPKGs.UnDownload.ListCSV) "
+    DebugQPKG 'ToDownload' "($(QPKGs.ToDownload.Count)) $(QPKGs.ToDownload.ListCSV) "
+    DebugQPKG 'IsDownload' "($(QPKGs.IsDownload.Count)) $(QPKGs.IsDownload.ListCSV) "
+    DebugQPKG 'UnDownload' "($(QPKGs.UnDownload.Count)) $(QPKGs.UnDownload.ListCSV) "
 
-    DebugQPKG 'ToBackup' "$(QPKGs.ToBackup.ListCSV) "
-    DebugQPKG 'IsBackup' "$(QPKGs.IsBackup.ListCSV) "
-    DebugQPKG 'UnBackup' "$(QPKGs.UnBackup.ListCSV) "
+    DebugQPKG 'ToBackup' "($(QPKGs.ToBackup.Count)) $(QPKGs.ToBackup.ListCSV) "
+    DebugQPKG 'IsBackup' "($(QPKGs.IsBackup.Count)) $(QPKGs.IsBackup.ListCSV) "
+    DebugQPKG 'UnBackup' "($(QPKGs.UnBackup.Count)) $(QPKGs.UnBackup.ListCSV) "
 
-    DebugQPKG 'ToStop' "$(QPKGs.ToStop.ListCSV) "
-    DebugQPKG 'IsStop' "$(QPKGs.IsStop.ListCSV) "
-    DebugQPKG 'UnStop' "$(QPKGs.UnStop.ListCSV) "
+    DebugQPKG 'ToStop' "($(QPKGs.ToStop.Count)) $(QPKGs.ToStop.ListCSV) "
+    DebugQPKG 'IsStop' "($(QPKGs.IsStop.Count)) $(QPKGs.IsStop.ListCSV) "
+    DebugQPKG 'UnStop' "($(QPKGs.UnStop.Count)) $(QPKGs.UnStop.ListCSV) "
 
-    DebugQPKG 'ToUninstall' "$(QPKGs.ToUninstall.ListCSV) "
-    DebugQPKG 'IsUninstall' "$(QPKGs.IsUninstall.ListCSV) "
-    DebugQPKG 'UnUninstall' "$(QPKGs.UnUninstall.ListCSV) "
-    DebugQPKG 'NotInstalled' "$(QPKGs.NotInstalled.ListCSV) "
+    DebugQPKG 'ToUninstall' "($(QPKGs.ToUninstall.Count)) $(QPKGs.ToUninstall.ListCSV) "
+    DebugQPKG 'IsUninstall' "($(QPKGs.IsUninstall.Count)) $(QPKGs.IsUninstall.ListCSV) "
+    DebugQPKG 'UnUninstall' "($(QPKGs.UnUninstall.Count)) $(QPKGs.UnUninstall.ListCSV) "
+    DebugQPKG 'NotInstalled' "($(QPKGs.NotInstalled.Count)) $(QPKGs.NotInstalled.ListCSV) "
 
-    DebugQPKG 'ToUpgrade' "$(QPKGs.ToUpgrade.ListCSV) "
-    DebugQPKG 'IsUpgrade' "$(QPKGs.IsUpgrade.ListCSV) "
-    DebugQPKG 'UnUpgrade' "$(QPKGs.UnUpgrade.ListCSV) "
+    DebugQPKG 'ToUpgrade' "($(QPKGs.ToUpgrade.Count)) $(QPKGs.ToUpgrade.ListCSV) "
+    DebugQPKG 'IsUpgrade' "($(QPKGs.IsUpgrade.Count)) $(QPKGs.IsUpgrade.ListCSV) "
+    DebugQPKG 'UnUpgrade' "($(QPKGs.UnUpgrade.Count)) $(QPKGs.UnUpgrade.ListCSV) "
 
-    DebugQPKG 'ToReinstall' "$(QPKGs.ToReinstall.ListCSV) "
-    DebugQPKG 'IsReinstall' "$(QPKGs.IsReinstall.ListCSV) "
-    DebugQPKG 'UnReinstall' "$(QPKGs.UnReinstall.ListCSV) "
+    DebugQPKG 'ToReinstall' "($(QPKGs.ToReinstall.Count)) $(QPKGs.ToReinstall.ListCSV) "
+    DebugQPKG 'IsReinstall' "($(QPKGs.IsReinstall.Count)) $(QPKGs.IsReinstall.ListCSV) "
+    DebugQPKG 'UnReinstall' "($(QPKGs.UnReinstall.Count)) $(QPKGs.UnReinstall.ListCSV) "
 
-    DebugQPKG 'ToInstall' "$(QPKGs.ToInstall.ListCSV) "
-    DebugQPKG 'IsInstall' "$(QPKGs.IsInstall.ListCSV) "
-    DebugQPKG 'UnInstall' "$(QPKGs.UnInstall.ListCSV) "
-    DebugQPKG 'Installed' "$(QPKGs.Installed.ListCSV) "
+    DebugQPKG 'ToInstall' "($(QPKGs.ToInstall.Count)) $(QPKGs.ToInstall.ListCSV) "
+    DebugQPKG 'IsInstall' "($(QPKGs.IsInstall.Count)) $(QPKGs.IsInstall.ListCSV) "
+    DebugQPKG 'UnInstall' "($(QPKGs.UnInstall.Count)) $(QPKGs.UnInstall.ListCSV) "
+    DebugQPKG 'Installed' "($(QPKGs.Installed.Count)) $(QPKGs.Installed.ListCSV) "
 
-    DebugQPKG 'ToRestore' "$(QPKGs.ToRestore.ListCSV) "
-    DebugQPKG 'IsRestore' "$(QPKGs.IsRestore.ListCSV) "
-    DebugQPKG 'UnRestore' "$(QPKGs.UnRestore.ListCSV) "
+    DebugQPKG 'ToRestore' "($(QPKGs.ToRestore.Count)) $(QPKGs.ToRestore.ListCSV) "
+    DebugQPKG 'IsRestore' "($(QPKGs.IsRestore.Count)) $(QPKGs.IsRestore.ListCSV) "
+    DebugQPKG 'UnRestore' "($(QPKGs.UnRestore.Count)) $(QPKGs.UnRestore.ListCSV) "
 
-    DebugQPKG 'ToStart' "$(QPKGs.ToStart.ListCSV) "
-    DebugQPKG 'IsStart' "$(QPKGs.IsStart.ListCSV) "
-    DebugQPKG 'UnStart' "$(QPKGs.UnStart.ListCSV) "
+    DebugQPKG 'ToStart' "($(QPKGs.ToStart.Count)) $(QPKGs.ToStart.ListCSV) "
+    DebugQPKG 'IsStart' "($(QPKGs.IsStart.Count)) $(QPKGs.IsStart.ListCSV) "
+    DebugQPKG 'UnStart' "($(QPKGs.UnStart.Count)) $(QPKGs.UnStart.ListCSV) "
 
-    DebugQPKG 'ToRestart' "$(QPKGs.ToRestart.ListCSV) "
-    DebugQPKG 'IsRestart' "$(QPKGs.IsRestart.ListCSV) "
-    DebugQPKG 'UnRestart' "$(QPKGs.UnRestart.ListCSV) "
+    DebugQPKG 'ToRestart' "($(QPKGs.ToDownload.Count)) $(QPKGs.ToRestart.ListCSV) "
+    DebugQPKG 'IsRestart' "($(QPKGs.IsDownload.Count)) $(QPKGs.IsRestart.ListCSV) "
+    DebugQPKG 'UnRestart' "($(QPKGs.UnDownload.Count)) $(QPKGs.UnRestart.ListCSV) "
 
-    DebugQPKG 'ToStatus' "$(QPKGs.ToStatus.ListCSV) "
+    DebugQPKG 'ToStatus' "($(QPKGs.ToStatus.Count)) $(QPKGs.ToStatus.ListCSV) "
     DebugInfoMinorSeparator
 
     DebugFuncExit; return 0
@@ -3126,15 +3126,15 @@ QPKGs.EssentialAndOptional.Build()
     # there are three tiers of package: 'essential', 'addon' and 'optional'
     # ... but only two tiers of QPKG: 'essential' and 'optional'
 
-    # 'essential' QPKGs don't depend on other QPKGs. They should be installed/started before any 'optional' QPKGs.
-    # 'optional' QPKGs depend on other QPKGs. They should be installed/started after any 'essential' QPKGs.
+    # 'essential' QPKGs don't depend on other QPKGs, but are required for other QPKGs. They should be installed/started before any 'optional' QPKGs.
+    # 'optional' QPKGs may depend on other QPKGs. They should be installed/started after any 'essential' QPKGs.
 
     DebugFuncEntry
     local -i index=0
 
     for index in "${!SHERPA_QPKG_NAME[@]}"; do
-        if [[ -n ${SHERPA_QPKG_ESSENTIALS[$index]} ]]; then
-            QPKGs.Optional.Add "${SHERPA_QPKG_NAME[$index]}"    # if the 'SHERPA_QPKG_ESSENTIALS' field has some value, then this package is 'optional'
+        if [[ -n ${SHERPA_QPKG_ESSENTIALS[$index]} || ${SHERPA_QPKG_ESSENTIALS[$index]} = 'none' ]]; then
+            QPKGs.Optional.Add "${SHERPA_QPKG_NAME[$index]}"    # if the 'SHERPA_QPKG_ESSENTIALS' field has some value and this value is not 'none', then this package is 'optional'
         else
             QPKGs.Essential.Add "${SHERPA_QPKG_NAME[$index]}"   # if the 'SHERPA_QPKG_ESSENTIALS' field is empty, then this package is 'essential'
         fi
@@ -3679,8 +3679,10 @@ QPKG.Get.Essentials()
 
     for index in "${!SHERPA_QPKG_NAME[@]}"; do
         if [[ ${SHERPA_QPKG_NAME[$index]} = "$1" ]]; then
-            echo "${SHERPA_QPKG_ESSENTIALS[$index]}"
-            return 0
+            if [[ ${SHERPA_QPKG_ESSENTIALS[$index]} != none ]]; then
+                echo "${SHERPA_QPKG_ESSENTIALS[$index]}"
+                return 0
+            fi
         fi
     done
 
