@@ -1510,12 +1510,12 @@ Tiers.Processor()
                 done
 
                 # don't restart packages that are not started
-                for package in $(QPKGs.ToRestart.Array); do
-                    if ! QPKG.Enabled "$package"; then
-                        QPKGs.ToRestart.Remove "$package"
-                        QPKGs.UnRestart.Add "$package"
-                    fi
-                done
+#                 for package in $(QPKGs.ToRestart.Array); do
+#                     if ! QPKG.Enabled "$package"; then
+#                         QPKGs.ToRestart.Remove "$package"
+#                         QPKGs.UnRestart.Add "$package"
+#                     fi
+#                 done
 
                 # don't restart packages that were just installed
                 for package in $(QPKGs.ToRestart.Array); do
@@ -3031,47 +3031,47 @@ QPKGs.Assignment.List()
     DebugFuncEntry
 
     DebugInfoMinorSeparator
-    DebugQPKG 'to download' "$(QPKGs.ToDownload.ListCSV) "
-    DebugQPKG 'is download' "$(QPKGs.IsDownload.ListCSV) "
-    DebugQPKG 'un download' "$(QPKGs.UnDownload.ListCSV) "
+    DebugQPKG 'ToDownload' "$(QPKGs.ToDownload.ListCSV) "
+    DebugQPKG 'IsDownload' "$(QPKGs.IsDownload.ListCSV) "
+    DebugQPKG 'UnDownload' "$(QPKGs.UnDownload.ListCSV) "
 
-    DebugQPKG 'to backup' "$(QPKGs.ToBackup.ListCSV) "
-    DebugQPKG 'is backup' "$(QPKGs.IsBackup.ListCSV) "
-    DebugQPKG 'un backup' "$(QPKGs.UnBackup.ListCSV) "
+    DebugQPKG 'ToBackup' "$(QPKGs.ToBackup.ListCSV) "
+    DebugQPKG 'IsBackup' "$(QPKGs.IsBackup.ListCSV) "
+    DebugQPKG 'UnBackup' "$(QPKGs.UnBackup.ListCSV) "
 
-    DebugQPKG 'to stop' "$(QPKGs.ToStop.ListCSV) "
-    DebugQPKG 'is stop' "$(QPKGs.IsStop.ListCSV) "
-    DebugQPKG 'un stop' "$(QPKGs.UnStop.ListCSV) "
+    DebugQPKG 'ToStop' "$(QPKGs.ToStop.ListCSV) "
+    DebugQPKG 'IsStop' "$(QPKGs.IsStop.ListCSV) "
+    DebugQPKG 'UnStop' "$(QPKGs.UnStop.ListCSV) "
 
-    DebugQPKG 'to uninstall' "$(QPKGs.ToUninstall.ListCSV) "
-    DebugQPKG 'is uninstall' "$(QPKGs.IsUninstall.ListCSV) "
-    DebugQPKG 'un uninstall' "$(QPKGs.UnUninstall.ListCSV) "
+    DebugQPKG 'ToUninstall' "$(QPKGs.ToUninstall.ListCSV) "
+    DebugQPKG 'IsUninstall' "$(QPKGs.IsUninstall.ListCSV) "
+    DebugQPKG 'UnUninstall' "$(QPKGs.UnUninstall.ListCSV) "
 
-    DebugQPKG 'to upgrade' "$(QPKGs.ToUpgrade.ListCSV) "
-    DebugQPKG 'is upgrade' "$(QPKGs.IsUpgrade.ListCSV) "
-    DebugQPKG 'un upgrade' "$(QPKGs.UnUpgrade.ListCSV) "
+    DebugQPKG 'ToUpgrade' "$(QPKGs.ToUpgrade.ListCSV) "
+    DebugQPKG 'IsUpgrade' "$(QPKGs.IsUpgrade.ListCSV) "
+    DebugQPKG 'UnUpgrade' "$(QPKGs.UnUpgrade.ListCSV) "
 
-    DebugQPKG 'to reinstall' "$(QPKGs.ToReinstall.ListCSV) "
-    DebugQPKG 'is reinstall' "$(QPKGs.IsReinstall.ListCSV) "
-    DebugQPKG 'un reinstall' "$(QPKGs.UnReinstall.ListCSV) "
+    DebugQPKG 'ToReinstall' "$(QPKGs.ToReinstall.ListCSV) "
+    DebugQPKG 'IsReinstall' "$(QPKGs.IsReinstall.ListCSV) "
+    DebugQPKG 'UnReinstall' "$(QPKGs.UnReinstall.ListCSV) "
 
-    DebugQPKG 'to install' "$(QPKGs.ToInstall.ListCSV) "
-    DebugQPKG 'is install' "$(QPKGs.IsInstall.ListCSV) "
-    DebugQPKG 'un install' "$(QPKGs.UnInstall.ListCSV) "
+    DebugQPKG 'ToInstall' "$(QPKGs.ToInstall.ListCSV) "
+    DebugQPKG 'IsInstall' "$(QPKGs.IsInstall.ListCSV) "
+    DebugQPKG 'UnInstall' "$(QPKGs.UnInstall.ListCSV) "
 
-    DebugQPKG 'to restore' "$(QPKGs.ToRestore.ListCSV) "
-    DebugQPKG 'is restore' "$(QPKGs.IsRestore.ListCSV) "
-    DebugQPKG 'un restore' "$(QPKGs.UnRestore.ListCSV) "
+    DebugQPKG 'ToRestore' "$(QPKGs.ToRestore.ListCSV) "
+    DebugQPKG 'IsRestore' "$(QPKGs.IsRestore.ListCSV) "
+    DebugQPKG 'UnRestore' "$(QPKGs.UnRestore.ListCSV) "
 
-    DebugQPKG 'to start' "$(QPKGs.ToStart.ListCSV) "
-    DebugQPKG 'is start' "$(QPKGs.IsStart.ListCSV) "
-    DebugQPKG 'un start' "$(QPKGs.UnStart.ListCSV) "
+    DebugQPKG 'ToStart' "$(QPKGs.ToStart.ListCSV) "
+    DebugQPKG 'IsStart' "$(QPKGs.IsStart.ListCSV) "
+    DebugQPKG 'UnStart' "$(QPKGs.UnStart.ListCSV) "
 
-    DebugQPKG 'to restart' "$(QPKGs.ToRestart.ListCSV) "
-    DebugQPKG 'is restart' "$(QPKGs.IsRestart.ListCSV) "
-    DebugQPKG 'un restart' "$(QPKGs.UnRestart.ListCSV) "
+    DebugQPKG 'ToRestart' "$(QPKGs.ToRestart.ListCSV) "
+    DebugQPKG 'IsRestart' "$(QPKGs.IsRestart.ListCSV) "
+    DebugQPKG 'UnRestart' "$(QPKGs.UnRestart.ListCSV) "
 
-    DebugQPKG 'to status' "$(QPKGs.ToStatus.ListCSV) "
+    DebugQPKG 'ToStatus' "$(QPKGs.ToStatus.ListCSV) "
     DebugInfoMinorSeparator
 
     DebugFuncExit; return 0
