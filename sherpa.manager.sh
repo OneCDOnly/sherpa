@@ -487,7 +487,7 @@ Session.Init()
     readonly SHERPA_COMMON_PIPS_ADD='apscheduler beautifulsoup4 cfscrape cheetah3 cheroot!=8.4.4 cherrypy configobj feedparser portend pygithub python-magic random_user_agent sabyenc3 simplejson slugify'
     readonly SHERPA_COMMON_QPKG_CONFLICTS='Optware Optware-NG TarMT Python QPython2'
 
-    # don't build package lists if only showing basic help
+    # speedup: don't build package lists if only showing basic help
     if [[ -z $USER_ARGS_RAW ]]; then
         User.Opts.Help.Basic.Set
         Session.SkipPackageProcessing.Set
@@ -552,7 +552,7 @@ Session.Arguments.Parse()
         DebugVar arg
         arg_identified=false
 
-        # identify [operation]      note: every time operation changes, clear scope
+        # identify operation    note: every time operation changes, clear scope
         case $arg in
             backup|check|install|reinstall|remove|restart|restore|start|stop|uninstall|upgrade)
                 operation=${arg}_
@@ -592,7 +592,7 @@ Session.Arguments.Parse()
 
         DebugVar operation
 
-        # identify [scope] in two stages: first stage is when user didn't supply an operation. Second is after an operation has been defined.
+        # identify scope in two stages: first stage is when user didn't supply an operation. Second is after an operation has been defined.
 
         # stage 1
         if [[ -z $operation ]]; then
@@ -686,7 +686,7 @@ Session.Arguments.Parse()
 
         DebugVar scope
 
-        # identify [options]
+        # identify options
         case $arg in
             debug|verbose)
                 Session.Debug.To.Screen.Set
@@ -725,7 +725,6 @@ Session.Arguments.Parse()
             backup_)
                 case $scope in
                     all_)
-                        QPKGs.ToBackup.Add "$(QPKGs.Installed.Array)"
                         User.Opts.Apps.All.Backup.Set
                         operation=''
                         ;;
@@ -819,7 +818,6 @@ Session.Arguments.Parse()
             install_)
                 case $scope in
                     all_)
-                        QPKGs.ToInstall.Add "$(QPKGs.Installable.Array)"
                         User.Opts.Apps.All.Install.Set
                         operation=''
                         ;;
@@ -847,7 +845,6 @@ Session.Arguments.Parse()
             reinstall_)
                 case $scope in
                     all_)
-                        QPKGs.ToReinstall.Add "$(QPKGs.Installable.Array)"
                         User.Opts.Apps.All.Reinstall.Set
                         operation=''
                         ;;
@@ -916,7 +913,7 @@ Session.Arguments.Parse()
             status_)
                 case $scope in
                     all_)
-                        QPKGs.ToStatus.Add "$(QPKGs.Installable.Array)"
+#                         QPKGs.ToStatus.Add "$(QPKGs.Installable.Array)"
                         User.Opts.Apps.All.Status.Set
                         operation=''
                         Session.SkipPackageProcessing.Set
@@ -936,7 +933,6 @@ Session.Arguments.Parse()
             stop_)
                 case $scope in
                     all_)
-                        QPKGs.ToStop.Add "$(QPKGs.Installed.Array)"
                         User.Opts.Apps.All.Stop.Set
                         operation=''
                         ;;
@@ -971,7 +967,6 @@ Session.Arguments.Parse()
             upgrade_)
                 case $scope in
                     all_)
-                        QPKGs.ToUpgrade.Add "$(QPKGs.Upgradable.Array)"
                         User.Opts.Apps.All.Upgrade.Set
                         operation=''
                         ;;
@@ -1255,51 +1250,59 @@ Tiers.Processor()
 
     Tier.Processor 'Download' false 'all' 'ToDownload' 'forward' 'update cache with' 'updating cache with' 'updated cache with' ''
 
+    if User.Opts.Apps.All.Backup.IsSet; then
+        QPKGs.ToBackup.Add "$(QPKGs.Installed.Array)"
+    fi
+
     QPKGs.ToBackup.Remove "$(QPKGs.Essential.Array)"    # KLUDGE: remove this when permitted package actions array is operational
     QPKGs.ToBackup.Remove "$(QPKGs.NotInstalled.Array)"
 
     Tier.Processor 'Backup' false 'all' 'ToBackup' 'forward' 'backup' 'backing-up' 'backed-up' ''
 
     # check for packages to be stopped or uninstalled, and ensure related packages are stopped
-    if User.Opts.Apps.All.Uninstall.IsSet; then
-        QPKGs.ToStop.Init           # no-need to stop all packages, as they are about to be 'uninstalled'
-    else
-        if QPKGs.ToReinstall.Exist Entware; then    # treat Entware as a special case: complete removal and fresh install (to clear all installed IPKGs)
-            QPKGs.ToUninstall.Add Entware
-            QPKGs.ToInstall.Add Entware
-            QPKGs.ToReinstall.Remove Entware
-        fi
-
-        # if an essential has been selected for stop, need to stop its optionals first
-        for package in $(QPKGs.ToStop.Array); do
-            if QPKGs.Essential.Exist "$package" && QPKG.Installed "$package"; then
-                QPKGs.ToStop.Add "$(QPKG.Get.Optionals "$package")"
-            fi
-        done
-
-        # if an essential has been selected for uninstall, need to stop its optionals first
-        for package in $(QPKGs.ToUninstall.Array); do
-            if QPKGs.Essential.Exist "$package" && QPKG.Installed "$package"; then
-                QPKGs.ToStop.Add "$(QPKG.Get.Optionals "$package")"
-            fi
-        done
-
-        # if an essential has been selected for install, need to stop its optionals first, and start them again later
-        for package in $(QPKGs.ToInstall.Array); do
-            if QPKGs.Essential.Exist "$package" && QPKG.Installed "$package"; then
-                QPKGs.ToStop.Add "$(QPKG.Get.Optionals "$package")"
-                QPKGs.ToStart.Add "$(QPKG.Get.Optionals "$package")"
-            fi
-        done
-
-        # if an essential has been selected for reinstall, need to stop its optionals first, and start them again later
-        for package in $(QPKGs.ToReinstall.Array); do
-            if QPKGs.Essential.Exist "$package" && QPKG.Installed "$package"; then
-                QPKGs.ToStop.Add "$(QPKG.Get.Optionals "$package")"
-                QPKGs.ToStart.Add "$(QPKG.Get.Optionals "$package")"
-            fi
-        done
+    if User.Opts.Apps.All.Stop.IsSet; then
+        QPKGs.ToStop.Add "$(QPKGs.Installed.Array)"
     fi
+
+    if User.Opts.Apps.All.Uninstall.IsSet; then
+        QPKGs.ToStop.Init   # no-need to stop all packages, as they are about to be uninstalled
+    fi
+
+    if QPKGs.ToReinstall.Exist Entware; then    # treat Entware as a special case: complete removal and fresh install (to clear all installed IPKGs)
+        QPKGs.ToUninstall.Add Entware
+        QPKGs.ToInstall.Add Entware
+        QPKGs.ToReinstall.Remove Entware
+    fi
+
+    # if an essential has been selected for stop, need to stop its optionals first
+    for package in $(QPKGs.ToStop.Array); do
+        if QPKGs.Essential.Exist "$package" && QPKG.Installed "$package"; then
+            QPKGs.ToStop.Add "$(QPKG.Get.Optionals "$package")"
+        fi
+    done
+
+    # if an essential has been selected for uninstall, need to stop its optionals first
+    for package in $(QPKGs.ToUninstall.Array); do
+        if QPKGs.Essential.Exist "$package" && QPKG.Installed "$package"; then
+            QPKGs.ToStop.Add "$(QPKG.Get.Optionals "$package")"
+        fi
+    done
+
+    # if an essential has been selected for install, need to stop its optionals first, and start them again later
+    for package in $(QPKGs.ToInstall.Array); do
+        if QPKGs.Essential.Exist "$package" && QPKG.Installed "$package"; then
+            QPKGs.ToStop.Add "$(QPKG.Get.Optionals "$package")"
+            QPKGs.ToStart.Add "$(QPKG.Get.Optionals "$package")"
+        fi
+    done
+
+    # if an essential has been selected for reinstall, need to stop its optionals first, and start them again later
+    for package in $(QPKGs.ToReinstall.Array); do
+        if QPKGs.Essential.Exist "$package" && QPKG.Installed "$package"; then
+            QPKGs.ToStop.Add "$(QPKG.Get.Optionals "$package")"
+            QPKGs.ToStart.Add "$(QPKG.Get.Optionals "$package")"
+        fi
+    done
 
     # don't stop packages that are already stopped
     for package in $(QPKGs.ToStop.Array); do
@@ -1355,7 +1358,15 @@ Tiers.Processor()
                 : # TODO: test if other packages are to be installed here. If so, and Entware isn't enabled, then abort with error.
             fi
         else
+            if User.Opts.Apps.All.Upgrade.IsSet; then
+                QPKGs.ToUpgrade.Add "$(QPKGs.Upgradable.Array)"
+            fi
+
             Tier.Processor 'Upgrade' false "$tier" 'ToUpgrade' 'forward' 'upgrade' 'upgrading' 'upgraded' 'long'
+
+            if User.Opts.Apps.All.Reinstall.IsSet; then
+                QPKGs.ToReinstall.Add "$(QPKGs.Installable.Array)"
+            fi
 
             # check reinstall for all items that should be installed instead
             for package in $(QPKGs.ToReinstall.Array); do
@@ -1374,6 +1385,10 @@ Tiers.Processor()
             done
 
             Tier.Processor 'Reinstall' false "$tier" 'ToReinstall' 'forward' 'reinstall' 'reinstalling' 'reinstalled' 'long'
+
+            if User.Opts.Apps.All.Install.IsSet; then
+                QPKGs.ToInstall.Add "$(QPKGs.Installable.Array)"
+            fi
 
             # check upgrade for essential items that should be installed
             for package in $(QPKGs.IsUpgrade.Array); do
