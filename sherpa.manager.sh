@@ -247,16 +247,17 @@ Session.Init()
     Session.Calc.QPKGArch
 
     # sherpa-supported package details - parallel arrays
-    SHERPA_QPKG_NAME=()             # internal QPKG name
-        SHERPA_QPKG_ARCH=()         # QPKG supports this architecture
-        SHERPA_QPKG_VERSION=()      # QPKG version
-        SHERPA_QPKG_URL=()          # remote QPKG URL
-        SHERPA_QPKG_MD5=()          # remote QPKG MD5
-        SHERPA_QPKG_ABBRVS=()       # if set, this package is user-installable, and these abbreviations may be used to specify app
-        SHERPA_QPKG_OPS=()          # these operations are permitted by the user for this package
-        SHERPA_QPKG_ESSENTIALS=()   # require these QPKGs to be installed. Use 'none' if package is optional.
-        SHERPA_QPKG_IPKGS_ADD=()    # require these IPKGs to be installed
-        SHERPA_QPKG_IPKGS_REMOVE=() # require these IPKGs to be uninstalled
+    SHERPA_QPKG_NAME=()                 # internal QPKG name
+        SHERPA_QPKG_ARCH=()             # QPKG supports this architecture
+        SHERPA_QPKG_VERSION=()          # QPKG version
+        SHERPA_QPKG_URL=()              # remote QPKG URL
+        SHERPA_QPKG_MD5=()              # remote QPKG MD5
+        SHERPA_QPKG_ABBRVS=()           # if set, this package is user-installable, and these abbreviations may be used to specify app
+        SHERPA_QPKG_OPS=()              # these operations are permitted by the user for this package
+        SHERPA_QPKG_ESSENTIALS=()       # require these QPKGs to be installed first. Use 'none' if package is optional.
+        SHERPA_QPKG_IPKGS_ADD=()        # require these IPKGs to be installed first
+        SHERPA_QPKG_IPKGS_REMOVE=()     # require these IPKGs to be uninstalled first
+        SHERPA_QPKG_BACKUP_SUPPORTED=() # true/false: this QPKG supports configuration 'backup' and 'restore' operations
 
     SHERPA_QPKG_NAME+=(sherpa)
         SHERPA_QPKG_ARCH+=(all)
@@ -268,6 +269,7 @@ Session.Init()
         SHERPA_QPKG_ESSENTIALS+=('')
         SHERPA_QPKG_IPKGS_ADD+=('')
         SHERPA_QPKG_IPKGS_REMOVE+=('')
+        SHERPA_QPKG_BACKUP_SUPPORTED+=(false)
 
     SHERPA_QPKG_NAME+=(Entware)
         SHERPA_QPKG_ARCH+=(all)
@@ -279,6 +281,7 @@ Session.Init()
         SHERPA_QPKG_ESSENTIALS+=('')
         SHERPA_QPKG_IPKGS_ADD+=('')
         SHERPA_QPKG_IPKGS_REMOVE+=('')
+        SHERPA_QPKG_BACKUP_SUPPORTED+=(false)
 
     SHERPA_QPKG_NAME+=(Par2)
         SHERPA_QPKG_ARCH+=(x86)
@@ -290,6 +293,7 @@ Session.Init()
         SHERPA_QPKG_ESSENTIALS+=('')
         SHERPA_QPKG_IPKGS_ADD+=('')
         SHERPA_QPKG_IPKGS_REMOVE+=(par2cmdline)
+        SHERPA_QPKG_BACKUP_SUPPORTED+=(false)
 
     SHERPA_QPKG_NAME+=(Par2)
         SHERPA_QPKG_ARCH+=(x64)
@@ -301,6 +305,7 @@ Session.Init()
         SHERPA_QPKG_ESSENTIALS+=('')
         SHERPA_QPKG_IPKGS_ADD+=('')
         SHERPA_QPKG_IPKGS_REMOVE+=(par2cmdline)
+        SHERPA_QPKG_BACKUP_SUPPORTED+=(false)
 
     SHERPA_QPKG_NAME+=(Par2)
         SHERPA_QPKG_ARCH+=(x31)
@@ -312,6 +317,7 @@ Session.Init()
         SHERPA_QPKG_ESSENTIALS+=('')
         SHERPA_QPKG_IPKGS_ADD+=('')
         SHERPA_QPKG_IPKGS_REMOVE+=(par2cmdline)
+        SHERPA_QPKG_BACKUP_SUPPORTED+=(false)
 
     SHERPA_QPKG_NAME+=(Par2)
         SHERPA_QPKG_ARCH+=(x41)
@@ -323,6 +329,7 @@ Session.Init()
         SHERPA_QPKG_ESSENTIALS+=('')
         SHERPA_QPKG_IPKGS_ADD+=('')
         SHERPA_QPKG_IPKGS_REMOVE+=(par2cmdline)
+        SHERPA_QPKG_BACKUP_SUPPORTED+=(false)
 
     SHERPA_QPKG_NAME+=(Par2)
         SHERPA_QPKG_ARCH+=(a64)
@@ -334,6 +341,7 @@ Session.Init()
         SHERPA_QPKG_ESSENTIALS+=('')
         SHERPA_QPKG_IPKGS_ADD+=('')
         SHERPA_QPKG_IPKGS_REMOVE+=(par2cmdline)
+        SHERPA_QPKG_BACKUP_SUPPORTED+=(false)
 
     SHERPA_QPKG_NAME+=(Par2)
         SHERPA_QPKG_ARCH+=(none)
@@ -345,6 +353,7 @@ Session.Init()
         SHERPA_QPKG_ESSENTIALS+=('')
         SHERPA_QPKG_IPKGS_ADD+=(par2cmdline)
         SHERPA_QPKG_IPKGS_REMOVE+=('')
+        SHERPA_QPKG_BACKUP_SUPPORTED+=(false)
 
     SHERPA_QPKG_NAME+=(Deluge-server)
         SHERPA_QPKG_ARCH+=(all)
@@ -356,6 +365,7 @@ Session.Init()
         SHERPA_QPKG_ESSENTIALS+=(Entware)
         SHERPA_QPKG_IPKGS_ADD+=('deluge jq')
         SHERPA_QPKG_IPKGS_REMOVE+=('')
+        SHERPA_QPKG_BACKUP_SUPPORTED+=(true)
 
     SHERPA_QPKG_NAME+=(Deluge-web)
         SHERPA_QPKG_ARCH+=(all)
@@ -367,6 +377,7 @@ Session.Init()
         SHERPA_QPKG_ESSENTIALS+=(Entware)
         SHERPA_QPKG_IPKGS_ADD+=('deluge-ui-web jq')
         SHERPA_QPKG_IPKGS_REMOVE+=('')
+        SHERPA_QPKG_BACKUP_SUPPORTED+=(true)
 
     SHERPA_QPKG_NAME+=(nzbToMedia)
         SHERPA_QPKG_ARCH+=(all)
@@ -378,6 +389,7 @@ Session.Init()
         SHERPA_QPKG_ESSENTIALS+=(Entware)
         SHERPA_QPKG_IPKGS_ADD+=('')
         SHERPA_QPKG_IPKGS_REMOVE+=('')
+        SHERPA_QPKG_BACKUP_SUPPORTED+=(true)
 
     SHERPA_QPKG_NAME+=(LazyLibrarian)
         SHERPA_QPKG_ARCH+=(all)
@@ -389,6 +401,7 @@ Session.Init()
         SHERPA_QPKG_ESSENTIALS+=(Entware)
         SHERPA_QPKG_IPKGS_ADD+=('python3-pyopenssl python3-requests')
         SHERPA_QPKG_IPKGS_REMOVE+=('')
+        SHERPA_QPKG_BACKUP_SUPPORTED+=(true)
 
     SHERPA_QPKG_NAME+=(Mylar3)
         SHERPA_QPKG_ARCH+=(all)
@@ -400,6 +413,7 @@ Session.Init()
         SHERPA_QPKG_ESSENTIALS+=(Entware)
         SHERPA_QPKG_IPKGS_ADD+=('python3-mako python3-pillow python3-pyopenssl python3-pytz python3-requests python3-six python3-urllib3')
         SHERPA_QPKG_IPKGS_REMOVE+=('')
+        SHERPA_QPKG_BACKUP_SUPPORTED+=(true)
 
     SHERPA_QPKG_NAME+=(NZBGet)
         SHERPA_QPKG_ARCH+=(all)
@@ -411,6 +425,7 @@ Session.Init()
         SHERPA_QPKG_ESSENTIALS+=(Entware)
         SHERPA_QPKG_IPKGS_ADD+=(nzbget)
         SHERPA_QPKG_IPKGS_REMOVE+=('')
+        SHERPA_QPKG_BACKUP_SUPPORTED+=(true)
 
     SHERPA_QPKG_NAME+=(OTransmission)
         SHERPA_QPKG_ARCH+=(all)
@@ -422,6 +437,7 @@ Session.Init()
         SHERPA_QPKG_ESSENTIALS+=(Entware)
         SHERPA_QPKG_IPKGS_ADD+=('transmission-web jq')
         SHERPA_QPKG_IPKGS_REMOVE+=('')
+        SHERPA_QPKG_BACKUP_SUPPORTED+=(true)
 
     SHERPA_QPKG_NAME+=(OMedusa)
         SHERPA_QPKG_ARCH+=(all)
@@ -433,6 +449,7 @@ Session.Init()
         SHERPA_QPKG_ESSENTIALS+=(Entware)
         SHERPA_QPKG_IPKGS_ADD+=('mediainfo python3-pyopenssl')
         SHERPA_QPKG_IPKGS_REMOVE+=('')
+        SHERPA_QPKG_BACKUP_SUPPORTED+=(true)
 
     SHERPA_QPKG_NAME+=(OSickGear)
         SHERPA_QPKG_ARCH+=(all)
@@ -444,6 +461,7 @@ Session.Init()
         SHERPA_QPKG_ESSENTIALS+=(Entware)
         SHERPA_QPKG_IPKGS_ADD+=('')
         SHERPA_QPKG_IPKGS_REMOVE+=('')
+        SHERPA_QPKG_BACKUP_SUPPORTED+=(true)
 
     SHERPA_QPKG_NAME+=(SABnzbd)
         SHERPA_QPKG_ARCH+=(all)
@@ -455,6 +473,7 @@ Session.Init()
         SHERPA_QPKG_ESSENTIALS+=('Entware Par2')
         SHERPA_QPKG_IPKGS_ADD+=('python3-asn1crypto python3-chardet python3-cryptography python3-pyopenssl unrar p7zip coreutils-nice ionice ffprobe')
         SHERPA_QPKG_IPKGS_REMOVE+=('')
+        SHERPA_QPKG_BACKUP_SUPPORTED+=(true)
 
     SHERPA_QPKG_NAME+=(SickChill)
         SHERPA_QPKG_ARCH+=(all)
@@ -466,6 +485,7 @@ Session.Init()
         SHERPA_QPKG_ESSENTIALS+=(Entware)
         SHERPA_QPKG_IPKGS_ADD+=('')
         SHERPA_QPKG_IPKGS_REMOVE+=('')
+        SHERPA_QPKG_BACKUP_SUPPORTED+=(true)
 
     SHERPA_QPKG_NAME+=(SortMyQPKGs)
         SHERPA_QPKG_ARCH+=(all)
@@ -477,6 +497,7 @@ Session.Init()
         SHERPA_QPKG_ESSENTIALS+=(none)
         SHERPA_QPKG_IPKGS_ADD+=('')
         SHERPA_QPKG_IPKGS_REMOVE+=('')
+        SHERPA_QPKG_BACKUP_SUPPORTED+=(false)
 
     # package arrays are now full, so lock them
     readonly SHERPA_QPKG_NAME
@@ -489,6 +510,7 @@ Session.Init()
         readonly SHERPA_QPKG_ESSENTIALS
         readonly SHERPA_QPKG_IPKGS_ADD
         readonly SHERPA_QPKG_IPKGS_REMOVE
+        readonly SHERPA_QPKG_BACKUP_SUPPORTED
 
     QPKGs.Names.Add "${SHERPA_QPKG_NAME[*]}"
 
@@ -532,7 +554,7 @@ Session.Build.StateLists()
     QPKGs.InstallationState.Build
     QPKGs.Upgradable.Build
     QPKGs.Enabled.Build
-    QPKGs.NotEnabled.Build
+    QPKGs.SupportsBackup.Build
 
     Session.Lists.Built.Set
 
@@ -1261,10 +1283,10 @@ Tiers.Processor()
     Tier.Processor 'Download' false 'all' 'QPKG' 'ToDownload' 'forward' 'update cache with' 'updating cache with' 'updated cache with' ''
 
     if User.Opts.Apps.All.Backup.IsSet; then
-        QPKGs.ToBackup.Add "$(QPKGs.Installed.Array)"
+        QPKGs.ToBackup.Add "$(QPKGs.SupportsBackup.Array)"
     fi
 
-    QPKGs.ToBackup.Remove "$(QPKGs.Essential.Array)"    # KLUDGE: remove this when permitted package actions array is operational
+    QPKGs.ToBackup.Remove "$(QPKGs.NotSupportsBackup.Array)"
     QPKGs.ToBackup.Remove "$(QPKGs.NotInstalled.Array)"
 
     Tier.Processor 'Backup' false 'all' 'QPKG' 'ToBackup' 'forward' 'backup' 'backing-up' 'backed-up' ''
@@ -1546,7 +1568,7 @@ Tiers.Processor()
         esac
     done
 
-    QPKGs.Assignment.List
+    QPKGs.OperationAssignment.List
     SmartCR >&2
 
     DebugFuncExit; return 0
@@ -3063,7 +3085,7 @@ QPKGs.Conflicts.Check()
 
     }
 
-QPKGs.Assignment.List()
+QPKGs.OperationAssignment.List()
     {
 
     DebugFuncEntry
@@ -3151,12 +3173,20 @@ QPKGs.InstallationState.Build()
     local package=''
 
     for package in $(QPKGs.Names.Array); do
-        QPKG.UserInstallable "$package" && QPKGs.Installable.Add "$package"
+        if QPKG.UserInstallable "$package"; then
+            QPKGs.Installable.Add "$package"
+            QPKGs.NotInstallable.Remove "$package"
+        else
+            QPKGs.NotInstallable.Add "$package"
+            QPKGs.Installable.Remove "$package"
+        fi
 
         if QPKG.Installed "$package"; then
             QPKGs.Installed.Add "$package"
+            QPKGs.NotInstalled.Remove "$package"
         else
             QPKGs.NotInstalled.Add "$package"
+            QPKGs.Installed.Remove "$package"
         fi
     done
 
@@ -3181,6 +3211,30 @@ QPKGs.Upgradable.Build()
         if [[ ${installed_version//./} != "${remote_version//./}" ]]; then
             #QPKGs.Upgradable.Add "$package $installed_version $remote_version"
             QPKGs.Upgradable.Add "$package"
+        else
+            QPKGs.Upgradable.Remove "$package"
+        fi
+    done
+
+    DebugFuncExit; return 0
+
+    }
+
+QPKGs.SupportsBackup.Build()
+    {
+
+    # Builds a list of QPKGs that do and don't support 'backup' and 'restore' operations
+
+    DebugFuncEntry
+    local package=''
+
+    for package in $(QPKGs.Names.Array); do
+        if QPKG.SupportsBackup "$package"; then
+            QPKGs.SupportsBackup.Add "$package"
+            QPKGs.NotSupportsBackup.Remove "$package"
+        else
+            QPKGs.NotSupportsBackup.Add "$package"
+            QPKGs.SupportsBackup.Remove "$package"
         fi
     done
 
@@ -3191,29 +3245,19 @@ QPKGs.Upgradable.Build()
 QPKGs.Enabled.Build()
     {
 
-    # Builds a list of QPKGs that are installed and enabled in [/etc/config/qpkg.conf]
+    # Builds a list of QPKGs that are installed and enabled or installed and disabled in [/etc/config/qpkg.conf]
 
     DebugFuncEntry
     local package=''
 
     for package in $(QPKGs.Installed.Array); do
-        QPKG.Enabled "$package" && QPKGs.Enabled.Add "$package"
-    done
-
-    DebugFuncExit; return 0
-
-    }
-
-QPKGs.NotEnabled.Build()
-    {
-
-    # Builds a list of QPKGs that are installed and disabled in [/etc/config/qpkg.conf]
-
-    DebugFuncEntry
-    local package=''
-
-    for package in $(QPKGs.Installed.Array); do
-        QPKG.NotEnabled "$package" && QPKGs.NotEnabled.Add "$package"
+        if QPKG.Enabled "$package"; then
+            QPKGs.Enabled.Add "$package"
+            QPKGs.NotEnabled.Remove "$package"
+        else
+            QPKGs.NotEnabled.Add "$package"
+            QPKGs.Enabled.Remove "$package"
+        fi
     done
 
     DebugFuncExit; return 0
@@ -4305,6 +4349,33 @@ QPKG.Backup()
 
     QPKGs.ToBackup.Remove "$1"
     DebugFuncExit; return $resultcode
+
+    }
+
+QPKG.SupportsBackup()
+    {
+
+    # does this QPKG support 'backup' and 'restore' operations?
+
+    # input:
+    #   $1 = QPKG name
+
+    # output:
+    #   $? = 0 if true, 1 if false
+
+    local package_index=0
+
+    for package_index in "${!SHERPA_QPKG_NAME[@]}"; do
+        if [[ ${SHERPA_QPKG_NAME[$package_index]} = $1 ]]; then
+            if ${SHERPA_QPKG_BACKUP_SUPPORTED[$package_index]}; then
+                return 0
+            else
+                return 1
+            fi
+        fi
+    done
+
+    return 1
 
     }
 
@@ -5548,7 +5619,7 @@ Objects.Compile()
 
     # $1 = 'hash' (optional) - if specified, only return the internal checksum
 
-    local -r COMPILED_OBJECTS_HASH=150e2f80045037d858cb16500c4c8cd2
+    local -r COMPILED_OBJECTS_HASH=499a18ddf57df75416a315c4d01913d7
 
     if [[ $1 = hash ]]; then
         echo "$COMPILED_OBJECTS_HASH"
@@ -5614,8 +5685,11 @@ Objects.Compile()
         Objects.Add QPKGs.Installed
         Objects.Add QPKGs.Names
         Objects.Add QPKGs.NotEnabled
+        Objects.Add QPKGs.NotInstallable
         Objects.Add QPKGs.NotInstalled
+        Objects.Add QPKGs.NotSupportsBackup
         Objects.Add QPKGs.Optional
+        Objects.Add QPKGs.SupportsBackup
         Objects.Add QPKGs.Upgradable
 
         # these lists contain package names to operate on

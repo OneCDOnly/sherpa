@@ -6577,6 +6577,159 @@ QPKGs.NotEnabled.Text()
     }
 QPKGs.NotEnabled.Init
 
+QPKGs.NotInstallable.Add()
+    {
+    local array=(${1})
+    local item=''
+    for item in "${array[@]}"; do
+        [[ " ${_object_qpkgs_notinstallable_array_[*]} " != *"$item"* ]] && _object_qpkgs_notinstallable_array_+=("$item")
+    done
+    }
+QPKGs.NotInstallable.Array()
+    {
+    echo -n "${_object_qpkgs_notinstallable_array_[@]}"
+    }
+QPKGs.NotInstallable.Clear()
+    {
+    [[ $_object_qpkgs_notinstallable_flag_ != 'true' ]] && return
+    _object_qpkgs_notinstallable_flag_=false
+    [[ $_object_qpkgs_notinstallable_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_notinstallable_flag_
+    }
+QPKGs.NotInstallable.Count()
+    {
+    echo "${#_object_qpkgs_notinstallable_array_[@]}"
+    }
+QPKGs.NotInstallable.Disable()
+    {
+    [[ $_object_qpkgs_notinstallable_enable_ != 'true' ]] && return
+    _object_qpkgs_notinstallable_enable_=false
+    [[ $_object_qpkgs_notinstallable_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_notinstallable_enable_
+    }
+QPKGs.NotInstallable.DontLogChanges()
+    {
+    [[ $_object_qpkgs_notinstallable_changes_flag_ != 'true' ]] && return
+    _object_qpkgs_notinstallable_changes_flag_=false
+    }
+QPKGs.NotInstallable.Enable()
+    {
+    [[ $_object_qpkgs_notinstallable_enable_ = 'true' ]] && return
+    _object_qpkgs_notinstallable_enable_=true
+    [[ $_object_qpkgs_notinstallable_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_notinstallable_enable_
+    }
+QPKGs.NotInstallable.Exist()
+    {
+    [[ ${_object_qpkgs_notinstallable_array_[*]} == *"$1"* ]]
+    }
+QPKGs.NotInstallable.First()
+    {
+    echo "${_object_qpkgs_notinstallable_array_[0]}"
+    }
+QPKGs.NotInstallable.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_qpkgs_notinstallable_array_[@]} ]] && index=${#_object_qpkgs_notinstallable_array_[@]}
+    echo -n "${_object_qpkgs_notinstallable_array_[((index-1))]}"
+    }
+QPKGs.NotInstallable.Init()
+    {
+    _object_qpkgs_notinstallable_size_=0
+    _object_qpkgs_notinstallable_text_=''
+    _object_qpkgs_notinstallable_flag_=false
+    _object_qpkgs_notinstallable_changes_flag_=true
+    _object_qpkgs_notinstallable_enable_=false
+    _object_qpkgs_notinstallable_array_=()
+    _object_qpkgs_notinstallable_array_index_=1
+    _object_qpkgs_notinstallable_path_=''
+    }
+QPKGs.NotInstallable.IsAny()
+    {
+    [[ ${#_object_qpkgs_notinstallable_array_[@]} -gt 0 ]]
+    }
+QPKGs.NotInstallable.IsDisabled()
+    {
+    [[ $_object_qpkgs_notinstallable_enable_ != 'true' ]]
+    }
+QPKGs.NotInstallable.IsEnabled()
+    {
+    [[ $_object_qpkgs_notinstallable_enable_ = 'true' ]]
+    }
+QPKGs.NotInstallable.IsNone()
+    {
+    [[ ${#_object_qpkgs_notinstallable_array_[@]} -eq 0 ]]
+    }
+QPKGs.NotInstallable.IsNot()
+    {
+    [[ $_object_qpkgs_notinstallable_flag_ != 'true' ]]
+    }
+QPKGs.NotInstallable.IsSet()
+    {
+    [[ $_object_qpkgs_notinstallable_flag_ = 'true' ]]
+    }
+QPKGs.NotInstallable.List()
+    {
+    echo -n "${_object_qpkgs_notinstallable_array_[*]}"
+    }
+QPKGs.NotInstallable.ListCSV()
+    {
+    echo -n "${_object_qpkgs_notinstallable_array_[*]}" | tr ' ' ','
+    }
+QPKGs.NotInstallable.LogChanges()
+    {
+    [[ $_object_qpkgs_notinstallable_changes_flag_ = 'true' ]] && return
+    _object_qpkgs_notinstallable_changes_flag_=true
+    }
+QPKGs.NotInstallable.Path()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_notinstallable_path_=$2
+    else
+        echo -n "$_object_qpkgs_notinstallable_path_"
+    fi
+    }
+QPKGs.NotInstallable.Remove()
+    {
+    local argument_array=(${1})
+    local temp_array=()
+    local argument=''
+    local item=''
+    local matched=false
+    for item in "${_object_qpkgs_notinstallable_array_[@]}"; do
+        matched=false
+        for argument in "${argument_array[@]}"; do
+            if [[ $argument = $item ]]; then
+                matched=true; break
+            fi
+        done
+        [[ $matched = false ]] && temp_array+=("$item")
+    done
+    _object_qpkgs_notinstallable_array_=("${temp_array[@]}")
+    [[ -z ${_object_qpkgs_notinstallable_array_[*]} ]] && _object_qpkgs_notinstallable_array_=()
+    }
+QPKGs.NotInstallable.Set()
+    {
+    [[ $_object_qpkgs_notinstallable_flag_ = 'true' ]] && return
+    _object_qpkgs_notinstallable_flag_=true
+    [[ $_object_qpkgs_notinstallable_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_notinstallable_flag_
+    }
+QPKGs.NotInstallable.Size()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_notinstallable_size_=$2
+    else
+        echo -n $_object_qpkgs_notinstallable_size_
+    fi
+    }
+QPKGs.NotInstallable.Text()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_notinstallable_text_=$2
+    else
+        echo -n "$_object_qpkgs_notinstallable_text_"
+    fi
+    }
+QPKGs.NotInstallable.Init
+
 QPKGs.NotInstalled.Add()
     {
     local array=(${1})
@@ -6730,6 +6883,159 @@ QPKGs.NotInstalled.Text()
     }
 QPKGs.NotInstalled.Init
 
+QPKGs.NotSupportsBackup.Add()
+    {
+    local array=(${1})
+    local item=''
+    for item in "${array[@]}"; do
+        [[ " ${_object_qpkgs_notsupportsbackup_array_[*]} " != *"$item"* ]] && _object_qpkgs_notsupportsbackup_array_+=("$item")
+    done
+    }
+QPKGs.NotSupportsBackup.Array()
+    {
+    echo -n "${_object_qpkgs_notsupportsbackup_array_[@]}"
+    }
+QPKGs.NotSupportsBackup.Clear()
+    {
+    [[ $_object_qpkgs_notsupportsbackup_flag_ != 'true' ]] && return
+    _object_qpkgs_notsupportsbackup_flag_=false
+    [[ $_object_qpkgs_notsupportsbackup_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_notsupportsbackup_flag_
+    }
+QPKGs.NotSupportsBackup.Count()
+    {
+    echo "${#_object_qpkgs_notsupportsbackup_array_[@]}"
+    }
+QPKGs.NotSupportsBackup.Disable()
+    {
+    [[ $_object_qpkgs_notsupportsbackup_enable_ != 'true' ]] && return
+    _object_qpkgs_notsupportsbackup_enable_=false
+    [[ $_object_qpkgs_notsupportsbackup_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_notsupportsbackup_enable_
+    }
+QPKGs.NotSupportsBackup.DontLogChanges()
+    {
+    [[ $_object_qpkgs_notsupportsbackup_changes_flag_ != 'true' ]] && return
+    _object_qpkgs_notsupportsbackup_changes_flag_=false
+    }
+QPKGs.NotSupportsBackup.Enable()
+    {
+    [[ $_object_qpkgs_notsupportsbackup_enable_ = 'true' ]] && return
+    _object_qpkgs_notsupportsbackup_enable_=true
+    [[ $_object_qpkgs_notsupportsbackup_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_notsupportsbackup_enable_
+    }
+QPKGs.NotSupportsBackup.Exist()
+    {
+    [[ ${_object_qpkgs_notsupportsbackup_array_[*]} == *"$1"* ]]
+    }
+QPKGs.NotSupportsBackup.First()
+    {
+    echo "${_object_qpkgs_notsupportsbackup_array_[0]}"
+    }
+QPKGs.NotSupportsBackup.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_qpkgs_notsupportsbackup_array_[@]} ]] && index=${#_object_qpkgs_notsupportsbackup_array_[@]}
+    echo -n "${_object_qpkgs_notsupportsbackup_array_[((index-1))]}"
+    }
+QPKGs.NotSupportsBackup.Init()
+    {
+    _object_qpkgs_notsupportsbackup_size_=0
+    _object_qpkgs_notsupportsbackup_text_=''
+    _object_qpkgs_notsupportsbackup_flag_=false
+    _object_qpkgs_notsupportsbackup_changes_flag_=true
+    _object_qpkgs_notsupportsbackup_enable_=false
+    _object_qpkgs_notsupportsbackup_array_=()
+    _object_qpkgs_notsupportsbackup_array_index_=1
+    _object_qpkgs_notsupportsbackup_path_=''
+    }
+QPKGs.NotSupportsBackup.IsAny()
+    {
+    [[ ${#_object_qpkgs_notsupportsbackup_array_[@]} -gt 0 ]]
+    }
+QPKGs.NotSupportsBackup.IsDisabled()
+    {
+    [[ $_object_qpkgs_notsupportsbackup_enable_ != 'true' ]]
+    }
+QPKGs.NotSupportsBackup.IsEnabled()
+    {
+    [[ $_object_qpkgs_notsupportsbackup_enable_ = 'true' ]]
+    }
+QPKGs.NotSupportsBackup.IsNone()
+    {
+    [[ ${#_object_qpkgs_notsupportsbackup_array_[@]} -eq 0 ]]
+    }
+QPKGs.NotSupportsBackup.IsNot()
+    {
+    [[ $_object_qpkgs_notsupportsbackup_flag_ != 'true' ]]
+    }
+QPKGs.NotSupportsBackup.IsSet()
+    {
+    [[ $_object_qpkgs_notsupportsbackup_flag_ = 'true' ]]
+    }
+QPKGs.NotSupportsBackup.List()
+    {
+    echo -n "${_object_qpkgs_notsupportsbackup_array_[*]}"
+    }
+QPKGs.NotSupportsBackup.ListCSV()
+    {
+    echo -n "${_object_qpkgs_notsupportsbackup_array_[*]}" | tr ' ' ','
+    }
+QPKGs.NotSupportsBackup.LogChanges()
+    {
+    [[ $_object_qpkgs_notsupportsbackup_changes_flag_ = 'true' ]] && return
+    _object_qpkgs_notsupportsbackup_changes_flag_=true
+    }
+QPKGs.NotSupportsBackup.Path()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_notsupportsbackup_path_=$2
+    else
+        echo -n "$_object_qpkgs_notsupportsbackup_path_"
+    fi
+    }
+QPKGs.NotSupportsBackup.Remove()
+    {
+    local argument_array=(${1})
+    local temp_array=()
+    local argument=''
+    local item=''
+    local matched=false
+    for item in "${_object_qpkgs_notsupportsbackup_array_[@]}"; do
+        matched=false
+        for argument in "${argument_array[@]}"; do
+            if [[ $argument = $item ]]; then
+                matched=true; break
+            fi
+        done
+        [[ $matched = false ]] && temp_array+=("$item")
+    done
+    _object_qpkgs_notsupportsbackup_array_=("${temp_array[@]}")
+    [[ -z ${_object_qpkgs_notsupportsbackup_array_[*]} ]] && _object_qpkgs_notsupportsbackup_array_=()
+    }
+QPKGs.NotSupportsBackup.Set()
+    {
+    [[ $_object_qpkgs_notsupportsbackup_flag_ = 'true' ]] && return
+    _object_qpkgs_notsupportsbackup_flag_=true
+    [[ $_object_qpkgs_notsupportsbackup_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_notsupportsbackup_flag_
+    }
+QPKGs.NotSupportsBackup.Size()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_notsupportsbackup_size_=$2
+    else
+        echo -n $_object_qpkgs_notsupportsbackup_size_
+    fi
+    }
+QPKGs.NotSupportsBackup.Text()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_notsupportsbackup_text_=$2
+    else
+        echo -n "$_object_qpkgs_notsupportsbackup_text_"
+    fi
+    }
+QPKGs.NotSupportsBackup.Init
+
 QPKGs.Optional.Add()
     {
     local array=(${1})
@@ -6882,6 +7188,159 @@ QPKGs.Optional.Text()
     fi
     }
 QPKGs.Optional.Init
+
+QPKGs.SupportsBackup.Add()
+    {
+    local array=(${1})
+    local item=''
+    for item in "${array[@]}"; do
+        [[ " ${_object_qpkgs_supportsbackup_array_[*]} " != *"$item"* ]] && _object_qpkgs_supportsbackup_array_+=("$item")
+    done
+    }
+QPKGs.SupportsBackup.Array()
+    {
+    echo -n "${_object_qpkgs_supportsbackup_array_[@]}"
+    }
+QPKGs.SupportsBackup.Clear()
+    {
+    [[ $_object_qpkgs_supportsbackup_flag_ != 'true' ]] && return
+    _object_qpkgs_supportsbackup_flag_=false
+    [[ $_object_qpkgs_supportsbackup_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_supportsbackup_flag_
+    }
+QPKGs.SupportsBackup.Count()
+    {
+    echo "${#_object_qpkgs_supportsbackup_array_[@]}"
+    }
+QPKGs.SupportsBackup.Disable()
+    {
+    [[ $_object_qpkgs_supportsbackup_enable_ != 'true' ]] && return
+    _object_qpkgs_supportsbackup_enable_=false
+    [[ $_object_qpkgs_supportsbackup_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_supportsbackup_enable_
+    }
+QPKGs.SupportsBackup.DontLogChanges()
+    {
+    [[ $_object_qpkgs_supportsbackup_changes_flag_ != 'true' ]] && return
+    _object_qpkgs_supportsbackup_changes_flag_=false
+    }
+QPKGs.SupportsBackup.Enable()
+    {
+    [[ $_object_qpkgs_supportsbackup_enable_ = 'true' ]] && return
+    _object_qpkgs_supportsbackup_enable_=true
+    [[ $_object_qpkgs_supportsbackup_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_supportsbackup_enable_
+    }
+QPKGs.SupportsBackup.Exist()
+    {
+    [[ ${_object_qpkgs_supportsbackup_array_[*]} == *"$1"* ]]
+    }
+QPKGs.SupportsBackup.First()
+    {
+    echo "${_object_qpkgs_supportsbackup_array_[0]}"
+    }
+QPKGs.SupportsBackup.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_qpkgs_supportsbackup_array_[@]} ]] && index=${#_object_qpkgs_supportsbackup_array_[@]}
+    echo -n "${_object_qpkgs_supportsbackup_array_[((index-1))]}"
+    }
+QPKGs.SupportsBackup.Init()
+    {
+    _object_qpkgs_supportsbackup_size_=0
+    _object_qpkgs_supportsbackup_text_=''
+    _object_qpkgs_supportsbackup_flag_=false
+    _object_qpkgs_supportsbackup_changes_flag_=true
+    _object_qpkgs_supportsbackup_enable_=false
+    _object_qpkgs_supportsbackup_array_=()
+    _object_qpkgs_supportsbackup_array_index_=1
+    _object_qpkgs_supportsbackup_path_=''
+    }
+QPKGs.SupportsBackup.IsAny()
+    {
+    [[ ${#_object_qpkgs_supportsbackup_array_[@]} -gt 0 ]]
+    }
+QPKGs.SupportsBackup.IsDisabled()
+    {
+    [[ $_object_qpkgs_supportsbackup_enable_ != 'true' ]]
+    }
+QPKGs.SupportsBackup.IsEnabled()
+    {
+    [[ $_object_qpkgs_supportsbackup_enable_ = 'true' ]]
+    }
+QPKGs.SupportsBackup.IsNone()
+    {
+    [[ ${#_object_qpkgs_supportsbackup_array_[@]} -eq 0 ]]
+    }
+QPKGs.SupportsBackup.IsNot()
+    {
+    [[ $_object_qpkgs_supportsbackup_flag_ != 'true' ]]
+    }
+QPKGs.SupportsBackup.IsSet()
+    {
+    [[ $_object_qpkgs_supportsbackup_flag_ = 'true' ]]
+    }
+QPKGs.SupportsBackup.List()
+    {
+    echo -n "${_object_qpkgs_supportsbackup_array_[*]}"
+    }
+QPKGs.SupportsBackup.ListCSV()
+    {
+    echo -n "${_object_qpkgs_supportsbackup_array_[*]}" | tr ' ' ','
+    }
+QPKGs.SupportsBackup.LogChanges()
+    {
+    [[ $_object_qpkgs_supportsbackup_changes_flag_ = 'true' ]] && return
+    _object_qpkgs_supportsbackup_changes_flag_=true
+    }
+QPKGs.SupportsBackup.Path()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_supportsbackup_path_=$2
+    else
+        echo -n "$_object_qpkgs_supportsbackup_path_"
+    fi
+    }
+QPKGs.SupportsBackup.Remove()
+    {
+    local argument_array=(${1})
+    local temp_array=()
+    local argument=''
+    local item=''
+    local matched=false
+    for item in "${_object_qpkgs_supportsbackup_array_[@]}"; do
+        matched=false
+        for argument in "${argument_array[@]}"; do
+            if [[ $argument = $item ]]; then
+                matched=true; break
+            fi
+        done
+        [[ $matched = false ]] && temp_array+=("$item")
+    done
+    _object_qpkgs_supportsbackup_array_=("${temp_array[@]}")
+    [[ -z ${_object_qpkgs_supportsbackup_array_[*]} ]] && _object_qpkgs_supportsbackup_array_=()
+    }
+QPKGs.SupportsBackup.Set()
+    {
+    [[ $_object_qpkgs_supportsbackup_flag_ = 'true' ]] && return
+    _object_qpkgs_supportsbackup_flag_=true
+    [[ $_object_qpkgs_supportsbackup_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_supportsbackup_flag_
+    }
+QPKGs.SupportsBackup.Size()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_supportsbackup_size_=$2
+    else
+        echo -n $_object_qpkgs_supportsbackup_size_
+    fi
+    }
+QPKGs.SupportsBackup.Text()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_supportsbackup_text_=$2
+    else
+        echo -n "$_object_qpkgs_supportsbackup_text_"
+    fi
+    }
+QPKGs.SupportsBackup.Init
 
 QPKGs.Upgradable.Add()
     {
