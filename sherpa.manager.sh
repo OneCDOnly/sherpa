@@ -1487,6 +1487,11 @@ Tiers.Processor()
                 if User.Opts.Apps.All.Restart.IsSet; then
                     QPKGs.ToRestart.Add "$(QPKGs.Installed.Array)"
                 else
+                    # check for optional packages that require restarting due to any essentials being started
+                    for package in $(QPKGs.IsStart.Array); do
+                        QPKGs.ToRestart.Add "$(QPKG.Get.Optionals "$package")"
+                    done
+
                     # check for optional packages that require restarting due to any essentials being restarted
                     for package in $(QPKGs.ToRestart.Array); do
                         QPKGs.ToRestart.Add "$(QPKG.Get.Optionals "$package")"
