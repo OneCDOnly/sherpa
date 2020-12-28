@@ -43,7 +43,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=201228
+    readonly MANAGER_SCRIPT_VERSION=201229
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -1258,7 +1258,7 @@ Tiers.Processor()
         done
     fi
 
-    Tier.Processor 'Download' false 'all' 'ToDownload' 'forward' 'update cache with' 'updating cache with' 'updated cache with' ''
+    Tier.Processor 'Download' false 'all' 'QPKG' 'ToDownload' 'forward' 'update cache with' 'updating cache with' 'updated cache with' ''
 
     if User.Opts.Apps.All.Backup.IsSet; then
         QPKGs.ToBackup.Add "$(QPKGs.Installed.Array)"
@@ -1267,7 +1267,7 @@ Tiers.Processor()
     QPKGs.ToBackup.Remove "$(QPKGs.Essential.Array)"    # KLUDGE: remove this when permitted package actions array is operational
     QPKGs.ToBackup.Remove "$(QPKGs.NotInstalled.Array)"
 
-    Tier.Processor 'Backup' false 'all' 'ToBackup' 'forward' 'backup' 'backing-up' 'backed-up' ''
+    Tier.Processor 'Backup' false 'all' 'QPKG' 'ToBackup' 'forward' 'backup' 'backing-up' 'backed-up' ''
 
     # check for packages to be stopped or uninstalled, and ensure related packages are stopped
     if User.Opts.Apps.All.Stop.IsSet; then
@@ -1336,19 +1336,19 @@ Tiers.Processor()
     QPKGs.ToStop.Remove "$(QPKGs.ToUninstall.Array)"
     QPKGs.ToStop.Remove sherpa
 
-    Tier.Processor 'Stop' false 'optional' 'ToStop' 'backward' 'stop' 'stopping' 'stopped' ''
+    Tier.Processor 'Stop' false 'optional' 'QPKG' 'ToStop' 'backward' 'stop' 'stopping' 'stopped' ''
 
-    Tier.Processor 'Stop' false 'essential' 'ToStop' 'backward' 'stop' 'stopping' 'stopped' ''
+    Tier.Processor 'Stop' false 'essential' 'QPKG' 'ToStop' 'backward' 'stop' 'stopping' 'stopped' ''
 
     QPKGs.ToUninstall.Remove "$(QPKGs.NotInstalled.Array)"
     QPKGs.ToUninstall.Remove sherpa
 
-    Tier.Processor 'Uninstall' false 'optional' 'ToUninstall' 'forward' 'uninstall' 'uninstalling' 'uninstalled' ''
+    Tier.Processor 'Uninstall' false 'optional' 'QPKG' 'ToUninstall' 'forward' 'uninstall' 'uninstalling' 'uninstalled' ''
 
     ShowAsProc "checking for addon packages to uninstall" >&2
     QPKG.Installed Entware && IPKGs.Uninstall
 
-    Tier.Processor 'Uninstall' false 'essential' 'ToUninstall' 'forward' 'uninstall' 'uninstalling' 'uninstalled' ''
+    Tier.Processor 'Uninstall' false 'essential' 'QPKG' 'ToUninstall' 'forward' 'uninstall' 'uninstalling' 'uninstalled' ''
 
     # adjust configuration restore lists to remove essentials (these can't be backed-up or restored for-now)
     if User.Opts.Apps.All.Restore.IsSet; then
@@ -1364,7 +1364,7 @@ Tiers.Processor()
                     QPKGs.ToUpgrade.Add "$(QPKGs.Upgradable.Array)"
                 fi
 
-                Tier.Processor 'Upgrade' false "$tier" 'ToUpgrade' 'forward' 'upgrade' 'upgrading' 'upgraded' 'long'
+                Tier.Processor 'Upgrade' false "$tier" 'QPKG' 'ToUpgrade' 'forward' 'upgrade' 'upgrading' 'upgraded' 'long'
 
                 if User.Opts.Apps.All.Reinstall.IsSet; then
                     QPKGs.ToReinstall.Add "$(QPKGs.Installable.Array)"
@@ -1386,7 +1386,7 @@ Tiers.Processor()
                     fi
                 done
 
-                Tier.Processor 'Reinstall' false "$tier" 'ToReinstall' 'forward' 'reinstall' 'reinstalling' 'reinstalled' 'long'
+                Tier.Processor 'Reinstall' false "$tier" 'QPKG' 'ToReinstall' 'forward' 'reinstall' 'reinstalling' 'reinstalled' 'long'
 
                 if User.Opts.Apps.All.Install.IsSet; then
                     QPKGs.ToInstall.Add "$(QPKGs.Installable.Array)"
@@ -1426,10 +1426,10 @@ Tiers.Processor()
 
                 QPKGs.ToInstall.Remove "$(QPKGs.Installed.Array)"
 
-                Tier.Processor 'Install' false "$tier" 'ToInstall' 'forward' 'install' 'installing' 'installed' 'long'
+                Tier.Processor 'Install' false "$tier" 'QPKG' 'ToInstall' 'forward' 'install' 'installing' 'installed' 'long'
 
                 if [[ $tier = optional ]]; then
-                    Tier.Processor 'Restore' false "$tier" 'ToRestore' 'forward' 'restore configuration for' 'restoring configuration for' 'configuration restored for' 'long'
+                    Tier.Processor 'Restore' false "$tier" 'QPKG' 'ToRestore' 'forward' 'restore configuration for' 'restoring configuration for' 'configuration restored for' 'long'
                 fi
 
                 # adjust lists for start
@@ -1482,7 +1482,7 @@ Tiers.Processor()
                 QPKGs.ToStart.Remove "$(QPKGs.ToInstall.Array)"
                 QPKGs.ToStart.Remove sherpa
 
-                Tier.Processor 'Start' false "$tier" 'ToStart' 'forward' 'start' 'starting' 'started' 'long'
+                Tier.Processor 'Start' false "$tier" 'QPKG' 'ToStart' 'forward' 'start' 'starting' 'started' 'long'
 
                 # check all items
                 if User.Opts.Dependencies.Check.IsSet; then
@@ -1524,7 +1524,7 @@ Tiers.Processor()
                     done
                 fi
 
-                Tier.Processor 'Restart' false "$tier" 'ToRestart' 'forward' 'restart' 'restarting' 'restarted' 'long'
+                Tier.Processor 'Restart' false "$tier" 'QPKG' 'ToRestart' 'forward' 'restart' 'restarting' 'restarted' 'long'
                 ;;
             addon)
                 if QPKGs.ToInstall.IsAny || QPKGs.ToReinstall.IsAny || QPKGs.IsInstall.IsAny || QPKGs.IsReinstall.IsAny; then
@@ -1537,8 +1537,8 @@ Tiers.Processor()
 
                 if QPKG.Enabled Entware; then
                     Session.AddPathToEntware
-                    Tier.Processor 'Install' false 'IPKG' '' 'forward' 'install' 'installing' 'installed' 'long'
-                    Tier.Processor 'Install' false 'PIP' '' 'forward' 'install' 'installing' 'installed' 'long'
+                    Tier.Processor 'Install' false "$tier" 'IPKG' '' 'forward' 'install' 'installing' 'installed' 'long'
+                    Tier.Processor 'Install' false "$tier" 'PIP' '' 'forward' 'install' 'installing' 'installed' 'long'
                 else
                     : # TODO: test if other packages are to be installed here. If so, and Entware isn't enabled, then abort with error.
                 fi
@@ -1562,14 +1562,15 @@ Tier.Processor()
     #   $1 = $TARGET_OPERATION              e.g. 'Start', 'Restart', etc...
     #   $2 = forced operation?              e.g. 'true', 'false'
     #   $3 = $TIER                          e.g. 'essential', 'optional', 'addon', 'all'
-    #   $4 = $TARGET_OBJECT_NAME            e.g. 'ToStart', 'ToStop', etc...
-    #   $5 = $PROCESSING_DIRECTION          e.g. 'forward', 'backward'
-    #   $6 = $ACTION_INTRANSITIVE           e.g. 'start', etc...
-    #   $7 = $ACTION_PRESENT                e.g. 'starting', etc...
-    #   $8 = $ACTION_PAST                   e.g. "started', etc...
-    #   $9 = $RUNTIME (optional)            e.g. 'long'
+    #   $4 = $PACKAGE_TYPE                  e.g. 'QPKG', 'IPKG', 'PIP'
+    #   $5 = $TARGET_OBJECT_NAME (optional) e.g. 'ToStart', 'ToStop', etc...
+    #   $6 = $PROCESSING_DIRECTION          e.g. 'forward', 'backward'
+    #   $7 = $ACTION_INTRANSITIVE           e.g. 'start', etc...
+    #   $8 = $ACTION_PRESENT                e.g. 'starting', etc...
+    #   $9 = $ACTION_PAST                   e.g. "started', etc...
+    #  $10 = $RUNTIME (optional)            e.g. 'long'
 
-    [[ -z $1 || -z $3 || -z $5 || -z $6 || -z $7 || -z $8 ]] && return
+    [[ -z $1 || -z $3 || -z $4 || -z $6 || -z $7 || -z $8 || -z $9 ]] && return
 
     DebugFuncEntry
 
@@ -1585,34 +1586,35 @@ Tier.Processor()
     local -i fail_count=0
     local -r TARGET_OPERATION=$1
     local -r TIER=$3
-    local -r TARGET_OBJECT_NAME=$4
-    local -r PROCESSING_DIRECTION=$5
-    local -r RUNTIME=$9
+    local -r PACKAGE_TYPE=$4
+    local -r TARGET_OBJECT_NAME=$5
+    local -r PROCESSING_DIRECTION=$6
+    local -r RUNTIME=${10}
 
     if [[ $2 = true ]]; then
         forced_operation='--forced'
         message_prefix='force-'
     fi
 
-    case $TIER in
-        essential|optional)
-            target_function=QPKG
-            targets_function=QPKGs
+    case $PACKAGE_TYPE in
+        QPKG|IPKG|PIP)
+            target_function=$PACKAGE_TYPE
+            targets_function=${PACKAGE_TYPE}s
             ;;
         *)
-            target_function=$TIER
-            targets_function=${TIER}s
+            DebugAsError "unknown \$PACKAGE_TYPE: '$PACKAGE_TYPE'"
+            return 1
             ;;
     esac
 
-    local -r ACTION_INTRANSITIVE=${message_prefix}$6
-    local -r ACTION_PRESENT=${message_prefix}$7
-    local -r ACTION_PAST=${message_prefix}$8
+    local -r ACTION_INTRANSITIVE=${message_prefix}$7
+    local -r ACTION_PRESENT=${message_prefix}$8
+    local -r ACTION_PAST=${message_prefix}$9
 
     ShowAsProc "checking for$([[ $TIER = all ]] && echo '' || echo " $TIER") packages to $ACTION_INTRANSITIVE" >&2
 
-    case $targets_function in
-        QPKGs)
+    case $PACKAGE_TYPE in
+        QPKG)
             if $targets_function.$TARGET_OBJECT_NAME.IsNone; then
                 DebugInfo "no $targets_function to process"
                 DebugFuncExit; return 0
@@ -1660,11 +1662,7 @@ Tier.Processor()
                 done
             fi
             ;;
-        alls)
-            : # do nothing: end up here during package downloading and so-on.
-            ;;
-        *)
-            # use $targets_function here as functions already exist to process all IPKGs and PIPs collectively
+        IPKG|PIP)
             $targets_function.$TARGET_OPERATION
             ;;
     esac
