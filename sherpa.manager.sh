@@ -1264,6 +1264,15 @@ Tiers.Processor()
         QPKGs.ToStop.Add "$(QPKGs.Installed.Array)"
     fi
 
+    # don't stop then start a package. Make it restart instead.
+    for package in $(QPKGs.ToStop.Array); do
+        if QPKGs.ToStart.Exist "$package"; then
+            QPKGs.ToStop.Remove "$package"
+            QPKGs.ToStart.Remove "$package"
+            QPKGs.ToRestart.Add "$package"
+        fi
+    done
+
     if User.Opts.Apps.All.Uninstall.IsSet; then
         QPKGs.ToStop.Init   # no-need to stop all packages, as they are about to be uninstalled
     fi
