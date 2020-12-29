@@ -3118,12 +3118,10 @@ QPKGs.OperationAssignment.List()
     DebugQPKG 'ToUninstall' "($(QPKGs.ToUninstall.Count)) $(QPKGs.ToUninstall.ListCSV) "
     DebugQPKG 'IsUninstall' "($(QPKGs.IsUninstall.Count)) $(QPKGs.IsUninstall.ListCSV) "
     DebugQPKG 'UnUninstall' "($(QPKGs.UnUninstall.Count)) $(QPKGs.UnUninstall.ListCSV) "
-    DebugQPKG 'NotInstalled' "($(QPKGs.NotInstalled.Count)) $(QPKGs.NotInstalled.ListCSV) "
 
     DebugQPKG 'ToUpgrade' "($(QPKGs.ToUpgrade.Count)) $(QPKGs.ToUpgrade.ListCSV) "
     DebugQPKG 'IsUpgrade' "($(QPKGs.IsUpgrade.Count)) $(QPKGs.IsUpgrade.ListCSV) "
     DebugQPKG 'UnUpgrade' "($(QPKGs.UnUpgrade.Count)) $(QPKGs.UnUpgrade.ListCSV) "
-    DebugQPKG 'Upgradable' "($(QPKGs.Upgradable.Count)) $(QPKGs.Upgradable.ListCSV) "
 
     DebugQPKG 'ToReinstall' "($(QPKGs.ToReinstall.Count)) $(QPKGs.ToReinstall.ListCSV) "
     DebugQPKG 'IsReinstall' "($(QPKGs.IsReinstall.Count)) $(QPKGs.IsReinstall.ListCSV) "
@@ -3132,7 +3130,6 @@ QPKGs.OperationAssignment.List()
     DebugQPKG 'ToInstall' "($(QPKGs.ToInstall.Count)) $(QPKGs.ToInstall.ListCSV) "
     DebugQPKG 'IsInstall' "($(QPKGs.IsInstall.Count)) $(QPKGs.IsInstall.ListCSV) "
     DebugQPKG 'UnInstall' "($(QPKGs.UnInstall.Count)) $(QPKGs.UnInstall.ListCSV) "
-    DebugQPKG 'Installed' "($(QPKGs.Installed.Count)) $(QPKGs.Installed.ListCSV) "
 
     DebugQPKG 'ToRestore' "($(QPKGs.ToRestore.Count)) $(QPKGs.ToRestore.ListCSV) "
     DebugQPKG 'IsRestore' "($(QPKGs.IsRestore.Count)) $(QPKGs.IsRestore.ListCSV) "
@@ -3147,6 +3144,13 @@ QPKGs.OperationAssignment.List()
     DebugQPKG 'UnRestart' "($(QPKGs.UnDownload.Count)) $(QPKGs.UnRestart.ListCSV) "
 
     DebugQPKG 'ToStatus' "($(QPKGs.ToStatus.Count)) $(QPKGs.ToStatus.ListCSV) "
+
+    DebugQPKG 'Installable' "($(QPKGs.Installable.Count)) $(QPKGs.Installable.ListCSV) "
+    DebugQPKG 'Installed' "($(QPKGs.Installed.Count)) $(QPKGs.Installed.ListCSV) "
+    DebugQPKG 'NotInstalled' "($(QPKGs.NotInstalled.Count)) $(QPKGs.NotInstalled.ListCSV) "
+    DebugQPKG 'Upgradable' "($(QPKGs.Upgradable.Count)) $(QPKGs.Upgradable.ListCSV) "
+    DebugQPKG 'Missing' "($(QPKGs.Missing.Count)) $(QPKGs.Missing.ListCSV) "
+
     DebugInfoMinorSeparator
 
     DebugFuncExit; return 0
@@ -3188,9 +3192,7 @@ QPKGs.InstallationState.Build()
     for package in $(QPKGs.Names.Array); do
         if QPKG.UserInstallable "$package"; then
             QPKGs.Installable.Add "$package"
-            QPKGs.NotInstallable.Remove "$package"
         else
-            QPKGs.NotInstallable.Add "$package"
             QPKGs.Installable.Remove "$package"
         fi
 
@@ -3282,9 +3284,9 @@ QPKGs.Enabled.Build()
     for package in $(QPKGs.Installed.Array); do
         if QPKG.Enabled "$package"; then
             QPKGs.Enabled.Add "$package"
-            QPKGs.NotEnabled.Remove "$package"
+            QPKGs.Disabled.Remove "$package"
         else
-            QPKGs.NotEnabled.Add "$package"
+            QPKGs.Disabled.Add "$package"
             QPKGs.Enabled.Remove "$package"
         fi
     done
@@ -3340,7 +3342,7 @@ QPKGs.Statuses.Show()
 
         QPKGs.NotInstalled.Exist "$package" && package_notes+=(not-installed)
         QPKGs.Enabled.Exist "$package" && package_notes+=($(ColourTextBrightGreen started))
-        QPKGs.NotEnabled.Exist "$package" && package_notes+=($(ColourTextBrightRed stopped))
+        QPKGs.Disabled.Exist "$package" && package_notes+=($(ColourTextBrightRed stopped))
         QPKGs.Upgradable.Exist "$package" && package_notes+=($(ColourTextBrightOrange upgradable))
         QPKGs.Missing.Exist "$package" && package_notes=($(ColourTextBrightRedBlink missing))
 
@@ -3358,7 +3360,7 @@ QPKGs.Statuses.Show()
 
         QPKGs.NotInstalled.Exist "$package" && package_notes+=(not-installed)
         QPKGs.Enabled.Exist "$package" && package_notes+=($(ColourTextBrightGreen started))
-        QPKGs.NotEnabled.Exist "$package" && package_notes+=($(ColourTextBrightRed stopped))
+        QPKGs.Disabled.Exist "$package" && package_notes+=($(ColourTextBrightRed stopped))
         QPKGs.Upgradable.Exist "$package" && package_notes+=($(ColourTextBrightOrange upgradable))
         QPKGs.Missing.Exist "$package" && package_notes=($(ColourTextBrightRedBlink missing))
 
@@ -3368,7 +3370,6 @@ QPKGs.Statuses.Show()
     done
 
     DisplayLineSpaceIfNoneAlready
-
     return 0
 
     }
@@ -5692,7 +5693,7 @@ Objects.Compile()
 
     # $1 = 'hash' (optional) - if specified, only return the internal checksum
 
-    local -r COMPILED_OBJECTS_HASH=895833704143a52b443acadfb3e63f95
+    local -r COMPILED_OBJECTS_HASH=0e5db412443acd5a42b7db4e3fde65dd
 
     if [[ $1 = hash ]]; then
         echo "$COMPILED_OBJECTS_HASH"
@@ -5758,8 +5759,7 @@ Objects.Compile()
         Objects.Add QPKGs.Installed
         Objects.Add QPKGs.Missing
         Objects.Add QPKGs.Names
-        Objects.Add QPKGs.NotEnabled
-        Objects.Add QPKGs.NotInstallable
+        Objects.Add QPKGs.Disabled
         Objects.Add QPKGs.NotInstalled
         Objects.Add QPKGs.NotSupportsBackup
         Objects.Add QPKGs.Optional

@@ -6577,124 +6577,124 @@ QPKGs.Names.Text()
     }
 QPKGs.Names.Init
 
-QPKGs.NotEnabled.Add()
+QPKGs.Disabled.Add()
     {
     local array=(${1})
     local item=''
     for item in "${array[@]}"; do
-        [[ " ${_object_qpkgs_notenabled_array_[*]} " != *"$item"* ]] && _object_qpkgs_notenabled_array_+=("$item")
+        [[ " ${_object_qpkgs_disabled_array_[*]} " != *"$item"* ]] && _object_qpkgs_disabled_array_+=("$item")
     done
     }
-QPKGs.NotEnabled.Array()
+QPKGs.Disabled.Array()
     {
-    echo -n "${_object_qpkgs_notenabled_array_[@]}"
+    echo -n "${_object_qpkgs_disabled_array_[@]}"
     }
-QPKGs.NotEnabled.Clear()
+QPKGs.Disabled.Clear()
     {
-    [[ $_object_qpkgs_notenabled_flag_ != 'true' ]] && return
-    _object_qpkgs_notenabled_flag_=false
-    [[ $_object_qpkgs_notenabled_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_notenabled_flag_
+    [[ $_object_qpkgs_disabled_flag_ != 'true' ]] && return
+    _object_qpkgs_disabled_flag_=false
+    [[ $_object_qpkgs_disabled_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_disabled_flag_
     }
-QPKGs.NotEnabled.Count()
+QPKGs.Disabled.Count()
     {
-    echo "${#_object_qpkgs_notenabled_array_[@]}"
+    echo "${#_object_qpkgs_disabled_array_[@]}"
     }
-QPKGs.NotEnabled.Disable()
+QPKGs.Disabled.Disable()
     {
-    [[ $_object_qpkgs_notenabled_enable_ != 'true' ]] && return
-    _object_qpkgs_notenabled_enable_=false
-    [[ $_object_qpkgs_notenabled_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_notenabled_enable_
+    [[ $_object_qpkgs_disabled_enable_ != 'true' ]] && return
+    _object_qpkgs_disabled_enable_=false
+    [[ $_object_qpkgs_disabled_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_disabled_enable_
     }
-QPKGs.NotEnabled.DontLogChanges()
+QPKGs.Disabled.DontLogChanges()
     {
-    [[ $_object_qpkgs_notenabled_changes_flag_ != 'true' ]] && return
-    _object_qpkgs_notenabled_changes_flag_=false
+    [[ $_object_qpkgs_disabled_changes_flag_ != 'true' ]] && return
+    _object_qpkgs_disabled_changes_flag_=false
     }
-QPKGs.NotEnabled.Enable()
+QPKGs.Disabled.Enable()
     {
-    [[ $_object_qpkgs_notenabled_enable_ = 'true' ]] && return
-    _object_qpkgs_notenabled_enable_=true
-    [[ $_object_qpkgs_notenabled_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_notenabled_enable_
+    [[ $_object_qpkgs_disabled_enable_ = 'true' ]] && return
+    _object_qpkgs_disabled_enable_=true
+    [[ $_object_qpkgs_disabled_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_disabled_enable_
     }
-QPKGs.NotEnabled.Exist()
+QPKGs.Disabled.Exist()
     {
-    [[ ${_object_qpkgs_notenabled_array_[*]} == *"$1"* ]]
+    [[ ${_object_qpkgs_disabled_array_[*]} == *"$1"* ]]
     }
-QPKGs.NotEnabled.First()
+QPKGs.Disabled.First()
     {
-    echo "${_object_qpkgs_notenabled_array_[0]}"
+    echo "${_object_qpkgs_disabled_array_[0]}"
     }
-QPKGs.NotEnabled.GetItem()
+QPKGs.Disabled.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_qpkgs_notenabled_array_[@]} ]] && index=${#_object_qpkgs_notenabled_array_[@]}
-    echo -n "${_object_qpkgs_notenabled_array_[((index-1))]}"
+    [[ $index -gt ${#_object_qpkgs_disabled_array_[@]} ]] && index=${#_object_qpkgs_disabled_array_[@]}
+    echo -n "${_object_qpkgs_disabled_array_[((index-1))]}"
     }
-QPKGs.NotEnabled.Init()
+QPKGs.Disabled.Init()
     {
-    _object_qpkgs_notenabled_size_=0
-    _object_qpkgs_notenabled_text_=''
-    _object_qpkgs_notenabled_flag_=false
-    _object_qpkgs_notenabled_changes_flag_=true
-    _object_qpkgs_notenabled_enable_=false
-    _object_qpkgs_notenabled_array_=()
-    _object_qpkgs_notenabled_array_index_=1
-    _object_qpkgs_notenabled_path_=''
+    _object_qpkgs_disabled_size_=0
+    _object_qpkgs_disabled_text_=''
+    _object_qpkgs_disabled_flag_=false
+    _object_qpkgs_disabled_changes_flag_=true
+    _object_qpkgs_disabled_enable_=false
+    _object_qpkgs_disabled_array_=()
+    _object_qpkgs_disabled_array_index_=1
+    _object_qpkgs_disabled_path_=''
     }
-QPKGs.NotEnabled.IsAny()
+QPKGs.Disabled.IsAny()
     {
-    [[ ${#_object_qpkgs_notenabled_array_[@]} -gt 0 ]]
+    [[ ${#_object_qpkgs_disabled_array_[@]} -gt 0 ]]
     }
-QPKGs.NotEnabled.IsDisabled()
+QPKGs.Disabled.IsDisabled()
     {
-    [[ $_object_qpkgs_notenabled_enable_ != 'true' ]]
+    [[ $_object_qpkgs_disabled_enable_ != 'true' ]]
     }
-QPKGs.NotEnabled.IsEnabled()
+QPKGs.Disabled.IsEnabled()
     {
-    [[ $_object_qpkgs_notenabled_enable_ = 'true' ]]
+    [[ $_object_qpkgs_disabled_enable_ = 'true' ]]
     }
-QPKGs.NotEnabled.IsNone()
+QPKGs.Disabled.IsNone()
     {
-    [[ ${#_object_qpkgs_notenabled_array_[@]} -eq 0 ]]
+    [[ ${#_object_qpkgs_disabled_array_[@]} -eq 0 ]]
     }
-QPKGs.NotEnabled.IsNot()
+QPKGs.Disabled.IsNot()
     {
-    [[ $_object_qpkgs_notenabled_flag_ != 'true' ]]
+    [[ $_object_qpkgs_disabled_flag_ != 'true' ]]
     }
-QPKGs.NotEnabled.IsSet()
+QPKGs.Disabled.IsSet()
     {
-    [[ $_object_qpkgs_notenabled_flag_ = 'true' ]]
+    [[ $_object_qpkgs_disabled_flag_ = 'true' ]]
     }
-QPKGs.NotEnabled.List()
+QPKGs.Disabled.List()
     {
-    echo -n "${_object_qpkgs_notenabled_array_[*]}"
+    echo -n "${_object_qpkgs_disabled_array_[*]}"
     }
-QPKGs.NotEnabled.ListCSV()
+QPKGs.Disabled.ListCSV()
     {
-    echo -n "${_object_qpkgs_notenabled_array_[*]}" | tr ' ' ','
+    echo -n "${_object_qpkgs_disabled_array_[*]}" | tr ' ' ','
     }
-QPKGs.NotEnabled.LogChanges()
+QPKGs.Disabled.LogChanges()
     {
-    [[ $_object_qpkgs_notenabled_changes_flag_ = 'true' ]] && return
-    _object_qpkgs_notenabled_changes_flag_=true
+    [[ $_object_qpkgs_disabled_changes_flag_ = 'true' ]] && return
+    _object_qpkgs_disabled_changes_flag_=true
     }
-QPKGs.NotEnabled.Path()
+QPKGs.Disabled.Path()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_qpkgs_notenabled_path_=$2
+        _object_qpkgs_disabled_path_=$2
     else
-        echo -n "$_object_qpkgs_notenabled_path_"
+        echo -n "$_object_qpkgs_disabled_path_"
     fi
     }
-QPKGs.NotEnabled.Remove()
+QPKGs.Disabled.Remove()
     {
     local argument_array=(${1})
     local temp_array=()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_object_qpkgs_notenabled_array_[@]}"; do
+    for item in "${_object_qpkgs_disabled_array_[@]}"; do
         matched=false
         for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
@@ -6703,185 +6703,32 @@ QPKGs.NotEnabled.Remove()
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _object_qpkgs_notenabled_array_=("${temp_array[@]}")
-    [[ -z ${_object_qpkgs_notenabled_array_[*]} ]] && _object_qpkgs_notenabled_array_=()
+    _object_qpkgs_disabled_array_=("${temp_array[@]}")
+    [[ -z ${_object_qpkgs_disabled_array_[*]} ]] && _object_qpkgs_disabled_array_=()
     }
-QPKGs.NotEnabled.Set()
+QPKGs.Disabled.Set()
     {
-    [[ $_object_qpkgs_notenabled_flag_ = 'true' ]] && return
-    _object_qpkgs_notenabled_flag_=true
-    [[ $_object_qpkgs_notenabled_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_notenabled_flag_
+    [[ $_object_qpkgs_disabled_flag_ = 'true' ]] && return
+    _object_qpkgs_disabled_flag_=true
+    [[ $_object_qpkgs_disabled_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_disabled_flag_
     }
-QPKGs.NotEnabled.Size()
-    {
-    if [[ -n $1 && $1 = "=" ]]; then
-        _object_qpkgs_notenabled_size_=$2
-    else
-        echo -n $_object_qpkgs_notenabled_size_
-    fi
-    }
-QPKGs.NotEnabled.Text()
+QPKGs.Disabled.Size()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_qpkgs_notenabled_text_=$2
+        _object_qpkgs_disabled_size_=$2
     else
-        echo -n "$_object_qpkgs_notenabled_text_"
+        echo -n $_object_qpkgs_disabled_size_
     fi
     }
-QPKGs.NotEnabled.Init
-
-QPKGs.NotInstallable.Add()
-    {
-    local array=(${1})
-    local item=''
-    for item in "${array[@]}"; do
-        [[ " ${_object_qpkgs_notinstallable_array_[*]} " != *"$item"* ]] && _object_qpkgs_notinstallable_array_+=("$item")
-    done
-    }
-QPKGs.NotInstallable.Array()
-    {
-    echo -n "${_object_qpkgs_notinstallable_array_[@]}"
-    }
-QPKGs.NotInstallable.Clear()
-    {
-    [[ $_object_qpkgs_notinstallable_flag_ != 'true' ]] && return
-    _object_qpkgs_notinstallable_flag_=false
-    [[ $_object_qpkgs_notinstallable_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_notinstallable_flag_
-    }
-QPKGs.NotInstallable.Count()
-    {
-    echo "${#_object_qpkgs_notinstallable_array_[@]}"
-    }
-QPKGs.NotInstallable.Disable()
-    {
-    [[ $_object_qpkgs_notinstallable_enable_ != 'true' ]] && return
-    _object_qpkgs_notinstallable_enable_=false
-    [[ $_object_qpkgs_notinstallable_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_notinstallable_enable_
-    }
-QPKGs.NotInstallable.DontLogChanges()
-    {
-    [[ $_object_qpkgs_notinstallable_changes_flag_ != 'true' ]] && return
-    _object_qpkgs_notinstallable_changes_flag_=false
-    }
-QPKGs.NotInstallable.Enable()
-    {
-    [[ $_object_qpkgs_notinstallable_enable_ = 'true' ]] && return
-    _object_qpkgs_notinstallable_enable_=true
-    [[ $_object_qpkgs_notinstallable_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_notinstallable_enable_
-    }
-QPKGs.NotInstallable.Exist()
-    {
-    [[ ${_object_qpkgs_notinstallable_array_[*]} == *"$1"* ]]
-    }
-QPKGs.NotInstallable.First()
-    {
-    echo "${_object_qpkgs_notinstallable_array_[0]}"
-    }
-QPKGs.NotInstallable.GetItem()
-    {
-    local -i index="$1"
-    [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_qpkgs_notinstallable_array_[@]} ]] && index=${#_object_qpkgs_notinstallable_array_[@]}
-    echo -n "${_object_qpkgs_notinstallable_array_[((index-1))]}"
-    }
-QPKGs.NotInstallable.Init()
-    {
-    _object_qpkgs_notinstallable_size_=0
-    _object_qpkgs_notinstallable_text_=''
-    _object_qpkgs_notinstallable_flag_=false
-    _object_qpkgs_notinstallable_changes_flag_=true
-    _object_qpkgs_notinstallable_enable_=false
-    _object_qpkgs_notinstallable_array_=()
-    _object_qpkgs_notinstallable_array_index_=1
-    _object_qpkgs_notinstallable_path_=''
-    }
-QPKGs.NotInstallable.IsAny()
-    {
-    [[ ${#_object_qpkgs_notinstallable_array_[@]} -gt 0 ]]
-    }
-QPKGs.NotInstallable.IsDisabled()
-    {
-    [[ $_object_qpkgs_notinstallable_enable_ != 'true' ]]
-    }
-QPKGs.NotInstallable.IsEnabled()
-    {
-    [[ $_object_qpkgs_notinstallable_enable_ = 'true' ]]
-    }
-QPKGs.NotInstallable.IsNone()
-    {
-    [[ ${#_object_qpkgs_notinstallable_array_[@]} -eq 0 ]]
-    }
-QPKGs.NotInstallable.IsNot()
-    {
-    [[ $_object_qpkgs_notinstallable_flag_ != 'true' ]]
-    }
-QPKGs.NotInstallable.IsSet()
-    {
-    [[ $_object_qpkgs_notinstallable_flag_ = 'true' ]]
-    }
-QPKGs.NotInstallable.List()
-    {
-    echo -n "${_object_qpkgs_notinstallable_array_[*]}"
-    }
-QPKGs.NotInstallable.ListCSV()
-    {
-    echo -n "${_object_qpkgs_notinstallable_array_[*]}" | tr ' ' ','
-    }
-QPKGs.NotInstallable.LogChanges()
-    {
-    [[ $_object_qpkgs_notinstallable_changes_flag_ = 'true' ]] && return
-    _object_qpkgs_notinstallable_changes_flag_=true
-    }
-QPKGs.NotInstallable.Path()
+QPKGs.Disabled.Text()
     {
     if [[ -n $1 && $1 = "=" ]]; then
-        _object_qpkgs_notinstallable_path_=$2
+        _object_qpkgs_disabled_text_=$2
     else
-        echo -n "$_object_qpkgs_notinstallable_path_"
+        echo -n "$_object_qpkgs_disabled_text_"
     fi
     }
-QPKGs.NotInstallable.Remove()
-    {
-    local argument_array=(${1})
-    local temp_array=()
-    local argument=''
-    local item=''
-    local matched=false
-    for item in "${_object_qpkgs_notinstallable_array_[@]}"; do
-        matched=false
-        for argument in "${argument_array[@]}"; do
-            if [[ $argument = $item ]]; then
-                matched=true; break
-            fi
-        done
-        [[ $matched = false ]] && temp_array+=("$item")
-    done
-    _object_qpkgs_notinstallable_array_=("${temp_array[@]}")
-    [[ -z ${_object_qpkgs_notinstallable_array_[*]} ]] && _object_qpkgs_notinstallable_array_=()
-    }
-QPKGs.NotInstallable.Set()
-    {
-    [[ $_object_qpkgs_notinstallable_flag_ = 'true' ]] && return
-    _object_qpkgs_notinstallable_flag_=true
-    [[ $_object_qpkgs_notinstallable_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_notinstallable_flag_
-    }
-QPKGs.NotInstallable.Size()
-    {
-    if [[ -n $1 && $1 = "=" ]]; then
-        _object_qpkgs_notinstallable_size_=$2
-    else
-        echo -n $_object_qpkgs_notinstallable_size_
-    fi
-    }
-QPKGs.NotInstallable.Text()
-    {
-    if [[ -n $1 && $1 = "=" ]]; then
-        _object_qpkgs_notinstallable_text_=$2
-    else
-        echo -n "$_object_qpkgs_notinstallable_text_"
-    fi
-    }
-QPKGs.NotInstallable.Init
+QPKGs.Disabled.Init
 
 QPKGs.NotInstalled.Add()
     {
