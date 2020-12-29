@@ -4269,17 +4269,15 @@ QPKG.Enable()
         DebugFuncExit; return 0
     fi
 
-    if QPKG.NotEnabled "$1"; then
-        RunAndLog "$QPKG_SERVICE_CMD enable $1" "$log_pathfile"
-        resultcode=$?
+    RunAndLog "$QPKG_SERVICE_CMD enable $1" "$log_pathfile"
+    resultcode=$?
 
-        if [[ $resultcode -eq 0 ]]; then
-            QPKG.ServiceStatus "$1"
-            QPKGs.Enabled.Add "$1"
-        else
-            ShowAsWarn "unable to enable $(FormatAsPackageName "$1") $(FormatAsExitcode $resultcode)"
-            QPKGs.Enabled.Remove "$1"
-        fi
+    if [[ $resultcode -eq 0 ]]; then
+        QPKG.ServiceStatus "$1"
+        QPKGs.Enabled.Add "$1"
+    else
+        ShowAsWarn "unable to enable $(FormatAsPackageName "$1") $(FormatAsExitcode $resultcode)"
+        QPKGs.Enabled.Remove "$1"
     fi
 
     QPKG.FixAppCenterStatus "$1"
@@ -4306,17 +4304,15 @@ QPKG.Disable()
         DebugFuncExit; return 0
     fi
 
-    if QPKG.Enabled "$1"; then
-        RunAndLog "$QPKG_SERVICE_CMD disable $1" "$log_pathfile"
-        resultcode=$?
+    RunAndLog "$QPKG_SERVICE_CMD disable $1" "$log_pathfile"
+    resultcode=$?
 
-        if [[ $resultcode -eq 0 ]]; then
-            QPKG.ServiceStatus "$1"
-            QPKGs.Enabled.Remove "$1"
-        else
-            ShowAsWarn "unable to disable $(FormatAsPackageName "$1") $(FormatAsExitcode $resultcode)"
-            QPKGs.Enabled.Add "$1"
-        fi
+    if [[ $resultcode -eq 0 ]]; then
+        QPKG.ServiceStatus "$1"
+        QPKGs.Enabled.Remove "$1"
+    else
+        ShowAsWarn "unable to disable $(FormatAsPackageName "$1") $(FormatAsExitcode $resultcode)"
+        QPKGs.Enabled.Add "$1"
     fi
 
     QPKG.FixAppCenterStatus "$1"
