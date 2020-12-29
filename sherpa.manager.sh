@@ -1264,84 +1264,31 @@ Tiers.Processor()
     DebugFuncEntry
     local package=''
 
-    # build an initial package download list. Items on this list will be skipped at download-time if they can be found locally.
-    if User.Opts.Dependencies.Check.IsSet; then
-        QPKGs.ToDownload.Add "$(QPKGs.Installed.Array)"
-
-    else
-        if User.Opts.Apps.All.Upgrade.IsSet; then
-            QPKGs.ToUpgrade.Add "$(QPKGs.Upgradable.Array)"
-        fi
-
-        if User.Opts.Apps.All.Reinstall.IsSet; then
-            QPKGs.ToReinstall.Add "$(QPKGs.Installable.Array)"
-        fi
-
-        # check reinstall for all items that should be installed instead
-        for package in $(QPKGs.ToReinstall.Array); do
-            if QPKG.NotInstalled "$package"; then
-                QPKGs.ToReinstall.Remove "$package"
-                QPKGs.ToInstall.Add "$package"
-            fi
-        done
-
-        # check install list for items that should be reinstalled instead
-        for package in $(QPKGs.ToInstall.Array); do
-            if QPKG.Installed "$package"; then
-                QPKGs.ToInstall.Remove "$package"
-                QPKGs.ToReinstall.Add "$package"
-            fi
-        done
-
-        if User.Opts.Apps.All.Install.IsSet; then
-            QPKGs.ToInstall.Add "$(QPKGs.Installable.Array)"
-        fi
-
-        # check upgrade for essential items that should be installed
-        for package in $(QPKGs.ToUpgrade.Array); do
-            QPKGs.ToInstall.Add "$(QPKG.Get.Essentials "$package")"
-        done
-
-        # check upgrade list for all items that should be installed
-        for package in $(QPKGs.ToUpgrade.Array); do
-            if QPKG.NotInstalled "$package"; then
-                QPKGs.ToInstall.Add "$package"
-            fi
-        done
-
-        # check reinstall for essential items that should be installed
-        for package in $(QPKGs.ToReinstall.Array); do
-            QPKGs.ToInstall.Add "$(QPKG.Get.Essentials "$package")"
-        done
-
-        # check install for essential items that should be installed
-        for package in $(QPKGs.ToInstall.Array); do
-            QPKGs.ToInstall.Add "$(QPKG.Get.Essentials "$package")"
-        done
-
-        # check start for essential items that should be installed
-        for package in $(QPKGs.ToStart.Array); do
-            QPKGs.ToInstall.Add "$(QPKG.Get.Essentials "$package")"
-        done
-
-        # check restart for essential items that should be installed
-        for package in $(QPKGs.ToRestart.Array); do
-            QPKGs.ToInstall.Add "$(QPKG.Get.Essentials "$package")"
-        done
-
-        QPKGs.ToInstall.Remove "$(QPKGs.Installed.Array)"
-
-        QPKGs.ToDownload.Add "$(QPKGs.ToUpgrade.Array)"
-        QPKGs.ToDownload.Add "$(QPKGs.ToReinstall.Array)"
-        QPKGs.ToDownload.Add "$(QPKGs.ToInstall.Array)"
-        QPKGs.ToDownload.Add "$(QPKGs.ToStart.Array)"
-        QPKGs.ToDownload.Add "$(QPKGs.ToRestart.Array)"
-
-        # if an item has been selected for installation, download its essentials too
-        for package in $(QPKGs.ToDownload.Array); do
-            QPKGs.ToDownload.Add "$(QPKG.Get.Essentials "$package")"
-        done
+    # build an initial download list
+    if User.Opts.Apps.All.Upgrade.IsSet; then
+        QPKGs.ToUpgrade.Add "$(QPKGs.Upgradable.Array)"
     fi
+
+    if User.Opts.Apps.All.Reinstall.IsSet; then
+        QPKGs.ToReinstall.Add "$(QPKGs.Installable.Array)"
+    fi
+
+    if User.Opts.Apps.All.Install.IsSet; then
+        QPKGs.ToInstall.Add "$(QPKGs.Installable.Array)"
+    fi
+
+    Dynamic.Package.Shuffle
+
+    QPKGs.ToDownload.Add "$(QPKGs.ToUpgrade.Array)"
+    QPKGs.ToDownload.Add "$(QPKGs.ToReinstall.Array)"
+    QPKGs.ToDownload.Add "$(QPKGs.ToInstall.Array)"
+#   QPKGs.ToDownload.Add "$(QPKGs.ToStart.Array)"
+#   QPKGs.ToDownload.Add "$(QPKGs.ToRestart.Array)"
+
+    # download all required essentials too
+    for package in $(QPKGs.ToDownload.Array); do
+        QPKGs.ToDownload.Add "$(QPKG.Get.Essentials "$package")"
+    done
 
     Tier.Processor 'Download' false 'all' 'QPKG' 'ToDownload' 'forward' 'update cache with' 'updating cache with' 'updated cache with' ''
 
@@ -1690,6 +1637,71 @@ Tier.Processor()
 
     ShowAsOperationResult "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PAST" "$RUNTIME"
     DebugFuncExit; return 0
+
+    }
+
+Dynamic.Package.Shuffle()
+    {
+
+    # this runs before operations for 'download' (and possibly 'install', 'reinstall' and 'upgrade': TBD) to ensure package lists are sane
+
+    local package=''
+
+    # check reinstall for all items that should be installed instead
+    for package in $(QPKGs.ToReinstall.Array); do
+        if QPKG.NotInstalled "$package"; then
+            QPKGs.ToReinstall.Remove "$package"
+            QPKGs.ToInstall.Add "$package"
+        fi
+    done
+
+    # check install list for items that should be reinstalled instead
+    for package in $(QPKGs.ToInstall.Array); do
+        if QPKG.Installed "$package"; then
+            QPKGs.ToInstall.Remove "$package"
+            QPKGs.ToReinstall.Add "$package"
+        fi
+    done
+
+    if User.Opts.Apps.All.Install.IsSet; then
+        QPKGs.ToInstall.Add "$(QPKGs.Installable.Array)"
+    fi
+
+    # check upgrade for essential items that should be installed
+    for package in $(QPKGs.ToUpgrade.Array); do
+        QPKGs.ToInstall.Add "$(QPKG.Get.Essentials "$package")"
+    done
+
+    # check upgrade list for all items that should be installed
+    for package in $(QPKGs.ToUpgrade.Array); do
+        if QPKG.NotInstalled "$package"; then
+            QPKGs.ToInstall.Add "$package"
+        fi
+    done
+
+    # check reinstall for essential items that should be installed
+    for package in $(QPKGs.ToReinstall.Array); do
+        QPKGs.ToInstall.Add "$(QPKG.Get.Essentials "$package")"
+    done
+
+    # check install for essential items that should be installed
+    for package in $(QPKGs.ToInstall.Array); do
+        QPKGs.ToInstall.Add "$(QPKG.Get.Essentials "$package")"
+    done
+
+    # check start for essential items that should be installed
+    for package in $(QPKGs.ToStart.Array); do
+        QPKGs.ToInstall.Add "$(QPKG.Get.Essentials "$package")"
+    done
+
+    # check restart for essential items that should be installed
+    for package in $(QPKGs.ToRestart.Array); do
+        QPKGs.ToInstall.Add "$(QPKG.Get.Essentials "$package")"
+    done
+
+    QPKGs.ToInstall.Remove "$(QPKGs.Installed.Array)"
+
+    return 0
 
     }
 
