@@ -3102,57 +3102,17 @@ QPKGs.OperationAssignment.List()
 
     DebugFuncEntry
 
-    DebugInfoMinorSeparator
-    DebugQPKG 'ToDownload' "($(QPKGs.ToDownload.Count)) $(QPKGs.ToDownload.ListCSV) "
-    DebugQPKG 'IsDownload' "($(QPKGs.IsDownload.Count)) $(QPKGs.IsDownload.ListCSV) "
-    DebugQPKG 'UnDownload' "($(QPKGs.UnDownload.Count)) $(QPKGs.UnDownload.ListCSV) "
-
-    DebugQPKG 'ToBackup' "($(QPKGs.ToBackup.Count)) $(QPKGs.ToBackup.ListCSV) "
-    DebugQPKG 'IsBackup' "($(QPKGs.IsBackup.Count)) $(QPKGs.IsBackup.ListCSV) "
-    DebugQPKG 'UnBackup' "($(QPKGs.UnBackup.Count)) $(QPKGs.UnBackup.ListCSV) "
-
-    DebugQPKG 'ToStop' "($(QPKGs.ToStop.Count)) $(QPKGs.ToStop.ListCSV) "
-    DebugQPKG 'IsStop' "($(QPKGs.IsStop.Count)) $(QPKGs.IsStop.ListCSV) "
-    DebugQPKG 'UnStop' "($(QPKGs.UnStop.Count)) $(QPKGs.UnStop.ListCSV) "
-
-    DebugQPKG 'ToUninstall' "($(QPKGs.ToUninstall.Count)) $(QPKGs.ToUninstall.ListCSV) "
-    DebugQPKG 'IsUninstall' "($(QPKGs.IsUninstall.Count)) $(QPKGs.IsUninstall.ListCSV) "
-    DebugQPKG 'UnUninstall' "($(QPKGs.UnUninstall.Count)) $(QPKGs.UnUninstall.ListCSV) "
-
-    DebugQPKG 'ToUpgrade' "($(QPKGs.ToUpgrade.Count)) $(QPKGs.ToUpgrade.ListCSV) "
-    DebugQPKG 'IsUpgrade' "($(QPKGs.IsUpgrade.Count)) $(QPKGs.IsUpgrade.ListCSV) "
-    DebugQPKG 'UnUpgrade' "($(QPKGs.UnUpgrade.Count)) $(QPKGs.UnUpgrade.ListCSV) "
-
-    DebugQPKG 'ToReinstall' "($(QPKGs.ToReinstall.Count)) $(QPKGs.ToReinstall.ListCSV) "
-    DebugQPKG 'IsReinstall' "($(QPKGs.IsReinstall.Count)) $(QPKGs.IsReinstall.ListCSV) "
-    DebugQPKG 'UnReinstall' "($(QPKGs.UnReinstall.Count)) $(QPKGs.UnReinstall.ListCSV) "
-
-    DebugQPKG 'ToInstall' "($(QPKGs.ToInstall.Count)) $(QPKGs.ToInstall.ListCSV) "
-    DebugQPKG 'IsInstall' "($(QPKGs.IsInstall.Count)) $(QPKGs.IsInstall.ListCSV) "
-    DebugQPKG 'UnInstall' "($(QPKGs.UnInstall.Count)) $(QPKGs.UnInstall.ListCSV) "
-
-    DebugQPKG 'ToRestore' "($(QPKGs.ToRestore.Count)) $(QPKGs.ToRestore.ListCSV) "
-    DebugQPKG 'IsRestore' "($(QPKGs.IsRestore.Count)) $(QPKGs.IsRestore.ListCSV) "
-    DebugQPKG 'UnRestore' "($(QPKGs.UnRestore.Count)) $(QPKGs.UnRestore.ListCSV) "
-
-    DebugQPKG 'ToStart' "($(QPKGs.ToStart.Count)) $(QPKGs.ToStart.ListCSV) "
-    DebugQPKG 'IsStart' "($(QPKGs.IsStart.Count)) $(QPKGs.IsStart.ListCSV) "
-    DebugQPKG 'UnStart' "($(QPKGs.UnStart.Count)) $(QPKGs.UnStart.ListCSV) "
-
-    DebugQPKG 'ToRestart' "($(QPKGs.ToDownload.Count)) $(QPKGs.ToRestart.ListCSV) "
-    DebugQPKG 'IsRestart' "($(QPKGs.IsDownload.Count)) $(QPKGs.IsRestart.ListCSV) "
-    DebugQPKG 'UnRestart' "($(QPKGs.UnDownload.Count)) $(QPKGs.UnRestart.ListCSV) "
-
-    DebugQPKG 'ToStatus' "($(QPKGs.ToStatus.Count)) $(QPKGs.ToStatus.ListCSV) "
-
-    DebugQPKG 'Installable' "($(QPKGs.Installable.Count)) $(QPKGs.Installable.ListCSV) "
-    DebugQPKG 'Installed' "($(QPKGs.Installed.Count)) $(QPKGs.Installed.ListCSV) "
-    DebugQPKG 'NotInstalled' "($(QPKGs.NotInstalled.Count)) $(QPKGs.NotInstalled.ListCSV) "
-    DebugQPKG 'Upgradable' "($(QPKGs.Upgradable.Count)) $(QPKGs.Upgradable.ListCSV) "
-    DebugQPKG 'Missing' "($(QPKGs.Missing.Count)) $(QPKGs.Missing.ListCSV) "
+    local array_name=''
+    local -a arrays_list=(ToDownload IsDownload UnDownload ToBackup IsBackup UnBackup ToStop IsStop UnStop ToUninstall IsUninstall UnUninstall ToUpgrade IsUpgrade UnUpgrade ToReinstall IsReinstall UnReinstall ToInstall IsInstall UnInstall ToRestore IsRestore UnRestore ToStart IsStart UnStart ToRestart IsRestart UnRestart ToStatus Installable Installed NotInstalled Upgradable Missing)
 
     DebugInfoMinorSeparator
 
+    for array_name in "${arrays_list[@]}"; do
+        # speedup: only log arrays with more than zero elements
+        [[ $(QPKGs.$array_name.Count) -gt 0 ]] && DebugQPKG "$array_name" "($(QPKGs.$array_name.Count)) $(QPKGs.$array_name.ListCSV) "
+    done
+
+    DebugInfoMinorSeparator
     DebugFuncExit; return 0
 
     }
