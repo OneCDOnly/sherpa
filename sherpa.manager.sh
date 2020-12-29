@@ -252,6 +252,7 @@ Session.Init()
         MANAGER_QPKG_VERSION=()             # QPKG version
         MANAGER_QPKG_URL=()                 # remote QPKG URL
         MANAGER_QPKG_MD5=()                 # remote QPKG MD5
+        MANAGER_QPKG_DESC+=()               # QPKG description
         MANAGER_QPKG_ABBRVS=()              # if set, this package is user-installable, and these abbreviations may be used to specify app
         MANAGER_QPKG_OPS=()                 # these operations are permitted by the user for this package
         MANAGER_QPKG_ESSENTIALS=()          # require these QPKGs to be installed first. Use 'none' if package is optional.
@@ -264,6 +265,7 @@ Session.Init()
         MANAGER_QPKG_VERSION+=(201224)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/$PROJECT_NAME/build/$PROJECT_NAME_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
         MANAGER_QPKG_MD5+=(9cd9aa88703071441f1b4ff57335d089)
+        MANAGER_QPKG_DESC+=("provides the 'sherpa' commmand")
         MANAGER_QPKG_ABBRVS+=($PROJECT_NAME)
         MANAGER_QPKG_OPS+=(upgrade)
         MANAGER_QPKG_ESSENTIALS+=('')
@@ -276,6 +278,7 @@ Session.Init()
         MANAGER_QPKG_VERSION+=(1.03)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/Entware/Entware_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}std.qpkg)
         MANAGER_QPKG_MD5+=(da2d9f8d3442dd665ce04b9b932c9d8e)
+        MANAGER_QPKG_DESC+=("provides the 'opkg' command: the OpenWRT package manager")
         MANAGER_QPKG_ABBRVS+=('ew ent opkg entware')
         MANAGER_QPKG_OPS+=('install reinstall restart start stop uninstall upgrade')
         MANAGER_QPKG_ESSENTIALS+=('')
@@ -288,7 +291,8 @@ Session.Init()
         MANAGER_QPKG_VERSION+=(0.8.1.0)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/Par2/Par2_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_x86.qpkg)
         MANAGER_QPKG_MD5+=(996ffb92d774eb01968003debc171e91)
-        MANAGER_QPKG_ABBRVS+=('par par2')   # applies to all 'Par2' packages
+        MANAGER_QPKG_DESC+=("provides the 'par2' command to fix downloads")     # applies to all 'Par2' packages
+        MANAGER_QPKG_ABBRVS+=('par par2')                                       # applies to all 'Par2' packages
         MANAGER_QPKG_OPS+=('install reinstall restart start stop uninstall upgrade')
         MANAGER_QPKG_ESSENTIALS+=('')
         MANAGER_QPKG_IPKGS_ADD+=('')
@@ -300,6 +304,7 @@ Session.Init()
         MANAGER_QPKG_VERSION+=(0.8.1.0)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/Par2/Par2_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_x86_64.qpkg)
         MANAGER_QPKG_MD5+=(520472cc87d301704f975f6eb9948e38)
+        MANAGER_QPKG_DESC+=('')
         MANAGER_QPKG_ABBRVS+=('')
         MANAGER_QPKG_OPS+=('install reinstall restart start stop uninstall upgrade')
         MANAGER_QPKG_ESSENTIALS+=('')
@@ -312,6 +317,7 @@ Session.Init()
         MANAGER_QPKG_VERSION+=(0.8.1.0)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/Par2/Par2_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_arm-x31.qpkg)
         MANAGER_QPKG_MD5+=(ce8af2e009eb87733c3b855e41a94f8e)
+        MANAGER_QPKG_DESC+=('')
         MANAGER_QPKG_ABBRVS+=('')
         MANAGER_QPKG_OPS+=('install reinstall restart start stop uninstall upgrade')
         MANAGER_QPKG_ESSENTIALS+=('')
@@ -324,6 +330,7 @@ Session.Init()
         MANAGER_QPKG_VERSION+=(0.8.1.0)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/Par2/Par2_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_arm-x41.qpkg)
         MANAGER_QPKG_MD5+=(8516e45e704875cdd2cd2bb315c4e1e6)
+        MANAGER_QPKG_DESC+=('')
         MANAGER_QPKG_ABBRVS+=('')
         MANAGER_QPKG_OPS+=('install reinstall restart start stop uninstall upgrade')
         MANAGER_QPKG_ESSENTIALS+=('')
@@ -336,6 +343,7 @@ Session.Init()
         MANAGER_QPKG_VERSION+=(0.8.1.0)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/Par2/Par2_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_arm_64.qpkg)
         MANAGER_QPKG_MD5+=(4d8e99f97936a163e411aa8765595f7a)
+        MANAGER_QPKG_DESC+=('')
         MANAGER_QPKG_ABBRVS+=('')
         MANAGER_QPKG_OPS+=('install reinstall restart start stop uninstall upgrade')
         MANAGER_QPKG_ESSENTIALS+=('')
@@ -348,6 +356,7 @@ Session.Init()
         MANAGER_QPKG_VERSION+=(0.8.1-1)
         MANAGER_QPKG_URL+=('')
         MANAGER_QPKG_MD5+=('')
+        MANAGER_QPKG_DESC+=('')
         MANAGER_QPKG_ABBRVS+=('')
         MANAGER_QPKG_OPS+=('install reinstall uninstall upgrade')
         MANAGER_QPKG_ESSENTIALS+=('')
@@ -360,6 +369,7 @@ Session.Init()
         MANAGER_QPKG_VERSION+=(201130)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/Deluge-server/build/Deluge-server_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
         MANAGER_QPKG_MD5+=(ec7ee6febaf34d894585afa4dec87798)
+        MANAGER_QPKG_DESC+=("the Deluge bittorrent daemon")
         MANAGER_QPKG_ABBRVS+=('deluge del-server deluge-server')
         MANAGER_QPKG_OPS+=('backup install reinstall restart restore start stop uninstall upgrade')
         MANAGER_QPKG_ESSENTIALS+=(Entware)
@@ -372,6 +382,7 @@ Session.Init()
         MANAGER_QPKG_VERSION+=(201130)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/Deluge-web/build/Deluge-web_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
         MANAGER_QPKG_MD5+=(2e77b7981360356e6457458b11e759ef)
+        MANAGER_QPKG_DESC+=("a web UI to access multiple Deluge bittorrent daemons")
         MANAGER_QPKG_ABBRVS+=('del-web deluge-web')
         MANAGER_QPKG_OPS+=('backup install reinstall restart restore start stop uninstall upgrade')
         MANAGER_QPKG_ESSENTIALS+=(Entware)
@@ -384,6 +395,7 @@ Session.Init()
         MANAGER_QPKG_VERSION+=(201215b)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/nzbToMedia/build/nzbToMedia_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
         MANAGER_QPKG_MD5+=(91300bd3ff3ad82e8e819905aa30484d)
+        MANAGER_QPKG_DESC+=("post-processing for NZBs to many services")
         MANAGER_QPKG_ABBRVS+=('nzb2 nzb2m nzbto nzbtom nzbtomedia')
         MANAGER_QPKG_OPS+=('backup install reinstall restart restore start stop uninstall upgrade')
         MANAGER_QPKG_ESSENTIALS+=(Entware)
@@ -396,6 +408,7 @@ Session.Init()
         MANAGER_QPKG_VERSION+=(201130)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/LazyLibrarian/build/LazyLibrarian_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
         MANAGER_QPKG_MD5+=(4317b410cc8cc380218d960a78686f3d)
+        MANAGER_QPKG_DESC+=("an ebook library manager")
         MANAGER_QPKG_ABBRVS+=('ll lazy lazylibrarian')
         MANAGER_QPKG_OPS+=('backup install reinstall restart restore start stop uninstall upgrade')
         MANAGER_QPKG_ESSENTIALS+=(Entware)
@@ -408,6 +421,7 @@ Session.Init()
         MANAGER_QPKG_VERSION+=(201130)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/Mylar3/build/Mylar3_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
         MANAGER_QPKG_MD5+=(ba959d93fa95d0bd5cd95d37a6e131f0)
+        MANAGER_QPKG_DESC+=("an ecomic library manager")
         MANAGER_QPKG_ABBRVS+=('my omy myl mylar mylar3')
         MANAGER_QPKG_OPS+=('backup install reinstall restart restore start stop uninstall upgrade')
         MANAGER_QPKG_ESSENTIALS+=(Entware)
@@ -420,6 +434,7 @@ Session.Init()
         MANAGER_QPKG_VERSION+=(201130)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/NZBGet/build/NZBGet_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
         MANAGER_QPKG_MD5+=(c7114e6e217110bc7490ad867b5bf536)
+        MANAGER_QPKG_DESC+=("a lite-and-fast NZB download manager")
         MANAGER_QPKG_ABBRVS+=('ng nzb nzbg nget nzbget')
         MANAGER_QPKG_OPS+=('backup install reinstall restart restore start stop uninstall upgrade')
         MANAGER_QPKG_ESSENTIALS+=(Entware)
@@ -432,6 +447,7 @@ Session.Init()
         MANAGER_QPKG_VERSION+=(201130)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/OTransmission/build/OTransmission_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
         MANAGER_QPKG_MD5+=(c39da08668672e53f8d2dfed0f746069)
+        MANAGER_QPKG_DESC+=("a bitorrent download mananger with a web UI")
         MANAGER_QPKG_ABBRVS+=('ot tm tr trans otrans tmission transmission otransmission')
         MANAGER_QPKG_OPS+=('backup install reinstall restart restore start stop uninstall upgrade')
         MANAGER_QPKG_ESSENTIALS+=(Entware)
@@ -444,6 +460,7 @@ Session.Init()
         MANAGER_QPKG_VERSION+=(201130)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/OMedusa/build/OMedusa_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
         MANAGER_QPKG_MD5+=(afa21ae0ef4b43022d09b2ee8f455176)
+        MANAGER_QPKG_DESC+=("another SickBeard fork: manage and search for TV shows")
         MANAGER_QPKG_ABBRVS+=('om med omed medusa omedusa')
         MANAGER_QPKG_OPS+=('backup install reinstall restart restore start stop uninstall upgrade')
         MANAGER_QPKG_ESSENTIALS+=(Entware)
@@ -456,6 +473,7 @@ Session.Init()
         MANAGER_QPKG_VERSION+=(201130)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/OSickGear/build/OSickGear_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
         MANAGER_QPKG_MD5+=(c735207d769d54ca375aa6da1ab1babf)
+        MANAGER_QPKG_DESC+=("another SickBeard fork: manage and search for TV shows")
         MANAGER_QPKG_ABBRVS+=('sg os osg sickg gear ogear osickg sickgear osickgear')
         MANAGER_QPKG_OPS+=('backup install reinstall restart restore start stop uninstall upgrade')
         MANAGER_QPKG_ESSENTIALS+=(Entware)
@@ -468,6 +486,7 @@ Session.Init()
         MANAGER_QPKG_VERSION+=(201130)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/SABnzbd/build/SABnzbd_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
         MANAGER_QPKG_MD5+=(dd1723270972c14cdfe017fc0bd51b88)
+        MANAGER_QPKG_DESC+=("a full-featured NZB download manager with a nice web UI")
         MANAGER_QPKG_ABBRVS+=('sb sb3 sab sab3 sabnzbd3 sabnzbd')
         MANAGER_QPKG_OPS+=('backup install reinstall restart restore start stop uninstall upgrade')
         MANAGER_QPKG_ESSENTIALS+=('Entware Par2')
@@ -480,6 +499,7 @@ Session.Init()
         MANAGER_QPKG_VERSION+=(201130)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/SickChill/build/SickChill_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
         MANAGER_QPKG_MD5+=(47a017ab38094aafde6ce25a69409762)
+        MANAGER_QPKG_DESC+=("another SickBeard fork: manage and search for TV shows and movies")
         MANAGER_QPKG_ABBRVS+=('sc sick sickc chill sickchill')
         MANAGER_QPKG_OPS+=('backup install reinstall restart restore start stop uninstall upgrade')
         MANAGER_QPKG_ESSENTIALS+=(Entware)
@@ -492,7 +512,8 @@ Session.Init()
         MANAGER_QPKG_VERSION+=(201228)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/SortMyQPKGs/main/build/SortMyQPKGs_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
         MANAGER_QPKG_MD5+=(4bf84d42c86952b835ca290e42747e09)
-        MANAGER_QPKG_ABBRVS+=(sort sortmy sortmine sortmypackages sortmyqpkgs)
+        MANAGER_QPKG_DESC+=("ensure other installed QPKGs start in correct sequence during QTS bootup")
+        MANAGER_QPKG_ABBRVS+=('sort sortmy sortmine sortmypackages sortmyqpkgs')
         MANAGER_QPKG_OPS+=('backup install reinstall restart restore start stop uninstall upgrade')
         MANAGER_QPKG_ESSENTIALS+=(none)
         MANAGER_QPKG_IPKGS_ADD+=('')
@@ -505,6 +526,7 @@ Session.Init()
         readonly MANAGER_QPKG_VERSION
         readonly MANAGER_QPKG_URL
         readonly MANAGER_QPKG_MD5
+        readonly MANAGER_QPKG_DESC
         readonly MANAGER_QPKG_ABBRVS
         readonly MANAGER_QPKG_OPS
         readonly MANAGER_QPKG_ESSENTIALS
@@ -2517,6 +2539,7 @@ IsNotSysFileExist()
 
 readonly HELP_DESC_INDENT=3
 readonly HELP_SYNTAX_INDENT=8
+readonly HELP_PACKAGE_NAME_WIDTH=16
 
 DisplayAsProjectSyntaxExample()
     {
@@ -2573,9 +2596,10 @@ DisplayAsSyntaxExample()
 DisplayAsHelpPackageName()
     {
 
-    # $1 = description
+    # $1 = package name
+    # $2 = package description
 
-    printf "%${HELP_SYNTAX_INDENT}s%s\n" '' "$1"
+    printf "%${HELP_DESC_INDENT}s%-${HELP_PACKAGE_NAME_WIDTH}s- %s\n" '' "$1" "$2"
 
     }
 
@@ -2720,7 +2744,7 @@ Help.Packages.Show()
     Display "* $(FormatAsHelpPackages) may be one-or-more of the following:"
 
     for package in $(QPKGs.Installable.Array); do
-        DisplayAsHelpPackageName "$package"
+        DisplayAsHelpPackageName "$package" "$(QPKG.Desc "$package")"
     done
 
     DisplayAsProjectSyntaxExample "abbreviations may also be used to specify $(FormatAsHelpPackages). To list these" 'list abs'
@@ -2840,11 +2864,7 @@ Help.PackageAbbreviations.Show()
 
     for package_index in "${!MANAGER_QPKG_NAME[@]}"; do
         if [[ -n ${MANAGER_QPKG_ABBRVS[$package_index]} ]]; then
-            if QPKGs.Upgradable.Exist "${MANAGER_QPKG_NAME[$package_index]}"; then
-                printf "%32s: %s\n" "$(ColourTextBrightOrange "${MANAGER_QPKG_NAME[$package_index]}")" "$($SED_CMD 's| |, |g' <<< "${MANAGER_QPKG_ABBRVS[$package_index]}")"
-            else
-                printf "%15s: %s\n" "${MANAGER_QPKG_NAME[$package_index]}" "$($SED_CMD 's| |, |g' <<< "${MANAGER_QPKG_ABBRVS[$package_index]}")"
-            fi
+            printf "%${HELP_DESC_INDENT}s%-${HELP_PACKAGE_NAME_WIDTH}s: %s\n" '' "${MANAGER_QPKG_NAME[$package_index]}" "$($SED_CMD 's| |, |g' <<< "${MANAGER_QPKG_ABBRVS[$package_index]}")"
         fi
     done
 
@@ -3685,6 +3705,29 @@ QPKG.URL()
     for index in "${!MANAGER_QPKG_NAME[@]}"; do
         if [[ $1 = "${MANAGER_QPKG_NAME[$index]}" ]] && [[ ${MANAGER_QPKG_ARCH[$index]} = all || ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
             echo "${MANAGER_QPKG_URL[$index]}"
+            return 0
+        fi
+    done
+
+    return 1
+
+    }
+
+QPKG.Desc()
+    {
+
+    # input:
+    #   $1 = QPKG name
+
+    # output:
+    #   stdout = QPKG description
+    #   $? = 0 if successful, 1 if failed
+
+    local -i index=0
+
+    for index in "${!MANAGER_QPKG_NAME[@]}"; do
+        if [[ $1 = "${MANAGER_QPKG_NAME[$index]}" ]]; then
+            echo "${MANAGER_QPKG_DESC[$index]}"
             return 0
         fi
     done
