@@ -2868,7 +2868,7 @@ Help.PackageAbbreviations.Show()
 
     for package_index in "${!MANAGER_QPKG_NAME[@]}"; do
         if [[ -n ${MANAGER_QPKG_ABBRVS[$package_index]} ]]; then
-            printf "%${HELP_DESC_INDENT}s%-${HELP_PACKAGE_NAME_WIDTH}s: %s\n" '' "${MANAGER_QPKG_NAME[$package_index]}" "$($SED_CMD 's| |, |g' <<< "${MANAGER_QPKG_ABBRVS[$package_index]}")"
+            printf "%${HELP_DESC_INDENT}s%-${HELP_PACKAGE_NAME_WIDTH}s- %s\n" '' "${MANAGER_QPKG_NAME[$package_index]}" "$($SED_CMD 's| |, |g' <<< "${MANAGER_QPKG_ABBRVS[$package_index]}")"
         fi
     done
 
@@ -3318,7 +3318,7 @@ QPKGs.Statuses.Show()
 
     SmartCR
     DisplayLineSpaceIfNoneAlready
-    printf '%-24s%-30s\n' "* essential packages:" '* statuses:'
+    printf "* %-${HELP_PACKAGE_NAME_WIDTH}s* %-30s\n" 'essentials:' 'statuses:'
 
     for package in $(QPKGs.Essential.Array); do
         package_notes=()
@@ -3332,11 +3332,11 @@ QPKGs.Statuses.Show()
 
         [[ ${#package_notes[@]} -gt 0 ]] && package_note="${package_notes[*]}"
 
-        printf ' %-24s%-30s\n' "$package" "${package_note// /, }"
+        printf "%${HELP_DESC_INDENT}s%-${HELP_PACKAGE_NAME_WIDTH}s- %s\n" '' "$package" "${package_note// /, }"
     done
 
     Display
-    printf '%-24s%-30s\n' "* optional packages:" '* statuses:'
+    printf "* %-${HELP_PACKAGE_NAME_WIDTH}s* %-30s\n" 'optionals:' 'statuses:'
 
     for package in $(QPKGs.Optional.Array); do
         package_notes=()
@@ -3350,7 +3350,7 @@ QPKGs.Statuses.Show()
 
         [[ ${#package_notes[@]} -gt 0 ]] && package_note="${package_notes[*]}"
 
-        printf ' %-24s%-30s\n' "$package" "${package_note// /, }"
+        printf "%${HELP_DESC_INDENT}s%-${HELP_PACKAGE_NAME_WIDTH}s- %s\n" '' "$package" "${package_note// /, }"
     done
 
     DisplayLineSpaceIfNoneAlready
