@@ -1495,7 +1495,7 @@ Tiers.Processor()
                 Tier.Processor 'Restart' false "$tier" 'QPKG' 'ToRestart' 'forward' 'restart' 'restarting' 'restarted' 'long'
                 ;;
             addon)
-                if QPKGs.ToInstall.IsAny || QPKGs.ToReinstall.IsAny || QPKGs.IsInstall.IsAny || QPKGs.IsReinstall.IsAny; then
+                if QPKGs.ToInstall.IsAny || QPKGs.IsInstall.IsAny || QPKGs.ToReinstall.IsAny || QPKGs.IsReinstall.IsAny || QPKGs.ToUpgrade.IsAny || QPKGs.IsUpgrade.IsAny; then
                     Session.IPKGs.Install.Set
                 fi
 
@@ -2142,7 +2142,7 @@ IPKGs.Install()
         done
     else
         for index in "${!SHERPA_QPKG_NAME[@]}"; do
-            if QPKGs.ToInstall.Exist "${SHERPA_QPKG_NAME[$index]}" || QPKG.Installed "${SHERPA_QPKG_NAME[$index]}" || QPKGs.ToUpgrade.Exist "${SHERPA_QPKG_NAME[$index]}"; then
+            if QPKGs.ToInstall.Exist "${SHERPA_QPKG_NAME[$index]}" || QPKG.Installed "${SHERPA_QPKG_NAME[$index]}" || QPKGs.ToReinstall.Exist "${SHERPA_QPKG_NAME[$index]}" || QPKGs.ToUpgrade.Exist "${SHERPA_QPKG_NAME[$index]}"; then
                 [[ ${SHERPA_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${SHERPA_QPKG_ARCH[$index]} = all ]] && IPKGs.ToInstall.Add "${SHERPA_QPKG_IPKGS_ADD[$index]}"
             fi
         done
