@@ -6271,6 +6271,159 @@ QPKGs.Installed.Text()
     }
 QPKGs.Installed.Init
 
+QPKGs.Missing.Add()
+    {
+    local array=(${1})
+    local item=''
+    for item in "${array[@]}"; do
+        [[ " ${_object_qpkgs_missing_array_[*]} " != *"$item"* ]] && _object_qpkgs_missing_array_+=("$item")
+    done
+    }
+QPKGs.Missing.Array()
+    {
+    echo -n "${_object_qpkgs_missing_array_[@]}"
+    }
+QPKGs.Missing.Clear()
+    {
+    [[ $_object_qpkgs_missing_flag_ != 'true' ]] && return
+    _object_qpkgs_missing_flag_=false
+    [[ $_object_qpkgs_missing_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_missing_flag_
+    }
+QPKGs.Missing.Count()
+    {
+    echo "${#_object_qpkgs_missing_array_[@]}"
+    }
+QPKGs.Missing.Disable()
+    {
+    [[ $_object_qpkgs_missing_enable_ != 'true' ]] && return
+    _object_qpkgs_missing_enable_=false
+    [[ $_object_qpkgs_missing_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_missing_enable_
+    }
+QPKGs.Missing.DontLogChanges()
+    {
+    [[ $_object_qpkgs_missing_changes_flag_ != 'true' ]] && return
+    _object_qpkgs_missing_changes_flag_=false
+    }
+QPKGs.Missing.Enable()
+    {
+    [[ $_object_qpkgs_missing_enable_ = 'true' ]] && return
+    _object_qpkgs_missing_enable_=true
+    [[ $_object_qpkgs_missing_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_missing_enable_
+    }
+QPKGs.Missing.Exist()
+    {
+    [[ ${_object_qpkgs_missing_array_[*]} == *"$1"* ]]
+    }
+QPKGs.Missing.First()
+    {
+    echo "${_object_qpkgs_missing_array_[0]}"
+    }
+QPKGs.Missing.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_qpkgs_missing_array_[@]} ]] && index=${#_object_qpkgs_missing_array_[@]}
+    echo -n "${_object_qpkgs_missing_array_[((index-1))]}"
+    }
+QPKGs.Missing.Init()
+    {
+    _object_qpkgs_missing_size_=0
+    _object_qpkgs_missing_text_=''
+    _object_qpkgs_missing_flag_=false
+    _object_qpkgs_missing_changes_flag_=true
+    _object_qpkgs_missing_enable_=false
+    _object_qpkgs_missing_array_=()
+    _object_qpkgs_missing_array_index_=1
+    _object_qpkgs_missing_path_=''
+    }
+QPKGs.Missing.IsAny()
+    {
+    [[ ${#_object_qpkgs_missing_array_[@]} -gt 0 ]]
+    }
+QPKGs.Missing.IsDisabled()
+    {
+    [[ $_object_qpkgs_missing_enable_ != 'true' ]]
+    }
+QPKGs.Missing.IsEnabled()
+    {
+    [[ $_object_qpkgs_missing_enable_ = 'true' ]]
+    }
+QPKGs.Missing.IsNone()
+    {
+    [[ ${#_object_qpkgs_missing_array_[@]} -eq 0 ]]
+    }
+QPKGs.Missing.IsNot()
+    {
+    [[ $_object_qpkgs_missing_flag_ != 'true' ]]
+    }
+QPKGs.Missing.IsSet()
+    {
+    [[ $_object_qpkgs_missing_flag_ = 'true' ]]
+    }
+QPKGs.Missing.List()
+    {
+    echo -n "${_object_qpkgs_missing_array_[*]}"
+    }
+QPKGs.Missing.ListCSV()
+    {
+    echo -n "${_object_qpkgs_missing_array_[*]}" | tr ' ' ','
+    }
+QPKGs.Missing.LogChanges()
+    {
+    [[ $_object_qpkgs_missing_changes_flag_ = 'true' ]] && return
+    _object_qpkgs_missing_changes_flag_=true
+    }
+QPKGs.Missing.Path()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_missing_path_=$2
+    else
+        echo -n "$_object_qpkgs_missing_path_"
+    fi
+    }
+QPKGs.Missing.Remove()
+    {
+    local argument_array=(${1})
+    local temp_array=()
+    local argument=''
+    local item=''
+    local matched=false
+    for item in "${_object_qpkgs_missing_array_[@]}"; do
+        matched=false
+        for argument in "${argument_array[@]}"; do
+            if [[ $argument = $item ]]; then
+                matched=true; break
+            fi
+        done
+        [[ $matched = false ]] && temp_array+=("$item")
+    done
+    _object_qpkgs_missing_array_=("${temp_array[@]}")
+    [[ -z ${_object_qpkgs_missing_array_[*]} ]] && _object_qpkgs_missing_array_=()
+    }
+QPKGs.Missing.Set()
+    {
+    [[ $_object_qpkgs_missing_flag_ = 'true' ]] && return
+    _object_qpkgs_missing_flag_=true
+    [[ $_object_qpkgs_missing_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_missing_flag_
+    }
+QPKGs.Missing.Size()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_missing_size_=$2
+    else
+        echo -n $_object_qpkgs_missing_size_
+    fi
+    }
+QPKGs.Missing.Text()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_missing_text_=$2
+    else
+        echo -n "$_object_qpkgs_missing_text_"
+    fi
+    }
+QPKGs.Missing.Init
+
 QPKGs.Names.Add()
     {
     local array=(${1})

@@ -555,6 +555,7 @@ Session.Build.StateLists()
     QPKGs.Upgradable.Build
     QPKGs.Enabled.Build
     QPKGs.SupportsBackup.Build
+    QPKGs.Missing.Build
 
     Session.Lists.Built.Set
 
@@ -3206,6 +3207,22 @@ QPKGs.InstallationState.Build()
 
     }
 
+QPKGs.Missing.Build()
+    {
+
+    # Builds a list of QPKGs that have config blocks in [/etc/config/qpkg.conf], but no files on-disk
+
+    DebugFuncEntry
+    local package=''
+
+    for package in $(QPKGs.Installed.Array); do
+        [[ ! -d $(QPKG.InstallPath "$package") ]] && QPKGs.Missing.Add "$package"
+    done
+
+    DebugFuncExit; return 0
+
+    }
+
 QPKGs.Upgradable.Build()
     {
 
@@ -3325,6 +3342,7 @@ QPKGs.Statuses.Show()
         QPKGs.Enabled.Exist "$package" && package_notes+=($(ColourTextBrightGreen started))
         QPKGs.NotEnabled.Exist "$package" && package_notes+=($(ColourTextBrightRed stopped))
         QPKGs.Upgradable.Exist "$package" && package_notes+=($(ColourTextBrightOrange upgradable))
+        QPKGs.Missing.Exist "$package" && package_notes=($(ColourTextBrightRedBlink missing))
 
         [[ ${#package_notes[@]} -gt 0 ]] && package_note="${package_notes[*]}"
 
@@ -3604,6 +3622,28 @@ QPKG.Installed.Version()
     local output=''
 
     if output=$($GETCFG_CMD "$1" Version -f $APP_CENTER_CONFIG_PATHFILE); then
+        echo "$output"
+        return 0
+    else
+        echo 'unknown'
+        return 1
+    fi
+
+    }
+
+QPKG.InstallPath()
+    {
+
+    # input:
+    #   $1 = QPKG name
+
+    # output:
+    #   stdout = QPKG installed path
+    #   $? = 0 if found, 1 if not
+
+    local output=''
+
+    if output=$($GETCFG_CMD "$1" Install_Path -f $APP_CENTER_CONFIG_PATHFILE); then
         echo "$output"
         return 0
     else
@@ -5365,6 +5405,13 @@ ColourTextBrightRed()
 
     }
 
+ColourTextBrightRedBlink()
+    {
+
+    echo -en '\033[1;5;31m'"$(ColourReset "$1")"
+
+    }
+
 ColourTextUnderlinedCyan()
     {
 
@@ -5627,7 +5674,7 @@ Objects.Compile()
 
     # $1 = 'hash' (optional) - if specified, only return the internal checksum
 
-    local -r COMPILED_OBJECTS_HASH=499a18ddf57df75416a315c4d01913d7
+    local -r COMPILED_OBJECTS_HASH=895833704143a52b443acadfb3e63f95
 
     if [[ $1 = hash ]]; then
         echo "$COMPILED_OBJECTS_HASH"
@@ -5691,6 +5738,7 @@ Objects.Compile()
         Objects.Add QPKGs.Essential
         Objects.Add QPKGs.Installable
         Objects.Add QPKGs.Installed
+        Objects.Add QPKGs.Missing
         Objects.Add QPKGs.Names
         Objects.Add QPKGs.NotEnabled
         Objects.Add QPKGs.NotInstallable
