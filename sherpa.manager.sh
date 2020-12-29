@@ -3332,9 +3332,9 @@ QPKGs.Statuses.Show()
 
     SmartCR
     DisplayLineSpaceIfNoneAlready
-    printf '%-20s%-30s\n' "* all packages:" '* statuses:'
+    printf '%-24s%-30s\n' "* essential packages:" '* statuses:'
 
-    for package in $(QPKGs.Installable.Array); do
+    for package in $(QPKGs.Essential.Array); do
         package_notes=()
         package_note=''
 
@@ -3346,7 +3346,25 @@ QPKGs.Statuses.Show()
 
         [[ ${#package_notes[@]} -gt 0 ]] && package_note="${package_notes[*]}"
 
-        printf ' %-20s%-30s\n' "$package" "${package_note// /, }"
+        printf ' %-24s%-30s\n' "$package" "${package_note// /, }"
+    done
+
+    Display
+    printf '%-24s%-30s\n' "* optional packages:" '* statuses:'
+
+    for package in $(QPKGs.Optional.Array); do
+        package_notes=()
+        package_note=''
+
+        QPKGs.NotInstalled.Exist "$package" && package_notes+=(not-installed)
+        QPKGs.Enabled.Exist "$package" && package_notes+=($(ColourTextBrightGreen started))
+        QPKGs.NotEnabled.Exist "$package" && package_notes+=($(ColourTextBrightRed stopped))
+        QPKGs.Upgradable.Exist "$package" && package_notes+=($(ColourTextBrightOrange upgradable))
+        QPKGs.Missing.Exist "$package" && package_notes=($(ColourTextBrightRedBlink missing))
+
+        [[ ${#package_notes[@]} -gt 0 ]] && package_note="${package_notes[*]}"
+
+        printf ' %-24s%-30s\n' "$package" "${package_note// /, }"
     done
 
     DisplayLineSpaceIfNoneAlready
