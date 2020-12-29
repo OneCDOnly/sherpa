@@ -43,7 +43,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=201229
+    readonly MANAGER_SCRIPT_VERSION=201230
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -246,278 +246,278 @@ Session.Init()
     Session.Calc.EntwareType
     Session.Calc.QPKGArch
 
-    # sherpa-supported package details - parallel arrays
-    SHERPA_QPKG_NAME=()                 # internal QPKG name
-        SHERPA_QPKG_ARCH=()             # QPKG supports this architecture
-        SHERPA_QPKG_VERSION=()          # QPKG version
-        SHERPA_QPKG_URL=()              # remote QPKG URL
-        SHERPA_QPKG_MD5=()              # remote QPKG MD5
-        SHERPA_QPKG_ABBRVS=()           # if set, this package is user-installable, and these abbreviations may be used to specify app
-        SHERPA_QPKG_OPS=()              # these operations are permitted by the user for this package
-        SHERPA_QPKG_ESSENTIALS=()       # require these QPKGs to be installed first. Use 'none' if package is optional.
-        SHERPA_QPKG_IPKGS_ADD=()        # require these IPKGs to be installed first
-        SHERPA_QPKG_IPKGS_REMOVE=()     # require these IPKGs to be uninstalled first
-        SHERPA_QPKG_BACKUP_SUPPORTED=() # true/false: this QPKG supports configuration 'backup' and 'restore' operations
+    # supported package details - parallel arrays
+    MANAGER_QPKG_NAME=()                    # internal QPKG name
+        MANAGER_QPKG_ARCH=()                # QPKG supports this architecture
+        MANAGER_QPKG_VERSION=()             # QPKG version
+        MANAGER_QPKG_URL=()                 # remote QPKG URL
+        MANAGER_QPKG_MD5=()                 # remote QPKG MD5
+        MANAGER_QPKG_ABBRVS=()              # if set, this package is user-installable, and these abbreviations may be used to specify app
+        MANAGER_QPKG_OPS=()                 # these operations are permitted by the user for this package
+        MANAGER_QPKG_ESSENTIALS=()          # require these QPKGs to be installed first. Use 'none' if package is optional.
+        MANAGER_QPKG_IPKGS_ADD=()           # require these IPKGs to be installed first
+        MANAGER_QPKG_IPKGS_REMOVE=()        # require these IPKGs to be uninstalled first
+        MANAGER_QPKG_BACKUP_SUPPORTED=()    # true/false: this QPKG supports configuration 'backup' and 'restore' operations
 
-    SHERPA_QPKG_NAME+=(sherpa)
-        SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_VERSION+=(201224)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/sherpa/build/sherpa_${SHERPA_QPKG_VERSION[${#SHERPA_QPKG_VERSION[@]}-1]}.qpkg)
-        SHERPA_QPKG_MD5+=(9cd9aa88703071441f1b4ff57335d089)
-        SHERPA_QPKG_ABBRVS+=(sherpa)
-        SHERPA_QPKG_OPS+=(upgrade)
-        SHERPA_QPKG_ESSENTIALS+=('')
-        SHERPA_QPKG_IPKGS_ADD+=('')
-        SHERPA_QPKG_IPKGS_REMOVE+=('')
-        SHERPA_QPKG_BACKUP_SUPPORTED+=(false)
+    MANAGER_QPKG_NAME+=($PROJECT_NAME)
+        MANAGER_QPKG_ARCH+=(all)
+        MANAGER_QPKG_VERSION+=(201224)
+        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/$PROJECT_NAME/build/$PROJECT_NAME_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
+        MANAGER_QPKG_MD5+=(9cd9aa88703071441f1b4ff57335d089)
+        MANAGER_QPKG_ABBRVS+=($PROJECT_NAME)
+        MANAGER_QPKG_OPS+=(upgrade)
+        MANAGER_QPKG_ESSENTIALS+=('')
+        MANAGER_QPKG_IPKGS_ADD+=('')
+        MANAGER_QPKG_IPKGS_REMOVE+=('')
+        MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
 
-    SHERPA_QPKG_NAME+=(Entware)
-        SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_VERSION+=(1.03)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/Entware/Entware_${SHERPA_QPKG_VERSION[${#SHERPA_QPKG_VERSION[@]}-1]}std.qpkg)
-        SHERPA_QPKG_MD5+=(da2d9f8d3442dd665ce04b9b932c9d8e)
-        SHERPA_QPKG_ABBRVS+=('ew ent opkg entware')
-        SHERPA_QPKG_OPS+=('install reinstall restart start stop uninstall upgrade')
-        SHERPA_QPKG_ESSENTIALS+=('')
-        SHERPA_QPKG_IPKGS_ADD+=('')
-        SHERPA_QPKG_IPKGS_REMOVE+=('')
-        SHERPA_QPKG_BACKUP_SUPPORTED+=(false)
+    MANAGER_QPKG_NAME+=(Entware)
+        MANAGER_QPKG_ARCH+=(all)
+        MANAGER_QPKG_VERSION+=(1.03)
+        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/Entware/Entware_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}std.qpkg)
+        MANAGER_QPKG_MD5+=(da2d9f8d3442dd665ce04b9b932c9d8e)
+        MANAGER_QPKG_ABBRVS+=('ew ent opkg entware')
+        MANAGER_QPKG_OPS+=('install reinstall restart start stop uninstall upgrade')
+        MANAGER_QPKG_ESSENTIALS+=('')
+        MANAGER_QPKG_IPKGS_ADD+=('')
+        MANAGER_QPKG_IPKGS_REMOVE+=('')
+        MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
 
-    SHERPA_QPKG_NAME+=(Par2)
-        SHERPA_QPKG_ARCH+=(x86)
-        SHERPA_QPKG_VERSION+=(0.8.1.0)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/Par2/Par2_${SHERPA_QPKG_VERSION[${#SHERPA_QPKG_VERSION[@]}-1]}_x86.qpkg)
-        SHERPA_QPKG_MD5+=(996ffb92d774eb01968003debc171e91)
-        SHERPA_QPKG_ABBRVS+=('par par2')        # applies to all 'Par2' packages
-        SHERPA_QPKG_OPS+=('install reinstall restart start stop uninstall upgrade')
-        SHERPA_QPKG_ESSENTIALS+=('')
-        SHERPA_QPKG_IPKGS_ADD+=('')
-        SHERPA_QPKG_IPKGS_REMOVE+=(par2cmdline)
-        SHERPA_QPKG_BACKUP_SUPPORTED+=(false)
+    MANAGER_QPKG_NAME+=(Par2)
+        MANAGER_QPKG_ARCH+=(x86)
+        MANAGER_QPKG_VERSION+=(0.8.1.0)
+        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/Par2/Par2_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_x86.qpkg)
+        MANAGER_QPKG_MD5+=(996ffb92d774eb01968003debc171e91)
+        MANAGER_QPKG_ABBRVS+=('par par2')   # applies to all 'Par2' packages
+        MANAGER_QPKG_OPS+=('install reinstall restart start stop uninstall upgrade')
+        MANAGER_QPKG_ESSENTIALS+=('')
+        MANAGER_QPKG_IPKGS_ADD+=('')
+        MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
+        MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
 
-    SHERPA_QPKG_NAME+=(Par2)
-        SHERPA_QPKG_ARCH+=(x64)
-        SHERPA_QPKG_VERSION+=(0.8.1.0)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/Par2/Par2_${SHERPA_QPKG_VERSION[${#SHERPA_QPKG_VERSION[@]}-1]}_x86_64.qpkg)
-        SHERPA_QPKG_MD5+=(520472cc87d301704f975f6eb9948e38)
-        SHERPA_QPKG_ABBRVS+=('')
-        SHERPA_QPKG_OPS+=('install reinstall restart start stop uninstall upgrade')
-        SHERPA_QPKG_ESSENTIALS+=('')
-        SHERPA_QPKG_IPKGS_ADD+=('')
-        SHERPA_QPKG_IPKGS_REMOVE+=(par2cmdline)
-        SHERPA_QPKG_BACKUP_SUPPORTED+=(false)
+    MANAGER_QPKG_NAME+=(Par2)
+        MANAGER_QPKG_ARCH+=(x64)
+        MANAGER_QPKG_VERSION+=(0.8.1.0)
+        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/Par2/Par2_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_x86_64.qpkg)
+        MANAGER_QPKG_MD5+=(520472cc87d301704f975f6eb9948e38)
+        MANAGER_QPKG_ABBRVS+=('')
+        MANAGER_QPKG_OPS+=('install reinstall restart start stop uninstall upgrade')
+        MANAGER_QPKG_ESSENTIALS+=('')
+        MANAGER_QPKG_IPKGS_ADD+=('')
+        MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
+        MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
 
-    SHERPA_QPKG_NAME+=(Par2)
-        SHERPA_QPKG_ARCH+=(x31)
-        SHERPA_QPKG_VERSION+=(0.8.1.0)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/Par2/Par2_${SHERPA_QPKG_VERSION[${#SHERPA_QPKG_VERSION[@]}-1]}_arm-x31.qpkg)
-        SHERPA_QPKG_MD5+=(ce8af2e009eb87733c3b855e41a94f8e)
-        SHERPA_QPKG_ABBRVS+=('')
-        SHERPA_QPKG_OPS+=('install reinstall restart start stop uninstall upgrade')
-        SHERPA_QPKG_ESSENTIALS+=('')
-        SHERPA_QPKG_IPKGS_ADD+=('')
-        SHERPA_QPKG_IPKGS_REMOVE+=(par2cmdline)
-        SHERPA_QPKG_BACKUP_SUPPORTED+=(false)
+    MANAGER_QPKG_NAME+=(Par2)
+        MANAGER_QPKG_ARCH+=(x31)
+        MANAGER_QPKG_VERSION+=(0.8.1.0)
+        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/Par2/Par2_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_arm-x31.qpkg)
+        MANAGER_QPKG_MD5+=(ce8af2e009eb87733c3b855e41a94f8e)
+        MANAGER_QPKG_ABBRVS+=('')
+        MANAGER_QPKG_OPS+=('install reinstall restart start stop uninstall upgrade')
+        MANAGER_QPKG_ESSENTIALS+=('')
+        MANAGER_QPKG_IPKGS_ADD+=('')
+        MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
+        MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
 
-    SHERPA_QPKG_NAME+=(Par2)
-        SHERPA_QPKG_ARCH+=(x41)
-        SHERPA_QPKG_VERSION+=(0.8.1.0)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/Par2/Par2_${SHERPA_QPKG_VERSION[${#SHERPA_QPKG_VERSION[@]}-1]}_arm-x41.qpkg)
-        SHERPA_QPKG_MD5+=(8516e45e704875cdd2cd2bb315c4e1e6)
-        SHERPA_QPKG_ABBRVS+=('')
-        SHERPA_QPKG_OPS+=('install reinstall restart start stop uninstall upgrade')
-        SHERPA_QPKG_ESSENTIALS+=('')
-        SHERPA_QPKG_IPKGS_ADD+=('')
-        SHERPA_QPKG_IPKGS_REMOVE+=(par2cmdline)
-        SHERPA_QPKG_BACKUP_SUPPORTED+=(false)
+    MANAGER_QPKG_NAME+=(Par2)
+        MANAGER_QPKG_ARCH+=(x41)
+        MANAGER_QPKG_VERSION+=(0.8.1.0)
+        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/Par2/Par2_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_arm-x41.qpkg)
+        MANAGER_QPKG_MD5+=(8516e45e704875cdd2cd2bb315c4e1e6)
+        MANAGER_QPKG_ABBRVS+=('')
+        MANAGER_QPKG_OPS+=('install reinstall restart start stop uninstall upgrade')
+        MANAGER_QPKG_ESSENTIALS+=('')
+        MANAGER_QPKG_IPKGS_ADD+=('')
+        MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
+        MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
 
-    SHERPA_QPKG_NAME+=(Par2)
-        SHERPA_QPKG_ARCH+=(a64)
-        SHERPA_QPKG_VERSION+=(0.8.1.0)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/Par2/Par2_${SHERPA_QPKG_VERSION[${#SHERPA_QPKG_VERSION[@]}-1]}_arm_64.qpkg)
-        SHERPA_QPKG_MD5+=(4d8e99f97936a163e411aa8765595f7a)
-        SHERPA_QPKG_ABBRVS+=('')
-        SHERPA_QPKG_OPS+=('install reinstall restart start stop uninstall upgrade')
-        SHERPA_QPKG_ESSENTIALS+=('')
-        SHERPA_QPKG_IPKGS_ADD+=('')
-        SHERPA_QPKG_IPKGS_REMOVE+=(par2cmdline)
-        SHERPA_QPKG_BACKUP_SUPPORTED+=(false)
+    MANAGER_QPKG_NAME+=(Par2)
+        MANAGER_QPKG_ARCH+=(a64)
+        MANAGER_QPKG_VERSION+=(0.8.1.0)
+        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/Par2/Par2_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_arm_64.qpkg)
+        MANAGER_QPKG_MD5+=(4d8e99f97936a163e411aa8765595f7a)
+        MANAGER_QPKG_ABBRVS+=('')
+        MANAGER_QPKG_OPS+=('install reinstall restart start stop uninstall upgrade')
+        MANAGER_QPKG_ESSENTIALS+=('')
+        MANAGER_QPKG_IPKGS_ADD+=('')
+        MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
+        MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
 
-    SHERPA_QPKG_NAME+=(Par2)
-        SHERPA_QPKG_ARCH+=(none)
-        SHERPA_QPKG_VERSION+=(0.8.1-1)
-        SHERPA_QPKG_URL+=('')
-        SHERPA_QPKG_MD5+=('')
-        SHERPA_QPKG_ABBRVS+=('')
-        SHERPA_QPKG_OPS+=('install reinstall uninstall upgrade')
-        SHERPA_QPKG_ESSENTIALS+=('')
-        SHERPA_QPKG_IPKGS_ADD+=(par2cmdline)
-        SHERPA_QPKG_IPKGS_REMOVE+=('')
-        SHERPA_QPKG_BACKUP_SUPPORTED+=(false)
+    MANAGER_QPKG_NAME+=(Par2)
+        MANAGER_QPKG_ARCH+=(none)
+        MANAGER_QPKG_VERSION+=(0.8.1-1)
+        MANAGER_QPKG_URL+=('')
+        MANAGER_QPKG_MD5+=('')
+        MANAGER_QPKG_ABBRVS+=('')
+        MANAGER_QPKG_OPS+=('install reinstall uninstall upgrade')
+        MANAGER_QPKG_ESSENTIALS+=('')
+        MANAGER_QPKG_IPKGS_ADD+=(par2cmdline)
+        MANAGER_QPKG_IPKGS_REMOVE+=('')
+        MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
 
-    SHERPA_QPKG_NAME+=(Deluge-server)
-        SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_VERSION+=(201130)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/Deluge-server/build/Deluge-server_${SHERPA_QPKG_VERSION[${#SHERPA_QPKG_VERSION[@]}-1]}.qpkg)
-        SHERPA_QPKG_MD5+=(ec7ee6febaf34d894585afa4dec87798)
-        SHERPA_QPKG_ABBRVS+=('deluge del-server deluge-server')
-        SHERPA_QPKG_OPS+=('backup install reinstall restart restore start stop uninstall upgrade')
-        SHERPA_QPKG_ESSENTIALS+=(Entware)
-        SHERPA_QPKG_IPKGS_ADD+=('deluge jq')
-        SHERPA_QPKG_IPKGS_REMOVE+=('')
-        SHERPA_QPKG_BACKUP_SUPPORTED+=(true)
+    MANAGER_QPKG_NAME+=(Deluge-server)
+        MANAGER_QPKG_ARCH+=(all)
+        MANAGER_QPKG_VERSION+=(201130)
+        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/Deluge-server/build/Deluge-server_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
+        MANAGER_QPKG_MD5+=(ec7ee6febaf34d894585afa4dec87798)
+        MANAGER_QPKG_ABBRVS+=('deluge del-server deluge-server')
+        MANAGER_QPKG_OPS+=('backup install reinstall restart restore start stop uninstall upgrade')
+        MANAGER_QPKG_ESSENTIALS+=(Entware)
+        MANAGER_QPKG_IPKGS_ADD+=('deluge jq')
+        MANAGER_QPKG_IPKGS_REMOVE+=('')
+        MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
 
-    SHERPA_QPKG_NAME+=(Deluge-web)
-        SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_VERSION+=(201130)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/Deluge-web/build/Deluge-web_${SHERPA_QPKG_VERSION[${#SHERPA_QPKG_VERSION[@]}-1]}.qpkg)
-        SHERPA_QPKG_MD5+=(2e77b7981360356e6457458b11e759ef)
-        SHERPA_QPKG_ABBRVS+=('del-web deluge-web')
-        SHERPA_QPKG_OPS+=('backup install reinstall restart restore start stop uninstall upgrade')
-        SHERPA_QPKG_ESSENTIALS+=(Entware)
-        SHERPA_QPKG_IPKGS_ADD+=('deluge-ui-web jq')
-        SHERPA_QPKG_IPKGS_REMOVE+=('')
-        SHERPA_QPKG_BACKUP_SUPPORTED+=(true)
+    MANAGER_QPKG_NAME+=(Deluge-web)
+        MANAGER_QPKG_ARCH+=(all)
+        MANAGER_QPKG_VERSION+=(201130)
+        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/Deluge-web/build/Deluge-web_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
+        MANAGER_QPKG_MD5+=(2e77b7981360356e6457458b11e759ef)
+        MANAGER_QPKG_ABBRVS+=('del-web deluge-web')
+        MANAGER_QPKG_OPS+=('backup install reinstall restart restore start stop uninstall upgrade')
+        MANAGER_QPKG_ESSENTIALS+=(Entware)
+        MANAGER_QPKG_IPKGS_ADD+=('deluge-ui-web jq')
+        MANAGER_QPKG_IPKGS_REMOVE+=('')
+        MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
 
-    SHERPA_QPKG_NAME+=(nzbToMedia)
-        SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_VERSION+=(201215b)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/nzbToMedia/build/nzbToMedia_${SHERPA_QPKG_VERSION[${#SHERPA_QPKG_VERSION[@]}-1]}.qpkg)
-        SHERPA_QPKG_MD5+=(91300bd3ff3ad82e8e819905aa30484d)
-        SHERPA_QPKG_ABBRVS+=('nzb2 nzb2m nzbto nzbtom nzbtomedia')
-        SHERPA_QPKG_OPS+=('backup install reinstall restart restore start stop uninstall upgrade')
-        SHERPA_QPKG_ESSENTIALS+=(Entware)
-        SHERPA_QPKG_IPKGS_ADD+=('')
-        SHERPA_QPKG_IPKGS_REMOVE+=('')
-        SHERPA_QPKG_BACKUP_SUPPORTED+=(true)
+    MANAGER_QPKG_NAME+=(nzbToMedia)
+        MANAGER_QPKG_ARCH+=(all)
+        MANAGER_QPKG_VERSION+=(201215b)
+        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/nzbToMedia/build/nzbToMedia_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
+        MANAGER_QPKG_MD5+=(91300bd3ff3ad82e8e819905aa30484d)
+        MANAGER_QPKG_ABBRVS+=('nzb2 nzb2m nzbto nzbtom nzbtomedia')
+        MANAGER_QPKG_OPS+=('backup install reinstall restart restore start stop uninstall upgrade')
+        MANAGER_QPKG_ESSENTIALS+=(Entware)
+        MANAGER_QPKG_IPKGS_ADD+=('')
+        MANAGER_QPKG_IPKGS_REMOVE+=('')
+        MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
 
-    SHERPA_QPKG_NAME+=(LazyLibrarian)
-        SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_VERSION+=(201130)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/LazyLibrarian/build/LazyLibrarian_${SHERPA_QPKG_VERSION[${#SHERPA_QPKG_VERSION[@]}-1]}.qpkg)
-        SHERPA_QPKG_MD5+=(4317b410cc8cc380218d960a78686f3d)
-        SHERPA_QPKG_ABBRVS+=('ll lazy lazylibrarian')
-        SHERPA_QPKG_OPS+=('backup install reinstall restart restore start stop uninstall upgrade')
-        SHERPA_QPKG_ESSENTIALS+=(Entware)
-        SHERPA_QPKG_IPKGS_ADD+=('python3-pyopenssl python3-requests')
-        SHERPA_QPKG_IPKGS_REMOVE+=('')
-        SHERPA_QPKG_BACKUP_SUPPORTED+=(true)
+    MANAGER_QPKG_NAME+=(LazyLibrarian)
+        MANAGER_QPKG_ARCH+=(all)
+        MANAGER_QPKG_VERSION+=(201130)
+        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/LazyLibrarian/build/LazyLibrarian_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
+        MANAGER_QPKG_MD5+=(4317b410cc8cc380218d960a78686f3d)
+        MANAGER_QPKG_ABBRVS+=('ll lazy lazylibrarian')
+        MANAGER_QPKG_OPS+=('backup install reinstall restart restore start stop uninstall upgrade')
+        MANAGER_QPKG_ESSENTIALS+=(Entware)
+        MANAGER_QPKG_IPKGS_ADD+=('python3-pyopenssl python3-requests')
+        MANAGER_QPKG_IPKGS_REMOVE+=('')
+        MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
 
-    SHERPA_QPKG_NAME+=(Mylar3)
-        SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_VERSION+=(201130)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/Mylar3/build/Mylar3_${SHERPA_QPKG_VERSION[${#SHERPA_QPKG_VERSION[@]}-1]}.qpkg)
-        SHERPA_QPKG_MD5+=(ba959d93fa95d0bd5cd95d37a6e131f0)
-        SHERPA_QPKG_ABBRVS+=('my omy myl mylar mylar3')
-        SHERPA_QPKG_OPS+=('backup install reinstall restart restore start stop uninstall upgrade')
-        SHERPA_QPKG_ESSENTIALS+=(Entware)
-        SHERPA_QPKG_IPKGS_ADD+=('python3-mako python3-pillow python3-pyopenssl python3-pytz python3-requests python3-six python3-urllib3')
-        SHERPA_QPKG_IPKGS_REMOVE+=('')
-        SHERPA_QPKG_BACKUP_SUPPORTED+=(true)
+    MANAGER_QPKG_NAME+=(Mylar3)
+        MANAGER_QPKG_ARCH+=(all)
+        MANAGER_QPKG_VERSION+=(201130)
+        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/Mylar3/build/Mylar3_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
+        MANAGER_QPKG_MD5+=(ba959d93fa95d0bd5cd95d37a6e131f0)
+        MANAGER_QPKG_ABBRVS+=('my omy myl mylar mylar3')
+        MANAGER_QPKG_OPS+=('backup install reinstall restart restore start stop uninstall upgrade')
+        MANAGER_QPKG_ESSENTIALS+=(Entware)
+        MANAGER_QPKG_IPKGS_ADD+=('python3-mako python3-pillow python3-pyopenssl python3-pytz python3-requests python3-six python3-urllib3')
+        MANAGER_QPKG_IPKGS_REMOVE+=('')
+        MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
 
-    SHERPA_QPKG_NAME+=(NZBGet)
-        SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_VERSION+=(201130)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/NZBGet/build/NZBGet_${SHERPA_QPKG_VERSION[${#SHERPA_QPKG_VERSION[@]}-1]}.qpkg)
-        SHERPA_QPKG_MD5+=(c7114e6e217110bc7490ad867b5bf536)
-        SHERPA_QPKG_ABBRVS+=('ng nzb nzbg nget nzbget')
-        SHERPA_QPKG_OPS+=('backup install reinstall restart restore start stop uninstall upgrade')
-        SHERPA_QPKG_ESSENTIALS+=(Entware)
-        SHERPA_QPKG_IPKGS_ADD+=(nzbget)
-        SHERPA_QPKG_IPKGS_REMOVE+=('')
-        SHERPA_QPKG_BACKUP_SUPPORTED+=(true)
+    MANAGER_QPKG_NAME+=(NZBGet)
+        MANAGER_QPKG_ARCH+=(all)
+        MANAGER_QPKG_VERSION+=(201130)
+        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/NZBGet/build/NZBGet_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
+        MANAGER_QPKG_MD5+=(c7114e6e217110bc7490ad867b5bf536)
+        MANAGER_QPKG_ABBRVS+=('ng nzb nzbg nget nzbget')
+        MANAGER_QPKG_OPS+=('backup install reinstall restart restore start stop uninstall upgrade')
+        MANAGER_QPKG_ESSENTIALS+=(Entware)
+        MANAGER_QPKG_IPKGS_ADD+=(nzbget)
+        MANAGER_QPKG_IPKGS_REMOVE+=('')
+        MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
 
-    SHERPA_QPKG_NAME+=(OTransmission)
-        SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_VERSION+=(201130)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/OTransmission/build/OTransmission_${SHERPA_QPKG_VERSION[${#SHERPA_QPKG_VERSION[@]}-1]}.qpkg)
-        SHERPA_QPKG_MD5+=(c39da08668672e53f8d2dfed0f746069)
-        SHERPA_QPKG_ABBRVS+=('ot tm tr trans otrans tmission transmission otransmission')
-        SHERPA_QPKG_OPS+=('backup install reinstall restart restore start stop uninstall upgrade')
-        SHERPA_QPKG_ESSENTIALS+=(Entware)
-        SHERPA_QPKG_IPKGS_ADD+=('transmission-web jq')
-        SHERPA_QPKG_IPKGS_REMOVE+=('')
-        SHERPA_QPKG_BACKUP_SUPPORTED+=(true)
+    MANAGER_QPKG_NAME+=(OTransmission)
+        MANAGER_QPKG_ARCH+=(all)
+        MANAGER_QPKG_VERSION+=(201130)
+        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/OTransmission/build/OTransmission_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
+        MANAGER_QPKG_MD5+=(c39da08668672e53f8d2dfed0f746069)
+        MANAGER_QPKG_ABBRVS+=('ot tm tr trans otrans tmission transmission otransmission')
+        MANAGER_QPKG_OPS+=('backup install reinstall restart restore start stop uninstall upgrade')
+        MANAGER_QPKG_ESSENTIALS+=(Entware)
+        MANAGER_QPKG_IPKGS_ADD+=('transmission-web jq')
+        MANAGER_QPKG_IPKGS_REMOVE+=('')
+        MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
 
-    SHERPA_QPKG_NAME+=(OMedusa)
-        SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_VERSION+=(201130)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/OMedusa/build/OMedusa_${SHERPA_QPKG_VERSION[${#SHERPA_QPKG_VERSION[@]}-1]}.qpkg)
-        SHERPA_QPKG_MD5+=(afa21ae0ef4b43022d09b2ee8f455176)
-        SHERPA_QPKG_ABBRVS+=('om med omed medusa omedusa')
-        SHERPA_QPKG_OPS+=('backup install reinstall restart restore start stop uninstall upgrade')
-        SHERPA_QPKG_ESSENTIALS+=(Entware)
-        SHERPA_QPKG_IPKGS_ADD+=('mediainfo python3-pyopenssl')
-        SHERPA_QPKG_IPKGS_REMOVE+=('')
-        SHERPA_QPKG_BACKUP_SUPPORTED+=(true)
+    MANAGER_QPKG_NAME+=(OMedusa)
+        MANAGER_QPKG_ARCH+=(all)
+        MANAGER_QPKG_VERSION+=(201130)
+        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/OMedusa/build/OMedusa_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
+        MANAGER_QPKG_MD5+=(afa21ae0ef4b43022d09b2ee8f455176)
+        MANAGER_QPKG_ABBRVS+=('om med omed medusa omedusa')
+        MANAGER_QPKG_OPS+=('backup install reinstall restart restore start stop uninstall upgrade')
+        MANAGER_QPKG_ESSENTIALS+=(Entware)
+        MANAGER_QPKG_IPKGS_ADD+=('mediainfo python3-pyopenssl')
+        MANAGER_QPKG_IPKGS_REMOVE+=('')
+        MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
 
-    SHERPA_QPKG_NAME+=(OSickGear)
-        SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_VERSION+=(201130)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/OSickGear/build/OSickGear_${SHERPA_QPKG_VERSION[${#SHERPA_QPKG_VERSION[@]}-1]}.qpkg)
-        SHERPA_QPKG_MD5+=(c735207d769d54ca375aa6da1ab1babf)
-        SHERPA_QPKG_ABBRVS+=('sg os osg sickg gear ogear osickg sickgear osickgear')
-        SHERPA_QPKG_OPS+=('backup install reinstall restart restore start stop uninstall upgrade')
-        SHERPA_QPKG_ESSENTIALS+=(Entware)
-        SHERPA_QPKG_IPKGS_ADD+=('')
-        SHERPA_QPKG_IPKGS_REMOVE+=('')
-        SHERPA_QPKG_BACKUP_SUPPORTED+=(true)
+    MANAGER_QPKG_NAME+=(OSickGear)
+        MANAGER_QPKG_ARCH+=(all)
+        MANAGER_QPKG_VERSION+=(201130)
+        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/OSickGear/build/OSickGear_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
+        MANAGER_QPKG_MD5+=(c735207d769d54ca375aa6da1ab1babf)
+        MANAGER_QPKG_ABBRVS+=('sg os osg sickg gear ogear osickg sickgear osickgear')
+        MANAGER_QPKG_OPS+=('backup install reinstall restart restore start stop uninstall upgrade')
+        MANAGER_QPKG_ESSENTIALS+=(Entware)
+        MANAGER_QPKG_IPKGS_ADD+=('')
+        MANAGER_QPKG_IPKGS_REMOVE+=('')
+        MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
 
-    SHERPA_QPKG_NAME+=(SABnzbd)
-        SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_VERSION+=(201130)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/SABnzbd/build/SABnzbd_${SHERPA_QPKG_VERSION[${#SHERPA_QPKG_VERSION[@]}-1]}.qpkg)
-        SHERPA_QPKG_MD5+=(dd1723270972c14cdfe017fc0bd51b88)
-        SHERPA_QPKG_ABBRVS+=('sb sb3 sab sab3 sabnzbd3 sabnzbd')
-        SHERPA_QPKG_OPS+=('backup install reinstall restart restore start stop uninstall upgrade')
-        SHERPA_QPKG_ESSENTIALS+=('Entware Par2')
-        SHERPA_QPKG_IPKGS_ADD+=('python3-asn1crypto python3-chardet python3-cryptography python3-pyopenssl unrar p7zip coreutils-nice ionice ffprobe')
-        SHERPA_QPKG_IPKGS_REMOVE+=('')
-        SHERPA_QPKG_BACKUP_SUPPORTED+=(true)
+    MANAGER_QPKG_NAME+=(SABnzbd)
+        MANAGER_QPKG_ARCH+=(all)
+        MANAGER_QPKG_VERSION+=(201130)
+        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/SABnzbd/build/SABnzbd_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
+        MANAGER_QPKG_MD5+=(dd1723270972c14cdfe017fc0bd51b88)
+        MANAGER_QPKG_ABBRVS+=('sb sb3 sab sab3 sabnzbd3 sabnzbd')
+        MANAGER_QPKG_OPS+=('backup install reinstall restart restore start stop uninstall upgrade')
+        MANAGER_QPKG_ESSENTIALS+=('Entware Par2')
+        MANAGER_QPKG_IPKGS_ADD+=('python3-asn1crypto python3-chardet python3-cryptography python3-pyopenssl unrar p7zip coreutils-nice ionice ffprobe')
+        MANAGER_QPKG_IPKGS_REMOVE+=('')
+        MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
 
-    SHERPA_QPKG_NAME+=(SickChill)
-        SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_VERSION+=(201130)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/SickChill/build/SickChill_${SHERPA_QPKG_VERSION[${#SHERPA_QPKG_VERSION[@]}-1]}.qpkg)
-        SHERPA_QPKG_MD5+=(47a017ab38094aafde6ce25a69409762)
-        SHERPA_QPKG_ABBRVS+=('sc sick sickc chill sickchill')
-        SHERPA_QPKG_OPS+=('backup install reinstall restart restore start stop uninstall upgrade')
-        SHERPA_QPKG_ESSENTIALS+=(Entware)
-        SHERPA_QPKG_IPKGS_ADD+=('')
-        SHERPA_QPKG_IPKGS_REMOVE+=('')
-        SHERPA_QPKG_BACKUP_SUPPORTED+=(true)
+    MANAGER_QPKG_NAME+=(SickChill)
+        MANAGER_QPKG_ARCH+=(all)
+        MANAGER_QPKG_VERSION+=(201130)
+        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/SickChill/build/SickChill_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
+        MANAGER_QPKG_MD5+=(47a017ab38094aafde6ce25a69409762)
+        MANAGER_QPKG_ABBRVS+=('sc sick sickc chill sickchill')
+        MANAGER_QPKG_OPS+=('backup install reinstall restart restore start stop uninstall upgrade')
+        MANAGER_QPKG_ESSENTIALS+=(Entware)
+        MANAGER_QPKG_IPKGS_ADD+=('')
+        MANAGER_QPKG_IPKGS_REMOVE+=('')
+        MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
 
-    SHERPA_QPKG_NAME+=(SortMyQPKGs)
-        SHERPA_QPKG_ARCH+=(all)
-        SHERPA_QPKG_VERSION+=(201228)
-        SHERPA_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/SortMyQPKGs/main/build/SortMyQPKGs_${SHERPA_QPKG_VERSION[${#SHERPA_QPKG_VERSION[@]}-1]}.qpkg)
-        SHERPA_QPKG_MD5+=(4bf84d42c86952b835ca290e42747e09)
-        SHERPA_QPKG_ABBRVS+=(sort sortmy sortmine sortmypackages sortmyqpkgs)
-        SHERPA_QPKG_OPS+=('backup install reinstall restart restore start stop uninstall upgrade')
-        SHERPA_QPKG_ESSENTIALS+=(none)
-        SHERPA_QPKG_IPKGS_ADD+=('')
-        SHERPA_QPKG_IPKGS_REMOVE+=('')
-        SHERPA_QPKG_BACKUP_SUPPORTED+=(false)
+    MANAGER_QPKG_NAME+=(SortMyQPKGs)
+        MANAGER_QPKG_ARCH+=(all)
+        MANAGER_QPKG_VERSION+=(201228)
+        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/SortMyQPKGs/main/build/SortMyQPKGs_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
+        MANAGER_QPKG_MD5+=(4bf84d42c86952b835ca290e42747e09)
+        MANAGER_QPKG_ABBRVS+=(sort sortmy sortmine sortmypackages sortmyqpkgs)
+        MANAGER_QPKG_OPS+=('backup install reinstall restart restore start stop uninstall upgrade')
+        MANAGER_QPKG_ESSENTIALS+=(none)
+        MANAGER_QPKG_IPKGS_ADD+=('')
+        MANAGER_QPKG_IPKGS_REMOVE+=('')
+        MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
 
     # package arrays are now full, so lock them
-    readonly SHERPA_QPKG_NAME
-        readonly SHERPA_QPKG_ARCH
-        readonly SHERPA_QPKG_VERSION
-        readonly SHERPA_QPKG_URL
-        readonly SHERPA_QPKG_MD5
-        readonly SHERPA_QPKG_ABBRVS
-        readonly SHERPA_QPKG_OPS
-        readonly SHERPA_QPKG_ESSENTIALS
-        readonly SHERPA_QPKG_IPKGS_ADD
-        readonly SHERPA_QPKG_IPKGS_REMOVE
-        readonly SHERPA_QPKG_BACKUP_SUPPORTED
+    readonly MANAGER_QPKG_NAME
+        readonly MANAGER_QPKG_ARCH
+        readonly MANAGER_QPKG_VERSION
+        readonly MANAGER_QPKG_URL
+        readonly MANAGER_QPKG_MD5
+        readonly MANAGER_QPKG_ABBRVS
+        readonly MANAGER_QPKG_OPS
+        readonly MANAGER_QPKG_ESSENTIALS
+        readonly MANAGER_QPKG_IPKGS_ADD
+        readonly MANAGER_QPKG_IPKGS_REMOVE
+        readonly MANAGER_QPKG_BACKUP_SUPPORTED
 
-    QPKGs.Names.Add "${SHERPA_QPKG_NAME[*]}"
+    QPKGs.Names.Add "${MANAGER_QPKG_NAME[*]}"
 
-    readonly SHERPA_ESSENTIAL_IPKGS_ADD='findutils grep less sed'
-    readonly SHERPA_COMMON_IPKGS_ADD='ca-certificates gcc git git-http nano python3-dev python3-pip python3-setuptools'
-    readonly SHERPA_COMMON_PIPS_ADD='apscheduler beautifulsoup4 cfscrape cheetah3 cheroot!=8.4.4 cherrypy configobj feedparser portend pygithub python-magic random_user_agent sabyenc3 simplejson slugify'
-    readonly SHERPA_COMMON_QPKG_CONFLICTS='Optware Optware-NG TarMT Python QPython2'
+    readonly MANAGER_ESSENTIAL_IPKGS_ADD='findutils grep less sed'
+    readonly MANAGER_COMMON_IPKGS_ADD='ca-certificates gcc git git-http nano python3-dev python3-pip python3-setuptools'
+    readonly MANAGER_COMMON_PIPS_ADD='apscheduler beautifulsoup4 cfscrape cheetah3 cheroot!=8.4.4 cherrypy configobj feedparser portend pygithub python-magic random_user_agent sabyenc3 simplejson slugify'
+    readonly MANAGER_COMMON_QPKG_CONFLICTS='Optware Optware-NG TarMT Python QPython2'
 
     # speedup: don't build package lists if only showing basic help
     if [[ -z $USER_ARGS_RAW ]]; then
@@ -567,7 +567,7 @@ Session.Arguments.Parse()
     {
 
     # basic argument syntax:
-    #   sherpa [operation] [scope] [options]
+    #   script [operation] [scope] [options]
 
     DebugFuncEntry
 
@@ -1367,14 +1367,14 @@ Tiers.Processor()
     QPKGs.ToStop.Remove "$(QPKGs.IsStop.Array)"
     QPKGs.ToStop.Remove "$(QPKGs.NotInstalled.Array)"
     QPKGs.ToStop.Remove "$(QPKGs.ToUninstall.Array)"
-    QPKGs.ToStop.Remove sherpa
+    QPKGs.ToStop.Remove "$PROJECT_NAME"
 
     Tier.Processor 'Stop' false 'optional' 'QPKG' 'ToStop' 'backward' 'stop' 'stopping' 'stopped' ''
 
     Tier.Processor 'Stop' false 'essential' 'QPKG' 'ToStop' 'backward' 'stop' 'stopping' 'stopped' ''
 
     QPKGs.ToUninstall.Remove "$(QPKGs.NotInstalled.Array)"
-    QPKGs.ToUninstall.Remove sherpa
+    QPKGs.ToUninstall.Remove "$PROJECT_NAME"
 
     Tier.Processor 'Uninstall' false 'optional' 'QPKG' 'ToUninstall' 'forward' 'uninstall' 'uninstalling' 'uninstalled' ''
 
@@ -1449,7 +1449,7 @@ Tiers.Processor()
                 # no-need to start packages that are unavailable
                 QPKGs.ToStart.Remove "$(QPKGs.NotInstalled.Array)"
                 QPKGs.ToStart.Remove "$(QPKGs.ToInstall.Array)"
-                QPKGs.ToStart.Remove sherpa
+                QPKGs.ToStart.Remove "$PROJECT_NAME"
 
                 Tier.Processor 'Start' false "$tier" 'QPKG' 'ToStart' 'forward' 'start' 'starting' 'started' 'long'
 
@@ -1933,7 +1933,7 @@ PIPs.Install()
 
     Session.AddPathToEntware
 
-    [[ -n ${SHERPA_COMMON_PIPS_ADD// /} ]] && exec_cmd="$pip3_cmd install $SHERPA_COMMON_PIPS_ADD --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
+    [[ -n ${MANAGER_COMMON_PIPS_ADD// /} ]] && exec_cmd="$pip3_cmd install $MANAGER_COMMON_PIPS_ADD --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
 
     ShowAsProcLong "downloading & installing PIPs"
 
@@ -2135,16 +2135,16 @@ IPKGs.Install()
     DebugFuncEntry
     local -i index=0
 
-    IPKGs.ToInstall.Add "$SHERPA_COMMON_IPKGS_ADD"
+    IPKGs.ToInstall.Add "$MANAGER_COMMON_IPKGS_ADD"
 
     if User.Opts.Apps.All.Install.IsSet; then
-        for index in "${!SHERPA_QPKG_NAME[@]}"; do
-            [[ ${SHERPA_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${SHERPA_QPKG_ARCH[$index]} = all ]] && IPKGs.ToInstall.Add "${SHERPA_QPKG_IPKGS_ADD[$index]}"
+        for index in "${!MANAGER_QPKG_NAME[@]}"; do
+            [[ ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${MANAGER_QPKG_ARCH[$index]} = all ]] && IPKGs.ToInstall.Add "${MANAGER_QPKG_IPKGS_ADD[$index]}"
         done
     else
-        for index in "${!SHERPA_QPKG_NAME[@]}"; do
-            if QPKGs.ToInstall.Exist "${SHERPA_QPKG_NAME[$index]}" || QPKG.Installed "${SHERPA_QPKG_NAME[$index]}" || QPKGs.ToReinstall.Exist "${SHERPA_QPKG_NAME[$index]}" || QPKGs.ToUpgrade.Exist "${SHERPA_QPKG_NAME[$index]}"; then
-                [[ ${SHERPA_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${SHERPA_QPKG_ARCH[$index]} = all ]] && IPKGs.ToInstall.Add "${SHERPA_QPKG_IPKGS_ADD[$index]}"
+        for index in "${!MANAGER_QPKG_NAME[@]}"; do
+            if QPKGs.ToInstall.Exist "${MANAGER_QPKG_NAME[$index]}" || QPKG.Installed "${MANAGER_QPKG_NAME[$index]}" || QPKGs.ToReinstall.Exist "${MANAGER_QPKG_NAME[$index]}" || QPKGs.ToUpgrade.Exist "${MANAGER_QPKG_NAME[$index]}"; then
+                [[ ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${MANAGER_QPKG_ARCH[$index]} = all ]] && IPKGs.ToInstall.Add "${MANAGER_QPKG_IPKGS_ADD[$index]}"
             fi
         done
     fi
@@ -2169,9 +2169,9 @@ IPKGs.Uninstall()
     local -i index=0
 
     if User.Opts.Apps.All.Uninstall.IsNot; then
-        for index in "${!SHERPA_QPKG_NAME[@]}"; do
-            if QPKGs.ToInstall.Exist "${SHERPA_QPKG_NAME[$index]}" || QPKG.Installed "${SHERPA_QPKG_NAME[$index]}" || QPKGs.ToUpgrade.Exist "${SHERPA_QPKG_NAME[$index]}" || QPKGs.ToUninstall.Exist "${SHERPA_QPKG_NAME[$index]}"; then
-                IPKGs.ToUninstall.Add "${SHERPA_QPKG_IPKGS_REMOVE[$index]}"
+        for index in "${!MANAGER_QPKG_NAME[@]}"; do
+            if QPKGs.ToInstall.Exist "${MANAGER_QPKG_NAME[$index]}" || QPKG.Installed "${MANAGER_QPKG_NAME[$index]}" || QPKGs.ToUpgrade.Exist "${MANAGER_QPKG_NAME[$index]}" || QPKGs.ToUninstall.Exist "${MANAGER_QPKG_NAME[$index]}"; then
+                IPKGs.ToUninstall.Add "${MANAGER_QPKG_IPKGS_REMOVE[$index]}"
             fi
         done
 
@@ -2625,7 +2625,7 @@ Help.Basic.Example.Show()
 
     DisplayAsProjectSyntaxIndentedExample "or, for more $(FormatAsHelpOptions), type" 'list options'
 
-    Display "\nThere's also the wiki: $(FormatAsURL 'https://github.com/OneCDOnly/sherpa/wiki')"
+    Display "\nThere's also the wiki: $(FormatAsURL "https://github.com/OneCDOnly/$PROJECT_NAME/wiki")"
 
     return 0
 
@@ -2787,7 +2787,7 @@ Help.Issue.Show()
     {
 
     DisplayLineSpaceIfNoneAlready
-    Display "* Please consider creating a new issue for this on GitHub:\n\thttps://github.com/OneCDOnly/sherpa/issues"
+    Display "* Please consider creating a new issue for this on GitHub:\n\thttps://github.com/OneCDOnly/$PROJECT_NAME/issues"
 
     Display "\n* Alternatively, post on the QNAP NAS Community Forum:\n\thttps://forum.qnap.com/viewtopic.php?f=320&t=132373"
 
@@ -2831,19 +2831,19 @@ Help.Tips.Show()
 Help.PackageAbbreviations.Show()
     {
 
-    [[ ${#SHERPA_QPKG_NAME[@]} -eq 0 || ${#SHERPA_QPKG_ABBRVS[@]} -eq 0 ]] && return 1
+    [[ ${#MANAGER_QPKG_NAME[@]} -eq 0 || ${#MANAGER_QPKG_ABBRVS[@]} -eq 0 ]] && return 1
 
     local package_index=0
     Help.Basic.Show
     DisplayLineSpaceIfNoneAlready
     Display "* $(FormatAsScriptTitle) recognises these abbreviations as $(FormatAsHelpPackages):"
 
-    for package_index in "${!SHERPA_QPKG_NAME[@]}"; do
-        if [[ -n ${SHERPA_QPKG_ABBRVS[$package_index]} ]]; then
-            if QPKGs.Upgradable.Exist "${SHERPA_QPKG_NAME[$package_index]}"; then
-                printf "%32s: %s\n" "$(ColourTextBrightOrange "${SHERPA_QPKG_NAME[$package_index]}")" "$($SED_CMD 's| |, |g' <<< "${SHERPA_QPKG_ABBRVS[$package_index]}")"
+    for package_index in "${!MANAGER_QPKG_NAME[@]}"; do
+        if [[ -n ${MANAGER_QPKG_ABBRVS[$package_index]} ]]; then
+            if QPKGs.Upgradable.Exist "${MANAGER_QPKG_NAME[$package_index]}"; then
+                printf "%32s: %s\n" "$(ColourTextBrightOrange "${MANAGER_QPKG_NAME[$package_index]}")" "$($SED_CMD 's| |, |g' <<< "${MANAGER_QPKG_ABBRVS[$package_index]}")"
             else
-                printf "%15s: %s\n" "${SHERPA_QPKG_NAME[$package_index]}" "$($SED_CMD 's| |, |g' <<< "${SHERPA_QPKG_ABBRVS[$package_index]}")"
+                printf "%15s: %s\n" "${MANAGER_QPKG_NAME[$package_index]}" "$($SED_CMD 's| |, |g' <<< "${MANAGER_QPKG_ABBRVS[$package_index]}")"
             fi
         fi
     done
@@ -2883,7 +2883,7 @@ Log.Whole.View()
 Log.Last.View()
     {
 
-    # view only the last sherpa session
+    # view only the last runtime session
 
     ExtractPreviousSessionFromTail
 
@@ -3086,7 +3086,7 @@ QPKGs.NewVersions.Show()
 QPKGs.Conflicts.Check()
     {
 
-    for package in "${SHERPA_COMMON_QPKG_CONFLICTS[@]}"; do
+    for package in "${MANAGER_COMMON_QPKG_CONFLICTS[@]}"; do
         if QPKG.Enabled "$package"; then
             ShowAsEror "'$package' is installed and enabled. One-or-more $(FormatAsScriptTitle) applications are incompatible with this package"
             return 1
@@ -3129,11 +3129,11 @@ QPKGs.EssentialAndOptional.Build()
     DebugFuncEntry
     local -i index=0
 
-    for index in "${!SHERPA_QPKG_NAME[@]}"; do
-        if [[ -n ${SHERPA_QPKG_ESSENTIALS[$index]} || ${SHERPA_QPKG_ESSENTIALS[$index]} = 'none' ]]; then
-            QPKGs.Optional.Add "${SHERPA_QPKG_NAME[$index]}"    # if the 'SHERPA_QPKG_ESSENTIALS' field has some value and this value is not 'none', then this package is 'optional'
+    for index in "${!MANAGER_QPKG_NAME[@]}"; do
+        if [[ -n ${MANAGER_QPKG_ESSENTIALS[$index]} || ${MANAGER_QPKG_ESSENTIALS[$index]} = 'none' ]]; then
+            QPKGs.Optional.Add "${MANAGER_QPKG_NAME[$index]}"    # if the 'MANAGER_QPKG_ESSENTIALS' field has some value and this value is not 'none', then this package is 'optional'
         else
-            QPKGs.Essential.Add "${SHERPA_QPKG_NAME[$index]}"   # if the 'SHERPA_QPKG_ESSENTIALS' field is empty, then this package is 'essential'
+            QPKGs.Essential.Add "${MANAGER_QPKG_NAME[$index]}"   # if the 'MANAGER_QPKG_ESSENTIALS' field is empty, then this package is 'essential'
         fi
     done
 
@@ -3651,7 +3651,7 @@ QPKG.ServiceStatus()
                 ;;
         esac
     else
-        DebugAsWarn "unable to get status of $(FormatAsPackageName "$1") service. It may be a non-sherpa package, or a package earlier than 200816c that doesn't support service results."
+        DebugAsWarn "unable to get status of $(FormatAsPackageName "$1") service. It may be a non-$PROJECT_NAME package, or a package earlier than 200816c that doesn't support service results."
     fi
 
     }
@@ -3682,9 +3682,9 @@ QPKG.URL()
 
     local -i index=0
 
-    for index in "${!SHERPA_QPKG_NAME[@]}"; do
-        if [[ $1 = "${SHERPA_QPKG_NAME[$index]}" ]] && [[ ${SHERPA_QPKG_ARCH[$index]} = all || ${SHERPA_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
-            echo "${SHERPA_QPKG_URL[$index]}"
+    for index in "${!MANAGER_QPKG_NAME[@]}"; do
+        if [[ $1 = "${MANAGER_QPKG_NAME[$index]}" ]] && [[ ${MANAGER_QPKG_ARCH[$index]} = all || ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
+            echo "${MANAGER_QPKG_URL[$index]}"
             return 0
         fi
     done
@@ -3705,9 +3705,9 @@ QPKG.Remote.Version()
 
     local -i index=0
 
-    for index in "${!SHERPA_QPKG_NAME[@]}"; do
-        if [[ $1 = "${SHERPA_QPKG_NAME[$index]}" ]] && [[ ${SHERPA_QPKG_ARCH[$index]} = all || ${SHERPA_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
-            echo "${SHERPA_QPKG_VERSION[$index]}"
+    for index in "${!MANAGER_QPKG_NAME[@]}"; do
+        if [[ $1 = "${MANAGER_QPKG_NAME[$index]}" ]] && [[ ${MANAGER_QPKG_ARCH[$index]} = all || ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
+            echo "${MANAGER_QPKG_VERSION[$index]}"
             return 0
         fi
     done
@@ -3728,9 +3728,9 @@ QPKG.MD5()
 
     local -i index=0
 
-    for index in "${!SHERPA_QPKG_NAME[@]}"; do
-        if [[ $1 = "${SHERPA_QPKG_NAME[$index]}" ]] && [[ ${SHERPA_QPKG_ARCH[$index]} = all || ${SHERPA_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
-            echo "${SHERPA_QPKG_MD5[$index]}"
+    for index in "${!MANAGER_QPKG_NAME[@]}"; do
+        if [[ $1 = "${MANAGER_QPKG_NAME[$index]}" ]] && [[ ${MANAGER_QPKG_ARCH[$index]} = all || ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
+            echo "${MANAGER_QPKG_MD5[$index]}"
             return 0
         fi
     done
@@ -3750,10 +3750,10 @@ QPKG.Get.Essentials()
 
     local -i index=0
 
-    for index in "${!SHERPA_QPKG_NAME[@]}"; do
-        if [[ ${SHERPA_QPKG_NAME[$index]} = "$1" ]]; then
-            if [[ ${SHERPA_QPKG_ESSENTIALS[$index]} != none ]]; then
-                echo "${SHERPA_QPKG_ESSENTIALS[$index]}"
+    for index in "${!MANAGER_QPKG_NAME[@]}"; do
+        if [[ ${MANAGER_QPKG_NAME[$index]} = "$1" ]]; then
+            if [[ ${MANAGER_QPKG_ESSENTIALS[$index]} != none ]]; then
+                echo "${MANAGER_QPKG_ESSENTIALS[$index]}"
                 return 0
             fi
         fi
@@ -3776,9 +3776,9 @@ QPKG.Get.Optionals()
     local -a acc=()
 
     if QPKGs.Essential.Exist "$1"; then
-        for index in "${!SHERPA_QPKG_NAME[@]}"; do
-            if [[ ${SHERPA_QPKG_ESSENTIALS[$index]} == *"$1"* ]]; then
-                [[ ${acc[*]} != "${SHERPA_QPKG_NAME[$index]}" ]] && acc+=(${SHERPA_QPKG_NAME[$index]})
+        for index in "${!MANAGER_QPKG_NAME[@]}"; do
+            if [[ ${MANAGER_QPKG_ESSENTIALS[$index]} == *"$1"* ]]; then
+                [[ ${acc[*]} != "${MANAGER_QPKG_NAME[$index]}" ]] && acc+=(${MANAGER_QPKG_NAME[$index]})
             fi
         done
     fi
@@ -3923,7 +3923,7 @@ QPKG.Install()
 
                 # add extra package(s) needed immediately
                 ShowAsProc 'installing essential IPKGs'
-                RunAndLog "$OPKG_CMD install$(User.Opts.IgnoreFreeSpace.IsSet && User.Opts.IgnoreFreeSpace.Text) --force-overwrite $SHERPA_ESSENTIAL_IPKGS_ADD --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
+                RunAndLog "$OPKG_CMD install$(User.Opts.IgnoreFreeSpace.IsSet && User.Opts.IgnoreFreeSpace.Text) --force-overwrite $MANAGER_ESSENTIAL_IPKGS_ADD --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
                 ShowAsDone 'installed essential IPKGs'
 
                 Session.PIPs.Install.Set
@@ -4392,9 +4392,9 @@ QPKG.SupportsBackup()
 
     local package_index=0
 
-    for package_index in "${!SHERPA_QPKG_NAME[@]}"; do
-        if [[ ${SHERPA_QPKG_NAME[$package_index]} = "$1" ]]; then
-            if ${SHERPA_QPKG_BACKUP_SUPPORTED[$package_index]}; then
+    for package_index in "${!MANAGER_QPKG_NAME[@]}"; do
+        if [[ ${MANAGER_QPKG_NAME[$package_index]} = "$1" ]]; then
+            if ${MANAGER_QPKG_BACKUP_SUPPORTED[$package_index]}; then
                 return 0
             else
                 return 1
@@ -4455,13 +4455,13 @@ QPKG.UserInstallable()
     # output:
     #   $? = 0 (true) or 1 (false)
 
-    [[ ${#SHERPA_QPKG_NAME[@]} -eq 0 || ${#SHERPA_QPKG_ABBRVS[@]} -eq 0 ]] && return 1
+    [[ ${#MANAGER_QPKG_NAME[@]} -eq 0 || ${#MANAGER_QPKG_ABBRVS[@]} -eq 0 ]] && return 1
 
     local returncode=1
     local package_index=0
 
-    for package_index in "${!SHERPA_QPKG_NAME[@]}"; do
-        if [[ ${SHERPA_QPKG_NAME[$package_index]} = "$1" && -n ${SHERPA_QPKG_ABBRVS[$package_index]} ]]; then
+    for package_index in "${!MANAGER_QPKG_NAME[@]}"; do
+        if [[ ${MANAGER_QPKG_NAME[$package_index]} = "$1" && -n ${MANAGER_QPKG_ABBRVS[$package_index]} ]]; then
             returncode=0
             break
         fi
@@ -4538,12 +4538,12 @@ QPKG.MatchAbbrv()
     local -i index=0
     local returncode=1
 
-    for package_index in "${!SHERPA_QPKG_NAME[@]}"; do
-        abbs=(${SHERPA_QPKG_ABBRVS[$package_index]})
+    for package_index in "${!MANAGER_QPKG_NAME[@]}"; do
+        abbs=(${MANAGER_QPKG_ABBRVS[$package_index]})
 
         for index in "${!abbs[@]}"; do
             if [[ ${abbs[$index]} = "$1" ]]; then
-                Display "${SHERPA_QPKG_NAME[$package_index]}"
+                Display "${MANAGER_QPKG_NAME[$package_index]}"
                 returncode=0
                 break 2
             fi
