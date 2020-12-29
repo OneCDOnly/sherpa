@@ -25,9 +25,9 @@ Package management via **sherpa** provides extra features like easy application 
 [![NZBGet](images/NZBGet.gif)](https://nzbget.net/)
 [![nzbToMedia](images/nzbToMedia.gif)](https://github.com/clinton-hall/nzbToMedia)
 [![RunLast](images/RunLast.gif)](https://github.com/OneCDOnly/RunLast)
-[![SABnzbd](images/SABnzbd.gif)](https://github.com/sabnzbd/sabnzbd)
+[![SABnzbd](images/SABnzbd.gif)](https://sabnzbd.org/wiki/)
 [![SickChill](images/SickChill.gif)](https://github.com/SickChill/SickChill)
-[![SickGear](images/OSickGear.gif)](https://github.com/SickGear/SickGear)
+[![SickGear](images/OSickGear.gif)](https://github.com/SickGear/SickGear/wiki)
 [![SortMyQPKGs](images/SortMyQPKGs.gif)](https://github.com/OneCDOnly/SortMyQPKGs)
 [![Transmission](images/OTransmission.gif)](https://transmissionbt.com/)
 
@@ -39,7 +39,7 @@ Any model QNAP NAS with at-least 1GB RAM and running QTS 4.0 or-later.
 ---
 ## Usage
 
-1) Install the **sherpa** QPKG, available [here](https://github.com/OneCDOnly/sherpa/tree/master/QPKGs/sherpa/build).
+1) Install the **sherpa** QPKG, available [here](https://github.com/OneCDOnly/sherpa/tree/main/QPKGs/sherpa/build).
 
 2) [SSH](https://www.qnap.com/en/how-to/knowledge-base/article/how-to-access-qnap-nas-by-ssh/) into your NAS as the 'admin' user,
 
