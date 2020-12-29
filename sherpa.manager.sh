@@ -3109,7 +3109,7 @@ QPKGs.OperationAssignment.List()
 
     for array_name in "${arrays_list[@]}"; do
         # speedup: only log arrays with more than zero elements
-        [[ $(QPKGs.$array_name.Count) -gt 0 ]] && DebugQPKG "$array_name" "($(QPKGs.$array_name.Count)) $(QPKGs.$array_name.ListCSV) "
+        QPKGs.$array_name.IsAny && DebugQPKG "$array_name" "($(QPKGs.$array_name.Count)) $(QPKGs.$array_name.ListCSV) "
     done
 
     DebugInfoMinorSeparator
