@@ -15,16 +15,21 @@ Package management via **sherpa** provides extra features like easy application 
 
 ---
 ## Applications available
-[![SABnzbd](images/SABnzbd.gif)](https://github.com/sabnzbd/sabnzbd)
-[![nzbToMedia](images/nzbToMedia.gif)](https://github.com/clinton-hall/nzbToMedia)
-[![LaztLibrarian](images/LazyLibrarian.gif)](https://lazylibrarian.gitlab.io/)
+[![Entware](images/Entware.gif)](https://github.com/Entware/Entware/wiki)
+[![Par2](images/Par2.gif)](https://github.com/Parchive/par2cmdline)
+[![Deluge](images/Deluge-web.gif)](https://dev.deluge-torrent.org/)
+[![HideThatBanner](images/HideThatBanner.gif)](https://github.com/OneCDOnly/HideThatBanner)
+[![LazyLibrarian](images/LazyLibrarian.gif)](https://lazylibrarian.gitlab.io/)
 [![Medusa](images/OMedusa.gif)](https://github.com/pymedusa/Medusa)
-[![SickChill](images/SickChill.gif)](https://github.com/SickChill/SickChill)
-[![SickGear](images/OSickGear.gif)](https://github.com/SickGear/SickGear)
 [![Mylar3](images/Mylar3.gif)](https://github.com/mylar3/mylar3)
 [![NZBGet](images/NZBGet.gif)](https://nzbget.net/)
+[![nzbToMedia](images/nzbToMedia.gif)](https://github.com/clinton-hall/nzbToMedia)
+[![RunLast](images/RunLast.gif)](https://github.com/OneCDOnly/RunLast)
+[![SABnzbd](images/SABnzbd.gif)](https://github.com/sabnzbd/sabnzbd)
+[![SickChill](images/SickChill.gif)](https://github.com/SickChill/SickChill)
+[![SickGear](images/OSickGear.gif)](https://github.com/SickGear/SickGear)
+[![SortMyQPKGs](images/SortMyQPKGs.gif)](https://github.com/OneCDOnly/SortMyQPKGs)
 [![Transmission](images/OTransmission.gif)](https://transmissionbt.com/)
-[![Deluge](images/Deluge-web.gif)](https://dev.deluge-torrent.org/)
 
 ---
 ## Requirements
