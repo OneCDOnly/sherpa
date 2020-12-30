@@ -1543,12 +1543,7 @@ Tiers.Processor()
                 # check all items
                 if User.Opts.Dependencies.Check.IsSet; then
                     for package in $(QPKGs.Optional.Array); do
-
-
-
-
-
-                        if QPKG.Enabled "$package" && ! QPKGs.Upgradable.Exist "$package"; then
+                        if ! QPKGs.Standalone.Exist "$package" && ! QPKGs.Upgradable.Exist "$package"; then
                             QPKGs.ToRestart.Add "$package"
                         fi
                     done
