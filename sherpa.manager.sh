@@ -1371,8 +1371,6 @@ Tiers.Processor()
     QPKGs.ToDownload.Add "$(QPKGs.ToUpgrade.Array)"
     QPKGs.ToDownload.Add "$(QPKGs.ToReinstall.Array)"
     QPKGs.ToDownload.Add "$(QPKGs.ToInstall.Array)"
-#   QPKGs.ToDownload.Add "$(QPKGs.ToStart.Array)"
-#   QPKGs.ToDownload.Add "$(QPKGs.ToRestart.Array)"
 
     # download all required essentials too
     for package in $(QPKGs.ToDownload.Array); do
@@ -1448,7 +1446,6 @@ Tiers.Processor()
     for package in $(QPKGs.ToStop.Array); do
         if QPKG.NotEnabled "$package"; then
             QPKGs.ToStop.Remove "$package"
-            QPKGs.UnStop.Add "$package"
         fi
     done
 
@@ -1534,7 +1531,6 @@ Tiers.Processor()
                 for package in $(QPKGs.ToStart.Array); do
                     if QPKG.Enabled "$package"; then
                         QPKGs.ToStart.Remove "$package"
-                        QPKGs.UnStart.Add "$package"
                     fi
                 done
 
@@ -1577,7 +1573,6 @@ Tiers.Processor()
                     for package in $(QPKGs.ToRestart.Array); do
                         if QPKG.NotEnabled "$package"; then
                             QPKGs.ToRestart.Remove "$package"
-                            QPKGs.UnRestart.Add "$package"
                         fi
                     done
 
@@ -1585,7 +1580,6 @@ Tiers.Processor()
                     for package in $(QPKGs.ToRestart.Array); do
                         if QPKGs.NotInstalled.Exist "$package"; then
                             QPKGs.ToRestart.Remove "$package"
-                            QPKGs.UnRestart.Add "$package"
                         fi
                     done
                 fi
