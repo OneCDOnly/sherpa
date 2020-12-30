@@ -4137,6 +4137,7 @@ QPKG.Upgrade()
         fi
         QPKG.GetServiceStatus "$1"
         QPKGs.IsUpgrade.Add "$1"
+        QPKGs.Upgradable.Remove "$1"
         resultcode=0    # reset this to zero (0 or 10 from a QPKG upgrade is OK)
     else
         ShowAsEror "upgrade failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $resultcode)"
