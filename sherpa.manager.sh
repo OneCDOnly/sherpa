@@ -31,6 +31,10 @@
 #   If on-screen line-spacing is required, this should only be done by the next function that outputs to display.
 #   Display functions should never finish by putting an empty line on-screen for spacing.
 
+set -o nounset
+set -o pipefail
+#set -o errexit
+
 readonly USER_ARGS_RAW=$*
 
 Session.Init()
@@ -43,7 +47,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=201230
+    readonly MANAGER_SCRIPT_VERSION=201231
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -192,7 +196,7 @@ Session.Init()
 
     DebugInfoMajorSeparator
     DebugScript 'started' "$($DATE_CMD -d @"$SCRIPT_STARTSECONDS" | tr -s ' ')"
-    DebugScript 'version' "package: $PACKAGE_VERSION, manager: $MANAGER_SCRIPT_VERSION, loader: $LOADER_SCRIPT_VERSION"
+    DebugScript 'version' "package: $PACKAGE_VERSION, manager: $MANAGER_SCRIPT_VERSION, loader: ${LOADER_SCRIPT_VERSION:-unknown}"
     DebugScript 'PID' "$$"
     DebugInfoMinorSeparator
     DebugInfo 'Markers: (**) detected, (II) information, (WW) warning, (EE) error, (LL) log file,'
@@ -241,6 +245,7 @@ Session.Init()
     readonly LOG_TAIL_LINES=3000    # a full download and install of everything generates a session around 1600 lines, but include a bunch of opkg updates and it can get much longer.
     code_pointer=0
     pip3_cmd=/opt/bin/pip3
+    previous_msg=' '
     local package=''
     [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg=' --insecure' || curl_insecure_arg=''
     Session.Calc.EntwareType
@@ -1396,7 +1401,6 @@ Tiers.Processor()
     QPKGs.ToStop.Remove "$PROJECT_NAME"
 
     Tier.Processor 'Stop' false 'optional' 'QPKG' 'ToStop' 'backward' 'stop' 'stopping' 'stopped' ''
-
     Tier.Processor 'Stop' false 'essential' 'QPKG' 'ToStop' 'backward' 'stop' 'stopping' 'stopped' ''
 
     QPKGs.ToUninstall.Remove "$(QPKGs.NotInstalled.Array)"
@@ -2087,7 +2091,7 @@ CalcAllIPKGDepsToInstall()
                     IPKGs.ToDownload.Add "$element"
                 fi
             elif ! $OPKG_CMD status 'libjpeg-turbo' | $GREP_CMD -q "Status:.*installed"; then
-                IPKGs.ToDownload.Add libjpeg-turbo
+                IPKGs.ToDownload.Add 'libjpeg-turbo'
             fi
         fi
     done
@@ -2107,7 +2111,6 @@ CalcAllIPKGDepsToInstall()
         DebugAsDone 'no IPKGs are required'
     fi
 
-#     ShowAsDone 'satisfied IPKG dependencies OK'
     IPKGs.Archive.Close
     DebugFuncExit; return 0
 
@@ -2201,7 +2204,7 @@ IPKGs.Uninstall()
             fi
         done
 
-        # when package ARCH is 'none', prevent 'par2cmdline' being uninstalled, then installed again later this same session. Noticed this was happening on ARMv5 models.
+        # when package arch is 'none', prevent 'par2cmdline' being uninstalled, then installed again later this same session. Noticed this was happening on ARMv5 models.
         [[ $NAS_QPKG_ARCH = none ]] && IPKGs.ToUninstall.Remove par2cmdline
 
         IPKGs.Uninstall.Batch
@@ -2631,7 +2634,7 @@ SmartCR()
 Display()
     {
 
-    echo -e "$1"
+    echo -e "${1:-}"
     [[ $(type -t Session.LineSpace.Init) = 'function' ]] && Session.LineSpace.Clear
 
     }
@@ -3562,14 +3565,14 @@ Session.Error.Set()
 Session.Error.IsSet()
     {
 
-    [[ $_script_error_flag = true ]]
+    [[ ${_script_error_flag:-} = true ]]
 
     }
 
 Session.Error.IsNot()
     {
 
-    [[ $_script_error_flag != true ]]
+    [[ ${_script_error_flag:-} != true ]]
 
     }
 
@@ -3853,7 +3856,7 @@ QPKG.Get.Optionals()
     if QPKGs.Essential.Exist "$1"; then
         for index in "${!MANAGER_QPKG_NAME[@]}"; do
             if [[ ${MANAGER_QPKG_ESSENTIALS[$index]} == *"$1"* ]]; then
-                [[ ${acc[*]} != "${MANAGER_QPKG_NAME[$index]}" ]] && acc+=(${MANAGER_QPKG_NAME[$index]})
+                [[ ${acc[*]:-} != "${MANAGER_QPKG_NAME[$index]}" ]] && acc+=(${MANAGER_QPKG_NAME[$index]})
             fi
         done
     fi
@@ -4729,7 +4732,7 @@ RunAndLog()
         FormatAsResultAndStdout "$resultcode" "<null>" >> "$2"
     fi
 
-    if [[ $resultcode -eq 0 && $3 != log:failure-only ]] || [[ $resultcode -ne 0 ]]; then
+    if [[ $resultcode -eq 0 && ${3:-} != log:failure-only ]] || [[ $resultcode -ne 0 ]]; then
         AddFileToDebug "$2"
     fi
 
@@ -5091,9 +5094,9 @@ DebugDetected()
 DebugInfo()
     {
 
-    if [[ $2 = ' ' ]]; then           # if $2 is only a whitespace then print $1 with trailing colon and 'none' as second field
+    if [[ ${2:-} = ' ' ]]; then           # if $2 is only a whitespace then print $1 with trailing colon and 'none' as second field
         DebugThis "(II) $1: none"
-    elif [[ -n $2 ]]; then
+    elif [[ -n ${2:-} ]]; then
         DebugThis "(II) $1: $2"
     else
         DebugThis "(II) $1"
@@ -5169,7 +5172,7 @@ AddFileToDebug()
 ShowAsProcLong()
     {
 
-    ShowAsProc "$1 (this may take a while)" "$2"
+    ShowAsProc "$1 (this may take a while)" "${2:-}"
 
     }
 
@@ -5178,7 +5181,7 @@ ShowAsProc()
 
     local suffix=''
 
-    [[ -n $2 ]] && suffix=" $2"
+    [[ -n ${2:-} ]] && suffix=" $2"
 
     SmartCR
     WriteToDisplay.Wait "$(ColourTextBrightOrange proc)" "$1 ...$suffix"
@@ -5413,9 +5416,11 @@ WriteToDisplay.New()
     local this_length=0
     local blanking_length=0
 
+    [[ ${previous_msg:-_none_} = _none_ ]] && previous_msg=''
+
     this_message=$(printf "%-10s: %s" "$1" "$2")
 
-    if [[ $this_message != "$previous_msg" ]]; then
+    if [[ $this_message != "${previous_msg}" ]]; then
         previous_length=$((${#previous_msg}+1))
         this_length=$((${#this_message}+1))
 
@@ -5442,7 +5447,7 @@ WriteToLog()
     #   $1 = pass/fail
     #   $2 = message
 
-    [[ -z $DEBUG_LOG_PATHFILE ]] && return 1
+    [[ -z ${DEBUG_LOG_PATHFILE:-} ]] && return 1
     [[ $(type -t Session.Debug.To.File.Init) = 'function' ]] && Session.Debug.To.File.IsNot && return
 
     printf "%-4s: %s\n" "$(StripANSI "$1")" "$(StripANSI "$2")" >> "$DEBUG_LOG_PATHFILE"
@@ -5578,13 +5583,13 @@ echo $public_function_name'.Add()
     {
     local array=(${1})
     local item='\'\''
-    for item in "${array[@]}"; do
-        [[ " ${'$_placeholder_array_'[*]} " != *"$item"* ]] && '$_placeholder_array_'+=("$item")
+    for item in "${array[@]:-}"; do
+        [[ " ${'$_placeholder_array_'[*]:-} " != *"$item"* ]] && '$_placeholder_array_'+=("$item")
     done
     }
 '$public_function_name'.Array()
     {
-    echo -n "${'$_placeholder_array_'[@]}"
+    echo -n "${'$_placeholder_array_'[@]:-}"
     }
 '$public_function_name'.Clear()
     {
@@ -5594,7 +5599,7 @@ echo $public_function_name'.Add()
     }
 '$public_function_name'.Count()
     {
-    echo "${#'$_placeholder_array_'[@]}"
+    echo "${#'$_placeholder_array_'[@]:-}"
     }
 '$public_function_name'.Disable()
     {
@@ -5615,7 +5620,7 @@ echo $public_function_name'.Add()
     }
 '$public_function_name'.Exist()
     {
-    [[ ${'$_placeholder_array_'[*]} == *"$1"* ]]
+    [[ ${'$_placeholder_array_'[*]:-} == *"$1"* ]]
     }
 '$public_function_name'.First()
     {
@@ -5625,7 +5630,7 @@ echo $public_function_name'.Add()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#'$_placeholder_array_'[@]} ]] && index=${#'$_placeholder_array_'[@]}
+    [[ $index -gt ${#'$_placeholder_array_'[@]:-} ]] && index=${#'$_placeholder_array_'[@]}
     echo -n "${'$_placeholder_array_'[((index-1))]}"
     }
 '$public_function_name'.Init()
@@ -5641,7 +5646,7 @@ echo $public_function_name'.Add()
     }
 '$public_function_name'.IsAny()
     {
-    [[ ${#'$_placeholder_array_'[@]} -gt 0 ]]
+    [[ ${#'$_placeholder_array_'[@]:-} -gt 0 ]]
     }
 '$public_function_name'.IsDisabled()
     {
@@ -5653,7 +5658,7 @@ echo $public_function_name'.Add()
     }
 '$public_function_name'.IsNone()
     {
-    [[ ${#'$_placeholder_array_'[@]} -eq 0 ]]
+    [[ ${#'$_placeholder_array_'[@]:-} -eq 0 ]]
     }
 '$public_function_name'.IsNot()
     {
@@ -5665,11 +5670,11 @@ echo $public_function_name'.Add()
     }
 '$public_function_name'.List()
     {
-    echo -n "${'$_placeholder_array_'[*]}"
+    echo -n "${'$_placeholder_array_'[*]:-}"
     }
 '$public_function_name'.ListCSV()
     {
-    echo -n "${'$_placeholder_array_'[*]}" | tr '\' \'' '\',\''
+    echo -n "${'$_placeholder_array_'[*]:-}" | tr '\' \'' '\',\''
     }
 '$public_function_name'.LogChanges()
     {
@@ -5678,7 +5683,7 @@ echo $public_function_name'.Add()
     }
 '$public_function_name'.Path()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
         '$_placeholder_path_'=$2
     else
         echo -n "$'$_placeholder_path_'"
@@ -5691,16 +5696,16 @@ echo $public_function_name'.Add()
     local argument='\'\''
     local item='\'\''
     local matched=false
-    for item in "${'$_placeholder_array_'[@]}"; do
+    for item in "${'$_placeholder_array_'[@]:-}"; do
         matched=false
-        for argument in "${argument_array[@]}"; do
+        for argument in "${argument_array[@]:-}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    '$_placeholder_array_'=("${temp_array[@]}")
+    '$_placeholder_array_'=("${temp_array[@]:-}")
     [[ -z ${'$_placeholder_array_'[*]} ]] && '$_placeholder_array_'=()
     }
 '$public_function_name'.Set()
@@ -5742,7 +5747,7 @@ Objects.CheckLocal()
 Objects.CheckRemote()
     {
 
-    [[ ! -e $COMPILED_OBJECTS_PATHFILE ]] && ! $CURL_CMD${curl_insecure_arg} --silent --fail "$COMPILED_OBJECTS_URL" > "$COMPILED_OBJECTS_PATHFILE" && [[ ! -s $COMPILED_OBJECTS_PATHFILE ]] && rm -f "$COMPILED_OBJECTS_PATHFILE"
+    [[ ! -e $COMPILED_OBJECTS_PATHFILE ]] && ! $CURL_CMD${curl_insecure_arg:-} --silent --fail "$COMPILED_OBJECTS_URL" > "$COMPILED_OBJECTS_PATHFILE" && [[ ! -s $COMPILED_OBJECTS_PATHFILE ]] && rm -f "$COMPILED_OBJECTS_PATHFILE"
 
     }
 
@@ -5753,9 +5758,9 @@ Objects.Compile()
 
     # $1 = 'hash' (optional) - if specified, only return the internal checksum
 
-    local -r COMPILED_OBJECTS_HASH=0e5db412443acd5a42b7db4e3fde65dd
+    local -r COMPILED_OBJECTS_HASH=af270dc8b0b19aa1b3348f067640b123
 
-    if [[ $1 = hash ]]; then
+    if [[ ${1:-} = hash ]]; then
         echo "$COMPILED_OBJECTS_HASH"
         return
     fi
