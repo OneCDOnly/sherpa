@@ -31,11 +31,18 @@
 #   If on-screen line-spacing is required, this should only be done by the next function that outputs to display.
 #   Display functions should never finish by putting an empty line on-screen for spacing.
 
+# These demonstrate available words for syntax highlighting on Kate (makes it easier to pick a word that stands-out):
+# ALERT ATTENTION DANGER HACK SECURITY
+# BUG FIXME DEPRECATED TASK TODO TBD WARNING CAUTION NOLINT
+# ### NOTE NOTICE TEST TESTING
+
 set -o nounset
 set -o pipefail
 #set -o errexit
 
 readonly USER_ARGS_RAW=$*
+
+# TASK: add 'stopped' as a scope?
 
 Session.Init()
     {
