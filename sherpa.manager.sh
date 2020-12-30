@@ -545,6 +545,8 @@ Session.Init()
     readonly MANAGER_COMMON_PIPS_ADD='apscheduler beautifulsoup4 cfscrape cheetah3 cheroot!=8.4.4 cherrypy configobj feedparser portend pygithub python-magic random_user_agent sabyenc3 simplejson slugify'
     readonly MANAGER_COMMON_QPKG_CONFLICTS='Optware Optware-NG TarMT Python QPython2'
 
+    QPKGs.EssentialAndOptional.Build
+
     # speedup: don't build package lists if only showing basic help
     if [[ -z $USER_ARGS_RAW ]]; then
         User.Opts.Help.Basic.Set
@@ -576,11 +578,9 @@ Session.Build.StateLists()
     DebugFuncEntry
     ShowAsProc 'building package state lists' >&2
 
-    QPKGs.EssentialAndOptional.Build
     QPKGs.InstallationState.Build
     QPKGs.Upgradable.Build
     QPKGs.Enabled.Build
-    QPKGs.SupportsBackup.Build
     QPKGs.Missing.Build
 
     Session.Lists.Built.Set
@@ -807,7 +807,6 @@ Session.Arguments.Parse()
             help_)
                 case $scope in
                     abs_)
-                        Session.Build.StateLists
                         User.Opts.Help.Abbreviations.Set
                         ;;
                     actions_)
@@ -820,7 +819,6 @@ Session.Arguments.Parse()
                         User.Opts.Apps.List.Backups.Set
                         ;;
                     essential_)
-                        Session.Build.StateLists
                         User.Opts.Apps.List.Essential.Set
                         Session.Display.Clean.Set
                         ;;
@@ -843,7 +841,6 @@ Session.Arguments.Parse()
                         Session.Display.Clean.Set
                         ;;
                     optional_)
-                        Session.Build.StateLists
                         User.Opts.Apps.List.Optional.Set
                         Session.Display.Clean.Set
                         ;;
@@ -1291,6 +1288,8 @@ Tiers.Processor()
     Session.SkipPackageProcessing.IsSet && return
     DebugFuncEntry
     local package=''
+
+    QPKGs.SupportsBackup.Build
 
     # build an initial download list
     if User.Opts.Apps.All.Upgrade.IsSet; then
@@ -3184,9 +3183,9 @@ QPKGs.EssentialAndOptional.Build()
 
     for index in "${!MANAGER_QPKG_NAME[@]}"; do
         if [[ -n ${MANAGER_QPKG_ESSENTIALS[$index]} || ${MANAGER_QPKG_ESSENTIALS[$index]} = 'none' ]]; then
-            QPKGs.Optional.Add "${MANAGER_QPKG_NAME[$index]}"    # if the 'MANAGER_QPKG_ESSENTIALS' field has some value and this value is not 'none', then this package is 'optional'
+            QPKGs.Optional.Add "${MANAGER_QPKG_NAME[$index]}"
         else
-            QPKGs.Essential.Add "${MANAGER_QPKG_NAME[$index]}"   # if the 'MANAGER_QPKG_ESSENTIALS' field is empty, then this package is 'essential'
+            QPKGs.Essential.Add "${MANAGER_QPKG_NAME[$index]}"
         fi
     done
 
@@ -3222,22 +3221,6 @@ QPKGs.InstallationState.Build()
 
     }
 
-QPKGs.Missing.Build()
-    {
-
-    # Builds a list of QPKGs that have config blocks in [/etc/config/qpkg.conf], but no files on-disk
-
-    DebugFuncEntry
-    local package=''
-
-    for package in $(QPKGs.Installed.Array); do
-        [[ ! -d $(QPKG.InstallPath "$package") ]] && QPKGs.Missing.Add "$package"
-    done
-
-    DebugFuncExit; return 0
-
-    }
-
 QPKGs.Upgradable.Build()
     {
 
@@ -3257,6 +3240,28 @@ QPKGs.Upgradable.Build()
             QPKGs.Upgradable.Add "$package"
         else
             QPKGs.Upgradable.Remove "$package"
+        fi
+    done
+
+    DebugFuncExit; return 0
+
+    }
+
+QPKGs.Enabled.Build()
+    {
+
+    # Builds a list of QPKGs that are installed and enabled or installed and disabled in [/etc/config/qpkg.conf]
+
+    DebugFuncEntry
+    local package=''
+
+    for package in $(QPKGs.Installed.Array); do
+        if QPKG.Enabled "$package"; then
+            QPKGs.Enabled.Add "$package"
+            QPKGs.Disabled.Remove "$package"
+        else
+            QPKGs.Disabled.Add "$package"
+            QPKGs.Enabled.Remove "$package"
         fi
     done
 
@@ -3286,22 +3291,16 @@ QPKGs.SupportsBackup.Build()
 
     }
 
-QPKGs.Enabled.Build()
+QPKGs.Missing.Build()
     {
 
-    # Builds a list of QPKGs that are installed and enabled or installed and disabled in [/etc/config/qpkg.conf]
+    # Builds a list of QPKGs that have config blocks in [/etc/config/qpkg.conf], but no files on-disk
 
     DebugFuncEntry
     local package=''
 
     for package in $(QPKGs.Installed.Array); do
-        if QPKG.Enabled "$package"; then
-            QPKGs.Enabled.Add "$package"
-            QPKGs.Disabled.Remove "$package"
-        else
-            QPKGs.Disabled.Add "$package"
-            QPKGs.Enabled.Remove "$package"
-        fi
+        [[ ! -d $(QPKG.InstallPath "$package") ]] && QPKGs.Missing.Add "$package"
     done
 
     DebugFuncExit; return 0
