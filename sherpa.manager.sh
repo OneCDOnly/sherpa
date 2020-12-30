@@ -851,6 +851,9 @@ Session.Arguments.Parse()
                     optional_)
                         QPKGs.ToBackup.Add "$(QPKGs.Optional.Array)"
                         ;;
+                    standalone_)
+                        QPKGs.ToBackup.Add "$(QPKGs.Standalone.Array)"
+                        ;;
                     *)
                         QPKGs.ToBackup.Add "$package"
                         ;;
@@ -946,6 +949,9 @@ Session.Arguments.Parse()
                     optional_)
                         QPKGs.ToInstall.Add "$(QPKGs.Optional.Array)"
                         ;;
+                    standalone_)
+                        QPKGs.ToInstall.Add "$(QPKGs.Standalone.Array)"
+                        ;;
                     *)
                         QPKGs.ToInstall.Add "$package"
                         ;;
@@ -973,6 +979,9 @@ Session.Arguments.Parse()
                     optional_)
                         QPKGs.ToReinstall.Add "$(QPKGs.Optional.Array)"
                         ;;
+                    standalone_)
+                        QPKGs.ToReinstall.Add "$(QPKGs.Standalone.Array)"
+                        ;;
                     *)
                         QPKGs.ToReinstall.Add "$package"
                         ;;
@@ -989,6 +998,9 @@ Session.Arguments.Parse()
                         ;;
                     optional_)
                         QPKGs.ToRestart.Add "$(QPKGs.Optional.Array)"
+                        ;;
+                    standalone_)
+                        QPKGs.ToRestart.Add "$(QPKGs.Standalone.Array)"
                         ;;
                     *)
                         QPKGs.ToRestart.Add "$package"
@@ -1007,6 +1019,9 @@ Session.Arguments.Parse()
                     optional_)
                         QPKGs.ToRestore.Add "$(QPKGs.Optional.Array)"
                         ;;
+                    standalone_)
+                        QPKGs.ToRestore.Add "$(QPKGs.Standalone.Array)"
+                        ;;
                     *)
                         QPKGs.ToRestore.Add "$package"
                         ;;
@@ -1023,6 +1038,9 @@ Session.Arguments.Parse()
                         ;;
                     optional_)
                         QPKGs.ToStart.Add "$(QPKGs.Optional.Array)"
+                        ;;
+                    standalone_)
+                        QPKGs.ToStart.Add "$(QPKGs.Standalone.Array)"
                         ;;
                     *)
                         QPKGs.ToStart.Add "$package"
@@ -1044,6 +1062,9 @@ Session.Arguments.Parse()
 #                     optional_)
 #                         QPKGs.ToStatus.Add "$(QPKGs.Optional.Array)"
 #                         ;;
+#                     standalone_)
+#                         QPKGs.ToStatus.Add "$(QPKGs.Standalone.Array)"
+#                         ;;
 #                     *)
 #                         QPKGs.ToStatus.Add "$package"
 #                         ;;
@@ -1060,6 +1081,9 @@ Session.Arguments.Parse()
                         ;;
                     optional_)
                         QPKGs.ToStop.Add "$(QPKGs.Optional.Array)"
+                        ;;
+                    standalone_)
+                        QPKGs.ToStop.Add "$(QPKGs.Standalone.Array)"
                         ;;
                     *)
                         QPKGs.ToStop.Add "$package"
@@ -1094,6 +1118,9 @@ Session.Arguments.Parse()
                         ;;
                     optional_)
                         QPKGs.ToUpgrade.Add "$(QPKGs.Optional.Array)"
+                        ;;
+                    standalone_)
+                        QPKGs.ToUpgrade.Add "$(QPKGs.Standalone.Array)"
                         ;;
                     *)
                         QPKGs.ToUpgrade.Add "$package"
@@ -3221,11 +3248,11 @@ QPKGs.OperationAssignment.List()
     DebugFuncEntry
 
     local array_name=''
-    local -a arrays_list=(ToDownload IsDownload UnDownload ToBackup IsBackup UnBackup ToStop IsStop UnStop ToUninstall IsUninstall UnUninstall ToUpgrade IsUpgrade UnUpgrade ToReinstall IsReinstall UnReinstall ToInstall IsInstall UnInstall ToRestore IsRestore UnRestore ToStart IsStart UnStart ToRestart IsRestart UnRestart ToStatus Installed NotInstalled Upgradable Missing)
+    local -a operations_array=(ToDownload IsDownload UnDownload ToBackup IsBackup UnBackup ToStop IsStop UnStop ToUninstall IsUninstall UnUninstall ToUpgrade IsUpgrade UnUpgrade ToReinstall IsReinstall UnReinstall ToInstall IsInstall UnInstall ToRestore IsRestore UnRestore ToStart IsStart UnStart ToRestart IsRestart UnRestart ToStatus Installed NotInstalled Upgradable Missing)
 
     DebugInfoMinorSeparator
 
-    for array_name in "${arrays_list[@]}"; do
+    for array_name in "${operations_array[@]}"; do
         # speedup: only log arrays with more than zero elements
         QPKGs.$array_name.IsAny && DebugQPKG "$array_name" "($(QPKGs.$array_name.Count)) $(QPKGs.$array_name.ListCSV) "
     done
@@ -3661,16 +3688,13 @@ Session.Error.IsNot()
 Session.Summary.Show()
     {
 
-    if User.Opts.Apps.All.Upgrade.IsSet; then
-        if QPKGs.Upgradable.IsNone; then
-            ShowAsDone 'no QPKGs need upgrading'
-        elif Session.Error.IsNot; then
-            ShowAsDone 'all upgradable QPKGs were upgraded OK'
-        else
-            ShowAsEror "upgrade failed! [$code_pointer]"
-            Session.SuggestIssue.Set
-        fi
-    fi
+    local -i index=0
+    local -a operations_array=(Backup Stop Uninstall Upgrade Reinstall Install Restore Start Restart)
+    local -a messages_array=(backed-up stopped uninstalled upgraded reinstalled installed restored started restarted)
+
+    for index in "${!operations_array[@]}"; do
+        User.Opts.Apps.All.${operations_array[$index]}.IsSet && QPKGs.Is${operations_array[$index]}.IsNone && ShowAsDone "no QPKGs were ${messages_array[$index]}"
+    done
 
     return 0
 
