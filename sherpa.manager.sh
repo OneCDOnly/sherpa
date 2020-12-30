@@ -807,6 +807,7 @@ Session.Arguments.Parse()
             help_)
                 case $scope in
                     abs_)
+                        Session.Build.StateLists
                         User.Opts.Help.Abbreviations.Set
                         ;;
                     actions_)
@@ -1384,7 +1385,7 @@ Tiers.Processor()
 
     # don't stop packages that are already stopped
     for package in $(QPKGs.ToStop.Array); do
-        if ! QPKG.Enabled "$package"; then
+        if QPKG.NotEnabled "$package"; then
             QPKGs.ToStop.Remove "$package"
             QPKGs.UnStop.Add "$package"
         fi
@@ -1504,7 +1505,7 @@ Tiers.Processor()
 
                     # DISABLED: don't restart packages that are not started
 #                   for package in $(QPKGs.ToRestart.Array); do
-#                       if ! QPKG.Enabled "$package"; then
+#                       if QPKG.NotEnabled "$package"; then
 #                           QPKGs.ToRestart.Remove "$package"
 #                           QPKGs.UnRestart.Add "$package"
 #                       fi
@@ -2155,7 +2156,7 @@ IPKGs.Install()
 
     Session.SkipPackageProcessing.IsSet && return
     Session.IPKGs.Install.IsNot && return
-    ! QPKG.Enabled Entware && return
+    QPKG.NotEnabled Entware && return
     Entware.Update
     Session.Error.IsSet && return
     DebugFuncEntry
@@ -2189,7 +2190,7 @@ IPKGs.Uninstall()
     {
 
     Session.SkipPackageProcessing.IsSet && return
-    ! QPKG.Enabled Entware && return
+    QPKG.NotEnabled Entware && return
     Session.Error.IsSet && return
     DebugFuncEntry
     local -i index=0
@@ -2597,13 +2598,23 @@ DisplayAsSyntaxExample()
 
     }
 
-DisplayAsHelpPackageName()
+DisplayAsHelpPackageNamePlusSomething()
     {
 
     # $1 = package name
-    # $2 = package description
+    # $2 = package text
 
     printf "%${HELP_DESC_INDENT}s%-${HELP_PACKAGE_NAME_WIDTH}s- %s\n" '' "$1" "$2"
+
+    }
+
+DisplayAsHelpTitlePackageNamePlusSomething()
+    {
+
+    # $1 = package name
+    # $2 = package text
+
+    printf "* %-${HELP_PACKAGE_NAME_WIDTH}s* %s\n" "$1:" "$2:"
 
     }
 
@@ -2745,10 +2756,20 @@ Help.Packages.Show()
 
     Help.Basic.Show
     DisplayLineSpaceIfNoneAlready
-    Display "* $(FormatAsHelpPackages) may be one-or-more of the following:"
+    Display "* One-or-more $(FormatAsHelpPackages) may be specified at-once"
+    Display
 
-    for package in $(QPKGs.Installable.Array); do
-        DisplayAsHelpPackageName "$package" "$(QPKG.Desc "$package")"
+    DisplayAsHelpTitlePackageNamePlusSomething 'essentials' 'package description'
+
+    for package in $(QPKGs.Essential.Array); do
+        DisplayAsHelpPackageNamePlusSomething "$package" "$(QPKG.Desc "$package")"
+    done
+
+    Display
+    DisplayAsHelpTitlePackageNamePlusSomething 'optionals' 'package description'
+
+    for package in $(QPKGs.Optional.Array); do
+        DisplayAsHelpPackageNamePlusSomething "$package" "$(QPKG.Desc "$package")"
     done
 
     DisplayAsProjectSyntaxExample "abbreviations may also be used to specify $(FormatAsHelpPackages). To list these" 'list abs'
@@ -2859,17 +2880,25 @@ Help.Tips.Show()
 Help.PackageAbbreviations.Show()
     {
 
-    [[ ${#MANAGER_QPKG_NAME[@]} -eq 0 || ${#MANAGER_QPKG_ABBRVS[@]} -eq 0 ]] && return 1
-
-    local package_index=0
+    local package=''
+    local abs=''
     Help.Basic.Show
     DisplayLineSpaceIfNoneAlready
-    Display "* $(FormatAsScriptTitle) recognises these abbreviations as $(FormatAsHelpPackages):"
+    Display "* $(FormatAsScriptTitle) recognises various abbreviations as $(FormatAsHelpPackages)"
+    Display
+    DisplayAsHelpTitlePackageNamePlusSomething 'essentials' 'acceptable abreviations'
 
-    for package_index in "${!MANAGER_QPKG_NAME[@]}"; do
-        if [[ -n ${MANAGER_QPKG_ABBRVS[$package_index]} ]]; then
-            printf "%${HELP_DESC_INDENT}s%-${HELP_PACKAGE_NAME_WIDTH}s- %s\n" '' "${MANAGER_QPKG_NAME[$package_index]}" "$($SED_CMD 's| |, |g' <<< "${MANAGER_QPKG_ABBRVS[$package_index]}")"
-        fi
+    for package in $(QPKGs.Essential.Array); do
+        abs=$(QPKG.Abbrvs "$package")
+        [[ -n $abs ]] && DisplayAsHelpPackageNamePlusSomething "$package" "${abs// /, }"
+    done
+
+    Display
+    DisplayAsHelpTitlePackageNamePlusSomething 'optionals' 'acceptable abreviations'
+
+    for package in $(QPKGs.Optional.Array); do
+        abs=$(QPKG.Abbrvs "$package")
+        [[ -n $abs ]] && DisplayAsHelpPackageNamePlusSomething "$package" "${abs// /, }"
     done
 
     DisplayAsProjectSyntaxExample "example: to install $(FormatAsPackageName SABnzbd), $(FormatAsPackageName Mylar3) and $(FormatAsPackageName nzbToMedia) all-at-once" 'install sab my nzb2'
@@ -3318,7 +3347,7 @@ QPKGs.Statuses.Show()
 
     SmartCR
     DisplayLineSpaceIfNoneAlready
-    printf "* %-${HELP_PACKAGE_NAME_WIDTH}s* %-30s\n" 'essentials:' 'statuses:'
+    DisplayAsHelpTitlePackageNamePlusSomething 'essentials' 'statuses'
 
     for package in $(QPKGs.Essential.Array); do
         package_notes=()
@@ -3332,11 +3361,11 @@ QPKGs.Statuses.Show()
 
         [[ ${#package_notes[@]} -gt 0 ]] && package_note="${package_notes[*]}"
 
-        printf "%${HELP_DESC_INDENT}s%-${HELP_PACKAGE_NAME_WIDTH}s- %s\n" '' "$package" "${package_note// /, }"
+        DisplayAsHelpPackageNamePlusSomething "$package" "${package_note// /, }"
     done
 
     Display
-    printf "* %-${HELP_PACKAGE_NAME_WIDTH}s* %-30s\n" 'optionals:' 'statuses:'
+    DisplayAsHelpTitlePackageNamePlusSomething 'optionals' 'statuses'
 
     for package in $(QPKGs.Optional.Array); do
         package_notes=()
@@ -3350,7 +3379,7 @@ QPKGs.Statuses.Show()
 
         [[ ${#package_notes[@]} -gt 0 ]] && package_note="${package_notes[*]}"
 
-        printf "%${HELP_DESC_INDENT}s%-${HELP_PACKAGE_NAME_WIDTH}s- %s\n" '' "$package" "${package_note// /, }"
+        DisplayAsHelpPackageNamePlusSomething "$package" "${package_note// /, }"
     done
 
     DisplayLineSpaceIfNoneAlready
@@ -4567,6 +4596,31 @@ QPKG.NotEnabled()
     #   $? = 0 (true) or 1 (false)
 
     [[ $($GETCFG_CMD "$1" Enable -u -f $APP_CENTER_CONFIG_PATHFILE) = 'FALSE' ]]
+
+    }
+
+QPKG.Abbrvs()
+    {
+
+    # input:
+    #   $1 = QPKG name
+
+    # output:
+    #   $? = 0 if successful, 1 if failed
+    #   stdout = list of acceptable abbreviations that may be used to specify this package
+
+    [[ -z $1 ]] && return 1
+
+    local -i index=0
+
+    for index in "${!MANAGER_QPKG_NAME[@]}"; do
+        if [[ $1 = "${MANAGER_QPKG_NAME[$index]}" ]]; then
+            echo "${MANAGER_QPKG_ABBRVS[$index]}"
+            return 0
+        fi
+    done
+
+    return 1
 
     }
 
