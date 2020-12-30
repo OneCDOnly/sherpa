@@ -253,6 +253,8 @@ Session.Init()
 
     # supported package details - parallel arrays
     MANAGER_QPKG_NAME=()                    # internal QPKG name
+        MANAGER_QPKG_IS_ESSENTIAL=()        # true/false: this is an essential QPKG. It will be required by one-or-more other QPKGs.
+        MANAGER_QPKG_IS_STANDALONE=()       # true/false: this QPKG will run without any other packages
         MANAGER_QPKG_ARCH=()                # QPKG supports this architecture
         MANAGER_QPKG_VERSION=()             # QPKG version
         MANAGER_QPKG_URL=()                 # remote QPKG URL
@@ -266,6 +268,8 @@ Session.Init()
 
     # essential packages here
     MANAGER_QPKG_NAME+=($PROJECT_NAME)
+        MANAGER_QPKG_IS_ESSENTIAL+=(true)
+        MANAGER_QPKG_IS_STANDALONE+=(true)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_VERSION+=(201224)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/$PROJECT_NAME/build/${PROJECT_NAME}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
@@ -278,6 +282,8 @@ Session.Init()
         MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
 
     MANAGER_QPKG_NAME+=(Entware)
+        MANAGER_QPKG_IS_ESSENTIAL+=(true)
+        MANAGER_QPKG_IS_STANDALONE+=(true)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_VERSION+=(1.03)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}std.qpkg)
@@ -290,6 +296,8 @@ Session.Init()
         MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
 
     MANAGER_QPKG_NAME+=(Par2)
+        MANAGER_QPKG_IS_ESSENTIAL+=(true)
+        MANAGER_QPKG_IS_STANDALONE+=(true)
         MANAGER_QPKG_ARCH+=(x86)
         MANAGER_QPKG_VERSION+=(0.8.1.0)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_x86.qpkg)
@@ -302,6 +310,8 @@ Session.Init()
         MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
 
     MANAGER_QPKG_NAME+=(Par2)
+        MANAGER_QPKG_IS_ESSENTIAL+=(true)
+        MANAGER_QPKG_IS_STANDALONE+=(true)
         MANAGER_QPKG_ARCH+=(x64)
         MANAGER_QPKG_VERSION+=(0.8.1.0)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_x86_64.qpkg)
@@ -314,6 +324,8 @@ Session.Init()
         MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
 
     MANAGER_QPKG_NAME+=(Par2)
+        MANAGER_QPKG_IS_ESSENTIAL+=(true)
+        MANAGER_QPKG_IS_STANDALONE+=(true)
         MANAGER_QPKG_ARCH+=(x31)
         MANAGER_QPKG_VERSION+=(0.8.1.0)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_arm-x31.qpkg)
@@ -326,6 +338,8 @@ Session.Init()
         MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
 
     MANAGER_QPKG_NAME+=(Par2)
+        MANAGER_QPKG_IS_ESSENTIAL+=(true)
+        MANAGER_QPKG_IS_STANDALONE+=(true)
         MANAGER_QPKG_ARCH+=(x41)
         MANAGER_QPKG_VERSION+=(0.8.1.0)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_arm-x41.qpkg)
@@ -338,6 +352,8 @@ Session.Init()
         MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
 
     MANAGER_QPKG_NAME+=(Par2)
+        MANAGER_QPKG_IS_ESSENTIAL+=(true)
+        MANAGER_QPKG_IS_STANDALONE+=(true)
         MANAGER_QPKG_ARCH+=(a64)
         MANAGER_QPKG_VERSION+=(0.8.1.0)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_arm_64.qpkg)
@@ -350,19 +366,23 @@ Session.Init()
         MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
 
     MANAGER_QPKG_NAME+=(Par2)
+        MANAGER_QPKG_IS_ESSENTIAL+=(true)
+        MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(none)
         MANAGER_QPKG_VERSION+=(0.8.1-1)
         MANAGER_QPKG_URL+=('')
         MANAGER_QPKG_MD5+=('')
         MANAGER_QPKG_DESC+=('')
         MANAGER_QPKG_ABBRVS+=('')
-        MANAGER_QPKG_ESSENTIALS+=('')
+        MANAGER_QPKG_ESSENTIALS+=(Entware)
         MANAGER_QPKG_IPKGS_ADD+=(par2cmdline)
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
 
     # only optionals below here in pseudo-alpha-sorted name order (i.e. disregard character-case and leading 'O')
     MANAGER_QPKG_NAME+=(Deluge-server)
+        MANAGER_QPKG_IS_ESSENTIAL+=(false)
+        MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_VERSION+=(201130)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
@@ -375,6 +395,8 @@ Session.Init()
         MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
 
     MANAGER_QPKG_NAME+=(Deluge-web)
+        MANAGER_QPKG_IS_ESSENTIAL+=(false)
+        MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_VERSION+=(201130)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
@@ -387,18 +409,22 @@ Session.Init()
         MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
 
     MANAGER_QPKG_NAME+=(HideThatBanner)
+        MANAGER_QPKG_IS_ESSENTIAL+=(false)
+        MANAGER_QPKG_IS_STANDALONE+=(true)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_VERSION+=(201219b)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/main/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
         MANAGER_QPKG_MD5+=(d576993ca2c6ec7585abe24455e19385)
         MANAGER_QPKG_DESC+=("hides the annoying rotating banner at the top of QTS App Center pages")
         MANAGER_QPKG_ABBRVS+=('htb hide hidebanner hidethatbanner')
-        MANAGER_QPKG_ESSENTIALS+=(none)
+        MANAGER_QPKG_ESSENTIALS+=('')
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
 
     MANAGER_QPKG_NAME+=(LazyLibrarian)
+        MANAGER_QPKG_IS_ESSENTIAL+=(false)
+        MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_VERSION+=(201130)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
@@ -411,6 +437,8 @@ Session.Init()
         MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
 
     MANAGER_QPKG_NAME+=(OMedusa)
+        MANAGER_QPKG_IS_ESSENTIAL+=(false)
+        MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_VERSION+=(201130)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
@@ -423,6 +451,8 @@ Session.Init()
         MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
 
     MANAGER_QPKG_NAME+=(Mylar3)
+        MANAGER_QPKG_IS_ESSENTIAL+=(false)
+        MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_VERSION+=(201130)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
@@ -435,6 +465,8 @@ Session.Init()
         MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
 
     MANAGER_QPKG_NAME+=(NZBGet)
+        MANAGER_QPKG_IS_ESSENTIAL+=(false)
+        MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_VERSION+=(201130)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
@@ -447,6 +479,8 @@ Session.Init()
         MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
 
     MANAGER_QPKG_NAME+=(nzbToMedia)
+        MANAGER_QPKG_IS_ESSENTIAL+=(false)
+        MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_VERSION+=(201215b)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
@@ -459,18 +493,22 @@ Session.Init()
         MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
 
     MANAGER_QPKG_NAME+=(RunLast)
+        MANAGER_QPKG_IS_ESSENTIAL+=(false)
+        MANAGER_QPKG_IS_STANDALONE+=(true)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_VERSION+=(201225)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/main/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
         MANAGER_QPKG_MD5+=(2de4bf787afe34405d76ebd8fefddb43)
         MANAGER_QPKG_DESC+=("run user scripts and commands after all QPKGs have completed startup reintegration into QTS")
         MANAGER_QPKG_ABBRVS+=('rl run runlast')
-        MANAGER_QPKG_ESSENTIALS+=(none)
+        MANAGER_QPKG_ESSENTIALS+=('')
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
 
     MANAGER_QPKG_NAME+=(SABnzbd)
+        MANAGER_QPKG_IS_ESSENTIAL+=(false)
+        MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_VERSION+=(201130)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
@@ -483,6 +521,8 @@ Session.Init()
         MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
 
     MANAGER_QPKG_NAME+=(SickChill)
+        MANAGER_QPKG_IS_ESSENTIAL+=(false)
+        MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_VERSION+=(201130)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
@@ -495,6 +535,8 @@ Session.Init()
         MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
 
     MANAGER_QPKG_NAME+=(OSickGear)
+        MANAGER_QPKG_IS_ESSENTIAL+=(false)
+        MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_VERSION+=(201130)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
@@ -507,18 +549,22 @@ Session.Init()
         MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
 
     MANAGER_QPKG_NAME+=(SortMyQPKGs)
+        MANAGER_QPKG_IS_ESSENTIAL+=(false)
+        MANAGER_QPKG_IS_STANDALONE+=(true)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_VERSION+=(201228)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/main/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
         MANAGER_QPKG_MD5+=(4bf84d42c86952b835ca290e42747e09)
         MANAGER_QPKG_DESC+=("ensure other installed QPKGs start in correct sequence during QTS bootup")
         MANAGER_QPKG_ABBRVS+=('smq smqs sort sortmy sortmine sortpackages sortmypackages sortmyqpkgs')
-        MANAGER_QPKG_ESSENTIALS+=(none)
+        MANAGER_QPKG_ESSENTIALS+=('')
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
 
     MANAGER_QPKG_NAME+=(OTransmission)
+        MANAGER_QPKG_IS_ESSENTIAL+=(false)
+        MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_VERSION+=(201130)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
@@ -532,6 +578,8 @@ Session.Init()
 
     # package arrays are now full, so lock them
     readonly MANAGER_QPKG_NAME
+        readonly MANAGER_QPKG_IS_ESSENTIAL
+        readonly MANAGER_QPKG_IS_STANDALONE
         readonly MANAGER_QPKG_ARCH
         readonly MANAGER_QPKG_VERSION
         readonly MANAGER_QPKG_URL
@@ -550,7 +598,7 @@ Session.Init()
     readonly MANAGER_COMMON_PIPS_ADD='apscheduler beautifulsoup4 cfscrape cheetah3 cheroot!=8.4.4 cherrypy configobj feedparser portend pygithub python-magic random_user_agent sabyenc3 simplejson slugify'
     readonly MANAGER_COMMON_QPKG_CONFLICTS='Optware Optware-NG TarMT Python QPython2'
 
-    QPKGs.EssentialAndOptional.Build
+    QPKGs.EssentialOptionalStandalone.Build
 
     # speedup: don't build package lists if only showing basic help
     if [[ -z $USER_ARGS_RAW ]]; then
@@ -663,7 +711,7 @@ Session.Arguments.Parse()
             DebugAsProc 'no operation set: checking for scopes that will run without an operation'
 
             case $arg in
-                abs|action|actions|all-actions|backups|essentials|installable|installed|l|last|log|option|optionals|options|package|packages|problems|tips|upgradable|version|versions)
+                abs|action|actions|all-actions|backups|essentials|installable|installed|l|last|log|option|optionals|options|package|packages|problems|standalone|standalones|tips|upgradable|version|versions)
                     operation=help_
                     scope=''
                     scope_incomplete=true
@@ -732,6 +780,11 @@ Session.Arguments.Parse()
                     ;;
                 package|packages)
                     scope=packages_
+                    scope_incomplete=false
+                    arg_identified=true
+                    ;;
+                standalone|standalones)
+                    scope=standalone_
                     scope_incomplete=false
                     arg_identified=true
                     ;;
@@ -858,6 +911,10 @@ Session.Arguments.Parse()
                         ;;
                     problems_)
                         User.Opts.Help.Problems.Set
+                        ;;
+                    standalone_)
+                        User.Opts.Apps.List.Standalone.Set
+                        Session.Display.Clean.Set
                         ;;
                     status_)
                         Session.Build.StateLists
@@ -1486,6 +1543,11 @@ Tiers.Processor()
                 # check all items
                 if User.Opts.Dependencies.Check.IsSet; then
                     for package in $(QPKGs.Optional.Array); do
+
+
+
+
+
                         if QPKG.Enabled "$package" && ! QPKGs.Upgradable.Exist "$package"; then
                             QPKGs.ToRestart.Add "$package"
                         fi
@@ -1782,6 +1844,8 @@ Session.Results()
             QPKGs.Essential.Show
         elif User.Opts.Apps.List.Optional.IsSet; then
             QPKGs.Optional.Show
+        elif User.Opts.Apps.List.Standalone.IsSet; then
+            QPKGs.Standalone.Show
         elif User.Opts.Apps.List.Backups.IsSet; then
             QPKGs.Backups.Show
         elif User.Opts.Apps.All.Status.IsSet; then
@@ -3163,7 +3227,7 @@ QPKGs.OperationAssignment.List()
     DebugFuncEntry
 
     local array_name=''
-    local -a arrays_list=(ToDownload IsDownload UnDownload ToBackup IsBackup UnBackup ToStop IsStop UnStop ToUninstall IsUninstall UnUninstall ToUpgrade IsUpgrade UnUpgrade ToReinstall IsReinstall UnReinstall ToInstall IsInstall UnInstall ToRestore IsRestore UnRestore ToStart IsStart UnStart ToRestart IsRestart UnRestart ToStatus Installable Installed NotInstalled Upgradable Missing)
+    local -a arrays_list=(ToDownload IsDownload UnDownload ToBackup IsBackup UnBackup ToStop IsStop UnStop ToUninstall IsUninstall UnUninstall ToUpgrade IsUpgrade UnUpgrade ToReinstall IsReinstall UnReinstall ToInstall IsInstall UnInstall ToRestore IsRestore UnRestore ToStart IsStart UnStart ToRestart IsRestart UnRestart ToStatus Installed NotInstalled Upgradable Missing)
 
     DebugInfoMinorSeparator
 
@@ -3177,7 +3241,7 @@ QPKGs.OperationAssignment.List()
 
     }
 
-QPKGs.EssentialAndOptional.Build()
+QPKGs.EssentialOptionalStandalone.Build()
     {
 
     # there are three tiers of package: 'essential', 'addon' and 'optional'
@@ -3186,14 +3250,20 @@ QPKGs.EssentialAndOptional.Build()
     # 'essential' QPKGs don't depend on other QPKGs, but are required for other QPKGs. They should be installed/started before any 'optional' QPKGs.
     # 'optional' QPKGs may depend on other QPKGs. They should be installed/started after any 'essential' QPKGs.
 
+    # 'standalone' isn't a tier, but a category of package that works without requiring any other package(s). A package may be 'standalone' or-not and can also be 'essential' or 'optional'.
+
     DebugFuncEntry
     local -i index=0
 
     for index in "${!MANAGER_QPKG_NAME[@]}"; do
-        if [[ -n ${MANAGER_QPKG_ESSENTIALS[$index]} || ${MANAGER_QPKG_ESSENTIALS[$index]} = 'none' ]]; then
-            QPKGs.Optional.Add "${MANAGER_QPKG_NAME[$index]}"
-        else
+        if [[ ${MANAGER_QPKG_IS_ESSENTIAL[$index]} = true ]]; then
             QPKGs.Essential.Add "${MANAGER_QPKG_NAME[$index]}"
+        else
+            QPKGs.Optional.Add "${MANAGER_QPKG_NAME[$index]}"
+        fi
+
+        if [[ ${MANAGER_QPKG_IS_STANDALONE[$index]} = true ]]; then
+            QPKGs.Standalone.Add "${MANAGER_QPKG_NAME[$index]}"
         fi
     done
 
@@ -3452,6 +3522,19 @@ QPKGs.Optional.Show()
     local package=''
 
     for package in $(QPKGs.Optional.Array); do
+        Display "$package"
+    done
+
+    return 0
+
+    }
+
+QPKGs.Standalone.Show()
+    {
+
+    local package=''
+
+    for package in $(QPKGs.Standalone.Array); do
         Display "$package"
     done
 
@@ -5779,7 +5862,7 @@ Objects.Compile()
 
     # $1 = 'hash' (optional) - if specified, only return the internal checksum
 
-    local -r COMPILED_OBJECTS_HASH=af270dc8b0b19aa1b3348f067640b123
+    local -r COMPILED_OBJECTS_HASH=8df2c198893c7eb4fb01ea0eb0bd8044
 
     if [[ ${1:-} = hash ]]; then
         echo "$COMPILED_OBJECTS_HASH"
@@ -5830,6 +5913,7 @@ Objects.Compile()
         Objects.Add User.Opts.Apps.List.Installed
         Objects.Add User.Opts.Apps.List.NotInstalled
         Objects.Add User.Opts.Apps.List.Optional
+        Objects.Add User.Opts.Apps.List.Standalone
         Objects.Add User.Opts.Apps.List.Upgradable
 
         # lists
@@ -5849,6 +5933,7 @@ Objects.Compile()
         Objects.Add QPKGs.NotInstalled
         Objects.Add QPKGs.NotSupportsBackup
         Objects.Add QPKGs.Optional
+        Objects.Add QPKGs.Standalone
         Objects.Add QPKGs.SupportsBackup
         Objects.Add QPKGs.Upgradable
 
