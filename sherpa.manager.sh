@@ -1506,6 +1506,11 @@ Tiers.Processor()
                         QPKGs.ToRestart.Add "$(QPKG.Get.Optionals "$package")"
                     done
 
+                    # check for optional packages that require restarting due to any essentials being upgraded
+                    for package in $(QPKGs.IsUpgrade.Array); do
+                        QPKGs.ToRestart.Add "$(QPKG.Get.Optionals "$package")"
+                    done
+
                     # don't restart packages that are not started
                     for package in $(QPKGs.ToRestart.Array); do
                         if QPKG.NotEnabled "$package"; then
@@ -1514,9 +1519,9 @@ Tiers.Processor()
                         fi
                     done
 
-                    # don't restart packages that were just installed
+                    # don't restart packages that are not installed
                     for package in $(QPKGs.ToRestart.Array); do
-                        if QPKGs.IsInstall.Exist "$package"; then
+                        if QPKGs.NotInstalled.Exist "$package"; then
                             QPKGs.ToRestart.Remove "$package"
                             QPKGs.UnRestart.Add "$package"
                         fi
