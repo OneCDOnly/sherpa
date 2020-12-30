@@ -3687,7 +3687,17 @@ QPKG.InstallPath()
 
     }
 
-QPKG.ServiceStatus()
+QPKG.ClearServiceStatus()
+    {
+
+    # input:
+    #   $1 = QPKG name
+
+    [[ -e /var/run/$1.last.operation ]] && rm /var/run/"$1".last.operation
+
+    }
+
+QPKG.GetServiceStatus()
     {
 
     # input:
@@ -3983,7 +3993,7 @@ QPKG.Install()
     if [[ $resultcode -eq 0 || $resultcode -eq 10 ]]; then
         DebugAsDone "installed $(FormatAsPackageName "$1")"
         QPKG.FixAppCenterStatus "$1"
-        QPKG.ServiceStatus "$1"
+        QPKG.GetServiceStatus "$1"
 
         if [[ $1 = Entware ]]; then
             Session.AddPathToEntware
@@ -4057,7 +4067,7 @@ QPKG.Reinstall()
     if [[ $resultcode -eq 0 || $resultcode -eq 10 ]]; then
         DebugAsDone "reinstalled $(FormatAsPackageName "$1")"
         QPKGs.IsReinstall.Add "$1"
-        QPKG.ServiceStatus "$1"
+        QPKG.GetServiceStatus "$1"
         QPKG.FixAppCenterStatus "$1"
         resultcode=0    # reset this to zero (0 or 10 from a QPKG install is OK)
     else
@@ -4125,7 +4135,7 @@ QPKG.Upgrade()
         else
             DebugAsDone "upgraded $(FormatAsPackageName "$1") from $previous_version to $current_version"
         fi
-        QPKG.ServiceStatus "$1"
+        QPKG.GetServiceStatus "$1"
         QPKGs.IsUpgrade.Add "$1"
         resultcode=0    # reset this to zero (0 or 10 from a QPKG upgrade is OK)
     else
@@ -4214,6 +4224,7 @@ QPKG.Restart()
 
     local -i resultcode=0
     local log_pathfile=$LOGS_PATH/$1.$RESTART_LOG_FILE
+    QPKG.ClearServiceStatus "$1"
 
     if QPKG.NotInstalled "$1"; then
         DebugAsWarn "unable to restart $(FormatAsPackageName "$1") as it's not installed"
@@ -4230,7 +4241,7 @@ QPKG.Restart()
 
     if [[ $resultcode -eq 0 ]]; then
         DebugAsDone "restarted $(FormatAsPackageName "$1")"
-        QPKG.ServiceStatus "$1"
+        QPKG.GetServiceStatus "$1"
         QPKGs.IsRestart.Add "$1"
     else
         ShowAsWarn "unable to restart $(FormatAsPackageName "$1") $(FormatAsExitcode $resultcode)"
@@ -4262,6 +4273,7 @@ QPKG.Start()
 
     local -i resultcode=0
     local log_pathfile=$LOGS_PATH/$1.$START_LOG_FILE
+    QPKG.ClearServiceStatus "$1"
 
     if QPKG.NotInstalled "$1"; then
         DebugAsWarn "unable to start $(FormatAsPackageName "$1") as it's not installed"
@@ -4285,7 +4297,7 @@ QPKG.Start()
 
     if [[ $resultcode -eq 0 ]]; then
         DebugAsDone "started $(FormatAsPackageName "$1")"
-        QPKG.ServiceStatus "$1"
+        QPKG.GetServiceStatus "$1"
         QPKGs.IsStart.Add "$1"
         [[ $1 = Entware ]] && Session.AddPathToEntware
     else
@@ -4318,6 +4330,7 @@ QPKG.Stop()
 
     local -i resultcode=0
     local log_pathfile=$LOGS_PATH/$1.$STOP_LOG_FILE
+    QPKG.ClearServiceStatus "$1"
 
     if QPKG.NotInstalled "$1"; then
         DebugAsWarn "unable to stop $(FormatAsPackageName "$1") as it's not installed"
@@ -4333,7 +4346,7 @@ QPKG.Stop()
 
     if [[ $resultcode -eq 0 ]]; then
         DebugAsDone "stopped $(FormatAsPackageName "$1")"
-        QPKG.ServiceStatus "$1"
+        QPKG.GetServiceStatus "$1"
         QPKG.Disable "$1"
         QPKGs.IsStop.Add "$package"
     else
@@ -4360,6 +4373,7 @@ QPKG.Enable()
 
     local -i resultcode=0
     local log_pathfile=$LOGS_PATH/$1.$ENABLE_LOG_FILE
+    QPKG.ClearServiceStatus "$1"
 
     if QPKG.NotInstalled "$1"; then
         DebugAsWarn "unable to enable $(FormatAsPackageName "$1") as it's not installed"
@@ -4370,7 +4384,7 @@ QPKG.Enable()
     resultcode=$?
 
     if [[ $resultcode -eq 0 ]]; then
-        QPKG.ServiceStatus "$1"
+        QPKG.GetServiceStatus "$1"
         QPKGs.Enabled.Add "$1"
     else
         ShowAsWarn "unable to enable $(FormatAsPackageName "$1") $(FormatAsExitcode $resultcode)"
@@ -4395,6 +4409,7 @@ QPKG.Disable()
 
     local -i resultcode=0
     local log_pathfile=$LOGS_PATH/$1.$DISABLE_LOG_FILE
+    QPKG.ClearServiceStatus "$1"
 
     if QPKG.NotInstalled "$1"; then
         DebugAsWarn "unable to disable $(FormatAsPackageName "$1") as it's not installed"
@@ -4405,7 +4420,7 @@ QPKG.Disable()
     resultcode=$?
 
     if [[ $resultcode -eq 0 ]]; then
-        QPKG.ServiceStatus "$1"
+        QPKG.GetServiceStatus "$1"
         QPKGs.Enabled.Remove "$1"
     else
         ShowAsWarn "unable to disable $(FormatAsPackageName "$1") $(FormatAsExitcode $resultcode)"
@@ -4446,7 +4461,7 @@ QPKG.Backup()
     if [[ $resultcode -eq 0 ]]; then
         DebugAsDone "backed-up $(FormatAsPackageName "$1") configuration"
         QPKGs.IsBackup.Add "$1"
-        QPKG.ServiceStatus "$1"
+        QPKG.GetServiceStatus "$1"
     else
         DebugAsWarn "unable to backup $(FormatAsPackageName "$1") configuration $(FormatAsExitcode $resultcode)"
         QPKGs.UnBackup.Add "$1"
@@ -4513,7 +4528,7 @@ QPKG.Restore()
     if [[ $resultcode -eq 0 ]]; then
         DebugAsDone "restored $(FormatAsPackageName "$1") configuration"
         QPKGs.IsRestore.Add "$1"
-        QPKG.ServiceStatus "$1"
+        QPKG.GetServiceStatus "$1"
     else
         DebugAsWarn "unable to restore $(FormatAsPackageName "$1") configuration $(FormatAsExitcode $resultcode)"
         QPKGs.UnRestore.Add "$1"
