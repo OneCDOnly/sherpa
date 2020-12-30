@@ -1506,13 +1506,13 @@ Tiers.Processor()
                         QPKGs.ToRestart.Add "$(QPKG.Get.Optionals "$package")"
                     done
 
-                    # DISABLED: don't restart packages that are not started
-#                   for package in $(QPKGs.ToRestart.Array); do
-#                       if QPKG.NotEnabled "$package"; then
-#                           QPKGs.ToRestart.Remove "$package"
-#                           QPKGs.UnRestart.Add "$package"
-#                       fi
-#                   done
+                    # don't restart packages that are not started
+                    for package in $(QPKGs.ToRestart.Array); do
+                        if QPKG.NotEnabled "$package"; then
+                            QPKGs.ToRestart.Remove "$package"
+                            QPKGs.UnRestart.Add "$package"
+                        fi
+                    done
 
                     # don't restart packages that were just installed
                     for package in $(QPKGs.ToRestart.Array); do
