@@ -4555,7 +4555,7 @@ QPKG.Installed()
     # output:
     #   $? = 0 (true) or 1 (false)
 
-    [[ $($GETCFG_CMD "$1" RC_Number -d 0 -f $APP_CENTER_CONFIG_PATHFILE) -gt 0 ]]
+    $GREP_CMD -q "^\[$1\]" "$APP_CENTER_CONFIG_PATHFILE"
 
     }
 
