@@ -1477,6 +1477,11 @@ Tiers.Processor()
 
     QPKGs.ToRestore.Remove "$(QPKGs.Essential.Array)"
 
+    if User.Opts.Apps.All.Upgrade.IsSet; then
+        QPKGs.ToRestart.Add "$(QPKGs.Optional.Array)"
+        QPKGs.ToRestart.Remove "$(QPKGs.Standalone.Array)"
+    fi
+
     for tier in {'essential','addon','optional'}; do
         case $tier in
             essential|optional)
