@@ -692,7 +692,7 @@ Session.Arguments.Parse()
                 Session.Display.Clean.Clear
                 Session.SkipPackageProcessing.Set
                 ;;
-            help|list|view)
+            display|help|list|show|view)
                 operation=help_
                 scope=''
                 scope_incomplete=true
