@@ -5666,7 +5666,7 @@ CTRL_C_Captured()
 
     }
 
-Objects.Add()
+Objects.Add.List()
     {
 
     # $1: object name to create
@@ -5674,14 +5674,8 @@ Objects.Add()
     local public_function_name=$1
     local safe_function_name="$(tr 'A-Z' 'a-z' <<< "${public_function_name//[.-]/_}")"
 
-    _placeholder_size_=_object_${safe_function_name}_size_
-    _placeholder_text_=_object_${safe_function_name}_text_
-    _placeholder_flag_=_object_${safe_function_name}_flag_
-    _placeholder_log_changes_flag_=_object_${safe_function_name}_changes_flag_
-    _placeholder_enable_=_object_${safe_function_name}_enable_
     _placeholder_array_=_object_${safe_function_name}_array_
     _placeholder_array_index_=_object_${safe_function_name}_array_index_
-    _placeholder_path_=_object_${safe_function_name}_path_
 
 echo $public_function_name'.Add()
     {
@@ -5695,32 +5689,9 @@ echo $public_function_name'.Add()
     {
     echo -n "${'$_placeholder_array_'[@]:-}"
     }
-'$public_function_name'.Clear()
-    {
-    [[ $'$_placeholder_flag_' != '\'true\'' ]] && return
-    '$_placeholder_flag_'=false
-    [[ $'$_placeholder_log_changes_flag_' = '\'true\'' ]] && DebugVar '$_placeholder_flag_'
-    }
 '$public_function_name'.Count()
     {
     echo "${#'$_placeholder_array_'[@]:-}"
-    }
-'$public_function_name'.Disable()
-    {
-    [[ $'$_placeholder_enable_' != '\'true\'' ]] && return
-    '$_placeholder_enable_'=false
-    [[ $'$_placeholder_log_changes_flag_' = '\'true\'' ]] && DebugVar '$_placeholder_enable_'
-    }
-'$public_function_name'.DontLogChanges()
-    {
-    [[ $'$_placeholder_log_changes_flag_' != '\'true\'' ]] && return
-    '$_placeholder_log_changes_flag_'=false
-    }
-'$public_function_name'.Enable()
-    {
-    [[ $'$_placeholder_enable_' = '\'true\'' ]] && return
-    '$_placeholder_enable_'=true
-    [[ $'$_placeholder_log_changes_flag_' = '\'true\'' ]] && DebugVar '$_placeholder_enable_'
     }
 '$public_function_name'.Exist()
     {
@@ -5739,38 +5710,16 @@ echo $public_function_name'.Add()
     }
 '$public_function_name'.Init()
     {
-    '$_placeholder_size_'=0
-    '$_placeholder_text_'='\'\''
-    '$_placeholder_flag_'=false
-    '$_placeholder_log_changes_flag_'=true
-    '$_placeholder_enable_'=false
     '$_placeholder_array_'=()
     '$_placeholder_array_index_'=1
-    '$_placeholder_path_'='\'\''
     }
 '$public_function_name'.IsAny()
     {
     [[ ${#'$_placeholder_array_'[@]:-} -gt 0 ]]
     }
-'$public_function_name'.IsDisabled()
-    {
-    [[ $'$_placeholder_enable_' != '\'true\'' ]]
-    }
-'$public_function_name'.IsEnabled()
-    {
-    [[ $'$_placeholder_enable_' = '\'true\'' ]]
-    }
 '$public_function_name'.IsNone()
     {
     [[ ${#'$_placeholder_array_'[@]:-} -eq 0 ]]
-    }
-'$public_function_name'.IsNot()
-    {
-    [[ $'$_placeholder_flag_' != '\'true\'' ]]
-    }
-'$public_function_name'.IsSet()
-    {
-    [[ $'$_placeholder_flag_' = '\'true\'' ]]
     }
 '$public_function_name'.List()
     {
@@ -5779,19 +5728,6 @@ echo $public_function_name'.Add()
 '$public_function_name'.ListCSV()
     {
     echo -n "${'$_placeholder_array_'[*]:-}" | tr '\' \'' '\',\''
-    }
-'$public_function_name'.LogChanges()
-    {
-    [[ $'$_placeholder_log_changes_flag_' = '\'true\'' ]] && return
-    '$_placeholder_log_changes_flag_'=true
-    }
-'$public_function_name'.Path()
-    {
-    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
-        '$_placeholder_path_'=$2
-    else
-        echo -n "$'$_placeholder_path_'"
-    fi
     }
 '$public_function_name'.Remove()
     {
@@ -5811,6 +5747,89 @@ echo $public_function_name'.Add()
     done
     '$_placeholder_array_'=("${temp_array[@]:-}")
     [[ -z ${'$_placeholder_array_'[*]} ]] && '$_placeholder_array_'=()
+    }
+'$public_function_name'.Init
+' >> "$COMPILED_OBJECTS_PATHFILE"
+
+    return 0
+
+    }
+
+Objects.Add.Flag()
+    {
+
+    # $1: object name to create
+
+    local public_function_name=$1
+    local safe_function_name="$(tr 'A-Z' 'a-z' <<< "${public_function_name//[.-]/_}")"
+
+    _placeholder_size_=_object_${safe_function_name}_size_
+    _placeholder_text_=_object_${safe_function_name}_text_
+    _placeholder_flag_=_object_${safe_function_name}_flag_
+    _placeholder_log_changes_flag_=_object_${safe_function_name}_changes_flag_
+    _placeholder_enable_=_object_${safe_function_name}_enable_
+    _placeholder_path_=_object_${safe_function_name}_path_
+
+echo $public_function_name'.Clear()
+    {
+    [[ $'$_placeholder_flag_' != '\'true\'' ]] && return
+    '$_placeholder_flag_'=false
+    [[ $'$_placeholder_log_changes_flag_' = '\'true\'' ]] && DebugVar '$_placeholder_flag_'
+    }
+'$public_function_name'.Disable()
+    {
+    [[ $'$_placeholder_enable_' != '\'true\'' ]] && return
+    '$_placeholder_enable_'=false
+    [[ $'$_placeholder_log_changes_flag_' = '\'true\'' ]] && DebugVar '$_placeholder_enable_'
+    }
+'$public_function_name'.DontLogChanges()
+    {
+    [[ $'$_placeholder_log_changes_flag_' != '\'true\'' ]] && return
+    '$_placeholder_log_changes_flag_'=false
+    }
+'$public_function_name'.Enable()
+    {
+    [[ $'$_placeholder_enable_' = '\'true\'' ]] && return
+    '$_placeholder_enable_'=true
+    [[ $'$_placeholder_log_changes_flag_' = '\'true\'' ]] && DebugVar '$_placeholder_enable_'
+    }
+'$public_function_name'.Init()
+    {
+    '$_placeholder_size_'=0
+    '$_placeholder_text_'='\'\''
+    '$_placeholder_flag_'=false
+    '$_placeholder_log_changes_flag_'=true
+    '$_placeholder_enable_'=false
+    '$_placeholder_path_'='\'\''
+    }
+'$public_function_name'.IsDisabled()
+    {
+    [[ $'$_placeholder_enable_' != '\'true\'' ]]
+    }
+'$public_function_name'.IsEnabled()
+    {
+    [[ $'$_placeholder_enable_' = '\'true\'' ]]
+    }
+'$public_function_name'.IsNot()
+    {
+    [[ $'$_placeholder_flag_' != '\'true\'' ]]
+    }
+'$public_function_name'.IsSet()
+    {
+    [[ $'$_placeholder_flag_' = '\'true\'' ]]
+    }
+'$public_function_name'.LogChanges()
+    {
+    [[ $'$_placeholder_log_changes_flag_' = '\'true\'' ]] && return
+    '$_placeholder_log_changes_flag_'=true
+    }
+'$public_function_name'.Path()
+    {
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+        '$_placeholder_path_'=$2
+    else
+        echo -n "$'$_placeholder_path_'"
+    fi
     }
 '$public_function_name'.Set()
     {
@@ -5862,7 +5881,7 @@ Objects.Compile()
 
     # $1 = 'hash' (optional) - if specified, only return the internal checksum
 
-    local -r COMPILED_OBJECTS_HASH=322356176b6a9967fc482cbece7729ee
+    local -r COMPILED_OBJECTS_HASH=e1bdff15c65f6f259fb8963f30158825
 
     if [[ ${1:-} = hash ]]; then
         echo "$COMPILED_OBJECTS_HASH"
@@ -5876,121 +5895,121 @@ Objects.Compile()
     if [[ ! -e $COMPILED_OBJECTS_PATHFILE ]]; then
         ShowAsProc 'compiling objects' >&2
 
+        # session flags
+        Objects.Add.Flag Session.Backup
+        Objects.Add.Flag Session.Debug.To.File
+        Objects.Add.Flag Session.Debug.To.Screen
+        Objects.Add.Flag Session.Display.Clean
+        Objects.Add.Flag Session.IPKGs.Install
+        Objects.Add.Flag Session.LineSpace
+        Objects.Add.Flag Session.Lists.Built
+        Objects.Add.Flag Session.PIPs.Install
+        Objects.Add.Flag Session.ShowBackupLocation
+        Objects.Add.Flag Session.SkipPackageProcessing
+        Objects.Add.Flag Session.SuggestIssue
+        Objects.Add.Flag Session.Summary
+
         # user-selected option flags
-        Objects.Add User.Opts.Help.Abbreviations
-        Objects.Add User.Opts.Help.Actions
-        Objects.Add User.Opts.Help.ActionsAll
-        Objects.Add User.Opts.Help.Basic
-        Objects.Add User.Opts.Help.Options
-        Objects.Add User.Opts.Help.Packages
-        Objects.Add User.Opts.Help.Problems
-        Objects.Add User.Opts.Help.Tips
+        Objects.Add.Flag User.Opts.Help.Abbreviations
+        Objects.Add.Flag User.Opts.Help.Actions
+        Objects.Add.Flag User.Opts.Help.ActionsAll
+        Objects.Add.Flag User.Opts.Help.Basic
+        Objects.Add.Flag User.Opts.Help.Options
+        Objects.Add.Flag User.Opts.Help.Packages
+        Objects.Add.Flag User.Opts.Help.Problems
+        Objects.Add.Flag User.Opts.Help.Tips
 
-        Objects.Add User.Opts.Clean
-        Objects.Add User.Opts.Dependencies.Check
-        Objects.Add User.Opts.IgnoreFreeSpace
-        Objects.Add User.Opts.Versions.View
+        Objects.Add.Flag User.Opts.Clean
+        Objects.Add.Flag User.Opts.Dependencies.Check
+        Objects.Add.Flag User.Opts.IgnoreFreeSpace
+        Objects.Add.Flag User.Opts.Versions.View
 
-        Objects.Add User.Opts.Log.Last.Paste
-        Objects.Add User.Opts.Log.Last.View
-        Objects.Add User.Opts.Log.Tail.Paste
-        Objects.Add User.Opts.Log.Whole.View
+        Objects.Add.Flag User.Opts.Log.Last.Paste
+        Objects.Add.Flag User.Opts.Log.Last.View
+        Objects.Add.Flag User.Opts.Log.Tail.Paste
+        Objects.Add.Flag User.Opts.Log.Whole.View
 
-        Objects.Add User.Opts.Apps.All.Backup
-        Objects.Add User.Opts.Apps.All.Install
-        Objects.Add User.Opts.Apps.All.Reinstall
-        Objects.Add User.Opts.Apps.All.Restart
-        Objects.Add User.Opts.Apps.All.Restore
-        Objects.Add User.Opts.Apps.All.Start
-        Objects.Add User.Opts.Apps.All.Status
-        Objects.Add User.Opts.Apps.All.Stop
-        Objects.Add User.Opts.Apps.All.Uninstall
-        Objects.Add User.Opts.Apps.All.Upgrade
+        Objects.Add.Flag User.Opts.Apps.All.Backup
+        Objects.Add.Flag User.Opts.Apps.All.Install
+        Objects.Add.Flag User.Opts.Apps.All.Reinstall
+        Objects.Add.Flag User.Opts.Apps.All.Restart
+        Objects.Add.Flag User.Opts.Apps.All.Restore
+        Objects.Add.Flag User.Opts.Apps.All.Start
+        Objects.Add.Flag User.Opts.Apps.All.Status
+        Objects.Add.Flag User.Opts.Apps.All.Stop
+        Objects.Add.Flag User.Opts.Apps.All.Uninstall
+        Objects.Add.Flag User.Opts.Apps.All.Upgrade
 
-        Objects.Add User.Opts.Apps.List.All
-        Objects.Add User.Opts.Apps.List.Backups
-        Objects.Add User.Opts.Apps.List.Essential
-        Objects.Add User.Opts.Apps.List.Installed
-        Objects.Add User.Opts.Apps.List.NotInstalled
-        Objects.Add User.Opts.Apps.List.Optional
-        Objects.Add User.Opts.Apps.List.Standalone
-        Objects.Add User.Opts.Apps.List.Started
-        Objects.Add User.Opts.Apps.List.Stopped
-        Objects.Add User.Opts.Apps.List.Upgradable
+        Objects.Add.Flag User.Opts.Apps.List.All
+        Objects.Add.Flag User.Opts.Apps.List.Backups
+        Objects.Add.Flag User.Opts.Apps.List.Essential
+        Objects.Add.Flag User.Opts.Apps.List.Installed
+        Objects.Add.Flag User.Opts.Apps.List.NotInstalled
+        Objects.Add.Flag User.Opts.Apps.List.Optional
+        Objects.Add.Flag User.Opts.Apps.List.Standalone
+        Objects.Add.Flag User.Opts.Apps.List.Started
+        Objects.Add.Flag User.Opts.Apps.List.Stopped
+        Objects.Add.Flag User.Opts.Apps.List.Upgradable
 
         # lists
-        Objects.Add Args.Unknown
+        Objects.Add.List Args.Unknown
 
-        Objects.Add IPKGs.ToDownload
-        Objects.Add IPKGs.ToInstall
-        Objects.Add IPKGs.ToUninstall
+        Objects.Add.List IPKGs.ToDownload
+        Objects.Add.List IPKGs.ToInstall
+        Objects.Add.List IPKGs.ToUninstall
 
-        Objects.Add QPKGs.Disabled
-        Objects.Add QPKGs.Enabled
-        Objects.Add QPKGs.Essential
-        Objects.Add QPKGs.Installable
-        Objects.Add QPKGs.Installed
-        Objects.Add QPKGs.Missing
-        Objects.Add QPKGs.Names
-        Objects.Add QPKGs.NotInstalled
-        Objects.Add QPKGs.NotSupportsBackup
-        Objects.Add QPKGs.Optional
-        Objects.Add QPKGs.Standalone
-        Objects.Add QPKGs.SupportsBackup
-        Objects.Add QPKGs.Upgradable
+        Objects.Add.List QPKGs.Disabled
+        Objects.Add.List QPKGs.Enabled
+        Objects.Add.List QPKGs.Essential
+        Objects.Add.List QPKGs.Installable
+        Objects.Add.List QPKGs.Installed
+        Objects.Add.List QPKGs.Missing
+        Objects.Add.List QPKGs.Names
+        Objects.Add.List QPKGs.NotInstalled
+        Objects.Add.List QPKGs.NotSupportsBackup
+        Objects.Add.List QPKGs.Optional
+        Objects.Add.List QPKGs.Standalone
+        Objects.Add.List QPKGs.SupportsBackup
+        Objects.Add.List QPKGs.Upgradable
 
         # these lists contain package names to operate on
-        Objects.Add QPKGs.ToBackup
-        Objects.Add QPKGs.ToDownload
-        Objects.Add QPKGs.ToInstall
-        Objects.Add QPKGs.ToReinstall
-        Objects.Add QPKGs.ToRestart
-        Objects.Add QPKGs.ToRestore
-        Objects.Add QPKGs.ToStart
-        Objects.Add QPKGs.ToStatus
-        Objects.Add QPKGs.ToStop
-        Objects.Add QPKGs.ToUninstall
-        Objects.Add QPKGs.ToUpgrade
+        Objects.Add.List QPKGs.ToBackup
+        Objects.Add.List QPKGs.ToDownload
+        Objects.Add.List QPKGs.ToInstall
+        Objects.Add.List QPKGs.ToReinstall
+        Objects.Add.List QPKGs.ToRestart
+        Objects.Add.List QPKGs.ToRestore
+        Objects.Add.List QPKGs.ToStart
+        Objects.Add.List QPKGs.ToStatus
+        Objects.Add.List QPKGs.ToStop
+        Objects.Add.List QPKGs.ToUninstall
+        Objects.Add.List QPKGs.ToUpgrade
 
         # these lists contain package names where the operation was successful
-        Objects.Add QPKGs.IsBackup
-        Objects.Add QPKGs.IsDownload
-        Objects.Add QPKGs.IsInstall
-        Objects.Add QPKGs.IsReinstall
-        Objects.Add QPKGs.IsRestart
-        Objects.Add QPKGs.IsRestore
-        Objects.Add QPKGs.IsStart
-        Objects.Add QPKGs.IsStatus
-        Objects.Add QPKGs.IsStop
-        Objects.Add QPKGs.IsUninstall
-        Objects.Add QPKGs.IsUpgrade
+        Objects.Add.List QPKGs.IsBackup
+        Objects.Add.List QPKGs.IsDownload
+        Objects.Add.List QPKGs.IsInstall
+        Objects.Add.List QPKGs.IsReinstall
+        Objects.Add.List QPKGs.IsRestart
+        Objects.Add.List QPKGs.IsRestore
+        Objects.Add.List QPKGs.IsStart
+        Objects.Add.List QPKGs.IsStatus
+        Objects.Add.List QPKGs.IsStop
+        Objects.Add.List QPKGs.IsUninstall
+        Objects.Add.List QPKGs.IsUpgrade
 
         # these lists contain package names where the operation failed
-        Objects.Add QPKGs.UnBackup
-        Objects.Add QPKGs.UnDownload
-        Objects.Add QPKGs.UnInstall
-        Objects.Add QPKGs.UnReinstall
-        Objects.Add QPKGs.UnRestart
-        Objects.Add QPKGs.UnRestore
-        Objects.Add QPKGs.UnStart
-        Objects.Add QPKGs.UnStatus
-        Objects.Add QPKGs.UnStop
-        Objects.Add QPKGs.UnUninstall
-        Objects.Add QPKGs.UnUpgrade
-
-        # flags
-        Objects.Add Session.Backup
-        Objects.Add Session.Debug.To.File
-        Objects.Add Session.Debug.To.Screen
-        Objects.Add Session.Display.Clean
-        Objects.Add Session.IPKGs.Install
-        Objects.Add Session.LineSpace
-        Objects.Add Session.Lists.Built
-        Objects.Add Session.PIPs.Install
-        Objects.Add Session.ShowBackupLocation
-        Objects.Add Session.SkipPackageProcessing
-        Objects.Add Session.SuggestIssue
-        Objects.Add Session.Summary
+        Objects.Add.List QPKGs.UnBackup
+        Objects.Add.List QPKGs.UnDownload
+        Objects.Add.List QPKGs.UnInstall
+        Objects.Add.List QPKGs.UnReinstall
+        Objects.Add.List QPKGs.UnRestart
+        Objects.Add.List QPKGs.UnRestore
+        Objects.Add.List QPKGs.UnStart
+        Objects.Add.List QPKGs.UnStatus
+        Objects.Add.List QPKGs.UnStop
+        Objects.Add.List QPKGs.UnUninstall
+        Objects.Add.List QPKGs.UnUpgrade
     fi
 
     . "$COMPILED_OBJECTS_PATHFILE"
