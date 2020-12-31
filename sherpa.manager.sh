@@ -628,25 +628,6 @@ Session.Init()
 
     }
 
-Session.Build.StateLists()
-    {
-
-    Session.Lists.Built.IsSet && return
-
-    DebugFuncEntry
-    ShowAsProc 'building package state lists' >&2
-
-    QPKGs.InstallationState.Build
-    QPKGs.Upgradable.Build
-    QPKGs.Enabled.Build
-    QPKGs.Missing.Build
-
-    Session.Lists.Built.Set
-
-    DebugFuncExit; return 0
-
-    }
-
 Session.Arguments.Parse()
     {
 
@@ -3309,78 +3290,52 @@ QPKGs.EssentialOptionalStandalone.Build()
 
     }
 
-QPKGs.InstallationState.Build()
+Session.Build.StateLists()
     {
 
-    # Builds a list of QPKGs that can be installed or reinstalled by the user
+    # Builds several lists of QPKGs:
+    #   - can be installed or reinstalled by the user
+    #   - can be upgraded
+    #   - are installed and enabled or installed and disabled in [/etc/config/qpkg.conf]
+    #   - have config blocks in [/etc/config/qpkg.conf], but no files on-disk
+
+    Session.Lists.Built.IsSet && return
 
     DebugFuncEntry
-    local package=''
+    ShowAsProc 'building package state lists' >&2
 
-    for package in $(QPKGs.Names.Array); do
-        if QPKG.UserInstallable "$package"; then
-            QPKGs.Installable.Add "$package"
-        else
-            QPKGs.Installable.Remove "$package"
-        fi
-
-        if QPKG.Installed "$package"; then
-            QPKGs.Installed.Add "$package"
-            QPKGs.NotInstalled.Remove "$package"
-        else
-            QPKGs.NotInstalled.Add "$package"
-            QPKGs.Installed.Remove "$package"
-        fi
-    done
-
-    DebugFuncExit; return 0
-
-    }
-
-QPKGs.Upgradable.Build()
-    {
-
-    # Builds a list of QPKGs that can be upgraded
-
-    DebugFuncEntry
     local package=''
     local installed_version=''
     local remote_version=''
 
-    for package in $(QPKGs.Installed.Array); do
-        installed_version=$(QPKG.Installed.Version "$package")
-        remote_version=$(QPKG.Remote.Version "$package")
+    for package in $(QPKGs.Names.Array); do
+        QPKG.UserInstallable "$package" && QPKGs.Installable.Add "$package"
 
-        if [[ ${installed_version//./} != "${remote_version//./}" ]]; then
-            #QPKGs.Upgradable.Add "$package $installed_version $remote_version"
-            QPKGs.Upgradable.Add "$package"
+        if QPKG.Installed "$package"; then
+            QPKGs.Installed.Add "$package"
+
+            installed_version=$(QPKG.Installed.Version "$package")
+            remote_version=$(QPKG.Remote.Version "$package")
+
+            if [[ ${installed_version//./} != "${remote_version//./}" ]]; then
+                QPKGs.Upgradable.Add "$package"
+            else
+                QPKGs.Upgradable.Remove "$package"
+            fi
+
+            if QPKG.Enabled "$package"; then
+                QPKGs.Enabled.Add "$package"
+            else
+                QPKGs.Disabled.Add "$package"
+            fi
+
+            [[ ! -d $(QPKG.InstallPath "$package") ]] && QPKGs.Missing.Add "$package"
         else
-            QPKGs.Upgradable.Remove "$package"
+            QPKGs.NotInstalled.Add "$package"
         fi
     done
 
-    DebugFuncExit; return 0
-
-    }
-
-QPKGs.Enabled.Build()
-    {
-
-    # Builds a list of QPKGs that are installed and enabled or installed and disabled in [/etc/config/qpkg.conf]
-
-    DebugFuncEntry
-    local package=''
-
-    for package in $(QPKGs.Installed.Array); do
-        if QPKG.Enabled "$package"; then
-            QPKGs.Enabled.Add "$package"
-            QPKGs.Disabled.Remove "$package"
-        else
-            QPKGs.Disabled.Add "$package"
-            QPKGs.Enabled.Remove "$package"
-        fi
-    done
-
+    Session.Lists.Built.Set
     DebugFuncExit; return 0
 
     }
@@ -3401,22 +3356,6 @@ QPKGs.SupportsBackup.Build()
             QPKGs.NotSupportsBackup.Add "$package"
             QPKGs.SupportsBackup.Remove "$package"
         fi
-    done
-
-    DebugFuncExit; return 0
-
-    }
-
-QPKGs.Missing.Build()
-    {
-
-    # Builds a list of QPKGs that have config blocks in [/etc/config/qpkg.conf], but no files on-disk
-
-    DebugFuncEntry
-    local package=''
-
-    for package in $(QPKGs.Installed.Array); do
-        [[ ! -d $(QPKG.InstallPath "$package") ]] && QPKGs.Missing.Add "$package"
     done
 
     DebugFuncExit; return 0
@@ -3540,6 +3479,7 @@ QPKGs.Started.Show()
     return 0
 
     }
+
 QPKGs.Stopped.Show()
     {
 
@@ -5936,7 +5876,7 @@ Objects.Compile()
     if [[ ! -e $COMPILED_OBJECTS_PATHFILE ]]; then
         ShowAsProc 'compiling objects' >&2
 
-        # user-selected options
+        # user-selected option flags
         Objects.Add User.Opts.Help.Abbreviations
         Objects.Add User.Opts.Help.Actions
         Objects.Add User.Opts.Help.ActionsAll
