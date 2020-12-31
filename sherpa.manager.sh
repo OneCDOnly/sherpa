@@ -3398,45 +3398,35 @@ QPKGs.Statuses.Show()
     {
 
     local -a package_notes=()
+    local tier=''
 
     SmartCR
-    DisplayLineSpaceIfNoneAlready
-    DisplayAsHelpTitlePackageNamePlusSomething 'essentials' 'statuses'
 
-    for package in $(QPKGs.Essential.Array); do
-        package_notes=()
-        package_note=''
+    for tier in {Essential,Optional}; do
+        DisplayLineSpaceIfNoneAlready
+        DisplayAsHelpTitlePackageNamePlusSomething "${tier}s" 'statuses'
 
-        QPKGs.NotInstalled.Exist "$package" && package_notes+=(not-installed)
-        QPKGs.Enabled.Exist "$package" && package_notes+=($(ColourTextBrightGreen started))
-        QPKGs.Disabled.Exist "$package" && package_notes+=($(ColourTextBrightRed stopped))
-        QPKGs.Upgradable.Exist "$package" && package_notes+=($(ColourTextBrightOrange upgradable))
-        QPKGs.Missing.Exist "$package" && package_notes=($(ColourTextBrightRedBlink missing))
+        for package in $(QPKGs.$tier.Array); do
+            package_notes=()
+            package_note=''
 
-        [[ ${#package_notes[@]} -gt 0 ]] && package_note="${package_notes[*]}"
+            if QPKGs.NotInstalled.Exist "$package"; then
+                DisplayAsHelpPackageNamePlusSomething "$package" 'not installed'
+            else
+                QPKGs.Enabled.Exist "$package" && package_notes+=($(ColourTextBrightGreen started))
+                QPKGs.Disabled.Exist "$package" && package_notes+=($(ColourTextBrightRed stopped))
+                QPKGs.Upgradable.Exist "$package" && package_notes+=($(ColourTextBrightOrange upgradable))
+                QPKGs.Missing.Exist "$package" && package_notes=($(ColourTextBrightRedBlink missing))
 
-        DisplayAsHelpPackageNamePlusSomething "$package" "${package_note// /, }"
+                [[ ${#package_notes[@]} -gt 0 ]] && package_note="${package_notes[*]}"
+
+                DisplayAsHelpPackageNamePlusSomething "$package" "${package_note// /, }"
+            fi
+        done
+
+        DisplayLineSpaceIfNoneAlready
     done
 
-    Display
-    DisplayAsHelpTitlePackageNamePlusSomething 'optionals' 'statuses'
-
-    for package in $(QPKGs.Optional.Array); do
-        package_notes=()
-        package_note=''
-
-        QPKGs.NotInstalled.Exist "$package" && package_notes+=(not-installed)
-        QPKGs.Enabled.Exist "$package" && package_notes+=($(ColourTextBrightGreen started))
-        QPKGs.Disabled.Exist "$package" && package_notes+=($(ColourTextBrightRed stopped))
-        QPKGs.Upgradable.Exist "$package" && package_notes+=($(ColourTextBrightOrange upgradable))
-        QPKGs.Missing.Exist "$package" && package_notes=($(ColourTextBrightRedBlink missing))
-
-        [[ ${#package_notes[@]} -gt 0 ]] && package_note="${package_notes[*]}"
-
-        DisplayAsHelpPackageNamePlusSomething "$package" "${package_note// /, }"
-    done
-
-    DisplayLineSpaceIfNoneAlready
     return 0
 
     }
