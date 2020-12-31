@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# sherpa.manager.sh - (C)opyright (C) 2017-2020 OneCD [one.cd.only@gmail.com]
+# sherpa.manager.sh - (C)opyright (C) 2017-2021 OneCD [one.cd.only@gmail.com]
 #
 # This is the management script for the sherpa mini-package-manager.
 # It's automatically downloaded via the 'sherpa.loader.sh' script in the 'sherpa' QPKG.
@@ -52,7 +52,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=201231
+    readonly MANAGER_SCRIPT_VERSION=210101
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -881,7 +881,6 @@ Session.Arguments.Parse()
                         User.Opts.Help.Options.Set
                         ;;
                     packages_)
-                        Session.Build.StateLists
                         User.Opts.Help.Packages.Set
                         ;;
                     problems_)
@@ -2854,23 +2853,21 @@ Help.Packages.Show()
     {
 
     local package=''
+    local tier=''
 
     Help.Basic.Show
     DisplayLineSpaceIfNoneAlready
     Display "* One-or-more $(FormatAsHelpPackages) may be specified at-once"
-    Display
 
-    DisplayAsHelpTitlePackageNamePlusSomething 'essentials' 'package description'
+    for tier in {Essential,Optional}; do
+        DisplayLineSpaceIfNoneAlready
+        DisplayAsHelpTitlePackageNamePlusSomething "${tier}s" 'package description'
 
-    for package in $(QPKGs.Essential.Array); do
-        DisplayAsHelpPackageNamePlusSomething "$package" "$(QPKG.Desc "$package")"
-    done
+        for package in $(QPKGs.$tier.Array); do
+            DisplayAsHelpPackageNamePlusSomething "$package" "$(QPKG.Desc "$package")"
+        done
 
-    Display
-    DisplayAsHelpTitlePackageNamePlusSomething 'optionals' 'package description'
-
-    for package in $(QPKGs.Optional.Array); do
-        DisplayAsHelpPackageNamePlusSomething "$package" "$(QPKG.Desc "$package")"
+        DisplayLineSpaceIfNoneAlready
     done
 
     DisplayAsProjectSyntaxExample "abbreviations may also be used to specify $(FormatAsHelpPackages). To list these" 'list abs'
@@ -2982,24 +2979,23 @@ Help.PackageAbbreviations.Show()
     {
 
     local package=''
+    local tier=''
     local abs=''
+
     Help.Basic.Show
     DisplayLineSpaceIfNoneAlready
     Display "* $(FormatAsScriptTitle) recognises various abbreviations as $(FormatAsHelpPackages)"
-    Display
-    DisplayAsHelpTitlePackageNamePlusSomething 'essentials' 'acceptable abreviations'
 
-    for package in $(QPKGs.Essential.Array); do
-        abs=$(QPKG.Abbrvs "$package")
-        [[ -n $abs ]] && DisplayAsHelpPackageNamePlusSomething "$package" "${abs// /, }"
-    done
+    for tier in {Essential,Optional}; do
+        DisplayLineSpaceIfNoneAlready
+        DisplayAsHelpTitlePackageNamePlusSomething "${tier}s" 'acceptable abreviations'
 
-    Display
-    DisplayAsHelpTitlePackageNamePlusSomething 'optionals' 'acceptable abreviations'
+        for package in $(QPKGs.$tier.Array); do
+            abs=$(QPKG.Abbrvs "$package")
+            [[ -n $abs ]] && DisplayAsHelpPackageNamePlusSomething "$package" "${abs// /, }"
+        done
 
-    for package in $(QPKGs.Optional.Array); do
-        abs=$(QPKG.Abbrvs "$package")
-        [[ -n $abs ]] && DisplayAsHelpPackageNamePlusSomething "$package" "${abs// /, }"
+        DisplayLineSpaceIfNoneAlready
     done
 
     DisplayAsProjectSyntaxExample "example: to install $(FormatAsPackageName SABnzbd), $(FormatAsPackageName Mylar3) and $(FormatAsPackageName nzbToMedia) all-at-once" 'install sab my nzb2'
