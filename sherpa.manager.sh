@@ -2488,7 +2488,7 @@ _MonitorDirSize_()
     previous_clean_msg=''
 
     while [[ -e $monitor_flag_pathfile ]]; do
-        current_bytes=$($GNU_FIND_CMD "$1" -type f -name '*.ipk' -exec $DU_CMD --bytes --total --apparent-size {} + 2> /dev/null | $GREP_CMD total$ | $CUT_CMD -f1)
+        current_bytes=$($GNU_FIND_CMD "$1" -type f -name '*.ipk' -exec $DU_CMD --bytes --total --apparent-size {} + 2>/dev/null | $GREP_CMD total$ | $CUT_CMD -f1)
         [[ -z $current_bytes ]] && current_bytes=0
 
         if [[ $current_bytes -ne $last_bytes ]]; then
@@ -4005,7 +4005,7 @@ QPKG.Download()
     local log_pathfile=$LOGS_PATH/$local_filename.$DOWNLOAD_LOG_FILE
 
     if [[ -z $remote_url ]]; then
-        DebugAsWarn "no URL found for this package $(FormatAsPackageName "$1")"
+        DebugAsError "no URL found for this package $(FormatAsPackageName "$1") (unsupported arch?)"
         DebugFuncExit; return
     fi
 
@@ -4013,7 +4013,7 @@ QPKG.Download()
         if FileMatchesMD5 "$local_pathfile" "$remote_md5"; then
             DebugInfo "local package $(FormatAsFileName "$local_filename") checksum correct, so skipping download"
         else
-            DebugAsWarn "local package $(FormatAsFileName "$local_filename") checksum incorrect"
+            DebugAsError "local package $(FormatAsFileName "$local_filename") checksum incorrect"
             DebugInfo "deleting $(FormatAsFileName "$local_filename")"
             rm -f "$local_pathfile"
         fi
@@ -4779,10 +4779,11 @@ QPKG.FixAppCenterStatus()
     # $1 = QPKG name to fix
 
     [[ -z $1 ]] && return 1
-    QPKG.NotInstalled "$1" && return 0
 
     # KLUDGE: 'clean' QTS 4.5.1 App Center notifier status
-    [[ -e $APP_CENTER_NOTIFIER ]] && $APP_CENTER_NOTIFIER --clean "$1" > /dev/null 2>&1
+    [[ -e $APP_CENTER_NOTIFIER ]] && $APP_CENTER_NOTIFIER --clean "$1" &>/dev/null
+
+    QPKG.NotInstalled "$1" && return 0
 
     # KLUDGE: need this for 'Entware' and 'Par2' packages as they don't add a status line to qpkg.conf
     $SETCFG_CMD "$1" Status complete -f "$APP_CENTER_CONFIG_PATHFILE"
@@ -4796,7 +4797,7 @@ MakePath()
 
     [[ -z $1 || -z $2 ]] && return 1
 
-    mkdir -p "$1" 2> /dev/null; resultcode=$?
+    mkdir -p "$1" 2>/dev/null; resultcode=$?
 
     if [[ $resultcode -ne 0 ]]; then
         ShowAsEror "unable to create $2 path $(FormatAsFileName "$1") $(FormatAsExitcode $resultcode)"
