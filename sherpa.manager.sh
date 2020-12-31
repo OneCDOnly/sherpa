@@ -4917,7 +4917,7 @@ FormatAsHelpAction()
 FormatAsHelpPackages()
     {
 
-    ColourTextBrightOrange '[packages]'
+    ColourTextBrightOrange '[multi-packages]'
 
     }
 
