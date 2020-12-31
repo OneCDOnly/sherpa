@@ -3407,6 +3407,9 @@ QPKGs.Backups.Show()
     if [[ -e $GNU_FIND_CMD ]]; then
         DisplayAsHelpTitleFileNamePlusSomething 'backup file' 'last backup date'
 
+        # TODO: - sort files by status change epoch time (oldest-first), then convert into locale's time format for display.
+        #       - highlight names for old backups (> 1 month).
+
         $GNU_FIND_CMD "$(Session.Backup.Path)"/*.config.tar.gz -maxdepth 1 -printf '   %-35f%Cc\n' 2>/dev/null
     else
         (cd "$(Session.Backup.Path)" && ls -1 ./*.config.tar.gz)
