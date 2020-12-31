@@ -1033,8 +1033,8 @@ Session.Arguments.Parse()
                 esac
                 ;;
             status_)
-                case $scope in
-                    all_)
+#                 case $scope in
+#                     all_)
 #                         QPKGs.ToStatus.Add "$(QPKGs.Installable.Array)"
                         User.Opts.Apps.All.Status.Set
                         operation=''
@@ -1053,8 +1053,8 @@ Session.Arguments.Parse()
 #                     *)
 #                         QPKGs.ToStatus.Add "$package"
 #                         ;;
-                esac
-                ;;
+#                 esac
+#                 ;;
             stop_)
                 case $scope in
                     all_)
@@ -1848,36 +1848,36 @@ Session.Results()
         elif User.Opts.Log.Last.View.IsSet; then        # default operation when scope is unspecified
             Log.Last.View
         fi
+    fi
 
-        if User.Opts.Apps.List.All.IsSet; then
-            QPKGs.All.Show
-        elif User.Opts.Apps.List.NotInstalled.IsSet; then
-            QPKGs.NotInstalled.Show
-        elif User.Opts.Apps.List.Started.IsSet; then
-            QPKGs.Started.Show
-        elif User.Opts.Apps.List.Stopped.IsSet; then
-            QPKGs.Stopped.Show
-        elif User.Opts.Apps.List.Upgradable.IsSet; then
-            QPKGs.Upgradable.Show
-        elif User.Opts.Apps.List.Essential.IsSet; then
-            QPKGs.Essential.Show
-        elif User.Opts.Apps.List.Optional.IsSet; then
-            QPKGs.Optional.Show
-        elif User.Opts.Apps.List.Standalone.IsSet; then
-            QPKGs.Standalone.Show
-        elif User.Opts.Apps.List.Backups.IsSet; then
-            QPKGs.Backups.Show
-        elif User.Opts.Apps.All.Status.IsSet; then
-            QPKGs.Statuses.Show
-        elif User.Opts.Apps.List.Installed.IsSet; then  # default operation when scope is unspecified
-            QPKGs.Installed.Show
-        fi
+    if User.Opts.Apps.List.All.IsSet; then
+        QPKGs.All.Show
+    elif User.Opts.Apps.List.NotInstalled.IsSet; then
+        QPKGs.NotInstalled.Show
+    elif User.Opts.Apps.List.Started.IsSet; then
+        QPKGs.Started.Show
+    elif User.Opts.Apps.List.Stopped.IsSet; then
+        QPKGs.Stopped.Show
+    elif User.Opts.Apps.List.Upgradable.IsSet; then
+        QPKGs.Upgradable.Show
+    elif User.Opts.Apps.List.Essential.IsSet; then
+        QPKGs.Essential.Show
+    elif User.Opts.Apps.List.Optional.IsSet; then
+        QPKGs.Optional.Show
+    elif User.Opts.Apps.List.Standalone.IsSet; then
+        QPKGs.Standalone.Show
+    elif User.Opts.Apps.List.Backups.IsSet; then
+        QPKGs.Backups.Show
+    elif User.Opts.Apps.All.Status.IsSet; then
+        QPKGs.Statuses.Show
+    elif User.Opts.Apps.List.Installed.IsSet; then  # default operation when scope is unspecified
+        QPKGs.Installed.Show
+    fi
 
-        if User.Opts.Log.Tail.Paste.IsSet; then
-            Log.Tail.Paste.Online
-        elif User.Opts.Log.Last.Paste.IsSet; then       # default operation when scope is unspecified
-            Log.Last.Paste.Online
-        fi
+    if User.Opts.Log.Tail.Paste.IsSet; then
+        Log.Tail.Paste.Online
+    elif User.Opts.Log.Last.Paste.IsSet; then       # default operation when scope is unspecified
+        Log.Last.Paste.Online
     fi
 
     if User.Opts.Help.Actions.IsSet; then
