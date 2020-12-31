@@ -42,8 +42,6 @@ set -o pipefail
 
 readonly USER_ARGS_RAW=$*
 
-# TASK: add 'stopped' as a scope?
-
 Session.Init()
     {
 
@@ -718,7 +716,7 @@ Session.Arguments.Parse()
             DebugAsProc 'no operation set: checking for scopes that will run without an operation'
 
             case $arg in
-                abs|action|actions|all-actions|backups|essentials|installable|installed|l|last|log|option|optionals|options|package|packages|problems|standalone|standalones|tips|upgradable|version|versions)
+                abs|action|actions|all-actions|backups|essentials|installable|installed|l|last|log|option|optionals|options|package|packages|problems|standalone|standalones|started|stopped|tips|upgradable|version|versions)
                     operation=help_
                     scope=''
                     scope_incomplete=true
@@ -735,7 +733,7 @@ Session.Arguments.Parse()
             DebugAsProc 'operation has been set: checking for valid scope variations'
 
             case $arg in
-                abs|all-actions|problems|tips)
+                abs|all-actions|backups|installable|installed|log|problems|started|stopped|tips|upgradable)
                     scope=${arg}_
                     scope_incomplete=false
                     arg_identified=true
@@ -750,28 +748,13 @@ Session.Arguments.Parse()
                     scope_incomplete=false
                     arg_identified=true
                     ;;
-                backups)
-                    scope=${arg}_
-                    scope_incomplete=false
-                    arg_identified=true
-                    ;;
                 essential|essentials)
                     scope=essential_
                     scope_incomplete=false
                     arg_identified=true
                     ;;
-                installable|installed)
-                    scope=${arg}_
-                    scope_incomplete=false
-                    arg_identified=true
-                    ;;
                 l|last)
                     scope=last_
-                    scope_incomplete=false
-                    arg_identified=true
-                    ;;
-                log)
-                    scope=${arg}_
                     scope_incomplete=false
                     arg_identified=true
                     ;;
@@ -792,11 +775,6 @@ Session.Arguments.Parse()
                     ;;
                 standalone|standalones)
                     scope=standalone_
-                    scope_incomplete=false
-                    arg_identified=true
-                    ;;
-                upgradable)
-                    scope=${arg}_
                     scope_incomplete=false
                     arg_identified=true
                     ;;
@@ -860,6 +838,12 @@ Session.Arguments.Parse()
                         ;;
                     standalone_)
                         QPKGs.ToBackup.Add "$(QPKGs.Standalone.Array)"
+                        ;;
+                    started_)
+                        QPKGs.ToBackup.Add "$(QPKGs.Enabled.Array)"
+                        ;;
+                    stopped_)
+                        QPKGs.ToBackup.Add "$(QPKGs.Disabled.Array)"
                         ;;
                     *)
                         QPKGs.ToBackup.Add "$package"
@@ -926,9 +910,19 @@ Session.Arguments.Parse()
                         User.Opts.Apps.List.Standalone.Set
                         Session.Display.Clean.Set
                         ;;
+                    started_)
+                        Session.Build.StateLists
+                        User.Opts.Apps.List.Started.Set
+                        Session.Display.Clean.Set
+                        ;;
                     status_)
                         Session.Build.StateLists
                         User.Opts.Apps.All.Status.Set
+                        ;;
+                    stopped_)
+                        Session.Build.StateLists
+                        User.Opts.Apps.List.Stopped.Set
+                        Session.Display.Clean.Set
                         ;;
                     tips_)
                         User.Opts.Help.Tips.Set
@@ -1049,6 +1043,9 @@ Session.Arguments.Parse()
                     standalone_)
                         QPKGs.ToStart.Add "$(QPKGs.Standalone.Array)"
                         ;;
+                    stopped_)
+                        QPKGs.ToStart.Add "$(QPKGs.Disabled.Array)"
+                        ;;
                     *)
                         QPKGs.ToStart.Add "$package"
                         ;;
@@ -1092,6 +1089,9 @@ Session.Arguments.Parse()
                     standalone_)
                         QPKGs.ToStop.Add "$(QPKGs.Standalone.Array)"
                         ;;
+                    started_)
+                        QPKGs.ToStop.Add "$(QPKGs.Enabled.Array)"
+                        ;;
                     *)
                         QPKGs.ToStop.Add "$package"
                         ;;
@@ -1128,6 +1128,12 @@ Session.Arguments.Parse()
                         ;;
                     standalone_)
                         QPKGs.ToUpgrade.Add "$(QPKGs.Standalone.Array)"
+                        ;;
+                    started_)
+                        QPKGs.ToUpgrade.Add "$(QPKGs.Enabled.Array)"
+                        ;;
+                    stopped_)
+                        QPKGs.ToUpgrade.Add "$(QPKGs.Disabled.Array)"
                         ;;
                     *)
                         QPKGs.ToUpgrade.Add "$package"
@@ -1866,6 +1872,10 @@ Session.Results()
             QPKGs.All.Show
         elif User.Opts.Apps.List.NotInstalled.IsSet; then
             QPKGs.NotInstalled.Show
+        elif User.Opts.Apps.List.Started.IsSet; then
+            QPKGs.Started.Show
+        elif User.Opts.Apps.List.Stopped.IsSet; then
+            QPKGs.Stopped.Show
         elif User.Opts.Apps.List.Upgradable.IsSet; then
             QPKGs.Upgradable.Show
         elif User.Opts.Apps.List.Essential.IsSet; then
@@ -3511,6 +3521,31 @@ QPKGs.NotInstalled.Show()
     local package=''
 
     for package in $(QPKGs.NotInstalled.Array); do
+        Display "$package"
+    done
+
+    return 0
+
+    }
+
+QPKGs.Started.Show()
+    {
+
+    local package=''
+
+    for package in $(QPKGs.Enabled.Array); do
+        Display "$package"
+    done
+
+    return 0
+
+    }
+QPKGs.Stopped.Show()
+    {
+
+    local package=''
+
+    for package in $(QPKGs.Disabled.Array); do
         Display "$package"
     done
 
@@ -5887,7 +5922,7 @@ Objects.Compile()
 
     # $1 = 'hash' (optional) - if specified, only return the internal checksum
 
-    local -r COMPILED_OBJECTS_HASH=8df2c198893c7eb4fb01ea0eb0bd8044
+    local -r COMPILED_OBJECTS_HASH=322356176b6a9967fc482cbece7729ee
 
     if [[ ${1:-} = hash ]]; then
         echo "$COMPILED_OBJECTS_HASH"
@@ -5939,6 +5974,8 @@ Objects.Compile()
         Objects.Add User.Opts.Apps.List.NotInstalled
         Objects.Add User.Opts.Apps.List.Optional
         Objects.Add User.Opts.Apps.List.Standalone
+        Objects.Add User.Opts.Apps.List.Started
+        Objects.Add User.Opts.Apps.List.Stopped
         Objects.Add User.Opts.Apps.List.Upgradable
 
         # lists
@@ -5948,13 +5985,13 @@ Objects.Compile()
         Objects.Add IPKGs.ToInstall
         Objects.Add IPKGs.ToUninstall
 
+        Objects.Add QPKGs.Disabled
         Objects.Add QPKGs.Enabled
         Objects.Add QPKGs.Essential
         Objects.Add QPKGs.Installable
         Objects.Add QPKGs.Installed
         Objects.Add QPKGs.Missing
         Objects.Add QPKGs.Names
-        Objects.Add QPKGs.Disabled
         Objects.Add QPKGs.NotInstalled
         Objects.Add QPKGs.NotSupportsBackup
         Objects.Add QPKGs.Optional

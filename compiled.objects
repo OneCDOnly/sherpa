@@ -5047,6 +5047,312 @@ User.Opts.Apps.List.Standalone.Text()
     }
 User.Opts.Apps.List.Standalone.Init
 
+User.Opts.Apps.List.Started.Add()
+    {
+    local array=(${1})
+    local item=''
+    for item in "${array[@]:-}"; do
+        [[ " ${_object_user_opts_apps_list_started_array_[*]:-} " != *"$item"* ]] && _object_user_opts_apps_list_started_array_+=("$item")
+    done
+    }
+User.Opts.Apps.List.Started.Array()
+    {
+    echo -n "${_object_user_opts_apps_list_started_array_[@]:-}"
+    }
+User.Opts.Apps.List.Started.Clear()
+    {
+    [[ $_object_user_opts_apps_list_started_flag_ != 'true' ]] && return
+    _object_user_opts_apps_list_started_flag_=false
+    [[ $_object_user_opts_apps_list_started_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_started_flag_
+    }
+User.Opts.Apps.List.Started.Count()
+    {
+    echo "${#_object_user_opts_apps_list_started_array_[@]:-}"
+    }
+User.Opts.Apps.List.Started.Disable()
+    {
+    [[ $_object_user_opts_apps_list_started_enable_ != 'true' ]] && return
+    _object_user_opts_apps_list_started_enable_=false
+    [[ $_object_user_opts_apps_list_started_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_started_enable_
+    }
+User.Opts.Apps.List.Started.DontLogChanges()
+    {
+    [[ $_object_user_opts_apps_list_started_changes_flag_ != 'true' ]] && return
+    _object_user_opts_apps_list_started_changes_flag_=false
+    }
+User.Opts.Apps.List.Started.Enable()
+    {
+    [[ $_object_user_opts_apps_list_started_enable_ = 'true' ]] && return
+    _object_user_opts_apps_list_started_enable_=true
+    [[ $_object_user_opts_apps_list_started_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_started_enable_
+    }
+User.Opts.Apps.List.Started.Exist()
+    {
+    [[ ${_object_user_opts_apps_list_started_array_[*]:-} == *"$1"* ]]
+    }
+User.Opts.Apps.List.Started.First()
+    {
+    echo "${_object_user_opts_apps_list_started_array_[0]}"
+    }
+User.Opts.Apps.List.Started.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_user_opts_apps_list_started_array_[@]:-} ]] && index=${#_object_user_opts_apps_list_started_array_[@]}
+    echo -n "${_object_user_opts_apps_list_started_array_[((index-1))]}"
+    }
+User.Opts.Apps.List.Started.Init()
+    {
+    _object_user_opts_apps_list_started_size_=0
+    _object_user_opts_apps_list_started_text_=''
+    _object_user_opts_apps_list_started_flag_=false
+    _object_user_opts_apps_list_started_changes_flag_=true
+    _object_user_opts_apps_list_started_enable_=false
+    _object_user_opts_apps_list_started_array_=()
+    _object_user_opts_apps_list_started_array_index_=1
+    _object_user_opts_apps_list_started_path_=''
+    }
+User.Opts.Apps.List.Started.IsAny()
+    {
+    [[ ${#_object_user_opts_apps_list_started_array_[@]:-} -gt 0 ]]
+    }
+User.Opts.Apps.List.Started.IsDisabled()
+    {
+    [[ $_object_user_opts_apps_list_started_enable_ != 'true' ]]
+    }
+User.Opts.Apps.List.Started.IsEnabled()
+    {
+    [[ $_object_user_opts_apps_list_started_enable_ = 'true' ]]
+    }
+User.Opts.Apps.List.Started.IsNone()
+    {
+    [[ ${#_object_user_opts_apps_list_started_array_[@]:-} -eq 0 ]]
+    }
+User.Opts.Apps.List.Started.IsNot()
+    {
+    [[ $_object_user_opts_apps_list_started_flag_ != 'true' ]]
+    }
+User.Opts.Apps.List.Started.IsSet()
+    {
+    [[ $_object_user_opts_apps_list_started_flag_ = 'true' ]]
+    }
+User.Opts.Apps.List.Started.List()
+    {
+    echo -n "${_object_user_opts_apps_list_started_array_[*]:-}"
+    }
+User.Opts.Apps.List.Started.ListCSV()
+    {
+    echo -n "${_object_user_opts_apps_list_started_array_[*]:-}" | tr ' ' ','
+    }
+User.Opts.Apps.List.Started.LogChanges()
+    {
+    [[ $_object_user_opts_apps_list_started_changes_flag_ = 'true' ]] && return
+    _object_user_opts_apps_list_started_changes_flag_=true
+    }
+User.Opts.Apps.List.Started.Path()
+    {
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+        _object_user_opts_apps_list_started_path_=$2
+    else
+        echo -n "$_object_user_opts_apps_list_started_path_"
+    fi
+    }
+User.Opts.Apps.List.Started.Remove()
+    {
+    local argument_array=(${1})
+    local temp_array=()
+    local argument=''
+    local item=''
+    local matched=false
+    for item in "${_object_user_opts_apps_list_started_array_[@]:-}"; do
+        matched=false
+        for argument in "${argument_array[@]:-}"; do
+            if [[ $argument = $item ]]; then
+                matched=true; break
+            fi
+        done
+        [[ $matched = false ]] && temp_array+=("$item")
+    done
+    _object_user_opts_apps_list_started_array_=("${temp_array[@]:-}")
+    [[ -z ${_object_user_opts_apps_list_started_array_[*]} ]] && _object_user_opts_apps_list_started_array_=()
+    }
+User.Opts.Apps.List.Started.Set()
+    {
+    [[ $_object_user_opts_apps_list_started_flag_ = 'true' ]] && return
+    _object_user_opts_apps_list_started_flag_=true
+    [[ $_object_user_opts_apps_list_started_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_started_flag_
+    }
+User.Opts.Apps.List.Started.Size()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_apps_list_started_size_=$2
+    else
+        echo -n $_object_user_opts_apps_list_started_size_
+    fi
+    }
+User.Opts.Apps.List.Started.Text()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_apps_list_started_text_=$2
+    else
+        echo -n "$_object_user_opts_apps_list_started_text_"
+    fi
+    }
+User.Opts.Apps.List.Started.Init
+
+User.Opts.Apps.List.Stopped.Add()
+    {
+    local array=(${1})
+    local item=''
+    for item in "${array[@]:-}"; do
+        [[ " ${_object_user_opts_apps_list_stopped_array_[*]:-} " != *"$item"* ]] && _object_user_opts_apps_list_stopped_array_+=("$item")
+    done
+    }
+User.Opts.Apps.List.Stopped.Array()
+    {
+    echo -n "${_object_user_opts_apps_list_stopped_array_[@]:-}"
+    }
+User.Opts.Apps.List.Stopped.Clear()
+    {
+    [[ $_object_user_opts_apps_list_stopped_flag_ != 'true' ]] && return
+    _object_user_opts_apps_list_stopped_flag_=false
+    [[ $_object_user_opts_apps_list_stopped_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_stopped_flag_
+    }
+User.Opts.Apps.List.Stopped.Count()
+    {
+    echo "${#_object_user_opts_apps_list_stopped_array_[@]:-}"
+    }
+User.Opts.Apps.List.Stopped.Disable()
+    {
+    [[ $_object_user_opts_apps_list_stopped_enable_ != 'true' ]] && return
+    _object_user_opts_apps_list_stopped_enable_=false
+    [[ $_object_user_opts_apps_list_stopped_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_stopped_enable_
+    }
+User.Opts.Apps.List.Stopped.DontLogChanges()
+    {
+    [[ $_object_user_opts_apps_list_stopped_changes_flag_ != 'true' ]] && return
+    _object_user_opts_apps_list_stopped_changes_flag_=false
+    }
+User.Opts.Apps.List.Stopped.Enable()
+    {
+    [[ $_object_user_opts_apps_list_stopped_enable_ = 'true' ]] && return
+    _object_user_opts_apps_list_stopped_enable_=true
+    [[ $_object_user_opts_apps_list_stopped_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_stopped_enable_
+    }
+User.Opts.Apps.List.Stopped.Exist()
+    {
+    [[ ${_object_user_opts_apps_list_stopped_array_[*]:-} == *"$1"* ]]
+    }
+User.Opts.Apps.List.Stopped.First()
+    {
+    echo "${_object_user_opts_apps_list_stopped_array_[0]}"
+    }
+User.Opts.Apps.List.Stopped.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_user_opts_apps_list_stopped_array_[@]:-} ]] && index=${#_object_user_opts_apps_list_stopped_array_[@]}
+    echo -n "${_object_user_opts_apps_list_stopped_array_[((index-1))]}"
+    }
+User.Opts.Apps.List.Stopped.Init()
+    {
+    _object_user_opts_apps_list_stopped_size_=0
+    _object_user_opts_apps_list_stopped_text_=''
+    _object_user_opts_apps_list_stopped_flag_=false
+    _object_user_opts_apps_list_stopped_changes_flag_=true
+    _object_user_opts_apps_list_stopped_enable_=false
+    _object_user_opts_apps_list_stopped_array_=()
+    _object_user_opts_apps_list_stopped_array_index_=1
+    _object_user_opts_apps_list_stopped_path_=''
+    }
+User.Opts.Apps.List.Stopped.IsAny()
+    {
+    [[ ${#_object_user_opts_apps_list_stopped_array_[@]:-} -gt 0 ]]
+    }
+User.Opts.Apps.List.Stopped.IsDisabled()
+    {
+    [[ $_object_user_opts_apps_list_stopped_enable_ != 'true' ]]
+    }
+User.Opts.Apps.List.Stopped.IsEnabled()
+    {
+    [[ $_object_user_opts_apps_list_stopped_enable_ = 'true' ]]
+    }
+User.Opts.Apps.List.Stopped.IsNone()
+    {
+    [[ ${#_object_user_opts_apps_list_stopped_array_[@]:-} -eq 0 ]]
+    }
+User.Opts.Apps.List.Stopped.IsNot()
+    {
+    [[ $_object_user_opts_apps_list_stopped_flag_ != 'true' ]]
+    }
+User.Opts.Apps.List.Stopped.IsSet()
+    {
+    [[ $_object_user_opts_apps_list_stopped_flag_ = 'true' ]]
+    }
+User.Opts.Apps.List.Stopped.List()
+    {
+    echo -n "${_object_user_opts_apps_list_stopped_array_[*]:-}"
+    }
+User.Opts.Apps.List.Stopped.ListCSV()
+    {
+    echo -n "${_object_user_opts_apps_list_stopped_array_[*]:-}" | tr ' ' ','
+    }
+User.Opts.Apps.List.Stopped.LogChanges()
+    {
+    [[ $_object_user_opts_apps_list_stopped_changes_flag_ = 'true' ]] && return
+    _object_user_opts_apps_list_stopped_changes_flag_=true
+    }
+User.Opts.Apps.List.Stopped.Path()
+    {
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+        _object_user_opts_apps_list_stopped_path_=$2
+    else
+        echo -n "$_object_user_opts_apps_list_stopped_path_"
+    fi
+    }
+User.Opts.Apps.List.Stopped.Remove()
+    {
+    local argument_array=(${1})
+    local temp_array=()
+    local argument=''
+    local item=''
+    local matched=false
+    for item in "${_object_user_opts_apps_list_stopped_array_[@]:-}"; do
+        matched=false
+        for argument in "${argument_array[@]:-}"; do
+            if [[ $argument = $item ]]; then
+                matched=true; break
+            fi
+        done
+        [[ $matched = false ]] && temp_array+=("$item")
+    done
+    _object_user_opts_apps_list_stopped_array_=("${temp_array[@]:-}")
+    [[ -z ${_object_user_opts_apps_list_stopped_array_[*]} ]] && _object_user_opts_apps_list_stopped_array_=()
+    }
+User.Opts.Apps.List.Stopped.Set()
+    {
+    [[ $_object_user_opts_apps_list_stopped_flag_ = 'true' ]] && return
+    _object_user_opts_apps_list_stopped_flag_=true
+    [[ $_object_user_opts_apps_list_stopped_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_stopped_flag_
+    }
+User.Opts.Apps.List.Stopped.Size()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_apps_list_stopped_size_=$2
+    else
+        echo -n $_object_user_opts_apps_list_stopped_size_
+    fi
+    }
+User.Opts.Apps.List.Stopped.Text()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_apps_list_stopped_text_=$2
+    else
+        echo -n "$_object_user_opts_apps_list_stopped_text_"
+    fi
+    }
+User.Opts.Apps.List.Stopped.Init
+
 User.Opts.Apps.List.Upgradable.Add()
     {
     local array=(${1})
@@ -5811,6 +6117,159 @@ IPKGs.ToUninstall.Text()
     fi
     }
 IPKGs.ToUninstall.Init
+
+QPKGs.Disabled.Add()
+    {
+    local array=(${1})
+    local item=''
+    for item in "${array[@]:-}"; do
+        [[ " ${_object_qpkgs_disabled_array_[*]:-} " != *"$item"* ]] && _object_qpkgs_disabled_array_+=("$item")
+    done
+    }
+QPKGs.Disabled.Array()
+    {
+    echo -n "${_object_qpkgs_disabled_array_[@]:-}"
+    }
+QPKGs.Disabled.Clear()
+    {
+    [[ $_object_qpkgs_disabled_flag_ != 'true' ]] && return
+    _object_qpkgs_disabled_flag_=false
+    [[ $_object_qpkgs_disabled_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_disabled_flag_
+    }
+QPKGs.Disabled.Count()
+    {
+    echo "${#_object_qpkgs_disabled_array_[@]:-}"
+    }
+QPKGs.Disabled.Disable()
+    {
+    [[ $_object_qpkgs_disabled_enable_ != 'true' ]] && return
+    _object_qpkgs_disabled_enable_=false
+    [[ $_object_qpkgs_disabled_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_disabled_enable_
+    }
+QPKGs.Disabled.DontLogChanges()
+    {
+    [[ $_object_qpkgs_disabled_changes_flag_ != 'true' ]] && return
+    _object_qpkgs_disabled_changes_flag_=false
+    }
+QPKGs.Disabled.Enable()
+    {
+    [[ $_object_qpkgs_disabled_enable_ = 'true' ]] && return
+    _object_qpkgs_disabled_enable_=true
+    [[ $_object_qpkgs_disabled_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_disabled_enable_
+    }
+QPKGs.Disabled.Exist()
+    {
+    [[ ${_object_qpkgs_disabled_array_[*]:-} == *"$1"* ]]
+    }
+QPKGs.Disabled.First()
+    {
+    echo "${_object_qpkgs_disabled_array_[0]}"
+    }
+QPKGs.Disabled.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_qpkgs_disabled_array_[@]:-} ]] && index=${#_object_qpkgs_disabled_array_[@]}
+    echo -n "${_object_qpkgs_disabled_array_[((index-1))]}"
+    }
+QPKGs.Disabled.Init()
+    {
+    _object_qpkgs_disabled_size_=0
+    _object_qpkgs_disabled_text_=''
+    _object_qpkgs_disabled_flag_=false
+    _object_qpkgs_disabled_changes_flag_=true
+    _object_qpkgs_disabled_enable_=false
+    _object_qpkgs_disabled_array_=()
+    _object_qpkgs_disabled_array_index_=1
+    _object_qpkgs_disabled_path_=''
+    }
+QPKGs.Disabled.IsAny()
+    {
+    [[ ${#_object_qpkgs_disabled_array_[@]:-} -gt 0 ]]
+    }
+QPKGs.Disabled.IsDisabled()
+    {
+    [[ $_object_qpkgs_disabled_enable_ != 'true' ]]
+    }
+QPKGs.Disabled.IsEnabled()
+    {
+    [[ $_object_qpkgs_disabled_enable_ = 'true' ]]
+    }
+QPKGs.Disabled.IsNone()
+    {
+    [[ ${#_object_qpkgs_disabled_array_[@]:-} -eq 0 ]]
+    }
+QPKGs.Disabled.IsNot()
+    {
+    [[ $_object_qpkgs_disabled_flag_ != 'true' ]]
+    }
+QPKGs.Disabled.IsSet()
+    {
+    [[ $_object_qpkgs_disabled_flag_ = 'true' ]]
+    }
+QPKGs.Disabled.List()
+    {
+    echo -n "${_object_qpkgs_disabled_array_[*]:-}"
+    }
+QPKGs.Disabled.ListCSV()
+    {
+    echo -n "${_object_qpkgs_disabled_array_[*]:-}" | tr ' ' ','
+    }
+QPKGs.Disabled.LogChanges()
+    {
+    [[ $_object_qpkgs_disabled_changes_flag_ = 'true' ]] && return
+    _object_qpkgs_disabled_changes_flag_=true
+    }
+QPKGs.Disabled.Path()
+    {
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+        _object_qpkgs_disabled_path_=$2
+    else
+        echo -n "$_object_qpkgs_disabled_path_"
+    fi
+    }
+QPKGs.Disabled.Remove()
+    {
+    local argument_array=(${1})
+    local temp_array=()
+    local argument=''
+    local item=''
+    local matched=false
+    for item in "${_object_qpkgs_disabled_array_[@]:-}"; do
+        matched=false
+        for argument in "${argument_array[@]:-}"; do
+            if [[ $argument = $item ]]; then
+                matched=true; break
+            fi
+        done
+        [[ $matched = false ]] && temp_array+=("$item")
+    done
+    _object_qpkgs_disabled_array_=("${temp_array[@]:-}")
+    [[ -z ${_object_qpkgs_disabled_array_[*]} ]] && _object_qpkgs_disabled_array_=()
+    }
+QPKGs.Disabled.Set()
+    {
+    [[ $_object_qpkgs_disabled_flag_ = 'true' ]] && return
+    _object_qpkgs_disabled_flag_=true
+    [[ $_object_qpkgs_disabled_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_disabled_flag_
+    }
+QPKGs.Disabled.Size()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_disabled_size_=$2
+    else
+        echo -n $_object_qpkgs_disabled_size_
+    fi
+    }
+QPKGs.Disabled.Text()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_qpkgs_disabled_text_=$2
+    else
+        echo -n "$_object_qpkgs_disabled_text_"
+    fi
+    }
+QPKGs.Disabled.Init
 
 QPKGs.Enabled.Add()
     {
@@ -6729,159 +7188,6 @@ QPKGs.Names.Text()
     fi
     }
 QPKGs.Names.Init
-
-QPKGs.Disabled.Add()
-    {
-    local array=(${1})
-    local item=''
-    for item in "${array[@]:-}"; do
-        [[ " ${_object_qpkgs_disabled_array_[*]:-} " != *"$item"* ]] && _object_qpkgs_disabled_array_+=("$item")
-    done
-    }
-QPKGs.Disabled.Array()
-    {
-    echo -n "${_object_qpkgs_disabled_array_[@]:-}"
-    }
-QPKGs.Disabled.Clear()
-    {
-    [[ $_object_qpkgs_disabled_flag_ != 'true' ]] && return
-    _object_qpkgs_disabled_flag_=false
-    [[ $_object_qpkgs_disabled_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_disabled_flag_
-    }
-QPKGs.Disabled.Count()
-    {
-    echo "${#_object_qpkgs_disabled_array_[@]:-}"
-    }
-QPKGs.Disabled.Disable()
-    {
-    [[ $_object_qpkgs_disabled_enable_ != 'true' ]] && return
-    _object_qpkgs_disabled_enable_=false
-    [[ $_object_qpkgs_disabled_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_disabled_enable_
-    }
-QPKGs.Disabled.DontLogChanges()
-    {
-    [[ $_object_qpkgs_disabled_changes_flag_ != 'true' ]] && return
-    _object_qpkgs_disabled_changes_flag_=false
-    }
-QPKGs.Disabled.Enable()
-    {
-    [[ $_object_qpkgs_disabled_enable_ = 'true' ]] && return
-    _object_qpkgs_disabled_enable_=true
-    [[ $_object_qpkgs_disabled_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_disabled_enable_
-    }
-QPKGs.Disabled.Exist()
-    {
-    [[ ${_object_qpkgs_disabled_array_[*]:-} == *"$1"* ]]
-    }
-QPKGs.Disabled.First()
-    {
-    echo "${_object_qpkgs_disabled_array_[0]}"
-    }
-QPKGs.Disabled.GetItem()
-    {
-    local -i index="$1"
-    [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_object_qpkgs_disabled_array_[@]:-} ]] && index=${#_object_qpkgs_disabled_array_[@]}
-    echo -n "${_object_qpkgs_disabled_array_[((index-1))]}"
-    }
-QPKGs.Disabled.Init()
-    {
-    _object_qpkgs_disabled_size_=0
-    _object_qpkgs_disabled_text_=''
-    _object_qpkgs_disabled_flag_=false
-    _object_qpkgs_disabled_changes_flag_=true
-    _object_qpkgs_disabled_enable_=false
-    _object_qpkgs_disabled_array_=()
-    _object_qpkgs_disabled_array_index_=1
-    _object_qpkgs_disabled_path_=''
-    }
-QPKGs.Disabled.IsAny()
-    {
-    [[ ${#_object_qpkgs_disabled_array_[@]:-} -gt 0 ]]
-    }
-QPKGs.Disabled.IsDisabled()
-    {
-    [[ $_object_qpkgs_disabled_enable_ != 'true' ]]
-    }
-QPKGs.Disabled.IsEnabled()
-    {
-    [[ $_object_qpkgs_disabled_enable_ = 'true' ]]
-    }
-QPKGs.Disabled.IsNone()
-    {
-    [[ ${#_object_qpkgs_disabled_array_[@]:-} -eq 0 ]]
-    }
-QPKGs.Disabled.IsNot()
-    {
-    [[ $_object_qpkgs_disabled_flag_ != 'true' ]]
-    }
-QPKGs.Disabled.IsSet()
-    {
-    [[ $_object_qpkgs_disabled_flag_ = 'true' ]]
-    }
-QPKGs.Disabled.List()
-    {
-    echo -n "${_object_qpkgs_disabled_array_[*]:-}"
-    }
-QPKGs.Disabled.ListCSV()
-    {
-    echo -n "${_object_qpkgs_disabled_array_[*]:-}" | tr ' ' ','
-    }
-QPKGs.Disabled.LogChanges()
-    {
-    [[ $_object_qpkgs_disabled_changes_flag_ = 'true' ]] && return
-    _object_qpkgs_disabled_changes_flag_=true
-    }
-QPKGs.Disabled.Path()
-    {
-    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
-        _object_qpkgs_disabled_path_=$2
-    else
-        echo -n "$_object_qpkgs_disabled_path_"
-    fi
-    }
-QPKGs.Disabled.Remove()
-    {
-    local argument_array=(${1})
-    local temp_array=()
-    local argument=''
-    local item=''
-    local matched=false
-    for item in "${_object_qpkgs_disabled_array_[@]:-}"; do
-        matched=false
-        for argument in "${argument_array[@]:-}"; do
-            if [[ $argument = $item ]]; then
-                matched=true; break
-            fi
-        done
-        [[ $matched = false ]] && temp_array+=("$item")
-    done
-    _object_qpkgs_disabled_array_=("${temp_array[@]:-}")
-    [[ -z ${_object_qpkgs_disabled_array_[*]} ]] && _object_qpkgs_disabled_array_=()
-    }
-QPKGs.Disabled.Set()
-    {
-    [[ $_object_qpkgs_disabled_flag_ = 'true' ]] && return
-    _object_qpkgs_disabled_flag_=true
-    [[ $_object_qpkgs_disabled_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_disabled_flag_
-    }
-QPKGs.Disabled.Size()
-    {
-    if [[ -n $1 && $1 = "=" ]]; then
-        _object_qpkgs_disabled_size_=$2
-    else
-        echo -n $_object_qpkgs_disabled_size_
-    fi
-    }
-QPKGs.Disabled.Text()
-    {
-    if [[ -n $1 && $1 = "=" ]]; then
-        _object_qpkgs_disabled_text_=$2
-    else
-        echo -n "$_object_qpkgs_disabled_text_"
-    fi
-    }
-QPKGs.Disabled.Init
 
 QPKGs.NotInstalled.Add()
     {
