@@ -307,7 +307,7 @@ Session.Init()
         MANAGER_QPKG_VERSION+=(0.8.1.0)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_x86.qpkg)
         MANAGER_QPKG_MD5+=(996ffb92d774eb01968003debc171e91)
-        MANAGER_QPKG_DESC+=("program for creating and using PAR2 files to detect damage in data files and repair them if necessary")     # applies to all 'Par2' packages
+        MANAGER_QPKG_DESC+=("create and use PAR2 files to detect damage in data files and repair them if necessary")     # applies to all 'Par2' packages
         MANAGER_QPKG_ABBRVS+=('par par2')                                       # applies to all 'Par2' packages
         MANAGER_QPKG_ESSENTIALS+=('')
         MANAGER_QPKG_IPKGS_ADD+=('')
@@ -863,7 +863,7 @@ Session.Arguments.Parse()
                         User.Opts.Help.ActionsAll.Set
                         ;;
                     backups_)
-                        User.Opts.Apps.List.Backups.Set
+                        User.Opts.Help.Backups.Set
                         ;;
                     essential_)
                         User.Opts.Apps.List.Essential.Set
@@ -911,7 +911,7 @@ Session.Arguments.Parse()
                         ;;
                     status_)
                         Session.Build.StateLists
-                        User.Opts.Apps.All.Status.Set
+                        User.Opts.Help.Status.Set
                         ;;
                     stopped_)
                         Session.Build.StateLists
@@ -1049,7 +1049,7 @@ Session.Arguments.Parse()
 #                 case $scope in
 #                     all_)
 #                         QPKGs.ToStatus.Add "$(QPKGs.Installable.Array)"
-                        User.Opts.Apps.All.Status.Set
+                        User.Opts.Help.Status.Set
                         operation=''
                         Session.SkipPackageProcessing.Set
                         ;;
@@ -1145,7 +1145,7 @@ Session.Arguments.Parse()
                 User.Opts.Help.Abbreviations.Set
                 ;;
             backups_)
-                User.Opts.Apps.List.Backups.Set
+                User.Opts.Help.Backups.Set
                 ;;
             help_)
                 User.Opts.Help.Basic.Set
@@ -1160,7 +1160,7 @@ Session.Arguments.Parse()
                 User.Opts.Help.Problems.Set
                 ;;
             status_)
-                User.Opts.Apps.All.Status.Set
+                User.Opts.Help.Status.Set
                 ;;
             tips_)
                 User.Opts.Help.Tips.Set
@@ -1337,7 +1337,7 @@ Session.Validate()
     fi
 
     if QPKGs.ToBackup.IsNone && QPKGs.ToUninstall.IsNone && QPKGs.ToUpgrade.IsNone && QPKGs.ToInstall.IsNone && QPKGs.ToReinstall.IsNone && QPKGs.ToRestore.IsNone && QPKGs.ToRestart.IsNone && QPKGs.ToStart.IsNone && QPKGs.ToStop.IsNone; then
-        if User.Opts.Apps.All.Install.IsNot && User.Opts.Apps.All.Restart.IsNot && User.Opts.Apps.All.Upgrade.IsNot && User.Opts.Apps.All.Backup.IsNot && User.Opts.Apps.All.Restore.IsNot && User.Opts.Apps.All.Status.IsNot && User.Opts.Apps.All.Start.IsNot && User.Opts.Apps.All.Stop.IsNot; then
+        if User.Opts.Apps.All.Install.IsNot && User.Opts.Apps.All.Restart.IsNot && User.Opts.Apps.All.Upgrade.IsNot && User.Opts.Apps.All.Backup.IsNot && User.Opts.Apps.All.Restore.IsNot && User.Opts.Help.Status.IsNot && User.Opts.Apps.All.Start.IsNot && User.Opts.Apps.All.Stop.IsNot; then
             if User.Opts.Dependencies.Check.IsNot && User.Opts.IgnoreFreeSpace.IsNot; then
                 ShowAsEror "I've nothing to do (usually means the arguments didn't make sense, or were incomplete)"
                 User.Opts.Help.Basic.Set
@@ -1879,9 +1879,9 @@ Session.Results()
         QPKGs.Optional.Show
     elif User.Opts.Apps.List.Standalone.IsSet; then
         QPKGs.Standalone.Show
-    elif User.Opts.Apps.List.Backups.IsSet; then
+    elif User.Opts.Help.Backups.IsSet; then
         QPKGs.Backups.Show
-    elif User.Opts.Apps.All.Status.IsSet; then
+    elif User.Opts.Help.Status.IsSet; then
         QPKGs.Statuses.Show
     elif User.Opts.Apps.List.Installed.IsSet; then  # default operation when scope is unspecified
         QPKGs.Installed.Show
@@ -5893,7 +5893,7 @@ Objects.Compile()
 
     # $1 = 'hash' (optional) - if specified, only return the internal checksum
 
-    local -r COMPILED_OBJECTS_HASH=e1bdff15c65f6f259fb8963f30158825
+    local -r COMPILED_OBJECTS_HASH=4ef8b249169c1f38c9aae99f359c86e7
 
     if [[ ${1:-} = hash ]]; then
         echo "$COMPILED_OBJECTS_HASH"
@@ -5925,10 +5925,12 @@ Objects.Compile()
         Objects.Add.Flag User.Opts.Help.Abbreviations
         Objects.Add.Flag User.Opts.Help.Actions
         Objects.Add.Flag User.Opts.Help.ActionsAll
+        Objects.Add.Flag User.Opts.Help.Backups
         Objects.Add.Flag User.Opts.Help.Basic
         Objects.Add.Flag User.Opts.Help.Options
         Objects.Add.Flag User.Opts.Help.Packages
         Objects.Add.Flag User.Opts.Help.Problems
+        Objects.Add.Flag User.Opts.Help.Status
         Objects.Add.Flag User.Opts.Help.Tips
 
         Objects.Add.Flag User.Opts.Clean
@@ -5947,13 +5949,11 @@ Objects.Compile()
         Objects.Add.Flag User.Opts.Apps.All.Restart
         Objects.Add.Flag User.Opts.Apps.All.Restore
         Objects.Add.Flag User.Opts.Apps.All.Start
-        Objects.Add.Flag User.Opts.Apps.All.Status
         Objects.Add.Flag User.Opts.Apps.All.Stop
         Objects.Add.Flag User.Opts.Apps.All.Uninstall
         Objects.Add.Flag User.Opts.Apps.All.Upgrade
 
         Objects.Add.Flag User.Opts.Apps.List.All
-        Objects.Add.Flag User.Opts.Apps.List.Backups
         Objects.Add.Flag User.Opts.Apps.List.Essential
         Objects.Add.Flag User.Opts.Apps.List.Installed
         Objects.Add.Flag User.Opts.Apps.List.NotInstalled

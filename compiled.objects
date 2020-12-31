@@ -1273,6 +1273,91 @@ User.Opts.Help.ActionsAll.Text()
     }
 User.Opts.Help.ActionsAll.Init
 
+User.Opts.Help.Backups.Clear()
+    {
+    [[ $_object_user_opts_help_backups_flag_ != 'true' ]] && return
+    _object_user_opts_help_backups_flag_=false
+    [[ $_object_user_opts_help_backups_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_help_backups_flag_
+    }
+User.Opts.Help.Backups.Disable()
+    {
+    [[ $_object_user_opts_help_backups_enable_ != 'true' ]] && return
+    _object_user_opts_help_backups_enable_=false
+    [[ $_object_user_opts_help_backups_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_help_backups_enable_
+    }
+User.Opts.Help.Backups.DontLogChanges()
+    {
+    [[ $_object_user_opts_help_backups_changes_flag_ != 'true' ]] && return
+    _object_user_opts_help_backups_changes_flag_=false
+    }
+User.Opts.Help.Backups.Enable()
+    {
+    [[ $_object_user_opts_help_backups_enable_ = 'true' ]] && return
+    _object_user_opts_help_backups_enable_=true
+    [[ $_object_user_opts_help_backups_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_help_backups_enable_
+    }
+User.Opts.Help.Backups.Init()
+    {
+    _object_user_opts_help_backups_size_=0
+    _object_user_opts_help_backups_text_=''
+    _object_user_opts_help_backups_flag_=false
+    _object_user_opts_help_backups_changes_flag_=true
+    _object_user_opts_help_backups_enable_=false
+    _object_user_opts_help_backups_path_=''
+    }
+User.Opts.Help.Backups.IsDisabled()
+    {
+    [[ $_object_user_opts_help_backups_enable_ != 'true' ]]
+    }
+User.Opts.Help.Backups.IsEnabled()
+    {
+    [[ $_object_user_opts_help_backups_enable_ = 'true' ]]
+    }
+User.Opts.Help.Backups.IsNot()
+    {
+    [[ $_object_user_opts_help_backups_flag_ != 'true' ]]
+    }
+User.Opts.Help.Backups.IsSet()
+    {
+    [[ $_object_user_opts_help_backups_flag_ = 'true' ]]
+    }
+User.Opts.Help.Backups.LogChanges()
+    {
+    [[ $_object_user_opts_help_backups_changes_flag_ = 'true' ]] && return
+    _object_user_opts_help_backups_changes_flag_=true
+    }
+User.Opts.Help.Backups.Path()
+    {
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+        _object_user_opts_help_backups_path_=$2
+    else
+        echo -n "$_object_user_opts_help_backups_path_"
+    fi
+    }
+User.Opts.Help.Backups.Set()
+    {
+    [[ $_object_user_opts_help_backups_flag_ = 'true' ]] && return
+    _object_user_opts_help_backups_flag_=true
+    [[ $_object_user_opts_help_backups_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_help_backups_flag_
+    }
+User.Opts.Help.Backups.Size()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_help_backups_size_=$2
+    else
+        echo -n $_object_user_opts_help_backups_size_
+    fi
+    }
+User.Opts.Help.Backups.Text()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_help_backups_text_=$2
+    else
+        echo -n "$_object_user_opts_help_backups_text_"
+    fi
+    }
+User.Opts.Help.Backups.Init
+
 User.Opts.Help.Basic.Clear()
     {
     [[ $_object_user_opts_help_basic_flag_ != 'true' ]] && return
@@ -1612,6 +1697,91 @@ User.Opts.Help.Problems.Text()
     fi
     }
 User.Opts.Help.Problems.Init
+
+User.Opts.Help.Status.Clear()
+    {
+    [[ $_object_user_opts_help_status_flag_ != 'true' ]] && return
+    _object_user_opts_help_status_flag_=false
+    [[ $_object_user_opts_help_status_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_help_status_flag_
+    }
+User.Opts.Help.Status.Disable()
+    {
+    [[ $_object_user_opts_help_status_enable_ != 'true' ]] && return
+    _object_user_opts_help_status_enable_=false
+    [[ $_object_user_opts_help_status_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_help_status_enable_
+    }
+User.Opts.Help.Status.DontLogChanges()
+    {
+    [[ $_object_user_opts_help_status_changes_flag_ != 'true' ]] && return
+    _object_user_opts_help_status_changes_flag_=false
+    }
+User.Opts.Help.Status.Enable()
+    {
+    [[ $_object_user_opts_help_status_enable_ = 'true' ]] && return
+    _object_user_opts_help_status_enable_=true
+    [[ $_object_user_opts_help_status_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_help_status_enable_
+    }
+User.Opts.Help.Status.Init()
+    {
+    _object_user_opts_help_status_size_=0
+    _object_user_opts_help_status_text_=''
+    _object_user_opts_help_status_flag_=false
+    _object_user_opts_help_status_changes_flag_=true
+    _object_user_opts_help_status_enable_=false
+    _object_user_opts_help_status_path_=''
+    }
+User.Opts.Help.Status.IsDisabled()
+    {
+    [[ $_object_user_opts_help_status_enable_ != 'true' ]]
+    }
+User.Opts.Help.Status.IsEnabled()
+    {
+    [[ $_object_user_opts_help_status_enable_ = 'true' ]]
+    }
+User.Opts.Help.Status.IsNot()
+    {
+    [[ $_object_user_opts_help_status_flag_ != 'true' ]]
+    }
+User.Opts.Help.Status.IsSet()
+    {
+    [[ $_object_user_opts_help_status_flag_ = 'true' ]]
+    }
+User.Opts.Help.Status.LogChanges()
+    {
+    [[ $_object_user_opts_help_status_changes_flag_ = 'true' ]] && return
+    _object_user_opts_help_status_changes_flag_=true
+    }
+User.Opts.Help.Status.Path()
+    {
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+        _object_user_opts_help_status_path_=$2
+    else
+        echo -n "$_object_user_opts_help_status_path_"
+    fi
+    }
+User.Opts.Help.Status.Set()
+    {
+    [[ $_object_user_opts_help_status_flag_ = 'true' ]] && return
+    _object_user_opts_help_status_flag_=true
+    [[ $_object_user_opts_help_status_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_help_status_flag_
+    }
+User.Opts.Help.Status.Size()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_help_status_size_=$2
+    else
+        echo -n $_object_user_opts_help_status_size_
+    fi
+    }
+User.Opts.Help.Status.Text()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        _object_user_opts_help_status_text_=$2
+    else
+        echo -n "$_object_user_opts_help_status_text_"
+    fi
+    }
+User.Opts.Help.Status.Init
 
 User.Opts.Help.Tips.Clear()
     {
@@ -2888,91 +3058,6 @@ User.Opts.Apps.All.Start.Text()
     }
 User.Opts.Apps.All.Start.Init
 
-User.Opts.Apps.All.Status.Clear()
-    {
-    [[ $_object_user_opts_apps_all_status_flag_ != 'true' ]] && return
-    _object_user_opts_apps_all_status_flag_=false
-    [[ $_object_user_opts_apps_all_status_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_status_flag_
-    }
-User.Opts.Apps.All.Status.Disable()
-    {
-    [[ $_object_user_opts_apps_all_status_enable_ != 'true' ]] && return
-    _object_user_opts_apps_all_status_enable_=false
-    [[ $_object_user_opts_apps_all_status_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_status_enable_
-    }
-User.Opts.Apps.All.Status.DontLogChanges()
-    {
-    [[ $_object_user_opts_apps_all_status_changes_flag_ != 'true' ]] && return
-    _object_user_opts_apps_all_status_changes_flag_=false
-    }
-User.Opts.Apps.All.Status.Enable()
-    {
-    [[ $_object_user_opts_apps_all_status_enable_ = 'true' ]] && return
-    _object_user_opts_apps_all_status_enable_=true
-    [[ $_object_user_opts_apps_all_status_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_status_enable_
-    }
-User.Opts.Apps.All.Status.Init()
-    {
-    _object_user_opts_apps_all_status_size_=0
-    _object_user_opts_apps_all_status_text_=''
-    _object_user_opts_apps_all_status_flag_=false
-    _object_user_opts_apps_all_status_changes_flag_=true
-    _object_user_opts_apps_all_status_enable_=false
-    _object_user_opts_apps_all_status_path_=''
-    }
-User.Opts.Apps.All.Status.IsDisabled()
-    {
-    [[ $_object_user_opts_apps_all_status_enable_ != 'true' ]]
-    }
-User.Opts.Apps.All.Status.IsEnabled()
-    {
-    [[ $_object_user_opts_apps_all_status_enable_ = 'true' ]]
-    }
-User.Opts.Apps.All.Status.IsNot()
-    {
-    [[ $_object_user_opts_apps_all_status_flag_ != 'true' ]]
-    }
-User.Opts.Apps.All.Status.IsSet()
-    {
-    [[ $_object_user_opts_apps_all_status_flag_ = 'true' ]]
-    }
-User.Opts.Apps.All.Status.LogChanges()
-    {
-    [[ $_object_user_opts_apps_all_status_changes_flag_ = 'true' ]] && return
-    _object_user_opts_apps_all_status_changes_flag_=true
-    }
-User.Opts.Apps.All.Status.Path()
-    {
-    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
-        _object_user_opts_apps_all_status_path_=$2
-    else
-        echo -n "$_object_user_opts_apps_all_status_path_"
-    fi
-    }
-User.Opts.Apps.All.Status.Set()
-    {
-    [[ $_object_user_opts_apps_all_status_flag_ = 'true' ]] && return
-    _object_user_opts_apps_all_status_flag_=true
-    [[ $_object_user_opts_apps_all_status_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_status_flag_
-    }
-User.Opts.Apps.All.Status.Size()
-    {
-    if [[ -n $1 && $1 = "=" ]]; then
-        _object_user_opts_apps_all_status_size_=$2
-    else
-        echo -n $_object_user_opts_apps_all_status_size_
-    fi
-    }
-User.Opts.Apps.All.Status.Text()
-    {
-    if [[ -n $1 && $1 = "=" ]]; then
-        _object_user_opts_apps_all_status_text_=$2
-    else
-        echo -n "$_object_user_opts_apps_all_status_text_"
-    fi
-    }
-User.Opts.Apps.All.Status.Init
-
 User.Opts.Apps.All.Stop.Clear()
     {
     [[ $_object_user_opts_apps_all_stop_flag_ != 'true' ]] && return
@@ -3312,91 +3397,6 @@ User.Opts.Apps.List.All.Text()
     fi
     }
 User.Opts.Apps.List.All.Init
-
-User.Opts.Apps.List.Backups.Clear()
-    {
-    [[ $_object_user_opts_apps_list_backups_flag_ != 'true' ]] && return
-    _object_user_opts_apps_list_backups_flag_=false
-    [[ $_object_user_opts_apps_list_backups_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_backups_flag_
-    }
-User.Opts.Apps.List.Backups.Disable()
-    {
-    [[ $_object_user_opts_apps_list_backups_enable_ != 'true' ]] && return
-    _object_user_opts_apps_list_backups_enable_=false
-    [[ $_object_user_opts_apps_list_backups_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_backups_enable_
-    }
-User.Opts.Apps.List.Backups.DontLogChanges()
-    {
-    [[ $_object_user_opts_apps_list_backups_changes_flag_ != 'true' ]] && return
-    _object_user_opts_apps_list_backups_changes_flag_=false
-    }
-User.Opts.Apps.List.Backups.Enable()
-    {
-    [[ $_object_user_opts_apps_list_backups_enable_ = 'true' ]] && return
-    _object_user_opts_apps_list_backups_enable_=true
-    [[ $_object_user_opts_apps_list_backups_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_backups_enable_
-    }
-User.Opts.Apps.List.Backups.Init()
-    {
-    _object_user_opts_apps_list_backups_size_=0
-    _object_user_opts_apps_list_backups_text_=''
-    _object_user_opts_apps_list_backups_flag_=false
-    _object_user_opts_apps_list_backups_changes_flag_=true
-    _object_user_opts_apps_list_backups_enable_=false
-    _object_user_opts_apps_list_backups_path_=''
-    }
-User.Opts.Apps.List.Backups.IsDisabled()
-    {
-    [[ $_object_user_opts_apps_list_backups_enable_ != 'true' ]]
-    }
-User.Opts.Apps.List.Backups.IsEnabled()
-    {
-    [[ $_object_user_opts_apps_list_backups_enable_ = 'true' ]]
-    }
-User.Opts.Apps.List.Backups.IsNot()
-    {
-    [[ $_object_user_opts_apps_list_backups_flag_ != 'true' ]]
-    }
-User.Opts.Apps.List.Backups.IsSet()
-    {
-    [[ $_object_user_opts_apps_list_backups_flag_ = 'true' ]]
-    }
-User.Opts.Apps.List.Backups.LogChanges()
-    {
-    [[ $_object_user_opts_apps_list_backups_changes_flag_ = 'true' ]] && return
-    _object_user_opts_apps_list_backups_changes_flag_=true
-    }
-User.Opts.Apps.List.Backups.Path()
-    {
-    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
-        _object_user_opts_apps_list_backups_path_=$2
-    else
-        echo -n "$_object_user_opts_apps_list_backups_path_"
-    fi
-    }
-User.Opts.Apps.List.Backups.Set()
-    {
-    [[ $_object_user_opts_apps_list_backups_flag_ = 'true' ]] && return
-    _object_user_opts_apps_list_backups_flag_=true
-    [[ $_object_user_opts_apps_list_backups_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_backups_flag_
-    }
-User.Opts.Apps.List.Backups.Size()
-    {
-    if [[ -n $1 && $1 = "=" ]]; then
-        _object_user_opts_apps_list_backups_size_=$2
-    else
-        echo -n $_object_user_opts_apps_list_backups_size_
-    fi
-    }
-User.Opts.Apps.List.Backups.Text()
-    {
-    if [[ -n $1 && $1 = "=" ]]; then
-        _object_user_opts_apps_list_backups_text_=$2
-    else
-        echo -n "$_object_user_opts_apps_list_backups_text_"
-    fi
-    }
-User.Opts.Apps.List.Backups.Init
 
 User.Opts.Apps.List.Essential.Clear()
     {
