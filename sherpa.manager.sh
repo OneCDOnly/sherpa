@@ -2635,6 +2635,7 @@ IsNotSysFileExist()
 readonly HELP_DESC_INDENT=3
 readonly HELP_SYNTAX_INDENT=8
 readonly HELP_PACKAGE_NAME_WIDTH=16
+readonly HELP_FILE_NAME_WIDTH=33
 
 DisplayAsProjectSyntaxExample()
     {
@@ -2705,6 +2706,16 @@ DisplayAsHelpTitlePackageNamePlusSomething()
     # $2 = package text
 
     printf "* %-${HELP_PACKAGE_NAME_WIDTH}s* %s\n" "$1:" "$2:"
+
+    }
+
+DisplayAsHelpTitleFileNamePlusSomething()
+    {
+
+    # $1 = package name
+    # $2 = package text
+
+    printf "* %-${HELP_FILE_NAME_WIDTH}s* %s\n" "$1:" "$2:"
 
     }
 
@@ -3384,8 +3395,9 @@ QPKGs.Backups.Show()
     Display
 
     if [[ -e $GNU_FIND_CMD ]]; then
-        printf '%-33s%-33s\n' '* backup file:' '* last backup date:'
-        $GNU_FIND_CMD "$(Session.Backup.Path)"/*.config.tar.gz -maxdepth 1 -printf ' %-33f%Cc\n' 2>/dev/null
+        DisplayAsHelpTitleFileNamePlusSomething 'backup file' 'last backup date'
+
+        $GNU_FIND_CMD "$(Session.Backup.Path)"/*.config.tar.gz -maxdepth 1 -printf '   %-35f%Cc\n' 2>/dev/null
     else
         (cd "$(Session.Backup.Path)" && ls -1 ./*.config.tar.gz)
     fi
