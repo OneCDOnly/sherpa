@@ -4104,7 +4104,6 @@ QPKG.Install()
 
     if [[ $resultcode -eq 0 || $resultcode -eq 10 ]]; then
         DebugAsDone "installed $(FormatAsPackageName "$1")"
-        QPKG.FixAppCenterStatus "$1"
         QPKG.GetServiceStatus "$1"
 
         if [[ $1 = Entware ]]; then
@@ -4140,6 +4139,7 @@ QPKG.Install()
     fi
 
     QPKGs.ToInstall.Remove "$1"
+    QPKG.FixAppCenterStatus "$1"
     DebugFuncExit; return $resultcode
 
     }
@@ -4180,7 +4180,6 @@ QPKG.Reinstall()
         DebugAsDone "reinstalled $(FormatAsPackageName "$1")"
         QPKGs.IsReinstall.Add "$1"
         QPKG.GetServiceStatus "$1"
-        QPKG.FixAppCenterStatus "$1"
         resultcode=0    # reset this to zero (0 or 10 from a QPKG install is OK)
     else
         ShowAsEror "reinstallation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $resultcode)"
@@ -4188,6 +4187,7 @@ QPKG.Reinstall()
     fi
 
     QPKGs.ToReinstall.Remove "$1"
+    QPKG.FixAppCenterStatus "$1"
     DebugFuncExit; return $resultcode
 
     }
@@ -4232,7 +4232,6 @@ QPKG.Upgrade()
     fi
 
     previous_version=$(QPKG.Installed.Version "$1")
-    QPKG.FixAppCenterStatus "$1"
 
     DebugAsProc "upgrading $(FormatAsPackageName "$1")"
 
@@ -4257,6 +4256,7 @@ QPKG.Upgrade()
     fi
 
     QPKGs.ToUpgrade.Remove "$1"
+    QPKG.FixAppCenterStatus "$1"
     DebugFuncExit; return $resultcode
 
     }
