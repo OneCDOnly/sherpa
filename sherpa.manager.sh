@@ -2279,6 +2279,8 @@ IPKGs.Install()
         done
     fi
 
+    User.Opts.Dependencies.Check.IsSet && IPKGs.ToInstall.Add "$MANAGER_ESSENTIAL_IPKGS_ADD"
+
     IPKGs.Upgrade.Batch
     IPKGs.Install.Batch
 
@@ -5775,7 +5777,7 @@ echo $public_function_name'.Add()
     }
 '$public_function_name'.Size()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
         '$_placeholder_size_'=$2
     else
         echo -n $'$_placeholder_size_'
@@ -5894,7 +5896,7 @@ Objects.Compile()
 
     # $1 = 'hash' (optional) - if specified, only return the internal checksum
 
-    local -r COMPILED_OBJECTS_HASH=a51d02740e9b67b61487bb5bb8e6db1a
+    local -r COMPILED_OBJECTS_HASH=6f10684e11320e32636e1541576187cc
 
     if [[ ${1:-} = hash ]]; then
         echo "$COMPILED_OBJECTS_HASH"

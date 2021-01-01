@@ -3221,7 +3221,7 @@ Args.Unknown.Remove()
     }
 Args.Unknown.Size()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
         _object_args_unknown_size_=$2
     else
         echo -n $_object_args_unknown_size_
@@ -3303,7 +3303,7 @@ IPKGs.ToDownload.Remove()
     }
 IPKGs.ToDownload.Size()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
         _object_ipkgs_todownload_size_=$2
     else
         echo -n $_object_ipkgs_todownload_size_
@@ -3385,7 +3385,7 @@ IPKGs.ToInstall.Remove()
     }
 IPKGs.ToInstall.Size()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
         _object_ipkgs_toinstall_size_=$2
     else
         echo -n $_object_ipkgs_toinstall_size_
@@ -3467,7 +3467,7 @@ IPKGs.ToUninstall.Remove()
     }
 IPKGs.ToUninstall.Size()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
         _object_ipkgs_touninstall_size_=$2
     else
         echo -n $_object_ipkgs_touninstall_size_
@@ -3549,7 +3549,7 @@ QPKGs.Disabled.Remove()
     }
 QPKGs.Disabled.Size()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
         _object_qpkgs_disabled_size_=$2
     else
         echo -n $_object_qpkgs_disabled_size_
@@ -3631,7 +3631,7 @@ QPKGs.Enabled.Remove()
     }
 QPKGs.Enabled.Size()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
         _object_qpkgs_enabled_size_=$2
     else
         echo -n $_object_qpkgs_enabled_size_
@@ -3713,7 +3713,7 @@ QPKGs.Essential.Remove()
     }
 QPKGs.Essential.Size()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
         _object_qpkgs_essential_size_=$2
     else
         echo -n $_object_qpkgs_essential_size_
@@ -3795,7 +3795,7 @@ QPKGs.Installable.Remove()
     }
 QPKGs.Installable.Size()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
         _object_qpkgs_installable_size_=$2
     else
         echo -n $_object_qpkgs_installable_size_
@@ -3877,7 +3877,7 @@ QPKGs.Installed.Remove()
     }
 QPKGs.Installed.Size()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
         _object_qpkgs_installed_size_=$2
     else
         echo -n $_object_qpkgs_installed_size_
@@ -3959,7 +3959,7 @@ QPKGs.Missing.Remove()
     }
 QPKGs.Missing.Size()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
         _object_qpkgs_missing_size_=$2
     else
         echo -n $_object_qpkgs_missing_size_
@@ -4041,7 +4041,7 @@ QPKGs.Names.Remove()
     }
 QPKGs.Names.Size()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
         _object_qpkgs_names_size_=$2
     else
         echo -n $_object_qpkgs_names_size_
@@ -4123,7 +4123,7 @@ QPKGs.NotInstalled.Remove()
     }
 QPKGs.NotInstalled.Size()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
         _object_qpkgs_notinstalled_size_=$2
     else
         echo -n $_object_qpkgs_notinstalled_size_
@@ -4205,7 +4205,7 @@ QPKGs.NotSupportsBackup.Remove()
     }
 QPKGs.NotSupportsBackup.Size()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
         _object_qpkgs_notsupportsbackup_size_=$2
     else
         echo -n $_object_qpkgs_notsupportsbackup_size_
@@ -4287,7 +4287,7 @@ QPKGs.Optional.Remove()
     }
 QPKGs.Optional.Size()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
         _object_qpkgs_optional_size_=$2
     else
         echo -n $_object_qpkgs_optional_size_
@@ -4369,7 +4369,7 @@ QPKGs.Standalone.Remove()
     }
 QPKGs.Standalone.Size()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
         _object_qpkgs_standalone_size_=$2
     else
         echo -n $_object_qpkgs_standalone_size_
@@ -4451,7 +4451,7 @@ QPKGs.SupportsBackup.Remove()
     }
 QPKGs.SupportsBackup.Size()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
         _object_qpkgs_supportsbackup_size_=$2
     else
         echo -n $_object_qpkgs_supportsbackup_size_
@@ -4533,7 +4533,7 @@ QPKGs.Upgradable.Remove()
     }
 QPKGs.Upgradable.Size()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
         _object_qpkgs_upgradable_size_=$2
     else
         echo -n $_object_qpkgs_upgradable_size_
@@ -4615,7 +4615,7 @@ QPKGs.ToBackup.Remove()
     }
 QPKGs.ToBackup.Size()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
         _object_qpkgs_tobackup_size_=$2
     else
         echo -n $_object_qpkgs_tobackup_size_
@@ -4697,7 +4697,7 @@ QPKGs.ToDownload.Remove()
     }
 QPKGs.ToDownload.Size()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
         _object_qpkgs_todownload_size_=$2
     else
         echo -n $_object_qpkgs_todownload_size_
@@ -4779,7 +4779,7 @@ QPKGs.ToInstall.Remove()
     }
 QPKGs.ToInstall.Size()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
         _object_qpkgs_toinstall_size_=$2
     else
         echo -n $_object_qpkgs_toinstall_size_
@@ -4861,7 +4861,7 @@ QPKGs.ToReinstall.Remove()
     }
 QPKGs.ToReinstall.Size()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
         _object_qpkgs_toreinstall_size_=$2
     else
         echo -n $_object_qpkgs_toreinstall_size_
@@ -4943,7 +4943,7 @@ QPKGs.ToRestart.Remove()
     }
 QPKGs.ToRestart.Size()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
         _object_qpkgs_torestart_size_=$2
     else
         echo -n $_object_qpkgs_torestart_size_
@@ -5025,7 +5025,7 @@ QPKGs.ToRestore.Remove()
     }
 QPKGs.ToRestore.Size()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
         _object_qpkgs_torestore_size_=$2
     else
         echo -n $_object_qpkgs_torestore_size_
@@ -5107,7 +5107,7 @@ QPKGs.ToStart.Remove()
     }
 QPKGs.ToStart.Size()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
         _object_qpkgs_tostart_size_=$2
     else
         echo -n $_object_qpkgs_tostart_size_
@@ -5189,7 +5189,7 @@ QPKGs.ToStatus.Remove()
     }
 QPKGs.ToStatus.Size()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
         _object_qpkgs_tostatus_size_=$2
     else
         echo -n $_object_qpkgs_tostatus_size_
@@ -5271,7 +5271,7 @@ QPKGs.ToStop.Remove()
     }
 QPKGs.ToStop.Size()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
         _object_qpkgs_tostop_size_=$2
     else
         echo -n $_object_qpkgs_tostop_size_
@@ -5353,7 +5353,7 @@ QPKGs.ToUninstall.Remove()
     }
 QPKGs.ToUninstall.Size()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
         _object_qpkgs_touninstall_size_=$2
     else
         echo -n $_object_qpkgs_touninstall_size_
@@ -5435,7 +5435,7 @@ QPKGs.ToUpgrade.Remove()
     }
 QPKGs.ToUpgrade.Size()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
         _object_qpkgs_toupgrade_size_=$2
     else
         echo -n $_object_qpkgs_toupgrade_size_
@@ -5517,7 +5517,7 @@ QPKGs.IsBackup.Remove()
     }
 QPKGs.IsBackup.Size()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
         _object_qpkgs_isbackup_size_=$2
     else
         echo -n $_object_qpkgs_isbackup_size_
@@ -5599,7 +5599,7 @@ QPKGs.IsDownload.Remove()
     }
 QPKGs.IsDownload.Size()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
         _object_qpkgs_isdownload_size_=$2
     else
         echo -n $_object_qpkgs_isdownload_size_
@@ -5681,7 +5681,7 @@ QPKGs.IsInstall.Remove()
     }
 QPKGs.IsInstall.Size()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
         _object_qpkgs_isinstall_size_=$2
     else
         echo -n $_object_qpkgs_isinstall_size_
@@ -5763,7 +5763,7 @@ QPKGs.IsReinstall.Remove()
     }
 QPKGs.IsReinstall.Size()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
         _object_qpkgs_isreinstall_size_=$2
     else
         echo -n $_object_qpkgs_isreinstall_size_
@@ -5845,7 +5845,7 @@ QPKGs.IsRestart.Remove()
     }
 QPKGs.IsRestart.Size()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
         _object_qpkgs_isrestart_size_=$2
     else
         echo -n $_object_qpkgs_isrestart_size_
@@ -5927,7 +5927,7 @@ QPKGs.IsRestore.Remove()
     }
 QPKGs.IsRestore.Size()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
         _object_qpkgs_isrestore_size_=$2
     else
         echo -n $_object_qpkgs_isrestore_size_
@@ -6009,7 +6009,7 @@ QPKGs.IsStart.Remove()
     }
 QPKGs.IsStart.Size()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
         _object_qpkgs_isstart_size_=$2
     else
         echo -n $_object_qpkgs_isstart_size_
@@ -6091,7 +6091,7 @@ QPKGs.IsStatus.Remove()
     }
 QPKGs.IsStatus.Size()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
         _object_qpkgs_isstatus_size_=$2
     else
         echo -n $_object_qpkgs_isstatus_size_
@@ -6173,7 +6173,7 @@ QPKGs.IsStop.Remove()
     }
 QPKGs.IsStop.Size()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
         _object_qpkgs_isstop_size_=$2
     else
         echo -n $_object_qpkgs_isstop_size_
@@ -6255,7 +6255,7 @@ QPKGs.IsUninstall.Remove()
     }
 QPKGs.IsUninstall.Size()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
         _object_qpkgs_isuninstall_size_=$2
     else
         echo -n $_object_qpkgs_isuninstall_size_
@@ -6337,7 +6337,7 @@ QPKGs.IsUpgrade.Remove()
     }
 QPKGs.IsUpgrade.Size()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
         _object_qpkgs_isupgrade_size_=$2
     else
         echo -n $_object_qpkgs_isupgrade_size_
@@ -6419,7 +6419,7 @@ QPKGs.UnBackup.Remove()
     }
 QPKGs.UnBackup.Size()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
         _object_qpkgs_unbackup_size_=$2
     else
         echo -n $_object_qpkgs_unbackup_size_
@@ -6501,7 +6501,7 @@ QPKGs.UnDownload.Remove()
     }
 QPKGs.UnDownload.Size()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
         _object_qpkgs_undownload_size_=$2
     else
         echo -n $_object_qpkgs_undownload_size_
@@ -6583,7 +6583,7 @@ QPKGs.UnInstall.Remove()
     }
 QPKGs.UnInstall.Size()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
         _object_qpkgs_uninstall_size_=$2
     else
         echo -n $_object_qpkgs_uninstall_size_
@@ -6665,7 +6665,7 @@ QPKGs.UnReinstall.Remove()
     }
 QPKGs.UnReinstall.Size()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
         _object_qpkgs_unreinstall_size_=$2
     else
         echo -n $_object_qpkgs_unreinstall_size_
@@ -6747,7 +6747,7 @@ QPKGs.UnRestart.Remove()
     }
 QPKGs.UnRestart.Size()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
         _object_qpkgs_unrestart_size_=$2
     else
         echo -n $_object_qpkgs_unrestart_size_
@@ -6829,7 +6829,7 @@ QPKGs.UnRestore.Remove()
     }
 QPKGs.UnRestore.Size()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
         _object_qpkgs_unrestore_size_=$2
     else
         echo -n $_object_qpkgs_unrestore_size_
@@ -6911,7 +6911,7 @@ QPKGs.UnStart.Remove()
     }
 QPKGs.UnStart.Size()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
         _object_qpkgs_unstart_size_=$2
     else
         echo -n $_object_qpkgs_unstart_size_
@@ -6993,7 +6993,7 @@ QPKGs.UnStatus.Remove()
     }
 QPKGs.UnStatus.Size()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
         _object_qpkgs_unstatus_size_=$2
     else
         echo -n $_object_qpkgs_unstatus_size_
@@ -7075,7 +7075,7 @@ QPKGs.UnStop.Remove()
     }
 QPKGs.UnStop.Size()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
         _object_qpkgs_unstop_size_=$2
     else
         echo -n $_object_qpkgs_unstop_size_
@@ -7157,7 +7157,7 @@ QPKGs.UnUninstall.Remove()
     }
 QPKGs.UnUninstall.Size()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
         _object_qpkgs_ununinstall_size_=$2
     else
         echo -n $_object_qpkgs_ununinstall_size_
@@ -7239,7 +7239,7 @@ QPKGs.UnUpgrade.Remove()
     }
 QPKGs.UnUpgrade.Size()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
         _object_qpkgs_unupgrade_size_=$2
     else
         echo -n $_object_qpkgs_unupgrade_size_
