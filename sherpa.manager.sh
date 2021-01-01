@@ -218,7 +218,7 @@ Session.Init()
         DebugFuncExit; return 1
     fi
 
-    Session.Backup.Path = "$($GETCFG_CMD SHARE_DEF defVolMP -f "$DEFAULT_SHARES_PATHFILE")/.qpkg_config_backup"
+    session_backup_path=$($GETCFG_CMD SHARE_DEF defVolMP -f "$DEFAULT_SHARES_PATHFILE")/.qpkg_config_backup
 
     if ! MakePath "$QPKG_DL_PATH" 'QPKG download'; then
         DebugFuncExit; return 1
@@ -3021,7 +3021,7 @@ Help.PackageAbbreviations.Show()
 Help.BackupLocation.Show()
     {
 
-    DisplayAsSyntaxExample 'the backup location can be accessed by running' "cd $(Session.Backup.Path)"
+    DisplayAsSyntaxExample 'the backup location can be accessed by running' "cd $session_backup_path"
 
     return 0
 
@@ -3401,7 +3401,7 @@ QPKGs.Backups.Show()
 
     SmartCR
     DisplayLineSpaceIfNoneAlready
-    Display "* The location for $(FormatAsScriptTitle) backups is: $(Session.Backup.Path)"
+    Display "* The location for $(FormatAsScriptTitle) backups is: $session_backup_path"
     Display
 
     if [[ -e $GNU_FIND_CMD ]]; then
@@ -3417,9 +3417,9 @@ QPKGs.Backups.Show()
         #   - works fine, just need to convert last 2 fields back into locale's date and time
         #   - must also ensure 'coreutils-printf' is installed
 
-        $GNU_FIND_CMD "$(Session.Backup.Path)"/*.config.tar.gz -maxdepth 1 -printf '   %-35f%Cc\n' 2>/dev/null
+        $GNU_FIND_CMD "$session_backup_path"/*.config.tar.gz -maxdepth 1 -printf '   %-35f%Cc\n' 2>/dev/null
     else
-        (cd "$(Session.Backup.Path)" && ls -1 ./*.config.tar.gz)
+        (cd "$session_backup_path" && ls -1 ./*.config.tar.gz)
     fi
 
     return 0
@@ -5697,6 +5697,7 @@ Objects.Add.List()
     local public_function_name=$1
     local safe_function_name="$(tr 'A-Z' 'a-z' <<< "${public_function_name//[.-]/_}")"
 
+    _placeholder_size_=_object_${safe_function_name}_size_
     _placeholder_array_=_object_${safe_function_name}_array_
     _placeholder_array_index_=_object_${safe_function_name}_array_index_
 
@@ -5733,6 +5734,7 @@ echo $public_function_name'.Add()
     }
 '$public_function_name'.Init()
     {
+    '$_placeholder_size_'=0
     '$_placeholder_array_'=()
     '$_placeholder_array_index_'=1
     }
@@ -5771,6 +5773,14 @@ echo $public_function_name'.Add()
     '$_placeholder_array_'=("${temp_array[@]:-}")
     [[ -z ${'$_placeholder_array_'[*]} ]] && '$_placeholder_array_'=()
     }
+'$public_function_name'.Size()
+    {
+    if [[ -n $1 && $1 = "=" ]]; then
+        '$_placeholder_size_'=$2
+    else
+        echo -n $'$_placeholder_size_'
+    fi
+    }
 '$public_function_name'.Init
 ' >> "$COMPILED_OBJECTS_PATHFILE"
 
@@ -5786,12 +5796,10 @@ Objects.Add.Flag()
     local public_function_name=$1
     local safe_function_name="$(tr 'A-Z' 'a-z' <<< "${public_function_name//[.-]/_}")"
 
-    _placeholder_size_=_object_${safe_function_name}_size_
     _placeholder_text_=_object_${safe_function_name}_text_
     _placeholder_flag_=_object_${safe_function_name}_flag_
     _placeholder_log_changes_flag_=_object_${safe_function_name}_changes_flag_
     _placeholder_enable_=_object_${safe_function_name}_enable_
-    _placeholder_path_=_object_${safe_function_name}_path_
 
 echo $public_function_name'.Clear()
     {
@@ -5818,12 +5826,10 @@ echo $public_function_name'.Clear()
     }
 '$public_function_name'.Init()
     {
-    '$_placeholder_size_'=0
     '$_placeholder_text_'='\'\''
     '$_placeholder_flag_'=false
     '$_placeholder_log_changes_flag_'=true
     '$_placeholder_enable_'=false
-    '$_placeholder_path_'='\'\''
     }
 '$public_function_name'.IsDisabled()
     {
@@ -5846,27 +5852,11 @@ echo $public_function_name'.Clear()
     [[ $'$_placeholder_log_changes_flag_' = '\'true\'' ]] && return
     '$_placeholder_log_changes_flag_'=true
     }
-'$public_function_name'.Path()
-    {
-    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
-        '$_placeholder_path_'=$2
-    else
-        echo -n "$'$_placeholder_path_'"
-    fi
-    }
 '$public_function_name'.Set()
     {
     [[ $'$_placeholder_flag_' = '\'true\'' ]] && return
     '$_placeholder_flag_'=true
     [[ $'$_placeholder_log_changes_flag_' = '\'true\'' ]] && DebugVar '$_placeholder_flag_'
-    }
-'$public_function_name'.Size()
-    {
-    if [[ -n $1 && $1 = "=" ]]; then
-        '$_placeholder_size_'=$2
-    else
-        echo -n $'$_placeholder_size_'
-    fi
     }
 '$public_function_name'.Text()
     {
@@ -5904,7 +5894,7 @@ Objects.Compile()
 
     # $1 = 'hash' (optional) - if specified, only return the internal checksum
 
-    local -r COMPILED_OBJECTS_HASH=4ef8b249169c1f38c9aae99f359c86e7
+    local -r COMPILED_OBJECTS_HASH=a51d02740e9b67b61487bb5bb8e6db1a
 
     if [[ ${1:-} = hash ]]; then
         echo "$COMPILED_OBJECTS_HASH"
@@ -5919,7 +5909,6 @@ Objects.Compile()
         ShowAsProc 'compiling objects' >&2
 
         # session flags
-        Objects.Add.Flag Session.Backup
         Objects.Add.Flag Session.Debug.To.File
         Objects.Add.Flag Session.Debug.To.Screen
         Objects.Add.Flag Session.Display.Clean
