@@ -52,7 +52,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=210101
+    readonly MANAGER_SCRIPT_VERSION=210102
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -4486,7 +4486,6 @@ QPKG.Enable()
 
     local -i resultcode=0
     local log_pathfile=$LOGS_PATH/$1.$ENABLE_LOG_FILE
-    QPKG.ClearServiceStatus "$1"
 
     if QPKG.NotInstalled "$1"; then
         DebugAsWarn "unable to enable $(FormatAsPackageName "$1") as it's not installed"
@@ -4497,7 +4496,6 @@ QPKG.Enable()
     resultcode=$?
 
     if [[ $resultcode -eq 0 ]]; then
-        QPKG.GetServiceStatus "$1"
         QPKGs.Enabled.Add "$1"
     else
         ShowAsWarn "unable to enable $(FormatAsPackageName "$1") $(FormatAsExitcode $resultcode)"
@@ -4522,7 +4520,6 @@ QPKG.Disable()
 
     local -i resultcode=0
     local log_pathfile=$LOGS_PATH/$1.$DISABLE_LOG_FILE
-    QPKG.ClearServiceStatus "$1"
 
     if QPKG.NotInstalled "$1"; then
         DebugAsWarn "unable to disable $(FormatAsPackageName "$1") as it's not installed"
@@ -4533,7 +4530,6 @@ QPKG.Disable()
     resultcode=$?
 
     if [[ $resultcode -eq 0 ]]; then
-        QPKG.GetServiceStatus "$1"
         QPKGs.Enabled.Remove "$1"
     else
         ShowAsWarn "unable to disable $(FormatAsPackageName "$1") $(FormatAsExitcode $resultcode)"
