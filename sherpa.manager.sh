@@ -52,7 +52,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=210102
+    readonly MANAGER_SCRIPT_VERSION=210103
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -2818,7 +2818,7 @@ Help.Actions.Show()
     DisplayAsProjectSyntaxIndentedExample 'backup these application configurations to the backup location' "backup $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample 'restore these application configurations from the backup location' "restore $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample 'show application backup files' 'list backups'
-    DisplayAsProjectSyntaxExample "$(FormatAsHelpAction) to affect all packages can be seen with" 'all-actions'
+    DisplayAsProjectSyntaxExample "$(FormatAsHelpAction)s to affect all packages can be seen with" 'all-actions'
     DisplayAsProjectSyntaxExample "multiple $(FormatAsHelpAction)s are supported like this" "$(FormatAsHelpAction) $(FormatAsHelpPackages) $(FormatAsHelpAction) $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample '' 'install sabnzbd sickchill restart transmission uninstall lazy nzbget upgrade nzbtomedia'
 
@@ -3384,7 +3384,7 @@ QPKGs.Backups.Show()
             [[ -z $epochtime || -z $filename ]] && break
 
             if [[ ${epochtime%.*} -lt $($DATE_CMD --date="$highlight_older_than" +%s) ]]; then
-                printf "$(ColourTextBrightRed "%${HELP_DESC_INDENT}s%-${HELP_FILE_NAME_WIDTH}s - %s\n")" '' "$filename" "$($DATE_CMD -d @"$epochtime")"
+                printf "$(ColourTextBrightRed "%${HELP_DESC_INDENT}s%-${HELP_FILE_NAME_WIDTH}s - %s\n")" '' "$filename" "$($DATE_CMD -d @"$epochtime" +%c)"
             else
                 printf "%${HELP_DESC_INDENT}s%-${HELP_FILE_NAME_WIDTH}s - %s\n" '' "$filename" "$($DATE_CMD -d @"$epochtime" +%c)"
             fi
