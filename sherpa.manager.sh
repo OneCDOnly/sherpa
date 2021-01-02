@@ -3409,7 +3409,7 @@ QPKGs.Backups.Show()
     DisplayLineSpaceIfNoneAlready
     Display "* The location for $(FormatAsScriptTitle) backups is: $session_backup_path"
     Display
-    Display "* Backups filenames shown in red were created more than $highlight_older_than"
+    Display "* Backups are listed oldest-first, and those $(ColourTextBrightRed "in red") were updated more than $highlight_older_than"
     Display
 
     if [[ -e $GNU_FIND_CMD ]]; then
@@ -3421,7 +3421,7 @@ QPKGs.Backups.Show()
             if [[ ${epochtime%.*} -lt $($DATE_CMD --date="$highlight_older_than" +%s) ]]; then
                 printf "$(ColourTextBrightRed "%${HELP_DESC_INDENT}s%-${HELP_FILE_NAME_WIDTH}s - %s\n")" '' "$filename" "$($DATE_CMD -d @"$epochtime")"
             else
-                printf "%${HELP_DESC_INDENT}s%-${HELP_FILE_NAME_WIDTH}s - %s\n" '' "$filename" "$($DATE_CMD -d @"$epochtime")"
+                printf "%${HELP_DESC_INDENT}s%-${HELP_FILE_NAME_WIDTH}s - %s\n" '' "$filename" "$($DATE_CMD -d @"$epochtime" +%c)"
             fi
         done <<<"$($GNU_FIND_CMD "$session_backup_path"/*.config.tar.gz -maxdepth 1 -printf '%C@ %f\n' 2>/dev/null | $SORT_CMD)"
 
