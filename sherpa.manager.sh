@@ -2730,7 +2730,7 @@ DisplayAsHelpTitleFileNamePlusSomething()
     # $1 = package name
     # $2 = package text
 
-    printf "* %-${HELP_FILE_NAME_WIDTH}s* %s\n" "$1:" "$2:"
+    printf "* %-${HELP_FILE_NAME_WIDTH}s* %s\n" "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}:" "$(tr 'a-z' 'A-Z' <<< "${2:0:1}")${2:1}:"
 
     }
 
@@ -3401,25 +3401,28 @@ QPKGs.All.Show()
 QPKGs.Backups.Show()
     {
 
+    local epochtime=0
+    local filename=''
+    local highlight_older_than='2 weeks ago'
+
     SmartCR
     DisplayLineSpaceIfNoneAlready
     Display "* The location for $(FormatAsScriptTitle) backups is: $session_backup_path"
+    Display
+    Display "* Backups filenames shown in red were created more than $highlight_older_than"
     Display
 
     if [[ -e $GNU_FIND_CMD ]]; then
         DisplayAsHelpTitleFileNamePlusSomething 'backup file' 'last backup date'
 
-        # TODO: - sort files by status change epoch time (oldest-first), then convert into locale's time format for display.
-        #       - highlight names for old backups (> 1 month).
+        while read -r epochtime filename; do
+            if [[ ${epochtime%.*} -lt $(date --date="$highlight_older_than" +%s) ]]; then
+                printf "$(ColourTextBrightRed "%${HELP_DESC_INDENT}s%-34s %s\n")" '' "$filename" "$(date -d @"$epochtime")"
+            else
+                printf "%${HELP_DESC_INDENT}.s%-34s %s\n" '' "$filename" "$(date -d @"$epochtime")"
+            fi
+        done <<<"$(find "$session_backup_path"/*.config.tar.gz -printf '%C@ %f\n' | sort)"
 
-        # find *.config.tar.gz -maxdepth 1 -printf '%f %C@\n' | sort -k2 | xargs printf '   %-35s %s\n'
-        #   - but still need to convert seconds back to date and set field widths
-
-        # stat -c '%Z %n %z' *.config.tar.gz | sort | xargs printf '%.s%-35s %s %s\n'
-        #   - works fine, just need to convert last 2 fields back into locale's date and time
-        #   - must also ensure 'coreutils-printf' is installed
-
-        $GNU_FIND_CMD "$session_backup_path"/*.config.tar.gz -maxdepth 1 -printf '   %-35f%Cc\n' 2>/dev/null
     else
         (cd "$session_backup_path" && ls -1 ./*.config.tar.gz)
     fi
