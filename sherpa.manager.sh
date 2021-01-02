@@ -2708,7 +2708,7 @@ DisplayAsHelpPackageNamePlusSomething()
     {
 
     # $1 = package name
-    # $2 = package text
+    # $2 = addtional text
 
     printf "%${HELP_DESC_INDENT}s%-${HELP_PACKAGE_NAME_WIDTH}s - %s\n" '' "$1" "$2"
 
@@ -2718,7 +2718,7 @@ DisplayAsHelpTitlePackageNamePlusSomething()
     {
 
     # $1 = package name
-    # $2 = package text
+    # $2 = addtional text
 
     printf "* %-${HELP_PACKAGE_NAME_WIDTH}s * %s\n" "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}:" "$(tr 'a-z' 'A-Z' <<< "${2:0:1}")${2:1}:"
 
@@ -2727,10 +2727,28 @@ DisplayAsHelpTitlePackageNamePlusSomething()
 DisplayAsHelpTitleFileNamePlusSomething()
     {
 
-    # $1 = package name
-    # $2 = package text
+    # $1 = file name
+    # $2 = additional text
 
     printf "* %-${HELP_FILE_NAME_WIDTH}s * %s\n" "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}:" "$(tr 'a-z' 'A-Z' <<< "${2:0:1}")${2:1}:"
+
+    }
+
+DisplayAsHelpTitle()
+    {
+
+    # $1 = text (will be capitalised)
+
+    printf "* %s\n" "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}"
+
+    }
+
+DisplayAsHelpTitleHighlighted()
+    {
+
+    # $1 = text (will be capitalised)
+
+    printf "$(ColourTextBrightOrange "* %s\n")" "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}"
 
     }
 
@@ -2775,11 +2793,8 @@ Help.Basic.Example.Show()
     {
 
     DisplayAsProjectSyntaxIndentedExample "to list available $(FormatAsHelpAction)s, type" 'list actions'
-
     DisplayAsProjectSyntaxIndentedExample "to list available $(FormatAsHelpPackages), type" 'list packages'
-
     DisplayAsProjectSyntaxIndentedExample "or, for more $(FormatAsHelpOptions), type" 'list options'
-
     Display "\nThere's also the wiki: $(FormatAsURL "https://github.com/OneCDOnly/$PROJECT_NAME/wiki")"
 
     return 0
@@ -2791,32 +2806,19 @@ Help.Actions.Show()
 
     Help.Basic.Show
     DisplayLineSpaceIfNoneAlready
-    Display "* $(FormatAsHelpAction) usage examples:"
-
+    DisplayAsHelpTitle "$(FormatAsHelpAction) usage examples:"
     DisplayAsProjectSyntaxIndentedExample 'show package statuses' 'status all'
-
     DisplayAsProjectSyntaxIndentedExample 'install these packages' "install $(FormatAsHelpPackages)"
-
     DisplayAsProjectSyntaxIndentedExample 'uninstall these packages' "uninstall $(FormatAsHelpPackages)"
-
     DisplayAsProjectSyntaxIndentedExample 'reinstall these packages' "reinstall $(FormatAsHelpPackages)"
-
     DisplayAsProjectSyntaxIndentedExample 'upgrade these packages (and internal applications)' "upgrade $(FormatAsHelpPackages)"
-
     DisplayAsProjectSyntaxIndentedExample 'start these packages' "start $(FormatAsHelpPackages)"
-
     DisplayAsProjectSyntaxIndentedExample 'stop these packages (and internal applications)' "stop $(FormatAsHelpPackages)"
-
     DisplayAsProjectSyntaxIndentedExample 'restart these packages (and internal applications)' "restart $(FormatAsHelpPackages)"
-
     DisplayAsProjectSyntaxIndentedExample 'backup these application configurations to the backup location' "backup $(FormatAsHelpPackages)"
-
     DisplayAsProjectSyntaxIndentedExample 'restore these application configurations from the backup location' "restore $(FormatAsHelpPackages)"
-
     DisplayAsProjectSyntaxIndentedExample 'show application backup files' 'list backups'
-
     DisplayAsProjectSyntaxExample "$(FormatAsHelpAction) to affect all packages can be seen with" 'all-actions'
-
     DisplayAsProjectSyntaxExample "multiple $(FormatAsHelpAction)s are supported like this" "$(FormatAsHelpAction) $(FormatAsHelpPackages) $(FormatAsHelpAction) $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample '' 'install sabnzbd sickchill restart transmission uninstall lazy nzbget upgrade nzbtomedia'
 
@@ -2831,34 +2833,20 @@ Help.ActionsAll.Show()
     DisplayLineSpaceIfNoneAlready
     Display "* These $(FormatAsHelpAction)s apply to all installed packages. If $(FormatAsHelpAction) is 'install all' then all available packages will be installed."
     DisplayLineSpaceIfNoneAlready
-    Display "* $(FormatAsHelpAction) usage examples:"
-
+    DisplayAsHelpTitle "$(FormatAsHelpAction) usage examples:"
     DisplayAsProjectSyntaxIndentedExample 'show package statuses' 'status all'
-
     DisplayAsProjectSyntaxIndentedExample 'install everything!' 'install all'
-
     DisplayAsProjectSyntaxIndentedExample "uninstall everything!" 'force uninstall all'
-
     DisplayAsProjectSyntaxIndentedExample "reinstall all installed packages" 'reinstall all'
-
     DisplayAsProjectSyntaxIndentedExample 'upgrade all installed packages (and internal applications)' 'upgrade all'
-
     DisplayAsProjectSyntaxIndentedExample 'start all installed packages (upgrade internal applications, not packages)' 'start all'
-
     DisplayAsProjectSyntaxIndentedExample 'stop all installed packages' 'stop all'
-
     DisplayAsProjectSyntaxIndentedExample 'restart all installed packages (upgrade internal applications, not packages)' 'restart all'
-
     DisplayAsProjectSyntaxIndentedExample 'list all available packages' 'list all'
-
     DisplayAsProjectSyntaxIndentedExample 'list only installed packages' 'list installed'
-
     DisplayAsProjectSyntaxIndentedExample 'list only installable packages' 'list installable'
-
     DisplayAsProjectSyntaxIndentedExample 'list only upgradable packages' 'list upgradable'
-
     DisplayAsProjectSyntaxIndentedExample 'backup all application configurations to the backup location' 'backup all'
-
     DisplayAsProjectSyntaxIndentedExample 'restore all application configurations from the backup location' 'restore all'
 
     return 0
@@ -2873,7 +2861,8 @@ Help.Packages.Show()
 
     Help.Basic.Show
     DisplayLineSpaceIfNoneAlready
-    Display "* One-or-more $(FormatAsHelpPackages) may be specified at-once"
+    DisplayAsHelpTitle "One-or-more $(FormatAsHelpPackages) may be specified at-once"
+    DisplayLineSpaceIfNoneAlready
 
     for tier in {Essential,Optional}; do
         DisplayLineSpaceIfNoneAlready
@@ -2897,14 +2886,10 @@ Help.Options.Show()
 
     Help.Basic.Show
     DisplayLineSpaceIfNoneAlready
-    Display "* $(FormatAsHelpOptions) usage examples:"
-
+    DisplayAsHelpTitle "$(FormatAsHelpOptions) usage examples:"
     DisplayAsProjectSyntaxIndentedExample 'process one-or-more packages and show live debugging information' "$(FormatAsHelpAction) $(FormatAsHelpPackages) debug"
-
     DisplayAsProjectSyntaxIndentedExample "don't check free-space on target filesystem when installing $(FormatAsPackageName Entware) packages" "$(FormatAsHelpAction) $(FormatAsHelpPackages) ignore-space"
-
     DisplayAsProjectSyntaxIndentedExample 'display helpful tips and shortcuts' 'tips'
-
     DisplayAsProjectSyntaxIndentedExample 'display troubleshooting options' 'problems'
 
     return 0
@@ -2916,31 +2901,20 @@ Help.Problems.Show()
 
     Help.Basic.Show
     DisplayLineSpaceIfNoneAlready
-    Display '* usage examples when dealing with problems:'
-
+    DisplayAsHelpTitle 'usage examples when dealing with problems:'
     DisplayAsProjectSyntaxIndentedExample 'process one-or-more packages and show live debugging information' "$(FormatAsHelpAction) $(FormatAsHelpPackages) debug"
-
     DisplayAsProjectSyntaxIndentedExample 'ensure all application dependencies are installed' 'check all'
-
     DisplayAsProjectSyntaxIndentedExample "don't check free-space on target filesystem when installing $(FormatAsPackageName Entware) packages" "$(FormatAsHelpAction) $(FormatAsHelpPackages) ignore-space"
-
     DisplayAsProjectSyntaxIndentedExample "clean the $(FormatAsScriptTitle) cache" 'clean'
-
     DisplayAsProjectSyntaxIndentedExample 'restart all installed packages (upgrades the internal applications, not packages)' 'restart all'
-
     DisplayAsProjectSyntaxIndentedExample 'start these packages and enable package icons' "start $(FormatAsHelpPackages)"
-
     DisplayAsProjectSyntaxIndentedExample 'stop these packages and disable package icons' "stop $(FormatAsHelpPackages)"
-
     DisplayAsProjectSyntaxIndentedExample "view only the most recent $(FormatAsScriptTitle) session log" 'l'
-
     DisplayAsProjectSyntaxIndentedExample "view the entire $(FormatAsScriptTitle) session log" 'log'
-
     DisplayAsProjectSyntaxIndentedExample "upload the most-recent session in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'p'
-
     DisplayAsProjectSyntaxIndentedExample "upload the most-recent $(FormatAsThousands "$LOG_TAIL_LINES") entries in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste'
-
-    Display "\n$(ColourTextBrightOrange "* If you need help, please include a copy of your") $(FormatAsScriptTitle) $(ColourTextBrightOrange "log for analysis!")"
+    Display
+    DisplayAsHelpTitleHighlighted "If you need help, please include a copy of your $(FormatAsScriptTitle) $(ColourTextBrightOrange "log for analysis!")"
 
     return 0
 
@@ -2950,17 +2924,14 @@ Help.Issue.Show()
     {
 
     DisplayLineSpaceIfNoneAlready
-    Display "* Please consider creating a new issue for this on GitHub:\n\thttps://github.com/OneCDOnly/$PROJECT_NAME/issues"
-
-    Display "\n* Alternatively, post on the QNAP NAS Community Forum:\n\thttps://forum.qnap.com/viewtopic.php?f=320&t=132373"
-
+    DisplayAsHelpTitle "please consider creating a new issue for this on GitHub:\n\thttps://github.com/OneCDOnly/$PROJECT_NAME/issues"
+    Display
+    DisplayAsHelpTitle "alternatively, post on the QNAP NAS Community Forum:\n\thttps://forum.qnap.com/viewtopic.php?f=320&t=132373"
     DisplayAsProjectSyntaxIndentedExample "view only the most recent $(FormatAsScriptTitle) session log" 'last'
-
     DisplayAsProjectSyntaxIndentedExample "view the entire $(FormatAsScriptTitle) session log" 'log'
-
     DisplayAsProjectSyntaxIndentedExample "upload the most-recent $(FormatAsThousands "$LOG_TAIL_LINES") entries in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste'
-
-    Display "\n$(ColourTextBrightOrange '* If you need help, please include a copy of your') $(FormatAsScriptTitle) $(ColourTextBrightOrange 'log for analysis!')"
+    Display
+    DisplayAsHelpTitleHighlighted "If you need help, please include a copy of your $(FormatAsScriptTitle) $(ColourTextBrightOrange "log for analysis!")"
 
     return 0
 
@@ -2971,20 +2942,13 @@ Help.Tips.Show()
 
     Help.Basic.Show
     DisplayLineSpaceIfNoneAlready
-    Display '* helpful tips and shortcuts:'
-
+    DisplayAsHelpTitle 'helpful tips and shortcuts:'
     DisplayAsProjectSyntaxIndentedExample "install all available $(FormatAsScriptTitle) packages" 'install all'
-
     DisplayAsProjectSyntaxIndentedExample 'package abbreviations also work. To see these' 'list abs'
-
     DisplayAsProjectSyntaxIndentedExample 'restart all packages (only upgrades the internal applications, not packages)' 'restart all'
-
     DisplayAsProjectSyntaxIndentedExample 'list only packages that are not installed' 'list installable'
-
     DisplayAsProjectSyntaxIndentedExample "view only the most recent $(FormatAsScriptTitle) session log" 'l'
-
     DisplayAsProjectSyntaxIndentedExample 'upgrade the internal applications only' "restart $(FormatAsHelpPackages)"
-
     Help.BackupLocation.Show
 
     return 0
@@ -3000,7 +2964,8 @@ Help.PackageAbbreviations.Show()
 
     Help.Basic.Show
     DisplayLineSpaceIfNoneAlready
-    Display "* $(FormatAsScriptTitle) recognises various abbreviations as $(FormatAsHelpPackages)"
+    DisplayAsHelpTitle "$(FormatAsScriptTitle) recognises various abbreviations as $(FormatAsHelpPackages)"
+    DisplayLineSpaceIfNoneAlready
 
     for tier in {Essential,Optional}; do
         DisplayLineSpaceIfNoneAlready
@@ -3407,9 +3372,9 @@ QPKGs.Backups.Show()
 
     SmartCR
     DisplayLineSpaceIfNoneAlready
-    Display "* The location for $(FormatAsScriptTitle) backups is: $session_backup_path"
+    DisplayAsHelpTitle "the location for $(FormatAsScriptTitle) backups is: $session_backup_path"
     Display
-    Display "* Backups are listed oldest-first, and those $(ColourTextBrightRed "in red") were updated more than $highlight_older_than"
+    DisplayAsHelpTitle "backups are listed oldest-first, and those $(ColourTextBrightRed "in red") were updated more than $highlight_older_than"
     Display
 
     if [[ -e $GNU_FIND_CMD ]]; then
