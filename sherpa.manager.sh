@@ -2648,8 +2648,8 @@ IsNotSysFileExist()
     }
 
 readonly HELP_DESC_INDENT=3
-readonly HELP_SYNTAX_INDENT=8
-readonly HELP_PACKAGE_NAME_WIDTH=16
+readonly HELP_SYNTAX_INDENT=6
+readonly HELP_PACKAGE_NAME_WIDTH=18
 readonly HELP_FILE_NAME_WIDTH=33
 
 DisplayAsProjectSyntaxExample()
@@ -2710,7 +2710,7 @@ DisplayAsHelpPackageNamePlusSomething()
     # $1 = package name
     # $2 = package text
 
-    printf "%${HELP_DESC_INDENT}s%-${HELP_PACKAGE_NAME_WIDTH}s- %s\n" '' "$1" "$2"
+    printf "%${HELP_DESC_INDENT}s%-${HELP_PACKAGE_NAME_WIDTH}s - %s\n" '' "$1" "$2"
 
     }
 
@@ -2720,7 +2720,7 @@ DisplayAsHelpTitlePackageNamePlusSomething()
     # $1 = package name
     # $2 = package text
 
-    printf "* %-${HELP_PACKAGE_NAME_WIDTH}s* %s\n" "$1:" "$2:"
+    printf "* %-${HELP_PACKAGE_NAME_WIDTH}s * %s\n" "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}:" "$(tr 'a-z' 'A-Z' <<< "${2:0:1}")${2:1}:"
 
     }
 
@@ -2730,7 +2730,7 @@ DisplayAsHelpTitleFileNamePlusSomething()
     # $1 = package name
     # $2 = package text
 
-    printf "* %-${HELP_FILE_NAME_WIDTH}s* %s\n" "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}:" "$(tr 'a-z' 'A-Z' <<< "${2:0:1}")${2:1}:"
+    printf "* %-${HELP_FILE_NAME_WIDTH}s * %s\n" "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}:" "$(tr 'a-z' 'A-Z' <<< "${2:0:1}")${2:1}:"
 
     }
 
@@ -3417,9 +3417,9 @@ QPKGs.Backups.Show()
 
         while read -r epochtime filename; do
             if [[ ${epochtime%.*} -lt $(date --date="$highlight_older_than" +%s) ]]; then
-                printf "$(ColourTextBrightRed "%${HELP_DESC_INDENT}s%-34s %s\n")" '' "$filename" "$(date -d @"$epochtime")"
+                printf "$(ColourTextBrightRed "%${HELP_DESC_INDENT}s%-${HELP_FILE_NAME_WIDTH}s - %s\n")" '' "$filename" "$(date -d @"$epochtime")"
             else
-                printf "%${HELP_DESC_INDENT}.s%-34s %s\n" '' "$filename" "$(date -d @"$epochtime")"
+                printf "%${HELP_DESC_INDENT}s%-${HELP_FILE_NAME_WIDTH}s - %s\n" '' "$filename" "$(date -d @"$epochtime")"
             fi
         done <<<"$(find "$session_backup_path"/*.config.tar.gz -printf '%C@ %f\n' | sort)"
 
