@@ -3416,12 +3416,14 @@ QPKGs.Backups.Show()
         DisplayAsHelpTitleFileNamePlusSomething 'backup file' 'last backup date'
 
         while read -r epochtime filename; do
-            if [[ ${epochtime%.*} -lt $(date --date="$highlight_older_than" +%s) ]]; then
-                printf "$(ColourTextBrightRed "%${HELP_DESC_INDENT}s%-${HELP_FILE_NAME_WIDTH}s - %s\n")" '' "$filename" "$(date -d @"$epochtime")"
+            [[ -z $epochtime || -z $filename ]] && break
+
+            if [[ ${epochtime%.*} -lt $($DATE_CMD --date="$highlight_older_than" +%s) ]]; then
+                printf "$(ColourTextBrightRed "%${HELP_DESC_INDENT}s%-${HELP_FILE_NAME_WIDTH}s - %s\n")" '' "$filename" "$($DATE_CMD -d @"$epochtime")"
             else
-                printf "%${HELP_DESC_INDENT}s%-${HELP_FILE_NAME_WIDTH}s - %s\n" '' "$filename" "$(date -d @"$epochtime")"
+                printf "%${HELP_DESC_INDENT}s%-${HELP_FILE_NAME_WIDTH}s - %s\n" '' "$filename" "$($DATE_CMD -d @"$epochtime")"
             fi
-        done <<<"$(find "$session_backup_path"/*.config.tar.gz -printf '%C@ %f\n' | sort)"
+        done <<<"$($GNU_FIND_CMD "$session_backup_path"/*.config.tar.gz -maxdepth 1 -printf '%C@ %f\n' 2>/dev/null | $SORT_CMD)"
 
     else
         (cd "$session_backup_path" && ls -1 ./*.config.tar.gz)
