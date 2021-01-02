@@ -612,7 +612,7 @@ Session.Init()
 
     QPKGs.Names.Add "${MANAGER_QPKG_NAME[*]}"
 
-    readonly MANAGER_ESSENTIAL_IPKGS_ADD='findutils grep less sed coreutils-printf'
+    readonly MANAGER_ESSENTIAL_IPKGS_ADD='findutils grep less sed'
     readonly MANAGER_COMMON_IPKGS_ADD='ca-certificates gcc git git-http nano python3-dev python3-pip python3-setuptools'
     readonly MANAGER_COMMON_PIPS_ADD='apscheduler beautifulsoup4 cfscrape cheetah3 cheroot!=8.4.4 cherrypy configobj feedparser portend pygithub python-magic random_user_agent sabyenc3 simplejson slugify'
     readonly MANAGER_COMMON_QPKG_CONFLICTS='Optware Optware-NG TarMT Python QPython2'
@@ -2708,7 +2708,7 @@ DisplayAsHelpPackageNamePlusSomething()
     {
 
     # $1 = package name
-    # $2 = addtional text
+    # $2 = additional text
 
     printf "%${HELP_DESC_INDENT}s%-${HELP_PACKAGE_NAME_WIDTH}s - %s\n" '' "$1" "$2"
 
@@ -2718,7 +2718,7 @@ DisplayAsHelpTitlePackageNamePlusSomething()
     {
 
     # $1 = package name
-    # $2 = addtional text
+    # $2 = additional text
 
     printf "* %-${HELP_PACKAGE_NAME_WIDTH}s * %s\n" "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}:" "$(tr 'a-z' 'A-Z' <<< "${2:0:1}")${2:1}:"
 
