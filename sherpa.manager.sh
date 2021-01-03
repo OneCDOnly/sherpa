@@ -31,11 +31,6 @@
 #   If on-screen line-spacing is required, this should only be done by the next function that outputs to display.
 #   Display functions should never finish by putting an empty line on-screen for spacing.
 
-# These demonstrate available words for syntax highlighting on Kate (makes it easier to pick a word that stands-out):
-# ALERT ATTENTION DANGER HACK SECURITY
-# BUG FIXME DEPRECATED TASK TODO TBD WARNING CAUTION NOLINT
-# ### NOTE NOTICE TEST TESTING
-
 set -o nounset
 set -o pipefail
 #set -o errexit
@@ -52,7 +47,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=210103
+    readonly MANAGER_SCRIPT_VERSION=210104
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -2747,7 +2742,7 @@ DisplayAsHelpTitleHighlighted()
     {
 
     # $1 = text (will be capitalised)
-
+    # shellcheck disable=2059
     printf "$(ColourTextBrightOrange "* %s\n")" "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}"
 
     }
@@ -2755,10 +2750,9 @@ DisplayAsHelpTitleHighlighted()
 SmartCR()
     {
 
-    # reset cursor to start-of-line, erasing previous characters
-
     [[ $(type -t Session.Debug.To.Screen.Init) = 'function' ]] && Session.Debug.To.Screen.IsSet && return
 
+    # reset cursor to start-of-line, erasing previous characters
     echo -en "\033[1K\r"
 
     }
@@ -3369,6 +3363,7 @@ QPKGs.Backups.Show()
     local epochtime=0
     local filename=''
     local highlight_older_than='2 weeks ago'
+    local format=''
 
     SmartCR
     DisplayLineSpaceIfNoneAlready
@@ -3384,10 +3379,13 @@ QPKGs.Backups.Show()
             [[ -z $epochtime || -z $filename ]] && break
 
             if [[ ${epochtime%.*} -lt $($DATE_CMD --date="$highlight_older_than" +%s) ]]; then
-                printf "$(ColourTextBrightRed "%${HELP_DESC_INDENT}s%-${HELP_FILE_NAME_WIDTH}s - %s\n")" '' "$filename" "$($DATE_CMD -d @"$epochtime" +%c)"
+                format="$(ColourTextBrightRed "%${HELP_DESC_INDENT}s%-${HELP_FILE_NAME_WIDTH}s - %s\n")"
             else
-                printf "%${HELP_DESC_INDENT}s%-${HELP_FILE_NAME_WIDTH}s - %s\n" '' "$filename" "$($DATE_CMD -d @"$epochtime" +%c)"
+                format="%${HELP_DESC_INDENT}s%-${HELP_FILE_NAME_WIDTH}s - %s\n"
             fi
+
+            # shellcheck disable=2059
+            printf "$format" '' "$filename" "$($DATE_CMD -d @"$epochtime" +%c)"
         done <<<"$($GNU_FIND_CMD "$session_backup_path"/*.config.tar.gz -maxdepth 1 -printf '%C@ %f\n' 2>/dev/null | $SORT_CMD)"
 
     else
