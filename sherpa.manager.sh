@@ -3831,7 +3831,7 @@ QPKG.PathFilename()
 
     url=$(QPKG.URL "$1") || return 1
 
-    echo "$QPKG_DL_PATH/$url"
+    echo "$QPKG_DL_PATH/$($BASENAME_CMD "$url")"
 
     }
 
