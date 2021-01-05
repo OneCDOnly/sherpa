@@ -1317,6 +1317,8 @@ Session.Validate()
         DebugUserspace.Warning '/opt' '<not present>'
     fi
 
+    QPKG.Enabled Entware && Session.AddPathToEntware
+
     if [[ ${#PATH} -le $max_width ]]; then
         DebugUserspace.OK '$PATH' "$PATH"
     else
