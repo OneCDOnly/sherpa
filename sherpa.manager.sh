@@ -47,7 +47,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=210104
+    readonly MANAGER_SCRIPT_VERSION=210106
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -259,8 +259,8 @@ Session.Init()
         MANAGER_QPKG_VERSION=()             # QPKG version
         MANAGER_QPKG_URL=()                 # remote QPKG URL
         MANAGER_QPKG_MD5=()                 # remote QPKG MD5
-        MANAGER_QPKG_DESC+=()               # QPKG description
-        MANAGER_QPKG_ABBRVS=()              # if set, this package is user-installable, and these abbreviations may be used to specify app
+        MANAGER_QPKG_DESC+=()               # QPKG description (applies to all packages with the same name)
+        MANAGER_QPKG_ABBRVS=()              # if set, this package is user-installable, and these abbreviations may be used to specify app (applies to all packages with the same name)
         MANAGER_QPKG_ESSENTIALS=()          # require these QPKGs to be installed first. Use 'none' if package is optional.
         MANAGER_QPKG_IPKGS_ADD=()           # require these IPKGs to be installed first
         MANAGER_QPKG_IPKGS_REMOVE=()        # require these IPKGs to be uninstalled first
@@ -302,8 +302,8 @@ Session.Init()
         MANAGER_QPKG_VERSION+=(0.8.1.0)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_x86.qpkg)
         MANAGER_QPKG_MD5+=(996ffb92d774eb01968003debc171e91)
-        MANAGER_QPKG_DESC+=("create and use PAR2 files to detect damage in data files and repair them if necessary")     # applies to all 'Par2' packages
-        MANAGER_QPKG_ABBRVS+=('par par2')                                       # applies to all 'Par2' packages
+        MANAGER_QPKG_DESC+=('create and use PAR2 files to detect damage in data files and repair them if necessary')
+        MANAGER_QPKG_ABBRVS+=('par par2')
         MANAGER_QPKG_ESSENTIALS+=('')
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
@@ -387,7 +387,7 @@ Session.Init()
         MANAGER_QPKG_VERSION+=(201130)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
         MANAGER_QPKG_MD5+=(ec7ee6febaf34d894585afa4dec87798)
-        MANAGER_QPKG_DESC+=("Deluge BitTorrent daemon")
+        MANAGER_QPKG_DESC+=('Deluge BitTorrent daemon')
         MANAGER_QPKG_ABBRVS+=('deluge del-server deluge-server')
         MANAGER_QPKG_ESSENTIALS+=(Entware)
         MANAGER_QPKG_IPKGS_ADD+=('deluge jq')
@@ -401,7 +401,7 @@ Session.Init()
         MANAGER_QPKG_VERSION+=(201130)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
         MANAGER_QPKG_MD5+=(2e77b7981360356e6457458b11e759ef)
-        MANAGER_QPKG_DESC+=("web UI to access multiple Deluge BitTorrent daemons")
+        MANAGER_QPKG_DESC+=('web UI to access multiple Deluge BitTorrent daemons')
         MANAGER_QPKG_ABBRVS+=('del-web deluge-web')
         MANAGER_QPKG_ESSENTIALS+=(Entware)
         MANAGER_QPKG_IPKGS_ADD+=('deluge-ui-web jq')
@@ -415,7 +415,7 @@ Session.Init()
         MANAGER_QPKG_VERSION+=(201219b)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/main/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
         MANAGER_QPKG_MD5+=(d576993ca2c6ec7585abe24455e19385)
-        MANAGER_QPKG_DESC+=("hides the annoying rotating banner at the top of QTS App Center pages")
+        MANAGER_QPKG_DESC+=('hides the annoying rotating banner at the top of QTS App Center pages')
         MANAGER_QPKG_ABBRVS+=('htb hide hidebanner hidethatbanner')
         MANAGER_QPKG_ESSENTIALS+=('')
         MANAGER_QPKG_IPKGS_ADD+=('')
@@ -429,7 +429,7 @@ Session.Init()
         MANAGER_QPKG_VERSION+=(201130)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
         MANAGER_QPKG_MD5+=(4317b410cc8cc380218d960a78686f3d)
-        MANAGER_QPKG_DESC+=("follow authors and grab metadata for all your digital reading needs")
+        MANAGER_QPKG_DESC+=('follow authors and grab metadata for all your digital reading needs')
         MANAGER_QPKG_ABBRVS+=('ll lazy lazylibrarian')
         MANAGER_QPKG_ESSENTIALS+=(Entware)
         MANAGER_QPKG_IPKGS_ADD+=('python3-pyopenssl python3-requests')
@@ -443,7 +443,7 @@ Session.Init()
         MANAGER_QPKG_VERSION+=(201130)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
         MANAGER_QPKG_MD5+=(afa21ae0ef4b43022d09b2ee8f455176)
-        MANAGER_QPKG_DESC+=("another SickBeard fork: manage and search for TV shows")
+        MANAGER_QPKG_DESC+=('another SickBeard fork: manage and search for TV shows')
         MANAGER_QPKG_ABBRVS+=('om med omed medusa omedusa')
         MANAGER_QPKG_ESSENTIALS+=(Entware)
         MANAGER_QPKG_IPKGS_ADD+=('mediainfo python3-pyopenssl')
@@ -457,7 +457,7 @@ Session.Init()
         MANAGER_QPKG_VERSION+=(201130)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
         MANAGER_QPKG_MD5+=(ba959d93fa95d0bd5cd95d37a6e131f0)
-        MANAGER_QPKG_DESC+=("automated Comic Book (cbr/cbz) downloader program for use with NZB and torrents written in python")
+        MANAGER_QPKG_DESC+=('automated Comic Book (cbr/cbz) downloader program for use with NZB and torrents written in Python')
         MANAGER_QPKG_ABBRVS+=('my omy myl mylar mylar3')
         MANAGER_QPKG_ESSENTIALS+=(Entware)
         MANAGER_QPKG_IPKGS_ADD+=('python3-mako python3-pillow python3-pyopenssl python3-pytz python3-requests python3-six python3-urllib3')
@@ -471,7 +471,7 @@ Session.Init()
         MANAGER_QPKG_VERSION+=(201130)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
         MANAGER_QPKG_MD5+=(c7114e6e217110bc7490ad867b5bf536)
-        MANAGER_QPKG_DESC+=("lite-and-fast NZB download manager with a simple web UI")
+        MANAGER_QPKG_DESC+=('lite-and-fast NZB download manager with a simple web UI')
         MANAGER_QPKG_ABBRVS+=('ng nzb nzbg nget nzbget')
         MANAGER_QPKG_ESSENTIALS+=(Entware)
         MANAGER_QPKG_IPKGS_ADD+=(nzbget)
@@ -485,7 +485,7 @@ Session.Init()
         MANAGER_QPKG_VERSION+=(201215b)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
         MANAGER_QPKG_MD5+=(91300bd3ff3ad82e8e819905aa30484d)
-        MANAGER_QPKG_DESC+=("post-processing for NZBs to many services")
+        MANAGER_QPKG_DESC+=('post-processing for NZBs to many services')
         MANAGER_QPKG_ABBRVS+=('nzb2 nzb2m nzbto nzbtom nzbtomedia')
         MANAGER_QPKG_ESSENTIALS+=(Entware)
         MANAGER_QPKG_IPKGS_ADD+=('')
@@ -499,7 +499,7 @@ Session.Init()
         MANAGER_QPKG_VERSION+=(201225)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/main/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
         MANAGER_QPKG_MD5+=(2de4bf787afe34405d76ebd8fefddb43)
-        MANAGER_QPKG_DESC+=("run user scripts and commands after all QPKGs have completed startup reintegration into QTS")
+        MANAGER_QPKG_DESC+=('run user scripts and commands after all QPKGs have completed startup reintegration into QTS')
         MANAGER_QPKG_ABBRVS+=('rl run runlast')
         MANAGER_QPKG_ESSENTIALS+=('')
         MANAGER_QPKG_IPKGS_ADD+=('')
@@ -513,26 +513,40 @@ Session.Init()
         MANAGER_QPKG_VERSION+=(201130)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
         MANAGER_QPKG_MD5+=(dd1723270972c14cdfe017fc0bd51b88)
-        MANAGER_QPKG_DESC+=("full-featured NZB download manager with a nice web UI")
+        MANAGER_QPKG_DESC+=('full-featured NZB download manager with a nice web UI')
         MANAGER_QPKG_ABBRVS+=('sb sb3 sab sab3 sabnzbd3 sabnzbd')
         MANAGER_QPKG_ESSENTIALS+=('Entware Par2')
         MANAGER_QPKG_IPKGS_ADD+=('python3-asn1crypto python3-chardet python3-cryptography python3-pyopenssl unrar p7zip coreutils-nice ionice ffprobe')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
 
-#     MANAGER_QPKG_NAME+=(sha3sum)
-#         MANAGER_QPKG_IS_ESSENTIAL+=(false)
-#         MANAGER_QPKG_IS_STANDALONE+=(true)
-#         MANAGER_QPKG_ARCH+=(x64)
-#         MANAGER_QPKG_VERSION+=(201114)
-#         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/main/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_x86_64.qpkg)
-#         MANAGER_QPKG_MD5+=(87c4ae02c7f95cd2706997047fc9e84d)
-#         MANAGER_QPKG_DESC+=("the 'sha3sum' and keccak utilities from @maandree")
-#         MANAGER_QPKG_ABBRVS+=('sha3 sha3sum')
-#         MANAGER_QPKG_ESSENTIALS+=('')
-#         MANAGER_QPKG_IPKGS_ADD+=('')
-#         MANAGER_QPKG_IPKGS_REMOVE+=('')
-#         MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
+    MANAGER_QPKG_NAME+=(sha3sum)
+        MANAGER_QPKG_IS_ESSENTIAL+=(false)
+        MANAGER_QPKG_IS_STANDALONE+=(true)
+        MANAGER_QPKG_ARCH+=(x86)
+        MANAGER_QPKG_VERSION+=(201114)
+        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/main/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_x86.qpkg)
+        MANAGER_QPKG_MD5+=(87c4ae02c7f95cd2706997047fc9e84d)
+        MANAGER_QPKG_DESC+=("the 'sha3sum' and keccak utilities from @maandree (x86 & x86-64 only)")
+        MANAGER_QPKG_ABBRVS+=('sha3 sha3sum')
+        MANAGER_QPKG_ESSENTIALS+=('')
+        MANAGER_QPKG_IPKGS_ADD+=('')
+        MANAGER_QPKG_IPKGS_REMOVE+=('')
+        MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
+
+    MANAGER_QPKG_NAME+=(sha3sum)
+        MANAGER_QPKG_IS_ESSENTIAL+=(false)
+        MANAGER_QPKG_IS_STANDALONE+=(true)
+        MANAGER_QPKG_ARCH+=(x64)
+        MANAGER_QPKG_VERSION+=(201114)
+        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/main/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_x86_64.qpkg)
+        MANAGER_QPKG_MD5+=(eed8071c43665431d6444cb489636ae5)
+        MANAGER_QPKG_DESC+=('')
+        MANAGER_QPKG_ABBRVS+=('')
+        MANAGER_QPKG_ESSENTIALS+=('')
+        MANAGER_QPKG_IPKGS_ADD+=('')
+        MANAGER_QPKG_IPKGS_REMOVE+=('')
+        MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
 
     MANAGER_QPKG_NAME+=(SickChill)
         MANAGER_QPKG_IS_ESSENTIAL+=(false)
@@ -541,7 +555,7 @@ Session.Init()
         MANAGER_QPKG_VERSION+=(201130)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
         MANAGER_QPKG_MD5+=(47a017ab38094aafde6ce25a69409762)
-        MANAGER_QPKG_DESC+=("another SickBeard fork: manage and search for TV shows and movies")
+        MANAGER_QPKG_DESC+=('another SickBeard fork: manage and search for TV shows and movies')
         MANAGER_QPKG_ABBRVS+=('sc sick sickc chill sickchill')
         MANAGER_QPKG_ESSENTIALS+=(Entware)
         MANAGER_QPKG_IPKGS_ADD+=('')
@@ -555,7 +569,7 @@ Session.Init()
         MANAGER_QPKG_VERSION+=(201130)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
         MANAGER_QPKG_MD5+=(c735207d769d54ca375aa6da1ab1babf)
-        MANAGER_QPKG_DESC+=("another SickBeard fork: manage and search for TV shows")
+        MANAGER_QPKG_DESC+=('another SickBeard fork: manage and search for TV shows')
         MANAGER_QPKG_ABBRVS+=('sg os osg sickg gear ogear osickg sickgear osickgear')
         MANAGER_QPKG_ESSENTIALS+=(Entware)
         MANAGER_QPKG_IPKGS_ADD+=('')
@@ -569,7 +583,7 @@ Session.Init()
         MANAGER_QPKG_VERSION+=(201228)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/main/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
         MANAGER_QPKG_MD5+=(4bf84d42c86952b835ca290e42747e09)
-        MANAGER_QPKG_DESC+=("ensure other installed QPKGs start in correct sequence during QTS bootup")
+        MANAGER_QPKG_DESC+=('ensure other installed QPKGs start in correct sequence during QTS bootup')
         MANAGER_QPKG_ABBRVS+=('smq smqs sort sortmy sortmine sortpackages sortmypackages sortmyqpkgs')
         MANAGER_QPKG_ESSENTIALS+=('')
         MANAGER_QPKG_IPKGS_ADD+=('')
@@ -583,7 +597,7 @@ Session.Init()
         MANAGER_QPKG_VERSION+=(201130)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
         MANAGER_QPKG_MD5+=(c39da08668672e53f8d2dfed0f746069)
-        MANAGER_QPKG_DESC+=("lite bitorrent download manager with a simple web UI")
+        MANAGER_QPKG_DESC+=('lite bitorrent download manager with a simple web UI')
         MANAGER_QPKG_ABBRVS+=('ot tm tr trans otrans tmission transmission otransmission')
         MANAGER_QPKG_ESSENTIALS+=(Entware)
         MANAGER_QPKG_IPKGS_ADD+=('transmission-web jq')
@@ -3412,7 +3426,9 @@ QPKGs.Statuses.Show()
             package_notes=()
             package_note=''
 
-            if QPKGs.NotInstalled.Exist "$package"; then
+            if ! QPKG.URL "$package" &>/dev/null; then
+                DisplayAsHelpPackageNamePlusSomething "$package" 'unavailable'
+            elif QPKGs.NotInstalled.Exist "$package"; then
                 DisplayAsHelpPackageNamePlusSomething "$package" 'not installed'
             else
                 QPKGs.Enabled.Exist "$package" && package_notes+=($(ColourTextBrightGreen started))
@@ -3811,7 +3827,11 @@ QPKG.PathFilename()
     #   stdout = QPKG local filename
     #   $? = 0 if successful, 1 if failed
 
-    echo "$QPKG_DL_PATH/$($BASENAME_CMD "$(QPKG.URL "$1")")"
+    local url=''
+
+    url=$(QPKG.URL "$1") || return 1
+
+    echo "$QPKG_DL_PATH/$url"
 
     }
 
@@ -3973,6 +3993,7 @@ QPKG.Download()
     DebugFuncEntry
 
     if [[ -z $1 ]]; then
+        DebugAsError 'no package name specified'
         DebugFuncExit; return 1
     fi
 
@@ -3986,7 +4007,9 @@ QPKG.Download()
 
     if [[ -z $remote_url ]]; then
         DebugAsError "no URL found for this package $(FormatAsPackageName "$1") (unsupported arch?)"
-        DebugFuncExit; return
+        QPKGs.ToDownload.Remove "$1"
+        QPKGs.UnDownload.Add "$1"
+        DebugFuncExit; return 1
     fi
 
     if [[ -e $local_pathfile ]]; then
@@ -4038,6 +4061,7 @@ QPKG.Install()
     DebugFuncEntry
 
     if [[ -z $1 ]]; then
+        DebugAsError 'no package name specified'
         DebugFuncExit; return 1
     fi
 
@@ -4045,6 +4069,13 @@ QPKG.Install()
     local -i resultcode=0
     local local_pathfile=$(QPKG.PathFilename "$1")
     local log_pathfile=''
+
+    if [[ -z $local_pathfile ]]; then
+        DebugAsError "no pathfile found for this package $(FormatAsPackageName "$1") (unsupported arch?)"
+        QPKGs.ToInstall.Remove "$1"
+        QPKGs.UnInstall.Add "$1"
+        DebugFuncExit; return 1
+    fi
 
     if [[ ${local_pathfile##*.} = zip ]]; then
         $UNZIP_CMD -nq "$local_pathfile" -d "$QPKG_DL_PATH"
@@ -4123,6 +4154,7 @@ QPKG.Reinstall()
     DebugFuncEntry
 
     if [[ -z $1 ]]; then
+        DebugAsError 'no package name specified'
         DebugFuncExit; return 1
     fi
 
@@ -4130,6 +4162,13 @@ QPKG.Reinstall()
     local -i resultcode=0
     local local_pathfile=$(QPKG.PathFilename "$1")
     local log_pathfile=''
+
+    if [[ -z $local_pathfile ]]; then
+        DebugAsError "no pathfile found for this package $(FormatAsPackageName "$1") (unsupported arch?)"
+        QPKGs.ToReinstall.Remove "$1"
+        QPKGs.UnReinstall.Add "$1"
+        DebugFuncExit; return 1
+    fi
 
     if [[ ${local_pathfile##*.} = zip ]]; then
         $UNZIP_CMD -nq "$local_pathfile" -d "$QPKG_DL_PATH"
@@ -4176,6 +4215,7 @@ QPKG.Upgrade()
     DebugFuncEntry
 
     if [[ -z $1 ]]; then
+        DebugAsError 'no package name specified'
         DebugFuncExit; return 1
     fi
 
@@ -4183,6 +4223,13 @@ QPKG.Upgrade()
     local previous_version='null'
     local current_version='null'
     local local_pathfile=$(QPKG.PathFilename "$1")
+
+    if [[ -z $local_pathfile ]]; then
+        DebugAsError "no pathfile found for this package $(FormatAsPackageName "$1") (unsupported arch?)"
+        QPKGs.ToUpgrade.Remove "$1"
+        QPKGs.UnUpgrade.Add "$1"
+        DebugFuncExit; return 1
+    fi
 
     if [[ ${local_pathfile##*.} = zip ]]; then
         $UNZIP_CMD -nq "$local_pathfile" -d "$QPKG_DL_PATH"
@@ -4242,6 +4289,7 @@ QPKG.Uninstall()
     DebugFuncEntry
 
     if [[ -z $1 ]]; then
+        DebugAsError 'no package name specified'
         DebugFuncExit; return 1
     fi
 
@@ -4300,6 +4348,7 @@ QPKG.Restart()
     DebugFuncEntry
 
     if [[ -z $1 ]]; then
+        DebugAsError 'no package name specified'
         DebugFuncExit; return 1
     fi
 
@@ -4349,6 +4398,7 @@ QPKG.Start()
     DebugFuncEntry
 
     if [[ -z $1 ]]; then
+        DebugAsError 'no package name specified'
         DebugFuncExit; return 1
     fi
 
@@ -4406,6 +4456,7 @@ QPKG.Stop()
     DebugFuncEntry
 
     if [[ -z $1 ]]; then
+        DebugAsError 'no package name specified'
         DebugFuncExit; return 1
     fi
 
@@ -4449,6 +4500,7 @@ QPKG.Enable()
     DebugFuncEntry
 
     if [[ -z $1 ]]; then
+        DebugAsError 'no package name specified'
         DebugFuncExit; return 1
     fi
 
@@ -4483,6 +4535,7 @@ QPKG.Disable()
     DebugFuncEntry
 
     if [[ -z $1 ]]; then
+        DebugAsError 'no package name specified'
         DebugFuncExit; return 1
     fi
 
@@ -4523,6 +4576,7 @@ QPKG.Backup()
     DebugFuncEntry
 
     if [[ -z $1 ]]; then
+        DebugAsError 'no package name specified'
         DebugFuncExit; return 1
     fi
 
@@ -4590,6 +4644,7 @@ QPKG.Restore()
     DebugFuncEntry
 
     if [[ -z $1 ]]; then
+        DebugAsError 'no package name specified'
         DebugFuncExit; return 1
     fi
 
@@ -5221,7 +5276,7 @@ DebugLog()
 DebugVar()
     {
 
-    DebugThis "(vv) \$$1 : '${!1}'"
+    DebugThis "(vv) \$${1:-} : '${!1:-}'"
 
     }
 
