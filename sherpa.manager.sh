@@ -2719,7 +2719,7 @@ DisplayAsHelpPackageNamePlusSomething()
     # $1 = package name
     # $2 = additional text
 
-    printf "%${HELP_DESC_INDENT}s%-${HELP_PACKAGE_NAME_WIDTH}s - %s\n" '' "$1" "$2"
+    printf "%${HELP_DESC_INDENT}s%-${HELP_PACKAGE_NAME_WIDTH}s - %s\n" '' "${1:-}" "${2:-}"
 
     }
 
@@ -5093,49 +5093,49 @@ DebugExtLogMinorSeparator()
 DebugScript()
     {
 
-    DebugDetected.OK "$(FormatAsScript)" "$1" "$2"
+    DebugDetected.OK "$(FormatAsScript)" "${1:-}" "${2:-}"
 
     }
 
 DebugHardware.OK()
     {
 
-    DebugDetected.OK "$(FormatAsHardware)" "$1" "$2"
+    DebugDetected.OK "$(FormatAsHardware)" "${1:-}" "${2:-}"
 
     }
 
 DebugHardware.Warning()
     {
 
-    DebugDetected.Warning "$(FormatAsHardware)" "$1" "$2"
+    DebugDetected.Warning "$(FormatAsHardware)" "${1:-}" "${2:-}"
 
     }
 
 DebugFirmware.OK()
     {
 
-    DebugDetected.OK "$(FormatAsFirmware)" "$1" "$2"
+    DebugDetected.OK "$(FormatAsFirmware)" "${1:-}" "${2:-}"
 
     }
 
 DebugFirmware.Warning()
     {
 
-    DebugDetected.Warning "$(FormatAsFirmware)" "$1" "$2"
+    DebugDetected.Warning "$(FormatAsFirmware)" "${1:-}" "${2:-}"
 
     }
 
 DebugUserspace.OK()
     {
 
-    DebugDetected.OK "$(FormatAsUserspace)" "$1" "$2"
+    DebugDetected.OK "$(FormatAsUserspace)" "${1:-}" "${2:-}"
 
     }
 
 DebugUserspace.Warning()
     {
 
-    DebugDetected.Warning "$(FormatAsUserspace)" "$1" "$2"
+    DebugDetected.Warning "$(FormatAsUserspace)" "${1:-}" "${2:-}"
 
     }
 
@@ -5146,13 +5146,13 @@ DebugDetected.Warning()
     second_column_width=21
 
     if [[ -z $3 ]]; then                # if $3 is nothing, then assume only 2 fields are required
-        DebugAsWarn "$(printf "%${first_column_width}s: %${second_column_width}s\n" "$1" "$2")"
+        DebugAsWarn "$(printf "%${first_column_width}s: %${second_column_width}s\n" "${1:-}" "${2:-}")"
     elif [[ $3 = ' ' ]]; then           # if $3 is only a whitespace then print $2 with trailing colon and 'none' as third field
-        DebugAsWarn "$(printf "%${first_column_width}s: %${second_column_width}s: none\n" "$1" "$2")"
+        DebugAsWarn "$(printf "%${first_column_width}s: %${second_column_width}s: none\n" "${1:-}" "${2:-}")"
     elif [[ ${3: -1} = ' ' ]]; then     # if $3 has a trailing whitespace then print $3 without the trailing whitespace
-        DebugAsWarn "$(printf "%${first_column_width}s: %${second_column_width}s: %-s\n" "$1" "$2" "$($SED_CMD 's| *$||' <<< "$3")")"
+        DebugAsWarn "$(printf "%${first_column_width}s: %${second_column_width}s: %-s\n" "${1:-}" "${2:-}" "$($SED_CMD 's| *$||' <<< "${3:-}")")"
     else
-        DebugAsWarn "$(printf "%${first_column_width}s: %${second_column_width}s: %-s\n" "$1" "$2" "$3")"
+        DebugAsWarn "$(printf "%${first_column_width}s: %${second_column_width}s: %-s\n" "${1:-}" "${2:-}" "${3:-}")"
     fi
 
     }
@@ -5164,13 +5164,13 @@ DebugDetected.OK()
     second_column_width=21
 
     if [[ -z $3 ]]; then                # if $3 is nothing, then assume only 2 fields are required
-        DebugDetected "$(printf "%${first_column_width}s: %${second_column_width}s\n" "$1" "$2")"
+        DebugDetected "$(printf "%${first_column_width}s: %${second_column_width}s\n" "${1:-}" "${2:-}")"
     elif [[ $3 = ' ' ]]; then           # if $3 is only a whitespace then print $2 with trailing colon and 'none' as third field
-        DebugDetected "$(printf "%${first_column_width}s: %${second_column_width}s: none\n" "$1" "$2")"
+        DebugDetected "$(printf "%${first_column_width}s: %${second_column_width}s: none\n" "${1:-}" "${2:-}")"
     elif [[ ${3: -1} = ' ' ]]; then     # if $3 has a trailing whitespace then print $3 without the trailing whitespace
-        DebugDetected "$(printf "%${first_column_width}s: %${second_column_width}s: %-s\n" "$1" "$2" "$($SED_CMD 's| *$||' <<< "$3")")"
+        DebugDetected "$(printf "%${first_column_width}s: %${second_column_width}s: %-s\n" "${1:-}" "${2:-}" "$($SED_CMD 's| *$||' <<< "${3:-}")")"
     else
-        DebugDetected "$(printf "%${first_column_width}s: %${second_column_width}s: %-s\n" "$1" "$2" "$3")"
+        DebugDetected "$(printf "%${first_column_width}s: %${second_column_width}s: %-s\n" "${1:-}" "${2:-}" "${3:-}")"
     fi
 
     }
@@ -5178,14 +5178,14 @@ DebugDetected.OK()
 DebugCommand.Proc()
     {
 
-    DebugAsProc "executing '$1'"
+    DebugAsProc "executing '${1:-}'"
 
     }
 
 DebugQPKG()
     {
 
-    DebugDetected.OK 'QPKG' "$1" "$2"
+    DebugDetected.OK 'QPKG' "${1:-}" "${2:-}"
 
     }
 
@@ -5508,7 +5508,7 @@ ShowAsOperationResult()
     fi
 
     if [[ $passes -eq 0 ]]; then
-        ShowAsFail "$5 ${fails}${tier} QPKG$(FormatAsPlural "$3") failed"
+        ShowAsFail "$5 ${fails}${tier} QPKG$(FormatAsPlural "${3:-}") failed"
     elif [[ $fails -gt 0 ]]; then
         ShowAsWarn "$5 ${passes}${tier} QPKG$(FormatAsPlural "$passes") OK, but ${fails}${tier} QPKG$(FormatAsPlural "$fails") failed"
     elif [[ $passes -gt 0 ]]; then
@@ -5539,7 +5539,7 @@ WriteToDisplay.Wait()
     #   $1 = pass/fail
     #   $2 = message
 
-    previous_msg=$(printf "%-10s: %s" "$1" "$2")
+    previous_msg=$(printf "%-10s: %s" "${1:-}" "${2:-}")
     DisplayWait "$previous_msg"
 
     return 0
@@ -5566,7 +5566,7 @@ WriteToDisplay.New()
 
     [[ ${previous_msg:-_none_} = _none_ ]] && previous_msg=''
 
-    this_message=$(printf "%-10s: %s" "$1" "$2")
+    this_message=$(printf "%-10s: %s" "${1:-}" "${2:-}")
 
     if [[ $this_message != "${previous_msg}" ]]; then
         previous_length=$((${#previous_msg}+1))
