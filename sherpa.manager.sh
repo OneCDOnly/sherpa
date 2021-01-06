@@ -243,6 +243,7 @@ Session.Init()
     readonly INSTALLED_RAM_KB=$($GREP_CMD MemTotal /proc/meminfo | $CUT_CMD -f2 -d':' | $SED_CMD 's|kB||;s| ||g')
     readonly MIN_RAM_KB=1048576
     readonly LOG_TAIL_LINES=3000    # a full download and install of everything generates a session around 1600 lines, but include a bunch of opkg updates and it can get much longer.
+    readonly MIN_PYTHON_VER=390
     code_pointer=0
     pip3_cmd=/opt/bin/pip3
     previous_msg=' '
@@ -1265,6 +1266,7 @@ Session.Validate()
     local package=''
     local -i max_width=58
     local -i trimmed_width=$((max_width-3))
+    local version=''
 
     DebugInfoMinorSeparator
     DebugHardware.OK 'model' "$(get_display_name)"
@@ -1325,9 +1327,11 @@ Session.Validate()
         DebugUserspace.OK '$PATH' "${PATH:0:trimmed_width}..."
     fi
 
-    CheckPythonPathAndVersion python2
     CheckPythonPathAndVersion python3
     CheckPythonPathAndVersion python
+
+    version=$(python3 -V 2>&1 | $SED_CMD 's|^Python ||') && [[ ${version//./} -lt $MIN_PYTHON_VER ]] && ShowAsReco "your Python 3 is out-of-date. Suggest reinstalling Entware: 'sherpa reinstall ew'"
+
     DebugUserspace.OK 'raw arguments' "\"$USER_ARGS_RAW\""
 
     DebugScript 'logs path' "$LOGS_PATH"
@@ -2614,8 +2618,12 @@ CheckPythonPathAndVersion()
 
     if location=$(command -v "$1" 2>&1); then
         DebugUserspace.OK "'$1' path" "$location"
-        if version=$($1 -V 2>&1); then
-            DebugUserspace.OK "'$1' version" "$version"
+        if version=$($1 -V 2>&1 | $SED_CMD 's|^Python ||'); then
+            if [[ ${version//./} -ge $MIN_PYTHON_VER ]]; then
+                DebugUserspace.OK "'$1' version" "$version"
+            else
+                DebugUserspace.Warning "'$1' version" "$version"
+            fi
         else
             DebugUserspace.Warning "default '$1' version" ' '
         fi
@@ -3625,12 +3633,7 @@ Session.AddPathToEntware()
     local opkg_prefix=/opt/bin:/opt/sbin
 
     [[ $PATH =~ opkg_prefix ]] && return
-
-    if QPKG.Installed Entware; then
-        export PATH="$opkg_prefix:$($SED_CMD "s|$opkg_prefix||" <<< "$PATH")"
-        DebugAsDone 'added $PATH to Entware'
-        DebugVar PATH
-    fi
+    QPKG.Installed Entware && export PATH="$opkg_prefix:$($SED_CMD "s|$opkg_prefix||" <<< "$PATH")"
 
     return 0
 
@@ -5350,8 +5353,21 @@ ShowAsDebug()
 ShowAsNote()
     {
 
+    # note to user
+
     SmartCR
     WriteToDisplay.New "$(ColourTextBrightYellow note)" "$1"
+    WriteToLog note "$1"
+
+    }
+
+ShowAsReco()
+    {
+
+    # recommendation
+
+    SmartCR
+    WriteToDisplay.New "$(ColourTextBrightOrange reco)" "$1"
     WriteToLog note "$1"
 
     }
