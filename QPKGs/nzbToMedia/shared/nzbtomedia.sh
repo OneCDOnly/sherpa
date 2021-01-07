@@ -2,7 +2,7 @@
 ####################################################################################
 # nzbtomedia.sh
 #
-# Copyright (C) 2020 OneCD [one.cd.only@gmail.com]
+# Copyright (C) 2020-2021 OneCD [one.cd.only@gmail.com]
 #
 # so, blame OneCD if it all goes horribly wrong. ;)
 #

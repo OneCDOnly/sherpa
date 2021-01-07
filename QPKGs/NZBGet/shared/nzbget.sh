@@ -2,7 +2,7 @@
 ####################################################################################
 # nzbget.sh
 #
-# Copyright (C) 2019-2020 OneCD [one.cd.only@gmail.com]
+# Copyright (C) 2019-2021 OneCD [one.cd.only@gmail.com]
 #
 # so, blame OneCD if it all goes horribly wrong. ;)
 #
@@ -146,7 +146,6 @@ StartQPKG()
     [[ $(type -t PullGitRepo) = 'function' ]] && PullGitRepo "$QPKG_NAME" "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_PATH"
 
     WaitForLaunchTarget || return 1
-
     [[ $(type -t UpdateLanguages) = 'function' ]] && UpdateLanguages
 
     EnsureConfigFileExists
@@ -519,7 +518,13 @@ ReWriteUIPorts()
     # Write the current application UI ports into the QTS App Center configuration
 
     # QTS App Center requires 'Web_Port' to always be non-zero
-    # 'Web_SSL_Port' behaviour: -1 (launch QTS UI again), 0 ("unable to connect") or > 0 (only works if logged-in to QTS UI via SSL)
+
+    # 'Web_SSL_Port' behaviour:
+    #   -2 or missing = QTS will permit fallback to HTTP port, with a warning to user
+    #              -1 = launch QTS UI again (except QTS 4.5.1 shows a QNAP Error screen)
+    #               0 = "unable to connect"
+    #             > 0 = only works if logged-in to QTS UI via SSL
+
     # If SSL is enabled, attempting to access with non-SSL via 'Web_Port' results in "connection was reset"
 
     DisplayWaitCommitToLog 'update QPKG icon with UI ports:'
@@ -529,7 +534,7 @@ ReWriteUIPorts()
     if IsSSLEnabled; then
         $SETCFG_CMD $QPKG_NAME Web_SSL_Port "$ui_port_secure" -f $APP_CENTER_CONFIG_PATHFILE
     else
-        $SETCFG_CMD $QPKG_NAME Web_SSL_Port 0 -f $APP_CENTER_CONFIG_PATHFILE
+        $SETCFG_CMD $QPKG_NAME Web_SSL_Port '-2' -f $APP_CENTER_CONFIG_PATHFILE
     fi
 
     DisplayCommitToLog 'OK'
