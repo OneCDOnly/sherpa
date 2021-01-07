@@ -1625,6 +1625,13 @@ Tiers.Processor()
                         fi
                     done
 
+                    # don't restart packages that were just upgraded
+                    for package in $(QPKGs.ToRestart.Array); do
+                        if QPKGs.IsUpgrade.Exist "$package"; then
+                            QPKGs.ToRestart.Remove "$package"
+                        fi
+                    done
+
                     # don't restart packages that are not installed
                     for package in $(QPKGs.ToRestart.Array); do
                         if QPKGs.NotInstalled.Exist "$package"; then
