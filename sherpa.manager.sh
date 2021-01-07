@@ -47,7 +47,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=210107
+    readonly MANAGER_SCRIPT_VERSION=210108
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -1432,14 +1432,14 @@ Tiers.Processor()
         QPKGs.ToBackup.Add "$(QPKGs.SupportsBackup.Array)"
     fi
 
-    QPKGs.ToBackup.Remove "$(QPKGs.NotSupportsBackup.Array)"
     QPKGs.ToBackup.Remove "$(QPKGs.NotInstalled.Array)"
+    QPKGs.ToBackup.Remove "$(QPKGs.NotSupportsBackup.Array)"
 
     Tier.Processor 'Backup' false 'all' 'QPKG' 'ToBackup' 'forward' 'backup' 'backing-up' 'backed-up' ''
 
     # check for packages to be stopped or uninstalled, and ensure related packages are stopped
     if User.Opts.Apps.All.Stop.IsSet; then
-        QPKGs.ToStop.Add "$(QPKGs.Installed.Array)"
+        QPKGs.ToStop.Add "$(QPKGs.Enabled.Array)"
     fi
 
     # don't stop then start a package. Make it restart instead.
@@ -1576,16 +1576,10 @@ Tiers.Processor()
                     done
                 fi
 
-                # don't start packages that are already started
-                for package in $(QPKGs.ToStart.Array); do
-                    if QPKG.Enabled "$package"; then
-                        QPKGs.ToStart.Remove "$package"
-                    fi
-                done
-
-                # no-need to start packages that are unavailable
                 QPKGs.ToStart.Remove "$(QPKGs.NotInstalled.Array)"
-                QPKGs.ToStart.Remove "$(QPKGs.ToInstall.Array)"
+                QPKGs.ToStart.Remove "$(QPKGs.Enabled.Array)"
+                QPKGs.ToStart.Remove "$(QPKGs.IsInstall.Array)"
+                QPKGs.ToStart.Remove "$(QPKGs.IsStart.Array)"
                 QPKGs.ToStart.Remove "$PROJECT_NAME"
 
                 Tier.Processor 'Start' false "$tier" 'QPKG' 'ToStart' 'forward' 'start' 'starting' 'started' 'long'
@@ -1617,28 +1611,13 @@ Tiers.Processor()
                     for package in $(QPKGs.IsUpgrade.Array); do
                         QPKGs.ToRestart.Add "$(QPKG.Get.Optionals "$package")"
                     done
-
-                    # don't restart packages that are not started
-                    for package in $(QPKGs.ToRestart.Array); do
-                        if QPKG.NotEnabled "$package"; then
-                            QPKGs.ToRestart.Remove "$package"
-                        fi
-                    done
-
-                    # don't restart packages that were just upgraded
-                    for package in $(QPKGs.ToRestart.Array); do
-                        if QPKGs.IsUpgrade.Exist "$package"; then
-                            QPKGs.ToRestart.Remove "$package"
-                        fi
-                    done
-
-                    # don't restart packages that are not installed
-                    for package in $(QPKGs.ToRestart.Array); do
-                        if QPKGs.NotInstalled.Exist "$package"; then
-                            QPKGs.ToRestart.Remove "$package"
-                        fi
-                    done
                 fi
+
+                QPKGs.ToRestart.Remove "$(QPKGs.NotInstalled.Array)"
+                QPKGs.ToRestart.Remove "$(QPKGs.Disabled.Array)"
+                QPKGs.ToRestart.Remove "$(QPKGs.IsUpgrade.Array)"
+                QPKGs.ToRestart.Remove "$(QPKGs.IsReinstall.Array)"
+                QPKGs.ToRestart.Remove "$(QPKGs.IsRestart.Array)"
 
                 Tier.Processor 'Restart' false "$tier" 'QPKG' 'ToRestart' 'forward' 'restart' 'restarting' 'restarted' 'long'
                 ;;
