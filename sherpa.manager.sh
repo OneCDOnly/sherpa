@@ -47,7 +47,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=210106
+    readonly MANAGER_SCRIPT_VERSION=210107
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -511,9 +511,9 @@ Session.Init()
         MANAGER_QPKG_IS_ESSENTIAL+=(false)
         MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(all)
-        MANAGER_QPKG_VERSION+=(201130)
+        MANAGER_QPKG_VERSION+=(210107)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
-        MANAGER_QPKG_MD5+=(dd1723270972c14cdfe017fc0bd51b88)
+        MANAGER_QPKG_MD5+=(ab5d64b285f4c2b00c6ddeb4c2c2cfe3)
         MANAGER_QPKG_DESC+=('full-featured NZB download manager with a nice web UI')
         MANAGER_QPKG_ABBRVS+=('sb sb3 sab sab3 sabnzbd3 sabnzbd')
         MANAGER_QPKG_ESSENTIALS+=('Entware Par2')
