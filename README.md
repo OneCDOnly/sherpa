@@ -26,6 +26,7 @@ Package management via **sherpa** provides extra features like easy application 
 [![nzbToMedia](images/nzbToMedia.gif)](https://github.com/clinton-hall/nzbToMedia)
 [![RunLast](images/RunLast.gif)](https://github.com/OneCDOnly/RunLast)
 [![SABnzbd](images/SABnzbd.gif)](https://sabnzbd.org/wiki/)
+[![sha3sum](images/sha3sum.gif)](https://github.com/maandree/sha3sum)
 [![SickChill](images/SickChill.gif)](https://github.com/SickChill/SickChill)
 [![SickGear](images/OSickGear.gif)](https://github.com/SickGear/SickGear/wiki)
 [![SortMyQPKGs](images/SortMyQPKGs.gif)](https://github.com/OneCDOnly/SortMyQPKGs)
