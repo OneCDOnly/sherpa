@@ -520,10 +520,11 @@ ReWriteUIPorts()
     # QTS App Center requires 'Web_Port' to always be non-zero
 
     # 'Web_SSL_Port' behaviour:
-    #   -2 or missing = QTS will permit fallback to HTTP port, with a warning to user
-    #              -1 = launch QTS UI again (except QTS 4.5.1 shows a QNAP Error screen)
+    #            < -2 = crashes current QTS session. Starts with non-responsive package icons in App Center
+    #   missing or -2 = QTS will fallback from HTTPS to HTTP, with a warning to user
+    #              -1 = launch QTS UI again (only if WebUI = '/'), else show "QNAP Error" page
     #               0 = "unable to connect"
-    #             > 0 = only works if logged-in to QTS UI via SSL
+    #             > 0 = works if logged-in to QTS UI via HTTPS
 
     # If SSL is enabled, attempting to access with non-SSL via 'Web_Port' results in "connection was reset"
 
