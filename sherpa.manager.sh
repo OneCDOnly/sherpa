@@ -2026,7 +2026,7 @@ Entware.Patch.Service()
     {
 
     local tab=$'\t'
-    local prefix_text="# following line was inserted by $PROJECT_NAME"
+    local prefix_text="# the following line was inserted by $PROJECT_NAME: https://git.io/sherpa"
     local find_text=''
     local insert_text=''
     local package_init_pathfile=$(QPKG.ServicePathFile Entware)
