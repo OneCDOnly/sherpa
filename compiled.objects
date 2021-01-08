@@ -4213,6 +4213,88 @@ QPKGs.NotSupportsBackup.Size()
     }
 QPKGs.NotSupportsBackup.Init
 
+QPKGs.NotSupportsUpdateOnRestart.Add()
+    {
+    local array=(${1})
+    local item=''
+    for item in "${array[@]:-}"; do
+        [[ " ${_object_qpkgs_notsupportsupdateonrestart_array_[*]:-} " != *"$item"* ]] && _object_qpkgs_notsupportsupdateonrestart_array_+=("$item")
+    done
+    }
+QPKGs.NotSupportsUpdateOnRestart.Array()
+    {
+    echo -n "${_object_qpkgs_notsupportsupdateonrestart_array_[@]:-}"
+    }
+QPKGs.NotSupportsUpdateOnRestart.Count()
+    {
+    echo "${#_object_qpkgs_notsupportsupdateonrestart_array_[@]:-}"
+    }
+QPKGs.NotSupportsUpdateOnRestart.Exist()
+    {
+    [[ ${_object_qpkgs_notsupportsupdateonrestart_array_[*]:-} == *"$1"* ]]
+    }
+QPKGs.NotSupportsUpdateOnRestart.First()
+    {
+    echo "${_object_qpkgs_notsupportsupdateonrestart_array_[0]}"
+    }
+QPKGs.NotSupportsUpdateOnRestart.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_qpkgs_notsupportsupdateonrestart_array_[@]:-} ]] && index=${#_object_qpkgs_notsupportsupdateonrestart_array_[@]}
+    echo -n "${_object_qpkgs_notsupportsupdateonrestart_array_[((index-1))]}"
+    }
+QPKGs.NotSupportsUpdateOnRestart.Init()
+    {
+    _object_qpkgs_notsupportsupdateonrestart_size_=0
+    _object_qpkgs_notsupportsupdateonrestart_array_=()
+    _object_qpkgs_notsupportsupdateonrestart_array_index_=1
+    }
+QPKGs.NotSupportsUpdateOnRestart.IsAny()
+    {
+    [[ ${#_object_qpkgs_notsupportsupdateonrestart_array_[@]:-} -gt 0 ]]
+    }
+QPKGs.NotSupportsUpdateOnRestart.IsNone()
+    {
+    [[ ${#_object_qpkgs_notsupportsupdateonrestart_array_[@]:-} -eq 0 ]]
+    }
+QPKGs.NotSupportsUpdateOnRestart.List()
+    {
+    echo -n "${_object_qpkgs_notsupportsupdateonrestart_array_[*]:-}"
+    }
+QPKGs.NotSupportsUpdateOnRestart.ListCSV()
+    {
+    echo -n "${_object_qpkgs_notsupportsupdateonrestart_array_[*]:-}" | tr ' ' ','
+    }
+QPKGs.NotSupportsUpdateOnRestart.Remove()
+    {
+    local argument_array=(${1})
+    local temp_array=()
+    local argument=''
+    local item=''
+    local matched=false
+    for item in "${_object_qpkgs_notsupportsupdateonrestart_array_[@]:-}"; do
+        matched=false
+        for argument in "${argument_array[@]:-}"; do
+            if [[ $argument = $item ]]; then
+                matched=true; break
+            fi
+        done
+        [[ $matched = false ]] && temp_array+=("$item")
+    done
+    _object_qpkgs_notsupportsupdateonrestart_array_=("${temp_array[@]:-}")
+    [[ -z ${_object_qpkgs_notsupportsupdateonrestart_array_[*]} ]] && _object_qpkgs_notsupportsupdateonrestart_array_=()
+    }
+QPKGs.NotSupportsUpdateOnRestart.Size()
+    {
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+        _object_qpkgs_notsupportsupdateonrestart_size_=$2
+    else
+        echo -n $_object_qpkgs_notsupportsupdateonrestart_size_
+    fi
+    }
+QPKGs.NotSupportsUpdateOnRestart.Init
+
 QPKGs.Optional.Add()
     {
     local array=(${1})
@@ -4458,6 +4540,88 @@ QPKGs.SupportsBackup.Size()
     fi
     }
 QPKGs.SupportsBackup.Init
+
+QPKGs.SupportsUpdateOnRestart.Add()
+    {
+    local array=(${1})
+    local item=''
+    for item in "${array[@]:-}"; do
+        [[ " ${_object_qpkgs_supportsupdateonrestart_array_[*]:-} " != *"$item"* ]] && _object_qpkgs_supportsupdateonrestart_array_+=("$item")
+    done
+    }
+QPKGs.SupportsUpdateOnRestart.Array()
+    {
+    echo -n "${_object_qpkgs_supportsupdateonrestart_array_[@]:-}"
+    }
+QPKGs.SupportsUpdateOnRestart.Count()
+    {
+    echo "${#_object_qpkgs_supportsupdateonrestart_array_[@]:-}"
+    }
+QPKGs.SupportsUpdateOnRestart.Exist()
+    {
+    [[ ${_object_qpkgs_supportsupdateonrestart_array_[*]:-} == *"$1"* ]]
+    }
+QPKGs.SupportsUpdateOnRestart.First()
+    {
+    echo "${_object_qpkgs_supportsupdateonrestart_array_[0]}"
+    }
+QPKGs.SupportsUpdateOnRestart.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_qpkgs_supportsupdateonrestart_array_[@]:-} ]] && index=${#_object_qpkgs_supportsupdateonrestart_array_[@]}
+    echo -n "${_object_qpkgs_supportsupdateonrestart_array_[((index-1))]}"
+    }
+QPKGs.SupportsUpdateOnRestart.Init()
+    {
+    _object_qpkgs_supportsupdateonrestart_size_=0
+    _object_qpkgs_supportsupdateonrestart_array_=()
+    _object_qpkgs_supportsupdateonrestart_array_index_=1
+    }
+QPKGs.SupportsUpdateOnRestart.IsAny()
+    {
+    [[ ${#_object_qpkgs_supportsupdateonrestart_array_[@]:-} -gt 0 ]]
+    }
+QPKGs.SupportsUpdateOnRestart.IsNone()
+    {
+    [[ ${#_object_qpkgs_supportsupdateonrestart_array_[@]:-} -eq 0 ]]
+    }
+QPKGs.SupportsUpdateOnRestart.List()
+    {
+    echo -n "${_object_qpkgs_supportsupdateonrestart_array_[*]:-}"
+    }
+QPKGs.SupportsUpdateOnRestart.ListCSV()
+    {
+    echo -n "${_object_qpkgs_supportsupdateonrestart_array_[*]:-}" | tr ' ' ','
+    }
+QPKGs.SupportsUpdateOnRestart.Remove()
+    {
+    local argument_array=(${1})
+    local temp_array=()
+    local argument=''
+    local item=''
+    local matched=false
+    for item in "${_object_qpkgs_supportsupdateonrestart_array_[@]:-}"; do
+        matched=false
+        for argument in "${argument_array[@]:-}"; do
+            if [[ $argument = $item ]]; then
+                matched=true; break
+            fi
+        done
+        [[ $matched = false ]] && temp_array+=("$item")
+    done
+    _object_qpkgs_supportsupdateonrestart_array_=("${temp_array[@]:-}")
+    [[ -z ${_object_qpkgs_supportsupdateonrestart_array_[*]} ]] && _object_qpkgs_supportsupdateonrestart_array_=()
+    }
+QPKGs.SupportsUpdateOnRestart.Size()
+    {
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+        _object_qpkgs_supportsupdateonrestart_size_=$2
+    else
+        echo -n $_object_qpkgs_supportsupdateonrestart_size_
+    fi
+    }
+QPKGs.SupportsUpdateOnRestart.Init
 
 QPKGs.Upgradable.Add()
     {

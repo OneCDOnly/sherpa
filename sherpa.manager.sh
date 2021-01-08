@@ -266,6 +266,7 @@ Session.Init()
         MANAGER_QPKG_IPKGS_ADD=()           # require these IPKGs to be installed first
         MANAGER_QPKG_IPKGS_REMOVE=()        # require these IPKGs to be uninstalled first
         MANAGER_QPKG_BACKUP_SUPPORTED=()    # true/false: this QPKG supports configuration 'backup' and 'restore' operations
+        MANAGER_QPKG_UPDATE_ON_RESTART=()   # true/false: the internal appplication can be updated by restarting the QPKG
 
     # essential packages here
     MANAGER_QPKG_NAME+=($PROJECT_NAME)
@@ -281,6 +282,7 @@ Session.Init()
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
+        MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     MANAGER_QPKG_NAME+=(Entware)
         MANAGER_QPKG_IS_ESSENTIAL+=(true)
@@ -295,6 +297,7 @@ Session.Init()
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
+        MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     MANAGER_QPKG_NAME+=(Par2)
         MANAGER_QPKG_IS_ESSENTIAL+=(true)
@@ -309,6 +312,7 @@ Session.Init()
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
         MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
+        MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     MANAGER_QPKG_NAME+=(Par2)
         MANAGER_QPKG_IS_ESSENTIAL+=(true)
@@ -323,6 +327,7 @@ Session.Init()
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
         MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
+        MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     MANAGER_QPKG_NAME+=(Par2)
         MANAGER_QPKG_IS_ESSENTIAL+=(true)
@@ -337,6 +342,7 @@ Session.Init()
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
         MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
+        MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     MANAGER_QPKG_NAME+=(Par2)
         MANAGER_QPKG_IS_ESSENTIAL+=(true)
@@ -351,6 +357,7 @@ Session.Init()
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
         MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
+        MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     MANAGER_QPKG_NAME+=(Par2)
         MANAGER_QPKG_IS_ESSENTIAL+=(true)
@@ -365,6 +372,7 @@ Session.Init()
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
         MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
+        MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     MANAGER_QPKG_NAME+=(Par2)
         MANAGER_QPKG_IS_ESSENTIAL+=(true)
@@ -379,6 +387,7 @@ Session.Init()
         MANAGER_QPKG_IPKGS_ADD+=(par2cmdline)
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
+        MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     # only optionals below here in pseudo-alpha-sorted name order (i.e. disregard character-case and leading 'O')
     MANAGER_QPKG_NAME+=(Deluge-server)
@@ -394,6 +403,7 @@ Session.Init()
         MANAGER_QPKG_IPKGS_ADD+=('deluge jq')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
+        MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     MANAGER_QPKG_NAME+=(Deluge-web)
         MANAGER_QPKG_IS_ESSENTIAL+=(false)
@@ -408,6 +418,7 @@ Session.Init()
         MANAGER_QPKG_IPKGS_ADD+=('deluge-ui-web jq')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
+        MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     MANAGER_QPKG_NAME+=(HideThatBanner)
         MANAGER_QPKG_IS_ESSENTIAL+=(false)
@@ -422,6 +433,7 @@ Session.Init()
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
+        MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     MANAGER_QPKG_NAME+=(LazyLibrarian)
         MANAGER_QPKG_IS_ESSENTIAL+=(false)
@@ -436,6 +448,7 @@ Session.Init()
         MANAGER_QPKG_IPKGS_ADD+=('python3-pyopenssl python3-requests')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
+        MANAGER_QPKG_UPDATE_ON_RESTART+=(true)
 
     MANAGER_QPKG_NAME+=(OMedusa)
         MANAGER_QPKG_IS_ESSENTIAL+=(false)
@@ -450,6 +463,7 @@ Session.Init()
         MANAGER_QPKG_IPKGS_ADD+=('mediainfo python3-pyopenssl')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
+        MANAGER_QPKG_UPDATE_ON_RESTART+=(true)
 
     MANAGER_QPKG_NAME+=(Mylar3)
         MANAGER_QPKG_IS_ESSENTIAL+=(false)
@@ -464,6 +478,7 @@ Session.Init()
         MANAGER_QPKG_IPKGS_ADD+=('python3-mako python3-pillow python3-pyopenssl python3-pytz python3-requests python3-six python3-urllib3')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
+        MANAGER_QPKG_UPDATE_ON_RESTART+=(true)
 
     MANAGER_QPKG_NAME+=(NZBGet)
         MANAGER_QPKG_IS_ESSENTIAL+=(false)
@@ -478,6 +493,7 @@ Session.Init()
         MANAGER_QPKG_IPKGS_ADD+=(nzbget)
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
+        MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     MANAGER_QPKG_NAME+=(nzbToMedia)
         MANAGER_QPKG_IS_ESSENTIAL+=(false)
@@ -492,6 +508,7 @@ Session.Init()
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
+        MANAGER_QPKG_UPDATE_ON_RESTART+=(true)
 
     MANAGER_QPKG_NAME+=(RunLast)
         MANAGER_QPKG_IS_ESSENTIAL+=(false)
@@ -506,6 +523,7 @@ Session.Init()
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
+        MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     MANAGER_QPKG_NAME+=(SABnzbd)
         MANAGER_QPKG_IS_ESSENTIAL+=(false)
@@ -520,6 +538,7 @@ Session.Init()
         MANAGER_QPKG_IPKGS_ADD+=('python3-asn1crypto python3-chardet python3-cryptography python3-pyopenssl unrar p7zip coreutils-nice ionice ffprobe')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
+        MANAGER_QPKG_UPDATE_ON_RESTART+=(true)
 
     MANAGER_QPKG_NAME+=(sha3sum)
         MANAGER_QPKG_IS_ESSENTIAL+=(false)
@@ -534,6 +553,7 @@ Session.Init()
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
+        MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     MANAGER_QPKG_NAME+=(sha3sum)
         MANAGER_QPKG_IS_ESSENTIAL+=(false)
@@ -548,6 +568,7 @@ Session.Init()
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
+        MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     MANAGER_QPKG_NAME+=(SickChill)
         MANAGER_QPKG_IS_ESSENTIAL+=(false)
@@ -562,6 +583,7 @@ Session.Init()
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
+        MANAGER_QPKG_UPDATE_ON_RESTART+=(true)
 
     MANAGER_QPKG_NAME+=(OSickGear)
         MANAGER_QPKG_IS_ESSENTIAL+=(false)
@@ -576,6 +598,7 @@ Session.Init()
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
+        MANAGER_QPKG_UPDATE_ON_RESTART+=(true)
 
     MANAGER_QPKG_NAME+=(SortMyQPKGs)
         MANAGER_QPKG_IS_ESSENTIAL+=(false)
@@ -590,6 +613,7 @@ Session.Init()
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
+        MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     MANAGER_QPKG_NAME+=(OTransmission)
         MANAGER_QPKG_IS_ESSENTIAL+=(false)
@@ -604,6 +628,7 @@ Session.Init()
         MANAGER_QPKG_IPKGS_ADD+=('transmission-web jq')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
+        MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     # package arrays are now full, so lock them
     readonly MANAGER_QPKG_NAME
@@ -619,6 +644,7 @@ Session.Init()
         readonly MANAGER_QPKG_IPKGS_ADD
         readonly MANAGER_QPKG_IPKGS_REMOVE
         readonly MANAGER_QPKG_BACKUP_SUPPORTED
+        readonly MANAGER_QPKG_UPDATE_ON_RESTART
 
     QPKGs.Names.Add "${MANAGER_QPKG_NAME[*]}"
 
@@ -1263,7 +1289,43 @@ Session.Validate()
 
     ShowAsProc 'validating parameters' >&2
 
-    local package=''
+    Session.Environment.List
+
+    if Session.SkipPackageProcessing.IsSet; then
+        DebugFuncExit; return 1
+    fi
+
+    if ! QPKGs.Conflicts.Check; then
+        code_pointer=2
+        Session.SkipPackageProcessing.Set
+        DebugFuncExit; return 1
+    fi
+
+    if QPKGs.ToBackup.IsNone && QPKGs.ToUninstall.IsNone && QPKGs.ToUpgrade.IsNone && QPKGs.ToInstall.IsNone && QPKGs.ToReinstall.IsNone && QPKGs.ToRestore.IsNone && QPKGs.ToRestart.IsNone && QPKGs.ToStart.IsNone && QPKGs.ToStop.IsNone; then
+        if User.Opts.Apps.All.Install.IsNot && User.Opts.Apps.All.Restart.IsNot && User.Opts.Apps.All.Upgrade.IsNot && User.Opts.Apps.All.Backup.IsNot && User.Opts.Apps.All.Restore.IsNot && User.Opts.Help.Status.IsNot && User.Opts.Apps.All.Start.IsNot && User.Opts.Apps.All.Stop.IsNot; then
+            if User.Opts.Dependencies.Check.IsNot && User.Opts.IgnoreFreeSpace.IsNot; then
+                ShowAsEror "I've nothing to do (usually means the arguments didn't make sense, or were incomplete)"
+                User.Opts.Help.Basic.Set
+                Session.SkipPackageProcessing.Set
+                DebugFuncExit; return 1
+            fi
+        fi
+    fi
+
+    if User.Opts.Dependencies.Check.IsSet || QPKGs.ToUpgrade.Exist Entware; then
+        Session.IPKGs.Install.Set
+        Session.PIPs.Install.Set
+    fi
+
+    DebugFuncExit; return 0
+
+    }
+
+Session.Environment.List()
+    {
+
+    DebugFuncEntry
+
     local -i max_width=58
     local -i trimmed_width=$((max_width-3))
     local version=''
@@ -1319,7 +1381,11 @@ Session.Validate()
         DebugUserspace.Warning '/opt' '<not present>'
     fi
 
-    QPKG.Enabled Entware && Session.AddPathToEntware
+    if QPKG.Enabled Entware; then
+        Session.AddPathToEntware
+    else
+        Session.RemovePathToEntware
+    fi
 
     if [[ ${#PATH} -le $max_width ]]; then
         DebugUserspace.OK '$PATH' "$PATH"
@@ -1337,35 +1403,7 @@ Session.Validate()
     DebugScript 'logs path' "$LOGS_PATH"
     DebugScript 'work path' "$WORK_PATH"
     DebugScript 'object reference hash' "$(Objects.Compile hash)"
-
-    DebugQPKG 'upgradable QPKGs' "$(QPKGs.Upgradable.ListCSV) "
     DebugInfoMinorSeparator
-
-    if Session.SkipPackageProcessing.IsSet; then
-        DebugFuncExit; return 1
-    fi
-
-    if ! QPKGs.Conflicts.Check; then
-        code_pointer=2
-        Session.SkipPackageProcessing.Set
-        DebugFuncExit; return 1
-    fi
-
-    if QPKGs.ToBackup.IsNone && QPKGs.ToUninstall.IsNone && QPKGs.ToUpgrade.IsNone && QPKGs.ToInstall.IsNone && QPKGs.ToReinstall.IsNone && QPKGs.ToRestore.IsNone && QPKGs.ToRestart.IsNone && QPKGs.ToStart.IsNone && QPKGs.ToStop.IsNone; then
-        if User.Opts.Apps.All.Install.IsNot && User.Opts.Apps.All.Restart.IsNot && User.Opts.Apps.All.Upgrade.IsNot && User.Opts.Apps.All.Backup.IsNot && User.Opts.Apps.All.Restore.IsNot && User.Opts.Help.Status.IsNot && User.Opts.Apps.All.Start.IsNot && User.Opts.Apps.All.Stop.IsNot; then
-            if User.Opts.Dependencies.Check.IsNot && User.Opts.IgnoreFreeSpace.IsNot; then
-                ShowAsEror "I've nothing to do (usually means the arguments didn't make sense, or were incomplete)"
-                User.Opts.Help.Basic.Set
-                Session.SkipPackageProcessing.Set
-                DebugFuncExit; return 1
-            fi
-        fi
-    fi
-
-    if User.Opts.Dependencies.Check.IsSet || QPKGs.ToUpgrade.Exist Entware; then
-        Session.IPKGs.Install.Set
-        Session.PIPs.Install.Set
-    fi
 
     DebugFuncExit; return 0
 
@@ -1401,6 +1439,7 @@ Tiers.Processor()
     local package=''
 
     QPKGs.SupportsBackup.Build
+    QPKGs.SupportsUpdateOnRestart.Build
 
     # build an initial download list
     if User.Opts.Apps.All.Upgrade.IsSet; then
@@ -1485,11 +1524,13 @@ Tiers.Processor()
 
     # if an essential has been selected for reinstall, need to stop its optionals first, and start them again later
     for package in $(QPKGs.ToReinstall.Array); do
-        if QPKGs.Essential.Exist "$package" && QPKG.Installed "$package"; then
+        if QPKGs.Essential.Exist "$package" && QPKG.Installed "$package" && QPKG.Enabled "$package"; then
             QPKGs.ToStop.Add "$(QPKG.Get.Optionals "$package")"
             QPKGs.ToStart.Add "$(QPKG.Get.Optionals "$package")"
         fi
     done
+
+    # TODO: if an optional is stopped, and an essential is reinstalled, don't start optional later
 
     # don't stop packages that are already stopped
     for package in $(QPKGs.ToStop.Array); do
@@ -1603,7 +1644,7 @@ Tiers.Processor()
                     done
 
                     # check for optional packages that require restarting due to any essentials being restarted
-                    for package in $(QPKGs.ToRestart.Array); do
+                    for package in $(QPKGs.IsRestart.Array); do
                         QPKGs.ToRestart.Add "$(QPKG.Get.Optionals "$package")"
                     done
 
@@ -1617,7 +1658,9 @@ Tiers.Processor()
                 QPKGs.ToRestart.Remove "$(QPKGs.Disabled.Array)"
                 QPKGs.ToRestart.Remove "$(QPKGs.IsUpgrade.Array)"
                 QPKGs.ToRestart.Remove "$(QPKGs.IsReinstall.Array)"
+                QPKGs.ToRestart.Remove "$(QPKGs.IsStart.Array)"
                 QPKGs.ToRestart.Remove "$(QPKGs.IsRestart.Array)"
+                QPKGs.ToRestart.Remove "$(QPKGs.NotSupportsUpdateOnRestart.Array)"
 
                 Tier.Processor 'Restart' false "$tier" 'QPKG' 'ToRestart' 'forward' 'restart' 'restarting' 'restarted' 'long'
                 ;;
@@ -2845,7 +2888,7 @@ Help.ActionsAll.Show()
     DisplayAsProjectSyntaxIndentedExample 'upgrade all installed packages (and internal applications)' 'upgrade all'
     DisplayAsProjectSyntaxIndentedExample 'start all installed packages (upgrade internal applications, not packages)' 'start all'
     DisplayAsProjectSyntaxIndentedExample 'stop all installed packages' 'stop all'
-    DisplayAsProjectSyntaxIndentedExample 'restart all installed packages (upgrade internal applications, not packages)' 'restart all'
+    DisplayAsProjectSyntaxIndentedExample 'restart packages that are able to upgrade their internal applications' 'restart all'
     DisplayAsProjectSyntaxIndentedExample 'list all available packages' 'list all'
     DisplayAsProjectSyntaxIndentedExample 'list only installed packages' 'list installed'
     DisplayAsProjectSyntaxIndentedExample 'list only installable packages' 'list installable'
@@ -3304,6 +3347,7 @@ Session.Build.StateLists()
         QPKG.UserInstallable "$package" && QPKGs.Installable.Add "$package"
 
         if QPKG.Installed "$package"; then
+            QPKGs.NotInstalled.Remove "$package"
             QPKGs.Installed.Add "$package"
 
             installed_version=$(QPKG.Installed.Version "$package")
@@ -3316,13 +3360,16 @@ Session.Build.StateLists()
             fi
 
             if QPKG.Enabled "$package"; then
+                QPKGs.Disabled.Remove "$package"
                 QPKGs.Enabled.Add "$package"
             else
+                QPKGs.Enabled.Remove "$package"
                 QPKGs.Disabled.Add "$package"
             fi
 
             [[ ! -d $(QPKG.InstallPath "$package") ]] && QPKGs.Missing.Add "$package"
         else
+            QPKGs.Installed.Remove "$package"
             QPKGs.NotInstalled.Add "$package"
         fi
     done
@@ -3347,6 +3394,28 @@ QPKGs.SupportsBackup.Build()
         else
             QPKGs.NotSupportsBackup.Add "$package"
             QPKGs.SupportsBackup.Remove "$package"
+        fi
+    done
+
+    DebugFuncExit; return 0
+
+    }
+
+QPKGs.SupportsUpdateOnRestart.Build()
+    {
+
+    # Builds a list of QPKGs that do and don't support application updating on QPKG restart
+
+    DebugFuncEntry
+    local package=''
+
+    for package in $(QPKGs.Names.Array); do
+        if QPKG.SupportsUpdateOnRestart "$package"; then
+            QPKGs.SupportsUpdateOnRestart.Add "$package"
+            QPKGs.NotSupportsUpdateOnRestart.Remove "$package"
+        else
+            QPKGs.NotSupportsUpdateOnRestart.Add "$package"
+            QPKGs.SupportsUpdateOnRestart.Remove "$package"
         fi
     done
 
@@ -4612,6 +4681,33 @@ QPKG.SupportsBackup()
     for package_index in "${!MANAGER_QPKG_NAME[@]}"; do
         if [[ ${MANAGER_QPKG_NAME[$package_index]} = "$1" ]]; then
             if ${MANAGER_QPKG_BACKUP_SUPPORTED[$package_index]}; then
+                return 0
+            else
+                return 1
+            fi
+        fi
+    done
+
+    return 1
+
+    }
+
+QPKG.SupportsUpdateOnRestart()
+    {
+
+    # does this QPKG support updating the internal application when the QPKG is restarted?
+
+    # input:
+    #   $1 = QPKG name
+
+    # output:
+    #   $? = 0 if true, 1 if false
+
+    local package_index=0
+
+    for package_index in "${!MANAGER_QPKG_NAME[@]}"; do
+        if [[ ${MANAGER_QPKG_NAME[$package_index]} = "$1" ]]; then
+            if ${MANAGER_QPKG_UPDATE_ON_RESTART[$package_index]}; then
                 return 0
             else
                 return 1
@@ -5921,7 +6017,7 @@ Objects.Compile()
 
     # $1 = 'hash' (optional) - if specified, only return the internal checksum
 
-    local -r COMPILED_OBJECTS_HASH=6f10684e11320e32636e1541576187cc
+    local -r COMPILED_OBJECTS_HASH=7ad4a363cb34ca661da0b4d16ea20d6f
 
     if [[ ${1:-} = hash ]]; then
         echo "$COMPILED_OBJECTS_HASH"
@@ -6006,9 +6102,11 @@ Objects.Compile()
         Objects.Add.List QPKGs.Names
         Objects.Add.List QPKGs.NotInstalled
         Objects.Add.List QPKGs.NotSupportsBackup
+        Objects.Add.List QPKGs.NotSupportsUpdateOnRestart
         Objects.Add.List QPKGs.Optional
         Objects.Add.List QPKGs.Standalone
         Objects.Add.List QPKGs.SupportsBackup
+        Objects.Add.List QPKGs.SupportsUpdateOnRestart
         Objects.Add.List QPKGs.Upgradable
 
         # these lists contain package names to operate on
