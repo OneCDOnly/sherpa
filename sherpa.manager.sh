@@ -47,7 +47,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=210108
+    readonly MANAGER_SCRIPT_VERSION=210109
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -1465,6 +1465,10 @@ Tiers.Processor()
         QPKGs.ToDownload.Add "$(QPKG.Get.Essentials "$package")"
     done
 
+    for package in $(QPKGs.Installed.Array); do
+        QPKGs.ToDownload.Add "$(QPKG.Get.Essentials "$package")"
+    done
+
     Tier.Processor 'Download' false 'all' 'QPKG' 'ToDownload' 'forward' 'update cache with' 'updating cache with' 'updated cache with' ''
 
     if User.Opts.Apps.All.Backup.IsSet; then
@@ -1568,6 +1572,11 @@ Tiers.Processor()
         QPKGs.ToRestart.Add "$(QPKGs.Optional.Array)"
         QPKGs.ToRestart.Remove "$(QPKGs.Standalone.Array)"
     fi
+
+    # install all required essentials too
+    for package in $(QPKGs.Installed.Array); do
+        QPKGs.ToInstall.Add "$(QPKG.Get.Essentials "$package")"
+    done
 
     for tier in {'essential','addon','optional'}; do
         case $tier in
