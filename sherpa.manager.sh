@@ -1578,6 +1578,8 @@ Tiers.Processor()
         QPKGs.ToInstall.Add "$(QPKG.Get.Essentials "$package")"
     done
 
+    QPKGs.ToInstall.Remove "$(QPKGs.Installed.Array)"
+
     for tier in {'essential','addon','optional'}; do
         case $tier in
             essential|optional)
@@ -4182,7 +4184,7 @@ QPKG.Install()
                 local log_pathfile=$LOGS_PATH/ipkgs.extra.$INSTALL_LOG_FILE
 
                 # copy all files from original [/opt] into new [/opt]
-                if [[ -L $opt_path && -d $opt_backup_path ]]; then
+                if [[ -L ${opt_path:-} && -d ${opt_backup_path:-} ]]; then
                     ShowAsProc "restoring original /opt" >&2
                     cp --recursive "$opt_backup_path"/* --target-directory "$opt_path" && rm -rf "$opt_backup_path"
                     DebugAsDone 'complete'
