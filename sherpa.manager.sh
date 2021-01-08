@@ -4018,7 +4018,7 @@ QPKG.Download()
 
         [[ -e $log_pathfile ]] && rm -f "$log_pathfile"
 
-        RunAndLog "$CURL_CMD${curl_insecure_arg} --output $local_pathfile $remote_url" "$log_pathfile"
+        RunAndLog "$CURL_CMD${curl_insecure_arg} --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
         resultcode=$?
 
         if [[ $resultcode -eq 0 ]]; then
@@ -4089,7 +4089,7 @@ QPKG.Install()
 
     DebugAsProc "installing $(FormatAsPackageName "$1")"
 
-    RunAndLog "$SH_CMD $local_pathfile" "$log_pathfile"
+    RunAndLog "$SH_CMD $local_pathfile" "$log_pathfile" log:failure-only
     resultcode=$?
 
     if [[ $resultcode -eq 0 || $resultcode -eq 10 ]]; then
@@ -4171,7 +4171,7 @@ QPKG.Reinstall()
 
     DebugAsProc "reinstalling $(FormatAsPackageName "$1")"
 
-    RunAndLog "$SH_CMD $local_pathfile" "$log_pathfile"
+    RunAndLog "$SH_CMD $local_pathfile" "$log_pathfile" log:failure-only
     resultcode=$?
 
     if [[ $resultcode -eq 0 || $resultcode -eq 10 ]]; then
@@ -4241,7 +4241,7 @@ QPKG.Upgrade()
 
     DebugAsProc "upgrading $(FormatAsPackageName "$1")"
 
-    RunAndLog "$SH_CMD $local_pathfile" "$log_pathfile"
+    RunAndLog "$SH_CMD $local_pathfile" "$log_pathfile" log:failure-only
     resultcode=$?
 
     current_version=$(QPKG.Installed.Version "$1")
@@ -4302,7 +4302,7 @@ QPKG.Uninstall()
     if [[ -e $qpkg_installed_path/.uninstall.sh ]]; then
         DebugAsProc "uninstalling $(FormatAsPackageName "$1")"
 
-        RunAndLog "$SH_CMD $qpkg_installed_path/.uninstall.sh" "$log_pathfile"
+        RunAndLog "$SH_CMD $qpkg_installed_path/.uninstall.sh" "$log_pathfile" log:failure-only
         resultcode=$?
 
         if [[ $resultcode -eq 0 ]]; then
@@ -4357,7 +4357,7 @@ QPKG.Restart()
     QPKG.Enable "$1"
     DebugAsProc "restarting $(FormatAsPackageName "$1")"
 
-    RunAndLog "$QPKG_SERVICE_CMD restart $1" "$log_pathfile"
+    RunAndLog "$QPKG_SERVICE_CMD restart $1" "$log_pathfile" log:failure-only
     resultcode=$?
 
     if [[ $resultcode -eq 0 ]]; then
@@ -4414,7 +4414,7 @@ QPKG.Start()
     QPKG.Enable "$1"
     DebugAsProc "starting $(FormatAsPackageName "$1")"
 
-    RunAndLog "$QPKG_SERVICE_CMD start $1" "$log_pathfile"
+    RunAndLog "$QPKG_SERVICE_CMD start $1" "$log_pathfile" log:failure-only
     resultcode=$?
 
     if [[ $resultcode -eq 0 ]]; then
@@ -4464,7 +4464,7 @@ QPKG.Stop()
 
     DebugAsProc "stopping $(FormatAsPackageName "$1")"
 
-    RunAndLog "$QPKG_SERVICE_CMD stop $1" "$log_pathfile"
+    RunAndLog "$QPKG_SERVICE_CMD stop $1" "$log_pathfile" log:failure-only
     resultcode=$?
 
     if [[ $resultcode -eq 0 ]]; then
@@ -4503,10 +4503,11 @@ QPKG.Enable()
         DebugFuncExit; return 0
     fi
 
-    RunAndLog "$QPKG_SERVICE_CMD enable $1" "$log_pathfile"
+    RunAndLog "$QPKG_SERVICE_CMD enable $1" "$log_pathfile" log:failure-only
     resultcode=$?
 
     if [[ $resultcode -eq 0 ]]; then
+        QPKGs.Disabled.Remove "$1"
         QPKGs.Enabled.Add "$1"
     else
         ShowAsWarn "unable to enable $(FormatAsPackageName "$1") $(FormatAsExitcode $resultcode)"
@@ -4538,11 +4539,12 @@ QPKG.Disable()
         DebugFuncExit; return 0
     fi
 
-    RunAndLog "$QPKG_SERVICE_CMD disable $1" "$log_pathfile"
+    RunAndLog "$QPKG_SERVICE_CMD disable $1" "$log_pathfile" log:failure-only
     resultcode=$?
 
     if [[ $resultcode -eq 0 ]]; then
         QPKGs.Enabled.Remove "$1"
+        QPKGs.Disabled.Add "$1"
     else
         ShowAsWarn "unable to disable $(FormatAsPackageName "$1") $(FormatAsExitcode $resultcode)"
         QPKGs.Enabled.Add "$1"
@@ -4577,7 +4579,7 @@ QPKG.Backup()
 
     DebugAsProc "backing-up $(FormatAsPackageName "$1") configuration"
 
-    RunAndLog "$SH_CMD $package_init_pathfile backup" "$log_pathfile"
+    RunAndLog "$SH_CMD $package_init_pathfile backup" "$log_pathfile" log:failure-only
     resultcode=$?
 
     if [[ $resultcode -eq 0 ]]; then
