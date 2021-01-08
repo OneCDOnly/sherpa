@@ -2073,7 +2073,7 @@ PIPs.Install()
     local log_pathfile=$LOGS_PATH/py3-modules.assorted.$INSTALL_LOG_FILE
     DebugAsProc "downloading & installing $desc"
 
-    RunAndLog "$exec_cmd" "$log_pathfile"
+    RunAndLog "$exec_cmd" "$log_pathfile" log:failure-only
     resultcode=$?
 
     if [[ $resultcode -eq 0 ]]; then
@@ -2090,7 +2090,7 @@ PIPs.Install()
         log_pathfile=$LOGS_PATH/py3-modules.sabnzbd.$INSTALL_LOG_FILE
         DebugAsProc "downloading & installing $desc"
 
-        RunAndLog "$exec_cmd" "$log_pathfile"
+        RunAndLog "$exec_cmd" "$log_pathfile" log:failure-only
         resultcode=$?
 
         if [[ $resultcode -eq 0 ]]; then
@@ -2106,7 +2106,7 @@ PIPs.Install()
         desc="'Python3 feedparser' module"
         log_pathfile=$LOGS_PATH/py3-modules.feedparser.$INSTALL_LOG_FILE
         DebugAsProc "downloading & installing $desc"
-        RunAndLog "$exec_cmd" "$log_pathfile"
+        RunAndLog "$exec_cmd" "$log_pathfile" log:failure-only
         resultcode=$?
 
         if [[ $resultcode -eq 0 ]]; then
@@ -2341,7 +2341,7 @@ IPKGs.Upgrade.Batch()
             trap CTRL_C_Captured INT
                 _MonitorDirSize_ "$IPKG_DL_PATH" "$(IPKGs.ToDownload.Size)" &
 
-                RunAndLog "$OPKG_CMD upgrade$(User.Opts.IgnoreFreeSpace.IsSet && User.Opts.IgnoreFreeSpace.Text) --force-overwrite $(IPKGs.ToDownload.List) --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
+                RunAndLog "$OPKG_CMD upgrade$(User.Opts.IgnoreFreeSpace.IsSet && User.Opts.IgnoreFreeSpace.Text) --force-overwrite $(IPKGs.ToDownload.List) --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile" log:failure-only
                 resultcode=$?
             trap - INT
         RemoveDirSizeMonitorFlagFile
@@ -2378,7 +2378,7 @@ IPKGs.Install.Batch()
             trap CTRL_C_Captured INT
                 _MonitorDirSize_ "$IPKG_DL_PATH" "$(IPKGs.ToDownload.Size)" &
 
-                RunAndLog "$OPKG_CMD install$(User.Opts.IgnoreFreeSpace.IsSet && User.Opts.IgnoreFreeSpace.Text) --force-overwrite $(IPKGs.ToDownload.List) --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
+                RunAndLog "$OPKG_CMD install$(User.Opts.IgnoreFreeSpace.IsSet && User.Opts.IgnoreFreeSpace.Text) --force-overwrite $(IPKGs.ToDownload.List) --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile" log:failure-only
                 resultcode=$?
             trap - INT
         RemoveDirSizeMonitorFlagFile
@@ -2411,7 +2411,7 @@ IPKGs.Uninstall.Batch()
     if [[ $package_count -gt 0 ]]; then
         ShowAsProc "uninstalling $package_count IPKG$(FormatAsPlural "$package_count")"
 
-        RunAndLog "$OPKG_CMD remove $(IPKGs.ToUninstall.List)" "$log_pathfile"
+        RunAndLog "$OPKG_CMD remove $(IPKGs.ToUninstall.List)" "$log_pathfile" log:failure-only
         resultcode=$?
 
         if [[ $resultcode -eq 0 ]]; then
