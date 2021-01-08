@@ -1567,6 +1567,7 @@ Tiers.Processor()
     fi
 
     QPKGs.ToRestore.Remove "$(QPKGs.Essential.Array)"
+    QPKGs.ToRestore.Remove "$(QPKGs.NotSupportsBackup.Array)"
 
     if User.Opts.Apps.All.Upgrade.IsSet; then
         QPKGs.ToRestart.Add "$(QPKGs.Optional.Array)"
@@ -1649,17 +1650,17 @@ Tiers.Processor()
                 if User.Opts.Apps.All.Restart.IsSet; then
                     QPKGs.ToRestart.Add "$(QPKGs.Installed.Array)"
                 else
-                    # check for optional packages that require restarting due to any essentials being started
+                    # check for optional packages to restart due to any essentials being started
                     for package in $(QPKGs.IsStart.Array); do
                         QPKGs.ToRestart.Add "$(QPKG.Get.Optionals "$package")"
                     done
 
-                    # check for optional packages that require restarting due to any essentials being restarted
+                    # check for optional packages to restart due to any essentials being restarted
                     for package in $(QPKGs.IsRestart.Array); do
                         QPKGs.ToRestart.Add "$(QPKG.Get.Optionals "$package")"
                     done
 
-                    # check for optional packages that require restarting due to any essentials being upgraded
+                    # check for optional packages to restart due to any essentials being upgraded
                     for package in $(QPKGs.IsUpgrade.Array); do
                         QPKGs.ToRestart.Add "$(QPKG.Get.Optionals "$package")"
                     done
