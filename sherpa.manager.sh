@@ -4755,7 +4755,7 @@ QPKG.Restore()
 
     DebugAsProc "restoring $(FormatAsPackageName "$1") configuration"
 
-    RunAndLog "$SH_CMD $package_init_pathfile restore" "$log_pathfile"
+    RunAndLog "$SH_CMD $package_init_pathfile restore" "$log_pathfile" log:failure-only
     resultcode=$?
 
     if [[ $resultcode -eq 0 ]]; then
