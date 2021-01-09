@@ -3279,7 +3279,7 @@ QPKGs.OperationAssignment.List()
     DebugFuncEntry
 
     local array_name=''
-    local -a operations_array=(ToDownload IsDownload ErDownload ToBackup IsBackup ErBackup ToStop IsStop ErStop ToUninstall IsUninstall ErUninstall ToUpgrade IsUpgrade ErUpgrade ToReinstall IsReinstall ErReinstall ToInstall IsInstall ErInstall ToRestore IsRestore ErRestore ToStart IsStart ErStart ToRestart IsRestart ErRestart ToStatus Installed NotInstalled Upgradable Missing)
+    local -a operations_array=(ToDownload IsDownload ErDownload SkDownload ToBackup IsBackup ErBackup SkBackup ToStop IsStop ErStop SkStop ToUninstall IsUninstall ErUninstall SkUninstall ToUpgrade IsUpgrade ErUpgrade SkUpgrade ToReinstall IsReinstall ErReinstall SkReinstall ToInstall IsInstall ErInstall SkInstall ToRestore IsRestore ErRestore SkRestore ToStart IsStart ErStart SkStart ToRestart IsRestart ErRestart SkRestart ToStatus Installed NotInstalled Upgradable Missing)
 
     DebugInfoMinorSeparator
 
@@ -4066,10 +4066,10 @@ QPKG.Download()
     local log_pathfile=$LOGS_PATH/$local_filename.$DOWNLOAD_LOG_FILE
 
     if [[ -z $remote_url ]]; then
-        DebugAsError "no URL found for this package $(FormatAsPackageName "$1") (unsupported arch?)"
+        DebugAsWarn "no URL found for this package $(FormatAsPackageName "$1") (unsupported arch?)"
         QPKGs.ToDownload.Remove "$1"
-        QPKGs.ErDownload.Add "$1"
-        DebugFuncExit; return 1
+        QPKGs.SkDownload.Add "$1"
+        DebugFuncExit; return 0
     fi
 
     if [[ -e $local_pathfile ]]; then
@@ -4131,10 +4131,10 @@ QPKG.Install()
     local log_pathfile=''
 
     if [[ -z $local_pathfile ]]; then
-        DebugAsError "no pathfile found for this package $(FormatAsPackageName "$1") (unsupported arch?)"
+        DebugAsWarn "no pathfile found for this package $(FormatAsPackageName "$1") (unsupported arch?)"
         QPKGs.ToInstall.Remove "$1"
-        QPKGs.ErInstall.Add "$1"
-        DebugFuncExit; return 1
+        QPKGs.SkInstall.Add "$1"
+        DebugFuncExit; return 0
     fi
 
     if [[ ${local_pathfile##*.} = zip ]]; then
@@ -4157,7 +4157,6 @@ QPKG.Install()
     log_pathfile=$LOGS_PATH/$target_file.$INSTALL_LOG_FILE
 
     DebugAsProc "installing $(FormatAsPackageName "$1")"
-
     RunAndLog "$SH_CMD $local_pathfile" "$log_pathfile" log:failure-only 10
     resultcode=$?
 
@@ -4224,10 +4223,17 @@ QPKG.Reinstall()
     local log_pathfile=''
 
     if [[ -z $local_pathfile ]]; then
-        DebugAsError "no pathfile found for this package $(FormatAsPackageName "$1") (unsupported arch?)"
+        DebugAsWarn "no pathfile found for this package $(FormatAsPackageName "$1") (unsupported arch?)"
         QPKGs.ToReinstall.Remove "$1"
-        QPKGs.ErReinstall.Add "$1"
-        DebugFuncExit; return 1
+        QPKGs.SkReinstall.Add "$1"
+        DebugFuncExit; return 0
+    fi
+
+    if ! QPKG.Installed "$1"; then
+        DebugAsWarn "unable to reinstall $(FormatAsPackageName "$1") as it's not installed"
+        QPKGs.ToReinstall.Remove "$1"
+        QPKGs.SkReinstall.Add "$1"
+        DebugFuncExit; return 0
     fi
 
     if [[ ${local_pathfile##*.} = zip ]]; then
@@ -4239,7 +4245,6 @@ QPKG.Reinstall()
     log_pathfile=$LOGS_PATH/$target_file.$REINSTALL_LOG_FILE
 
     DebugAsProc "reinstalling $(FormatAsPackageName "$1")"
-
     RunAndLog "$SH_CMD $local_pathfile" "$log_pathfile" log:failure-only 10
     resultcode=$?
 
@@ -4285,10 +4290,17 @@ QPKG.Upgrade()
     local local_pathfile=$(QPKG.PathFilename "$1")
 
     if [[ -z $local_pathfile ]]; then
-        DebugAsError "no pathfile found for this package $(FormatAsPackageName "$1") (unsupported arch?)"
+        DebugAsWarn "no pathfile found for this package $(FormatAsPackageName "$1") (unsupported arch?)"
         QPKGs.ToUpgrade.Remove "$1"
-        QPKGs.ErUpgrade.Add "$1"
-        DebugFuncExit; return 1
+        QPKGs.SkUpgrade.Add "$1"
+        DebugFuncExit; return 0
+    fi
+
+    if ! QPKG.Installed "$1"; then
+        DebugAsWarn "unable to upgrade $(FormatAsPackageName "$1") as it's not installed"
+        QPKGs.ToUpgrade.Remove "$1"
+        QPKGs.SkUpgrade.Add "$1"
+        DebugFuncExit; return 0
     fi
 
     if [[ ${local_pathfile##*.} = zip ]]; then
@@ -4298,18 +4310,9 @@ QPKG.Upgrade()
 
     local target_file=$($BASENAME_CMD "$local_pathfile")
     local log_pathfile=$LOGS_PATH/$target_file.$UPGRADE_LOG_FILE
-
-    if ! QPKG.Installed "$1"; then
-        DebugAsWarn "unable to upgrade $(FormatAsPackageName "$1") as it's not installed"
-        QPKGs.ToUpgrade.Remove "$1"
-        QPKGs.ErUpgrade.Remove "$1"
-        DebugFuncExit; return 0
-    fi
-
     previous_version=$(QPKG.Installed.Version "$1")
 
     DebugAsProc "upgrading $(FormatAsPackageName "$1")"
-
     RunAndLog "$SH_CMD $local_pathfile" "$log_pathfile" log:failure-only 10
     resultcode=$?
 
@@ -4322,8 +4325,8 @@ QPKG.Upgrade()
             DebugAsDone "upgraded $(FormatAsPackageName "$1") from $previous_version to $current_version"
         fi
         QPKG.GetServiceStatus "$1"
-        QPKGs.IsUpgrade.Add "$1"
         QPKGs.Upgradable.Remove "$1"
+        QPKGs.IsUpgrade.Add "$1"
         resultcode=0    # reset this to zero (0 or 10 from a QPKG upgrade is OK)
     else
         ShowAsEror "upgrade failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $resultcode)"
@@ -4353,18 +4356,18 @@ QPKG.Uninstall()
         DebugFuncExit; return 1
     fi
 
-    local -i resultcode=0
-    local qpkg_installed_path=$($GETCFG_CMD "$1" Install_Path -f $APP_CENTER_CONFIG_PATHFILE)
-    local log_pathfile=$LOGS_PATH/$1.$UNINSTALL_LOG_FILE
-
     if QPKG.NotInstalled "$1"; then
         DebugAsWarn "unable to uninstall $(FormatAsPackageName "$1") as it's not installed"
         QPKGs.ToUninstall.Remove "$1"
-        QPKGs.ErUninstall.Add "$1"
-        QPKGs.NotInstalled.Add "$1"
+        QPKGs.SkUninstall.Add "$1"
         QPKGs.Installed.Remove "$1"
+        QPKGs.NotInstalled.Add "$1"
         DebugFuncExit; return 0
     fi
+
+    local -i resultcode=0
+    local qpkg_installed_path=$($GETCFG_CMD "$1" Install_Path -f $APP_CENTER_CONFIG_PATHFILE)
+    local log_pathfile=$LOGS_PATH/$1.$UNINSTALL_LOG_FILE
 
     [[ $1 = Entware ]] && Package.Save.Lists
 
@@ -4419,13 +4422,12 @@ QPKG.Restart()
     if QPKG.NotInstalled "$1"; then
         DebugAsWarn "unable to restart $(FormatAsPackageName "$1") as it's not installed"
         QPKGs.ToRestart.Remove "$1"
-        QPKGs.ErRestart.Add "$1"
+        QPKGs.SkRestart.Add "$1"
         DebugFuncExit; return 0
     fi
 
     QPKG.Enable "$1"
     DebugAsProc "restarting $(FormatAsPackageName "$1")"
-
     RunAndLog "$QPKG_SERVICE_CMD restart $1" "$log_pathfile" log:failure-only
     resultcode=$?
 
@@ -4469,20 +4471,19 @@ QPKG.Start()
     if QPKG.NotInstalled "$1"; then
         DebugAsWarn "unable to start $(FormatAsPackageName "$1") as it's not installed"
         QPKGs.ToStart.Remove "$1"
-        QPKGs.ErStart.Add "$1"
+        QPKGs.SkStart.Add "$1"
         DebugFuncExit; return 0
     fi
 
     if QPKG.Enabled "$1"; then
         DebugAsWarn "unable to start $(FormatAsPackageName "$1") as it's already started"
         QPKGs.ToStart.Remove "$1"
-        QPKGs.ErStart.Add "$1"
+        QPKGs.SkStart.Add "$1"
         DebugFuncExit; return 0
     fi
 
     QPKG.Enable "$1"
     DebugAsProc "starting $(FormatAsPackageName "$1")"
-
     RunAndLog "$QPKG_SERVICE_CMD start $1" "$log_pathfile" log:failure-only
     resultcode=$?
 
@@ -4520,19 +4521,26 @@ QPKG.Stop()
         DebugFuncExit; return 1
     fi
 
-    local -i resultcode=0
-    local log_pathfile=$LOGS_PATH/$1.$STOP_LOG_FILE
     QPKG.ClearServiceStatus "$1"
 
     if QPKG.NotInstalled "$1"; then
         DebugAsWarn "unable to stop $(FormatAsPackageName "$1") as it's not installed"
         QPKGs.ToStop.Remove "$1"
-        QPKGs.ErStop.Add "$1"
+        QPKGs.SkStop.Add "$1"
         DebugFuncExit; return 0
     fi
 
-    DebugAsProc "stopping $(FormatAsPackageName "$1")"
+    if QPKG.NotEnabled "$1"; then
+        DebugAsWarn "unable to stop $(FormatAsPackageName "$1") as it's already stopped"
+        QPKGs.ToStop.Remove "$1"
+        QPKGs.SkStop.Add "$1"
+        DebugFuncExit; return 0
+    fi
 
+    local -i resultcode=0
+    local log_pathfile=$LOGS_PATH/$1.$STOP_LOG_FILE
+
+    DebugAsProc "stopping $(FormatAsPackageName "$1")"
     RunAndLog "$QPKG_SERVICE_CMD stop $1" "$log_pathfile" log:failure-only
     resultcode=$?
 
@@ -4564,13 +4572,13 @@ QPKG.Enable()
         DebugFuncExit; return 1
     fi
 
-    local -i resultcode=0
-    local log_pathfile=$LOGS_PATH/$1.$ENABLE_LOG_FILE
-
     if QPKG.NotInstalled "$1"; then
         DebugAsWarn "unable to enable $(FormatAsPackageName "$1") as it's not installed"
         DebugFuncExit; return 0
     fi
+
+    local -i resultcode=0
+    local log_pathfile=$LOGS_PATH/$1.$ENABLE_LOG_FILE
 
     RunAndLog "$QPKG_SERVICE_CMD enable $1" "$log_pathfile" log:failure-only
     resultcode=$?
@@ -4600,13 +4608,13 @@ QPKG.Disable()
         DebugFuncExit; return 1
     fi
 
-    local -i resultcode=0
-    local log_pathfile=$LOGS_PATH/$1.$DISABLE_LOG_FILE
-
     if QPKG.NotInstalled "$1"; then
         DebugAsWarn "unable to disable $(FormatAsPackageName "$1") as it's not installed"
         DebugFuncExit; return 0
     fi
+
+    local -i resultcode=0
+    local log_pathfile=$LOGS_PATH/$1.$DISABLE_LOG_FILE
 
     RunAndLog "$QPKG_SERVICE_CMD disable $1" "$log_pathfile" log:failure-only
     resultcode=$?
@@ -4642,12 +4650,18 @@ QPKG.Backup()
         DebugFuncExit; return 1
     fi
 
+    if QPKG.NotInstalled "$1"; then
+        DebugAsWarn "unable to backup $(FormatAsPackageName "$1") as it's not installed"
+        QPKGs.ToBackup.Remove "$1"
+        QPKGs.SkBackup.Add "$1"
+        DebugFuncExit; return 0
+    fi
+
     local -i resultcode=0
     local package_init_pathfile=$(QPKG.ServicePathFile "$1")
     local log_pathfile=$LOGS_PATH/$1.$BACKUP_LOG_FILE
 
     DebugAsProc "backing-up $(FormatAsPackageName "$1") configuration"
-
     RunAndLog "$SH_CMD $package_init_pathfile backup" "$log_pathfile" log:failure-only
     resultcode=$?
 
@@ -6024,7 +6038,7 @@ Objects.Compile()
 
     # $1 = 'hash' (optional) - if specified, only return the internal checksum
 
-    local -r COMPILED_OBJECTS_HASH=287aef816bba42482178512e5a2ac7b9
+    local -r COMPILED_OBJECTS_HASH=f56c086b8c899a4ae2f8a0476ba4f99f
     local array_name=''
     local -a operations_array=()
 
@@ -6108,8 +6122,9 @@ Objects.Compile()
 
         for array_name in "${operations_array[@]}"; do
             Objects.Add.List QPKGs.To${array_name}      # to operate on
-            Objects.Add.List QPKGs.Is${array_name}      # operation succeeded
-            Objects.Add.List QPKGs.Er${array_name}      # operation failed
+            Objects.Add.List QPKGs.Is${array_name}      # succeeded
+            Objects.Add.List QPKGs.Er${array_name}      # failed
+            Objects.Add.List QPKGs.Sk${array_name}      # skipped
         done
     fi
 
