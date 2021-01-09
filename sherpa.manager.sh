@@ -293,7 +293,7 @@ Session.Init()
         MANAGER_QPKG_MD5+=(da2d9f8d3442dd665ce04b9b932c9d8e)
         MANAGER_QPKG_DESC+=("provides the 'opkg' command: the OpenWRT package manager")
         MANAGER_QPKG_ABBRVS+=('ew ent opkg entware')
-        MANAGER_QPKG_ESSENTIALS+=('')
+        MANAGER_QPKG_ESSENTIALS+=(none)
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
@@ -308,7 +308,7 @@ Session.Init()
         MANAGER_QPKG_MD5+=(996ffb92d774eb01968003debc171e91)
         MANAGER_QPKG_DESC+=('create and use PAR2 files to detect damage in data files and repair them if necessary')
         MANAGER_QPKG_ABBRVS+=('par par2')
-        MANAGER_QPKG_ESSENTIALS+=('')
+        MANAGER_QPKG_ESSENTIALS+=(none)
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
         MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
@@ -323,7 +323,7 @@ Session.Init()
         MANAGER_QPKG_MD5+=(520472cc87d301704f975f6eb9948e38)
         MANAGER_QPKG_DESC+=('')
         MANAGER_QPKG_ABBRVS+=('')
-        MANAGER_QPKG_ESSENTIALS+=('')
+        MANAGER_QPKG_ESSENTIALS+=(none)
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
         MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
@@ -338,7 +338,7 @@ Session.Init()
         MANAGER_QPKG_MD5+=(ce8af2e009eb87733c3b855e41a94f8e)
         MANAGER_QPKG_DESC+=('')
         MANAGER_QPKG_ABBRVS+=('')
-        MANAGER_QPKG_ESSENTIALS+=('')
+        MANAGER_QPKG_ESSENTIALS+=(none)
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
         MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
@@ -353,7 +353,7 @@ Session.Init()
         MANAGER_QPKG_MD5+=(8516e45e704875cdd2cd2bb315c4e1e6)
         MANAGER_QPKG_DESC+=('')
         MANAGER_QPKG_ABBRVS+=('')
-        MANAGER_QPKG_ESSENTIALS+=('')
+        MANAGER_QPKG_ESSENTIALS+=(none)
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
         MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
@@ -368,7 +368,7 @@ Session.Init()
         MANAGER_QPKG_MD5+=(4d8e99f97936a163e411aa8765595f7a)
         MANAGER_QPKG_DESC+=('')
         MANAGER_QPKG_ABBRVS+=('')
-        MANAGER_QPKG_ESSENTIALS+=('')
+        MANAGER_QPKG_ESSENTIALS+=(none)
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
         MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
@@ -1480,28 +1480,21 @@ Tiers.Processor()
 
     Tier.Processor 'Backup' false 'all' 'QPKG' 'ToBackup' 'forward' 'backup' 'backing-up' 'backed-up' ''
 
-    # check for packages to be stopped or uninstalled, and ensure related packages are stopped
     if User.Opts.Apps.All.Stop.IsSet; then
         QPKGs.ToStop.Add "$(QPKGs.Enabled.Array)"
     fi
 
-    # don't stop then start a package. Make it restart instead.
-    for package in $(QPKGs.ToStop.Array); do
-        if QPKGs.ToStart.Exist "$package"; then
-            QPKGs.ToStop.Remove "$package"
-            QPKGs.ToStart.Remove "$package"
-            QPKGs.ToRestart.Add "$package"
-        fi
-    done
+#     # don't stop, then start a package. Make it restart instead.
+#     for package in $(QPKGs.ToStop.Array); do
+#         if QPKGs.ToStart.Exist "$package"; then
+#             QPKGs.ToStop.Remove "$package"
+#             QPKGs.ToStart.Remove "$package"
+#             QPKGs.ToRestart.Add "$package"
+#         fi
+#     done
 
     if User.Opts.Apps.All.Uninstall.IsSet; then
         QPKGs.ToStop.Init   # no-need to stop all packages, as they are about to be uninstalled
-    fi
-
-    if QPKGs.ToReinstall.Exist Entware; then    # treat Entware as a special case: complete removal and fresh install (to clear all installed IPKGs)
-        QPKGs.ToUninstall.Add Entware
-        QPKGs.ToInstall.Add Entware
-        QPKGs.ToReinstall.Remove Entware
     fi
 
     # if an essential has been selected for stop, need to stop its optionals first
@@ -1518,15 +1511,17 @@ Tiers.Processor()
         fi
     done
 
-    # if an essential has been selected for install, need to stop its optionals first, and start them again later
-    for package in $(QPKGs.ToInstall.Array); do
-        if QPKGs.Essential.Exist "$package" && QPKG.Installed "$package"; then
-            QPKGs.ToStop.Add "$(QPKG.Get.Optionals "$package")"
-            QPKGs.ToStart.Add "$(QPKG.Get.Optionals "$package")"
-        fi
-    done
+    if QPKGs.ToReinstall.Exist Entware; then    # treat Entware as a special case: complete removal and fresh install (to clear all installed IPKGs)
+        QPKGs.ToUninstall.Add Entware
+        QPKGs.ToInstall.Add Entware
+        QPKGs.ToReinstall.Remove Entware
 
-    # if an essential has been selected for reinstall, need to stop its optionals first, and start them again later
+        # if Entware has been selected for reinstall, need to stop its optionals first, and start them again later
+        QPKGs.ToStop.Add "$(QPKG.Get.Optionals Entware)"
+        QPKGs.ToStart.Add "$(QPKGs.Enabled.Array)"
+    fi
+
+    # if an essential (like Par2, but not Entware) has been selected for reinstall, need to stop its optionals first, and start them again later
     for package in $(QPKGs.ToReinstall.Array); do
         if QPKGs.Essential.Exist "$package" && QPKG.Installed "$package" && QPKG.Enabled "$package"; then
             QPKGs.ToStop.Add "$(QPKG.Get.Optionals "$package")"
@@ -1536,14 +1531,7 @@ Tiers.Processor()
 
     # TODO: if an optional is stopped, and an essential is reinstalled, don't start optional later
 
-    # don't stop packages that are already stopped
-    for package in $(QPKGs.ToStop.Array); do
-        if QPKG.NotEnabled "$package"; then
-            QPKGs.ToStop.Remove "$package"
-        fi
-    done
-
-    QPKGs.ToStop.Remove "$(QPKGs.IsStop.Array)"
+    QPKGs.ToStop.Remove "$(QPKGs.Disabled.Array)"
     QPKGs.ToStop.Remove "$(QPKGs.NotInstalled.Array)"
     QPKGs.ToStop.Remove "$(QPKGs.ToUninstall.Array)"
     QPKGs.ToStop.Remove "$PROJECT_NAME"
@@ -1650,6 +1638,11 @@ Tiers.Processor()
                 if User.Opts.Apps.All.Restart.IsSet; then
                     QPKGs.ToRestart.Add "$(QPKGs.Installed.Array)"
                 else
+                    # check for optional packages to restart due to any essentials being installed
+                    for package in $(QPKGs.IsInstall.Array); do
+                        QPKGs.ToRestart.Add "$(QPKG.Get.Optionals "$package")"
+                    done
+
                     # check for optional packages to restart due to any essentials being started
                     for package in $(QPKGs.IsStart.Array); do
                         QPKGs.ToRestart.Add "$(QPKG.Get.Optionals "$package")"
@@ -1672,6 +1665,7 @@ Tiers.Processor()
                 QPKGs.ToRestart.Remove "$(QPKGs.IsReinstall.Array)"
                 QPKGs.ToRestart.Remove "$(QPKGs.IsStart.Array)"
                 QPKGs.ToRestart.Remove "$(QPKGs.IsRestart.Array)"
+                QPKGs.ToRestart.Remove "$(QPKGs.IsRestore.Array)"
                 QPKGs.ToRestart.Remove "$(QPKGs.NotSupportsUpdateOnRestart.Array)"
 
                 Tier.Processor 'Restart' false "$tier" 'QPKG' 'ToRestart' 'forward' 'restart' 'restarting' 'restarted' 'long'
@@ -1839,15 +1833,11 @@ Dynamic.Package.Shuffle()
 
     # check install list for items that should be reinstalled instead
     for package in $(QPKGs.ToInstall.Array); do
-        if QPKG.Installed "$package"; then
+        if QPKG.Installed "$package" && ! QPKGs.ToUninstall.Exist "$package"; then
             QPKGs.ToInstall.Remove "$package"
             QPKGs.ToReinstall.Add "$package"
         fi
     done
-
-    if User.Opts.Apps.All.Install.IsSet; then
-        QPKGs.ToInstall.Add "$(QPKGs.Installable.Array)"
-    fi
 
     # check upgrade for essential items that should be installed
     for package in $(QPKGs.ToUpgrade.Array); do
@@ -1880,8 +1870,6 @@ Dynamic.Package.Shuffle()
     for package in $(QPKGs.ToRestart.Array); do
         QPKGs.ToInstall.Add "$(QPKG.Get.Essentials "$package")"
     done
-
-    QPKGs.ToInstall.Remove "$(QPKGs.Installed.Array)"
 
     return 0
 
@@ -4003,21 +3991,23 @@ QPKG.Get.Essentials()
     {
 
     # input:
-    #   $1 = QPKG name to return 'esssential' packages for
+    #   $1 = optional QPKG name to return esssentials for
 
     # output:
     #   $? = 0 if successful, 1 if failed
 
     local -i index=0
 
-    for index in "${!MANAGER_QPKG_NAME[@]}"; do
-        if [[ ${MANAGER_QPKG_NAME[$index]} = "$1" ]]; then
-            if [[ ${MANAGER_QPKG_ESSENTIALS[$index]} != none ]]; then
-                echo "${MANAGER_QPKG_ESSENTIALS[$index]}"
-                return 0
+    if QPKGs.Optional.Exist "$1"; then
+        for index in "${!MANAGER_QPKG_NAME[@]}"; do
+            if [[ $1 = "${MANAGER_QPKG_NAME[$index]}" ]] && [[ ${MANAGER_QPKG_ARCH[$index]} = all || ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
+                if [[ ${MANAGER_QPKG_ESSENTIALS[$index]} != none ]]; then
+                    echo "${MANAGER_QPKG_ESSENTIALS[$index]}"
+                    return 0
+                fi
             fi
-        fi
-    done
+        done
+    fi
 
     return 1
 
@@ -4027,7 +4017,7 @@ QPKG.Get.Optionals()
     {
 
     # input:
-    #   $1 = 'essential' QPKG name to return optionals for
+    #   $1 = essential QPKG name to return optionals for
 
     # output:
     #   $? = 0 if successful, 1 if failed
@@ -4170,7 +4160,7 @@ QPKG.Install()
 
     DebugAsProc "installing $(FormatAsPackageName "$1")"
 
-    RunAndLog "$SH_CMD $local_pathfile" "$log_pathfile" log:failure-only
+    RunAndLog "$SH_CMD $local_pathfile" "$log_pathfile" log:failure-only 10
     resultcode=$?
 
     if [[ $resultcode -eq 0 || $resultcode -eq 10 ]]; then
@@ -4193,7 +4183,7 @@ QPKG.Install()
 
                 # add extra package(s) needed immediately
                 ShowAsProc 'installing essential IPKGs'
-                RunAndLog "$OPKG_CMD install$(User.Opts.IgnoreFreeSpace.IsSet && User.Opts.IgnoreFreeSpace.Text) --force-overwrite $MANAGER_ESSENTIAL_IPKGS_ADD --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile"
+                RunAndLog "$OPKG_CMD install$(User.Opts.IgnoreFreeSpace.IsSet && User.Opts.IgnoreFreeSpace.Text) --force-overwrite $MANAGER_ESSENTIAL_IPKGS_ADD --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile" log:failure-only
                 ShowAsDone 'installed essential IPKGs'
 
                 Session.PIPs.Install.Set
@@ -4252,7 +4242,7 @@ QPKG.Reinstall()
 
     DebugAsProc "reinstalling $(FormatAsPackageName "$1")"
 
-    RunAndLog "$SH_CMD $local_pathfile" "$log_pathfile" log:failure-only
+    RunAndLog "$SH_CMD $local_pathfile" "$log_pathfile" log:failure-only 10
     resultcode=$?
 
     if [[ $resultcode -eq 0 || $resultcode -eq 10 ]]; then
@@ -4322,7 +4312,7 @@ QPKG.Upgrade()
 
     DebugAsProc "upgrading $(FormatAsPackageName "$1")"
 
-    RunAndLog "$SH_CMD $local_pathfile" "$log_pathfile" log:failure-only
+    RunAndLog "$SH_CMD $local_pathfile" "$log_pathfile" log:failure-only 10
     resultcode=$?
 
     current_version=$(QPKG.Installed.Version "$1")
@@ -4951,6 +4941,7 @@ RunAndLog()
     #   $2 = pathfilename to record command string ($1) stdout and stderr
     #   $3 = 'log:failure-only' (optional) - if specified, stdout & stderr are only recorded in the specified log if the command failed
     #                                      - if unspecified, stdout & stderr is always recorded
+    #   $4 = e.g. '10' (optional) - an additional acceptable return code. Any other returncode from command (other than zero) will be considered a failure
 
     # output:
     #   stdout = command string stdout and stderr if script is in 'debug' mode
@@ -4981,8 +4972,14 @@ RunAndLog()
         FormatAsResultAndStdout "$resultcode" "<null>" >> "$2"
     fi
 
-    if [[ $resultcode -eq 0 && ${3:-} != log:failure-only ]] || [[ $resultcode -ne 0 ]]; then
-        AddFileToDebug "$2"
+    if [[ $resultcode -ne 0 ]]; then
+        if [[ -n ${4:-} && $resultcode -ne $4 ]]; then
+            AddFileToDebug "$2"
+        fi
+    else
+        if [[ ${3:-} != log:failure-only ]]; then
+            AddFileToDebug "$2"
+        fi
     fi
 
     DebugFuncExit; return $resultcode
