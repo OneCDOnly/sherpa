@@ -42,7 +42,7 @@ Session.Init()
 
     IsQNAP || return 1
     DebugFuncEntry
-    ShowAsProc 'init' >&2
+
     readonly SCRIPT_STARTSECONDS=$(/bin/date +%s)
     export LC_CTYPE=C
 
@@ -186,6 +186,8 @@ Session.Init()
         Clean.Cache
         exit 0
     fi
+
+    ShowAsProc 'init' >&2
 
     if ! MakePath "$WORK_PATH" 'work'; then
         DebugFuncExit; return 1
