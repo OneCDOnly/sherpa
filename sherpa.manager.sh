@@ -874,7 +874,7 @@ Session.Arguments.Parse()
                         QPKGs.ToBackup.Add "$(QPKGs.Enabled.Array)"
                         ;;
                     stopped_)
-                        QPKGs.ToBackup.Add "$(QPKGs.Disabled.Array)"
+                        QPKGs.ToBackup.Add "$(QPKGs.NotEnabled.Array)"
                         ;;
                     *)
                         QPKGs.ToBackup.Add "$package"
@@ -1074,7 +1074,7 @@ Session.Arguments.Parse()
                         QPKGs.ToStart.Add "$(QPKGs.Standalone.Array)"
                         ;;
                     stopped_)
-                        QPKGs.ToStart.Add "$(QPKGs.Disabled.Array)"
+                        QPKGs.ToStart.Add "$(QPKGs.NotEnabled.Array)"
                         ;;
                     *)
                         QPKGs.ToStart.Add "$package"
@@ -1163,7 +1163,7 @@ Session.Arguments.Parse()
                         QPKGs.ToUpgrade.Add "$(QPKGs.Enabled.Array)"
                         ;;
                     stopped_)
-                        QPKGs.ToUpgrade.Add "$(QPKGs.Disabled.Array)"
+                        QPKGs.ToUpgrade.Add "$(QPKGs.NotEnabled.Array)"
                         ;;
                     *)
                         QPKGs.ToUpgrade.Add "$package"
@@ -1454,7 +1454,7 @@ Tiers.Processor()
         QPKGs.ToInstall.Add "$(QPKGs.Installable.Array)"
     fi
 
-    Dynamic.Package.Shuffle
+    PreDownload.Package.Shuffle
 
     QPKGs.ToDownload.Add "$(QPKGs.ToUpgrade.Array)"
     QPKGs.ToDownload.Add "$(QPKGs.ToReinstall.Array)"
@@ -1529,9 +1529,7 @@ Tiers.Processor()
         fi
     done
 
-    # TODO: if an optional is stopped, and an essential is reinstalled, don't start optional later
-
-    QPKGs.ToStop.Remove "$(QPKGs.Disabled.Array)"
+    QPKGs.ToStop.Remove "$(QPKGs.NotEnabled.Array)"
     QPKGs.ToStop.Remove "$(QPKGs.NotInstalled.Array)"
     QPKGs.ToStop.Remove "$(QPKGs.ToUninstall.Array)"
     QPKGs.ToStop.Remove "$PROJECT_NAME"
@@ -1660,7 +1658,7 @@ Tiers.Processor()
                 fi
 
                 QPKGs.ToRestart.Remove "$(QPKGs.NotInstalled.Array)"
-                QPKGs.ToRestart.Remove "$(QPKGs.Disabled.Array)"
+                QPKGs.ToRestart.Remove "$(QPKGs.NotEnabled.Array)"
                 QPKGs.ToRestart.Remove "$(QPKGs.IsUpgrade.Array)"
                 QPKGs.ToRestart.Remove "$(QPKGs.IsReinstall.Array)"
                 QPKGs.ToRestart.Remove "$(QPKGs.IsStart.Array)"
@@ -1816,7 +1814,7 @@ Tier.Processor()
 
     }
 
-Dynamic.Package.Shuffle()
+PreDownload.Package.Shuffle()
     {
 
     # this runs before operations for 'download' (and possibly 'install', 'reinstall' and 'upgrade': TBD) to ensure package lists are sane
@@ -3281,7 +3279,7 @@ QPKGs.OperationAssignment.List()
     DebugFuncEntry
 
     local array_name=''
-    local -a operations_array=(ToDownload IsDownload UnDownload ToBackup IsBackup UnBackup ToStop IsStop UnStop ToUninstall IsUninstall UnUninstall ToUpgrade IsUpgrade UnUpgrade ToReinstall IsReinstall UnReinstall ToInstall IsInstall UnInstall ToRestore IsRestore UnRestore ToStart IsStart UnStart ToRestart IsRestart UnRestart ToStatus Installed NotInstalled Upgradable Missing)
+    local -a operations_array=(ToDownload IsDownload ErDownload ToBackup IsBackup ErBackup ToStop IsStop ErStop ToUninstall IsUninstall ErUninstall ToUpgrade IsUpgrade ErUpgrade ToReinstall IsReinstall ErReinstall ToInstall IsInstall ErInstall ToRestore IsRestore ErRestore ToStart IsStart ErStart ToRestart IsRestart ErRestart ToStatus Installed NotInstalled Upgradable Missing)
 
     DebugInfoMinorSeparator
 
@@ -3360,11 +3358,11 @@ Session.Build.StateLists()
             fi
 
             if QPKG.Enabled "$package"; then
-                QPKGs.Disabled.Remove "$package"
+                QPKGs.NotEnabled.Remove "$package"
                 QPKGs.Enabled.Add "$package"
             else
                 QPKGs.Enabled.Remove "$package"
-                QPKGs.Disabled.Add "$package"
+                QPKGs.NotEnabled.Add "$package"
             fi
 
             [[ ! -d $(QPKG.InstallPath "$package") ]] && QPKGs.Missing.Add "$package"
@@ -3497,7 +3495,7 @@ QPKGs.Statuses.Show()
                 DisplayAsHelpPackageNamePlusSomething "$package" 'not installed'
             else
                 QPKGs.Enabled.Exist "$package" && package_notes+=($(ColourTextBrightGreen started))
-                QPKGs.Disabled.Exist "$package" && package_notes+=($(ColourTextBrightRed stopped))
+                QPKGs.NotEnabled.Exist "$package" && package_notes+=($(ColourTextBrightRed stopped))
                 QPKGs.Upgradable.Exist "$package" && package_notes+=($(ColourTextBrightOrange upgradable))
                 QPKGs.Missing.Exist "$package" && package_notes=($(ColourTextBrightRedBlink missing))
 
@@ -3558,7 +3556,7 @@ QPKGs.Stopped.Show()
 
     local package=''
 
-    for package in $(QPKGs.Disabled.Array); do
+    for package in $(QPKGs.NotEnabled.Array); do
         Display "$package"
     done
 
@@ -4070,7 +4068,7 @@ QPKG.Download()
     if [[ -z $remote_url ]]; then
         DebugAsError "no URL found for this package $(FormatAsPackageName "$1") (unsupported arch?)"
         QPKGs.ToDownload.Remove "$1"
-        QPKGs.UnDownload.Add "$1"
+        QPKGs.ErDownload.Add "$1"
         DebugFuncExit; return 1
     fi
 
@@ -4099,11 +4097,11 @@ QPKG.Download()
             else
                 DebugAsError "downloaded package $(FormatAsFileName "$local_pathfile") checksum incorrect"
                 resultcode=1
-                QPKGs.UnDownload.Add "$1"
+                QPKGs.ErDownload.Add "$1"
             fi
         else
             DebugAsError "download failed $(FormatAsFileName "$local_pathfile") $(FormatAsExitcode $resultcode)"
-            QPKGs.UnDownload.Add "$1"
+            QPKGs.ErDownload.Add "$1"
         fi
     fi
 
@@ -4135,7 +4133,7 @@ QPKG.Install()
     if [[ -z $local_pathfile ]]; then
         DebugAsError "no pathfile found for this package $(FormatAsPackageName "$1") (unsupported arch?)"
         QPKGs.ToInstall.Remove "$1"
-        QPKGs.UnInstall.Add "$1"
+        QPKGs.ErInstall.Add "$1"
         DebugFuncExit; return 1
     fi
 
@@ -4196,7 +4194,7 @@ QPKG.Install()
         resultcode=0    # reset this to zero (0 or 10 from a QPKG install is OK)
     else
         DebugAsError "installation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $resultcode)"
-        QPKGs.UnInstall.Add "$1"
+        QPKGs.ErInstall.Add "$1"
     fi
 
     QPKGs.ToInstall.Remove "$1"
@@ -4228,7 +4226,7 @@ QPKG.Reinstall()
     if [[ -z $local_pathfile ]]; then
         DebugAsError "no pathfile found for this package $(FormatAsPackageName "$1") (unsupported arch?)"
         QPKGs.ToReinstall.Remove "$1"
-        QPKGs.UnReinstall.Add "$1"
+        QPKGs.ErReinstall.Add "$1"
         DebugFuncExit; return 1
     fi
 
@@ -4252,7 +4250,7 @@ QPKG.Reinstall()
         resultcode=0    # reset this to zero (0 or 10 from a QPKG install is OK)
     else
         ShowAsEror "reinstallation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $resultcode)"
-        QPKGs.UnReinstall.Add "$1"
+        QPKGs.ErReinstall.Add "$1"
     fi
 
     QPKGs.ToReinstall.Remove "$1"
@@ -4289,7 +4287,7 @@ QPKG.Upgrade()
     if [[ -z $local_pathfile ]]; then
         DebugAsError "no pathfile found for this package $(FormatAsPackageName "$1") (unsupported arch?)"
         QPKGs.ToUpgrade.Remove "$1"
-        QPKGs.UnUpgrade.Add "$1"
+        QPKGs.ErUpgrade.Add "$1"
         DebugFuncExit; return 1
     fi
 
@@ -4304,7 +4302,7 @@ QPKG.Upgrade()
     if ! QPKG.Installed "$1"; then
         DebugAsWarn "unable to upgrade $(FormatAsPackageName "$1") as it's not installed"
         QPKGs.ToUpgrade.Remove "$1"
-        QPKGs.UnUpgrade.Remove "$1"
+        QPKGs.ErUpgrade.Remove "$1"
         DebugFuncExit; return 0
     fi
 
@@ -4329,7 +4327,7 @@ QPKG.Upgrade()
         resultcode=0    # reset this to zero (0 or 10 from a QPKG upgrade is OK)
     else
         ShowAsEror "upgrade failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $resultcode)"
-        QPKGs.UnUpgrade.Add "$1"
+        QPKGs.ErUpgrade.Add "$1"
     fi
 
     QPKGs.ToUpgrade.Remove "$1"
@@ -4362,7 +4360,7 @@ QPKG.Uninstall()
     if QPKG.NotInstalled "$1"; then
         DebugAsWarn "unable to uninstall $(FormatAsPackageName "$1") as it's not installed"
         QPKGs.ToUninstall.Remove "$1"
-        QPKGs.UnUninstall.Add "$1"
+        QPKGs.ErUninstall.Add "$1"
         QPKGs.NotInstalled.Add "$1"
         QPKGs.Installed.Remove "$1"
         DebugFuncExit; return 0
@@ -4386,7 +4384,7 @@ QPKG.Uninstall()
             QPKGs.Installed.Remove "$1"
         else
             DebugAsError "unable to uninstall $(FormatAsPackageName "$1") $(FormatAsExitcode $resultcode)"
-            QPKGs.UnUninstall.Add "$1"
+            QPKGs.ErUninstall.Add "$1"
         fi
     fi
 
@@ -4421,7 +4419,7 @@ QPKG.Restart()
     if QPKG.NotInstalled "$1"; then
         DebugAsWarn "unable to restart $(FormatAsPackageName "$1") as it's not installed"
         QPKGs.ToRestart.Remove "$1"
-        QPKGs.UnRestart.Add "$1"
+        QPKGs.ErRestart.Add "$1"
         DebugFuncExit; return 0
     fi
 
@@ -4437,7 +4435,7 @@ QPKG.Restart()
         QPKGs.IsRestart.Add "$1"
     else
         ShowAsWarn "unable to restart $(FormatAsPackageName "$1") $(FormatAsExitcode $resultcode)"
-        QPKGs.UnRestart.Add "$1"
+        QPKGs.ErRestart.Add "$1"
     fi
 
     QPKGs.ToRestart.Remove "$1"
@@ -4471,14 +4469,14 @@ QPKG.Start()
     if QPKG.NotInstalled "$1"; then
         DebugAsWarn "unable to start $(FormatAsPackageName "$1") as it's not installed"
         QPKGs.ToStart.Remove "$1"
-        QPKGs.UnStart.Add "$1"
+        QPKGs.ErStart.Add "$1"
         DebugFuncExit; return 0
     fi
 
     if QPKG.Enabled "$1"; then
         DebugAsWarn "unable to start $(FormatAsPackageName "$1") as it's already started"
         QPKGs.ToStart.Remove "$1"
-        QPKGs.UnStart.Add "$1"
+        QPKGs.ErStart.Add "$1"
         DebugFuncExit; return 0
     fi
 
@@ -4495,7 +4493,7 @@ QPKG.Start()
         [[ $1 = Entware ]] && Session.AddPathToEntware
     else
         ShowAsWarn "unable to start $(FormatAsPackageName "$1") $(FormatAsExitcode $resultcode)"
-        QPKGs.UnStart.Add "$1"
+        QPKGs.ErStart.Add "$1"
     fi
 
     QPKGs.ToStart.Remove "$1"
@@ -4529,7 +4527,7 @@ QPKG.Stop()
     if QPKG.NotInstalled "$1"; then
         DebugAsWarn "unable to stop $(FormatAsPackageName "$1") as it's not installed"
         QPKGs.ToStop.Remove "$1"
-        QPKGs.UnStop.Add "$1"
+        QPKGs.ErStop.Add "$1"
         DebugFuncExit; return 0
     fi
 
@@ -4545,7 +4543,7 @@ QPKG.Stop()
         QPKGs.IsStop.Add "$package"
     else
         ShowAsWarn "unable to stop $(FormatAsPackageName "$1") $(FormatAsExitcode $resultcode)"
-        QPKGs.UnStop.Add "$1"
+        QPKGs.ErStop.Add "$1"
     fi
 
     QPKGs.ToStop.Remove "$package"
@@ -4578,7 +4576,7 @@ QPKG.Enable()
     resultcode=$?
 
     if [[ $resultcode -eq 0 ]]; then
-        QPKGs.Disabled.Remove "$1"
+        QPKGs.NotEnabled.Remove "$1"
         QPKGs.Enabled.Add "$1"
     else
         ShowAsWarn "unable to enable $(FormatAsPackageName "$1") $(FormatAsExitcode $resultcode)"
@@ -4615,7 +4613,7 @@ QPKG.Disable()
 
     if [[ $resultcode -eq 0 ]]; then
         QPKGs.Enabled.Remove "$1"
-        QPKGs.Disabled.Add "$1"
+        QPKGs.NotEnabled.Add "$1"
     else
         ShowAsWarn "unable to disable $(FormatAsPackageName "$1") $(FormatAsExitcode $resultcode)"
         QPKGs.Enabled.Add "$1"
@@ -4659,7 +4657,7 @@ QPKG.Backup()
         QPKG.GetServiceStatus "$1"
     else
         DebugAsWarn "unable to backup $(FormatAsPackageName "$1") configuration $(FormatAsExitcode $resultcode)"
-        QPKGs.UnBackup.Add "$1"
+        QPKGs.ErBackup.Add "$1"
     fi
 
     QPKGs.ToBackup.Remove "$1"
@@ -4754,7 +4752,7 @@ QPKG.Restore()
         QPKG.GetServiceStatus "$1"
     else
         DebugAsWarn "unable to restore $(FormatAsPackageName "$1") configuration $(FormatAsExitcode $resultcode)"
-        QPKGs.UnRestore.Add "$1"
+        QPKGs.ErRestore.Add "$1"
     fi
 
     QPKGs.ToRestore.Remove "$1"
@@ -6026,7 +6024,8 @@ Objects.Compile()
 
     # $1 = 'hash' (optional) - if specified, only return the internal checksum
 
-    local -r COMPILED_OBJECTS_HASH=7ad4a363cb34ca661da0b4d16ea20d6f
+    local -r COMPILED_OBJECTS_HASH=287aef816bba42482178512e5a2ac7b9
+    local array_name=''
 
     if [[ ${1:-} = hash ]]; then
         echo "$COMPILED_OBJECTS_HASH"
@@ -6054,16 +6053,11 @@ Objects.Compile()
         Objects.Add.Flag Session.Summary
 
         # user-selected option flags
-        Objects.Add.Flag User.Opts.Help.Abbreviations
-        Objects.Add.Flag User.Opts.Help.Actions
-        Objects.Add.Flag User.Opts.Help.ActionsAll
-        Objects.Add.Flag User.Opts.Help.Backups
-        Objects.Add.Flag User.Opts.Help.Basic
-        Objects.Add.Flag User.Opts.Help.Options
-        Objects.Add.Flag User.Opts.Help.Packages
-        Objects.Add.Flag User.Opts.Help.Problems
-        Objects.Add.Flag User.Opts.Help.Status
-        Objects.Add.Flag User.Opts.Help.Tips
+        local -a operations_array=(Abbreviations Actions ActionsAll Backups Basic Options Packages Problems Status Tips)
+
+        for array_name in "${operations_array[@]}"; do
+            Objects.Add.Flag User.Opts.Help.${array_name}
+        done
 
         Objects.Add.Flag User.Opts.Clean
         Objects.Add.Flag User.Opts.Dependencies.Check
@@ -6075,87 +6069,47 @@ Objects.Compile()
         Objects.Add.Flag User.Opts.Log.Tail.Paste
         Objects.Add.Flag User.Opts.Log.Whole.View
 
-        Objects.Add.Flag User.Opts.Apps.All.Backup
-        Objects.Add.Flag User.Opts.Apps.All.Install
-        Objects.Add.Flag User.Opts.Apps.All.Reinstall
-        Objects.Add.Flag User.Opts.Apps.All.Restart
-        Objects.Add.Flag User.Opts.Apps.All.Restore
-        Objects.Add.Flag User.Opts.Apps.All.Start
-        Objects.Add.Flag User.Opts.Apps.All.Stop
-        Objects.Add.Flag User.Opts.Apps.All.Uninstall
-        Objects.Add.Flag User.Opts.Apps.All.Upgrade
+        local -a operations_array=(Backup Install Reinstall Restart Restore Start Stop Uninstall Upgrade)
 
-        Objects.Add.Flag User.Opts.Apps.List.All
-        Objects.Add.Flag User.Opts.Apps.List.Essential
-        Objects.Add.Flag User.Opts.Apps.List.Installed
-        Objects.Add.Flag User.Opts.Apps.List.NotInstalled
-        Objects.Add.Flag User.Opts.Apps.List.Optional
-        Objects.Add.Flag User.Opts.Apps.List.Standalone
-        Objects.Add.Flag User.Opts.Apps.List.Started
-        Objects.Add.Flag User.Opts.Apps.List.Stopped
-        Objects.Add.Flag User.Opts.Apps.List.Upgradable
+        for array_name in "${operations_array[@]}"; do
+            Objects.Add.Flag User.Opts.Apps.All.${array_name}
+        done
+
+        local -a operations_array=(All Essential Installed NotInstalled Optional Standalone Started Stopped Upgradable)
+
+        for array_name in "${operations_array[@]}"; do
+            Objects.Add.Flag User.Opts.Apps.List.${array_name}
+        done
 
         # lists
         Objects.Add.List Args.Unknown
 
-        Objects.Add.List IPKGs.ToDownload
-        Objects.Add.List IPKGs.ToInstall
-        Objects.Add.List IPKGs.ToUninstall
+        local -a operations_array=(Download Install Uninstall)
 
-        Objects.Add.List QPKGs.Disabled
-        Objects.Add.List QPKGs.Enabled
-        Objects.Add.List QPKGs.Essential
-        Objects.Add.List QPKGs.Installable
-        Objects.Add.List QPKGs.Installed
-        Objects.Add.List QPKGs.Missing
-        Objects.Add.List QPKGs.Names
-        Objects.Add.List QPKGs.NotInstalled
-        Objects.Add.List QPKGs.NotSupportsBackup
-        Objects.Add.List QPKGs.NotSupportsUpdateOnRestart
-        Objects.Add.List QPKGs.Optional
-        Objects.Add.List QPKGs.Standalone
-        Objects.Add.List QPKGs.SupportsBackup
-        Objects.Add.List QPKGs.SupportsUpdateOnRestart
-        Objects.Add.List QPKGs.Upgradable
+        for array_name in "${operations_array[@]}"; do
+            Objects.Add.List IPKGs.To${array_name}
+        done
 
-        # these lists contain package names to operate on
-        Objects.Add.List QPKGs.ToBackup
-        Objects.Add.List QPKGs.ToDownload
-        Objects.Add.List QPKGs.ToInstall
-        Objects.Add.List QPKGs.ToReinstall
-        Objects.Add.List QPKGs.ToRestart
-        Objects.Add.List QPKGs.ToRestore
-        Objects.Add.List QPKGs.ToStart
-        Objects.Add.List QPKGs.ToStatus
-        Objects.Add.List QPKGs.ToStop
-        Objects.Add.List QPKGs.ToUninstall
-        Objects.Add.List QPKGs.ToUpgrade
+        local -a operations_array=(Essential Installable Missing Names Optional Standalone Upgradable)
 
-        # these lists contain package names where the operation was successful
-        Objects.Add.List QPKGs.IsBackup
-        Objects.Add.List QPKGs.IsDownload
-        Objects.Add.List QPKGs.IsInstall
-        Objects.Add.List QPKGs.IsReinstall
-        Objects.Add.List QPKGs.IsRestart
-        Objects.Add.List QPKGs.IsRestore
-        Objects.Add.List QPKGs.IsStart
-        Objects.Add.List QPKGs.IsStatus
-        Objects.Add.List QPKGs.IsStop
-        Objects.Add.List QPKGs.IsUninstall
-        Objects.Add.List QPKGs.IsUpgrade
+        for array_name in "${operations_array[@]}"; do
+            Objects.Add.List QPKGs.${array_name}
+        done
 
-        # these lists contain package names where the operation failed
-        Objects.Add.List QPKGs.UnBackup
-        Objects.Add.List QPKGs.UnDownload
-        Objects.Add.List QPKGs.UnInstall
-        Objects.Add.List QPKGs.UnReinstall
-        Objects.Add.List QPKGs.UnRestart
-        Objects.Add.List QPKGs.UnRestore
-        Objects.Add.List QPKGs.UnStart
-        Objects.Add.List QPKGs.UnStatus
-        Objects.Add.List QPKGs.UnStop
-        Objects.Add.List QPKGs.UnUninstall
-        Objects.Add.List QPKGs.UnUpgrade
+        local -a operations_array=(Enabled Installed SupportsBackup SupportsUpdateOnRestart)
+
+        for array_name in "${operations_array[@]}"; do
+            Objects.Add.List QPKGs.${array_name}
+            Objects.Add.List QPKGs.Not${array_name}
+        done
+
+        local -a operations_array=(Backup Download Install Reinstall Restart Restore Start Status Stop Uninstall Upgrade)
+
+        for array_name in "${operations_array[@]}"; do
+            Objects.Add.List QPKGs.To${array_name}      # to operate on
+            Objects.Add.List QPKGs.Is${array_name}      # operation succeeded
+            Objects.Add.List QPKGs.Er${array_name}      # operation failed
+        done
     fi
 
     . "$COMPILED_OBJECTS_PATHFILE"
