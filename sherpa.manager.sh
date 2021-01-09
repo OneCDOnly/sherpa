@@ -181,6 +181,12 @@ Session.Init()
     readonly DEBUG_LOG_DATAWIDTH=92
     readonly PACKAGE_VERSION=$(QPKG.Installed.Version "$PROJECT_NAME")
 
+    # clean as early as possible
+    if [[ $USER_ARGS_RAW == *"clean"* ]]; then
+        Clean.Cache
+        exit 0
+    fi
+
     if ! MakePath "$WORK_PATH" 'work'; then
         DebugFuncExit; return 1
     fi
@@ -720,7 +726,7 @@ Session.Arguments.Parse()
                 Session.SkipPackageProcessing.Set
                 Session.Build.StateLists
                 ;;
-            clean|paste)
+            paste)
                 operation=${arg}_
                 scope=''
                 scope_incomplete=true
@@ -883,9 +889,6 @@ Session.Arguments.Parse()
                 ;;
             check_)
                 User.Opts.Dependencies.Check.Set
-                ;;
-            clean_)
-                User.Opts.Clean.Set
                 ;;
             help_)
                 case $scope in
@@ -1890,10 +1893,6 @@ Package.Save.Lists()
 
 Session.Results()
     {
-
-    if User.Opts.Clean.IsSet; then
-        Clean.Cache
-    fi
 
     if Args.Unknown.IsNone; then
         if User.Opts.Versions.View.IsSet; then
@@ -6038,7 +6037,7 @@ Objects.Compile()
 
     # $1 = 'hash' (optional) - if specified, only return the internal checksum
 
-    local -r COMPILED_OBJECTS_HASH=f56c086b8c899a4ae2f8a0476ba4f99f
+    local -r COMPILED_OBJECTS_HASH=fc0932577952660c6e6eec07ffc954df
     local array_name=''
     local -a operations_array=()
 
@@ -6074,7 +6073,6 @@ Objects.Compile()
             Objects.Add.Flag User.Opts.Help.${array_name}
         done
 
-        Objects.Add.Flag User.Opts.Clean
         Objects.Add.Flag User.Opts.Dependencies.Check
         Objects.Add.Flag User.Opts.IgnoreFreeSpace
         Objects.Add.Flag User.Opts.Versions.View
