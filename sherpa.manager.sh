@@ -6026,6 +6026,7 @@ Objects.Compile()
 
     local -r COMPILED_OBJECTS_HASH=287aef816bba42482178512e5a2ac7b9
     local array_name=''
+    local -a operations_array=()
 
     if [[ ${1:-} = hash ]]; then
         echo "$COMPILED_OBJECTS_HASH"
@@ -6052,8 +6053,8 @@ Objects.Compile()
         Objects.Add.Flag Session.SuggestIssue
         Objects.Add.Flag Session.Summary
 
-        # user-selected option flags
-        local -a operations_array=(Abbreviations Actions ActionsAll Backups Basic Options Packages Problems Status Tips)
+        # user option flags
+        operations_array=(Abbreviations Actions ActionsAll Backups Basic Options Packages Problems Status Tips)
 
         for array_name in "${operations_array[@]}"; do
             Objects.Add.Flag User.Opts.Help.${array_name}
@@ -6069,13 +6070,13 @@ Objects.Compile()
         Objects.Add.Flag User.Opts.Log.Tail.Paste
         Objects.Add.Flag User.Opts.Log.Whole.View
 
-        local -a operations_array=(Backup Install Reinstall Restart Restore Start Stop Uninstall Upgrade)
+        operations_array=(Backup Install Reinstall Restart Restore Start Stop Uninstall Upgrade)
 
         for array_name in "${operations_array[@]}"; do
             Objects.Add.Flag User.Opts.Apps.All.${array_name}
         done
 
-        local -a operations_array=(All Essential Installed NotInstalled Optional Standalone Started Stopped Upgradable)
+        operations_array=(All Essential Installed NotInstalled Optional Standalone Started Stopped Upgradable)
 
         for array_name in "${operations_array[@]}"; do
             Objects.Add.Flag User.Opts.Apps.List.${array_name}
@@ -6084,26 +6085,26 @@ Objects.Compile()
         # lists
         Objects.Add.List Args.Unknown
 
-        local -a operations_array=(Download Install Uninstall)
+        operations_array=(Download Install Uninstall)
 
         for array_name in "${operations_array[@]}"; do
             Objects.Add.List IPKGs.To${array_name}
         done
 
-        local -a operations_array=(Essential Installable Missing Names Optional Standalone Upgradable)
+        operations_array=(Essential Installable Missing Names Optional Standalone Upgradable)
 
         for array_name in "${operations_array[@]}"; do
             Objects.Add.List QPKGs.${array_name}
         done
 
-        local -a operations_array=(Enabled Installed SupportsBackup SupportsUpdateOnRestart)
+        operations_array=(Enabled Installed SupportsBackup SupportsUpdateOnRestart)
 
         for array_name in "${operations_array[@]}"; do
             Objects.Add.List QPKGs.${array_name}
             Objects.Add.List QPKGs.Not${array_name}
         done
 
-        local -a operations_array=(Backup Download Install Reinstall Restart Restore Start Status Stop Uninstall Upgrade)
+        operations_array=(Backup Download Install Reinstall Restart Restore Start Status Stop Uninstall Upgrade)
 
         for array_name in "${operations_array[@]}"; do
             Objects.Add.List QPKGs.To${array_name}      # to operate on
