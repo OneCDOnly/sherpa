@@ -47,7 +47,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=210110
+    readonly MANAGER_SCRIPT_VERSION=210120
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -2322,7 +2322,10 @@ IPKGs.Install()
         done
     fi
 
-    User.Opts.Dependencies.Check.IsSet && IPKGs.ToInstall.Add "$MANAGER_ESSENTIAL_IPKGS_ADD"
+    if User.Opts.Dependencies.Check.IsSet; then
+        IPKGs.ToInstall.Add "$MANAGER_ESSENTIAL_IPKGS_ADD"
+        [[ $NAS_QPKG_ARCH = none ]] && QPKGs.Installed.Exist SABnzbd && IPKGs.ToInstall.Add par2cmdline
+    fi
 
     IPKGs.Upgrade.Batch
     IPKGs.Install.Batch
@@ -3886,11 +3889,13 @@ QPKG.PathFilename()
     #   stdout = QPKG local filename
     #   $? = 0 if successful, 1 if failed
 
-    local url=''
+    local url=$(QPKG.URL "$1")
 
-    url=$(QPKG.URL "$1") || return 1
+    [[ -z $url ]] && return 1
 
     echo "$QPKG_DL_PATH/$($BASENAME_CMD "$url")"
+
+    return 0
 
     }
 
@@ -6005,7 +6010,7 @@ echo $public_function_name'.Clear()
     }
 '$public_function_name'.Text()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && $1 = "=" ]]; then
         '$_placeholder_text_'=$2
     else
         echo -n "$'$_placeholder_text_'"
@@ -6039,7 +6044,7 @@ Objects.Compile()
 
     # $1 = 'hash' (optional) - if specified, only return the internal checksum
 
-    local -r COMPILED_OBJECTS_HASH=fc0932577952660c6e6eec07ffc954df
+    local -r COMPILED_OBJECTS_HASH=c10f0bf5e663233ac19efdefa61bc3ca
     local array_name=''
     local -a operations_array=()
 

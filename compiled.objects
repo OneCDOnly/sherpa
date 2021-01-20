@@ -57,7 +57,7 @@ Session.Debug.To.File.Set()
     }
 Session.Debug.To.File.Text()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && $1 = "=" ]]; then
         _object_session_debug_to_file_text_=$2
     else
         echo -n "$_object_session_debug_to_file_text_"
@@ -124,7 +124,7 @@ Session.Debug.To.Screen.Set()
     }
 Session.Debug.To.Screen.Text()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && $1 = "=" ]]; then
         _object_session_debug_to_screen_text_=$2
     else
         echo -n "$_object_session_debug_to_screen_text_"
@@ -191,7 +191,7 @@ Session.Display.Clean.Set()
     }
 Session.Display.Clean.Text()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && $1 = "=" ]]; then
         _object_session_display_clean_text_=$2
     else
         echo -n "$_object_session_display_clean_text_"
@@ -258,7 +258,7 @@ Session.IPKGs.Install.Set()
     }
 Session.IPKGs.Install.Text()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && $1 = "=" ]]; then
         _object_session_ipkgs_install_text_=$2
     else
         echo -n "$_object_session_ipkgs_install_text_"
@@ -325,7 +325,7 @@ Session.LineSpace.Set()
     }
 Session.LineSpace.Text()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && $1 = "=" ]]; then
         _object_session_linespace_text_=$2
     else
         echo -n "$_object_session_linespace_text_"
@@ -392,7 +392,7 @@ Session.Lists.Built.Set()
     }
 Session.Lists.Built.Text()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && $1 = "=" ]]; then
         _object_session_lists_built_text_=$2
     else
         echo -n "$_object_session_lists_built_text_"
@@ -459,7 +459,7 @@ Session.PIPs.Install.Set()
     }
 Session.PIPs.Install.Text()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && $1 = "=" ]]; then
         _object_session_pips_install_text_=$2
     else
         echo -n "$_object_session_pips_install_text_"
@@ -526,7 +526,7 @@ Session.ShowBackupLocation.Set()
     }
 Session.ShowBackupLocation.Text()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && $1 = "=" ]]; then
         _object_session_showbackuplocation_text_=$2
     else
         echo -n "$_object_session_showbackuplocation_text_"
@@ -593,7 +593,7 @@ Session.SkipPackageProcessing.Set()
     }
 Session.SkipPackageProcessing.Text()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && $1 = "=" ]]; then
         _object_session_skippackageprocessing_text_=$2
     else
         echo -n "$_object_session_skippackageprocessing_text_"
@@ -660,7 +660,7 @@ Session.SuggestIssue.Set()
     }
 Session.SuggestIssue.Text()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && $1 = "=" ]]; then
         _object_session_suggestissue_text_=$2
     else
         echo -n "$_object_session_suggestissue_text_"
@@ -727,7 +727,7 @@ Session.Summary.Set()
     }
 Session.Summary.Text()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && $1 = "=" ]]; then
         _object_session_summary_text_=$2
     else
         echo -n "$_object_session_summary_text_"
@@ -794,7 +794,7 @@ User.Opts.Help.Abbreviations.Set()
     }
 User.Opts.Help.Abbreviations.Text()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && $1 = "=" ]]; then
         _object_user_opts_help_abbreviations_text_=$2
     else
         echo -n "$_object_user_opts_help_abbreviations_text_"
@@ -861,7 +861,7 @@ User.Opts.Help.Actions.Set()
     }
 User.Opts.Help.Actions.Text()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && $1 = "=" ]]; then
         _object_user_opts_help_actions_text_=$2
     else
         echo -n "$_object_user_opts_help_actions_text_"
@@ -928,7 +928,7 @@ User.Opts.Help.ActionsAll.Set()
     }
 User.Opts.Help.ActionsAll.Text()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && $1 = "=" ]]; then
         _object_user_opts_help_actionsall_text_=$2
     else
         echo -n "$_object_user_opts_help_actionsall_text_"
@@ -995,7 +995,7 @@ User.Opts.Help.Backups.Set()
     }
 User.Opts.Help.Backups.Text()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && $1 = "=" ]]; then
         _object_user_opts_help_backups_text_=$2
     else
         echo -n "$_object_user_opts_help_backups_text_"
@@ -1062,7 +1062,7 @@ User.Opts.Help.Basic.Set()
     }
 User.Opts.Help.Basic.Text()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && $1 = "=" ]]; then
         _object_user_opts_help_basic_text_=$2
     else
         echo -n "$_object_user_opts_help_basic_text_"
@@ -1129,7 +1129,7 @@ User.Opts.Help.Options.Set()
     }
 User.Opts.Help.Options.Text()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && $1 = "=" ]]; then
         _object_user_opts_help_options_text_=$2
     else
         echo -n "$_object_user_opts_help_options_text_"
@@ -1196,7 +1196,7 @@ User.Opts.Help.Packages.Set()
     }
 User.Opts.Help.Packages.Text()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && $1 = "=" ]]; then
         _object_user_opts_help_packages_text_=$2
     else
         echo -n "$_object_user_opts_help_packages_text_"
@@ -1263,7 +1263,7 @@ User.Opts.Help.Problems.Set()
     }
 User.Opts.Help.Problems.Text()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && $1 = "=" ]]; then
         _object_user_opts_help_problems_text_=$2
     else
         echo -n "$_object_user_opts_help_problems_text_"
@@ -1330,7 +1330,7 @@ User.Opts.Help.Status.Set()
     }
 User.Opts.Help.Status.Text()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && $1 = "=" ]]; then
         _object_user_opts_help_status_text_=$2
     else
         echo -n "$_object_user_opts_help_status_text_"
@@ -1397,7 +1397,7 @@ User.Opts.Help.Tips.Set()
     }
 User.Opts.Help.Tips.Text()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && $1 = "=" ]]; then
         _object_user_opts_help_tips_text_=$2
     else
         echo -n "$_object_user_opts_help_tips_text_"
@@ -1464,7 +1464,7 @@ User.Opts.Dependencies.Check.Set()
     }
 User.Opts.Dependencies.Check.Text()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && $1 = "=" ]]; then
         _object_user_opts_dependencies_check_text_=$2
     else
         echo -n "$_object_user_opts_dependencies_check_text_"
@@ -1531,7 +1531,7 @@ User.Opts.IgnoreFreeSpace.Set()
     }
 User.Opts.IgnoreFreeSpace.Text()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && $1 = "=" ]]; then
         _object_user_opts_ignorefreespace_text_=$2
     else
         echo -n "$_object_user_opts_ignorefreespace_text_"
@@ -1598,7 +1598,7 @@ User.Opts.Versions.View.Set()
     }
 User.Opts.Versions.View.Text()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && $1 = "=" ]]; then
         _object_user_opts_versions_view_text_=$2
     else
         echo -n "$_object_user_opts_versions_view_text_"
@@ -1665,7 +1665,7 @@ User.Opts.Log.Last.Paste.Set()
     }
 User.Opts.Log.Last.Paste.Text()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && $1 = "=" ]]; then
         _object_user_opts_log_last_paste_text_=$2
     else
         echo -n "$_object_user_opts_log_last_paste_text_"
@@ -1732,7 +1732,7 @@ User.Opts.Log.Last.View.Set()
     }
 User.Opts.Log.Last.View.Text()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && $1 = "=" ]]; then
         _object_user_opts_log_last_view_text_=$2
     else
         echo -n "$_object_user_opts_log_last_view_text_"
@@ -1799,7 +1799,7 @@ User.Opts.Log.Tail.Paste.Set()
     }
 User.Opts.Log.Tail.Paste.Text()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && $1 = "=" ]]; then
         _object_user_opts_log_tail_paste_text_=$2
     else
         echo -n "$_object_user_opts_log_tail_paste_text_"
@@ -1866,7 +1866,7 @@ User.Opts.Log.Whole.View.Set()
     }
 User.Opts.Log.Whole.View.Text()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && $1 = "=" ]]; then
         _object_user_opts_log_whole_view_text_=$2
     else
         echo -n "$_object_user_opts_log_whole_view_text_"
@@ -1933,7 +1933,7 @@ User.Opts.Apps.All.Backup.Set()
     }
 User.Opts.Apps.All.Backup.Text()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && $1 = "=" ]]; then
         _object_user_opts_apps_all_backup_text_=$2
     else
         echo -n "$_object_user_opts_apps_all_backup_text_"
@@ -2000,7 +2000,7 @@ User.Opts.Apps.All.Install.Set()
     }
 User.Opts.Apps.All.Install.Text()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && $1 = "=" ]]; then
         _object_user_opts_apps_all_install_text_=$2
     else
         echo -n "$_object_user_opts_apps_all_install_text_"
@@ -2067,7 +2067,7 @@ User.Opts.Apps.All.Reinstall.Set()
     }
 User.Opts.Apps.All.Reinstall.Text()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && $1 = "=" ]]; then
         _object_user_opts_apps_all_reinstall_text_=$2
     else
         echo -n "$_object_user_opts_apps_all_reinstall_text_"
@@ -2134,7 +2134,7 @@ User.Opts.Apps.All.Restart.Set()
     }
 User.Opts.Apps.All.Restart.Text()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && $1 = "=" ]]; then
         _object_user_opts_apps_all_restart_text_=$2
     else
         echo -n "$_object_user_opts_apps_all_restart_text_"
@@ -2201,7 +2201,7 @@ User.Opts.Apps.All.Restore.Set()
     }
 User.Opts.Apps.All.Restore.Text()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && $1 = "=" ]]; then
         _object_user_opts_apps_all_restore_text_=$2
     else
         echo -n "$_object_user_opts_apps_all_restore_text_"
@@ -2268,7 +2268,7 @@ User.Opts.Apps.All.Start.Set()
     }
 User.Opts.Apps.All.Start.Text()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && $1 = "=" ]]; then
         _object_user_opts_apps_all_start_text_=$2
     else
         echo -n "$_object_user_opts_apps_all_start_text_"
@@ -2335,7 +2335,7 @@ User.Opts.Apps.All.Stop.Set()
     }
 User.Opts.Apps.All.Stop.Text()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && $1 = "=" ]]; then
         _object_user_opts_apps_all_stop_text_=$2
     else
         echo -n "$_object_user_opts_apps_all_stop_text_"
@@ -2402,7 +2402,7 @@ User.Opts.Apps.All.Uninstall.Set()
     }
 User.Opts.Apps.All.Uninstall.Text()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && $1 = "=" ]]; then
         _object_user_opts_apps_all_uninstall_text_=$2
     else
         echo -n "$_object_user_opts_apps_all_uninstall_text_"
@@ -2469,7 +2469,7 @@ User.Opts.Apps.All.Upgrade.Set()
     }
 User.Opts.Apps.All.Upgrade.Text()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && $1 = "=" ]]; then
         _object_user_opts_apps_all_upgrade_text_=$2
     else
         echo -n "$_object_user_opts_apps_all_upgrade_text_"
@@ -2536,7 +2536,7 @@ User.Opts.Apps.List.All.Set()
     }
 User.Opts.Apps.List.All.Text()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && $1 = "=" ]]; then
         _object_user_opts_apps_list_all_text_=$2
     else
         echo -n "$_object_user_opts_apps_list_all_text_"
@@ -2603,7 +2603,7 @@ User.Opts.Apps.List.Essential.Set()
     }
 User.Opts.Apps.List.Essential.Text()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && $1 = "=" ]]; then
         _object_user_opts_apps_list_essential_text_=$2
     else
         echo -n "$_object_user_opts_apps_list_essential_text_"
@@ -2670,7 +2670,7 @@ User.Opts.Apps.List.Installed.Set()
     }
 User.Opts.Apps.List.Installed.Text()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && $1 = "=" ]]; then
         _object_user_opts_apps_list_installed_text_=$2
     else
         echo -n "$_object_user_opts_apps_list_installed_text_"
@@ -2737,7 +2737,7 @@ User.Opts.Apps.List.NotInstalled.Set()
     }
 User.Opts.Apps.List.NotInstalled.Text()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && $1 = "=" ]]; then
         _object_user_opts_apps_list_notinstalled_text_=$2
     else
         echo -n "$_object_user_opts_apps_list_notinstalled_text_"
@@ -2804,7 +2804,7 @@ User.Opts.Apps.List.Optional.Set()
     }
 User.Opts.Apps.List.Optional.Text()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && $1 = "=" ]]; then
         _object_user_opts_apps_list_optional_text_=$2
     else
         echo -n "$_object_user_opts_apps_list_optional_text_"
@@ -2871,7 +2871,7 @@ User.Opts.Apps.List.Standalone.Set()
     }
 User.Opts.Apps.List.Standalone.Text()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && $1 = "=" ]]; then
         _object_user_opts_apps_list_standalone_text_=$2
     else
         echo -n "$_object_user_opts_apps_list_standalone_text_"
@@ -2938,7 +2938,7 @@ User.Opts.Apps.List.Started.Set()
     }
 User.Opts.Apps.List.Started.Text()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && $1 = "=" ]]; then
         _object_user_opts_apps_list_started_text_=$2
     else
         echo -n "$_object_user_opts_apps_list_started_text_"
@@ -3005,7 +3005,7 @@ User.Opts.Apps.List.Stopped.Set()
     }
 User.Opts.Apps.List.Stopped.Text()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && $1 = "=" ]]; then
         _object_user_opts_apps_list_stopped_text_=$2
     else
         echo -n "$_object_user_opts_apps_list_stopped_text_"
@@ -3072,7 +3072,7 @@ User.Opts.Apps.List.Upgradable.Set()
     }
 User.Opts.Apps.List.Upgradable.Text()
     {
-    if [[ -n $1 && $1 = "=" ]]; then
+    if [[ -n ${1:-} && $1 = "=" ]]; then
         _object_user_opts_apps_list_upgradable_text_=$2
     else
         echo -n "$_object_user_opts_apps_list_upgradable_text_"
