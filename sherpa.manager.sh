@@ -47,7 +47,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=210120
+    readonly MANAGER_SCRIPT_VERSION=210122
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -659,7 +659,7 @@ Session.Init()
     readonly MANAGER_ESSENTIAL_IPKGS_ADD='findutils grep less sed'
     readonly MANAGER_COMMON_IPKGS_ADD='ca-certificates gcc git git-http nano python3-dev python3-pip python3-setuptools'
     readonly MANAGER_COMMON_PIPS_ADD='apprise apscheduler beautifulsoup4 cfscrape cheetah3 cheroot!=8.4.4 cherrypy configobj feedparser portend pygithub python-levenshtein python-magic random_user_agent sabyenc3 simplejson slugify'
-    readonly MANAGER_COMMON_QPKG_CONFLICTS='Optware Optware-NG TarMT Python QPython2'
+    readonly MANAGER_COMMON_QPKG_CONFLICTS='Optware Optware-NG TarMT Python QPython2 Python3 QPython3'
 
     QPKGs.EssentialOptionalStandalone.Build
 
