@@ -2746,7 +2746,7 @@ DisplayAsProjectSyntaxIndentedExample()
     # $1 = description
     # $2 = example syntax
 
-    if [[ -z $1 ]]; then
+    if [[ -z ${1:-} ]]; then
         printf "%${HELP_SYNTAX_INDENT}s# %s\n" '' "$PROJECT_NAME $2"
     elif [[ ${1: -1} = '!' ]]; then
         printf "\n%${HELP_DESC_INDENT}s%s \n%${HELP_SYNTAX_INDENT}s# %s\n" '' "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}" '' "$PROJECT_NAME $2"
@@ -3307,7 +3307,7 @@ QPKGs.OperationAssignment.List()
     DebugFuncEntry
 
     local array_name=''
-    local -a operations_array=(ToDownload IsDownload ErDownload SkDownload ToBackup IsBackup ErBackup SkBackup ToStop IsStop ErStop SkStop ToUninstall IsUninstall ErUninstall SkUninstall ToUpgrade IsUpgrade ErUpgrade SkUpgrade ToReinstall IsReinstall ErReinstall SkReinstall ToInstall IsInstall ErInstall SkInstall ToRestore IsRestore ErRestore SkRestore ToStart IsStart ErStart SkStart ToRestart IsRestart ErRestart SkRestart ToStatus Installed NotInstalled Upgradable Missing)
+    local -a operations_array=(ToDownload IsDownload ErDownload SkDownload ToBackup IsBackup ErBackup SkBackup ToStop IsStop ErStop SkStop ToUninstall IsUninstall ErUninstall SkUninstall ToUpgrade IsUpgrade ErUpgrade SkUpgrade ToReinstall IsReinstall ErReinstall SkReinstall ToInstall IsInstall ErInstall SkInstall ToRestore IsRestore ErRestore SkRestore ToStart IsStart ErStart SkStart ToRestart IsRestart ErRestart SkRestart ToStatus Installed NotInstalled BackedUp NotBackedUp Upgradable Missing)
 
     DebugInfoMinorSeparator
 
@@ -3358,6 +3358,7 @@ Session.Build.StateLists()
     #   - can be installed or reinstalled by the user
     #   - can be upgraded
     #   - are installed and enabled or installed and disabled in [/etc/config/qpkg.conf]
+    #   - have backup files in backup location
     #   - have config blocks in [/etc/config/qpkg.conf], but no files on-disk
 
     Session.Lists.Built.IsSet && return
@@ -3393,14 +3394,20 @@ Session.Build.StateLists()
                 QPKGs.NotEnabled.Add "$package"
             fi
 
-            # TODO: build a list of QPKGs with config backup files
-
-
-
             [[ ! -d $(QPKG.InstallPath "$package") ]] && QPKGs.Missing.Add "$package"
         else
             QPKGs.Installed.Remove "$package"
             QPKGs.NotInstalled.Add "$package"
+        fi
+
+        if QPKG.SupportsBackup "$package"; then
+            if [[ -e $session_backup_path/$package.config.tar.gz ]]; then
+                QPKGs.NotBackedUp.Remove "$package"
+                QPKGs.BackedUp.Add "$package"
+            else
+                QPKGs.BackedUp.Remove "$package"
+                QPKGs.NotBackedUp.Add "$package"
+            fi
         fi
     done
 
@@ -3539,6 +3546,8 @@ QPKGs.Statuses.Show()
 
         DisplayLineSpaceIfNoneAlready
     done
+
+    QPKGs.OperationAssignment.List
 
     return 0
 
@@ -4086,7 +4095,7 @@ QPKG.Download()
     Session.Error.IsSet && return
     DebugFuncEntry
 
-    if [[ -z $1 ]]; then
+    if [[ -z ${1:-} ]]; then
         DebugAsError 'no package name specified'
         DebugFuncExit 1; return
     fi
@@ -4154,7 +4163,7 @@ QPKG.Install()
     Session.SkipPackageProcessing.IsSet && return
     DebugFuncEntry
 
-    if [[ -z $1 ]]; then
+    if [[ -z ${1:-} ]]; then
         DebugAsError 'no package name specified'
         DebugFuncExit 1; return
     fi
@@ -4246,7 +4255,7 @@ QPKG.Reinstall()
     Session.SkipPackageProcessing.IsSet && return
     DebugFuncEntry
 
-    if [[ -z $1 ]]; then
+    if [[ -z ${1:-} ]]; then
         DebugAsError 'no package name specified'
         DebugFuncExit 1; return
     fi
@@ -4313,7 +4322,7 @@ QPKG.Upgrade()
     Session.SkipPackageProcessing.IsSet && return
     DebugFuncEntry
 
-    if [[ -z $1 ]]; then
+    if [[ -z ${1:-} ]]; then
         DebugAsError 'no package name specified'
         DebugFuncExit 1; return
     fi
@@ -4385,7 +4394,7 @@ QPKG.Uninstall()
     Session.Error.IsSet && return
     DebugFuncEntry
 
-    if [[ -z $1 ]]; then
+    if [[ -z ${1:-} ]]; then
         DebugAsError 'no package name specified'
         DebugFuncExit 1; return
     fi
@@ -4444,7 +4453,7 @@ QPKG.Restart()
 
     DebugFuncEntry
 
-    if [[ -z $1 ]]; then
+    if [[ -z ${1:-} ]]; then
         DebugAsError 'no package name specified'
         DebugFuncExit 1; return
     fi
@@ -4493,7 +4502,7 @@ QPKG.Start()
 
     DebugFuncEntry
 
-    if [[ -z $1 ]]; then
+    if [[ -z ${1:-} ]]; then
         DebugAsError 'no package name specified'
         DebugFuncExit 1; return
     fi
@@ -4550,7 +4559,7 @@ QPKG.Stop()
 
     DebugFuncEntry
 
-    if [[ -z $1 ]]; then
+    if [[ -z ${1:-} ]]; then
         DebugAsError 'no package name specified'
         DebugFuncExit 1; return
     fi
@@ -4601,7 +4610,7 @@ QPKG.Enable()
 
     DebugFuncEntry
 
-    if [[ -z $1 ]]; then
+    if [[ -z ${1:-} ]]; then
         DebugAsError 'no package name specified'
         DebugFuncExit 1; return
     fi
@@ -4637,7 +4646,7 @@ QPKG.Disable()
 
     DebugFuncEntry
 
-    if [[ -z $1 ]]; then
+    if [[ -z ${1:-} ]]; then
         DebugAsError 'no package name specified'
         DebugFuncExit 1; return
     fi
@@ -4679,7 +4688,7 @@ QPKG.Backup()
 
     DebugFuncEntry
 
-    if [[ -z $1 ]]; then
+    if [[ -z ${1:-} ]]; then
         DebugAsError 'no package name specified'
         DebugFuncExit 1; return
     fi
@@ -4780,7 +4789,7 @@ QPKG.Restore()
 
     DebugFuncEntry
 
-    if [[ -z $1 ]]; then
+    if [[ -z ${1:-} ]]; then
         DebugAsError 'no package name specified'
         DebugFuncExit 1; return
     fi
@@ -6070,7 +6079,7 @@ Objects.Compile()
 
     # $1 = 'hash' (optional) - if specified, only return the internal checksum
 
-    local -r COMPILED_OBJECTS_HASH=e5ee5f911839c2945faa79f2508fde04
+    local -r COMPILED_OBJECTS_HASH=6973255413cd5374b07738c3ea8d1ec9
     local array_name=''
     local -a operations_array=()
 
@@ -6136,13 +6145,13 @@ Objects.Compile()
             Objects.Add.List IPKGs.To${array_name}
         done
 
-        operations_array=(BackedUp Essential Installable Missing Names Optional Standalone Upgradable)
+        operations_array=(Essential Installable Missing Names Optional Standalone Upgradable)
 
         for array_name in "${operations_array[@]}"; do
             Objects.Add.List QPKGs.${array_name}
         done
 
-        operations_array=(Enabled Installed SupportsBackup SupportsUpdateOnRestart)
+        operations_array=(BackedUp Enabled Installed SupportsBackup SupportsUpdateOnRestart)
 
         for array_name in "${operations_array[@]}"; do
             Objects.Add.List QPKGs.${array_name}
