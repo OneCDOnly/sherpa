@@ -47,7 +47,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=210122
+    readonly MANAGER_SCRIPT_VERSION=210123
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -190,7 +190,7 @@ Session.Init()
     ShowAsProc 'init' >&2
 
     if ! MakePath "$WORK_PATH" 'work'; then
-        DebugFuncExit; return 1
+        DebugFuncExit 1; return
     fi
 
     Objects.Compile
@@ -218,36 +218,36 @@ Session.Init()
     Session.SkipPackageProcessing.DontLogChanges
 
     if ! MakePath "$LOGS_PATH" 'logs'; then
-        DebugFuncExit; return 1
+        DebugFuncExit 1; return
     fi
 
     session_backup_path=$($GETCFG_CMD SHARE_DEF defVolMP -f "$DEFAULT_SHARES_PATHFILE")/.qpkg_config_backup
 
     if ! MakePath "$session_backup_path" 'QPKG backup'; then
-        DebugFuncExit; return 1
+        DebugFuncExit 1; return
     fi
 
     if ! MakePath "$QPKG_DL_PATH" 'QPKG download'; then
-        DebugFuncExit; return 1
+        DebugFuncExit 1; return
     fi
 
     # errors can occur due to incompatible IPKGs (tried installing Entware-3x, then Entware-ng), so delete them first
     [[ -d $IPKG_DL_PATH ]] && rm -rf "$IPKG_DL_PATH"
 
     if ! MakePath "$IPKG_DL_PATH" 'IPKG download'; then
-        DebugFuncExit; return 1
+        DebugFuncExit 1; return
     fi
 
     [[ -d $IPKG_CACHE_PATH ]] && rm -rf "$IPKG_CACHE_PATH"
 
     if ! MakePath "$IPKG_CACHE_PATH" 'IPKG cache'; then
-        DebugFuncExit; return 1
+        DebugFuncExit 1; return
     fi
 
     [[ -d $PIP_CACHE_PATH ]] && rm -rf "$PIP_CACHE_PATH"
 
     if ! MakePath "$PIP_CACHE_PATH" 'PIP cache'; then
-        DebugFuncExit; return 1
+        DebugFuncExit 1; return
     fi
 
     readonly NAS_FIRMWARE=$($GETCFG_CMD System Version -f "$ULINUX_PATHFILE")
@@ -686,7 +686,7 @@ Session.Init()
         User.Opts.Apps.All.Upgrade.IsNot && User.Opts.Apps.All.Uninstall.IsNot && QPKGs.NewVersions.Show
     fi
 
-    DebugFuncExit; return 0
+    DebugFuncExit
 
     }
 
@@ -1223,7 +1223,7 @@ Session.Arguments.Parse()
         Session.SkipPackageProcessing.Set
     fi
 
-    DebugFuncExit; return 0
+    DebugFuncExit
 
     }
 
@@ -1282,7 +1282,7 @@ Session.Arguments.Suggestions()
         done
     fi
 
-    DebugFuncExit; return 0
+    DebugFuncExit
 
     }
 
@@ -1293,7 +1293,7 @@ Session.Validate()
     Session.Arguments.Suggestions
 
     if Session.SkipPackageProcessing.IsSet; then
-        DebugFuncExit; return 1
+        DebugFuncExit 1; return
     fi
 
     ShowAsProc 'validating parameters' >&2
@@ -1301,13 +1301,13 @@ Session.Validate()
     Session.Environment.List
 
     if Session.SkipPackageProcessing.IsSet; then
-        DebugFuncExit; return 1
+        DebugFuncExit 1; return
     fi
 
     if ! QPKGs.Conflicts.Check; then
         code_pointer=2
         Session.SkipPackageProcessing.Set
-        DebugFuncExit; return 1
+        DebugFuncExit 1; return
     fi
 
     if QPKGs.ToBackup.IsNone && QPKGs.ToUninstall.IsNone && QPKGs.ToUpgrade.IsNone && QPKGs.ToInstall.IsNone && QPKGs.ToReinstall.IsNone && QPKGs.ToRestore.IsNone && QPKGs.ToRestart.IsNone && QPKGs.ToStart.IsNone && QPKGs.ToStop.IsNone; then
@@ -1316,7 +1316,7 @@ Session.Validate()
                 ShowAsEror "I've nothing to do (usually means the arguments didn't make sense, or were incomplete)"
                 User.Opts.Help.Basic.Set
                 Session.SkipPackageProcessing.Set
-                DebugFuncExit; return 1
+                DebugFuncExit 1; return
             fi
         fi
     fi
@@ -1326,7 +1326,7 @@ Session.Validate()
         Session.PIPs.Install.Set
     fi
 
-    DebugFuncExit; return 0
+    DebugFuncExit
 
     }
 
@@ -1378,7 +1378,7 @@ Session.Environment.List()
     if [[ $EUID -ne 0 || $USER != admin ]]; then
         ShowAsEror "this script must be run as the 'admin' user. Please login via SSH as 'admin' and try again"
         Session.SkipPackageProcessing.Set
-        DebugFuncExit; return 1
+        DebugFuncExit 1; return
     fi
 
     DebugUserspace.OK '$BASH_VERSION' "$BASH_VERSION"
@@ -1414,7 +1414,7 @@ Session.Environment.List()
     DebugScript 'object reference hash' "$(Objects.Compile hash)"
     DebugInfoMinorSeparator
 
-    DebugFuncExit; return 0
+    DebugFuncExit
 
     }
 
@@ -1700,7 +1700,7 @@ Tiers.Processor()
     QPKGs.OperationAssignment.List
     SmartCR >&2
 
-    DebugFuncExit; return 0
+    DebugFuncExit
 
     }
 
@@ -1768,7 +1768,7 @@ Tier.Processor()
         QPKG)
             if $targets_function.$TARGET_OBJECT_NAME.IsNone; then
                 DebugInfo "no $targets_function to process"
-                DebugFuncExit; return 0
+                DebugFuncExit; return
             fi
 
             if [[ $TIER = all ]]; then
@@ -1783,7 +1783,7 @@ Tier.Processor()
 
             if [[ $package_count -eq 0 ]]; then
                 DebugInfo "no$([[ $TIER = all ]] && echo '' || echo " $TIER") $targets_function to process"
-                DebugFuncExit; return 0
+                DebugFuncExit; return
             fi
 
             if [[ $PROCESSING_DIRECTION = forward ]]; then
@@ -1819,7 +1819,7 @@ Tier.Processor()
     esac
 
     ShowAsOperationResult "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PAST" "$RUNTIME"
-    DebugFuncExit; return 0
+    DebugFuncExit
 
     }
 
@@ -2105,7 +2105,7 @@ PIPs.Install()
             Display "* Ugh! The usual fix for this is to let $(FormatAsScriptTitle) reinstall $(FormatAsPackageName Entware) at least once."
             Display "\t$0 reinstall ew"
             Display "If it happens again after reinstalling $(FormatAsPackageName Entware), please create a new issue for this on GitHub."
-            DebugFuncExit; return 1
+            DebugFuncExit 1; return
         fi
     fi
 
@@ -2165,7 +2165,7 @@ PIPs.Install()
 
     ShowAsDone 'downloaded & installed PIPs OK'
 
-    DebugFuncExit; return $resultcode
+    DebugFuncExit $resultcode
 
     }
 
@@ -2198,7 +2198,7 @@ CalcAllIPKGDepsToInstall()
     DebugInfo 'IPKGs requested' "$requested_list "
 
     if ! IPKGs.Archive.Open; then
-        DebugFuncExit; return 1
+        DebugFuncExit 1; return
     fi
 
     ShowAsProc 'satisfying IPKG dependencies'
@@ -2260,7 +2260,7 @@ CalcAllIPKGDepsToInstall()
     fi
 
     IPKGs.Archive.Close
-    DebugFuncExit; return 0
+    DebugFuncExit
 
     }
 
@@ -2297,7 +2297,7 @@ CalcAllIPKGDepsToUninstall()
         DebugAsDone "$package_count IPKG$(FormatAsPlural "$package_count") to be uninstalled"
     fi
 
-    DebugFuncExit; return 0
+    DebugFuncExit
 
     }
 
@@ -2337,7 +2337,7 @@ IPKGs.Install()
     # in-case 'python' has disappeared again ...
     [[ ! -L /opt/bin/python && -e /opt/bin/python3 ]] && ln -s /opt/bin/python3 /opt/bin/python
 
-    DebugFuncExit; return 0
+    DebugFuncExit
 
     }
 
@@ -2363,7 +2363,7 @@ IPKGs.Uninstall()
         IPKGs.Uninstall.Batch
     fi
 
-    DebugFuncExit; return 0
+    DebugFuncExit
 
     }
 
@@ -2402,7 +2402,7 @@ IPKGs.Upgrade.Batch()
         fi
     fi
 
-    DebugFuncExit; return $resultcode
+    DebugFuncExit $resultcode
 
     }
 
@@ -2439,7 +2439,7 @@ IPKGs.Install.Batch()
         fi
     fi
 
-    DebugFuncExit; return $resultcode
+    DebugFuncExit $resultcode
 
     }
 
@@ -2470,7 +2470,7 @@ IPKGs.Uninstall.Batch()
         fi
     fi
 
-    DebugFuncExit; return $resultcode
+    DebugFuncExit $resultcode
 
     }
 
@@ -2486,7 +2486,7 @@ IPKGs.Archive.Open()
 
     if [[ ! -e $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE ]]; then
         ShowAsEror 'unable to locate the IPKG list file'
-        DebugFuncExit; return 1
+        DebugFuncExit 1; return
     fi
 
     IPKGs.Archive.Close
@@ -2496,10 +2496,10 @@ IPKGs.Archive.Open()
 
     if [[ ! -e $EXTERNAL_PACKAGE_LIST_PATHFILE ]]; then
         ShowAsEror 'unable to open the IPKG list file'
-        DebugFuncExit; return 1
+        DebugFuncExit 1; return
     fi
 
-    DebugFuncExit; return 0
+    DebugFuncExit
 
     }
 
@@ -3297,7 +3297,7 @@ QPKGs.OperationAssignment.List()
     done
 
     DebugInfoMinorSeparator
-    DebugFuncExit; return 0
+    DebugFuncExit
 
     }
 
@@ -3327,7 +3327,7 @@ QPKGs.EssentialOptionalStandalone.Build()
         fi
     done
 
-    DebugFuncExit; return 0
+    DebugFuncExit
 
     }
 
@@ -3381,7 +3381,7 @@ Session.Build.StateLists()
     done
 
     Session.Lists.Built.Set
-    DebugFuncExit; return 0
+    DebugFuncExit
 
     }
 
@@ -3403,7 +3403,7 @@ QPKGs.SupportsBackup.Build()
         fi
     done
 
-    DebugFuncExit; return 0
+    DebugFuncExit
 
     }
 
@@ -3425,7 +3425,7 @@ QPKGs.SupportsUpdateOnRestart.Build()
         fi
     done
 
-    DebugFuncExit; return 0
+    DebugFuncExit
 
     }
 
@@ -4064,7 +4064,7 @@ QPKG.Download()
 
     if [[ -z $1 ]]; then
         DebugAsError 'no package name specified'
-        DebugFuncExit; return 1
+        DebugFuncExit 1; return
     fi
 
     local -i resultcode=0
@@ -4079,7 +4079,7 @@ QPKG.Download()
         DebugAsWarn "no URL found for this package $(FormatAsPackageName "$1") (unsupported arch?)"
         QPKGs.ToDownload.Remove "$1"
         QPKGs.SkDownload.Add "$1"
-        DebugFuncExit; return 0
+        DebugFuncExit; return
     fi
 
     if [[ -e $local_pathfile ]]; then
@@ -4116,7 +4116,7 @@ QPKG.Download()
     fi
 
     QPKGs.ToDownload.Remove "$1"
-    DebugFuncExit; return $resultcode
+    DebugFuncExit $resultcode
 
     }
 
@@ -4132,7 +4132,7 @@ QPKG.Install()
 
     if [[ -z $1 ]]; then
         DebugAsError 'no package name specified'
-        DebugFuncExit; return 1
+        DebugFuncExit 1; return
     fi
 
     local target_file=''
@@ -4144,7 +4144,7 @@ QPKG.Install()
         DebugAsWarn "no pathfile found for this package $(FormatAsPackageName "$1") (unsupported arch?)"
         QPKGs.ToInstall.Remove "$1"
         QPKGs.SkInstall.Add "$1"
-        DebugFuncExit; return 0
+        DebugFuncExit; return
     fi
 
     if [[ ${local_pathfile##*.} = zip ]]; then
@@ -4208,7 +4208,7 @@ QPKG.Install()
 
     QPKGs.ToInstall.Remove "$1"
     QPKG.FixAppCenterStatus "$1"
-    DebugFuncExit; return $resultcode
+    DebugFuncExit $resultcode
 
     }
 
@@ -4224,7 +4224,7 @@ QPKG.Reinstall()
 
     if [[ -z $1 ]]; then
         DebugAsError 'no package name specified'
-        DebugFuncExit; return 1
+        DebugFuncExit 1; return
     fi
 
     local target_file=''
@@ -4236,14 +4236,14 @@ QPKG.Reinstall()
         DebugAsWarn "no pathfile found for this package $(FormatAsPackageName "$1") (unsupported arch?)"
         QPKGs.ToReinstall.Remove "$1"
         QPKGs.SkReinstall.Add "$1"
-        DebugFuncExit; return 0
+        DebugFuncExit; return
     fi
 
     if ! QPKG.Installed "$1"; then
         DebugAsWarn "unable to reinstall $(FormatAsPackageName "$1") as it's not installed"
         QPKGs.ToReinstall.Remove "$1"
         QPKGs.SkReinstall.Add "$1"
-        DebugFuncExit; return 0
+        DebugFuncExit; return
     fi
 
     if [[ ${local_pathfile##*.} = zip ]]; then
@@ -4270,7 +4270,7 @@ QPKG.Reinstall()
 
     QPKGs.ToReinstall.Remove "$1"
     QPKG.FixAppCenterStatus "$1"
-    DebugFuncExit; return $resultcode
+    DebugFuncExit $resultcode
 
     }
 
@@ -4291,7 +4291,7 @@ QPKG.Upgrade()
 
     if [[ -z $1 ]]; then
         DebugAsError 'no package name specified'
-        DebugFuncExit; return 1
+        DebugFuncExit 1; return
     fi
 
     local -i resultcode=0
@@ -4303,14 +4303,14 @@ QPKG.Upgrade()
         DebugAsWarn "no pathfile found for this package $(FormatAsPackageName "$1") (unsupported arch?)"
         QPKGs.ToUpgrade.Remove "$1"
         QPKGs.SkUpgrade.Add "$1"
-        DebugFuncExit; return 0
+        DebugFuncExit; return
     fi
 
     if ! QPKG.Installed "$1"; then
         DebugAsWarn "unable to upgrade $(FormatAsPackageName "$1") as it's not installed"
         QPKGs.ToUpgrade.Remove "$1"
         QPKGs.SkUpgrade.Add "$1"
-        DebugFuncExit; return 0
+        DebugFuncExit; return
     fi
 
     if [[ ${local_pathfile##*.} = zip ]]; then
@@ -4345,7 +4345,7 @@ QPKG.Upgrade()
 
     QPKGs.ToUpgrade.Remove "$1"
     QPKG.FixAppCenterStatus "$1"
-    DebugFuncExit; return $resultcode
+    DebugFuncExit $resultcode
 
     }
 
@@ -4363,7 +4363,7 @@ QPKG.Uninstall()
 
     if [[ -z $1 ]]; then
         DebugAsError 'no package name specified'
-        DebugFuncExit; return 1
+        DebugFuncExit 1; return
     fi
 
     if QPKG.NotInstalled "$1"; then
@@ -4372,7 +4372,7 @@ QPKG.Uninstall()
         QPKGs.SkUninstall.Add "$1"
         QPKGs.Installed.Remove "$1"
         QPKGs.NotInstalled.Add "$1"
-        DebugFuncExit; return 0
+        DebugFuncExit; return
     fi
 
     local -i resultcode=0
@@ -4403,7 +4403,7 @@ QPKG.Uninstall()
 
     QPKGs.ToUninstall.Remove "$1"
     QPKG.FixAppCenterStatus "$1"
-    DebugFuncExit; return $resultcode
+    DebugFuncExit $resultcode
 
     }
 
@@ -4422,7 +4422,7 @@ QPKG.Restart()
 
     if [[ -z $1 ]]; then
         DebugAsError 'no package name specified'
-        DebugFuncExit; return 1
+        DebugFuncExit 1; return
     fi
 
     local -i resultcode=0
@@ -4433,7 +4433,7 @@ QPKG.Restart()
         DebugAsWarn "unable to restart $(FormatAsPackageName "$1") as it's not installed"
         QPKGs.ToRestart.Remove "$1"
         QPKGs.SkRestart.Add "$1"
-        DebugFuncExit; return 0
+        DebugFuncExit; return
     fi
 
     QPKG.Enable "$1"
@@ -4452,7 +4452,7 @@ QPKG.Restart()
 
     QPKGs.ToRestart.Remove "$1"
     QPKG.FixAppCenterStatus "$1"
-    DebugFuncExit; return $resultcode
+    DebugFuncExit $resultcode
 
     }
 
@@ -4471,7 +4471,7 @@ QPKG.Start()
 
     if [[ -z $1 ]]; then
         DebugAsError 'no package name specified'
-        DebugFuncExit; return 1
+        DebugFuncExit 1; return
     fi
 
     local -i resultcode=0
@@ -4482,14 +4482,14 @@ QPKG.Start()
         DebugAsWarn "unable to start $(FormatAsPackageName "$1") as it's not installed"
         QPKGs.ToStart.Remove "$1"
         QPKGs.SkStart.Add "$1"
-        DebugFuncExit; return 0
+        DebugFuncExit; return
     fi
 
     if QPKG.Enabled "$1"; then
         DebugAsWarn "unable to start $(FormatAsPackageName "$1") as it's already started"
         QPKGs.ToStart.Remove "$1"
         QPKGs.SkStart.Add "$1"
-        DebugFuncExit; return 0
+        DebugFuncExit; return
     fi
 
     QPKG.Enable "$1"
@@ -4509,7 +4509,7 @@ QPKG.Start()
 
     QPKGs.ToStart.Remove "$1"
     QPKG.FixAppCenterStatus "$1"
-    DebugFuncExit; return $resultcode
+    DebugFuncExit $resultcode
 
     }
 
@@ -4528,7 +4528,7 @@ QPKG.Stop()
 
     if [[ -z $1 ]]; then
         DebugAsError 'no package name specified'
-        DebugFuncExit; return 1
+        DebugFuncExit 1; return
     fi
 
     QPKG.ClearServiceStatus "$1"
@@ -4537,14 +4537,14 @@ QPKG.Stop()
         DebugAsWarn "unable to stop $(FormatAsPackageName "$1") as it's not installed"
         QPKGs.ToStop.Remove "$1"
         QPKGs.SkStop.Add "$1"
-        DebugFuncExit; return 0
+        DebugFuncExit; return
     fi
 
     if QPKG.NotEnabled "$1"; then
         DebugAsWarn "unable to stop $(FormatAsPackageName "$1") as it's already stopped"
         QPKGs.ToStop.Remove "$1"
         QPKGs.SkStop.Add "$1"
-        DebugFuncExit; return 0
+        DebugFuncExit; return
     fi
 
     local -i resultcode=0
@@ -4566,7 +4566,7 @@ QPKG.Stop()
 
     QPKGs.ToStop.Remove "$package"
     QPKG.FixAppCenterStatus "$1"
-    DebugFuncExit; return $resultcode
+    DebugFuncExit $resultcode
 
     }
 
@@ -4579,12 +4579,12 @@ QPKG.Enable()
 
     if [[ -z $1 ]]; then
         DebugAsError 'no package name specified'
-        DebugFuncExit; return 1
+        DebugFuncExit 1; return
     fi
 
     if QPKG.NotInstalled "$1"; then
         DebugAsWarn "unable to enable $(FormatAsPackageName "$1") as it's not installed"
-        DebugFuncExit; return 0
+        DebugFuncExit; return
     fi
 
     local -i resultcode=0
@@ -4602,7 +4602,7 @@ QPKG.Enable()
     fi
 
     QPKG.FixAppCenterStatus "$1"
-    DebugFuncExit; return 0
+    DebugFuncExit; return
 
     }
 
@@ -4615,12 +4615,12 @@ QPKG.Disable()
 
     if [[ -z $1 ]]; then
         DebugAsError 'no package name specified'
-        DebugFuncExit; return 1
+        DebugFuncExit 1; return
     fi
 
     if QPKG.NotInstalled "$1"; then
         DebugAsWarn "unable to disable $(FormatAsPackageName "$1") as it's not installed"
-        DebugFuncExit; return 0
+        DebugFuncExit; return
     fi
 
     local -i resultcode=0
@@ -4638,7 +4638,7 @@ QPKG.Disable()
     fi
 
     QPKG.FixAppCenterStatus "$1"
-    DebugFuncExit; return 0
+    DebugFuncExit; return
 
     }
 
@@ -4657,14 +4657,14 @@ QPKG.Backup()
 
     if [[ -z $1 ]]; then
         DebugAsError 'no package name specified'
-        DebugFuncExit; return 1
+        DebugFuncExit 1; return
     fi
 
     if QPKG.NotInstalled "$1"; then
         DebugAsWarn "unable to backup $(FormatAsPackageName "$1") as it's not installed"
         QPKGs.ToBackup.Remove "$1"
         QPKGs.SkBackup.Add "$1"
-        DebugFuncExit; return 0
+        DebugFuncExit; return
     fi
 
     local -i resultcode=0
@@ -4685,7 +4685,7 @@ QPKG.Backup()
     fi
 
     QPKGs.ToBackup.Remove "$1"
-    DebugFuncExit; return $resultcode
+    DebugFuncExit $resultcode
 
     }
 
@@ -4758,7 +4758,7 @@ QPKG.Restore()
 
     if [[ -z $1 ]]; then
         DebugAsError 'no package name specified'
-        DebugFuncExit; return 1
+        DebugFuncExit 1; return
     fi
 
     local -i resultcode=0
@@ -4780,7 +4780,7 @@ QPKG.Restore()
     fi
 
     QPKGs.ToRestore.Remove "$1"
-    DebugFuncExit; return $resultcode
+    DebugFuncExit $resultcode
 
     }
 
@@ -4956,21 +4956,21 @@ MakePath()
 RunAndLog()
     {
 
-    # Run a command string, log the results, and show onscreen if required
+    # Run a commandstring, log the results, and show onscreen if required
 
     # input:
-    #   $1 = command string to execute
-    #   $2 = pathfilename to record command string ($1) stdout and stderr
+    #   $1 = commandstring to execute
+    #   $2 = pathfilename to record stdout and stderr for commandstring
     #   $3 = 'log:failure-only' (optional) - if specified, stdout & stderr are only recorded in the specified log if the command failed
     #                                      - if unspecified, stdout & stderr is always recorded
     #   $4 = e.g. '10' (optional) - an additional acceptable return code. Any other returncode from command (other than zero) will be considered a failure
 
     # output:
-    #   stdout = command string stdout and stderr if script is in 'debug' mode
-    #   pathfilename ($2) = command string ($1) stdout and stderr
-    #   $? = resultcode of command string
+    #   stdout = commandstring stdout and stderr if script is in 'debug' mode
+    #   pathfilename ($2) = commandstring ($1) stdout and stderr
+    #   $? = resultcode of commandstring
 
-    [[ -z $1 || -z $2 ]] && return 1
+    [[ -z ${1:-} || -z ${2:-} ]] && return 1
     DebugFuncEntry
 
     local msgs=/var/log/execd.log
@@ -4987,6 +4987,8 @@ RunAndLog()
         resultcode=$?
     fi
 
+    DebugCommand.Proc "$1"
+
     if [[ -e $msgs ]]; then
         FormatAsResultAndStdout "$resultcode" "$(<"$msgs")" >> "$2"
         rm -f "$msgs"
@@ -4994,17 +4996,13 @@ RunAndLog()
         FormatAsResultAndStdout "$resultcode" "<null>" >> "$2"
     fi
 
-    if [[ $resultcode -ne 0 ]]; then
-        if [[ -n ${4:-} && $resultcode -ne $4 ]]; then
-            AddFileToDebug "$2"
-        fi
+    if [[ $resultcode -eq 0 ]]; then
+        [[ ${3:-} != log:failure-only ]] && AddFileToDebug "$2"
     else
-        if [[ ${3:-} != log:failure-only ]]; then
-            AddFileToDebug "$2"
-        fi
+        [[ -n ${4:-} && $resultcode -ne ${4:-} ]] && AddFileToDebug "$2"
     fi
 
-    DebugFuncExit; return $resultcode
+    DebugFuncExit $resultcode
 
     }
 
@@ -5334,7 +5332,9 @@ DebugFuncExit()
         elapsed_time=$(ConvertSecsToHoursMinutesSecs "$((diff_milliseconds/1000))")
     fi
 
-    DebugThis "(<<) ${FUNCNAME[1]}()|$code_pointer|$elapsed_time"
+    DebugThis "(<<) ${FUNCNAME[1]}()|${1:-0}|$code_pointer|$elapsed_time"
+
+    return ${1:-0}
 
     }
 
