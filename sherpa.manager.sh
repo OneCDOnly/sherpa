@@ -1324,7 +1324,7 @@ Session.Validate()
         DebugFuncExit 1; return
     fi
 
-    if QPKGs.ToBackup.IsNone && QPKGs.ToUninstall.IsNone && QPKGs.ToUpgrade.IsNone && QPKGs.ToInstall.IsNone && QPKGs.ToReinstall.IsNone && QPKGs.ToRestore.IsNone && QPKGs.ToRestart.IsNone && QPKGs.ToStart.IsNone && QPKGs.ToStop.IsNone; then
+    if QPKGs.ToBackup.IsNone && QPKGs.ToUninstall.IsNone && QPKGs.ToUpgrade.IsNone && QPKGs.ToInstall.IsNone && QPKGs.ToReinstall.IsNone && QPKGs.ToRestore.IsNone && QPKGs.ToRestart.IsNone && QPKGs.ToStart.IsNone && QPKGs.ToStop.IsNone && QPKGs.ToRebuild.IsNone; then
         if User.Opts.Apps.All.Install.IsNot && User.Opts.Apps.All.Restart.IsNot && User.Opts.Apps.All.Upgrade.IsNot && User.Opts.Apps.All.Backup.IsNot && User.Opts.Apps.All.Restore.IsNot && User.Opts.Help.Status.IsNot && User.Opts.Apps.All.Start.IsNot && User.Opts.Apps.All.Stop.IsNot && User.Opts.Apps.All.Rebuild.IsNot; then
             if User.Opts.Dependencies.Check.IsNot && User.Opts.IgnoreFreeSpace.IsNot; then
                 ShowAsEror "I've nothing to do (usually means the arguments didn't make sense, or were incomplete)"
@@ -1419,7 +1419,9 @@ Session.Environment.List()
     CheckPythonPathAndVersion python3
     CheckPythonPathAndVersion python
 
-    version=$(python3 -V 2>&1 | $SED_CMD 's|^Python ||') && [[ ${version//./} -lt $MIN_PYTHON_VER ]] && ShowAsReco "your Python 3 is out-of-date. Suggest reinstalling Entware: 'sherpa reinstall ew'"
+    if QPKG.Installed Entware; then
+        version=$(python3 -V 2>/dev/null | $SED_CMD 's|^Python ||') && [[ ${version//./} -lt $MIN_PYTHON_VER ]] && ShowAsReco "your Python 3 is out-of-date. Suggest reinstalling Entware: 'sherpa reinstall ew'"
+    fi
 
     DebugUserspace.OK 'raw arguments' "\"$USER_ARGS_RAW\""
 
@@ -1479,6 +1481,29 @@ Tiers.Processor()
 
     if User.Opts.Apps.All.Install.IsSet; then
         QPKGs.ToInstall.Add "$(QPKGs.Installable.Array)"
+    fi
+
+    if User.Opts.Apps.All.Rebuild.IsSet || QPKGs.ToRebuild.IsAny; then
+        if QPKGs.BackedUp.IsNone; then
+            ShowAsWarn 'there are no package backups to rebuild from' >&2
+        else
+            if User.Opts.Apps.All.Rebuild.IsSet; then
+                for package in $(QPKGs.BackedUp.Array); do
+                    QPKG.NotInstalled "$package" && QPKGs.ToInstall.Add "$package"
+                done
+
+                QPKGs.ToRestore.Add "$(QPKGs.BackedUp.Array)"
+            else
+                for package in $(QPKGs.ToRebuild.Array); do
+                    if ! QPKGs.BackedUp.Exist "$package"; then
+                        ShowAsWarn "$(FormatAsPackageName "$package") does not have a backup to rebuild from" >&2
+                    else
+                        QPKG.NotInstalled "$package" && QPKGs.ToInstall.Add "$package"
+                        QPKGs.ToRestore.Add "$package"
+                    fi
+                done
+            fi
+        fi
     fi
 
     PreDownload.Package.Shuffle
@@ -1569,7 +1594,7 @@ Tiers.Processor()
 
     Tier.Processor 'Uninstall' false 'optional' 'QPKG' 'ToUninstall' 'forward' 'uninstall' 'uninstalling' 'uninstalled' ''
 
-    ShowAsProc "checking for addon packages to uninstall" >&2
+    ShowAsProc 'checking for addon packages to uninstall' >&2
     QPKG.Installed Entware && IPKGs.Uninstall
 
     Tier.Processor 'Uninstall' false 'essential' 'QPKG' 'ToUninstall' 'forward' 'uninstall' 'uninstalling' 'uninstalled' ''
@@ -2882,7 +2907,7 @@ Help.Actions.Show()
     DisplayAsProjectSyntaxIndentedExample 'install these packages' "install $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample 'uninstall these packages' "uninstall $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample 'reinstall these packages' "reinstall $(FormatAsHelpPackages)"
-#     DisplayAsProjectSyntaxIndentedExample "rebuild these packages ('install' and 'restore')" "rebuild $(FormatAsHelpPackages)"
+    DisplayAsProjectSyntaxIndentedExample "rebuild these packages ('install' package and 'restore' backups)" "rebuild $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample 'upgrade these packages (and internal applications)' "upgrade $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample 'start these packages' "start $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample 'stop these packages (and internal applications)' "stop $(FormatAsHelpPackages)"
@@ -2910,7 +2935,7 @@ Help.ActionsAll.Show()
     DisplayAsProjectSyntaxIndentedExample 'install everything!' 'install all'
     DisplayAsProjectSyntaxIndentedExample "uninstall everything!" 'force uninstall all'
     DisplayAsProjectSyntaxIndentedExample "reinstall all installed packages" 'reinstall all'
-#     DisplayAsProjectSyntaxIndentedExample "rebuild all packages with backups ('install' and 'restore')" "rebuild all"
+    DisplayAsProjectSyntaxIndentedExample "rebuild all packages with backups ('install' packages and 'restore' backups)" "rebuild all"
     DisplayAsProjectSyntaxIndentedExample 'upgrade all installed packages (and internal applications)' 'upgrade all'
     DisplayAsProjectSyntaxIndentedExample 'start all installed packages (upgrade internal applications, not packages)' 'start all'
     DisplayAsProjectSyntaxIndentedExample 'stop all installed packages' 'stop all'
@@ -3505,7 +3530,7 @@ QPKGs.Backups.Show()
         done <<<"$($GNU_FIND_CMD "$session_backup_path"/*.config.tar.gz -maxdepth 1 -printf '%C@ %f\n' 2>/dev/null | $SORT_CMD)"
 
     else
-        (cd "$session_backup_path" && ls -1 ./*.config.tar.gz)
+        (cd "$session_backup_path" && ls -1 ./*.config.tar.gz 2>/dev/null)
     fi
 
     return 0
