@@ -714,7 +714,7 @@ Session.Arguments.Parse()
 
         # identify operation    note: every time operation changes, clear scope
         case $arg in
-            backup|check|install|reinstall|remove|restart|restore|start|stop|uninstall|upgrade)
+            backup|check|install|rebuild|reinstall|remove|restart|restore|start|stop|uninstall|upgrade)
                 operation=${arg}_
                 scope=''
                 scope_incomplete=true
@@ -1004,6 +1004,20 @@ Session.Arguments.Parse()
                         ;;
                     *)
                         User.Opts.Log.Last.Paste.Set
+                        ;;
+                esac
+                ;;
+            rebuild_)
+                case $scope in
+                    all_)
+                        User.Opts.Apps.All.Rebuild.Set
+                        operation=''
+                        ;;
+                    optional_)
+                        QPKGs.ToRebuild.Add "$(QPKGs.Optional.Array)"
+                        ;;
+                    *)
+                        QPKGs.ToRebuild.Add "$package"
                         ;;
                 esac
                 ;;
@@ -1311,7 +1325,7 @@ Session.Validate()
     fi
 
     if QPKGs.ToBackup.IsNone && QPKGs.ToUninstall.IsNone && QPKGs.ToUpgrade.IsNone && QPKGs.ToInstall.IsNone && QPKGs.ToReinstall.IsNone && QPKGs.ToRestore.IsNone && QPKGs.ToRestart.IsNone && QPKGs.ToStart.IsNone && QPKGs.ToStop.IsNone; then
-        if User.Opts.Apps.All.Install.IsNot && User.Opts.Apps.All.Restart.IsNot && User.Opts.Apps.All.Upgrade.IsNot && User.Opts.Apps.All.Backup.IsNot && User.Opts.Apps.All.Restore.IsNot && User.Opts.Help.Status.IsNot && User.Opts.Apps.All.Start.IsNot && User.Opts.Apps.All.Stop.IsNot; then
+        if User.Opts.Apps.All.Install.IsNot && User.Opts.Apps.All.Restart.IsNot && User.Opts.Apps.All.Upgrade.IsNot && User.Opts.Apps.All.Backup.IsNot && User.Opts.Apps.All.Restore.IsNot && User.Opts.Help.Status.IsNot && User.Opts.Apps.All.Start.IsNot && User.Opts.Apps.All.Stop.IsNot && User.Opts.Apps.All.Rebuild.IsNot; then
             if User.Opts.Dependencies.Check.IsNot && User.Opts.IgnoreFreeSpace.IsNot; then
                 ShowAsEror "I've nothing to do (usually means the arguments didn't make sense, or were incomplete)"
                 User.Opts.Help.Basic.Set
@@ -1419,10 +1433,14 @@ Session.Environment.List()
     }
 
 # package processing priorities need to be:
+
+#   _. rebuild optionals            (meta-operation: 'install' QPKG and 'restore' config only if package has a backup file)
+
 #  17. backup all                   (highest: most-important)
 #  16. stop optionals
 #  15. stop essentials
 #  14. uninstall all
+
 
 #  13. upgrade essentials
 #  12. reinstall essentials
@@ -2864,6 +2882,7 @@ Help.Actions.Show()
     DisplayAsProjectSyntaxIndentedExample 'install these packages' "install $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample 'uninstall these packages' "uninstall $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample 'reinstall these packages' "reinstall $(FormatAsHelpPackages)"
+#     DisplayAsProjectSyntaxIndentedExample "rebuild these packages ('install' and 'restore')" "rebuild $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample 'upgrade these packages (and internal applications)' "upgrade $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample 'start these packages' "start $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample 'stop these packages (and internal applications)' "stop $(FormatAsHelpPackages)"
@@ -2891,6 +2910,7 @@ Help.ActionsAll.Show()
     DisplayAsProjectSyntaxIndentedExample 'install everything!' 'install all'
     DisplayAsProjectSyntaxIndentedExample "uninstall everything!" 'force uninstall all'
     DisplayAsProjectSyntaxIndentedExample "reinstall all installed packages" 'reinstall all'
+#     DisplayAsProjectSyntaxIndentedExample "rebuild all packages with backups ('install' and 'restore')" "rebuild all"
     DisplayAsProjectSyntaxIndentedExample 'upgrade all installed packages (and internal applications)' 'upgrade all'
     DisplayAsProjectSyntaxIndentedExample 'start all installed packages (upgrade internal applications, not packages)' 'start all'
     DisplayAsProjectSyntaxIndentedExample 'stop all installed packages' 'stop all'
@@ -3372,6 +3392,10 @@ Session.Build.StateLists()
                 QPKGs.Enabled.Remove "$package"
                 QPKGs.NotEnabled.Add "$package"
             fi
+
+            # TODO: build a list of QPKGs with config backup files
+
+
 
             [[ ! -d $(QPKG.InstallPath "$package") ]] && QPKGs.Missing.Add "$package"
         else
@@ -6046,7 +6070,7 @@ Objects.Compile()
 
     # $1 = 'hash' (optional) - if specified, only return the internal checksum
 
-    local -r COMPILED_OBJECTS_HASH=c10f0bf5e663233ac19efdefa61bc3ca
+    local -r COMPILED_OBJECTS_HASH=e5ee5f911839c2945faa79f2508fde04
     local array_name=''
     local -a operations_array=()
 
@@ -6091,7 +6115,7 @@ Objects.Compile()
         Objects.Add.Flag User.Opts.Log.Tail.Paste
         Objects.Add.Flag User.Opts.Log.Whole.View
 
-        operations_array=(Backup Install Reinstall Restart Restore Start Stop Uninstall Upgrade)
+        operations_array=(Backup Install Rebuild Reinstall Restart Restore Start Stop Uninstall Upgrade)
 
         for array_name in "${operations_array[@]}"; do
             Objects.Add.Flag User.Opts.Apps.All.${array_name}
@@ -6112,7 +6136,7 @@ Objects.Compile()
             Objects.Add.List IPKGs.To${array_name}
         done
 
-        operations_array=(Essential Installable Missing Names Optional Standalone Upgradable)
+        operations_array=(BackedUp Essential Installable Missing Names Optional Standalone Upgradable)
 
         for array_name in "${operations_array[@]}"; do
             Objects.Add.List QPKGs.${array_name}
@@ -6125,7 +6149,7 @@ Objects.Compile()
             Objects.Add.List QPKGs.Not${array_name}
         done
 
-        operations_array=(Backup Download Install Reinstall Restart Restore Start Status Stop Uninstall Upgrade)
+        operations_array=(Backup Download Install Rebuild Reinstall Restart Restore Start Status Stop Uninstall Upgrade)
 
         for array_name in "${operations_array[@]}"; do
             Objects.Add.List QPKGs.To${array_name}      # to operate on

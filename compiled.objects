@@ -2008,6 +2008,73 @@ User.Opts.Apps.All.Install.Text()
     }
 User.Opts.Apps.All.Install.Init
 
+User.Opts.Apps.All.Rebuild.Clear()
+    {
+    [[ $_object_user_opts_apps_all_rebuild_flag_ != 'true' ]] && return
+    _object_user_opts_apps_all_rebuild_flag_=false
+    [[ $_object_user_opts_apps_all_rebuild_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_rebuild_flag_
+    }
+User.Opts.Apps.All.Rebuild.Disable()
+    {
+    [[ $_object_user_opts_apps_all_rebuild_enable_ != 'true' ]] && return
+    _object_user_opts_apps_all_rebuild_enable_=false
+    [[ $_object_user_opts_apps_all_rebuild_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_rebuild_enable_
+    }
+User.Opts.Apps.All.Rebuild.DontLogChanges()
+    {
+    [[ $_object_user_opts_apps_all_rebuild_changes_flag_ != 'true' ]] && return
+    _object_user_opts_apps_all_rebuild_changes_flag_=false
+    }
+User.Opts.Apps.All.Rebuild.Enable()
+    {
+    [[ $_object_user_opts_apps_all_rebuild_enable_ = 'true' ]] && return
+    _object_user_opts_apps_all_rebuild_enable_=true
+    [[ $_object_user_opts_apps_all_rebuild_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_rebuild_enable_
+    }
+User.Opts.Apps.All.Rebuild.Init()
+    {
+    _object_user_opts_apps_all_rebuild_text_=''
+    _object_user_opts_apps_all_rebuild_flag_=false
+    _object_user_opts_apps_all_rebuild_changes_flag_=true
+    _object_user_opts_apps_all_rebuild_enable_=false
+    }
+User.Opts.Apps.All.Rebuild.IsDisabled()
+    {
+    [[ $_object_user_opts_apps_all_rebuild_enable_ != 'true' ]]
+    }
+User.Opts.Apps.All.Rebuild.IsEnabled()
+    {
+    [[ $_object_user_opts_apps_all_rebuild_enable_ = 'true' ]]
+    }
+User.Opts.Apps.All.Rebuild.IsNot()
+    {
+    [[ $_object_user_opts_apps_all_rebuild_flag_ != 'true' ]]
+    }
+User.Opts.Apps.All.Rebuild.IsSet()
+    {
+    [[ $_object_user_opts_apps_all_rebuild_flag_ = 'true' ]]
+    }
+User.Opts.Apps.All.Rebuild.LogChanges()
+    {
+    [[ $_object_user_opts_apps_all_rebuild_changes_flag_ = 'true' ]] && return
+    _object_user_opts_apps_all_rebuild_changes_flag_=true
+    }
+User.Opts.Apps.All.Rebuild.Set()
+    {
+    [[ $_object_user_opts_apps_all_rebuild_flag_ = 'true' ]] && return
+    _object_user_opts_apps_all_rebuild_flag_=true
+    [[ $_object_user_opts_apps_all_rebuild_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_rebuild_flag_
+    }
+User.Opts.Apps.All.Rebuild.Text()
+    {
+    if [[ -n ${1:-} && $1 = "=" ]]; then
+        _object_user_opts_apps_all_rebuild_text_=$2
+    else
+        echo -n "$_object_user_opts_apps_all_rebuild_text_"
+    fi
+    }
+User.Opts.Apps.All.Rebuild.Init
+
 User.Opts.Apps.All.Reinstall.Clear()
     {
     [[ $_object_user_opts_apps_all_reinstall_flag_ != 'true' ]] && return
@@ -3407,6 +3474,88 @@ IPKGs.ToUninstall.Size()
     fi
     }
 IPKGs.ToUninstall.Init
+
+QPKGs.BackedUp.Add()
+    {
+    local array=(${1})
+    local item=''
+    for item in "${array[@]:-}"; do
+        [[ " ${_object_qpkgs_backedup_array_[*]:-} " != *"$item"* ]] && _object_qpkgs_backedup_array_+=("$item")
+    done
+    }
+QPKGs.BackedUp.Array()
+    {
+    echo -n "${_object_qpkgs_backedup_array_[@]:-}"
+    }
+QPKGs.BackedUp.Count()
+    {
+    echo "${#_object_qpkgs_backedup_array_[@]:-}"
+    }
+QPKGs.BackedUp.Exist()
+    {
+    [[ ${_object_qpkgs_backedup_array_[*]:-} == *"$1"* ]]
+    }
+QPKGs.BackedUp.First()
+    {
+    echo "${_object_qpkgs_backedup_array_[0]}"
+    }
+QPKGs.BackedUp.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_qpkgs_backedup_array_[@]:-} ]] && index=${#_object_qpkgs_backedup_array_[@]}
+    echo -n "${_object_qpkgs_backedup_array_[((index-1))]}"
+    }
+QPKGs.BackedUp.Init()
+    {
+    _object_qpkgs_backedup_size_=0
+    _object_qpkgs_backedup_array_=()
+    _object_qpkgs_backedup_array_index_=1
+    }
+QPKGs.BackedUp.IsAny()
+    {
+    [[ ${#_object_qpkgs_backedup_array_[@]:-} -gt 0 ]]
+    }
+QPKGs.BackedUp.IsNone()
+    {
+    [[ ${#_object_qpkgs_backedup_array_[@]:-} -eq 0 ]]
+    }
+QPKGs.BackedUp.List()
+    {
+    echo -n "${_object_qpkgs_backedup_array_[*]:-}"
+    }
+QPKGs.BackedUp.ListCSV()
+    {
+    echo -n "${_object_qpkgs_backedup_array_[*]:-}" | tr ' ' ','
+    }
+QPKGs.BackedUp.Remove()
+    {
+    local argument_array=(${1})
+    local temp_array=()
+    local argument=''
+    local item=''
+    local matched=false
+    for item in "${_object_qpkgs_backedup_array_[@]:-}"; do
+        matched=false
+        for argument in "${argument_array[@]:-}"; do
+            if [[ $argument = $item ]]; then
+                matched=true; break
+            fi
+        done
+        [[ $matched = false ]] && temp_array+=("$item")
+    done
+    _object_qpkgs_backedup_array_=("${temp_array[@]:-}")
+    [[ -z ${_object_qpkgs_backedup_array_[*]} ]] && _object_qpkgs_backedup_array_=()
+    }
+QPKGs.BackedUp.Size()
+    {
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+        _object_qpkgs_backedup_size_=$2
+    else
+        echo -n $_object_qpkgs_backedup_size_
+    fi
+    }
+QPKGs.BackedUp.Init
 
 QPKGs.Essential.Add()
     {
@@ -5621,6 +5770,334 @@ QPKGs.SkInstall.Size()
     fi
     }
 QPKGs.SkInstall.Init
+
+QPKGs.ToRebuild.Add()
+    {
+    local array=(${1})
+    local item=''
+    for item in "${array[@]:-}"; do
+        [[ " ${_object_qpkgs_torebuild_array_[*]:-} " != *"$item"* ]] && _object_qpkgs_torebuild_array_+=("$item")
+    done
+    }
+QPKGs.ToRebuild.Array()
+    {
+    echo -n "${_object_qpkgs_torebuild_array_[@]:-}"
+    }
+QPKGs.ToRebuild.Count()
+    {
+    echo "${#_object_qpkgs_torebuild_array_[@]:-}"
+    }
+QPKGs.ToRebuild.Exist()
+    {
+    [[ ${_object_qpkgs_torebuild_array_[*]:-} == *"$1"* ]]
+    }
+QPKGs.ToRebuild.First()
+    {
+    echo "${_object_qpkgs_torebuild_array_[0]}"
+    }
+QPKGs.ToRebuild.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_qpkgs_torebuild_array_[@]:-} ]] && index=${#_object_qpkgs_torebuild_array_[@]}
+    echo -n "${_object_qpkgs_torebuild_array_[((index-1))]}"
+    }
+QPKGs.ToRebuild.Init()
+    {
+    _object_qpkgs_torebuild_size_=0
+    _object_qpkgs_torebuild_array_=()
+    _object_qpkgs_torebuild_array_index_=1
+    }
+QPKGs.ToRebuild.IsAny()
+    {
+    [[ ${#_object_qpkgs_torebuild_array_[@]:-} -gt 0 ]]
+    }
+QPKGs.ToRebuild.IsNone()
+    {
+    [[ ${#_object_qpkgs_torebuild_array_[@]:-} -eq 0 ]]
+    }
+QPKGs.ToRebuild.List()
+    {
+    echo -n "${_object_qpkgs_torebuild_array_[*]:-}"
+    }
+QPKGs.ToRebuild.ListCSV()
+    {
+    echo -n "${_object_qpkgs_torebuild_array_[*]:-}" | tr ' ' ','
+    }
+QPKGs.ToRebuild.Remove()
+    {
+    local argument_array=(${1})
+    local temp_array=()
+    local argument=''
+    local item=''
+    local matched=false
+    for item in "${_object_qpkgs_torebuild_array_[@]:-}"; do
+        matched=false
+        for argument in "${argument_array[@]:-}"; do
+            if [[ $argument = $item ]]; then
+                matched=true; break
+            fi
+        done
+        [[ $matched = false ]] && temp_array+=("$item")
+    done
+    _object_qpkgs_torebuild_array_=("${temp_array[@]:-}")
+    [[ -z ${_object_qpkgs_torebuild_array_[*]} ]] && _object_qpkgs_torebuild_array_=()
+    }
+QPKGs.ToRebuild.Size()
+    {
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+        _object_qpkgs_torebuild_size_=$2
+    else
+        echo -n $_object_qpkgs_torebuild_size_
+    fi
+    }
+QPKGs.ToRebuild.Init
+
+QPKGs.IsRebuild.Add()
+    {
+    local array=(${1})
+    local item=''
+    for item in "${array[@]:-}"; do
+        [[ " ${_object_qpkgs_isrebuild_array_[*]:-} " != *"$item"* ]] && _object_qpkgs_isrebuild_array_+=("$item")
+    done
+    }
+QPKGs.IsRebuild.Array()
+    {
+    echo -n "${_object_qpkgs_isrebuild_array_[@]:-}"
+    }
+QPKGs.IsRebuild.Count()
+    {
+    echo "${#_object_qpkgs_isrebuild_array_[@]:-}"
+    }
+QPKGs.IsRebuild.Exist()
+    {
+    [[ ${_object_qpkgs_isrebuild_array_[*]:-} == *"$1"* ]]
+    }
+QPKGs.IsRebuild.First()
+    {
+    echo "${_object_qpkgs_isrebuild_array_[0]}"
+    }
+QPKGs.IsRebuild.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_qpkgs_isrebuild_array_[@]:-} ]] && index=${#_object_qpkgs_isrebuild_array_[@]}
+    echo -n "${_object_qpkgs_isrebuild_array_[((index-1))]}"
+    }
+QPKGs.IsRebuild.Init()
+    {
+    _object_qpkgs_isrebuild_size_=0
+    _object_qpkgs_isrebuild_array_=()
+    _object_qpkgs_isrebuild_array_index_=1
+    }
+QPKGs.IsRebuild.IsAny()
+    {
+    [[ ${#_object_qpkgs_isrebuild_array_[@]:-} -gt 0 ]]
+    }
+QPKGs.IsRebuild.IsNone()
+    {
+    [[ ${#_object_qpkgs_isrebuild_array_[@]:-} -eq 0 ]]
+    }
+QPKGs.IsRebuild.List()
+    {
+    echo -n "${_object_qpkgs_isrebuild_array_[*]:-}"
+    }
+QPKGs.IsRebuild.ListCSV()
+    {
+    echo -n "${_object_qpkgs_isrebuild_array_[*]:-}" | tr ' ' ','
+    }
+QPKGs.IsRebuild.Remove()
+    {
+    local argument_array=(${1})
+    local temp_array=()
+    local argument=''
+    local item=''
+    local matched=false
+    for item in "${_object_qpkgs_isrebuild_array_[@]:-}"; do
+        matched=false
+        for argument in "${argument_array[@]:-}"; do
+            if [[ $argument = $item ]]; then
+                matched=true; break
+            fi
+        done
+        [[ $matched = false ]] && temp_array+=("$item")
+    done
+    _object_qpkgs_isrebuild_array_=("${temp_array[@]:-}")
+    [[ -z ${_object_qpkgs_isrebuild_array_[*]} ]] && _object_qpkgs_isrebuild_array_=()
+    }
+QPKGs.IsRebuild.Size()
+    {
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+        _object_qpkgs_isrebuild_size_=$2
+    else
+        echo -n $_object_qpkgs_isrebuild_size_
+    fi
+    }
+QPKGs.IsRebuild.Init
+
+QPKGs.ErRebuild.Add()
+    {
+    local array=(${1})
+    local item=''
+    for item in "${array[@]:-}"; do
+        [[ " ${_object_qpkgs_errebuild_array_[*]:-} " != *"$item"* ]] && _object_qpkgs_errebuild_array_+=("$item")
+    done
+    }
+QPKGs.ErRebuild.Array()
+    {
+    echo -n "${_object_qpkgs_errebuild_array_[@]:-}"
+    }
+QPKGs.ErRebuild.Count()
+    {
+    echo "${#_object_qpkgs_errebuild_array_[@]:-}"
+    }
+QPKGs.ErRebuild.Exist()
+    {
+    [[ ${_object_qpkgs_errebuild_array_[*]:-} == *"$1"* ]]
+    }
+QPKGs.ErRebuild.First()
+    {
+    echo "${_object_qpkgs_errebuild_array_[0]}"
+    }
+QPKGs.ErRebuild.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_qpkgs_errebuild_array_[@]:-} ]] && index=${#_object_qpkgs_errebuild_array_[@]}
+    echo -n "${_object_qpkgs_errebuild_array_[((index-1))]}"
+    }
+QPKGs.ErRebuild.Init()
+    {
+    _object_qpkgs_errebuild_size_=0
+    _object_qpkgs_errebuild_array_=()
+    _object_qpkgs_errebuild_array_index_=1
+    }
+QPKGs.ErRebuild.IsAny()
+    {
+    [[ ${#_object_qpkgs_errebuild_array_[@]:-} -gt 0 ]]
+    }
+QPKGs.ErRebuild.IsNone()
+    {
+    [[ ${#_object_qpkgs_errebuild_array_[@]:-} -eq 0 ]]
+    }
+QPKGs.ErRebuild.List()
+    {
+    echo -n "${_object_qpkgs_errebuild_array_[*]:-}"
+    }
+QPKGs.ErRebuild.ListCSV()
+    {
+    echo -n "${_object_qpkgs_errebuild_array_[*]:-}" | tr ' ' ','
+    }
+QPKGs.ErRebuild.Remove()
+    {
+    local argument_array=(${1})
+    local temp_array=()
+    local argument=''
+    local item=''
+    local matched=false
+    for item in "${_object_qpkgs_errebuild_array_[@]:-}"; do
+        matched=false
+        for argument in "${argument_array[@]:-}"; do
+            if [[ $argument = $item ]]; then
+                matched=true; break
+            fi
+        done
+        [[ $matched = false ]] && temp_array+=("$item")
+    done
+    _object_qpkgs_errebuild_array_=("${temp_array[@]:-}")
+    [[ -z ${_object_qpkgs_errebuild_array_[*]} ]] && _object_qpkgs_errebuild_array_=()
+    }
+QPKGs.ErRebuild.Size()
+    {
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+        _object_qpkgs_errebuild_size_=$2
+    else
+        echo -n $_object_qpkgs_errebuild_size_
+    fi
+    }
+QPKGs.ErRebuild.Init
+
+QPKGs.SkRebuild.Add()
+    {
+    local array=(${1})
+    local item=''
+    for item in "${array[@]:-}"; do
+        [[ " ${_object_qpkgs_skrebuild_array_[*]:-} " != *"$item"* ]] && _object_qpkgs_skrebuild_array_+=("$item")
+    done
+    }
+QPKGs.SkRebuild.Array()
+    {
+    echo -n "${_object_qpkgs_skrebuild_array_[@]:-}"
+    }
+QPKGs.SkRebuild.Count()
+    {
+    echo "${#_object_qpkgs_skrebuild_array_[@]:-}"
+    }
+QPKGs.SkRebuild.Exist()
+    {
+    [[ ${_object_qpkgs_skrebuild_array_[*]:-} == *"$1"* ]]
+    }
+QPKGs.SkRebuild.First()
+    {
+    echo "${_object_qpkgs_skrebuild_array_[0]}"
+    }
+QPKGs.SkRebuild.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_object_qpkgs_skrebuild_array_[@]:-} ]] && index=${#_object_qpkgs_skrebuild_array_[@]}
+    echo -n "${_object_qpkgs_skrebuild_array_[((index-1))]}"
+    }
+QPKGs.SkRebuild.Init()
+    {
+    _object_qpkgs_skrebuild_size_=0
+    _object_qpkgs_skrebuild_array_=()
+    _object_qpkgs_skrebuild_array_index_=1
+    }
+QPKGs.SkRebuild.IsAny()
+    {
+    [[ ${#_object_qpkgs_skrebuild_array_[@]:-} -gt 0 ]]
+    }
+QPKGs.SkRebuild.IsNone()
+    {
+    [[ ${#_object_qpkgs_skrebuild_array_[@]:-} -eq 0 ]]
+    }
+QPKGs.SkRebuild.List()
+    {
+    echo -n "${_object_qpkgs_skrebuild_array_[*]:-}"
+    }
+QPKGs.SkRebuild.ListCSV()
+    {
+    echo -n "${_object_qpkgs_skrebuild_array_[*]:-}" | tr ' ' ','
+    }
+QPKGs.SkRebuild.Remove()
+    {
+    local argument_array=(${1})
+    local temp_array=()
+    local argument=''
+    local item=''
+    local matched=false
+    for item in "${_object_qpkgs_skrebuild_array_[@]:-}"; do
+        matched=false
+        for argument in "${argument_array[@]:-}"; do
+            if [[ $argument = $item ]]; then
+                matched=true; break
+            fi
+        done
+        [[ $matched = false ]] && temp_array+=("$item")
+    done
+    _object_qpkgs_skrebuild_array_=("${temp_array[@]:-}")
+    [[ -z ${_object_qpkgs_skrebuild_array_[*]} ]] && _object_qpkgs_skrebuild_array_=()
+    }
+QPKGs.SkRebuild.Size()
+    {
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+        _object_qpkgs_skrebuild_size_=$2
+    else
+        echo -n $_object_qpkgs_skrebuild_size_
+    fi
+    }
+QPKGs.SkRebuild.Init
 
 QPKGs.ToReinstall.Add()
     {
