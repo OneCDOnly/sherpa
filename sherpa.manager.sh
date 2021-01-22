@@ -223,6 +223,10 @@ Session.Init()
 
     session_backup_path=$($GETCFG_CMD SHARE_DEF defVolMP -f "$DEFAULT_SHARES_PATHFILE")/.qpkg_config_backup
 
+    if ! MakePath "$session_backup_path" 'QPKG backup'; then
+        DebugFuncExit; return 1
+    fi
+
     if ! MakePath "$QPKG_DL_PATH" 'QPKG download'; then
         DebugFuncExit; return 1
     fi
