@@ -4977,17 +4977,15 @@ RunAndLog()
     local -i resultcode=0
 
     FormatAsCommand "$1" > "$2"
+    DebugCommand.Proc "$1"
 
     if Session.Debug.To.Screen.IsSet; then
-        DebugCommand.Proc "$1"
         $1 > >($TEE_CMD "$msgs") 2>&1
         resultcode=$?
     else
         $1 > "$msgs" 2>&1
         resultcode=$?
     fi
-
-    DebugCommand.Proc "$1"
 
     if [[ -e $msgs ]]; then
         FormatAsResultAndStdout "$resultcode" "$(<"$msgs")" >> "$2"
@@ -4999,7 +4997,7 @@ RunAndLog()
     if [[ $resultcode -eq 0 ]]; then
         [[ ${3:-} != log:failure-only ]] && AddFileToDebug "$2"
     else
-        [[ -n ${4:-} && $resultcode -ne ${4:-} ]] && AddFileToDebug "$2"
+        [[ $resultcode -ne ${4:-} ]] && AddFileToDebug "$2"
     fi
 
     DebugFuncExit $resultcode
