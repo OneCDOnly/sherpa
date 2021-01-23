@@ -2070,14 +2070,14 @@ Entware.Update()
         return 1
     fi
 
-    local package_minutes_threshold=60
-    local log_pathfile=$LOGS_PATH/entware.$UPDATE_LOG_FILE
+    local -r CHANGE_THRESHOLD_MINUTES=60
+    local -r LOG_PATHFILE=$LOGS_PATH/entware.$UPDATE_LOG_FILE
     local msgs=''
     local -i resultcode=0
 
-    # if Entware package list was updated only recently, don't run another update. Examine 'change' time as this is updated even if package list content isn't modified.
+    # if Entware package list was recently updated, don't update again. Examine 'change' time as this is updated even if package list content isn't modified.
     if [[ -e $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE && -e $GNU_FIND_CMD ]]; then
-        msgs=$($GNU_FIND_CMD "$EXTERNAL_PACKAGE_ARCHIVE_PATHFILE" -cmin +$package_minutes_threshold)        # no-output if last update was less than $package_minutes_threshold minutes ago
+        msgs=$($GNU_FIND_CMD "$EXTERNAL_PACKAGE_ARCHIVE_PATHFILE" -cmin +$CHANGE_THRESHOLD_MINUTES) # no-output if last update was less than $CHANGE_THRESHOLD_MINUTES minutes ago
     else
         msgs='new install'
     fi
@@ -2085,17 +2085,17 @@ Entware.Update()
     if [[ -n $msgs ]]; then
         DebugAsProc "updating $(FormatAsPackageName Entware) package list"
 
-        RunAndLog "$OPKG_CMD update" "$log_pathfile" log:failure-only
+        RunAndLog "$OPKG_CMD update" "$LOG_PATHFILE" log:failure-only
         resultcode=$?
 
         if [[ $resultcode -eq 0 ]]; then
             DebugAsDone "updated $(FormatAsPackageName Entware) package list"
         else
             DebugAsWarn "Unable to update $(FormatAsPackageName Entware) package list $(FormatAsExitcode $resultcode)"
-            # meh, continue anyway with existing list
+            # no-big-deal
         fi
     else
-        DebugInfo "$(FormatAsPackageName Entware) package list was updated less than $package_minutes_threshold minutes ago: skipping update"
+        DebugInfo "$(FormatAsPackageName Entware) package list updated less than $CHANGE_THRESHOLD_MINUTES minutes ago: skipping update"
     fi
 
     return 0
@@ -2118,7 +2118,7 @@ PIPs.Install()
     local -r ACTION_PAST=installed
     local -r RUNTIME=long
 
-    # sometimes, OpenWRT doesn't have a 'pip3'
+    # sometimes, 'pip3' goes missing from Entware. Don't know why.
     if [[ -e /opt/bin/pip3 ]]; then
         pip3_cmd=/opt/bin/pip3
     elif [[ -e /opt/bin/pip3.9 ]]; then
