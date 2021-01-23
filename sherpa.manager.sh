@@ -1810,7 +1810,7 @@ Tier.Processor()
 
             if [[ $PROCESSING_DIRECTION = forward ]]; then
                 for package in "${target_packages[@]}"; do                  # process list forwards
-                    ShowAsOperationProgress "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$RUNTIME"
+                    ShowAsOperationProgress "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$PACKAGE_TYPE" "$RUNTIME"
 
                     if ! $target_function.$TARGET_OPERATION "$package" "$forced_operation"; then
                         ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") (see log for more details)"
@@ -1823,7 +1823,7 @@ Tier.Processor()
             else
                 for ((index=package_count-1; index>=0; index--)); do       # process list backwards
                     package=${target_packages[$index]}
-                    ShowAsOperationProgress "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$RUNTIME"
+                    ShowAsOperationProgress "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$PACKAGE_TYPE" "$RUNTIME"
 
                     if ! $target_function.$TARGET_OPERATION "$package" "$forced_operation"; then
                         ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") (see log for more details)"
@@ -1840,7 +1840,7 @@ Tier.Processor()
             ;;
     esac
 
-    ShowAsOperationResult "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PAST" "$RUNTIME"
+    ShowAsOperationResult "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PAST" "$PACKAGE_TYPE" "$RUNTIME"
     DebugFuncExit
 
     }
@@ -2002,7 +2002,7 @@ Clean.Cache()
     {
 
     [[ -d $WORK_PATH ]] && rm -rf "$WORK_PATH"
-    ShowAsDone 'work path cleaned'
+    ShowAsDone 'work path cleaned OK'
 
     return 0
 
@@ -2012,7 +2012,7 @@ Clean.Logs()
     {
 
     [[ -d $LOGS_PATH ]] && rm -rf "$LOGS_PATH"
-    ShowAsDone 'logs path cleaned'
+    ShowAsDone 'logs path cleaned OK'
 
     return 0
 
@@ -2122,6 +2122,12 @@ PIPs.Install()
     DebugFuncEntry
     local exec_cmd=''
     local -i resultcode=0
+    local -i pass_count=0
+    local -i package_count=1
+    local -r PACKAGE_TYPE='PIP group'
+    local -r ACTION_PRESENT=installing
+    local -r ACTION_PAST=installed
+    local -r RUNTIME=long
 
     # sometimes, OpenWRT doesn't have a 'pip3'
     if [[ -e /opt/bin/pip3 ]]; then
@@ -2145,7 +2151,7 @@ PIPs.Install()
 
     [[ -n ${MANAGER_COMMON_PIPS_ADD// /} ]] && exec_cmd="$pip3_cmd install $MANAGER_COMMON_PIPS_ADD --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
 
-    ShowAsProcLong "downloading & installing PIPs"
+    ShowAsOperationProgress '' "$package_count" 0 "$pass_count" "$ACTION_PRESENT" "$PACKAGE_TYPE" "$RUNTIME"
 
     local desc="'Python3' modules"
     local log_pathfile=$LOGS_PATH/py3-modules.assorted.$INSTALL_LOG_FILE
@@ -2156,16 +2162,20 @@ PIPs.Install()
 
     if [[ $resultcode -eq 0 ]]; then
         DebugAsDone "downloaded & installed $desc"
+        ((pass_count++))
     else
         ShowAsEror "download & install $desc failed $(FormatAsResult "$resultcode")"
     fi
 
     if QPKG.Installed SABnzbd || QPKGs.ToInstall.Exist SABnzbd || QPKGs.ToReinstall.Exist SABnzbd; then
-        # KLUDGE: force recompilation of 'sabyenc3' package so it's recognised by SABnzbd: https://forums.sabnzbd.org/viewtopic.php?p=121214#p121214
-        exec_cmd="$pip3_cmd install --force-reinstall --ignore-installed --no-binary :all: sabyenc3 --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
+        package_count=3
 
-        desc="'Python3 SABnzbd' module"
-        log_pathfile=$LOGS_PATH/py3-modules.sabnzbd.$INSTALL_LOG_FILE
+        # KLUDGE: force recompilation of 'sabyenc3' package so it's recognised by SABnzbd: https://forums.sabnzbd.org/viewtopic.php?p=121214#p121214
+        ShowAsOperationProgress '' "$package_count" 0 "$pass_count" "$ACTION_PRESENT" "$PACKAGE_TYPE" "$RUNTIME"
+
+        exec_cmd="$pip3_cmd install --force-reinstall --ignore-installed --no-binary :all: sabyenc3 --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
+        desc="'Python3 sabyenc3' module"
+        log_pathfile=$LOGS_PATH/py3-modules.sabyenc3.$INSTALL_LOG_FILE
         DebugAsProc "downloading & installing $desc"
 
         RunAndLog "$exec_cmd" "$log_pathfile" log:failure-only
@@ -2174,13 +2184,15 @@ PIPs.Install()
         if [[ $resultcode -eq 0 ]]; then
             DebugAsDone "downloaded & installed $desc"
             QPKGs.ToRestart.Add SABnzbd
+            ((pass_count++))
         else
             ShowAsEror "download & install $desc failed $(FormatAsResult "$resultcode")"
         fi
 
         # KLUDGE: ensure 'feedparser' is upgraded. This was version-held at 5.2.1 for Python 3.8.5 but from Python 3.9.0 onward there's no-need for version-hold anymore.
-        exec_cmd="$pip3_cmd install --upgrade feedparser --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
+        ShowAsOperationProgress '' "$package_count" 0 "$pass_count" "$ACTION_PRESENT" "$PACKAGE_TYPE" "$RUNTIME"
 
+        exec_cmd="$pip3_cmd install --upgrade feedparser --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
         desc="'Python3 feedparser' module"
         log_pathfile=$LOGS_PATH/py3-modules.feedparser.$INSTALL_LOG_FILE
         DebugAsProc "downloading & installing $desc"
@@ -2190,13 +2202,13 @@ PIPs.Install()
         if [[ $resultcode -eq 0 ]]; then
             DebugAsDone "downloaded & installed $desc"
             QPKGs.ToRestart.Add SABnzbd
+            ((pass_count++))
         else
             ShowAsEror "download & install $desc failed $(FormatAsResult "$resultcode")"
         fi
     fi
 
-    ShowAsDone 'downloaded & installed PIPs OK'
-
+    ShowAsOperationResult '' "$package_count" 0 "$pass_count" "$ACTION_PAST" "$PACKAGE_TYPE" "$RUNTIME"
     DebugFuncExit $resultcode
 
     }
@@ -5619,9 +5631,10 @@ ShowAsOperationProgress()
     # $3 = fail count
     # $4 = pass count
     # $5 = action message (present-tense)
-    # $6 = 'long' (optional)
+    # $6 = package type: 'QPKG', 'IPKG', 'PIP', etc ...
+    # $7 = 'long' (optional)
 
-    [[ -z $2 || -z $3 || -z $4 || -z $5 ]] && return 1
+    [[ -z $2 || -z $3 || -z $4 || -z $5 || -z $6 ]] && return 1
     [[ $2 -eq 0 ]] && return 1                  # zero total, so let's get out of here
 
     local tier=''
@@ -5646,10 +5659,10 @@ ShowAsOperationProgress()
         percent="$((200*(tweaked_passes)/(tweaked_total+1) % 2 + 100*(tweaked_passes)/(tweaked_total+1)))%"
     fi
 
-    if [[ $6 = long ]]; then
-        ShowAsProcLong "$5 ${tweaked_total}${tier} QPKG$(FormatAsPlural "$tweaked_total")" "$percent ($tweaked_passes/$tweaked_total)"
+    if [[ ${7:-} = long ]]; then
+        ShowAsProcLong "$5 ${tweaked_total}${tier} ${6}$(FormatAsPlural "$tweaked_total")" "$percent ($tweaked_passes/$tweaked_total)"
     else
-        ShowAsProc "$5 ${tweaked_total}${tier} QPKG$(FormatAsPlural "$tweaked_total")" "$percent ($tweaked_passes/$tweaked_total)"
+        ShowAsProc "$5 ${tweaked_total}${tier} ${6}$(FormatAsPlural "$tweaked_total")" "$percent ($tweaked_passes/$tweaked_total)"
     fi
 
     [[ $percent = '100%' ]] && sleep 1
@@ -5666,9 +5679,10 @@ ShowAsOperationResult()
     # $3 = fail count
     # $4 = pass count
     # $5 = action message (past-tense)
-    # $6 = 'long' (optional)
+    # $6 = package type: 'QPKG', 'IPKG', 'PIP', etc ...
+    # $7 = 'long' (optional)
 
-    [[ -z $2 || -z $3 || -z $4 || -z $5 ]] && return 1
+    [[ -z $2 || -z $3 || -z $4 || -z $5 || -z $6 ]] && return 1
     [[ $2 -eq 0 ]] && return 1                  # zero total, so let's get out of here
 
     local tier=''
@@ -5677,7 +5691,7 @@ ShowAsOperationResult()
     local -i passes=$4
 
     # execute with passes > total to trigger 100% message
-    ShowAsOperationProgress "$1" "$total" "$fails" "$((passes+1))" "$ACTION_PRESENT" "$6"
+    ShowAsOperationProgress "$1" "$total" "$fails" "$((passes+1))" "$ACTION_PRESENT" "$6" "${7:-}"
 
     if [[ -n $1 && $1 != all ]]; then
         tier=" $1"
@@ -5686,13 +5700,13 @@ ShowAsOperationResult()
     fi
 
     if [[ $passes -eq 0 ]]; then
-        ShowAsFail "$5 ${fails}${tier} QPKG$(FormatAsPlural "${3:-}") failed"
+        ShowAsFail "$5 ${fails}${tier} ${6}$(FormatAsPlural "${3:-}") failed"
     elif [[ $fails -gt 0 ]]; then
-        ShowAsWarn "$5 ${passes}${tier} QPKG$(FormatAsPlural "$passes") OK, but ${fails}${tier} QPKG$(FormatAsPlural "$fails") failed"
+        ShowAsWarn "$5 ${passes}${tier} ${6}$(FormatAsPlural "$passes") OK, but ${fails}${tier} ${6}$(FormatAsPlural "$fails") failed"
     elif [[ $passes -gt 0 ]]; then
-        ShowAsDone "$5 ${passes}${tier} QPKG$(FormatAsPlural "$passes") OK"
+        ShowAsDone "$5 ${passes}${tier} ${6}$(FormatAsPlural "$passes") OK"
     else
-        DebugAsDone "no${tier} QPKGs processed"
+        DebugAsDone "no${tier} ${6}s processed"
     fi
 
     return 0
