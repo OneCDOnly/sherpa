@@ -184,12 +184,17 @@ Session.Init()
     # clean as early as possible
     if [[ $USER_ARGS_RAW == *"clean"* ]]; then
         Clean.Cache
+        Clean.Logs
         exit 0
     fi
 
     ShowAsProc 'init' >&2
 
     if ! MakePath "$WORK_PATH" 'work'; then
+        DebugFuncExit 1; return
+    fi
+
+    if ! MakePath "$LOGS_PATH" 'logs'; then
         DebugFuncExit 1; return
     fi
 
@@ -216,10 +221,6 @@ Session.Init()
     Session.Summary.Set
     Session.LineSpace.DontLogChanges
     Session.SkipPackageProcessing.DontLogChanges
-
-    if ! MakePath "$LOGS_PATH" 'logs'; then
-        DebugFuncExit 1; return
-    fi
 
     session_backup_path=$($GETCFG_CMD SHARE_DEF defVolMP -f "$DEFAULT_SHARES_PATHFILE")/.qpkg_config_backup
 
@@ -2001,7 +2002,17 @@ Clean.Cache()
     {
 
     [[ -d $WORK_PATH ]] && rm -rf "$WORK_PATH"
-    ShowAsDone 'work path cleaned OK'
+    ShowAsDone 'work path cleaned'
+
+    return 0
+
+    }
+
+Clean.Logs()
+    {
+
+    [[ -d $LOGS_PATH ]] && rm -rf "$LOGS_PATH"
+    ShowAsDone 'logs path cleaned'
 
     return 0
 
