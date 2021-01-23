@@ -40,14 +40,16 @@ readonly USER_ARGS_RAW=$*
 Session.Init()
     {
 
-    IsQNAP || return 1
+    IsQNAP || return
     DebugFuncEntry
 
     readonly SCRIPT_STARTSECONDS=$(/bin/date +%s)
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=210123
+    readonly MANAGER_SCRIPT_VERSION=210124
+
+    Session.LockFile.Claim /var/run/$PROJECT_NAME.loader.sh.pid || return
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -91,44 +93,45 @@ Session.Init()
     readonly ZIP_CMD=/usr/local/sbin/zip
 
     # check required binaries are present
-    IsSysFileExist $AWK_CMD || return 1
-    IsSysFileExist $BUSYBOX_CMD || return 1
-    IsSysFileExist $CAT_CMD || return 1
-    IsSysFileExist $CHMOD_CMD || return 1
-    IsSysFileExist $DATE_CMD || return 1
-    IsSysFileExist $GREP_CMD || return 1
-    IsSysFileExist $HOSTNAME_CMD || return 1
-    IsSysFileExist $MD5SUM_CMD || return 1
-    IsSysFileExist $PING_CMD || return 1
-    IsSysFileExist $SED_CMD || return 1
-    IsSysFileExist $SLEEP_CMD || return 1
-    IsSysFileExist $TAR_CMD || return 1
-    IsSysFileExist $TOUCH_CMD || return 1
-    IsSysFileExist $UNAME_CMD || return 1
-    IsSysFileExist $UNIQ_CMD || return 1
+    IsSysFileExist $AWK_CMD || return
+    IsSysFileExist $BUSYBOX_CMD || return
+    IsSysFileExist $CAT_CMD || return
+    IsSysFileExist $CHMOD_CMD || return
+    IsSysFileExist $DATE_CMD || return
+    IsSysFileExist $GREP_CMD || return
+    IsSysFileExist $HOSTNAME_CMD || return
+    IsSysFileExist $MD5SUM_CMD || return
+    IsSysFileExist $PING_CMD || return
+    IsSysFileExist $SED_CMD || return
+    IsSysFileExist $SLEEP_CMD || return
+    IsSysFileExist $TAR_CMD || return
+    IsSysFileExist $TOUCH_CMD || return
+    IsSysFileExist $UNAME_CMD || return
+    IsSysFileExist $UNIQ_CMD || return
 
-    IsSysFileExist $CURL_CMD || return 1
-    IsSysFileExist $GETCFG_CMD || return 1
-    IsSysFileExist $QPKG_SERVICE_CMD || return 1
-    IsSysFileExist $RMCFG_CMD || return 1
-    IsSysFileExist $SETCFG_CMD || return 1
+    IsSysFileExist $CURL_CMD || return
+    IsSysFileExist $GETCFG_CMD || return
+    IsSysFileExist $QPKG_SERVICE_CMD || return
+    IsSysFileExist $RMCFG_CMD || return
+    IsSysFileExist $SETCFG_CMD || return
 
-    IsSysFileExist $BASENAME_CMD || return 1
-    IsSysFileExist $CUT_CMD || return 1
-    IsSysFileExist $DIRNAME_CMD || return 1
-    IsSysFileExist $DU_CMD || return 1
-    IsSysFileExist $HEAD_CMD || return 1
-    IsSysFileExist $READLINK_CMD || return 1
-    [[ ! -e $SORT_CMD ]] && ln -s "$BUSYBOX_CMD" "$SORT_CMD"   # sometimes, 'sort' goes missing from QTS. Don't know why.
-    IsSysFileExist $SORT_CMD || return 1
-    IsSysFileExist $TAIL_CMD || return 1
-    IsSysFileExist $TEE_CMD || return 1
-    IsSysFileExist $UNZIP_CMD || return 1
-    IsSysFileExist $UPTIME_CMD || return 1
-    IsSysFileExist $WC_CMD || return 1
+    [[ ! -e $SORT_CMD ]] && ln -s "$BUSYBOX_CMD" "$SORT_CMD"    # sometimes, 'sort' goes missing from QTS. Don't know why.
+    [[ ! -e /dev/fd ]] && ln -s /proc/self/fd /dev/fd           # sometimes, '/dev/fd' isn't created by QTS. Don't know why.
 
-    IsSysFileExist $Z7_CMD || return 1
-    IsSysFileExist $ZIP_CMD || return 1
+    IsSysFileExist $BASENAME_CMD || return
+    IsSysFileExist $CUT_CMD || return
+    IsSysFileExist $DIRNAME_CMD || return
+    IsSysFileExist $DU_CMD || return
+    IsSysFileExist $HEAD_CMD || return
+    IsSysFileExist $READLINK_CMD || return
+    IsSysFileExist $TAIL_CMD || return
+    IsSysFileExist $TEE_CMD || return
+    IsSysFileExist $UNZIP_CMD || return
+    IsSysFileExist $UPTIME_CMD || return
+    IsSysFileExist $WC_CMD || return
+
+    IsSysFileExist $Z7_CMD || return
+    IsSysFileExist $ZIP_CMD || return
 
     readonly GNU_FIND_CMD=/opt/bin/find
     readonly GNU_GREP_CMD=/opt/bin/grep
@@ -136,52 +139,41 @@ Session.Init()
     readonly GNU_SED_CMD=/opt/bin/sed
     readonly OPKG_CMD=/opt/bin/opkg
 
-    [[ ! -e /dev/fd ]] && ln -s /proc/self/fd /dev/fd   # sometimes, '/dev/fd' isn't created by QTS. Don't know why.
-
-    # paths and files
-    local -r LOADER_SCRIPT_FILE=$PROJECT_NAME.loader.sh
-    readonly MANAGER_SCRIPT_FILE=$PROJECT_NAME.manager.sh
-
-    Session.LockFile.Claim /var/run/"$LOADER_SCRIPT_FILE".pid || return 1
-
-    local -r DEBUG_LOG_FILE=$PROJECT_NAME.debug.log
-    readonly INSTALL_LOG_FILE=install.log
-    readonly REINSTALL_LOG_FILE=reinstall.log
-    readonly UNINSTALL_LOG_FILE=uninstall.log
-    readonly DOWNLOAD_LOG_FILE=download.log
-    readonly START_LOG_FILE=start.log
-    readonly STOP_LOG_FILE=stop.log
-    readonly RESTART_LOG_FILE=restart.log
-    readonly UPDATE_LOG_FILE=update.log
-    readonly UPGRADE_LOG_FILE=upgrade.log
-    readonly BACKUP_LOG_FILE=backup.log
-    readonly RESTORE_LOG_FILE=restore.log
-    readonly ENABLE_LOG_FILE=enable.log
-    readonly DISABLE_LOG_FILE=disable.log
-    readonly DEFAULT_SHARES_PATHFILE=/etc/config/def_share.info
-    local -r ULINUX_PATHFILE=/etc/config/uLinux.conf
-    readonly PLATFORM_PATHFILE=/etc/platform.conf
-    readonly EXTERNAL_PACKAGE_ARCHIVE_PATHFILE=/opt/var/opkg-lists/entware
-    readonly APP_CENTER_CONFIG_PATHFILE=/etc/config/qpkg.conf
-    local -r PROJECT_PATH=$($GETCFG_CMD "$PROJECT_NAME" Install_Path -f "$APP_CENTER_CONFIG_PATHFILE")
-    readonly DEBUG_LOG_PATHFILE=$PROJECT_PATH/$DEBUG_LOG_FILE
+    readonly DEFAULT_VOLUME=$($GETCFG_CMD SHARE_DEF defVolMP -f /etc/config/def_share.info)
+    local -r PROJECT_PATH=$($GETCFG_CMD "$PROJECT_NAME" Install_Path -f /etc/config/qpkg.conf)
     readonly WORK_PATH=$PROJECT_PATH/cache
-    readonly COMPILED_OBJECTS_URL=https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/compiled.objects
-    readonly COMPILED_OBJECTS_PATHFILE=$WORK_PATH/compiled.objects
-    readonly EXTERNAL_PACKAGE_LIST_PATHFILE=$WORK_PATH/Packages
     readonly LOGS_PATH=$PROJECT_PATH/logs
-    readonly SESSION_LAST_PATHFILE=$LOGS_PATH/session.last.log
-    readonly SESSION_TAIL_PATHFILE=$LOGS_PATH/session.tail.log
-    readonly PREVIOUS_PIP3_MODULE_LIST=$WORK_PATH/pip3.prev.installed.list
-    readonly PREVIOUS_OPKG_PACKAGE_LIST=$WORK_PATH/opkg.prev.installed.list
     readonly QPKG_DL_PATH=$WORK_PATH/qpkgs
     readonly IPKG_DL_PATH=$WORK_PATH/ipkgs.downloads
     readonly IPKG_CACHE_PATH=$WORK_PATH/ipkgs
     readonly PIP_CACHE_PATH=$WORK_PATH/pips
-    readonly DEBUG_LOG_DATAWIDTH=92
-    readonly PACKAGE_VERSION=$(QPKG.Installed.Version "$PROJECT_NAME")
+    readonly BACKUP_PATH=$DEFAULT_VOLUME/.qpkg_config_backup
 
-    # clean as early as possible
+    readonly DEBUG_LOG_PATHFILE=$PROJECT_PATH/$PROJECT_NAME.debug.log
+    readonly COMPILED_OBJECTS_PATHFILE=$WORK_PATH/compiled.objects
+    readonly EXTERNAL_PACKAGE_LIST_PATHFILE=$WORK_PATH/Packages
+    readonly SESSION_LAST_PATHFILE=$LOGS_PATH/session.last.log
+    readonly SESSION_TAIL_PATHFILE=$LOGS_PATH/session.tail.log
+
+    readonly COMPILED_OBJECTS_URL=https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/compiled.objects
+    readonly EXTERNAL_PACKAGE_ARCHIVE_PATHFILE=/opt/var/opkg-lists/entware
+    readonly PREVIOUS_OPKG_PACKAGE_LIST=$WORK_PATH/opkg.prev.installed.list
+    readonly PREVIOUS_PIP_MODULE_LIST=$WORK_PATH/pip.prev.installed.list
+
+    readonly BACKUP_LOG_FILE=backup.log
+    readonly DISABLE_LOG_FILE=disable.log
+    readonly DOWNLOAD_LOG_FILE=download.log
+    readonly ENABLE_LOG_FILE=enable.log
+    readonly INSTALL_LOG_FILE=install.log
+    readonly REINSTALL_LOG_FILE=reinstall.log
+    readonly RESTART_LOG_FILE=restart.log
+    readonly RESTORE_LOG_FILE=restore.log
+    readonly START_LOG_FILE=start.log
+    readonly STOP_LOG_FILE=stop.log
+    readonly UNINSTALL_LOG_FILE=uninstall.log
+    readonly UPDATE_LOG_FILE=update.log
+    readonly UPGRADE_LOG_FILE=upgrade.log
+
     if [[ $USER_ARGS_RAW == *"clean"* ]]; then
         Clean.Cache
         Clean.Logs
@@ -190,11 +182,35 @@ Session.Init()
 
     ShowAsProc 'init' >&2
 
+    [[ -d $IPKG_DL_PATH ]] && rm -rf "$IPKG_DL_PATH"
+    [[ -d $IPKG_CACHE_PATH ]] && rm -rf "$IPKG_CACHE_PATH"
+    [[ -d $PIP_CACHE_PATH ]] && rm -rf "$PIP_CACHE_PATH"
+
     if ! MakePath "$WORK_PATH" 'work'; then
         DebugFuncExit 1; return
     fi
 
     if ! MakePath "$LOGS_PATH" 'logs'; then
+        DebugFuncExit 1; return
+    fi
+
+    if ! MakePath "$QPKG_DL_PATH" 'QPKG download'; then
+        DebugFuncExit 1; return
+    fi
+
+    if ! MakePath "$IPKG_DL_PATH" 'IPKG download'; then
+        DebugFuncExit 1; return
+    fi
+
+    if ! MakePath "$IPKG_CACHE_PATH" 'IPKG cache'; then
+        DebugFuncExit 1; return
+    fi
+
+    if ! MakePath "$PIP_CACHE_PATH" 'PIP cache'; then
+        DebugFuncExit 1; return
+    fi
+
+    if ! MakePath "$BACKUP_PATH" 'QPKG backup'; then
         DebugFuncExit 1; return
     fi
 
@@ -206,6 +222,8 @@ Session.Init()
         Display >&2
         Session.Debug.To.Screen.Set
     fi
+
+    readonly PACKAGE_VERSION=$(QPKG.Installed.Version "$PROJECT_NAME")
 
     DebugInfoMajorSeparator
     DebugScript 'started' "$($DATE_CMD -d @"$SCRIPT_STARTSECONDS" | tr -s ' ')"
@@ -222,37 +240,8 @@ Session.Init()
     Session.LineSpace.DontLogChanges
     Session.SkipPackageProcessing.DontLogChanges
 
-    session_backup_path=$($GETCFG_CMD SHARE_DEF defVolMP -f "$DEFAULT_SHARES_PATHFILE")/.qpkg_config_backup
-
-    if ! MakePath "$session_backup_path" 'QPKG backup'; then
-        DebugFuncExit 1; return
-    fi
-
-    if ! MakePath "$QPKG_DL_PATH" 'QPKG download'; then
-        DebugFuncExit 1; return
-    fi
-
-    # errors can occur due to incompatible IPKGs (tried installing Entware-3x, then Entware-ng), so delete them first
-    [[ -d $IPKG_DL_PATH ]] && rm -rf "$IPKG_DL_PATH"
-
-    if ! MakePath "$IPKG_DL_PATH" 'IPKG download'; then
-        DebugFuncExit 1; return
-    fi
-
-    [[ -d $IPKG_CACHE_PATH ]] && rm -rf "$IPKG_CACHE_PATH"
-
-    if ! MakePath "$IPKG_CACHE_PATH" 'IPKG cache'; then
-        DebugFuncExit 1; return
-    fi
-
-    [[ -d $PIP_CACHE_PATH ]] && rm -rf "$PIP_CACHE_PATH"
-
-    if ! MakePath "$PIP_CACHE_PATH" 'PIP cache'; then
-        DebugFuncExit 1; return
-    fi
-
-    readonly NAS_FIRMWARE=$($GETCFG_CMD System Version -f "$ULINUX_PATHFILE")
-    readonly NAS_BUILD=$($GETCFG_CMD System 'Build Number' -f "$ULINUX_PATHFILE")
+    readonly NAS_FIRMWARE=$($GETCFG_CMD System Version -f /etc/config/uLinux.conf)
+    readonly NAS_BUILD=$($GETCFG_CMD System 'Build Number' -f /etc/config/uLinux.conf)
     readonly INSTALLED_RAM_KB=$($GREP_CMD MemTotal /proc/meminfo | $CUT_CMD -f2 -d':' | $SED_CMD 's|kB||;s| ||g')
     readonly MIN_RAM_KB=1048576
     readonly LOG_TAIL_LINES=3000    # a full download and install of everything generates a session around 1600 lines, but include a bunch of opkg updates and it can get much longer.
@@ -1375,7 +1364,7 @@ Session.Environment.List()
     fi
 
     DebugUserspace.OK '$BASH_VERSION' "$BASH_VERSION"
-    DebugUserspace.OK 'default volume' "$($GETCFG_CMD SHARE_DEF defVolMP -f "$DEFAULT_SHARES_PATHFILE")"
+    DebugUserspace.OK 'default volume' "$DEFAULT_VOLUME"
 
     if [[ -L '/opt' ]]; then
         DebugUserspace.OK '/opt' "$($READLINK_CMD '/opt' || echo '<not present>')"
@@ -1421,7 +1410,6 @@ Session.Environment.List()
 #  16. stop optionals
 #  15. stop essentials
 #  14. uninstall all
-
 
 #  13. upgrade essentials
 #  12. reinstall essentials
@@ -1908,8 +1896,8 @@ Package.Save.Lists()
     {
 
     if [[ -e $pip3_cmd ]]; then
-        $pip3_cmd freeze > "$PREVIOUS_PIP3_MODULE_LIST"
-        DebugAsDone "saved current $(FormatAsPackageName pip3) module list to $(FormatAsFileName "$PREVIOUS_PIP3_MODULE_LIST")"
+        $pip3_cmd freeze > "$PREVIOUS_PIP_MODULE_LIST"
+        DebugAsDone "saved current $(FormatAsPackageName pip3) module list to $(FormatAsFileName "$PREVIOUS_PIP_MODULE_LIST")"
     fi
 
     if [[ -e $OPKG_CMD ]]; then
@@ -2466,7 +2454,7 @@ IPKGs.Install.Batch()
     local log_pathfile=$LOGS_PATH/ipkgs.addons.$INSTALL_LOG_FILE
     local -i resultcode=0
 
-    CalcAllIPKGDepsToInstall || return 1
+    CalcAllIPKGDepsToInstall || return
     package_count=$(IPKGs.ToDownload.Count)
 
     if [[ $package_count -gt 0 ]]; then
@@ -2503,7 +2491,7 @@ IPKGs.Uninstall.Batch()
     local log_pathfile=$LOGS_PATH/ipkgs.$UNINSTALL_LOG_FILE
     local -i resultcode=0
 
-    CalcAllIPKGDepsToUninstall || return 1
+    CalcAllIPKGDepsToUninstall || return
     package_count=$(IPKGs.ToUninstall.Count)
 
     if [[ $package_count -gt 0 ]]; then
@@ -2665,7 +2653,7 @@ ProgressUpdater()
 CreateDirSizeMonitorFlagFile()
     {
 
-    [[ -z $1 ]] && return 1
+    [[ -n ${1:-} ]] || return
     monitor_flag_pathfile=$1
     $TOUCH_CMD "$monitor_flag_pathfile"
 
@@ -2731,9 +2719,9 @@ IsSysFileExist()
     if ! [[ -f $1 || -L $1 ]]; then
         ShowAsAbort "a required NAS system file is missing $(FormatAsFileName "$1")"
         return 1
-    else
-        return 0
     fi
+
+    return 0
 
     }
 
@@ -3092,7 +3080,7 @@ Help.PackageAbbreviations.Show()
 Help.BackupLocation.Show()
     {
 
-    DisplayAsSyntaxExample 'the backup location can be accessed by running' "cd $session_backup_path"
+    DisplayAsSyntaxExample 'the backup location can be accessed by running' "cd $BACKUP_PATH"
 
     return 0
 
@@ -3432,7 +3420,7 @@ Session.Build.StateLists()
         fi
 
         if QPKG.SupportsBackup "$package"; then
-            if [[ -e $session_backup_path/$package.config.tar.gz ]]; then
+            if [[ -e $BACKUP_PATH/$package.config.tar.gz ]]; then
                 QPKGs.NotBackedUp.Remove "$package"
                 QPKGs.BackedUp.Add "$package"
             else
@@ -3514,7 +3502,7 @@ QPKGs.Backups.Show()
 
     SmartCR
     DisplayLineSpaceIfNoneAlready
-    DisplayAsHelpTitle "the location for $(FormatAsScriptTitle) backups is: $session_backup_path"
+    DisplayAsHelpTitle "the location for $(FormatAsScriptTitle) backups is: $BACKUP_PATH"
     Display
     DisplayAsHelpTitle "backups are listed oldest-first, and those $(ColourTextBrightRed "in red") were updated more than $highlight_older_than"
     Display
@@ -3533,10 +3521,10 @@ QPKGs.Backups.Show()
 
             # shellcheck disable=2059
             printf "$format" '' "$filename" "$($DATE_CMD -d @"$epochtime" +%c)"
-        done <<<"$($GNU_FIND_CMD "$session_backup_path"/*.config.tar.gz -maxdepth 1 -printf '%C@ %f\n' 2>/dev/null | $SORT_CMD)"
+        done <<<"$($GNU_FIND_CMD "$BACKUP_PATH"/*.config.tar.gz -maxdepth 1 -printf '%C@ %f\n' 2>/dev/null | $SORT_CMD)"
 
     else
-        (cd "$session_backup_path" && ls -1 ./*.config.tar.gz 2>/dev/null)
+        (cd "$BACKUP_PATH" && ls -1 ./*.config.tar.gz 2>/dev/null)
     fi
 
     return 0
@@ -3702,7 +3690,7 @@ Session.Calc.QPKGArch()
             NAS_QPKG_ARCH=x86
             ;;
         armv7l)
-            case $($GETCFG_CMD '' Platform -f $PLATFORM_PATHFILE) in
+            case $($GETCFG_CMD '' Platform -f /etc/platform.conf) in
                 ARM_MS)
                     NAS_QPKG_ARCH=x31
                     ;;
@@ -3823,16 +3811,15 @@ Session.Summary.Show()
 Session.LockFile.Claim()
     {
 
-    [[ -z $1 ]] && return 1
+    [[ -n ${1:-} ]] || return
     readonly RUNTIME_LOCK_PATHFILE=$1
 
-    if [[ -e $RUNTIME_LOCK_PATHFILE && -d /proc/$(<"$RUNTIME_LOCK_PATHFILE") && $(</proc/"$(<"$RUNTIME_LOCK_PATHFILE")"/cmdline) =~ $MANAGER_SCRIPT_FILE ]]; then
+    if [[ -e $RUNTIME_LOCK_PATHFILE && -d /proc/$(<"$RUNTIME_LOCK_PATHFILE") && $(</proc/"$(<"$RUNTIME_LOCK_PATHFILE")"/cmdline) =~ $PROJECT_NAME.manager.sh ]]; then
         ShowAsAbort 'another instance is running'
         return 1
-    else
-        echo "$$" > "$RUNTIME_LOCK_PATHFILE"
     fi
 
+    echo "$$" > "$RUNTIME_LOCK_PATHFILE"
     return 0
 
     }
@@ -3840,7 +3827,7 @@ Session.LockFile.Claim()
 Session.LockFile.Release()
     {
 
-    [[ -z $RUNTIME_LOCK_PATHFILE ]] && return 1
+    [[ -n ${RUNTIME_LOCK_PATHFILE:-} ]] || return
     [[ -e $RUNTIME_LOCK_PATHFILE ]] && rm -f "$RUNTIME_LOCK_PATHFILE"
 
     }
@@ -3857,13 +3844,13 @@ QPKG.ServicePathFile()
 
     local output=''
 
-    if output=$($GETCFG_CMD "$1" Shell -f $APP_CENTER_CONFIG_PATHFILE); then
+    if output=$($GETCFG_CMD "$1" Shell -f /etc/config/qpkg.conf); then
         echo "$output"
         return 0
-    else
-        echo 'unknown'
-        return 1
     fi
+
+    echo 'unknown'
+    return 1
 
     }
 
@@ -3881,13 +3868,13 @@ QPKG.Installed.Version()
 
     local output=''
 
-    if output=$($GETCFG_CMD "$1" Version -f $APP_CENTER_CONFIG_PATHFILE); then
+    if output=$($GETCFG_CMD "$1" Version -f /etc/config/qpkg.conf); then
         echo "$output"
         return 0
-    else
-        echo 'unknown'
-        return 1
     fi
+
+    echo 'unknown'
+    return 1
 
     }
 
@@ -3903,13 +3890,13 @@ QPKG.InstallPath()
 
     local output=''
 
-    if output=$($GETCFG_CMD "$1" Install_Path -f $APP_CENTER_CONFIG_PATHFILE); then
+    if output=$($GETCFG_CMD "$1" Install_Path -f /etc/config/qpkg.conf); then
         echo "$output"
         return 0
-    else
-        echo 'unknown'
-        return 1
     fi
+
+    echo 'unknown'
+    return 1
 
     }
 
@@ -3959,7 +3946,7 @@ QPKG.PathFilename()
 
     local url=$(QPKG.URL "$1")
 
-    [[ -z $url ]] && return 1
+    [[ -n ${url:-} ]] || return
 
     echo "$QPKG_DL_PATH/$($BASENAME_CMD "$url")"
 
@@ -4108,9 +4095,9 @@ QPKG.Get.Optionals()
     if [[ ${#acc[@]} -gt 0 ]]; then
         echo "${acc[@]}"
         return 0
-    else
-        return 1
     fi
+
+    return 1
 
     }
 
@@ -4440,7 +4427,7 @@ QPKG.Uninstall()
     fi
 
     local -i resultcode=0
-    local qpkg_installed_path=$($GETCFG_CMD "$1" Install_Path -f $APP_CENTER_CONFIG_PATHFILE)
+    local qpkg_installed_path=$($GETCFG_CMD "$1" Install_Path -f /etc/config/qpkg.conf)
     local log_pathfile=$LOGS_PATH/$1.$UNINSTALL_LOG_FILE
 
     [[ $1 = Entware ]] && Package.Save.Lists
@@ -4453,7 +4440,7 @@ QPKG.Uninstall()
 
         if [[ $resultcode -eq 0 ]]; then
             DebugAsDone "uninstalled $(FormatAsPackageName "$1")"
-            $RMCFG_CMD "$1" -f $APP_CENTER_CONFIG_PATHFILE
+            $RMCFG_CMD "$1" -f /etc/config/qpkg.conf
             DebugAsDone 'removed icon information from App Center'
             [[ $1 = Entware ]] && Session.RemovePathToEntware
             QPKGs.IsUninstall.Add "$1"
@@ -4882,7 +4869,7 @@ QPKG.Installed()
     # output:
     #   $? = 0 (true) or 1 (false)
 
-    $GREP_CMD -q "^\[$1\]" "$APP_CENTER_CONFIG_PATHFILE"
+    $GREP_CMD -q "^\[$1\]" /etc/config/qpkg.conf
 
     }
 
@@ -4908,7 +4895,7 @@ QPKG.Enabled()
     # output:
     #   $? = 0 (true) or 1 (false)
 
-    [[ $($GETCFG_CMD "$1" Enable -u -f $APP_CENTER_CONFIG_PATHFILE) = 'TRUE' ]]
+    [[ $($GETCFG_CMD "$1" Enable -u -f /etc/config/qpkg.conf) = 'TRUE' ]]
 
     }
 
@@ -4921,7 +4908,7 @@ QPKG.NotEnabled()
     # output:
     #   $? = 0 (true) or 1 (false)
 
-    [[ $($GETCFG_CMD "$1" Enable -u -f $APP_CENTER_CONFIG_PATHFILE) = 'FALSE' ]]
+    [[ $($GETCFG_CMD "$1" Enable -u -f /etc/config/qpkg.conf) = 'FALSE' ]]
 
     }
 
@@ -4994,7 +4981,7 @@ QPKG.FixAppCenterStatus()
     QPKG.NotInstalled "$1" && return 0
 
     # KLUDGE: need this for 'Entware' and 'Par2' packages as they don't add a status line to qpkg.conf
-    $SETCFG_CMD "$1" Status complete -f "$APP_CENTER_CONFIG_PATHFILE"
+    $SETCFG_CMD "$1" Status complete -f /etc/config/qpkg.conf
 
     return 0
 
@@ -5248,6 +5235,8 @@ DisplayLineSpaceIfNoneAlready()
     }
 
 #### Debug... functions are used for formatted debug information output. This may be to screen, file or both.
+
+readonly DEBUG_LOG_DATAWIDTH=92
 
 DebugInfoMajorSeparator()
     {
