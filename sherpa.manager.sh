@@ -2123,7 +2123,8 @@ PIPs.Install()
     local exec_cmd=''
     local -i resultcode=0
     local -i pass_count=0
-    local -i package_count=1
+    local -i fail_count=0
+    local -i package_count=0
     local -r PACKAGE_TYPE='PIP group'
     local -r ACTION_PRESENT=installing
     local -r ACTION_PAST=installed
@@ -2150,8 +2151,9 @@ PIPs.Install()
     Session.AddPathToEntware
 
     [[ -n ${MANAGER_COMMON_PIPS_ADD// /} ]] && exec_cmd="$pip3_cmd install $MANAGER_COMMON_PIPS_ADD --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
+    ((package_count++))
 
-    ShowAsOperationProgress '' "$package_count" 0 "$pass_count" "$ACTION_PRESENT" "$PACKAGE_TYPE" "$RUNTIME"
+    ShowAsOperationProgress '' "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$PACKAGE_TYPE" "$RUNTIME"
 
     local desc="'Python3' modules"
     local log_pathfile=$LOGS_PATH/py3-modules.assorted.$INSTALL_LOG_FILE
@@ -2165,13 +2167,14 @@ PIPs.Install()
         ((pass_count++))
     else
         ShowAsEror "download & install $desc failed $(FormatAsResult "$resultcode")"
+        ((fail_count++))
     fi
 
     if QPKG.Installed SABnzbd || QPKGs.ToInstall.Exist SABnzbd || QPKGs.ToReinstall.Exist SABnzbd; then
-        package_count=3
+        ((package_count+=2))
 
         # KLUDGE: force recompilation of 'sabyenc3' package so it's recognised by SABnzbd: https://forums.sabnzbd.org/viewtopic.php?p=121214#p121214
-        ShowAsOperationProgress '' "$package_count" 0 "$pass_count" "$ACTION_PRESENT" "$PACKAGE_TYPE" "$RUNTIME"
+        ShowAsOperationProgress '' "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$PACKAGE_TYPE" "$RUNTIME"
 
         exec_cmd="$pip3_cmd install --force-reinstall --ignore-installed --no-binary :all: sabyenc3 --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
         desc="'Python3 sabyenc3' module"
@@ -2187,10 +2190,11 @@ PIPs.Install()
             ((pass_count++))
         else
             ShowAsEror "download & install $desc failed $(FormatAsResult "$resultcode")"
+            ((fail_count++))
         fi
 
         # KLUDGE: ensure 'feedparser' is upgraded. This was version-held at 5.2.1 for Python 3.8.5 but from Python 3.9.0 onward there's no-need for version-hold anymore.
-        ShowAsOperationProgress '' "$package_count" 0 "$pass_count" "$ACTION_PRESENT" "$PACKAGE_TYPE" "$RUNTIME"
+        ShowAsOperationProgress '' "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$PACKAGE_TYPE" "$RUNTIME"
 
         exec_cmd="$pip3_cmd install --upgrade feedparser --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
         desc="'Python3 feedparser' module"
@@ -2205,10 +2209,11 @@ PIPs.Install()
             ((pass_count++))
         else
             ShowAsEror "download & install $desc failed $(FormatAsResult "$resultcode")"
+            ((fail_count++))
         fi
     fi
 
-    ShowAsOperationResult '' "$package_count" 0 "$pass_count" "$ACTION_PAST" "$PACKAGE_TYPE" "$RUNTIME"
+    ShowAsOperationResult '' "$package_count" "$fail_count" "$pass_count" "$ACTION_PAST" "$PACKAGE_TYPE" "$RUNTIME"
     DebugFuncExit $resultcode
 
     }
