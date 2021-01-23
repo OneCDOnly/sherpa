@@ -2250,7 +2250,6 @@ CalcAllIPKGDepsToInstall()
 
         if [[ ${#this_list[@]} -eq 0 ]]; then
             DebugAsDone 'complete'
-            DebugInfo "found all IPKG dependencies in $iterations iteration$(FormatAsPlural $iterations)"
             complete=true
             break
         else
@@ -2264,6 +2263,7 @@ CalcAllIPKGDepsToInstall()
     fi
 
     pre_download_list=$(DeDupeWords "$requested_list ${dependency_accumulator[*]}")
+    DebugInfo "found $($WC_CMD -w <<<"$pre_download_list") IPKG dependencies in $iterations iteration$(FormatAsPlural $iterations)"
     DebugInfo 'IPKGs requested + dependencies' "$pre_download_list "
     DebugAsProc 'excluding IPKGs already installed'
 
