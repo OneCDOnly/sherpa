@@ -3504,10 +3504,10 @@ QPKGs.Backups.Show()
     DisplayLineSpaceIfNoneAlready
     DisplayAsHelpTitle "the location for $(FormatAsScriptTitle) backups is: $BACKUP_PATH"
     Display
-    DisplayAsHelpTitle "backups are listed oldest-first, and those $(ColourTextBrightRed "in red") were updated more than $highlight_older_than"
-    Display
 
     if [[ -e $GNU_FIND_CMD ]]; then
+        DisplayAsHelpTitle "backups are listed oldest-first, and those $(ColourTextBrightRed 'in red') were updated more than $highlight_older_than"
+        Display
         DisplayAsHelpTitleFileNamePlusSomething 'backup file' 'last backup date'
 
         while read -r epochtime filename; do
@@ -3524,6 +3524,9 @@ QPKGs.Backups.Show()
         done <<<"$($GNU_FIND_CMD "$BACKUP_PATH"/*.config.tar.gz -maxdepth 1 -printf '%C@ %f\n' 2>/dev/null | $SORT_CMD)"
 
     else
+        DisplayAsHelpTitle 'backups are listed oldest-first'
+        Display
+
         (cd "$BACKUP_PATH" && ls -1 ./*.config.tar.gz 2>/dev/null)
     fi
 
