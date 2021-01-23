@@ -1105,28 +1105,9 @@ Session.Arguments.Parse()
                 esac
                 ;;
             status_)
-#                 case $scope in
-#                     all_)
-#                         QPKGs.ToStatus.Add "$(QPKGs.Installable.Array)"
-                        User.Opts.Help.Status.Set
-                        operation=''
-                        Session.SkipPackageProcessing.Set
-                        ;;
-# TODO: implement selective package status checks
-#                     essential_)
-#                         QPKGs.ToStatus.Add "$(QPKGs.Essential.Array)"
-#                         ;;
-#                     optional_)
-#                         QPKGs.ToStatus.Add "$(QPKGs.Optional.Array)"
-#                         ;;
-#                     standalone_)
-#                         QPKGs.ToStatus.Add "$(QPKGs.Standalone.Array)"
-#                         ;;
-#                     *)
-#                         QPKGs.ToStatus.Add "$package"
-#                         ;;
-#                 esac
-#                 ;;
+                User.Opts.Help.Status.Set
+                Session.SkipPackageProcessing.Set
+                ;;
             stop_)
                 case $scope in
                     all_)
@@ -1217,9 +1198,6 @@ Session.Arguments.Parse()
                 ;;
             problems_)
                 User.Opts.Help.Problems.Set
-                ;;
-            status_)
-                User.Opts.Help.Status.Set
                 ;;
             tips_)
                 User.Opts.Help.Tips.Set
@@ -2903,7 +2881,7 @@ Help.Actions.Show()
     Help.Basic.Show
     DisplayLineSpaceIfNoneAlready
     DisplayAsHelpTitle "$(FormatAsHelpAction) usage examples:"
-    DisplayAsProjectSyntaxIndentedExample 'show package statuses' 'status all'
+    DisplayAsProjectSyntaxIndentedExample 'show package statuses' 'status'
     DisplayAsProjectSyntaxIndentedExample 'install these packages' "install $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample 'uninstall these packages' "uninstall $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample 'reinstall these packages' "reinstall $(FormatAsHelpPackages)"
@@ -2931,11 +2909,11 @@ Help.ActionsAll.Show()
     Display "* These $(FormatAsHelpAction)s apply to all installed packages. If $(FormatAsHelpAction) is 'install all' then all available packages will be installed."
     DisplayLineSpaceIfNoneAlready
     DisplayAsHelpTitle "$(FormatAsHelpAction) usage examples:"
-    DisplayAsProjectSyntaxIndentedExample 'show package statuses' 'status all'
+    DisplayAsProjectSyntaxIndentedExample 'show package statuses' 'status'
     DisplayAsProjectSyntaxIndentedExample 'install everything!' 'install all'
     DisplayAsProjectSyntaxIndentedExample "uninstall everything!" 'force uninstall all'
     DisplayAsProjectSyntaxIndentedExample "reinstall all installed packages" 'reinstall all'
-    DisplayAsProjectSyntaxIndentedExample "rebuild all packages with backups ('install' packages and 'restore' backups)" "rebuild all"
+    DisplayAsProjectSyntaxIndentedExample "rebuild all packages with backups ('install' packages and 'restore' backups)" 'rebuild all'
     DisplayAsProjectSyntaxIndentedExample 'upgrade all installed packages (and internal applications)' 'upgrade all'
     DisplayAsProjectSyntaxIndentedExample 'start all installed packages (upgrade internal applications, not packages)' 'start all'
     DisplayAsProjectSyntaxIndentedExample 'stop all installed packages' 'stop all'
@@ -3001,7 +2979,7 @@ Help.Problems.Show()
     DisplayLineSpaceIfNoneAlready
     DisplayAsHelpTitle 'usage examples when dealing with problems:'
     DisplayAsProjectSyntaxIndentedExample 'process one-or-more packages and show live debugging information' "$(FormatAsHelpAction) $(FormatAsHelpPackages) debug"
-    DisplayAsProjectSyntaxIndentedExample 'ensure all application dependencies are installed' 'check all'
+    DisplayAsProjectSyntaxIndentedExample 'ensure all application dependencies are installed' 'check'
     DisplayAsProjectSyntaxIndentedExample "don't check free-space on target filesystem when installing $(FormatAsPackageName Entware) packages" "$(FormatAsHelpAction) $(FormatAsHelpPackages) ignore-space"
     DisplayAsProjectSyntaxIndentedExample "clean the $(FormatAsScriptTitle) cache" 'clean'
     DisplayAsProjectSyntaxIndentedExample 'restart all installed packages (upgrades the internal applications, not packages)' 'restart all'
@@ -3332,7 +3310,7 @@ QPKGs.OperationAssignment.List()
     DebugFuncEntry
 
     local array_name=''
-    local -a operations_array=(ToDownload IsDownload ErDownload SkDownload ToBackup IsBackup ErBackup SkBackup ToStop IsStop ErStop SkStop ToUninstall IsUninstall ErUninstall SkUninstall ToUpgrade IsUpgrade ErUpgrade SkUpgrade ToReinstall IsReinstall ErReinstall SkReinstall ToInstall IsInstall ErInstall SkInstall ToRestore IsRestore ErRestore SkRestore ToStart IsStart ErStart SkStart ToRestart IsRestart ErRestart SkRestart ToStatus Installed NotInstalled BackedUp NotBackedUp Upgradable Missing)
+    local -a operations_array=(ToDownload IsDownload ErDownload SkDownload ToBackup IsBackup ErBackup SkBackup ToStop IsStop ErStop SkStop ToUninstall IsUninstall ErUninstall SkUninstall ToUpgrade IsUpgrade ErUpgrade SkUpgrade ToReinstall IsReinstall ErReinstall SkReinstall ToInstall IsInstall ErInstall SkInstall ToRestore IsRestore ErRestore SkRestore ToStart IsStart ErStart SkStart ToRestart IsRestart ErRestart SkRestart Installed NotInstalled BackedUp NotBackedUp Upgradable Missing)
 
     DebugInfoMinorSeparator
 
@@ -5038,7 +5016,7 @@ RunAndLog()
     DebugCommand.Proc "$1"
 
     if Session.Debug.To.Screen.IsSet; then
-        $1 > >($TEE_CMD "$msgs") 2>&1
+        $1 > >($TEE_CMD "$msgs") 2>&1   # NOTE: 'tee' buffers stdout here
         resultcode=$?
     else
         $1 > "$msgs" 2>&1
@@ -6104,7 +6082,7 @@ Objects.Compile()
 
     # $1 = 'hash' (optional) - if specified, only return the internal checksum
 
-    local -r COMPILED_OBJECTS_HASH=6973255413cd5374b07738c3ea8d1ec9
+    local -r COMPILED_OBJECTS_HASH=9d5296872c8753afef589fbe43af0e44
     local array_name=''
     local -a operations_array=()
 
@@ -6183,7 +6161,7 @@ Objects.Compile()
             Objects.Add.List QPKGs.Not${array_name}
         done
 
-        operations_array=(Backup Download Install Rebuild Reinstall Restart Restore Start Status Stop Uninstall Upgrade)
+        operations_array=(Backup Download Install Rebuild Reinstall Restart Restore Start Stop Uninstall Upgrade)
 
         for array_name in "${operations_array[@]}"; do
             Objects.Add.List QPKGs.To${array_name}      # to operate on
