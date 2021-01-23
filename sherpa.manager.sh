@@ -2095,7 +2095,7 @@ Entware.Update()
             # meh, continue anyway with existing list
         fi
     else
-        DebugInfo "$(FormatAsPackageName Entware) package list was updated less than $package_minutes_threshold minutes ago"
+        DebugInfo "$(FormatAsPackageName Entware) package list was updated less than $package_minutes_threshold minutes ago: skipping update"
     fi
 
     return 0
@@ -5368,7 +5368,7 @@ DebugFuncEntry()
     local var_safe_name=${var_name//[.-]/_}
     eval "$var_safe_name=$(/bin/date +%s%N)"    # hardcode 'date' here as this function is called before binaries are cherry-picked.
 
-    DebugThis "(>>) ${FUNCNAME[1]}()"
+    DebugThis "(>>) ${FUNCNAME[1]}"
 
     }
 
@@ -5386,7 +5386,7 @@ DebugFuncExit()
         elapsed_time=$(ConvertSecsToHoursMinutesSecs "$((diff_milliseconds/1000))")
     fi
 
-    DebugThis "(<<) ${FUNCNAME[1]}()|${1:-0}|$code_pointer|$elapsed_time"
+    DebugThis "(<<) ${FUNCNAME[1]}|${1:-0}|$code_pointer|$elapsed_time"
 
     return ${1:-0}
 
@@ -5494,7 +5494,7 @@ AddFileToDebug()
 ShowAsProcLong()
     {
 
-    ShowAsProc "$1 (this may take a while)" "${2:-}"
+    ShowAsProc "$1 (might take a while)" "${2:-}"
 
     }
 
