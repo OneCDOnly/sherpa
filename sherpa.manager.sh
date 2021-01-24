@@ -47,7 +47,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=210124
+    readonly MANAGER_SCRIPT_VERSION=210125
 
     Session.LockFile.Claim /var/run/$PROJECT_NAME.loader.sh.pid || return
 
@@ -235,10 +235,10 @@ Session.Init()
     DebugInfo '($1) positional argument value'
     DebugInfoMinorSeparator
 
-    User.Opts.IgnoreFreeSpace.Text = ' --force-space'
+    Opts.IgnoreFreeSpace.Text = ' --force-space'
     Session.Summary.Set
     Session.LineSpace.DontLogChanges
-    Session.SkipPackageProcessing.DontLogChanges
+    QPKGs.SkipProcessing.DontLogChanges
 
     readonly NAS_FIRMWARE=$($GETCFG_CMD System Version -f /etc/config/uLinux.conf)
     readonly NAS_BUILD=$($GETCFG_CMD System 'Build Number' -f /etc/config/uLinux.conf)
@@ -659,8 +659,8 @@ Session.Init()
 
     # speedup: don't build package lists if only showing basic help
     if [[ -z $USER_ARGS_RAW ]]; then
-        User.Opts.Help.Basic.Set
-        Session.SkipPackageProcessing.Set
+        Opts.Help.Basic.Set
+        QPKGs.SkipProcessing.Set
     else
         Session.Arguments.Parse
     fi
@@ -673,7 +673,7 @@ Session.Init()
             DisplayLineSpaceIfNoneAlready
         fi
 
-        User.Opts.Apps.All.Upgrade.IsNot && User.Opts.Apps.All.Uninstall.IsNot && QPKGs.NewVersions.Show
+        Opts.Apps.All.Upgrade.IsNot && Opts.Apps.All.Uninstall.IsNot && QPKGs.NewVersions.Show
     fi
 
     DebugFuncExit
@@ -709,8 +709,8 @@ Session.Arguments.Parse()
                 scope_incomplete=true
                 arg_identified=true
                 Session.Display.Clean.Clear
-                Session.SkipPackageProcessing.Clear
-                Session.Build.StateLists
+                QPKGs.SkipProcessing.Clear
+                QPKGs.States.Build
                 ;;
             status|statuses)
                 operation=status_
@@ -718,8 +718,8 @@ Session.Arguments.Parse()
                 scope_incomplete=true
                 arg_identified=true
                 Session.Display.Clean.Clear
-                Session.SkipPackageProcessing.Set
-                Session.Build.StateLists
+                QPKGs.SkipProcessing.Set
+                QPKGs.States.Build
                 ;;
             paste)
                 operation=${arg}_
@@ -727,7 +727,7 @@ Session.Arguments.Parse()
                 scope_incomplete=true
                 arg_identified=true
                 Session.Display.Clean.Clear
-                Session.SkipPackageProcessing.Set
+                QPKGs.SkipProcessing.Set
                 ;;
             display|help|list|show|view)
                 operation=help_
@@ -735,7 +735,7 @@ Session.Arguments.Parse()
                 scope_incomplete=true
                 arg_identified=true
                 Session.Display.Clean.Clear
-                Session.SkipPackageProcessing.Set
+                QPKGs.SkipProcessing.Set
                 ;;
         esac
 
@@ -749,7 +749,7 @@ Session.Arguments.Parse()
                     scope=''
                     scope_incomplete=true
                     arg_identified=true
-                    Session.SkipPackageProcessing.Set
+                    QPKGs.SkipProcessing.Set
                     ;;
             esac
 
@@ -829,7 +829,7 @@ Session.Arguments.Parse()
                 arg_identified=true
                 ;;
             ignore-space)
-                User.Opts.IgnoreFreeSpace.Set
+                Opts.IgnoreFreeSpace.Set
                 arg_identified=true
                 ;;
         esac
@@ -850,7 +850,7 @@ Session.Arguments.Parse()
             backup_)
                 case $scope in
                     all_)
-                        User.Opts.Apps.All.Backup.Set
+                        Opts.Apps.All.Backup.Set
                         operation=''
                         ;;
                     essential_)
@@ -874,85 +874,85 @@ Session.Arguments.Parse()
                 esac
                 ;;
             check_)
-                User.Opts.Dependencies.Check.Set
+                Opts.Dependencies.Check.Set
                 ;;
             help_)
                 case $scope in
                     abs_)
-                        User.Opts.Help.Abbreviations.Set
+                        Opts.Help.Abbreviations.Set
                         ;;
                     actions_)
-                        User.Opts.Help.Actions.Set
+                        Opts.Help.Actions.Set
                         ;;
                     all-actions_)
-                        User.Opts.Help.ActionsAll.Set
+                        Opts.Help.ActionsAll.Set
                         ;;
                     backups_)
-                        User.Opts.Help.Backups.Set
+                        Opts.Help.Backups.Set
                         ;;
                     essential_)
-                        User.Opts.Apps.List.Essential.Set
+                        Opts.Apps.List.Essential.Set
                         Session.Display.Clean.Set
                         ;;
                     installable_)
-                        Session.Build.StateLists
-                        User.Opts.Apps.List.NotInstalled.Set
+                        QPKGs.States.Build
+                        Opts.Apps.List.NotInstalled.Set
                         Session.Display.Clean.Set
                         ;;
                     installed_)
-                        Session.Build.StateLists
-                        User.Opts.Apps.List.Installed.Set
+                        QPKGs.States.Build
+                        Opts.Apps.List.Installed.Set
                         Session.Display.Clean.Set
                         ;;
                     last_)
-                        User.Opts.Log.Last.View.Set
+                        Opts.Log.Last.View.Set
                         Session.Display.Clean.Set
                         ;;
                     log_)
-                        User.Opts.Log.Whole.View.Set
+                        Opts.Log.Whole.View.Set
                         Session.Display.Clean.Set
                         ;;
                     optional_)
-                        User.Opts.Apps.List.Optional.Set
+                        Opts.Apps.List.Optional.Set
                         Session.Display.Clean.Set
                         ;;
                     options_)
-                        User.Opts.Help.Options.Set
+                        Opts.Help.Options.Set
                         ;;
                     packages_)
-                        User.Opts.Help.Packages.Set
+                        Opts.Help.Packages.Set
                         ;;
                     problems_)
-                        User.Opts.Help.Problems.Set
+                        Opts.Help.Problems.Set
                         ;;
                     standalone_)
-                        User.Opts.Apps.List.Standalone.Set
+                        Opts.Apps.List.Standalone.Set
                         Session.Display.Clean.Set
                         ;;
                     started_)
-                        Session.Build.StateLists
-                        User.Opts.Apps.List.Started.Set
+                        QPKGs.States.Build
+                        Opts.Apps.List.Started.Set
                         Session.Display.Clean.Set
                         ;;
                     status_)
-                        Session.Build.StateLists
-                        User.Opts.Help.Status.Set
+                        QPKGs.States.Build
+                        Opts.Help.Status.Set
                         ;;
                     stopped_)
-                        Session.Build.StateLists
-                        User.Opts.Apps.List.Stopped.Set
+                        QPKGs.States.Build
+                        Opts.Apps.List.Stopped.Set
                         Session.Display.Clean.Set
                         ;;
                     tips_)
-                        User.Opts.Help.Tips.Set
+                        Opts.Help.Tips.Set
                         ;;
                     upgradable_)
-                        Session.Build.StateLists
-                        User.Opts.Apps.List.Upgradable.Set
+                        QPKGs.States.Build
+                        Opts.Apps.List.Upgradable.Set
                         Session.Display.Clean.Set
                         ;;
                     versions_)
-                        User.Opts.Versions.View.Set
+                        Opts.Versions.View.Set
                         Session.Display.Clean.Set
                         ;;
                 esac
@@ -960,7 +960,7 @@ Session.Arguments.Parse()
             install_)
                 case $scope in
                     all_)
-                        User.Opts.Apps.All.Install.Set
+                        Opts.Apps.All.Install.Set
                         operation=''
                         ;;
                     essential_)
@@ -980,17 +980,17 @@ Session.Arguments.Parse()
             paste_)
                 case $scope in
                     all_)
-                        User.Opts.Log.Tail.Paste.Set
+                        Opts.Log.Tail.Paste.Set
                         ;;
                     *)
-                        User.Opts.Log.Last.Paste.Set
+                        Opts.Log.Last.Paste.Set
                         ;;
                 esac
                 ;;
             rebuild_)
                 case $scope in
                     all_)
-                        User.Opts.Apps.All.Rebuild.Set
+                        Opts.Apps.All.Rebuild.Set
                         operation=''
                         ;;
                     optional_)
@@ -1004,7 +1004,7 @@ Session.Arguments.Parse()
             reinstall_)
                 case $scope in
                     all_)
-                        User.Opts.Apps.All.Reinstall.Set
+                        Opts.Apps.All.Reinstall.Set
                         operation=''
                         ;;
                     essential_)
@@ -1024,7 +1024,7 @@ Session.Arguments.Parse()
             restart_)
                 case $scope in
                     all_)
-                        User.Opts.Apps.All.Restart.Set
+                        Opts.Apps.All.Restart.Set
                         operation=''
                         ;;
                     essential_)
@@ -1044,7 +1044,7 @@ Session.Arguments.Parse()
             restore_)
                 case $scope in
                     all_)
-                        User.Opts.Apps.All.Restore.Set
+                        Opts.Apps.All.Restore.Set
                         operation=''
                         ;;
                     essential_)
@@ -1064,7 +1064,7 @@ Session.Arguments.Parse()
             start_)
                 case $scope in
                     all_)
-                        User.Opts.Apps.All.Start.Set
+                        Opts.Apps.All.Start.Set
                         operation=''
                         ;;
                     essential_)
@@ -1085,13 +1085,13 @@ Session.Arguments.Parse()
                 esac
                 ;;
             status_)
-                User.Opts.Help.Status.Set
-                Session.SkipPackageProcessing.Set
+                Opts.Help.Status.Set
+                QPKGs.SkipProcessing.Set
                 ;;
             stop_)
                 case $scope in
                     all_)
-                        User.Opts.Apps.All.Stop.Set
+                        Opts.Apps.All.Stop.Set
                         operation=''
                         ;;
                     essential_)
@@ -1116,7 +1116,7 @@ Session.Arguments.Parse()
                     case $scope in
                         all_)
                             QPKGs.ToUninstall.Add "$(QPKGs.Installed.Array)"
-                            User.Opts.Apps.All.Uninstall.Set
+                            Opts.Apps.All.Uninstall.Set
                             operation=''
                             operation_force=false
                             ;;
@@ -1131,7 +1131,7 @@ Session.Arguments.Parse()
             upgrade_)
                 case $scope in
                     all_)
-                        User.Opts.Apps.All.Upgrade.Set
+                        Opts.Apps.All.Upgrade.Set
                         operation=''
                         ;;
                     essential_)
@@ -1160,37 +1160,37 @@ Session.Arguments.Parse()
     if [[ -n $operation && $scope_incomplete = true ]]; then
         case $operation in
             abs_)
-                User.Opts.Help.Abbreviations.Set
+                Opts.Help.Abbreviations.Set
                 ;;
             backups_)
-                User.Opts.Help.Backups.Set
+                Opts.Help.Backups.Set
                 ;;
             help_)
-                User.Opts.Help.Basic.Set
+                Opts.Help.Basic.Set
                 ;;
             options_)
-                User.Opts.Help.Options.Set
+                Opts.Help.Options.Set
                 ;;
             packages_)
-                User.Opts.Help.Packages.Set
+                Opts.Help.Packages.Set
                 ;;
             problems_)
-                User.Opts.Help.Problems.Set
+                Opts.Help.Problems.Set
                 ;;
             tips_)
-                User.Opts.Help.Tips.Set
+                Opts.Help.Tips.Set
                 ;;
             versions_)
-                User.Opts.Versions.View.Set
+                Opts.Versions.View.Set
                 Session.Display.Clean.Set
                 ;;
         esac
     fi
 
     if Args.Unknown.IsAny; then
-        User.Opts.Help.Basic.Set
+        Opts.Help.Basic.Set
         Session.Display.Clean.Clear
-        Session.SkipPackageProcessing.Set
+        QPKGs.SkipProcessing.Set
     fi
 
     DebugFuncExit
@@ -1210,43 +1210,43 @@ Session.Arguments.Suggestions()
             case $arg in
                 all)
                     DisplayAsProjectSyntaxExample "please provide an $(FormatAsHelpAction) before 'all' like" 'start all'
-                    User.Opts.Help.Basic.Clear
+                    Opts.Help.Basic.Clear
                     ;;
                 backup-all)
                     DisplayAsProjectSyntaxExample 'to backup all installed package configurations, use' 'backup all'
-                    User.Opts.Help.Basic.Clear
+                    Opts.Help.Basic.Clear
                     ;;
                 essential)
                     DisplayAsProjectSyntaxExample "please provide an $(FormatAsHelpAction) before 'essential' like" 'start essential'
-                    User.Opts.Help.Basic.Clear
+                    Opts.Help.Basic.Clear
                     ;;
                 optional)
                     DisplayAsProjectSyntaxExample "please provide an $(FormatAsHelpAction) before 'optional' like" 'start optional'
-                    User.Opts.Help.Basic.Clear
+                    Opts.Help.Basic.Clear
                     ;;
                 restart-all)
                     DisplayAsProjectSyntaxExample 'to restart all packages, use' 'restart all'
-                    User.Opts.Help.Basic.Clear
+                    Opts.Help.Basic.Clear
                     ;;
                 restore-all)
                     DisplayAsProjectSyntaxExample 'to restore all installed package configurations, use' 'restore all'
-                    User.Opts.Help.Basic.Clear
+                    Opts.Help.Basic.Clear
                     ;;
                 start-all)
                     DisplayAsProjectSyntaxExample 'to start all packages, use' 'start all'
-                    User.Opts.Help.Basic.Clear
+                    Opts.Help.Basic.Clear
                     ;;
                 stop-all)
                     DisplayAsProjectSyntaxExample 'to stop all packages, use' 'stop all'
-                    User.Opts.Help.Basic.Clear
+                    Opts.Help.Basic.Clear
                     ;;
                 uninstall-all|remove-all)
                     DisplayAsProjectSyntaxExample 'to uninstall all packages, use' 'force uninstall all'
-                    User.Opts.Help.Basic.Clear
+                    Opts.Help.Basic.Clear
                     ;;
                 upgrade-all)
                     DisplayAsProjectSyntaxExample 'to upgrade all packages, use' 'upgrade all'
-                    User.Opts.Help.Basic.Clear
+                    Opts.Help.Basic.Clear
                     ;;
             esac
         done
@@ -1262,7 +1262,7 @@ Session.Validate()
     DebugFuncEntry
     Session.Arguments.Suggestions
 
-    if Session.SkipPackageProcessing.IsSet; then
+    if QPKGs.SkipProcessing.IsSet; then
         DebugFuncExit 1; return
     fi
 
@@ -1270,30 +1270,30 @@ Session.Validate()
 
     Session.Environment.List
 
-    if Session.SkipPackageProcessing.IsSet; then
+    if QPKGs.SkipProcessing.IsSet; then
         DebugFuncExit 1; return
     fi
 
     if ! QPKGs.Conflicts.Check; then
         code_pointer=2
-        Session.SkipPackageProcessing.Set
+        QPKGs.SkipProcessing.Set
         DebugFuncExit 1; return
     fi
 
     if QPKGs.ToBackup.IsNone && QPKGs.ToUninstall.IsNone && QPKGs.ToUpgrade.IsNone && QPKGs.ToInstall.IsNone && QPKGs.ToReinstall.IsNone && QPKGs.ToRestore.IsNone && QPKGs.ToRestart.IsNone && QPKGs.ToStart.IsNone && QPKGs.ToStop.IsNone && QPKGs.ToRebuild.IsNone; then
-        if User.Opts.Apps.All.Install.IsNot && User.Opts.Apps.All.Restart.IsNot && User.Opts.Apps.All.Upgrade.IsNot && User.Opts.Apps.All.Backup.IsNot && User.Opts.Apps.All.Restore.IsNot && User.Opts.Help.Status.IsNot && User.Opts.Apps.All.Start.IsNot && User.Opts.Apps.All.Stop.IsNot && User.Opts.Apps.All.Rebuild.IsNot; then
-            if User.Opts.Dependencies.Check.IsNot && User.Opts.IgnoreFreeSpace.IsNot; then
+        if Opts.Apps.All.Install.IsNot && Opts.Apps.All.Restart.IsNot && Opts.Apps.All.Upgrade.IsNot && Opts.Apps.All.Backup.IsNot && Opts.Apps.All.Restore.IsNot && Opts.Help.Status.IsNot && Opts.Apps.All.Start.IsNot && Opts.Apps.All.Stop.IsNot && Opts.Apps.All.Rebuild.IsNot; then
+            if Opts.Dependencies.Check.IsNot && Opts.IgnoreFreeSpace.IsNot; then
                 ShowAsEror "I've nothing to do (usually means the arguments didn't make sense, or were incomplete)"
-                User.Opts.Help.Basic.Set
-                Session.SkipPackageProcessing.Set
+                Opts.Help.Basic.Set
+                QPKGs.SkipProcessing.Set
                 DebugFuncExit 1; return
             fi
         fi
     fi
 
-    if User.Opts.Dependencies.Check.IsSet || QPKGs.ToUpgrade.Exist Entware; then
-        Session.IPKGs.Install.Set
-        Session.PIPs.Install.Set
+    if Opts.Dependencies.Check.IsSet || QPKGs.ToUpgrade.Exist Entware; then
+        IPKGs.Install.Set
+        PIPs.Install.Set
     fi
 
     DebugFuncExit
@@ -1347,7 +1347,7 @@ Session.Environment.List()
 
     if [[ $EUID -ne 0 || $USER != admin ]]; then
         ShowAsEror "this script must be run as the 'admin' user. Please login via SSH as 'admin' and try again"
-        Session.SkipPackageProcessing.Set
+        QPKGs.SkipProcessing.Set
         DebugFuncExit 1; return
     fi
 
@@ -1418,7 +1418,7 @@ Session.Environment.List()
 Tiers.Processor()
     {
 
-    Session.SkipPackageProcessing.IsSet && return
+    QPKGs.SkipProcessing.IsSet && return
     DebugFuncEntry
     local package=''
 
@@ -1426,23 +1426,23 @@ Tiers.Processor()
     QPKGs.SupportsUpdateOnRestart.Build
 
     # build an initial download list
-    if User.Opts.Apps.All.Upgrade.IsSet; then
+    if Opts.Apps.All.Upgrade.IsSet; then
         QPKGs.ToUpgrade.Add "$(QPKGs.Upgradable.Array)"
     fi
 
-    if User.Opts.Apps.All.Reinstall.IsSet; then
+    if Opts.Apps.All.Reinstall.IsSet; then
         QPKGs.ToReinstall.Add "$(QPKGs.Installable.Array)"
     fi
 
-    if User.Opts.Apps.All.Install.IsSet; then
+    if Opts.Apps.All.Install.IsSet; then
         QPKGs.ToInstall.Add "$(QPKGs.Installable.Array)"
     fi
 
-    if User.Opts.Apps.All.Rebuild.IsSet || QPKGs.ToRebuild.IsAny; then
+    if Opts.Apps.All.Rebuild.IsSet || QPKGs.ToRebuild.IsAny; then
         if QPKGs.BackedUp.IsNone; then
             ShowAsWarn 'there are no package backups to rebuild from' >&2
         else
-            if User.Opts.Apps.All.Rebuild.IsSet; then
+            if Opts.Apps.All.Rebuild.IsSet; then
                 for package in $(QPKGs.BackedUp.Array); do
                     QPKG.NotInstalled "$package" && QPKGs.ToInstall.Add "$package"
                 done
@@ -1478,7 +1478,7 @@ Tiers.Processor()
 
     Tier.Processor 'Download' false 'all' 'QPKG' 'ToDownload' 'forward' 'update cache with' 'updating cache with' 'updated cache with' ''
 
-    if User.Opts.Apps.All.Backup.IsSet; then
+    if Opts.Apps.All.Backup.IsSet; then
         QPKGs.ToBackup.Add "$(QPKGs.SupportsBackup.Array)"
     fi
 
@@ -1487,7 +1487,7 @@ Tiers.Processor()
 
     Tier.Processor 'Backup' false 'all' 'QPKG' 'ToBackup' 'forward' 'backup' 'backing-up' 'backed-up' ''
 
-    if User.Opts.Apps.All.Stop.IsSet; then
+    if Opts.Apps.All.Stop.IsSet; then
         QPKGs.ToStop.Add "$(QPKGs.Enabled.Array)"
     fi
 
@@ -1500,8 +1500,8 @@ Tiers.Processor()
 #         fi
 #     done
 
-    if User.Opts.Apps.All.Uninstall.IsSet; then
-        QPKGs.ToStop.Init   # no-need to stop all packages, as they are about to be uninstalled
+    if Opts.Apps.All.Uninstall.IsSet; then
+        QPKGs.ToStop.Init   # no-need to stop any packages, as they are about to be uninstalled
     fi
 
     # if an essential has been selected for stop, need to stop its optionals first
@@ -1555,14 +1555,14 @@ Tiers.Processor()
     Tier.Processor 'Uninstall' false 'essential' 'QPKG' 'ToUninstall' 'forward' 'uninstall' 'uninstalling' 'uninstalled' ''
 
     # adjust configuration restore lists to remove essentials (these can't be backed-up or restored for-now)
-    if User.Opts.Apps.All.Restore.IsSet; then
+    if Opts.Apps.All.Restore.IsSet; then
         QPKGs.ToRestore.Add "$(QPKGs.Installed.Array)"
     fi
 
     QPKGs.ToRestore.Remove "$(QPKGs.Essential.Array)"
     QPKGs.ToRestore.Remove "$(QPKGs.NotSupportsBackup.Array)"
 
-    if User.Opts.Apps.All.Upgrade.IsSet; then
+    if Opts.Apps.All.Upgrade.IsSet; then
         QPKGs.ToRestart.Add "$(QPKGs.Optional.Array)"
         QPKGs.ToRestart.Remove "$(QPKGs.Standalone.Array)"
     fi
@@ -1586,7 +1586,7 @@ Tiers.Processor()
                 fi
 
                 # adjust lists for start
-                if User.Opts.Apps.All.Start.IsSet; then
+                if Opts.Apps.All.Start.IsSet; then
                     QPKGs.ToStart.Add "$(QPKGs.Installed.Array)"
                 else
                     # check for essential packages that require starting due to any optionals being reinstalled
@@ -1631,7 +1631,7 @@ Tiers.Processor()
                 Tier.Processor 'Start' false "$tier" 'QPKG' 'ToStart' 'forward' 'start' 'starting' 'started' 'long'
 
                 # check all items
-                if User.Opts.Dependencies.Check.IsSet; then
+                if Opts.Dependencies.Check.IsSet; then
                     for package in $(QPKGs.Optional.Array); do
                         if ! QPKGs.Standalone.Exist "$package" && ! QPKGs.Upgradable.Exist "$package"; then
                             QPKGs.ToRestart.Add "$package"
@@ -1640,7 +1640,7 @@ Tiers.Processor()
                 fi
 
                 # adjust lists for restart
-                if User.Opts.Apps.All.Restart.IsSet; then
+                if Opts.Apps.All.Restart.IsSet; then
                     QPKGs.ToRestart.Add "$(QPKGs.Installed.Array)"
                 else
                     # check for optional packages to restart due to any essentials being installed
@@ -1677,11 +1677,11 @@ Tiers.Processor()
                 ;;
             addon)
                 if QPKGs.ToInstall.IsAny || QPKGs.IsInstall.IsAny || QPKGs.ToReinstall.IsAny || QPKGs.IsReinstall.IsAny || QPKGs.ToUpgrade.IsAny || QPKGs.IsUpgrade.IsAny; then
-                    Session.IPKGs.Install.Set
+                    IPKGs.Install.Set
                 fi
 
                 if QPKGs.ToInstall.Exist SABnzbd || QPKGs.ToReinstall.Exist SABnzbd || QPKGs.ToUpgrade.Exist SABnzbd; then
-                    Session.PIPs.Install.Set   # must ensure 'sabyenc' and 'feedparser' modules are installed/updated
+                    PIPs.Install.Set   # must ensure 'sabyenc' and 'feedparser' modules are installed/updated
                 fi
 
                 if QPKG.Enabled Entware; then
@@ -1900,60 +1900,60 @@ Session.Results()
     {
 
     if Args.Unknown.IsNone; then
-        if User.Opts.Versions.View.IsSet; then
+        if Opts.Versions.View.IsSet; then
             Versions.Show
-        elif User.Opts.Log.Whole.View.IsSet; then
+        elif Opts.Log.Whole.View.IsSet; then
             Log.Whole.View
-        elif User.Opts.Log.Last.View.IsSet; then    # default operation when scope is unspecified
+        elif Opts.Log.Last.View.IsSet; then		# default operation when scope is unspecified
             Log.Last.View
         fi
     fi
 
-    if User.Opts.Apps.List.All.IsSet; then
+    if Opts.Apps.List.All.IsSet; then
         QPKGs.All.Show
-    elif User.Opts.Apps.List.NotInstalled.IsSet; then
+    elif Opts.Apps.List.NotInstalled.IsSet; then
         QPKGs.NotInstalled.Show
-    elif User.Opts.Apps.List.Started.IsSet; then
+    elif Opts.Apps.List.Started.IsSet; then
         QPKGs.Started.Show
-    elif User.Opts.Apps.List.Stopped.IsSet; then
+    elif Opts.Apps.List.Stopped.IsSet; then
         QPKGs.Stopped.Show
-    elif User.Opts.Apps.List.Upgradable.IsSet; then
+    elif Opts.Apps.List.Upgradable.IsSet; then
         QPKGs.Upgradable.Show
-    elif User.Opts.Apps.List.Essential.IsSet; then
+    elif Opts.Apps.List.Essential.IsSet; then
         QPKGs.Essential.Show
-    elif User.Opts.Apps.List.Optional.IsSet; then
+    elif Opts.Apps.List.Optional.IsSet; then
         QPKGs.Optional.Show
-    elif User.Opts.Apps.List.Standalone.IsSet; then
+    elif Opts.Apps.List.Standalone.IsSet; then
         QPKGs.Standalone.Show
-    elif User.Opts.Help.Backups.IsSet; then
+    elif Opts.Help.Backups.IsSet; then
         QPKGs.Backups.Show
-    elif User.Opts.Help.Status.IsSet; then
+    elif Opts.Help.Status.IsSet; then
         QPKGs.Statuses.Show
-    elif User.Opts.Apps.List.Installed.IsSet; then  # default operation when scope is unspecified
+    elif Opts.Apps.List.Installed.IsSet; then	# default operation when scope is unspecified
         QPKGs.Installed.Show
     fi
 
-    if User.Opts.Log.Tail.Paste.IsSet; then
+    if Opts.Log.Tail.Paste.IsSet; then
         Log.Tail.Paste.Online
-    elif User.Opts.Log.Last.Paste.IsSet; then       # default operation when scope is unspecified
+    elif Opts.Log.Last.Paste.IsSet; then		# default operation when scope is unspecified
         Log.Last.Paste.Online
     fi
 
-    if User.Opts.Help.Actions.IsSet; then
+    if Opts.Help.Actions.IsSet; then
         Help.Actions.Show
-    elif User.Opts.Help.ActionsAll.IsSet; then
+    elif Opts.Help.ActionsAll.IsSet; then
         Help.ActionsAll.Show
-    elif User.Opts.Help.Packages.IsSet; then
+    elif Opts.Help.Packages.IsSet; then
         Help.Packages.Show
-    elif User.Opts.Help.Options.IsSet; then
+    elif Opts.Help.Options.IsSet; then
         Help.Options.Show
-    elif User.Opts.Help.Problems.IsSet; then
+    elif Opts.Help.Problems.IsSet; then
         Help.Problems.Show
-    elif User.Opts.Help.Tips.IsSet; then
+    elif Opts.Help.Tips.IsSet; then
         Help.Tips.Show
-    elif User.Opts.Help.Abbreviations.IsSet; then
+    elif Opts.Help.Abbreviations.IsSet; then
         Help.PackageAbbreviations.Show
-    elif User.Opts.Help.Basic.IsSet; then           # default operation when scope is unspecified
+    elif Opts.Help.Basic.IsSet; then			# default operation when scope is unspecified
         Help.Basic.Show
         Help.Basic.Example.Show
     fi
@@ -1962,7 +1962,7 @@ Session.Results()
 
     Session.Summary.IsSet && Session.Summary.Show
     Session.SuggestIssue.IsSet && Help.Issue.Show
-    DisplayLineSpaceIfNoneAlready       # final on-screen linespace
+    DisplayLineSpaceIfNoneAlready				# final on-screen linespace
 
     DebugInfoMinorSeparator
     DebugScript 'finished' "$($DATE_CMD)"
@@ -2098,8 +2098,8 @@ Entware.Update()
 PIPs.Install()
     {
 
-    Session.SkipPackageProcessing.IsSet && return
-    Session.PIPs.Install.IsNot && return
+    QPKGs.SkipProcessing.IsSet && return
+    PIPs.Install.IsNot && return
     DebugFuncEntry
     local exec_cmd=''
     local -i resultcode=0
@@ -2334,8 +2334,8 @@ CalcAllIPKGDepsToUninstall()
 IPKGs.Install()
     {
 
-    Session.SkipPackageProcessing.IsSet && return
-    Session.IPKGs.Install.IsNot && return
+    QPKGs.SkipProcessing.IsSet && return
+    IPKGs.Install.IsNot && return
     QPKG.NotEnabled Entware && return
     Entware.Update
     Session.Error.IsSet && return
@@ -2344,7 +2344,7 @@ IPKGs.Install()
 
     IPKGs.ToInstall.Add "$MANAGER_COMMON_IPKGS_ADD"
 
-    if User.Opts.Apps.All.Install.IsSet; then
+    if Opts.Apps.All.Install.IsSet; then
         for index in "${!MANAGER_QPKG_NAME[@]}"; do
             [[ ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${MANAGER_QPKG_ARCH[$index]} = all ]] && IPKGs.ToInstall.Add "${MANAGER_QPKG_IPKGS_ADD[$index]}"
         done
@@ -2356,7 +2356,7 @@ IPKGs.Install()
         done
     fi
 
-    if User.Opts.Dependencies.Check.IsSet; then
+    if Opts.Dependencies.Check.IsSet; then
         IPKGs.ToInstall.Add "$MANAGER_ESSENTIAL_IPKGS_ADD"
         [[ $NAS_QPKG_ARCH = none ]] && QPKGs.Installed.Exist SABnzbd && IPKGs.ToInstall.Add par2cmdline
     fi
@@ -2374,13 +2374,13 @@ IPKGs.Install()
 IPKGs.Uninstall()
     {
 
-    Session.SkipPackageProcessing.IsSet && return
+    QPKGs.SkipProcessing.IsSet && return
     QPKG.NotEnabled Entware && return
     Session.Error.IsSet && return
     DebugFuncEntry
     local -i index=0
 
-    if User.Opts.Apps.All.Uninstall.IsNot; then
+    if Opts.Apps.All.Uninstall.IsNot; then
         for index in "${!MANAGER_QPKG_NAME[@]}"; do
             if QPKGs.ToInstall.Exist "${MANAGER_QPKG_NAME[$index]}" || QPKG.Installed "${MANAGER_QPKG_NAME[$index]}" || QPKGs.ToUpgrade.Exist "${MANAGER_QPKG_NAME[$index]}" || QPKGs.ToUninstall.Exist "${MANAGER_QPKG_NAME[$index]}"; then
                 IPKGs.ToUninstall.Add "${MANAGER_QPKG_IPKGS_REMOVE[$index]}"
@@ -2419,7 +2419,7 @@ IPKGs.Upgrade.Batch()
             trap CTRL_C_Captured INT
                 _MonitorDirSize_ "$IPKG_DL_PATH" "$(IPKGs.ToDownload.Size)" &
 
-                RunAndLog "$OPKG_CMD upgrade$(User.Opts.IgnoreFreeSpace.Text) --force-overwrite $(IPKGs.ToDownload.List) --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$LOGS_PATH/ipkgs.$UPGRADE_LOG_FILE" log:failure-only
+                RunAndLog "$OPKG_CMD upgrade$(Opts.IgnoreFreeSpace.Text) --force-overwrite $(IPKGs.ToDownload.List) --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$LOGS_PATH/ipkgs.$UPGRADE_LOG_FILE" log:failure-only
                 resultcode=$?
             trap - INT
         RemoveDirSizeMonitorFlagFile
@@ -2453,7 +2453,7 @@ IPKGs.Install.Batch()
             trap CTRL_C_Captured INT
                 _MonitorDirSize_ "$IPKG_DL_PATH" "$(IPKGs.ToDownload.Size)" &
 
-                RunAndLog "$OPKG_CMD install$(User.Opts.IgnoreFreeSpace.Text) --force-overwrite $(IPKGs.ToDownload.List) --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$LOGS_PATH/ipkgs.addons.$INSTALL_LOG_FILE" log:failure-only
+                RunAndLog "$OPKG_CMD install$(Opts.IgnoreFreeSpace.Text) --force-overwrite $(IPKGs.ToDownload.List) --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$LOGS_PATH/ipkgs.addons.$INSTALL_LOG_FILE" log:failure-only
                 resultcode=$?
             trap - INT
         RemoveDirSizeMonitorFlagFile
@@ -3305,7 +3305,7 @@ QPKGs.Conflicts.Check()
 QPKGs.Operations.List()
     {
 
-    Session.SkipPackageProcessing.IsSet && return
+    QPKGs.SkipProcessing.IsSet && return
     DebugFuncEntry
 
     local array_name=''
@@ -3352,9 +3352,8 @@ QPKGs.EssentialOptionalStandalone.Build()
     # 'essential' QPKGs don't depend on other QPKGs, but are required for other QPKGs. They should be installed/started before any 'optional' QPKGs.
     # 'optional' QPKGs may depend on other QPKGs. They should be installed/started after any 'essential' QPKGs.
 
-    # 'standalone' isn't a tier, but a category of package that works without requiring any other package(s). A package may be 'standalone' or-not and can also be 'essential' or 'optional'.
+    # 'standalone' isn't a tier, but a category of package that works without requiring any other package(s). A package may be 'standalone' or-not, and may also be 'essential' or 'optional'.
 
-    DebugFuncEntry
     local -i index=0
 
     for index in "${!MANAGER_QPKG_NAME[@]}"; do
@@ -3369,11 +3368,11 @@ QPKGs.EssentialOptionalStandalone.Build()
         fi
     done
 
-    DebugFuncExit
+    return 0
 
     }
 
-Session.Build.StateLists()
+QPKGs.States.Build()
     {
 
     # Builds several lists of QPKGs:
@@ -3383,10 +3382,10 @@ Session.Build.StateLists()
     #   - have backup files in backup location
     #   - have config blocks in [/etc/config/qpkg.conf], but no files on-disk
 
-    Session.Lists.Built.IsSet && return
+    QPKGs.States.Built.IsSet && return
 
     DebugFuncEntry
-    ShowAsProc 'building package state lists' >&2
+    ShowAsProc 'checking installed QPKGs' >&2
 
     local package=''
     local installed_version=''
@@ -3433,7 +3432,7 @@ Session.Build.StateLists()
         fi
     done
 
-    Session.Lists.Built.Set
+    QPKGs.States.Built.Set
     DebugFuncExit
 
     }
@@ -3779,7 +3778,7 @@ Session.RemovePathToEntware()
 Session.Error.Set()
     {
 
-    [[ $(type -t Session.SkipPackageProcessing.Init) = 'function' ]] && Session.SkipPackageProcessing.Set
+    [[ $(type -t QPKGs.SkipProcessing.Init) = 'function' ]] && QPKGs.SkipProcessing.Set
     Session.Error.IsSet && return
     _script_error_flag=true
     DebugVar _script_error_flag
@@ -3808,7 +3807,7 @@ Session.Summary.Show()
     local -a messages_array=(backed-up stopped uninstalled upgraded reinstalled installed restored started restarted)
 
     for index in "${!operations_array[@]}"; do
-        User.Opts.Apps.All.${operations_array[$index]}.IsSet && QPKGs.Is${operations_array[$index]}.IsNone && ShowAsDone "no QPKGs were ${messages_array[$index]}"
+        Opts.Apps.All.${operations_array[$index]}.IsSet && QPKGs.Is${operations_array[$index]}.IsNone && ShowAsDone "no QPKGs were ${messages_array[$index]}"
     done
 
     return 0
@@ -4185,7 +4184,7 @@ QPKG.Install()
     #   $1 = QPKG name
 
     Session.Error.IsSet && return
-    Session.SkipPackageProcessing.IsSet && return
+    QPKGs.SkipProcessing.IsSet && return
     DebugFuncEntry
 
     if [[ -z ${1:-} ]]; then
@@ -4243,10 +4242,10 @@ QPKG.Install()
 
                 # add extra package(s) needed immediately
                 ShowAsProc 'installing essential IPKGs'
-                RunAndLog "$OPKG_CMD install$(User.Opts.IgnoreFreeSpace.Text) --force-overwrite $MANAGER_ESSENTIAL_IPKGS_ADD --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$LOGS_PATH/ipkgs.extra.$INSTALL_LOG_FILE" log:failure-only
+                RunAndLog "$OPKG_CMD install$(Opts.IgnoreFreeSpace.Text) --force-overwrite $MANAGER_ESSENTIAL_IPKGS_ADD --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$LOGS_PATH/ipkgs.extra.$INSTALL_LOG_FILE" log:failure-only
                 ShowAsDone 'installed essential IPKGs'
 
-                Session.PIPs.Install.Set
+                PIPs.Install.Set
             fi
         fi
 
@@ -4272,7 +4271,7 @@ QPKG.Reinstall()
     #   $1 = QPKG name
 
     Session.Error.IsSet && return
-    Session.SkipPackageProcessing.IsSet && return
+    QPKGs.SkipProcessing.IsSet && return
     DebugFuncEntry
 
     if [[ -z ${1:-} ]]; then
@@ -4337,7 +4336,7 @@ QPKG.Upgrade()
     #   $? = 0 if successful, 1 if failed
 
     Session.Error.IsSet && return
-    Session.SkipPackageProcessing.IsSet && return
+    QPKGs.SkipProcessing.IsSet && return
     DebugFuncEntry
 
     if [[ -z ${1:-} ]]; then
@@ -6101,7 +6100,7 @@ Objects.Compile()
 
     # $1 = 'hash' (optional) - if specified, only return the internal checksum
 
-    local -r COMPILED_OBJECTS_HASH=9d5296872c8753afef589fbe43af0e44
+    local -r COMPILED_OBJECTS_HASH=0b7ea80d73d489e37528cbce0c6c0e2c
     local array_name=''
     local -a operations_array=()
 
@@ -6121,41 +6120,42 @@ Objects.Compile()
         Objects.Add.Flag Session.Debug.To.File
         Objects.Add.Flag Session.Debug.To.Screen
         Objects.Add.Flag Session.Display.Clean
-        Objects.Add.Flag Session.IPKGs.Install
         Objects.Add.Flag Session.LineSpace
-        Objects.Add.Flag Session.Lists.Built
-        Objects.Add.Flag Session.PIPs.Install
         Objects.Add.Flag Session.ShowBackupLocation
-        Objects.Add.Flag Session.SkipPackageProcessing
         Objects.Add.Flag Session.SuggestIssue
         Objects.Add.Flag Session.Summary
+
+        Objects.Add.Flag QPKGs.States.Built
+        Objects.Add.Flag QPKGs.SkipProcessing
+        Objects.Add.Flag IPKGs.Install
+        Objects.Add.Flag PIPs.Install
 
         # user option flags
         operations_array=(Abbreviations Actions ActionsAll Backups Basic Options Packages Problems Status Tips)
 
         for array_name in "${operations_array[@]}"; do
-            Objects.Add.Flag User.Opts.Help.${array_name}
+            Objects.Add.Flag Opts.Help.${array_name}
         done
 
-        Objects.Add.Flag User.Opts.Dependencies.Check
-        Objects.Add.Flag User.Opts.IgnoreFreeSpace
-        Objects.Add.Flag User.Opts.Versions.View
+        Objects.Add.Flag Opts.Dependencies.Check
+        Objects.Add.Flag Opts.IgnoreFreeSpace
+        Objects.Add.Flag Opts.Versions.View
 
-        Objects.Add.Flag User.Opts.Log.Last.Paste
-        Objects.Add.Flag User.Opts.Log.Last.View
-        Objects.Add.Flag User.Opts.Log.Tail.Paste
-        Objects.Add.Flag User.Opts.Log.Whole.View
+        Objects.Add.Flag Opts.Log.Last.Paste
+        Objects.Add.Flag Opts.Log.Last.View
+        Objects.Add.Flag Opts.Log.Tail.Paste
+        Objects.Add.Flag Opts.Log.Whole.View
 
         operations_array=(Backup Install Rebuild Reinstall Restart Restore Start Stop Uninstall Upgrade)
 
         for array_name in "${operations_array[@]}"; do
-            Objects.Add.Flag User.Opts.Apps.All.${array_name}
+            Objects.Add.Flag Opts.Apps.All.${array_name}
         done
 
         operations_array=(All Essential Installed NotInstalled Optional Standalone Started Stopped Upgradable)
 
         for array_name in "${operations_array[@]}"; do
-            Objects.Add.Flag User.Opts.Apps.List.${array_name}
+            Objects.Add.Flag Opts.Apps.List.${array_name}
         done
 
         # lists

@@ -199,73 +199,6 @@ Session.Display.Clean.Text()
     }
 Session.Display.Clean.Init
 
-Session.IPKGs.Install.Clear()
-    {
-    [[ $_object_session_ipkgs_install_flag_ != 'true' ]] && return
-    _object_session_ipkgs_install_flag_=false
-    [[ $_object_session_ipkgs_install_changes_flag_ = 'true' ]] && DebugVar _object_session_ipkgs_install_flag_
-    }
-Session.IPKGs.Install.Disable()
-    {
-    [[ $_object_session_ipkgs_install_enable_ != 'true' ]] && return
-    _object_session_ipkgs_install_enable_=false
-    [[ $_object_session_ipkgs_install_changes_flag_ = 'true' ]] && DebugVar _object_session_ipkgs_install_enable_
-    }
-Session.IPKGs.Install.DontLogChanges()
-    {
-    [[ $_object_session_ipkgs_install_changes_flag_ != 'true' ]] && return
-    _object_session_ipkgs_install_changes_flag_=false
-    }
-Session.IPKGs.Install.Enable()
-    {
-    [[ $_object_session_ipkgs_install_enable_ = 'true' ]] && return
-    _object_session_ipkgs_install_enable_=true
-    [[ $_object_session_ipkgs_install_changes_flag_ = 'true' ]] && DebugVar _object_session_ipkgs_install_enable_
-    }
-Session.IPKGs.Install.Init()
-    {
-    _object_session_ipkgs_install_text_=''
-    _object_session_ipkgs_install_flag_=false
-    _object_session_ipkgs_install_changes_flag_=true
-    _object_session_ipkgs_install_enable_=false
-    }
-Session.IPKGs.Install.IsDisabled()
-    {
-    [[ $_object_session_ipkgs_install_enable_ != 'true' ]]
-    }
-Session.IPKGs.Install.IsEnabled()
-    {
-    [[ $_object_session_ipkgs_install_enable_ = 'true' ]]
-    }
-Session.IPKGs.Install.IsNot()
-    {
-    [[ $_object_session_ipkgs_install_flag_ != 'true' ]]
-    }
-Session.IPKGs.Install.IsSet()
-    {
-    [[ $_object_session_ipkgs_install_flag_ = 'true' ]]
-    }
-Session.IPKGs.Install.LogChanges()
-    {
-    [[ $_object_session_ipkgs_install_changes_flag_ = 'true' ]] && return
-    _object_session_ipkgs_install_changes_flag_=true
-    }
-Session.IPKGs.Install.Set()
-    {
-    [[ $_object_session_ipkgs_install_flag_ = 'true' ]] && return
-    _object_session_ipkgs_install_flag_=true
-    [[ $_object_session_ipkgs_install_changes_flag_ = 'true' ]] && DebugVar _object_session_ipkgs_install_flag_
-    }
-Session.IPKGs.Install.Text()
-    {
-    if [[ -n ${1:-} && $1 = "=" ]]; then
-        _object_session_ipkgs_install_text_=$2
-    else
-        echo -n "$_object_session_ipkgs_install_text_"
-    fi
-    }
-Session.IPKGs.Install.Init
-
 Session.LineSpace.Clear()
     {
     [[ $_object_session_linespace_flag_ != 'true' ]] && return
@@ -333,140 +266,6 @@ Session.LineSpace.Text()
     }
 Session.LineSpace.Init
 
-Session.Lists.Built.Clear()
-    {
-    [[ $_object_session_lists_built_flag_ != 'true' ]] && return
-    _object_session_lists_built_flag_=false
-    [[ $_object_session_lists_built_changes_flag_ = 'true' ]] && DebugVar _object_session_lists_built_flag_
-    }
-Session.Lists.Built.Disable()
-    {
-    [[ $_object_session_lists_built_enable_ != 'true' ]] && return
-    _object_session_lists_built_enable_=false
-    [[ $_object_session_lists_built_changes_flag_ = 'true' ]] && DebugVar _object_session_lists_built_enable_
-    }
-Session.Lists.Built.DontLogChanges()
-    {
-    [[ $_object_session_lists_built_changes_flag_ != 'true' ]] && return
-    _object_session_lists_built_changes_flag_=false
-    }
-Session.Lists.Built.Enable()
-    {
-    [[ $_object_session_lists_built_enable_ = 'true' ]] && return
-    _object_session_lists_built_enable_=true
-    [[ $_object_session_lists_built_changes_flag_ = 'true' ]] && DebugVar _object_session_lists_built_enable_
-    }
-Session.Lists.Built.Init()
-    {
-    _object_session_lists_built_text_=''
-    _object_session_lists_built_flag_=false
-    _object_session_lists_built_changes_flag_=true
-    _object_session_lists_built_enable_=false
-    }
-Session.Lists.Built.IsDisabled()
-    {
-    [[ $_object_session_lists_built_enable_ != 'true' ]]
-    }
-Session.Lists.Built.IsEnabled()
-    {
-    [[ $_object_session_lists_built_enable_ = 'true' ]]
-    }
-Session.Lists.Built.IsNot()
-    {
-    [[ $_object_session_lists_built_flag_ != 'true' ]]
-    }
-Session.Lists.Built.IsSet()
-    {
-    [[ $_object_session_lists_built_flag_ = 'true' ]]
-    }
-Session.Lists.Built.LogChanges()
-    {
-    [[ $_object_session_lists_built_changes_flag_ = 'true' ]] && return
-    _object_session_lists_built_changes_flag_=true
-    }
-Session.Lists.Built.Set()
-    {
-    [[ $_object_session_lists_built_flag_ = 'true' ]] && return
-    _object_session_lists_built_flag_=true
-    [[ $_object_session_lists_built_changes_flag_ = 'true' ]] && DebugVar _object_session_lists_built_flag_
-    }
-Session.Lists.Built.Text()
-    {
-    if [[ -n ${1:-} && $1 = "=" ]]; then
-        _object_session_lists_built_text_=$2
-    else
-        echo -n "$_object_session_lists_built_text_"
-    fi
-    }
-Session.Lists.Built.Init
-
-Session.PIPs.Install.Clear()
-    {
-    [[ $_object_session_pips_install_flag_ != 'true' ]] && return
-    _object_session_pips_install_flag_=false
-    [[ $_object_session_pips_install_changes_flag_ = 'true' ]] && DebugVar _object_session_pips_install_flag_
-    }
-Session.PIPs.Install.Disable()
-    {
-    [[ $_object_session_pips_install_enable_ != 'true' ]] && return
-    _object_session_pips_install_enable_=false
-    [[ $_object_session_pips_install_changes_flag_ = 'true' ]] && DebugVar _object_session_pips_install_enable_
-    }
-Session.PIPs.Install.DontLogChanges()
-    {
-    [[ $_object_session_pips_install_changes_flag_ != 'true' ]] && return
-    _object_session_pips_install_changes_flag_=false
-    }
-Session.PIPs.Install.Enable()
-    {
-    [[ $_object_session_pips_install_enable_ = 'true' ]] && return
-    _object_session_pips_install_enable_=true
-    [[ $_object_session_pips_install_changes_flag_ = 'true' ]] && DebugVar _object_session_pips_install_enable_
-    }
-Session.PIPs.Install.Init()
-    {
-    _object_session_pips_install_text_=''
-    _object_session_pips_install_flag_=false
-    _object_session_pips_install_changes_flag_=true
-    _object_session_pips_install_enable_=false
-    }
-Session.PIPs.Install.IsDisabled()
-    {
-    [[ $_object_session_pips_install_enable_ != 'true' ]]
-    }
-Session.PIPs.Install.IsEnabled()
-    {
-    [[ $_object_session_pips_install_enable_ = 'true' ]]
-    }
-Session.PIPs.Install.IsNot()
-    {
-    [[ $_object_session_pips_install_flag_ != 'true' ]]
-    }
-Session.PIPs.Install.IsSet()
-    {
-    [[ $_object_session_pips_install_flag_ = 'true' ]]
-    }
-Session.PIPs.Install.LogChanges()
-    {
-    [[ $_object_session_pips_install_changes_flag_ = 'true' ]] && return
-    _object_session_pips_install_changes_flag_=true
-    }
-Session.PIPs.Install.Set()
-    {
-    [[ $_object_session_pips_install_flag_ = 'true' ]] && return
-    _object_session_pips_install_flag_=true
-    [[ $_object_session_pips_install_changes_flag_ = 'true' ]] && DebugVar _object_session_pips_install_flag_
-    }
-Session.PIPs.Install.Text()
-    {
-    if [[ -n ${1:-} && $1 = "=" ]]; then
-        _object_session_pips_install_text_=$2
-    else
-        echo -n "$_object_session_pips_install_text_"
-    fi
-    }
-Session.PIPs.Install.Init
-
 Session.ShowBackupLocation.Clear()
     {
     [[ $_object_session_showbackuplocation_flag_ != 'true' ]] && return
@@ -533,73 +332,6 @@ Session.ShowBackupLocation.Text()
     fi
     }
 Session.ShowBackupLocation.Init
-
-Session.SkipPackageProcessing.Clear()
-    {
-    [[ $_object_session_skippackageprocessing_flag_ != 'true' ]] && return
-    _object_session_skippackageprocessing_flag_=false
-    [[ $_object_session_skippackageprocessing_changes_flag_ = 'true' ]] && DebugVar _object_session_skippackageprocessing_flag_
-    }
-Session.SkipPackageProcessing.Disable()
-    {
-    [[ $_object_session_skippackageprocessing_enable_ != 'true' ]] && return
-    _object_session_skippackageprocessing_enable_=false
-    [[ $_object_session_skippackageprocessing_changes_flag_ = 'true' ]] && DebugVar _object_session_skippackageprocessing_enable_
-    }
-Session.SkipPackageProcessing.DontLogChanges()
-    {
-    [[ $_object_session_skippackageprocessing_changes_flag_ != 'true' ]] && return
-    _object_session_skippackageprocessing_changes_flag_=false
-    }
-Session.SkipPackageProcessing.Enable()
-    {
-    [[ $_object_session_skippackageprocessing_enable_ = 'true' ]] && return
-    _object_session_skippackageprocessing_enable_=true
-    [[ $_object_session_skippackageprocessing_changes_flag_ = 'true' ]] && DebugVar _object_session_skippackageprocessing_enable_
-    }
-Session.SkipPackageProcessing.Init()
-    {
-    _object_session_skippackageprocessing_text_=''
-    _object_session_skippackageprocessing_flag_=false
-    _object_session_skippackageprocessing_changes_flag_=true
-    _object_session_skippackageprocessing_enable_=false
-    }
-Session.SkipPackageProcessing.IsDisabled()
-    {
-    [[ $_object_session_skippackageprocessing_enable_ != 'true' ]]
-    }
-Session.SkipPackageProcessing.IsEnabled()
-    {
-    [[ $_object_session_skippackageprocessing_enable_ = 'true' ]]
-    }
-Session.SkipPackageProcessing.IsNot()
-    {
-    [[ $_object_session_skippackageprocessing_flag_ != 'true' ]]
-    }
-Session.SkipPackageProcessing.IsSet()
-    {
-    [[ $_object_session_skippackageprocessing_flag_ = 'true' ]]
-    }
-Session.SkipPackageProcessing.LogChanges()
-    {
-    [[ $_object_session_skippackageprocessing_changes_flag_ = 'true' ]] && return
-    _object_session_skippackageprocessing_changes_flag_=true
-    }
-Session.SkipPackageProcessing.Set()
-    {
-    [[ $_object_session_skippackageprocessing_flag_ = 'true' ]] && return
-    _object_session_skippackageprocessing_flag_=true
-    [[ $_object_session_skippackageprocessing_changes_flag_ = 'true' ]] && DebugVar _object_session_skippackageprocessing_flag_
-    }
-Session.SkipPackageProcessing.Text()
-    {
-    if [[ -n ${1:-} && $1 = "=" ]]; then
-        _object_session_skippackageprocessing_text_=$2
-    else
-        echo -n "$_object_session_skippackageprocessing_text_"
-    fi
-    }
-Session.SkipPackageProcessing.Init
 
 Session.SuggestIssue.Clear()
     {
@@ -735,2417 +467,2685 @@ Session.Summary.Text()
     }
 Session.Summary.Init
 
-User.Opts.Help.Abbreviations.Clear()
+QPKGs.States.Built.Clear()
     {
-    [[ $_object_user_opts_help_abbreviations_flag_ != 'true' ]] && return
-    _object_user_opts_help_abbreviations_flag_=false
-    [[ $_object_user_opts_help_abbreviations_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_help_abbreviations_flag_
+    [[ $_object_qpkgs_states_built_flag_ != 'true' ]] && return
+    _object_qpkgs_states_built_flag_=false
+    [[ $_object_qpkgs_states_built_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_states_built_flag_
     }
-User.Opts.Help.Abbreviations.Disable()
+QPKGs.States.Built.Disable()
     {
-    [[ $_object_user_opts_help_abbreviations_enable_ != 'true' ]] && return
-    _object_user_opts_help_abbreviations_enable_=false
-    [[ $_object_user_opts_help_abbreviations_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_help_abbreviations_enable_
+    [[ $_object_qpkgs_states_built_enable_ != 'true' ]] && return
+    _object_qpkgs_states_built_enable_=false
+    [[ $_object_qpkgs_states_built_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_states_built_enable_
     }
-User.Opts.Help.Abbreviations.DontLogChanges()
+QPKGs.States.Built.DontLogChanges()
     {
-    [[ $_object_user_opts_help_abbreviations_changes_flag_ != 'true' ]] && return
-    _object_user_opts_help_abbreviations_changes_flag_=false
+    [[ $_object_qpkgs_states_built_changes_flag_ != 'true' ]] && return
+    _object_qpkgs_states_built_changes_flag_=false
     }
-User.Opts.Help.Abbreviations.Enable()
+QPKGs.States.Built.Enable()
     {
-    [[ $_object_user_opts_help_abbreviations_enable_ = 'true' ]] && return
-    _object_user_opts_help_abbreviations_enable_=true
-    [[ $_object_user_opts_help_abbreviations_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_help_abbreviations_enable_
+    [[ $_object_qpkgs_states_built_enable_ = 'true' ]] && return
+    _object_qpkgs_states_built_enable_=true
+    [[ $_object_qpkgs_states_built_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_states_built_enable_
     }
-User.Opts.Help.Abbreviations.Init()
+QPKGs.States.Built.Init()
     {
-    _object_user_opts_help_abbreviations_text_=''
-    _object_user_opts_help_abbreviations_flag_=false
-    _object_user_opts_help_abbreviations_changes_flag_=true
-    _object_user_opts_help_abbreviations_enable_=false
+    _object_qpkgs_states_built_text_=''
+    _object_qpkgs_states_built_flag_=false
+    _object_qpkgs_states_built_changes_flag_=true
+    _object_qpkgs_states_built_enable_=false
     }
-User.Opts.Help.Abbreviations.IsDisabled()
+QPKGs.States.Built.IsDisabled()
     {
-    [[ $_object_user_opts_help_abbreviations_enable_ != 'true' ]]
+    [[ $_object_qpkgs_states_built_enable_ != 'true' ]]
     }
-User.Opts.Help.Abbreviations.IsEnabled()
+QPKGs.States.Built.IsEnabled()
     {
-    [[ $_object_user_opts_help_abbreviations_enable_ = 'true' ]]
+    [[ $_object_qpkgs_states_built_enable_ = 'true' ]]
     }
-User.Opts.Help.Abbreviations.IsNot()
+QPKGs.States.Built.IsNot()
     {
-    [[ $_object_user_opts_help_abbreviations_flag_ != 'true' ]]
+    [[ $_object_qpkgs_states_built_flag_ != 'true' ]]
     }
-User.Opts.Help.Abbreviations.IsSet()
+QPKGs.States.Built.IsSet()
     {
-    [[ $_object_user_opts_help_abbreviations_flag_ = 'true' ]]
+    [[ $_object_qpkgs_states_built_flag_ = 'true' ]]
     }
-User.Opts.Help.Abbreviations.LogChanges()
+QPKGs.States.Built.LogChanges()
     {
-    [[ $_object_user_opts_help_abbreviations_changes_flag_ = 'true' ]] && return
-    _object_user_opts_help_abbreviations_changes_flag_=true
+    [[ $_object_qpkgs_states_built_changes_flag_ = 'true' ]] && return
+    _object_qpkgs_states_built_changes_flag_=true
     }
-User.Opts.Help.Abbreviations.Set()
+QPKGs.States.Built.Set()
     {
-    [[ $_object_user_opts_help_abbreviations_flag_ = 'true' ]] && return
-    _object_user_opts_help_abbreviations_flag_=true
-    [[ $_object_user_opts_help_abbreviations_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_help_abbreviations_flag_
+    [[ $_object_qpkgs_states_built_flag_ = 'true' ]] && return
+    _object_qpkgs_states_built_flag_=true
+    [[ $_object_qpkgs_states_built_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_states_built_flag_
     }
-User.Opts.Help.Abbreviations.Text()
+QPKGs.States.Built.Text()
     {
     if [[ -n ${1:-} && $1 = "=" ]]; then
-        _object_user_opts_help_abbreviations_text_=$2
+        _object_qpkgs_states_built_text_=$2
     else
-        echo -n "$_object_user_opts_help_abbreviations_text_"
+        echo -n "$_object_qpkgs_states_built_text_"
     fi
     }
-User.Opts.Help.Abbreviations.Init
+QPKGs.States.Built.Init
 
-User.Opts.Help.Actions.Clear()
+QPKGs.SkipProcessing.Clear()
     {
-    [[ $_object_user_opts_help_actions_flag_ != 'true' ]] && return
-    _object_user_opts_help_actions_flag_=false
-    [[ $_object_user_opts_help_actions_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_help_actions_flag_
+    [[ $_object_qpkgs_skipprocessing_flag_ != 'true' ]] && return
+    _object_qpkgs_skipprocessing_flag_=false
+    [[ $_object_qpkgs_skipprocessing_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_skipprocessing_flag_
     }
-User.Opts.Help.Actions.Disable()
+QPKGs.SkipProcessing.Disable()
     {
-    [[ $_object_user_opts_help_actions_enable_ != 'true' ]] && return
-    _object_user_opts_help_actions_enable_=false
-    [[ $_object_user_opts_help_actions_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_help_actions_enable_
+    [[ $_object_qpkgs_skipprocessing_enable_ != 'true' ]] && return
+    _object_qpkgs_skipprocessing_enable_=false
+    [[ $_object_qpkgs_skipprocessing_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_skipprocessing_enable_
     }
-User.Opts.Help.Actions.DontLogChanges()
+QPKGs.SkipProcessing.DontLogChanges()
     {
-    [[ $_object_user_opts_help_actions_changes_flag_ != 'true' ]] && return
-    _object_user_opts_help_actions_changes_flag_=false
+    [[ $_object_qpkgs_skipprocessing_changes_flag_ != 'true' ]] && return
+    _object_qpkgs_skipprocessing_changes_flag_=false
     }
-User.Opts.Help.Actions.Enable()
+QPKGs.SkipProcessing.Enable()
     {
-    [[ $_object_user_opts_help_actions_enable_ = 'true' ]] && return
-    _object_user_opts_help_actions_enable_=true
-    [[ $_object_user_opts_help_actions_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_help_actions_enable_
+    [[ $_object_qpkgs_skipprocessing_enable_ = 'true' ]] && return
+    _object_qpkgs_skipprocessing_enable_=true
+    [[ $_object_qpkgs_skipprocessing_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_skipprocessing_enable_
     }
-User.Opts.Help.Actions.Init()
+QPKGs.SkipProcessing.Init()
     {
-    _object_user_opts_help_actions_text_=''
-    _object_user_opts_help_actions_flag_=false
-    _object_user_opts_help_actions_changes_flag_=true
-    _object_user_opts_help_actions_enable_=false
+    _object_qpkgs_skipprocessing_text_=''
+    _object_qpkgs_skipprocessing_flag_=false
+    _object_qpkgs_skipprocessing_changes_flag_=true
+    _object_qpkgs_skipprocessing_enable_=false
     }
-User.Opts.Help.Actions.IsDisabled()
+QPKGs.SkipProcessing.IsDisabled()
     {
-    [[ $_object_user_opts_help_actions_enable_ != 'true' ]]
+    [[ $_object_qpkgs_skipprocessing_enable_ != 'true' ]]
     }
-User.Opts.Help.Actions.IsEnabled()
+QPKGs.SkipProcessing.IsEnabled()
     {
-    [[ $_object_user_opts_help_actions_enable_ = 'true' ]]
+    [[ $_object_qpkgs_skipprocessing_enable_ = 'true' ]]
     }
-User.Opts.Help.Actions.IsNot()
+QPKGs.SkipProcessing.IsNot()
     {
-    [[ $_object_user_opts_help_actions_flag_ != 'true' ]]
+    [[ $_object_qpkgs_skipprocessing_flag_ != 'true' ]]
     }
-User.Opts.Help.Actions.IsSet()
+QPKGs.SkipProcessing.IsSet()
     {
-    [[ $_object_user_opts_help_actions_flag_ = 'true' ]]
+    [[ $_object_qpkgs_skipprocessing_flag_ = 'true' ]]
     }
-User.Opts.Help.Actions.LogChanges()
+QPKGs.SkipProcessing.LogChanges()
     {
-    [[ $_object_user_opts_help_actions_changes_flag_ = 'true' ]] && return
-    _object_user_opts_help_actions_changes_flag_=true
+    [[ $_object_qpkgs_skipprocessing_changes_flag_ = 'true' ]] && return
+    _object_qpkgs_skipprocessing_changes_flag_=true
     }
-User.Opts.Help.Actions.Set()
+QPKGs.SkipProcessing.Set()
     {
-    [[ $_object_user_opts_help_actions_flag_ = 'true' ]] && return
-    _object_user_opts_help_actions_flag_=true
-    [[ $_object_user_opts_help_actions_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_help_actions_flag_
+    [[ $_object_qpkgs_skipprocessing_flag_ = 'true' ]] && return
+    _object_qpkgs_skipprocessing_flag_=true
+    [[ $_object_qpkgs_skipprocessing_changes_flag_ = 'true' ]] && DebugVar _object_qpkgs_skipprocessing_flag_
     }
-User.Opts.Help.Actions.Text()
+QPKGs.SkipProcessing.Text()
     {
     if [[ -n ${1:-} && $1 = "=" ]]; then
-        _object_user_opts_help_actions_text_=$2
+        _object_qpkgs_skipprocessing_text_=$2
     else
-        echo -n "$_object_user_opts_help_actions_text_"
+        echo -n "$_object_qpkgs_skipprocessing_text_"
     fi
     }
-User.Opts.Help.Actions.Init
+QPKGs.SkipProcessing.Init
 
-User.Opts.Help.ActionsAll.Clear()
+IPKGs.Install.Clear()
     {
-    [[ $_object_user_opts_help_actionsall_flag_ != 'true' ]] && return
-    _object_user_opts_help_actionsall_flag_=false
-    [[ $_object_user_opts_help_actionsall_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_help_actionsall_flag_
+    [[ $_object_ipkgs_install_flag_ != 'true' ]] && return
+    _object_ipkgs_install_flag_=false
+    [[ $_object_ipkgs_install_changes_flag_ = 'true' ]] && DebugVar _object_ipkgs_install_flag_
     }
-User.Opts.Help.ActionsAll.Disable()
+IPKGs.Install.Disable()
     {
-    [[ $_object_user_opts_help_actionsall_enable_ != 'true' ]] && return
-    _object_user_opts_help_actionsall_enable_=false
-    [[ $_object_user_opts_help_actionsall_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_help_actionsall_enable_
+    [[ $_object_ipkgs_install_enable_ != 'true' ]] && return
+    _object_ipkgs_install_enable_=false
+    [[ $_object_ipkgs_install_changes_flag_ = 'true' ]] && DebugVar _object_ipkgs_install_enable_
     }
-User.Opts.Help.ActionsAll.DontLogChanges()
+IPKGs.Install.DontLogChanges()
     {
-    [[ $_object_user_opts_help_actionsall_changes_flag_ != 'true' ]] && return
-    _object_user_opts_help_actionsall_changes_flag_=false
+    [[ $_object_ipkgs_install_changes_flag_ != 'true' ]] && return
+    _object_ipkgs_install_changes_flag_=false
     }
-User.Opts.Help.ActionsAll.Enable()
+IPKGs.Install.Enable()
     {
-    [[ $_object_user_opts_help_actionsall_enable_ = 'true' ]] && return
-    _object_user_opts_help_actionsall_enable_=true
-    [[ $_object_user_opts_help_actionsall_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_help_actionsall_enable_
+    [[ $_object_ipkgs_install_enable_ = 'true' ]] && return
+    _object_ipkgs_install_enable_=true
+    [[ $_object_ipkgs_install_changes_flag_ = 'true' ]] && DebugVar _object_ipkgs_install_enable_
     }
-User.Opts.Help.ActionsAll.Init()
+IPKGs.Install.Init()
     {
-    _object_user_opts_help_actionsall_text_=''
-    _object_user_opts_help_actionsall_flag_=false
-    _object_user_opts_help_actionsall_changes_flag_=true
-    _object_user_opts_help_actionsall_enable_=false
+    _object_ipkgs_install_text_=''
+    _object_ipkgs_install_flag_=false
+    _object_ipkgs_install_changes_flag_=true
+    _object_ipkgs_install_enable_=false
     }
-User.Opts.Help.ActionsAll.IsDisabled()
+IPKGs.Install.IsDisabled()
     {
-    [[ $_object_user_opts_help_actionsall_enable_ != 'true' ]]
+    [[ $_object_ipkgs_install_enable_ != 'true' ]]
     }
-User.Opts.Help.ActionsAll.IsEnabled()
+IPKGs.Install.IsEnabled()
     {
-    [[ $_object_user_opts_help_actionsall_enable_ = 'true' ]]
+    [[ $_object_ipkgs_install_enable_ = 'true' ]]
     }
-User.Opts.Help.ActionsAll.IsNot()
+IPKGs.Install.IsNot()
     {
-    [[ $_object_user_opts_help_actionsall_flag_ != 'true' ]]
+    [[ $_object_ipkgs_install_flag_ != 'true' ]]
     }
-User.Opts.Help.ActionsAll.IsSet()
+IPKGs.Install.IsSet()
     {
-    [[ $_object_user_opts_help_actionsall_flag_ = 'true' ]]
+    [[ $_object_ipkgs_install_flag_ = 'true' ]]
     }
-User.Opts.Help.ActionsAll.LogChanges()
+IPKGs.Install.LogChanges()
     {
-    [[ $_object_user_opts_help_actionsall_changes_flag_ = 'true' ]] && return
-    _object_user_opts_help_actionsall_changes_flag_=true
+    [[ $_object_ipkgs_install_changes_flag_ = 'true' ]] && return
+    _object_ipkgs_install_changes_flag_=true
     }
-User.Opts.Help.ActionsAll.Set()
+IPKGs.Install.Set()
     {
-    [[ $_object_user_opts_help_actionsall_flag_ = 'true' ]] && return
-    _object_user_opts_help_actionsall_flag_=true
-    [[ $_object_user_opts_help_actionsall_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_help_actionsall_flag_
+    [[ $_object_ipkgs_install_flag_ = 'true' ]] && return
+    _object_ipkgs_install_flag_=true
+    [[ $_object_ipkgs_install_changes_flag_ = 'true' ]] && DebugVar _object_ipkgs_install_flag_
     }
-User.Opts.Help.ActionsAll.Text()
+IPKGs.Install.Text()
     {
     if [[ -n ${1:-} && $1 = "=" ]]; then
-        _object_user_opts_help_actionsall_text_=$2
+        _object_ipkgs_install_text_=$2
     else
-        echo -n "$_object_user_opts_help_actionsall_text_"
+        echo -n "$_object_ipkgs_install_text_"
     fi
     }
-User.Opts.Help.ActionsAll.Init
+IPKGs.Install.Init
 
-User.Opts.Help.Backups.Clear()
+PIPs.Install.Clear()
     {
-    [[ $_object_user_opts_help_backups_flag_ != 'true' ]] && return
-    _object_user_opts_help_backups_flag_=false
-    [[ $_object_user_opts_help_backups_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_help_backups_flag_
+    [[ $_object_pips_install_flag_ != 'true' ]] && return
+    _object_pips_install_flag_=false
+    [[ $_object_pips_install_changes_flag_ = 'true' ]] && DebugVar _object_pips_install_flag_
     }
-User.Opts.Help.Backups.Disable()
+PIPs.Install.Disable()
     {
-    [[ $_object_user_opts_help_backups_enable_ != 'true' ]] && return
-    _object_user_opts_help_backups_enable_=false
-    [[ $_object_user_opts_help_backups_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_help_backups_enable_
+    [[ $_object_pips_install_enable_ != 'true' ]] && return
+    _object_pips_install_enable_=false
+    [[ $_object_pips_install_changes_flag_ = 'true' ]] && DebugVar _object_pips_install_enable_
     }
-User.Opts.Help.Backups.DontLogChanges()
+PIPs.Install.DontLogChanges()
     {
-    [[ $_object_user_opts_help_backups_changes_flag_ != 'true' ]] && return
-    _object_user_opts_help_backups_changes_flag_=false
+    [[ $_object_pips_install_changes_flag_ != 'true' ]] && return
+    _object_pips_install_changes_flag_=false
     }
-User.Opts.Help.Backups.Enable()
+PIPs.Install.Enable()
     {
-    [[ $_object_user_opts_help_backups_enable_ = 'true' ]] && return
-    _object_user_opts_help_backups_enable_=true
-    [[ $_object_user_opts_help_backups_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_help_backups_enable_
+    [[ $_object_pips_install_enable_ = 'true' ]] && return
+    _object_pips_install_enable_=true
+    [[ $_object_pips_install_changes_flag_ = 'true' ]] && DebugVar _object_pips_install_enable_
     }
-User.Opts.Help.Backups.Init()
+PIPs.Install.Init()
     {
-    _object_user_opts_help_backups_text_=''
-    _object_user_opts_help_backups_flag_=false
-    _object_user_opts_help_backups_changes_flag_=true
-    _object_user_opts_help_backups_enable_=false
+    _object_pips_install_text_=''
+    _object_pips_install_flag_=false
+    _object_pips_install_changes_flag_=true
+    _object_pips_install_enable_=false
     }
-User.Opts.Help.Backups.IsDisabled()
+PIPs.Install.IsDisabled()
     {
-    [[ $_object_user_opts_help_backups_enable_ != 'true' ]]
+    [[ $_object_pips_install_enable_ != 'true' ]]
     }
-User.Opts.Help.Backups.IsEnabled()
+PIPs.Install.IsEnabled()
     {
-    [[ $_object_user_opts_help_backups_enable_ = 'true' ]]
+    [[ $_object_pips_install_enable_ = 'true' ]]
     }
-User.Opts.Help.Backups.IsNot()
+PIPs.Install.IsNot()
     {
-    [[ $_object_user_opts_help_backups_flag_ != 'true' ]]
+    [[ $_object_pips_install_flag_ != 'true' ]]
     }
-User.Opts.Help.Backups.IsSet()
+PIPs.Install.IsSet()
     {
-    [[ $_object_user_opts_help_backups_flag_ = 'true' ]]
+    [[ $_object_pips_install_flag_ = 'true' ]]
     }
-User.Opts.Help.Backups.LogChanges()
+PIPs.Install.LogChanges()
     {
-    [[ $_object_user_opts_help_backups_changes_flag_ = 'true' ]] && return
-    _object_user_opts_help_backups_changes_flag_=true
+    [[ $_object_pips_install_changes_flag_ = 'true' ]] && return
+    _object_pips_install_changes_flag_=true
     }
-User.Opts.Help.Backups.Set()
+PIPs.Install.Set()
     {
-    [[ $_object_user_opts_help_backups_flag_ = 'true' ]] && return
-    _object_user_opts_help_backups_flag_=true
-    [[ $_object_user_opts_help_backups_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_help_backups_flag_
+    [[ $_object_pips_install_flag_ = 'true' ]] && return
+    _object_pips_install_flag_=true
+    [[ $_object_pips_install_changes_flag_ = 'true' ]] && DebugVar _object_pips_install_flag_
     }
-User.Opts.Help.Backups.Text()
+PIPs.Install.Text()
     {
     if [[ -n ${1:-} && $1 = "=" ]]; then
-        _object_user_opts_help_backups_text_=$2
+        _object_pips_install_text_=$2
     else
-        echo -n "$_object_user_opts_help_backups_text_"
+        echo -n "$_object_pips_install_text_"
     fi
     }
-User.Opts.Help.Backups.Init
+PIPs.Install.Init
 
-User.Opts.Help.Basic.Clear()
+Opts.Help.Abbreviations.Clear()
     {
-    [[ $_object_user_opts_help_basic_flag_ != 'true' ]] && return
-    _object_user_opts_help_basic_flag_=false
-    [[ $_object_user_opts_help_basic_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_help_basic_flag_
+    [[ $_object_opts_help_abbreviations_flag_ != 'true' ]] && return
+    _object_opts_help_abbreviations_flag_=false
+    [[ $_object_opts_help_abbreviations_changes_flag_ = 'true' ]] && DebugVar _object_opts_help_abbreviations_flag_
     }
-User.Opts.Help.Basic.Disable()
+Opts.Help.Abbreviations.Disable()
     {
-    [[ $_object_user_opts_help_basic_enable_ != 'true' ]] && return
-    _object_user_opts_help_basic_enable_=false
-    [[ $_object_user_opts_help_basic_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_help_basic_enable_
+    [[ $_object_opts_help_abbreviations_enable_ != 'true' ]] && return
+    _object_opts_help_abbreviations_enable_=false
+    [[ $_object_opts_help_abbreviations_changes_flag_ = 'true' ]] && DebugVar _object_opts_help_abbreviations_enable_
     }
-User.Opts.Help.Basic.DontLogChanges()
+Opts.Help.Abbreviations.DontLogChanges()
     {
-    [[ $_object_user_opts_help_basic_changes_flag_ != 'true' ]] && return
-    _object_user_opts_help_basic_changes_flag_=false
+    [[ $_object_opts_help_abbreviations_changes_flag_ != 'true' ]] && return
+    _object_opts_help_abbreviations_changes_flag_=false
     }
-User.Opts.Help.Basic.Enable()
+Opts.Help.Abbreviations.Enable()
     {
-    [[ $_object_user_opts_help_basic_enable_ = 'true' ]] && return
-    _object_user_opts_help_basic_enable_=true
-    [[ $_object_user_opts_help_basic_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_help_basic_enable_
+    [[ $_object_opts_help_abbreviations_enable_ = 'true' ]] && return
+    _object_opts_help_abbreviations_enable_=true
+    [[ $_object_opts_help_abbreviations_changes_flag_ = 'true' ]] && DebugVar _object_opts_help_abbreviations_enable_
     }
-User.Opts.Help.Basic.Init()
+Opts.Help.Abbreviations.Init()
     {
-    _object_user_opts_help_basic_text_=''
-    _object_user_opts_help_basic_flag_=false
-    _object_user_opts_help_basic_changes_flag_=true
-    _object_user_opts_help_basic_enable_=false
+    _object_opts_help_abbreviations_text_=''
+    _object_opts_help_abbreviations_flag_=false
+    _object_opts_help_abbreviations_changes_flag_=true
+    _object_opts_help_abbreviations_enable_=false
     }
-User.Opts.Help.Basic.IsDisabled()
+Opts.Help.Abbreviations.IsDisabled()
     {
-    [[ $_object_user_opts_help_basic_enable_ != 'true' ]]
+    [[ $_object_opts_help_abbreviations_enable_ != 'true' ]]
     }
-User.Opts.Help.Basic.IsEnabled()
+Opts.Help.Abbreviations.IsEnabled()
     {
-    [[ $_object_user_opts_help_basic_enable_ = 'true' ]]
+    [[ $_object_opts_help_abbreviations_enable_ = 'true' ]]
     }
-User.Opts.Help.Basic.IsNot()
+Opts.Help.Abbreviations.IsNot()
     {
-    [[ $_object_user_opts_help_basic_flag_ != 'true' ]]
+    [[ $_object_opts_help_abbreviations_flag_ != 'true' ]]
     }
-User.Opts.Help.Basic.IsSet()
+Opts.Help.Abbreviations.IsSet()
     {
-    [[ $_object_user_opts_help_basic_flag_ = 'true' ]]
+    [[ $_object_opts_help_abbreviations_flag_ = 'true' ]]
     }
-User.Opts.Help.Basic.LogChanges()
+Opts.Help.Abbreviations.LogChanges()
     {
-    [[ $_object_user_opts_help_basic_changes_flag_ = 'true' ]] && return
-    _object_user_opts_help_basic_changes_flag_=true
+    [[ $_object_opts_help_abbreviations_changes_flag_ = 'true' ]] && return
+    _object_opts_help_abbreviations_changes_flag_=true
     }
-User.Opts.Help.Basic.Set()
+Opts.Help.Abbreviations.Set()
     {
-    [[ $_object_user_opts_help_basic_flag_ = 'true' ]] && return
-    _object_user_opts_help_basic_flag_=true
-    [[ $_object_user_opts_help_basic_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_help_basic_flag_
+    [[ $_object_opts_help_abbreviations_flag_ = 'true' ]] && return
+    _object_opts_help_abbreviations_flag_=true
+    [[ $_object_opts_help_abbreviations_changes_flag_ = 'true' ]] && DebugVar _object_opts_help_abbreviations_flag_
     }
-User.Opts.Help.Basic.Text()
+Opts.Help.Abbreviations.Text()
     {
     if [[ -n ${1:-} && $1 = "=" ]]; then
-        _object_user_opts_help_basic_text_=$2
+        _object_opts_help_abbreviations_text_=$2
     else
-        echo -n "$_object_user_opts_help_basic_text_"
+        echo -n "$_object_opts_help_abbreviations_text_"
     fi
     }
-User.Opts.Help.Basic.Init
+Opts.Help.Abbreviations.Init
 
-User.Opts.Help.Options.Clear()
+Opts.Help.Actions.Clear()
     {
-    [[ $_object_user_opts_help_options_flag_ != 'true' ]] && return
-    _object_user_opts_help_options_flag_=false
-    [[ $_object_user_opts_help_options_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_help_options_flag_
+    [[ $_object_opts_help_actions_flag_ != 'true' ]] && return
+    _object_opts_help_actions_flag_=false
+    [[ $_object_opts_help_actions_changes_flag_ = 'true' ]] && DebugVar _object_opts_help_actions_flag_
     }
-User.Opts.Help.Options.Disable()
+Opts.Help.Actions.Disable()
     {
-    [[ $_object_user_opts_help_options_enable_ != 'true' ]] && return
-    _object_user_opts_help_options_enable_=false
-    [[ $_object_user_opts_help_options_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_help_options_enable_
+    [[ $_object_opts_help_actions_enable_ != 'true' ]] && return
+    _object_opts_help_actions_enable_=false
+    [[ $_object_opts_help_actions_changes_flag_ = 'true' ]] && DebugVar _object_opts_help_actions_enable_
     }
-User.Opts.Help.Options.DontLogChanges()
+Opts.Help.Actions.DontLogChanges()
     {
-    [[ $_object_user_opts_help_options_changes_flag_ != 'true' ]] && return
-    _object_user_opts_help_options_changes_flag_=false
+    [[ $_object_opts_help_actions_changes_flag_ != 'true' ]] && return
+    _object_opts_help_actions_changes_flag_=false
     }
-User.Opts.Help.Options.Enable()
+Opts.Help.Actions.Enable()
     {
-    [[ $_object_user_opts_help_options_enable_ = 'true' ]] && return
-    _object_user_opts_help_options_enable_=true
-    [[ $_object_user_opts_help_options_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_help_options_enable_
+    [[ $_object_opts_help_actions_enable_ = 'true' ]] && return
+    _object_opts_help_actions_enable_=true
+    [[ $_object_opts_help_actions_changes_flag_ = 'true' ]] && DebugVar _object_opts_help_actions_enable_
     }
-User.Opts.Help.Options.Init()
+Opts.Help.Actions.Init()
     {
-    _object_user_opts_help_options_text_=''
-    _object_user_opts_help_options_flag_=false
-    _object_user_opts_help_options_changes_flag_=true
-    _object_user_opts_help_options_enable_=false
+    _object_opts_help_actions_text_=''
+    _object_opts_help_actions_flag_=false
+    _object_opts_help_actions_changes_flag_=true
+    _object_opts_help_actions_enable_=false
     }
-User.Opts.Help.Options.IsDisabled()
+Opts.Help.Actions.IsDisabled()
     {
-    [[ $_object_user_opts_help_options_enable_ != 'true' ]]
+    [[ $_object_opts_help_actions_enable_ != 'true' ]]
     }
-User.Opts.Help.Options.IsEnabled()
+Opts.Help.Actions.IsEnabled()
     {
-    [[ $_object_user_opts_help_options_enable_ = 'true' ]]
+    [[ $_object_opts_help_actions_enable_ = 'true' ]]
     }
-User.Opts.Help.Options.IsNot()
+Opts.Help.Actions.IsNot()
     {
-    [[ $_object_user_opts_help_options_flag_ != 'true' ]]
+    [[ $_object_opts_help_actions_flag_ != 'true' ]]
     }
-User.Opts.Help.Options.IsSet()
+Opts.Help.Actions.IsSet()
     {
-    [[ $_object_user_opts_help_options_flag_ = 'true' ]]
+    [[ $_object_opts_help_actions_flag_ = 'true' ]]
     }
-User.Opts.Help.Options.LogChanges()
+Opts.Help.Actions.LogChanges()
     {
-    [[ $_object_user_opts_help_options_changes_flag_ = 'true' ]] && return
-    _object_user_opts_help_options_changes_flag_=true
+    [[ $_object_opts_help_actions_changes_flag_ = 'true' ]] && return
+    _object_opts_help_actions_changes_flag_=true
     }
-User.Opts.Help.Options.Set()
+Opts.Help.Actions.Set()
     {
-    [[ $_object_user_opts_help_options_flag_ = 'true' ]] && return
-    _object_user_opts_help_options_flag_=true
-    [[ $_object_user_opts_help_options_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_help_options_flag_
+    [[ $_object_opts_help_actions_flag_ = 'true' ]] && return
+    _object_opts_help_actions_flag_=true
+    [[ $_object_opts_help_actions_changes_flag_ = 'true' ]] && DebugVar _object_opts_help_actions_flag_
     }
-User.Opts.Help.Options.Text()
+Opts.Help.Actions.Text()
     {
     if [[ -n ${1:-} && $1 = "=" ]]; then
-        _object_user_opts_help_options_text_=$2
+        _object_opts_help_actions_text_=$2
     else
-        echo -n "$_object_user_opts_help_options_text_"
+        echo -n "$_object_opts_help_actions_text_"
     fi
     }
-User.Opts.Help.Options.Init
+Opts.Help.Actions.Init
 
-User.Opts.Help.Packages.Clear()
+Opts.Help.ActionsAll.Clear()
     {
-    [[ $_object_user_opts_help_packages_flag_ != 'true' ]] && return
-    _object_user_opts_help_packages_flag_=false
-    [[ $_object_user_opts_help_packages_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_help_packages_flag_
+    [[ $_object_opts_help_actionsall_flag_ != 'true' ]] && return
+    _object_opts_help_actionsall_flag_=false
+    [[ $_object_opts_help_actionsall_changes_flag_ = 'true' ]] && DebugVar _object_opts_help_actionsall_flag_
     }
-User.Opts.Help.Packages.Disable()
+Opts.Help.ActionsAll.Disable()
     {
-    [[ $_object_user_opts_help_packages_enable_ != 'true' ]] && return
-    _object_user_opts_help_packages_enable_=false
-    [[ $_object_user_opts_help_packages_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_help_packages_enable_
+    [[ $_object_opts_help_actionsall_enable_ != 'true' ]] && return
+    _object_opts_help_actionsall_enable_=false
+    [[ $_object_opts_help_actionsall_changes_flag_ = 'true' ]] && DebugVar _object_opts_help_actionsall_enable_
     }
-User.Opts.Help.Packages.DontLogChanges()
+Opts.Help.ActionsAll.DontLogChanges()
     {
-    [[ $_object_user_opts_help_packages_changes_flag_ != 'true' ]] && return
-    _object_user_opts_help_packages_changes_flag_=false
+    [[ $_object_opts_help_actionsall_changes_flag_ != 'true' ]] && return
+    _object_opts_help_actionsall_changes_flag_=false
     }
-User.Opts.Help.Packages.Enable()
+Opts.Help.ActionsAll.Enable()
     {
-    [[ $_object_user_opts_help_packages_enable_ = 'true' ]] && return
-    _object_user_opts_help_packages_enable_=true
-    [[ $_object_user_opts_help_packages_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_help_packages_enable_
+    [[ $_object_opts_help_actionsall_enable_ = 'true' ]] && return
+    _object_opts_help_actionsall_enable_=true
+    [[ $_object_opts_help_actionsall_changes_flag_ = 'true' ]] && DebugVar _object_opts_help_actionsall_enable_
     }
-User.Opts.Help.Packages.Init()
+Opts.Help.ActionsAll.Init()
     {
-    _object_user_opts_help_packages_text_=''
-    _object_user_opts_help_packages_flag_=false
-    _object_user_opts_help_packages_changes_flag_=true
-    _object_user_opts_help_packages_enable_=false
+    _object_opts_help_actionsall_text_=''
+    _object_opts_help_actionsall_flag_=false
+    _object_opts_help_actionsall_changes_flag_=true
+    _object_opts_help_actionsall_enable_=false
     }
-User.Opts.Help.Packages.IsDisabled()
+Opts.Help.ActionsAll.IsDisabled()
     {
-    [[ $_object_user_opts_help_packages_enable_ != 'true' ]]
+    [[ $_object_opts_help_actionsall_enable_ != 'true' ]]
     }
-User.Opts.Help.Packages.IsEnabled()
+Opts.Help.ActionsAll.IsEnabled()
     {
-    [[ $_object_user_opts_help_packages_enable_ = 'true' ]]
+    [[ $_object_opts_help_actionsall_enable_ = 'true' ]]
     }
-User.Opts.Help.Packages.IsNot()
+Opts.Help.ActionsAll.IsNot()
     {
-    [[ $_object_user_opts_help_packages_flag_ != 'true' ]]
+    [[ $_object_opts_help_actionsall_flag_ != 'true' ]]
     }
-User.Opts.Help.Packages.IsSet()
+Opts.Help.ActionsAll.IsSet()
     {
-    [[ $_object_user_opts_help_packages_flag_ = 'true' ]]
+    [[ $_object_opts_help_actionsall_flag_ = 'true' ]]
     }
-User.Opts.Help.Packages.LogChanges()
+Opts.Help.ActionsAll.LogChanges()
     {
-    [[ $_object_user_opts_help_packages_changes_flag_ = 'true' ]] && return
-    _object_user_opts_help_packages_changes_flag_=true
+    [[ $_object_opts_help_actionsall_changes_flag_ = 'true' ]] && return
+    _object_opts_help_actionsall_changes_flag_=true
     }
-User.Opts.Help.Packages.Set()
+Opts.Help.ActionsAll.Set()
     {
-    [[ $_object_user_opts_help_packages_flag_ = 'true' ]] && return
-    _object_user_opts_help_packages_flag_=true
-    [[ $_object_user_opts_help_packages_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_help_packages_flag_
+    [[ $_object_opts_help_actionsall_flag_ = 'true' ]] && return
+    _object_opts_help_actionsall_flag_=true
+    [[ $_object_opts_help_actionsall_changes_flag_ = 'true' ]] && DebugVar _object_opts_help_actionsall_flag_
     }
-User.Opts.Help.Packages.Text()
+Opts.Help.ActionsAll.Text()
     {
     if [[ -n ${1:-} && $1 = "=" ]]; then
-        _object_user_opts_help_packages_text_=$2
+        _object_opts_help_actionsall_text_=$2
     else
-        echo -n "$_object_user_opts_help_packages_text_"
+        echo -n "$_object_opts_help_actionsall_text_"
     fi
     }
-User.Opts.Help.Packages.Init
+Opts.Help.ActionsAll.Init
 
-User.Opts.Help.Problems.Clear()
+Opts.Help.Backups.Clear()
     {
-    [[ $_object_user_opts_help_problems_flag_ != 'true' ]] && return
-    _object_user_opts_help_problems_flag_=false
-    [[ $_object_user_opts_help_problems_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_help_problems_flag_
+    [[ $_object_opts_help_backups_flag_ != 'true' ]] && return
+    _object_opts_help_backups_flag_=false
+    [[ $_object_opts_help_backups_changes_flag_ = 'true' ]] && DebugVar _object_opts_help_backups_flag_
     }
-User.Opts.Help.Problems.Disable()
+Opts.Help.Backups.Disable()
     {
-    [[ $_object_user_opts_help_problems_enable_ != 'true' ]] && return
-    _object_user_opts_help_problems_enable_=false
-    [[ $_object_user_opts_help_problems_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_help_problems_enable_
+    [[ $_object_opts_help_backups_enable_ != 'true' ]] && return
+    _object_opts_help_backups_enable_=false
+    [[ $_object_opts_help_backups_changes_flag_ = 'true' ]] && DebugVar _object_opts_help_backups_enable_
     }
-User.Opts.Help.Problems.DontLogChanges()
+Opts.Help.Backups.DontLogChanges()
     {
-    [[ $_object_user_opts_help_problems_changes_flag_ != 'true' ]] && return
-    _object_user_opts_help_problems_changes_flag_=false
+    [[ $_object_opts_help_backups_changes_flag_ != 'true' ]] && return
+    _object_opts_help_backups_changes_flag_=false
     }
-User.Opts.Help.Problems.Enable()
+Opts.Help.Backups.Enable()
     {
-    [[ $_object_user_opts_help_problems_enable_ = 'true' ]] && return
-    _object_user_opts_help_problems_enable_=true
-    [[ $_object_user_opts_help_problems_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_help_problems_enable_
+    [[ $_object_opts_help_backups_enable_ = 'true' ]] && return
+    _object_opts_help_backups_enable_=true
+    [[ $_object_opts_help_backups_changes_flag_ = 'true' ]] && DebugVar _object_opts_help_backups_enable_
     }
-User.Opts.Help.Problems.Init()
+Opts.Help.Backups.Init()
     {
-    _object_user_opts_help_problems_text_=''
-    _object_user_opts_help_problems_flag_=false
-    _object_user_opts_help_problems_changes_flag_=true
-    _object_user_opts_help_problems_enable_=false
+    _object_opts_help_backups_text_=''
+    _object_opts_help_backups_flag_=false
+    _object_opts_help_backups_changes_flag_=true
+    _object_opts_help_backups_enable_=false
     }
-User.Opts.Help.Problems.IsDisabled()
+Opts.Help.Backups.IsDisabled()
     {
-    [[ $_object_user_opts_help_problems_enable_ != 'true' ]]
+    [[ $_object_opts_help_backups_enable_ != 'true' ]]
     }
-User.Opts.Help.Problems.IsEnabled()
+Opts.Help.Backups.IsEnabled()
     {
-    [[ $_object_user_opts_help_problems_enable_ = 'true' ]]
+    [[ $_object_opts_help_backups_enable_ = 'true' ]]
     }
-User.Opts.Help.Problems.IsNot()
+Opts.Help.Backups.IsNot()
     {
-    [[ $_object_user_opts_help_problems_flag_ != 'true' ]]
+    [[ $_object_opts_help_backups_flag_ != 'true' ]]
     }
-User.Opts.Help.Problems.IsSet()
+Opts.Help.Backups.IsSet()
     {
-    [[ $_object_user_opts_help_problems_flag_ = 'true' ]]
+    [[ $_object_opts_help_backups_flag_ = 'true' ]]
     }
-User.Opts.Help.Problems.LogChanges()
+Opts.Help.Backups.LogChanges()
     {
-    [[ $_object_user_opts_help_problems_changes_flag_ = 'true' ]] && return
-    _object_user_opts_help_problems_changes_flag_=true
+    [[ $_object_opts_help_backups_changes_flag_ = 'true' ]] && return
+    _object_opts_help_backups_changes_flag_=true
     }
-User.Opts.Help.Problems.Set()
+Opts.Help.Backups.Set()
     {
-    [[ $_object_user_opts_help_problems_flag_ = 'true' ]] && return
-    _object_user_opts_help_problems_flag_=true
-    [[ $_object_user_opts_help_problems_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_help_problems_flag_
+    [[ $_object_opts_help_backups_flag_ = 'true' ]] && return
+    _object_opts_help_backups_flag_=true
+    [[ $_object_opts_help_backups_changes_flag_ = 'true' ]] && DebugVar _object_opts_help_backups_flag_
     }
-User.Opts.Help.Problems.Text()
+Opts.Help.Backups.Text()
     {
     if [[ -n ${1:-} && $1 = "=" ]]; then
-        _object_user_opts_help_problems_text_=$2
+        _object_opts_help_backups_text_=$2
     else
-        echo -n "$_object_user_opts_help_problems_text_"
+        echo -n "$_object_opts_help_backups_text_"
     fi
     }
-User.Opts.Help.Problems.Init
+Opts.Help.Backups.Init
 
-User.Opts.Help.Status.Clear()
+Opts.Help.Basic.Clear()
     {
-    [[ $_object_user_opts_help_status_flag_ != 'true' ]] && return
-    _object_user_opts_help_status_flag_=false
-    [[ $_object_user_opts_help_status_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_help_status_flag_
+    [[ $_object_opts_help_basic_flag_ != 'true' ]] && return
+    _object_opts_help_basic_flag_=false
+    [[ $_object_opts_help_basic_changes_flag_ = 'true' ]] && DebugVar _object_opts_help_basic_flag_
     }
-User.Opts.Help.Status.Disable()
+Opts.Help.Basic.Disable()
     {
-    [[ $_object_user_opts_help_status_enable_ != 'true' ]] && return
-    _object_user_opts_help_status_enable_=false
-    [[ $_object_user_opts_help_status_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_help_status_enable_
+    [[ $_object_opts_help_basic_enable_ != 'true' ]] && return
+    _object_opts_help_basic_enable_=false
+    [[ $_object_opts_help_basic_changes_flag_ = 'true' ]] && DebugVar _object_opts_help_basic_enable_
     }
-User.Opts.Help.Status.DontLogChanges()
+Opts.Help.Basic.DontLogChanges()
     {
-    [[ $_object_user_opts_help_status_changes_flag_ != 'true' ]] && return
-    _object_user_opts_help_status_changes_flag_=false
+    [[ $_object_opts_help_basic_changes_flag_ != 'true' ]] && return
+    _object_opts_help_basic_changes_flag_=false
     }
-User.Opts.Help.Status.Enable()
+Opts.Help.Basic.Enable()
     {
-    [[ $_object_user_opts_help_status_enable_ = 'true' ]] && return
-    _object_user_opts_help_status_enable_=true
-    [[ $_object_user_opts_help_status_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_help_status_enable_
+    [[ $_object_opts_help_basic_enable_ = 'true' ]] && return
+    _object_opts_help_basic_enable_=true
+    [[ $_object_opts_help_basic_changes_flag_ = 'true' ]] && DebugVar _object_opts_help_basic_enable_
     }
-User.Opts.Help.Status.Init()
+Opts.Help.Basic.Init()
     {
-    _object_user_opts_help_status_text_=''
-    _object_user_opts_help_status_flag_=false
-    _object_user_opts_help_status_changes_flag_=true
-    _object_user_opts_help_status_enable_=false
+    _object_opts_help_basic_text_=''
+    _object_opts_help_basic_flag_=false
+    _object_opts_help_basic_changes_flag_=true
+    _object_opts_help_basic_enable_=false
     }
-User.Opts.Help.Status.IsDisabled()
+Opts.Help.Basic.IsDisabled()
     {
-    [[ $_object_user_opts_help_status_enable_ != 'true' ]]
+    [[ $_object_opts_help_basic_enable_ != 'true' ]]
     }
-User.Opts.Help.Status.IsEnabled()
+Opts.Help.Basic.IsEnabled()
     {
-    [[ $_object_user_opts_help_status_enable_ = 'true' ]]
+    [[ $_object_opts_help_basic_enable_ = 'true' ]]
     }
-User.Opts.Help.Status.IsNot()
+Opts.Help.Basic.IsNot()
     {
-    [[ $_object_user_opts_help_status_flag_ != 'true' ]]
+    [[ $_object_opts_help_basic_flag_ != 'true' ]]
     }
-User.Opts.Help.Status.IsSet()
+Opts.Help.Basic.IsSet()
     {
-    [[ $_object_user_opts_help_status_flag_ = 'true' ]]
+    [[ $_object_opts_help_basic_flag_ = 'true' ]]
     }
-User.Opts.Help.Status.LogChanges()
+Opts.Help.Basic.LogChanges()
     {
-    [[ $_object_user_opts_help_status_changes_flag_ = 'true' ]] && return
-    _object_user_opts_help_status_changes_flag_=true
+    [[ $_object_opts_help_basic_changes_flag_ = 'true' ]] && return
+    _object_opts_help_basic_changes_flag_=true
     }
-User.Opts.Help.Status.Set()
+Opts.Help.Basic.Set()
     {
-    [[ $_object_user_opts_help_status_flag_ = 'true' ]] && return
-    _object_user_opts_help_status_flag_=true
-    [[ $_object_user_opts_help_status_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_help_status_flag_
+    [[ $_object_opts_help_basic_flag_ = 'true' ]] && return
+    _object_opts_help_basic_flag_=true
+    [[ $_object_opts_help_basic_changes_flag_ = 'true' ]] && DebugVar _object_opts_help_basic_flag_
     }
-User.Opts.Help.Status.Text()
+Opts.Help.Basic.Text()
     {
     if [[ -n ${1:-} && $1 = "=" ]]; then
-        _object_user_opts_help_status_text_=$2
+        _object_opts_help_basic_text_=$2
     else
-        echo -n "$_object_user_opts_help_status_text_"
+        echo -n "$_object_opts_help_basic_text_"
     fi
     }
-User.Opts.Help.Status.Init
+Opts.Help.Basic.Init
 
-User.Opts.Help.Tips.Clear()
+Opts.Help.Options.Clear()
     {
-    [[ $_object_user_opts_help_tips_flag_ != 'true' ]] && return
-    _object_user_opts_help_tips_flag_=false
-    [[ $_object_user_opts_help_tips_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_help_tips_flag_
+    [[ $_object_opts_help_options_flag_ != 'true' ]] && return
+    _object_opts_help_options_flag_=false
+    [[ $_object_opts_help_options_changes_flag_ = 'true' ]] && DebugVar _object_opts_help_options_flag_
     }
-User.Opts.Help.Tips.Disable()
+Opts.Help.Options.Disable()
     {
-    [[ $_object_user_opts_help_tips_enable_ != 'true' ]] && return
-    _object_user_opts_help_tips_enable_=false
-    [[ $_object_user_opts_help_tips_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_help_tips_enable_
+    [[ $_object_opts_help_options_enable_ != 'true' ]] && return
+    _object_opts_help_options_enable_=false
+    [[ $_object_opts_help_options_changes_flag_ = 'true' ]] && DebugVar _object_opts_help_options_enable_
     }
-User.Opts.Help.Tips.DontLogChanges()
+Opts.Help.Options.DontLogChanges()
     {
-    [[ $_object_user_opts_help_tips_changes_flag_ != 'true' ]] && return
-    _object_user_opts_help_tips_changes_flag_=false
+    [[ $_object_opts_help_options_changes_flag_ != 'true' ]] && return
+    _object_opts_help_options_changes_flag_=false
     }
-User.Opts.Help.Tips.Enable()
+Opts.Help.Options.Enable()
     {
-    [[ $_object_user_opts_help_tips_enable_ = 'true' ]] && return
-    _object_user_opts_help_tips_enable_=true
-    [[ $_object_user_opts_help_tips_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_help_tips_enable_
+    [[ $_object_opts_help_options_enable_ = 'true' ]] && return
+    _object_opts_help_options_enable_=true
+    [[ $_object_opts_help_options_changes_flag_ = 'true' ]] && DebugVar _object_opts_help_options_enable_
     }
-User.Opts.Help.Tips.Init()
+Opts.Help.Options.Init()
     {
-    _object_user_opts_help_tips_text_=''
-    _object_user_opts_help_tips_flag_=false
-    _object_user_opts_help_tips_changes_flag_=true
-    _object_user_opts_help_tips_enable_=false
+    _object_opts_help_options_text_=''
+    _object_opts_help_options_flag_=false
+    _object_opts_help_options_changes_flag_=true
+    _object_opts_help_options_enable_=false
     }
-User.Opts.Help.Tips.IsDisabled()
+Opts.Help.Options.IsDisabled()
     {
-    [[ $_object_user_opts_help_tips_enable_ != 'true' ]]
+    [[ $_object_opts_help_options_enable_ != 'true' ]]
     }
-User.Opts.Help.Tips.IsEnabled()
+Opts.Help.Options.IsEnabled()
     {
-    [[ $_object_user_opts_help_tips_enable_ = 'true' ]]
+    [[ $_object_opts_help_options_enable_ = 'true' ]]
     }
-User.Opts.Help.Tips.IsNot()
+Opts.Help.Options.IsNot()
     {
-    [[ $_object_user_opts_help_tips_flag_ != 'true' ]]
+    [[ $_object_opts_help_options_flag_ != 'true' ]]
     }
-User.Opts.Help.Tips.IsSet()
+Opts.Help.Options.IsSet()
     {
-    [[ $_object_user_opts_help_tips_flag_ = 'true' ]]
+    [[ $_object_opts_help_options_flag_ = 'true' ]]
     }
-User.Opts.Help.Tips.LogChanges()
+Opts.Help.Options.LogChanges()
     {
-    [[ $_object_user_opts_help_tips_changes_flag_ = 'true' ]] && return
-    _object_user_opts_help_tips_changes_flag_=true
+    [[ $_object_opts_help_options_changes_flag_ = 'true' ]] && return
+    _object_opts_help_options_changes_flag_=true
     }
-User.Opts.Help.Tips.Set()
+Opts.Help.Options.Set()
     {
-    [[ $_object_user_opts_help_tips_flag_ = 'true' ]] && return
-    _object_user_opts_help_tips_flag_=true
-    [[ $_object_user_opts_help_tips_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_help_tips_flag_
+    [[ $_object_opts_help_options_flag_ = 'true' ]] && return
+    _object_opts_help_options_flag_=true
+    [[ $_object_opts_help_options_changes_flag_ = 'true' ]] && DebugVar _object_opts_help_options_flag_
     }
-User.Opts.Help.Tips.Text()
+Opts.Help.Options.Text()
     {
     if [[ -n ${1:-} && $1 = "=" ]]; then
-        _object_user_opts_help_tips_text_=$2
+        _object_opts_help_options_text_=$2
     else
-        echo -n "$_object_user_opts_help_tips_text_"
+        echo -n "$_object_opts_help_options_text_"
     fi
     }
-User.Opts.Help.Tips.Init
+Opts.Help.Options.Init
 
-User.Opts.Dependencies.Check.Clear()
+Opts.Help.Packages.Clear()
     {
-    [[ $_object_user_opts_dependencies_check_flag_ != 'true' ]] && return
-    _object_user_opts_dependencies_check_flag_=false
-    [[ $_object_user_opts_dependencies_check_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_dependencies_check_flag_
+    [[ $_object_opts_help_packages_flag_ != 'true' ]] && return
+    _object_opts_help_packages_flag_=false
+    [[ $_object_opts_help_packages_changes_flag_ = 'true' ]] && DebugVar _object_opts_help_packages_flag_
     }
-User.Opts.Dependencies.Check.Disable()
+Opts.Help.Packages.Disable()
     {
-    [[ $_object_user_opts_dependencies_check_enable_ != 'true' ]] && return
-    _object_user_opts_dependencies_check_enable_=false
-    [[ $_object_user_opts_dependencies_check_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_dependencies_check_enable_
+    [[ $_object_opts_help_packages_enable_ != 'true' ]] && return
+    _object_opts_help_packages_enable_=false
+    [[ $_object_opts_help_packages_changes_flag_ = 'true' ]] && DebugVar _object_opts_help_packages_enable_
     }
-User.Opts.Dependencies.Check.DontLogChanges()
+Opts.Help.Packages.DontLogChanges()
     {
-    [[ $_object_user_opts_dependencies_check_changes_flag_ != 'true' ]] && return
-    _object_user_opts_dependencies_check_changes_flag_=false
+    [[ $_object_opts_help_packages_changes_flag_ != 'true' ]] && return
+    _object_opts_help_packages_changes_flag_=false
     }
-User.Opts.Dependencies.Check.Enable()
+Opts.Help.Packages.Enable()
     {
-    [[ $_object_user_opts_dependencies_check_enable_ = 'true' ]] && return
-    _object_user_opts_dependencies_check_enable_=true
-    [[ $_object_user_opts_dependencies_check_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_dependencies_check_enable_
+    [[ $_object_opts_help_packages_enable_ = 'true' ]] && return
+    _object_opts_help_packages_enable_=true
+    [[ $_object_opts_help_packages_changes_flag_ = 'true' ]] && DebugVar _object_opts_help_packages_enable_
     }
-User.Opts.Dependencies.Check.Init()
+Opts.Help.Packages.Init()
     {
-    _object_user_opts_dependencies_check_text_=''
-    _object_user_opts_dependencies_check_flag_=false
-    _object_user_opts_dependencies_check_changes_flag_=true
-    _object_user_opts_dependencies_check_enable_=false
+    _object_opts_help_packages_text_=''
+    _object_opts_help_packages_flag_=false
+    _object_opts_help_packages_changes_flag_=true
+    _object_opts_help_packages_enable_=false
     }
-User.Opts.Dependencies.Check.IsDisabled()
+Opts.Help.Packages.IsDisabled()
     {
-    [[ $_object_user_opts_dependencies_check_enable_ != 'true' ]]
+    [[ $_object_opts_help_packages_enable_ != 'true' ]]
     }
-User.Opts.Dependencies.Check.IsEnabled()
+Opts.Help.Packages.IsEnabled()
     {
-    [[ $_object_user_opts_dependencies_check_enable_ = 'true' ]]
+    [[ $_object_opts_help_packages_enable_ = 'true' ]]
     }
-User.Opts.Dependencies.Check.IsNot()
+Opts.Help.Packages.IsNot()
     {
-    [[ $_object_user_opts_dependencies_check_flag_ != 'true' ]]
+    [[ $_object_opts_help_packages_flag_ != 'true' ]]
     }
-User.Opts.Dependencies.Check.IsSet()
+Opts.Help.Packages.IsSet()
     {
-    [[ $_object_user_opts_dependencies_check_flag_ = 'true' ]]
+    [[ $_object_opts_help_packages_flag_ = 'true' ]]
     }
-User.Opts.Dependencies.Check.LogChanges()
+Opts.Help.Packages.LogChanges()
     {
-    [[ $_object_user_opts_dependencies_check_changes_flag_ = 'true' ]] && return
-    _object_user_opts_dependencies_check_changes_flag_=true
+    [[ $_object_opts_help_packages_changes_flag_ = 'true' ]] && return
+    _object_opts_help_packages_changes_flag_=true
     }
-User.Opts.Dependencies.Check.Set()
+Opts.Help.Packages.Set()
     {
-    [[ $_object_user_opts_dependencies_check_flag_ = 'true' ]] && return
-    _object_user_opts_dependencies_check_flag_=true
-    [[ $_object_user_opts_dependencies_check_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_dependencies_check_flag_
+    [[ $_object_opts_help_packages_flag_ = 'true' ]] && return
+    _object_opts_help_packages_flag_=true
+    [[ $_object_opts_help_packages_changes_flag_ = 'true' ]] && DebugVar _object_opts_help_packages_flag_
     }
-User.Opts.Dependencies.Check.Text()
+Opts.Help.Packages.Text()
     {
     if [[ -n ${1:-} && $1 = "=" ]]; then
-        _object_user_opts_dependencies_check_text_=$2
+        _object_opts_help_packages_text_=$2
     else
-        echo -n "$_object_user_opts_dependencies_check_text_"
+        echo -n "$_object_opts_help_packages_text_"
     fi
     }
-User.Opts.Dependencies.Check.Init
+Opts.Help.Packages.Init
 
-User.Opts.IgnoreFreeSpace.Clear()
+Opts.Help.Problems.Clear()
     {
-    [[ $_object_user_opts_ignorefreespace_flag_ != 'true' ]] && return
-    _object_user_opts_ignorefreespace_flag_=false
-    [[ $_object_user_opts_ignorefreespace_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_ignorefreespace_flag_
+    [[ $_object_opts_help_problems_flag_ != 'true' ]] && return
+    _object_opts_help_problems_flag_=false
+    [[ $_object_opts_help_problems_changes_flag_ = 'true' ]] && DebugVar _object_opts_help_problems_flag_
     }
-User.Opts.IgnoreFreeSpace.Disable()
+Opts.Help.Problems.Disable()
     {
-    [[ $_object_user_opts_ignorefreespace_enable_ != 'true' ]] && return
-    _object_user_opts_ignorefreespace_enable_=false
-    [[ $_object_user_opts_ignorefreespace_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_ignorefreespace_enable_
+    [[ $_object_opts_help_problems_enable_ != 'true' ]] && return
+    _object_opts_help_problems_enable_=false
+    [[ $_object_opts_help_problems_changes_flag_ = 'true' ]] && DebugVar _object_opts_help_problems_enable_
     }
-User.Opts.IgnoreFreeSpace.DontLogChanges()
+Opts.Help.Problems.DontLogChanges()
     {
-    [[ $_object_user_opts_ignorefreespace_changes_flag_ != 'true' ]] && return
-    _object_user_opts_ignorefreespace_changes_flag_=false
+    [[ $_object_opts_help_problems_changes_flag_ != 'true' ]] && return
+    _object_opts_help_problems_changes_flag_=false
     }
-User.Opts.IgnoreFreeSpace.Enable()
+Opts.Help.Problems.Enable()
     {
-    [[ $_object_user_opts_ignorefreespace_enable_ = 'true' ]] && return
-    _object_user_opts_ignorefreespace_enable_=true
-    [[ $_object_user_opts_ignorefreespace_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_ignorefreespace_enable_
+    [[ $_object_opts_help_problems_enable_ = 'true' ]] && return
+    _object_opts_help_problems_enable_=true
+    [[ $_object_opts_help_problems_changes_flag_ = 'true' ]] && DebugVar _object_opts_help_problems_enable_
     }
-User.Opts.IgnoreFreeSpace.Init()
+Opts.Help.Problems.Init()
     {
-    _object_user_opts_ignorefreespace_text_=''
-    _object_user_opts_ignorefreespace_flag_=false
-    _object_user_opts_ignorefreespace_changes_flag_=true
-    _object_user_opts_ignorefreespace_enable_=false
+    _object_opts_help_problems_text_=''
+    _object_opts_help_problems_flag_=false
+    _object_opts_help_problems_changes_flag_=true
+    _object_opts_help_problems_enable_=false
     }
-User.Opts.IgnoreFreeSpace.IsDisabled()
+Opts.Help.Problems.IsDisabled()
     {
-    [[ $_object_user_opts_ignorefreespace_enable_ != 'true' ]]
+    [[ $_object_opts_help_problems_enable_ != 'true' ]]
     }
-User.Opts.IgnoreFreeSpace.IsEnabled()
+Opts.Help.Problems.IsEnabled()
     {
-    [[ $_object_user_opts_ignorefreespace_enable_ = 'true' ]]
+    [[ $_object_opts_help_problems_enable_ = 'true' ]]
     }
-User.Opts.IgnoreFreeSpace.IsNot()
+Opts.Help.Problems.IsNot()
     {
-    [[ $_object_user_opts_ignorefreespace_flag_ != 'true' ]]
+    [[ $_object_opts_help_problems_flag_ != 'true' ]]
     }
-User.Opts.IgnoreFreeSpace.IsSet()
+Opts.Help.Problems.IsSet()
     {
-    [[ $_object_user_opts_ignorefreespace_flag_ = 'true' ]]
+    [[ $_object_opts_help_problems_flag_ = 'true' ]]
     }
-User.Opts.IgnoreFreeSpace.LogChanges()
+Opts.Help.Problems.LogChanges()
     {
-    [[ $_object_user_opts_ignorefreespace_changes_flag_ = 'true' ]] && return
-    _object_user_opts_ignorefreespace_changes_flag_=true
+    [[ $_object_opts_help_problems_changes_flag_ = 'true' ]] && return
+    _object_opts_help_problems_changes_flag_=true
     }
-User.Opts.IgnoreFreeSpace.Set()
+Opts.Help.Problems.Set()
     {
-    [[ $_object_user_opts_ignorefreespace_flag_ = 'true' ]] && return
-    _object_user_opts_ignorefreespace_flag_=true
-    [[ $_object_user_opts_ignorefreespace_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_ignorefreespace_flag_
+    [[ $_object_opts_help_problems_flag_ = 'true' ]] && return
+    _object_opts_help_problems_flag_=true
+    [[ $_object_opts_help_problems_changes_flag_ = 'true' ]] && DebugVar _object_opts_help_problems_flag_
     }
-User.Opts.IgnoreFreeSpace.Text()
+Opts.Help.Problems.Text()
     {
     if [[ -n ${1:-} && $1 = "=" ]]; then
-        _object_user_opts_ignorefreespace_text_=$2
+        _object_opts_help_problems_text_=$2
     else
-        echo -n "$_object_user_opts_ignorefreespace_text_"
+        echo -n "$_object_opts_help_problems_text_"
     fi
     }
-User.Opts.IgnoreFreeSpace.Init
+Opts.Help.Problems.Init
 
-User.Opts.Versions.View.Clear()
+Opts.Help.Status.Clear()
     {
-    [[ $_object_user_opts_versions_view_flag_ != 'true' ]] && return
-    _object_user_opts_versions_view_flag_=false
-    [[ $_object_user_opts_versions_view_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_versions_view_flag_
+    [[ $_object_opts_help_status_flag_ != 'true' ]] && return
+    _object_opts_help_status_flag_=false
+    [[ $_object_opts_help_status_changes_flag_ = 'true' ]] && DebugVar _object_opts_help_status_flag_
     }
-User.Opts.Versions.View.Disable()
+Opts.Help.Status.Disable()
     {
-    [[ $_object_user_opts_versions_view_enable_ != 'true' ]] && return
-    _object_user_opts_versions_view_enable_=false
-    [[ $_object_user_opts_versions_view_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_versions_view_enable_
+    [[ $_object_opts_help_status_enable_ != 'true' ]] && return
+    _object_opts_help_status_enable_=false
+    [[ $_object_opts_help_status_changes_flag_ = 'true' ]] && DebugVar _object_opts_help_status_enable_
     }
-User.Opts.Versions.View.DontLogChanges()
+Opts.Help.Status.DontLogChanges()
     {
-    [[ $_object_user_opts_versions_view_changes_flag_ != 'true' ]] && return
-    _object_user_opts_versions_view_changes_flag_=false
+    [[ $_object_opts_help_status_changes_flag_ != 'true' ]] && return
+    _object_opts_help_status_changes_flag_=false
     }
-User.Opts.Versions.View.Enable()
+Opts.Help.Status.Enable()
     {
-    [[ $_object_user_opts_versions_view_enable_ = 'true' ]] && return
-    _object_user_opts_versions_view_enable_=true
-    [[ $_object_user_opts_versions_view_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_versions_view_enable_
+    [[ $_object_opts_help_status_enable_ = 'true' ]] && return
+    _object_opts_help_status_enable_=true
+    [[ $_object_opts_help_status_changes_flag_ = 'true' ]] && DebugVar _object_opts_help_status_enable_
     }
-User.Opts.Versions.View.Init()
+Opts.Help.Status.Init()
     {
-    _object_user_opts_versions_view_text_=''
-    _object_user_opts_versions_view_flag_=false
-    _object_user_opts_versions_view_changes_flag_=true
-    _object_user_opts_versions_view_enable_=false
+    _object_opts_help_status_text_=''
+    _object_opts_help_status_flag_=false
+    _object_opts_help_status_changes_flag_=true
+    _object_opts_help_status_enable_=false
     }
-User.Opts.Versions.View.IsDisabled()
+Opts.Help.Status.IsDisabled()
     {
-    [[ $_object_user_opts_versions_view_enable_ != 'true' ]]
+    [[ $_object_opts_help_status_enable_ != 'true' ]]
     }
-User.Opts.Versions.View.IsEnabled()
+Opts.Help.Status.IsEnabled()
     {
-    [[ $_object_user_opts_versions_view_enable_ = 'true' ]]
+    [[ $_object_opts_help_status_enable_ = 'true' ]]
     }
-User.Opts.Versions.View.IsNot()
+Opts.Help.Status.IsNot()
     {
-    [[ $_object_user_opts_versions_view_flag_ != 'true' ]]
+    [[ $_object_opts_help_status_flag_ != 'true' ]]
     }
-User.Opts.Versions.View.IsSet()
+Opts.Help.Status.IsSet()
     {
-    [[ $_object_user_opts_versions_view_flag_ = 'true' ]]
+    [[ $_object_opts_help_status_flag_ = 'true' ]]
     }
-User.Opts.Versions.View.LogChanges()
+Opts.Help.Status.LogChanges()
     {
-    [[ $_object_user_opts_versions_view_changes_flag_ = 'true' ]] && return
-    _object_user_opts_versions_view_changes_flag_=true
+    [[ $_object_opts_help_status_changes_flag_ = 'true' ]] && return
+    _object_opts_help_status_changes_flag_=true
     }
-User.Opts.Versions.View.Set()
+Opts.Help.Status.Set()
     {
-    [[ $_object_user_opts_versions_view_flag_ = 'true' ]] && return
-    _object_user_opts_versions_view_flag_=true
-    [[ $_object_user_opts_versions_view_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_versions_view_flag_
+    [[ $_object_opts_help_status_flag_ = 'true' ]] && return
+    _object_opts_help_status_flag_=true
+    [[ $_object_opts_help_status_changes_flag_ = 'true' ]] && DebugVar _object_opts_help_status_flag_
     }
-User.Opts.Versions.View.Text()
+Opts.Help.Status.Text()
     {
     if [[ -n ${1:-} && $1 = "=" ]]; then
-        _object_user_opts_versions_view_text_=$2
+        _object_opts_help_status_text_=$2
     else
-        echo -n "$_object_user_opts_versions_view_text_"
+        echo -n "$_object_opts_help_status_text_"
     fi
     }
-User.Opts.Versions.View.Init
+Opts.Help.Status.Init
 
-User.Opts.Log.Last.Paste.Clear()
+Opts.Help.Tips.Clear()
     {
-    [[ $_object_user_opts_log_last_paste_flag_ != 'true' ]] && return
-    _object_user_opts_log_last_paste_flag_=false
-    [[ $_object_user_opts_log_last_paste_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_log_last_paste_flag_
+    [[ $_object_opts_help_tips_flag_ != 'true' ]] && return
+    _object_opts_help_tips_flag_=false
+    [[ $_object_opts_help_tips_changes_flag_ = 'true' ]] && DebugVar _object_opts_help_tips_flag_
     }
-User.Opts.Log.Last.Paste.Disable()
+Opts.Help.Tips.Disable()
     {
-    [[ $_object_user_opts_log_last_paste_enable_ != 'true' ]] && return
-    _object_user_opts_log_last_paste_enable_=false
-    [[ $_object_user_opts_log_last_paste_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_log_last_paste_enable_
+    [[ $_object_opts_help_tips_enable_ != 'true' ]] && return
+    _object_opts_help_tips_enable_=false
+    [[ $_object_opts_help_tips_changes_flag_ = 'true' ]] && DebugVar _object_opts_help_tips_enable_
     }
-User.Opts.Log.Last.Paste.DontLogChanges()
+Opts.Help.Tips.DontLogChanges()
     {
-    [[ $_object_user_opts_log_last_paste_changes_flag_ != 'true' ]] && return
-    _object_user_opts_log_last_paste_changes_flag_=false
+    [[ $_object_opts_help_tips_changes_flag_ != 'true' ]] && return
+    _object_opts_help_tips_changes_flag_=false
     }
-User.Opts.Log.Last.Paste.Enable()
+Opts.Help.Tips.Enable()
     {
-    [[ $_object_user_opts_log_last_paste_enable_ = 'true' ]] && return
-    _object_user_opts_log_last_paste_enable_=true
-    [[ $_object_user_opts_log_last_paste_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_log_last_paste_enable_
+    [[ $_object_opts_help_tips_enable_ = 'true' ]] && return
+    _object_opts_help_tips_enable_=true
+    [[ $_object_opts_help_tips_changes_flag_ = 'true' ]] && DebugVar _object_opts_help_tips_enable_
     }
-User.Opts.Log.Last.Paste.Init()
+Opts.Help.Tips.Init()
     {
-    _object_user_opts_log_last_paste_text_=''
-    _object_user_opts_log_last_paste_flag_=false
-    _object_user_opts_log_last_paste_changes_flag_=true
-    _object_user_opts_log_last_paste_enable_=false
+    _object_opts_help_tips_text_=''
+    _object_opts_help_tips_flag_=false
+    _object_opts_help_tips_changes_flag_=true
+    _object_opts_help_tips_enable_=false
     }
-User.Opts.Log.Last.Paste.IsDisabled()
+Opts.Help.Tips.IsDisabled()
     {
-    [[ $_object_user_opts_log_last_paste_enable_ != 'true' ]]
+    [[ $_object_opts_help_tips_enable_ != 'true' ]]
     }
-User.Opts.Log.Last.Paste.IsEnabled()
+Opts.Help.Tips.IsEnabled()
     {
-    [[ $_object_user_opts_log_last_paste_enable_ = 'true' ]]
+    [[ $_object_opts_help_tips_enable_ = 'true' ]]
     }
-User.Opts.Log.Last.Paste.IsNot()
+Opts.Help.Tips.IsNot()
     {
-    [[ $_object_user_opts_log_last_paste_flag_ != 'true' ]]
+    [[ $_object_opts_help_tips_flag_ != 'true' ]]
     }
-User.Opts.Log.Last.Paste.IsSet()
+Opts.Help.Tips.IsSet()
     {
-    [[ $_object_user_opts_log_last_paste_flag_ = 'true' ]]
+    [[ $_object_opts_help_tips_flag_ = 'true' ]]
     }
-User.Opts.Log.Last.Paste.LogChanges()
+Opts.Help.Tips.LogChanges()
     {
-    [[ $_object_user_opts_log_last_paste_changes_flag_ = 'true' ]] && return
-    _object_user_opts_log_last_paste_changes_flag_=true
+    [[ $_object_opts_help_tips_changes_flag_ = 'true' ]] && return
+    _object_opts_help_tips_changes_flag_=true
     }
-User.Opts.Log.Last.Paste.Set()
+Opts.Help.Tips.Set()
     {
-    [[ $_object_user_opts_log_last_paste_flag_ = 'true' ]] && return
-    _object_user_opts_log_last_paste_flag_=true
-    [[ $_object_user_opts_log_last_paste_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_log_last_paste_flag_
+    [[ $_object_opts_help_tips_flag_ = 'true' ]] && return
+    _object_opts_help_tips_flag_=true
+    [[ $_object_opts_help_tips_changes_flag_ = 'true' ]] && DebugVar _object_opts_help_tips_flag_
     }
-User.Opts.Log.Last.Paste.Text()
+Opts.Help.Tips.Text()
     {
     if [[ -n ${1:-} && $1 = "=" ]]; then
-        _object_user_opts_log_last_paste_text_=$2
+        _object_opts_help_tips_text_=$2
     else
-        echo -n "$_object_user_opts_log_last_paste_text_"
+        echo -n "$_object_opts_help_tips_text_"
     fi
     }
-User.Opts.Log.Last.Paste.Init
+Opts.Help.Tips.Init
 
-User.Opts.Log.Last.View.Clear()
+Opts.Dependencies.Check.Clear()
     {
-    [[ $_object_user_opts_log_last_view_flag_ != 'true' ]] && return
-    _object_user_opts_log_last_view_flag_=false
-    [[ $_object_user_opts_log_last_view_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_log_last_view_flag_
+    [[ $_object_opts_dependencies_check_flag_ != 'true' ]] && return
+    _object_opts_dependencies_check_flag_=false
+    [[ $_object_opts_dependencies_check_changes_flag_ = 'true' ]] && DebugVar _object_opts_dependencies_check_flag_
     }
-User.Opts.Log.Last.View.Disable()
+Opts.Dependencies.Check.Disable()
     {
-    [[ $_object_user_opts_log_last_view_enable_ != 'true' ]] && return
-    _object_user_opts_log_last_view_enable_=false
-    [[ $_object_user_opts_log_last_view_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_log_last_view_enable_
+    [[ $_object_opts_dependencies_check_enable_ != 'true' ]] && return
+    _object_opts_dependencies_check_enable_=false
+    [[ $_object_opts_dependencies_check_changes_flag_ = 'true' ]] && DebugVar _object_opts_dependencies_check_enable_
     }
-User.Opts.Log.Last.View.DontLogChanges()
+Opts.Dependencies.Check.DontLogChanges()
     {
-    [[ $_object_user_opts_log_last_view_changes_flag_ != 'true' ]] && return
-    _object_user_opts_log_last_view_changes_flag_=false
+    [[ $_object_opts_dependencies_check_changes_flag_ != 'true' ]] && return
+    _object_opts_dependencies_check_changes_flag_=false
     }
-User.Opts.Log.Last.View.Enable()
+Opts.Dependencies.Check.Enable()
     {
-    [[ $_object_user_opts_log_last_view_enable_ = 'true' ]] && return
-    _object_user_opts_log_last_view_enable_=true
-    [[ $_object_user_opts_log_last_view_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_log_last_view_enable_
+    [[ $_object_opts_dependencies_check_enable_ = 'true' ]] && return
+    _object_opts_dependencies_check_enable_=true
+    [[ $_object_opts_dependencies_check_changes_flag_ = 'true' ]] && DebugVar _object_opts_dependencies_check_enable_
     }
-User.Opts.Log.Last.View.Init()
+Opts.Dependencies.Check.Init()
     {
-    _object_user_opts_log_last_view_text_=''
-    _object_user_opts_log_last_view_flag_=false
-    _object_user_opts_log_last_view_changes_flag_=true
-    _object_user_opts_log_last_view_enable_=false
+    _object_opts_dependencies_check_text_=''
+    _object_opts_dependencies_check_flag_=false
+    _object_opts_dependencies_check_changes_flag_=true
+    _object_opts_dependencies_check_enable_=false
     }
-User.Opts.Log.Last.View.IsDisabled()
+Opts.Dependencies.Check.IsDisabled()
     {
-    [[ $_object_user_opts_log_last_view_enable_ != 'true' ]]
+    [[ $_object_opts_dependencies_check_enable_ != 'true' ]]
     }
-User.Opts.Log.Last.View.IsEnabled()
+Opts.Dependencies.Check.IsEnabled()
     {
-    [[ $_object_user_opts_log_last_view_enable_ = 'true' ]]
+    [[ $_object_opts_dependencies_check_enable_ = 'true' ]]
     }
-User.Opts.Log.Last.View.IsNot()
+Opts.Dependencies.Check.IsNot()
     {
-    [[ $_object_user_opts_log_last_view_flag_ != 'true' ]]
+    [[ $_object_opts_dependencies_check_flag_ != 'true' ]]
     }
-User.Opts.Log.Last.View.IsSet()
+Opts.Dependencies.Check.IsSet()
     {
-    [[ $_object_user_opts_log_last_view_flag_ = 'true' ]]
+    [[ $_object_opts_dependencies_check_flag_ = 'true' ]]
     }
-User.Opts.Log.Last.View.LogChanges()
+Opts.Dependencies.Check.LogChanges()
     {
-    [[ $_object_user_opts_log_last_view_changes_flag_ = 'true' ]] && return
-    _object_user_opts_log_last_view_changes_flag_=true
+    [[ $_object_opts_dependencies_check_changes_flag_ = 'true' ]] && return
+    _object_opts_dependencies_check_changes_flag_=true
     }
-User.Opts.Log.Last.View.Set()
+Opts.Dependencies.Check.Set()
     {
-    [[ $_object_user_opts_log_last_view_flag_ = 'true' ]] && return
-    _object_user_opts_log_last_view_flag_=true
-    [[ $_object_user_opts_log_last_view_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_log_last_view_flag_
+    [[ $_object_opts_dependencies_check_flag_ = 'true' ]] && return
+    _object_opts_dependencies_check_flag_=true
+    [[ $_object_opts_dependencies_check_changes_flag_ = 'true' ]] && DebugVar _object_opts_dependencies_check_flag_
     }
-User.Opts.Log.Last.View.Text()
+Opts.Dependencies.Check.Text()
     {
     if [[ -n ${1:-} && $1 = "=" ]]; then
-        _object_user_opts_log_last_view_text_=$2
+        _object_opts_dependencies_check_text_=$2
     else
-        echo -n "$_object_user_opts_log_last_view_text_"
+        echo -n "$_object_opts_dependencies_check_text_"
     fi
     }
-User.Opts.Log.Last.View.Init
+Opts.Dependencies.Check.Init
 
-User.Opts.Log.Tail.Paste.Clear()
+Opts.IgnoreFreeSpace.Clear()
     {
-    [[ $_object_user_opts_log_tail_paste_flag_ != 'true' ]] && return
-    _object_user_opts_log_tail_paste_flag_=false
-    [[ $_object_user_opts_log_tail_paste_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_log_tail_paste_flag_
+    [[ $_object_opts_ignorefreespace_flag_ != 'true' ]] && return
+    _object_opts_ignorefreespace_flag_=false
+    [[ $_object_opts_ignorefreespace_changes_flag_ = 'true' ]] && DebugVar _object_opts_ignorefreespace_flag_
     }
-User.Opts.Log.Tail.Paste.Disable()
+Opts.IgnoreFreeSpace.Disable()
     {
-    [[ $_object_user_opts_log_tail_paste_enable_ != 'true' ]] && return
-    _object_user_opts_log_tail_paste_enable_=false
-    [[ $_object_user_opts_log_tail_paste_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_log_tail_paste_enable_
+    [[ $_object_opts_ignorefreespace_enable_ != 'true' ]] && return
+    _object_opts_ignorefreespace_enable_=false
+    [[ $_object_opts_ignorefreespace_changes_flag_ = 'true' ]] && DebugVar _object_opts_ignorefreespace_enable_
     }
-User.Opts.Log.Tail.Paste.DontLogChanges()
+Opts.IgnoreFreeSpace.DontLogChanges()
     {
-    [[ $_object_user_opts_log_tail_paste_changes_flag_ != 'true' ]] && return
-    _object_user_opts_log_tail_paste_changes_flag_=false
+    [[ $_object_opts_ignorefreespace_changes_flag_ != 'true' ]] && return
+    _object_opts_ignorefreespace_changes_flag_=false
     }
-User.Opts.Log.Tail.Paste.Enable()
+Opts.IgnoreFreeSpace.Enable()
     {
-    [[ $_object_user_opts_log_tail_paste_enable_ = 'true' ]] && return
-    _object_user_opts_log_tail_paste_enable_=true
-    [[ $_object_user_opts_log_tail_paste_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_log_tail_paste_enable_
+    [[ $_object_opts_ignorefreespace_enable_ = 'true' ]] && return
+    _object_opts_ignorefreespace_enable_=true
+    [[ $_object_opts_ignorefreespace_changes_flag_ = 'true' ]] && DebugVar _object_opts_ignorefreespace_enable_
     }
-User.Opts.Log.Tail.Paste.Init()
+Opts.IgnoreFreeSpace.Init()
     {
-    _object_user_opts_log_tail_paste_text_=''
-    _object_user_opts_log_tail_paste_flag_=false
-    _object_user_opts_log_tail_paste_changes_flag_=true
-    _object_user_opts_log_tail_paste_enable_=false
+    _object_opts_ignorefreespace_text_=''
+    _object_opts_ignorefreespace_flag_=false
+    _object_opts_ignorefreespace_changes_flag_=true
+    _object_opts_ignorefreespace_enable_=false
     }
-User.Opts.Log.Tail.Paste.IsDisabled()
+Opts.IgnoreFreeSpace.IsDisabled()
     {
-    [[ $_object_user_opts_log_tail_paste_enable_ != 'true' ]]
+    [[ $_object_opts_ignorefreespace_enable_ != 'true' ]]
     }
-User.Opts.Log.Tail.Paste.IsEnabled()
+Opts.IgnoreFreeSpace.IsEnabled()
     {
-    [[ $_object_user_opts_log_tail_paste_enable_ = 'true' ]]
+    [[ $_object_opts_ignorefreespace_enable_ = 'true' ]]
     }
-User.Opts.Log.Tail.Paste.IsNot()
+Opts.IgnoreFreeSpace.IsNot()
     {
-    [[ $_object_user_opts_log_tail_paste_flag_ != 'true' ]]
+    [[ $_object_opts_ignorefreespace_flag_ != 'true' ]]
     }
-User.Opts.Log.Tail.Paste.IsSet()
+Opts.IgnoreFreeSpace.IsSet()
     {
-    [[ $_object_user_opts_log_tail_paste_flag_ = 'true' ]]
+    [[ $_object_opts_ignorefreespace_flag_ = 'true' ]]
     }
-User.Opts.Log.Tail.Paste.LogChanges()
+Opts.IgnoreFreeSpace.LogChanges()
     {
-    [[ $_object_user_opts_log_tail_paste_changes_flag_ = 'true' ]] && return
-    _object_user_opts_log_tail_paste_changes_flag_=true
+    [[ $_object_opts_ignorefreespace_changes_flag_ = 'true' ]] && return
+    _object_opts_ignorefreespace_changes_flag_=true
     }
-User.Opts.Log.Tail.Paste.Set()
+Opts.IgnoreFreeSpace.Set()
     {
-    [[ $_object_user_opts_log_tail_paste_flag_ = 'true' ]] && return
-    _object_user_opts_log_tail_paste_flag_=true
-    [[ $_object_user_opts_log_tail_paste_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_log_tail_paste_flag_
+    [[ $_object_opts_ignorefreespace_flag_ = 'true' ]] && return
+    _object_opts_ignorefreespace_flag_=true
+    [[ $_object_opts_ignorefreespace_changes_flag_ = 'true' ]] && DebugVar _object_opts_ignorefreespace_flag_
     }
-User.Opts.Log.Tail.Paste.Text()
+Opts.IgnoreFreeSpace.Text()
     {
     if [[ -n ${1:-} && $1 = "=" ]]; then
-        _object_user_opts_log_tail_paste_text_=$2
+        _object_opts_ignorefreespace_text_=$2
     else
-        echo -n "$_object_user_opts_log_tail_paste_text_"
+        echo -n "$_object_opts_ignorefreespace_text_"
     fi
     }
-User.Opts.Log.Tail.Paste.Init
+Opts.IgnoreFreeSpace.Init
 
-User.Opts.Log.Whole.View.Clear()
+Opts.Versions.View.Clear()
     {
-    [[ $_object_user_opts_log_whole_view_flag_ != 'true' ]] && return
-    _object_user_opts_log_whole_view_flag_=false
-    [[ $_object_user_opts_log_whole_view_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_log_whole_view_flag_
+    [[ $_object_opts_versions_view_flag_ != 'true' ]] && return
+    _object_opts_versions_view_flag_=false
+    [[ $_object_opts_versions_view_changes_flag_ = 'true' ]] && DebugVar _object_opts_versions_view_flag_
     }
-User.Opts.Log.Whole.View.Disable()
+Opts.Versions.View.Disable()
     {
-    [[ $_object_user_opts_log_whole_view_enable_ != 'true' ]] && return
-    _object_user_opts_log_whole_view_enable_=false
-    [[ $_object_user_opts_log_whole_view_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_log_whole_view_enable_
+    [[ $_object_opts_versions_view_enable_ != 'true' ]] && return
+    _object_opts_versions_view_enable_=false
+    [[ $_object_opts_versions_view_changes_flag_ = 'true' ]] && DebugVar _object_opts_versions_view_enable_
     }
-User.Opts.Log.Whole.View.DontLogChanges()
+Opts.Versions.View.DontLogChanges()
     {
-    [[ $_object_user_opts_log_whole_view_changes_flag_ != 'true' ]] && return
-    _object_user_opts_log_whole_view_changes_flag_=false
+    [[ $_object_opts_versions_view_changes_flag_ != 'true' ]] && return
+    _object_opts_versions_view_changes_flag_=false
     }
-User.Opts.Log.Whole.View.Enable()
+Opts.Versions.View.Enable()
     {
-    [[ $_object_user_opts_log_whole_view_enable_ = 'true' ]] && return
-    _object_user_opts_log_whole_view_enable_=true
-    [[ $_object_user_opts_log_whole_view_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_log_whole_view_enable_
+    [[ $_object_opts_versions_view_enable_ = 'true' ]] && return
+    _object_opts_versions_view_enable_=true
+    [[ $_object_opts_versions_view_changes_flag_ = 'true' ]] && DebugVar _object_opts_versions_view_enable_
     }
-User.Opts.Log.Whole.View.Init()
+Opts.Versions.View.Init()
     {
-    _object_user_opts_log_whole_view_text_=''
-    _object_user_opts_log_whole_view_flag_=false
-    _object_user_opts_log_whole_view_changes_flag_=true
-    _object_user_opts_log_whole_view_enable_=false
+    _object_opts_versions_view_text_=''
+    _object_opts_versions_view_flag_=false
+    _object_opts_versions_view_changes_flag_=true
+    _object_opts_versions_view_enable_=false
     }
-User.Opts.Log.Whole.View.IsDisabled()
+Opts.Versions.View.IsDisabled()
     {
-    [[ $_object_user_opts_log_whole_view_enable_ != 'true' ]]
+    [[ $_object_opts_versions_view_enable_ != 'true' ]]
     }
-User.Opts.Log.Whole.View.IsEnabled()
+Opts.Versions.View.IsEnabled()
     {
-    [[ $_object_user_opts_log_whole_view_enable_ = 'true' ]]
+    [[ $_object_opts_versions_view_enable_ = 'true' ]]
     }
-User.Opts.Log.Whole.View.IsNot()
+Opts.Versions.View.IsNot()
     {
-    [[ $_object_user_opts_log_whole_view_flag_ != 'true' ]]
+    [[ $_object_opts_versions_view_flag_ != 'true' ]]
     }
-User.Opts.Log.Whole.View.IsSet()
+Opts.Versions.View.IsSet()
     {
-    [[ $_object_user_opts_log_whole_view_flag_ = 'true' ]]
+    [[ $_object_opts_versions_view_flag_ = 'true' ]]
     }
-User.Opts.Log.Whole.View.LogChanges()
+Opts.Versions.View.LogChanges()
     {
-    [[ $_object_user_opts_log_whole_view_changes_flag_ = 'true' ]] && return
-    _object_user_opts_log_whole_view_changes_flag_=true
+    [[ $_object_opts_versions_view_changes_flag_ = 'true' ]] && return
+    _object_opts_versions_view_changes_flag_=true
     }
-User.Opts.Log.Whole.View.Set()
+Opts.Versions.View.Set()
     {
-    [[ $_object_user_opts_log_whole_view_flag_ = 'true' ]] && return
-    _object_user_opts_log_whole_view_flag_=true
-    [[ $_object_user_opts_log_whole_view_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_log_whole_view_flag_
+    [[ $_object_opts_versions_view_flag_ = 'true' ]] && return
+    _object_opts_versions_view_flag_=true
+    [[ $_object_opts_versions_view_changes_flag_ = 'true' ]] && DebugVar _object_opts_versions_view_flag_
     }
-User.Opts.Log.Whole.View.Text()
+Opts.Versions.View.Text()
     {
     if [[ -n ${1:-} && $1 = "=" ]]; then
-        _object_user_opts_log_whole_view_text_=$2
+        _object_opts_versions_view_text_=$2
     else
-        echo -n "$_object_user_opts_log_whole_view_text_"
+        echo -n "$_object_opts_versions_view_text_"
     fi
     }
-User.Opts.Log.Whole.View.Init
+Opts.Versions.View.Init
 
-User.Opts.Apps.All.Backup.Clear()
+Opts.Log.Last.Paste.Clear()
     {
-    [[ $_object_user_opts_apps_all_backup_flag_ != 'true' ]] && return
-    _object_user_opts_apps_all_backup_flag_=false
-    [[ $_object_user_opts_apps_all_backup_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_backup_flag_
+    [[ $_object_opts_log_last_paste_flag_ != 'true' ]] && return
+    _object_opts_log_last_paste_flag_=false
+    [[ $_object_opts_log_last_paste_changes_flag_ = 'true' ]] && DebugVar _object_opts_log_last_paste_flag_
     }
-User.Opts.Apps.All.Backup.Disable()
+Opts.Log.Last.Paste.Disable()
     {
-    [[ $_object_user_opts_apps_all_backup_enable_ != 'true' ]] && return
-    _object_user_opts_apps_all_backup_enable_=false
-    [[ $_object_user_opts_apps_all_backup_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_backup_enable_
+    [[ $_object_opts_log_last_paste_enable_ != 'true' ]] && return
+    _object_opts_log_last_paste_enable_=false
+    [[ $_object_opts_log_last_paste_changes_flag_ = 'true' ]] && DebugVar _object_opts_log_last_paste_enable_
     }
-User.Opts.Apps.All.Backup.DontLogChanges()
+Opts.Log.Last.Paste.DontLogChanges()
     {
-    [[ $_object_user_opts_apps_all_backup_changes_flag_ != 'true' ]] && return
-    _object_user_opts_apps_all_backup_changes_flag_=false
+    [[ $_object_opts_log_last_paste_changes_flag_ != 'true' ]] && return
+    _object_opts_log_last_paste_changes_flag_=false
     }
-User.Opts.Apps.All.Backup.Enable()
+Opts.Log.Last.Paste.Enable()
     {
-    [[ $_object_user_opts_apps_all_backup_enable_ = 'true' ]] && return
-    _object_user_opts_apps_all_backup_enable_=true
-    [[ $_object_user_opts_apps_all_backup_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_backup_enable_
+    [[ $_object_opts_log_last_paste_enable_ = 'true' ]] && return
+    _object_opts_log_last_paste_enable_=true
+    [[ $_object_opts_log_last_paste_changes_flag_ = 'true' ]] && DebugVar _object_opts_log_last_paste_enable_
     }
-User.Opts.Apps.All.Backup.Init()
+Opts.Log.Last.Paste.Init()
     {
-    _object_user_opts_apps_all_backup_text_=''
-    _object_user_opts_apps_all_backup_flag_=false
-    _object_user_opts_apps_all_backup_changes_flag_=true
-    _object_user_opts_apps_all_backup_enable_=false
+    _object_opts_log_last_paste_text_=''
+    _object_opts_log_last_paste_flag_=false
+    _object_opts_log_last_paste_changes_flag_=true
+    _object_opts_log_last_paste_enable_=false
     }
-User.Opts.Apps.All.Backup.IsDisabled()
+Opts.Log.Last.Paste.IsDisabled()
     {
-    [[ $_object_user_opts_apps_all_backup_enable_ != 'true' ]]
+    [[ $_object_opts_log_last_paste_enable_ != 'true' ]]
     }
-User.Opts.Apps.All.Backup.IsEnabled()
+Opts.Log.Last.Paste.IsEnabled()
     {
-    [[ $_object_user_opts_apps_all_backup_enable_ = 'true' ]]
+    [[ $_object_opts_log_last_paste_enable_ = 'true' ]]
     }
-User.Opts.Apps.All.Backup.IsNot()
+Opts.Log.Last.Paste.IsNot()
     {
-    [[ $_object_user_opts_apps_all_backup_flag_ != 'true' ]]
+    [[ $_object_opts_log_last_paste_flag_ != 'true' ]]
     }
-User.Opts.Apps.All.Backup.IsSet()
+Opts.Log.Last.Paste.IsSet()
     {
-    [[ $_object_user_opts_apps_all_backup_flag_ = 'true' ]]
+    [[ $_object_opts_log_last_paste_flag_ = 'true' ]]
     }
-User.Opts.Apps.All.Backup.LogChanges()
+Opts.Log.Last.Paste.LogChanges()
     {
-    [[ $_object_user_opts_apps_all_backup_changes_flag_ = 'true' ]] && return
-    _object_user_opts_apps_all_backup_changes_flag_=true
+    [[ $_object_opts_log_last_paste_changes_flag_ = 'true' ]] && return
+    _object_opts_log_last_paste_changes_flag_=true
     }
-User.Opts.Apps.All.Backup.Set()
+Opts.Log.Last.Paste.Set()
     {
-    [[ $_object_user_opts_apps_all_backup_flag_ = 'true' ]] && return
-    _object_user_opts_apps_all_backup_flag_=true
-    [[ $_object_user_opts_apps_all_backup_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_backup_flag_
+    [[ $_object_opts_log_last_paste_flag_ = 'true' ]] && return
+    _object_opts_log_last_paste_flag_=true
+    [[ $_object_opts_log_last_paste_changes_flag_ = 'true' ]] && DebugVar _object_opts_log_last_paste_flag_
     }
-User.Opts.Apps.All.Backup.Text()
+Opts.Log.Last.Paste.Text()
     {
     if [[ -n ${1:-} && $1 = "=" ]]; then
-        _object_user_opts_apps_all_backup_text_=$2
+        _object_opts_log_last_paste_text_=$2
     else
-        echo -n "$_object_user_opts_apps_all_backup_text_"
+        echo -n "$_object_opts_log_last_paste_text_"
     fi
     }
-User.Opts.Apps.All.Backup.Init
+Opts.Log.Last.Paste.Init
 
-User.Opts.Apps.All.Install.Clear()
+Opts.Log.Last.View.Clear()
     {
-    [[ $_object_user_opts_apps_all_install_flag_ != 'true' ]] && return
-    _object_user_opts_apps_all_install_flag_=false
-    [[ $_object_user_opts_apps_all_install_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_install_flag_
+    [[ $_object_opts_log_last_view_flag_ != 'true' ]] && return
+    _object_opts_log_last_view_flag_=false
+    [[ $_object_opts_log_last_view_changes_flag_ = 'true' ]] && DebugVar _object_opts_log_last_view_flag_
     }
-User.Opts.Apps.All.Install.Disable()
+Opts.Log.Last.View.Disable()
     {
-    [[ $_object_user_opts_apps_all_install_enable_ != 'true' ]] && return
-    _object_user_opts_apps_all_install_enable_=false
-    [[ $_object_user_opts_apps_all_install_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_install_enable_
+    [[ $_object_opts_log_last_view_enable_ != 'true' ]] && return
+    _object_opts_log_last_view_enable_=false
+    [[ $_object_opts_log_last_view_changes_flag_ = 'true' ]] && DebugVar _object_opts_log_last_view_enable_
     }
-User.Opts.Apps.All.Install.DontLogChanges()
+Opts.Log.Last.View.DontLogChanges()
     {
-    [[ $_object_user_opts_apps_all_install_changes_flag_ != 'true' ]] && return
-    _object_user_opts_apps_all_install_changes_flag_=false
+    [[ $_object_opts_log_last_view_changes_flag_ != 'true' ]] && return
+    _object_opts_log_last_view_changes_flag_=false
     }
-User.Opts.Apps.All.Install.Enable()
+Opts.Log.Last.View.Enable()
     {
-    [[ $_object_user_opts_apps_all_install_enable_ = 'true' ]] && return
-    _object_user_opts_apps_all_install_enable_=true
-    [[ $_object_user_opts_apps_all_install_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_install_enable_
+    [[ $_object_opts_log_last_view_enable_ = 'true' ]] && return
+    _object_opts_log_last_view_enable_=true
+    [[ $_object_opts_log_last_view_changes_flag_ = 'true' ]] && DebugVar _object_opts_log_last_view_enable_
     }
-User.Opts.Apps.All.Install.Init()
+Opts.Log.Last.View.Init()
     {
-    _object_user_opts_apps_all_install_text_=''
-    _object_user_opts_apps_all_install_flag_=false
-    _object_user_opts_apps_all_install_changes_flag_=true
-    _object_user_opts_apps_all_install_enable_=false
+    _object_opts_log_last_view_text_=''
+    _object_opts_log_last_view_flag_=false
+    _object_opts_log_last_view_changes_flag_=true
+    _object_opts_log_last_view_enable_=false
     }
-User.Opts.Apps.All.Install.IsDisabled()
+Opts.Log.Last.View.IsDisabled()
     {
-    [[ $_object_user_opts_apps_all_install_enable_ != 'true' ]]
+    [[ $_object_opts_log_last_view_enable_ != 'true' ]]
     }
-User.Opts.Apps.All.Install.IsEnabled()
+Opts.Log.Last.View.IsEnabled()
     {
-    [[ $_object_user_opts_apps_all_install_enable_ = 'true' ]]
+    [[ $_object_opts_log_last_view_enable_ = 'true' ]]
     }
-User.Opts.Apps.All.Install.IsNot()
+Opts.Log.Last.View.IsNot()
     {
-    [[ $_object_user_opts_apps_all_install_flag_ != 'true' ]]
+    [[ $_object_opts_log_last_view_flag_ != 'true' ]]
     }
-User.Opts.Apps.All.Install.IsSet()
+Opts.Log.Last.View.IsSet()
     {
-    [[ $_object_user_opts_apps_all_install_flag_ = 'true' ]]
+    [[ $_object_opts_log_last_view_flag_ = 'true' ]]
     }
-User.Opts.Apps.All.Install.LogChanges()
+Opts.Log.Last.View.LogChanges()
     {
-    [[ $_object_user_opts_apps_all_install_changes_flag_ = 'true' ]] && return
-    _object_user_opts_apps_all_install_changes_flag_=true
+    [[ $_object_opts_log_last_view_changes_flag_ = 'true' ]] && return
+    _object_opts_log_last_view_changes_flag_=true
     }
-User.Opts.Apps.All.Install.Set()
+Opts.Log.Last.View.Set()
     {
-    [[ $_object_user_opts_apps_all_install_flag_ = 'true' ]] && return
-    _object_user_opts_apps_all_install_flag_=true
-    [[ $_object_user_opts_apps_all_install_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_install_flag_
+    [[ $_object_opts_log_last_view_flag_ = 'true' ]] && return
+    _object_opts_log_last_view_flag_=true
+    [[ $_object_opts_log_last_view_changes_flag_ = 'true' ]] && DebugVar _object_opts_log_last_view_flag_
     }
-User.Opts.Apps.All.Install.Text()
+Opts.Log.Last.View.Text()
     {
     if [[ -n ${1:-} && $1 = "=" ]]; then
-        _object_user_opts_apps_all_install_text_=$2
+        _object_opts_log_last_view_text_=$2
     else
-        echo -n "$_object_user_opts_apps_all_install_text_"
+        echo -n "$_object_opts_log_last_view_text_"
     fi
     }
-User.Opts.Apps.All.Install.Init
+Opts.Log.Last.View.Init
 
-User.Opts.Apps.All.Rebuild.Clear()
+Opts.Log.Tail.Paste.Clear()
     {
-    [[ $_object_user_opts_apps_all_rebuild_flag_ != 'true' ]] && return
-    _object_user_opts_apps_all_rebuild_flag_=false
-    [[ $_object_user_opts_apps_all_rebuild_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_rebuild_flag_
+    [[ $_object_opts_log_tail_paste_flag_ != 'true' ]] && return
+    _object_opts_log_tail_paste_flag_=false
+    [[ $_object_opts_log_tail_paste_changes_flag_ = 'true' ]] && DebugVar _object_opts_log_tail_paste_flag_
     }
-User.Opts.Apps.All.Rebuild.Disable()
+Opts.Log.Tail.Paste.Disable()
     {
-    [[ $_object_user_opts_apps_all_rebuild_enable_ != 'true' ]] && return
-    _object_user_opts_apps_all_rebuild_enable_=false
-    [[ $_object_user_opts_apps_all_rebuild_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_rebuild_enable_
+    [[ $_object_opts_log_tail_paste_enable_ != 'true' ]] && return
+    _object_opts_log_tail_paste_enable_=false
+    [[ $_object_opts_log_tail_paste_changes_flag_ = 'true' ]] && DebugVar _object_opts_log_tail_paste_enable_
     }
-User.Opts.Apps.All.Rebuild.DontLogChanges()
+Opts.Log.Tail.Paste.DontLogChanges()
     {
-    [[ $_object_user_opts_apps_all_rebuild_changes_flag_ != 'true' ]] && return
-    _object_user_opts_apps_all_rebuild_changes_flag_=false
+    [[ $_object_opts_log_tail_paste_changes_flag_ != 'true' ]] && return
+    _object_opts_log_tail_paste_changes_flag_=false
     }
-User.Opts.Apps.All.Rebuild.Enable()
+Opts.Log.Tail.Paste.Enable()
     {
-    [[ $_object_user_opts_apps_all_rebuild_enable_ = 'true' ]] && return
-    _object_user_opts_apps_all_rebuild_enable_=true
-    [[ $_object_user_opts_apps_all_rebuild_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_rebuild_enable_
+    [[ $_object_opts_log_tail_paste_enable_ = 'true' ]] && return
+    _object_opts_log_tail_paste_enable_=true
+    [[ $_object_opts_log_tail_paste_changes_flag_ = 'true' ]] && DebugVar _object_opts_log_tail_paste_enable_
     }
-User.Opts.Apps.All.Rebuild.Init()
+Opts.Log.Tail.Paste.Init()
     {
-    _object_user_opts_apps_all_rebuild_text_=''
-    _object_user_opts_apps_all_rebuild_flag_=false
-    _object_user_opts_apps_all_rebuild_changes_flag_=true
-    _object_user_opts_apps_all_rebuild_enable_=false
+    _object_opts_log_tail_paste_text_=''
+    _object_opts_log_tail_paste_flag_=false
+    _object_opts_log_tail_paste_changes_flag_=true
+    _object_opts_log_tail_paste_enable_=false
     }
-User.Opts.Apps.All.Rebuild.IsDisabled()
+Opts.Log.Tail.Paste.IsDisabled()
     {
-    [[ $_object_user_opts_apps_all_rebuild_enable_ != 'true' ]]
+    [[ $_object_opts_log_tail_paste_enable_ != 'true' ]]
     }
-User.Opts.Apps.All.Rebuild.IsEnabled()
+Opts.Log.Tail.Paste.IsEnabled()
     {
-    [[ $_object_user_opts_apps_all_rebuild_enable_ = 'true' ]]
+    [[ $_object_opts_log_tail_paste_enable_ = 'true' ]]
     }
-User.Opts.Apps.All.Rebuild.IsNot()
+Opts.Log.Tail.Paste.IsNot()
     {
-    [[ $_object_user_opts_apps_all_rebuild_flag_ != 'true' ]]
+    [[ $_object_opts_log_tail_paste_flag_ != 'true' ]]
     }
-User.Opts.Apps.All.Rebuild.IsSet()
+Opts.Log.Tail.Paste.IsSet()
     {
-    [[ $_object_user_opts_apps_all_rebuild_flag_ = 'true' ]]
+    [[ $_object_opts_log_tail_paste_flag_ = 'true' ]]
     }
-User.Opts.Apps.All.Rebuild.LogChanges()
+Opts.Log.Tail.Paste.LogChanges()
     {
-    [[ $_object_user_opts_apps_all_rebuild_changes_flag_ = 'true' ]] && return
-    _object_user_opts_apps_all_rebuild_changes_flag_=true
+    [[ $_object_opts_log_tail_paste_changes_flag_ = 'true' ]] && return
+    _object_opts_log_tail_paste_changes_flag_=true
     }
-User.Opts.Apps.All.Rebuild.Set()
+Opts.Log.Tail.Paste.Set()
     {
-    [[ $_object_user_opts_apps_all_rebuild_flag_ = 'true' ]] && return
-    _object_user_opts_apps_all_rebuild_flag_=true
-    [[ $_object_user_opts_apps_all_rebuild_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_rebuild_flag_
+    [[ $_object_opts_log_tail_paste_flag_ = 'true' ]] && return
+    _object_opts_log_tail_paste_flag_=true
+    [[ $_object_opts_log_tail_paste_changes_flag_ = 'true' ]] && DebugVar _object_opts_log_tail_paste_flag_
     }
-User.Opts.Apps.All.Rebuild.Text()
+Opts.Log.Tail.Paste.Text()
     {
     if [[ -n ${1:-} && $1 = "=" ]]; then
-        _object_user_opts_apps_all_rebuild_text_=$2
+        _object_opts_log_tail_paste_text_=$2
     else
-        echo -n "$_object_user_opts_apps_all_rebuild_text_"
+        echo -n "$_object_opts_log_tail_paste_text_"
     fi
     }
-User.Opts.Apps.All.Rebuild.Init
+Opts.Log.Tail.Paste.Init
 
-User.Opts.Apps.All.Reinstall.Clear()
+Opts.Log.Whole.View.Clear()
     {
-    [[ $_object_user_opts_apps_all_reinstall_flag_ != 'true' ]] && return
-    _object_user_opts_apps_all_reinstall_flag_=false
-    [[ $_object_user_opts_apps_all_reinstall_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_reinstall_flag_
+    [[ $_object_opts_log_whole_view_flag_ != 'true' ]] && return
+    _object_opts_log_whole_view_flag_=false
+    [[ $_object_opts_log_whole_view_changes_flag_ = 'true' ]] && DebugVar _object_opts_log_whole_view_flag_
     }
-User.Opts.Apps.All.Reinstall.Disable()
+Opts.Log.Whole.View.Disable()
     {
-    [[ $_object_user_opts_apps_all_reinstall_enable_ != 'true' ]] && return
-    _object_user_opts_apps_all_reinstall_enable_=false
-    [[ $_object_user_opts_apps_all_reinstall_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_reinstall_enable_
+    [[ $_object_opts_log_whole_view_enable_ != 'true' ]] && return
+    _object_opts_log_whole_view_enable_=false
+    [[ $_object_opts_log_whole_view_changes_flag_ = 'true' ]] && DebugVar _object_opts_log_whole_view_enable_
     }
-User.Opts.Apps.All.Reinstall.DontLogChanges()
+Opts.Log.Whole.View.DontLogChanges()
     {
-    [[ $_object_user_opts_apps_all_reinstall_changes_flag_ != 'true' ]] && return
-    _object_user_opts_apps_all_reinstall_changes_flag_=false
+    [[ $_object_opts_log_whole_view_changes_flag_ != 'true' ]] && return
+    _object_opts_log_whole_view_changes_flag_=false
     }
-User.Opts.Apps.All.Reinstall.Enable()
+Opts.Log.Whole.View.Enable()
     {
-    [[ $_object_user_opts_apps_all_reinstall_enable_ = 'true' ]] && return
-    _object_user_opts_apps_all_reinstall_enable_=true
-    [[ $_object_user_opts_apps_all_reinstall_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_reinstall_enable_
+    [[ $_object_opts_log_whole_view_enable_ = 'true' ]] && return
+    _object_opts_log_whole_view_enable_=true
+    [[ $_object_opts_log_whole_view_changes_flag_ = 'true' ]] && DebugVar _object_opts_log_whole_view_enable_
     }
-User.Opts.Apps.All.Reinstall.Init()
+Opts.Log.Whole.View.Init()
     {
-    _object_user_opts_apps_all_reinstall_text_=''
-    _object_user_opts_apps_all_reinstall_flag_=false
-    _object_user_opts_apps_all_reinstall_changes_flag_=true
-    _object_user_opts_apps_all_reinstall_enable_=false
+    _object_opts_log_whole_view_text_=''
+    _object_opts_log_whole_view_flag_=false
+    _object_opts_log_whole_view_changes_flag_=true
+    _object_opts_log_whole_view_enable_=false
     }
-User.Opts.Apps.All.Reinstall.IsDisabled()
+Opts.Log.Whole.View.IsDisabled()
     {
-    [[ $_object_user_opts_apps_all_reinstall_enable_ != 'true' ]]
+    [[ $_object_opts_log_whole_view_enable_ != 'true' ]]
     }
-User.Opts.Apps.All.Reinstall.IsEnabled()
+Opts.Log.Whole.View.IsEnabled()
     {
-    [[ $_object_user_opts_apps_all_reinstall_enable_ = 'true' ]]
+    [[ $_object_opts_log_whole_view_enable_ = 'true' ]]
     }
-User.Opts.Apps.All.Reinstall.IsNot()
+Opts.Log.Whole.View.IsNot()
     {
-    [[ $_object_user_opts_apps_all_reinstall_flag_ != 'true' ]]
+    [[ $_object_opts_log_whole_view_flag_ != 'true' ]]
     }
-User.Opts.Apps.All.Reinstall.IsSet()
+Opts.Log.Whole.View.IsSet()
     {
-    [[ $_object_user_opts_apps_all_reinstall_flag_ = 'true' ]]
+    [[ $_object_opts_log_whole_view_flag_ = 'true' ]]
     }
-User.Opts.Apps.All.Reinstall.LogChanges()
+Opts.Log.Whole.View.LogChanges()
     {
-    [[ $_object_user_opts_apps_all_reinstall_changes_flag_ = 'true' ]] && return
-    _object_user_opts_apps_all_reinstall_changes_flag_=true
+    [[ $_object_opts_log_whole_view_changes_flag_ = 'true' ]] && return
+    _object_opts_log_whole_view_changes_flag_=true
     }
-User.Opts.Apps.All.Reinstall.Set()
+Opts.Log.Whole.View.Set()
     {
-    [[ $_object_user_opts_apps_all_reinstall_flag_ = 'true' ]] && return
-    _object_user_opts_apps_all_reinstall_flag_=true
-    [[ $_object_user_opts_apps_all_reinstall_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_reinstall_flag_
+    [[ $_object_opts_log_whole_view_flag_ = 'true' ]] && return
+    _object_opts_log_whole_view_flag_=true
+    [[ $_object_opts_log_whole_view_changes_flag_ = 'true' ]] && DebugVar _object_opts_log_whole_view_flag_
     }
-User.Opts.Apps.All.Reinstall.Text()
+Opts.Log.Whole.View.Text()
     {
     if [[ -n ${1:-} && $1 = "=" ]]; then
-        _object_user_opts_apps_all_reinstall_text_=$2
+        _object_opts_log_whole_view_text_=$2
     else
-        echo -n "$_object_user_opts_apps_all_reinstall_text_"
+        echo -n "$_object_opts_log_whole_view_text_"
     fi
     }
-User.Opts.Apps.All.Reinstall.Init
+Opts.Log.Whole.View.Init
 
-User.Opts.Apps.All.Restart.Clear()
+Opts.Apps.All.Backup.Clear()
     {
-    [[ $_object_user_opts_apps_all_restart_flag_ != 'true' ]] && return
-    _object_user_opts_apps_all_restart_flag_=false
-    [[ $_object_user_opts_apps_all_restart_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_restart_flag_
+    [[ $_object_opts_apps_all_backup_flag_ != 'true' ]] && return
+    _object_opts_apps_all_backup_flag_=false
+    [[ $_object_opts_apps_all_backup_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_all_backup_flag_
     }
-User.Opts.Apps.All.Restart.Disable()
+Opts.Apps.All.Backup.Disable()
     {
-    [[ $_object_user_opts_apps_all_restart_enable_ != 'true' ]] && return
-    _object_user_opts_apps_all_restart_enable_=false
-    [[ $_object_user_opts_apps_all_restart_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_restart_enable_
+    [[ $_object_opts_apps_all_backup_enable_ != 'true' ]] && return
+    _object_opts_apps_all_backup_enable_=false
+    [[ $_object_opts_apps_all_backup_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_all_backup_enable_
     }
-User.Opts.Apps.All.Restart.DontLogChanges()
+Opts.Apps.All.Backup.DontLogChanges()
     {
-    [[ $_object_user_opts_apps_all_restart_changes_flag_ != 'true' ]] && return
-    _object_user_opts_apps_all_restart_changes_flag_=false
+    [[ $_object_opts_apps_all_backup_changes_flag_ != 'true' ]] && return
+    _object_opts_apps_all_backup_changes_flag_=false
     }
-User.Opts.Apps.All.Restart.Enable()
+Opts.Apps.All.Backup.Enable()
     {
-    [[ $_object_user_opts_apps_all_restart_enable_ = 'true' ]] && return
-    _object_user_opts_apps_all_restart_enable_=true
-    [[ $_object_user_opts_apps_all_restart_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_restart_enable_
+    [[ $_object_opts_apps_all_backup_enable_ = 'true' ]] && return
+    _object_opts_apps_all_backup_enable_=true
+    [[ $_object_opts_apps_all_backup_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_all_backup_enable_
     }
-User.Opts.Apps.All.Restart.Init()
+Opts.Apps.All.Backup.Init()
     {
-    _object_user_opts_apps_all_restart_text_=''
-    _object_user_opts_apps_all_restart_flag_=false
-    _object_user_opts_apps_all_restart_changes_flag_=true
-    _object_user_opts_apps_all_restart_enable_=false
+    _object_opts_apps_all_backup_text_=''
+    _object_opts_apps_all_backup_flag_=false
+    _object_opts_apps_all_backup_changes_flag_=true
+    _object_opts_apps_all_backup_enable_=false
     }
-User.Opts.Apps.All.Restart.IsDisabled()
+Opts.Apps.All.Backup.IsDisabled()
     {
-    [[ $_object_user_opts_apps_all_restart_enable_ != 'true' ]]
+    [[ $_object_opts_apps_all_backup_enable_ != 'true' ]]
     }
-User.Opts.Apps.All.Restart.IsEnabled()
+Opts.Apps.All.Backup.IsEnabled()
     {
-    [[ $_object_user_opts_apps_all_restart_enable_ = 'true' ]]
+    [[ $_object_opts_apps_all_backup_enable_ = 'true' ]]
     }
-User.Opts.Apps.All.Restart.IsNot()
+Opts.Apps.All.Backup.IsNot()
     {
-    [[ $_object_user_opts_apps_all_restart_flag_ != 'true' ]]
+    [[ $_object_opts_apps_all_backup_flag_ != 'true' ]]
     }
-User.Opts.Apps.All.Restart.IsSet()
+Opts.Apps.All.Backup.IsSet()
     {
-    [[ $_object_user_opts_apps_all_restart_flag_ = 'true' ]]
+    [[ $_object_opts_apps_all_backup_flag_ = 'true' ]]
     }
-User.Opts.Apps.All.Restart.LogChanges()
+Opts.Apps.All.Backup.LogChanges()
     {
-    [[ $_object_user_opts_apps_all_restart_changes_flag_ = 'true' ]] && return
-    _object_user_opts_apps_all_restart_changes_flag_=true
+    [[ $_object_opts_apps_all_backup_changes_flag_ = 'true' ]] && return
+    _object_opts_apps_all_backup_changes_flag_=true
     }
-User.Opts.Apps.All.Restart.Set()
+Opts.Apps.All.Backup.Set()
     {
-    [[ $_object_user_opts_apps_all_restart_flag_ = 'true' ]] && return
-    _object_user_opts_apps_all_restart_flag_=true
-    [[ $_object_user_opts_apps_all_restart_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_restart_flag_
+    [[ $_object_opts_apps_all_backup_flag_ = 'true' ]] && return
+    _object_opts_apps_all_backup_flag_=true
+    [[ $_object_opts_apps_all_backup_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_all_backup_flag_
     }
-User.Opts.Apps.All.Restart.Text()
+Opts.Apps.All.Backup.Text()
     {
     if [[ -n ${1:-} && $1 = "=" ]]; then
-        _object_user_opts_apps_all_restart_text_=$2
+        _object_opts_apps_all_backup_text_=$2
     else
-        echo -n "$_object_user_opts_apps_all_restart_text_"
+        echo -n "$_object_opts_apps_all_backup_text_"
     fi
     }
-User.Opts.Apps.All.Restart.Init
+Opts.Apps.All.Backup.Init
 
-User.Opts.Apps.All.Restore.Clear()
+Opts.Apps.All.Install.Clear()
     {
-    [[ $_object_user_opts_apps_all_restore_flag_ != 'true' ]] && return
-    _object_user_opts_apps_all_restore_flag_=false
-    [[ $_object_user_opts_apps_all_restore_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_restore_flag_
+    [[ $_object_opts_apps_all_install_flag_ != 'true' ]] && return
+    _object_opts_apps_all_install_flag_=false
+    [[ $_object_opts_apps_all_install_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_all_install_flag_
     }
-User.Opts.Apps.All.Restore.Disable()
+Opts.Apps.All.Install.Disable()
     {
-    [[ $_object_user_opts_apps_all_restore_enable_ != 'true' ]] && return
-    _object_user_opts_apps_all_restore_enable_=false
-    [[ $_object_user_opts_apps_all_restore_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_restore_enable_
+    [[ $_object_opts_apps_all_install_enable_ != 'true' ]] && return
+    _object_opts_apps_all_install_enable_=false
+    [[ $_object_opts_apps_all_install_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_all_install_enable_
     }
-User.Opts.Apps.All.Restore.DontLogChanges()
+Opts.Apps.All.Install.DontLogChanges()
     {
-    [[ $_object_user_opts_apps_all_restore_changes_flag_ != 'true' ]] && return
-    _object_user_opts_apps_all_restore_changes_flag_=false
+    [[ $_object_opts_apps_all_install_changes_flag_ != 'true' ]] && return
+    _object_opts_apps_all_install_changes_flag_=false
     }
-User.Opts.Apps.All.Restore.Enable()
+Opts.Apps.All.Install.Enable()
     {
-    [[ $_object_user_opts_apps_all_restore_enable_ = 'true' ]] && return
-    _object_user_opts_apps_all_restore_enable_=true
-    [[ $_object_user_opts_apps_all_restore_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_restore_enable_
+    [[ $_object_opts_apps_all_install_enable_ = 'true' ]] && return
+    _object_opts_apps_all_install_enable_=true
+    [[ $_object_opts_apps_all_install_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_all_install_enable_
     }
-User.Opts.Apps.All.Restore.Init()
+Opts.Apps.All.Install.Init()
     {
-    _object_user_opts_apps_all_restore_text_=''
-    _object_user_opts_apps_all_restore_flag_=false
-    _object_user_opts_apps_all_restore_changes_flag_=true
-    _object_user_opts_apps_all_restore_enable_=false
+    _object_opts_apps_all_install_text_=''
+    _object_opts_apps_all_install_flag_=false
+    _object_opts_apps_all_install_changes_flag_=true
+    _object_opts_apps_all_install_enable_=false
     }
-User.Opts.Apps.All.Restore.IsDisabled()
+Opts.Apps.All.Install.IsDisabled()
     {
-    [[ $_object_user_opts_apps_all_restore_enable_ != 'true' ]]
+    [[ $_object_opts_apps_all_install_enable_ != 'true' ]]
     }
-User.Opts.Apps.All.Restore.IsEnabled()
+Opts.Apps.All.Install.IsEnabled()
     {
-    [[ $_object_user_opts_apps_all_restore_enable_ = 'true' ]]
+    [[ $_object_opts_apps_all_install_enable_ = 'true' ]]
     }
-User.Opts.Apps.All.Restore.IsNot()
+Opts.Apps.All.Install.IsNot()
     {
-    [[ $_object_user_opts_apps_all_restore_flag_ != 'true' ]]
+    [[ $_object_opts_apps_all_install_flag_ != 'true' ]]
     }
-User.Opts.Apps.All.Restore.IsSet()
+Opts.Apps.All.Install.IsSet()
     {
-    [[ $_object_user_opts_apps_all_restore_flag_ = 'true' ]]
+    [[ $_object_opts_apps_all_install_flag_ = 'true' ]]
     }
-User.Opts.Apps.All.Restore.LogChanges()
+Opts.Apps.All.Install.LogChanges()
     {
-    [[ $_object_user_opts_apps_all_restore_changes_flag_ = 'true' ]] && return
-    _object_user_opts_apps_all_restore_changes_flag_=true
+    [[ $_object_opts_apps_all_install_changes_flag_ = 'true' ]] && return
+    _object_opts_apps_all_install_changes_flag_=true
     }
-User.Opts.Apps.All.Restore.Set()
+Opts.Apps.All.Install.Set()
     {
-    [[ $_object_user_opts_apps_all_restore_flag_ = 'true' ]] && return
-    _object_user_opts_apps_all_restore_flag_=true
-    [[ $_object_user_opts_apps_all_restore_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_restore_flag_
+    [[ $_object_opts_apps_all_install_flag_ = 'true' ]] && return
+    _object_opts_apps_all_install_flag_=true
+    [[ $_object_opts_apps_all_install_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_all_install_flag_
     }
-User.Opts.Apps.All.Restore.Text()
+Opts.Apps.All.Install.Text()
     {
     if [[ -n ${1:-} && $1 = "=" ]]; then
-        _object_user_opts_apps_all_restore_text_=$2
+        _object_opts_apps_all_install_text_=$2
     else
-        echo -n "$_object_user_opts_apps_all_restore_text_"
+        echo -n "$_object_opts_apps_all_install_text_"
     fi
     }
-User.Opts.Apps.All.Restore.Init
+Opts.Apps.All.Install.Init
 
-User.Opts.Apps.All.Start.Clear()
+Opts.Apps.All.Rebuild.Clear()
     {
-    [[ $_object_user_opts_apps_all_start_flag_ != 'true' ]] && return
-    _object_user_opts_apps_all_start_flag_=false
-    [[ $_object_user_opts_apps_all_start_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_start_flag_
+    [[ $_object_opts_apps_all_rebuild_flag_ != 'true' ]] && return
+    _object_opts_apps_all_rebuild_flag_=false
+    [[ $_object_opts_apps_all_rebuild_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_all_rebuild_flag_
     }
-User.Opts.Apps.All.Start.Disable()
+Opts.Apps.All.Rebuild.Disable()
     {
-    [[ $_object_user_opts_apps_all_start_enable_ != 'true' ]] && return
-    _object_user_opts_apps_all_start_enable_=false
-    [[ $_object_user_opts_apps_all_start_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_start_enable_
+    [[ $_object_opts_apps_all_rebuild_enable_ != 'true' ]] && return
+    _object_opts_apps_all_rebuild_enable_=false
+    [[ $_object_opts_apps_all_rebuild_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_all_rebuild_enable_
     }
-User.Opts.Apps.All.Start.DontLogChanges()
+Opts.Apps.All.Rebuild.DontLogChanges()
     {
-    [[ $_object_user_opts_apps_all_start_changes_flag_ != 'true' ]] && return
-    _object_user_opts_apps_all_start_changes_flag_=false
+    [[ $_object_opts_apps_all_rebuild_changes_flag_ != 'true' ]] && return
+    _object_opts_apps_all_rebuild_changes_flag_=false
     }
-User.Opts.Apps.All.Start.Enable()
+Opts.Apps.All.Rebuild.Enable()
     {
-    [[ $_object_user_opts_apps_all_start_enable_ = 'true' ]] && return
-    _object_user_opts_apps_all_start_enable_=true
-    [[ $_object_user_opts_apps_all_start_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_start_enable_
+    [[ $_object_opts_apps_all_rebuild_enable_ = 'true' ]] && return
+    _object_opts_apps_all_rebuild_enable_=true
+    [[ $_object_opts_apps_all_rebuild_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_all_rebuild_enable_
     }
-User.Opts.Apps.All.Start.Init()
+Opts.Apps.All.Rebuild.Init()
     {
-    _object_user_opts_apps_all_start_text_=''
-    _object_user_opts_apps_all_start_flag_=false
-    _object_user_opts_apps_all_start_changes_flag_=true
-    _object_user_opts_apps_all_start_enable_=false
+    _object_opts_apps_all_rebuild_text_=''
+    _object_opts_apps_all_rebuild_flag_=false
+    _object_opts_apps_all_rebuild_changes_flag_=true
+    _object_opts_apps_all_rebuild_enable_=false
     }
-User.Opts.Apps.All.Start.IsDisabled()
+Opts.Apps.All.Rebuild.IsDisabled()
     {
-    [[ $_object_user_opts_apps_all_start_enable_ != 'true' ]]
+    [[ $_object_opts_apps_all_rebuild_enable_ != 'true' ]]
     }
-User.Opts.Apps.All.Start.IsEnabled()
+Opts.Apps.All.Rebuild.IsEnabled()
     {
-    [[ $_object_user_opts_apps_all_start_enable_ = 'true' ]]
+    [[ $_object_opts_apps_all_rebuild_enable_ = 'true' ]]
     }
-User.Opts.Apps.All.Start.IsNot()
+Opts.Apps.All.Rebuild.IsNot()
     {
-    [[ $_object_user_opts_apps_all_start_flag_ != 'true' ]]
+    [[ $_object_opts_apps_all_rebuild_flag_ != 'true' ]]
     }
-User.Opts.Apps.All.Start.IsSet()
+Opts.Apps.All.Rebuild.IsSet()
     {
-    [[ $_object_user_opts_apps_all_start_flag_ = 'true' ]]
+    [[ $_object_opts_apps_all_rebuild_flag_ = 'true' ]]
     }
-User.Opts.Apps.All.Start.LogChanges()
+Opts.Apps.All.Rebuild.LogChanges()
     {
-    [[ $_object_user_opts_apps_all_start_changes_flag_ = 'true' ]] && return
-    _object_user_opts_apps_all_start_changes_flag_=true
+    [[ $_object_opts_apps_all_rebuild_changes_flag_ = 'true' ]] && return
+    _object_opts_apps_all_rebuild_changes_flag_=true
     }
-User.Opts.Apps.All.Start.Set()
+Opts.Apps.All.Rebuild.Set()
     {
-    [[ $_object_user_opts_apps_all_start_flag_ = 'true' ]] && return
-    _object_user_opts_apps_all_start_flag_=true
-    [[ $_object_user_opts_apps_all_start_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_start_flag_
+    [[ $_object_opts_apps_all_rebuild_flag_ = 'true' ]] && return
+    _object_opts_apps_all_rebuild_flag_=true
+    [[ $_object_opts_apps_all_rebuild_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_all_rebuild_flag_
     }
-User.Opts.Apps.All.Start.Text()
+Opts.Apps.All.Rebuild.Text()
     {
     if [[ -n ${1:-} && $1 = "=" ]]; then
-        _object_user_opts_apps_all_start_text_=$2
+        _object_opts_apps_all_rebuild_text_=$2
     else
-        echo -n "$_object_user_opts_apps_all_start_text_"
+        echo -n "$_object_opts_apps_all_rebuild_text_"
     fi
     }
-User.Opts.Apps.All.Start.Init
+Opts.Apps.All.Rebuild.Init
 
-User.Opts.Apps.All.Stop.Clear()
+Opts.Apps.All.Reinstall.Clear()
     {
-    [[ $_object_user_opts_apps_all_stop_flag_ != 'true' ]] && return
-    _object_user_opts_apps_all_stop_flag_=false
-    [[ $_object_user_opts_apps_all_stop_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_stop_flag_
+    [[ $_object_opts_apps_all_reinstall_flag_ != 'true' ]] && return
+    _object_opts_apps_all_reinstall_flag_=false
+    [[ $_object_opts_apps_all_reinstall_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_all_reinstall_flag_
     }
-User.Opts.Apps.All.Stop.Disable()
+Opts.Apps.All.Reinstall.Disable()
     {
-    [[ $_object_user_opts_apps_all_stop_enable_ != 'true' ]] && return
-    _object_user_opts_apps_all_stop_enable_=false
-    [[ $_object_user_opts_apps_all_stop_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_stop_enable_
+    [[ $_object_opts_apps_all_reinstall_enable_ != 'true' ]] && return
+    _object_opts_apps_all_reinstall_enable_=false
+    [[ $_object_opts_apps_all_reinstall_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_all_reinstall_enable_
     }
-User.Opts.Apps.All.Stop.DontLogChanges()
+Opts.Apps.All.Reinstall.DontLogChanges()
     {
-    [[ $_object_user_opts_apps_all_stop_changes_flag_ != 'true' ]] && return
-    _object_user_opts_apps_all_stop_changes_flag_=false
+    [[ $_object_opts_apps_all_reinstall_changes_flag_ != 'true' ]] && return
+    _object_opts_apps_all_reinstall_changes_flag_=false
     }
-User.Opts.Apps.All.Stop.Enable()
+Opts.Apps.All.Reinstall.Enable()
     {
-    [[ $_object_user_opts_apps_all_stop_enable_ = 'true' ]] && return
-    _object_user_opts_apps_all_stop_enable_=true
-    [[ $_object_user_opts_apps_all_stop_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_stop_enable_
+    [[ $_object_opts_apps_all_reinstall_enable_ = 'true' ]] && return
+    _object_opts_apps_all_reinstall_enable_=true
+    [[ $_object_opts_apps_all_reinstall_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_all_reinstall_enable_
     }
-User.Opts.Apps.All.Stop.Init()
+Opts.Apps.All.Reinstall.Init()
     {
-    _object_user_opts_apps_all_stop_text_=''
-    _object_user_opts_apps_all_stop_flag_=false
-    _object_user_opts_apps_all_stop_changes_flag_=true
-    _object_user_opts_apps_all_stop_enable_=false
+    _object_opts_apps_all_reinstall_text_=''
+    _object_opts_apps_all_reinstall_flag_=false
+    _object_opts_apps_all_reinstall_changes_flag_=true
+    _object_opts_apps_all_reinstall_enable_=false
     }
-User.Opts.Apps.All.Stop.IsDisabled()
+Opts.Apps.All.Reinstall.IsDisabled()
     {
-    [[ $_object_user_opts_apps_all_stop_enable_ != 'true' ]]
+    [[ $_object_opts_apps_all_reinstall_enable_ != 'true' ]]
     }
-User.Opts.Apps.All.Stop.IsEnabled()
+Opts.Apps.All.Reinstall.IsEnabled()
     {
-    [[ $_object_user_opts_apps_all_stop_enable_ = 'true' ]]
+    [[ $_object_opts_apps_all_reinstall_enable_ = 'true' ]]
     }
-User.Opts.Apps.All.Stop.IsNot()
+Opts.Apps.All.Reinstall.IsNot()
     {
-    [[ $_object_user_opts_apps_all_stop_flag_ != 'true' ]]
+    [[ $_object_opts_apps_all_reinstall_flag_ != 'true' ]]
     }
-User.Opts.Apps.All.Stop.IsSet()
+Opts.Apps.All.Reinstall.IsSet()
     {
-    [[ $_object_user_opts_apps_all_stop_flag_ = 'true' ]]
+    [[ $_object_opts_apps_all_reinstall_flag_ = 'true' ]]
     }
-User.Opts.Apps.All.Stop.LogChanges()
+Opts.Apps.All.Reinstall.LogChanges()
     {
-    [[ $_object_user_opts_apps_all_stop_changes_flag_ = 'true' ]] && return
-    _object_user_opts_apps_all_stop_changes_flag_=true
+    [[ $_object_opts_apps_all_reinstall_changes_flag_ = 'true' ]] && return
+    _object_opts_apps_all_reinstall_changes_flag_=true
     }
-User.Opts.Apps.All.Stop.Set()
+Opts.Apps.All.Reinstall.Set()
     {
-    [[ $_object_user_opts_apps_all_stop_flag_ = 'true' ]] && return
-    _object_user_opts_apps_all_stop_flag_=true
-    [[ $_object_user_opts_apps_all_stop_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_stop_flag_
+    [[ $_object_opts_apps_all_reinstall_flag_ = 'true' ]] && return
+    _object_opts_apps_all_reinstall_flag_=true
+    [[ $_object_opts_apps_all_reinstall_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_all_reinstall_flag_
     }
-User.Opts.Apps.All.Stop.Text()
+Opts.Apps.All.Reinstall.Text()
     {
     if [[ -n ${1:-} && $1 = "=" ]]; then
-        _object_user_opts_apps_all_stop_text_=$2
+        _object_opts_apps_all_reinstall_text_=$2
     else
-        echo -n "$_object_user_opts_apps_all_stop_text_"
+        echo -n "$_object_opts_apps_all_reinstall_text_"
     fi
     }
-User.Opts.Apps.All.Stop.Init
+Opts.Apps.All.Reinstall.Init
 
-User.Opts.Apps.All.Uninstall.Clear()
+Opts.Apps.All.Restart.Clear()
     {
-    [[ $_object_user_opts_apps_all_uninstall_flag_ != 'true' ]] && return
-    _object_user_opts_apps_all_uninstall_flag_=false
-    [[ $_object_user_opts_apps_all_uninstall_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_uninstall_flag_
+    [[ $_object_opts_apps_all_restart_flag_ != 'true' ]] && return
+    _object_opts_apps_all_restart_flag_=false
+    [[ $_object_opts_apps_all_restart_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_all_restart_flag_
     }
-User.Opts.Apps.All.Uninstall.Disable()
+Opts.Apps.All.Restart.Disable()
     {
-    [[ $_object_user_opts_apps_all_uninstall_enable_ != 'true' ]] && return
-    _object_user_opts_apps_all_uninstall_enable_=false
-    [[ $_object_user_opts_apps_all_uninstall_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_uninstall_enable_
+    [[ $_object_opts_apps_all_restart_enable_ != 'true' ]] && return
+    _object_opts_apps_all_restart_enable_=false
+    [[ $_object_opts_apps_all_restart_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_all_restart_enable_
     }
-User.Opts.Apps.All.Uninstall.DontLogChanges()
+Opts.Apps.All.Restart.DontLogChanges()
     {
-    [[ $_object_user_opts_apps_all_uninstall_changes_flag_ != 'true' ]] && return
-    _object_user_opts_apps_all_uninstall_changes_flag_=false
+    [[ $_object_opts_apps_all_restart_changes_flag_ != 'true' ]] && return
+    _object_opts_apps_all_restart_changes_flag_=false
     }
-User.Opts.Apps.All.Uninstall.Enable()
+Opts.Apps.All.Restart.Enable()
     {
-    [[ $_object_user_opts_apps_all_uninstall_enable_ = 'true' ]] && return
-    _object_user_opts_apps_all_uninstall_enable_=true
-    [[ $_object_user_opts_apps_all_uninstall_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_uninstall_enable_
+    [[ $_object_opts_apps_all_restart_enable_ = 'true' ]] && return
+    _object_opts_apps_all_restart_enable_=true
+    [[ $_object_opts_apps_all_restart_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_all_restart_enable_
     }
-User.Opts.Apps.All.Uninstall.Init()
+Opts.Apps.All.Restart.Init()
     {
-    _object_user_opts_apps_all_uninstall_text_=''
-    _object_user_opts_apps_all_uninstall_flag_=false
-    _object_user_opts_apps_all_uninstall_changes_flag_=true
-    _object_user_opts_apps_all_uninstall_enable_=false
+    _object_opts_apps_all_restart_text_=''
+    _object_opts_apps_all_restart_flag_=false
+    _object_opts_apps_all_restart_changes_flag_=true
+    _object_opts_apps_all_restart_enable_=false
     }
-User.Opts.Apps.All.Uninstall.IsDisabled()
+Opts.Apps.All.Restart.IsDisabled()
     {
-    [[ $_object_user_opts_apps_all_uninstall_enable_ != 'true' ]]
+    [[ $_object_opts_apps_all_restart_enable_ != 'true' ]]
     }
-User.Opts.Apps.All.Uninstall.IsEnabled()
+Opts.Apps.All.Restart.IsEnabled()
     {
-    [[ $_object_user_opts_apps_all_uninstall_enable_ = 'true' ]]
+    [[ $_object_opts_apps_all_restart_enable_ = 'true' ]]
     }
-User.Opts.Apps.All.Uninstall.IsNot()
+Opts.Apps.All.Restart.IsNot()
     {
-    [[ $_object_user_opts_apps_all_uninstall_flag_ != 'true' ]]
+    [[ $_object_opts_apps_all_restart_flag_ != 'true' ]]
     }
-User.Opts.Apps.All.Uninstall.IsSet()
+Opts.Apps.All.Restart.IsSet()
     {
-    [[ $_object_user_opts_apps_all_uninstall_flag_ = 'true' ]]
+    [[ $_object_opts_apps_all_restart_flag_ = 'true' ]]
     }
-User.Opts.Apps.All.Uninstall.LogChanges()
+Opts.Apps.All.Restart.LogChanges()
     {
-    [[ $_object_user_opts_apps_all_uninstall_changes_flag_ = 'true' ]] && return
-    _object_user_opts_apps_all_uninstall_changes_flag_=true
+    [[ $_object_opts_apps_all_restart_changes_flag_ = 'true' ]] && return
+    _object_opts_apps_all_restart_changes_flag_=true
     }
-User.Opts.Apps.All.Uninstall.Set()
+Opts.Apps.All.Restart.Set()
     {
-    [[ $_object_user_opts_apps_all_uninstall_flag_ = 'true' ]] && return
-    _object_user_opts_apps_all_uninstall_flag_=true
-    [[ $_object_user_opts_apps_all_uninstall_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_uninstall_flag_
+    [[ $_object_opts_apps_all_restart_flag_ = 'true' ]] && return
+    _object_opts_apps_all_restart_flag_=true
+    [[ $_object_opts_apps_all_restart_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_all_restart_flag_
     }
-User.Opts.Apps.All.Uninstall.Text()
+Opts.Apps.All.Restart.Text()
     {
     if [[ -n ${1:-} && $1 = "=" ]]; then
-        _object_user_opts_apps_all_uninstall_text_=$2
+        _object_opts_apps_all_restart_text_=$2
     else
-        echo -n "$_object_user_opts_apps_all_uninstall_text_"
+        echo -n "$_object_opts_apps_all_restart_text_"
     fi
     }
-User.Opts.Apps.All.Uninstall.Init
+Opts.Apps.All.Restart.Init
 
-User.Opts.Apps.All.Upgrade.Clear()
+Opts.Apps.All.Restore.Clear()
     {
-    [[ $_object_user_opts_apps_all_upgrade_flag_ != 'true' ]] && return
-    _object_user_opts_apps_all_upgrade_flag_=false
-    [[ $_object_user_opts_apps_all_upgrade_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_upgrade_flag_
+    [[ $_object_opts_apps_all_restore_flag_ != 'true' ]] && return
+    _object_opts_apps_all_restore_flag_=false
+    [[ $_object_opts_apps_all_restore_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_all_restore_flag_
     }
-User.Opts.Apps.All.Upgrade.Disable()
+Opts.Apps.All.Restore.Disable()
     {
-    [[ $_object_user_opts_apps_all_upgrade_enable_ != 'true' ]] && return
-    _object_user_opts_apps_all_upgrade_enable_=false
-    [[ $_object_user_opts_apps_all_upgrade_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_upgrade_enable_
+    [[ $_object_opts_apps_all_restore_enable_ != 'true' ]] && return
+    _object_opts_apps_all_restore_enable_=false
+    [[ $_object_opts_apps_all_restore_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_all_restore_enable_
     }
-User.Opts.Apps.All.Upgrade.DontLogChanges()
+Opts.Apps.All.Restore.DontLogChanges()
     {
-    [[ $_object_user_opts_apps_all_upgrade_changes_flag_ != 'true' ]] && return
-    _object_user_opts_apps_all_upgrade_changes_flag_=false
+    [[ $_object_opts_apps_all_restore_changes_flag_ != 'true' ]] && return
+    _object_opts_apps_all_restore_changes_flag_=false
     }
-User.Opts.Apps.All.Upgrade.Enable()
+Opts.Apps.All.Restore.Enable()
     {
-    [[ $_object_user_opts_apps_all_upgrade_enable_ = 'true' ]] && return
-    _object_user_opts_apps_all_upgrade_enable_=true
-    [[ $_object_user_opts_apps_all_upgrade_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_upgrade_enable_
+    [[ $_object_opts_apps_all_restore_enable_ = 'true' ]] && return
+    _object_opts_apps_all_restore_enable_=true
+    [[ $_object_opts_apps_all_restore_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_all_restore_enable_
     }
-User.Opts.Apps.All.Upgrade.Init()
+Opts.Apps.All.Restore.Init()
     {
-    _object_user_opts_apps_all_upgrade_text_=''
-    _object_user_opts_apps_all_upgrade_flag_=false
-    _object_user_opts_apps_all_upgrade_changes_flag_=true
-    _object_user_opts_apps_all_upgrade_enable_=false
+    _object_opts_apps_all_restore_text_=''
+    _object_opts_apps_all_restore_flag_=false
+    _object_opts_apps_all_restore_changes_flag_=true
+    _object_opts_apps_all_restore_enable_=false
     }
-User.Opts.Apps.All.Upgrade.IsDisabled()
+Opts.Apps.All.Restore.IsDisabled()
     {
-    [[ $_object_user_opts_apps_all_upgrade_enable_ != 'true' ]]
+    [[ $_object_opts_apps_all_restore_enable_ != 'true' ]]
     }
-User.Opts.Apps.All.Upgrade.IsEnabled()
+Opts.Apps.All.Restore.IsEnabled()
     {
-    [[ $_object_user_opts_apps_all_upgrade_enable_ = 'true' ]]
+    [[ $_object_opts_apps_all_restore_enable_ = 'true' ]]
     }
-User.Opts.Apps.All.Upgrade.IsNot()
+Opts.Apps.All.Restore.IsNot()
     {
-    [[ $_object_user_opts_apps_all_upgrade_flag_ != 'true' ]]
+    [[ $_object_opts_apps_all_restore_flag_ != 'true' ]]
     }
-User.Opts.Apps.All.Upgrade.IsSet()
+Opts.Apps.All.Restore.IsSet()
     {
-    [[ $_object_user_opts_apps_all_upgrade_flag_ = 'true' ]]
+    [[ $_object_opts_apps_all_restore_flag_ = 'true' ]]
     }
-User.Opts.Apps.All.Upgrade.LogChanges()
+Opts.Apps.All.Restore.LogChanges()
     {
-    [[ $_object_user_opts_apps_all_upgrade_changes_flag_ = 'true' ]] && return
-    _object_user_opts_apps_all_upgrade_changes_flag_=true
+    [[ $_object_opts_apps_all_restore_changes_flag_ = 'true' ]] && return
+    _object_opts_apps_all_restore_changes_flag_=true
     }
-User.Opts.Apps.All.Upgrade.Set()
+Opts.Apps.All.Restore.Set()
     {
-    [[ $_object_user_opts_apps_all_upgrade_flag_ = 'true' ]] && return
-    _object_user_opts_apps_all_upgrade_flag_=true
-    [[ $_object_user_opts_apps_all_upgrade_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_all_upgrade_flag_
+    [[ $_object_opts_apps_all_restore_flag_ = 'true' ]] && return
+    _object_opts_apps_all_restore_flag_=true
+    [[ $_object_opts_apps_all_restore_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_all_restore_flag_
     }
-User.Opts.Apps.All.Upgrade.Text()
+Opts.Apps.All.Restore.Text()
     {
     if [[ -n ${1:-} && $1 = "=" ]]; then
-        _object_user_opts_apps_all_upgrade_text_=$2
+        _object_opts_apps_all_restore_text_=$2
     else
-        echo -n "$_object_user_opts_apps_all_upgrade_text_"
+        echo -n "$_object_opts_apps_all_restore_text_"
     fi
     }
-User.Opts.Apps.All.Upgrade.Init
+Opts.Apps.All.Restore.Init
 
-User.Opts.Apps.List.All.Clear()
+Opts.Apps.All.Start.Clear()
     {
-    [[ $_object_user_opts_apps_list_all_flag_ != 'true' ]] && return
-    _object_user_opts_apps_list_all_flag_=false
-    [[ $_object_user_opts_apps_list_all_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_all_flag_
+    [[ $_object_opts_apps_all_start_flag_ != 'true' ]] && return
+    _object_opts_apps_all_start_flag_=false
+    [[ $_object_opts_apps_all_start_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_all_start_flag_
     }
-User.Opts.Apps.List.All.Disable()
+Opts.Apps.All.Start.Disable()
     {
-    [[ $_object_user_opts_apps_list_all_enable_ != 'true' ]] && return
-    _object_user_opts_apps_list_all_enable_=false
-    [[ $_object_user_opts_apps_list_all_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_all_enable_
+    [[ $_object_opts_apps_all_start_enable_ != 'true' ]] && return
+    _object_opts_apps_all_start_enable_=false
+    [[ $_object_opts_apps_all_start_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_all_start_enable_
     }
-User.Opts.Apps.List.All.DontLogChanges()
+Opts.Apps.All.Start.DontLogChanges()
     {
-    [[ $_object_user_opts_apps_list_all_changes_flag_ != 'true' ]] && return
-    _object_user_opts_apps_list_all_changes_flag_=false
+    [[ $_object_opts_apps_all_start_changes_flag_ != 'true' ]] && return
+    _object_opts_apps_all_start_changes_flag_=false
     }
-User.Opts.Apps.List.All.Enable()
+Opts.Apps.All.Start.Enable()
     {
-    [[ $_object_user_opts_apps_list_all_enable_ = 'true' ]] && return
-    _object_user_opts_apps_list_all_enable_=true
-    [[ $_object_user_opts_apps_list_all_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_all_enable_
+    [[ $_object_opts_apps_all_start_enable_ = 'true' ]] && return
+    _object_opts_apps_all_start_enable_=true
+    [[ $_object_opts_apps_all_start_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_all_start_enable_
     }
-User.Opts.Apps.List.All.Init()
+Opts.Apps.All.Start.Init()
     {
-    _object_user_opts_apps_list_all_text_=''
-    _object_user_opts_apps_list_all_flag_=false
-    _object_user_opts_apps_list_all_changes_flag_=true
-    _object_user_opts_apps_list_all_enable_=false
+    _object_opts_apps_all_start_text_=''
+    _object_opts_apps_all_start_flag_=false
+    _object_opts_apps_all_start_changes_flag_=true
+    _object_opts_apps_all_start_enable_=false
     }
-User.Opts.Apps.List.All.IsDisabled()
+Opts.Apps.All.Start.IsDisabled()
     {
-    [[ $_object_user_opts_apps_list_all_enable_ != 'true' ]]
+    [[ $_object_opts_apps_all_start_enable_ != 'true' ]]
     }
-User.Opts.Apps.List.All.IsEnabled()
+Opts.Apps.All.Start.IsEnabled()
     {
-    [[ $_object_user_opts_apps_list_all_enable_ = 'true' ]]
+    [[ $_object_opts_apps_all_start_enable_ = 'true' ]]
     }
-User.Opts.Apps.List.All.IsNot()
+Opts.Apps.All.Start.IsNot()
     {
-    [[ $_object_user_opts_apps_list_all_flag_ != 'true' ]]
+    [[ $_object_opts_apps_all_start_flag_ != 'true' ]]
     }
-User.Opts.Apps.List.All.IsSet()
+Opts.Apps.All.Start.IsSet()
     {
-    [[ $_object_user_opts_apps_list_all_flag_ = 'true' ]]
+    [[ $_object_opts_apps_all_start_flag_ = 'true' ]]
     }
-User.Opts.Apps.List.All.LogChanges()
+Opts.Apps.All.Start.LogChanges()
     {
-    [[ $_object_user_opts_apps_list_all_changes_flag_ = 'true' ]] && return
-    _object_user_opts_apps_list_all_changes_flag_=true
+    [[ $_object_opts_apps_all_start_changes_flag_ = 'true' ]] && return
+    _object_opts_apps_all_start_changes_flag_=true
     }
-User.Opts.Apps.List.All.Set()
+Opts.Apps.All.Start.Set()
     {
-    [[ $_object_user_opts_apps_list_all_flag_ = 'true' ]] && return
-    _object_user_opts_apps_list_all_flag_=true
-    [[ $_object_user_opts_apps_list_all_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_all_flag_
+    [[ $_object_opts_apps_all_start_flag_ = 'true' ]] && return
+    _object_opts_apps_all_start_flag_=true
+    [[ $_object_opts_apps_all_start_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_all_start_flag_
     }
-User.Opts.Apps.List.All.Text()
+Opts.Apps.All.Start.Text()
     {
     if [[ -n ${1:-} && $1 = "=" ]]; then
-        _object_user_opts_apps_list_all_text_=$2
+        _object_opts_apps_all_start_text_=$2
     else
-        echo -n "$_object_user_opts_apps_list_all_text_"
+        echo -n "$_object_opts_apps_all_start_text_"
     fi
     }
-User.Opts.Apps.List.All.Init
+Opts.Apps.All.Start.Init
 
-User.Opts.Apps.List.Essential.Clear()
+Opts.Apps.All.Stop.Clear()
     {
-    [[ $_object_user_opts_apps_list_essential_flag_ != 'true' ]] && return
-    _object_user_opts_apps_list_essential_flag_=false
-    [[ $_object_user_opts_apps_list_essential_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_essential_flag_
+    [[ $_object_opts_apps_all_stop_flag_ != 'true' ]] && return
+    _object_opts_apps_all_stop_flag_=false
+    [[ $_object_opts_apps_all_stop_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_all_stop_flag_
     }
-User.Opts.Apps.List.Essential.Disable()
+Opts.Apps.All.Stop.Disable()
     {
-    [[ $_object_user_opts_apps_list_essential_enable_ != 'true' ]] && return
-    _object_user_opts_apps_list_essential_enable_=false
-    [[ $_object_user_opts_apps_list_essential_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_essential_enable_
+    [[ $_object_opts_apps_all_stop_enable_ != 'true' ]] && return
+    _object_opts_apps_all_stop_enable_=false
+    [[ $_object_opts_apps_all_stop_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_all_stop_enable_
     }
-User.Opts.Apps.List.Essential.DontLogChanges()
+Opts.Apps.All.Stop.DontLogChanges()
     {
-    [[ $_object_user_opts_apps_list_essential_changes_flag_ != 'true' ]] && return
-    _object_user_opts_apps_list_essential_changes_flag_=false
+    [[ $_object_opts_apps_all_stop_changes_flag_ != 'true' ]] && return
+    _object_opts_apps_all_stop_changes_flag_=false
     }
-User.Opts.Apps.List.Essential.Enable()
+Opts.Apps.All.Stop.Enable()
     {
-    [[ $_object_user_opts_apps_list_essential_enable_ = 'true' ]] && return
-    _object_user_opts_apps_list_essential_enable_=true
-    [[ $_object_user_opts_apps_list_essential_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_essential_enable_
+    [[ $_object_opts_apps_all_stop_enable_ = 'true' ]] && return
+    _object_opts_apps_all_stop_enable_=true
+    [[ $_object_opts_apps_all_stop_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_all_stop_enable_
     }
-User.Opts.Apps.List.Essential.Init()
+Opts.Apps.All.Stop.Init()
     {
-    _object_user_opts_apps_list_essential_text_=''
-    _object_user_opts_apps_list_essential_flag_=false
-    _object_user_opts_apps_list_essential_changes_flag_=true
-    _object_user_opts_apps_list_essential_enable_=false
+    _object_opts_apps_all_stop_text_=''
+    _object_opts_apps_all_stop_flag_=false
+    _object_opts_apps_all_stop_changes_flag_=true
+    _object_opts_apps_all_stop_enable_=false
     }
-User.Opts.Apps.List.Essential.IsDisabled()
+Opts.Apps.All.Stop.IsDisabled()
     {
-    [[ $_object_user_opts_apps_list_essential_enable_ != 'true' ]]
+    [[ $_object_opts_apps_all_stop_enable_ != 'true' ]]
     }
-User.Opts.Apps.List.Essential.IsEnabled()
+Opts.Apps.All.Stop.IsEnabled()
     {
-    [[ $_object_user_opts_apps_list_essential_enable_ = 'true' ]]
+    [[ $_object_opts_apps_all_stop_enable_ = 'true' ]]
     }
-User.Opts.Apps.List.Essential.IsNot()
+Opts.Apps.All.Stop.IsNot()
     {
-    [[ $_object_user_opts_apps_list_essential_flag_ != 'true' ]]
+    [[ $_object_opts_apps_all_stop_flag_ != 'true' ]]
     }
-User.Opts.Apps.List.Essential.IsSet()
+Opts.Apps.All.Stop.IsSet()
     {
-    [[ $_object_user_opts_apps_list_essential_flag_ = 'true' ]]
+    [[ $_object_opts_apps_all_stop_flag_ = 'true' ]]
     }
-User.Opts.Apps.List.Essential.LogChanges()
+Opts.Apps.All.Stop.LogChanges()
     {
-    [[ $_object_user_opts_apps_list_essential_changes_flag_ = 'true' ]] && return
-    _object_user_opts_apps_list_essential_changes_flag_=true
+    [[ $_object_opts_apps_all_stop_changes_flag_ = 'true' ]] && return
+    _object_opts_apps_all_stop_changes_flag_=true
     }
-User.Opts.Apps.List.Essential.Set()
+Opts.Apps.All.Stop.Set()
     {
-    [[ $_object_user_opts_apps_list_essential_flag_ = 'true' ]] && return
-    _object_user_opts_apps_list_essential_flag_=true
-    [[ $_object_user_opts_apps_list_essential_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_essential_flag_
+    [[ $_object_opts_apps_all_stop_flag_ = 'true' ]] && return
+    _object_opts_apps_all_stop_flag_=true
+    [[ $_object_opts_apps_all_stop_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_all_stop_flag_
     }
-User.Opts.Apps.List.Essential.Text()
+Opts.Apps.All.Stop.Text()
     {
     if [[ -n ${1:-} && $1 = "=" ]]; then
-        _object_user_opts_apps_list_essential_text_=$2
+        _object_opts_apps_all_stop_text_=$2
     else
-        echo -n "$_object_user_opts_apps_list_essential_text_"
+        echo -n "$_object_opts_apps_all_stop_text_"
     fi
     }
-User.Opts.Apps.List.Essential.Init
+Opts.Apps.All.Stop.Init
 
-User.Opts.Apps.List.Installed.Clear()
+Opts.Apps.All.Uninstall.Clear()
     {
-    [[ $_object_user_opts_apps_list_installed_flag_ != 'true' ]] && return
-    _object_user_opts_apps_list_installed_flag_=false
-    [[ $_object_user_opts_apps_list_installed_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_installed_flag_
+    [[ $_object_opts_apps_all_uninstall_flag_ != 'true' ]] && return
+    _object_opts_apps_all_uninstall_flag_=false
+    [[ $_object_opts_apps_all_uninstall_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_all_uninstall_flag_
     }
-User.Opts.Apps.List.Installed.Disable()
+Opts.Apps.All.Uninstall.Disable()
     {
-    [[ $_object_user_opts_apps_list_installed_enable_ != 'true' ]] && return
-    _object_user_opts_apps_list_installed_enable_=false
-    [[ $_object_user_opts_apps_list_installed_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_installed_enable_
+    [[ $_object_opts_apps_all_uninstall_enable_ != 'true' ]] && return
+    _object_opts_apps_all_uninstall_enable_=false
+    [[ $_object_opts_apps_all_uninstall_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_all_uninstall_enable_
     }
-User.Opts.Apps.List.Installed.DontLogChanges()
+Opts.Apps.All.Uninstall.DontLogChanges()
     {
-    [[ $_object_user_opts_apps_list_installed_changes_flag_ != 'true' ]] && return
-    _object_user_opts_apps_list_installed_changes_flag_=false
+    [[ $_object_opts_apps_all_uninstall_changes_flag_ != 'true' ]] && return
+    _object_opts_apps_all_uninstall_changes_flag_=false
     }
-User.Opts.Apps.List.Installed.Enable()
+Opts.Apps.All.Uninstall.Enable()
     {
-    [[ $_object_user_opts_apps_list_installed_enable_ = 'true' ]] && return
-    _object_user_opts_apps_list_installed_enable_=true
-    [[ $_object_user_opts_apps_list_installed_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_installed_enable_
+    [[ $_object_opts_apps_all_uninstall_enable_ = 'true' ]] && return
+    _object_opts_apps_all_uninstall_enable_=true
+    [[ $_object_opts_apps_all_uninstall_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_all_uninstall_enable_
     }
-User.Opts.Apps.List.Installed.Init()
+Opts.Apps.All.Uninstall.Init()
     {
-    _object_user_opts_apps_list_installed_text_=''
-    _object_user_opts_apps_list_installed_flag_=false
-    _object_user_opts_apps_list_installed_changes_flag_=true
-    _object_user_opts_apps_list_installed_enable_=false
+    _object_opts_apps_all_uninstall_text_=''
+    _object_opts_apps_all_uninstall_flag_=false
+    _object_opts_apps_all_uninstall_changes_flag_=true
+    _object_opts_apps_all_uninstall_enable_=false
     }
-User.Opts.Apps.List.Installed.IsDisabled()
+Opts.Apps.All.Uninstall.IsDisabled()
     {
-    [[ $_object_user_opts_apps_list_installed_enable_ != 'true' ]]
+    [[ $_object_opts_apps_all_uninstall_enable_ != 'true' ]]
     }
-User.Opts.Apps.List.Installed.IsEnabled()
+Opts.Apps.All.Uninstall.IsEnabled()
     {
-    [[ $_object_user_opts_apps_list_installed_enable_ = 'true' ]]
+    [[ $_object_opts_apps_all_uninstall_enable_ = 'true' ]]
     }
-User.Opts.Apps.List.Installed.IsNot()
+Opts.Apps.All.Uninstall.IsNot()
     {
-    [[ $_object_user_opts_apps_list_installed_flag_ != 'true' ]]
+    [[ $_object_opts_apps_all_uninstall_flag_ != 'true' ]]
     }
-User.Opts.Apps.List.Installed.IsSet()
+Opts.Apps.All.Uninstall.IsSet()
     {
-    [[ $_object_user_opts_apps_list_installed_flag_ = 'true' ]]
+    [[ $_object_opts_apps_all_uninstall_flag_ = 'true' ]]
     }
-User.Opts.Apps.List.Installed.LogChanges()
+Opts.Apps.All.Uninstall.LogChanges()
     {
-    [[ $_object_user_opts_apps_list_installed_changes_flag_ = 'true' ]] && return
-    _object_user_opts_apps_list_installed_changes_flag_=true
+    [[ $_object_opts_apps_all_uninstall_changes_flag_ = 'true' ]] && return
+    _object_opts_apps_all_uninstall_changes_flag_=true
     }
-User.Opts.Apps.List.Installed.Set()
+Opts.Apps.All.Uninstall.Set()
     {
-    [[ $_object_user_opts_apps_list_installed_flag_ = 'true' ]] && return
-    _object_user_opts_apps_list_installed_flag_=true
-    [[ $_object_user_opts_apps_list_installed_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_installed_flag_
+    [[ $_object_opts_apps_all_uninstall_flag_ = 'true' ]] && return
+    _object_opts_apps_all_uninstall_flag_=true
+    [[ $_object_opts_apps_all_uninstall_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_all_uninstall_flag_
     }
-User.Opts.Apps.List.Installed.Text()
+Opts.Apps.All.Uninstall.Text()
     {
     if [[ -n ${1:-} && $1 = "=" ]]; then
-        _object_user_opts_apps_list_installed_text_=$2
+        _object_opts_apps_all_uninstall_text_=$2
     else
-        echo -n "$_object_user_opts_apps_list_installed_text_"
+        echo -n "$_object_opts_apps_all_uninstall_text_"
     fi
     }
-User.Opts.Apps.List.Installed.Init
+Opts.Apps.All.Uninstall.Init
 
-User.Opts.Apps.List.NotInstalled.Clear()
+Opts.Apps.All.Upgrade.Clear()
     {
-    [[ $_object_user_opts_apps_list_notinstalled_flag_ != 'true' ]] && return
-    _object_user_opts_apps_list_notinstalled_flag_=false
-    [[ $_object_user_opts_apps_list_notinstalled_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_notinstalled_flag_
+    [[ $_object_opts_apps_all_upgrade_flag_ != 'true' ]] && return
+    _object_opts_apps_all_upgrade_flag_=false
+    [[ $_object_opts_apps_all_upgrade_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_all_upgrade_flag_
     }
-User.Opts.Apps.List.NotInstalled.Disable()
+Opts.Apps.All.Upgrade.Disable()
     {
-    [[ $_object_user_opts_apps_list_notinstalled_enable_ != 'true' ]] && return
-    _object_user_opts_apps_list_notinstalled_enable_=false
-    [[ $_object_user_opts_apps_list_notinstalled_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_notinstalled_enable_
+    [[ $_object_opts_apps_all_upgrade_enable_ != 'true' ]] && return
+    _object_opts_apps_all_upgrade_enable_=false
+    [[ $_object_opts_apps_all_upgrade_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_all_upgrade_enable_
     }
-User.Opts.Apps.List.NotInstalled.DontLogChanges()
+Opts.Apps.All.Upgrade.DontLogChanges()
     {
-    [[ $_object_user_opts_apps_list_notinstalled_changes_flag_ != 'true' ]] && return
-    _object_user_opts_apps_list_notinstalled_changes_flag_=false
+    [[ $_object_opts_apps_all_upgrade_changes_flag_ != 'true' ]] && return
+    _object_opts_apps_all_upgrade_changes_flag_=false
     }
-User.Opts.Apps.List.NotInstalled.Enable()
+Opts.Apps.All.Upgrade.Enable()
     {
-    [[ $_object_user_opts_apps_list_notinstalled_enable_ = 'true' ]] && return
-    _object_user_opts_apps_list_notinstalled_enable_=true
-    [[ $_object_user_opts_apps_list_notinstalled_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_notinstalled_enable_
+    [[ $_object_opts_apps_all_upgrade_enable_ = 'true' ]] && return
+    _object_opts_apps_all_upgrade_enable_=true
+    [[ $_object_opts_apps_all_upgrade_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_all_upgrade_enable_
     }
-User.Opts.Apps.List.NotInstalled.Init()
+Opts.Apps.All.Upgrade.Init()
     {
-    _object_user_opts_apps_list_notinstalled_text_=''
-    _object_user_opts_apps_list_notinstalled_flag_=false
-    _object_user_opts_apps_list_notinstalled_changes_flag_=true
-    _object_user_opts_apps_list_notinstalled_enable_=false
+    _object_opts_apps_all_upgrade_text_=''
+    _object_opts_apps_all_upgrade_flag_=false
+    _object_opts_apps_all_upgrade_changes_flag_=true
+    _object_opts_apps_all_upgrade_enable_=false
     }
-User.Opts.Apps.List.NotInstalled.IsDisabled()
+Opts.Apps.All.Upgrade.IsDisabled()
     {
-    [[ $_object_user_opts_apps_list_notinstalled_enable_ != 'true' ]]
+    [[ $_object_opts_apps_all_upgrade_enable_ != 'true' ]]
     }
-User.Opts.Apps.List.NotInstalled.IsEnabled()
+Opts.Apps.All.Upgrade.IsEnabled()
     {
-    [[ $_object_user_opts_apps_list_notinstalled_enable_ = 'true' ]]
+    [[ $_object_opts_apps_all_upgrade_enable_ = 'true' ]]
     }
-User.Opts.Apps.List.NotInstalled.IsNot()
+Opts.Apps.All.Upgrade.IsNot()
     {
-    [[ $_object_user_opts_apps_list_notinstalled_flag_ != 'true' ]]
+    [[ $_object_opts_apps_all_upgrade_flag_ != 'true' ]]
     }
-User.Opts.Apps.List.NotInstalled.IsSet()
+Opts.Apps.All.Upgrade.IsSet()
     {
-    [[ $_object_user_opts_apps_list_notinstalled_flag_ = 'true' ]]
+    [[ $_object_opts_apps_all_upgrade_flag_ = 'true' ]]
     }
-User.Opts.Apps.List.NotInstalled.LogChanges()
+Opts.Apps.All.Upgrade.LogChanges()
     {
-    [[ $_object_user_opts_apps_list_notinstalled_changes_flag_ = 'true' ]] && return
-    _object_user_opts_apps_list_notinstalled_changes_flag_=true
+    [[ $_object_opts_apps_all_upgrade_changes_flag_ = 'true' ]] && return
+    _object_opts_apps_all_upgrade_changes_flag_=true
     }
-User.Opts.Apps.List.NotInstalled.Set()
+Opts.Apps.All.Upgrade.Set()
     {
-    [[ $_object_user_opts_apps_list_notinstalled_flag_ = 'true' ]] && return
-    _object_user_opts_apps_list_notinstalled_flag_=true
-    [[ $_object_user_opts_apps_list_notinstalled_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_notinstalled_flag_
+    [[ $_object_opts_apps_all_upgrade_flag_ = 'true' ]] && return
+    _object_opts_apps_all_upgrade_flag_=true
+    [[ $_object_opts_apps_all_upgrade_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_all_upgrade_flag_
     }
-User.Opts.Apps.List.NotInstalled.Text()
+Opts.Apps.All.Upgrade.Text()
     {
     if [[ -n ${1:-} && $1 = "=" ]]; then
-        _object_user_opts_apps_list_notinstalled_text_=$2
+        _object_opts_apps_all_upgrade_text_=$2
     else
-        echo -n "$_object_user_opts_apps_list_notinstalled_text_"
+        echo -n "$_object_opts_apps_all_upgrade_text_"
     fi
     }
-User.Opts.Apps.List.NotInstalled.Init
+Opts.Apps.All.Upgrade.Init
 
-User.Opts.Apps.List.Optional.Clear()
+Opts.Apps.List.All.Clear()
     {
-    [[ $_object_user_opts_apps_list_optional_flag_ != 'true' ]] && return
-    _object_user_opts_apps_list_optional_flag_=false
-    [[ $_object_user_opts_apps_list_optional_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_optional_flag_
+    [[ $_object_opts_apps_list_all_flag_ != 'true' ]] && return
+    _object_opts_apps_list_all_flag_=false
+    [[ $_object_opts_apps_list_all_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_list_all_flag_
     }
-User.Opts.Apps.List.Optional.Disable()
+Opts.Apps.List.All.Disable()
     {
-    [[ $_object_user_opts_apps_list_optional_enable_ != 'true' ]] && return
-    _object_user_opts_apps_list_optional_enable_=false
-    [[ $_object_user_opts_apps_list_optional_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_optional_enable_
+    [[ $_object_opts_apps_list_all_enable_ != 'true' ]] && return
+    _object_opts_apps_list_all_enable_=false
+    [[ $_object_opts_apps_list_all_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_list_all_enable_
     }
-User.Opts.Apps.List.Optional.DontLogChanges()
+Opts.Apps.List.All.DontLogChanges()
     {
-    [[ $_object_user_opts_apps_list_optional_changes_flag_ != 'true' ]] && return
-    _object_user_opts_apps_list_optional_changes_flag_=false
+    [[ $_object_opts_apps_list_all_changes_flag_ != 'true' ]] && return
+    _object_opts_apps_list_all_changes_flag_=false
     }
-User.Opts.Apps.List.Optional.Enable()
+Opts.Apps.List.All.Enable()
     {
-    [[ $_object_user_opts_apps_list_optional_enable_ = 'true' ]] && return
-    _object_user_opts_apps_list_optional_enable_=true
-    [[ $_object_user_opts_apps_list_optional_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_optional_enable_
+    [[ $_object_opts_apps_list_all_enable_ = 'true' ]] && return
+    _object_opts_apps_list_all_enable_=true
+    [[ $_object_opts_apps_list_all_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_list_all_enable_
     }
-User.Opts.Apps.List.Optional.Init()
+Opts.Apps.List.All.Init()
     {
-    _object_user_opts_apps_list_optional_text_=''
-    _object_user_opts_apps_list_optional_flag_=false
-    _object_user_opts_apps_list_optional_changes_flag_=true
-    _object_user_opts_apps_list_optional_enable_=false
+    _object_opts_apps_list_all_text_=''
+    _object_opts_apps_list_all_flag_=false
+    _object_opts_apps_list_all_changes_flag_=true
+    _object_opts_apps_list_all_enable_=false
     }
-User.Opts.Apps.List.Optional.IsDisabled()
+Opts.Apps.List.All.IsDisabled()
     {
-    [[ $_object_user_opts_apps_list_optional_enable_ != 'true' ]]
+    [[ $_object_opts_apps_list_all_enable_ != 'true' ]]
     }
-User.Opts.Apps.List.Optional.IsEnabled()
+Opts.Apps.List.All.IsEnabled()
     {
-    [[ $_object_user_opts_apps_list_optional_enable_ = 'true' ]]
+    [[ $_object_opts_apps_list_all_enable_ = 'true' ]]
     }
-User.Opts.Apps.List.Optional.IsNot()
+Opts.Apps.List.All.IsNot()
     {
-    [[ $_object_user_opts_apps_list_optional_flag_ != 'true' ]]
+    [[ $_object_opts_apps_list_all_flag_ != 'true' ]]
     }
-User.Opts.Apps.List.Optional.IsSet()
+Opts.Apps.List.All.IsSet()
     {
-    [[ $_object_user_opts_apps_list_optional_flag_ = 'true' ]]
+    [[ $_object_opts_apps_list_all_flag_ = 'true' ]]
     }
-User.Opts.Apps.List.Optional.LogChanges()
+Opts.Apps.List.All.LogChanges()
     {
-    [[ $_object_user_opts_apps_list_optional_changes_flag_ = 'true' ]] && return
-    _object_user_opts_apps_list_optional_changes_flag_=true
+    [[ $_object_opts_apps_list_all_changes_flag_ = 'true' ]] && return
+    _object_opts_apps_list_all_changes_flag_=true
     }
-User.Opts.Apps.List.Optional.Set()
+Opts.Apps.List.All.Set()
     {
-    [[ $_object_user_opts_apps_list_optional_flag_ = 'true' ]] && return
-    _object_user_opts_apps_list_optional_flag_=true
-    [[ $_object_user_opts_apps_list_optional_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_optional_flag_
+    [[ $_object_opts_apps_list_all_flag_ = 'true' ]] && return
+    _object_opts_apps_list_all_flag_=true
+    [[ $_object_opts_apps_list_all_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_list_all_flag_
     }
-User.Opts.Apps.List.Optional.Text()
+Opts.Apps.List.All.Text()
     {
     if [[ -n ${1:-} && $1 = "=" ]]; then
-        _object_user_opts_apps_list_optional_text_=$2
+        _object_opts_apps_list_all_text_=$2
     else
-        echo -n "$_object_user_opts_apps_list_optional_text_"
+        echo -n "$_object_opts_apps_list_all_text_"
     fi
     }
-User.Opts.Apps.List.Optional.Init
+Opts.Apps.List.All.Init
 
-User.Opts.Apps.List.Standalone.Clear()
+Opts.Apps.List.Essential.Clear()
     {
-    [[ $_object_user_opts_apps_list_standalone_flag_ != 'true' ]] && return
-    _object_user_opts_apps_list_standalone_flag_=false
-    [[ $_object_user_opts_apps_list_standalone_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_standalone_flag_
+    [[ $_object_opts_apps_list_essential_flag_ != 'true' ]] && return
+    _object_opts_apps_list_essential_flag_=false
+    [[ $_object_opts_apps_list_essential_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_list_essential_flag_
     }
-User.Opts.Apps.List.Standalone.Disable()
+Opts.Apps.List.Essential.Disable()
     {
-    [[ $_object_user_opts_apps_list_standalone_enable_ != 'true' ]] && return
-    _object_user_opts_apps_list_standalone_enable_=false
-    [[ $_object_user_opts_apps_list_standalone_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_standalone_enable_
+    [[ $_object_opts_apps_list_essential_enable_ != 'true' ]] && return
+    _object_opts_apps_list_essential_enable_=false
+    [[ $_object_opts_apps_list_essential_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_list_essential_enable_
     }
-User.Opts.Apps.List.Standalone.DontLogChanges()
+Opts.Apps.List.Essential.DontLogChanges()
     {
-    [[ $_object_user_opts_apps_list_standalone_changes_flag_ != 'true' ]] && return
-    _object_user_opts_apps_list_standalone_changes_flag_=false
+    [[ $_object_opts_apps_list_essential_changes_flag_ != 'true' ]] && return
+    _object_opts_apps_list_essential_changes_flag_=false
     }
-User.Opts.Apps.List.Standalone.Enable()
+Opts.Apps.List.Essential.Enable()
     {
-    [[ $_object_user_opts_apps_list_standalone_enable_ = 'true' ]] && return
-    _object_user_opts_apps_list_standalone_enable_=true
-    [[ $_object_user_opts_apps_list_standalone_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_standalone_enable_
+    [[ $_object_opts_apps_list_essential_enable_ = 'true' ]] && return
+    _object_opts_apps_list_essential_enable_=true
+    [[ $_object_opts_apps_list_essential_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_list_essential_enable_
     }
-User.Opts.Apps.List.Standalone.Init()
+Opts.Apps.List.Essential.Init()
     {
-    _object_user_opts_apps_list_standalone_text_=''
-    _object_user_opts_apps_list_standalone_flag_=false
-    _object_user_opts_apps_list_standalone_changes_flag_=true
-    _object_user_opts_apps_list_standalone_enable_=false
+    _object_opts_apps_list_essential_text_=''
+    _object_opts_apps_list_essential_flag_=false
+    _object_opts_apps_list_essential_changes_flag_=true
+    _object_opts_apps_list_essential_enable_=false
     }
-User.Opts.Apps.List.Standalone.IsDisabled()
+Opts.Apps.List.Essential.IsDisabled()
     {
-    [[ $_object_user_opts_apps_list_standalone_enable_ != 'true' ]]
+    [[ $_object_opts_apps_list_essential_enable_ != 'true' ]]
     }
-User.Opts.Apps.List.Standalone.IsEnabled()
+Opts.Apps.List.Essential.IsEnabled()
     {
-    [[ $_object_user_opts_apps_list_standalone_enable_ = 'true' ]]
+    [[ $_object_opts_apps_list_essential_enable_ = 'true' ]]
     }
-User.Opts.Apps.List.Standalone.IsNot()
+Opts.Apps.List.Essential.IsNot()
     {
-    [[ $_object_user_opts_apps_list_standalone_flag_ != 'true' ]]
+    [[ $_object_opts_apps_list_essential_flag_ != 'true' ]]
     }
-User.Opts.Apps.List.Standalone.IsSet()
+Opts.Apps.List.Essential.IsSet()
     {
-    [[ $_object_user_opts_apps_list_standalone_flag_ = 'true' ]]
+    [[ $_object_opts_apps_list_essential_flag_ = 'true' ]]
     }
-User.Opts.Apps.List.Standalone.LogChanges()
+Opts.Apps.List.Essential.LogChanges()
     {
-    [[ $_object_user_opts_apps_list_standalone_changes_flag_ = 'true' ]] && return
-    _object_user_opts_apps_list_standalone_changes_flag_=true
+    [[ $_object_opts_apps_list_essential_changes_flag_ = 'true' ]] && return
+    _object_opts_apps_list_essential_changes_flag_=true
     }
-User.Opts.Apps.List.Standalone.Set()
+Opts.Apps.List.Essential.Set()
     {
-    [[ $_object_user_opts_apps_list_standalone_flag_ = 'true' ]] && return
-    _object_user_opts_apps_list_standalone_flag_=true
-    [[ $_object_user_opts_apps_list_standalone_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_standalone_flag_
+    [[ $_object_opts_apps_list_essential_flag_ = 'true' ]] && return
+    _object_opts_apps_list_essential_flag_=true
+    [[ $_object_opts_apps_list_essential_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_list_essential_flag_
     }
-User.Opts.Apps.List.Standalone.Text()
+Opts.Apps.List.Essential.Text()
     {
     if [[ -n ${1:-} && $1 = "=" ]]; then
-        _object_user_opts_apps_list_standalone_text_=$2
+        _object_opts_apps_list_essential_text_=$2
     else
-        echo -n "$_object_user_opts_apps_list_standalone_text_"
+        echo -n "$_object_opts_apps_list_essential_text_"
     fi
     }
-User.Opts.Apps.List.Standalone.Init
+Opts.Apps.List.Essential.Init
 
-User.Opts.Apps.List.Started.Clear()
+Opts.Apps.List.Installed.Clear()
     {
-    [[ $_object_user_opts_apps_list_started_flag_ != 'true' ]] && return
-    _object_user_opts_apps_list_started_flag_=false
-    [[ $_object_user_opts_apps_list_started_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_started_flag_
+    [[ $_object_opts_apps_list_installed_flag_ != 'true' ]] && return
+    _object_opts_apps_list_installed_flag_=false
+    [[ $_object_opts_apps_list_installed_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_list_installed_flag_
     }
-User.Opts.Apps.List.Started.Disable()
+Opts.Apps.List.Installed.Disable()
     {
-    [[ $_object_user_opts_apps_list_started_enable_ != 'true' ]] && return
-    _object_user_opts_apps_list_started_enable_=false
-    [[ $_object_user_opts_apps_list_started_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_started_enable_
+    [[ $_object_opts_apps_list_installed_enable_ != 'true' ]] && return
+    _object_opts_apps_list_installed_enable_=false
+    [[ $_object_opts_apps_list_installed_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_list_installed_enable_
     }
-User.Opts.Apps.List.Started.DontLogChanges()
+Opts.Apps.List.Installed.DontLogChanges()
     {
-    [[ $_object_user_opts_apps_list_started_changes_flag_ != 'true' ]] && return
-    _object_user_opts_apps_list_started_changes_flag_=false
+    [[ $_object_opts_apps_list_installed_changes_flag_ != 'true' ]] && return
+    _object_opts_apps_list_installed_changes_flag_=false
     }
-User.Opts.Apps.List.Started.Enable()
+Opts.Apps.List.Installed.Enable()
     {
-    [[ $_object_user_opts_apps_list_started_enable_ = 'true' ]] && return
-    _object_user_opts_apps_list_started_enable_=true
-    [[ $_object_user_opts_apps_list_started_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_started_enable_
+    [[ $_object_opts_apps_list_installed_enable_ = 'true' ]] && return
+    _object_opts_apps_list_installed_enable_=true
+    [[ $_object_opts_apps_list_installed_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_list_installed_enable_
     }
-User.Opts.Apps.List.Started.Init()
+Opts.Apps.List.Installed.Init()
     {
-    _object_user_opts_apps_list_started_text_=''
-    _object_user_opts_apps_list_started_flag_=false
-    _object_user_opts_apps_list_started_changes_flag_=true
-    _object_user_opts_apps_list_started_enable_=false
+    _object_opts_apps_list_installed_text_=''
+    _object_opts_apps_list_installed_flag_=false
+    _object_opts_apps_list_installed_changes_flag_=true
+    _object_opts_apps_list_installed_enable_=false
     }
-User.Opts.Apps.List.Started.IsDisabled()
+Opts.Apps.List.Installed.IsDisabled()
     {
-    [[ $_object_user_opts_apps_list_started_enable_ != 'true' ]]
+    [[ $_object_opts_apps_list_installed_enable_ != 'true' ]]
     }
-User.Opts.Apps.List.Started.IsEnabled()
+Opts.Apps.List.Installed.IsEnabled()
     {
-    [[ $_object_user_opts_apps_list_started_enable_ = 'true' ]]
+    [[ $_object_opts_apps_list_installed_enable_ = 'true' ]]
     }
-User.Opts.Apps.List.Started.IsNot()
+Opts.Apps.List.Installed.IsNot()
     {
-    [[ $_object_user_opts_apps_list_started_flag_ != 'true' ]]
+    [[ $_object_opts_apps_list_installed_flag_ != 'true' ]]
     }
-User.Opts.Apps.List.Started.IsSet()
+Opts.Apps.List.Installed.IsSet()
     {
-    [[ $_object_user_opts_apps_list_started_flag_ = 'true' ]]
+    [[ $_object_opts_apps_list_installed_flag_ = 'true' ]]
     }
-User.Opts.Apps.List.Started.LogChanges()
+Opts.Apps.List.Installed.LogChanges()
     {
-    [[ $_object_user_opts_apps_list_started_changes_flag_ = 'true' ]] && return
-    _object_user_opts_apps_list_started_changes_flag_=true
+    [[ $_object_opts_apps_list_installed_changes_flag_ = 'true' ]] && return
+    _object_opts_apps_list_installed_changes_flag_=true
     }
-User.Opts.Apps.List.Started.Set()
+Opts.Apps.List.Installed.Set()
     {
-    [[ $_object_user_opts_apps_list_started_flag_ = 'true' ]] && return
-    _object_user_opts_apps_list_started_flag_=true
-    [[ $_object_user_opts_apps_list_started_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_started_flag_
+    [[ $_object_opts_apps_list_installed_flag_ = 'true' ]] && return
+    _object_opts_apps_list_installed_flag_=true
+    [[ $_object_opts_apps_list_installed_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_list_installed_flag_
     }
-User.Opts.Apps.List.Started.Text()
+Opts.Apps.List.Installed.Text()
     {
     if [[ -n ${1:-} && $1 = "=" ]]; then
-        _object_user_opts_apps_list_started_text_=$2
+        _object_opts_apps_list_installed_text_=$2
     else
-        echo -n "$_object_user_opts_apps_list_started_text_"
+        echo -n "$_object_opts_apps_list_installed_text_"
     fi
     }
-User.Opts.Apps.List.Started.Init
+Opts.Apps.List.Installed.Init
 
-User.Opts.Apps.List.Stopped.Clear()
+Opts.Apps.List.NotInstalled.Clear()
     {
-    [[ $_object_user_opts_apps_list_stopped_flag_ != 'true' ]] && return
-    _object_user_opts_apps_list_stopped_flag_=false
-    [[ $_object_user_opts_apps_list_stopped_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_stopped_flag_
+    [[ $_object_opts_apps_list_notinstalled_flag_ != 'true' ]] && return
+    _object_opts_apps_list_notinstalled_flag_=false
+    [[ $_object_opts_apps_list_notinstalled_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_list_notinstalled_flag_
     }
-User.Opts.Apps.List.Stopped.Disable()
+Opts.Apps.List.NotInstalled.Disable()
     {
-    [[ $_object_user_opts_apps_list_stopped_enable_ != 'true' ]] && return
-    _object_user_opts_apps_list_stopped_enable_=false
-    [[ $_object_user_opts_apps_list_stopped_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_stopped_enable_
+    [[ $_object_opts_apps_list_notinstalled_enable_ != 'true' ]] && return
+    _object_opts_apps_list_notinstalled_enable_=false
+    [[ $_object_opts_apps_list_notinstalled_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_list_notinstalled_enable_
     }
-User.Opts.Apps.List.Stopped.DontLogChanges()
+Opts.Apps.List.NotInstalled.DontLogChanges()
     {
-    [[ $_object_user_opts_apps_list_stopped_changes_flag_ != 'true' ]] && return
-    _object_user_opts_apps_list_stopped_changes_flag_=false
+    [[ $_object_opts_apps_list_notinstalled_changes_flag_ != 'true' ]] && return
+    _object_opts_apps_list_notinstalled_changes_flag_=false
     }
-User.Opts.Apps.List.Stopped.Enable()
+Opts.Apps.List.NotInstalled.Enable()
     {
-    [[ $_object_user_opts_apps_list_stopped_enable_ = 'true' ]] && return
-    _object_user_opts_apps_list_stopped_enable_=true
-    [[ $_object_user_opts_apps_list_stopped_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_stopped_enable_
+    [[ $_object_opts_apps_list_notinstalled_enable_ = 'true' ]] && return
+    _object_opts_apps_list_notinstalled_enable_=true
+    [[ $_object_opts_apps_list_notinstalled_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_list_notinstalled_enable_
     }
-User.Opts.Apps.List.Stopped.Init()
+Opts.Apps.List.NotInstalled.Init()
     {
-    _object_user_opts_apps_list_stopped_text_=''
-    _object_user_opts_apps_list_stopped_flag_=false
-    _object_user_opts_apps_list_stopped_changes_flag_=true
-    _object_user_opts_apps_list_stopped_enable_=false
+    _object_opts_apps_list_notinstalled_text_=''
+    _object_opts_apps_list_notinstalled_flag_=false
+    _object_opts_apps_list_notinstalled_changes_flag_=true
+    _object_opts_apps_list_notinstalled_enable_=false
     }
-User.Opts.Apps.List.Stopped.IsDisabled()
+Opts.Apps.List.NotInstalled.IsDisabled()
     {
-    [[ $_object_user_opts_apps_list_stopped_enable_ != 'true' ]]
+    [[ $_object_opts_apps_list_notinstalled_enable_ != 'true' ]]
     }
-User.Opts.Apps.List.Stopped.IsEnabled()
+Opts.Apps.List.NotInstalled.IsEnabled()
     {
-    [[ $_object_user_opts_apps_list_stopped_enable_ = 'true' ]]
+    [[ $_object_opts_apps_list_notinstalled_enable_ = 'true' ]]
     }
-User.Opts.Apps.List.Stopped.IsNot()
+Opts.Apps.List.NotInstalled.IsNot()
     {
-    [[ $_object_user_opts_apps_list_stopped_flag_ != 'true' ]]
+    [[ $_object_opts_apps_list_notinstalled_flag_ != 'true' ]]
     }
-User.Opts.Apps.List.Stopped.IsSet()
+Opts.Apps.List.NotInstalled.IsSet()
     {
-    [[ $_object_user_opts_apps_list_stopped_flag_ = 'true' ]]
+    [[ $_object_opts_apps_list_notinstalled_flag_ = 'true' ]]
     }
-User.Opts.Apps.List.Stopped.LogChanges()
+Opts.Apps.List.NotInstalled.LogChanges()
     {
-    [[ $_object_user_opts_apps_list_stopped_changes_flag_ = 'true' ]] && return
-    _object_user_opts_apps_list_stopped_changes_flag_=true
+    [[ $_object_opts_apps_list_notinstalled_changes_flag_ = 'true' ]] && return
+    _object_opts_apps_list_notinstalled_changes_flag_=true
     }
-User.Opts.Apps.List.Stopped.Set()
+Opts.Apps.List.NotInstalled.Set()
     {
-    [[ $_object_user_opts_apps_list_stopped_flag_ = 'true' ]] && return
-    _object_user_opts_apps_list_stopped_flag_=true
-    [[ $_object_user_opts_apps_list_stopped_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_stopped_flag_
+    [[ $_object_opts_apps_list_notinstalled_flag_ = 'true' ]] && return
+    _object_opts_apps_list_notinstalled_flag_=true
+    [[ $_object_opts_apps_list_notinstalled_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_list_notinstalled_flag_
     }
-User.Opts.Apps.List.Stopped.Text()
+Opts.Apps.List.NotInstalled.Text()
     {
     if [[ -n ${1:-} && $1 = "=" ]]; then
-        _object_user_opts_apps_list_stopped_text_=$2
+        _object_opts_apps_list_notinstalled_text_=$2
     else
-        echo -n "$_object_user_opts_apps_list_stopped_text_"
+        echo -n "$_object_opts_apps_list_notinstalled_text_"
     fi
     }
-User.Opts.Apps.List.Stopped.Init
+Opts.Apps.List.NotInstalled.Init
 
-User.Opts.Apps.List.Upgradable.Clear()
+Opts.Apps.List.Optional.Clear()
     {
-    [[ $_object_user_opts_apps_list_upgradable_flag_ != 'true' ]] && return
-    _object_user_opts_apps_list_upgradable_flag_=false
-    [[ $_object_user_opts_apps_list_upgradable_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_upgradable_flag_
+    [[ $_object_opts_apps_list_optional_flag_ != 'true' ]] && return
+    _object_opts_apps_list_optional_flag_=false
+    [[ $_object_opts_apps_list_optional_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_list_optional_flag_
     }
-User.Opts.Apps.List.Upgradable.Disable()
+Opts.Apps.List.Optional.Disable()
     {
-    [[ $_object_user_opts_apps_list_upgradable_enable_ != 'true' ]] && return
-    _object_user_opts_apps_list_upgradable_enable_=false
-    [[ $_object_user_opts_apps_list_upgradable_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_upgradable_enable_
+    [[ $_object_opts_apps_list_optional_enable_ != 'true' ]] && return
+    _object_opts_apps_list_optional_enable_=false
+    [[ $_object_opts_apps_list_optional_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_list_optional_enable_
     }
-User.Opts.Apps.List.Upgradable.DontLogChanges()
+Opts.Apps.List.Optional.DontLogChanges()
     {
-    [[ $_object_user_opts_apps_list_upgradable_changes_flag_ != 'true' ]] && return
-    _object_user_opts_apps_list_upgradable_changes_flag_=false
+    [[ $_object_opts_apps_list_optional_changes_flag_ != 'true' ]] && return
+    _object_opts_apps_list_optional_changes_flag_=false
     }
-User.Opts.Apps.List.Upgradable.Enable()
+Opts.Apps.List.Optional.Enable()
     {
-    [[ $_object_user_opts_apps_list_upgradable_enable_ = 'true' ]] && return
-    _object_user_opts_apps_list_upgradable_enable_=true
-    [[ $_object_user_opts_apps_list_upgradable_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_upgradable_enable_
+    [[ $_object_opts_apps_list_optional_enable_ = 'true' ]] && return
+    _object_opts_apps_list_optional_enable_=true
+    [[ $_object_opts_apps_list_optional_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_list_optional_enable_
     }
-User.Opts.Apps.List.Upgradable.Init()
+Opts.Apps.List.Optional.Init()
     {
-    _object_user_opts_apps_list_upgradable_text_=''
-    _object_user_opts_apps_list_upgradable_flag_=false
-    _object_user_opts_apps_list_upgradable_changes_flag_=true
-    _object_user_opts_apps_list_upgradable_enable_=false
+    _object_opts_apps_list_optional_text_=''
+    _object_opts_apps_list_optional_flag_=false
+    _object_opts_apps_list_optional_changes_flag_=true
+    _object_opts_apps_list_optional_enable_=false
     }
-User.Opts.Apps.List.Upgradable.IsDisabled()
+Opts.Apps.List.Optional.IsDisabled()
     {
-    [[ $_object_user_opts_apps_list_upgradable_enable_ != 'true' ]]
+    [[ $_object_opts_apps_list_optional_enable_ != 'true' ]]
     }
-User.Opts.Apps.List.Upgradable.IsEnabled()
+Opts.Apps.List.Optional.IsEnabled()
     {
-    [[ $_object_user_opts_apps_list_upgradable_enable_ = 'true' ]]
+    [[ $_object_opts_apps_list_optional_enable_ = 'true' ]]
     }
-User.Opts.Apps.List.Upgradable.IsNot()
+Opts.Apps.List.Optional.IsNot()
     {
-    [[ $_object_user_opts_apps_list_upgradable_flag_ != 'true' ]]
+    [[ $_object_opts_apps_list_optional_flag_ != 'true' ]]
     }
-User.Opts.Apps.List.Upgradable.IsSet()
+Opts.Apps.List.Optional.IsSet()
     {
-    [[ $_object_user_opts_apps_list_upgradable_flag_ = 'true' ]]
+    [[ $_object_opts_apps_list_optional_flag_ = 'true' ]]
     }
-User.Opts.Apps.List.Upgradable.LogChanges()
+Opts.Apps.List.Optional.LogChanges()
     {
-    [[ $_object_user_opts_apps_list_upgradable_changes_flag_ = 'true' ]] && return
-    _object_user_opts_apps_list_upgradable_changes_flag_=true
+    [[ $_object_opts_apps_list_optional_changes_flag_ = 'true' ]] && return
+    _object_opts_apps_list_optional_changes_flag_=true
     }
-User.Opts.Apps.List.Upgradable.Set()
+Opts.Apps.List.Optional.Set()
     {
-    [[ $_object_user_opts_apps_list_upgradable_flag_ = 'true' ]] && return
-    _object_user_opts_apps_list_upgradable_flag_=true
-    [[ $_object_user_opts_apps_list_upgradable_changes_flag_ = 'true' ]] && DebugVar _object_user_opts_apps_list_upgradable_flag_
+    [[ $_object_opts_apps_list_optional_flag_ = 'true' ]] && return
+    _object_opts_apps_list_optional_flag_=true
+    [[ $_object_opts_apps_list_optional_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_list_optional_flag_
     }
-User.Opts.Apps.List.Upgradable.Text()
+Opts.Apps.List.Optional.Text()
     {
     if [[ -n ${1:-} && $1 = "=" ]]; then
-        _object_user_opts_apps_list_upgradable_text_=$2
+        _object_opts_apps_list_optional_text_=$2
     else
-        echo -n "$_object_user_opts_apps_list_upgradable_text_"
+        echo -n "$_object_opts_apps_list_optional_text_"
     fi
     }
-User.Opts.Apps.List.Upgradable.Init
+Opts.Apps.List.Optional.Init
+
+Opts.Apps.List.Standalone.Clear()
+    {
+    [[ $_object_opts_apps_list_standalone_flag_ != 'true' ]] && return
+    _object_opts_apps_list_standalone_flag_=false
+    [[ $_object_opts_apps_list_standalone_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_list_standalone_flag_
+    }
+Opts.Apps.List.Standalone.Disable()
+    {
+    [[ $_object_opts_apps_list_standalone_enable_ != 'true' ]] && return
+    _object_opts_apps_list_standalone_enable_=false
+    [[ $_object_opts_apps_list_standalone_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_list_standalone_enable_
+    }
+Opts.Apps.List.Standalone.DontLogChanges()
+    {
+    [[ $_object_opts_apps_list_standalone_changes_flag_ != 'true' ]] && return
+    _object_opts_apps_list_standalone_changes_flag_=false
+    }
+Opts.Apps.List.Standalone.Enable()
+    {
+    [[ $_object_opts_apps_list_standalone_enable_ = 'true' ]] && return
+    _object_opts_apps_list_standalone_enable_=true
+    [[ $_object_opts_apps_list_standalone_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_list_standalone_enable_
+    }
+Opts.Apps.List.Standalone.Init()
+    {
+    _object_opts_apps_list_standalone_text_=''
+    _object_opts_apps_list_standalone_flag_=false
+    _object_opts_apps_list_standalone_changes_flag_=true
+    _object_opts_apps_list_standalone_enable_=false
+    }
+Opts.Apps.List.Standalone.IsDisabled()
+    {
+    [[ $_object_opts_apps_list_standalone_enable_ != 'true' ]]
+    }
+Opts.Apps.List.Standalone.IsEnabled()
+    {
+    [[ $_object_opts_apps_list_standalone_enable_ = 'true' ]]
+    }
+Opts.Apps.List.Standalone.IsNot()
+    {
+    [[ $_object_opts_apps_list_standalone_flag_ != 'true' ]]
+    }
+Opts.Apps.List.Standalone.IsSet()
+    {
+    [[ $_object_opts_apps_list_standalone_flag_ = 'true' ]]
+    }
+Opts.Apps.List.Standalone.LogChanges()
+    {
+    [[ $_object_opts_apps_list_standalone_changes_flag_ = 'true' ]] && return
+    _object_opts_apps_list_standalone_changes_flag_=true
+    }
+Opts.Apps.List.Standalone.Set()
+    {
+    [[ $_object_opts_apps_list_standalone_flag_ = 'true' ]] && return
+    _object_opts_apps_list_standalone_flag_=true
+    [[ $_object_opts_apps_list_standalone_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_list_standalone_flag_
+    }
+Opts.Apps.List.Standalone.Text()
+    {
+    if [[ -n ${1:-} && $1 = "=" ]]; then
+        _object_opts_apps_list_standalone_text_=$2
+    else
+        echo -n "$_object_opts_apps_list_standalone_text_"
+    fi
+    }
+Opts.Apps.List.Standalone.Init
+
+Opts.Apps.List.Started.Clear()
+    {
+    [[ $_object_opts_apps_list_started_flag_ != 'true' ]] && return
+    _object_opts_apps_list_started_flag_=false
+    [[ $_object_opts_apps_list_started_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_list_started_flag_
+    }
+Opts.Apps.List.Started.Disable()
+    {
+    [[ $_object_opts_apps_list_started_enable_ != 'true' ]] && return
+    _object_opts_apps_list_started_enable_=false
+    [[ $_object_opts_apps_list_started_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_list_started_enable_
+    }
+Opts.Apps.List.Started.DontLogChanges()
+    {
+    [[ $_object_opts_apps_list_started_changes_flag_ != 'true' ]] && return
+    _object_opts_apps_list_started_changes_flag_=false
+    }
+Opts.Apps.List.Started.Enable()
+    {
+    [[ $_object_opts_apps_list_started_enable_ = 'true' ]] && return
+    _object_opts_apps_list_started_enable_=true
+    [[ $_object_opts_apps_list_started_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_list_started_enable_
+    }
+Opts.Apps.List.Started.Init()
+    {
+    _object_opts_apps_list_started_text_=''
+    _object_opts_apps_list_started_flag_=false
+    _object_opts_apps_list_started_changes_flag_=true
+    _object_opts_apps_list_started_enable_=false
+    }
+Opts.Apps.List.Started.IsDisabled()
+    {
+    [[ $_object_opts_apps_list_started_enable_ != 'true' ]]
+    }
+Opts.Apps.List.Started.IsEnabled()
+    {
+    [[ $_object_opts_apps_list_started_enable_ = 'true' ]]
+    }
+Opts.Apps.List.Started.IsNot()
+    {
+    [[ $_object_opts_apps_list_started_flag_ != 'true' ]]
+    }
+Opts.Apps.List.Started.IsSet()
+    {
+    [[ $_object_opts_apps_list_started_flag_ = 'true' ]]
+    }
+Opts.Apps.List.Started.LogChanges()
+    {
+    [[ $_object_opts_apps_list_started_changes_flag_ = 'true' ]] && return
+    _object_opts_apps_list_started_changes_flag_=true
+    }
+Opts.Apps.List.Started.Set()
+    {
+    [[ $_object_opts_apps_list_started_flag_ = 'true' ]] && return
+    _object_opts_apps_list_started_flag_=true
+    [[ $_object_opts_apps_list_started_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_list_started_flag_
+    }
+Opts.Apps.List.Started.Text()
+    {
+    if [[ -n ${1:-} && $1 = "=" ]]; then
+        _object_opts_apps_list_started_text_=$2
+    else
+        echo -n "$_object_opts_apps_list_started_text_"
+    fi
+    }
+Opts.Apps.List.Started.Init
+
+Opts.Apps.List.Stopped.Clear()
+    {
+    [[ $_object_opts_apps_list_stopped_flag_ != 'true' ]] && return
+    _object_opts_apps_list_stopped_flag_=false
+    [[ $_object_opts_apps_list_stopped_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_list_stopped_flag_
+    }
+Opts.Apps.List.Stopped.Disable()
+    {
+    [[ $_object_opts_apps_list_stopped_enable_ != 'true' ]] && return
+    _object_opts_apps_list_stopped_enable_=false
+    [[ $_object_opts_apps_list_stopped_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_list_stopped_enable_
+    }
+Opts.Apps.List.Stopped.DontLogChanges()
+    {
+    [[ $_object_opts_apps_list_stopped_changes_flag_ != 'true' ]] && return
+    _object_opts_apps_list_stopped_changes_flag_=false
+    }
+Opts.Apps.List.Stopped.Enable()
+    {
+    [[ $_object_opts_apps_list_stopped_enable_ = 'true' ]] && return
+    _object_opts_apps_list_stopped_enable_=true
+    [[ $_object_opts_apps_list_stopped_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_list_stopped_enable_
+    }
+Opts.Apps.List.Stopped.Init()
+    {
+    _object_opts_apps_list_stopped_text_=''
+    _object_opts_apps_list_stopped_flag_=false
+    _object_opts_apps_list_stopped_changes_flag_=true
+    _object_opts_apps_list_stopped_enable_=false
+    }
+Opts.Apps.List.Stopped.IsDisabled()
+    {
+    [[ $_object_opts_apps_list_stopped_enable_ != 'true' ]]
+    }
+Opts.Apps.List.Stopped.IsEnabled()
+    {
+    [[ $_object_opts_apps_list_stopped_enable_ = 'true' ]]
+    }
+Opts.Apps.List.Stopped.IsNot()
+    {
+    [[ $_object_opts_apps_list_stopped_flag_ != 'true' ]]
+    }
+Opts.Apps.List.Stopped.IsSet()
+    {
+    [[ $_object_opts_apps_list_stopped_flag_ = 'true' ]]
+    }
+Opts.Apps.List.Stopped.LogChanges()
+    {
+    [[ $_object_opts_apps_list_stopped_changes_flag_ = 'true' ]] && return
+    _object_opts_apps_list_stopped_changes_flag_=true
+    }
+Opts.Apps.List.Stopped.Set()
+    {
+    [[ $_object_opts_apps_list_stopped_flag_ = 'true' ]] && return
+    _object_opts_apps_list_stopped_flag_=true
+    [[ $_object_opts_apps_list_stopped_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_list_stopped_flag_
+    }
+Opts.Apps.List.Stopped.Text()
+    {
+    if [[ -n ${1:-} && $1 = "=" ]]; then
+        _object_opts_apps_list_stopped_text_=$2
+    else
+        echo -n "$_object_opts_apps_list_stopped_text_"
+    fi
+    }
+Opts.Apps.List.Stopped.Init
+
+Opts.Apps.List.Upgradable.Clear()
+    {
+    [[ $_object_opts_apps_list_upgradable_flag_ != 'true' ]] && return
+    _object_opts_apps_list_upgradable_flag_=false
+    [[ $_object_opts_apps_list_upgradable_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_list_upgradable_flag_
+    }
+Opts.Apps.List.Upgradable.Disable()
+    {
+    [[ $_object_opts_apps_list_upgradable_enable_ != 'true' ]] && return
+    _object_opts_apps_list_upgradable_enable_=false
+    [[ $_object_opts_apps_list_upgradable_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_list_upgradable_enable_
+    }
+Opts.Apps.List.Upgradable.DontLogChanges()
+    {
+    [[ $_object_opts_apps_list_upgradable_changes_flag_ != 'true' ]] && return
+    _object_opts_apps_list_upgradable_changes_flag_=false
+    }
+Opts.Apps.List.Upgradable.Enable()
+    {
+    [[ $_object_opts_apps_list_upgradable_enable_ = 'true' ]] && return
+    _object_opts_apps_list_upgradable_enable_=true
+    [[ $_object_opts_apps_list_upgradable_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_list_upgradable_enable_
+    }
+Opts.Apps.List.Upgradable.Init()
+    {
+    _object_opts_apps_list_upgradable_text_=''
+    _object_opts_apps_list_upgradable_flag_=false
+    _object_opts_apps_list_upgradable_changes_flag_=true
+    _object_opts_apps_list_upgradable_enable_=false
+    }
+Opts.Apps.List.Upgradable.IsDisabled()
+    {
+    [[ $_object_opts_apps_list_upgradable_enable_ != 'true' ]]
+    }
+Opts.Apps.List.Upgradable.IsEnabled()
+    {
+    [[ $_object_opts_apps_list_upgradable_enable_ = 'true' ]]
+    }
+Opts.Apps.List.Upgradable.IsNot()
+    {
+    [[ $_object_opts_apps_list_upgradable_flag_ != 'true' ]]
+    }
+Opts.Apps.List.Upgradable.IsSet()
+    {
+    [[ $_object_opts_apps_list_upgradable_flag_ = 'true' ]]
+    }
+Opts.Apps.List.Upgradable.LogChanges()
+    {
+    [[ $_object_opts_apps_list_upgradable_changes_flag_ = 'true' ]] && return
+    _object_opts_apps_list_upgradable_changes_flag_=true
+    }
+Opts.Apps.List.Upgradable.Set()
+    {
+    [[ $_object_opts_apps_list_upgradable_flag_ = 'true' ]] && return
+    _object_opts_apps_list_upgradable_flag_=true
+    [[ $_object_opts_apps_list_upgradable_changes_flag_ = 'true' ]] && DebugVar _object_opts_apps_list_upgradable_flag_
+    }
+Opts.Apps.List.Upgradable.Text()
+    {
+    if [[ -n ${1:-} && $1 = "=" ]]; then
+        _object_opts_apps_list_upgradable_text_=$2
+    else
+        echo -n "$_object_opts_apps_list_upgradable_text_"
+    fi
+    }
+Opts.Apps.List.Upgradable.Init
 
 Args.Unknown.Add()
     {
