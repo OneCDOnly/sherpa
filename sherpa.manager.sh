@@ -699,7 +699,7 @@ Session.Arguments.Parse()
     local package=''
 
     for arg in "${user_args[@]}"; do
-        DebugVar arg
+#         DebugVar arg
         arg_identified=false
 
         # identify operation    note: every time operation changes, clear scope
@@ -740,13 +740,13 @@ Session.Arguments.Parse()
                 ;;
         esac
 
-        DebugVar operation
+#         DebugVar operation
 
         # identify scope in two stages: first stage is when user didn't supply an operation. Second is after an operation has been defined.
 
         # stage 1
         if [[ -z $operation ]]; then
-            DebugAsProc 'no operation set: checking for scopes that will run without an operation'
+#             DebugAsProc 'no operation set: checking for scopes that run without an operation'
 
             case $arg in
                 abs|action|actions|actions-all|all-actions|backups|essentials|installable|installed|l|last|log|option|optionals|options|package|packages|problems|standalone|standalones|started|stopped|tips|upgradable|version|versions)
@@ -763,7 +763,7 @@ Session.Arguments.Parse()
 
         # stage 2
         if [[ -n $operation ]]; then
-            DebugAsProc 'operation has been set: checking for valid scope variations'
+#             DebugAsProc 'operation is set: checking for valid scope variations'
 
             case $arg in
                 abs|backups|installable|installed|log|problems|started|stopped|tips|upgradable)
@@ -824,7 +824,7 @@ Session.Arguments.Parse()
             esac
         fi
 
-        DebugVar scope
+#         DebugVar scope
 
         # identify options
         case $arg in
@@ -843,13 +843,13 @@ Session.Arguments.Parse()
                 ;;
         esac
 
-        DebugVar operation_force
-        DebugVar scope_incomplete
+#         DebugVar operation_force
+#         DebugVar scope_incomplete
 
         # identify package
         package=$(QPKG.MatchAbbrv "$arg")
 
-        DebugVar package
+#         DebugVar package
 
         if [[ -n $package ]]; then
             scope_incomplete=false
@@ -857,7 +857,7 @@ Session.Arguments.Parse()
         fi
 
         if [[ $arg_identified = false ]]; then
-            DebugAsProc "adding '$arg' as unknown argument"
+#             DebugAsProc "adding '$arg' as unknown argument"
             Args.Unknown.Add "$arg"
         fi
 
@@ -1173,7 +1173,7 @@ Session.Arguments.Parse()
     done
 
     if [[ -n $operation && $scope_incomplete = true ]]; then
-        DebugAsProc "processing operation '$operation' with incomplete scope"
+#         DebugAsProc "processing operation '$operation' with incomplete scope"
 
         case $operation in
             abs_)
@@ -1712,7 +1712,8 @@ Tiers.Processor()
         esac
     done
 
-    QPKGs.OperationAssignment.List
+    QPKGs.OperationArrays.List
+    QPKGs.StateArrays.List
     SmartCR >&2
 
     DebugFuncExit
@@ -3326,13 +3327,34 @@ QPKGs.Conflicts.Check()
 
     }
 
-QPKGs.OperationAssignment.List()
+QPKGs.OperationArrays.List()
+    {
+
+    Session.SkipPackageProcessing.IsSet && return
+    DebugFuncEntry
+
+    local array_name=''
+    local -a operations_array=(ToDownload IsDownload ErDownload SkDownload ToBackup IsBackup ErBackup SkBackup ToStop IsStop ErStop SkStop ToUninstall IsUninstall ErUninstall SkUninstall ToUpgrade IsUpgrade ErUpgrade SkUpgrade ToReinstall IsReinstall ErReinstall SkReinstall ToInstall IsInstall ErInstall SkInstall ToRestore IsRestore ErRestore SkRestore ToStart IsStart ErStart SkStart ToRestart IsRestart ErRestart SkRestart)
+
+    DebugInfoMinorSeparator
+
+    for array_name in "${operations_array[@]}"; do
+        # speedup: only log arrays with more than zero elements
+        QPKGs.$array_name.IsAny && DebugQPKG "$array_name" "($(QPKGs.$array_name.Count)) $(QPKGs.$array_name.ListCSV) "
+    done
+
+    DebugInfoMinorSeparator
+    DebugFuncExit
+
+    }
+
+QPKGs.StateArrays.List()
     {
 
     DebugFuncEntry
 
     local array_name=''
-    local -a operations_array=(ToDownload IsDownload ErDownload SkDownload ToBackup IsBackup ErBackup SkBackup ToStop IsStop ErStop SkStop ToUninstall IsUninstall ErUninstall SkUninstall ToUpgrade IsUpgrade ErUpgrade SkUpgrade ToReinstall IsReinstall ErReinstall SkReinstall ToInstall IsInstall ErInstall SkInstall ToRestore IsRestore ErRestore SkRestore ToStart IsStart ErStart SkStart ToRestart IsRestart ErRestart SkRestart Installed NotInstalled BackedUp NotBackedUp Upgradable Missing)
+    local -a operations_array=(Installed NotInstalled BackedUp NotBackedUp Upgradable Missing)
 
     DebugInfoMinorSeparator
 
@@ -3575,7 +3597,8 @@ QPKGs.Statuses.Show()
         DisplayLineSpaceIfNoneAlready
     done
 
-    QPKGs.OperationAssignment.List
+    QPKGs.OperationArrays.List
+    QPKGs.StateArrays.List
 
     return 0
 
