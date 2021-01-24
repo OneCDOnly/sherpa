@@ -1387,7 +1387,7 @@ Session.Environment.List()
     CheckPythonPathAndVersion python3
     CheckPythonPathAndVersion python
 
-    if QPKG.Installed Entware; then
+    if QPKG.Installed Entware && ! QPKGs.ToUninstall.Exist Entware; then
         version=$(python3 -V 2>/dev/null | $SED_CMD 's|^Python ||') && [[ ${version//./} -lt $MIN_PYTHON_VER ]] && ShowAsReco "your Python 3 is out-of-date. Suggest reinstalling Entware: 'sherpa reinstall ew'"
     fi
 
