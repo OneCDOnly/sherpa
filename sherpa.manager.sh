@@ -749,7 +749,7 @@ Session.Arguments.Parse()
             DebugAsProc 'no operation set: checking for scopes that will run without an operation'
 
             case $arg in
-                abs|action|actions|all-actions|backups|essentials|installable|installed|l|last|log|option|optionals|options|package|packages|problems|standalone|standalones|started|stopped|tips|upgradable|version|versions)
+                abs|action|actions|actions-all|all-actions|backups|essentials|installable|installed|l|last|log|option|optionals|options|package|packages|problems|standalone|standalones|started|stopped|tips|upgradable|version|versions)
                     operation=help_
                     scope=''
                     scope_incomplete=true
@@ -766,8 +766,13 @@ Session.Arguments.Parse()
             DebugAsProc 'operation has been set: checking for valid scope variations'
 
             case $arg in
-                abs|all-actions|backups|installable|installed|log|problems|started|stopped|tips|upgradable)
+                abs|backups|installable|installed|log|problems|started|stopped|tips|upgradable)
                     scope=${arg}_
+                    scope_incomplete=false
+                    arg_identified=true
+                    ;;
+                actions-all|all-actions)
+                    scope=all-actions_
                     scope_incomplete=false
                     arg_identified=true
                     ;;
@@ -2873,7 +2878,7 @@ Help.Basic.Show()
 
     SmartCR
     DisplayLineSpaceIfNoneAlready
-    Display "Usage: $(FormatAsScriptTitle) $(FormatAsHelpAction) $(FormatAsHelpPackages) $(FormatAsHelpAction) $(FormatAsHelpPackages) ... $(FormatAsHelpOptions)"
+    Display "Usage: $PROJECT_NAME $(FormatAsHelpAction) $(FormatAsHelpPackages) $(FormatAsHelpAction) $(FormatAsHelpPackages) ... $(FormatAsHelpOptions)"
 
     return 0
 
