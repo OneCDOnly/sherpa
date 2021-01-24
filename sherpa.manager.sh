@@ -699,7 +699,6 @@ Session.Arguments.Parse()
     local package=''
 
     for arg in "${user_args[@]}"; do
-#         DebugVar arg
         arg_identified=false
 
         # identify operation    note: every time operation changes, clear scope
@@ -740,14 +739,10 @@ Session.Arguments.Parse()
                 ;;
         esac
 
-#         DebugVar operation
-
         # identify scope in two stages: first stage is when user didn't supply an operation. Second is after an operation has been defined.
 
         # stage 1
         if [[ -z $operation ]]; then
-#             DebugAsProc 'no operation set: checking for scopes that run without an operation'
-
             case $arg in
                 abs|action|actions|actions-all|all-actions|backups|essentials|installable|installed|l|last|log|option|optionals|options|package|packages|problems|standalone|standalones|started|stopped|tips|upgradable|version|versions)
                     operation=help_
@@ -763,8 +758,6 @@ Session.Arguments.Parse()
 
         # stage 2
         if [[ -n $operation ]]; then
-#             DebugAsProc 'operation is set: checking for valid scope variations'
-
             case $arg in
                 abs|backups|installable|installed|log|problems|started|stopped|tips|upgradable)
                     scope=${arg}_
@@ -824,8 +817,6 @@ Session.Arguments.Parse()
             esac
         fi
 
-#         DebugVar scope
-
         # identify options
         case $arg in
             debug|verbose)
@@ -843,13 +834,8 @@ Session.Arguments.Parse()
                 ;;
         esac
 
-#         DebugVar operation_force
-#         DebugVar scope_incomplete
-
         # identify package
         package=$(QPKG.MatchAbbrv "$arg")
-
-#         DebugVar package
 
         if [[ -n $package ]]; then
             scope_incomplete=false
@@ -857,7 +843,6 @@ Session.Arguments.Parse()
         fi
 
         if [[ $arg_identified = false ]]; then
-#             DebugAsProc "adding '$arg' as unknown argument"
             Args.Unknown.Add "$arg"
         fi
 
@@ -1173,8 +1158,6 @@ Session.Arguments.Parse()
     done
 
     if [[ -n $operation && $scope_incomplete = true ]]; then
-#         DebugAsProc "processing operation '$operation' with incomplete scope"
-
         case $operation in
             abs_)
                 User.Opts.Help.Abbreviations.Set
@@ -1393,7 +1376,7 @@ Session.Environment.List()
     CheckPythonPathAndVersion python
 
     if QPKG.Installed Entware && ! QPKGs.ToUninstall.Exist Entware; then
-        version=$(python3 -V 2>/dev/null | $SED_CMD 's|^Python ||') && [[ ${version//./} -lt $MIN_PYTHON_VER ]] && ShowAsReco "your Python 3 is out-of-date. Suggest reinstalling Entware: 'sherpa reinstall ew'"
+        version=$(python3 -V 2>/dev/null | $SED_CMD 's|^Python ||') && [[ ${version//./} -lt $MIN_PYTHON_VER ]] && ShowAsReco "your Python 3 is out-of-date. Suggest reinstalling Entware: '$PROJECT_NAME reinstall ew'"
     fi
 
     DebugUserspace.OK 'raw arguments' "\"$USER_ARGS_RAW\""
@@ -1712,8 +1695,8 @@ Tiers.Processor()
         esac
     done
 
-    QPKGs.OperationArrays.List
-    QPKGs.StateArrays.List
+    QPKGs.Operations.List
+    QPKGs.States.List
     SmartCR >&2
 
     DebugFuncExit
@@ -1734,7 +1717,7 @@ Tier.Processor()
     #   $6 = $PROCESSING_DIRECTION          e.g. 'forward', 'backward'
     #   $7 = $ACTION_INTRANSITIVE           e.g. 'start', etc...
     #   $8 = $ACTION_PRESENT                e.g. 'starting', etc...
-    #   $9 = $ACTION_PAST                   e.g. "started', etc...
+    #   $9 = $ACTION_PAST                   e.g. 'started', etc...
     #  $10 = $RUNTIME (optional)            e.g. 'long'
 
     [[ -z $1 || -z $3 || -z $4 || -z $6 || -z $7 || -z $8 || -z $9 ]] && return
@@ -1754,9 +1737,9 @@ Tier.Processor()
     local -r TARGET_OPERATION=$1
     local -r TIER=$3
     local -r PACKAGE_TYPE=$4
-    local -r TARGET_OBJECT_NAME=$5
+    local -r TARGET_OBJECT_NAME=${5:-}
     local -r PROCESSING_DIRECTION=$6
-    local -r RUNTIME=${10}
+    local -r RUNTIME=${10:-}
 
     if [[ $2 = true ]]; then
         forced_operation='--forced'
@@ -1921,7 +1904,7 @@ Session.Results()
             Versions.Show
         elif User.Opts.Log.Whole.View.IsSet; then
             Log.Whole.View
-        elif User.Opts.Log.Last.View.IsSet; then        # default operation when scope is unspecified
+        elif User.Opts.Log.Last.View.IsSet; then    # default operation when scope is unspecified
             Log.Last.View
         fi
     fi
@@ -1970,7 +1953,7 @@ Session.Results()
         Help.Tips.Show
     elif User.Opts.Help.Abbreviations.IsSet; then
         Help.PackageAbbreviations.Show
-    elif User.Opts.Help.Basic.IsSet; then               # default operation when scope is unspecified
+    elif User.Opts.Help.Basic.IsSet; then           # default operation when scope is unspecified
         Help.Basic.Show
         Help.Basic.Example.Show
     fi
@@ -1979,7 +1962,7 @@ Session.Results()
 
     Session.Summary.IsSet && Session.Summary.Show
     Session.SuggestIssue.IsSet && Help.Issue.Show
-    DisplayLineSpaceIfNoneAlready       # final on-screen line space
+    DisplayLineSpaceIfNoneAlready       # final on-screen linespace
 
     DebugInfoMinorSeparator
     DebugScript 'finished' "$($DATE_CMD)"
@@ -1995,8 +1978,10 @@ Session.Results()
 Clean.Cache()
     {
 
-    [[ -d $WORK_PATH ]] && rm -rf "$WORK_PATH"
-    ShowAsDone 'work path cleaned OK'
+    if [[ -n $WORK_PATH && -d $WORK_PATH ]]; then
+        rm -rf "$WORK_PATH"
+        ShowAsDone 'work path cleaned OK'
+    fi
 
     return 0
 
@@ -2005,8 +1990,10 @@ Clean.Cache()
 Clean.Logs()
     {
 
-    [[ -d $LOGS_PATH ]] && rm -rf "$LOGS_PATH"
-    ShowAsDone 'logs path cleaned OK'
+    if [[ -n $LOGS_PATH && -d $LOGS_PATH ]]; then
+        rm -rf "$LOGS_PATH"
+        ShowAsDone 'logs path cleaned OK'
+    fi
 
     return 0
 
@@ -2023,10 +2010,10 @@ AskQuiz()
 
     local response=''
 
-    ShowAsQuiz "$1"
+    ShowAsQuiz "${1:-}"
     read -rn1 response
     DebugVar response
-    ShowAsQuizDone "$1: $response"
+    ShowAsQuizDone "${1:-}: $response"
 
     case ${response:0:1} in
         y|Y)
@@ -2043,23 +2030,23 @@ Entware.Patch.Service()
     {
 
     local tab=$'\t'
-    local prefix_text="# the following line was inserted by $PROJECT_NAME: https://git.io/sherpa"
+    local prefix_text="# the following line was inserted by $PROJECT_NAME: https://git.io/$PROJECT_NAME"
     local find_text=''
     local insert_text=''
-    local package_init_pathfile=$(QPKG.ServicePathFile Entware)
+    local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile Entware)
 
-    if $GREP_CMD -q 'opt.orig' "$package_init_pathfile"; then
+    if $GREP_CMD -q 'opt.orig' "$PACKAGE_INIT_PATHFILE"; then
         DebugInfo 'patch: do the "opt shuffle" - already done'
     else
         # ensure existing files are moved out of the way before creating /opt symlink
         find_text='# sym-link $QPKG_DIR to /opt'
         insert_text='opt_path="/opt"; opt_backup_path="/opt.orig"; [[ -d "$opt_path" \&\& ! -L "$opt_path" \&\& ! -e "$opt_backup_path" ]] \&\& mv "$opt_path" "$opt_backup_path"'
-        $SED_CMD -i "s|$find_text|$find_text\n\n${tab}${prefix_text}\n${tab}${insert_text}\n|" "$package_init_pathfile"
+        $SED_CMD -i "s|$find_text|$find_text\n\n${tab}${prefix_text}\n${tab}${insert_text}\n|" "$PACKAGE_INIT_PATHFILE"
 
         # ... then restored after creating /opt symlink
         find_text='/bin/ln -sf $QPKG_DIR /opt'
         insert_text='[[ -L "$opt_path" \&\& -d "$opt_backup_path" ]] \&\& cp "$opt_backup_path"/* --target-directory "$opt_path" \&\& rm -r "$opt_backup_path"'
-        $SED_CMD -i "s|$find_text|$find_text\n\n${tab}${prefix_text}\n${tab}${insert_text}\n|" "$package_init_pathfile"
+        $SED_CMD -i "s|$find_text|$find_text\n\n${tab}${prefix_text}\n${tab}${insert_text}\n|" "$PACKAGE_INIT_PATHFILE"
 
         DebugAsDone 'patch: do the "opt shuffle"'
     fi
@@ -2229,7 +2216,7 @@ CalcAllIPKGDepsToInstall()
     local -a dependency_accumulator=()
     local pre_download_list=''
     local element=''
-    local iterations=0
+    local -i iterations=0
     local -r ITERATION_LIMIT=20
     local complete=false
 
@@ -2420,7 +2407,6 @@ IPKGs.Upgrade.Batch()
 
     DebugFuncEntry
     local -i package_count=0
-    local log_pathfile=$LOGS_PATH/ipkgs.$UPGRADE_LOG_FILE
     local -i resultcode=0
 
     IPKGs.ToDownload.Add "$($OPKG_CMD list-upgradable | $CUT_CMD -f1 -d' ')"
@@ -2433,7 +2419,7 @@ IPKGs.Upgrade.Batch()
             trap CTRL_C_Captured INT
                 _MonitorDirSize_ "$IPKG_DL_PATH" "$(IPKGs.ToDownload.Size)" &
 
-                RunAndLog "$OPKG_CMD upgrade$(User.Opts.IgnoreFreeSpace.Text) --force-overwrite $(IPKGs.ToDownload.List) --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile" log:failure-only
+                RunAndLog "$OPKG_CMD upgrade$(User.Opts.IgnoreFreeSpace.Text) --force-overwrite $(IPKGs.ToDownload.List) --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$LOGS_PATH/ipkgs.$UPGRADE_LOG_FILE" log:failure-only
                 resultcode=$?
             trap - INT
         RemoveDirSizeMonitorFlagFile
@@ -2456,12 +2442,9 @@ IPKGs.Install.Batch()
     #   $? = 0 (success) or 1 (failed)
 
     DebugFuncEntry
-    local -i package_count=0
-    local log_pathfile=$LOGS_PATH/ipkgs.addons.$INSTALL_LOG_FILE
-    local -i resultcode=0
-
     CalcAllIPKGDepsToInstall || return
-    package_count=$(IPKGs.ToDownload.Count)
+    local -i resultcode=0
+    local -i package_count=$(IPKGs.ToDownload.Count)
 
     if [[ $package_count -gt 0 ]]; then
         ShowAsProc "downloading & installing $package_count IPKG$(FormatAsPlural "$package_count")"
@@ -2470,7 +2453,7 @@ IPKGs.Install.Batch()
             trap CTRL_C_Captured INT
                 _MonitorDirSize_ "$IPKG_DL_PATH" "$(IPKGs.ToDownload.Size)" &
 
-                RunAndLog "$OPKG_CMD install$(User.Opts.IgnoreFreeSpace.Text) --force-overwrite $(IPKGs.ToDownload.List) --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile" log:failure-only
+                RunAndLog "$OPKG_CMD install$(User.Opts.IgnoreFreeSpace.Text) --force-overwrite $(IPKGs.ToDownload.List) --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$LOGS_PATH/ipkgs.addons.$INSTALL_LOG_FILE" log:failure-only
                 resultcode=$?
             trap - INT
         RemoveDirSizeMonitorFlagFile
@@ -2493,17 +2476,14 @@ IPKGs.Uninstall.Batch()
     #   $? = 0 (success) or 1 (failed)
 
     DebugFuncEntry
-    local -i package_count=0
-    local log_pathfile=$LOGS_PATH/ipkgs.$UNINSTALL_LOG_FILE
-    local -i resultcode=0
-
     CalcAllIPKGDepsToUninstall || return
-    package_count=$(IPKGs.ToUninstall.Count)
+    local -i resultcode=0
+    local -i package_count=$(IPKGs.ToUninstall.Count)
 
     if [[ $package_count -gt 0 ]]; then
         ShowAsProc "uninstalling $package_count IPKG$(FormatAsPlural "$package_count")"
 
-        RunAndLog "$OPKG_CMD remove $(IPKGs.ToUninstall.List)" "$log_pathfile" log:failure-only
+        RunAndLog "$OPKG_CMD remove $(IPKGs.ToUninstall.List)" "$LOGS_PATH/ipkgs.$UNINSTALL_LOG_FILE" log:failure-only
         resultcode=$?
 
         if [[ $resultcode -eq 0 ]]; then
@@ -2549,7 +2529,7 @@ IPKGs.Archive.Open()
 IPKGs.Archive.Close()
     {
 
-    [[ -e $EXTERNAL_PACKAGE_LIST_PATHFILE ]] && rm -f "$EXTERNAL_PACKAGE_LIST_PATHFILE"
+    [[ -n $EXTERNAL_PACKAGE_LIST_PATHFILE && -e $EXTERNAL_PACKAGE_LIST_PATHFILE ]] && rm -f "$EXTERNAL_PACKAGE_LIST_PATHFILE"
 
     }
 
@@ -2557,7 +2537,7 @@ _MonitorDirSize_()
     {
 
     # * This function runs autonomously *
-    # It watches for the existence of $monitor_flag_pathfile
+    # It watches for the existence of $MONITOR_FLAG_PATHFILE
     # If that file is removed, this function dies gracefully
 
     # input:
@@ -2582,7 +2562,7 @@ _MonitorDirSize_()
     previous_length=0
     previous_clean_msg=''
 
-    while [[ -e $monitor_flag_pathfile ]]; do
+    while [[ -e $MONITOR_FLAG_PATHFILE ]]; do
         current_bytes=$($GNU_FIND_CMD "$1" -type f -name '*.ipk' -exec $DU_CMD --bytes --total --apparent-size {} + 2>/dev/null | $GREP_CMD total$ | $CUT_CMD -f1)
         [[ -z $current_bytes ]] && current_bytes=0
 
@@ -2607,7 +2587,7 @@ _MonitorDirSize_()
 
             # add a suggestion to cancel if download has stalled for too long
             if [[ $stall_seconds -ge 90 ]]; then
-                stall_message+=": cancel with CTRL+C and try again later"
+                stall_message+=': cancel with CTRL+C and try again later'
             fi
 
             # colourise if required
@@ -2636,7 +2616,7 @@ ProgressUpdater()
     # input:
     #   $1 = message to display
 
-    this_clean_msg=$(StripANSI "$1")
+    this_clean_msg=$(StripANSI "${1:-}")
 
     if [[ $this_clean_msg != "$previous_clean_msg" ]]; then
         this_length=$((${#this_clean_msg}+1))
@@ -2660,16 +2640,16 @@ CreateDirSizeMonitorFlagFile()
     {
 
     [[ -n ${1:-} ]] || return
-    monitor_flag_pathfile=$1
-    $TOUCH_CMD "$monitor_flag_pathfile"
+    readonly MONITOR_FLAG_PATHFILE=$1
+    $TOUCH_CMD "$MONITOR_FLAG_PATHFILE"
 
     }
 
 RemoveDirSizeMonitorFlagFile()
     {
 
-    if [[ -n $monitor_flag_pathfile && -e $monitor_flag_pathfile ]]; then
-        rm -f "$monitor_flag_pathfile"
+    if [[ -n $MONITOR_FLAG_PATHFILE && -e $MONITOR_FLAG_PATHFILE ]]; then
+        rm -f "$MONITOR_FLAG_PATHFILE"
         $SLEEP_CMD 2
     fi
 
@@ -2696,6 +2676,7 @@ CheckPythonPathAndVersion()
 
     if location=$(command -v "$1" 2>&1); then
         DebugUserspace.OK "'$1' path" "$location"
+
         if version=$($1 -V 2>&1 | $SED_CMD 's|^Python ||'); then
             if [[ ${version//./} -ge $MIN_PYTHON_VER ]]; then
                 DebugUserspace.OK "'$1' version" "$version"
@@ -2870,7 +2851,7 @@ Display()
 DisplayWait()
     {
 
-    echo -en "$1 "
+    echo -en "${1:-} "
 
     }
 
@@ -3194,24 +3175,18 @@ Log.Last.Paste.Online()
 GetSessionStart()
     {
 
-    # $1 = count how many back? (optional)
+    # $1 = how many sessions back? (optional) default = 1
 
-    local -i back=1
-    [[ -n $1 ]] && back=$1
-
-    echo $(($($GREP_CMD -n 'SCRIPT:.*started:' "$SESSION_TAIL_PATHFILE" | $TAIL_CMD -n${back} | $HEAD_CMD -n1 | $CUT_CMD -d':' -f1)-1))
+    echo $(($($GREP_CMD -n 'SCRIPT:.*started:' "$SESSION_TAIL_PATHFILE" | $TAIL_CMD -n${1:-1} | $HEAD_CMD -n1 | $CUT_CMD -d':' -f1)-1))
 
     }
 
 GetSessionFinish()
     {
 
-    # $1 = count how many back? (optional)
+    # $1 = how many sessions back? (optional) default = 1
 
-    local -i back=1
-#         [[ -n $1 ]] && back=$1
-
-    echo $(($($GREP_CMD -n 'SCRIPT:.*finished:' "$SESSION_TAIL_PATHFILE" | $TAIL_CMD -n${back} | $CUT_CMD -d':' -f1)+2))
+    echo $(($($GREP_CMD -n 'SCRIPT:.*finished:' "$SESSION_TAIL_PATHFILE" | $TAIL_CMD -n${1:-1} | $CUT_CMD -d':' -f1)+2))
 
     }
 
@@ -3327,7 +3302,7 @@ QPKGs.Conflicts.Check()
 
     }
 
-QPKGs.OperationArrays.List()
+QPKGs.Operations.List()
     {
 
     Session.SkipPackageProcessing.IsSet && return
@@ -3348,7 +3323,7 @@ QPKGs.OperationArrays.List()
 
     }
 
-QPKGs.StateArrays.List()
+QPKGs.States.List()
     {
 
     DebugFuncEntry
@@ -3597,8 +3572,8 @@ QPKGs.Statuses.Show()
         DisplayLineSpaceIfNoneAlready
     done
 
-    QPKGs.OperationArrays.List
-    QPKGs.StateArrays.List
+    QPKGs.Operations.List
+    QPKGs.States.List
 
     return 0
 
@@ -3938,7 +3913,7 @@ QPKG.ClearServiceStatus()
     # input:
     #   $1 = QPKG name
 
-    [[ -e /var/run/$1.last.operation ]] && rm /var/run/"$1".last.operation
+    [[ -e /var/run/${1:-}.last.operation ]] && rm /var/run/"${1:-}".last.operation
 
     }
 
@@ -3948,7 +3923,7 @@ QPKG.GetServiceStatus()
     # input:
     #   $1 = QPKG name
 
-    if [[ -e /var/run/$1.last.operation ]]; then
+    if [[ -e /var/run/${1:-}.last.operation ]]; then
         case $(</var/run/"$1".last.operation) in
             ok)
                 DebugInfo "$(FormatAsPackageName "$1") service started OK"
@@ -3976,11 +3951,11 @@ QPKG.PathFilename()
     #   stdout = QPKG local filename
     #   $? = 0 if successful, 1 if failed
 
-    local url=$(QPKG.URL "$1")
+    local -r URL=$(QPKG.URL "${1:-}")
 
-    [[ -n ${url:-} ]] || return
+    [[ -n ${URL:-} ]] || return
 
-    echo "$QPKG_DL_PATH/$($BASENAME_CMD "$url")"
+    echo "$QPKG_DL_PATH/$($BASENAME_CMD "$URL")"
 
     return 0
 
@@ -4151,49 +4126,49 @@ QPKG.Download()
     fi
 
     local -i resultcode=0
-    local remote_url=$(QPKG.URL "$1")
-    local remote_filename=$($BASENAME_CMD "$remote_url")
-    local remote_md5=$(QPKG.MD5 "$1")
-    local local_pathfile=$QPKG_DL_PATH/$remote_filename
-    local local_filename=$($BASENAME_CMD "$local_pathfile")
-    local log_pathfile=$LOGS_PATH/$local_filename.$DOWNLOAD_LOG_FILE
+    local -r REMOTE_URL=$(QPKG.URL "$1")
+    local -r REMOTE_FILENAME=$($BASENAME_CMD "$REMOTE_URL")
+    local -r REMOTE_MD5=$(QPKG.MD5 "$1")
+    local -r LOCAL_PATHFILE=$QPKG_DL_PATH/$REMOTE_FILENAME
+    local -r LOCAL_FILENAME=$($BASENAME_CMD "$LOCAL_PATHFILE")
+    local -r LOG_PATHFILE=$LOGS_PATH/$LOCAL_FILENAME.$DOWNLOAD_LOG_FILE
 
-    if [[ -z $remote_url ]]; then
+    if [[ -z $REMOTE_URL ]]; then
         DebugAsWarn "no URL found for this package $(FormatAsPackageName "$1") (unsupported arch?)"
         QPKGs.ToDownload.Remove "$1"
         QPKGs.SkDownload.Add "$1"
         DebugFuncExit; return
     fi
 
-    if [[ -e $local_pathfile ]]; then
-        if FileMatchesMD5 "$local_pathfile" "$remote_md5"; then
-            DebugInfo "local package $(FormatAsFileName "$local_filename") checksum correct: skipping download"
+    if [[ -e $LOCAL_PATHFILE ]]; then
+        if FileMatchesMD5 "$LOCAL_PATHFILE" "$REMOTE_MD5"; then
+            DebugInfo "local package $(FormatAsFileName "$LOCAL_FILENAME") checksum correct: skipping download"
         else
-            DebugAsError "local package $(FormatAsFileName "$local_filename") checksum incorrect"
-            DebugInfo "deleting $(FormatAsFileName "$local_filename")"
-            rm -f "$local_pathfile"
+            DebugAsError "local package $(FormatAsFileName "$LOCAL_FILENAME") checksum incorrect"
+            DebugInfo "deleting $(FormatAsFileName "$LOCAL_FILENAME")"
+            rm -f "$LOCAL_PATHFILE"
         fi
     fi
 
-    if Session.Error.IsNot && [[ ! -e $local_pathfile ]]; then
-        DebugAsProc "downloading $(FormatAsFileName "$remote_filename")"
+    if Session.Error.IsNot && [[ ! -e $LOCAL_PATHFILE ]]; then
+        DebugAsProc "downloading $(FormatAsFileName "$REMOTE_FILENAME")"
 
-        [[ -e $log_pathfile ]] && rm -f "$log_pathfile"
+        [[ -e $LOG_PATHFILE ]] && rm -f "$LOG_PATHFILE"
 
-        RunAndLog "$CURL_CMD${curl_insecure_arg} --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
+        RunAndLog "$CURL_CMD${curl_insecure_arg} --output $LOCAL_PATHFILE $REMOTE_URL" "$LOG_PATHFILE" log:failure-only
         resultcode=$?
 
         if [[ $resultcode -eq 0 ]]; then
-            if FileMatchesMD5 "$local_pathfile" "$remote_md5"; then
-                DebugAsDone "downloaded $(FormatAsFileName "$remote_filename")"
+            if FileMatchesMD5 "$LOCAL_PATHFILE" "$REMOTE_MD5"; then
+                DebugAsDone "downloaded $(FormatAsFileName "$REMOTE_FILENAME")"
                 QPKGs.IsDownload.Add "$1"
             else
-                DebugAsError "downloaded package $(FormatAsFileName "$local_pathfile") checksum incorrect"
+                DebugAsError "downloaded package $(FormatAsFileName "$LOCAL_PATHFILE") checksum incorrect"
                 resultcode=1
                 QPKGs.ErDownload.Add "$1"
             fi
         else
-            DebugAsError "download failed $(FormatAsFileName "$local_pathfile") $(FormatAsExitcode $resultcode)"
+            DebugAsError "download failed $(FormatAsFileName "$LOCAL_PATHFILE") $(FormatAsExitcode $resultcode)"
             QPKGs.ErDownload.Add "$1"
         fi
     fi
@@ -4218,10 +4193,8 @@ QPKG.Install()
         DebugFuncExit 1; return
     fi
 
-    local target_file=''
     local -i resultcode=0
     local local_pathfile=$(QPKG.PathFilename "$1")
-    local log_pathfile=''
 
     if [[ -z $local_pathfile ]]; then
         DebugAsWarn "no pathfile found for this package $(FormatAsPackageName "$1") (unsupported arch?)"
@@ -4236,21 +4209,20 @@ QPKG.Install()
     fi
 
     if [[ $1 = Entware ]] && ! QPKG.Installed Entware && QPKGs.ToInstall.Exist Entware; then
-        local opt_path=/opt
-        local opt_backup_path=/opt.orig
+        local -r OPT_PATH=/opt
+        local -r OPT_BACKUP_PATH=/opt.orig
 
-        if [[ -d $opt_path && ! -L $opt_path && ! -e $opt_backup_path ]]; then
+        if [[ -d $OPT_PATH && ! -L $OPT_PATH && ! -e $OPT_BACKUP_PATH ]]; then
             ShowAsProc "backup original /opt" >&2
-            mv "$opt_path" "$opt_backup_path"
+            mv "$OPT_PATH" "$OPT_BACKUP_PATH"
             DebugAsDone 'complete'
         fi
     fi
 
-    target_file=$($BASENAME_CMD "$local_pathfile")
-    log_pathfile=$LOGS_PATH/$target_file.$INSTALL_LOG_FILE
+    local -r TARGET_FILE=$($BASENAME_CMD "$local_pathfile")
 
     DebugAsProc "installing $(FormatAsPackageName "$1")"
-    RunAndLog "$SH_CMD $local_pathfile" "$log_pathfile" log:failure-only 10
+    RunAndLog "$SH_CMD $local_pathfile" "$LOGS_PATH/$TARGET_FILE.$INSTALL_LOG_FILE" log:failure-only 10
     resultcode=$?
 
     if [[ $resultcode -eq 0 || $resultcode -eq 10 ]]; then
@@ -4262,18 +4234,16 @@ QPKG.Install()
             Entware.Patch.Service
 
             if QPKGs.ToInstall.Exist Entware; then
-                local log_pathfile=$LOGS_PATH/ipkgs.extra.$INSTALL_LOG_FILE
-
                 # copy all files from original [/opt] into new [/opt]
-                if [[ -L ${opt_path:-} && -d ${opt_backup_path:-} ]]; then
+                if [[ -L ${OPT_PATH:-} && -d ${OPT_BACKUP_PATH:-} ]]; then
                     ShowAsProc "restoring original /opt" >&2
-                    cp --recursive "$opt_backup_path"/* --target-directory "$opt_path" && rm -rf "$opt_backup_path"
+                    cp --recursive "$OPT_BACKUP_PATH"/* --target-directory "$OPT_PATH" && rm -rf "$OPT_BACKUP_PATH"
                     DebugAsDone 'complete'
                 fi
 
                 # add extra package(s) needed immediately
                 ShowAsProc 'installing essential IPKGs'
-                RunAndLog "$OPKG_CMD install$(User.Opts.IgnoreFreeSpace.Text) --force-overwrite $MANAGER_ESSENTIAL_IPKGS_ADD --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$log_pathfile" log:failure-only
+                RunAndLog "$OPKG_CMD install$(User.Opts.IgnoreFreeSpace.Text) --force-overwrite $MANAGER_ESSENTIAL_IPKGS_ADD --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$LOGS_PATH/ipkgs.extra.$INSTALL_LOG_FILE" log:failure-only
                 ShowAsDone 'installed essential IPKGs'
 
                 Session.PIPs.Install.Set
@@ -4285,7 +4255,7 @@ QPKG.Install()
         QPKGs.NotInstalled.Remove "$1"
         resultcode=0    # reset this to zero (0 or 10 from a QPKG install is OK)
     else
-        DebugAsError "installation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $resultcode)"
+        DebugAsError "installation failed $(FormatAsFileName "$TARGET_FILE") $(FormatAsExitcode $resultcode)"
         QPKGs.ErInstall.Add "$1"
     fi
 
@@ -4310,10 +4280,8 @@ QPKG.Reinstall()
         DebugFuncExit 1; return
     fi
 
-    local target_file=''
     local -i resultcode=0
     local local_pathfile=$(QPKG.PathFilename "$1")
-    local log_pathfile=''
 
     if [[ -z $local_pathfile ]]; then
         DebugAsWarn "no pathfile found for this package $(FormatAsPackageName "$1") (unsupported arch?)"
@@ -4334,11 +4302,11 @@ QPKG.Reinstall()
         local_pathfile=${local_pathfile%.*}
     fi
 
-    target_file=$($BASENAME_CMD "$local_pathfile")
-    log_pathfile=$LOGS_PATH/$target_file.$REINSTALL_LOG_FILE
+    local -r TARGET_FILE=$($BASENAME_CMD "$local_pathfile")
+    local -r LOG_PATHFILE=$LOGS_PATH/$TARGET_FILE.$REINSTALL_LOG_FILE
 
     DebugAsProc "reinstalling $(FormatAsPackageName "$1")"
-    RunAndLog "$SH_CMD $local_pathfile" "$log_pathfile" log:failure-only 10
+    RunAndLog "$SH_CMD $local_pathfile" "$LOG_PATHFILE" log:failure-only 10
     resultcode=$?
 
     if [[ $resultcode -eq 0 || $resultcode -eq 10 ]]; then
@@ -4347,7 +4315,7 @@ QPKG.Reinstall()
         QPKG.GetServiceStatus "$1"
         resultcode=0    # reset this to zero (0 or 10 from a QPKG install is OK)
     else
-        ShowAsEror "reinstallation failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $resultcode)"
+        ShowAsEror "reinstallation failed $(FormatAsFileName "$TARGET_FILE") $(FormatAsExitcode $resultcode)"
         QPKGs.ErReinstall.Add "$1"
     fi
 
@@ -4401,12 +4369,12 @@ QPKG.Upgrade()
         local_pathfile=${local_pathfile%.*}
     fi
 
-    local target_file=$($BASENAME_CMD "$local_pathfile")
-    local log_pathfile=$LOGS_PATH/$target_file.$UPGRADE_LOG_FILE
+    local -r TARGET_FILE=$($BASENAME_CMD "$local_pathfile")
+    local -r LOG_PATHFILE=$LOGS_PATH/$TARGET_FILE.$UPGRADE_LOG_FILE
     previous_version=$(QPKG.Installed.Version "$1")
 
     DebugAsProc "upgrading $(FormatAsPackageName "$1")"
-    RunAndLog "$SH_CMD $local_pathfile" "$log_pathfile" log:failure-only 10
+    RunAndLog "$SH_CMD $local_pathfile" "$LOG_PATHFILE" log:failure-only 10
     resultcode=$?
 
     current_version=$(QPKG.Installed.Version "$1")
@@ -4422,7 +4390,7 @@ QPKG.Upgrade()
         QPKGs.IsUpgrade.Add "$1"
         resultcode=0    # reset this to zero (0 or 10 from a QPKG upgrade is OK)
     else
-        ShowAsEror "upgrade failed $(FormatAsFileName "$target_file") $(FormatAsExitcode $resultcode)"
+        ShowAsEror "upgrade failed $(FormatAsFileName "$TARGET_FILE") $(FormatAsExitcode $resultcode)"
         QPKGs.ErUpgrade.Add "$1"
     fi
 
@@ -4459,15 +4427,15 @@ QPKG.Uninstall()
     fi
 
     local -i resultcode=0
-    local qpkg_installed_path=$($GETCFG_CMD "$1" Install_Path -f /etc/config/qpkg.conf)
-    local log_pathfile=$LOGS_PATH/$1.$UNINSTALL_LOG_FILE
+    local -r QPKG_UNINSTALLER_PATHFILE=$($GETCFG_CMD "$1" Install_Path -f /etc/config/qpkg.conf)/.uninstall.sh
+    local -r LOG_PATHFILE=$LOGS_PATH/$1.$UNINSTALL_LOG_FILE
 
     [[ $1 = Entware ]] && Package.Save.Lists
 
-    if [[ -e $qpkg_installed_path/.uninstall.sh ]]; then
+    if [[ -e $QPKG_UNINSTALLER_PATHFILE ]]; then
         DebugAsProc "uninstalling $(FormatAsPackageName "$1")"
 
-        RunAndLog "$SH_CMD $qpkg_installed_path/.uninstall.sh" "$log_pathfile" log:failure-only
+        RunAndLog "$SH_CMD $QPKG_UNINSTALLER_PATHFILE" "$LOG_PATHFILE" log:failure-only
         resultcode=$?
 
         if [[ $resultcode -eq 0 ]]; then
@@ -4509,7 +4477,7 @@ QPKG.Restart()
     fi
 
     local -i resultcode=0
-    local log_pathfile=$LOGS_PATH/$1.$RESTART_LOG_FILE
+    local -r LOG_PATHFILE=$LOGS_PATH/$1.$RESTART_LOG_FILE
     QPKG.ClearServiceStatus "$1"
 
     if QPKG.NotInstalled "$1"; then
@@ -4521,7 +4489,7 @@ QPKG.Restart()
 
     QPKG.Enable "$1"
     DebugAsProc "restarting $(FormatAsPackageName "$1")"
-    RunAndLog "$QPKG_SERVICE_CMD restart $1" "$log_pathfile" log:failure-only
+    RunAndLog "$QPKG_SERVICE_CMD restart $1" "$LOG_PATHFILE" log:failure-only
     resultcode=$?
 
     if [[ $resultcode -eq 0 ]]; then
@@ -4558,7 +4526,7 @@ QPKG.Start()
     fi
 
     local -i resultcode=0
-    local log_pathfile=$LOGS_PATH/$1.$START_LOG_FILE
+    local -r LOG_PATHFILE=$LOGS_PATH/$1.$START_LOG_FILE
     QPKG.ClearServiceStatus "$1"
 
     if QPKG.NotInstalled "$1"; then
@@ -4577,7 +4545,7 @@ QPKG.Start()
 
     QPKG.Enable "$1"
     DebugAsProc "starting $(FormatAsPackageName "$1")"
-    RunAndLog "$QPKG_SERVICE_CMD start $1" "$log_pathfile" log:failure-only
+    RunAndLog "$QPKG_SERVICE_CMD start $1" "$LOG_PATHFILE" log:failure-only
     resultcode=$?
 
     if [[ $resultcode -eq 0 ]]; then
@@ -4631,10 +4599,10 @@ QPKG.Stop()
     fi
 
     local -i resultcode=0
-    local log_pathfile=$LOGS_PATH/$1.$STOP_LOG_FILE
+    local -r LOG_PATHFILE=$LOGS_PATH/$1.$STOP_LOG_FILE
 
     DebugAsProc "stopping $(FormatAsPackageName "$1")"
-    RunAndLog "$QPKG_SERVICE_CMD stop $1" "$log_pathfile" log:failure-only
+    RunAndLog "$QPKG_SERVICE_CMD stop $1" "$LOG_PATHFILE" log:failure-only
     resultcode=$?
 
     if [[ $resultcode -eq 0 ]]; then
@@ -4671,9 +4639,9 @@ QPKG.Enable()
     fi
 
     local -i resultcode=0
-    local log_pathfile=$LOGS_PATH/$1.$ENABLE_LOG_FILE
+    local -r LOG_PATHFILE=$LOGS_PATH/$1.$ENABLE_LOG_FILE
 
-    RunAndLog "$QPKG_SERVICE_CMD enable $1" "$log_pathfile" log:failure-only
+    RunAndLog "$QPKG_SERVICE_CMD enable $1" "$LOG_PATHFILE" log:failure-only
     resultcode=$?
 
     if [[ $resultcode -eq 0 ]]; then
@@ -4707,9 +4675,9 @@ QPKG.Disable()
     fi
 
     local -i resultcode=0
-    local log_pathfile=$LOGS_PATH/$1.$DISABLE_LOG_FILE
+    local -r LOG_PATHFILE=$LOGS_PATH/$1.$DISABLE_LOG_FILE
 
-    RunAndLog "$QPKG_SERVICE_CMD disable $1" "$log_pathfile" log:failure-only
+    RunAndLog "$QPKG_SERVICE_CMD disable $1" "$LOG_PATHFILE" log:failure-only
     resultcode=$?
 
     if [[ $resultcode -eq 0 ]]; then
@@ -4751,11 +4719,11 @@ QPKG.Backup()
     fi
 
     local -i resultcode=0
-    local package_init_pathfile=$(QPKG.ServicePathFile "$1")
-    local log_pathfile=$LOGS_PATH/$1.$BACKUP_LOG_FILE
+    local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile "$1")
+    local -r LOG_PATHFILE=$LOGS_PATH/$1.$BACKUP_LOG_FILE
 
     DebugAsProc "backing-up $(FormatAsPackageName "$1") configuration"
-    RunAndLog "$SH_CMD $package_init_pathfile backup" "$log_pathfile" log:failure-only
+    RunAndLog "$SH_CMD $PACKAGE_INIT_PATHFILE backup" "$LOG_PATHFILE" log:failure-only
     resultcode=$?
 
     if [[ $resultcode -eq 0 ]]; then
@@ -4845,12 +4813,12 @@ QPKG.Restore()
     fi
 
     local -i resultcode=0
-    local package_init_pathfile=$(QPKG.ServicePathFile "$1")
-    local log_pathfile=$LOGS_PATH/$1.$RESTORE_LOG_FILE
+    local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile "$1")
+    local -r LOG_PATHFILE=$LOGS_PATH/$1.$RESTORE_LOG_FILE
 
     DebugAsProc "restoring $(FormatAsPackageName "$1") configuration"
 
-    RunAndLog "$SH_CMD $package_init_pathfile restore" "$log_pathfile" log:failure-only
+    RunAndLog "$SH_CMD $PACKAGE_INIT_PATHFILE restore" "$LOG_PATHFILE" log:failure-only
     resultcode=$?
 
     if [[ $resultcode -eq 0 ]]; then
@@ -5379,7 +5347,7 @@ DebugDetected.OK()
 DebugCommand.Proc()
     {
 
-    DebugAsProc "executing '${1:-}'"
+    DebugAsProc "exec: '${1:-}'"
 
     }
 
