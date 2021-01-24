@@ -1476,7 +1476,7 @@ Tiers.Processor()
         QPKGs.ToDownload.Add "$(QPKG.Get.Essentials "$package")"
     done
 
-    Tier.Processor 'Download' false 'all' 'QPKG' 'ToDownload' 'forward' 'update cache with' 'updating cache with' 'updated cache with' ''
+    Tier.Processor 'Download' false 'all' 'QPKG' 'ToDownload' 'forward' 'update package cache with' 'updating package cache with' 'updated package cache with' ''
 
     if Opts.Apps.All.Backup.IsSet; then
         QPKGs.ToBackup.Add "$(QPKGs.SupportsBackup.Array)"
@@ -1980,7 +1980,7 @@ Clean.Cache()
 
     if [[ -n $WORK_PATH && -d $WORK_PATH ]]; then
         rm -rf "$WORK_PATH"
-        ShowAsDone 'work path cleaned OK'
+        ShowAsDone 'work path cleaned'
     fi
 
     return 0
@@ -1992,7 +1992,7 @@ Clean.Logs()
 
     if [[ -n $LOGS_PATH && -d $LOGS_PATH ]]; then
         rm -rf "$LOGS_PATH"
-        ShowAsDone 'logs path cleaned OK'
+        ShowAsDone 'logs path cleaned'
     fi
 
     return 0
@@ -2434,7 +2434,7 @@ IPKGs.Upgrade.Batch()
         RemoveDirSizeMonitorFlagFile
 
         if [[ $resultcode -eq 0 ]]; then
-            ShowAsDone "downloaded & upgraded $package_count IPKG$(FormatAsPlural "$package_count") OK"
+            ShowAsDone "downloaded & upgraded $package_count IPKG$(FormatAsPlural "$package_count")"
         else
             ShowAsEror "download & upgrade $package_count IPKG$(FormatAsPlural "$package_count") failed $(FormatAsExitcode $resultcode)"
         fi
@@ -2468,7 +2468,7 @@ IPKGs.Install.Batch()
         RemoveDirSizeMonitorFlagFile
 
         if [[ $resultcode -eq 0 ]]; then
-            ShowAsDone "downloaded & installed $package_count IPKG$(FormatAsPlural "$package_count") OK"
+            ShowAsDone "downloaded & installed $package_count IPKG$(FormatAsPlural "$package_count")"
         else
             ShowAsEror "download & install $package_count IPKG$(FormatAsPlural "$package_count") failed $(FormatAsExitcode $resultcode)"
         fi
@@ -2496,7 +2496,7 @@ IPKGs.Uninstall.Batch()
         resultcode=$?
 
         if [[ $resultcode -eq 0 ]]; then
-            ShowAsDone "uninstalled $package_count IPKG$(FormatAsPlural "$package_count") OK"
+            ShowAsDone "uninstalled $package_count IPKG$(FormatAsPlural "$package_count")"
         else
             ShowAsEror "uninstall IPKG$(FormatAsPlural "$package_count") failed $(FormatAsExitcode $resultcode)"
         fi
@@ -5702,9 +5702,9 @@ ShowAsOperationResult()
     if [[ $passes -eq 0 ]]; then
         ShowAsFail "$5 ${fails}${tier} ${6}$(FormatAsPlural "${3:-}") failed"
     elif [[ $fails -gt 0 ]]; then
-        ShowAsWarn "$5 ${passes}${tier} ${6}$(FormatAsPlural "$passes") OK, but ${fails}${tier} ${6}$(FormatAsPlural "$fails") failed"
+        ShowAsWarn "$5 ${passes}${tier} ${6}$(FormatAsPlural "$passes"), but ${fails}${tier} ${6}$(FormatAsPlural "$fails") failed"
     elif [[ $passes -gt 0 ]]; then
-        ShowAsDone "$5 ${passes}${tier} ${6}$(FormatAsPlural "$passes") OK"
+        ShowAsDone "$5 ${passes}${tier} ${6}$(FormatAsPlural "$passes")"
     else
         DebugAsDone "no${tier} ${6}s processed"
     fi
