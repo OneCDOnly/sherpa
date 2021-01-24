@@ -69,7 +69,7 @@ Session.Init()
     readonly UNAME_CMD=/bin/uname
     readonly UNIQ_CMD=/bin/uniq
 
-    readonly APP_CENTER_NOTIFIER=/sbin/qpkg_cli     # only needed for QTS 4.5.1-and-later
+    readonly APP_CENTER_NOTIFIER=/sbin/qpkg_cli
     readonly CURL_CMD=/sbin/curl
     readonly GETCFG_CMD=/sbin/getcfg
     readonly QPKG_SERVICE_CMD=/sbin/qpkg_service
@@ -140,7 +140,7 @@ Session.Init()
     readonly OPKG_CMD=/opt/bin/opkg
 
     readonly DEFAULT_VOLUME=$($GETCFG_CMD SHARE_DEF defVolMP -f /etc/config/def_share.info)
-    local -r PROJECT_PATH=$($GETCFG_CMD "$PROJECT_NAME" Install_Path -f /etc/config/qpkg.conf)
+    local -r PROJECT_PATH=$($GETCFG_CMD $PROJECT_NAME Install_Path -f /etc/config/qpkg.conf)
     readonly WORK_PATH=$PROJECT_PATH/cache
     readonly LOGS_PATH=$PROJECT_PATH/logs
     readonly QPKG_DL_PATH=$WORK_PATH/qpkgs
@@ -5119,7 +5119,7 @@ FormatAsHelpAction()
 FormatAsHelpPackages()
     {
 
-    ColourTextBrightOrange '[multi-packages]'
+    ColourTextBrightOrange '[packages...]'
 
     }
 
