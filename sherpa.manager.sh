@@ -231,7 +231,7 @@ Session.Init()
     DebugScript 'PID' "$$"
     DebugInfoMinorSeparator
     DebugInfo 'Markers: (**) detected, (II) information, (WW) warning, (EE) error, (LL) log file,'
-    DebugInfo '(==) processing, (--) done, (>>) f entry, (<<) f exit, (vv) variable name & value,'
+    DebugInfo '(--) processing, (==) done, (>>) f entry, (<<) f exit, (vv) variable name & value,'
     DebugInfo '($1) positional argument value'
     DebugInfoMinorSeparator
 
@@ -2210,28 +2210,35 @@ CalcAllIPKGDepsToInstall()
     fi
 
     DebugFuncEntry
-    local -i package_count=0
-    local requested_list=''
     local -a this_list=()
     local -a dependency_accumulator=()
-    local pre_download_list=''
-    local element=''
+    local -a size_array=()
+    local -i requested_count=0
+    local -i pre_exclude_count=0
+    local -i size_count=0
     local -i iterations=0
     local -r ITERATION_LIMIT=20
+    local requested_list=''
+    local pre_exclude_list=''
+    local element=''
     local complete=false
 
     # remove duplicate entries
     requested_list=$(DeDupeWords "$(IPKGs.ToInstall.List)")
     this_list=($requested_list)
+    requested_count=$($WC_CMD -w <<<"$requested_list")
 
-    DebugAsProc 'calculating IPKGs required'
-    DebugInfo 'IPKGs requested' "'$requested_list' "
+    if [[ $requested_count -eq 0 ]]; then
+        DebugAsWarn "no IPKGs requested: aborting ..."
+        DebugFuncExit 1; return
+    fi
 
     if ! IPKGs.Archive.Open; then
         DebugFuncExit 1; return
     fi
 
-    ShowAsProc 'satisfying IPKG dependencies'
+    ShowAsProc 'calculating IPKG dependencies'
+    DebugInfo "$requested_count IPKG$(FormatAsPlural "$requested_count") requested" "'$requested_list' "
 
     while [[ $iterations -lt $ITERATION_LIMIT ]]; do
         ((iterations++))
@@ -2242,7 +2249,6 @@ CalcAllIPKGDepsToInstall()
         this_list=($($GNU_GREP_CMD --word-regexp --after-context 1 --no-group-separator '^Package:\|^Depends:' "$EXTERNAL_PACKAGE_LIST_PATHFILE" | $GNU_GREP_CMD -vG '^Section:\|^Version:' | $GNU_GREP_CMD --word-regexp --after-context 1 --no-group-separator "$IPKG_titles" | $GNU_GREP_CMD -vG "$IPKG_titles" | $GNU_GREP_CMD -vG '^Package: ' | $SED_CMD 's|^Depends: ||;s|, |\n|g' | $SORT_CMD | $UNIQ_CMD))
 
         if [[ ${#this_list[@]} -eq 0 ]]; then
-            DebugAsDone 'complete'
             complete=true
             break
         else
@@ -2250,43 +2256,52 @@ CalcAllIPKGDepsToInstall()
         fi
     done
 
-    if [[ $complete = false ]]; then
-        DebugAsError "IPKG dependency list is incomplete! Consider raising \$ITERATION_LIMIT [$ITERATION_LIMIT]."
+    if [[ $complete = true ]]; then
+        DebugAsDone "complete in $iterations iteration$(FormatAsPlural $iterations)"
+    else
+        DebugAsError "incomplete in $iterations iteration$(FormatAsPlural $iterations), consider raising \$ITERATION_LIMIT [$ITERATION_LIMIT]"
         Session.SuggestIssue.Set
     fi
 
-    pre_download_list=$(DeDupeWords "$requested_list ${dependency_accumulator[*]}")
-    DebugInfo "found $($WC_CMD -w <<<"$pre_download_list") IPKG dependencies in $iterations iteration$(FormatAsPlural $iterations)"
-    DebugInfo 'IPKGs requested + dependencies' "'$pre_download_list' "
-    DebugAsProc 'excluding IPKGs already installed'
+    # exclude already installed IPKGs
+    pre_exclude_list=$(DeDupeWords "$requested_list ${dependency_accumulator[*]}")
+    pre_exclude_count=$($WC_CMD -w <<<"$pre_exclude_list")
 
-    for element in $pre_download_list; do
-        # KLUDGE: 'ca-certs' appears to be a bogus meta-package, so silently exclude it from attempted installation.
-        if [[ $element != 'ca-certs' ]]; then
-            # KLUDGE: 'libjpeg' appears to have been replaced by 'libjpeg-turbo', but many packages still list 'libjpeg' as a dependency, so replace it with 'libjpeg-turbo'.
-            if [[ $element != 'libjpeg' ]]; then
-                if ! $OPKG_CMD status "$element" | $GREP_CMD -q "Status:.*installed"; then
-                    IPKGs.ToDownload.Add "$element"
+    if [[ $pre_exclude_count -gt 0 ]]; then
+        DebugInfo "$pre_exclude_count IPKG$(FormatAsPlural "$pre_exclude_count") requested + dependencies" "'$pre_exclude_list' "
+
+        DebugAsProc 'excluding IPKGs already installed'
+
+        for element in $pre_exclude_list; do
+            # KLUDGE: 'ca-certs' appears to be a bogus meta-package, so silently exclude it from attempted installation.
+            if [[ $element != 'ca-certs' ]]; then
+                # KLUDGE: 'libjpeg' appears to have been replaced by 'libjpeg-turbo', but many packages still list 'libjpeg' as a dependency, so replace it with 'libjpeg-turbo'.
+                if [[ $element != 'libjpeg' ]]; then
+                    if ! $OPKG_CMD status "$element" | $GREP_CMD -q "Status:.*installed"; then
+                        IPKGs.ToDownload.Add "$element"
+                    fi
+                elif ! $OPKG_CMD status 'libjpeg-turbo' | $GREP_CMD -q "Status:.*installed"; then
+                    IPKGs.ToDownload.Add 'libjpeg-turbo'
                 fi
-            elif ! $OPKG_CMD status 'libjpeg-turbo' | $GREP_CMD -q "Status:.*installed"; then
-                IPKGs.ToDownload.Add 'libjpeg-turbo'
             fi
-        fi
-    done
+        done
+    else
+        DebugAsDone 'no IPKGs to exclude'
+        IPKGs.Archive.Close
+        DebugFuncExit; return
+    fi
 
-    DebugAsDone 'complete'
-    DebugInfo 'IPKGs to download' "'$(IPKGs.ToDownload.List)' "
-    package_count=$(IPKGs.ToDownload.Count)
+    # calculate size of required IPKGs
+    size_count=$(IPKGs.ToDownload.Count)
 
-    if [[ $package_count -gt 0 ]]; then
-        DebugAsProc "determining size of IPKG$(FormatAsPlural "$package_count") to download"
+    if [[ $size_count -gt 0 ]]; then
+        DebugAsDone "$size_count IPKG$(FormatAsPlural "$size_count") to download: '$(IPKGs.ToDownload.List)'"
+        DebugAsProc "calculating size of IPKG$(FormatAsPlural "$size_count") to download"
         size_array=($($GNU_GREP_CMD -w '^Package:\|^Size:' "$EXTERNAL_PACKAGE_LIST_PATHFILE" | $GNU_GREP_CMD --after-context 1 --no-group-separator ": $($SED_CMD 's/ /$ /g;s/\$ /\$\\\|: /g' <<< "$(IPKGs.ToDownload.List)")$" | $GREP_CMD '^Size:' | $SED_CMD 's|^Size: ||'))
         IPKGs.ToDownload.Size = "$(IFS=+; echo "$((${size_array[*]}))")"   # a neat sizing shortcut found here https://stackoverflow.com/a/13635566/6182835
-        DebugAsDone 'complete'
-        DebugInfo "IPKG download size: $(IPKGs.ToDownload.Size)"
-        DebugAsDone "$package_count IPKG$(FormatAsPlural "$package_count") ($(FormatAsISOBytes "$(IPKGs.ToDownload.Size)")) to be downloaded"
+        DebugAsDone "$(FormatAsThousands "$(IPKGs.ToDownload.Size)") bytes ($(FormatAsISOBytes "$(IPKGs.ToDownload.Size)")) to download"
     else
-        DebugAsDone 'no IPKGs are required'
+        DebugAsDone 'no IPKGs to size'
     fi
 
     IPKGs.Archive.Close
@@ -2306,27 +2321,21 @@ CalcAllIPKGDepsToUninstall()
 
     DebugFuncEntry
     local requested_list=''
-    local -i package_count=0
     local element=''
 
     requested_list=$(DeDupeWords "$(IPKGs.ToUninstall.List)")
-
-    DebugInfo 'IPKGs requested' "'$requested_list' "
+    DebugInfo "$($WC_CMD -w <<<"$requested_list") IPKG$(FormatAsPlural "$($WC_CMD -w <<<"$requested_list")") requested" "'$requested_list' "
     DebugAsProc 'excluding IPKGs not installed'
 
     for element in $requested_list; do
         ! $OPKG_CMD status "$element" | $GREP_CMD -q "Status:.*installed" && IPKGs.ToUninstall.Remove "$element"
     done
 
-    DebugAsDone 'complete'
-    DebugInfo 'IPKGs to uninstall' "'$(IPKGs.ToUninstall.List)' "
-    package_count=$(IPKGs.ToUninstall.Count)
-
-    if [[ $package_count -gt 0 ]]; then
-        DebugAsDone 'complete'
-        DebugAsDone "$package_count IPKG$(FormatAsPlural "$package_count") to be uninstalled"
+    if [[ $(IPKGs.ToUninstall.Count) -gt 0 ]]; then
+        DebugAsDone "$(IPKGs.ToUninstall.Count) IPKG$(FormatAsPlural "$(IPKGs.ToUninstall.Count)") to uninstall: '$(IPKGs.ToUninstall.List)'"
+    else
+        DebugAsDone 'no IPKGs to uninstall'
     fi
-
     DebugFuncExit
 
     }
@@ -2505,8 +2514,6 @@ IPKGs.Archive.Open()
     # output:
     #   $? = 0 (success) or 1 (failed)
 
-    DebugFuncEntry
-
     if [[ ! -e $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE ]]; then
         ShowAsEror 'unable to locate the IPKG list file'
         DebugFuncExit 1; return
@@ -2522,7 +2529,7 @@ IPKGs.Archive.Open()
         DebugFuncExit 1; return
     fi
 
-    DebugFuncExit
+    return 0
 
     }
 
@@ -5391,14 +5398,14 @@ DebugFuncExit()
 DebugAsProc()
     {
 
-    DebugThis "(==) $1 ..."
+    DebugThis "(--) $1 ..."
 
     }
 
 DebugAsDone()
     {
 
-    DebugThis "(--) $1"
+    DebugThis "(==) $1"
 
     }
 
