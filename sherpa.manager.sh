@@ -2873,7 +2873,7 @@ Help.Basic.Show()
 
     SmartCR
     DisplayLineSpaceIfNoneAlready
-    Display "Usage: $(FormatAsScriptTitle) $(FormatAsHelpAction) $(FormatAsHelpPackages) $(FormatAsHelpAction) $(FormatAsHelpPackages) $(FormatAsHelpAction) $(FormatAsHelpPackages) $(FormatAsHelpOptions)"
+    Display "Usage: $(FormatAsScriptTitle) $(FormatAsHelpAction) $(FormatAsHelpPackages) $(FormatAsHelpAction) $(FormatAsHelpPackages) ... $(FormatAsHelpOptions)"
 
     return 0
 
@@ -5127,7 +5127,7 @@ FormatAsHelpPackages()
 FormatAsHelpOptions()
     {
 
-    ColourTextBrightRed '[options]'
+    ColourTextBrightRed '[options...]'
 
     }
 
