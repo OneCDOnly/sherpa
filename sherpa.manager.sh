@@ -5903,9 +5903,9 @@ Objects.Add.List()
     local public_function_name=$1
     local safe_function_name="$(tr 'A-Z' 'a-z' <<< "${public_function_name//[.-]/_}")"
 
-    _placeholder_size_=_object_${safe_function_name}_size_
-    _placeholder_array_=_object_${safe_function_name}_array_
-    _placeholder_array_index_=_object_${safe_function_name}_array_index_
+    _placeholder_size_=_obj_${safe_function_name}_size_
+    _placeholder_array_=_obj_${safe_function_name}_array_
+    _placeholder_array_index_=_obj_${safe_function_name}_array_index_
 
 echo $public_function_name'.Add()
     {
@@ -6002,10 +6002,10 @@ Objects.Add.Flag()
     local public_function_name=$1
     local safe_function_name="$(tr 'A-Z' 'a-z' <<< "${public_function_name//[.-]/_}")"
 
-    _placeholder_text_=_object_${safe_function_name}_text_
-    _placeholder_flag_=_object_${safe_function_name}_flag_
-    _placeholder_log_changes_flag_=_object_${safe_function_name}_changes_flag_
-    _placeholder_enable_=_object_${safe_function_name}_enable_
+    _placeholder_text_=_obj_${safe_function_name}_text_
+    _placeholder_flag_=_obj_${safe_function_name}_flag_
+    _placeholder_log_changes_flag_=_obj_${safe_function_name}_changes_flag_
+    _placeholder_enable_=_obj_${safe_function_name}_enable_
 
 echo $public_function_name'.Clear()
     {
@@ -6100,7 +6100,7 @@ Objects.Compile()
 
     # $1 = 'hash' (optional) - if specified, only return the internal checksum
 
-    local -r COMPILED_OBJECTS_HASH=0b7ea80d73d489e37528cbce0c6c0e2c
+    local -r COMPILED_OBJECTS_HASH=f158775d835378d5a0e84ea1656cf1d3
     local array_name=''
     local -a operations_array=()
 
