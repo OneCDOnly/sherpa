@@ -1904,7 +1904,7 @@ Session.Results()
             Versions.Show
         elif Opts.Log.Whole.View.IsSet; then
             Log.Whole.View
-        elif Opts.Log.Last.View.IsSet; then		# default operation when scope is unspecified
+        elif Opts.Log.Last.View.IsSet; then     # default operation when scope is unspecified
             Log.Last.View
         fi
     fi
@@ -1929,13 +1929,13 @@ Session.Results()
         QPKGs.Backups.Show
     elif Opts.Help.Status.IsSet; then
         QPKGs.Statuses.Show
-    elif Opts.Apps.List.Installed.IsSet; then	# default operation when scope is unspecified
+    elif Opts.Apps.List.Installed.IsSet; then   # default operation when scope is unspecified
         QPKGs.Installed.Show
     fi
 
     if Opts.Log.Tail.Paste.IsSet; then
         Log.Tail.Paste.Online
-    elif Opts.Log.Last.Paste.IsSet; then		# default operation when scope is unspecified
+    elif Opts.Log.Last.Paste.IsSet; then        # default operation when scope is unspecified
         Log.Last.Paste.Online
     fi
 
@@ -1953,7 +1953,7 @@ Session.Results()
         Help.Tips.Show
     elif Opts.Help.Abbreviations.IsSet; then
         Help.PackageAbbreviations.Show
-    elif Opts.Help.Basic.IsSet; then			# default operation when scope is unspecified
+    elif Opts.Help.Basic.IsSet; then            # default operation when scope is unspecified
         Help.Basic.Show
         Help.Basic.Example.Show
     fi
@@ -1962,7 +1962,7 @@ Session.Results()
 
     Session.Summary.IsSet && Session.Summary.Show
     Session.SuggestIssue.IsSet && Help.Issue.Show
-    DisplayLineSpaceIfNoneAlready				# final on-screen linespace
+    DisplayLineSpaceIfNoneAlready               # final on-screen linespace
 
     DebugInfoMinorSeparator
     DebugScript 'finished' "$($DATE_CMD)"
@@ -2419,7 +2419,7 @@ IPKGs.Upgrade.Batch()
             trap CTRL_C_Captured INT
                 _MonitorDirSize_ "$IPKG_DL_PATH" "$(IPKGs.ToDownload.Size)" &
 
-                RunAndLog "$OPKG_CMD upgrade$(Opts.IgnoreFreeSpace.Text) --force-overwrite $(IPKGs.ToDownload.List) --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$LOGS_PATH/ipkgs.$UPGRADE_LOG_FILE" log:failure-only
+                RunAndLog "$OPKG_CMD upgrade$(Opts.IgnoreFreeSpace.IsSet && Opts.IgnoreFreeSpace.Text) --force-overwrite $(IPKGs.ToDownload.List) --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$LOGS_PATH/ipkgs.$UPGRADE_LOG_FILE" log:failure-only
                 resultcode=$?
             trap - INT
         RemoveDirSizeMonitorFlagFile
@@ -2453,7 +2453,7 @@ IPKGs.Install.Batch()
             trap CTRL_C_Captured INT
                 _MonitorDirSize_ "$IPKG_DL_PATH" "$(IPKGs.ToDownload.Size)" &
 
-                RunAndLog "$OPKG_CMD install$(Opts.IgnoreFreeSpace.Text) --force-overwrite $(IPKGs.ToDownload.List) --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$LOGS_PATH/ipkgs.addons.$INSTALL_LOG_FILE" log:failure-only
+                RunAndLog "$OPKG_CMD install$(Opts.IgnoreFreeSpace.IsSet && Opts.IgnoreFreeSpace.Text) --force-overwrite $(IPKGs.ToDownload.List) --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$LOGS_PATH/ipkgs.addons.$INSTALL_LOG_FILE" log:failure-only
                 resultcode=$?
             trap - INT
         RemoveDirSizeMonitorFlagFile
@@ -4242,7 +4242,7 @@ QPKG.Install()
 
                 # add extra package(s) needed immediately
                 ShowAsProc 'installing essential IPKGs'
-                RunAndLog "$OPKG_CMD install$(Opts.IgnoreFreeSpace.Text) --force-overwrite $MANAGER_ESSENTIAL_IPKGS_ADD --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$LOGS_PATH/ipkgs.extra.$INSTALL_LOG_FILE" log:failure-only
+                RunAndLog "$OPKG_CMD install$(Opts.IgnoreFreeSpace.IsSet && Opts.IgnoreFreeSpace.Text) --force-overwrite $MANAGER_ESSENTIAL_IPKGS_ADD --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$LOGS_PATH/ipkgs.extra.$INSTALL_LOG_FILE" log:failure-only
                 ShowAsDone 'installed essential IPKGs'
 
                 PIPs.Install.Set
