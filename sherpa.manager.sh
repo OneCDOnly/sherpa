@@ -3486,6 +3486,8 @@ QPKGs.States.Build()
     #   - have backup files in backup location
     #   - have config blocks in [/etc/config/qpkg.conf], but no files on-disk
 
+    # NOTE: lists cannot be rebuilt unless object removal methods are re-added
+
     QPKGs.States.Built.IsSet && return
 
     DebugFuncEntry
@@ -3499,7 +3501,6 @@ QPKGs.States.Build()
         QPKG.UserInstallable "$package" && QPKGs.Installable.Add "$package"
 
         if QPKG.Installed "$package"; then
-            QPKGs.NotInstalled.Remove "$package"
             QPKGs.Installed.Add "$package"
 
             installed_version=$(QPKG.Installed.Version "$package")
@@ -3507,30 +3508,23 @@ QPKGs.States.Build()
 
             if [[ ${installed_version//./} != "${remote_version//./}" ]]; then
                 QPKGs.Upgradable.Add "$package"
-            else
-                QPKGs.Upgradable.Remove "$package"
             fi
 
             if QPKG.Enabled "$package"; then
-                QPKGs.NotEnabled.Remove "$package"
                 QPKGs.Enabled.Add "$package"
             else
-                QPKGs.Enabled.Remove "$package"
                 QPKGs.NotEnabled.Add "$package"
             fi
 
             [[ ! -d $(QPKG.InstallPath "$package") ]] && QPKGs.Missing.Add "$package"
         else
-            QPKGs.Installed.Remove "$package"
             QPKGs.NotInstalled.Add "$package"
         fi
 
         if QPKG.SupportsBackup "$package"; then
             if [[ -e $BACKUP_PATH/$package.config.tar.gz ]]; then
-                QPKGs.NotBackedUp.Remove "$package"
                 QPKGs.BackedUp.Add "$package"
             else
-                QPKGs.BackedUp.Remove "$package"
                 QPKGs.NotBackedUp.Add "$package"
             fi
         fi
@@ -6013,6 +6007,7 @@ Objects.Add.List()
 echo $public_function_name'.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item='\'\''
     for item in "${array[@]:-}"; do
         [[ " ${'$_placeholder_array_'[*]:-} " != *"$item"* ]] && '$_placeholder_array_'+=("$item")
@@ -6203,7 +6198,7 @@ Objects.Compile()
 
     # $1 = 'hash' (optional) - if specified, only return the internal checksum
 
-    local -r COMPILED_OBJECTS_HASH=ecf33a57402d0ac391c3e8bd72c37e41
+    local -r COMPILED_OBJECTS_HASH=0b527adfa93bbabc084cde1b9b81a63f
     local array_name=''
     local -a operations_array=()
 

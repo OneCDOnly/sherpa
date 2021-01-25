@@ -3351,6 +3351,7 @@ Opts.Apps.List.Upgradable.Init
 Args.Unknown.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_args_unknown_array_[*]:-} " != *"$item"* ]] && _obj_args_unknown_array_+=("$item")
@@ -3433,6 +3434,7 @@ Args.Unknown.Init
 IPKGs.ToDownload.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_ipkgs_todownload_array_[*]:-} " != *"$item"* ]] && _obj_ipkgs_todownload_array_+=("$item")
@@ -3515,6 +3517,7 @@ IPKGs.ToDownload.Init
 IPKGs.ToInstall.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_ipkgs_toinstall_array_[*]:-} " != *"$item"* ]] && _obj_ipkgs_toinstall_array_+=("$item")
@@ -3597,6 +3600,7 @@ IPKGs.ToInstall.Init
 IPKGs.ToUninstall.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_ipkgs_touninstall_array_[*]:-} " != *"$item"* ]] && _obj_ipkgs_touninstall_array_+=("$item")
@@ -3679,6 +3683,7 @@ IPKGs.ToUninstall.Init
 QPKGs.Essential.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_essential_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_essential_array_+=("$item")
@@ -3761,6 +3766,7 @@ QPKGs.Essential.Init
 QPKGs.Installable.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_installable_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_installable_array_+=("$item")
@@ -3843,6 +3849,7 @@ QPKGs.Installable.Init
 QPKGs.Missing.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_missing_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_missing_array_+=("$item")
@@ -3925,6 +3932,7 @@ QPKGs.Missing.Init
 QPKGs.Names.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_names_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_names_array_+=("$item")
@@ -4007,6 +4015,7 @@ QPKGs.Names.Init
 QPKGs.Optional.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_optional_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_optional_array_+=("$item")
@@ -4089,6 +4098,7 @@ QPKGs.Optional.Init
 QPKGs.Standalone.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_standalone_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_standalone_array_+=("$item")
@@ -4171,6 +4181,7 @@ QPKGs.Standalone.Init
 QPKGs.Upgradable.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_upgradable_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_upgradable_array_+=("$item")
@@ -4253,6 +4264,7 @@ QPKGs.Upgradable.Init
 QPKGs.BackedUp.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_backedup_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_backedup_array_+=("$item")
@@ -4335,6 +4347,7 @@ QPKGs.BackedUp.Init
 QPKGs.NotBackedUp.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_notbackedup_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_notbackedup_array_+=("$item")
@@ -4417,6 +4430,7 @@ QPKGs.NotBackedUp.Init
 QPKGs.Enabled.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_enabled_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_enabled_array_+=("$item")
@@ -4499,6 +4513,7 @@ QPKGs.Enabled.Init
 QPKGs.NotEnabled.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_notenabled_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_notenabled_array_+=("$item")
@@ -4581,6 +4596,7 @@ QPKGs.NotEnabled.Init
 QPKGs.Installed.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_installed_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_installed_array_+=("$item")
@@ -4663,6 +4679,7 @@ QPKGs.Installed.Init
 QPKGs.NotInstalled.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_notinstalled_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_notinstalled_array_+=("$item")
@@ -4745,6 +4762,7 @@ QPKGs.NotInstalled.Init
 QPKGs.SupportsBackup.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_supportsbackup_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_supportsbackup_array_+=("$item")
@@ -4827,6 +4845,7 @@ QPKGs.SupportsBackup.Init
 QPKGs.NotSupportsBackup.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_notsupportsbackup_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_notsupportsbackup_array_+=("$item")
@@ -4909,6 +4928,7 @@ QPKGs.NotSupportsBackup.Init
 QPKGs.SupportsUpdateOnRestart.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_supportsupdateonrestart_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_supportsupdateonrestart_array_+=("$item")
@@ -4991,6 +5011,7 @@ QPKGs.SupportsUpdateOnRestart.Init
 QPKGs.NotSupportsUpdateOnRestart.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_notsupportsupdateonrestart_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_notsupportsupdateonrestart_array_+=("$item")
@@ -5073,6 +5094,7 @@ QPKGs.NotSupportsUpdateOnRestart.Init
 QPKGs.ToBackup.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_tobackup_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_tobackup_array_+=("$item")
@@ -5155,6 +5177,7 @@ QPKGs.ToBackup.Init
 QPKGs.IsBackup.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_isbackup_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_isbackup_array_+=("$item")
@@ -5237,6 +5260,7 @@ QPKGs.IsBackup.Init
 QPKGs.ErBackup.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_erbackup_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_erbackup_array_+=("$item")
@@ -5319,6 +5343,7 @@ QPKGs.ErBackup.Init
 QPKGs.SkBackup.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_skbackup_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_skbackup_array_+=("$item")
@@ -5401,6 +5426,7 @@ QPKGs.SkBackup.Init
 QPKGs.ToDownload.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_todownload_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_todownload_array_+=("$item")
@@ -5483,6 +5509,7 @@ QPKGs.ToDownload.Init
 QPKGs.IsDownload.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_isdownload_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_isdownload_array_+=("$item")
@@ -5565,6 +5592,7 @@ QPKGs.IsDownload.Init
 QPKGs.ErDownload.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_erdownload_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_erdownload_array_+=("$item")
@@ -5647,6 +5675,7 @@ QPKGs.ErDownload.Init
 QPKGs.SkDownload.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_skdownload_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_skdownload_array_+=("$item")
@@ -5729,6 +5758,7 @@ QPKGs.SkDownload.Init
 QPKGs.ToInstall.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_toinstall_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_toinstall_array_+=("$item")
@@ -5811,6 +5841,7 @@ QPKGs.ToInstall.Init
 QPKGs.IsInstall.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_isinstall_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_isinstall_array_+=("$item")
@@ -5893,6 +5924,7 @@ QPKGs.IsInstall.Init
 QPKGs.ErInstall.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_erinstall_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_erinstall_array_+=("$item")
@@ -5975,6 +6007,7 @@ QPKGs.ErInstall.Init
 QPKGs.SkInstall.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_skinstall_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_skinstall_array_+=("$item")
@@ -6057,6 +6090,7 @@ QPKGs.SkInstall.Init
 QPKGs.ToRebuild.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_torebuild_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_torebuild_array_+=("$item")
@@ -6139,6 +6173,7 @@ QPKGs.ToRebuild.Init
 QPKGs.IsRebuild.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_isrebuild_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_isrebuild_array_+=("$item")
@@ -6221,6 +6256,7 @@ QPKGs.IsRebuild.Init
 QPKGs.ErRebuild.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_errebuild_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_errebuild_array_+=("$item")
@@ -6303,6 +6339,7 @@ QPKGs.ErRebuild.Init
 QPKGs.SkRebuild.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_skrebuild_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_skrebuild_array_+=("$item")
@@ -6385,6 +6422,7 @@ QPKGs.SkRebuild.Init
 QPKGs.ToReinstall.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_toreinstall_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_toreinstall_array_+=("$item")
@@ -6467,6 +6505,7 @@ QPKGs.ToReinstall.Init
 QPKGs.IsReinstall.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_isreinstall_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_isreinstall_array_+=("$item")
@@ -6549,6 +6588,7 @@ QPKGs.IsReinstall.Init
 QPKGs.ErReinstall.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_erreinstall_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_erreinstall_array_+=("$item")
@@ -6631,6 +6671,7 @@ QPKGs.ErReinstall.Init
 QPKGs.SkReinstall.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_skreinstall_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_skreinstall_array_+=("$item")
@@ -6713,6 +6754,7 @@ QPKGs.SkReinstall.Init
 QPKGs.ToRestart.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_torestart_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_torestart_array_+=("$item")
@@ -6795,6 +6837,7 @@ QPKGs.ToRestart.Init
 QPKGs.IsRestart.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_isrestart_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_isrestart_array_+=("$item")
@@ -6877,6 +6920,7 @@ QPKGs.IsRestart.Init
 QPKGs.ErRestart.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_errestart_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_errestart_array_+=("$item")
@@ -6959,6 +7003,7 @@ QPKGs.ErRestart.Init
 QPKGs.SkRestart.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_skrestart_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_skrestart_array_+=("$item")
@@ -7041,6 +7086,7 @@ QPKGs.SkRestart.Init
 QPKGs.ToRestore.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_torestore_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_torestore_array_+=("$item")
@@ -7123,6 +7169,7 @@ QPKGs.ToRestore.Init
 QPKGs.IsRestore.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_isrestore_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_isrestore_array_+=("$item")
@@ -7205,6 +7252,7 @@ QPKGs.IsRestore.Init
 QPKGs.ErRestore.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_errestore_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_errestore_array_+=("$item")
@@ -7287,6 +7335,7 @@ QPKGs.ErRestore.Init
 QPKGs.SkRestore.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_skrestore_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_skrestore_array_+=("$item")
@@ -7369,6 +7418,7 @@ QPKGs.SkRestore.Init
 QPKGs.ToStart.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_tostart_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_tostart_array_+=("$item")
@@ -7451,6 +7501,7 @@ QPKGs.ToStart.Init
 QPKGs.IsStart.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_isstart_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_isstart_array_+=("$item")
@@ -7533,6 +7584,7 @@ QPKGs.IsStart.Init
 QPKGs.ErStart.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_erstart_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_erstart_array_+=("$item")
@@ -7615,6 +7667,7 @@ QPKGs.ErStart.Init
 QPKGs.SkStart.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_skstart_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_skstart_array_+=("$item")
@@ -7697,6 +7750,7 @@ QPKGs.SkStart.Init
 QPKGs.ToStop.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_tostop_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_tostop_array_+=("$item")
@@ -7779,6 +7833,7 @@ QPKGs.ToStop.Init
 QPKGs.IsStop.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_isstop_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_isstop_array_+=("$item")
@@ -7861,6 +7916,7 @@ QPKGs.IsStop.Init
 QPKGs.ErStop.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_erstop_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_erstop_array_+=("$item")
@@ -7943,6 +7999,7 @@ QPKGs.ErStop.Init
 QPKGs.SkStop.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_skstop_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_skstop_array_+=("$item")
@@ -8025,6 +8082,7 @@ QPKGs.SkStop.Init
 QPKGs.ToUninstall.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_touninstall_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_touninstall_array_+=("$item")
@@ -8107,6 +8165,7 @@ QPKGs.ToUninstall.Init
 QPKGs.IsUninstall.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_isuninstall_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_isuninstall_array_+=("$item")
@@ -8189,6 +8248,7 @@ QPKGs.IsUninstall.Init
 QPKGs.ErUninstall.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_eruninstall_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_eruninstall_array_+=("$item")
@@ -8271,6 +8331,7 @@ QPKGs.ErUninstall.Init
 QPKGs.SkUninstall.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_skuninstall_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_skuninstall_array_+=("$item")
@@ -8353,6 +8414,7 @@ QPKGs.SkUninstall.Init
 QPKGs.ToUpgrade.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_toupgrade_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_toupgrade_array_+=("$item")
@@ -8435,6 +8497,7 @@ QPKGs.ToUpgrade.Init
 QPKGs.IsUpgrade.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_isupgrade_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_isupgrade_array_+=("$item")
@@ -8517,6 +8580,7 @@ QPKGs.IsUpgrade.Init
 QPKGs.ErUpgrade.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_erupgrade_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_erupgrade_array_+=("$item")
@@ -8599,6 +8663,7 @@ QPKGs.ErUpgrade.Init
 QPKGs.SkUpgrade.Add()
     {
     local array=(${1})
+    [[ ${#array[@]:-} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
         [[ " ${_obj_qpkgs_skupgrade_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_skupgrade_array_+=("$item")
