@@ -3174,11 +3174,13 @@ Log.Tail.View()
 Log.All.Paste.Online()
     {
 
+    Session.Debug.ToArchive.Clear
+
     if [[ -e $SESSION_ARCHIVE_PATHFILE ]]; then
         if AskQuiz "Press 'Y' to post your ENTIRE $(FormatAsScriptTitle) log to a public pastebin, or any other key to abort"; then
             ShowAsProc "uploading $(FormatAsScriptTitle) log"
             # with thanks to https://github.com/solusipse/fiche
-            link=$($CAT_CMD "$SESSION_ARCHIVE_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
+            link=$($CAT_CMD --number "$SESSION_ARCHIVE_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
 
             if [[ $? -eq 0 ]]; then
                 ShowAsDone "your $(FormatAsScriptTitle) log is now online at $(FormatAsURL "$link") and will be deleted in 1 month"
@@ -3202,13 +3204,14 @@ Log.All.Paste.Online()
 Log.Last.Paste.Online()
     {
 
+    Session.Debug.ToArchive.Clear
     ExtractPreviousSessionFromTail
 
     if [[ -e $SESSION_LAST_PATHFILE ]]; then
         if AskQuiz "Press 'Y' to post the most-recent session in your $(FormatAsScriptTitle) log to a public pastebin, or any other key to abort"; then
             ShowAsProc "uploading $(FormatAsScriptTitle) log"
             # with thanks to https://github.com/solusipse/fiche
-            link=$($CAT_CMD "$SESSION_LAST_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
+            link=$($CAT_CMD --number "$SESSION_LAST_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
 
             if [[ $? -eq 0 ]]; then
                 ShowAsDone "your $(FormatAsScriptTitle) log is now online at $(FormatAsURL "$link") and will be deleted in 1 month"
@@ -3232,13 +3235,14 @@ Log.Last.Paste.Online()
 Log.Tail.Paste.Online()
     {
 
+    Session.Debug.ToArchive.Clear
     ExtractTailFromLog
 
     if [[ -e $SESSION_TAIL_PATHFILE ]]; then
         if AskQuiz "Press 'Y' to post the most-recent $(FormatAsThousands "$LOG_TAIL_LINES") entries in your $(FormatAsScriptTitle) log to a public pastebin, or any other key to abort"; then
             ShowAsProc "uploading $(FormatAsScriptTitle) log"
             # with thanks to https://github.com/solusipse/fiche
-            link=$($CAT_CMD -n "$SESSION_TAIL_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
+            link=$($CAT_CMD --number "$SESSION_TAIL_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
 
             if [[ $? -eq 0 ]]; then
                 ShowAsDone "your $(FormatAsScriptTitle) log is now online at $(FormatAsURL "$link") and will be deleted in 1 month"
