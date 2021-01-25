@@ -744,7 +744,7 @@ Session.Arguments.Parse()
         # stage 1
         if [[ -z $operation ]]; then
             case $arg in
-                abs|action|actions|actions-all|all-actions|backups|essentials|installable|installed|l|last|log|option|optionals|options|package|packages|problems|standalone|standalones|started|stopped|tips|upgradable|version|versions)
+                abs|action|actions|actions-all|all-actions|backups|essentials|installable|installed|l|last|log|option|optionals|options|package|packages|problems|standalone|standalones|started|stopped|tail|tips|upgradable|version|versions|whole)
                     operation=help_
                     scope=''
                     scope_incomplete=true
@@ -759,7 +759,7 @@ Session.Arguments.Parse()
         # stage 2
         if [[ -n $operation ]]; then
             case $arg in
-                abs|backups|installable|installed|log|problems|started|stopped|tips|upgradable)
+                abs|backups|installable|installed|problems|started|stopped|tail|tips|upgradable)
                     scope=${arg}_
                     scope_incomplete=false
                     arg_identified=true
@@ -786,6 +786,11 @@ Session.Arguments.Parse()
                     ;;
                 l|last)
                     scope=last_
+                    scope_incomplete=false
+                    arg_identified=true
+                    ;;
+                log|whole)
+                    scope=log_
                     scope_incomplete=false
                     arg_identified=true
                     ;;
@@ -884,7 +889,7 @@ Session.Arguments.Parse()
                     actions_)
                         Opts.Help.Actions.Set
                         ;;
-                    all-actions_)
+                    all-actions_|all_)
                         Opts.Help.ActionsAll.Set
                         ;;
                     backups_)
@@ -909,7 +914,7 @@ Session.Arguments.Parse()
                         Session.Display.Clean.Set
                         ;;
                     log_)
-                        Opts.Log.Whole.View.Set
+                        Opts.Log.All.View.Set
                         Session.Display.Clean.Set
                         ;;
                     optional_)
@@ -941,6 +946,10 @@ Session.Arguments.Parse()
                     stopped_)
                         QPKGs.States.Build
                         Opts.Apps.List.Stopped.Set
+                        Session.Display.Clean.Set
+                        ;;
+                    tail_)
+                        Opts.Log.Tail.View.Set
                         Session.Display.Clean.Set
                         ;;
                     tips_)
@@ -979,11 +988,14 @@ Session.Arguments.Parse()
                 ;;
             paste_)
                 case $scope in
-                    all_)
-                        Opts.Log.Tail.Paste.Set
+                    all_|whole_)
+                        Opts.Log.All.Paste.Set
                         ;;
-                    *)
+                    last_)
                         Opts.Log.Last.Paste.Set
+                        ;;
+                    tail_)
+                        Opts.Log.Tail.Paste.Set
                         ;;
                 esac
                 ;;
@@ -1902,7 +1914,7 @@ Session.Results()
     if Args.Unknown.IsNone; then
         if Opts.Versions.View.IsSet; then
             Versions.Show
-        elif Opts.Log.Whole.View.IsSet; then
+        elif Opts.Log.All.View.IsSet; then
             Log.Whole.View
         elif Opts.Log.Last.View.IsSet; then     # default operation when scope is unspecified
             Log.Last.View
@@ -6107,7 +6119,7 @@ Objects.Compile()
 
     # $1 = 'hash' (optional) - if specified, only return the internal checksum
 
-    local -r COMPILED_OBJECTS_HASH=f158775d835378d5a0e84ea1656cf1d3
+    local -r COMPILED_OBJECTS_HASH=497ecb5d9e21a91a1993b69fde8ddd8e
     local array_name=''
     local -a operations_array=()
 
@@ -6148,10 +6160,12 @@ Objects.Compile()
         Objects.Add.Flag Opts.IgnoreFreeSpace
         Objects.Add.Flag Opts.Versions.View
 
+        Objects.Add.Flag Opts.Log.All.Paste
+        Objects.Add.Flag Opts.Log.All.View
         Objects.Add.Flag Opts.Log.Last.Paste
         Objects.Add.Flag Opts.Log.Last.View
         Objects.Add.Flag Opts.Log.Tail.Paste
-        Objects.Add.Flag Opts.Log.Whole.View
+        Objects.Add.Flag Opts.Log.Tail.View
 
         operations_array=(Backup Install Rebuild Reinstall Restart Restore Start Stop Uninstall Upgrade)
 

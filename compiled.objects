@@ -1606,6 +1606,140 @@ Opts.Versions.View.Text()
     }
 Opts.Versions.View.Init
 
+Opts.Log.All.Paste.Clear()
+    {
+    [[ $_obj_opts_log_all_paste_flag_ != 'true' ]] && return
+    _obj_opts_log_all_paste_flag_=false
+    [[ $_obj_opts_log_all_paste_changes_flag_ = 'true' ]] && DebugVar _obj_opts_log_all_paste_flag_
+    }
+Opts.Log.All.Paste.Disable()
+    {
+    [[ $_obj_opts_log_all_paste_enable_ != 'true' ]] && return
+    _obj_opts_log_all_paste_enable_=false
+    [[ $_obj_opts_log_all_paste_changes_flag_ = 'true' ]] && DebugVar _obj_opts_log_all_paste_enable_
+    }
+Opts.Log.All.Paste.DontLogChanges()
+    {
+    [[ $_obj_opts_log_all_paste_changes_flag_ != 'true' ]] && return
+    _obj_opts_log_all_paste_changes_flag_=false
+    }
+Opts.Log.All.Paste.Enable()
+    {
+    [[ $_obj_opts_log_all_paste_enable_ = 'true' ]] && return
+    _obj_opts_log_all_paste_enable_=true
+    [[ $_obj_opts_log_all_paste_changes_flag_ = 'true' ]] && DebugVar _obj_opts_log_all_paste_enable_
+    }
+Opts.Log.All.Paste.Init()
+    {
+    _obj_opts_log_all_paste_text_=''
+    _obj_opts_log_all_paste_flag_=false
+    _obj_opts_log_all_paste_changes_flag_=true
+    _obj_opts_log_all_paste_enable_=false
+    }
+Opts.Log.All.Paste.IsDisabled()
+    {
+    [[ $_obj_opts_log_all_paste_enable_ != 'true' ]]
+    }
+Opts.Log.All.Paste.IsEnabled()
+    {
+    [[ $_obj_opts_log_all_paste_enable_ = 'true' ]]
+    }
+Opts.Log.All.Paste.IsNot()
+    {
+    [[ $_obj_opts_log_all_paste_flag_ != 'true' ]]
+    }
+Opts.Log.All.Paste.IsSet()
+    {
+    [[ $_obj_opts_log_all_paste_flag_ = 'true' ]]
+    }
+Opts.Log.All.Paste.LogChanges()
+    {
+    [[ $_obj_opts_log_all_paste_changes_flag_ = 'true' ]] && return
+    _obj_opts_log_all_paste_changes_flag_=true
+    }
+Opts.Log.All.Paste.Set()
+    {
+    [[ $_obj_opts_log_all_paste_flag_ = 'true' ]] && return
+    _obj_opts_log_all_paste_flag_=true
+    [[ $_obj_opts_log_all_paste_changes_flag_ = 'true' ]] && DebugVar _obj_opts_log_all_paste_flag_
+    }
+Opts.Log.All.Paste.Text()
+    {
+    if [[ -n ${1:-} && $1 = "=" ]]; then
+        _obj_opts_log_all_paste_text_=$2
+    else
+        echo -n "$_obj_opts_log_all_paste_text_"
+    fi
+    }
+Opts.Log.All.Paste.Init
+
+Opts.Log.All.View.Clear()
+    {
+    [[ $_obj_opts_log_all_view_flag_ != 'true' ]] && return
+    _obj_opts_log_all_view_flag_=false
+    [[ $_obj_opts_log_all_view_changes_flag_ = 'true' ]] && DebugVar _obj_opts_log_all_view_flag_
+    }
+Opts.Log.All.View.Disable()
+    {
+    [[ $_obj_opts_log_all_view_enable_ != 'true' ]] && return
+    _obj_opts_log_all_view_enable_=false
+    [[ $_obj_opts_log_all_view_changes_flag_ = 'true' ]] && DebugVar _obj_opts_log_all_view_enable_
+    }
+Opts.Log.All.View.DontLogChanges()
+    {
+    [[ $_obj_opts_log_all_view_changes_flag_ != 'true' ]] && return
+    _obj_opts_log_all_view_changes_flag_=false
+    }
+Opts.Log.All.View.Enable()
+    {
+    [[ $_obj_opts_log_all_view_enable_ = 'true' ]] && return
+    _obj_opts_log_all_view_enable_=true
+    [[ $_obj_opts_log_all_view_changes_flag_ = 'true' ]] && DebugVar _obj_opts_log_all_view_enable_
+    }
+Opts.Log.All.View.Init()
+    {
+    _obj_opts_log_all_view_text_=''
+    _obj_opts_log_all_view_flag_=false
+    _obj_opts_log_all_view_changes_flag_=true
+    _obj_opts_log_all_view_enable_=false
+    }
+Opts.Log.All.View.IsDisabled()
+    {
+    [[ $_obj_opts_log_all_view_enable_ != 'true' ]]
+    }
+Opts.Log.All.View.IsEnabled()
+    {
+    [[ $_obj_opts_log_all_view_enable_ = 'true' ]]
+    }
+Opts.Log.All.View.IsNot()
+    {
+    [[ $_obj_opts_log_all_view_flag_ != 'true' ]]
+    }
+Opts.Log.All.View.IsSet()
+    {
+    [[ $_obj_opts_log_all_view_flag_ = 'true' ]]
+    }
+Opts.Log.All.View.LogChanges()
+    {
+    [[ $_obj_opts_log_all_view_changes_flag_ = 'true' ]] && return
+    _obj_opts_log_all_view_changes_flag_=true
+    }
+Opts.Log.All.View.Set()
+    {
+    [[ $_obj_opts_log_all_view_flag_ = 'true' ]] && return
+    _obj_opts_log_all_view_flag_=true
+    [[ $_obj_opts_log_all_view_changes_flag_ = 'true' ]] && DebugVar _obj_opts_log_all_view_flag_
+    }
+Opts.Log.All.View.Text()
+    {
+    if [[ -n ${1:-} && $1 = "=" ]]; then
+        _obj_opts_log_all_view_text_=$2
+    else
+        echo -n "$_obj_opts_log_all_view_text_"
+    fi
+    }
+Opts.Log.All.View.Init
+
 Opts.Log.Last.Paste.Clear()
     {
     [[ $_obj_opts_log_last_paste_flag_ != 'true' ]] && return
@@ -1807,72 +1941,72 @@ Opts.Log.Tail.Paste.Text()
     }
 Opts.Log.Tail.Paste.Init
 
-Opts.Log.Whole.View.Clear()
+Opts.Log.Tail.View.Clear()
     {
-    [[ $_obj_opts_log_whole_view_flag_ != 'true' ]] && return
-    _obj_opts_log_whole_view_flag_=false
-    [[ $_obj_opts_log_whole_view_changes_flag_ = 'true' ]] && DebugVar _obj_opts_log_whole_view_flag_
+    [[ $_obj_opts_log_tail_view_flag_ != 'true' ]] && return
+    _obj_opts_log_tail_view_flag_=false
+    [[ $_obj_opts_log_tail_view_changes_flag_ = 'true' ]] && DebugVar _obj_opts_log_tail_view_flag_
     }
-Opts.Log.Whole.View.Disable()
+Opts.Log.Tail.View.Disable()
     {
-    [[ $_obj_opts_log_whole_view_enable_ != 'true' ]] && return
-    _obj_opts_log_whole_view_enable_=false
-    [[ $_obj_opts_log_whole_view_changes_flag_ = 'true' ]] && DebugVar _obj_opts_log_whole_view_enable_
+    [[ $_obj_opts_log_tail_view_enable_ != 'true' ]] && return
+    _obj_opts_log_tail_view_enable_=false
+    [[ $_obj_opts_log_tail_view_changes_flag_ = 'true' ]] && DebugVar _obj_opts_log_tail_view_enable_
     }
-Opts.Log.Whole.View.DontLogChanges()
+Opts.Log.Tail.View.DontLogChanges()
     {
-    [[ $_obj_opts_log_whole_view_changes_flag_ != 'true' ]] && return
-    _obj_opts_log_whole_view_changes_flag_=false
+    [[ $_obj_opts_log_tail_view_changes_flag_ != 'true' ]] && return
+    _obj_opts_log_tail_view_changes_flag_=false
     }
-Opts.Log.Whole.View.Enable()
+Opts.Log.Tail.View.Enable()
     {
-    [[ $_obj_opts_log_whole_view_enable_ = 'true' ]] && return
-    _obj_opts_log_whole_view_enable_=true
-    [[ $_obj_opts_log_whole_view_changes_flag_ = 'true' ]] && DebugVar _obj_opts_log_whole_view_enable_
+    [[ $_obj_opts_log_tail_view_enable_ = 'true' ]] && return
+    _obj_opts_log_tail_view_enable_=true
+    [[ $_obj_opts_log_tail_view_changes_flag_ = 'true' ]] && DebugVar _obj_opts_log_tail_view_enable_
     }
-Opts.Log.Whole.View.Init()
+Opts.Log.Tail.View.Init()
     {
-    _obj_opts_log_whole_view_text_=''
-    _obj_opts_log_whole_view_flag_=false
-    _obj_opts_log_whole_view_changes_flag_=true
-    _obj_opts_log_whole_view_enable_=false
+    _obj_opts_log_tail_view_text_=''
+    _obj_opts_log_tail_view_flag_=false
+    _obj_opts_log_tail_view_changes_flag_=true
+    _obj_opts_log_tail_view_enable_=false
     }
-Opts.Log.Whole.View.IsDisabled()
+Opts.Log.Tail.View.IsDisabled()
     {
-    [[ $_obj_opts_log_whole_view_enable_ != 'true' ]]
+    [[ $_obj_opts_log_tail_view_enable_ != 'true' ]]
     }
-Opts.Log.Whole.View.IsEnabled()
+Opts.Log.Tail.View.IsEnabled()
     {
-    [[ $_obj_opts_log_whole_view_enable_ = 'true' ]]
+    [[ $_obj_opts_log_tail_view_enable_ = 'true' ]]
     }
-Opts.Log.Whole.View.IsNot()
+Opts.Log.Tail.View.IsNot()
     {
-    [[ $_obj_opts_log_whole_view_flag_ != 'true' ]]
+    [[ $_obj_opts_log_tail_view_flag_ != 'true' ]]
     }
-Opts.Log.Whole.View.IsSet()
+Opts.Log.Tail.View.IsSet()
     {
-    [[ $_obj_opts_log_whole_view_flag_ = 'true' ]]
+    [[ $_obj_opts_log_tail_view_flag_ = 'true' ]]
     }
-Opts.Log.Whole.View.LogChanges()
+Opts.Log.Tail.View.LogChanges()
     {
-    [[ $_obj_opts_log_whole_view_changes_flag_ = 'true' ]] && return
-    _obj_opts_log_whole_view_changes_flag_=true
+    [[ $_obj_opts_log_tail_view_changes_flag_ = 'true' ]] && return
+    _obj_opts_log_tail_view_changes_flag_=true
     }
-Opts.Log.Whole.View.Set()
+Opts.Log.Tail.View.Set()
     {
-    [[ $_obj_opts_log_whole_view_flag_ = 'true' ]] && return
-    _obj_opts_log_whole_view_flag_=true
-    [[ $_obj_opts_log_whole_view_changes_flag_ = 'true' ]] && DebugVar _obj_opts_log_whole_view_flag_
+    [[ $_obj_opts_log_tail_view_flag_ = 'true' ]] && return
+    _obj_opts_log_tail_view_flag_=true
+    [[ $_obj_opts_log_tail_view_changes_flag_ = 'true' ]] && DebugVar _obj_opts_log_tail_view_flag_
     }
-Opts.Log.Whole.View.Text()
+Opts.Log.Tail.View.Text()
     {
     if [[ -n ${1:-} && $1 = "=" ]]; then
-        _obj_opts_log_whole_view_text_=$2
+        _obj_opts_log_tail_view_text_=$2
     else
-        echo -n "$_obj_opts_log_whole_view_text_"
+        echo -n "$_obj_opts_log_tail_view_text_"
     fi
     }
-Opts.Log.Whole.View.Init
+Opts.Log.Tail.View.Init
 
 Opts.Apps.All.Backup.Clear()
     {
