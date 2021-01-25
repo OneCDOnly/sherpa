@@ -1354,7 +1354,7 @@ Session.Environment.List()
     DebugFirmware.OK 'kernel' "$($UNAME_CMD -mr)"
     DebugFirmware.OK 'platform' "$($GETCFG_CMD '' Platform -d unknown -f /etc/platform.conf)"
     DebugUserspace.OK 'OS uptime' "$($UPTIME_CMD | $SED_CMD 's|.*up.||;s|,.*load.*||;s|^\ *||')"
-    DebugUserspace.OK 'system load' "$($UPTIME_CMD | $SED_CMD 's|.*load average: ||' | $AWK_CMD -F', ' '{print "1 min: "$1 ", 5 min: "$2 ", 15 min: "$3}')"
+    DebugUserspace.OK 'system load' "$($UPTIME_CMD | $SED_CMD 's|.*load average: ||' | $AWK_CMD -F', ' '{print "1m:"$1", 5m:"$2", 15m:"$3}')"
 
     if [[ $USER = admin ]]; then
         DebugUserspace.OK '$USER' "$USER"
