@@ -139,28 +139,8 @@ Session.Init()
     readonly GNU_SED_CMD=/opt/bin/sed
     readonly OPKG_CMD=/opt/bin/opkg
 
-    readonly DEFAULT_VOLUME=$($GETCFG_CMD SHARE_DEF defVolMP -f /etc/config/def_share.info)
-    local -r PROJECT_PATH=$($GETCFG_CMD $PROJECT_NAME Install_Path -f /etc/config/qpkg.conf)
-    readonly WORK_PATH=$PROJECT_PATH/cache
-    readonly LOGS_PATH=$PROJECT_PATH/logs
-    readonly QPKG_DL_PATH=$WORK_PATH/qpkgs
-    readonly IPKG_DL_PATH=$WORK_PATH/ipkgs.downloads
-    readonly IPKG_CACHE_PATH=$WORK_PATH/ipkgs
-    readonly PIP_CACHE_PATH=$WORK_PATH/pips
-    readonly BACKUP_PATH=$DEFAULT_VOLUME/.qpkg_config_backup
-
-    readonly DEBUG_LOG_PATHFILE=$PROJECT_PATH/$PROJECT_NAME.debug.log
-    readonly COMPILED_OBJECTS_PATHFILE=$WORK_PATH/compiled.objects
-    readonly EXTERNAL_PACKAGE_LIST_PATHFILE=$WORK_PATH/Packages
-    readonly SESSION_LAST_PATHFILE=$LOGS_PATH/session.last.log
-    readonly SESSION_TAIL_PATHFILE=$LOGS_PATH/session.tail.log
-
-    readonly COMPILED_OBJECTS_URL=https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/compiled.objects
-    readonly EXTERNAL_PACKAGE_ARCHIVE_PATHFILE=/opt/var/opkg-lists/entware
-    readonly PREVIOUS_OPKG_PACKAGE_LIST=$WORK_PATH/opkg.prev.installed.list
-    readonly PREVIOUS_PIP_MODULE_LIST=$WORK_PATH/pip.prev.installed.list
-
     readonly BACKUP_LOG_FILE=backup.log
+    readonly DEBUG_LOG_FILE=debug.log
     readonly DISABLE_LOG_FILE=disable.log
     readonly DOWNLOAD_LOG_FILE=download.log
     readonly ENABLE_LOG_FILE=enable.log
@@ -174,17 +154,34 @@ Session.Init()
     readonly UPDATE_LOG_FILE=update.log
     readonly UPGRADE_LOG_FILE=upgrade.log
 
+    readonly DEFAULT_VOLUME=$($GETCFG_CMD SHARE_DEF defVolMP -f /etc/config/def_share.info)
+    local -r PROJECT_PATH=$($GETCFG_CMD $PROJECT_NAME Install_Path -f /etc/config/qpkg.conf)
+    readonly WORK_PATH=$PROJECT_PATH/cache
+    readonly LOGS_PATH=$PROJECT_PATH/logs
+    readonly QPKG_DL_PATH=$WORK_PATH/qpkgs
+    readonly IPKG_DL_PATH=$WORK_PATH/ipkgs.downloads
+    readonly IPKG_CACHE_PATH=$WORK_PATH/ipkgs
+    readonly PIP_CACHE_PATH=$WORK_PATH/pips
+    readonly BACKUP_PATH=$DEFAULT_VOLUME/.qpkg_config_backup
+
+    readonly COMPILED_OBJECTS_URL=https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/compiled.objects
+    readonly EXTERNAL_PACKAGE_ARCHIVE_PATHFILE=/opt/var/opkg-lists/entware
+    readonly PREVIOUS_OPKG_PACKAGE_LIST=$WORK_PATH/opkg.prev.installed.list
+    readonly PREVIOUS_PIP_MODULE_LIST=$WORK_PATH/pip.prev.installed.list
+
+    readonly COMPILED_OBJECTS_PATHFILE=$WORK_PATH/compiled.objects
+    readonly SESSION_ARCHIVE_PATHFILE=$LOGS_PATH/session.archive.log
+    readonly SESSION_ACTIVE_PATHFILE=$PROJECT_PATH/session.active.log
+    readonly SESSION_LAST_PATHFILE=$LOGS_PATH/session.last.log
+    readonly SESSION_TAIL_PATHFILE=$LOGS_PATH/session.tail.log
+    readonly EXTERNAL_PACKAGE_LIST_PATHFILE=$WORK_PATH/Packages
+
     if [[ $USER_ARGS_RAW == *"clean"* ]]; then
         Clean.Cache
         Clean.Logs
+        rm -f "$SESSION_ACTIVE_PATHFILE"
         exit 0
     fi
-
-    ShowAsProc 'init' >&2
-
-    [[ -d $IPKG_DL_PATH ]] && rm -rf "$IPKG_DL_PATH"
-    [[ -d $IPKG_CACHE_PATH ]] && rm -rf "$IPKG_CACHE_PATH"
-    [[ -d $PIP_CACHE_PATH ]] && rm -rf "$PIP_CACHE_PATH"
 
     if ! MakePath "$WORK_PATH" 'work'; then
         DebugFuncExit 1; return
@@ -193,6 +190,17 @@ Session.Init()
     if ! MakePath "$LOGS_PATH" 'logs'; then
         DebugFuncExit 1; return
     fi
+
+    if [[ -e $SESSION_ACTIVE_PATHFILE ]]; then      # check for incomplete previous session (crashed, interrupted?) and save it to archive
+        cat "$SESSION_ACTIVE_PATHFILE" >> "$SESSION_ARCHIVE_PATHFILE"
+        rm -f "$SESSION_ACTIVE_PATHFILE"
+    fi
+
+    ShowAsProc 'init' >&2
+
+    [[ -d $IPKG_DL_PATH ]] && rm -rf "$IPKG_DL_PATH"
+    [[ -d $IPKG_CACHE_PATH ]] && rm -rf "$IPKG_CACHE_PATH"
+    [[ -d $PIP_CACHE_PATH ]] && rm -rf "$PIP_CACHE_PATH"
 
     if ! MakePath "$QPKG_DL_PATH" 'QPKG download'; then
         DebugFuncExit 1; return
@@ -215,12 +223,13 @@ Session.Init()
     fi
 
     Objects.Compile
-    Session.Debug.To.File.Set
+    Session.Debug.ToArchive.Set
+    Session.Debug.ToFile.Set
 
     # enable debug mode early if possible
     if [[ $USER_ARGS_RAW == *"debug"* || $USER_ARGS_RAW == *"verbose"* ]]; then
         Display >&2
-        Session.Debug.To.Screen.Set
+        Session.Debug.ToScreen.Set
     fi
 
     readonly PACKAGE_VERSION=$(QPKG.Installed.Version "$PROJECT_NAME")
@@ -668,7 +677,7 @@ Session.Init()
     SmartCR >&2
 
     if Session.Display.Clean.IsNot; then
-        if Session.Debug.To.Screen.IsNot; then
+        if Session.Debug.ToScreen.IsNot; then
             Display "$(FormatAsScriptTitle) $MANAGER_SCRIPT_VERSION • a mini-package-manager for QNAP NAS"
             DisplayLineSpaceIfNoneAlready
         fi
@@ -774,7 +783,7 @@ Session.Arguments.Parse()
                     scope_incomplete=false
                     arg_identified=true
                     ;;
-                all|whole|entire|everything)
+                all|entire|everything)
                     scope=all_
                     scope_incomplete=false
                     arg_identified=true
@@ -825,7 +834,7 @@ Session.Arguments.Parse()
         # identify options
         case $arg in
             debug|verbose)
-                Session.Debug.To.Screen.Set
+                Session.Debug.ToScreen.Set
                 arg_identified=true
                 scope_incomplete=false
                 ;;
@@ -1915,7 +1924,9 @@ Session.Results()
         if Opts.Versions.View.IsSet; then
             Versions.Show
         elif Opts.Log.All.View.IsSet; then
-            Log.Whole.View
+            Log.All.View
+        elif Opts.Log.Tail.View.IsSet; then
+            Log.Tail.View
         elif Opts.Log.Last.View.IsSet; then     # default operation when scope is unspecified
             Log.Last.View
         fi
@@ -1945,7 +1956,9 @@ Session.Results()
         QPKGs.Installed.Show
     fi
 
-    if Opts.Log.Tail.Paste.IsSet; then
+    if Opts.Log.All.Paste.IsSet; then
+        Log.All.Paste.Online
+    elif Opts.Log.Tail.Paste.IsSet; then
         Log.Tail.Paste.Online
     elif Opts.Log.Last.Paste.IsSet; then        # default operation when scope is unspecified
         Log.Last.Paste.Online
@@ -1980,7 +1993,7 @@ Session.Results()
     DebugScript 'finished' "$($DATE_CMD)"
     DebugScript 'elapsed time' "$(ConvertSecsToHoursMinutesSecs "$(($($DATE_CMD +%s)-$([[ -n $SCRIPT_STARTSECONDS ]] && echo "$SCRIPT_STARTSECONDS" || echo "1")))")"
     DebugInfoMajorSeparator
-
+    AppendSessionToArchive
     Session.LockFile.Release
 
     return 0
@@ -1991,7 +2004,7 @@ Clean.Cache()
     {
 
     if [[ -n $WORK_PATH && -d $WORK_PATH ]]; then
-        rm -rf "$WORK_PATH"
+        rm -rf "$WORK_PATH"/*
         ShowAsDone 'work path cleaned'
     fi
 
@@ -2003,7 +2016,7 @@ Clean.Logs()
     {
 
     if [[ -n $LOGS_PATH && -d $LOGS_PATH ]]; then
-        rm -rf "$LOGS_PATH"
+        rm -rf "$LOGS_PATH"/*
         ShowAsDone 'logs path cleaned'
     fi
 
@@ -2852,7 +2865,7 @@ DisplayAsHelpTitleHighlighted()
 SmartCR()
     {
 
-    [[ $(type -t Session.Debug.To.Screen.Init) = 'function' ]] && Session.Debug.To.Screen.IsSet && return
+    [[ $(type -t Session.Debug.ToScreen.Init) = 'function' ]] && Session.Debug.ToScreen.IsSet && return
 
     # reset cursor to start-of-line, erasing previous characters
     echo -en "\033[1K\r"
@@ -3093,14 +3106,18 @@ Help.BackupLocation.Show()
 
     }
 
-Log.Whole.View()
+Log.All.View()
     {
 
-    if [[ -e $DEBUG_LOG_PATHFILE ]]; then
+    # view the entire archived sessions log
+
+    Session.Debug.ToArchive.Clear
+
+    if [[ -e $SESSION_ARCHIVE_PATHFILE ]]; then
         if [[ -e $GNU_LESS_CMD ]]; then
-            LESSSECURE=1 $GNU_LESS_CMD +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$DEBUG_LOG_PATHFILE"
+            LESSSECURE=1 $GNU_LESS_CMD +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$SESSION_ARCHIVE_PATHFILE"
         else
-            $CAT_CMD --number "$DEBUG_LOG_PATHFILE"
+            $CAT_CMD --number "$SESSION_ARCHIVE_PATHFILE"
         fi
     else
         ShowAsEror 'no session log to display'
@@ -3113,8 +3130,9 @@ Log.Whole.View()
 Log.Last.View()
     {
 
-    # view only the last runtime session
+    # view only the last session log
 
+    Session.Debug.ToArchive.Clear
     ExtractPreviousSessionFromTail
 
     if [[ -e $SESSION_LAST_PATHFILE ]]; then
@@ -3131,16 +3149,36 @@ Log.Last.View()
 
     }
 
-Log.Tail.Paste.Online()
+Log.Tail.View()
     {
 
-    ExtractFixedTailFromLog
+    # view only the last session log
+
+    Session.Debug.ToArchive.Clear
+    ExtractTailFromLog
 
     if [[ -e $SESSION_TAIL_PATHFILE ]]; then
-        if AskQuiz "Press 'Y' to post the most-recent $(FormatAsThousands "$LOG_TAIL_LINES") entries in your $(FormatAsScriptTitle) log to a public pastebin, or any other key to abort"; then
+        if [[ -e $GNU_LESS_CMD ]]; then
+            LESSSECURE=1 $GNU_LESS_CMD +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$SESSION_TAIL_PATHFILE"
+        else
+            $CAT_CMD --number "$SESSION_TAIL_PATHFILE"
+        fi
+    else
+        ShowAsEror 'no last session log to display'
+    fi
+
+    return 0
+
+    }
+
+Log.All.Paste.Online()
+    {
+
+    if [[ -e $SESSION_ARCHIVE_PATHFILE ]]; then
+        if AskQuiz "Press 'Y' to post your ENTIRE $(FormatAsScriptTitle) log to a public pastebin, or any other key to abort"; then
             ShowAsProc "uploading $(FormatAsScriptTitle) log"
             # with thanks to https://github.com/solusipse/fiche
-            link=$($CAT_CMD -n "$SESSION_TAIL_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
+            link=$($CAT_CMD "$SESSION_ARCHIVE_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
 
             if [[ $? -eq 0 ]]; then
                 ShowAsDone "your $(FormatAsScriptTitle) log is now online at $(FormatAsURL "$link") and will be deleted in 1 month"
@@ -3154,7 +3192,7 @@ Log.Tail.Paste.Online()
             return 1
         fi
     else
-        ShowAsEror 'no tail log to paste'
+        ShowAsEror 'no archive log file found'
     fi
 
     return 0
@@ -3184,7 +3222,37 @@ Log.Last.Paste.Online()
             return 1
         fi
     else
-        ShowAsEror 'no last session log to paste'
+        ShowAsEror 'no last log file found'
+    fi
+
+    return 0
+
+    }
+
+Log.Tail.Paste.Online()
+    {
+
+    ExtractTailFromLog
+
+    if [[ -e $SESSION_TAIL_PATHFILE ]]; then
+        if AskQuiz "Press 'Y' to post the most-recent $(FormatAsThousands "$LOG_TAIL_LINES") entries in your $(FormatAsScriptTitle) log to a public pastebin, or any other key to abort"; then
+            ShowAsProc "uploading $(FormatAsScriptTitle) log"
+            # with thanks to https://github.com/solusipse/fiche
+            link=$($CAT_CMD -n "$SESSION_TAIL_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
+
+            if [[ $? -eq 0 ]]; then
+                ShowAsDone "your $(FormatAsScriptTitle) log is now online at $(FormatAsURL "$link") and will be deleted in 1 month"
+            else
+                ShowAsEror "a link could not be generated. Most likely a problem occurred when talking with $(FormatAsURL 'https://termbin.com')"
+            fi
+        else
+            DebugInfoMinorSeparator
+            DebugScript 'user abort'
+            Session.Summary.Clear
+            return 1
+        fi
+    else
+        ShowAsEror 'no tail log file found'
     fi
 
     return 0
@@ -3209,6 +3277,17 @@ GetSessionFinish()
 
     }
 
+AppendSessionToArchive()
+    {
+
+    if Session.Debug.ToArchive.IsSet && [[ -e $SESSION_ACTIVE_PATHFILE ]]; then
+        cat "$SESSION_ACTIVE_PATHFILE" >> "$SESSION_ARCHIVE_PATHFILE"
+    fi
+
+    rm -f "$SESSION_ACTIVE_PATHFILE"
+
+    }
+
 ExtractPreviousSessionFromTail()
     {
 
@@ -3217,7 +3296,7 @@ ExtractPreviousSessionFromTail()
     local -i old_session=1
     local -i old_session_limit=12   # don't try to find 'started:' any further back than this many sessions
 
-    ExtractFixedTailFromLog
+    ExtractTailFromLog
 
     if [[ -e $SESSION_TAIL_PATHFILE ]]; then
         end_line=$(GetSessionFinish)
@@ -3239,11 +3318,11 @@ ExtractPreviousSessionFromTail()
 
     }
 
-ExtractFixedTailFromLog()
+ExtractTailFromLog()
     {
 
-    if [[ -e $DEBUG_LOG_PATHFILE ]]; then
-        $TAIL_CMD -n${LOG_TAIL_LINES} "$DEBUG_LOG_PATHFILE" > "$SESSION_TAIL_PATHFILE"   # trim main log first so there's less to 'grep'
+    if [[ -e $SESSION_ARCHIVE_PATHFILE ]]; then
+        $TAIL_CMD -n${LOG_TAIL_LINES} "$SESSION_ARCHIVE_PATHFILE" > "$SESSION_TAIL_PATHFILE"   # trim main log first so there's less to 'grep'
     else
         [[ -e $SESSION_TAIL_PATHFILE ]] && rm -rf "$SESSION_TAIL_PATHFILE"
     fi
@@ -3278,7 +3357,7 @@ QPKGs.NewVersions.Show()
     local names_formatted=''
 
     for package in $(QPKGs.Upgradable.Array); do
-        # only show upgradable packages if they haven't been selected for upgrade in current session
+        # only show upgradable packages if they haven't been selected for upgrade in active session
         if ! QPKGs.ToUpgrade.Exist "$package" && ! QPKGs.ToReinstall.Exist "$package"; then
             left_to_upgrade+=("$package")
         fi
@@ -5048,7 +5127,7 @@ RunAndLog()
     FormatAsCommand "$1" > "$2"
     DebugCommand.Proc "$1"
 
-    if Session.Debug.To.Screen.IsSet; then
+    if Session.Debug.ToScreen.IsSet; then
         $1 > >($TEE_CMD "$msgs") 2>&1   # NOTE: 'tee' buffers stdout here
         resultcode=$?
     else
@@ -5243,7 +5322,7 @@ FormatAsResultAndStdout()
 DisplayLineSpaceIfNoneAlready()
     {
 
-    if Session.LineSpace.IsNot && Session.Debug.To.Screen.IsNot && Session.Display.Clean.IsNot; then
+    if Session.LineSpace.IsNot && Session.Debug.ToScreen.IsNot && Session.Display.Clean.IsNot; then
         echo
         Session.LineSpace.Set
     else
@@ -5472,7 +5551,7 @@ DebugVar()
 DebugThis()
     {
 
-    [[ $(type -t Session.Debug.To.Screen.Init) = 'function' ]] && Session.Debug.To.Screen.IsSet && ShowAsDebug "$1"
+    [[ $(type -t Session.Debug.ToScreen.Init) = 'function' ]] && Session.Debug.ToScreen.IsSet && ShowAsDebug "$1"
     WriteAsDebug "$1"
 
     }
@@ -5488,9 +5567,9 @@ AddFileToDebug()
     DebugExtLogMinorSeparator
     DebugLog 'adding external log to main log ...'
 
-    if Session.Debug.To.Screen.IsSet; then      # prevent external log contents appearing onscreen again - it's already been seen "live".
+    if Session.Debug.ToScreen.IsSet; then      # prevent external log contents appearing onscreen again - it's already been seen "live".
         screen_debug=true
-        Session.Debug.To.Screen.Clear
+        Session.Debug.ToScreen.Clear
     fi
 
     DebugLog "$(FormatAsLogFilename "$1")"
@@ -5499,7 +5578,7 @@ AddFileToDebug()
         DebugLog "$linebuff"
     done < "$1"
 
-    [[ $screen_debug = true ]] && Session.Debug.To.Screen.Set
+    [[ $screen_debug = true ]] && Session.Debug.ToScreen.Set
     DebugExtLogMinorSeparator
 
     }
@@ -5523,7 +5602,7 @@ ShowAsProc()
     SmartCR
     WriteToDisplay.Wait "$(ColourTextBrightOrange proc)" "$1 ...$suffix"
     WriteToLog proc "$1 ...$suffix"
-    [[ $(type -t Session.Debug.To.Screen.Init) = 'function' ]] && Session.Debug.To.Screen.IsSet && Display
+    [[ $(type -t Session.Debug.ToScreen.Init) = 'function' ]] && Session.Debug.ToScreen.IsSet && Display
 
     }
 
@@ -5799,10 +5878,10 @@ WriteToLog()
     #   $1 = pass/fail
     #   $2 = message
 
-    [[ -z ${DEBUG_LOG_PATHFILE:-} ]] && return 1
-    [[ $(type -t Session.Debug.To.File.Init) = 'function' ]] && Session.Debug.To.File.IsNot && return
+    [[ -z ${SESSION_ACTIVE_PATHFILE:-} ]] && return 1
+    [[ $(type -t Session.Debug.ToFile.Init) = 'function' ]] && Session.Debug.ToFile.IsNot && return
 
-    printf "%-4s: %s\n" "$(StripANSI "$1")" "$(StripANSI "$2")" >> "$DEBUG_LOG_PATHFILE"
+    printf "%-4s: %s\n" "$(StripANSI "$1")" "$(StripANSI "$2")" >> "$SESSION_ACTIVE_PATHFILE"
 
     }
 
@@ -6119,7 +6198,7 @@ Objects.Compile()
 
     # $1 = 'hash' (optional) - if specified, only return the internal checksum
 
-    local -r COMPILED_OBJECTS_HASH=497ecb5d9e21a91a1993b69fde8ddd8e
+    local -r COMPILED_OBJECTS_HASH=ecf33a57402d0ac391c3e8bd72c37e41
     local array_name=''
     local -a operations_array=()
 
@@ -6136,8 +6215,9 @@ Objects.Compile()
         ShowAsProc 'compiling objects' >&2
 
         # session flags
-        Objects.Add.Flag Session.Debug.To.File
-        Objects.Add.Flag Session.Debug.To.Screen
+        Objects.Add.Flag Session.Debug.ToArchive
+        Objects.Add.Flag Session.Debug.ToFile
+        Objects.Add.Flag Session.Debug.ToScreen
         Objects.Add.Flag Session.Display.Clean
         Objects.Add.Flag Session.LineSpace
         Objects.Add.Flag Session.ShowBackupLocation

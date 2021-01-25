@@ -1,136 +1,203 @@
-Session.Debug.To.File.Clear()
+Session.Debug.ToArchive.Clear()
     {
-    [[ $_obj_session_debug_to_file_flag_ != 'true' ]] && return
-    _obj_session_debug_to_file_flag_=false
-    [[ $_obj_session_debug_to_file_changes_flag_ = 'true' ]] && DebugVar _obj_session_debug_to_file_flag_
+    [[ $_obj_session_debug_toarchive_flag_ != 'true' ]] && return
+    _obj_session_debug_toarchive_flag_=false
+    [[ $_obj_session_debug_toarchive_changes_flag_ = 'true' ]] && DebugVar _obj_session_debug_toarchive_flag_
     }
-Session.Debug.To.File.Disable()
+Session.Debug.ToArchive.Disable()
     {
-    [[ $_obj_session_debug_to_file_enable_ != 'true' ]] && return
-    _obj_session_debug_to_file_enable_=false
-    [[ $_obj_session_debug_to_file_changes_flag_ = 'true' ]] && DebugVar _obj_session_debug_to_file_enable_
+    [[ $_obj_session_debug_toarchive_enable_ != 'true' ]] && return
+    _obj_session_debug_toarchive_enable_=false
+    [[ $_obj_session_debug_toarchive_changes_flag_ = 'true' ]] && DebugVar _obj_session_debug_toarchive_enable_
     }
-Session.Debug.To.File.DontLogChanges()
+Session.Debug.ToArchive.DontLogChanges()
     {
-    [[ $_obj_session_debug_to_file_changes_flag_ != 'true' ]] && return
-    _obj_session_debug_to_file_changes_flag_=false
+    [[ $_obj_session_debug_toarchive_changes_flag_ != 'true' ]] && return
+    _obj_session_debug_toarchive_changes_flag_=false
     }
-Session.Debug.To.File.Enable()
+Session.Debug.ToArchive.Enable()
     {
-    [[ $_obj_session_debug_to_file_enable_ = 'true' ]] && return
-    _obj_session_debug_to_file_enable_=true
-    [[ $_obj_session_debug_to_file_changes_flag_ = 'true' ]] && DebugVar _obj_session_debug_to_file_enable_
+    [[ $_obj_session_debug_toarchive_enable_ = 'true' ]] && return
+    _obj_session_debug_toarchive_enable_=true
+    [[ $_obj_session_debug_toarchive_changes_flag_ = 'true' ]] && DebugVar _obj_session_debug_toarchive_enable_
     }
-Session.Debug.To.File.Init()
+Session.Debug.ToArchive.Init()
     {
-    _obj_session_debug_to_file_text_=''
-    _obj_session_debug_to_file_flag_=false
-    _obj_session_debug_to_file_changes_flag_=true
-    _obj_session_debug_to_file_enable_=false
+    _obj_session_debug_toarchive_text_=''
+    _obj_session_debug_toarchive_flag_=false
+    _obj_session_debug_toarchive_changes_flag_=true
+    _obj_session_debug_toarchive_enable_=false
     }
-Session.Debug.To.File.IsDisabled()
+Session.Debug.ToArchive.IsDisabled()
     {
-    [[ $_obj_session_debug_to_file_enable_ != 'true' ]]
+    [[ $_obj_session_debug_toarchive_enable_ != 'true' ]]
     }
-Session.Debug.To.File.IsEnabled()
+Session.Debug.ToArchive.IsEnabled()
     {
-    [[ $_obj_session_debug_to_file_enable_ = 'true' ]]
+    [[ $_obj_session_debug_toarchive_enable_ = 'true' ]]
     }
-Session.Debug.To.File.IsNot()
+Session.Debug.ToArchive.IsNot()
     {
-    [[ $_obj_session_debug_to_file_flag_ != 'true' ]]
+    [[ $_obj_session_debug_toarchive_flag_ != 'true' ]]
     }
-Session.Debug.To.File.IsSet()
+Session.Debug.ToArchive.IsSet()
     {
-    [[ $_obj_session_debug_to_file_flag_ = 'true' ]]
+    [[ $_obj_session_debug_toarchive_flag_ = 'true' ]]
     }
-Session.Debug.To.File.LogChanges()
+Session.Debug.ToArchive.LogChanges()
     {
-    [[ $_obj_session_debug_to_file_changes_flag_ = 'true' ]] && return
-    _obj_session_debug_to_file_changes_flag_=true
+    [[ $_obj_session_debug_toarchive_changes_flag_ = 'true' ]] && return
+    _obj_session_debug_toarchive_changes_flag_=true
     }
-Session.Debug.To.File.Set()
+Session.Debug.ToArchive.Set()
     {
-    [[ $_obj_session_debug_to_file_flag_ = 'true' ]] && return
-    _obj_session_debug_to_file_flag_=true
-    [[ $_obj_session_debug_to_file_changes_flag_ = 'true' ]] && DebugVar _obj_session_debug_to_file_flag_
+    [[ $_obj_session_debug_toarchive_flag_ = 'true' ]] && return
+    _obj_session_debug_toarchive_flag_=true
+    [[ $_obj_session_debug_toarchive_changes_flag_ = 'true' ]] && DebugVar _obj_session_debug_toarchive_flag_
     }
-Session.Debug.To.File.Text()
+Session.Debug.ToArchive.Text()
     {
     if [[ -n ${1:-} && $1 = "=" ]]; then
-        _obj_session_debug_to_file_text_=$2
+        _obj_session_debug_toarchive_text_=$2
     else
-        echo -n "$_obj_session_debug_to_file_text_"
+        echo -n "$_obj_session_debug_toarchive_text_"
     fi
     }
-Session.Debug.To.File.Init
+Session.Debug.ToArchive.Init
 
-Session.Debug.To.Screen.Clear()
+Session.Debug.ToFile.Clear()
     {
-    [[ $_obj_session_debug_to_screen_flag_ != 'true' ]] && return
-    _obj_session_debug_to_screen_flag_=false
-    [[ $_obj_session_debug_to_screen_changes_flag_ = 'true' ]] && DebugVar _obj_session_debug_to_screen_flag_
+    [[ $_obj_session_debug_tofile_flag_ != 'true' ]] && return
+    _obj_session_debug_tofile_flag_=false
+    [[ $_obj_session_debug_tofile_changes_flag_ = 'true' ]] && DebugVar _obj_session_debug_tofile_flag_
     }
-Session.Debug.To.Screen.Disable()
+Session.Debug.ToFile.Disable()
     {
-    [[ $_obj_session_debug_to_screen_enable_ != 'true' ]] && return
-    _obj_session_debug_to_screen_enable_=false
-    [[ $_obj_session_debug_to_screen_changes_flag_ = 'true' ]] && DebugVar _obj_session_debug_to_screen_enable_
+    [[ $_obj_session_debug_tofile_enable_ != 'true' ]] && return
+    _obj_session_debug_tofile_enable_=false
+    [[ $_obj_session_debug_tofile_changes_flag_ = 'true' ]] && DebugVar _obj_session_debug_tofile_enable_
     }
-Session.Debug.To.Screen.DontLogChanges()
+Session.Debug.ToFile.DontLogChanges()
     {
-    [[ $_obj_session_debug_to_screen_changes_flag_ != 'true' ]] && return
-    _obj_session_debug_to_screen_changes_flag_=false
+    [[ $_obj_session_debug_tofile_changes_flag_ != 'true' ]] && return
+    _obj_session_debug_tofile_changes_flag_=false
     }
-Session.Debug.To.Screen.Enable()
+Session.Debug.ToFile.Enable()
     {
-    [[ $_obj_session_debug_to_screen_enable_ = 'true' ]] && return
-    _obj_session_debug_to_screen_enable_=true
-    [[ $_obj_session_debug_to_screen_changes_flag_ = 'true' ]] && DebugVar _obj_session_debug_to_screen_enable_
+    [[ $_obj_session_debug_tofile_enable_ = 'true' ]] && return
+    _obj_session_debug_tofile_enable_=true
+    [[ $_obj_session_debug_tofile_changes_flag_ = 'true' ]] && DebugVar _obj_session_debug_tofile_enable_
     }
-Session.Debug.To.Screen.Init()
+Session.Debug.ToFile.Init()
     {
-    _obj_session_debug_to_screen_text_=''
-    _obj_session_debug_to_screen_flag_=false
-    _obj_session_debug_to_screen_changes_flag_=true
-    _obj_session_debug_to_screen_enable_=false
+    _obj_session_debug_tofile_text_=''
+    _obj_session_debug_tofile_flag_=false
+    _obj_session_debug_tofile_changes_flag_=true
+    _obj_session_debug_tofile_enable_=false
     }
-Session.Debug.To.Screen.IsDisabled()
+Session.Debug.ToFile.IsDisabled()
     {
-    [[ $_obj_session_debug_to_screen_enable_ != 'true' ]]
+    [[ $_obj_session_debug_tofile_enable_ != 'true' ]]
     }
-Session.Debug.To.Screen.IsEnabled()
+Session.Debug.ToFile.IsEnabled()
     {
-    [[ $_obj_session_debug_to_screen_enable_ = 'true' ]]
+    [[ $_obj_session_debug_tofile_enable_ = 'true' ]]
     }
-Session.Debug.To.Screen.IsNot()
+Session.Debug.ToFile.IsNot()
     {
-    [[ $_obj_session_debug_to_screen_flag_ != 'true' ]]
+    [[ $_obj_session_debug_tofile_flag_ != 'true' ]]
     }
-Session.Debug.To.Screen.IsSet()
+Session.Debug.ToFile.IsSet()
     {
-    [[ $_obj_session_debug_to_screen_flag_ = 'true' ]]
+    [[ $_obj_session_debug_tofile_flag_ = 'true' ]]
     }
-Session.Debug.To.Screen.LogChanges()
+Session.Debug.ToFile.LogChanges()
     {
-    [[ $_obj_session_debug_to_screen_changes_flag_ = 'true' ]] && return
-    _obj_session_debug_to_screen_changes_flag_=true
+    [[ $_obj_session_debug_tofile_changes_flag_ = 'true' ]] && return
+    _obj_session_debug_tofile_changes_flag_=true
     }
-Session.Debug.To.Screen.Set()
+Session.Debug.ToFile.Set()
     {
-    [[ $_obj_session_debug_to_screen_flag_ = 'true' ]] && return
-    _obj_session_debug_to_screen_flag_=true
-    [[ $_obj_session_debug_to_screen_changes_flag_ = 'true' ]] && DebugVar _obj_session_debug_to_screen_flag_
+    [[ $_obj_session_debug_tofile_flag_ = 'true' ]] && return
+    _obj_session_debug_tofile_flag_=true
+    [[ $_obj_session_debug_tofile_changes_flag_ = 'true' ]] && DebugVar _obj_session_debug_tofile_flag_
     }
-Session.Debug.To.Screen.Text()
+Session.Debug.ToFile.Text()
     {
     if [[ -n ${1:-} && $1 = "=" ]]; then
-        _obj_session_debug_to_screen_text_=$2
+        _obj_session_debug_tofile_text_=$2
     else
-        echo -n "$_obj_session_debug_to_screen_text_"
+        echo -n "$_obj_session_debug_tofile_text_"
     fi
     }
-Session.Debug.To.Screen.Init
+Session.Debug.ToFile.Init
+
+Session.Debug.ToScreen.Clear()
+    {
+    [[ $_obj_session_debug_toscreen_flag_ != 'true' ]] && return
+    _obj_session_debug_toscreen_flag_=false
+    [[ $_obj_session_debug_toscreen_changes_flag_ = 'true' ]] && DebugVar _obj_session_debug_toscreen_flag_
+    }
+Session.Debug.ToScreen.Disable()
+    {
+    [[ $_obj_session_debug_toscreen_enable_ != 'true' ]] && return
+    _obj_session_debug_toscreen_enable_=false
+    [[ $_obj_session_debug_toscreen_changes_flag_ = 'true' ]] && DebugVar _obj_session_debug_toscreen_enable_
+    }
+Session.Debug.ToScreen.DontLogChanges()
+    {
+    [[ $_obj_session_debug_toscreen_changes_flag_ != 'true' ]] && return
+    _obj_session_debug_toscreen_changes_flag_=false
+    }
+Session.Debug.ToScreen.Enable()
+    {
+    [[ $_obj_session_debug_toscreen_enable_ = 'true' ]] && return
+    _obj_session_debug_toscreen_enable_=true
+    [[ $_obj_session_debug_toscreen_changes_flag_ = 'true' ]] && DebugVar _obj_session_debug_toscreen_enable_
+    }
+Session.Debug.ToScreen.Init()
+    {
+    _obj_session_debug_toscreen_text_=''
+    _obj_session_debug_toscreen_flag_=false
+    _obj_session_debug_toscreen_changes_flag_=true
+    _obj_session_debug_toscreen_enable_=false
+    }
+Session.Debug.ToScreen.IsDisabled()
+    {
+    [[ $_obj_session_debug_toscreen_enable_ != 'true' ]]
+    }
+Session.Debug.ToScreen.IsEnabled()
+    {
+    [[ $_obj_session_debug_toscreen_enable_ = 'true' ]]
+    }
+Session.Debug.ToScreen.IsNot()
+    {
+    [[ $_obj_session_debug_toscreen_flag_ != 'true' ]]
+    }
+Session.Debug.ToScreen.IsSet()
+    {
+    [[ $_obj_session_debug_toscreen_flag_ = 'true' ]]
+    }
+Session.Debug.ToScreen.LogChanges()
+    {
+    [[ $_obj_session_debug_toscreen_changes_flag_ = 'true' ]] && return
+    _obj_session_debug_toscreen_changes_flag_=true
+    }
+Session.Debug.ToScreen.Set()
+    {
+    [[ $_obj_session_debug_toscreen_flag_ = 'true' ]] && return
+    _obj_session_debug_toscreen_flag_=true
+    [[ $_obj_session_debug_toscreen_changes_flag_ = 'true' ]] && DebugVar _obj_session_debug_toscreen_flag_
+    }
+Session.Debug.ToScreen.Text()
+    {
+    if [[ -n ${1:-} && $1 = "=" ]]; then
+        _obj_session_debug_toscreen_text_=$2
+    else
+        echo -n "$_obj_session_debug_toscreen_text_"
+    fi
+    }
+Session.Debug.ToScreen.Init
 
 Session.Display.Clean.Clear()
     {
