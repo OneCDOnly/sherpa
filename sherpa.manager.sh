@@ -2977,7 +2977,7 @@ Help.Packages.Show()
 
     for tier in {Essential,Optional}; do
         DisplayLineSpaceIfNoneAlready
-        DisplayAsHelpTitlePackageNamePlusSomething "${tier}s" 'package description'
+        DisplayAsHelpTitlePackageNamePlusSomething "${tier} QPKGs" 'package description'
 
         for package in $(QPKGs.$tier.Array); do
             DisplayAsHelpPackageNamePlusSomething "$package" "$(QPKG.Desc "$package")"
@@ -3081,7 +3081,7 @@ Help.PackageAbbreviations.Show()
 
     for tier in {Essential,Optional}; do
         DisplayLineSpaceIfNoneAlready
-        DisplayAsHelpTitlePackageNamePlusSomething "${tier}s" 'acceptable abreviations'
+        DisplayAsHelpTitlePackageNamePlusSomething "${tier} QPKGs" 'acceptable abreviations'
 
         for package in $(QPKGs.$tier.Array); do
             abs=$(QPKG.Abbrvs "$package")
@@ -3648,7 +3648,7 @@ QPKGs.Statuses.Show()
 
     for tier in {Essential,Optional}; do
         DisplayLineSpaceIfNoneAlready
-        DisplayAsHelpTitlePackageNamePlusSomething "${tier}s" 'statuses'
+        DisplayAsHelpTitlePackageNamePlusSomething "${tier} QPKGs" 'statuses'
 
         for package in $(QPKGs.$tier.Array); do
             package_notes=()
