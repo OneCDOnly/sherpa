@@ -176,19 +176,20 @@ Session.Init()
     readonly SESSION_TAIL_PATHFILE=$LOGS_PATH/session.tail.log
     readonly EXTERNAL_PACKAGE_LIST_PATHFILE=$WORK_PATH/Packages
 
-    if [[ $USER_ARGS_RAW == *"clean"* ]]; then
-        Clean.Cache
-        Clean.Logs
-        rm -f "$SESSION_ACTIVE_PATHFILE"
-        exit 0
-    fi
-
     if ! MakePath "$WORK_PATH" 'work'; then
         DebugFuncExit 1; return
     fi
 
     if ! MakePath "$LOGS_PATH" 'logs'; then
         DebugFuncExit 1; return
+    fi
+
+    if [[ $USER_ARGS_RAW == *"clean"* ]]; then
+        Clean.Logs
+        Clean.Cache
+        cat "$SESSION_ACTIVE_PATHFILE" >> "$SESSION_ARCHIVE_PATHFILE"
+        rm -f "$SESSION_ACTIVE_PATHFILE"
+        exit 0
     fi
 
     if [[ -e $SESSION_ACTIVE_PATHFILE ]]; then      # check for incomplete previous session (crashed, interrupted?) and save it to archive
@@ -2000,24 +2001,24 @@ Session.Results()
 
     }
 
-Clean.Cache()
-    {
-
-    if [[ -n $WORK_PATH && -d $WORK_PATH ]]; then
-        rm -rf "${WORK_PATH:?}"/*
-        ShowAsDone 'work path cleaned'
-    fi
-
-    return 0
-
-    }
-
 Clean.Logs()
     {
 
     if [[ -n $LOGS_PATH && -d $LOGS_PATH ]]; then
         rm -rf "${LOGS_PATH:?}"/*
         ShowAsDone 'logs path cleaned'
+    fi
+
+    return 0
+
+    }
+
+Clean.Cache()
+    {
+
+    if [[ -n $WORK_PATH && -d $WORK_PATH ]]; then
+        rm -rf "${WORK_PATH:?}"/*
+        ShowAsDone 'work path cleaned'
     fi
 
     return 0
