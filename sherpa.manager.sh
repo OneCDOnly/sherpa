@@ -7,7 +7,8 @@
 #
 # So, blame OneCD if it all goes horribly wrong. ;)
 #
-# For more info: https://forum.qnap.com/viewtopic.php?f=320&t=132373
+# project: git.io/sherpa
+# forum: https://forum.qnap.com/viewtopic.php?f=320&t=132373
 #
 # Tested on:
 #  GNU bash, version 3.2.57(2)-release (i686-pc-linux-gnu)
