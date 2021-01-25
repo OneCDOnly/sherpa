@@ -697,6 +697,7 @@ Session.Arguments.Parse()
 
     DebugFuncEntry
 
+    DebugVar USER_ARGS_RAW
     local user_args_fixed=$(tr 'A-Z' 'a-z' <<< "${USER_ARGS_RAW//,/ }")
     local -a user_args=(${user_args_fixed/--/})
     local arg=''
@@ -1399,8 +1400,6 @@ Session.Environment.List()
     if QPKG.Installed Entware && ! QPKGs.ToUninstall.Exist Entware; then
         version=$(python3 -V 2>/dev/null | $SED_CMD 's|^Python ||') && [[ ${version//./} -lt $MIN_PYTHON_VER ]] && ShowAsReco "your Python 3 is out-of-date. Suggest reinstalling Entware: '$PROJECT_NAME reinstall ew'"
     fi
-
-    DebugUserspace.OK 'raw arguments' "\"$USER_ARGS_RAW\""
 
     DebugScript 'logs path' "$LOGS_PATH"
     DebugScript 'work path' "$WORK_PATH"
