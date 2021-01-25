@@ -17,14 +17,31 @@
 #
 # You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/.
 
-readonly PROJECT_NAME=sherpa
-readonly PROJECT_PATH=$(/sbin/getcfg $PROJECT_NAME Install_Path -f /etc/config/qpkg.conf)
-readonly REAL_LOG_PATHFILE=$PROJECT_PATH/logs/session.archive.log
-readonly GUI_LOG_PATHFILE=/home/httpd/$PROJECT_NAME.debug.log
-readonly REAL_LOADER_SCRIPT_PATHNAME=$PROJECT_PATH/$PROJECT_NAME.loader.sh
-readonly APPARENT_LOADER_SCRIPT_PATHNAME=/usr/sbin/$PROJECT_NAME
+Init()
+    {
 
-[[ ! -e $REAL_LOG_PATHFILE ]] && /bin/touch "$REAL_LOG_PATHFILE"
+    local -r QPKG_NAME=sherpa
+    local -r QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
+    readonly REAL_LOG_PATHFILE=$QPKG_PATH/logs/session.archive.log
+    readonly GUI_LOG_PATHFILE=/home/httpd/$QPKG_NAME.debug.log
+    readonly REAL_LOADER_SCRIPT_PATHNAME=$QPKG_PATH/$QPKG_NAME.loader.sh
+    readonly APPARENT_LOADER_SCRIPT_PATHNAME=/usr/sbin/$QPKG_NAME
+    readonly SERVICE_STATUS_PATHFILE=/var/run/$QPKG_NAME.last.operation
+
+    [[ ! -e $REAL_LOG_PATHFILE ]] && /bin/touch "$REAL_LOG_PATHFILE"
+
+    }
+
+SetServiceOperationResult()
+    {
+
+    # $1 = result of operation to recorded
+
+    [[ -n $1 && -n $SERVICE_STATUS_PATHFILE ]] && echo "$1" > "$SERVICE_STATUS_PATHFILE"
+
+    }
+
+Init
 
 case $1 in
     start)
@@ -43,3 +60,6 @@ case $1 in
         echo -e "\n Usage: $0 {start|stop|restart}\n"
         ;;
 esac
+
+SetServiceOperationResult ok
+exit

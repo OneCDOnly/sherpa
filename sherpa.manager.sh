@@ -47,7 +47,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=210125
+    readonly MANAGER_SCRIPT_VERSION=210126
 
     Session.LockFile.Claim /var/run/$PROJECT_NAME.loader.sh.pid || return
 
@@ -284,9 +284,9 @@ Session.Init()
         MANAGER_QPKG_IS_ESSENTIAL+=(true)
         MANAGER_QPKG_IS_STANDALONE+=(true)
         MANAGER_QPKG_ARCH+=(all)
-        MANAGER_QPKG_VERSION+=(210125)
+        MANAGER_QPKG_VERSION+=(210126)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/$PROJECT_NAME/build/${PROJECT_NAME}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
-        MANAGER_QPKG_MD5+=(4dcb329a76372dc856bf39f992cdfe84)
+        MANAGER_QPKG_MD5+=(3a4791a14b524fc0bb8b645f24c83271)
         MANAGER_QPKG_DESC+=("provides the '$PROJECT_NAME' command: the mini-package-manager")
         MANAGER_QPKG_ABBRVS+=($PROJECT_NAME)
         MANAGER_QPKG_ESSENTIALS+=('')
@@ -2004,7 +2004,7 @@ Clean.Cache()
     {
 
     if [[ -n $WORK_PATH && -d $WORK_PATH ]]; then
-        rm -rf "$WORK_PATH"/*
+        rm -rf "${WORK_PATH:?}"/*
         ShowAsDone 'work path cleaned'
     fi
 
@@ -2016,7 +2016,7 @@ Clean.Logs()
     {
 
     if [[ -n $LOGS_PATH && -d $LOGS_PATH ]]; then
-        rm -rf "$LOGS_PATH"/*
+        rm -rf "${LOGS_PATH:?}"/*
         ShowAsDone 'logs path cleaned'
     fi
 
@@ -3303,7 +3303,7 @@ ExtractPreviousSessionFromTail()
     ExtractTailFromLog
 
     if [[ -e $SESSION_TAIL_PATHFILE ]]; then
-        end_line=$(GetSessionFinish)
+        end_line=$(GetSessionFinish "$old_session")
         start_line=$((end_line+1))      # ensure an invalid condition, to be solved by the loop
 
         while [[ $start_line -ge $end_line ]]; do
@@ -3315,7 +3315,7 @@ ExtractPreviousSessionFromTail()
 
         $SED_CMD "$start_line,$end_line!d" "$SESSION_TAIL_PATHFILE" > "$SESSION_LAST_PATHFILE"
     else
-        [[ -e $SESSION_LAST_PATHFILE ]] && rm -rf "$SESSION_LAST_PATHFILE"
+        [[ -e $SESSION_LAST_PATHFILE ]] && rm -f "$SESSION_LAST_PATHFILE"
     fi
 
     return 0
@@ -3328,7 +3328,7 @@ ExtractTailFromLog()
     if [[ -e $SESSION_ARCHIVE_PATHFILE ]]; then
         $TAIL_CMD -n${LOG_TAIL_LINES} "$SESSION_ARCHIVE_PATHFILE" > "$SESSION_TAIL_PATHFILE"   # trim main log first so there's less to 'grep'
     else
-        [[ -e $SESSION_TAIL_PATHFILE ]] && rm -rf "$SESSION_TAIL_PATHFILE"
+        [[ -e $SESSION_TAIL_PATHFILE ]] && rm -f "$SESSION_TAIL_PATHFILE"
     fi
 
     return 0
