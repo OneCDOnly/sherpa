@@ -2113,7 +2113,7 @@ Entware.Update()
             # no-big-deal
         fi
     else
-        DebugInfo "$(FormatAsPackageName Entware) package list updated less than $CHANGE_THRESHOLD_MINUTES minutes ago: skipping update"
+        DebugInfo "$(FormatAsPackageName Entware) package list updated less-than $CHANGE_THRESHOLD_MINUTES minutes ago: skipping update"
     fi
 
     return 0
@@ -2293,7 +2293,7 @@ CalcAllIPKGDepsToInstall()
     pre_exclude_count=$($WC_CMD -w <<<"$pre_exclude_list")
 
     if [[ $pre_exclude_count -gt 0 ]]; then
-        DebugInfo "$pre_exclude_count IPKG$(FormatAsPlural "$pre_exclude_count") requested + dependencies" "'$pre_exclude_list' "
+        DebugInfo "$pre_exclude_count IPKG$(FormatAsPlural "$pre_exclude_count") required (including dependencies)" "'$pre_exclude_list' "
 
         DebugAsProc 'excluding IPKGs already installed'
 
