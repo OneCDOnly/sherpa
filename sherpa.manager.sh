@@ -4216,7 +4216,7 @@ QPKG.Download()
     #   $1 = QPKG name to download
 
     # output:
-    #   $? = 0 if successful (or package was already downloaded), 1 if failed
+    #   $? = 0 if successful (or package was already downloaded), anything else if failed
 
     Session.Error.IsSet && return
     DebugFuncEntry
@@ -4236,14 +4236,13 @@ QPKG.Download()
 
     if [[ -z $REMOTE_URL ]]; then
         DebugAsWarn "no URL found for this package $(FormatAsPackageName "$1") (unsupported arch?)"
-        QPKGs.ToDownload.Remove "$1"
         QPKGs.SkDownload.Add "$1"
-        DebugFuncExit; return
     fi
 
     if [[ -e $LOCAL_PATHFILE ]]; then
         if FileMatchesMD5 "$LOCAL_PATHFILE" "$REMOTE_MD5"; then
             DebugInfo "local package $(FormatAsFileName "$LOCAL_FILENAME") checksum correct: skipping download"
+            QPKGs.SkDownload.Add "$1"
         else
             DebugAsError "local package $(FormatAsFileName "$LOCAL_FILENAME") checksum incorrect"
             DebugInfo "deleting $(FormatAsFileName "$LOCAL_FILENAME")"
@@ -4265,8 +4264,8 @@ QPKG.Download()
                 QPKGs.IsDownload.Add "$1"
             else
                 DebugAsError "downloaded package $(FormatAsFileName "$LOCAL_PATHFILE") checksum incorrect"
-                resultcode=1
                 QPKGs.ErDownload.Add "$1"
+                resultcode=1
             fi
         else
             DebugAsError "download failed $(FormatAsFileName "$LOCAL_PATHFILE") $(FormatAsExitcode $resultcode)"
@@ -4754,7 +4753,7 @@ QPKG.Enable()
     fi
 
     QPKG.FixAppCenterStatus "$1"
-    DebugFuncExit; return
+    DebugFuncExit $resultcode
 
     }
 
@@ -4790,7 +4789,7 @@ QPKG.Disable()
     fi
 
     QPKG.FixAppCenterStatus "$1"
-    DebugFuncExit; return
+    DebugFuncExit $resultcode
 
     }
 
