@@ -190,15 +190,12 @@ Session.Init()
     if [[ $USER_ARGS_RAW == *"clean"* ]]; then
         Clean.Logs
         Clean.Cache
-        cat "$SESSION_ACTIVE_PATHFILE" >> "$SESSION_ARCHIVE_PATHFILE"
-        rm -f "$SESSION_ACTIVE_PATHFILE"
+        ArchiveSessionLog
         exit 0
     fi
 
-    if [[ -e $SESSION_ACTIVE_PATHFILE ]]; then      # check for incomplete previous session (crashed, interrupted?) and save it to archive
-        cat "$SESSION_ACTIVE_PATHFILE" >> "$SESSION_ARCHIVE_PATHFILE"
-        rm -f "$SESSION_ACTIVE_PATHFILE"
-    fi
+    # check for incomplete previous session (crashed, interrupted?) and save it to archive
+    ArchiveSessionLog
 
     ShowAsProc 'init' >&2
 
@@ -2018,7 +2015,7 @@ Session.Results()
     DebugScript 'finished' "$($DATE_CMD)"
     DebugScript 'elapsed time' "$(ConvertSecsToHoursMinutesSecs "$(($($DATE_CMD +%s)-$([[ -n $SCRIPT_STARTSECONDS ]] && echo "$SCRIPT_STARTSECONDS" || echo "1")))")"
     DebugInfoMajorSeparator
-    AppendSessionToArchive
+    Session.Debug.ToArchive.IsSet && ArchiveSessionLog
     Session.LockFile.Release
 
     return 0
@@ -2938,7 +2935,7 @@ Help.Basic.Example.Show()
 Help.Actions.Show()
     {
 
-    Session.Debug.ToArchive.Clear
+    Session.DisableDebuggingToArchiveAndFile
     Help.Basic.Show
     DisplayLineSpaceIfNoneAlready
     DisplayAsHelpTitle "$(FormatAsHelpAction) usage examples:"
@@ -2967,7 +2964,7 @@ Help.Actions.Show()
 Help.ActionsAll.Show()
     {
 
-    Session.Debug.ToArchive.Clear
+    Session.DisableDebuggingToArchiveAndFile
     Help.Basic.Show
     DisplayLineSpaceIfNoneAlready
     Display "* These $(FormatAsHelpAction)s apply to all installed packages. If $(FormatAsHelpAction) is 'install all' then all available packages will be installed."
@@ -2999,7 +2996,7 @@ Help.Packages.Show()
     local package=''
     local tier=''
 
-    Session.Debug.ToArchive.Clear
+    Session.DisableDebuggingToArchiveAndFile
     Help.Basic.Show
     Display
     DisplayAsHelpTitle "One-or-more $(FormatAsHelpPackages) may be specified at-once"
@@ -3024,7 +3021,7 @@ Help.Packages.Show()
 Help.Options.Show()
     {
 
-    Session.Debug.ToArchive.Clear
+    Session.DisableDebuggingToArchiveAndFile
     Help.Basic.Show
     DisplayLineSpaceIfNoneAlready
     DisplayAsHelpTitle "$(FormatAsHelpOptions) usage examples:"
@@ -3040,7 +3037,7 @@ Help.Options.Show()
 Help.Problems.Show()
     {
 
-    Session.Debug.ToArchive.Clear
+    Session.DisableDebuggingToArchiveAndFile
     Help.Basic.Show
     DisplayLineSpaceIfNoneAlready
     DisplayAsHelpTitle 'usage examples when dealing with problems:'
@@ -3082,7 +3079,7 @@ Help.Issue.Show()
 Help.Tips.Show()
     {
 
-    Session.Debug.ToArchive.Clear
+    Session.DisableDebuggingToArchiveAndFile
     Help.Basic.Show
     DisplayLineSpaceIfNoneAlready
     DisplayAsHelpTitle 'helpful tips and shortcuts:'
@@ -3106,7 +3103,7 @@ Help.PackageAbbreviations.Show()
     local tier=''
     local abs=''
 
-    Session.Debug.ToArchive.Clear
+    Session.DisableDebuggingToArchiveAndFile
     Help.Basic.Show
     Display
     DisplayAsHelpTitle "$(FormatAsScriptTitle) recognises various abbreviations as $(FormatAsHelpPackages)"
@@ -3143,7 +3140,7 @@ Log.All.View()
 
     # view the entire archived sessions log
 
-    Session.Debug.ToArchive.Clear
+    Session.DisableDebuggingToArchiveAndFile
 
     if [[ -e $SESSION_ARCHIVE_PATHFILE ]]; then
         if [[ -e $GNU_LESS_CMD ]]; then
@@ -3164,7 +3161,7 @@ Log.Last.View()
 
     # view only the last session log
 
-    Session.Debug.ToArchive.Clear
+    Session.DisableDebuggingToArchiveAndFile
     ExtractPreviousSessionFromTail
 
     if [[ -e $SESSION_LAST_PATHFILE ]]; then
@@ -3186,7 +3183,7 @@ Log.Tail.View()
 
     # view only the last session log
 
-    Session.Debug.ToArchive.Clear
+    Session.DisableDebuggingToArchiveAndFile
     ExtractTailFromLog
 
     if [[ -e $SESSION_TAIL_PATHFILE ]]; then
@@ -3206,7 +3203,7 @@ Log.Tail.View()
 Log.All.Paste.Online()
     {
 
-    Session.Debug.ToArchive.Clear
+    Session.DisableDebuggingToArchiveAndFile
 
     if [[ -e $SESSION_ARCHIVE_PATHFILE ]]; then
         if AskQuiz "Press 'Y' to post your ENTIRE $(FormatAsScriptTitle) log to a public pastebin, or any other key to abort"; then
@@ -3236,7 +3233,7 @@ Log.All.Paste.Online()
 Log.Last.Paste.Online()
     {
 
-    Session.Debug.ToArchive.Clear
+    Session.DisableDebuggingToArchiveAndFile
     ExtractPreviousSessionFromTail
 
     if [[ -e $SESSION_LAST_PATHFILE ]]; then
@@ -3267,7 +3264,7 @@ Log.Last.Paste.Online()
 Log.Tail.Paste.Online()
     {
 
-    Session.Debug.ToArchive.Clear
+    Session.DisableDebuggingToArchiveAndFile
     ExtractTailFromLog
 
     if [[ -e $SESSION_TAIL_PATHFILE ]]; then
@@ -3313,14 +3310,13 @@ GetSessionFinish()
 
     }
 
-AppendSessionToArchive()
+ArchiveSessionLog()
     {
 
-    if Session.Debug.ToArchive.IsSet && [[ -e $SESSION_ACTIVE_PATHFILE ]]; then
-        cat "$SESSION_ACTIVE_PATHFILE" >> "$SESSION_ARCHIVE_PATHFILE"
+    if [[ -e $SESSION_ACTIVE_PATHFILE ]]; then
+        $CAT_CMD "$SESSION_ACTIVE_PATHFILE" >> "$SESSION_ARCHIVE_PATHFILE"
+        rm -f "$SESSION_ACTIVE_PATHFILE"
     fi
-
-    rm -f "$SESSION_ACTIVE_PATHFILE"
 
     }
 
@@ -3614,7 +3610,7 @@ QPKGs.All.Show()
 
     local package=''
 
-    Session.Debug.ToArchive.Clear
+    Session.DisableDebuggingToArchiveAndFile
 
     for package in $(QPKGs.Names.Array); do
         Display "$package"
@@ -3632,7 +3628,7 @@ QPKGs.Backups.Show()
     local highlight_older_than='2 weeks ago'
     local format=''
 
-    Session.Debug.ToArchive.Clear
+    Session.DisableDebuggingToArchiveAndFile
     SmartCR
     DisplayLineSpaceIfNoneAlready
     DisplayAsHelpTitle "the location for $(FormatAsScriptTitle) backups is: $BACKUP_PATH"
@@ -3714,7 +3710,7 @@ QPKGs.Installed.Show()
 
     local package=''
 
-    Session.Debug.ToArchive.Clear
+    Session.DisableDebuggingToArchiveAndFile
 
     for package in $(QPKGs.Installed.Array); do
         Display "$package"
@@ -3729,7 +3725,7 @@ QPKGs.NotInstalled.Show()
 
     local package=''
 
-    Session.Debug.ToArchive.Clear
+    Session.DisableDebuggingToArchiveAndFile
 
     for package in $(QPKGs.NotInstalled.Array); do
         Display "$package"
@@ -3744,7 +3740,7 @@ QPKGs.Started.Show()
 
     local package=''
 
-    Session.Debug.ToArchive.Clear
+    Session.DisableDebuggingToArchiveAndFile
 
     for package in $(QPKGs.Started.Array); do
         Display "$package"
@@ -3759,7 +3755,7 @@ QPKGs.Stopped.Show()
 
     local package=''
 
-    Session.Debug.ToArchive.Clear
+    Session.DisableDebuggingToArchiveAndFile
 
     for package in $(QPKGs.Stopped.Array); do
         Display "$package"
@@ -3774,7 +3770,7 @@ QPKGs.Upgradable.Show()
 
     local package=''
 
-    Session.Debug.ToArchive.Clear
+    Session.DisableDebuggingToArchiveAndFile
 
     for package in $(QPKGs.Upgradable.Array); do
         Display "$package"
@@ -3789,7 +3785,7 @@ QPKGs.Essential.Show()
 
     local package=''
 
-    Session.Debug.ToArchive.Clear
+    Session.DisableDebuggingToArchiveAndFile
 
     for package in $(QPKGs.Essential.Array); do
         Display "$package"
@@ -3804,7 +3800,7 @@ QPKGs.Optional.Show()
 
     local package=''
 
-    Session.Debug.ToArchive.Clear
+    Session.DisableDebuggingToArchiveAndFile
 
     for package in $(QPKGs.Optional.Array); do
         Display "$package"
@@ -3819,7 +3815,7 @@ QPKGs.Standalone.Show()
 
     local package=''
 
-    Session.Debug.ToArchive.Clear
+    Session.DisableDebuggingToArchiveAndFile
 
     for package in $(QPKGs.Standalone.Array); do
         Display "$package"
@@ -3982,6 +3978,14 @@ Session.LockFile.Release()
 
     [[ -n ${RUNTIME_LOCK_PATHFILE:-} ]] || return
     [[ -e $RUNTIME_LOCK_PATHFILE ]] && rm -f "$RUNTIME_LOCK_PATHFILE"
+
+    }
+
+Session.DisableDebuggingToArchiveAndFile()
+    {
+
+    Session.Debug.ToArchive.Clear
+    Session.Debug.ToFile.Clear
 
     }
 
