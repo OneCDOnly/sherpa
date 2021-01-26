@@ -172,7 +172,7 @@ Session.Init()
 
     readonly COMPILED_OBJECTS_PATHFILE=$WORK_PATH/compiled.objects
     readonly SESSION_ARCHIVE_PATHFILE=$LOGS_PATH/session.archive.log
-    readonly SESSION_ACTIVE_PATHFILE=$PROJECT_PATH/session.active.log
+    readonly SESSION_ACTIVE_PATHFILE=$PROJECT_PATH/session.$$.active.log
     readonly SESSION_LAST_PATHFILE=$LOGS_PATH/session.last.log
     readonly SESSION_TAIL_PATHFILE=$LOGS_PATH/session.tail.log
     readonly EXTERNAL_PACKAGE_LIST_PATHFILE=$WORK_PATH/Packages
@@ -707,7 +707,7 @@ Session.Arguments.Parse()
     local operation=''
     local operation_force=false
     local scope=''
-    local scope_incomplete=false    # some operations require a value for scope, so mark all operations as incomplete until scope has been defined.
+    local scope_identified=false
     local package=''
 
     for arg in "${user_args[@]}"; do
@@ -717,35 +717,35 @@ Session.Arguments.Parse()
         case $arg in
             backup|check|install|rebuild|reinstall|remove|restart|restore|start|stop|uninstall|upgrade)
                 operation=${arg}_
-                scope=''
-                scope_incomplete=true
                 arg_identified=true
+                scope=''
+                scope_identified=false
                 Session.Display.Clean.Clear
                 QPKGs.SkipProcessing.Clear
                 QPKGs.States.Build
                 ;;
             status|statuses)
                 operation=status_
-                scope=''
-                scope_incomplete=true
                 arg_identified=true
+                scope=''
+                scope_identified=false
                 Session.Display.Clean.Clear
                 QPKGs.SkipProcessing.Set
                 QPKGs.States.Build
                 ;;
             paste)
                 operation=${arg}_
-                scope=''
-                scope_incomplete=true
                 arg_identified=true
+                scope=''
+                scope_identified=false
                 Session.Display.Clean.Clear
                 QPKGs.SkipProcessing.Set
                 ;;
             display|help|list|show|view)
                 operation=help_
-                scope=''
-                scope_incomplete=true
                 arg_identified=true
+                scope=''
+                scope_identified=false
                 Session.Display.Clean.Clear
                 QPKGs.SkipProcessing.Set
                 ;;
@@ -758,9 +758,9 @@ Session.Arguments.Parse()
             case $arg in
                 abs|action|actions|actions-all|all-actions|backups|essentials|installable|installed|l|last|log|option|optionals|options|package|packages|problems|standalone|standalones|started|stopped|tail|tips|upgradable|version|versions|whole)
                     operation=help_
-                    scope=''
-                    scope_incomplete=true
                     arg_identified=true
+                    scope=''
+                    scope_identified=false
                     QPKGs.SkipProcessing.Set
                     ;;
             esac
@@ -773,62 +773,62 @@ Session.Arguments.Parse()
             case $arg in
                 abs|backups|installable|installed|problems|started|stopped|tail|tips|upgradable)
                     scope=${arg}_
-                    scope_incomplete=false
+                    scope_identified=true
                     arg_identified=true
                     ;;
                 actions-all|all-actions)
                     scope=all-actions_
-                    scope_incomplete=false
+                    scope_identified=true
                     arg_identified=true
                     ;;
                 action|actions)
                     scope=actions_
-                    scope_incomplete=false
+                    scope_identified=true
                     arg_identified=true
                     ;;
                 all|entire|everything)
                     scope=all_
-                    scope_incomplete=false
+                    scope_identified=true
                     arg_identified=true
                     ;;
                 essential|essentials)
                     scope=essential_
-                    scope_incomplete=false
+                    scope_identified=true
                     arg_identified=true
                     ;;
                 l|last)
                     scope=last_
-                    scope_incomplete=false
+                    scope_identified=true
                     arg_identified=true
                     ;;
                 log|whole)
                     scope=log_
-                    scope_incomplete=false
+                    scope_identified=true
                     arg_identified=true
                     ;;
                 option|options)
                     scope=options_
-                    scope_incomplete=false
+                    scope_identified=true
                     arg_identified=true
                     ;;
                 optional|optionals)
                     scope=optional_
-                    scope_incomplete=false
+                    scope_identified=true
                     arg_identified=true
                     ;;
                 package|packages)
                     scope=packages_
-                    scope_incomplete=false
+                    scope_identified=true
                     arg_identified=true
                     ;;
                 standalone|standalones)
                     scope=standalone_
-                    scope_incomplete=false
+                    scope_identified=true
                     arg_identified=true
                     ;;
                 version|versions)
                     scope=versions_
-                    scope_incomplete=false
+                    scope_identified=true
                     arg_identified=true
                     ;;
             esac
@@ -839,7 +839,7 @@ Session.Arguments.Parse()
             debug|verbose)
                 Session.Debug.ToScreen.Set
                 arg_identified=true
-                scope_incomplete=false
+                scope_identified=true
                 ;;
             force)
                 operation_force=true
@@ -855,7 +855,7 @@ Session.Arguments.Parse()
         package=$(QPKG.MatchAbbrv "$arg")
 
         if [[ -n $package ]]; then
-            scope_incomplete=false
+            scope_identified=true
             arg_identified=true
         fi
 
@@ -892,6 +892,7 @@ Session.Arguments.Parse()
                 ;;
             check_)
                 Opts.Dependencies.Check.Set
+                DebugFuncExit; return
                 ;;
             help_)
                 case $scope in
@@ -977,6 +978,12 @@ Session.Arguments.Parse()
                         Session.Display.Clean.Set
                         ;;
                 esac
+
+                QPKGs.SkipProcessing.Set
+
+                if [[ $scope_identified = true ]]; then
+                    DebugFuncExit; return
+                fi
                 ;;
             install_)
                 case $scope in
@@ -1010,6 +1017,12 @@ Session.Arguments.Parse()
                         Opts.Log.Tail.Paste.Set
                         ;;
                 esac
+
+                QPKGs.SkipProcessing.Set
+
+                if [[ $scope_identified = true ]]; then
+                    DebugFuncExit; return
+                fi
                 ;;
             rebuild_)
                 case $scope in
@@ -1111,6 +1124,7 @@ Session.Arguments.Parse()
             status_)
                 Opts.Help.Status.Set
                 QPKGs.SkipProcessing.Set
+                DebugFuncExit; return
                 ;;
             stop_)
                 case $scope in
@@ -1181,32 +1195,40 @@ Session.Arguments.Parse()
         esac
     done
 
-    if [[ -n $operation && $scope_incomplete = true ]]; then
+    if [[ -n $operation && $scope_identified = false ]]; then
         case $operation in
             abs_)
                 Opts.Help.Abbreviations.Set
+                DebugFuncExit; return
                 ;;
             backups_)
                 Opts.Help.Backups.Set
+                DebugFuncExit; return
                 ;;
             help_)
                 Opts.Help.Basic.Set
+                DebugFuncExit; return
                 ;;
             options_)
                 Opts.Help.Options.Set
+                DebugFuncExit; return
                 ;;
             packages_)
                 Opts.Help.Packages.Set
+                DebugFuncExit; return
                 ;;
             problems_)
                 Opts.Help.Problems.Set
+                DebugFuncExit; return
                 ;;
             tips_)
                 Opts.Help.Tips.Set
+                DebugFuncExit; return
                 ;;
             versions_)
                 Opts.Versions.View.Set
                 Session.Display.Clean.Set
+                DebugFuncExit; return
                 ;;
         esac
     fi
@@ -1215,6 +1237,7 @@ Session.Arguments.Parse()
         Opts.Help.Basic.Set
         Session.Display.Clean.Clear
         QPKGs.SkipProcessing.Set
+        DebugFuncExit; return   # ... and stop processing any further arguments
     fi
 
     DebugFuncExit
@@ -1922,71 +1945,68 @@ Package.Save.Lists()
 Session.Results()
     {
 
+#     Session.Debug.ToArchive.IsSet && Session.LockFile.Release # release lock early if possible so other instances can run
+
     if Args.Unknown.IsNone; then
-        if Opts.Versions.View.IsSet; then
+        if Opts.Help.Actions.IsSet; then
+            Help.Actions.Show
+        elif Opts.Help.ActionsAll.IsSet; then
+            Help.ActionsAll.Show
+        elif Opts.Help.Packages.IsSet; then
+            Help.Packages.Show
+        elif Opts.Help.Options.IsSet; then
+            Help.Options.Show
+        elif Opts.Help.Problems.IsSet; then
+            Help.Problems.Show
+        elif Opts.Help.Tips.IsSet; then
+            Help.Tips.Show
+        elif Opts.Help.Abbreviations.IsSet; then
+            Help.PackageAbbreviations.Show
+        elif Opts.Versions.View.IsSet; then
             Versions.Show
         elif Opts.Log.All.View.IsSet; then
             Log.All.View
+        elif Opts.Log.Last.View.IsSet; then
+            Log.Last.View
         elif Opts.Log.Tail.View.IsSet; then
             Log.Tail.View
-        elif Opts.Log.Last.View.IsSet; then     # default operation when scope is unspecified
-            Log.Last.View
+        elif Opts.Log.All.Paste.IsSet; then
+            Log.All.Paste.Online
+        elif Opts.Log.Last.Paste.IsSet; then
+            Log.Last.Paste.Online
+        elif Opts.Log.Tail.Paste.IsSet; then
+            Log.Tail.Paste.Online
+        elif Opts.Apps.List.All.IsSet; then
+            QPKGs.All.Show
+        elif Opts.Apps.List.NotInstalled.IsSet; then
+            QPKGs.NotInstalled.Show
+        elif Opts.Apps.List.Started.IsSet; then
+            QPKGs.Started.Show
+        elif Opts.Apps.List.Stopped.IsSet; then
+            QPKGs.Stopped.Show
+        elif Opts.Apps.List.Upgradable.IsSet; then
+            QPKGs.Upgradable.Show
+        elif Opts.Apps.List.Essential.IsSet; then
+            QPKGs.Essential.Show
+        elif Opts.Apps.List.Optional.IsSet; then
+            QPKGs.Optional.Show
+        elif Opts.Apps.List.Standalone.IsSet; then
+            QPKGs.Standalone.Show
+        elif Opts.Help.Backups.IsSet; then
+            QPKGs.Backups.Show
+        elif Opts.Help.Status.IsSet; then
+            QPKGs.Statuses.Show
+        elif Opts.Apps.List.Installed.IsSet; then
+            QPKGs.Installed.Show
         fi
     fi
 
-    if Opts.Apps.List.All.IsSet; then
-        QPKGs.All.Show
-    elif Opts.Apps.List.NotInstalled.IsSet; then
-        QPKGs.NotInstalled.Show
-    elif Opts.Apps.List.Started.IsSet; then
-        QPKGs.Started.Show
-    elif Opts.Apps.List.Stopped.IsSet; then
-        QPKGs.Stopped.Show
-    elif Opts.Apps.List.Upgradable.IsSet; then
-        QPKGs.Upgradable.Show
-    elif Opts.Apps.List.Essential.IsSet; then
-        QPKGs.Essential.Show
-    elif Opts.Apps.List.Optional.IsSet; then
-        QPKGs.Optional.Show
-    elif Opts.Apps.List.Standalone.IsSet; then
-        QPKGs.Standalone.Show
-    elif Opts.Help.Backups.IsSet; then
-        QPKGs.Backups.Show
-    elif Opts.Help.Status.IsSet; then
-        QPKGs.Statuses.Show
-    elif Opts.Apps.List.Installed.IsSet; then   # default operation when scope is unspecified
-        QPKGs.Installed.Show
-    fi
-
-    if Opts.Log.All.Paste.IsSet; then
-        Log.All.Paste.Online
-    elif Opts.Log.Tail.Paste.IsSet; then
-        Log.Tail.Paste.Online
-    elif Opts.Log.Last.Paste.IsSet; then        # default operation when scope is unspecified
-        Log.Last.Paste.Online
-    fi
-
-    if Opts.Help.Actions.IsSet; then
-        Help.Actions.Show
-    elif Opts.Help.ActionsAll.IsSet; then
-        Help.ActionsAll.Show
-    elif Opts.Help.Packages.IsSet; then
-        Help.Packages.Show
-    elif Opts.Help.Options.IsSet; then
-        Help.Options.Show
-    elif Opts.Help.Problems.IsSet; then
-        Help.Problems.Show
-    elif Opts.Help.Tips.IsSet; then
-        Help.Tips.Show
-    elif Opts.Help.Abbreviations.IsSet; then
-        Help.PackageAbbreviations.Show
-    elif Opts.Help.Basic.IsSet; then            # default operation when scope is unspecified
+    if Opts.Help.Basic.IsSet; then
         Help.Basic.Show
         Help.Basic.Example.Show
     fi
 
     Session.ShowBackupLocation.IsSet && Help.BackupLocation.Show
-
     Session.Summary.IsSet && Session.Summary.Show
     Session.SuggestIssue.IsSet && Help.Issue.Show
     DisplayLineSpaceIfNoneAlready               # final on-screen linespace
@@ -2771,9 +2791,9 @@ DisplayAsProjectSyntaxExample()
     # $2 = example syntax
 
     if [[ ${1: -1} = '!' ]]; then
-        printf "\n* %s \n%${HELP_SYNTAX_INDENT}s# %s\n" "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}" '' "$PROJECT_NAME $2"
+        printf "* %s \n%${HELP_SYNTAX_INDENT}s# %s\n" "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}" '' "$PROJECT_NAME $2"
     else
-        printf "\n* %s:\n%${HELP_SYNTAX_INDENT}s# %s\n" "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}" '' "$PROJECT_NAME $2"
+        printf "* %s:\n%${HELP_SYNTAX_INDENT}s# %s\n" "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}" '' "$PROJECT_NAME $2"
     fi
 
     Session.LineSpace.Clear
@@ -2930,7 +2950,9 @@ Help.Actions.Show()
     DisplayAsProjectSyntaxIndentedExample 'backup these application configurations to the backup location' "backup $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample 'restore these application configurations from the backup location' "restore $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample 'show application backup files' 'list backups'
+    Display
     DisplayAsProjectSyntaxExample "$(FormatAsHelpAction)s to affect all packages can be seen with" 'all-actions'
+    Display
     DisplayAsProjectSyntaxExample "multiple $(FormatAsHelpAction)s are supported like this" "$(FormatAsHelpAction) $(FormatAsHelpPackages) $(FormatAsHelpAction) $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample '' 'install sabnzbd sickchill restart transmission uninstall lazy nzbget upgrade nzbtomedia'
 
@@ -2973,19 +2995,18 @@ Help.Packages.Show()
     local tier=''
 
     Help.Basic.Show
-    DisplayLineSpaceIfNoneAlready
+    Display
     DisplayAsHelpTitle "One-or-more $(FormatAsHelpPackages) may be specified at-once"
-    DisplayLineSpaceIfNoneAlready
+    Display
 
     for tier in {Essential,Optional}; do
-        DisplayLineSpaceIfNoneAlready
         DisplayAsHelpTitlePackageNamePlusSomething "${tier} QPKGs" 'package description'
 
         for package in $(QPKGs.$tier.Array); do
             DisplayAsHelpPackageNamePlusSomething "$package" "$(QPKG.Desc "$package")"
         done
 
-        DisplayLineSpaceIfNoneAlready
+        Display
     done
 
     DisplayAsProjectSyntaxExample "abbreviations may also be used to specify $(FormatAsHelpPackages). To list these" 'list abs'
@@ -3077,12 +3098,11 @@ Help.PackageAbbreviations.Show()
     local abs=''
 
     Help.Basic.Show
-    DisplayLineSpaceIfNoneAlready
+    Display
     DisplayAsHelpTitle "$(FormatAsScriptTitle) recognises various abbreviations as $(FormatAsHelpPackages)"
-    DisplayLineSpaceIfNoneAlready
+    Display
 
     for tier in {Essential,Optional}; do
-        DisplayLineSpaceIfNoneAlready
         DisplayAsHelpTitlePackageNamePlusSomething "${tier} QPKGs" 'acceptable abreviations'
 
         for package in $(QPKGs.$tier.Array); do
@@ -3090,7 +3110,7 @@ Help.PackageAbbreviations.Show()
             [[ -n $abs ]] && DisplayAsHelpPackageNamePlusSomething "$package" "${abs// /, }"
         done
 
-        DisplayLineSpaceIfNoneAlready
+        Display
     done
 
     DisplayAsProjectSyntaxExample "example: to install $(FormatAsPackageName SABnzbd), $(FormatAsPackageName Mylar3) and $(FormatAsPackageName nzbToMedia) all-at-once" 'install sab my nzb2'
@@ -3641,9 +3661,9 @@ QPKGs.Statuses.Show()
     local tier=''
 
     SmartCR
+    DisplayLineSpaceIfNoneAlready
 
     for tier in {Essential,Optional}; do
-        DisplayLineSpaceIfNoneAlready
         DisplayAsHelpTitlePackageNamePlusSomething "${tier} QPKGs" 'statuses'
 
         for package in $(QPKGs.$tier.Array); do
@@ -5321,7 +5341,7 @@ FormatAsResultAndStdout()
 DisplayLineSpaceIfNoneAlready()
     {
 
-    if Session.LineSpace.IsNot && Session.Debug.ToScreen.IsNot && Session.Display.Clean.IsNot; then
+    if Session.LineSpace.IsNot && Session.Display.Clean.IsNot; then
         echo
         Session.LineSpace.Set
     else
