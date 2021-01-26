@@ -880,10 +880,10 @@ Session.Arguments.Parse()
                         QPKGs.ToBackup.Add "$(QPKGs.Standalone.Array)"
                         ;;
                     started_)
-                        QPKGs.ToBackup.Add "$(QPKGs.Enabled.Array)"
+                        QPKGs.ToBackup.Add "$(QPKGs.Started.Array)"
                         ;;
                     stopped_)
-                        QPKGs.ToBackup.Add "$(QPKGs.NotEnabled.Array)"
+                        QPKGs.ToBackup.Add "$(QPKGs.Stopped.Array)"
                         ;;
                     *)
                         QPKGs.ToBackup.Add "$package"
@@ -1114,7 +1114,7 @@ Session.Arguments.Parse()
                         QPKGs.ToStart.Add "$(QPKGs.Standalone.Array)"
                         ;;
                     stopped_)
-                        QPKGs.ToStart.Add "$(QPKGs.NotEnabled.Array)"
+                        QPKGs.ToStart.Add "$(QPKGs.Stopped.Array)"
                         ;;
                     *)
                         QPKGs.ToStart.Add "$package"
@@ -1142,7 +1142,7 @@ Session.Arguments.Parse()
                         QPKGs.ToStop.Add "$(QPKGs.Standalone.Array)"
                         ;;
                     started_)
-                        QPKGs.ToStop.Add "$(QPKGs.Enabled.Array)"
+                        QPKGs.ToStop.Add "$(QPKGs.Started.Array)"
                         ;;
                     *)
                         QPKGs.ToStop.Add "$package"
@@ -1182,10 +1182,10 @@ Session.Arguments.Parse()
                         QPKGs.ToUpgrade.Add "$(QPKGs.Standalone.Array)"
                         ;;
                     started_)
-                        QPKGs.ToUpgrade.Add "$(QPKGs.Enabled.Array)"
+                        QPKGs.ToUpgrade.Add "$(QPKGs.Started.Array)"
                         ;;
                     stopped_)
-                        QPKGs.ToUpgrade.Add "$(QPKGs.NotEnabled.Array)"
+                        QPKGs.ToUpgrade.Add "$(QPKGs.Stopped.Array)"
                         ;;
                     *)
                         QPKGs.ToUpgrade.Add "$package"
@@ -1534,7 +1534,7 @@ Tiers.Processor()
     Tier.Processor 'Backup' false 'all' 'QPKG' 'ToBackup' 'forward' 'backup' 'backing-up' 'backed-up' ''
 
     if Opts.Apps.All.Stop.IsSet; then
-        QPKGs.ToStop.Add "$(QPKGs.Enabled.Array)"
+        QPKGs.ToStop.Add "$(QPKGs.Started.Array)"
     fi
 
 #     # don't stop, then start a package. Make it restart instead.
@@ -1571,7 +1571,7 @@ Tiers.Processor()
 
         # if Entware has been selected for reinstall, need to stop its optionals first, and start them again later
         QPKGs.ToStop.Add "$(QPKG.Get.Optionals Entware)"
-        QPKGs.ToStart.Add "$(QPKGs.Enabled.Array)"
+        QPKGs.ToStart.Add "$(QPKGs.Started.Array)"
     fi
 
     # if an essential (like Par2, but not Entware) has been selected for reinstall, need to stop its optionals first, and start them again later
@@ -1582,7 +1582,7 @@ Tiers.Processor()
         fi
     done
 
-    QPKGs.ToStop.Remove "$(QPKGs.NotEnabled.Array)"
+    QPKGs.ToStop.Remove "$(QPKGs.Stopped.Array)"
     QPKGs.ToStop.Remove "$(QPKGs.NotInstalled.Array)"
     QPKGs.ToStop.Remove "$(QPKGs.ToUninstall.Array)"
     QPKGs.ToStop.Remove "$PROJECT_NAME"
@@ -1669,7 +1669,7 @@ Tiers.Processor()
                 fi
 
                 QPKGs.ToStart.Remove "$(QPKGs.NotInstalled.Array)"
-                QPKGs.ToStart.Remove "$(QPKGs.Enabled.Array)"
+                QPKGs.ToStart.Remove "$(QPKGs.Started.Array)"
                 QPKGs.ToStart.Remove "$(QPKGs.IsInstall.Array)"
                 QPKGs.ToStart.Remove "$(QPKGs.IsStart.Array)"
                 QPKGs.ToStart.Remove "$PROJECT_NAME"
@@ -1711,7 +1711,7 @@ Tiers.Processor()
                 fi
 
                 QPKGs.ToRestart.Remove "$(QPKGs.NotInstalled.Array)"
-                QPKGs.ToRestart.Remove "$(QPKGs.NotEnabled.Array)"
+                QPKGs.ToRestart.Remove "$(QPKGs.Stopped.Array)"
                 QPKGs.ToRestart.Remove "$(QPKGs.IsUpgrade.Array)"
                 QPKGs.ToRestart.Remove "$(QPKGs.IsReinstall.Array)"
                 QPKGs.ToRestart.Remove "$(QPKGs.IsStart.Array)"
@@ -3460,7 +3460,7 @@ QPKGs.States.List()
     DebugFuncEntry
 
     local array_name=''
-    local -a operations_array=(Installed NotInstalled BackedUp NotBackedUp Upgradable Missing)
+    local -a operations_array=(Installed NotInstalled Started Stopped BackedUp NotBackedUp Upgradable Missing)
 
     DebugInfoMinorSeparator
 
@@ -3538,9 +3538,9 @@ QPKGs.States.Build()
             fi
 
             if QPKG.Enabled "$package"; then
-                QPKGs.Enabled.Add "$package"
+                QPKGs.Started.Add "$package"
             else
-                QPKGs.NotEnabled.Add "$package"
+                QPKGs.Stopped.Add "$package"
             fi
 
             [[ ! -d $(QPKG.InstallPath "$package") ]] && QPKGs.Missing.Add "$package"
@@ -3682,8 +3682,8 @@ QPKGs.Statuses.Show()
             elif QPKGs.NotInstalled.Exist "$package"; then
                 DisplayAsHelpPackageNamePlusSomething "$package" 'not installed'
             else
-                QPKGs.Enabled.Exist "$package" && package_notes+=($(ColourTextBrightGreen started))
-                QPKGs.NotEnabled.Exist "$package" && package_notes+=($(ColourTextBrightRed stopped))
+                QPKGs.Started.Exist "$package" && package_notes+=($(ColourTextBrightGreen started))
+                QPKGs.Stopped.Exist "$package" && package_notes+=($(ColourTextBrightRed stopped))
                 QPKGs.Upgradable.Exist "$package" && package_notes+=($(ColourTextBrightOrange upgradable))
                 QPKGs.Missing.Exist "$package" && package_notes=($(ColourTextBrightRedBlink missing))
 
@@ -3734,7 +3734,7 @@ QPKGs.Started.Show()
 
     local package=''
 
-    for package in $(QPKGs.Enabled.Array); do
+    for package in $(QPKGs.Started.Array); do
         Display "$package"
     done
 
@@ -3747,7 +3747,7 @@ QPKGs.Stopped.Show()
 
     local package=''
 
-    for package in $(QPKGs.NotEnabled.Array); do
+    for package in $(QPKGs.Stopped.Array); do
         Display "$package"
     done
 
@@ -4768,11 +4768,11 @@ QPKG.Enable()
     resultcode=$?
 
     if [[ $resultcode -eq 0 ]]; then
-        QPKGs.NotEnabled.Remove "$1"
-        QPKGs.Enabled.Add "$1"
+        QPKGs.Stopped.Remove "$1"
+        QPKGs.Started.Add "$1"
     else
         ShowAsWarn "unable to enable $(FormatAsPackageName "$1") $(FormatAsExitcode $resultcode)"
-        QPKGs.Enabled.Remove "$1"
+        QPKGs.Started.Remove "$1"
     fi
 
     QPKG.FixAppCenterStatus "$1"
@@ -4804,11 +4804,11 @@ QPKG.Disable()
     resultcode=$?
 
     if [[ $resultcode -eq 0 ]]; then
-        QPKGs.Enabled.Remove "$1"
-        QPKGs.NotEnabled.Add "$1"
+        QPKGs.Started.Remove "$1"
+        QPKGs.Stopped.Add "$1"
     else
         ShowAsWarn "unable to disable $(FormatAsPackageName "$1") $(FormatAsExitcode $resultcode)"
-        QPKGs.Enabled.Add "$1"
+        QPKGs.Started.Add "$1"
     fi
 
     QPKG.FixAppCenterStatus "$1"
@@ -6225,7 +6225,7 @@ Objects.Compile()
 
     # $1 = 'hash' (optional) - if specified, only return the internal checksum
 
-    local -r COMPILED_OBJECTS_HASH=0b527adfa93bbabc084cde1b9b81a63f
+    local -r COMPILED_OBJECTS_HASH=4593a01e9ca49770375c9f62e07897dc
     local array_name=''
     local -a operations_array=()
 
@@ -6295,13 +6295,13 @@ Objects.Compile()
             Objects.Add.List IPKGs.To${array_name}
         done
 
-        operations_array=(Essential Installable Missing Names Optional Standalone Upgradable)
+        operations_array=(Essential Installable Missing Names Optional Standalone Started Stopped Upgradable)
 
         for array_name in "${operations_array[@]}"; do
             Objects.Add.List QPKGs.${array_name}
         done
 
-        operations_array=(BackedUp Enabled Installed SupportsBackup SupportsUpdateOnRestart)
+        operations_array=(BackedUp Installed SupportsBackup SupportsUpdateOnRestart)
 
         for array_name in "${operations_array[@]}"; do
             Objects.Add.List QPKGs.${array_name}
