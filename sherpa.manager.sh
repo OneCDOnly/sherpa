@@ -3551,7 +3551,7 @@ QPKGs.States.Build()
             if [[ -e $BACKUP_PATH/$package.config.tar.gz ]]; then
                 QPKGs.BackedUp.Add "$package"
             else
-                QPKGs.NotBackedUp.Add "$package"
+                QPKG.Installed "$package" && QPKGs.NotBackedUp.Add "$package"
             fi
         fi
     done
