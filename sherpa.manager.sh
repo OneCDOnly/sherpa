@@ -48,7 +48,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=210126
+    readonly MANAGER_SCRIPT_VERSION=210127
 
     Session.LockFile.Claim /var/run/$PROJECT_NAME.loader.sh.pid || return
 
@@ -60,6 +60,7 @@ Session.Init()
     readonly DATE_CMD=/bin/date
     readonly GREP_CMD=/bin/grep
     readonly HOSTNAME_CMD=/bin/hostname
+    readonly LESS_CMD=/bin/less
     readonly MD5SUM_CMD=/bin/md5sum
     readonly PING_CMD=/bin/ping
     readonly SED_CMD=/bin/sed
@@ -101,6 +102,7 @@ Session.Init()
     IsSysFileExist $DATE_CMD || return
     IsSysFileExist $GREP_CMD || return
     IsSysFileExist $HOSTNAME_CMD || return
+    IsSysFileExist $LESS_CMD || return
     IsSysFileExist $MD5SUM_CMD || return
     IsSysFileExist $PING_CMD || return
     IsSysFileExist $SED_CMD || return
@@ -3147,7 +3149,7 @@ Log.All.View()
         if [[ -e $GNU_LESS_CMD ]]; then
             LESSSECURE=1 $GNU_LESS_CMD +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$SESSION_ARCHIVE_PATHFILE"
         else
-            $CAT_CMD --number "$SESSION_ARCHIVE_PATHFILE"
+            $LESS_CMD -N~ "$SESSION_ARCHIVE_PATHFILE"
         fi
     else
         ShowAsEror 'no session log to display'
@@ -3169,7 +3171,7 @@ Log.Last.View()
         if [[ -e $GNU_LESS_CMD ]]; then
             LESSSECURE=1 $GNU_LESS_CMD +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$SESSION_LAST_PATHFILE"
         else
-            $CAT_CMD --number "$SESSION_LAST_PATHFILE"
+            $LESS_CMD -N~ "$SESSION_LAST_PATHFILE"
         fi
     else
         ShowAsEror 'no last session log to display'
@@ -3191,7 +3193,7 @@ Log.Tail.View()
         if [[ -e $GNU_LESS_CMD ]]; then
             LESSSECURE=1 $GNU_LESS_CMD +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$SESSION_TAIL_PATHFILE"
         else
-            $CAT_CMD --number "$SESSION_TAIL_PATHFILE"
+            $LESS_CMD -N~ "$SESSION_TAIL_PATHFILE"
         fi
     else
         ShowAsEror 'no last session log to display'
