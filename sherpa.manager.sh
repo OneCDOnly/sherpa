@@ -3612,6 +3612,8 @@ QPKGs.All.Show()
 
     local package=''
 
+    Session.Debug.ToArchive.Clear
+
     for package in $(QPKGs.Names.Array); do
         Display "$package"
     done
@@ -3628,6 +3630,7 @@ QPKGs.Backups.Show()
     local highlight_older_than='2 weeks ago'
     local format=''
 
+    Session.Debug.ToArchive.Clear
     SmartCR
     DisplayLineSpaceIfNoneAlready
     DisplayAsHelpTitle "the location for $(FormatAsScriptTitle) backups is: $BACKUP_PATH"
@@ -3709,6 +3712,8 @@ QPKGs.Installed.Show()
 
     local package=''
 
+    Session.Debug.ToArchive.Clear
+
     for package in $(QPKGs.Installed.Array); do
         Display "$package"
     done
@@ -3721,6 +3726,8 @@ QPKGs.NotInstalled.Show()
     {
 
     local package=''
+
+    Session.Debug.ToArchive.Clear
 
     for package in $(QPKGs.NotInstalled.Array); do
         Display "$package"
@@ -3735,6 +3742,8 @@ QPKGs.Started.Show()
 
     local package=''
 
+    Session.Debug.ToArchive.Clear
+
     for package in $(QPKGs.Started.Array); do
         Display "$package"
     done
@@ -3747,6 +3756,8 @@ QPKGs.Stopped.Show()
     {
 
     local package=''
+
+    Session.Debug.ToArchive.Clear
 
     for package in $(QPKGs.Stopped.Array); do
         Display "$package"
@@ -3761,6 +3772,8 @@ QPKGs.Upgradable.Show()
 
     local package=''
 
+    Session.Debug.ToArchive.Clear
+
     for package in $(QPKGs.Upgradable.Array); do
         Display "$package"
     done
@@ -3773,6 +3786,8 @@ QPKGs.Essential.Show()
     {
 
     local package=''
+
+    Session.Debug.ToArchive.Clear
 
     for package in $(QPKGs.Essential.Array); do
         Display "$package"
@@ -3787,6 +3802,8 @@ QPKGs.Optional.Show()
 
     local package=''
 
+    Session.Debug.ToArchive.Clear
+
     for package in $(QPKGs.Optional.Array); do
         Display "$package"
     done
@@ -3799,6 +3816,8 @@ QPKGs.Standalone.Show()
     {
 
     local package=''
+
+    Session.Debug.ToArchive.Clear
 
     for package in $(QPKGs.Standalone.Array); do
         Display "$package"
