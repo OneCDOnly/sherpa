@@ -1252,6 +1252,7 @@ Session.Arguments.Suggestions()
 
     if Args.Unknown.IsAny; then
         ShowAsEror "unknown argument$(FormatAsPlural "$(Args.Unknown.Count)"): \"$(Args.Unknown.List)\""
+        Display
 
         for arg in $(Args.Unknown.Array); do
             case $arg in
@@ -1259,7 +1260,7 @@ Session.Arguments.Suggestions()
                     DisplayAsProjectSyntaxExample "please provide an $(FormatAsHelpAction) before 'all' like" 'start all'
                     Opts.Help.Basic.Clear
                     ;;
-                backup-all)
+                all-backup|backup-all)
                     DisplayAsProjectSyntaxExample 'to backup all installed package configurations, use' 'backup all'
                     Opts.Help.Basic.Clear
                     ;;
@@ -1271,27 +1272,27 @@ Session.Arguments.Suggestions()
                     DisplayAsProjectSyntaxExample "please provide an $(FormatAsHelpAction) before 'optional' like" 'start optional'
                     Opts.Help.Basic.Clear
                     ;;
-                restart-all)
+                all-restart|restart-all)
                     DisplayAsProjectSyntaxExample 'to restart all packages, use' 'restart all'
                     Opts.Help.Basic.Clear
                     ;;
-                restore-all)
+                all-restore|restore-all)
                     DisplayAsProjectSyntaxExample 'to restore all installed package configurations, use' 'restore all'
                     Opts.Help.Basic.Clear
                     ;;
-                start-all)
+                all-start|start-all)
                     DisplayAsProjectSyntaxExample 'to start all packages, use' 'start all'
                     Opts.Help.Basic.Clear
                     ;;
-                stop-all)
+                all-stop|stop-all)
                     DisplayAsProjectSyntaxExample 'to stop all packages, use' 'stop all'
                     Opts.Help.Basic.Clear
                     ;;
-                uninstall-all|remove-all)
+                all-uninstall|all-remove|uninstall-all|remove-all)
                     DisplayAsProjectSyntaxExample 'to uninstall all packages, use' 'force uninstall all'
                     Opts.Help.Basic.Clear
                     ;;
-                upgrade-all)
+                all-upgrade|upgrade-all)
                     DisplayAsProjectSyntaxExample 'to upgrade all packages, use' 'upgrade all'
                     Opts.Help.Basic.Clear
                     ;;
