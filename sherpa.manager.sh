@@ -4402,6 +4402,15 @@ QPKG.Install()
         QPKGs.IsInstall.Add "$1"
         QPKGs.Installed.Add "$1"
         QPKGs.NotInstalled.Remove "$1"
+
+        if QPKG.Enabled "$1"; then
+            QPKGs.Stopped.Remove "$1"
+            QPKGs.Started.Add "$1"
+        else
+            QPKGs.Started.Remove "$1"
+            QPKGs.Stopped.Add "$1"
+        fi
+
         resultcode=0    # reset this to zero (0 or 10 from a QPKG install is OK)
     else
         DebugAsError "installation failed $(FormatAsFileName "$TARGET_FILE") $(FormatAsExitcode $resultcode)"
@@ -4462,6 +4471,15 @@ QPKG.Reinstall()
         DebugAsDone "reinstalled $(FormatAsPackageName "$1")"
         QPKGs.IsReinstall.Add "$1"
         QPKG.GetServiceStatus "$1"
+
+        if QPKG.Enabled "$1"; then
+            QPKGs.Stopped.Remove "$1"
+            QPKGs.Started.Add "$1"
+        else
+            QPKGs.Started.Remove "$1"
+            QPKGs.Stopped.Add "$1"
+        fi
+
         resultcode=0    # reset this to zero (0 or 10 from a QPKG install is OK)
     else
         ShowAsEror "reinstallation failed $(FormatAsFileName "$TARGET_FILE") $(FormatAsExitcode $resultcode)"
@@ -4537,6 +4555,15 @@ QPKG.Upgrade()
         QPKG.GetServiceStatus "$1"
         QPKGs.Upgradable.Remove "$1"
         QPKGs.IsUpgrade.Add "$1"
+
+        if QPKG.Enabled "$1"; then
+            QPKGs.Stopped.Remove "$1"
+            QPKGs.Started.Add "$1"
+        else
+            QPKGs.Started.Remove "$1"
+            QPKGs.Stopped.Add "$1"
+        fi
+
         resultcode=0    # reset this to zero (0 or 10 from a QPKG upgrade is OK)
     else
         ShowAsEror "upgrade failed $(FormatAsFileName "$TARGET_FILE") $(FormatAsExitcode $resultcode)"
@@ -4625,8 +4652,6 @@ QPKG.Restart()
         DebugFuncExit 1; return
     fi
 
-    local -i resultcode=0
-    local -r LOG_PATHFILE=$LOGS_PATH/$1.$RESTART_LOG_FILE
     QPKG.ClearServiceStatus "$1"
 
     if QPKG.NotInstalled "$1"; then
@@ -4636,10 +4661,16 @@ QPKG.Restart()
         DebugFuncExit; return
     fi
 
+    local -r LOG_PATHFILE=$LOGS_PATH/$1.$RESTART_LOG_FILE
+
     QPKG.Enable "$1"
-    DebugAsProc "restarting $(FormatAsPackageName "$1")"
-    RunAndLog "$QPKG_SERVICE_CMD restart $1" "$LOG_PATHFILE" log:failure-only
-    resultcode=$?
+    local -i resultcode=$?
+
+    if [[ $resultcode -eq 0 ]]; then
+        DebugAsProc "restarting $(FormatAsPackageName "$1")"
+        RunAndLog "$QPKG_SERVICE_CMD restart $1" "$LOG_PATHFILE" log:failure-only
+        resultcode=$?
+    fi
 
     if [[ $resultcode -eq 0 ]]; then
         DebugAsDone "restarted $(FormatAsPackageName "$1")"
@@ -4669,13 +4700,11 @@ QPKG.Start()
 
     DebugFuncEntry
 
-    if [[ -z ${1:-} ]]; then
+    if [[ -z $1 ]]; then
         DebugAsError 'no package name specified'
         DebugFuncExit 1; return
     fi
 
-    local -i resultcode=0
-    local -r LOG_PATHFILE=$LOGS_PATH/$1.$START_LOG_FILE
     QPKG.ClearServiceStatus "$1"
 
     if QPKG.NotInstalled "$1"; then
@@ -4692,15 +4721,23 @@ QPKG.Start()
         DebugFuncExit; return
     fi
 
+    local -r LOG_PATHFILE=$LOGS_PATH/$1.$START_LOG_FILE
+
     QPKG.Enable "$1"
-    DebugAsProc "starting $(FormatAsPackageName "$1")"
-    RunAndLog "$QPKG_SERVICE_CMD start $1" "$LOG_PATHFILE" log:failure-only
-    resultcode=$?
+    local -i resultcode=$?
+
+    if [[ $resultcode -eq 0 ]]; then
+        DebugAsProc "starting $(FormatAsPackageName "$1")"
+        RunAndLog "$QPKG_SERVICE_CMD start $1" "$LOG_PATHFILE" log:failure-only
+        resultcode=$?
+    fi
 
     if [[ $resultcode -eq 0 ]]; then
         DebugAsDone "started $(FormatAsPackageName "$1")"
         QPKG.GetServiceStatus "$1"
         QPKGs.IsStart.Add "$1"
+        QPKGs.Started.Add "$1"
+        QPKGs.Stopped.Remove "$1"
         [[ $1 = Entware ]] && Session.AddPathToEntware
     else
         ShowAsWarn "unable to start $(FormatAsPackageName "$1") $(FormatAsExitcode $resultcode)"
@@ -4726,7 +4763,7 @@ QPKG.Stop()
 
     DebugFuncEntry
 
-    if [[ -z ${1:-} ]]; then
+    if [[ -z $1 ]]; then
         DebugAsError 'no package name specified'
         DebugFuncExit 1; return
     fi
@@ -4747,18 +4784,23 @@ QPKG.Stop()
         DebugFuncExit; return
     fi
 
-    local -i resultcode=0
     local -r LOG_PATHFILE=$LOGS_PATH/$1.$STOP_LOG_FILE
 
     DebugAsProc "stopping $(FormatAsPackageName "$1")"
     RunAndLog "$QPKG_SERVICE_CMD stop $1" "$LOG_PATHFILE" log:failure-only
-    resultcode=$?
+    local -i resultcode=$?
+
+    if [[ $resultcode -eq 0 ]]; then
+        QPKG.Disable "$1"
+        resultcode=$?
+    fi
 
     if [[ $resultcode -eq 0 ]]; then
         DebugAsDone "stopped $(FormatAsPackageName "$1")"
         QPKG.GetServiceStatus "$1"
-        QPKG.Disable "$1"
         QPKGs.IsStop.Add "$package"
+        QPKGs.Stopped.Add "$1"
+        QPKGs.Started.Remove "$1"
     else
         ShowAsWarn "unable to stop $(FormatAsPackageName "$1") $(FormatAsExitcode $resultcode)"
         QPKGs.ErStop.Add "$1"
@@ -4775,34 +4817,12 @@ QPKG.Enable()
 
     # $1 = package name to enable
 
-    DebugFuncEntry
+    RunAndLog "$QPKG_SERVICE_CMD enable $1" "$LOGS_PATH/$1.$ENABLE_LOG_FILE" log:failure-only
+    local -i resultcode=$?
 
-    if [[ -z ${1:-} ]]; then
-        DebugAsError 'no package name specified'
-        DebugFuncExit 1; return
-    fi
+    [[ $resultcode -ne 0 ]] && ShowAsWarn "unable to enable $(FormatAsPackageName "$1") $(FormatAsExitcode $resultcode)"
 
-    if QPKG.NotInstalled "$1"; then
-        DebugAsWarn "unable to enable $(FormatAsPackageName "$1") as it's not installed"
-        DebugFuncExit; return
-    fi
-
-    local -i resultcode=0
-    local -r LOG_PATHFILE=$LOGS_PATH/$1.$ENABLE_LOG_FILE
-
-    RunAndLog "$QPKG_SERVICE_CMD enable $1" "$LOG_PATHFILE" log:failure-only
-    resultcode=$?
-
-    if [[ $resultcode -eq 0 ]]; then
-        QPKGs.Stopped.Remove "$1"
-        QPKGs.Started.Add "$1"
-    else
-        ShowAsWarn "unable to enable $(FormatAsPackageName "$1") $(FormatAsExitcode $resultcode)"
-        QPKGs.Started.Remove "$1"
-    fi
-
-    QPKG.FixAppCenterStatus "$1"
-    DebugFuncExit $resultcode
+    return $resultcode
 
     }
 
@@ -4811,34 +4831,12 @@ QPKG.Disable()
 
     # $1 = package name to disable
 
-    DebugFuncEntry
+    RunAndLog "$QPKG_SERVICE_CMD disable $1" "$LOGS_PATH/$1.$DISABLE_LOG_FILE" log:failure-only
+    local -i resultcode=$?
 
-    if [[ -z ${1:-} ]]; then
-        DebugAsError 'no package name specified'
-        DebugFuncExit 1; return
-    fi
+    [[ $resultcode -ne 0 ]] && ShowAsWarn "unable to disable $(FormatAsPackageName "$1") $(FormatAsExitcode $resultcode)"
 
-    if QPKG.NotInstalled "$1"; then
-        DebugAsWarn "unable to disable $(FormatAsPackageName "$1") as it's not installed"
-        DebugFuncExit; return
-    fi
-
-    local -i resultcode=0
-    local -r LOG_PATHFILE=$LOGS_PATH/$1.$DISABLE_LOG_FILE
-
-    RunAndLog "$QPKG_SERVICE_CMD disable $1" "$LOG_PATHFILE" log:failure-only
-    resultcode=$?
-
-    if [[ $resultcode -eq 0 ]]; then
-        QPKGs.Started.Remove "$1"
-        QPKGs.Stopped.Add "$1"
-    else
-        ShowAsWarn "unable to disable $(FormatAsPackageName "$1") $(FormatAsExitcode $resultcode)"
-        QPKGs.Started.Add "$1"
-    fi
-
-    QPKG.FixAppCenterStatus "$1"
-    DebugFuncExit $resultcode
+    return $resultcode
 
     }
 
