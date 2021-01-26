@@ -2935,6 +2935,7 @@ Help.Basic.Example.Show()
 Help.Actions.Show()
     {
 
+    Session.Debug.ToArchive.Clear
     Help.Basic.Show
     DisplayLineSpaceIfNoneAlready
     DisplayAsHelpTitle "$(FormatAsHelpAction) usage examples:"
@@ -2963,6 +2964,7 @@ Help.Actions.Show()
 Help.ActionsAll.Show()
     {
 
+    Session.Debug.ToArchive.Clear
     Help.Basic.Show
     DisplayLineSpaceIfNoneAlready
     Display "* These $(FormatAsHelpAction)s apply to all installed packages. If $(FormatAsHelpAction) is 'install all' then all available packages will be installed."
@@ -2994,6 +2996,7 @@ Help.Packages.Show()
     local package=''
     local tier=''
 
+    Session.Debug.ToArchive.Clear
     Help.Basic.Show
     Display
     DisplayAsHelpTitle "One-or-more $(FormatAsHelpPackages) may be specified at-once"
@@ -3018,6 +3021,7 @@ Help.Packages.Show()
 Help.Options.Show()
     {
 
+    Session.Debug.ToArchive.Clear
     Help.Basic.Show
     DisplayLineSpaceIfNoneAlready
     DisplayAsHelpTitle "$(FormatAsHelpOptions) usage examples:"
@@ -3033,6 +3037,7 @@ Help.Options.Show()
 Help.Problems.Show()
     {
 
+    Session.Debug.ToArchive.Clear
     Help.Basic.Show
     DisplayLineSpaceIfNoneAlready
     DisplayAsHelpTitle 'usage examples when dealing with problems:'
@@ -3074,6 +3079,7 @@ Help.Issue.Show()
 Help.Tips.Show()
     {
 
+    Session.Debug.ToArchive.Clear
     Help.Basic.Show
     DisplayLineSpaceIfNoneAlready
     DisplayAsHelpTitle 'helpful tips and shortcuts:'
@@ -3097,6 +3103,7 @@ Help.PackageAbbreviations.Show()
     local tier=''
     local abs=''
 
+    Session.Debug.ToArchive.Clear
     Help.Basic.Show
     Display
     DisplayAsHelpTitle "$(FormatAsScriptTitle) recognises various abbreviations as $(FormatAsHelpPackages)"
