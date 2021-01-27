@@ -672,6 +672,7 @@ Session.Init()
     if [[ -z $USER_ARGS_RAW ]]; then
         Opts.Help.Basic.Set
         QPKGs.SkipProcessing.Set
+        DisableDebuggingToArchiveAndFile
     else
         ParseArguments
     fi
