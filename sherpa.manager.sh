@@ -19,14 +19,15 @@
 #
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 #
-# You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/.
+# You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
 #
-# Style Guide:
-#         functions: CamelCase
-#         variables: lowercase_with_inline_underscores (except for 'returncode', 'resultcode')
-# "class" variables: _lowercase_with_leading_and_inline_underscores (these should only be managed via their specific functions)
-#         constants: UPPERCASE_WITH_INLINE_UNDERSCORES (these are also set as readonly)
-#           indents: 1 x tab (converted to 4 x spaces to suit GitHub web-display)
+# Project variable and function naming style-guide:
+#            functions: CamelCase
+#            variables: lowercase_with_inline_underscores
+#     "object" methods: Capitalised.CamelCase.With.Inline.Periods
+#  "object" properties: _lowercase_with_leading_and_inline_and_trailing_underscores_ (these should ONLY be managed via the object's methods)
+#            constants: UPPERCASE_WITH_INLINE_UNDERSCORES (also set as readonly)
+#              indents: 1 x tab (converted to 4 x spaces to suit GitHub web-display)
 #
 # Notes:
 #   If on-screen line-spacing is required, this should only be done by the next function that outputs to display.
@@ -50,7 +51,7 @@ Session.Init()
     readonly PROJECT_NAME=sherpa
     readonly MANAGER_SCRIPT_VERSION=210127
 
-    Session.LockFile.Claim /var/run/$PROJECT_NAME.loader.sh.pid || return
+    ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -112,6 +113,7 @@ Session.Init()
     IsSysFileExist $UNAME_CMD || return
     IsSysFileExist $UNIQ_CMD || return
 
+    IsSysFileExist $APP_CENTER_NOTIFIER || return
     IsSysFileExist $CURL_CMD || return
     IsSysFileExist $GETCFG_CMD || return
     IsSysFileExist $QPKG_SERVICE_CMD || return
@@ -179,6 +181,8 @@ Session.Init()
     readonly SESSION_TAIL_PATHFILE=$LOGS_PATH/session.tail.log
     readonly EXTERNAL_PACKAGE_LIST_PATHFILE=$WORK_PATH/Packages
 
+    ShowAsProc 'init' >&2
+
     if ! MakePath "$WORK_PATH" 'work'; then
         DebugFuncExit 1; return
     fi
@@ -186,18 +190,6 @@ Session.Init()
     if ! MakePath "$LOGS_PATH" 'logs'; then
         DebugFuncExit 1; return
     fi
-
-    if [[ $USER_ARGS_RAW == *"clean"* ]]; then
-        Clean.Logs
-        Clean.Cache
-        ArchiveSessionLog
-        exit 0
-    fi
-
-    # check for incomplete previous session (crashed, interrupted?) and save it to archive
-    ArchiveSessionLog
-
-    ShowAsProc 'init' >&2
 
     [[ -d $IPKG_DL_PATH ]] && rm -rf "$IPKG_DL_PATH"
     [[ -d $IPKG_CACHE_PATH ]] && rm -rf "$IPKG_CACHE_PATH"
@@ -223,11 +215,20 @@ Session.Init()
         DebugFuncExit 1; return
     fi
 
-    Objects.Compile
+    ArchivePriorSessionLogs
+
+    if [[ $USER_ARGS_RAW == *"clean"* ]]; then
+        CleanArchivedSessionLogs
+        CleanWorkPath
+        ArchiveActiveSessionLog
+        CleanActiveSessionLog
+        exit 0
+    fi
+
+    CompileObjects
     Session.Debug.ToArchive.Set
     Session.Debug.ToFile.Set
 
-    # enable debug mode early if possible
     if [[ $USER_ARGS_RAW == *"debug"* || $USER_ARGS_RAW == *"verbose"* ]]; then
         Display >&2
         Session.Debug.ToScreen.Set
@@ -261,8 +262,8 @@ Session.Init()
     previous_msg=' '
     local package=''
     [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg=' --insecure' || curl_insecure_arg=''
-    Session.Calc.EntwareType
-    Session.Calc.QPKGArch
+    CalcEntwareType
+    CalcQPKGArch
 
     # supported package details - parallel arrays
     MANAGER_QPKG_NAME=()                    # internal QPKG name
@@ -661,7 +662,7 @@ Session.Init()
     QPKGs.Names.Add "${MANAGER_QPKG_NAME[*]}"
 
     readonly MANAGER_ESSENTIAL_IPKGS_ADD='findutils grep less sed'
-    readonly MANAGER_COMMON_IPKGS_ADD='ca-certificates gcc git git-http nano python3-dev python3-pip python3-setuptools'
+    readonly MANAGER_COMMON_IPKGS_ADD='ca-certificates gcc git git-http python3-dev python3-pip python3-setuptools'
     readonly MANAGER_COMMON_PIPS_ADD='apprise apscheduler beautifulsoup4 cfscrape cheetah3 cheroot!=8.4.4 cherrypy configobj feedparser portend pygithub python-levenshtein python-magic random_user_agent sabyenc3 simplejson slugify'
     readonly MANAGER_COMMON_QPKG_CONFLICTS='Optware Optware-NG TarMT Python QPython2 Python3 QPython3'
 
@@ -672,7 +673,7 @@ Session.Init()
         Opts.Help.Basic.Set
         QPKGs.SkipProcessing.Set
     else
-        Session.Arguments.Parse
+        ParseArguments
     fi
 
     SmartCR >&2
@@ -690,7 +691,564 @@ Session.Init()
 
     }
 
-Session.Arguments.Parse()
+Session.Validate()
+    {
+
+    DebugFuncEntry
+    ArgumentSuggestions
+
+    if QPKGs.SkipProcessing.IsSet; then
+        DebugFuncExit 1; return
+    fi
+
+    ShowAsProc 'validating parameters' >&2
+
+    ListEnvironment
+
+    if QPKGs.SkipProcessing.IsSet; then
+        DebugFuncExit 1; return
+    fi
+
+    if ! QPKGs.Conflicts.Check; then
+        code_pointer=1
+        QPKGs.SkipProcessing.Set
+        DebugFuncExit 1; return
+    fi
+
+    if QPKGs.ToBackup.IsNone && QPKGs.ToUninstall.IsNone && QPKGs.ToUpgrade.IsNone && QPKGs.ToInstall.IsNone && QPKGs.ToReinstall.IsNone && QPKGs.ToRestore.IsNone && QPKGs.ToRestart.IsNone && QPKGs.ToStart.IsNone && QPKGs.ToStop.IsNone && QPKGs.ToRebuild.IsNone; then
+        if Opts.Apps.All.Install.IsNot && Opts.Apps.All.Restart.IsNot && Opts.Apps.All.Upgrade.IsNot && Opts.Apps.All.Backup.IsNot && Opts.Apps.All.Restore.IsNot && Opts.Help.Status.IsNot && Opts.Apps.All.Start.IsNot && Opts.Apps.All.Stop.IsNot && Opts.Apps.All.Rebuild.IsNot; then
+            if Opts.Dependencies.Check.IsNot && Opts.IgnoreFreeSpace.IsNot; then
+                ShowAsEror "I've nothing to do (usually means the arguments didn't make sense, or were incomplete)"
+                Opts.Help.Basic.Set
+                QPKGs.SkipProcessing.Set
+                DebugFuncExit 1; return
+            fi
+        fi
+    fi
+
+    if Opts.Dependencies.Check.IsSet || QPKGs.ToUpgrade.Exist Entware; then
+        IPKGs.Install.Set
+        PIPs.Install.Set
+    fi
+
+    DebugFuncExit
+
+    }
+
+# package processing priorities need to be:
+
+#   _. rebuild optionals            (meta-operation: 'install' QPKG and 'restore' config only if package has a backup file)
+
+#  17. backup all                   (highest: most-important)
+#  16. stop optionals
+#  15. stop essentials
+#  14. uninstall all
+
+#  13. upgrade essentials
+#  12. reinstall essentials
+#  11. install essentials
+#  10. restore essentials
+#   9. start essentials
+#   8. restart essentials
+
+#   7. upgrade optionals
+#   6. reinstall optionals
+#   5. install optionals
+#   4. restore optionals
+#   3. start optionals
+#   2. restart optionals
+
+#   1. status                       (lowest: least-important)
+
+Tiers.Processor()
+    {
+
+    QPKGs.SkipProcessing.IsSet && return
+    DebugFuncEntry
+    local package=''
+
+    QPKGs.SupportsBackup.Build
+    QPKGs.SupportsUpdateOnRestart.Build
+
+    # build an initial download list
+    if Opts.Apps.All.Upgrade.IsSet; then
+        QPKGs.ToUpgrade.Add "$(QPKGs.Upgradable.Array)"
+    fi
+
+    if Opts.Apps.All.Reinstall.IsSet; then
+        QPKGs.ToReinstall.Add "$(QPKGs.Installable.Array)"
+    fi
+
+    if Opts.Apps.All.Install.IsSet; then
+        QPKGs.ToInstall.Add "$(QPKGs.Installable.Array)"
+    fi
+
+    if Opts.Apps.All.Rebuild.IsSet || QPKGs.ToRebuild.IsAny; then
+        if QPKGs.BackedUp.IsNone; then
+            ShowAsWarn 'there are no package backups to rebuild from' >&2
+        else
+            if Opts.Apps.All.Rebuild.IsSet; then
+                for package in $(QPKGs.BackedUp.Array); do
+                    QPKG.NotInstalled "$package" && QPKGs.ToInstall.Add "$package"
+                done
+
+                QPKGs.ToRestore.Add "$(QPKGs.BackedUp.Array)"
+            else
+                for package in $(QPKGs.ToRebuild.Array); do
+                    if ! QPKGs.BackedUp.Exist "$package"; then
+                        ShowAsWarn "$(FormatAsPackageName "$package") does not have a backup to rebuild from" >&2
+                    else
+                        QPKG.NotInstalled "$package" && QPKGs.ToInstall.Add "$package"
+                        QPKGs.ToRestore.Add "$package"
+                    fi
+                done
+            fi
+        fi
+    fi
+
+    PreDownloadPackageShuffle
+
+    QPKGs.ToDownload.Add "$(QPKGs.ToUpgrade.Array)"
+    QPKGs.ToDownload.Add "$(QPKGs.ToReinstall.Array)"
+    QPKGs.ToDownload.Add "$(QPKGs.ToInstall.Array)"
+
+    # download all required essentials too
+    for package in $(QPKGs.ToDownload.Array); do
+        QPKGs.ToDownload.Add "$(QPKG.Get.Essentials "$package")"
+    done
+
+    for package in $(QPKGs.Installed.Array); do
+        QPKGs.ToDownload.Add "$(QPKG.Get.Essentials "$package")"
+    done
+
+    Tier.Processor 'Download' false 'all' 'QPKG' 'ToDownload' 'forward' 'update package cache with' 'updating package cache with' 'updated package cache with' ''
+
+    if Opts.Apps.All.Backup.IsSet; then
+        QPKGs.ToBackup.Add "$(QPKGs.SupportsBackup.Array)"
+    fi
+
+    QPKGs.ToBackup.Remove "$(QPKGs.NotInstalled.Array)"
+    QPKGs.ToBackup.Remove "$(QPKGs.NotSupportsBackup.Array)"
+
+    Tier.Processor 'Backup' false 'all' 'QPKG' 'ToBackup' 'forward' 'backup' 'backing-up' 'backed-up' ''
+
+    if Opts.Apps.All.Stop.IsSet; then
+        QPKGs.ToStop.Add "$(QPKGs.Started.Array)"
+    fi
+
+#     # don't stop, then start a package. Make it restart instead.
+#     for package in $(QPKGs.ToStop.Array); do
+#         if QPKGs.ToStart.Exist "$package"; then
+#             QPKGs.ToStop.Remove "$package"
+#             QPKGs.ToStart.Remove "$package"
+#             QPKGs.ToRestart.Add "$package"
+#         fi
+#     done
+
+    if Opts.Apps.All.Uninstall.IsSet; then
+        QPKGs.ToStop.Init   # no-need to stop any packages, as they are about to be uninstalled
+    fi
+
+    # if an essential has been selected for stop, need to stop its optionals first
+    for package in $(QPKGs.ToStop.Array); do
+        if QPKGs.Essential.Exist "$package" && QPKG.Installed "$package"; then
+            QPKGs.ToStop.Add "$(QPKG.Get.Optionals "$package")"
+        fi
+    done
+
+    # if an essential has been selected for uninstall, need to stop its optionals first
+    for package in $(QPKGs.ToUninstall.Array); do
+        if QPKGs.Essential.Exist "$package" && QPKG.Installed "$package"; then
+            QPKGs.ToStop.Add "$(QPKG.Get.Optionals "$package")"
+        fi
+    done
+
+    if QPKGs.ToReinstall.Exist Entware; then    # treat Entware as a special case: complete removal and fresh install (to clear all installed IPKGs)
+        QPKGs.ToUninstall.Add Entware
+        QPKGs.ToInstall.Add Entware
+        QPKGs.ToReinstall.Remove Entware
+
+        # if Entware has been selected for reinstall, need to stop its optionals first, and start them again later
+        QPKGs.ToStop.Add "$(QPKG.Get.Optionals Entware)"
+        QPKGs.ToStart.Add "$(QPKGs.Started.Array)"
+    fi
+
+    # if an essential (like Par2, but not Entware) has been selected for reinstall, need to stop its optionals first, and start them again later
+    for package in $(QPKGs.ToReinstall.Array); do
+        if QPKGs.Essential.Exist "$package" && QPKG.Installed "$package" && QPKG.Enabled "$package"; then
+            QPKGs.ToStop.Add "$(QPKG.Get.Optionals "$package")"
+            QPKGs.ToStart.Add "$(QPKG.Get.Optionals "$package")"
+        fi
+    done
+
+    QPKGs.ToStop.Remove "$(QPKGs.Stopped.Array)"
+    QPKGs.ToStop.Remove "$(QPKGs.NotInstalled.Array)"
+    QPKGs.ToStop.Remove "$(QPKGs.ToUninstall.Array)"
+    QPKGs.ToStop.Remove "$PROJECT_NAME"
+
+    Tier.Processor 'Stop' false 'optional' 'QPKG' 'ToStop' 'backward' 'stop' 'stopping' 'stopped' ''
+    Tier.Processor 'Stop' false 'essential' 'QPKG' 'ToStop' 'backward' 'stop' 'stopping' 'stopped' ''
+
+    QPKGs.ToUninstall.Remove "$(QPKGs.NotInstalled.Array)"
+    QPKGs.ToUninstall.Remove "$PROJECT_NAME"
+
+    Tier.Processor 'Uninstall' false 'optional' 'QPKG' 'ToUninstall' 'forward' 'uninstall' 'uninstalling' 'uninstalled' ''
+
+    ShowAsProc 'checking for addon packages to uninstall' >&2
+    QPKG.Installed Entware && IPKGs.Uninstall
+
+    Tier.Processor 'Uninstall' false 'essential' 'QPKG' 'ToUninstall' 'forward' 'uninstall' 'uninstalling' 'uninstalled' ''
+
+    # adjust configuration restore lists to remove essentials (these can't be backed-up or restored for-now)
+    if Opts.Apps.All.Restore.IsSet; then
+        QPKGs.ToRestore.Add "$(QPKGs.Installed.Array)"
+    fi
+
+    QPKGs.ToRestore.Remove "$(QPKGs.Essential.Array)"
+    QPKGs.ToRestore.Remove "$(QPKGs.NotSupportsBackup.Array)"
+
+    if Opts.Apps.All.Upgrade.IsSet; then
+        QPKGs.ToRestart.Add "$(QPKGs.Optional.Array)"
+        QPKGs.ToRestart.Remove "$(QPKGs.Standalone.Array)"
+    fi
+
+    # install all required essentials too
+    for package in $(QPKGs.Installed.Array); do
+        QPKGs.ToInstall.Add "$(QPKG.Get.Essentials "$package")"
+    done
+
+    QPKGs.ToInstall.Remove "$(QPKGs.Installed.Array)"
+
+    for tier in {'essential','addon','optional'}; do
+        case $tier in
+            essential|optional)
+                Tier.Processor 'Upgrade' false "$tier" 'QPKG' 'ToUpgrade' 'forward' 'upgrade' 'upgrading' 'upgraded' 'long'
+                Tier.Processor 'Reinstall' false "$tier" 'QPKG' 'ToReinstall' 'forward' 'reinstall' 'reinstalling' 'reinstalled' 'long'
+                Tier.Processor 'Install' false "$tier" 'QPKG' 'ToInstall' 'forward' 'install' 'installing' 'installed' 'long'
+
+                if [[ $tier = optional ]]; then
+                    Tier.Processor 'Restore' false "$tier" 'QPKG' 'ToRestore' 'forward' 'restore configuration for' 'restoring configuration for' 'configuration restored for' 'long'
+                fi
+
+                # adjust lists for start
+                if Opts.Apps.All.Start.IsSet; then
+                    QPKGs.ToStart.Add "$(QPKGs.Installed.Array)"
+                else
+                    # check for essential packages that require starting due to any optionals being reinstalled
+                    for package in $(QPKGs.ToReinstall.Array); do
+                        QPKGs.ToStart.Add "$(QPKG.Get.Essentials "$package")"
+                    done
+
+                    for package in $(QPKGs.IsReinstall.Array); do
+                        QPKGs.ToStart.Add "$(QPKG.Get.Essentials "$package")"
+                    done
+
+                    # check for essential packages that require starting due to any optionals being installed
+                    for package in $(QPKGs.ToInstall.Array); do
+                        QPKGs.ToStart.Add "$(QPKG.Get.Essentials "$package")"
+                    done
+
+                    for package in $(QPKGs.IsInstall.Array); do
+                        QPKGs.ToStart.Add "$(QPKG.Get.Essentials "$package")"
+                    done
+
+                    # check for essential packages that require starting due to any optionals being started
+                    for package in $(QPKGs.ToStart.Array); do
+                        QPKGs.ToStart.Add "$(QPKG.Get.Essentials "$package")"
+                    done
+
+                    for package in $(QPKGs.IsStart.Array); do
+                        QPKGs.ToStart.Add "$(QPKG.Get.Essentials "$package")"
+                    done
+
+                    # check for essential packages that require starting due to any optionals being restarted
+                    for package in $(QPKGs.ToRestart.Array); do
+                        QPKGs.ToStart.Add "$(QPKG.Get.Essentials "$package")"
+                    done
+                fi
+
+                QPKGs.ToStart.Remove "$(QPKGs.NotInstalled.Array)"
+                QPKGs.ToStart.Remove "$(QPKGs.Started.Array)"
+                QPKGs.ToStart.Remove "$(QPKGs.IsInstall.Array)"
+                QPKGs.ToStart.Remove "$(QPKGs.IsStart.Array)"
+                QPKGs.ToStart.Remove "$PROJECT_NAME"
+
+                Tier.Processor 'Start' false "$tier" 'QPKG' 'ToStart' 'forward' 'start' 'starting' 'started' 'long'
+
+                # check all items
+                if Opts.Dependencies.Check.IsSet; then
+                    for package in $(QPKGs.Optional.Array); do
+                        if ! QPKGs.Standalone.Exist "$package" && ! QPKGs.Upgradable.Exist "$package"; then
+                            QPKGs.ToRestart.Add "$package"
+                        fi
+                    done
+                fi
+
+                # adjust lists for restart
+                if Opts.Apps.All.Restart.IsSet; then
+                    QPKGs.ToRestart.Add "$(QPKGs.Installed.Array)"
+                else
+                    # check for optional packages to restart due to any essentials being installed
+                    for package in $(QPKGs.IsInstall.Array); do
+                        QPKGs.ToRestart.Add "$(QPKG.Get.Optionals "$package")"
+                    done
+
+                    # check for optional packages to restart due to any essentials being started
+                    for package in $(QPKGs.IsStart.Array); do
+                        QPKGs.ToRestart.Add "$(QPKG.Get.Optionals "$package")"
+                    done
+
+                    # check for optional packages to restart due to any essentials being restarted
+                    for package in $(QPKGs.IsRestart.Array); do
+                        QPKGs.ToRestart.Add "$(QPKG.Get.Optionals "$package")"
+                    done
+
+                    # check for optional packages to restart due to any essentials being upgraded
+                    for package in $(QPKGs.IsUpgrade.Array); do
+                        QPKGs.ToRestart.Add "$(QPKG.Get.Optionals "$package")"
+                    done
+                fi
+
+                QPKGs.ToRestart.Remove "$(QPKGs.NotInstalled.Array)"
+                QPKGs.ToRestart.Remove "$(QPKGs.Stopped.Array)"
+                QPKGs.ToRestart.Remove "$(QPKGs.IsUpgrade.Array)"
+                QPKGs.ToRestart.Remove "$(QPKGs.IsReinstall.Array)"
+                QPKGs.ToRestart.Remove "$(QPKGs.IsStart.Array)"
+                QPKGs.ToRestart.Remove "$(QPKGs.IsRestart.Array)"
+                QPKGs.ToRestart.Remove "$(QPKGs.IsRestore.Array)"
+                QPKGs.ToRestart.Remove "$(QPKGs.NotSupportsUpdateOnRestart.Array)"
+
+                Tier.Processor 'Restart' false "$tier" 'QPKG' 'ToRestart' 'forward' 'restart' 'restarting' 'restarted' 'long'
+                ;;
+            addon)
+                if QPKGs.ToInstall.IsAny || QPKGs.IsInstall.IsAny || QPKGs.ToReinstall.IsAny || QPKGs.IsReinstall.IsAny || QPKGs.ToUpgrade.IsAny || QPKGs.IsUpgrade.IsAny; then
+                    IPKGs.Install.Set
+                fi
+
+                if QPKGs.ToInstall.Exist SABnzbd || QPKGs.ToReinstall.Exist SABnzbd || QPKGs.ToUpgrade.Exist SABnzbd; then
+                    PIPs.Install.Set   # must ensure 'sabyenc' and 'feedparser' modules are installed/updated
+                fi
+
+                if QPKG.Enabled Entware; then
+                    AddPathToEntware
+                    Tier.Processor 'Install' false "$tier" 'IPKG' '' 'forward' 'install' 'installing' 'installed' 'long'
+                    Tier.Processor 'Install' false "$tier" 'PIP' '' 'forward' 'install' 'installing' 'installed' 'long'
+                else
+                    : # TODO: test if other packages are to be installed here. If so, and Entware isn't enabled, then abort with error.
+                fi
+                ;;
+        esac
+    done
+
+    QPKGs.Operations.List
+    QPKGs.States.List
+    SmartCR >&2
+
+    DebugFuncExit
+
+    }
+
+Tier.Processor()
+    {
+
+    # run a single operation on a group of packages
+
+    # input:
+    #   $1 = $TARGET_OPERATION              e.g. 'Start', 'Restart', etc...
+    #   $2 = forced operation?              e.g. 'true', 'false'
+    #   $3 = $TIER                          e.g. 'essential', 'optional', 'addon', 'all'
+    #   $4 = $PACKAGE_TYPE                  e.g. 'QPKG', 'IPKG', 'PIP'
+    #   $5 = $TARGET_OBJECT_NAME (optional) e.g. 'ToStart', 'ToStop', etc...
+    #   $6 = $PROCESSING_DIRECTION          e.g. 'forward', 'backward'
+    #   $7 = $ACTION_INTRANSITIVE           e.g. 'start', etc...
+    #   $8 = $ACTION_PRESENT                e.g. 'starting', etc...
+    #   $9 = $ACTION_PAST                   e.g. 'started', etc...
+    #  $10 = $RUNTIME (optional)            e.g. 'long'
+
+    [[ -z $1 || -z $3 || -z $4 || -z $6 || -z $7 || -z $8 || -z $9 ]] && return
+
+    DebugFuncEntry
+
+    local package=''
+    local forced_operation=''
+    local message_prefix=''
+    local target_function=''
+    local targets_function=''
+    local -i index=0
+    local -a target_packages=()
+    local -i package_count=0
+    local -i pass_count=0
+    local -i fail_count=0
+    local -r TARGET_OPERATION=$1
+    local -r TIER=$3
+    local -r PACKAGE_TYPE=$4
+    local -r TARGET_OBJECT_NAME=${5:-}
+    local -r PROCESSING_DIRECTION=$6
+    local -r RUNTIME=${10:-}
+
+    if [[ $2 = true ]]; then
+        forced_operation='--forced'
+        message_prefix='force-'
+    fi
+
+    case $PACKAGE_TYPE in
+        QPKG|IPKG|PIP)
+            target_function=$PACKAGE_TYPE
+            targets_function=${PACKAGE_TYPE}s
+            ;;
+        *)
+            DebugAsError "unknown \$PACKAGE_TYPE: '$PACKAGE_TYPE'"
+            DebugFuncExit 1; return
+            ;;
+    esac
+
+    local -r ACTION_INTRANSITIVE=${message_prefix}$7
+    local -r ACTION_PRESENT=${message_prefix}$8
+    local -r ACTION_PAST=${message_prefix}$9
+
+    ShowAsProc "checking for$([[ $TIER = all ]] && echo '' || echo " $TIER") packages to $ACTION_INTRANSITIVE" >&2
+
+    case $PACKAGE_TYPE in
+        QPKG)
+            if $targets_function.$TARGET_OBJECT_NAME.IsNone; then
+                DebugInfo "no $targets_function to process"
+                DebugFuncExit; return
+            fi
+
+            if [[ $TIER = all ]]; then
+                target_packages=($($targets_function.$TARGET_OBJECT_NAME.Array))
+            else
+                for package in $($targets_function.$TARGET_OBJECT_NAME.Array); do
+                    $targets_function."$(tr 'a-z' 'A-Z' <<< "${TIER:0:1}")${TIER:1}".Exist "$package" && target_packages+=("$package")
+                done
+            fi
+
+            package_count=${#target_packages[@]}
+
+            if [[ $package_count -eq 0 ]]; then
+                DebugInfo "no$([[ $TIER = all ]] && echo '' || echo " $TIER") $targets_function to process"
+                DebugFuncExit; return
+            fi
+
+            if [[ $PROCESSING_DIRECTION = forward ]]; then
+                for package in "${target_packages[@]}"; do                  # process list forwards
+                    ShowAsOperationProgress "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$PACKAGE_TYPE" "$RUNTIME"
+
+                    if ! $target_function.$TARGET_OPERATION "$package" "$forced_operation"; then
+                        ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") (see log for more details)"
+                        ((fail_count++))
+                        continue
+                    fi
+
+                    ((pass_count++))
+                done
+            else
+                for ((index=package_count-1; index>=0; index--)); do       # process list backwards
+                    package=${target_packages[$index]}
+                    ShowAsOperationProgress "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$PACKAGE_TYPE" "$RUNTIME"
+
+                    if ! $target_function.$TARGET_OPERATION "$package" "$forced_operation"; then
+                        ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") (see log for more details)"
+                        ((fail_count++))
+                        continue
+                    fi
+
+                    ((pass_count++))
+                done
+            fi
+            ;;
+        IPKG|PIP)
+            $targets_function.$TARGET_OPERATION
+            ;;
+    esac
+
+    ShowAsOperationResult "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PAST" "$PACKAGE_TYPE" "$RUNTIME"
+    DebugFuncExit
+
+    }
+
+Session.Results()
+    {
+
+#     Session.Debug.ToArchive.IsSet && ReleaseLockFile # release lock early if possible so other instances can run
+
+    if Args.Unknown.IsNone; then
+        if Opts.Help.Actions.IsSet; then
+            Help.Actions.Show
+        elif Opts.Help.ActionsAll.IsSet; then
+            Help.ActionsAll.Show
+        elif Opts.Help.Packages.IsSet; then
+            Help.Packages.Show
+        elif Opts.Help.Options.IsSet; then
+            Help.Options.Show
+        elif Opts.Help.Problems.IsSet; then
+            Help.Problems.Show
+        elif Opts.Help.Tips.IsSet; then
+            Help.Tips.Show
+        elif Opts.Help.Abbreviations.IsSet; then
+            Help.PackageAbbreviations.Show
+        elif Opts.Versions.View.IsSet; then
+            ShowVersions
+        elif Opts.Log.All.View.IsSet; then
+            Log.All.View
+        elif Opts.Log.Last.View.IsSet; then
+            Log.Last.View
+        elif Opts.Log.Tail.View.IsSet; then
+            Log.Tail.View
+        elif Opts.Log.All.Paste.IsSet; then
+            Log.All.Paste.Online
+        elif Opts.Log.Last.Paste.IsSet; then
+            Log.Last.Paste.Online
+        elif Opts.Log.Tail.Paste.IsSet; then
+            Log.Tail.Paste.Online
+        elif Opts.Apps.List.All.IsSet; then
+            QPKGs.All.Show
+        elif Opts.Apps.List.NotInstalled.IsSet; then
+            QPKGs.NotInstalled.Show
+        elif Opts.Apps.List.Started.IsSet; then
+            QPKGs.Started.Show
+        elif Opts.Apps.List.Stopped.IsSet; then
+            QPKGs.Stopped.Show
+        elif Opts.Apps.List.Upgradable.IsSet; then
+            QPKGs.Upgradable.Show
+        elif Opts.Apps.List.Essential.IsSet; then
+            QPKGs.Essential.Show
+        elif Opts.Apps.List.Optional.IsSet; then
+            QPKGs.Optional.Show
+        elif Opts.Apps.List.Standalone.IsSet; then
+            QPKGs.Standalone.Show
+        elif Opts.Help.Backups.IsSet; then
+            QPKGs.Backups.Show
+        elif Opts.Help.Status.IsSet; then
+            QPKGs.Statuses.Show
+        elif Opts.Apps.List.Installed.IsSet; then
+            QPKGs.Installed.Show
+        fi
+    fi
+
+    if Opts.Help.Basic.IsSet; then
+        Help.Basic.Show
+        Help.Basic.Example.Show
+    fi
+
+    Session.ShowBackupLocation.IsSet && Help.BackupLocation.Show
+    Session.Summary.IsSet && ShowSummary
+    Session.SuggestIssue.IsSet && Help.Issue.Show
+    DisplayLineSpaceIfNoneAlready               # final on-screen linespace
+
+    DebugInfoMinorSeparator
+    DebugScript 'finished' "$($DATE_CMD)"
+    DebugScript 'elapsed time' "$(ConvertSecsToHoursMinutesSecs "$(($($DATE_CMD +%s)-$([[ -n $SCRIPT_STARTSECONDS ]] && echo "$SCRIPT_STARTSECONDS" || echo "1")))")"
+    DebugInfoMajorSeparator
+    Session.Debug.ToArchive.IsSet && ArchiveActiveSessionLog
+    CleanActiveSessionLog
+    ReleaseLockFile
+
+    return 0
+
+    }
+
+ParseArguments()
     {
 
     # basic argument syntax:
@@ -712,7 +1270,7 @@ Session.Arguments.Parse()
     for arg in "${user_args[@]}"; do
         arg_identified=false
 
-        # identify operation    note: every time operation changes, clear scope
+        # identify operation: everytime operation changes, must clear scope
         case $arg in
             backup|check|install|rebuild|reinstall|remove|restart|restore|start|stop|uninstall|upgrade)
                 operation=${arg}_
@@ -1243,7 +1801,7 @@ Session.Arguments.Parse()
 
     }
 
-Session.Arguments.Suggestions()
+ArgumentSuggestions()
     {
 
     DebugFuncEntry
@@ -1303,51 +1861,7 @@ Session.Arguments.Suggestions()
 
     }
 
-Session.Validate()
-    {
-
-    DebugFuncEntry
-    Session.Arguments.Suggestions
-
-    if QPKGs.SkipProcessing.IsSet; then
-        DebugFuncExit 1; return
-    fi
-
-    ShowAsProc 'validating parameters' >&2
-
-    Session.Environment.List
-
-    if QPKGs.SkipProcessing.IsSet; then
-        DebugFuncExit 1; return
-    fi
-
-    if ! QPKGs.Conflicts.Check; then
-        code_pointer=2
-        QPKGs.SkipProcessing.Set
-        DebugFuncExit 1; return
-    fi
-
-    if QPKGs.ToBackup.IsNone && QPKGs.ToUninstall.IsNone && QPKGs.ToUpgrade.IsNone && QPKGs.ToInstall.IsNone && QPKGs.ToReinstall.IsNone && QPKGs.ToRestore.IsNone && QPKGs.ToRestart.IsNone && QPKGs.ToStart.IsNone && QPKGs.ToStop.IsNone && QPKGs.ToRebuild.IsNone; then
-        if Opts.Apps.All.Install.IsNot && Opts.Apps.All.Restart.IsNot && Opts.Apps.All.Upgrade.IsNot && Opts.Apps.All.Backup.IsNot && Opts.Apps.All.Restore.IsNot && Opts.Help.Status.IsNot && Opts.Apps.All.Start.IsNot && Opts.Apps.All.Stop.IsNot && Opts.Apps.All.Rebuild.IsNot; then
-            if Opts.Dependencies.Check.IsNot && Opts.IgnoreFreeSpace.IsNot; then
-                ShowAsEror "I've nothing to do (usually means the arguments didn't make sense, or were incomplete)"
-                Opts.Help.Basic.Set
-                QPKGs.SkipProcessing.Set
-                DebugFuncExit 1; return
-            fi
-        fi
-    fi
-
-    if Opts.Dependencies.Check.IsSet || QPKGs.ToUpgrade.Exist Entware; then
-        IPKGs.Install.Set
-        PIPs.Install.Set
-    fi
-
-    DebugFuncExit
-
-    }
-
-Session.Environment.List()
+ListEnvironment()
     {
 
     DebugFuncEntry
@@ -1357,40 +1871,40 @@ Session.Environment.List()
     local version=''
 
     DebugInfoMinorSeparator
-    DebugHardware.OK 'model' "$(get_display_name)"
-    DebugHardware.OK 'RAM' "$(FormatAsThousands "$INSTALLED_RAM_KB")kB"
+    DebugHardwareOK 'model' "$(get_display_name)"
+    DebugHardwareOK 'RAM' "$(FormatAsThousands "$INSTALLED_RAM_KB")kB"
 
     if QPKGs.ToInstall.Exist SABnzbd || QPKG.Installed SABnzbd; then
-        [[ $INSTALLED_RAM_KB -le $MIN_RAM_KB ]] && DebugHardware.Warning 'RAM' "less-than or equal-to $(FormatAsThousands "$MIN_RAM_KB")kB"
+        [[ $INSTALLED_RAM_KB -le $MIN_RAM_KB ]] && DebugHardwareWarning 'RAM' "less-than or equal-to $(FormatAsThousands "$MIN_RAM_KB")kB"
     fi
 
     if [[ ${NAS_FIRMWARE//.} -ge 400 ]]; then
-        DebugFirmware.OK 'version' "$NAS_FIRMWARE"
+        DebugFirmwareOK 'version' "$NAS_FIRMWARE"
     else
-        DebugFirmware.Warning 'version' "$NAS_FIRMWARE"
+        DebugFirmwareWarning 'version' "$NAS_FIRMWARE"
     fi
 
     if [[ $NAS_BUILD -lt 20201015 || $NAS_BUILD -gt 20201020 ]]; then   # these builds won't allow unsigned QPKGs to run at all
-        DebugFirmware.OK 'build' "$NAS_BUILD"
+        DebugFirmwareOK 'build' "$NAS_BUILD"
     else
-        DebugFirmware.Warning 'build' "$NAS_BUILD"
+        DebugFirmwareWarning 'build' "$NAS_BUILD"
     fi
 
-    DebugFirmware.OK 'kernel' "$($UNAME_CMD -mr)"
-    DebugFirmware.OK 'platform' "$($GETCFG_CMD '' Platform -d unknown -f /etc/platform.conf)"
-    DebugUserspace.OK 'OS uptime' "$($UPTIME_CMD | $SED_CMD 's|.*up.||;s|,.*load.*||;s|^\ *||')"
-    DebugUserspace.OK 'system load' "$($UPTIME_CMD | $SED_CMD 's|.*load average: ||' | $AWK_CMD -F', ' '{print "1m:"$1", 5m:"$2", 15m:"$3}')"
+    DebugFirmwareOK 'kernel' "$($UNAME_CMD -mr)"
+    DebugFirmwareOK 'platform' "$($GETCFG_CMD '' Platform -d unknown -f /etc/platform.conf)"
+    DebugUserspaceOK 'OS uptime' "$($UPTIME_CMD | $SED_CMD 's|.*up.||;s|,.*load.*||;s|^\ *||')"
+    DebugUserspaceOK 'system load' "$($UPTIME_CMD | $SED_CMD 's|.*load average: ||' | $AWK_CMD -F', ' '{print "1m:"$1", 5m:"$2", 15m:"$3}')"
 
     if [[ $USER = admin ]]; then
-        DebugUserspace.OK '$USER' "$USER"
+        DebugUserspaceOK '$USER' "$USER"
     else
-        DebugUserspace.Warning '$USER' "$USER"
+        DebugUserspaceWarning '$USER' "$USER"
     fi
 
     if [[ $EUID -eq 0 ]]; then
-        DebugUserspace.OK '$EUID' "$EUID"
+        DebugUserspaceOK '$EUID' "$EUID"
     else
-        DebugUserspace.Warning '$EUID' "$EUID"
+        DebugUserspaceWarning '$EUID' "$EUID"
     fi
 
     if [[ $EUID -ne 0 || $USER != admin ]]; then
@@ -1399,25 +1913,25 @@ Session.Environment.List()
         DebugFuncExit 1; return
     fi
 
-    DebugUserspace.OK '$BASH_VERSION' "$BASH_VERSION"
-    DebugUserspace.OK 'default volume' "$DEFAULT_VOLUME"
+    DebugUserspaceOK '$BASH_VERSION' "$BASH_VERSION"
+    DebugUserspaceOK 'default volume' "$DEFAULT_VOLUME"
 
     if [[ -L '/opt' ]]; then
-        DebugUserspace.OK '/opt' "$($READLINK_CMD '/opt' || echo '<not present>')"
+        DebugUserspaceOK '/opt' "$($READLINK_CMD '/opt' || echo '<not present>')"
     else
-        DebugUserspace.Warning '/opt' '<not present>'
+        DebugUserspaceWarning '/opt' '<not present>'
     fi
 
     if QPKG.Enabled Entware; then
-        Session.AddPathToEntware
+        AddPathToEntware
     else
-        Session.RemovePathToEntware
+        RemovePathToEntware
     fi
 
     if [[ ${#PATH} -le $max_width ]]; then
-        DebugUserspace.OK '$PATH' "$PATH"
+        DebugUserspaceOK '$PATH' "$PATH"
     else
-        DebugUserspace.OK '$PATH' "${PATH:0:trimmed_width}..."
+        DebugUserspaceOK '$PATH' "${PATH:0:trimmed_width}..."
     fi
 
     CheckPythonPathAndVersion python3
@@ -1429,446 +1943,14 @@ Session.Environment.List()
 
     DebugScript 'logs path' "$LOGS_PATH"
     DebugScript 'work path' "$WORK_PATH"
-    DebugScript 'object reference hash' "$(Objects.Compile hash)"
+    DebugScript 'object reference hash' "$(CompileObjects hash)"
     DebugInfoMinorSeparator
 
     DebugFuncExit
 
     }
 
-# package processing priorities need to be:
-
-#   _. rebuild optionals            (meta-operation: 'install' QPKG and 'restore' config only if package has a backup file)
-
-#  17. backup all                   (highest: most-important)
-#  16. stop optionals
-#  15. stop essentials
-#  14. uninstall all
-
-#  13. upgrade essentials
-#  12. reinstall essentials
-#  11. install essentials
-#  10. restore essentials
-#   9. start essentials
-#   8. restart essentials
-
-#   7. upgrade optionals
-#   6. reinstall optionals
-#   5. install optionals
-#   4. restore optionals
-#   3. start optionals
-#   2. restart optionals
-
-#   1. status                       (lowest: least-important)
-
-Tiers.Processor()
-    {
-
-    QPKGs.SkipProcessing.IsSet && return
-    DebugFuncEntry
-    local package=''
-
-    QPKGs.SupportsBackup.Build
-    QPKGs.SupportsUpdateOnRestart.Build
-
-    # build an initial download list
-    if Opts.Apps.All.Upgrade.IsSet; then
-        QPKGs.ToUpgrade.Add "$(QPKGs.Upgradable.Array)"
-    fi
-
-    if Opts.Apps.All.Reinstall.IsSet; then
-        QPKGs.ToReinstall.Add "$(QPKGs.Installable.Array)"
-    fi
-
-    if Opts.Apps.All.Install.IsSet; then
-        QPKGs.ToInstall.Add "$(QPKGs.Installable.Array)"
-    fi
-
-    if Opts.Apps.All.Rebuild.IsSet || QPKGs.ToRebuild.IsAny; then
-        if QPKGs.BackedUp.IsNone; then
-            ShowAsWarn 'there are no package backups to rebuild from' >&2
-        else
-            if Opts.Apps.All.Rebuild.IsSet; then
-                for package in $(QPKGs.BackedUp.Array); do
-                    QPKG.NotInstalled "$package" && QPKGs.ToInstall.Add "$package"
-                done
-
-                QPKGs.ToRestore.Add "$(QPKGs.BackedUp.Array)"
-            else
-                for package in $(QPKGs.ToRebuild.Array); do
-                    if ! QPKGs.BackedUp.Exist "$package"; then
-                        ShowAsWarn "$(FormatAsPackageName "$package") does not have a backup to rebuild from" >&2
-                    else
-                        QPKG.NotInstalled "$package" && QPKGs.ToInstall.Add "$package"
-                        QPKGs.ToRestore.Add "$package"
-                    fi
-                done
-            fi
-        fi
-    fi
-
-    PreDownload.Package.Shuffle
-
-    QPKGs.ToDownload.Add "$(QPKGs.ToUpgrade.Array)"
-    QPKGs.ToDownload.Add "$(QPKGs.ToReinstall.Array)"
-    QPKGs.ToDownload.Add "$(QPKGs.ToInstall.Array)"
-
-    # download all required essentials too
-    for package in $(QPKGs.ToDownload.Array); do
-        QPKGs.ToDownload.Add "$(QPKG.Get.Essentials "$package")"
-    done
-
-    for package in $(QPKGs.Installed.Array); do
-        QPKGs.ToDownload.Add "$(QPKG.Get.Essentials "$package")"
-    done
-
-    Tier.Processor 'Download' false 'all' 'QPKG' 'ToDownload' 'forward' 'update package cache with' 'updating package cache with' 'updated package cache with' ''
-
-    if Opts.Apps.All.Backup.IsSet; then
-        QPKGs.ToBackup.Add "$(QPKGs.SupportsBackup.Array)"
-    fi
-
-    QPKGs.ToBackup.Remove "$(QPKGs.NotInstalled.Array)"
-    QPKGs.ToBackup.Remove "$(QPKGs.NotSupportsBackup.Array)"
-
-    Tier.Processor 'Backup' false 'all' 'QPKG' 'ToBackup' 'forward' 'backup' 'backing-up' 'backed-up' ''
-
-    if Opts.Apps.All.Stop.IsSet; then
-        QPKGs.ToStop.Add "$(QPKGs.Started.Array)"
-    fi
-
-#     # don't stop, then start a package. Make it restart instead.
-#     for package in $(QPKGs.ToStop.Array); do
-#         if QPKGs.ToStart.Exist "$package"; then
-#             QPKGs.ToStop.Remove "$package"
-#             QPKGs.ToStart.Remove "$package"
-#             QPKGs.ToRestart.Add "$package"
-#         fi
-#     done
-
-    if Opts.Apps.All.Uninstall.IsSet; then
-        QPKGs.ToStop.Init   # no-need to stop any packages, as they are about to be uninstalled
-    fi
-
-    # if an essential has been selected for stop, need to stop its optionals first
-    for package in $(QPKGs.ToStop.Array); do
-        if QPKGs.Essential.Exist "$package" && QPKG.Installed "$package"; then
-            QPKGs.ToStop.Add "$(QPKG.Get.Optionals "$package")"
-        fi
-    done
-
-    # if an essential has been selected for uninstall, need to stop its optionals first
-    for package in $(QPKGs.ToUninstall.Array); do
-        if QPKGs.Essential.Exist "$package" && QPKG.Installed "$package"; then
-            QPKGs.ToStop.Add "$(QPKG.Get.Optionals "$package")"
-        fi
-    done
-
-    if QPKGs.ToReinstall.Exist Entware; then    # treat Entware as a special case: complete removal and fresh install (to clear all installed IPKGs)
-        QPKGs.ToUninstall.Add Entware
-        QPKGs.ToInstall.Add Entware
-        QPKGs.ToReinstall.Remove Entware
-
-        # if Entware has been selected for reinstall, need to stop its optionals first, and start them again later
-        QPKGs.ToStop.Add "$(QPKG.Get.Optionals Entware)"
-        QPKGs.ToStart.Add "$(QPKGs.Started.Array)"
-    fi
-
-    # if an essential (like Par2, but not Entware) has been selected for reinstall, need to stop its optionals first, and start them again later
-    for package in $(QPKGs.ToReinstall.Array); do
-        if QPKGs.Essential.Exist "$package" && QPKG.Installed "$package" && QPKG.Enabled "$package"; then
-            QPKGs.ToStop.Add "$(QPKG.Get.Optionals "$package")"
-            QPKGs.ToStart.Add "$(QPKG.Get.Optionals "$package")"
-        fi
-    done
-
-    QPKGs.ToStop.Remove "$(QPKGs.Stopped.Array)"
-    QPKGs.ToStop.Remove "$(QPKGs.NotInstalled.Array)"
-    QPKGs.ToStop.Remove "$(QPKGs.ToUninstall.Array)"
-    QPKGs.ToStop.Remove "$PROJECT_NAME"
-
-    Tier.Processor 'Stop' false 'optional' 'QPKG' 'ToStop' 'backward' 'stop' 'stopping' 'stopped' ''
-    Tier.Processor 'Stop' false 'essential' 'QPKG' 'ToStop' 'backward' 'stop' 'stopping' 'stopped' ''
-
-    QPKGs.ToUninstall.Remove "$(QPKGs.NotInstalled.Array)"
-    QPKGs.ToUninstall.Remove "$PROJECT_NAME"
-
-    Tier.Processor 'Uninstall' false 'optional' 'QPKG' 'ToUninstall' 'forward' 'uninstall' 'uninstalling' 'uninstalled' ''
-
-    ShowAsProc 'checking for addon packages to uninstall' >&2
-    QPKG.Installed Entware && IPKGs.Uninstall
-
-    Tier.Processor 'Uninstall' false 'essential' 'QPKG' 'ToUninstall' 'forward' 'uninstall' 'uninstalling' 'uninstalled' ''
-
-    # adjust configuration restore lists to remove essentials (these can't be backed-up or restored for-now)
-    if Opts.Apps.All.Restore.IsSet; then
-        QPKGs.ToRestore.Add "$(QPKGs.Installed.Array)"
-    fi
-
-    QPKGs.ToRestore.Remove "$(QPKGs.Essential.Array)"
-    QPKGs.ToRestore.Remove "$(QPKGs.NotSupportsBackup.Array)"
-
-    if Opts.Apps.All.Upgrade.IsSet; then
-        QPKGs.ToRestart.Add "$(QPKGs.Optional.Array)"
-        QPKGs.ToRestart.Remove "$(QPKGs.Standalone.Array)"
-    fi
-
-    # install all required essentials too
-    for package in $(QPKGs.Installed.Array); do
-        QPKGs.ToInstall.Add "$(QPKG.Get.Essentials "$package")"
-    done
-
-    QPKGs.ToInstall.Remove "$(QPKGs.Installed.Array)"
-
-    for tier in {'essential','addon','optional'}; do
-        case $tier in
-            essential|optional)
-                Tier.Processor 'Upgrade' false "$tier" 'QPKG' 'ToUpgrade' 'forward' 'upgrade' 'upgrading' 'upgraded' 'long'
-                Tier.Processor 'Reinstall' false "$tier" 'QPKG' 'ToReinstall' 'forward' 'reinstall' 'reinstalling' 'reinstalled' 'long'
-                Tier.Processor 'Install' false "$tier" 'QPKG' 'ToInstall' 'forward' 'install' 'installing' 'installed' 'long'
-
-                if [[ $tier = optional ]]; then
-                    Tier.Processor 'Restore' false "$tier" 'QPKG' 'ToRestore' 'forward' 'restore configuration for' 'restoring configuration for' 'configuration restored for' 'long'
-                fi
-
-                # adjust lists for start
-                if Opts.Apps.All.Start.IsSet; then
-                    QPKGs.ToStart.Add "$(QPKGs.Installed.Array)"
-                else
-                    # check for essential packages that require starting due to any optionals being reinstalled
-                    for package in $(QPKGs.ToReinstall.Array); do
-                        QPKGs.ToStart.Add "$(QPKG.Get.Essentials "$package")"
-                    done
-
-                    for package in $(QPKGs.IsReinstall.Array); do
-                        QPKGs.ToStart.Add "$(QPKG.Get.Essentials "$package")"
-                    done
-
-                    # check for essential packages that require starting due to any optionals being installed
-                    for package in $(QPKGs.ToInstall.Array); do
-                        QPKGs.ToStart.Add "$(QPKG.Get.Essentials "$package")"
-                    done
-
-                    for package in $(QPKGs.IsInstall.Array); do
-                        QPKGs.ToStart.Add "$(QPKG.Get.Essentials "$package")"
-                    done
-
-                    # check for essential packages that require starting due to any optionals being started
-                    for package in $(QPKGs.ToStart.Array); do
-                        QPKGs.ToStart.Add "$(QPKG.Get.Essentials "$package")"
-                    done
-
-                    for package in $(QPKGs.IsStart.Array); do
-                        QPKGs.ToStart.Add "$(QPKG.Get.Essentials "$package")"
-                    done
-
-                    # check for essential packages that require starting due to any optionals being restarted
-                    for package in $(QPKGs.ToRestart.Array); do
-                        QPKGs.ToStart.Add "$(QPKG.Get.Essentials "$package")"
-                    done
-                fi
-
-                QPKGs.ToStart.Remove "$(QPKGs.NotInstalled.Array)"
-                QPKGs.ToStart.Remove "$(QPKGs.Started.Array)"
-                QPKGs.ToStart.Remove "$(QPKGs.IsInstall.Array)"
-                QPKGs.ToStart.Remove "$(QPKGs.IsStart.Array)"
-                QPKGs.ToStart.Remove "$PROJECT_NAME"
-
-                Tier.Processor 'Start' false "$tier" 'QPKG' 'ToStart' 'forward' 'start' 'starting' 'started' 'long'
-
-                # check all items
-                if Opts.Dependencies.Check.IsSet; then
-                    for package in $(QPKGs.Optional.Array); do
-                        if ! QPKGs.Standalone.Exist "$package" && ! QPKGs.Upgradable.Exist "$package"; then
-                            QPKGs.ToRestart.Add "$package"
-                        fi
-                    done
-                fi
-
-                # adjust lists for restart
-                if Opts.Apps.All.Restart.IsSet; then
-                    QPKGs.ToRestart.Add "$(QPKGs.Installed.Array)"
-                else
-                    # check for optional packages to restart due to any essentials being installed
-                    for package in $(QPKGs.IsInstall.Array); do
-                        QPKGs.ToRestart.Add "$(QPKG.Get.Optionals "$package")"
-                    done
-
-                    # check for optional packages to restart due to any essentials being started
-                    for package in $(QPKGs.IsStart.Array); do
-                        QPKGs.ToRestart.Add "$(QPKG.Get.Optionals "$package")"
-                    done
-
-                    # check for optional packages to restart due to any essentials being restarted
-                    for package in $(QPKGs.IsRestart.Array); do
-                        QPKGs.ToRestart.Add "$(QPKG.Get.Optionals "$package")"
-                    done
-
-                    # check for optional packages to restart due to any essentials being upgraded
-                    for package in $(QPKGs.IsUpgrade.Array); do
-                        QPKGs.ToRestart.Add "$(QPKG.Get.Optionals "$package")"
-                    done
-                fi
-
-                QPKGs.ToRestart.Remove "$(QPKGs.NotInstalled.Array)"
-                QPKGs.ToRestart.Remove "$(QPKGs.Stopped.Array)"
-                QPKGs.ToRestart.Remove "$(QPKGs.IsUpgrade.Array)"
-                QPKGs.ToRestart.Remove "$(QPKGs.IsReinstall.Array)"
-                QPKGs.ToRestart.Remove "$(QPKGs.IsStart.Array)"
-                QPKGs.ToRestart.Remove "$(QPKGs.IsRestart.Array)"
-                QPKGs.ToRestart.Remove "$(QPKGs.IsRestore.Array)"
-                QPKGs.ToRestart.Remove "$(QPKGs.NotSupportsUpdateOnRestart.Array)"
-
-                Tier.Processor 'Restart' false "$tier" 'QPKG' 'ToRestart' 'forward' 'restart' 'restarting' 'restarted' 'long'
-                ;;
-            addon)
-                if QPKGs.ToInstall.IsAny || QPKGs.IsInstall.IsAny || QPKGs.ToReinstall.IsAny || QPKGs.IsReinstall.IsAny || QPKGs.ToUpgrade.IsAny || QPKGs.IsUpgrade.IsAny; then
-                    IPKGs.Install.Set
-                fi
-
-                if QPKGs.ToInstall.Exist SABnzbd || QPKGs.ToReinstall.Exist SABnzbd || QPKGs.ToUpgrade.Exist SABnzbd; then
-                    PIPs.Install.Set   # must ensure 'sabyenc' and 'feedparser' modules are installed/updated
-                fi
-
-                if QPKG.Enabled Entware; then
-                    Session.AddPathToEntware
-                    Tier.Processor 'Install' false "$tier" 'IPKG' '' 'forward' 'install' 'installing' 'installed' 'long'
-                    Tier.Processor 'Install' false "$tier" 'PIP' '' 'forward' 'install' 'installing' 'installed' 'long'
-                else
-                    : # TODO: test if other packages are to be installed here. If so, and Entware isn't enabled, then abort with error.
-                fi
-                ;;
-        esac
-    done
-
-    QPKGs.Operations.List
-    QPKGs.States.List
-    SmartCR >&2
-
-    DebugFuncExit
-
-    }
-
-Tier.Processor()
-    {
-
-    # run a single operation on a group of packages
-
-    # input:
-    #   $1 = $TARGET_OPERATION              e.g. 'Start', 'Restart', etc...
-    #   $2 = forced operation?              e.g. 'true', 'false'
-    #   $3 = $TIER                          e.g. 'essential', 'optional', 'addon', 'all'
-    #   $4 = $PACKAGE_TYPE                  e.g. 'QPKG', 'IPKG', 'PIP'
-    #   $5 = $TARGET_OBJECT_NAME (optional) e.g. 'ToStart', 'ToStop', etc...
-    #   $6 = $PROCESSING_DIRECTION          e.g. 'forward', 'backward'
-    #   $7 = $ACTION_INTRANSITIVE           e.g. 'start', etc...
-    #   $8 = $ACTION_PRESENT                e.g. 'starting', etc...
-    #   $9 = $ACTION_PAST                   e.g. 'started', etc...
-    #  $10 = $RUNTIME (optional)            e.g. 'long'
-
-    [[ -z $1 || -z $3 || -z $4 || -z $6 || -z $7 || -z $8 || -z $9 ]] && return
-
-    DebugFuncEntry
-
-    local package=''
-    local forced_operation=''
-    local message_prefix=''
-    local target_function=''
-    local targets_function=''
-    local -i index=0
-    local -a target_packages=()
-    local -i package_count=0
-    local -i pass_count=0
-    local -i fail_count=0
-    local -r TARGET_OPERATION=$1
-    local -r TIER=$3
-    local -r PACKAGE_TYPE=$4
-    local -r TARGET_OBJECT_NAME=${5:-}
-    local -r PROCESSING_DIRECTION=$6
-    local -r RUNTIME=${10:-}
-
-    if [[ $2 = true ]]; then
-        forced_operation='--forced'
-        message_prefix='force-'
-    fi
-
-    case $PACKAGE_TYPE in
-        QPKG|IPKG|PIP)
-            target_function=$PACKAGE_TYPE
-            targets_function=${PACKAGE_TYPE}s
-            ;;
-        *)
-            DebugAsError "unknown \$PACKAGE_TYPE: '$PACKAGE_TYPE'"
-            return 1
-            ;;
-    esac
-
-    local -r ACTION_INTRANSITIVE=${message_prefix}$7
-    local -r ACTION_PRESENT=${message_prefix}$8
-    local -r ACTION_PAST=${message_prefix}$9
-
-    ShowAsProc "checking for$([[ $TIER = all ]] && echo '' || echo " $TIER") packages to $ACTION_INTRANSITIVE" >&2
-
-    case $PACKAGE_TYPE in
-        QPKG)
-            if $targets_function.$TARGET_OBJECT_NAME.IsNone; then
-                DebugInfo "no $targets_function to process"
-                DebugFuncExit; return
-            fi
-
-            if [[ $TIER = all ]]; then
-                target_packages=($($targets_function.$TARGET_OBJECT_NAME.Array))
-            else
-                for package in $($targets_function.$TARGET_OBJECT_NAME.Array); do
-                    $targets_function."$(tr 'a-z' 'A-Z' <<< "${TIER:0:1}")${TIER:1}".Exist "$package" && target_packages+=("$package")
-                done
-            fi
-
-            package_count=${#target_packages[@]}
-
-            if [[ $package_count -eq 0 ]]; then
-                DebugInfo "no$([[ $TIER = all ]] && echo '' || echo " $TIER") $targets_function to process"
-                DebugFuncExit; return
-            fi
-
-            if [[ $PROCESSING_DIRECTION = forward ]]; then
-                for package in "${target_packages[@]}"; do                  # process list forwards
-                    ShowAsOperationProgress "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$PACKAGE_TYPE" "$RUNTIME"
-
-                    if ! $target_function.$TARGET_OPERATION "$package" "$forced_operation"; then
-                        ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") (see log for more details)"
-                        ((fail_count++))
-                        continue
-                    fi
-
-                    ((pass_count++))
-                done
-            else
-                for ((index=package_count-1; index>=0; index--)); do       # process list backwards
-                    package=${target_packages[$index]}
-                    ShowAsOperationProgress "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$PACKAGE_TYPE" "$RUNTIME"
-
-                    if ! $target_function.$TARGET_OPERATION "$package" "$forced_operation"; then
-                        ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") (see log for more details)"
-                        ((fail_count++))
-                        continue
-                    fi
-
-                    ((pass_count++))
-                done
-            fi
-            ;;
-        IPKG|PIP)
-            $targets_function.$TARGET_OPERATION
-            ;;
-    esac
-
-    ShowAsOperationResult "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PAST" "$PACKAGE_TYPE" "$RUNTIME"
-    DebugFuncExit
-
-    }
-
-PreDownload.Package.Shuffle()
+PreDownloadPackageShuffle()
     {
 
     # this runs before operations for 'download' (and possibly 'install', 'reinstall' and 'upgrade': TBD) to ensure package lists are sane
@@ -1927,102 +2009,7 @@ PreDownload.Package.Shuffle()
 
     }
 
-Package.Save.Lists()
-    {
-
-    if [[ -e $pip3_cmd ]]; then
-        $pip3_cmd freeze > "$PREVIOUS_PIP_MODULE_LIST"
-        DebugAsDone "saved current $(FormatAsPackageName pip3) module list to $(FormatAsFileName "$PREVIOUS_PIP_MODULE_LIST")"
-    fi
-
-    if [[ -e $OPKG_CMD ]]; then
-        $OPKG_CMD list-installed > "$PREVIOUS_OPKG_PACKAGE_LIST"
-        DebugAsDone "saved current $(FormatAsPackageName Entware) IPKG list to $(FormatAsFileName "$PREVIOUS_OPKG_PACKAGE_LIST")"
-    fi
-
-    }
-
-Session.Results()
-    {
-
-#     Session.Debug.ToArchive.IsSet && Session.LockFile.Release # release lock early if possible so other instances can run
-
-    if Args.Unknown.IsNone; then
-        if Opts.Help.Actions.IsSet; then
-            Help.Actions.Show
-        elif Opts.Help.ActionsAll.IsSet; then
-            Help.ActionsAll.Show
-        elif Opts.Help.Packages.IsSet; then
-            Help.Packages.Show
-        elif Opts.Help.Options.IsSet; then
-            Help.Options.Show
-        elif Opts.Help.Problems.IsSet; then
-            Help.Problems.Show
-        elif Opts.Help.Tips.IsSet; then
-            Help.Tips.Show
-        elif Opts.Help.Abbreviations.IsSet; then
-            Help.PackageAbbreviations.Show
-        elif Opts.Versions.View.IsSet; then
-            Versions.Show
-        elif Opts.Log.All.View.IsSet; then
-            Log.All.View
-        elif Opts.Log.Last.View.IsSet; then
-            Log.Last.View
-        elif Opts.Log.Tail.View.IsSet; then
-            Log.Tail.View
-        elif Opts.Log.All.Paste.IsSet; then
-            Log.All.Paste.Online
-        elif Opts.Log.Last.Paste.IsSet; then
-            Log.Last.Paste.Online
-        elif Opts.Log.Tail.Paste.IsSet; then
-            Log.Tail.Paste.Online
-        elif Opts.Apps.List.All.IsSet; then
-            QPKGs.All.Show
-        elif Opts.Apps.List.NotInstalled.IsSet; then
-            QPKGs.NotInstalled.Show
-        elif Opts.Apps.List.Started.IsSet; then
-            QPKGs.Started.Show
-        elif Opts.Apps.List.Stopped.IsSet; then
-            QPKGs.Stopped.Show
-        elif Opts.Apps.List.Upgradable.IsSet; then
-            QPKGs.Upgradable.Show
-        elif Opts.Apps.List.Essential.IsSet; then
-            QPKGs.Essential.Show
-        elif Opts.Apps.List.Optional.IsSet; then
-            QPKGs.Optional.Show
-        elif Opts.Apps.List.Standalone.IsSet; then
-            QPKGs.Standalone.Show
-        elif Opts.Help.Backups.IsSet; then
-            QPKGs.Backups.Show
-        elif Opts.Help.Status.IsSet; then
-            QPKGs.Statuses.Show
-        elif Opts.Apps.List.Installed.IsSet; then
-            QPKGs.Installed.Show
-        fi
-    fi
-
-    if Opts.Help.Basic.IsSet; then
-        Help.Basic.Show
-        Help.Basic.Example.Show
-    fi
-
-    Session.ShowBackupLocation.IsSet && Help.BackupLocation.Show
-    Session.Summary.IsSet && Session.Summary.Show
-    Session.SuggestIssue.IsSet && Help.Issue.Show
-    DisplayLineSpaceIfNoneAlready               # final on-screen linespace
-
-    DebugInfoMinorSeparator
-    DebugScript 'finished' "$($DATE_CMD)"
-    DebugScript 'elapsed time' "$(ConvertSecsToHoursMinutesSecs "$(($($DATE_CMD +%s)-$([[ -n $SCRIPT_STARTSECONDS ]] && echo "$SCRIPT_STARTSECONDS" || echo "1")))")"
-    DebugInfoMajorSeparator
-    Session.Debug.ToArchive.IsSet && ArchiveSessionLog
-    Session.LockFile.Release
-
-    return 0
-
-    }
-
-Clean.Logs()
+CleanArchivedSessionLogs()
     {
 
     if [[ -n $LOGS_PATH && -d $LOGS_PATH ]]; then
@@ -2034,7 +2021,7 @@ Clean.Logs()
 
     }
 
-Clean.Cache()
+CleanWorkPath()
     {
 
     if [[ -n $WORK_PATH && -d $WORK_PATH ]]; then
@@ -2073,27 +2060,27 @@ AskQuiz()
 
     }
 
-Entware.Patch.Service()
+PatchEntwareService()
     {
 
     local tab=$'\t'
-    local prefix_text="# the following line was inserted by $PROJECT_NAME: https://git.io/$PROJECT_NAME"
-    local find_text=''
-    local insert_text=''
+    local prefix="# the following line was inserted by $PROJECT_NAME: https://git.io/$PROJECT_NAME"
+    local find=''
+    local insert=''
     local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile Entware)
 
     if $GREP_CMD -q 'opt.orig' "$PACKAGE_INIT_PATHFILE"; then
         DebugInfo 'patch: do the "opt shuffle" - already done'
     else
         # ensure existing files are moved out of the way before creating /opt symlink
-        find_text='# sym-link $QPKG_DIR to /opt'
-        insert_text='opt_path="/opt"; opt_backup_path="/opt.orig"; [[ -d "$opt_path" \&\& ! -L "$opt_path" \&\& ! -e "$opt_backup_path" ]] \&\& mv "$opt_path" "$opt_backup_path"'
-        $SED_CMD -i "s|$find_text|$find_text\n\n${tab}${prefix_text}\n${tab}${insert_text}\n|" "$PACKAGE_INIT_PATHFILE"
+        find='# sym-link $QPKG_DIR to /opt'
+        insert='opt_path="/opt"; opt_backup_path="/opt.orig"; [[ -d "$opt_path" \&\& ! -L "$opt_path" \&\& ! -e "$opt_backup_path" ]] \&\& mv "$opt_path" "$opt_backup_path"'
+        $SED_CMD -i "s|$find|$find\n\n${tab}${prefix}\n${tab}${insert}\n|" "$PACKAGE_INIT_PATHFILE"
 
         # ... then restored after creating /opt symlink
-        find_text='/bin/ln -sf $QPKG_DIR /opt'
-        insert_text='[[ -L "$opt_path" \&\& -d "$opt_backup_path" ]] \&\& cp "$opt_backup_path"/* --target-directory "$opt_path" \&\& rm -r "$opt_backup_path"'
-        $SED_CMD -i "s|$find_text|$find_text\n\n${tab}${prefix_text}\n${tab}${insert_text}\n|" "$PACKAGE_INIT_PATHFILE"
+        find='/bin/ln -sf $QPKG_DIR /opt'
+        insert='[[ -L "$opt_path" \&\& -d "$opt_backup_path" ]] \&\& cp "$opt_backup_path"/* --target-directory "$opt_path" \&\& rm -r "$opt_backup_path"'
+        $SED_CMD -i "s|$find|$find\n\n${tab}${prefix}\n${tab}${insert}\n|" "$PACKAGE_INIT_PATHFILE"
 
         DebugAsDone 'patch: do the "opt shuffle"'
     fi
@@ -2102,18 +2089,18 @@ Entware.Patch.Service()
 
     }
 
-Entware.Update()
+UpdateEntware()
     {
 
     if IsNotSysFileExist $OPKG_CMD; then
-        code_pointer=3
+        code_pointer=2
         return 1
     fi
 
     local -r CHANGE_THRESHOLD_MINUTES=60
     local -r LOG_PATHFILE=$LOGS_PATH/entware.$UPDATE_LOG_FILE
     local msgs=''
-    local -i resultcode=0
+    local -i result_code=0
 
     # if Entware package list was recently updated, don't update again. Examine 'change' time as this is updated even if package list content isn't modified.
     if [[ -e $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE && -e $GNU_FIND_CMD ]]; then
@@ -2126,12 +2113,12 @@ Entware.Update()
         DebugAsProc "updating $(FormatAsPackageName Entware) package list"
 
         RunAndLog "$OPKG_CMD update" "$LOG_PATHFILE" log:failure-only
-        resultcode=$?
+        result_code=$?
 
-        if [[ $resultcode -eq 0 ]]; then
+        if [[ $result_code -eq 0 ]]; then
             DebugAsDone "updated $(FormatAsPackageName Entware) package list"
         else
-            DebugAsWarn "Unable to update $(FormatAsPackageName Entware) package list $(FormatAsExitcode $resultcode)"
+            DebugAsWarn "Unable to update $(FormatAsPackageName Entware) package list $(FormatAsExitcode $result_code)"
             # no-big-deal
         fi
     else
@@ -2142,107 +2129,18 @@ Entware.Update()
 
     }
 
-PIPs.Install()
+SavePackageLists()
     {
 
-    QPKGs.SkipProcessing.IsSet && return
-    PIPs.Install.IsNot && return
-    DebugFuncEntry
-    local exec_cmd=''
-    local -i resultcode=0
-    local -i pass_count=0
-    local -i fail_count=0
-    local -i package_count=0
-    local -r PACKAGE_TYPE='PIP group'
-    local -r ACTION_PRESENT=installing
-    local -r ACTION_PAST=installed
-    local -r RUNTIME=long
-
-    # sometimes, 'pip3' goes missing from Entware. Don't know why.
-    if [[ -e /opt/bin/pip3 ]]; then
-        pip3_cmd=/opt/bin/pip3
-    elif [[ -e /opt/bin/pip3.9 ]]; then
-        pip3_cmd=/opt/bin/pip3.9
-    elif [[ -e /opt/bin/pip3.8 ]]; then
-        pip3_cmd=/opt/bin/pip3.8
-    elif [[ -e /opt/bin/pip3.7 ]]; then
-        pip3_cmd=/opt/bin/pip3.7
-    else
-        if IsNotSysFileExist $pip3_cmd; then
-            Display "* Ugh! The usual fix for this is to let $(FormatAsScriptTitle) reinstall $(FormatAsPackageName Entware) at least once."
-            Display "\t$0 reinstall ew"
-            Display "If it happens again after reinstalling $(FormatAsPackageName Entware), please create a new issue for this on GitHub."
-            DebugFuncExit 1; return
-        fi
+    if [[ -e $pip3_cmd ]]; then
+        $pip3_cmd freeze > "$PREVIOUS_PIP_MODULE_LIST"
+        DebugAsDone "saved current $(FormatAsPackageName pip3) module list to $(FormatAsFileName "$PREVIOUS_PIP_MODULE_LIST")"
     fi
 
-    Session.AddPathToEntware
-
-    [[ -n ${MANAGER_COMMON_PIPS_ADD// /} ]] && exec_cmd="$pip3_cmd install $MANAGER_COMMON_PIPS_ADD --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
-    ((package_count++))
-
-    ShowAsOperationProgress '' "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$PACKAGE_TYPE" "$RUNTIME"
-
-    local desc="'Python3' modules"
-    local log_pathfile=$LOGS_PATH/py3-modules.assorted.$INSTALL_LOG_FILE
-    DebugAsProc "downloading & installing $desc"
-
-    RunAndLog "$exec_cmd" "$log_pathfile" log:failure-only
-    resultcode=$?
-
-    if [[ $resultcode -eq 0 ]]; then
-        DebugAsDone "downloaded & installed $desc"
-        ((pass_count++))
-    else
-        ShowAsEror "download & install $desc failed $(FormatAsResult "$resultcode")"
-        ((fail_count++))
+    if [[ -e $OPKG_CMD ]]; then
+        $OPKG_CMD list-installed > "$PREVIOUS_OPKG_PACKAGE_LIST"
+        DebugAsDone "saved current $(FormatAsPackageName Entware) IPKG list to $(FormatAsFileName "$PREVIOUS_OPKG_PACKAGE_LIST")"
     fi
-
-    if QPKG.Installed SABnzbd || QPKGs.ToInstall.Exist SABnzbd || QPKGs.ToReinstall.Exist SABnzbd; then
-        ((package_count+=2))
-
-        # KLUDGE: force recompilation of 'sabyenc3' package so it's recognised by SABnzbd: https://forums.sabnzbd.org/viewtopic.php?p=121214#p121214
-        ShowAsOperationProgress '' "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$PACKAGE_TYPE" "$RUNTIME"
-
-        exec_cmd="$pip3_cmd install --force-reinstall --ignore-installed --no-binary :all: sabyenc3 --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
-        desc="'Python3 sabyenc3' module"
-        log_pathfile=$LOGS_PATH/py3-modules.sabyenc3.$INSTALL_LOG_FILE
-        DebugAsProc "downloading & installing $desc"
-
-        RunAndLog "$exec_cmd" "$log_pathfile" log:failure-only
-        resultcode=$?
-
-        if [[ $resultcode -eq 0 ]]; then
-            DebugAsDone "downloaded & installed $desc"
-            QPKGs.ToRestart.Add SABnzbd
-            ((pass_count++))
-        else
-            ShowAsEror "download & install $desc failed $(FormatAsResult "$resultcode")"
-            ((fail_count++))
-        fi
-
-        # KLUDGE: ensure 'feedparser' is upgraded. This was version-held at 5.2.1 for Python 3.8.5 but from Python 3.9.0 onward there's no-need for version-hold anymore.
-        ShowAsOperationProgress '' "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$PACKAGE_TYPE" "$RUNTIME"
-
-        exec_cmd="$pip3_cmd install --upgrade feedparser --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
-        desc="'Python3 feedparser' module"
-        log_pathfile=$LOGS_PATH/py3-modules.feedparser.$INSTALL_LOG_FILE
-        DebugAsProc "downloading & installing $desc"
-        RunAndLog "$exec_cmd" "$log_pathfile" log:failure-only
-        resultcode=$?
-
-        if [[ $resultcode -eq 0 ]]; then
-            DebugAsDone "downloaded & installed $desc"
-            QPKGs.ToRestart.Add SABnzbd
-            ((pass_count++))
-        else
-            ShowAsEror "download & install $desc failed $(FormatAsResult "$resultcode")"
-            ((fail_count++))
-        fi
-    fi
-
-    ShowAsOperationResult '' "$package_count" "$fail_count" "$pass_count" "$ACTION_PAST" "$PACKAGE_TYPE" "$RUNTIME"
-    DebugFuncExit $resultcode
 
     }
 
@@ -2252,7 +2150,7 @@ CalcAllIPKGDepsToInstall()
     # From a specified list of IPKG names, find all dependent IPKGs, exclude those already installed, then generate a total qty to download and a total download byte-size
 
     if IsNotSysFileExist $OPKG_CMD || IsNotSysFileExist $GNU_GREP_CMD; then
-        code_pointer=4
+        code_pointer=3
         return 1
     fi
 
@@ -2273,14 +2171,14 @@ CalcAllIPKGDepsToInstall()
     # remove duplicate entries
     requested_list=$(DeDupeWords "$(IPKGs.ToInstall.List)")
     this_list=($requested_list)
-    requested_count=$($WC_CMD -w <<<"$requested_list")
+    requested_count=$($WC_CMD -w <<< "$requested_list")
 
     if [[ $requested_count -eq 0 ]]; then
         DebugAsWarn "no IPKGs requested: aborting ..."
         DebugFuncExit 1; return
     fi
 
-    if ! IPKGs.Archive.Open; then
+    if ! OpenIPKGArchive; then
         DebugFuncExit 1; return
     fi
 
@@ -2312,7 +2210,7 @@ CalcAllIPKGDepsToInstall()
 
     # exclude already installed IPKGs
     pre_exclude_list=$(DeDupeWords "$requested_list ${dependency_accumulator[*]}")
-    pre_exclude_count=$($WC_CMD -w <<<"$pre_exclude_list")
+    pre_exclude_count=$($WC_CMD -w <<< "$pre_exclude_list")
 
     if [[ $pre_exclude_count -gt 0 ]]; then
         DebugInfo "$pre_exclude_count IPKG$(FormatAsPlural "$pre_exclude_count") required (including dependencies)" "'$pre_exclude_list' "
@@ -2334,7 +2232,7 @@ CalcAllIPKGDepsToInstall()
         done
     else
         DebugAsDone 'no IPKGs to exclude'
-        IPKGs.Archive.Close
+        CloseIPKGArchive
         DebugFuncExit; return
     fi
 
@@ -2351,7 +2249,7 @@ CalcAllIPKGDepsToInstall()
         DebugAsDone 'no IPKGs to size'
     fi
 
-    IPKGs.Archive.Close
+    CloseIPKGArchive
     DebugFuncExit
 
     }
@@ -2362,7 +2260,7 @@ CalcAllIPKGDepsToUninstall()
     # From a specified list of IPKG names, exclude those already installed, then generate a total qty to uninstall
 
     if IsNotSysFileExist $OPKG_CMD || IsNotSysFileExist $GNU_GREP_CMD; then
-        code_pointer=5
+        code_pointer=4
         return 1
     fi
 
@@ -2371,7 +2269,7 @@ CalcAllIPKGDepsToUninstall()
     local element=''
 
     requested_list=$(DeDupeWords "$(IPKGs.ToUninstall.List)")
-    DebugInfo "$($WC_CMD -w <<<"$requested_list") IPKG$(FormatAsPlural "$($WC_CMD -w <<<"$requested_list")") requested" "'$requested_list' "
+    DebugInfo "$($WC_CMD -w <<< "$requested_list") IPKG$(FormatAsPlural "$($WC_CMD -w <<< "$requested_list")") requested" "'$requested_list' "
     DebugAsProc 'excluding IPKGs not installed'
 
     for element in $requested_list; do
@@ -2393,7 +2291,7 @@ IPKGs.Install()
     QPKGs.SkipProcessing.IsSet && return
     IPKGs.Install.IsNot && return
     QPKG.NotEnabled Entware && return
-    Entware.Update
+    UpdateEntware
     Session.Error.IsSet && return
     DebugFuncEntry
     local -i index=0
@@ -2463,7 +2361,7 @@ IPKGs.Upgrade.Batch()
 
     DebugFuncEntry
     local -i package_count=0
-    local -i resultcode=0
+    local -i result_code=0
 
     IPKGs.ToDownload.Add "$($OPKG_CMD list-upgradable | $CUT_CMD -f1 -d' ')"
     package_count=$(IPKGs.ToDownload.Count)
@@ -2476,18 +2374,18 @@ IPKGs.Upgrade.Batch()
                 _MonitorDirSize_ "$IPKG_DL_PATH" "$(IPKGs.ToDownload.Size)" &
 
                 RunAndLog "$OPKG_CMD upgrade$(Opts.IgnoreFreeSpace.IsSet && Opts.IgnoreFreeSpace.Text) --force-overwrite $(IPKGs.ToDownload.List) --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$LOGS_PATH/ipkgs.$UPGRADE_LOG_FILE" log:failure-only
-                resultcode=$?
+                result_code=$?
             trap - INT
         RemoveDirSizeMonitorFlagFile
 
-        if [[ $resultcode -eq 0 ]]; then
+        if [[ $result_code -eq 0 ]]; then
             ShowAsDone "downloaded & upgraded $package_count IPKG$(FormatAsPlural "$package_count")"
         else
-            ShowAsEror "download & upgrade $package_count IPKG$(FormatAsPlural "$package_count") failed $(FormatAsExitcode $resultcode)"
+            ShowAsEror "download & upgrade $package_count IPKG$(FormatAsPlural "$package_count") failed $(FormatAsExitcode $result_code)"
         fi
     fi
 
-    DebugFuncExit $resultcode
+    DebugFuncExit $result_code
 
     }
 
@@ -2499,7 +2397,7 @@ IPKGs.Install.Batch()
 
     DebugFuncEntry
     CalcAllIPKGDepsToInstall || return
-    local -i resultcode=0
+    local -i result_code=0
     local -i package_count=$(IPKGs.ToDownload.Count)
 
     if [[ $package_count -gt 0 ]]; then
@@ -2510,18 +2408,18 @@ IPKGs.Install.Batch()
                 _MonitorDirSize_ "$IPKG_DL_PATH" "$(IPKGs.ToDownload.Size)" &
 
                 RunAndLog "$OPKG_CMD install$(Opts.IgnoreFreeSpace.IsSet && Opts.IgnoreFreeSpace.Text) --force-overwrite $(IPKGs.ToDownload.List) --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$LOGS_PATH/ipkgs.addons.$INSTALL_LOG_FILE" log:failure-only
-                resultcode=$?
+                result_code=$?
             trap - INT
         RemoveDirSizeMonitorFlagFile
 
-        if [[ $resultcode -eq 0 ]]; then
+        if [[ $result_code -eq 0 ]]; then
             ShowAsDone "downloaded & installed $package_count IPKG$(FormatAsPlural "$package_count")"
         else
-            ShowAsEror "download & install $package_count IPKG$(FormatAsPlural "$package_count") failed $(FormatAsExitcode $resultcode)"
+            ShowAsEror "download & install $package_count IPKG$(FormatAsPlural "$package_count") failed $(FormatAsExitcode $result_code)"
         fi
     fi
 
-    DebugFuncExit $resultcode
+    DebugFuncExit $result_code
 
     }
 
@@ -2533,27 +2431,131 @@ IPKGs.Uninstall.Batch()
 
     DebugFuncEntry
     CalcAllIPKGDepsToUninstall || return
-    local -i resultcode=0
+    local -i result_code=0
     local -i package_count=$(IPKGs.ToUninstall.Count)
 
     if [[ $package_count -gt 0 ]]; then
         ShowAsProc "uninstalling $package_count IPKG$(FormatAsPlural "$package_count")"
 
         RunAndLog "$OPKG_CMD remove $(IPKGs.ToUninstall.List)" "$LOGS_PATH/ipkgs.$UNINSTALL_LOG_FILE" log:failure-only
-        resultcode=$?
+        result_code=$?
 
-        if [[ $resultcode -eq 0 ]]; then
+        if [[ $result_code -eq 0 ]]; then
             ShowAsDone "uninstalled $package_count IPKG$(FormatAsPlural "$package_count")"
         else
-            ShowAsEror "uninstall IPKG$(FormatAsPlural "$package_count") failed $(FormatAsExitcode $resultcode)"
+            ShowAsEror "uninstall IPKG$(FormatAsPlural "$package_count") failed $(FormatAsExitcode $result_code)"
         fi
     fi
 
-    DebugFuncExit $resultcode
+    DebugFuncExit $result_code
 
     }
 
-IPKGs.Archive.Open()
+PIPs.Install()
+    {
+
+    QPKGs.SkipProcessing.IsSet && return
+    PIPs.Install.IsNot && return
+    DebugFuncEntry
+    local exec_cmd=''
+    local -i result_code=0
+    local -i pass_count=0
+    local -i fail_count=0
+    local -i package_count=0
+    local -r PACKAGE_TYPE='PIP group'
+    local -r ACTION_PRESENT=installing
+    local -r ACTION_PAST=installed
+    local -r RUNTIME=long
+
+    # sometimes, 'pip3' goes missing from Entware. Don't know why.
+    if [[ -e /opt/bin/pip3 ]]; then
+        pip3_cmd=/opt/bin/pip3
+    elif [[ -e /opt/bin/pip3.9 ]]; then
+        pip3_cmd=/opt/bin/pip3.9
+    elif [[ -e /opt/bin/pip3.8 ]]; then
+        pip3_cmd=/opt/bin/pip3.8
+    elif [[ -e /opt/bin/pip3.7 ]]; then
+        pip3_cmd=/opt/bin/pip3.7
+    else
+        if IsNotSysFileExist $pip3_cmd; then
+            Display "* Ugh! The usual fix for this is to let $(FormatAsScriptTitle) reinstall $(FormatAsPackageName Entware) at least once."
+            Display "\t$0 reinstall ew"
+            Display "If it happens again after reinstalling $(FormatAsPackageName Entware), please create a new issue for this on GitHub."
+            DebugFuncExit 1; return
+        fi
+    fi
+
+    AddPathToEntware
+
+    [[ -n ${MANAGER_COMMON_PIPS_ADD// /} ]] && exec_cmd="$pip3_cmd install $MANAGER_COMMON_PIPS_ADD --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
+    ((package_count++))
+
+    ShowAsOperationProgress '' "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$PACKAGE_TYPE" "$RUNTIME"
+
+    local desc="'Python3' modules"
+    local log_pathfile=$LOGS_PATH/py3-modules.assorted.$INSTALL_LOG_FILE
+    DebugAsProc "downloading & installing $desc"
+
+    RunAndLog "$exec_cmd" "$log_pathfile" log:failure-only
+    result_code=$?
+
+    if [[ $result_code -eq 0 ]]; then
+        DebugAsDone "downloaded & installed $desc"
+        ((pass_count++))
+    else
+        ShowAsEror "download & install $desc failed $(FormatAsResult "$result_code")"
+        ((fail_count++))
+    fi
+
+    if QPKG.Installed SABnzbd || QPKGs.ToInstall.Exist SABnzbd || QPKGs.ToReinstall.Exist SABnzbd; then
+        ((package_count+=2))
+
+        # KLUDGE: force recompilation of 'sabyenc3' package so it's recognised by SABnzbd: https://forums.sabnzbd.org/viewtopic.php?p=121214#p121214
+        ShowAsOperationProgress '' "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$PACKAGE_TYPE" "$RUNTIME"
+
+        exec_cmd="$pip3_cmd install --force-reinstall --ignore-installed --no-binary :all: sabyenc3 --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
+        desc="'Python3 sabyenc3' module"
+        log_pathfile=$LOGS_PATH/py3-modules.sabyenc3.$INSTALL_LOG_FILE
+        DebugAsProc "downloading & installing $desc"
+
+        RunAndLog "$exec_cmd" "$log_pathfile" log:failure-only
+        result_code=$?
+
+        if [[ $result_code -eq 0 ]]; then
+            DebugAsDone "downloaded & installed $desc"
+            QPKGs.ToRestart.Add SABnzbd
+            ((pass_count++))
+        else
+            ShowAsEror "download & install $desc failed $(FormatAsResult "$result_code")"
+            ((fail_count++))
+        fi
+
+        # KLUDGE: ensure 'feedparser' is upgraded. This was version-held at 5.2.1 for Python 3.8.5 but from Python 3.9.0 onward there's no-need for version-hold anymore.
+        ShowAsOperationProgress '' "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$PACKAGE_TYPE" "$RUNTIME"
+
+        exec_cmd="$pip3_cmd install --upgrade feedparser --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
+        desc="'Python3 feedparser' module"
+        log_pathfile=$LOGS_PATH/py3-modules.feedparser.$INSTALL_LOG_FILE
+        DebugAsProc "downloading & installing $desc"
+        RunAndLog "$exec_cmd" "$log_pathfile" log:failure-only
+        result_code=$?
+
+        if [[ $result_code -eq 0 ]]; then
+            DebugAsDone "downloaded & installed $desc"
+            QPKGs.ToRestart.Add SABnzbd
+            ((pass_count++))
+        else
+            ShowAsEror "download & install $desc failed $(FormatAsResult "$result_code")"
+            ((fail_count++))
+        fi
+    fi
+
+    ShowAsOperationResult '' "$package_count" "$fail_count" "$pass_count" "$ACTION_PAST" "$PACKAGE_TYPE" "$RUNTIME"
+    DebugFuncExit $result_code
+
+    }
+
+OpenIPKGArchive()
     {
 
     # extract the 'opkg' package list file
@@ -2566,10 +2568,10 @@ IPKGs.Archive.Open()
         DebugFuncExit 1; return
     fi
 
-    IPKGs.Archive.Close
+    CloseIPKGArchive
 
     RunAndLog "$Z7_CMD e -o$($DIRNAME_CMD "$EXTERNAL_PACKAGE_LIST_PATHFILE") $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE" "$WORK_PATH/ipkg.list.archive.extract" log:failure-only
-    resultcode=$?
+    result_code=$?
 
     if [[ ! -e $EXTERNAL_PACKAGE_LIST_PATHFILE ]]; then
         ShowAsEror 'unable to open the IPKG list file'
@@ -2580,7 +2582,7 @@ IPKGs.Archive.Open()
 
     }
 
-IPKGs.Archive.Close()
+CloseIPKGArchive()
     {
 
     [[ -n $EXTERNAL_PACKAGE_LIST_PATHFILE && -e $EXTERNAL_PACKAGE_LIST_PATHFILE ]] && rm -f "$EXTERNAL_PACKAGE_LIST_PATHFILE"
@@ -2729,19 +2731,19 @@ CheckPythonPathAndVersion()
     [[ -z $1 ]] && return
 
     if location=$(command -v "$1" 2>&1); then
-        DebugUserspace.OK "'$1' path" "$location"
+        DebugUserspaceOK "'$1' path" "$location"
 
         if version=$($1 -V 2>&1 | $SED_CMD 's|^Python ||'); then
             if [[ ${version//./} -ge $MIN_PYTHON_VER ]]; then
-                DebugUserspace.OK "'$1' version" "$version"
+                DebugUserspaceOK "'$1' version" "$version"
             else
-                DebugUserspace.Warning "'$1' version" "$version"
+                DebugUserspaceWarning "'$1' version" "$version"
             fi
         else
-            DebugUserspace.Warning "default '$1' version" ' '
+            DebugUserspaceWarning "default '$1' version" ' '
         fi
     else
-        DebugUserspace.Warning "'$1' path" ' '
+        DebugUserspaceWarning "'$1' path" ' '
     fi
 
     return 0
@@ -2935,7 +2937,7 @@ Help.Basic.Example.Show()
 Help.Actions.Show()
     {
 
-    Session.DisableDebuggingToArchiveAndFile
+    DisableDebuggingToArchiveAndFile
     Help.Basic.Show
     DisplayLineSpaceIfNoneAlready
     DisplayAsHelpTitle "$(FormatAsHelpAction) usage examples:"
@@ -2964,7 +2966,7 @@ Help.Actions.Show()
 Help.ActionsAll.Show()
     {
 
-    Session.DisableDebuggingToArchiveAndFile
+    DisableDebuggingToArchiveAndFile
     Help.Basic.Show
     DisplayLineSpaceIfNoneAlready
     Display "* These $(FormatAsHelpAction)s apply to all installed packages. If $(FormatAsHelpAction) is 'install all' then all available packages will be installed."
@@ -2996,7 +2998,7 @@ Help.Packages.Show()
     local package=''
     local tier=''
 
-    Session.DisableDebuggingToArchiveAndFile
+    DisableDebuggingToArchiveAndFile
     Help.Basic.Show
     Display
     DisplayAsHelpTitle "One-or-more $(FormatAsHelpPackages) may be specified at-once"
@@ -3021,7 +3023,7 @@ Help.Packages.Show()
 Help.Options.Show()
     {
 
-    Session.DisableDebuggingToArchiveAndFile
+    DisableDebuggingToArchiveAndFile
     Help.Basic.Show
     DisplayLineSpaceIfNoneAlready
     DisplayAsHelpTitle "$(FormatAsHelpOptions) usage examples:"
@@ -3037,7 +3039,7 @@ Help.Options.Show()
 Help.Problems.Show()
     {
 
-    Session.DisableDebuggingToArchiveAndFile
+    DisableDebuggingToArchiveAndFile
     Help.Basic.Show
     DisplayLineSpaceIfNoneAlready
     DisplayAsHelpTitle 'usage examples when dealing with problems:'
@@ -3079,7 +3081,7 @@ Help.Issue.Show()
 Help.Tips.Show()
     {
 
-    Session.DisableDebuggingToArchiveAndFile
+    DisableDebuggingToArchiveAndFile
     Help.Basic.Show
     DisplayLineSpaceIfNoneAlready
     DisplayAsHelpTitle 'helpful tips and shortcuts:'
@@ -3103,7 +3105,7 @@ Help.PackageAbbreviations.Show()
     local tier=''
     local abs=''
 
-    Session.DisableDebuggingToArchiveAndFile
+    DisableDebuggingToArchiveAndFile
     Help.Basic.Show
     Display
     DisplayAsHelpTitle "$(FormatAsScriptTitle) recognises various abbreviations as $(FormatAsHelpPackages)"
@@ -3140,7 +3142,7 @@ Log.All.View()
 
     # view the entire archived sessions log
 
-    Session.DisableDebuggingToArchiveAndFile
+    DisableDebuggingToArchiveAndFile
 
     if [[ -e $SESSION_ARCHIVE_PATHFILE ]]; then
         if [[ -e $GNU_LESS_CMD ]]; then
@@ -3161,7 +3163,7 @@ Log.Last.View()
 
     # view only the last session log
 
-    Session.DisableDebuggingToArchiveAndFile
+    DisableDebuggingToArchiveAndFile
     ExtractPreviousSessionFromTail
 
     if [[ -e $SESSION_LAST_PATHFILE ]]; then
@@ -3183,7 +3185,7 @@ Log.Tail.View()
 
     # view only the last session log
 
-    Session.DisableDebuggingToArchiveAndFile
+    DisableDebuggingToArchiveAndFile
     ExtractTailFromLog
 
     if [[ -e $SESSION_TAIL_PATHFILE ]]; then
@@ -3203,7 +3205,7 @@ Log.Tail.View()
 Log.All.Paste.Online()
     {
 
-    Session.DisableDebuggingToArchiveAndFile
+    DisableDebuggingToArchiveAndFile
 
     if [[ -e $SESSION_ARCHIVE_PATHFILE ]]; then
         if AskQuiz "Press 'Y' to post your ENTIRE $(FormatAsScriptTitle) log to a public pastebin, or any other key to abort"; then
@@ -3233,7 +3235,7 @@ Log.All.Paste.Online()
 Log.Last.Paste.Online()
     {
 
-    Session.DisableDebuggingToArchiveAndFile
+    DisableDebuggingToArchiveAndFile
     ExtractPreviousSessionFromTail
 
     if [[ -e $SESSION_LAST_PATHFILE ]]; then
@@ -3264,7 +3266,7 @@ Log.Last.Paste.Online()
 Log.Tail.Paste.Online()
     {
 
-    Session.DisableDebuggingToArchiveAndFile
+    DisableDebuggingToArchiveAndFile
     ExtractTailFromLog
 
     if [[ -e $SESSION_TAIL_PATHFILE ]]; then
@@ -3310,13 +3312,33 @@ GetSessionFinish()
 
     }
 
-ArchiveSessionLog()
+ArchiveActiveSessionLog()
     {
 
-    if [[ -e $SESSION_ACTIVE_PATHFILE ]]; then
-        $CAT_CMD "$SESSION_ACTIVE_PATHFILE" >> "$SESSION_ARCHIVE_PATHFILE"
-        rm -f "$SESSION_ACTIVE_PATHFILE"
-    fi
+    [[ -e $SESSION_ACTIVE_PATHFILE ]] && $CAT_CMD "$SESSION_ACTIVE_PATHFILE" >> "$SESSION_ARCHIVE_PATHFILE"
+
+    }
+
+ArchivePriorSessionLogs()
+    {
+
+    # check for incomplete previous session logs (crashed, interrupted?) and save to archive
+
+    local log_pathfile=''
+
+    for log_pathfile in "$PROJECT_PATH/session."*".active.log"; do
+        if [[ -f $log_pathfile && $log_pathfile != "$SESSION_ACTIVE_PATHFILE" ]]; then
+            $CAT_CMD "$log_pathfile" >> "$SESSION_ARCHIVE_PATHFILE"
+            rm -f "$log_pathfile"
+        fi
+    done
+
+    }
+
+CleanActiveSessionLog()
+    {
+
+    [[ -e $SESSION_ACTIVE_PATHFILE ]] && rm -f "$SESSION_ACTIVE_PATHFILE"
 
     }
 
@@ -3363,13 +3385,13 @@ ExtractTailFromLog()
 
     }
 
-Versions.Show()
+ShowVersions()
     {
 
     Display "manager: $MANAGER_SCRIPT_VERSION"
     Display "loader: $LOADER_SCRIPT_VERSION"
     Display "package: $PACKAGE_VERSION"
-    Display "objects hash: $(Objects.Compile hash)"
+    Display "objects hash: $(CompileObjects hash)"
 
     return 0
 
@@ -3610,7 +3632,7 @@ QPKGs.All.Show()
 
     local package=''
 
-    Session.DisableDebuggingToArchiveAndFile
+    DisableDebuggingToArchiveAndFile
 
     for package in $(QPKGs.Names.Array); do
         Display "$package"
@@ -3628,7 +3650,7 @@ QPKGs.Backups.Show()
     local highlight_older_than='2 weeks ago'
     local format=''
 
-    Session.DisableDebuggingToArchiveAndFile
+    DisableDebuggingToArchiveAndFile
     SmartCR
     DisplayLineSpaceIfNoneAlready
     DisplayAsHelpTitle "the location for $(FormatAsScriptTitle) backups is: $BACKUP_PATH"
@@ -3650,7 +3672,7 @@ QPKGs.Backups.Show()
 
             # shellcheck disable=2059
             printf "$format" '' "$filename" "$($DATE_CMD -d @"$epochtime" +%c)"
-        done <<<"$($GNU_FIND_CMD "$BACKUP_PATH"/*.config.tar.gz -maxdepth 1 -printf '%C@ %f\n' 2>/dev/null | $SORT_CMD)"
+        done <<< "$($GNU_FIND_CMD "$BACKUP_PATH"/*.config.tar.gz -maxdepth 1 -printf '%C@ %f\n' 2>/dev/null | $SORT_CMD)"
 
     else
         DisplayAsHelpTitle 'backups are listed oldest-first'
@@ -3710,7 +3732,7 @@ QPKGs.Installed.Show()
 
     local package=''
 
-    Session.DisableDebuggingToArchiveAndFile
+    DisableDebuggingToArchiveAndFile
 
     for package in $(QPKGs.Installed.Array); do
         Display "$package"
@@ -3725,7 +3747,7 @@ QPKGs.NotInstalled.Show()
 
     local package=''
 
-    Session.DisableDebuggingToArchiveAndFile
+    DisableDebuggingToArchiveAndFile
 
     for package in $(QPKGs.NotInstalled.Array); do
         Display "$package"
@@ -3740,7 +3762,7 @@ QPKGs.Started.Show()
 
     local package=''
 
-    Session.DisableDebuggingToArchiveAndFile
+    DisableDebuggingToArchiveAndFile
 
     for package in $(QPKGs.Started.Array); do
         Display "$package"
@@ -3755,7 +3777,7 @@ QPKGs.Stopped.Show()
 
     local package=''
 
-    Session.DisableDebuggingToArchiveAndFile
+    DisableDebuggingToArchiveAndFile
 
     for package in $(QPKGs.Stopped.Array); do
         Display "$package"
@@ -3770,7 +3792,7 @@ QPKGs.Upgradable.Show()
 
     local package=''
 
-    Session.DisableDebuggingToArchiveAndFile
+    DisableDebuggingToArchiveAndFile
 
     for package in $(QPKGs.Upgradable.Array); do
         Display "$package"
@@ -3785,7 +3807,7 @@ QPKGs.Essential.Show()
 
     local package=''
 
-    Session.DisableDebuggingToArchiveAndFile
+    DisableDebuggingToArchiveAndFile
 
     for package in $(QPKGs.Essential.Array); do
         Display "$package"
@@ -3800,7 +3822,7 @@ QPKGs.Optional.Show()
 
     local package=''
 
-    Session.DisableDebuggingToArchiveAndFile
+    DisableDebuggingToArchiveAndFile
 
     for package in $(QPKGs.Optional.Array); do
         Display "$package"
@@ -3815,7 +3837,7 @@ QPKGs.Standalone.Show()
 
     local package=''
 
-    Session.DisableDebuggingToArchiveAndFile
+    DisableDebuggingToArchiveAndFile
 
     for package in $(QPKGs.Standalone.Array); do
         Display "$package"
@@ -3825,7 +3847,7 @@ QPKGs.Standalone.Show()
 
     }
 
-Session.Calc.QPKGArch()
+CalcQPKGArch()
     {
 
     # Decide which package arch is suitable for this NAS. Only needed for Stephane's packages.
@@ -3866,7 +3888,7 @@ Session.Calc.QPKGArch()
 
     }
 
-Session.Calc.EntwareType()
+CalcEntwareType()
     {
 
     if QPKG.Installed Entware; then
@@ -3889,7 +3911,7 @@ Session.Calc.EntwareType()
 
     }
 
-Session.AddPathToEntware()
+AddPathToEntware()
     {
 
     local opkg_prefix=/opt/bin:/opt/sbin
@@ -3901,7 +3923,7 @@ Session.AddPathToEntware()
 
     }
 
-Session.RemovePathToEntware()
+RemovePathToEntware()
     {
 
     local opkg_prefix=/opt/bin:/opt/sbin
@@ -3923,26 +3945,26 @@ Session.Error.Set()
 
     [[ $(type -t QPKGs.SkipProcessing.Init) = 'function' ]] && QPKGs.SkipProcessing.Set
     Session.Error.IsSet && return
-    _script_error_flag=true
-    DebugVar _script_error_flag
+    _script_error_flag_=true
+    DebugVar _script_error_flag_
 
     }
 
 Session.Error.IsSet()
     {
 
-    [[ ${_script_error_flag:-} = true ]]
+    [[ ${_script_error_flag_:-} = true ]]
 
     }
 
 Session.Error.IsNot()
     {
 
-    [[ ${_script_error_flag:-} != true ]]
+    [[ ${_script_error_flag_:-} != true ]]
 
     }
 
-Session.Summary.Show()
+ShowSummary()
     {
 
     local -i index=0
@@ -3957,7 +3979,7 @@ Session.Summary.Show()
 
     }
 
-Session.LockFile.Claim()
+ClaimLockFile()
     {
 
     [[ -n ${1:-} ]] || return
@@ -3973,7 +3995,7 @@ Session.LockFile.Claim()
 
     }
 
-Session.LockFile.Release()
+ReleaseLockFile()
     {
 
     [[ -n ${RUNTIME_LOCK_PATHFILE:-} ]] || return
@@ -3981,7 +4003,7 @@ Session.LockFile.Release()
 
     }
 
-Session.DisableDebuggingToArchiveAndFile()
+DisableDebuggingToArchiveAndFile()
     {
 
     Session.Debug.ToArchive.Clear
@@ -4275,7 +4297,7 @@ QPKG.Download()
         DebugFuncExit 1; return
     fi
 
-    local -i resultcode=0
+    local -i result_code=0
     local -r REMOTE_URL=$(QPKG.URL "$1")
     local -r REMOTE_FILENAME=$($BASENAME_CMD "$REMOTE_URL")
     local -r REMOTE_MD5=$(QPKG.MD5 "$1")
@@ -4305,25 +4327,25 @@ QPKG.Download()
         [[ -e $LOG_PATHFILE ]] && rm -f "$LOG_PATHFILE"
 
         RunAndLog "$CURL_CMD${curl_insecure_arg} --output $LOCAL_PATHFILE $REMOTE_URL" "$LOG_PATHFILE" log:failure-only
-        resultcode=$?
+        result_code=$?
 
-        if [[ $resultcode -eq 0 ]]; then
+        if [[ $result_code -eq 0 ]]; then
             if FileMatchesMD5 "$LOCAL_PATHFILE" "$REMOTE_MD5"; then
                 DebugAsDone "downloaded $(FormatAsFileName "$REMOTE_FILENAME")"
                 QPKGs.IsDownload.Add "$1"
             else
                 DebugAsError "downloaded package $(FormatAsFileName "$LOCAL_PATHFILE") checksum incorrect"
                 QPKGs.ErDownload.Add "$1"
-                resultcode=1
+                result_code=1
             fi
         else
-            DebugAsError "download failed $(FormatAsFileName "$LOCAL_PATHFILE") $(FormatAsExitcode $resultcode)"
+            DebugAsError "download failed $(FormatAsFileName "$LOCAL_PATHFILE") $(FormatAsExitcode $result_code)"
             QPKGs.ErDownload.Add "$1"
         fi
     fi
 
     QPKGs.ToDownload.Remove "$1"
-    DebugFuncExit $resultcode
+    DebugFuncExit $result_code
 
     }
 
@@ -4342,7 +4364,7 @@ QPKG.Install()
         DebugFuncExit 1; return
     fi
 
-    local -i resultcode=0
+    local -i result_code=0
     local local_pathfile=$(QPKG.PathFilename "$1")
 
     if [[ -z $local_pathfile ]]; then
@@ -4372,15 +4394,15 @@ QPKG.Install()
 
     DebugAsProc "installing $(FormatAsPackageName "$1")"
     RunAndLog "$SH_CMD $local_pathfile" "$LOGS_PATH/$TARGET_FILE.$INSTALL_LOG_FILE" log:failure-only 10
-    resultcode=$?
+    result_code=$?
 
-    if [[ $resultcode -eq 0 || $resultcode -eq 10 ]]; then
+    if [[ $result_code -eq 0 || $result_code -eq 10 ]]; then
         DebugAsDone "installed $(FormatAsPackageName "$1")"
         QPKG.GetServiceStatus "$1"
 
         if [[ $1 = Entware ]]; then
-            Session.AddPathToEntware
-            Entware.Patch.Service
+            AddPathToEntware
+            PatchEntwareService
 
             if QPKGs.ToInstall.Exist Entware; then
                 # copy all files from original [/opt] into new [/opt]
@@ -4411,15 +4433,15 @@ QPKG.Install()
             QPKGs.Stopped.Add "$1"
         fi
 
-        resultcode=0    # reset this to zero (0 or 10 from a QPKG install is OK)
+        result_code=0    # reset this to zero (0 or 10 from a QPKG install is OK)
     else
-        DebugAsError "installation failed $(FormatAsFileName "$TARGET_FILE") $(FormatAsExitcode $resultcode)"
+        DebugAsError "installation failed $(FormatAsFileName "$TARGET_FILE") $(FormatAsExitcode $result_code)"
         QPKGs.ErInstall.Add "$1"
     fi
 
     QPKGs.ToInstall.Remove "$1"
     QPKG.FixAppCenterStatus "$1"
-    DebugFuncExit $resultcode
+    DebugFuncExit $result_code
 
     }
 
@@ -4438,7 +4460,7 @@ QPKG.Reinstall()
         DebugFuncExit 1; return
     fi
 
-    local -i resultcode=0
+    local -i result_code=0
     local local_pathfile=$(QPKG.PathFilename "$1")
 
     if [[ -z $local_pathfile ]]; then
@@ -4465,9 +4487,9 @@ QPKG.Reinstall()
 
     DebugAsProc "reinstalling $(FormatAsPackageName "$1")"
     RunAndLog "$SH_CMD $local_pathfile" "$LOG_PATHFILE" log:failure-only 10
-    resultcode=$?
+    result_code=$?
 
-    if [[ $resultcode -eq 0 || $resultcode -eq 10 ]]; then
+    if [[ $result_code -eq 0 || $result_code -eq 10 ]]; then
         DebugAsDone "reinstalled $(FormatAsPackageName "$1")"
         QPKGs.IsReinstall.Add "$1"
         QPKG.GetServiceStatus "$1"
@@ -4480,15 +4502,15 @@ QPKG.Reinstall()
             QPKGs.Stopped.Add "$1"
         fi
 
-        resultcode=0    # reset this to zero (0 or 10 from a QPKG install is OK)
+        result_code=0    # reset this to zero (0 or 10 from a QPKG install is OK)
     else
-        ShowAsEror "reinstallation failed $(FormatAsFileName "$TARGET_FILE") $(FormatAsExitcode $resultcode)"
+        ShowAsEror "reinstallation failed $(FormatAsFileName "$TARGET_FILE") $(FormatAsExitcode $result_code)"
         QPKGs.ErReinstall.Add "$1"
     fi
 
     QPKGs.ToReinstall.Remove "$1"
     QPKG.FixAppCenterStatus "$1"
-    DebugFuncExit $resultcode
+    DebugFuncExit $result_code
 
     }
 
@@ -4512,7 +4534,7 @@ QPKG.Upgrade()
         DebugFuncExit 1; return
     fi
 
-    local -i resultcode=0
+    local -i result_code=0
     local previous_version='null'
     local current_version='null'
     local local_pathfile=$(QPKG.PathFilename "$1")
@@ -4542,11 +4564,11 @@ QPKG.Upgrade()
 
     DebugAsProc "upgrading $(FormatAsPackageName "$1")"
     RunAndLog "$SH_CMD $local_pathfile" "$LOG_PATHFILE" log:failure-only 10
-    resultcode=$?
+    result_code=$?
 
     current_version=$(QPKG.Installed.Version "$1")
 
-    if [[ $resultcode -eq 0 || $resultcode -eq 10 ]]; then
+    if [[ $result_code -eq 0 || $result_code -eq 10 ]]; then
         if [[ $current_version = "$previous_version" ]]; then
             DebugAsDone "upgraded $(FormatAsPackageName "$1") and installed version is $current_version"
         else
@@ -4564,15 +4586,15 @@ QPKG.Upgrade()
             QPKGs.Stopped.Add "$1"
         fi
 
-        resultcode=0    # reset this to zero (0 or 10 from a QPKG upgrade is OK)
+        result_code=0    # reset this to zero (0 or 10 from a QPKG upgrade is OK)
     else
-        ShowAsEror "upgrade failed $(FormatAsFileName "$TARGET_FILE") $(FormatAsExitcode $resultcode)"
+        ShowAsEror "upgrade failed $(FormatAsFileName "$TARGET_FILE") $(FormatAsExitcode $result_code)"
         QPKGs.ErUpgrade.Add "$1"
     fi
 
     QPKGs.ToUpgrade.Remove "$1"
     QPKG.FixAppCenterStatus "$1"
-    DebugFuncExit $resultcode
+    DebugFuncExit $result_code
 
     }
 
@@ -4602,35 +4624,35 @@ QPKG.Uninstall()
         DebugFuncExit; return
     fi
 
-    local -i resultcode=0
+    local -i result_code=0
     local -r QPKG_UNINSTALLER_PATHFILE=$($GETCFG_CMD "$1" Install_Path -f /etc/config/qpkg.conf)/.uninstall.sh
     local -r LOG_PATHFILE=$LOGS_PATH/$1.$UNINSTALL_LOG_FILE
 
-    [[ $1 = Entware ]] && Package.Save.Lists
+    [[ $1 = Entware ]] && SavePackageLists
 
     if [[ -e $QPKG_UNINSTALLER_PATHFILE ]]; then
         DebugAsProc "uninstalling $(FormatAsPackageName "$1")"
 
         RunAndLog "$SH_CMD $QPKG_UNINSTALLER_PATHFILE" "$LOG_PATHFILE" log:failure-only
-        resultcode=$?
+        result_code=$?
 
-        if [[ $resultcode -eq 0 ]]; then
+        if [[ $result_code -eq 0 ]]; then
             DebugAsDone "uninstalled $(FormatAsPackageName "$1")"
             $RMCFG_CMD "$1" -f /etc/config/qpkg.conf
             DebugAsDone 'removed icon information from App Center'
-            [[ $1 = Entware ]] && Session.RemovePathToEntware
+            [[ $1 = Entware ]] && RemovePathToEntware
             QPKGs.IsUninstall.Add "$1"
             QPKGs.NotInstalled.Add "$1"
             QPKGs.Installed.Remove "$1"
         else
-            DebugAsError "unable to uninstall $(FormatAsPackageName "$1") $(FormatAsExitcode $resultcode)"
+            DebugAsError "unable to uninstall $(FormatAsPackageName "$1") $(FormatAsExitcode $result_code)"
             QPKGs.ErUninstall.Add "$1"
         fi
     fi
 
     QPKGs.ToUninstall.Remove "$1"
     QPKG.FixAppCenterStatus "$1"
-    DebugFuncExit $resultcode
+    DebugFuncExit $result_code
 
     }
 
@@ -4664,26 +4686,26 @@ QPKG.Restart()
     local -r LOG_PATHFILE=$LOGS_PATH/$1.$RESTART_LOG_FILE
 
     QPKG.Enable "$1"
-    local -i resultcode=$?
+    local -i result_code=$?
 
-    if [[ $resultcode -eq 0 ]]; then
+    if [[ $result_code -eq 0 ]]; then
         DebugAsProc "restarting $(FormatAsPackageName "$1")"
         RunAndLog "$QPKG_SERVICE_CMD restart $1" "$LOG_PATHFILE" log:failure-only
-        resultcode=$?
+        result_code=$?
     fi
 
-    if [[ $resultcode -eq 0 ]]; then
+    if [[ $result_code -eq 0 ]]; then
         DebugAsDone "restarted $(FormatAsPackageName "$1")"
         QPKG.GetServiceStatus "$1"
         QPKGs.IsRestart.Add "$1"
     else
-        ShowAsWarn "unable to restart $(FormatAsPackageName "$1") $(FormatAsExitcode $resultcode)"
+        ShowAsWarn "unable to restart $(FormatAsPackageName "$1") $(FormatAsExitcode $result_code)"
         QPKGs.ErRestart.Add "$1"
     fi
 
     QPKGs.ToRestart.Remove "$1"
     QPKG.FixAppCenterStatus "$1"
-    DebugFuncExit $resultcode
+    DebugFuncExit $result_code
 
     }
 
@@ -4724,29 +4746,29 @@ QPKG.Start()
     local -r LOG_PATHFILE=$LOGS_PATH/$1.$START_LOG_FILE
 
     QPKG.Enable "$1"
-    local -i resultcode=$?
+    local -i result_code=$?
 
-    if [[ $resultcode -eq 0 ]]; then
+    if [[ $result_code -eq 0 ]]; then
         DebugAsProc "starting $(FormatAsPackageName "$1")"
         RunAndLog "$QPKG_SERVICE_CMD start $1" "$LOG_PATHFILE" log:failure-only
-        resultcode=$?
+        result_code=$?
     fi
 
-    if [[ $resultcode -eq 0 ]]; then
+    if [[ $result_code -eq 0 ]]; then
         DebugAsDone "started $(FormatAsPackageName "$1")"
         QPKG.GetServiceStatus "$1"
         QPKGs.IsStart.Add "$1"
         QPKGs.Started.Add "$1"
         QPKGs.Stopped.Remove "$1"
-        [[ $1 = Entware ]] && Session.AddPathToEntware
+        [[ $1 = Entware ]] && AddPathToEntware
     else
-        ShowAsWarn "unable to start $(FormatAsPackageName "$1") $(FormatAsExitcode $resultcode)"
+        ShowAsWarn "unable to start $(FormatAsPackageName "$1") $(FormatAsExitcode $result_code)"
         QPKGs.ErStart.Add "$1"
     fi
 
     QPKGs.ToStart.Remove "$1"
     QPKG.FixAppCenterStatus "$1"
-    DebugFuncExit $resultcode
+    DebugFuncExit $result_code
 
     }
 
@@ -4788,27 +4810,27 @@ QPKG.Stop()
 
     DebugAsProc "stopping $(FormatAsPackageName "$1")"
     RunAndLog "$QPKG_SERVICE_CMD stop $1" "$LOG_PATHFILE" log:failure-only
-    local -i resultcode=$?
+    local -i result_code=$?
 
-    if [[ $resultcode -eq 0 ]]; then
+    if [[ $result_code -eq 0 ]]; then
         QPKG.Disable "$1"
-        resultcode=$?
+        result_code=$?
     fi
 
-    if [[ $resultcode -eq 0 ]]; then
+    if [[ $result_code -eq 0 ]]; then
         DebugAsDone "stopped $(FormatAsPackageName "$1")"
         QPKG.GetServiceStatus "$1"
         QPKGs.IsStop.Add "$package"
         QPKGs.Stopped.Add "$1"
         QPKGs.Started.Remove "$1"
     else
-        ShowAsWarn "unable to stop $(FormatAsPackageName "$1") $(FormatAsExitcode $resultcode)"
+        ShowAsWarn "unable to stop $(FormatAsPackageName "$1") $(FormatAsExitcode $result_code)"
         QPKGs.ErStop.Add "$1"
     fi
 
     QPKGs.ToStop.Remove "$package"
     QPKG.FixAppCenterStatus "$1"
-    DebugFuncExit $resultcode
+    DebugFuncExit $result_code
 
     }
 
@@ -4818,11 +4840,11 @@ QPKG.Enable()
     # $1 = package name to enable
 
     RunAndLog "$QPKG_SERVICE_CMD enable $1" "$LOGS_PATH/$1.$ENABLE_LOG_FILE" log:failure-only
-    local -i resultcode=$?
+    local -i result_code=$?
 
-    [[ $resultcode -ne 0 ]] && ShowAsWarn "unable to enable $(FormatAsPackageName "$1") $(FormatAsExitcode $resultcode)"
+    [[ $result_code -ne 0 ]] && ShowAsWarn "unable to enable $(FormatAsPackageName "$1") $(FormatAsExitcode $result_code)"
 
-    return $resultcode
+    return $result_code
 
     }
 
@@ -4832,11 +4854,11 @@ QPKG.Disable()
     # $1 = package name to disable
 
     RunAndLog "$QPKG_SERVICE_CMD disable $1" "$LOGS_PATH/$1.$DISABLE_LOG_FILE" log:failure-only
-    local -i resultcode=$?
+    local -i result_code=$?
 
-    [[ $resultcode -ne 0 ]] && ShowAsWarn "unable to disable $(FormatAsPackageName "$1") $(FormatAsExitcode $resultcode)"
+    [[ $result_code -ne 0 ]] && ShowAsWarn "unable to disable $(FormatAsPackageName "$1") $(FormatAsExitcode $result_code)"
 
-    return $resultcode
+    return $result_code
 
     }
 
@@ -4865,25 +4887,25 @@ QPKG.Backup()
         DebugFuncExit; return
     fi
 
-    local -i resultcode=0
+    local -i result_code=0
     local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile "$1")
     local -r LOG_PATHFILE=$LOGS_PATH/$1.$BACKUP_LOG_FILE
 
     DebugAsProc "backing-up $(FormatAsPackageName "$1") configuration"
     RunAndLog "$SH_CMD $PACKAGE_INIT_PATHFILE backup" "$LOG_PATHFILE" log:failure-only
-    resultcode=$?
+    result_code=$?
 
-    if [[ $resultcode -eq 0 ]]; then
+    if [[ $result_code -eq 0 ]]; then
         DebugAsDone "backed-up $(FormatAsPackageName "$1") configuration"
         QPKGs.IsBackup.Add "$1"
         QPKG.GetServiceStatus "$1"
     else
-        DebugAsWarn "unable to backup $(FormatAsPackageName "$1") configuration $(FormatAsExitcode $resultcode)"
+        DebugAsWarn "unable to backup $(FormatAsPackageName "$1") configuration $(FormatAsExitcode $result_code)"
         QPKGs.ErBackup.Add "$1"
     fi
 
     QPKGs.ToBackup.Remove "$1"
-    DebugFuncExit $resultcode
+    DebugFuncExit $result_code
 
     }
 
@@ -4959,26 +4981,26 @@ QPKG.Restore()
         DebugFuncExit 1; return
     fi
 
-    local -i resultcode=0
+    local -i result_code=0
     local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile "$1")
     local -r LOG_PATHFILE=$LOGS_PATH/$1.$RESTORE_LOG_FILE
 
     DebugAsProc "restoring $(FormatAsPackageName "$1") configuration"
 
     RunAndLog "$SH_CMD $PACKAGE_INIT_PATHFILE restore" "$LOG_PATHFILE" log:failure-only
-    resultcode=$?
+    result_code=$?
 
-    if [[ $resultcode -eq 0 ]]; then
+    if [[ $result_code -eq 0 ]]; then
         DebugAsDone "restored $(FormatAsPackageName "$1") configuration"
         QPKGs.IsRestore.Add "$1"
         QPKG.GetServiceStatus "$1"
     else
-        DebugAsWarn "unable to restore $(FormatAsPackageName "$1") configuration $(FormatAsExitcode $resultcode)"
+        DebugAsWarn "unable to restore $(FormatAsPackageName "$1") configuration $(FormatAsExitcode $result_code)"
         QPKGs.ErRestore.Add "$1"
     fi
 
     QPKGs.ToRestore.Remove "$1"
-    DebugFuncExit $resultcode
+    DebugFuncExit $result_code
 
     }
 
@@ -4993,17 +5015,17 @@ QPKG.UserInstallable()
 
     [[ ${#MANAGER_QPKG_NAME[@]} -eq 0 || ${#MANAGER_QPKG_ABBRVS[@]} -eq 0 ]] && return 1
 
-    local returncode=1
+    local result_code=1
     local package_index=0
 
     for package_index in "${!MANAGER_QPKG_NAME[@]}"; do
         if [[ ${MANAGER_QPKG_NAME[$package_index]} = "$1" && -n ${MANAGER_QPKG_ABBRVS[$package_index]} ]]; then
-            returncode=0
+            result_code=0
             break
         fi
     done
 
-    return $returncode
+    return $result_code
 
     }
 
@@ -5097,7 +5119,7 @@ QPKG.MatchAbbrv()
     local -a abbs=()
     local package_index=0
     local -i index=0
-    local returncode=1
+    local result_code=1
 
     for package_index in "${!MANAGER_QPKG_NAME[@]}"; do
         abbs=(${MANAGER_QPKG_ABBRVS[$package_index]})
@@ -5105,13 +5127,13 @@ QPKG.MatchAbbrv()
         for index in "${!abbs[@]}"; do
             if [[ ${abbs[$index]} = "$1" ]]; then
                 Display "${MANAGER_QPKG_NAME[$package_index]}"
-                returncode=0
+                result_code=0
                 break 2
             fi
         done
     done
 
-    return $returncode
+    return $result_code
 
     }
 
@@ -5139,10 +5161,10 @@ MakePath()
 
     [[ -z $1 || -z $2 ]] && return 1
 
-    mkdir -p "$1" 2>/dev/null; resultcode=$?
+    mkdir -p "$1" 2>/dev/null; result_code=$?
 
-    if [[ $resultcode -ne 0 ]]; then
-        ShowAsEror "unable to create $2 path $(FormatAsFileName "$1") $(FormatAsExitcode $resultcode)"
+    if [[ $result_code -ne 0 ]]; then
+        ShowAsEror "unable to create $2 path $(FormatAsFileName "$1") $(FormatAsExitcode $result_code)"
         [[ $(type -t Session.SuggestIssue.Init) = 'function' ]] && Session.SuggestIssue.Set
         return 1
     fi
@@ -5161,44 +5183,44 @@ RunAndLog()
     #   $2 = pathfilename to record stdout and stderr for commandstring
     #   $3 = 'log:failure-only' (optional) - if specified, stdout & stderr are only recorded in the specified log if the command failed
     #                                      - if unspecified, stdout & stderr is always recorded
-    #   $4 = e.g. '10' (optional) - an additional acceptable return code. Any other returncode from command (other than zero) will be considered a failure
+    #   $4 = e.g. '10' (optional) - an additional acceptable result code. Any other result from command (other than zero) will be considered a failure
 
     # output:
     #   stdout = commandstring stdout and stderr if script is in 'debug' mode
     #   pathfilename ($2) = commandstring ($1) stdout and stderr
-    #   $? = resultcode of commandstring
+    #   $? = result_code of commandstring
 
     [[ -z ${1:-} || -z ${2:-} ]] && return 1
     DebugFuncEntry
 
     local msgs=/var/log/execd.log
-    local -i resultcode=0
+    local -i result_code=0
 
     FormatAsCommand "$1" > "$2"
-    DebugCommand.Proc "$1"
+    DebugAsProc "exec: '$1'"
 
     if Session.Debug.ToScreen.IsSet; then
         $1 > >($TEE_CMD "$msgs") 2>&1   # NOTE: 'tee' buffers stdout here
-        resultcode=$?
+        result_code=$?
     else
         $1 > "$msgs" 2>&1
-        resultcode=$?
+        result_code=$?
     fi
 
     if [[ -e $msgs ]]; then
-        FormatAsResultAndStdout "$resultcode" "$(<"$msgs")" >> "$2"
+        FormatAsResultAndStdout "$result_code" "$(<"$msgs")" >> "$2"
         rm -f "$msgs"
     else
-        FormatAsResultAndStdout "$resultcode" "<null>" >> "$2"
+        FormatAsResultAndStdout "$result_code" "<null>" >> "$2"
     fi
 
-    if [[ $resultcode -eq 0 ]]; then
+    if [[ $result_code -eq 0 ]]; then
         [[ ${3:-} != log:failure-only ]] && AddFileToDebug "$2"
     else
-        [[ $resultcode -ne ${4:-} ]] && AddFileToDebug "$2"
+        [[ $result_code -ne ${4:-} ]] && AddFileToDebug "$2"
     fi
 
-    DebugFuncExit $resultcode
+    DebugFuncExit $result_code
 
     }
 
@@ -5222,8 +5244,6 @@ FileMatchesMD5()
     [[ $($MD5SUM_CMD "$1" | $CUT_CMD -f1 -d' ') = "$2" ]]
 
     }
-
-#### FormatAs... functions always output formatted info to be used as part of another string. These shouldn't be used for direct screen output.
 
 FormatAsPlural()
     {
@@ -5320,9 +5340,9 @@ FormatAsResult()
     {
 
     if [[ $1 -eq 0 ]]; then
-        echo "= resultcode: $(FormatAsExitcode "$1")"
+        echo "= result_code: $(FormatAsExitcode "$1")"
     else
-        echo "! resultcode: $(FormatAsExitcode "$1")"
+        echo "! result_code: $(FormatAsExitcode "$1")"
     fi
 
     }
@@ -5359,9 +5379,9 @@ FormatAsResultAndStdout()
     {
 
     if [[ $1 -eq 0 ]]; then
-        echo "= resultcode: $(FormatAsExitcode "$1") ***** stdout/stderr begins below *****"
+        echo "= result_code: $(FormatAsExitcode "$1") ***** stdout/stderr begins below *****"
     else
-        echo "! resultcode: $(FormatAsExitcode "$1") ***** stdout/stderr begins below *****"
+        echo "! result_code: $(FormatAsExitcode "$1") ***** stdout/stderr begins below *****"
     fi
 
     echo "$2"
@@ -5380,8 +5400,6 @@ DisplayLineSpaceIfNoneAlready()
     fi
 
     }
-
-#### Debug... functions are used for formatted debug information output. This may be to screen, file or both.
 
 readonly DEBUG_LOG_DATAWIDTH=92
 
@@ -5409,53 +5427,53 @@ DebugExtLogMinorSeparator()
 DebugScript()
     {
 
-    DebugDetected.OK "$(FormatAsScript)" "${1:-}" "${2:-}"
+    DebugDetectedOK "$(FormatAsScript)" "${1:-}" "${2:-}"
 
     }
 
-DebugHardware.OK()
+DebugHardwareOK()
     {
 
-    DebugDetected.OK "$(FormatAsHardware)" "${1:-}" "${2:-}"
+    DebugDetectedOK "$(FormatAsHardware)" "${1:-}" "${2:-}"
 
     }
 
-DebugHardware.Warning()
+DebugHardwareWarning()
     {
 
-    DebugDetected.Warning "$(FormatAsHardware)" "${1:-}" "${2:-}"
+    DebugDetectedWarning "$(FormatAsHardware)" "${1:-}" "${2:-}"
 
     }
 
-DebugFirmware.OK()
+DebugFirmwareOK()
     {
 
-    DebugDetected.OK "$(FormatAsFirmware)" "${1:-}" "${2:-}"
+    DebugDetectedOK "$(FormatAsFirmware)" "${1:-}" "${2:-}"
 
     }
 
-DebugFirmware.Warning()
+DebugFirmwareWarning()
     {
 
-    DebugDetected.Warning "$(FormatAsFirmware)" "${1:-}" "${2:-}"
+    DebugDetectedWarning "$(FormatAsFirmware)" "${1:-}" "${2:-}"
 
     }
 
-DebugUserspace.OK()
+DebugUserspaceOK()
     {
 
-    DebugDetected.OK "$(FormatAsUserspace)" "${1:-}" "${2:-}"
+    DebugDetectedOK "$(FormatAsUserspace)" "${1:-}" "${2:-}"
 
     }
 
-DebugUserspace.Warning()
+DebugUserspaceWarning()
     {
 
-    DebugDetected.Warning "$(FormatAsUserspace)" "${1:-}" "${2:-}"
+    DebugDetectedWarning "$(FormatAsUserspace)" "${1:-}" "${2:-}"
 
     }
 
-DebugDetected.Warning()
+DebugDetectedWarning()
     {
 
     first_column_width=9
@@ -5473,7 +5491,7 @@ DebugDetected.Warning()
 
     }
 
-DebugDetected.OK()
+DebugDetectedOK()
     {
 
     first_column_width=9
@@ -5491,17 +5509,10 @@ DebugDetected.OK()
 
     }
 
-DebugCommand.Proc()
-    {
-
-    DebugAsProc "exec: '${1:-}'"
-
-    }
-
 DebugQPKG()
     {
 
-    DebugDetected.OK 'QPKG' "${1:-}" "${2:-}"
+    DebugDetectedOK 'QPKG' "${1:-}" "${2:-}"
 
     }
 
@@ -5633,8 +5644,6 @@ AddFileToDebug()
 
     }
 
-#### ShowAs... functions output formatted info to screen and (usually) to debug log.
-
 ShowAsProcLong()
     {
 
@@ -5650,7 +5659,7 @@ ShowAsProc()
     [[ -n ${2:-} ]] && suffix=" $2"
 
     SmartCR
-    WriteToDisplay.Wait "$(ColourTextBrightOrange proc)" "$1 ...$suffix"
+    WriteToDisplayWait "$(ColourTextBrightOrange proc)" "$1 ...$suffix"
     WriteToLog proc "$1 ...$suffix"
     [[ $(type -t Session.Debug.ToScreen.Init) = 'function' ]] && Session.Debug.ToScreen.IsSet && Display
 
@@ -5659,7 +5668,7 @@ ShowAsProc()
 ShowAsDebug()
     {
 
-    WriteToDisplay.New "$(ColourTextBlackOnCyan dbug)" "$1"
+    WriteToDisplayNew "$(ColourTextBlackOnCyan dbug)" "$1"
 
     }
 
@@ -5669,7 +5678,7 @@ ShowAsNote()
     # note to user
 
     SmartCR
-    WriteToDisplay.New "$(ColourTextBrightYellow note)" "$1"
+    WriteToDisplayNew "$(ColourTextBrightYellow note)" "$1"
     WriteToLog note "$1"
 
     }
@@ -5680,7 +5689,7 @@ ShowAsReco()
     # recommendation
 
     SmartCR
-    WriteToDisplay.New "$(ColourTextBrightOrange reco)" "$1"
+    WriteToDisplayNew "$(ColourTextBrightOrange reco)" "$1"
     WriteToLog note "$1"
 
     }
@@ -5688,7 +5697,7 @@ ShowAsReco()
 ShowAsQuiz()
     {
 
-    WriteToDisplay.Wait "$(ColourTextBrightOrangeBlink quiz)" "$1: "
+    WriteToDisplayWait "$(ColourTextBrightOrangeBlink quiz)" "$1: "
     WriteToLog quiz "$1:"
 
     }
@@ -5696,7 +5705,7 @@ ShowAsQuiz()
 ShowAsQuizDone()
     {
 
-    WriteToDisplay.New "$(ColourTextBrightOrange quiz)" "$1"
+    WriteToDisplayNew "$(ColourTextBrightOrange quiz)" "$1"
 
     }
 
@@ -5706,7 +5715,7 @@ ShowAsDone()
     # process completed OK
 
     SmartCR
-    WriteToDisplay.New "$(ColourTextBrightGreen 'done')" "$1"
+    WriteToDisplayNew "$(ColourTextBrightGreen 'done')" "$1"
     WriteToLog 'done' "$1"
 
     }
@@ -5717,7 +5726,7 @@ ShowAsWarn()
     # warning only
 
     SmartCR
-    WriteToDisplay.New "$(ColourTextBrightOrange warn)" "$1"
+    WriteToDisplayNew "$(ColourTextBrightOrange warn)" "$1"
     WriteToLog warn "$1"
 
     }
@@ -5727,7 +5736,7 @@ ShowAsAbort()
 
     local capitalised="$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}"      # use any available 'tr'
 
-    WriteToDisplay.New "$(ColourTextBrightRed eror)" "$capitalised: aborting ..."
+    WriteToDisplayNew "$(ColourTextBrightRed eror)" "$capitalised: aborting ..."
     WriteToLog eror "$capitalised: aborting"
     Session.Error.Set
 
@@ -5742,7 +5751,7 @@ ShowAsFail()
 
     local capitalised="$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}"      # use any available 'tr'
 
-    WriteToDisplay.New "$(ColourTextBrightRed fail)" "$capitalised"
+    WriteToDisplayNew "$(ColourTextBrightRed fail)" "$capitalised"
     WriteToLog fail "$capitalised."
 
     }
@@ -5756,7 +5765,7 @@ ShowAsEror()
 
     local capitalised="$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}"      # use any available 'tr'
 
-    WriteToDisplay.New "$(ColourTextBrightRed eror)" "$capitalised"
+    WriteToDisplayNew "$(ColourTextBrightRed eror)" "$capitalised"
     WriteToLog eror "$capitalised."
     Session.Error.Set
 
@@ -5854,8 +5863,6 @@ ShowAsOperationResult()
 
     }
 
-### WriteAs... functions - to be determined.
-
 WriteAsDebug()
     {
 
@@ -5863,7 +5870,7 @@ WriteAsDebug()
 
     }
 
-WriteToDisplay.Wait()
+WriteToDisplayWait()
     {
 
     # Writes a new message without newline
@@ -5879,7 +5886,7 @@ WriteToDisplay.Wait()
 
     }
 
-WriteToDisplay.New()
+WriteToDisplayNew()
     {
 
     # Updates the previous message
@@ -6043,7 +6050,7 @@ CTRL_C_Captured()
 
     }
 
-Objects.Add.List()
+AddListObj()
     {
 
     # $1: object name to create
@@ -6143,7 +6150,7 @@ echo $public_function_name'.Add()
 
     }
 
-Objects.Add.Flag()
+AddFlagObj()
     {
 
     # $1: object name to create
@@ -6228,21 +6235,21 @@ echo $public_function_name'.Clear()
 
     }
 
-Objects.CheckLocal()
+CheckLocalObjects()
     {
 
-    [[ -e $COMPILED_OBJECTS_PATHFILE ]] && ! FileMatchesMD5 "$COMPILED_OBJECTS_PATHFILE" "$(Objects.Compile hash)" && rm -f "$COMPILED_OBJECTS_PATHFILE"
+    [[ -e $COMPILED_OBJECTS_PATHFILE ]] && ! FileMatchesMD5 "$COMPILED_OBJECTS_PATHFILE" "$(CompileObjects hash)" && rm -f "$COMPILED_OBJECTS_PATHFILE"
 
     }
 
-Objects.CheckRemote()
+CheckRemoteObjects()
     {
 
     [[ ! -e $COMPILED_OBJECTS_PATHFILE ]] && ! $CURL_CMD${curl_insecure_arg:-} --silent --fail "$COMPILED_OBJECTS_URL" > "$COMPILED_OBJECTS_PATHFILE" && [[ ! -s $COMPILED_OBJECTS_PATHFILE ]] && rm -f "$COMPILED_OBJECTS_PATHFILE"
 
     }
 
-Objects.Compile()
+CompileObjects()
     {
 
     # builds a new [compiled.objects] file in the work path
@@ -6258,87 +6265,87 @@ Objects.Compile()
         return
     fi
 
-    Objects.CheckLocal
-    Objects.CheckRemote
-    Objects.CheckLocal
+    CheckLocalObjects
+    CheckRemoteObjects
+    CheckLocalObjects
 
     if [[ ! -e $COMPILED_OBJECTS_PATHFILE ]]; then
         ShowAsProc 'compiling objects' >&2
 
         # session flags
-        Objects.Add.Flag Session.Debug.ToArchive
-        Objects.Add.Flag Session.Debug.ToFile
-        Objects.Add.Flag Session.Debug.ToScreen
-        Objects.Add.Flag Session.Display.Clean
-        Objects.Add.Flag Session.LineSpace
-        Objects.Add.Flag Session.ShowBackupLocation
-        Objects.Add.Flag Session.SuggestIssue
-        Objects.Add.Flag Session.Summary
+        AddFlagObj Session.Debug.ToArchive
+        AddFlagObj Session.Debug.ToFile
+        AddFlagObj Session.Debug.ToScreen
+        AddFlagObj Session.Display.Clean
+        AddFlagObj Session.LineSpace
+        AddFlagObj Session.ShowBackupLocation
+        AddFlagObj Session.SuggestIssue
+        AddFlagObj Session.Summary
 
-        Objects.Add.Flag QPKGs.States.Built
-        Objects.Add.Flag QPKGs.SkipProcessing
-        Objects.Add.Flag IPKGs.Install
-        Objects.Add.Flag PIPs.Install
+        AddFlagObj QPKGs.States.Built
+        AddFlagObj QPKGs.SkipProcessing
+        AddFlagObj IPKGs.Install
+        AddFlagObj PIPs.Install
 
         # user option flags
         operations_array=(Abbreviations Actions ActionsAll Backups Basic Options Packages Problems Status Tips)
 
         for array_name in "${operations_array[@]}"; do
-            Objects.Add.Flag Opts.Help.${array_name}
+            AddFlagObj Opts.Help.${array_name}
         done
 
-        Objects.Add.Flag Opts.Dependencies.Check
-        Objects.Add.Flag Opts.IgnoreFreeSpace
-        Objects.Add.Flag Opts.Versions.View
+        AddFlagObj Opts.Dependencies.Check
+        AddFlagObj Opts.IgnoreFreeSpace
+        AddFlagObj Opts.Versions.View
 
-        Objects.Add.Flag Opts.Log.All.Paste
-        Objects.Add.Flag Opts.Log.All.View
-        Objects.Add.Flag Opts.Log.Last.Paste
-        Objects.Add.Flag Opts.Log.Last.View
-        Objects.Add.Flag Opts.Log.Tail.Paste
-        Objects.Add.Flag Opts.Log.Tail.View
+        AddFlagObj Opts.Log.All.Paste
+        AddFlagObj Opts.Log.All.View
+        AddFlagObj Opts.Log.Last.Paste
+        AddFlagObj Opts.Log.Last.View
+        AddFlagObj Opts.Log.Tail.Paste
+        AddFlagObj Opts.Log.Tail.View
 
         operations_array=(Backup Install Rebuild Reinstall Restart Restore Start Stop Uninstall Upgrade)
 
         for array_name in "${operations_array[@]}"; do
-            Objects.Add.Flag Opts.Apps.All.${array_name}
+            AddFlagObj Opts.Apps.All.${array_name}
         done
 
         operations_array=(All Essential Installed NotInstalled Optional Standalone Started Stopped Upgradable)
 
         for array_name in "${operations_array[@]}"; do
-            Objects.Add.Flag Opts.Apps.List.${array_name}
+            AddFlagObj Opts.Apps.List.${array_name}
         done
 
         # lists
-        Objects.Add.List Args.Unknown
+        AddListObj Args.Unknown
 
         operations_array=(Download Install Uninstall)
 
         for array_name in "${operations_array[@]}"; do
-            Objects.Add.List IPKGs.To${array_name}
+            AddListObj IPKGs.To${array_name}
         done
 
         operations_array=(Essential Installable Missing Names Optional Standalone Started Stopped Upgradable)
 
         for array_name in "${operations_array[@]}"; do
-            Objects.Add.List QPKGs.${array_name}
+            AddListObj QPKGs.${array_name}
         done
 
         operations_array=(BackedUp Installed SupportsBackup SupportsUpdateOnRestart)
 
         for array_name in "${operations_array[@]}"; do
-            Objects.Add.List QPKGs.${array_name}
-            Objects.Add.List QPKGs.Not${array_name}
+            AddListObj QPKGs.${array_name}
+            AddListObj QPKGs.Not${array_name}
         done
 
         operations_array=(Backup Download Install Rebuild Reinstall Restart Restore Start Stop Uninstall Upgrade)
 
         for array_name in "${operations_array[@]}"; do
-            Objects.Add.List QPKGs.To${array_name}      # to operate on
-            Objects.Add.List QPKGs.Is${array_name}      # succeeded
-            Objects.Add.List QPKGs.Er${array_name}      # failed
-            Objects.Add.List QPKGs.Sk${array_name}      # skipped
+            AddListObj QPKGs.To${array_name}      # to operate on
+            AddListObj QPKGs.Is${array_name}      # succeeded
+            AddListObj QPKGs.Er${array_name}      # failed
+            AddListObj QPKGs.Sk${array_name}      # skipped
         done
     fi
 
