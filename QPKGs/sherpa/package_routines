@@ -103,8 +103,17 @@
 # the package is installed.
 ######################################################################
 pkg_post_install()
-	{
+    {
 
-	$CMD_SETCFG -f $SYS_QPKG_CONFIG_FILE $QPKG_NAME Web_Port $($CMD_GETCFG System "Web Access Port")
+    QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
+    REAL_LOG_PATHFILE=$QPKG_PATH/logs/session.archive.log
 
-	}
+    $CMD_SETCFG -f $SYS_QPKG_CONFIG_FILE $QPKG_NAME Web_Port $($CMD_GETCFG System "Web Access Port")
+    [[ -e /sbin/qpkg_cli ]] && /sbin/qpkg_cli --clean "$QPKG_NAME" &>/dev/null
+    $CMD_SETCFG "$QPKG_NAME" Status complete -f /etc/config/qpkg.conf
+
+    [[ ! -d $(dirname $REAL_LOG_PATHFILE) ]] && mkdir -p $(dirname $REAL_LOG_PATHFILE)
+    [[ ! -e $REAL_LOG_PATHFILE ]] && /bin/touch "$REAL_LOG_PATHFILE"
+    echo "done: $QPKG_NAME QPKG has been installed" >> "$REAL_LOG_PATHFILE"
+
+    }

@@ -4,7 +4,10 @@
 #
 # This is the service script for the sherpa mini-package-manager and is part of the 'sherpa' QPKG.
 #
-# For more info: https://forum.qnap.com/viewtopic.php?f=320&t=132373
+# So, blame OneCD if it all goes horribly wrong. ;)
+#
+# project: git.io/sherpa
+# forum: https://forum.qnap.com/viewtopic.php?f=320&t=132373
 #
 # Tested on:
 #  GNU bash, version 3.2.57(2)-release (i686-pc-linux-gnu)
@@ -15,7 +18,7 @@
 #
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 #
-# You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/.
+# You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
 
 Init()
     {
@@ -28,6 +31,7 @@ Init()
     readonly APPARENT_LOADER_SCRIPT_PATHNAME=/usr/sbin/$QPKG_NAME
     readonly SERVICE_STATUS_PATHFILE=/var/run/$QPKG_NAME.last.operation
 
+    [[ ! -d $(dirname $REAL_LOG_PATHFILE) ]] && mkdir -p $(dirname $REAL_LOG_PATHFILE)
     [[ ! -e $REAL_LOG_PATHFILE ]] && /bin/touch "$REAL_LOG_PATHFILE"
 
     }
@@ -47,6 +51,7 @@ case $1 in
     start)
         [[ ! -L $APPARENT_LOADER_SCRIPT_PATHNAME ]] && /bin/ln -s "$REAL_LOADER_SCRIPT_PATHNAME" "$APPARENT_LOADER_SCRIPT_PATHNAME"
         [[ ! -L $GUI_LOG_PATHFILE ]] && /bin/ln -s "$REAL_LOG_PATHFILE" "$GUI_LOG_PATHFILE"
+        sherpa status >& /dev/null
         ;;
     stop)
         [[ -L $APPARENT_LOADER_SCRIPT_PATHNAME ]] && rm -f "$APPARENT_LOADER_SCRIPT_PATHNAME"

@@ -49,7 +49,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=210127
+    readonly MANAGER_SCRIPT_VERSION=210128
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
 
@@ -286,9 +286,9 @@ Session.Init()
         MANAGER_QPKG_IS_ESSENTIAL+=(true)
         MANAGER_QPKG_IS_STANDALONE+=(true)
         MANAGER_QPKG_ARCH+=(all)
-        MANAGER_QPKG_VERSION+=(210126)
+        MANAGER_QPKG_VERSION+=(210128)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/$PROJECT_NAME/build/${PROJECT_NAME}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
-        MANAGER_QPKG_MD5+=(3a4791a14b524fc0bb8b645f24c83271)
+        MANAGER_QPKG_MD5+=(4baf3abc5fe0a94cd47d33cb6e0c308f)
         MANAGER_QPKG_DESC+=("provides the '$PROJECT_NAME' command: the mini-package-manager")
         MANAGER_QPKG_ABBRVS+=($PROJECT_NAME)
         MANAGER_QPKG_ESSENTIALS+=('')
