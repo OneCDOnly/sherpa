@@ -1810,47 +1810,56 @@ ArgumentSuggestions()
 
     if Args.Unknown.IsAny; then
         ShowAsEror "unknown argument$(FormatAsPlural "$(Args.Unknown.Count)"): \"$(Args.Unknown.List)\""
-        Display
 
         for arg in $(Args.Unknown.Array); do
             case $arg in
                 all)
+                    Display
                     DisplayAsProjectSyntaxExample "please provide an $(FormatAsHelpAction) before 'all' like" 'start all'
                     Opts.Help.Basic.Clear
                     ;;
                 all-backup|backup-all)
+                    Display
                     DisplayAsProjectSyntaxExample 'to backup all installed package configurations, use' 'backup all'
                     Opts.Help.Basic.Clear
                     ;;
                 essential)
+                    Display
                     DisplayAsProjectSyntaxExample "please provide an $(FormatAsHelpAction) before 'essential' like" 'start essential'
                     Opts.Help.Basic.Clear
                     ;;
                 optional)
+                    Display
                     DisplayAsProjectSyntaxExample "please provide an $(FormatAsHelpAction) before 'optional' like" 'start optional'
                     Opts.Help.Basic.Clear
                     ;;
                 all-restart|restart-all)
+                    Display
                     DisplayAsProjectSyntaxExample 'to restart all packages, use' 'restart all'
                     Opts.Help.Basic.Clear
                     ;;
                 all-restore|restore-all)
+                    Display
                     DisplayAsProjectSyntaxExample 'to restore all installed package configurations, use' 'restore all'
                     Opts.Help.Basic.Clear
                     ;;
                 all-start|start-all)
+                    Display
                     DisplayAsProjectSyntaxExample 'to start all packages, use' 'start all'
                     Opts.Help.Basic.Clear
                     ;;
                 all-stop|stop-all)
+                    Display
                     DisplayAsProjectSyntaxExample 'to stop all packages, use' 'stop all'
                     Opts.Help.Basic.Clear
                     ;;
                 all-uninstall|all-remove|uninstall-all|remove-all)
+                    Display
                     DisplayAsProjectSyntaxExample 'to uninstall all packages, use' 'force uninstall all'
                     Opts.Help.Basic.Clear
                     ;;
                 all-upgrade|upgrade-all)
+                    Display
                     DisplayAsProjectSyntaxExample 'to upgrade all packages, use' 'upgrade all'
                     Opts.Help.Basic.Clear
                     ;;
@@ -3722,7 +3731,7 @@ QPKGs.Statuses.Show()
             fi
         done
 
-        DisplayLineSpaceIfNoneAlready
+        Display; Session.LineSpace.Set
     done
 
     QPKGs.Operations.List
@@ -6348,9 +6357,9 @@ CompileObjects()
 
         for array_name in "${operations_array[@]}"; do
             AddListObj QPKGs.To${array_name}      # to operate on
-            AddListObj QPKGs.Is${array_name}      # succeeded
-            AddListObj QPKGs.Er${array_name}      # failed
-            AddListObj QPKGs.Sk${array_name}      # skipped
+            AddListObj QPKGs.Is${array_name}      # operation succeeded
+            AddListObj QPKGs.Er${array_name}      # operation failed
+            AddListObj QPKGs.Sk${array_name}      # operation was skipped
         done
     fi
 
