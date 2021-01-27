@@ -3196,7 +3196,7 @@ Log.Tail.View()
             $LESS_CMD -N~ "$SESSION_TAIL_PATHFILE"
         fi
     else
-        ShowAsEror 'no last session log to display'
+        ShowAsEror 'no session log tail to display'
     fi
 
     return 0
@@ -3226,7 +3226,7 @@ Log.All.Paste.Online()
             return 1
         fi
     else
-        ShowAsEror 'no archive log file found'
+        ShowAsEror 'no session log found'
     fi
 
     return 0
@@ -3257,7 +3257,7 @@ Log.Last.Paste.Online()
             return 1
         fi
     else
-        ShowAsEror 'no last log file found'
+        ShowAsEror 'no last session log found'
     fi
 
     return 0
@@ -3288,28 +3288,32 @@ Log.Tail.Paste.Online()
             return 1
         fi
     else
-        ShowAsEror 'no tail log file found'
+        ShowAsEror 'no session log tail found'
     fi
 
     return 0
 
     }
 
-GetSessionStart()
+GetLogSessionStartLine()
     {
 
     # $1 = how many sessions back? (optional) default = 1
 
-    echo $(($($GREP_CMD -n 'SCRIPT:.*started:' "$SESSION_TAIL_PATHFILE" | $TAIL_CMD -n${1:-1} | $HEAD_CMD -n1 | $CUT_CMD -d':' -f1)-1))
+    local -i linenum=$(($($GREP_CMD -n 'SCRIPT:.*started:' "$SESSION_TAIL_PATHFILE" | $TAIL_CMD -n${1:-1} | $HEAD_CMD -n1 | $CUT_CMD -d':' -f1)-1))
+    [[ $linenum -lt 1 ]] && linenum=1
+    echo $linenum
 
     }
 
-GetSessionFinish()
+GetLogSessionFinishLine()
     {
 
     # $1 = how many sessions back? (optional) default = 1
 
-    echo $(($($GREP_CMD -n 'SCRIPT:.*finished:' "$SESSION_TAIL_PATHFILE" | $TAIL_CMD -n${1:-1} | $CUT_CMD -d':' -f1)+2))
+    local -i linenum=$(($($GREP_CMD -n 'SCRIPT:.*finished:' "$SESSION_TAIL_PATHFILE" | $TAIL_CMD -n${1:-1} | $CUT_CMD -d':' -f1)+2))
+    [[ $linenum -eq 2 ]] && linenum=3
+    echo $linenum
 
     }
 
@@ -3354,11 +3358,11 @@ ExtractPreviousSessionFromTail()
     ExtractTailFromLog
 
     if [[ -e $SESSION_TAIL_PATHFILE ]]; then
-        end_line=$(GetSessionFinish "$old_session")
+        end_line=$(GetLogSessionFinishLine "$old_session")
         start_line=$((end_line+1))      # ensure an invalid condition, to be solved by the loop
 
         while [[ $start_line -ge $end_line ]]; do
-            start_line=$(GetSessionStart "$old_session")
+            start_line=$(GetLogSessionStartLine "$old_session")
 
             ((old_session++))
             [[ $old_session -gt $old_session_limit ]] && break
