@@ -151,7 +151,6 @@ Session.Init()
     readonly UPDATE_LOG_FILE=update.log
     readonly UPGRADE_LOG_FILE=upgrade.log
 
-    readonly DEFAULT_VOLUME=$($GETCFG_CMD SHARE_DEF defVolMP -f /etc/config/def_share.info)
     local -r PROJECT_PATH=$($GETCFG_CMD $PROJECT_NAME Install_Path -f /etc/config/qpkg.conf)
     readonly WORK_PATH=$PROJECT_PATH/cache
     readonly LOGS_PATH=$PROJECT_PATH/logs
@@ -159,7 +158,7 @@ Session.Init()
     readonly IPKG_DL_PATH=$WORK_PATH/ipkgs.downloads
     readonly IPKG_CACHE_PATH=$WORK_PATH/ipkgs
     readonly PIP_CACHE_PATH=$WORK_PATH/pips
-    readonly BACKUP_PATH=$DEFAULT_VOLUME/.qpkg_config_backup
+    readonly BACKUP_PATH=$($GETCFG_CMD SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
 
     readonly COMPILED_OBJECTS_URL=https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/compiled.objects
     readonly EXTERNAL_PACKAGE_ARCHIVE_PATHFILE=/opt/var/opkg-lists/entware
@@ -1915,7 +1914,7 @@ ListEnvironment()
     fi
 
     DebugUserspaceOK '$BASH_VERSION' "$BASH_VERSION"
-    DebugUserspaceOK 'default volume' "$DEFAULT_VOLUME"
+    DebugUserspaceOK 'default volume' "$($GETCFG_CMD SHARE_DEF defVolMP -f /etc/config/def_share.info)"
 
     if [[ -L '/opt' ]]; then
         DebugUserspaceOK '/opt' "$($READLINK_CMD '/opt' || echo '<not present>')"
