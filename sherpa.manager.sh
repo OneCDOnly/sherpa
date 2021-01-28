@@ -72,7 +72,6 @@ Session.Init()
     readonly UNAME_CMD=/bin/uname
     readonly UNIQ_CMD=/bin/uniq
 
-    readonly APP_CENTER_NOTIFIER=/sbin/qpkg_cli
     readonly CURL_CMD=/sbin/curl
     readonly GETCFG_CMD=/sbin/getcfg
     readonly QPKG_SERVICE_CMD=/sbin/qpkg_service
@@ -92,9 +91,6 @@ Session.Init()
     readonly UPTIME_CMD=/usr/bin/uptime
     readonly WC_CMD=/usr/bin/wc
 
-    readonly Z7_CMD=/usr/local/sbin/7z
-    readonly ZIP_CMD=/usr/local/sbin/zip
-
     # check required binaries are present
     IsSysFileExist $AWK_CMD || return
     IsSysFileExist $BUSYBOX_CMD || return
@@ -113,7 +109,6 @@ Session.Init()
     IsSysFileExist $UNAME_CMD || return
     IsSysFileExist $UNIQ_CMD || return
 
-    IsSysFileExist $APP_CENTER_NOTIFIER || return
     IsSysFileExist $CURL_CMD || return
     IsSysFileExist $GETCFG_CMD || return
     IsSysFileExist $QPKG_SERVICE_CMD || return
@@ -134,9 +129,6 @@ Session.Init()
     IsSysFileExist $UNZIP_CMD || return
     IsSysFileExist $UPTIME_CMD || return
     IsSysFileExist $WC_CMD || return
-
-    IsSysFileExist $Z7_CMD || return
-    IsSysFileExist $ZIP_CMD || return
 
     readonly GNU_FIND_CMD=/opt/bin/find
     readonly GNU_GREP_CMD=/opt/bin/grep
@@ -2580,7 +2572,7 @@ OpenIPKGArchive()
 
     CloseIPKGArchive
 
-    RunAndLog "$Z7_CMD e -o$($DIRNAME_CMD "$EXTERNAL_PACKAGE_LIST_PATHFILE") $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE" "$WORK_PATH/ipkg.list.archive.extract" log:failure-only
+    RunAndLog "/usr/local/sbin/7z e -o$($DIRNAME_CMD "$EXTERNAL_PACKAGE_LIST_PATHFILE") $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE" "$WORK_PATH/ipkg.list.archive.extract" log:failure-only
     result_code=$?
 
     if [[ ! -e $EXTERNAL_PACKAGE_LIST_PATHFILE ]]; then
@@ -5159,7 +5151,7 @@ QPKG.FixAppCenterStatus()
     [[ -z $1 ]] && return 1
 
     # KLUDGE: 'clean' QTS 4.5.1 App Center notifier status
-    [[ -e $APP_CENTER_NOTIFIER ]] && $APP_CENTER_NOTIFIER --clean "$1" &>/dev/null
+    [[ -e /sbin/qpkg_cli ]] && /sbin/qpkg_cli --clean "$1" &>/dev/null
 
     QPKG.NotInstalled "$1" && return 0
 
