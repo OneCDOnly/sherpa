@@ -61,7 +61,6 @@ Session.Init()
     readonly DATE_CMD=/bin/date
     readonly GREP_CMD=/bin/grep
     readonly HOSTNAME_CMD=/bin/hostname
-    readonly LESS_CMD=/bin/less
     readonly MD5SUM_CMD=/bin/md5sum
     readonly PING_CMD=/bin/ping
     readonly SED_CMD=/bin/sed
@@ -99,7 +98,6 @@ Session.Init()
     IsSysFileExist $DATE_CMD || return
     IsSysFileExist $GREP_CMD || return
     IsSysFileExist $HOSTNAME_CMD || return
-    IsSysFileExist $LESS_CMD || return
     IsSysFileExist $MD5SUM_CMD || return
     IsSysFileExist $PING_CMD || return
     IsSysFileExist $SED_CMD || return
@@ -132,7 +130,6 @@ Session.Init()
 
     readonly GNU_FIND_CMD=/opt/bin/find
     readonly GNU_GREP_CMD=/opt/bin/grep
-    readonly GNU_LESS_CMD=/opt/bin/less
     readonly GNU_SED_CMD=/opt/bin/sed
     readonly OPKG_CMD=/opt/bin/opkg
 
@@ -3145,10 +3142,12 @@ Log.All.View()
     DisableDebuggingToArchiveAndFile
 
     if [[ -e $SESSION_ARCHIVE_PATHFILE ]]; then
-        if [[ -e $GNU_LESS_CMD ]]; then
-            LESSSECURE=1 $GNU_LESS_CMD +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$SESSION_ARCHIVE_PATHFILE"
+        if [[ -e /opt/bin/less ]]; then
+            LESSSECURE=1 /opt/bin/less +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$SESSION_ARCHIVE_PATHFILE"
+        elif [[ -e /bin/less ]]; then
+            /bin/less -N~ "$SESSION_ARCHIVE_PATHFILE"
         else
-            $LESS_CMD -N~ "$SESSION_ARCHIVE_PATHFILE"
+            $CAT_CMD --number "$SESSION_ARCHIVE_PATHFILE"
         fi
     else
         ShowAsEror 'no session log to display'
@@ -3167,10 +3166,12 @@ Log.Last.View()
     ExtractPreviousSessionFromTail
 
     if [[ -e $SESSION_LAST_PATHFILE ]]; then
-        if [[ -e $GNU_LESS_CMD ]]; then
-            LESSSECURE=1 $GNU_LESS_CMD +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$SESSION_LAST_PATHFILE"
+        if [[ -e /opt/bin/less ]]; then
+            LESSSECURE=1 /opt/bin/less +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$SESSION_LAST_PATHFILE"
+        elif [[ -e /bin/less ]]; then
+            /bin/less -N~ "$SESSION_LAST_PATHFILE"
         else
-            $LESS_CMD -N~ "$SESSION_LAST_PATHFILE"
+            $CAT_CMD --number "$SESSION_LAST_PATHFILE"
         fi
     else
         ShowAsEror 'no last session log to display'
@@ -3189,10 +3190,12 @@ Log.Tail.View()
     ExtractTailFromLog
 
     if [[ -e $SESSION_TAIL_PATHFILE ]]; then
-        if [[ -e $GNU_LESS_CMD ]]; then
-            LESSSECURE=1 $GNU_LESS_CMD +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$SESSION_TAIL_PATHFILE"
+        if [[ -e /opt/bin/less ]]; then
+            LESSSECURE=1 /opt/bin/less +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$SESSION_TAIL_PATHFILE"
+        elif [[ -e /bin/less ]]; then
+            /bin/less -N~ "$SESSION_TAIL_PATHFILE"
         else
-            $LESS_CMD -N~ "$SESSION_TAIL_PATHFILE"
+            $CAT_CMD --number "$SESSION_TAIL_PATHFILE"
         fi
     else
         ShowAsEror 'no session log tail to display'
