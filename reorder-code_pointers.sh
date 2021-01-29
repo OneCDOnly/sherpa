@@ -1,9 +1,9 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-echo -n "reordering ... "
+echo -n 'reordering ... '
 
-base_path=${HOME}/scripts/nas/sherpa
-target_path=${base_path}/.backups-b4-reordering
+base_path=$HOME/scripts/nas/sherpa
+target_path=$base_path/.backups-b4-reordering
 source_file=sherpa.manager.sh
 source_pathfile=$base_path/$source_file
 target_pathfile=$target_path/$source_file.$(date +%s).bak
@@ -15,4 +15,4 @@ cp "$source_pathfile" "$target_pathfile"
 # https://stackoverflow.com/questions/42869901/bash-script-to-rewrite-numbers-sequentially
 perl -i -pe 's/(\bcode_pointer=)\d+/$1.$i++/ge' "$source_pathfile"
 
-echo "done!"
+echo 'done!'

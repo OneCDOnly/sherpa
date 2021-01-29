@@ -49,7 +49,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=210129
+    readonly MANAGER_SCRIPT_VERSION=210130
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
 
@@ -1042,15 +1042,15 @@ Tier.Processor()
     # run a single operation on a group of packages
 
     # input:
-    #   $1 = $TARGET_OPERATION              e.g. 'Start', 'Restart', etc...
+    #   $1 = $TARGET_OPERATION              e.g. 'Start', 'Restart'...
     #   $2 = forced operation?              e.g. 'true', 'false'
     #   $3 = $TIER                          e.g. 'essential', 'optional', 'addon', 'all'
     #   $4 = $PACKAGE_TYPE                  e.g. 'QPKG', 'IPKG', 'PIP'
-    #   $5 = $TARGET_OBJECT_NAME (optional) e.g. 'ToStart', 'ToStop', etc...
+    #   $5 = $TARGET_OBJECT_NAME (optional) e.g. 'ToStart', 'ToStop'...
     #   $6 = $PROCESSING_DIRECTION          e.g. 'forward', 'backward'
-    #   $7 = $ACTION_INTRANSITIVE           e.g. 'start', etc...
-    #   $8 = $ACTION_PRESENT                e.g. 'starting', etc...
-    #   $9 = $ACTION_PAST                   e.g. 'started', etc...
+    #   $7 = $ACTION_INTRANSITIVE           e.g. 'start'...
+    #   $8 = $ACTION_PRESENT                e.g. 'starting'...
+    #   $9 = $ACTION_PAST                   e.g. 'started'...
     #  $10 = $RUNTIME (optional)            e.g. 'long'
 
     [[ -z $1 || -z $3 || -z $4 || -z $6 || -z $7 || -z $8 || -z $9 ]] && return
@@ -1222,7 +1222,7 @@ Session.Results()
     Session.ShowBackupLocation.IsSet && Help.BackupLocation.Show
     Session.Summary.IsSet && ShowSummary
     Session.SuggestIssue.IsSet && Help.Issue.Show
-    DisplayLineSpaceIfNoneAlready               # final on-screen linespace
+    DisplayLineSpaceIfNoneAlready   # final on-screen linespace
 
     DebugInfoMinorSeparator
     DebugScript 'finished' "$($DATE_CMD)"
@@ -1269,7 +1269,7 @@ ParseArguments()
                 QPKGs.SkipProcessing.Clear
                 QPKGs.States.Build
                 ;;
-            status|statuses)
+            s|status|statuses)
                 operation=status_
                 arg_identified=true
                 scope=''
@@ -1796,7 +1796,7 @@ ArgumentSuggestions()
     local arg=''
 
     if Args.Unknown.IsAny; then
-        ShowAsEror "unknown argument$(FormatAsPlural "$(Args.Unknown.Count)"): \"$(Args.Unknown.List)\""
+        ShowAsEror "unknown argument$(Plural "$(Args.Unknown.Count)"): \"$(Args.Unknown.List)\""
 
         for arg in $(Args.Unknown.Array); do
             case $arg in
@@ -1881,7 +1881,7 @@ ListEnvironment()
         DebugFirmwareWarning 'version' "$NAS_FIRMWARE"
     fi
 
-    if [[ $NAS_BUILD -lt 20201015 || $NAS_BUILD -gt 20201020 ]]; then   # these builds won't allow unsigned QPKGs to run at all
+    if [[ $NAS_BUILD -lt 20201015 || $NAS_BUILD -gt 20201020 ]]; then   # these builds won't allow unsigned QPKGs to run at-all
         DebugFirmwareOK 'build' "$NAS_BUILD"
     else
         DebugFirmwareWarning 'build' "$NAS_BUILD"
@@ -2030,7 +2030,7 @@ CleanWorkPath()
 
     }
 
-AskQuiz()
+Quiz()
     {
 
     # input:
@@ -2180,7 +2180,7 @@ CalcAllIPKGDepsToInstall()
     fi
 
     ShowAsProc 'calculating IPKG dependencies'
-    DebugInfo "$requested_count IPKG$(FormatAsPlural "$requested_count") requested" "'$requested_list' "
+    DebugInfo "$requested_count IPKG$(Plural "$requested_count") requested" "'$requested_list' "
 
     while [[ $iterations -lt $ITERATION_LIMIT ]]; do
         ((iterations++))
@@ -2199,9 +2199,9 @@ CalcAllIPKGDepsToInstall()
     done
 
     if [[ $complete = true ]]; then
-        DebugAsDone "complete in $iterations iteration$(FormatAsPlural $iterations)"
+        DebugAsDone "complete in $iterations iteration$(Plural $iterations)"
     else
-        DebugAsError "incomplete in $iterations iteration$(FormatAsPlural $iterations), consider raising \$ITERATION_LIMIT [$ITERATION_LIMIT]"
+        DebugAsError "incomplete in $iterations iteration$(Plural $iterations), consider raising \$ITERATION_LIMIT [$ITERATION_LIMIT]"
         Session.SuggestIssue.Set
     fi
 
@@ -2210,7 +2210,7 @@ CalcAllIPKGDepsToInstall()
     pre_exclude_count=$($WC_CMD -w <<< "$pre_exclude_list")
 
     if [[ $pre_exclude_count -gt 0 ]]; then
-        DebugInfo "$pre_exclude_count IPKG$(FormatAsPlural "$pre_exclude_count") required (including dependencies)" "'$pre_exclude_list' "
+        DebugInfo "$pre_exclude_count IPKG$(Plural "$pre_exclude_count") required (including dependencies)" "'$pre_exclude_list' "
 
         DebugAsProc 'excluding IPKGs already installed'
 
@@ -2237,8 +2237,8 @@ CalcAllIPKGDepsToInstall()
     size_count=$(IPKGs.ToDownload.Count)
 
     if [[ $size_count -gt 0 ]]; then
-        DebugAsDone "$size_count IPKG$(FormatAsPlural "$size_count") to download: '$(IPKGs.ToDownload.List)'"
-        DebugAsProc "calculating size of IPKG$(FormatAsPlural "$size_count") to download"
+        DebugAsDone "$size_count IPKG$(Plural "$size_count") to download: '$(IPKGs.ToDownload.List)'"
+        DebugAsProc "calculating size of IPKG$(Plural "$size_count") to download"
         size_array=($($GNU_GREP_CMD -w '^Package:\|^Size:' "$EXTERNAL_PACKAGE_LIST_PATHFILE" | $GNU_GREP_CMD --after-context 1 --no-group-separator ": $($SED_CMD 's/ /$ /g;s/\$ /\$\\\|: /g' <<< "$(IPKGs.ToDownload.List)")$" | $GREP_CMD '^Size:' | $SED_CMD 's|^Size: ||'))
         IPKGs.ToDownload.Size = "$(IFS=+; echo "$((${size_array[*]}))")"   # a neat sizing shortcut found here https://stackoverflow.com/a/13635566/6182835
         DebugAsDone "$(FormatAsThousands "$(IPKGs.ToDownload.Size)") bytes ($(FormatAsISOBytes "$(IPKGs.ToDownload.Size)")) to download"
@@ -2266,7 +2266,7 @@ CalcAllIPKGDepsToUninstall()
     local element=''
 
     requested_list=$(DeDupeWords "$(IPKGs.ToUninstall.List)")
-    DebugInfo "$($WC_CMD -w <<< "$requested_list") IPKG$(FormatAsPlural "$($WC_CMD -w <<< "$requested_list")") requested" "'$requested_list' "
+    DebugInfo "$($WC_CMD -w <<< "$requested_list") IPKG$(Plural "$($WC_CMD -w <<< "$requested_list")") requested" "'$requested_list' "
     DebugAsProc 'excluding IPKGs not installed'
 
     for element in $requested_list; do
@@ -2274,10 +2274,11 @@ CalcAllIPKGDepsToUninstall()
     done
 
     if [[ $(IPKGs.ToUninstall.Count) -gt 0 ]]; then
-        DebugAsDone "$(IPKGs.ToUninstall.Count) IPKG$(FormatAsPlural "$(IPKGs.ToUninstall.Count)") to uninstall: '$(IPKGs.ToUninstall.List)'"
+        DebugAsDone "$(IPKGs.ToUninstall.Count) IPKG$(Plural "$(IPKGs.ToUninstall.Count)") to uninstall: '$(IPKGs.ToUninstall.List)'"
     else
         DebugAsDone 'no IPKGs to uninstall'
     fi
+
     DebugFuncExit
 
     }
@@ -2309,7 +2310,7 @@ IPKGs.Install()
 
     if Opts.Dependencies.Check.IsSet; then
         IPKGs.ToInstall.Add "$MANAGER_ESSENTIAL_IPKGS_ADD"
-        [[ $NAS_QPKG_ARCH = none ]] && QPKGs.Installed.Exist SABnzbd && IPKGs.ToInstall.Add par2cmdline
+        [[ $NAS_QPKG_ARCH = none ]] && QPKGs.Installed.Exist SABnzbd && IPKGs.ToInstall.Add par2cmdline     # KLUDGE
     fi
 
     IPKGs.Upgrade.Batch
@@ -2338,7 +2339,7 @@ IPKGs.Uninstall()
             fi
         done
 
-        # when package arch is 'none', prevent 'par2cmdline' being uninstalled, then installed again later this same session. Noticed this was happening on ARMv5 models.
+        # KLUDGE: when package arch is 'none', prevent 'par2cmdline' being uninstalled, then installed again later this same session. Noticed this was happening on ARMv5 models.
         [[ $NAS_QPKG_ARCH = none ]] && IPKGs.ToUninstall.Remove par2cmdline
 
         IPKGs.Uninstall.Batch
@@ -2364,7 +2365,7 @@ IPKGs.Upgrade.Batch()
     package_count=$(IPKGs.ToDownload.Count)
 
     if [[ $package_count -gt 0 ]]; then
-        ShowAsProc "downloading & upgrading $package_count IPKG$(FormatAsPlural "$package_count")"
+        ShowAsProc "downloading & upgrading $package_count IPKG$(Plural "$package_count")"
 
         CreateDirSizeMonitorFlagFile "$IPKG_DL_PATH"/.monitor
             trap CTRL_C_Captured INT
@@ -2376,9 +2377,9 @@ IPKGs.Upgrade.Batch()
         RemoveDirSizeMonitorFlagFile
 
         if [[ $result_code -eq 0 ]]; then
-            ShowAsDone "downloaded & upgraded $package_count IPKG$(FormatAsPlural "$package_count")"
+            ShowAsDone "downloaded & upgraded $package_count IPKG$(Plural "$package_count")"
         else
-            ShowAsEror "download & upgrade $package_count IPKG$(FormatAsPlural "$package_count") failed $(FormatAsExitcode $result_code)"
+            ShowAsEror "download & upgrade $package_count IPKG$(Plural "$package_count") failed $(FormatAsExitcode $result_code)"
         fi
     fi
 
@@ -2398,7 +2399,7 @@ IPKGs.Install.Batch()
     local -i package_count=$(IPKGs.ToDownload.Count)
 
     if [[ $package_count -gt 0 ]]; then
-        ShowAsProc "downloading & installing $package_count IPKG$(FormatAsPlural "$package_count")"
+        ShowAsProc "downloading & installing $package_count IPKG$(Plural "$package_count")"
 
         CreateDirSizeMonitorFlagFile "$IPKG_DL_PATH"/.monitor
             trap CTRL_C_Captured INT
@@ -2410,9 +2411,9 @@ IPKGs.Install.Batch()
         RemoveDirSizeMonitorFlagFile
 
         if [[ $result_code -eq 0 ]]; then
-            ShowAsDone "downloaded & installed $package_count IPKG$(FormatAsPlural "$package_count")"
+            ShowAsDone "downloaded & installed $package_count IPKG$(Plural "$package_count")"
         else
-            ShowAsEror "download & install $package_count IPKG$(FormatAsPlural "$package_count") failed $(FormatAsExitcode $result_code)"
+            ShowAsEror "download & install $package_count IPKG$(Plural "$package_count") failed $(FormatAsExitcode $result_code)"
         fi
     fi
 
@@ -2432,15 +2433,15 @@ IPKGs.Uninstall.Batch()
     local -i package_count=$(IPKGs.ToUninstall.Count)
 
     if [[ $package_count -gt 0 ]]; then
-        ShowAsProc "uninstalling $package_count IPKG$(FormatAsPlural "$package_count")"
+        ShowAsProc "uninstalling $package_count IPKG$(Plural "$package_count")"
 
         RunAndLog "$OPKG_CMD remove $(IPKGs.ToUninstall.List)" "$LOGS_PATH/ipkgs.$UNINSTALL_LOG_FILE" log:failure-only
         result_code=$?
 
         if [[ $result_code -eq 0 ]]; then
-            ShowAsDone "uninstalled $package_count IPKG$(FormatAsPlural "$package_count")"
+            ShowAsDone "uninstalled $package_count IPKG$(Plural "$package_count")"
         else
-            ShowAsEror "uninstall IPKG$(FormatAsPlural "$package_count") failed $(FormatAsExitcode $result_code)"
+            ShowAsEror "uninstall IPKG$(Plural "$package_count") failed $(FormatAsExitcode $result_code)"
         fi
     fi
 
@@ -2582,7 +2583,7 @@ OpenIPKGArchive()
 CloseIPKGArchive()
     {
 
-    [[ -n $EXTERNAL_PACKAGE_LIST_PATHFILE && -e $EXTERNAL_PACKAGE_LIST_PATHFILE ]] && rm -f "$EXTERNAL_PACKAGE_LIST_PATHFILE"
+    [[ -e $EXTERNAL_PACKAGE_LIST_PATHFILE ]] && rm -f "$EXTERNAL_PACKAGE_LIST_PATHFILE"
 
     }
 
@@ -2631,7 +2632,7 @@ _MonitorDirSize_()
         progress_message="$percent ($(FormatAsISOBytes "$current_bytes")/$(FormatAsISOBytes "$total_bytes"))"
 
         if [[ $stall_seconds -ge $stall_seconds_threshold ]]; then
-            # append a message showing time that download has stalled for
+            # append a message showing stalled time
             if [[ $stall_seconds -lt 60 ]]; then
                 stall_message=" stalled for $stall_seconds seconds"
             else
@@ -3211,7 +3212,7 @@ Log.All.Paste.Online()
     DisableDebuggingToArchiveAndFile
 
     if [[ -e $SESSION_ARCHIVE_PATHFILE ]]; then
-        if AskQuiz "Press 'Y' to post your ENTIRE $(FormatAsScriptTitle) log to a public pastebin, or any other key to abort"; then
+        if Quiz "Press 'Y' to post your ENTIRE $(FormatAsScriptTitle) log to a public pastebin, or any other key to abort"; then
             ShowAsProc "uploading $(FormatAsScriptTitle) log"
             # with thanks to https://github.com/solusipse/fiche
             link=$($CAT_CMD --number "$SESSION_ARCHIVE_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
@@ -3242,7 +3243,7 @@ Log.Last.Paste.Online()
     ExtractPreviousSessionFromTail
 
     if [[ -e $SESSION_LAST_PATHFILE ]]; then
-        if AskQuiz "Press 'Y' to post the most-recent session in your $(FormatAsScriptTitle) log to a public pastebin, or any other key to abort"; then
+        if Quiz "Press 'Y' to post the most-recent session in your $(FormatAsScriptTitle) log to a public pastebin, or any other key to abort"; then
             ShowAsProc "uploading $(FormatAsScriptTitle) log"
             # with thanks to https://github.com/solusipse/fiche
             link=$($CAT_CMD --number "$SESSION_LAST_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
@@ -3273,7 +3274,7 @@ Log.Tail.Paste.Online()
     ExtractTailFromLog
 
     if [[ -e $SESSION_TAIL_PATHFILE ]]; then
-        if AskQuiz "Press 'Y' to post the most-recent $(FormatAsThousands "$LOG_TAIL_LINES") entries in your $(FormatAsScriptTitle) log to a public pastebin, or any other key to abort"; then
+        if Quiz "Press 'Y' to post the most-recent $(FormatAsThousands "$LOG_TAIL_LINES") entries in your $(FormatAsScriptTitle) log to a public pastebin, or any other key to abort"; then
             ShowAsProc "uploading $(FormatAsScriptTitle) log"
             # with thanks to https://github.com/solusipse/fiche
             link=$($CAT_CMD --number "$SESSION_TAIL_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
@@ -5252,7 +5253,7 @@ FileMatchesMD5()
 
     }
 
-FormatAsPlural()
+Plural()
     {
 
     [[ $1 -ne 1 ]] && echo 's'
@@ -5817,9 +5818,9 @@ ShowAsOperationProgress()
     fi
 
     if [[ ${7:-} = long ]]; then
-        ShowAsProcLong "$5 ${tweaked_total}${tier} ${6}$(FormatAsPlural "$tweaked_total")" "$percent ($tweaked_passes/$tweaked_total)"
+        ShowAsProcLong "$5 ${tweaked_total}${tier} ${6}$(Plural "$tweaked_total")" "$percent ($tweaked_passes/$tweaked_total)"
     else
-        ShowAsProc "$5 ${tweaked_total}${tier} ${6}$(FormatAsPlural "$tweaked_total")" "$percent ($tweaked_passes/$tweaked_total)"
+        ShowAsProc "$5 ${tweaked_total}${tier} ${6}$(Plural "$tweaked_total")" "$percent ($tweaked_passes/$tweaked_total)"
     fi
 
     [[ $percent = '100%' ]] && sleep 1
@@ -5857,11 +5858,11 @@ ShowAsOperationResult()
     fi
 
     if [[ $passes -eq 0 ]]; then
-        ShowAsFail "$5 ${fails}${tier} ${6}$(FormatAsPlural "${3:-}") failed"
+        ShowAsFail "$5 ${fails}${tier} ${6}$(Plural "${3:-}") failed"
     elif [[ $fails -gt 0 ]]; then
-        ShowAsWarn "$5 ${passes}${tier} ${6}$(FormatAsPlural "$passes"), but ${fails}${tier} ${6}$(FormatAsPlural "$fails") failed"
+        ShowAsWarn "$5 ${passes}${tier} ${6}$(Plural "$passes"), but ${fails}${tier} ${6}$(Plural "$fails") failed"
     elif [[ $passes -gt 0 ]]; then
-        ShowAsDone "$5 ${passes}${tier} ${6}$(FormatAsPlural "$passes")"
+        ShowAsDone "$5 ${passes}${tier} ${6}$(Plural "$passes")"
     else
         DebugAsDone "no${tier} ${6}s processed"
     fi
