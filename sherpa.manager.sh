@@ -7,7 +7,7 @@
 #
 # So, blame OneCD if it all goes horribly wrong. ;)
 #
-# project: git.io/sherpa
+# project: https://git.io/sherpa
 # forum: https://forum.qnap.com/viewtopic.php?f=320&t=132373
 #
 # Tested on:
@@ -22,12 +22,13 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
 #
 # Project variable and function naming style-guide:
-#            functions: CamelCase
-#            variables: lowercase_with_inline_underscores
-#     "object" methods: Capitalised.CamelCase.With.Inline.Periods
-#  "object" properties: _lowercase_with_leading_and_inline_and_trailing_underscores_ (these should ONLY be managed via the object's methods)
-#            constants: UPPERCASE_WITH_INLINE_UNDERSCORES (also set as readonly)
-#              indents: 1 x tab (converted to 4 x spaces to suit GitHub web-display)
+#             functions: CamelCase
+#  background functions: _CamelCaseWithLeadingAndTrailingUnderscores_
+#             variables: lowercase_with_inline_underscores
+#      "object" methods: Capitalised.CamelCase.With.Inline.Periods
+#   "object" properties: _lowercase_with_leading_and_inline_and_trailing_underscores_ (these should ONLY be managed via the object's methods)
+#             constants: UPPERCASE_WITH_INLINE_UNDERSCORES (also set as readonly)
+#               indents: 1 x tab (converted to 4 x spaces to suit GitHub web-display)
 #
 # Notes:
 #   If on-screen line-spacing is required, this should only be done by the next function that outputs to display.
@@ -49,7 +50,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=210130
+    readonly MANAGER_SCRIPT_VERSION=210131
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
 
@@ -2310,7 +2311,7 @@ IPKGs.Install()
 
     if Opts.Dependencies.Check.IsSet; then
         IPKGs.ToInstall.Add "$MANAGER_ESSENTIAL_IPKGS_ADD"
-        [[ $NAS_QPKG_ARCH = none ]] && QPKGs.Installed.Exist SABnzbd && IPKGs.ToInstall.Add par2cmdline     # KLUDGE
+        [[ $NAS_QPKG_ARCH = none ]] && QPKGs.Installed.Exist SABnzbd && IPKGs.ToInstall.Add par2cmdline # FIXME: this should be added automatically
     fi
 
     IPKGs.Upgrade.Batch
