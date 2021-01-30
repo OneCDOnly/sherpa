@@ -1302,7 +1302,7 @@ ParseArguments()
         # stage 1
         if [[ -z $operation ]]; then
             case $arg in
-                abs|action|actions|actions-all|all-actions|backups|essentials|installable|installed|l|last|log|option|optionals|options|package|packages|problems|standalone|standalones|started|stopped|tail|tips|upgradable|version|versions|whole)
+                a|abs|action|actions|actions-all|all-actions|b|backups|e|essentials|installable|installed|l|last|log|o|option|optionals|options|p|package|packages|problems|standalone|standalones|started|stopped|tail|tips|upgradable|v|version|versions|whole)
                     operation=help_
                     arg_identified=true
                     scope=''
@@ -1317,8 +1317,8 @@ ParseArguments()
         # stage 2
         if [[ -n $operation ]]; then
             case $arg in
-                abs|backups|installable|installed|problems|started|stopped|tail|tips|upgradable)
-                    scope=${arg}_
+                a|abs)
+                    scope=abs_
                     scope_identified=true
                     arg_identified=true
                     ;;
@@ -1337,8 +1337,18 @@ ParseArguments()
                     scope_identified=true
                     arg_identified=true
                     ;;
-                essential|essentials)
+                b|backups)
+                    scope=backups_
+                    scope_identified=true
+                    arg_identified=true
+                    ;;
+                e|essential|essentials)
                     scope=essential_
+                    scope_identified=true
+                    arg_identified=true
+                    ;;
+                installable|installed|problems|started|stopped|tail|tips|upgradable)
+                    scope=${arg}_
                     scope_identified=true
                     arg_identified=true
                     ;;
@@ -1357,12 +1367,12 @@ ParseArguments()
                     scope_identified=true
                     arg_identified=true
                     ;;
-                optional|optionals)
+                o|optional|optionals)
                     scope=optional_
                     scope_identified=true
                     arg_identified=true
                     ;;
-                package|packages)
+                p|package|packages)
                     scope=packages_
                     scope_identified=true
                     arg_identified=true
@@ -1372,7 +1382,7 @@ ParseArguments()
                     scope_identified=true
                     arg_identified=true
                     ;;
-                version|versions)
+                v|version|versions)
                     scope=versions_
                     scope_identified=true
                     arg_identified=true
@@ -3397,9 +3407,9 @@ ExtractTailFromLog()
 ShowVersions()
     {
 
-    Display "manager: $MANAGER_SCRIPT_VERSION"
-    Display "loader: $LOADER_SCRIPT_VERSION"
-    Display "package: $PACKAGE_VERSION"
+    Display "manager: ${MANAGER_SCRIPT_VERSION:-unknown}"
+    Display "loader: ${LOADER_SCRIPT_VERSION:-unknown}"
+    Display "package: ${PACKAGE_VERSION:-unknown}"
     Display "objects hash: $(CompileObjects hash)"
 
     return 0
