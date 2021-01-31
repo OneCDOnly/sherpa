@@ -50,7 +50,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=210131
+    readonly MANAGER_SCRIPT_VERSION=210201
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
 
@@ -1020,7 +1020,7 @@ Tiers.Processor()
                 fi
 
                 if QPKG.Enabled Entware; then
-                    AddPathToEntware
+                    ModPathToEntware
                     Tier.Processor 'Install' false "$tier" 'IPKG' '' 'forward' 'install' 'installing' 'installed' 'long'
                     Tier.Processor 'Install' false "$tier" 'PIP' '' 'forward' 'install' 'installing' 'installed' 'long'
                 else
@@ -2508,7 +2508,7 @@ PIPs.Install()
         fi
     fi
 
-    AddPathToEntware
+    ModPathToEntware
 
     [[ -n ${MANAGER_COMMON_PIPS_ADD// /} ]] && exec_cmd="$pip3_cmd install $MANAGER_COMMON_PIPS_ADD --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
     ((package_count++))
@@ -3937,41 +3937,25 @@ CalcEntwareType()
 
         DebugQPKG 'Entware installer' $ENTWARE_VER
 
-        if [[ $ENTWARE_VER = none ]]; then
-            DebugAsWarn "$(FormatAsPackageName Entware) appears to be installed but is not visible"
-        fi
+        [[ $ENTWARE_VER = none ]] && DebugAsWarn "$(FormatAsPackageName Entware) appears to be installed but is not visible"
     fi
 
     }
 
-AddPathToEntware()
+ModPathToEntware()
     {
 
     local opkg_prefix=/opt/bin:/opt/sbin
     local temp=''
 
-    [[ $PATH =~ $opkg_prefix ]] && return
-
     if QPKG.Enabled Entware; then
+        [[ $PATH =~ $opkg_prefix ]] && return
         temp="$($SED_CMD "s|$opkg_prefix:||" <<< "$PATH:")"     # append colon prior to searching, then remove existing Entware paths
         export PATH="$opkg_prefix:${temp%:}"                    # ... now prepend Entware paths and remove trailing colon
         DebugAsDone 'prepended $PATH to Entware'
         DebugVar PATH
-    fi
-
-    return 0
-
-    }
-
-RemovePathToEntware()
-    {
-
-    local opkg_prefix=/opt/bin:/opt/sbin
-    local temp=''
-
-    ! [[ $PATH =~ $opkg_prefix ]] && return
-
-    if ! QPKG.Enabled Entware; then
+    elif ! QPKG.Enabled Entware; then
+        ! [[ $PATH =~ $opkg_prefix ]] && return
         temp="$($SED_CMD "s|$opkg_prefix:||" <<< "$PATH:")"     # append colon prior to searching, then remove existing Entware paths
         export PATH="${temp%:}"                                 # ... now remove trailing colon
         DebugAsDone 'removed $PATH to Entware'
@@ -4443,7 +4427,7 @@ QPKG.Install()
         QPKG.GetServiceStatus "$1"
 
         if [[ $1 = Entware ]]; then
-            AddPathToEntware
+            ModPathToEntware
             PatchEntwareService
 
             if QPKGs.ToInstall.Exist Entware; then
@@ -4682,7 +4666,7 @@ QPKG.Uninstall()
             DebugAsDone "uninstalled $(FormatAsPackageName "$1")"
             $RMCFG_CMD "$1" -f /etc/config/qpkg.conf
             DebugAsDone 'removed icon information from App Center'
-            [[ $1 = Entware ]] && RemovePathToEntware
+            [[ $1 = Entware ]] && ModPathToEntware
             QPKGs.IsUninstall.Add "$1"
             QPKGs.NotInstalled.Add "$1"
             QPKGs.Installed.Remove "$1"
@@ -4802,7 +4786,7 @@ QPKG.Start()
         QPKGs.IsStart.Add "$1"
         QPKGs.Started.Add "$1"
         QPKGs.Stopped.Remove "$1"
-        [[ $1 = Entware ]] && AddPathToEntware
+        [[ $1 = Entware ]] && ModPathToEntware
     else
         ShowAsWarn "unable to start $(FormatAsPackageName "$1") $(FormatAsExitcode $result_code)"
         QPKGs.ErStart.Add "$1"
