@@ -1002,6 +1002,7 @@ Tiers.Processor()
                 QPKGs.ToRestart.Remove "$(QPKGs.Stopped.Array)"
                 QPKGs.ToRestart.Remove "$(QPKGs.IsUpgrade.Array)"
                 QPKGs.ToRestart.Remove "$(QPKGs.IsReinstall.Array)"
+                QPKGs.ToRestart.Remove "$(QPKGs.IsInstall.Array)"
                 QPKGs.ToRestart.Remove "$(QPKGs.IsStart.Array)"
                 QPKGs.ToRestart.Remove "$(QPKGs.IsRestart.Array)"
                 QPKGs.ToRestart.Remove "$(QPKGs.IsRestore.Array)"
@@ -1261,8 +1262,17 @@ ParseArguments()
 
         # identify operation: everytime operation changes, must clear scope
         case $arg in
-            backup|check|install|rebuild|reinstall|remove|restart|restore|start|stop|uninstall|upgrade)
+            backup|check|install|rebuild|reinstall|restart|restore|start|stop|upgrade)
                 operation=${arg}_
+                arg_identified=true
+                scope=''
+                scope_identified=false
+                Session.Display.Clean.Clear
+                QPKGs.SkipProcessing.Clear
+                QPKGs.States.Build
+                ;;
+            remove|uninstall)
+                operation=uninstall_
                 arg_identified=true
                 scope=''
                 scope_identified=false
@@ -1705,12 +1715,22 @@ ParseArguments()
                         ;;
                 esac
                 ;;
-            uninstall_|remove_)
-                if [[ $operation_force = true ]]; then  # this operation is dangerous, so make 'force' a requirement
-                    case $scope in
+            uninstall_)
+                if [[ $operation_force = true ]]; then
+                    case $scope in                          # these scopes are dangerous, so make 'force' a requirement
                         all_)
                             QPKGs.ToUninstall.Add "$(QPKGs.Installed.Array)"
                             Opts.Apps.All.Uninstall.Set
+                            operation=''
+                            operation_force=false
+                            ;;
+                        essential_)
+                            QPKGs.ToUninstall.Add "$(QPKGs.Essential.Array)"
+                            operation=''
+                            operation_force=false
+                            ;;
+                        optional_)
+                            QPKGs.ToUninstall.Add "$(QPKGs.Optional.Array)"
                             operation=''
                             operation_force=false
                             ;;
@@ -1973,42 +1993,42 @@ PreDownloadPackageShuffle()
         fi
     done
 
-    # check install list for items that should be reinstalled instead
-    for package in $(QPKGs.ToInstall.Array); do
-        if QPKG.Installed "$package" && ! QPKGs.ToUninstall.Exist "$package"; then
-            QPKGs.ToInstall.Remove "$package"
-            QPKGs.ToReinstall.Add "$package"
-        fi
-    done
+#     # check install for items that should be reinstalled instead
+#     for package in $(QPKGs.ToInstall.Array); do
+#         if QPKG.Installed "$package" && ! QPKGs.ToUninstall.Exist "$package"; then
+#             QPKGs.ToInstall.Remove "$package"
+#             QPKGs.ToReinstall.Add "$package"
+#         fi
+#     done
 
     # check upgrade for essential items that should be installed
     for package in $(QPKGs.ToUpgrade.Array); do
         QPKGs.ToInstall.Add "$(QPKG.Get.Essentials "$package")"
     done
 
-    # check upgrade list for all items that should be installed
-    for package in $(QPKGs.ToUpgrade.Array); do
-        if QPKG.NotInstalled "$package"; then
-            QPKGs.ToInstall.Add "$package"
-        fi
-    done
+#     # check upgrade for all items that should be installed
+#     for package in $(QPKGs.ToUpgrade.Array); do
+#         if QPKG.NotInstalled "$package"; then
+#             QPKGs.ToInstall.Add "$package"
+#         fi
+#     done
 
-    # check reinstall for essential items that should be installed
+    # check reinstall for essential items that should be installed first
     for package in $(QPKGs.ToReinstall.Array); do
         QPKGs.ToInstall.Add "$(QPKG.Get.Essentials "$package")"
     done
 
-    # check install for essential items that should be installed
+    # check install for essential items that should be installed first
     for package in $(QPKGs.ToInstall.Array); do
         QPKGs.ToInstall.Add "$(QPKG.Get.Essentials "$package")"
     done
 
-    # check start for essential items that should be installed
+    # check start for essential items that should be installed first
     for package in $(QPKGs.ToStart.Array); do
         QPKGs.ToInstall.Add "$(QPKG.Get.Essentials "$package")"
     done
 
-    # check restart for essential items that should be installed
+    # check restart for essential items that should be installed first
     for package in $(QPKGs.ToRestart.Array); do
         QPKGs.ToInstall.Add "$(QPKG.Get.Essentials "$package")"
     done
@@ -2594,7 +2614,7 @@ OpenIPKGArchive()
 CloseIPKGArchive()
     {
 
-    [[ -e $EXTERNAL_PACKAGE_LIST_PATHFILE ]] && rm -f "$EXTERNAL_PACKAGE_LIST_PATHFILE"
+    [[ -f $EXTERNAL_PACKAGE_LIST_PATHFILE ]] && rm -f "$EXTERNAL_PACKAGE_LIST_PATHFILE"
 
     }
 
@@ -2713,7 +2733,7 @@ CreateDirSizeMonitorFlagFile()
 RemoveDirSizeMonitorFlagFile()
     {
 
-    if [[ -n $MONITOR_FLAG_PATHFILE && -e $MONITOR_FLAG_PATHFILE ]]; then
+    if [[ -f $MONITOR_FLAG_PATHFILE ]]; then
         rm -f "$MONITOR_FLAG_PATHFILE"
         $SLEEP_CMD 2
     fi
@@ -3553,7 +3573,7 @@ QPKGs.States.Build()
     #   - have backup files in backup location
     #   - have config blocks in [/etc/config/qpkg.conf], but no files on-disk
 
-    # NOTE: lists cannot be rebuilt unless object removal methods are re-added
+    # NOTE: these lists cannot be rebuilt unless element removal methods are re-added
 
     QPKGs.States.Built.IsSet && return
 
@@ -4336,7 +4356,7 @@ QPKG.Download()
         else
             DebugAsError "local package $(FormatAsFileName "$LOCAL_FILENAME") checksum incorrect"
             DebugInfo "deleting $(FormatAsFileName "$LOCAL_FILENAME")"
-            rm -f "$LOCAL_PATHFILE"
+            [[ -f $LOCAL_PATHFILE ]] && rm -f "$LOCAL_PATHFILE"
         fi
     fi
 
@@ -5035,10 +5055,10 @@ QPKG.UserInstallable()
     [[ ${#MANAGER_QPKG_NAME[@]} -eq 0 || ${#MANAGER_QPKG_ABBRVS[@]} -eq 0 ]] && return 1
 
     local result_code=1
-    local package_index=0
+    local index=0
 
-    for package_index in "${!MANAGER_QPKG_NAME[@]}"; do
-        if [[ ${MANAGER_QPKG_NAME[$package_index]} = "$1" && -n ${MANAGER_QPKG_ABBRVS[$package_index]} ]]; then
+    for index in "${!MANAGER_QPKG_NAME[@]}"; do
+        if [[ $1 = "${MANAGER_QPKG_NAME[$index]}" && -n ${MANAGER_QPKG_ABBRVS[$index]} ]] && [[ ${MANAGER_QPKG_ARCH[$index]} = all || ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
             result_code=0
             break
         fi
