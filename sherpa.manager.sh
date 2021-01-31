@@ -1898,12 +1898,6 @@ ListEnvironment()
     local -i trimmed_width=$((max_width-3))
     local version=''
 
-#     if QPKG.Enabled Entware; then
-#         AddPathToEntware
-#     else
-#         RemovePathToEntware
-#     fi
-
     DebugInfoMinorSeparator
     DebugHardwareOK 'model' "$(get_display_name)"
     DebugHardwareOK 'RAM' "$(FormatAsThousands "$INSTALLED_RAM_KB")kB"
@@ -3956,11 +3950,11 @@ AddPathToEntware()
     local opkg_prefix=/opt/bin:/opt/sbin
     local temp=''
 
-    [[ $PATH =~ opkg_prefix ]] && return
+    [[ $PATH =~ $opkg_prefix ]] && return
 
-    if QPKG.Installed Entware; then
-        temp="$opkg_prefix:$($SED_CMD "s|$opkg_prefix:||" <<< "$PATH:")"    # append colon prior to searching
-        export PATH="${temp%:}"                                             # now remove trailing colon prior to assignment back to $PATH
+    if QPKG.Enabled Entware; then
+        temp="$($SED_CMD "s|$opkg_prefix:||" <<< "$PATH:")"     # append colon prior to searching, then remove existing Entware paths
+        export PATH="$opkg_prefix:${temp%:}"                    # ... now prepend Entware paths and remove trailing colon
         DebugAsDone 'prepended $PATH to Entware'
         DebugVar PATH
     fi
@@ -3975,11 +3969,11 @@ RemovePathToEntware()
     local opkg_prefix=/opt/bin:/opt/sbin
     local temp=''
 
-    ! [[ $PATH =~ opkg_prefix ]] && return
+    ! [[ $PATH =~ $opkg_prefix ]] && return
 
-    if QPKG.Installed Entware; then
-        temp="$($SED_CMD "s|$opkg_prefix:||" <<< "$PATH:")" # append colon prior to searching
-        export PATH="${temp%:}"                             # now remove trailing colon prior to assignment back to $PATH
+    if ! QPKG.Enabled Entware; then
+        temp="$($SED_CMD "s|$opkg_prefix:||" <<< "$PATH:")"     # append colon prior to searching, then remove existing Entware paths
+        export PATH="${temp%:}"                                 # ... now remove trailing colon
         DebugAsDone 'removed $PATH to Entware'
         DebugVar PATH
     fi
