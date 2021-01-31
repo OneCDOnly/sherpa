@@ -56,18 +56,13 @@ Session.Init()
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
-    readonly BUSYBOX_CMD=/bin/busybox
     readonly CAT_CMD=/bin/cat
-    readonly CHMOD_CMD=/bin/chmod
     readonly DATE_CMD=/bin/date
     readonly GREP_CMD=/bin/grep
-    readonly HOSTNAME_CMD=/bin/hostname
     readonly MD5SUM_CMD=/bin/md5sum
-    readonly PING_CMD=/bin/ping
     readonly SED_CMD=/bin/sed
     readonly SH_CMD=/bin/sh
     readonly SLEEP_CMD=/bin/sleep
-    readonly TAR_CMD=/bin/tar
     readonly TOUCH_CMD=/bin/touch
     readonly UNAME_CMD=/bin/uname
     readonly UNIQ_CMD=/bin/uniq
@@ -79,7 +74,6 @@ Session.Init()
     readonly SETCFG_CMD=/sbin/setcfg
 
     readonly BASENAME_CMD=/usr/bin/basename
-    readonly CUT_CMD=/usr/bin/cut
     readonly DIRNAME_CMD=/usr/bin/dirname
     readonly DU_CMD=/usr/bin/du
     readonly HEAD_CMD=/usr/bin/head
@@ -93,17 +87,13 @@ Session.Init()
 
     # check required binaries are present
     IsSysFileExist $AWK_CMD || return
-    IsSysFileExist $BUSYBOX_CMD || return
     IsSysFileExist $CAT_CMD || return
-    IsSysFileExist $CHMOD_CMD || return
     IsSysFileExist $DATE_CMD || return
     IsSysFileExist $GREP_CMD || return
-    IsSysFileExist $HOSTNAME_CMD || return
     IsSysFileExist $MD5SUM_CMD || return
-    IsSysFileExist $PING_CMD || return
     IsSysFileExist $SED_CMD || return
+    IsSysFileExist $SH_CMD || return
     IsSysFileExist $SLEEP_CMD || return
-    IsSysFileExist $TAR_CMD || return
     IsSysFileExist $TOUCH_CMD || return
     IsSysFileExist $UNAME_CMD || return
     IsSysFileExist $UNIQ_CMD || return
@@ -114,11 +104,10 @@ Session.Init()
     IsSysFileExist $RMCFG_CMD || return
     IsSysFileExist $SETCFG_CMD || return
 
-    [[ ! -e $SORT_CMD ]] && ln -s "$BUSYBOX_CMD" "$SORT_CMD"    # sometimes, 'sort' goes missing from QTS. Don't know why.
+    [[ ! -e $SORT_CMD ]] && ln -s /bin/busybox "$SORT_CMD"    # sometimes, 'sort' goes missing from QTS. Don't know why.
     [[ ! -e /dev/fd ]] && ln -s /proc/self/fd /dev/fd           # sometimes, '/dev/fd' isn't created by QTS. Don't know why.
 
     IsSysFileExist $BASENAME_CMD || return
-    IsSysFileExist $CUT_CMD || return
     IsSysFileExist $DIRNAME_CMD || return
     IsSysFileExist $DU_CMD || return
     IsSysFileExist $HEAD_CMD || return
@@ -242,7 +231,7 @@ Session.Init()
 
     readonly NAS_FIRMWARE=$($GETCFG_CMD System Version -f /etc/config/uLinux.conf)
     readonly NAS_BUILD=$($GETCFG_CMD System 'Build Number' -f /etc/config/uLinux.conf)
-    readonly INSTALLED_RAM_KB=$($GREP_CMD MemTotal /proc/meminfo | $CUT_CMD -f2 -d':' | $SED_CMD 's|kB||;s| ||g')
+    readonly INSTALLED_RAM_KB=$($GREP_CMD MemTotal /proc/meminfo | cut -f2 -d':' | $SED_CMD 's|kB||;s| ||g')
     readonly MIN_RAM_KB=1048576
     readonly LOG_TAIL_LINES=3000    # a full download and install of everything generates a session around 1600 lines, but include a bunch of opkg updates and it can get much longer.
     readonly MIN_PYTHON_VER=390
@@ -2386,7 +2375,7 @@ IPKGs.Upgrade.Batch()
     local -i package_count=0
     local -i result_code=0
 
-    IPKGs.ToDownload.Add "$($OPKG_CMD list-upgradable | $CUT_CMD -f1 -d' ')"
+    IPKGs.ToDownload.Add "$($OPKG_CMD list-upgradable | cut -f1 -d' ')"
     package_count=$(IPKGs.ToDownload.Count)
 
     if [[ $package_count -gt 0 ]]; then
@@ -2642,7 +2631,7 @@ _MonitorDirSize_()
     previous_clean_msg=''
 
     while [[ -e $MONITOR_FLAG_PATHFILE ]]; do
-        current_bytes=$($GNU_FIND_CMD "$1" -type f -name '*.ipk' -exec $DU_CMD --bytes --total --apparent-size {} + 2>/dev/null | $GREP_CMD total$ | $CUT_CMD -f1)
+        current_bytes=$($GNU_FIND_CMD "$1" -type f -name '*.ipk' -exec $DU_CMD --bytes --total --apparent-size {} + 2>/dev/null | $GREP_CMD total$ | cut -f1)
         [[ -z $current_bytes ]] && current_bytes=0
 
         if [[ $current_bytes -ne $last_bytes ]]; then
@@ -3328,7 +3317,7 @@ GetLogSessionStartLine()
 
     # $1 = how many sessions back? (optional) default = 1
 
-    local -i linenum=$(($($GREP_CMD -n 'SCRIPT:.*started:' "$SESSION_TAIL_PATHFILE" | $TAIL_CMD -n${1:-1} | $HEAD_CMD -n1 | $CUT_CMD -d':' -f1)-1))
+    local -i linenum=$(($($GREP_CMD -n 'SCRIPT:.*started:' "$SESSION_TAIL_PATHFILE" | $TAIL_CMD -n${1:-1} | $HEAD_CMD -n1 | cut -d':' -f1)-1))
     [[ $linenum -lt 1 ]] && linenum=1
     echo $linenum
 
@@ -3339,7 +3328,7 @@ GetLogSessionFinishLine()
 
     # $1 = how many sessions back? (optional) default = 1
 
-    local -i linenum=$(($($GREP_CMD -n 'SCRIPT:.*finished:' "$SESSION_TAIL_PATHFILE" | $TAIL_CMD -n${1:-1} | $CUT_CMD -d':' -f1)+2))
+    local -i linenum=$(($($GREP_CMD -n 'SCRIPT:.*finished:' "$SESSION_TAIL_PATHFILE" | $TAIL_CMD -n${1:-1} | cut -d':' -f1)+2))
     [[ $linenum -eq 2 ]] && linenum=3
     echo $linenum
 
@@ -5269,7 +5258,7 @@ FileMatchesMD5()
     #   $2 = MD5 checksum to compare against
 
     [[ -z $1 || -z $2 ]] && return 1
-    [[ $($MD5SUM_CMD "$1" | $CUT_CMD -f1 -d' ') = "$2" ]]
+    [[ $($MD5SUM_CMD "$1" | cut -f1 -d' ') = "$2" ]]
 
     }
 
@@ -5743,8 +5732,8 @@ ShowAsDone()
     # process completed OK
 
     SmartCR
-    WriteToDisplayNew "$(ColourTextBrightGreen done)" "$1"
-    WriteToLog done "$1"
+    WriteToDisplayNew "$(ColourTextBrightGreen 'done')" "$1"
+    WriteToLog 'done' "$1"
 
     }
 
