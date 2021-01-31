@@ -227,7 +227,7 @@ Session.Init()
 
     DebugInfoMajorSeparator
     DebugScript 'started' "$($DATE_CMD -d @"$SCRIPT_STARTSECONDS" | tr -s ' ')"
-    DebugScript 'version' "package: $PACKAGE_VERSION, manager: $MANAGER_SCRIPT_VERSION, loader: ${LOADER_SCRIPT_VERSION:-unknown}"
+    DebugScript 'version' "package: ${PACKAGE_VERSION:-unknown}, manager: ${MANAGER_SCRIPT_VERSION:-unknown}, loader: ${LOADER_SCRIPT_VERSION:-unknown}"
     DebugScript 'PID' "$$"
     DebugInfoMinorSeparator
     DebugInfo 'Markers: (**) detected, (II) information, (WW) warning, (EE) error, (LL) log file,'
@@ -2912,7 +2912,7 @@ DisplayAsHelpTitleHighlighted()
 SmartCR()
     {
 
-    [[ $(type -t Session.Debug.ToScreen.Init) = 'function' ]] && Session.Debug.ToScreen.IsSet && return
+    [[ $(type -t Session.Debug.ToScreen.Init) = function ]] && Session.Debug.ToScreen.IsSet && return
 
     # reset cursor to start-of-line, erasing previous characters
     echo -en "\033[1K\r"
@@ -2923,7 +2923,7 @@ Display()
     {
 
     echo -e "${1:-}"
-    [[ $(type -t Session.LineSpace.Init) = 'function' ]] && Session.LineSpace.Clear
+    [[ $(type -t Session.LineSpace.Init) = function ]] && Session.LineSpace.Clear
 
     }
 
@@ -3969,7 +3969,7 @@ ModPathToEntware()
 Session.Error.Set()
     {
 
-    [[ $(type -t QPKGs.SkipProcessing.Init) = 'function' ]] && QPKGs.SkipProcessing.Set
+    [[ $(type -t QPKGs.SkipProcessing.Init) = function ]] && QPKGs.SkipProcessing.Set
     Session.Error.IsSet && return
     _script_error_flag_=true
     DebugVar _script_error_flag_
@@ -5191,7 +5191,7 @@ MakePath()
 
     if [[ $result_code -ne 0 ]]; then
         ShowAsEror "unable to create $2 path $(FormatAsFileName "$1") $(FormatAsExitcode $result_code)"
-        [[ $(type -t Session.SuggestIssue.Init) = 'function' ]] && Session.SuggestIssue.Set
+        [[ $(type -t Session.SuggestIssue.Init) = function ]] && Session.SuggestIssue.Set
         return 1
     fi
 
@@ -5638,7 +5638,7 @@ DebugVar()
 DebugThis()
     {
 
-    [[ $(type -t Session.Debug.ToScreen.Init) = 'function' ]] && Session.Debug.ToScreen.IsSet && ShowAsDebug "$1"
+    [[ $(type -t Session.Debug.ToScreen.Init) = function ]] && Session.Debug.ToScreen.IsSet && ShowAsDebug "$1"
     WriteAsDebug "$1"
 
     }
@@ -5687,7 +5687,7 @@ ShowAsProc()
     SmartCR
     WriteToDisplayWait "$(ColourTextBrightOrange proc)" "$1 ...$suffix"
     WriteToLog proc "$1 ...$suffix"
-    [[ $(type -t Session.Debug.ToScreen.Init) = 'function' ]] && Session.Debug.ToScreen.IsSet && Display
+    [[ $(type -t Session.Debug.ToScreen.Init) = function ]] && Session.Debug.ToScreen.IsSet && Display
 
     }
 
@@ -5741,8 +5741,8 @@ ShowAsDone()
     # process completed OK
 
     SmartCR
-    WriteToDisplayNew "$(ColourTextBrightGreen 'done')" "$1"
-    WriteToLog 'done' "$1"
+    WriteToDisplayNew "$(ColourTextBrightGreen done)" "$1"
+    WriteToLog done "$1"
 
     }
 
@@ -5859,7 +5859,7 @@ ShowAsOperationResult()
     # $7 = 'long' (optional)
 
     [[ -z $2 || -z $3 || -z $4 || -z $5 || -z $6 ]] && return 1
-    [[ $2 -eq 0 ]] && return 1                  # zero total, so let's get out of here
+    [[ $2 -eq 0 ]] && return 1
 
     local tier=''
     local -i total=$2
@@ -5962,7 +5962,7 @@ WriteToLog()
     #   $2 = message
 
     [[ -z ${SESSION_ACTIVE_PATHFILE:-} ]] && return 1
-    [[ $(type -t Session.Debug.ToFile.Init) = 'function' ]] && Session.Debug.ToFile.IsNot && return
+    [[ $(type -t Session.Debug.ToFile.Init) = function ]] && Session.Debug.ToFile.IsNot && return
 
     printf "%-4s: %s\n" "$(StripANSI "$1")" "$(StripANSI "$2")" >> "$SESSION_ACTIVE_PATHFILE"
 
@@ -6381,7 +6381,7 @@ CompileObjects()
 
     }
 
-Session.Init || exit 1
+Session.Init || exit
 Session.Validate
 Tiers.Processor
 Session.Results
