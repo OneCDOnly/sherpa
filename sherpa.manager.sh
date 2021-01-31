@@ -1290,7 +1290,7 @@ ParseArguments()
                 QPKGs.States.Build
                 ;;
             paste)
-                operation=${arg}_
+                operation=paste_
                 arg_identified=true
                 scope=''
                 scope_identified=false
@@ -3420,6 +3420,8 @@ ExtractTailFromLog()
 
 ShowVersions()
     {
+
+    DisableDebuggingToArchiveAndFile
 
     Display "manager: ${MANAGER_SCRIPT_VERSION:-unknown}"
     Display "loader: ${LOADER_SCRIPT_VERSION:-unknown}"
