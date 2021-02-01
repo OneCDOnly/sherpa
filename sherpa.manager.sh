@@ -890,9 +890,11 @@ Tiers.Processor()
         QPKGs.ToRestart.Remove "$(QPKGs.Standalone.Array)"
     fi
 
-    # install all required essentials too
+    # install all essentials for started packages only
     for package in $(QPKGs.Installed.Array); do
-        QPKGs.ToInstall.Add "$(QPKG.Get.Essentials "$package")"
+        if QPKGs.Started.Exist "$package" || QPKGs.ToStart.Exist "$package"; then
+            QPKGs.ToInstall.Add "$(QPKG.Get.Essentials "$package")"
+        fi
     done
 
     QPKGs.ToInstall.Remove "$(QPKGs.Installed.Array)"
@@ -4114,10 +4116,10 @@ QPKG.GetServiceStatus()
     if [[ -e /var/run/${1:-}.last.operation ]]; then
         case $(</var/run/"$1".last.operation) in
             ok)
-                DebugInfo "$(FormatAsPackageName "$1") service started OK"
+                DebugInfo "$(FormatAsPackageName "$1") service operation completed OK"
                 ;;
             failed)
-                ShowAsEror "$(FormatAsPackageName "$1") service failed to start.$([[ -e /var/log/$1.log ]] && echo " Check $(FormatAsFileName "/var/log/$1.log") for more information")"
+                ShowAsEror "$(FormatAsPackageName "$1") service operation failed.$([[ -e /var/log/$1.log ]] && echo " Check $(FormatAsFileName "/var/log/$1.log") for more information")"
                 ;;
             *)
                 DebugAsWarn "$(FormatAsPackageName "$1") service status is incorrect"
