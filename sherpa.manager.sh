@@ -104,8 +104,8 @@ Session.Init()
     IsSysFileExist $RMCFG_CMD || return
     IsSysFileExist $SETCFG_CMD || return
 
-    [[ ! -e $SORT_CMD ]] && ln -s /bin/busybox "$SORT_CMD"    # sometimes, 'sort' goes missing from QTS. Don't know why.
-    [[ ! -e /dev/fd ]] && ln -s /proc/self/fd /dev/fd           # sometimes, '/dev/fd' isn't created by QTS. Don't know why.
+    [[ ! -e $SORT_CMD ]] && ln -s /bin/busybox "$SORT_CMD"  # sometimes, 'sort' goes missing from QTS. Don't know why.
+    [[ ! -e /dev/fd ]] && ln -s /proc/self/fd /dev/fd       # sometimes, '/dev/fd' isn't created by QTS. Don't know why.
 
     IsSysFileExist $BASENAME_CMD || return
     IsSysFileExist $DIRNAME_CMD || return
@@ -2317,15 +2317,14 @@ IPKGs.Install()
     else
         for index in "${!MANAGER_QPKG_NAME[@]}"; do
             if QPKGs.ToInstall.Exist "${MANAGER_QPKG_NAME[$index]}" || QPKG.Installed "${MANAGER_QPKG_NAME[$index]}" || QPKGs.ToReinstall.Exist "${MANAGER_QPKG_NAME[$index]}" || QPKGs.ToUpgrade.Exist "${MANAGER_QPKG_NAME[$index]}"; then
-                [[ ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${MANAGER_QPKG_ARCH[$index]} = all ]] && IPKGs.ToInstall.Add "${MANAGER_QPKG_IPKGS_ADD[$index]}"
+                if [[ ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${MANAGER_QPKG_ARCH[$index]} = all ]]; then
+                    IPKGs.ToInstall.Add "${MANAGER_QPKG_IPKGS_ADD[$index]}"
+                fi
             fi
         done
     fi
 
-    if Opts.Dependencies.Check.IsSet; then
-        IPKGs.ToInstall.Add "$MANAGER_ESSENTIAL_IPKGS_ADD"
-        [[ $NAS_QPKG_ARCH = none ]] && QPKGs.Installed.Exist SABnzbd && IPKGs.ToInstall.Add par2cmdline # FIXME: this should be added automatically
-    fi
+    Opts.Dependencies.Check.IsSet && IPKGs.ToInstall.Add "$MANAGER_ESSENTIAL_IPKGS_ADD"
 
     IPKGs.Upgrade.Batch
     IPKGs.Install.Batch
@@ -2369,7 +2368,7 @@ IPKGs.Upgrade.Batch()
     # upgrade all installed IPKGs
 
     # output:
-    #   $? = 0 (success) or 1 (failed)
+    #   $? = 0 if successful or 1 if failed
 
     DebugFuncEntry
     local -i package_count=0
@@ -2405,7 +2404,7 @@ IPKGs.Install.Batch()
     {
 
     # output:
-    #   $? = 0 (success) or 1 (failed)
+    #   $? = 0 if successful or 1 if failed
 
     DebugFuncEntry
     CalcAllIPKGDepsToInstall || return
@@ -2439,7 +2438,7 @@ IPKGs.Uninstall.Batch()
     {
 
     # output:
-    #   $? = 0 (success) or 1 (failed)
+    #   $? = 0 if successful or 1 if failed
 
     DebugFuncEntry
     CalcAllIPKGDepsToUninstall || return
@@ -2573,7 +2572,7 @@ OpenIPKGArchive()
     # extract the 'opkg' package list file
 
     # output:
-    #   $? = 0 (success) or 1 (failed)
+    #   $? = 0 if successful or 1 if failed
 
     if [[ ! -e $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE ]]; then
         ShowAsEror 'unable to locate the IPKG list file'
@@ -4246,23 +4245,21 @@ QPKG.Get.Essentials()
     {
 
     # input:
-    #   $1 = optional QPKG name to return esssentials for
+    #   $1 = QPKG name to return esssentials for
 
     # output:
     #   $? = 0 if successful, 1 if failed
 
     local -i index=0
 
-    if QPKGs.Optional.Exist "$1"; then
-        for index in "${!MANAGER_QPKG_NAME[@]}"; do
-            if [[ $1 = "${MANAGER_QPKG_NAME[$index]}" ]] && [[ ${MANAGER_QPKG_ARCH[$index]} = all || ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
-                if [[ ${MANAGER_QPKG_ESSENTIALS[$index]} != none ]]; then
-                    echo "${MANAGER_QPKG_ESSENTIALS[$index]}"
-                    return 0
-                fi
+    for index in "${!MANAGER_QPKG_NAME[@]}"; do
+        if [[ $1 = "${MANAGER_QPKG_NAME[$index]}" ]] && [[ ${MANAGER_QPKG_ARCH[$index]} = all || ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
+            if [[ ${MANAGER_QPKG_ESSENTIALS[$index]} != none ]]; then
+                echo "${MANAGER_QPKG_ESSENTIALS[$index]}"
+                return 0
             fi
-        done
-    fi
+        fi
+    done
 
     return 1
 
@@ -4386,8 +4383,12 @@ QPKG.Install()
 
     if [[ -z $local_pathfile ]]; then
         DebugAsWarn "no pathfile found for this package $(FormatAsPackageName "$1") (unsupported arch?)"
-        QPKGs.ToInstall.Remove "$1"
-        QPKGs.SkInstall.Add "$1"
+
+        if [[ $NAS_QPKG_ARCH != none ]]; then       # don't skip QPKG, it may have IPKGs to be installed
+            QPKGs.ToInstall.Remove "$1"
+            QPKGs.SkInstall.Add "$1"
+        fi
+
         DebugFuncExit; return
     fi
 
@@ -4482,8 +4483,12 @@ QPKG.Reinstall()
 
     if [[ -z $local_pathfile ]]; then
         DebugAsWarn "no pathfile found for this package $(FormatAsPackageName "$1") (unsupported arch?)"
-        QPKGs.ToReinstall.Remove "$1"
-        QPKGs.SkReinstall.Add "$1"
+
+        if [[ $NAS_QPKG_ARCH != none ]]; then       # don't skip QPKG just yet, it may have IPKGs to be installed
+            QPKGs.ToReinstall.Remove "$1"
+            QPKGs.SkReinstall.Add "$1"
+        fi
+
         DebugFuncExit; return
     fi
 
@@ -4558,8 +4563,12 @@ QPKG.Upgrade()
 
     if [[ -z $local_pathfile ]]; then
         DebugAsWarn "no pathfile found for this package $(FormatAsPackageName "$1") (unsupported arch?)"
-        QPKGs.ToUpgrade.Remove "$1"
-        QPKGs.SkUpgrade.Add "$1"
+
+        if [[ $NAS_QPKG_ARCH != none ]]; then       # don't skip QPKG just yet, it may have IPKGs to be installed
+            QPKGs.ToUpgrade.Remove "$1"
+            QPKGs.SkUpgrade.Add "$1"
+        fi
+
         DebugFuncExit; return
     fi
 
