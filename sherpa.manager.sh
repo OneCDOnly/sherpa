@@ -50,7 +50,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=210201
+    readonly MANAGER_SCRIPT_VERSION=210203
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
 
@@ -741,6 +741,9 @@ Session.Validate()
 Tiers.Processor()
     {
 
+    # This function is a bit of a dog's breakfast. It handles all the high-level logic for package operations.
+    # If a package isn't being processed correctly, odds-are it's due to a problem in this function.
+
     QPKGs.SkipProcessing.IsSet && return
     DebugFuncEntry
     local package=''
@@ -784,7 +787,7 @@ Tiers.Processor()
         fi
     fi
 
-    PreDownloadPackageShuffle
+    PreDownloadPackageAssignment
 
     QPKGs.ToDownload.Add "$(QPKGs.ToUpgrade.Array)"
     QPKGs.ToDownload.Add "$(QPKGs.ToReinstall.Array)"
@@ -897,7 +900,7 @@ Tiers.Processor()
         fi
     done
 
-    QPKGs.ToInstall.Remove "$(QPKGs.Installed.Array)"
+#     QPKGs.ToInstall.Remove "$(QPKGs.Installed.Array)"
 
     for tier in {'essential','addon','optional'}; do
         case $tier in
@@ -1046,8 +1049,6 @@ Tier.Processor()
     #   $9 = $ACTION_PAST                   e.g. 'started'...
     #  $10 = $RUNTIME (optional)            e.g. 'long'
 
-    [[ -z $1 || -z $3 || -z $4 || -z $6 || -z $7 || -z $8 || -z $9 ]] && return
-
     DebugFuncEntry
 
     local package=''
@@ -1057,14 +1058,14 @@ Tier.Processor()
     local targets_function=''
     local -i index=0
     local -a target_packages=()
-    local -i package_count=0
     local -i pass_count=0
     local -i fail_count=0
-    local -r TARGET_OPERATION=$1
-    local -r TIER=$3
-    local -r PACKAGE_TYPE=$4
+    local -i total_count=0
+    local -r TARGET_OPERATION=${1:?empty}
+    local -r TIER=${3:?empty}
+    local -r PACKAGE_TYPE=${4:?empty}
     local -r TARGET_OBJECT_NAME=${5:-}
-    local -r PROCESSING_DIRECTION=$6
+    local -r PROCESSING_DIRECTION=${6:-forward}
     local -r RUNTIME=${10:-}
 
     if [[ $2 = true ]]; then
@@ -1083,9 +1084,9 @@ Tier.Processor()
             ;;
     esac
 
-    local -r ACTION_INTRANSITIVE=${message_prefix}$7
-    local -r ACTION_PRESENT=${message_prefix}$8
-    local -r ACTION_PAST=${message_prefix}$9
+    local -r ACTION_INTRANSITIVE=${message_prefix}${7:?empty}
+    local -r ACTION_PRESENT=${message_prefix}${8:?empty}
+    local -r ACTION_PAST=${message_prefix}${9:?empty}
 
     ShowAsProc "checking for$([[ $TIER = all ]] && echo '' || echo " $TIER") packages to $ACTION_INTRANSITIVE" >&2
 
@@ -1104,16 +1105,16 @@ Tier.Processor()
                 done
             fi
 
-            package_count=${#target_packages[@]}
+            total_count=${#target_packages[@]}
 
-            if [[ $package_count -eq 0 ]]; then
+            if [[ $total_count -eq 0 ]]; then
                 DebugInfo "no$([[ $TIER = all ]] && echo '' || echo " $TIER") $targets_function to process"
                 DebugFuncExit; return
             fi
 
             if [[ $PROCESSING_DIRECTION = forward ]]; then
                 for package in "${target_packages[@]}"; do                  # process list forwards
-                    ShowAsOperationProgress "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$PACKAGE_TYPE" "$RUNTIME"
+                    ShowAsOperationProgress "$TIER" "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
 
                     if ! $target_function.$TARGET_OPERATION "$package" "$forced_operation"; then
                         ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") (see log for more details)"
@@ -1124,9 +1125,9 @@ Tier.Processor()
                     ((pass_count++))
                 done
             else
-                for ((index=package_count-1; index>=0; index--)); do       # process list backwards
+                for ((index=total_count-1; index>=0; index--)); do       # process list backwards
                     package=${target_packages[$index]}
-                    ShowAsOperationProgress "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$PACKAGE_TYPE" "$RUNTIME"
+                    ShowAsOperationProgress "$TIER" "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
 
                     if ! $target_function.$TARGET_OPERATION "$package" "$forced_operation"; then
                         ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") (see log for more details)"
@@ -1143,7 +1144,11 @@ Tier.Processor()
             ;;
     esac
 
-    ShowAsOperationResult "$TIER" "$package_count" "$fail_count" "$pass_count" "$ACTION_PAST" "$PACKAGE_TYPE" "$RUNTIME"
+    # execute with pass_count > total_count to trigger 100% message
+    ShowAsOperationProgress "$TIER" "$PACKAGE_TYPE" "$((total_count+1))" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
+
+    ShowAsOperationResult "$TIER" "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PAST" "$RUNTIME"
+
     DebugFuncExit
 
     }
@@ -1963,14 +1968,14 @@ ListEnvironment()
 
     }
 
-PreDownloadPackageShuffle()
+PreDownloadPackageAssignment()
     {
 
-    # this runs before operations for 'download' (and possibly 'install', 'reinstall' and 'upgrade': TBD) to ensure package lists are sane
+    # this runs before the 'download' operation to ensure package lists are sane
 
     local package=''
 
-    # check reinstall for all items that should be installed instead
+    # check reinstall for all items to be installed instead
     for package in $(QPKGs.ToReinstall.Array); do
         if QPKG.NotInstalled "$package"; then
             QPKGs.ToReinstall.Remove "$package"
@@ -1978,7 +1983,7 @@ PreDownloadPackageShuffle()
         fi
     done
 
-#     # check install for items that should be reinstalled instead
+#     # check install for items to be reinstalled instead
 #     for package in $(QPKGs.ToInstall.Array); do
 #         if QPKG.Installed "$package" && ! QPKGs.ToUninstall.Exist "$package"; then
 #             QPKGs.ToInstall.Remove "$package"
@@ -1986,7 +1991,7 @@ PreDownloadPackageShuffle()
 #         fi
 #     done
 
-    # check upgrade for essential items that should be installed
+    # check upgrade for essential items to be installed
     for package in $(QPKGs.ToUpgrade.Array); do
         QPKGs.ToInstall.Add "$(QPKG.Get.Essentials "$package")"
     done
@@ -1998,22 +2003,22 @@ PreDownloadPackageShuffle()
 #         fi
 #     done
 
-    # check reinstall for essential items that should be installed first
+    # check reinstall for essential items to be installed first
     for package in $(QPKGs.ToReinstall.Array); do
         QPKGs.ToInstall.Add "$(QPKG.Get.Essentials "$package")"
     done
 
-    # check install for essential items that should be installed first
+    # check install for essential items to be installed first
     for package in $(QPKGs.ToInstall.Array); do
         QPKGs.ToInstall.Add "$(QPKG.Get.Essentials "$package")"
     done
 
-    # check start for essential items that should be installed first
+    # check start for essential items to be installed first
     for package in $(QPKGs.ToStart.Array); do
         QPKGs.ToInstall.Add "$(QPKG.Get.Essentials "$package")"
     done
 
-    # check restart for essential items that should be installed first
+    # check restart for essential items to be installed first
     for package in $(QPKGs.ToRestart.Array); do
         QPKGs.ToInstall.Add "$(QPKG.Get.Essentials "$package")"
     done
@@ -2373,14 +2378,14 @@ IPKGs.Upgrade.Batch()
     #   $? = 0 if successful or 1 if failed
 
     DebugFuncEntry
-    local -i package_count=0
+    local -i total_count=0
     local -i result_code=0
 
     IPKGs.ToDownload.Add "$($OPKG_CMD list-upgradable | cut -f1 -d' ')"
-    package_count=$(IPKGs.ToDownload.Count)
+    total_count=$(IPKGs.ToDownload.Count)
 
-    if [[ $package_count -gt 0 ]]; then
-        ShowAsProc "downloading & upgrading $package_count IPKG$(Plural "$package_count")"
+    if [[ $total_count -gt 0 ]]; then
+        ShowAsProc "downloading & upgrading $total_count IPKG$(Plural "$total_count")"
 
         CreateDirSizeMonitorFlagFile "$IPKG_DL_PATH"/.monitor
             trap CTRL_C_Captured INT
@@ -2392,9 +2397,9 @@ IPKGs.Upgrade.Batch()
         RemoveDirSizeMonitorFlagFile
 
         if [[ $result_code -eq 0 ]]; then
-            ShowAsDone "downloaded & upgraded $package_count IPKG$(Plural "$package_count")"
+            ShowAsDone "downloaded & upgraded $total_count IPKG$(Plural "$total_count")"
         else
-            ShowAsEror "download & upgrade $package_count IPKG$(Plural "$package_count") failed $(FormatAsExitcode $result_code)"
+            ShowAsEror "download & upgrade $total_count IPKG$(Plural "$total_count") failed $(FormatAsExitcode $result_code)"
         fi
     fi
 
@@ -2411,10 +2416,10 @@ IPKGs.Install.Batch()
     DebugFuncEntry
     CalcAllIPKGDepsToInstall || return
     local -i result_code=0
-    local -i package_count=$(IPKGs.ToDownload.Count)
+    local -i total_count=$(IPKGs.ToDownload.Count)
 
-    if [[ $package_count -gt 0 ]]; then
-        ShowAsProc "downloading & installing $package_count IPKG$(Plural "$package_count")"
+    if [[ $total_count -gt 0 ]]; then
+        ShowAsProc "downloading & installing $total_count IPKG$(Plural "$total_count")"
 
         CreateDirSizeMonitorFlagFile "$IPKG_DL_PATH"/.monitor
             trap CTRL_C_Captured INT
@@ -2426,9 +2431,9 @@ IPKGs.Install.Batch()
         RemoveDirSizeMonitorFlagFile
 
         if [[ $result_code -eq 0 ]]; then
-            ShowAsDone "downloaded & installed $package_count IPKG$(Plural "$package_count")"
+            ShowAsDone "downloaded & installed $total_count IPKG$(Plural "$total_count")"
         else
-            ShowAsEror "download & install $package_count IPKG$(Plural "$package_count") failed $(FormatAsExitcode $result_code)"
+            ShowAsEror "download & install $total_count IPKG$(Plural "$total_count") failed $(FormatAsExitcode $result_code)"
         fi
     fi
 
@@ -2445,18 +2450,18 @@ IPKGs.Uninstall.Batch()
     DebugFuncEntry
     CalcAllIPKGDepsToUninstall || return
     local -i result_code=0
-    local -i package_count=$(IPKGs.ToUninstall.Count)
+    local -i total_count=$(IPKGs.ToUninstall.Count)
 
-    if [[ $package_count -gt 0 ]]; then
-        ShowAsProc "uninstalling $package_count IPKG$(Plural "$package_count")"
+    if [[ $total_count -gt 0 ]]; then
+        ShowAsProc "uninstalling $total_count IPKG$(Plural "$total_count")"
 
         RunAndLog "$OPKG_CMD remove $(IPKGs.ToUninstall.List)" "$LOGS_PATH/ipkgs.$UNINSTALL_LOG_FILE" log:failure-only
         result_code=$?
 
         if [[ $result_code -eq 0 ]]; then
-            ShowAsDone "uninstalled $package_count IPKG$(Plural "$package_count")"
+            ShowAsDone "uninstalled $total_count IPKG$(Plural "$total_count")"
         else
-            ShowAsEror "uninstall IPKG$(Plural "$package_count") failed $(FormatAsExitcode $result_code)"
+            ShowAsEror "uninstall IPKG$(Plural "$total_count") failed $(FormatAsExitcode $result_code)"
         fi
     fi
 
@@ -2474,7 +2479,7 @@ PIPs.Install()
     local -i result_code=0
     local -i pass_count=0
     local -i fail_count=0
-    local -i package_count=0
+    local -i total_count=0
     local -r PACKAGE_TYPE='PIP group'
     local -r ACTION_PRESENT=installing
     local -r ACTION_PAST=installed
@@ -2501,9 +2506,9 @@ PIPs.Install()
     ModPathToEntware
 
     [[ -n ${MANAGER_COMMON_PIPS_ADD// /} ]] && exec_cmd="$pip3_cmd install $MANAGER_COMMON_PIPS_ADD --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
-    ((package_count++))
+    ((total_count++))
 
-    ShowAsOperationProgress '' "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$PACKAGE_TYPE" "$RUNTIME"
+    ShowAsOperationProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" '' "$total_count" "$ACTION_PRESENT" "$RUNTIME"
 
     local desc="'Python3' modules"
     local log_pathfile=$LOGS_PATH/py3-modules.assorted.$INSTALL_LOG_FILE
@@ -2521,10 +2526,10 @@ PIPs.Install()
     fi
 
     if QPKG.Installed SABnzbd || QPKGs.ToInstall.Exist SABnzbd || QPKGs.ToReinstall.Exist SABnzbd; then
-        ((package_count+=2))
+        ((total_count+=2))
 
         # KLUDGE: force recompilation of 'sabyenc3' package so it's recognised by SABnzbd: https://forums.sabnzbd.org/viewtopic.php?p=121214#p121214
-        ShowAsOperationProgress '' "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$PACKAGE_TYPE" "$RUNTIME"
+        ShowAsOperationProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" '' "$total_count" "$ACTION_PRESENT" "$RUNTIME"
 
         exec_cmd="$pip3_cmd install --force-reinstall --ignore-installed --no-binary :all: sabyenc3 --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
         desc="'Python3 sabyenc3' module"
@@ -2544,7 +2549,7 @@ PIPs.Install()
         fi
 
         # KLUDGE: ensure 'feedparser' is upgraded. This was version-held at 5.2.1 for Python 3.8.5 but from Python 3.9.0 onward there's no-need for version-hold anymore.
-        ShowAsOperationProgress '' "$package_count" "$fail_count" "$pass_count" "$ACTION_PRESENT" "$PACKAGE_TYPE" "$RUNTIME"
+        ShowAsOperationProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" '' "$total_count" "$ACTION_PRESENT" "$RUNTIME"
 
         exec_cmd="$pip3_cmd install --upgrade feedparser --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
         desc="'Python3 feedparser' module"
@@ -2563,7 +2568,10 @@ PIPs.Install()
         fi
     fi
 
-    ShowAsOperationResult '' "$package_count" "$fail_count" "$pass_count" "$ACTION_PAST" "$PACKAGE_TYPE" "$RUNTIME"
+    # execute with pass_count > total_count to trigger 100% message
+    ShowAsOperationProgress '' "$PACKAGE_TYPE" "$((total_count+1))" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
+
+    ShowAsOperationResult '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PAST" "$RUNTIME"
     DebugFuncExit $result_code
 
     }
@@ -4380,6 +4388,15 @@ QPKG.Install()
         DebugFuncExit 1; return
     fi
 
+    if QPKG.Installed "$1"; then
+        DebugAsWarn "unable to install $(FormatAsPackageName "$1") as it's already installed. Use 'reinstall' instead."
+        QPKGs.ToInstall.Remove "$1"
+        QPKGs.SkInstall.Add "$1"
+        QPKGs.NotInstalled.Remove "$1"
+        QPKGs.Installed.Add "$1"
+        DebugFuncExit; return
+    fi
+
     local -i result_code=0
     local local_pathfile=$(QPKG.PathFilename "$1")
 
@@ -4480,6 +4497,15 @@ QPKG.Reinstall()
         DebugFuncExit 1; return
     fi
 
+    if ! QPKG.Installed "$1"; then
+        DebugAsWarn "unable to reinstall $(FormatAsPackageName "$1") as it's not installed. Use 'install' instead."
+        QPKGs.ToReinstall.Remove "$1"
+        QPKGs.SkReinstall.Add "$1"
+        QPKGs.NotInstalled.Remove "$1"
+        QPKGs.Installed.Add "$1"
+        DebugFuncExit; return
+    fi
+
     local -i result_code=0
     local local_pathfile=$(QPKG.PathFilename "$1")
 
@@ -4491,13 +4517,6 @@ QPKG.Reinstall()
             QPKGs.SkReinstall.Add "$1"
         fi
 
-        DebugFuncExit; return
-    fi
-
-    if ! QPKG.Installed "$1"; then
-        DebugAsWarn "unable to reinstall $(FormatAsPackageName "$1") as it's not installed"
-        QPKGs.ToReinstall.Remove "$1"
-        QPKGs.SkReinstall.Add "$1"
         DebugFuncExit; return
     fi
 
@@ -4558,6 +4577,15 @@ QPKG.Upgrade()
         DebugFuncExit 1; return
     fi
 
+    if ! QPKG.Installed "$1"; then
+        DebugAsWarn "unable to upgrade $(FormatAsPackageName "$1") as it's not installed. Use 'install' instead."
+        QPKGs.ToUpgrade.Remove "$1"
+        QPKGs.SkUpgrade.Add "$1"
+        QPKGs.Installed.Remove "$1"
+        QPKGs.NotInstalled.Add "$1"
+        DebugFuncExit; return
+    fi
+
     local -i result_code=0
     local previous_version='null'
     local current_version='null'
@@ -4571,13 +4599,6 @@ QPKG.Upgrade()
             QPKGs.SkUpgrade.Add "$1"
         fi
 
-        DebugFuncExit; return
-    fi
-
-    if ! QPKG.Installed "$1"; then
-        DebugAsWarn "unable to upgrade $(FormatAsPackageName "$1") as it's not installed"
-        QPKGs.ToUpgrade.Remove "$1"
-        QPKGs.SkUpgrade.Add "$1"
         DebugFuncExit; return
     fi
 
@@ -5805,42 +5826,42 @@ ShowAsOperationProgress()
     # show QPKG operations progress as percent-complete and a fraction of the total
 
     # $1 = tier (optional)
-    # $2 = total count
-    # $3 = fail count
-    # $4 = pass count
-    # $5 = action message (present-tense)
-    # $6 = package type: 'QPKG', 'IPKG', 'PIP', etc ...
+    # $2 = package type: 'QPKG', 'IPKG', 'PIP', etc ...
+    # $3 = pass count
+    # $4 = fail count
+    # $5 = total count
+    # $6 = verb (present)
     # $7 = 'long' (optional)
 
-    [[ -z $2 || -z $3 || -z $4 || -z $5 || -z $6 ]] && return 1
-    [[ $2 -eq 0 ]] && return 1                  # zero total, so let's get out of here
-
-    local tier=''
-    local total=$2
-    local fails=$3
-    local passes=$4
-    local tweaked_passes=$((passes+1))          # so we never show zero (e.g. 0/8)
-    local tweaked_total=$((total-fails))        # auto-adjust upper limit to account for failures
-
-    [[ $tweaked_total -eq 0 ]] && return 1      # no-point showing a fraction of zero
-
     if [[ -n $1 && $1 != all ]]; then
-        tier=" $1"
+        local tier=" $1"
     else
-        tier=''
+        local tier=''
     fi
 
+    local -r PACKAGE_TYPE=${2:?empty}
+    local -i pass_count=${3:-0}
+    local -i fail_count=${4:-0}
+    local -i total_count=${5:-0}
+    local -r ACTION_PRESENT=${6:?empty}
+    local -r DURATION=${7:-}
+
+    local tweaked_passes=$((pass_count+1))              # never show zero (e.g. 0/8)
+    local tweaked_total=$((total_count-fail_count))     # auto-adjust upper limit to account for failures
+
+    [[ $tweaked_total -eq 0 ]] && return 1              # no-point showing a fraction of zero
+
     if [[ $tweaked_passes -gt $tweaked_total ]]; then
-        tweaked_passes=$((tweaked_total-fails))
+        tweaked_passes=$((tweaked_total-fail_count))
         percent='100%'
     else
         percent="$((200*(tweaked_passes)/(tweaked_total+1) % 2 + 100*(tweaked_passes)/(tweaked_total+1)))%"
     fi
 
-    if [[ ${7:-} = long ]]; then
-        ShowAsProcLong "$5 ${tweaked_total}${tier} ${6}$(Plural "$tweaked_total")" "$percent ($tweaked_passes/$tweaked_total)"
+    if [[ $DURATION = long ]]; then
+        ShowAsProcLong "$ACTION_PRESENT ${tweaked_total}${tier} ${PACKAGE_TYPE}$(Plural "$tweaked_total")" "$percent ($tweaked_passes/$tweaked_total)"
     else
-        ShowAsProc "$5 ${tweaked_total}${tier} ${6}$(Plural "$tweaked_total")" "$percent ($tweaked_passes/$tweaked_total)"
+        ShowAsProc "$ACTION_PRESENT ${tweaked_total}${tier} ${PACKAGE_TYPE}$(Plural "$tweaked_total")" "$percent ($tweaked_passes/$tweaked_total)"
     fi
 
     [[ $percent = '100%' ]] && sleep 1
@@ -5853,38 +5874,36 @@ ShowAsOperationResult()
     {
 
     # $1 = tier (optional)
-    # $2 = total package count
-    # $3 = fail count
-    # $4 = pass count
-    # $5 = action message (past-tense)
-    # $6 = package type: 'QPKG', 'IPKG', 'PIP', etc ...
+    # $2 = package type: 'QPKG', 'IPKG', 'PIP', etc ...
+    # $3 = pass count
+    # $4 = fail count
+    # $5 = total count
+    # $6 = verb (past)
     # $7 = 'long' (optional)
 
-    [[ -z $2 || -z $3 || -z $4 || -z $5 || -z $6 ]] && return 1
-    [[ $2 -eq 0 ]] && return 1
-
-    local tier=''
-    local -i total=$2
-    local -i fails=$3
-    local -i passes=$4
-
-    # execute with passes > total to trigger 100% message
-    ShowAsOperationProgress "$1" "$total" "$fails" "$((passes+1))" "$ACTION_PRESENT" "$6" "${7:-}"
-
     if [[ -n $1 && $1 != all ]]; then
-        tier=" $1"
+        local tier=" $1"
     else
-        tier=''
+        local tier=''
     fi
 
-    if [[ $passes -eq 0 ]]; then
-        ShowAsFail "$5 ${fails}${tier} ${6}$(Plural "${3:-}") failed"
-    elif [[ $fails -gt 0 ]]; then
-        ShowAsWarn "$5 ${passes}${tier} ${6}$(Plural "$passes"), but ${fails}${tier} ${6}$(Plural "$fails") failed"
-    elif [[ $passes -gt 0 ]]; then
-        ShowAsDone "$5 ${passes}${tier} ${6}$(Plural "$passes")"
+    local -r PACKAGE_TYPE=${2:?empty}
+    local -i pass_count=${3:-0}
+    local -i fail_count=${4:-0}
+    local -i total_count=${5:-0}
+    local -r ACTION_PAST=${6:?empty}
+    local -r DURATION=${7:-}
+
+    [[ $total_count -eq 0 ]] && return 1
+
+    if [[ $pass_count -eq 0 ]]; then
+        ShowAsFail "$ACTION_PAST ${fail_count}${tier} ${PACKAGE_TYPE}$(Plural "$fail_count") failed"
+    elif [[ $fail_count -gt 0 ]]; then
+        ShowAsWarn "$ACTION_PAST ${pass_count}${tier} ${PACKAGE_TYPE}$(Plural "$pass_count"), but ${fail_count}${tier} ${PACKAGE_TYPE}$(Plural "$fail_count") failed"
+    elif [[ $pass_count -gt 0 ]]; then
+        ShowAsDone "$ACTION_PAST ${pass_count}${tier} ${PACKAGE_TYPE}$(Plural "$pass_count")"
     else
-        DebugAsDone "no${tier} ${6}s processed"
+        DebugAsDone "no${tier} ${PACKAGE_TYPE}s processed"
     fi
 
     return 0
