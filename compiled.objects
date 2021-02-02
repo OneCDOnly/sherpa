@@ -3351,19 +3351,19 @@ Opts.Apps.List.Upgradable.Init
 Args.Unknown.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_args_unknown_array_[*]:-} " != *"$item"* ]] && _obj_args_unknown_array_+=("$item")
+        [[ " ${_obj_args_unknown_array_[*]} " != *"$item"* ]] && _obj_args_unknown_array_+=("$item")
     done
     }
 Args.Unknown.Array()
     {
-    echo -n "${_obj_args_unknown_array_[@]:-}"
+    echo -n "${_obj_args_unknown_array_[@]}"
     }
 Args.Unknown.Count()
     {
-    echo "${#_obj_args_unknown_array_[@]:-}"
+    echo "${#_obj_args_unknown_array_[@]}"
     }
 Args.Unknown.Exist()
     {
@@ -3377,7 +3377,7 @@ Args.Unknown.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_args_unknown_array_[@]:-} ]] && index=${#_obj_args_unknown_array_[@]}
+    [[ $index -gt ${#_obj_args_unknown_array_[@]} ]] && index=${#_obj_args_unknown_array_[@]}
     echo -n "${_obj_args_unknown_array_[((index-1))]}"
     }
 Args.Unknown.Init()
@@ -3388,19 +3388,19 @@ Args.Unknown.Init()
     }
 Args.Unknown.IsAny()
     {
-    [[ ${#_obj_args_unknown_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_args_unknown_array_[@]} -gt 0 ]]
     }
 Args.Unknown.IsNone()
     {
-    [[ ${#_obj_args_unknown_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_args_unknown_array_[@]} -eq 0 ]]
     }
 Args.Unknown.List()
     {
-    echo -n "${_obj_args_unknown_array_[*]:-}"
+    echo -n "${_obj_args_unknown_array_[*]}"
     }
 Args.Unknown.ListCSV()
     {
-    echo -n "${_obj_args_unknown_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_args_unknown_array_[*]}" | tr ' ' ','
     }
 Args.Unknown.Remove()
     {
@@ -3409,16 +3409,16 @@ Args.Unknown.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_args_unknown_array_[@]:-}"; do
+    for item in "${_obj_args_unknown_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_args_unknown_array_=("${temp_array[@]:-}")
+    _obj_args_unknown_array_=("${temp_array[@]}")
     [[ -z ${_obj_args_unknown_array_[*]} ]] && _obj_args_unknown_array_=()
     }
 Args.Unknown.Size()
@@ -3434,19 +3434,19 @@ Args.Unknown.Init
 IPKGs.ToDownload.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_ipkgs_todownload_array_[*]:-} " != *"$item"* ]] && _obj_ipkgs_todownload_array_+=("$item")
+        [[ " ${_obj_ipkgs_todownload_array_[*]} " != *"$item"* ]] && _obj_ipkgs_todownload_array_+=("$item")
     done
     }
 IPKGs.ToDownload.Array()
     {
-    echo -n "${_obj_ipkgs_todownload_array_[@]:-}"
+    echo -n "${_obj_ipkgs_todownload_array_[@]}"
     }
 IPKGs.ToDownload.Count()
     {
-    echo "${#_obj_ipkgs_todownload_array_[@]:-}"
+    echo "${#_obj_ipkgs_todownload_array_[@]}"
     }
 IPKGs.ToDownload.Exist()
     {
@@ -3460,7 +3460,7 @@ IPKGs.ToDownload.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_ipkgs_todownload_array_[@]:-} ]] && index=${#_obj_ipkgs_todownload_array_[@]}
+    [[ $index -gt ${#_obj_ipkgs_todownload_array_[@]} ]] && index=${#_obj_ipkgs_todownload_array_[@]}
     echo -n "${_obj_ipkgs_todownload_array_[((index-1))]}"
     }
 IPKGs.ToDownload.Init()
@@ -3471,19 +3471,19 @@ IPKGs.ToDownload.Init()
     }
 IPKGs.ToDownload.IsAny()
     {
-    [[ ${#_obj_ipkgs_todownload_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_ipkgs_todownload_array_[@]} -gt 0 ]]
     }
 IPKGs.ToDownload.IsNone()
     {
-    [[ ${#_obj_ipkgs_todownload_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_ipkgs_todownload_array_[@]} -eq 0 ]]
     }
 IPKGs.ToDownload.List()
     {
-    echo -n "${_obj_ipkgs_todownload_array_[*]:-}"
+    echo -n "${_obj_ipkgs_todownload_array_[*]}"
     }
 IPKGs.ToDownload.ListCSV()
     {
-    echo -n "${_obj_ipkgs_todownload_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_ipkgs_todownload_array_[*]}" | tr ' ' ','
     }
 IPKGs.ToDownload.Remove()
     {
@@ -3492,16 +3492,16 @@ IPKGs.ToDownload.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_ipkgs_todownload_array_[@]:-}"; do
+    for item in "${_obj_ipkgs_todownload_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_ipkgs_todownload_array_=("${temp_array[@]:-}")
+    _obj_ipkgs_todownload_array_=("${temp_array[@]}")
     [[ -z ${_obj_ipkgs_todownload_array_[*]} ]] && _obj_ipkgs_todownload_array_=()
     }
 IPKGs.ToDownload.Size()
@@ -3517,19 +3517,19 @@ IPKGs.ToDownload.Init
 IPKGs.ToInstall.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_ipkgs_toinstall_array_[*]:-} " != *"$item"* ]] && _obj_ipkgs_toinstall_array_+=("$item")
+        [[ " ${_obj_ipkgs_toinstall_array_[*]} " != *"$item"* ]] && _obj_ipkgs_toinstall_array_+=("$item")
     done
     }
 IPKGs.ToInstall.Array()
     {
-    echo -n "${_obj_ipkgs_toinstall_array_[@]:-}"
+    echo -n "${_obj_ipkgs_toinstall_array_[@]}"
     }
 IPKGs.ToInstall.Count()
     {
-    echo "${#_obj_ipkgs_toinstall_array_[@]:-}"
+    echo "${#_obj_ipkgs_toinstall_array_[@]}"
     }
 IPKGs.ToInstall.Exist()
     {
@@ -3543,7 +3543,7 @@ IPKGs.ToInstall.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_ipkgs_toinstall_array_[@]:-} ]] && index=${#_obj_ipkgs_toinstall_array_[@]}
+    [[ $index -gt ${#_obj_ipkgs_toinstall_array_[@]} ]] && index=${#_obj_ipkgs_toinstall_array_[@]}
     echo -n "${_obj_ipkgs_toinstall_array_[((index-1))]}"
     }
 IPKGs.ToInstall.Init()
@@ -3554,19 +3554,19 @@ IPKGs.ToInstall.Init()
     }
 IPKGs.ToInstall.IsAny()
     {
-    [[ ${#_obj_ipkgs_toinstall_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_ipkgs_toinstall_array_[@]} -gt 0 ]]
     }
 IPKGs.ToInstall.IsNone()
     {
-    [[ ${#_obj_ipkgs_toinstall_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_ipkgs_toinstall_array_[@]} -eq 0 ]]
     }
 IPKGs.ToInstall.List()
     {
-    echo -n "${_obj_ipkgs_toinstall_array_[*]:-}"
+    echo -n "${_obj_ipkgs_toinstall_array_[*]}"
     }
 IPKGs.ToInstall.ListCSV()
     {
-    echo -n "${_obj_ipkgs_toinstall_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_ipkgs_toinstall_array_[*]}" | tr ' ' ','
     }
 IPKGs.ToInstall.Remove()
     {
@@ -3575,16 +3575,16 @@ IPKGs.ToInstall.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_ipkgs_toinstall_array_[@]:-}"; do
+    for item in "${_obj_ipkgs_toinstall_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_ipkgs_toinstall_array_=("${temp_array[@]:-}")
+    _obj_ipkgs_toinstall_array_=("${temp_array[@]}")
     [[ -z ${_obj_ipkgs_toinstall_array_[*]} ]] && _obj_ipkgs_toinstall_array_=()
     }
 IPKGs.ToInstall.Size()
@@ -3600,19 +3600,19 @@ IPKGs.ToInstall.Init
 IPKGs.ToUninstall.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_ipkgs_touninstall_array_[*]:-} " != *"$item"* ]] && _obj_ipkgs_touninstall_array_+=("$item")
+        [[ " ${_obj_ipkgs_touninstall_array_[*]} " != *"$item"* ]] && _obj_ipkgs_touninstall_array_+=("$item")
     done
     }
 IPKGs.ToUninstall.Array()
     {
-    echo -n "${_obj_ipkgs_touninstall_array_[@]:-}"
+    echo -n "${_obj_ipkgs_touninstall_array_[@]}"
     }
 IPKGs.ToUninstall.Count()
     {
-    echo "${#_obj_ipkgs_touninstall_array_[@]:-}"
+    echo "${#_obj_ipkgs_touninstall_array_[@]}"
     }
 IPKGs.ToUninstall.Exist()
     {
@@ -3626,7 +3626,7 @@ IPKGs.ToUninstall.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_ipkgs_touninstall_array_[@]:-} ]] && index=${#_obj_ipkgs_touninstall_array_[@]}
+    [[ $index -gt ${#_obj_ipkgs_touninstall_array_[@]} ]] && index=${#_obj_ipkgs_touninstall_array_[@]}
     echo -n "${_obj_ipkgs_touninstall_array_[((index-1))]}"
     }
 IPKGs.ToUninstall.Init()
@@ -3637,19 +3637,19 @@ IPKGs.ToUninstall.Init()
     }
 IPKGs.ToUninstall.IsAny()
     {
-    [[ ${#_obj_ipkgs_touninstall_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_ipkgs_touninstall_array_[@]} -gt 0 ]]
     }
 IPKGs.ToUninstall.IsNone()
     {
-    [[ ${#_obj_ipkgs_touninstall_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_ipkgs_touninstall_array_[@]} -eq 0 ]]
     }
 IPKGs.ToUninstall.List()
     {
-    echo -n "${_obj_ipkgs_touninstall_array_[*]:-}"
+    echo -n "${_obj_ipkgs_touninstall_array_[*]}"
     }
 IPKGs.ToUninstall.ListCSV()
     {
-    echo -n "${_obj_ipkgs_touninstall_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_ipkgs_touninstall_array_[*]}" | tr ' ' ','
     }
 IPKGs.ToUninstall.Remove()
     {
@@ -3658,16 +3658,16 @@ IPKGs.ToUninstall.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_ipkgs_touninstall_array_[@]:-}"; do
+    for item in "${_obj_ipkgs_touninstall_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_ipkgs_touninstall_array_=("${temp_array[@]:-}")
+    _obj_ipkgs_touninstall_array_=("${temp_array[@]}")
     [[ -z ${_obj_ipkgs_touninstall_array_[*]} ]] && _obj_ipkgs_touninstall_array_=()
     }
 IPKGs.ToUninstall.Size()
@@ -3683,19 +3683,19 @@ IPKGs.ToUninstall.Init
 QPKGs.Essential.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_essential_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_essential_array_+=("$item")
+        [[ " ${_obj_qpkgs_essential_array_[*]} " != *"$item"* ]] && _obj_qpkgs_essential_array_+=("$item")
     done
     }
 QPKGs.Essential.Array()
     {
-    echo -n "${_obj_qpkgs_essential_array_[@]:-}"
+    echo -n "${_obj_qpkgs_essential_array_[@]}"
     }
 QPKGs.Essential.Count()
     {
-    echo "${#_obj_qpkgs_essential_array_[@]:-}"
+    echo "${#_obj_qpkgs_essential_array_[@]}"
     }
 QPKGs.Essential.Exist()
     {
@@ -3709,7 +3709,7 @@ QPKGs.Essential.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_essential_array_[@]:-} ]] && index=${#_obj_qpkgs_essential_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_essential_array_[@]} ]] && index=${#_obj_qpkgs_essential_array_[@]}
     echo -n "${_obj_qpkgs_essential_array_[((index-1))]}"
     }
 QPKGs.Essential.Init()
@@ -3720,19 +3720,19 @@ QPKGs.Essential.Init()
     }
 QPKGs.Essential.IsAny()
     {
-    [[ ${#_obj_qpkgs_essential_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_essential_array_[@]} -gt 0 ]]
     }
 QPKGs.Essential.IsNone()
     {
-    [[ ${#_obj_qpkgs_essential_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_essential_array_[@]} -eq 0 ]]
     }
 QPKGs.Essential.List()
     {
-    echo -n "${_obj_qpkgs_essential_array_[*]:-}"
+    echo -n "${_obj_qpkgs_essential_array_[*]}"
     }
 QPKGs.Essential.ListCSV()
     {
-    echo -n "${_obj_qpkgs_essential_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_essential_array_[*]}" | tr ' ' ','
     }
 QPKGs.Essential.Remove()
     {
@@ -3741,16 +3741,16 @@ QPKGs.Essential.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_essential_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_essential_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_essential_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_essential_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_essential_array_[*]} ]] && _obj_qpkgs_essential_array_=()
     }
 QPKGs.Essential.Size()
@@ -3766,19 +3766,19 @@ QPKGs.Essential.Init
 QPKGs.Installable.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_installable_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_installable_array_+=("$item")
+        [[ " ${_obj_qpkgs_installable_array_[*]} " != *"$item"* ]] && _obj_qpkgs_installable_array_+=("$item")
     done
     }
 QPKGs.Installable.Array()
     {
-    echo -n "${_obj_qpkgs_installable_array_[@]:-}"
+    echo -n "${_obj_qpkgs_installable_array_[@]}"
     }
 QPKGs.Installable.Count()
     {
-    echo "${#_obj_qpkgs_installable_array_[@]:-}"
+    echo "${#_obj_qpkgs_installable_array_[@]}"
     }
 QPKGs.Installable.Exist()
     {
@@ -3792,7 +3792,7 @@ QPKGs.Installable.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_installable_array_[@]:-} ]] && index=${#_obj_qpkgs_installable_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_installable_array_[@]} ]] && index=${#_obj_qpkgs_installable_array_[@]}
     echo -n "${_obj_qpkgs_installable_array_[((index-1))]}"
     }
 QPKGs.Installable.Init()
@@ -3803,19 +3803,19 @@ QPKGs.Installable.Init()
     }
 QPKGs.Installable.IsAny()
     {
-    [[ ${#_obj_qpkgs_installable_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_installable_array_[@]} -gt 0 ]]
     }
 QPKGs.Installable.IsNone()
     {
-    [[ ${#_obj_qpkgs_installable_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_installable_array_[@]} -eq 0 ]]
     }
 QPKGs.Installable.List()
     {
-    echo -n "${_obj_qpkgs_installable_array_[*]:-}"
+    echo -n "${_obj_qpkgs_installable_array_[*]}"
     }
 QPKGs.Installable.ListCSV()
     {
-    echo -n "${_obj_qpkgs_installable_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_installable_array_[*]}" | tr ' ' ','
     }
 QPKGs.Installable.Remove()
     {
@@ -3824,16 +3824,16 @@ QPKGs.Installable.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_installable_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_installable_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_installable_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_installable_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_installable_array_[*]} ]] && _obj_qpkgs_installable_array_=()
     }
 QPKGs.Installable.Size()
@@ -3849,19 +3849,19 @@ QPKGs.Installable.Init
 QPKGs.Missing.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_missing_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_missing_array_+=("$item")
+        [[ " ${_obj_qpkgs_missing_array_[*]} " != *"$item"* ]] && _obj_qpkgs_missing_array_+=("$item")
     done
     }
 QPKGs.Missing.Array()
     {
-    echo -n "${_obj_qpkgs_missing_array_[@]:-}"
+    echo -n "${_obj_qpkgs_missing_array_[@]}"
     }
 QPKGs.Missing.Count()
     {
-    echo "${#_obj_qpkgs_missing_array_[@]:-}"
+    echo "${#_obj_qpkgs_missing_array_[@]}"
     }
 QPKGs.Missing.Exist()
     {
@@ -3875,7 +3875,7 @@ QPKGs.Missing.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_missing_array_[@]:-} ]] && index=${#_obj_qpkgs_missing_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_missing_array_[@]} ]] && index=${#_obj_qpkgs_missing_array_[@]}
     echo -n "${_obj_qpkgs_missing_array_[((index-1))]}"
     }
 QPKGs.Missing.Init()
@@ -3886,19 +3886,19 @@ QPKGs.Missing.Init()
     }
 QPKGs.Missing.IsAny()
     {
-    [[ ${#_obj_qpkgs_missing_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_missing_array_[@]} -gt 0 ]]
     }
 QPKGs.Missing.IsNone()
     {
-    [[ ${#_obj_qpkgs_missing_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_missing_array_[@]} -eq 0 ]]
     }
 QPKGs.Missing.List()
     {
-    echo -n "${_obj_qpkgs_missing_array_[*]:-}"
+    echo -n "${_obj_qpkgs_missing_array_[*]}"
     }
 QPKGs.Missing.ListCSV()
     {
-    echo -n "${_obj_qpkgs_missing_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_missing_array_[*]}" | tr ' ' ','
     }
 QPKGs.Missing.Remove()
     {
@@ -3907,16 +3907,16 @@ QPKGs.Missing.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_missing_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_missing_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_missing_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_missing_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_missing_array_[*]} ]] && _obj_qpkgs_missing_array_=()
     }
 QPKGs.Missing.Size()
@@ -3932,19 +3932,19 @@ QPKGs.Missing.Init
 QPKGs.Names.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_names_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_names_array_+=("$item")
+        [[ " ${_obj_qpkgs_names_array_[*]} " != *"$item"* ]] && _obj_qpkgs_names_array_+=("$item")
     done
     }
 QPKGs.Names.Array()
     {
-    echo -n "${_obj_qpkgs_names_array_[@]:-}"
+    echo -n "${_obj_qpkgs_names_array_[@]}"
     }
 QPKGs.Names.Count()
     {
-    echo "${#_obj_qpkgs_names_array_[@]:-}"
+    echo "${#_obj_qpkgs_names_array_[@]}"
     }
 QPKGs.Names.Exist()
     {
@@ -3958,7 +3958,7 @@ QPKGs.Names.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_names_array_[@]:-} ]] && index=${#_obj_qpkgs_names_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_names_array_[@]} ]] && index=${#_obj_qpkgs_names_array_[@]}
     echo -n "${_obj_qpkgs_names_array_[((index-1))]}"
     }
 QPKGs.Names.Init()
@@ -3969,19 +3969,19 @@ QPKGs.Names.Init()
     }
 QPKGs.Names.IsAny()
     {
-    [[ ${#_obj_qpkgs_names_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_names_array_[@]} -gt 0 ]]
     }
 QPKGs.Names.IsNone()
     {
-    [[ ${#_obj_qpkgs_names_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_names_array_[@]} -eq 0 ]]
     }
 QPKGs.Names.List()
     {
-    echo -n "${_obj_qpkgs_names_array_[*]:-}"
+    echo -n "${_obj_qpkgs_names_array_[*]}"
     }
 QPKGs.Names.ListCSV()
     {
-    echo -n "${_obj_qpkgs_names_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_names_array_[*]}" | tr ' ' ','
     }
 QPKGs.Names.Remove()
     {
@@ -3990,16 +3990,16 @@ QPKGs.Names.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_names_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_names_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_names_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_names_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_names_array_[*]} ]] && _obj_qpkgs_names_array_=()
     }
 QPKGs.Names.Size()
@@ -4015,19 +4015,19 @@ QPKGs.Names.Init
 QPKGs.Optional.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_optional_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_optional_array_+=("$item")
+        [[ " ${_obj_qpkgs_optional_array_[*]} " != *"$item"* ]] && _obj_qpkgs_optional_array_+=("$item")
     done
     }
 QPKGs.Optional.Array()
     {
-    echo -n "${_obj_qpkgs_optional_array_[@]:-}"
+    echo -n "${_obj_qpkgs_optional_array_[@]}"
     }
 QPKGs.Optional.Count()
     {
-    echo "${#_obj_qpkgs_optional_array_[@]:-}"
+    echo "${#_obj_qpkgs_optional_array_[@]}"
     }
 QPKGs.Optional.Exist()
     {
@@ -4041,7 +4041,7 @@ QPKGs.Optional.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_optional_array_[@]:-} ]] && index=${#_obj_qpkgs_optional_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_optional_array_[@]} ]] && index=${#_obj_qpkgs_optional_array_[@]}
     echo -n "${_obj_qpkgs_optional_array_[((index-1))]}"
     }
 QPKGs.Optional.Init()
@@ -4052,19 +4052,19 @@ QPKGs.Optional.Init()
     }
 QPKGs.Optional.IsAny()
     {
-    [[ ${#_obj_qpkgs_optional_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_optional_array_[@]} -gt 0 ]]
     }
 QPKGs.Optional.IsNone()
     {
-    [[ ${#_obj_qpkgs_optional_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_optional_array_[@]} -eq 0 ]]
     }
 QPKGs.Optional.List()
     {
-    echo -n "${_obj_qpkgs_optional_array_[*]:-}"
+    echo -n "${_obj_qpkgs_optional_array_[*]}"
     }
 QPKGs.Optional.ListCSV()
     {
-    echo -n "${_obj_qpkgs_optional_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_optional_array_[*]}" | tr ' ' ','
     }
 QPKGs.Optional.Remove()
     {
@@ -4073,16 +4073,16 @@ QPKGs.Optional.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_optional_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_optional_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_optional_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_optional_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_optional_array_[*]} ]] && _obj_qpkgs_optional_array_=()
     }
 QPKGs.Optional.Size()
@@ -4098,19 +4098,19 @@ QPKGs.Optional.Init
 QPKGs.Standalone.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_standalone_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_standalone_array_+=("$item")
+        [[ " ${_obj_qpkgs_standalone_array_[*]} " != *"$item"* ]] && _obj_qpkgs_standalone_array_+=("$item")
     done
     }
 QPKGs.Standalone.Array()
     {
-    echo -n "${_obj_qpkgs_standalone_array_[@]:-}"
+    echo -n "${_obj_qpkgs_standalone_array_[@]}"
     }
 QPKGs.Standalone.Count()
     {
-    echo "${#_obj_qpkgs_standalone_array_[@]:-}"
+    echo "${#_obj_qpkgs_standalone_array_[@]}"
     }
 QPKGs.Standalone.Exist()
     {
@@ -4124,7 +4124,7 @@ QPKGs.Standalone.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_standalone_array_[@]:-} ]] && index=${#_obj_qpkgs_standalone_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_standalone_array_[@]} ]] && index=${#_obj_qpkgs_standalone_array_[@]}
     echo -n "${_obj_qpkgs_standalone_array_[((index-1))]}"
     }
 QPKGs.Standalone.Init()
@@ -4135,19 +4135,19 @@ QPKGs.Standalone.Init()
     }
 QPKGs.Standalone.IsAny()
     {
-    [[ ${#_obj_qpkgs_standalone_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_standalone_array_[@]} -gt 0 ]]
     }
 QPKGs.Standalone.IsNone()
     {
-    [[ ${#_obj_qpkgs_standalone_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_standalone_array_[@]} -eq 0 ]]
     }
 QPKGs.Standalone.List()
     {
-    echo -n "${_obj_qpkgs_standalone_array_[*]:-}"
+    echo -n "${_obj_qpkgs_standalone_array_[*]}"
     }
 QPKGs.Standalone.ListCSV()
     {
-    echo -n "${_obj_qpkgs_standalone_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_standalone_array_[*]}" | tr ' ' ','
     }
 QPKGs.Standalone.Remove()
     {
@@ -4156,16 +4156,16 @@ QPKGs.Standalone.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_standalone_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_standalone_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_standalone_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_standalone_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_standalone_array_[*]} ]] && _obj_qpkgs_standalone_array_=()
     }
 QPKGs.Standalone.Size()
@@ -4181,19 +4181,19 @@ QPKGs.Standalone.Init
 QPKGs.Started.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_started_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_started_array_+=("$item")
+        [[ " ${_obj_qpkgs_started_array_[*]} " != *"$item"* ]] && _obj_qpkgs_started_array_+=("$item")
     done
     }
 QPKGs.Started.Array()
     {
-    echo -n "${_obj_qpkgs_started_array_[@]:-}"
+    echo -n "${_obj_qpkgs_started_array_[@]}"
     }
 QPKGs.Started.Count()
     {
-    echo "${#_obj_qpkgs_started_array_[@]:-}"
+    echo "${#_obj_qpkgs_started_array_[@]}"
     }
 QPKGs.Started.Exist()
     {
@@ -4207,7 +4207,7 @@ QPKGs.Started.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_started_array_[@]:-} ]] && index=${#_obj_qpkgs_started_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_started_array_[@]} ]] && index=${#_obj_qpkgs_started_array_[@]}
     echo -n "${_obj_qpkgs_started_array_[((index-1))]}"
     }
 QPKGs.Started.Init()
@@ -4218,19 +4218,19 @@ QPKGs.Started.Init()
     }
 QPKGs.Started.IsAny()
     {
-    [[ ${#_obj_qpkgs_started_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_started_array_[@]} -gt 0 ]]
     }
 QPKGs.Started.IsNone()
     {
-    [[ ${#_obj_qpkgs_started_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_started_array_[@]} -eq 0 ]]
     }
 QPKGs.Started.List()
     {
-    echo -n "${_obj_qpkgs_started_array_[*]:-}"
+    echo -n "${_obj_qpkgs_started_array_[*]}"
     }
 QPKGs.Started.ListCSV()
     {
-    echo -n "${_obj_qpkgs_started_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_started_array_[*]}" | tr ' ' ','
     }
 QPKGs.Started.Remove()
     {
@@ -4239,16 +4239,16 @@ QPKGs.Started.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_started_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_started_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_started_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_started_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_started_array_[*]} ]] && _obj_qpkgs_started_array_=()
     }
 QPKGs.Started.Size()
@@ -4264,19 +4264,19 @@ QPKGs.Started.Init
 QPKGs.Stopped.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_stopped_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_stopped_array_+=("$item")
+        [[ " ${_obj_qpkgs_stopped_array_[*]} " != *"$item"* ]] && _obj_qpkgs_stopped_array_+=("$item")
     done
     }
 QPKGs.Stopped.Array()
     {
-    echo -n "${_obj_qpkgs_stopped_array_[@]:-}"
+    echo -n "${_obj_qpkgs_stopped_array_[@]}"
     }
 QPKGs.Stopped.Count()
     {
-    echo "${#_obj_qpkgs_stopped_array_[@]:-}"
+    echo "${#_obj_qpkgs_stopped_array_[@]}"
     }
 QPKGs.Stopped.Exist()
     {
@@ -4290,7 +4290,7 @@ QPKGs.Stopped.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_stopped_array_[@]:-} ]] && index=${#_obj_qpkgs_stopped_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_stopped_array_[@]} ]] && index=${#_obj_qpkgs_stopped_array_[@]}
     echo -n "${_obj_qpkgs_stopped_array_[((index-1))]}"
     }
 QPKGs.Stopped.Init()
@@ -4301,19 +4301,19 @@ QPKGs.Stopped.Init()
     }
 QPKGs.Stopped.IsAny()
     {
-    [[ ${#_obj_qpkgs_stopped_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_stopped_array_[@]} -gt 0 ]]
     }
 QPKGs.Stopped.IsNone()
     {
-    [[ ${#_obj_qpkgs_stopped_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_stopped_array_[@]} -eq 0 ]]
     }
 QPKGs.Stopped.List()
     {
-    echo -n "${_obj_qpkgs_stopped_array_[*]:-}"
+    echo -n "${_obj_qpkgs_stopped_array_[*]}"
     }
 QPKGs.Stopped.ListCSV()
     {
-    echo -n "${_obj_qpkgs_stopped_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_stopped_array_[*]}" | tr ' ' ','
     }
 QPKGs.Stopped.Remove()
     {
@@ -4322,16 +4322,16 @@ QPKGs.Stopped.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_stopped_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_stopped_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_stopped_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_stopped_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_stopped_array_[*]} ]] && _obj_qpkgs_stopped_array_=()
     }
 QPKGs.Stopped.Size()
@@ -4347,19 +4347,19 @@ QPKGs.Stopped.Init
 QPKGs.Upgradable.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_upgradable_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_upgradable_array_+=("$item")
+        [[ " ${_obj_qpkgs_upgradable_array_[*]} " != *"$item"* ]] && _obj_qpkgs_upgradable_array_+=("$item")
     done
     }
 QPKGs.Upgradable.Array()
     {
-    echo -n "${_obj_qpkgs_upgradable_array_[@]:-}"
+    echo -n "${_obj_qpkgs_upgradable_array_[@]}"
     }
 QPKGs.Upgradable.Count()
     {
-    echo "${#_obj_qpkgs_upgradable_array_[@]:-}"
+    echo "${#_obj_qpkgs_upgradable_array_[@]}"
     }
 QPKGs.Upgradable.Exist()
     {
@@ -4373,7 +4373,7 @@ QPKGs.Upgradable.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_upgradable_array_[@]:-} ]] && index=${#_obj_qpkgs_upgradable_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_upgradable_array_[@]} ]] && index=${#_obj_qpkgs_upgradable_array_[@]}
     echo -n "${_obj_qpkgs_upgradable_array_[((index-1))]}"
     }
 QPKGs.Upgradable.Init()
@@ -4384,19 +4384,19 @@ QPKGs.Upgradable.Init()
     }
 QPKGs.Upgradable.IsAny()
     {
-    [[ ${#_obj_qpkgs_upgradable_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_upgradable_array_[@]} -gt 0 ]]
     }
 QPKGs.Upgradable.IsNone()
     {
-    [[ ${#_obj_qpkgs_upgradable_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_upgradable_array_[@]} -eq 0 ]]
     }
 QPKGs.Upgradable.List()
     {
-    echo -n "${_obj_qpkgs_upgradable_array_[*]:-}"
+    echo -n "${_obj_qpkgs_upgradable_array_[*]}"
     }
 QPKGs.Upgradable.ListCSV()
     {
-    echo -n "${_obj_qpkgs_upgradable_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_upgradable_array_[*]}" | tr ' ' ','
     }
 QPKGs.Upgradable.Remove()
     {
@@ -4405,16 +4405,16 @@ QPKGs.Upgradable.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_upgradable_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_upgradable_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_upgradable_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_upgradable_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_upgradable_array_[*]} ]] && _obj_qpkgs_upgradable_array_=()
     }
 QPKGs.Upgradable.Size()
@@ -4430,19 +4430,19 @@ QPKGs.Upgradable.Init
 QPKGs.BackedUp.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_backedup_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_backedup_array_+=("$item")
+        [[ " ${_obj_qpkgs_backedup_array_[*]} " != *"$item"* ]] && _obj_qpkgs_backedup_array_+=("$item")
     done
     }
 QPKGs.BackedUp.Array()
     {
-    echo -n "${_obj_qpkgs_backedup_array_[@]:-}"
+    echo -n "${_obj_qpkgs_backedup_array_[@]}"
     }
 QPKGs.BackedUp.Count()
     {
-    echo "${#_obj_qpkgs_backedup_array_[@]:-}"
+    echo "${#_obj_qpkgs_backedup_array_[@]}"
     }
 QPKGs.BackedUp.Exist()
     {
@@ -4456,7 +4456,7 @@ QPKGs.BackedUp.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_backedup_array_[@]:-} ]] && index=${#_obj_qpkgs_backedup_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_backedup_array_[@]} ]] && index=${#_obj_qpkgs_backedup_array_[@]}
     echo -n "${_obj_qpkgs_backedup_array_[((index-1))]}"
     }
 QPKGs.BackedUp.Init()
@@ -4467,19 +4467,19 @@ QPKGs.BackedUp.Init()
     }
 QPKGs.BackedUp.IsAny()
     {
-    [[ ${#_obj_qpkgs_backedup_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_backedup_array_[@]} -gt 0 ]]
     }
 QPKGs.BackedUp.IsNone()
     {
-    [[ ${#_obj_qpkgs_backedup_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_backedup_array_[@]} -eq 0 ]]
     }
 QPKGs.BackedUp.List()
     {
-    echo -n "${_obj_qpkgs_backedup_array_[*]:-}"
+    echo -n "${_obj_qpkgs_backedup_array_[*]}"
     }
 QPKGs.BackedUp.ListCSV()
     {
-    echo -n "${_obj_qpkgs_backedup_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_backedup_array_[*]}" | tr ' ' ','
     }
 QPKGs.BackedUp.Remove()
     {
@@ -4488,16 +4488,16 @@ QPKGs.BackedUp.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_backedup_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_backedup_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_backedup_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_backedup_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_backedup_array_[*]} ]] && _obj_qpkgs_backedup_array_=()
     }
 QPKGs.BackedUp.Size()
@@ -4513,19 +4513,19 @@ QPKGs.BackedUp.Init
 QPKGs.NotBackedUp.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_notbackedup_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_notbackedup_array_+=("$item")
+        [[ " ${_obj_qpkgs_notbackedup_array_[*]} " != *"$item"* ]] && _obj_qpkgs_notbackedup_array_+=("$item")
     done
     }
 QPKGs.NotBackedUp.Array()
     {
-    echo -n "${_obj_qpkgs_notbackedup_array_[@]:-}"
+    echo -n "${_obj_qpkgs_notbackedup_array_[@]}"
     }
 QPKGs.NotBackedUp.Count()
     {
-    echo "${#_obj_qpkgs_notbackedup_array_[@]:-}"
+    echo "${#_obj_qpkgs_notbackedup_array_[@]}"
     }
 QPKGs.NotBackedUp.Exist()
     {
@@ -4539,7 +4539,7 @@ QPKGs.NotBackedUp.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_notbackedup_array_[@]:-} ]] && index=${#_obj_qpkgs_notbackedup_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_notbackedup_array_[@]} ]] && index=${#_obj_qpkgs_notbackedup_array_[@]}
     echo -n "${_obj_qpkgs_notbackedup_array_[((index-1))]}"
     }
 QPKGs.NotBackedUp.Init()
@@ -4550,19 +4550,19 @@ QPKGs.NotBackedUp.Init()
     }
 QPKGs.NotBackedUp.IsAny()
     {
-    [[ ${#_obj_qpkgs_notbackedup_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_notbackedup_array_[@]} -gt 0 ]]
     }
 QPKGs.NotBackedUp.IsNone()
     {
-    [[ ${#_obj_qpkgs_notbackedup_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_notbackedup_array_[@]} -eq 0 ]]
     }
 QPKGs.NotBackedUp.List()
     {
-    echo -n "${_obj_qpkgs_notbackedup_array_[*]:-}"
+    echo -n "${_obj_qpkgs_notbackedup_array_[*]}"
     }
 QPKGs.NotBackedUp.ListCSV()
     {
-    echo -n "${_obj_qpkgs_notbackedup_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_notbackedup_array_[*]}" | tr ' ' ','
     }
 QPKGs.NotBackedUp.Remove()
     {
@@ -4571,16 +4571,16 @@ QPKGs.NotBackedUp.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_notbackedup_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_notbackedup_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_notbackedup_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_notbackedup_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_notbackedup_array_[*]} ]] && _obj_qpkgs_notbackedup_array_=()
     }
 QPKGs.NotBackedUp.Size()
@@ -4596,19 +4596,19 @@ QPKGs.NotBackedUp.Init
 QPKGs.Installed.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_installed_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_installed_array_+=("$item")
+        [[ " ${_obj_qpkgs_installed_array_[*]} " != *"$item"* ]] && _obj_qpkgs_installed_array_+=("$item")
     done
     }
 QPKGs.Installed.Array()
     {
-    echo -n "${_obj_qpkgs_installed_array_[@]:-}"
+    echo -n "${_obj_qpkgs_installed_array_[@]}"
     }
 QPKGs.Installed.Count()
     {
-    echo "${#_obj_qpkgs_installed_array_[@]:-}"
+    echo "${#_obj_qpkgs_installed_array_[@]}"
     }
 QPKGs.Installed.Exist()
     {
@@ -4622,7 +4622,7 @@ QPKGs.Installed.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_installed_array_[@]:-} ]] && index=${#_obj_qpkgs_installed_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_installed_array_[@]} ]] && index=${#_obj_qpkgs_installed_array_[@]}
     echo -n "${_obj_qpkgs_installed_array_[((index-1))]}"
     }
 QPKGs.Installed.Init()
@@ -4633,19 +4633,19 @@ QPKGs.Installed.Init()
     }
 QPKGs.Installed.IsAny()
     {
-    [[ ${#_obj_qpkgs_installed_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_installed_array_[@]} -gt 0 ]]
     }
 QPKGs.Installed.IsNone()
     {
-    [[ ${#_obj_qpkgs_installed_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_installed_array_[@]} -eq 0 ]]
     }
 QPKGs.Installed.List()
     {
-    echo -n "${_obj_qpkgs_installed_array_[*]:-}"
+    echo -n "${_obj_qpkgs_installed_array_[*]}"
     }
 QPKGs.Installed.ListCSV()
     {
-    echo -n "${_obj_qpkgs_installed_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_installed_array_[*]}" | tr ' ' ','
     }
 QPKGs.Installed.Remove()
     {
@@ -4654,16 +4654,16 @@ QPKGs.Installed.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_installed_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_installed_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_installed_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_installed_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_installed_array_[*]} ]] && _obj_qpkgs_installed_array_=()
     }
 QPKGs.Installed.Size()
@@ -4679,19 +4679,19 @@ QPKGs.Installed.Init
 QPKGs.NotInstalled.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_notinstalled_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_notinstalled_array_+=("$item")
+        [[ " ${_obj_qpkgs_notinstalled_array_[*]} " != *"$item"* ]] && _obj_qpkgs_notinstalled_array_+=("$item")
     done
     }
 QPKGs.NotInstalled.Array()
     {
-    echo -n "${_obj_qpkgs_notinstalled_array_[@]:-}"
+    echo -n "${_obj_qpkgs_notinstalled_array_[@]}"
     }
 QPKGs.NotInstalled.Count()
     {
-    echo "${#_obj_qpkgs_notinstalled_array_[@]:-}"
+    echo "${#_obj_qpkgs_notinstalled_array_[@]}"
     }
 QPKGs.NotInstalled.Exist()
     {
@@ -4705,7 +4705,7 @@ QPKGs.NotInstalled.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_notinstalled_array_[@]:-} ]] && index=${#_obj_qpkgs_notinstalled_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_notinstalled_array_[@]} ]] && index=${#_obj_qpkgs_notinstalled_array_[@]}
     echo -n "${_obj_qpkgs_notinstalled_array_[((index-1))]}"
     }
 QPKGs.NotInstalled.Init()
@@ -4716,19 +4716,19 @@ QPKGs.NotInstalled.Init()
     }
 QPKGs.NotInstalled.IsAny()
     {
-    [[ ${#_obj_qpkgs_notinstalled_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_notinstalled_array_[@]} -gt 0 ]]
     }
 QPKGs.NotInstalled.IsNone()
     {
-    [[ ${#_obj_qpkgs_notinstalled_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_notinstalled_array_[@]} -eq 0 ]]
     }
 QPKGs.NotInstalled.List()
     {
-    echo -n "${_obj_qpkgs_notinstalled_array_[*]:-}"
+    echo -n "${_obj_qpkgs_notinstalled_array_[*]}"
     }
 QPKGs.NotInstalled.ListCSV()
     {
-    echo -n "${_obj_qpkgs_notinstalled_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_notinstalled_array_[*]}" | tr ' ' ','
     }
 QPKGs.NotInstalled.Remove()
     {
@@ -4737,16 +4737,16 @@ QPKGs.NotInstalled.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_notinstalled_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_notinstalled_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_notinstalled_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_notinstalled_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_notinstalled_array_[*]} ]] && _obj_qpkgs_notinstalled_array_=()
     }
 QPKGs.NotInstalled.Size()
@@ -4762,19 +4762,19 @@ QPKGs.NotInstalled.Init
 QPKGs.SupportsBackup.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_supportsbackup_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_supportsbackup_array_+=("$item")
+        [[ " ${_obj_qpkgs_supportsbackup_array_[*]} " != *"$item"* ]] && _obj_qpkgs_supportsbackup_array_+=("$item")
     done
     }
 QPKGs.SupportsBackup.Array()
     {
-    echo -n "${_obj_qpkgs_supportsbackup_array_[@]:-}"
+    echo -n "${_obj_qpkgs_supportsbackup_array_[@]}"
     }
 QPKGs.SupportsBackup.Count()
     {
-    echo "${#_obj_qpkgs_supportsbackup_array_[@]:-}"
+    echo "${#_obj_qpkgs_supportsbackup_array_[@]}"
     }
 QPKGs.SupportsBackup.Exist()
     {
@@ -4788,7 +4788,7 @@ QPKGs.SupportsBackup.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_supportsbackup_array_[@]:-} ]] && index=${#_obj_qpkgs_supportsbackup_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_supportsbackup_array_[@]} ]] && index=${#_obj_qpkgs_supportsbackup_array_[@]}
     echo -n "${_obj_qpkgs_supportsbackup_array_[((index-1))]}"
     }
 QPKGs.SupportsBackup.Init()
@@ -4799,19 +4799,19 @@ QPKGs.SupportsBackup.Init()
     }
 QPKGs.SupportsBackup.IsAny()
     {
-    [[ ${#_obj_qpkgs_supportsbackup_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_supportsbackup_array_[@]} -gt 0 ]]
     }
 QPKGs.SupportsBackup.IsNone()
     {
-    [[ ${#_obj_qpkgs_supportsbackup_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_supportsbackup_array_[@]} -eq 0 ]]
     }
 QPKGs.SupportsBackup.List()
     {
-    echo -n "${_obj_qpkgs_supportsbackup_array_[*]:-}"
+    echo -n "${_obj_qpkgs_supportsbackup_array_[*]}"
     }
 QPKGs.SupportsBackup.ListCSV()
     {
-    echo -n "${_obj_qpkgs_supportsbackup_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_supportsbackup_array_[*]}" | tr ' ' ','
     }
 QPKGs.SupportsBackup.Remove()
     {
@@ -4820,16 +4820,16 @@ QPKGs.SupportsBackup.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_supportsbackup_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_supportsbackup_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_supportsbackup_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_supportsbackup_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_supportsbackup_array_[*]} ]] && _obj_qpkgs_supportsbackup_array_=()
     }
 QPKGs.SupportsBackup.Size()
@@ -4845,19 +4845,19 @@ QPKGs.SupportsBackup.Init
 QPKGs.NotSupportsBackup.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_notsupportsbackup_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_notsupportsbackup_array_+=("$item")
+        [[ " ${_obj_qpkgs_notsupportsbackup_array_[*]} " != *"$item"* ]] && _obj_qpkgs_notsupportsbackup_array_+=("$item")
     done
     }
 QPKGs.NotSupportsBackup.Array()
     {
-    echo -n "${_obj_qpkgs_notsupportsbackup_array_[@]:-}"
+    echo -n "${_obj_qpkgs_notsupportsbackup_array_[@]}"
     }
 QPKGs.NotSupportsBackup.Count()
     {
-    echo "${#_obj_qpkgs_notsupportsbackup_array_[@]:-}"
+    echo "${#_obj_qpkgs_notsupportsbackup_array_[@]}"
     }
 QPKGs.NotSupportsBackup.Exist()
     {
@@ -4871,7 +4871,7 @@ QPKGs.NotSupportsBackup.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_notsupportsbackup_array_[@]:-} ]] && index=${#_obj_qpkgs_notsupportsbackup_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_notsupportsbackup_array_[@]} ]] && index=${#_obj_qpkgs_notsupportsbackup_array_[@]}
     echo -n "${_obj_qpkgs_notsupportsbackup_array_[((index-1))]}"
     }
 QPKGs.NotSupportsBackup.Init()
@@ -4882,19 +4882,19 @@ QPKGs.NotSupportsBackup.Init()
     }
 QPKGs.NotSupportsBackup.IsAny()
     {
-    [[ ${#_obj_qpkgs_notsupportsbackup_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_notsupportsbackup_array_[@]} -gt 0 ]]
     }
 QPKGs.NotSupportsBackup.IsNone()
     {
-    [[ ${#_obj_qpkgs_notsupportsbackup_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_notsupportsbackup_array_[@]} -eq 0 ]]
     }
 QPKGs.NotSupportsBackup.List()
     {
-    echo -n "${_obj_qpkgs_notsupportsbackup_array_[*]:-}"
+    echo -n "${_obj_qpkgs_notsupportsbackup_array_[*]}"
     }
 QPKGs.NotSupportsBackup.ListCSV()
     {
-    echo -n "${_obj_qpkgs_notsupportsbackup_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_notsupportsbackup_array_[*]}" | tr ' ' ','
     }
 QPKGs.NotSupportsBackup.Remove()
     {
@@ -4903,16 +4903,16 @@ QPKGs.NotSupportsBackup.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_notsupportsbackup_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_notsupportsbackup_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_notsupportsbackup_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_notsupportsbackup_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_notsupportsbackup_array_[*]} ]] && _obj_qpkgs_notsupportsbackup_array_=()
     }
 QPKGs.NotSupportsBackup.Size()
@@ -4928,19 +4928,19 @@ QPKGs.NotSupportsBackup.Init
 QPKGs.SupportsUpdateOnRestart.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_supportsupdateonrestart_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_supportsupdateonrestart_array_+=("$item")
+        [[ " ${_obj_qpkgs_supportsupdateonrestart_array_[*]} " != *"$item"* ]] && _obj_qpkgs_supportsupdateonrestart_array_+=("$item")
     done
     }
 QPKGs.SupportsUpdateOnRestart.Array()
     {
-    echo -n "${_obj_qpkgs_supportsupdateonrestart_array_[@]:-}"
+    echo -n "${_obj_qpkgs_supportsupdateonrestart_array_[@]}"
     }
 QPKGs.SupportsUpdateOnRestart.Count()
     {
-    echo "${#_obj_qpkgs_supportsupdateonrestart_array_[@]:-}"
+    echo "${#_obj_qpkgs_supportsupdateonrestart_array_[@]}"
     }
 QPKGs.SupportsUpdateOnRestart.Exist()
     {
@@ -4954,7 +4954,7 @@ QPKGs.SupportsUpdateOnRestart.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_supportsupdateonrestart_array_[@]:-} ]] && index=${#_obj_qpkgs_supportsupdateonrestart_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_supportsupdateonrestart_array_[@]} ]] && index=${#_obj_qpkgs_supportsupdateonrestart_array_[@]}
     echo -n "${_obj_qpkgs_supportsupdateonrestart_array_[((index-1))]}"
     }
 QPKGs.SupportsUpdateOnRestart.Init()
@@ -4965,19 +4965,19 @@ QPKGs.SupportsUpdateOnRestart.Init()
     }
 QPKGs.SupportsUpdateOnRestart.IsAny()
     {
-    [[ ${#_obj_qpkgs_supportsupdateonrestart_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_supportsupdateonrestart_array_[@]} -gt 0 ]]
     }
 QPKGs.SupportsUpdateOnRestart.IsNone()
     {
-    [[ ${#_obj_qpkgs_supportsupdateonrestart_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_supportsupdateonrestart_array_[@]} -eq 0 ]]
     }
 QPKGs.SupportsUpdateOnRestart.List()
     {
-    echo -n "${_obj_qpkgs_supportsupdateonrestart_array_[*]:-}"
+    echo -n "${_obj_qpkgs_supportsupdateonrestart_array_[*]}"
     }
 QPKGs.SupportsUpdateOnRestart.ListCSV()
     {
-    echo -n "${_obj_qpkgs_supportsupdateonrestart_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_supportsupdateonrestart_array_[*]}" | tr ' ' ','
     }
 QPKGs.SupportsUpdateOnRestart.Remove()
     {
@@ -4986,16 +4986,16 @@ QPKGs.SupportsUpdateOnRestart.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_supportsupdateonrestart_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_supportsupdateonrestart_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_supportsupdateonrestart_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_supportsupdateonrestart_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_supportsupdateonrestart_array_[*]} ]] && _obj_qpkgs_supportsupdateonrestart_array_=()
     }
 QPKGs.SupportsUpdateOnRestart.Size()
@@ -5011,19 +5011,19 @@ QPKGs.SupportsUpdateOnRestart.Init
 QPKGs.NotSupportsUpdateOnRestart.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_notsupportsupdateonrestart_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_notsupportsupdateonrestart_array_+=("$item")
+        [[ " ${_obj_qpkgs_notsupportsupdateonrestart_array_[*]} " != *"$item"* ]] && _obj_qpkgs_notsupportsupdateonrestart_array_+=("$item")
     done
     }
 QPKGs.NotSupportsUpdateOnRestart.Array()
     {
-    echo -n "${_obj_qpkgs_notsupportsupdateonrestart_array_[@]:-}"
+    echo -n "${_obj_qpkgs_notsupportsupdateonrestart_array_[@]}"
     }
 QPKGs.NotSupportsUpdateOnRestart.Count()
     {
-    echo "${#_obj_qpkgs_notsupportsupdateonrestart_array_[@]:-}"
+    echo "${#_obj_qpkgs_notsupportsupdateonrestart_array_[@]}"
     }
 QPKGs.NotSupportsUpdateOnRestart.Exist()
     {
@@ -5037,7 +5037,7 @@ QPKGs.NotSupportsUpdateOnRestart.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_notsupportsupdateonrestart_array_[@]:-} ]] && index=${#_obj_qpkgs_notsupportsupdateonrestart_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_notsupportsupdateonrestart_array_[@]} ]] && index=${#_obj_qpkgs_notsupportsupdateonrestart_array_[@]}
     echo -n "${_obj_qpkgs_notsupportsupdateonrestart_array_[((index-1))]}"
     }
 QPKGs.NotSupportsUpdateOnRestart.Init()
@@ -5048,19 +5048,19 @@ QPKGs.NotSupportsUpdateOnRestart.Init()
     }
 QPKGs.NotSupportsUpdateOnRestart.IsAny()
     {
-    [[ ${#_obj_qpkgs_notsupportsupdateonrestart_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_notsupportsupdateonrestart_array_[@]} -gt 0 ]]
     }
 QPKGs.NotSupportsUpdateOnRestart.IsNone()
     {
-    [[ ${#_obj_qpkgs_notsupportsupdateonrestart_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_notsupportsupdateonrestart_array_[@]} -eq 0 ]]
     }
 QPKGs.NotSupportsUpdateOnRestart.List()
     {
-    echo -n "${_obj_qpkgs_notsupportsupdateonrestart_array_[*]:-}"
+    echo -n "${_obj_qpkgs_notsupportsupdateonrestart_array_[*]}"
     }
 QPKGs.NotSupportsUpdateOnRestart.ListCSV()
     {
-    echo -n "${_obj_qpkgs_notsupportsupdateonrestart_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_notsupportsupdateonrestart_array_[*]}" | tr ' ' ','
     }
 QPKGs.NotSupportsUpdateOnRestart.Remove()
     {
@@ -5069,16 +5069,16 @@ QPKGs.NotSupportsUpdateOnRestart.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_notsupportsupdateonrestart_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_notsupportsupdateonrestart_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_notsupportsupdateonrestart_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_notsupportsupdateonrestart_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_notsupportsupdateonrestart_array_[*]} ]] && _obj_qpkgs_notsupportsupdateonrestart_array_=()
     }
 QPKGs.NotSupportsUpdateOnRestart.Size()
@@ -5094,19 +5094,19 @@ QPKGs.NotSupportsUpdateOnRestart.Init
 QPKGs.ToBackup.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_tobackup_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_tobackup_array_+=("$item")
+        [[ " ${_obj_qpkgs_tobackup_array_[*]} " != *"$item"* ]] && _obj_qpkgs_tobackup_array_+=("$item")
     done
     }
 QPKGs.ToBackup.Array()
     {
-    echo -n "${_obj_qpkgs_tobackup_array_[@]:-}"
+    echo -n "${_obj_qpkgs_tobackup_array_[@]}"
     }
 QPKGs.ToBackup.Count()
     {
-    echo "${#_obj_qpkgs_tobackup_array_[@]:-}"
+    echo "${#_obj_qpkgs_tobackup_array_[@]}"
     }
 QPKGs.ToBackup.Exist()
     {
@@ -5120,7 +5120,7 @@ QPKGs.ToBackup.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_tobackup_array_[@]:-} ]] && index=${#_obj_qpkgs_tobackup_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_tobackup_array_[@]} ]] && index=${#_obj_qpkgs_tobackup_array_[@]}
     echo -n "${_obj_qpkgs_tobackup_array_[((index-1))]}"
     }
 QPKGs.ToBackup.Init()
@@ -5131,19 +5131,19 @@ QPKGs.ToBackup.Init()
     }
 QPKGs.ToBackup.IsAny()
     {
-    [[ ${#_obj_qpkgs_tobackup_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_tobackup_array_[@]} -gt 0 ]]
     }
 QPKGs.ToBackup.IsNone()
     {
-    [[ ${#_obj_qpkgs_tobackup_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_tobackup_array_[@]} -eq 0 ]]
     }
 QPKGs.ToBackup.List()
     {
-    echo -n "${_obj_qpkgs_tobackup_array_[*]:-}"
+    echo -n "${_obj_qpkgs_tobackup_array_[*]}"
     }
 QPKGs.ToBackup.ListCSV()
     {
-    echo -n "${_obj_qpkgs_tobackup_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_tobackup_array_[*]}" | tr ' ' ','
     }
 QPKGs.ToBackup.Remove()
     {
@@ -5152,16 +5152,16 @@ QPKGs.ToBackup.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_tobackup_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_tobackup_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_tobackup_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_tobackup_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_tobackup_array_[*]} ]] && _obj_qpkgs_tobackup_array_=()
     }
 QPKGs.ToBackup.Size()
@@ -5177,19 +5177,19 @@ QPKGs.ToBackup.Init
 QPKGs.IsBackup.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_isbackup_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_isbackup_array_+=("$item")
+        [[ " ${_obj_qpkgs_isbackup_array_[*]} " != *"$item"* ]] && _obj_qpkgs_isbackup_array_+=("$item")
     done
     }
 QPKGs.IsBackup.Array()
     {
-    echo -n "${_obj_qpkgs_isbackup_array_[@]:-}"
+    echo -n "${_obj_qpkgs_isbackup_array_[@]}"
     }
 QPKGs.IsBackup.Count()
     {
-    echo "${#_obj_qpkgs_isbackup_array_[@]:-}"
+    echo "${#_obj_qpkgs_isbackup_array_[@]}"
     }
 QPKGs.IsBackup.Exist()
     {
@@ -5203,7 +5203,7 @@ QPKGs.IsBackup.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_isbackup_array_[@]:-} ]] && index=${#_obj_qpkgs_isbackup_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_isbackup_array_[@]} ]] && index=${#_obj_qpkgs_isbackup_array_[@]}
     echo -n "${_obj_qpkgs_isbackup_array_[((index-1))]}"
     }
 QPKGs.IsBackup.Init()
@@ -5214,19 +5214,19 @@ QPKGs.IsBackup.Init()
     }
 QPKGs.IsBackup.IsAny()
     {
-    [[ ${#_obj_qpkgs_isbackup_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_isbackup_array_[@]} -gt 0 ]]
     }
 QPKGs.IsBackup.IsNone()
     {
-    [[ ${#_obj_qpkgs_isbackup_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_isbackup_array_[@]} -eq 0 ]]
     }
 QPKGs.IsBackup.List()
     {
-    echo -n "${_obj_qpkgs_isbackup_array_[*]:-}"
+    echo -n "${_obj_qpkgs_isbackup_array_[*]}"
     }
 QPKGs.IsBackup.ListCSV()
     {
-    echo -n "${_obj_qpkgs_isbackup_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_isbackup_array_[*]}" | tr ' ' ','
     }
 QPKGs.IsBackup.Remove()
     {
@@ -5235,16 +5235,16 @@ QPKGs.IsBackup.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_isbackup_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_isbackup_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_isbackup_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_isbackup_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_isbackup_array_[*]} ]] && _obj_qpkgs_isbackup_array_=()
     }
 QPKGs.IsBackup.Size()
@@ -5260,19 +5260,19 @@ QPKGs.IsBackup.Init
 QPKGs.ErBackup.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_erbackup_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_erbackup_array_+=("$item")
+        [[ " ${_obj_qpkgs_erbackup_array_[*]} " != *"$item"* ]] && _obj_qpkgs_erbackup_array_+=("$item")
     done
     }
 QPKGs.ErBackup.Array()
     {
-    echo -n "${_obj_qpkgs_erbackup_array_[@]:-}"
+    echo -n "${_obj_qpkgs_erbackup_array_[@]}"
     }
 QPKGs.ErBackup.Count()
     {
-    echo "${#_obj_qpkgs_erbackup_array_[@]:-}"
+    echo "${#_obj_qpkgs_erbackup_array_[@]}"
     }
 QPKGs.ErBackup.Exist()
     {
@@ -5286,7 +5286,7 @@ QPKGs.ErBackup.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_erbackup_array_[@]:-} ]] && index=${#_obj_qpkgs_erbackup_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_erbackup_array_[@]} ]] && index=${#_obj_qpkgs_erbackup_array_[@]}
     echo -n "${_obj_qpkgs_erbackup_array_[((index-1))]}"
     }
 QPKGs.ErBackup.Init()
@@ -5297,19 +5297,19 @@ QPKGs.ErBackup.Init()
     }
 QPKGs.ErBackup.IsAny()
     {
-    [[ ${#_obj_qpkgs_erbackup_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_erbackup_array_[@]} -gt 0 ]]
     }
 QPKGs.ErBackup.IsNone()
     {
-    [[ ${#_obj_qpkgs_erbackup_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_erbackup_array_[@]} -eq 0 ]]
     }
 QPKGs.ErBackup.List()
     {
-    echo -n "${_obj_qpkgs_erbackup_array_[*]:-}"
+    echo -n "${_obj_qpkgs_erbackup_array_[*]}"
     }
 QPKGs.ErBackup.ListCSV()
     {
-    echo -n "${_obj_qpkgs_erbackup_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_erbackup_array_[*]}" | tr ' ' ','
     }
 QPKGs.ErBackup.Remove()
     {
@@ -5318,16 +5318,16 @@ QPKGs.ErBackup.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_erbackup_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_erbackup_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_erbackup_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_erbackup_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_erbackup_array_[*]} ]] && _obj_qpkgs_erbackup_array_=()
     }
 QPKGs.ErBackup.Size()
@@ -5343,19 +5343,19 @@ QPKGs.ErBackup.Init
 QPKGs.SkBackup.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_skbackup_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_skbackup_array_+=("$item")
+        [[ " ${_obj_qpkgs_skbackup_array_[*]} " != *"$item"* ]] && _obj_qpkgs_skbackup_array_+=("$item")
     done
     }
 QPKGs.SkBackup.Array()
     {
-    echo -n "${_obj_qpkgs_skbackup_array_[@]:-}"
+    echo -n "${_obj_qpkgs_skbackup_array_[@]}"
     }
 QPKGs.SkBackup.Count()
     {
-    echo "${#_obj_qpkgs_skbackup_array_[@]:-}"
+    echo "${#_obj_qpkgs_skbackup_array_[@]}"
     }
 QPKGs.SkBackup.Exist()
     {
@@ -5369,7 +5369,7 @@ QPKGs.SkBackup.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_skbackup_array_[@]:-} ]] && index=${#_obj_qpkgs_skbackup_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_skbackup_array_[@]} ]] && index=${#_obj_qpkgs_skbackup_array_[@]}
     echo -n "${_obj_qpkgs_skbackup_array_[((index-1))]}"
     }
 QPKGs.SkBackup.Init()
@@ -5380,19 +5380,19 @@ QPKGs.SkBackup.Init()
     }
 QPKGs.SkBackup.IsAny()
     {
-    [[ ${#_obj_qpkgs_skbackup_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_skbackup_array_[@]} -gt 0 ]]
     }
 QPKGs.SkBackup.IsNone()
     {
-    [[ ${#_obj_qpkgs_skbackup_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_skbackup_array_[@]} -eq 0 ]]
     }
 QPKGs.SkBackup.List()
     {
-    echo -n "${_obj_qpkgs_skbackup_array_[*]:-}"
+    echo -n "${_obj_qpkgs_skbackup_array_[*]}"
     }
 QPKGs.SkBackup.ListCSV()
     {
-    echo -n "${_obj_qpkgs_skbackup_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_skbackup_array_[*]}" | tr ' ' ','
     }
 QPKGs.SkBackup.Remove()
     {
@@ -5401,16 +5401,16 @@ QPKGs.SkBackup.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_skbackup_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_skbackup_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_skbackup_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_skbackup_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_skbackup_array_[*]} ]] && _obj_qpkgs_skbackup_array_=()
     }
 QPKGs.SkBackup.Size()
@@ -5426,19 +5426,19 @@ QPKGs.SkBackup.Init
 QPKGs.ToDownload.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_todownload_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_todownload_array_+=("$item")
+        [[ " ${_obj_qpkgs_todownload_array_[*]} " != *"$item"* ]] && _obj_qpkgs_todownload_array_+=("$item")
     done
     }
 QPKGs.ToDownload.Array()
     {
-    echo -n "${_obj_qpkgs_todownload_array_[@]:-}"
+    echo -n "${_obj_qpkgs_todownload_array_[@]}"
     }
 QPKGs.ToDownload.Count()
     {
-    echo "${#_obj_qpkgs_todownload_array_[@]:-}"
+    echo "${#_obj_qpkgs_todownload_array_[@]}"
     }
 QPKGs.ToDownload.Exist()
     {
@@ -5452,7 +5452,7 @@ QPKGs.ToDownload.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_todownload_array_[@]:-} ]] && index=${#_obj_qpkgs_todownload_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_todownload_array_[@]} ]] && index=${#_obj_qpkgs_todownload_array_[@]}
     echo -n "${_obj_qpkgs_todownload_array_[((index-1))]}"
     }
 QPKGs.ToDownload.Init()
@@ -5463,19 +5463,19 @@ QPKGs.ToDownload.Init()
     }
 QPKGs.ToDownload.IsAny()
     {
-    [[ ${#_obj_qpkgs_todownload_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_todownload_array_[@]} -gt 0 ]]
     }
 QPKGs.ToDownload.IsNone()
     {
-    [[ ${#_obj_qpkgs_todownload_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_todownload_array_[@]} -eq 0 ]]
     }
 QPKGs.ToDownload.List()
     {
-    echo -n "${_obj_qpkgs_todownload_array_[*]:-}"
+    echo -n "${_obj_qpkgs_todownload_array_[*]}"
     }
 QPKGs.ToDownload.ListCSV()
     {
-    echo -n "${_obj_qpkgs_todownload_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_todownload_array_[*]}" | tr ' ' ','
     }
 QPKGs.ToDownload.Remove()
     {
@@ -5484,16 +5484,16 @@ QPKGs.ToDownload.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_todownload_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_todownload_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_todownload_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_todownload_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_todownload_array_[*]} ]] && _obj_qpkgs_todownload_array_=()
     }
 QPKGs.ToDownload.Size()
@@ -5509,19 +5509,19 @@ QPKGs.ToDownload.Init
 QPKGs.IsDownload.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_isdownload_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_isdownload_array_+=("$item")
+        [[ " ${_obj_qpkgs_isdownload_array_[*]} " != *"$item"* ]] && _obj_qpkgs_isdownload_array_+=("$item")
     done
     }
 QPKGs.IsDownload.Array()
     {
-    echo -n "${_obj_qpkgs_isdownload_array_[@]:-}"
+    echo -n "${_obj_qpkgs_isdownload_array_[@]}"
     }
 QPKGs.IsDownload.Count()
     {
-    echo "${#_obj_qpkgs_isdownload_array_[@]:-}"
+    echo "${#_obj_qpkgs_isdownload_array_[@]}"
     }
 QPKGs.IsDownload.Exist()
     {
@@ -5535,7 +5535,7 @@ QPKGs.IsDownload.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_isdownload_array_[@]:-} ]] && index=${#_obj_qpkgs_isdownload_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_isdownload_array_[@]} ]] && index=${#_obj_qpkgs_isdownload_array_[@]}
     echo -n "${_obj_qpkgs_isdownload_array_[((index-1))]}"
     }
 QPKGs.IsDownload.Init()
@@ -5546,19 +5546,19 @@ QPKGs.IsDownload.Init()
     }
 QPKGs.IsDownload.IsAny()
     {
-    [[ ${#_obj_qpkgs_isdownload_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_isdownload_array_[@]} -gt 0 ]]
     }
 QPKGs.IsDownload.IsNone()
     {
-    [[ ${#_obj_qpkgs_isdownload_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_isdownload_array_[@]} -eq 0 ]]
     }
 QPKGs.IsDownload.List()
     {
-    echo -n "${_obj_qpkgs_isdownload_array_[*]:-}"
+    echo -n "${_obj_qpkgs_isdownload_array_[*]}"
     }
 QPKGs.IsDownload.ListCSV()
     {
-    echo -n "${_obj_qpkgs_isdownload_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_isdownload_array_[*]}" | tr ' ' ','
     }
 QPKGs.IsDownload.Remove()
     {
@@ -5567,16 +5567,16 @@ QPKGs.IsDownload.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_isdownload_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_isdownload_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_isdownload_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_isdownload_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_isdownload_array_[*]} ]] && _obj_qpkgs_isdownload_array_=()
     }
 QPKGs.IsDownload.Size()
@@ -5592,19 +5592,19 @@ QPKGs.IsDownload.Init
 QPKGs.ErDownload.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_erdownload_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_erdownload_array_+=("$item")
+        [[ " ${_obj_qpkgs_erdownload_array_[*]} " != *"$item"* ]] && _obj_qpkgs_erdownload_array_+=("$item")
     done
     }
 QPKGs.ErDownload.Array()
     {
-    echo -n "${_obj_qpkgs_erdownload_array_[@]:-}"
+    echo -n "${_obj_qpkgs_erdownload_array_[@]}"
     }
 QPKGs.ErDownload.Count()
     {
-    echo "${#_obj_qpkgs_erdownload_array_[@]:-}"
+    echo "${#_obj_qpkgs_erdownload_array_[@]}"
     }
 QPKGs.ErDownload.Exist()
     {
@@ -5618,7 +5618,7 @@ QPKGs.ErDownload.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_erdownload_array_[@]:-} ]] && index=${#_obj_qpkgs_erdownload_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_erdownload_array_[@]} ]] && index=${#_obj_qpkgs_erdownload_array_[@]}
     echo -n "${_obj_qpkgs_erdownload_array_[((index-1))]}"
     }
 QPKGs.ErDownload.Init()
@@ -5629,19 +5629,19 @@ QPKGs.ErDownload.Init()
     }
 QPKGs.ErDownload.IsAny()
     {
-    [[ ${#_obj_qpkgs_erdownload_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_erdownload_array_[@]} -gt 0 ]]
     }
 QPKGs.ErDownload.IsNone()
     {
-    [[ ${#_obj_qpkgs_erdownload_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_erdownload_array_[@]} -eq 0 ]]
     }
 QPKGs.ErDownload.List()
     {
-    echo -n "${_obj_qpkgs_erdownload_array_[*]:-}"
+    echo -n "${_obj_qpkgs_erdownload_array_[*]}"
     }
 QPKGs.ErDownload.ListCSV()
     {
-    echo -n "${_obj_qpkgs_erdownload_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_erdownload_array_[*]}" | tr ' ' ','
     }
 QPKGs.ErDownload.Remove()
     {
@@ -5650,16 +5650,16 @@ QPKGs.ErDownload.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_erdownload_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_erdownload_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_erdownload_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_erdownload_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_erdownload_array_[*]} ]] && _obj_qpkgs_erdownload_array_=()
     }
 QPKGs.ErDownload.Size()
@@ -5675,19 +5675,19 @@ QPKGs.ErDownload.Init
 QPKGs.SkDownload.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_skdownload_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_skdownload_array_+=("$item")
+        [[ " ${_obj_qpkgs_skdownload_array_[*]} " != *"$item"* ]] && _obj_qpkgs_skdownload_array_+=("$item")
     done
     }
 QPKGs.SkDownload.Array()
     {
-    echo -n "${_obj_qpkgs_skdownload_array_[@]:-}"
+    echo -n "${_obj_qpkgs_skdownload_array_[@]}"
     }
 QPKGs.SkDownload.Count()
     {
-    echo "${#_obj_qpkgs_skdownload_array_[@]:-}"
+    echo "${#_obj_qpkgs_skdownload_array_[@]}"
     }
 QPKGs.SkDownload.Exist()
     {
@@ -5701,7 +5701,7 @@ QPKGs.SkDownload.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_skdownload_array_[@]:-} ]] && index=${#_obj_qpkgs_skdownload_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_skdownload_array_[@]} ]] && index=${#_obj_qpkgs_skdownload_array_[@]}
     echo -n "${_obj_qpkgs_skdownload_array_[((index-1))]}"
     }
 QPKGs.SkDownload.Init()
@@ -5712,19 +5712,19 @@ QPKGs.SkDownload.Init()
     }
 QPKGs.SkDownload.IsAny()
     {
-    [[ ${#_obj_qpkgs_skdownload_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_skdownload_array_[@]} -gt 0 ]]
     }
 QPKGs.SkDownload.IsNone()
     {
-    [[ ${#_obj_qpkgs_skdownload_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_skdownload_array_[@]} -eq 0 ]]
     }
 QPKGs.SkDownload.List()
     {
-    echo -n "${_obj_qpkgs_skdownload_array_[*]:-}"
+    echo -n "${_obj_qpkgs_skdownload_array_[*]}"
     }
 QPKGs.SkDownload.ListCSV()
     {
-    echo -n "${_obj_qpkgs_skdownload_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_skdownload_array_[*]}" | tr ' ' ','
     }
 QPKGs.SkDownload.Remove()
     {
@@ -5733,16 +5733,16 @@ QPKGs.SkDownload.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_skdownload_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_skdownload_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_skdownload_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_skdownload_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_skdownload_array_[*]} ]] && _obj_qpkgs_skdownload_array_=()
     }
 QPKGs.SkDownload.Size()
@@ -5758,19 +5758,19 @@ QPKGs.SkDownload.Init
 QPKGs.ToInstall.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_toinstall_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_toinstall_array_+=("$item")
+        [[ " ${_obj_qpkgs_toinstall_array_[*]} " != *"$item"* ]] && _obj_qpkgs_toinstall_array_+=("$item")
     done
     }
 QPKGs.ToInstall.Array()
     {
-    echo -n "${_obj_qpkgs_toinstall_array_[@]:-}"
+    echo -n "${_obj_qpkgs_toinstall_array_[@]}"
     }
 QPKGs.ToInstall.Count()
     {
-    echo "${#_obj_qpkgs_toinstall_array_[@]:-}"
+    echo "${#_obj_qpkgs_toinstall_array_[@]}"
     }
 QPKGs.ToInstall.Exist()
     {
@@ -5784,7 +5784,7 @@ QPKGs.ToInstall.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_toinstall_array_[@]:-} ]] && index=${#_obj_qpkgs_toinstall_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_toinstall_array_[@]} ]] && index=${#_obj_qpkgs_toinstall_array_[@]}
     echo -n "${_obj_qpkgs_toinstall_array_[((index-1))]}"
     }
 QPKGs.ToInstall.Init()
@@ -5795,19 +5795,19 @@ QPKGs.ToInstall.Init()
     }
 QPKGs.ToInstall.IsAny()
     {
-    [[ ${#_obj_qpkgs_toinstall_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_toinstall_array_[@]} -gt 0 ]]
     }
 QPKGs.ToInstall.IsNone()
     {
-    [[ ${#_obj_qpkgs_toinstall_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_toinstall_array_[@]} -eq 0 ]]
     }
 QPKGs.ToInstall.List()
     {
-    echo -n "${_obj_qpkgs_toinstall_array_[*]:-}"
+    echo -n "${_obj_qpkgs_toinstall_array_[*]}"
     }
 QPKGs.ToInstall.ListCSV()
     {
-    echo -n "${_obj_qpkgs_toinstall_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_toinstall_array_[*]}" | tr ' ' ','
     }
 QPKGs.ToInstall.Remove()
     {
@@ -5816,16 +5816,16 @@ QPKGs.ToInstall.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_toinstall_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_toinstall_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_toinstall_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_toinstall_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_toinstall_array_[*]} ]] && _obj_qpkgs_toinstall_array_=()
     }
 QPKGs.ToInstall.Size()
@@ -5841,19 +5841,19 @@ QPKGs.ToInstall.Init
 QPKGs.IsInstall.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_isinstall_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_isinstall_array_+=("$item")
+        [[ " ${_obj_qpkgs_isinstall_array_[*]} " != *"$item"* ]] && _obj_qpkgs_isinstall_array_+=("$item")
     done
     }
 QPKGs.IsInstall.Array()
     {
-    echo -n "${_obj_qpkgs_isinstall_array_[@]:-}"
+    echo -n "${_obj_qpkgs_isinstall_array_[@]}"
     }
 QPKGs.IsInstall.Count()
     {
-    echo "${#_obj_qpkgs_isinstall_array_[@]:-}"
+    echo "${#_obj_qpkgs_isinstall_array_[@]}"
     }
 QPKGs.IsInstall.Exist()
     {
@@ -5867,7 +5867,7 @@ QPKGs.IsInstall.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_isinstall_array_[@]:-} ]] && index=${#_obj_qpkgs_isinstall_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_isinstall_array_[@]} ]] && index=${#_obj_qpkgs_isinstall_array_[@]}
     echo -n "${_obj_qpkgs_isinstall_array_[((index-1))]}"
     }
 QPKGs.IsInstall.Init()
@@ -5878,19 +5878,19 @@ QPKGs.IsInstall.Init()
     }
 QPKGs.IsInstall.IsAny()
     {
-    [[ ${#_obj_qpkgs_isinstall_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_isinstall_array_[@]} -gt 0 ]]
     }
 QPKGs.IsInstall.IsNone()
     {
-    [[ ${#_obj_qpkgs_isinstall_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_isinstall_array_[@]} -eq 0 ]]
     }
 QPKGs.IsInstall.List()
     {
-    echo -n "${_obj_qpkgs_isinstall_array_[*]:-}"
+    echo -n "${_obj_qpkgs_isinstall_array_[*]}"
     }
 QPKGs.IsInstall.ListCSV()
     {
-    echo -n "${_obj_qpkgs_isinstall_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_isinstall_array_[*]}" | tr ' ' ','
     }
 QPKGs.IsInstall.Remove()
     {
@@ -5899,16 +5899,16 @@ QPKGs.IsInstall.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_isinstall_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_isinstall_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_isinstall_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_isinstall_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_isinstall_array_[*]} ]] && _obj_qpkgs_isinstall_array_=()
     }
 QPKGs.IsInstall.Size()
@@ -5924,19 +5924,19 @@ QPKGs.IsInstall.Init
 QPKGs.ErInstall.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_erinstall_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_erinstall_array_+=("$item")
+        [[ " ${_obj_qpkgs_erinstall_array_[*]} " != *"$item"* ]] && _obj_qpkgs_erinstall_array_+=("$item")
     done
     }
 QPKGs.ErInstall.Array()
     {
-    echo -n "${_obj_qpkgs_erinstall_array_[@]:-}"
+    echo -n "${_obj_qpkgs_erinstall_array_[@]}"
     }
 QPKGs.ErInstall.Count()
     {
-    echo "${#_obj_qpkgs_erinstall_array_[@]:-}"
+    echo "${#_obj_qpkgs_erinstall_array_[@]}"
     }
 QPKGs.ErInstall.Exist()
     {
@@ -5950,7 +5950,7 @@ QPKGs.ErInstall.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_erinstall_array_[@]:-} ]] && index=${#_obj_qpkgs_erinstall_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_erinstall_array_[@]} ]] && index=${#_obj_qpkgs_erinstall_array_[@]}
     echo -n "${_obj_qpkgs_erinstall_array_[((index-1))]}"
     }
 QPKGs.ErInstall.Init()
@@ -5961,19 +5961,19 @@ QPKGs.ErInstall.Init()
     }
 QPKGs.ErInstall.IsAny()
     {
-    [[ ${#_obj_qpkgs_erinstall_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_erinstall_array_[@]} -gt 0 ]]
     }
 QPKGs.ErInstall.IsNone()
     {
-    [[ ${#_obj_qpkgs_erinstall_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_erinstall_array_[@]} -eq 0 ]]
     }
 QPKGs.ErInstall.List()
     {
-    echo -n "${_obj_qpkgs_erinstall_array_[*]:-}"
+    echo -n "${_obj_qpkgs_erinstall_array_[*]}"
     }
 QPKGs.ErInstall.ListCSV()
     {
-    echo -n "${_obj_qpkgs_erinstall_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_erinstall_array_[*]}" | tr ' ' ','
     }
 QPKGs.ErInstall.Remove()
     {
@@ -5982,16 +5982,16 @@ QPKGs.ErInstall.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_erinstall_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_erinstall_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_erinstall_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_erinstall_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_erinstall_array_[*]} ]] && _obj_qpkgs_erinstall_array_=()
     }
 QPKGs.ErInstall.Size()
@@ -6007,19 +6007,19 @@ QPKGs.ErInstall.Init
 QPKGs.SkInstall.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_skinstall_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_skinstall_array_+=("$item")
+        [[ " ${_obj_qpkgs_skinstall_array_[*]} " != *"$item"* ]] && _obj_qpkgs_skinstall_array_+=("$item")
     done
     }
 QPKGs.SkInstall.Array()
     {
-    echo -n "${_obj_qpkgs_skinstall_array_[@]:-}"
+    echo -n "${_obj_qpkgs_skinstall_array_[@]}"
     }
 QPKGs.SkInstall.Count()
     {
-    echo "${#_obj_qpkgs_skinstall_array_[@]:-}"
+    echo "${#_obj_qpkgs_skinstall_array_[@]}"
     }
 QPKGs.SkInstall.Exist()
     {
@@ -6033,7 +6033,7 @@ QPKGs.SkInstall.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_skinstall_array_[@]:-} ]] && index=${#_obj_qpkgs_skinstall_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_skinstall_array_[@]} ]] && index=${#_obj_qpkgs_skinstall_array_[@]}
     echo -n "${_obj_qpkgs_skinstall_array_[((index-1))]}"
     }
 QPKGs.SkInstall.Init()
@@ -6044,19 +6044,19 @@ QPKGs.SkInstall.Init()
     }
 QPKGs.SkInstall.IsAny()
     {
-    [[ ${#_obj_qpkgs_skinstall_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_skinstall_array_[@]} -gt 0 ]]
     }
 QPKGs.SkInstall.IsNone()
     {
-    [[ ${#_obj_qpkgs_skinstall_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_skinstall_array_[@]} -eq 0 ]]
     }
 QPKGs.SkInstall.List()
     {
-    echo -n "${_obj_qpkgs_skinstall_array_[*]:-}"
+    echo -n "${_obj_qpkgs_skinstall_array_[*]}"
     }
 QPKGs.SkInstall.ListCSV()
     {
-    echo -n "${_obj_qpkgs_skinstall_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_skinstall_array_[*]}" | tr ' ' ','
     }
 QPKGs.SkInstall.Remove()
     {
@@ -6065,16 +6065,16 @@ QPKGs.SkInstall.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_skinstall_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_skinstall_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_skinstall_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_skinstall_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_skinstall_array_[*]} ]] && _obj_qpkgs_skinstall_array_=()
     }
 QPKGs.SkInstall.Size()
@@ -6090,19 +6090,19 @@ QPKGs.SkInstall.Init
 QPKGs.ToRebuild.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_torebuild_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_torebuild_array_+=("$item")
+        [[ " ${_obj_qpkgs_torebuild_array_[*]} " != *"$item"* ]] && _obj_qpkgs_torebuild_array_+=("$item")
     done
     }
 QPKGs.ToRebuild.Array()
     {
-    echo -n "${_obj_qpkgs_torebuild_array_[@]:-}"
+    echo -n "${_obj_qpkgs_torebuild_array_[@]}"
     }
 QPKGs.ToRebuild.Count()
     {
-    echo "${#_obj_qpkgs_torebuild_array_[@]:-}"
+    echo "${#_obj_qpkgs_torebuild_array_[@]}"
     }
 QPKGs.ToRebuild.Exist()
     {
@@ -6116,7 +6116,7 @@ QPKGs.ToRebuild.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_torebuild_array_[@]:-} ]] && index=${#_obj_qpkgs_torebuild_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_torebuild_array_[@]} ]] && index=${#_obj_qpkgs_torebuild_array_[@]}
     echo -n "${_obj_qpkgs_torebuild_array_[((index-1))]}"
     }
 QPKGs.ToRebuild.Init()
@@ -6127,19 +6127,19 @@ QPKGs.ToRebuild.Init()
     }
 QPKGs.ToRebuild.IsAny()
     {
-    [[ ${#_obj_qpkgs_torebuild_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_torebuild_array_[@]} -gt 0 ]]
     }
 QPKGs.ToRebuild.IsNone()
     {
-    [[ ${#_obj_qpkgs_torebuild_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_torebuild_array_[@]} -eq 0 ]]
     }
 QPKGs.ToRebuild.List()
     {
-    echo -n "${_obj_qpkgs_torebuild_array_[*]:-}"
+    echo -n "${_obj_qpkgs_torebuild_array_[*]}"
     }
 QPKGs.ToRebuild.ListCSV()
     {
-    echo -n "${_obj_qpkgs_torebuild_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_torebuild_array_[*]}" | tr ' ' ','
     }
 QPKGs.ToRebuild.Remove()
     {
@@ -6148,16 +6148,16 @@ QPKGs.ToRebuild.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_torebuild_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_torebuild_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_torebuild_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_torebuild_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_torebuild_array_[*]} ]] && _obj_qpkgs_torebuild_array_=()
     }
 QPKGs.ToRebuild.Size()
@@ -6173,19 +6173,19 @@ QPKGs.ToRebuild.Init
 QPKGs.IsRebuild.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_isrebuild_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_isrebuild_array_+=("$item")
+        [[ " ${_obj_qpkgs_isrebuild_array_[*]} " != *"$item"* ]] && _obj_qpkgs_isrebuild_array_+=("$item")
     done
     }
 QPKGs.IsRebuild.Array()
     {
-    echo -n "${_obj_qpkgs_isrebuild_array_[@]:-}"
+    echo -n "${_obj_qpkgs_isrebuild_array_[@]}"
     }
 QPKGs.IsRebuild.Count()
     {
-    echo "${#_obj_qpkgs_isrebuild_array_[@]:-}"
+    echo "${#_obj_qpkgs_isrebuild_array_[@]}"
     }
 QPKGs.IsRebuild.Exist()
     {
@@ -6199,7 +6199,7 @@ QPKGs.IsRebuild.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_isrebuild_array_[@]:-} ]] && index=${#_obj_qpkgs_isrebuild_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_isrebuild_array_[@]} ]] && index=${#_obj_qpkgs_isrebuild_array_[@]}
     echo -n "${_obj_qpkgs_isrebuild_array_[((index-1))]}"
     }
 QPKGs.IsRebuild.Init()
@@ -6210,19 +6210,19 @@ QPKGs.IsRebuild.Init()
     }
 QPKGs.IsRebuild.IsAny()
     {
-    [[ ${#_obj_qpkgs_isrebuild_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_isrebuild_array_[@]} -gt 0 ]]
     }
 QPKGs.IsRebuild.IsNone()
     {
-    [[ ${#_obj_qpkgs_isrebuild_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_isrebuild_array_[@]} -eq 0 ]]
     }
 QPKGs.IsRebuild.List()
     {
-    echo -n "${_obj_qpkgs_isrebuild_array_[*]:-}"
+    echo -n "${_obj_qpkgs_isrebuild_array_[*]}"
     }
 QPKGs.IsRebuild.ListCSV()
     {
-    echo -n "${_obj_qpkgs_isrebuild_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_isrebuild_array_[*]}" | tr ' ' ','
     }
 QPKGs.IsRebuild.Remove()
     {
@@ -6231,16 +6231,16 @@ QPKGs.IsRebuild.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_isrebuild_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_isrebuild_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_isrebuild_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_isrebuild_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_isrebuild_array_[*]} ]] && _obj_qpkgs_isrebuild_array_=()
     }
 QPKGs.IsRebuild.Size()
@@ -6256,19 +6256,19 @@ QPKGs.IsRebuild.Init
 QPKGs.ErRebuild.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_errebuild_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_errebuild_array_+=("$item")
+        [[ " ${_obj_qpkgs_errebuild_array_[*]} " != *"$item"* ]] && _obj_qpkgs_errebuild_array_+=("$item")
     done
     }
 QPKGs.ErRebuild.Array()
     {
-    echo -n "${_obj_qpkgs_errebuild_array_[@]:-}"
+    echo -n "${_obj_qpkgs_errebuild_array_[@]}"
     }
 QPKGs.ErRebuild.Count()
     {
-    echo "${#_obj_qpkgs_errebuild_array_[@]:-}"
+    echo "${#_obj_qpkgs_errebuild_array_[@]}"
     }
 QPKGs.ErRebuild.Exist()
     {
@@ -6282,7 +6282,7 @@ QPKGs.ErRebuild.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_errebuild_array_[@]:-} ]] && index=${#_obj_qpkgs_errebuild_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_errebuild_array_[@]} ]] && index=${#_obj_qpkgs_errebuild_array_[@]}
     echo -n "${_obj_qpkgs_errebuild_array_[((index-1))]}"
     }
 QPKGs.ErRebuild.Init()
@@ -6293,19 +6293,19 @@ QPKGs.ErRebuild.Init()
     }
 QPKGs.ErRebuild.IsAny()
     {
-    [[ ${#_obj_qpkgs_errebuild_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_errebuild_array_[@]} -gt 0 ]]
     }
 QPKGs.ErRebuild.IsNone()
     {
-    [[ ${#_obj_qpkgs_errebuild_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_errebuild_array_[@]} -eq 0 ]]
     }
 QPKGs.ErRebuild.List()
     {
-    echo -n "${_obj_qpkgs_errebuild_array_[*]:-}"
+    echo -n "${_obj_qpkgs_errebuild_array_[*]}"
     }
 QPKGs.ErRebuild.ListCSV()
     {
-    echo -n "${_obj_qpkgs_errebuild_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_errebuild_array_[*]}" | tr ' ' ','
     }
 QPKGs.ErRebuild.Remove()
     {
@@ -6314,16 +6314,16 @@ QPKGs.ErRebuild.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_errebuild_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_errebuild_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_errebuild_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_errebuild_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_errebuild_array_[*]} ]] && _obj_qpkgs_errebuild_array_=()
     }
 QPKGs.ErRebuild.Size()
@@ -6339,19 +6339,19 @@ QPKGs.ErRebuild.Init
 QPKGs.SkRebuild.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_skrebuild_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_skrebuild_array_+=("$item")
+        [[ " ${_obj_qpkgs_skrebuild_array_[*]} " != *"$item"* ]] && _obj_qpkgs_skrebuild_array_+=("$item")
     done
     }
 QPKGs.SkRebuild.Array()
     {
-    echo -n "${_obj_qpkgs_skrebuild_array_[@]:-}"
+    echo -n "${_obj_qpkgs_skrebuild_array_[@]}"
     }
 QPKGs.SkRebuild.Count()
     {
-    echo "${#_obj_qpkgs_skrebuild_array_[@]:-}"
+    echo "${#_obj_qpkgs_skrebuild_array_[@]}"
     }
 QPKGs.SkRebuild.Exist()
     {
@@ -6365,7 +6365,7 @@ QPKGs.SkRebuild.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_skrebuild_array_[@]:-} ]] && index=${#_obj_qpkgs_skrebuild_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_skrebuild_array_[@]} ]] && index=${#_obj_qpkgs_skrebuild_array_[@]}
     echo -n "${_obj_qpkgs_skrebuild_array_[((index-1))]}"
     }
 QPKGs.SkRebuild.Init()
@@ -6376,19 +6376,19 @@ QPKGs.SkRebuild.Init()
     }
 QPKGs.SkRebuild.IsAny()
     {
-    [[ ${#_obj_qpkgs_skrebuild_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_skrebuild_array_[@]} -gt 0 ]]
     }
 QPKGs.SkRebuild.IsNone()
     {
-    [[ ${#_obj_qpkgs_skrebuild_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_skrebuild_array_[@]} -eq 0 ]]
     }
 QPKGs.SkRebuild.List()
     {
-    echo -n "${_obj_qpkgs_skrebuild_array_[*]:-}"
+    echo -n "${_obj_qpkgs_skrebuild_array_[*]}"
     }
 QPKGs.SkRebuild.ListCSV()
     {
-    echo -n "${_obj_qpkgs_skrebuild_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_skrebuild_array_[*]}" | tr ' ' ','
     }
 QPKGs.SkRebuild.Remove()
     {
@@ -6397,16 +6397,16 @@ QPKGs.SkRebuild.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_skrebuild_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_skrebuild_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_skrebuild_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_skrebuild_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_skrebuild_array_[*]} ]] && _obj_qpkgs_skrebuild_array_=()
     }
 QPKGs.SkRebuild.Size()
@@ -6422,19 +6422,19 @@ QPKGs.SkRebuild.Init
 QPKGs.ToReinstall.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_toreinstall_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_toreinstall_array_+=("$item")
+        [[ " ${_obj_qpkgs_toreinstall_array_[*]} " != *"$item"* ]] && _obj_qpkgs_toreinstall_array_+=("$item")
     done
     }
 QPKGs.ToReinstall.Array()
     {
-    echo -n "${_obj_qpkgs_toreinstall_array_[@]:-}"
+    echo -n "${_obj_qpkgs_toreinstall_array_[@]}"
     }
 QPKGs.ToReinstall.Count()
     {
-    echo "${#_obj_qpkgs_toreinstall_array_[@]:-}"
+    echo "${#_obj_qpkgs_toreinstall_array_[@]}"
     }
 QPKGs.ToReinstall.Exist()
     {
@@ -6448,7 +6448,7 @@ QPKGs.ToReinstall.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_toreinstall_array_[@]:-} ]] && index=${#_obj_qpkgs_toreinstall_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_toreinstall_array_[@]} ]] && index=${#_obj_qpkgs_toreinstall_array_[@]}
     echo -n "${_obj_qpkgs_toreinstall_array_[((index-1))]}"
     }
 QPKGs.ToReinstall.Init()
@@ -6459,19 +6459,19 @@ QPKGs.ToReinstall.Init()
     }
 QPKGs.ToReinstall.IsAny()
     {
-    [[ ${#_obj_qpkgs_toreinstall_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_toreinstall_array_[@]} -gt 0 ]]
     }
 QPKGs.ToReinstall.IsNone()
     {
-    [[ ${#_obj_qpkgs_toreinstall_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_toreinstall_array_[@]} -eq 0 ]]
     }
 QPKGs.ToReinstall.List()
     {
-    echo -n "${_obj_qpkgs_toreinstall_array_[*]:-}"
+    echo -n "${_obj_qpkgs_toreinstall_array_[*]}"
     }
 QPKGs.ToReinstall.ListCSV()
     {
-    echo -n "${_obj_qpkgs_toreinstall_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_toreinstall_array_[*]}" | tr ' ' ','
     }
 QPKGs.ToReinstall.Remove()
     {
@@ -6480,16 +6480,16 @@ QPKGs.ToReinstall.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_toreinstall_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_toreinstall_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_toreinstall_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_toreinstall_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_toreinstall_array_[*]} ]] && _obj_qpkgs_toreinstall_array_=()
     }
 QPKGs.ToReinstall.Size()
@@ -6505,19 +6505,19 @@ QPKGs.ToReinstall.Init
 QPKGs.IsReinstall.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_isreinstall_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_isreinstall_array_+=("$item")
+        [[ " ${_obj_qpkgs_isreinstall_array_[*]} " != *"$item"* ]] && _obj_qpkgs_isreinstall_array_+=("$item")
     done
     }
 QPKGs.IsReinstall.Array()
     {
-    echo -n "${_obj_qpkgs_isreinstall_array_[@]:-}"
+    echo -n "${_obj_qpkgs_isreinstall_array_[@]}"
     }
 QPKGs.IsReinstall.Count()
     {
-    echo "${#_obj_qpkgs_isreinstall_array_[@]:-}"
+    echo "${#_obj_qpkgs_isreinstall_array_[@]}"
     }
 QPKGs.IsReinstall.Exist()
     {
@@ -6531,7 +6531,7 @@ QPKGs.IsReinstall.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_isreinstall_array_[@]:-} ]] && index=${#_obj_qpkgs_isreinstall_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_isreinstall_array_[@]} ]] && index=${#_obj_qpkgs_isreinstall_array_[@]}
     echo -n "${_obj_qpkgs_isreinstall_array_[((index-1))]}"
     }
 QPKGs.IsReinstall.Init()
@@ -6542,19 +6542,19 @@ QPKGs.IsReinstall.Init()
     }
 QPKGs.IsReinstall.IsAny()
     {
-    [[ ${#_obj_qpkgs_isreinstall_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_isreinstall_array_[@]} -gt 0 ]]
     }
 QPKGs.IsReinstall.IsNone()
     {
-    [[ ${#_obj_qpkgs_isreinstall_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_isreinstall_array_[@]} -eq 0 ]]
     }
 QPKGs.IsReinstall.List()
     {
-    echo -n "${_obj_qpkgs_isreinstall_array_[*]:-}"
+    echo -n "${_obj_qpkgs_isreinstall_array_[*]}"
     }
 QPKGs.IsReinstall.ListCSV()
     {
-    echo -n "${_obj_qpkgs_isreinstall_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_isreinstall_array_[*]}" | tr ' ' ','
     }
 QPKGs.IsReinstall.Remove()
     {
@@ -6563,16 +6563,16 @@ QPKGs.IsReinstall.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_isreinstall_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_isreinstall_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_isreinstall_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_isreinstall_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_isreinstall_array_[*]} ]] && _obj_qpkgs_isreinstall_array_=()
     }
 QPKGs.IsReinstall.Size()
@@ -6588,19 +6588,19 @@ QPKGs.IsReinstall.Init
 QPKGs.ErReinstall.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_erreinstall_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_erreinstall_array_+=("$item")
+        [[ " ${_obj_qpkgs_erreinstall_array_[*]} " != *"$item"* ]] && _obj_qpkgs_erreinstall_array_+=("$item")
     done
     }
 QPKGs.ErReinstall.Array()
     {
-    echo -n "${_obj_qpkgs_erreinstall_array_[@]:-}"
+    echo -n "${_obj_qpkgs_erreinstall_array_[@]}"
     }
 QPKGs.ErReinstall.Count()
     {
-    echo "${#_obj_qpkgs_erreinstall_array_[@]:-}"
+    echo "${#_obj_qpkgs_erreinstall_array_[@]}"
     }
 QPKGs.ErReinstall.Exist()
     {
@@ -6614,7 +6614,7 @@ QPKGs.ErReinstall.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_erreinstall_array_[@]:-} ]] && index=${#_obj_qpkgs_erreinstall_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_erreinstall_array_[@]} ]] && index=${#_obj_qpkgs_erreinstall_array_[@]}
     echo -n "${_obj_qpkgs_erreinstall_array_[((index-1))]}"
     }
 QPKGs.ErReinstall.Init()
@@ -6625,19 +6625,19 @@ QPKGs.ErReinstall.Init()
     }
 QPKGs.ErReinstall.IsAny()
     {
-    [[ ${#_obj_qpkgs_erreinstall_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_erreinstall_array_[@]} -gt 0 ]]
     }
 QPKGs.ErReinstall.IsNone()
     {
-    [[ ${#_obj_qpkgs_erreinstall_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_erreinstall_array_[@]} -eq 0 ]]
     }
 QPKGs.ErReinstall.List()
     {
-    echo -n "${_obj_qpkgs_erreinstall_array_[*]:-}"
+    echo -n "${_obj_qpkgs_erreinstall_array_[*]}"
     }
 QPKGs.ErReinstall.ListCSV()
     {
-    echo -n "${_obj_qpkgs_erreinstall_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_erreinstall_array_[*]}" | tr ' ' ','
     }
 QPKGs.ErReinstall.Remove()
     {
@@ -6646,16 +6646,16 @@ QPKGs.ErReinstall.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_erreinstall_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_erreinstall_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_erreinstall_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_erreinstall_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_erreinstall_array_[*]} ]] && _obj_qpkgs_erreinstall_array_=()
     }
 QPKGs.ErReinstall.Size()
@@ -6671,19 +6671,19 @@ QPKGs.ErReinstall.Init
 QPKGs.SkReinstall.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_skreinstall_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_skreinstall_array_+=("$item")
+        [[ " ${_obj_qpkgs_skreinstall_array_[*]} " != *"$item"* ]] && _obj_qpkgs_skreinstall_array_+=("$item")
     done
     }
 QPKGs.SkReinstall.Array()
     {
-    echo -n "${_obj_qpkgs_skreinstall_array_[@]:-}"
+    echo -n "${_obj_qpkgs_skreinstall_array_[@]}"
     }
 QPKGs.SkReinstall.Count()
     {
-    echo "${#_obj_qpkgs_skreinstall_array_[@]:-}"
+    echo "${#_obj_qpkgs_skreinstall_array_[@]}"
     }
 QPKGs.SkReinstall.Exist()
     {
@@ -6697,7 +6697,7 @@ QPKGs.SkReinstall.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_skreinstall_array_[@]:-} ]] && index=${#_obj_qpkgs_skreinstall_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_skreinstall_array_[@]} ]] && index=${#_obj_qpkgs_skreinstall_array_[@]}
     echo -n "${_obj_qpkgs_skreinstall_array_[((index-1))]}"
     }
 QPKGs.SkReinstall.Init()
@@ -6708,19 +6708,19 @@ QPKGs.SkReinstall.Init()
     }
 QPKGs.SkReinstall.IsAny()
     {
-    [[ ${#_obj_qpkgs_skreinstall_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_skreinstall_array_[@]} -gt 0 ]]
     }
 QPKGs.SkReinstall.IsNone()
     {
-    [[ ${#_obj_qpkgs_skreinstall_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_skreinstall_array_[@]} -eq 0 ]]
     }
 QPKGs.SkReinstall.List()
     {
-    echo -n "${_obj_qpkgs_skreinstall_array_[*]:-}"
+    echo -n "${_obj_qpkgs_skreinstall_array_[*]}"
     }
 QPKGs.SkReinstall.ListCSV()
     {
-    echo -n "${_obj_qpkgs_skreinstall_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_skreinstall_array_[*]}" | tr ' ' ','
     }
 QPKGs.SkReinstall.Remove()
     {
@@ -6729,16 +6729,16 @@ QPKGs.SkReinstall.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_skreinstall_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_skreinstall_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_skreinstall_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_skreinstall_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_skreinstall_array_[*]} ]] && _obj_qpkgs_skreinstall_array_=()
     }
 QPKGs.SkReinstall.Size()
@@ -6754,19 +6754,19 @@ QPKGs.SkReinstall.Init
 QPKGs.ToRestart.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_torestart_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_torestart_array_+=("$item")
+        [[ " ${_obj_qpkgs_torestart_array_[*]} " != *"$item"* ]] && _obj_qpkgs_torestart_array_+=("$item")
     done
     }
 QPKGs.ToRestart.Array()
     {
-    echo -n "${_obj_qpkgs_torestart_array_[@]:-}"
+    echo -n "${_obj_qpkgs_torestart_array_[@]}"
     }
 QPKGs.ToRestart.Count()
     {
-    echo "${#_obj_qpkgs_torestart_array_[@]:-}"
+    echo "${#_obj_qpkgs_torestart_array_[@]}"
     }
 QPKGs.ToRestart.Exist()
     {
@@ -6780,7 +6780,7 @@ QPKGs.ToRestart.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_torestart_array_[@]:-} ]] && index=${#_obj_qpkgs_torestart_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_torestart_array_[@]} ]] && index=${#_obj_qpkgs_torestart_array_[@]}
     echo -n "${_obj_qpkgs_torestart_array_[((index-1))]}"
     }
 QPKGs.ToRestart.Init()
@@ -6791,19 +6791,19 @@ QPKGs.ToRestart.Init()
     }
 QPKGs.ToRestart.IsAny()
     {
-    [[ ${#_obj_qpkgs_torestart_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_torestart_array_[@]} -gt 0 ]]
     }
 QPKGs.ToRestart.IsNone()
     {
-    [[ ${#_obj_qpkgs_torestart_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_torestart_array_[@]} -eq 0 ]]
     }
 QPKGs.ToRestart.List()
     {
-    echo -n "${_obj_qpkgs_torestart_array_[*]:-}"
+    echo -n "${_obj_qpkgs_torestart_array_[*]}"
     }
 QPKGs.ToRestart.ListCSV()
     {
-    echo -n "${_obj_qpkgs_torestart_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_torestart_array_[*]}" | tr ' ' ','
     }
 QPKGs.ToRestart.Remove()
     {
@@ -6812,16 +6812,16 @@ QPKGs.ToRestart.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_torestart_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_torestart_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_torestart_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_torestart_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_torestart_array_[*]} ]] && _obj_qpkgs_torestart_array_=()
     }
 QPKGs.ToRestart.Size()
@@ -6837,19 +6837,19 @@ QPKGs.ToRestart.Init
 QPKGs.IsRestart.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_isrestart_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_isrestart_array_+=("$item")
+        [[ " ${_obj_qpkgs_isrestart_array_[*]} " != *"$item"* ]] && _obj_qpkgs_isrestart_array_+=("$item")
     done
     }
 QPKGs.IsRestart.Array()
     {
-    echo -n "${_obj_qpkgs_isrestart_array_[@]:-}"
+    echo -n "${_obj_qpkgs_isrestart_array_[@]}"
     }
 QPKGs.IsRestart.Count()
     {
-    echo "${#_obj_qpkgs_isrestart_array_[@]:-}"
+    echo "${#_obj_qpkgs_isrestart_array_[@]}"
     }
 QPKGs.IsRestart.Exist()
     {
@@ -6863,7 +6863,7 @@ QPKGs.IsRestart.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_isrestart_array_[@]:-} ]] && index=${#_obj_qpkgs_isrestart_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_isrestart_array_[@]} ]] && index=${#_obj_qpkgs_isrestart_array_[@]}
     echo -n "${_obj_qpkgs_isrestart_array_[((index-1))]}"
     }
 QPKGs.IsRestart.Init()
@@ -6874,19 +6874,19 @@ QPKGs.IsRestart.Init()
     }
 QPKGs.IsRestart.IsAny()
     {
-    [[ ${#_obj_qpkgs_isrestart_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_isrestart_array_[@]} -gt 0 ]]
     }
 QPKGs.IsRestart.IsNone()
     {
-    [[ ${#_obj_qpkgs_isrestart_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_isrestart_array_[@]} -eq 0 ]]
     }
 QPKGs.IsRestart.List()
     {
-    echo -n "${_obj_qpkgs_isrestart_array_[*]:-}"
+    echo -n "${_obj_qpkgs_isrestart_array_[*]}"
     }
 QPKGs.IsRestart.ListCSV()
     {
-    echo -n "${_obj_qpkgs_isrestart_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_isrestart_array_[*]}" | tr ' ' ','
     }
 QPKGs.IsRestart.Remove()
     {
@@ -6895,16 +6895,16 @@ QPKGs.IsRestart.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_isrestart_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_isrestart_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_isrestart_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_isrestart_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_isrestart_array_[*]} ]] && _obj_qpkgs_isrestart_array_=()
     }
 QPKGs.IsRestart.Size()
@@ -6920,19 +6920,19 @@ QPKGs.IsRestart.Init
 QPKGs.ErRestart.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_errestart_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_errestart_array_+=("$item")
+        [[ " ${_obj_qpkgs_errestart_array_[*]} " != *"$item"* ]] && _obj_qpkgs_errestart_array_+=("$item")
     done
     }
 QPKGs.ErRestart.Array()
     {
-    echo -n "${_obj_qpkgs_errestart_array_[@]:-}"
+    echo -n "${_obj_qpkgs_errestart_array_[@]}"
     }
 QPKGs.ErRestart.Count()
     {
-    echo "${#_obj_qpkgs_errestart_array_[@]:-}"
+    echo "${#_obj_qpkgs_errestart_array_[@]}"
     }
 QPKGs.ErRestart.Exist()
     {
@@ -6946,7 +6946,7 @@ QPKGs.ErRestart.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_errestart_array_[@]:-} ]] && index=${#_obj_qpkgs_errestart_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_errestart_array_[@]} ]] && index=${#_obj_qpkgs_errestart_array_[@]}
     echo -n "${_obj_qpkgs_errestart_array_[((index-1))]}"
     }
 QPKGs.ErRestart.Init()
@@ -6957,19 +6957,19 @@ QPKGs.ErRestart.Init()
     }
 QPKGs.ErRestart.IsAny()
     {
-    [[ ${#_obj_qpkgs_errestart_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_errestart_array_[@]} -gt 0 ]]
     }
 QPKGs.ErRestart.IsNone()
     {
-    [[ ${#_obj_qpkgs_errestart_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_errestart_array_[@]} -eq 0 ]]
     }
 QPKGs.ErRestart.List()
     {
-    echo -n "${_obj_qpkgs_errestart_array_[*]:-}"
+    echo -n "${_obj_qpkgs_errestart_array_[*]}"
     }
 QPKGs.ErRestart.ListCSV()
     {
-    echo -n "${_obj_qpkgs_errestart_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_errestart_array_[*]}" | tr ' ' ','
     }
 QPKGs.ErRestart.Remove()
     {
@@ -6978,16 +6978,16 @@ QPKGs.ErRestart.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_errestart_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_errestart_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_errestart_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_errestart_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_errestart_array_[*]} ]] && _obj_qpkgs_errestart_array_=()
     }
 QPKGs.ErRestart.Size()
@@ -7003,19 +7003,19 @@ QPKGs.ErRestart.Init
 QPKGs.SkRestart.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_skrestart_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_skrestart_array_+=("$item")
+        [[ " ${_obj_qpkgs_skrestart_array_[*]} " != *"$item"* ]] && _obj_qpkgs_skrestart_array_+=("$item")
     done
     }
 QPKGs.SkRestart.Array()
     {
-    echo -n "${_obj_qpkgs_skrestart_array_[@]:-}"
+    echo -n "${_obj_qpkgs_skrestart_array_[@]}"
     }
 QPKGs.SkRestart.Count()
     {
-    echo "${#_obj_qpkgs_skrestart_array_[@]:-}"
+    echo "${#_obj_qpkgs_skrestart_array_[@]}"
     }
 QPKGs.SkRestart.Exist()
     {
@@ -7029,7 +7029,7 @@ QPKGs.SkRestart.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_skrestart_array_[@]:-} ]] && index=${#_obj_qpkgs_skrestart_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_skrestart_array_[@]} ]] && index=${#_obj_qpkgs_skrestart_array_[@]}
     echo -n "${_obj_qpkgs_skrestart_array_[((index-1))]}"
     }
 QPKGs.SkRestart.Init()
@@ -7040,19 +7040,19 @@ QPKGs.SkRestart.Init()
     }
 QPKGs.SkRestart.IsAny()
     {
-    [[ ${#_obj_qpkgs_skrestart_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_skrestart_array_[@]} -gt 0 ]]
     }
 QPKGs.SkRestart.IsNone()
     {
-    [[ ${#_obj_qpkgs_skrestart_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_skrestart_array_[@]} -eq 0 ]]
     }
 QPKGs.SkRestart.List()
     {
-    echo -n "${_obj_qpkgs_skrestart_array_[*]:-}"
+    echo -n "${_obj_qpkgs_skrestart_array_[*]}"
     }
 QPKGs.SkRestart.ListCSV()
     {
-    echo -n "${_obj_qpkgs_skrestart_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_skrestart_array_[*]}" | tr ' ' ','
     }
 QPKGs.SkRestart.Remove()
     {
@@ -7061,16 +7061,16 @@ QPKGs.SkRestart.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_skrestart_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_skrestart_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_skrestart_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_skrestart_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_skrestart_array_[*]} ]] && _obj_qpkgs_skrestart_array_=()
     }
 QPKGs.SkRestart.Size()
@@ -7086,19 +7086,19 @@ QPKGs.SkRestart.Init
 QPKGs.ToRestore.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_torestore_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_torestore_array_+=("$item")
+        [[ " ${_obj_qpkgs_torestore_array_[*]} " != *"$item"* ]] && _obj_qpkgs_torestore_array_+=("$item")
     done
     }
 QPKGs.ToRestore.Array()
     {
-    echo -n "${_obj_qpkgs_torestore_array_[@]:-}"
+    echo -n "${_obj_qpkgs_torestore_array_[@]}"
     }
 QPKGs.ToRestore.Count()
     {
-    echo "${#_obj_qpkgs_torestore_array_[@]:-}"
+    echo "${#_obj_qpkgs_torestore_array_[@]}"
     }
 QPKGs.ToRestore.Exist()
     {
@@ -7112,7 +7112,7 @@ QPKGs.ToRestore.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_torestore_array_[@]:-} ]] && index=${#_obj_qpkgs_torestore_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_torestore_array_[@]} ]] && index=${#_obj_qpkgs_torestore_array_[@]}
     echo -n "${_obj_qpkgs_torestore_array_[((index-1))]}"
     }
 QPKGs.ToRestore.Init()
@@ -7123,19 +7123,19 @@ QPKGs.ToRestore.Init()
     }
 QPKGs.ToRestore.IsAny()
     {
-    [[ ${#_obj_qpkgs_torestore_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_torestore_array_[@]} -gt 0 ]]
     }
 QPKGs.ToRestore.IsNone()
     {
-    [[ ${#_obj_qpkgs_torestore_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_torestore_array_[@]} -eq 0 ]]
     }
 QPKGs.ToRestore.List()
     {
-    echo -n "${_obj_qpkgs_torestore_array_[*]:-}"
+    echo -n "${_obj_qpkgs_torestore_array_[*]}"
     }
 QPKGs.ToRestore.ListCSV()
     {
-    echo -n "${_obj_qpkgs_torestore_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_torestore_array_[*]}" | tr ' ' ','
     }
 QPKGs.ToRestore.Remove()
     {
@@ -7144,16 +7144,16 @@ QPKGs.ToRestore.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_torestore_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_torestore_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_torestore_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_torestore_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_torestore_array_[*]} ]] && _obj_qpkgs_torestore_array_=()
     }
 QPKGs.ToRestore.Size()
@@ -7169,19 +7169,19 @@ QPKGs.ToRestore.Init
 QPKGs.IsRestore.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_isrestore_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_isrestore_array_+=("$item")
+        [[ " ${_obj_qpkgs_isrestore_array_[*]} " != *"$item"* ]] && _obj_qpkgs_isrestore_array_+=("$item")
     done
     }
 QPKGs.IsRestore.Array()
     {
-    echo -n "${_obj_qpkgs_isrestore_array_[@]:-}"
+    echo -n "${_obj_qpkgs_isrestore_array_[@]}"
     }
 QPKGs.IsRestore.Count()
     {
-    echo "${#_obj_qpkgs_isrestore_array_[@]:-}"
+    echo "${#_obj_qpkgs_isrestore_array_[@]}"
     }
 QPKGs.IsRestore.Exist()
     {
@@ -7195,7 +7195,7 @@ QPKGs.IsRestore.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_isrestore_array_[@]:-} ]] && index=${#_obj_qpkgs_isrestore_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_isrestore_array_[@]} ]] && index=${#_obj_qpkgs_isrestore_array_[@]}
     echo -n "${_obj_qpkgs_isrestore_array_[((index-1))]}"
     }
 QPKGs.IsRestore.Init()
@@ -7206,19 +7206,19 @@ QPKGs.IsRestore.Init()
     }
 QPKGs.IsRestore.IsAny()
     {
-    [[ ${#_obj_qpkgs_isrestore_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_isrestore_array_[@]} -gt 0 ]]
     }
 QPKGs.IsRestore.IsNone()
     {
-    [[ ${#_obj_qpkgs_isrestore_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_isrestore_array_[@]} -eq 0 ]]
     }
 QPKGs.IsRestore.List()
     {
-    echo -n "${_obj_qpkgs_isrestore_array_[*]:-}"
+    echo -n "${_obj_qpkgs_isrestore_array_[*]}"
     }
 QPKGs.IsRestore.ListCSV()
     {
-    echo -n "${_obj_qpkgs_isrestore_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_isrestore_array_[*]}" | tr ' ' ','
     }
 QPKGs.IsRestore.Remove()
     {
@@ -7227,16 +7227,16 @@ QPKGs.IsRestore.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_isrestore_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_isrestore_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_isrestore_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_isrestore_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_isrestore_array_[*]} ]] && _obj_qpkgs_isrestore_array_=()
     }
 QPKGs.IsRestore.Size()
@@ -7252,19 +7252,19 @@ QPKGs.IsRestore.Init
 QPKGs.ErRestore.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_errestore_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_errestore_array_+=("$item")
+        [[ " ${_obj_qpkgs_errestore_array_[*]} " != *"$item"* ]] && _obj_qpkgs_errestore_array_+=("$item")
     done
     }
 QPKGs.ErRestore.Array()
     {
-    echo -n "${_obj_qpkgs_errestore_array_[@]:-}"
+    echo -n "${_obj_qpkgs_errestore_array_[@]}"
     }
 QPKGs.ErRestore.Count()
     {
-    echo "${#_obj_qpkgs_errestore_array_[@]:-}"
+    echo "${#_obj_qpkgs_errestore_array_[@]}"
     }
 QPKGs.ErRestore.Exist()
     {
@@ -7278,7 +7278,7 @@ QPKGs.ErRestore.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_errestore_array_[@]:-} ]] && index=${#_obj_qpkgs_errestore_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_errestore_array_[@]} ]] && index=${#_obj_qpkgs_errestore_array_[@]}
     echo -n "${_obj_qpkgs_errestore_array_[((index-1))]}"
     }
 QPKGs.ErRestore.Init()
@@ -7289,19 +7289,19 @@ QPKGs.ErRestore.Init()
     }
 QPKGs.ErRestore.IsAny()
     {
-    [[ ${#_obj_qpkgs_errestore_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_errestore_array_[@]} -gt 0 ]]
     }
 QPKGs.ErRestore.IsNone()
     {
-    [[ ${#_obj_qpkgs_errestore_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_errestore_array_[@]} -eq 0 ]]
     }
 QPKGs.ErRestore.List()
     {
-    echo -n "${_obj_qpkgs_errestore_array_[*]:-}"
+    echo -n "${_obj_qpkgs_errestore_array_[*]}"
     }
 QPKGs.ErRestore.ListCSV()
     {
-    echo -n "${_obj_qpkgs_errestore_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_errestore_array_[*]}" | tr ' ' ','
     }
 QPKGs.ErRestore.Remove()
     {
@@ -7310,16 +7310,16 @@ QPKGs.ErRestore.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_errestore_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_errestore_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_errestore_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_errestore_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_errestore_array_[*]} ]] && _obj_qpkgs_errestore_array_=()
     }
 QPKGs.ErRestore.Size()
@@ -7335,19 +7335,19 @@ QPKGs.ErRestore.Init
 QPKGs.SkRestore.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_skrestore_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_skrestore_array_+=("$item")
+        [[ " ${_obj_qpkgs_skrestore_array_[*]} " != *"$item"* ]] && _obj_qpkgs_skrestore_array_+=("$item")
     done
     }
 QPKGs.SkRestore.Array()
     {
-    echo -n "${_obj_qpkgs_skrestore_array_[@]:-}"
+    echo -n "${_obj_qpkgs_skrestore_array_[@]}"
     }
 QPKGs.SkRestore.Count()
     {
-    echo "${#_obj_qpkgs_skrestore_array_[@]:-}"
+    echo "${#_obj_qpkgs_skrestore_array_[@]}"
     }
 QPKGs.SkRestore.Exist()
     {
@@ -7361,7 +7361,7 @@ QPKGs.SkRestore.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_skrestore_array_[@]:-} ]] && index=${#_obj_qpkgs_skrestore_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_skrestore_array_[@]} ]] && index=${#_obj_qpkgs_skrestore_array_[@]}
     echo -n "${_obj_qpkgs_skrestore_array_[((index-1))]}"
     }
 QPKGs.SkRestore.Init()
@@ -7372,19 +7372,19 @@ QPKGs.SkRestore.Init()
     }
 QPKGs.SkRestore.IsAny()
     {
-    [[ ${#_obj_qpkgs_skrestore_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_skrestore_array_[@]} -gt 0 ]]
     }
 QPKGs.SkRestore.IsNone()
     {
-    [[ ${#_obj_qpkgs_skrestore_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_skrestore_array_[@]} -eq 0 ]]
     }
 QPKGs.SkRestore.List()
     {
-    echo -n "${_obj_qpkgs_skrestore_array_[*]:-}"
+    echo -n "${_obj_qpkgs_skrestore_array_[*]}"
     }
 QPKGs.SkRestore.ListCSV()
     {
-    echo -n "${_obj_qpkgs_skrestore_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_skrestore_array_[*]}" | tr ' ' ','
     }
 QPKGs.SkRestore.Remove()
     {
@@ -7393,16 +7393,16 @@ QPKGs.SkRestore.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_skrestore_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_skrestore_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_skrestore_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_skrestore_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_skrestore_array_[*]} ]] && _obj_qpkgs_skrestore_array_=()
     }
 QPKGs.SkRestore.Size()
@@ -7418,19 +7418,19 @@ QPKGs.SkRestore.Init
 QPKGs.ToStart.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_tostart_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_tostart_array_+=("$item")
+        [[ " ${_obj_qpkgs_tostart_array_[*]} " != *"$item"* ]] && _obj_qpkgs_tostart_array_+=("$item")
     done
     }
 QPKGs.ToStart.Array()
     {
-    echo -n "${_obj_qpkgs_tostart_array_[@]:-}"
+    echo -n "${_obj_qpkgs_tostart_array_[@]}"
     }
 QPKGs.ToStart.Count()
     {
-    echo "${#_obj_qpkgs_tostart_array_[@]:-}"
+    echo "${#_obj_qpkgs_tostart_array_[@]}"
     }
 QPKGs.ToStart.Exist()
     {
@@ -7444,7 +7444,7 @@ QPKGs.ToStart.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_tostart_array_[@]:-} ]] && index=${#_obj_qpkgs_tostart_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_tostart_array_[@]} ]] && index=${#_obj_qpkgs_tostart_array_[@]}
     echo -n "${_obj_qpkgs_tostart_array_[((index-1))]}"
     }
 QPKGs.ToStart.Init()
@@ -7455,19 +7455,19 @@ QPKGs.ToStart.Init()
     }
 QPKGs.ToStart.IsAny()
     {
-    [[ ${#_obj_qpkgs_tostart_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_tostart_array_[@]} -gt 0 ]]
     }
 QPKGs.ToStart.IsNone()
     {
-    [[ ${#_obj_qpkgs_tostart_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_tostart_array_[@]} -eq 0 ]]
     }
 QPKGs.ToStart.List()
     {
-    echo -n "${_obj_qpkgs_tostart_array_[*]:-}"
+    echo -n "${_obj_qpkgs_tostart_array_[*]}"
     }
 QPKGs.ToStart.ListCSV()
     {
-    echo -n "${_obj_qpkgs_tostart_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_tostart_array_[*]}" | tr ' ' ','
     }
 QPKGs.ToStart.Remove()
     {
@@ -7476,16 +7476,16 @@ QPKGs.ToStart.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_tostart_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_tostart_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_tostart_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_tostart_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_tostart_array_[*]} ]] && _obj_qpkgs_tostart_array_=()
     }
 QPKGs.ToStart.Size()
@@ -7501,19 +7501,19 @@ QPKGs.ToStart.Init
 QPKGs.IsStart.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_isstart_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_isstart_array_+=("$item")
+        [[ " ${_obj_qpkgs_isstart_array_[*]} " != *"$item"* ]] && _obj_qpkgs_isstart_array_+=("$item")
     done
     }
 QPKGs.IsStart.Array()
     {
-    echo -n "${_obj_qpkgs_isstart_array_[@]:-}"
+    echo -n "${_obj_qpkgs_isstart_array_[@]}"
     }
 QPKGs.IsStart.Count()
     {
-    echo "${#_obj_qpkgs_isstart_array_[@]:-}"
+    echo "${#_obj_qpkgs_isstart_array_[@]}"
     }
 QPKGs.IsStart.Exist()
     {
@@ -7527,7 +7527,7 @@ QPKGs.IsStart.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_isstart_array_[@]:-} ]] && index=${#_obj_qpkgs_isstart_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_isstart_array_[@]} ]] && index=${#_obj_qpkgs_isstart_array_[@]}
     echo -n "${_obj_qpkgs_isstart_array_[((index-1))]}"
     }
 QPKGs.IsStart.Init()
@@ -7538,19 +7538,19 @@ QPKGs.IsStart.Init()
     }
 QPKGs.IsStart.IsAny()
     {
-    [[ ${#_obj_qpkgs_isstart_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_isstart_array_[@]} -gt 0 ]]
     }
 QPKGs.IsStart.IsNone()
     {
-    [[ ${#_obj_qpkgs_isstart_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_isstart_array_[@]} -eq 0 ]]
     }
 QPKGs.IsStart.List()
     {
-    echo -n "${_obj_qpkgs_isstart_array_[*]:-}"
+    echo -n "${_obj_qpkgs_isstart_array_[*]}"
     }
 QPKGs.IsStart.ListCSV()
     {
-    echo -n "${_obj_qpkgs_isstart_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_isstart_array_[*]}" | tr ' ' ','
     }
 QPKGs.IsStart.Remove()
     {
@@ -7559,16 +7559,16 @@ QPKGs.IsStart.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_isstart_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_isstart_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_isstart_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_isstart_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_isstart_array_[*]} ]] && _obj_qpkgs_isstart_array_=()
     }
 QPKGs.IsStart.Size()
@@ -7584,19 +7584,19 @@ QPKGs.IsStart.Init
 QPKGs.ErStart.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_erstart_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_erstart_array_+=("$item")
+        [[ " ${_obj_qpkgs_erstart_array_[*]} " != *"$item"* ]] && _obj_qpkgs_erstart_array_+=("$item")
     done
     }
 QPKGs.ErStart.Array()
     {
-    echo -n "${_obj_qpkgs_erstart_array_[@]:-}"
+    echo -n "${_obj_qpkgs_erstart_array_[@]}"
     }
 QPKGs.ErStart.Count()
     {
-    echo "${#_obj_qpkgs_erstart_array_[@]:-}"
+    echo "${#_obj_qpkgs_erstart_array_[@]}"
     }
 QPKGs.ErStart.Exist()
     {
@@ -7610,7 +7610,7 @@ QPKGs.ErStart.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_erstart_array_[@]:-} ]] && index=${#_obj_qpkgs_erstart_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_erstart_array_[@]} ]] && index=${#_obj_qpkgs_erstart_array_[@]}
     echo -n "${_obj_qpkgs_erstart_array_[((index-1))]}"
     }
 QPKGs.ErStart.Init()
@@ -7621,19 +7621,19 @@ QPKGs.ErStart.Init()
     }
 QPKGs.ErStart.IsAny()
     {
-    [[ ${#_obj_qpkgs_erstart_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_erstart_array_[@]} -gt 0 ]]
     }
 QPKGs.ErStart.IsNone()
     {
-    [[ ${#_obj_qpkgs_erstart_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_erstart_array_[@]} -eq 0 ]]
     }
 QPKGs.ErStart.List()
     {
-    echo -n "${_obj_qpkgs_erstart_array_[*]:-}"
+    echo -n "${_obj_qpkgs_erstart_array_[*]}"
     }
 QPKGs.ErStart.ListCSV()
     {
-    echo -n "${_obj_qpkgs_erstart_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_erstart_array_[*]}" | tr ' ' ','
     }
 QPKGs.ErStart.Remove()
     {
@@ -7642,16 +7642,16 @@ QPKGs.ErStart.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_erstart_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_erstart_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_erstart_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_erstart_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_erstart_array_[*]} ]] && _obj_qpkgs_erstart_array_=()
     }
 QPKGs.ErStart.Size()
@@ -7667,19 +7667,19 @@ QPKGs.ErStart.Init
 QPKGs.SkStart.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_skstart_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_skstart_array_+=("$item")
+        [[ " ${_obj_qpkgs_skstart_array_[*]} " != *"$item"* ]] && _obj_qpkgs_skstart_array_+=("$item")
     done
     }
 QPKGs.SkStart.Array()
     {
-    echo -n "${_obj_qpkgs_skstart_array_[@]:-}"
+    echo -n "${_obj_qpkgs_skstart_array_[@]}"
     }
 QPKGs.SkStart.Count()
     {
-    echo "${#_obj_qpkgs_skstart_array_[@]:-}"
+    echo "${#_obj_qpkgs_skstart_array_[@]}"
     }
 QPKGs.SkStart.Exist()
     {
@@ -7693,7 +7693,7 @@ QPKGs.SkStart.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_skstart_array_[@]:-} ]] && index=${#_obj_qpkgs_skstart_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_skstart_array_[@]} ]] && index=${#_obj_qpkgs_skstart_array_[@]}
     echo -n "${_obj_qpkgs_skstart_array_[((index-1))]}"
     }
 QPKGs.SkStart.Init()
@@ -7704,19 +7704,19 @@ QPKGs.SkStart.Init()
     }
 QPKGs.SkStart.IsAny()
     {
-    [[ ${#_obj_qpkgs_skstart_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_skstart_array_[@]} -gt 0 ]]
     }
 QPKGs.SkStart.IsNone()
     {
-    [[ ${#_obj_qpkgs_skstart_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_skstart_array_[@]} -eq 0 ]]
     }
 QPKGs.SkStart.List()
     {
-    echo -n "${_obj_qpkgs_skstart_array_[*]:-}"
+    echo -n "${_obj_qpkgs_skstart_array_[*]}"
     }
 QPKGs.SkStart.ListCSV()
     {
-    echo -n "${_obj_qpkgs_skstart_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_skstart_array_[*]}" | tr ' ' ','
     }
 QPKGs.SkStart.Remove()
     {
@@ -7725,16 +7725,16 @@ QPKGs.SkStart.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_skstart_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_skstart_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_skstart_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_skstart_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_skstart_array_[*]} ]] && _obj_qpkgs_skstart_array_=()
     }
 QPKGs.SkStart.Size()
@@ -7750,19 +7750,19 @@ QPKGs.SkStart.Init
 QPKGs.ToStop.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_tostop_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_tostop_array_+=("$item")
+        [[ " ${_obj_qpkgs_tostop_array_[*]} " != *"$item"* ]] && _obj_qpkgs_tostop_array_+=("$item")
     done
     }
 QPKGs.ToStop.Array()
     {
-    echo -n "${_obj_qpkgs_tostop_array_[@]:-}"
+    echo -n "${_obj_qpkgs_tostop_array_[@]}"
     }
 QPKGs.ToStop.Count()
     {
-    echo "${#_obj_qpkgs_tostop_array_[@]:-}"
+    echo "${#_obj_qpkgs_tostop_array_[@]}"
     }
 QPKGs.ToStop.Exist()
     {
@@ -7776,7 +7776,7 @@ QPKGs.ToStop.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_tostop_array_[@]:-} ]] && index=${#_obj_qpkgs_tostop_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_tostop_array_[@]} ]] && index=${#_obj_qpkgs_tostop_array_[@]}
     echo -n "${_obj_qpkgs_tostop_array_[((index-1))]}"
     }
 QPKGs.ToStop.Init()
@@ -7787,19 +7787,19 @@ QPKGs.ToStop.Init()
     }
 QPKGs.ToStop.IsAny()
     {
-    [[ ${#_obj_qpkgs_tostop_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_tostop_array_[@]} -gt 0 ]]
     }
 QPKGs.ToStop.IsNone()
     {
-    [[ ${#_obj_qpkgs_tostop_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_tostop_array_[@]} -eq 0 ]]
     }
 QPKGs.ToStop.List()
     {
-    echo -n "${_obj_qpkgs_tostop_array_[*]:-}"
+    echo -n "${_obj_qpkgs_tostop_array_[*]}"
     }
 QPKGs.ToStop.ListCSV()
     {
-    echo -n "${_obj_qpkgs_tostop_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_tostop_array_[*]}" | tr ' ' ','
     }
 QPKGs.ToStop.Remove()
     {
@@ -7808,16 +7808,16 @@ QPKGs.ToStop.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_tostop_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_tostop_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_tostop_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_tostop_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_tostop_array_[*]} ]] && _obj_qpkgs_tostop_array_=()
     }
 QPKGs.ToStop.Size()
@@ -7833,19 +7833,19 @@ QPKGs.ToStop.Init
 QPKGs.IsStop.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_isstop_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_isstop_array_+=("$item")
+        [[ " ${_obj_qpkgs_isstop_array_[*]} " != *"$item"* ]] && _obj_qpkgs_isstop_array_+=("$item")
     done
     }
 QPKGs.IsStop.Array()
     {
-    echo -n "${_obj_qpkgs_isstop_array_[@]:-}"
+    echo -n "${_obj_qpkgs_isstop_array_[@]}"
     }
 QPKGs.IsStop.Count()
     {
-    echo "${#_obj_qpkgs_isstop_array_[@]:-}"
+    echo "${#_obj_qpkgs_isstop_array_[@]}"
     }
 QPKGs.IsStop.Exist()
     {
@@ -7859,7 +7859,7 @@ QPKGs.IsStop.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_isstop_array_[@]:-} ]] && index=${#_obj_qpkgs_isstop_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_isstop_array_[@]} ]] && index=${#_obj_qpkgs_isstop_array_[@]}
     echo -n "${_obj_qpkgs_isstop_array_[((index-1))]}"
     }
 QPKGs.IsStop.Init()
@@ -7870,19 +7870,19 @@ QPKGs.IsStop.Init()
     }
 QPKGs.IsStop.IsAny()
     {
-    [[ ${#_obj_qpkgs_isstop_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_isstop_array_[@]} -gt 0 ]]
     }
 QPKGs.IsStop.IsNone()
     {
-    [[ ${#_obj_qpkgs_isstop_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_isstop_array_[@]} -eq 0 ]]
     }
 QPKGs.IsStop.List()
     {
-    echo -n "${_obj_qpkgs_isstop_array_[*]:-}"
+    echo -n "${_obj_qpkgs_isstop_array_[*]}"
     }
 QPKGs.IsStop.ListCSV()
     {
-    echo -n "${_obj_qpkgs_isstop_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_isstop_array_[*]}" | tr ' ' ','
     }
 QPKGs.IsStop.Remove()
     {
@@ -7891,16 +7891,16 @@ QPKGs.IsStop.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_isstop_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_isstop_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_isstop_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_isstop_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_isstop_array_[*]} ]] && _obj_qpkgs_isstop_array_=()
     }
 QPKGs.IsStop.Size()
@@ -7916,19 +7916,19 @@ QPKGs.IsStop.Init
 QPKGs.ErStop.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_erstop_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_erstop_array_+=("$item")
+        [[ " ${_obj_qpkgs_erstop_array_[*]} " != *"$item"* ]] && _obj_qpkgs_erstop_array_+=("$item")
     done
     }
 QPKGs.ErStop.Array()
     {
-    echo -n "${_obj_qpkgs_erstop_array_[@]:-}"
+    echo -n "${_obj_qpkgs_erstop_array_[@]}"
     }
 QPKGs.ErStop.Count()
     {
-    echo "${#_obj_qpkgs_erstop_array_[@]:-}"
+    echo "${#_obj_qpkgs_erstop_array_[@]}"
     }
 QPKGs.ErStop.Exist()
     {
@@ -7942,7 +7942,7 @@ QPKGs.ErStop.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_erstop_array_[@]:-} ]] && index=${#_obj_qpkgs_erstop_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_erstop_array_[@]} ]] && index=${#_obj_qpkgs_erstop_array_[@]}
     echo -n "${_obj_qpkgs_erstop_array_[((index-1))]}"
     }
 QPKGs.ErStop.Init()
@@ -7953,19 +7953,19 @@ QPKGs.ErStop.Init()
     }
 QPKGs.ErStop.IsAny()
     {
-    [[ ${#_obj_qpkgs_erstop_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_erstop_array_[@]} -gt 0 ]]
     }
 QPKGs.ErStop.IsNone()
     {
-    [[ ${#_obj_qpkgs_erstop_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_erstop_array_[@]} -eq 0 ]]
     }
 QPKGs.ErStop.List()
     {
-    echo -n "${_obj_qpkgs_erstop_array_[*]:-}"
+    echo -n "${_obj_qpkgs_erstop_array_[*]}"
     }
 QPKGs.ErStop.ListCSV()
     {
-    echo -n "${_obj_qpkgs_erstop_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_erstop_array_[*]}" | tr ' ' ','
     }
 QPKGs.ErStop.Remove()
     {
@@ -7974,16 +7974,16 @@ QPKGs.ErStop.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_erstop_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_erstop_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_erstop_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_erstop_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_erstop_array_[*]} ]] && _obj_qpkgs_erstop_array_=()
     }
 QPKGs.ErStop.Size()
@@ -7999,19 +7999,19 @@ QPKGs.ErStop.Init
 QPKGs.SkStop.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_skstop_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_skstop_array_+=("$item")
+        [[ " ${_obj_qpkgs_skstop_array_[*]} " != *"$item"* ]] && _obj_qpkgs_skstop_array_+=("$item")
     done
     }
 QPKGs.SkStop.Array()
     {
-    echo -n "${_obj_qpkgs_skstop_array_[@]:-}"
+    echo -n "${_obj_qpkgs_skstop_array_[@]}"
     }
 QPKGs.SkStop.Count()
     {
-    echo "${#_obj_qpkgs_skstop_array_[@]:-}"
+    echo "${#_obj_qpkgs_skstop_array_[@]}"
     }
 QPKGs.SkStop.Exist()
     {
@@ -8025,7 +8025,7 @@ QPKGs.SkStop.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_skstop_array_[@]:-} ]] && index=${#_obj_qpkgs_skstop_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_skstop_array_[@]} ]] && index=${#_obj_qpkgs_skstop_array_[@]}
     echo -n "${_obj_qpkgs_skstop_array_[((index-1))]}"
     }
 QPKGs.SkStop.Init()
@@ -8036,19 +8036,19 @@ QPKGs.SkStop.Init()
     }
 QPKGs.SkStop.IsAny()
     {
-    [[ ${#_obj_qpkgs_skstop_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_skstop_array_[@]} -gt 0 ]]
     }
 QPKGs.SkStop.IsNone()
     {
-    [[ ${#_obj_qpkgs_skstop_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_skstop_array_[@]} -eq 0 ]]
     }
 QPKGs.SkStop.List()
     {
-    echo -n "${_obj_qpkgs_skstop_array_[*]:-}"
+    echo -n "${_obj_qpkgs_skstop_array_[*]}"
     }
 QPKGs.SkStop.ListCSV()
     {
-    echo -n "${_obj_qpkgs_skstop_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_skstop_array_[*]}" | tr ' ' ','
     }
 QPKGs.SkStop.Remove()
     {
@@ -8057,16 +8057,16 @@ QPKGs.SkStop.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_skstop_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_skstop_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_skstop_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_skstop_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_skstop_array_[*]} ]] && _obj_qpkgs_skstop_array_=()
     }
 QPKGs.SkStop.Size()
@@ -8082,19 +8082,19 @@ QPKGs.SkStop.Init
 QPKGs.ToUninstall.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_touninstall_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_touninstall_array_+=("$item")
+        [[ " ${_obj_qpkgs_touninstall_array_[*]} " != *"$item"* ]] && _obj_qpkgs_touninstall_array_+=("$item")
     done
     }
 QPKGs.ToUninstall.Array()
     {
-    echo -n "${_obj_qpkgs_touninstall_array_[@]:-}"
+    echo -n "${_obj_qpkgs_touninstall_array_[@]}"
     }
 QPKGs.ToUninstall.Count()
     {
-    echo "${#_obj_qpkgs_touninstall_array_[@]:-}"
+    echo "${#_obj_qpkgs_touninstall_array_[@]}"
     }
 QPKGs.ToUninstall.Exist()
     {
@@ -8108,7 +8108,7 @@ QPKGs.ToUninstall.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_touninstall_array_[@]:-} ]] && index=${#_obj_qpkgs_touninstall_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_touninstall_array_[@]} ]] && index=${#_obj_qpkgs_touninstall_array_[@]}
     echo -n "${_obj_qpkgs_touninstall_array_[((index-1))]}"
     }
 QPKGs.ToUninstall.Init()
@@ -8119,19 +8119,19 @@ QPKGs.ToUninstall.Init()
     }
 QPKGs.ToUninstall.IsAny()
     {
-    [[ ${#_obj_qpkgs_touninstall_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_touninstall_array_[@]} -gt 0 ]]
     }
 QPKGs.ToUninstall.IsNone()
     {
-    [[ ${#_obj_qpkgs_touninstall_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_touninstall_array_[@]} -eq 0 ]]
     }
 QPKGs.ToUninstall.List()
     {
-    echo -n "${_obj_qpkgs_touninstall_array_[*]:-}"
+    echo -n "${_obj_qpkgs_touninstall_array_[*]}"
     }
 QPKGs.ToUninstall.ListCSV()
     {
-    echo -n "${_obj_qpkgs_touninstall_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_touninstall_array_[*]}" | tr ' ' ','
     }
 QPKGs.ToUninstall.Remove()
     {
@@ -8140,16 +8140,16 @@ QPKGs.ToUninstall.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_touninstall_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_touninstall_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_touninstall_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_touninstall_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_touninstall_array_[*]} ]] && _obj_qpkgs_touninstall_array_=()
     }
 QPKGs.ToUninstall.Size()
@@ -8165,19 +8165,19 @@ QPKGs.ToUninstall.Init
 QPKGs.IsUninstall.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_isuninstall_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_isuninstall_array_+=("$item")
+        [[ " ${_obj_qpkgs_isuninstall_array_[*]} " != *"$item"* ]] && _obj_qpkgs_isuninstall_array_+=("$item")
     done
     }
 QPKGs.IsUninstall.Array()
     {
-    echo -n "${_obj_qpkgs_isuninstall_array_[@]:-}"
+    echo -n "${_obj_qpkgs_isuninstall_array_[@]}"
     }
 QPKGs.IsUninstall.Count()
     {
-    echo "${#_obj_qpkgs_isuninstall_array_[@]:-}"
+    echo "${#_obj_qpkgs_isuninstall_array_[@]}"
     }
 QPKGs.IsUninstall.Exist()
     {
@@ -8191,7 +8191,7 @@ QPKGs.IsUninstall.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_isuninstall_array_[@]:-} ]] && index=${#_obj_qpkgs_isuninstall_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_isuninstall_array_[@]} ]] && index=${#_obj_qpkgs_isuninstall_array_[@]}
     echo -n "${_obj_qpkgs_isuninstall_array_[((index-1))]}"
     }
 QPKGs.IsUninstall.Init()
@@ -8202,19 +8202,19 @@ QPKGs.IsUninstall.Init()
     }
 QPKGs.IsUninstall.IsAny()
     {
-    [[ ${#_obj_qpkgs_isuninstall_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_isuninstall_array_[@]} -gt 0 ]]
     }
 QPKGs.IsUninstall.IsNone()
     {
-    [[ ${#_obj_qpkgs_isuninstall_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_isuninstall_array_[@]} -eq 0 ]]
     }
 QPKGs.IsUninstall.List()
     {
-    echo -n "${_obj_qpkgs_isuninstall_array_[*]:-}"
+    echo -n "${_obj_qpkgs_isuninstall_array_[*]}"
     }
 QPKGs.IsUninstall.ListCSV()
     {
-    echo -n "${_obj_qpkgs_isuninstall_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_isuninstall_array_[*]}" | tr ' ' ','
     }
 QPKGs.IsUninstall.Remove()
     {
@@ -8223,16 +8223,16 @@ QPKGs.IsUninstall.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_isuninstall_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_isuninstall_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_isuninstall_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_isuninstall_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_isuninstall_array_[*]} ]] && _obj_qpkgs_isuninstall_array_=()
     }
 QPKGs.IsUninstall.Size()
@@ -8248,19 +8248,19 @@ QPKGs.IsUninstall.Init
 QPKGs.ErUninstall.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_eruninstall_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_eruninstall_array_+=("$item")
+        [[ " ${_obj_qpkgs_eruninstall_array_[*]} " != *"$item"* ]] && _obj_qpkgs_eruninstall_array_+=("$item")
     done
     }
 QPKGs.ErUninstall.Array()
     {
-    echo -n "${_obj_qpkgs_eruninstall_array_[@]:-}"
+    echo -n "${_obj_qpkgs_eruninstall_array_[@]}"
     }
 QPKGs.ErUninstall.Count()
     {
-    echo "${#_obj_qpkgs_eruninstall_array_[@]:-}"
+    echo "${#_obj_qpkgs_eruninstall_array_[@]}"
     }
 QPKGs.ErUninstall.Exist()
     {
@@ -8274,7 +8274,7 @@ QPKGs.ErUninstall.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_eruninstall_array_[@]:-} ]] && index=${#_obj_qpkgs_eruninstall_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_eruninstall_array_[@]} ]] && index=${#_obj_qpkgs_eruninstall_array_[@]}
     echo -n "${_obj_qpkgs_eruninstall_array_[((index-1))]}"
     }
 QPKGs.ErUninstall.Init()
@@ -8285,19 +8285,19 @@ QPKGs.ErUninstall.Init()
     }
 QPKGs.ErUninstall.IsAny()
     {
-    [[ ${#_obj_qpkgs_eruninstall_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_eruninstall_array_[@]} -gt 0 ]]
     }
 QPKGs.ErUninstall.IsNone()
     {
-    [[ ${#_obj_qpkgs_eruninstall_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_eruninstall_array_[@]} -eq 0 ]]
     }
 QPKGs.ErUninstall.List()
     {
-    echo -n "${_obj_qpkgs_eruninstall_array_[*]:-}"
+    echo -n "${_obj_qpkgs_eruninstall_array_[*]}"
     }
 QPKGs.ErUninstall.ListCSV()
     {
-    echo -n "${_obj_qpkgs_eruninstall_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_eruninstall_array_[*]}" | tr ' ' ','
     }
 QPKGs.ErUninstall.Remove()
     {
@@ -8306,16 +8306,16 @@ QPKGs.ErUninstall.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_eruninstall_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_eruninstall_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_eruninstall_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_eruninstall_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_eruninstall_array_[*]} ]] && _obj_qpkgs_eruninstall_array_=()
     }
 QPKGs.ErUninstall.Size()
@@ -8331,19 +8331,19 @@ QPKGs.ErUninstall.Init
 QPKGs.SkUninstall.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_skuninstall_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_skuninstall_array_+=("$item")
+        [[ " ${_obj_qpkgs_skuninstall_array_[*]} " != *"$item"* ]] && _obj_qpkgs_skuninstall_array_+=("$item")
     done
     }
 QPKGs.SkUninstall.Array()
     {
-    echo -n "${_obj_qpkgs_skuninstall_array_[@]:-}"
+    echo -n "${_obj_qpkgs_skuninstall_array_[@]}"
     }
 QPKGs.SkUninstall.Count()
     {
-    echo "${#_obj_qpkgs_skuninstall_array_[@]:-}"
+    echo "${#_obj_qpkgs_skuninstall_array_[@]}"
     }
 QPKGs.SkUninstall.Exist()
     {
@@ -8357,7 +8357,7 @@ QPKGs.SkUninstall.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_skuninstall_array_[@]:-} ]] && index=${#_obj_qpkgs_skuninstall_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_skuninstall_array_[@]} ]] && index=${#_obj_qpkgs_skuninstall_array_[@]}
     echo -n "${_obj_qpkgs_skuninstall_array_[((index-1))]}"
     }
 QPKGs.SkUninstall.Init()
@@ -8368,19 +8368,19 @@ QPKGs.SkUninstall.Init()
     }
 QPKGs.SkUninstall.IsAny()
     {
-    [[ ${#_obj_qpkgs_skuninstall_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_skuninstall_array_[@]} -gt 0 ]]
     }
 QPKGs.SkUninstall.IsNone()
     {
-    [[ ${#_obj_qpkgs_skuninstall_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_skuninstall_array_[@]} -eq 0 ]]
     }
 QPKGs.SkUninstall.List()
     {
-    echo -n "${_obj_qpkgs_skuninstall_array_[*]:-}"
+    echo -n "${_obj_qpkgs_skuninstall_array_[*]}"
     }
 QPKGs.SkUninstall.ListCSV()
     {
-    echo -n "${_obj_qpkgs_skuninstall_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_skuninstall_array_[*]}" | tr ' ' ','
     }
 QPKGs.SkUninstall.Remove()
     {
@@ -8389,16 +8389,16 @@ QPKGs.SkUninstall.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_skuninstall_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_skuninstall_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_skuninstall_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_skuninstall_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_skuninstall_array_[*]} ]] && _obj_qpkgs_skuninstall_array_=()
     }
 QPKGs.SkUninstall.Size()
@@ -8414,19 +8414,19 @@ QPKGs.SkUninstall.Init
 QPKGs.ToUpgrade.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_toupgrade_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_toupgrade_array_+=("$item")
+        [[ " ${_obj_qpkgs_toupgrade_array_[*]} " != *"$item"* ]] && _obj_qpkgs_toupgrade_array_+=("$item")
     done
     }
 QPKGs.ToUpgrade.Array()
     {
-    echo -n "${_obj_qpkgs_toupgrade_array_[@]:-}"
+    echo -n "${_obj_qpkgs_toupgrade_array_[@]}"
     }
 QPKGs.ToUpgrade.Count()
     {
-    echo "${#_obj_qpkgs_toupgrade_array_[@]:-}"
+    echo "${#_obj_qpkgs_toupgrade_array_[@]}"
     }
 QPKGs.ToUpgrade.Exist()
     {
@@ -8440,7 +8440,7 @@ QPKGs.ToUpgrade.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_toupgrade_array_[@]:-} ]] && index=${#_obj_qpkgs_toupgrade_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_toupgrade_array_[@]} ]] && index=${#_obj_qpkgs_toupgrade_array_[@]}
     echo -n "${_obj_qpkgs_toupgrade_array_[((index-1))]}"
     }
 QPKGs.ToUpgrade.Init()
@@ -8451,19 +8451,19 @@ QPKGs.ToUpgrade.Init()
     }
 QPKGs.ToUpgrade.IsAny()
     {
-    [[ ${#_obj_qpkgs_toupgrade_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_toupgrade_array_[@]} -gt 0 ]]
     }
 QPKGs.ToUpgrade.IsNone()
     {
-    [[ ${#_obj_qpkgs_toupgrade_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_toupgrade_array_[@]} -eq 0 ]]
     }
 QPKGs.ToUpgrade.List()
     {
-    echo -n "${_obj_qpkgs_toupgrade_array_[*]:-}"
+    echo -n "${_obj_qpkgs_toupgrade_array_[*]}"
     }
 QPKGs.ToUpgrade.ListCSV()
     {
-    echo -n "${_obj_qpkgs_toupgrade_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_toupgrade_array_[*]}" | tr ' ' ','
     }
 QPKGs.ToUpgrade.Remove()
     {
@@ -8472,16 +8472,16 @@ QPKGs.ToUpgrade.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_toupgrade_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_toupgrade_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_toupgrade_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_toupgrade_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_toupgrade_array_[*]} ]] && _obj_qpkgs_toupgrade_array_=()
     }
 QPKGs.ToUpgrade.Size()
@@ -8497,19 +8497,19 @@ QPKGs.ToUpgrade.Init
 QPKGs.IsUpgrade.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_isupgrade_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_isupgrade_array_+=("$item")
+        [[ " ${_obj_qpkgs_isupgrade_array_[*]} " != *"$item"* ]] && _obj_qpkgs_isupgrade_array_+=("$item")
     done
     }
 QPKGs.IsUpgrade.Array()
     {
-    echo -n "${_obj_qpkgs_isupgrade_array_[@]:-}"
+    echo -n "${_obj_qpkgs_isupgrade_array_[@]}"
     }
 QPKGs.IsUpgrade.Count()
     {
-    echo "${#_obj_qpkgs_isupgrade_array_[@]:-}"
+    echo "${#_obj_qpkgs_isupgrade_array_[@]}"
     }
 QPKGs.IsUpgrade.Exist()
     {
@@ -8523,7 +8523,7 @@ QPKGs.IsUpgrade.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_isupgrade_array_[@]:-} ]] && index=${#_obj_qpkgs_isupgrade_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_isupgrade_array_[@]} ]] && index=${#_obj_qpkgs_isupgrade_array_[@]}
     echo -n "${_obj_qpkgs_isupgrade_array_[((index-1))]}"
     }
 QPKGs.IsUpgrade.Init()
@@ -8534,19 +8534,19 @@ QPKGs.IsUpgrade.Init()
     }
 QPKGs.IsUpgrade.IsAny()
     {
-    [[ ${#_obj_qpkgs_isupgrade_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_isupgrade_array_[@]} -gt 0 ]]
     }
 QPKGs.IsUpgrade.IsNone()
     {
-    [[ ${#_obj_qpkgs_isupgrade_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_isupgrade_array_[@]} -eq 0 ]]
     }
 QPKGs.IsUpgrade.List()
     {
-    echo -n "${_obj_qpkgs_isupgrade_array_[*]:-}"
+    echo -n "${_obj_qpkgs_isupgrade_array_[*]}"
     }
 QPKGs.IsUpgrade.ListCSV()
     {
-    echo -n "${_obj_qpkgs_isupgrade_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_isupgrade_array_[*]}" | tr ' ' ','
     }
 QPKGs.IsUpgrade.Remove()
     {
@@ -8555,16 +8555,16 @@ QPKGs.IsUpgrade.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_isupgrade_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_isupgrade_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_isupgrade_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_isupgrade_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_isupgrade_array_[*]} ]] && _obj_qpkgs_isupgrade_array_=()
     }
 QPKGs.IsUpgrade.Size()
@@ -8580,19 +8580,19 @@ QPKGs.IsUpgrade.Init
 QPKGs.ErUpgrade.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_erupgrade_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_erupgrade_array_+=("$item")
+        [[ " ${_obj_qpkgs_erupgrade_array_[*]} " != *"$item"* ]] && _obj_qpkgs_erupgrade_array_+=("$item")
     done
     }
 QPKGs.ErUpgrade.Array()
     {
-    echo -n "${_obj_qpkgs_erupgrade_array_[@]:-}"
+    echo -n "${_obj_qpkgs_erupgrade_array_[@]}"
     }
 QPKGs.ErUpgrade.Count()
     {
-    echo "${#_obj_qpkgs_erupgrade_array_[@]:-}"
+    echo "${#_obj_qpkgs_erupgrade_array_[@]}"
     }
 QPKGs.ErUpgrade.Exist()
     {
@@ -8606,7 +8606,7 @@ QPKGs.ErUpgrade.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_erupgrade_array_[@]:-} ]] && index=${#_obj_qpkgs_erupgrade_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_erupgrade_array_[@]} ]] && index=${#_obj_qpkgs_erupgrade_array_[@]}
     echo -n "${_obj_qpkgs_erupgrade_array_[((index-1))]}"
     }
 QPKGs.ErUpgrade.Init()
@@ -8617,19 +8617,19 @@ QPKGs.ErUpgrade.Init()
     }
 QPKGs.ErUpgrade.IsAny()
     {
-    [[ ${#_obj_qpkgs_erupgrade_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_erupgrade_array_[@]} -gt 0 ]]
     }
 QPKGs.ErUpgrade.IsNone()
     {
-    [[ ${#_obj_qpkgs_erupgrade_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_erupgrade_array_[@]} -eq 0 ]]
     }
 QPKGs.ErUpgrade.List()
     {
-    echo -n "${_obj_qpkgs_erupgrade_array_[*]:-}"
+    echo -n "${_obj_qpkgs_erupgrade_array_[*]}"
     }
 QPKGs.ErUpgrade.ListCSV()
     {
-    echo -n "${_obj_qpkgs_erupgrade_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_erupgrade_array_[*]}" | tr ' ' ','
     }
 QPKGs.ErUpgrade.Remove()
     {
@@ -8638,16 +8638,16 @@ QPKGs.ErUpgrade.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_erupgrade_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_erupgrade_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_erupgrade_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_erupgrade_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_erupgrade_array_[*]} ]] && _obj_qpkgs_erupgrade_array_=()
     }
 QPKGs.ErUpgrade.Size()
@@ -8663,19 +8663,19 @@ QPKGs.ErUpgrade.Init
 QPKGs.SkUpgrade.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        [[ " ${_obj_qpkgs_skupgrade_array_[*]:-} " != *"$item"* ]] && _obj_qpkgs_skupgrade_array_+=("$item")
+        [[ " ${_obj_qpkgs_skupgrade_array_[*]} " != *"$item"* ]] && _obj_qpkgs_skupgrade_array_+=("$item")
     done
     }
 QPKGs.SkUpgrade.Array()
     {
-    echo -n "${_obj_qpkgs_skupgrade_array_[@]:-}"
+    echo -n "${_obj_qpkgs_skupgrade_array_[@]}"
     }
 QPKGs.SkUpgrade.Count()
     {
-    echo "${#_obj_qpkgs_skupgrade_array_[@]:-}"
+    echo "${#_obj_qpkgs_skupgrade_array_[@]}"
     }
 QPKGs.SkUpgrade.Exist()
     {
@@ -8689,7 +8689,7 @@ QPKGs.SkUpgrade.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_skupgrade_array_[@]:-} ]] && index=${#_obj_qpkgs_skupgrade_array_[@]}
+    [[ $index -gt ${#_obj_qpkgs_skupgrade_array_[@]} ]] && index=${#_obj_qpkgs_skupgrade_array_[@]}
     echo -n "${_obj_qpkgs_skupgrade_array_[((index-1))]}"
     }
 QPKGs.SkUpgrade.Init()
@@ -8700,19 +8700,19 @@ QPKGs.SkUpgrade.Init()
     }
 QPKGs.SkUpgrade.IsAny()
     {
-    [[ ${#_obj_qpkgs_skupgrade_array_[@]:-} -gt 0 ]]
+    [[ ${#_obj_qpkgs_skupgrade_array_[@]} -gt 0 ]]
     }
 QPKGs.SkUpgrade.IsNone()
     {
-    [[ ${#_obj_qpkgs_skupgrade_array_[@]:-} -eq 0 ]]
+    [[ ${#_obj_qpkgs_skupgrade_array_[@]} -eq 0 ]]
     }
 QPKGs.SkUpgrade.List()
     {
-    echo -n "${_obj_qpkgs_skupgrade_array_[*]:-}"
+    echo -n "${_obj_qpkgs_skupgrade_array_[*]}"
     }
 QPKGs.SkUpgrade.ListCSV()
     {
-    echo -n "${_obj_qpkgs_skupgrade_array_[*]:-}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_skupgrade_array_[*]}" | tr ' ' ','
     }
 QPKGs.SkUpgrade.Remove()
     {
@@ -8721,16 +8721,16 @@ QPKGs.SkUpgrade.Remove()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_skupgrade_array_[@]:-}"; do
+    for item in "${_obj_qpkgs_skupgrade_array_[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_skupgrade_array_=("${temp_array[@]:-}")
+    _obj_qpkgs_skupgrade_array_=("${temp_array[@]}")
     [[ -z ${_obj_qpkgs_skupgrade_array_[*]} ]] && _obj_qpkgs_skupgrade_array_=()
     }
 QPKGs.SkUpgrade.Size()

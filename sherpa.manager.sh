@@ -6112,19 +6112,19 @@ AddListObj()
 echo $public_function_name'.Add()
     {
     local array=(${1})
-    [[ ${#array[@]:-} -eq 0 ]] && return
+    [[ ${#array[@]} -eq 0 ]] && return
     local item='\'\''
     for item in "${array[@]:-}"; do
-        [[ " ${'$_placeholder_array_'[*]:-} " != *"$item"* ]] && '$_placeholder_array_'+=("$item")
+        [[ " ${'$_placeholder_array_'[*]} " != *"$item"* ]] && '$_placeholder_array_'+=("$item")
     done
     }
 '$public_function_name'.Array()
     {
-    echo -n "${'$_placeholder_array_'[@]:-}"
+    echo -n "${'$_placeholder_array_'[@]}"
     }
 '$public_function_name'.Count()
     {
-    echo "${#'$_placeholder_array_'[@]:-}"
+    echo "${#'$_placeholder_array_'[@]}"
     }
 '$public_function_name'.Exist()
     {
@@ -6138,7 +6138,7 @@ echo $public_function_name'.Add()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#'$_placeholder_array_'[@]:-} ]] && index=${#'$_placeholder_array_'[@]}
+    [[ $index -gt ${#'$_placeholder_array_'[@]} ]] && index=${#'$_placeholder_array_'[@]}
     echo -n "${'$_placeholder_array_'[((index-1))]}"
     }
 '$public_function_name'.Init()
@@ -6149,19 +6149,19 @@ echo $public_function_name'.Add()
     }
 '$public_function_name'.IsAny()
     {
-    [[ ${#'$_placeholder_array_'[@]:-} -gt 0 ]]
+    [[ ${#'$_placeholder_array_'[@]} -gt 0 ]]
     }
 '$public_function_name'.IsNone()
     {
-    [[ ${#'$_placeholder_array_'[@]:-} -eq 0 ]]
+    [[ ${#'$_placeholder_array_'[@]} -eq 0 ]]
     }
 '$public_function_name'.List()
     {
-    echo -n "${'$_placeholder_array_'[*]:-}"
+    echo -n "${'$_placeholder_array_'[*]}"
     }
 '$public_function_name'.ListCSV()
     {
-    echo -n "${'$_placeholder_array_'[*]:-}" | tr '\' \'' '\',\''
+    echo -n "${'$_placeholder_array_'[*]}" | tr '\' \'' '\',\''
     }
 '$public_function_name'.Remove()
     {
@@ -6170,16 +6170,16 @@ echo $public_function_name'.Add()
     local argument='\'\''
     local item='\'\''
     local matched=false
-    for item in "${'$_placeholder_array_'[@]:-}"; do
+    for item in "${'$_placeholder_array_'[@]}"; do
         matched=false
-        for argument in "${argument_array[@]:-}"; do
+        for argument in "${argument_array[@]}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    '$_placeholder_array_'=("${temp_array[@]:-}")
+    '$_placeholder_array_'=("${temp_array[@]}")
     [[ -z ${'$_placeholder_array_'[*]} ]] && '$_placeholder_array_'=()
     }
 '$public_function_name'.Size()
@@ -6303,7 +6303,7 @@ CompileObjects()
 
     # $1 = 'hash' (optional) - if specified, only return the internal checksum
 
-    local -r COMPILED_OBJECTS_HASH=4593a01e9ca49770375c9f62e07897dc
+    local -r COMPILED_OBJECTS_HASH=d810a08bd797add988e89a8caef2f7ef
     local array_name=''
     local -a operations_array=()
 
