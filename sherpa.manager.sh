@@ -639,7 +639,7 @@ Session.Init()
     QPKGs.Names.Add "${MANAGER_QPKG_NAME[*]}"
 
     readonly MANAGER_ESSENTIAL_IPKGS_ADD='findutils grep less sed'
-    readonly MANAGER_COMMON_IPKGS_ADD='ca-certificates gcc git git-http python3-dev python3-pip python3-setuptools'
+    readonly MANAGER_COMMON_IPKGS_ADD='ca-certificates gcc git git-http nano python3-dev python3-pip python3-setuptools'
     readonly MANAGER_COMMON_PIPS_ADD='apprise apscheduler beautifulsoup4 cfscrape cheetah3 cheroot!=8.4.4 cherrypy configobj feedparser portend pygithub python-levenshtein python-magic random_user_agent sabyenc3 simplejson slugify'
     readonly MANAGER_COMMON_QPKG_CONFLICTS='Optware Optware-NG TarMT Python QPython2 Python3 QPython3'
 
@@ -2508,7 +2508,7 @@ PIPs.Install()
     [[ -n ${MANAGER_COMMON_PIPS_ADD// /} ]] && exec_cmd="$pip3_cmd install $MANAGER_COMMON_PIPS_ADD --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
     ((total_count++))
 
-    ShowAsOperationProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" '' "$total_count" "$ACTION_PRESENT" "$RUNTIME"
+    ShowAsOperationProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
 
     local desc="'Python3' modules"
     local log_pathfile=$LOGS_PATH/py3-modules.assorted.$INSTALL_LOG_FILE
@@ -2529,7 +2529,7 @@ PIPs.Install()
         ((total_count+=2))
 
         # KLUDGE: force recompilation of 'sabyenc3' package so it's recognised by SABnzbd: https://forums.sabnzbd.org/viewtopic.php?p=121214#p121214
-        ShowAsOperationProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" '' "$total_count" "$ACTION_PRESENT" "$RUNTIME"
+        ShowAsOperationProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
 
         exec_cmd="$pip3_cmd install --force-reinstall --ignore-installed --no-binary :all: sabyenc3 --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
         desc="'Python3 sabyenc3' module"
@@ -2549,7 +2549,7 @@ PIPs.Install()
         fi
 
         # KLUDGE: ensure 'feedparser' is upgraded. This was version-held at 5.2.1 for Python 3.8.5 but from Python 3.9.0 onward there's no-need for version-hold anymore.
-        ShowAsOperationProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" '' "$total_count" "$ACTION_PRESENT" "$RUNTIME"
+        ShowAsOperationProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
 
         exec_cmd="$pip3_cmd install --upgrade feedparser --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
         desc="'Python3 feedparser' module"
@@ -6115,12 +6115,14 @@ echo $public_function_name'.Add()
     [[ ${#array[@]} -eq 0 ]] && return
     local item='\'\''
     for item in "${array[@]:-}"; do
-        [[ " ${'$_placeholder_array_'[*]} " != *"$item"* ]] && '$_placeholder_array_'+=("$item")
+        if [[ " ${'$_placeholder_array_'[*]+"${'$_placeholder_array_'[@]}"} " != *"$item"* ]]; then
+            '$_placeholder_array_'+=("$item")
+        fi
     done
     }
 '$public_function_name'.Array()
     {
-    echo -n "${'$_placeholder_array_'[@]}"
+    echo -n "${'$_placeholder_array_'[@]+"${'$_placeholder_array_'[@]}"}"
     }
 '$public_function_name'.Count()
     {
@@ -6170,17 +6172,17 @@ echo $public_function_name'.Add()
     local argument='\'\''
     local item='\'\''
     local matched=false
-    for item in "${'$_placeholder_array_'[@]}"; do
+    for item in "${'$_placeholder_array_'[@]+"${'$_placeholder_array_'[@]}"}"; do
         matched=false
-        for argument in "${argument_array[@]}"; do
+        for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
             if [[ $argument = $item ]]; then
                 matched=true; break
             fi
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    '$_placeholder_array_'=("${temp_array[@]}")
-    [[ -z ${'$_placeholder_array_'[*]} ]] && '$_placeholder_array_'=()
+    '$_placeholder_array_'=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${'$_placeholder_array_'[*]+"${'$_placeholder_array_'[@]}"} ]] && '$_placeholder_array_'=()
     }
 '$public_function_name'.Size()
     {
@@ -6303,7 +6305,7 @@ CompileObjects()
 
     # $1 = 'hash' (optional) - if specified, only return the internal checksum
 
-    local -r COMPILED_OBJECTS_HASH=d810a08bd797add988e89a8caef2f7ef
+    local -r COMPILED_OBJECTS_HASH=bad07ce1dc27db73a904249b667c2390
     local array_name=''
     local -a operations_array=()
 
