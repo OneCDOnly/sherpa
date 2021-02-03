@@ -4991,6 +4991,8 @@ QPKG.Backup()
         DebugAsDone "backed-up $(FormatAsPackageName "$PACKAGE_NAME") configuration"
         QPKGs.IsBackup.Add "$PACKAGE_NAME"
         QPKG.GetServiceStatus "$PACKAGE_NAME"
+        QPKGs.NotBackedUp.Remove "$PACKAGE_NAME"
+        QPKGs.BackedUp.Add "$PACKAGE_NAME"
     else
         DebugAsWarn "unable to backup $(FormatAsPackageName "$PACKAGE_NAME") configuration $(FormatAsExitcode $result_code)"
         QPKGs.ErBackup.Add "$PACKAGE_NAME"
