@@ -1229,7 +1229,6 @@ Session.Results()
     Session.ShowBackupLocation.IsSet && Help.BackupLocation.Show
     Session.Summary.IsSet && ShowSummary
     Session.SuggestIssue.IsSet && Help.Issue.Show
-    DisplayLineSpaceIfNoneAlready   # final on-screen linespace
 
     DebugInfoMinorSeparator
     DebugScript 'finished' "$($DATE_CMD)"
@@ -1238,6 +1237,7 @@ Session.Results()
     Session.Debug.ToArchive.IsSet && ArchiveActiveSessionLog
     CleanActiveSessionLog
     ReleaseLockFile
+    DisplayLineSpaceIfNoneAlready   # final on-screen linespace
 
     return 0
 
