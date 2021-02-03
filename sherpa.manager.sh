@@ -4597,26 +4597,26 @@ QPKG.Upgrade()
     local -r PACKAGE_NAME=${1:?empty}
     local -i result_code=0
 
-    if ! QPKG.Installed "$1"; then
-        DebugAsWarn "unable to upgrade $(FormatAsPackageName "$1") as it's not installed. Use 'install' instead."
-        QPKGs.ToUpgrade.Remove "$1"
-        QPKGs.SkUpgrade.Add "$1"
-        QPKGs.Installed.Remove "$1"
-        QPKGs.NotInstalled.Add "$1"
+    if ! QPKG.Installed "$PACKAGE_NAME"; then
+        DebugAsWarn "unable to upgrade $(FormatAsPackageName "$PACKAGE_NAME") as it's not installed. Use 'install' instead."
+        QPKGs.ToUpgrade.Remove "$PACKAGE_NAME"
+        QPKGs.SkUpgrade.Add "$PACKAGE_NAME"
+        QPKGs.Installed.Remove "$PACKAGE_NAME"
+        QPKGs.NotInstalled.Add "$PACKAGE_NAME"
         result_code=2
         DebugFuncExit $result_code; return
     fi
 
     local previous_version='null'
     local current_version='null'
-    local local_pathfile=$(QPKG.PathFilename "$1")
+    local local_pathfile=$(QPKG.PathFilename "$PACKAGE_NAME")
 
     if [[ -z $local_pathfile ]]; then
-        DebugAsWarn "no pathfile found for this package $(FormatAsPackageName "$1") (unsupported arch?)"
+        DebugAsWarn "no pathfile found for this package $(FormatAsPackageName "$PACKAGE_NAME") (unsupported arch?)"
 
         if [[ $NAS_QPKG_ARCH != none ]]; then       # don't skip QPKG just yet, it may have IPKGs to be installed
-            QPKGs.ToUpgrade.Remove "$1"
-            QPKGs.SkUpgrade.Add "$1"
+            QPKGs.ToUpgrade.Remove "$PACKAGE_NAME"
+            QPKGs.SkUpgrade.Add "$PACKAGE_NAME"
             result_code=2
         fi
 
@@ -4630,41 +4630,41 @@ QPKG.Upgrade()
 
     local -r TARGET_FILE=$($BASENAME_CMD "$local_pathfile")
     local -r LOG_PATHFILE=$LOGS_PATH/$TARGET_FILE.$UPGRADE_LOG_FILE
-    previous_version=$(QPKG.Installed.Version "$1")
+    previous_version=$(QPKG.Installed.Version "$PACKAGE_NAME")
 
-    DebugAsProc "upgrading $(FormatAsPackageName "$1")"
+    DebugAsProc "upgrading $(FormatAsPackageName "$PACKAGE_NAME")"
     RunAndLog "$SH_CMD $local_pathfile" "$LOG_PATHFILE" log:failure-only 10
     result_code=$?
 
-    current_version=$(QPKG.Installed.Version "$1")
+    current_version=$(QPKG.Installed.Version "$PACKAGE_NAME")
 
     if [[ $result_code -eq 0 || $result_code -eq 10 ]]; then
         if [[ $current_version = "$previous_version" ]]; then
-            DebugAsDone "upgraded $(FormatAsPackageName "$1") and installed version is $current_version"
+            DebugAsDone "upgraded $(FormatAsPackageName "$PACKAGE_NAME") and installed version is $current_version"
         else
-            DebugAsDone "upgraded $(FormatAsPackageName "$1") from $previous_version to $current_version"
+            DebugAsDone "upgraded $(FormatAsPackageName "$PACKAGE_NAME") from $previous_version to $current_version"
         fi
-        QPKG.GetServiceStatus "$1"
-        QPKGs.Upgradable.Remove "$1"
-        QPKGs.IsUpgrade.Add "$1"
+        QPKG.GetServiceStatus "$PACKAGE_NAME"
+        QPKGs.Upgradable.Remove "$PACKAGE_NAME"
+        QPKGs.IsUpgrade.Add "$PACKAGE_NAME"
 
-        if QPKG.Enabled "$1"; then
-            QPKGs.Stopped.Remove "$1"
-            QPKGs.Started.Add "$1"
+        if QPKG.Enabled "$PACKAGE_NAME"; then
+            QPKGs.Stopped.Remove "$PACKAGE_NAME"
+            QPKGs.Started.Add "$PACKAGE_NAME"
         else
-            QPKGs.Started.Remove "$1"
-            QPKGs.Stopped.Add "$1"
+            QPKGs.Started.Remove "$PACKAGE_NAME"
+            QPKGs.Stopped.Add "$PACKAGE_NAME"
         fi
 
         result_code=0    # remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK)
     else
         ShowAsEror "upgrade failed $(FormatAsFileName "$TARGET_FILE") $(FormatAsExitcode $result_code)"
-        QPKGs.ErUpgrade.Add "$1"
+        QPKGs.ErUpgrade.Add "$PACKAGE_NAME"
         result_code=1    # remap to 1
     fi
 
-    QPKGs.ToUpgrade.Remove "$1"
-    QPKG.FixAppCenterStatus "$1"
+    QPKGs.ToUpgrade.Remove "$PACKAGE_NAME"
+    QPKG.FixAppCenterStatus "$PACKAGE_NAME"
     DebugFuncExit $result_code
 
     }
