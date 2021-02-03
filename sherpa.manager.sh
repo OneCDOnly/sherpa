@@ -219,9 +219,8 @@ Session.Init()
     DebugScript 'version' "package: ${PACKAGE_VERSION:-unknown}, manager: ${MANAGER_SCRIPT_VERSION:-unknown}, loader: ${LOADER_SCRIPT_VERSION:-unknown}"
     DebugScript 'PID' "$$"
     DebugInfoMinorSeparator
-    DebugInfo 'Markers: (**) detected, (II) information, (WW) warning, (EE) error, (LL) log file,'
-    DebugInfo '(--) processing, (==) done, (>>) f entry, (<<) f exit, (vv) variable name & value,'
-    DebugInfo '($1) positional argument value'
+    DebugInfo 'Markers: (**) detected, (II) information, (WW) warning, (EE) error, (LL) log file, (--) processing,'
+    DebugInfo '(==) done, (>>) f entry, (<<) f exit, (vv) variable name & value, ($1) positional argument value'
     DebugInfoMinorSeparator
 
     Opts.IgnoreFreeSpace.Text = ' --force-space'
