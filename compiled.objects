@@ -3398,11 +3398,11 @@ Args.Unknown.IsNone()
     }
 Args.Unknown.List()
     {
-    echo -n "${_obj_args_unknown_array_[*]}"
+    echo -n "${_obj_args_unknown_array_[*]+"${_obj_args_unknown_array_[@]}"}"
     }
 Args.Unknown.ListCSV()
     {
-    echo -n "${_obj_args_unknown_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_args_unknown_array_[*]+"${_obj_args_unknown_array_[@]}"}" | tr ' ' ','
     }
 Args.Unknown.Remove()
     {
@@ -3483,11 +3483,11 @@ IPKGs.ToDownload.IsNone()
     }
 IPKGs.ToDownload.List()
     {
-    echo -n "${_obj_ipkgs_todownload_array_[*]}"
+    echo -n "${_obj_ipkgs_todownload_array_[*]+"${_obj_ipkgs_todownload_array_[@]}"}"
     }
 IPKGs.ToDownload.ListCSV()
     {
-    echo -n "${_obj_ipkgs_todownload_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_ipkgs_todownload_array_[*]+"${_obj_ipkgs_todownload_array_[@]}"}" | tr ' ' ','
     }
 IPKGs.ToDownload.Remove()
     {
@@ -3568,11 +3568,11 @@ IPKGs.ToInstall.IsNone()
     }
 IPKGs.ToInstall.List()
     {
-    echo -n "${_obj_ipkgs_toinstall_array_[*]}"
+    echo -n "${_obj_ipkgs_toinstall_array_[*]+"${_obj_ipkgs_toinstall_array_[@]}"}"
     }
 IPKGs.ToInstall.ListCSV()
     {
-    echo -n "${_obj_ipkgs_toinstall_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_ipkgs_toinstall_array_[*]+"${_obj_ipkgs_toinstall_array_[@]}"}" | tr ' ' ','
     }
 IPKGs.ToInstall.Remove()
     {
@@ -3653,11 +3653,11 @@ IPKGs.ToUninstall.IsNone()
     }
 IPKGs.ToUninstall.List()
     {
-    echo -n "${_obj_ipkgs_touninstall_array_[*]}"
+    echo -n "${_obj_ipkgs_touninstall_array_[*]+"${_obj_ipkgs_touninstall_array_[@]}"}"
     }
 IPKGs.ToUninstall.ListCSV()
     {
-    echo -n "${_obj_ipkgs_touninstall_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_ipkgs_touninstall_array_[*]+"${_obj_ipkgs_touninstall_array_[@]}"}" | tr ' ' ','
     }
 IPKGs.ToUninstall.Remove()
     {
@@ -3738,11 +3738,11 @@ QPKGs.Essential.IsNone()
     }
 QPKGs.Essential.List()
     {
-    echo -n "${_obj_qpkgs_essential_array_[*]}"
+    echo -n "${_obj_qpkgs_essential_array_[*]+"${_obj_qpkgs_essential_array_[@]}"}"
     }
 QPKGs.Essential.ListCSV()
     {
-    echo -n "${_obj_qpkgs_essential_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_essential_array_[*]+"${_obj_qpkgs_essential_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.Essential.Remove()
     {
@@ -3823,11 +3823,11 @@ QPKGs.Installable.IsNone()
     }
 QPKGs.Installable.List()
     {
-    echo -n "${_obj_qpkgs_installable_array_[*]}"
+    echo -n "${_obj_qpkgs_installable_array_[*]+"${_obj_qpkgs_installable_array_[@]}"}"
     }
 QPKGs.Installable.ListCSV()
     {
-    echo -n "${_obj_qpkgs_installable_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_installable_array_[*]+"${_obj_qpkgs_installable_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.Installable.Remove()
     {
@@ -3908,11 +3908,11 @@ QPKGs.Missing.IsNone()
     }
 QPKGs.Missing.List()
     {
-    echo -n "${_obj_qpkgs_missing_array_[*]}"
+    echo -n "${_obj_qpkgs_missing_array_[*]+"${_obj_qpkgs_missing_array_[@]}"}"
     }
 QPKGs.Missing.ListCSV()
     {
-    echo -n "${_obj_qpkgs_missing_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_missing_array_[*]+"${_obj_qpkgs_missing_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.Missing.Remove()
     {
@@ -3993,11 +3993,11 @@ QPKGs.Names.IsNone()
     }
 QPKGs.Names.List()
     {
-    echo -n "${_obj_qpkgs_names_array_[*]}"
+    echo -n "${_obj_qpkgs_names_array_[*]+"${_obj_qpkgs_names_array_[@]}"}"
     }
 QPKGs.Names.ListCSV()
     {
-    echo -n "${_obj_qpkgs_names_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_names_array_[*]+"${_obj_qpkgs_names_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.Names.Remove()
     {
@@ -4078,11 +4078,11 @@ QPKGs.Optional.IsNone()
     }
 QPKGs.Optional.List()
     {
-    echo -n "${_obj_qpkgs_optional_array_[*]}"
+    echo -n "${_obj_qpkgs_optional_array_[*]+"${_obj_qpkgs_optional_array_[@]}"}"
     }
 QPKGs.Optional.ListCSV()
     {
-    echo -n "${_obj_qpkgs_optional_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_optional_array_[*]+"${_obj_qpkgs_optional_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.Optional.Remove()
     {
@@ -4163,11 +4163,11 @@ QPKGs.Standalone.IsNone()
     }
 QPKGs.Standalone.List()
     {
-    echo -n "${_obj_qpkgs_standalone_array_[*]}"
+    echo -n "${_obj_qpkgs_standalone_array_[*]+"${_obj_qpkgs_standalone_array_[@]}"}"
     }
 QPKGs.Standalone.ListCSV()
     {
-    echo -n "${_obj_qpkgs_standalone_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_standalone_array_[*]+"${_obj_qpkgs_standalone_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.Standalone.Remove()
     {
@@ -4248,11 +4248,11 @@ QPKGs.Started.IsNone()
     }
 QPKGs.Started.List()
     {
-    echo -n "${_obj_qpkgs_started_array_[*]}"
+    echo -n "${_obj_qpkgs_started_array_[*]+"${_obj_qpkgs_started_array_[@]}"}"
     }
 QPKGs.Started.ListCSV()
     {
-    echo -n "${_obj_qpkgs_started_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_started_array_[*]+"${_obj_qpkgs_started_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.Started.Remove()
     {
@@ -4333,11 +4333,11 @@ QPKGs.Stopped.IsNone()
     }
 QPKGs.Stopped.List()
     {
-    echo -n "${_obj_qpkgs_stopped_array_[*]}"
+    echo -n "${_obj_qpkgs_stopped_array_[*]+"${_obj_qpkgs_stopped_array_[@]}"}"
     }
 QPKGs.Stopped.ListCSV()
     {
-    echo -n "${_obj_qpkgs_stopped_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_stopped_array_[*]+"${_obj_qpkgs_stopped_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.Stopped.Remove()
     {
@@ -4418,11 +4418,11 @@ QPKGs.Upgradable.IsNone()
     }
 QPKGs.Upgradable.List()
     {
-    echo -n "${_obj_qpkgs_upgradable_array_[*]}"
+    echo -n "${_obj_qpkgs_upgradable_array_[*]+"${_obj_qpkgs_upgradable_array_[@]}"}"
     }
 QPKGs.Upgradable.ListCSV()
     {
-    echo -n "${_obj_qpkgs_upgradable_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_upgradable_array_[*]+"${_obj_qpkgs_upgradable_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.Upgradable.Remove()
     {
@@ -4503,11 +4503,11 @@ QPKGs.BackedUp.IsNone()
     }
 QPKGs.BackedUp.List()
     {
-    echo -n "${_obj_qpkgs_backedup_array_[*]}"
+    echo -n "${_obj_qpkgs_backedup_array_[*]+"${_obj_qpkgs_backedup_array_[@]}"}"
     }
 QPKGs.BackedUp.ListCSV()
     {
-    echo -n "${_obj_qpkgs_backedup_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_backedup_array_[*]+"${_obj_qpkgs_backedup_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.BackedUp.Remove()
     {
@@ -4588,11 +4588,11 @@ QPKGs.NotBackedUp.IsNone()
     }
 QPKGs.NotBackedUp.List()
     {
-    echo -n "${_obj_qpkgs_notbackedup_array_[*]}"
+    echo -n "${_obj_qpkgs_notbackedup_array_[*]+"${_obj_qpkgs_notbackedup_array_[@]}"}"
     }
 QPKGs.NotBackedUp.ListCSV()
     {
-    echo -n "${_obj_qpkgs_notbackedup_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_notbackedup_array_[*]+"${_obj_qpkgs_notbackedup_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.NotBackedUp.Remove()
     {
@@ -4673,11 +4673,11 @@ QPKGs.Installed.IsNone()
     }
 QPKGs.Installed.List()
     {
-    echo -n "${_obj_qpkgs_installed_array_[*]}"
+    echo -n "${_obj_qpkgs_installed_array_[*]+"${_obj_qpkgs_installed_array_[@]}"}"
     }
 QPKGs.Installed.ListCSV()
     {
-    echo -n "${_obj_qpkgs_installed_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_installed_array_[*]+"${_obj_qpkgs_installed_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.Installed.Remove()
     {
@@ -4758,11 +4758,11 @@ QPKGs.NotInstalled.IsNone()
     }
 QPKGs.NotInstalled.List()
     {
-    echo -n "${_obj_qpkgs_notinstalled_array_[*]}"
+    echo -n "${_obj_qpkgs_notinstalled_array_[*]+"${_obj_qpkgs_notinstalled_array_[@]}"}"
     }
 QPKGs.NotInstalled.ListCSV()
     {
-    echo -n "${_obj_qpkgs_notinstalled_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_notinstalled_array_[*]+"${_obj_qpkgs_notinstalled_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.NotInstalled.Remove()
     {
@@ -4843,11 +4843,11 @@ QPKGs.SupportsBackup.IsNone()
     }
 QPKGs.SupportsBackup.List()
     {
-    echo -n "${_obj_qpkgs_supportsbackup_array_[*]}"
+    echo -n "${_obj_qpkgs_supportsbackup_array_[*]+"${_obj_qpkgs_supportsbackup_array_[@]}"}"
     }
 QPKGs.SupportsBackup.ListCSV()
     {
-    echo -n "${_obj_qpkgs_supportsbackup_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_supportsbackup_array_[*]+"${_obj_qpkgs_supportsbackup_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.SupportsBackup.Remove()
     {
@@ -4928,11 +4928,11 @@ QPKGs.NotSupportsBackup.IsNone()
     }
 QPKGs.NotSupportsBackup.List()
     {
-    echo -n "${_obj_qpkgs_notsupportsbackup_array_[*]}"
+    echo -n "${_obj_qpkgs_notsupportsbackup_array_[*]+"${_obj_qpkgs_notsupportsbackup_array_[@]}"}"
     }
 QPKGs.NotSupportsBackup.ListCSV()
     {
-    echo -n "${_obj_qpkgs_notsupportsbackup_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_notsupportsbackup_array_[*]+"${_obj_qpkgs_notsupportsbackup_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.NotSupportsBackup.Remove()
     {
@@ -5013,11 +5013,11 @@ QPKGs.SupportsUpdateOnRestart.IsNone()
     }
 QPKGs.SupportsUpdateOnRestart.List()
     {
-    echo -n "${_obj_qpkgs_supportsupdateonrestart_array_[*]}"
+    echo -n "${_obj_qpkgs_supportsupdateonrestart_array_[*]+"${_obj_qpkgs_supportsupdateonrestart_array_[@]}"}"
     }
 QPKGs.SupportsUpdateOnRestart.ListCSV()
     {
-    echo -n "${_obj_qpkgs_supportsupdateonrestart_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_supportsupdateonrestart_array_[*]+"${_obj_qpkgs_supportsupdateonrestart_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.SupportsUpdateOnRestart.Remove()
     {
@@ -5098,11 +5098,11 @@ QPKGs.NotSupportsUpdateOnRestart.IsNone()
     }
 QPKGs.NotSupportsUpdateOnRestart.List()
     {
-    echo -n "${_obj_qpkgs_notsupportsupdateonrestart_array_[*]}"
+    echo -n "${_obj_qpkgs_notsupportsupdateonrestart_array_[*]+"${_obj_qpkgs_notsupportsupdateonrestart_array_[@]}"}"
     }
 QPKGs.NotSupportsUpdateOnRestart.ListCSV()
     {
-    echo -n "${_obj_qpkgs_notsupportsupdateonrestart_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_notsupportsupdateonrestart_array_[*]+"${_obj_qpkgs_notsupportsupdateonrestart_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.NotSupportsUpdateOnRestart.Remove()
     {
@@ -5183,11 +5183,11 @@ QPKGs.ToBackup.IsNone()
     }
 QPKGs.ToBackup.List()
     {
-    echo -n "${_obj_qpkgs_tobackup_array_[*]}"
+    echo -n "${_obj_qpkgs_tobackup_array_[*]+"${_obj_qpkgs_tobackup_array_[@]}"}"
     }
 QPKGs.ToBackup.ListCSV()
     {
-    echo -n "${_obj_qpkgs_tobackup_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_tobackup_array_[*]+"${_obj_qpkgs_tobackup_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.ToBackup.Remove()
     {
@@ -5268,11 +5268,11 @@ QPKGs.IsBackup.IsNone()
     }
 QPKGs.IsBackup.List()
     {
-    echo -n "${_obj_qpkgs_isbackup_array_[*]}"
+    echo -n "${_obj_qpkgs_isbackup_array_[*]+"${_obj_qpkgs_isbackup_array_[@]}"}"
     }
 QPKGs.IsBackup.ListCSV()
     {
-    echo -n "${_obj_qpkgs_isbackup_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_isbackup_array_[*]+"${_obj_qpkgs_isbackup_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.IsBackup.Remove()
     {
@@ -5353,11 +5353,11 @@ QPKGs.ErBackup.IsNone()
     }
 QPKGs.ErBackup.List()
     {
-    echo -n "${_obj_qpkgs_erbackup_array_[*]}"
+    echo -n "${_obj_qpkgs_erbackup_array_[*]+"${_obj_qpkgs_erbackup_array_[@]}"}"
     }
 QPKGs.ErBackup.ListCSV()
     {
-    echo -n "${_obj_qpkgs_erbackup_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_erbackup_array_[*]+"${_obj_qpkgs_erbackup_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.ErBackup.Remove()
     {
@@ -5438,11 +5438,11 @@ QPKGs.SkBackup.IsNone()
     }
 QPKGs.SkBackup.List()
     {
-    echo -n "${_obj_qpkgs_skbackup_array_[*]}"
+    echo -n "${_obj_qpkgs_skbackup_array_[*]+"${_obj_qpkgs_skbackup_array_[@]}"}"
     }
 QPKGs.SkBackup.ListCSV()
     {
-    echo -n "${_obj_qpkgs_skbackup_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_skbackup_array_[*]+"${_obj_qpkgs_skbackup_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.SkBackup.Remove()
     {
@@ -5523,11 +5523,11 @@ QPKGs.ToDownload.IsNone()
     }
 QPKGs.ToDownload.List()
     {
-    echo -n "${_obj_qpkgs_todownload_array_[*]}"
+    echo -n "${_obj_qpkgs_todownload_array_[*]+"${_obj_qpkgs_todownload_array_[@]}"}"
     }
 QPKGs.ToDownload.ListCSV()
     {
-    echo -n "${_obj_qpkgs_todownload_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_todownload_array_[*]+"${_obj_qpkgs_todownload_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.ToDownload.Remove()
     {
@@ -5608,11 +5608,11 @@ QPKGs.IsDownload.IsNone()
     }
 QPKGs.IsDownload.List()
     {
-    echo -n "${_obj_qpkgs_isdownload_array_[*]}"
+    echo -n "${_obj_qpkgs_isdownload_array_[*]+"${_obj_qpkgs_isdownload_array_[@]}"}"
     }
 QPKGs.IsDownload.ListCSV()
     {
-    echo -n "${_obj_qpkgs_isdownload_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_isdownload_array_[*]+"${_obj_qpkgs_isdownload_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.IsDownload.Remove()
     {
@@ -5693,11 +5693,11 @@ QPKGs.ErDownload.IsNone()
     }
 QPKGs.ErDownload.List()
     {
-    echo -n "${_obj_qpkgs_erdownload_array_[*]}"
+    echo -n "${_obj_qpkgs_erdownload_array_[*]+"${_obj_qpkgs_erdownload_array_[@]}"}"
     }
 QPKGs.ErDownload.ListCSV()
     {
-    echo -n "${_obj_qpkgs_erdownload_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_erdownload_array_[*]+"${_obj_qpkgs_erdownload_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.ErDownload.Remove()
     {
@@ -5778,11 +5778,11 @@ QPKGs.SkDownload.IsNone()
     }
 QPKGs.SkDownload.List()
     {
-    echo -n "${_obj_qpkgs_skdownload_array_[*]}"
+    echo -n "${_obj_qpkgs_skdownload_array_[*]+"${_obj_qpkgs_skdownload_array_[@]}"}"
     }
 QPKGs.SkDownload.ListCSV()
     {
-    echo -n "${_obj_qpkgs_skdownload_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_skdownload_array_[*]+"${_obj_qpkgs_skdownload_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.SkDownload.Remove()
     {
@@ -5863,11 +5863,11 @@ QPKGs.ToInstall.IsNone()
     }
 QPKGs.ToInstall.List()
     {
-    echo -n "${_obj_qpkgs_toinstall_array_[*]}"
+    echo -n "${_obj_qpkgs_toinstall_array_[*]+"${_obj_qpkgs_toinstall_array_[@]}"}"
     }
 QPKGs.ToInstall.ListCSV()
     {
-    echo -n "${_obj_qpkgs_toinstall_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_toinstall_array_[*]+"${_obj_qpkgs_toinstall_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.ToInstall.Remove()
     {
@@ -5948,11 +5948,11 @@ QPKGs.IsInstall.IsNone()
     }
 QPKGs.IsInstall.List()
     {
-    echo -n "${_obj_qpkgs_isinstall_array_[*]}"
+    echo -n "${_obj_qpkgs_isinstall_array_[*]+"${_obj_qpkgs_isinstall_array_[@]}"}"
     }
 QPKGs.IsInstall.ListCSV()
     {
-    echo -n "${_obj_qpkgs_isinstall_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_isinstall_array_[*]+"${_obj_qpkgs_isinstall_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.IsInstall.Remove()
     {
@@ -6033,11 +6033,11 @@ QPKGs.ErInstall.IsNone()
     }
 QPKGs.ErInstall.List()
     {
-    echo -n "${_obj_qpkgs_erinstall_array_[*]}"
+    echo -n "${_obj_qpkgs_erinstall_array_[*]+"${_obj_qpkgs_erinstall_array_[@]}"}"
     }
 QPKGs.ErInstall.ListCSV()
     {
-    echo -n "${_obj_qpkgs_erinstall_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_erinstall_array_[*]+"${_obj_qpkgs_erinstall_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.ErInstall.Remove()
     {
@@ -6118,11 +6118,11 @@ QPKGs.SkInstall.IsNone()
     }
 QPKGs.SkInstall.List()
     {
-    echo -n "${_obj_qpkgs_skinstall_array_[*]}"
+    echo -n "${_obj_qpkgs_skinstall_array_[*]+"${_obj_qpkgs_skinstall_array_[@]}"}"
     }
 QPKGs.SkInstall.ListCSV()
     {
-    echo -n "${_obj_qpkgs_skinstall_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_skinstall_array_[*]+"${_obj_qpkgs_skinstall_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.SkInstall.Remove()
     {
@@ -6203,11 +6203,11 @@ QPKGs.ToRebuild.IsNone()
     }
 QPKGs.ToRebuild.List()
     {
-    echo -n "${_obj_qpkgs_torebuild_array_[*]}"
+    echo -n "${_obj_qpkgs_torebuild_array_[*]+"${_obj_qpkgs_torebuild_array_[@]}"}"
     }
 QPKGs.ToRebuild.ListCSV()
     {
-    echo -n "${_obj_qpkgs_torebuild_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_torebuild_array_[*]+"${_obj_qpkgs_torebuild_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.ToRebuild.Remove()
     {
@@ -6288,11 +6288,11 @@ QPKGs.IsRebuild.IsNone()
     }
 QPKGs.IsRebuild.List()
     {
-    echo -n "${_obj_qpkgs_isrebuild_array_[*]}"
+    echo -n "${_obj_qpkgs_isrebuild_array_[*]+"${_obj_qpkgs_isrebuild_array_[@]}"}"
     }
 QPKGs.IsRebuild.ListCSV()
     {
-    echo -n "${_obj_qpkgs_isrebuild_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_isrebuild_array_[*]+"${_obj_qpkgs_isrebuild_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.IsRebuild.Remove()
     {
@@ -6373,11 +6373,11 @@ QPKGs.ErRebuild.IsNone()
     }
 QPKGs.ErRebuild.List()
     {
-    echo -n "${_obj_qpkgs_errebuild_array_[*]}"
+    echo -n "${_obj_qpkgs_errebuild_array_[*]+"${_obj_qpkgs_errebuild_array_[@]}"}"
     }
 QPKGs.ErRebuild.ListCSV()
     {
-    echo -n "${_obj_qpkgs_errebuild_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_errebuild_array_[*]+"${_obj_qpkgs_errebuild_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.ErRebuild.Remove()
     {
@@ -6458,11 +6458,11 @@ QPKGs.SkRebuild.IsNone()
     }
 QPKGs.SkRebuild.List()
     {
-    echo -n "${_obj_qpkgs_skrebuild_array_[*]}"
+    echo -n "${_obj_qpkgs_skrebuild_array_[*]+"${_obj_qpkgs_skrebuild_array_[@]}"}"
     }
 QPKGs.SkRebuild.ListCSV()
     {
-    echo -n "${_obj_qpkgs_skrebuild_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_skrebuild_array_[*]+"${_obj_qpkgs_skrebuild_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.SkRebuild.Remove()
     {
@@ -6543,11 +6543,11 @@ QPKGs.ToReinstall.IsNone()
     }
 QPKGs.ToReinstall.List()
     {
-    echo -n "${_obj_qpkgs_toreinstall_array_[*]}"
+    echo -n "${_obj_qpkgs_toreinstall_array_[*]+"${_obj_qpkgs_toreinstall_array_[@]}"}"
     }
 QPKGs.ToReinstall.ListCSV()
     {
-    echo -n "${_obj_qpkgs_toreinstall_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_toreinstall_array_[*]+"${_obj_qpkgs_toreinstall_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.ToReinstall.Remove()
     {
@@ -6628,11 +6628,11 @@ QPKGs.IsReinstall.IsNone()
     }
 QPKGs.IsReinstall.List()
     {
-    echo -n "${_obj_qpkgs_isreinstall_array_[*]}"
+    echo -n "${_obj_qpkgs_isreinstall_array_[*]+"${_obj_qpkgs_isreinstall_array_[@]}"}"
     }
 QPKGs.IsReinstall.ListCSV()
     {
-    echo -n "${_obj_qpkgs_isreinstall_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_isreinstall_array_[*]+"${_obj_qpkgs_isreinstall_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.IsReinstall.Remove()
     {
@@ -6713,11 +6713,11 @@ QPKGs.ErReinstall.IsNone()
     }
 QPKGs.ErReinstall.List()
     {
-    echo -n "${_obj_qpkgs_erreinstall_array_[*]}"
+    echo -n "${_obj_qpkgs_erreinstall_array_[*]+"${_obj_qpkgs_erreinstall_array_[@]}"}"
     }
 QPKGs.ErReinstall.ListCSV()
     {
-    echo -n "${_obj_qpkgs_erreinstall_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_erreinstall_array_[*]+"${_obj_qpkgs_erreinstall_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.ErReinstall.Remove()
     {
@@ -6798,11 +6798,11 @@ QPKGs.SkReinstall.IsNone()
     }
 QPKGs.SkReinstall.List()
     {
-    echo -n "${_obj_qpkgs_skreinstall_array_[*]}"
+    echo -n "${_obj_qpkgs_skreinstall_array_[*]+"${_obj_qpkgs_skreinstall_array_[@]}"}"
     }
 QPKGs.SkReinstall.ListCSV()
     {
-    echo -n "${_obj_qpkgs_skreinstall_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_skreinstall_array_[*]+"${_obj_qpkgs_skreinstall_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.SkReinstall.Remove()
     {
@@ -6883,11 +6883,11 @@ QPKGs.ToRestart.IsNone()
     }
 QPKGs.ToRestart.List()
     {
-    echo -n "${_obj_qpkgs_torestart_array_[*]}"
+    echo -n "${_obj_qpkgs_torestart_array_[*]+"${_obj_qpkgs_torestart_array_[@]}"}"
     }
 QPKGs.ToRestart.ListCSV()
     {
-    echo -n "${_obj_qpkgs_torestart_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_torestart_array_[*]+"${_obj_qpkgs_torestart_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.ToRestart.Remove()
     {
@@ -6968,11 +6968,11 @@ QPKGs.IsRestart.IsNone()
     }
 QPKGs.IsRestart.List()
     {
-    echo -n "${_obj_qpkgs_isrestart_array_[*]}"
+    echo -n "${_obj_qpkgs_isrestart_array_[*]+"${_obj_qpkgs_isrestart_array_[@]}"}"
     }
 QPKGs.IsRestart.ListCSV()
     {
-    echo -n "${_obj_qpkgs_isrestart_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_isrestart_array_[*]+"${_obj_qpkgs_isrestart_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.IsRestart.Remove()
     {
@@ -7053,11 +7053,11 @@ QPKGs.ErRestart.IsNone()
     }
 QPKGs.ErRestart.List()
     {
-    echo -n "${_obj_qpkgs_errestart_array_[*]}"
+    echo -n "${_obj_qpkgs_errestart_array_[*]+"${_obj_qpkgs_errestart_array_[@]}"}"
     }
 QPKGs.ErRestart.ListCSV()
     {
-    echo -n "${_obj_qpkgs_errestart_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_errestart_array_[*]+"${_obj_qpkgs_errestart_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.ErRestart.Remove()
     {
@@ -7138,11 +7138,11 @@ QPKGs.SkRestart.IsNone()
     }
 QPKGs.SkRestart.List()
     {
-    echo -n "${_obj_qpkgs_skrestart_array_[*]}"
+    echo -n "${_obj_qpkgs_skrestart_array_[*]+"${_obj_qpkgs_skrestart_array_[@]}"}"
     }
 QPKGs.SkRestart.ListCSV()
     {
-    echo -n "${_obj_qpkgs_skrestart_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_skrestart_array_[*]+"${_obj_qpkgs_skrestart_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.SkRestart.Remove()
     {
@@ -7223,11 +7223,11 @@ QPKGs.ToRestore.IsNone()
     }
 QPKGs.ToRestore.List()
     {
-    echo -n "${_obj_qpkgs_torestore_array_[*]}"
+    echo -n "${_obj_qpkgs_torestore_array_[*]+"${_obj_qpkgs_torestore_array_[@]}"}"
     }
 QPKGs.ToRestore.ListCSV()
     {
-    echo -n "${_obj_qpkgs_torestore_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_torestore_array_[*]+"${_obj_qpkgs_torestore_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.ToRestore.Remove()
     {
@@ -7308,11 +7308,11 @@ QPKGs.IsRestore.IsNone()
     }
 QPKGs.IsRestore.List()
     {
-    echo -n "${_obj_qpkgs_isrestore_array_[*]}"
+    echo -n "${_obj_qpkgs_isrestore_array_[*]+"${_obj_qpkgs_isrestore_array_[@]}"}"
     }
 QPKGs.IsRestore.ListCSV()
     {
-    echo -n "${_obj_qpkgs_isrestore_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_isrestore_array_[*]+"${_obj_qpkgs_isrestore_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.IsRestore.Remove()
     {
@@ -7393,11 +7393,11 @@ QPKGs.ErRestore.IsNone()
     }
 QPKGs.ErRestore.List()
     {
-    echo -n "${_obj_qpkgs_errestore_array_[*]}"
+    echo -n "${_obj_qpkgs_errestore_array_[*]+"${_obj_qpkgs_errestore_array_[@]}"}"
     }
 QPKGs.ErRestore.ListCSV()
     {
-    echo -n "${_obj_qpkgs_errestore_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_errestore_array_[*]+"${_obj_qpkgs_errestore_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.ErRestore.Remove()
     {
@@ -7478,11 +7478,11 @@ QPKGs.SkRestore.IsNone()
     }
 QPKGs.SkRestore.List()
     {
-    echo -n "${_obj_qpkgs_skrestore_array_[*]}"
+    echo -n "${_obj_qpkgs_skrestore_array_[*]+"${_obj_qpkgs_skrestore_array_[@]}"}"
     }
 QPKGs.SkRestore.ListCSV()
     {
-    echo -n "${_obj_qpkgs_skrestore_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_skrestore_array_[*]+"${_obj_qpkgs_skrestore_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.SkRestore.Remove()
     {
@@ -7563,11 +7563,11 @@ QPKGs.ToStart.IsNone()
     }
 QPKGs.ToStart.List()
     {
-    echo -n "${_obj_qpkgs_tostart_array_[*]}"
+    echo -n "${_obj_qpkgs_tostart_array_[*]+"${_obj_qpkgs_tostart_array_[@]}"}"
     }
 QPKGs.ToStart.ListCSV()
     {
-    echo -n "${_obj_qpkgs_tostart_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_tostart_array_[*]+"${_obj_qpkgs_tostart_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.ToStart.Remove()
     {
@@ -7648,11 +7648,11 @@ QPKGs.IsStart.IsNone()
     }
 QPKGs.IsStart.List()
     {
-    echo -n "${_obj_qpkgs_isstart_array_[*]}"
+    echo -n "${_obj_qpkgs_isstart_array_[*]+"${_obj_qpkgs_isstart_array_[@]}"}"
     }
 QPKGs.IsStart.ListCSV()
     {
-    echo -n "${_obj_qpkgs_isstart_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_isstart_array_[*]+"${_obj_qpkgs_isstart_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.IsStart.Remove()
     {
@@ -7733,11 +7733,11 @@ QPKGs.ErStart.IsNone()
     }
 QPKGs.ErStart.List()
     {
-    echo -n "${_obj_qpkgs_erstart_array_[*]}"
+    echo -n "${_obj_qpkgs_erstart_array_[*]+"${_obj_qpkgs_erstart_array_[@]}"}"
     }
 QPKGs.ErStart.ListCSV()
     {
-    echo -n "${_obj_qpkgs_erstart_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_erstart_array_[*]+"${_obj_qpkgs_erstart_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.ErStart.Remove()
     {
@@ -7818,11 +7818,11 @@ QPKGs.SkStart.IsNone()
     }
 QPKGs.SkStart.List()
     {
-    echo -n "${_obj_qpkgs_skstart_array_[*]}"
+    echo -n "${_obj_qpkgs_skstart_array_[*]+"${_obj_qpkgs_skstart_array_[@]}"}"
     }
 QPKGs.SkStart.ListCSV()
     {
-    echo -n "${_obj_qpkgs_skstart_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_skstart_array_[*]+"${_obj_qpkgs_skstart_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.SkStart.Remove()
     {
@@ -7903,11 +7903,11 @@ QPKGs.ToStop.IsNone()
     }
 QPKGs.ToStop.List()
     {
-    echo -n "${_obj_qpkgs_tostop_array_[*]}"
+    echo -n "${_obj_qpkgs_tostop_array_[*]+"${_obj_qpkgs_tostop_array_[@]}"}"
     }
 QPKGs.ToStop.ListCSV()
     {
-    echo -n "${_obj_qpkgs_tostop_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_tostop_array_[*]+"${_obj_qpkgs_tostop_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.ToStop.Remove()
     {
@@ -7988,11 +7988,11 @@ QPKGs.IsStop.IsNone()
     }
 QPKGs.IsStop.List()
     {
-    echo -n "${_obj_qpkgs_isstop_array_[*]}"
+    echo -n "${_obj_qpkgs_isstop_array_[*]+"${_obj_qpkgs_isstop_array_[@]}"}"
     }
 QPKGs.IsStop.ListCSV()
     {
-    echo -n "${_obj_qpkgs_isstop_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_isstop_array_[*]+"${_obj_qpkgs_isstop_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.IsStop.Remove()
     {
@@ -8073,11 +8073,11 @@ QPKGs.ErStop.IsNone()
     }
 QPKGs.ErStop.List()
     {
-    echo -n "${_obj_qpkgs_erstop_array_[*]}"
+    echo -n "${_obj_qpkgs_erstop_array_[*]+"${_obj_qpkgs_erstop_array_[@]}"}"
     }
 QPKGs.ErStop.ListCSV()
     {
-    echo -n "${_obj_qpkgs_erstop_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_erstop_array_[*]+"${_obj_qpkgs_erstop_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.ErStop.Remove()
     {
@@ -8158,11 +8158,11 @@ QPKGs.SkStop.IsNone()
     }
 QPKGs.SkStop.List()
     {
-    echo -n "${_obj_qpkgs_skstop_array_[*]}"
+    echo -n "${_obj_qpkgs_skstop_array_[*]+"${_obj_qpkgs_skstop_array_[@]}"}"
     }
 QPKGs.SkStop.ListCSV()
     {
-    echo -n "${_obj_qpkgs_skstop_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_skstop_array_[*]+"${_obj_qpkgs_skstop_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.SkStop.Remove()
     {
@@ -8243,11 +8243,11 @@ QPKGs.ToUninstall.IsNone()
     }
 QPKGs.ToUninstall.List()
     {
-    echo -n "${_obj_qpkgs_touninstall_array_[*]}"
+    echo -n "${_obj_qpkgs_touninstall_array_[*]+"${_obj_qpkgs_touninstall_array_[@]}"}"
     }
 QPKGs.ToUninstall.ListCSV()
     {
-    echo -n "${_obj_qpkgs_touninstall_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_touninstall_array_[*]+"${_obj_qpkgs_touninstall_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.ToUninstall.Remove()
     {
@@ -8328,11 +8328,11 @@ QPKGs.IsUninstall.IsNone()
     }
 QPKGs.IsUninstall.List()
     {
-    echo -n "${_obj_qpkgs_isuninstall_array_[*]}"
+    echo -n "${_obj_qpkgs_isuninstall_array_[*]+"${_obj_qpkgs_isuninstall_array_[@]}"}"
     }
 QPKGs.IsUninstall.ListCSV()
     {
-    echo -n "${_obj_qpkgs_isuninstall_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_isuninstall_array_[*]+"${_obj_qpkgs_isuninstall_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.IsUninstall.Remove()
     {
@@ -8413,11 +8413,11 @@ QPKGs.ErUninstall.IsNone()
     }
 QPKGs.ErUninstall.List()
     {
-    echo -n "${_obj_qpkgs_eruninstall_array_[*]}"
+    echo -n "${_obj_qpkgs_eruninstall_array_[*]+"${_obj_qpkgs_eruninstall_array_[@]}"}"
     }
 QPKGs.ErUninstall.ListCSV()
     {
-    echo -n "${_obj_qpkgs_eruninstall_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_eruninstall_array_[*]+"${_obj_qpkgs_eruninstall_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.ErUninstall.Remove()
     {
@@ -8498,11 +8498,11 @@ QPKGs.SkUninstall.IsNone()
     }
 QPKGs.SkUninstall.List()
     {
-    echo -n "${_obj_qpkgs_skuninstall_array_[*]}"
+    echo -n "${_obj_qpkgs_skuninstall_array_[*]+"${_obj_qpkgs_skuninstall_array_[@]}"}"
     }
 QPKGs.SkUninstall.ListCSV()
     {
-    echo -n "${_obj_qpkgs_skuninstall_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_skuninstall_array_[*]+"${_obj_qpkgs_skuninstall_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.SkUninstall.Remove()
     {
@@ -8583,11 +8583,11 @@ QPKGs.ToUpgrade.IsNone()
     }
 QPKGs.ToUpgrade.List()
     {
-    echo -n "${_obj_qpkgs_toupgrade_array_[*]}"
+    echo -n "${_obj_qpkgs_toupgrade_array_[*]+"${_obj_qpkgs_toupgrade_array_[@]}"}"
     }
 QPKGs.ToUpgrade.ListCSV()
     {
-    echo -n "${_obj_qpkgs_toupgrade_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_toupgrade_array_[*]+"${_obj_qpkgs_toupgrade_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.ToUpgrade.Remove()
     {
@@ -8668,11 +8668,11 @@ QPKGs.IsUpgrade.IsNone()
     }
 QPKGs.IsUpgrade.List()
     {
-    echo -n "${_obj_qpkgs_isupgrade_array_[*]}"
+    echo -n "${_obj_qpkgs_isupgrade_array_[*]+"${_obj_qpkgs_isupgrade_array_[@]}"}"
     }
 QPKGs.IsUpgrade.ListCSV()
     {
-    echo -n "${_obj_qpkgs_isupgrade_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_isupgrade_array_[*]+"${_obj_qpkgs_isupgrade_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.IsUpgrade.Remove()
     {
@@ -8753,11 +8753,11 @@ QPKGs.ErUpgrade.IsNone()
     }
 QPKGs.ErUpgrade.List()
     {
-    echo -n "${_obj_qpkgs_erupgrade_array_[*]}"
+    echo -n "${_obj_qpkgs_erupgrade_array_[*]+"${_obj_qpkgs_erupgrade_array_[@]}"}"
     }
 QPKGs.ErUpgrade.ListCSV()
     {
-    echo -n "${_obj_qpkgs_erupgrade_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_erupgrade_array_[*]+"${_obj_qpkgs_erupgrade_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.ErUpgrade.Remove()
     {
@@ -8838,11 +8838,11 @@ QPKGs.SkUpgrade.IsNone()
     }
 QPKGs.SkUpgrade.List()
     {
-    echo -n "${_obj_qpkgs_skupgrade_array_[*]}"
+    echo -n "${_obj_qpkgs_skupgrade_array_[*]+"${_obj_qpkgs_skupgrade_array_[@]}"}"
     }
 QPKGs.SkUpgrade.ListCSV()
     {
-    echo -n "${_obj_qpkgs_skupgrade_array_[*]}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_skupgrade_array_[*]+"${_obj_qpkgs_skupgrade_array_[@]}"}" | tr ' ' ','
     }
 QPKGs.SkUpgrade.Remove()
     {

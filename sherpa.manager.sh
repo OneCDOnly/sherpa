@@ -50,7 +50,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=210203
+    readonly MANAGER_SCRIPT_VERSION=210204
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
 
@@ -741,7 +741,7 @@ Tiers.Processor()
     {
 
     # This function is a bit of a dog's breakfast. It handles all the high-level logic for package operations.
-    # If a package isn't being processed correctly, odds-are it's due to a problem in this function.
+    # If a package isn't being processed when it should, odds-are it's because of a logic error in this function.
 
     QPKGs.SkipProcessing.IsSet && return
     DebugFuncEntry
@@ -801,7 +801,7 @@ Tiers.Processor()
         QPKGs.ToDownload.Add "$(QPKG.Get.Essentials "$package")"
     done
 
-    Tier.Processor 'Download' false 'all' 'QPKG' 'ToDownload' 'forward' 'update package cache with' 'updating package cache with' 'updated package cache with' ''
+    Tier.Processor Download false all QPKG ToDownload forward 'update package cache with' 'updating package cache with' 'updated package cache with' ''
 
     if Opts.Apps.All.Backup.IsSet; then
         QPKGs.ToBackup.Add "$(QPKGs.SupportsBackup.Array)"
@@ -810,7 +810,7 @@ Tiers.Processor()
     QPKGs.ToBackup.Remove "$(QPKGs.NotInstalled.Array)"
     QPKGs.ToBackup.Remove "$(QPKGs.NotSupportsBackup.Array)"
 
-    Tier.Processor 'Backup' false 'all' 'QPKG' 'ToBackup' 'forward' 'backup' 'backing-up' 'backed-up' ''
+    Tier.Processor Backup false all QPKG ToBackup forward backup backing-up backed-up ''
 
     if Opts.Apps.All.Stop.IsSet; then
         QPKGs.ToStop.Add "$(QPKGs.Started.Array)"
@@ -866,18 +866,18 @@ Tiers.Processor()
     QPKGs.ToStop.Remove "$(QPKGs.ToUninstall.Array)"
     QPKGs.ToStop.Remove "$PROJECT_NAME"
 
-    Tier.Processor 'Stop' false 'optional' 'QPKG' 'ToStop' 'backward' 'stop' 'stopping' 'stopped' ''
-    Tier.Processor 'Stop' false 'essential' 'QPKG' 'ToStop' 'backward' 'stop' 'stopping' 'stopped' ''
+    Tier.Processor Stop false optional QPKG ToStop backward stop stopping stopped ''
+    Tier.Processor Stop false essential QPKG ToStop backward stop stopping stopped ''
 
     QPKGs.ToUninstall.Remove "$(QPKGs.NotInstalled.Array)"
     QPKGs.ToUninstall.Remove "$PROJECT_NAME"
 
-    Tier.Processor 'Uninstall' false 'optional' 'QPKG' 'ToUninstall' 'forward' 'uninstall' 'uninstalling' 'uninstalled' ''
+    Tier.Processor Uninstall false optional QPKG ToUninstall forward uninstall uninstalling uninstalled ''
 
     ShowAsProc 'checking for addon packages to uninstall' >&2
     QPKG.Installed Entware && IPKGs.Uninstall
 
-    Tier.Processor 'Uninstall' false 'essential' 'QPKG' 'ToUninstall' 'forward' 'uninstall' 'uninstalling' 'uninstalled' ''
+    Tier.Processor Uninstall false essential QPKG ToUninstall forward uninstall uninstalling uninstalled ''
 
     # adjust configuration restore lists to remove essentials (these can't be backed-up or restored for-now)
     if Opts.Apps.All.Restore.IsSet; then
@@ -904,12 +904,12 @@ Tiers.Processor()
     for tier in {'essential','addon','optional'}; do
         case $tier in
             essential|optional)
-                Tier.Processor 'Upgrade' false "$tier" 'QPKG' 'ToUpgrade' 'forward' 'upgrade' 'upgrading' 'upgraded' 'long'
-                Tier.Processor 'Reinstall' false "$tier" 'QPKG' 'ToReinstall' 'forward' 'reinstall' 'reinstalling' 'reinstalled' 'long'
-                Tier.Processor 'Install' false "$tier" 'QPKG' 'ToInstall' 'forward' 'install' 'installing' 'installed' 'long'
+                Tier.Processor Upgrade false "$tier" QPKG ToUpgrade forward upgrade upgrading upgraded long
+                Tier.Processor Reinstall false "$tier" QPKG ToReinstall forward reinstall reinstalling reinstalled long
+                Tier.Processor Install false "$tier" QPKG ToInstall forward install installing installed long
 
                 if [[ $tier = optional ]]; then
-                    Tier.Processor 'Restore' false "$tier" 'QPKG' 'ToRestore' 'forward' 'restore configuration for' 'restoring configuration for' 'configuration restored for' 'long'
+                    Tier.Processor Restore false "$tier" QPKG ToRestore forward 'restore configuration for' 'restoring configuration for' 'configuration restored for' long
                 fi
 
                 # adjust lists for start
@@ -955,7 +955,7 @@ Tiers.Processor()
                 QPKGs.ToStart.Remove "$(QPKGs.IsStart.Array)"
                 QPKGs.ToStart.Remove "$PROJECT_NAME"
 
-                Tier.Processor 'Start' false "$tier" 'QPKG' 'ToStart' 'forward' 'start' 'starting' 'started' 'long'
+                Tier.Processor Start false "$tier" QPKG ToStart forward start starting started long
 
                 # check all items
                 if Opts.Dependencies.Check.IsSet; then
@@ -1001,7 +1001,7 @@ Tiers.Processor()
                 QPKGs.ToRestart.Remove "$(QPKGs.IsRestore.Array)"
                 QPKGs.ToRestart.Remove "$(QPKGs.NotSupportsUpdateOnRestart.Array)"
 
-                Tier.Processor 'Restart' false "$tier" 'QPKG' 'ToRestart' 'forward' 'restart' 'restarting' 'restarted' 'long'
+                Tier.Processor Restart false "$tier" QPKG ToRestart forward restart restarting restarted long
                 ;;
             addon)
                 if QPKGs.ToInstall.IsAny || QPKGs.IsInstall.IsAny || QPKGs.ToReinstall.IsAny || QPKGs.IsReinstall.IsAny || QPKGs.ToUpgrade.IsAny || QPKGs.IsUpgrade.IsAny; then
@@ -1014,8 +1014,8 @@ Tiers.Processor()
 
                 if QPKG.Enabled Entware; then
                     ModPathToEntware
-                    Tier.Processor 'Install' false "$tier" 'IPKG' '' 'forward' 'install' 'installing' 'installed' 'long'
-                    Tier.Processor 'Install' false "$tier" 'PIP' '' 'forward' 'install' 'installing' 'installed' 'long'
+                    Tier.Processor Install false "$tier" IPKG '' forward install installing installed long
+                    Tier.Processor Install false "$tier" PIP '' forward install installing installed long
                 else
                     : # TODO: test if other packages are to be installed here. If so, and Entware isn't enabled, then abort with error.
                 fi
@@ -1904,28 +1904,28 @@ ListEnvironment()
     local version=''
 
     DebugInfoMinorSeparator
-    DebugHardwareOK 'model' "$(get_display_name)"
-    DebugHardwareOK 'CPU' "$($GREP_CMD -m1 '^model name' /proc/cpuinfo | $SED_CMD 's|^.*: ||')"
-    DebugHardwareOK 'RAM' "$(FormatAsThousands "$INSTALLED_RAM_KB")kB"
+    DebugHardwareOK model "$(get_display_name)"
+    DebugHardwareOK CPU "$($GREP_CMD -m1 '^model name' /proc/cpuinfo | $SED_CMD 's|^.*: ||')"
+    DebugHardwareOK RAM "$(FormatAsThousands "$INSTALLED_RAM_KB")kB"
 
     if QPKGs.ToInstall.Exist SABnzbd || QPKG.Installed SABnzbd; then
-        [[ $INSTALLED_RAM_KB -le $MIN_RAM_KB ]] && DebugHardwareWarning 'RAM' "less-than or equal-to $(FormatAsThousands "$MIN_RAM_KB")kB"
+        [[ $INSTALLED_RAM_KB -le $MIN_RAM_KB ]] && DebugHardwareWarning RAM "less-than or equal-to $(FormatAsThousands "$MIN_RAM_KB")kB"
     fi
 
     if [[ ${NAS_FIRMWARE//.} -ge 400 ]]; then
-        DebugFirmwareOK 'version' "$NAS_FIRMWARE"
+        DebugFirmwareOK version "$NAS_FIRMWARE"
     else
-        DebugFirmwareWarning 'version' "$NAS_FIRMWARE"
+        DebugFirmwareWarning version "$NAS_FIRMWARE"
     fi
 
     if [[ $NAS_BUILD -lt 20201015 || $NAS_BUILD -gt 20201020 ]]; then   # these builds won't allow unsigned QPKGs to run at-all
-        DebugFirmwareOK 'build' "$NAS_BUILD"
+        DebugFirmwareOK build "$NAS_BUILD"
     else
-        DebugFirmwareWarning 'build' "$NAS_BUILD"
+        DebugFirmwareWarning build "$NAS_BUILD"
     fi
 
-    DebugFirmwareOK 'kernel' "$($UNAME_CMD -mr)"
-    DebugFirmwareOK 'platform' "$($GETCFG_CMD '' Platform -d unknown -f /etc/platform.conf)"
+    DebugFirmwareOK kernel "$($UNAME_CMD -mr)"
+    DebugFirmwareOK platform "$($GETCFG_CMD '' Platform -d unknown -f /etc/platform.conf)"
     DebugUserspaceOK 'OS uptime' "$($UPTIME_CMD | $SED_CMD 's|.*up.||;s|,.*load.*||;s|^\ *||')"
     DebugUserspaceOK 'system load' "$($UPTIME_CMD | $SED_CMD 's|.*load average: ||' | $AWK_CMD -F', ' '{print "1m:"$1", 5m:"$2", 15m:"$3}')"
 
@@ -1950,8 +1950,8 @@ ListEnvironment()
     DebugUserspaceOK '$BASH_VERSION' "$BASH_VERSION"
     DebugUserspaceOK 'default volume' "$($GETCFG_CMD SHARE_DEF defVolMP -f /etc/config/def_share.info)"
 
-    if [[ -L '/opt' ]]; then
-        DebugUserspaceOK '/opt' "$($READLINK_CMD '/opt' || echo '<not present>')"
+    if [[ -L /opt ]]; then
+        DebugUserspaceOK '/opt' "$($READLINK_CMD /opt || echo '<not present>')"
     else
         DebugUserspaceWarning '/opt' '<not present>'
     fi
@@ -2202,7 +2202,7 @@ CalcAllIPKGDepsToInstall()
     requested_count=$($WC_CMD -w <<< "$requested_list")
 
     if [[ $requested_count -eq 0 ]]; then
-        DebugAsWarn "no IPKGs requested: aborting ..."
+        DebugAsWarn 'no IPKGs requested: aborting ...'
         DebugFuncExit 1; return
     fi
 
@@ -2726,8 +2726,7 @@ ProgressUpdater()
 CreateDirSizeMonitorFlagFile()
     {
 
-    [[ -n ${1:-} ]] || return
-    readonly MONITOR_FLAG_PATHFILE=$1
+    readonly MONITOR_FLAG_PATHFILE=${1:?empty}
     $TOUCH_CMD "$MONITOR_FLAG_PATHFILE"
 
     }
@@ -2759,9 +2758,7 @@ IsQNAP()
 CheckPythonPathAndVersion()
     {
 
-    [[ -z $1 ]] && return
-
-    if location=$(command -v "$1" 2>&1); then
+    if location=$(command -v "${1:?empty}" 2>&1); then
         DebugUserspaceOK "'$1' path" "$location"
 
         if version=$($1 -V 2>&1 | $SED_CMD 's|^Python ||'); then
@@ -2808,7 +2805,7 @@ IsNotSysFileExist()
     # output:
     #   $? = 0 (true) or 1 (false)
 
-    ! IsSysFileExist "$1"
+    ! IsSysFileExist "${1:?empty}"
 
     }
 
@@ -6201,11 +6198,11 @@ echo $public_function_name'.Add()
     }
 '$public_function_name'.List()
     {
-    echo -n "${'$_placeholder_array_'[*]}"
+    echo -n "${'$_placeholder_array_'[*]+"${'$_placeholder_array_'[@]}"}"
     }
 '$public_function_name'.ListCSV()
     {
-    echo -n "${'$_placeholder_array_'[*]}" | tr '\' \'' '\',\''
+    echo -n "${'$_placeholder_array_'[*]+"${'$_placeholder_array_'[@]}"}" | tr '\' \'' '\',\''
     }
 '$public_function_name'.Remove()
     {
@@ -6347,7 +6344,7 @@ CompileObjects()
 
     # $1 = 'hash' (optional) - if specified, only return the internal checksum
 
-    local -r COMPILED_OBJECTS_HASH=bad07ce1dc27db73a904249b667c2390
+    local -r COMPILED_OBJECTS_HASH=ae01301cf13cfc8dd4b0c50304b8da3e
     local array_name=''
     local -a operations_array=()
 
