@@ -1899,7 +1899,7 @@ ListEnvironment()
 
     DebugFuncEntry
 
-    local -i max_width=66
+    local -i max_width=70
     local -i trimmed_width=$((max_width-3))
     local version=''
 
@@ -1971,7 +1971,7 @@ ListEnvironment()
 
     DebugScript 'logs path' "$LOGS_PATH"
     DebugScript 'work path' "$WORK_PATH"
-    DebugScript 'object reference hash' "$(CompileObjects hash)"
+    DebugScript 'objects hash' "$(CompileObjects hash)"
     DebugInfoMinorSeparator
 
     DebugFuncExit
@@ -5495,6 +5495,8 @@ DisplayLineSpaceIfNoneAlready()
     }
 
 readonly DEBUG_LOG_DATAWIDTH=100
+readonly DEBUG_LOG_FIRST_COL_WIDTH=9
+readonly DEBUG_LOG_SECOND_COL_WIDTH=17
 
 DebugInfoMajorSeparator()
     {
@@ -5569,17 +5571,14 @@ DebugUserspaceWarning()
 DebugDetectedWarning()
     {
 
-    first_column_width=9
-    second_column_width=21
-
     if [[ -z $3 ]]; then                # if $3 is nothing, then assume only 2 fields are required
-        DebugAsWarn "$(printf "%${first_column_width}s: %${second_column_width}s\n" "${1:-}" "${2:-}")"
+        DebugAsWarn "$(printf "%${DEBUG_LOG_FIRST_COL_WIDTH}s: %${DEBUG_LOG_SECOND_COL_WIDTH}s\n" "${1:-}" "${2:-}")"
     elif [[ $3 = ' ' ]]; then           # if $3 is only a whitespace then print $2 with trailing colon and 'none' as third field
-        DebugAsWarn "$(printf "%${first_column_width}s: %${second_column_width}s: none\n" "${1:-}" "${2:-}")"
+        DebugAsWarn "$(printf "%${DEBUG_LOG_FIRST_COL_WIDTH}s: %${DEBUG_LOG_SECOND_COL_WIDTH}s: none\n" "${1:-}" "${2:-}")"
     elif [[ ${3: -1} = ' ' ]]; then     # if $3 has a trailing whitespace then print $3 without the trailing whitespace
-        DebugAsWarn "$(printf "%${first_column_width}s: %${second_column_width}s: %-s\n" "${1:-}" "${2:-}" "$($SED_CMD 's| *$||' <<< "${3:-}")")"
+        DebugAsWarn "$(printf "%${DEBUG_LOG_FIRST_COL_WIDTH}s: %${DEBUG_LOG_SECOND_COL_WIDTH}s: %-s\n" "${1:-}" "${2:-}" "$($SED_CMD 's| *$||' <<< "${3:-}")")"
     else
-        DebugAsWarn "$(printf "%${first_column_width}s: %${second_column_width}s: %-s\n" "${1:-}" "${2:-}" "${3:-}")"
+        DebugAsWarn "$(printf "%${DEBUG_LOG_FIRST_COL_WIDTH}s: %${DEBUG_LOG_SECOND_COL_WIDTH}s: %-s\n" "${1:-}" "${2:-}" "${3:-}")"
     fi
 
     }
@@ -5587,17 +5586,14 @@ DebugDetectedWarning()
 DebugDetectedOK()
     {
 
-    first_column_width=9
-    second_column_width=21
-
     if [[ -z $3 ]]; then                # if $3 is nothing, then assume only 2 fields are required
-        DebugDetected "$(printf "%${first_column_width}s: %${second_column_width}s\n" "${1:-}" "${2:-}")"
+        DebugDetected "$(printf "%${DEBUG_LOG_FIRST_COL_WIDTH}s: %${DEBUG_LOG_SECOND_COL_WIDTH}s\n" "${1:-}" "${2:-}")"
     elif [[ $3 = ' ' ]]; then           # if $3 is only a whitespace then print $2 with trailing colon and 'none' as third field
-        DebugDetected "$(printf "%${first_column_width}s: %${second_column_width}s: none\n" "${1:-}" "${2:-}")"
+        DebugDetected "$(printf "%${DEBUG_LOG_FIRST_COL_WIDTH}s: %${DEBUG_LOG_SECOND_COL_WIDTH}s: none\n" "${1:-}" "${2:-}")"
     elif [[ ${3: -1} = ' ' ]]; then     # if $3 has a trailing whitespace then print $3 without the trailing whitespace
-        DebugDetected "$(printf "%${first_column_width}s: %${second_column_width}s: %-s\n" "${1:-}" "${2:-}" "$($SED_CMD 's| *$||' <<< "${3:-}")")"
+        DebugDetected "$(printf "%${DEBUG_LOG_FIRST_COL_WIDTH}s: %${DEBUG_LOG_SECOND_COL_WIDTH}s: %-s\n" "${1:-}" "${2:-}" "$($SED_CMD 's| *$||' <<< "${3:-}")")"
     else
-        DebugDetected "$(printf "%${first_column_width}s: %${second_column_width}s: %-s\n" "${1:-}" "${2:-}" "${3:-}")"
+        DebugDetected "$(printf "%${DEBUG_LOG_FIRST_COL_WIDTH}s: %${DEBUG_LOG_SECOND_COL_WIDTH}s: %-s\n" "${1:-}" "${2:-}" "${3:-}")"
     fi
 
     }
