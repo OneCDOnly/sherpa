@@ -159,13 +159,13 @@ Session.Init()
     readonly SESSION_TAIL_PATHFILE=$LOGS_PATH/session.tail.log
     readonly EXTERNAL_PACKAGE_LIST_PATHFILE=$WORK_PATH/Packages
 
-    ShowAsProc 'init' >&2
+    ShowAsProc init >&2
 
-    if ! MakePath "$WORK_PATH" 'work'; then
+    if ! MakePath "$WORK_PATH" work; then
         DebugFuncExit 1; return
     fi
 
-    if ! MakePath "$LOGS_PATH" 'logs'; then
+    if ! MakePath "$LOGS_PATH" logs; then
         DebugFuncExit 1; return
     fi
 
@@ -215,9 +215,9 @@ Session.Init()
     readonly PACKAGE_VERSION=$(QPKG.Installed.Version "$PROJECT_NAME")
 
     DebugInfoMajorSeparator
-    DebugScript 'started' "$($DATE_CMD -d @"$SCRIPT_STARTSECONDS" | tr -s ' ')"
-    DebugScript 'version' "package: ${PACKAGE_VERSION:-unknown}, manager: ${MANAGER_SCRIPT_VERSION:-unknown}, loader: ${LOADER_SCRIPT_VERSION:-unknown}"
-    DebugScript 'PID' "$$"
+    DebugScript started "$($DATE_CMD -d @"$SCRIPT_STARTSECONDS" | tr -s ' ')"
+    DebugScript version "package: ${PACKAGE_VERSION:-unknown}, manager: ${MANAGER_SCRIPT_VERSION:-unknown}, loader: ${LOADER_SCRIPT_VERSION:-unknown}"
+    DebugScript PID "$$"
     DebugInfoMinorSeparator
     DebugInfo 'Markers: (**) detected, (II) information, (WW) warning, (EE) error, (LL) log file, (--) processing,'
     DebugInfo '(==) done, (>>) f entry, (<<) f exit, (vv) variable name & value, ($1) positional argument value'
