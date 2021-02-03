@@ -1900,12 +1900,13 @@ ListEnvironment()
 
     DebugFuncEntry
 
-    local -i max_width=58
+    local -i max_width=66
     local -i trimmed_width=$((max_width-3))
     local version=''
 
     DebugInfoMinorSeparator
     DebugHardwareOK 'model' "$(get_display_name)"
+    DebugHardwareOK 'CPU' "$($GREP_CMD -m1 '^model name' /proc/cpuinfo | $SED_CMD 's|^.*: ||')"
     DebugHardwareOK 'RAM' "$(FormatAsThousands "$INSTALLED_RAM_KB")kB"
 
     if QPKGs.ToInstall.Exist SABnzbd || QPKG.Installed SABnzbd; then
@@ -5494,7 +5495,7 @@ DisplayLineSpaceIfNoneAlready()
 
     }
 
-readonly DEBUG_LOG_DATAWIDTH=92
+readonly DEBUG_LOG_DATAWIDTH=100
 
 DebugInfoMajorSeparator()
     {
