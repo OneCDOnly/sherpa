@@ -5335,7 +5335,7 @@ RunAndLog()
 DeDupeWords()
     {
 
-    tr ' ' '\n' <<< "${1:?empty}" | $SORT_CMD | $UNIQ_CMD | tr '\n' ' ' | $SED_CMD 's|^[[:blank:]]*||;s|[[:blank:]]*$||'
+    tr ' ' '\n' <<< "${1:-}" | $SORT_CMD | $UNIQ_CMD | tr '\n' ' ' | $SED_CMD 's|^[[:blank:]]*||;s|[[:blank:]]*$||'
 
     }
 
