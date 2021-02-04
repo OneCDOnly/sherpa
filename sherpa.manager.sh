@@ -808,7 +808,7 @@ Tiers.Processor()
     fi
 
     QPKGs.ToBackup.Remove "$(QPKGs.NotInstalled.Array)"
-    QPKGs.ToBackup.Remove "$(QPKGs.NotSupportsBackup.Array)"
+#     QPKGs.ToBackup.Remove "$(QPKGs.NotSupportsBackup.Array)"
 
     Tier.Processor Backup false all QPKG ToBackup forward backup backing-up backed-up ''
 
@@ -3922,7 +3922,7 @@ CalcQPKGArch()
     esac
 
     readonly NAS_QPKG_ARCH
-    DebugQPKG 'arch' "$NAS_QPKG_ARCH"
+    DebugQPKG arch "$NAS_QPKG_ARCH"
 
     return 0
 
@@ -4015,8 +4015,7 @@ ShowSummary()
 ClaimLockFile()
     {
 
-    [[ -n ${1:-} ]] || return
-    readonly RUNTIME_LOCK_PATHFILE=$1
+    readonly RUNTIME_LOCK_PATHFILE=${1:?empty}
 
     if [[ -e $RUNTIME_LOCK_PATHFILE && -d /proc/$(<"$RUNTIME_LOCK_PATHFILE") && $(</proc/"$(<"$RUNTIME_LOCK_PATHFILE")"/cmdline) =~ $PROJECT_NAME.manager.sh ]]; then
         ShowAsAbort 'another instance is running'
@@ -4031,8 +4030,7 @@ ClaimLockFile()
 ReleaseLockFile()
     {
 
-    [[ -n ${RUNTIME_LOCK_PATHFILE:-} ]] || return
-    [[ -e $RUNTIME_LOCK_PATHFILE ]] && rm -f "$RUNTIME_LOCK_PATHFILE"
+    [[ -e ${RUNTIME_LOCK_PATHFILE:?empty} ]] && rm -f "$RUNTIME_LOCK_PATHFILE"
 
     }
 
@@ -4051,12 +4049,12 @@ QPKG.ServicePathFile()
     #   $1 = QPKG name
 
     # output:
-    #   stdout = service pathfilename
+    #   stdout = service pathfile
     #   $? = 0 if found, 1 if not
 
     local output=''
 
-    if output=$($GETCFG_CMD "$1" Shell -f /etc/config/qpkg.conf); then
+    if output=$($GETCFG_CMD "${1:-}" Shell -f /etc/config/qpkg.conf); then
         echo "$output"
         return 0
     fi
@@ -4080,7 +4078,7 @@ QPKG.Installed.Version()
 
     local output=''
 
-    if output=$($GETCFG_CMD "$1" Version -f /etc/config/qpkg.conf); then
+    if output=$($GETCFG_CMD "${1:-}" Version -f /etc/config/qpkg.conf); then
         echo "$output"
         return 0
     fi
@@ -4128,20 +4126,22 @@ QPKG.GetServiceStatus()
     # input:
     #   $1 = QPKG name
 
-    if [[ -e /var/run/${1:-}.last.operation ]]; then
-        case $(</var/run/"$1".last.operation) in
+    local -r PACKAGE_NAME=${1:?no package name supplied}
+
+    if [[ -e /var/run/$PACKAGE_NAME.last.operation ]]; then
+        case $(</var/run/"$PACKAGE_NAME".last.operation) in
             ok)
-                DebugInfo "$(FormatAsPackageName "$1") service operation completed OK"
+                DebugInfo "$(FormatAsPackageName "$PACKAGE_NAME") service operation completed OK"
                 ;;
             failed)
-                ShowAsEror "$(FormatAsPackageName "$1") service operation failed.$([[ -e /var/log/$1.log ]] && echo " Check $(FormatAsFileName "/var/log/$1.log") for more information")"
+                ShowAsEror "$(FormatAsPackageName "$PACKAGE_NAME") service operation failed.$([[ -e /var/log/$PACKAGE_NAME.log ]] && echo " Check $(FormatAsFileName "/var/log/$PACKAGE_NAME.log") for more information")"
                 ;;
             *)
-                DebugAsWarn "$(FormatAsPackageName "$1") service status is incorrect"
+                DebugAsWarn "$(FormatAsPackageName "$PACKAGE_NAME") service status is incorrect"
                 ;;
         esac
     else
-        DebugAsWarn "unable to get status of $(FormatAsPackageName "$1") service. It may be a non-$PROJECT_NAME package, or a package earlier than 200816c that doesn't support service results."
+        DebugAsWarn "unable to get status of $(FormatAsPackageName "$PACKAGE_NAME") service. It may be a non-$PROJECT_NAME package, or a package earlier than 200816c that doesn't support service results."
     fi
 
     }
@@ -4325,7 +4325,7 @@ QPKG.Download()
     Session.Error.IsSet && return
     DebugFuncEntry
 
-    local -r PACKAGE_NAME=${1:?empty}
+    local -r PACKAGE_NAME=${1:?no package name supplied}
     local -i result_code=0
     local -r REMOTE_URL=$(QPKG.URL "$PACKAGE_NAME")
     local -r REMOTE_FILENAME=$($BASENAME_CMD "$REMOTE_URL")
@@ -4334,24 +4334,32 @@ QPKG.Download()
     local -r LOCAL_FILENAME=$($BASENAME_CMD "$LOCAL_PATHFILE")
     local -r LOG_PATHFILE=$LOGS_PATH/$LOCAL_FILENAME.$DOWNLOAD_LOG_FILE
 
-    if [[ -z $REMOTE_URL ]]; then
-        DebugAsWarn "no URL found for this package $(FormatAsPackageName "$PACKAGE_NAME") (unsupported arch?)"
-        QPKGs.SkDownload.Add "$PACKAGE_NAME"
+    if [[ -z $REMOTE_URL || -z $REMOTE_MD5 ]]; then
+        DebugAsWarn "no URL or MD5 found for this package $(FormatAsPackageName "$PACKAGE_NAME") (unsupported arch?)"
+        result_code=2
     fi
 
-    if [[ -e $LOCAL_PATHFILE ]]; then
+    if [[ -f $LOCAL_PATHFILE ]]; then
         if FileMatchesMD5 "$LOCAL_PATHFILE" "$REMOTE_MD5"; then
             DebugInfo "local package $(FormatAsFileName "$LOCAL_FILENAME") checksum correct: skipping download"
-            QPKGs.SkDownload.Add "$PACKAGE_NAME"
             result_code=2
         else
             DebugAsError "local package $(FormatAsFileName "$LOCAL_FILENAME") checksum incorrect"
-            DebugInfo "deleting $(FormatAsFileName "$LOCAL_FILENAME")"
-            [[ -f $LOCAL_PATHFILE ]] && rm -f "$LOCAL_PATHFILE"
+
+            if [[ -f $LOCAL_PATHFILE ]]; then
+                DebugInfo "deleting $(FormatAsFileName "$LOCAL_FILENAME")"
+                rm -f "$LOCAL_PATHFILE"
+            fi
         fi
     fi
 
-    if Session.Error.IsNot && [[ ! -e $LOCAL_PATHFILE ]]; then
+    if [[ $result_code -eq 2 ]]; then
+        QPKGs.ToDownload.Remove "$PACKAGE_NAME"
+        QPKGs.SkDownload.Add "$PACKAGE_NAME"
+        DebugFuncExit $result_code; return
+    fi
+
+    if [[ ! -f $LOCAL_PATHFILE ]]; then
         DebugAsProc "downloading $(FormatAsFileName "$REMOTE_FILENAME")"
 
         [[ -e $LOG_PATHFILE ]] && rm -f "$LOG_PATHFILE"
@@ -4395,7 +4403,7 @@ QPKG.Install()
     QPKGs.SkipProcessing.IsSet && return
     DebugFuncEntry
 
-    local -r PACKAGE_NAME=${1:?empty}
+    local -r PACKAGE_NAME=${1:?no package name supplied}
     local -i result_code=0
 
     if QPKG.Installed "$PACKAGE_NAME"; then
@@ -4509,7 +4517,7 @@ QPKG.Reinstall()
     QPKGs.SkipProcessing.IsSet && return
     DebugFuncEntry
 
-    local -r PACKAGE_NAME=${1:?empty}
+    local -r PACKAGE_NAME=${1:?no package name supplied}
     local -i result_code=0
 
     if ! QPKG.Installed "$PACKAGE_NAME"; then
@@ -4591,7 +4599,7 @@ QPKG.Upgrade()
     QPKGs.SkipProcessing.IsSet && return
     DebugFuncEntry
 
-    local -r PACKAGE_NAME=${1:?empty}
+    local -r PACKAGE_NAME=${1:?no package name supplied}
     local -i result_code=0
 
     if ! QPKG.Installed "$PACKAGE_NAME"; then
@@ -4680,7 +4688,7 @@ QPKG.Uninstall()
     Session.Error.IsSet && return
     DebugFuncEntry
 
-    local -r PACKAGE_NAME=${1:?empty}
+    local -r PACKAGE_NAME=${1:?no package name supplied}
     local -i result_code=0
 
     if QPKG.NotInstalled "$PACKAGE_NAME"; then
@@ -4740,7 +4748,7 @@ QPKG.Restart()
 
     DebugFuncEntry
 
-    local -r PACKAGE_NAME=${1:?empty}
+    local -r PACKAGE_NAME=${1:?no package name supplied}
     local -i result_code=0
 
     QPKG.ClearServiceStatus "$PACKAGE_NAME"
@@ -4795,7 +4803,7 @@ QPKG.Start()
 
     DebugFuncEntry
 
-    local -r PACKAGE_NAME=${1:?empty}
+    local -r PACKAGE_NAME=${1:?no package name supplied}
     local -i result_code=0
 
     QPKG.ClearServiceStatus "$PACKAGE_NAME"
@@ -4861,7 +4869,7 @@ QPKG.Stop()
 
     DebugFuncEntry
 
-    local -r PACKAGE_NAME=${1:?empty}
+    local -r PACKAGE_NAME=${1:?no package name supplied}
     local -i result_code=0
 
     QPKG.ClearServiceStatus "$PACKAGE_NAME"
@@ -4916,7 +4924,7 @@ QPKG.Enable()
 
     # $1 = package name to enable
 
-    local -r PACKAGE_NAME=${1:?empty}
+    local -r PACKAGE_NAME=${1:?no package name supplied}
     local -i result_code=0
 
     RunAndLog "$QPKG_SERVICE_CMD enable $PACKAGE_NAME" "$LOGS_PATH/$PACKAGE_NAME.$ENABLE_LOG_FILE" log:failure-only
@@ -4936,7 +4944,7 @@ QPKG.Disable()
 
     # $1 = package name to disable
 
-    local -r PACKAGE_NAME=${1:?empty}
+    local -r PACKAGE_NAME=${1:?no package name supplied}
     local -i result_code=0
 
     RunAndLog "$QPKG_SERVICE_CMD disable $PACKAGE_NAME" "$LOGS_PATH/$PACKAGE_NAME.$DISABLE_LOG_FILE" log:failure-only
@@ -4966,8 +4974,16 @@ QPKG.Backup()
 
     DebugFuncEntry
 
-    local -r PACKAGE_NAME=${1:?empty}
+    local -r PACKAGE_NAME=${1:?no package name supplied}
     local -i result_code=0
+
+    if ! QPKG.SupportsBackup "$PACKAGE_NAME"; then
+        DebugAsWarn "unable to backup $(FormatAsPackageName "$PACKAGE_NAME") as it does not support backups"
+        QPKGs.ToBackup.Remove "$PACKAGE_NAME"
+        QPKGs.SkBackup.Add "$PACKAGE_NAME"
+        result_code=2
+        DebugFuncExit $result_code; return
+    fi
 
     if QPKG.NotInstalled "$PACKAGE_NAME"; then
         DebugAsWarn "unable to backup $(FormatAsPackageName "$PACKAGE_NAME") as it's not installed"
@@ -5015,7 +5031,7 @@ QPKG.SupportsBackup()
     local package_index=0
 
     for package_index in "${!MANAGER_QPKG_NAME[@]}"; do
-        if [[ ${MANAGER_QPKG_NAME[$package_index]} = "$1" ]]; then
+        if [[ ${MANAGER_QPKG_NAME[$package_index]} = "${1:?empty}" ]]; then
             if ${MANAGER_QPKG_BACKUP_SUPPORTED[$package_index]}; then
                 return 0
             else
@@ -5042,7 +5058,7 @@ QPKG.SupportsUpdateOnRestart()
     local package_index=0
 
     for package_index in "${!MANAGER_QPKG_NAME[@]}"; do
-        if [[ ${MANAGER_QPKG_NAME[$package_index]} = "$1" ]]; then
+        if [[ ${MANAGER_QPKG_NAME[$package_index]} = "${1:?empty}" ]]; then
             if ${MANAGER_QPKG_UPDATE_ON_RESTART[$package_index]}; then
                 return 0
             else
@@ -5068,30 +5084,26 @@ QPKG.Restore()
 
     DebugFuncEntry
 
-    if [[ -z ${1:-} ]]; then
-        DebugAsError 'no package name specified'
-        DebugFuncExit 1; return
-    fi
-
+    local -r PACKAGE_NAME=${1:?no package name supplied}
     local -i result_code=0
-    local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile "$1")
-    local -r LOG_PATHFILE=$LOGS_PATH/$1.$RESTORE_LOG_FILE
+    local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile "$PACKAGE_NAME")
+    local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$RESTORE_LOG_FILE
 
-    DebugAsProc "restoring $(FormatAsPackageName "$1") configuration"
+    DebugAsProc "restoring $(FormatAsPackageName "$PACKAGE_NAME") configuration"
 
     RunAndLog "$SH_CMD $PACKAGE_INIT_PATHFILE restore" "$LOG_PATHFILE" log:failure-only
     result_code=$?
 
     if [[ $result_code -eq 0 ]]; then
-        DebugAsDone "restored $(FormatAsPackageName "$1") configuration"
-        QPKGs.IsRestore.Add "$1"
-        QPKG.GetServiceStatus "$1"
+        DebugAsDone "restored $(FormatAsPackageName "$PACKAGE_NAME") configuration"
+        QPKGs.IsRestore.Add "$PACKAGE_NAME"
+        QPKG.GetServiceStatus "$PACKAGE_NAME"
     else
-        DebugAsWarn "unable to restore $(FormatAsPackageName "$1") configuration $(FormatAsExitcode $result_code)"
-        QPKGs.ErRestore.Add "$1"
+        DebugAsWarn "unable to restore $(FormatAsPackageName "$PACKAGE_NAME") configuration $(FormatAsExitcode $result_code)"
+        QPKGs.ErRestore.Add "$PACKAGE_NAME"
     fi
 
-    QPKGs.ToRestore.Remove "$1"
+    QPKGs.ToRestore.Remove "$PACKAGE_NAME"
     DebugFuncExit $result_code
 
     }
@@ -5107,11 +5119,12 @@ QPKG.UserInstallable()
 
     [[ ${#MANAGER_QPKG_NAME[@]} -eq 0 || ${#MANAGER_QPKG_ABBRVS[@]} -eq 0 ]] && return 1
 
+    local -r PACKAGE_NAME=${1:?no package name supplied}
     local result_code=1
     local index=0
 
     for index in "${!MANAGER_QPKG_NAME[@]}"; do
-        if [[ $1 = "${MANAGER_QPKG_NAME[$index]}" && -n ${MANAGER_QPKG_ABBRVS[$index]} ]] && [[ ${MANAGER_QPKG_ARCH[$index]} = all || ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
+        if [[ $PACKAGE_NAME = "${MANAGER_QPKG_NAME[$index]}" && -n ${MANAGER_QPKG_ABBRVS[$index]} ]] && [[ ${MANAGER_QPKG_ARCH[$index]} = all || ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
             result_code=0
             break
         fi
@@ -5130,7 +5143,7 @@ QPKG.Installed()
     # output:
     #   $? = 0 (true) or 1 (false)
 
-    $GREP_CMD -q "^\[$1\]" /etc/config/qpkg.conf
+    $GREP_CMD -q "^\[${1:?empty}\]" /etc/config/qpkg.conf
 
     }
 
@@ -5143,7 +5156,7 @@ QPKG.NotInstalled()
     # output:
     #   $? = 0 (true) or 1 (false)
 
-    ! QPKG.Installed "$1"
+    ! QPKG.Installed "${1:?empty}"
 
     }
 
@@ -5156,7 +5169,7 @@ QPKG.Enabled()
     # output:
     #   $? = 0 (true) or 1 (false)
 
-    [[ $($GETCFG_CMD "$1" Enable -u -f /etc/config/qpkg.conf) = 'TRUE' ]]
+    [[ $($GETCFG_CMD "${1:?empty}" Enable -u -f /etc/config/qpkg.conf) = 'TRUE' ]]
 
     }
 
@@ -5169,7 +5182,7 @@ QPKG.NotEnabled()
     # output:
     #   $? = 0 (true) or 1 (false)
 
-    [[ $($GETCFG_CMD "$1" Enable -u -f /etc/config/qpkg.conf) = 'FALSE' ]]
+    [[ $($GETCFG_CMD "${1:?empty}" Enable -u -f /etc/config/qpkg.conf) = 'FALSE' ]]
 
     }
 
@@ -5183,12 +5196,10 @@ QPKG.Abbrvs()
     #   $? = 0 if successful, 1 if failed
     #   stdout = list of acceptable abbreviations that may be used to specify this package
 
-    [[ -z $1 ]] && return 1
-
     local -i index=0
 
     for index in "${!MANAGER_QPKG_NAME[@]}"; do
-        if [[ $1 = "${MANAGER_QPKG_NAME[$index]}" ]]; then
+        if [[ ${1:?empty} = "${MANAGER_QPKG_NAME[$index]}" ]]; then
             echo "${MANAGER_QPKG_ABBRVS[$index]}"
             return 0
         fi
@@ -5234,15 +5245,15 @@ QPKG.FixAppCenterStatus()
 
     # $1 = QPKG name to fix
 
-    [[ -z $1 ]] && return 1
+    local -r PACKAGE_NAME=${1:?no package name supplied}
 
     # KLUDGE: 'clean' QTS 4.5.1 App Center notifier status
-    [[ -e /sbin/qpkg_cli ]] && /sbin/qpkg_cli --clean "$1" &>/dev/null
+    [[ -e /sbin/qpkg_cli ]] && /sbin/qpkg_cli --clean "${1:?empty}" &>/dev/null
 
-    QPKG.NotInstalled "$1" && return 0
+    QPKG.NotInstalled "$PACKAGE_NAME" && return 0
 
     # KLUDGE: need this for 'Entware' and 'Par2' packages as they don't add a status line to qpkg.conf
-    $SETCFG_CMD "$1" Status complete -f /etc/config/qpkg.conf
+    $SETCFG_CMD "$PACKAGE_NAME" Status complete -f /etc/config/qpkg.conf
 
     return 0
 
@@ -5251,12 +5262,10 @@ QPKG.FixAppCenterStatus()
 MakePath()
     {
 
-    [[ -z $1 || -z $2 ]] && return 1
-
-    mkdir -p "$1" 2>/dev/null; result_code=$?
+    mkdir -p "${1:?empty}" 2>/dev/null; result_code=$?
 
     if [[ $result_code -ne 0 ]]; then
-        ShowAsEror "unable to create $2 path $(FormatAsFileName "$1") $(FormatAsExitcode $result_code)"
+        ShowAsEror "unable to create ${2:?empty} path $(FormatAsFileName "$1") $(FormatAsExitcode $result_code)"
         [[ $(type -t Session.SuggestIssue.Init) = function ]] && Session.SuggestIssue.Set
         return 1
     fi
@@ -5272,23 +5281,22 @@ RunAndLog()
 
     # input:
     #   $1 = commandstring to execute
-    #   $2 = pathfilename to record stdout and stderr for commandstring
+    #   $2 = pathfile to record stdout and stderr for commandstring
     #   $3 = 'log:failure-only' (optional) - if specified, stdout & stderr are only recorded in the specified log if the command failed
     #                                      - if unspecified, stdout & stderr is always recorded
     #   $4 = e.g. '10' (optional) - an additional acceptable result code. Any other result from command (other than zero) will be considered a failure
 
     # output:
     #   stdout = commandstring stdout and stderr if script is in 'debug' mode
-    #   pathfilename ($2) = commandstring ($1) stdout and stderr
+    #   pathfile ($2) = commandstring ($1) stdout and stderr
     #   $? = result_code of commandstring
 
-    [[ -z ${1:-} || -z ${2:-} ]] && return 1
     DebugFuncEntry
 
     local msgs=/var/log/execd.log
     local -i result_code=0
 
-    FormatAsCommand "$1" > "$2"
+    FormatAsCommand "${1:?empty}" > "${2:?empty}"
     DebugAsProc "exec: '$1'"
 
     if Session.Debug.ToScreen.IsSet; then
@@ -5303,7 +5311,7 @@ RunAndLog()
         FormatAsResultAndStdout "$result_code" "$(<"$msgs")" >> "$2"
         rm -f "$msgs"
     else
-        FormatAsResultAndStdout "$result_code" "<null>" >> "$2"
+        FormatAsResultAndStdout "$result_code" '<null>' >> "$2"
     fi
 
     if [[ $result_code -eq 0 ]]; then
@@ -5319,9 +5327,7 @@ RunAndLog()
 DeDupeWords()
     {
 
-    [[ -z $1 ]] && return 1
-
-    tr ' ' '\n' <<< "$1" | $SORT_CMD | $UNIQ_CMD | tr '\n' ' ' | $SED_CMD 's|^[[:blank:]]*||;s|[[:blank:]]*$||'
+    tr ' ' '\n' <<< "${1:?empty}" | $SORT_CMD | $UNIQ_CMD | tr '\n' ' ' | $SED_CMD 's|^[[:blank:]]*||;s|[[:blank:]]*$||'
 
     }
 
@@ -5329,18 +5335,17 @@ FileMatchesMD5()
     {
 
     # input:
-    #   $1 = pathfilename to generate an MD5 checksum for
+    #   $1 = pathfile to generate an MD5 checksum for
     #   $2 = MD5 checksum to compare against
 
-    [[ -z $1 || -z $2 ]] && return 1
-    [[ $($MD5SUM_CMD "$1" | cut -f1 -d' ') = "$2" ]]
+    [[ $($MD5SUM_CMD "${1:?pathfile null}" | cut -f1 -d' ') = "${2:?comparison checksum null}" ]]
 
     }
 
 Plural()
     {
 
-    [[ $1 -ne 1 ]] && echo 's'
+    [[ ${1:-0} -ne 1 ]] && echo s
 
     }
 
@@ -5442,28 +5447,28 @@ FormatAsResult()
 FormatAsScript()
     {
 
-    echo 'SCRIPT'
+    echo SCRIPT
 
     }
 
 FormatAsHardware()
     {
 
-    echo 'HARDWARE'
+    echo HARDWARE
 
     }
 
 FormatAsFirmware()
     {
 
-    echo 'FIRMWARE'
+    echo FIRMWARE
 
     }
 
 FormatAsUserspace()
     {
 
-    echo 'USERSPACE'
+    echo USERSPACE
 
     }
 
