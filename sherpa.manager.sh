@@ -949,10 +949,10 @@ Tiers.Processor()
                     done
                 fi
 
-                QPKGs.ToStart.Remove "$(QPKGs.NotInstalled.Array)"
-                QPKGs.ToStart.Remove "$(QPKGs.Started.Array)"
-                QPKGs.ToStart.Remove "$(QPKGs.IsInstall.Array)"
-                QPKGs.ToStart.Remove "$(QPKGs.IsStart.Array)"
+#                 QPKGs.ToStart.Remove "$(QPKGs.NotInstalled.Array)"
+#                 QPKGs.ToStart.Remove "$(QPKGs.Started.Array)"
+#                 QPKGs.ToStart.Remove "$(QPKGs.IsInstall.Array)"
+#                 QPKGs.ToStart.Remove "$(QPKGs.IsStart.Array)"
                 QPKGs.ToStart.Remove "$PROJECT_NAME"
 
                 Tier.Processor Start false "$tier" QPKG ToStart forward start starting started long
@@ -1138,13 +1138,22 @@ Tier.Processor()
                     package=${target_packages[$index]}
                     ShowAsOperationProgress "$TIER" "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
 
-                    if ! $target_function.$TARGET_OPERATION "$package" "$forced_operation"; then
-                        ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") (see log for more details)"
-                        ((fail_count++))
-                        continue
-                    fi
+                    $target_function.$TARGET_OPERATION "$package" "$forced_operation"
+                    result_code=$?
 
-                    ((pass_count++))
+                    case $result_code in
+                        0)  # OK
+                            ((pass_count++))
+                            ;;
+                        2)  # skipped
+                            ((total_count--))
+                            ;;
+                        *)  # failed
+                            ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") (see log for more details)"
+                            ((fail_count++))
+                            continue
+                            ;;
+                    esac
                 done
             fi
             ;;
