@@ -54,7 +54,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=210204
+    readonly MANAGER_SCRIPT_VERSION=210205
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
 
@@ -755,7 +755,6 @@ Tiers.Processor()
     QPKGs.SupportsBackup.Build
     QPKGs.SupportsUpdateOnRestart.Build
 
-    # build an initial download list
     if Opts.Apps.All.Upgrade.IsSet; then
         QPKGs.ToUpgrade.Add "$(QPKGs.Upgradable.Array)"
     fi
@@ -791,8 +790,40 @@ Tiers.Processor()
         fi
     fi
 
-    PreDownloadPackageAssignment
+    # check reinstall for all items to be installed instead
+    for package in $(QPKGs.ToReinstall.Array); do
+        if QPKG.NotInstalled "$package"; then
+            QPKGs.ToReinstall.Remove "$package"
+            QPKGs.ToInstall.Add "$package"
+        fi
+    done
 
+    # check upgrade for essential items to be installed
+    for package in $(QPKGs.ToUpgrade.Array); do
+        QPKGs.ToInstall.Add "$(QPKG.Get.Essentials "$package")"
+    done
+
+    # check reinstall for essential items to be installed first
+    for package in $(QPKGs.ToReinstall.Array); do
+        QPKGs.ToInstall.Add "$(QPKG.Get.Essentials "$package")"
+    done
+
+    # check install for essential items to be installed first
+    for package in $(QPKGs.ToInstall.Array); do
+        QPKGs.ToInstall.Add "$(QPKG.Get.Essentials "$package")"
+    done
+
+    # check start for essential items to be installed first
+    for package in $(QPKGs.ToStart.Array); do
+        QPKGs.ToInstall.Add "$(QPKG.Get.Essentials "$package")"
+    done
+
+    # check restart for essential items to be installed first
+    for package in $(QPKGs.ToRestart.Array); do
+        QPKGs.ToInstall.Add "$(QPKG.Get.Essentials "$package")"
+    done
+
+    # build package download list
     QPKGs.ToDownload.Add "$(QPKGs.ToUpgrade.Array)"
     QPKGs.ToDownload.Add "$(QPKGs.ToReinstall.Array)"
     QPKGs.ToDownload.Add "$(QPKGs.ToInstall.Array)"
@@ -1981,65 +2012,6 @@ ListEnvironment()
     DebugInfoMinorSeparator
 
     DebugFuncExit
-
-    }
-
-PreDownloadPackageAssignment()
-    {
-
-    # this runs before the 'download' operation to ensure package lists are sane
-
-    local package=''
-
-    # check reinstall for all items to be installed instead
-    for package in $(QPKGs.ToReinstall.Array); do
-        if QPKG.NotInstalled "$package"; then
-            QPKGs.ToReinstall.Remove "$package"
-            QPKGs.ToInstall.Add "$package"
-        fi
-    done
-
-#     # check install for items to be reinstalled instead
-#     for package in $(QPKGs.ToInstall.Array); do
-#         if QPKG.Installed "$package" && ! QPKGs.ToUninstall.Exist "$package"; then
-#             QPKGs.ToInstall.Remove "$package"
-#             QPKGs.ToReinstall.Add "$package"
-#         fi
-#     done
-
-    # check upgrade for essential items to be installed
-    for package in $(QPKGs.ToUpgrade.Array); do
-        QPKGs.ToInstall.Add "$(QPKG.Get.Essentials "$package")"
-    done
-
-#     # check upgrade for all items that should be installed
-#     for package in $(QPKGs.ToUpgrade.Array); do
-#         if QPKG.NotInstalled "$package"; then
-#             QPKGs.ToInstall.Add "$package"
-#         fi
-#     done
-
-    # check reinstall for essential items to be installed first
-    for package in $(QPKGs.ToReinstall.Array); do
-        QPKGs.ToInstall.Add "$(QPKG.Get.Essentials "$package")"
-    done
-
-    # check install for essential items to be installed first
-    for package in $(QPKGs.ToInstall.Array); do
-        QPKGs.ToInstall.Add "$(QPKG.Get.Essentials "$package")"
-    done
-
-    # check start for essential items to be installed first
-    for package in $(QPKGs.ToStart.Array); do
-        QPKGs.ToInstall.Add "$(QPKG.Get.Essentials "$package")"
-    done
-
-    # check restart for essential items to be installed first
-    for package in $(QPKGs.ToRestart.Array); do
-        QPKGs.ToInstall.Add "$(QPKG.Get.Essentials "$package")"
-    done
-
-    return 0
 
     }
 
