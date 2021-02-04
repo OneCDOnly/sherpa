@@ -15,6 +15,10 @@
 #  GNU bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)
 #  Copyright (C) 2007 Free Software Foundation, Inc.
 #
+# ... and periodically on:
+#  GNU bash, version 5.0.17(1)-release (aarch64-openwrt-linux-gnu)
+#  Copyright (C) 2019 Free Software Foundation, Inc.
+#
 # This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 #
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
@@ -1302,7 +1306,7 @@ ParseArguments()
                 QPKGs.SkipProcessing.Clear
                 QPKGs.States.Build
                 ;;
-            remove|uninstall)
+            rm|remove|uninstall)
                 operation=uninstall_
                 arg_identified=true
                 scope=''
