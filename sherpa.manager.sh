@@ -927,6 +927,11 @@ Tiers.Processor()
             fi
         done
 
+        # adjust lists for start
+        if Opts.Apps.All.Start.IsSet; then
+            QPKGs.ToStart.Add "$(QPKGs.Installed.Array)"
+        fi
+
     for tier in {'essential','addon','optional'}; do
         case $tier in
             essential|optional)
@@ -948,10 +953,7 @@ Tiers.Processor()
 
                 Tier.Processor Restore false "$tier" QPKG ToRestore forward 'restore configuration for' 'restoring configuration for' 'configuration restored for' long
 
-                    # adjust lists for start
-                    if Opts.Apps.All.Start.IsSet; then
-                        QPKGs.ToStart.Add "$(QPKGs.Installed.Array)"
-                    else
+                    if [[ $tier == essential ]]; then
                         # check for essential packages that require starting due to any optionals being reinstalled
                         for package in $(QPKGs.ToReinstall.Array); do
                             QPKGs.ToStart.Add "$(QPKG.Get.Essentials "$package")"
@@ -983,9 +985,10 @@ Tiers.Processor()
                         for package in $(QPKGs.ToRestart.Array); do
                             QPKGs.ToStart.Add "$(QPKG.Get.Essentials "$package")"
                         done
+
+                        QPKGs.ToStart.Remove "$PROJECT_NAME"
                     fi
 
-                    QPKGs.ToStart.Remove "$PROJECT_NAME"
                     QPKGs.ToStart.Remove "$(QPKGs.SkStart.Array)"
 
                 Tier.Processor Start false "$tier" QPKG ToStart forward start starting started long
@@ -3487,7 +3490,13 @@ QPKGs.Operations.List()
 
     for array_name in "${operations_array[@]}"; do
         # speedup: only log arrays with more than zero elements
-        QPKGs.$array_name.IsAny && DebugQPKG "$array_name" "($(QPKGs.$array_name.Count)) $(QPKGs.$array_name.ListCSV) "
+        if QPKGs.$array_name.IsAny; then
+            if [[ ${array_name::2} != To ]]; then
+                DebugQPKGInfo "$array_name" "($(QPKGs.$array_name.Count)) $(QPKGs.$array_name.ListCSV) "
+            else
+                DebugQPKGWarning "$array_name" "($(QPKGs.$array_name.Count)) $(QPKGs.$array_name.ListCSV) "
+            fi
+        fi
     done
 
     DebugInfoMinorSeparator
@@ -3507,7 +3516,7 @@ QPKGs.States.List()
 
     for array_name in "${operations_array[@]}"; do
         # speedup: only log arrays with more than zero elements
-        QPKGs.$array_name.IsAny && DebugQPKG "$array_name" "($(QPKGs.$array_name.Count)) $(QPKGs.$array_name.ListCSV) "
+        QPKGs.$array_name.IsAny && DebugQPKGInfo "$array_name" "($(QPKGs.$array_name.Count)) $(QPKGs.$array_name.ListCSV) "
     done
 
     DebugInfoMinorSeparator
@@ -3902,7 +3911,7 @@ CalcQPKGArch()
     esac
 
     readonly NAS_QPKG_ARCH
-    DebugQPKG arch "$NAS_QPKG_ARCH"
+    DebugQPKGDetected arch "$NAS_QPKG_ARCH"
 
     return 0
 
@@ -3922,7 +3931,7 @@ CalcEntwareType()
             ENTWARE_VER=none
         fi
 
-        DebugQPKG 'Entware installer' $ENTWARE_VER
+        DebugQPKGDetected 'Entware installer' $ENTWARE_VER
 
         [[ $ENTWARE_VER = none ]] && DebugAsWarn "$(FormatAsPackageName Entware) appears to be installed but is not visible"
     fi
@@ -5501,60 +5510,111 @@ DebugInfoMinorSeparator()
 DebugExtLogMinorSeparator()
     {
 
-    DebugLog "$(eval printf '%0.s-' "{1..$DEBUG_LOG_DATAWIDTH}")"     # 'seq' is unavailable in QTS, so must resort to 'eval' trickery instead
+    DebugAsLog "$(eval printf '%0.s-' "{1..$DEBUG_LOG_DATAWIDTH}")"     # 'seq' is unavailable in QTS, so must resort to 'eval' trickery instead
 
     }
 
 DebugScript()
     {
 
-    DebugDetectedOK "$(FormatAsScript)" "${1:-}" "${2:-}"
+    DebugDetectedTabulated "$(FormatAsScript)" "${1:-}" "${2:-}"
 
     }
 
 DebugHardwareOK()
     {
 
-    DebugDetectedOK "$(FormatAsHardware)" "${1:-}" "${2:-}"
+    DebugDetectedTabulated "$(FormatAsHardware)" "${1:-}" "${2:-}"
 
     }
 
 DebugHardwareWarning()
     {
 
-    DebugDetectedWarning "$(FormatAsHardware)" "${1:-}" "${2:-}"
+    DebugWarningTabulated "$(FormatAsHardware)" "${1:-}" "${2:-}"
 
     }
 
 DebugFirmwareOK()
     {
 
-    DebugDetectedOK "$(FormatAsFirmware)" "${1:-}" "${2:-}"
+    DebugDetectedTabulated "$(FormatAsFirmware)" "${1:-}" "${2:-}"
 
     }
 
 DebugFirmwareWarning()
     {
 
-    DebugDetectedWarning "$(FormatAsFirmware)" "${1:-}" "${2:-}"
+    DebugWarningTabulated "$(FormatAsFirmware)" "${1:-}" "${2:-}"
 
     }
 
 DebugUserspaceOK()
     {
 
-    DebugDetectedOK "$(FormatAsUserspace)" "${1:-}" "${2:-}"
+    DebugDetectedTabulated "$(FormatAsUserspace)" "${1:-}" "${2:-}"
 
     }
 
 DebugUserspaceWarning()
     {
 
-    DebugDetectedWarning "$(FormatAsUserspace)" "${1:-}" "${2:-}"
+    DebugWarningTabulated "$(FormatAsUserspace)" "${1:-}" "${2:-}"
 
     }
 
-DebugDetectedWarning()
+DebugQPKGDetected()
+    {
+
+    DebugDetectedTabulated 'QPKG' "${1:-}" "${2:-}"
+
+    }
+
+DebugQPKGInfo()
+    {
+
+    DebugInfoTabulated 'QPKG' "${1:-}" "${2:-}"
+
+    }
+
+DebugQPKGWarning()
+    {
+
+    DebugWarningTabulated 'QPKG' "${1:-}" "${2:-}"
+
+    }
+
+DebugDetectedTabulated()
+    {
+
+    if [[ -z $3 ]]; then                # if $3 is nothing, then assume only 2 fields are required
+        DebugAsDetected "$(printf "%${DEBUG_LOG_FIRST_COL_WIDTH}s: %${DEBUG_LOG_SECOND_COL_WIDTH}s\n" "${1:-}" "${2:-}")"
+    elif [[ $3 = ' ' ]]; then           # if $3 is only a whitespace then print $2 with trailing colon and 'none' as third field
+        DebugAsDetected "$(printf "%${DEBUG_LOG_FIRST_COL_WIDTH}s: %${DEBUG_LOG_SECOND_COL_WIDTH}s: none\n" "${1:-}" "${2:-}")"
+    elif [[ ${3: -1} = ' ' ]]; then     # if $3 has a trailing whitespace then print $3 without the trailing whitespace
+        DebugAsDetected "$(printf "%${DEBUG_LOG_FIRST_COL_WIDTH}s: %${DEBUG_LOG_SECOND_COL_WIDTH}s: %-s\n" "${1:-}" "${2:-}" "$($SED_CMD 's| *$||' <<< "${3:-}")")"
+    else
+        DebugAsDetected "$(printf "%${DEBUG_LOG_FIRST_COL_WIDTH}s: %${DEBUG_LOG_SECOND_COL_WIDTH}s: %-s\n" "${1:-}" "${2:-}" "${3:-}")"
+    fi
+
+    }
+
+DebugInfoTabulated()
+    {
+
+    if [[ -z $3 ]]; then                # if $3 is nothing, then assume only 2 fields are required
+        DebugAsInfo "$(printf "%${DEBUG_LOG_FIRST_COL_WIDTH}s: %${DEBUG_LOG_SECOND_COL_WIDTH}s\n" "${1:-}" "${2:-}")"
+    elif [[ $3 = ' ' ]]; then           # if $3 is only a whitespace then print $2 with trailing colon and 'none' as third field
+        DebugAsInfo "$(printf "%${DEBUG_LOG_FIRST_COL_WIDTH}s: %${DEBUG_LOG_SECOND_COL_WIDTH}s: none\n" "${1:-}" "${2:-}")"
+    elif [[ ${3: -1} = ' ' ]]; then     # if $3 has a trailing whitespace then print $3 without the trailing whitespace
+        DebugAsInfo "$(printf "%${DEBUG_LOG_FIRST_COL_WIDTH}s: %${DEBUG_LOG_SECOND_COL_WIDTH}s: %-s\n" "${1:-}" "${2:-}" "$($SED_CMD 's| *$||' <<< "${3:-}")")"
+    else
+        DebugAsInfo "$(printf "%${DEBUG_LOG_FIRST_COL_WIDTH}s: %${DEBUG_LOG_SECOND_COL_WIDTH}s: %-s\n" "${1:-}" "${2:-}" "${3:-}")"
+    fi
+
+    }
+
+DebugWarningTabulated()
     {
 
     if [[ -z $3 ]]; then                # if $3 is nothing, then assume only 2 fields are required
@@ -5569,25 +5629,23 @@ DebugDetectedWarning()
 
     }
 
-DebugDetectedOK()
+DebugVar()
     {
 
-    if [[ -z $3 ]]; then                # if $3 is nothing, then assume only 2 fields are required
-        DebugDetected "$(printf "%${DEBUG_LOG_FIRST_COL_WIDTH}s: %${DEBUG_LOG_SECOND_COL_WIDTH}s\n" "${1:-}" "${2:-}")"
-    elif [[ $3 = ' ' ]]; then           # if $3 is only a whitespace then print $2 with trailing colon and 'none' as third field
-        DebugDetected "$(printf "%${DEBUG_LOG_FIRST_COL_WIDTH}s: %${DEBUG_LOG_SECOND_COL_WIDTH}s: none\n" "${1:-}" "${2:-}")"
-    elif [[ ${3: -1} = ' ' ]]; then     # if $3 has a trailing whitespace then print $3 without the trailing whitespace
-        DebugDetected "$(printf "%${DEBUG_LOG_FIRST_COL_WIDTH}s: %${DEBUG_LOG_SECOND_COL_WIDTH}s: %-s\n" "${1:-}" "${2:-}" "$($SED_CMD 's| *$||' <<< "${3:-}")")"
-    else
-        DebugDetected "$(printf "%${DEBUG_LOG_FIRST_COL_WIDTH}s: %${DEBUG_LOG_SECOND_COL_WIDTH}s: %-s\n" "${1:-}" "${2:-}" "${3:-}")"
-    fi
+    DebugAsVar "\$${1:-} : '${!1:-}'"
 
     }
 
-DebugQPKG()
+DebugInfo()
     {
 
-    DebugDetectedOK 'QPKG' "${1:-}" "${2:-}"
+    if [[ ${2:-} = ' ' || ${2:-} = "'' " ]]; then   # if $2 has no usable content then print $1 with trailing colon and 'none' as second field
+        DebugAsInfo "$1: none"
+    elif [[ -n ${2:-} ]]; then
+        DebugAsInfo "$1: $2"
+    else
+        DebugAsInfo "$1"
+    fi
 
     }
 
@@ -5636,23 +5694,17 @@ DebugAsDone()
 
     }
 
-DebugDetected()
+DebugAsDetected()
     {
 
     DebugThis "(**) $1"
 
     }
 
-DebugInfo()
+DebugAsInfo()
     {
 
-    if [[ ${2:-} = ' ' || ${2:-} = "'' " ]]; then   # if $2 has no usable content then print $1 with trailing colon and 'none' as second field
-        DebugThis "(II) $1: none"
-    elif [[ -n ${2:-} ]]; then
-        DebugThis "(II) $1: $2"
-    else
-        DebugThis "(II) $1"
-    fi
+    DebugThis "(II) $1"
 
     }
 
@@ -5670,17 +5722,17 @@ DebugAsError()
 
     }
 
-DebugLog()
+DebugAsLog()
     {
 
     DebugThis "(LL) ${1:-}"
 
     }
 
-DebugVar()
+DebugAsVar()
     {
 
-    DebugThis "(vv) \$${1:-} : '${!1:-}'"
+    DebugThis "(vv) $1"
 
     }
 
@@ -5701,17 +5753,17 @@ AddFileToDebug()
     local screen_debug=false
 
     DebugExtLogMinorSeparator
-    DebugLog 'adding external log to main log ...'
+    DebugAsLog 'adding external log to main log ...'
 
     if Session.Debug.ToScreen.IsSet; then      # prevent external log contents appearing onscreen again - it's already been seen "live".
         screen_debug=true
         Session.Debug.ToScreen.Clear
     fi
 
-    DebugLog "$(FormatAsLogFilename "${1:?no filename supplied}")"
+    DebugAsLog "$(FormatAsLogFilename "${1:?no filename supplied}")"
 
     while read -r linebuff; do
-        DebugLog "$linebuff"
+        DebugAsLog "$linebuff"
     done < "$1"
 
     [[ $screen_debug = true ]] && Session.Debug.ToScreen.Set
