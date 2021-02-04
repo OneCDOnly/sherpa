@@ -4612,8 +4612,8 @@ QPKG.Upgrade()
         DebugFuncExit $result_code; return
     fi
 
-    local previous_version='null'
-    local current_version='null'
+    local previous_version=null
+    local current_version=null
     local local_pathfile=$(QPKG.PathFilename "$PACKAGE_NAME")
 
     if [[ -z $local_pathfile ]]; then
@@ -5031,7 +5031,7 @@ QPKG.SupportsBackup()
     local package_index=0
 
     for package_index in "${!MANAGER_QPKG_NAME[@]}"; do
-        if [[ ${MANAGER_QPKG_NAME[$package_index]} = "${1:?empty}" ]]; then
+        if [[ ${MANAGER_QPKG_NAME[$package_index]} = "${1:?no package name supplied}" ]]; then
             if ${MANAGER_QPKG_BACKUP_SUPPORTED[$package_index]}; then
                 return 0
             else
@@ -5058,7 +5058,7 @@ QPKG.SupportsUpdateOnRestart()
     local package_index=0
 
     for package_index in "${!MANAGER_QPKG_NAME[@]}"; do
-        if [[ ${MANAGER_QPKG_NAME[$package_index]} = "${1:?empty}" ]]; then
+        if [[ ${MANAGER_QPKG_NAME[$package_index]} = "${1:?no package name supplied}" ]]; then
             if ${MANAGER_QPKG_UPDATE_ON_RESTART[$package_index]}; then
                 return 0
             else
@@ -5143,7 +5143,7 @@ QPKG.Installed()
     # output:
     #   $? = 0 (true) or 1 (false)
 
-    $GREP_CMD -q "^\[${1:?empty}\]" /etc/config/qpkg.conf
+    $GREP_CMD -q "^\[${1:?no package name supplied}\]" /etc/config/qpkg.conf
 
     }
 
@@ -5156,7 +5156,7 @@ QPKG.NotInstalled()
     # output:
     #   $? = 0 (true) or 1 (false)
 
-    ! QPKG.Installed "${1:?empty}"
+    ! QPKG.Installed "${1:?no package name supplied}"
 
     }
 
@@ -5169,7 +5169,7 @@ QPKG.Enabled()
     # output:
     #   $? = 0 (true) or 1 (false)
 
-    [[ $($GETCFG_CMD "${1:?empty}" Enable -u -f /etc/config/qpkg.conf) = 'TRUE' ]]
+    [[ $($GETCFG_CMD "${1:?no package name supplied}" Enable -u -f /etc/config/qpkg.conf) = 'TRUE' ]]
 
     }
 
@@ -5182,7 +5182,7 @@ QPKG.NotEnabled()
     # output:
     #   $? = 0 (true) or 1 (false)
 
-    [[ $($GETCFG_CMD "${1:?empty}" Enable -u -f /etc/config/qpkg.conf) = 'FALSE' ]]
+    [[ $($GETCFG_CMD "${1:?no package name supplied}" Enable -u -f /etc/config/qpkg.conf) = 'FALSE' ]]
 
     }
 
@@ -5199,7 +5199,7 @@ QPKG.Abbrvs()
     local -i index=0
 
     for index in "${!MANAGER_QPKG_NAME[@]}"; do
-        if [[ ${1:?empty} = "${MANAGER_QPKG_NAME[$index]}" ]]; then
+        if [[ ${1:?no package name supplied} = "${MANAGER_QPKG_NAME[$index]}" ]]; then
             echo "${MANAGER_QPKG_ABBRVS[$index]}"
             return 0
         fi
@@ -5366,7 +5366,7 @@ FormatAsISOBytes()
 FormatAsScriptTitle()
     {
 
-    ColourTextBrightWhite "$PROJECT_NAME"
+    ColourTextBrightWhite "${PROJECT_NAME:-default project name}"
 
     }
 
@@ -5475,13 +5475,13 @@ FormatAsUserspace()
 FormatAsResultAndStdout()
     {
 
-    if [[ $1 -eq 0 ]]; then
+    if [[ ${1:-0} -eq 0 ]]; then
         echo "= result_code: $(FormatAsExitcode "$1") ***** stdout/stderr begins below *****"
     else
         echo "! result_code: $(FormatAsExitcode "$1") ***** stdout/stderr begins below *****"
     fi
 
-    echo "$2"
+    echo "${2:-stdout}"
     echo '= ***** stdout/stderr is complete *****'
 
     }
@@ -5691,7 +5691,7 @@ DebugAsError()
 DebugLog()
     {
 
-    DebugThis "(LL) $1"
+    DebugThis "(LL) ${1:-}"
 
     }
 
@@ -5705,7 +5705,7 @@ DebugVar()
 DebugThis()
     {
 
-    [[ $(type -t Session.Debug.ToScreen.Init) = function ]] && Session.Debug.ToScreen.IsSet && ShowAsDebug "$1"
+    [[ $(type -t Session.Debug.ToScreen.Init) = function ]] && Session.Debug.ToScreen.IsSet && ShowAsDebug "${1:-}"
     WriteAsDebug "$1"
 
     }
@@ -5726,7 +5726,7 @@ AddFileToDebug()
         Session.Debug.ToScreen.Clear
     fi
 
-    DebugLog "$(FormatAsLogFilename "$1")"
+    DebugLog "$(FormatAsLogFilename "${1:?no filename supplied}")"
 
     while read -r linebuff; do
         DebugLog "$linebuff"
@@ -5970,6 +5970,9 @@ WriteToDisplayWait()
     #   $1 = pass/fail
     #   $2 = message
 
+    # output:
+    #   $previous_msg = global and will be used again later
+
     previous_msg=$(printf "%-10s: %s" "${1:-}" "${2:-}")
     DisplayWait "$previous_msg"
 
@@ -6026,10 +6029,8 @@ WriteToLog()
     #   $1 = pass/fail
     #   $2 = message
 
-    [[ -z ${SESSION_ACTIVE_PATHFILE:-} ]] && return 1
     [[ $(type -t Session.Debug.ToFile.Init) = function ]] && Session.Debug.ToFile.IsNot && return
-
-    printf "%-4s: %s\n" "$(StripANSI "$1")" "$(StripANSI "$2")" >> "$SESSION_ACTIVE_PATHFILE"
+    [[ -n ${SESSION_ACTIVE_PATHFILE:-} ]] && printf "%-4s: %s\n" "$(StripANSI "${1:-}")" "$(StripANSI "${2:-}")" >> "$SESSION_ACTIVE_PATHFILE"
 
     }
 
@@ -6099,7 +6100,7 @@ ColourTextBrightWhite()
 ColourReset()
     {
 
-    echo -en "$1"'\033[0m'
+    echo -en "${1:-}"'\033[0m'
 
     }
 
@@ -6108,10 +6109,10 @@ StripANSI()
 
     # QTS 4.2.6 BusyBox 'sed' doesn't fully support extended regexes, so this only works with a real 'sed'.
 
-    if [[ -e $GNU_SED_CMD ]]; then
-        $GNU_SED_CMD -r 's/\x1b\[[0-9;]*m//g' <<< "$1"
+    if [[ -e ${GNU_SED_CMD:-} ]]; then
+        $GNU_SED_CMD -r 's/\x1b\[[0-9;]*m//g' <<< "${1:-}"
     else
-        echo "$1"
+        echo "${1:-}"
     fi
 
     }
@@ -6124,9 +6125,9 @@ ConvertSecsToHoursMinutesSecs()
     # input:
     #   $1 = a time in seconds to convert to 'hh:mm:ss'
 
-    ((h=${1}/3600))
-    ((m=(${1}%3600)/60))
-    ((s=${1}%60))
+    ((h=${1:-0}/3600))
+    ((m=(${1:-0}%3600)/60))
+    ((s=${1:-0}%60))
 
     printf "%02dh:%02dm:%02ds\n" "$h" "$m" "$s"
 
@@ -6146,7 +6147,7 @@ AddListObj()
 
     # $1: object name to create
 
-    local public_function_name=$1
+    local public_function_name=${1:?no object name supplied}
     local safe_function_name="$(tr 'A-Z' 'a-z' <<< "${public_function_name//[.-]/_}")"
 
     _placeholder_size_=_obj_${safe_function_name}_size_
@@ -6248,7 +6249,7 @@ AddFlagObj()
 
     # $1: object name to create
 
-    local public_function_name=$1
+    local public_function_name=${1:?no object name supplied}
     local safe_function_name="$(tr 'A-Z' 'a-z' <<< "${public_function_name//[.-]/_}")"
 
     _placeholder_text_=_obj_${safe_function_name}_text_
