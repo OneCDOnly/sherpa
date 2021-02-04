@@ -814,8 +814,6 @@ Tiers.Processor()
         QPKGs.ToBackup.Add "$(QPKGs.SupportsBackup.Array)"
     fi
 
-#     QPKGs.ToBackup.Remove "$(QPKGs.NotInstalled.Array)"
-#     QPKGs.ToBackup.Remove "$(QPKGs.NotSupportsBackup.Array)"
     QPKGs.ToBackup.Remove "$(QPKGs.SkBackup.Array)"
 
     Tier.Processor Backup false all QPKG ToBackup forward backup backing-up backed-up ''
@@ -823,15 +821,6 @@ Tiers.Processor()
     if Opts.Apps.All.Stop.IsSet; then
         QPKGs.ToStop.Add "$(QPKGs.Started.Array)"
     fi
-
-#     # don't stop, then start a package. Make it restart instead.
-#     for package in $(QPKGs.ToStop.Array); do
-#         if QPKGs.ToStart.Exist "$package"; then
-#             QPKGs.ToStop.Remove "$package"
-#             QPKGs.ToStart.Remove "$package"
-#             QPKGs.ToRestart.Add "$package"
-#         fi
-#     done
 
     if Opts.Apps.All.Uninstall.IsSet; then
         QPKGs.ToStop.Init   # no-need to stop any packages, as they are about to be uninstalled
@@ -869,8 +858,6 @@ Tiers.Processor()
         fi
     done
 
-#     QPKGs.ToStop.Remove "$(QPKGs.Stopped.Array)"
-#     QPKGs.ToStop.Remove "$(QPKGs.NotInstalled.Array)"
     QPKGs.ToStop.Remove "$(QPKGs.ToUninstall.Array)"
     QPKGs.ToStop.Remove "$PROJECT_NAME"
     QPKGs.ToStop.Remove "$(QPKGs.SkStop.Array)"
@@ -878,7 +865,6 @@ Tiers.Processor()
     Tier.Processor Stop false optional QPKG ToStop backward stop stopping stopped ''
     Tier.Processor Stop false essential QPKG ToStop backward stop stopping stopped ''
 
-#     QPKGs.ToUninstall.Remove "$(QPKGs.NotInstalled.Array)"
     QPKGs.ToUninstall.Remove "$PROJECT_NAME"
     QPKGs.ToUninstall.Remove "$(QPKGs.SkUninstall.Array)"
 
@@ -910,8 +896,6 @@ Tiers.Processor()
         fi
     done
 
-#     QPKGs.ToInstall.Remove "$(QPKGs.Installed.Array)"
-
     for tier in {'essential','addon','optional'}; do
         case $tier in
             essential|optional)
@@ -927,9 +911,10 @@ Tiers.Processor()
 
                 Tier.Processor Install false "$tier" QPKG ToInstall forward install installing installed long
 
-                if [[ $tier = optional ]]; then
-                    Tier.Processor Restore false "$tier" QPKG ToRestore forward 'restore configuration for' 'restoring configuration for' 'configuration restored for' long
-                fi
+                QPKGs.ToRestore.Remove "$(QPKGs.Essential.Array)"
+                QPKGs.ToRestore.Remove "$PROJECT_NAME"
+                QPKGs.ToRestore.Remove "$(QPKGs.SkRestore.Array)"
+                Tier.Processor Restore false "$tier" QPKG ToRestore forward 'restore configuration for' 'restoring configuration for' 'configuration restored for' long
 
                 # adjust lists for start
                 if Opts.Apps.All.Start.IsSet; then
@@ -968,10 +953,6 @@ Tiers.Processor()
                     done
                 fi
 
-#                 QPKGs.ToStart.Remove "$(QPKGs.NotInstalled.Array)"
-#                 QPKGs.ToStart.Remove "$(QPKGs.Started.Array)"
-#                 QPKGs.ToStart.Remove "$(QPKGs.IsInstall.Array)"
-#                 QPKGs.ToStart.Remove "$(QPKGs.IsStart.Array)"
                 QPKGs.ToStart.Remove "$PROJECT_NAME"
                 QPKGs.ToStart.Remove "$(QPKGs.SkStart.Array)"
 
@@ -1011,15 +992,12 @@ Tiers.Processor()
                     done
                 fi
 
-#                 QPKGs.ToRestart.Remove "$(QPKGs.NotInstalled.Array)"
-#                 QPKGs.ToRestart.Remove "$(QPKGs.Stopped.Array)"
                 QPKGs.ToRestart.Remove "$(QPKGs.IsUpgrade.Array)"
                 QPKGs.ToRestart.Remove "$(QPKGs.IsReinstall.Array)"
                 QPKGs.ToRestart.Remove "$(QPKGs.IsInstall.Array)"
                 QPKGs.ToRestart.Remove "$(QPKGs.IsStart.Array)"
                 QPKGs.ToRestart.Remove "$(QPKGs.IsRestart.Array)"
                 QPKGs.ToRestart.Remove "$(QPKGs.IsRestore.Array)"
-#                 QPKGs.ToRestart.Remove "$(QPKGs.NotSupportsUpdateOnRestart.Array)"
                 QPKGs.ToRestart.Remove "$(QPKGs.SkRestart.Array)"
 
                 Tier.Processor Restart false "$tier" QPKG ToRestart forward restart restarting restarted long
@@ -4727,6 +4705,7 @@ QPKG.Uninstall()
         QPKGs.SkUninstall.Add "$PACKAGE_NAME"
         QPKGs.Installed.Remove "$PACKAGE_NAME"
         QPKGs.NotInstalled.Add "$PACKAGE_NAME"
+        QPKGs.Started.Remove "$PACKAGE_NAME"
         result_code=2
         DebugFuncExit $result_code; return
     fi
@@ -4750,6 +4729,7 @@ QPKG.Uninstall()
             QPKGs.IsUninstall.Add "$PACKAGE_NAME"
             QPKGs.NotInstalled.Add "$PACKAGE_NAME"
             QPKGs.Installed.Remove "$PACKAGE_NAME"
+            QPKGs.Started.Remove "$PACKAGE_NAME"
         else
             DebugAsError "unable to uninstall $(FormatAsPackageName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
             QPKGs.ErUninstall.Add "$PACKAGE_NAME"
