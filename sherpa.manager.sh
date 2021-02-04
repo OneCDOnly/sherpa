@@ -1325,7 +1325,7 @@ ParseArguments()
         # stage 1
         if [[ -z $operation ]]; then
             case $arg in
-                a|abs|action|actions|actions-all|all-actions|b|backups|e|essentials|installable|installed|l|last|log|o|option|optionals|options|p|package|packages|problems|standalone|standalones|started|stopped|tail|tips|upgradable|v|version|versions|whole)
+                a|abs|action|actions|actions-all|all-actions|b|backups|e|essential|essentials|installable|installed|l|last|log|o|option|optional|optionals|options|p|package|packages|problems|standalone|standalones|started|stopped|tail|tips|upgradable|v|version|versions|whole)
                     operation=help_
                     arg_identified=true
                     scope=''
@@ -1729,31 +1729,29 @@ ParseArguments()
                 esac
                 ;;
             uninstall_)
-                if [[ $operation_force = true ]]; then
-                    case $scope in                          # these scopes are dangerous, so make 'force' a requirement
-                        all_)
+                case $scope in
+                    all_)   # this scope is dangerous, so make 'force' a requirement
+                        if [[ $operation_force = true ]]; then
                             QPKGs.ToUninstall.Add "$(QPKGs.Installed.Array)"
                             Opts.Apps.All.Uninstall.Set
                             operation=''
                             operation_force=false
-                            ;;
-                        essential_)
-                            QPKGs.ToUninstall.Add "$(QPKGs.Essential.Array)"
-                            operation=''
-                            operation_force=false
-                            ;;
-                        optional_)
-                            QPKGs.ToUninstall.Add "$(QPKGs.Optional.Array)"
-                            operation=''
-                            operation_force=false
-                            ;;
-                        *)
-                            QPKGs.ToUninstall.Add "$package"
-                            ;;
-                    esac
-                else
-                    QPKGs.ToUninstall.Add "$package"
-                fi
+                        fi
+                        ;;
+                    essential_)
+                        QPKGs.ToUninstall.Add "$(QPKGs.Essential.Array)"
+                        operation=''
+                        operation_force=false
+                        ;;
+                    optional_)
+                        QPKGs.ToUninstall.Add "$(QPKGs.Optional.Array)"
+                        operation=''
+                        operation_force=false
+                        ;;
+                    *)
+                        QPKGs.ToUninstall.Add "$package"
+                        ;;
+                esac
                 ;;
             upgrade_)
                 case $scope in
