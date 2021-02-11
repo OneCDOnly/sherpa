@@ -12,7 +12,7 @@
 Init()
     {
 
-    IsQNAP || return 1
+    IsQNAP || return
 
     # specific environment
     readonly QPKG_NAME=nzbToMedia
@@ -177,7 +177,11 @@ StartQPKG()
         rm -r "$APPARENT_PATH"
     fi
 
-    [[ ! -L $APPARENT_PATH ]] && ln -s "$QPKG_REPO_PATH" "$APPARENT_PATH"
+    if [[ ! -L $APPARENT_PATH ]]; then
+        rmdir --ignore-fail-on-non-empty "$APPARENT_PATH" &>/dev/null
+        ln -s "$QPKG_REPO_PATH" "$APPARENT_PATH"
+    fi
+
     DisplayCommitToLog 'start package: OK'
 
     EnsureConfigFileExists
