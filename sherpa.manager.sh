@@ -54,7 +54,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=210211
+    readonly MANAGER_SCRIPT_VERSION=210304
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
 
@@ -438,7 +438,7 @@ Session.Init()
         MANAGER_QPKG_DESC+=('follow authors and grab metadata for all your digital reading needs')
         MANAGER_QPKG_ABBRVS+=('ll lazy lazylibrarian')
         MANAGER_QPKG_ESSENTIALS+=(Entware)
-        MANAGER_QPKG_IPKGS_ADD+=('python3-pyopenssl python3-requests')
+        MANAGER_QPKG_IPKGS_ADD+=('python3-requests')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
         MANAGER_QPKG_UPDATE_ON_RESTART+=(true)
@@ -453,7 +453,7 @@ Session.Init()
         MANAGER_QPKG_DESC+=('another SickBeard fork: manage and search for TV shows')
         MANAGER_QPKG_ABBRVS+=('om med omed medusa omedusa')
         MANAGER_QPKG_ESSENTIALS+=(Entware)
-        MANAGER_QPKG_IPKGS_ADD+=('mediainfo python3-pyopenssl')
+        MANAGER_QPKG_IPKGS_ADD+=('mediainfo')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
         MANAGER_QPKG_UPDATE_ON_RESTART+=(true)
@@ -468,7 +468,7 @@ Session.Init()
         MANAGER_QPKG_DESC+=('automated Comic Book (cbr/cbz) downloader program for use with NZB and torrents written in Python')
         MANAGER_QPKG_ABBRVS+=('my omy myl mylar mylar3')
         MANAGER_QPKG_ESSENTIALS+=(Entware)
-        MANAGER_QPKG_IPKGS_ADD+=('python3-mako python3-pillow python3-pyopenssl python3-pytz python3-requests python3-six python3-urllib3')
+        MANAGER_QPKG_IPKGS_ADD+=('python3-mako python3-pillow python3-pytz python3-requests python3-six python3-urllib3')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
         MANAGER_QPKG_UPDATE_ON_RESTART+=(true)
@@ -528,7 +528,7 @@ Session.Init()
         MANAGER_QPKG_DESC+=('full-featured NZB download manager with a nice web UI')
         MANAGER_QPKG_ABBRVS+=('sb sb3 sab sab3 sabnzbd3 sabnzbd')
         MANAGER_QPKG_ESSENTIALS+=('Entware Par2')
-        MANAGER_QPKG_IPKGS_ADD+=('python3-asn1crypto python3-chardet python3-cryptography python3-pyopenssl unrar p7zip coreutils-nice ionice ffprobe')
+        MANAGER_QPKG_IPKGS_ADD+=('python3-asn1crypto python3-chardet python3-cryptography unrar p7zip coreutils-nice ionice ffprobe')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
         MANAGER_QPKG_UPDATE_ON_RESTART+=(true)
@@ -643,7 +643,7 @@ Session.Init()
 
     readonly MANAGER_ESSENTIAL_IPKGS_ADD='findutils grep less sed'
     readonly MANAGER_COMMON_IPKGS_ADD='ca-certificates gcc git git-http nano python3-dev python3-pip python3-setuptools'
-    readonly MANAGER_COMMON_PIPS_ADD='apprise apscheduler beautifulsoup4 cfscrape cheetah3 cheroot!=8.4.4 cherrypy configobj feedparser portend pygithub python-levenshtein python-magic random_user_agent sabyenc3 simplejson slugify'
+    readonly MANAGER_COMMON_PIPS_ADD='apprise apscheduler beautifulsoup4 cfscrape cheetah3 cheroot!=8.4.4 cherrypy configobj feedparser portend pygithub pyopenssl python-levenshtein python-magic random_user_agent sabyenc3 simplejson slugify'
     readonly MANAGER_COMMON_QPKG_CONFLICTS='Optware Optware-NG TarMT Python QPython2 Python3 QPython3'
 
     QPKGs.EssentialOptionalStandalone.Build
@@ -2354,6 +2354,9 @@ IPKGs.Uninstall()
 
         # KLUDGE: when package arch is 'none', prevent 'par2cmdline' being uninstalled, then installed again later this same session. Noticed this was happening on ARMv5 models.
         [[ $NAS_QPKG_ARCH = none ]] && IPKGs.ToUninstall.Remove par2cmdline
+
+        # KLUDGE: switched-to using the PIP package instead. Ref: https://forums.sabnzbd.org/viewtopic.php?p=123862#p123862
+        IPKGs.ToUninstall.Remove python3-pyopenssl
 
         IPKGs.Uninstall.Batch
     fi
