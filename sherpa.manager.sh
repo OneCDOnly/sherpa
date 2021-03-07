@@ -54,7 +54,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=210304
+    readonly MANAGER_SCRIPT_VERSION=210308
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
 
@@ -1947,7 +1947,13 @@ ListEnvironment()
 
     DebugInfoMinorSeparator
     DebugHardwareOK model "$(get_display_name)"
-    DebugHardwareOK CPU "$($GREP_CMD -m1 '^model name' /proc/cpuinfo | $SED_CMD 's|^.*: ||')"
+
+    if [[ -e $GNU_GREP_CMD ]]; then
+        DebugHardwareOK CPU "$($GNU_GREP_CMD -m1 '^model name' /proc/cpuinfo | $SED_CMD 's|^.*: ||')"
+    else    # QTS 4.5.1 & BusyBox 1.01 don't support '-m' option for 'grep', so need to use a different method
+        DebugHardwareOK CPU "$($GREP_CMD '^model name' /proc/cpuinfo | $HEAD_CMD -n1 | $SED_CMD 's|^.*: ||')"
+    fi
+
     DebugHardwareOK RAM "$(FormatAsThousands "$INSTALLED_RAM_KB")kB"
 
     if QPKGs.ToInstall.Exist SABnzbd || QPKG.Installed SABnzbd; then
@@ -2008,7 +2014,7 @@ ListEnvironment()
     CheckPythonPathAndVersion python
 
     if QPKG.Installed Entware && ! QPKGs.ToUninstall.Exist Entware; then
-        version=$(python3 -V 2>/dev/null | $SED_CMD 's|^Python ||') && [[ ${version//./} -lt $MIN_PYTHON_VER ]] && ShowAsReco "your Python 3 is out-of-date. Suggest reinstalling Entware: '$PROJECT_NAME reinstall ew'"
+        [[ -e /opt/bin/python3 ]] && version=$(/opt/bin/python3 -V 2>/dev/null | $SED_CMD 's|^Python ||') && [[ ${version//./} -lt $MIN_PYTHON_VER ]] && ShowAsReco "your Python 3 is out-of-date. Suggest reinstalling Entware: '$PROJECT_NAME reinstall ew'"
     fi
 
     DebugScript 'logs path' "$LOGS_PATH"
