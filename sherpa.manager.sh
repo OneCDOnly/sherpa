@@ -1622,7 +1622,7 @@ ParseArguments()
                 ;;
             paste_)
                 case $scope in
-                    all_|whole_)
+                    all_|log_)
                         Opts.Log.All.Paste.Set
                         ;;
                     last_)
