@@ -17,7 +17,7 @@ Package management via **sherpa** provides extra features like easy application 
 ## Applications available
 [![Entware](images/Entware.gif)](https://github.com/Entware/Entware/wiki)
 [![Par2](images/Par2.gif)](https://github.com/Parchive/par2cmdline)
-[![Deluge](images/Deluge-web.gif)](https://dev.deluge-torrent.org/)
+[![ClamAV](images/ClamAV.gif)](https://www.clamav.net/)[![Deluge](images/Deluge-web.gif)](https://dev.deluge-torrent.org/)
 [![HideThatBanner](images/HideThatBanner.gif)](https://github.com/OneCDOnly/HideThatBanner)
 [![LazyLibrarian](images/LazyLibrarian.gif)](https://lazylibrarian.gitlab.io/)
 [![Medusa](images/OMedusa.gif)](https://github.com/pymedusa/Medusa)
@@ -36,6 +36,8 @@ Package management via **sherpa** provides extra features like easy application 
 ## Requirements
 
 Any model QNAP NAS with at-least 1GB RAM and running QTS 4.0 or-later.
+
+The ClamAV package will require at-least 1.5GB RAM installed.
 
 ---
 ## Usage
