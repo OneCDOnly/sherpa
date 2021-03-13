@@ -395,7 +395,7 @@ Session.Init()
         MANAGER_QPKG_ESSENTIALS+=(Entware)
         MANAGER_QPKG_IPKGS_ADD+=('clamav freshclam')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
-        MANAGER_QPKG_BACKUP_SUPPORTED+=(flase)
+        MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
         MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     MANAGER_QPKG_NAME+=(Deluge-server)
