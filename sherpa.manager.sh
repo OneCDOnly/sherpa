@@ -54,7 +54,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=210308
+    readonly MANAGER_SCRIPT_VERSION=210314
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
 
@@ -383,6 +383,21 @@ Session.Init()
         MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     # only optionals below here in pseudo-alpha-sorted name order (i.e. disregard character-case and leading 'O')
+    MANAGER_QPKG_NAME+=(ClamAV)
+        MANAGER_QPKG_IS_ESSENTIAL+=(false)
+        MANAGER_QPKG_IS_STANDALONE+=(false)
+        MANAGER_QPKG_ARCH+=(all)
+        MANAGER_QPKG_VERSION+=(210314)
+        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
+        MANAGER_QPKG_MD5+=(31f4c23f992264e2e8818011bc137e00)
+        MANAGER_QPKG_DESC+=('ClamAV replacement for QTS built-in')
+        MANAGER_QPKG_ABBRVS+=('clam clamscan freshclam clamav')
+        MANAGER_QPKG_ESSENTIALS+=(Entware)
+        MANAGER_QPKG_IPKGS_ADD+=('clamav freshclam')
+        MANAGER_QPKG_IPKGS_REMOVE+=('')
+        MANAGER_QPKG_BACKUP_SUPPORTED+=(flase)
+        MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
+
     MANAGER_QPKG_NAME+=(Deluge-server)
         MANAGER_QPKG_IS_ESSENTIAL+=(false)
         MANAGER_QPKG_IS_STANDALONE+=(false)
