@@ -46,15 +46,20 @@ Init()
     readonly SERVICE_STATUS_PATHFILE=/var/run/$QPKG_NAME.last.operation
     readonly SERVICE_LOG_PATHFILE=/var/log/$QPKG_NAME.log
     readonly OPKG_PATH=/opt/bin:/opt/sbin
-#     local -r BACKUP_PATH=$($GETCFG_CMD SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
-#     readonly BACKUP_PATHFILE=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
     readonly APPARENT_PATH=/share/$($GETCFG_CMD SHARE_DEF defDownload -d Qdownload -f /etc/config/def_share.info)/$QPKG_NAME
     export PATH="$OPKG_PATH:$($SED_CMD "s|$OPKG_PATH||" <<< "$PATH")"
     [[ -n $PYTHON ]] && export PYTHONPATH=$PYTHON
 
     # application specific
-	AV_INIT_PATHFILE=/etc/init.d/antivirus.sh
-	AV_INIT_BACKUP_PATHFILE=/etc/init.d/antivirus.sh.bak
+    readonly AV_INIT_PATHFILE=/etc/init.d/antivirus.sh
+    readonly AV_INIT_BACKUP_PATHFILE=/etc/init.d/antivirus.sh.bak
+    readonly INSTALLED_RAM_KB=$($GREP_CMD MemTotal /proc/meminfo | cut -f2 -d':' | $SED_CMD 's|kB||;s| ||g')
+    readonly MIN_RAM_KB=1578040
+
+    if [[ $INSTALLED_RAM_KB -lt $MIN_RAM_KB ]]; then
+        DisplayErrCommitAllLogs "ClamAV won't run on this NAS. Not enough RAM. :("
+        exit 1
+    fi
 
     if [[ -n $PYTHON ]]; then
         readonly LAUNCH_TARGET=$PYTHON
@@ -120,28 +125,28 @@ StartQPKG()
 
     IsError && return
 
-	if [[ ! -e $AV_INIT_BACKUP_PATHFILE ]]; then
-		cp "$AV_INIT_PATHFILE" "$AV_INIT_BACKUP_PATHFILE"
+    if [[ ! -e $AV_INIT_BACKUP_PATHFILE ]]; then
+        cp "$AV_INIT_PATHFILE" "$AV_INIT_BACKUP_PATHFILE"
 
-		# mod base references
-		$SED_CMD -i 's|/usr/local/bin/clamscan|/opt/sbin/clamscan|' "$AV_INIT_PATHFILE"
-		$SED_CMD -i 's|/usr/local/bin/freshclam|/opt/sbin/freshclam|' "$AV_INIT_PATHFILE"
+        # mod base references
+        $SED_CMD -i 's|/usr/local/bin/clamscan|/opt/sbin/clamscan|' "$AV_INIT_PATHFILE"
+        $SED_CMD -i 's|/usr/local/bin/freshclam|/opt/sbin/freshclam|' "$AV_INIT_PATHFILE"
 
-		# disable dryrun. The new ClamAV engine (0.102.4) doesn't support the '--dryrun' or '--countfile=' options.
-		# match second occurrence only. First one is used by Mcafee. Solution here: https://unix.stackexchange.com/a/403272
-		$SED_CMD -i ':a;N;$!ba; s|/bin/sh -c "$AV_SCAN_PATH $DRY_RUN_OPTIONS --dryrun|#/bin/sh -c "$AV_SCAN_PATH $DRY_RUN_OPTIONS --dryrun|2' "$AV_INIT_PATHFILE"
+        # disable dryrun. The new ClamAV engine (0.102.4) doesn't support the '--dryrun' or '--countfile=' options.
+        # match second occurrence only. First one is used by Mcafee. Solution here: https://unix.stackexchange.com/a/403272
+        $SED_CMD -i ':a;N;$!ba; s|/bin/sh -c "$AV_SCAN_PATH $DRY_RUN_OPTIONS --dryrun|#/bin/sh -c "$AV_SCAN_PATH $DRY_RUN_OPTIONS --dryrun|2' "$AV_INIT_PATHFILE"
 
-		# mod 'clamscan' runtime options
-		# match second occurrence only. First one is used by Mcafee.
-		$SED_CMD -i ':a;N;$!ba; s|OPTIONS="$OPTIONS --countfile=/tmp/antivirous.job.$job_id.scanning"|OPTIONS="$OPTIONS --database=$ANTIVIRUS_CLAMAV"|2' "$AV_INIT_PATHFILE"
+        # mod 'clamscan' runtime options
+        # match second occurrence only. First one is used by Mcafee.
+        $SED_CMD -i ':a;N;$!ba; s|OPTIONS="$OPTIONS --countfile=/tmp/antivirous.job.$job_id.scanning"|OPTIONS="$OPTIONS --database=$ANTIVIRUS_CLAMAV"|2' "$AV_INIT_PATHFILE"
 
-		# mod 'freshclam' runtime options
-		$SED_CMD -i 's|$FRESHCLAM -u admin -l /tmp/.freshclam.log|$FRESHCLAM -u admin --config-file=$FRESHCLAM_CONFIG --datadir=$ANTIVIRUS_CLAMAV -l /tmp/.freshclam.log|' "$AV_INIT_PATHFILE"
+        # mod 'freshclam' runtime options
+        $SED_CMD -i 's|$FRESHCLAM -u admin -l /tmp/.freshclam.log|$FRESHCLAM -u admin --config-file=$FRESHCLAM_CONFIG --datadir=$ANTIVIRUS_CLAMAV -l /tmp/.freshclam.log|' "$AV_INIT_PATHFILE"
 
-		"$AV_INIT_PATHFILE" restart
-	fi
+        "$AV_INIT_PATHFILE" restart
+    fi
 
-	DisplayCommitToLog 'start package: OK'
+    DisplayCommitToLog 'start package: OK'
     EnableThisQPKGIcon
 
     return 0
@@ -153,11 +158,11 @@ StopQPKG()
 
     IsError && return
 
-	if [[ -e $AV_INIT_BACKUP_PATHFILE ]]; then
-		mv "$AV_INIT_BACKUP_PATHFILE" "$AV_INIT_PATHFILE"
+    if [[ -e $AV_INIT_BACKUP_PATHFILE ]]; then
+        mv "$AV_INIT_BACKUP_PATHFILE" "$AV_INIT_PATHFILE"
 
-		"$AV_INIT_PATHFILE" restart
-	fi
+        "$AV_INIT_PATHFILE" restart
+    fi
 
     DisplayCommitToLog 'stop package: OK'
     DisableThisQPKGIcon
