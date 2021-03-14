@@ -3796,8 +3796,10 @@ QPKGs.Statuses.Show()
             package_notes=()
             package_note=''
 
-            if ! QPKG.URL "$package" &>/dev/null || ! QPKG.MinRAM "$package" &>/dev/null; then
-                DisplayAsHelpPackageNamePlusSomething "$package" 'not installable on this NAS'
+            if ! QPKG.URL "$package" &>/dev/null; then
+                DisplayAsHelpPackageNamePlusSomething "$package" 'not installable on this NAS (incompatible arch)'
+            elif ! QPKG.MinRAM "$package" &>/dev/null; then
+                DisplayAsHelpPackageNamePlusSomething "$package" 'not installable on this NAS (not enough RAM)'
             elif QPKGs.NotInstalled.Exist "$package"; then
                 DisplayAsHelpPackageNamePlusSomething "$package" 'not installed'
             else
