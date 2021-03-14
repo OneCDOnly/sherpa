@@ -250,6 +250,7 @@ Session.Init()
         MANAGER_QPKG_IS_ESSENTIAL=()        # true/false: this is an essential QPKG. It will be required by one-or-more other QPKGs.
         MANAGER_QPKG_IS_STANDALONE=()       # true/false: this QPKG will run without any other packages
         MANAGER_QPKG_ARCH=()                # QPKG supports this architecture
+        MANAGER_QPKG_MINRAM=()              # QPKG requires at-least this much RAM installed in kB. Use 'any' if any amount is OK.
         MANAGER_QPKG_VERSION=()             # QPKG version
         MANAGER_QPKG_URL=()                 # remote QPKG URL
         MANAGER_QPKG_MD5=()                 # remote QPKG MD5
@@ -266,6 +267,7 @@ Session.Init()
         MANAGER_QPKG_IS_ESSENTIAL+=(true)
         MANAGER_QPKG_IS_STANDALONE+=(true)
         MANAGER_QPKG_ARCH+=(all)
+        MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(210129)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/$PROJECT_NAME/build/${PROJECT_NAME}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
         MANAGER_QPKG_MD5+=(b427d662011172e8680b83c9823b0933)
@@ -281,6 +283,7 @@ Session.Init()
         MANAGER_QPKG_IS_ESSENTIAL+=(true)
         MANAGER_QPKG_IS_STANDALONE+=(true)
         MANAGER_QPKG_ARCH+=(all)
+        MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(1.03)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}std.qpkg)
         MANAGER_QPKG_MD5+=(da2d9f8d3442dd665ce04b9b932c9d8e)
@@ -296,6 +299,7 @@ Session.Init()
         MANAGER_QPKG_IS_ESSENTIAL+=(true)
         MANAGER_QPKG_IS_STANDALONE+=(true)
         MANAGER_QPKG_ARCH+=(x86)
+        MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(0.8.1.0)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_x86.qpkg)
         MANAGER_QPKG_MD5+=(996ffb92d774eb01968003debc171e91)
@@ -311,6 +315,7 @@ Session.Init()
         MANAGER_QPKG_IS_ESSENTIAL+=(true)
         MANAGER_QPKG_IS_STANDALONE+=(true)
         MANAGER_QPKG_ARCH+=(x64)
+        MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(0.8.1.0)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_x86_64.qpkg)
         MANAGER_QPKG_MD5+=(520472cc87d301704f975f6eb9948e38)
@@ -326,6 +331,7 @@ Session.Init()
         MANAGER_QPKG_IS_ESSENTIAL+=(true)
         MANAGER_QPKG_IS_STANDALONE+=(true)
         MANAGER_QPKG_ARCH+=(x31)
+        MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(0.8.1.0)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_arm-x31.qpkg)
         MANAGER_QPKG_MD5+=(ce8af2e009eb87733c3b855e41a94f8e)
@@ -341,6 +347,7 @@ Session.Init()
         MANAGER_QPKG_IS_ESSENTIAL+=(true)
         MANAGER_QPKG_IS_STANDALONE+=(true)
         MANAGER_QPKG_ARCH+=(x41)
+        MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(0.8.1.0)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_arm-x41.qpkg)
         MANAGER_QPKG_MD5+=(8516e45e704875cdd2cd2bb315c4e1e6)
@@ -356,6 +363,7 @@ Session.Init()
         MANAGER_QPKG_IS_ESSENTIAL+=(true)
         MANAGER_QPKG_IS_STANDALONE+=(true)
         MANAGER_QPKG_ARCH+=(a64)
+        MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(0.8.1.0)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_arm_64.qpkg)
         MANAGER_QPKG_MD5+=(4d8e99f97936a163e411aa8765595f7a)
@@ -371,6 +379,7 @@ Session.Init()
         MANAGER_QPKG_IS_ESSENTIAL+=(true)
         MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(none)
+        MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(0.8.1-1)
         MANAGER_QPKG_URL+=('')
         MANAGER_QPKG_MD5+=('')
@@ -387,10 +396,11 @@ Session.Init()
         MANAGER_QPKG_IS_ESSENTIAL+=(false)
         MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(all)
+        MANAGER_QPKG_MINRAM+=(1578040)
         MANAGER_QPKG_VERSION+=(210314b)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
         MANAGER_QPKG_MD5+=(2edac71e5c10c65e9ad7055fc55c4600)
-        MANAGER_QPKG_DESC+=('ClamAV replacement for QTS built-in')
+        MANAGER_QPKG_DESC+=('replacement for the QTS built-in ClamAV (requires a minimum of 1.5GB RAM)')
         MANAGER_QPKG_ABBRVS+=('clam clamscan freshclam clamav')
         MANAGER_QPKG_ESSENTIALS+=(Entware)
         MANAGER_QPKG_IPKGS_ADD+=('clamav freshclam')
@@ -402,6 +412,7 @@ Session.Init()
         MANAGER_QPKG_IS_ESSENTIAL+=(false)
         MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(all)
+        MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(210129)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
         MANAGER_QPKG_MD5+=(367948c64666c0f7fc1e8c129fb2e10b)
@@ -417,6 +428,7 @@ Session.Init()
         MANAGER_QPKG_IS_ESSENTIAL+=(false)
         MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(all)
+        MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(210129)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
         MANAGER_QPKG_MD5+=(a45745980336fb219b21140426b1eb8c)
@@ -432,6 +444,7 @@ Session.Init()
         MANAGER_QPKG_IS_ESSENTIAL+=(false)
         MANAGER_QPKG_IS_STANDALONE+=(true)
         MANAGER_QPKG_ARCH+=(all)
+        MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(201219b)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/main/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
         MANAGER_QPKG_MD5+=(d576993ca2c6ec7585abe24455e19385)
@@ -447,6 +460,7 @@ Session.Init()
         MANAGER_QPKG_IS_ESSENTIAL+=(false)
         MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(all)
+        MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(210129)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
         MANAGER_QPKG_MD5+=(cc01ed421b771ac6fafa4cfc11723097)
@@ -462,6 +476,7 @@ Session.Init()
         MANAGER_QPKG_IS_ESSENTIAL+=(false)
         MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(all)
+        MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(210129)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
         MANAGER_QPKG_MD5+=(e3f8876b066a97480713a5911b411904)
@@ -477,6 +492,7 @@ Session.Init()
         MANAGER_QPKG_IS_ESSENTIAL+=(false)
         MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(all)
+        MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(210129)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
         MANAGER_QPKG_MD5+=(7fe7313951e35a2ee5d0f66b8861b95d)
@@ -492,6 +508,7 @@ Session.Init()
         MANAGER_QPKG_IS_ESSENTIAL+=(false)
         MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(all)
+        MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(210129)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
         MANAGER_QPKG_MD5+=(84f87342e3879eb1243ad46f188ad9d8)
@@ -507,6 +524,7 @@ Session.Init()
         MANAGER_QPKG_IS_ESSENTIAL+=(false)
         MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(all)
+        MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(210211)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
         MANAGER_QPKG_MD5+=(d5d2d46420ca4750387f83ddb99babd4)
@@ -522,6 +540,7 @@ Session.Init()
         MANAGER_QPKG_IS_ESSENTIAL+=(false)
         MANAGER_QPKG_IS_STANDALONE+=(true)
         MANAGER_QPKG_ARCH+=(all)
+        MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(201225)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/main/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
         MANAGER_QPKG_MD5+=(2de4bf787afe34405d76ebd8fefddb43)
@@ -537,6 +556,7 @@ Session.Init()
         MANAGER_QPKG_IS_ESSENTIAL+=(false)
         MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(all)
+        MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(210128)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
         MANAGER_QPKG_MD5+=(530f7b4b8dcc4eaf44e4f58d25b525bf)
@@ -552,10 +572,11 @@ Session.Init()
         MANAGER_QPKG_IS_ESSENTIAL+=(false)
         MANAGER_QPKG_IS_STANDALONE+=(true)
         MANAGER_QPKG_ARCH+=(x86)
+        MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(201114)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/main/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_x86.qpkg)
         MANAGER_QPKG_MD5+=(87c4ae02c7f95cd2706997047fc9e84d)
-        MANAGER_QPKG_DESC+=("the 'sha3sum' and keccak utilities from @maandree (x86 & x86-64 only)")
+        MANAGER_QPKG_DESC+=("the 'sha3sum' and keccak utilities from @maandree (for x86 & x86-64 NAS only)")
         MANAGER_QPKG_ABBRVS+=('sha3 sha3sum')
         MANAGER_QPKG_ESSENTIALS+=('')
         MANAGER_QPKG_IPKGS_ADD+=('')
@@ -567,6 +588,7 @@ Session.Init()
         MANAGER_QPKG_IS_ESSENTIAL+=(false)
         MANAGER_QPKG_IS_STANDALONE+=(true)
         MANAGER_QPKG_ARCH+=(x64)
+        MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(201114)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/main/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_x86_64.qpkg)
         MANAGER_QPKG_MD5+=(eed8071c43665431d6444cb489636ae5)
@@ -582,6 +604,7 @@ Session.Init()
         MANAGER_QPKG_IS_ESSENTIAL+=(false)
         MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(all)
+        MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(210129)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
         MANAGER_QPKG_MD5+=(7fdb7eeb050c9d172edf187791f9886f)
@@ -597,6 +620,7 @@ Session.Init()
         MANAGER_QPKG_IS_ESSENTIAL+=(false)
         MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(all)
+        MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(210129)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
         MANAGER_QPKG_MD5+=(d76e8c72ad9a91389ac753aa4e03c9f7)
@@ -612,6 +636,7 @@ Session.Init()
         MANAGER_QPKG_IS_ESSENTIAL+=(false)
         MANAGER_QPKG_IS_STANDALONE+=(true)
         MANAGER_QPKG_ARCH+=(all)
+        MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(201228)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/main/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
         MANAGER_QPKG_MD5+=(4bf84d42c86952b835ca290e42747e09)
@@ -627,6 +652,7 @@ Session.Init()
         MANAGER_QPKG_IS_ESSENTIAL+=(false)
         MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(all)
+        MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(210129)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
         MANAGER_QPKG_MD5+=(6b2fb2bb98597989bdf1533a2e7734e5)
@@ -643,6 +669,7 @@ Session.Init()
         readonly MANAGER_QPKG_IS_ESSENTIAL
         readonly MANAGER_QPKG_IS_STANDALONE
         readonly MANAGER_QPKG_ARCH
+        readonly MANAGER_QPKG_MINRAM
         readonly MANAGER_QPKG_VERSION
         readonly MANAGER_QPKG_URL
         readonly MANAGER_QPKG_MD5
@@ -711,10 +738,25 @@ Session.Validate()
         DebugFuncExit 1; return
     fi
 
+    # skip packages that can't be installed on this NAS
+    for package in $(QPKGs.ToInstall.Array); do
+        if ! QPKG.URL "$package" &>/dev/null; then
+            QPKGs.ToInstall.Remove "$package"
+            QPKGs.SkInstall.Add "$package"
+            DebugAsWarn "can't install this package $(FormatAsPackageName "$package"): unsupported arch"
+        fi
+
+        if ! QPKG.MinRAM "$package" &>/dev/null; then
+            QPKGs.ToInstall.Remove "$package"
+            QPKGs.SkInstall.Add "$package"
+            DebugAsWarn "can't install this package $(FormatAsPackageName "$package"): not enough RAM"
+        fi
+    done
+
     if QPKGs.ToBackup.IsNone && QPKGs.ToUninstall.IsNone && QPKGs.ToUpgrade.IsNone && QPKGs.ToInstall.IsNone && QPKGs.ToReinstall.IsNone && QPKGs.ToRestore.IsNone && QPKGs.ToRestart.IsNone && QPKGs.ToStart.IsNone && QPKGs.ToStop.IsNone && QPKGs.ToRebuild.IsNone; then
         if Opts.Apps.All.Install.IsNot && Opts.Apps.All.Restart.IsNot && Opts.Apps.All.Upgrade.IsNot && Opts.Apps.All.Backup.IsNot && Opts.Apps.All.Restore.IsNot && Opts.Help.Status.IsNot && Opts.Apps.All.Start.IsNot && Opts.Apps.All.Stop.IsNot && Opts.Apps.All.Rebuild.IsNot; then
             if Opts.Dependencies.Check.IsNot && Opts.IgnoreFreeSpace.IsNot; then
-                ShowAsEror "I've nothing to do (usually means the arguments didn't make sense, or were incomplete)"
+                ShowAsEror "I've nothing to do (usually means the arguments couldn't be run as specified)"
                 Opts.Help.Basic.Set
                 QPKGs.SkipProcessing.Set
                 DebugFuncExit 1; return
@@ -3754,8 +3796,8 @@ QPKGs.Statuses.Show()
             package_notes=()
             package_note=''
 
-            if ! QPKG.URL "$package" &>/dev/null; then
-                DisplayAsHelpPackageNamePlusSomething "$package" 'unavailable'
+            if ! QPKG.URL "$package" &>/dev/null || ! QPKG.MinRAM "$package" &>/dev/null; then
+                DisplayAsHelpPackageNamePlusSomething "$package" 'not installable on this NAS'
             elif QPKGs.NotInstalled.Exist "$package"; then
                 DisplayAsHelpPackageNamePlusSomething "$package" 'not installed'
             else
@@ -4263,6 +4305,29 @@ QPKG.MD5()
     for index in "${!MANAGER_QPKG_NAME[@]}"; do
         if [[ $1 = "${MANAGER_QPKG_NAME[$index]}" ]] && [[ ${MANAGER_QPKG_ARCH[$index]} = all || ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
             echo "${MANAGER_QPKG_MD5[$index]}"
+            return 0
+        fi
+    done
+
+    return 1
+
+    }
+
+QPKG.MinRAM()
+    {
+
+    # input:
+    #   $1 = QPKG name
+
+    # output:
+    #   stdout = the minimum kB of installed RAM required by this QPKG
+    #   $? = 0 if successful, 1 if failed
+
+    local -i index=0
+
+    for index in "${!MANAGER_QPKG_NAME[@]}"; do
+        if [[ $1 = "${MANAGER_QPKG_NAME[$index]}" ]] && [[ ${MANAGER_QPKG_MINRAM[$index]} = any || $INSTALLED_RAM_KB -ge ${MANAGER_QPKG_MINRAM[$index]} ]]; then
+            echo "${MANAGER_QPKG_MINRAM[$index]}"
             return 0
         fi
     done
@@ -5139,7 +5204,7 @@ QPKG.UserInstallable()
     local index=0
 
     for index in "${!MANAGER_QPKG_NAME[@]}"; do
-        if [[ $PACKAGE_NAME = "${MANAGER_QPKG_NAME[$index]}" && -n ${MANAGER_QPKG_ABBRVS[$index]} ]] && [[ ${MANAGER_QPKG_ARCH[$index]} = all || ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
+        if [[ $PACKAGE_NAME = "${MANAGER_QPKG_NAME[$index]}" && -n ${MANAGER_QPKG_ABBRVS[$index]} ]] && [[ ${MANAGER_QPKG_ARCH[$index]} = all || ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]] && QPKG.MinRAM "$1" &>/dev/null; then
             result_code=0
             break
         fi
