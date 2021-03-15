@@ -16,55 +16,49 @@ Init()
 
     # specific environment
     readonly QPKG_NAME=ClamAV
+    readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
+    readonly MIN_RAM_KB=1578040
 
-    # cherry-pick required binaries
-    readonly GREP_CMD=/bin/grep
-    readonly SED_CMD=/bin/sed
-    readonly TAR_CMD=/bin/tar
-
-    readonly BASENAME_CMD=/usr/bin/basename
-    readonly DIRNAME_CMD=/usr/bin/dirname
-    readonly TAIL_CMD=/usr/bin/tail
-    readonly TEE_CMD=/usr/bin/tee
-
-    readonly CURL_CMD=/sbin/curl
-    readonly GETCFG_CMD=/sbin/getcfg
-    readonly SETCFG_CMD=/sbin/setcfg
-    readonly WRITE_LOG_CMD=/sbin/write_log
-
-    readonly LSOF_CMD=/usr/sbin/lsof
-
-    readonly GIT_CMD=/opt/bin/git
-    readonly GNU_LESS_CMD=/opt/bin/less
-    readonly JQ_CMD=/opt/bin/jq
-
-    # generic environment
-    readonly APP_CENTER_CONFIG_PATHFILE=/etc/config/qpkg.conf
-    readonly QPKG_PATH=$($GETCFG_CMD $QPKG_NAME Install_Path -f $APP_CENTER_CONFIG_PATHFILE)
+    # for online-hosted applications only
+    readonly SOURCE_GIT_URL=''
+    readonly SOURCE_GIT_BRANCH=''
+    # 'shallow' (depth 1) or 'single-branch' (note: 'shallow' implies a 'single-branch' too)
+    readonly SOURCE_GIT_DEPTH=''
+    readonly TARGET_SCRIPT=''
+    readonly PYTHON=''
     readonly QPKG_REPO_PATH=$QPKG_PATH/$QPKG_NAME
-    readonly QPKG_VERSION=$($GETCFG_CMD $QPKG_NAME Version -f $APP_CENTER_CONFIG_PATHFILE)
+    readonly APP_VERSION_PATHFILE=''
+
+    # for Entware binaries only
+    readonly ORIG_DAEMON_SERVICE_SCRIPT=''
+
+    # name of file to launch
+    readonly DAEMON_PATHFILE=''
+
+    # for local mods only
+    readonly TARGET_SERVICE_PATHFILE=/etc/init.d/antivirus.sh
+    readonly BACKUP_SERVICE_PATHFILE=$TARGET_SERVICE_PATHFILE.bak
+
+    # remaining environment
+    readonly DAEMON_PID_PATHFILE=/var/run/$QPKG_NAME.pid
+    readonly APP_VERSION_STORE_PATHFILE=$(/usr/bin/dirname "$APP_VERSION_PATHFILE")/version.stored
+    readonly INSTALLED_RAM_KB=$(/bin/grep MemTotal /proc/meminfo | cut -f2 -d':' | /bin/sed 's|kB||;s| ||g')
+    readonly QPKG_INI_PATHFILE=''
+    readonly QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.def
+    readonly LAUNCHER=''
+    readonly QPKG_VERSION=$(/sbin/getcfg $QPKG_NAME Version -f /etc/config/qpkg.conf)
     readonly SERVICE_STATUS_PATHFILE=/var/run/$QPKG_NAME.last.operation
     readonly SERVICE_LOG_PATHFILE=/var/log/$QPKG_NAME.log
     readonly OPKG_PATH=/opt/bin:/opt/sbin
-    readonly APPARENT_PATH=/share/$($GETCFG_CMD SHARE_DEF defDownload -d Qdownload -f /etc/config/def_share.info)/$QPKG_NAME
-    export PATH="$OPKG_PATH:$($SED_CMD "s|$OPKG_PATH||" <<< "$PATH")"
+    local -r BACKUP_PATH=$(/sbin/getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
+    readonly BACKUP_PATHFILE=''
+    readonly APPARENT_PATH=/share/$(/sbin/getcfg SHARE_DEF defDownload -d Qdownload -f /etc/config/def_share.info)/$QPKG_NAME
+    export PATH="$OPKG_PATH:$(/bin/sed "s|$OPKG_PATH||" <<< "$PATH")"
     [[ -n $PYTHON ]] && export PYTHONPATH=$PYTHON
 
-    # application specific
-    readonly AV_INIT_PATHFILE=/etc/init.d/antivirus.sh
-    readonly AV_INIT_BACKUP_PATHFILE=/etc/init.d/antivirus.sh.bak
-    readonly INSTALLED_RAM_KB=$($GREP_CMD MemTotal /proc/meminfo | cut -f2 -d':' | $SED_CMD 's|kB||;s| ||g')
-    readonly MIN_RAM_KB=1578040
-
-    if [[ $INSTALLED_RAM_KB -lt $MIN_RAM_KB ]]; then
-        DisplayErrCommitAllLogs "ClamAV won't run on this NAS. Not enough RAM. :("
+    if [[ $MIN_RAM_KB != any && $INSTALLED_RAM_KB -lt $MIN_RAM_KB ]]; then
+        DisplayErrCommitAllLogs "$(FormatAsPackageName $QPKG_NAME) won't run on this NAS. Not enough RAM. :("
         exit 1
-    fi
-
-    if [[ -n $PYTHON ]]; then
-        readonly LAUNCH_TARGET=$PYTHON
-    elif [[ -n $TARGET_DAEMON ]]; then
-        readonly LAUNCH_TARGET=$TARGET_DAEMON
     fi
 
     # all timeouts are in seconds
@@ -86,11 +80,11 @@ Init()
 
     UnsetError
     UnsetRestartPending
-#    EnsureConfigFileExists
-    [[ $(type -t DisableOpkgDaemonStart) = 'function' ]] && DisableOpkgDaemonStart
+    EnsureConfigFileExists
+    [[ -n $ORIG_DAEMON_SERVICE_SCRIPT ]] && DisableOpkgDaemonStart
     LoadAppVersion
 
-#     [[ ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
+    [[ ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
 
     return 0
 
@@ -99,7 +93,7 @@ Init()
 ShowHelp()
     {
 
-    Display "$(ColourTextBrightWhite "$($BASENAME_CMD "$0")") ($QPKG_VERSION) a service control script for the $(FormatAsPackageName $QPKG_NAME) QPKG"
+    Display "$(ColourTextBrightWhite "$(/usr/bin/basename "$0")") ($QPKG_VERSION) a service control script for the $(FormatAsPackageName $QPKG_NAME) QPKG"
     Display
     Display "Usage: $0 [OPTION]"
     Display
@@ -109,11 +103,11 @@ ShowHelp()
     DisplayAsHelp 'stop' "shutdown $(FormatAsPackageName $QPKG_NAME) if running."
     DisplayAsHelp 'restart' "stop, then start $(FormatAsPackageName $QPKG_NAME)."
     DisplayAsHelp 'status' "check if $(FormatAsPackageName $QPKG_NAME) is still running. Returns \$? = 0 if running, 1 if not."
-#     DisplayAsHelp 'backup' "backup the current $(FormatAsPackageName $QPKG_NAME) configuration to persistent storage."
-#     DisplayAsHelp 'restore' "restore a previously saved configuration from persistent storage. $(FormatAsPackageName $QPKG_NAME) will be stopped, then restarted."
-#     DisplayAsHelp 'reset-config' "delete the application configuration, databases and history. $(FormatAsPackageName $QPKG_NAME) will be stopped, then restarted."
-#     [[ $(type -t ImportFromSAB2) = 'function' ]] && DisplayAsHelp 'import' "create a backup of an installed $(FormatAsPackageName SABnzbdplus) config and restore it into $(FormatAsPackageName $QPKG_NAME)."
-#     [[ $(type -t CleanLocalClone) = 'function' ]] && DisplayAsHelp 'clean' "wipe the current local copy of $(FormatAsPackageName $QPKG_NAME), and download it again from remote source. Configuration will be retained."
+    [[ -n $BACKUP_PATHFILE ]] && DisplayAsHelp 'backup' "backup the current $(FormatAsPackageName $QPKG_NAME) configuration to persistent storage."
+    [[ -n $BACKUP_PATHFILE ]] && DisplayAsHelp 'restore' "restore a previously saved configuration from persistent storage. $(FormatAsPackageName $QPKG_NAME) will be stopped, then restarted."
+    [[ -n $QPKG_INI_PATHFILE ]] && DisplayAsHelp 'reset-config' "delete the application configuration, databases and history. $(FormatAsPackageName $QPKG_NAME) will be stopped, then restarted."
+    [[ $QPKG_NAME = SABnzbd ]] && DisplayAsHelp 'import' "create a backup of an installed $(FormatAsPackageName SABnzbdplus) config and restore it into $(FormatAsPackageName $QPKG_NAME)."
+    [[ -n $SOURCE_GIT_URL ]] && DisplayAsHelp 'clean' "wipe the current local copy of $(FormatAsPackageName $QPKG_NAME), and download it again from remote source. Configuration will be retained."
     DisplayAsHelp 'log' 'display this service script runtime log.'
     DisplayAsHelp 'version' 'display the package version number.'
     Display
@@ -123,27 +117,30 @@ ShowHelp()
 StartQPKG()
     {
 
-    IsError && return
+    # this function is customised depending on the requirements of the packaged application
 
-    if [[ ! -e $AV_INIT_BACKUP_PATHFILE ]]; then
-        cp "$AV_INIT_PATHFILE" "$AV_INIT_BACKUP_PATHFILE"
+    IsError && return
+    WaitForGit || return
+
+    if [[ ! -e $BACKUP_SERVICE_PATHFILE ]]; then
+        cp "$TARGET_SERVICE_PATHFILE" "$BACKUP_SERVICE_PATHFILE"
 
         # mod base references
-        $SED_CMD -i 's|/usr/local/bin/clamscan|/opt/sbin/clamscan|' "$AV_INIT_PATHFILE"
-        $SED_CMD -i 's|/usr/local/bin/freshclam|/opt/sbin/freshclam|' "$AV_INIT_PATHFILE"
+        /bin/sed -i 's|/usr/local/bin/clamscan|/opt/sbin/clamscan|' "$TARGET_SERVICE_PATHFILE"
+        /bin/sed -i 's|/usr/local/bin/freshclam|/opt/sbin/freshclam|' "$TARGET_SERVICE_PATHFILE"
 
         # disable dryrun. The new ClamAV engine (0.102.4) doesn't support the '--dryrun' or '--countfile=' options.
         # match second occurrence only. First one is used by Mcafee. Solution here: https://unix.stackexchange.com/a/403272
-        $SED_CMD -i ':a;N;$!ba; s|/bin/sh -c "$AV_SCAN_PATH $DRY_RUN_OPTIONS --dryrun|#/bin/sh -c "$AV_SCAN_PATH $DRY_RUN_OPTIONS --dryrun|2' "$AV_INIT_PATHFILE"
+        /bin/sed -i ':a;N;$!ba; s|/bin/sh -c "$AV_SCAN_PATH $DRY_RUN_OPTIONS --dryrun|#/bin/sh -c "$AV_SCAN_PATH $DRY_RUN_OPTIONS --dryrun|2' "$TARGET_SERVICE_PATHFILE"
 
         # mod 'clamscan' runtime options
         # match second occurrence only. First one is used by Mcafee.
-        $SED_CMD -i ':a;N;$!ba; s|OPTIONS="$OPTIONS --countfile=/tmp/antivirous.job.$job_id.scanning"|OPTIONS="$OPTIONS --database=$ANTIVIRUS_CLAMAV"|2' "$AV_INIT_PATHFILE"
+        /bin/sed -i ':a;N;$!ba; s|OPTIONS="$OPTIONS --countfile=/tmp/antivirous.job.$job_id.scanning"|OPTIONS="$OPTIONS --database=$ANTIVIRUS_CLAMAV"|2' "$TARGET_SERVICE_PATHFILE"
 
         # mod 'freshclam' runtime options
-        $SED_CMD -i 's|$FRESHCLAM -u admin -l /tmp/.freshclam.log|$FRESHCLAM -u admin --config-file=$FRESHCLAM_CONFIG --datadir=$ANTIVIRUS_CLAMAV -l /tmp/.freshclam.log|' "$AV_INIT_PATHFILE"
+        /bin/sed -i 's|$FRESHCLAM -u admin -l /tmp/.freshclam.log|$FRESHCLAM -u admin --config-file=$FRESHCLAM_CONFIG --datadir=$ANTIVIRUS_CLAMAV -l /tmp/.freshclam.log|' "$TARGET_SERVICE_PATHFILE"
 
-        "$AV_INIT_PATHFILE" restart
+        "$TARGET_SERVICE_PATHFILE" restart
     fi
 
     DisplayCommitToLog 'start package: OK'
@@ -156,12 +153,15 @@ StartQPKG()
 StopQPKG()
     {
 
+    # this function is customised depending on the requirements of the packaged application
+
     IsError && return
+    WaitForGit || return
 
-    if [[ -e $AV_INIT_BACKUP_PATHFILE ]]; then
-        mv "$AV_INIT_BACKUP_PATHFILE" "$AV_INIT_PATHFILE"
+    if [[ -e $BACKUP_SERVICE_PATHFILE ]]; then
+        mv "$BACKUP_SERVICE_PATHFILE" "$TARGET_SERVICE_PATHFILE"
 
-        "$AV_INIT_PATHFILE" restart
+        "$TARGET_SERVICE_PATHFILE" restart
     fi
 
     DisplayCommitToLog 'stop package: OK'
@@ -171,13 +171,11 @@ StopQPKG()
 
     }
 
-#### customisable functions for this app appear below ###
-
 BackupConfig()
     {
 
     CommitOperationToLog
-    ExecuteAndLog 'update configuration backup' "$TAR_CMD --create --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_REPO_PATH autoProcessMedia.cfg" log:everything
+    ExecuteAndLog 'update configuration backup' "/bin/tar --create --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config ." log:everything
 
     }
 
@@ -193,7 +191,7 @@ RestoreConfig()
     fi
 
     StopQPKG
-    ExecuteAndLog 'restore configuration backup' "$TAR_CMD --extract --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_REPO_PATH" log:everything
+    ExecuteAndLog 'restore configuration backup' "/bin/tar --extract --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config" log:everything
     StartQPKG
 
     }
@@ -204,8 +202,54 @@ ResetConfig()
     CommitOperationToLog
 
     StopQPKG
-    ExecuteAndLog 'resetting configuration' "rm $QPKG_INI_PATHFILE" log:everything
+    ExecuteAndLog 'reset configuration' "mv $QPKG_INI_DEFAULT_PATHFILE $QPKG_PATH; rm -rf $QPKG_PATH/config/*; mv $QPKG_PATH/$(/usr/bin/basename "$QPKG_INI_DEFAULT_PATHFILE") $QPKG_INI_DEFAULT_PATHFILE" log:everything
     StartQPKG
+
+    }
+
+LoadUIPorts()
+    {
+
+    # If user changes ports via app UI, must first 'stop' application on old ports, then 'start' on new ports
+
+    case $1 in
+        app)
+            # Read the current application UI ports from application configuration
+            DisplayWaitCommitToLog 'load UI ports from application:'
+            ui_port=$(/sbin/getcfg '' ControlPort -d 0 -f "$QPKG_INI_PATHFILE")
+            ui_port_secure=$(/sbin/getcfg '' SecurePort -d 0 -f "$QPKG_INI_PATHFILE")
+            DisplayCommitToLog 'OK'
+            ;;
+        qts)
+            # Read the current application UI ports from QTS App Center
+            DisplayWaitCommitToLog 'load UI ports from QPKG icon:'
+            ui_port=$(/sbin/getcfg $QPKG_NAME Web_Port -d 0 -f "/etc/config/qpkg.conf")
+            ui_port_secure=$(/sbin/getcfg $QPKG_NAME Web_SSL_Port -d 0 -f "/etc/config/qpkg.conf")
+            DisplayCommitToLog 'OK'
+            ;;
+        *)
+            DisplayErrCommitAllLogs "unable to load UI ports: action '$1' unrecognised"
+            SetError
+            return 1
+            ;;
+    esac
+
+    if [[ $ui_port -eq 0 ]] && IsNotDefaultConfigFound; then
+        ui_port=0
+        ui_port_secure=0
+    fi
+
+    # Always read this from the application configuration
+    ui_listening_address=$(/sbin/getcfg '' ControlIP -f "$QPKG_INI_PATHFILE")
+
+    return 0
+
+    }
+
+IsSSLEnabled()
+    {
+
+    [[ $(/sbin/getcfg '' SecureControl -d no -f "$QPKG_INI_PATHFILE") = yes ]]
 
     }
 
@@ -217,10 +261,9 @@ LoadAppVersion()
     # this is the installed application version (not the QPKG version)
 
     app_version=''
-
-    [[ ! -e $APP_VERSION_PATHFILE ]] && return
-
-    app_version=$($GREP_CMD '__version__ =' "$APP_VERSION_PATHFILE" | $SED_CMD 's|^.*"\(.*\)"|\1|')
+    [[ ! -e $DAEMON_PATHFILE && ! -e $APP_VERSION_PATHFILE ]] && return 1
+    [[ -n $DAEMON_PATHFILE && -e $DAEMON_PATHFILE ]] && app_version=$($DAEMON_PATHFILE --version 2>&1 | /bin/sed 's|nzbget version: ||')
+    [[ -n $APP_VERSION_PATHFILE && -e $APP_VERSION_PATHFILE ]] && app_version=$(/bin/grep '__version__ =' "$APP_VERSION_PATHFILE" | /bin/sed 's|^.*"\(.*\)"|\1|')
 
     }
 
@@ -232,17 +275,60 @@ StatusQPKG()
     if IsNotDaemonActive; then
         DisableThisQPKGIcon
         return
-    fi
+    else
+        if [[ -n $DAEMON_PATHFILE || -n $SOURCE_GIT_URL ]]; then
+            LoadUIPorts qts
+            CheckPorts || SetError
+        fi
 
-#    LoadUIPorts qts
-#    CheckPorts || SetError
-    EnableThisQPKGIcon
+        EnableThisQPKGIcon
+    fi
 
     }
 
-#### functions specific to this app appear below ###
+DisableOpkgDaemonStart()
+    {
 
-#### optional functions for this app appear below ###
+    if [[ -n $ORIG_DAEMON_SERVICE_SCRIPT && -x $ORIG_DAEMON_SERVICE_SCRIPT ]]; then
+        $ORIG_DAEMON_SERVICE_SCRIPT stop        # stop default daemon
+        chmod -x $ORIG_DAEMON_SERVICE_SCRIPT    # ... and ensure Entware doesn't re-launch it on startup
+    fi
+
+    }
+
+UpdateLanguages()
+    {
+
+    # run [tools/make_mo.py] if SABnzbd version number has changed since last run
+
+    LoadAppVersion
+
+    [[ -e $APP_VERSION_STORE_PATHFILE && $(<"$APP_VERSION_STORE_PATHFILE") = "$app_version" && -d $QPKG_REPO_PATH/locale ]] && return 0
+
+    ExecuteAndLog "update $(FormatAsPackageName $QPKG_NAME) language translations" "cd $QPKG_REPO_PATH; $PYTHON $QPKG_REPO_PATH/tools/make_mo.py" && SaveAppVersion
+
+    }
+
+ImportFromSAB2()
+    {
+
+    CommitOperationToLog
+
+    if [[ -e /etc/init.d/sabnzbd.sh ]]; then
+        /etc/init.d/sabnzbd.sh stop
+    elif [[ -e /etc/init.d/sabnzbd2.sh ]]; then
+        /etc/init.d/sabnzbd2.sh stop
+    else
+        DisplayCommitToLog "can't find a compatible version of $(FormatAsPackageName SABnzbdplus) to import from"
+        return 1
+    fi
+
+    ExecuteAndLog "update SABnzbd2 configuration backup for SABnzbd3" "/bin/tar --create --gzip --file=$BACKUP_PATHFILE --directory=$(getcfg SABnzbdplus Install_Path -f /etc/config/qpkg.conf)/config ." log:everything
+    eval "$0" restore
+
+    return 0
+
+    }
 
 PullGitRepo()
     {
@@ -264,26 +350,26 @@ PullGitRepo()
     [[ $4 = single-branch ]] && local -r DEPTH=' --single-branch'
 
     if [[ -d $QPKG_GIT_PATH/.git ]]; then
-        installed_branch=$($GIT_CMD -C "$QPKG_GIT_PATH" branch | $GREP_CMD '^\*' | $SED_CMD 's|^\* ||')
+        installed_branch=$(/opt/bin/git -C "$QPKG_GIT_PATH" branch | /bin/grep '^\*' | /bin/sed 's|^\* ||')
 
         if [[ $installed_branch != "$3" ]]; then
             branch_switch=true
             DisplayCommitToLog "current git branch: $installed_branch, new git branch: $3"
-            BackupConfig
-            ExecuteAndLog 'new git branch was specified so clean local repository' "rm -r $QPKG_GIT_PATH"
+            [[ $QPKG_NAME = nzbToMedia ]] && BackupConfig
+            ExecuteAndLog 'new git branch was specified so clean local repository' "cd /tmp; rm -r $QPKG_GIT_PATH"
         fi
     fi
 
     if [[ ! -d $QPKG_GIT_PATH/.git ]]; then
-        ExecuteAndLog "clone $(FormatAsPackageName "$1") from remote repository" "$GIT_CMD clone --branch $3 $DEPTH -c advice.detachedHead=false $GIT_HTTPS_URL $QPKG_GIT_PATH || $GIT_CMD clone --branch $3 $DEPTH -c advice.detachedHead=false $GIT_HTTP_URL $QPKG_GIT_PATH"
+        ExecuteAndLog "clone $(FormatAsPackageName "$1") from remote repository" "cd /tmp; /opt/bin/git clone --branch $3 $DEPTH -c advice.detachedHead=false $GIT_HTTPS_URL $QPKG_GIT_PATH || /opt/bin/git clone --branch $3 $DEPTH -c advice.detachedHead=false $GIT_HTTP_URL $QPKG_GIT_PATH"
     else
-        ExecuteAndLog "update $(FormatAsPackageName "$1") from remote repository" "$GIT_CMD -C $QPKG_GIT_PATH reset --hard; $GIT_CMD -C $QPKG_GIT_PATH pull"
+        ExecuteAndLog "update $(FormatAsPackageName "$1") from remote repository" "cd /tmp; /opt/bin/git -C $QPKG_GIT_PATH reset --hard; /opt/bin/git -C $QPKG_GIT_PATH pull"
     fi
 
-    installed_branch=$($GIT_CMD -C "$QPKG_GIT_PATH" branch | $GREP_CMD '^\*' | $SED_CMD 's|^\* ||')
+    installed_branch=$(/opt/bin/git -C "$QPKG_GIT_PATH" branch | /bin/grep '^\*' | /bin/sed 's|^\* ||')
     DisplayCommitToLog "current git branch: $installed_branch"
 
-    [[ $branch_switch = true ]] && RestoreConfig
+    [[ $branch_switch = true && $QPKG_NAME = nzbToMedia ]] && RestoreConfig
 
     return 0
 
@@ -307,8 +393,6 @@ CleanLocalClone()
 
     }
 
-#### end of optional functions
-
 IsQNAP()
     {
 
@@ -327,8 +411,8 @@ IsQNAP()
 WaitForGit()
     {
 
-    if WaitForFileToAppear "$GIT_CMD" "$GIT_APPEAR_TIMEOUT"; then
-        export PATH="$OPKG_PATH:$($SED_CMD "s|$OPKG_PATH||" <<< "$PATH")"
+    if WaitForFileToAppear "/opt/bin/git" "$GIT_APPEAR_TIMEOUT"; then
+        export PATH="$OPKG_PATH:$(/bin/sed "s|$OPKG_PATH||" <<< "$PATH")"
         return 0
     else
         return 1
@@ -339,7 +423,17 @@ WaitForGit()
 WaitForLaunchTarget()
     {
 
-    if WaitForFileToAppear "$LAUNCH_TARGET" "$LAUNCH_TARGET_APPEAR_TIMEOUT"; then
+    local launch_target=''
+
+    if [[ -n $PYTHON ]]; then
+        launch_target=$PYTHON
+    elif [[ -n $DAEMON_PATHFILE ]]; then
+        launch_target=$DAEMON_PATHFILE
+    else
+        return 0
+    fi
+
+    if WaitForFileToAppear "$launch_target" "$LAUNCH_TARGET_APPEAR_TIMEOUT"; then
         return 0
     else
         return 1
@@ -411,6 +505,8 @@ WaitForFileToAppear()
 EnsureConfigFileExists()
     {
 
+    [[ -z $QPKG_INI_PATHFILE ]] && return
+
     if IsNotConfigFound && IsDefaultConfigFound; then
         DisplayCommitToLog 'no configuration file found: using default'
         cp "$QPKG_INI_DEFAULT_PATHFILE" "$QPKG_INI_PATHFILE"
@@ -429,8 +525,8 @@ ViewLog()
     {
 
     if [[ -e $SERVICE_LOG_PATHFILE ]]; then
-        if [[ -e $GNU_LESS_CMD ]]; then
-            LESSSECURE=1 $GNU_LESS_CMD +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$SERVICE_LOG_PATHFILE"
+        if [[ -e /opt/bin/less ]]; then
+            LESSSECURE=1 /opt/bin/less +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$SERVICE_LOG_PATHFILE"
         else
             cat --number "$SERVICE_LOG_PATHFILE"
         fi
@@ -480,6 +576,71 @@ ExecuteAndLog()
 
     }
 
+ReWriteUIPorts()
+    {
+
+    # Write the current application UI ports into the QTS App Center configuration
+
+    # QTS App Center requires 'Web_Port' to always be non-zero
+
+    # 'Web_SSL_Port' behaviour:
+    #            < -2 = crashes current QTS session. Starts with non-responsive package icons in App Center
+    #   missing or -2 = QTS will fallback from HTTPS to HTTP, with a warning to user
+    #              -1 = launch QTS UI again (only if WebUI = '/'), else show "QNAP Error" page
+    #               0 = "unable to connect"
+    #             > 0 = works if logged-in to QTS UI via HTTPS
+
+    # If SSL is enabled, attempting to access with non-SSL via 'Web_Port' results in "connection was reset"
+
+    DisplayWaitCommitToLog 'update QPKG icon with UI ports:'
+
+    /sbin/setcfg $QPKG_NAME Web_Port "$ui_port" -f /etc/config/qpkg.conf
+
+    if IsSSLEnabled; then
+        /sbin/setcfg $QPKG_NAME Web_SSL_Port "$ui_port_secure" -f /etc/config/qpkg.conf
+    else
+        /sbin/setcfg $QPKG_NAME Web_SSL_Port '-2' -f /etc/config/qpkg.conf
+    fi
+
+    DisplayCommitToLog 'OK'
+
+    }
+
+CheckPorts()
+    {
+
+    local msg=''
+
+    DisplayCommitToLog "daemon listening address: $ui_listening_address"
+
+    if IsSSLEnabled && IsPortSecureResponds $ui_port_secure; then
+        msg="HTTPS port $ui_port_secure"
+    fi
+
+    if IsNotSSLEnabled || [[ $ui_port -ne $ui_port_secure ]]; then
+        # assume $ui_port should be checked too
+        if IsPortResponds $ui_port; then
+            if [[ -n $msg ]]; then
+                msg+=" and HTTP port $ui_port"
+            else
+                msg="HTTP port $ui_port"
+            fi
+        fi
+    fi
+
+    if [[ -z $msg ]]; then
+        DisplayErrCommitAllLogs 'no response on configured port(s)!'
+        SetError
+        return 1
+    fi
+
+    DisplayCommitToLog "$msg: OK"
+    ReWriteUIPorts
+
+    return 0
+
+    }
+
 IsQPKGEnabled()
     {
 
@@ -489,7 +650,7 @@ IsQPKGEnabled()
     # output:
     #   $? = 0 (true) or 1 (false)
 
-    [[ $($GETCFG_CMD "$1" Enable -u -f $APP_CENTER_CONFIG_PATHFILE) = 'TRUE' ]]
+    [[ $(/sbin/getcfg "$1" Enable -u -f /etc/config/qpkg.conf) = 'TRUE' ]]
 
     }
 
@@ -526,7 +687,7 @@ EnableQPKG()
     # $1 = package name to enable
 
     IsNotQPKGEnabled "$1" && ExecuteAndLog 'enable QPKG icon' "qpkg_service enable $1"
-    $SETCFG_CMD "$QPKG_NAME" Status complete -f "$APP_CENTER_CONFIG_PATHFILE"
+    /sbin/setcfg "$QPKG_NAME" Status complete -f "/etc/config/qpkg.conf"
 
     }
 
@@ -537,18 +698,52 @@ DisableQPKG()
 
     }
 
-IsDaemonActive()
+IsNotSSLEnabled()
+    {
+
+    ! IsSSLEnabled
+
+    }
+
+IsPackageActive()
     {
 
     # $? = 0 : package is 'started'
     # $? = 1 : package is 'stopped'
 
-    if [[ -L $APPARENT_PATH ]]; then
+    if [[ -e $BACKUP_SERVICE_PATHFILE ]]; then
         DisplayCommitToLog "package: IS active"
         return
     fi
 
     DisplayCommitToLog 'package: NOT active'
+    return 1
+
+    }
+
+IsNotPackageActive()
+    {
+
+    # $? = 1 if $QPKG_NAME is active
+    # $? = 0 if $QPKG_NAME is not active
+
+    ! IsPackageActive
+
+    }
+
+IsDaemonActive()
+    {
+
+    # $? = 0 : $DAEMON_PATHFILE is in memory
+    # $? = 1 : $DAEMON_PATHFILE is not in memory
+
+    if [[ -e $DAEMON_PID_PATHFILE && -d /proc/$(<$DAEMON_PID_PATHFILE) && -n $DAEMON_PATHFILE && $(</proc/"$(<$DAEMON_PID_PATHFILE)"/cmdline) =~ $DAEMON_PATHFILE ]]; then
+        DisplayCommitToLog 'daemon: IS active'
+        DisplayCommitToLog "daemon PID: $(<$DAEMON_PID_PATHFILE)"
+        return
+    fi
+
+    DisplayCommitToLog 'daemon: NOT active'
     [[ -f $DAEMON_PID_PATHFILE ]] && rm "$DAEMON_PID_PATHFILE"
     return 1
 
@@ -590,6 +785,106 @@ IsNotSysFilePresent()
     # $1 = pathfile to check
 
     ! IsSysFilePresent "$1"
+
+    }
+
+IsPortAvailable()
+    {
+
+    # $1 = port to check
+    # $? = 0 if available
+    # $? = 1 if already used
+
+    [[ -z $1 || $1 -eq 0 ]] && return
+
+    if (/usr/sbin/lsof -i :"$1" -sTCP:LISTEN >/dev/null 2>&1); then
+        return 1
+    else
+        return 0
+    fi
+
+    }
+
+IsNotPortAvailable()
+    {
+
+    # $1 = port to check
+    # $? = 1 if available
+    # $? = 0 if already used
+
+    ! IsPortAvailable "$1"
+
+    }
+
+IsPortResponds()
+    {
+
+    # $1 = port to check
+    # $? = 0 if response received
+    # $? = 1 if not OK
+
+    if [[ -z $1 || $1 -eq 0 ]]; then
+        SetError
+        return 1
+    fi
+
+    local acc=0
+
+    DisplayWaitCommitToLog "check for UI port $1 response:"
+    DisplayWait "(no-more than $PORT_CHECK_TIMEOUT seconds):"
+
+    while ! /sbin/curl --silent --fail --max-time 1 http://localhost:"$1" >/dev/null; do
+        sleep 1
+        ((acc+=2))
+        DisplayWait "$acc,"
+
+        if [[ $acc -ge $PORT_CHECK_TIMEOUT ]]; then
+            DisplayCommitToLog 'failed!'
+            CommitErrToSysLog "UI port $1 failed to respond after $acc seconds"
+            return 1
+        fi
+    done
+
+    Display 'OK'
+    CommitLog "UI port responded after $acc seconds"
+
+    return 0
+
+    }
+
+IsPortSecureResponds()
+    {
+
+    # $1 = port to check
+    # $? = 0 if response received
+    # $? = 1 if not OK or port unspecified
+
+    if [[ -z $1 || $1 -eq 0 ]]; then
+        SetError
+        return 1
+    fi
+
+    local acc=0
+
+    DisplayWaitCommitToLog "check for secure UI port $1 response:"
+    DisplayWait "(no-more than $PORT_CHECK_TIMEOUT seconds):"
+
+    while ! /sbin/curl --silent --insecure --fail --max-time 1 https://localhost:"$1" >/dev/null; do
+        sleep 1
+        ((acc+=2))
+        DisplayWait "$acc,"
+
+        if [[ $acc -ge $PORT_CHECK_TIMEOUT ]]; then
+            DisplayCommitToLog 'failed!'
+            CommitErrToSysLog "secure UI port $1 failed to respond after $acc seconds"
+            return 1
+        fi
+    done
+
+    Display 'OK'
+    CommitLog "secure UI port responded after $acc seconds"
+
+    return 0
 
     }
 
@@ -944,7 +1239,7 @@ CommitSysLog()
         return 1
     fi
 
-    $WRITE_LOG_CMD "[$QPKG_NAME] $1" "$2"
+    /sbin/write_log "[$QPKG_NAME] $1" "$2"
 
     }
 
@@ -985,7 +1280,7 @@ if IsNotError; then
         start|--start)
             SetServiceOperation "$1"
             # ensure those still on SickBeard.py are using the updated repo
-            if [[ ! -e $TARGET_SCRIPT_PATHFILE && -e $($DIRNAME_CMD "$TARGET_SCRIPT_PATHFILE")/SickBeard.py ]]; then
+            if [[ ! -e $DAEMON_PATHFILE && -e $(/usr/bin/dirname "$DAEMON_PATHFILE")/SickBeard.py ]]; then
                 CleanLocalClone
             else
                 StartQPKG || SetError
@@ -1003,23 +1298,38 @@ if IsNotError; then
             SetServiceOperation status
             StatusQPKG || SetError
             ;;
-        b|-b|backup|--backup)
-            SetServiceOperation backup
-            BackupConfig || SetError
+        b|-b|backup|--backup|backup-config|--backup-config)
+            if [[ -n $BACKUP_PATHFILE ]]; then
+                SetServiceOperation backup
+                BackupConfig || SetError
+            else
+                SetServiceOperation none
+                ShowHelp
+            fi
             ;;
         reset-config|--reset-config)
-            SetServiceOperation "$1"
-            ResetConfig || SetError
+            if [[ -n $QPKG_INI_PATHFILE ]]; then
+                SetServiceOperation "$1"
+                ResetConfig || SetError
+            else
+                SetServiceOperation none
+                ShowHelp
+            fi
             ;;
-        restore|--restore)
-            SetServiceOperation "$1"
-            RestoreConfig || SetError
+        restore|--restore|restore-config|--restore-config)
+            if [[ -n $BACKUP_PATHFILE ]]; then
+                SetServiceOperation "$1"
+                RestoreConfig || SetError
+            else
+                SetServiceOperation none
+                ShowHelp
+            fi
             ;;
         c|-c|clean|--clean)
-            if [[ $(type -t CleanLocalClone) = 'function' ]]; then
+            if [[ -n $SOURCE_GIT_URL ]]; then
                 SetServiceOperation clean
 
-                if [[ $($DIRNAME_CMD "$QPKG_INI_PATHFILE") = "$QPKG_REPO_PATH" ]]; then
+                if [[ $QPKG_NAME = nzbToMedia ]]; then
                     # nzbToMedia stores the config file in the repo location, so save it and restore again after new clone is complete
                     { BackupConfig; CleanLocalClone; RestoreConfig ;} || SetError
                 else
@@ -1039,7 +1349,7 @@ if IsNotError; then
             Display "$QPKG_VERSION"
             ;;
         import|--import)
-            if [[ $(type -t ImportFromSAB2) = 'function' ]]; then
+            if [[ $QPKG_NAME = SABnzbd ]]; then
                 SetServiceOperation "$1"
                 ImportFromSAB2 || SetError
             else
