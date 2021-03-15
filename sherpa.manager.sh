@@ -1867,6 +1867,9 @@ ParseArguments()
                     stopped_)
                         QPKGs.ToUpgrade.Add "$(QPKGs.Stopped.Array)"
                         ;;
+                    upgradable_)
+                        QPKGs.ToUpgrade.Add "$(QPKGs.Upgradable.Array)"
+                        ;;
                     *)
                         QPKGs.ToUpgrade.Add "$package"
                         ;;
