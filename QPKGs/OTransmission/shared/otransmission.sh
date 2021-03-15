@@ -33,7 +33,7 @@ Init()
     readonly ORIG_DAEMON_SERVICE_SCRIPT=/opt/etc/init.d/S88transmission
 
     # name of file to launch
-    readonly TARGET_DAEMON=/opt/bin/transmission-daemon
+    readonly DAEMON_PATHFILE=/opt/bin/transmission-daemon
 
     # for local mods only
     readonly TARGET_SERVICE_PATHFILE=''
