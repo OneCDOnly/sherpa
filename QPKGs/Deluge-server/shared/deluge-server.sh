@@ -136,10 +136,8 @@ StartQPKG()
         fi
     fi
 
-    WaitForGit || return
     WaitForLaunchTarget || return
     EnsureConfigFileExists
-
     ExecuteAndLog 'start daemon' "$LAUNCHER" log:everything || return
     WaitForPID || return
     IsDaemonActive || return

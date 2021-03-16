@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 ####################################################################################
-# deluge-web.sh
+# nzbget.sh
 #
-# Copyright (C) 2020-2021 OneCD [one.cd.only@gmail.com]
+# Copyright (C) 2019-2021 OneCD [one.cd.only@gmail.com]
 #
 # so, blame OneCD if it all goes horribly wrong. ;)
 #
@@ -15,7 +15,7 @@ Init()
     IsQNAP || return
 
     # specific environment
-    readonly QPKG_NAME=Deluge-web
+    readonly QPKG_NAME=NZBGet
     readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
     readonly MIN_RAM_KB=any
 
@@ -27,25 +27,25 @@ Init()
     readonly TARGET_SCRIPT=''
     readonly PYTHON=''
     readonly QPKG_REPO_PATH=$QPKG_PATH/$QPKG_NAME
-    readonly APP_VERSION_PATHFILE=/opt/bin/deluge-web
+    readonly APP_VERSION_PATHFILE=''
 
     # for Entware binaries only
-    readonly ORIG_DAEMON_SERVICE_SCRIPT=/opt/etc/init.d/S81deluge-web
+    readonly ORIG_DAEMON_SERVICE_SCRIPT=/opt/etc/init.d/S75nzbget
 
     # name of file to launch
-    readonly DAEMON_PATHFILE=/opt/bin/deluge-web
+    readonly DAEMON_PATHFILE=/opt/bin/nzbget
 
     # for local mods only
     readonly TARGET_SERVICE_PATHFILE=''
     readonly BACKUP_SERVICE_PATHFILE=$TARGET_SERVICE_PATHFILE.bak
 
     # remaining environment
-    readonly DAEMON_PID_PATHFILE=/var/run/$QPKG_NAME.pid
+    readonly DAEMON_PID_PATHFILE=/opt/var/lock/nzbget.lock
     readonly APP_VERSION_STORE_PATHFILE=$(/usr/bin/dirname "$APP_VERSION_PATHFILE")/version.stored
     readonly INSTALLED_RAM_KB=$(/bin/grep MemTotal /proc/meminfo | cut -f2 -d':' | /bin/sed 's|kB||;s| ||g')
-    readonly QPKG_INI_PATHFILE=$QPKG_PATH/config/web.conf
+    readonly QPKG_INI_PATHFILE=$QPKG_PATH/config/config.ini
     readonly QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.def
-    readonly LAUNCHER="$DAEMON_PATHFILE --logfile $(/usr/bin/dirname "$QPKG_INI_PATHFILE")/$QPKG_NAME.log --config $(/usr/bin/dirname "$QPKG_INI_PATHFILE")/ --pidfile $DAEMON_PID_PATHFILE"
+    readonly LAUNCHER="$DAEMON_PATHFILE --daemon --configfile $QPKG_INI_PATHFILE"
     readonly QPKG_VERSION=$(/sbin/getcfg $QPKG_NAME Version -f /etc/config/qpkg.conf)
     readonly SERVICE_STATUS_PATHFILE=/var/run/$QPKG_NAME.last.operation
     readonly SERVICE_LOG_PATHFILE=/var/log/$QPKG_NAME.log
@@ -258,8 +258,8 @@ LoadUIPorts()
         app)
             # Read the current application UI ports from application configuration
             DisplayWaitCommitToLog 'load UI ports from application:'
-            ui_port=$(/opt/bin/jq -r .port < "$QPKG_INI_PATHFILE" | /usr/bin/tail -n1)
-            ui_port_secure=$(/opt/bin/jq -r .port < "$QPKG_INI_PATHFILE" | /usr/bin/tail -n1)
+            ui_port=$(/sbin/getcfg '' ControlPort -d 0 -f "$QPKG_INI_PATHFILE")
+            ui_port_secure=$(/sbin/getcfg '' SecurePort -d 0 -f "$QPKG_INI_PATHFILE")
             DisplayCommitToLog 'OK'
             ;;
         qts)
@@ -282,7 +282,7 @@ LoadUIPorts()
     fi
 
     # Always read this from the application configuration
-    ui_listening_address=$(/opt/bin/jq -r .interface < "$QPKG_INI_PATHFILE" | /usr/bin/tail -n1)
+    ui_listening_address=$(/sbin/getcfg '' ControlIP -f "$QPKG_INI_PATHFILE")
 
     return 0
 
@@ -291,7 +291,7 @@ LoadUIPorts()
 IsSSLEnabled()
     {
 
-    [[ $(/opt/bin/jq -r .https < "$QPKG_INI_PATHFILE" | /usr/bin/tail -n1) = true ]]
+    [[ $(/sbin/getcfg '' SecureControl -d no -f "$QPKG_INI_PATHFILE") = yes ]]
 
     }
 
@@ -305,10 +305,10 @@ LoadAppVersion()
     app_version=''
 
     if [[ -n $APP_VERSION_PATHFILE && -e $APP_VERSION_PATHFILE ]]; then
-        app_version=$(/bin/grep '__requires__ =' "$APP_VERSION_PATHFILE" | /bin/sed 's|^.*==\(.*\).$|\1|')
+        app_version=$(/bin/grep '__version__ =' "$APP_VERSION_PATHFILE" | /bin/sed 's|^.*"\(.*\)"|\1|')
         return
     elif [[ -n $DAEMON_PATHFILE && -e $DAEMON_PATHFILE ]]; then
-        app_version=$($DAEMON_PATHFILE --version 2>&1 | /bin/sed 's|deluged ||')
+        app_version=$($DAEMON_PATHFILE --version 2>&1 | /bin/sed 's|nzbget version: ||')
         return
     fi
 
@@ -561,17 +561,6 @@ EnsureConfigFileExists()
         cp "$QPKG_INI_DEFAULT_PATHFILE" "$QPKG_INI_PATHFILE"
     fi
 
-    # Deluge-server and Deluge-web need acccess to the same auth file or to duplicate copies of it
-
-    if [[ $(/sbin/getcfg Deluge-server Enable -d FALSE -f /etc/config/qpkg.conf) = TRUE ]]; then
-        web_auth_pathfile=$(/usr/bin/dirname "$QPKG_INI_PATHFILE")/auth
-        server_auth_pathfile=$(/sbin/getcfg Deluge-server Install_Path -f "/etc/config/qpkg.conf")/config/auth
-
-        if [[ -e $server_auth_pathfile ]]; then         # the grass is always greener
-            cp "$server_auth_pathfile" "$web_auth_pathfile"
-        fi
-    fi
-
     }
 
 SaveAppVersion()
@@ -618,11 +607,19 @@ ExecuteAndLog()
     local returncode=0
 
     DisplayWaitCommitToLog "$1:"
-    # can't launch 'deluge-web' or 'deluged' inside eval and capture output: both hang.
-    eval "$2" 2>&1
+    exec_msgs=$(eval "$2" 2>&1)
+    result=$?
 
-    DisplayCommitToLog 'OK'
-    [[ $3 = log:everything ]] && CommitInfoToSysLog "$1: OK."
+    if [[ $result = 0 ]]; then
+        DisplayCommitToLog 'OK'
+        [[ $3 = log:everything ]] && CommitInfoToSysLog "$1: OK."
+    else
+        DisplayCommitToLog 'failed!'
+        DisplayCommitToLog "$(FormatAsFuncMessages "$exec_msgs")"
+        DisplayCommitToLog "$(FormatAsResult $result)"
+        CommitWarnToSysLog "A problem occurred while $1. Check $(FormatAsFileName "$SERVICE_LOG_PATHFILE") for more details."
+        returncode=1
+    fi
 
     return $returncode
 
@@ -789,8 +786,7 @@ IsDaemonActive()
     # $? = 0 : $DAEMON_PATHFILE is in memory
     # $? = 1 : $DAEMON_PATHFILE is not in memory
 
-    # deluge-web: only check for basename of $DAEMON_PATHFILE as only the basename is shown in the process list
-    if [[ -e $DAEMON_PID_PATHFILE && -d /proc/$(<$DAEMON_PID_PATHFILE) && -n $DAEMON_PATHFILE && $(</proc/"$(<$DAEMON_PID_PATHFILE)"/cmdline) =~ $(/usr/bin/basename "$DAEMON_PATHFILE") ]]; then
+    if [[ -e $DAEMON_PID_PATHFILE && -d /proc/$(<$DAEMON_PID_PATHFILE) && -n $DAEMON_PATHFILE && $(</proc/"$(<$DAEMON_PID_PATHFILE)"/cmdline) =~ $DAEMON_PATHFILE ]]; then
         DisplayCommitToLog 'daemon: IS active'
         DisplayCommitToLog "daemon PID: $(<$DAEMON_PID_PATHFILE)"
         return
