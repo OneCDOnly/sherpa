@@ -308,9 +308,16 @@ LoadAppVersion()
     # this is the installed application version (not the QPKG version)
 
     app_version=''
-    [[ ! -e $DAEMON_PATHFILE && ! -e $APP_VERSION_PATHFILE ]] && return 1
-    [[ -n $DAEMON_PATHFILE && -e $DAEMON_PATHFILE ]] && app_version=$($DAEMON_PATHFILE --version 2>&1 | /bin/sed 's|nzbget version: ||')
-    [[ -n $APP_VERSION_PATHFILE && -e $APP_VERSION_PATHFILE ]] && app_version=$(/bin/grep '__version__ =' "$APP_VERSION_PATHFILE" | /bin/sed 's|^.*"\(.*\)"|\1|')
+
+    if [[ -n $APP_VERSION_PATHFILE && -e $APP_VERSION_PATHFILE ]]; then
+        app_version=$(/bin/grep '__version__ =' "$APP_VERSION_PATHFILE" | /bin/sed 's|^.*"\(.*\)"|\1|')
+        return
+    elif [[ -n $DAEMON_PATHFILE && -e $DAEMON_PATHFILE ]]; then
+        app_version=$($DAEMON_PATHFILE --version 2>&1 | /bin/sed 's|nzbget version: ||')
+        return
+    fi
+
+    return 1
 
     }
 
