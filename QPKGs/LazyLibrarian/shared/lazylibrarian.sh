@@ -152,7 +152,6 @@ StartQPKG()
 
     ExecuteAndLog 'start daemon' "$LAUNCHER" log:everything || return
     WaitForPID || return
-
     IsDaemonActive || return
     CheckPorts || return
     EnableThisQPKGIcon
