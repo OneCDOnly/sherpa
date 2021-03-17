@@ -4198,6 +4198,91 @@ QPKGs.Standalone.Size()
     }
 QPKGs.Standalone.Init
 
+QPKGs.Starting.Add()
+    {
+    local array=(${1})
+    [[ ${#array[@]} -eq 0 ]] && return
+    local item=''
+    for item in "${array[@]:-}"; do
+        if [[ " ${_obj_qpkgs_starting_array_[*]+"${_obj_qpkgs_starting_array_[@]}"} " != *"$item"* ]]; then
+            _obj_qpkgs_starting_array_+=("$item")
+        fi
+    done
+    }
+QPKGs.Starting.Array()
+    {
+    echo -n "${_obj_qpkgs_starting_array_[@]+"${_obj_qpkgs_starting_array_[@]}"}"
+    }
+QPKGs.Starting.Count()
+    {
+    echo "${#_obj_qpkgs_starting_array_[@]}"
+    }
+QPKGs.Starting.Exist()
+    {
+    [[ ${_obj_qpkgs_starting_array_[*]:-} == *"$1"* ]]
+    }
+QPKGs.Starting.First()
+    {
+    echo "${_obj_qpkgs_starting_array_[0]}"
+    }
+QPKGs.Starting.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_obj_qpkgs_starting_array_[@]} ]] && index=${#_obj_qpkgs_starting_array_[@]}
+    echo -n "${_obj_qpkgs_starting_array_[((index-1))]}"
+    }
+QPKGs.Starting.Init()
+    {
+    _obj_qpkgs_starting_size_=0
+    _obj_qpkgs_starting_array_=()
+    _obj_qpkgs_starting_array_index_=1
+    }
+QPKGs.Starting.IsAny()
+    {
+    [[ ${#_obj_qpkgs_starting_array_[@]} -gt 0 ]]
+    }
+QPKGs.Starting.IsNone()
+    {
+    [[ ${#_obj_qpkgs_starting_array_[@]} -eq 0 ]]
+    }
+QPKGs.Starting.List()
+    {
+    echo -n "${_obj_qpkgs_starting_array_[*]+"${_obj_qpkgs_starting_array_[@]}"}"
+    }
+QPKGs.Starting.ListCSV()
+    {
+    echo -n "${_obj_qpkgs_starting_array_[*]+"${_obj_qpkgs_starting_array_[@]}"}" | tr ' ' ','
+    }
+QPKGs.Starting.Remove()
+    {
+    local argument_array=(${1})
+    local temp_array=()
+    local argument=''
+    local item=''
+    local matched=false
+    for item in "${_obj_qpkgs_starting_array_[@]+"${_obj_qpkgs_starting_array_[@]}"}"; do
+        matched=false
+        for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
+            if [[ $argument = $item ]]; then
+                matched=true; break
+            fi
+        done
+        [[ $matched = false ]] && temp_array+=("$item")
+    done
+    _obj_qpkgs_starting_array_=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${_obj_qpkgs_starting_array_[*]+"${_obj_qpkgs_starting_array_[@]}"} ]] && _obj_qpkgs_starting_array_=()
+    }
+QPKGs.Starting.Size()
+    {
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+        _obj_qpkgs_starting_size_=$2
+    else
+        echo -n $_obj_qpkgs_starting_size_
+    fi
+    }
+QPKGs.Starting.Init
+
 QPKGs.Started.Add()
     {
     local array=(${1})
@@ -4283,6 +4368,91 @@ QPKGs.Started.Size()
     }
 QPKGs.Started.Init
 
+QPKGs.Stopping.Add()
+    {
+    local array=(${1})
+    [[ ${#array[@]} -eq 0 ]] && return
+    local item=''
+    for item in "${array[@]:-}"; do
+        if [[ " ${_obj_qpkgs_stopping_array_[*]+"${_obj_qpkgs_stopping_array_[@]}"} " != *"$item"* ]]; then
+            _obj_qpkgs_stopping_array_+=("$item")
+        fi
+    done
+    }
+QPKGs.Stopping.Array()
+    {
+    echo -n "${_obj_qpkgs_stopping_array_[@]+"${_obj_qpkgs_stopping_array_[@]}"}"
+    }
+QPKGs.Stopping.Count()
+    {
+    echo "${#_obj_qpkgs_stopping_array_[@]}"
+    }
+QPKGs.Stopping.Exist()
+    {
+    [[ ${_obj_qpkgs_stopping_array_[*]:-} == *"$1"* ]]
+    }
+QPKGs.Stopping.First()
+    {
+    echo "${_obj_qpkgs_stopping_array_[0]}"
+    }
+QPKGs.Stopping.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_obj_qpkgs_stopping_array_[@]} ]] && index=${#_obj_qpkgs_stopping_array_[@]}
+    echo -n "${_obj_qpkgs_stopping_array_[((index-1))]}"
+    }
+QPKGs.Stopping.Init()
+    {
+    _obj_qpkgs_stopping_size_=0
+    _obj_qpkgs_stopping_array_=()
+    _obj_qpkgs_stopping_array_index_=1
+    }
+QPKGs.Stopping.IsAny()
+    {
+    [[ ${#_obj_qpkgs_stopping_array_[@]} -gt 0 ]]
+    }
+QPKGs.Stopping.IsNone()
+    {
+    [[ ${#_obj_qpkgs_stopping_array_[@]} -eq 0 ]]
+    }
+QPKGs.Stopping.List()
+    {
+    echo -n "${_obj_qpkgs_stopping_array_[*]+"${_obj_qpkgs_stopping_array_[@]}"}"
+    }
+QPKGs.Stopping.ListCSV()
+    {
+    echo -n "${_obj_qpkgs_stopping_array_[*]+"${_obj_qpkgs_stopping_array_[@]}"}" | tr ' ' ','
+    }
+QPKGs.Stopping.Remove()
+    {
+    local argument_array=(${1})
+    local temp_array=()
+    local argument=''
+    local item=''
+    local matched=false
+    for item in "${_obj_qpkgs_stopping_array_[@]+"${_obj_qpkgs_stopping_array_[@]}"}"; do
+        matched=false
+        for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
+            if [[ $argument = $item ]]; then
+                matched=true; break
+            fi
+        done
+        [[ $matched = false ]] && temp_array+=("$item")
+    done
+    _obj_qpkgs_stopping_array_=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${_obj_qpkgs_stopping_array_[*]+"${_obj_qpkgs_stopping_array_[@]}"} ]] && _obj_qpkgs_stopping_array_=()
+    }
+QPKGs.Stopping.Size()
+    {
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+        _obj_qpkgs_stopping_size_=$2
+    else
+        echo -n $_obj_qpkgs_stopping_size_
+    fi
+    }
+QPKGs.Stopping.Init
+
 QPKGs.Stopped.Add()
     {
     local array=(${1})
@@ -4367,6 +4537,91 @@ QPKGs.Stopped.Size()
     fi
     }
 QPKGs.Stopped.Init
+
+QPKGs.Restarting.Add()
+    {
+    local array=(${1})
+    [[ ${#array[@]} -eq 0 ]] && return
+    local item=''
+    for item in "${array[@]:-}"; do
+        if [[ " ${_obj_qpkgs_restarting_array_[*]+"${_obj_qpkgs_restarting_array_[@]}"} " != *"$item"* ]]; then
+            _obj_qpkgs_restarting_array_+=("$item")
+        fi
+    done
+    }
+QPKGs.Restarting.Array()
+    {
+    echo -n "${_obj_qpkgs_restarting_array_[@]+"${_obj_qpkgs_restarting_array_[@]}"}"
+    }
+QPKGs.Restarting.Count()
+    {
+    echo "${#_obj_qpkgs_restarting_array_[@]}"
+    }
+QPKGs.Restarting.Exist()
+    {
+    [[ ${_obj_qpkgs_restarting_array_[*]:-} == *"$1"* ]]
+    }
+QPKGs.Restarting.First()
+    {
+    echo "${_obj_qpkgs_restarting_array_[0]}"
+    }
+QPKGs.Restarting.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_obj_qpkgs_restarting_array_[@]} ]] && index=${#_obj_qpkgs_restarting_array_[@]}
+    echo -n "${_obj_qpkgs_restarting_array_[((index-1))]}"
+    }
+QPKGs.Restarting.Init()
+    {
+    _obj_qpkgs_restarting_size_=0
+    _obj_qpkgs_restarting_array_=()
+    _obj_qpkgs_restarting_array_index_=1
+    }
+QPKGs.Restarting.IsAny()
+    {
+    [[ ${#_obj_qpkgs_restarting_array_[@]} -gt 0 ]]
+    }
+QPKGs.Restarting.IsNone()
+    {
+    [[ ${#_obj_qpkgs_restarting_array_[@]} -eq 0 ]]
+    }
+QPKGs.Restarting.List()
+    {
+    echo -n "${_obj_qpkgs_restarting_array_[*]+"${_obj_qpkgs_restarting_array_[@]}"}"
+    }
+QPKGs.Restarting.ListCSV()
+    {
+    echo -n "${_obj_qpkgs_restarting_array_[*]+"${_obj_qpkgs_restarting_array_[@]}"}" | tr ' ' ','
+    }
+QPKGs.Restarting.Remove()
+    {
+    local argument_array=(${1})
+    local temp_array=()
+    local argument=''
+    local item=''
+    local matched=false
+    for item in "${_obj_qpkgs_restarting_array_[@]+"${_obj_qpkgs_restarting_array_[@]}"}"; do
+        matched=false
+        for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
+            if [[ $argument = $item ]]; then
+                matched=true; break
+            fi
+        done
+        [[ $matched = false ]] && temp_array+=("$item")
+    done
+    _obj_qpkgs_restarting_array_=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${_obj_qpkgs_restarting_array_[*]+"${_obj_qpkgs_restarting_array_[@]}"} ]] && _obj_qpkgs_restarting_array_=()
+    }
+QPKGs.Restarting.Size()
+    {
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+        _obj_qpkgs_restarting_size_=$2
+    else
+        echo -n $_obj_qpkgs_restarting_size_
+    fi
+    }
+QPKGs.Restarting.Init
 
 QPKGs.Upgradable.Add()
     {

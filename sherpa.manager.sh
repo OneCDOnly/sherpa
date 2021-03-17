@@ -54,7 +54,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=210317
+    readonly MANAGER_SCRIPT_VERSION=210318
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
 
@@ -557,9 +557,9 @@ Session.Init()
         MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MINRAM+=(any)
-        MANAGER_QPKG_VERSION+=(210317)
+        MANAGER_QPKG_VERSION+=(210318)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
-        MANAGER_QPKG_MD5+=(b8a3d21d47408dd2c7f96ae909ac643d)
+        MANAGER_QPKG_MD5+=(512b6a7a4e98d32611be8299530a63a5)
         MANAGER_QPKG_DESC+=('full-featured NZB download manager with a nice web UI')
         MANAGER_QPKG_ABBRVS+=('sb sb3 sab sab3 sabnzbd3 sabnzbd')
         MANAGER_QPKG_ESSENTIALS+=('Entware Par2')
@@ -3579,7 +3579,7 @@ QPKGs.States.List()
     DebugFuncEntry
 
     local array_name=''
-    local -a operations_array=(Installed NotInstalled Started Stopped BackedUp NotBackedUp Upgradable Missing)
+    local -a operations_array=(Installed NotInstalled Starting Started Stopping Stopped Restarting BackedUp NotBackedUp Upgradable Missing)
 
     DebugInfoMinorSeparator
 
@@ -3631,6 +3631,7 @@ QPKGs.States.Build()
     #   - are installed and enabled or installed and disabled in [/etc/config/qpkg.conf]
     #   - have backup files in backup location
     #   - have config blocks in [/etc/config/qpkg.conf], but no files on-disk
+    #   - those in the process of starting, stopping, or restarting
 
     # NOTE: these lists cannot be rebuilt unless element removal methods are re-added
 
@@ -3651,16 +3652,26 @@ QPKGs.States.Build()
 
             installed_version=$(QPKG.Installed.Version "$package")
             remote_version=$(QPKG.Remote.Version "$package")
+            [[ ${installed_version//./} != "${remote_version//./}" ]] && QPKGs.Upgradable.Add "$package"
 
-            if [[ ${installed_version//./} != "${remote_version//./}" ]]; then
-                QPKGs.Upgradable.Add "$package"
-            fi
-
-            if QPKG.Enabled "$package"; then
-                QPKGs.Started.Add "$package"
-            else
-                QPKGs.Stopped.Add "$package"
-            fi
+            case $(QPKG.GetServiceStatus "$package") in
+                starting)
+                    QPKGs.Starting.Add "$package"
+                    ;;
+                restarting)
+                    QPKGs.Restarting.Add "$package"
+                    ;;
+                stopping)
+                    QPKGs.Stopping.Add "$package"
+                    ;;
+                *)
+                    if QPKG.Enabled "$package"; then
+                        QPKGs.Started.Add "$package"
+                    elif QPKG.NotEnabled "$package"; then
+                        QPKGs.Stopped.Add "$package"
+                    fi
+                    ;;
+            esac
 
             [[ ! -d $(QPKG.InstallPath "$package") ]] && QPKGs.Missing.Add "$package"
         else
@@ -3806,8 +3817,11 @@ QPKGs.Statuses.Show()
             elif QPKGs.NotInstalled.Exist "$package"; then
                 DisplayAsHelpPackageNamePlusSomething "$package" 'not installed'
             else
+                QPKGs.Starting.Exist "$package" && package_notes+=($(ColourTextBrightOrange starting))
                 QPKGs.Started.Exist "$package" && package_notes+=($(ColourTextBrightGreen started))
+                QPKGs.Stopping.Exist "$package" && package_notes+=($(ColourTextBrightOrange stopping))
                 QPKGs.Stopped.Exist "$package" && package_notes+=($(ColourTextBrightRed stopped))
+                QPKGs.Restarting.Exist "$package" && package_notes+=($(ColourTextBrightOrange restarting))
                 QPKGs.Upgradable.Exist "$package" && package_notes+=($(ColourTextBrightOrange upgradable))
                 QPKGs.Missing.Exist "$package" && package_notes=($(ColourTextBrightRedBlink missing))
 
@@ -4180,7 +4194,7 @@ QPKG.ClearServiceStatus()
 
     }
 
-QPKG.GetServiceStatus()
+QPKG.StoreServiceStatus()
     {
 
     # input:
@@ -4188,21 +4202,41 @@ QPKG.GetServiceStatus()
 
     local -r PACKAGE_NAME=${1:?no package name supplied}
 
-    if [[ -e /var/run/$PACKAGE_NAME.last.operation ]]; then
-        case $(</var/run/"$PACKAGE_NAME".last.operation) in
-            ok)
-                DebugInfo "$(FormatAsPackageName "$PACKAGE_NAME") service operation completed OK"
-                ;;
-            failed)
-                ShowAsEror "$(FormatAsPackageName "$PACKAGE_NAME") service operation failed.$([[ -e /var/log/$PACKAGE_NAME.log ]] && echo " Check $(FormatAsFileName "/var/log/$PACKAGE_NAME.log") for more information")"
-                ;;
-            *)
-                DebugAsWarn "$(FormatAsPackageName "$PACKAGE_NAME") service status is incorrect"
-                ;;
-        esac
-    else
+    if ! local status=$(QPKG.GetServiceStatus "$PACKAGE_NAME"); then
         DebugAsWarn "unable to get status of $(FormatAsPackageName "$PACKAGE_NAME") service. It may be a non-$PROJECT_NAME package, or a package earlier than 200816c that doesn't support service results."
+        return 1
     fi
+
+    case $status in
+        starting|stopping|restarting)
+            DebugInfo "$(FormatAsPackageName "$PACKAGE_NAME") service is $status"
+            ;;
+        ok)
+            DebugInfo "$(FormatAsPackageName "$PACKAGE_NAME") service operation completed OK"
+            ;;
+        failed)
+            ShowAsEror "$(FormatAsPackageName "$PACKAGE_NAME") service operation failed.$([[ -e /var/log/$PACKAGE_NAME.log ]] && echo " Check $(FormatAsFileName "/var/log/$PACKAGE_NAME.log") for more information")"
+            ;;
+        *)
+            DebugAsWarn "$(FormatAsPackageName "$PACKAGE_NAME") service status is incorrect"
+            ;;
+    esac
+
+    }
+
+QPKG.GetServiceStatus()
+    {
+
+    # input:
+    #   $1 = QPKG name
+
+    # output:
+    #   $stdout = last known package service status
+    #   $? = 0 if found, 1 if not found
+
+    local -r PACKAGE_NAME=${1:?no package name supplied}
+
+    [[ -e /var/run/$PACKAGE_NAME.last.operation ]] && echo $(</var/run/"$PACKAGE_NAME".last.operation)
 
     }
 
@@ -4537,7 +4571,7 @@ QPKG.Install()
 
     if [[ $result_code -eq 0 || $result_code -eq 10 ]]; then
         DebugAsDone "installed $(FormatAsPackageName "$PACKAGE_NAME")"
-        QPKG.GetServiceStatus "$PACKAGE_NAME"
+        QPKG.StoreServiceStatus "$PACKAGE_NAME"
 
         if [[ $PACKAGE_NAME = Entware ]]; then
             ModPathToEntware
@@ -4642,7 +4676,7 @@ QPKG.Reinstall()
     if [[ $result_code -eq 0 || $result_code -eq 10 ]]; then
         DebugAsDone "reinstalled $(FormatAsPackageName "$PACKAGE_NAME")"
         QPKGs.IsReinstall.Add "$PACKAGE_NAME"
-        QPKG.GetServiceStatus "$PACKAGE_NAME"
+        QPKG.StoreServiceStatus "$PACKAGE_NAME"
 
         if QPKG.Enabled "$PACKAGE_NAME"; then
             QPKGs.Stopped.Remove "$PACKAGE_NAME"
@@ -4732,7 +4766,7 @@ QPKG.Upgrade()
         else
             DebugAsDone "upgraded $(FormatAsPackageName "$PACKAGE_NAME") from $previous_version to $current_version"
         fi
-        QPKG.GetServiceStatus "$PACKAGE_NAME"
+        QPKG.StoreServiceStatus "$PACKAGE_NAME"
         QPKGs.Upgradable.Remove "$PACKAGE_NAME"
         QPKGs.IsUpgrade.Add "$PACKAGE_NAME"
 
@@ -4859,7 +4893,7 @@ QPKG.Restart()
 
     if [[ $result_code -eq 0 ]]; then
         DebugAsDone "restarted $(FormatAsPackageName "$PACKAGE_NAME")"
-        QPKG.GetServiceStatus "$PACKAGE_NAME"
+        QPKG.StoreServiceStatus "$PACKAGE_NAME"
         QPKGs.IsRestart.Add "$PACKAGE_NAME"
     else
         ShowAsWarn "unable to restart $(FormatAsPackageName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
@@ -4922,7 +4956,7 @@ QPKG.Start()
 
     if [[ $result_code -eq 0 ]]; then
         DebugAsDone "started $(FormatAsPackageName "$PACKAGE_NAME")"
-        QPKG.GetServiceStatus "$PACKAGE_NAME"
+        QPKG.StoreServiceStatus "$PACKAGE_NAME"
         QPKGs.IsStart.Add "$PACKAGE_NAME"
         QPKGs.Started.Add "$PACKAGE_NAME"
         QPKGs.Stopped.Remove "$PACKAGE_NAME"
@@ -4988,7 +5022,7 @@ QPKG.Stop()
 
     if [[ $result_code -eq 0 ]]; then
         DebugAsDone "stopped $(FormatAsPackageName "$PACKAGE_NAME")"
-        QPKG.GetServiceStatus "$PACKAGE_NAME"
+        QPKG.StoreServiceStatus "$PACKAGE_NAME"
         QPKGs.IsStop.Add "$package"
         QPKGs.Stopped.Add "$PACKAGE_NAME"
         QPKGs.Started.Remove "$PACKAGE_NAME"
@@ -5088,7 +5122,7 @@ QPKG.Backup()
     if [[ $result_code -eq 0 ]]; then
         DebugAsDone "backed-up $(FormatAsPackageName "$PACKAGE_NAME") configuration"
         QPKGs.IsBackup.Add "$PACKAGE_NAME"
-        QPKG.GetServiceStatus "$PACKAGE_NAME"
+        QPKG.StoreServiceStatus "$PACKAGE_NAME"
         QPKGs.NotBackedUp.Remove "$PACKAGE_NAME"
         QPKGs.BackedUp.Add "$PACKAGE_NAME"
     else
@@ -5182,7 +5216,7 @@ QPKG.Restore()
     if [[ $result_code -eq 0 ]]; then
         DebugAsDone "restored $(FormatAsPackageName "$PACKAGE_NAME") configuration"
         QPKGs.IsRestore.Add "$PACKAGE_NAME"
-        QPKG.GetServiceStatus "$PACKAGE_NAME"
+        QPKG.StoreServiceStatus "$PACKAGE_NAME"
     else
         DebugAsWarn "unable to restore $(FormatAsPackageName "$PACKAGE_NAME") configuration $(FormatAsExitcode $result_code)"
         QPKGs.ErRestore.Add "$PACKAGE_NAME"
@@ -5268,6 +5302,45 @@ QPKG.NotEnabled()
     #   $? = 0 (true) or 1 (false)
 
     [[ $($GETCFG_CMD "${1:?no package name supplied}" Enable -u -f /etc/config/qpkg.conf) = 'FALSE' ]]
+
+    }
+
+QPKG.Starting()
+    {
+
+    # input:
+    #   $1 = package name to check
+
+    # output:
+    #   $? = 0 (true) or 1 (false)
+
+    [[ $(QPKG.StoreServiceStatus "$1") = starting ]]
+
+    }
+
+QPKG.Stopping()
+    {
+
+    # input:
+    #   $1 = package name to check
+
+    # output:
+    #   $? = 0 (true) or 1 (false)
+
+    [[ $(QPKG.StoreServiceStatus "$1") = stopping ]]
+
+    }
+
+QPKG.Restarting()
+    {
+
+    # input:
+    #   $1 = package name to check
+
+    # output:
+    #   $? = 0 (true) or 1 (false)
+
+    [[ $(QPKG.StoreServiceStatus "$1") = restarting ]]
 
     }
 
@@ -6478,7 +6551,7 @@ CompileObjects()
 
     # $1 = 'hash' (optional) - if specified, only return the internal checksum
 
-    local -r COMPILED_OBJECTS_HASH=ae01301cf13cfc8dd4b0c50304b8da3e
+    local -r COMPILED_OBJECTS_HASH=01ca7679650c971e3a9d38c5191533dd
     local array_name=''
     local -a operations_array=()
 
@@ -6548,7 +6621,7 @@ CompileObjects()
             AddListObj IPKGs.To${array_name}
         done
 
-        operations_array=(Essential Installable Missing Names Optional Standalone Started Stopped Upgradable)
+        operations_array=(Essential Installable Missing Names Optional Standalone Starting Started Stopping Stopped Restarting Upgradable)
 
         for array_name in "${operations_array[@]}"; do
             AddListObj QPKGs.${array_name}
