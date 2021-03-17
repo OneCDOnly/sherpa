@@ -5314,7 +5314,7 @@ QPKG.Starting()
     # output:
     #   $? = 0 (true) or 1 (false)
 
-    [[ $(QPKG.StoreServiceStatus "$1") = starting ]]
+    [[ $(QPKG.GetServiceStatus "$1") = starting ]]
 
     }
 
@@ -5327,7 +5327,7 @@ QPKG.Stopping()
     # output:
     #   $? = 0 (true) or 1 (false)
 
-    [[ $(QPKG.StoreServiceStatus "$1") = stopping ]]
+    [[ $(QPKG.GetServiceStatus "$1") = stopping ]]
 
     }
 
@@ -5340,7 +5340,7 @@ QPKG.Restarting()
     # output:
     #   $? = 0 (true) or 1 (false)
 
-    [[ $(QPKG.StoreServiceStatus "$1") = restarting ]]
+    [[ $(QPKG.GetServiceStatus "$1") = restarting ]]
 
     }
 
