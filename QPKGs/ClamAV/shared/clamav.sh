@@ -931,6 +931,7 @@ SetServiceOperation()
     {
 
     service_operation="$1"
+    SetServiceOperationResult "$1"
 
     }
 
@@ -1024,7 +1025,7 @@ IsNotError()
 IsRestart()
     {
 
-    [[ $service_operation = restart ]]
+    [[ $service_operation = restarting ]]
 
     }
 
@@ -1038,7 +1039,7 @@ IsNotRestart()
 IsNotRestore()
     {
 
-    ! [[ $service_operation = restore ]]
+    ! [[ $service_operation = restoring ]]
 
     }
 
@@ -1052,7 +1053,7 @@ IsNotLog()
 IsClean()
     {
 
-    [[ $service_operation = clean ]]
+    [[ $service_operation = cleaning ]]
 
     }
 
@@ -1066,7 +1067,7 @@ IsNotClean()
 IsRestore()
     {
 
-    [[ $service_operation = restore ]]
+    [[ $service_operation = restoring ]]
 
     }
 
@@ -1080,7 +1081,7 @@ IsNotRestore()
 IsReset()
     {
 
-    [[ $service_operation = 'reset-config' ]]
+    [[ $service_operation = 'resetting-config' ]]
 
     }
 
@@ -1285,7 +1286,7 @@ Init
 if IsNotError; then
     case $1 in
         start|--start)
-            SetServiceOperation "$1"
+            SetServiceOperation starting
             # ensure those still on SickBeard.py are using the updated repo
             if [[ ! -e $DAEMON_PATHFILE && -e $(/usr/bin/dirname "$DAEMON_PATHFILE")/SickBeard.py ]]; then
                 CleanLocalClone
@@ -1294,11 +1295,11 @@ if IsNotError; then
             fi
             ;;
         stop|--stop)
-            SetServiceOperation "$1"
+            SetServiceOperation stopping
             StopQPKG || SetError
             ;;
         r|-r|restart|--restart)
-            SetServiceOperation restart
+            SetServiceOperation restarting
             { StopQPKG; StartQPKG ;} || SetError
             ;;
         s|-s|status|--status)
@@ -1307,7 +1308,7 @@ if IsNotError; then
             ;;
         b|-b|backup|--backup|backup-config|--backup-config)
             if [[ -n $BACKUP_PATHFILE ]]; then
-                SetServiceOperation backup
+                SetServiceOperation backing-up
                 BackupConfig || SetError
             else
                 SetServiceOperation none
@@ -1316,7 +1317,7 @@ if IsNotError; then
             ;;
         reset-config|--reset-config)
             if [[ -n $QPKG_INI_PATHFILE ]]; then
-                SetServiceOperation "$1"
+                SetServiceOperation resetting-config
                 ResetConfig || SetError
             else
                 SetServiceOperation none
@@ -1325,7 +1326,7 @@ if IsNotError; then
             ;;
         restore|--restore|restore-config|--restore-config)
             if [[ -n $BACKUP_PATHFILE ]]; then
-                SetServiceOperation "$1"
+                SetServiceOperation restoring
                 RestoreConfig || SetError
             else
                 SetServiceOperation none
@@ -1334,7 +1335,7 @@ if IsNotError; then
             ;;
         c|-c|clean|--clean)
             if [[ -n $SOURCE_GIT_URL ]]; then
-                SetServiceOperation clean
+                SetServiceOperation cleaning
 
                 if [[ $QPKG_NAME = nzbToMedia ]]; then
                     # nzbToMedia stores the config file in the repo location, so save it and restore again after new clone is complete
@@ -1348,16 +1349,16 @@ if IsNotError; then
             fi
             ;;
         l|-l|log|--log)
-            SetServiceOperation log
+            SetServiceOperation logging
             ViewLog
             ;;
         v|-v|version|--version)
-            SetServiceOperation version
+            SetServiceOperation versioning
             Display "$QPKG_VERSION"
             ;;
         import|--import)
             if [[ $QPKG_NAME = SABnzbd ]]; then
-                SetServiceOperation "$1"
+                SetServiceOperation importing
                 ImportFromSAB2 || SetError
             else
                 SetServiceOperation none
