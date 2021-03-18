@@ -54,7 +54,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=210318
+    readonly MANAGER_SCRIPT_VERSION=210319
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
 
@@ -525,9 +525,9 @@ Session.Init()
         MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MINRAM+=(any)
-        MANAGER_QPKG_VERSION+=(210318)
+        MANAGER_QPKG_VERSION+=(210319)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
-        MANAGER_QPKG_MD5+=(ab718cd9d1baa2e6ef298a6b3d7ea27d)
+        MANAGER_QPKG_MD5+=(0c28fe3a7d1dc2bcfd2d84c78e37477b)
         MANAGER_QPKG_DESC+=('post-processing for NZBs to many services')
         MANAGER_QPKG_ABBRVS+=('nzb2 nzb2m nzbto nzbtom nzbtomedia')
         MANAGER_QPKG_ESSENTIALS+=(Entware)

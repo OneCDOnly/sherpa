@@ -27,13 +27,13 @@ Init()
     readonly TARGET_SCRIPT=''
     readonly PYTHON=/opt/bin/python3
     readonly QPKG_REPO_PATH=$QPKG_PATH/$QPKG_NAME
-    readonly APP_VERSION_PATHFILE=$QPKG_REPO_PATH/nzbtomedia/version.py
+    readonly APP_VERSION_PATHFILE=$QPKG_REPO_PATH/.bumpversion.cfg
 
     # for Entware binaries only
     readonly ORIG_DAEMON_SERVICE_SCRIPT=''
 
     # name of file to launch
-    readonly DAEMON_PATHFILE=$QPKG_REPO_PATH/$TARGET_SCRIPT
+    readonly DAEMON_PATHFILE=''
 
     # for local mods only
     readonly TARGET_SERVICE_PATHFILE=''
@@ -297,7 +297,7 @@ LoadAppVersion()
     app_version=''
 
     if [[ -n $APP_VERSION_PATHFILE && -e $APP_VERSION_PATHFILE ]]; then
-        app_version=$(/bin/grep '__version__ =' "$APP_VERSION_PATHFILE" | /bin/sed 's|^.*"\(.*\)"|\1|')
+        app_version=$(/sbin/getcfg bumpversion current_version -d 0 -f "$APP_VERSION_PATHFILE")
         return
     elif [[ -n $DAEMON_PATHFILE && -e $DAEMON_PATHFILE ]]; then
         app_version=$($DAEMON_PATHFILE --version 2>&1 | /bin/sed 's|nzbget version: ||')
