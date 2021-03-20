@@ -749,14 +749,14 @@ Session.Validate()
         if ! QPKG.MinRAM "$package" &>/dev/null; then
             QPKGs.ToInstall.Remove "$package"
             QPKGs.SkInstall.Add "$package"
-            DebugAsWarn "can't install this package $(FormatAsPackageName "$package"): not enough RAM"
+            DebugAsWarn "can't install this package $(FormatAsPackageName "$package"): insufficient RAM"
         fi
     done
 
     if QPKGs.ToBackup.IsNone && QPKGs.ToUninstall.IsNone && QPKGs.ToUpgrade.IsNone && QPKGs.ToInstall.IsNone && QPKGs.ToReinstall.IsNone && QPKGs.ToRestore.IsNone && QPKGs.ToRestart.IsNone && QPKGs.ToStart.IsNone && QPKGs.ToStop.IsNone && QPKGs.ToRebuild.IsNone; then
         if Opts.Apps.All.Install.IsNot && Opts.Apps.All.Restart.IsNot && Opts.Apps.All.Upgrade.IsNot && Opts.Apps.All.Backup.IsNot && Opts.Apps.All.Restore.IsNot && Opts.Help.Status.IsNot && Opts.Apps.All.Start.IsNot && Opts.Apps.All.Stop.IsNot && Opts.Apps.All.Rebuild.IsNot; then
             if Opts.Dependencies.Check.IsNot && Opts.IgnoreFreeSpace.IsNot; then
-                ShowAsEror "I've nothing to do (usually means the arguments couldn't be run as specified)"
+                ShowAsEror "I've nothing to do (this usually means the arguments couldn't be run as-specified)"
                 Opts.Help.Basic.Set
                 QPKGs.SkipProcessing.Set
                 DebugFuncExit 1; return
@@ -3813,7 +3813,7 @@ QPKGs.Statuses.Show()
             if ! QPKG.URL "$package" &>/dev/null; then
                 DisplayAsHelpPackageNamePlusSomething "$package" 'not installable on this NAS (incompatible arch)'
             elif ! QPKG.MinRAM "$package" &>/dev/null; then
-                DisplayAsHelpPackageNamePlusSomething "$package" 'not installable on this NAS (not enough RAM)'
+                DisplayAsHelpPackageNamePlusSomething "$package" 'not installable on this NAS (insufficient RAM)'
             elif QPKGs.NotInstalled.Exist "$package"; then
                 DisplayAsHelpPackageNamePlusSomething "$package" 'not installed'
             else
