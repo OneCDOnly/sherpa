@@ -149,26 +149,25 @@ StartQPKG()
 
     if [[ $(/sbin/getcfg SABnzbd Enable -f /etc/config/qpkg.conf) = TRUE ]]; then
         local current_version=$(/sbin/getcfg SABnzbd Version -f /etc/config/qpkg.conf)
+
         if [[ ${current_version//[!0-9]/} -lt $SAB_MIN_VERSION ]]; then
             DisplayErrCommitAllLogs "unable to link from package to target: installed $(FormatAsPackageName SABnzbd) QPKG must first be upgraded to $SAB_MIN_VERSION or later"
             return 1
         fi
     fi
 
-    # save config from original nzbToMedia install (which was created by sherpa SABnzbd QPKGs earlier than 200809)
-    if [[ -d $APPARENT_PATH && ! -L $APPARENT_PATH ]]; then
-        if [[ -e "$APPARENT_PATH/$(/usr/bin/basename "$QPKG_INI_PATHFILE")" ]]; then
-            cp "$APPARENT_PATH/$(/usr/bin/basename "$QPKG_INI_PATHFILE")" "$QPKG_INI_PATHFILE"
-        fi
-
-        # destroy original installation
-        rm -r "$APPARENT_PATH"
+    # save config from original nzbToMedia install (created by sherpa SABnzbd QPKGs earlier than $SAB_MIN_VERSION)
+    if [[ -d $APPARENT_PATH && ! -L $APPARENT_PATH && -e "$APPARENT_PATH/$(/usr/bin/basename "$QPKG_INI_PATHFILE")" ]]; then
+        cp "$APPARENT_PATH/$(/usr/bin/basename "$QPKG_INI_PATHFILE")" "$QPKG_INI_PATHFILE"
     fi
 
-    if [[ ! -L $APPARENT_PATH ]]; then
-        rmdir --ignore-fail-on-non-empty "$APPARENT_PATH" &>/dev/null
-        ln -s "$QPKG_REPO_PATH" "$APPARENT_PATH"
-    fi
+    # destroy original installation
+    [[ -d $APPARENT_PATH ]] && rm -r "$APPARENT_PATH"
+
+    # need this if [Download] isn't a share on this NAS
+    [[ ! -e $(/usr/bin/dirname $APPARENT_PATH) ]] && mkdir -p $(/usr/bin/dirname $APPARENT_PATH)
+
+    ln -s "$QPKG_REPO_PATH" "$APPARENT_PATH"
 
     DisplayCommitToLog 'start package: OK'
     EnsureConfigFileExists
