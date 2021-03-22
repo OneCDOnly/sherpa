@@ -738,18 +738,27 @@ Session.Validate()
         DebugFuncExit 1; return
     fi
 
-    # skip packages that can't be installed on this NAS
+    # skip packages that can't be installed
     for package in $(QPKGs.ToInstall.Array); do
         if ! QPKG.URL "$package" &>/dev/null; then
+            ShowAsFail "unable to install $(FormatAsPackageName "$package"): unsupported arch"
             QPKGs.ToInstall.Remove "$package"
             QPKGs.SkInstall.Add "$package"
-            DebugAsWarn "can't install this package $(FormatAsPackageName "$package"): unsupported arch"
         fi
 
         if ! QPKG.MinRAM "$package" &>/dev/null; then
+            ShowAsFail "unable to install $(FormatAsPackageName "$package"): insufficient RAM"
             QPKGs.ToInstall.Remove "$package"
             QPKGs.SkInstall.Add "$package"
-            DebugAsWarn "can't install this package $(FormatAsPackageName "$package"): insufficient RAM"
+        fi
+    done
+
+    # skip packages that can't be upgraded
+    for package in $(QPKGs.ToUpgrade.Array); do
+        if ! QPKG.Installed "$package"; then
+            ShowAsFail "unable to upgrade $(FormatAsPackageName "$package"): not installed"
+            QPKGs.ToUpgrade.Remove "$package"
+            QPKGs.SkUpgrade.Add "$package"
         fi
     done
 
