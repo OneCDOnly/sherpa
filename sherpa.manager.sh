@@ -744,9 +744,7 @@ Session.Validate()
             ShowAsFail "unable to install $(FormatAsPackageName "$package"): unsupported arch"
             QPKGs.ToInstall.Remove "$package"
             QPKGs.SkInstall.Add "$package"
-        fi
-
-        if ! QPKG.MinRAM "$package" &>/dev/null; then
+        elif ! QPKG.MinRAM "$package" &>/dev/null; then
             ShowAsFail "unable to install $(FormatAsPackageName "$package"): insufficient RAM"
             QPKGs.ToInstall.Remove "$package"
             QPKGs.SkInstall.Add "$package"
@@ -759,6 +757,37 @@ Session.Validate()
             ShowAsFail "unable to upgrade $(FormatAsPackageName "$package"): not installed"
             QPKGs.ToUpgrade.Remove "$package"
             QPKGs.SkUpgrade.Add "$package"
+        elif ! QPKGs.Upgradable.Exist "$package"; then
+            ShowAsFail "unable to upgrade $(FormatAsPackageName "$package"): no new package available"
+            QPKGs.ToUpgrade.Remove "$package"
+            QPKGs.SkUpgrade.Add "$package"
+        fi
+    done
+
+    # skip packages that can't be started
+    for package in $(QPKGs.ToStart.Array); do
+        if ! QPKG.Installed "$package"; then
+            ShowAsFail "unable to start $(FormatAsPackageName "$package"): not installed"
+            QPKGs.ToStart.Remove "$package"
+            QPKGs.SkStart.Add "$package"
+        fi
+    done
+
+    # skip packages that can't be stopped
+    for package in $(QPKGs.ToStop.Array); do
+        if ! QPKG.Installed "$package"; then
+            ShowAsFail "unable to stop $(FormatAsPackageName "$package"): not installed"
+            QPKGs.ToStop.Remove "$package"
+            QPKGs.SkStop.Add "$package"
+        fi
+    done
+
+    # skip packages that can't be restarted
+    for package in $(QPKGs.ToRestart.Array); do
+        if ! QPKG.Installed "$package"; then
+            ShowAsFail "unable to restart $(FormatAsPackageName "$package"): not installed"
+            QPKGs.ToRestart.Remove "$package"
+            QPKGs.SkRestart.Add "$package"
         fi
     done
 
