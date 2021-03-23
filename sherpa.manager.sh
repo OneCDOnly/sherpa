@@ -1128,8 +1128,7 @@ Tiers.Processor()
                 fi
 
                 if QPKG.Enabled Entware; then
-                        ModPathToEntware
-
+                    ModPathToEntware
                     Tier.Processor Install false "$tier" IPKG '' forward install installing installed long
                     Tier.Processor Install false "$tier" PIP '' forward install installing installed long
                 else
@@ -4612,6 +4611,17 @@ QPKG.Install()
     if [[ $result_code -eq 0 || $result_code -eq 10 ]]; then
         DebugAsDone "installed $(FormatAsPackageName "$PACKAGE_NAME")"
         QPKG.StoreServiceStatus "$PACKAGE_NAME"
+        QPKGs.IsInstall.Add "$PACKAGE_NAME"
+        QPKGs.Installed.Add "$PACKAGE_NAME"
+        QPKGs.NotInstalled.Remove "$PACKAGE_NAME"
+
+        if QPKG.Enabled "$PACKAGE_NAME"; then
+            QPKGs.Stopped.Remove "$PACKAGE_NAME"
+            QPKGs.Started.Add "$PACKAGE_NAME"
+        else
+            QPKGs.Started.Remove "$PACKAGE_NAME"
+            QPKGs.Stopped.Add "$PACKAGE_NAME"
+        fi
 
         if [[ $PACKAGE_NAME = Entware ]]; then
             ModPathToEntware
@@ -4626,24 +4636,12 @@ QPKG.Install()
                 fi
 
                 # add extra package(s) needed immediately
-                ShowAsProc 'installing essential IPKGs'
+                DebugAsProc 'installing essential IPKGs'
                 RunAndLog "$OPKG_CMD install$(Opts.IgnoreFreeSpace.IsSet && Opts.IgnoreFreeSpace.Text) --force-overwrite $MANAGER_ESSENTIAL_IPKGS_ADD --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$LOGS_PATH/ipkgs.extra.$INSTALL_LOG_FILE" log:failure-only
-                ShowAsDone 'installed essential IPKGs'
+                DebugAsDone 'installed essential IPKGs'
 
                 PIPs.Install.Set
             fi
-        fi
-
-        QPKGs.IsInstall.Add "$PACKAGE_NAME"
-        QPKGs.Installed.Add "$PACKAGE_NAME"
-        QPKGs.NotInstalled.Remove "$PACKAGE_NAME"
-
-        if QPKG.Enabled "$PACKAGE_NAME"; then
-            QPKGs.Stopped.Remove "$PACKAGE_NAME"
-            QPKGs.Started.Add "$PACKAGE_NAME"
-        else
-            QPKGs.Started.Remove "$PACKAGE_NAME"
-            QPKGs.Stopped.Add "$PACKAGE_NAME"
         fi
 
         result_code=0    # remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK)
