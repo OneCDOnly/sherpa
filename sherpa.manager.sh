@@ -54,7 +54,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=210323
+    readonly MANAGER_SCRIPT_VERSION=210324
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
 
@@ -741,53 +741,39 @@ Session.Validate()
     # skip packages that can't be installed
     for package in $(QPKGs.ToInstall.Array); do
         if ! QPKG.URL "$package" &>/dev/null; then
-            ShowAsFail "unable to install $(FormatAsPackageName "$package"): unsupported arch"
-            QPKGs.ToInstall.Remove "$package"
-            QPKGs.SkInstall.Add "$package"
+            MoveToSkip "$package" install 'unsupported arch'
         elif ! QPKG.MinRAM "$package" &>/dev/null; then
-            ShowAsFail "unable to install $(FormatAsPackageName "$package"): insufficient RAM"
-            QPKGs.ToInstall.Remove "$package"
-            QPKGs.SkInstall.Add "$package"
+            MoveToSkip "$package" install 'insufficient RAM'
         fi
     done
 
     # skip packages that can't be upgraded
     for package in $(QPKGs.ToUpgrade.Array); do
         if ! QPKG.Installed "$package"; then
-            ShowAsFail "unable to upgrade $(FormatAsPackageName "$package"): not installed"
-            QPKGs.ToUpgrade.Remove "$package"
-            QPKGs.SkUpgrade.Add "$package"
+            MoveToSkip "$package" upgrade 'not installed'
         elif ! QPKGs.Upgradable.Exist "$package"; then
-            ShowAsFail "unable to upgrade $(FormatAsPackageName "$package"): no new package available"
-            QPKGs.ToUpgrade.Remove "$package"
-            QPKGs.SkUpgrade.Add "$package"
+            MoveToSkip "$package" upgrade 'no new package available'
         fi
     done
 
     # skip packages that can't be started
     for package in $(QPKGs.ToStart.Array); do
         if ! QPKG.Installed "$package"; then
-            ShowAsFail "unable to start $(FormatAsPackageName "$package"): not installed"
-            QPKGs.ToStart.Remove "$package"
-            QPKGs.SkStart.Add "$package"
+            MoveToSkip "$package" start 'not installed'
         fi
     done
 
     # skip packages that can't be stopped
     for package in $(QPKGs.ToStop.Array); do
         if ! QPKG.Installed "$package"; then
-            ShowAsFail "unable to stop $(FormatAsPackageName "$package"): not installed"
-            QPKGs.ToStop.Remove "$package"
-            QPKGs.SkStop.Add "$package"
+            MoveToSkip "$package" stop 'not installed'
         fi
     done
 
     # skip packages that can't be restarted
     for package in $(QPKGs.ToRestart.Array); do
         if ! QPKG.Installed "$package"; then
-            ShowAsFail "unable to restart $(FormatAsPackageName "$package"): not installed"
-            QPKGs.ToRestart.Remove "$package"
-            QPKGs.SkRestart.Add "$package"
+            MoveToSkip "$package" restart 'not installed'
         fi
     done
 
@@ -3996,6 +3982,22 @@ QPKGs.Standalone.Show()
     done
 
     return 0
+
+    }
+
+MoveToSkip()
+    {
+
+    # move specified package name from 'To' operation array into associated 'Sk' array
+
+    # input:
+    #   $1 = package name
+    #   $2 = action
+    #   $3 = reason
+
+    ShowAsWarn "unable to $2 $(FormatAsPackageName "$1"): $3" >&2
+    QPKGs.To$(tr 'a-z' 'A-Z' <<< "${2:0:1}")${2:1}.Remove "$1"
+    QPKGs.Sk$(tr 'a-z' 'A-Z' <<< "${2:0:1}")${2:1}.Add "$1"
 
     }
 
