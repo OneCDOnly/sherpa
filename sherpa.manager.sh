@@ -741,16 +741,16 @@ Session.Validate()
     # skip packages that can't be installed
     for package in $(QPKGs.ToInstall.Array); do
         if ! QPKG.URL "$package" &>/dev/null; then
-            ReassignToSk "$package" install 'unsupported arch'
+            ReassignToSk "$package" install 'this NAS has an unsupported arch'
         elif ! QPKG.MinRAM "$package" &>/dev/null; then
-            ReassignToSk "$package" install 'insufficient RAM'
+            ReassignToSk "$package" install 'this NAS has insufficient RAM'
         fi
     done
 
     # skip packages that can't be upgraded
     for package in $(QPKGs.ToUpgrade.Array); do
         if ! QPKG.Installed "$package"; then
-            ReassignToSk "$package" upgrade 'not installed'
+            ReassignToSk "$package" upgrade "it's not installed"
         elif ! QPKGs.Upgradable.Exist "$package"; then
             ReassignToSk "$package" upgrade 'no new package available'
         fi
@@ -759,21 +759,21 @@ Session.Validate()
     # skip packages that can't be started
     for package in $(QPKGs.ToStart.Array); do
         if ! QPKG.Installed "$package"; then
-            ReassignToSk "$package" start 'not installed'
+            ReassignToSk "$package" start "it's not installed"
         fi
     done
 
     # skip packages that can't be stopped
     for package in $(QPKGs.ToStop.Array); do
         if ! QPKG.Installed "$package"; then
-            ReassignToSk "$package" stop 'not installed'
+            ReassignToSk "$package" stop "it's not installed"
         fi
     done
 
     # skip packages that can't be restarted
     for package in $(QPKGs.ToRestart.Array); do
         if ! QPKG.Installed "$package"; then
-            ReassignToSk "$package" restart 'not installed'
+            ReassignToSk "$package" restart "it's not installed"
         fi
     done
 
@@ -4600,7 +4600,7 @@ QPKG.Install()
     local -i result_code=0
 
     if QPKG.Installed "$PACKAGE_NAME"; then
-        ReassignToSk "$PACKAGE_NAME" install "it's already installed. Use 'reinstall' instead."
+        ReassignToSk "$PACKAGE_NAME" install "it's already installed - use 'reinstall' instead"
         MarkAsInstalled "$PACKAGE_NAME"
         result_code=2
         DebugFuncExit $result_code; return
@@ -4707,7 +4707,7 @@ QPKG.Reinstall()
     local -i result_code=0
 
     if ! QPKG.Installed "$PACKAGE_NAME"; then
-        ReassignToSk "$PACKAGE_NAME" reistall "it's not installed. Use 'install' instead."
+        ReassignToSk "$PACKAGE_NAME" reistall "it's not installed - use 'install' instead"
         MarkAsNotInstalled "$PACKAGE_NAME"
         result_code=2
         DebugFuncExit $result_code; return
@@ -4784,7 +4784,7 @@ QPKG.Upgrade()
     local -i result_code=0
 
     if ! QPKG.Installed "$PACKAGE_NAME"; then
-        ReassignToSk "$PACKAGE_NAME" upgrade "it's not installed. Use 'install' instead."
+        ReassignToSk "$PACKAGE_NAME" upgrade "it's not installed - use 'install' instead"
         MarkAsNotInstalled "$PACKAGE_NAME"
         result_code=2
         DebugFuncExit $result_code; return
@@ -4868,7 +4868,7 @@ QPKG.Uninstall()
     local -i result_code=0
 
     if QPKG.NotInstalled "$PACKAGE_NAME"; then
-        ReassignToSk "$PACKAGE_NAME" uninstall "it's not installed."
+        ReassignToSk "$PACKAGE_NAME" uninstall "it's not installed"
         MarkAsNotInstalled "$PACKAGE_NAME"
         QPKGs.Started.Remove "$PACKAGE_NAME"
         result_code=2
@@ -4928,7 +4928,7 @@ QPKG.Restart()
     QPKG.ClearServiceStatus "$PACKAGE_NAME"
 
     if QPKG.NotInstalled "$PACKAGE_NAME"; then
-        ReassignToSk "$PACKAGE_NAME" restart "it's not installed."
+        ReassignToSk "$PACKAGE_NAME" restart "it's not installed"
         MarkAsNotInstalled "$PACKAGE_NAME"
         result_code=2
         DebugFuncExit $result_code; return
@@ -4982,13 +4982,13 @@ QPKG.Start()
     QPKG.ClearServiceStatus "$PACKAGE_NAME"
 
     if QPKG.NotInstalled "$PACKAGE_NAME"; then
-        ReassignToSk "$PACKAGE_NAME" start "it's not installed."
+        ReassignToSk "$PACKAGE_NAME" start "it's not installed"
         result_code=2
         DebugFuncExit $result_code; return
     fi
 
     if QPKG.Enabled "$PACKAGE_NAME"; then
-        ReassignToSk "$PACKAGE_NAME" start "it's already started."
+        ReassignToSk "$PACKAGE_NAME" start "it's already started"
         result_code=2
         DebugFuncExit $result_code; return
     fi
@@ -5043,13 +5043,13 @@ QPKG.Stop()
     QPKG.ClearServiceStatus "$PACKAGE_NAME"
 
     if QPKG.NotInstalled "$PACKAGE_NAME"; then
-        ReassignToSk "$PACKAGE_NAME" stop "it's not installed."
+        ReassignToSk "$PACKAGE_NAME" stop "it's not installed"
         result_code=2
         DebugFuncExit $result_code; return
     fi
 
     if QPKG.NotEnabled "$PACKAGE_NAME"; then
-        ReassignToSk "$PACKAGE_NAME" stop "it's already stopped."
+        ReassignToSk "$PACKAGE_NAME" stop "it's already stopped"
         result_code=2
         DebugFuncExit $result_code; return
     fi
@@ -5141,13 +5141,13 @@ QPKG.Backup()
     local -i result_code=0
 
     if ! QPKG.SupportsBackup "$PACKAGE_NAME"; then
-        ReassignToSk "$PACKAGE_NAME" backup "it does not support backups."
+        ReassignToSk "$PACKAGE_NAME" backup "it does not support backups"
         result_code=2
         DebugFuncExit $result_code; return
     fi
 
     if QPKG.NotInstalled "$PACKAGE_NAME"; then
-        ReassignToSk "$PACKAGE_NAME" backup "it's not installed."
+        ReassignToSk "$PACKAGE_NAME" backup "it's not installed"
         result_code=2
         DebugFuncExit $result_code; return
     fi
