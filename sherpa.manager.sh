@@ -54,7 +54,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=210324
+    readonly MANAGER_SCRIPT_VERSION=210325
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
 
@@ -741,39 +741,39 @@ Session.Validate()
     # skip packages that can't be installed
     for package in $(QPKGs.ToInstall.Array); do
         if ! QPKG.URL "$package" &>/dev/null; then
-            ReassignToSk "$package" install 'this NAS has an unsupported arch'
+            MarkOpAsSkipped "$package" install 'this NAS has an unsupported arch'
         elif ! QPKG.MinRAM "$package" &>/dev/null; then
-            ReassignToSk "$package" install 'this NAS has insufficient RAM'
+            MarkOpAsSkipped "$package" install 'this NAS has insufficient RAM'
         fi
     done
 
     # skip packages that can't be upgraded
     for package in $(QPKGs.ToUpgrade.Array); do
         if ! QPKG.Installed "$package"; then
-            ReassignToSk "$package" upgrade "it's not installed"
+            MarkOpAsSkipped "$package" upgrade "it's not installed"
         elif ! QPKGs.Upgradable.Exist "$package"; then
-            ReassignToSk "$package" upgrade 'no new package available'
+            MarkOpAsSkipped "$package" upgrade 'no new package available'
         fi
     done
 
     # skip packages that can't be started
     for package in $(QPKGs.ToStart.Array); do
         if ! QPKG.Installed "$package"; then
-            ReassignToSk "$package" start "it's not installed"
+            MarkOpAsSkipped "$package" start "it's not installed"
         fi
     done
 
     # skip packages that can't be stopped
     for package in $(QPKGs.ToStop.Array); do
         if ! QPKG.Installed "$package"; then
-            ReassignToSk "$package" stop "it's not installed"
+            MarkOpAsSkipped "$package" stop "it's not installed"
         fi
     done
 
     # skip packages that can't be restarted
     for package in $(QPKGs.ToRestart.Array); do
         if ! QPKG.Installed "$package"; then
-            ReassignToSk "$package" restart "it's not installed"
+            MarkOpAsSkipped "$package" restart "it's not installed"
         fi
     done
 
@@ -934,10 +934,6 @@ Tiers.Processor()
             QPKGs.ToStop.Add "$(QPKGs.Started.Array)"
         fi
 
-        if Opts.Apps.All.Uninstall.IsSet; then
-            QPKGs.ToStop.Init   # no-need to stop any packages, as they are about to be uninstalled
-        fi
-
         # if an essential has been selected for stop, need to stop its optionals first
         for package in $(QPKGs.ToStop.Array); do
             if QPKGs.Essential.Exist "$package" && QPKG.Installed "$package"; then
@@ -973,6 +969,10 @@ Tiers.Processor()
         QPKGs.ToStop.Remove "$(QPKGs.ToUninstall.Array)"
         QPKGs.ToStop.Remove "$PROJECT_NAME"
         QPKGs.ToStop.Remove "$(QPKGs.SkStop.Array)"
+
+        if Opts.Apps.All.Uninstall.IsSet; then
+            QPKGs.ToStop.Init   # no-need to stop any packages, as they are about to be uninstalled
+        fi
 
     Tier.Processor Stop false optional QPKG ToStop backward stop stopping stopped ''
     Tier.Processor Stop false essential QPKG ToStop backward stop stopping stopped ''
@@ -3984,7 +3984,40 @@ QPKGs.Standalone.Show()
 
     }
 
-ReassignToSk()
+MarkOpAsOK()
+    {
+
+    # move specified package name from 'To' operation array into associated 'Is' array
+
+    # input:
+    #   $1 = package name
+    #   $2 = action
+
+    QPKGs.To"$(tr 'a-z' 'A-Z' <<< "${2:0:1}")${2:1}".Remove "$1"
+    QPKGs.Is"$(tr 'a-z' 'A-Z' <<< "${2:0:1}")${2:1}".Add "$1"
+
+    }
+
+MarkOpAsError()
+    {
+
+    # move specified package name from 'To' operation array into associated 'Er' array
+
+    # input:
+    #   $1 = package name
+    #   $2 = action
+    #   $3 = reason (optional)
+
+    local message="failing request to $2 $(FormatAsPackageName "$1")"
+
+    [[ -n ${3:-} ]] && message+=" as $3"
+    DebugAsError "$message" >&2
+    QPKGs.To"$(tr 'a-z' 'A-Z' <<< "${2:0:1}")${2:1}".Remove "$1"
+    QPKGs.Er"$(tr 'a-z' 'A-Z' <<< "${2:0:1}")${2:1}".Add "$1"
+
+    }
+
+MarkOpAsSkipped()
     {
 
     # move specified package name from 'To' operation array into associated 'Sk' array
@@ -3992,20 +4025,18 @@ ReassignToSk()
     # input:
     #   $1 = package name
     #   $2 = action
-    #   $3 = reason
+    #   $3 = reason (optional)
 
-    if QPKGs.Essential.Exist $1; then
-        DebugAsWarn "unable to $2 $(FormatAsPackageName "$1") as $3" >&2
-    else
-        ShowAsWarn "unable to $2 $(FormatAsPackageName "$1") as $3" >&2
-    fi
+    local message="ignoring request to $2 $(FormatAsPackageName "$1")"
 
-    QPKGs.To$(tr 'a-z' 'A-Z' <<< "${2:0:1}")${2:1}.Remove "$1"
-    QPKGs.Sk$(tr 'a-z' 'A-Z' <<< "${2:0:1}")${2:1}.Add "$1"
+    [[ -n ${3:-} ]] && message+=" as $3"
+    DebugAsInfo "$message" >&2
+    QPKGs.To"$(tr 'a-z' 'A-Z' <<< "${2:0:1}")${2:1}".Remove "$1"
+    QPKGs.Sk"$(tr 'a-z' 'A-Z' <<< "${2:0:1}")${2:1}".Add "$1"
 
     }
 
-MarkAsInstalled()
+MarkStateAsInstalled()
     {
 
     QPKGs.NotInstalled.Remove "$1"
@@ -4013,7 +4044,7 @@ MarkAsInstalled()
 
     }
 
-MarkAsNotInstalled()
+MarkStateAsNotInstalled()
     {
 
     QPKGs.Installed.Remove "$1"
@@ -4021,7 +4052,7 @@ MarkAsNotInstalled()
 
     }
 
-MarkAsStarted()
+MarkStateAsStarted()
     {
 
     QPKGs.Stopped.Remove "$1"
@@ -4029,7 +4060,7 @@ MarkAsStarted()
 
     }
 
-MarkAsStopped()
+MarkStateAsStopped()
     {
 
     QPKGs.Started.Remove "$1"
@@ -4312,7 +4343,7 @@ QPKG.GetServiceStatus()
 
     local -r PACKAGE_NAME=${1:?no package name supplied}
 
-    [[ -e /var/run/$PACKAGE_NAME.last.operation ]] && echo $(</var/run/"$PACKAGE_NAME".last.operation)
+    [[ -e /var/run/$PACKAGE_NAME.last.operation ]] && echo "$(</var/run/"$PACKAGE_NAME".last.operation)"
 
     }
 
@@ -4547,8 +4578,7 @@ QPKG.Download()
     fi
 
     if [[ $result_code -eq 2 ]]; then
-        QPKGs.ToDownload.Remove "$PACKAGE_NAME"
-        QPKGs.SkDownload.Add "$PACKAGE_NAME"
+        MarkOpAsSkipped "$PACKAGE_NAME" download
         DebugFuncExit $result_code; return
     fi
 
@@ -4600,10 +4630,9 @@ QPKG.Install()
     local -i result_code=0
 
     if QPKG.Installed "$PACKAGE_NAME"; then
-        ReassignToSk "$PACKAGE_NAME" install "it's already installed - use 'reinstall' instead"
-        MarkAsInstalled "$PACKAGE_NAME"
-        result_code=2
-        DebugFuncExit $result_code; return
+        MarkOpAsSkipped "$PACKAGE_NAME" install "it's already installed - use 'reinstall' instead"
+        MarkStateAsInstalled "$PACKAGE_NAME"
+        DebugFuncExit 2; return
     fi
 
     local local_pathfile=$(QPKG.PathFilename "$PACKAGE_NAME")
@@ -4612,8 +4641,7 @@ QPKG.Install()
         DebugAsWarn "no pathfile found for this package $(FormatAsPackageName "$PACKAGE_NAME") (unsupported arch?)"
 
         if [[ $NAS_QPKG_ARCH != none ]]; then       # don't skip QPKG, it may have IPKGs to be installed
-            QPKGs.ToInstall.Remove "$PACKAGE_NAME"
-            QPKGs.SkInstall.Add "$PACKAGE_NAME"
+            MarkOpAsSkipped "$PACKAGE_NAME" install
             result_code=2
         fi
 
@@ -4645,13 +4673,13 @@ QPKG.Install()
     if [[ $result_code -eq 0 || $result_code -eq 10 ]]; then
         DebugAsDone "installed $(FormatAsPackageName "$PACKAGE_NAME")"
         QPKG.StoreServiceStatus "$PACKAGE_NAME"
-        QPKGs.IsInstall.Add "$PACKAGE_NAME"
-        MarkAsInstalled "$PACKAGE_NAME"
+        MarkOpAsOK "$PACKAGE_NAME" install
+        MarkStateAsInstalled "$PACKAGE_NAME"
 
         if QPKG.Enabled "$PACKAGE_NAME"; then
-            MarkAsStarted "$PACKAGE_NAME"
+            MarkStateAsStarted "$PACKAGE_NAME"
         else
-            MarkAsStopped "$PACKAGE_NAME"
+            MarkStateAsStopped "$PACKAGE_NAME"
         fi
 
         if [[ $PACKAGE_NAME = Entware ]]; then
@@ -4678,11 +4706,10 @@ QPKG.Install()
         result_code=0    # remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK)
     else
         DebugAsError "installation failed $(FormatAsFileName "$TARGET_FILE") $(FormatAsExitcode $result_code)"
-        QPKGs.ErInstall.Add "$PACKAGE_NAME"
+        MarkOpAsError "$PACKAGE_NAME" install
         result_code=1    # remap to 1
     fi
 
-    QPKGs.ToInstall.Remove "$PACKAGE_NAME"
     QPKG.FixAppCenterStatus "$PACKAGE_NAME"
     DebugFuncExit $result_code
 
@@ -4707,10 +4734,9 @@ QPKG.Reinstall()
     local -i result_code=0
 
     if ! QPKG.Installed "$PACKAGE_NAME"; then
-        ReassignToSk "$PACKAGE_NAME" reistall "it's not installed - use 'install' instead"
-        MarkAsNotInstalled "$PACKAGE_NAME"
-        result_code=2
-        DebugFuncExit $result_code; return
+        MarkOpAsSkipped "$PACKAGE_NAME" reinstall "it's not installed - use 'install' instead"
+        MarkStateAsNotInstalled "$PACKAGE_NAME"
+        DebugFuncExit 2; return
     fi
 
     local local_pathfile=$(QPKG.PathFilename "$PACKAGE_NAME")
@@ -4719,8 +4745,7 @@ QPKG.Reinstall()
         DebugAsWarn "no pathfile found for this package $(FormatAsPackageName "$PACKAGE_NAME") (unsupported arch?)"
 
         if [[ $NAS_QPKG_ARCH != none ]]; then       # don't skip QPKG just yet, it may have IPKGs to be installed
-            QPKGs.ToReinstall.Remove "$PACKAGE_NAME"
-            QPKGs.SkReinstall.Add "$PACKAGE_NAME"
+            MarkOpAsSkipped "$PACKAGE_NAME" reinstall
             result_code=2
         fi
 
@@ -4741,23 +4766,22 @@ QPKG.Reinstall()
 
     if [[ $result_code -eq 0 || $result_code -eq 10 ]]; then
         DebugAsDone "reinstalled $(FormatAsPackageName "$PACKAGE_NAME")"
-        QPKGs.IsReinstall.Add "$PACKAGE_NAME"
+        MarkOpAsOK "$PACKAGE_NAME" reinstall
         QPKG.StoreServiceStatus "$PACKAGE_NAME"
 
         if QPKG.Enabled "$PACKAGE_NAME"; then
-            MarkAsStarted "$PACKAGE_NAME"
+            MarkStateAsStarted "$PACKAGE_NAME"
         else
-            MarkAsStopped "$PACKAGE_NAME"
+            MarkStateAsStopped "$PACKAGE_NAME"
         fi
 
         result_code=0    # remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK)
     else
         ShowAsEror "reinstallation failed $(FormatAsFileName "$TARGET_FILE") $(FormatAsExitcode $result_code)"
-        QPKGs.ErReinstall.Add "$PACKAGE_NAME"
+        MarkOpAsError "$PACKAGE_NAME" reinstall
         result_code=1    # remap to 1
     fi
 
-    QPKGs.ToReinstall.Remove "$PACKAGE_NAME"
     QPKG.FixAppCenterStatus "$PACKAGE_NAME"
     DebugFuncExit $result_code
 
@@ -4784,10 +4808,9 @@ QPKG.Upgrade()
     local -i result_code=0
 
     if ! QPKG.Installed "$PACKAGE_NAME"; then
-        ReassignToSk "$PACKAGE_NAME" upgrade "it's not installed - use 'install' instead"
-        MarkAsNotInstalled "$PACKAGE_NAME"
-        result_code=2
-        DebugFuncExit $result_code; return
+        MarkOpAsSkipped "$PACKAGE_NAME" upgrade "it's not installed - use 'install' instead"
+        MarkStateAsNotInstalled "$PACKAGE_NAME"
+        DebugFuncExit 2; return
     fi
 
     local previous_version=null
@@ -4798,8 +4821,7 @@ QPKG.Upgrade()
         DebugAsWarn "no pathfile found for this package $(FormatAsPackageName "$PACKAGE_NAME") (unsupported arch?)"
 
         if [[ $NAS_QPKG_ARCH != none ]]; then       # don't skip QPKG just yet, it may have IPKGs to be installed
-            QPKGs.ToUpgrade.Remove "$PACKAGE_NAME"
-            QPKGs.SkUpgrade.Add "$PACKAGE_NAME"
+            MarkOpAsSkipped "$PACKAGE_NAME" upgrade
             result_code=2
         fi
 
@@ -4829,22 +4851,21 @@ QPKG.Upgrade()
         fi
         QPKG.StoreServiceStatus "$PACKAGE_NAME"
         QPKGs.Upgradable.Remove "$PACKAGE_NAME"
-        QPKGs.IsUpgrade.Add "$PACKAGE_NAME"
+        MarkOpAsOK "$PACKAGE_NAME" upgrade
 
         if QPKG.Enabled "$PACKAGE_NAME"; then
-            MarkAsStarted "$PACKAGE_NAME"
+            MarkStateAsStarted "$PACKAGE_NAME"
         else
-            MarkAsStopped "$PACKAGE_NAME"
+            MarkStateAsStopped "$PACKAGE_NAME"
         fi
 
         result_code=0    # remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK)
     else
         ShowAsEror "upgrade failed $(FormatAsFileName "$TARGET_FILE") $(FormatAsExitcode $result_code)"
-        QPKGs.ErUpgrade.Add "$PACKAGE_NAME"
+        MarkOpAsError "$PACKAGE_NAME" upgrade
         result_code=1    # remap to 1
     fi
 
-    QPKGs.ToUpgrade.Remove "$PACKAGE_NAME"
     QPKG.FixAppCenterStatus "$PACKAGE_NAME"
     DebugFuncExit $result_code
 
@@ -4868,11 +4889,10 @@ QPKG.Uninstall()
     local -i result_code=0
 
     if QPKG.NotInstalled "$PACKAGE_NAME"; then
-        ReassignToSk "$PACKAGE_NAME" uninstall "it's not installed"
-        MarkAsNotInstalled "$PACKAGE_NAME"
+        MarkOpAsSkipped "$PACKAGE_NAME" uninstall "it's not installed"
+        MarkStateAsNotInstalled "$PACKAGE_NAME"
         QPKGs.Started.Remove "$PACKAGE_NAME"
-        result_code=2
-        DebugFuncExit $result_code; return
+        DebugFuncExit 2; return
     fi
 
     local -r QPKG_UNINSTALLER_PATHFILE=$($GETCFG_CMD "$PACKAGE_NAME" Install_Path -f /etc/config/qpkg.conf)/.uninstall.sh
@@ -4891,17 +4911,16 @@ QPKG.Uninstall()
             $RMCFG_CMD "$PACKAGE_NAME" -f /etc/config/qpkg.conf
             DebugAsDone 'removed icon information from App Center'
             [[ $PACKAGE_NAME = Entware ]] && ModPathToEntware
-            QPKGs.IsUninstall.Add "$PACKAGE_NAME"
-            MarkAsNotInstalled "$PACKAGE_NAME"
+            MarkOpAsOK "$PACKAGE_NAME" uninstall
+            MarkStateAsNotInstalled "$PACKAGE_NAME"
             QPKGs.Started.Remove "$PACKAGE_NAME"
         else
             DebugAsError "unable to uninstall $(FormatAsPackageName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
-            QPKGs.ErUninstall.Add "$PACKAGE_NAME"
+            MarkOpAsError "$PACKAGE_NAME" uninstall
             result_code=1    # remap to 1
         fi
     fi
 
-    QPKGs.ToUninstall.Remove "$PACKAGE_NAME"
     QPKG.FixAppCenterStatus "$PACKAGE_NAME"
     DebugFuncExit $result_code
 
@@ -4928,10 +4947,9 @@ QPKG.Restart()
     QPKG.ClearServiceStatus "$PACKAGE_NAME"
 
     if QPKG.NotInstalled "$PACKAGE_NAME"; then
-        ReassignToSk "$PACKAGE_NAME" restart "it's not installed"
-        MarkAsNotInstalled "$PACKAGE_NAME"
-        result_code=2
-        DebugFuncExit $result_code; return
+        MarkOpAsSkipped "$PACKAGE_NAME" restart "it's not installed"
+        MarkStateAsNotInstalled "$PACKAGE_NAME"
+        DebugFuncExit 2; return
     fi
 
     local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$RESTART_LOG_FILE
@@ -4948,14 +4966,13 @@ QPKG.Restart()
     if [[ $result_code -eq 0 ]]; then
         DebugAsDone "restarted $(FormatAsPackageName "$PACKAGE_NAME")"
         QPKG.StoreServiceStatus "$PACKAGE_NAME"
-        QPKGs.IsRestart.Add "$PACKAGE_NAME"
+        MarkOpAsOK "$PACKAGE_NAME" restart
     else
         ShowAsWarn "unable to restart $(FormatAsPackageName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
-        QPKGs.ErRestart.Add "$PACKAGE_NAME"
+        MarkOpAsError "$PACKAGE_NAME" restart
         result_code=1    # remap to 1
     fi
 
-    QPKGs.ToRestart.Remove "$PACKAGE_NAME"
     QPKG.FixAppCenterStatus "$PACKAGE_NAME"
     DebugFuncExit $result_code
 
@@ -4982,15 +4999,13 @@ QPKG.Start()
     QPKG.ClearServiceStatus "$PACKAGE_NAME"
 
     if QPKG.NotInstalled "$PACKAGE_NAME"; then
-        ReassignToSk "$PACKAGE_NAME" start "it's not installed"
-        result_code=2
-        DebugFuncExit $result_code; return
+        MarkOpAsSkipped "$PACKAGE_NAME" start "it's not installed"
+        DebugFuncExit 2; return
     fi
 
     if QPKG.Enabled "$PACKAGE_NAME"; then
-        ReassignToSk "$PACKAGE_NAME" start "it's already started"
-        result_code=2
-        DebugFuncExit $result_code; return
+        MarkOpAsSkipped "$PACKAGE_NAME" start "it's already started"
+        DebugFuncExit 2; return
     fi
 
     local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$START_LOG_FILE
@@ -5007,16 +5022,15 @@ QPKG.Start()
     if [[ $result_code -eq 0 ]]; then
         DebugAsDone "started $(FormatAsPackageName "$PACKAGE_NAME")"
         QPKG.StoreServiceStatus "$PACKAGE_NAME"
-        QPKGs.IsStart.Add "$PACKAGE_NAME"
-        MarkAsStarted "$PACKAGE_NAME"
+        MarkOpAsOK "$PACKAGE_NAME" start
+        MarkStateAsStarted "$PACKAGE_NAME"
         [[ $PACKAGE_NAME = Entware ]] && ModPathToEntware
     else
         ShowAsWarn "unable to start $(FormatAsPackageName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
-        QPKGs.ErStart.Add "$PACKAGE_NAME"
+        MarkOpAsError "$PACKAGE_NAME" start
         result_code=1    # remap to 1
     fi
 
-    QPKGs.ToStart.Remove "$PACKAGE_NAME"
     QPKG.FixAppCenterStatus "$PACKAGE_NAME"
     DebugFuncExit $result_code
 
@@ -5043,15 +5057,13 @@ QPKG.Stop()
     QPKG.ClearServiceStatus "$PACKAGE_NAME"
 
     if QPKG.NotInstalled "$PACKAGE_NAME"; then
-        ReassignToSk "$PACKAGE_NAME" stop "it's not installed"
-        result_code=2
-        DebugFuncExit $result_code; return
+        MarkOpAsSkipped "$PACKAGE_NAME" stop "it's not installed"
+        DebugFuncExit 2; return
     fi
 
     if QPKG.NotEnabled "$PACKAGE_NAME"; then
-        ReassignToSk "$PACKAGE_NAME" stop "it's already stopped"
-        result_code=2
-        DebugFuncExit $result_code; return
+        MarkOpAsSkipped "$PACKAGE_NAME" stop "it's already stopped"
+        DebugFuncExit 2; return
     fi
 
     local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$STOP_LOG_FILE
@@ -5068,15 +5080,14 @@ QPKG.Stop()
     if [[ $result_code -eq 0 ]]; then
         DebugAsDone "stopped $(FormatAsPackageName "$PACKAGE_NAME")"
         QPKG.StoreServiceStatus "$PACKAGE_NAME"
-        QPKGs.IsStop.Add "$package"
-        MarkAsStopped "$PACKAGE_NAME"
+        MarkOpAsOK "$PACKAGE_NAME" stop
+        MarkStateAsStopped "$PACKAGE_NAME"
     else
         ShowAsWarn "unable to stop $(FormatAsPackageName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
-        QPKGs.ErStop.Add "$PACKAGE_NAME"
+        MarkOpAsError "$PACKAGE_NAME" stop
         result_code=1    # remap to 1
     fi
 
-    QPKGs.ToStop.Remove "$package"
     QPKG.FixAppCenterStatus "$PACKAGE_NAME"
     DebugFuncExit $result_code
 
@@ -5141,15 +5152,13 @@ QPKG.Backup()
     local -i result_code=0
 
     if ! QPKG.SupportsBackup "$PACKAGE_NAME"; then
-        ReassignToSk "$PACKAGE_NAME" backup "it does not support backups"
-        result_code=2
-        DebugFuncExit $result_code; return
+        MarkOpAsSkipped "$PACKAGE_NAME" backup "it does not support backups"
+        DebugFuncExit 2; return
     fi
 
     if QPKG.NotInstalled "$PACKAGE_NAME"; then
-        ReassignToSk "$PACKAGE_NAME" backup "it's not installed"
-        result_code=2
-        DebugFuncExit $result_code; return
+        MarkOpAsSkipped "$PACKAGE_NAME" backup "it's not installed"
+        DebugFuncExit 2; return
     fi
 
     local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile "$PACKAGE_NAME")
@@ -5161,17 +5170,16 @@ QPKG.Backup()
 
     if [[ $result_code -eq 0 ]]; then
         DebugAsDone "backed-up $(FormatAsPackageName "$PACKAGE_NAME") configuration"
-        QPKGs.IsBackup.Add "$PACKAGE_NAME"
+        MarkOpAsOK "$PACKAGE_NAME" backup
         QPKG.StoreServiceStatus "$PACKAGE_NAME"
         QPKGs.NotBackedUp.Remove "$PACKAGE_NAME"
         QPKGs.BackedUp.Add "$PACKAGE_NAME"
     else
         DebugAsWarn "unable to backup $(FormatAsPackageName "$PACKAGE_NAME") configuration $(FormatAsExitcode $result_code)"
-        QPKGs.ErBackup.Add "$PACKAGE_NAME"
+        MarkOpAsError "$PACKAGE_NAME" backup
         result_code=1    # remap to 1
     fi
 
-    QPKGs.ToBackup.Remove "$PACKAGE_NAME"
     DebugFuncExit $result_code
 
     }
@@ -5255,14 +5263,13 @@ QPKG.Restore()
 
     if [[ $result_code -eq 0 ]]; then
         DebugAsDone "restored $(FormatAsPackageName "$PACKAGE_NAME") configuration"
-        QPKGs.IsRestore.Add "$PACKAGE_NAME"
+        MarkOpAsOK "$PACKAGE_NAME" restore
         QPKG.StoreServiceStatus "$PACKAGE_NAME"
     else
         DebugAsWarn "unable to restore $(FormatAsPackageName "$PACKAGE_NAME") configuration $(FormatAsExitcode $result_code)"
-        QPKGs.ErRestore.Add "$PACKAGE_NAME"
+        MarkOpAsError "$PACKAGE_NAME" restore
     fi
 
-    QPKGs.ToRestore.Remove "$PACKAGE_NAME"
     DebugFuncExit $result_code
 
     }
