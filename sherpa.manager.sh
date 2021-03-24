@@ -4686,7 +4686,7 @@ QPKG.Install()
             ModPathToEntware
             PatchEntwareService
 
-            if QPKGs.ToInstall.Exist Entware; then
+            if QPKGs.IsInstall.Exist Entware; then
                 # copy all files from original [/opt] into new [/opt]
                 if [[ -L ${OPT_PATH:-} && -d ${OPT_BACKUP_PATH:-} ]]; then
                     ShowAsProc "restoring original /opt" >&2
