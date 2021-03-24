@@ -23,11 +23,11 @@ Init()
     readonly SOURCE_GIT_URL=http://github.com/pymedusa/Medusa.git
     readonly SOURCE_GIT_BRANCH=master
     # 'shallow' (depth 1) or 'single-branch' (note: 'shallow' implies a 'single-branch' too)
-    readonly SOURCE_GIT_DEPTH=shallow
+    readonly SOURCE_GIT_DEPTH=single-branch
     readonly TARGET_SCRIPT=start.py
     readonly PYTHON=/opt/bin/python3
     readonly QPKG_REPO_PATH=$QPKG_PATH/$QPKG_NAME
-    readonly APP_VERSION_PATHFILE=''
+    readonly APP_VERSION_PATHFILE=$QPKG_REPO_PATH/medusa/common.py
 
     # for Entware binaries only
     readonly ORIG_DAEMON_SERVICE_SCRIPT=''
@@ -307,14 +307,13 @@ LoadAppVersion()
 
     app_version=''
 
-    # only way to find Medusa version is to 'start.py' it - which takes time, so let's not bother.
-#     if [[ -n $APP_VERSION_PATHFILE && -e $APP_VERSION_PATHFILE ]]; then
-#         app_version=$(/bin/grep '__version__ =' "$APP_VERSION_PATHFILE" | /bin/sed 's|^.*"\(.*\)"|\1|')
-#         return
-#     elif [[ -n $DAEMON_PATHFILE && -e $DAEMON_PATHFILE ]]; then
-#         app_version=$($DAEMON_PATHFILE --version 2>&1 | /bin/sed 's|nzbget version: ||')
-#         return
-#     fi
+    if [[ -n $APP_VERSION_PATHFILE && -e $APP_VERSION_PATHFILE ]]; then
+        app_version=$(/bin/grep '^VERSION =' "$APP_VERSION_PATHFILE" | /bin/sed "s|^.*'\(.*\)'|\1|")
+        return
+    elif [[ -n $DAEMON_PATHFILE && -e $DAEMON_PATHFILE ]]; then
+        app_version=$($DAEMON_PATHFILE --version 2>&1 | /bin/sed 's|nzbget version: ||')
+        return
+    fi
 
     return 1
 
