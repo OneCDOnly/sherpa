@@ -978,8 +978,10 @@ Tiers.Processor()
         QPKGs.ToRestore.Remove "$(QPKGs.SkRestore.Array)"
 
         if Opts.Apps.All.Upgrade.IsSet; then
-            QPKGs.ToRestart.Add "$(QPKGs.Optional.Array)"
-            QPKGs.ToRestart.Remove "$(QPKGs.Standalone.Array)"
+            QPKGs.ToRestart.Add "$(QPKGs.SupportsUpdateOnRestart.Array)"
+            QPKGs.ToRestart.Remove "$(QPKGs.NotInstalled.Array)"
+            QPKGs.ToRestart.Remove "$(QPKGs.ToUpgrade.Array)"
+            QPKGs.ToRestart.Remove "$(QPKGs.Essential.Array)"
         fi
 
         # install all essentials for started packages only
