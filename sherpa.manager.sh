@@ -54,7 +54,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=210325
+    readonly MANAGER_SCRIPT_VERSION=210326
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
 
@@ -747,36 +747,6 @@ Session.Validate()
         fi
     done
 
-    # skip packages that can't be upgraded
-    for package in $(QPKGs.ToUpgrade.Array); do
-        if QPKG.NotInstalled "$package"; then
-            MarkOpAsSkipped show "$package" upgrade "it's not installed"
-        elif ! QPKGs.Upgradable.Exist "$package"; then
-            MarkOpAsSkipped show "$package" upgrade 'no new package available'
-        fi
-    done
-
-    # skip packages that can't be started
-    for package in $(QPKGs.ToStart.Array); do
-        if QPKG.NotInstalled "$package"; then
-            MarkOpAsSkipped show "$package" start "it's not installed"
-        fi
-    done
-
-    # skip packages that can't be stopped
-    for package in $(QPKGs.ToStop.Array); do
-        if QPKG.NotInstalled "$package"; then
-            MarkOpAsSkipped show "$package" stop "it's not installed"
-        fi
-    done
-
-    # skip packages that can't be restarted
-    for package in $(QPKGs.ToRestart.Array); do
-        if QPKG.NotInstalled "$package"; then
-            MarkOpAsSkipped show "$package" restart "it's not installed"
-        fi
-    done
-
     if QPKGs.ToBackup.IsNone && QPKGs.ToUninstall.IsNone && QPKGs.ToUpgrade.IsNone && QPKGs.ToInstall.IsNone && QPKGs.ToReinstall.IsNone && QPKGs.ToRestore.IsNone && QPKGs.ToRestart.IsNone && QPKGs.ToStart.IsNone && QPKGs.ToStop.IsNone && QPKGs.ToRebuild.IsNone; then
         if Opts.Apps.All.Install.IsNot && Opts.Apps.All.Restart.IsNot && Opts.Apps.All.Upgrade.IsNot && Opts.Apps.All.Backup.IsNot && Opts.Apps.All.Restore.IsNot && Opts.Help.Status.IsNot && Opts.Apps.All.Start.IsNot && Opts.Apps.All.Stop.IsNot && Opts.Apps.All.Rebuild.IsNot; then
             if QPKGs.SkBackup.IsNone && QPKGs.SkDownload.IsNone && QPKGs.SkInstall.IsNone && QPKGs.SkReinstall.IsNone && QPKGs.SkRestart.IsNone && QPKGs.SkRestore.IsNone && QPKGs.SkStart.IsNone && QPKGs.SkStop.IsNone && QPKGs.SkUninstall.IsNone && QPKGs.SkUpgrade.IsNone; then
@@ -1001,13 +971,11 @@ Tiers.Processor()
 
     Tier.Processor Uninstall false essential QPKG ToUninstall forward uninstall uninstalling uninstalled ''
 
-        # adjust configuration restore lists to remove essentials (these can't be backed-up or restored for-now)
         if Opts.Apps.All.Restore.IsSet; then
-            QPKGs.ToRestore.Add "$(QPKGs.Installed.Array)"
+            QPKGs.ToRestore.Add "$(QPKGs.SupportsBackup.Array)"
         fi
 
-        QPKGs.ToRestore.Remove "$(QPKGs.Essential.Array)"
-        QPKGs.ToRestore.Remove "$(QPKGs.NotSupportsBackup.Array)"
+        QPKGs.ToRestore.Remove "$(QPKGs.SkRestore.Array)"
 
         if Opts.Apps.All.Upgrade.IsSet; then
             QPKGs.ToRestart.Add "$(QPKGs.Optional.Array)"
@@ -4853,6 +4821,11 @@ QPKG.Upgrade()
     if ! QPKG.Installed "$PACKAGE_NAME"; then
         MarkOpAsSkipped show "$PACKAGE_NAME" upgrade "it's not installed - use 'install' instead"
         MarkStateAsNotInstalled "$PACKAGE_NAME"
+        DebugFuncExit 2; return
+    fi
+
+    if ! QPKGs.Upgradable.Exist "$PACKAGE_NAME"; then
+        MarkOpAsSkipped show "$PACKAGE_NAME" upgrade 'no new package available'
         DebugFuncExit 2; return
     fi
 
