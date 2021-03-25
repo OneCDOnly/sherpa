@@ -898,7 +898,7 @@ Tiers.Processor()
 
     # check restart for essential items to be installed first
     for package in $(QPKGs.ToRestart.Array); do
-        for prospect in "$(QPKG.Get.Essentials "$package")"; do
+        for prospect in $(QPKG.Get.Essentials "$package"); do
             QPKG.NotInstalled "$prospect" && QPKGs.ToInstall.Add "$prospect"
         done
     done
@@ -1052,34 +1052,48 @@ Tiers.Processor()
                     if [[ $tier == essential ]]; then
                         # check for essential packages that require starting due to any optionals being reinstalled
                         for package in $(QPKGs.ToReinstall.Array); do
-                            QPKGs.ToStart.Add "$(QPKG.Get.Essentials "$package")"
+                            for prospect in $(QPKG.Get.Essentials "$package"); do
+                                QPKG.NotEnabled "$prospect" && QPKGs.ToStart.Add "$prospect"
+                            done
                         done
 
                         for package in $(QPKGs.IsReinstall.Array); do
-                            QPKGs.ToStart.Add "$(QPKG.Get.Essentials "$package")"
+                            for prospect in $(QPKG.Get.Essentials "$package"); do
+                                QPKG.NotEnabled "$prospect" && QPKGs.ToStart.Add "$prospect"
+                            done
                         done
 
                         # check for essential packages that require starting due to any optionals being installed
                         for package in $(QPKGs.ToInstall.Array); do
-                            QPKGs.ToStart.Add "$(QPKG.Get.Essentials "$package")"
+                            for prospect in $(QPKG.Get.Essentials "$package"); do
+                                QPKG.NotEnabled "$prospect" && QPKGs.ToStart.Add "$prospect"
+                            done
                         done
 
                         for package in $(QPKGs.IsInstall.Array); do
-                            QPKGs.ToStart.Add "$(QPKG.Get.Essentials "$package")"
+                            for prospect in $(QPKG.Get.Essentials "$package"); do
+                                QPKG.NotEnabled "$prospect" && QPKGs.ToStart.Add "$prospect"
+                            done
                         done
 
                         # check for essential packages that require starting due to any optionals being started
                         for package in $(QPKGs.ToStart.Array); do
-                            QPKGs.ToStart.Add "$(QPKG.Get.Essentials "$package")"
+                            for prospect in $(QPKG.Get.Essentials "$package"); do
+                                QPKG.NotEnabled "$prospect" && QPKGs.ToStart.Add "$prospect"
+                            done
                         done
 
                         for package in $(QPKGs.IsStart.Array); do
-                            QPKGs.ToStart.Add "$(QPKG.Get.Essentials "$package")"
+                            for prospect in $(QPKG.Get.Essentials "$package"); do
+                                QPKG.NotEnabled "$prospect" && QPKGs.ToStart.Add "$prospect"
+                            done
                         done
 
                         # check for essential packages that require starting due to any optionals being restarted
                         for package in $(QPKGs.ToRestart.Array); do
-                            QPKGs.ToStart.Add "$(QPKG.Get.Essentials "$package")"
+                            for prospect in $(QPKG.Get.Essentials "$package"); do
+                                QPKG.NotEnabled "$prospect" && QPKGs.ToStart.Add "$prospect"
+                            done
                         done
 
                         QPKGs.ToStart.Remove "$PROJECT_NAME"
@@ -1104,22 +1118,30 @@ Tiers.Processor()
                     else
                         # check for optional packages to restart due to any essentials being installed
                         for package in $(QPKGs.IsInstall.Array); do
-                            QPKGs.ToRestart.Add "$(QPKG.Get.Optionals "$package")"
+                            for prospect in $(QPKG.Get.Optionals "$package"); do
+                                QPKG.Installed "$prospect" && QPKGs.ToRestart.Add "$prospect"
+                            done
                         done
 
                         # check for optional packages to restart due to any essentials being started
                         for package in $(QPKGs.IsStart.Array); do
-                            QPKGs.ToRestart.Add "$(QPKG.Get.Optionals "$package")"
+                            for prospect in $(QPKG.Get.Optionals "$package"); do
+                                QPKG.Installed "$prospect" && QPKGs.ToRestart.Add "$prospect"
+                            done
                         done
 
                         # check for optional packages to restart due to any essentials being restarted
                         for package in $(QPKGs.IsRestart.Array); do
-                            QPKGs.ToRestart.Add "$(QPKG.Get.Optionals "$package")"
+                            for prospect in $(QPKG.Get.Optionals "$package"); do
+                                QPKG.Installed "$prospect" && QPKGs.ToRestart.Add "$prospect"
+                            done
                         done
 
                         # check for optional packages to restart due to any essentials being upgraded
                         for package in $(QPKGs.IsUpgrade.Array); do
-                            QPKGs.ToRestart.Add "$(QPKG.Get.Optionals "$package")"
+                            for prospect in $(QPKG.Get.Optionals "$package"); do
+                                QPKG.Installed "$prospect" && QPKGs.ToRestart.Add "$prospect"
+                            done
                         done
                     fi
 
