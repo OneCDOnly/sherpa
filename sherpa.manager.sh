@@ -54,7 +54,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=210326
+    readonly MANAGER_SCRIPT_VERSION=210327
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
 
@@ -1493,7 +1493,12 @@ ParseArguments()
                     scope_identified=true
                     arg_identified=true
                     ;;
-                installable|installed|problems|started|stopped|tail|tips|upgradable)
+                installable|not-installed)
+                    scope=installable_
+                    scope_identified=true
+                    arg_identified=true
+                    ;;
+                installed|problems|started|stopped|tail|tips|upgradable)
                     scope=${arg}_
                     scope_identified=true
                     arg_identified=true
@@ -3835,7 +3840,7 @@ QPKGs.Statuses.Show()
             package_note=''
 
             if ! QPKG.URL "$package" &>/dev/null; then
-                DisplayAsHelpPackageNamePlusSomething "$package" 'not installable on this NAS (incompatible arch)'
+                DisplayAsHelpPackageNamePlusSomething "$package" 'not installable on this NAS (unsupported arch)'
             elif ! QPKG.MinRAM "$package" &>/dev/null; then
                 DisplayAsHelpPackageNamePlusSomething "$package" 'not installable on this NAS (insufficient RAM)'
             elif QPKGs.NotInstalled.Exist "$package"; then
