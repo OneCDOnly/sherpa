@@ -998,7 +998,7 @@ Tiers.Processor()
             QPKGs.ToStart.Add "$(QPKGs.Installed.Array)"
         fi
 
-    for tier in {'essential','addon','optional'}; do
+    for tier in essential addon optional; do
         case $tier in
             essential|optional)
                     QPKGs.ToUpgrade.Remove "$(QPKGs.SkUpgrade.Array)"
@@ -3114,7 +3114,7 @@ Help.Packages.Show()
     DisplayAsHelpTitle "One-or-more $(FormatAsHelpPackages) may be specified at-once"
     Display
 
-    for tier in {Essential,Optional}; do
+    for tier in Essential Optional; do
         DisplayAsHelpTitlePackageNamePlusSomething "${tier} QPKGs" 'package description'
 
         for package in $(QPKGs.$tier.Array); do
@@ -3221,7 +3221,7 @@ Help.PackageAbbreviations.Show()
     DisplayAsHelpTitle "$(FormatAsScriptTitle) recognises various abbreviations as $(FormatAsHelpPackages)"
     Display
 
-    for tier in {Essential,Optional}; do
+    for tier in Essential Optional; do
         DisplayAsHelpTitlePackageNamePlusSomething "${tier} QPKGs" 'acceptable abreviations'
 
         for package in $(QPKGs.$tier.Array); do
@@ -3581,13 +3581,10 @@ QPKGs.Operations.List()
 
     QPKGs.SkipProcessing.IsSet && return
     DebugFuncEntry
-
     local array_name=''
-    local -a operations_array=(ToDownload IsDownload ErDownload SkDownload ToBackup IsBackup ErBackup SkBackup ToStop IsStop ErStop SkStop ToUninstall IsUninstall ErUninstall SkUninstall ToUpgrade IsUpgrade ErUpgrade SkUpgrade ToReinstall IsReinstall ErReinstall SkReinstall ToInstall IsInstall ErInstall SkInstall ToRestore IsRestore ErRestore SkRestore ToStart IsStart ErStart SkStart ToRestart IsRestart ErRestart SkRestart)
-
     DebugInfoMinorSeparator
 
-    for array_name in "${operations_array[@]}"; do
+    for array_name in ToDownload IsDownload ErDownload SkDownload ToBackup IsBackup ErBackup SkBackup ToStop IsStop ErStop SkStop ToUninstall IsUninstall ErUninstall SkUninstall ToUpgrade IsUpgrade ErUpgrade SkUpgrade ToReinstall IsReinstall ErReinstall SkReinstall ToInstall IsInstall ErInstall SkInstall ToRestore IsRestore ErRestore SkRestore ToStart IsStart ErStart SkStart ToRestart IsRestart ErRestart SkRestart; do
         # speedup: only log arrays with more than zero elements
         if QPKGs.$array_name.IsAny; then
             if [[ ${array_name::2} != To ]]; then
@@ -3607,13 +3604,10 @@ QPKGs.States.List()
     {
 
     DebugFuncEntry
-
     local array_name=''
-    local -a operations_array=(Installed NotInstalled Starting Started Stopping Stopped Restarting BackedUp NotBackedUp Upgradable Missing)
-
     DebugInfoMinorSeparator
 
-    for array_name in "${operations_array[@]}"; do
+    for array_name in Installed NotInstalled Starting Started Stopping Stopped Restarting BackedUp NotBackedUp Upgradable Missing; do
         # speedup: only log arrays with more than zero elements
         QPKGs.$array_name.IsAny && DebugQPKGInfo "$array_name" "($(QPKGs.$array_name.Count)) $(QPKGs.$array_name.ListCSV) "
     done
@@ -3833,7 +3827,7 @@ QPKGs.Statuses.Show()
     SmartCR
     DisplayLineSpaceIfNoneAlready
 
-    for tier in {Essential,Optional}; do
+    for tier in Essential Optional; do
         DisplayAsHelpTitlePackageNamePlusSomething "${tier} QPKGs" 'statuses'
 
         for package in $(QPKGs.$tier.Array); do
@@ -6618,7 +6612,6 @@ CompileObjects()
 
     local -r COMPILED_OBJECTS_HASH=01ca7679650c971e3a9d38c5191533dd
     local array_name=''
-    local -a operations_array=()
 
     if [[ ${1:-} = hash ]]; then
         echo "$COMPILED_OBJECTS_HASH"
@@ -6648,9 +6641,7 @@ CompileObjects()
         AddFlagObj PIPs.Install
 
         # user option flags
-        operations_array=(Abbreviations Actions ActionsAll Backups Basic Options Packages Problems Status Tips)
-
-        for array_name in "${operations_array[@]}"; do
+        for array_name in Abbreviations Actions ActionsAll Backups Basic Options Packages Problems Status Tips; do
             AddFlagObj Opts.Help.${array_name}
         done
 
@@ -6665,43 +6656,31 @@ CompileObjects()
         AddFlagObj Opts.Log.Tail.Paste
         AddFlagObj Opts.Log.Tail.View
 
-        operations_array=(Backup Install Rebuild Reinstall Restart Restore Start Stop Uninstall Upgrade)
-
-        for array_name in "${operations_array[@]}"; do
+        for array_name in Backup Install Rebuild Reinstall Restart Restore Start Stop Uninstall Upgrade; do
             AddFlagObj Opts.Apps.All.${array_name}
         done
 
-        operations_array=(All Essential Installed NotInstalled Optional Standalone Started Stopped Upgradable)
-
-        for array_name in "${operations_array[@]}"; do
+        for array_name in All Essential Installed NotInstalled Optional Standalone Started Stopped Upgradable; do
             AddFlagObj Opts.Apps.List.${array_name}
         done
 
         # lists
         AddListObj Args.Unknown
 
-        operations_array=(Download Install Uninstall)
-
-        for array_name in "${operations_array[@]}"; do
+        for array_name in Download Install Uninstall; do
             AddListObj IPKGs.To${array_name}
         done
 
-        operations_array=(Essential Installable Missing Names Optional Standalone Starting Started Stopping Stopped Restarting Upgradable)
-
-        for array_name in "${operations_array[@]}"; do
+        for array_name in Essential Installable Missing Names Optional Standalone Starting Started Stopping Stopped Restarting Upgradable; do
             AddListObj QPKGs.${array_name}
         done
 
-        operations_array=(BackedUp Installed SupportsBackup SupportsUpdateOnRestart)
-
-        for array_name in "${operations_array[@]}"; do
+        for array_name in BackedUp Installed SupportsBackup SupportsUpdateOnRestart; do
             AddListObj QPKGs.${array_name}
             AddListObj QPKGs.Not${array_name}
         done
 
-        operations_array=(Backup Download Install Rebuild Reinstall Restart Restore Start Stop Uninstall Upgrade)
-
-        for array_name in "${operations_array[@]}"; do
+        for array_name in Backup Download Install Rebuild Reinstall Restart Restore Start Stop Uninstall Upgrade; do
             AddListObj QPKGs.To${array_name}      # to operate on
             AddListObj QPKGs.Is${array_name}      # operation succeeded
             AddListObj QPKGs.Er${array_name}      # operation failed
