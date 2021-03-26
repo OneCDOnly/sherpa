@@ -913,7 +913,7 @@ Tiers.Processor()
 
         QPKGs.ToBackup.Remove "$(QPKGs.SkBackup.Array)"
 
-    Tier.Processor Backup false all QPKG ToBackup forward backup backing-up backed-up ''
+    Tier.Processor Backup false all QPKG ToBackup forward 'backup configuration for' 'backing-up configuration for' 'configuration backed-up for' ''
 
         if Opts.Apps.All.Stop.IsSet; then
             QPKGs.ToStop.Add "$(QPKGs.Started.Array)"
