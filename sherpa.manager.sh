@@ -906,7 +906,9 @@ Tiers.Processor()
     Tier.Processor Download false all QPKG ToDownload forward 'update package cache with' 'updating package cache with' 'updated package cache with' ''
 
         if Opts.Apps.All.Backup.IsSet; then
-            QPKGs.ToBackup.Add "$(QPKGs.SupportsBackup.Array)"
+            for prospect in $(QPKGs.SupportsBackup.Array); do
+                QPKG.Installed "$prospect" && QPKGs.ToBackup.Add "$prospect"
+            done
         fi
 
         QPKGs.ToBackup.Remove "$(QPKGs.SkBackup.Array)"
@@ -972,7 +974,9 @@ Tiers.Processor()
     Tier.Processor Uninstall false essential QPKG ToUninstall forward uninstall uninstalling uninstalled ''
 
         if Opts.Apps.All.Restore.IsSet; then
-            QPKGs.ToRestore.Add "$(QPKGs.SupportsBackup.Array)"
+            for prospect in $(QPKGs.SupportsBackup.Array); do
+                QPKG.Installed "$prospect" && QPKGs.ToRestore.Add "$prospect"
+            done
         fi
 
         QPKGs.ToRestore.Remove "$(QPKGs.SkRestore.Array)"
@@ -5201,6 +5205,53 @@ QPKG.Backup()
 
     }
 
+QPKG.Restore()
+    {
+
+    # calls the service script for the QPKG named in $1 and runs a restore operation
+
+    # input:
+    #   $1 = QPKG name
+
+    # output:
+    #   $? = 0 if successful, 1 if failed
+
+    DebugFuncEntry
+
+    local -r PACKAGE_NAME=${1:?no package name supplied}
+    local -i result_code=0
+
+    if ! QPKG.SupportsBackup "$PACKAGE_NAME"; then
+        MarkOpAsSkipped show "$PACKAGE_NAME" restore "it does not support backups"
+        DebugFuncExit 2; return
+    fi
+
+    if QPKG.NotInstalled "$PACKAGE_NAME"; then
+        MarkOpAsSkipped show "$PACKAGE_NAME" restore "it's not installed"
+        DebugFuncExit 2; return
+    fi
+
+    local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile "$PACKAGE_NAME")
+    local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$RESTORE_LOG_FILE
+
+    DebugAsProc "restoring $(FormatAsPackageName "$PACKAGE_NAME") configuration"
+
+    RunAndLog "$SH_CMD $PACKAGE_INIT_PATHFILE restore" "$LOG_PATHFILE" log:failure-only
+    result_code=$?
+
+    if [[ $result_code -eq 0 ]]; then
+        DebugAsDone "restored $(FormatAsPackageName "$PACKAGE_NAME") configuration"
+        MarkOpAsDone "$PACKAGE_NAME" restore
+        QPKG.StoreServiceStatus "$PACKAGE_NAME"
+    else
+        DebugAsWarn "unable to restore $(FormatAsPackageName "$PACKAGE_NAME") configuration $(FormatAsExitcode $result_code)"
+        MarkOpAsError "$PACKAGE_NAME" restore
+    fi
+
+    DebugFuncExit $result_code
+
+    }
+
 QPKG.SupportsBackup()
     {
 
@@ -5252,42 +5303,6 @@ QPKG.SupportsUpdateOnRestart()
     done
 
     return 1
-
-    }
-
-QPKG.Restore()
-    {
-
-    # calls the service script for the QPKG named in $1 and runs a restore operation
-
-    # input:
-    #   $1 = QPKG name
-
-    # output:
-    #   $? = 0 if successful, 1 if failed
-
-    DebugFuncEntry
-
-    local -r PACKAGE_NAME=${1:?no package name supplied}
-    local -i result_code=0
-    local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile "$PACKAGE_NAME")
-    local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$RESTORE_LOG_FILE
-
-    DebugAsProc "restoring $(FormatAsPackageName "$PACKAGE_NAME") configuration"
-
-    RunAndLog "$SH_CMD $PACKAGE_INIT_PATHFILE restore" "$LOG_PATHFILE" log:failure-only
-    result_code=$?
-
-    if [[ $result_code -eq 0 ]]; then
-        DebugAsDone "restored $(FormatAsPackageName "$PACKAGE_NAME") configuration"
-        MarkOpAsDone "$PACKAGE_NAME" restore
-        QPKG.StoreServiceStatus "$PACKAGE_NAME"
-    else
-        DebugAsWarn "unable to restore $(FormatAsPackageName "$PACKAGE_NAME") configuration $(FormatAsExitcode $result_code)"
-        MarkOpAsError "$PACKAGE_NAME" restore
-    fi
-
-    DebugFuncExit $result_code
 
     }
 
