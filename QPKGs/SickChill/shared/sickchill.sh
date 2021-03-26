@@ -1355,7 +1355,7 @@ if IsNotError; then
             { StopQPKG; StartQPKG ;} || SetError
             ;;
         s|-s|status|--status)
-            SetServiceOperation status
+            SetServiceOperation statusing
             StatusQPKG || SetError
             ;;
         b|-b|backup|--backup|backup-config|--backup-config)
