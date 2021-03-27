@@ -415,7 +415,7 @@ PullGitRepo()
     if [[ ! -d $QPKG_GIT_PATH/.git ]]; then
         ExecuteAndLog "clone $(FormatAsPackageName "$1") from remote repository" "cd /tmp; /opt/bin/git clone --branch $3 $DEPTH -c advice.detachedHead=false $GIT_HTTPS_URL $QPKG_GIT_PATH || /opt/bin/git clone --branch $3 $DEPTH -c advice.detachedHead=false $GIT_HTTP_URL $QPKG_GIT_PATH"
     else
-        ExecuteAndLog "update $(FormatAsPackageName "$1") from remote repository" "cd /tmp; /opt/bin/git -C $QPKG_GIT_PATH reset --hard; /opt/bin/git -C $QPKG_GIT_PATH pull"
+        ExecuteAndLog "update $(FormatAsPackageName "$1") from remote repository" "cd /tmp; /opt/bin/git -C $QPKG_GIT_PATH fetch; /opt/bin/git -C $QPKG_GIT_PATH reset --hard HEAD; /opt/bin/git -C $QPKG_GIT_PATH merge '@{u}'"
     fi
 
     installed_branch=$(/opt/bin/git -C "$QPKG_GIT_PATH" branch | /bin/grep '^\*' | /bin/sed 's|^\* ||')
@@ -885,7 +885,10 @@ IsPortResponds()
     DisplayWaitCommitToLog "check for UI port $1 response:"
     DisplayWait "(no-more than $PORT_CHECK_TIMEOUT seconds):"
 
-    while ! /sbin/curl --silent --fail --max-time 1 http://localhost:"$1" >/dev/null; do
+    while true; do
+        /sbin/curl --silent --fail --max-time 1 http://localhost:"$1" >/dev/null
+        [[ $? -eq 0 || $? -eq 22 ]] && break
+
         sleep 1
         ((acc+=2))
         DisplayWait "$acc,"
@@ -1348,7 +1351,7 @@ if IsNotError; then
             { StopQPKG; StartQPKG ;} || SetError
             ;;
         s|-s|status|--status)
-            SetServiceOperation status
+            SetServiceOperation statusing
             StatusQPKG || SetError
             ;;
         b|-b|backup|--backup|backup-config|--backup-config)

@@ -653,9 +653,9 @@ Session.Init()
         MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MINRAM+=(any)
-        MANAGER_QPKG_VERSION+=(210318)
+        MANAGER_QPKG_VERSION+=(210327)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
-        MANAGER_QPKG_MD5+=(2857b94f5cad9109cd45836373957493)
+        MANAGER_QPKG_MD5+=(9211703e811755e8b9c3aafb8c1a9890)
         MANAGER_QPKG_DESC+=('lite bitorrent download manager with a simple web UI')
         MANAGER_QPKG_ABBRVS+=('ot tm tr trans otrans tmission transmission otransmission')
         MANAGER_QPKG_ESSENTIALS+=(Entware)
@@ -4830,7 +4830,7 @@ QPKG.Upgrade()
     fi
 
     if ! QPKGs.Upgradable.Exist "$PACKAGE_NAME"; then
-        MarkOpAsSkipped show "$PACKAGE_NAME" upgrade 'no new package available'
+        MarkOpAsSkipped show "$PACKAGE_NAME" upgrade 'no new package is available'
         DebugFuncExit 2; return
     fi
 
