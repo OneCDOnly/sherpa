@@ -2481,10 +2481,9 @@ IPKGs.Upgrade.Batch()
     #   $? = 0 if successful or 1 if failed
 
     DebugFuncEntry
+    IPKGs.ToDownload.Add "$($OPKG_CMD list-upgradable | cut -f1 -d' ')"
     local -i total_count=0
     local -i result_code=0
-
-    IPKGs.ToDownload.Add "$($OPKG_CMD list-upgradable | cut -f1 -d' ')"
     total_count=$(IPKGs.ToDownload.Count)
 
     if [[ $total_count -gt 0 ]]; then
@@ -2513,13 +2512,16 @@ IPKGs.Upgrade.Batch()
 IPKGs.Install.Batch()
     {
 
+    # installed required IPKGs
+
     # output:
     #   $? = 0 if successful or 1 if failed
 
     DebugFuncEntry
     CalcAllIPKGDepsToInstall || return
+    local -i total_count=0
     local -i result_code=0
-    local -i total_count=$(IPKGs.ToDownload.Count)
+    total_count=$(IPKGs.ToDownload.Count)
 
     if [[ $total_count -gt 0 ]]; then
         ShowAsProc "downloading & installing $total_count IPKG$(Plural "$total_count")"
@@ -2819,7 +2821,7 @@ ProgressUpdater()
 CreateDirSizeMonitorFlagFile()
     {
 
-    readonly MONITOR_FLAG_PATHFILE=${1:?empty}
+    [[ -z $MONITOR_FLAG_PATHFILE ]] && readonly MONITOR_FLAG_PATHFILE=${1:?empty}
     $TOUCH_CMD "$MONITOR_FLAG_PATHFILE"
 
     }
