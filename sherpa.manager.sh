@@ -1333,6 +1333,8 @@ Session.Results()
             Log.Tail.Paste.Online
         elif Opts.Apps.List.All.IsSet; then
             QPKGs.All.Show
+        elif Opts.Apps.List.Installable.IsSet; then
+            QPKGs.Installable.Show
         elif Opts.Apps.List.NotInstalled.IsSet; then
             QPKGs.NotInstalled.Show
         elif Opts.Apps.List.Started.IsSet; then
@@ -1452,7 +1454,7 @@ ParseArguments()
         # stage 1
         if [[ -z $operation ]]; then
             case $arg in
-                a|abs|action|actions|actions-all|all-actions|b|backups|e|essential|essentials|installable|installed|l|last|log|o|option|optional|optionals|options|p|package|packages|problems|standalone|standalones|started|stopped|tail|tips|upgradable|v|version|versions|whole)
+                a|abs|action|actions|actions-all|all-actions|b|backups|e|essential|essentials|installable|installed|l|last|log|not-installed|o|option|optional|optionals|options|p|package|packages|problems|standalone|standalones|started|stopped|tail|tips|upgradable|v|version|versions|whole)
                     operation=help_
                     arg_identified=true
                     scope=''
@@ -1497,12 +1499,7 @@ ParseArguments()
                     scope_identified=true
                     arg_identified=true
                     ;;
-                installable|not-installed)
-                    scope=installable_
-                    scope_identified=true
-                    arg_identified=true
-                    ;;
-                installed|problems|started|stopped|tail|tips|upgradable)
+                installable|installed|not-installed|problems|started|stopped|tail|tips|upgradable)
                     scope=${arg}_
                     scope_identified=true
                     arg_identified=true
@@ -1625,7 +1622,7 @@ ParseArguments()
                         ;;
                     installable_)
                         QPKGs.States.Build
-                        Opts.Apps.List.NotInstalled.Set
+                        Opts.Apps.List.Installable.Set
                         Session.Display.Clean.Set
                         ;;
                     installed_)
@@ -1639,6 +1636,11 @@ ParseArguments()
                         ;;
                     log_)
                         Opts.Log.All.View.Set
+                        Session.Display.Clean.Set
+                        ;;
+                    not-installed_)
+                        QPKGs.States.Build
+                        Opts.Apps.List.NotInstalled.Set
                         Session.Display.Clean.Set
                         ;;
                     optional_)
@@ -3102,7 +3104,8 @@ Help.ActionsAll.Show()
     DisplayAsProjectSyntaxIndentedExample 'restart packages that are able to upgrade their internal applications' 'restart all'
     DisplayAsProjectSyntaxIndentedExample 'list all available packages' 'list all'
     DisplayAsProjectSyntaxIndentedExample 'list only installed packages' 'list installed'
-    DisplayAsProjectSyntaxIndentedExample 'list only installable packages' 'list installable'
+    DisplayAsProjectSyntaxIndentedExample 'list only packages that can be installed' 'list installable'
+    DisplayAsProjectSyntaxIndentedExample 'list only packages that are not installed' 'list not-installed'
     DisplayAsProjectSyntaxIndentedExample 'list only upgradable packages' 'list upgradable'
     DisplayAsProjectSyntaxIndentedExample 'backup all application configurations to the backup location' 'backup all'
     DisplayAsProjectSyntaxIndentedExample 'restore all application configurations from the backup location' 'restore all'
@@ -3207,7 +3210,7 @@ Help.Tips.Show()
     DisplayAsProjectSyntaxIndentedExample "install all available $(FormatAsScriptTitle) packages" 'install all'
     DisplayAsProjectSyntaxIndentedExample 'package abbreviations also work. To see these' 'list abs'
     DisplayAsProjectSyntaxIndentedExample 'restart all packages (only upgrades the internal applications, not packages)' 'restart all'
-    DisplayAsProjectSyntaxIndentedExample 'list only packages that are not installed' 'list installable'
+    DisplayAsProjectSyntaxIndentedExample 'list only packages that can be installed' 'list installable'
     DisplayAsProjectSyntaxIndentedExample "view only the most recent $(FormatAsScriptTitle) session log" 'l'
     DisplayAsProjectSyntaxIndentedExample "start all stopped packages" 'start stopped'
     DisplayAsProjectSyntaxIndentedExample 'upgrade the internal applications only' "restart $(FormatAsHelpPackages)"
@@ -3616,6 +3619,8 @@ QPKGs.States.List()
     local array_name=''
     DebugInfoMinorSeparator
 
+    QPKGs.States.Built.IsNot && QPKGs.States.Build
+
     for array_name in Installed NotInstalled Starting Started Stopping Stopped Restarting BackedUp NotBackedUp Upgradable Missing; do
         # speedup: only log arrays with more than zero elements
         QPKGs.$array_name.IsAny && DebugQPKGInfo "$array_name" "($(QPKGs.$array_name.Count)) $(QPKGs.$array_name.ListCSV) "
@@ -3678,7 +3683,7 @@ QPKGs.States.Build()
     local remote_version=''
 
     for package in $(QPKGs.Names.Array); do
-        QPKG.UserInstallable "$package" && QPKGs.Installable.Add "$package"
+        QPKG.Installable "$package" && QPKGs.Installable.Add "$package"
 
         if QPKG.Installed "$package"; then
             QPKGs.Installed.Add "$package"
@@ -3882,6 +3887,21 @@ QPKGs.Installed.Show()
     DisableDebuggingToArchiveAndFile
 
     for package in $(QPKGs.Installed.Array); do
+        Display "$package"
+    done
+
+    return 0
+
+    }
+
+QPKGs.Installable.Show()
+    {
+
+    local package=''
+
+    DisableDebuggingToArchiveAndFile
+
+    for package in $(QPKGs.Installable.Array); do
         Display "$package"
     done
 
@@ -5306,7 +5326,7 @@ QPKG.SupportsUpdateOnRestart()
 
     }
 
-QPKG.UserInstallable()
+QPKG.Installable()
     {
 
     # input:
@@ -5322,10 +5342,14 @@ QPKG.UserInstallable()
     local index=0
 
     for index in "${!MANAGER_QPKG_NAME[@]}"; do
-        if [[ $PACKAGE_NAME = "${MANAGER_QPKG_NAME[$index]}" && -n ${MANAGER_QPKG_ABBRVS[$index]} ]] && [[ ${MANAGER_QPKG_ARCH[$index]} = all || ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]] && QPKG.MinRAM "$1" &>/dev/null; then
-            result_code=0
-            break
-        fi
+        [[ ${MANAGER_QPKG_NAME[$index]} = "$PACKAGE_NAME" ]] || continue
+        QPKG.NotInstalled "$PACKAGE_NAME" || continue
+        [[ -n ${MANAGER_QPKG_ABBRVS[$index]} ]] || continue
+        [[ ${MANAGER_QPKG_ARCH[$index]} = all || ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]] || continue
+        QPKG.MinRAM "$1" &>/dev/null || continue
+
+        result_code=0
+        break
     done
 
     return $result_code
@@ -6630,7 +6654,7 @@ CompileObjects()
 
     # $1 = 'hash' (optional) - if specified, only return the internal checksum
 
-    local -r COMPILED_OBJECTS_HASH=01ca7679650c971e3a9d38c5191533dd
+    local -r COMPILED_OBJECTS_HASH=953e254c09e681fc9c5585216b03b733
     local array_name=''
 
     if [[ ${1:-} = hash ]]; then
@@ -6680,7 +6704,7 @@ CompileObjects()
             AddFlagObj Opts.Apps.All.${array_name}
         done
 
-        for array_name in All Essential Installed NotInstalled Optional Standalone Started Stopped Upgradable; do
+        for array_name in All Essential Installable Installed NotInstalled Optional Standalone Started Stopped Upgradable; do
             AddFlagObj Opts.Apps.List.${array_name}
         done
 
@@ -6702,8 +6726,8 @@ CompileObjects()
 
         for array_name in Backup Download Install Rebuild Reinstall Restart Restore Start Stop Uninstall Upgrade; do
             AddListObj QPKGs.To${array_name}      # to operate on
-            AddListObj QPKGs.Is${array_name}      # operation succeeded
-            AddListObj QPKGs.Er${array_name}      # operation failed
+            AddListObj QPKGs.Is${array_name}      # operation was tried and succeeded
+            AddListObj QPKGs.Er${array_name}      # operation was tried but failed
             AddListObj QPKGs.Sk${array_name}      # operation was skipped
         done
     fi

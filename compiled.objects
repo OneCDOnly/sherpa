@@ -2879,6 +2879,73 @@ Opts.Apps.List.Essential.Text()
     }
 Opts.Apps.List.Essential.Init
 
+Opts.Apps.List.Installable.Clear()
+    {
+    [[ $_obj_opts_apps_list_installable_flag_ != 'true' ]] && return
+    _obj_opts_apps_list_installable_flag_=false
+    [[ $_obj_opts_apps_list_installable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_list_installable_flag_
+    }
+Opts.Apps.List.Installable.Disable()
+    {
+    [[ $_obj_opts_apps_list_installable_enable_ != 'true' ]] && return
+    _obj_opts_apps_list_installable_enable_=false
+    [[ $_obj_opts_apps_list_installable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_list_installable_enable_
+    }
+Opts.Apps.List.Installable.DontLogChanges()
+    {
+    [[ $_obj_opts_apps_list_installable_changes_flag_ != 'true' ]] && return
+    _obj_opts_apps_list_installable_changes_flag_=false
+    }
+Opts.Apps.List.Installable.Enable()
+    {
+    [[ $_obj_opts_apps_list_installable_enable_ = 'true' ]] && return
+    _obj_opts_apps_list_installable_enable_=true
+    [[ $_obj_opts_apps_list_installable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_list_installable_enable_
+    }
+Opts.Apps.List.Installable.Init()
+    {
+    _obj_opts_apps_list_installable_text_=''
+    _obj_opts_apps_list_installable_flag_=false
+    _obj_opts_apps_list_installable_changes_flag_=true
+    _obj_opts_apps_list_installable_enable_=false
+    }
+Opts.Apps.List.Installable.IsDisabled()
+    {
+    [[ $_obj_opts_apps_list_installable_enable_ != 'true' ]]
+    }
+Opts.Apps.List.Installable.IsEnabled()
+    {
+    [[ $_obj_opts_apps_list_installable_enable_ = 'true' ]]
+    }
+Opts.Apps.List.Installable.IsNot()
+    {
+    [[ $_obj_opts_apps_list_installable_flag_ != 'true' ]]
+    }
+Opts.Apps.List.Installable.IsSet()
+    {
+    [[ $_obj_opts_apps_list_installable_flag_ = 'true' ]]
+    }
+Opts.Apps.List.Installable.LogChanges()
+    {
+    [[ $_obj_opts_apps_list_installable_changes_flag_ = 'true' ]] && return
+    _obj_opts_apps_list_installable_changes_flag_=true
+    }
+Opts.Apps.List.Installable.Set()
+    {
+    [[ $_obj_opts_apps_list_installable_flag_ = 'true' ]] && return
+    _obj_opts_apps_list_installable_flag_=true
+    [[ $_obj_opts_apps_list_installable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_list_installable_flag_
+    }
+Opts.Apps.List.Installable.Text()
+    {
+    if [[ -n ${1:-} && $1 = "=" ]]; then
+        _obj_opts_apps_list_installable_text_=$2
+    else
+        echo -n "$_obj_opts_apps_list_installable_text_"
+    fi
+    }
+Opts.Apps.List.Installable.Init
+
 Opts.Apps.List.Installed.Clear()
     {
     [[ $_obj_opts_apps_list_installed_flag_ != 'true' ]] && return
