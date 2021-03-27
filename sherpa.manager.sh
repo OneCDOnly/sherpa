@@ -54,7 +54,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=210327
+    readonly MANAGER_SCRIPT_VERSION=210328
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
 
@@ -255,7 +255,7 @@ Session.Init()
         MANAGER_QPKG_URL=()                 # remote QPKG URL
         MANAGER_QPKG_MD5=()                 # remote QPKG MD5
         MANAGER_QPKG_DESC+=()               # QPKG description (applies to all packages with the same name)
-        MANAGER_QPKG_ABBRVS=()              # if set, this package is user-installable, and these abbreviations may be used to specify app (applies to all packages with the same name)
+        MANAGER_QPKG_ABBRVS=()              # if set, this package is user-installable, and these abbreviations may be used to specify app
         MANAGER_QPKG_ESSENTIALS=()          # require these QPKGs to be installed first. Use 'none' if package is optional.
         MANAGER_QPKG_IPKGS_ADD=()           # require these IPKGs to be installed first
         MANAGER_QPKG_IPKGS_REMOVE=()        # require these IPKGs to be uninstalled first
@@ -320,7 +320,7 @@ Session.Init()
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_x86_64.qpkg)
         MANAGER_QPKG_MD5+=(520472cc87d301704f975f6eb9948e38)
         MANAGER_QPKG_DESC+=('')
-        MANAGER_QPKG_ABBRVS+=('')
+        MANAGER_QPKG_ABBRVS+=('par par2')
         MANAGER_QPKG_ESSENTIALS+=(none)
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
@@ -336,7 +336,7 @@ Session.Init()
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_arm-x31.qpkg)
         MANAGER_QPKG_MD5+=(ce8af2e009eb87733c3b855e41a94f8e)
         MANAGER_QPKG_DESC+=('')
-        MANAGER_QPKG_ABBRVS+=('')
+        MANAGER_QPKG_ABBRVS+=('par par2')
         MANAGER_QPKG_ESSENTIALS+=(none)
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
@@ -352,7 +352,7 @@ Session.Init()
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_arm-x41.qpkg)
         MANAGER_QPKG_MD5+=(8516e45e704875cdd2cd2bb315c4e1e6)
         MANAGER_QPKG_DESC+=('')
-        MANAGER_QPKG_ABBRVS+=('')
+        MANAGER_QPKG_ABBRVS+=('par par2')
         MANAGER_QPKG_ESSENTIALS+=(none)
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
@@ -368,7 +368,7 @@ Session.Init()
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_arm_64.qpkg)
         MANAGER_QPKG_MD5+=(4d8e99f97936a163e411aa8765595f7a)
         MANAGER_QPKG_DESC+=('')
-        MANAGER_QPKG_ABBRVS+=('')
+        MANAGER_QPKG_ABBRVS+=('par par2')
         MANAGER_QPKG_ESSENTIALS+=(none)
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
@@ -384,7 +384,7 @@ Session.Init()
         MANAGER_QPKG_URL+=('')
         MANAGER_QPKG_MD5+=('')
         MANAGER_QPKG_DESC+=('')
-        MANAGER_QPKG_ABBRVS+=('')
+        MANAGER_QPKG_ABBRVS+=('par par2')
         MANAGER_QPKG_ESSENTIALS+=(Entware)
         MANAGER_QPKG_IPKGS_ADD+=(par2cmdline)
         MANAGER_QPKG_IPKGS_REMOVE+=('')
@@ -593,7 +593,7 @@ Session.Init()
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/main/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_x86_64.qpkg)
         MANAGER_QPKG_MD5+=(eed8071c43665431d6444cb489636ae5)
         MANAGER_QPKG_DESC+=('')
-        MANAGER_QPKG_ABBRVS+=('')
+        MANAGER_QPKG_ABBRVS+=('sha3 sha3sum')
         MANAGER_QPKG_ESSENTIALS+=('')
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
@@ -5343,13 +5343,14 @@ QPKG.Installable()
 
     for index in "${!MANAGER_QPKG_NAME[@]}"; do
         [[ ${MANAGER_QPKG_NAME[$index]} = "$PACKAGE_NAME" ]] || continue
-        QPKG.NotInstalled "$PACKAGE_NAME" || continue
         [[ -n ${MANAGER_QPKG_ABBRVS[$index]} ]] || continue
-        [[ ${MANAGER_QPKG_ARCH[$index]} = all || ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]] || continue
+        QPKG.Installed "$PACKAGE_NAME" && break
         QPKG.MinRAM "$1" &>/dev/null || continue
 
-        result_code=0
-        break
+        if [[ ${MANAGER_QPKG_ARCH[$index]} = 'all' || ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
+            result_code=0
+            break
+        fi
     done
 
     return $result_code
