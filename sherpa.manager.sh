@@ -54,7 +54,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=210328
+    readonly MANAGER_SCRIPT_VERSION=210329
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
 
@@ -2423,15 +2423,15 @@ IPKGs.Install()
 
     if Opts.Apps.All.Install.IsSet; then
         for index in "${!MANAGER_QPKG_NAME[@]}"; do
-            [[ ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${MANAGER_QPKG_ARCH[$index]} = all ]] && IPKGs.ToInstall.Add "${MANAGER_QPKG_IPKGS_ADD[$index]}"
+            [[ ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${MANAGER_QPKG_ARCH[$index]} = all ]] || continue
+            IPKGs.ToInstall.Add "${MANAGER_QPKG_IPKGS_ADD[$index]}"
         done
     else
         for index in "${!MANAGER_QPKG_NAME[@]}"; do
-            if QPKGs.ToInstall.Exist "${MANAGER_QPKG_NAME[$index]}" || QPKG.Installed "${MANAGER_QPKG_NAME[$index]}" || QPKGs.ToReinstall.Exist "${MANAGER_QPKG_NAME[$index]}" || QPKGs.ToUpgrade.Exist "${MANAGER_QPKG_NAME[$index]}"; then
-                if [[ ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${MANAGER_QPKG_ARCH[$index]} = all ]]; then
-                    IPKGs.ToInstall.Add "${MANAGER_QPKG_IPKGS_ADD[$index]}"
-                fi
-            fi
+            QPKGs.ToInstall.Exist "${MANAGER_QPKG_NAME[$index]}" || QPKG.Installed "${MANAGER_QPKG_NAME[$index]}" || QPKGs.ToReinstall.Exist "${MANAGER_QPKG_NAME[$index]}" || QPKGs.ToUpgrade.Exist "${MANAGER_QPKG_NAME[$index]}" || continue
+            [[ ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${MANAGER_QPKG_ARCH[$index]} = all ]] || continue
+            QPKG.MinRAM "${MANAGER_QPKG_NAME[$index]}" &>/dev/null || continue
+            IPKGs.ToInstall.Add "${MANAGER_QPKG_IPKGS_ADD[$index]}"
         done
     fi
 
