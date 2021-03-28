@@ -738,15 +738,6 @@ Session.Validate()
         DebugFuncExit 1; return
     fi
 
-    # skip packages that can't be installed
-    for package in $(QPKGs.ToInstall.Array); do
-        if ! QPKG.URL "$package" &>/dev/null; then
-            MarkOpAsSkipped show "$package" install 'this NAS has an unsupported arch'
-        elif ! QPKG.MinRAM "$package" &>/dev/null; then
-            MarkOpAsSkipped show "$package" install 'this NAS has insufficient RAM'
-        fi
-    done
-
     if QPKGs.ToBackup.IsNone && QPKGs.ToUninstall.IsNone && QPKGs.ToUpgrade.IsNone && QPKGs.ToInstall.IsNone && QPKGs.ToReinstall.IsNone && QPKGs.ToRestore.IsNone && QPKGs.ToRestart.IsNone && QPKGs.ToStart.IsNone && QPKGs.ToStop.IsNone && QPKGs.ToRebuild.IsNone; then
         if Opts.Apps.All.Install.IsNot && Opts.Apps.All.Restart.IsNot && Opts.Apps.All.Upgrade.IsNot && Opts.Apps.All.Backup.IsNot && Opts.Apps.All.Restore.IsNot && Opts.Help.Status.IsNot && Opts.Apps.All.Start.IsNot && Opts.Apps.All.Stop.IsNot && Opts.Apps.All.Rebuild.IsNot; then
             if QPKGs.SkBackup.IsNone && QPKGs.SkDownload.IsNone && QPKGs.SkInstall.IsNone && QPKGs.SkReinstall.IsNone && QPKGs.SkRestart.IsNone && QPKGs.SkRestore.IsNone && QPKGs.SkStart.IsNone && QPKGs.SkStop.IsNone && QPKGs.SkUninstall.IsNone && QPKGs.SkUpgrade.IsNone; then
@@ -999,7 +990,7 @@ Tiers.Processor()
 
         # adjust lists for start
         if Opts.Apps.All.Start.IsSet; then
-            QPKGs.ToStart.Add "$(QPKGs.Installed.Array)"
+            QPKGs.ToStart.Add "$(QPKGs.Stopped.Array)"
         fi
 
     for tier in essential addon optional; do
@@ -1574,7 +1565,7 @@ ParseArguments()
         case $operation in
             backup_)
                 case $scope in
-                    all_)
+                    all_|installed_)
                         Opts.Apps.All.Backup.Set
                         operation=''
                         ;;
@@ -1707,6 +1698,9 @@ ParseArguments()
                     essential_)
                         QPKGs.ToInstall.Add "$(QPKGs.Essential.Array)"
                         ;;
+                    not-installed_)
+                        QPKGs.ToInstall.Add "$(QPKGs.NotInstalled.Array)"
+                        ;;
                     optional_)
                         QPKGs.ToInstall.Add "$(QPKGs.Optional.Array)"
                         ;;
@@ -1739,7 +1733,7 @@ ParseArguments()
                 ;;
             rebuild_)
                 case $scope in
-                    all_)
+                    all_|installed_)
                         Opts.Apps.All.Rebuild.Set
                         operation=''
                         ;;
@@ -1753,7 +1747,7 @@ ParseArguments()
                 ;;
             reinstall_)
                 case $scope in
-                    all_)
+                    all_|installed_)
                         Opts.Apps.All.Reinstall.Set
                         operation=''
                         ;;
@@ -1773,7 +1767,7 @@ ParseArguments()
                 ;;
             restart_)
                 case $scope in
-                    all_)
+                    all_|installed_)
                         Opts.Apps.All.Restart.Set
                         operation=''
                         ;;
@@ -1793,7 +1787,7 @@ ParseArguments()
                 ;;
             restore_)
                 case $scope in
-                    all_)
+                    all_|installed_)
                         Opts.Apps.All.Restore.Set
                         operation=''
                         ;;
@@ -1813,7 +1807,7 @@ ParseArguments()
                 ;;
             start_)
                 case $scope in
-                    all_)
+                    all_|installed_)
                         Opts.Apps.All.Start.Set
                         operation=''
                         ;;
@@ -1841,7 +1835,7 @@ ParseArguments()
                 ;;
             stop_)
                 case $scope in
-                    all_)
+                    all_|installed_)
                         Opts.Apps.All.Stop.Set
                         operation=''
                         ;;
@@ -1864,7 +1858,7 @@ ParseArguments()
                 ;;
             uninstall_)
                 case $scope in
-                    all_)   # this scope is dangerous, so make 'force' a requirement
+                    all_|installed_)   # this scope is dangerous, so make 'force' a requirement
                         if [[ $operation_force = true ]]; then
                             QPKGs.ToUninstall.Add "$(QPKGs.Installed.Array)"
                             Opts.Apps.All.Uninstall.Set
@@ -1879,6 +1873,16 @@ ParseArguments()
                         ;;
                     optional_)
                         QPKGs.ToUninstall.Add "$(QPKGs.Optional.Array)"
+                        operation=''
+                        operation_force=false
+                        ;;
+                    started_)
+                        QPKGs.ToUninstall.Add "$(QPKGs.Started.Array)"
+                        operation=''
+                        operation_force=false
+                        ;;
+                    stopped_)
+                        QPKGs.ToUninstall.Add "$(QPKGs.Stopped.Array)"
                         operation=''
                         operation_force=false
                         ;;
@@ -4673,18 +4677,17 @@ QPKG.Install()
         DebugFuncExit 2; return
     fi
 
-    local local_pathfile=$(QPKG.PathFilename "$PACKAGE_NAME")
-
-    if [[ -z $local_pathfile ]]; then
-        DebugAsWarn "no pathfile found for this package $(FormatAsPackageName "$PACKAGE_NAME") (unsupported arch?)"
-
-        if [[ $NAS_QPKG_ARCH != none ]]; then       # don't skip QPKG, it may have IPKGs to be installed
-            MarkOpAsSkipped show "$PACKAGE_NAME" install
-            result_code=2
-        fi
-
-        DebugFuncExit $result_code; return
+    if ! QPKG.URL "$PACKAGE_NAME" &>/dev/null; then
+        MarkOpAsSkipped show "$PACKAGE_NAME" install 'this NAS has an unsupported arch'
+        DebugFuncExit 2; return
     fi
+
+    if ! QPKG.MinRAM "$PACKAGE_NAME" &>/dev/null; then
+        MarkOpAsSkipped show "$PACKAGE_NAME" install 'this NAS has insufficient RAM'
+        DebugFuncExit 2; return
+    fi
+
+    local local_pathfile=$(QPKG.PathFilename "$PACKAGE_NAME")
 
     if [[ ${local_pathfile##*.} = zip ]]; then
         $UNZIP_CMD -nq "$local_pathfile" -d "$QPKG_DL_PATH"
@@ -4777,18 +4780,17 @@ QPKG.Reinstall()
         DebugFuncExit 2; return
     fi
 
-    local local_pathfile=$(QPKG.PathFilename "$PACKAGE_NAME")
-
-    if [[ -z $local_pathfile ]]; then
-        DebugAsWarn "no pathfile found for this package $(FormatAsPackageName "$PACKAGE_NAME") (unsupported arch?)"
-
-        if [[ $NAS_QPKG_ARCH != none ]]; then       # don't skip QPKG just yet, it may have IPKGs to be installed
-            MarkOpAsSkipped show "$PACKAGE_NAME" reinstall
-            result_code=2
-        fi
-
-        DebugFuncExit $result_code; return
+    if ! QPKG.URL "$PACKAGE_NAME" &>/dev/null; then
+        MarkOpAsSkipped show "$PACKAGE_NAME" reinstall 'this NAS has an unsupported arch'
+        DebugFuncExit 2; return
     fi
+
+    if ! QPKG.MinRAM "$PACKAGE_NAME" &>/dev/null; then
+        MarkOpAsSkipped show "$PACKAGE_NAME" reinstall 'this NAS has insufficient RAM'
+        DebugFuncExit 2; return
+    fi
+
+    local local_pathfile=$(QPKG.PathFilename "$PACKAGE_NAME")
 
     if [[ ${local_pathfile##*.} = zip ]]; then
         $UNZIP_CMD -nq "$local_pathfile" -d "$QPKG_DL_PATH"
@@ -4851,6 +4853,16 @@ QPKG.Upgrade()
         DebugFuncExit 2; return
     fi
 
+    if ! QPKG.URL "$PACKAGE_NAME" &>/dev/null; then
+        MarkOpAsSkipped show "$PACKAGE_NAME" upgrade 'this NAS has an unsupported arch'
+        DebugFuncExit 2; return
+    fi
+
+    if ! QPKG.MinRAM "$PACKAGE_NAME" &>/dev/null; then
+        MarkOpAsSkipped show "$PACKAGE_NAME" upgrade 'this NAS has insufficient RAM'
+        DebugFuncExit 2; return
+    fi
+
     if ! QPKGs.Upgradable.Exist "$PACKAGE_NAME"; then
         MarkOpAsSkipped show "$PACKAGE_NAME" upgrade 'no new package is available'
         DebugFuncExit 2; return
@@ -4859,17 +4871,6 @@ QPKG.Upgrade()
     local previous_version=null
     local current_version=null
     local local_pathfile=$(QPKG.PathFilename "$PACKAGE_NAME")
-
-    if [[ -z $local_pathfile ]]; then
-        DebugAsWarn "no pathfile found for this package $(FormatAsPackageName "$PACKAGE_NAME") (unsupported arch?)"
-
-        if [[ $NAS_QPKG_ARCH != none ]]; then       # don't skip QPKG just yet, it may have IPKGs to be installed
-            MarkOpAsSkipped hide "$PACKAGE_NAME" upgrade
-            result_code=2
-        fi
-
-        DebugFuncExit $result_code; return
-    fi
 
     if [[ ${local_pathfile##*.} = zip ]]; then
         $UNZIP_CMD -nq "$local_pathfile" -d "$QPKG_DL_PATH"
@@ -6673,9 +6674,10 @@ CompileObjects()
         ShowAsProc 'compiling objects' >&2
 
         # session flags
-        AddFlagObj Session.Debug.ToArchive
-        AddFlagObj Session.Debug.ToFile
-        AddFlagObj Session.Debug.ToScreen
+        for array_name in ToArchive ToFile ToScreen; do
+            AddFlagObj Session.Debug.${array_name}
+        done
+
         AddFlagObj Session.Display.Clean
         AddFlagObj Session.LineSpace
         AddFlagObj Session.ShowBackupLocation
@@ -6696,12 +6698,10 @@ CompileObjects()
         AddFlagObj Opts.IgnoreFreeSpace
         AddFlagObj Opts.Versions.View
 
-        AddFlagObj Opts.Log.All.Paste
-        AddFlagObj Opts.Log.All.View
-        AddFlagObj Opts.Log.Last.Paste
-        AddFlagObj Opts.Log.Last.View
-        AddFlagObj Opts.Log.Tail.Paste
-        AddFlagObj Opts.Log.Tail.View
+        for array_name in All Last Tail; do
+            AddFlagObj Opts.Log.${array_name}.Paste
+            AddFlagObj Opts.Log.${array_name}.View
+        done
 
         for array_name in Backup Install Rebuild Reinstall Restart Restore Start Stop Uninstall Upgrade; do
             AddFlagObj Opts.Apps.All.${array_name}
