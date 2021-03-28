@@ -105,7 +105,7 @@
 ######################################################################
 PKG_POST_REMOVE="{
     [[ -e /opt/bin/opkg ]] && /opt/bin/opkg remove freshclam clamav> /dev/null 2>&1
-    /bin/sed -i '|freshclam|d' /etc/profile
+    /bin/sed -i '/freshclam/d' /etc/profile
 }"
 
 ######################################################################
