@@ -2825,7 +2825,7 @@ ProgressUpdater()
 CreateDirSizeMonitorFlagFile()
     {
 
-    [[ -z $MONITOR_FLAG_PATHFILE ]] && readonly MONITOR_FLAG_PATHFILE=${1:?empty}
+    [[ -z ${MONITOR_FLAG_PATHFILE:-} ]] && readonly MONITOR_FLAG_PATHFILE=${1:?empty}
     $TOUCH_CMD "$MONITOR_FLAG_PATHFILE"
 
     }
