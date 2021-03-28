@@ -31,7 +31,7 @@ Init()
     readonly APPARENT_LOADER_SCRIPT_PATHNAME=/usr/sbin/$QPKG_NAME
     readonly SERVICE_STATUS_PATHFILE=/var/run/$QPKG_NAME.last.operation
 
-    [[ ! -d $(dirname $REAL_LOG_PATHFILE) ]] && mkdir -p $(dirname $REAL_LOG_PATHFILE)
+    [[ ! -d $(/usr/bin/dirname $REAL_LOG_PATHFILE) ]] && mkdir -p $(/usr/bin/dirname $REAL_LOG_PATHFILE)
     [[ ! -e $REAL_LOG_PATHFILE ]] && /bin/touch "$REAL_LOG_PATHFILE"
 
     }
