@@ -54,7 +54,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=210329
+    readonly MANAGER_SCRIPT_VERSION=210330
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
 
@@ -2067,17 +2067,13 @@ ListEnvironment()
 
     DebugHardwareOK RAM "$(FormatAsThousands "$INSTALLED_RAM_KB")kB"
 
-    if QPKGs.ToInstall.Exist SABnzbd || QPKG.Installed SABnzbd; then
-        [[ $INSTALLED_RAM_KB -le $MIN_RAM_KB ]] && DebugHardwareWarning RAM "less-than or equal-to $(FormatAsThousands "$MIN_RAM_KB")kB"
-    fi
-
     if [[ ${NAS_FIRMWARE//.} -ge 400 ]]; then
         DebugFirmwareOK version "$NAS_FIRMWARE"
     else
         DebugFirmwareWarning version "$NAS_FIRMWARE"
     fi
 
-    if [[ $NAS_BUILD -lt 20201015 || $NAS_BUILD -gt 20201020 ]]; then   # these builds won't allow unsigned QPKGs to run at-all
+    if [[ $NAS_BUILD -lt 20201015 || $NAS_BUILD -gt 20201020 ]]; then   # builds in between won't allow unsigned QPKGs to run at-all
         DebugFirmwareOK build "$NAS_BUILD"
     else
         DebugFirmwareWarning build "$NAS_BUILD"
