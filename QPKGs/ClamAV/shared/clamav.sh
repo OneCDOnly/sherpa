@@ -143,6 +143,8 @@ StartQPKG()
         "$TARGET_SERVICE_PATHFILE" restart
     fi
 
+    /bin/grep -q freshclam /etc/profile || echo "alias freshclam='/opt/sbin/freshclam -u admin --config-file=/etc/config/freshclam.conf --datadir=/share/$(/sbin/getcfg Public path -f /etc/config/smb.conf | cut -d '/' -f 3)/.antivirus/usr/share/clamav -l /tmp/.freshclam.log'" >> /etc/profile
+
     DisplayCommitToLog 'start package: OK'
     EnableThisQPKGIcon
 
@@ -163,6 +165,8 @@ StopQPKG()
 
         "$TARGET_SERVICE_PATHFILE" restart
     fi
+
+    /bin/sed -i '/freshclam/d' /etc/profile
 
     DisplayCommitToLog 'stop package: OK'
     DisableThisQPKGIcon
