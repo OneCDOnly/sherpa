@@ -4,7 +4,7 @@
 
 ## Description
 
-A mini-package-manager to install various media-management apps into QNAP NAS.
+A mini-package-manager for QNAP NAS.
 
 ---
 ## Before you begin
@@ -35,7 +35,7 @@ Package management via **sherpa** provides extra features like easy application 
 ---
 ## Requirements
 
-- Any model QNAP NAS with at-least 1GB RAM and running QTS 4.0 or-later.
+- Any model QNAP NAS running QTS 4.0 or-later.
 
 - The ClamAV package will require at-least 1.5GB RAM installed.
 

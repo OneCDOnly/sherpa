@@ -4,7 +4,7 @@
 
 [b][u][size=120]Description[/size][/u][/b]
 
-A mini-package-manager to install various media-management apps into QNAP NAS.
+A mini-package-manager for QNAP NAS.
 
 [b][u][size=120]Before you begin[/size][/u][/b]
 
@@ -16,6 +16,7 @@ Package management via [b]sherpa[/b] provides extra features like easy applicati
 
 [list]
 
+[*][url=https://www.clamav.net/][b]ClamAV[/b][/url]
 [*][url=https://dev.deluge-torrent.org/][b]Deluge[/b][/url]
 [*][url=https://github.com/OneCDOnly/HideThatBanner][b]HideThatBanner[/b][/url]
 [*][url=https://lazylibrarian.gitlab.io/][b]LazyLibrarian[/b][/url]
@@ -33,21 +34,21 @@ Package management via [b]sherpa[/b] provides extra features like easy applicati
 [/list]
 
 ... and the following apps will be automatically installed as required:
-[list][*][url=https://forum.qnap.com/viewtopic.php?f=351&t=124894][b]Entware[/b][/url] (standard version)
-[*][b]Python[/b] v3.9.0
+[list][*][b]Entware[/b] (standard version)
+[*][b]Python[/b] v3.9.2
 [*][b]Par2[/b] or [b]Par2cmdline-MT[/b], except on ARMv5. This will use the single-thread par2 from Entware instead.
 [/list]
 
 
 [b][u][size=120]Requirements[/size][/u][/b]
 
-[list]Any model QNAP NAS with at-least 1GB RAM and running QTS 4.0 or-later.[/list]
+[list]Any model QNAP NAS running QTS 4.0 or-later.[/list]
 
-[list][b][color=#FF0000]Strongly suggest avoiding QTS 4.5.1.1456 through QTS 4.5.1.1461[/color][/b] as these don't permit the running of unsigned 3rd-party packages and will stop all [b]sherpa[/b] QPKGs from working. If you're using QTS 4.5.1, please ensure it's at least 4.5.1.1465[/list]
+[list]The ClamAV package will require at-least 1.5GB RAM installed.[/list]
 
 [b][u][size=120]Usage[/size][/u][/b]
 
-[list=1][*]Install the [b]sherpa[/b] QPKG, available from [url=https://github.com/OneCDOnly/sherpa/raw/main/QPKGs/sherpa/build/sherpa_201224.qpkg][b]GitHub[/b][/url].
+[list=1][*]Install the [b]sherpa[/b] QPKG, available from [url=https://github.com/OneCDOnly/sherpa/raw/main/QPKGs/sherpa/build/][b]GitHub[/b][/url].
 
 
 [*][url=https://www.qnap.com/en/how-to/knowledge-base/article/how-to-access-qnap-nas-by-ssh/][b]SSH[/b][/url] into your NAS as the 'admin' user,
