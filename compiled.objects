@@ -1,204 +1,3 @@
-Session.Debug.ToArchive.Clear()
-    {
-    [[ $_obj_session_debug_toarchive_flag_ != 'true' ]] && return
-    _obj_session_debug_toarchive_flag_=false
-    [[ $_obj_session_debug_toarchive_changes_flag_ = 'true' ]] && DebugVar _obj_session_debug_toarchive_flag_
-    }
-Session.Debug.ToArchive.Disable()
-    {
-    [[ $_obj_session_debug_toarchive_enable_ != 'true' ]] && return
-    _obj_session_debug_toarchive_enable_=false
-    [[ $_obj_session_debug_toarchive_changes_flag_ = 'true' ]] && DebugVar _obj_session_debug_toarchive_enable_
-    }
-Session.Debug.ToArchive.DontLogChanges()
-    {
-    [[ $_obj_session_debug_toarchive_changes_flag_ != 'true' ]] && return
-    _obj_session_debug_toarchive_changes_flag_=false
-    }
-Session.Debug.ToArchive.Enable()
-    {
-    [[ $_obj_session_debug_toarchive_enable_ = 'true' ]] && return
-    _obj_session_debug_toarchive_enable_=true
-    [[ $_obj_session_debug_toarchive_changes_flag_ = 'true' ]] && DebugVar _obj_session_debug_toarchive_enable_
-    }
-Session.Debug.ToArchive.Init()
-    {
-    _obj_session_debug_toarchive_text_=''
-    _obj_session_debug_toarchive_flag_=false
-    _obj_session_debug_toarchive_changes_flag_=true
-    _obj_session_debug_toarchive_enable_=false
-    }
-Session.Debug.ToArchive.IsDisabled()
-    {
-    [[ $_obj_session_debug_toarchive_enable_ != 'true' ]]
-    }
-Session.Debug.ToArchive.IsEnabled()
-    {
-    [[ $_obj_session_debug_toarchive_enable_ = 'true' ]]
-    }
-Session.Debug.ToArchive.IsNot()
-    {
-    [[ $_obj_session_debug_toarchive_flag_ != 'true' ]]
-    }
-Session.Debug.ToArchive.IsSet()
-    {
-    [[ $_obj_session_debug_toarchive_flag_ = 'true' ]]
-    }
-Session.Debug.ToArchive.LogChanges()
-    {
-    [[ $_obj_session_debug_toarchive_changes_flag_ = 'true' ]] && return
-    _obj_session_debug_toarchive_changes_flag_=true
-    }
-Session.Debug.ToArchive.Set()
-    {
-    [[ $_obj_session_debug_toarchive_flag_ = 'true' ]] && return
-    _obj_session_debug_toarchive_flag_=true
-    [[ $_obj_session_debug_toarchive_changes_flag_ = 'true' ]] && DebugVar _obj_session_debug_toarchive_flag_
-    }
-Session.Debug.ToArchive.Text()
-    {
-    if [[ -n ${1:-} && $1 = "=" ]]; then
-        _obj_session_debug_toarchive_text_=$2
-    else
-        echo -n "$_obj_session_debug_toarchive_text_"
-    fi
-    }
-Session.Debug.ToArchive.Init
-
-Session.Debug.ToFile.Clear()
-    {
-    [[ $_obj_session_debug_tofile_flag_ != 'true' ]] && return
-    _obj_session_debug_tofile_flag_=false
-    [[ $_obj_session_debug_tofile_changes_flag_ = 'true' ]] && DebugVar _obj_session_debug_tofile_flag_
-    }
-Session.Debug.ToFile.Disable()
-    {
-    [[ $_obj_session_debug_tofile_enable_ != 'true' ]] && return
-    _obj_session_debug_tofile_enable_=false
-    [[ $_obj_session_debug_tofile_changes_flag_ = 'true' ]] && DebugVar _obj_session_debug_tofile_enable_
-    }
-Session.Debug.ToFile.DontLogChanges()
-    {
-    [[ $_obj_session_debug_tofile_changes_flag_ != 'true' ]] && return
-    _obj_session_debug_tofile_changes_flag_=false
-    }
-Session.Debug.ToFile.Enable()
-    {
-    [[ $_obj_session_debug_tofile_enable_ = 'true' ]] && return
-    _obj_session_debug_tofile_enable_=true
-    [[ $_obj_session_debug_tofile_changes_flag_ = 'true' ]] && DebugVar _obj_session_debug_tofile_enable_
-    }
-Session.Debug.ToFile.Init()
-    {
-    _obj_session_debug_tofile_text_=''
-    _obj_session_debug_tofile_flag_=false
-    _obj_session_debug_tofile_changes_flag_=true
-    _obj_session_debug_tofile_enable_=false
-    }
-Session.Debug.ToFile.IsDisabled()
-    {
-    [[ $_obj_session_debug_tofile_enable_ != 'true' ]]
-    }
-Session.Debug.ToFile.IsEnabled()
-    {
-    [[ $_obj_session_debug_tofile_enable_ = 'true' ]]
-    }
-Session.Debug.ToFile.IsNot()
-    {
-    [[ $_obj_session_debug_tofile_flag_ != 'true' ]]
-    }
-Session.Debug.ToFile.IsSet()
-    {
-    [[ $_obj_session_debug_tofile_flag_ = 'true' ]]
-    }
-Session.Debug.ToFile.LogChanges()
-    {
-    [[ $_obj_session_debug_tofile_changes_flag_ = 'true' ]] && return
-    _obj_session_debug_tofile_changes_flag_=true
-    }
-Session.Debug.ToFile.Set()
-    {
-    [[ $_obj_session_debug_tofile_flag_ = 'true' ]] && return
-    _obj_session_debug_tofile_flag_=true
-    [[ $_obj_session_debug_tofile_changes_flag_ = 'true' ]] && DebugVar _obj_session_debug_tofile_flag_
-    }
-Session.Debug.ToFile.Text()
-    {
-    if [[ -n ${1:-} && $1 = "=" ]]; then
-        _obj_session_debug_tofile_text_=$2
-    else
-        echo -n "$_obj_session_debug_tofile_text_"
-    fi
-    }
-Session.Debug.ToFile.Init
-
-Session.Debug.ToScreen.Clear()
-    {
-    [[ $_obj_session_debug_toscreen_flag_ != 'true' ]] && return
-    _obj_session_debug_toscreen_flag_=false
-    [[ $_obj_session_debug_toscreen_changes_flag_ = 'true' ]] && DebugVar _obj_session_debug_toscreen_flag_
-    }
-Session.Debug.ToScreen.Disable()
-    {
-    [[ $_obj_session_debug_toscreen_enable_ != 'true' ]] && return
-    _obj_session_debug_toscreen_enable_=false
-    [[ $_obj_session_debug_toscreen_changes_flag_ = 'true' ]] && DebugVar _obj_session_debug_toscreen_enable_
-    }
-Session.Debug.ToScreen.DontLogChanges()
-    {
-    [[ $_obj_session_debug_toscreen_changes_flag_ != 'true' ]] && return
-    _obj_session_debug_toscreen_changes_flag_=false
-    }
-Session.Debug.ToScreen.Enable()
-    {
-    [[ $_obj_session_debug_toscreen_enable_ = 'true' ]] && return
-    _obj_session_debug_toscreen_enable_=true
-    [[ $_obj_session_debug_toscreen_changes_flag_ = 'true' ]] && DebugVar _obj_session_debug_toscreen_enable_
-    }
-Session.Debug.ToScreen.Init()
-    {
-    _obj_session_debug_toscreen_text_=''
-    _obj_session_debug_toscreen_flag_=false
-    _obj_session_debug_toscreen_changes_flag_=true
-    _obj_session_debug_toscreen_enable_=false
-    }
-Session.Debug.ToScreen.IsDisabled()
-    {
-    [[ $_obj_session_debug_toscreen_enable_ != 'true' ]]
-    }
-Session.Debug.ToScreen.IsEnabled()
-    {
-    [[ $_obj_session_debug_toscreen_enable_ = 'true' ]]
-    }
-Session.Debug.ToScreen.IsNot()
-    {
-    [[ $_obj_session_debug_toscreen_flag_ != 'true' ]]
-    }
-Session.Debug.ToScreen.IsSet()
-    {
-    [[ $_obj_session_debug_toscreen_flag_ = 'true' ]]
-    }
-Session.Debug.ToScreen.LogChanges()
-    {
-    [[ $_obj_session_debug_toscreen_changes_flag_ = 'true' ]] && return
-    _obj_session_debug_toscreen_changes_flag_=true
-    }
-Session.Debug.ToScreen.Set()
-    {
-    [[ $_obj_session_debug_toscreen_flag_ = 'true' ]] && return
-    _obj_session_debug_toscreen_flag_=true
-    [[ $_obj_session_debug_toscreen_changes_flag_ = 'true' ]] && DebugVar _obj_session_debug_toscreen_flag_
-    }
-Session.Debug.ToScreen.Text()
-    {
-    if [[ -n ${1:-} && $1 = "=" ]]; then
-        _obj_session_debug_toscreen_text_=$2
-    else
-        echo -n "$_obj_session_debug_toscreen_text_"
-    fi
-    }
-Session.Debug.ToScreen.Init
-
 Session.Display.Clean.Clear()
     {
     [[ $_obj_session_display_clean_flag_ != 'true' ]] && return
@@ -534,6 +333,207 @@ Session.Summary.Text()
     }
 Session.Summary.Init
 
+Session.Debug.ToArchive.Clear()
+    {
+    [[ $_obj_session_debug_toarchive_flag_ != 'true' ]] && return
+    _obj_session_debug_toarchive_flag_=false
+    [[ $_obj_session_debug_toarchive_changes_flag_ = 'true' ]] && DebugVar _obj_session_debug_toarchive_flag_
+    }
+Session.Debug.ToArchive.Disable()
+    {
+    [[ $_obj_session_debug_toarchive_enable_ != 'true' ]] && return
+    _obj_session_debug_toarchive_enable_=false
+    [[ $_obj_session_debug_toarchive_changes_flag_ = 'true' ]] && DebugVar _obj_session_debug_toarchive_enable_
+    }
+Session.Debug.ToArchive.DontLogChanges()
+    {
+    [[ $_obj_session_debug_toarchive_changes_flag_ != 'true' ]] && return
+    _obj_session_debug_toarchive_changes_flag_=false
+    }
+Session.Debug.ToArchive.Enable()
+    {
+    [[ $_obj_session_debug_toarchive_enable_ = 'true' ]] && return
+    _obj_session_debug_toarchive_enable_=true
+    [[ $_obj_session_debug_toarchive_changes_flag_ = 'true' ]] && DebugVar _obj_session_debug_toarchive_enable_
+    }
+Session.Debug.ToArchive.Init()
+    {
+    _obj_session_debug_toarchive_text_=''
+    _obj_session_debug_toarchive_flag_=false
+    _obj_session_debug_toarchive_changes_flag_=true
+    _obj_session_debug_toarchive_enable_=false
+    }
+Session.Debug.ToArchive.IsDisabled()
+    {
+    [[ $_obj_session_debug_toarchive_enable_ != 'true' ]]
+    }
+Session.Debug.ToArchive.IsEnabled()
+    {
+    [[ $_obj_session_debug_toarchive_enable_ = 'true' ]]
+    }
+Session.Debug.ToArchive.IsNot()
+    {
+    [[ $_obj_session_debug_toarchive_flag_ != 'true' ]]
+    }
+Session.Debug.ToArchive.IsSet()
+    {
+    [[ $_obj_session_debug_toarchive_flag_ = 'true' ]]
+    }
+Session.Debug.ToArchive.LogChanges()
+    {
+    [[ $_obj_session_debug_toarchive_changes_flag_ = 'true' ]] && return
+    _obj_session_debug_toarchive_changes_flag_=true
+    }
+Session.Debug.ToArchive.Set()
+    {
+    [[ $_obj_session_debug_toarchive_flag_ = 'true' ]] && return
+    _obj_session_debug_toarchive_flag_=true
+    [[ $_obj_session_debug_toarchive_changes_flag_ = 'true' ]] && DebugVar _obj_session_debug_toarchive_flag_
+    }
+Session.Debug.ToArchive.Text()
+    {
+    if [[ -n ${1:-} && $1 = "=" ]]; then
+        _obj_session_debug_toarchive_text_=$2
+    else
+        echo -n "$_obj_session_debug_toarchive_text_"
+    fi
+    }
+Session.Debug.ToArchive.Init
+
+Session.Debug.ToFile.Clear()
+    {
+    [[ $_obj_session_debug_tofile_flag_ != 'true' ]] && return
+    _obj_session_debug_tofile_flag_=false
+    [[ $_obj_session_debug_tofile_changes_flag_ = 'true' ]] && DebugVar _obj_session_debug_tofile_flag_
+    }
+Session.Debug.ToFile.Disable()
+    {
+    [[ $_obj_session_debug_tofile_enable_ != 'true' ]] && return
+    _obj_session_debug_tofile_enable_=false
+    [[ $_obj_session_debug_tofile_changes_flag_ = 'true' ]] && DebugVar _obj_session_debug_tofile_enable_
+    }
+Session.Debug.ToFile.DontLogChanges()
+    {
+    [[ $_obj_session_debug_tofile_changes_flag_ != 'true' ]] && return
+    _obj_session_debug_tofile_changes_flag_=false
+    }
+Session.Debug.ToFile.Enable()
+    {
+    [[ $_obj_session_debug_tofile_enable_ = 'true' ]] && return
+    _obj_session_debug_tofile_enable_=true
+    [[ $_obj_session_debug_tofile_changes_flag_ = 'true' ]] && DebugVar _obj_session_debug_tofile_enable_
+    }
+Session.Debug.ToFile.Init()
+    {
+    _obj_session_debug_tofile_text_=''
+    _obj_session_debug_tofile_flag_=false
+    _obj_session_debug_tofile_changes_flag_=true
+    _obj_session_debug_tofile_enable_=false
+    }
+Session.Debug.ToFile.IsDisabled()
+    {
+    [[ $_obj_session_debug_tofile_enable_ != 'true' ]]
+    }
+Session.Debug.ToFile.IsEnabled()
+    {
+    [[ $_obj_session_debug_tofile_enable_ = 'true' ]]
+    }
+Session.Debug.ToFile.IsNot()
+    {
+    [[ $_obj_session_debug_tofile_flag_ != 'true' ]]
+    }
+Session.Debug.ToFile.IsSet()
+    {
+    [[ $_obj_session_debug_tofile_flag_ = 'true' ]]
+    }
+Session.Debug.ToFile.LogChanges()
+    {
+    [[ $_obj_session_debug_tofile_changes_flag_ = 'true' ]] && return
+    _obj_session_debug_tofile_changes_flag_=true
+    }
+Session.Debug.ToFile.Set()
+    {
+    [[ $_obj_session_debug_tofile_flag_ = 'true' ]] && return
+    _obj_session_debug_tofile_flag_=true
+    [[ $_obj_session_debug_tofile_changes_flag_ = 'true' ]] && DebugVar _obj_session_debug_tofile_flag_
+    }
+Session.Debug.ToFile.Text()
+    {
+    if [[ -n ${1:-} && $1 = "=" ]]; then
+        _obj_session_debug_tofile_text_=$2
+    else
+        echo -n "$_obj_session_debug_tofile_text_"
+    fi
+    }
+Session.Debug.ToFile.Init
+
+Session.Debug.ToScreen.Clear()
+    {
+    [[ $_obj_session_debug_toscreen_flag_ != 'true' ]] && return
+    _obj_session_debug_toscreen_flag_=false
+    [[ $_obj_session_debug_toscreen_changes_flag_ = 'true' ]] && DebugVar _obj_session_debug_toscreen_flag_
+    }
+Session.Debug.ToScreen.Disable()
+    {
+    [[ $_obj_session_debug_toscreen_enable_ != 'true' ]] && return
+    _obj_session_debug_toscreen_enable_=false
+    [[ $_obj_session_debug_toscreen_changes_flag_ = 'true' ]] && DebugVar _obj_session_debug_toscreen_enable_
+    }
+Session.Debug.ToScreen.DontLogChanges()
+    {
+    [[ $_obj_session_debug_toscreen_changes_flag_ != 'true' ]] && return
+    _obj_session_debug_toscreen_changes_flag_=false
+    }
+Session.Debug.ToScreen.Enable()
+    {
+    [[ $_obj_session_debug_toscreen_enable_ = 'true' ]] && return
+    _obj_session_debug_toscreen_enable_=true
+    [[ $_obj_session_debug_toscreen_changes_flag_ = 'true' ]] && DebugVar _obj_session_debug_toscreen_enable_
+    }
+Session.Debug.ToScreen.Init()
+    {
+    _obj_session_debug_toscreen_text_=''
+    _obj_session_debug_toscreen_flag_=false
+    _obj_session_debug_toscreen_changes_flag_=true
+    _obj_session_debug_toscreen_enable_=false
+    }
+Session.Debug.ToScreen.IsDisabled()
+    {
+    [[ $_obj_session_debug_toscreen_enable_ != 'true' ]]
+    }
+Session.Debug.ToScreen.IsEnabled()
+    {
+    [[ $_obj_session_debug_toscreen_enable_ = 'true' ]]
+    }
+Session.Debug.ToScreen.IsNot()
+    {
+    [[ $_obj_session_debug_toscreen_flag_ != 'true' ]]
+    }
+Session.Debug.ToScreen.IsSet()
+    {
+    [[ $_obj_session_debug_toscreen_flag_ = 'true' ]]
+    }
+Session.Debug.ToScreen.LogChanges()
+    {
+    [[ $_obj_session_debug_toscreen_changes_flag_ = 'true' ]] && return
+    _obj_session_debug_toscreen_changes_flag_=true
+    }
+Session.Debug.ToScreen.Set()
+    {
+    [[ $_obj_session_debug_toscreen_flag_ = 'true' ]] && return
+    _obj_session_debug_toscreen_flag_=true
+    [[ $_obj_session_debug_toscreen_changes_flag_ = 'true' ]] && DebugVar _obj_session_debug_toscreen_flag_
+    }
+Session.Debug.ToScreen.Text()
+    {
+    if [[ -n ${1:-} && $1 = "=" ]]; then
+        _obj_session_debug_toscreen_text_=$2
+    else
+        echo -n "$_obj_session_debug_toscreen_text_"
+    fi
+    }
+Session.Debug.ToScreen.Init
+
 QPKGs.States.Built.Clear()
     {
     [[ $_obj_qpkgs_states_built_flag_ != 'true' ]] && return
@@ -668,6 +668,73 @@ QPKGs.SkipProcessing.Text()
     }
 QPKGs.SkipProcessing.Init
 
+IPKGs.Upgrade.Clear()
+    {
+    [[ $_obj_ipkgs_upgrade_flag_ != 'true' ]] && return
+    _obj_ipkgs_upgrade_flag_=false
+    [[ $_obj_ipkgs_upgrade_changes_flag_ = 'true' ]] && DebugVar _obj_ipkgs_upgrade_flag_
+    }
+IPKGs.Upgrade.Disable()
+    {
+    [[ $_obj_ipkgs_upgrade_enable_ != 'true' ]] && return
+    _obj_ipkgs_upgrade_enable_=false
+    [[ $_obj_ipkgs_upgrade_changes_flag_ = 'true' ]] && DebugVar _obj_ipkgs_upgrade_enable_
+    }
+IPKGs.Upgrade.DontLogChanges()
+    {
+    [[ $_obj_ipkgs_upgrade_changes_flag_ != 'true' ]] && return
+    _obj_ipkgs_upgrade_changes_flag_=false
+    }
+IPKGs.Upgrade.Enable()
+    {
+    [[ $_obj_ipkgs_upgrade_enable_ = 'true' ]] && return
+    _obj_ipkgs_upgrade_enable_=true
+    [[ $_obj_ipkgs_upgrade_changes_flag_ = 'true' ]] && DebugVar _obj_ipkgs_upgrade_enable_
+    }
+IPKGs.Upgrade.Init()
+    {
+    _obj_ipkgs_upgrade_text_=''
+    _obj_ipkgs_upgrade_flag_=false
+    _obj_ipkgs_upgrade_changes_flag_=true
+    _obj_ipkgs_upgrade_enable_=false
+    }
+IPKGs.Upgrade.IsDisabled()
+    {
+    [[ $_obj_ipkgs_upgrade_enable_ != 'true' ]]
+    }
+IPKGs.Upgrade.IsEnabled()
+    {
+    [[ $_obj_ipkgs_upgrade_enable_ = 'true' ]]
+    }
+IPKGs.Upgrade.IsNot()
+    {
+    [[ $_obj_ipkgs_upgrade_flag_ != 'true' ]]
+    }
+IPKGs.Upgrade.IsSet()
+    {
+    [[ $_obj_ipkgs_upgrade_flag_ = 'true' ]]
+    }
+IPKGs.Upgrade.LogChanges()
+    {
+    [[ $_obj_ipkgs_upgrade_changes_flag_ = 'true' ]] && return
+    _obj_ipkgs_upgrade_changes_flag_=true
+    }
+IPKGs.Upgrade.Set()
+    {
+    [[ $_obj_ipkgs_upgrade_flag_ = 'true' ]] && return
+    _obj_ipkgs_upgrade_flag_=true
+    [[ $_obj_ipkgs_upgrade_changes_flag_ = 'true' ]] && DebugVar _obj_ipkgs_upgrade_flag_
+    }
+IPKGs.Upgrade.Text()
+    {
+    if [[ -n ${1:-} && $1 = "=" ]]; then
+        _obj_ipkgs_upgrade_text_=$2
+    else
+        echo -n "$_obj_ipkgs_upgrade_text_"
+    fi
+    }
+IPKGs.Upgrade.Init
+
 IPKGs.Install.Clear()
     {
     [[ $_obj_ipkgs_install_flag_ != 'true' ]] && return
@@ -801,6 +868,207 @@ PIPs.Install.Text()
     fi
     }
 PIPs.Install.Init
+
+Opts.Dependencies.Check.Clear()
+    {
+    [[ $_obj_opts_dependencies_check_flag_ != 'true' ]] && return
+    _obj_opts_dependencies_check_flag_=false
+    [[ $_obj_opts_dependencies_check_changes_flag_ = 'true' ]] && DebugVar _obj_opts_dependencies_check_flag_
+    }
+Opts.Dependencies.Check.Disable()
+    {
+    [[ $_obj_opts_dependencies_check_enable_ != 'true' ]] && return
+    _obj_opts_dependencies_check_enable_=false
+    [[ $_obj_opts_dependencies_check_changes_flag_ = 'true' ]] && DebugVar _obj_opts_dependencies_check_enable_
+    }
+Opts.Dependencies.Check.DontLogChanges()
+    {
+    [[ $_obj_opts_dependencies_check_changes_flag_ != 'true' ]] && return
+    _obj_opts_dependencies_check_changes_flag_=false
+    }
+Opts.Dependencies.Check.Enable()
+    {
+    [[ $_obj_opts_dependencies_check_enable_ = 'true' ]] && return
+    _obj_opts_dependencies_check_enable_=true
+    [[ $_obj_opts_dependencies_check_changes_flag_ = 'true' ]] && DebugVar _obj_opts_dependencies_check_enable_
+    }
+Opts.Dependencies.Check.Init()
+    {
+    _obj_opts_dependencies_check_text_=''
+    _obj_opts_dependencies_check_flag_=false
+    _obj_opts_dependencies_check_changes_flag_=true
+    _obj_opts_dependencies_check_enable_=false
+    }
+Opts.Dependencies.Check.IsDisabled()
+    {
+    [[ $_obj_opts_dependencies_check_enable_ != 'true' ]]
+    }
+Opts.Dependencies.Check.IsEnabled()
+    {
+    [[ $_obj_opts_dependencies_check_enable_ = 'true' ]]
+    }
+Opts.Dependencies.Check.IsNot()
+    {
+    [[ $_obj_opts_dependencies_check_flag_ != 'true' ]]
+    }
+Opts.Dependencies.Check.IsSet()
+    {
+    [[ $_obj_opts_dependencies_check_flag_ = 'true' ]]
+    }
+Opts.Dependencies.Check.LogChanges()
+    {
+    [[ $_obj_opts_dependencies_check_changes_flag_ = 'true' ]] && return
+    _obj_opts_dependencies_check_changes_flag_=true
+    }
+Opts.Dependencies.Check.Set()
+    {
+    [[ $_obj_opts_dependencies_check_flag_ = 'true' ]] && return
+    _obj_opts_dependencies_check_flag_=true
+    [[ $_obj_opts_dependencies_check_changes_flag_ = 'true' ]] && DebugVar _obj_opts_dependencies_check_flag_
+    }
+Opts.Dependencies.Check.Text()
+    {
+    if [[ -n ${1:-} && $1 = "=" ]]; then
+        _obj_opts_dependencies_check_text_=$2
+    else
+        echo -n "$_obj_opts_dependencies_check_text_"
+    fi
+    }
+Opts.Dependencies.Check.Init
+
+Opts.IgnoreFreeSpace.Clear()
+    {
+    [[ $_obj_opts_ignorefreespace_flag_ != 'true' ]] && return
+    _obj_opts_ignorefreespace_flag_=false
+    [[ $_obj_opts_ignorefreespace_changes_flag_ = 'true' ]] && DebugVar _obj_opts_ignorefreespace_flag_
+    }
+Opts.IgnoreFreeSpace.Disable()
+    {
+    [[ $_obj_opts_ignorefreespace_enable_ != 'true' ]] && return
+    _obj_opts_ignorefreespace_enable_=false
+    [[ $_obj_opts_ignorefreespace_changes_flag_ = 'true' ]] && DebugVar _obj_opts_ignorefreespace_enable_
+    }
+Opts.IgnoreFreeSpace.DontLogChanges()
+    {
+    [[ $_obj_opts_ignorefreespace_changes_flag_ != 'true' ]] && return
+    _obj_opts_ignorefreespace_changes_flag_=false
+    }
+Opts.IgnoreFreeSpace.Enable()
+    {
+    [[ $_obj_opts_ignorefreespace_enable_ = 'true' ]] && return
+    _obj_opts_ignorefreespace_enable_=true
+    [[ $_obj_opts_ignorefreespace_changes_flag_ = 'true' ]] && DebugVar _obj_opts_ignorefreespace_enable_
+    }
+Opts.IgnoreFreeSpace.Init()
+    {
+    _obj_opts_ignorefreespace_text_=''
+    _obj_opts_ignorefreespace_flag_=false
+    _obj_opts_ignorefreespace_changes_flag_=true
+    _obj_opts_ignorefreespace_enable_=false
+    }
+Opts.IgnoreFreeSpace.IsDisabled()
+    {
+    [[ $_obj_opts_ignorefreespace_enable_ != 'true' ]]
+    }
+Opts.IgnoreFreeSpace.IsEnabled()
+    {
+    [[ $_obj_opts_ignorefreespace_enable_ = 'true' ]]
+    }
+Opts.IgnoreFreeSpace.IsNot()
+    {
+    [[ $_obj_opts_ignorefreespace_flag_ != 'true' ]]
+    }
+Opts.IgnoreFreeSpace.IsSet()
+    {
+    [[ $_obj_opts_ignorefreespace_flag_ = 'true' ]]
+    }
+Opts.IgnoreFreeSpace.LogChanges()
+    {
+    [[ $_obj_opts_ignorefreespace_changes_flag_ = 'true' ]] && return
+    _obj_opts_ignorefreespace_changes_flag_=true
+    }
+Opts.IgnoreFreeSpace.Set()
+    {
+    [[ $_obj_opts_ignorefreespace_flag_ = 'true' ]] && return
+    _obj_opts_ignorefreespace_flag_=true
+    [[ $_obj_opts_ignorefreespace_changes_flag_ = 'true' ]] && DebugVar _obj_opts_ignorefreespace_flag_
+    }
+Opts.IgnoreFreeSpace.Text()
+    {
+    if [[ -n ${1:-} && $1 = "=" ]]; then
+        _obj_opts_ignorefreespace_text_=$2
+    else
+        echo -n "$_obj_opts_ignorefreespace_text_"
+    fi
+    }
+Opts.IgnoreFreeSpace.Init
+
+Opts.Versions.View.Clear()
+    {
+    [[ $_obj_opts_versions_view_flag_ != 'true' ]] && return
+    _obj_opts_versions_view_flag_=false
+    [[ $_obj_opts_versions_view_changes_flag_ = 'true' ]] && DebugVar _obj_opts_versions_view_flag_
+    }
+Opts.Versions.View.Disable()
+    {
+    [[ $_obj_opts_versions_view_enable_ != 'true' ]] && return
+    _obj_opts_versions_view_enable_=false
+    [[ $_obj_opts_versions_view_changes_flag_ = 'true' ]] && DebugVar _obj_opts_versions_view_enable_
+    }
+Opts.Versions.View.DontLogChanges()
+    {
+    [[ $_obj_opts_versions_view_changes_flag_ != 'true' ]] && return
+    _obj_opts_versions_view_changes_flag_=false
+    }
+Opts.Versions.View.Enable()
+    {
+    [[ $_obj_opts_versions_view_enable_ = 'true' ]] && return
+    _obj_opts_versions_view_enable_=true
+    [[ $_obj_opts_versions_view_changes_flag_ = 'true' ]] && DebugVar _obj_opts_versions_view_enable_
+    }
+Opts.Versions.View.Init()
+    {
+    _obj_opts_versions_view_text_=''
+    _obj_opts_versions_view_flag_=false
+    _obj_opts_versions_view_changes_flag_=true
+    _obj_opts_versions_view_enable_=false
+    }
+Opts.Versions.View.IsDisabled()
+    {
+    [[ $_obj_opts_versions_view_enable_ != 'true' ]]
+    }
+Opts.Versions.View.IsEnabled()
+    {
+    [[ $_obj_opts_versions_view_enable_ = 'true' ]]
+    }
+Opts.Versions.View.IsNot()
+    {
+    [[ $_obj_opts_versions_view_flag_ != 'true' ]]
+    }
+Opts.Versions.View.IsSet()
+    {
+    [[ $_obj_opts_versions_view_flag_ = 'true' ]]
+    }
+Opts.Versions.View.LogChanges()
+    {
+    [[ $_obj_opts_versions_view_changes_flag_ = 'true' ]] && return
+    _obj_opts_versions_view_changes_flag_=true
+    }
+Opts.Versions.View.Set()
+    {
+    [[ $_obj_opts_versions_view_flag_ = 'true' ]] && return
+    _obj_opts_versions_view_flag_=true
+    [[ $_obj_opts_versions_view_changes_flag_ = 'true' ]] && DebugVar _obj_opts_versions_view_flag_
+    }
+Opts.Versions.View.Text()
+    {
+    if [[ -n ${1:-} && $1 = "=" ]]; then
+        _obj_opts_versions_view_text_=$2
+    else
+        echo -n "$_obj_opts_versions_view_text_"
+    fi
+    }
+Opts.Versions.View.Init
 
 Opts.Help.Abbreviations.Clear()
     {
@@ -1471,207 +1739,6 @@ Opts.Help.Tips.Text()
     fi
     }
 Opts.Help.Tips.Init
-
-Opts.Dependencies.Check.Clear()
-    {
-    [[ $_obj_opts_dependencies_check_flag_ != 'true' ]] && return
-    _obj_opts_dependencies_check_flag_=false
-    [[ $_obj_opts_dependencies_check_changes_flag_ = 'true' ]] && DebugVar _obj_opts_dependencies_check_flag_
-    }
-Opts.Dependencies.Check.Disable()
-    {
-    [[ $_obj_opts_dependencies_check_enable_ != 'true' ]] && return
-    _obj_opts_dependencies_check_enable_=false
-    [[ $_obj_opts_dependencies_check_changes_flag_ = 'true' ]] && DebugVar _obj_opts_dependencies_check_enable_
-    }
-Opts.Dependencies.Check.DontLogChanges()
-    {
-    [[ $_obj_opts_dependencies_check_changes_flag_ != 'true' ]] && return
-    _obj_opts_dependencies_check_changes_flag_=false
-    }
-Opts.Dependencies.Check.Enable()
-    {
-    [[ $_obj_opts_dependencies_check_enable_ = 'true' ]] && return
-    _obj_opts_dependencies_check_enable_=true
-    [[ $_obj_opts_dependencies_check_changes_flag_ = 'true' ]] && DebugVar _obj_opts_dependencies_check_enable_
-    }
-Opts.Dependencies.Check.Init()
-    {
-    _obj_opts_dependencies_check_text_=''
-    _obj_opts_dependencies_check_flag_=false
-    _obj_opts_dependencies_check_changes_flag_=true
-    _obj_opts_dependencies_check_enable_=false
-    }
-Opts.Dependencies.Check.IsDisabled()
-    {
-    [[ $_obj_opts_dependencies_check_enable_ != 'true' ]]
-    }
-Opts.Dependencies.Check.IsEnabled()
-    {
-    [[ $_obj_opts_dependencies_check_enable_ = 'true' ]]
-    }
-Opts.Dependencies.Check.IsNot()
-    {
-    [[ $_obj_opts_dependencies_check_flag_ != 'true' ]]
-    }
-Opts.Dependencies.Check.IsSet()
-    {
-    [[ $_obj_opts_dependencies_check_flag_ = 'true' ]]
-    }
-Opts.Dependencies.Check.LogChanges()
-    {
-    [[ $_obj_opts_dependencies_check_changes_flag_ = 'true' ]] && return
-    _obj_opts_dependencies_check_changes_flag_=true
-    }
-Opts.Dependencies.Check.Set()
-    {
-    [[ $_obj_opts_dependencies_check_flag_ = 'true' ]] && return
-    _obj_opts_dependencies_check_flag_=true
-    [[ $_obj_opts_dependencies_check_changes_flag_ = 'true' ]] && DebugVar _obj_opts_dependencies_check_flag_
-    }
-Opts.Dependencies.Check.Text()
-    {
-    if [[ -n ${1:-} && $1 = "=" ]]; then
-        _obj_opts_dependencies_check_text_=$2
-    else
-        echo -n "$_obj_opts_dependencies_check_text_"
-    fi
-    }
-Opts.Dependencies.Check.Init
-
-Opts.IgnoreFreeSpace.Clear()
-    {
-    [[ $_obj_opts_ignorefreespace_flag_ != 'true' ]] && return
-    _obj_opts_ignorefreespace_flag_=false
-    [[ $_obj_opts_ignorefreespace_changes_flag_ = 'true' ]] && DebugVar _obj_opts_ignorefreespace_flag_
-    }
-Opts.IgnoreFreeSpace.Disable()
-    {
-    [[ $_obj_opts_ignorefreespace_enable_ != 'true' ]] && return
-    _obj_opts_ignorefreespace_enable_=false
-    [[ $_obj_opts_ignorefreespace_changes_flag_ = 'true' ]] && DebugVar _obj_opts_ignorefreespace_enable_
-    }
-Opts.IgnoreFreeSpace.DontLogChanges()
-    {
-    [[ $_obj_opts_ignorefreespace_changes_flag_ != 'true' ]] && return
-    _obj_opts_ignorefreespace_changes_flag_=false
-    }
-Opts.IgnoreFreeSpace.Enable()
-    {
-    [[ $_obj_opts_ignorefreespace_enable_ = 'true' ]] && return
-    _obj_opts_ignorefreespace_enable_=true
-    [[ $_obj_opts_ignorefreespace_changes_flag_ = 'true' ]] && DebugVar _obj_opts_ignorefreespace_enable_
-    }
-Opts.IgnoreFreeSpace.Init()
-    {
-    _obj_opts_ignorefreespace_text_=''
-    _obj_opts_ignorefreespace_flag_=false
-    _obj_opts_ignorefreespace_changes_flag_=true
-    _obj_opts_ignorefreespace_enable_=false
-    }
-Opts.IgnoreFreeSpace.IsDisabled()
-    {
-    [[ $_obj_opts_ignorefreespace_enable_ != 'true' ]]
-    }
-Opts.IgnoreFreeSpace.IsEnabled()
-    {
-    [[ $_obj_opts_ignorefreespace_enable_ = 'true' ]]
-    }
-Opts.IgnoreFreeSpace.IsNot()
-    {
-    [[ $_obj_opts_ignorefreespace_flag_ != 'true' ]]
-    }
-Opts.IgnoreFreeSpace.IsSet()
-    {
-    [[ $_obj_opts_ignorefreespace_flag_ = 'true' ]]
-    }
-Opts.IgnoreFreeSpace.LogChanges()
-    {
-    [[ $_obj_opts_ignorefreespace_changes_flag_ = 'true' ]] && return
-    _obj_opts_ignorefreespace_changes_flag_=true
-    }
-Opts.IgnoreFreeSpace.Set()
-    {
-    [[ $_obj_opts_ignorefreespace_flag_ = 'true' ]] && return
-    _obj_opts_ignorefreespace_flag_=true
-    [[ $_obj_opts_ignorefreespace_changes_flag_ = 'true' ]] && DebugVar _obj_opts_ignorefreespace_flag_
-    }
-Opts.IgnoreFreeSpace.Text()
-    {
-    if [[ -n ${1:-} && $1 = "=" ]]; then
-        _obj_opts_ignorefreespace_text_=$2
-    else
-        echo -n "$_obj_opts_ignorefreespace_text_"
-    fi
-    }
-Opts.IgnoreFreeSpace.Init
-
-Opts.Versions.View.Clear()
-    {
-    [[ $_obj_opts_versions_view_flag_ != 'true' ]] && return
-    _obj_opts_versions_view_flag_=false
-    [[ $_obj_opts_versions_view_changes_flag_ = 'true' ]] && DebugVar _obj_opts_versions_view_flag_
-    }
-Opts.Versions.View.Disable()
-    {
-    [[ $_obj_opts_versions_view_enable_ != 'true' ]] && return
-    _obj_opts_versions_view_enable_=false
-    [[ $_obj_opts_versions_view_changes_flag_ = 'true' ]] && DebugVar _obj_opts_versions_view_enable_
-    }
-Opts.Versions.View.DontLogChanges()
-    {
-    [[ $_obj_opts_versions_view_changes_flag_ != 'true' ]] && return
-    _obj_opts_versions_view_changes_flag_=false
-    }
-Opts.Versions.View.Enable()
-    {
-    [[ $_obj_opts_versions_view_enable_ = 'true' ]] && return
-    _obj_opts_versions_view_enable_=true
-    [[ $_obj_opts_versions_view_changes_flag_ = 'true' ]] && DebugVar _obj_opts_versions_view_enable_
-    }
-Opts.Versions.View.Init()
-    {
-    _obj_opts_versions_view_text_=''
-    _obj_opts_versions_view_flag_=false
-    _obj_opts_versions_view_changes_flag_=true
-    _obj_opts_versions_view_enable_=false
-    }
-Opts.Versions.View.IsDisabled()
-    {
-    [[ $_obj_opts_versions_view_enable_ != 'true' ]]
-    }
-Opts.Versions.View.IsEnabled()
-    {
-    [[ $_obj_opts_versions_view_enable_ = 'true' ]]
-    }
-Opts.Versions.View.IsNot()
-    {
-    [[ $_obj_opts_versions_view_flag_ != 'true' ]]
-    }
-Opts.Versions.View.IsSet()
-    {
-    [[ $_obj_opts_versions_view_flag_ = 'true' ]]
-    }
-Opts.Versions.View.LogChanges()
-    {
-    [[ $_obj_opts_versions_view_changes_flag_ = 'true' ]] && return
-    _obj_opts_versions_view_changes_flag_=true
-    }
-Opts.Versions.View.Set()
-    {
-    [[ $_obj_opts_versions_view_flag_ = 'true' ]] && return
-    _obj_opts_versions_view_flag_=true
-    [[ $_obj_opts_versions_view_changes_flag_ = 'true' ]] && DebugVar _obj_opts_versions_view_flag_
-    }
-Opts.Versions.View.Text()
-    {
-    if [[ -n ${1:-} && $1 = "=" ]]; then
-        _obj_opts_versions_view_text_=$2
-    else
-        echo -n "$_obj_opts_versions_view_text_"
-    fi
-    }
-Opts.Versions.View.Init
 
 Opts.Log.All.Paste.Clear()
     {
@@ -3754,6 +3821,91 @@ IPKGs.ToUninstall.Size()
     fi
     }
 IPKGs.ToUninstall.Init
+
+IPKGs.ToUpgrade.Add()
+    {
+    local array=(${1})
+    [[ ${#array[@]} -eq 0 ]] && return
+    local item=''
+    for item in "${array[@]:-}"; do
+        if [[ " ${_obj_ipkgs_toupgrade_array_[*]+"${_obj_ipkgs_toupgrade_array_[@]}"} " != *"$item"* ]]; then
+            _obj_ipkgs_toupgrade_array_+=("$item")
+        fi
+    done
+    }
+IPKGs.ToUpgrade.Array()
+    {
+    echo -n "${_obj_ipkgs_toupgrade_array_[@]+"${_obj_ipkgs_toupgrade_array_[@]}"}"
+    }
+IPKGs.ToUpgrade.Count()
+    {
+    echo "${#_obj_ipkgs_toupgrade_array_[@]}"
+    }
+IPKGs.ToUpgrade.Exist()
+    {
+    [[ ${_obj_ipkgs_toupgrade_array_[*]:-} == *"$1"* ]]
+    }
+IPKGs.ToUpgrade.First()
+    {
+    echo "${_obj_ipkgs_toupgrade_array_[0]}"
+    }
+IPKGs.ToUpgrade.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_obj_ipkgs_toupgrade_array_[@]} ]] && index=${#_obj_ipkgs_toupgrade_array_[@]}
+    echo -n "${_obj_ipkgs_toupgrade_array_[((index-1))]}"
+    }
+IPKGs.ToUpgrade.Init()
+    {
+    _obj_ipkgs_toupgrade_size_=0
+    _obj_ipkgs_toupgrade_array_=()
+    _obj_ipkgs_toupgrade_array_index_=1
+    }
+IPKGs.ToUpgrade.IsAny()
+    {
+    [[ ${#_obj_ipkgs_toupgrade_array_[@]} -gt 0 ]]
+    }
+IPKGs.ToUpgrade.IsNone()
+    {
+    [[ ${#_obj_ipkgs_toupgrade_array_[@]} -eq 0 ]]
+    }
+IPKGs.ToUpgrade.List()
+    {
+    echo -n "${_obj_ipkgs_toupgrade_array_[*]+"${_obj_ipkgs_toupgrade_array_[@]}"}"
+    }
+IPKGs.ToUpgrade.ListCSV()
+    {
+    echo -n "${_obj_ipkgs_toupgrade_array_[*]+"${_obj_ipkgs_toupgrade_array_[@]}"}" | tr ' ' ','
+    }
+IPKGs.ToUpgrade.Remove()
+    {
+    local argument_array=(${1})
+    local temp_array=()
+    local argument=''
+    local item=''
+    local matched=false
+    for item in "${_obj_ipkgs_toupgrade_array_[@]+"${_obj_ipkgs_toupgrade_array_[@]}"}"; do
+        matched=false
+        for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
+            if [[ $argument = $item ]]; then
+                matched=true; break
+            fi
+        done
+        [[ $matched = false ]] && temp_array+=("$item")
+    done
+    _obj_ipkgs_toupgrade_array_=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${_obj_ipkgs_toupgrade_array_[*]+"${_obj_ipkgs_toupgrade_array_[@]}"} ]] && _obj_ipkgs_toupgrade_array_=()
+    }
+IPKGs.ToUpgrade.Size()
+    {
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+        _obj_ipkgs_toupgrade_size_=$2
+    else
+        echo -n $_obj_ipkgs_toupgrade_size_
+    fi
+    }
+IPKGs.ToUpgrade.Init
 
 QPKGs.Essential.Add()
     {

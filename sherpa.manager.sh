@@ -752,6 +752,7 @@ Session.Validate()
     fi
 
     if Opts.Dependencies.Check.IsSet || QPKGs.ToUpgrade.Exist Entware; then
+        IPKGs.Upgrade.Set
         IPKGs.Install.Set
         PIPs.Install.Set
     fi
@@ -958,8 +959,11 @@ Tiers.Processor()
 
     Tier.Processor Uninstall false optional QPKG ToUninstall forward uninstall uninstalling uninstalled ''
 
+    # in-case 'python' has disappeared again ...
+    [[ ! -L /opt/bin/python && -e /opt/bin/python3 ]] && ln -s /opt/bin/python3 /opt/bin/python
+
         ShowAsProc 'checking for addon packages to uninstall' >&2
-        QPKG.Installed Entware && IPKGs.Uninstall
+        Tier.Processor Uninstall false addon IPKG ToUninstall forward uninstall uninstalling uninstalled ''
         QPKGs.ToUninstall.Remove "$(QPKGs.SkUninstall.Array)"
 
     Tier.Processor Uninstall false essential QPKG ToUninstall forward uninstall uninstalling uninstalled ''
@@ -1122,6 +1126,7 @@ Tiers.Processor()
                 ;;
             addon)
                 if QPKGs.ToInstall.IsAny || QPKGs.IsInstall.IsAny || QPKGs.ToReinstall.IsAny || QPKGs.IsReinstall.IsAny || QPKGs.ToUpgrade.IsAny || QPKGs.IsUpgrade.IsAny; then
+                    IPKGs.Upgrade.Set
                     IPKGs.Install.Set
                 fi
 
@@ -1131,6 +1136,7 @@ Tiers.Processor()
 
                 if QPKG.Enabled Entware; then
                     ModPathToEntware
+                    Tier.Processor Upgrade false "$tier" IPKG '' forward upgrade upgrading upgraded long
                     Tier.Processor Install false "$tier" IPKG '' forward install installing installed long
                     Tier.Processor Install false "$tier" PIP '' forward install installing installed long
                 else
@@ -2266,10 +2272,10 @@ SavePackageLists()
 
     }
 
-CalcAllIPKGDepsToInstall()
+CalcIPKGsDepsToInstall()
     {
 
-    # From a specified list of IPKG names, find all dependent IPKGs, exclude those already installed, then generate a total qty to download and a total download byte-size
+    # From a specified list of IPKG names, find all dependent IPKGs, exclude those already installed, then generate a total qty to download
 
     if IsNotSysFileExist $OPKG_CMD || IsNotSysFileExist $GNU_GREP_CMD; then
         code_pointer=3
@@ -2279,10 +2285,8 @@ CalcAllIPKGDepsToInstall()
     DebugFuncEntry
     local -a this_list=()
     local -a dependency_accumulator=()
-    local -a size_array=()
     local -i requested_count=0
     local -i pre_exclude_count=0
-    local -i size_count=0
     local -i iterations=0
     local -r ITERATION_LIMIT=20
     local requested_list=''
@@ -2354,21 +2358,6 @@ CalcAllIPKGDepsToInstall()
         done
     else
         DebugAsDone 'no IPKGs to exclude'
-        CloseIPKGArchive
-        DebugFuncExit; return
-    fi
-
-    # calculate size of required IPKGs
-    size_count=$(IPKGs.ToDownload.Count)
-
-    if [[ $size_count -gt 0 ]]; then
-        DebugAsDone "$size_count IPKG$(Plural "$size_count") to download: '$(IPKGs.ToDownload.List)'"
-        DebugAsProc "calculating size of IPKG$(Plural "$size_count") to download"
-        size_array=($($GNU_GREP_CMD -w '^Package:\|^Size:' "$EXTERNAL_PACKAGE_LIST_PATHFILE" | $GNU_GREP_CMD --after-context 1 --no-group-separator ": $($SED_CMD 's/ /$ /g;s/\$ /\$\\\|: /g' <<< "$(IPKGs.ToDownload.List)")$" | $GREP_CMD '^Size:' | $SED_CMD 's|^Size: ||'))
-        IPKGs.ToDownload.Size = "$(IFS=+; echo "$((${size_array[*]}))")"   # a neat sizing shortcut found here https://stackoverflow.com/a/13635566/6182835
-        DebugAsDone "$(FormatAsThousands "$(IPKGs.ToDownload.Size)") bytes ($(FormatAsISOBytes "$(IPKGs.ToDownload.Size)")) to download"
-    else
-        DebugAsDone 'no IPKGs to size'
     fi
 
     CloseIPKGArchive
@@ -2408,87 +2397,56 @@ CalcAllIPKGDepsToUninstall()
 
     }
 
-IPKGs.Install()
+CalcIPKGsDownloadSize()
     {
 
-    QPKGs.SkipProcessing.IsSet && return
-    IPKGs.Install.IsNot && return
-    QPKG.NotEnabled Entware && return
-    UpdateEntware
-    Session.Error.IsSet && return
+    # calculate size of required IPKGs
+
     DebugFuncEntry
-    local -i index=0
 
-    IPKGs.ToInstall.Add "$MANAGER_COMMON_IPKGS_ADD"
+    if ! OpenIPKGArchive; then
+        DebugFuncExit 1; return
+    fi
 
-    if Opts.Apps.All.Install.IsSet; then
-        for index in "${!MANAGER_QPKG_NAME[@]}"; do
-            [[ ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${MANAGER_QPKG_ARCH[$index]} = all ]] || continue
-            IPKGs.ToInstall.Add "${MANAGER_QPKG_IPKGS_ADD[$index]}"
-        done
+    local -a size_array=()
+    local -i size_count=0
+    size_count=$(IPKGs.ToDownload.Count)
+
+    if [[ $size_count -gt 0 ]]; then
+        DebugAsDone "$size_count IPKG$(Plural "$size_count") to download: '$(IPKGs.ToDownload.List)'"
+        DebugAsProc "calculating size of IPKG$(Plural "$size_count") to download"
+        size_array=($($GNU_GREP_CMD -w '^Package:\|^Size:' "$EXTERNAL_PACKAGE_LIST_PATHFILE" | $GNU_GREP_CMD --after-context 1 --no-group-separator ": $($SED_CMD 's/ /$ /g;s/\$ /\$\\\|: /g' <<< "$(IPKGs.ToDownload.List)")$" | $GREP_CMD '^Size:' | $SED_CMD 's|^Size: ||'))
+        IPKGs.ToDownload.Size = "$(IFS=+; echo "$((${size_array[*]}))")"   # a neat sizing shortcut found here https://stackoverflow.com/a/13635566/6182835
+        DebugAsDone "$(FormatAsThousands "$(IPKGs.ToDownload.Size)") bytes ($(FormatAsISOBytes "$(IPKGs.ToDownload.Size)")) to download"
     else
-        for index in "${!MANAGER_QPKG_NAME[@]}"; do
-            QPKGs.ToInstall.Exist "${MANAGER_QPKG_NAME[$index]}" || QPKG.Installed "${MANAGER_QPKG_NAME[$index]}" || QPKGs.ToReinstall.Exist "${MANAGER_QPKG_NAME[$index]}" || QPKGs.ToUpgrade.Exist "${MANAGER_QPKG_NAME[$index]}" || continue
-            [[ ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${MANAGER_QPKG_ARCH[$index]} = all ]] || continue
-            QPKG.MinRAM "${MANAGER_QPKG_NAME[$index]}" &>/dev/null || continue
-            IPKGs.ToInstall.Add "${MANAGER_QPKG_IPKGS_ADD[$index]}"
-        done
+        DebugAsDone 'no IPKGs to size'
     fi
 
-    Opts.Dependencies.Check.IsSet && IPKGs.ToInstall.Add "$MANAGER_ESSENTIAL_IPKGS_ADD"
-
-    IPKGs.Upgrade.Batch
-    IPKGs.Install.Batch
-
-    # in-case 'python' has disappeared again ...
-    [[ ! -L /opt/bin/python && -e /opt/bin/python3 ]] && ln -s /opt/bin/python3 /opt/bin/python
-
+    CloseIPKGArchive
     DebugFuncExit
 
     }
 
-IPKGs.Uninstall()
-    {
-
-    QPKGs.SkipProcessing.IsSet && return
-    QPKG.NotEnabled Entware && return
-    Session.Error.IsSet && return
-    DebugFuncEntry
-    local -i index=0
-
-    if Opts.Apps.All.Uninstall.IsNot; then
-        for index in "${!MANAGER_QPKG_NAME[@]}"; do
-            if QPKGs.ToInstall.Exist "${MANAGER_QPKG_NAME[$index]}" || QPKG.Installed "${MANAGER_QPKG_NAME[$index]}" || QPKGs.ToUpgrade.Exist "${MANAGER_QPKG_NAME[$index]}" || QPKGs.ToUninstall.Exist "${MANAGER_QPKG_NAME[$index]}"; then
-                IPKGs.ToUninstall.Add "${MANAGER_QPKG_IPKGS_REMOVE[$index]}"
-            fi
-        done
-
-        # KLUDGE: when package arch is 'none', prevent 'par2cmdline' being uninstalled, then installed again later this same session. Noticed this was happening on ARMv5 models.
-        [[ $NAS_QPKG_ARCH = none ]] && IPKGs.ToUninstall.Remove par2cmdline
-
-        # KLUDGE: switched-to using the PIP package instead. Ref: https://forums.sabnzbd.org/viewtopic.php?p=123862#p123862
-        IPKGs.ToUninstall.Remove python3-pyopenssl
-
-        IPKGs.Uninstall.Batch
-    fi
-
-    DebugFuncExit
-
-    }
-
-IPKGs.Upgrade.Batch()
+IPKGs.Upgrade()
     {
 
     # upgrade all installed IPKGs
 
-    # output:
-    #   $? = 0 if successful or 1 if failed
-
+    QPKGs.SkipProcessing.IsSet && return
+    IPKGs.Upgrade.IsNot && return
+    QPKG.NotEnabled Entware && return
+    UpdateEntware
+    Session.Error.IsSet && return
     DebugFuncEntry
-    IPKGs.ToDownload.Add "$($OPKG_CMD list-upgradable | cut -f1 -d' ')"
-    local -i total_count=0
     local -i result_code=0
-    total_count=$(IPKGs.ToDownload.Count)
+    IPKGs.ToUpgrade.Init
+    IPKGs.ToDownload.Init
+
+    IPKGs.ToUpgrade.Add "$($OPKG_CMD list-upgradable | cut -f1 -d' ')"
+    IPKGs.ToDownload.Add "$(IPKGs.ToUpgrade.Array)"
+
+    CalcIPKGsDownloadSize
+    local -i total_count=$(IPKGs.ToDownload.Count)
 
     if [[ $total_count -gt 0 ]]; then
         ShowAsProc "downloading & upgrading $total_count IPKG$(Plural "$total_count")"
@@ -2509,23 +2467,47 @@ IPKGs.Upgrade.Batch()
         fi
     fi
 
-    DebugFuncExit $result_code
+    DebugFuncExit
 
     }
 
-IPKGs.Install.Batch()
+IPKGs.Install()
     {
 
-    # installed required IPKGs
+    # install IPKGs required to support QPKGs
 
-    # output:
-    #   $? = 0 if successful or 1 if failed
-
+    QPKGs.SkipProcessing.IsSet && return
+    IPKGs.Install.IsNot && return
+    QPKG.NotEnabled Entware && return
+    UpdateEntware
+    Session.Error.IsSet && return
     DebugFuncEntry
-    CalcAllIPKGDepsToInstall || return
-    local -i total_count=0
+    local -i index=0
     local -i result_code=0
-    total_count=$(IPKGs.ToDownload.Count)
+    IPKGs.ToInstall.Init
+    IPKGs.ToDownload.Init
+
+    IPKGs.ToInstall.Add "$MANAGER_COMMON_IPKGS_ADD"
+
+    if Opts.Apps.All.Install.IsSet; then
+        for index in "${!MANAGER_QPKG_NAME[@]}"; do
+            [[ ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${MANAGER_QPKG_ARCH[$index]} = all ]] || continue
+            IPKGs.ToInstall.Add "${MANAGER_QPKG_IPKGS_ADD[$index]}"
+        done
+    else
+        for index in "${!MANAGER_QPKG_NAME[@]}"; do
+            QPKGs.ToInstall.Exist "${MANAGER_QPKG_NAME[$index]}" || QPKG.Installed "${MANAGER_QPKG_NAME[$index]}" || QPKGs.ToReinstall.Exist "${MANAGER_QPKG_NAME[$index]}" || QPKGs.ToUpgrade.Exist "${MANAGER_QPKG_NAME[$index]}" || continue
+            [[ ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${MANAGER_QPKG_ARCH[$index]} = all ]] || continue
+            QPKG.MinRAM "${MANAGER_QPKG_NAME[$index]}" &>/dev/null || continue
+            IPKGs.ToInstall.Add "${MANAGER_QPKG_IPKGS_ADD[$index]}"
+        done
+    fi
+
+    Opts.Dependencies.Check.IsSet && IPKGs.ToInstall.Add "$MANAGER_ESSENTIAL_IPKGS_ADD"
+
+    CalcIPKGsDepsToInstall
+    CalcIPKGsDownloadSize
+    local -i total_count=$(IPKGs.ToDownload.Count)
 
     if [[ $total_count -gt 0 ]]; then
         ShowAsProc "downloading & installing $total_count IPKG$(Plural "$total_count")"
@@ -2546,19 +2528,35 @@ IPKGs.Install.Batch()
         fi
     fi
 
-    DebugFuncExit $result_code
+    DebugFuncExit
 
     }
 
-IPKGs.Uninstall.Batch()
+IPKGs.Uninstall()
     {
 
-    # output:
-    #   $? = 0 if successful or 1 if failed
-
+    QPKGs.SkipProcessing.IsSet && return
+    QPKG.NotEnabled Entware && return
+    Session.Error.IsSet && return
     DebugFuncEntry
-    CalcAllIPKGDepsToUninstall || return
+    local -i index=0
     local -i result_code=0
+
+    if Opts.Apps.All.Uninstall.IsNot; then
+        for index in "${!MANAGER_QPKG_NAME[@]}"; do
+            if QPKGs.ToInstall.Exist "${MANAGER_QPKG_NAME[$index]}" || QPKG.Installed "${MANAGER_QPKG_NAME[$index]}" || QPKGs.ToUpgrade.Exist "${MANAGER_QPKG_NAME[$index]}" || QPKGs.ToUninstall.Exist "${MANAGER_QPKG_NAME[$index]}"; then
+                IPKGs.ToUninstall.Add "${MANAGER_QPKG_IPKGS_REMOVE[$index]}"
+            fi
+        done
+    fi
+
+    # KLUDGE: when package arch is 'none', prevent 'par2cmdline' being uninstalled, then installed again later this same session. Noticed this was happening on ARMv5 models.
+    [[ $NAS_QPKG_ARCH = none ]] && IPKGs.ToUninstall.Remove par2cmdline
+
+    # KLUDGE: switched-to the PIP package instead. Ref: https://forums.sabnzbd.org/viewtopic.php?p=123862#p123862
+    IPKGs.ToUninstall.Remove python3-pyopenssl
+
+    CalcAllIPKGDepsToUninstall
     local -i total_count=$(IPKGs.ToUninstall.Count)
 
     if [[ $total_count -gt 0 ]]; then
@@ -2574,7 +2572,7 @@ IPKGs.Uninstall.Batch()
         fi
     fi
 
-    DebugFuncExit $result_code
+    DebugFuncExit
 
     }
 
@@ -6658,7 +6656,7 @@ CompileObjects()
 
     # $1 = 'hash' (optional) - if specified, only return the internal checksum
 
-    local -r COMPILED_OBJECTS_HASH=953e254c09e681fc9c5585216b03b733
+    local -r COMPILED_OBJECTS_HASH=d515fe88a87f5681069c9722db19ddd4
     local array_name=''
 
     if [[ ${1:-} = hash ]]; then
@@ -6674,29 +6672,28 @@ CompileObjects()
         ShowAsProc 'compiling objects' >&2
 
         # session flags
+        for array_name in Display.Clean LineSpace ShowBackupLocation SuggestIssue Summary; do
+            AddFlagObj Session.${array_name}
+        done
+
         for array_name in ToArchive ToFile ToScreen; do
             AddFlagObj Session.Debug.${array_name}
         done
 
-        AddFlagObj Session.Display.Clean
-        AddFlagObj Session.LineSpace
-        AddFlagObj Session.ShowBackupLocation
-        AddFlagObj Session.SuggestIssue
-        AddFlagObj Session.Summary
-
         AddFlagObj QPKGs.States.Built
         AddFlagObj QPKGs.SkipProcessing
+        AddFlagObj IPKGs.Upgrade
         AddFlagObj IPKGs.Install
         AddFlagObj PIPs.Install
 
         # user option flags
+        for array_name in Dependencies.Check IgnoreFreeSpace Versions.View; do
+            AddFlagObj Opts.${array_name}
+        done
+
         for array_name in Abbreviations Actions ActionsAll Backups Basic Options Packages Problems Status Tips; do
             AddFlagObj Opts.Help.${array_name}
         done
-
-        AddFlagObj Opts.Dependencies.Check
-        AddFlagObj Opts.IgnoreFreeSpace
-        AddFlagObj Opts.Versions.View
 
         for array_name in All Last Tail; do
             AddFlagObj Opts.Log.${array_name}.Paste
@@ -6714,7 +6711,7 @@ CompileObjects()
         # lists
         AddListObj Args.Unknown
 
-        for array_name in Download Install Uninstall; do
+        for array_name in Download Install Uninstall Upgrade; do
             AddListObj IPKGs.To${array_name}
         done
 
