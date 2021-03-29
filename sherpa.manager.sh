@@ -2434,6 +2434,7 @@ IPKGs.Upgrade()
 
     QPKGs.SkipProcessing.IsSet && return
     IPKGs.Upgrade.IsNot && return
+    QPKG.NotInstalled Entware && return
     QPKG.NotEnabled Entware && return
     UpdateEntware
     Session.Error.IsSet && return
@@ -2478,6 +2479,7 @@ IPKGs.Install()
 
     QPKGs.SkipProcessing.IsSet && return
     IPKGs.Install.IsNot && return
+    QPKG.NotInstalled Entware && return
     QPKG.NotEnabled Entware && return
     UpdateEntware
     Session.Error.IsSet && return
@@ -2536,6 +2538,7 @@ IPKGs.Uninstall()
     {
 
     QPKGs.SkipProcessing.IsSet && return
+    QPKG.NotInstalled Entware && return
     QPKG.NotEnabled Entware && return
     Session.Error.IsSet && return
     DebugFuncEntry
@@ -2580,7 +2583,10 @@ PIPs.Install()
     {
 
     QPKGs.SkipProcessing.IsSet && return
+    QPKG.NotInstalled Entware && return
+    QPKG.NotEnabled Entware && return
     PIPs.Install.IsNot && return
+    Session.Error.IsSet && return
     DebugFuncEntry
     local exec_cmd=''
     local -i result_code=0
