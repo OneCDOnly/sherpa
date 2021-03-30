@@ -5260,7 +5260,7 @@ QPKG.Backup()
     local -i result_code=0
 
     if ! QPKG.SupportsBackup "$PACKAGE_NAME"; then
-        MarkOpAsSkipped show "$PACKAGE_NAME" backup "it does not support backups"
+        MarkOpAsSkipped show "$PACKAGE_NAME" backup "it does not support backup"
         DebugFuncExit 2; return
     fi
 
@@ -5309,7 +5309,7 @@ QPKG.Restore()
     local -i result_code=0
 
     if ! QPKG.SupportsBackup "$PACKAGE_NAME"; then
-        MarkOpAsSkipped show "$PACKAGE_NAME" restore "it does not support backups"
+        MarkOpAsSkipped show "$PACKAGE_NAME" restore "it does not support backup"
         DebugFuncExit 2; return
     fi
 
