@@ -18,6 +18,7 @@ Package management via **sherpa** provides extra features like easy application 
 [![Entware](images/Entware.gif)](https://github.com/Entware/Entware/wiki)
 [![Par2](images/Par2.gif)](https://github.com/Parchive/par2cmdline)
 [![ClamAV](images/ClamAV.gif)](https://www.clamav.net/) [![Deluge](images/Deluge-web.gif)](https://dev.deluge-torrent.org/)
+[![duf](images/duf.gif)](https://github.com/muesli/duf)
 [![HideThatBanner](images/HideThatBanner.gif)](https://github.com/OneCDOnly/HideThatBanner)
 [![LazyLibrarian](images/LazyLibrarian.gif)](https://lazylibrarian.gitlab.io/)
 [![Medusa](images/OMedusa.gif)](https://github.com/pymedusa/Medusa)
