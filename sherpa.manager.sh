@@ -54,7 +54,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=210330
+    readonly MANAGER_SCRIPT_VERSION=210331
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
 
@@ -247,7 +247,6 @@ Session.Init()
 
     # supported package details - parallel arrays
     MANAGER_QPKG_NAME=()                    # internal QPKG name
-        MANAGER_QPKG_IS_ESSENTIAL=()        # true/false: this is an essential QPKG. It will be required by one-or-more other QPKGs.
         MANAGER_QPKG_IS_STANDALONE=()       # true/false: this QPKG will run without any other packages
         MANAGER_QPKG_ARCH=()                # QPKG supports this architecture
         MANAGER_QPKG_MINRAM=()              # QPKG requires at-least this much RAM installed in kB. Use 'any' if any amount is OK.
@@ -256,144 +255,14 @@ Session.Init()
         MANAGER_QPKG_MD5=()                 # remote QPKG MD5
         MANAGER_QPKG_DESC+=()               # QPKG description (applies to all packages with the same name)
         MANAGER_QPKG_ABBRVS=()              # if set, this package is user-installable, and these abbreviations may be used to specify app
-        MANAGER_QPKG_ESSENTIALS=()          # require these QPKGs to be installed first. Use 'none' if package is optional.
+        MANAGER_QPKG_DEPENDS_ON=()          # require these QPKGs to be installed first. Use '' if package is standalone.
         MANAGER_QPKG_IPKGS_ADD=()           # require these IPKGs to be installed first
         MANAGER_QPKG_IPKGS_REMOVE=()        # require these IPKGs to be uninstalled first
         MANAGER_QPKG_BACKUP_SUPPORTED=()    # true/false: this QPKG supports configuration 'backup' and 'restore' operations
         MANAGER_QPKG_UPDATE_ON_RESTART=()   # true/false: the internal appplication can be updated by restarting the QPKG
 
-    # essential packages here
-    MANAGER_QPKG_NAME+=($PROJECT_NAME)
-        MANAGER_QPKG_IS_ESSENTIAL+=(true)
-        MANAGER_QPKG_IS_STANDALONE+=(true)
-        MANAGER_QPKG_ARCH+=(all)
-        MANAGER_QPKG_MINRAM+=(any)
-        MANAGER_QPKG_VERSION+=(210328)
-        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/$PROJECT_NAME/build/${PROJECT_NAME}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
-        MANAGER_QPKG_MD5+=(dc3e0cef8c22fe43acc2ad94eadba5cf)
-        MANAGER_QPKG_DESC+=("provides the '$PROJECT_NAME' command: the mini-package-manager")
-        MANAGER_QPKG_ABBRVS+=($PROJECT_NAME)
-        MANAGER_QPKG_ESSENTIALS+=('')
-        MANAGER_QPKG_IPKGS_ADD+=('')
-        MANAGER_QPKG_IPKGS_REMOVE+=('')
-        MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
-        MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
-
-    MANAGER_QPKG_NAME+=(Entware)
-        MANAGER_QPKG_IS_ESSENTIAL+=(true)
-        MANAGER_QPKG_IS_STANDALONE+=(true)
-        MANAGER_QPKG_ARCH+=(all)
-        MANAGER_QPKG_MINRAM+=(any)
-        MANAGER_QPKG_VERSION+=(1.03)
-        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}std.qpkg)
-        MANAGER_QPKG_MD5+=(da2d9f8d3442dd665ce04b9b932c9d8e)
-        MANAGER_QPKG_DESC+=("provides the 'opkg' command: the OpenWRT package manager")
-        MANAGER_QPKG_ABBRVS+=('ew ent opkg entware')
-        MANAGER_QPKG_ESSENTIALS+=(none)
-        MANAGER_QPKG_IPKGS_ADD+=('')
-        MANAGER_QPKG_IPKGS_REMOVE+=('')
-        MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
-        MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
-
-    MANAGER_QPKG_NAME+=(Par2)
-        MANAGER_QPKG_IS_ESSENTIAL+=(true)
-        MANAGER_QPKG_IS_STANDALONE+=(true)
-        MANAGER_QPKG_ARCH+=(x86)
-        MANAGER_QPKG_MINRAM+=(any)
-        MANAGER_QPKG_VERSION+=(0.8.1.0)
-        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_x86.qpkg)
-        MANAGER_QPKG_MD5+=(996ffb92d774eb01968003debc171e91)
-        MANAGER_QPKG_DESC+=('create and use PAR2 files to detect damage in data files and repair them if necessary')
-        MANAGER_QPKG_ABBRVS+=('par par2')
-        MANAGER_QPKG_ESSENTIALS+=(none)
-        MANAGER_QPKG_IPKGS_ADD+=('')
-        MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
-        MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
-        MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
-
-    MANAGER_QPKG_NAME+=(Par2)
-        MANAGER_QPKG_IS_ESSENTIAL+=(true)
-        MANAGER_QPKG_IS_STANDALONE+=(true)
-        MANAGER_QPKG_ARCH+=(x64)
-        MANAGER_QPKG_MINRAM+=(any)
-        MANAGER_QPKG_VERSION+=(0.8.1.0)
-        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_x86_64.qpkg)
-        MANAGER_QPKG_MD5+=(520472cc87d301704f975f6eb9948e38)
-        MANAGER_QPKG_DESC+=('')
-        MANAGER_QPKG_ABBRVS+=('par par2')
-        MANAGER_QPKG_ESSENTIALS+=(none)
-        MANAGER_QPKG_IPKGS_ADD+=('')
-        MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
-        MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
-        MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
-
-    MANAGER_QPKG_NAME+=(Par2)
-        MANAGER_QPKG_IS_ESSENTIAL+=(true)
-        MANAGER_QPKG_IS_STANDALONE+=(true)
-        MANAGER_QPKG_ARCH+=(x31)
-        MANAGER_QPKG_MINRAM+=(any)
-        MANAGER_QPKG_VERSION+=(0.8.1.0)
-        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_arm-x31.qpkg)
-        MANAGER_QPKG_MD5+=(ce8af2e009eb87733c3b855e41a94f8e)
-        MANAGER_QPKG_DESC+=('')
-        MANAGER_QPKG_ABBRVS+=('par par2')
-        MANAGER_QPKG_ESSENTIALS+=(none)
-        MANAGER_QPKG_IPKGS_ADD+=('')
-        MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
-        MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
-        MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
-
-    MANAGER_QPKG_NAME+=(Par2)
-        MANAGER_QPKG_IS_ESSENTIAL+=(true)
-        MANAGER_QPKG_IS_STANDALONE+=(true)
-        MANAGER_QPKG_ARCH+=(x41)
-        MANAGER_QPKG_MINRAM+=(any)
-        MANAGER_QPKG_VERSION+=(0.8.1.0)
-        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_arm-x41.qpkg)
-        MANAGER_QPKG_MD5+=(8516e45e704875cdd2cd2bb315c4e1e6)
-        MANAGER_QPKG_DESC+=('')
-        MANAGER_QPKG_ABBRVS+=('par par2')
-        MANAGER_QPKG_ESSENTIALS+=(none)
-        MANAGER_QPKG_IPKGS_ADD+=('')
-        MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
-        MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
-        MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
-
-    MANAGER_QPKG_NAME+=(Par2)
-        MANAGER_QPKG_IS_ESSENTIAL+=(true)
-        MANAGER_QPKG_IS_STANDALONE+=(true)
-        MANAGER_QPKG_ARCH+=(a64)
-        MANAGER_QPKG_MINRAM+=(any)
-        MANAGER_QPKG_VERSION+=(0.8.1.0)
-        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_arm_64.qpkg)
-        MANAGER_QPKG_MD5+=(4d8e99f97936a163e411aa8765595f7a)
-        MANAGER_QPKG_DESC+=('')
-        MANAGER_QPKG_ABBRVS+=('par par2')
-        MANAGER_QPKG_ESSENTIALS+=(none)
-        MANAGER_QPKG_IPKGS_ADD+=('')
-        MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
-        MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
-        MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
-
-    MANAGER_QPKG_NAME+=(Par2)
-        MANAGER_QPKG_IS_ESSENTIAL+=(true)
-        MANAGER_QPKG_IS_STANDALONE+=(false)
-        MANAGER_QPKG_ARCH+=(none)
-        MANAGER_QPKG_MINRAM+=(any)
-        MANAGER_QPKG_VERSION+=(0.8.1-1)
-        MANAGER_QPKG_URL+=('')
-        MANAGER_QPKG_MD5+=('')
-        MANAGER_QPKG_DESC+=('')
-        MANAGER_QPKG_ABBRVS+=('par par2')
-        MANAGER_QPKG_ESSENTIALS+=(Entware)
-        MANAGER_QPKG_IPKGS_ADD+=(par2cmdline)
-        MANAGER_QPKG_IPKGS_REMOVE+=('')
-        MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
-        MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
-
-    # only optionals below here in pseudo-alpha-sorted name order (i.e. disregard character-case and leading 'O')
+    # pseudo-alpha-sorted name order (i.e. disregard character-case and leading 'O')
     MANAGER_QPKG_NAME+=(ClamAV)
-        MANAGER_QPKG_IS_ESSENTIAL+=(false)
         MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MINRAM+=(1578040)
@@ -402,14 +271,13 @@ Session.Init()
         MANAGER_QPKG_MD5+=(4832660af9242f0bf72509f0bd91d0b7)
         MANAGER_QPKG_DESC+=('replacement for the QTS built-in ClamAV (requires a minimum of 1.5GB RAM)')
         MANAGER_QPKG_ABBRVS+=('clam clamscan freshclam clamav')
-        MANAGER_QPKG_ESSENTIALS+=(Entware)
+        MANAGER_QPKG_DEPENDS_ON+=(Entware)
         MANAGER_QPKG_IPKGS_ADD+=('clamav freshclam')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
         MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     MANAGER_QPKG_NAME+=(Deluge-server)
-        MANAGER_QPKG_IS_ESSENTIAL+=(false)
         MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MINRAM+=(any)
@@ -418,14 +286,13 @@ Session.Init()
         MANAGER_QPKG_MD5+=(fd0c08fee3db2bb281866e13b7e72d8d)
         MANAGER_QPKG_DESC+=('Deluge BitTorrent daemon')
         MANAGER_QPKG_ABBRVS+=('deluge del-server deluge-server')
-        MANAGER_QPKG_ESSENTIALS+=(Entware)
+        MANAGER_QPKG_DEPENDS_ON+=(Entware)
         MANAGER_QPKG_IPKGS_ADD+=('deluge jq')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
         MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     MANAGER_QPKG_NAME+=(Deluge-web)
-        MANAGER_QPKG_IS_ESSENTIAL+=(false)
         MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MINRAM+=(any)
@@ -434,14 +301,13 @@ Session.Init()
         MANAGER_QPKG_MD5+=(3b1d6edd4b7aed815c862e74d047ef62)
         MANAGER_QPKG_DESC+=('web UI to access multiple Deluge BitTorrent daemons')
         MANAGER_QPKG_ABBRVS+=('del-web deluge-web')
-        MANAGER_QPKG_ESSENTIALS+=(Entware)
+        MANAGER_QPKG_DEPENDS_ON+=(Entware)
         MANAGER_QPKG_IPKGS_ADD+=('deluge-ui-web jq')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
         MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     MANAGER_QPKG_NAME+=(duf)
-        MANAGER_QPKG_IS_ESSENTIAL+=(false)
         MANAGER_QPKG_IS_STANDALONE+=(true)
         MANAGER_QPKG_ARCH+=(a64)
         MANAGER_QPKG_MINRAM+=(any)
@@ -450,14 +316,13 @@ Session.Init()
         MANAGER_QPKG_MD5+=(03bdcee03ca1580c20edc012628965a7)
         MANAGER_QPKG_DESC+=('a nice CLI disk-usage/free-space utility from @muesli')
         MANAGER_QPKG_ABBRVS+=('duf')
-        MANAGER_QPKG_ESSENTIALS+=('')
+        MANAGER_QPKG_DEPENDS_ON+=('')
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
         MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     MANAGER_QPKG_NAME+=(duf)
-        MANAGER_QPKG_IS_ESSENTIAL+=(false)
         MANAGER_QPKG_IS_STANDALONE+=(true)
         MANAGER_QPKG_ARCH+=(x41)
         MANAGER_QPKG_MINRAM+=(any)
@@ -466,14 +331,13 @@ Session.Init()
         MANAGER_QPKG_MD5+=(a91c79d797545b67854443866549dd6d)
         MANAGER_QPKG_DESC+=('a nice CLI disk-usage/free-space utility from @muesli')
         MANAGER_QPKG_ABBRVS+=('duf')
-        MANAGER_QPKG_ESSENTIALS+=('')
+        MANAGER_QPKG_DEPENDS_ON+=('')
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
         MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     MANAGER_QPKG_NAME+=(duf)
-        MANAGER_QPKG_IS_ESSENTIAL+=(false)
         MANAGER_QPKG_IS_STANDALONE+=(true)
         MANAGER_QPKG_ARCH+=(x86)
         MANAGER_QPKG_MINRAM+=(any)
@@ -482,14 +346,13 @@ Session.Init()
         MANAGER_QPKG_MD5+=(8fac3d3df25e7570a5fbcd51f2e0371d)
         MANAGER_QPKG_DESC+=('a nice CLI disk-usage/free-space utility from @muesli')
         MANAGER_QPKG_ABBRVS+=('duf')
-        MANAGER_QPKG_ESSENTIALS+=('')
+        MANAGER_QPKG_DEPENDS_ON+=('')
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
         MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     MANAGER_QPKG_NAME+=(duf)
-        MANAGER_QPKG_IS_ESSENTIAL+=(false)
         MANAGER_QPKG_IS_STANDALONE+=(true)
         MANAGER_QPKG_ARCH+=(x64)
         MANAGER_QPKG_MINRAM+=(any)
@@ -498,14 +361,28 @@ Session.Init()
         MANAGER_QPKG_MD5+=(5d3b1c6eeeb7d5c0025a7f09c695fe9b)
         MANAGER_QPKG_DESC+=('a nice CLI disk-usage/free-space utility from @muesli')
         MANAGER_QPKG_ABBRVS+=('duf')
-        MANAGER_QPKG_ESSENTIALS+=('')
+        MANAGER_QPKG_DEPENDS_ON+=('')
+        MANAGER_QPKG_IPKGS_ADD+=('')
+        MANAGER_QPKG_IPKGS_REMOVE+=('')
+        MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
+        MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
+
+    MANAGER_QPKG_NAME+=(Entware)
+        MANAGER_QPKG_IS_STANDALONE+=(true)
+        MANAGER_QPKG_ARCH+=(all)
+        MANAGER_QPKG_MINRAM+=(any)
+        MANAGER_QPKG_VERSION+=(1.03)
+        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}std.qpkg)
+        MANAGER_QPKG_MD5+=(da2d9f8d3442dd665ce04b9b932c9d8e)
+        MANAGER_QPKG_DESC+=("provides the 'opkg' command: the OpenWRT package manager")
+        MANAGER_QPKG_ABBRVS+=('ew ent opkg entware')
+        MANAGER_QPKG_DEPENDS_ON+=(none)
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
         MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     MANAGER_QPKG_NAME+=(HideThatBanner)
-        MANAGER_QPKG_IS_ESSENTIAL+=(false)
         MANAGER_QPKG_IS_STANDALONE+=(true)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MINRAM+=(any)
@@ -514,14 +391,13 @@ Session.Init()
         MANAGER_QPKG_MD5+=(d576993ca2c6ec7585abe24455e19385)
         MANAGER_QPKG_DESC+=('hides the annoying rotating banner at the top of QTS App Center pages')
         MANAGER_QPKG_ABBRVS+=('htb hide hidebanner hidethatbanner')
-        MANAGER_QPKG_ESSENTIALS+=('')
+        MANAGER_QPKG_DEPENDS_ON+=('')
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
         MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     MANAGER_QPKG_NAME+=(LazyLibrarian)
-        MANAGER_QPKG_IS_ESSENTIAL+=(false)
         MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MINRAM+=(any)
@@ -530,14 +406,13 @@ Session.Init()
         MANAGER_QPKG_MD5+=(aa35dab8b3043741da42deab2dc68d74)
         MANAGER_QPKG_DESC+=('follow authors and grab metadata for all your digital reading needs')
         MANAGER_QPKG_ABBRVS+=('ll lazy lazylibrarian')
-        MANAGER_QPKG_ESSENTIALS+=(Entware)
+        MANAGER_QPKG_DEPENDS_ON+=(Entware)
         MANAGER_QPKG_IPKGS_ADD+=('python3-requests')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
         MANAGER_QPKG_UPDATE_ON_RESTART+=(true)
 
     MANAGER_QPKG_NAME+=(OMedusa)
-        MANAGER_QPKG_IS_ESSENTIAL+=(false)
         MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MINRAM+=(any)
@@ -546,14 +421,13 @@ Session.Init()
         MANAGER_QPKG_MD5+=(cd920291f5df7f6febc36db60bbfd323)
         MANAGER_QPKG_DESC+=('another SickBeard fork: manage and search for TV shows')
         MANAGER_QPKG_ABBRVS+=('om med omed medusa omedusa')
-        MANAGER_QPKG_ESSENTIALS+=(Entware)
+        MANAGER_QPKG_DEPENDS_ON+=(Entware)
         MANAGER_QPKG_IPKGS_ADD+=('mediainfo')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
         MANAGER_QPKG_UPDATE_ON_RESTART+=(true)
 
     MANAGER_QPKG_NAME+=(Mylar3)
-        MANAGER_QPKG_IS_ESSENTIAL+=(false)
         MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MINRAM+=(any)
@@ -562,14 +436,13 @@ Session.Init()
         MANAGER_QPKG_MD5+=(1127611fedd01817f952de0ee43f796f)
         MANAGER_QPKG_DESC+=('automated Comic Book (cbr/cbz) downloader program for use with NZB and torrents written in Python')
         MANAGER_QPKG_ABBRVS+=('my omy myl mylar mylar3')
-        MANAGER_QPKG_ESSENTIALS+=(Entware)
+        MANAGER_QPKG_DEPENDS_ON+=(Entware)
         MANAGER_QPKG_IPKGS_ADD+=('python3-mako python3-pillow python3-pytz python3-requests python3-six python3-urllib3')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
         MANAGER_QPKG_UPDATE_ON_RESTART+=(true)
 
     MANAGER_QPKG_NAME+=(NZBGet)
-        MANAGER_QPKG_IS_ESSENTIAL+=(false)
         MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MINRAM+=(any)
@@ -578,14 +451,13 @@ Session.Init()
         MANAGER_QPKG_MD5+=(09337f13fc7f79b37a22997606b52972)
         MANAGER_QPKG_DESC+=('lite-and-fast NZB download manager with a simple web UI')
         MANAGER_QPKG_ABBRVS+=('ng nzb nzbg nget nzbget')
-        MANAGER_QPKG_ESSENTIALS+=(Entware)
+        MANAGER_QPKG_DEPENDS_ON+=(Entware)
         MANAGER_QPKG_IPKGS_ADD+=(nzbget)
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
         MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     MANAGER_QPKG_NAME+=(nzbToMedia)
-        MANAGER_QPKG_IS_ESSENTIAL+=(false)
         MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MINRAM+=(any)
@@ -594,14 +466,103 @@ Session.Init()
         MANAGER_QPKG_MD5+=(3d46d56830007f131a457b4fd7f40fb6)
         MANAGER_QPKG_DESC+=('post-processing for NZBs to many services')
         MANAGER_QPKG_ABBRVS+=('nzb2 nzb2m nzbto nzbtom nzbtomedia')
-        MANAGER_QPKG_ESSENTIALS+=(Entware)
+        MANAGER_QPKG_DEPENDS_ON+=(Entware)
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
         MANAGER_QPKG_UPDATE_ON_RESTART+=(true)
 
+    MANAGER_QPKG_NAME+=(Par2)
+        MANAGER_QPKG_IS_STANDALONE+=(true)
+        MANAGER_QPKG_ARCH+=(x86)
+        MANAGER_QPKG_MINRAM+=(any)
+        MANAGER_QPKG_VERSION+=(0.8.1.0)
+        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_x86.qpkg)
+        MANAGER_QPKG_MD5+=(996ffb92d774eb01968003debc171e91)
+        MANAGER_QPKG_DESC+=('create and use PAR2 files to detect damage in data files and repair them if necessary')
+        MANAGER_QPKG_ABBRVS+=('par par2')
+        MANAGER_QPKG_DEPENDS_ON+=(none)
+        MANAGER_QPKG_IPKGS_ADD+=('')
+        MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
+        MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
+        MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
+
+    MANAGER_QPKG_NAME+=(Par2)
+        MANAGER_QPKG_IS_STANDALONE+=(true)
+        MANAGER_QPKG_ARCH+=(x64)
+        MANAGER_QPKG_MINRAM+=(any)
+        MANAGER_QPKG_VERSION+=(0.8.1.0)
+        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_x86_64.qpkg)
+        MANAGER_QPKG_MD5+=(520472cc87d301704f975f6eb9948e38)
+        MANAGER_QPKG_DESC+=('')
+        MANAGER_QPKG_ABBRVS+=('par par2')
+        MANAGER_QPKG_DEPENDS_ON+=(none)
+        MANAGER_QPKG_IPKGS_ADD+=('')
+        MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
+        MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
+        MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
+
+    MANAGER_QPKG_NAME+=(Par2)
+        MANAGER_QPKG_IS_STANDALONE+=(true)
+        MANAGER_QPKG_ARCH+=(x31)
+        MANAGER_QPKG_MINRAM+=(any)
+        MANAGER_QPKG_VERSION+=(0.8.1.0)
+        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_arm-x31.qpkg)
+        MANAGER_QPKG_MD5+=(ce8af2e009eb87733c3b855e41a94f8e)
+        MANAGER_QPKG_DESC+=('')
+        MANAGER_QPKG_ABBRVS+=('par par2')
+        MANAGER_QPKG_DEPENDS_ON+=(none)
+        MANAGER_QPKG_IPKGS_ADD+=('')
+        MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
+        MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
+        MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
+
+    MANAGER_QPKG_NAME+=(Par2)
+        MANAGER_QPKG_IS_STANDALONE+=(true)
+        MANAGER_QPKG_ARCH+=(x41)
+        MANAGER_QPKG_MINRAM+=(any)
+        MANAGER_QPKG_VERSION+=(0.8.1.0)
+        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_arm-x41.qpkg)
+        MANAGER_QPKG_MD5+=(8516e45e704875cdd2cd2bb315c4e1e6)
+        MANAGER_QPKG_DESC+=('')
+        MANAGER_QPKG_ABBRVS+=('par par2')
+        MANAGER_QPKG_DEPENDS_ON+=(none)
+        MANAGER_QPKG_IPKGS_ADD+=('')
+        MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
+        MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
+        MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
+
+    MANAGER_QPKG_NAME+=(Par2)
+        MANAGER_QPKG_IS_STANDALONE+=(true)
+        MANAGER_QPKG_ARCH+=(a64)
+        MANAGER_QPKG_MINRAM+=(any)
+        MANAGER_QPKG_VERSION+=(0.8.1.0)
+        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_arm_64.qpkg)
+        MANAGER_QPKG_MD5+=(4d8e99f97936a163e411aa8765595f7a)
+        MANAGER_QPKG_DESC+=('')
+        MANAGER_QPKG_ABBRVS+=('par par2')
+        MANAGER_QPKG_DEPENDS_ON+=(none)
+        MANAGER_QPKG_IPKGS_ADD+=('')
+        MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
+        MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
+        MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
+
+    MANAGER_QPKG_NAME+=(Par2)
+        MANAGER_QPKG_IS_STANDALONE+=(false)
+        MANAGER_QPKG_ARCH+=(none)
+        MANAGER_QPKG_MINRAM+=(any)
+        MANAGER_QPKG_VERSION+=(0.8.1-1)
+        MANAGER_QPKG_URL+=('')
+        MANAGER_QPKG_MD5+=('')
+        MANAGER_QPKG_DESC+=('')
+        MANAGER_QPKG_ABBRVS+=('par par2')
+        MANAGER_QPKG_DEPENDS_ON+=(Entware)
+        MANAGER_QPKG_IPKGS_ADD+=(par2cmdline)
+        MANAGER_QPKG_IPKGS_REMOVE+=('')
+        MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
+        MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
+
     MANAGER_QPKG_NAME+=(RunLast)
-        MANAGER_QPKG_IS_ESSENTIAL+=(false)
         MANAGER_QPKG_IS_STANDALONE+=(true)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MINRAM+=(any)
@@ -610,14 +571,13 @@ Session.Init()
         MANAGER_QPKG_MD5+=(8bc501c43a1041e966c63b4ff242ecb9)
         MANAGER_QPKG_DESC+=('run userscripts and commands after all QPKGs have completed startup reintegration into QTS')
         MANAGER_QPKG_ABBRVS+=('rl run runlast')
-        MANAGER_QPKG_ESSENTIALS+=('')
+        MANAGER_QPKG_DEPENDS_ON+=('')
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
         MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     MANAGER_QPKG_NAME+=(SABnzbd)
-        MANAGER_QPKG_IS_ESSENTIAL+=(false)
         MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MINRAM+=(any)
@@ -626,14 +586,13 @@ Session.Init()
         MANAGER_QPKG_MD5+=(512b6a7a4e98d32611be8299530a63a5)
         MANAGER_QPKG_DESC+=('full-featured NZB download manager with a nice web UI')
         MANAGER_QPKG_ABBRVS+=('sb sb3 sab sab3 sabnzbd3 sabnzbd')
-        MANAGER_QPKG_ESSENTIALS+=('Entware Par2')
+        MANAGER_QPKG_DEPENDS_ON+=('Entware Par2')
         MANAGER_QPKG_IPKGS_ADD+=('python3-asn1crypto python3-chardet python3-cryptography unrar p7zip coreutils-nice ionice ffprobe')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
         MANAGER_QPKG_UPDATE_ON_RESTART+=(true)
 
     MANAGER_QPKG_NAME+=(sha3sum)
-        MANAGER_QPKG_IS_ESSENTIAL+=(false)
         MANAGER_QPKG_IS_STANDALONE+=(true)
         MANAGER_QPKG_ARCH+=(x86)
         MANAGER_QPKG_MINRAM+=(any)
@@ -642,14 +601,13 @@ Session.Init()
         MANAGER_QPKG_MD5+=(87c4ae02c7f95cd2706997047fc9e84d)
         MANAGER_QPKG_DESC+=("the 'sha3sum' and keccak utilities from @maandree (for x86 & x86-64 NAS only)")
         MANAGER_QPKG_ABBRVS+=('sha sha3 sha3sum')
-        MANAGER_QPKG_ESSENTIALS+=('')
+        MANAGER_QPKG_DEPENDS_ON+=('')
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
         MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     MANAGER_QPKG_NAME+=(sha3sum)
-        MANAGER_QPKG_IS_ESSENTIAL+=(false)
         MANAGER_QPKG_IS_STANDALONE+=(true)
         MANAGER_QPKG_ARCH+=(x64)
         MANAGER_QPKG_MINRAM+=(any)
@@ -658,14 +616,28 @@ Session.Init()
         MANAGER_QPKG_MD5+=(eed8071c43665431d6444cb489636ae5)
         MANAGER_QPKG_DESC+=('')
         MANAGER_QPKG_ABBRVS+=('sha sha3 sha3sum')
-        MANAGER_QPKG_ESSENTIALS+=('')
+        MANAGER_QPKG_DEPENDS_ON+=('')
+        MANAGER_QPKG_IPKGS_ADD+=('')
+        MANAGER_QPKG_IPKGS_REMOVE+=('')
+        MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
+        MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
+
+    MANAGER_QPKG_NAME+=($PROJECT_NAME)
+        MANAGER_QPKG_IS_STANDALONE+=(true)
+        MANAGER_QPKG_ARCH+=(all)
+        MANAGER_QPKG_MINRAM+=(any)
+        MANAGER_QPKG_VERSION+=(210328)
+        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/$PROJECT_NAME/build/${PROJECT_NAME}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
+        MANAGER_QPKG_MD5+=(dc3e0cef8c22fe43acc2ad94eadba5cf)
+        MANAGER_QPKG_DESC+=("provides the '$PROJECT_NAME' command: the mini-package-manager")
+        MANAGER_QPKG_ABBRVS+=($PROJECT_NAME)
+        MANAGER_QPKG_DEPENDS_ON+=('')
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
         MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     MANAGER_QPKG_NAME+=(SickChill)
-        MANAGER_QPKG_IS_ESSENTIAL+=(false)
         MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MINRAM+=(any)
@@ -674,14 +646,13 @@ Session.Init()
         MANAGER_QPKG_MD5+=(fb488f7176bf5656575fa010a9599b63)
         MANAGER_QPKG_DESC+=('another SickBeard fork: manage and search for TV shows and movies')
         MANAGER_QPKG_ABBRVS+=('sc sick sickc chill sickchill')
-        MANAGER_QPKG_ESSENTIALS+=(Entware)
+        MANAGER_QPKG_DEPENDS_ON+=(Entware)
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
         MANAGER_QPKG_UPDATE_ON_RESTART+=(true)
 
     MANAGER_QPKG_NAME+=(OSickGear)
-        MANAGER_QPKG_IS_ESSENTIAL+=(false)
         MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MINRAM+=(any)
@@ -690,14 +661,13 @@ Session.Init()
         MANAGER_QPKG_MD5+=(5584d751bed1c700f407375e3f56174e)
         MANAGER_QPKG_DESC+=('another SickBeard fork: manage and search for TV shows')
         MANAGER_QPKG_ABBRVS+=('sg os osg sickg gear ogear osickg sickgear osickgear')
-        MANAGER_QPKG_ESSENTIALS+=(Entware)
+        MANAGER_QPKG_DEPENDS_ON+=(Entware)
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
         MANAGER_QPKG_UPDATE_ON_RESTART+=(true)
 
     MANAGER_QPKG_NAME+=(SortMyQPKGs)
-        MANAGER_QPKG_IS_ESSENTIAL+=(false)
         MANAGER_QPKG_IS_STANDALONE+=(true)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MINRAM+=(any)
@@ -706,14 +676,13 @@ Session.Init()
         MANAGER_QPKG_MD5+=(4a8a8662d27aa110ae096e68e0a2e293)
         MANAGER_QPKG_DESC+=('ensure other installed QPKGs start in correct sequence during QTS bootup')
         MANAGER_QPKG_ABBRVS+=('smq smqs sort sortmy sortmine sortpackages sortmypackages sortmyqpkgs')
-        MANAGER_QPKG_ESSENTIALS+=('')
+        MANAGER_QPKG_DEPENDS_ON+=('')
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
         MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     MANAGER_QPKG_NAME+=(OTransmission)
-        MANAGER_QPKG_IS_ESSENTIAL+=(false)
         MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MINRAM+=(any)
@@ -722,7 +691,7 @@ Session.Init()
         MANAGER_QPKG_MD5+=(9211703e811755e8b9c3aafb8c1a9890)
         MANAGER_QPKG_DESC+=('lite bitorrent download manager with a simple web UI')
         MANAGER_QPKG_ABBRVS+=('ot tm tr trans otrans tmission transmission otransmission')
-        MANAGER_QPKG_ESSENTIALS+=(Entware)
+        MANAGER_QPKG_DEPENDS_ON+=(Entware)
         MANAGER_QPKG_IPKGS_ADD+=('transmission-web jq')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
@@ -730,7 +699,6 @@ Session.Init()
 
     # package arrays are now full, so lock them
     readonly MANAGER_QPKG_NAME
-        readonly MANAGER_QPKG_IS_ESSENTIAL
         readonly MANAGER_QPKG_IS_STANDALONE
         readonly MANAGER_QPKG_ARCH
         readonly MANAGER_QPKG_MINRAM
@@ -739,7 +707,7 @@ Session.Init()
         readonly MANAGER_QPKG_MD5
         readonly MANAGER_QPKG_DESC
         readonly MANAGER_QPKG_ABBRVS
-        readonly MANAGER_QPKG_ESSENTIALS
+        readonly MANAGER_QPKG_DEPENDS_ON
         readonly MANAGER_QPKG_IPKGS_ADD
         readonly MANAGER_QPKG_IPKGS_REMOVE
         readonly MANAGER_QPKG_BACKUP_SUPPORTED
@@ -747,12 +715,12 @@ Session.Init()
 
     QPKGs.Names.Add "${MANAGER_QPKG_NAME[*]}"
 
-    readonly MANAGER_ESSENTIAL_IPKGS_ADD='findutils grep less sed'
+    readonly MANAGER_BASE_IPKGS_ADD='findutils grep less sed'
     readonly MANAGER_COMMON_IPKGS_ADD='ca-certificates gcc git git-http nano python3-dev python3-pip python3-setuptools'
     readonly MANAGER_COMMON_PIPS_ADD='apprise apscheduler beautifulsoup4 cfscrape cheetah3 cheroot!=8.4.4 cherrypy configobj feedparser portend pygithub pyopenssl python-levenshtein python-magic random_user_agent sabyenc3 simplejson slugify'
     readonly MANAGER_COMMON_QPKG_CONFLICTS='Optware Optware-NG TarMT Python QPython2 Python3 QPython3'
 
-    QPKGs.EssentialOptionalStandalone.Build
+    QPKGs.StandaloneDependent.Build
 
     # speedup: don't build package lists if only showing basic help
     if [[ -z $USER_ARGS_RAW ]]; then
@@ -827,26 +795,26 @@ Session.Validate()
 
 # package processing priorities need to be:
 
-#   _. rebuild optionals            (meta-operation: 'install' QPKG and 'restore' config only if package has a backup file)
+#   _. rebuild dependents           (meta-operation: 'install' QPKG and 'restore' config only if package has a backup file)
 
 #  17. backup all                   (highest: most-important)
-#  16. stop optionals
-#  15. stop essentials
+#  16. stop dependents
+#  15. stop standalones
 #  14. uninstall all
 
-#  13. upgrade essentials
-#  12. reinstall essentials
-#  11. install essentials
-#  10. restore essentials
-#   9. start essentials
-#   8. restart essentials
+#  13. upgrade standalones
+#  12. reinstall standalones
+#  11. install standalones
+#  10. restore standalones
+#   9. start standalones
+#   8. restart standalones
 
-#   7. upgrade optionals
-#   6. reinstall optionals
-#   5. install optionals
-#   4. restore optionals
-#   3. start optionals
-#   2. restart optionals
+#   7. upgrade dependents
+#   6. reinstall dependents
+#   5. install dependents
+#   4. restore dependents
+#   3. start dependents
+#   2. restart dependents
 
 #   1. status                       (lowest: least-important)
 
@@ -908,37 +876,37 @@ Tiers.Processor()
         fi
     done
 
-    # check upgrade for essential items to be installed
+    # check upgrade for standalone items to be installed
     for package in $(QPKGs.ToUpgrade.Array); do
-        for prospect in $(QPKG.Get.Essentials "$package"); do
+        for prospect in $(QPKG.Get.Standalones "$package"); do
             QPKG.NotInstalled "$prospect" && QPKGs.ToInstall.Add "$prospect"
         done
     done
 
-    # check start for essential items to be installed first
+    # check start for standalone items to be installed first
     for package in $(QPKGs.ToStart.Array); do
-        for prospect in $(QPKG.Get.Essentials "$package"); do
+        for prospect in $(QPKG.Get.Standalones "$package"); do
             QPKG.NotInstalled "$prospect" && QPKGs.ToInstall.Add "$prospect"
         done
     done
 
-    # check restart for essential items to be installed first
+    # check restart for standalone items to be installed first
     for package in $(QPKGs.ToRestart.Array); do
-        for prospect in $(QPKG.Get.Essentials "$package"); do
+        for prospect in $(QPKG.Get.Standalones "$package"); do
             QPKG.NotInstalled "$prospect" && QPKGs.ToInstall.Add "$prospect"
         done
     done
 
-    # check reinstall for essential items to be installed first
+    # check reinstall for standalone items to be installed first
     for package in $(QPKGs.ToReinstall.Array); do
-        for prospect in $(QPKG.Get.Essentials "$package"); do
+        for prospect in $(QPKG.Get.Standalones "$package"); do
             QPKG.NotInstalled "$prospect" && QPKGs.ToInstall.Add "$prospect"
         done
     done
 
-    # check install for essential items to be installed first
+    # check install for standalone items to be installed first
     for package in $(QPKGs.ToInstall.Array); do
-        for prospect in $(QPKG.Get.Essentials "$package"); do
+        for prospect in $(QPKG.Get.Standalones "$package"); do
             QPKG.NotInstalled "$prospect" && QPKGs.ToInstall.Add "$prospect"
         done
     done
@@ -948,13 +916,13 @@ Tiers.Processor()
         QPKGs.ToDownload.Add "$(QPKGs.ToReinstall.Array)"
         QPKGs.ToDownload.Add "$(QPKGs.ToInstall.Array)"
 
-        # download all required essentials too
+        # download all required standalones too
         for package in $(QPKGs.ToDownload.Array); do
-            QPKGs.ToDownload.Add "$(QPKG.Get.Essentials "$package")"
+            QPKGs.ToDownload.Add "$(QPKG.Get.Standalones "$package")"
         done
 
         for package in $(QPKGs.Installed.Array); do
-            QPKGs.ToDownload.Add "$(QPKG.Get.Essentials "$package")"
+            QPKGs.ToDownload.Add "$(QPKG.Get.Standalones "$package")"
         done
 
         QPKGs.ToDownload.Remove "$(QPKGs.SkDownload.Array)"
@@ -975,17 +943,17 @@ Tiers.Processor()
             QPKGs.ToStop.Add "$(QPKGs.Started.Array)"
         fi
 
-        # if an essential has been selected for stop, need to stop its optionals first
+        # if an standalone has been selected for stop, need to stop its dependents first
         for package in $(QPKGs.ToStop.Array); do
-            if QPKGs.Essential.Exist "$package" && QPKG.Installed "$package"; then
-                QPKGs.ToStop.Add "$(QPKG.Get.Optionals "$package")"
+            if QPKGs.Standalone.Exist "$package" && QPKG.Installed "$package"; then
+                QPKGs.ToStop.Add "$(QPKG.Get.Dependents "$package")"
             fi
         done
 
-        # if an essential has been selected for uninstall, need to stop its optionals first
+        # if an standalone has been selected for uninstall, need to stop its dependents first
         for package in $(QPKGs.ToUninstall.Array); do
-            if QPKGs.Essential.Exist "$package" && QPKG.Installed "$package"; then
-                QPKGs.ToStop.Add "$(QPKG.Get.Optionals "$package")"
+            if QPKGs.Standalone.Exist "$package" && QPKG.Installed "$package"; then
+                QPKGs.ToStop.Add "$(QPKG.Get.Dependents "$package")"
             fi
         done
 
@@ -994,16 +962,20 @@ Tiers.Processor()
             QPKGs.ToInstall.Add Entware
             QPKGs.ToReinstall.Remove Entware
 
-            # if Entware has been selected for reinstall, need to stop its optionals first, and start them again later
-            QPKGs.ToStop.Add "$(QPKG.Get.Optionals Entware)"
-            QPKGs.ToStart.Add "$(QPKGs.Started.Array)"
+            # if Entware has been selected for reinstall, need to stop its dependents first, and start them again later
+            for prospect in "$(QPKG.Get.Dependents Entware)"; do
+                if QPKG.Installed "$prospect"; then
+                    QPKGs.ToStop.Add "$prospect"
+                    QPKGs.Started.Exist "$prospect" && QPKGs.ToStart.Add "$prospect"
+                fi
+            done
         fi
 
-        # if an essential (like Par2, but not Entware) has been selected for reinstall, need to stop its optionals first, and start them again later
+        # if an standalone (like Par2, but not Entware) has been selected for reinstall, need to stop its dependents first, and start them again later
         for package in $(QPKGs.ToReinstall.Array); do
-            if QPKGs.Essential.Exist "$package" && QPKG.Installed "$package" && QPKG.Enabled "$package"; then
-                QPKGs.ToStop.Add "$(QPKG.Get.Optionals "$package")"
-                QPKGs.ToStart.Add "$(QPKG.Get.Optionals "$package")"
+            if QPKGs.Standalone.Exist "$package" && QPKG.Installed "$package" && QPKG.Enabled "$package"; then
+                QPKGs.ToStop.Add "$(QPKG.Get.Dependents "$package")"
+                QPKGs.ToStart.Add "$(QPKG.Get.Dependents "$package")"
             fi
         done
 
@@ -1015,13 +987,13 @@ Tiers.Processor()
             QPKGs.ToStop.Init   # no-need to stop any packages, as they are about to be uninstalled
         fi
 
-    Tier.Processor Stop false optional QPKG ToStop backward stop stopping stopped ''
-    Tier.Processor Stop false essential QPKG ToStop backward stop stopping stopped ''
+    Tier.Processor Stop false dependent QPKG ToStop backward stop stopping stopped ''
+    Tier.Processor Stop false standalone QPKG ToStop backward stop stopping stopped ''
 
         QPKGs.ToUninstall.Remove "$PROJECT_NAME"
         QPKGs.ToUninstall.Remove "$(QPKGs.SkUninstall.Array)"
 
-    Tier.Processor Uninstall false optional QPKG ToUninstall forward uninstall uninstalling uninstalled ''
+    Tier.Processor Uninstall false dependent QPKG ToUninstall forward uninstall uninstalling uninstalled ''
 
     # in-case 'python' has disappeared again ...
     [[ ! -L /opt/bin/python && -e /opt/bin/python3 ]] && ln -s /opt/bin/python3 /opt/bin/python
@@ -1030,7 +1002,7 @@ Tiers.Processor()
         Tier.Processor Uninstall false addon IPKG ToUninstall forward uninstall uninstalling uninstalled ''
         QPKGs.ToUninstall.Remove "$(QPKGs.SkUninstall.Array)"
 
-    Tier.Processor Uninstall false essential QPKG ToUninstall forward uninstall uninstalling uninstalled ''
+    Tier.Processor Uninstall false standalone QPKG ToUninstall forward uninstall uninstalling uninstalled ''
 
         if Opts.Apps.All.Restore.IsSet; then
             for prospect in $(QPKGs.SupportsBackup.Array); do
@@ -1044,13 +1016,13 @@ Tiers.Processor()
             QPKGs.ToRestart.Add "$(QPKGs.SupportsUpdateOnRestart.Array)"
             QPKGs.ToRestart.Remove "$(QPKGs.NotInstalled.Array)"
             QPKGs.ToRestart.Remove "$(QPKGs.ToUpgrade.Array)"
-            QPKGs.ToRestart.Remove "$(QPKGs.Essential.Array)"
+            QPKGs.ToRestart.Remove "$(QPKGs.Standalone.Array)"
         fi
 
-        # install all essentials for started packages only
+        # install all standalones for started packages only
         for package in $(QPKGs.Installed.Array); do
             if QPKGs.Started.Exist "$package" || QPKGs.ToStart.Exist "$package"; then
-                for prospect in $(QPKG.Get.Essentials "$package"); do
+                for prospect in $(QPKG.Get.Standalones "$package"); do
                     QPKG.NotInstalled "$prospect" && QPKGs.ToInstall.Add "$prospect"
                 done
             fi
@@ -1061,9 +1033,9 @@ Tiers.Processor()
             QPKGs.ToStart.Add "$(QPKGs.Stopped.Array)"
         fi
 
-    for tier in essential addon optional; do
+    for tier in standalone addon dependent; do
         case $tier in
-            essential|optional)
+            standalone|dependent)
                     QPKGs.ToUpgrade.Remove "$(QPKGs.SkUpgrade.Array)"
 
                 Tier.Processor Upgrade false "$tier" QPKG ToUpgrade forward upgrade upgrading upgraded long
@@ -1076,55 +1048,55 @@ Tiers.Processor()
 
                 Tier.Processor Install false "$tier" QPKG ToInstall forward install installing installed long
 
-                    QPKGs.ToRestore.Remove "$(QPKGs.Essential.Array)"
+                    QPKGs.ToRestore.Remove "$(QPKGs.Standalone.Array)"
                     QPKGs.ToRestore.Remove "$PROJECT_NAME"
                     QPKGs.ToRestore.Remove "$(QPKGs.SkRestore.Array)"
 
                 Tier.Processor Restore false "$tier" QPKG ToRestore forward 'restore configuration for' 'restoring configuration for' 'configuration restored for' long
 
-                    if [[ $tier == essential ]]; then
-                        # check for essential packages that require starting due to any optionals being reinstalled
+                    if [[ $tier == standalone ]]; then
+                        # check for standalone packages that require starting due to dependents being reinstalled
                         for package in $(QPKGs.ToReinstall.Array); do
-                            for prospect in $(QPKG.Get.Essentials "$package"); do
+                            for prospect in $(QPKG.Get.Standalones "$package"); do
                                 QPKG.NotEnabled "$prospect" && QPKGs.ToStart.Add "$prospect"
                             done
                         done
 
                         for package in $(QPKGs.IsReinstall.Array); do
-                            for prospect in $(QPKG.Get.Essentials "$package"); do
+                            for prospect in $(QPKG.Get.Standalones "$package"); do
                                 QPKG.NotEnabled "$prospect" && QPKGs.ToStart.Add "$prospect"
                             done
                         done
 
-                        # check for essential packages that require starting due to any optionals being installed
+                        # check for standalone packages that require starting due to dependents being installed
                         for package in $(QPKGs.ToInstall.Array); do
-                            for prospect in $(QPKG.Get.Essentials "$package"); do
+                            for prospect in $(QPKG.Get.Standalones "$package"); do
                                 QPKG.NotEnabled "$prospect" && QPKGs.ToStart.Add "$prospect"
                             done
                         done
 
                         for package in $(QPKGs.IsInstall.Array); do
-                            for prospect in $(QPKG.Get.Essentials "$package"); do
+                            for prospect in $(QPKG.Get.Standalones "$package"); do
                                 QPKG.NotEnabled "$prospect" && QPKGs.ToStart.Add "$prospect"
                             done
                         done
 
-                        # check for essential packages that require starting due to any optionals being started
+                        # check for standalone packages that require starting due to dependents being started
                         for package in $(QPKGs.ToStart.Array); do
-                            for prospect in $(QPKG.Get.Essentials "$package"); do
+                            for prospect in $(QPKG.Get.Standalones "$package"); do
                                 QPKG.NotEnabled "$prospect" && QPKGs.ToStart.Add "$prospect"
                             done
                         done
 
                         for package in $(QPKGs.IsStart.Array); do
-                            for prospect in $(QPKG.Get.Essentials "$package"); do
+                            for prospect in $(QPKG.Get.Standalones "$package"); do
                                 QPKG.NotEnabled "$prospect" && QPKGs.ToStart.Add "$prospect"
                             done
                         done
 
-                        # check for essential packages that require starting due to any optionals being restarted
+                        # check for standalone packages that require starting due to dependents being restarted
                         for package in $(QPKGs.ToRestart.Array); do
-                            for prospect in $(QPKG.Get.Essentials "$package"); do
+                            for prospect in $(QPKG.Get.Standalones "$package"); do
                                 QPKG.NotEnabled "$prospect" && QPKGs.ToStart.Add "$prospect"
                             done
                         done
@@ -1138,7 +1110,7 @@ Tiers.Processor()
 
                     # check all items
                     if Opts.Dependencies.Check.IsSet; then
-                        for package in $(QPKGs.Optional.Array); do
+                        for package in $(QPKGs.Dependent.Array); do
                             if ! QPKGs.Standalone.Exist "$package" && ! QPKGs.Upgradable.Exist "$package" && QPKG.Installed "$package"; then
                                 QPKGs.ToRestart.Add "$package"
                             fi
@@ -1149,30 +1121,30 @@ Tiers.Processor()
                     if Opts.Apps.All.Restart.IsSet; then
                         QPKGs.ToRestart.Add "$(QPKGs.Installed.Array)"
                     else
-                        # check for optional packages to restart due to any essentials being installed
+                        # check for dependent packages to restart due to standalones being installed
                         for package in $(QPKGs.IsInstall.Array); do
-                            for prospect in $(QPKG.Get.Optionals "$package"); do
+                            for prospect in $(QPKG.Get.Dependents "$package"); do
                                 QPKG.Installed "$prospect" && QPKGs.ToRestart.Add "$prospect"
                             done
                         done
 
-                        # check for optional packages to restart due to any essentials being started
+                        # check for dependent packages to restart due to standalones being started
                         for package in $(QPKGs.IsStart.Array); do
-                            for prospect in $(QPKG.Get.Optionals "$package"); do
+                            for prospect in $(QPKG.Get.Dependents "$package"); do
                                 QPKG.Installed "$prospect" && QPKGs.ToRestart.Add "$prospect"
                             done
                         done
 
-                        # check for optional packages to restart due to any essentials being restarted
+                        # check for dependent packages to restart due to standalones being restarted
                         for package in $(QPKGs.IsRestart.Array); do
-                            for prospect in $(QPKG.Get.Optionals "$package"); do
+                            for prospect in $(QPKG.Get.Dependents "$package"); do
                                 QPKG.Installed "$prospect" && QPKGs.ToRestart.Add "$prospect"
                             done
                         done
 
-                        # check for optional packages to restart due to any essentials being upgraded
+                        # check for dependent packages to restart due to standalones being upgraded
                         for package in $(QPKGs.IsUpgrade.Array); do
-                            for prospect in $(QPKG.Get.Optionals "$package"); do
+                            for prospect in $(QPKG.Get.Dependents "$package"); do
                                 QPKG.Installed "$prospect" && QPKGs.ToRestart.Add "$prospect"
                             done
                         done
@@ -1226,14 +1198,14 @@ Tier.Processor()
     # input:
     #   $1 = $TARGET_OPERATION              e.g. 'Start', 'Restart'...
     #   $2 = forced operation?              e.g. 'true', 'false'
-    #   $3 = $TIER                          e.g. 'essential', 'optional', 'addon', 'all'
+    #   $3 = $TIER                          e.g. 'standalone', 'dependent', 'addon', 'all'
     #   $4 = $PACKAGE_TYPE                  e.g. 'QPKG', 'IPKG', 'PIP'
-    #   $5 = $TARGET_OBJECT_NAME (optional) e.g. 'ToStart', 'ToStop'...
+    #   $5 = $TARGET_OBJECT_NAME (dependent) e.g. 'ToStart', 'ToStop'...
     #   $6 = $PROCESSING_DIRECTION          e.g. 'forward', 'backward'
     #   $7 = $ACTION_INTRANSITIVE           e.g. 'start'...
     #   $8 = $ACTION_PRESENT                e.g. 'starting'...
     #   $9 = $ACTION_PAST                   e.g. 'started'...
-    #  $10 = $RUNTIME (optional)            e.g. 'long'
+    #  $10 = $RUNTIME (dependent)            e.g. 'long'
 
     DebugFuncEntry
 
@@ -1387,11 +1359,11 @@ Session.Results()
         elif Opts.Log.Tail.View.IsSet; then
             Log.Tail.View
         elif Opts.Log.All.Paste.IsSet; then
-            Log.All.Paste.Online
+            Log.All.Paste
         elif Opts.Log.Last.Paste.IsSet; then
-            Log.Last.Paste.Online
+            Log.Last.Paste
         elif Opts.Log.Tail.Paste.IsSet; then
-            Log.Tail.Paste.Online
+            Log.Tail.Paste
         elif Opts.Apps.List.All.IsSet; then
             QPKGs.All.Show
         elif Opts.Apps.List.Installable.IsSet; then
@@ -1404,10 +1376,10 @@ Session.Results()
             QPKGs.Stopped.Show
         elif Opts.Apps.List.Upgradable.IsSet; then
             QPKGs.Upgradable.Show
-        elif Opts.Apps.List.Essential.IsSet; then
-            QPKGs.Essential.Show
-        elif Opts.Apps.List.Optional.IsSet; then
-            QPKGs.Optional.Show
+        elif Opts.Apps.List.Standalone.IsSet; then
+            QPKGs.Standalone.Show
+        elif Opts.Apps.List.Dependent.IsSet; then
+            QPKGs.Dependent.Show
         elif Opts.Apps.List.Standalone.IsSet; then
             QPKGs.Standalone.Show
         elif Opts.Help.Backups.IsSet; then
@@ -1515,7 +1487,7 @@ ParseArguments()
         # stage 1
         if [[ -z $operation ]]; then
             case $arg in
-                a|abs|action|actions|actions-all|all-actions|b|backups|e|essential|essentials|installable|installed|l|last|log|not-installed|o|option|optional|optionals|options|p|package|packages|problems|standalone|standalones|started|stopped|tail|tips|upgradable|v|version|versions|whole)
+                a|abs|action|actions|actions-all|all-actions|b|backups|dependent|dependents|installable|installed|l|last|log|not-installed|o|option|options|p|package|packages|problems|standalone|standalones|started|stopped|tail|tips|upgradable|v|version|versions|whole)
                     operation=help_
                     arg_identified=true
                     scope=''
@@ -1555,8 +1527,8 @@ ParseArguments()
                     scope_identified=true
                     arg_identified=true
                     ;;
-                e|essential|essentials)
-                    scope=essential_
+                dependent|dependents)
+                    scope=dependent_
                     scope_identified=true
                     arg_identified=true
                     ;;
@@ -1577,11 +1549,6 @@ ParseArguments()
                     ;;
                 option|options)
                     scope=options_
-                    scope_identified=true
-                    arg_identified=true
-                    ;;
-                o|optional|optionals)
-                    scope=optional_
                     scope_identified=true
                     arg_identified=true
                     ;;
@@ -1639,11 +1606,8 @@ ParseArguments()
                         Opts.Apps.All.Backup.Set
                         operation=''
                         ;;
-                    essential_)
-                        QPKGs.ToBackup.Add "$(QPKGs.Essential.Array)"
-                        ;;
-                    optional_)
-                        QPKGs.ToBackup.Add "$(QPKGs.Optional.Array)"
+                    dependent_)
+                        QPKGs.ToBackup.Add "$(QPKGs.Dependent.Array)"
                         ;;
                     standalone_)
                         QPKGs.ToBackup.Add "$(QPKGs.Standalone.Array)"
@@ -1677,10 +1641,6 @@ ParseArguments()
                     backups_)
                         Opts.Help.Backups.Set
                         ;;
-                    essential_)
-                        Opts.Apps.List.Essential.Set
-                        Session.Display.Clean.Set
-                        ;;
                     installable_)
                         QPKGs.States.Build
                         Opts.Apps.List.Installable.Set
@@ -1704,8 +1664,8 @@ ParseArguments()
                         Opts.Apps.List.NotInstalled.Set
                         Session.Display.Clean.Set
                         ;;
-                    optional_)
-                        Opts.Apps.List.Optional.Set
+                    dependent_)
+                        Opts.Apps.List.Dependent.Set
                         Session.Display.Clean.Set
                         ;;
                     options_)
@@ -1765,14 +1725,11 @@ ParseArguments()
                         Opts.Apps.All.Install.Set
                         operation=''
                         ;;
-                    essential_)
-                        QPKGs.ToInstall.Add "$(QPKGs.Essential.Array)"
+                    dependent_)
+                        QPKGs.ToInstall.Add "$(QPKGs.Dependent.Array)"
                         ;;
                     not-installed_)
                         QPKGs.ToInstall.Add "$(QPKGs.NotInstalled.Array)"
-                        ;;
-                    optional_)
-                        QPKGs.ToInstall.Add "$(QPKGs.Optional.Array)"
                         ;;
                     standalone_)
                         QPKGs.ToInstall.Add "$(QPKGs.Standalone.Array)"
@@ -1807,8 +1764,8 @@ ParseArguments()
                         Opts.Apps.All.Rebuild.Set
                         operation=''
                         ;;
-                    optional_)
-                        QPKGs.ToRebuild.Add "$(QPKGs.Optional.Array)"
+                    dependent_)
+                        QPKGs.ToRebuild.Add "$(QPKGs.Dependent.Array)"
                         ;;
                     *)
                         QPKGs.ToRebuild.Add "$package"
@@ -1821,11 +1778,8 @@ ParseArguments()
                         Opts.Apps.All.Reinstall.Set
                         operation=''
                         ;;
-                    essential_)
-                        QPKGs.ToReinstall.Add "$(QPKGs.Essential.Array)"
-                        ;;
-                    optional_)
-                        QPKGs.ToReinstall.Add "$(QPKGs.Optional.Array)"
+                    dependent_)
+                        QPKGs.ToReinstall.Add "$(QPKGs.Dependent.Array)"
                         ;;
                     standalone_)
                         QPKGs.ToReinstall.Add "$(QPKGs.Standalone.Array)"
@@ -1841,11 +1795,8 @@ ParseArguments()
                         Opts.Apps.All.Restart.Set
                         operation=''
                         ;;
-                    essential_)
-                        QPKGs.ToRestart.Add "$(QPKGs.Essential.Array)"
-                        ;;
-                    optional_)
-                        QPKGs.ToRestart.Add "$(QPKGs.Optional.Array)"
+                    dependent_)
+                        QPKGs.ToRestart.Add "$(QPKGs.Dependent.Array)"
                         ;;
                     standalone_)
                         QPKGs.ToRestart.Add "$(QPKGs.Standalone.Array)"
@@ -1861,11 +1812,8 @@ ParseArguments()
                         Opts.Apps.All.Restore.Set
                         operation=''
                         ;;
-                    essential_)
-                        QPKGs.ToRestore.Add "$(QPKGs.Essential.Array)"
-                        ;;
-                    optional_)
-                        QPKGs.ToRestore.Add "$(QPKGs.Optional.Array)"
+                    dependent_)
+                        QPKGs.ToRestore.Add "$(QPKGs.Dependent.Array)"
                         ;;
                     standalone_)
                         QPKGs.ToRestore.Add "$(QPKGs.Standalone.Array)"
@@ -1881,11 +1829,8 @@ ParseArguments()
                         Opts.Apps.All.Start.Set
                         operation=''
                         ;;
-                    essential_)
-                        QPKGs.ToStart.Add "$(QPKGs.Essential.Array)"
-                        ;;
-                    optional_)
-                        QPKGs.ToStart.Add "$(QPKGs.Optional.Array)"
+                    dependent_)
+                        QPKGs.ToStart.Add "$(QPKGs.Dependent.Array)"
                         ;;
                     standalone_)
                         QPKGs.ToStart.Add "$(QPKGs.Standalone.Array)"
@@ -1909,11 +1854,8 @@ ParseArguments()
                         Opts.Apps.All.Stop.Set
                         operation=''
                         ;;
-                    essential_)
-                        QPKGs.ToStop.Add "$(QPKGs.Essential.Array)"
-                        ;;
-                    optional_)
-                        QPKGs.ToStop.Add "$(QPKGs.Optional.Array)"
+                    dependent_)
+                        QPKGs.ToStop.Add "$(QPKGs.Dependent.Array)"
                         ;;
                     standalone_)
                         QPKGs.ToStop.Add "$(QPKGs.Standalone.Array)"
@@ -1936,13 +1878,13 @@ ParseArguments()
                             operation_force=false
                         fi
                         ;;
-                    essential_)
-                        QPKGs.ToUninstall.Add "$(QPKGs.Essential.Array)"
+                    dependent_)
+                        QPKGs.ToUninstall.Add "$(QPKGs.Dependent.Array)"
                         operation=''
                         operation_force=false
                         ;;
-                    optional_)
-                        QPKGs.ToUninstall.Add "$(QPKGs.Optional.Array)"
+                    standalone_)
+                        QPKGs.ToUninstall.Add "$(QPKGs.Standalone.Array)"
                         operation=''
                         operation_force=false
                         ;;
@@ -1967,11 +1909,8 @@ ParseArguments()
                         Opts.Apps.All.Upgrade.Set
                         operation=''
                         ;;
-                    essential_)
-                        QPKGs.ToUpgrade.Add "$(QPKGs.Essential.Array)"
-                        ;;
-                    optional_)
-                        QPKGs.ToUpgrade.Add "$(QPKGs.Optional.Array)"
+                    dependent_)
+                        QPKGs.ToUpgrade.Add "$(QPKGs.Dependent.Array)"
                         ;;
                     standalone_)
                         QPKGs.ToUpgrade.Add "$(QPKGs.Standalone.Array)"
@@ -2063,14 +2002,14 @@ ArgumentSuggestions()
                     DisplayAsProjectSyntaxExample 'to backup all installed package configurations, use' 'backup all'
                     Opts.Help.Basic.Clear
                     ;;
-                essential)
+                standalone)
                     Display
-                    DisplayAsProjectSyntaxExample "please provide an $(FormatAsHelpAction) before 'essential' like" 'start essential'
+                    DisplayAsProjectSyntaxExample "please provide an $(FormatAsHelpAction) before 'standalone' like" 'start standalone'
                     Opts.Help.Basic.Clear
                     ;;
-                optional)
+                dependent)
                     Display
-                    DisplayAsProjectSyntaxExample "please provide an $(FormatAsHelpAction) before 'optional' like" 'start optional'
+                    DisplayAsProjectSyntaxExample "please provide an $(FormatAsHelpAction) before 'dependent' like" 'start dependent'
                     Opts.Help.Basic.Clear
                     ;;
                 all-restart|restart-all)
@@ -2565,7 +2504,7 @@ IPKGs.Install()
         done
     fi
 
-    Opts.Dependencies.Check.IsSet && IPKGs.ToInstall.Add "$MANAGER_ESSENTIAL_IPKGS_ADD"
+    Opts.Dependencies.Check.IsSet && IPKGs.ToInstall.Add "$MANAGER_BASE_IPKGS_ADD"
 
     CalcIPKGsDepsToInstall
     CalcIPKGsDownloadSize
@@ -3196,7 +3135,7 @@ Help.Packages.Show()
     DisplayAsHelpTitle "One-or-more $(FormatAsHelpPackages) may be specified at-once"
     Display
 
-    for tier in Essential Optional; do
+    for tier in Standalone Dependent; do
         DisplayAsHelpTitlePackageNamePlusSomething "${tier} QPKGs" 'package description'
 
         for package in $(QPKGs.$tier.Array); do
@@ -3303,7 +3242,7 @@ Help.PackageAbbreviations.Show()
     DisplayAsHelpTitle "$(FormatAsScriptTitle) recognises various abbreviations as $(FormatAsHelpPackages)"
     Display
 
-    for tier in Essential Optional; do
+    for tier in Standalone Dependent; do
         DisplayAsHelpTitlePackageNamePlusSomething "${tier} QPKGs" 'acceptable abreviations'
 
         for package in $(QPKGs.$tier.Array); do
@@ -3400,7 +3339,7 @@ Log.Tail.View()
 
     }
 
-Log.All.Paste.Online()
+Log.All.Paste()
     {
 
     DisableDebuggingToArchiveAndFile
@@ -3430,7 +3369,7 @@ Log.All.Paste.Online()
 
     }
 
-Log.Last.Paste.Online()
+Log.Last.Paste()
     {
 
     DisableDebuggingToArchiveAndFile
@@ -3461,7 +3400,7 @@ Log.Last.Paste.Online()
 
     }
 
-Log.Tail.Paste.Online()
+Log.Tail.Paste()
     {
 
     DisableDebuggingToArchiveAndFile
@@ -3495,7 +3434,7 @@ Log.Tail.Paste.Online()
 GetLogSessionStartLine()
     {
 
-    # $1 = how many sessions back? (optional) default = 1
+    # $1 = how many sessions back? (dependent) default = 1
 
     local -i linenum=$(($($GREP_CMD -n 'SCRIPT:.*started:' "$SESSION_TAIL_PATHFILE" | $TAIL_CMD -n${1:-1} | $HEAD_CMD -n1 | cut -d':' -f1)-1))
     [[ $linenum -lt 1 ]] && linenum=1
@@ -3506,7 +3445,7 @@ GetLogSessionStartLine()
 GetLogSessionFinishLine()
     {
 
-    # $1 = how many sessions back? (optional) default = 1
+    # $1 = how many sessions back? (dependent) default = 1
 
     local -i linenum=$(($($GREP_CMD -n 'SCRIPT:.*finished:' "$SESSION_TAIL_PATHFILE" | $TAIL_CMD -n${1:-1} | cut -d':' -f1)+2))
     [[ $linenum -eq 2 ]] && linenum=3
@@ -3701,28 +3640,22 @@ QPKGs.States.List()
 
     }
 
-QPKGs.EssentialOptionalStandalone.Build()
+QPKGs.StandaloneDependent.Build()
     {
 
-    # there are three tiers of package: 'essential', 'addon' and 'optional'
-    # ... but only two tiers of QPKG: 'essential' and 'optional'
+    # there are three tiers of package: 'standalone', 'addon' and 'dependent'
+    # ... but only two tiers of QPKG: 'standalone' and 'dependent'
 
-    # 'essential' QPKGs don't depend on other QPKGs, but are required for other QPKGs. They should be installed/started before any 'optional' QPKGs.
-    # 'optional' QPKGs may depend on other QPKGs. They should be installed/started after any 'essential' QPKGs.
-
-    # 'standalone' isn't a tier, but a category of package that works without requiring any other package(s). A package may be 'standalone' or-not, and may also be 'essential' or 'optional'.
+    # 'standalone' QPKGs don't depend on other QPKGs, but may be required for other QPKGs. They should be installed/started before any 'dependent' QPKGs.
+    # 'dependent' QPKGs depend on other QPKGs. They should be installed/started after all 'standalone' QPKGs.
 
     local -i index=0
 
     for index in "${!MANAGER_QPKG_NAME[@]}"; do
-        if [[ ${MANAGER_QPKG_IS_ESSENTIAL[$index]} = true ]]; then
-            QPKGs.Essential.Add "${MANAGER_QPKG_NAME[$index]}"
-        else
-            QPKGs.Optional.Add "${MANAGER_QPKG_NAME[$index]}"
-        fi
-
         if [[ ${MANAGER_QPKG_IS_STANDALONE[$index]} = true ]]; then
             QPKGs.Standalone.Add "${MANAGER_QPKG_NAME[$index]}"
+        else
+            QPKGs.Dependent.Add "${MANAGER_QPKG_NAME[$index]}"
         fi
     done
 
@@ -3911,7 +3844,7 @@ QPKGs.Statuses.Show()
     SmartCR
     DisplayLineSpaceIfNoneAlready
 
-    for tier in Essential Optional; do
+    for tier in Standalone Dependent; do
         DisplayAsHelpTitlePackageNamePlusSomething "${tier} QPKGs" 'statuses'
 
         for package in $(QPKGs.$tier.Array); do
@@ -4039,36 +3972,6 @@ QPKGs.Upgradable.Show()
 
     }
 
-QPKGs.Essential.Show()
-    {
-
-    local package=''
-
-    DisableDebuggingToArchiveAndFile
-
-    for package in $(QPKGs.Essential.Array); do
-        Display "$package"
-    done
-
-    return 0
-
-    }
-
-QPKGs.Optional.Show()
-    {
-
-    local package=''
-
-    DisableDebuggingToArchiveAndFile
-
-    for package in $(QPKGs.Optional.Array); do
-        Display "$package"
-    done
-
-    return 0
-
-    }
-
 QPKGs.Standalone.Show()
     {
 
@@ -4077,6 +3980,21 @@ QPKGs.Standalone.Show()
     DisableDebuggingToArchiveAndFile
 
     for package in $(QPKGs.Standalone.Array); do
+        Display "$package"
+    done
+
+    return 0
+
+    }
+
+QPKGs.Dependent.Show()
+    {
+
+    local package=''
+
+    DisableDebuggingToArchiveAndFile
+
+    for package in $(QPKGs.Dependent.Array); do
         Display "$package"
     done
 
@@ -4106,7 +4024,7 @@ MarkOpAsError()
     # input:
     #   $1 = package name
     #   $2 = action
-    #   $3 = reason (optional)
+    #   $3 = reason (dependent)
 
     local message="failing request to $2 $(FormatAsPackageName "$1")"
 
@@ -4126,7 +4044,7 @@ MarkOpAsSkipped()
     #   $1 = show this onscreen: 'show'/'hide'
     #   $2 = package name
     #   $3 = action
-    #   $4 = reason (optional)
+    #   $4 = reason (dependent)
 
     local message="ignoring request to $3 $(FormatAsPackageName "$2")"
     [[ -n ${4:-} ]] && message+=" as $4"
@@ -4588,11 +4506,11 @@ QPKG.MinRAM()
 
     }
 
-QPKG.Get.Essentials()
+QPKG.Get.Standalones()
     {
 
     # input:
-    #   $1 = QPKG name to return esssentials for
+    #   $1 = QPKG name to return standalones for
 
     # output:
     #   $? = 0 if successful, 1 if failed
@@ -4601,8 +4519,8 @@ QPKG.Get.Essentials()
 
     for index in "${!MANAGER_QPKG_NAME[@]}"; do
         if [[ $1 = "${MANAGER_QPKG_NAME[$index]}" ]] && [[ ${MANAGER_QPKG_ARCH[$index]} = all || ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
-            if [[ ${MANAGER_QPKG_ESSENTIALS[$index]} != none ]]; then
-                echo "${MANAGER_QPKG_ESSENTIALS[$index]}"
+            if [[ ${MANAGER_QPKG_DEPENDS_ON[$index]} != none ]]; then
+                echo "${MANAGER_QPKG_DEPENDS_ON[$index]}"
                 return 0
             fi
         fi
@@ -4612,11 +4530,11 @@ QPKG.Get.Essentials()
 
     }
 
-QPKG.Get.Optionals()
+QPKG.Get.Dependents()
     {
 
     # input:
-    #   $1 = essential QPKG name to return optionals for
+    #   $1 = standalone QPKG name to return dependents for
 
     # output:
     #   $? = 0 if successful, 1 if failed
@@ -4624,9 +4542,9 @@ QPKG.Get.Optionals()
     local -i index=0
     local -a acc=()
 
-    if QPKGs.Essential.Exist "$1"; then
+    if QPKGs.Standalone.Exist "$1"; then
         for index in "${!MANAGER_QPKG_NAME[@]}"; do
-            if [[ ${MANAGER_QPKG_ESSENTIALS[$index]} == *"$1"* ]]; then
+            if [[ ${MANAGER_QPKG_DEPENDS_ON[$index]} == *"$1"* ]]; then
                 [[ ${acc[*]:-} != "${MANAGER_QPKG_NAME[$index]}" ]] && acc+=(${MANAGER_QPKG_NAME[$index]})
             fi
         done
@@ -4800,9 +4718,9 @@ QPKG.Install()
                 fi
 
                 # add extra package(s) needed immediately
-                DebugAsProc 'installing essential IPKGs'
-                RunAndLog "$OPKG_CMD install$(Opts.IgnoreFreeSpace.IsSet && Opts.IgnoreFreeSpace.Text) --force-overwrite $MANAGER_ESSENTIAL_IPKGS_ADD --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$LOGS_PATH/ipkgs.extra.$INSTALL_LOG_FILE" log:failure-only
-                DebugAsDone 'installed essential IPKGs'
+                DebugAsProc 'installing standalone IPKGs'
+                RunAndLog "$OPKG_CMD install$(Opts.IgnoreFreeSpace.IsSet && Opts.IgnoreFreeSpace.Text) --force-overwrite $MANAGER_BASE_IPKGS_ADD --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$LOGS_PATH/ipkgs.extra.$INSTALL_LOG_FILE" log:failure-only
+                DebugAsDone 'installed standalone IPKGs'
 
                 PIPs.Install.Set
             fi
@@ -5611,9 +5529,9 @@ RunAndLog()
     # input:
     #   $1 = commandstring to execute
     #   $2 = pathfile to record stdout and stderr for commandstring
-    #   $3 = 'log:failure-only' (optional) - if specified, stdout & stderr are only recorded in the specified log if the command failed
+    #   $3 = 'log:failure-only' (dependent) - if specified, stdout & stderr are only recorded in the specified log if the command failed
     #                                      - if unspecified, stdout & stderr is always recorded
-    #   $4 = e.g. '10' (optional) - an additional acceptable result code. Any other result from command (other than zero) will be considered a failure
+    #   $4 = e.g. '10' (dependent) - an additional acceptable result code. Any other result from command (other than zero) will be considered a failure
 
     # output:
     #   stdout = commandstring stdout and stderr if script is in 'debug' mode
@@ -6241,13 +6159,13 @@ ShowAsOperationProgress()
 
     # show QPKG operations progress as percent-complete and a fraction of the total
 
-    # $1 = tier (optional)
+    # $1 = tier (dependent)
     # $2 = package type: 'QPKG', 'IPKG', 'PIP', etc ...
     # $3 = pass count
     # $4 = fail count
     # $5 = total count
     # $6 = verb (present)
-    # $7 = 'long' (optional)
+    # $7 = 'long' (dependent)
 
     if [[ -n $1 && $1 != all ]]; then
         local tier=" $1"
@@ -6289,13 +6207,13 @@ ShowAsOperationProgress()
 ShowAsOperationResult()
     {
 
-    # $1 = tier (optional)
+    # $1 = tier (dependent)
     # $2 = package type: 'QPKG', 'IPKG', 'PIP', etc ...
     # $3 = pass count
     # $4 = fail count
     # $5 = total count
     # $6 = verb (past)
-    # $7 = 'long' (optional)
+    # $7 = 'long' (dependent)
 
     if [[ -n $1 && $1 != all ]]; then
         local tier=" $1"
@@ -6720,9 +6638,9 @@ CompileObjects()
 
     # builds a new [compiled.objects] file in the work path
 
-    # $1 = 'hash' (optional) - if specified, only return the internal checksum
+    # $1 = 'hash' (dependent) - if specified, only return the internal checksum
 
-    local -r COMPILED_OBJECTS_HASH=d515fe88a87f5681069c9722db19ddd4
+    local -r COMPILED_OBJECTS_HASH=e540f9ecfea768b455432c9ec2dc24b3
     local array_name=''
 
     if [[ ${1:-} = hash ]]; then
@@ -6770,18 +6688,14 @@ CompileObjects()
             AddFlagObj Opts.Apps.All.${array_name}
         done
 
-        for array_name in All Essential Installable Installed NotInstalled Optional Standalone Started Stopped Upgradable; do
+        for array_name in All Dependent Installable Installed NotInstalled Standalone Started Stopped Upgradable; do
             AddFlagObj Opts.Apps.List.${array_name}
         done
 
         # lists
         AddListObj Args.Unknown
 
-        for array_name in Download Install Uninstall Upgrade; do
-            AddListObj IPKGs.To${array_name}
-        done
-
-        for array_name in Essential Installable Missing Names Optional Standalone Starting Started Stopping Stopped Restarting Upgradable; do
+        for array_name in Dependent Installable Missing Names Standalone Starting Started Stopping Stopped Restarting Upgradable; do
             AddListObj QPKGs.${array_name}
         done
 
@@ -6795,6 +6709,10 @@ CompileObjects()
             AddListObj QPKGs.Is${array_name}      # operation was tried and succeeded
             AddListObj QPKGs.Er${array_name}      # operation was tried but failed
             AddListObj QPKGs.Sk${array_name}      # operation was skipped
+        done
+
+        for array_name in Download Install Uninstall Upgrade; do
+            AddListObj IPKGs.To${array_name}
         done
     fi
 

@@ -2879,72 +2879,72 @@ Opts.Apps.List.All.Text()
     }
 Opts.Apps.List.All.Init
 
-Opts.Apps.List.Essential.Clear()
+Opts.Apps.List.Dependent.Clear()
     {
-    [[ $_obj_opts_apps_list_essential_flag_ != 'true' ]] && return
-    _obj_opts_apps_list_essential_flag_=false
-    [[ $_obj_opts_apps_list_essential_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_list_essential_flag_
+    [[ $_obj_opts_apps_list_dependent_flag_ != 'true' ]] && return
+    _obj_opts_apps_list_dependent_flag_=false
+    [[ $_obj_opts_apps_list_dependent_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_list_dependent_flag_
     }
-Opts.Apps.List.Essential.Disable()
+Opts.Apps.List.Dependent.Disable()
     {
-    [[ $_obj_opts_apps_list_essential_enable_ != 'true' ]] && return
-    _obj_opts_apps_list_essential_enable_=false
-    [[ $_obj_opts_apps_list_essential_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_list_essential_enable_
+    [[ $_obj_opts_apps_list_dependent_enable_ != 'true' ]] && return
+    _obj_opts_apps_list_dependent_enable_=false
+    [[ $_obj_opts_apps_list_dependent_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_list_dependent_enable_
     }
-Opts.Apps.List.Essential.DontLogChanges()
+Opts.Apps.List.Dependent.DontLogChanges()
     {
-    [[ $_obj_opts_apps_list_essential_changes_flag_ != 'true' ]] && return
-    _obj_opts_apps_list_essential_changes_flag_=false
+    [[ $_obj_opts_apps_list_dependent_changes_flag_ != 'true' ]] && return
+    _obj_opts_apps_list_dependent_changes_flag_=false
     }
-Opts.Apps.List.Essential.Enable()
+Opts.Apps.List.Dependent.Enable()
     {
-    [[ $_obj_opts_apps_list_essential_enable_ = 'true' ]] && return
-    _obj_opts_apps_list_essential_enable_=true
-    [[ $_obj_opts_apps_list_essential_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_list_essential_enable_
+    [[ $_obj_opts_apps_list_dependent_enable_ = 'true' ]] && return
+    _obj_opts_apps_list_dependent_enable_=true
+    [[ $_obj_opts_apps_list_dependent_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_list_dependent_enable_
     }
-Opts.Apps.List.Essential.Init()
+Opts.Apps.List.Dependent.Init()
     {
-    _obj_opts_apps_list_essential_text_=''
-    _obj_opts_apps_list_essential_flag_=false
-    _obj_opts_apps_list_essential_changes_flag_=true
-    _obj_opts_apps_list_essential_enable_=false
+    _obj_opts_apps_list_dependent_text_=''
+    _obj_opts_apps_list_dependent_flag_=false
+    _obj_opts_apps_list_dependent_changes_flag_=true
+    _obj_opts_apps_list_dependent_enable_=false
     }
-Opts.Apps.List.Essential.IsDisabled()
+Opts.Apps.List.Dependent.IsDisabled()
     {
-    [[ $_obj_opts_apps_list_essential_enable_ != 'true' ]]
+    [[ $_obj_opts_apps_list_dependent_enable_ != 'true' ]]
     }
-Opts.Apps.List.Essential.IsEnabled()
+Opts.Apps.List.Dependent.IsEnabled()
     {
-    [[ $_obj_opts_apps_list_essential_enable_ = 'true' ]]
+    [[ $_obj_opts_apps_list_dependent_enable_ = 'true' ]]
     }
-Opts.Apps.List.Essential.IsNot()
+Opts.Apps.List.Dependent.IsNot()
     {
-    [[ $_obj_opts_apps_list_essential_flag_ != 'true' ]]
+    [[ $_obj_opts_apps_list_dependent_flag_ != 'true' ]]
     }
-Opts.Apps.List.Essential.IsSet()
+Opts.Apps.List.Dependent.IsSet()
     {
-    [[ $_obj_opts_apps_list_essential_flag_ = 'true' ]]
+    [[ $_obj_opts_apps_list_dependent_flag_ = 'true' ]]
     }
-Opts.Apps.List.Essential.LogChanges()
+Opts.Apps.List.Dependent.LogChanges()
     {
-    [[ $_obj_opts_apps_list_essential_changes_flag_ = 'true' ]] && return
-    _obj_opts_apps_list_essential_changes_flag_=true
+    [[ $_obj_opts_apps_list_dependent_changes_flag_ = 'true' ]] && return
+    _obj_opts_apps_list_dependent_changes_flag_=true
     }
-Opts.Apps.List.Essential.Set()
+Opts.Apps.List.Dependent.Set()
     {
-    [[ $_obj_opts_apps_list_essential_flag_ = 'true' ]] && return
-    _obj_opts_apps_list_essential_flag_=true
-    [[ $_obj_opts_apps_list_essential_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_list_essential_flag_
+    [[ $_obj_opts_apps_list_dependent_flag_ = 'true' ]] && return
+    _obj_opts_apps_list_dependent_flag_=true
+    [[ $_obj_opts_apps_list_dependent_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_list_dependent_flag_
     }
-Opts.Apps.List.Essential.Text()
+Opts.Apps.List.Dependent.Text()
     {
     if [[ -n ${1:-} && $1 = "=" ]]; then
-        _obj_opts_apps_list_essential_text_=$2
+        _obj_opts_apps_list_dependent_text_=$2
     else
-        echo -n "$_obj_opts_apps_list_essential_text_"
+        echo -n "$_obj_opts_apps_list_dependent_text_"
     fi
     }
-Opts.Apps.List.Essential.Init
+Opts.Apps.List.Dependent.Init
 
 Opts.Apps.List.Installable.Clear()
     {
@@ -3146,73 +3146,6 @@ Opts.Apps.List.NotInstalled.Text()
     fi
     }
 Opts.Apps.List.NotInstalled.Init
-
-Opts.Apps.List.Optional.Clear()
-    {
-    [[ $_obj_opts_apps_list_optional_flag_ != 'true' ]] && return
-    _obj_opts_apps_list_optional_flag_=false
-    [[ $_obj_opts_apps_list_optional_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_list_optional_flag_
-    }
-Opts.Apps.List.Optional.Disable()
-    {
-    [[ $_obj_opts_apps_list_optional_enable_ != 'true' ]] && return
-    _obj_opts_apps_list_optional_enable_=false
-    [[ $_obj_opts_apps_list_optional_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_list_optional_enable_
-    }
-Opts.Apps.List.Optional.DontLogChanges()
-    {
-    [[ $_obj_opts_apps_list_optional_changes_flag_ != 'true' ]] && return
-    _obj_opts_apps_list_optional_changes_flag_=false
-    }
-Opts.Apps.List.Optional.Enable()
-    {
-    [[ $_obj_opts_apps_list_optional_enable_ = 'true' ]] && return
-    _obj_opts_apps_list_optional_enable_=true
-    [[ $_obj_opts_apps_list_optional_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_list_optional_enable_
-    }
-Opts.Apps.List.Optional.Init()
-    {
-    _obj_opts_apps_list_optional_text_=''
-    _obj_opts_apps_list_optional_flag_=false
-    _obj_opts_apps_list_optional_changes_flag_=true
-    _obj_opts_apps_list_optional_enable_=false
-    }
-Opts.Apps.List.Optional.IsDisabled()
-    {
-    [[ $_obj_opts_apps_list_optional_enable_ != 'true' ]]
-    }
-Opts.Apps.List.Optional.IsEnabled()
-    {
-    [[ $_obj_opts_apps_list_optional_enable_ = 'true' ]]
-    }
-Opts.Apps.List.Optional.IsNot()
-    {
-    [[ $_obj_opts_apps_list_optional_flag_ != 'true' ]]
-    }
-Opts.Apps.List.Optional.IsSet()
-    {
-    [[ $_obj_opts_apps_list_optional_flag_ = 'true' ]]
-    }
-Opts.Apps.List.Optional.LogChanges()
-    {
-    [[ $_obj_opts_apps_list_optional_changes_flag_ = 'true' ]] && return
-    _obj_opts_apps_list_optional_changes_flag_=true
-    }
-Opts.Apps.List.Optional.Set()
-    {
-    [[ $_obj_opts_apps_list_optional_flag_ = 'true' ]] && return
-    _obj_opts_apps_list_optional_flag_=true
-    [[ $_obj_opts_apps_list_optional_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_list_optional_flag_
-    }
-Opts.Apps.List.Optional.Text()
-    {
-    if [[ -n ${1:-} && $1 = "=" ]]; then
-        _obj_opts_apps_list_optional_text_=$2
-    else
-        echo -n "$_obj_opts_apps_list_optional_text_"
-    fi
-    }
-Opts.Apps.List.Optional.Init
 
 Opts.Apps.List.Standalone.Clear()
     {
@@ -3567,70 +3500,70 @@ Args.Unknown.Size()
     }
 Args.Unknown.Init
 
-IPKGs.ToDownload.Add()
+QPKGs.Dependent.Add()
     {
     local array=(${1})
     [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        if [[ " ${_obj_ipkgs_todownload_array_[*]+"${_obj_ipkgs_todownload_array_[@]}"} " != *"$item"* ]]; then
-            _obj_ipkgs_todownload_array_+=("$item")
+        if [[ " ${_obj_qpkgs_dependent_array_[*]+"${_obj_qpkgs_dependent_array_[@]}"} " != *"$item"* ]]; then
+            _obj_qpkgs_dependent_array_+=("$item")
         fi
     done
     }
-IPKGs.ToDownload.Array()
+QPKGs.Dependent.Array()
     {
-    echo -n "${_obj_ipkgs_todownload_array_[@]+"${_obj_ipkgs_todownload_array_[@]}"}"
+    echo -n "${_obj_qpkgs_dependent_array_[@]+"${_obj_qpkgs_dependent_array_[@]}"}"
     }
-IPKGs.ToDownload.Count()
+QPKGs.Dependent.Count()
     {
-    echo "${#_obj_ipkgs_todownload_array_[@]}"
+    echo "${#_obj_qpkgs_dependent_array_[@]}"
     }
-IPKGs.ToDownload.Exist()
+QPKGs.Dependent.Exist()
     {
-    [[ ${_obj_ipkgs_todownload_array_[*]:-} == *"$1"* ]]
+    [[ ${_obj_qpkgs_dependent_array_[*]:-} == *"$1"* ]]
     }
-IPKGs.ToDownload.First()
+QPKGs.Dependent.First()
     {
-    echo "${_obj_ipkgs_todownload_array_[0]}"
+    echo "${_obj_qpkgs_dependent_array_[0]}"
     }
-IPKGs.ToDownload.GetItem()
+QPKGs.Dependent.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_ipkgs_todownload_array_[@]} ]] && index=${#_obj_ipkgs_todownload_array_[@]}
-    echo -n "${_obj_ipkgs_todownload_array_[((index-1))]}"
+    [[ $index -gt ${#_obj_qpkgs_dependent_array_[@]} ]] && index=${#_obj_qpkgs_dependent_array_[@]}
+    echo -n "${_obj_qpkgs_dependent_array_[((index-1))]}"
     }
-IPKGs.ToDownload.Init()
+QPKGs.Dependent.Init()
     {
-    _obj_ipkgs_todownload_size_=0
-    _obj_ipkgs_todownload_array_=()
-    _obj_ipkgs_todownload_array_index_=1
+    _obj_qpkgs_dependent_size_=0
+    _obj_qpkgs_dependent_array_=()
+    _obj_qpkgs_dependent_array_index_=1
     }
-IPKGs.ToDownload.IsAny()
+QPKGs.Dependent.IsAny()
     {
-    [[ ${#_obj_ipkgs_todownload_array_[@]} -gt 0 ]]
+    [[ ${#_obj_qpkgs_dependent_array_[@]} -gt 0 ]]
     }
-IPKGs.ToDownload.IsNone()
+QPKGs.Dependent.IsNone()
     {
-    [[ ${#_obj_ipkgs_todownload_array_[@]} -eq 0 ]]
+    [[ ${#_obj_qpkgs_dependent_array_[@]} -eq 0 ]]
     }
-IPKGs.ToDownload.List()
+QPKGs.Dependent.List()
     {
-    echo -n "${_obj_ipkgs_todownload_array_[*]+"${_obj_ipkgs_todownload_array_[@]}"}"
+    echo -n "${_obj_qpkgs_dependent_array_[*]+"${_obj_qpkgs_dependent_array_[@]}"}"
     }
-IPKGs.ToDownload.ListCSV()
+QPKGs.Dependent.ListCSV()
     {
-    echo -n "${_obj_ipkgs_todownload_array_[*]+"${_obj_ipkgs_todownload_array_[@]}"}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_dependent_array_[*]+"${_obj_qpkgs_dependent_array_[@]}"}" | tr ' ' ','
     }
-IPKGs.ToDownload.Remove()
+QPKGs.Dependent.Remove()
     {
     local argument_array=(${1})
     local temp_array=()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_ipkgs_todownload_array_[@]+"${_obj_ipkgs_todownload_array_[@]}"}"; do
+    for item in "${_obj_qpkgs_dependent_array_[@]+"${_obj_qpkgs_dependent_array_[@]}"}"; do
         matched=false
         for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
             if [[ $argument = $item ]]; then
@@ -3639,358 +3572,18 @@ IPKGs.ToDownload.Remove()
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_ipkgs_todownload_array_=("${temp_array[@]+"${temp_array[@]}"}")
-    [[ -z ${_obj_ipkgs_todownload_array_[*]+"${_obj_ipkgs_todownload_array_[@]}"} ]] && _obj_ipkgs_todownload_array_=()
+    _obj_qpkgs_dependent_array_=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${_obj_qpkgs_dependent_array_[*]+"${_obj_qpkgs_dependent_array_[@]}"} ]] && _obj_qpkgs_dependent_array_=()
     }
-IPKGs.ToDownload.Size()
+QPKGs.Dependent.Size()
     {
     if [[ -n ${1:-} && ${1:-} = "=" ]]; then
-        _obj_ipkgs_todownload_size_=$2
+        _obj_qpkgs_dependent_size_=$2
     else
-        echo -n $_obj_ipkgs_todownload_size_
+        echo -n $_obj_qpkgs_dependent_size_
     fi
     }
-IPKGs.ToDownload.Init
-
-IPKGs.ToInstall.Add()
-    {
-    local array=(${1})
-    [[ ${#array[@]} -eq 0 ]] && return
-    local item=''
-    for item in "${array[@]:-}"; do
-        if [[ " ${_obj_ipkgs_toinstall_array_[*]+"${_obj_ipkgs_toinstall_array_[@]}"} " != *"$item"* ]]; then
-            _obj_ipkgs_toinstall_array_+=("$item")
-        fi
-    done
-    }
-IPKGs.ToInstall.Array()
-    {
-    echo -n "${_obj_ipkgs_toinstall_array_[@]+"${_obj_ipkgs_toinstall_array_[@]}"}"
-    }
-IPKGs.ToInstall.Count()
-    {
-    echo "${#_obj_ipkgs_toinstall_array_[@]}"
-    }
-IPKGs.ToInstall.Exist()
-    {
-    [[ ${_obj_ipkgs_toinstall_array_[*]:-} == *"$1"* ]]
-    }
-IPKGs.ToInstall.First()
-    {
-    echo "${_obj_ipkgs_toinstall_array_[0]}"
-    }
-IPKGs.ToInstall.GetItem()
-    {
-    local -i index="$1"
-    [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_ipkgs_toinstall_array_[@]} ]] && index=${#_obj_ipkgs_toinstall_array_[@]}
-    echo -n "${_obj_ipkgs_toinstall_array_[((index-1))]}"
-    }
-IPKGs.ToInstall.Init()
-    {
-    _obj_ipkgs_toinstall_size_=0
-    _obj_ipkgs_toinstall_array_=()
-    _obj_ipkgs_toinstall_array_index_=1
-    }
-IPKGs.ToInstall.IsAny()
-    {
-    [[ ${#_obj_ipkgs_toinstall_array_[@]} -gt 0 ]]
-    }
-IPKGs.ToInstall.IsNone()
-    {
-    [[ ${#_obj_ipkgs_toinstall_array_[@]} -eq 0 ]]
-    }
-IPKGs.ToInstall.List()
-    {
-    echo -n "${_obj_ipkgs_toinstall_array_[*]+"${_obj_ipkgs_toinstall_array_[@]}"}"
-    }
-IPKGs.ToInstall.ListCSV()
-    {
-    echo -n "${_obj_ipkgs_toinstall_array_[*]+"${_obj_ipkgs_toinstall_array_[@]}"}" | tr ' ' ','
-    }
-IPKGs.ToInstall.Remove()
-    {
-    local argument_array=(${1})
-    local temp_array=()
-    local argument=''
-    local item=''
-    local matched=false
-    for item in "${_obj_ipkgs_toinstall_array_[@]+"${_obj_ipkgs_toinstall_array_[@]}"}"; do
-        matched=false
-        for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
-            if [[ $argument = $item ]]; then
-                matched=true; break
-            fi
-        done
-        [[ $matched = false ]] && temp_array+=("$item")
-    done
-    _obj_ipkgs_toinstall_array_=("${temp_array[@]+"${temp_array[@]}"}")
-    [[ -z ${_obj_ipkgs_toinstall_array_[*]+"${_obj_ipkgs_toinstall_array_[@]}"} ]] && _obj_ipkgs_toinstall_array_=()
-    }
-IPKGs.ToInstall.Size()
-    {
-    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
-        _obj_ipkgs_toinstall_size_=$2
-    else
-        echo -n $_obj_ipkgs_toinstall_size_
-    fi
-    }
-IPKGs.ToInstall.Init
-
-IPKGs.ToUninstall.Add()
-    {
-    local array=(${1})
-    [[ ${#array[@]} -eq 0 ]] && return
-    local item=''
-    for item in "${array[@]:-}"; do
-        if [[ " ${_obj_ipkgs_touninstall_array_[*]+"${_obj_ipkgs_touninstall_array_[@]}"} " != *"$item"* ]]; then
-            _obj_ipkgs_touninstall_array_+=("$item")
-        fi
-    done
-    }
-IPKGs.ToUninstall.Array()
-    {
-    echo -n "${_obj_ipkgs_touninstall_array_[@]+"${_obj_ipkgs_touninstall_array_[@]}"}"
-    }
-IPKGs.ToUninstall.Count()
-    {
-    echo "${#_obj_ipkgs_touninstall_array_[@]}"
-    }
-IPKGs.ToUninstall.Exist()
-    {
-    [[ ${_obj_ipkgs_touninstall_array_[*]:-} == *"$1"* ]]
-    }
-IPKGs.ToUninstall.First()
-    {
-    echo "${_obj_ipkgs_touninstall_array_[0]}"
-    }
-IPKGs.ToUninstall.GetItem()
-    {
-    local -i index="$1"
-    [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_ipkgs_touninstall_array_[@]} ]] && index=${#_obj_ipkgs_touninstall_array_[@]}
-    echo -n "${_obj_ipkgs_touninstall_array_[((index-1))]}"
-    }
-IPKGs.ToUninstall.Init()
-    {
-    _obj_ipkgs_touninstall_size_=0
-    _obj_ipkgs_touninstall_array_=()
-    _obj_ipkgs_touninstall_array_index_=1
-    }
-IPKGs.ToUninstall.IsAny()
-    {
-    [[ ${#_obj_ipkgs_touninstall_array_[@]} -gt 0 ]]
-    }
-IPKGs.ToUninstall.IsNone()
-    {
-    [[ ${#_obj_ipkgs_touninstall_array_[@]} -eq 0 ]]
-    }
-IPKGs.ToUninstall.List()
-    {
-    echo -n "${_obj_ipkgs_touninstall_array_[*]+"${_obj_ipkgs_touninstall_array_[@]}"}"
-    }
-IPKGs.ToUninstall.ListCSV()
-    {
-    echo -n "${_obj_ipkgs_touninstall_array_[*]+"${_obj_ipkgs_touninstall_array_[@]}"}" | tr ' ' ','
-    }
-IPKGs.ToUninstall.Remove()
-    {
-    local argument_array=(${1})
-    local temp_array=()
-    local argument=''
-    local item=''
-    local matched=false
-    for item in "${_obj_ipkgs_touninstall_array_[@]+"${_obj_ipkgs_touninstall_array_[@]}"}"; do
-        matched=false
-        for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
-            if [[ $argument = $item ]]; then
-                matched=true; break
-            fi
-        done
-        [[ $matched = false ]] && temp_array+=("$item")
-    done
-    _obj_ipkgs_touninstall_array_=("${temp_array[@]+"${temp_array[@]}"}")
-    [[ -z ${_obj_ipkgs_touninstall_array_[*]+"${_obj_ipkgs_touninstall_array_[@]}"} ]] && _obj_ipkgs_touninstall_array_=()
-    }
-IPKGs.ToUninstall.Size()
-    {
-    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
-        _obj_ipkgs_touninstall_size_=$2
-    else
-        echo -n $_obj_ipkgs_touninstall_size_
-    fi
-    }
-IPKGs.ToUninstall.Init
-
-IPKGs.ToUpgrade.Add()
-    {
-    local array=(${1})
-    [[ ${#array[@]} -eq 0 ]] && return
-    local item=''
-    for item in "${array[@]:-}"; do
-        if [[ " ${_obj_ipkgs_toupgrade_array_[*]+"${_obj_ipkgs_toupgrade_array_[@]}"} " != *"$item"* ]]; then
-            _obj_ipkgs_toupgrade_array_+=("$item")
-        fi
-    done
-    }
-IPKGs.ToUpgrade.Array()
-    {
-    echo -n "${_obj_ipkgs_toupgrade_array_[@]+"${_obj_ipkgs_toupgrade_array_[@]}"}"
-    }
-IPKGs.ToUpgrade.Count()
-    {
-    echo "${#_obj_ipkgs_toupgrade_array_[@]}"
-    }
-IPKGs.ToUpgrade.Exist()
-    {
-    [[ ${_obj_ipkgs_toupgrade_array_[*]:-} == *"$1"* ]]
-    }
-IPKGs.ToUpgrade.First()
-    {
-    echo "${_obj_ipkgs_toupgrade_array_[0]}"
-    }
-IPKGs.ToUpgrade.GetItem()
-    {
-    local -i index="$1"
-    [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_ipkgs_toupgrade_array_[@]} ]] && index=${#_obj_ipkgs_toupgrade_array_[@]}
-    echo -n "${_obj_ipkgs_toupgrade_array_[((index-1))]}"
-    }
-IPKGs.ToUpgrade.Init()
-    {
-    _obj_ipkgs_toupgrade_size_=0
-    _obj_ipkgs_toupgrade_array_=()
-    _obj_ipkgs_toupgrade_array_index_=1
-    }
-IPKGs.ToUpgrade.IsAny()
-    {
-    [[ ${#_obj_ipkgs_toupgrade_array_[@]} -gt 0 ]]
-    }
-IPKGs.ToUpgrade.IsNone()
-    {
-    [[ ${#_obj_ipkgs_toupgrade_array_[@]} -eq 0 ]]
-    }
-IPKGs.ToUpgrade.List()
-    {
-    echo -n "${_obj_ipkgs_toupgrade_array_[*]+"${_obj_ipkgs_toupgrade_array_[@]}"}"
-    }
-IPKGs.ToUpgrade.ListCSV()
-    {
-    echo -n "${_obj_ipkgs_toupgrade_array_[*]+"${_obj_ipkgs_toupgrade_array_[@]}"}" | tr ' ' ','
-    }
-IPKGs.ToUpgrade.Remove()
-    {
-    local argument_array=(${1})
-    local temp_array=()
-    local argument=''
-    local item=''
-    local matched=false
-    for item in "${_obj_ipkgs_toupgrade_array_[@]+"${_obj_ipkgs_toupgrade_array_[@]}"}"; do
-        matched=false
-        for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
-            if [[ $argument = $item ]]; then
-                matched=true; break
-            fi
-        done
-        [[ $matched = false ]] && temp_array+=("$item")
-    done
-    _obj_ipkgs_toupgrade_array_=("${temp_array[@]+"${temp_array[@]}"}")
-    [[ -z ${_obj_ipkgs_toupgrade_array_[*]+"${_obj_ipkgs_toupgrade_array_[@]}"} ]] && _obj_ipkgs_toupgrade_array_=()
-    }
-IPKGs.ToUpgrade.Size()
-    {
-    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
-        _obj_ipkgs_toupgrade_size_=$2
-    else
-        echo -n $_obj_ipkgs_toupgrade_size_
-    fi
-    }
-IPKGs.ToUpgrade.Init
-
-QPKGs.Essential.Add()
-    {
-    local array=(${1})
-    [[ ${#array[@]} -eq 0 ]] && return
-    local item=''
-    for item in "${array[@]:-}"; do
-        if [[ " ${_obj_qpkgs_essential_array_[*]+"${_obj_qpkgs_essential_array_[@]}"} " != *"$item"* ]]; then
-            _obj_qpkgs_essential_array_+=("$item")
-        fi
-    done
-    }
-QPKGs.Essential.Array()
-    {
-    echo -n "${_obj_qpkgs_essential_array_[@]+"${_obj_qpkgs_essential_array_[@]}"}"
-    }
-QPKGs.Essential.Count()
-    {
-    echo "${#_obj_qpkgs_essential_array_[@]}"
-    }
-QPKGs.Essential.Exist()
-    {
-    [[ ${_obj_qpkgs_essential_array_[*]:-} == *"$1"* ]]
-    }
-QPKGs.Essential.First()
-    {
-    echo "${_obj_qpkgs_essential_array_[0]}"
-    }
-QPKGs.Essential.GetItem()
-    {
-    local -i index="$1"
-    [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_essential_array_[@]} ]] && index=${#_obj_qpkgs_essential_array_[@]}
-    echo -n "${_obj_qpkgs_essential_array_[((index-1))]}"
-    }
-QPKGs.Essential.Init()
-    {
-    _obj_qpkgs_essential_size_=0
-    _obj_qpkgs_essential_array_=()
-    _obj_qpkgs_essential_array_index_=1
-    }
-QPKGs.Essential.IsAny()
-    {
-    [[ ${#_obj_qpkgs_essential_array_[@]} -gt 0 ]]
-    }
-QPKGs.Essential.IsNone()
-    {
-    [[ ${#_obj_qpkgs_essential_array_[@]} -eq 0 ]]
-    }
-QPKGs.Essential.List()
-    {
-    echo -n "${_obj_qpkgs_essential_array_[*]+"${_obj_qpkgs_essential_array_[@]}"}"
-    }
-QPKGs.Essential.ListCSV()
-    {
-    echo -n "${_obj_qpkgs_essential_array_[*]+"${_obj_qpkgs_essential_array_[@]}"}" | tr ' ' ','
-    }
-QPKGs.Essential.Remove()
-    {
-    local argument_array=(${1})
-    local temp_array=()
-    local argument=''
-    local item=''
-    local matched=false
-    for item in "${_obj_qpkgs_essential_array_[@]+"${_obj_qpkgs_essential_array_[@]}"}"; do
-        matched=false
-        for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
-            if [[ $argument = $item ]]; then
-                matched=true; break
-            fi
-        done
-        [[ $matched = false ]] && temp_array+=("$item")
-    done
-    _obj_qpkgs_essential_array_=("${temp_array[@]+"${temp_array[@]}"}")
-    [[ -z ${_obj_qpkgs_essential_array_[*]+"${_obj_qpkgs_essential_array_[@]}"} ]] && _obj_qpkgs_essential_array_=()
-    }
-QPKGs.Essential.Size()
-    {
-    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
-        _obj_qpkgs_essential_size_=$2
-    else
-        echo -n $_obj_qpkgs_essential_size_
-    fi
-    }
-QPKGs.Essential.Init
+QPKGs.Dependent.Init
 
 QPKGs.Installable.Add()
     {
@@ -4246,91 +3839,6 @@ QPKGs.Names.Size()
     fi
     }
 QPKGs.Names.Init
-
-QPKGs.Optional.Add()
-    {
-    local array=(${1})
-    [[ ${#array[@]} -eq 0 ]] && return
-    local item=''
-    for item in "${array[@]:-}"; do
-        if [[ " ${_obj_qpkgs_optional_array_[*]+"${_obj_qpkgs_optional_array_[@]}"} " != *"$item"* ]]; then
-            _obj_qpkgs_optional_array_+=("$item")
-        fi
-    done
-    }
-QPKGs.Optional.Array()
-    {
-    echo -n "${_obj_qpkgs_optional_array_[@]+"${_obj_qpkgs_optional_array_[@]}"}"
-    }
-QPKGs.Optional.Count()
-    {
-    echo "${#_obj_qpkgs_optional_array_[@]}"
-    }
-QPKGs.Optional.Exist()
-    {
-    [[ ${_obj_qpkgs_optional_array_[*]:-} == *"$1"* ]]
-    }
-QPKGs.Optional.First()
-    {
-    echo "${_obj_qpkgs_optional_array_[0]}"
-    }
-QPKGs.Optional.GetItem()
-    {
-    local -i index="$1"
-    [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_optional_array_[@]} ]] && index=${#_obj_qpkgs_optional_array_[@]}
-    echo -n "${_obj_qpkgs_optional_array_[((index-1))]}"
-    }
-QPKGs.Optional.Init()
-    {
-    _obj_qpkgs_optional_size_=0
-    _obj_qpkgs_optional_array_=()
-    _obj_qpkgs_optional_array_index_=1
-    }
-QPKGs.Optional.IsAny()
-    {
-    [[ ${#_obj_qpkgs_optional_array_[@]} -gt 0 ]]
-    }
-QPKGs.Optional.IsNone()
-    {
-    [[ ${#_obj_qpkgs_optional_array_[@]} -eq 0 ]]
-    }
-QPKGs.Optional.List()
-    {
-    echo -n "${_obj_qpkgs_optional_array_[*]+"${_obj_qpkgs_optional_array_[@]}"}"
-    }
-QPKGs.Optional.ListCSV()
-    {
-    echo -n "${_obj_qpkgs_optional_array_[*]+"${_obj_qpkgs_optional_array_[@]}"}" | tr ' ' ','
-    }
-QPKGs.Optional.Remove()
-    {
-    local argument_array=(${1})
-    local temp_array=()
-    local argument=''
-    local item=''
-    local matched=false
-    for item in "${_obj_qpkgs_optional_array_[@]+"${_obj_qpkgs_optional_array_[@]}"}"; do
-        matched=false
-        for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
-            if [[ $argument = $item ]]; then
-                matched=true; break
-            fi
-        done
-        [[ $matched = false ]] && temp_array+=("$item")
-    done
-    _obj_qpkgs_optional_array_=("${temp_array[@]+"${temp_array[@]}"}")
-    [[ -z ${_obj_qpkgs_optional_array_[*]+"${_obj_qpkgs_optional_array_[@]}"} ]] && _obj_qpkgs_optional_array_=()
-    }
-QPKGs.Optional.Size()
-    {
-    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
-        _obj_qpkgs_optional_size_=$2
-    else
-        echo -n $_obj_qpkgs_optional_size_
-    fi
-    }
-QPKGs.Optional.Init
 
 QPKGs.Standalone.Add()
     {
@@ -9346,4 +8854,344 @@ QPKGs.SkUpgrade.Size()
     fi
     }
 QPKGs.SkUpgrade.Init
+
+IPKGs.ToDownload.Add()
+    {
+    local array=(${1})
+    [[ ${#array[@]} -eq 0 ]] && return
+    local item=''
+    for item in "${array[@]:-}"; do
+        if [[ " ${_obj_ipkgs_todownload_array_[*]+"${_obj_ipkgs_todownload_array_[@]}"} " != *"$item"* ]]; then
+            _obj_ipkgs_todownload_array_+=("$item")
+        fi
+    done
+    }
+IPKGs.ToDownload.Array()
+    {
+    echo -n "${_obj_ipkgs_todownload_array_[@]+"${_obj_ipkgs_todownload_array_[@]}"}"
+    }
+IPKGs.ToDownload.Count()
+    {
+    echo "${#_obj_ipkgs_todownload_array_[@]}"
+    }
+IPKGs.ToDownload.Exist()
+    {
+    [[ ${_obj_ipkgs_todownload_array_[*]:-} == *"$1"* ]]
+    }
+IPKGs.ToDownload.First()
+    {
+    echo "${_obj_ipkgs_todownload_array_[0]}"
+    }
+IPKGs.ToDownload.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_obj_ipkgs_todownload_array_[@]} ]] && index=${#_obj_ipkgs_todownload_array_[@]}
+    echo -n "${_obj_ipkgs_todownload_array_[((index-1))]}"
+    }
+IPKGs.ToDownload.Init()
+    {
+    _obj_ipkgs_todownload_size_=0
+    _obj_ipkgs_todownload_array_=()
+    _obj_ipkgs_todownload_array_index_=1
+    }
+IPKGs.ToDownload.IsAny()
+    {
+    [[ ${#_obj_ipkgs_todownload_array_[@]} -gt 0 ]]
+    }
+IPKGs.ToDownload.IsNone()
+    {
+    [[ ${#_obj_ipkgs_todownload_array_[@]} -eq 0 ]]
+    }
+IPKGs.ToDownload.List()
+    {
+    echo -n "${_obj_ipkgs_todownload_array_[*]+"${_obj_ipkgs_todownload_array_[@]}"}"
+    }
+IPKGs.ToDownload.ListCSV()
+    {
+    echo -n "${_obj_ipkgs_todownload_array_[*]+"${_obj_ipkgs_todownload_array_[@]}"}" | tr ' ' ','
+    }
+IPKGs.ToDownload.Remove()
+    {
+    local argument_array=(${1})
+    local temp_array=()
+    local argument=''
+    local item=''
+    local matched=false
+    for item in "${_obj_ipkgs_todownload_array_[@]+"${_obj_ipkgs_todownload_array_[@]}"}"; do
+        matched=false
+        for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
+            if [[ $argument = $item ]]; then
+                matched=true; break
+            fi
+        done
+        [[ $matched = false ]] && temp_array+=("$item")
+    done
+    _obj_ipkgs_todownload_array_=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${_obj_ipkgs_todownload_array_[*]+"${_obj_ipkgs_todownload_array_[@]}"} ]] && _obj_ipkgs_todownload_array_=()
+    }
+IPKGs.ToDownload.Size()
+    {
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+        _obj_ipkgs_todownload_size_=$2
+    else
+        echo -n $_obj_ipkgs_todownload_size_
+    fi
+    }
+IPKGs.ToDownload.Init
+
+IPKGs.ToInstall.Add()
+    {
+    local array=(${1})
+    [[ ${#array[@]} -eq 0 ]] && return
+    local item=''
+    for item in "${array[@]:-}"; do
+        if [[ " ${_obj_ipkgs_toinstall_array_[*]+"${_obj_ipkgs_toinstall_array_[@]}"} " != *"$item"* ]]; then
+            _obj_ipkgs_toinstall_array_+=("$item")
+        fi
+    done
+    }
+IPKGs.ToInstall.Array()
+    {
+    echo -n "${_obj_ipkgs_toinstall_array_[@]+"${_obj_ipkgs_toinstall_array_[@]}"}"
+    }
+IPKGs.ToInstall.Count()
+    {
+    echo "${#_obj_ipkgs_toinstall_array_[@]}"
+    }
+IPKGs.ToInstall.Exist()
+    {
+    [[ ${_obj_ipkgs_toinstall_array_[*]:-} == *"$1"* ]]
+    }
+IPKGs.ToInstall.First()
+    {
+    echo "${_obj_ipkgs_toinstall_array_[0]}"
+    }
+IPKGs.ToInstall.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_obj_ipkgs_toinstall_array_[@]} ]] && index=${#_obj_ipkgs_toinstall_array_[@]}
+    echo -n "${_obj_ipkgs_toinstall_array_[((index-1))]}"
+    }
+IPKGs.ToInstall.Init()
+    {
+    _obj_ipkgs_toinstall_size_=0
+    _obj_ipkgs_toinstall_array_=()
+    _obj_ipkgs_toinstall_array_index_=1
+    }
+IPKGs.ToInstall.IsAny()
+    {
+    [[ ${#_obj_ipkgs_toinstall_array_[@]} -gt 0 ]]
+    }
+IPKGs.ToInstall.IsNone()
+    {
+    [[ ${#_obj_ipkgs_toinstall_array_[@]} -eq 0 ]]
+    }
+IPKGs.ToInstall.List()
+    {
+    echo -n "${_obj_ipkgs_toinstall_array_[*]+"${_obj_ipkgs_toinstall_array_[@]}"}"
+    }
+IPKGs.ToInstall.ListCSV()
+    {
+    echo -n "${_obj_ipkgs_toinstall_array_[*]+"${_obj_ipkgs_toinstall_array_[@]}"}" | tr ' ' ','
+    }
+IPKGs.ToInstall.Remove()
+    {
+    local argument_array=(${1})
+    local temp_array=()
+    local argument=''
+    local item=''
+    local matched=false
+    for item in "${_obj_ipkgs_toinstall_array_[@]+"${_obj_ipkgs_toinstall_array_[@]}"}"; do
+        matched=false
+        for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
+            if [[ $argument = $item ]]; then
+                matched=true; break
+            fi
+        done
+        [[ $matched = false ]] && temp_array+=("$item")
+    done
+    _obj_ipkgs_toinstall_array_=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${_obj_ipkgs_toinstall_array_[*]+"${_obj_ipkgs_toinstall_array_[@]}"} ]] && _obj_ipkgs_toinstall_array_=()
+    }
+IPKGs.ToInstall.Size()
+    {
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+        _obj_ipkgs_toinstall_size_=$2
+    else
+        echo -n $_obj_ipkgs_toinstall_size_
+    fi
+    }
+IPKGs.ToInstall.Init
+
+IPKGs.ToUninstall.Add()
+    {
+    local array=(${1})
+    [[ ${#array[@]} -eq 0 ]] && return
+    local item=''
+    for item in "${array[@]:-}"; do
+        if [[ " ${_obj_ipkgs_touninstall_array_[*]+"${_obj_ipkgs_touninstall_array_[@]}"} " != *"$item"* ]]; then
+            _obj_ipkgs_touninstall_array_+=("$item")
+        fi
+    done
+    }
+IPKGs.ToUninstall.Array()
+    {
+    echo -n "${_obj_ipkgs_touninstall_array_[@]+"${_obj_ipkgs_touninstall_array_[@]}"}"
+    }
+IPKGs.ToUninstall.Count()
+    {
+    echo "${#_obj_ipkgs_touninstall_array_[@]}"
+    }
+IPKGs.ToUninstall.Exist()
+    {
+    [[ ${_obj_ipkgs_touninstall_array_[*]:-} == *"$1"* ]]
+    }
+IPKGs.ToUninstall.First()
+    {
+    echo "${_obj_ipkgs_touninstall_array_[0]}"
+    }
+IPKGs.ToUninstall.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_obj_ipkgs_touninstall_array_[@]} ]] && index=${#_obj_ipkgs_touninstall_array_[@]}
+    echo -n "${_obj_ipkgs_touninstall_array_[((index-1))]}"
+    }
+IPKGs.ToUninstall.Init()
+    {
+    _obj_ipkgs_touninstall_size_=0
+    _obj_ipkgs_touninstall_array_=()
+    _obj_ipkgs_touninstall_array_index_=1
+    }
+IPKGs.ToUninstall.IsAny()
+    {
+    [[ ${#_obj_ipkgs_touninstall_array_[@]} -gt 0 ]]
+    }
+IPKGs.ToUninstall.IsNone()
+    {
+    [[ ${#_obj_ipkgs_touninstall_array_[@]} -eq 0 ]]
+    }
+IPKGs.ToUninstall.List()
+    {
+    echo -n "${_obj_ipkgs_touninstall_array_[*]+"${_obj_ipkgs_touninstall_array_[@]}"}"
+    }
+IPKGs.ToUninstall.ListCSV()
+    {
+    echo -n "${_obj_ipkgs_touninstall_array_[*]+"${_obj_ipkgs_touninstall_array_[@]}"}" | tr ' ' ','
+    }
+IPKGs.ToUninstall.Remove()
+    {
+    local argument_array=(${1})
+    local temp_array=()
+    local argument=''
+    local item=''
+    local matched=false
+    for item in "${_obj_ipkgs_touninstall_array_[@]+"${_obj_ipkgs_touninstall_array_[@]}"}"; do
+        matched=false
+        for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
+            if [[ $argument = $item ]]; then
+                matched=true; break
+            fi
+        done
+        [[ $matched = false ]] && temp_array+=("$item")
+    done
+    _obj_ipkgs_touninstall_array_=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${_obj_ipkgs_touninstall_array_[*]+"${_obj_ipkgs_touninstall_array_[@]}"} ]] && _obj_ipkgs_touninstall_array_=()
+    }
+IPKGs.ToUninstall.Size()
+    {
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+        _obj_ipkgs_touninstall_size_=$2
+    else
+        echo -n $_obj_ipkgs_touninstall_size_
+    fi
+    }
+IPKGs.ToUninstall.Init
+
+IPKGs.ToUpgrade.Add()
+    {
+    local array=(${1})
+    [[ ${#array[@]} -eq 0 ]] && return
+    local item=''
+    for item in "${array[@]:-}"; do
+        if [[ " ${_obj_ipkgs_toupgrade_array_[*]+"${_obj_ipkgs_toupgrade_array_[@]}"} " != *"$item"* ]]; then
+            _obj_ipkgs_toupgrade_array_+=("$item")
+        fi
+    done
+    }
+IPKGs.ToUpgrade.Array()
+    {
+    echo -n "${_obj_ipkgs_toupgrade_array_[@]+"${_obj_ipkgs_toupgrade_array_[@]}"}"
+    }
+IPKGs.ToUpgrade.Count()
+    {
+    echo "${#_obj_ipkgs_toupgrade_array_[@]}"
+    }
+IPKGs.ToUpgrade.Exist()
+    {
+    [[ ${_obj_ipkgs_toupgrade_array_[*]:-} == *"$1"* ]]
+    }
+IPKGs.ToUpgrade.First()
+    {
+    echo "${_obj_ipkgs_toupgrade_array_[0]}"
+    }
+IPKGs.ToUpgrade.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_obj_ipkgs_toupgrade_array_[@]} ]] && index=${#_obj_ipkgs_toupgrade_array_[@]}
+    echo -n "${_obj_ipkgs_toupgrade_array_[((index-1))]}"
+    }
+IPKGs.ToUpgrade.Init()
+    {
+    _obj_ipkgs_toupgrade_size_=0
+    _obj_ipkgs_toupgrade_array_=()
+    _obj_ipkgs_toupgrade_array_index_=1
+    }
+IPKGs.ToUpgrade.IsAny()
+    {
+    [[ ${#_obj_ipkgs_toupgrade_array_[@]} -gt 0 ]]
+    }
+IPKGs.ToUpgrade.IsNone()
+    {
+    [[ ${#_obj_ipkgs_toupgrade_array_[@]} -eq 0 ]]
+    }
+IPKGs.ToUpgrade.List()
+    {
+    echo -n "${_obj_ipkgs_toupgrade_array_[*]+"${_obj_ipkgs_toupgrade_array_[@]}"}"
+    }
+IPKGs.ToUpgrade.ListCSV()
+    {
+    echo -n "${_obj_ipkgs_toupgrade_array_[*]+"${_obj_ipkgs_toupgrade_array_[@]}"}" | tr ' ' ','
+    }
+IPKGs.ToUpgrade.Remove()
+    {
+    local argument_array=(${1})
+    local temp_array=()
+    local argument=''
+    local item=''
+    local matched=false
+    for item in "${_obj_ipkgs_toupgrade_array_[@]+"${_obj_ipkgs_toupgrade_array_[@]}"}"; do
+        matched=false
+        for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
+            if [[ $argument = $item ]]; then
+                matched=true; break
+            fi
+        done
+        [[ $matched = false ]] && temp_array+=("$item")
+    done
+    _obj_ipkgs_toupgrade_array_=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${_obj_ipkgs_toupgrade_array_[*]+"${_obj_ipkgs_toupgrade_array_[@]}"} ]] && _obj_ipkgs_toupgrade_array_=()
+    }
+IPKGs.ToUpgrade.Size()
+    {
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+        _obj_ipkgs_toupgrade_size_=$2
+    else
+        echo -n $_obj_ipkgs_toupgrade_size_
+    fi
+    }
+IPKGs.ToUpgrade.Init
 
