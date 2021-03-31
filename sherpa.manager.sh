@@ -54,7 +54,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=210331
+    readonly MANAGER_SCRIPT_VERSION=210401
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
 
@@ -200,7 +200,7 @@ Session.Init()
     ArchivePriorSessionLogs
 
     if [[ $USER_ARGS_RAW == *"clean"* ]]; then
-        CleanArchivedSessionLogs
+        CleanArchivedLogs
         CleanWorkPath
         ArchiveActiveSessionLog
         CleanActiveSessionLog
@@ -235,9 +235,8 @@ Session.Init()
     readonly NAS_FIRMWARE=$($GETCFG_CMD System Version -f /etc/config/uLinux.conf)
     readonly NAS_BUILD=$($GETCFG_CMD System 'Build Number' -f /etc/config/uLinux.conf)
     readonly INSTALLED_RAM_KB=$($GREP_CMD MemTotal /proc/meminfo | cut -f2 -d':' | $SED_CMD 's|kB||;s| ||g')
-    readonly MIN_RAM_KB=1048576
     readonly LOG_TAIL_LINES=3000    # a full download and install of everything generates a session around 1600 lines, but include a bunch of opkg updates and it can get much longer.
-    readonly MIN_PYTHON_VER=390
+    readonly MIN_PYTHON_VER=392
     code_pointer=0
     pip3_cmd=/opt/bin/pip3
     previous_msg=' '
@@ -247,7 +246,6 @@ Session.Init()
 
     # supported package details - parallel arrays
     MANAGER_QPKG_NAME=()                    # internal QPKG name
-        MANAGER_QPKG_IS_STANDALONE=()       # true/false: this QPKG will run without any other packages
         MANAGER_QPKG_ARCH=()                # QPKG supports this architecture
         MANAGER_QPKG_MINRAM=()              # QPKG requires at-least this much RAM installed in kB. Use 'any' if any amount is OK.
         MANAGER_QPKG_VERSION=()             # QPKG version
@@ -263,7 +261,6 @@ Session.Init()
 
     # pseudo-alpha-sorted name order (i.e. disregard character-case and leading 'O')
     MANAGER_QPKG_NAME+=(ClamAV)
-        MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MINRAM+=(1578040)
         MANAGER_QPKG_VERSION+=(210331c)
@@ -278,7 +275,6 @@ Session.Init()
         MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     MANAGER_QPKG_NAME+=(Deluge-server)
-        MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(210331)
@@ -293,7 +289,6 @@ Session.Init()
         MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     MANAGER_QPKG_NAME+=(Deluge-web)
-        MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(210331)
@@ -308,7 +303,6 @@ Session.Init()
         MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     MANAGER_QPKG_NAME+=(duf)
-        MANAGER_QPKG_IS_STANDALONE+=(true)
         MANAGER_QPKG_ARCH+=(a64)
         MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(210330)
@@ -323,7 +317,6 @@ Session.Init()
         MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     MANAGER_QPKG_NAME+=(duf)
-        MANAGER_QPKG_IS_STANDALONE+=(true)
         MANAGER_QPKG_ARCH+=(x41)
         MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(210330)
@@ -338,7 +331,6 @@ Session.Init()
         MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     MANAGER_QPKG_NAME+=(duf)
-        MANAGER_QPKG_IS_STANDALONE+=(true)
         MANAGER_QPKG_ARCH+=(x86)
         MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(210330)
@@ -353,7 +345,6 @@ Session.Init()
         MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     MANAGER_QPKG_NAME+=(duf)
-        MANAGER_QPKG_IS_STANDALONE+=(true)
         MANAGER_QPKG_ARCH+=(x64)
         MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(210330)
@@ -368,7 +359,6 @@ Session.Init()
         MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     MANAGER_QPKG_NAME+=(Entware)
-        MANAGER_QPKG_IS_STANDALONE+=(true)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(1.03)
@@ -376,14 +366,13 @@ Session.Init()
         MANAGER_QPKG_MD5+=(da2d9f8d3442dd665ce04b9b932c9d8e)
         MANAGER_QPKG_DESC+=("provides the 'opkg' command: the OpenWRT package manager")
         MANAGER_QPKG_ABBRVS+=('ew ent opkg entware')
-        MANAGER_QPKG_DEPENDS_ON+=(none)
+        MANAGER_QPKG_DEPENDS_ON+=('')
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
         MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     MANAGER_QPKG_NAME+=(HideThatBanner)
-        MANAGER_QPKG_IS_STANDALONE+=(true)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(201219b)
@@ -398,7 +387,6 @@ Session.Init()
         MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     MANAGER_QPKG_NAME+=(LazyLibrarian)
-        MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(210318)
@@ -413,7 +401,6 @@ Session.Init()
         MANAGER_QPKG_UPDATE_ON_RESTART+=(true)
 
     MANAGER_QPKG_NAME+=(OMedusa)
-        MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(210325)
@@ -428,7 +415,6 @@ Session.Init()
         MANAGER_QPKG_UPDATE_ON_RESTART+=(true)
 
     MANAGER_QPKG_NAME+=(Mylar3)
-        MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(210318)
@@ -443,7 +429,6 @@ Session.Init()
         MANAGER_QPKG_UPDATE_ON_RESTART+=(true)
 
     MANAGER_QPKG_NAME+=(NZBGet)
-        MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(210331)
@@ -458,7 +443,6 @@ Session.Init()
         MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     MANAGER_QPKG_NAME+=(nzbToMedia)
-        MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(210327)
@@ -473,7 +457,6 @@ Session.Init()
         MANAGER_QPKG_UPDATE_ON_RESTART+=(true)
 
     MANAGER_QPKG_NAME+=(Par2)
-        MANAGER_QPKG_IS_STANDALONE+=(true)
         MANAGER_QPKG_ARCH+=(x86)
         MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(0.8.1.0)
@@ -481,14 +464,13 @@ Session.Init()
         MANAGER_QPKG_MD5+=(996ffb92d774eb01968003debc171e91)
         MANAGER_QPKG_DESC+=('create and use PAR2 files to detect damage in data files and repair them if necessary')
         MANAGER_QPKG_ABBRVS+=('par par2')
-        MANAGER_QPKG_DEPENDS_ON+=(none)
+        MANAGER_QPKG_DEPENDS_ON+=('')
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
         MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
         MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     MANAGER_QPKG_NAME+=(Par2)
-        MANAGER_QPKG_IS_STANDALONE+=(true)
         MANAGER_QPKG_ARCH+=(x64)
         MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(0.8.1.0)
@@ -496,14 +478,13 @@ Session.Init()
         MANAGER_QPKG_MD5+=(520472cc87d301704f975f6eb9948e38)
         MANAGER_QPKG_DESC+=('')
         MANAGER_QPKG_ABBRVS+=('par par2')
-        MANAGER_QPKG_DEPENDS_ON+=(none)
+        MANAGER_QPKG_DEPENDS_ON+=('')
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
         MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
         MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     MANAGER_QPKG_NAME+=(Par2)
-        MANAGER_QPKG_IS_STANDALONE+=(true)
         MANAGER_QPKG_ARCH+=(x31)
         MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(0.8.1.0)
@@ -511,14 +492,13 @@ Session.Init()
         MANAGER_QPKG_MD5+=(ce8af2e009eb87733c3b855e41a94f8e)
         MANAGER_QPKG_DESC+=('')
         MANAGER_QPKG_ABBRVS+=('par par2')
-        MANAGER_QPKG_DEPENDS_ON+=(none)
+        MANAGER_QPKG_DEPENDS_ON+=('')
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
         MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
         MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     MANAGER_QPKG_NAME+=(Par2)
-        MANAGER_QPKG_IS_STANDALONE+=(true)
         MANAGER_QPKG_ARCH+=(x41)
         MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(0.8.1.0)
@@ -526,14 +506,13 @@ Session.Init()
         MANAGER_QPKG_MD5+=(8516e45e704875cdd2cd2bb315c4e1e6)
         MANAGER_QPKG_DESC+=('')
         MANAGER_QPKG_ABBRVS+=('par par2')
-        MANAGER_QPKG_DEPENDS_ON+=(none)
+        MANAGER_QPKG_DEPENDS_ON+=('')
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
         MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
         MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     MANAGER_QPKG_NAME+=(Par2)
-        MANAGER_QPKG_IS_STANDALONE+=(true)
         MANAGER_QPKG_ARCH+=(a64)
         MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(0.8.1.0)
@@ -541,14 +520,13 @@ Session.Init()
         MANAGER_QPKG_MD5+=(4d8e99f97936a163e411aa8765595f7a)
         MANAGER_QPKG_DESC+=('')
         MANAGER_QPKG_ABBRVS+=('par par2')
-        MANAGER_QPKG_DEPENDS_ON+=(none)
+        MANAGER_QPKG_DEPENDS_ON+=('')
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
         MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
         MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
 #     MANAGER_QPKG_NAME+=(Par2)
-#         MANAGER_QPKG_IS_STANDALONE+=(false)
 #         MANAGER_QPKG_ARCH+=(none)
 #         MANAGER_QPKG_MINRAM+=(any)
 #         MANAGER_QPKG_VERSION+=(0.8.1-1)
@@ -563,7 +541,6 @@ Session.Init()
 #         MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 #
     MANAGER_QPKG_NAME+=(RunLast)
-        MANAGER_QPKG_IS_STANDALONE+=(true)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(210328)
@@ -578,7 +555,6 @@ Session.Init()
         MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     MANAGER_QPKG_NAME+=(SABnzbd)
-        MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(210318)
@@ -593,7 +569,6 @@ Session.Init()
         MANAGER_QPKG_UPDATE_ON_RESTART+=(true)
 
     MANAGER_QPKG_NAME+=(sha3sum)
-        MANAGER_QPKG_IS_STANDALONE+=(true)
         MANAGER_QPKG_ARCH+=(x86)
         MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(201114)
@@ -608,7 +583,6 @@ Session.Init()
         MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     MANAGER_QPKG_NAME+=(sha3sum)
-        MANAGER_QPKG_IS_STANDALONE+=(true)
         MANAGER_QPKG_ARCH+=(x64)
         MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(201114)
@@ -623,7 +597,6 @@ Session.Init()
         MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     MANAGER_QPKG_NAME+=($PROJECT_NAME)
-        MANAGER_QPKG_IS_STANDALONE+=(true)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(210328)
@@ -638,7 +611,6 @@ Session.Init()
         MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     MANAGER_QPKG_NAME+=(SickChill)
-        MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(210326)
@@ -653,7 +625,6 @@ Session.Init()
         MANAGER_QPKG_UPDATE_ON_RESTART+=(true)
 
     MANAGER_QPKG_NAME+=(OSickGear)
-        MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(210318)
@@ -668,7 +639,6 @@ Session.Init()
         MANAGER_QPKG_UPDATE_ON_RESTART+=(true)
 
     MANAGER_QPKG_NAME+=(SortMyQPKGs)
-        MANAGER_QPKG_IS_STANDALONE+=(true)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(210328)
@@ -683,7 +653,6 @@ Session.Init()
         MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     MANAGER_QPKG_NAME+=(OTransmission)
-        MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(210331b)
@@ -699,7 +668,6 @@ Session.Init()
 
     # package arrays are now full, so lock them
     readonly MANAGER_QPKG_NAME
-        readonly MANAGER_QPKG_IS_STANDALONE
         readonly MANAGER_QPKG_ARCH
         readonly MANAGER_QPKG_MINRAM
         readonly MANAGER_QPKG_VERSION
@@ -715,10 +683,10 @@ Session.Init()
 
     QPKGs.Names.Add "${MANAGER_QPKG_NAME[*]}"
 
+    readonly MANAGER_BASE_QPKG_CONFLICTS='Optware Optware-NG TarMT Python QPython2 Python3 QPython3'
     readonly MANAGER_BASE_IPKGS_ADD='findutils grep less sed'
-    readonly MANAGER_COMMON_IPKGS_ADD='ca-certificates gcc git git-http nano python3-dev python3-pip python3-setuptools'
-    readonly MANAGER_COMMON_PIPS_ADD='apprise apscheduler beautifulsoup4 cfscrape cheetah3 cheroot!=8.4.4 cherrypy configobj feedparser portend pygithub pyopenssl python-levenshtein python-magic random_user_agent sabyenc3 simplejson slugify'
-    readonly MANAGER_COMMON_QPKG_CONFLICTS='Optware Optware-NG TarMT Python QPython2 Python3 QPython3'
+    readonly MANAGER_SHARED_IPKGS_ADD='ca-certificates gcc git git-http nano python3-dev python3-pip python3-setuptools'
+    readonly MANAGER_SHARED_PIPS_ADD='apprise apscheduler beautifulsoup4 cfscrape cheetah3 cheroot!=8.4.4 cherrypy configobj feedparser portend pygithub pyopenssl python-levenshtein python-magic random_user_agent sabyenc3 simplejson slugify'
 
     QPKGs.StandaloneDependent.Build
 
@@ -726,7 +694,7 @@ Session.Init()
     if [[ -z $USER_ARGS_RAW ]]; then
         Opts.Help.Basic.Set
         QPKGs.SkipProcessing.Set
-        DisableDebuggingToArchiveAndFile
+        DisableDebugToArchiveAndFile
     else
         ParseArguments
     fi
@@ -1055,7 +1023,7 @@ Tiers.Processor()
 
                 Tier.Processor Restore false "$tier" QPKG ToRestore forward 'restore configuration for' 'restoring configuration for' 'configuration restored for' long
 
-                    if [[ $tier == standalone ]]; then
+                    if [[ $tier = standalone ]]; then
                         # check for standalone packages that require starting due to dependents being reinstalled
                         for package in $(QPKGs.ToReinstall.Array); do
                             for prospect in $(QPKG.Get.Standalones "$package"); do
@@ -1202,12 +1170,12 @@ Tier.Processor()
     #   $2 = forced operation?              e.g. 'true', 'false'
     #   $3 = $TIER                          e.g. 'standalone', 'dependent', 'addon', 'all'
     #   $4 = $PACKAGE_TYPE                  e.g. 'QPKG', 'IPKG', 'PIP'
-    #   $5 = $TARGET_OBJECT_NAME (dependent) e.g. 'ToStart', 'ToStop'...
+    #   $5 = $TARGET_OBJECT_NAME (optional) e.g. 'ToStart', 'ToStop'...
     #   $6 = $PROCESSING_DIRECTION          e.g. 'forward', 'backward'
     #   $7 = $ACTION_INTRANSITIVE           e.g. 'start'...
     #   $8 = $ACTION_PRESENT                e.g. 'starting'...
     #   $9 = $ACTION_PAST                   e.g. 'started'...
-    #  $10 = $RUNTIME (dependent)            e.g. 'long'
+    #  $10 = $RUNTIME (optional)            e.g. 'long'
 
     DebugFuncEntry
 
@@ -1274,7 +1242,7 @@ Tier.Processor()
             fi
 
             if [[ $PROCESSING_DIRECTION = forward ]]; then
-                for package in ${target_packages[@]}; do                # process list forwards
+                for package in "${target_packages[@]}"; do                # process list forwards
                     ShowAsOperationProgress "$TIER" "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
 
                     $target_function.$TARGET_OPERATION "$package" "$forced_operation"
@@ -2013,11 +1981,6 @@ ArgumentSuggestions()
                     DisplayAsProjectSyntaxExample 'to backup all installed package configurations, use' 'backup all'
                     Opts.Help.Basic.Clear
                     ;;
-                standalone)
-                    Display
-                    DisplayAsProjectSyntaxExample "please provide an $(FormatAsHelpAction) before 'standalone' like" 'start standalone'
-                    Opts.Help.Basic.Clear
-                    ;;
                 dependent)
                     Display
                     DisplayAsProjectSyntaxExample "please provide an $(FormatAsHelpAction) before 'dependent' like" 'start dependent'
@@ -2031,6 +1994,11 @@ ArgumentSuggestions()
                 all-restore|restore-all)
                     Display
                     DisplayAsProjectSyntaxExample 'to restore all installed package configurations, use' 'restore all'
+                    Opts.Help.Basic.Clear
+                    ;;
+                standalone)
+                    Display
+                    DisplayAsProjectSyntaxExample "please provide an $(FormatAsHelpAction) before 'standalone' like" 'start standalone'
                     Opts.Help.Basic.Clear
                     ;;
                 all-start|start-all)
@@ -2147,7 +2115,7 @@ ListEnvironment()
 
     }
 
-CleanArchivedSessionLogs()
+CleanArchivedLogs()
     {
 
     if [[ -n $LOGS_PATH && -d $LOGS_PATH ]]; then
@@ -2500,7 +2468,7 @@ IPKGs.Install()
     IPKGs.ToDownload.Init
 
     IPKGs.ToInstall.Add "$MANAGER_BASE_IPKGS_ADD"
-    IPKGs.ToInstall.Add "$MANAGER_COMMON_IPKGS_ADD"
+    IPKGs.ToInstall.Add "$MANAGER_SHARED_IPKGS_ADD"
 
     if Opts.Apps.All.Install.IsSet; then
         for index in "${!MANAGER_QPKG_NAME[@]}"; do
@@ -2627,7 +2595,7 @@ PIPs.Install()
 
     ModPathToEntware
 
-    [[ -n ${MANAGER_COMMON_PIPS_ADD// /} ]] && exec_cmd="$pip3_cmd install $MANAGER_COMMON_PIPS_ADD --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
+    [[ -n ${MANAGER_SHARED_PIPS_ADD// /} ]] && exec_cmd="$pip3_cmd install $MANAGER_SHARED_PIPS_ADD --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
     ((total_count++))
 
     ShowAsOperationProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
@@ -3021,6 +2989,7 @@ DisplayAsHelpTitleHighlighted()
     {
 
     # $1 = text (will be capitalised)
+
     # shellcheck disable=2059
     printf "$(ColourTextBrightOrange "* %s\n")" "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}"
 
@@ -3029,9 +2998,10 @@ DisplayAsHelpTitleHighlighted()
 SmartCR()
     {
 
+    # reset cursor to start-of-line, erasing previous characters
+
     [[ $(type -t Session.Debug.ToScreen.Init) = function ]] && Session.Debug.ToScreen.IsSet && return
 
-    # reset cursor to start-of-line, erasing previous characters
     echo -en "\033[1K\r"
 
     }
@@ -3077,7 +3047,7 @@ Help.Basic.Example.Show()
 Help.Actions.Show()
     {
 
-    DisableDebuggingToArchiveAndFile
+    DisableDebugToArchiveAndFile
     Help.Basic.Show
     DisplayLineSpaceIfNoneAlready
     DisplayAsHelpTitle "$(FormatAsHelpAction) usage examples:"
@@ -3106,7 +3076,7 @@ Help.Actions.Show()
 Help.ActionsAll.Show()
     {
 
-    DisableDebuggingToArchiveAndFile
+    DisableDebugToArchiveAndFile
     Help.Basic.Show
     DisplayLineSpaceIfNoneAlready
     Display "* These $(FormatAsHelpAction)s apply to all installed packages. If $(FormatAsHelpAction) is 'install all' then all available packages will be installed."
@@ -3139,7 +3109,7 @@ Help.Packages.Show()
     local package=''
     local tier=''
 
-    DisableDebuggingToArchiveAndFile
+    DisableDebugToArchiveAndFile
     Help.Basic.Show
     Display
     DisplayAsHelpTitle "One-or-more $(FormatAsHelpPackages) may be specified at-once"
@@ -3164,7 +3134,7 @@ Help.Packages.Show()
 Help.Options.Show()
     {
 
-    DisableDebuggingToArchiveAndFile
+    DisableDebugToArchiveAndFile
     Help.Basic.Show
     DisplayLineSpaceIfNoneAlready
     DisplayAsHelpTitle "$(FormatAsHelpOptions) usage examples:"
@@ -3180,7 +3150,7 @@ Help.Options.Show()
 Help.Problems.Show()
     {
 
-    DisableDebuggingToArchiveAndFile
+    DisableDebugToArchiveAndFile
     Help.Basic.Show
     DisplayLineSpaceIfNoneAlready
     DisplayAsHelpTitle 'usage examples when dealing with problems:'
@@ -3222,7 +3192,7 @@ Help.Issue.Show()
 Help.Tips.Show()
     {
 
-    DisableDebuggingToArchiveAndFile
+    DisableDebugToArchiveAndFile
     Help.Basic.Show
     DisplayLineSpaceIfNoneAlready
     DisplayAsHelpTitle 'helpful tips and shortcuts:'
@@ -3246,7 +3216,7 @@ Help.PackageAbbreviations.Show()
     local tier=''
     local abs=''
 
-    DisableDebuggingToArchiveAndFile
+    DisableDebugToArchiveAndFile
     Help.Basic.Show
     Display
     DisplayAsHelpTitle "$(FormatAsScriptTitle) recognises various abbreviations as $(FormatAsHelpPackages)"
@@ -3283,7 +3253,7 @@ Log.All.View()
 
     # view the entire archived sessions log
 
-    DisableDebuggingToArchiveAndFile
+    DisableDebugToArchiveAndFile
 
     if [[ -e $SESSION_ARCHIVE_PATHFILE ]]; then
         if [[ -e /opt/bin/less ]]; then
@@ -3306,7 +3276,7 @@ Log.Last.View()
 
     # view only the last session log
 
-    DisableDebuggingToArchiveAndFile
+    DisableDebugToArchiveAndFile
     ExtractPreviousSessionFromTail
 
     if [[ -e $SESSION_LAST_PATHFILE ]]; then
@@ -3330,7 +3300,7 @@ Log.Tail.View()
 
     # view only the last session log
 
-    DisableDebuggingToArchiveAndFile
+    DisableDebugToArchiveAndFile
     ExtractTailFromLog
 
     if [[ -e $SESSION_TAIL_PATHFILE ]]; then
@@ -3352,7 +3322,7 @@ Log.Tail.View()
 Log.All.Paste()
     {
 
-    DisableDebuggingToArchiveAndFile
+    DisableDebugToArchiveAndFile
 
     if [[ -e $SESSION_ARCHIVE_PATHFILE ]]; then
         if Quiz "Press 'Y' to post your ENTIRE $(FormatAsScriptTitle) log to a public pastebin, or any other key to abort"; then
@@ -3382,7 +3352,7 @@ Log.All.Paste()
 Log.Last.Paste()
     {
 
-    DisableDebuggingToArchiveAndFile
+    DisableDebugToArchiveAndFile
     ExtractPreviousSessionFromTail
 
     if [[ -e $SESSION_LAST_PATHFILE ]]; then
@@ -3413,7 +3383,7 @@ Log.Last.Paste()
 Log.Tail.Paste()
     {
 
-    DisableDebuggingToArchiveAndFile
+    DisableDebugToArchiveAndFile
     ExtractTailFromLog
 
     if [[ -e $SESSION_TAIL_PATHFILE ]]; then
@@ -3444,7 +3414,7 @@ Log.Tail.Paste()
 GetLogSessionStartLine()
     {
 
-    # $1 = how many sessions back? (dependent) default = 1
+    # $1 = how many sessions back? (optional) default = 1
 
     local -i linenum=$(($($GREP_CMD -n 'SCRIPT:.*started:' "$SESSION_TAIL_PATHFILE" | $TAIL_CMD -n${1:-1} | $HEAD_CMD -n1 | cut -d':' -f1)-1))
     [[ $linenum -lt 1 ]] && linenum=1
@@ -3455,7 +3425,7 @@ GetLogSessionStartLine()
 GetLogSessionFinishLine()
     {
 
-    # $1 = how many sessions back? (dependent) default = 1
+    # $1 = how many sessions back? (optional) default = 1
 
     local -i linenum=$(($($GREP_CMD -n 'SCRIPT:.*finished:' "$SESSION_TAIL_PATHFILE" | $TAIL_CMD -n${1:-1} | cut -d':' -f1)+2))
     [[ $linenum -eq 2 ]] && linenum=3
@@ -3539,7 +3509,7 @@ ExtractTailFromLog()
 ShowVersions()
     {
 
-    DisableDebuggingToArchiveAndFile
+    DisableDebugToArchiveAndFile
 
     Display "manager: ${MANAGER_SCRIPT_VERSION:-unknown}"
     Display "loader: ${LOADER_SCRIPT_VERSION:-unknown}"
@@ -3596,7 +3566,7 @@ QPKGs.NewVersions.Show()
 QPKGs.Conflicts.Check()
     {
 
-    for package in ${MANAGER_COMMON_QPKG_CONFLICTS[@]}; do
+    for package in "${MANAGER_BASE_QPKG_CONFLICTS[@]}"; do
         if QPKG.Enabled "$package"; then
             ShowAsEror "'$package' is installed and enabled. One-or-more $(FormatAsScriptTitle) applications are incompatible with this package"
             return 1
@@ -3662,7 +3632,7 @@ QPKGs.StandaloneDependent.Build()
     local -i index=0
 
     for index in "${!MANAGER_QPKG_NAME[@]}"; do
-        if [[ ${MANAGER_QPKG_IS_STANDALONE[$index]} = true ]]; then
+        if [[ -z ${MANAGER_QPKG_DEPENDS_ON[$index]} ]]; then
             QPKGs.Standalone.Add "${MANAGER_QPKG_NAME[$index]}"
         else
             QPKGs.Dependent.Add "${MANAGER_QPKG_NAME[$index]}"
@@ -3792,7 +3762,7 @@ QPKGs.All.Show()
 
     local package=''
 
-    DisableDebuggingToArchiveAndFile
+    DisableDebugToArchiveAndFile
 
     for package in $(QPKGs.Names.Array); do
         Display "$package"
@@ -3810,7 +3780,7 @@ QPKGs.Backups.Show()
     local highlight_older_than='2 weeks ago'
     local format=''
 
-    DisableDebuggingToArchiveAndFile
+    DisableDebugToArchiveAndFile
     SmartCR
     DisplayLineSpaceIfNoneAlready
     DisplayAsHelpTitle "the location for $(FormatAsScriptTitle) backups is: $BACKUP_PATH"
@@ -3897,7 +3867,7 @@ QPKGs.Installed.Show()
 
     local package=''
 
-    DisableDebuggingToArchiveAndFile
+    DisableDebugToArchiveAndFile
 
     for package in $(QPKGs.Installed.Array); do
         Display "$package"
@@ -3912,7 +3882,7 @@ QPKGs.Installable.Show()
 
     local package=''
 
-    DisableDebuggingToArchiveAndFile
+    DisableDebugToArchiveAndFile
 
     for package in $(QPKGs.Installable.Array); do
         Display "$package"
@@ -3927,7 +3897,7 @@ QPKGs.NotInstalled.Show()
 
     local package=''
 
-    DisableDebuggingToArchiveAndFile
+    DisableDebugToArchiveAndFile
 
     for package in $(QPKGs.NotInstalled.Array); do
         Display "$package"
@@ -3942,7 +3912,7 @@ QPKGs.Started.Show()
 
     local package=''
 
-    DisableDebuggingToArchiveAndFile
+    DisableDebugToArchiveAndFile
 
     for package in $(QPKGs.Started.Array); do
         Display "$package"
@@ -3957,7 +3927,7 @@ QPKGs.Stopped.Show()
 
     local package=''
 
-    DisableDebuggingToArchiveAndFile
+    DisableDebugToArchiveAndFile
 
     for package in $(QPKGs.Stopped.Array); do
         Display "$package"
@@ -3972,7 +3942,7 @@ QPKGs.Upgradable.Show()
 
     local package=''
 
-    DisableDebuggingToArchiveAndFile
+    DisableDebugToArchiveAndFile
 
     for package in $(QPKGs.Upgradable.Array); do
         Display "$package"
@@ -3987,7 +3957,7 @@ QPKGs.Standalone.Show()
 
     local package=''
 
-    DisableDebuggingToArchiveAndFile
+    DisableDebugToArchiveAndFile
 
     for package in $(QPKGs.Standalone.Array); do
         Display "$package"
@@ -4002,7 +3972,7 @@ QPKGs.Dependent.Show()
 
     local package=''
 
-    DisableDebuggingToArchiveAndFile
+    DisableDebugToArchiveAndFile
 
     for package in $(QPKGs.Dependent.Array); do
         Display "$package"
@@ -4024,6 +3994,8 @@ MarkOpAsDone()
     QPKGs.To"$(tr 'a-z' 'A-Z' <<< "${2:0:1}")${2:1}".Remove "$1"
     QPKGs.Is"$(tr 'a-z' 'A-Z' <<< "${2:0:1}")${2:1}".Add "$1"
 
+    return 0
+
     }
 
 MarkOpAsError()
@@ -4034,7 +4006,7 @@ MarkOpAsError()
     # input:
     #   $1 = package name
     #   $2 = action
-    #   $3 = reason (dependent)
+    #   $3 = reason (optional)
 
     local message="failing request to $2 $(FormatAsPackageName "$1")"
 
@@ -4042,6 +4014,8 @@ MarkOpAsError()
     DebugAsError "$message" >&2
     QPKGs.To"$(tr 'a-z' 'A-Z' <<< "${2:0:1}")${2:1}".Remove "$1"
     QPKGs.Er"$(tr 'a-z' 'A-Z' <<< "${2:0:1}")${2:1}".Add "$1"
+
+    return 0
 
     }
 
@@ -4054,7 +4028,7 @@ MarkOpAsSkipped()
     #   $1 = show this onscreen: 'show'/'hide'
     #   $2 = package name
     #   $3 = action
-    #   $4 = reason (dependent)
+    #   $4 = reason (optional)
 
     local message="ignoring request to $3 $(FormatAsPackageName "$2")"
     [[ -n ${4:-} ]] && message+=" as $4"
@@ -4067,6 +4041,8 @@ MarkOpAsSkipped()
 
     QPKGs.To"$(tr 'a-z' 'A-Z' <<< "${3:0:1}")${3:1}".Remove "$2"
     QPKGs.Sk"$(tr 'a-z' 'A-Z' <<< "${3:0:1}")${3:1}".Add "$2"
+
+    return 0
 
     }
 
@@ -4162,6 +4138,8 @@ CalcEntwareType()
         [[ $ENTWARE_VER = none ]] && DebugAsWarn "$(FormatAsPackageName Entware) appears to be installed but is not visible"
     fi
 
+    return 0
+
     }
 
 ModPathToEntware()
@@ -4249,7 +4227,7 @@ ReleaseLockFile()
 
     }
 
-DisableDebuggingToArchiveAndFile()
+DisableDebugToArchiveAndFile()
     {
 
     Session.Debug.ToArchive.Clear
@@ -4362,6 +4340,8 @@ QPKG.StoreServiceStatus()
             DebugAsWarn "$(FormatAsPackageName "$PACKAGE_NAME") service status is incorrect"
             ;;
     esac
+
+    return 0
 
     }
 
@@ -5054,11 +5034,6 @@ QPKG.Start()
         DebugFuncExit 2; return
     fi
 
-    if [[ $PACKAGE_NAME = "$PROJECT_NAME" ]]; then
-        MarkOpAsSkipped show "$PACKAGE_NAME" start "it's already running"
-        DebugFuncExit 2; return
-    fi
-
     local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$START_LOG_FILE
 
     QPKG.Enable "$PACKAGE_NAME"
@@ -5559,9 +5534,9 @@ RunAndLog()
     # input:
     #   $1 = commandstring to execute
     #   $2 = pathfile to record stdout and stderr for commandstring
-    #   $3 = 'log:failure-only' (dependent) - if specified, stdout & stderr are only recorded in the specified log if the command failed
+    #   $3 = 'log:failure-only' (optional) - if specified, stdout & stderr are only recorded in the specified log if the command failed
     #                                      - if unspecified, stdout & stderr is always recorded
-    #   $4 = e.g. '10' (dependent) - an additional acceptable result code. Any other result from command (other than zero) will be considered a failure
+    #   $4 = e.g. '10' (optional) - an additional acceptable result code. Any other result from command (other than zero) will be considered a failure
 
     # output:
     #   stdout = commandstring stdout and stderr if script is in 'debug' mode
@@ -6189,13 +6164,13 @@ ShowAsOperationProgress()
 
     # show QPKG operations progress as percent-complete and a fraction of the total
 
-    # $1 = tier (dependent)
+    # $1 = tier (optional)
     # $2 = package type: 'QPKG', 'IPKG', 'PIP', etc ...
     # $3 = pass count
     # $4 = fail count
     # $5 = total count
     # $6 = verb (present)
-    # $7 = 'long' (dependent)
+    # $7 = 'long' (optional)
 
     if [[ -n $1 && $1 != all ]]; then
         local tier=" $1"
@@ -6237,13 +6212,13 @@ ShowAsOperationProgress()
 ShowAsOperationResult()
     {
 
-    # $1 = tier (dependent)
+    # $1 = tier (optional)
     # $2 = package type: 'QPKG', 'IPKG', 'PIP', etc ...
     # $3 = pass count
     # $4 = fail count
     # $5 = total count
     # $6 = verb (past)
-    # $7 = 'long' (dependent)
+    # $7 = 'long' (optional)
 
     if [[ -n $1 && $1 != all ]]; then
         local tier=" $1"
@@ -6465,7 +6440,7 @@ CTRL_C_Captured()
 AddListObj()
     {
 
-    # $1: object name to create
+    # $1 = object name to create
 
     local public_function_name=${1:?no object name supplied}
     local safe_function_name="$(tr 'A-Z' 'a-z' <<< "${public_function_name//[.-]/_}")"
@@ -6567,7 +6542,7 @@ echo $public_function_name'.Add()
 AddFlagObj()
     {
 
-    # $1: object name to create
+    # $1 = object name to create
 
     local public_function_name=${1:?no object name supplied}
     local safe_function_name="$(tr 'A-Z' 'a-z' <<< "${public_function_name//[.-]/_}")"
@@ -6668,7 +6643,7 @@ CompileObjects()
 
     # builds a new [compiled.objects] file in the work path
 
-    # $1 = 'hash' (dependent) - if specified, only return the internal checksum
+    # $1 = 'hash' (optional) - if specified, only return the internal checksum
 
     local -r COMPILED_OBJECTS_HASH=e540f9ecfea768b455432c9ec2dc24b3
     local array_name=''
