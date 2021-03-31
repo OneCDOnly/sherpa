@@ -266,9 +266,9 @@ Session.Init()
         MANAGER_QPKG_IS_STANDALONE+=(false)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MINRAM+=(1578040)
-        MANAGER_QPKG_VERSION+=(210331)
+        MANAGER_QPKG_VERSION+=(210331b)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
-        MANAGER_QPKG_MD5+=(01b9fd3f800d3b50e01bc47c9b778997)
+        MANAGER_QPKG_MD5+=(aef0633b666a671a11373335f265680e)
         MANAGER_QPKG_DESC+=('replacement for the QTS built-in ClamAV (requires a minimum of 1.5GB RAM)')
         MANAGER_QPKG_ABBRVS+=('clam clamscan freshclam clamav')
         MANAGER_QPKG_DEPENDS_ON+=(Entware)
@@ -4931,6 +4931,11 @@ QPKG.Uninstall()
         DebugFuncExit 2; return
     fi
 
+    if [[ $PACKAGE_NAME = "$PROJECT_NAME" ]]; then
+        MarkOpAsSkipped show "$PACKAGE_NAME" uninstall "it's needed here"
+        DebugFuncExit 2; return
+    fi
+
     local -r QPKG_UNINSTALLER_PATHFILE=$($GETCFG_CMD "$PACKAGE_NAME" Install_Path -f /etc/config/qpkg.conf)/.uninstall.sh
     local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$UNINSTALL_LOG_FILE
 
@@ -4985,6 +4990,11 @@ QPKG.Restart()
     if QPKG.NotInstalled "$PACKAGE_NAME"; then
         MarkOpAsSkipped show "$PACKAGE_NAME" restart "it's not installed"
         MarkStateAsNotInstalled "$PACKAGE_NAME"
+        DebugFuncExit 2; return
+    fi
+
+    if [[ $PACKAGE_NAME = "$PROJECT_NAME" ]]; then
+        MarkOpAsSkipped show "$PACKAGE_NAME" restart "it's needed here"
         DebugFuncExit 2; return
     fi
 
@@ -5044,6 +5054,11 @@ QPKG.Start()
         DebugFuncExit 2; return
     fi
 
+    if [[ $PACKAGE_NAME = "$PROJECT_NAME" ]]; then
+        MarkOpAsSkipped show "$PACKAGE_NAME" start "it's already running"
+        DebugFuncExit 2; return
+    fi
+
     local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$START_LOG_FILE
 
     QPKG.Enable "$PACKAGE_NAME"
@@ -5099,6 +5114,11 @@ QPKG.Stop()
 
     if QPKG.NotEnabled "$PACKAGE_NAME"; then
         MarkOpAsSkipped show "$PACKAGE_NAME" stop "it's already stopped"
+        DebugFuncExit 2; return
+    fi
+
+    if [[ $PACKAGE_NAME = "$PROJECT_NAME" ]]; then
+        MarkOpAsSkipped show "$PACKAGE_NAME" stop "it's needed here"
         DebugFuncExit 2; return
     fi
 
