@@ -158,7 +158,6 @@ StopQPKG()
     # this function is customised depending on the requirements of the packaged application
 
     IsError && return
-    WaitForGit || return
 
     if [[ -e $BACKUP_SERVICE_PATHFILE ]]; then
         mv "$BACKUP_SERVICE_PATHFILE" "$TARGET_SERVICE_PATHFILE"
@@ -374,7 +373,7 @@ PullGitRepo()
     if [[ ! -d $QPKG_GIT_PATH/.git ]]; then
         ExecuteAndLog "clone $(FormatAsPackageName "$1") from remote repository" "cd /tmp; /opt/bin/git clone --branch $3 $DEPTH -c advice.detachedHead=false $GIT_HTTPS_URL $QPKG_GIT_PATH || /opt/bin/git clone --branch $3 $DEPTH -c advice.detachedHead=false $GIT_HTTP_URL $QPKG_GIT_PATH"
     else
-        ExecuteAndLog "update $(FormatAsPackageName "$1") from remote repository" "cd /tmp; /opt/bin/git -C $QPKG_GIT_PATH reset --hard; /opt/bin/git -C $QPKG_GIT_PATH pull"
+        ExecuteAndLog "update $(FormatAsPackageName "$1") from remote repository" "cd /tmp; /opt/bin/git -C $QPKG_GIT_PATH fetch; /opt/bin/git -C $QPKG_GIT_PATH reset --hard HEAD; /opt/bin/git -C $QPKG_GIT_PATH merge '@{u}'"
     fi
 
     installed_branch=$(/opt/bin/git -C "$QPKG_GIT_PATH" branch | /bin/grep '^\*' | /bin/sed 's|^\* ||')
@@ -1307,7 +1306,7 @@ if IsNotError; then
             { StopQPKG; StartQPKG ;} || SetError
             ;;
         s|-s|status|--status)
-            SetServiceOperation status
+            SetServiceOperation statusing
             StatusQPKG || SetError
             ;;
         b|-b|backup|--backup|backup-config|--backup-config)
