@@ -2500,7 +2500,7 @@ IPKGs.Install()
         done
     else
         for index in "${!MANAGER_QPKG_NAME[@]}"; do
-            QPKGs.ToStart.Exist "${MANAGER_QPKG_NAME[$index]}" || QPKGs.ToInstall.Exist "${MANAGER_QPKG_NAME[$index]}" || (QPKG.Installed "${MANAGER_QPKG_NAME[$index]}" && QPKGs.Started.Exist "${MANAGER_QPKG_NAME[$index]}") || QPKGs.ToReinstall.Exist "${MANAGER_QPKG_NAME[$index]}" || QPKGs.ToUpgrade.Exist "${MANAGER_QPKG_NAME[$index]}" || Opts.Dependencies.Check.IsSet || continue
+            QPKGs.ToInstall.Exist "${MANAGER_QPKG_NAME[$index]}" || (QPKG.Installed "${MANAGER_QPKG_NAME[$index]}" && QPKGs.Started.Exist "${MANAGER_QPKG_NAME[$index]}") || QPKGs.ToReinstall.Exist "${MANAGER_QPKG_NAME[$index]}" || Opts.Dependencies.Check.IsSet || continue
             [[ ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${MANAGER_QPKG_ARCH[$index]} = all ]] || continue
             QPKG.MinRAM "${MANAGER_QPKG_NAME[$index]}" &>/dev/null || continue
             IPKGs.ToInstall.Add "${MANAGER_QPKG_IPKGS_ADD[$index]}"
