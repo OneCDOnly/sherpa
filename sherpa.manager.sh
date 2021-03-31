@@ -868,7 +868,7 @@ Tiers.Processor()
         fi
     fi
 
-    # check reinstall for all items to be installed instead
+    # check reinstall for items to be installed instead
     for package in $(QPKGs.ToReinstall.Array); do
         if QPKG.NotInstalled "$package"; then
             QPKGs.ToReinstall.Remove "$package"
@@ -876,7 +876,7 @@ Tiers.Processor()
         fi
     done
 
-    # check upgrade for standalone items to be installed
+    # check upgrade for standalone items to be installed first
     for package in $(QPKGs.ToUpgrade.Array); do
         for prospect in $(QPKG.Get.Standalones "$package"); do
             QPKG.NotInstalled "$prospect" && QPKGs.ToInstall.Add "$prospect"
@@ -946,14 +946,18 @@ Tiers.Processor()
         # if an standalone has been selected for stop, need to stop its dependents first
         for package in $(QPKGs.ToStop.Array); do
             if QPKGs.Standalone.Exist "$package" && QPKG.Installed "$package"; then
-                QPKGs.ToStop.Add "$(QPKG.Get.Dependents "$package")"
+                for prospect in $(QPKG.Get.Dependents "$package"); do
+                    QPKGs.Started.Exist "$prospect" && QPKGs.ToStop.Add "$prospect"
+                done
             fi
         done
 
         # if an standalone has been selected for uninstall, need to stop its dependents first
         for package in $(QPKGs.ToUninstall.Array); do
             if QPKGs.Standalone.Exist "$package" && QPKG.Installed "$package"; then
-                QPKGs.ToStop.Add "$(QPKG.Get.Dependents "$package")"
+                for prospect in $(QPKG.Get.Dependents "$package"); do
+                    QPKGs.Started.Exist "$prospect" && QPKGs.ToStop.Add "$prospect"
+                done
             fi
         done
 
@@ -963,10 +967,10 @@ Tiers.Processor()
             QPKGs.ToReinstall.Remove Entware
 
             # if Entware has been selected for reinstall, need to stop its dependents first, and start them again later
-            for prospect in "$(QPKG.Get.Dependents Entware)"; do
-                if QPKG.Installed "$prospect"; then
+            for prospect in $(QPKG.Get.Dependents Entware); do
+                if QPKGs.Started.Exist "$prospect"; then
                     QPKGs.ToStop.Add "$prospect"
-                    QPKGs.Started.Exist "$prospect" && QPKGs.ToStart.Add "$prospect"
+                    QPKGs.ToStart.Add "$prospect"
                 fi
             done
         fi
@@ -980,7 +984,6 @@ Tiers.Processor()
         done
 
         QPKGs.ToStop.Remove "$(QPKGs.ToUninstall.Array)"
-        QPKGs.ToStop.Remove "$PROJECT_NAME"
         QPKGs.ToStop.Remove "$(QPKGs.SkStop.Array)"
 
         if Opts.Apps.All.Uninstall.IsSet; then
@@ -990,13 +993,12 @@ Tiers.Processor()
     Tier.Processor Stop false dependent QPKG ToStop backward stop stopping stopped ''
     Tier.Processor Stop false standalone QPKG ToStop backward stop stopping stopped ''
 
-        QPKGs.ToUninstall.Remove "$PROJECT_NAME"
         QPKGs.ToUninstall.Remove "$(QPKGs.SkUninstall.Array)"
 
     Tier.Processor Uninstall false dependent QPKG ToUninstall forward uninstall uninstalling uninstalled ''
 
-    # in-case 'python' has disappeared again ...
-    [[ ! -L /opt/bin/python && -e /opt/bin/python3 ]] && ln -s /opt/bin/python3 /opt/bin/python
+        # in-case 'python' has disappeared again ...
+        [[ ! -L /opt/bin/python && -e /opt/bin/python3 ]] && ln -s /opt/bin/python3 /opt/bin/python
 
         ShowAsProc 'checking for addon packages to uninstall' >&2
         Tier.Processor Uninstall false addon IPKG ToUninstall forward uninstall uninstalling uninstalled ''
@@ -1049,7 +1051,6 @@ Tiers.Processor()
                 Tier.Processor Install false "$tier" QPKG ToInstall forward install installing installed long
 
                     QPKGs.ToRestore.Remove "$(QPKGs.Standalone.Array)"
-                    QPKGs.ToRestore.Remove "$PROJECT_NAME"
                     QPKGs.ToRestore.Remove "$(QPKGs.SkRestore.Array)"
 
                 Tier.Processor Restore false "$tier" QPKG ToRestore forward 'restore configuration for' 'restoring configuration for' 'configuration restored for' long
@@ -1100,8 +1101,6 @@ Tiers.Processor()
                                 QPKG.NotEnabled "$prospect" && QPKGs.ToStart.Add "$prospect"
                             done
                         done
-
-                        QPKGs.ToStart.Remove "$PROJECT_NAME"
                     fi
 
                     QPKGs.ToStart.Remove "$(QPKGs.SkStart.Array)"
@@ -1121,8 +1120,8 @@ Tiers.Processor()
                     if Opts.Apps.All.Restart.IsSet; then
                         QPKGs.ToRestart.Add "$(QPKGs.Installed.Array)"
                     else
-                        # check for dependent packages to restart due to standalones being installed
-                        for package in $(QPKGs.IsInstall.Array); do
+                        # check for dependent packages to restart due to standalones being reinstalled
+                        for package in $(QPKGs.IsReinstall.Array); do
                             for prospect in $(QPKG.Get.Dependents "$package"); do
                                 QPKG.Installed "$prospect" && QPKGs.ToRestart.Add "$prospect"
                             done
@@ -1159,26 +1158,29 @@ Tiers.Processor()
                     QPKGs.ToRestart.Remove "$(QPKGs.SkRestart.Array)"
 
                 Tier.Processor Restart false "$tier" QPKG ToRestart forward restart restarting restarted long
+
                 ;;
             addon)
-                if QPKGs.ToInstall.IsAny || QPKGs.IsInstall.IsAny || QPKGs.ToReinstall.IsAny || QPKGs.IsReinstall.IsAny || QPKGs.ToUpgrade.IsAny || QPKGs.IsUpgrade.IsAny; then
-                    IPKGs.Upgrade.Set
-                    IPKGs.Install.Set
-                fi
+                    if QPKGs.ToInstall.IsAny || QPKGs.IsInstall.IsAny || QPKGs.ToReinstall.IsAny || QPKGs.IsReinstall.IsAny || QPKGs.ToUpgrade.IsAny || QPKGs.IsUpgrade.IsAny || QPKGs.ToStart.IsAny; then
+                        IPKGs.Upgrade.Set
+                        IPKGs.Install.Set
+                    fi
 
-                if QPKGs.ToInstall.Exist SABnzbd || QPKGs.ToReinstall.Exist SABnzbd || QPKGs.ToUpgrade.Exist SABnzbd; then
-                    PIPs.Install.Set   # must ensure 'sabyenc' and 'feedparser' modules are installed/updated
-                fi
+                    if QPKGs.ToInstall.Exist SABnzbd || QPKGs.ToReinstall.Exist SABnzbd || QPKGs.ToUpgrade.Exist SABnzbd; then
+                        PIPs.Install.Set   # must ensure 'sabyenc' and 'feedparser' modules are installed/updated
+                    fi
 
-                if QPKG.Enabled Entware; then
-                    ModPathToEntware
-                    Tier.Processor Upgrade false "$tier" IPKG '' forward upgrade upgrading upgraded long
-                    Tier.Processor Install false "$tier" IPKG '' forward install installing installed long
-                    Tier.Processor Install false "$tier" PIP '' forward install installing installed long
-                else
-                    : # TODO: test if other packages are to be installed here. If so, and Entware isn't enabled, then abort with error.
-                fi
-                ;;
+                    if QPKG.Enabled Entware; then
+                        ModPathToEntware
+
+                Tier.Processor Upgrade false "$tier" IPKG '' forward upgrade upgrading upgraded long
+                Tier.Processor Install false "$tier" IPKG '' forward install installing installed long
+                Tier.Processor Install false "$tier" PIP '' forward install installing installed long
+
+                    else
+                        : # TODO: test if other packages are to be installed here. If so, and Entware isn't enabled, then abort with error.
+                    fi
+                    ;;
         esac
     done
 
@@ -1272,7 +1274,7 @@ Tier.Processor()
             fi
 
             if [[ $PROCESSING_DIRECTION = forward ]]; then
-                for package in "${target_packages[@]}"; do                  # process list forwards
+                for package in ${target_packages[@]}; do                # process list forwards
                     ShowAsOperationProgress "$TIER" "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
 
                     $target_function.$TARGET_OPERATION "$package" "$forced_operation"
@@ -1293,7 +1295,7 @@ Tier.Processor()
                     esac
                 done
             else
-                for ((index=total_count-1; index>=0; index--)); do       # process list backwards
+                for ((index=total_count-1; index>=0; index--)); do      # process list backwards
                     package=${target_packages[$index]}
                     ShowAsOperationProgress "$TIER" "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
 
@@ -2488,6 +2490,7 @@ IPKGs.Install()
     IPKGs.ToInstall.Init
     IPKGs.ToDownload.Init
 
+    IPKGs.ToInstall.Add "$MANAGER_BASE_IPKGS_ADD"
     IPKGs.ToInstall.Add "$MANAGER_COMMON_IPKGS_ADD"
 
     if Opts.Apps.All.Install.IsSet; then
@@ -2497,14 +2500,12 @@ IPKGs.Install()
         done
     else
         for index in "${!MANAGER_QPKG_NAME[@]}"; do
-            QPKGs.ToInstall.Exist "${MANAGER_QPKG_NAME[$index]}" || QPKG.Installed "${MANAGER_QPKG_NAME[$index]}" || QPKGs.ToReinstall.Exist "${MANAGER_QPKG_NAME[$index]}" || QPKGs.ToUpgrade.Exist "${MANAGER_QPKG_NAME[$index]}" || continue
+            QPKGs.ToStart.Exist "${MANAGER_QPKG_NAME[$index]}" || QPKGs.ToInstall.Exist "${MANAGER_QPKG_NAME[$index]}" || (QPKG.Installed "${MANAGER_QPKG_NAME[$index]}" && QPKGs.Started.Exist "${MANAGER_QPKG_NAME[$index]}") || QPKGs.ToReinstall.Exist "${MANAGER_QPKG_NAME[$index]}" || QPKGs.ToUpgrade.Exist "${MANAGER_QPKG_NAME[$index]}" || Opts.Dependencies.Check.IsSet || continue
             [[ ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${MANAGER_QPKG_ARCH[$index]} = all ]] || continue
             QPKG.MinRAM "${MANAGER_QPKG_NAME[$index]}" &>/dev/null || continue
             IPKGs.ToInstall.Add "${MANAGER_QPKG_IPKGS_ADD[$index]}"
         done
     fi
-
-    Opts.Dependencies.Check.IsSet && IPKGs.ToInstall.Add "$MANAGER_BASE_IPKGS_ADD"
 
     CalcIPKGsDepsToInstall
     CalcIPKGsDownloadSize
@@ -2637,7 +2638,7 @@ PIPs.Install()
         ((fail_count++))
     fi
 
-    if QPKG.Installed SABnzbd || QPKGs.ToInstall.Exist SABnzbd || QPKGs.ToReinstall.Exist SABnzbd; then
+    if QPKGs.ToInstall.Exist SABnzbd || QPKGs.ToReinstall.Exist SABnzbd || (Opts.Dependencies.Check.IsSet && QPKGs.Installed.Exist SABnzbd); then
         ((total_count+=2))
 
         # KLUDGE: force recompilation of 'sabyenc3' package so it's recognised by SABnzbd: https://forums.sabnzbd.org/viewtopic.php?p=121214#p121214
@@ -3586,7 +3587,7 @@ QPKGs.NewVersions.Show()
 QPKGs.Conflicts.Check()
     {
 
-    for package in "${MANAGER_COMMON_QPKG_CONFLICTS[@]}"; do
+    for package in ${MANAGER_COMMON_QPKG_CONFLICTS[@]}; do
         if QPKG.Enabled "$package"; then
             ShowAsEror "'$package' is installed and enabled. One-or-more $(FormatAsScriptTitle) applications are incompatible with this package"
             return 1
