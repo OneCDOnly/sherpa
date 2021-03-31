@@ -169,8 +169,6 @@ StopQPKG()
         CommitOperationToLog
     fi
 
-    IsNotDaemonActive && return
-
     if IsRestart || IsRestore || IsClean || IsReset; then
         SetRestartPending
     fi
@@ -1349,7 +1347,7 @@ if IsNotError; then
             { StopQPKG; StartQPKG ;} || SetError
             ;;
         s|-s|status|--status)
-            SetServiceOperation status
+            SetServiceOperation statusing
             StatusQPKG || SetError
             ;;
         b|-b|backup|--backup|backup-config|--backup-config)
