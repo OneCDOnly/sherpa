@@ -1078,7 +1078,7 @@ Tiers.Processor()
                     # check all items
                     if Opts.Dependencies.Check.IsSet; then
                         for package in $(QPKGs.Dependent.Array); do
-                            if ! QPKGs.Standalone.Exist "$package" && ! QPKGs.Upgradable.Exist "$package" && QPKG.Installed "$package"; then
+                            if ! QPKGs.Standalone.Exist "$package" && ! QPKGs.Upgradable.Exist "$package" && QPKG.Installed "$package" && QPKG.Enabled "$package"; then
                                 QPKGs.ToRestart.Add "$package"
                             fi
                         done
@@ -2481,7 +2481,7 @@ IPKGs.Install()
         done
     else
         for index in "${!MANAGER_QPKG_NAME[@]}"; do
-            QPKGs.ToInstall.Exist "${MANAGER_QPKG_NAME[$index]}" || (QPKG.Installed "${MANAGER_QPKG_NAME[$index]}" && QPKGs.Started.Exist "${MANAGER_QPKG_NAME[$index]}") || QPKGs.ToReinstall.Exist "${MANAGER_QPKG_NAME[$index]}" || Opts.Dependencies.Check.IsSet || continue
+            QPKGs.ToInstall.Exist "${MANAGER_QPKG_NAME[$index]}" || (QPKG.Installed "${MANAGER_QPKG_NAME[$index]}" && QPKGs.Started.Exist "${MANAGER_QPKG_NAME[$index]}") || QPKGs.ToReinstall.Exist "${MANAGER_QPKG_NAME[$index]}" || QPKGs.ToStart.Exist "${MANAGER_QPKG_NAME[$index]}" || continue
             [[ ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${MANAGER_QPKG_ARCH[$index]} = all ]] || continue
             QPKG.MinRAM "${MANAGER_QPKG_NAME[$index]}" &>/dev/null || continue
             IPKGs.ToInstall.Add "${MANAGER_QPKG_IPKGS_ADD[$index]}"
