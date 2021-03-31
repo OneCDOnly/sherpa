@@ -1697,13 +1697,17 @@ ParseArguments()
                         operation=''
                         ;;
                     dependent_)
-                        QPKGs.ToInstall.Add "$(QPKGs.Dependent.Array)"
+                        for prospect in $(QPKGs.Dependent.Array); do
+                            QPKG.NotInstalled "$prospect" && QPKGs.ToInstall.Add "$prospect"
+                        done
                         ;;
                     not-installed_)
                         QPKGs.ToInstall.Add "$(QPKGs.NotInstalled.Array)"
                         ;;
                     standalone_)
-                        QPKGs.ToInstall.Add "$(QPKGs.Standalone.Array)"
+                        for prospect in $(QPKGs.Standalone.Array); do
+                            QPKG.NotInstalled "$prospect" && QPKGs.ToInstall.Add "$prospect"
+                        done
                         ;;
                     *)
                         QPKGs.ToInstall.Add "$package"
