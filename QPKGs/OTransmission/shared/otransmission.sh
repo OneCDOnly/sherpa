@@ -170,44 +170,45 @@ StopQPKG()
         CommitOperationToLog
     fi
 
-    IsNotDaemonActive && return
+    if IsDaemonActive; then
+        if IsRestart || IsRestore || IsClean || IsReset; then
+            SetRestartPending
+        fi
 
-    if IsRestart || IsRestore || IsClean || IsReset; then
+        local acc=0
+        local pid=0
         SetRestartPending
-    fi
 
-    local acc=0
-    local pid=0
-    SetRestartPending
+        killall "$(/usr/bin/basename "$DAEMON_PATHFILE")"
+        DisplayWaitCommitToLog 'stop daemon with SIGTERM:'
+        DisplayWait "(no-more than $DAEMON_STOP_TIMEOUT seconds):"
 
-    killall "$(/usr/bin/basename "$DAEMON_PATHFILE")"
-    DisplayWaitCommitToLog 'stop daemon with SIGTERM:'
-    DisplayWait "(no-more than $DAEMON_STOP_TIMEOUT seconds):"
+        while true; do
+            while (ps ax | /bin/grep $DAEMON_PATHFILE | /bin/grep -vq grep); do
+                sleep 1
+                ((acc++))
+                DisplayWait "$acc,"
 
-    while true; do
-        while (ps ax | /bin/grep $DAEMON_PATHFILE | /bin/grep -vq grep); do
-            sleep 1
-            ((acc++))
-            DisplayWait "$acc,"
+                if [[ $acc -ge $DAEMON_STOP_TIMEOUT ]]; then
+                    DisplayCommitToLog 'failed!'
+                    DisplayCommitToLog 'stop daemon with SIGKILL'
+                    killall -9 "$(/usr/bin/basename "$DAEMON_PATHFILE")"
+                    [[ -f $DAEMON_PID_PATHFILE ]] && rm -f $DAEMON_PID_PATHFILE
+                    break 2
+                fi
+            done
 
-            if [[ $acc -ge $DAEMON_STOP_TIMEOUT ]]; then
-                DisplayCommitToLog 'failed!'
-                DisplayCommitToLog 'stop daemon with SIGKILL'
-                killall -9 "$(/usr/bin/basename "$DAEMON_PATHFILE")"
-                [[ -f $DAEMON_PID_PATHFILE ]] && rm -f $DAEMON_PID_PATHFILE
-                break 2
-            fi
+            [[ -f $DAEMON_PID_PATHFILE ]] && rm -f $DAEMON_PID_PATHFILE
+            Display 'OK'
+            CommitLog "stopped OK in $acc seconds"
+
+            CommitInfoToSysLog "stop daemon: OK."
+            break
         done
 
-        [[ -f $DAEMON_PID_PATHFILE ]] && rm -f $DAEMON_PID_PATHFILE
-        Display 'OK'
-        CommitLog "stopped OK in $acc seconds"
+        IsNotDaemonActive || return
+    fi
 
-        CommitInfoToSysLog "stop daemon: OK."
-        break
-    done
-
-    IsNotDaemonActive || return
     DisableThisQPKGIcon
 
     return 0
