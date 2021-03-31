@@ -1130,7 +1130,7 @@ Tiers.Processor()
                         # check for dependent packages to restart due to standalones being started
                         for package in $(QPKGs.IsStart.Array); do
                             for prospect in $(QPKG.Get.Dependents "$package"); do
-                                QPKG.Installed "$prospect" && QPKGs.ToRestart.Add "$prospect"
+                                QPKGs.Started.Exist "$prospect" && QPKGs.ToRestart.Add "$prospect"
                             done
                         done
 
@@ -1433,6 +1433,7 @@ ParseArguments()
     local scope=''
     local scope_identified=false
     local package=''
+    local prospect=''
 
     for arg in "${user_args[@]}"; do
         arg_identified=false
@@ -1832,10 +1833,14 @@ ParseArguments()
                         operation=''
                         ;;
                     dependent_)
-                        QPKGs.ToStart.Add "$(QPKGs.Dependent.Array)"
+                        for prospect in $(QPKGs.Dependent.Array); do
+                            QPKGs.Stopped.Exist "$prospect" && QPKGs.ToStart.Add "$prospect"
+                        done
                         ;;
                     standalone_)
-                        QPKGs.ToStart.Add "$(QPKGs.Standalone.Array)"
+                        for prospect in $(QPKGs.Standalone.Array); do
+                            QPKGs.Stopped.Exist "$prospect" && QPKGs.ToStart.Add "$prospect"
+                        done
                         ;;
                     stopped_)
                         QPKGs.ToStart.Add "$(QPKGs.Stopped.Array)"
@@ -1857,10 +1862,14 @@ ParseArguments()
                         operation=''
                         ;;
                     dependent_)
-                        QPKGs.ToStop.Add "$(QPKGs.Dependent.Array)"
+                        for prospect in $(QPKGs.Dependent.Array); do
+                            QPKGs.Started.Exist "$prospect" && QPKGs.ToStop.Add "$prospect"
+                        done
                         ;;
                     standalone_)
-                        QPKGs.ToStop.Add "$(QPKGs.Standalone.Array)"
+                        for prospect in $(QPKGs.Standalone.Array); do
+                            QPKGs.Started.Exist "$prospect" && QPKGs.ToStop.Add "$prospect"
+                        done
                         ;;
                     started_)
                         QPKGs.ToStop.Add "$(QPKGs.Started.Array)"
