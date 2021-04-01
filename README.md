@@ -1,6 +1,6 @@
 ![icon](images/sherpa.wide.png)
 
-*The world's first multiple-action CLI package-manager!*
+<p align="center"><i>The world's first multiple-action CLI package-manager!</i></p>
 
 ## Description
 
