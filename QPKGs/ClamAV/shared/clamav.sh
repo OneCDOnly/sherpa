@@ -81,6 +81,7 @@ Init()
     UnsetError
     UnsetRestartPending
     EnsureConfigFileExists
+    ClearAppCenterNotifier
     [[ -n $ORIG_DAEMON_SERVICE_SCRIPT ]] && DisableOpkgDaemonStart
     LoadAppVersion
 
@@ -207,6 +208,16 @@ ResetConfig()
     StopQPKG
     ExecuteAndLog 'reset configuration' "mv $QPKG_INI_DEFAULT_PATHFILE $QPKG_PATH; rm -rf $QPKG_PATH/config/*; mv $QPKG_PATH/$(/usr/bin/basename "$QPKG_INI_DEFAULT_PATHFILE") $QPKG_INI_DEFAULT_PATHFILE" log:everything
     StartQPKG
+
+    }
+
+ClearAppCenterNotifier()
+    {
+
+    # KLUDGE: 'clean' QTS 4.5.1 App Center notifier status as it's frequently incorrect
+    [[ -e /sbin/qpkg_cli ]] && /sbin/qpkg_cli --clean "$QPKG_NAME" &>/dev/null
+
+    return 0
 
     }
 
@@ -697,7 +708,7 @@ EnableQPKG()
     # $1 = package name to enable
 
     IsNotQPKGEnabled "$1" && ExecuteAndLog 'enable QPKG icon' "qpkg_service enable $1"
-    /sbin/setcfg "$QPKG_NAME" Status complete -f "/etc/config/qpkg.conf"
+    /sbin/setcfg "$QPKG_NAME" Status complete -f /etc/config/qpkg.conf
 
     }
 

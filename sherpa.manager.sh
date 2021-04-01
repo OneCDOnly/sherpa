@@ -254,11 +254,11 @@ Session.Init()
     MANAGER_QPKG_NAME+=(ClamAV)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MINRAM+=(1578040)
-        MANAGER_QPKG_VERSION+=(210331c)
+        MANAGER_QPKG_VERSION+=(210402)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
-        MANAGER_QPKG_MD5+=(a58009e4572fbf83edd85a2130068258)
+        MANAGER_QPKG_MD5+=(8108dc9373c2c9779e9da6f76dde2800)
         MANAGER_QPKG_DESC+=('replacement for the QTS built-in ClamAV (requires a minimum of 1.5GB RAM)')
-        MANAGER_QPKG_ABBRVS+=('clam clamscan freshclam clamav')
+        MANAGER_QPKG_ABBRVS+=('av clam clamscan freshclam clamav')
         MANAGER_QPKG_DEPENDS_ON+=(Entware)
         MANAGER_QPKG_IPKGS_ADD+=('clamav freshclam')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
@@ -4403,7 +4403,7 @@ QPKG.Install()
         result_code=1    # remap to 1
     fi
 
-    QPKG.FixAppCenterStatus "$PACKAGE_NAME"
+    QPKG.ClearAppCenterNotifier "$PACKAGE_NAME"
     DebugFuncExit $result_code
 
     }
@@ -4474,7 +4474,7 @@ QPKG.Reinstall()
         result_code=1    # remap to 1
     fi
 
-    QPKG.FixAppCenterStatus "$PACKAGE_NAME"
+    QPKG.ClearAppCenterNotifier "$PACKAGE_NAME"
     DebugFuncExit $result_code
 
     }
@@ -4562,7 +4562,7 @@ QPKG.Upgrade()
         result_code=1    # remap to 1
     fi
 
-    QPKG.FixAppCenterStatus "$PACKAGE_NAME"
+    QPKG.ClearAppCenterNotifier "$PACKAGE_NAME"
     DebugFuncExit $result_code
 
     }
@@ -4621,7 +4621,7 @@ QPKG.Uninstall()
         fi
     fi
 
-    QPKG.FixAppCenterStatus "$PACKAGE_NAME"
+    QPKG.ClearAppCenterNotifier "$PACKAGE_NAME"
     DebugFuncExit $result_code
 
     }
@@ -4678,7 +4678,7 @@ QPKG.Restart()
         result_code=1    # remap to 1
     fi
 
-    QPKG.FixAppCenterStatus "$PACKAGE_NAME"
+    QPKG.ClearAppCenterNotifier "$PACKAGE_NAME"
     DebugFuncExit $result_code
 
     }
@@ -4736,7 +4736,7 @@ QPKG.Start()
         result_code=1    # remap to 1
     fi
 
-    QPKG.FixAppCenterStatus "$PACKAGE_NAME"
+    QPKG.ClearAppCenterNotifier "$PACKAGE_NAME"
     DebugFuncExit $result_code
 
     }
@@ -4798,7 +4798,7 @@ QPKG.Stop()
         result_code=1    # remap to 1
     fi
 
-    QPKG.FixAppCenterStatus "$PACKAGE_NAME"
+    QPKG.ClearAppCenterNotifier "$PACKAGE_NAME"
     DebugFuncExit $result_code
 
     }
@@ -4940,15 +4940,15 @@ QPKG.Restore()
 
     }
 
-QPKG.FixAppCenterStatus()
+QPKG.ClearAppCenterNotifier()
     {
 
-    # $1 = QPKG name to fix
+    # $1 = QPKG name to clear from notifier list
 
     local -r PACKAGE_NAME=${1:?no package name supplied}
 
     # KLUDGE: 'clean' QTS 4.5.1 App Center notifier status
-    [[ -e /sbin/qpkg_cli ]] && /sbin/qpkg_cli --clean "${1:?empty}" &>/dev/null
+    [[ -e /sbin/qpkg_cli ]] && /sbin/qpkg_cli --clean "$PACKAGE_NAME" &>/dev/null
 
     QPKG.IsNotInstalled "$PACKAGE_NAME" && return 0
 
