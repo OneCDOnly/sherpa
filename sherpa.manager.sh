@@ -799,17 +799,15 @@ Tiers.Processor()
             ShowAsWarn 'there are no package backups to rebuild from' >&2
         else
             if Opts.Apps.All.Rebuild.IsSet; then
-                for package in $(QPKGs.IsBackedUp.Array); do
-                    QPKG.IsNotInstalled "$package" && QPKGs.ToInstall.Add "$package"
-                done
-
+                QPKGs.ToInstall.Add "$(QPKGs.IsBackedUp.Array)"
                 QPKGs.ToRestore.Add "$(QPKGs.IsBackedUp.Array)"
             else
                 for package in $(QPKGs.ToRebuild.Array); do
                     if ! QPKGs.IsBackedUp.Exist "$package"; then
-                        ShowAsWarn "$(FormatAsPackageName "$package") does not have a backup to rebuild from" >&2
+                        MarkOpAsSkipped show "$PACKAGE_NAME" rebuild "does not have a backup to rebuild from"
                     else
-                        QPKG.IsNotInstalled "$package" && QPKGs.ToInstall.Add "$package"
+                        QPKGs.ToRebuild.Remove "$package"
+                        (QPKG.IsNotInstalled "$package" || QPKGs.ToUninstall.Exist "$package") && QPKGs.ToInstall.Add "$package"
                         QPKGs.ToRestore.Add "$package"
                     fi
                 done
@@ -935,7 +933,7 @@ Tiers.Processor()
         fi
 
         if Opts.Apps.All.Uninstall.IsSet; then
-            QPKGs.ToStop.Init   # no-need to stop packages, as they are about to be uninstalled
+            QPKGs.ToStop.Init   # no-need to stop packages that are about to be uninstalled
         else
             QPKGs.ToStop.Remove "$(QPKGs.ToUninstall.Array)"
         fi
@@ -1718,7 +1716,9 @@ ParseArguments()
                         operation=''
                         ;;
                     dependent_)
-                        QPKGs.ToRebuild.Add "$(QPKGs.IsDependent.Array)"
+                        for prospect in $(QPKGs.IsDependent.Array); do
+                            QPKGs.IsBackedUp.Exist "$prospect" && (QPKG.IsInstalled "$prospect" || QPKGs.ToInstall.Exist "$prospect") && QPKGs.ToRebuild.Add "$prospect"
+                        done
                         ;;
                     *)
                         QPKGs.ToRebuild.Add "$package"
