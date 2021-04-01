@@ -3104,7 +3104,7 @@ Help.Packages.Show()
     for tier in Standalone Dependent; do
         DisplayAsHelpTitlePackageNamePlusSomething "${tier} QPKGs" 'package description'
 
-        for package in $(QPKGs.$tier.Array); do
+        for package in $(QPKGs.Is$tier.Array); do
             DisplayAsHelpPackageNamePlusSomething "$package" "$(QPKG.Desc "$package")"
         done
 
