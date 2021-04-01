@@ -3500,261 +3500,6 @@ Args.Unknown.Size()
     }
 Args.Unknown.Init
 
-QPKGs.Dependent.Add()
-    {
-    local array=(${1})
-    [[ ${#array[@]} -eq 0 ]] && return
-    local item=''
-    for item in "${array[@]:-}"; do
-        if [[ " ${_obj_qpkgs_dependent_array_[*]+"${_obj_qpkgs_dependent_array_[@]}"} " != *"$item"* ]]; then
-            _obj_qpkgs_dependent_array_+=("$item")
-        fi
-    done
-    }
-QPKGs.Dependent.Array()
-    {
-    echo -n "${_obj_qpkgs_dependent_array_[@]+"${_obj_qpkgs_dependent_array_[@]}"}"
-    }
-QPKGs.Dependent.Count()
-    {
-    echo "${#_obj_qpkgs_dependent_array_[@]}"
-    }
-QPKGs.Dependent.Exist()
-    {
-    [[ ${_obj_qpkgs_dependent_array_[*]:-} == *"$1"* ]]
-    }
-QPKGs.Dependent.First()
-    {
-    echo "${_obj_qpkgs_dependent_array_[0]}"
-    }
-QPKGs.Dependent.GetItem()
-    {
-    local -i index="$1"
-    [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_dependent_array_[@]} ]] && index=${#_obj_qpkgs_dependent_array_[@]}
-    echo -n "${_obj_qpkgs_dependent_array_[((index-1))]}"
-    }
-QPKGs.Dependent.Init()
-    {
-    _obj_qpkgs_dependent_size_=0
-    _obj_qpkgs_dependent_array_=()
-    _obj_qpkgs_dependent_array_index_=1
-    }
-QPKGs.Dependent.IsAny()
-    {
-    [[ ${#_obj_qpkgs_dependent_array_[@]} -gt 0 ]]
-    }
-QPKGs.Dependent.IsNone()
-    {
-    [[ ${#_obj_qpkgs_dependent_array_[@]} -eq 0 ]]
-    }
-QPKGs.Dependent.List()
-    {
-    echo -n "${_obj_qpkgs_dependent_array_[*]+"${_obj_qpkgs_dependent_array_[@]}"}"
-    }
-QPKGs.Dependent.ListCSV()
-    {
-    echo -n "${_obj_qpkgs_dependent_array_[*]+"${_obj_qpkgs_dependent_array_[@]}"}" | tr ' ' ','
-    }
-QPKGs.Dependent.Remove()
-    {
-    local argument_array=(${1})
-    local temp_array=()
-    local argument=''
-    local item=''
-    local matched=false
-    for item in "${_obj_qpkgs_dependent_array_[@]+"${_obj_qpkgs_dependent_array_[@]}"}"; do
-        matched=false
-        for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
-            if [[ $argument = $item ]]; then
-                matched=true; break
-            fi
-        done
-        [[ $matched = false ]] && temp_array+=("$item")
-    done
-    _obj_qpkgs_dependent_array_=("${temp_array[@]+"${temp_array[@]}"}")
-    [[ -z ${_obj_qpkgs_dependent_array_[*]+"${_obj_qpkgs_dependent_array_[@]}"} ]] && _obj_qpkgs_dependent_array_=()
-    }
-QPKGs.Dependent.Size()
-    {
-    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
-        _obj_qpkgs_dependent_size_=$2
-    else
-        echo -n $_obj_qpkgs_dependent_size_
-    fi
-    }
-QPKGs.Dependent.Init
-
-QPKGs.Installable.Add()
-    {
-    local array=(${1})
-    [[ ${#array[@]} -eq 0 ]] && return
-    local item=''
-    for item in "${array[@]:-}"; do
-        if [[ " ${_obj_qpkgs_installable_array_[*]+"${_obj_qpkgs_installable_array_[@]}"} " != *"$item"* ]]; then
-            _obj_qpkgs_installable_array_+=("$item")
-        fi
-    done
-    }
-QPKGs.Installable.Array()
-    {
-    echo -n "${_obj_qpkgs_installable_array_[@]+"${_obj_qpkgs_installable_array_[@]}"}"
-    }
-QPKGs.Installable.Count()
-    {
-    echo "${#_obj_qpkgs_installable_array_[@]}"
-    }
-QPKGs.Installable.Exist()
-    {
-    [[ ${_obj_qpkgs_installable_array_[*]:-} == *"$1"* ]]
-    }
-QPKGs.Installable.First()
-    {
-    echo "${_obj_qpkgs_installable_array_[0]}"
-    }
-QPKGs.Installable.GetItem()
-    {
-    local -i index="$1"
-    [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_installable_array_[@]} ]] && index=${#_obj_qpkgs_installable_array_[@]}
-    echo -n "${_obj_qpkgs_installable_array_[((index-1))]}"
-    }
-QPKGs.Installable.Init()
-    {
-    _obj_qpkgs_installable_size_=0
-    _obj_qpkgs_installable_array_=()
-    _obj_qpkgs_installable_array_index_=1
-    }
-QPKGs.Installable.IsAny()
-    {
-    [[ ${#_obj_qpkgs_installable_array_[@]} -gt 0 ]]
-    }
-QPKGs.Installable.IsNone()
-    {
-    [[ ${#_obj_qpkgs_installable_array_[@]} -eq 0 ]]
-    }
-QPKGs.Installable.List()
-    {
-    echo -n "${_obj_qpkgs_installable_array_[*]+"${_obj_qpkgs_installable_array_[@]}"}"
-    }
-QPKGs.Installable.ListCSV()
-    {
-    echo -n "${_obj_qpkgs_installable_array_[*]+"${_obj_qpkgs_installable_array_[@]}"}" | tr ' ' ','
-    }
-QPKGs.Installable.Remove()
-    {
-    local argument_array=(${1})
-    local temp_array=()
-    local argument=''
-    local item=''
-    local matched=false
-    for item in "${_obj_qpkgs_installable_array_[@]+"${_obj_qpkgs_installable_array_[@]}"}"; do
-        matched=false
-        for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
-            if [[ $argument = $item ]]; then
-                matched=true; break
-            fi
-        done
-        [[ $matched = false ]] && temp_array+=("$item")
-    done
-    _obj_qpkgs_installable_array_=("${temp_array[@]+"${temp_array[@]}"}")
-    [[ -z ${_obj_qpkgs_installable_array_[*]+"${_obj_qpkgs_installable_array_[@]}"} ]] && _obj_qpkgs_installable_array_=()
-    }
-QPKGs.Installable.Size()
-    {
-    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
-        _obj_qpkgs_installable_size_=$2
-    else
-        echo -n $_obj_qpkgs_installable_size_
-    fi
-    }
-QPKGs.Installable.Init
-
-QPKGs.Missing.Add()
-    {
-    local array=(${1})
-    [[ ${#array[@]} -eq 0 ]] && return
-    local item=''
-    for item in "${array[@]:-}"; do
-        if [[ " ${_obj_qpkgs_missing_array_[*]+"${_obj_qpkgs_missing_array_[@]}"} " != *"$item"* ]]; then
-            _obj_qpkgs_missing_array_+=("$item")
-        fi
-    done
-    }
-QPKGs.Missing.Array()
-    {
-    echo -n "${_obj_qpkgs_missing_array_[@]+"${_obj_qpkgs_missing_array_[@]}"}"
-    }
-QPKGs.Missing.Count()
-    {
-    echo "${#_obj_qpkgs_missing_array_[@]}"
-    }
-QPKGs.Missing.Exist()
-    {
-    [[ ${_obj_qpkgs_missing_array_[*]:-} == *"$1"* ]]
-    }
-QPKGs.Missing.First()
-    {
-    echo "${_obj_qpkgs_missing_array_[0]}"
-    }
-QPKGs.Missing.GetItem()
-    {
-    local -i index="$1"
-    [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_missing_array_[@]} ]] && index=${#_obj_qpkgs_missing_array_[@]}
-    echo -n "${_obj_qpkgs_missing_array_[((index-1))]}"
-    }
-QPKGs.Missing.Init()
-    {
-    _obj_qpkgs_missing_size_=0
-    _obj_qpkgs_missing_array_=()
-    _obj_qpkgs_missing_array_index_=1
-    }
-QPKGs.Missing.IsAny()
-    {
-    [[ ${#_obj_qpkgs_missing_array_[@]} -gt 0 ]]
-    }
-QPKGs.Missing.IsNone()
-    {
-    [[ ${#_obj_qpkgs_missing_array_[@]} -eq 0 ]]
-    }
-QPKGs.Missing.List()
-    {
-    echo -n "${_obj_qpkgs_missing_array_[*]+"${_obj_qpkgs_missing_array_[@]}"}"
-    }
-QPKGs.Missing.ListCSV()
-    {
-    echo -n "${_obj_qpkgs_missing_array_[*]+"${_obj_qpkgs_missing_array_[@]}"}" | tr ' ' ','
-    }
-QPKGs.Missing.Remove()
-    {
-    local argument_array=(${1})
-    local temp_array=()
-    local argument=''
-    local item=''
-    local matched=false
-    for item in "${_obj_qpkgs_missing_array_[@]+"${_obj_qpkgs_missing_array_[@]}"}"; do
-        matched=false
-        for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
-            if [[ $argument = $item ]]; then
-                matched=true; break
-            fi
-        done
-        [[ $matched = false ]] && temp_array+=("$item")
-    done
-    _obj_qpkgs_missing_array_=("${temp_array[@]+"${temp_array[@]}"}")
-    [[ -z ${_obj_qpkgs_missing_array_[*]+"${_obj_qpkgs_missing_array_[@]}"} ]] && _obj_qpkgs_missing_array_=()
-    }
-QPKGs.Missing.Size()
-    {
-    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
-        _obj_qpkgs_missing_size_=$2
-    else
-        echo -n $_obj_qpkgs_missing_size_
-    fi
-    }
-QPKGs.Missing.Init
-
 QPKGs.Names.Add()
     {
     local array=(${1})
@@ -3840,70 +3585,70 @@ QPKGs.Names.Size()
     }
 QPKGs.Names.Init
 
-QPKGs.Standalone.Add()
+QPKGs.IsBackedUp.Add()
     {
     local array=(${1})
     [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        if [[ " ${_obj_qpkgs_standalone_array_[*]+"${_obj_qpkgs_standalone_array_[@]}"} " != *"$item"* ]]; then
-            _obj_qpkgs_standalone_array_+=("$item")
+        if [[ " ${_obj_qpkgs_isbackedup_array_[*]+"${_obj_qpkgs_isbackedup_array_[@]}"} " != *"$item"* ]]; then
+            _obj_qpkgs_isbackedup_array_+=("$item")
         fi
     done
     }
-QPKGs.Standalone.Array()
+QPKGs.IsBackedUp.Array()
     {
-    echo -n "${_obj_qpkgs_standalone_array_[@]+"${_obj_qpkgs_standalone_array_[@]}"}"
+    echo -n "${_obj_qpkgs_isbackedup_array_[@]+"${_obj_qpkgs_isbackedup_array_[@]}"}"
     }
-QPKGs.Standalone.Count()
+QPKGs.IsBackedUp.Count()
     {
-    echo "${#_obj_qpkgs_standalone_array_[@]}"
+    echo "${#_obj_qpkgs_isbackedup_array_[@]}"
     }
-QPKGs.Standalone.Exist()
+QPKGs.IsBackedUp.Exist()
     {
-    [[ ${_obj_qpkgs_standalone_array_[*]:-} == *"$1"* ]]
+    [[ ${_obj_qpkgs_isbackedup_array_[*]:-} == *"$1"* ]]
     }
-QPKGs.Standalone.First()
+QPKGs.IsBackedUp.First()
     {
-    echo "${_obj_qpkgs_standalone_array_[0]}"
+    echo "${_obj_qpkgs_isbackedup_array_[0]}"
     }
-QPKGs.Standalone.GetItem()
+QPKGs.IsBackedUp.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_standalone_array_[@]} ]] && index=${#_obj_qpkgs_standalone_array_[@]}
-    echo -n "${_obj_qpkgs_standalone_array_[((index-1))]}"
+    [[ $index -gt ${#_obj_qpkgs_isbackedup_array_[@]} ]] && index=${#_obj_qpkgs_isbackedup_array_[@]}
+    echo -n "${_obj_qpkgs_isbackedup_array_[((index-1))]}"
     }
-QPKGs.Standalone.Init()
+QPKGs.IsBackedUp.Init()
     {
-    _obj_qpkgs_standalone_size_=0
-    _obj_qpkgs_standalone_array_=()
-    _obj_qpkgs_standalone_array_index_=1
+    _obj_qpkgs_isbackedup_size_=0
+    _obj_qpkgs_isbackedup_array_=()
+    _obj_qpkgs_isbackedup_array_index_=1
     }
-QPKGs.Standalone.IsAny()
+QPKGs.IsBackedUp.IsAny()
     {
-    [[ ${#_obj_qpkgs_standalone_array_[@]} -gt 0 ]]
+    [[ ${#_obj_qpkgs_isbackedup_array_[@]} -gt 0 ]]
     }
-QPKGs.Standalone.IsNone()
+QPKGs.IsBackedUp.IsNone()
     {
-    [[ ${#_obj_qpkgs_standalone_array_[@]} -eq 0 ]]
+    [[ ${#_obj_qpkgs_isbackedup_array_[@]} -eq 0 ]]
     }
-QPKGs.Standalone.List()
+QPKGs.IsBackedUp.List()
     {
-    echo -n "${_obj_qpkgs_standalone_array_[*]+"${_obj_qpkgs_standalone_array_[@]}"}"
+    echo -n "${_obj_qpkgs_isbackedup_array_[*]+"${_obj_qpkgs_isbackedup_array_[@]}"}"
     }
-QPKGs.Standalone.ListCSV()
+QPKGs.IsBackedUp.ListCSV()
     {
-    echo -n "${_obj_qpkgs_standalone_array_[*]+"${_obj_qpkgs_standalone_array_[@]}"}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_isbackedup_array_[*]+"${_obj_qpkgs_isbackedup_array_[@]}"}" | tr ' ' ','
     }
-QPKGs.Standalone.Remove()
+QPKGs.IsBackedUp.Remove()
     {
     local argument_array=(${1})
     local temp_array=()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_standalone_array_[@]+"${_obj_qpkgs_standalone_array_[@]}"}"; do
+    for item in "${_obj_qpkgs_isbackedup_array_[@]+"${_obj_qpkgs_isbackedup_array_[@]}"}"; do
         matched=false
         for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
             if [[ $argument = $item ]]; then
@@ -3912,83 +3657,83 @@ QPKGs.Standalone.Remove()
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_standalone_array_=("${temp_array[@]+"${temp_array[@]}"}")
-    [[ -z ${_obj_qpkgs_standalone_array_[*]+"${_obj_qpkgs_standalone_array_[@]}"} ]] && _obj_qpkgs_standalone_array_=()
+    _obj_qpkgs_isbackedup_array_=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${_obj_qpkgs_isbackedup_array_[*]+"${_obj_qpkgs_isbackedup_array_[@]}"} ]] && _obj_qpkgs_isbackedup_array_=()
     }
-QPKGs.Standalone.Size()
+QPKGs.IsBackedUp.Size()
     {
     if [[ -n ${1:-} && ${1:-} = "=" ]]; then
-        _obj_qpkgs_standalone_size_=$2
+        _obj_qpkgs_isbackedup_size_=$2
     else
-        echo -n $_obj_qpkgs_standalone_size_
+        echo -n $_obj_qpkgs_isbackedup_size_
     fi
     }
-QPKGs.Standalone.Init
+QPKGs.IsBackedUp.Init
 
-QPKGs.Starting.Add()
+QPKGs.IsNotBackedUp.Add()
     {
     local array=(${1})
     [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        if [[ " ${_obj_qpkgs_starting_array_[*]+"${_obj_qpkgs_starting_array_[@]}"} " != *"$item"* ]]; then
-            _obj_qpkgs_starting_array_+=("$item")
+        if [[ " ${_obj_qpkgs_isnotbackedup_array_[*]+"${_obj_qpkgs_isnotbackedup_array_[@]}"} " != *"$item"* ]]; then
+            _obj_qpkgs_isnotbackedup_array_+=("$item")
         fi
     done
     }
-QPKGs.Starting.Array()
+QPKGs.IsNotBackedUp.Array()
     {
-    echo -n "${_obj_qpkgs_starting_array_[@]+"${_obj_qpkgs_starting_array_[@]}"}"
+    echo -n "${_obj_qpkgs_isnotbackedup_array_[@]+"${_obj_qpkgs_isnotbackedup_array_[@]}"}"
     }
-QPKGs.Starting.Count()
+QPKGs.IsNotBackedUp.Count()
     {
-    echo "${#_obj_qpkgs_starting_array_[@]}"
+    echo "${#_obj_qpkgs_isnotbackedup_array_[@]}"
     }
-QPKGs.Starting.Exist()
+QPKGs.IsNotBackedUp.Exist()
     {
-    [[ ${_obj_qpkgs_starting_array_[*]:-} == *"$1"* ]]
+    [[ ${_obj_qpkgs_isnotbackedup_array_[*]:-} == *"$1"* ]]
     }
-QPKGs.Starting.First()
+QPKGs.IsNotBackedUp.First()
     {
-    echo "${_obj_qpkgs_starting_array_[0]}"
+    echo "${_obj_qpkgs_isnotbackedup_array_[0]}"
     }
-QPKGs.Starting.GetItem()
+QPKGs.IsNotBackedUp.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_starting_array_[@]} ]] && index=${#_obj_qpkgs_starting_array_[@]}
-    echo -n "${_obj_qpkgs_starting_array_[((index-1))]}"
+    [[ $index -gt ${#_obj_qpkgs_isnotbackedup_array_[@]} ]] && index=${#_obj_qpkgs_isnotbackedup_array_[@]}
+    echo -n "${_obj_qpkgs_isnotbackedup_array_[((index-1))]}"
     }
-QPKGs.Starting.Init()
+QPKGs.IsNotBackedUp.Init()
     {
-    _obj_qpkgs_starting_size_=0
-    _obj_qpkgs_starting_array_=()
-    _obj_qpkgs_starting_array_index_=1
+    _obj_qpkgs_isnotbackedup_size_=0
+    _obj_qpkgs_isnotbackedup_array_=()
+    _obj_qpkgs_isnotbackedup_array_index_=1
     }
-QPKGs.Starting.IsAny()
+QPKGs.IsNotBackedUp.IsAny()
     {
-    [[ ${#_obj_qpkgs_starting_array_[@]} -gt 0 ]]
+    [[ ${#_obj_qpkgs_isnotbackedup_array_[@]} -gt 0 ]]
     }
-QPKGs.Starting.IsNone()
+QPKGs.IsNotBackedUp.IsNone()
     {
-    [[ ${#_obj_qpkgs_starting_array_[@]} -eq 0 ]]
+    [[ ${#_obj_qpkgs_isnotbackedup_array_[@]} -eq 0 ]]
     }
-QPKGs.Starting.List()
+QPKGs.IsNotBackedUp.List()
     {
-    echo -n "${_obj_qpkgs_starting_array_[*]+"${_obj_qpkgs_starting_array_[@]}"}"
+    echo -n "${_obj_qpkgs_isnotbackedup_array_[*]+"${_obj_qpkgs_isnotbackedup_array_[@]}"}"
     }
-QPKGs.Starting.ListCSV()
+QPKGs.IsNotBackedUp.ListCSV()
     {
-    echo -n "${_obj_qpkgs_starting_array_[*]+"${_obj_qpkgs_starting_array_[@]}"}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_isnotbackedup_array_[*]+"${_obj_qpkgs_isnotbackedup_array_[@]}"}" | tr ' ' ','
     }
-QPKGs.Starting.Remove()
+QPKGs.IsNotBackedUp.Remove()
     {
     local argument_array=(${1})
     local temp_array=()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_starting_array_[@]+"${_obj_qpkgs_starting_array_[@]}"}"; do
+    for item in "${_obj_qpkgs_isnotbackedup_array_[@]+"${_obj_qpkgs_isnotbackedup_array_[@]}"}"; do
         matched=false
         for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
             if [[ $argument = $item ]]; then
@@ -3997,83 +3742,83 @@ QPKGs.Starting.Remove()
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_starting_array_=("${temp_array[@]+"${temp_array[@]}"}")
-    [[ -z ${_obj_qpkgs_starting_array_[*]+"${_obj_qpkgs_starting_array_[@]}"} ]] && _obj_qpkgs_starting_array_=()
+    _obj_qpkgs_isnotbackedup_array_=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${_obj_qpkgs_isnotbackedup_array_[*]+"${_obj_qpkgs_isnotbackedup_array_[@]}"} ]] && _obj_qpkgs_isnotbackedup_array_=()
     }
-QPKGs.Starting.Size()
+QPKGs.IsNotBackedUp.Size()
     {
     if [[ -n ${1:-} && ${1:-} = "=" ]]; then
-        _obj_qpkgs_starting_size_=$2
+        _obj_qpkgs_isnotbackedup_size_=$2
     else
-        echo -n $_obj_qpkgs_starting_size_
+        echo -n $_obj_qpkgs_isnotbackedup_size_
     fi
     }
-QPKGs.Starting.Init
+QPKGs.IsNotBackedUp.Init
 
-QPKGs.Started.Add()
+QPKGs.IsDependent.Add()
     {
     local array=(${1})
     [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        if [[ " ${_obj_qpkgs_started_array_[*]+"${_obj_qpkgs_started_array_[@]}"} " != *"$item"* ]]; then
-            _obj_qpkgs_started_array_+=("$item")
+        if [[ " ${_obj_qpkgs_isdependent_array_[*]+"${_obj_qpkgs_isdependent_array_[@]}"} " != *"$item"* ]]; then
+            _obj_qpkgs_isdependent_array_+=("$item")
         fi
     done
     }
-QPKGs.Started.Array()
+QPKGs.IsDependent.Array()
     {
-    echo -n "${_obj_qpkgs_started_array_[@]+"${_obj_qpkgs_started_array_[@]}"}"
+    echo -n "${_obj_qpkgs_isdependent_array_[@]+"${_obj_qpkgs_isdependent_array_[@]}"}"
     }
-QPKGs.Started.Count()
+QPKGs.IsDependent.Count()
     {
-    echo "${#_obj_qpkgs_started_array_[@]}"
+    echo "${#_obj_qpkgs_isdependent_array_[@]}"
     }
-QPKGs.Started.Exist()
+QPKGs.IsDependent.Exist()
     {
-    [[ ${_obj_qpkgs_started_array_[*]:-} == *"$1"* ]]
+    [[ ${_obj_qpkgs_isdependent_array_[*]:-} == *"$1"* ]]
     }
-QPKGs.Started.First()
+QPKGs.IsDependent.First()
     {
-    echo "${_obj_qpkgs_started_array_[0]}"
+    echo "${_obj_qpkgs_isdependent_array_[0]}"
     }
-QPKGs.Started.GetItem()
+QPKGs.IsDependent.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_started_array_[@]} ]] && index=${#_obj_qpkgs_started_array_[@]}
-    echo -n "${_obj_qpkgs_started_array_[((index-1))]}"
+    [[ $index -gt ${#_obj_qpkgs_isdependent_array_[@]} ]] && index=${#_obj_qpkgs_isdependent_array_[@]}
+    echo -n "${_obj_qpkgs_isdependent_array_[((index-1))]}"
     }
-QPKGs.Started.Init()
+QPKGs.IsDependent.Init()
     {
-    _obj_qpkgs_started_size_=0
-    _obj_qpkgs_started_array_=()
-    _obj_qpkgs_started_array_index_=1
+    _obj_qpkgs_isdependent_size_=0
+    _obj_qpkgs_isdependent_array_=()
+    _obj_qpkgs_isdependent_array_index_=1
     }
-QPKGs.Started.IsAny()
+QPKGs.IsDependent.IsAny()
     {
-    [[ ${#_obj_qpkgs_started_array_[@]} -gt 0 ]]
+    [[ ${#_obj_qpkgs_isdependent_array_[@]} -gt 0 ]]
     }
-QPKGs.Started.IsNone()
+QPKGs.IsDependent.IsNone()
     {
-    [[ ${#_obj_qpkgs_started_array_[@]} -eq 0 ]]
+    [[ ${#_obj_qpkgs_isdependent_array_[@]} -eq 0 ]]
     }
-QPKGs.Started.List()
+QPKGs.IsDependent.List()
     {
-    echo -n "${_obj_qpkgs_started_array_[*]+"${_obj_qpkgs_started_array_[@]}"}"
+    echo -n "${_obj_qpkgs_isdependent_array_[*]+"${_obj_qpkgs_isdependent_array_[@]}"}"
     }
-QPKGs.Started.ListCSV()
+QPKGs.IsDependent.ListCSV()
     {
-    echo -n "${_obj_qpkgs_started_array_[*]+"${_obj_qpkgs_started_array_[@]}"}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_isdependent_array_[*]+"${_obj_qpkgs_isdependent_array_[@]}"}" | tr ' ' ','
     }
-QPKGs.Started.Remove()
+QPKGs.IsDependent.Remove()
     {
     local argument_array=(${1})
     local temp_array=()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_started_array_[@]+"${_obj_qpkgs_started_array_[@]}"}"; do
+    for item in "${_obj_qpkgs_isdependent_array_[@]+"${_obj_qpkgs_isdependent_array_[@]}"}"; do
         matched=false
         for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
             if [[ $argument = $item ]]; then
@@ -4082,83 +3827,83 @@ QPKGs.Started.Remove()
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_started_array_=("${temp_array[@]+"${temp_array[@]}"}")
-    [[ -z ${_obj_qpkgs_started_array_[*]+"${_obj_qpkgs_started_array_[@]}"} ]] && _obj_qpkgs_started_array_=()
+    _obj_qpkgs_isdependent_array_=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${_obj_qpkgs_isdependent_array_[*]+"${_obj_qpkgs_isdependent_array_[@]}"} ]] && _obj_qpkgs_isdependent_array_=()
     }
-QPKGs.Started.Size()
+QPKGs.IsDependent.Size()
     {
     if [[ -n ${1:-} && ${1:-} = "=" ]]; then
-        _obj_qpkgs_started_size_=$2
+        _obj_qpkgs_isdependent_size_=$2
     else
-        echo -n $_obj_qpkgs_started_size_
+        echo -n $_obj_qpkgs_isdependent_size_
     fi
     }
-QPKGs.Started.Init
+QPKGs.IsDependent.Init
 
-QPKGs.Stopping.Add()
+QPKGs.IsNotDependent.Add()
     {
     local array=(${1})
     [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        if [[ " ${_obj_qpkgs_stopping_array_[*]+"${_obj_qpkgs_stopping_array_[@]}"} " != *"$item"* ]]; then
-            _obj_qpkgs_stopping_array_+=("$item")
+        if [[ " ${_obj_qpkgs_isnotdependent_array_[*]+"${_obj_qpkgs_isnotdependent_array_[@]}"} " != *"$item"* ]]; then
+            _obj_qpkgs_isnotdependent_array_+=("$item")
         fi
     done
     }
-QPKGs.Stopping.Array()
+QPKGs.IsNotDependent.Array()
     {
-    echo -n "${_obj_qpkgs_stopping_array_[@]+"${_obj_qpkgs_stopping_array_[@]}"}"
+    echo -n "${_obj_qpkgs_isnotdependent_array_[@]+"${_obj_qpkgs_isnotdependent_array_[@]}"}"
     }
-QPKGs.Stopping.Count()
+QPKGs.IsNotDependent.Count()
     {
-    echo "${#_obj_qpkgs_stopping_array_[@]}"
+    echo "${#_obj_qpkgs_isnotdependent_array_[@]}"
     }
-QPKGs.Stopping.Exist()
+QPKGs.IsNotDependent.Exist()
     {
-    [[ ${_obj_qpkgs_stopping_array_[*]:-} == *"$1"* ]]
+    [[ ${_obj_qpkgs_isnotdependent_array_[*]:-} == *"$1"* ]]
     }
-QPKGs.Stopping.First()
+QPKGs.IsNotDependent.First()
     {
-    echo "${_obj_qpkgs_stopping_array_[0]}"
+    echo "${_obj_qpkgs_isnotdependent_array_[0]}"
     }
-QPKGs.Stopping.GetItem()
+QPKGs.IsNotDependent.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_stopping_array_[@]} ]] && index=${#_obj_qpkgs_stopping_array_[@]}
-    echo -n "${_obj_qpkgs_stopping_array_[((index-1))]}"
+    [[ $index -gt ${#_obj_qpkgs_isnotdependent_array_[@]} ]] && index=${#_obj_qpkgs_isnotdependent_array_[@]}
+    echo -n "${_obj_qpkgs_isnotdependent_array_[((index-1))]}"
     }
-QPKGs.Stopping.Init()
+QPKGs.IsNotDependent.Init()
     {
-    _obj_qpkgs_stopping_size_=0
-    _obj_qpkgs_stopping_array_=()
-    _obj_qpkgs_stopping_array_index_=1
+    _obj_qpkgs_isnotdependent_size_=0
+    _obj_qpkgs_isnotdependent_array_=()
+    _obj_qpkgs_isnotdependent_array_index_=1
     }
-QPKGs.Stopping.IsAny()
+QPKGs.IsNotDependent.IsAny()
     {
-    [[ ${#_obj_qpkgs_stopping_array_[@]} -gt 0 ]]
+    [[ ${#_obj_qpkgs_isnotdependent_array_[@]} -gt 0 ]]
     }
-QPKGs.Stopping.IsNone()
+QPKGs.IsNotDependent.IsNone()
     {
-    [[ ${#_obj_qpkgs_stopping_array_[@]} -eq 0 ]]
+    [[ ${#_obj_qpkgs_isnotdependent_array_[@]} -eq 0 ]]
     }
-QPKGs.Stopping.List()
+QPKGs.IsNotDependent.List()
     {
-    echo -n "${_obj_qpkgs_stopping_array_[*]+"${_obj_qpkgs_stopping_array_[@]}"}"
+    echo -n "${_obj_qpkgs_isnotdependent_array_[*]+"${_obj_qpkgs_isnotdependent_array_[@]}"}"
     }
-QPKGs.Stopping.ListCSV()
+QPKGs.IsNotDependent.ListCSV()
     {
-    echo -n "${_obj_qpkgs_stopping_array_[*]+"${_obj_qpkgs_stopping_array_[@]}"}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_isnotdependent_array_[*]+"${_obj_qpkgs_isnotdependent_array_[@]}"}" | tr ' ' ','
     }
-QPKGs.Stopping.Remove()
+QPKGs.IsNotDependent.Remove()
     {
     local argument_array=(${1})
     local temp_array=()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_stopping_array_[@]+"${_obj_qpkgs_stopping_array_[@]}"}"; do
+    for item in "${_obj_qpkgs_isnotdependent_array_[@]+"${_obj_qpkgs_isnotdependent_array_[@]}"}"; do
         matched=false
         for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
             if [[ $argument = $item ]]; then
@@ -4167,83 +3912,83 @@ QPKGs.Stopping.Remove()
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_stopping_array_=("${temp_array[@]+"${temp_array[@]}"}")
-    [[ -z ${_obj_qpkgs_stopping_array_[*]+"${_obj_qpkgs_stopping_array_[@]}"} ]] && _obj_qpkgs_stopping_array_=()
+    _obj_qpkgs_isnotdependent_array_=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${_obj_qpkgs_isnotdependent_array_[*]+"${_obj_qpkgs_isnotdependent_array_[@]}"} ]] && _obj_qpkgs_isnotdependent_array_=()
     }
-QPKGs.Stopping.Size()
+QPKGs.IsNotDependent.Size()
     {
     if [[ -n ${1:-} && ${1:-} = "=" ]]; then
-        _obj_qpkgs_stopping_size_=$2
+        _obj_qpkgs_isnotdependent_size_=$2
     else
-        echo -n $_obj_qpkgs_stopping_size_
+        echo -n $_obj_qpkgs_isnotdependent_size_
     fi
     }
-QPKGs.Stopping.Init
+QPKGs.IsNotDependent.Init
 
-QPKGs.Stopped.Add()
+QPKGs.IsInstalled.Add()
     {
     local array=(${1})
     [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        if [[ " ${_obj_qpkgs_stopped_array_[*]+"${_obj_qpkgs_stopped_array_[@]}"} " != *"$item"* ]]; then
-            _obj_qpkgs_stopped_array_+=("$item")
+        if [[ " ${_obj_qpkgs_isinstalled_array_[*]+"${_obj_qpkgs_isinstalled_array_[@]}"} " != *"$item"* ]]; then
+            _obj_qpkgs_isinstalled_array_+=("$item")
         fi
     done
     }
-QPKGs.Stopped.Array()
+QPKGs.IsInstalled.Array()
     {
-    echo -n "${_obj_qpkgs_stopped_array_[@]+"${_obj_qpkgs_stopped_array_[@]}"}"
+    echo -n "${_obj_qpkgs_isinstalled_array_[@]+"${_obj_qpkgs_isinstalled_array_[@]}"}"
     }
-QPKGs.Stopped.Count()
+QPKGs.IsInstalled.Count()
     {
-    echo "${#_obj_qpkgs_stopped_array_[@]}"
+    echo "${#_obj_qpkgs_isinstalled_array_[@]}"
     }
-QPKGs.Stopped.Exist()
+QPKGs.IsInstalled.Exist()
     {
-    [[ ${_obj_qpkgs_stopped_array_[*]:-} == *"$1"* ]]
+    [[ ${_obj_qpkgs_isinstalled_array_[*]:-} == *"$1"* ]]
     }
-QPKGs.Stopped.First()
+QPKGs.IsInstalled.First()
     {
-    echo "${_obj_qpkgs_stopped_array_[0]}"
+    echo "${_obj_qpkgs_isinstalled_array_[0]}"
     }
-QPKGs.Stopped.GetItem()
+QPKGs.IsInstalled.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_stopped_array_[@]} ]] && index=${#_obj_qpkgs_stopped_array_[@]}
-    echo -n "${_obj_qpkgs_stopped_array_[((index-1))]}"
+    [[ $index -gt ${#_obj_qpkgs_isinstalled_array_[@]} ]] && index=${#_obj_qpkgs_isinstalled_array_[@]}
+    echo -n "${_obj_qpkgs_isinstalled_array_[((index-1))]}"
     }
-QPKGs.Stopped.Init()
+QPKGs.IsInstalled.Init()
     {
-    _obj_qpkgs_stopped_size_=0
-    _obj_qpkgs_stopped_array_=()
-    _obj_qpkgs_stopped_array_index_=1
+    _obj_qpkgs_isinstalled_size_=0
+    _obj_qpkgs_isinstalled_array_=()
+    _obj_qpkgs_isinstalled_array_index_=1
     }
-QPKGs.Stopped.IsAny()
+QPKGs.IsInstalled.IsAny()
     {
-    [[ ${#_obj_qpkgs_stopped_array_[@]} -gt 0 ]]
+    [[ ${#_obj_qpkgs_isinstalled_array_[@]} -gt 0 ]]
     }
-QPKGs.Stopped.IsNone()
+QPKGs.IsInstalled.IsNone()
     {
-    [[ ${#_obj_qpkgs_stopped_array_[@]} -eq 0 ]]
+    [[ ${#_obj_qpkgs_isinstalled_array_[@]} -eq 0 ]]
     }
-QPKGs.Stopped.List()
+QPKGs.IsInstalled.List()
     {
-    echo -n "${_obj_qpkgs_stopped_array_[*]+"${_obj_qpkgs_stopped_array_[@]}"}"
+    echo -n "${_obj_qpkgs_isinstalled_array_[*]+"${_obj_qpkgs_isinstalled_array_[@]}"}"
     }
-QPKGs.Stopped.ListCSV()
+QPKGs.IsInstalled.ListCSV()
     {
-    echo -n "${_obj_qpkgs_stopped_array_[*]+"${_obj_qpkgs_stopped_array_[@]}"}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_isinstalled_array_[*]+"${_obj_qpkgs_isinstalled_array_[@]}"}" | tr ' ' ','
     }
-QPKGs.Stopped.Remove()
+QPKGs.IsInstalled.Remove()
     {
     local argument_array=(${1})
     local temp_array=()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_stopped_array_[@]+"${_obj_qpkgs_stopped_array_[@]}"}"; do
+    for item in "${_obj_qpkgs_isinstalled_array_[@]+"${_obj_qpkgs_isinstalled_array_[@]}"}"; do
         matched=false
         for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
             if [[ $argument = $item ]]; then
@@ -4252,83 +3997,83 @@ QPKGs.Stopped.Remove()
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_stopped_array_=("${temp_array[@]+"${temp_array[@]}"}")
-    [[ -z ${_obj_qpkgs_stopped_array_[*]+"${_obj_qpkgs_stopped_array_[@]}"} ]] && _obj_qpkgs_stopped_array_=()
+    _obj_qpkgs_isinstalled_array_=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${_obj_qpkgs_isinstalled_array_[*]+"${_obj_qpkgs_isinstalled_array_[@]}"} ]] && _obj_qpkgs_isinstalled_array_=()
     }
-QPKGs.Stopped.Size()
+QPKGs.IsInstalled.Size()
     {
     if [[ -n ${1:-} && ${1:-} = "=" ]]; then
-        _obj_qpkgs_stopped_size_=$2
+        _obj_qpkgs_isinstalled_size_=$2
     else
-        echo -n $_obj_qpkgs_stopped_size_
+        echo -n $_obj_qpkgs_isinstalled_size_
     fi
     }
-QPKGs.Stopped.Init
+QPKGs.IsInstalled.Init
 
-QPKGs.Restarting.Add()
+QPKGs.IsNotInstalled.Add()
     {
     local array=(${1})
     [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        if [[ " ${_obj_qpkgs_restarting_array_[*]+"${_obj_qpkgs_restarting_array_[@]}"} " != *"$item"* ]]; then
-            _obj_qpkgs_restarting_array_+=("$item")
+        if [[ " ${_obj_qpkgs_isnotinstalled_array_[*]+"${_obj_qpkgs_isnotinstalled_array_[@]}"} " != *"$item"* ]]; then
+            _obj_qpkgs_isnotinstalled_array_+=("$item")
         fi
     done
     }
-QPKGs.Restarting.Array()
+QPKGs.IsNotInstalled.Array()
     {
-    echo -n "${_obj_qpkgs_restarting_array_[@]+"${_obj_qpkgs_restarting_array_[@]}"}"
+    echo -n "${_obj_qpkgs_isnotinstalled_array_[@]+"${_obj_qpkgs_isnotinstalled_array_[@]}"}"
     }
-QPKGs.Restarting.Count()
+QPKGs.IsNotInstalled.Count()
     {
-    echo "${#_obj_qpkgs_restarting_array_[@]}"
+    echo "${#_obj_qpkgs_isnotinstalled_array_[@]}"
     }
-QPKGs.Restarting.Exist()
+QPKGs.IsNotInstalled.Exist()
     {
-    [[ ${_obj_qpkgs_restarting_array_[*]:-} == *"$1"* ]]
+    [[ ${_obj_qpkgs_isnotinstalled_array_[*]:-} == *"$1"* ]]
     }
-QPKGs.Restarting.First()
+QPKGs.IsNotInstalled.First()
     {
-    echo "${_obj_qpkgs_restarting_array_[0]}"
+    echo "${_obj_qpkgs_isnotinstalled_array_[0]}"
     }
-QPKGs.Restarting.GetItem()
+QPKGs.IsNotInstalled.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_restarting_array_[@]} ]] && index=${#_obj_qpkgs_restarting_array_[@]}
-    echo -n "${_obj_qpkgs_restarting_array_[((index-1))]}"
+    [[ $index -gt ${#_obj_qpkgs_isnotinstalled_array_[@]} ]] && index=${#_obj_qpkgs_isnotinstalled_array_[@]}
+    echo -n "${_obj_qpkgs_isnotinstalled_array_[((index-1))]}"
     }
-QPKGs.Restarting.Init()
+QPKGs.IsNotInstalled.Init()
     {
-    _obj_qpkgs_restarting_size_=0
-    _obj_qpkgs_restarting_array_=()
-    _obj_qpkgs_restarting_array_index_=1
+    _obj_qpkgs_isnotinstalled_size_=0
+    _obj_qpkgs_isnotinstalled_array_=()
+    _obj_qpkgs_isnotinstalled_array_index_=1
     }
-QPKGs.Restarting.IsAny()
+QPKGs.IsNotInstalled.IsAny()
     {
-    [[ ${#_obj_qpkgs_restarting_array_[@]} -gt 0 ]]
+    [[ ${#_obj_qpkgs_isnotinstalled_array_[@]} -gt 0 ]]
     }
-QPKGs.Restarting.IsNone()
+QPKGs.IsNotInstalled.IsNone()
     {
-    [[ ${#_obj_qpkgs_restarting_array_[@]} -eq 0 ]]
+    [[ ${#_obj_qpkgs_isnotinstalled_array_[@]} -eq 0 ]]
     }
-QPKGs.Restarting.List()
+QPKGs.IsNotInstalled.List()
     {
-    echo -n "${_obj_qpkgs_restarting_array_[*]+"${_obj_qpkgs_restarting_array_[@]}"}"
+    echo -n "${_obj_qpkgs_isnotinstalled_array_[*]+"${_obj_qpkgs_isnotinstalled_array_[@]}"}"
     }
-QPKGs.Restarting.ListCSV()
+QPKGs.IsNotInstalled.ListCSV()
     {
-    echo -n "${_obj_qpkgs_restarting_array_[*]+"${_obj_qpkgs_restarting_array_[@]}"}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_isnotinstalled_array_[*]+"${_obj_qpkgs_isnotinstalled_array_[@]}"}" | tr ' ' ','
     }
-QPKGs.Restarting.Remove()
+QPKGs.IsNotInstalled.Remove()
     {
     local argument_array=(${1})
     local temp_array=()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_restarting_array_[@]+"${_obj_qpkgs_restarting_array_[@]}"}"; do
+    for item in "${_obj_qpkgs_isnotinstalled_array_[@]+"${_obj_qpkgs_isnotinstalled_array_[@]}"}"; do
         matched=false
         for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
             if [[ $argument = $item ]]; then
@@ -4337,83 +4082,83 @@ QPKGs.Restarting.Remove()
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_restarting_array_=("${temp_array[@]+"${temp_array[@]}"}")
-    [[ -z ${_obj_qpkgs_restarting_array_[*]+"${_obj_qpkgs_restarting_array_[@]}"} ]] && _obj_qpkgs_restarting_array_=()
+    _obj_qpkgs_isnotinstalled_array_=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${_obj_qpkgs_isnotinstalled_array_[*]+"${_obj_qpkgs_isnotinstalled_array_[@]}"} ]] && _obj_qpkgs_isnotinstalled_array_=()
     }
-QPKGs.Restarting.Size()
+QPKGs.IsNotInstalled.Size()
     {
     if [[ -n ${1:-} && ${1:-} = "=" ]]; then
-        _obj_qpkgs_restarting_size_=$2
+        _obj_qpkgs_isnotinstalled_size_=$2
     else
-        echo -n $_obj_qpkgs_restarting_size_
+        echo -n $_obj_qpkgs_isnotinstalled_size_
     fi
     }
-QPKGs.Restarting.Init
+QPKGs.IsNotInstalled.Init
 
-QPKGs.Upgradable.Add()
+QPKGs.IsInstallable.Add()
     {
     local array=(${1})
     [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        if [[ " ${_obj_qpkgs_upgradable_array_[*]+"${_obj_qpkgs_upgradable_array_[@]}"} " != *"$item"* ]]; then
-            _obj_qpkgs_upgradable_array_+=("$item")
+        if [[ " ${_obj_qpkgs_isinstallable_array_[*]+"${_obj_qpkgs_isinstallable_array_[@]}"} " != *"$item"* ]]; then
+            _obj_qpkgs_isinstallable_array_+=("$item")
         fi
     done
     }
-QPKGs.Upgradable.Array()
+QPKGs.IsInstallable.Array()
     {
-    echo -n "${_obj_qpkgs_upgradable_array_[@]+"${_obj_qpkgs_upgradable_array_[@]}"}"
+    echo -n "${_obj_qpkgs_isinstallable_array_[@]+"${_obj_qpkgs_isinstallable_array_[@]}"}"
     }
-QPKGs.Upgradable.Count()
+QPKGs.IsInstallable.Count()
     {
-    echo "${#_obj_qpkgs_upgradable_array_[@]}"
+    echo "${#_obj_qpkgs_isinstallable_array_[@]}"
     }
-QPKGs.Upgradable.Exist()
+QPKGs.IsInstallable.Exist()
     {
-    [[ ${_obj_qpkgs_upgradable_array_[*]:-} == *"$1"* ]]
+    [[ ${_obj_qpkgs_isinstallable_array_[*]:-} == *"$1"* ]]
     }
-QPKGs.Upgradable.First()
+QPKGs.IsInstallable.First()
     {
-    echo "${_obj_qpkgs_upgradable_array_[0]}"
+    echo "${_obj_qpkgs_isinstallable_array_[0]}"
     }
-QPKGs.Upgradable.GetItem()
+QPKGs.IsInstallable.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_upgradable_array_[@]} ]] && index=${#_obj_qpkgs_upgradable_array_[@]}
-    echo -n "${_obj_qpkgs_upgradable_array_[((index-1))]}"
+    [[ $index -gt ${#_obj_qpkgs_isinstallable_array_[@]} ]] && index=${#_obj_qpkgs_isinstallable_array_[@]}
+    echo -n "${_obj_qpkgs_isinstallable_array_[((index-1))]}"
     }
-QPKGs.Upgradable.Init()
+QPKGs.IsInstallable.Init()
     {
-    _obj_qpkgs_upgradable_size_=0
-    _obj_qpkgs_upgradable_array_=()
-    _obj_qpkgs_upgradable_array_index_=1
+    _obj_qpkgs_isinstallable_size_=0
+    _obj_qpkgs_isinstallable_array_=()
+    _obj_qpkgs_isinstallable_array_index_=1
     }
-QPKGs.Upgradable.IsAny()
+QPKGs.IsInstallable.IsAny()
     {
-    [[ ${#_obj_qpkgs_upgradable_array_[@]} -gt 0 ]]
+    [[ ${#_obj_qpkgs_isinstallable_array_[@]} -gt 0 ]]
     }
-QPKGs.Upgradable.IsNone()
+QPKGs.IsInstallable.IsNone()
     {
-    [[ ${#_obj_qpkgs_upgradable_array_[@]} -eq 0 ]]
+    [[ ${#_obj_qpkgs_isinstallable_array_[@]} -eq 0 ]]
     }
-QPKGs.Upgradable.List()
+QPKGs.IsInstallable.List()
     {
-    echo -n "${_obj_qpkgs_upgradable_array_[*]+"${_obj_qpkgs_upgradable_array_[@]}"}"
+    echo -n "${_obj_qpkgs_isinstallable_array_[*]+"${_obj_qpkgs_isinstallable_array_[@]}"}"
     }
-QPKGs.Upgradable.ListCSV()
+QPKGs.IsInstallable.ListCSV()
     {
-    echo -n "${_obj_qpkgs_upgradable_array_[*]+"${_obj_qpkgs_upgradable_array_[@]}"}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_isinstallable_array_[*]+"${_obj_qpkgs_isinstallable_array_[@]}"}" | tr ' ' ','
     }
-QPKGs.Upgradable.Remove()
+QPKGs.IsInstallable.Remove()
     {
     local argument_array=(${1})
     local temp_array=()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_upgradable_array_[@]+"${_obj_qpkgs_upgradable_array_[@]}"}"; do
+    for item in "${_obj_qpkgs_isinstallable_array_[@]+"${_obj_qpkgs_isinstallable_array_[@]}"}"; do
         matched=false
         for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
             if [[ $argument = $item ]]; then
@@ -4422,83 +4167,83 @@ QPKGs.Upgradable.Remove()
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_upgradable_array_=("${temp_array[@]+"${temp_array[@]}"}")
-    [[ -z ${_obj_qpkgs_upgradable_array_[*]+"${_obj_qpkgs_upgradable_array_[@]}"} ]] && _obj_qpkgs_upgradable_array_=()
+    _obj_qpkgs_isinstallable_array_=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${_obj_qpkgs_isinstallable_array_[*]+"${_obj_qpkgs_isinstallable_array_[@]}"} ]] && _obj_qpkgs_isinstallable_array_=()
     }
-QPKGs.Upgradable.Size()
+QPKGs.IsInstallable.Size()
     {
     if [[ -n ${1:-} && ${1:-} = "=" ]]; then
-        _obj_qpkgs_upgradable_size_=$2
+        _obj_qpkgs_isinstallable_size_=$2
     else
-        echo -n $_obj_qpkgs_upgradable_size_
+        echo -n $_obj_qpkgs_isinstallable_size_
     fi
     }
-QPKGs.Upgradable.Init
+QPKGs.IsInstallable.Init
 
-QPKGs.BackedUp.Add()
+QPKGs.IsNotInstallable.Add()
     {
     local array=(${1})
     [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        if [[ " ${_obj_qpkgs_backedup_array_[*]+"${_obj_qpkgs_backedup_array_[@]}"} " != *"$item"* ]]; then
-            _obj_qpkgs_backedup_array_+=("$item")
+        if [[ " ${_obj_qpkgs_isnotinstallable_array_[*]+"${_obj_qpkgs_isnotinstallable_array_[@]}"} " != *"$item"* ]]; then
+            _obj_qpkgs_isnotinstallable_array_+=("$item")
         fi
     done
     }
-QPKGs.BackedUp.Array()
+QPKGs.IsNotInstallable.Array()
     {
-    echo -n "${_obj_qpkgs_backedup_array_[@]+"${_obj_qpkgs_backedup_array_[@]}"}"
+    echo -n "${_obj_qpkgs_isnotinstallable_array_[@]+"${_obj_qpkgs_isnotinstallable_array_[@]}"}"
     }
-QPKGs.BackedUp.Count()
+QPKGs.IsNotInstallable.Count()
     {
-    echo "${#_obj_qpkgs_backedup_array_[@]}"
+    echo "${#_obj_qpkgs_isnotinstallable_array_[@]}"
     }
-QPKGs.BackedUp.Exist()
+QPKGs.IsNotInstallable.Exist()
     {
-    [[ ${_obj_qpkgs_backedup_array_[*]:-} == *"$1"* ]]
+    [[ ${_obj_qpkgs_isnotinstallable_array_[*]:-} == *"$1"* ]]
     }
-QPKGs.BackedUp.First()
+QPKGs.IsNotInstallable.First()
     {
-    echo "${_obj_qpkgs_backedup_array_[0]}"
+    echo "${_obj_qpkgs_isnotinstallable_array_[0]}"
     }
-QPKGs.BackedUp.GetItem()
+QPKGs.IsNotInstallable.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_backedup_array_[@]} ]] && index=${#_obj_qpkgs_backedup_array_[@]}
-    echo -n "${_obj_qpkgs_backedup_array_[((index-1))]}"
+    [[ $index -gt ${#_obj_qpkgs_isnotinstallable_array_[@]} ]] && index=${#_obj_qpkgs_isnotinstallable_array_[@]}
+    echo -n "${_obj_qpkgs_isnotinstallable_array_[((index-1))]}"
     }
-QPKGs.BackedUp.Init()
+QPKGs.IsNotInstallable.Init()
     {
-    _obj_qpkgs_backedup_size_=0
-    _obj_qpkgs_backedup_array_=()
-    _obj_qpkgs_backedup_array_index_=1
+    _obj_qpkgs_isnotinstallable_size_=0
+    _obj_qpkgs_isnotinstallable_array_=()
+    _obj_qpkgs_isnotinstallable_array_index_=1
     }
-QPKGs.BackedUp.IsAny()
+QPKGs.IsNotInstallable.IsAny()
     {
-    [[ ${#_obj_qpkgs_backedup_array_[@]} -gt 0 ]]
+    [[ ${#_obj_qpkgs_isnotinstallable_array_[@]} -gt 0 ]]
     }
-QPKGs.BackedUp.IsNone()
+QPKGs.IsNotInstallable.IsNone()
     {
-    [[ ${#_obj_qpkgs_backedup_array_[@]} -eq 0 ]]
+    [[ ${#_obj_qpkgs_isnotinstallable_array_[@]} -eq 0 ]]
     }
-QPKGs.BackedUp.List()
+QPKGs.IsNotInstallable.List()
     {
-    echo -n "${_obj_qpkgs_backedup_array_[*]+"${_obj_qpkgs_backedup_array_[@]}"}"
+    echo -n "${_obj_qpkgs_isnotinstallable_array_[*]+"${_obj_qpkgs_isnotinstallable_array_[@]}"}"
     }
-QPKGs.BackedUp.ListCSV()
+QPKGs.IsNotInstallable.ListCSV()
     {
-    echo -n "${_obj_qpkgs_backedup_array_[*]+"${_obj_qpkgs_backedup_array_[@]}"}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_isnotinstallable_array_[*]+"${_obj_qpkgs_isnotinstallable_array_[@]}"}" | tr ' ' ','
     }
-QPKGs.BackedUp.Remove()
+QPKGs.IsNotInstallable.Remove()
     {
     local argument_array=(${1})
     local temp_array=()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_backedup_array_[@]+"${_obj_qpkgs_backedup_array_[@]}"}"; do
+    for item in "${_obj_qpkgs_isnotinstallable_array_[@]+"${_obj_qpkgs_isnotinstallable_array_[@]}"}"; do
         matched=false
         for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
             if [[ $argument = $item ]]; then
@@ -4507,83 +4252,83 @@ QPKGs.BackedUp.Remove()
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_backedup_array_=("${temp_array[@]+"${temp_array[@]}"}")
-    [[ -z ${_obj_qpkgs_backedup_array_[*]+"${_obj_qpkgs_backedup_array_[@]}"} ]] && _obj_qpkgs_backedup_array_=()
+    _obj_qpkgs_isnotinstallable_array_=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${_obj_qpkgs_isnotinstallable_array_[*]+"${_obj_qpkgs_isnotinstallable_array_[@]}"} ]] && _obj_qpkgs_isnotinstallable_array_=()
     }
-QPKGs.BackedUp.Size()
+QPKGs.IsNotInstallable.Size()
     {
     if [[ -n ${1:-} && ${1:-} = "=" ]]; then
-        _obj_qpkgs_backedup_size_=$2
+        _obj_qpkgs_isnotinstallable_size_=$2
     else
-        echo -n $_obj_qpkgs_backedup_size_
+        echo -n $_obj_qpkgs_isnotinstallable_size_
     fi
     }
-QPKGs.BackedUp.Init
+QPKGs.IsNotInstallable.Init
 
-QPKGs.NotBackedUp.Add()
+QPKGs.IsMissing.Add()
     {
     local array=(${1})
     [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        if [[ " ${_obj_qpkgs_notbackedup_array_[*]+"${_obj_qpkgs_notbackedup_array_[@]}"} " != *"$item"* ]]; then
-            _obj_qpkgs_notbackedup_array_+=("$item")
+        if [[ " ${_obj_qpkgs_ismissing_array_[*]+"${_obj_qpkgs_ismissing_array_[@]}"} " != *"$item"* ]]; then
+            _obj_qpkgs_ismissing_array_+=("$item")
         fi
     done
     }
-QPKGs.NotBackedUp.Array()
+QPKGs.IsMissing.Array()
     {
-    echo -n "${_obj_qpkgs_notbackedup_array_[@]+"${_obj_qpkgs_notbackedup_array_[@]}"}"
+    echo -n "${_obj_qpkgs_ismissing_array_[@]+"${_obj_qpkgs_ismissing_array_[@]}"}"
     }
-QPKGs.NotBackedUp.Count()
+QPKGs.IsMissing.Count()
     {
-    echo "${#_obj_qpkgs_notbackedup_array_[@]}"
+    echo "${#_obj_qpkgs_ismissing_array_[@]}"
     }
-QPKGs.NotBackedUp.Exist()
+QPKGs.IsMissing.Exist()
     {
-    [[ ${_obj_qpkgs_notbackedup_array_[*]:-} == *"$1"* ]]
+    [[ ${_obj_qpkgs_ismissing_array_[*]:-} == *"$1"* ]]
     }
-QPKGs.NotBackedUp.First()
+QPKGs.IsMissing.First()
     {
-    echo "${_obj_qpkgs_notbackedup_array_[0]}"
+    echo "${_obj_qpkgs_ismissing_array_[0]}"
     }
-QPKGs.NotBackedUp.GetItem()
+QPKGs.IsMissing.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_notbackedup_array_[@]} ]] && index=${#_obj_qpkgs_notbackedup_array_[@]}
-    echo -n "${_obj_qpkgs_notbackedup_array_[((index-1))]}"
+    [[ $index -gt ${#_obj_qpkgs_ismissing_array_[@]} ]] && index=${#_obj_qpkgs_ismissing_array_[@]}
+    echo -n "${_obj_qpkgs_ismissing_array_[((index-1))]}"
     }
-QPKGs.NotBackedUp.Init()
+QPKGs.IsMissing.Init()
     {
-    _obj_qpkgs_notbackedup_size_=0
-    _obj_qpkgs_notbackedup_array_=()
-    _obj_qpkgs_notbackedup_array_index_=1
+    _obj_qpkgs_ismissing_size_=0
+    _obj_qpkgs_ismissing_array_=()
+    _obj_qpkgs_ismissing_array_index_=1
     }
-QPKGs.NotBackedUp.IsAny()
+QPKGs.IsMissing.IsAny()
     {
-    [[ ${#_obj_qpkgs_notbackedup_array_[@]} -gt 0 ]]
+    [[ ${#_obj_qpkgs_ismissing_array_[@]} -gt 0 ]]
     }
-QPKGs.NotBackedUp.IsNone()
+QPKGs.IsMissing.IsNone()
     {
-    [[ ${#_obj_qpkgs_notbackedup_array_[@]} -eq 0 ]]
+    [[ ${#_obj_qpkgs_ismissing_array_[@]} -eq 0 ]]
     }
-QPKGs.NotBackedUp.List()
+QPKGs.IsMissing.List()
     {
-    echo -n "${_obj_qpkgs_notbackedup_array_[*]+"${_obj_qpkgs_notbackedup_array_[@]}"}"
+    echo -n "${_obj_qpkgs_ismissing_array_[*]+"${_obj_qpkgs_ismissing_array_[@]}"}"
     }
-QPKGs.NotBackedUp.ListCSV()
+QPKGs.IsMissing.ListCSV()
     {
-    echo -n "${_obj_qpkgs_notbackedup_array_[*]+"${_obj_qpkgs_notbackedup_array_[@]}"}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_ismissing_array_[*]+"${_obj_qpkgs_ismissing_array_[@]}"}" | tr ' ' ','
     }
-QPKGs.NotBackedUp.Remove()
+QPKGs.IsMissing.Remove()
     {
     local argument_array=(${1})
     local temp_array=()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_notbackedup_array_[@]+"${_obj_qpkgs_notbackedup_array_[@]}"}"; do
+    for item in "${_obj_qpkgs_ismissing_array_[@]+"${_obj_qpkgs_ismissing_array_[@]}"}"; do
         matched=false
         for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
             if [[ $argument = $item ]]; then
@@ -4592,83 +4337,83 @@ QPKGs.NotBackedUp.Remove()
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_notbackedup_array_=("${temp_array[@]+"${temp_array[@]}"}")
-    [[ -z ${_obj_qpkgs_notbackedup_array_[*]+"${_obj_qpkgs_notbackedup_array_[@]}"} ]] && _obj_qpkgs_notbackedup_array_=()
+    _obj_qpkgs_ismissing_array_=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${_obj_qpkgs_ismissing_array_[*]+"${_obj_qpkgs_ismissing_array_[@]}"} ]] && _obj_qpkgs_ismissing_array_=()
     }
-QPKGs.NotBackedUp.Size()
+QPKGs.IsMissing.Size()
     {
     if [[ -n ${1:-} && ${1:-} = "=" ]]; then
-        _obj_qpkgs_notbackedup_size_=$2
+        _obj_qpkgs_ismissing_size_=$2
     else
-        echo -n $_obj_qpkgs_notbackedup_size_
+        echo -n $_obj_qpkgs_ismissing_size_
     fi
     }
-QPKGs.NotBackedUp.Init
+QPKGs.IsMissing.Init
 
-QPKGs.Installed.Add()
+QPKGs.IsNotMissing.Add()
     {
     local array=(${1})
     [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        if [[ " ${_obj_qpkgs_installed_array_[*]+"${_obj_qpkgs_installed_array_[@]}"} " != *"$item"* ]]; then
-            _obj_qpkgs_installed_array_+=("$item")
+        if [[ " ${_obj_qpkgs_isnotmissing_array_[*]+"${_obj_qpkgs_isnotmissing_array_[@]}"} " != *"$item"* ]]; then
+            _obj_qpkgs_isnotmissing_array_+=("$item")
         fi
     done
     }
-QPKGs.Installed.Array()
+QPKGs.IsNotMissing.Array()
     {
-    echo -n "${_obj_qpkgs_installed_array_[@]+"${_obj_qpkgs_installed_array_[@]}"}"
+    echo -n "${_obj_qpkgs_isnotmissing_array_[@]+"${_obj_qpkgs_isnotmissing_array_[@]}"}"
     }
-QPKGs.Installed.Count()
+QPKGs.IsNotMissing.Count()
     {
-    echo "${#_obj_qpkgs_installed_array_[@]}"
+    echo "${#_obj_qpkgs_isnotmissing_array_[@]}"
     }
-QPKGs.Installed.Exist()
+QPKGs.IsNotMissing.Exist()
     {
-    [[ ${_obj_qpkgs_installed_array_[*]:-} == *"$1"* ]]
+    [[ ${_obj_qpkgs_isnotmissing_array_[*]:-} == *"$1"* ]]
     }
-QPKGs.Installed.First()
+QPKGs.IsNotMissing.First()
     {
-    echo "${_obj_qpkgs_installed_array_[0]}"
+    echo "${_obj_qpkgs_isnotmissing_array_[0]}"
     }
-QPKGs.Installed.GetItem()
+QPKGs.IsNotMissing.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_installed_array_[@]} ]] && index=${#_obj_qpkgs_installed_array_[@]}
-    echo -n "${_obj_qpkgs_installed_array_[((index-1))]}"
+    [[ $index -gt ${#_obj_qpkgs_isnotmissing_array_[@]} ]] && index=${#_obj_qpkgs_isnotmissing_array_[@]}
+    echo -n "${_obj_qpkgs_isnotmissing_array_[((index-1))]}"
     }
-QPKGs.Installed.Init()
+QPKGs.IsNotMissing.Init()
     {
-    _obj_qpkgs_installed_size_=0
-    _obj_qpkgs_installed_array_=()
-    _obj_qpkgs_installed_array_index_=1
+    _obj_qpkgs_isnotmissing_size_=0
+    _obj_qpkgs_isnotmissing_array_=()
+    _obj_qpkgs_isnotmissing_array_index_=1
     }
-QPKGs.Installed.IsAny()
+QPKGs.IsNotMissing.IsAny()
     {
-    [[ ${#_obj_qpkgs_installed_array_[@]} -gt 0 ]]
+    [[ ${#_obj_qpkgs_isnotmissing_array_[@]} -gt 0 ]]
     }
-QPKGs.Installed.IsNone()
+QPKGs.IsNotMissing.IsNone()
     {
-    [[ ${#_obj_qpkgs_installed_array_[@]} -eq 0 ]]
+    [[ ${#_obj_qpkgs_isnotmissing_array_[@]} -eq 0 ]]
     }
-QPKGs.Installed.List()
+QPKGs.IsNotMissing.List()
     {
-    echo -n "${_obj_qpkgs_installed_array_[*]+"${_obj_qpkgs_installed_array_[@]}"}"
+    echo -n "${_obj_qpkgs_isnotmissing_array_[*]+"${_obj_qpkgs_isnotmissing_array_[@]}"}"
     }
-QPKGs.Installed.ListCSV()
+QPKGs.IsNotMissing.ListCSV()
     {
-    echo -n "${_obj_qpkgs_installed_array_[*]+"${_obj_qpkgs_installed_array_[@]}"}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_isnotmissing_array_[*]+"${_obj_qpkgs_isnotmissing_array_[@]}"}" | tr ' ' ','
     }
-QPKGs.Installed.Remove()
+QPKGs.IsNotMissing.Remove()
     {
     local argument_array=(${1})
     local temp_array=()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_installed_array_[@]+"${_obj_qpkgs_installed_array_[@]}"}"; do
+    for item in "${_obj_qpkgs_isnotmissing_array_[@]+"${_obj_qpkgs_isnotmissing_array_[@]}"}"; do
         matched=false
         for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
             if [[ $argument = $item ]]; then
@@ -4677,83 +4422,83 @@ QPKGs.Installed.Remove()
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_installed_array_=("${temp_array[@]+"${temp_array[@]}"}")
-    [[ -z ${_obj_qpkgs_installed_array_[*]+"${_obj_qpkgs_installed_array_[@]}"} ]] && _obj_qpkgs_installed_array_=()
+    _obj_qpkgs_isnotmissing_array_=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${_obj_qpkgs_isnotmissing_array_[*]+"${_obj_qpkgs_isnotmissing_array_[@]}"} ]] && _obj_qpkgs_isnotmissing_array_=()
     }
-QPKGs.Installed.Size()
+QPKGs.IsNotMissing.Size()
     {
     if [[ -n ${1:-} && ${1:-} = "=" ]]; then
-        _obj_qpkgs_installed_size_=$2
+        _obj_qpkgs_isnotmissing_size_=$2
     else
-        echo -n $_obj_qpkgs_installed_size_
+        echo -n $_obj_qpkgs_isnotmissing_size_
     fi
     }
-QPKGs.Installed.Init
+QPKGs.IsNotMissing.Init
 
-QPKGs.NotInstalled.Add()
+QPKGs.IsNames.Add()
     {
     local array=(${1})
     [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        if [[ " ${_obj_qpkgs_notinstalled_array_[*]+"${_obj_qpkgs_notinstalled_array_[@]}"} " != *"$item"* ]]; then
-            _obj_qpkgs_notinstalled_array_+=("$item")
+        if [[ " ${_obj_qpkgs_isnames_array_[*]+"${_obj_qpkgs_isnames_array_[@]}"} " != *"$item"* ]]; then
+            _obj_qpkgs_isnames_array_+=("$item")
         fi
     done
     }
-QPKGs.NotInstalled.Array()
+QPKGs.IsNames.Array()
     {
-    echo -n "${_obj_qpkgs_notinstalled_array_[@]+"${_obj_qpkgs_notinstalled_array_[@]}"}"
+    echo -n "${_obj_qpkgs_isnames_array_[@]+"${_obj_qpkgs_isnames_array_[@]}"}"
     }
-QPKGs.NotInstalled.Count()
+QPKGs.IsNames.Count()
     {
-    echo "${#_obj_qpkgs_notinstalled_array_[@]}"
+    echo "${#_obj_qpkgs_isnames_array_[@]}"
     }
-QPKGs.NotInstalled.Exist()
+QPKGs.IsNames.Exist()
     {
-    [[ ${_obj_qpkgs_notinstalled_array_[*]:-} == *"$1"* ]]
+    [[ ${_obj_qpkgs_isnames_array_[*]:-} == *"$1"* ]]
     }
-QPKGs.NotInstalled.First()
+QPKGs.IsNames.First()
     {
-    echo "${_obj_qpkgs_notinstalled_array_[0]}"
+    echo "${_obj_qpkgs_isnames_array_[0]}"
     }
-QPKGs.NotInstalled.GetItem()
+QPKGs.IsNames.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_notinstalled_array_[@]} ]] && index=${#_obj_qpkgs_notinstalled_array_[@]}
-    echo -n "${_obj_qpkgs_notinstalled_array_[((index-1))]}"
+    [[ $index -gt ${#_obj_qpkgs_isnames_array_[@]} ]] && index=${#_obj_qpkgs_isnames_array_[@]}
+    echo -n "${_obj_qpkgs_isnames_array_[((index-1))]}"
     }
-QPKGs.NotInstalled.Init()
+QPKGs.IsNames.Init()
     {
-    _obj_qpkgs_notinstalled_size_=0
-    _obj_qpkgs_notinstalled_array_=()
-    _obj_qpkgs_notinstalled_array_index_=1
+    _obj_qpkgs_isnames_size_=0
+    _obj_qpkgs_isnames_array_=()
+    _obj_qpkgs_isnames_array_index_=1
     }
-QPKGs.NotInstalled.IsAny()
+QPKGs.IsNames.IsAny()
     {
-    [[ ${#_obj_qpkgs_notinstalled_array_[@]} -gt 0 ]]
+    [[ ${#_obj_qpkgs_isnames_array_[@]} -gt 0 ]]
     }
-QPKGs.NotInstalled.IsNone()
+QPKGs.IsNames.IsNone()
     {
-    [[ ${#_obj_qpkgs_notinstalled_array_[@]} -eq 0 ]]
+    [[ ${#_obj_qpkgs_isnames_array_[@]} -eq 0 ]]
     }
-QPKGs.NotInstalled.List()
+QPKGs.IsNames.List()
     {
-    echo -n "${_obj_qpkgs_notinstalled_array_[*]+"${_obj_qpkgs_notinstalled_array_[@]}"}"
+    echo -n "${_obj_qpkgs_isnames_array_[*]+"${_obj_qpkgs_isnames_array_[@]}"}"
     }
-QPKGs.NotInstalled.ListCSV()
+QPKGs.IsNames.ListCSV()
     {
-    echo -n "${_obj_qpkgs_notinstalled_array_[*]+"${_obj_qpkgs_notinstalled_array_[@]}"}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_isnames_array_[*]+"${_obj_qpkgs_isnames_array_[@]}"}" | tr ' ' ','
     }
-QPKGs.NotInstalled.Remove()
+QPKGs.IsNames.Remove()
     {
     local argument_array=(${1})
     local temp_array=()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_notinstalled_array_[@]+"${_obj_qpkgs_notinstalled_array_[@]}"}"; do
+    for item in "${_obj_qpkgs_isnames_array_[@]+"${_obj_qpkgs_isnames_array_[@]}"}"; do
         matched=false
         for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
             if [[ $argument = $item ]]; then
@@ -4762,83 +4507,83 @@ QPKGs.NotInstalled.Remove()
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_notinstalled_array_=("${temp_array[@]+"${temp_array[@]}"}")
-    [[ -z ${_obj_qpkgs_notinstalled_array_[*]+"${_obj_qpkgs_notinstalled_array_[@]}"} ]] && _obj_qpkgs_notinstalled_array_=()
+    _obj_qpkgs_isnames_array_=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${_obj_qpkgs_isnames_array_[*]+"${_obj_qpkgs_isnames_array_[@]}"} ]] && _obj_qpkgs_isnames_array_=()
     }
-QPKGs.NotInstalled.Size()
+QPKGs.IsNames.Size()
     {
     if [[ -n ${1:-} && ${1:-} = "=" ]]; then
-        _obj_qpkgs_notinstalled_size_=$2
+        _obj_qpkgs_isnames_size_=$2
     else
-        echo -n $_obj_qpkgs_notinstalled_size_
+        echo -n $_obj_qpkgs_isnames_size_
     fi
     }
-QPKGs.NotInstalled.Init
+QPKGs.IsNames.Init
 
-QPKGs.SupportsBackup.Add()
+QPKGs.IsNotNames.Add()
     {
     local array=(${1})
     [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        if [[ " ${_obj_qpkgs_supportsbackup_array_[*]+"${_obj_qpkgs_supportsbackup_array_[@]}"} " != *"$item"* ]]; then
-            _obj_qpkgs_supportsbackup_array_+=("$item")
+        if [[ " ${_obj_qpkgs_isnotnames_array_[*]+"${_obj_qpkgs_isnotnames_array_[@]}"} " != *"$item"* ]]; then
+            _obj_qpkgs_isnotnames_array_+=("$item")
         fi
     done
     }
-QPKGs.SupportsBackup.Array()
+QPKGs.IsNotNames.Array()
     {
-    echo -n "${_obj_qpkgs_supportsbackup_array_[@]+"${_obj_qpkgs_supportsbackup_array_[@]}"}"
+    echo -n "${_obj_qpkgs_isnotnames_array_[@]+"${_obj_qpkgs_isnotnames_array_[@]}"}"
     }
-QPKGs.SupportsBackup.Count()
+QPKGs.IsNotNames.Count()
     {
-    echo "${#_obj_qpkgs_supportsbackup_array_[@]}"
+    echo "${#_obj_qpkgs_isnotnames_array_[@]}"
     }
-QPKGs.SupportsBackup.Exist()
+QPKGs.IsNotNames.Exist()
     {
-    [[ ${_obj_qpkgs_supportsbackup_array_[*]:-} == *"$1"* ]]
+    [[ ${_obj_qpkgs_isnotnames_array_[*]:-} == *"$1"* ]]
     }
-QPKGs.SupportsBackup.First()
+QPKGs.IsNotNames.First()
     {
-    echo "${_obj_qpkgs_supportsbackup_array_[0]}"
+    echo "${_obj_qpkgs_isnotnames_array_[0]}"
     }
-QPKGs.SupportsBackup.GetItem()
+QPKGs.IsNotNames.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_supportsbackup_array_[@]} ]] && index=${#_obj_qpkgs_supportsbackup_array_[@]}
-    echo -n "${_obj_qpkgs_supportsbackup_array_[((index-1))]}"
+    [[ $index -gt ${#_obj_qpkgs_isnotnames_array_[@]} ]] && index=${#_obj_qpkgs_isnotnames_array_[@]}
+    echo -n "${_obj_qpkgs_isnotnames_array_[((index-1))]}"
     }
-QPKGs.SupportsBackup.Init()
+QPKGs.IsNotNames.Init()
     {
-    _obj_qpkgs_supportsbackup_size_=0
-    _obj_qpkgs_supportsbackup_array_=()
-    _obj_qpkgs_supportsbackup_array_index_=1
+    _obj_qpkgs_isnotnames_size_=0
+    _obj_qpkgs_isnotnames_array_=()
+    _obj_qpkgs_isnotnames_array_index_=1
     }
-QPKGs.SupportsBackup.IsAny()
+QPKGs.IsNotNames.IsAny()
     {
-    [[ ${#_obj_qpkgs_supportsbackup_array_[@]} -gt 0 ]]
+    [[ ${#_obj_qpkgs_isnotnames_array_[@]} -gt 0 ]]
     }
-QPKGs.SupportsBackup.IsNone()
+QPKGs.IsNotNames.IsNone()
     {
-    [[ ${#_obj_qpkgs_supportsbackup_array_[@]} -eq 0 ]]
+    [[ ${#_obj_qpkgs_isnotnames_array_[@]} -eq 0 ]]
     }
-QPKGs.SupportsBackup.List()
+QPKGs.IsNotNames.List()
     {
-    echo -n "${_obj_qpkgs_supportsbackup_array_[*]+"${_obj_qpkgs_supportsbackup_array_[@]}"}"
+    echo -n "${_obj_qpkgs_isnotnames_array_[*]+"${_obj_qpkgs_isnotnames_array_[@]}"}"
     }
-QPKGs.SupportsBackup.ListCSV()
+QPKGs.IsNotNames.ListCSV()
     {
-    echo -n "${_obj_qpkgs_supportsbackup_array_[*]+"${_obj_qpkgs_supportsbackup_array_[@]}"}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_isnotnames_array_[*]+"${_obj_qpkgs_isnotnames_array_[@]}"}" | tr ' ' ','
     }
-QPKGs.SupportsBackup.Remove()
+QPKGs.IsNotNames.Remove()
     {
     local argument_array=(${1})
     local temp_array=()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_supportsbackup_array_[@]+"${_obj_qpkgs_supportsbackup_array_[@]}"}"; do
+    for item in "${_obj_qpkgs_isnotnames_array_[@]+"${_obj_qpkgs_isnotnames_array_[@]}"}"; do
         matched=false
         for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
             if [[ $argument = $item ]]; then
@@ -4847,83 +4592,83 @@ QPKGs.SupportsBackup.Remove()
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_supportsbackup_array_=("${temp_array[@]+"${temp_array[@]}"}")
-    [[ -z ${_obj_qpkgs_supportsbackup_array_[*]+"${_obj_qpkgs_supportsbackup_array_[@]}"} ]] && _obj_qpkgs_supportsbackup_array_=()
+    _obj_qpkgs_isnotnames_array_=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${_obj_qpkgs_isnotnames_array_[*]+"${_obj_qpkgs_isnotnames_array_[@]}"} ]] && _obj_qpkgs_isnotnames_array_=()
     }
-QPKGs.SupportsBackup.Size()
+QPKGs.IsNotNames.Size()
     {
     if [[ -n ${1:-} && ${1:-} = "=" ]]; then
-        _obj_qpkgs_supportsbackup_size_=$2
+        _obj_qpkgs_isnotnames_size_=$2
     else
-        echo -n $_obj_qpkgs_supportsbackup_size_
+        echo -n $_obj_qpkgs_isnotnames_size_
     fi
     }
-QPKGs.SupportsBackup.Init
+QPKGs.IsNotNames.Init
 
-QPKGs.NotSupportsBackup.Add()
+QPKGs.IsStandalone.Add()
     {
     local array=(${1})
     [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        if [[ " ${_obj_qpkgs_notsupportsbackup_array_[*]+"${_obj_qpkgs_notsupportsbackup_array_[@]}"} " != *"$item"* ]]; then
-            _obj_qpkgs_notsupportsbackup_array_+=("$item")
+        if [[ " ${_obj_qpkgs_isstandalone_array_[*]+"${_obj_qpkgs_isstandalone_array_[@]}"} " != *"$item"* ]]; then
+            _obj_qpkgs_isstandalone_array_+=("$item")
         fi
     done
     }
-QPKGs.NotSupportsBackup.Array()
+QPKGs.IsStandalone.Array()
     {
-    echo -n "${_obj_qpkgs_notsupportsbackup_array_[@]+"${_obj_qpkgs_notsupportsbackup_array_[@]}"}"
+    echo -n "${_obj_qpkgs_isstandalone_array_[@]+"${_obj_qpkgs_isstandalone_array_[@]}"}"
     }
-QPKGs.NotSupportsBackup.Count()
+QPKGs.IsStandalone.Count()
     {
-    echo "${#_obj_qpkgs_notsupportsbackup_array_[@]}"
+    echo "${#_obj_qpkgs_isstandalone_array_[@]}"
     }
-QPKGs.NotSupportsBackup.Exist()
+QPKGs.IsStandalone.Exist()
     {
-    [[ ${_obj_qpkgs_notsupportsbackup_array_[*]:-} == *"$1"* ]]
+    [[ ${_obj_qpkgs_isstandalone_array_[*]:-} == *"$1"* ]]
     }
-QPKGs.NotSupportsBackup.First()
+QPKGs.IsStandalone.First()
     {
-    echo "${_obj_qpkgs_notsupportsbackup_array_[0]}"
+    echo "${_obj_qpkgs_isstandalone_array_[0]}"
     }
-QPKGs.NotSupportsBackup.GetItem()
+QPKGs.IsStandalone.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_notsupportsbackup_array_[@]} ]] && index=${#_obj_qpkgs_notsupportsbackup_array_[@]}
-    echo -n "${_obj_qpkgs_notsupportsbackup_array_[((index-1))]}"
+    [[ $index -gt ${#_obj_qpkgs_isstandalone_array_[@]} ]] && index=${#_obj_qpkgs_isstandalone_array_[@]}
+    echo -n "${_obj_qpkgs_isstandalone_array_[((index-1))]}"
     }
-QPKGs.NotSupportsBackup.Init()
+QPKGs.IsStandalone.Init()
     {
-    _obj_qpkgs_notsupportsbackup_size_=0
-    _obj_qpkgs_notsupportsbackup_array_=()
-    _obj_qpkgs_notsupportsbackup_array_index_=1
+    _obj_qpkgs_isstandalone_size_=0
+    _obj_qpkgs_isstandalone_array_=()
+    _obj_qpkgs_isstandalone_array_index_=1
     }
-QPKGs.NotSupportsBackup.IsAny()
+QPKGs.IsStandalone.IsAny()
     {
-    [[ ${#_obj_qpkgs_notsupportsbackup_array_[@]} -gt 0 ]]
+    [[ ${#_obj_qpkgs_isstandalone_array_[@]} -gt 0 ]]
     }
-QPKGs.NotSupportsBackup.IsNone()
+QPKGs.IsStandalone.IsNone()
     {
-    [[ ${#_obj_qpkgs_notsupportsbackup_array_[@]} -eq 0 ]]
+    [[ ${#_obj_qpkgs_isstandalone_array_[@]} -eq 0 ]]
     }
-QPKGs.NotSupportsBackup.List()
+QPKGs.IsStandalone.List()
     {
-    echo -n "${_obj_qpkgs_notsupportsbackup_array_[*]+"${_obj_qpkgs_notsupportsbackup_array_[@]}"}"
+    echo -n "${_obj_qpkgs_isstandalone_array_[*]+"${_obj_qpkgs_isstandalone_array_[@]}"}"
     }
-QPKGs.NotSupportsBackup.ListCSV()
+QPKGs.IsStandalone.ListCSV()
     {
-    echo -n "${_obj_qpkgs_notsupportsbackup_array_[*]+"${_obj_qpkgs_notsupportsbackup_array_[@]}"}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_isstandalone_array_[*]+"${_obj_qpkgs_isstandalone_array_[@]}"}" | tr ' ' ','
     }
-QPKGs.NotSupportsBackup.Remove()
+QPKGs.IsStandalone.Remove()
     {
     local argument_array=(${1})
     local temp_array=()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_notsupportsbackup_array_[@]+"${_obj_qpkgs_notsupportsbackup_array_[@]}"}"; do
+    for item in "${_obj_qpkgs_isstandalone_array_[@]+"${_obj_qpkgs_isstandalone_array_[@]}"}"; do
         matched=false
         for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
             if [[ $argument = $item ]]; then
@@ -4932,83 +4677,83 @@ QPKGs.NotSupportsBackup.Remove()
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_notsupportsbackup_array_=("${temp_array[@]+"${temp_array[@]}"}")
-    [[ -z ${_obj_qpkgs_notsupportsbackup_array_[*]+"${_obj_qpkgs_notsupportsbackup_array_[@]}"} ]] && _obj_qpkgs_notsupportsbackup_array_=()
+    _obj_qpkgs_isstandalone_array_=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${_obj_qpkgs_isstandalone_array_[*]+"${_obj_qpkgs_isstandalone_array_[@]}"} ]] && _obj_qpkgs_isstandalone_array_=()
     }
-QPKGs.NotSupportsBackup.Size()
+QPKGs.IsStandalone.Size()
     {
     if [[ -n ${1:-} && ${1:-} = "=" ]]; then
-        _obj_qpkgs_notsupportsbackup_size_=$2
+        _obj_qpkgs_isstandalone_size_=$2
     else
-        echo -n $_obj_qpkgs_notsupportsbackup_size_
+        echo -n $_obj_qpkgs_isstandalone_size_
     fi
     }
-QPKGs.NotSupportsBackup.Init
+QPKGs.IsStandalone.Init
 
-QPKGs.SupportsUpdateOnRestart.Add()
+QPKGs.IsNotStandalone.Add()
     {
     local array=(${1})
     [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        if [[ " ${_obj_qpkgs_supportsupdateonrestart_array_[*]+"${_obj_qpkgs_supportsupdateonrestart_array_[@]}"} " != *"$item"* ]]; then
-            _obj_qpkgs_supportsupdateonrestart_array_+=("$item")
+        if [[ " ${_obj_qpkgs_isnotstandalone_array_[*]+"${_obj_qpkgs_isnotstandalone_array_[@]}"} " != *"$item"* ]]; then
+            _obj_qpkgs_isnotstandalone_array_+=("$item")
         fi
     done
     }
-QPKGs.SupportsUpdateOnRestart.Array()
+QPKGs.IsNotStandalone.Array()
     {
-    echo -n "${_obj_qpkgs_supportsupdateonrestart_array_[@]+"${_obj_qpkgs_supportsupdateonrestart_array_[@]}"}"
+    echo -n "${_obj_qpkgs_isnotstandalone_array_[@]+"${_obj_qpkgs_isnotstandalone_array_[@]}"}"
     }
-QPKGs.SupportsUpdateOnRestart.Count()
+QPKGs.IsNotStandalone.Count()
     {
-    echo "${#_obj_qpkgs_supportsupdateonrestart_array_[@]}"
+    echo "${#_obj_qpkgs_isnotstandalone_array_[@]}"
     }
-QPKGs.SupportsUpdateOnRestart.Exist()
+QPKGs.IsNotStandalone.Exist()
     {
-    [[ ${_obj_qpkgs_supportsupdateonrestart_array_[*]:-} == *"$1"* ]]
+    [[ ${_obj_qpkgs_isnotstandalone_array_[*]:-} == *"$1"* ]]
     }
-QPKGs.SupportsUpdateOnRestart.First()
+QPKGs.IsNotStandalone.First()
     {
-    echo "${_obj_qpkgs_supportsupdateonrestart_array_[0]}"
+    echo "${_obj_qpkgs_isnotstandalone_array_[0]}"
     }
-QPKGs.SupportsUpdateOnRestart.GetItem()
+QPKGs.IsNotStandalone.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_supportsupdateonrestart_array_[@]} ]] && index=${#_obj_qpkgs_supportsupdateonrestart_array_[@]}
-    echo -n "${_obj_qpkgs_supportsupdateonrestart_array_[((index-1))]}"
+    [[ $index -gt ${#_obj_qpkgs_isnotstandalone_array_[@]} ]] && index=${#_obj_qpkgs_isnotstandalone_array_[@]}
+    echo -n "${_obj_qpkgs_isnotstandalone_array_[((index-1))]}"
     }
-QPKGs.SupportsUpdateOnRestart.Init()
+QPKGs.IsNotStandalone.Init()
     {
-    _obj_qpkgs_supportsupdateonrestart_size_=0
-    _obj_qpkgs_supportsupdateonrestart_array_=()
-    _obj_qpkgs_supportsupdateonrestart_array_index_=1
+    _obj_qpkgs_isnotstandalone_size_=0
+    _obj_qpkgs_isnotstandalone_array_=()
+    _obj_qpkgs_isnotstandalone_array_index_=1
     }
-QPKGs.SupportsUpdateOnRestart.IsAny()
+QPKGs.IsNotStandalone.IsAny()
     {
-    [[ ${#_obj_qpkgs_supportsupdateonrestart_array_[@]} -gt 0 ]]
+    [[ ${#_obj_qpkgs_isnotstandalone_array_[@]} -gt 0 ]]
     }
-QPKGs.SupportsUpdateOnRestart.IsNone()
+QPKGs.IsNotStandalone.IsNone()
     {
-    [[ ${#_obj_qpkgs_supportsupdateonrestart_array_[@]} -eq 0 ]]
+    [[ ${#_obj_qpkgs_isnotstandalone_array_[@]} -eq 0 ]]
     }
-QPKGs.SupportsUpdateOnRestart.List()
+QPKGs.IsNotStandalone.List()
     {
-    echo -n "${_obj_qpkgs_supportsupdateonrestart_array_[*]+"${_obj_qpkgs_supportsupdateonrestart_array_[@]}"}"
+    echo -n "${_obj_qpkgs_isnotstandalone_array_[*]+"${_obj_qpkgs_isnotstandalone_array_[@]}"}"
     }
-QPKGs.SupportsUpdateOnRestart.ListCSV()
+QPKGs.IsNotStandalone.ListCSV()
     {
-    echo -n "${_obj_qpkgs_supportsupdateonrestart_array_[*]+"${_obj_qpkgs_supportsupdateonrestart_array_[@]}"}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_isnotstandalone_array_[*]+"${_obj_qpkgs_isnotstandalone_array_[@]}"}" | tr ' ' ','
     }
-QPKGs.SupportsUpdateOnRestart.Remove()
+QPKGs.IsNotStandalone.Remove()
     {
     local argument_array=(${1})
     local temp_array=()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_supportsupdateonrestart_array_[@]+"${_obj_qpkgs_supportsupdateonrestart_array_[@]}"}"; do
+    for item in "${_obj_qpkgs_isnotstandalone_array_[@]+"${_obj_qpkgs_isnotstandalone_array_[@]}"}"; do
         matched=false
         for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
             if [[ $argument = $item ]]; then
@@ -5017,83 +4762,83 @@ QPKGs.SupportsUpdateOnRestart.Remove()
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_supportsupdateonrestart_array_=("${temp_array[@]+"${temp_array[@]}"}")
-    [[ -z ${_obj_qpkgs_supportsupdateonrestart_array_[*]+"${_obj_qpkgs_supportsupdateonrestart_array_[@]}"} ]] && _obj_qpkgs_supportsupdateonrestart_array_=()
+    _obj_qpkgs_isnotstandalone_array_=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${_obj_qpkgs_isnotstandalone_array_[*]+"${_obj_qpkgs_isnotstandalone_array_[@]}"} ]] && _obj_qpkgs_isnotstandalone_array_=()
     }
-QPKGs.SupportsUpdateOnRestart.Size()
+QPKGs.IsNotStandalone.Size()
     {
     if [[ -n ${1:-} && ${1:-} = "=" ]]; then
-        _obj_qpkgs_supportsupdateonrestart_size_=$2
+        _obj_qpkgs_isnotstandalone_size_=$2
     else
-        echo -n $_obj_qpkgs_supportsupdateonrestart_size_
+        echo -n $_obj_qpkgs_isnotstandalone_size_
     fi
     }
-QPKGs.SupportsUpdateOnRestart.Init
+QPKGs.IsNotStandalone.Init
 
-QPKGs.NotSupportsUpdateOnRestart.Add()
+QPKGs.IsStarting.Add()
     {
     local array=(${1})
     [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        if [[ " ${_obj_qpkgs_notsupportsupdateonrestart_array_[*]+"${_obj_qpkgs_notsupportsupdateonrestart_array_[@]}"} " != *"$item"* ]]; then
-            _obj_qpkgs_notsupportsupdateonrestart_array_+=("$item")
+        if [[ " ${_obj_qpkgs_isstarting_array_[*]+"${_obj_qpkgs_isstarting_array_[@]}"} " != *"$item"* ]]; then
+            _obj_qpkgs_isstarting_array_+=("$item")
         fi
     done
     }
-QPKGs.NotSupportsUpdateOnRestart.Array()
+QPKGs.IsStarting.Array()
     {
-    echo -n "${_obj_qpkgs_notsupportsupdateonrestart_array_[@]+"${_obj_qpkgs_notsupportsupdateonrestart_array_[@]}"}"
+    echo -n "${_obj_qpkgs_isstarting_array_[@]+"${_obj_qpkgs_isstarting_array_[@]}"}"
     }
-QPKGs.NotSupportsUpdateOnRestart.Count()
+QPKGs.IsStarting.Count()
     {
-    echo "${#_obj_qpkgs_notsupportsupdateonrestart_array_[@]}"
+    echo "${#_obj_qpkgs_isstarting_array_[@]}"
     }
-QPKGs.NotSupportsUpdateOnRestart.Exist()
+QPKGs.IsStarting.Exist()
     {
-    [[ ${_obj_qpkgs_notsupportsupdateonrestart_array_[*]:-} == *"$1"* ]]
+    [[ ${_obj_qpkgs_isstarting_array_[*]:-} == *"$1"* ]]
     }
-QPKGs.NotSupportsUpdateOnRestart.First()
+QPKGs.IsStarting.First()
     {
-    echo "${_obj_qpkgs_notsupportsupdateonrestart_array_[0]}"
+    echo "${_obj_qpkgs_isstarting_array_[0]}"
     }
-QPKGs.NotSupportsUpdateOnRestart.GetItem()
+QPKGs.IsStarting.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_notsupportsupdateonrestart_array_[@]} ]] && index=${#_obj_qpkgs_notsupportsupdateonrestart_array_[@]}
-    echo -n "${_obj_qpkgs_notsupportsupdateonrestart_array_[((index-1))]}"
+    [[ $index -gt ${#_obj_qpkgs_isstarting_array_[@]} ]] && index=${#_obj_qpkgs_isstarting_array_[@]}
+    echo -n "${_obj_qpkgs_isstarting_array_[((index-1))]}"
     }
-QPKGs.NotSupportsUpdateOnRestart.Init()
+QPKGs.IsStarting.Init()
     {
-    _obj_qpkgs_notsupportsupdateonrestart_size_=0
-    _obj_qpkgs_notsupportsupdateonrestart_array_=()
-    _obj_qpkgs_notsupportsupdateonrestart_array_index_=1
+    _obj_qpkgs_isstarting_size_=0
+    _obj_qpkgs_isstarting_array_=()
+    _obj_qpkgs_isstarting_array_index_=1
     }
-QPKGs.NotSupportsUpdateOnRestart.IsAny()
+QPKGs.IsStarting.IsAny()
     {
-    [[ ${#_obj_qpkgs_notsupportsupdateonrestart_array_[@]} -gt 0 ]]
+    [[ ${#_obj_qpkgs_isstarting_array_[@]} -gt 0 ]]
     }
-QPKGs.NotSupportsUpdateOnRestart.IsNone()
+QPKGs.IsStarting.IsNone()
     {
-    [[ ${#_obj_qpkgs_notsupportsupdateonrestart_array_[@]} -eq 0 ]]
+    [[ ${#_obj_qpkgs_isstarting_array_[@]} -eq 0 ]]
     }
-QPKGs.NotSupportsUpdateOnRestart.List()
+QPKGs.IsStarting.List()
     {
-    echo -n "${_obj_qpkgs_notsupportsupdateonrestart_array_[*]+"${_obj_qpkgs_notsupportsupdateonrestart_array_[@]}"}"
+    echo -n "${_obj_qpkgs_isstarting_array_[*]+"${_obj_qpkgs_isstarting_array_[@]}"}"
     }
-QPKGs.NotSupportsUpdateOnRestart.ListCSV()
+QPKGs.IsStarting.ListCSV()
     {
-    echo -n "${_obj_qpkgs_notsupportsupdateonrestart_array_[*]+"${_obj_qpkgs_notsupportsupdateonrestart_array_[@]}"}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_isstarting_array_[*]+"${_obj_qpkgs_isstarting_array_[@]}"}" | tr ' ' ','
     }
-QPKGs.NotSupportsUpdateOnRestart.Remove()
+QPKGs.IsStarting.Remove()
     {
     local argument_array=(${1})
     local temp_array=()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_notsupportsupdateonrestart_array_[@]+"${_obj_qpkgs_notsupportsupdateonrestart_array_[@]}"}"; do
+    for item in "${_obj_qpkgs_isstarting_array_[@]+"${_obj_qpkgs_isstarting_array_[@]}"}"; do
         matched=false
         for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
             if [[ $argument = $item ]]; then
@@ -5102,18 +4847,1293 @@ QPKGs.NotSupportsUpdateOnRestart.Remove()
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_notsupportsupdateonrestart_array_=("${temp_array[@]+"${temp_array[@]}"}")
-    [[ -z ${_obj_qpkgs_notsupportsupdateonrestart_array_[*]+"${_obj_qpkgs_notsupportsupdateonrestart_array_[@]}"} ]] && _obj_qpkgs_notsupportsupdateonrestart_array_=()
+    _obj_qpkgs_isstarting_array_=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${_obj_qpkgs_isstarting_array_[*]+"${_obj_qpkgs_isstarting_array_[@]}"} ]] && _obj_qpkgs_isstarting_array_=()
     }
-QPKGs.NotSupportsUpdateOnRestart.Size()
+QPKGs.IsStarting.Size()
     {
     if [[ -n ${1:-} && ${1:-} = "=" ]]; then
-        _obj_qpkgs_notsupportsupdateonrestart_size_=$2
+        _obj_qpkgs_isstarting_size_=$2
     else
-        echo -n $_obj_qpkgs_notsupportsupdateonrestart_size_
+        echo -n $_obj_qpkgs_isstarting_size_
     fi
     }
-QPKGs.NotSupportsUpdateOnRestart.Init
+QPKGs.IsStarting.Init
+
+QPKGs.IsNotStarting.Add()
+    {
+    local array=(${1})
+    [[ ${#array[@]} -eq 0 ]] && return
+    local item=''
+    for item in "${array[@]:-}"; do
+        if [[ " ${_obj_qpkgs_isnotstarting_array_[*]+"${_obj_qpkgs_isnotstarting_array_[@]}"} " != *"$item"* ]]; then
+            _obj_qpkgs_isnotstarting_array_+=("$item")
+        fi
+    done
+    }
+QPKGs.IsNotStarting.Array()
+    {
+    echo -n "${_obj_qpkgs_isnotstarting_array_[@]+"${_obj_qpkgs_isnotstarting_array_[@]}"}"
+    }
+QPKGs.IsNotStarting.Count()
+    {
+    echo "${#_obj_qpkgs_isnotstarting_array_[@]}"
+    }
+QPKGs.IsNotStarting.Exist()
+    {
+    [[ ${_obj_qpkgs_isnotstarting_array_[*]:-} == *"$1"* ]]
+    }
+QPKGs.IsNotStarting.First()
+    {
+    echo "${_obj_qpkgs_isnotstarting_array_[0]}"
+    }
+QPKGs.IsNotStarting.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_obj_qpkgs_isnotstarting_array_[@]} ]] && index=${#_obj_qpkgs_isnotstarting_array_[@]}
+    echo -n "${_obj_qpkgs_isnotstarting_array_[((index-1))]}"
+    }
+QPKGs.IsNotStarting.Init()
+    {
+    _obj_qpkgs_isnotstarting_size_=0
+    _obj_qpkgs_isnotstarting_array_=()
+    _obj_qpkgs_isnotstarting_array_index_=1
+    }
+QPKGs.IsNotStarting.IsAny()
+    {
+    [[ ${#_obj_qpkgs_isnotstarting_array_[@]} -gt 0 ]]
+    }
+QPKGs.IsNotStarting.IsNone()
+    {
+    [[ ${#_obj_qpkgs_isnotstarting_array_[@]} -eq 0 ]]
+    }
+QPKGs.IsNotStarting.List()
+    {
+    echo -n "${_obj_qpkgs_isnotstarting_array_[*]+"${_obj_qpkgs_isnotstarting_array_[@]}"}"
+    }
+QPKGs.IsNotStarting.ListCSV()
+    {
+    echo -n "${_obj_qpkgs_isnotstarting_array_[*]+"${_obj_qpkgs_isnotstarting_array_[@]}"}" | tr ' ' ','
+    }
+QPKGs.IsNotStarting.Remove()
+    {
+    local argument_array=(${1})
+    local temp_array=()
+    local argument=''
+    local item=''
+    local matched=false
+    for item in "${_obj_qpkgs_isnotstarting_array_[@]+"${_obj_qpkgs_isnotstarting_array_[@]}"}"; do
+        matched=false
+        for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
+            if [[ $argument = $item ]]; then
+                matched=true; break
+            fi
+        done
+        [[ $matched = false ]] && temp_array+=("$item")
+    done
+    _obj_qpkgs_isnotstarting_array_=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${_obj_qpkgs_isnotstarting_array_[*]+"${_obj_qpkgs_isnotstarting_array_[@]}"} ]] && _obj_qpkgs_isnotstarting_array_=()
+    }
+QPKGs.IsNotStarting.Size()
+    {
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+        _obj_qpkgs_isnotstarting_size_=$2
+    else
+        echo -n $_obj_qpkgs_isnotstarting_size_
+    fi
+    }
+QPKGs.IsNotStarting.Init
+
+QPKGs.IsStarted.Add()
+    {
+    local array=(${1})
+    [[ ${#array[@]} -eq 0 ]] && return
+    local item=''
+    for item in "${array[@]:-}"; do
+        if [[ " ${_obj_qpkgs_isstarted_array_[*]+"${_obj_qpkgs_isstarted_array_[@]}"} " != *"$item"* ]]; then
+            _obj_qpkgs_isstarted_array_+=("$item")
+        fi
+    done
+    }
+QPKGs.IsStarted.Array()
+    {
+    echo -n "${_obj_qpkgs_isstarted_array_[@]+"${_obj_qpkgs_isstarted_array_[@]}"}"
+    }
+QPKGs.IsStarted.Count()
+    {
+    echo "${#_obj_qpkgs_isstarted_array_[@]}"
+    }
+QPKGs.IsStarted.Exist()
+    {
+    [[ ${_obj_qpkgs_isstarted_array_[*]:-} == *"$1"* ]]
+    }
+QPKGs.IsStarted.First()
+    {
+    echo "${_obj_qpkgs_isstarted_array_[0]}"
+    }
+QPKGs.IsStarted.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_obj_qpkgs_isstarted_array_[@]} ]] && index=${#_obj_qpkgs_isstarted_array_[@]}
+    echo -n "${_obj_qpkgs_isstarted_array_[((index-1))]}"
+    }
+QPKGs.IsStarted.Init()
+    {
+    _obj_qpkgs_isstarted_size_=0
+    _obj_qpkgs_isstarted_array_=()
+    _obj_qpkgs_isstarted_array_index_=1
+    }
+QPKGs.IsStarted.IsAny()
+    {
+    [[ ${#_obj_qpkgs_isstarted_array_[@]} -gt 0 ]]
+    }
+QPKGs.IsStarted.IsNone()
+    {
+    [[ ${#_obj_qpkgs_isstarted_array_[@]} -eq 0 ]]
+    }
+QPKGs.IsStarted.List()
+    {
+    echo -n "${_obj_qpkgs_isstarted_array_[*]+"${_obj_qpkgs_isstarted_array_[@]}"}"
+    }
+QPKGs.IsStarted.ListCSV()
+    {
+    echo -n "${_obj_qpkgs_isstarted_array_[*]+"${_obj_qpkgs_isstarted_array_[@]}"}" | tr ' ' ','
+    }
+QPKGs.IsStarted.Remove()
+    {
+    local argument_array=(${1})
+    local temp_array=()
+    local argument=''
+    local item=''
+    local matched=false
+    for item in "${_obj_qpkgs_isstarted_array_[@]+"${_obj_qpkgs_isstarted_array_[@]}"}"; do
+        matched=false
+        for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
+            if [[ $argument = $item ]]; then
+                matched=true; break
+            fi
+        done
+        [[ $matched = false ]] && temp_array+=("$item")
+    done
+    _obj_qpkgs_isstarted_array_=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${_obj_qpkgs_isstarted_array_[*]+"${_obj_qpkgs_isstarted_array_[@]}"} ]] && _obj_qpkgs_isstarted_array_=()
+    }
+QPKGs.IsStarted.Size()
+    {
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+        _obj_qpkgs_isstarted_size_=$2
+    else
+        echo -n $_obj_qpkgs_isstarted_size_
+    fi
+    }
+QPKGs.IsStarted.Init
+
+QPKGs.IsNotStarted.Add()
+    {
+    local array=(${1})
+    [[ ${#array[@]} -eq 0 ]] && return
+    local item=''
+    for item in "${array[@]:-}"; do
+        if [[ " ${_obj_qpkgs_isnotstarted_array_[*]+"${_obj_qpkgs_isnotstarted_array_[@]}"} " != *"$item"* ]]; then
+            _obj_qpkgs_isnotstarted_array_+=("$item")
+        fi
+    done
+    }
+QPKGs.IsNotStarted.Array()
+    {
+    echo -n "${_obj_qpkgs_isnotstarted_array_[@]+"${_obj_qpkgs_isnotstarted_array_[@]}"}"
+    }
+QPKGs.IsNotStarted.Count()
+    {
+    echo "${#_obj_qpkgs_isnotstarted_array_[@]}"
+    }
+QPKGs.IsNotStarted.Exist()
+    {
+    [[ ${_obj_qpkgs_isnotstarted_array_[*]:-} == *"$1"* ]]
+    }
+QPKGs.IsNotStarted.First()
+    {
+    echo "${_obj_qpkgs_isnotstarted_array_[0]}"
+    }
+QPKGs.IsNotStarted.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_obj_qpkgs_isnotstarted_array_[@]} ]] && index=${#_obj_qpkgs_isnotstarted_array_[@]}
+    echo -n "${_obj_qpkgs_isnotstarted_array_[((index-1))]}"
+    }
+QPKGs.IsNotStarted.Init()
+    {
+    _obj_qpkgs_isnotstarted_size_=0
+    _obj_qpkgs_isnotstarted_array_=()
+    _obj_qpkgs_isnotstarted_array_index_=1
+    }
+QPKGs.IsNotStarted.IsAny()
+    {
+    [[ ${#_obj_qpkgs_isnotstarted_array_[@]} -gt 0 ]]
+    }
+QPKGs.IsNotStarted.IsNone()
+    {
+    [[ ${#_obj_qpkgs_isnotstarted_array_[@]} -eq 0 ]]
+    }
+QPKGs.IsNotStarted.List()
+    {
+    echo -n "${_obj_qpkgs_isnotstarted_array_[*]+"${_obj_qpkgs_isnotstarted_array_[@]}"}"
+    }
+QPKGs.IsNotStarted.ListCSV()
+    {
+    echo -n "${_obj_qpkgs_isnotstarted_array_[*]+"${_obj_qpkgs_isnotstarted_array_[@]}"}" | tr ' ' ','
+    }
+QPKGs.IsNotStarted.Remove()
+    {
+    local argument_array=(${1})
+    local temp_array=()
+    local argument=''
+    local item=''
+    local matched=false
+    for item in "${_obj_qpkgs_isnotstarted_array_[@]+"${_obj_qpkgs_isnotstarted_array_[@]}"}"; do
+        matched=false
+        for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
+            if [[ $argument = $item ]]; then
+                matched=true; break
+            fi
+        done
+        [[ $matched = false ]] && temp_array+=("$item")
+    done
+    _obj_qpkgs_isnotstarted_array_=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${_obj_qpkgs_isnotstarted_array_[*]+"${_obj_qpkgs_isnotstarted_array_[@]}"} ]] && _obj_qpkgs_isnotstarted_array_=()
+    }
+QPKGs.IsNotStarted.Size()
+    {
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+        _obj_qpkgs_isnotstarted_size_=$2
+    else
+        echo -n $_obj_qpkgs_isnotstarted_size_
+    fi
+    }
+QPKGs.IsNotStarted.Init
+
+QPKGs.IsStopping.Add()
+    {
+    local array=(${1})
+    [[ ${#array[@]} -eq 0 ]] && return
+    local item=''
+    for item in "${array[@]:-}"; do
+        if [[ " ${_obj_qpkgs_isstopping_array_[*]+"${_obj_qpkgs_isstopping_array_[@]}"} " != *"$item"* ]]; then
+            _obj_qpkgs_isstopping_array_+=("$item")
+        fi
+    done
+    }
+QPKGs.IsStopping.Array()
+    {
+    echo -n "${_obj_qpkgs_isstopping_array_[@]+"${_obj_qpkgs_isstopping_array_[@]}"}"
+    }
+QPKGs.IsStopping.Count()
+    {
+    echo "${#_obj_qpkgs_isstopping_array_[@]}"
+    }
+QPKGs.IsStopping.Exist()
+    {
+    [[ ${_obj_qpkgs_isstopping_array_[*]:-} == *"$1"* ]]
+    }
+QPKGs.IsStopping.First()
+    {
+    echo "${_obj_qpkgs_isstopping_array_[0]}"
+    }
+QPKGs.IsStopping.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_obj_qpkgs_isstopping_array_[@]} ]] && index=${#_obj_qpkgs_isstopping_array_[@]}
+    echo -n "${_obj_qpkgs_isstopping_array_[((index-1))]}"
+    }
+QPKGs.IsStopping.Init()
+    {
+    _obj_qpkgs_isstopping_size_=0
+    _obj_qpkgs_isstopping_array_=()
+    _obj_qpkgs_isstopping_array_index_=1
+    }
+QPKGs.IsStopping.IsAny()
+    {
+    [[ ${#_obj_qpkgs_isstopping_array_[@]} -gt 0 ]]
+    }
+QPKGs.IsStopping.IsNone()
+    {
+    [[ ${#_obj_qpkgs_isstopping_array_[@]} -eq 0 ]]
+    }
+QPKGs.IsStopping.List()
+    {
+    echo -n "${_obj_qpkgs_isstopping_array_[*]+"${_obj_qpkgs_isstopping_array_[@]}"}"
+    }
+QPKGs.IsStopping.ListCSV()
+    {
+    echo -n "${_obj_qpkgs_isstopping_array_[*]+"${_obj_qpkgs_isstopping_array_[@]}"}" | tr ' ' ','
+    }
+QPKGs.IsStopping.Remove()
+    {
+    local argument_array=(${1})
+    local temp_array=()
+    local argument=''
+    local item=''
+    local matched=false
+    for item in "${_obj_qpkgs_isstopping_array_[@]+"${_obj_qpkgs_isstopping_array_[@]}"}"; do
+        matched=false
+        for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
+            if [[ $argument = $item ]]; then
+                matched=true; break
+            fi
+        done
+        [[ $matched = false ]] && temp_array+=("$item")
+    done
+    _obj_qpkgs_isstopping_array_=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${_obj_qpkgs_isstopping_array_[*]+"${_obj_qpkgs_isstopping_array_[@]}"} ]] && _obj_qpkgs_isstopping_array_=()
+    }
+QPKGs.IsStopping.Size()
+    {
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+        _obj_qpkgs_isstopping_size_=$2
+    else
+        echo -n $_obj_qpkgs_isstopping_size_
+    fi
+    }
+QPKGs.IsStopping.Init
+
+QPKGs.IsNotStopping.Add()
+    {
+    local array=(${1})
+    [[ ${#array[@]} -eq 0 ]] && return
+    local item=''
+    for item in "${array[@]:-}"; do
+        if [[ " ${_obj_qpkgs_isnotstopping_array_[*]+"${_obj_qpkgs_isnotstopping_array_[@]}"} " != *"$item"* ]]; then
+            _obj_qpkgs_isnotstopping_array_+=("$item")
+        fi
+    done
+    }
+QPKGs.IsNotStopping.Array()
+    {
+    echo -n "${_obj_qpkgs_isnotstopping_array_[@]+"${_obj_qpkgs_isnotstopping_array_[@]}"}"
+    }
+QPKGs.IsNotStopping.Count()
+    {
+    echo "${#_obj_qpkgs_isnotstopping_array_[@]}"
+    }
+QPKGs.IsNotStopping.Exist()
+    {
+    [[ ${_obj_qpkgs_isnotstopping_array_[*]:-} == *"$1"* ]]
+    }
+QPKGs.IsNotStopping.First()
+    {
+    echo "${_obj_qpkgs_isnotstopping_array_[0]}"
+    }
+QPKGs.IsNotStopping.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_obj_qpkgs_isnotstopping_array_[@]} ]] && index=${#_obj_qpkgs_isnotstopping_array_[@]}
+    echo -n "${_obj_qpkgs_isnotstopping_array_[((index-1))]}"
+    }
+QPKGs.IsNotStopping.Init()
+    {
+    _obj_qpkgs_isnotstopping_size_=0
+    _obj_qpkgs_isnotstopping_array_=()
+    _obj_qpkgs_isnotstopping_array_index_=1
+    }
+QPKGs.IsNotStopping.IsAny()
+    {
+    [[ ${#_obj_qpkgs_isnotstopping_array_[@]} -gt 0 ]]
+    }
+QPKGs.IsNotStopping.IsNone()
+    {
+    [[ ${#_obj_qpkgs_isnotstopping_array_[@]} -eq 0 ]]
+    }
+QPKGs.IsNotStopping.List()
+    {
+    echo -n "${_obj_qpkgs_isnotstopping_array_[*]+"${_obj_qpkgs_isnotstopping_array_[@]}"}"
+    }
+QPKGs.IsNotStopping.ListCSV()
+    {
+    echo -n "${_obj_qpkgs_isnotstopping_array_[*]+"${_obj_qpkgs_isnotstopping_array_[@]}"}" | tr ' ' ','
+    }
+QPKGs.IsNotStopping.Remove()
+    {
+    local argument_array=(${1})
+    local temp_array=()
+    local argument=''
+    local item=''
+    local matched=false
+    for item in "${_obj_qpkgs_isnotstopping_array_[@]+"${_obj_qpkgs_isnotstopping_array_[@]}"}"; do
+        matched=false
+        for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
+            if [[ $argument = $item ]]; then
+                matched=true; break
+            fi
+        done
+        [[ $matched = false ]] && temp_array+=("$item")
+    done
+    _obj_qpkgs_isnotstopping_array_=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${_obj_qpkgs_isnotstopping_array_[*]+"${_obj_qpkgs_isnotstopping_array_[@]}"} ]] && _obj_qpkgs_isnotstopping_array_=()
+    }
+QPKGs.IsNotStopping.Size()
+    {
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+        _obj_qpkgs_isnotstopping_size_=$2
+    else
+        echo -n $_obj_qpkgs_isnotstopping_size_
+    fi
+    }
+QPKGs.IsNotStopping.Init
+
+QPKGs.IsStopped.Add()
+    {
+    local array=(${1})
+    [[ ${#array[@]} -eq 0 ]] && return
+    local item=''
+    for item in "${array[@]:-}"; do
+        if [[ " ${_obj_qpkgs_isstopped_array_[*]+"${_obj_qpkgs_isstopped_array_[@]}"} " != *"$item"* ]]; then
+            _obj_qpkgs_isstopped_array_+=("$item")
+        fi
+    done
+    }
+QPKGs.IsStopped.Array()
+    {
+    echo -n "${_obj_qpkgs_isstopped_array_[@]+"${_obj_qpkgs_isstopped_array_[@]}"}"
+    }
+QPKGs.IsStopped.Count()
+    {
+    echo "${#_obj_qpkgs_isstopped_array_[@]}"
+    }
+QPKGs.IsStopped.Exist()
+    {
+    [[ ${_obj_qpkgs_isstopped_array_[*]:-} == *"$1"* ]]
+    }
+QPKGs.IsStopped.First()
+    {
+    echo "${_obj_qpkgs_isstopped_array_[0]}"
+    }
+QPKGs.IsStopped.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_obj_qpkgs_isstopped_array_[@]} ]] && index=${#_obj_qpkgs_isstopped_array_[@]}
+    echo -n "${_obj_qpkgs_isstopped_array_[((index-1))]}"
+    }
+QPKGs.IsStopped.Init()
+    {
+    _obj_qpkgs_isstopped_size_=0
+    _obj_qpkgs_isstopped_array_=()
+    _obj_qpkgs_isstopped_array_index_=1
+    }
+QPKGs.IsStopped.IsAny()
+    {
+    [[ ${#_obj_qpkgs_isstopped_array_[@]} -gt 0 ]]
+    }
+QPKGs.IsStopped.IsNone()
+    {
+    [[ ${#_obj_qpkgs_isstopped_array_[@]} -eq 0 ]]
+    }
+QPKGs.IsStopped.List()
+    {
+    echo -n "${_obj_qpkgs_isstopped_array_[*]+"${_obj_qpkgs_isstopped_array_[@]}"}"
+    }
+QPKGs.IsStopped.ListCSV()
+    {
+    echo -n "${_obj_qpkgs_isstopped_array_[*]+"${_obj_qpkgs_isstopped_array_[@]}"}" | tr ' ' ','
+    }
+QPKGs.IsStopped.Remove()
+    {
+    local argument_array=(${1})
+    local temp_array=()
+    local argument=''
+    local item=''
+    local matched=false
+    for item in "${_obj_qpkgs_isstopped_array_[@]+"${_obj_qpkgs_isstopped_array_[@]}"}"; do
+        matched=false
+        for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
+            if [[ $argument = $item ]]; then
+                matched=true; break
+            fi
+        done
+        [[ $matched = false ]] && temp_array+=("$item")
+    done
+    _obj_qpkgs_isstopped_array_=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${_obj_qpkgs_isstopped_array_[*]+"${_obj_qpkgs_isstopped_array_[@]}"} ]] && _obj_qpkgs_isstopped_array_=()
+    }
+QPKGs.IsStopped.Size()
+    {
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+        _obj_qpkgs_isstopped_size_=$2
+    else
+        echo -n $_obj_qpkgs_isstopped_size_
+    fi
+    }
+QPKGs.IsStopped.Init
+
+QPKGs.IsNotStopped.Add()
+    {
+    local array=(${1})
+    [[ ${#array[@]} -eq 0 ]] && return
+    local item=''
+    for item in "${array[@]:-}"; do
+        if [[ " ${_obj_qpkgs_isnotstopped_array_[*]+"${_obj_qpkgs_isnotstopped_array_[@]}"} " != *"$item"* ]]; then
+            _obj_qpkgs_isnotstopped_array_+=("$item")
+        fi
+    done
+    }
+QPKGs.IsNotStopped.Array()
+    {
+    echo -n "${_obj_qpkgs_isnotstopped_array_[@]+"${_obj_qpkgs_isnotstopped_array_[@]}"}"
+    }
+QPKGs.IsNotStopped.Count()
+    {
+    echo "${#_obj_qpkgs_isnotstopped_array_[@]}"
+    }
+QPKGs.IsNotStopped.Exist()
+    {
+    [[ ${_obj_qpkgs_isnotstopped_array_[*]:-} == *"$1"* ]]
+    }
+QPKGs.IsNotStopped.First()
+    {
+    echo "${_obj_qpkgs_isnotstopped_array_[0]}"
+    }
+QPKGs.IsNotStopped.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_obj_qpkgs_isnotstopped_array_[@]} ]] && index=${#_obj_qpkgs_isnotstopped_array_[@]}
+    echo -n "${_obj_qpkgs_isnotstopped_array_[((index-1))]}"
+    }
+QPKGs.IsNotStopped.Init()
+    {
+    _obj_qpkgs_isnotstopped_size_=0
+    _obj_qpkgs_isnotstopped_array_=()
+    _obj_qpkgs_isnotstopped_array_index_=1
+    }
+QPKGs.IsNotStopped.IsAny()
+    {
+    [[ ${#_obj_qpkgs_isnotstopped_array_[@]} -gt 0 ]]
+    }
+QPKGs.IsNotStopped.IsNone()
+    {
+    [[ ${#_obj_qpkgs_isnotstopped_array_[@]} -eq 0 ]]
+    }
+QPKGs.IsNotStopped.List()
+    {
+    echo -n "${_obj_qpkgs_isnotstopped_array_[*]+"${_obj_qpkgs_isnotstopped_array_[@]}"}"
+    }
+QPKGs.IsNotStopped.ListCSV()
+    {
+    echo -n "${_obj_qpkgs_isnotstopped_array_[*]+"${_obj_qpkgs_isnotstopped_array_[@]}"}" | tr ' ' ','
+    }
+QPKGs.IsNotStopped.Remove()
+    {
+    local argument_array=(${1})
+    local temp_array=()
+    local argument=''
+    local item=''
+    local matched=false
+    for item in "${_obj_qpkgs_isnotstopped_array_[@]+"${_obj_qpkgs_isnotstopped_array_[@]}"}"; do
+        matched=false
+        for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
+            if [[ $argument = $item ]]; then
+                matched=true; break
+            fi
+        done
+        [[ $matched = false ]] && temp_array+=("$item")
+    done
+    _obj_qpkgs_isnotstopped_array_=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${_obj_qpkgs_isnotstopped_array_[*]+"${_obj_qpkgs_isnotstopped_array_[@]}"} ]] && _obj_qpkgs_isnotstopped_array_=()
+    }
+QPKGs.IsNotStopped.Size()
+    {
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+        _obj_qpkgs_isnotstopped_size_=$2
+    else
+        echo -n $_obj_qpkgs_isnotstopped_size_
+    fi
+    }
+QPKGs.IsNotStopped.Init
+
+QPKGs.IsSupportBackup.Add()
+    {
+    local array=(${1})
+    [[ ${#array[@]} -eq 0 ]] && return
+    local item=''
+    for item in "${array[@]:-}"; do
+        if [[ " ${_obj_qpkgs_issupportbackup_array_[*]+"${_obj_qpkgs_issupportbackup_array_[@]}"} " != *"$item"* ]]; then
+            _obj_qpkgs_issupportbackup_array_+=("$item")
+        fi
+    done
+    }
+QPKGs.IsSupportBackup.Array()
+    {
+    echo -n "${_obj_qpkgs_issupportbackup_array_[@]+"${_obj_qpkgs_issupportbackup_array_[@]}"}"
+    }
+QPKGs.IsSupportBackup.Count()
+    {
+    echo "${#_obj_qpkgs_issupportbackup_array_[@]}"
+    }
+QPKGs.IsSupportBackup.Exist()
+    {
+    [[ ${_obj_qpkgs_issupportbackup_array_[*]:-} == *"$1"* ]]
+    }
+QPKGs.IsSupportBackup.First()
+    {
+    echo "${_obj_qpkgs_issupportbackup_array_[0]}"
+    }
+QPKGs.IsSupportBackup.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_obj_qpkgs_issupportbackup_array_[@]} ]] && index=${#_obj_qpkgs_issupportbackup_array_[@]}
+    echo -n "${_obj_qpkgs_issupportbackup_array_[((index-1))]}"
+    }
+QPKGs.IsSupportBackup.Init()
+    {
+    _obj_qpkgs_issupportbackup_size_=0
+    _obj_qpkgs_issupportbackup_array_=()
+    _obj_qpkgs_issupportbackup_array_index_=1
+    }
+QPKGs.IsSupportBackup.IsAny()
+    {
+    [[ ${#_obj_qpkgs_issupportbackup_array_[@]} -gt 0 ]]
+    }
+QPKGs.IsSupportBackup.IsNone()
+    {
+    [[ ${#_obj_qpkgs_issupportbackup_array_[@]} -eq 0 ]]
+    }
+QPKGs.IsSupportBackup.List()
+    {
+    echo -n "${_obj_qpkgs_issupportbackup_array_[*]+"${_obj_qpkgs_issupportbackup_array_[@]}"}"
+    }
+QPKGs.IsSupportBackup.ListCSV()
+    {
+    echo -n "${_obj_qpkgs_issupportbackup_array_[*]+"${_obj_qpkgs_issupportbackup_array_[@]}"}" | tr ' ' ','
+    }
+QPKGs.IsSupportBackup.Remove()
+    {
+    local argument_array=(${1})
+    local temp_array=()
+    local argument=''
+    local item=''
+    local matched=false
+    for item in "${_obj_qpkgs_issupportbackup_array_[@]+"${_obj_qpkgs_issupportbackup_array_[@]}"}"; do
+        matched=false
+        for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
+            if [[ $argument = $item ]]; then
+                matched=true; break
+            fi
+        done
+        [[ $matched = false ]] && temp_array+=("$item")
+    done
+    _obj_qpkgs_issupportbackup_array_=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${_obj_qpkgs_issupportbackup_array_[*]+"${_obj_qpkgs_issupportbackup_array_[@]}"} ]] && _obj_qpkgs_issupportbackup_array_=()
+    }
+QPKGs.IsSupportBackup.Size()
+    {
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+        _obj_qpkgs_issupportbackup_size_=$2
+    else
+        echo -n $_obj_qpkgs_issupportbackup_size_
+    fi
+    }
+QPKGs.IsSupportBackup.Init
+
+QPKGs.IsNotSupportBackup.Add()
+    {
+    local array=(${1})
+    [[ ${#array[@]} -eq 0 ]] && return
+    local item=''
+    for item in "${array[@]:-}"; do
+        if [[ " ${_obj_qpkgs_isnotsupportbackup_array_[*]+"${_obj_qpkgs_isnotsupportbackup_array_[@]}"} " != *"$item"* ]]; then
+            _obj_qpkgs_isnotsupportbackup_array_+=("$item")
+        fi
+    done
+    }
+QPKGs.IsNotSupportBackup.Array()
+    {
+    echo -n "${_obj_qpkgs_isnotsupportbackup_array_[@]+"${_obj_qpkgs_isnotsupportbackup_array_[@]}"}"
+    }
+QPKGs.IsNotSupportBackup.Count()
+    {
+    echo "${#_obj_qpkgs_isnotsupportbackup_array_[@]}"
+    }
+QPKGs.IsNotSupportBackup.Exist()
+    {
+    [[ ${_obj_qpkgs_isnotsupportbackup_array_[*]:-} == *"$1"* ]]
+    }
+QPKGs.IsNotSupportBackup.First()
+    {
+    echo "${_obj_qpkgs_isnotsupportbackup_array_[0]}"
+    }
+QPKGs.IsNotSupportBackup.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_obj_qpkgs_isnotsupportbackup_array_[@]} ]] && index=${#_obj_qpkgs_isnotsupportbackup_array_[@]}
+    echo -n "${_obj_qpkgs_isnotsupportbackup_array_[((index-1))]}"
+    }
+QPKGs.IsNotSupportBackup.Init()
+    {
+    _obj_qpkgs_isnotsupportbackup_size_=0
+    _obj_qpkgs_isnotsupportbackup_array_=()
+    _obj_qpkgs_isnotsupportbackup_array_index_=1
+    }
+QPKGs.IsNotSupportBackup.IsAny()
+    {
+    [[ ${#_obj_qpkgs_isnotsupportbackup_array_[@]} -gt 0 ]]
+    }
+QPKGs.IsNotSupportBackup.IsNone()
+    {
+    [[ ${#_obj_qpkgs_isnotsupportbackup_array_[@]} -eq 0 ]]
+    }
+QPKGs.IsNotSupportBackup.List()
+    {
+    echo -n "${_obj_qpkgs_isnotsupportbackup_array_[*]+"${_obj_qpkgs_isnotsupportbackup_array_[@]}"}"
+    }
+QPKGs.IsNotSupportBackup.ListCSV()
+    {
+    echo -n "${_obj_qpkgs_isnotsupportbackup_array_[*]+"${_obj_qpkgs_isnotsupportbackup_array_[@]}"}" | tr ' ' ','
+    }
+QPKGs.IsNotSupportBackup.Remove()
+    {
+    local argument_array=(${1})
+    local temp_array=()
+    local argument=''
+    local item=''
+    local matched=false
+    for item in "${_obj_qpkgs_isnotsupportbackup_array_[@]+"${_obj_qpkgs_isnotsupportbackup_array_[@]}"}"; do
+        matched=false
+        for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
+            if [[ $argument = $item ]]; then
+                matched=true; break
+            fi
+        done
+        [[ $matched = false ]] && temp_array+=("$item")
+    done
+    _obj_qpkgs_isnotsupportbackup_array_=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${_obj_qpkgs_isnotsupportbackup_array_[*]+"${_obj_qpkgs_isnotsupportbackup_array_[@]}"} ]] && _obj_qpkgs_isnotsupportbackup_array_=()
+    }
+QPKGs.IsNotSupportBackup.Size()
+    {
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+        _obj_qpkgs_isnotsupportbackup_size_=$2
+    else
+        echo -n $_obj_qpkgs_isnotsupportbackup_size_
+    fi
+    }
+QPKGs.IsNotSupportBackup.Init
+
+QPKGs.IsSupportUpdateOnRestart.Add()
+    {
+    local array=(${1})
+    [[ ${#array[@]} -eq 0 ]] && return
+    local item=''
+    for item in "${array[@]:-}"; do
+        if [[ " ${_obj_qpkgs_issupportupdateonrestart_array_[*]+"${_obj_qpkgs_issupportupdateonrestart_array_[@]}"} " != *"$item"* ]]; then
+            _obj_qpkgs_issupportupdateonrestart_array_+=("$item")
+        fi
+    done
+    }
+QPKGs.IsSupportUpdateOnRestart.Array()
+    {
+    echo -n "${_obj_qpkgs_issupportupdateonrestart_array_[@]+"${_obj_qpkgs_issupportupdateonrestart_array_[@]}"}"
+    }
+QPKGs.IsSupportUpdateOnRestart.Count()
+    {
+    echo "${#_obj_qpkgs_issupportupdateonrestart_array_[@]}"
+    }
+QPKGs.IsSupportUpdateOnRestart.Exist()
+    {
+    [[ ${_obj_qpkgs_issupportupdateonrestart_array_[*]:-} == *"$1"* ]]
+    }
+QPKGs.IsSupportUpdateOnRestart.First()
+    {
+    echo "${_obj_qpkgs_issupportupdateonrestart_array_[0]}"
+    }
+QPKGs.IsSupportUpdateOnRestart.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_obj_qpkgs_issupportupdateonrestart_array_[@]} ]] && index=${#_obj_qpkgs_issupportupdateonrestart_array_[@]}
+    echo -n "${_obj_qpkgs_issupportupdateonrestart_array_[((index-1))]}"
+    }
+QPKGs.IsSupportUpdateOnRestart.Init()
+    {
+    _obj_qpkgs_issupportupdateonrestart_size_=0
+    _obj_qpkgs_issupportupdateonrestart_array_=()
+    _obj_qpkgs_issupportupdateonrestart_array_index_=1
+    }
+QPKGs.IsSupportUpdateOnRestart.IsAny()
+    {
+    [[ ${#_obj_qpkgs_issupportupdateonrestart_array_[@]} -gt 0 ]]
+    }
+QPKGs.IsSupportUpdateOnRestart.IsNone()
+    {
+    [[ ${#_obj_qpkgs_issupportupdateonrestart_array_[@]} -eq 0 ]]
+    }
+QPKGs.IsSupportUpdateOnRestart.List()
+    {
+    echo -n "${_obj_qpkgs_issupportupdateonrestart_array_[*]+"${_obj_qpkgs_issupportupdateonrestart_array_[@]}"}"
+    }
+QPKGs.IsSupportUpdateOnRestart.ListCSV()
+    {
+    echo -n "${_obj_qpkgs_issupportupdateonrestart_array_[*]+"${_obj_qpkgs_issupportupdateonrestart_array_[@]}"}" | tr ' ' ','
+    }
+QPKGs.IsSupportUpdateOnRestart.Remove()
+    {
+    local argument_array=(${1})
+    local temp_array=()
+    local argument=''
+    local item=''
+    local matched=false
+    for item in "${_obj_qpkgs_issupportupdateonrestart_array_[@]+"${_obj_qpkgs_issupportupdateonrestart_array_[@]}"}"; do
+        matched=false
+        for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
+            if [[ $argument = $item ]]; then
+                matched=true; break
+            fi
+        done
+        [[ $matched = false ]] && temp_array+=("$item")
+    done
+    _obj_qpkgs_issupportupdateonrestart_array_=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${_obj_qpkgs_issupportupdateonrestart_array_[*]+"${_obj_qpkgs_issupportupdateonrestart_array_[@]}"} ]] && _obj_qpkgs_issupportupdateonrestart_array_=()
+    }
+QPKGs.IsSupportUpdateOnRestart.Size()
+    {
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+        _obj_qpkgs_issupportupdateonrestart_size_=$2
+    else
+        echo -n $_obj_qpkgs_issupportupdateonrestart_size_
+    fi
+    }
+QPKGs.IsSupportUpdateOnRestart.Init
+
+QPKGs.IsNotSupportUpdateOnRestart.Add()
+    {
+    local array=(${1})
+    [[ ${#array[@]} -eq 0 ]] && return
+    local item=''
+    for item in "${array[@]:-}"; do
+        if [[ " ${_obj_qpkgs_isnotsupportupdateonrestart_array_[*]+"${_obj_qpkgs_isnotsupportupdateonrestart_array_[@]}"} " != *"$item"* ]]; then
+            _obj_qpkgs_isnotsupportupdateonrestart_array_+=("$item")
+        fi
+    done
+    }
+QPKGs.IsNotSupportUpdateOnRestart.Array()
+    {
+    echo -n "${_obj_qpkgs_isnotsupportupdateonrestart_array_[@]+"${_obj_qpkgs_isnotsupportupdateonrestart_array_[@]}"}"
+    }
+QPKGs.IsNotSupportUpdateOnRestart.Count()
+    {
+    echo "${#_obj_qpkgs_isnotsupportupdateonrestart_array_[@]}"
+    }
+QPKGs.IsNotSupportUpdateOnRestart.Exist()
+    {
+    [[ ${_obj_qpkgs_isnotsupportupdateonrestart_array_[*]:-} == *"$1"* ]]
+    }
+QPKGs.IsNotSupportUpdateOnRestart.First()
+    {
+    echo "${_obj_qpkgs_isnotsupportupdateonrestart_array_[0]}"
+    }
+QPKGs.IsNotSupportUpdateOnRestart.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_obj_qpkgs_isnotsupportupdateonrestart_array_[@]} ]] && index=${#_obj_qpkgs_isnotsupportupdateonrestart_array_[@]}
+    echo -n "${_obj_qpkgs_isnotsupportupdateonrestart_array_[((index-1))]}"
+    }
+QPKGs.IsNotSupportUpdateOnRestart.Init()
+    {
+    _obj_qpkgs_isnotsupportupdateonrestart_size_=0
+    _obj_qpkgs_isnotsupportupdateonrestart_array_=()
+    _obj_qpkgs_isnotsupportupdateonrestart_array_index_=1
+    }
+QPKGs.IsNotSupportUpdateOnRestart.IsAny()
+    {
+    [[ ${#_obj_qpkgs_isnotsupportupdateonrestart_array_[@]} -gt 0 ]]
+    }
+QPKGs.IsNotSupportUpdateOnRestart.IsNone()
+    {
+    [[ ${#_obj_qpkgs_isnotsupportupdateonrestart_array_[@]} -eq 0 ]]
+    }
+QPKGs.IsNotSupportUpdateOnRestart.List()
+    {
+    echo -n "${_obj_qpkgs_isnotsupportupdateonrestart_array_[*]+"${_obj_qpkgs_isnotsupportupdateonrestart_array_[@]}"}"
+    }
+QPKGs.IsNotSupportUpdateOnRestart.ListCSV()
+    {
+    echo -n "${_obj_qpkgs_isnotsupportupdateonrestart_array_[*]+"${_obj_qpkgs_isnotsupportupdateonrestart_array_[@]}"}" | tr ' ' ','
+    }
+QPKGs.IsNotSupportUpdateOnRestart.Remove()
+    {
+    local argument_array=(${1})
+    local temp_array=()
+    local argument=''
+    local item=''
+    local matched=false
+    for item in "${_obj_qpkgs_isnotsupportupdateonrestart_array_[@]+"${_obj_qpkgs_isnotsupportupdateonrestart_array_[@]}"}"; do
+        matched=false
+        for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
+            if [[ $argument = $item ]]; then
+                matched=true; break
+            fi
+        done
+        [[ $matched = false ]] && temp_array+=("$item")
+    done
+    _obj_qpkgs_isnotsupportupdateonrestart_array_=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${_obj_qpkgs_isnotsupportupdateonrestart_array_[*]+"${_obj_qpkgs_isnotsupportupdateonrestart_array_[@]}"} ]] && _obj_qpkgs_isnotsupportupdateonrestart_array_=()
+    }
+QPKGs.IsNotSupportUpdateOnRestart.Size()
+    {
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+        _obj_qpkgs_isnotsupportupdateonrestart_size_=$2
+    else
+        echo -n $_obj_qpkgs_isnotsupportupdateonrestart_size_
+    fi
+    }
+QPKGs.IsNotSupportUpdateOnRestart.Init
+
+QPKGs.IsRestarting.Add()
+    {
+    local array=(${1})
+    [[ ${#array[@]} -eq 0 ]] && return
+    local item=''
+    for item in "${array[@]:-}"; do
+        if [[ " ${_obj_qpkgs_isrestarting_array_[*]+"${_obj_qpkgs_isrestarting_array_[@]}"} " != *"$item"* ]]; then
+            _obj_qpkgs_isrestarting_array_+=("$item")
+        fi
+    done
+    }
+QPKGs.IsRestarting.Array()
+    {
+    echo -n "${_obj_qpkgs_isrestarting_array_[@]+"${_obj_qpkgs_isrestarting_array_[@]}"}"
+    }
+QPKGs.IsRestarting.Count()
+    {
+    echo "${#_obj_qpkgs_isrestarting_array_[@]}"
+    }
+QPKGs.IsRestarting.Exist()
+    {
+    [[ ${_obj_qpkgs_isrestarting_array_[*]:-} == *"$1"* ]]
+    }
+QPKGs.IsRestarting.First()
+    {
+    echo "${_obj_qpkgs_isrestarting_array_[0]}"
+    }
+QPKGs.IsRestarting.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_obj_qpkgs_isrestarting_array_[@]} ]] && index=${#_obj_qpkgs_isrestarting_array_[@]}
+    echo -n "${_obj_qpkgs_isrestarting_array_[((index-1))]}"
+    }
+QPKGs.IsRestarting.Init()
+    {
+    _obj_qpkgs_isrestarting_size_=0
+    _obj_qpkgs_isrestarting_array_=()
+    _obj_qpkgs_isrestarting_array_index_=1
+    }
+QPKGs.IsRestarting.IsAny()
+    {
+    [[ ${#_obj_qpkgs_isrestarting_array_[@]} -gt 0 ]]
+    }
+QPKGs.IsRestarting.IsNone()
+    {
+    [[ ${#_obj_qpkgs_isrestarting_array_[@]} -eq 0 ]]
+    }
+QPKGs.IsRestarting.List()
+    {
+    echo -n "${_obj_qpkgs_isrestarting_array_[*]+"${_obj_qpkgs_isrestarting_array_[@]}"}"
+    }
+QPKGs.IsRestarting.ListCSV()
+    {
+    echo -n "${_obj_qpkgs_isrestarting_array_[*]+"${_obj_qpkgs_isrestarting_array_[@]}"}" | tr ' ' ','
+    }
+QPKGs.IsRestarting.Remove()
+    {
+    local argument_array=(${1})
+    local temp_array=()
+    local argument=''
+    local item=''
+    local matched=false
+    for item in "${_obj_qpkgs_isrestarting_array_[@]+"${_obj_qpkgs_isrestarting_array_[@]}"}"; do
+        matched=false
+        for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
+            if [[ $argument = $item ]]; then
+                matched=true; break
+            fi
+        done
+        [[ $matched = false ]] && temp_array+=("$item")
+    done
+    _obj_qpkgs_isrestarting_array_=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${_obj_qpkgs_isrestarting_array_[*]+"${_obj_qpkgs_isrestarting_array_[@]}"} ]] && _obj_qpkgs_isrestarting_array_=()
+    }
+QPKGs.IsRestarting.Size()
+    {
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+        _obj_qpkgs_isrestarting_size_=$2
+    else
+        echo -n $_obj_qpkgs_isrestarting_size_
+    fi
+    }
+QPKGs.IsRestarting.Init
+
+QPKGs.IsNotRestarting.Add()
+    {
+    local array=(${1})
+    [[ ${#array[@]} -eq 0 ]] && return
+    local item=''
+    for item in "${array[@]:-}"; do
+        if [[ " ${_obj_qpkgs_isnotrestarting_array_[*]+"${_obj_qpkgs_isnotrestarting_array_[@]}"} " != *"$item"* ]]; then
+            _obj_qpkgs_isnotrestarting_array_+=("$item")
+        fi
+    done
+    }
+QPKGs.IsNotRestarting.Array()
+    {
+    echo -n "${_obj_qpkgs_isnotrestarting_array_[@]+"${_obj_qpkgs_isnotrestarting_array_[@]}"}"
+    }
+QPKGs.IsNotRestarting.Count()
+    {
+    echo "${#_obj_qpkgs_isnotrestarting_array_[@]}"
+    }
+QPKGs.IsNotRestarting.Exist()
+    {
+    [[ ${_obj_qpkgs_isnotrestarting_array_[*]:-} == *"$1"* ]]
+    }
+QPKGs.IsNotRestarting.First()
+    {
+    echo "${_obj_qpkgs_isnotrestarting_array_[0]}"
+    }
+QPKGs.IsNotRestarting.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_obj_qpkgs_isnotrestarting_array_[@]} ]] && index=${#_obj_qpkgs_isnotrestarting_array_[@]}
+    echo -n "${_obj_qpkgs_isnotrestarting_array_[((index-1))]}"
+    }
+QPKGs.IsNotRestarting.Init()
+    {
+    _obj_qpkgs_isnotrestarting_size_=0
+    _obj_qpkgs_isnotrestarting_array_=()
+    _obj_qpkgs_isnotrestarting_array_index_=1
+    }
+QPKGs.IsNotRestarting.IsAny()
+    {
+    [[ ${#_obj_qpkgs_isnotrestarting_array_[@]} -gt 0 ]]
+    }
+QPKGs.IsNotRestarting.IsNone()
+    {
+    [[ ${#_obj_qpkgs_isnotrestarting_array_[@]} -eq 0 ]]
+    }
+QPKGs.IsNotRestarting.List()
+    {
+    echo -n "${_obj_qpkgs_isnotrestarting_array_[*]+"${_obj_qpkgs_isnotrestarting_array_[@]}"}"
+    }
+QPKGs.IsNotRestarting.ListCSV()
+    {
+    echo -n "${_obj_qpkgs_isnotrestarting_array_[*]+"${_obj_qpkgs_isnotrestarting_array_[@]}"}" | tr ' ' ','
+    }
+QPKGs.IsNotRestarting.Remove()
+    {
+    local argument_array=(${1})
+    local temp_array=()
+    local argument=''
+    local item=''
+    local matched=false
+    for item in "${_obj_qpkgs_isnotrestarting_array_[@]+"${_obj_qpkgs_isnotrestarting_array_[@]}"}"; do
+        matched=false
+        for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
+            if [[ $argument = $item ]]; then
+                matched=true; break
+            fi
+        done
+        [[ $matched = false ]] && temp_array+=("$item")
+    done
+    _obj_qpkgs_isnotrestarting_array_=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${_obj_qpkgs_isnotrestarting_array_[*]+"${_obj_qpkgs_isnotrestarting_array_[@]}"} ]] && _obj_qpkgs_isnotrestarting_array_=()
+    }
+QPKGs.IsNotRestarting.Size()
+    {
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+        _obj_qpkgs_isnotrestarting_size_=$2
+    else
+        echo -n $_obj_qpkgs_isnotrestarting_size_
+    fi
+    }
+QPKGs.IsNotRestarting.Init
+
+QPKGs.IsUpgradable.Add()
+    {
+    local array=(${1})
+    [[ ${#array[@]} -eq 0 ]] && return
+    local item=''
+    for item in "${array[@]:-}"; do
+        if [[ " ${_obj_qpkgs_isupgradable_array_[*]+"${_obj_qpkgs_isupgradable_array_[@]}"} " != *"$item"* ]]; then
+            _obj_qpkgs_isupgradable_array_+=("$item")
+        fi
+    done
+    }
+QPKGs.IsUpgradable.Array()
+    {
+    echo -n "${_obj_qpkgs_isupgradable_array_[@]+"${_obj_qpkgs_isupgradable_array_[@]}"}"
+    }
+QPKGs.IsUpgradable.Count()
+    {
+    echo "${#_obj_qpkgs_isupgradable_array_[@]}"
+    }
+QPKGs.IsUpgradable.Exist()
+    {
+    [[ ${_obj_qpkgs_isupgradable_array_[*]:-} == *"$1"* ]]
+    }
+QPKGs.IsUpgradable.First()
+    {
+    echo "${_obj_qpkgs_isupgradable_array_[0]}"
+    }
+QPKGs.IsUpgradable.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_obj_qpkgs_isupgradable_array_[@]} ]] && index=${#_obj_qpkgs_isupgradable_array_[@]}
+    echo -n "${_obj_qpkgs_isupgradable_array_[((index-1))]}"
+    }
+QPKGs.IsUpgradable.Init()
+    {
+    _obj_qpkgs_isupgradable_size_=0
+    _obj_qpkgs_isupgradable_array_=()
+    _obj_qpkgs_isupgradable_array_index_=1
+    }
+QPKGs.IsUpgradable.IsAny()
+    {
+    [[ ${#_obj_qpkgs_isupgradable_array_[@]} -gt 0 ]]
+    }
+QPKGs.IsUpgradable.IsNone()
+    {
+    [[ ${#_obj_qpkgs_isupgradable_array_[@]} -eq 0 ]]
+    }
+QPKGs.IsUpgradable.List()
+    {
+    echo -n "${_obj_qpkgs_isupgradable_array_[*]+"${_obj_qpkgs_isupgradable_array_[@]}"}"
+    }
+QPKGs.IsUpgradable.ListCSV()
+    {
+    echo -n "${_obj_qpkgs_isupgradable_array_[*]+"${_obj_qpkgs_isupgradable_array_[@]}"}" | tr ' ' ','
+    }
+QPKGs.IsUpgradable.Remove()
+    {
+    local argument_array=(${1})
+    local temp_array=()
+    local argument=''
+    local item=''
+    local matched=false
+    for item in "${_obj_qpkgs_isupgradable_array_[@]+"${_obj_qpkgs_isupgradable_array_[@]}"}"; do
+        matched=false
+        for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
+            if [[ $argument = $item ]]; then
+                matched=true; break
+            fi
+        done
+        [[ $matched = false ]] && temp_array+=("$item")
+    done
+    _obj_qpkgs_isupgradable_array_=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${_obj_qpkgs_isupgradable_array_[*]+"${_obj_qpkgs_isupgradable_array_[@]}"} ]] && _obj_qpkgs_isupgradable_array_=()
+    }
+QPKGs.IsUpgradable.Size()
+    {
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+        _obj_qpkgs_isupgradable_size_=$2
+    else
+        echo -n $_obj_qpkgs_isupgradable_size_
+    fi
+    }
+QPKGs.IsUpgradable.Init
+
+QPKGs.IsNotUpgradable.Add()
+    {
+    local array=(${1})
+    [[ ${#array[@]} -eq 0 ]] && return
+    local item=''
+    for item in "${array[@]:-}"; do
+        if [[ " ${_obj_qpkgs_isnotupgradable_array_[*]+"${_obj_qpkgs_isnotupgradable_array_[@]}"} " != *"$item"* ]]; then
+            _obj_qpkgs_isnotupgradable_array_+=("$item")
+        fi
+    done
+    }
+QPKGs.IsNotUpgradable.Array()
+    {
+    echo -n "${_obj_qpkgs_isnotupgradable_array_[@]+"${_obj_qpkgs_isnotupgradable_array_[@]}"}"
+    }
+QPKGs.IsNotUpgradable.Count()
+    {
+    echo "${#_obj_qpkgs_isnotupgradable_array_[@]}"
+    }
+QPKGs.IsNotUpgradable.Exist()
+    {
+    [[ ${_obj_qpkgs_isnotupgradable_array_[*]:-} == *"$1"* ]]
+    }
+QPKGs.IsNotUpgradable.First()
+    {
+    echo "${_obj_qpkgs_isnotupgradable_array_[0]}"
+    }
+QPKGs.IsNotUpgradable.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_obj_qpkgs_isnotupgradable_array_[@]} ]] && index=${#_obj_qpkgs_isnotupgradable_array_[@]}
+    echo -n "${_obj_qpkgs_isnotupgradable_array_[((index-1))]}"
+    }
+QPKGs.IsNotUpgradable.Init()
+    {
+    _obj_qpkgs_isnotupgradable_size_=0
+    _obj_qpkgs_isnotupgradable_array_=()
+    _obj_qpkgs_isnotupgradable_array_index_=1
+    }
+QPKGs.IsNotUpgradable.IsAny()
+    {
+    [[ ${#_obj_qpkgs_isnotupgradable_array_[@]} -gt 0 ]]
+    }
+QPKGs.IsNotUpgradable.IsNone()
+    {
+    [[ ${#_obj_qpkgs_isnotupgradable_array_[@]} -eq 0 ]]
+    }
+QPKGs.IsNotUpgradable.List()
+    {
+    echo -n "${_obj_qpkgs_isnotupgradable_array_[*]+"${_obj_qpkgs_isnotupgradable_array_[@]}"}"
+    }
+QPKGs.IsNotUpgradable.ListCSV()
+    {
+    echo -n "${_obj_qpkgs_isnotupgradable_array_[*]+"${_obj_qpkgs_isnotupgradable_array_[@]}"}" | tr ' ' ','
+    }
+QPKGs.IsNotUpgradable.Remove()
+    {
+    local argument_array=(${1})
+    local temp_array=()
+    local argument=''
+    local item=''
+    local matched=false
+    for item in "${_obj_qpkgs_isnotupgradable_array_[@]+"${_obj_qpkgs_isnotupgradable_array_[@]}"}"; do
+        matched=false
+        for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
+            if [[ $argument = $item ]]; then
+                matched=true; break
+            fi
+        done
+        [[ $matched = false ]] && temp_array+=("$item")
+    done
+    _obj_qpkgs_isnotupgradable_array_=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${_obj_qpkgs_isnotupgradable_array_[*]+"${_obj_qpkgs_isnotupgradable_array_[@]}"} ]] && _obj_qpkgs_isnotupgradable_array_=()
+    }
+QPKGs.IsNotUpgradable.Size()
+    {
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+        _obj_qpkgs_isnotupgradable_size_=$2
+    else
+        echo -n $_obj_qpkgs_isnotupgradable_size_
+    fi
+    }
+QPKGs.IsNotUpgradable.Init
 
 QPKGs.ToBackup.Add()
     {
@@ -5200,70 +6220,70 @@ QPKGs.ToBackup.Size()
     }
 QPKGs.ToBackup.Init
 
-QPKGs.IsBackup.Add()
+QPKGs.OkBackup.Add()
     {
     local array=(${1})
     [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        if [[ " ${_obj_qpkgs_isbackup_array_[*]+"${_obj_qpkgs_isbackup_array_[@]}"} " != *"$item"* ]]; then
-            _obj_qpkgs_isbackup_array_+=("$item")
+        if [[ " ${_obj_qpkgs_okbackup_array_[*]+"${_obj_qpkgs_okbackup_array_[@]}"} " != *"$item"* ]]; then
+            _obj_qpkgs_okbackup_array_+=("$item")
         fi
     done
     }
-QPKGs.IsBackup.Array()
+QPKGs.OkBackup.Array()
     {
-    echo -n "${_obj_qpkgs_isbackup_array_[@]+"${_obj_qpkgs_isbackup_array_[@]}"}"
+    echo -n "${_obj_qpkgs_okbackup_array_[@]+"${_obj_qpkgs_okbackup_array_[@]}"}"
     }
-QPKGs.IsBackup.Count()
+QPKGs.OkBackup.Count()
     {
-    echo "${#_obj_qpkgs_isbackup_array_[@]}"
+    echo "${#_obj_qpkgs_okbackup_array_[@]}"
     }
-QPKGs.IsBackup.Exist()
+QPKGs.OkBackup.Exist()
     {
-    [[ ${_obj_qpkgs_isbackup_array_[*]:-} == *"$1"* ]]
+    [[ ${_obj_qpkgs_okbackup_array_[*]:-} == *"$1"* ]]
     }
-QPKGs.IsBackup.First()
+QPKGs.OkBackup.First()
     {
-    echo "${_obj_qpkgs_isbackup_array_[0]}"
+    echo "${_obj_qpkgs_okbackup_array_[0]}"
     }
-QPKGs.IsBackup.GetItem()
+QPKGs.OkBackup.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_isbackup_array_[@]} ]] && index=${#_obj_qpkgs_isbackup_array_[@]}
-    echo -n "${_obj_qpkgs_isbackup_array_[((index-1))]}"
+    [[ $index -gt ${#_obj_qpkgs_okbackup_array_[@]} ]] && index=${#_obj_qpkgs_okbackup_array_[@]}
+    echo -n "${_obj_qpkgs_okbackup_array_[((index-1))]}"
     }
-QPKGs.IsBackup.Init()
+QPKGs.OkBackup.Init()
     {
-    _obj_qpkgs_isbackup_size_=0
-    _obj_qpkgs_isbackup_array_=()
-    _obj_qpkgs_isbackup_array_index_=1
+    _obj_qpkgs_okbackup_size_=0
+    _obj_qpkgs_okbackup_array_=()
+    _obj_qpkgs_okbackup_array_index_=1
     }
-QPKGs.IsBackup.IsAny()
+QPKGs.OkBackup.IsAny()
     {
-    [[ ${#_obj_qpkgs_isbackup_array_[@]} -gt 0 ]]
+    [[ ${#_obj_qpkgs_okbackup_array_[@]} -gt 0 ]]
     }
-QPKGs.IsBackup.IsNone()
+QPKGs.OkBackup.IsNone()
     {
-    [[ ${#_obj_qpkgs_isbackup_array_[@]} -eq 0 ]]
+    [[ ${#_obj_qpkgs_okbackup_array_[@]} -eq 0 ]]
     }
-QPKGs.IsBackup.List()
+QPKGs.OkBackup.List()
     {
-    echo -n "${_obj_qpkgs_isbackup_array_[*]+"${_obj_qpkgs_isbackup_array_[@]}"}"
+    echo -n "${_obj_qpkgs_okbackup_array_[*]+"${_obj_qpkgs_okbackup_array_[@]}"}"
     }
-QPKGs.IsBackup.ListCSV()
+QPKGs.OkBackup.ListCSV()
     {
-    echo -n "${_obj_qpkgs_isbackup_array_[*]+"${_obj_qpkgs_isbackup_array_[@]}"}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_okbackup_array_[*]+"${_obj_qpkgs_okbackup_array_[@]}"}" | tr ' ' ','
     }
-QPKGs.IsBackup.Remove()
+QPKGs.OkBackup.Remove()
     {
     local argument_array=(${1})
     local temp_array=()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_isbackup_array_[@]+"${_obj_qpkgs_isbackup_array_[@]}"}"; do
+    for item in "${_obj_qpkgs_okbackup_array_[@]+"${_obj_qpkgs_okbackup_array_[@]}"}"; do
         matched=false
         for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
             if [[ $argument = $item ]]; then
@@ -5272,18 +6292,18 @@ QPKGs.IsBackup.Remove()
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_isbackup_array_=("${temp_array[@]+"${temp_array[@]}"}")
-    [[ -z ${_obj_qpkgs_isbackup_array_[*]+"${_obj_qpkgs_isbackup_array_[@]}"} ]] && _obj_qpkgs_isbackup_array_=()
+    _obj_qpkgs_okbackup_array_=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${_obj_qpkgs_okbackup_array_[*]+"${_obj_qpkgs_okbackup_array_[@]}"} ]] && _obj_qpkgs_okbackup_array_=()
     }
-QPKGs.IsBackup.Size()
+QPKGs.OkBackup.Size()
     {
     if [[ -n ${1:-} && ${1:-} = "=" ]]; then
-        _obj_qpkgs_isbackup_size_=$2
+        _obj_qpkgs_okbackup_size_=$2
     else
-        echo -n $_obj_qpkgs_isbackup_size_
+        echo -n $_obj_qpkgs_okbackup_size_
     fi
     }
-QPKGs.IsBackup.Init
+QPKGs.OkBackup.Init
 
 QPKGs.ErBackup.Add()
     {
@@ -5540,70 +6560,70 @@ QPKGs.ToDownload.Size()
     }
 QPKGs.ToDownload.Init
 
-QPKGs.IsDownload.Add()
+QPKGs.OkDownload.Add()
     {
     local array=(${1})
     [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        if [[ " ${_obj_qpkgs_isdownload_array_[*]+"${_obj_qpkgs_isdownload_array_[@]}"} " != *"$item"* ]]; then
-            _obj_qpkgs_isdownload_array_+=("$item")
+        if [[ " ${_obj_qpkgs_okdownload_array_[*]+"${_obj_qpkgs_okdownload_array_[@]}"} " != *"$item"* ]]; then
+            _obj_qpkgs_okdownload_array_+=("$item")
         fi
     done
     }
-QPKGs.IsDownload.Array()
+QPKGs.OkDownload.Array()
     {
-    echo -n "${_obj_qpkgs_isdownload_array_[@]+"${_obj_qpkgs_isdownload_array_[@]}"}"
+    echo -n "${_obj_qpkgs_okdownload_array_[@]+"${_obj_qpkgs_okdownload_array_[@]}"}"
     }
-QPKGs.IsDownload.Count()
+QPKGs.OkDownload.Count()
     {
-    echo "${#_obj_qpkgs_isdownload_array_[@]}"
+    echo "${#_obj_qpkgs_okdownload_array_[@]}"
     }
-QPKGs.IsDownload.Exist()
+QPKGs.OkDownload.Exist()
     {
-    [[ ${_obj_qpkgs_isdownload_array_[*]:-} == *"$1"* ]]
+    [[ ${_obj_qpkgs_okdownload_array_[*]:-} == *"$1"* ]]
     }
-QPKGs.IsDownload.First()
+QPKGs.OkDownload.First()
     {
-    echo "${_obj_qpkgs_isdownload_array_[0]}"
+    echo "${_obj_qpkgs_okdownload_array_[0]}"
     }
-QPKGs.IsDownload.GetItem()
+QPKGs.OkDownload.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_isdownload_array_[@]} ]] && index=${#_obj_qpkgs_isdownload_array_[@]}
-    echo -n "${_obj_qpkgs_isdownload_array_[((index-1))]}"
+    [[ $index -gt ${#_obj_qpkgs_okdownload_array_[@]} ]] && index=${#_obj_qpkgs_okdownload_array_[@]}
+    echo -n "${_obj_qpkgs_okdownload_array_[((index-1))]}"
     }
-QPKGs.IsDownload.Init()
+QPKGs.OkDownload.Init()
     {
-    _obj_qpkgs_isdownload_size_=0
-    _obj_qpkgs_isdownload_array_=()
-    _obj_qpkgs_isdownload_array_index_=1
+    _obj_qpkgs_okdownload_size_=0
+    _obj_qpkgs_okdownload_array_=()
+    _obj_qpkgs_okdownload_array_index_=1
     }
-QPKGs.IsDownload.IsAny()
+QPKGs.OkDownload.IsAny()
     {
-    [[ ${#_obj_qpkgs_isdownload_array_[@]} -gt 0 ]]
+    [[ ${#_obj_qpkgs_okdownload_array_[@]} -gt 0 ]]
     }
-QPKGs.IsDownload.IsNone()
+QPKGs.OkDownload.IsNone()
     {
-    [[ ${#_obj_qpkgs_isdownload_array_[@]} -eq 0 ]]
+    [[ ${#_obj_qpkgs_okdownload_array_[@]} -eq 0 ]]
     }
-QPKGs.IsDownload.List()
+QPKGs.OkDownload.List()
     {
-    echo -n "${_obj_qpkgs_isdownload_array_[*]+"${_obj_qpkgs_isdownload_array_[@]}"}"
+    echo -n "${_obj_qpkgs_okdownload_array_[*]+"${_obj_qpkgs_okdownload_array_[@]}"}"
     }
-QPKGs.IsDownload.ListCSV()
+QPKGs.OkDownload.ListCSV()
     {
-    echo -n "${_obj_qpkgs_isdownload_array_[*]+"${_obj_qpkgs_isdownload_array_[@]}"}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_okdownload_array_[*]+"${_obj_qpkgs_okdownload_array_[@]}"}" | tr ' ' ','
     }
-QPKGs.IsDownload.Remove()
+QPKGs.OkDownload.Remove()
     {
     local argument_array=(${1})
     local temp_array=()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_isdownload_array_[@]+"${_obj_qpkgs_isdownload_array_[@]}"}"; do
+    for item in "${_obj_qpkgs_okdownload_array_[@]+"${_obj_qpkgs_okdownload_array_[@]}"}"; do
         matched=false
         for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
             if [[ $argument = $item ]]; then
@@ -5612,18 +6632,18 @@ QPKGs.IsDownload.Remove()
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_isdownload_array_=("${temp_array[@]+"${temp_array[@]}"}")
-    [[ -z ${_obj_qpkgs_isdownload_array_[*]+"${_obj_qpkgs_isdownload_array_[@]}"} ]] && _obj_qpkgs_isdownload_array_=()
+    _obj_qpkgs_okdownload_array_=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${_obj_qpkgs_okdownload_array_[*]+"${_obj_qpkgs_okdownload_array_[@]}"} ]] && _obj_qpkgs_okdownload_array_=()
     }
-QPKGs.IsDownload.Size()
+QPKGs.OkDownload.Size()
     {
     if [[ -n ${1:-} && ${1:-} = "=" ]]; then
-        _obj_qpkgs_isdownload_size_=$2
+        _obj_qpkgs_okdownload_size_=$2
     else
-        echo -n $_obj_qpkgs_isdownload_size_
+        echo -n $_obj_qpkgs_okdownload_size_
     fi
     }
-QPKGs.IsDownload.Init
+QPKGs.OkDownload.Init
 
 QPKGs.ErDownload.Add()
     {
@@ -5880,70 +6900,70 @@ QPKGs.ToInstall.Size()
     }
 QPKGs.ToInstall.Init
 
-QPKGs.IsInstall.Add()
+QPKGs.OkInstall.Add()
     {
     local array=(${1})
     [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        if [[ " ${_obj_qpkgs_isinstall_array_[*]+"${_obj_qpkgs_isinstall_array_[@]}"} " != *"$item"* ]]; then
-            _obj_qpkgs_isinstall_array_+=("$item")
+        if [[ " ${_obj_qpkgs_okinstall_array_[*]+"${_obj_qpkgs_okinstall_array_[@]}"} " != *"$item"* ]]; then
+            _obj_qpkgs_okinstall_array_+=("$item")
         fi
     done
     }
-QPKGs.IsInstall.Array()
+QPKGs.OkInstall.Array()
     {
-    echo -n "${_obj_qpkgs_isinstall_array_[@]+"${_obj_qpkgs_isinstall_array_[@]}"}"
+    echo -n "${_obj_qpkgs_okinstall_array_[@]+"${_obj_qpkgs_okinstall_array_[@]}"}"
     }
-QPKGs.IsInstall.Count()
+QPKGs.OkInstall.Count()
     {
-    echo "${#_obj_qpkgs_isinstall_array_[@]}"
+    echo "${#_obj_qpkgs_okinstall_array_[@]}"
     }
-QPKGs.IsInstall.Exist()
+QPKGs.OkInstall.Exist()
     {
-    [[ ${_obj_qpkgs_isinstall_array_[*]:-} == *"$1"* ]]
+    [[ ${_obj_qpkgs_okinstall_array_[*]:-} == *"$1"* ]]
     }
-QPKGs.IsInstall.First()
+QPKGs.OkInstall.First()
     {
-    echo "${_obj_qpkgs_isinstall_array_[0]}"
+    echo "${_obj_qpkgs_okinstall_array_[0]}"
     }
-QPKGs.IsInstall.GetItem()
+QPKGs.OkInstall.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_isinstall_array_[@]} ]] && index=${#_obj_qpkgs_isinstall_array_[@]}
-    echo -n "${_obj_qpkgs_isinstall_array_[((index-1))]}"
+    [[ $index -gt ${#_obj_qpkgs_okinstall_array_[@]} ]] && index=${#_obj_qpkgs_okinstall_array_[@]}
+    echo -n "${_obj_qpkgs_okinstall_array_[((index-1))]}"
     }
-QPKGs.IsInstall.Init()
+QPKGs.OkInstall.Init()
     {
-    _obj_qpkgs_isinstall_size_=0
-    _obj_qpkgs_isinstall_array_=()
-    _obj_qpkgs_isinstall_array_index_=1
+    _obj_qpkgs_okinstall_size_=0
+    _obj_qpkgs_okinstall_array_=()
+    _obj_qpkgs_okinstall_array_index_=1
     }
-QPKGs.IsInstall.IsAny()
+QPKGs.OkInstall.IsAny()
     {
-    [[ ${#_obj_qpkgs_isinstall_array_[@]} -gt 0 ]]
+    [[ ${#_obj_qpkgs_okinstall_array_[@]} -gt 0 ]]
     }
-QPKGs.IsInstall.IsNone()
+QPKGs.OkInstall.IsNone()
     {
-    [[ ${#_obj_qpkgs_isinstall_array_[@]} -eq 0 ]]
+    [[ ${#_obj_qpkgs_okinstall_array_[@]} -eq 0 ]]
     }
-QPKGs.IsInstall.List()
+QPKGs.OkInstall.List()
     {
-    echo -n "${_obj_qpkgs_isinstall_array_[*]+"${_obj_qpkgs_isinstall_array_[@]}"}"
+    echo -n "${_obj_qpkgs_okinstall_array_[*]+"${_obj_qpkgs_okinstall_array_[@]}"}"
     }
-QPKGs.IsInstall.ListCSV()
+QPKGs.OkInstall.ListCSV()
     {
-    echo -n "${_obj_qpkgs_isinstall_array_[*]+"${_obj_qpkgs_isinstall_array_[@]}"}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_okinstall_array_[*]+"${_obj_qpkgs_okinstall_array_[@]}"}" | tr ' ' ','
     }
-QPKGs.IsInstall.Remove()
+QPKGs.OkInstall.Remove()
     {
     local argument_array=(${1})
     local temp_array=()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_isinstall_array_[@]+"${_obj_qpkgs_isinstall_array_[@]}"}"; do
+    for item in "${_obj_qpkgs_okinstall_array_[@]+"${_obj_qpkgs_okinstall_array_[@]}"}"; do
         matched=false
         for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
             if [[ $argument = $item ]]; then
@@ -5952,18 +6972,18 @@ QPKGs.IsInstall.Remove()
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_isinstall_array_=("${temp_array[@]+"${temp_array[@]}"}")
-    [[ -z ${_obj_qpkgs_isinstall_array_[*]+"${_obj_qpkgs_isinstall_array_[@]}"} ]] && _obj_qpkgs_isinstall_array_=()
+    _obj_qpkgs_okinstall_array_=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${_obj_qpkgs_okinstall_array_[*]+"${_obj_qpkgs_okinstall_array_[@]}"} ]] && _obj_qpkgs_okinstall_array_=()
     }
-QPKGs.IsInstall.Size()
+QPKGs.OkInstall.Size()
     {
     if [[ -n ${1:-} && ${1:-} = "=" ]]; then
-        _obj_qpkgs_isinstall_size_=$2
+        _obj_qpkgs_okinstall_size_=$2
     else
-        echo -n $_obj_qpkgs_isinstall_size_
+        echo -n $_obj_qpkgs_okinstall_size_
     fi
     }
-QPKGs.IsInstall.Init
+QPKGs.OkInstall.Init
 
 QPKGs.ErInstall.Add()
     {
@@ -6220,70 +7240,70 @@ QPKGs.ToRebuild.Size()
     }
 QPKGs.ToRebuild.Init
 
-QPKGs.IsRebuild.Add()
+QPKGs.OkRebuild.Add()
     {
     local array=(${1})
     [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        if [[ " ${_obj_qpkgs_isrebuild_array_[*]+"${_obj_qpkgs_isrebuild_array_[@]}"} " != *"$item"* ]]; then
-            _obj_qpkgs_isrebuild_array_+=("$item")
+        if [[ " ${_obj_qpkgs_okrebuild_array_[*]+"${_obj_qpkgs_okrebuild_array_[@]}"} " != *"$item"* ]]; then
+            _obj_qpkgs_okrebuild_array_+=("$item")
         fi
     done
     }
-QPKGs.IsRebuild.Array()
+QPKGs.OkRebuild.Array()
     {
-    echo -n "${_obj_qpkgs_isrebuild_array_[@]+"${_obj_qpkgs_isrebuild_array_[@]}"}"
+    echo -n "${_obj_qpkgs_okrebuild_array_[@]+"${_obj_qpkgs_okrebuild_array_[@]}"}"
     }
-QPKGs.IsRebuild.Count()
+QPKGs.OkRebuild.Count()
     {
-    echo "${#_obj_qpkgs_isrebuild_array_[@]}"
+    echo "${#_obj_qpkgs_okrebuild_array_[@]}"
     }
-QPKGs.IsRebuild.Exist()
+QPKGs.OkRebuild.Exist()
     {
-    [[ ${_obj_qpkgs_isrebuild_array_[*]:-} == *"$1"* ]]
+    [[ ${_obj_qpkgs_okrebuild_array_[*]:-} == *"$1"* ]]
     }
-QPKGs.IsRebuild.First()
+QPKGs.OkRebuild.First()
     {
-    echo "${_obj_qpkgs_isrebuild_array_[0]}"
+    echo "${_obj_qpkgs_okrebuild_array_[0]}"
     }
-QPKGs.IsRebuild.GetItem()
+QPKGs.OkRebuild.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_isrebuild_array_[@]} ]] && index=${#_obj_qpkgs_isrebuild_array_[@]}
-    echo -n "${_obj_qpkgs_isrebuild_array_[((index-1))]}"
+    [[ $index -gt ${#_obj_qpkgs_okrebuild_array_[@]} ]] && index=${#_obj_qpkgs_okrebuild_array_[@]}
+    echo -n "${_obj_qpkgs_okrebuild_array_[((index-1))]}"
     }
-QPKGs.IsRebuild.Init()
+QPKGs.OkRebuild.Init()
     {
-    _obj_qpkgs_isrebuild_size_=0
-    _obj_qpkgs_isrebuild_array_=()
-    _obj_qpkgs_isrebuild_array_index_=1
+    _obj_qpkgs_okrebuild_size_=0
+    _obj_qpkgs_okrebuild_array_=()
+    _obj_qpkgs_okrebuild_array_index_=1
     }
-QPKGs.IsRebuild.IsAny()
+QPKGs.OkRebuild.IsAny()
     {
-    [[ ${#_obj_qpkgs_isrebuild_array_[@]} -gt 0 ]]
+    [[ ${#_obj_qpkgs_okrebuild_array_[@]} -gt 0 ]]
     }
-QPKGs.IsRebuild.IsNone()
+QPKGs.OkRebuild.IsNone()
     {
-    [[ ${#_obj_qpkgs_isrebuild_array_[@]} -eq 0 ]]
+    [[ ${#_obj_qpkgs_okrebuild_array_[@]} -eq 0 ]]
     }
-QPKGs.IsRebuild.List()
+QPKGs.OkRebuild.List()
     {
-    echo -n "${_obj_qpkgs_isrebuild_array_[*]+"${_obj_qpkgs_isrebuild_array_[@]}"}"
+    echo -n "${_obj_qpkgs_okrebuild_array_[*]+"${_obj_qpkgs_okrebuild_array_[@]}"}"
     }
-QPKGs.IsRebuild.ListCSV()
+QPKGs.OkRebuild.ListCSV()
     {
-    echo -n "${_obj_qpkgs_isrebuild_array_[*]+"${_obj_qpkgs_isrebuild_array_[@]}"}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_okrebuild_array_[*]+"${_obj_qpkgs_okrebuild_array_[@]}"}" | tr ' ' ','
     }
-QPKGs.IsRebuild.Remove()
+QPKGs.OkRebuild.Remove()
     {
     local argument_array=(${1})
     local temp_array=()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_isrebuild_array_[@]+"${_obj_qpkgs_isrebuild_array_[@]}"}"; do
+    for item in "${_obj_qpkgs_okrebuild_array_[@]+"${_obj_qpkgs_okrebuild_array_[@]}"}"; do
         matched=false
         for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
             if [[ $argument = $item ]]; then
@@ -6292,18 +7312,18 @@ QPKGs.IsRebuild.Remove()
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_isrebuild_array_=("${temp_array[@]+"${temp_array[@]}"}")
-    [[ -z ${_obj_qpkgs_isrebuild_array_[*]+"${_obj_qpkgs_isrebuild_array_[@]}"} ]] && _obj_qpkgs_isrebuild_array_=()
+    _obj_qpkgs_okrebuild_array_=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${_obj_qpkgs_okrebuild_array_[*]+"${_obj_qpkgs_okrebuild_array_[@]}"} ]] && _obj_qpkgs_okrebuild_array_=()
     }
-QPKGs.IsRebuild.Size()
+QPKGs.OkRebuild.Size()
     {
     if [[ -n ${1:-} && ${1:-} = "=" ]]; then
-        _obj_qpkgs_isrebuild_size_=$2
+        _obj_qpkgs_okrebuild_size_=$2
     else
-        echo -n $_obj_qpkgs_isrebuild_size_
+        echo -n $_obj_qpkgs_okrebuild_size_
     fi
     }
-QPKGs.IsRebuild.Init
+QPKGs.OkRebuild.Init
 
 QPKGs.ErRebuild.Add()
     {
@@ -6560,70 +7580,70 @@ QPKGs.ToReinstall.Size()
     }
 QPKGs.ToReinstall.Init
 
-QPKGs.IsReinstall.Add()
+QPKGs.OkReinstall.Add()
     {
     local array=(${1})
     [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        if [[ " ${_obj_qpkgs_isreinstall_array_[*]+"${_obj_qpkgs_isreinstall_array_[@]}"} " != *"$item"* ]]; then
-            _obj_qpkgs_isreinstall_array_+=("$item")
+        if [[ " ${_obj_qpkgs_okreinstall_array_[*]+"${_obj_qpkgs_okreinstall_array_[@]}"} " != *"$item"* ]]; then
+            _obj_qpkgs_okreinstall_array_+=("$item")
         fi
     done
     }
-QPKGs.IsReinstall.Array()
+QPKGs.OkReinstall.Array()
     {
-    echo -n "${_obj_qpkgs_isreinstall_array_[@]+"${_obj_qpkgs_isreinstall_array_[@]}"}"
+    echo -n "${_obj_qpkgs_okreinstall_array_[@]+"${_obj_qpkgs_okreinstall_array_[@]}"}"
     }
-QPKGs.IsReinstall.Count()
+QPKGs.OkReinstall.Count()
     {
-    echo "${#_obj_qpkgs_isreinstall_array_[@]}"
+    echo "${#_obj_qpkgs_okreinstall_array_[@]}"
     }
-QPKGs.IsReinstall.Exist()
+QPKGs.OkReinstall.Exist()
     {
-    [[ ${_obj_qpkgs_isreinstall_array_[*]:-} == *"$1"* ]]
+    [[ ${_obj_qpkgs_okreinstall_array_[*]:-} == *"$1"* ]]
     }
-QPKGs.IsReinstall.First()
+QPKGs.OkReinstall.First()
     {
-    echo "${_obj_qpkgs_isreinstall_array_[0]}"
+    echo "${_obj_qpkgs_okreinstall_array_[0]}"
     }
-QPKGs.IsReinstall.GetItem()
+QPKGs.OkReinstall.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_isreinstall_array_[@]} ]] && index=${#_obj_qpkgs_isreinstall_array_[@]}
-    echo -n "${_obj_qpkgs_isreinstall_array_[((index-1))]}"
+    [[ $index -gt ${#_obj_qpkgs_okreinstall_array_[@]} ]] && index=${#_obj_qpkgs_okreinstall_array_[@]}
+    echo -n "${_obj_qpkgs_okreinstall_array_[((index-1))]}"
     }
-QPKGs.IsReinstall.Init()
+QPKGs.OkReinstall.Init()
     {
-    _obj_qpkgs_isreinstall_size_=0
-    _obj_qpkgs_isreinstall_array_=()
-    _obj_qpkgs_isreinstall_array_index_=1
+    _obj_qpkgs_okreinstall_size_=0
+    _obj_qpkgs_okreinstall_array_=()
+    _obj_qpkgs_okreinstall_array_index_=1
     }
-QPKGs.IsReinstall.IsAny()
+QPKGs.OkReinstall.IsAny()
     {
-    [[ ${#_obj_qpkgs_isreinstall_array_[@]} -gt 0 ]]
+    [[ ${#_obj_qpkgs_okreinstall_array_[@]} -gt 0 ]]
     }
-QPKGs.IsReinstall.IsNone()
+QPKGs.OkReinstall.IsNone()
     {
-    [[ ${#_obj_qpkgs_isreinstall_array_[@]} -eq 0 ]]
+    [[ ${#_obj_qpkgs_okreinstall_array_[@]} -eq 0 ]]
     }
-QPKGs.IsReinstall.List()
+QPKGs.OkReinstall.List()
     {
-    echo -n "${_obj_qpkgs_isreinstall_array_[*]+"${_obj_qpkgs_isreinstall_array_[@]}"}"
+    echo -n "${_obj_qpkgs_okreinstall_array_[*]+"${_obj_qpkgs_okreinstall_array_[@]}"}"
     }
-QPKGs.IsReinstall.ListCSV()
+QPKGs.OkReinstall.ListCSV()
     {
-    echo -n "${_obj_qpkgs_isreinstall_array_[*]+"${_obj_qpkgs_isreinstall_array_[@]}"}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_okreinstall_array_[*]+"${_obj_qpkgs_okreinstall_array_[@]}"}" | tr ' ' ','
     }
-QPKGs.IsReinstall.Remove()
+QPKGs.OkReinstall.Remove()
     {
     local argument_array=(${1})
     local temp_array=()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_isreinstall_array_[@]+"${_obj_qpkgs_isreinstall_array_[@]}"}"; do
+    for item in "${_obj_qpkgs_okreinstall_array_[@]+"${_obj_qpkgs_okreinstall_array_[@]}"}"; do
         matched=false
         for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
             if [[ $argument = $item ]]; then
@@ -6632,18 +7652,18 @@ QPKGs.IsReinstall.Remove()
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_isreinstall_array_=("${temp_array[@]+"${temp_array[@]}"}")
-    [[ -z ${_obj_qpkgs_isreinstall_array_[*]+"${_obj_qpkgs_isreinstall_array_[@]}"} ]] && _obj_qpkgs_isreinstall_array_=()
+    _obj_qpkgs_okreinstall_array_=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${_obj_qpkgs_okreinstall_array_[*]+"${_obj_qpkgs_okreinstall_array_[@]}"} ]] && _obj_qpkgs_okreinstall_array_=()
     }
-QPKGs.IsReinstall.Size()
+QPKGs.OkReinstall.Size()
     {
     if [[ -n ${1:-} && ${1:-} = "=" ]]; then
-        _obj_qpkgs_isreinstall_size_=$2
+        _obj_qpkgs_okreinstall_size_=$2
     else
-        echo -n $_obj_qpkgs_isreinstall_size_
+        echo -n $_obj_qpkgs_okreinstall_size_
     fi
     }
-QPKGs.IsReinstall.Init
+QPKGs.OkReinstall.Init
 
 QPKGs.ErReinstall.Add()
     {
@@ -6900,70 +7920,70 @@ QPKGs.ToRestart.Size()
     }
 QPKGs.ToRestart.Init
 
-QPKGs.IsRestart.Add()
+QPKGs.OkRestart.Add()
     {
     local array=(${1})
     [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        if [[ " ${_obj_qpkgs_isrestart_array_[*]+"${_obj_qpkgs_isrestart_array_[@]}"} " != *"$item"* ]]; then
-            _obj_qpkgs_isrestart_array_+=("$item")
+        if [[ " ${_obj_qpkgs_okrestart_array_[*]+"${_obj_qpkgs_okrestart_array_[@]}"} " != *"$item"* ]]; then
+            _obj_qpkgs_okrestart_array_+=("$item")
         fi
     done
     }
-QPKGs.IsRestart.Array()
+QPKGs.OkRestart.Array()
     {
-    echo -n "${_obj_qpkgs_isrestart_array_[@]+"${_obj_qpkgs_isrestart_array_[@]}"}"
+    echo -n "${_obj_qpkgs_okrestart_array_[@]+"${_obj_qpkgs_okrestart_array_[@]}"}"
     }
-QPKGs.IsRestart.Count()
+QPKGs.OkRestart.Count()
     {
-    echo "${#_obj_qpkgs_isrestart_array_[@]}"
+    echo "${#_obj_qpkgs_okrestart_array_[@]}"
     }
-QPKGs.IsRestart.Exist()
+QPKGs.OkRestart.Exist()
     {
-    [[ ${_obj_qpkgs_isrestart_array_[*]:-} == *"$1"* ]]
+    [[ ${_obj_qpkgs_okrestart_array_[*]:-} == *"$1"* ]]
     }
-QPKGs.IsRestart.First()
+QPKGs.OkRestart.First()
     {
-    echo "${_obj_qpkgs_isrestart_array_[0]}"
+    echo "${_obj_qpkgs_okrestart_array_[0]}"
     }
-QPKGs.IsRestart.GetItem()
+QPKGs.OkRestart.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_isrestart_array_[@]} ]] && index=${#_obj_qpkgs_isrestart_array_[@]}
-    echo -n "${_obj_qpkgs_isrestart_array_[((index-1))]}"
+    [[ $index -gt ${#_obj_qpkgs_okrestart_array_[@]} ]] && index=${#_obj_qpkgs_okrestart_array_[@]}
+    echo -n "${_obj_qpkgs_okrestart_array_[((index-1))]}"
     }
-QPKGs.IsRestart.Init()
+QPKGs.OkRestart.Init()
     {
-    _obj_qpkgs_isrestart_size_=0
-    _obj_qpkgs_isrestart_array_=()
-    _obj_qpkgs_isrestart_array_index_=1
+    _obj_qpkgs_okrestart_size_=0
+    _obj_qpkgs_okrestart_array_=()
+    _obj_qpkgs_okrestart_array_index_=1
     }
-QPKGs.IsRestart.IsAny()
+QPKGs.OkRestart.IsAny()
     {
-    [[ ${#_obj_qpkgs_isrestart_array_[@]} -gt 0 ]]
+    [[ ${#_obj_qpkgs_okrestart_array_[@]} -gt 0 ]]
     }
-QPKGs.IsRestart.IsNone()
+QPKGs.OkRestart.IsNone()
     {
-    [[ ${#_obj_qpkgs_isrestart_array_[@]} -eq 0 ]]
+    [[ ${#_obj_qpkgs_okrestart_array_[@]} -eq 0 ]]
     }
-QPKGs.IsRestart.List()
+QPKGs.OkRestart.List()
     {
-    echo -n "${_obj_qpkgs_isrestart_array_[*]+"${_obj_qpkgs_isrestart_array_[@]}"}"
+    echo -n "${_obj_qpkgs_okrestart_array_[*]+"${_obj_qpkgs_okrestart_array_[@]}"}"
     }
-QPKGs.IsRestart.ListCSV()
+QPKGs.OkRestart.ListCSV()
     {
-    echo -n "${_obj_qpkgs_isrestart_array_[*]+"${_obj_qpkgs_isrestart_array_[@]}"}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_okrestart_array_[*]+"${_obj_qpkgs_okrestart_array_[@]}"}" | tr ' ' ','
     }
-QPKGs.IsRestart.Remove()
+QPKGs.OkRestart.Remove()
     {
     local argument_array=(${1})
     local temp_array=()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_isrestart_array_[@]+"${_obj_qpkgs_isrestart_array_[@]}"}"; do
+    for item in "${_obj_qpkgs_okrestart_array_[@]+"${_obj_qpkgs_okrestart_array_[@]}"}"; do
         matched=false
         for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
             if [[ $argument = $item ]]; then
@@ -6972,18 +7992,18 @@ QPKGs.IsRestart.Remove()
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_isrestart_array_=("${temp_array[@]+"${temp_array[@]}"}")
-    [[ -z ${_obj_qpkgs_isrestart_array_[*]+"${_obj_qpkgs_isrestart_array_[@]}"} ]] && _obj_qpkgs_isrestart_array_=()
+    _obj_qpkgs_okrestart_array_=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${_obj_qpkgs_okrestart_array_[*]+"${_obj_qpkgs_okrestart_array_[@]}"} ]] && _obj_qpkgs_okrestart_array_=()
     }
-QPKGs.IsRestart.Size()
+QPKGs.OkRestart.Size()
     {
     if [[ -n ${1:-} && ${1:-} = "=" ]]; then
-        _obj_qpkgs_isrestart_size_=$2
+        _obj_qpkgs_okrestart_size_=$2
     else
-        echo -n $_obj_qpkgs_isrestart_size_
+        echo -n $_obj_qpkgs_okrestart_size_
     fi
     }
-QPKGs.IsRestart.Init
+QPKGs.OkRestart.Init
 
 QPKGs.ErRestart.Add()
     {
@@ -7240,70 +8260,70 @@ QPKGs.ToRestore.Size()
     }
 QPKGs.ToRestore.Init
 
-QPKGs.IsRestore.Add()
+QPKGs.OkRestore.Add()
     {
     local array=(${1})
     [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        if [[ " ${_obj_qpkgs_isrestore_array_[*]+"${_obj_qpkgs_isrestore_array_[@]}"} " != *"$item"* ]]; then
-            _obj_qpkgs_isrestore_array_+=("$item")
+        if [[ " ${_obj_qpkgs_okrestore_array_[*]+"${_obj_qpkgs_okrestore_array_[@]}"} " != *"$item"* ]]; then
+            _obj_qpkgs_okrestore_array_+=("$item")
         fi
     done
     }
-QPKGs.IsRestore.Array()
+QPKGs.OkRestore.Array()
     {
-    echo -n "${_obj_qpkgs_isrestore_array_[@]+"${_obj_qpkgs_isrestore_array_[@]}"}"
+    echo -n "${_obj_qpkgs_okrestore_array_[@]+"${_obj_qpkgs_okrestore_array_[@]}"}"
     }
-QPKGs.IsRestore.Count()
+QPKGs.OkRestore.Count()
     {
-    echo "${#_obj_qpkgs_isrestore_array_[@]}"
+    echo "${#_obj_qpkgs_okrestore_array_[@]}"
     }
-QPKGs.IsRestore.Exist()
+QPKGs.OkRestore.Exist()
     {
-    [[ ${_obj_qpkgs_isrestore_array_[*]:-} == *"$1"* ]]
+    [[ ${_obj_qpkgs_okrestore_array_[*]:-} == *"$1"* ]]
     }
-QPKGs.IsRestore.First()
+QPKGs.OkRestore.First()
     {
-    echo "${_obj_qpkgs_isrestore_array_[0]}"
+    echo "${_obj_qpkgs_okrestore_array_[0]}"
     }
-QPKGs.IsRestore.GetItem()
+QPKGs.OkRestore.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_isrestore_array_[@]} ]] && index=${#_obj_qpkgs_isrestore_array_[@]}
-    echo -n "${_obj_qpkgs_isrestore_array_[((index-1))]}"
+    [[ $index -gt ${#_obj_qpkgs_okrestore_array_[@]} ]] && index=${#_obj_qpkgs_okrestore_array_[@]}
+    echo -n "${_obj_qpkgs_okrestore_array_[((index-1))]}"
     }
-QPKGs.IsRestore.Init()
+QPKGs.OkRestore.Init()
     {
-    _obj_qpkgs_isrestore_size_=0
-    _obj_qpkgs_isrestore_array_=()
-    _obj_qpkgs_isrestore_array_index_=1
+    _obj_qpkgs_okrestore_size_=0
+    _obj_qpkgs_okrestore_array_=()
+    _obj_qpkgs_okrestore_array_index_=1
     }
-QPKGs.IsRestore.IsAny()
+QPKGs.OkRestore.IsAny()
     {
-    [[ ${#_obj_qpkgs_isrestore_array_[@]} -gt 0 ]]
+    [[ ${#_obj_qpkgs_okrestore_array_[@]} -gt 0 ]]
     }
-QPKGs.IsRestore.IsNone()
+QPKGs.OkRestore.IsNone()
     {
-    [[ ${#_obj_qpkgs_isrestore_array_[@]} -eq 0 ]]
+    [[ ${#_obj_qpkgs_okrestore_array_[@]} -eq 0 ]]
     }
-QPKGs.IsRestore.List()
+QPKGs.OkRestore.List()
     {
-    echo -n "${_obj_qpkgs_isrestore_array_[*]+"${_obj_qpkgs_isrestore_array_[@]}"}"
+    echo -n "${_obj_qpkgs_okrestore_array_[*]+"${_obj_qpkgs_okrestore_array_[@]}"}"
     }
-QPKGs.IsRestore.ListCSV()
+QPKGs.OkRestore.ListCSV()
     {
-    echo -n "${_obj_qpkgs_isrestore_array_[*]+"${_obj_qpkgs_isrestore_array_[@]}"}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_okrestore_array_[*]+"${_obj_qpkgs_okrestore_array_[@]}"}" | tr ' ' ','
     }
-QPKGs.IsRestore.Remove()
+QPKGs.OkRestore.Remove()
     {
     local argument_array=(${1})
     local temp_array=()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_isrestore_array_[@]+"${_obj_qpkgs_isrestore_array_[@]}"}"; do
+    for item in "${_obj_qpkgs_okrestore_array_[@]+"${_obj_qpkgs_okrestore_array_[@]}"}"; do
         matched=false
         for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
             if [[ $argument = $item ]]; then
@@ -7312,18 +8332,18 @@ QPKGs.IsRestore.Remove()
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_isrestore_array_=("${temp_array[@]+"${temp_array[@]}"}")
-    [[ -z ${_obj_qpkgs_isrestore_array_[*]+"${_obj_qpkgs_isrestore_array_[@]}"} ]] && _obj_qpkgs_isrestore_array_=()
+    _obj_qpkgs_okrestore_array_=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${_obj_qpkgs_okrestore_array_[*]+"${_obj_qpkgs_okrestore_array_[@]}"} ]] && _obj_qpkgs_okrestore_array_=()
     }
-QPKGs.IsRestore.Size()
+QPKGs.OkRestore.Size()
     {
     if [[ -n ${1:-} && ${1:-} = "=" ]]; then
-        _obj_qpkgs_isrestore_size_=$2
+        _obj_qpkgs_okrestore_size_=$2
     else
-        echo -n $_obj_qpkgs_isrestore_size_
+        echo -n $_obj_qpkgs_okrestore_size_
     fi
     }
-QPKGs.IsRestore.Init
+QPKGs.OkRestore.Init
 
 QPKGs.ErRestore.Add()
     {
@@ -7580,70 +8600,70 @@ QPKGs.ToStart.Size()
     }
 QPKGs.ToStart.Init
 
-QPKGs.IsStart.Add()
+QPKGs.OkStart.Add()
     {
     local array=(${1})
     [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        if [[ " ${_obj_qpkgs_isstart_array_[*]+"${_obj_qpkgs_isstart_array_[@]}"} " != *"$item"* ]]; then
-            _obj_qpkgs_isstart_array_+=("$item")
+        if [[ " ${_obj_qpkgs_okstart_array_[*]+"${_obj_qpkgs_okstart_array_[@]}"} " != *"$item"* ]]; then
+            _obj_qpkgs_okstart_array_+=("$item")
         fi
     done
     }
-QPKGs.IsStart.Array()
+QPKGs.OkStart.Array()
     {
-    echo -n "${_obj_qpkgs_isstart_array_[@]+"${_obj_qpkgs_isstart_array_[@]}"}"
+    echo -n "${_obj_qpkgs_okstart_array_[@]+"${_obj_qpkgs_okstart_array_[@]}"}"
     }
-QPKGs.IsStart.Count()
+QPKGs.OkStart.Count()
     {
-    echo "${#_obj_qpkgs_isstart_array_[@]}"
+    echo "${#_obj_qpkgs_okstart_array_[@]}"
     }
-QPKGs.IsStart.Exist()
+QPKGs.OkStart.Exist()
     {
-    [[ ${_obj_qpkgs_isstart_array_[*]:-} == *"$1"* ]]
+    [[ ${_obj_qpkgs_okstart_array_[*]:-} == *"$1"* ]]
     }
-QPKGs.IsStart.First()
+QPKGs.OkStart.First()
     {
-    echo "${_obj_qpkgs_isstart_array_[0]}"
+    echo "${_obj_qpkgs_okstart_array_[0]}"
     }
-QPKGs.IsStart.GetItem()
+QPKGs.OkStart.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_isstart_array_[@]} ]] && index=${#_obj_qpkgs_isstart_array_[@]}
-    echo -n "${_obj_qpkgs_isstart_array_[((index-1))]}"
+    [[ $index -gt ${#_obj_qpkgs_okstart_array_[@]} ]] && index=${#_obj_qpkgs_okstart_array_[@]}
+    echo -n "${_obj_qpkgs_okstart_array_[((index-1))]}"
     }
-QPKGs.IsStart.Init()
+QPKGs.OkStart.Init()
     {
-    _obj_qpkgs_isstart_size_=0
-    _obj_qpkgs_isstart_array_=()
-    _obj_qpkgs_isstart_array_index_=1
+    _obj_qpkgs_okstart_size_=0
+    _obj_qpkgs_okstart_array_=()
+    _obj_qpkgs_okstart_array_index_=1
     }
-QPKGs.IsStart.IsAny()
+QPKGs.OkStart.IsAny()
     {
-    [[ ${#_obj_qpkgs_isstart_array_[@]} -gt 0 ]]
+    [[ ${#_obj_qpkgs_okstart_array_[@]} -gt 0 ]]
     }
-QPKGs.IsStart.IsNone()
+QPKGs.OkStart.IsNone()
     {
-    [[ ${#_obj_qpkgs_isstart_array_[@]} -eq 0 ]]
+    [[ ${#_obj_qpkgs_okstart_array_[@]} -eq 0 ]]
     }
-QPKGs.IsStart.List()
+QPKGs.OkStart.List()
     {
-    echo -n "${_obj_qpkgs_isstart_array_[*]+"${_obj_qpkgs_isstart_array_[@]}"}"
+    echo -n "${_obj_qpkgs_okstart_array_[*]+"${_obj_qpkgs_okstart_array_[@]}"}"
     }
-QPKGs.IsStart.ListCSV()
+QPKGs.OkStart.ListCSV()
     {
-    echo -n "${_obj_qpkgs_isstart_array_[*]+"${_obj_qpkgs_isstart_array_[@]}"}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_okstart_array_[*]+"${_obj_qpkgs_okstart_array_[@]}"}" | tr ' ' ','
     }
-QPKGs.IsStart.Remove()
+QPKGs.OkStart.Remove()
     {
     local argument_array=(${1})
     local temp_array=()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_isstart_array_[@]+"${_obj_qpkgs_isstart_array_[@]}"}"; do
+    for item in "${_obj_qpkgs_okstart_array_[@]+"${_obj_qpkgs_okstart_array_[@]}"}"; do
         matched=false
         for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
             if [[ $argument = $item ]]; then
@@ -7652,18 +8672,18 @@ QPKGs.IsStart.Remove()
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_isstart_array_=("${temp_array[@]+"${temp_array[@]}"}")
-    [[ -z ${_obj_qpkgs_isstart_array_[*]+"${_obj_qpkgs_isstart_array_[@]}"} ]] && _obj_qpkgs_isstart_array_=()
+    _obj_qpkgs_okstart_array_=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${_obj_qpkgs_okstart_array_[*]+"${_obj_qpkgs_okstart_array_[@]}"} ]] && _obj_qpkgs_okstart_array_=()
     }
-QPKGs.IsStart.Size()
+QPKGs.OkStart.Size()
     {
     if [[ -n ${1:-} && ${1:-} = "=" ]]; then
-        _obj_qpkgs_isstart_size_=$2
+        _obj_qpkgs_okstart_size_=$2
     else
-        echo -n $_obj_qpkgs_isstart_size_
+        echo -n $_obj_qpkgs_okstart_size_
     fi
     }
-QPKGs.IsStart.Init
+QPKGs.OkStart.Init
 
 QPKGs.ErStart.Add()
     {
@@ -7920,70 +8940,70 @@ QPKGs.ToStop.Size()
     }
 QPKGs.ToStop.Init
 
-QPKGs.IsStop.Add()
+QPKGs.OkStop.Add()
     {
     local array=(${1})
     [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        if [[ " ${_obj_qpkgs_isstop_array_[*]+"${_obj_qpkgs_isstop_array_[@]}"} " != *"$item"* ]]; then
-            _obj_qpkgs_isstop_array_+=("$item")
+        if [[ " ${_obj_qpkgs_okstop_array_[*]+"${_obj_qpkgs_okstop_array_[@]}"} " != *"$item"* ]]; then
+            _obj_qpkgs_okstop_array_+=("$item")
         fi
     done
     }
-QPKGs.IsStop.Array()
+QPKGs.OkStop.Array()
     {
-    echo -n "${_obj_qpkgs_isstop_array_[@]+"${_obj_qpkgs_isstop_array_[@]}"}"
+    echo -n "${_obj_qpkgs_okstop_array_[@]+"${_obj_qpkgs_okstop_array_[@]}"}"
     }
-QPKGs.IsStop.Count()
+QPKGs.OkStop.Count()
     {
-    echo "${#_obj_qpkgs_isstop_array_[@]}"
+    echo "${#_obj_qpkgs_okstop_array_[@]}"
     }
-QPKGs.IsStop.Exist()
+QPKGs.OkStop.Exist()
     {
-    [[ ${_obj_qpkgs_isstop_array_[*]:-} == *"$1"* ]]
+    [[ ${_obj_qpkgs_okstop_array_[*]:-} == *"$1"* ]]
     }
-QPKGs.IsStop.First()
+QPKGs.OkStop.First()
     {
-    echo "${_obj_qpkgs_isstop_array_[0]}"
+    echo "${_obj_qpkgs_okstop_array_[0]}"
     }
-QPKGs.IsStop.GetItem()
+QPKGs.OkStop.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_isstop_array_[@]} ]] && index=${#_obj_qpkgs_isstop_array_[@]}
-    echo -n "${_obj_qpkgs_isstop_array_[((index-1))]}"
+    [[ $index -gt ${#_obj_qpkgs_okstop_array_[@]} ]] && index=${#_obj_qpkgs_okstop_array_[@]}
+    echo -n "${_obj_qpkgs_okstop_array_[((index-1))]}"
     }
-QPKGs.IsStop.Init()
+QPKGs.OkStop.Init()
     {
-    _obj_qpkgs_isstop_size_=0
-    _obj_qpkgs_isstop_array_=()
-    _obj_qpkgs_isstop_array_index_=1
+    _obj_qpkgs_okstop_size_=0
+    _obj_qpkgs_okstop_array_=()
+    _obj_qpkgs_okstop_array_index_=1
     }
-QPKGs.IsStop.IsAny()
+QPKGs.OkStop.IsAny()
     {
-    [[ ${#_obj_qpkgs_isstop_array_[@]} -gt 0 ]]
+    [[ ${#_obj_qpkgs_okstop_array_[@]} -gt 0 ]]
     }
-QPKGs.IsStop.IsNone()
+QPKGs.OkStop.IsNone()
     {
-    [[ ${#_obj_qpkgs_isstop_array_[@]} -eq 0 ]]
+    [[ ${#_obj_qpkgs_okstop_array_[@]} -eq 0 ]]
     }
-QPKGs.IsStop.List()
+QPKGs.OkStop.List()
     {
-    echo -n "${_obj_qpkgs_isstop_array_[*]+"${_obj_qpkgs_isstop_array_[@]}"}"
+    echo -n "${_obj_qpkgs_okstop_array_[*]+"${_obj_qpkgs_okstop_array_[@]}"}"
     }
-QPKGs.IsStop.ListCSV()
+QPKGs.OkStop.ListCSV()
     {
-    echo -n "${_obj_qpkgs_isstop_array_[*]+"${_obj_qpkgs_isstop_array_[@]}"}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_okstop_array_[*]+"${_obj_qpkgs_okstop_array_[@]}"}" | tr ' ' ','
     }
-QPKGs.IsStop.Remove()
+QPKGs.OkStop.Remove()
     {
     local argument_array=(${1})
     local temp_array=()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_isstop_array_[@]+"${_obj_qpkgs_isstop_array_[@]}"}"; do
+    for item in "${_obj_qpkgs_okstop_array_[@]+"${_obj_qpkgs_okstop_array_[@]}"}"; do
         matched=false
         for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
             if [[ $argument = $item ]]; then
@@ -7992,18 +9012,18 @@ QPKGs.IsStop.Remove()
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_isstop_array_=("${temp_array[@]+"${temp_array[@]}"}")
-    [[ -z ${_obj_qpkgs_isstop_array_[*]+"${_obj_qpkgs_isstop_array_[@]}"} ]] && _obj_qpkgs_isstop_array_=()
+    _obj_qpkgs_okstop_array_=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${_obj_qpkgs_okstop_array_[*]+"${_obj_qpkgs_okstop_array_[@]}"} ]] && _obj_qpkgs_okstop_array_=()
     }
-QPKGs.IsStop.Size()
+QPKGs.OkStop.Size()
     {
     if [[ -n ${1:-} && ${1:-} = "=" ]]; then
-        _obj_qpkgs_isstop_size_=$2
+        _obj_qpkgs_okstop_size_=$2
     else
-        echo -n $_obj_qpkgs_isstop_size_
+        echo -n $_obj_qpkgs_okstop_size_
     fi
     }
-QPKGs.IsStop.Init
+QPKGs.OkStop.Init
 
 QPKGs.ErStop.Add()
     {
@@ -8260,70 +9280,70 @@ QPKGs.ToUninstall.Size()
     }
 QPKGs.ToUninstall.Init
 
-QPKGs.IsUninstall.Add()
+QPKGs.OkUninstall.Add()
     {
     local array=(${1})
     [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        if [[ " ${_obj_qpkgs_isuninstall_array_[*]+"${_obj_qpkgs_isuninstall_array_[@]}"} " != *"$item"* ]]; then
-            _obj_qpkgs_isuninstall_array_+=("$item")
+        if [[ " ${_obj_qpkgs_okuninstall_array_[*]+"${_obj_qpkgs_okuninstall_array_[@]}"} " != *"$item"* ]]; then
+            _obj_qpkgs_okuninstall_array_+=("$item")
         fi
     done
     }
-QPKGs.IsUninstall.Array()
+QPKGs.OkUninstall.Array()
     {
-    echo -n "${_obj_qpkgs_isuninstall_array_[@]+"${_obj_qpkgs_isuninstall_array_[@]}"}"
+    echo -n "${_obj_qpkgs_okuninstall_array_[@]+"${_obj_qpkgs_okuninstall_array_[@]}"}"
     }
-QPKGs.IsUninstall.Count()
+QPKGs.OkUninstall.Count()
     {
-    echo "${#_obj_qpkgs_isuninstall_array_[@]}"
+    echo "${#_obj_qpkgs_okuninstall_array_[@]}"
     }
-QPKGs.IsUninstall.Exist()
+QPKGs.OkUninstall.Exist()
     {
-    [[ ${_obj_qpkgs_isuninstall_array_[*]:-} == *"$1"* ]]
+    [[ ${_obj_qpkgs_okuninstall_array_[*]:-} == *"$1"* ]]
     }
-QPKGs.IsUninstall.First()
+QPKGs.OkUninstall.First()
     {
-    echo "${_obj_qpkgs_isuninstall_array_[0]}"
+    echo "${_obj_qpkgs_okuninstall_array_[0]}"
     }
-QPKGs.IsUninstall.GetItem()
+QPKGs.OkUninstall.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_isuninstall_array_[@]} ]] && index=${#_obj_qpkgs_isuninstall_array_[@]}
-    echo -n "${_obj_qpkgs_isuninstall_array_[((index-1))]}"
+    [[ $index -gt ${#_obj_qpkgs_okuninstall_array_[@]} ]] && index=${#_obj_qpkgs_okuninstall_array_[@]}
+    echo -n "${_obj_qpkgs_okuninstall_array_[((index-1))]}"
     }
-QPKGs.IsUninstall.Init()
+QPKGs.OkUninstall.Init()
     {
-    _obj_qpkgs_isuninstall_size_=0
-    _obj_qpkgs_isuninstall_array_=()
-    _obj_qpkgs_isuninstall_array_index_=1
+    _obj_qpkgs_okuninstall_size_=0
+    _obj_qpkgs_okuninstall_array_=()
+    _obj_qpkgs_okuninstall_array_index_=1
     }
-QPKGs.IsUninstall.IsAny()
+QPKGs.OkUninstall.IsAny()
     {
-    [[ ${#_obj_qpkgs_isuninstall_array_[@]} -gt 0 ]]
+    [[ ${#_obj_qpkgs_okuninstall_array_[@]} -gt 0 ]]
     }
-QPKGs.IsUninstall.IsNone()
+QPKGs.OkUninstall.IsNone()
     {
-    [[ ${#_obj_qpkgs_isuninstall_array_[@]} -eq 0 ]]
+    [[ ${#_obj_qpkgs_okuninstall_array_[@]} -eq 0 ]]
     }
-QPKGs.IsUninstall.List()
+QPKGs.OkUninstall.List()
     {
-    echo -n "${_obj_qpkgs_isuninstall_array_[*]+"${_obj_qpkgs_isuninstall_array_[@]}"}"
+    echo -n "${_obj_qpkgs_okuninstall_array_[*]+"${_obj_qpkgs_okuninstall_array_[@]}"}"
     }
-QPKGs.IsUninstall.ListCSV()
+QPKGs.OkUninstall.ListCSV()
     {
-    echo -n "${_obj_qpkgs_isuninstall_array_[*]+"${_obj_qpkgs_isuninstall_array_[@]}"}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_okuninstall_array_[*]+"${_obj_qpkgs_okuninstall_array_[@]}"}" | tr ' ' ','
     }
-QPKGs.IsUninstall.Remove()
+QPKGs.OkUninstall.Remove()
     {
     local argument_array=(${1})
     local temp_array=()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_isuninstall_array_[@]+"${_obj_qpkgs_isuninstall_array_[@]}"}"; do
+    for item in "${_obj_qpkgs_okuninstall_array_[@]+"${_obj_qpkgs_okuninstall_array_[@]}"}"; do
         matched=false
         for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
             if [[ $argument = $item ]]; then
@@ -8332,18 +9352,18 @@ QPKGs.IsUninstall.Remove()
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_isuninstall_array_=("${temp_array[@]+"${temp_array[@]}"}")
-    [[ -z ${_obj_qpkgs_isuninstall_array_[*]+"${_obj_qpkgs_isuninstall_array_[@]}"} ]] && _obj_qpkgs_isuninstall_array_=()
+    _obj_qpkgs_okuninstall_array_=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${_obj_qpkgs_okuninstall_array_[*]+"${_obj_qpkgs_okuninstall_array_[@]}"} ]] && _obj_qpkgs_okuninstall_array_=()
     }
-QPKGs.IsUninstall.Size()
+QPKGs.OkUninstall.Size()
     {
     if [[ -n ${1:-} && ${1:-} = "=" ]]; then
-        _obj_qpkgs_isuninstall_size_=$2
+        _obj_qpkgs_okuninstall_size_=$2
     else
-        echo -n $_obj_qpkgs_isuninstall_size_
+        echo -n $_obj_qpkgs_okuninstall_size_
     fi
     }
-QPKGs.IsUninstall.Init
+QPKGs.OkUninstall.Init
 
 QPKGs.ErUninstall.Add()
     {
@@ -8600,70 +9620,70 @@ QPKGs.ToUpgrade.Size()
     }
 QPKGs.ToUpgrade.Init
 
-QPKGs.IsUpgrade.Add()
+QPKGs.OkUpgrade.Add()
     {
     local array=(${1})
     [[ ${#array[@]} -eq 0 ]] && return
     local item=''
     for item in "${array[@]:-}"; do
-        if [[ " ${_obj_qpkgs_isupgrade_array_[*]+"${_obj_qpkgs_isupgrade_array_[@]}"} " != *"$item"* ]]; then
-            _obj_qpkgs_isupgrade_array_+=("$item")
+        if [[ " ${_obj_qpkgs_okupgrade_array_[*]+"${_obj_qpkgs_okupgrade_array_[@]}"} " != *"$item"* ]]; then
+            _obj_qpkgs_okupgrade_array_+=("$item")
         fi
     done
     }
-QPKGs.IsUpgrade.Array()
+QPKGs.OkUpgrade.Array()
     {
-    echo -n "${_obj_qpkgs_isupgrade_array_[@]+"${_obj_qpkgs_isupgrade_array_[@]}"}"
+    echo -n "${_obj_qpkgs_okupgrade_array_[@]+"${_obj_qpkgs_okupgrade_array_[@]}"}"
     }
-QPKGs.IsUpgrade.Count()
+QPKGs.OkUpgrade.Count()
     {
-    echo "${#_obj_qpkgs_isupgrade_array_[@]}"
+    echo "${#_obj_qpkgs_okupgrade_array_[@]}"
     }
-QPKGs.IsUpgrade.Exist()
+QPKGs.OkUpgrade.Exist()
     {
-    [[ ${_obj_qpkgs_isupgrade_array_[*]:-} == *"$1"* ]]
+    [[ ${_obj_qpkgs_okupgrade_array_[*]:-} == *"$1"* ]]
     }
-QPKGs.IsUpgrade.First()
+QPKGs.OkUpgrade.First()
     {
-    echo "${_obj_qpkgs_isupgrade_array_[0]}"
+    echo "${_obj_qpkgs_okupgrade_array_[0]}"
     }
-QPKGs.IsUpgrade.GetItem()
+QPKGs.OkUpgrade.GetItem()
     {
     local -i index="$1"
     [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_isupgrade_array_[@]} ]] && index=${#_obj_qpkgs_isupgrade_array_[@]}
-    echo -n "${_obj_qpkgs_isupgrade_array_[((index-1))]}"
+    [[ $index -gt ${#_obj_qpkgs_okupgrade_array_[@]} ]] && index=${#_obj_qpkgs_okupgrade_array_[@]}
+    echo -n "${_obj_qpkgs_okupgrade_array_[((index-1))]}"
     }
-QPKGs.IsUpgrade.Init()
+QPKGs.OkUpgrade.Init()
     {
-    _obj_qpkgs_isupgrade_size_=0
-    _obj_qpkgs_isupgrade_array_=()
-    _obj_qpkgs_isupgrade_array_index_=1
+    _obj_qpkgs_okupgrade_size_=0
+    _obj_qpkgs_okupgrade_array_=()
+    _obj_qpkgs_okupgrade_array_index_=1
     }
-QPKGs.IsUpgrade.IsAny()
+QPKGs.OkUpgrade.IsAny()
     {
-    [[ ${#_obj_qpkgs_isupgrade_array_[@]} -gt 0 ]]
+    [[ ${#_obj_qpkgs_okupgrade_array_[@]} -gt 0 ]]
     }
-QPKGs.IsUpgrade.IsNone()
+QPKGs.OkUpgrade.IsNone()
     {
-    [[ ${#_obj_qpkgs_isupgrade_array_[@]} -eq 0 ]]
+    [[ ${#_obj_qpkgs_okupgrade_array_[@]} -eq 0 ]]
     }
-QPKGs.IsUpgrade.List()
+QPKGs.OkUpgrade.List()
     {
-    echo -n "${_obj_qpkgs_isupgrade_array_[*]+"${_obj_qpkgs_isupgrade_array_[@]}"}"
+    echo -n "${_obj_qpkgs_okupgrade_array_[*]+"${_obj_qpkgs_okupgrade_array_[@]}"}"
     }
-QPKGs.IsUpgrade.ListCSV()
+QPKGs.OkUpgrade.ListCSV()
     {
-    echo -n "${_obj_qpkgs_isupgrade_array_[*]+"${_obj_qpkgs_isupgrade_array_[@]}"}" | tr ' ' ','
+    echo -n "${_obj_qpkgs_okupgrade_array_[*]+"${_obj_qpkgs_okupgrade_array_[@]}"}" | tr ' ' ','
     }
-QPKGs.IsUpgrade.Remove()
+QPKGs.OkUpgrade.Remove()
     {
     local argument_array=(${1})
     local temp_array=()
     local argument=''
     local item=''
     local matched=false
-    for item in "${_obj_qpkgs_isupgrade_array_[@]+"${_obj_qpkgs_isupgrade_array_[@]}"}"; do
+    for item in "${_obj_qpkgs_okupgrade_array_[@]+"${_obj_qpkgs_okupgrade_array_[@]}"}"; do
         matched=false
         for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
             if [[ $argument = $item ]]; then
@@ -8672,18 +9692,18 @@ QPKGs.IsUpgrade.Remove()
         done
         [[ $matched = false ]] && temp_array+=("$item")
     done
-    _obj_qpkgs_isupgrade_array_=("${temp_array[@]+"${temp_array[@]}"}")
-    [[ -z ${_obj_qpkgs_isupgrade_array_[*]+"${_obj_qpkgs_isupgrade_array_[@]}"} ]] && _obj_qpkgs_isupgrade_array_=()
+    _obj_qpkgs_okupgrade_array_=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${_obj_qpkgs_okupgrade_array_[*]+"${_obj_qpkgs_okupgrade_array_[@]}"} ]] && _obj_qpkgs_okupgrade_array_=()
     }
-QPKGs.IsUpgrade.Size()
+QPKGs.OkUpgrade.Size()
     {
     if [[ -n ${1:-} && ${1:-} = "=" ]]; then
-        _obj_qpkgs_isupgrade_size_=$2
+        _obj_qpkgs_okupgrade_size_=$2
     else
-        echo -n $_obj_qpkgs_isupgrade_size_
+        echo -n $_obj_qpkgs_okupgrade_size_
     fi
     }
-QPKGs.IsUpgrade.Init
+QPKGs.OkUpgrade.Init
 
 QPKGs.ErUpgrade.Add()
     {
