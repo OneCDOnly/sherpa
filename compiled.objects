@@ -2209,6 +2209,140 @@ Opts.Apps.All.Backup.Text()
     }
 Opts.Apps.All.Backup.Init
 
+Opts.Apps.Standalone.Backup.Clear()
+    {
+    [[ $_obj_opts_apps_standalone_backup_flag_ != 'true' ]] && return
+    _obj_opts_apps_standalone_backup_flag_=false
+    [[ $_obj_opts_apps_standalone_backup_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_standalone_backup_flag_
+    }
+Opts.Apps.Standalone.Backup.Disable()
+    {
+    [[ $_obj_opts_apps_standalone_backup_enable_ != 'true' ]] && return
+    _obj_opts_apps_standalone_backup_enable_=false
+    [[ $_obj_opts_apps_standalone_backup_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_standalone_backup_enable_
+    }
+Opts.Apps.Standalone.Backup.DontLogChanges()
+    {
+    [[ $_obj_opts_apps_standalone_backup_changes_flag_ != 'true' ]] && return
+    _obj_opts_apps_standalone_backup_changes_flag_=false
+    }
+Opts.Apps.Standalone.Backup.Enable()
+    {
+    [[ $_obj_opts_apps_standalone_backup_enable_ = 'true' ]] && return
+    _obj_opts_apps_standalone_backup_enable_=true
+    [[ $_obj_opts_apps_standalone_backup_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_standalone_backup_enable_
+    }
+Opts.Apps.Standalone.Backup.Init()
+    {
+    _obj_opts_apps_standalone_backup_text_=''
+    _obj_opts_apps_standalone_backup_flag_=false
+    _obj_opts_apps_standalone_backup_changes_flag_=true
+    _obj_opts_apps_standalone_backup_enable_=false
+    }
+Opts.Apps.Standalone.Backup.IsDisabled()
+    {
+    [[ $_obj_opts_apps_standalone_backup_enable_ != 'true' ]]
+    }
+Opts.Apps.Standalone.Backup.IsEnabled()
+    {
+    [[ $_obj_opts_apps_standalone_backup_enable_ = 'true' ]]
+    }
+Opts.Apps.Standalone.Backup.IsNot()
+    {
+    [[ $_obj_opts_apps_standalone_backup_flag_ != 'true' ]]
+    }
+Opts.Apps.Standalone.Backup.IsSet()
+    {
+    [[ $_obj_opts_apps_standalone_backup_flag_ = 'true' ]]
+    }
+Opts.Apps.Standalone.Backup.LogChanges()
+    {
+    [[ $_obj_opts_apps_standalone_backup_changes_flag_ = 'true' ]] && return
+    _obj_opts_apps_standalone_backup_changes_flag_=true
+    }
+Opts.Apps.Standalone.Backup.Set()
+    {
+    [[ $_obj_opts_apps_standalone_backup_flag_ = 'true' ]] && return
+    _obj_opts_apps_standalone_backup_flag_=true
+    [[ $_obj_opts_apps_standalone_backup_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_standalone_backup_flag_
+    }
+Opts.Apps.Standalone.Backup.Text()
+    {
+    if [[ -n ${1:-} && $1 = "=" ]]; then
+        _obj_opts_apps_standalone_backup_text_=$2
+    else
+        echo -n "$_obj_opts_apps_standalone_backup_text_"
+    fi
+    }
+Opts.Apps.Standalone.Backup.Init
+
+Opts.Apps.Dependent.Backup.Clear()
+    {
+    [[ $_obj_opts_apps_dependent_backup_flag_ != 'true' ]] && return
+    _obj_opts_apps_dependent_backup_flag_=false
+    [[ $_obj_opts_apps_dependent_backup_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_dependent_backup_flag_
+    }
+Opts.Apps.Dependent.Backup.Disable()
+    {
+    [[ $_obj_opts_apps_dependent_backup_enable_ != 'true' ]] && return
+    _obj_opts_apps_dependent_backup_enable_=false
+    [[ $_obj_opts_apps_dependent_backup_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_dependent_backup_enable_
+    }
+Opts.Apps.Dependent.Backup.DontLogChanges()
+    {
+    [[ $_obj_opts_apps_dependent_backup_changes_flag_ != 'true' ]] && return
+    _obj_opts_apps_dependent_backup_changes_flag_=false
+    }
+Opts.Apps.Dependent.Backup.Enable()
+    {
+    [[ $_obj_opts_apps_dependent_backup_enable_ = 'true' ]] && return
+    _obj_opts_apps_dependent_backup_enable_=true
+    [[ $_obj_opts_apps_dependent_backup_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_dependent_backup_enable_
+    }
+Opts.Apps.Dependent.Backup.Init()
+    {
+    _obj_opts_apps_dependent_backup_text_=''
+    _obj_opts_apps_dependent_backup_flag_=false
+    _obj_opts_apps_dependent_backup_changes_flag_=true
+    _obj_opts_apps_dependent_backup_enable_=false
+    }
+Opts.Apps.Dependent.Backup.IsDisabled()
+    {
+    [[ $_obj_opts_apps_dependent_backup_enable_ != 'true' ]]
+    }
+Opts.Apps.Dependent.Backup.IsEnabled()
+    {
+    [[ $_obj_opts_apps_dependent_backup_enable_ = 'true' ]]
+    }
+Opts.Apps.Dependent.Backup.IsNot()
+    {
+    [[ $_obj_opts_apps_dependent_backup_flag_ != 'true' ]]
+    }
+Opts.Apps.Dependent.Backup.IsSet()
+    {
+    [[ $_obj_opts_apps_dependent_backup_flag_ = 'true' ]]
+    }
+Opts.Apps.Dependent.Backup.LogChanges()
+    {
+    [[ $_obj_opts_apps_dependent_backup_changes_flag_ = 'true' ]] && return
+    _obj_opts_apps_dependent_backup_changes_flag_=true
+    }
+Opts.Apps.Dependent.Backup.Set()
+    {
+    [[ $_obj_opts_apps_dependent_backup_flag_ = 'true' ]] && return
+    _obj_opts_apps_dependent_backup_flag_=true
+    [[ $_obj_opts_apps_dependent_backup_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_dependent_backup_flag_
+    }
+Opts.Apps.Dependent.Backup.Text()
+    {
+    if [[ -n ${1:-} && $1 = "=" ]]; then
+        _obj_opts_apps_dependent_backup_text_=$2
+    else
+        echo -n "$_obj_opts_apps_dependent_backup_text_"
+    fi
+    }
+Opts.Apps.Dependent.Backup.Init
+
 Opts.Apps.All.Install.Clear()
     {
     [[ $_obj_opts_apps_all_install_flag_ != 'true' ]] && return
@@ -2275,6 +2409,140 @@ Opts.Apps.All.Install.Text()
     fi
     }
 Opts.Apps.All.Install.Init
+
+Opts.Apps.Standalone.Install.Clear()
+    {
+    [[ $_obj_opts_apps_standalone_install_flag_ != 'true' ]] && return
+    _obj_opts_apps_standalone_install_flag_=false
+    [[ $_obj_opts_apps_standalone_install_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_standalone_install_flag_
+    }
+Opts.Apps.Standalone.Install.Disable()
+    {
+    [[ $_obj_opts_apps_standalone_install_enable_ != 'true' ]] && return
+    _obj_opts_apps_standalone_install_enable_=false
+    [[ $_obj_opts_apps_standalone_install_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_standalone_install_enable_
+    }
+Opts.Apps.Standalone.Install.DontLogChanges()
+    {
+    [[ $_obj_opts_apps_standalone_install_changes_flag_ != 'true' ]] && return
+    _obj_opts_apps_standalone_install_changes_flag_=false
+    }
+Opts.Apps.Standalone.Install.Enable()
+    {
+    [[ $_obj_opts_apps_standalone_install_enable_ = 'true' ]] && return
+    _obj_opts_apps_standalone_install_enable_=true
+    [[ $_obj_opts_apps_standalone_install_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_standalone_install_enable_
+    }
+Opts.Apps.Standalone.Install.Init()
+    {
+    _obj_opts_apps_standalone_install_text_=''
+    _obj_opts_apps_standalone_install_flag_=false
+    _obj_opts_apps_standalone_install_changes_flag_=true
+    _obj_opts_apps_standalone_install_enable_=false
+    }
+Opts.Apps.Standalone.Install.IsDisabled()
+    {
+    [[ $_obj_opts_apps_standalone_install_enable_ != 'true' ]]
+    }
+Opts.Apps.Standalone.Install.IsEnabled()
+    {
+    [[ $_obj_opts_apps_standalone_install_enable_ = 'true' ]]
+    }
+Opts.Apps.Standalone.Install.IsNot()
+    {
+    [[ $_obj_opts_apps_standalone_install_flag_ != 'true' ]]
+    }
+Opts.Apps.Standalone.Install.IsSet()
+    {
+    [[ $_obj_opts_apps_standalone_install_flag_ = 'true' ]]
+    }
+Opts.Apps.Standalone.Install.LogChanges()
+    {
+    [[ $_obj_opts_apps_standalone_install_changes_flag_ = 'true' ]] && return
+    _obj_opts_apps_standalone_install_changes_flag_=true
+    }
+Opts.Apps.Standalone.Install.Set()
+    {
+    [[ $_obj_opts_apps_standalone_install_flag_ = 'true' ]] && return
+    _obj_opts_apps_standalone_install_flag_=true
+    [[ $_obj_opts_apps_standalone_install_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_standalone_install_flag_
+    }
+Opts.Apps.Standalone.Install.Text()
+    {
+    if [[ -n ${1:-} && $1 = "=" ]]; then
+        _obj_opts_apps_standalone_install_text_=$2
+    else
+        echo -n "$_obj_opts_apps_standalone_install_text_"
+    fi
+    }
+Opts.Apps.Standalone.Install.Init
+
+Opts.Apps.Dependent.Install.Clear()
+    {
+    [[ $_obj_opts_apps_dependent_install_flag_ != 'true' ]] && return
+    _obj_opts_apps_dependent_install_flag_=false
+    [[ $_obj_opts_apps_dependent_install_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_dependent_install_flag_
+    }
+Opts.Apps.Dependent.Install.Disable()
+    {
+    [[ $_obj_opts_apps_dependent_install_enable_ != 'true' ]] && return
+    _obj_opts_apps_dependent_install_enable_=false
+    [[ $_obj_opts_apps_dependent_install_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_dependent_install_enable_
+    }
+Opts.Apps.Dependent.Install.DontLogChanges()
+    {
+    [[ $_obj_opts_apps_dependent_install_changes_flag_ != 'true' ]] && return
+    _obj_opts_apps_dependent_install_changes_flag_=false
+    }
+Opts.Apps.Dependent.Install.Enable()
+    {
+    [[ $_obj_opts_apps_dependent_install_enable_ = 'true' ]] && return
+    _obj_opts_apps_dependent_install_enable_=true
+    [[ $_obj_opts_apps_dependent_install_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_dependent_install_enable_
+    }
+Opts.Apps.Dependent.Install.Init()
+    {
+    _obj_opts_apps_dependent_install_text_=''
+    _obj_opts_apps_dependent_install_flag_=false
+    _obj_opts_apps_dependent_install_changes_flag_=true
+    _obj_opts_apps_dependent_install_enable_=false
+    }
+Opts.Apps.Dependent.Install.IsDisabled()
+    {
+    [[ $_obj_opts_apps_dependent_install_enable_ != 'true' ]]
+    }
+Opts.Apps.Dependent.Install.IsEnabled()
+    {
+    [[ $_obj_opts_apps_dependent_install_enable_ = 'true' ]]
+    }
+Opts.Apps.Dependent.Install.IsNot()
+    {
+    [[ $_obj_opts_apps_dependent_install_flag_ != 'true' ]]
+    }
+Opts.Apps.Dependent.Install.IsSet()
+    {
+    [[ $_obj_opts_apps_dependent_install_flag_ = 'true' ]]
+    }
+Opts.Apps.Dependent.Install.LogChanges()
+    {
+    [[ $_obj_opts_apps_dependent_install_changes_flag_ = 'true' ]] && return
+    _obj_opts_apps_dependent_install_changes_flag_=true
+    }
+Opts.Apps.Dependent.Install.Set()
+    {
+    [[ $_obj_opts_apps_dependent_install_flag_ = 'true' ]] && return
+    _obj_opts_apps_dependent_install_flag_=true
+    [[ $_obj_opts_apps_dependent_install_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_dependent_install_flag_
+    }
+Opts.Apps.Dependent.Install.Text()
+    {
+    if [[ -n ${1:-} && $1 = "=" ]]; then
+        _obj_opts_apps_dependent_install_text_=$2
+    else
+        echo -n "$_obj_opts_apps_dependent_install_text_"
+    fi
+    }
+Opts.Apps.Dependent.Install.Init
 
 Opts.Apps.All.Rebuild.Clear()
     {
@@ -2343,6 +2611,140 @@ Opts.Apps.All.Rebuild.Text()
     }
 Opts.Apps.All.Rebuild.Init
 
+Opts.Apps.Standalone.Rebuild.Clear()
+    {
+    [[ $_obj_opts_apps_standalone_rebuild_flag_ != 'true' ]] && return
+    _obj_opts_apps_standalone_rebuild_flag_=false
+    [[ $_obj_opts_apps_standalone_rebuild_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_standalone_rebuild_flag_
+    }
+Opts.Apps.Standalone.Rebuild.Disable()
+    {
+    [[ $_obj_opts_apps_standalone_rebuild_enable_ != 'true' ]] && return
+    _obj_opts_apps_standalone_rebuild_enable_=false
+    [[ $_obj_opts_apps_standalone_rebuild_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_standalone_rebuild_enable_
+    }
+Opts.Apps.Standalone.Rebuild.DontLogChanges()
+    {
+    [[ $_obj_opts_apps_standalone_rebuild_changes_flag_ != 'true' ]] && return
+    _obj_opts_apps_standalone_rebuild_changes_flag_=false
+    }
+Opts.Apps.Standalone.Rebuild.Enable()
+    {
+    [[ $_obj_opts_apps_standalone_rebuild_enable_ = 'true' ]] && return
+    _obj_opts_apps_standalone_rebuild_enable_=true
+    [[ $_obj_opts_apps_standalone_rebuild_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_standalone_rebuild_enable_
+    }
+Opts.Apps.Standalone.Rebuild.Init()
+    {
+    _obj_opts_apps_standalone_rebuild_text_=''
+    _obj_opts_apps_standalone_rebuild_flag_=false
+    _obj_opts_apps_standalone_rebuild_changes_flag_=true
+    _obj_opts_apps_standalone_rebuild_enable_=false
+    }
+Opts.Apps.Standalone.Rebuild.IsDisabled()
+    {
+    [[ $_obj_opts_apps_standalone_rebuild_enable_ != 'true' ]]
+    }
+Opts.Apps.Standalone.Rebuild.IsEnabled()
+    {
+    [[ $_obj_opts_apps_standalone_rebuild_enable_ = 'true' ]]
+    }
+Opts.Apps.Standalone.Rebuild.IsNot()
+    {
+    [[ $_obj_opts_apps_standalone_rebuild_flag_ != 'true' ]]
+    }
+Opts.Apps.Standalone.Rebuild.IsSet()
+    {
+    [[ $_obj_opts_apps_standalone_rebuild_flag_ = 'true' ]]
+    }
+Opts.Apps.Standalone.Rebuild.LogChanges()
+    {
+    [[ $_obj_opts_apps_standalone_rebuild_changes_flag_ = 'true' ]] && return
+    _obj_opts_apps_standalone_rebuild_changes_flag_=true
+    }
+Opts.Apps.Standalone.Rebuild.Set()
+    {
+    [[ $_obj_opts_apps_standalone_rebuild_flag_ = 'true' ]] && return
+    _obj_opts_apps_standalone_rebuild_flag_=true
+    [[ $_obj_opts_apps_standalone_rebuild_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_standalone_rebuild_flag_
+    }
+Opts.Apps.Standalone.Rebuild.Text()
+    {
+    if [[ -n ${1:-} && $1 = "=" ]]; then
+        _obj_opts_apps_standalone_rebuild_text_=$2
+    else
+        echo -n "$_obj_opts_apps_standalone_rebuild_text_"
+    fi
+    }
+Opts.Apps.Standalone.Rebuild.Init
+
+Opts.Apps.Dependent.Rebuild.Clear()
+    {
+    [[ $_obj_opts_apps_dependent_rebuild_flag_ != 'true' ]] && return
+    _obj_opts_apps_dependent_rebuild_flag_=false
+    [[ $_obj_opts_apps_dependent_rebuild_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_dependent_rebuild_flag_
+    }
+Opts.Apps.Dependent.Rebuild.Disable()
+    {
+    [[ $_obj_opts_apps_dependent_rebuild_enable_ != 'true' ]] && return
+    _obj_opts_apps_dependent_rebuild_enable_=false
+    [[ $_obj_opts_apps_dependent_rebuild_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_dependent_rebuild_enable_
+    }
+Opts.Apps.Dependent.Rebuild.DontLogChanges()
+    {
+    [[ $_obj_opts_apps_dependent_rebuild_changes_flag_ != 'true' ]] && return
+    _obj_opts_apps_dependent_rebuild_changes_flag_=false
+    }
+Opts.Apps.Dependent.Rebuild.Enable()
+    {
+    [[ $_obj_opts_apps_dependent_rebuild_enable_ = 'true' ]] && return
+    _obj_opts_apps_dependent_rebuild_enable_=true
+    [[ $_obj_opts_apps_dependent_rebuild_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_dependent_rebuild_enable_
+    }
+Opts.Apps.Dependent.Rebuild.Init()
+    {
+    _obj_opts_apps_dependent_rebuild_text_=''
+    _obj_opts_apps_dependent_rebuild_flag_=false
+    _obj_opts_apps_dependent_rebuild_changes_flag_=true
+    _obj_opts_apps_dependent_rebuild_enable_=false
+    }
+Opts.Apps.Dependent.Rebuild.IsDisabled()
+    {
+    [[ $_obj_opts_apps_dependent_rebuild_enable_ != 'true' ]]
+    }
+Opts.Apps.Dependent.Rebuild.IsEnabled()
+    {
+    [[ $_obj_opts_apps_dependent_rebuild_enable_ = 'true' ]]
+    }
+Opts.Apps.Dependent.Rebuild.IsNot()
+    {
+    [[ $_obj_opts_apps_dependent_rebuild_flag_ != 'true' ]]
+    }
+Opts.Apps.Dependent.Rebuild.IsSet()
+    {
+    [[ $_obj_opts_apps_dependent_rebuild_flag_ = 'true' ]]
+    }
+Opts.Apps.Dependent.Rebuild.LogChanges()
+    {
+    [[ $_obj_opts_apps_dependent_rebuild_changes_flag_ = 'true' ]] && return
+    _obj_opts_apps_dependent_rebuild_changes_flag_=true
+    }
+Opts.Apps.Dependent.Rebuild.Set()
+    {
+    [[ $_obj_opts_apps_dependent_rebuild_flag_ = 'true' ]] && return
+    _obj_opts_apps_dependent_rebuild_flag_=true
+    [[ $_obj_opts_apps_dependent_rebuild_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_dependent_rebuild_flag_
+    }
+Opts.Apps.Dependent.Rebuild.Text()
+    {
+    if [[ -n ${1:-} && $1 = "=" ]]; then
+        _obj_opts_apps_dependent_rebuild_text_=$2
+    else
+        echo -n "$_obj_opts_apps_dependent_rebuild_text_"
+    fi
+    }
+Opts.Apps.Dependent.Rebuild.Init
+
 Opts.Apps.All.Reinstall.Clear()
     {
     [[ $_obj_opts_apps_all_reinstall_flag_ != 'true' ]] && return
@@ -2409,6 +2811,140 @@ Opts.Apps.All.Reinstall.Text()
     fi
     }
 Opts.Apps.All.Reinstall.Init
+
+Opts.Apps.Standalone.Reinstall.Clear()
+    {
+    [[ $_obj_opts_apps_standalone_reinstall_flag_ != 'true' ]] && return
+    _obj_opts_apps_standalone_reinstall_flag_=false
+    [[ $_obj_opts_apps_standalone_reinstall_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_standalone_reinstall_flag_
+    }
+Opts.Apps.Standalone.Reinstall.Disable()
+    {
+    [[ $_obj_opts_apps_standalone_reinstall_enable_ != 'true' ]] && return
+    _obj_opts_apps_standalone_reinstall_enable_=false
+    [[ $_obj_opts_apps_standalone_reinstall_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_standalone_reinstall_enable_
+    }
+Opts.Apps.Standalone.Reinstall.DontLogChanges()
+    {
+    [[ $_obj_opts_apps_standalone_reinstall_changes_flag_ != 'true' ]] && return
+    _obj_opts_apps_standalone_reinstall_changes_flag_=false
+    }
+Opts.Apps.Standalone.Reinstall.Enable()
+    {
+    [[ $_obj_opts_apps_standalone_reinstall_enable_ = 'true' ]] && return
+    _obj_opts_apps_standalone_reinstall_enable_=true
+    [[ $_obj_opts_apps_standalone_reinstall_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_standalone_reinstall_enable_
+    }
+Opts.Apps.Standalone.Reinstall.Init()
+    {
+    _obj_opts_apps_standalone_reinstall_text_=''
+    _obj_opts_apps_standalone_reinstall_flag_=false
+    _obj_opts_apps_standalone_reinstall_changes_flag_=true
+    _obj_opts_apps_standalone_reinstall_enable_=false
+    }
+Opts.Apps.Standalone.Reinstall.IsDisabled()
+    {
+    [[ $_obj_opts_apps_standalone_reinstall_enable_ != 'true' ]]
+    }
+Opts.Apps.Standalone.Reinstall.IsEnabled()
+    {
+    [[ $_obj_opts_apps_standalone_reinstall_enable_ = 'true' ]]
+    }
+Opts.Apps.Standalone.Reinstall.IsNot()
+    {
+    [[ $_obj_opts_apps_standalone_reinstall_flag_ != 'true' ]]
+    }
+Opts.Apps.Standalone.Reinstall.IsSet()
+    {
+    [[ $_obj_opts_apps_standalone_reinstall_flag_ = 'true' ]]
+    }
+Opts.Apps.Standalone.Reinstall.LogChanges()
+    {
+    [[ $_obj_opts_apps_standalone_reinstall_changes_flag_ = 'true' ]] && return
+    _obj_opts_apps_standalone_reinstall_changes_flag_=true
+    }
+Opts.Apps.Standalone.Reinstall.Set()
+    {
+    [[ $_obj_opts_apps_standalone_reinstall_flag_ = 'true' ]] && return
+    _obj_opts_apps_standalone_reinstall_flag_=true
+    [[ $_obj_opts_apps_standalone_reinstall_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_standalone_reinstall_flag_
+    }
+Opts.Apps.Standalone.Reinstall.Text()
+    {
+    if [[ -n ${1:-} && $1 = "=" ]]; then
+        _obj_opts_apps_standalone_reinstall_text_=$2
+    else
+        echo -n "$_obj_opts_apps_standalone_reinstall_text_"
+    fi
+    }
+Opts.Apps.Standalone.Reinstall.Init
+
+Opts.Apps.Dependent.Reinstall.Clear()
+    {
+    [[ $_obj_opts_apps_dependent_reinstall_flag_ != 'true' ]] && return
+    _obj_opts_apps_dependent_reinstall_flag_=false
+    [[ $_obj_opts_apps_dependent_reinstall_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_dependent_reinstall_flag_
+    }
+Opts.Apps.Dependent.Reinstall.Disable()
+    {
+    [[ $_obj_opts_apps_dependent_reinstall_enable_ != 'true' ]] && return
+    _obj_opts_apps_dependent_reinstall_enable_=false
+    [[ $_obj_opts_apps_dependent_reinstall_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_dependent_reinstall_enable_
+    }
+Opts.Apps.Dependent.Reinstall.DontLogChanges()
+    {
+    [[ $_obj_opts_apps_dependent_reinstall_changes_flag_ != 'true' ]] && return
+    _obj_opts_apps_dependent_reinstall_changes_flag_=false
+    }
+Opts.Apps.Dependent.Reinstall.Enable()
+    {
+    [[ $_obj_opts_apps_dependent_reinstall_enable_ = 'true' ]] && return
+    _obj_opts_apps_dependent_reinstall_enable_=true
+    [[ $_obj_opts_apps_dependent_reinstall_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_dependent_reinstall_enable_
+    }
+Opts.Apps.Dependent.Reinstall.Init()
+    {
+    _obj_opts_apps_dependent_reinstall_text_=''
+    _obj_opts_apps_dependent_reinstall_flag_=false
+    _obj_opts_apps_dependent_reinstall_changes_flag_=true
+    _obj_opts_apps_dependent_reinstall_enable_=false
+    }
+Opts.Apps.Dependent.Reinstall.IsDisabled()
+    {
+    [[ $_obj_opts_apps_dependent_reinstall_enable_ != 'true' ]]
+    }
+Opts.Apps.Dependent.Reinstall.IsEnabled()
+    {
+    [[ $_obj_opts_apps_dependent_reinstall_enable_ = 'true' ]]
+    }
+Opts.Apps.Dependent.Reinstall.IsNot()
+    {
+    [[ $_obj_opts_apps_dependent_reinstall_flag_ != 'true' ]]
+    }
+Opts.Apps.Dependent.Reinstall.IsSet()
+    {
+    [[ $_obj_opts_apps_dependent_reinstall_flag_ = 'true' ]]
+    }
+Opts.Apps.Dependent.Reinstall.LogChanges()
+    {
+    [[ $_obj_opts_apps_dependent_reinstall_changes_flag_ = 'true' ]] && return
+    _obj_opts_apps_dependent_reinstall_changes_flag_=true
+    }
+Opts.Apps.Dependent.Reinstall.Set()
+    {
+    [[ $_obj_opts_apps_dependent_reinstall_flag_ = 'true' ]] && return
+    _obj_opts_apps_dependent_reinstall_flag_=true
+    [[ $_obj_opts_apps_dependent_reinstall_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_dependent_reinstall_flag_
+    }
+Opts.Apps.Dependent.Reinstall.Text()
+    {
+    if [[ -n ${1:-} && $1 = "=" ]]; then
+        _obj_opts_apps_dependent_reinstall_text_=$2
+    else
+        echo -n "$_obj_opts_apps_dependent_reinstall_text_"
+    fi
+    }
+Opts.Apps.Dependent.Reinstall.Init
 
 Opts.Apps.All.Restart.Clear()
     {
@@ -2477,6 +3013,140 @@ Opts.Apps.All.Restart.Text()
     }
 Opts.Apps.All.Restart.Init
 
+Opts.Apps.Standalone.Restart.Clear()
+    {
+    [[ $_obj_opts_apps_standalone_restart_flag_ != 'true' ]] && return
+    _obj_opts_apps_standalone_restart_flag_=false
+    [[ $_obj_opts_apps_standalone_restart_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_standalone_restart_flag_
+    }
+Opts.Apps.Standalone.Restart.Disable()
+    {
+    [[ $_obj_opts_apps_standalone_restart_enable_ != 'true' ]] && return
+    _obj_opts_apps_standalone_restart_enable_=false
+    [[ $_obj_opts_apps_standalone_restart_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_standalone_restart_enable_
+    }
+Opts.Apps.Standalone.Restart.DontLogChanges()
+    {
+    [[ $_obj_opts_apps_standalone_restart_changes_flag_ != 'true' ]] && return
+    _obj_opts_apps_standalone_restart_changes_flag_=false
+    }
+Opts.Apps.Standalone.Restart.Enable()
+    {
+    [[ $_obj_opts_apps_standalone_restart_enable_ = 'true' ]] && return
+    _obj_opts_apps_standalone_restart_enable_=true
+    [[ $_obj_opts_apps_standalone_restart_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_standalone_restart_enable_
+    }
+Opts.Apps.Standalone.Restart.Init()
+    {
+    _obj_opts_apps_standalone_restart_text_=''
+    _obj_opts_apps_standalone_restart_flag_=false
+    _obj_opts_apps_standalone_restart_changes_flag_=true
+    _obj_opts_apps_standalone_restart_enable_=false
+    }
+Opts.Apps.Standalone.Restart.IsDisabled()
+    {
+    [[ $_obj_opts_apps_standalone_restart_enable_ != 'true' ]]
+    }
+Opts.Apps.Standalone.Restart.IsEnabled()
+    {
+    [[ $_obj_opts_apps_standalone_restart_enable_ = 'true' ]]
+    }
+Opts.Apps.Standalone.Restart.IsNot()
+    {
+    [[ $_obj_opts_apps_standalone_restart_flag_ != 'true' ]]
+    }
+Opts.Apps.Standalone.Restart.IsSet()
+    {
+    [[ $_obj_opts_apps_standalone_restart_flag_ = 'true' ]]
+    }
+Opts.Apps.Standalone.Restart.LogChanges()
+    {
+    [[ $_obj_opts_apps_standalone_restart_changes_flag_ = 'true' ]] && return
+    _obj_opts_apps_standalone_restart_changes_flag_=true
+    }
+Opts.Apps.Standalone.Restart.Set()
+    {
+    [[ $_obj_opts_apps_standalone_restart_flag_ = 'true' ]] && return
+    _obj_opts_apps_standalone_restart_flag_=true
+    [[ $_obj_opts_apps_standalone_restart_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_standalone_restart_flag_
+    }
+Opts.Apps.Standalone.Restart.Text()
+    {
+    if [[ -n ${1:-} && $1 = "=" ]]; then
+        _obj_opts_apps_standalone_restart_text_=$2
+    else
+        echo -n "$_obj_opts_apps_standalone_restart_text_"
+    fi
+    }
+Opts.Apps.Standalone.Restart.Init
+
+Opts.Apps.Dependent.Restart.Clear()
+    {
+    [[ $_obj_opts_apps_dependent_restart_flag_ != 'true' ]] && return
+    _obj_opts_apps_dependent_restart_flag_=false
+    [[ $_obj_opts_apps_dependent_restart_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_dependent_restart_flag_
+    }
+Opts.Apps.Dependent.Restart.Disable()
+    {
+    [[ $_obj_opts_apps_dependent_restart_enable_ != 'true' ]] && return
+    _obj_opts_apps_dependent_restart_enable_=false
+    [[ $_obj_opts_apps_dependent_restart_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_dependent_restart_enable_
+    }
+Opts.Apps.Dependent.Restart.DontLogChanges()
+    {
+    [[ $_obj_opts_apps_dependent_restart_changes_flag_ != 'true' ]] && return
+    _obj_opts_apps_dependent_restart_changes_flag_=false
+    }
+Opts.Apps.Dependent.Restart.Enable()
+    {
+    [[ $_obj_opts_apps_dependent_restart_enable_ = 'true' ]] && return
+    _obj_opts_apps_dependent_restart_enable_=true
+    [[ $_obj_opts_apps_dependent_restart_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_dependent_restart_enable_
+    }
+Opts.Apps.Dependent.Restart.Init()
+    {
+    _obj_opts_apps_dependent_restart_text_=''
+    _obj_opts_apps_dependent_restart_flag_=false
+    _obj_opts_apps_dependent_restart_changes_flag_=true
+    _obj_opts_apps_dependent_restart_enable_=false
+    }
+Opts.Apps.Dependent.Restart.IsDisabled()
+    {
+    [[ $_obj_opts_apps_dependent_restart_enable_ != 'true' ]]
+    }
+Opts.Apps.Dependent.Restart.IsEnabled()
+    {
+    [[ $_obj_opts_apps_dependent_restart_enable_ = 'true' ]]
+    }
+Opts.Apps.Dependent.Restart.IsNot()
+    {
+    [[ $_obj_opts_apps_dependent_restart_flag_ != 'true' ]]
+    }
+Opts.Apps.Dependent.Restart.IsSet()
+    {
+    [[ $_obj_opts_apps_dependent_restart_flag_ = 'true' ]]
+    }
+Opts.Apps.Dependent.Restart.LogChanges()
+    {
+    [[ $_obj_opts_apps_dependent_restart_changes_flag_ = 'true' ]] && return
+    _obj_opts_apps_dependent_restart_changes_flag_=true
+    }
+Opts.Apps.Dependent.Restart.Set()
+    {
+    [[ $_obj_opts_apps_dependent_restart_flag_ = 'true' ]] && return
+    _obj_opts_apps_dependent_restart_flag_=true
+    [[ $_obj_opts_apps_dependent_restart_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_dependent_restart_flag_
+    }
+Opts.Apps.Dependent.Restart.Text()
+    {
+    if [[ -n ${1:-} && $1 = "=" ]]; then
+        _obj_opts_apps_dependent_restart_text_=$2
+    else
+        echo -n "$_obj_opts_apps_dependent_restart_text_"
+    fi
+    }
+Opts.Apps.Dependent.Restart.Init
+
 Opts.Apps.All.Restore.Clear()
     {
     [[ $_obj_opts_apps_all_restore_flag_ != 'true' ]] && return
@@ -2543,6 +3213,140 @@ Opts.Apps.All.Restore.Text()
     fi
     }
 Opts.Apps.All.Restore.Init
+
+Opts.Apps.Standalone.Restore.Clear()
+    {
+    [[ $_obj_opts_apps_standalone_restore_flag_ != 'true' ]] && return
+    _obj_opts_apps_standalone_restore_flag_=false
+    [[ $_obj_opts_apps_standalone_restore_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_standalone_restore_flag_
+    }
+Opts.Apps.Standalone.Restore.Disable()
+    {
+    [[ $_obj_opts_apps_standalone_restore_enable_ != 'true' ]] && return
+    _obj_opts_apps_standalone_restore_enable_=false
+    [[ $_obj_opts_apps_standalone_restore_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_standalone_restore_enable_
+    }
+Opts.Apps.Standalone.Restore.DontLogChanges()
+    {
+    [[ $_obj_opts_apps_standalone_restore_changes_flag_ != 'true' ]] && return
+    _obj_opts_apps_standalone_restore_changes_flag_=false
+    }
+Opts.Apps.Standalone.Restore.Enable()
+    {
+    [[ $_obj_opts_apps_standalone_restore_enable_ = 'true' ]] && return
+    _obj_opts_apps_standalone_restore_enable_=true
+    [[ $_obj_opts_apps_standalone_restore_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_standalone_restore_enable_
+    }
+Opts.Apps.Standalone.Restore.Init()
+    {
+    _obj_opts_apps_standalone_restore_text_=''
+    _obj_opts_apps_standalone_restore_flag_=false
+    _obj_opts_apps_standalone_restore_changes_flag_=true
+    _obj_opts_apps_standalone_restore_enable_=false
+    }
+Opts.Apps.Standalone.Restore.IsDisabled()
+    {
+    [[ $_obj_opts_apps_standalone_restore_enable_ != 'true' ]]
+    }
+Opts.Apps.Standalone.Restore.IsEnabled()
+    {
+    [[ $_obj_opts_apps_standalone_restore_enable_ = 'true' ]]
+    }
+Opts.Apps.Standalone.Restore.IsNot()
+    {
+    [[ $_obj_opts_apps_standalone_restore_flag_ != 'true' ]]
+    }
+Opts.Apps.Standalone.Restore.IsSet()
+    {
+    [[ $_obj_opts_apps_standalone_restore_flag_ = 'true' ]]
+    }
+Opts.Apps.Standalone.Restore.LogChanges()
+    {
+    [[ $_obj_opts_apps_standalone_restore_changes_flag_ = 'true' ]] && return
+    _obj_opts_apps_standalone_restore_changes_flag_=true
+    }
+Opts.Apps.Standalone.Restore.Set()
+    {
+    [[ $_obj_opts_apps_standalone_restore_flag_ = 'true' ]] && return
+    _obj_opts_apps_standalone_restore_flag_=true
+    [[ $_obj_opts_apps_standalone_restore_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_standalone_restore_flag_
+    }
+Opts.Apps.Standalone.Restore.Text()
+    {
+    if [[ -n ${1:-} && $1 = "=" ]]; then
+        _obj_opts_apps_standalone_restore_text_=$2
+    else
+        echo -n "$_obj_opts_apps_standalone_restore_text_"
+    fi
+    }
+Opts.Apps.Standalone.Restore.Init
+
+Opts.Apps.Dependent.Restore.Clear()
+    {
+    [[ $_obj_opts_apps_dependent_restore_flag_ != 'true' ]] && return
+    _obj_opts_apps_dependent_restore_flag_=false
+    [[ $_obj_opts_apps_dependent_restore_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_dependent_restore_flag_
+    }
+Opts.Apps.Dependent.Restore.Disable()
+    {
+    [[ $_obj_opts_apps_dependent_restore_enable_ != 'true' ]] && return
+    _obj_opts_apps_dependent_restore_enable_=false
+    [[ $_obj_opts_apps_dependent_restore_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_dependent_restore_enable_
+    }
+Opts.Apps.Dependent.Restore.DontLogChanges()
+    {
+    [[ $_obj_opts_apps_dependent_restore_changes_flag_ != 'true' ]] && return
+    _obj_opts_apps_dependent_restore_changes_flag_=false
+    }
+Opts.Apps.Dependent.Restore.Enable()
+    {
+    [[ $_obj_opts_apps_dependent_restore_enable_ = 'true' ]] && return
+    _obj_opts_apps_dependent_restore_enable_=true
+    [[ $_obj_opts_apps_dependent_restore_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_dependent_restore_enable_
+    }
+Opts.Apps.Dependent.Restore.Init()
+    {
+    _obj_opts_apps_dependent_restore_text_=''
+    _obj_opts_apps_dependent_restore_flag_=false
+    _obj_opts_apps_dependent_restore_changes_flag_=true
+    _obj_opts_apps_dependent_restore_enable_=false
+    }
+Opts.Apps.Dependent.Restore.IsDisabled()
+    {
+    [[ $_obj_opts_apps_dependent_restore_enable_ != 'true' ]]
+    }
+Opts.Apps.Dependent.Restore.IsEnabled()
+    {
+    [[ $_obj_opts_apps_dependent_restore_enable_ = 'true' ]]
+    }
+Opts.Apps.Dependent.Restore.IsNot()
+    {
+    [[ $_obj_opts_apps_dependent_restore_flag_ != 'true' ]]
+    }
+Opts.Apps.Dependent.Restore.IsSet()
+    {
+    [[ $_obj_opts_apps_dependent_restore_flag_ = 'true' ]]
+    }
+Opts.Apps.Dependent.Restore.LogChanges()
+    {
+    [[ $_obj_opts_apps_dependent_restore_changes_flag_ = 'true' ]] && return
+    _obj_opts_apps_dependent_restore_changes_flag_=true
+    }
+Opts.Apps.Dependent.Restore.Set()
+    {
+    [[ $_obj_opts_apps_dependent_restore_flag_ = 'true' ]] && return
+    _obj_opts_apps_dependent_restore_flag_=true
+    [[ $_obj_opts_apps_dependent_restore_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_dependent_restore_flag_
+    }
+Opts.Apps.Dependent.Restore.Text()
+    {
+    if [[ -n ${1:-} && $1 = "=" ]]; then
+        _obj_opts_apps_dependent_restore_text_=$2
+    else
+        echo -n "$_obj_opts_apps_dependent_restore_text_"
+    fi
+    }
+Opts.Apps.Dependent.Restore.Init
 
 Opts.Apps.All.Start.Clear()
     {
@@ -2611,6 +3415,140 @@ Opts.Apps.All.Start.Text()
     }
 Opts.Apps.All.Start.Init
 
+Opts.Apps.Standalone.Start.Clear()
+    {
+    [[ $_obj_opts_apps_standalone_start_flag_ != 'true' ]] && return
+    _obj_opts_apps_standalone_start_flag_=false
+    [[ $_obj_opts_apps_standalone_start_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_standalone_start_flag_
+    }
+Opts.Apps.Standalone.Start.Disable()
+    {
+    [[ $_obj_opts_apps_standalone_start_enable_ != 'true' ]] && return
+    _obj_opts_apps_standalone_start_enable_=false
+    [[ $_obj_opts_apps_standalone_start_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_standalone_start_enable_
+    }
+Opts.Apps.Standalone.Start.DontLogChanges()
+    {
+    [[ $_obj_opts_apps_standalone_start_changes_flag_ != 'true' ]] && return
+    _obj_opts_apps_standalone_start_changes_flag_=false
+    }
+Opts.Apps.Standalone.Start.Enable()
+    {
+    [[ $_obj_opts_apps_standalone_start_enable_ = 'true' ]] && return
+    _obj_opts_apps_standalone_start_enable_=true
+    [[ $_obj_opts_apps_standalone_start_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_standalone_start_enable_
+    }
+Opts.Apps.Standalone.Start.Init()
+    {
+    _obj_opts_apps_standalone_start_text_=''
+    _obj_opts_apps_standalone_start_flag_=false
+    _obj_opts_apps_standalone_start_changes_flag_=true
+    _obj_opts_apps_standalone_start_enable_=false
+    }
+Opts.Apps.Standalone.Start.IsDisabled()
+    {
+    [[ $_obj_opts_apps_standalone_start_enable_ != 'true' ]]
+    }
+Opts.Apps.Standalone.Start.IsEnabled()
+    {
+    [[ $_obj_opts_apps_standalone_start_enable_ = 'true' ]]
+    }
+Opts.Apps.Standalone.Start.IsNot()
+    {
+    [[ $_obj_opts_apps_standalone_start_flag_ != 'true' ]]
+    }
+Opts.Apps.Standalone.Start.IsSet()
+    {
+    [[ $_obj_opts_apps_standalone_start_flag_ = 'true' ]]
+    }
+Opts.Apps.Standalone.Start.LogChanges()
+    {
+    [[ $_obj_opts_apps_standalone_start_changes_flag_ = 'true' ]] && return
+    _obj_opts_apps_standalone_start_changes_flag_=true
+    }
+Opts.Apps.Standalone.Start.Set()
+    {
+    [[ $_obj_opts_apps_standalone_start_flag_ = 'true' ]] && return
+    _obj_opts_apps_standalone_start_flag_=true
+    [[ $_obj_opts_apps_standalone_start_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_standalone_start_flag_
+    }
+Opts.Apps.Standalone.Start.Text()
+    {
+    if [[ -n ${1:-} && $1 = "=" ]]; then
+        _obj_opts_apps_standalone_start_text_=$2
+    else
+        echo -n "$_obj_opts_apps_standalone_start_text_"
+    fi
+    }
+Opts.Apps.Standalone.Start.Init
+
+Opts.Apps.Dependent.Start.Clear()
+    {
+    [[ $_obj_opts_apps_dependent_start_flag_ != 'true' ]] && return
+    _obj_opts_apps_dependent_start_flag_=false
+    [[ $_obj_opts_apps_dependent_start_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_dependent_start_flag_
+    }
+Opts.Apps.Dependent.Start.Disable()
+    {
+    [[ $_obj_opts_apps_dependent_start_enable_ != 'true' ]] && return
+    _obj_opts_apps_dependent_start_enable_=false
+    [[ $_obj_opts_apps_dependent_start_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_dependent_start_enable_
+    }
+Opts.Apps.Dependent.Start.DontLogChanges()
+    {
+    [[ $_obj_opts_apps_dependent_start_changes_flag_ != 'true' ]] && return
+    _obj_opts_apps_dependent_start_changes_flag_=false
+    }
+Opts.Apps.Dependent.Start.Enable()
+    {
+    [[ $_obj_opts_apps_dependent_start_enable_ = 'true' ]] && return
+    _obj_opts_apps_dependent_start_enable_=true
+    [[ $_obj_opts_apps_dependent_start_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_dependent_start_enable_
+    }
+Opts.Apps.Dependent.Start.Init()
+    {
+    _obj_opts_apps_dependent_start_text_=''
+    _obj_opts_apps_dependent_start_flag_=false
+    _obj_opts_apps_dependent_start_changes_flag_=true
+    _obj_opts_apps_dependent_start_enable_=false
+    }
+Opts.Apps.Dependent.Start.IsDisabled()
+    {
+    [[ $_obj_opts_apps_dependent_start_enable_ != 'true' ]]
+    }
+Opts.Apps.Dependent.Start.IsEnabled()
+    {
+    [[ $_obj_opts_apps_dependent_start_enable_ = 'true' ]]
+    }
+Opts.Apps.Dependent.Start.IsNot()
+    {
+    [[ $_obj_opts_apps_dependent_start_flag_ != 'true' ]]
+    }
+Opts.Apps.Dependent.Start.IsSet()
+    {
+    [[ $_obj_opts_apps_dependent_start_flag_ = 'true' ]]
+    }
+Opts.Apps.Dependent.Start.LogChanges()
+    {
+    [[ $_obj_opts_apps_dependent_start_changes_flag_ = 'true' ]] && return
+    _obj_opts_apps_dependent_start_changes_flag_=true
+    }
+Opts.Apps.Dependent.Start.Set()
+    {
+    [[ $_obj_opts_apps_dependent_start_flag_ = 'true' ]] && return
+    _obj_opts_apps_dependent_start_flag_=true
+    [[ $_obj_opts_apps_dependent_start_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_dependent_start_flag_
+    }
+Opts.Apps.Dependent.Start.Text()
+    {
+    if [[ -n ${1:-} && $1 = "=" ]]; then
+        _obj_opts_apps_dependent_start_text_=$2
+    else
+        echo -n "$_obj_opts_apps_dependent_start_text_"
+    fi
+    }
+Opts.Apps.Dependent.Start.Init
+
 Opts.Apps.All.Stop.Clear()
     {
     [[ $_obj_opts_apps_all_stop_flag_ != 'true' ]] && return
@@ -2677,6 +3615,140 @@ Opts.Apps.All.Stop.Text()
     fi
     }
 Opts.Apps.All.Stop.Init
+
+Opts.Apps.Standalone.Stop.Clear()
+    {
+    [[ $_obj_opts_apps_standalone_stop_flag_ != 'true' ]] && return
+    _obj_opts_apps_standalone_stop_flag_=false
+    [[ $_obj_opts_apps_standalone_stop_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_standalone_stop_flag_
+    }
+Opts.Apps.Standalone.Stop.Disable()
+    {
+    [[ $_obj_opts_apps_standalone_stop_enable_ != 'true' ]] && return
+    _obj_opts_apps_standalone_stop_enable_=false
+    [[ $_obj_opts_apps_standalone_stop_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_standalone_stop_enable_
+    }
+Opts.Apps.Standalone.Stop.DontLogChanges()
+    {
+    [[ $_obj_opts_apps_standalone_stop_changes_flag_ != 'true' ]] && return
+    _obj_opts_apps_standalone_stop_changes_flag_=false
+    }
+Opts.Apps.Standalone.Stop.Enable()
+    {
+    [[ $_obj_opts_apps_standalone_stop_enable_ = 'true' ]] && return
+    _obj_opts_apps_standalone_stop_enable_=true
+    [[ $_obj_opts_apps_standalone_stop_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_standalone_stop_enable_
+    }
+Opts.Apps.Standalone.Stop.Init()
+    {
+    _obj_opts_apps_standalone_stop_text_=''
+    _obj_opts_apps_standalone_stop_flag_=false
+    _obj_opts_apps_standalone_stop_changes_flag_=true
+    _obj_opts_apps_standalone_stop_enable_=false
+    }
+Opts.Apps.Standalone.Stop.IsDisabled()
+    {
+    [[ $_obj_opts_apps_standalone_stop_enable_ != 'true' ]]
+    }
+Opts.Apps.Standalone.Stop.IsEnabled()
+    {
+    [[ $_obj_opts_apps_standalone_stop_enable_ = 'true' ]]
+    }
+Opts.Apps.Standalone.Stop.IsNot()
+    {
+    [[ $_obj_opts_apps_standalone_stop_flag_ != 'true' ]]
+    }
+Opts.Apps.Standalone.Stop.IsSet()
+    {
+    [[ $_obj_opts_apps_standalone_stop_flag_ = 'true' ]]
+    }
+Opts.Apps.Standalone.Stop.LogChanges()
+    {
+    [[ $_obj_opts_apps_standalone_stop_changes_flag_ = 'true' ]] && return
+    _obj_opts_apps_standalone_stop_changes_flag_=true
+    }
+Opts.Apps.Standalone.Stop.Set()
+    {
+    [[ $_obj_opts_apps_standalone_stop_flag_ = 'true' ]] && return
+    _obj_opts_apps_standalone_stop_flag_=true
+    [[ $_obj_opts_apps_standalone_stop_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_standalone_stop_flag_
+    }
+Opts.Apps.Standalone.Stop.Text()
+    {
+    if [[ -n ${1:-} && $1 = "=" ]]; then
+        _obj_opts_apps_standalone_stop_text_=$2
+    else
+        echo -n "$_obj_opts_apps_standalone_stop_text_"
+    fi
+    }
+Opts.Apps.Standalone.Stop.Init
+
+Opts.Apps.Dependent.Stop.Clear()
+    {
+    [[ $_obj_opts_apps_dependent_stop_flag_ != 'true' ]] && return
+    _obj_opts_apps_dependent_stop_flag_=false
+    [[ $_obj_opts_apps_dependent_stop_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_dependent_stop_flag_
+    }
+Opts.Apps.Dependent.Stop.Disable()
+    {
+    [[ $_obj_opts_apps_dependent_stop_enable_ != 'true' ]] && return
+    _obj_opts_apps_dependent_stop_enable_=false
+    [[ $_obj_opts_apps_dependent_stop_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_dependent_stop_enable_
+    }
+Opts.Apps.Dependent.Stop.DontLogChanges()
+    {
+    [[ $_obj_opts_apps_dependent_stop_changes_flag_ != 'true' ]] && return
+    _obj_opts_apps_dependent_stop_changes_flag_=false
+    }
+Opts.Apps.Dependent.Stop.Enable()
+    {
+    [[ $_obj_opts_apps_dependent_stop_enable_ = 'true' ]] && return
+    _obj_opts_apps_dependent_stop_enable_=true
+    [[ $_obj_opts_apps_dependent_stop_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_dependent_stop_enable_
+    }
+Opts.Apps.Dependent.Stop.Init()
+    {
+    _obj_opts_apps_dependent_stop_text_=''
+    _obj_opts_apps_dependent_stop_flag_=false
+    _obj_opts_apps_dependent_stop_changes_flag_=true
+    _obj_opts_apps_dependent_stop_enable_=false
+    }
+Opts.Apps.Dependent.Stop.IsDisabled()
+    {
+    [[ $_obj_opts_apps_dependent_stop_enable_ != 'true' ]]
+    }
+Opts.Apps.Dependent.Stop.IsEnabled()
+    {
+    [[ $_obj_opts_apps_dependent_stop_enable_ = 'true' ]]
+    }
+Opts.Apps.Dependent.Stop.IsNot()
+    {
+    [[ $_obj_opts_apps_dependent_stop_flag_ != 'true' ]]
+    }
+Opts.Apps.Dependent.Stop.IsSet()
+    {
+    [[ $_obj_opts_apps_dependent_stop_flag_ = 'true' ]]
+    }
+Opts.Apps.Dependent.Stop.LogChanges()
+    {
+    [[ $_obj_opts_apps_dependent_stop_changes_flag_ = 'true' ]] && return
+    _obj_opts_apps_dependent_stop_changes_flag_=true
+    }
+Opts.Apps.Dependent.Stop.Set()
+    {
+    [[ $_obj_opts_apps_dependent_stop_flag_ = 'true' ]] && return
+    _obj_opts_apps_dependent_stop_flag_=true
+    [[ $_obj_opts_apps_dependent_stop_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_dependent_stop_flag_
+    }
+Opts.Apps.Dependent.Stop.Text()
+    {
+    if [[ -n ${1:-} && $1 = "=" ]]; then
+        _obj_opts_apps_dependent_stop_text_=$2
+    else
+        echo -n "$_obj_opts_apps_dependent_stop_text_"
+    fi
+    }
+Opts.Apps.Dependent.Stop.Init
 
 Opts.Apps.All.Uninstall.Clear()
     {
@@ -2745,6 +3817,140 @@ Opts.Apps.All.Uninstall.Text()
     }
 Opts.Apps.All.Uninstall.Init
 
+Opts.Apps.Standalone.Uninstall.Clear()
+    {
+    [[ $_obj_opts_apps_standalone_uninstall_flag_ != 'true' ]] && return
+    _obj_opts_apps_standalone_uninstall_flag_=false
+    [[ $_obj_opts_apps_standalone_uninstall_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_standalone_uninstall_flag_
+    }
+Opts.Apps.Standalone.Uninstall.Disable()
+    {
+    [[ $_obj_opts_apps_standalone_uninstall_enable_ != 'true' ]] && return
+    _obj_opts_apps_standalone_uninstall_enable_=false
+    [[ $_obj_opts_apps_standalone_uninstall_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_standalone_uninstall_enable_
+    }
+Opts.Apps.Standalone.Uninstall.DontLogChanges()
+    {
+    [[ $_obj_opts_apps_standalone_uninstall_changes_flag_ != 'true' ]] && return
+    _obj_opts_apps_standalone_uninstall_changes_flag_=false
+    }
+Opts.Apps.Standalone.Uninstall.Enable()
+    {
+    [[ $_obj_opts_apps_standalone_uninstall_enable_ = 'true' ]] && return
+    _obj_opts_apps_standalone_uninstall_enable_=true
+    [[ $_obj_opts_apps_standalone_uninstall_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_standalone_uninstall_enable_
+    }
+Opts.Apps.Standalone.Uninstall.Init()
+    {
+    _obj_opts_apps_standalone_uninstall_text_=''
+    _obj_opts_apps_standalone_uninstall_flag_=false
+    _obj_opts_apps_standalone_uninstall_changes_flag_=true
+    _obj_opts_apps_standalone_uninstall_enable_=false
+    }
+Opts.Apps.Standalone.Uninstall.IsDisabled()
+    {
+    [[ $_obj_opts_apps_standalone_uninstall_enable_ != 'true' ]]
+    }
+Opts.Apps.Standalone.Uninstall.IsEnabled()
+    {
+    [[ $_obj_opts_apps_standalone_uninstall_enable_ = 'true' ]]
+    }
+Opts.Apps.Standalone.Uninstall.IsNot()
+    {
+    [[ $_obj_opts_apps_standalone_uninstall_flag_ != 'true' ]]
+    }
+Opts.Apps.Standalone.Uninstall.IsSet()
+    {
+    [[ $_obj_opts_apps_standalone_uninstall_flag_ = 'true' ]]
+    }
+Opts.Apps.Standalone.Uninstall.LogChanges()
+    {
+    [[ $_obj_opts_apps_standalone_uninstall_changes_flag_ = 'true' ]] && return
+    _obj_opts_apps_standalone_uninstall_changes_flag_=true
+    }
+Opts.Apps.Standalone.Uninstall.Set()
+    {
+    [[ $_obj_opts_apps_standalone_uninstall_flag_ = 'true' ]] && return
+    _obj_opts_apps_standalone_uninstall_flag_=true
+    [[ $_obj_opts_apps_standalone_uninstall_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_standalone_uninstall_flag_
+    }
+Opts.Apps.Standalone.Uninstall.Text()
+    {
+    if [[ -n ${1:-} && $1 = "=" ]]; then
+        _obj_opts_apps_standalone_uninstall_text_=$2
+    else
+        echo -n "$_obj_opts_apps_standalone_uninstall_text_"
+    fi
+    }
+Opts.Apps.Standalone.Uninstall.Init
+
+Opts.Apps.Dependent.Uninstall.Clear()
+    {
+    [[ $_obj_opts_apps_dependent_uninstall_flag_ != 'true' ]] && return
+    _obj_opts_apps_dependent_uninstall_flag_=false
+    [[ $_obj_opts_apps_dependent_uninstall_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_dependent_uninstall_flag_
+    }
+Opts.Apps.Dependent.Uninstall.Disable()
+    {
+    [[ $_obj_opts_apps_dependent_uninstall_enable_ != 'true' ]] && return
+    _obj_opts_apps_dependent_uninstall_enable_=false
+    [[ $_obj_opts_apps_dependent_uninstall_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_dependent_uninstall_enable_
+    }
+Opts.Apps.Dependent.Uninstall.DontLogChanges()
+    {
+    [[ $_obj_opts_apps_dependent_uninstall_changes_flag_ != 'true' ]] && return
+    _obj_opts_apps_dependent_uninstall_changes_flag_=false
+    }
+Opts.Apps.Dependent.Uninstall.Enable()
+    {
+    [[ $_obj_opts_apps_dependent_uninstall_enable_ = 'true' ]] && return
+    _obj_opts_apps_dependent_uninstall_enable_=true
+    [[ $_obj_opts_apps_dependent_uninstall_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_dependent_uninstall_enable_
+    }
+Opts.Apps.Dependent.Uninstall.Init()
+    {
+    _obj_opts_apps_dependent_uninstall_text_=''
+    _obj_opts_apps_dependent_uninstall_flag_=false
+    _obj_opts_apps_dependent_uninstall_changes_flag_=true
+    _obj_opts_apps_dependent_uninstall_enable_=false
+    }
+Opts.Apps.Dependent.Uninstall.IsDisabled()
+    {
+    [[ $_obj_opts_apps_dependent_uninstall_enable_ != 'true' ]]
+    }
+Opts.Apps.Dependent.Uninstall.IsEnabled()
+    {
+    [[ $_obj_opts_apps_dependent_uninstall_enable_ = 'true' ]]
+    }
+Opts.Apps.Dependent.Uninstall.IsNot()
+    {
+    [[ $_obj_opts_apps_dependent_uninstall_flag_ != 'true' ]]
+    }
+Opts.Apps.Dependent.Uninstall.IsSet()
+    {
+    [[ $_obj_opts_apps_dependent_uninstall_flag_ = 'true' ]]
+    }
+Opts.Apps.Dependent.Uninstall.LogChanges()
+    {
+    [[ $_obj_opts_apps_dependent_uninstall_changes_flag_ = 'true' ]] && return
+    _obj_opts_apps_dependent_uninstall_changes_flag_=true
+    }
+Opts.Apps.Dependent.Uninstall.Set()
+    {
+    [[ $_obj_opts_apps_dependent_uninstall_flag_ = 'true' ]] && return
+    _obj_opts_apps_dependent_uninstall_flag_=true
+    [[ $_obj_opts_apps_dependent_uninstall_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_dependent_uninstall_flag_
+    }
+Opts.Apps.Dependent.Uninstall.Text()
+    {
+    if [[ -n ${1:-} && $1 = "=" ]]; then
+        _obj_opts_apps_dependent_uninstall_text_=$2
+    else
+        echo -n "$_obj_opts_apps_dependent_uninstall_text_"
+    fi
+    }
+Opts.Apps.Dependent.Uninstall.Init
+
 Opts.Apps.All.Upgrade.Clear()
     {
     [[ $_obj_opts_apps_all_upgrade_flag_ != 'true' ]] && return
@@ -2811,6 +4017,140 @@ Opts.Apps.All.Upgrade.Text()
     fi
     }
 Opts.Apps.All.Upgrade.Init
+
+Opts.Apps.Standalone.Upgrade.Clear()
+    {
+    [[ $_obj_opts_apps_standalone_upgrade_flag_ != 'true' ]] && return
+    _obj_opts_apps_standalone_upgrade_flag_=false
+    [[ $_obj_opts_apps_standalone_upgrade_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_standalone_upgrade_flag_
+    }
+Opts.Apps.Standalone.Upgrade.Disable()
+    {
+    [[ $_obj_opts_apps_standalone_upgrade_enable_ != 'true' ]] && return
+    _obj_opts_apps_standalone_upgrade_enable_=false
+    [[ $_obj_opts_apps_standalone_upgrade_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_standalone_upgrade_enable_
+    }
+Opts.Apps.Standalone.Upgrade.DontLogChanges()
+    {
+    [[ $_obj_opts_apps_standalone_upgrade_changes_flag_ != 'true' ]] && return
+    _obj_opts_apps_standalone_upgrade_changes_flag_=false
+    }
+Opts.Apps.Standalone.Upgrade.Enable()
+    {
+    [[ $_obj_opts_apps_standalone_upgrade_enable_ = 'true' ]] && return
+    _obj_opts_apps_standalone_upgrade_enable_=true
+    [[ $_obj_opts_apps_standalone_upgrade_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_standalone_upgrade_enable_
+    }
+Opts.Apps.Standalone.Upgrade.Init()
+    {
+    _obj_opts_apps_standalone_upgrade_text_=''
+    _obj_opts_apps_standalone_upgrade_flag_=false
+    _obj_opts_apps_standalone_upgrade_changes_flag_=true
+    _obj_opts_apps_standalone_upgrade_enable_=false
+    }
+Opts.Apps.Standalone.Upgrade.IsDisabled()
+    {
+    [[ $_obj_opts_apps_standalone_upgrade_enable_ != 'true' ]]
+    }
+Opts.Apps.Standalone.Upgrade.IsEnabled()
+    {
+    [[ $_obj_opts_apps_standalone_upgrade_enable_ = 'true' ]]
+    }
+Opts.Apps.Standalone.Upgrade.IsNot()
+    {
+    [[ $_obj_opts_apps_standalone_upgrade_flag_ != 'true' ]]
+    }
+Opts.Apps.Standalone.Upgrade.IsSet()
+    {
+    [[ $_obj_opts_apps_standalone_upgrade_flag_ = 'true' ]]
+    }
+Opts.Apps.Standalone.Upgrade.LogChanges()
+    {
+    [[ $_obj_opts_apps_standalone_upgrade_changes_flag_ = 'true' ]] && return
+    _obj_opts_apps_standalone_upgrade_changes_flag_=true
+    }
+Opts.Apps.Standalone.Upgrade.Set()
+    {
+    [[ $_obj_opts_apps_standalone_upgrade_flag_ = 'true' ]] && return
+    _obj_opts_apps_standalone_upgrade_flag_=true
+    [[ $_obj_opts_apps_standalone_upgrade_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_standalone_upgrade_flag_
+    }
+Opts.Apps.Standalone.Upgrade.Text()
+    {
+    if [[ -n ${1:-} && $1 = "=" ]]; then
+        _obj_opts_apps_standalone_upgrade_text_=$2
+    else
+        echo -n "$_obj_opts_apps_standalone_upgrade_text_"
+    fi
+    }
+Opts.Apps.Standalone.Upgrade.Init
+
+Opts.Apps.Dependent.Upgrade.Clear()
+    {
+    [[ $_obj_opts_apps_dependent_upgrade_flag_ != 'true' ]] && return
+    _obj_opts_apps_dependent_upgrade_flag_=false
+    [[ $_obj_opts_apps_dependent_upgrade_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_dependent_upgrade_flag_
+    }
+Opts.Apps.Dependent.Upgrade.Disable()
+    {
+    [[ $_obj_opts_apps_dependent_upgrade_enable_ != 'true' ]] && return
+    _obj_opts_apps_dependent_upgrade_enable_=false
+    [[ $_obj_opts_apps_dependent_upgrade_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_dependent_upgrade_enable_
+    }
+Opts.Apps.Dependent.Upgrade.DontLogChanges()
+    {
+    [[ $_obj_opts_apps_dependent_upgrade_changes_flag_ != 'true' ]] && return
+    _obj_opts_apps_dependent_upgrade_changes_flag_=false
+    }
+Opts.Apps.Dependent.Upgrade.Enable()
+    {
+    [[ $_obj_opts_apps_dependent_upgrade_enable_ = 'true' ]] && return
+    _obj_opts_apps_dependent_upgrade_enable_=true
+    [[ $_obj_opts_apps_dependent_upgrade_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_dependent_upgrade_enable_
+    }
+Opts.Apps.Dependent.Upgrade.Init()
+    {
+    _obj_opts_apps_dependent_upgrade_text_=''
+    _obj_opts_apps_dependent_upgrade_flag_=false
+    _obj_opts_apps_dependent_upgrade_changes_flag_=true
+    _obj_opts_apps_dependent_upgrade_enable_=false
+    }
+Opts.Apps.Dependent.Upgrade.IsDisabled()
+    {
+    [[ $_obj_opts_apps_dependent_upgrade_enable_ != 'true' ]]
+    }
+Opts.Apps.Dependent.Upgrade.IsEnabled()
+    {
+    [[ $_obj_opts_apps_dependent_upgrade_enable_ = 'true' ]]
+    }
+Opts.Apps.Dependent.Upgrade.IsNot()
+    {
+    [[ $_obj_opts_apps_dependent_upgrade_flag_ != 'true' ]]
+    }
+Opts.Apps.Dependent.Upgrade.IsSet()
+    {
+    [[ $_obj_opts_apps_dependent_upgrade_flag_ = 'true' ]]
+    }
+Opts.Apps.Dependent.Upgrade.LogChanges()
+    {
+    [[ $_obj_opts_apps_dependent_upgrade_changes_flag_ = 'true' ]] && return
+    _obj_opts_apps_dependent_upgrade_changes_flag_=true
+    }
+Opts.Apps.Dependent.Upgrade.Set()
+    {
+    [[ $_obj_opts_apps_dependent_upgrade_flag_ = 'true' ]] && return
+    _obj_opts_apps_dependent_upgrade_flag_=true
+    [[ $_obj_opts_apps_dependent_upgrade_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_dependent_upgrade_flag_
+    }
+Opts.Apps.Dependent.Upgrade.Text()
+    {
+    if [[ -n ${1:-} && $1 = "=" ]]; then
+        _obj_opts_apps_dependent_upgrade_text_=$2
+    else
+        echo -n "$_obj_opts_apps_dependent_upgrade_text_"
+    fi
+    }
+Opts.Apps.Dependent.Upgrade.Init
 
 Opts.Apps.List.All.Clear()
     {
