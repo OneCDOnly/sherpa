@@ -4341,7 +4341,6 @@ QPKG.Install()
 
     if QPKGs.IsInstalled.Exist "$PACKAGE_NAME"; then
         MarkOpAsSkipped show "$PACKAGE_NAME" install "it's already installed - use 'reinstall' instead"
-        MarkStateAsInstalled "$PACKAGE_NAME"
         DebugFuncExit 2; return
     fi
 
@@ -4385,7 +4384,7 @@ QPKG.Install()
         MarkOpAsDone "$PACKAGE_NAME" install
         MarkStateAsInstalled "$PACKAGE_NAME"
 
-        if QPKGs.IsStarted.Exist "$PACKAGE_NAME"; then
+        if QPKG.IsStarted "$PACKAGE_NAME"; then
             MarkStateAsStarted "$PACKAGE_NAME"
         else
             MarkStateAsStopped "$PACKAGE_NAME"
@@ -4444,7 +4443,6 @@ QPKG.Reinstall()
 
     if ! QPKGs.IsInstalled.Exist "$PACKAGE_NAME"; then
         MarkOpAsSkipped show "$PACKAGE_NAME" reinstall "it's not installed - use 'install' instead"
-        MarkStateAsNotInstalled "$PACKAGE_NAME"
         DebugFuncExit 2; return
     fi
 
@@ -4477,7 +4475,7 @@ QPKG.Reinstall()
         MarkOpAsDone "$PACKAGE_NAME" reinstall
         QPKG.StoreServiceStatus "$PACKAGE_NAME"
 
-        if QPKGs.IsStarted.Exist "$PACKAGE_NAME"; then
+        if QPKG.IsStarted "$PACKAGE_NAME"; then
             MarkStateAsStarted "$PACKAGE_NAME"
         else
             MarkStateAsStopped "$PACKAGE_NAME"
@@ -4517,7 +4515,6 @@ QPKG.Upgrade()
 
     if ! QPKGs.IsInstalled.Exist "$PACKAGE_NAME"; then
         MarkOpAsSkipped show "$PACKAGE_NAME" upgrade "it's not installed - use 'install' instead"
-        MarkStateAsNotInstalled "$PACKAGE_NAME"
         DebugFuncExit 2; return
     fi
 
@@ -4565,7 +4562,7 @@ QPKG.Upgrade()
         QPKGs.IsUpgradable.Remove "$PACKAGE_NAME"
         MarkOpAsDone "$PACKAGE_NAME" upgrade
 
-        if QPKGs.IsStarted.Exist "$PACKAGE_NAME"; then
+        if QPKG.IsStarted "$PACKAGE_NAME"; then
             MarkStateAsStarted "$PACKAGE_NAME"
         else
             MarkStateAsStopped "$PACKAGE_NAME"
@@ -4602,8 +4599,6 @@ QPKG.Uninstall()
 
     if QPKGs.IsNotInstalled.Exist "$PACKAGE_NAME"; then
         MarkOpAsSkipped show "$PACKAGE_NAME" uninstall "it's not installed"
-        MarkStateAsNotInstalled "$PACKAGE_NAME"
-        QPKGs.IsStarted.Remove "$PACKAGE_NAME"
         DebugFuncExit 2; return
     fi
 
@@ -4664,7 +4659,6 @@ QPKG.Restart()
 
     if QPKGs.IsNotInstalled.Exist "$PACKAGE_NAME"; then
         MarkOpAsSkipped show "$PACKAGE_NAME" restart "it's not installed"
-        MarkStateAsNotInstalled "$PACKAGE_NAME"
         DebugFuncExit 2; return
     fi
 
