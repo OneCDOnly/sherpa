@@ -1000,11 +1000,11 @@ Tiers.Processor()
         # adjust lists for start
         if Opts.Apps.All.Start.IsSet; then
             QPKGs.ToStart.Add "$(QPKGs.IsStopped.Array)"
-        elif Opts.Apps.Standalone.Stop.IsSet; then
+        elif Opts.Apps.Standalone.Start.IsSet; then
             for prospect in $(QPKGs.IsStopped.Array); do
                 QPKGs.IsStandalone.Exist "$prospect" && QPKGs.ToStart.Add "$prospect"
             done
-        elif Opts.Apps.Dependent.Stop.IsSet; then
+        elif Opts.Apps.Dependent.Start.IsSet; then
             for prospect in $(QPKGs.IsStopped.Array); do
                 QPKGs.IsDependent.Exist "$prospect" && QPKGs.ToStart.Add "$prospect"
             done
