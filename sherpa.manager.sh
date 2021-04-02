@@ -386,7 +386,7 @@ Session.Init()
         MANAGER_QPKG_DESC+=('follow authors and grab metadata for all your digital reading needs')
         MANAGER_QPKG_ABBRVS+=('ll lazy lazylibrarian')
         MANAGER_QPKG_DEPENDS_ON+=(Entware)
-        MANAGER_QPKG_IPKGS_ADD+=('python3-requests')
+        MANAGER_QPKG_IPKGS_ADD+=('python3-pyopenssl python3-requests')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
         MANAGER_QPKG_UPDATE_ON_RESTART+=(true)
@@ -400,7 +400,7 @@ Session.Init()
         MANAGER_QPKG_DESC+=('another SickBeard fork: manage and search for TV shows')
         MANAGER_QPKG_ABBRVS+=('om med omed medusa omedusa')
         MANAGER_QPKG_DEPENDS_ON+=(Entware)
-        MANAGER_QPKG_IPKGS_ADD+=('mediainfo')
+        MANAGER_QPKG_IPKGS_ADD+=('mediainfo python3-pyopenssl')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
         MANAGER_QPKG_UPDATE_ON_RESTART+=(true)
@@ -414,7 +414,7 @@ Session.Init()
         MANAGER_QPKG_DESC+=('automated Comic Book (cbr/cbz) downloader program for use with NZB and torrents written in Python')
         MANAGER_QPKG_ABBRVS+=('my omy myl mylar mylar3')
         MANAGER_QPKG_DEPENDS_ON+=(Entware)
-        MANAGER_QPKG_IPKGS_ADD+=('python3-mako python3-pillow python3-pytz python3-requests python3-six python3-urllib3')
+        MANAGER_QPKG_IPKGS_ADD+=('python3-mako python3-pillow python3-pyopenssl python3-pytz python3-requests python3-six python3-urllib3')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
         MANAGER_QPKG_UPDATE_ON_RESTART+=(true)
@@ -554,7 +554,7 @@ Session.Init()
         MANAGER_QPKG_DESC+=('full-featured NZB download manager with a nice web UI')
         MANAGER_QPKG_ABBRVS+=('sb sb3 sab sab3 sabnzbd3 sabnzbd')
         MANAGER_QPKG_DEPENDS_ON+=('Entware Par2')
-        MANAGER_QPKG_IPKGS_ADD+=('python3-asn1crypto python3-chardet python3-cryptography unrar p7zip coreutils-nice ionice ffprobe')
+        MANAGER_QPKG_IPKGS_ADD+=('python3-asn1crypto python3-chardet python3-cryptography python3-pyopenssl unrar p7zip coreutils-nice ionice ffprobe')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
         MANAGER_QPKG_UPDATE_ON_RESTART+=(true)
@@ -677,7 +677,7 @@ Session.Init()
     readonly MANAGER_BASE_QPKG_CONFLICTS='Optware Optware-NG TarMT Python QPython2 Python3 QPython3'
     readonly MANAGER_BASE_IPKGS_ADD='findutils grep less sed'
     readonly MANAGER_SHARED_IPKGS_ADD='ca-certificates gcc git git-http nano python3-dev python3-pip python3-setuptools'
-    readonly MANAGER_SHARED_PIPS_ADD='apprise apscheduler beautifulsoup4 cfscrape cheetah3 cheroot!=8.4.4 cherrypy configobj feedparser portend pygithub pyopenssl python-levenshtein python-magic random_user_agent sabyenc3 simplejson slugify'
+    readonly MANAGER_SHARED_PIPS_ADD='apprise apscheduler beautifulsoup4 cfscrape cheetah3 cheroot!=8.4.4 cherrypy configobj feedparser portend pygithub python-levenshtein python-magic random_user_agent sabyenc3 simplejson slugify'
 
     QPKGs.StandaloneDependent.Build
 
@@ -796,7 +796,18 @@ Tiers.Processor()
 
     Opts.Apps.All.Upgrade.IsSet && QPKGs.ToUpgrade.Add "$(QPKGs.IsUpgradable.Array)"
     Opts.Apps.All.Reinstall.IsSet && QPKGs.ToReinstall.Add "$(QPKGs.IsInstalled.Array)"
-    Opts.Apps.All.Install.IsSet && QPKGs.ToInstall.Add "$(QPKGs.IsInstallable.Array)"
+
+    if Opts.Apps.All.Install.IsSet; then
+        QPKGs.ToInstall.Add "$(QPKGs.IsInstallable.Array)"
+    elif Opts.Apps.Standalone.Install.IsSet; then
+        for prospect in $(QPKGs.IsInstallable.Array); do
+            QPKGs.IsStandalone.Exist "$prospect" && QPKGs.ToInstall.Add "$prospect"
+        done
+    elif Opts.Apps.Dependent.Install.IsSet; then
+        for prospect in $(QPKGs.IsInstallable.Array); do
+            QPKGs.IsDependent.Exist "$prospect" && QPKGs.ToInstall.Add "$prospect"
+        done
+    fi
 
     ### 'rebuild' meta-operation pre-processing ###
 
@@ -897,6 +908,26 @@ Tiers.Processor()
 
     Tier.Processor Backup false all QPKG ToBackup 'backup configuration for' 'backing-up configuration for' 'configuration backed-up for' ''
 
+    ### 'uninstall' pre-processing ###
+
+        if Opts.Apps.All.Uninstall.IsSet; then
+            QPKGs.ToUninstall.Add "$(QPKGs.IsInstalled.Array)"
+        elif Opts.Apps.Standalone.Uninstall.IsSet; then
+            for prospect in $(QPKGs.IsInstalled.Array); do
+                QPKGs.IsStandalone.Exist "$prospect" && QPKGs.ToUninstall.Add "$prospect"
+            done
+        elif Opts.Apps.Dependent.Uninstall.IsSet; then
+            for prospect in $(QPKGs.IsInstalled.Array); do
+                QPKGs.IsDependent.Exist "$prospect" && QPKGs.ToUninstall.Add "$prospect"
+            done
+        fi
+
+        if QPKGs.ToReinstall.Exist Entware; then    # Entware is a special case: complete removal and fresh install (to clear all installed IPKGs)
+            QPKGs.ToUninstall.Add Entware
+            QPKGs.ToInstall.Add Entware
+            QPKGs.ToReinstall.Remove Entware
+        fi
+
     ### 'stop' operation ###
 
         if Opts.Apps.All.Stop.IsSet; then
@@ -952,24 +983,6 @@ Tiers.Processor()
     Tier.Processor Stop false standalone QPKG ToStop stop stopping stopped ''
 
     ### 'uninstall' operation ###
-
-        if Opts.Apps.All.Uninstall.IsSet; then
-            QPKGs.ToUninstall.Add "$(QPKGs.IsInstalled.Array)"
-        elif Opts.Apps.Standalone.Uninstall.IsSet; then
-            for prospect in $(QPKGs.IsInstalled.Array); do
-                QPKGs.IsStandalone.Exist "$prospect" && QPKGs.ToUninstall.Add "$prospect"
-            done
-        elif Opts.Apps.Dependent.Uninstall.IsSet; then
-            for prospect in $(QPKGs.IsInstalled.Array); do
-                QPKGs.IsDependent.Exist "$prospect" && QPKGs.ToUninstall.Add "$prospect"
-            done
-        fi
-
-        if QPKGs.ToReinstall.Exist Entware; then    # Entware is a special case: complete removal and fresh install (to clear all installed IPKGs)
-            QPKGs.ToUninstall.Add Entware
-            QPKGs.ToInstall.Add Entware
-            QPKGs.ToReinstall.Remove Entware
-        fi
 
     Tier.Processor Uninstall false dependent QPKG ToUninstall uninstall uninstalling uninstalled ''
     Tier.Processor Uninstall false addon IPKG ToUninstall uninstall uninstalling uninstalled ''
@@ -2534,9 +2547,6 @@ IPKGs.Uninstall()
 
     # KLUDGE: when package arch is 'none', prevent 'par2cmdline' being uninstalled, then installed again later this same session. Noticed this was happening on ARMv5 models.
     [[ $NAS_QPKG_ARCH = none ]] && IPKGs.ToUninstall.Remove par2cmdline
-
-    # KLUDGE: switched-to the PIP package instead. Ref: https://forums.sabnzbd.org/viewtopic.php?p=123862#p123862
-    IPKGs.ToUninstall.Remove python3-pyopenssl
 
     CalcAllIPKGDepsToUninstall
     local -i total_count=$(IPKGs.ToUninstall.Count)
