@@ -54,7 +54,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=210403d
+    readonly MANAGER_SCRIPT_VERSION=210404d
     readonly PROJECT_BRANCH=develop
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -830,8 +830,15 @@ Tiers.Processor()
     QPKGs.ToDownload.Add "$(QPKGs.ToReinstall.Array)"
     QPKGs.ToDownload.Add "$(QPKGs.ToInstall.Array)"
 
+    # download all required standalones too
+    for package in $(QPKGs.ToDownload.Array); do
+        QPKGs.ToDownload.Add "$(QPKG.Standalones "$package")"
+    done
+
+    Tier.Processor Download false all QPKG ToDownload 'update package cache with' 'updating package cache with' 'updated package cache with' ''
+
+Session.Debug.ToScreen.Set
 QPKGs.Operations.List
-QPKGs.States.List
 
 exit
 
@@ -861,13 +868,6 @@ exit
     ### pre-'download' fixes ###
 
     ### 'download' operation ###
-
-        # download all required standalones too
-        for package in $(QPKGs.ToDownload.Array); do
-            QPKGs.ToDownload.Add "$(QPKG.Standalones "$package")"
-        done
-
-    Tier.Processor Download false all QPKG ToDownload 'update package cache with' 'updating package cache with' 'updated package cache with' ''
 
     ### 'backup' operation ###
 
