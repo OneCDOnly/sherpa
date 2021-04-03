@@ -819,22 +819,8 @@ Tiers.Processor()
         QPKGs.ToInstall.Add "$(QPKGs.IsDependent.Array)"
     fi
 
-    # check upgrade for standalone items to be installed first
-    for package in $(QPKGs.ToUpgrade.Array); do
-        for prospect in $(QPKG.Standalones "$package"); do
-            QPKGs.IsNotInstalled.Exist "$prospect" && ! QPKGs.ToUninstall.Exist "$prospect" && QPKGs.ToInstall.Add "$prospect"
-        done
-    done
-
-    # check install/reinstall for standalone items to be installed first
-    for package in $(QPKGs.ToInstall.Array) $(QPKGs.ToReinstall.Array); do
-        for prospect in $(QPKG.Standalones "$package"); do
-            QPKGs.IsNotInstalled.Exist "$prospect" && ! QPKGs.ToUninstall.Exist "$prospect" && QPKGs.ToInstall.Add "$prospect"
-        done
-    done
-
-    # check start/restart for standalone items to be installed first
-    for package in $(QPKGs.ToStart.Array) $(QPKGs.ToRestart.Array); do
+    # check for standalone items to be installed first
+    for package in $(QPKGs.ToUpgrade.Array) $(QPKGs.ToReinstall.Array) $(QPKGs.ToInstall.Array) $(QPKGs.ToStart.Array) $(QPKGs.ToRestart.Array); do
         for prospect in $(QPKG.Standalones "$package"); do
             QPKGs.IsNotInstalled.Exist "$prospect" && ! QPKGs.ToUninstall.Exist "$prospect" && QPKGs.ToInstall.Add "$prospect"
         done
@@ -844,7 +830,11 @@ Tiers.Processor()
     QPKGs.ToDownload.Add "$(QPKGs.ToReinstall.Array)"
     QPKGs.ToDownload.Add "$(QPKGs.ToInstall.Array)"
 
+QPKGs.Operations.List
+QPKGs.States.List
+
 exit
+
     ### 'rebuild' meta-operation pre-processing ###
 
         if Opts.Apps.All.Rebuild.IsSet || QPKGs.ToRebuild.IsAny; then
@@ -895,135 +885,138 @@ exit
             done
         fi
 
-    Tier.Processor Backup false all QPKG ToBackup 'backup configuration for' 'backing-up configuration for' 'configuration backed-up for' ''
 
     ### 'uninstall' pre-processing ###
 
-        if Opts.Apps.All.Uninstall.IsSet; then
-            QPKGs.ToUninstall.Add "$(QPKGs.IsInstalled.Array)"
-        elif Opts.Apps.Standalone.Uninstall.IsSet; then
-            for prospect in $(QPKGs.IsInstalled.Array); do
-                QPKGs.IsStandalone.Exist "$prospect" && QPKGs.ToUninstall.Add "$prospect"
-            done
-        elif Opts.Apps.Dependent.Uninstall.IsSet; then
-            for prospect in $(QPKGs.IsInstalled.Array); do
-                QPKGs.IsDependent.Exist "$prospect" && QPKGs.ToUninstall.Add "$prospect"
-            done
-        fi
+    if Opts.Apps.All.Uninstall.IsSet; then
+        QPKGs.ToUninstall.Add "$(QPKGs.IsInstalled.Array)"
+    elif Opts.Apps.Standalone.Uninstall.IsSet; then
+        for prospect in $(QPKGs.IsInstalled.Array); do
+            QPKGs.IsStandalone.Exist "$prospect" && QPKGs.ToUninstall.Add "$prospect"
+        done
+    elif Opts.Apps.Dependent.Uninstall.IsSet; then
+        for prospect in $(QPKGs.IsInstalled.Array); do
+            QPKGs.IsDependent.Exist "$prospect" && QPKGs.ToUninstall.Add "$prospect"
+        done
+    fi
 
-        if QPKGs.ToReinstall.Exist Entware; then    # Entware is a special case: complete removal and fresh install (to clear all installed IPKGs)
-            QPKGs.ToUninstall.Add Entware
-            QPKGs.ToInstall.Add Entware
-            QPKGs.ToReinstall.Remove Entware
-        fi
+    if QPKGs.ToReinstall.Exist Entware; then    # Entware is a special case: complete removal and fresh install (to clear all installed IPKGs)
+        QPKGs.ToUninstall.Add Entware
+        QPKGs.ToInstall.Add Entware
+        QPKGs.ToReinstall.Remove Entware
+    fi
 
     ### 'stop' operation ###
 
-        if Opts.Apps.All.Stop.IsSet; then
-            QPKGs.ToStop.Add "$(QPKGs.IsStarted.Array)"
-        elif Opts.Apps.Standalone.Stop.IsSet; then
-            for prospect in $(QPKGs.IsStarted.Array); do
-                QPKGs.IsStandalone.Exist "$prospect" && QPKGs.ToStop.Add "$prospect"
-            done
-        elif Opts.Apps.Dependent.Stop.IsSet; then
-            for prospect in $(QPKGs.IsStarted.Array); do
-                QPKGs.IsDependent.Exist "$prospect" && QPKGs.ToStop.Add "$prospect"
+    if Opts.Apps.All.Stop.IsSet; then
+        QPKGs.ToStop.Add "$(QPKGs.IsStarted.Array)"
+    elif Opts.Apps.Standalone.Stop.IsSet; then
+        for prospect in $(QPKGs.IsStarted.Array); do
+            QPKGs.IsStandalone.Exist "$prospect" && QPKGs.ToStop.Add "$prospect"
+        done
+    elif Opts.Apps.Dependent.Stop.IsSet; then
+        for prospect in $(QPKGs.IsStarted.Array); do
+            QPKGs.IsDependent.Exist "$prospect" && QPKGs.ToStop.Add "$prospect"
+        done
+    fi
+
+    # if an standalone has been selected for stop, need to stop its dependents first
+    for package in $(QPKGs.ToStop.Array); do
+        if QPKGs.IsStandalone.Exist "$package" && QPKGs.IsInstalled.Exist "$package"; then
+            for prospect in $(QPKG.Dependents "$package"); do
+                QPKGs.IsStarted.Exist "$prospect" && QPKGs.ToStop.Add "$prospect"
             done
         fi
+    done
 
-        # if an standalone has been selected for stop, need to stop its dependents first
-        for package in $(QPKGs.ToStop.Array); do
-            if QPKGs.IsStandalone.Exist "$package" && QPKGs.IsInstalled.Exist "$package"; then
-                for prospect in $(QPKG.Dependents "$package"); do
-                    QPKGs.IsStarted.Exist "$prospect" && QPKGs.ToStop.Add "$prospect"
-                done
-            fi
-        done
-
-        # if an standalone has been selected for uninstall, need to stop its dependents first
-        for package in $(QPKGs.ToUninstall.Array); do
-            if QPKGs.IsStandalone.Exist "$package" && QPKGs.IsInstalled.Exist "$package"; then
-                for prospect in $(QPKG.Dependents "$package"); do
-                    QPKGs.IsStarted.Exist "$prospect" && QPKGs.ToStop.Add "$prospect"
-                done
-            fi
-        done
-
-        # if an standalone has been selected for reinstall, need to stop its dependents first, and start them again later
-        for package in $(QPKGs.ToReinstall.Array); do
-            if QPKGs.IsStandalone.Exist "$package" && QPKGs.IsInstalled.Exist "$package" && QPKGs.IsStarted.Exist "$package"; then
-                for prospect in $(QPKG.Dependents "$package"); do
-                    if QPKGs.IsStarted.Exist "$prospect"; then
-                        QPKGs.ToStop.Add "$prospect"
-                        QPKGs.ToStart.Add "$prospect"
-                    fi
-                done
-            fi
-        done
-
-        # no-need to stop packages that are about to be uninstalled
-        if Opts.Apps.All.Uninstall.IsSet; then
-            QPKGs.ToStop.Init
-        else
-            QPKGs.ToStop.Remove "$(QPKGs.ToUninstall.Array)"
+    # if an standalone has been selected for uninstall, need to stop its dependents first
+    for package in $(QPKGs.ToUninstall.Array); do
+        if QPKGs.IsStandalone.Exist "$package" && QPKGs.IsInstalled.Exist "$package"; then
+            for prospect in $(QPKG.Dependents "$package"); do
+                QPKGs.IsStarted.Exist "$prospect" && QPKGs.ToStop.Add "$prospect"
+            done
         fi
+    done
 
-    Tier.Processor Stop false dependent QPKG ToStop stop stopping stopped ''
-    Tier.Processor Stop false standalone QPKG ToStop stop stopping stopped ''
+    # if an standalone has been selected for reinstall, need to stop its dependents first, and start them again later
+    for package in $(QPKGs.ToReinstall.Array); do
+        if QPKGs.IsStandalone.Exist "$package" && QPKGs.IsInstalled.Exist "$package" && QPKGs.IsStarted.Exist "$package"; then
+            for prospect in $(QPKG.Dependents "$package"); do
+                if QPKGs.IsStarted.Exist "$prospect"; then
+                    QPKGs.ToStop.Add "$prospect"
+                    QPKGs.ToStart.Add "$prospect"
+                fi
+            done
+        fi
+    done
 
-    ### 'uninstall' operation ###
+    # no-need to stop packages that are about to be uninstalled
+    if Opts.Apps.All.Uninstall.IsSet; then
+        QPKGs.ToStop.Init
+    else
+        QPKGs.ToStop.Remove "$(QPKGs.ToUninstall.Array)"
+    fi
 
-    Tier.Processor Uninstall false dependent QPKG ToUninstall uninstall uninstalling uninstalled ''
-    Tier.Processor Uninstall false addon IPKG ToUninstall uninstall uninstalling uninstalled ''
-    Tier.Processor Uninstall false standalone QPKG ToUninstall uninstall uninstalling uninstalled ''
-
-    # the fixes below must be completed before entering tier loop
+    # 'removal' phase
+    for tier in dependent addon standalone; do
+        case $tier in
+            standalone|dependent)
+                Tier.Processor Backup false $tier QPKG ToBackup 'backup configuration for' 'backing-up configuration for' 'configuration backed-up for' ''
+                Tier.Processor Stop false $tier QPKG ToStop stop stopping stopped ''
+                Tier.Processor Uninstall false $tier QPKG ToUninstall uninstall uninstalling uninstalled ''
+                ;;
+            addon)
+                Tier.Processor Uninstall false $tier IPKG ToUninstall uninstall uninstalling uninstalled ''
+                ;;
+        esac
+    done
 
     ### pre-'install' fixes ###
 
-        # install standalones for started packages only
-        for package in $(QPKGs.IsInstalled.Array); do
-            if QPKGs.IsStarted.Exist "$package" || QPKGs.ToStart.Exist "$package"; then
-                for prospect in $(QPKG.Standalones "$package"); do
-                    QPKGs.IsNotInstalled.Exist "$prospect" && QPKGs.ToInstall.Add "$prospect"
-                done
-            fi
-        done
-
-    ### pre-'restore' fixes ###
-        if Opts.Apps.All.Restore.IsSet; then
-            for prospect in $(QPKGs.IsSupportBackup.Array); do
-                QPKGs.IsInstalled.Exist "$prospect" && QPKGs.ToRestore.Add "$prospect"
+    # install standalones for started packages only
+    for package in $(QPKGs.IsInstalled.Array); do
+        if QPKGs.IsStarted.Exist "$package" || QPKGs.ToStart.Exist "$package"; then
+            for prospect in $(QPKG.Standalones "$package"); do
+                QPKGs.IsNotInstalled.Exist "$prospect" && QPKGs.ToInstall.Add "$prospect"
             done
         fi
+    done
+
+    ### pre-'restore' fixes ###
+
+    if Opts.Apps.All.Restore.IsSet; then
+        for prospect in $(QPKGs.IsSupportBackup.Array); do
+            QPKGs.IsInstalled.Exist "$prospect" && QPKGs.ToRestore.Add "$prospect"
+        done
+    fi
 
     ### pre-'start' fixes ###
 
-        # adjust lists for start
-        if Opts.Apps.All.Start.IsSet; then
-            QPKGs.ToStart.Add "$(QPKGs.IsStopped.Array)"
-        elif Opts.Apps.Standalone.Start.IsSet; then
-            for prospect in $(QPKGs.IsStopped.Array); do
-                QPKGs.IsStandalone.Exist "$prospect" && QPKGs.ToStart.Add "$prospect"
-            done
-        elif Opts.Apps.Dependent.Start.IsSet; then
-            for prospect in $(QPKGs.IsStopped.Array); do
-                QPKGs.IsDependent.Exist "$prospect" && QPKGs.ToStart.Add "$prospect"
-            done
-        fi
+    if Opts.Apps.All.Start.IsSet; then
+        QPKGs.ToStart.Add "$(QPKGs.IsStopped.Array)"
+    elif Opts.Apps.Standalone.Start.IsSet; then
+        for prospect in $(QPKGs.IsStopped.Array); do
+            QPKGs.IsStandalone.Exist "$prospect" && QPKGs.ToStart.Add "$prospect"
+        done
+    elif Opts.Apps.Dependent.Start.IsSet; then
+        for prospect in $(QPKGs.IsStopped.Array); do
+            QPKGs.IsDependent.Exist "$prospect" && QPKGs.ToStart.Add "$prospect"
+        done
+    fi
 
     ### pre-'restart' fixes ###
 
-        if Opts.Apps.All.Upgrade.IsSet; then
-            QPKGs.ToRestart.Add "$(QPKGs.IsSupportUpdateOnRestart.Array)"
-            QPKGs.ToRestart.Remove "$(QPKGs.IsNotInstalled.Array)"
-            QPKGs.ToRestart.Remove "$(QPKGs.ToUpgrade.Array)"
-            QPKGs.ToRestart.Remove "$(QPKGs.IsStandalone.Array)"
-        fi
+    if Opts.Apps.All.Upgrade.IsSet; then
+        QPKGs.ToRestart.Add "$(QPKGs.IsSupportUpdateOnRestart.Array)"
+        QPKGs.ToRestart.Remove "$(QPKGs.IsNotInstalled.Array)"
+        QPKGs.ToRestart.Remove "$(QPKGs.ToUpgrade.Array)"
+        QPKGs.ToRestart.Remove "$(QPKGs.IsStandalone.Array)"
+    fi
 
     # in-case 'python' has disappeared again ...
     [[ ! -L /opt/bin/python && -e /opt/bin/python3 ]] && ln -s /opt/bin/python3 /opt/bin/python
 
+    # 'addition' phase
     for tier in standalone addon dependent; do
         case $tier in
             standalone|dependent)
