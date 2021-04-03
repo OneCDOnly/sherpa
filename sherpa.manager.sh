@@ -298,7 +298,7 @@ Session.Init()
         MANAGER_QPKG_ARCH+=(a64)
         MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(210330)
-        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/$PROJECT_BRANCH/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_arm_64.qpkg)
+        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/main/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_arm_64.qpkg)
         MANAGER_QPKG_MD5+=(03bdcee03ca1580c20edc012628965a7)
         MANAGER_QPKG_DESC+=('a nice CLI disk-usage/free-space utility from @muesli')
         MANAGER_QPKG_ABBRVS+=('duf')
@@ -312,7 +312,7 @@ Session.Init()
         MANAGER_QPKG_ARCH+=(x41)
         MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(210330)
-        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/$PROJECT_BRANCH/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_arm-x41.qpkg)
+        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/main/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_arm-x41.qpkg)
         MANAGER_QPKG_MD5+=(a91c79d797545b67854443866549dd6d)
         MANAGER_QPKG_DESC+=('a nice CLI disk-usage/free-space utility from @muesli')
         MANAGER_QPKG_ABBRVS+=('duf')
@@ -326,7 +326,7 @@ Session.Init()
         MANAGER_QPKG_ARCH+=(x86)
         MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(210330)
-        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/$PROJECT_BRANCH/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_x86.qpkg)
+        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/main/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_x86.qpkg)
         MANAGER_QPKG_MD5+=(8fac3d3df25e7570a5fbcd51f2e0371d)
         MANAGER_QPKG_DESC+=('a nice CLI disk-usage/free-space utility from @muesli')
         MANAGER_QPKG_ABBRVS+=('duf')
@@ -340,7 +340,7 @@ Session.Init()
         MANAGER_QPKG_ARCH+=(x64)
         MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(210330)
-        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/$PROJECT_BRANCH/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_x86_64.qpkg)
+        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/main/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_x86_64.qpkg)
         MANAGER_QPKG_MD5+=(5d3b1c6eeeb7d5c0025a7f09c695fe9b)
         MANAGER_QPKG_DESC+=('a nice CLI disk-usage/free-space utility from @muesli')
         MANAGER_QPKG_ABBRVS+=('duf')
@@ -368,7 +368,7 @@ Session.Init()
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(201219b)
-        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/$PROJECT_BRANCH/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
+        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/main/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
         MANAGER_QPKG_MD5+=(d576993ca2c6ec7585abe24455e19385)
         MANAGER_QPKG_DESC+=('hides the annoying rotating banner at the top of QTS App Center pages')
         MANAGER_QPKG_ABBRVS+=('htb hide hidebanner hidethatbanner')
@@ -536,7 +536,7 @@ Session.Init()
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(210328)
-        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/$PROJECT_BRANCH/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
+        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/main/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
         MANAGER_QPKG_MD5+=(8bc501c43a1041e966c63b4ff242ecb9)
         MANAGER_QPKG_DESC+=('run userscripts and commands after all QPKGs have completed startup reintegration into QTS')
         MANAGER_QPKG_ABBRVS+=('rl run runlast')
@@ -564,7 +564,7 @@ Session.Init()
         MANAGER_QPKG_ARCH+=(x86)
         MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(201114)
-        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/$PROJECT_BRANCH/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_x86.qpkg)
+        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/main/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_x86.qpkg)
         MANAGER_QPKG_MD5+=(87c4ae02c7f95cd2706997047fc9e84d)
         MANAGER_QPKG_DESC+=("the 'sha3sum' and keccak utilities from @maandree (for x86 & x86-64 NAS only)")
         MANAGER_QPKG_ABBRVS+=('sha sha3 sha3sum')
@@ -578,7 +578,7 @@ Session.Init()
         MANAGER_QPKG_ARCH+=(x64)
         MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(201114)
-        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/$PROJECT_BRANCH/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_x86_64.qpkg)
+        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/main/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_x86_64.qpkg)
         MANAGER_QPKG_MD5+=(eed8071c43665431d6444cb489636ae5)
         MANAGER_QPKG_DESC+=('')
         MANAGER_QPKG_ABBRVS+=('sha sha3 sha3sum')
@@ -634,7 +634,7 @@ Session.Init()
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(210328)
-        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/$PROJECT_BRANCH/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
+        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/main/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
         MANAGER_QPKG_MD5+=(4a8a8662d27aa110ae096e68e0a2e293)
         MANAGER_QPKG_DESC+=('ensure other installed QPKGs start in correct sequence during QTS bootup')
         MANAGER_QPKG_ABBRVS+=('smq smqs sort sortmy sortmine sortpackages sortmypackages sortmyqpkgs')
@@ -711,6 +711,9 @@ Session.Validate()
 
     DebugFuncEntry
     ArgumentSuggestions
+    local operation=''
+    local scope=''
+    local something_to_do=false
 
     if QPKGs.SkipProcessing.IsSet; then
         DebugFuncExit 1; return
@@ -730,19 +733,29 @@ Session.Validate()
         DebugFuncExit 1; return
     fi
 
-    if QPKGs.ToBackup.IsNone && QPKGs.ToUninstall.IsNone && QPKGs.ToUpgrade.IsNone && QPKGs.ToInstall.IsNone && QPKGs.ToReinstall.IsNone && QPKGs.ToRestore.IsNone && QPKGs.ToRestart.IsNone && QPKGs.ToStart.IsNone && QPKGs.ToStop.IsNone && QPKGs.ToRebuild.IsNone; then
-        if Opts.Apps.All.Install.IsNot && Opts.Apps.All.Uninstall.IsNot && Opts.Apps.All.Restart.IsNot && Opts.Apps.All.Upgrade.IsNot && Opts.Apps.All.Backup.IsNot && Opts.Apps.All.Restore.IsNot && Opts.Apps.All.Start.IsNot && Opts.Apps.All.Stop.IsNot && Opts.Apps.All.Rebuild.IsNot; then
-            if Opts.Apps.Standalone.Install.IsNot && Opts.Apps.Standalone.Uninstall.IsNot && Opts.Apps.Standalone.Restart.IsNot && Opts.Apps.Standalone.Upgrade.IsNot && Opts.Apps.Standalone.Backup.IsNot && Opts.Apps.Standalone.Restore.IsNot && Opts.Apps.Standalone.Start.IsNot && Opts.Apps.Standalone.Stop.IsNot && Opts.Apps.Standalone.Rebuild.IsNot; then
-                if Opts.Apps.Dependent.Install.IsNot && Opts.Apps.Dependent.Uninstall.IsNot && Opts.Apps.Dependent.Restart.IsNot && Opts.Apps.Dependent.Upgrade.IsNot && Opts.Apps.Dependent.Backup.IsNot && Opts.Apps.Dependent.Restore.IsNot && Opts.Apps.Dependent.Start.IsNot && Opts.Apps.Dependent.Stop.IsNot && Opts.Apps.Dependent.Rebuild.IsNot; then
-                    if Opts.Dependencies.Check.IsNot && Opts.IgnoreFreeSpace.IsNot && Opts.Help.Status.IsNot; then
-                        ShowAsEror "I've nothing to do (this usually means the arguments couldn't be run as-specified)"
-                        Opts.Help.Basic.Set
-                        QPKGs.SkipProcessing.Set
-                        DebugFuncExit 1; return
-                    fi
-                fi
-            fi
+    for operation in Backup Uninstall Upgrade Install Reinstall Restore Restart Start Stop Rebuild; do
+        if QPKGs.To${operation}.IsAny; then
+            something_to_do=true
+            break
         fi
+
+        for scope in All Dependent Installable Installed NotInstalled Standalone; do
+            if Opts.Apps.$scope.$operation.IsSet; then
+                something_to_do=true
+                break 2
+            fi
+        done
+    done
+
+    if Opts.Dependencies.Check.IsSet || Opts.IgnoreFreeSpace.IsSet || Opts.Help.Status.IsSet; then
+        something_to_do=true
+    fi
+
+    if [[ $something_to_do = false ]]; then
+        ShowAsEror "I've nothing to do (this usually means the arguments couldn't be run as-specified)"
+        Opts.Help.Basic.Set
+        QPKGs.SkipProcessing.Set
+        DebugFuncExit 1; return
     fi
 
     if Opts.Dependencies.Check.IsSet || QPKGs.ToUpgrade.Exist Entware; then
@@ -817,9 +830,13 @@ Tiers.Processor()
         QPKGs.ToInstall.Add "$(QPKGs.IsStandalone.Array)"
     elif Opts.Apps.Dependent.Install.IsSet; then
         QPKGs.ToInstall.Add "$(QPKGs.IsDependent.Array)"
+    elif Opts.Apps.Installable.Install.IsSet; then
+        QPKGs.ToInstall.Add "$(QPKGs.IsInstallable.Array)"
+    elif Opts.Apps.NotInstalled.Install.IsSet; then
+        QPKGs.ToInstall.Add "$(QPKGs.IsNotInstalled.Array)"
     fi
 
-    # check for standalone items to be installed first
+    # check for standalone items to install first
     for package in $(QPKGs.ToUpgrade.Array) $(QPKGs.ToReinstall.Array) $(QPKGs.ToInstall.Array) $(QPKGs.ToStart.Array) $(QPKGs.ToRestart.Array); do
         for prospect in $(QPKG.Standalones "$package"); do
             QPKGs.IsNotInstalled.Exist "$prospect" && ! QPKGs.ToUninstall.Exist "$prospect" && QPKGs.ToInstall.Add "$prospect"
@@ -829,11 +846,6 @@ Tiers.Processor()
     QPKGs.ToDownload.Add "$(QPKGs.ToUpgrade.Array)"
     QPKGs.ToDownload.Add "$(QPKGs.ToReinstall.Array)"
     QPKGs.ToDownload.Add "$(QPKGs.ToInstall.Array)"
-
-    # download all required standalones too
-    for package in $(QPKGs.ToDownload.Array); do
-        QPKGs.ToDownload.Add "$(QPKG.Standalones "$package")"
-    done
 
     Tier.Processor Download false all QPKG ToDownload 'update package cache with' 'updating package cache with' 'updated package cache with' ''
 
@@ -1692,8 +1704,11 @@ ParseArguments()
                     dependent_)
                         Opts.Apps.Dependent.Install.Set
                         ;;
+                    installable_)
+                        Opts.Apps.Installable.Install.Set
+                        ;;
                     not-installed_)
-                        QPKGs.ToInstall.Add "$(QPKGs.IsNotInstalled.Array)"
+                        Opts.Apps.NotInstalled.Install.Set
                         ;;
                     standalone_)
                         Opts.Apps.Standalone.Install.Set
@@ -6643,8 +6658,9 @@ CompileObjects()
 
     # $1 = 'hash' (optional) return the internal checksum
 
-    local -r COMPILED_OBJECTS_HASH=f94c5346e4a1bc45377d5361a86e71e1
+    local -r COMPILED_OBJECTS_HASH=5bf18f670274d5c6fda7bffb6b928aa1
     local array_name=''
+    local scope=''
 
     if [[ ${1:-} = hash ]]; then
         echo "$COMPILED_OBJECTS_HASH"
@@ -6687,14 +6703,12 @@ CompileObjects()
             AddFlagObj Opts.Log.${array_name}.View
         done
 
-        for array_name in Backup Install Rebuild Reinstall Restart Restore Start Stop Uninstall Upgrade; do
-            AddFlagObj Opts.Apps.All.${array_name}
-            AddFlagObj Opts.Apps.Standalone.${array_name}
-            AddFlagObj Opts.Apps.Dependent.${array_name}
-        done
+        for scope in All Dependent Installable Installed NotInstalled Standalone Started Stopped Upgradable; do
+            AddFlagObj Opts.Apps.List.${scope}
 
-        for array_name in All Dependent Installable Installed NotInstalled Standalone Started Stopped Upgradable; do
-            AddFlagObj Opts.Apps.List.${array_name}
+            for array_name in Backup Install Rebuild Reinstall Restart Restore Start Stop Uninstall Upgrade; do
+                AddFlagObj Opts.Apps.${scope}.${array_name}
+            done
         done
 
         # lists
