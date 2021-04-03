@@ -154,6 +154,11 @@ Session.Init()
     readonly SESSION_LAST_PATHFILE=$LOGS_PATH/session.last.log
     readonly SESSION_TAIL_PATHFILE=$LOGS_PATH/session.tail.log
     readonly EXTERNAL_PACKAGE_LIST_PATHFILE=$WORK_PATH/Packages
+    PACKAGE_OPERATIONS=(Backup Download Install Rebuild Reinstall Restore Restart Start Stop Uninstall Upgrade)
+    PACKAGE_STATES=(All BackedUp Dependent Installed Installable Missing Names Standalone Starting Started Stopping Stopped SupportBackup SupportUpdateOnRestart Restarting Upgradable)
+
+    readonly PACKAGE_OPERATIONS
+    readonly PACKAGE_STATES
 
     ShowAsProc init >&2
 
@@ -699,7 +704,7 @@ Session.Init()
             DisplayLineSpaceIfNoneAlready
         fi
 
-        Opts.Apps.All.Upgrade.IsNot && Opts.Apps.All.Uninstall.IsNot && QPKGs.NewVersions.Show
+        Opts.Apps.IsAll.Upgrade.IsNot && Opts.Apps.IsAll.Uninstall.IsNot && QPKGs.NewVersions.Show
     fi
 
     DebugFuncExit
@@ -712,7 +717,7 @@ Session.Validate()
     DebugFuncEntry
     ArgumentSuggestions
     local operation=''
-    local scope=''
+    local state=''
     local something_to_do=false
 
     if QPKGs.SkipProcessing.IsSet; then
@@ -733,14 +738,14 @@ Session.Validate()
         DebugFuncExit 1; return
     fi
 
-    for operation in Backup Uninstall Upgrade Install Reinstall Restore Restart Start Stop Rebuild; do
+    for operation in "${PACKAGE_OPERATIONS[@]}"; do
         if QPKGs.To${operation}.IsAny; then
             something_to_do=true
             break
         fi
 
-        for scope in All Dependent Installable Installed NotInstalled Standalone; do
-            if Opts.Apps.$scope.$operation.IsSet; then
+        for state in "${PACKAGE_STATES[@]}"; do
+            if Opts.Apps.Is${state}.$operation.IsSet || Opts.Apps.IsNot${state}.$operation.IsSet; then
                 something_to_do=true
                 break 2
             fi
@@ -808,33 +813,19 @@ Tiers.Processor()
     QPKGs.IsSupportBackup.Build
     QPKGs.IsSupportUpdateOnRestart.Build
 
-    if Opts.Apps.All.Upgrade.IsSet; then
-        QPKGs.ToUpgrade.Add "$(QPKGs.Names.Array)"
-    elif Opts.Apps.Standalone.Upgrade.IsSet; then
-        QPKGs.ToUpgrade.Add "$(QPKGs.IsStandalone.Array)"
-    elif Opts.Apps.Dependent.Upgrade.IsSet; then
-        QPKGs.ToUpgrade.Add "$(QPKGs.IsDependent.Array)"
-    fi
+    Opts.Apps.IsAll.Upgrade.IsSet && QPKGs.ToUpgrade.Add "$(QPKGs.Names.Array)"
+    Opts.Apps.IsStandalone.Upgrade.IsSet && QPKGs.ToUpgrade.Add "$(QPKGs.IsStandalone.Array)"
+    Opts.Apps.IsDependent.Upgrade.IsSet && QPKGs.ToUpgrade.Add "$(QPKGs.IsDependent.Array)"
 
-    if Opts.Apps.All.Reinstall.IsSet; then
-        QPKGs.ToReinstall.Add "$(QPKGs.Names.Array)"
-    elif Opts.Apps.Standalone.Reinstall.IsSet; then
-        QPKGs.ToReinstall.Add "$(QPKGs.IsStandalone.Array)"
-    elif Opts.Apps.Dependent.Reinstall.IsSet; then
-        QPKGs.ToReinstall.Add "$(QPKGs.IsDependent.Array)"
-    fi
+    Opts.Apps.IsAll.Reinstall.IsSet && QPKGs.ToReinstall.Add "$(QPKGs.Names.Array)"
+    Opts.Apps.IsStandalone.Reinstall.IsSet && QPKGs.ToReinstall.Add "$(QPKGs.IsStandalone.Array)"
+    Opts.Apps.IsDependent.Reinstall.IsSet && QPKGs.ToReinstall.Add "$(QPKGs.IsDependent.Array)"
 
-    if Opts.Apps.All.Install.IsSet; then
-        QPKGs.ToInstall.Add "$(QPKGs.Names.Array)"
-    elif Opts.Apps.Standalone.Install.IsSet; then
-        QPKGs.ToInstall.Add "$(QPKGs.IsStandalone.Array)"
-    elif Opts.Apps.Dependent.Install.IsSet; then
-        QPKGs.ToInstall.Add "$(QPKGs.IsDependent.Array)"
-    elif Opts.Apps.Installable.Install.IsSet; then
-        QPKGs.ToInstall.Add "$(QPKGs.IsInstallable.Array)"
-    elif Opts.Apps.NotInstalled.Install.IsSet; then
-        QPKGs.ToInstall.Add "$(QPKGs.IsNotInstalled.Array)"
-    fi
+    Opts.Apps.IsAll.Install.IsSet && QPKGs.ToInstall.Add "$(QPKGs.Names.Array)"
+    Opts.Apps.IsStandalone.Install.IsSet && QPKGs.ToInstall.Add "$(QPKGs.IsStandalone.Array)"
+    Opts.Apps.IsDependent.Install.IsSet && QPKGs.ToInstall.Add "$(QPKGs.IsDependent.Array)"
+    Opts.Apps.IsInstallable.Install.IsSet && QPKGs.ToInstall.Add "$(QPKGs.IsInstallable.Array)"
+    Opts.Apps.IsNotInstalled.Install.IsSet && QPKGs.ToInstall.Add "$(QPKGs.IsNotInstalled.Array)"
 
     # check for standalone items to install first
     for package in $(QPKGs.ToUpgrade.Array) $(QPKGs.ToReinstall.Array) $(QPKGs.ToInstall.Array) $(QPKGs.ToStart.Array) $(QPKGs.ToRestart.Array); do
@@ -856,11 +847,11 @@ exit
 
     ### 'rebuild' meta-operation pre-processing ###
 
-        if Opts.Apps.All.Rebuild.IsSet || QPKGs.ToRebuild.IsAny; then
+        if Opts.Apps.IsAll.Rebuild.IsSet || QPKGs.ToRebuild.IsAny; then
             if QPKGs.IsBackedUp.IsNone; then
                 ShowAsWarn 'there are no package backups to rebuild from' >&2
             else
-                if Opts.Apps.All.Rebuild.IsSet; then
+                if Opts.Apps.IsAll.Rebuild.IsSet; then
                     QPKGs.ToInstall.Add "$(QPKGs.IsBackedUp.Array)"
                     QPKGs.ToRestore.Add "$(QPKGs.IsBackedUp.Array)"
                 else
@@ -883,15 +874,15 @@ exit
 
     ### 'backup' operation ###
 
-        if Opts.Apps.All.Backup.IsSet; then
+        if Opts.Apps.IsAll.Backup.IsSet; then
             for prospect in $(QPKGs.IsSupportBackup.Array); do
                 QPKGs.IsInstalled.Exist "$prospect" && QPKGs.ToBackup.Add "$prospect"
             done
-        elif Opts.Apps.Standalone.Backup.IsSet; then
+        elif Opts.Apps.IsStandalone.Backup.IsSet; then
             for prospect in $(QPKGs.IsSupportBackup.Array); do
                 QPKGs.IsStandalone.Exist "$prospect" && QPKGs.IsInstalled.Exist "$prospect" && QPKGs.ToBackup.Add "$prospect"
             done
-        elif Opts.Apps.Dependent.Backup.IsSet; then
+        elif Opts.Apps.IsDependent.Backup.IsSet; then
             for prospect in $(QPKGs.IsSupportBackup.Array); do
                 QPKGs.IsDependent.Exist "$prospect" && QPKGs.IsInstalled.Exist "$prospect" && QPKGs.ToBackup.Add "$prospect"
             done
@@ -900,13 +891,13 @@ exit
 
     ### 'uninstall' pre-processing ###
 
-    if Opts.Apps.All.Uninstall.IsSet; then
+    if Opts.Apps.IsAll.Uninstall.IsSet; then
         QPKGs.ToUninstall.Add "$(QPKGs.IsInstalled.Array)"
-    elif Opts.Apps.Standalone.Uninstall.IsSet; then
+    elif Opts.Apps.IsStandalone.Uninstall.IsSet; then
         for prospect in $(QPKGs.IsInstalled.Array); do
             QPKGs.IsStandalone.Exist "$prospect" && QPKGs.ToUninstall.Add "$prospect"
         done
-    elif Opts.Apps.Dependent.Uninstall.IsSet; then
+    elif Opts.Apps.IsDependent.Uninstall.IsSet; then
         for prospect in $(QPKGs.IsInstalled.Array); do
             QPKGs.IsDependent.Exist "$prospect" && QPKGs.ToUninstall.Add "$prospect"
         done
@@ -920,13 +911,13 @@ exit
 
     ### 'stop' operation ###
 
-    if Opts.Apps.All.Stop.IsSet; then
+    if Opts.Apps.IsAll.Stop.IsSet; then
         QPKGs.ToStop.Add "$(QPKGs.IsStarted.Array)"
-    elif Opts.Apps.Standalone.Stop.IsSet; then
+    elif Opts.Apps.IsStandalone.Stop.IsSet; then
         for prospect in $(QPKGs.IsStarted.Array); do
             QPKGs.IsStandalone.Exist "$prospect" && QPKGs.ToStop.Add "$prospect"
         done
-    elif Opts.Apps.Dependent.Stop.IsSet; then
+    elif Opts.Apps.IsDependent.Stop.IsSet; then
         for prospect in $(QPKGs.IsStarted.Array); do
             QPKGs.IsDependent.Exist "$prospect" && QPKGs.ToStop.Add "$prospect"
         done
@@ -963,7 +954,7 @@ exit
     done
 
     # no-need to stop packages that are about to be uninstalled
-    if Opts.Apps.All.Uninstall.IsSet; then
+    if Opts.Apps.IsAll.Uninstall.IsSet; then
         QPKGs.ToStop.Init
     else
         QPKGs.ToStop.Remove "$(QPKGs.ToUninstall.Array)"
@@ -996,7 +987,7 @@ exit
 
     ### pre-'restore' fixes ###
 
-    if Opts.Apps.All.Restore.IsSet; then
+    if Opts.Apps.IsAll.Restore.IsSet; then
         for prospect in $(QPKGs.IsSupportBackup.Array); do
             QPKGs.IsInstalled.Exist "$prospect" && QPKGs.ToRestore.Add "$prospect"
         done
@@ -1004,13 +995,13 @@ exit
 
     ### pre-'start' fixes ###
 
-    if Opts.Apps.All.Start.IsSet; then
+    if Opts.Apps.IsAll.Start.IsSet; then
         QPKGs.ToStart.Add "$(QPKGs.IsStopped.Array)"
-    elif Opts.Apps.Standalone.Start.IsSet; then
+    elif Opts.Apps.IsStandalone.Start.IsSet; then
         for prospect in $(QPKGs.IsStopped.Array); do
             QPKGs.IsStandalone.Exist "$prospect" && QPKGs.ToStart.Add "$prospect"
         done
-    elif Opts.Apps.Dependent.Start.IsSet; then
+    elif Opts.Apps.IsDependent.Start.IsSet; then
         for prospect in $(QPKGs.IsStopped.Array); do
             QPKGs.IsDependent.Exist "$prospect" && QPKGs.ToStart.Add "$prospect"
         done
@@ -1018,7 +1009,7 @@ exit
 
     ### pre-'restart' fixes ###
 
-    if Opts.Apps.All.Upgrade.IsSet; then
+    if Opts.Apps.IsAll.Upgrade.IsSet; then
         QPKGs.ToRestart.Add "$(QPKGs.IsSupportUpdateOnRestart.Array)"
         QPKGs.ToRestart.Remove "$(QPKGs.IsNotInstalled.Array)"
         QPKGs.ToRestart.Remove "$(QPKGs.ToUpgrade.Array)"
@@ -1118,7 +1109,7 @@ exit
                     fi
 
                     # adjust lists for restart
-                    if Opts.Apps.All.Restart.IsSet; then
+                    if Opts.Apps.IsAll.Restart.IsSet; then
                         QPKGs.ToRestart.Add "$(QPKGs.IsInstalled.Array)"
                     else
                         # check for dependent packages to restart due to standalones being reinstalled
@@ -1579,14 +1570,14 @@ ParseArguments()
             backup_)
                 case $scope in
                     all_|installed_)
-                        Opts.Apps.All.Backup.Set
+                        Opts.Apps.IsAll.Backup.Set
                         operation=''
                         ;;
                     dependent_)
-                        Opts.Apps.Dependent.Backup.Set
+                        Opts.Apps.IsDependent.Backup.Set
                         ;;
                     standalone_)
-                        Opts.Apps.Standalone.Backup.Set
+                        Opts.Apps.IsStandalone.Backup.Set
                         ;;
                     started_)
                         QPKGs.ToBackup.Add "$(QPKGs.IsStarted.Array)"
@@ -1698,11 +1689,11 @@ ParseArguments()
             install_)
                 case $scope in
                     all_)
-                        Opts.Apps.All.Install.Set
+                        Opts.Apps.IsAll.Install.Set
                         operation=''
                         ;;
                     dependent_)
-                        Opts.Apps.Dependent.Install.Set
+                        Opts.Apps.IsDependent.Install.Set
                         ;;
                     installable_)
                         Opts.Apps.Installable.Install.Set
@@ -1711,7 +1702,7 @@ ParseArguments()
                         Opts.Apps.NotInstalled.Install.Set
                         ;;
                     standalone_)
-                        Opts.Apps.Standalone.Install.Set
+                        Opts.Apps.IsStandalone.Install.Set
                         ;;
                     *)
                         QPKGs.ToInstall.Add "$package"
@@ -1740,14 +1731,14 @@ ParseArguments()
             rebuild_)
                 case $scope in
                     all_|installed_)
-                        Opts.Apps.All.Rebuild.Set
+                        Opts.Apps.IsAll.Rebuild.Set
                         operation=''
                         ;;
                     dependent_)
-                        Opts.Apps.Dependent.Rebuild.Set
+                        Opts.Apps.IsDependent.Rebuild.Set
                         ;;
                     standalone_)
-                        Opts.Apps.Standalone.Rebuild.Set
+                        Opts.Apps.IsStandalone.Rebuild.Set
                         ;;
                     *)
                         QPKGs.ToRebuild.Add "$package"
@@ -1757,14 +1748,14 @@ ParseArguments()
             reinstall_)
                 case $scope in
                     all_|installed_)
-                        Opts.Apps.All.Reinstall.Set
+                        Opts.Apps.IsAll.Reinstall.Set
                         operation=''
                         ;;
                     dependent_)
-                        Opts.Apps.Dependent.Reinstall.Set
+                        Opts.Apps.IsDependent.Reinstall.Set
                         ;;
                     standalone_)
-                        Opts.Apps.Standalone.Reinstall.Set
+                        Opts.Apps.IsStandalone.Reinstall.Set
                         ;;
                     *)
                         QPKGs.ToReinstall.Add "$package"
@@ -1774,15 +1765,15 @@ ParseArguments()
             restart_)
                 case $scope in
                     all_|installed_)
-                        Opts.Apps.All.Restart.Set
+                        Opts.Apps.IsAll.Restart.Set
                         operation=''
                         ;;
                     dependent_)
-                        Opts.Apps.Dependent.Restart.Set
+                        Opts.Apps.IsDependent.Restart.Set
 #                         QPKGs.ToRestart.Add "$(QPKGs.IsDependent.Array)"
                         ;;
                     standalone_)
-                        Opts.Apps.Standalone.Restart.Set
+                        Opts.Apps.IsStandalone.Restart.Set
 #                         QPKGs.ToRestart.Add "$(QPKGs.IsStandalone.Array)"
                         ;;
                     *)
@@ -1793,15 +1784,15 @@ ParseArguments()
             restore_)
                 case $scope in
                     all_|installed_)
-                        Opts.Apps.All.Restore.Set
+                        Opts.Apps.IsAll.Restore.Set
                         operation=''
                         ;;
                     dependent_)
-                        Opts.Apps.Dependent.Restore.Set
+                        Opts.Apps.IsDependent.Restore.Set
 #                         QPKGs.ToRestore.Add "$(QPKGs.IsDependent.Array)"
                         ;;
                     standalone_)
-                        Opts.Apps.Standalone.Restore.Set
+                        Opts.Apps.IsStandalone.Restore.Set
 #                         QPKGs.ToRestore.Add "$(QPKGs.IsStandalone.Array)"
                         ;;
                     *)
@@ -1812,15 +1803,15 @@ ParseArguments()
             start_)
                 case $scope in
                     all_|installed_)
-                        Opts.Apps.All.Start.Set
+                        Opts.Apps.IsAll.Start.Set
                         operation=''
                         ;;
                     dependent_)
-                        Opts.Apps.Dependent.Start.Set
+                        Opts.Apps.IsDependent.Start.Set
                         operation=''
                         ;;
                     standalone_)
-                        Opts.Apps.Standalone.Start.Set
+                        Opts.Apps.IsStandalone.Start.Set
                         operation=''
                         ;;
                     stopped_)
@@ -1840,15 +1831,15 @@ ParseArguments()
             stop_)
                 case $scope in
                     all_|installed_)
-                        Opts.Apps.All.Stop.Set
+                        Opts.Apps.IsAll.Stop.Set
                         operation=''
                         ;;
                     dependent_)
-                        Opts.Apps.Dependent.Stop.Set
+                        Opts.Apps.IsDependent.Stop.Set
                         operation=''
                         ;;
                     standalone_)
-                        Opts.Apps.Standalone.Stop.Set
+                        Opts.Apps.IsStandalone.Stop.Set
                         operation=''
                         ;;
                     started_)
@@ -1864,18 +1855,18 @@ ParseArguments()
                 case $scope in
                     all_|installed_)   # this scope is dangerous, so make 'force' a requirement
                         if [[ $operation_force = true ]]; then
-                            Opts.Apps.All.Uninstall.Set
+                            Opts.Apps.IsAll.Uninstall.Set
                             operation=''
                             operation_force=false
                         fi
                         ;;
                     dependent_)
-                        Opts.Apps.Dependent.Uninstall.Set
+                        Opts.Apps.IsDependent.Uninstall.Set
                         operation=''
                         operation_force=false
                         ;;
                     standalone_)
-                        Opts.Apps.Standalone.Uninstall.Set
+                        Opts.Apps.IsStandalone.Uninstall.Set
                         operation=''
                         operation_force=false
                         ;;
@@ -1897,14 +1888,14 @@ ParseArguments()
             upgrade_)
                 case $scope in
                     all_)
-                        Opts.Apps.All.Upgrade.Set
+                        Opts.Apps.IsAll.Upgrade.Set
                         operation=''
                         ;;
                     dependent_)
-                        Opts.Apps.Dependent.Upgrade.Set
+                        Opts.Apps.IsDependent.Upgrade.Set
                         ;;
                     standalone_)
-                        Opts.Apps.Standalone.Upgrade.Set
+                        Opts.Apps.IsStandalone.Upgrade.Set
                         ;;
                     started_)
                         QPKGs.ToUpgrade.Add "$(QPKGs.IsStarted.Array)"
@@ -2482,7 +2473,7 @@ IPKGs.Install()
     IPKGs.ToInstall.Add "$MANAGER_BASE_IPKGS_ADD"
     IPKGs.ToInstall.Add "$MANAGER_SHARED_IPKGS_ADD"
 
-    if Opts.Apps.All.Install.IsSet; then
+    if Opts.Apps.IsAll.Install.IsSet; then
         for index in "${!MANAGER_QPKG_NAME[@]}"; do
             [[ ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${MANAGER_QPKG_ARCH[$index]} = all ]] || continue
             IPKGs.ToInstall.Add "${MANAGER_QPKG_IPKGS_ADD[$index]}"
@@ -2534,7 +2525,7 @@ IPKGs.Uninstall()
     local -i index=0
     local -i result_code=0
 
-    if Opts.Apps.All.Uninstall.IsNot; then
+    if Opts.Apps.IsAll.Uninstall.IsNot; then
         for index in "${!MANAGER_QPKG_NAME[@]}"; do
             if QPKGs.ToInstall.Exist "${MANAGER_QPKG_NAME[$index]}" || QPKGs.IsInstalled.Exist "${MANAGER_QPKG_NAME[$index]}" || QPKGs.ToUpgrade.Exist "${MANAGER_QPKG_NAME[$index]}" || QPKGs.ToUninstall.Exist "${MANAGER_QPKG_NAME[$index]}"; then
                 IPKGs.ToUninstall.Add "${MANAGER_QPKG_IPKGS_REMOVE[$index]}"
@@ -3591,18 +3582,18 @@ QPKGs.Operations.List()
 
     QPKGs.SkipProcessing.IsSet && return
     DebugFuncEntry
-    local array_name=''
-    local state_name=''
+    local operation=''
+    local prefix=''
     DebugInfoMinorSeparator
 
-    for array_name in Download Backup Stop Uninstall Upgrade Reinstall Install Restore Start Restart; do
+    for operation in "${PACKAGE_OPERATIONS[@]}"; do
         # speedup: only log arrays with more than zero elements
-        for state_name in To Ok Er Sk; do
-            if QPKGs.${state_name}${array_name}.IsAny; then
-                if [[ $state_name != To ]]; then
-                    DebugQPKGInfo "${state_name}${array_name}" "($(QPKGs.${state_name}${array_name}.Count)) $(QPKGs.${state_name}${array_name}.ListCSV) "
+        for prefix in To Ok Er Sk; do
+            if QPKGs.${prefix}${operation}.IsAny; then
+                if [[ $prefix != To ]]; then
+                    DebugQPKGInfo "${prefix}${operation}" "($(QPKGs.${prefix}${operation}.Count)) $(QPKGs.${prefix}${operation}.ListCSV) "
                 else
-                    DebugQPKGWarning "${state_name}${array_name}" "($(QPKGs.${state_name}${array_name}.Count)) $(QPKGs.${state_name}${array_name}.ListCSV) "
+                    DebugQPKGWarning "${prefix}${operation}" "($(QPKGs.${prefix}${operation}.Count)) $(QPKGs.${prefix}${operation}.ListCSV) "
                 fi
             fi
         done
@@ -3617,16 +3608,16 @@ QPKGs.States.List()
     {
 
     DebugFuncEntry
-    local array_name=''
-    local state_name=''
+    local state=''
+    local prefix=''
     DebugInfoMinorSeparator
 
     QPKGs.States.Built.IsNot && QPKGs.States.Build
 
-    for array_name in Installed Starting Started Stopping Stopped Restarting BackedUp Upgradable Missing; do
+    for state in "${PACKAGE_STATES[@]}"; do
         # speedup: only log arrays with more than zero elements
-        for state_name in Is IsNot; do
-            QPKGs.${state_name}${array_name}.IsAny && DebugQPKGInfo "${state_name}${array_name}" "($(QPKGs.${state_name}${array_name}.Count)) $(QPKGs.${state_name}${array_name}.ListCSV) "
+        for prefix in Is IsNot; do
+            QPKGs.${prefix}${state}.IsAny && DebugQPKGInfo "${prefix}${state}" "($(QPKGs.${prefix}${state}.Count)) $(QPKGs.${prefix}${state}.ListCSV) "
         done
     done
 
@@ -4213,7 +4204,7 @@ ShowSummary()
     local -a messages_array=(backed-up stopped uninstalled upgraded reinstalled installed restored started restarted)
 
     for index in "${!operations_array[@]}"; do
-        Opts.Apps.All.${operations_array[$index]}.IsSet && QPKGs.Ok${operations_array[$index]}.IsNone && ShowAsDone "no QPKGs were ${messages_array[$index]}"
+        Opts.Apps.IsAll.${operations_array[$index]}.IsSet && QPKGs.Ok${operations_array[$index]}.IsNone && ShowAsDone "no QPKGs were ${messages_array[$index]}"
     done
 
     return 0
@@ -6658,9 +6649,10 @@ CompileObjects()
 
     # $1 = 'hash' (optional) return the internal checksum
 
-    local -r COMPILED_OBJECTS_HASH=5bf18f670274d5c6fda7bffb6b928aa1
-    local array_name=''
-    local scope=''
+    local -r COMPILED_OBJECTS_HASH=fc9618ebea70f711a1027b195567c929
+    local element=''
+    local operation=''
+    local state=''
 
     if [[ ${1:-} = hash ]]; then
         echo "$COMPILED_OBJECTS_HASH"
@@ -6675,12 +6667,12 @@ CompileObjects()
         ShowAsProc 'compiling objects' >&2
 
         # session flags
-        for array_name in Display.Clean LineSpace ShowBackupLocation SuggestIssue Summary; do
-            AddFlagObj Session.${array_name}
+        for element in Display.Clean LineSpace ShowBackupLocation SuggestIssue Summary; do
+            AddFlagObj Session.$element
         done
 
-        for array_name in ToArchive ToFile ToScreen; do
-            AddFlagObj Session.Debug.${array_name}
+        for element in ToArchive ToFile ToScreen; do
+            AddFlagObj Session.Debug.$element
         done
 
         AddFlagObj QPKGs.States.Built
@@ -6690,24 +6682,25 @@ CompileObjects()
         AddFlagObj PIPs.Install
 
         # user option flags
-        for array_name in Dependencies.Check IgnoreFreeSpace Versions.View; do
-            AddFlagObj Opts.${array_name}
+        for element in Dependencies.Check IgnoreFreeSpace Versions.View; do
+            AddFlagObj Opts.$element
         done
 
-        for array_name in Abbreviations Actions ActionsAll Backups Basic Options Packages Problems Status Tips; do
-            AddFlagObj Opts.Help.${array_name}
+        for element in Abbreviations Actions ActionsAll Backups Basic Options Packages Problems Status Tips; do
+            AddFlagObj Opts.Help.$element
         done
 
-        for array_name in All Last Tail; do
-            AddFlagObj Opts.Log.${array_name}.Paste
-            AddFlagObj Opts.Log.${array_name}.View
+        for element in All Last Tail; do
+            AddFlagObj Opts.Log.$element.Paste
+            AddFlagObj Opts.Log.$element.View
         done
 
-        for scope in All Dependent Installable Installed NotInstalled Standalone Started Stopped Upgradable; do
-            AddFlagObj Opts.Apps.List.${scope}
+        for state in "${PACKAGE_STATES[@]}"; do
+            AddFlagObj Opts.Apps.List.$state
 
-            for array_name in Backup Install Rebuild Reinstall Restart Restore Start Stop Uninstall Upgrade; do
-                AddFlagObj Opts.Apps.${scope}.${array_name}
+            for operation in "${PACKAGE_OPERATIONS[@]}"; do
+                AddFlagObj Opts.Apps.Is${state}.$operation
+                AddFlagObj Opts.Apps.IsNot${state}.$operation
             done
         done
 
@@ -6715,20 +6708,20 @@ CompileObjects()
         AddListObj Args.Unknown
         AddListObj QPKGs.Names
 
-        for array_name in BackedUp Dependent Installed Installable Missing Names Standalone Starting Started Stopping Stopped SupportBackup SupportUpdateOnRestart Restarting Upgradable; do
-            AddListObj QPKGs.Is${array_name}
-            AddListObj QPKGs.IsNot${array_name}
+        for state in "${PACKAGE_STATES[@]}"; do
+            AddListObj QPKGs.Is${state}
+            AddListObj QPKGs.IsNot${state}
         done
 
-        for array_name in Backup Download Install Rebuild Reinstall Restart Restore Start Stop Uninstall Upgrade; do
-            AddListObj QPKGs.To${array_name}      # to operate on
-            AddListObj QPKGs.Ok${array_name}      # operation was tried and succeeded
-            AddListObj QPKGs.Er${array_name}      # operation was tried but failed
-            AddListObj QPKGs.Sk${array_name}      # operation was skipped
+        for operation in "${PACKAGE_OPERATIONS[@]}"; do
+            AddListObj QPKGs.To${operation}      # to operate on
+            AddListObj QPKGs.Ok${operation}      # operation was tried and succeeded
+            AddListObj QPKGs.Er${operation}      # operation was tried but failed
+            AddListObj QPKGs.Sk${operation}      # operation was skipped
         done
 
-        for array_name in Download Install Uninstall Upgrade; do
-            AddListObj IPKGs.To${array_name}
+        for operation in Download Install Uninstall Upgrade; do     # only a subset of package operations are supported for now
+            AddListObj IPKGs.To${operation}
         done
     fi
 
