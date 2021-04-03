@@ -143,7 +143,7 @@ Session.Init()
     readonly PIP_CACHE_PATH=$WORK_PATH/pips
     readonly BACKUP_PATH=$(/sbin/getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
 
-    readonly COMPILED_OBJECTS_URL=https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/develop/compiled.objects
+    readonly COMPILED_OBJECTS_URL=https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/compiled.objects
     readonly EXTERNAL_PACKAGE_ARCHIVE_PATHFILE=/opt/var/opkg-lists/entware
     readonly PREVIOUS_OPKG_PACKAGE_LIST=$WORK_PATH/opkg.prev.installed.list
     readonly PREVIOUS_PIP_MODULE_LIST=$WORK_PATH/pip.prev.installed.list
@@ -795,21 +795,56 @@ Tiers.Processor()
     QPKGs.IsSupportBackup.Build
     QPKGs.IsSupportUpdateOnRestart.Build
 
-    Opts.Apps.All.Upgrade.IsSet && QPKGs.ToUpgrade.Add "$(QPKGs.IsUpgradable.Array)"
-    Opts.Apps.All.Reinstall.IsSet && QPKGs.ToReinstall.Add "$(QPKGs.IsInstalled.Array)"
-
-    if Opts.Apps.All.Install.IsSet; then
-        QPKGs.ToInstall.Add "$(QPKGs.IsInstallable.Array)"
-    elif Opts.Apps.Standalone.Install.IsSet; then
-        for prospect in $(QPKGs.IsInstallable.Array); do
-            QPKGs.IsStandalone.Exist "$prospect" && QPKGs.ToInstall.Add "$prospect"
-        done
-    elif Opts.Apps.Dependent.Install.IsSet; then
-        for prospect in $(QPKGs.IsInstallable.Array); do
-            QPKGs.IsDependent.Exist "$prospect" && QPKGs.ToInstall.Add "$prospect"
-        done
+    if Opts.Apps.All.Upgrade.IsSet; then
+        QPKGs.ToUpgrade.Add "$(QPKGs.Names.Array)"
+    elif Opts.Apps.Standalone.Upgrade.IsSet; then
+        QPKGs.ToUpgrade.Add "$(QPKGs.IsStandalone.Array)"
+    elif Opts.Apps.Dependent.Upgrade.IsSet; then
+        QPKGs.ToUpgrade.Add "$(QPKGs.IsDependent.Array)"
     fi
 
+    if Opts.Apps.All.Reinstall.IsSet; then
+        QPKGs.ToReinstall.Add "$(QPKGs.Names.Array)"
+    elif Opts.Apps.Standalone.Reinstall.IsSet; then
+        QPKGs.ToReinstall.Add "$(QPKGs.IsStandalone.Array)"
+    elif Opts.Apps.Dependent.Reinstall.IsSet; then
+        QPKGs.ToReinstall.Add "$(QPKGs.IsDependent.Array)"
+    fi
+
+    if Opts.Apps.All.Install.IsSet; then
+        QPKGs.ToInstall.Add "$(QPKGs.Names.Array)"
+    elif Opts.Apps.Standalone.Install.IsSet; then
+        QPKGs.ToInstall.Add "$(QPKGs.IsStandalone.Array)"
+    elif Opts.Apps.Dependent.Install.IsSet; then
+        QPKGs.ToInstall.Add "$(QPKGs.IsDependent.Array)"
+    fi
+
+    # check upgrade for standalone items to be installed first
+    for package in $(QPKGs.ToUpgrade.Array); do
+        for prospect in $(QPKG.Standalones "$package"); do
+            QPKGs.IsNotInstalled.Exist "$prospect" && ! QPKGs.ToUninstall.Exist "$prospect" && QPKGs.ToInstall.Add "$prospect"
+        done
+    done
+
+    # check install/reinstall for standalone items to be installed first
+    for package in $(QPKGs.ToInstall.Array) $(QPKGs.ToReinstall.Array); do
+        for prospect in $(QPKG.Standalones "$package"); do
+            QPKGs.IsNotInstalled.Exist "$prospect" && ! QPKGs.ToUninstall.Exist "$prospect" && QPKGs.ToInstall.Add "$prospect"
+        done
+    done
+
+    # check start/restart for standalone items to be installed first
+    for package in $(QPKGs.ToStart.Array) $(QPKGs.ToRestart.Array); do
+        for prospect in $(QPKG.Standalones "$package"); do
+            QPKGs.IsNotInstalled.Exist "$prospect" && ! QPKGs.ToUninstall.Exist "$prospect" && QPKGs.ToInstall.Add "$prospect"
+        done
+    done
+
+    QPKGs.ToDownload.Add "$(QPKGs.ToUpgrade.Array)"
+    QPKGs.ToDownload.Add "$(QPKGs.ToReinstall.Array)"
+    QPKGs.ToDownload.Add "$(QPKGs.ToInstall.Array)"
+
+exit
     ### 'rebuild' meta-operation pre-processing ###
 
         if Opts.Apps.All.Rebuild.IsSet || QPKGs.ToRebuild.IsAny; then
@@ -835,54 +870,7 @@ Tiers.Processor()
 
     ### pre-'download' fixes ###
 
-        # check reinstall for items to install instead
-        for package in $(QPKGs.ToReinstall.Array); do
-            if QPKGs.IsNotInstalled.Exist "$package"; then
-                QPKGs.ToReinstall.Remove "$package"
-                QPKGs.ToInstall.Add "$package"
-            fi
-        done
-
-        # check upgrade for standalone items to be installed first
-        for package in $(QPKGs.ToUpgrade.Array); do
-            for prospect in $(QPKG.Standalones "$package"); do
-                QPKGs.IsNotInstalled.Exist "$prospect" && QPKGs.ToInstall.Add "$prospect"
-            done
-        done
-
-        # check start for standalone items to be installed first
-        for package in $(QPKGs.ToStart.Array); do
-            for prospect in $(QPKG.Standalones "$package"); do
-                QPKGs.IsNotInstalled.Exist "$prospect" && QPKGs.ToInstall.Add "$prospect"
-            done
-        done
-
-        # check restart for standalone items to be installed first
-        for package in $(QPKGs.ToRestart.Array); do
-            for prospect in $(QPKG.Standalones "$package"); do
-                QPKGs.IsNotInstalled.Exist "$prospect" && QPKGs.ToInstall.Add "$prospect"
-            done
-        done
-
-        # check reinstall for standalone items to be installed first
-        for package in $(QPKGs.ToReinstall.Array); do
-            for prospect in $(QPKG.Standalones "$package"); do
-                QPKGs.IsNotInstalled.Exist "$prospect" && QPKGs.ToInstall.Add "$prospect"
-            done
-        done
-
-        # check install for standalone items to be installed first
-        for package in $(QPKGs.ToInstall.Array); do
-            for prospect in $(QPKG.Standalones "$package"); do
-                QPKGs.IsNotInstalled.Exist "$prospect" && QPKGs.ToInstall.Add "$prospect"
-            done
-        done
-
     ### 'download' operation ###
-
-        QPKGs.ToDownload.Add "$(QPKGs.ToUpgrade.Array)"
-        QPKGs.ToDownload.Add "$(QPKGs.ToReinstall.Array)"
-        QPKGs.ToDownload.Add "$(QPKGs.ToInstall.Array)"
 
         # download all required standalones too
         for package in $(QPKGs.ToDownload.Array); do
