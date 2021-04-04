@@ -143,11 +143,12 @@ Session.Init()
     readonly PIP_CACHE_PATH=$WORK_PATH/pips
     readonly BACKUP_PATH=$(/sbin/getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
 
-    readonly COMPILED_OBJECTS_URL=https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/compiled.objects
+    readonly COMPILED_OBJECTS_URL=https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/compiled.objects.tar.gz
     readonly EXTERNAL_PACKAGE_ARCHIVE_PATHFILE=/opt/var/opkg-lists/entware
     readonly PREVIOUS_OPKG_PACKAGE_LIST=$WORK_PATH/opkg.prev.installed.list
     readonly PREVIOUS_PIP_MODULE_LIST=$WORK_PATH/pip.prev.installed.list
 
+    readonly COMPILED_OBJECTS_ARCHIVE_PATHFILE=$WORK_PATH/compiled.objects.tar.gz
     readonly COMPILED_OBJECTS_PATHFILE=$WORK_PATH/compiled.objects
     readonly SESSION_ARCHIVE_PATHFILE=$LOGS_PATH/session.archive.log
     readonly SESSION_ACTIVE_PATHFILE=$PROJECT_PATH/session.$$.active.log
@@ -1330,29 +1331,27 @@ Session.Results()
             Log.Last.Paste
         elif Opts.Log.Tail.Paste.IsSet; then
             Log.Tail.Paste
-        elif Opts.Apps.List.All.IsSet; then
+        elif Opts.Apps.List.IsAll.IsSet; then
             QPKGs.All.Show
-        elif Opts.Apps.List.Installable.IsSet; then
+        elif Opts.Apps.List.IsInstallable.IsSet; then
             QPKGs.IsInstallable.Show
-        elif Opts.Apps.List.NotInstalled.IsSet; then
+        elif Opts.Apps.List.IsNotInstalled.IsSet; then
             QPKGs.IsNotInstalled.Show
-        elif Opts.Apps.List.Started.IsSet; then
+        elif Opts.Apps.List.IsStarted.IsSet; then
             QPKGs.IsStarted.Show
-        elif Opts.Apps.List.Stopped.IsSet; then
+        elif Opts.Apps.List.IsStopped.IsSet; then
             QPKGs.IsStopped.Show
-        elif Opts.Apps.List.Upgradable.IsSet; then
+        elif Opts.Apps.List.IsUpgradable.IsSet; then
             QPKGs.IsUpgradable.Show
-        elif Opts.Apps.List.Standalone.IsSet; then
+        elif Opts.Apps.List.IsStandalone.IsSet; then
             QPKGs.IsStandalone.Show
-        elif Opts.Apps.List.Dependent.IsSet; then
+        elif Opts.Apps.List.IsDependent.IsSet; then
             QPKGs.IsDependent.Show
-        elif Opts.Apps.List.Standalone.IsSet; then
-            QPKGs.IsStandalone.Show
         elif Opts.Help.Backups.IsSet; then
             QPKGs.Backups.Show
         elif Opts.Help.Status.IsSet; then
             QPKGs.Statuses.Show
-        elif Opts.Apps.List.Installed.IsSet; then
+        elif Opts.Apps.List.IsInstalled.IsSet; then
             QPKGs.IsInstalled.Show
         fi
     fi
@@ -1610,12 +1609,12 @@ ParseArguments()
                         ;;
                     installable_)
                         QPKGs.States.Build
-                        Opts.Apps.List.Installable.Set
+                        Opts.Apps.List.IsInstallable.Set
                         Session.Display.Clean.Set
                         ;;
                     installed_)
                         QPKGs.States.Build
-                        Opts.Apps.List.Installed.Set
+                        Opts.Apps.List.IsInstalled.Set
                         Session.Display.Clean.Set
                         ;;
                     last_)
@@ -1628,11 +1627,11 @@ ParseArguments()
                         ;;
                     not-installed_)
                         QPKGs.States.Build
-                        Opts.Apps.List.NotInstalled.Set
+                        Opts.Apps.List.IsNotInstalled.Set
                         Session.Display.Clean.Set
                         ;;
                     dependent_)
-                        Opts.Apps.List.Dependent.Set
+                        Opts.Apps.List.IsDependent.Set
                         Session.Display.Clean.Set
                         ;;
                     options_)
@@ -1645,12 +1644,12 @@ ParseArguments()
                         Opts.Help.Problems.Set
                         ;;
                     standalone_)
-                        Opts.Apps.List.Standalone.Set
+                        Opts.Apps.List.IsStandalone.Set
                         Session.Display.Clean.Set
                         ;;
                     started_)
                         QPKGs.States.Build
-                        Opts.Apps.List.Started.Set
+                        Opts.Apps.List.IsStarted.Set
                         Session.Display.Clean.Set
                         ;;
                     status_)
@@ -1659,7 +1658,7 @@ ParseArguments()
                         ;;
                     stopped_)
                         QPKGs.States.Build
-                        Opts.Apps.List.Stopped.Set
+                        Opts.Apps.List.IsStopped.Set
                         Session.Display.Clean.Set
                         ;;
                     tail_)
@@ -1671,7 +1670,7 @@ ParseArguments()
                         ;;
                     upgradable_)
                         QPKGs.States.Build
-                        Opts.Apps.List.Upgradable.Set
+                        Opts.Apps.List.IsUpgradable.Set
                         Session.Display.Clean.Set
                         ;;
                     versions_)
@@ -6631,14 +6630,26 @@ echo $public_function_name'.Clear()
 CheckLocalObjects()
     {
 
-    [[ -e $COMPILED_OBJECTS_PATHFILE ]] && ! FileMatchesMD5 "$COMPILED_OBJECTS_PATHFILE" "$(CompileObjects hash)" && rm -f "$COMPILED_OBJECTS_PATHFILE"
+    [[ -e $COMPILED_OBJECTS_PATHFILE ]] && FileMatchesMD5 "$COMPILED_OBJECTS_PATHFILE" "$(CompileObjects hash)" && return 0
+    rm -f "$COMPILED_OBJECTS_PATHFILE"
+
+    return 1
 
     }
 
-CheckRemoteObjects()
+GetRemoteObjects()
     {
 
-    [[ ! -e $COMPILED_OBJECTS_PATHFILE ]] && ! $CURL_CMD${curl_insecure_arg:-} --silent --fail "$COMPILED_OBJECTS_URL" > "$COMPILED_OBJECTS_PATHFILE" && [[ ! -s $COMPILED_OBJECTS_PATHFILE ]] && rm -f "$COMPILED_OBJECTS_PATHFILE"
+    if [[ ! -e $COMPILED_OBJECTS_PATHFILE ]]; then
+        if $CURL_CMD${curl_insecure_arg:-} --silent --fail "$COMPILED_OBJECTS_URL" > "$COMPILED_OBJECTS_ARCHIVE_PATHFILE"; then
+            /bin/tar --extract --gzip --file="$COMPILED_OBJECTS_ARCHIVE_PATHFILE" --directory="$($DIRNAME_CMD "$COMPILED_OBJECTS_PATHFILE")"
+            [[ -s $COMPILED_OBJECTS_PATHFILE ]] && return 0
+        fi
+    fi
+
+    rm -f "$COMPILED_OBJECTS_PATHFILE"
+
+    return 1
 
     }
 
@@ -6649,7 +6660,7 @@ CompileObjects()
 
     # $1 = 'hash' (optional) return the internal checksum
 
-    local -r COMPILED_OBJECTS_HASH=fc9618ebea70f711a1027b195567c929
+    local -r COMPILED_OBJECTS_HASH=dfbbd8069f1aa598ab1913b70fcf5e5c
     local element=''
     local operation=''
     local state=''
@@ -6659,9 +6670,10 @@ CompileObjects()
         return
     fi
 
-    CheckLocalObjects
-    CheckRemoteObjects
-    CheckLocalObjects
+    if ! CheckLocalObjects; then
+        GetRemoteObjects
+        CheckLocalObjects
+    fi
 
     if [[ ! -e $COMPILED_OBJECTS_PATHFILE ]]; then
         ShowAsProc 'compiling objects' >&2
@@ -6696,7 +6708,8 @@ CompileObjects()
         done
 
         for state in "${PACKAGE_STATES[@]}"; do
-            AddFlagObj Opts.Apps.List.$state
+            AddFlagObj Opts.Apps.List.Is${state}
+            AddFlagObj Opts.Apps.List.IsNot${state}
 
             for operation in "${PACKAGE_OPERATIONS[@]}"; do
                 AddFlagObj Opts.Apps.Is${state}.$operation
@@ -6723,6 +6736,8 @@ CompileObjects()
         for operation in Download Install Uninstall Upgrade; do     # only a subset of package operations are supported for now
             AddListObj IPKGs.To${operation}
         done
+
+        /bin/tar --create --gzip --file="$COMPILED_OBJECTS_ARCHIVE_PATHFILE" --directory="$($DIRNAME_CMD "$COMPILED_OBJECTS_PATHFILE")" "$($BASENAME_CMD "$COMPILED_OBJECTS_PATHFILE")"
     fi
 
     . "$COMPILED_OBJECTS_PATHFILE"
