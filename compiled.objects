@@ -2410,6 +2410,140 @@ Opts.Apps.List.ScNtDependent.Text()
     }
 Opts.Apps.List.ScNtDependent.Init
 
+Opts.Apps.List.ScInstallable.Clear()
+    {
+    [[ $_obj_opts_apps_list_scinstallable_flag_ != 'true' ]] && return
+    _obj_opts_apps_list_scinstallable_flag_=false
+    [[ $_obj_opts_apps_list_scinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_list_scinstallable_flag_
+    }
+Opts.Apps.List.ScInstallable.Disable()
+    {
+    [[ $_obj_opts_apps_list_scinstallable_enable_ != 'true' ]] && return
+    _obj_opts_apps_list_scinstallable_enable_=false
+    [[ $_obj_opts_apps_list_scinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_list_scinstallable_enable_
+    }
+Opts.Apps.List.ScInstallable.DontLogChanges()
+    {
+    [[ $_obj_opts_apps_list_scinstallable_changes_flag_ != 'true' ]] && return
+    _obj_opts_apps_list_scinstallable_changes_flag_=false
+    }
+Opts.Apps.List.ScInstallable.Enable()
+    {
+    [[ $_obj_opts_apps_list_scinstallable_enable_ = 'true' ]] && return
+    _obj_opts_apps_list_scinstallable_enable_=true
+    [[ $_obj_opts_apps_list_scinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_list_scinstallable_enable_
+    }
+Opts.Apps.List.ScInstallable.Init()
+    {
+    _obj_opts_apps_list_scinstallable_text_=''
+    _obj_opts_apps_list_scinstallable_flag_=false
+    _obj_opts_apps_list_scinstallable_changes_flag_=true
+    _obj_opts_apps_list_scinstallable_enable_=false
+    }
+Opts.Apps.List.ScInstallable.IsDisabled()
+    {
+    [[ $_obj_opts_apps_list_scinstallable_enable_ != 'true' ]]
+    }
+Opts.Apps.List.ScInstallable.IsEnabled()
+    {
+    [[ $_obj_opts_apps_list_scinstallable_enable_ = 'true' ]]
+    }
+Opts.Apps.List.ScInstallable.IsNt()
+    {
+    [[ $_obj_opts_apps_list_scinstallable_flag_ != 'true' ]]
+    }
+Opts.Apps.List.ScInstallable.IsSet()
+    {
+    [[ $_obj_opts_apps_list_scinstallable_flag_ = 'true' ]]
+    }
+Opts.Apps.List.ScInstallable.LogChanges()
+    {
+    [[ $_obj_opts_apps_list_scinstallable_changes_flag_ = 'true' ]] && return
+    _obj_opts_apps_list_scinstallable_changes_flag_=true
+    }
+Opts.Apps.List.ScInstallable.Set()
+    {
+    [[ $_obj_opts_apps_list_scinstallable_flag_ = 'true' ]] && return
+    _obj_opts_apps_list_scinstallable_flag_=true
+    [[ $_obj_opts_apps_list_scinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_list_scinstallable_flag_
+    }
+Opts.Apps.List.ScInstallable.Text()
+    {
+    if [[ -n ${1:-} && $1 = "=" ]]; then
+        _obj_opts_apps_list_scinstallable_text_=$2
+    else
+        echo -n "$_obj_opts_apps_list_scinstallable_text_"
+    fi
+    }
+Opts.Apps.List.ScInstallable.Init
+
+Opts.Apps.List.ScNtInstallable.Clear()
+    {
+    [[ $_obj_opts_apps_list_scntinstallable_flag_ != 'true' ]] && return
+    _obj_opts_apps_list_scntinstallable_flag_=false
+    [[ $_obj_opts_apps_list_scntinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_list_scntinstallable_flag_
+    }
+Opts.Apps.List.ScNtInstallable.Disable()
+    {
+    [[ $_obj_opts_apps_list_scntinstallable_enable_ != 'true' ]] && return
+    _obj_opts_apps_list_scntinstallable_enable_=false
+    [[ $_obj_opts_apps_list_scntinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_list_scntinstallable_enable_
+    }
+Opts.Apps.List.ScNtInstallable.DontLogChanges()
+    {
+    [[ $_obj_opts_apps_list_scntinstallable_changes_flag_ != 'true' ]] && return
+    _obj_opts_apps_list_scntinstallable_changes_flag_=false
+    }
+Opts.Apps.List.ScNtInstallable.Enable()
+    {
+    [[ $_obj_opts_apps_list_scntinstallable_enable_ = 'true' ]] && return
+    _obj_opts_apps_list_scntinstallable_enable_=true
+    [[ $_obj_opts_apps_list_scntinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_list_scntinstallable_enable_
+    }
+Opts.Apps.List.ScNtInstallable.Init()
+    {
+    _obj_opts_apps_list_scntinstallable_text_=''
+    _obj_opts_apps_list_scntinstallable_flag_=false
+    _obj_opts_apps_list_scntinstallable_changes_flag_=true
+    _obj_opts_apps_list_scntinstallable_enable_=false
+    }
+Opts.Apps.List.ScNtInstallable.IsDisabled()
+    {
+    [[ $_obj_opts_apps_list_scntinstallable_enable_ != 'true' ]]
+    }
+Opts.Apps.List.ScNtInstallable.IsEnabled()
+    {
+    [[ $_obj_opts_apps_list_scntinstallable_enable_ = 'true' ]]
+    }
+Opts.Apps.List.ScNtInstallable.IsNt()
+    {
+    [[ $_obj_opts_apps_list_scntinstallable_flag_ != 'true' ]]
+    }
+Opts.Apps.List.ScNtInstallable.IsSet()
+    {
+    [[ $_obj_opts_apps_list_scntinstallable_flag_ = 'true' ]]
+    }
+Opts.Apps.List.ScNtInstallable.LogChanges()
+    {
+    [[ $_obj_opts_apps_list_scntinstallable_changes_flag_ = 'true' ]] && return
+    _obj_opts_apps_list_scntinstallable_changes_flag_=true
+    }
+Opts.Apps.List.ScNtInstallable.Set()
+    {
+    [[ $_obj_opts_apps_list_scntinstallable_flag_ = 'true' ]] && return
+    _obj_opts_apps_list_scntinstallable_flag_=true
+    [[ $_obj_opts_apps_list_scntinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_list_scntinstallable_flag_
+    }
+Opts.Apps.List.ScNtInstallable.Text()
+    {
+    if [[ -n ${1:-} && $1 = "=" ]]; then
+        _obj_opts_apps_list_scntinstallable_text_=$2
+    else
+        echo -n "$_obj_opts_apps_list_scntinstallable_text_"
+    fi
+    }
+Opts.Apps.List.ScNtInstallable.Init
+
 Opts.Apps.List.ScNames.Clear()
     {
     [[ $_obj_opts_apps_list_scnames_flag_ != 'true' ]] && return
@@ -3481,140 +3615,6 @@ Opts.Apps.List.IsNtInstalled.Text()
     fi
     }
 Opts.Apps.List.IsNtInstalled.Init
-
-Opts.Apps.List.IsInstallable.Clear()
-    {
-    [[ $_obj_opts_apps_list_isinstallable_flag_ != 'true' ]] && return
-    _obj_opts_apps_list_isinstallable_flag_=false
-    [[ $_obj_opts_apps_list_isinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_list_isinstallable_flag_
-    }
-Opts.Apps.List.IsInstallable.Disable()
-    {
-    [[ $_obj_opts_apps_list_isinstallable_enable_ != 'true' ]] && return
-    _obj_opts_apps_list_isinstallable_enable_=false
-    [[ $_obj_opts_apps_list_isinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_list_isinstallable_enable_
-    }
-Opts.Apps.List.IsInstallable.DontLogChanges()
-    {
-    [[ $_obj_opts_apps_list_isinstallable_changes_flag_ != 'true' ]] && return
-    _obj_opts_apps_list_isinstallable_changes_flag_=false
-    }
-Opts.Apps.List.IsInstallable.Enable()
-    {
-    [[ $_obj_opts_apps_list_isinstallable_enable_ = 'true' ]] && return
-    _obj_opts_apps_list_isinstallable_enable_=true
-    [[ $_obj_opts_apps_list_isinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_list_isinstallable_enable_
-    }
-Opts.Apps.List.IsInstallable.Init()
-    {
-    _obj_opts_apps_list_isinstallable_text_=''
-    _obj_opts_apps_list_isinstallable_flag_=false
-    _obj_opts_apps_list_isinstallable_changes_flag_=true
-    _obj_opts_apps_list_isinstallable_enable_=false
-    }
-Opts.Apps.List.IsInstallable.IsDisabled()
-    {
-    [[ $_obj_opts_apps_list_isinstallable_enable_ != 'true' ]]
-    }
-Opts.Apps.List.IsInstallable.IsEnabled()
-    {
-    [[ $_obj_opts_apps_list_isinstallable_enable_ = 'true' ]]
-    }
-Opts.Apps.List.IsInstallable.IsNt()
-    {
-    [[ $_obj_opts_apps_list_isinstallable_flag_ != 'true' ]]
-    }
-Opts.Apps.List.IsInstallable.IsSet()
-    {
-    [[ $_obj_opts_apps_list_isinstallable_flag_ = 'true' ]]
-    }
-Opts.Apps.List.IsInstallable.LogChanges()
-    {
-    [[ $_obj_opts_apps_list_isinstallable_changes_flag_ = 'true' ]] && return
-    _obj_opts_apps_list_isinstallable_changes_flag_=true
-    }
-Opts.Apps.List.IsInstallable.Set()
-    {
-    [[ $_obj_opts_apps_list_isinstallable_flag_ = 'true' ]] && return
-    _obj_opts_apps_list_isinstallable_flag_=true
-    [[ $_obj_opts_apps_list_isinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_list_isinstallable_flag_
-    }
-Opts.Apps.List.IsInstallable.Text()
-    {
-    if [[ -n ${1:-} && $1 = "=" ]]; then
-        _obj_opts_apps_list_isinstallable_text_=$2
-    else
-        echo -n "$_obj_opts_apps_list_isinstallable_text_"
-    fi
-    }
-Opts.Apps.List.IsInstallable.Init
-
-Opts.Apps.List.IsNtInstallable.Clear()
-    {
-    [[ $_obj_opts_apps_list_isntinstallable_flag_ != 'true' ]] && return
-    _obj_opts_apps_list_isntinstallable_flag_=false
-    [[ $_obj_opts_apps_list_isntinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_list_isntinstallable_flag_
-    }
-Opts.Apps.List.IsNtInstallable.Disable()
-    {
-    [[ $_obj_opts_apps_list_isntinstallable_enable_ != 'true' ]] && return
-    _obj_opts_apps_list_isntinstallable_enable_=false
-    [[ $_obj_opts_apps_list_isntinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_list_isntinstallable_enable_
-    }
-Opts.Apps.List.IsNtInstallable.DontLogChanges()
-    {
-    [[ $_obj_opts_apps_list_isntinstallable_changes_flag_ != 'true' ]] && return
-    _obj_opts_apps_list_isntinstallable_changes_flag_=false
-    }
-Opts.Apps.List.IsNtInstallable.Enable()
-    {
-    [[ $_obj_opts_apps_list_isntinstallable_enable_ = 'true' ]] && return
-    _obj_opts_apps_list_isntinstallable_enable_=true
-    [[ $_obj_opts_apps_list_isntinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_list_isntinstallable_enable_
-    }
-Opts.Apps.List.IsNtInstallable.Init()
-    {
-    _obj_opts_apps_list_isntinstallable_text_=''
-    _obj_opts_apps_list_isntinstallable_flag_=false
-    _obj_opts_apps_list_isntinstallable_changes_flag_=true
-    _obj_opts_apps_list_isntinstallable_enable_=false
-    }
-Opts.Apps.List.IsNtInstallable.IsDisabled()
-    {
-    [[ $_obj_opts_apps_list_isntinstallable_enable_ != 'true' ]]
-    }
-Opts.Apps.List.IsNtInstallable.IsEnabled()
-    {
-    [[ $_obj_opts_apps_list_isntinstallable_enable_ = 'true' ]]
-    }
-Opts.Apps.List.IsNtInstallable.IsNt()
-    {
-    [[ $_obj_opts_apps_list_isntinstallable_flag_ != 'true' ]]
-    }
-Opts.Apps.List.IsNtInstallable.IsSet()
-    {
-    [[ $_obj_opts_apps_list_isntinstallable_flag_ = 'true' ]]
-    }
-Opts.Apps.List.IsNtInstallable.LogChanges()
-    {
-    [[ $_obj_opts_apps_list_isntinstallable_changes_flag_ = 'true' ]] && return
-    _obj_opts_apps_list_isntinstallable_changes_flag_=true
-    }
-Opts.Apps.List.IsNtInstallable.Set()
-    {
-    [[ $_obj_opts_apps_list_isntinstallable_flag_ = 'true' ]] && return
-    _obj_opts_apps_list_isntinstallable_flag_=true
-    [[ $_obj_opts_apps_list_isntinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_list_isntinstallable_flag_
-    }
-Opts.Apps.List.IsNtInstallable.Text()
-    {
-    if [[ -n ${1:-} && $1 = "=" ]]; then
-        _obj_opts_apps_list_isntinstallable_text_=$2
-    else
-        echo -n "$_obj_opts_apps_list_isntinstallable_text_"
-    fi
-    }
-Opts.Apps.List.IsNtInstallable.Init
 
 Opts.Apps.List.IsMissing.Clear()
     {
@@ -5893,6 +5893,743 @@ Opts.Apps.OpUpgrade.ScDependent.Text()
     fi
     }
 Opts.Apps.OpUpgrade.ScDependent.Init
+
+Opts.Apps.OpBackup.ScInstallable.Clear()
+    {
+    [[ $_obj_opts_apps_opbackup_scinstallable_flag_ != 'true' ]] && return
+    _obj_opts_apps_opbackup_scinstallable_flag_=false
+    [[ $_obj_opts_apps_opbackup_scinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opbackup_scinstallable_flag_
+    }
+Opts.Apps.OpBackup.ScInstallable.Disable()
+    {
+    [[ $_obj_opts_apps_opbackup_scinstallable_enable_ != 'true' ]] && return
+    _obj_opts_apps_opbackup_scinstallable_enable_=false
+    [[ $_obj_opts_apps_opbackup_scinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opbackup_scinstallable_enable_
+    }
+Opts.Apps.OpBackup.ScInstallable.DontLogChanges()
+    {
+    [[ $_obj_opts_apps_opbackup_scinstallable_changes_flag_ != 'true' ]] && return
+    _obj_opts_apps_opbackup_scinstallable_changes_flag_=false
+    }
+Opts.Apps.OpBackup.ScInstallable.Enable()
+    {
+    [[ $_obj_opts_apps_opbackup_scinstallable_enable_ = 'true' ]] && return
+    _obj_opts_apps_opbackup_scinstallable_enable_=true
+    [[ $_obj_opts_apps_opbackup_scinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opbackup_scinstallable_enable_
+    }
+Opts.Apps.OpBackup.ScInstallable.Init()
+    {
+    _obj_opts_apps_opbackup_scinstallable_text_=''
+    _obj_opts_apps_opbackup_scinstallable_flag_=false
+    _obj_opts_apps_opbackup_scinstallable_changes_flag_=true
+    _obj_opts_apps_opbackup_scinstallable_enable_=false
+    }
+Opts.Apps.OpBackup.ScInstallable.IsDisabled()
+    {
+    [[ $_obj_opts_apps_opbackup_scinstallable_enable_ != 'true' ]]
+    }
+Opts.Apps.OpBackup.ScInstallable.IsEnabled()
+    {
+    [[ $_obj_opts_apps_opbackup_scinstallable_enable_ = 'true' ]]
+    }
+Opts.Apps.OpBackup.ScInstallable.IsNt()
+    {
+    [[ $_obj_opts_apps_opbackup_scinstallable_flag_ != 'true' ]]
+    }
+Opts.Apps.OpBackup.ScInstallable.IsSet()
+    {
+    [[ $_obj_opts_apps_opbackup_scinstallable_flag_ = 'true' ]]
+    }
+Opts.Apps.OpBackup.ScInstallable.LogChanges()
+    {
+    [[ $_obj_opts_apps_opbackup_scinstallable_changes_flag_ = 'true' ]] && return
+    _obj_opts_apps_opbackup_scinstallable_changes_flag_=true
+    }
+Opts.Apps.OpBackup.ScInstallable.Set()
+    {
+    [[ $_obj_opts_apps_opbackup_scinstallable_flag_ = 'true' ]] && return
+    _obj_opts_apps_opbackup_scinstallable_flag_=true
+    [[ $_obj_opts_apps_opbackup_scinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opbackup_scinstallable_flag_
+    }
+Opts.Apps.OpBackup.ScInstallable.Text()
+    {
+    if [[ -n ${1:-} && $1 = "=" ]]; then
+        _obj_opts_apps_opbackup_scinstallable_text_=$2
+    else
+        echo -n "$_obj_opts_apps_opbackup_scinstallable_text_"
+    fi
+    }
+Opts.Apps.OpBackup.ScInstallable.Init
+
+Opts.Apps.OpDownload.ScInstallable.Clear()
+    {
+    [[ $_obj_opts_apps_opdownload_scinstallable_flag_ != 'true' ]] && return
+    _obj_opts_apps_opdownload_scinstallable_flag_=false
+    [[ $_obj_opts_apps_opdownload_scinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opdownload_scinstallable_flag_
+    }
+Opts.Apps.OpDownload.ScInstallable.Disable()
+    {
+    [[ $_obj_opts_apps_opdownload_scinstallable_enable_ != 'true' ]] && return
+    _obj_opts_apps_opdownload_scinstallable_enable_=false
+    [[ $_obj_opts_apps_opdownload_scinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opdownload_scinstallable_enable_
+    }
+Opts.Apps.OpDownload.ScInstallable.DontLogChanges()
+    {
+    [[ $_obj_opts_apps_opdownload_scinstallable_changes_flag_ != 'true' ]] && return
+    _obj_opts_apps_opdownload_scinstallable_changes_flag_=false
+    }
+Opts.Apps.OpDownload.ScInstallable.Enable()
+    {
+    [[ $_obj_opts_apps_opdownload_scinstallable_enable_ = 'true' ]] && return
+    _obj_opts_apps_opdownload_scinstallable_enable_=true
+    [[ $_obj_opts_apps_opdownload_scinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opdownload_scinstallable_enable_
+    }
+Opts.Apps.OpDownload.ScInstallable.Init()
+    {
+    _obj_opts_apps_opdownload_scinstallable_text_=''
+    _obj_opts_apps_opdownload_scinstallable_flag_=false
+    _obj_opts_apps_opdownload_scinstallable_changes_flag_=true
+    _obj_opts_apps_opdownload_scinstallable_enable_=false
+    }
+Opts.Apps.OpDownload.ScInstallable.IsDisabled()
+    {
+    [[ $_obj_opts_apps_opdownload_scinstallable_enable_ != 'true' ]]
+    }
+Opts.Apps.OpDownload.ScInstallable.IsEnabled()
+    {
+    [[ $_obj_opts_apps_opdownload_scinstallable_enable_ = 'true' ]]
+    }
+Opts.Apps.OpDownload.ScInstallable.IsNt()
+    {
+    [[ $_obj_opts_apps_opdownload_scinstallable_flag_ != 'true' ]]
+    }
+Opts.Apps.OpDownload.ScInstallable.IsSet()
+    {
+    [[ $_obj_opts_apps_opdownload_scinstallable_flag_ = 'true' ]]
+    }
+Opts.Apps.OpDownload.ScInstallable.LogChanges()
+    {
+    [[ $_obj_opts_apps_opdownload_scinstallable_changes_flag_ = 'true' ]] && return
+    _obj_opts_apps_opdownload_scinstallable_changes_flag_=true
+    }
+Opts.Apps.OpDownload.ScInstallable.Set()
+    {
+    [[ $_obj_opts_apps_opdownload_scinstallable_flag_ = 'true' ]] && return
+    _obj_opts_apps_opdownload_scinstallable_flag_=true
+    [[ $_obj_opts_apps_opdownload_scinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opdownload_scinstallable_flag_
+    }
+Opts.Apps.OpDownload.ScInstallable.Text()
+    {
+    if [[ -n ${1:-} && $1 = "=" ]]; then
+        _obj_opts_apps_opdownload_scinstallable_text_=$2
+    else
+        echo -n "$_obj_opts_apps_opdownload_scinstallable_text_"
+    fi
+    }
+Opts.Apps.OpDownload.ScInstallable.Init
+
+Opts.Apps.OpInstall.ScInstallable.Clear()
+    {
+    [[ $_obj_opts_apps_opinstall_scinstallable_flag_ != 'true' ]] && return
+    _obj_opts_apps_opinstall_scinstallable_flag_=false
+    [[ $_obj_opts_apps_opinstall_scinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opinstall_scinstallable_flag_
+    }
+Opts.Apps.OpInstall.ScInstallable.Disable()
+    {
+    [[ $_obj_opts_apps_opinstall_scinstallable_enable_ != 'true' ]] && return
+    _obj_opts_apps_opinstall_scinstallable_enable_=false
+    [[ $_obj_opts_apps_opinstall_scinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opinstall_scinstallable_enable_
+    }
+Opts.Apps.OpInstall.ScInstallable.DontLogChanges()
+    {
+    [[ $_obj_opts_apps_opinstall_scinstallable_changes_flag_ != 'true' ]] && return
+    _obj_opts_apps_opinstall_scinstallable_changes_flag_=false
+    }
+Opts.Apps.OpInstall.ScInstallable.Enable()
+    {
+    [[ $_obj_opts_apps_opinstall_scinstallable_enable_ = 'true' ]] && return
+    _obj_opts_apps_opinstall_scinstallable_enable_=true
+    [[ $_obj_opts_apps_opinstall_scinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opinstall_scinstallable_enable_
+    }
+Opts.Apps.OpInstall.ScInstallable.Init()
+    {
+    _obj_opts_apps_opinstall_scinstallable_text_=''
+    _obj_opts_apps_opinstall_scinstallable_flag_=false
+    _obj_opts_apps_opinstall_scinstallable_changes_flag_=true
+    _obj_opts_apps_opinstall_scinstallable_enable_=false
+    }
+Opts.Apps.OpInstall.ScInstallable.IsDisabled()
+    {
+    [[ $_obj_opts_apps_opinstall_scinstallable_enable_ != 'true' ]]
+    }
+Opts.Apps.OpInstall.ScInstallable.IsEnabled()
+    {
+    [[ $_obj_opts_apps_opinstall_scinstallable_enable_ = 'true' ]]
+    }
+Opts.Apps.OpInstall.ScInstallable.IsNt()
+    {
+    [[ $_obj_opts_apps_opinstall_scinstallable_flag_ != 'true' ]]
+    }
+Opts.Apps.OpInstall.ScInstallable.IsSet()
+    {
+    [[ $_obj_opts_apps_opinstall_scinstallable_flag_ = 'true' ]]
+    }
+Opts.Apps.OpInstall.ScInstallable.LogChanges()
+    {
+    [[ $_obj_opts_apps_opinstall_scinstallable_changes_flag_ = 'true' ]] && return
+    _obj_opts_apps_opinstall_scinstallable_changes_flag_=true
+    }
+Opts.Apps.OpInstall.ScInstallable.Set()
+    {
+    [[ $_obj_opts_apps_opinstall_scinstallable_flag_ = 'true' ]] && return
+    _obj_opts_apps_opinstall_scinstallable_flag_=true
+    [[ $_obj_opts_apps_opinstall_scinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opinstall_scinstallable_flag_
+    }
+Opts.Apps.OpInstall.ScInstallable.Text()
+    {
+    if [[ -n ${1:-} && $1 = "=" ]]; then
+        _obj_opts_apps_opinstall_scinstallable_text_=$2
+    else
+        echo -n "$_obj_opts_apps_opinstall_scinstallable_text_"
+    fi
+    }
+Opts.Apps.OpInstall.ScInstallable.Init
+
+Opts.Apps.OpRebuild.ScInstallable.Clear()
+    {
+    [[ $_obj_opts_apps_oprebuild_scinstallable_flag_ != 'true' ]] && return
+    _obj_opts_apps_oprebuild_scinstallable_flag_=false
+    [[ $_obj_opts_apps_oprebuild_scinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_oprebuild_scinstallable_flag_
+    }
+Opts.Apps.OpRebuild.ScInstallable.Disable()
+    {
+    [[ $_obj_opts_apps_oprebuild_scinstallable_enable_ != 'true' ]] && return
+    _obj_opts_apps_oprebuild_scinstallable_enable_=false
+    [[ $_obj_opts_apps_oprebuild_scinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_oprebuild_scinstallable_enable_
+    }
+Opts.Apps.OpRebuild.ScInstallable.DontLogChanges()
+    {
+    [[ $_obj_opts_apps_oprebuild_scinstallable_changes_flag_ != 'true' ]] && return
+    _obj_opts_apps_oprebuild_scinstallable_changes_flag_=false
+    }
+Opts.Apps.OpRebuild.ScInstallable.Enable()
+    {
+    [[ $_obj_opts_apps_oprebuild_scinstallable_enable_ = 'true' ]] && return
+    _obj_opts_apps_oprebuild_scinstallable_enable_=true
+    [[ $_obj_opts_apps_oprebuild_scinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_oprebuild_scinstallable_enable_
+    }
+Opts.Apps.OpRebuild.ScInstallable.Init()
+    {
+    _obj_opts_apps_oprebuild_scinstallable_text_=''
+    _obj_opts_apps_oprebuild_scinstallable_flag_=false
+    _obj_opts_apps_oprebuild_scinstallable_changes_flag_=true
+    _obj_opts_apps_oprebuild_scinstallable_enable_=false
+    }
+Opts.Apps.OpRebuild.ScInstallable.IsDisabled()
+    {
+    [[ $_obj_opts_apps_oprebuild_scinstallable_enable_ != 'true' ]]
+    }
+Opts.Apps.OpRebuild.ScInstallable.IsEnabled()
+    {
+    [[ $_obj_opts_apps_oprebuild_scinstallable_enable_ = 'true' ]]
+    }
+Opts.Apps.OpRebuild.ScInstallable.IsNt()
+    {
+    [[ $_obj_opts_apps_oprebuild_scinstallable_flag_ != 'true' ]]
+    }
+Opts.Apps.OpRebuild.ScInstallable.IsSet()
+    {
+    [[ $_obj_opts_apps_oprebuild_scinstallable_flag_ = 'true' ]]
+    }
+Opts.Apps.OpRebuild.ScInstallable.LogChanges()
+    {
+    [[ $_obj_opts_apps_oprebuild_scinstallable_changes_flag_ = 'true' ]] && return
+    _obj_opts_apps_oprebuild_scinstallable_changes_flag_=true
+    }
+Opts.Apps.OpRebuild.ScInstallable.Set()
+    {
+    [[ $_obj_opts_apps_oprebuild_scinstallable_flag_ = 'true' ]] && return
+    _obj_opts_apps_oprebuild_scinstallable_flag_=true
+    [[ $_obj_opts_apps_oprebuild_scinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_oprebuild_scinstallable_flag_
+    }
+Opts.Apps.OpRebuild.ScInstallable.Text()
+    {
+    if [[ -n ${1:-} && $1 = "=" ]]; then
+        _obj_opts_apps_oprebuild_scinstallable_text_=$2
+    else
+        echo -n "$_obj_opts_apps_oprebuild_scinstallable_text_"
+    fi
+    }
+Opts.Apps.OpRebuild.ScInstallable.Init
+
+Opts.Apps.OpReinstall.ScInstallable.Clear()
+    {
+    [[ $_obj_opts_apps_opreinstall_scinstallable_flag_ != 'true' ]] && return
+    _obj_opts_apps_opreinstall_scinstallable_flag_=false
+    [[ $_obj_opts_apps_opreinstall_scinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opreinstall_scinstallable_flag_
+    }
+Opts.Apps.OpReinstall.ScInstallable.Disable()
+    {
+    [[ $_obj_opts_apps_opreinstall_scinstallable_enable_ != 'true' ]] && return
+    _obj_opts_apps_opreinstall_scinstallable_enable_=false
+    [[ $_obj_opts_apps_opreinstall_scinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opreinstall_scinstallable_enable_
+    }
+Opts.Apps.OpReinstall.ScInstallable.DontLogChanges()
+    {
+    [[ $_obj_opts_apps_opreinstall_scinstallable_changes_flag_ != 'true' ]] && return
+    _obj_opts_apps_opreinstall_scinstallable_changes_flag_=false
+    }
+Opts.Apps.OpReinstall.ScInstallable.Enable()
+    {
+    [[ $_obj_opts_apps_opreinstall_scinstallable_enable_ = 'true' ]] && return
+    _obj_opts_apps_opreinstall_scinstallable_enable_=true
+    [[ $_obj_opts_apps_opreinstall_scinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opreinstall_scinstallable_enable_
+    }
+Opts.Apps.OpReinstall.ScInstallable.Init()
+    {
+    _obj_opts_apps_opreinstall_scinstallable_text_=''
+    _obj_opts_apps_opreinstall_scinstallable_flag_=false
+    _obj_opts_apps_opreinstall_scinstallable_changes_flag_=true
+    _obj_opts_apps_opreinstall_scinstallable_enable_=false
+    }
+Opts.Apps.OpReinstall.ScInstallable.IsDisabled()
+    {
+    [[ $_obj_opts_apps_opreinstall_scinstallable_enable_ != 'true' ]]
+    }
+Opts.Apps.OpReinstall.ScInstallable.IsEnabled()
+    {
+    [[ $_obj_opts_apps_opreinstall_scinstallable_enable_ = 'true' ]]
+    }
+Opts.Apps.OpReinstall.ScInstallable.IsNt()
+    {
+    [[ $_obj_opts_apps_opreinstall_scinstallable_flag_ != 'true' ]]
+    }
+Opts.Apps.OpReinstall.ScInstallable.IsSet()
+    {
+    [[ $_obj_opts_apps_opreinstall_scinstallable_flag_ = 'true' ]]
+    }
+Opts.Apps.OpReinstall.ScInstallable.LogChanges()
+    {
+    [[ $_obj_opts_apps_opreinstall_scinstallable_changes_flag_ = 'true' ]] && return
+    _obj_opts_apps_opreinstall_scinstallable_changes_flag_=true
+    }
+Opts.Apps.OpReinstall.ScInstallable.Set()
+    {
+    [[ $_obj_opts_apps_opreinstall_scinstallable_flag_ = 'true' ]] && return
+    _obj_opts_apps_opreinstall_scinstallable_flag_=true
+    [[ $_obj_opts_apps_opreinstall_scinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opreinstall_scinstallable_flag_
+    }
+Opts.Apps.OpReinstall.ScInstallable.Text()
+    {
+    if [[ -n ${1:-} && $1 = "=" ]]; then
+        _obj_opts_apps_opreinstall_scinstallable_text_=$2
+    else
+        echo -n "$_obj_opts_apps_opreinstall_scinstallable_text_"
+    fi
+    }
+Opts.Apps.OpReinstall.ScInstallable.Init
+
+Opts.Apps.OpRestart.ScInstallable.Clear()
+    {
+    [[ $_obj_opts_apps_oprestart_scinstallable_flag_ != 'true' ]] && return
+    _obj_opts_apps_oprestart_scinstallable_flag_=false
+    [[ $_obj_opts_apps_oprestart_scinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_oprestart_scinstallable_flag_
+    }
+Opts.Apps.OpRestart.ScInstallable.Disable()
+    {
+    [[ $_obj_opts_apps_oprestart_scinstallable_enable_ != 'true' ]] && return
+    _obj_opts_apps_oprestart_scinstallable_enable_=false
+    [[ $_obj_opts_apps_oprestart_scinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_oprestart_scinstallable_enable_
+    }
+Opts.Apps.OpRestart.ScInstallable.DontLogChanges()
+    {
+    [[ $_obj_opts_apps_oprestart_scinstallable_changes_flag_ != 'true' ]] && return
+    _obj_opts_apps_oprestart_scinstallable_changes_flag_=false
+    }
+Opts.Apps.OpRestart.ScInstallable.Enable()
+    {
+    [[ $_obj_opts_apps_oprestart_scinstallable_enable_ = 'true' ]] && return
+    _obj_opts_apps_oprestart_scinstallable_enable_=true
+    [[ $_obj_opts_apps_oprestart_scinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_oprestart_scinstallable_enable_
+    }
+Opts.Apps.OpRestart.ScInstallable.Init()
+    {
+    _obj_opts_apps_oprestart_scinstallable_text_=''
+    _obj_opts_apps_oprestart_scinstallable_flag_=false
+    _obj_opts_apps_oprestart_scinstallable_changes_flag_=true
+    _obj_opts_apps_oprestart_scinstallable_enable_=false
+    }
+Opts.Apps.OpRestart.ScInstallable.IsDisabled()
+    {
+    [[ $_obj_opts_apps_oprestart_scinstallable_enable_ != 'true' ]]
+    }
+Opts.Apps.OpRestart.ScInstallable.IsEnabled()
+    {
+    [[ $_obj_opts_apps_oprestart_scinstallable_enable_ = 'true' ]]
+    }
+Opts.Apps.OpRestart.ScInstallable.IsNt()
+    {
+    [[ $_obj_opts_apps_oprestart_scinstallable_flag_ != 'true' ]]
+    }
+Opts.Apps.OpRestart.ScInstallable.IsSet()
+    {
+    [[ $_obj_opts_apps_oprestart_scinstallable_flag_ = 'true' ]]
+    }
+Opts.Apps.OpRestart.ScInstallable.LogChanges()
+    {
+    [[ $_obj_opts_apps_oprestart_scinstallable_changes_flag_ = 'true' ]] && return
+    _obj_opts_apps_oprestart_scinstallable_changes_flag_=true
+    }
+Opts.Apps.OpRestart.ScInstallable.Set()
+    {
+    [[ $_obj_opts_apps_oprestart_scinstallable_flag_ = 'true' ]] && return
+    _obj_opts_apps_oprestart_scinstallable_flag_=true
+    [[ $_obj_opts_apps_oprestart_scinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_oprestart_scinstallable_flag_
+    }
+Opts.Apps.OpRestart.ScInstallable.Text()
+    {
+    if [[ -n ${1:-} && $1 = "=" ]]; then
+        _obj_opts_apps_oprestart_scinstallable_text_=$2
+    else
+        echo -n "$_obj_opts_apps_oprestart_scinstallable_text_"
+    fi
+    }
+Opts.Apps.OpRestart.ScInstallable.Init
+
+Opts.Apps.OpRestore.ScInstallable.Clear()
+    {
+    [[ $_obj_opts_apps_oprestore_scinstallable_flag_ != 'true' ]] && return
+    _obj_opts_apps_oprestore_scinstallable_flag_=false
+    [[ $_obj_opts_apps_oprestore_scinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_oprestore_scinstallable_flag_
+    }
+Opts.Apps.OpRestore.ScInstallable.Disable()
+    {
+    [[ $_obj_opts_apps_oprestore_scinstallable_enable_ != 'true' ]] && return
+    _obj_opts_apps_oprestore_scinstallable_enable_=false
+    [[ $_obj_opts_apps_oprestore_scinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_oprestore_scinstallable_enable_
+    }
+Opts.Apps.OpRestore.ScInstallable.DontLogChanges()
+    {
+    [[ $_obj_opts_apps_oprestore_scinstallable_changes_flag_ != 'true' ]] && return
+    _obj_opts_apps_oprestore_scinstallable_changes_flag_=false
+    }
+Opts.Apps.OpRestore.ScInstallable.Enable()
+    {
+    [[ $_obj_opts_apps_oprestore_scinstallable_enable_ = 'true' ]] && return
+    _obj_opts_apps_oprestore_scinstallable_enable_=true
+    [[ $_obj_opts_apps_oprestore_scinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_oprestore_scinstallable_enable_
+    }
+Opts.Apps.OpRestore.ScInstallable.Init()
+    {
+    _obj_opts_apps_oprestore_scinstallable_text_=''
+    _obj_opts_apps_oprestore_scinstallable_flag_=false
+    _obj_opts_apps_oprestore_scinstallable_changes_flag_=true
+    _obj_opts_apps_oprestore_scinstallable_enable_=false
+    }
+Opts.Apps.OpRestore.ScInstallable.IsDisabled()
+    {
+    [[ $_obj_opts_apps_oprestore_scinstallable_enable_ != 'true' ]]
+    }
+Opts.Apps.OpRestore.ScInstallable.IsEnabled()
+    {
+    [[ $_obj_opts_apps_oprestore_scinstallable_enable_ = 'true' ]]
+    }
+Opts.Apps.OpRestore.ScInstallable.IsNt()
+    {
+    [[ $_obj_opts_apps_oprestore_scinstallable_flag_ != 'true' ]]
+    }
+Opts.Apps.OpRestore.ScInstallable.IsSet()
+    {
+    [[ $_obj_opts_apps_oprestore_scinstallable_flag_ = 'true' ]]
+    }
+Opts.Apps.OpRestore.ScInstallable.LogChanges()
+    {
+    [[ $_obj_opts_apps_oprestore_scinstallable_changes_flag_ = 'true' ]] && return
+    _obj_opts_apps_oprestore_scinstallable_changes_flag_=true
+    }
+Opts.Apps.OpRestore.ScInstallable.Set()
+    {
+    [[ $_obj_opts_apps_oprestore_scinstallable_flag_ = 'true' ]] && return
+    _obj_opts_apps_oprestore_scinstallable_flag_=true
+    [[ $_obj_opts_apps_oprestore_scinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_oprestore_scinstallable_flag_
+    }
+Opts.Apps.OpRestore.ScInstallable.Text()
+    {
+    if [[ -n ${1:-} && $1 = "=" ]]; then
+        _obj_opts_apps_oprestore_scinstallable_text_=$2
+    else
+        echo -n "$_obj_opts_apps_oprestore_scinstallable_text_"
+    fi
+    }
+Opts.Apps.OpRestore.ScInstallable.Init
+
+Opts.Apps.OpStart.ScInstallable.Clear()
+    {
+    [[ $_obj_opts_apps_opstart_scinstallable_flag_ != 'true' ]] && return
+    _obj_opts_apps_opstart_scinstallable_flag_=false
+    [[ $_obj_opts_apps_opstart_scinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opstart_scinstallable_flag_
+    }
+Opts.Apps.OpStart.ScInstallable.Disable()
+    {
+    [[ $_obj_opts_apps_opstart_scinstallable_enable_ != 'true' ]] && return
+    _obj_opts_apps_opstart_scinstallable_enable_=false
+    [[ $_obj_opts_apps_opstart_scinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opstart_scinstallable_enable_
+    }
+Opts.Apps.OpStart.ScInstallable.DontLogChanges()
+    {
+    [[ $_obj_opts_apps_opstart_scinstallable_changes_flag_ != 'true' ]] && return
+    _obj_opts_apps_opstart_scinstallable_changes_flag_=false
+    }
+Opts.Apps.OpStart.ScInstallable.Enable()
+    {
+    [[ $_obj_opts_apps_opstart_scinstallable_enable_ = 'true' ]] && return
+    _obj_opts_apps_opstart_scinstallable_enable_=true
+    [[ $_obj_opts_apps_opstart_scinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opstart_scinstallable_enable_
+    }
+Opts.Apps.OpStart.ScInstallable.Init()
+    {
+    _obj_opts_apps_opstart_scinstallable_text_=''
+    _obj_opts_apps_opstart_scinstallable_flag_=false
+    _obj_opts_apps_opstart_scinstallable_changes_flag_=true
+    _obj_opts_apps_opstart_scinstallable_enable_=false
+    }
+Opts.Apps.OpStart.ScInstallable.IsDisabled()
+    {
+    [[ $_obj_opts_apps_opstart_scinstallable_enable_ != 'true' ]]
+    }
+Opts.Apps.OpStart.ScInstallable.IsEnabled()
+    {
+    [[ $_obj_opts_apps_opstart_scinstallable_enable_ = 'true' ]]
+    }
+Opts.Apps.OpStart.ScInstallable.IsNt()
+    {
+    [[ $_obj_opts_apps_opstart_scinstallable_flag_ != 'true' ]]
+    }
+Opts.Apps.OpStart.ScInstallable.IsSet()
+    {
+    [[ $_obj_opts_apps_opstart_scinstallable_flag_ = 'true' ]]
+    }
+Opts.Apps.OpStart.ScInstallable.LogChanges()
+    {
+    [[ $_obj_opts_apps_opstart_scinstallable_changes_flag_ = 'true' ]] && return
+    _obj_opts_apps_opstart_scinstallable_changes_flag_=true
+    }
+Opts.Apps.OpStart.ScInstallable.Set()
+    {
+    [[ $_obj_opts_apps_opstart_scinstallable_flag_ = 'true' ]] && return
+    _obj_opts_apps_opstart_scinstallable_flag_=true
+    [[ $_obj_opts_apps_opstart_scinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opstart_scinstallable_flag_
+    }
+Opts.Apps.OpStart.ScInstallable.Text()
+    {
+    if [[ -n ${1:-} && $1 = "=" ]]; then
+        _obj_opts_apps_opstart_scinstallable_text_=$2
+    else
+        echo -n "$_obj_opts_apps_opstart_scinstallable_text_"
+    fi
+    }
+Opts.Apps.OpStart.ScInstallable.Init
+
+Opts.Apps.OpStop.ScInstallable.Clear()
+    {
+    [[ $_obj_opts_apps_opstop_scinstallable_flag_ != 'true' ]] && return
+    _obj_opts_apps_opstop_scinstallable_flag_=false
+    [[ $_obj_opts_apps_opstop_scinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opstop_scinstallable_flag_
+    }
+Opts.Apps.OpStop.ScInstallable.Disable()
+    {
+    [[ $_obj_opts_apps_opstop_scinstallable_enable_ != 'true' ]] && return
+    _obj_opts_apps_opstop_scinstallable_enable_=false
+    [[ $_obj_opts_apps_opstop_scinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opstop_scinstallable_enable_
+    }
+Opts.Apps.OpStop.ScInstallable.DontLogChanges()
+    {
+    [[ $_obj_opts_apps_opstop_scinstallable_changes_flag_ != 'true' ]] && return
+    _obj_opts_apps_opstop_scinstallable_changes_flag_=false
+    }
+Opts.Apps.OpStop.ScInstallable.Enable()
+    {
+    [[ $_obj_opts_apps_opstop_scinstallable_enable_ = 'true' ]] && return
+    _obj_opts_apps_opstop_scinstallable_enable_=true
+    [[ $_obj_opts_apps_opstop_scinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opstop_scinstallable_enable_
+    }
+Opts.Apps.OpStop.ScInstallable.Init()
+    {
+    _obj_opts_apps_opstop_scinstallable_text_=''
+    _obj_opts_apps_opstop_scinstallable_flag_=false
+    _obj_opts_apps_opstop_scinstallable_changes_flag_=true
+    _obj_opts_apps_opstop_scinstallable_enable_=false
+    }
+Opts.Apps.OpStop.ScInstallable.IsDisabled()
+    {
+    [[ $_obj_opts_apps_opstop_scinstallable_enable_ != 'true' ]]
+    }
+Opts.Apps.OpStop.ScInstallable.IsEnabled()
+    {
+    [[ $_obj_opts_apps_opstop_scinstallable_enable_ = 'true' ]]
+    }
+Opts.Apps.OpStop.ScInstallable.IsNt()
+    {
+    [[ $_obj_opts_apps_opstop_scinstallable_flag_ != 'true' ]]
+    }
+Opts.Apps.OpStop.ScInstallable.IsSet()
+    {
+    [[ $_obj_opts_apps_opstop_scinstallable_flag_ = 'true' ]]
+    }
+Opts.Apps.OpStop.ScInstallable.LogChanges()
+    {
+    [[ $_obj_opts_apps_opstop_scinstallable_changes_flag_ = 'true' ]] && return
+    _obj_opts_apps_opstop_scinstallable_changes_flag_=true
+    }
+Opts.Apps.OpStop.ScInstallable.Set()
+    {
+    [[ $_obj_opts_apps_opstop_scinstallable_flag_ = 'true' ]] && return
+    _obj_opts_apps_opstop_scinstallable_flag_=true
+    [[ $_obj_opts_apps_opstop_scinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opstop_scinstallable_flag_
+    }
+Opts.Apps.OpStop.ScInstallable.Text()
+    {
+    if [[ -n ${1:-} && $1 = "=" ]]; then
+        _obj_opts_apps_opstop_scinstallable_text_=$2
+    else
+        echo -n "$_obj_opts_apps_opstop_scinstallable_text_"
+    fi
+    }
+Opts.Apps.OpStop.ScInstallable.Init
+
+Opts.Apps.OpUninstall.ScInstallable.Clear()
+    {
+    [[ $_obj_opts_apps_opuninstall_scinstallable_flag_ != 'true' ]] && return
+    _obj_opts_apps_opuninstall_scinstallable_flag_=false
+    [[ $_obj_opts_apps_opuninstall_scinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opuninstall_scinstallable_flag_
+    }
+Opts.Apps.OpUninstall.ScInstallable.Disable()
+    {
+    [[ $_obj_opts_apps_opuninstall_scinstallable_enable_ != 'true' ]] && return
+    _obj_opts_apps_opuninstall_scinstallable_enable_=false
+    [[ $_obj_opts_apps_opuninstall_scinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opuninstall_scinstallable_enable_
+    }
+Opts.Apps.OpUninstall.ScInstallable.DontLogChanges()
+    {
+    [[ $_obj_opts_apps_opuninstall_scinstallable_changes_flag_ != 'true' ]] && return
+    _obj_opts_apps_opuninstall_scinstallable_changes_flag_=false
+    }
+Opts.Apps.OpUninstall.ScInstallable.Enable()
+    {
+    [[ $_obj_opts_apps_opuninstall_scinstallable_enable_ = 'true' ]] && return
+    _obj_opts_apps_opuninstall_scinstallable_enable_=true
+    [[ $_obj_opts_apps_opuninstall_scinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opuninstall_scinstallable_enable_
+    }
+Opts.Apps.OpUninstall.ScInstallable.Init()
+    {
+    _obj_opts_apps_opuninstall_scinstallable_text_=''
+    _obj_opts_apps_opuninstall_scinstallable_flag_=false
+    _obj_opts_apps_opuninstall_scinstallable_changes_flag_=true
+    _obj_opts_apps_opuninstall_scinstallable_enable_=false
+    }
+Opts.Apps.OpUninstall.ScInstallable.IsDisabled()
+    {
+    [[ $_obj_opts_apps_opuninstall_scinstallable_enable_ != 'true' ]]
+    }
+Opts.Apps.OpUninstall.ScInstallable.IsEnabled()
+    {
+    [[ $_obj_opts_apps_opuninstall_scinstallable_enable_ = 'true' ]]
+    }
+Opts.Apps.OpUninstall.ScInstallable.IsNt()
+    {
+    [[ $_obj_opts_apps_opuninstall_scinstallable_flag_ != 'true' ]]
+    }
+Opts.Apps.OpUninstall.ScInstallable.IsSet()
+    {
+    [[ $_obj_opts_apps_opuninstall_scinstallable_flag_ = 'true' ]]
+    }
+Opts.Apps.OpUninstall.ScInstallable.LogChanges()
+    {
+    [[ $_obj_opts_apps_opuninstall_scinstallable_changes_flag_ = 'true' ]] && return
+    _obj_opts_apps_opuninstall_scinstallable_changes_flag_=true
+    }
+Opts.Apps.OpUninstall.ScInstallable.Set()
+    {
+    [[ $_obj_opts_apps_opuninstall_scinstallable_flag_ = 'true' ]] && return
+    _obj_opts_apps_opuninstall_scinstallable_flag_=true
+    [[ $_obj_opts_apps_opuninstall_scinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opuninstall_scinstallable_flag_
+    }
+Opts.Apps.OpUninstall.ScInstallable.Text()
+    {
+    if [[ -n ${1:-} && $1 = "=" ]]; then
+        _obj_opts_apps_opuninstall_scinstallable_text_=$2
+    else
+        echo -n "$_obj_opts_apps_opuninstall_scinstallable_text_"
+    fi
+    }
+Opts.Apps.OpUninstall.ScInstallable.Init
+
+Opts.Apps.OpUpgrade.ScInstallable.Clear()
+    {
+    [[ $_obj_opts_apps_opupgrade_scinstallable_flag_ != 'true' ]] && return
+    _obj_opts_apps_opupgrade_scinstallable_flag_=false
+    [[ $_obj_opts_apps_opupgrade_scinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opupgrade_scinstallable_flag_
+    }
+Opts.Apps.OpUpgrade.ScInstallable.Disable()
+    {
+    [[ $_obj_opts_apps_opupgrade_scinstallable_enable_ != 'true' ]] && return
+    _obj_opts_apps_opupgrade_scinstallable_enable_=false
+    [[ $_obj_opts_apps_opupgrade_scinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opupgrade_scinstallable_enable_
+    }
+Opts.Apps.OpUpgrade.ScInstallable.DontLogChanges()
+    {
+    [[ $_obj_opts_apps_opupgrade_scinstallable_changes_flag_ != 'true' ]] && return
+    _obj_opts_apps_opupgrade_scinstallable_changes_flag_=false
+    }
+Opts.Apps.OpUpgrade.ScInstallable.Enable()
+    {
+    [[ $_obj_opts_apps_opupgrade_scinstallable_enable_ = 'true' ]] && return
+    _obj_opts_apps_opupgrade_scinstallable_enable_=true
+    [[ $_obj_opts_apps_opupgrade_scinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opupgrade_scinstallable_enable_
+    }
+Opts.Apps.OpUpgrade.ScInstallable.Init()
+    {
+    _obj_opts_apps_opupgrade_scinstallable_text_=''
+    _obj_opts_apps_opupgrade_scinstallable_flag_=false
+    _obj_opts_apps_opupgrade_scinstallable_changes_flag_=true
+    _obj_opts_apps_opupgrade_scinstallable_enable_=false
+    }
+Opts.Apps.OpUpgrade.ScInstallable.IsDisabled()
+    {
+    [[ $_obj_opts_apps_opupgrade_scinstallable_enable_ != 'true' ]]
+    }
+Opts.Apps.OpUpgrade.ScInstallable.IsEnabled()
+    {
+    [[ $_obj_opts_apps_opupgrade_scinstallable_enable_ = 'true' ]]
+    }
+Opts.Apps.OpUpgrade.ScInstallable.IsNt()
+    {
+    [[ $_obj_opts_apps_opupgrade_scinstallable_flag_ != 'true' ]]
+    }
+Opts.Apps.OpUpgrade.ScInstallable.IsSet()
+    {
+    [[ $_obj_opts_apps_opupgrade_scinstallable_flag_ = 'true' ]]
+    }
+Opts.Apps.OpUpgrade.ScInstallable.LogChanges()
+    {
+    [[ $_obj_opts_apps_opupgrade_scinstallable_changes_flag_ = 'true' ]] && return
+    _obj_opts_apps_opupgrade_scinstallable_changes_flag_=true
+    }
+Opts.Apps.OpUpgrade.ScInstallable.Set()
+    {
+    [[ $_obj_opts_apps_opupgrade_scinstallable_flag_ = 'true' ]] && return
+    _obj_opts_apps_opupgrade_scinstallable_flag_=true
+    [[ $_obj_opts_apps_opupgrade_scinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opupgrade_scinstallable_flag_
+    }
+Opts.Apps.OpUpgrade.ScInstallable.Text()
+    {
+    if [[ -n ${1:-} && $1 = "=" ]]; then
+        _obj_opts_apps_opupgrade_scinstallable_text_=$2
+    else
+        echo -n "$_obj_opts_apps_opupgrade_scinstallable_text_"
+    fi
+    }
+Opts.Apps.OpUpgrade.ScInstallable.Init
 
 Opts.Apps.OpBackup.ScNames.Clear()
     {
@@ -14000,1480 +14737,6 @@ Opts.Apps.OpUpgrade.IsNtInstalled.Text()
     fi
     }
 Opts.Apps.OpUpgrade.IsNtInstalled.Init
-
-Opts.Apps.OpBackup.IsInstallable.Clear()
-    {
-    [[ $_obj_opts_apps_opbackup_isinstallable_flag_ != 'true' ]] && return
-    _obj_opts_apps_opbackup_isinstallable_flag_=false
-    [[ $_obj_opts_apps_opbackup_isinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opbackup_isinstallable_flag_
-    }
-Opts.Apps.OpBackup.IsInstallable.Disable()
-    {
-    [[ $_obj_opts_apps_opbackup_isinstallable_enable_ != 'true' ]] && return
-    _obj_opts_apps_opbackup_isinstallable_enable_=false
-    [[ $_obj_opts_apps_opbackup_isinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opbackup_isinstallable_enable_
-    }
-Opts.Apps.OpBackup.IsInstallable.DontLogChanges()
-    {
-    [[ $_obj_opts_apps_opbackup_isinstallable_changes_flag_ != 'true' ]] && return
-    _obj_opts_apps_opbackup_isinstallable_changes_flag_=false
-    }
-Opts.Apps.OpBackup.IsInstallable.Enable()
-    {
-    [[ $_obj_opts_apps_opbackup_isinstallable_enable_ = 'true' ]] && return
-    _obj_opts_apps_opbackup_isinstallable_enable_=true
-    [[ $_obj_opts_apps_opbackup_isinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opbackup_isinstallable_enable_
-    }
-Opts.Apps.OpBackup.IsInstallable.Init()
-    {
-    _obj_opts_apps_opbackup_isinstallable_text_=''
-    _obj_opts_apps_opbackup_isinstallable_flag_=false
-    _obj_opts_apps_opbackup_isinstallable_changes_flag_=true
-    _obj_opts_apps_opbackup_isinstallable_enable_=false
-    }
-Opts.Apps.OpBackup.IsInstallable.IsDisabled()
-    {
-    [[ $_obj_opts_apps_opbackup_isinstallable_enable_ != 'true' ]]
-    }
-Opts.Apps.OpBackup.IsInstallable.IsEnabled()
-    {
-    [[ $_obj_opts_apps_opbackup_isinstallable_enable_ = 'true' ]]
-    }
-Opts.Apps.OpBackup.IsInstallable.IsNt()
-    {
-    [[ $_obj_opts_apps_opbackup_isinstallable_flag_ != 'true' ]]
-    }
-Opts.Apps.OpBackup.IsInstallable.IsSet()
-    {
-    [[ $_obj_opts_apps_opbackup_isinstallable_flag_ = 'true' ]]
-    }
-Opts.Apps.OpBackup.IsInstallable.LogChanges()
-    {
-    [[ $_obj_opts_apps_opbackup_isinstallable_changes_flag_ = 'true' ]] && return
-    _obj_opts_apps_opbackup_isinstallable_changes_flag_=true
-    }
-Opts.Apps.OpBackup.IsInstallable.Set()
-    {
-    [[ $_obj_opts_apps_opbackup_isinstallable_flag_ = 'true' ]] && return
-    _obj_opts_apps_opbackup_isinstallable_flag_=true
-    [[ $_obj_opts_apps_opbackup_isinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opbackup_isinstallable_flag_
-    }
-Opts.Apps.OpBackup.IsInstallable.Text()
-    {
-    if [[ -n ${1:-} && $1 = "=" ]]; then
-        _obj_opts_apps_opbackup_isinstallable_text_=$2
-    else
-        echo -n "$_obj_opts_apps_opbackup_isinstallable_text_"
-    fi
-    }
-Opts.Apps.OpBackup.IsInstallable.Init
-
-Opts.Apps.OpBackup.IsNtInstallable.Clear()
-    {
-    [[ $_obj_opts_apps_opbackup_isntinstallable_flag_ != 'true' ]] && return
-    _obj_opts_apps_opbackup_isntinstallable_flag_=false
-    [[ $_obj_opts_apps_opbackup_isntinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opbackup_isntinstallable_flag_
-    }
-Opts.Apps.OpBackup.IsNtInstallable.Disable()
-    {
-    [[ $_obj_opts_apps_opbackup_isntinstallable_enable_ != 'true' ]] && return
-    _obj_opts_apps_opbackup_isntinstallable_enable_=false
-    [[ $_obj_opts_apps_opbackup_isntinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opbackup_isntinstallable_enable_
-    }
-Opts.Apps.OpBackup.IsNtInstallable.DontLogChanges()
-    {
-    [[ $_obj_opts_apps_opbackup_isntinstallable_changes_flag_ != 'true' ]] && return
-    _obj_opts_apps_opbackup_isntinstallable_changes_flag_=false
-    }
-Opts.Apps.OpBackup.IsNtInstallable.Enable()
-    {
-    [[ $_obj_opts_apps_opbackup_isntinstallable_enable_ = 'true' ]] && return
-    _obj_opts_apps_opbackup_isntinstallable_enable_=true
-    [[ $_obj_opts_apps_opbackup_isntinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opbackup_isntinstallable_enable_
-    }
-Opts.Apps.OpBackup.IsNtInstallable.Init()
-    {
-    _obj_opts_apps_opbackup_isntinstallable_text_=''
-    _obj_opts_apps_opbackup_isntinstallable_flag_=false
-    _obj_opts_apps_opbackup_isntinstallable_changes_flag_=true
-    _obj_opts_apps_opbackup_isntinstallable_enable_=false
-    }
-Opts.Apps.OpBackup.IsNtInstallable.IsDisabled()
-    {
-    [[ $_obj_opts_apps_opbackup_isntinstallable_enable_ != 'true' ]]
-    }
-Opts.Apps.OpBackup.IsNtInstallable.IsEnabled()
-    {
-    [[ $_obj_opts_apps_opbackup_isntinstallable_enable_ = 'true' ]]
-    }
-Opts.Apps.OpBackup.IsNtInstallable.IsNt()
-    {
-    [[ $_obj_opts_apps_opbackup_isntinstallable_flag_ != 'true' ]]
-    }
-Opts.Apps.OpBackup.IsNtInstallable.IsSet()
-    {
-    [[ $_obj_opts_apps_opbackup_isntinstallable_flag_ = 'true' ]]
-    }
-Opts.Apps.OpBackup.IsNtInstallable.LogChanges()
-    {
-    [[ $_obj_opts_apps_opbackup_isntinstallable_changes_flag_ = 'true' ]] && return
-    _obj_opts_apps_opbackup_isntinstallable_changes_flag_=true
-    }
-Opts.Apps.OpBackup.IsNtInstallable.Set()
-    {
-    [[ $_obj_opts_apps_opbackup_isntinstallable_flag_ = 'true' ]] && return
-    _obj_opts_apps_opbackup_isntinstallable_flag_=true
-    [[ $_obj_opts_apps_opbackup_isntinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opbackup_isntinstallable_flag_
-    }
-Opts.Apps.OpBackup.IsNtInstallable.Text()
-    {
-    if [[ -n ${1:-} && $1 = "=" ]]; then
-        _obj_opts_apps_opbackup_isntinstallable_text_=$2
-    else
-        echo -n "$_obj_opts_apps_opbackup_isntinstallable_text_"
-    fi
-    }
-Opts.Apps.OpBackup.IsNtInstallable.Init
-
-Opts.Apps.OpDownload.IsInstallable.Clear()
-    {
-    [[ $_obj_opts_apps_opdownload_isinstallable_flag_ != 'true' ]] && return
-    _obj_opts_apps_opdownload_isinstallable_flag_=false
-    [[ $_obj_opts_apps_opdownload_isinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opdownload_isinstallable_flag_
-    }
-Opts.Apps.OpDownload.IsInstallable.Disable()
-    {
-    [[ $_obj_opts_apps_opdownload_isinstallable_enable_ != 'true' ]] && return
-    _obj_opts_apps_opdownload_isinstallable_enable_=false
-    [[ $_obj_opts_apps_opdownload_isinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opdownload_isinstallable_enable_
-    }
-Opts.Apps.OpDownload.IsInstallable.DontLogChanges()
-    {
-    [[ $_obj_opts_apps_opdownload_isinstallable_changes_flag_ != 'true' ]] && return
-    _obj_opts_apps_opdownload_isinstallable_changes_flag_=false
-    }
-Opts.Apps.OpDownload.IsInstallable.Enable()
-    {
-    [[ $_obj_opts_apps_opdownload_isinstallable_enable_ = 'true' ]] && return
-    _obj_opts_apps_opdownload_isinstallable_enable_=true
-    [[ $_obj_opts_apps_opdownload_isinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opdownload_isinstallable_enable_
-    }
-Opts.Apps.OpDownload.IsInstallable.Init()
-    {
-    _obj_opts_apps_opdownload_isinstallable_text_=''
-    _obj_opts_apps_opdownload_isinstallable_flag_=false
-    _obj_opts_apps_opdownload_isinstallable_changes_flag_=true
-    _obj_opts_apps_opdownload_isinstallable_enable_=false
-    }
-Opts.Apps.OpDownload.IsInstallable.IsDisabled()
-    {
-    [[ $_obj_opts_apps_opdownload_isinstallable_enable_ != 'true' ]]
-    }
-Opts.Apps.OpDownload.IsInstallable.IsEnabled()
-    {
-    [[ $_obj_opts_apps_opdownload_isinstallable_enable_ = 'true' ]]
-    }
-Opts.Apps.OpDownload.IsInstallable.IsNt()
-    {
-    [[ $_obj_opts_apps_opdownload_isinstallable_flag_ != 'true' ]]
-    }
-Opts.Apps.OpDownload.IsInstallable.IsSet()
-    {
-    [[ $_obj_opts_apps_opdownload_isinstallable_flag_ = 'true' ]]
-    }
-Opts.Apps.OpDownload.IsInstallable.LogChanges()
-    {
-    [[ $_obj_opts_apps_opdownload_isinstallable_changes_flag_ = 'true' ]] && return
-    _obj_opts_apps_opdownload_isinstallable_changes_flag_=true
-    }
-Opts.Apps.OpDownload.IsInstallable.Set()
-    {
-    [[ $_obj_opts_apps_opdownload_isinstallable_flag_ = 'true' ]] && return
-    _obj_opts_apps_opdownload_isinstallable_flag_=true
-    [[ $_obj_opts_apps_opdownload_isinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opdownload_isinstallable_flag_
-    }
-Opts.Apps.OpDownload.IsInstallable.Text()
-    {
-    if [[ -n ${1:-} && $1 = "=" ]]; then
-        _obj_opts_apps_opdownload_isinstallable_text_=$2
-    else
-        echo -n "$_obj_opts_apps_opdownload_isinstallable_text_"
-    fi
-    }
-Opts.Apps.OpDownload.IsInstallable.Init
-
-Opts.Apps.OpDownload.IsNtInstallable.Clear()
-    {
-    [[ $_obj_opts_apps_opdownload_isntinstallable_flag_ != 'true' ]] && return
-    _obj_opts_apps_opdownload_isntinstallable_flag_=false
-    [[ $_obj_opts_apps_opdownload_isntinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opdownload_isntinstallable_flag_
-    }
-Opts.Apps.OpDownload.IsNtInstallable.Disable()
-    {
-    [[ $_obj_opts_apps_opdownload_isntinstallable_enable_ != 'true' ]] && return
-    _obj_opts_apps_opdownload_isntinstallable_enable_=false
-    [[ $_obj_opts_apps_opdownload_isntinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opdownload_isntinstallable_enable_
-    }
-Opts.Apps.OpDownload.IsNtInstallable.DontLogChanges()
-    {
-    [[ $_obj_opts_apps_opdownload_isntinstallable_changes_flag_ != 'true' ]] && return
-    _obj_opts_apps_opdownload_isntinstallable_changes_flag_=false
-    }
-Opts.Apps.OpDownload.IsNtInstallable.Enable()
-    {
-    [[ $_obj_opts_apps_opdownload_isntinstallable_enable_ = 'true' ]] && return
-    _obj_opts_apps_opdownload_isntinstallable_enable_=true
-    [[ $_obj_opts_apps_opdownload_isntinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opdownload_isntinstallable_enable_
-    }
-Opts.Apps.OpDownload.IsNtInstallable.Init()
-    {
-    _obj_opts_apps_opdownload_isntinstallable_text_=''
-    _obj_opts_apps_opdownload_isntinstallable_flag_=false
-    _obj_opts_apps_opdownload_isntinstallable_changes_flag_=true
-    _obj_opts_apps_opdownload_isntinstallable_enable_=false
-    }
-Opts.Apps.OpDownload.IsNtInstallable.IsDisabled()
-    {
-    [[ $_obj_opts_apps_opdownload_isntinstallable_enable_ != 'true' ]]
-    }
-Opts.Apps.OpDownload.IsNtInstallable.IsEnabled()
-    {
-    [[ $_obj_opts_apps_opdownload_isntinstallable_enable_ = 'true' ]]
-    }
-Opts.Apps.OpDownload.IsNtInstallable.IsNt()
-    {
-    [[ $_obj_opts_apps_opdownload_isntinstallable_flag_ != 'true' ]]
-    }
-Opts.Apps.OpDownload.IsNtInstallable.IsSet()
-    {
-    [[ $_obj_opts_apps_opdownload_isntinstallable_flag_ = 'true' ]]
-    }
-Opts.Apps.OpDownload.IsNtInstallable.LogChanges()
-    {
-    [[ $_obj_opts_apps_opdownload_isntinstallable_changes_flag_ = 'true' ]] && return
-    _obj_opts_apps_opdownload_isntinstallable_changes_flag_=true
-    }
-Opts.Apps.OpDownload.IsNtInstallable.Set()
-    {
-    [[ $_obj_opts_apps_opdownload_isntinstallable_flag_ = 'true' ]] && return
-    _obj_opts_apps_opdownload_isntinstallable_flag_=true
-    [[ $_obj_opts_apps_opdownload_isntinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opdownload_isntinstallable_flag_
-    }
-Opts.Apps.OpDownload.IsNtInstallable.Text()
-    {
-    if [[ -n ${1:-} && $1 = "=" ]]; then
-        _obj_opts_apps_opdownload_isntinstallable_text_=$2
-    else
-        echo -n "$_obj_opts_apps_opdownload_isntinstallable_text_"
-    fi
-    }
-Opts.Apps.OpDownload.IsNtInstallable.Init
-
-Opts.Apps.OpInstall.IsInstallable.Clear()
-    {
-    [[ $_obj_opts_apps_opinstall_isinstallable_flag_ != 'true' ]] && return
-    _obj_opts_apps_opinstall_isinstallable_flag_=false
-    [[ $_obj_opts_apps_opinstall_isinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opinstall_isinstallable_flag_
-    }
-Opts.Apps.OpInstall.IsInstallable.Disable()
-    {
-    [[ $_obj_opts_apps_opinstall_isinstallable_enable_ != 'true' ]] && return
-    _obj_opts_apps_opinstall_isinstallable_enable_=false
-    [[ $_obj_opts_apps_opinstall_isinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opinstall_isinstallable_enable_
-    }
-Opts.Apps.OpInstall.IsInstallable.DontLogChanges()
-    {
-    [[ $_obj_opts_apps_opinstall_isinstallable_changes_flag_ != 'true' ]] && return
-    _obj_opts_apps_opinstall_isinstallable_changes_flag_=false
-    }
-Opts.Apps.OpInstall.IsInstallable.Enable()
-    {
-    [[ $_obj_opts_apps_opinstall_isinstallable_enable_ = 'true' ]] && return
-    _obj_opts_apps_opinstall_isinstallable_enable_=true
-    [[ $_obj_opts_apps_opinstall_isinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opinstall_isinstallable_enable_
-    }
-Opts.Apps.OpInstall.IsInstallable.Init()
-    {
-    _obj_opts_apps_opinstall_isinstallable_text_=''
-    _obj_opts_apps_opinstall_isinstallable_flag_=false
-    _obj_opts_apps_opinstall_isinstallable_changes_flag_=true
-    _obj_opts_apps_opinstall_isinstallable_enable_=false
-    }
-Opts.Apps.OpInstall.IsInstallable.IsDisabled()
-    {
-    [[ $_obj_opts_apps_opinstall_isinstallable_enable_ != 'true' ]]
-    }
-Opts.Apps.OpInstall.IsInstallable.IsEnabled()
-    {
-    [[ $_obj_opts_apps_opinstall_isinstallable_enable_ = 'true' ]]
-    }
-Opts.Apps.OpInstall.IsInstallable.IsNt()
-    {
-    [[ $_obj_opts_apps_opinstall_isinstallable_flag_ != 'true' ]]
-    }
-Opts.Apps.OpInstall.IsInstallable.IsSet()
-    {
-    [[ $_obj_opts_apps_opinstall_isinstallable_flag_ = 'true' ]]
-    }
-Opts.Apps.OpInstall.IsInstallable.LogChanges()
-    {
-    [[ $_obj_opts_apps_opinstall_isinstallable_changes_flag_ = 'true' ]] && return
-    _obj_opts_apps_opinstall_isinstallable_changes_flag_=true
-    }
-Opts.Apps.OpInstall.IsInstallable.Set()
-    {
-    [[ $_obj_opts_apps_opinstall_isinstallable_flag_ = 'true' ]] && return
-    _obj_opts_apps_opinstall_isinstallable_flag_=true
-    [[ $_obj_opts_apps_opinstall_isinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opinstall_isinstallable_flag_
-    }
-Opts.Apps.OpInstall.IsInstallable.Text()
-    {
-    if [[ -n ${1:-} && $1 = "=" ]]; then
-        _obj_opts_apps_opinstall_isinstallable_text_=$2
-    else
-        echo -n "$_obj_opts_apps_opinstall_isinstallable_text_"
-    fi
-    }
-Opts.Apps.OpInstall.IsInstallable.Init
-
-Opts.Apps.OpInstall.IsNtInstallable.Clear()
-    {
-    [[ $_obj_opts_apps_opinstall_isntinstallable_flag_ != 'true' ]] && return
-    _obj_opts_apps_opinstall_isntinstallable_flag_=false
-    [[ $_obj_opts_apps_opinstall_isntinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opinstall_isntinstallable_flag_
-    }
-Opts.Apps.OpInstall.IsNtInstallable.Disable()
-    {
-    [[ $_obj_opts_apps_opinstall_isntinstallable_enable_ != 'true' ]] && return
-    _obj_opts_apps_opinstall_isntinstallable_enable_=false
-    [[ $_obj_opts_apps_opinstall_isntinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opinstall_isntinstallable_enable_
-    }
-Opts.Apps.OpInstall.IsNtInstallable.DontLogChanges()
-    {
-    [[ $_obj_opts_apps_opinstall_isntinstallable_changes_flag_ != 'true' ]] && return
-    _obj_opts_apps_opinstall_isntinstallable_changes_flag_=false
-    }
-Opts.Apps.OpInstall.IsNtInstallable.Enable()
-    {
-    [[ $_obj_opts_apps_opinstall_isntinstallable_enable_ = 'true' ]] && return
-    _obj_opts_apps_opinstall_isntinstallable_enable_=true
-    [[ $_obj_opts_apps_opinstall_isntinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opinstall_isntinstallable_enable_
-    }
-Opts.Apps.OpInstall.IsNtInstallable.Init()
-    {
-    _obj_opts_apps_opinstall_isntinstallable_text_=''
-    _obj_opts_apps_opinstall_isntinstallable_flag_=false
-    _obj_opts_apps_opinstall_isntinstallable_changes_flag_=true
-    _obj_opts_apps_opinstall_isntinstallable_enable_=false
-    }
-Opts.Apps.OpInstall.IsNtInstallable.IsDisabled()
-    {
-    [[ $_obj_opts_apps_opinstall_isntinstallable_enable_ != 'true' ]]
-    }
-Opts.Apps.OpInstall.IsNtInstallable.IsEnabled()
-    {
-    [[ $_obj_opts_apps_opinstall_isntinstallable_enable_ = 'true' ]]
-    }
-Opts.Apps.OpInstall.IsNtInstallable.IsNt()
-    {
-    [[ $_obj_opts_apps_opinstall_isntinstallable_flag_ != 'true' ]]
-    }
-Opts.Apps.OpInstall.IsNtInstallable.IsSet()
-    {
-    [[ $_obj_opts_apps_opinstall_isntinstallable_flag_ = 'true' ]]
-    }
-Opts.Apps.OpInstall.IsNtInstallable.LogChanges()
-    {
-    [[ $_obj_opts_apps_opinstall_isntinstallable_changes_flag_ = 'true' ]] && return
-    _obj_opts_apps_opinstall_isntinstallable_changes_flag_=true
-    }
-Opts.Apps.OpInstall.IsNtInstallable.Set()
-    {
-    [[ $_obj_opts_apps_opinstall_isntinstallable_flag_ = 'true' ]] && return
-    _obj_opts_apps_opinstall_isntinstallable_flag_=true
-    [[ $_obj_opts_apps_opinstall_isntinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opinstall_isntinstallable_flag_
-    }
-Opts.Apps.OpInstall.IsNtInstallable.Text()
-    {
-    if [[ -n ${1:-} && $1 = "=" ]]; then
-        _obj_opts_apps_opinstall_isntinstallable_text_=$2
-    else
-        echo -n "$_obj_opts_apps_opinstall_isntinstallable_text_"
-    fi
-    }
-Opts.Apps.OpInstall.IsNtInstallable.Init
-
-Opts.Apps.OpRebuild.IsInstallable.Clear()
-    {
-    [[ $_obj_opts_apps_oprebuild_isinstallable_flag_ != 'true' ]] && return
-    _obj_opts_apps_oprebuild_isinstallable_flag_=false
-    [[ $_obj_opts_apps_oprebuild_isinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_oprebuild_isinstallable_flag_
-    }
-Opts.Apps.OpRebuild.IsInstallable.Disable()
-    {
-    [[ $_obj_opts_apps_oprebuild_isinstallable_enable_ != 'true' ]] && return
-    _obj_opts_apps_oprebuild_isinstallable_enable_=false
-    [[ $_obj_opts_apps_oprebuild_isinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_oprebuild_isinstallable_enable_
-    }
-Opts.Apps.OpRebuild.IsInstallable.DontLogChanges()
-    {
-    [[ $_obj_opts_apps_oprebuild_isinstallable_changes_flag_ != 'true' ]] && return
-    _obj_opts_apps_oprebuild_isinstallable_changes_flag_=false
-    }
-Opts.Apps.OpRebuild.IsInstallable.Enable()
-    {
-    [[ $_obj_opts_apps_oprebuild_isinstallable_enable_ = 'true' ]] && return
-    _obj_opts_apps_oprebuild_isinstallable_enable_=true
-    [[ $_obj_opts_apps_oprebuild_isinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_oprebuild_isinstallable_enable_
-    }
-Opts.Apps.OpRebuild.IsInstallable.Init()
-    {
-    _obj_opts_apps_oprebuild_isinstallable_text_=''
-    _obj_opts_apps_oprebuild_isinstallable_flag_=false
-    _obj_opts_apps_oprebuild_isinstallable_changes_flag_=true
-    _obj_opts_apps_oprebuild_isinstallable_enable_=false
-    }
-Opts.Apps.OpRebuild.IsInstallable.IsDisabled()
-    {
-    [[ $_obj_opts_apps_oprebuild_isinstallable_enable_ != 'true' ]]
-    }
-Opts.Apps.OpRebuild.IsInstallable.IsEnabled()
-    {
-    [[ $_obj_opts_apps_oprebuild_isinstallable_enable_ = 'true' ]]
-    }
-Opts.Apps.OpRebuild.IsInstallable.IsNt()
-    {
-    [[ $_obj_opts_apps_oprebuild_isinstallable_flag_ != 'true' ]]
-    }
-Opts.Apps.OpRebuild.IsInstallable.IsSet()
-    {
-    [[ $_obj_opts_apps_oprebuild_isinstallable_flag_ = 'true' ]]
-    }
-Opts.Apps.OpRebuild.IsInstallable.LogChanges()
-    {
-    [[ $_obj_opts_apps_oprebuild_isinstallable_changes_flag_ = 'true' ]] && return
-    _obj_opts_apps_oprebuild_isinstallable_changes_flag_=true
-    }
-Opts.Apps.OpRebuild.IsInstallable.Set()
-    {
-    [[ $_obj_opts_apps_oprebuild_isinstallable_flag_ = 'true' ]] && return
-    _obj_opts_apps_oprebuild_isinstallable_flag_=true
-    [[ $_obj_opts_apps_oprebuild_isinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_oprebuild_isinstallable_flag_
-    }
-Opts.Apps.OpRebuild.IsInstallable.Text()
-    {
-    if [[ -n ${1:-} && $1 = "=" ]]; then
-        _obj_opts_apps_oprebuild_isinstallable_text_=$2
-    else
-        echo -n "$_obj_opts_apps_oprebuild_isinstallable_text_"
-    fi
-    }
-Opts.Apps.OpRebuild.IsInstallable.Init
-
-Opts.Apps.OpRebuild.IsNtInstallable.Clear()
-    {
-    [[ $_obj_opts_apps_oprebuild_isntinstallable_flag_ != 'true' ]] && return
-    _obj_opts_apps_oprebuild_isntinstallable_flag_=false
-    [[ $_obj_opts_apps_oprebuild_isntinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_oprebuild_isntinstallable_flag_
-    }
-Opts.Apps.OpRebuild.IsNtInstallable.Disable()
-    {
-    [[ $_obj_opts_apps_oprebuild_isntinstallable_enable_ != 'true' ]] && return
-    _obj_opts_apps_oprebuild_isntinstallable_enable_=false
-    [[ $_obj_opts_apps_oprebuild_isntinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_oprebuild_isntinstallable_enable_
-    }
-Opts.Apps.OpRebuild.IsNtInstallable.DontLogChanges()
-    {
-    [[ $_obj_opts_apps_oprebuild_isntinstallable_changes_flag_ != 'true' ]] && return
-    _obj_opts_apps_oprebuild_isntinstallable_changes_flag_=false
-    }
-Opts.Apps.OpRebuild.IsNtInstallable.Enable()
-    {
-    [[ $_obj_opts_apps_oprebuild_isntinstallable_enable_ = 'true' ]] && return
-    _obj_opts_apps_oprebuild_isntinstallable_enable_=true
-    [[ $_obj_opts_apps_oprebuild_isntinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_oprebuild_isntinstallable_enable_
-    }
-Opts.Apps.OpRebuild.IsNtInstallable.Init()
-    {
-    _obj_opts_apps_oprebuild_isntinstallable_text_=''
-    _obj_opts_apps_oprebuild_isntinstallable_flag_=false
-    _obj_opts_apps_oprebuild_isntinstallable_changes_flag_=true
-    _obj_opts_apps_oprebuild_isntinstallable_enable_=false
-    }
-Opts.Apps.OpRebuild.IsNtInstallable.IsDisabled()
-    {
-    [[ $_obj_opts_apps_oprebuild_isntinstallable_enable_ != 'true' ]]
-    }
-Opts.Apps.OpRebuild.IsNtInstallable.IsEnabled()
-    {
-    [[ $_obj_opts_apps_oprebuild_isntinstallable_enable_ = 'true' ]]
-    }
-Opts.Apps.OpRebuild.IsNtInstallable.IsNt()
-    {
-    [[ $_obj_opts_apps_oprebuild_isntinstallable_flag_ != 'true' ]]
-    }
-Opts.Apps.OpRebuild.IsNtInstallable.IsSet()
-    {
-    [[ $_obj_opts_apps_oprebuild_isntinstallable_flag_ = 'true' ]]
-    }
-Opts.Apps.OpRebuild.IsNtInstallable.LogChanges()
-    {
-    [[ $_obj_opts_apps_oprebuild_isntinstallable_changes_flag_ = 'true' ]] && return
-    _obj_opts_apps_oprebuild_isntinstallable_changes_flag_=true
-    }
-Opts.Apps.OpRebuild.IsNtInstallable.Set()
-    {
-    [[ $_obj_opts_apps_oprebuild_isntinstallable_flag_ = 'true' ]] && return
-    _obj_opts_apps_oprebuild_isntinstallable_flag_=true
-    [[ $_obj_opts_apps_oprebuild_isntinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_oprebuild_isntinstallable_flag_
-    }
-Opts.Apps.OpRebuild.IsNtInstallable.Text()
-    {
-    if [[ -n ${1:-} && $1 = "=" ]]; then
-        _obj_opts_apps_oprebuild_isntinstallable_text_=$2
-    else
-        echo -n "$_obj_opts_apps_oprebuild_isntinstallable_text_"
-    fi
-    }
-Opts.Apps.OpRebuild.IsNtInstallable.Init
-
-Opts.Apps.OpReinstall.IsInstallable.Clear()
-    {
-    [[ $_obj_opts_apps_opreinstall_isinstallable_flag_ != 'true' ]] && return
-    _obj_opts_apps_opreinstall_isinstallable_flag_=false
-    [[ $_obj_opts_apps_opreinstall_isinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opreinstall_isinstallable_flag_
-    }
-Opts.Apps.OpReinstall.IsInstallable.Disable()
-    {
-    [[ $_obj_opts_apps_opreinstall_isinstallable_enable_ != 'true' ]] && return
-    _obj_opts_apps_opreinstall_isinstallable_enable_=false
-    [[ $_obj_opts_apps_opreinstall_isinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opreinstall_isinstallable_enable_
-    }
-Opts.Apps.OpReinstall.IsInstallable.DontLogChanges()
-    {
-    [[ $_obj_opts_apps_opreinstall_isinstallable_changes_flag_ != 'true' ]] && return
-    _obj_opts_apps_opreinstall_isinstallable_changes_flag_=false
-    }
-Opts.Apps.OpReinstall.IsInstallable.Enable()
-    {
-    [[ $_obj_opts_apps_opreinstall_isinstallable_enable_ = 'true' ]] && return
-    _obj_opts_apps_opreinstall_isinstallable_enable_=true
-    [[ $_obj_opts_apps_opreinstall_isinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opreinstall_isinstallable_enable_
-    }
-Opts.Apps.OpReinstall.IsInstallable.Init()
-    {
-    _obj_opts_apps_opreinstall_isinstallable_text_=''
-    _obj_opts_apps_opreinstall_isinstallable_flag_=false
-    _obj_opts_apps_opreinstall_isinstallable_changes_flag_=true
-    _obj_opts_apps_opreinstall_isinstallable_enable_=false
-    }
-Opts.Apps.OpReinstall.IsInstallable.IsDisabled()
-    {
-    [[ $_obj_opts_apps_opreinstall_isinstallable_enable_ != 'true' ]]
-    }
-Opts.Apps.OpReinstall.IsInstallable.IsEnabled()
-    {
-    [[ $_obj_opts_apps_opreinstall_isinstallable_enable_ = 'true' ]]
-    }
-Opts.Apps.OpReinstall.IsInstallable.IsNt()
-    {
-    [[ $_obj_opts_apps_opreinstall_isinstallable_flag_ != 'true' ]]
-    }
-Opts.Apps.OpReinstall.IsInstallable.IsSet()
-    {
-    [[ $_obj_opts_apps_opreinstall_isinstallable_flag_ = 'true' ]]
-    }
-Opts.Apps.OpReinstall.IsInstallable.LogChanges()
-    {
-    [[ $_obj_opts_apps_opreinstall_isinstallable_changes_flag_ = 'true' ]] && return
-    _obj_opts_apps_opreinstall_isinstallable_changes_flag_=true
-    }
-Opts.Apps.OpReinstall.IsInstallable.Set()
-    {
-    [[ $_obj_opts_apps_opreinstall_isinstallable_flag_ = 'true' ]] && return
-    _obj_opts_apps_opreinstall_isinstallable_flag_=true
-    [[ $_obj_opts_apps_opreinstall_isinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opreinstall_isinstallable_flag_
-    }
-Opts.Apps.OpReinstall.IsInstallable.Text()
-    {
-    if [[ -n ${1:-} && $1 = "=" ]]; then
-        _obj_opts_apps_opreinstall_isinstallable_text_=$2
-    else
-        echo -n "$_obj_opts_apps_opreinstall_isinstallable_text_"
-    fi
-    }
-Opts.Apps.OpReinstall.IsInstallable.Init
-
-Opts.Apps.OpReinstall.IsNtInstallable.Clear()
-    {
-    [[ $_obj_opts_apps_opreinstall_isntinstallable_flag_ != 'true' ]] && return
-    _obj_opts_apps_opreinstall_isntinstallable_flag_=false
-    [[ $_obj_opts_apps_opreinstall_isntinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opreinstall_isntinstallable_flag_
-    }
-Opts.Apps.OpReinstall.IsNtInstallable.Disable()
-    {
-    [[ $_obj_opts_apps_opreinstall_isntinstallable_enable_ != 'true' ]] && return
-    _obj_opts_apps_opreinstall_isntinstallable_enable_=false
-    [[ $_obj_opts_apps_opreinstall_isntinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opreinstall_isntinstallable_enable_
-    }
-Opts.Apps.OpReinstall.IsNtInstallable.DontLogChanges()
-    {
-    [[ $_obj_opts_apps_opreinstall_isntinstallable_changes_flag_ != 'true' ]] && return
-    _obj_opts_apps_opreinstall_isntinstallable_changes_flag_=false
-    }
-Opts.Apps.OpReinstall.IsNtInstallable.Enable()
-    {
-    [[ $_obj_opts_apps_opreinstall_isntinstallable_enable_ = 'true' ]] && return
-    _obj_opts_apps_opreinstall_isntinstallable_enable_=true
-    [[ $_obj_opts_apps_opreinstall_isntinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opreinstall_isntinstallable_enable_
-    }
-Opts.Apps.OpReinstall.IsNtInstallable.Init()
-    {
-    _obj_opts_apps_opreinstall_isntinstallable_text_=''
-    _obj_opts_apps_opreinstall_isntinstallable_flag_=false
-    _obj_opts_apps_opreinstall_isntinstallable_changes_flag_=true
-    _obj_opts_apps_opreinstall_isntinstallable_enable_=false
-    }
-Opts.Apps.OpReinstall.IsNtInstallable.IsDisabled()
-    {
-    [[ $_obj_opts_apps_opreinstall_isntinstallable_enable_ != 'true' ]]
-    }
-Opts.Apps.OpReinstall.IsNtInstallable.IsEnabled()
-    {
-    [[ $_obj_opts_apps_opreinstall_isntinstallable_enable_ = 'true' ]]
-    }
-Opts.Apps.OpReinstall.IsNtInstallable.IsNt()
-    {
-    [[ $_obj_opts_apps_opreinstall_isntinstallable_flag_ != 'true' ]]
-    }
-Opts.Apps.OpReinstall.IsNtInstallable.IsSet()
-    {
-    [[ $_obj_opts_apps_opreinstall_isntinstallable_flag_ = 'true' ]]
-    }
-Opts.Apps.OpReinstall.IsNtInstallable.LogChanges()
-    {
-    [[ $_obj_opts_apps_opreinstall_isntinstallable_changes_flag_ = 'true' ]] && return
-    _obj_opts_apps_opreinstall_isntinstallable_changes_flag_=true
-    }
-Opts.Apps.OpReinstall.IsNtInstallable.Set()
-    {
-    [[ $_obj_opts_apps_opreinstall_isntinstallable_flag_ = 'true' ]] && return
-    _obj_opts_apps_opreinstall_isntinstallable_flag_=true
-    [[ $_obj_opts_apps_opreinstall_isntinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opreinstall_isntinstallable_flag_
-    }
-Opts.Apps.OpReinstall.IsNtInstallable.Text()
-    {
-    if [[ -n ${1:-} && $1 = "=" ]]; then
-        _obj_opts_apps_opreinstall_isntinstallable_text_=$2
-    else
-        echo -n "$_obj_opts_apps_opreinstall_isntinstallable_text_"
-    fi
-    }
-Opts.Apps.OpReinstall.IsNtInstallable.Init
-
-Opts.Apps.OpRestart.IsInstallable.Clear()
-    {
-    [[ $_obj_opts_apps_oprestart_isinstallable_flag_ != 'true' ]] && return
-    _obj_opts_apps_oprestart_isinstallable_flag_=false
-    [[ $_obj_opts_apps_oprestart_isinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_oprestart_isinstallable_flag_
-    }
-Opts.Apps.OpRestart.IsInstallable.Disable()
-    {
-    [[ $_obj_opts_apps_oprestart_isinstallable_enable_ != 'true' ]] && return
-    _obj_opts_apps_oprestart_isinstallable_enable_=false
-    [[ $_obj_opts_apps_oprestart_isinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_oprestart_isinstallable_enable_
-    }
-Opts.Apps.OpRestart.IsInstallable.DontLogChanges()
-    {
-    [[ $_obj_opts_apps_oprestart_isinstallable_changes_flag_ != 'true' ]] && return
-    _obj_opts_apps_oprestart_isinstallable_changes_flag_=false
-    }
-Opts.Apps.OpRestart.IsInstallable.Enable()
-    {
-    [[ $_obj_opts_apps_oprestart_isinstallable_enable_ = 'true' ]] && return
-    _obj_opts_apps_oprestart_isinstallable_enable_=true
-    [[ $_obj_opts_apps_oprestart_isinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_oprestart_isinstallable_enable_
-    }
-Opts.Apps.OpRestart.IsInstallable.Init()
-    {
-    _obj_opts_apps_oprestart_isinstallable_text_=''
-    _obj_opts_apps_oprestart_isinstallable_flag_=false
-    _obj_opts_apps_oprestart_isinstallable_changes_flag_=true
-    _obj_opts_apps_oprestart_isinstallable_enable_=false
-    }
-Opts.Apps.OpRestart.IsInstallable.IsDisabled()
-    {
-    [[ $_obj_opts_apps_oprestart_isinstallable_enable_ != 'true' ]]
-    }
-Opts.Apps.OpRestart.IsInstallable.IsEnabled()
-    {
-    [[ $_obj_opts_apps_oprestart_isinstallable_enable_ = 'true' ]]
-    }
-Opts.Apps.OpRestart.IsInstallable.IsNt()
-    {
-    [[ $_obj_opts_apps_oprestart_isinstallable_flag_ != 'true' ]]
-    }
-Opts.Apps.OpRestart.IsInstallable.IsSet()
-    {
-    [[ $_obj_opts_apps_oprestart_isinstallable_flag_ = 'true' ]]
-    }
-Opts.Apps.OpRestart.IsInstallable.LogChanges()
-    {
-    [[ $_obj_opts_apps_oprestart_isinstallable_changes_flag_ = 'true' ]] && return
-    _obj_opts_apps_oprestart_isinstallable_changes_flag_=true
-    }
-Opts.Apps.OpRestart.IsInstallable.Set()
-    {
-    [[ $_obj_opts_apps_oprestart_isinstallable_flag_ = 'true' ]] && return
-    _obj_opts_apps_oprestart_isinstallable_flag_=true
-    [[ $_obj_opts_apps_oprestart_isinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_oprestart_isinstallable_flag_
-    }
-Opts.Apps.OpRestart.IsInstallable.Text()
-    {
-    if [[ -n ${1:-} && $1 = "=" ]]; then
-        _obj_opts_apps_oprestart_isinstallable_text_=$2
-    else
-        echo -n "$_obj_opts_apps_oprestart_isinstallable_text_"
-    fi
-    }
-Opts.Apps.OpRestart.IsInstallable.Init
-
-Opts.Apps.OpRestart.IsNtInstallable.Clear()
-    {
-    [[ $_obj_opts_apps_oprestart_isntinstallable_flag_ != 'true' ]] && return
-    _obj_opts_apps_oprestart_isntinstallable_flag_=false
-    [[ $_obj_opts_apps_oprestart_isntinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_oprestart_isntinstallable_flag_
-    }
-Opts.Apps.OpRestart.IsNtInstallable.Disable()
-    {
-    [[ $_obj_opts_apps_oprestart_isntinstallable_enable_ != 'true' ]] && return
-    _obj_opts_apps_oprestart_isntinstallable_enable_=false
-    [[ $_obj_opts_apps_oprestart_isntinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_oprestart_isntinstallable_enable_
-    }
-Opts.Apps.OpRestart.IsNtInstallable.DontLogChanges()
-    {
-    [[ $_obj_opts_apps_oprestart_isntinstallable_changes_flag_ != 'true' ]] && return
-    _obj_opts_apps_oprestart_isntinstallable_changes_flag_=false
-    }
-Opts.Apps.OpRestart.IsNtInstallable.Enable()
-    {
-    [[ $_obj_opts_apps_oprestart_isntinstallable_enable_ = 'true' ]] && return
-    _obj_opts_apps_oprestart_isntinstallable_enable_=true
-    [[ $_obj_opts_apps_oprestart_isntinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_oprestart_isntinstallable_enable_
-    }
-Opts.Apps.OpRestart.IsNtInstallable.Init()
-    {
-    _obj_opts_apps_oprestart_isntinstallable_text_=''
-    _obj_opts_apps_oprestart_isntinstallable_flag_=false
-    _obj_opts_apps_oprestart_isntinstallable_changes_flag_=true
-    _obj_opts_apps_oprestart_isntinstallable_enable_=false
-    }
-Opts.Apps.OpRestart.IsNtInstallable.IsDisabled()
-    {
-    [[ $_obj_opts_apps_oprestart_isntinstallable_enable_ != 'true' ]]
-    }
-Opts.Apps.OpRestart.IsNtInstallable.IsEnabled()
-    {
-    [[ $_obj_opts_apps_oprestart_isntinstallable_enable_ = 'true' ]]
-    }
-Opts.Apps.OpRestart.IsNtInstallable.IsNt()
-    {
-    [[ $_obj_opts_apps_oprestart_isntinstallable_flag_ != 'true' ]]
-    }
-Opts.Apps.OpRestart.IsNtInstallable.IsSet()
-    {
-    [[ $_obj_opts_apps_oprestart_isntinstallable_flag_ = 'true' ]]
-    }
-Opts.Apps.OpRestart.IsNtInstallable.LogChanges()
-    {
-    [[ $_obj_opts_apps_oprestart_isntinstallable_changes_flag_ = 'true' ]] && return
-    _obj_opts_apps_oprestart_isntinstallable_changes_flag_=true
-    }
-Opts.Apps.OpRestart.IsNtInstallable.Set()
-    {
-    [[ $_obj_opts_apps_oprestart_isntinstallable_flag_ = 'true' ]] && return
-    _obj_opts_apps_oprestart_isntinstallable_flag_=true
-    [[ $_obj_opts_apps_oprestart_isntinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_oprestart_isntinstallable_flag_
-    }
-Opts.Apps.OpRestart.IsNtInstallable.Text()
-    {
-    if [[ -n ${1:-} && $1 = "=" ]]; then
-        _obj_opts_apps_oprestart_isntinstallable_text_=$2
-    else
-        echo -n "$_obj_opts_apps_oprestart_isntinstallable_text_"
-    fi
-    }
-Opts.Apps.OpRestart.IsNtInstallable.Init
-
-Opts.Apps.OpRestore.IsInstallable.Clear()
-    {
-    [[ $_obj_opts_apps_oprestore_isinstallable_flag_ != 'true' ]] && return
-    _obj_opts_apps_oprestore_isinstallable_flag_=false
-    [[ $_obj_opts_apps_oprestore_isinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_oprestore_isinstallable_flag_
-    }
-Opts.Apps.OpRestore.IsInstallable.Disable()
-    {
-    [[ $_obj_opts_apps_oprestore_isinstallable_enable_ != 'true' ]] && return
-    _obj_opts_apps_oprestore_isinstallable_enable_=false
-    [[ $_obj_opts_apps_oprestore_isinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_oprestore_isinstallable_enable_
-    }
-Opts.Apps.OpRestore.IsInstallable.DontLogChanges()
-    {
-    [[ $_obj_opts_apps_oprestore_isinstallable_changes_flag_ != 'true' ]] && return
-    _obj_opts_apps_oprestore_isinstallable_changes_flag_=false
-    }
-Opts.Apps.OpRestore.IsInstallable.Enable()
-    {
-    [[ $_obj_opts_apps_oprestore_isinstallable_enable_ = 'true' ]] && return
-    _obj_opts_apps_oprestore_isinstallable_enable_=true
-    [[ $_obj_opts_apps_oprestore_isinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_oprestore_isinstallable_enable_
-    }
-Opts.Apps.OpRestore.IsInstallable.Init()
-    {
-    _obj_opts_apps_oprestore_isinstallable_text_=''
-    _obj_opts_apps_oprestore_isinstallable_flag_=false
-    _obj_opts_apps_oprestore_isinstallable_changes_flag_=true
-    _obj_opts_apps_oprestore_isinstallable_enable_=false
-    }
-Opts.Apps.OpRestore.IsInstallable.IsDisabled()
-    {
-    [[ $_obj_opts_apps_oprestore_isinstallable_enable_ != 'true' ]]
-    }
-Opts.Apps.OpRestore.IsInstallable.IsEnabled()
-    {
-    [[ $_obj_opts_apps_oprestore_isinstallable_enable_ = 'true' ]]
-    }
-Opts.Apps.OpRestore.IsInstallable.IsNt()
-    {
-    [[ $_obj_opts_apps_oprestore_isinstallable_flag_ != 'true' ]]
-    }
-Opts.Apps.OpRestore.IsInstallable.IsSet()
-    {
-    [[ $_obj_opts_apps_oprestore_isinstallable_flag_ = 'true' ]]
-    }
-Opts.Apps.OpRestore.IsInstallable.LogChanges()
-    {
-    [[ $_obj_opts_apps_oprestore_isinstallable_changes_flag_ = 'true' ]] && return
-    _obj_opts_apps_oprestore_isinstallable_changes_flag_=true
-    }
-Opts.Apps.OpRestore.IsInstallable.Set()
-    {
-    [[ $_obj_opts_apps_oprestore_isinstallable_flag_ = 'true' ]] && return
-    _obj_opts_apps_oprestore_isinstallable_flag_=true
-    [[ $_obj_opts_apps_oprestore_isinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_oprestore_isinstallable_flag_
-    }
-Opts.Apps.OpRestore.IsInstallable.Text()
-    {
-    if [[ -n ${1:-} && $1 = "=" ]]; then
-        _obj_opts_apps_oprestore_isinstallable_text_=$2
-    else
-        echo -n "$_obj_opts_apps_oprestore_isinstallable_text_"
-    fi
-    }
-Opts.Apps.OpRestore.IsInstallable.Init
-
-Opts.Apps.OpRestore.IsNtInstallable.Clear()
-    {
-    [[ $_obj_opts_apps_oprestore_isntinstallable_flag_ != 'true' ]] && return
-    _obj_opts_apps_oprestore_isntinstallable_flag_=false
-    [[ $_obj_opts_apps_oprestore_isntinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_oprestore_isntinstallable_flag_
-    }
-Opts.Apps.OpRestore.IsNtInstallable.Disable()
-    {
-    [[ $_obj_opts_apps_oprestore_isntinstallable_enable_ != 'true' ]] && return
-    _obj_opts_apps_oprestore_isntinstallable_enable_=false
-    [[ $_obj_opts_apps_oprestore_isntinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_oprestore_isntinstallable_enable_
-    }
-Opts.Apps.OpRestore.IsNtInstallable.DontLogChanges()
-    {
-    [[ $_obj_opts_apps_oprestore_isntinstallable_changes_flag_ != 'true' ]] && return
-    _obj_opts_apps_oprestore_isntinstallable_changes_flag_=false
-    }
-Opts.Apps.OpRestore.IsNtInstallable.Enable()
-    {
-    [[ $_obj_opts_apps_oprestore_isntinstallable_enable_ = 'true' ]] && return
-    _obj_opts_apps_oprestore_isntinstallable_enable_=true
-    [[ $_obj_opts_apps_oprestore_isntinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_oprestore_isntinstallable_enable_
-    }
-Opts.Apps.OpRestore.IsNtInstallable.Init()
-    {
-    _obj_opts_apps_oprestore_isntinstallable_text_=''
-    _obj_opts_apps_oprestore_isntinstallable_flag_=false
-    _obj_opts_apps_oprestore_isntinstallable_changes_flag_=true
-    _obj_opts_apps_oprestore_isntinstallable_enable_=false
-    }
-Opts.Apps.OpRestore.IsNtInstallable.IsDisabled()
-    {
-    [[ $_obj_opts_apps_oprestore_isntinstallable_enable_ != 'true' ]]
-    }
-Opts.Apps.OpRestore.IsNtInstallable.IsEnabled()
-    {
-    [[ $_obj_opts_apps_oprestore_isntinstallable_enable_ = 'true' ]]
-    }
-Opts.Apps.OpRestore.IsNtInstallable.IsNt()
-    {
-    [[ $_obj_opts_apps_oprestore_isntinstallable_flag_ != 'true' ]]
-    }
-Opts.Apps.OpRestore.IsNtInstallable.IsSet()
-    {
-    [[ $_obj_opts_apps_oprestore_isntinstallable_flag_ = 'true' ]]
-    }
-Opts.Apps.OpRestore.IsNtInstallable.LogChanges()
-    {
-    [[ $_obj_opts_apps_oprestore_isntinstallable_changes_flag_ = 'true' ]] && return
-    _obj_opts_apps_oprestore_isntinstallable_changes_flag_=true
-    }
-Opts.Apps.OpRestore.IsNtInstallable.Set()
-    {
-    [[ $_obj_opts_apps_oprestore_isntinstallable_flag_ = 'true' ]] && return
-    _obj_opts_apps_oprestore_isntinstallable_flag_=true
-    [[ $_obj_opts_apps_oprestore_isntinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_oprestore_isntinstallable_flag_
-    }
-Opts.Apps.OpRestore.IsNtInstallable.Text()
-    {
-    if [[ -n ${1:-} && $1 = "=" ]]; then
-        _obj_opts_apps_oprestore_isntinstallable_text_=$2
-    else
-        echo -n "$_obj_opts_apps_oprestore_isntinstallable_text_"
-    fi
-    }
-Opts.Apps.OpRestore.IsNtInstallable.Init
-
-Opts.Apps.OpStart.IsInstallable.Clear()
-    {
-    [[ $_obj_opts_apps_opstart_isinstallable_flag_ != 'true' ]] && return
-    _obj_opts_apps_opstart_isinstallable_flag_=false
-    [[ $_obj_opts_apps_opstart_isinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opstart_isinstallable_flag_
-    }
-Opts.Apps.OpStart.IsInstallable.Disable()
-    {
-    [[ $_obj_opts_apps_opstart_isinstallable_enable_ != 'true' ]] && return
-    _obj_opts_apps_opstart_isinstallable_enable_=false
-    [[ $_obj_opts_apps_opstart_isinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opstart_isinstallable_enable_
-    }
-Opts.Apps.OpStart.IsInstallable.DontLogChanges()
-    {
-    [[ $_obj_opts_apps_opstart_isinstallable_changes_flag_ != 'true' ]] && return
-    _obj_opts_apps_opstart_isinstallable_changes_flag_=false
-    }
-Opts.Apps.OpStart.IsInstallable.Enable()
-    {
-    [[ $_obj_opts_apps_opstart_isinstallable_enable_ = 'true' ]] && return
-    _obj_opts_apps_opstart_isinstallable_enable_=true
-    [[ $_obj_opts_apps_opstart_isinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opstart_isinstallable_enable_
-    }
-Opts.Apps.OpStart.IsInstallable.Init()
-    {
-    _obj_opts_apps_opstart_isinstallable_text_=''
-    _obj_opts_apps_opstart_isinstallable_flag_=false
-    _obj_opts_apps_opstart_isinstallable_changes_flag_=true
-    _obj_opts_apps_opstart_isinstallable_enable_=false
-    }
-Opts.Apps.OpStart.IsInstallable.IsDisabled()
-    {
-    [[ $_obj_opts_apps_opstart_isinstallable_enable_ != 'true' ]]
-    }
-Opts.Apps.OpStart.IsInstallable.IsEnabled()
-    {
-    [[ $_obj_opts_apps_opstart_isinstallable_enable_ = 'true' ]]
-    }
-Opts.Apps.OpStart.IsInstallable.IsNt()
-    {
-    [[ $_obj_opts_apps_opstart_isinstallable_flag_ != 'true' ]]
-    }
-Opts.Apps.OpStart.IsInstallable.IsSet()
-    {
-    [[ $_obj_opts_apps_opstart_isinstallable_flag_ = 'true' ]]
-    }
-Opts.Apps.OpStart.IsInstallable.LogChanges()
-    {
-    [[ $_obj_opts_apps_opstart_isinstallable_changes_flag_ = 'true' ]] && return
-    _obj_opts_apps_opstart_isinstallable_changes_flag_=true
-    }
-Opts.Apps.OpStart.IsInstallable.Set()
-    {
-    [[ $_obj_opts_apps_opstart_isinstallable_flag_ = 'true' ]] && return
-    _obj_opts_apps_opstart_isinstallable_flag_=true
-    [[ $_obj_opts_apps_opstart_isinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opstart_isinstallable_flag_
-    }
-Opts.Apps.OpStart.IsInstallable.Text()
-    {
-    if [[ -n ${1:-} && $1 = "=" ]]; then
-        _obj_opts_apps_opstart_isinstallable_text_=$2
-    else
-        echo -n "$_obj_opts_apps_opstart_isinstallable_text_"
-    fi
-    }
-Opts.Apps.OpStart.IsInstallable.Init
-
-Opts.Apps.OpStart.IsNtInstallable.Clear()
-    {
-    [[ $_obj_opts_apps_opstart_isntinstallable_flag_ != 'true' ]] && return
-    _obj_opts_apps_opstart_isntinstallable_flag_=false
-    [[ $_obj_opts_apps_opstart_isntinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opstart_isntinstallable_flag_
-    }
-Opts.Apps.OpStart.IsNtInstallable.Disable()
-    {
-    [[ $_obj_opts_apps_opstart_isntinstallable_enable_ != 'true' ]] && return
-    _obj_opts_apps_opstart_isntinstallable_enable_=false
-    [[ $_obj_opts_apps_opstart_isntinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opstart_isntinstallable_enable_
-    }
-Opts.Apps.OpStart.IsNtInstallable.DontLogChanges()
-    {
-    [[ $_obj_opts_apps_opstart_isntinstallable_changes_flag_ != 'true' ]] && return
-    _obj_opts_apps_opstart_isntinstallable_changes_flag_=false
-    }
-Opts.Apps.OpStart.IsNtInstallable.Enable()
-    {
-    [[ $_obj_opts_apps_opstart_isntinstallable_enable_ = 'true' ]] && return
-    _obj_opts_apps_opstart_isntinstallable_enable_=true
-    [[ $_obj_opts_apps_opstart_isntinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opstart_isntinstallable_enable_
-    }
-Opts.Apps.OpStart.IsNtInstallable.Init()
-    {
-    _obj_opts_apps_opstart_isntinstallable_text_=''
-    _obj_opts_apps_opstart_isntinstallable_flag_=false
-    _obj_opts_apps_opstart_isntinstallable_changes_flag_=true
-    _obj_opts_apps_opstart_isntinstallable_enable_=false
-    }
-Opts.Apps.OpStart.IsNtInstallable.IsDisabled()
-    {
-    [[ $_obj_opts_apps_opstart_isntinstallable_enable_ != 'true' ]]
-    }
-Opts.Apps.OpStart.IsNtInstallable.IsEnabled()
-    {
-    [[ $_obj_opts_apps_opstart_isntinstallable_enable_ = 'true' ]]
-    }
-Opts.Apps.OpStart.IsNtInstallable.IsNt()
-    {
-    [[ $_obj_opts_apps_opstart_isntinstallable_flag_ != 'true' ]]
-    }
-Opts.Apps.OpStart.IsNtInstallable.IsSet()
-    {
-    [[ $_obj_opts_apps_opstart_isntinstallable_flag_ = 'true' ]]
-    }
-Opts.Apps.OpStart.IsNtInstallable.LogChanges()
-    {
-    [[ $_obj_opts_apps_opstart_isntinstallable_changes_flag_ = 'true' ]] && return
-    _obj_opts_apps_opstart_isntinstallable_changes_flag_=true
-    }
-Opts.Apps.OpStart.IsNtInstallable.Set()
-    {
-    [[ $_obj_opts_apps_opstart_isntinstallable_flag_ = 'true' ]] && return
-    _obj_opts_apps_opstart_isntinstallable_flag_=true
-    [[ $_obj_opts_apps_opstart_isntinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opstart_isntinstallable_flag_
-    }
-Opts.Apps.OpStart.IsNtInstallable.Text()
-    {
-    if [[ -n ${1:-} && $1 = "=" ]]; then
-        _obj_opts_apps_opstart_isntinstallable_text_=$2
-    else
-        echo -n "$_obj_opts_apps_opstart_isntinstallable_text_"
-    fi
-    }
-Opts.Apps.OpStart.IsNtInstallable.Init
-
-Opts.Apps.OpStop.IsInstallable.Clear()
-    {
-    [[ $_obj_opts_apps_opstop_isinstallable_flag_ != 'true' ]] && return
-    _obj_opts_apps_opstop_isinstallable_flag_=false
-    [[ $_obj_opts_apps_opstop_isinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opstop_isinstallable_flag_
-    }
-Opts.Apps.OpStop.IsInstallable.Disable()
-    {
-    [[ $_obj_opts_apps_opstop_isinstallable_enable_ != 'true' ]] && return
-    _obj_opts_apps_opstop_isinstallable_enable_=false
-    [[ $_obj_opts_apps_opstop_isinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opstop_isinstallable_enable_
-    }
-Opts.Apps.OpStop.IsInstallable.DontLogChanges()
-    {
-    [[ $_obj_opts_apps_opstop_isinstallable_changes_flag_ != 'true' ]] && return
-    _obj_opts_apps_opstop_isinstallable_changes_flag_=false
-    }
-Opts.Apps.OpStop.IsInstallable.Enable()
-    {
-    [[ $_obj_opts_apps_opstop_isinstallable_enable_ = 'true' ]] && return
-    _obj_opts_apps_opstop_isinstallable_enable_=true
-    [[ $_obj_opts_apps_opstop_isinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opstop_isinstallable_enable_
-    }
-Opts.Apps.OpStop.IsInstallable.Init()
-    {
-    _obj_opts_apps_opstop_isinstallable_text_=''
-    _obj_opts_apps_opstop_isinstallable_flag_=false
-    _obj_opts_apps_opstop_isinstallable_changes_flag_=true
-    _obj_opts_apps_opstop_isinstallable_enable_=false
-    }
-Opts.Apps.OpStop.IsInstallable.IsDisabled()
-    {
-    [[ $_obj_opts_apps_opstop_isinstallable_enable_ != 'true' ]]
-    }
-Opts.Apps.OpStop.IsInstallable.IsEnabled()
-    {
-    [[ $_obj_opts_apps_opstop_isinstallable_enable_ = 'true' ]]
-    }
-Opts.Apps.OpStop.IsInstallable.IsNt()
-    {
-    [[ $_obj_opts_apps_opstop_isinstallable_flag_ != 'true' ]]
-    }
-Opts.Apps.OpStop.IsInstallable.IsSet()
-    {
-    [[ $_obj_opts_apps_opstop_isinstallable_flag_ = 'true' ]]
-    }
-Opts.Apps.OpStop.IsInstallable.LogChanges()
-    {
-    [[ $_obj_opts_apps_opstop_isinstallable_changes_flag_ = 'true' ]] && return
-    _obj_opts_apps_opstop_isinstallable_changes_flag_=true
-    }
-Opts.Apps.OpStop.IsInstallable.Set()
-    {
-    [[ $_obj_opts_apps_opstop_isinstallable_flag_ = 'true' ]] && return
-    _obj_opts_apps_opstop_isinstallable_flag_=true
-    [[ $_obj_opts_apps_opstop_isinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opstop_isinstallable_flag_
-    }
-Opts.Apps.OpStop.IsInstallable.Text()
-    {
-    if [[ -n ${1:-} && $1 = "=" ]]; then
-        _obj_opts_apps_opstop_isinstallable_text_=$2
-    else
-        echo -n "$_obj_opts_apps_opstop_isinstallable_text_"
-    fi
-    }
-Opts.Apps.OpStop.IsInstallable.Init
-
-Opts.Apps.OpStop.IsNtInstallable.Clear()
-    {
-    [[ $_obj_opts_apps_opstop_isntinstallable_flag_ != 'true' ]] && return
-    _obj_opts_apps_opstop_isntinstallable_flag_=false
-    [[ $_obj_opts_apps_opstop_isntinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opstop_isntinstallable_flag_
-    }
-Opts.Apps.OpStop.IsNtInstallable.Disable()
-    {
-    [[ $_obj_opts_apps_opstop_isntinstallable_enable_ != 'true' ]] && return
-    _obj_opts_apps_opstop_isntinstallable_enable_=false
-    [[ $_obj_opts_apps_opstop_isntinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opstop_isntinstallable_enable_
-    }
-Opts.Apps.OpStop.IsNtInstallable.DontLogChanges()
-    {
-    [[ $_obj_opts_apps_opstop_isntinstallable_changes_flag_ != 'true' ]] && return
-    _obj_opts_apps_opstop_isntinstallable_changes_flag_=false
-    }
-Opts.Apps.OpStop.IsNtInstallable.Enable()
-    {
-    [[ $_obj_opts_apps_opstop_isntinstallable_enable_ = 'true' ]] && return
-    _obj_opts_apps_opstop_isntinstallable_enable_=true
-    [[ $_obj_opts_apps_opstop_isntinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opstop_isntinstallable_enable_
-    }
-Opts.Apps.OpStop.IsNtInstallable.Init()
-    {
-    _obj_opts_apps_opstop_isntinstallable_text_=''
-    _obj_opts_apps_opstop_isntinstallable_flag_=false
-    _obj_opts_apps_opstop_isntinstallable_changes_flag_=true
-    _obj_opts_apps_opstop_isntinstallable_enable_=false
-    }
-Opts.Apps.OpStop.IsNtInstallable.IsDisabled()
-    {
-    [[ $_obj_opts_apps_opstop_isntinstallable_enable_ != 'true' ]]
-    }
-Opts.Apps.OpStop.IsNtInstallable.IsEnabled()
-    {
-    [[ $_obj_opts_apps_opstop_isntinstallable_enable_ = 'true' ]]
-    }
-Opts.Apps.OpStop.IsNtInstallable.IsNt()
-    {
-    [[ $_obj_opts_apps_opstop_isntinstallable_flag_ != 'true' ]]
-    }
-Opts.Apps.OpStop.IsNtInstallable.IsSet()
-    {
-    [[ $_obj_opts_apps_opstop_isntinstallable_flag_ = 'true' ]]
-    }
-Opts.Apps.OpStop.IsNtInstallable.LogChanges()
-    {
-    [[ $_obj_opts_apps_opstop_isntinstallable_changes_flag_ = 'true' ]] && return
-    _obj_opts_apps_opstop_isntinstallable_changes_flag_=true
-    }
-Opts.Apps.OpStop.IsNtInstallable.Set()
-    {
-    [[ $_obj_opts_apps_opstop_isntinstallable_flag_ = 'true' ]] && return
-    _obj_opts_apps_opstop_isntinstallable_flag_=true
-    [[ $_obj_opts_apps_opstop_isntinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opstop_isntinstallable_flag_
-    }
-Opts.Apps.OpStop.IsNtInstallable.Text()
-    {
-    if [[ -n ${1:-} && $1 = "=" ]]; then
-        _obj_opts_apps_opstop_isntinstallable_text_=$2
-    else
-        echo -n "$_obj_opts_apps_opstop_isntinstallable_text_"
-    fi
-    }
-Opts.Apps.OpStop.IsNtInstallable.Init
-
-Opts.Apps.OpUninstall.IsInstallable.Clear()
-    {
-    [[ $_obj_opts_apps_opuninstall_isinstallable_flag_ != 'true' ]] && return
-    _obj_opts_apps_opuninstall_isinstallable_flag_=false
-    [[ $_obj_opts_apps_opuninstall_isinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opuninstall_isinstallable_flag_
-    }
-Opts.Apps.OpUninstall.IsInstallable.Disable()
-    {
-    [[ $_obj_opts_apps_opuninstall_isinstallable_enable_ != 'true' ]] && return
-    _obj_opts_apps_opuninstall_isinstallable_enable_=false
-    [[ $_obj_opts_apps_opuninstall_isinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opuninstall_isinstallable_enable_
-    }
-Opts.Apps.OpUninstall.IsInstallable.DontLogChanges()
-    {
-    [[ $_obj_opts_apps_opuninstall_isinstallable_changes_flag_ != 'true' ]] && return
-    _obj_opts_apps_opuninstall_isinstallable_changes_flag_=false
-    }
-Opts.Apps.OpUninstall.IsInstallable.Enable()
-    {
-    [[ $_obj_opts_apps_opuninstall_isinstallable_enable_ = 'true' ]] && return
-    _obj_opts_apps_opuninstall_isinstallable_enable_=true
-    [[ $_obj_opts_apps_opuninstall_isinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opuninstall_isinstallable_enable_
-    }
-Opts.Apps.OpUninstall.IsInstallable.Init()
-    {
-    _obj_opts_apps_opuninstall_isinstallable_text_=''
-    _obj_opts_apps_opuninstall_isinstallable_flag_=false
-    _obj_opts_apps_opuninstall_isinstallable_changes_flag_=true
-    _obj_opts_apps_opuninstall_isinstallable_enable_=false
-    }
-Opts.Apps.OpUninstall.IsInstallable.IsDisabled()
-    {
-    [[ $_obj_opts_apps_opuninstall_isinstallable_enable_ != 'true' ]]
-    }
-Opts.Apps.OpUninstall.IsInstallable.IsEnabled()
-    {
-    [[ $_obj_opts_apps_opuninstall_isinstallable_enable_ = 'true' ]]
-    }
-Opts.Apps.OpUninstall.IsInstallable.IsNt()
-    {
-    [[ $_obj_opts_apps_opuninstall_isinstallable_flag_ != 'true' ]]
-    }
-Opts.Apps.OpUninstall.IsInstallable.IsSet()
-    {
-    [[ $_obj_opts_apps_opuninstall_isinstallable_flag_ = 'true' ]]
-    }
-Opts.Apps.OpUninstall.IsInstallable.LogChanges()
-    {
-    [[ $_obj_opts_apps_opuninstall_isinstallable_changes_flag_ = 'true' ]] && return
-    _obj_opts_apps_opuninstall_isinstallable_changes_flag_=true
-    }
-Opts.Apps.OpUninstall.IsInstallable.Set()
-    {
-    [[ $_obj_opts_apps_opuninstall_isinstallable_flag_ = 'true' ]] && return
-    _obj_opts_apps_opuninstall_isinstallable_flag_=true
-    [[ $_obj_opts_apps_opuninstall_isinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opuninstall_isinstallable_flag_
-    }
-Opts.Apps.OpUninstall.IsInstallable.Text()
-    {
-    if [[ -n ${1:-} && $1 = "=" ]]; then
-        _obj_opts_apps_opuninstall_isinstallable_text_=$2
-    else
-        echo -n "$_obj_opts_apps_opuninstall_isinstallable_text_"
-    fi
-    }
-Opts.Apps.OpUninstall.IsInstallable.Init
-
-Opts.Apps.OpUninstall.IsNtInstallable.Clear()
-    {
-    [[ $_obj_opts_apps_opuninstall_isntinstallable_flag_ != 'true' ]] && return
-    _obj_opts_apps_opuninstall_isntinstallable_flag_=false
-    [[ $_obj_opts_apps_opuninstall_isntinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opuninstall_isntinstallable_flag_
-    }
-Opts.Apps.OpUninstall.IsNtInstallable.Disable()
-    {
-    [[ $_obj_opts_apps_opuninstall_isntinstallable_enable_ != 'true' ]] && return
-    _obj_opts_apps_opuninstall_isntinstallable_enable_=false
-    [[ $_obj_opts_apps_opuninstall_isntinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opuninstall_isntinstallable_enable_
-    }
-Opts.Apps.OpUninstall.IsNtInstallable.DontLogChanges()
-    {
-    [[ $_obj_opts_apps_opuninstall_isntinstallable_changes_flag_ != 'true' ]] && return
-    _obj_opts_apps_opuninstall_isntinstallable_changes_flag_=false
-    }
-Opts.Apps.OpUninstall.IsNtInstallable.Enable()
-    {
-    [[ $_obj_opts_apps_opuninstall_isntinstallable_enable_ = 'true' ]] && return
-    _obj_opts_apps_opuninstall_isntinstallable_enable_=true
-    [[ $_obj_opts_apps_opuninstall_isntinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opuninstall_isntinstallable_enable_
-    }
-Opts.Apps.OpUninstall.IsNtInstallable.Init()
-    {
-    _obj_opts_apps_opuninstall_isntinstallable_text_=''
-    _obj_opts_apps_opuninstall_isntinstallable_flag_=false
-    _obj_opts_apps_opuninstall_isntinstallable_changes_flag_=true
-    _obj_opts_apps_opuninstall_isntinstallable_enable_=false
-    }
-Opts.Apps.OpUninstall.IsNtInstallable.IsDisabled()
-    {
-    [[ $_obj_opts_apps_opuninstall_isntinstallable_enable_ != 'true' ]]
-    }
-Opts.Apps.OpUninstall.IsNtInstallable.IsEnabled()
-    {
-    [[ $_obj_opts_apps_opuninstall_isntinstallable_enable_ = 'true' ]]
-    }
-Opts.Apps.OpUninstall.IsNtInstallable.IsNt()
-    {
-    [[ $_obj_opts_apps_opuninstall_isntinstallable_flag_ != 'true' ]]
-    }
-Opts.Apps.OpUninstall.IsNtInstallable.IsSet()
-    {
-    [[ $_obj_opts_apps_opuninstall_isntinstallable_flag_ = 'true' ]]
-    }
-Opts.Apps.OpUninstall.IsNtInstallable.LogChanges()
-    {
-    [[ $_obj_opts_apps_opuninstall_isntinstallable_changes_flag_ = 'true' ]] && return
-    _obj_opts_apps_opuninstall_isntinstallable_changes_flag_=true
-    }
-Opts.Apps.OpUninstall.IsNtInstallable.Set()
-    {
-    [[ $_obj_opts_apps_opuninstall_isntinstallable_flag_ = 'true' ]] && return
-    _obj_opts_apps_opuninstall_isntinstallable_flag_=true
-    [[ $_obj_opts_apps_opuninstall_isntinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opuninstall_isntinstallable_flag_
-    }
-Opts.Apps.OpUninstall.IsNtInstallable.Text()
-    {
-    if [[ -n ${1:-} && $1 = "=" ]]; then
-        _obj_opts_apps_opuninstall_isntinstallable_text_=$2
-    else
-        echo -n "$_obj_opts_apps_opuninstall_isntinstallable_text_"
-    fi
-    }
-Opts.Apps.OpUninstall.IsNtInstallable.Init
-
-Opts.Apps.OpUpgrade.IsInstallable.Clear()
-    {
-    [[ $_obj_opts_apps_opupgrade_isinstallable_flag_ != 'true' ]] && return
-    _obj_opts_apps_opupgrade_isinstallable_flag_=false
-    [[ $_obj_opts_apps_opupgrade_isinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opupgrade_isinstallable_flag_
-    }
-Opts.Apps.OpUpgrade.IsInstallable.Disable()
-    {
-    [[ $_obj_opts_apps_opupgrade_isinstallable_enable_ != 'true' ]] && return
-    _obj_opts_apps_opupgrade_isinstallable_enable_=false
-    [[ $_obj_opts_apps_opupgrade_isinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opupgrade_isinstallable_enable_
-    }
-Opts.Apps.OpUpgrade.IsInstallable.DontLogChanges()
-    {
-    [[ $_obj_opts_apps_opupgrade_isinstallable_changes_flag_ != 'true' ]] && return
-    _obj_opts_apps_opupgrade_isinstallable_changes_flag_=false
-    }
-Opts.Apps.OpUpgrade.IsInstallable.Enable()
-    {
-    [[ $_obj_opts_apps_opupgrade_isinstallable_enable_ = 'true' ]] && return
-    _obj_opts_apps_opupgrade_isinstallable_enable_=true
-    [[ $_obj_opts_apps_opupgrade_isinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opupgrade_isinstallable_enable_
-    }
-Opts.Apps.OpUpgrade.IsInstallable.Init()
-    {
-    _obj_opts_apps_opupgrade_isinstallable_text_=''
-    _obj_opts_apps_opupgrade_isinstallable_flag_=false
-    _obj_opts_apps_opupgrade_isinstallable_changes_flag_=true
-    _obj_opts_apps_opupgrade_isinstallable_enable_=false
-    }
-Opts.Apps.OpUpgrade.IsInstallable.IsDisabled()
-    {
-    [[ $_obj_opts_apps_opupgrade_isinstallable_enable_ != 'true' ]]
-    }
-Opts.Apps.OpUpgrade.IsInstallable.IsEnabled()
-    {
-    [[ $_obj_opts_apps_opupgrade_isinstallable_enable_ = 'true' ]]
-    }
-Opts.Apps.OpUpgrade.IsInstallable.IsNt()
-    {
-    [[ $_obj_opts_apps_opupgrade_isinstallable_flag_ != 'true' ]]
-    }
-Opts.Apps.OpUpgrade.IsInstallable.IsSet()
-    {
-    [[ $_obj_opts_apps_opupgrade_isinstallable_flag_ = 'true' ]]
-    }
-Opts.Apps.OpUpgrade.IsInstallable.LogChanges()
-    {
-    [[ $_obj_opts_apps_opupgrade_isinstallable_changes_flag_ = 'true' ]] && return
-    _obj_opts_apps_opupgrade_isinstallable_changes_flag_=true
-    }
-Opts.Apps.OpUpgrade.IsInstallable.Set()
-    {
-    [[ $_obj_opts_apps_opupgrade_isinstallable_flag_ = 'true' ]] && return
-    _obj_opts_apps_opupgrade_isinstallable_flag_=true
-    [[ $_obj_opts_apps_opupgrade_isinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opupgrade_isinstallable_flag_
-    }
-Opts.Apps.OpUpgrade.IsInstallable.Text()
-    {
-    if [[ -n ${1:-} && $1 = "=" ]]; then
-        _obj_opts_apps_opupgrade_isinstallable_text_=$2
-    else
-        echo -n "$_obj_opts_apps_opupgrade_isinstallable_text_"
-    fi
-    }
-Opts.Apps.OpUpgrade.IsInstallable.Init
-
-Opts.Apps.OpUpgrade.IsNtInstallable.Clear()
-    {
-    [[ $_obj_opts_apps_opupgrade_isntinstallable_flag_ != 'true' ]] && return
-    _obj_opts_apps_opupgrade_isntinstallable_flag_=false
-    [[ $_obj_opts_apps_opupgrade_isntinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opupgrade_isntinstallable_flag_
-    }
-Opts.Apps.OpUpgrade.IsNtInstallable.Disable()
-    {
-    [[ $_obj_opts_apps_opupgrade_isntinstallable_enable_ != 'true' ]] && return
-    _obj_opts_apps_opupgrade_isntinstallable_enable_=false
-    [[ $_obj_opts_apps_opupgrade_isntinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opupgrade_isntinstallable_enable_
-    }
-Opts.Apps.OpUpgrade.IsNtInstallable.DontLogChanges()
-    {
-    [[ $_obj_opts_apps_opupgrade_isntinstallable_changes_flag_ != 'true' ]] && return
-    _obj_opts_apps_opupgrade_isntinstallable_changes_flag_=false
-    }
-Opts.Apps.OpUpgrade.IsNtInstallable.Enable()
-    {
-    [[ $_obj_opts_apps_opupgrade_isntinstallable_enable_ = 'true' ]] && return
-    _obj_opts_apps_opupgrade_isntinstallable_enable_=true
-    [[ $_obj_opts_apps_opupgrade_isntinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opupgrade_isntinstallable_enable_
-    }
-Opts.Apps.OpUpgrade.IsNtInstallable.Init()
-    {
-    _obj_opts_apps_opupgrade_isntinstallable_text_=''
-    _obj_opts_apps_opupgrade_isntinstallable_flag_=false
-    _obj_opts_apps_opupgrade_isntinstallable_changes_flag_=true
-    _obj_opts_apps_opupgrade_isntinstallable_enable_=false
-    }
-Opts.Apps.OpUpgrade.IsNtInstallable.IsDisabled()
-    {
-    [[ $_obj_opts_apps_opupgrade_isntinstallable_enable_ != 'true' ]]
-    }
-Opts.Apps.OpUpgrade.IsNtInstallable.IsEnabled()
-    {
-    [[ $_obj_opts_apps_opupgrade_isntinstallable_enable_ = 'true' ]]
-    }
-Opts.Apps.OpUpgrade.IsNtInstallable.IsNt()
-    {
-    [[ $_obj_opts_apps_opupgrade_isntinstallable_flag_ != 'true' ]]
-    }
-Opts.Apps.OpUpgrade.IsNtInstallable.IsSet()
-    {
-    [[ $_obj_opts_apps_opupgrade_isntinstallable_flag_ = 'true' ]]
-    }
-Opts.Apps.OpUpgrade.IsNtInstallable.LogChanges()
-    {
-    [[ $_obj_opts_apps_opupgrade_isntinstallable_changes_flag_ = 'true' ]] && return
-    _obj_opts_apps_opupgrade_isntinstallable_changes_flag_=true
-    }
-Opts.Apps.OpUpgrade.IsNtInstallable.Set()
-    {
-    [[ $_obj_opts_apps_opupgrade_isntinstallable_flag_ = 'true' ]] && return
-    _obj_opts_apps_opupgrade_isntinstallable_flag_=true
-    [[ $_obj_opts_apps_opupgrade_isntinstallable_changes_flag_ = 'true' ]] && DebugVar _obj_opts_apps_opupgrade_isntinstallable_flag_
-    }
-Opts.Apps.OpUpgrade.IsNtInstallable.Text()
-    {
-    if [[ -n ${1:-} && $1 = "=" ]]; then
-        _obj_opts_apps_opupgrade_isntinstallable_text_=$2
-    else
-        echo -n "$_obj_opts_apps_opupgrade_isntinstallable_text_"
-    fi
-    }
-Opts.Apps.OpUpgrade.IsNtInstallable.Init
 
 Opts.Apps.OpBackup.IsMissing.Clear()
     {
@@ -24744,6 +24007,176 @@ QPKGs.ScNtDependent.Size()
     }
 QPKGs.ScNtDependent.Init
 
+QPKGs.ScInstallable.Add()
+    {
+    local array=(${1})
+    [[ ${#array[@]} -eq 0 ]] && return
+    local item=''
+    for item in "${array[@]:-}"; do
+        if [[ " ${_obj_qpkgs_scinstallable_array_[*]+"${_obj_qpkgs_scinstallable_array_[@]}"} " != *"$item"* ]]; then
+            _obj_qpkgs_scinstallable_array_+=("$item")
+        fi
+    done
+    }
+QPKGs.ScInstallable.Array()
+    {
+    echo -n "${_obj_qpkgs_scinstallable_array_[@]+"${_obj_qpkgs_scinstallable_array_[@]}"}"
+    }
+QPKGs.ScInstallable.Count()
+    {
+    echo "${#_obj_qpkgs_scinstallable_array_[@]}"
+    }
+QPKGs.ScInstallable.Exist()
+    {
+    [[ ${_obj_qpkgs_scinstallable_array_[*]:-} == *"$1"* ]]
+    }
+QPKGs.ScInstallable.First()
+    {
+    echo "${_obj_qpkgs_scinstallable_array_[0]}"
+    }
+QPKGs.ScInstallable.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_obj_qpkgs_scinstallable_array_[@]} ]] && index=${#_obj_qpkgs_scinstallable_array_[@]}
+    echo -n "${_obj_qpkgs_scinstallable_array_[((index-1))]}"
+    }
+QPKGs.ScInstallable.Init()
+    {
+    _obj_qpkgs_scinstallable_size_=0
+    _obj_qpkgs_scinstallable_array_=()
+    _obj_qpkgs_scinstallable_array_index_=1
+    }
+QPKGs.ScInstallable.IsAny()
+    {
+    [[ ${#_obj_qpkgs_scinstallable_array_[@]} -gt 0 ]]
+    }
+QPKGs.ScInstallable.IsNone()
+    {
+    [[ ${#_obj_qpkgs_scinstallable_array_[@]} -eq 0 ]]
+    }
+QPKGs.ScInstallable.List()
+    {
+    echo -n "${_obj_qpkgs_scinstallable_array_[*]+"${_obj_qpkgs_scinstallable_array_[@]}"}"
+    }
+QPKGs.ScInstallable.ListCSV()
+    {
+    echo -n "${_obj_qpkgs_scinstallable_array_[*]+"${_obj_qpkgs_scinstallable_array_[@]}"}" | tr ' ' ','
+    }
+QPKGs.ScInstallable.Remove()
+    {
+    local argument_array=(${1})
+    local temp_array=()
+    local argument=''
+    local item=''
+    local matched=false
+    for item in "${_obj_qpkgs_scinstallable_array_[@]+"${_obj_qpkgs_scinstallable_array_[@]}"}"; do
+        matched=false
+        for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
+            if [[ $argument = $item ]]; then
+                matched=true; break
+            fi
+        done
+        [[ $matched = false ]] && temp_array+=("$item")
+    done
+    _obj_qpkgs_scinstallable_array_=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${_obj_qpkgs_scinstallable_array_[*]+"${_obj_qpkgs_scinstallable_array_[@]}"} ]] && _obj_qpkgs_scinstallable_array_=()
+    }
+QPKGs.ScInstallable.Size()
+    {
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+        _obj_qpkgs_scinstallable_size_=$2
+    else
+        echo -n $_obj_qpkgs_scinstallable_size_
+    fi
+    }
+QPKGs.ScInstallable.Init
+
+QPKGs.ScNtInstallable.Add()
+    {
+    local array=(${1})
+    [[ ${#array[@]} -eq 0 ]] && return
+    local item=''
+    for item in "${array[@]:-}"; do
+        if [[ " ${_obj_qpkgs_scntinstallable_array_[*]+"${_obj_qpkgs_scntinstallable_array_[@]}"} " != *"$item"* ]]; then
+            _obj_qpkgs_scntinstallable_array_+=("$item")
+        fi
+    done
+    }
+QPKGs.ScNtInstallable.Array()
+    {
+    echo -n "${_obj_qpkgs_scntinstallable_array_[@]+"${_obj_qpkgs_scntinstallable_array_[@]}"}"
+    }
+QPKGs.ScNtInstallable.Count()
+    {
+    echo "${#_obj_qpkgs_scntinstallable_array_[@]}"
+    }
+QPKGs.ScNtInstallable.Exist()
+    {
+    [[ ${_obj_qpkgs_scntinstallable_array_[*]:-} == *"$1"* ]]
+    }
+QPKGs.ScNtInstallable.First()
+    {
+    echo "${_obj_qpkgs_scntinstallable_array_[0]}"
+    }
+QPKGs.ScNtInstallable.GetItem()
+    {
+    local -i index="$1"
+    [[ $index -lt 1 ]] && index=1
+    [[ $index -gt ${#_obj_qpkgs_scntinstallable_array_[@]} ]] && index=${#_obj_qpkgs_scntinstallable_array_[@]}
+    echo -n "${_obj_qpkgs_scntinstallable_array_[((index-1))]}"
+    }
+QPKGs.ScNtInstallable.Init()
+    {
+    _obj_qpkgs_scntinstallable_size_=0
+    _obj_qpkgs_scntinstallable_array_=()
+    _obj_qpkgs_scntinstallable_array_index_=1
+    }
+QPKGs.ScNtInstallable.IsAny()
+    {
+    [[ ${#_obj_qpkgs_scntinstallable_array_[@]} -gt 0 ]]
+    }
+QPKGs.ScNtInstallable.IsNone()
+    {
+    [[ ${#_obj_qpkgs_scntinstallable_array_[@]} -eq 0 ]]
+    }
+QPKGs.ScNtInstallable.List()
+    {
+    echo -n "${_obj_qpkgs_scntinstallable_array_[*]+"${_obj_qpkgs_scntinstallable_array_[@]}"}"
+    }
+QPKGs.ScNtInstallable.ListCSV()
+    {
+    echo -n "${_obj_qpkgs_scntinstallable_array_[*]+"${_obj_qpkgs_scntinstallable_array_[@]}"}" | tr ' ' ','
+    }
+QPKGs.ScNtInstallable.Remove()
+    {
+    local argument_array=(${1})
+    local temp_array=()
+    local argument=''
+    local item=''
+    local matched=false
+    for item in "${_obj_qpkgs_scntinstallable_array_[@]+"${_obj_qpkgs_scntinstallable_array_[@]}"}"; do
+        matched=false
+        for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
+            if [[ $argument = $item ]]; then
+                matched=true; break
+            fi
+        done
+        [[ $matched = false ]] && temp_array+=("$item")
+    done
+    _obj_qpkgs_scntinstallable_array_=("${temp_array[@]+"${temp_array[@]}"}")
+    [[ -z ${_obj_qpkgs_scntinstallable_array_[*]+"${_obj_qpkgs_scntinstallable_array_[@]}"} ]] && _obj_qpkgs_scntinstallable_array_=()
+    }
+QPKGs.ScNtInstallable.Size()
+    {
+    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+        _obj_qpkgs_scntinstallable_size_=$2
+    else
+        echo -n $_obj_qpkgs_scntinstallable_size_
+    fi
+    }
+QPKGs.ScNtInstallable.Init
+
 QPKGs.ScNames.Add()
     {
     local array=(${1})
@@ -26103,176 +25536,6 @@ QPKGs.IsNtInstalled.Size()
     fi
     }
 QPKGs.IsNtInstalled.Init
-
-QPKGs.IsInstallable.Add()
-    {
-    local array=(${1})
-    [[ ${#array[@]} -eq 0 ]] && return
-    local item=''
-    for item in "${array[@]:-}"; do
-        if [[ " ${_obj_qpkgs_isinstallable_array_[*]+"${_obj_qpkgs_isinstallable_array_[@]}"} " != *"$item"* ]]; then
-            _obj_qpkgs_isinstallable_array_+=("$item")
-        fi
-    done
-    }
-QPKGs.IsInstallable.Array()
-    {
-    echo -n "${_obj_qpkgs_isinstallable_array_[@]+"${_obj_qpkgs_isinstallable_array_[@]}"}"
-    }
-QPKGs.IsInstallable.Count()
-    {
-    echo "${#_obj_qpkgs_isinstallable_array_[@]}"
-    }
-QPKGs.IsInstallable.Exist()
-    {
-    [[ ${_obj_qpkgs_isinstallable_array_[*]:-} == *"$1"* ]]
-    }
-QPKGs.IsInstallable.First()
-    {
-    echo "${_obj_qpkgs_isinstallable_array_[0]}"
-    }
-QPKGs.IsInstallable.GetItem()
-    {
-    local -i index="$1"
-    [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_isinstallable_array_[@]} ]] && index=${#_obj_qpkgs_isinstallable_array_[@]}
-    echo -n "${_obj_qpkgs_isinstallable_array_[((index-1))]}"
-    }
-QPKGs.IsInstallable.Init()
-    {
-    _obj_qpkgs_isinstallable_size_=0
-    _obj_qpkgs_isinstallable_array_=()
-    _obj_qpkgs_isinstallable_array_index_=1
-    }
-QPKGs.IsInstallable.IsAny()
-    {
-    [[ ${#_obj_qpkgs_isinstallable_array_[@]} -gt 0 ]]
-    }
-QPKGs.IsInstallable.IsNone()
-    {
-    [[ ${#_obj_qpkgs_isinstallable_array_[@]} -eq 0 ]]
-    }
-QPKGs.IsInstallable.List()
-    {
-    echo -n "${_obj_qpkgs_isinstallable_array_[*]+"${_obj_qpkgs_isinstallable_array_[@]}"}"
-    }
-QPKGs.IsInstallable.ListCSV()
-    {
-    echo -n "${_obj_qpkgs_isinstallable_array_[*]+"${_obj_qpkgs_isinstallable_array_[@]}"}" | tr ' ' ','
-    }
-QPKGs.IsInstallable.Remove()
-    {
-    local argument_array=(${1})
-    local temp_array=()
-    local argument=''
-    local item=''
-    local matched=false
-    for item in "${_obj_qpkgs_isinstallable_array_[@]+"${_obj_qpkgs_isinstallable_array_[@]}"}"; do
-        matched=false
-        for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
-            if [[ $argument = $item ]]; then
-                matched=true; break
-            fi
-        done
-        [[ $matched = false ]] && temp_array+=("$item")
-    done
-    _obj_qpkgs_isinstallable_array_=("${temp_array[@]+"${temp_array[@]}"}")
-    [[ -z ${_obj_qpkgs_isinstallable_array_[*]+"${_obj_qpkgs_isinstallable_array_[@]}"} ]] && _obj_qpkgs_isinstallable_array_=()
-    }
-QPKGs.IsInstallable.Size()
-    {
-    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
-        _obj_qpkgs_isinstallable_size_=$2
-    else
-        echo -n $_obj_qpkgs_isinstallable_size_
-    fi
-    }
-QPKGs.IsInstallable.Init
-
-QPKGs.IsNtInstallable.Add()
-    {
-    local array=(${1})
-    [[ ${#array[@]} -eq 0 ]] && return
-    local item=''
-    for item in "${array[@]:-}"; do
-        if [[ " ${_obj_qpkgs_isntinstallable_array_[*]+"${_obj_qpkgs_isntinstallable_array_[@]}"} " != *"$item"* ]]; then
-            _obj_qpkgs_isntinstallable_array_+=("$item")
-        fi
-    done
-    }
-QPKGs.IsNtInstallable.Array()
-    {
-    echo -n "${_obj_qpkgs_isntinstallable_array_[@]+"${_obj_qpkgs_isntinstallable_array_[@]}"}"
-    }
-QPKGs.IsNtInstallable.Count()
-    {
-    echo "${#_obj_qpkgs_isntinstallable_array_[@]}"
-    }
-QPKGs.IsNtInstallable.Exist()
-    {
-    [[ ${_obj_qpkgs_isntinstallable_array_[*]:-} == *"$1"* ]]
-    }
-QPKGs.IsNtInstallable.First()
-    {
-    echo "${_obj_qpkgs_isntinstallable_array_[0]}"
-    }
-QPKGs.IsNtInstallable.GetItem()
-    {
-    local -i index="$1"
-    [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#_obj_qpkgs_isntinstallable_array_[@]} ]] && index=${#_obj_qpkgs_isntinstallable_array_[@]}
-    echo -n "${_obj_qpkgs_isntinstallable_array_[((index-1))]}"
-    }
-QPKGs.IsNtInstallable.Init()
-    {
-    _obj_qpkgs_isntinstallable_size_=0
-    _obj_qpkgs_isntinstallable_array_=()
-    _obj_qpkgs_isntinstallable_array_index_=1
-    }
-QPKGs.IsNtInstallable.IsAny()
-    {
-    [[ ${#_obj_qpkgs_isntinstallable_array_[@]} -gt 0 ]]
-    }
-QPKGs.IsNtInstallable.IsNone()
-    {
-    [[ ${#_obj_qpkgs_isntinstallable_array_[@]} -eq 0 ]]
-    }
-QPKGs.IsNtInstallable.List()
-    {
-    echo -n "${_obj_qpkgs_isntinstallable_array_[*]+"${_obj_qpkgs_isntinstallable_array_[@]}"}"
-    }
-QPKGs.IsNtInstallable.ListCSV()
-    {
-    echo -n "${_obj_qpkgs_isntinstallable_array_[*]+"${_obj_qpkgs_isntinstallable_array_[@]}"}" | tr ' ' ','
-    }
-QPKGs.IsNtInstallable.Remove()
-    {
-    local argument_array=(${1})
-    local temp_array=()
-    local argument=''
-    local item=''
-    local matched=false
-    for item in "${_obj_qpkgs_isntinstallable_array_[@]+"${_obj_qpkgs_isntinstallable_array_[@]}"}"; do
-        matched=false
-        for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
-            if [[ $argument = $item ]]; then
-                matched=true; break
-            fi
-        done
-        [[ $matched = false ]] && temp_array+=("$item")
-    done
-    _obj_qpkgs_isntinstallable_array_=("${temp_array[@]+"${temp_array[@]}"}")
-    [[ -z ${_obj_qpkgs_isntinstallable_array_[*]+"${_obj_qpkgs_isntinstallable_array_[@]}"} ]] && _obj_qpkgs_isntinstallable_array_=()
-    }
-QPKGs.IsNtInstallable.Size()
-    {
-    if [[ -n ${1:-} && ${1:-} = "=" ]]; then
-        _obj_qpkgs_isntinstallable_size_=$2
-    else
-        echo -n $_obj_qpkgs_isntinstallable_size_
-    fi
-    }
-QPKGs.IsNtInstallable.Init
 
 QPKGs.IsMissing.Add()
     {

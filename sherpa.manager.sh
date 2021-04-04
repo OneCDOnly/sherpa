@@ -155,8 +155,8 @@ Session.Init()
     readonly SESSION_LAST_PATHFILE=$LOGS_PATH/session.last.log
     readonly SESSION_TAIL_PATHFILE=$LOGS_PATH/session.tail.log
     readonly EXTERNAL_PACKAGE_LIST_PATHFILE=$WORK_PATH/Packages
-    PACKAGE_SCOPES=(All Dependent Names Standalone SupportBackup SupportUpdateOnRestart Upgradable)
-    PACKAGE_STATES=(BackedUp Downloaded Installed Installable Missing Starting Started Stopping Stopped Restarting)
+    PACKAGE_SCOPES=(All Dependent Installable Names Standalone SupportBackup SupportUpdateOnRestart Upgradable)
+    PACKAGE_STATES=(BackedUp Downloaded Installed Missing Starting Started Stopping Stopped Restarting)
     PACKAGE_OPERATIONS=(Backup Download Install Rebuild Reinstall Restart Restore Start Stop Uninstall Upgrade)
 
     readonly PACKAGE_SCOPES
@@ -1021,7 +1021,7 @@ exit
                     # check all items
                     if Opts.Dependencies.Check.IsSet; then
                         for package in $(QPKGs.ScDependent.Array); do
-                            if ! QPKGs.ScStandalone.Exist "$package" && ! QPKGs.IsUpgradable.Exist "$package" && QPKGs.IsInstalled.Exist "$package" && QPKGs.IsStarted.Exist "$package"; then
+                            if ! QPKGs.ScStandalone.Exist "$package" && ! QPKGs.ScUpgradable.Exist "$package" && QPKGs.IsInstalled.Exist "$package" && QPKGs.IsStarted.Exist "$package"; then
                                 QPKGs.OpToRestart.Add "$package"
                             fi
                         done
@@ -1248,8 +1248,8 @@ Session.Results()
             Log.Tail.Paste
         elif Opts.Apps.List.ScAll.IsSet; then
             QPKGs.ScAll.Show
-        elif Opts.Apps.List.IsInstallable.IsSet; then
-            QPKGs.IsInstallable.Show
+        elif Opts.Apps.List.ScInstallable.IsSet; then
+            QPKGs.ScInstallable.Show
         elif Opts.Apps.List.IsNtInstalled.IsSet; then
             QPKGs.IsNtInstalled.Show
         elif Opts.Apps.List.IsStarted.IsSet; then
@@ -1257,7 +1257,7 @@ Session.Results()
         elif Opts.Apps.List.IsStopped.IsSet; then
             QPKGs.IsStopped.Show
         elif Opts.Apps.List.ScUpgradable.IsSet; then
-            QPKGs.IsUpgradable.Show
+            QPKGs.ScUpgradable.Show
         elif Opts.Apps.List.ScStandalone.IsSet; then
             QPKGs.ScStandalone.Show
         elif Opts.Apps.List.ScDependent.IsSet; then
@@ -1585,7 +1585,7 @@ ParseArguments()
                         ;;
                     upgradable_)
                         QPKGs.States.Build
-                        Opts.Apps.List.IsUpgradable.Set
+                        Opts.Apps.List.ScUpgradable.Set
                         Session.Display.Clean.Set
                         ;;
                     versions_)
@@ -1607,16 +1607,16 @@ ParseArguments()
                         operation=''
                         ;;
                     dependent_)
-                        Opts.Apps.OpInstall.IsDependent.Set
+                        Opts.Apps.OpInstall.ScDependent.Set
                         ;;
                     installable_)
-                        Opts.Apps.OpInstall.IsInstallable.Set
+                        Opts.Apps.OpInstall.ScInstallable.Set
                         ;;
                     not-installed_)
                         Opts.Apps.OpInstall.IsNtInstalled.Set
                         ;;
                     standalone_)
-                        Opts.Apps.OpInstall.IsStandalone.Set
+                        Opts.Apps.OpInstall.ScStandalone.Set
                         ;;
                     *)
                         QPKGs.OpToInstall.Add "$package"
@@ -1814,7 +1814,7 @@ ParseArguments()
                         QPKGs.OpToUpgrade.Add "$(QPKGs.IsStopped.Array)"
                         ;;
                     upgradable_)
-                        QPKGs.OpToUpgrade.Add "$(QPKGs.IsUpgradable.Array)"
+                        QPKGs.OpToUpgrade.Add "$(QPKGs.ScUpgradable.Array)"
                         ;;
                     *)
                         QPKGs.OpToUpgrade.Add "$package"
@@ -3582,14 +3582,14 @@ QPKGs.States.Build()
     local remote_version=''
 
     for package in $(QPKGs.ScAll.Array); do
-        QPKG.IsInstallable "$package" && QPKGs.IsInstallable.Add "$package"
+        QPKG.IsInstallable "$package" && QPKGs.ScInstallable.Add "$package"
 
         if QPKG.IsInstalled "$package"; then
             QPKGs.IsInstalled.Add "$package"
 
             installed_version=$(QPKG.Local.Version "$package")
             remote_version=$(QPKG.Remote.Version "$package")
-            [[ ${installed_version//./} != "${remote_version//./}" ]] && QPKGs.IsUpgradable.Add "$package"
+            [[ ${installed_version//./} != "${remote_version//./}" ]] && QPKGs.ScUpgradable.Add "$package"
 
             case $(QPKG.GetServiceStatus "$package") in
                 starting)
@@ -3743,7 +3743,7 @@ QPKGs.Statuses.Show()
     for tier in Standalone Dependent; do
         DisplayAsHelpTitlePackageNamePlusSomething "${tier} QPKGs" 'statuses'
 
-        for package in $(QPKGs.Is$tier.Array); do
+        for package in $(QPKGs.Sc$tier.Array); do
             package_notes=()
             package_note=''
 
@@ -3759,7 +3759,7 @@ QPKGs.Statuses.Show()
                 QPKGs.IsStopping.Exist "$package" && package_notes+=($(ColourTextBrightOrange stopping))
                 QPKGs.IsStopped.Exist "$package" && package_notes+=($(ColourTextBrightRed stopped))
                 QPKGs.IsRestarting.Exist "$package" && package_notes+=($(ColourTextBrightOrange restarting))
-                QPKGs.IsUpgradable.Exist "$package" && package_notes+=($(ColourTextBrightOrange upgradable))
+                QPKGs.ScUpgradable.Exist "$package" && package_notes+=($(ColourTextBrightOrange upgradable))
                 QPKGs.IsMissing.Exist "$package" && package_notes=($(ColourTextBrightRedBlink missing))
 
                 [[ ${#package_notes[@]} -gt 0 ]] && package_note="${package_notes[*]}"
@@ -3793,14 +3793,14 @@ QPKGs.IsInstalled.Show()
 
     }
 
-QPKGs.IsInstallable.Show()
+QPKGs.ScInstallable.Show()
     {
 
     local package=''
 
     DisableDebugToArchiveAndFile
 
-    for package in $(QPKGs.IsInstallable.Array); do
+    for package in $(QPKGs.ScInstallable.Array); do
         Display "$package"
     done
 
@@ -3853,14 +3853,14 @@ QPKGs.IsStopped.Show()
 
     }
 
-QPKGs.IsUpgradable.Show()
+QPKGs.ScUpgradable.Show()
     {
 
     local package=''
 
     DisableDebugToArchiveAndFile
 
-    for package in $(QPKGs.IsUpgradable.Array); do
+    for package in $(QPKGs.ScUpgradable.Array); do
         Display "$package"
     done
 
@@ -4476,7 +4476,7 @@ QPKG.Upgrade()
         DebugFuncExit 2; return
     fi
 
-    if ! QPKGs.IsUpgradable.Exist "$PACKAGE_NAME"; then
+    if ! QPKGs.ScUpgradable.Exist "$PACKAGE_NAME"; then
         MarkOperationAsSkipped show "$PACKAGE_NAME" upgrade 'no new package is available'
         DebugFuncExit 2; return
     fi
@@ -4507,7 +4507,7 @@ QPKG.Upgrade()
             DebugAsDone "upgraded $(FormatAsPackageName "$PACKAGE_NAME") from $previous_version to $current_version"
         fi
         QPKG.StoreServiceStatus "$PACKAGE_NAME"
-        QPKGs.IsUpgradable.Remove "$PACKAGE_NAME"
+        QPKGs.ScUpgradable.Remove "$PACKAGE_NAME"
         MarkOperationAsDone "$PACKAGE_NAME" upgrade
 
         if QPKG.IsStarted "$PACKAGE_NAME"; then
@@ -6611,7 +6611,7 @@ CompileObjects()
 
     # $1 = 'hash' (optional) return the internal checksum
 
-    local -r COMPILED_OBJECTS_HASH=97039705cd3103f4319b7503cf82d16a
+    local -r COMPILED_OBJECTS_HASH=a565b11ef4fa54ed7437d4241460b603
     local element=''
     local operation=''
     local state=''
