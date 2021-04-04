@@ -747,6 +747,13 @@ Session.Validate()
             break
         fi
 
+        for scope in "${PACKAGE_SCOPES[@]}"; do
+            if Opts.Apps.Op${operation}.Sc${scope}.IsSet || Opts.Apps.Op${operation}.ScNt${scope}.IsSet; then
+                something_to_do=true
+                break 2
+            fi
+        done
+
         for state in "${PACKAGE_STATES[@]}"; do
             if Opts.Apps.Op${operation}.Is${state}.IsSet || Opts.Apps.Op${operation}.IsNt${state}.IsSet; then
                 something_to_do=true
@@ -6611,7 +6618,7 @@ CompileObjects()
 
     # $1 = 'hash' (optional) return the internal checksum
 
-    local -r COMPILED_OBJECTS_HASH=a565b11ef4fa54ed7437d4241460b603
+    local -r COMPILED_OBJECTS_HASH=f8c472178b4c9ca4e8ba65fcc1ec1a88
     local element=''
     local operation=''
     local state=''
@@ -6671,6 +6678,7 @@ CompileObjects()
         for scope in "${PACKAGE_SCOPES[@]}"; do
             for operation in "${PACKAGE_OPERATIONS[@]}"; do
                 AddFlagObj Opts.Apps.Op$operation.Sc${scope}
+                AddFlagObj Opts.Apps.Op$operation.ScNt${scope}
             done
         done
 
