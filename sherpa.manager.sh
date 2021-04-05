@@ -1169,7 +1169,7 @@ Tier.Processor()
     local -r ACTION_PRESENT=${message_prefix}${7:?empty}
     local -r ACTION_PAST=${message_prefix}${8:?empty}
 
-    ShowAsProc "checking for$([[ $TIER = All ]] && echo '' || echo " $TIER") packages to $ACTION_INTRANSITIVE" >&2
+    ShowAsProc "checking for$([[ $TIER = All ]] && echo '' || echo " $TIER" | tr '[:upper:]' '[:lower:]') packages to $ACTION_INTRANSITIVE" >&2
 
     case $PACKAGE_TYPE in
         QPKG)
@@ -6159,7 +6159,7 @@ ShowAsOperationProgress()
     # $7 = 'long' (optional)
 
     if [[ -n $1 && $1 != All ]]; then
-        local tier=" $1"
+        local tier=" $(tr '[:upper:]' '[:lower:]' <<<$1)"
     else
         local tier=''
     fi
@@ -6207,7 +6207,7 @@ ShowAsOperationResult()
     # $7 = 'long' (optional)
 
     if [[ -n $1 && $1 != All ]]; then
-        local tier=" $1"
+        local tier=" $(tr '[:upper:]' '[:lower:]' <<<$1)"
     else
         local tier=''
     fi
