@@ -54,7 +54,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    readonly MANAGER_SCRIPT_VERSION=210405d
+    local -r SCRIPT_VERSION=210405
     readonly PROJECT_BRANCH=develop
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -220,6 +220,7 @@ Session.Init()
     fi
 
     readonly PACKAGE_VERSION=$(QPKG.Local.Version "$PROJECT_NAME")
+    readonly MANAGER_SCRIPT_VERSION="$SCRIPT_VERSION$([[ $PROJECT_BRANCH = develop ]] && echo '(d)')"
 
     DebugInfoMajorSeparator
     DebugScript started "$($DATE_CMD -d @"$SCRIPT_STARTSECONDS" | tr -s ' ')"
