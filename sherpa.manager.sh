@@ -1618,20 +1618,24 @@ ParseArguments()
             install_)
                 case $scope in
                     all_)
-                        Opts.Apps.ScAll.Install.Set
+                        Opts.Apps.OpInstall.ScAll.Set
                         operation=''
                         ;;
                     dependent_)
                         Opts.Apps.OpInstall.ScDependent.Set
+                        operation=''
                         ;;
                     installable_)
                         Opts.Apps.OpInstall.ScInstallable.Set
+                        operation=''
                         ;;
                     not-installed_)
                         Opts.Apps.OpInstall.IsNtInstalled.Set
+                        operation=''
                         ;;
                     standalone_)
                         Opts.Apps.OpInstall.ScStandalone.Set
+                        operation=''
                         ;;
                     *)
                         QPKGs.OpToInstall.Add "$package"
@@ -1660,14 +1664,16 @@ ParseArguments()
             rebuild_)
                 case $scope in
                     all_|installed_)
-                        Opts.Apps.ScAll.Rebuild.Set
+                        Opts.Apps.OpRebuild.ScAll.Set
                         operation=''
                         ;;
                     dependent_)
-                        Opts.Apps.ScDependent.Rebuild.Set
+                        Opts.Apps.OpRebuild.ScDependent.Set
+                        operation=''
                         ;;
                     standalone_)
-                        Opts.Apps.ScStandalone.Rebuild.Set
+                        Opts.Apps.OpRebuild.ScStandalone.Set
+                        operation=''
                         ;;
                     *)
                         QPKGs.OpToRebuild.Add "$package"
@@ -1677,14 +1683,16 @@ ParseArguments()
             reinstall_)
                 case $scope in
                     all_|installed_)
-                        Opts.Apps.ScAll.Reinstall.Set
+                        Opts.Apps.OpReinstall.ScAll.Set
                         operation=''
                         ;;
                     dependent_)
-                        Opts.Apps.ScDependent.Reinstall.Set
+                        Opts.Apps.OpReinstall.ScDependent.Set
+                        operation=''
                         ;;
                     standalone_)
-                        Opts.Apps.ScStandalone.Reinstall.Set
+                        Opts.Apps.OpReinstall.ScStandalone.Set
+                        operation=''
                         ;;
                     *)
                         QPKGs.OpToReinstall.Add "$package"
@@ -1694,14 +1702,16 @@ ParseArguments()
             restart_)
                 case $scope in
                     all_|installed_)
-                        Opts.Apps.ScAll.Restart.Set
+                        Opts.Apps.OpRestart.ScAll.Set
                         operation=''
                         ;;
                     dependent_)
-                        Opts.Apps.ScDependent.Restart.Set
+                        Opts.Apps.OpRestartScDependent.Set
+                        operation=''
                         ;;
                     standalone_)
-                        Opts.Apps.ScStandalone.Restart.Set
+                        Opts.Apps.OpRestart.ScStandalone.Set
+                        operation=''
                         ;;
                     *)
                         QPKGs.OpToRestart.Add "$package"
@@ -1711,14 +1721,16 @@ ParseArguments()
             restore_)
                 case $scope in
                     all_|installed_)
-                        Opts.Apps.ScAll.Restore.Set
+                        Opts.Apps.OpRestore.ScAll.Set
                         operation=''
                         ;;
                     dependent_)
-                        Opts.Apps.ScDependent.Restore.Set
+                        Opts.Apps.OpRestore.ScDependent.Set
+                        operation=''
                         ;;
                     standalone_)
-                        Opts.Apps.ScStandalone.Restore.Set
+                        Opts.Apps.OpRestore.ScStandalone.Set
+                        operation=''
                         ;;
                     *)
                         QPKGs.OpToRestore.Add "$package"
@@ -1728,19 +1740,19 @@ ParseArguments()
             start_)
                 case $scope in
                     all_|installed_)
-                        Opts.Apps.ScAll.Start.Set
+                        Opts.Apps.OpStart.ScAll.Set
                         operation=''
                         ;;
                     dependent_)
-                        Opts.Apps.ScDependent.Start.Set
+                        Opts.Apps.OpStart.ScDependent.Set
                         operation=''
                         ;;
                     standalone_)
-                        Opts.Apps.ScStandalone.Start.Set
+                        Opts.Apps.OpStart.ScStandalone.Set
                         operation=''
                         ;;
                     stopped_)
-                        QPKGs.OpToStart.Add "$(QPKGs.IsStopped.Array)"
+                        Opts.Apps.OpStart.IsStopped.Set
                         operation=''
                         ;;
                     *)
@@ -1756,19 +1768,19 @@ ParseArguments()
             stop_)
                 case $scope in
                     all_|installed_)
-                        Opts.Apps.ScAll.Stop.Set
+                        Opts.Apps.OpStop.ScAll.Set
                         operation=''
                         ;;
                     dependent_)
-                        Opts.Apps.ScDependent.Stop.Set
+                        Opts.Apps.OpStop.ScDependent.Set
                         operation=''
                         ;;
                     standalone_)
-                        Opts.Apps.ScStandalone.Stop.Set
+                        Opts.Apps.OpStop.ScStandalone.Set
                         operation=''
                         ;;
                     started_)
-                        QPKGs.OpToStop.Add "$(QPKGs.IsStarted.Array)"
+                        Opts.Apps.OpStop.IsStarted.Set
                         operation=''
                         ;;
                     *)
@@ -1780,28 +1792,28 @@ ParseArguments()
                 case $scope in
                     all_|installed_)   # this scope is dangerous, so make 'force' a requirement
                         if [[ $operation_force = true ]]; then
-                            Opts.Apps.ScAll.Uninstall.Set
+                            Opts.Apps.OpUninstall.ScAll.Set
                             operation=''
                             operation_force=false
                         fi
                         ;;
                     dependent_)
-                        Opts.Apps.ScDependent.Uninstall.Set
+                        Opts.Apps.OpUninstall.ScDependent.Set
                         operation=''
                         operation_force=false
                         ;;
                     standalone_)
-                        Opts.Apps.ScStandalone.Uninstall.Set
+                        Opts.Apps.OpUninstall.ScStandalone.Set
                         operation=''
                         operation_force=false
                         ;;
                     started_)
-                        QPKGs.OpToUninstall.Add "$(QPKGs.IsStarted.Array)"
+                        Opts.Apps.OpUninstall.IsStarted.Set
                         operation=''
                         operation_force=false
                         ;;
                     stopped_)
-                        QPKGs.OpToUninstall.Add "$(QPKGs.IsStopped.Array)"
+                        Opts.Apps.OpUninstall.IsStopped.Set
                         operation=''
                         operation_force=false
                         ;;
@@ -1813,23 +1825,28 @@ ParseArguments()
             upgrade_)
                 case $scope in
                     all_)
-                        Opts.Apps.ScAll.Upgrade.Set
+                        Opts.Apps.OpUpgrade.ScAll.Set
                         operation=''
                         ;;
                     dependent_)
-                        Opts.Apps.ScDependent.Upgrade.Set
+                        Opts.Apps.OpUpgrade.ScDependent.Set
+                        operation=''
                         ;;
                     standalone_)
-                        Opts.Apps.ScStandalone.Upgrade.Set
+                        Opts.Apps.OpUpgrade.ScStandalone.Set
+                        operation=''
                         ;;
                     started_)
-                        QPKGs.OpToUpgrade.Add "$(QPKGs.IsStarted.Array)"
+                        Opts.Apps.OpUpgrade.IsStarted.Set
+                        operation=''
                         ;;
                     stopped_)
-                        QPKGs.OpToUpgrade.Add "$(QPKGs.IsStopped.Array)"
+                        Opts.Apps.OpUpgrade.IsStopped.Set
+                        operation=''
                         ;;
                     upgradable_)
-                        QPKGs.OpToUpgrade.Add "$(QPKGs.ScUpgradable.Array)"
+                        Opts.Apps.OpUpgrade.ScUpgradable.Set
+                        operation=''
                         ;;
                     *)
                         QPKGs.OpToUpgrade.Add "$package"
@@ -6441,17 +6458,6 @@ echo $public_function_name'.Add()
     {
     [[ ${'$_placeholder_array_'[*]:-} == *"$1"* ]]
     }
-'$public_function_name'.First()
-    {
-    echo "${'$_placeholder_array_'[0]}"
-    }
-'$public_function_name'.GetItem()
-    {
-    local -i index="$1"
-    [[ $index -lt 1 ]] && index=1
-    [[ $index -gt ${#'$_placeholder_array_'[@]} ]] && index=${#'$_placeholder_array_'[@]}
-    echo -n "${'$_placeholder_array_'[((index-1))]}"
-    }
 '$public_function_name'.Init()
     {
     '$_placeholder_size_'=0
@@ -6519,7 +6525,6 @@ AddFlagObj()
     _placeholder_text_=_obj_${safe_function_name}_text_
     _placeholder_flag_=_obj_${safe_function_name}_flag_
     _placeholder_log_changes_flag_=_obj_${safe_function_name}_changes_flag_
-    _placeholder_enable_=_obj_${safe_function_name}_enable_
 
 echo $public_function_name'.Clear()
     {
@@ -6527,37 +6532,16 @@ echo $public_function_name'.Clear()
     '$_placeholder_flag_'=false
     [[ $'$_placeholder_log_changes_flag_' = '\'true\'' ]] && DebugVar '$_placeholder_flag_'
     }
-'$public_function_name'.Disable()
-    {
-    [[ $'$_placeholder_enable_' != '\'true\'' ]] && return
-    '$_placeholder_enable_'=false
-    [[ $'$_placeholder_log_changes_flag_' = '\'true\'' ]] && DebugVar '$_placeholder_enable_'
-    }
 '$public_function_name'.DontLogChanges()
     {
     [[ $'$_placeholder_log_changes_flag_' != '\'true\'' ]] && return
     '$_placeholder_log_changes_flag_'=false
-    }
-'$public_function_name'.Enable()
-    {
-    [[ $'$_placeholder_enable_' = '\'true\'' ]] && return
-    '$_placeholder_enable_'=true
-    [[ $'$_placeholder_log_changes_flag_' = '\'true\'' ]] && DebugVar '$_placeholder_enable_'
     }
 '$public_function_name'.Init()
     {
     '$_placeholder_text_'='\'\''
     '$_placeholder_flag_'=false
     '$_placeholder_log_changes_flag_'=true
-    '$_placeholder_enable_'=false
-    }
-'$public_function_name'.IsDisabled()
-    {
-    [[ $'$_placeholder_enable_' != '\'true\'' ]]
-    }
-'$public_function_name'.IsEnabled()
-    {
-    [[ $'$_placeholder_enable_' = '\'true\'' ]]
     }
 '$public_function_name'.IsNt()
     {
@@ -6566,11 +6550,6 @@ echo $public_function_name'.Clear()
 '$public_function_name'.IsSet()
     {
     [[ $'$_placeholder_flag_' = '\'true\'' ]]
-    }
-'$public_function_name'.LogChanges()
-    {
-    [[ $'$_placeholder_log_changes_flag_' = '\'true\'' ]] && return
-    '$_placeholder_log_changes_flag_'=true
     }
 '$public_function_name'.Set()
     {
@@ -6626,7 +6605,7 @@ CompileObjects()
 
     # $1 = 'hash' (optional) return the internal checksum
 
-    local -r COMPILED_OBJECTS_HASH=f8c472178b4c9ca4e8ba65fcc1ec1a88
+    local -r COMPILED_OBJECTS_HASH=fec7f3b9babd0795a1232c5369f316fd
     local element=''
     local operation=''
     local state=''
