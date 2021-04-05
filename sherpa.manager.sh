@@ -54,7 +54,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=210405
+    local -r SCRIPT_VERSION=210406
     readonly PROJECT_BRANCH=develop
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -916,20 +916,15 @@ Tiers.Processor()
 
         case $tier in
             Standalone|Dependent)
-                Tier.Processor Backup false $tier QPKG OpToBackup 'backup configuration for' 'backing-up configuration for' 'configuration backed-up for' ''
-                Tier.Processor Stop false $tier QPKG OpToStop stop stopping stopped ''
-                Tier.Processor Uninstall false $tier QPKG OpToUninstall uninstall uninstalling uninstalled ''
+                Tier.Processor Backup false "$tier" QPKG OpToBackup 'backup configuration for' 'backing-up configuration for' 'configuration backed-up for' ''
+                Tier.Processor Stop false "$tier" QPKG OpToStop stop stopping stopped ''
+                Tier.Processor Uninstall false "$tier" QPKG OpToUninstall uninstall uninstalling uninstalled ''
                 ;;
             Addon)
-                Tier.Processor Uninstall false $tier IPKG OpToUninstall uninstall uninstalling uninstalled ''
+                Tier.Processor Uninstall false "$tier" IPKG OpToUninstall uninstall uninstalling uninstalled ''
                 ;;
         esac
     done
-
-Session.Debug.ToScreen.Set
-QPKGs.Operations.List
-
-exit
 
     ### pre-'install' fixes ###
 
@@ -944,7 +939,7 @@ exit
 
     ### pre-'restart' fixes ###
 
-    if Opts.Apps.ScAll.Upgrade.IsSet; then
+    if Opts.Apps.OpUpgrade.ScAll.IsSet; then
         QPKGs.OpToRestart.Add "$(QPKGs.IsSupportUpdateOnRestart.Array)"
         QPKGs.OpToRestart.Remove "$(QPKGs.IsNtInstalled.Array)"
         QPKGs.OpToRestart.Remove "$(QPKGs.OpToUpgrade.Array)"
@@ -960,151 +955,163 @@ exit
             Standalone|Dependent)
                 ### 'upgrade' operation ###
 
-                Tier.Processor Upgrade false "$tier" QPKG ToUpgrade upgrade upgrading upgraded long
+                Tier.Processor Upgrade false "$tier" QPKG OpToUpgrade upgrade upgrading upgraded long
 
                 ### 'reinstall' operation ###
 
-                Tier.Processor Reinstall false "$tier" QPKG ToReinstall reinstall reinstalling reinstalled long
+                Tier.Processor Reinstall false "$tier" QPKG OpToReinstall reinstall reinstalling reinstalled long
 
                 ### 'install' operation ###
 
-                Tier.Processor Install false "$tier" QPKG ToInstall install installing installed long
+                Tier.Processor Install false "$tier" QPKG OpToInstall install installing installed long
 
                 ### 'restore' operation ###
 
-                Tier.Processor Restore false "$tier" QPKG ToRestore 'restore configuration for' 'restoring configuration for' 'configuration restored for' long
+                Tier.Processor Restore false "$tier" QPKG OpToRestore 'restore configuration for' 'restoring configuration for' 'configuration restored for' long
 
                 ### 'start' operation ###
 
-                    if [[ $tier = standalone ]]; then
-                        # check for standalone packages that require starting due to dependents being reinstalled
-                        for package in $(QPKGs.OpToReinstall.Array); do
-                            for prospect in $(QPKG.Standalones "$package"); do
-                                QPKGs.IsStopped.Exist "$prospect" && QPKGs.OpToStart.Add "$prospect"
-                            done
+                if [[ $tier = standalone ]]; then
+                    # check for standalone packages that require starting due to dependents being reinstalled
+                    for package in $(QPKGs.OpToReinstall.Array); do
+                        for prospect in $(QPKG.Standalones "$package"); do
+                            QPKGs.IsStopped.Exist "$prospect" && QPKGs.OpToStart.Add "$prospect"
                         done
+                    done
 
-                        for package in $(QPKGs.OkReinstall.Array); do
-                            for prospect in $(QPKG.Standalones "$package"); do
-                                QPKGs.IsStopped.Exist "$prospect" && QPKGs.OpToStart.Add "$prospect"
-                            done
+                    for package in $(QPKGs.OpOkReinstall.Array); do
+                        for prospect in $(QPKG.Standalones "$package"); do
+                            QPKGs.IsStopped.Exist "$prospect" && QPKGs.OpToStart.Add "$prospect"
                         done
+                    done
 
-                        # check for standalone packages that require starting due to dependents being installed
-                        for package in $(QPKGs.OpToInstall.Array); do
-                            for prospect in $(QPKG.Standalones "$package"); do
-                                QPKGs.IsStopped.Exist "$prospect" && QPKGs.OpToStart.Add "$prospect"
-                            done
+                    # check for standalone packages that require starting due to dependents being installed
+                    for package in $(QPKGs.OpOpToInstall.Array); do
+                        for prospect in $(QPKG.Standalones "$package"); do
+                            QPKGs.IsStopped.Exist "$prospect" && QPKGs.OpToStart.Add "$prospect"
                         done
+                    done
 
-                        for package in $(QPKGs.OkInstall.Array); do
-                            for prospect in $(QPKG.Standalones "$package"); do
-                                QPKGs.IsStopped.Exist "$prospect" && QPKGs.OpToStart.Add "$prospect"
-                            done
+                    for package in $(QPKGs.OpOkInstall.Array); do
+                        for prospect in $(QPKG.Standalones "$package"); do
+                            QPKGs.IsStopped.Exist "$prospect" && QPKGs.OpToStart.Add "$prospect"
                         done
+                    done
 
-                        # check for standalone packages that require starting due to dependents being started
-                        for package in $(QPKGs.OpToStart.Array); do
-                            for prospect in $(QPKG.Standalones "$package"); do
-                                QPKGs.IsStopped.Exist "$prospect" && QPKGs.OpToStart.Add "$prospect"
-                            done
+                    # check for standalone packages that require starting due to dependents being started
+                    for package in $(QPKGs.OpToStart.Array); do
+                        for prospect in $(QPKG.Standalones "$package"); do
+                            QPKGs.IsStopped.Exist "$prospect" && QPKGs.OpToStart.Add "$prospect"
                         done
+                    done
 
-                        for package in $(QPKGs.OkStart.Array); do
-                            for prospect in $(QPKG.Standalones "$package"); do
-                                QPKGs.IsStopped.Exist "$prospect" && QPKGs.OpToStart.Add "$prospect"
-                            done
+                    for package in $(QPKGs.OpOkStart.Array); do
+                        for prospect in $(QPKG.Standalones "$package"); do
+                            QPKGs.IsStopped.Exist "$prospect" && QPKGs.OpToStart.Add "$prospect"
                         done
+                    done
 
-                        # check for standalone packages that require starting due to dependents being restarted
-                        for package in $(QPKGs.OpToRestart.Array); do
-                            for prospect in $(QPKG.Standalones "$package"); do
-                                QPKGs.IsStopped.Exist "$prospect" && QPKGs.OpToStart.Add "$prospect"
-                            done
+                    # check for standalone packages that require starting due to dependents being restarted
+                    for package in $(QPKGs.OpToRestart.Array); do
+                        for prospect in $(QPKG.Standalones "$package"); do
+                            QPKGs.IsStopped.Exist "$prospect" && QPKGs.OpToStart.Add "$prospect"
                         done
+                    done
 
-                        for package in $(QPKGs.OkRestart.Array); do
-                            for prospect in $(QPKG.Standalones "$package"); do
-                                QPKGs.IsStopped.Exist "$prospect" && QPKGs.OpToStart.Add "$prospect"
-                            done
+                    for package in $(QPKGs.OpOkRestart.Array); do
+                        for prospect in $(QPKG.Standalones "$package"); do
+                            QPKGs.IsStopped.Exist "$prospect" && QPKGs.OpToStart.Add "$prospect"
                         done
-                    fi
+                    done
+                fi
+# Session.Debug.ToScreen.Set
 
-                Tier.Processor Start false "$tier" QPKG ToStart start starting started long
+                Tier.Processor Start false "$tier" QPKG OpToStart start starting started long
 
                 ### 'restart' operation ###
 
-                    # check all items
-                    if Opts.Dependencies.Check.IsSet; then
-                        for package in $(QPKGs.ScDependent.Array); do
-                            if ! QPKGs.ScStandalone.Exist "$package" && ! QPKGs.ScUpgradable.Exist "$package" && QPKGs.IsInstalled.Exist "$package" && QPKGs.IsStarted.Exist "$package"; then
-                                QPKGs.OpToRestart.Add "$package"
-                            fi
+                # check all items
+                if Opts.Dependencies.Check.IsSet; then
+                    for package in $(QPKGs.ScDependent.Array); do
+                        if ! QPKGs.ScStandalone.Exist "$package" && ! QPKGs.ScUpgradable.Exist "$package" && QPKGs.IsInstalled.Exist "$package" && QPKGs.IsStarted.Exist "$package"; then
+                            QPKGs.OpToRestart.Add "$package"
+                        fi
+                    done
+                fi
+                # adjust lists for restart
+                if Opts.Apps.OpRestart.ScAll.IsSet; then
+                    QPKGs.OpToRestart.Add "$(QPKGs.IsInstalled.Array)"
+                else
+                    # check for dependent packages to restart due to standalones being reinstalled
+                    for package in $(QPKGs.OpOkReinstall.Array); do
+                        for prospect in $(QPKG.Dependents "$package"); do
+                            QPKGs.IsInstalled.Exist "$prospect" && QPKGs.OpToRestart.Add "$prospect"
                         done
-                    fi
+                    done
+# exit
 
-                    # adjust lists for restart
-                    if Opts.Apps.ScAll.Restart.IsSet; then
-                        QPKGs.OpToRestart.Add "$(QPKGs.IsInstalled.Array)"
-                    else
-                        # check for dependent packages to restart due to standalones being reinstalled
-                        for package in $(QPKGs.OkReinstall.Array); do
-                            for prospect in $(QPKG.Dependents "$package"); do
-                                QPKGs.IsInstalled.Exist "$prospect" && QPKGs.OpToRestart.Add "$prospect"
-                            done
+                    # check for dependent packages to restart due to standalones being started
+                    for package in $(QPKGs.OpOkStart.Array); do
+                        for prospect in $(QPKG.Dependents "$package"); do
+                            QPKGs.IsStarted.Exist "$prospect" && QPKGs.OpToRestart.Add "$prospect"
                         done
-
-                        # check for dependent packages to restart due to standalones being started
-                        for package in $(QPKGs.OkStart.Array); do
-                            for prospect in $(QPKG.Dependents "$package"); do
-                                QPKGs.IsStarted.Exist "$prospect" && QPKGs.OpToRestart.Add "$prospect"
-                            done
-                        done
-
-                        # check for dependent packages to restart due to standalones being restarted
-                        for package in $(QPKGs.OkRestart.Array); do
-                            for prospect in $(QPKG.Dependents "$package"); do
-                                QPKGs.IsInstalled.Exist "$prospect" && QPKGs.OpToRestart.Add "$prospect"
-                            done
-                        done
-
-                        # check for dependent packages to restart due to standalones being upgraded
-                        for package in $(QPKGs.OkUpgrade.Array); do
-                            for prospect in $(QPKG.Dependents "$package"); do
-                                QPKGs.IsInstalled.Exist "$prospect" && QPKGs.OpToRestart.Add "$prospect"
-                            done
-                        done
-                    fi
-
-                    for operation in Install Reinstall Restart Restore Start Upgrade; do
-                        QPKGs.OpToRestart.Remove "$(QPKGs.Ok${operation}.Array)"
                     done
 
-                Tier.Processor Restart false "$tier" QPKG ToRestart restart restarting restarted long
+                    # check for dependent packages to restart due to standalones being restarted
+                    for package in $(QPKGs.OpOkRestart.Array); do
+                        for prospect in $(QPKG.Dependents "$package"); do
+                            QPKGs.IsInstalled.Exist "$prospect" && QPKGs.OpToRestart.Add "$prospect"
+                        done
+                    done
+
+                    # check for dependent packages to restart due to standalones being upgraded
+                    for package in $(QPKGs.OpOkUpgrade.Array); do
+                        for prospect in $(QPKG.Dependents "$package"); do
+                            QPKGs.IsInstalled.Exist "$prospect" && QPKGs.OpToRestart.Add "$prospect"
+                        done
+                    done
+                fi
+
+                for operation in Install Reinstall Restart Restore Start Upgrade; do
+                    QPKGs.OpToRestart.Remove "$(QPKGs.OpOk${operation}.Array)"
+                done
+
+                Tier.Processor Restart false "$tier" QPKG OpToRestart restart restarting restarted long
 
                 ;;
             Addon)
-                    if QPKGs.OpToInstall.IsAny || QPKGs.OkInstall.IsAny || QPKGs.OpToReinstall.IsAny || QPKGs.OkReinstall.IsAny || QPKGs.OpToUpgrade.IsAny || QPKGs.OkUpgrade.IsAny || QPKGs.OpToStart.IsAny; then
+                for operation in Install Reinstall Upgrade Start; do
+                    if QPKGs.OpTo${operation}.IsAny || QPKGs.OpOk${operation}.IsAny; then
                         IPKGs.Upgrade.Set
                         IPKGs.Install.Set
+                        break
                     fi
+                done
 
-                    if QPKGs.OpToInstall.Exist SABnzbd || QPKGs.OpToReinstall.Exist SABnzbd || QPKGs.OpToUpgrade.Exist SABnzbd; then
+                for operation in Install Reinstall Upgrade; do
+                    if QPKGs.OpTo${operation}.Exist SABnzbd; then
                         PIPs.Install.Set   # must ensure 'sabyenc' and 'feedparser' modules are installed/updated
+                        break
                     fi
+                done
 
-                    if QPKGs.IsStarted.Exist Entware; then
-                        ModPathToEntware
+                if QPKGs.IsStarted.Exist Entware; then
+                    ModPathToEntware
 
-                Tier.Processor Upgrade false "$tier" IPKG '' upgrade upgrading upgraded long
-                Tier.Processor Install false "$tier" IPKG '' install installing installed long
-                Tier.Processor Install false "$tier" PIP '' install installing installed long
+                    Tier.Processor Upgrade false "$tier" IPKG '' upgrade upgrading upgraded long
+                    Tier.Processor Install false "$tier" IPKG '' install installing installed long
+                    Tier.Processor Install false "$tier" PIP '' install installing installed long
 
-                    else
-                        : # TODO: test if other packages are to be installed here. If so, and Entware isn't enabled, then abort with error.
-                    fi
-                    ;;
+                else
+                    : # TODO: test if other packages are to be installed here. If so, and Entware isn't enabled, then abort with error.
+                fi
+                ;;
         esac
+
+# QPKGs.Operations.List
+
+# exit
+
     done
 
     QPKGs.Operations.List
@@ -1125,7 +1132,7 @@ Tier.Processor()
     #   $2 = forced operation?              e.g. 'true', 'false'
     #   $3 = $TIER                          e.g. 'Standalone', 'Dependent', 'Addon', 'All'
     #   $4 = $PACKAGE_TYPE                  e.g. 'QPKG', 'IPKG', 'PIP'
-    #   $5 = $TARGET_OBJECT_NAME (optional) e.g. 'ToStart', 'ToStop'...
+    #   $5 = $TARGET_OBJECT_NAME (optional) e.g. 'OpToStart', 'OpToStop'...
     #   $6 = $ACTION_INTRANSITIVE           e.g. 'start'...
     #   $7 = $ACTION_PRESENT                e.g. 'starting'...
     #   $8 = $ACTION_PAST                   e.g. 'started'...
@@ -1500,14 +1507,14 @@ ParseArguments()
             backup_)
                 case $scope in
                     all_|installed_)
-                        Opts.Apps.ScAll.Backup.Set
+                        Opts.Apps.OpBackup.ScAll.Set
                         operation=''
                         ;;
                     dependent_)
-                        Opts.Apps.Backup.ScDependent.Set
+                        Opts.Apps.OpBackup.ScDependent.Set
                         ;;
                     standalone_)
-                        Opts.Apps.Backup.ScStandalone.Set
+                        Opts.Apps.OpBackup.ScStandalone.Set
                         ;;
                     started_)
                         QPKGs.OpToBackup.Add "$(QPKGs.IsStarted.Array)"
@@ -2364,11 +2371,11 @@ IPKGs.Upgrade()
     Session.Error.IsSet && return
     DebugFuncEntry
     local -i result_code=0
-    IPKGs.ToUpgrade.Init
+    IPKGs.OpToUpgrade.Init
     IPKGs.OpToDownload.Init
 
-    IPKGs.ToUpgrade.Add "$(/opt/bin/opkg list-upgradable | cut -f1 -d' ')"
-    IPKGs.OpToDownload.Add "$(IPKGs.ToUpgrade.Array)"
+    IPKGs.OpToUpgrade.Add "$(/opt/bin/opkg list-upgradable | cut -f1 -d' ')"
+    IPKGs.OpToDownload.Add "$(IPKGs.OpToUpgrade.Array)"
 
     CalcIPKGsDownloadSize
     local -i total_count=$(IPKGs.OpToDownload.Count)
@@ -2416,7 +2423,7 @@ IPKGs.Install()
     IPKGs.OpToInstall.Add "$MANAGER_BASE_IPKGS_ADD"
     IPKGs.OpToInstall.Add "$MANAGER_SHARED_IPKGS_ADD"
 
-    if Opts.Apps.ScAll.Install.IsSet; then
+    if Opts.Apps.OpInstall.ScAll.IsSet; then
         for index in "${!MANAGER_QPKG_NAME[@]}"; do
             [[ ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${MANAGER_QPKG_ARCH[$index]} = all ]] || continue
             IPKGs.OpToInstall.Add "${MANAGER_QPKG_IPKGS_ADD[$index]}"
