@@ -155,13 +155,16 @@ Session.Init()
     readonly SESSION_LAST_PATHFILE=$LOGS_PATH/session.last.log
     readonly SESSION_TAIL_PATHFILE=$LOGS_PATH/session.tail.log
     readonly EXTERNAL_PACKAGE_LIST_PATHFILE=$WORK_PATH/Packages
+
     PACKAGE_SCOPES=(All Dependent Installable Names Standalone SupportBackup SupportUpdateOnRestart Upgradable)
     PACKAGE_STATES=(BackedUp Downloaded Installed Missing Starting Started Stopping Stopped Restarting)
     PACKAGE_OPERATIONS=(Backup Download Install Rebuild Reinstall Restart Restore Start Stop Uninstall Upgrade)
+    PACKAGE_TIERS=(Standalone Addon Dependent)
 
     readonly PACKAGE_SCOPES
     readonly PACKAGE_STATES
     readonly PACKAGE_OPERATIONS
+    readonly PACKAGE_TIERS
 
     ShowAsProc init >&2
 
@@ -816,10 +819,12 @@ Tiers.Processor()
 
     QPKGs.SkipProcessing.IsSet && return
     DebugFuncEntry
-    local package=''
     local operation=''
     local state=''
     local prospect=''
+    local tier=''
+    local package=''
+    local -i index=0
 
     QPKGs.IsSupportBackup.Build
     QPKGs.IsSupportUpdateOnRestart.Build
@@ -901,26 +906,29 @@ Tiers.Processor()
         QPKGs.OpToStop.Remove "$(QPKGs.OpToUninstall.Array)"
     fi
 
-    Tier.Processor Download false all QPKG OpToDownload 'update package cache with' 'updating package cache with' 'updated package cache with' ''
+    Tier.Processor Download false All QPKG OpToDownload 'update package cache with' 'updating package cache with' 'updated package cache with' ''
+
+    # TASK: package 'removal' phase
+
+    for ((index=${#PACKAGE_TIERS[@]}-1; index>=0; index--)); do     # process tiered removal operations in-reverse
+        tier=${PACKAGE_TIERS[$index]}
+
+        case $tier in
+            Standalone|Dependent)
+                Tier.Processor Backup false $tier QPKG OpToBackup 'backup configuration for' 'backing-up configuration for' 'configuration backed-up for' ''
+                Tier.Processor Stop false $tier QPKG OpToStop stop stopping stopped ''
+                Tier.Processor Uninstall false $tier QPKG OpToUninstall uninstall uninstalling uninstalled ''
+                ;;
+            Addon)
+                Tier.Processor Uninstall false $tier IPKG OpToUninstall uninstall uninstalling uninstalled ''
+                ;;
+        esac
+    done
 
 Session.Debug.ToScreen.Set
 QPKGs.Operations.List
 
 exit
-
-    # TASK: package 'removal' phase
-    for tier in dependent addon standalone; do
-        case $tier in
-            standalone|dependent)
-                Tier.Processor Backup false $tier QPKG OpToBackup 'backup configuration for' 'backing-up configuration for' 'configuration backed-up for' ''
-                Tier.Processor Stop false $tier QPKG OpToStop stop stopping stopped ''
-                Tier.Processor Uninstall false $tier QPKG OpToUninstall uninstall uninstalling uninstalled ''
-                ;;
-            addon)
-                Tier.Processor Uninstall false $tier IPKG OpToUninstall uninstall uninstalling uninstalled ''
-                ;;
-        esac
-    done
 
     ### pre-'install' fixes ###
 
@@ -946,9 +954,9 @@ exit
     [[ ! -L /opt/bin/python && -e /opt/bin/python3 ]] && ln -s /opt/bin/python3 /opt/bin/python
 
     # TASK: package 'installation' phase
-    for tier in standalone addon dependent; do
+    for tier in "${PACKAGE_TIERS[@]}"; do
         case $tier in
-            standalone|dependent)
+            Standalone|Dependent)
                 ### 'upgrade' operation ###
 
                 Tier.Processor Upgrade false "$tier" QPKG ToUpgrade upgrade upgrading upgraded long
@@ -1074,7 +1082,7 @@ exit
                 Tier.Processor Restart false "$tier" QPKG ToRestart restart restarting restarted long
 
                 ;;
-            addon)
+            Addon)
                     if QPKGs.OpToInstall.IsAny || QPKGs.OkInstall.IsAny || QPKGs.OpToReinstall.IsAny || QPKGs.OkReinstall.IsAny || QPKGs.OpToUpgrade.IsAny || QPKGs.OkUpgrade.IsAny || QPKGs.OpToStart.IsAny; then
                         IPKGs.Upgrade.Set
                         IPKGs.Install.Set
@@ -1114,7 +1122,7 @@ Tier.Processor()
     # input:
     #   $1 = $TARGET_OPERATION              e.g. 'Start', 'Restart'...
     #   $2 = forced operation?              e.g. 'true', 'false'
-    #   $3 = $TIER                          e.g. 'standalone', 'dependent', 'addon', 'all'
+    #   $3 = $TIER                          e.g. 'Standalone', 'Dependent', 'Addon', 'All'
     #   $4 = $PACKAGE_TYPE                  e.g. 'QPKG', 'IPKG', 'PIP'
     #   $5 = $TARGET_OBJECT_NAME (optional) e.g. 'ToStart', 'ToStop'...
     #   $6 = $ACTION_INTRANSITIVE           e.g. 'start'...
@@ -1161,7 +1169,7 @@ Tier.Processor()
     local -r ACTION_PRESENT=${message_prefix}${7:?empty}
     local -r ACTION_PAST=${message_prefix}${8:?empty}
 
-    ShowAsProc "checking for$([[ $TIER = all ]] && echo '' || echo " $TIER") packages to $ACTION_INTRANSITIVE" >&2
+    ShowAsProc "checking for$([[ $TIER = All ]] && echo '' || echo " $TIER") packages to $ACTION_INTRANSITIVE" >&2
 
     case $PACKAGE_TYPE in
         QPKG)
@@ -1174,14 +1182,14 @@ Tier.Processor()
                 target_packages=($($targets_function.$TARGET_OBJECT_NAME.Array))
             else                        # only process packages in specified tier, ignoring all others
                 for package in $($targets_function.$TARGET_OBJECT_NAME.Array); do
-                    $targets_function.Is"$(tr 'a-z' 'A-Z' <<< "${TIER:0:1}")${TIER:1}".Exist "$package" && target_packages+=("$package")
+                    $targets_function.Sc${TIER}.Exist "$package" && target_packages+=("$package")
                 done
             fi
 
             total_count=${#target_packages[@]}
 
             if [[ $total_count -eq 0 ]]; then
-                DebugInfo "no$([[ $TIER = all ]] && echo '' || echo " $TIER") $targets_function to process"
+                DebugInfo "no$([[ $TIER = All ]] && echo '' || echo " $TIER") $targets_function to process"
                 DebugFuncExit; return
             fi
 
@@ -2193,7 +2201,7 @@ CalcIPKGsDepsToInstall()
     local complete=false
 
     # remove duplicate entries
-    requested_list=$(DeDupeWords "$(IPKGs.ToInstall.List)")
+    requested_list=$(DeDupeWords "$(IPKGs.OpToInstall.List)")
     this_list=($requested_list)
     requested_count=$($WC_CMD -w <<< "$requested_list")
 
@@ -2247,10 +2255,10 @@ CalcIPKGsDepsToInstall()
                 # KLUDGE: 'libjpeg' appears to have been replaced by 'libjpeg-turbo', but many packages still list 'libjpeg' as a dependency, so replace it with 'libjpeg-turbo'.
                 if [[ $element != 'libjpeg' ]]; then
                     if ! /opt/bin/opkg status "$element" | $GREP_CMD -q "Status:.*installed"; then
-                        IPKGs.ToDownload.Add "$element"
+                        IPKGs.OpToDownload.Add "$element"
                     fi
                 elif ! /opt/bin/opkg status 'libjpeg-turbo' | $GREP_CMD -q "Status:.*installed"; then
-                    IPKGs.ToDownload.Add 'libjpeg-turbo'
+                    IPKGs.OpToDownload.Add 'libjpeg-turbo'
                 fi
             fi
         done
@@ -2277,16 +2285,16 @@ CalcAllIPKGDepsToUninstall()
     local requested_list=''
     local element=''
 
-    requested_list=$(DeDupeWords "$(IPKGs.ToUninstall.List)")
+    requested_list=$(DeDupeWords "$(IPKGs.OpToUninstall.List)")
     DebugInfo "$($WC_CMD -w <<< "$requested_list") IPKG$(Plural "$($WC_CMD -w <<< "$requested_list")") requested" "'$requested_list' "
     DebugAsProc 'excluding IPKGs not installed'
 
     for element in $requested_list; do
-        ! /opt/bin/opkg status "$element" | $GREP_CMD -q "Status:.*installed" && IPKGs.ToUninstall.Remove "$element"
+        ! /opt/bin/opkg status "$element" | $GREP_CMD -q "Status:.*installed" && IPKGs.OpToUninstall.Remove "$element"
     done
 
-    if [[ $(IPKGs.ToUninstall.Count) -gt 0 ]]; then
-        DebugAsDone "$(IPKGs.ToUninstall.Count) IPKG$(Plural "$(IPKGs.ToUninstall.Count)") to uninstall: '$(IPKGs.ToUninstall.List)'"
+    if [[ $(IPKGs.OpToUninstall.Count) -gt 0 ]]; then
+        DebugAsDone "$(IPKGs.OpToUninstall.Count) IPKG$(Plural "$(IPKGs.OpToUninstall.Count)") to uninstall: '$(IPKGs.OpToUninstall.List)'"
     else
         DebugAsDone 'no IPKGs to uninstall'
     fi
@@ -2308,14 +2316,14 @@ CalcIPKGsDownloadSize()
 
     local -a size_array=()
     local -i size_count=0
-    size_count=$(IPKGs.ToDownload.Count)
+    size_count=$(IPKGs.OpToDownload.Count)
 
     if [[ $size_count -gt 0 ]]; then
-        DebugAsDone "$size_count IPKG$(Plural "$size_count") to download: '$(IPKGs.ToDownload.List)'"
+        DebugAsDone "$size_count IPKG$(Plural "$size_count") to download: '$(IPKGs.OpToDownload.List)'"
         DebugAsProc "calculating size of IPKG$(Plural "$size_count") to download"
-        size_array=($($GNU_GREP_CMD -w '^Package:\|^Size:' "$EXTERNAL_PACKAGE_LIST_PATHFILE" | $GNU_GREP_CMD --after-context 1 --no-group-separator ": $($SED_CMD 's/ /$ /g;s/\$ /\$\\\|: /g' <<< "$(IPKGs.ToDownload.List)")$" | $GREP_CMD '^Size:' | $SED_CMD 's|^Size: ||'))
-        IPKGs.ToDownload.Size = "$(IFS=+; echo "$((${size_array[*]}))")"   # a neat sizing shortcut found here https://stackoverflow.com/a/13635566/6182835
-        DebugAsDone "$(FormatAsThousands "$(IPKGs.ToDownload.Size)") bytes ($(FormatAsISOBytes "$(IPKGs.ToDownload.Size)")) to download"
+        size_array=($($GNU_GREP_CMD -w '^Package:\|^Size:' "$EXTERNAL_PACKAGE_LIST_PATHFILE" | $GNU_GREP_CMD --after-context 1 --no-group-separator ": $($SED_CMD 's/ /$ /g;s/\$ /\$\\\|: /g' <<< "$(IPKGs.OpToDownload.List)")$" | $GREP_CMD '^Size:' | $SED_CMD 's|^Size: ||'))
+        IPKGs.OpToDownload.Size = "$(IFS=+; echo "$((${size_array[*]}))")"   # a neat sizing shortcut found here https://stackoverflow.com/a/13635566/6182835
+        DebugAsDone "$(FormatAsThousands "$(IPKGs.OpToDownload.Size)") bytes ($(FormatAsISOBytes "$(IPKGs.OpToDownload.Size)")) to download"
     else
         DebugAsDone 'no IPKGs to size'
     fi
@@ -2339,22 +2347,22 @@ IPKGs.Upgrade()
     DebugFuncEntry
     local -i result_code=0
     IPKGs.ToUpgrade.Init
-    IPKGs.ToDownload.Init
+    IPKGs.OpToDownload.Init
 
     IPKGs.ToUpgrade.Add "$(/opt/bin/opkg list-upgradable | cut -f1 -d' ')"
-    IPKGs.ToDownload.Add "$(IPKGs.ToUpgrade.Array)"
+    IPKGs.OpToDownload.Add "$(IPKGs.ToUpgrade.Array)"
 
     CalcIPKGsDownloadSize
-    local -i total_count=$(IPKGs.ToDownload.Count)
+    local -i total_count=$(IPKGs.OpToDownload.Count)
 
     if [[ $total_count -gt 0 ]]; then
         ShowAsProc "downloading & upgrading $total_count IPKG$(Plural "$total_count")"
 
         CreateDirSizeMonitorFlagFile "$IPKG_DL_PATH"/.monitor
             trap CTRL_C_Captured INT
-                _MonitorDirSize_ "$IPKG_DL_PATH" "$(IPKGs.ToDownload.Size)" &
+                _MonitorDirSize_ "$IPKG_DL_PATH" "$(IPKGs.OpToDownload.Size)" &
 
-                RunAndLog "/opt/bin/opkg upgrade$(Opts.IgnoreFreeSpace.IsSet && Opts.IgnoreFreeSpace.Text) --force-overwrite $(IPKGs.ToDownload.List) --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$LOGS_PATH/ipkgs.$UPGRADE_LOG_FILE" log:failure-only
+                RunAndLog "/opt/bin/opkg upgrade$(Opts.IgnoreFreeSpace.IsSet && Opts.IgnoreFreeSpace.Text) --force-overwrite $(IPKGs.OpToDownload.List) --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$LOGS_PATH/ipkgs.$UPGRADE_LOG_FILE" log:failure-only
                 result_code=$?
             trap - INT
         RemoveDirSizeMonitorFlagFile
@@ -2384,38 +2392,38 @@ IPKGs.Install()
     DebugFuncEntry
     local -i index=0
     local -i result_code=0
-    IPKGs.ToInstall.Init
-    IPKGs.ToDownload.Init
+    IPKGs.OpToInstall.Init
+    IPKGs.OpToDownload.Init
 
-    IPKGs.ToInstall.Add "$MANAGER_BASE_IPKGS_ADD"
-    IPKGs.ToInstall.Add "$MANAGER_SHARED_IPKGS_ADD"
+    IPKGs.OpToInstall.Add "$MANAGER_BASE_IPKGS_ADD"
+    IPKGs.OpToInstall.Add "$MANAGER_SHARED_IPKGS_ADD"
 
     if Opts.Apps.ScAll.Install.IsSet; then
         for index in "${!MANAGER_QPKG_NAME[@]}"; do
             [[ ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${MANAGER_QPKG_ARCH[$index]} = all ]] || continue
-            IPKGs.ToInstall.Add "${MANAGER_QPKG_IPKGS_ADD[$index]}"
+            IPKGs.OpToInstall.Add "${MANAGER_QPKG_IPKGS_ADD[$index]}"
         done
     else
         for index in "${!MANAGER_QPKG_NAME[@]}"; do
             QPKGs.OpToInstall.Exist "${MANAGER_QPKG_NAME[$index]}" || (QPKGs.IsInstalled.Exist "${MANAGER_QPKG_NAME[$index]}" && QPKGs.IsStarted.Exist "${MANAGER_QPKG_NAME[$index]}") || QPKGs.OpToReinstall.Exist "${MANAGER_QPKG_NAME[$index]}" || QPKGs.OpToStart.Exist "${MANAGER_QPKG_NAME[$index]}" || continue
             [[ ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${MANAGER_QPKG_ARCH[$index]} = all ]] || continue
             QPKG.MinRAM "${MANAGER_QPKG_NAME[$index]}" &>/dev/null || continue
-            IPKGs.ToInstall.Add "${MANAGER_QPKG_IPKGS_ADD[$index]}"
+            IPKGs.OpToInstall.Add "${MANAGER_QPKG_IPKGS_ADD[$index]}"
         done
     fi
 
     CalcIPKGsDepsToInstall
     CalcIPKGsDownloadSize
-    local -i total_count=$(IPKGs.ToDownload.Count)
+    local -i total_count=$(IPKGs.OpToDownload.Count)
 
     if [[ $total_count -gt 0 ]]; then
         ShowAsProc "downloading & installing $total_count IPKG$(Plural "$total_count")"
 
         CreateDirSizeMonitorFlagFile "$IPKG_DL_PATH"/.monitor
             trap CTRL_C_Captured INT
-                _MonitorDirSize_ "$IPKG_DL_PATH" "$(IPKGs.ToDownload.Size)" &
+                _MonitorDirSize_ "$IPKG_DL_PATH" "$(IPKGs.OpToDownload.Size)" &
 
-                RunAndLog "/opt/bin/opkg install$(Opts.IgnoreFreeSpace.IsSet && Opts.IgnoreFreeSpace.Text) --force-overwrite $(IPKGs.ToDownload.List) --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$LOGS_PATH/ipkgs.addons.$INSTALL_LOG_FILE" log:failure-only
+                RunAndLog "/opt/bin/opkg install$(Opts.IgnoreFreeSpace.IsSet && Opts.IgnoreFreeSpace.Text) --force-overwrite $(IPKGs.OpToDownload.List) --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$LOGS_PATH/ipkgs.addons.$INSTALL_LOG_FILE" log:failure-only
                 result_code=$?
             trap - INT
         RemoveDirSizeMonitorFlagFile
@@ -2442,24 +2450,24 @@ IPKGs.Uninstall()
     local -i index=0
     local -i result_code=0
 
-    if Opts.Apps.ScAll.Uninstall.IsNt; then
+    if Opts.Apps.OpUninstall.ScAll.IsNt; then
         for index in "${!MANAGER_QPKG_NAME[@]}"; do
             if QPKGs.OpToInstall.Exist "${MANAGER_QPKG_NAME[$index]}" || QPKGs.IsInstalled.Exist "${MANAGER_QPKG_NAME[$index]}" || QPKGs.OpToUpgrade.Exist "${MANAGER_QPKG_NAME[$index]}" || QPKGs.OpToUninstall.Exist "${MANAGER_QPKG_NAME[$index]}"; then
-                IPKGs.ToUninstall.Add "${MANAGER_QPKG_IPKGS_REMOVE[$index]}"
+                IPKGs.OpToUninstall.Add "${MANAGER_QPKG_IPKGS_REMOVE[$index]}"
             fi
         done
     fi
 
     # KLUDGE: when package arch is 'none', prevent 'par2cmdline' being uninstalled, then installed again later this same session. Noticed this was happening on ARMv5 models.
-    [[ $NAS_QPKG_ARCH = none ]] && IPKGs.ToUninstall.Remove par2cmdline
+    [[ $NAS_QPKG_ARCH = none ]] && IPKGs.OpToUninstall.Remove par2cmdline
 
     CalcAllIPKGDepsToUninstall
-    local -i total_count=$(IPKGs.ToUninstall.Count)
+    local -i total_count=$(IPKGs.OpToUninstall.Count)
 
     if [[ $total_count -gt 0 ]]; then
         ShowAsProc "uninstalling $total_count IPKG$(Plural "$total_count")"
 
-        RunAndLog "/opt/bin/opkg remove $(IPKGs.ToUninstall.List)" "$LOGS_PATH/ipkgs.$UNINSTALL_LOG_FILE" log:failure-only
+        RunAndLog "/opt/bin/opkg remove $(IPKGs.OpToUninstall.List)" "$LOGS_PATH/ipkgs.$UNINSTALL_LOG_FILE" log:failure-only
         result_code=$?
 
         if [[ $result_code -eq 0 ]]; then
@@ -6133,7 +6141,7 @@ ShowAsOperationProgress()
     # $6 = verb (present)
     # $7 = 'long' (optional)
 
-    if [[ -n $1 && $1 != all ]]; then
+    if [[ -n $1 && $1 != All ]]; then
         local tier=" $1"
     else
         local tier=''
@@ -6181,7 +6189,7 @@ ShowAsOperationResult()
     # $6 = verb (past)
     # $7 = 'long' (optional)
 
-    if [[ -n $1 && $1 != all ]]; then
+    if [[ -n $1 && $1 != All ]]; then
         local tier=" $1"
     else
         local tier=''
