@@ -543,7 +543,7 @@ Session.Init()
 #         MANAGER_QPKG_IPKGS_REMOVE+=('')
 #         MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
 #         MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
-#
+
     MANAGER_QPKG_NAME+=(RunLast)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MINRAM+=(any)
@@ -2235,6 +2235,7 @@ UpdateEntware()
 
         if [[ $result_code -eq 0 ]]; then
             DebugAsDone "updated $(FormatAsPackageName Entware) package list"
+            CloseIPKGArchive
         else
             DebugAsWarn "Unable to update $(FormatAsPackageName Entware) package list $(FormatAsExitcode $result_code)"
             # no-big-deal
@@ -2242,6 +2243,8 @@ UpdateEntware()
     else
         DebugInfo "$(FormatAsPackageName Entware) package list updated less-than $CHANGE_THRESHOLD_MINUTES minutes ago: skipping update"
     fi
+
+    [[ ! -f $EXTERNAL_PACKAGE_LIST_PATHFILE ]] && OpenIPKGArchive
 
     return 0
 
@@ -2291,10 +2294,6 @@ CalcIPKGsDepsToInstall()
 
     if [[ $requested_count -eq 0 ]]; then
         DebugAsWarn 'no IPKGs requested: aborting ...'
-        DebugFuncExit 1; return
-    fi
-
-    if ! OpenIPKGArchive; then
         DebugFuncExit 1; return
     fi
 
@@ -2350,7 +2349,6 @@ CalcIPKGsDepsToInstall()
         DebugAsDone 'no IPKGs to exclude'
     fi
 
-    CloseIPKGArchive
     DebugFuncExit
 
     }
@@ -2394,10 +2392,6 @@ CalcIPKGsDownloadSize()
 
     DebugFuncEntry
 
-    if ! OpenIPKGArchive; then
-        DebugFuncExit 1; return
-    fi
-
     local -a size_array=()
     local -i size_count=0
     size_count=$(IPKGs.OpToDownload.Count)
@@ -2412,7 +2406,6 @@ CalcIPKGsDownloadSize()
         DebugAsDone 'no IPKGs to size'
     fi
 
-    CloseIPKGArchive
     DebugFuncExit
 
     }
@@ -2687,8 +2680,6 @@ OpenIPKGArchive()
         ShowAsEror 'unable to locate the IPKG list file'
         DebugFuncExit 1; return
     fi
-
-    CloseIPKGArchive
 
     RunAndLog "/usr/local/sbin/7z e -o$($DIRNAME_CMD "$EXTERNAL_PACKAGE_LIST_PATHFILE") $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE" "$WORK_PATH/ipkg.list.archive.extract" log:failure-only
     result_code=$?
