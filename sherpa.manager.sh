@@ -54,7 +54,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=210406
+    local -r SCRIPT_VERSION=210407
     readonly PROJECT_BRANCH=develop
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -489,6 +489,20 @@ Session.Init()
         MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     MANAGER_QPKG_NAME+=(Par2)
+        MANAGER_QPKG_ARCH+=(x19)
+        MANAGER_QPKG_MINRAM+=(any)
+        MANAGER_QPKG_VERSION+=(0.8.1.0)
+        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_arm-x41.qpkg)
+        MANAGER_QPKG_MD5+=(516e3f2849aa880c85ee736c2db833a8)
+        MANAGER_QPKG_DESC+=('')
+        MANAGER_QPKG_ABBRVS+=('par par2')
+        MANAGER_QPKG_DEPENDS_ON+=('')
+        MANAGER_QPKG_IPKGS_ADD+=('')
+        MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
+        MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
+        MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
+
+    MANAGER_QPKG_NAME+=(Par2)
         MANAGER_QPKG_ARCH+=(x31)
         MANAGER_QPKG_MINRAM+=(any)
         MANAGER_QPKG_VERSION+=(0.8.1.0)
@@ -529,20 +543,6 @@ Session.Init()
         MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
         MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
         MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
-
-#     MANAGER_QPKG_NAME+=(Par2)
-#         MANAGER_QPKG_ARCH+=(none)
-#         MANAGER_QPKG_MINRAM+=(any)
-#         MANAGER_QPKG_VERSION+=(0.8.1-1)
-#         MANAGER_QPKG_URL+=('')
-#         MANAGER_QPKG_MD5+=('')
-#         MANAGER_QPKG_DESC+=('')
-#         MANAGER_QPKG_ABBRVS+=('par par2')
-#         MANAGER_QPKG_DEPENDS_ON+=(Entware)
-#         MANAGER_QPKG_IPKGS_ADD+=(par2cmdline)
-#         MANAGER_QPKG_IPKGS_REMOVE+=('')
-#         MANAGER_QPKG_BACKUP_SUPPORTED+=(false)
-#         MANAGER_QPKG_UPDATE_ON_RESTART+=(false)
 
     MANAGER_QPKG_NAME+=(RunLast)
         MANAGER_QPKG_ARCH+=(all)
@@ -2535,9 +2535,6 @@ IPKGs.Uninstall()
         done
     fi
 
-    # KLUDGE: when package arch is 'none', prevent 'par2cmdline' being uninstalled, then installed again later this same session. Noticed this was happening on ARMv5 models.
-    [[ $NAS_QPKG_ARCH = none ]] && IPKGs.OpToUninstall.Remove par2cmdline
-
     CalcAllIPKGDepsToUninstall
     local -i total_count=$(IPKGs.OpToUninstall.Count)
 
@@ -4148,6 +4145,9 @@ CalcQPKGArch()
                     NAS_QPKG_ARCH=none
                     ;;
             esac
+            ;;
+        armv5tel)
+            NAS_QPKG_ARCH=x19
             ;;
         aarch64)
             NAS_QPKG_ARCH=a64
