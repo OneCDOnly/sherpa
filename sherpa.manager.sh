@@ -825,6 +825,7 @@ Tiers.Processor()
     local prospect=''
     local tier=''
     local package=''
+    local found=false
     local -i index=0
 
     QPKGs.IsSupportBackup.Build
@@ -833,7 +834,110 @@ Tiers.Processor()
     # process scope-based user-options
     for operation in "${PACKAGE_OPERATIONS[@]}"; do
         for scope in "${PACKAGE_SCOPES[@]}"; do
-            Opts.Apps.Op$operation.Sc${scope}.IsSet && QPKGs.OpTo${operation}.Add "$(QPKGs.Sc${scope}.Array)"
+            if Opts.Apps.Op${operation}.Sc${scope}.IsSet; then
+                # use sensible scope exceptions (for convenience) rather than follow scope literally
+                case $operation in
+                    Install)
+                        case $scope in
+                            All)
+                                found=true
+                                QPKGs.OpTo${operation}.Add "$(QPKGs.IsNtInstalled.Array)"
+                                ;;
+                            Dependent)
+                                found=true
+                                for prospect in $(QPKGs.IsNtInstalled.Array); do
+                                    QPKGs.ScDependent.Exist "$prospect" && QPKGs.OpTo${operation}.Add "$prospect"
+                                done
+                                ;;
+                            Standalone)
+                                found=true
+                                for prospect in $(QPKGs.IsNtInstalled.Array); do
+                                    QPKGs.ScStandalone.Exist "$prospect" && QPKGs.OpTo${operation}.Add "$prospect"
+                                done
+                        esac
+                        ;;
+                    Start)
+                        case $scope in
+                            All)
+                                found=true
+                                QPKGs.OpTo${operation}.Add "$(QPKGs.IsStopped.Array)"
+                                ;;
+                            Dependent)
+                                found=true
+                                for prospect in $(QPKGs.IsStopped.Array); do
+                                    QPKGs.ScDependent.Exist "$prospect" && QPKGs.OpTo${operation}.Add "$prospect"
+                                done
+                                ;;
+                            Standalone)
+                                found=true
+                                for prospect in $(QPKGs.IsStopped.Array); do
+                                    QPKGs.ScStandalone.Exist "$prospect" && QPKGs.OpTo${operation}.Add "$prospect"
+                                done
+                        esac
+                        ;;
+                    Stop)
+                        case $scope in
+                            All)
+                                found=true
+                                QPKGs.OpTo${operation}.Add "$(QPKGs.IsStarted.Array)"
+                                ;;
+                            Dependent)
+                                found=true
+                                for prospect in $(QPKGs.IsStarted.Array); do
+                                    QPKGs.ScDependent.Exist "$prospect" && QPKGs.OpTo${operation}.Add "$prospect"
+                                done
+                                ;;
+                            Standalone)
+                                found=true
+                                for prospect in $(QPKGs.IsStarted.Array); do
+                                    QPKGs.ScStandalone.Exist "$prospect" && QPKGs.OpTo${operation}.Add "$prospect"
+                                done
+                                ;;
+                        esac
+                        ;;
+                    Uninstall)
+                        case $scope in
+                            All)
+                                found=true
+                                QPKGs.OpTo${operation}.Add "$(QPKGs.IsInstalled.Array)"
+                                ;;
+                            Dependent)
+                                found=true
+                                for prospect in $(QPKGs.IsInstalled.Array); do
+                                    QPKGs.ScDependent.Exist "$prospect" && QPKGs.OpTo${operation}.Add "$prospect"
+                                done
+                                ;;
+                            Standalone)
+                                found=true
+                                for prospect in $(QPKGs.IsInstalled.Array); do
+                                    QPKGs.ScStandalone.Exist "$prospect" && QPKGs.OpTo${operation}.Add "$prospect"
+                                done
+                        esac
+                        ;;
+                    Upgrade)
+                        case $scope in
+                            All)
+                                found=true
+                                QPKGs.OpTo${operation}.Add "$(QPKGs.ScUpgradable.Array)"
+                                QPKGs.OpToRestart.Add "$(QPKGs.IsSupportUpdateOnRestart.Array)"
+                                QPKGs.OpToRestart.Remove "$(QPKGs.IsNtInstalled.Array) $(QPKGs.OpToUpgrade.Array) $(QPKGs.ScStandalone.Array)"
+                                ;;
+                            Dependent)
+                                found=true
+                                for prospect in $(QPKGs.IsInstalled.Array); do
+                                    QPKGs.ScDependent.Exist "$prospect" && QPKGs.OpTo${operation}.Add "$prospect"
+                                done
+                                ;;
+                            Standalone)
+                                found=true
+                                for prospect in $(QPKGs.IsInstalled.Array); do
+                                    QPKGs.ScStandalone.Exist "$prospect" && QPKGs.OpTo${operation}.Add "$prospect"
+                                done
+                        esac
+                esac
+
+                [[ $found != true ]] && QPKGs.OpTo${operation}.Add "$(QPKGs.Sc${scope}.Array)" || found=false
+            fi
         done
     done
 
@@ -864,7 +968,7 @@ Tiers.Processor()
     # ensure standalone packages are also installed when processing these specific operations
     for operation in Upgrade Reinstall Install Start Restart; do
         for package in $(QPKGs.OpTo${operation}.Array); do
-            for prospect in $(QPKG.Standalones "$package"); do
+            for prospect in $(QPKG.GetStandalones "$package"); do
                 QPKGs.IsNtInstalled.Exist "$prospect" && ! QPKGs.OpToUninstall.Exist "$prospect" && QPKGs.OpToInstall.Add "$prospect"
             done
         done
@@ -882,7 +986,7 @@ Tiers.Processor()
     # if an standalone has been selected for stop or uninstall, need to stop its dependents first
     for package in $(QPKGs.OpToStop.Array) $(QPKGs.OpToUninstall.Array); do
         if QPKGs.ScStandalone.Exist "$package" && QPKGs.IsInstalled.Exist "$package"; then
-            for prospect in $(QPKG.Dependents "$package"); do
+            for prospect in $(QPKG.GetDependents "$package"); do
                 QPKGs.IsStarted.Exist "$prospect" && QPKGs.OpToStop.Add "$prospect"
             done
         fi
@@ -891,7 +995,7 @@ Tiers.Processor()
     # if an standalone has been selected for reinstall, need to stop its dependents first, and start them again later
     for package in $(QPKGs.OpToReinstall.Array); do
         if QPKGs.ScStandalone.Exist "$package" && QPKGs.IsInstalled.Exist "$package" && QPKGs.IsStarted.Exist "$package"; then
-            for prospect in $(QPKG.Dependents "$package"); do
+            for prospect in $(QPKG.GetDependents "$package"); do
                 if QPKGs.IsStarted.Exist "$prospect"; then
                     QPKGs.OpToStop.Add "$prospect"
                     QPKGs.OpToStart.Add "$prospect"
@@ -931,7 +1035,7 @@ Tiers.Processor()
     # install standalones for started packages only
     for package in $(QPKGs.IsInstalled.Array); do
         if QPKGs.IsStarted.Exist "$package" || QPKGs.OpToStart.Exist "$package"; then
-            for prospect in $(QPKG.Standalones "$package"); do
+            for prospect in $(QPKG.GetStandalones "$package"); do
                 QPKGs.IsNtInstalled.Exist "$prospect" && QPKGs.OpToInstall.Add "$prospect"
             done
         fi
@@ -941,9 +1045,7 @@ Tiers.Processor()
 
     if Opts.Apps.OpUpgrade.ScAll.IsSet; then
         QPKGs.OpToRestart.Add "$(QPKGs.IsSupportUpdateOnRestart.Array)"
-        QPKGs.OpToRestart.Remove "$(QPKGs.IsNtInstalled.Array)"
-        QPKGs.OpToRestart.Remove "$(QPKGs.OpToUpgrade.Array)"
-        QPKGs.OpToRestart.Remove "$(QPKGs.ScStandalone.Array)"
+        QPKGs.OpToRestart.Remove "$(QPKGs.IsNtInstalled.Array) $(QPKGs.OpToUpgrade.Array) $(QPKGs.ScStandalone.Array)"
     fi
 
     # in-case 'python' has disappeared again ...
@@ -971,60 +1073,14 @@ Tiers.Processor()
 
                 ### 'start' operation ###
 
-                if [[ $tier = standalone ]]; then
-                    # check for standalone packages that require starting due to dependents being reinstalled
-                    for package in $(QPKGs.OpToReinstall.Array); do
-                        for prospect in $(QPKG.Standalones "$package"); do
-                            QPKGs.IsStopped.Exist "$prospect" && QPKGs.OpToStart.Add "$prospect"
-                        done
-                    done
-
-                    for package in $(QPKGs.OpOkReinstall.Array); do
-                        for prospect in $(QPKG.Standalones "$package"); do
-                            QPKGs.IsStopped.Exist "$prospect" && QPKGs.OpToStart.Add "$prospect"
-                        done
-                    done
-
-                    # check for standalone packages that require starting due to dependents being installed
-                    for package in $(QPKGs.OpOpToInstall.Array); do
-                        for prospect in $(QPKG.Standalones "$package"); do
-                            QPKGs.IsStopped.Exist "$prospect" && QPKGs.OpToStart.Add "$prospect"
-                        done
-                    done
-
-                    for package in $(QPKGs.OpOkInstall.Array); do
-                        for prospect in $(QPKG.Standalones "$package"); do
-                            QPKGs.IsStopped.Exist "$prospect" && QPKGs.OpToStart.Add "$prospect"
-                        done
-                    done
-
-                    # check for standalone packages that require starting due to dependents being started
-                    for package in $(QPKGs.OpToStart.Array); do
-                        for prospect in $(QPKG.Standalones "$package"); do
-                            QPKGs.IsStopped.Exist "$prospect" && QPKGs.OpToStart.Add "$prospect"
-                        done
-                    done
-
-                    for package in $(QPKGs.OpOkStart.Array); do
-                        for prospect in $(QPKG.Standalones "$package"); do
-                            QPKGs.IsStopped.Exist "$prospect" && QPKGs.OpToStart.Add "$prospect"
-                        done
-                    done
-
-                    # check for standalone packages that require starting due to dependents being restarted
-                    for package in $(QPKGs.OpToRestart.Array); do
-                        for prospect in $(QPKG.Standalones "$package"); do
-                            QPKGs.IsStopped.Exist "$prospect" && QPKGs.OpToStart.Add "$prospect"
-                        done
-                    done
-
-                    for package in $(QPKGs.OpOkRestart.Array); do
-                        for prospect in $(QPKG.Standalones "$package"); do
+                if [[ $tier = Standalone ]]; then
+                    # check for standalone packages that require starting due to dependents being reinstalled/installed/started/restarted
+                    for package in $(QPKGs.OpToReinstall.Array) $(QPKGs.OpOkReinstall.Array) $(QPKGs.OpToInstall.Array) $(QPKGs.OpOkInstall.Array) $(QPKGs.OpToStart.Array) $(QPKGs.OpOkStart.Array) $(QPKGs.OpToRestart.Array) $(QPKGs.OpOkRestart.Array); do
+                        for prospect in $(QPKG.GetStandalones "$package"); do
                             QPKGs.IsStopped.Exist "$prospect" && QPKGs.OpToStart.Add "$prospect"
                         done
                     done
                 fi
-# Session.Debug.ToScreen.Set
 
                 Tier.Processor Start false "$tier" QPKG OpToStart start starting started long
 
@@ -1038,39 +1094,42 @@ Tiers.Processor()
                         fi
                     done
                 fi
-                # adjust lists for restart
-                if Opts.Apps.OpRestart.ScAll.IsSet; then
-                    QPKGs.OpToRestart.Add "$(QPKGs.IsInstalled.Array)"
-                else
-                    # check for dependent packages to restart due to standalones being reinstalled
-                    for package in $(QPKGs.OpOkReinstall.Array); do
-                        for prospect in $(QPKG.Dependents "$package"); do
-                            QPKGs.IsInstalled.Exist "$prospect" && QPKGs.OpToRestart.Add "$prospect"
-                        done
-                    done
+
+# Session.Debug.ToScreen.Set
+# QPKGs.Operations.List
 # exit
-
-                    # check for dependent packages to restart due to standalones being started
-                    for package in $(QPKGs.OpOkStart.Array); do
-                        for prospect in $(QPKG.Dependents "$package"); do
-                            QPKGs.IsStarted.Exist "$prospect" && QPKGs.OpToRestart.Add "$prospect"
-                        done
-                    done
-
-                    # check for dependent packages to restart due to standalones being restarted
-                    for package in $(QPKGs.OpOkRestart.Array); do
-                        for prospect in $(QPKG.Dependents "$package"); do
-                            QPKGs.IsInstalled.Exist "$prospect" && QPKGs.OpToRestart.Add "$prospect"
-                        done
-                    done
-
-                    # check for dependent packages to restart due to standalones being upgraded
-                    for package in $(QPKGs.OpOkUpgrade.Array); do
-                        for prospect in $(QPKG.Dependents "$package"); do
-                            QPKGs.IsInstalled.Exist "$prospect" && QPKGs.OpToRestart.Add "$prospect"
-                        done
-                    done
-                fi
+                # adjust lists for restart
+#                 if Opts.Apps.OpRestart.ScAll.IsSet; then
+#                     QPKGs.OpToRestart.Add "$(QPKGs.IsInstalled.Array)"
+#                 else
+#                     # check for dependent packages to restart due to standalones being reinstalled
+#                     for package in $(QPKGs.OpOkReinstall.Array); do
+#                         for prospect in $(QPKG.GetDependents "$package"); do
+#                             QPKGs.IsInstalled.Exist "$prospect" && QPKGs.OpToRestart.Add "$prospect"
+#                         done
+#                     done
+#
+#                     # check for dependent packages to restart due to standalones being started
+#                     for package in $(QPKGs.OpOkStart.Array); do
+#                         for prospect in $(QPKG.GetDependents "$package"); do
+#                             QPKGs.IsStarted.Exist "$prospect" && QPKGs.OpToRestart.Add "$prospect"
+#                         done
+#                     done
+#
+#                     # check for dependent packages to restart due to standalones being restarted
+#                     for package in $(QPKGs.OpOkRestart.Array); do
+#                         for prospect in $(QPKG.GetDependents "$package"); do
+#                             QPKGs.IsInstalled.Exist "$prospect" && QPKGs.OpToRestart.Add "$prospect"
+#                         done
+#                     done
+#
+#                     # check for dependent packages to restart due to standalones being upgraded
+#                     for package in $(QPKGs.OpOkUpgrade.Array); do
+#                         for prospect in $(QPKG.GetDependents "$package"); do
+#                             QPKGs.IsInstalled.Exist "$prospect" && QPKGs.OpToRestart.Add "$prospect"
+#                         done
+#                     done
+#                 fi
 
                 for operation in Install Reinstall Restart Restore Start Upgrade; do
                     QPKGs.OpToRestart.Remove "$(QPKGs.OpOk${operation}.Array)"
@@ -1186,7 +1245,7 @@ Tier.Processor()
                 DebugFuncExit; return
             fi
 
-            if [[ $TIER = all ]]; then  # process all tiers
+            if [[ $TIER = All ]]; then  # process all tiers
                 target_packages=($($targets_function.$TARGET_OBJECT_NAME.Array))
             else                        # only process packages in specified tier, ignoring all others
                 for package in $($targets_function.$TARGET_OBJECT_NAME.Array); do
@@ -4255,6 +4314,7 @@ QPKG.Download()
     local -r LOCAL_PATHFILE=$QPKG_DL_PATH/$REMOTE_FILENAME
     local -r LOCAL_FILENAME=$($BASENAME_CMD "$LOCAL_PATHFILE")
     local -r LOG_PATHFILE=$LOGS_PATH/$LOCAL_FILENAME.$DOWNLOAD_LOG_FILE
+    local operation=download
 
     if [[ -z $REMOTE_URL || -z $REMOTE_MD5 ]]; then
         DebugAsWarn "no URL or MD5 found for this package $(FormatAsPackageName "$PACKAGE_NAME") (unsupported arch?)"
@@ -4276,7 +4336,7 @@ QPKG.Download()
     fi
 
     if [[ $result_code -eq 2 ]]; then
-        MarkOperationAsSkipped hide "$PACKAGE_NAME" download
+        MarkOperationAsSkipped hide "$PACKAGE_NAME" "$operation"
         DebugFuncExit $result_code; return
     fi
 
@@ -4298,7 +4358,7 @@ QPKG.Download()
                 result_code=1
             fi
         else
-            DebugAsError "download failed $(FormatAsFileName "$LOCAL_PATHFILE") $(FormatAsExitcode $result_code)"
+            ShowAsEror "$operation failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
             QPKGs.OpErDownload.Add "$PACKAGE_NAME"
             result_code=1    # remap to 1 (last time I checked, 'curl' had 92 return codes)
         fi
@@ -4326,19 +4386,20 @@ QPKG.Install()
 
     local -r PACKAGE_NAME=${1:?no package name supplied}
     local -i result_code=0
+    local operation=install
 
     if QPKGs.IsInstalled.Exist "$PACKAGE_NAME"; then
-        MarkOperationAsSkipped show "$PACKAGE_NAME" install "it's already installed - use 'reinstall' instead"
+        MarkOperationAsSkipped show "$PACKAGE_NAME" "$operation" "it's already installed - use 'reinstall' instead"
         DebugFuncExit 2; return
     fi
 
     if ! QPKG.URL "$PACKAGE_NAME" &>/dev/null; then
-        MarkOperationAsSkipped show "$PACKAGE_NAME" install 'this NAS has an unsupported arch'
+        MarkOperationAsSkipped show "$PACKAGE_NAME" "$operation" 'this NAS has an unsupported arch'
         DebugFuncExit 2; return
     fi
 
     if ! QPKG.MinRAM "$PACKAGE_NAME" &>/dev/null; then
-        MarkOperationAsSkipped show "$PACKAGE_NAME" install 'this NAS has insufficient RAM'
+        MarkOperationAsSkipped show "$PACKAGE_NAME" "$operation" 'this NAS has insufficient RAM'
         DebugFuncExit 2; return
     fi
 
@@ -4347,6 +4408,12 @@ QPKG.Install()
     if [[ ${local_pathfile##*.} = zip ]]; then
         $UNZIP_CMD -nq "$local_pathfile" -d "$QPKG_DL_PATH"
         local_pathfile=${local_pathfile%.*}
+    fi
+
+    if [[ -z $local_pathfile ]]; then
+        MarkOperationAsSkipped show "$PACKAGE_NAME" "$operation" 'no local file found for processing: this error should be reported.'
+        code_pointer=5
+        DebugFuncExit 2; return
     fi
 
     if [[ $PACKAGE_NAME = Entware ]] && ! QPKGs.IsInstalled.Exist Entware && QPKGs.OpToInstall.Exist Entware; then
@@ -4369,7 +4436,7 @@ QPKG.Install()
     if [[ $result_code -eq 0 || $result_code -eq 10 ]]; then
         DebugAsDone "installed $(FormatAsPackageName "$PACKAGE_NAME")"
         QPKG.StoreServiceStatus "$PACKAGE_NAME"
-        MarkOperationAsDone "$PACKAGE_NAME" install
+        MarkOperationAsDone "$PACKAGE_NAME" "$operation"
         MarkStateAsInstalled "$PACKAGE_NAME"
 
         if QPKG.IsStarted "$PACKAGE_NAME"; then
@@ -4401,8 +4468,8 @@ QPKG.Install()
 
         result_code=0    # remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK)
     else
-        DebugAsError "installation failed $(FormatAsFileName "$TARGET_FILE") $(FormatAsExitcode $result_code)"
-        MarkOperationAsError "$PACKAGE_NAME" install
+        ShowAsEror "$operation failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
+        MarkOperationAsError "$PACKAGE_NAME" "$operation"
         result_code=1    # remap to 1
     fi
 
@@ -4428,19 +4495,20 @@ QPKG.Reinstall()
 
     local -r PACKAGE_NAME=${1:?no package name supplied}
     local -i result_code=0
+    local operation=reinstall
 
     if ! QPKGs.IsInstalled.Exist "$PACKAGE_NAME"; then
-        MarkOperationAsSkipped show "$PACKAGE_NAME" reinstall "it's not installed - use 'install' instead"
+        MarkOperationAsSkipped show "$PACKAGE_NAME" "$operation" "it's not installed - use 'install' instead"
         DebugFuncExit 2; return
     fi
 
     if ! QPKG.URL "$PACKAGE_NAME" &>/dev/null; then
-        MarkOperationAsSkipped show "$PACKAGE_NAME" reinstall 'this NAS has an unsupported arch'
+        MarkOperationAsSkipped show "$PACKAGE_NAME" "$operation" 'this NAS has an unsupported arch'
         DebugFuncExit 2; return
     fi
 
     if ! QPKG.MinRAM "$PACKAGE_NAME" &>/dev/null; then
-        MarkOperationAsSkipped show "$PACKAGE_NAME" reinstall 'this NAS has insufficient RAM'
+        MarkOperationAsSkipped show "$PACKAGE_NAME" "$operation" 'this NAS has insufficient RAM'
         DebugFuncExit 2; return
     fi
 
@@ -4449,6 +4517,12 @@ QPKG.Reinstall()
     if [[ ${local_pathfile##*.} = zip ]]; then
         $UNZIP_CMD -nq "$local_pathfile" -d "$QPKG_DL_PATH"
         local_pathfile=${local_pathfile%.*}
+    fi
+
+    if [[ -z $local_pathfile ]]; then
+        MarkOperationAsSkipped show "$PACKAGE_NAME" "$operation" 'no local file found for processing: this error should be reported.'
+        code_pointer=6
+        DebugFuncExit 2; return
     fi
 
     local -r TARGET_FILE=$($BASENAME_CMD "$local_pathfile")
@@ -4460,7 +4534,7 @@ QPKG.Reinstall()
 
     if [[ $result_code -eq 0 || $result_code -eq 10 ]]; then
         DebugAsDone "reinstalled $(FormatAsPackageName "$PACKAGE_NAME")"
-        MarkOperationAsDone "$PACKAGE_NAME" reinstall
+        MarkOperationAsDone "$PACKAGE_NAME" "$operation"
         QPKG.StoreServiceStatus "$PACKAGE_NAME"
 
         if QPKG.IsStarted "$PACKAGE_NAME"; then
@@ -4471,8 +4545,8 @@ QPKG.Reinstall()
 
         result_code=0    # remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK)
     else
-        ShowAsEror "reinstallation failed $(FormatAsFileName "$TARGET_FILE") $(FormatAsExitcode $result_code)"
-        MarkOperationAsError "$PACKAGE_NAME" reinstall
+        ShowAsEror "$operation failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
+        MarkOperationAsError "$PACKAGE_NAME" "$operation"
         result_code=1    # remap to 1
     fi
 
@@ -4500,24 +4574,25 @@ QPKG.Upgrade()
 
     local -r PACKAGE_NAME=${1:?no package name supplied}
     local -i result_code=0
+    local operation=upgrade
 
     if ! QPKGs.IsInstalled.Exist "$PACKAGE_NAME"; then
-        MarkOperationAsSkipped show "$PACKAGE_NAME" upgrade "it's not installed - use 'install' instead"
+        MarkOperationAsSkipped show "$PACKAGE_NAME" "$operation" "it's not installed - use 'install' instead"
         DebugFuncExit 2; return
     fi
 
     if ! QPKG.URL "$PACKAGE_NAME" &>/dev/null; then
-        MarkOperationAsSkipped show "$PACKAGE_NAME" upgrade 'this NAS has an unsupported arch'
+        MarkOperationAsSkipped show "$PACKAGE_NAME" "$operation" 'this NAS has an unsupported arch'
         DebugFuncExit 2; return
     fi
 
     if ! QPKG.MinRAM "$PACKAGE_NAME" &>/dev/null; then
-        MarkOperationAsSkipped show "$PACKAGE_NAME" upgrade 'this NAS has insufficient RAM'
+        MarkOperationAsSkipped show "$PACKAGE_NAME" "$operation" 'this NAS has insufficient RAM'
         DebugFuncExit 2; return
     fi
 
     if ! QPKGs.ScUpgradable.Exist "$PACKAGE_NAME"; then
-        MarkOperationAsSkipped show "$PACKAGE_NAME" upgrade 'no new package is available'
+        MarkOperationAsSkipped show "$PACKAGE_NAME" "$operation" 'no new package is available'
         DebugFuncExit 2; return
     fi
 
@@ -4528,6 +4603,12 @@ QPKG.Upgrade()
     if [[ ${local_pathfile##*.} = zip ]]; then
         $UNZIP_CMD -nq "$local_pathfile" -d "$QPKG_DL_PATH"
         local_pathfile=${local_pathfile%.*}
+    fi
+
+    if [[ -z $local_pathfile ]]; then
+        MarkOperationAsSkipped show "$PACKAGE_NAME" "$operation" 'no local file found for processing: this error should be reported.'
+        code_pointer=7
+        DebugFuncExit 2; return
     fi
 
     local -r TARGET_FILE=$($BASENAME_CMD "$local_pathfile")
@@ -4548,7 +4629,7 @@ QPKG.Upgrade()
         fi
         QPKG.StoreServiceStatus "$PACKAGE_NAME"
         QPKGs.ScUpgradable.Remove "$PACKAGE_NAME"
-        MarkOperationAsDone "$PACKAGE_NAME" upgrade
+        MarkOperationAsDone "$PACKAGE_NAME" "$operation"
 
         if QPKG.IsStarted "$PACKAGE_NAME"; then
             MarkStateAsStarted "$PACKAGE_NAME"
@@ -4558,8 +4639,8 @@ QPKG.Upgrade()
 
         result_code=0    # remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK)
     else
-        ShowAsEror "upgrade failed $(FormatAsFileName "$TARGET_FILE") $(FormatAsExitcode $result_code)"
-        MarkOperationAsError "$PACKAGE_NAME" upgrade
+        ShowAsEror "$operation failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
+        MarkOperationAsError "$PACKAGE_NAME" "$operation"
         result_code=1    # remap to 1
     fi
 
@@ -4584,14 +4665,15 @@ QPKG.Uninstall()
 
     local -r PACKAGE_NAME=${1:?no package name supplied}
     local -i result_code=0
+    local operation=uninstall
 
     if QPKGs.IsNtInstalled.Exist "$PACKAGE_NAME"; then
-        MarkOperationAsSkipped show "$PACKAGE_NAME" uninstall "it's not installed"
+        MarkOperationAsSkipped show "$PACKAGE_NAME" "$operation" "it's not installed"
         DebugFuncExit 2; return
     fi
 
     if [[ $PACKAGE_NAME = "$PROJECT_NAME" ]]; then
-        MarkOperationAsSkipped show "$PACKAGE_NAME" uninstall "it's needed here"
+        MarkOperationAsSkipped show "$PACKAGE_NAME" "$operation" "it's needed here"
         DebugFuncExit 2; return
     fi
 
@@ -4610,12 +4692,12 @@ QPKG.Uninstall()
             /sbin/rmcfg "$PACKAGE_NAME" -f /etc/config/qpkg.conf
             DebugAsDone 'removed icon information from App Center'
             [[ $PACKAGE_NAME = Entware ]] && ModPathToEntware
-            MarkOperationAsDone "$PACKAGE_NAME" uninstall
+            MarkOperationAsDone "$PACKAGE_NAME" "$operation"
             MarkStateAsNotInstalled "$PACKAGE_NAME"
             QPKGs.IsStarted.Remove "$PACKAGE_NAME"
         else
-            DebugAsError "unable to uninstall $(FormatAsPackageName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
-            MarkOperationAsError "$PACKAGE_NAME" uninstall
+            ShowAsEror "$operation failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
+            MarkOperationAsError "$PACKAGE_NAME" "$operation"
             result_code=1    # remap to 1
         fi
     fi
@@ -4642,16 +4724,17 @@ QPKG.Restart()
 
     local -r PACKAGE_NAME=${1:?no package name supplied}
     local -i result_code=0
+    local operation=restart
 
     QPKG.ClearServiceStatus "$PACKAGE_NAME"
 
     if QPKGs.IsNtInstalled.Exist "$PACKAGE_NAME"; then
-        MarkOperationAsSkipped show "$PACKAGE_NAME" restart "it's not installed"
+        MarkOperationAsSkipped show "$PACKAGE_NAME" "$operation" "it's not installed"
         DebugFuncExit 2; return
     fi
 
     if [[ $PACKAGE_NAME = "$PROJECT_NAME" ]]; then
-        MarkOperationAsSkipped show "$PACKAGE_NAME" restart "it's needed here"
+        MarkOperationAsSkipped show "$PACKAGE_NAME" "$operation" "it's needed here"
         DebugFuncExit 2; return
     fi
 
@@ -4669,10 +4752,10 @@ QPKG.Restart()
     if [[ $result_code -eq 0 ]]; then
         DebugAsDone "restarted $(FormatAsPackageName "$PACKAGE_NAME")"
         QPKG.StoreServiceStatus "$PACKAGE_NAME"
-        MarkOperationAsDone "$PACKAGE_NAME" restart
+        MarkOperationAsDone "$PACKAGE_NAME" "$operation"
     else
-        ShowAsWarn "unable to restart $(FormatAsPackageName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
-        MarkOperationAsError "$PACKAGE_NAME" restart
+        ShowAsEror "$operation failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
+        MarkOperationAsError "$PACKAGE_NAME" "$operation"
         result_code=1    # remap to 1
     fi
 
@@ -5312,7 +5395,7 @@ QPKG.MinRAM()
 
     }
 
-QPKG.Standalones()
+QPKG.GetStandalones()
     {
 
     # input:
@@ -5336,7 +5419,7 @@ QPKG.Standalones()
 
     }
 
-QPKG.Dependents()
+QPKG.GetDependents()
     {
 
     # input:
