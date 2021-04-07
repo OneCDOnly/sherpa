@@ -427,7 +427,7 @@ Session.Init()
         MANAGER_QPKG_DESC+=('automated Comic Book (cbr/cbz) downloader program for use with NZB and torrents written in Python')
         MANAGER_QPKG_ABBRVS+=('my omy myl mylar mylar3')
         MANAGER_QPKG_DEPENDS_ON+=(Entware)
-        MANAGER_QPKG_IPKGS_ADD+=('python3-mako python3-pillow python3-pyopenssl python3-pytz python3-requests python3-six python3-urllib3')
+        MANAGER_QPKG_IPKGS_ADD+=('python3-mako python3-pillow python3-pytz python3-requests python3-six python3-urllib3')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
         MANAGER_QPKG_UPDATE_ON_RESTART+=(true)
@@ -567,7 +567,7 @@ Session.Init()
         MANAGER_QPKG_DESC+=('full-featured NZB download manager with a nice web UI')
         MANAGER_QPKG_ABBRVS+=('sb sb3 sab sab3 sabnzbd3 sabnzbd')
         MANAGER_QPKG_DEPENDS_ON+=('Entware Par2')
-        MANAGER_QPKG_IPKGS_ADD+=('python3-asn1crypto python3-chardet python3-cryptography python3-pyopenssl unrar p7zip coreutils-nice ionice ffprobe')
+        MANAGER_QPKG_IPKGS_ADD+=('python3-asn1crypto python3-chardet python3-cryptography unrar p7zip coreutils-nice ionice ffprobe')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_BACKUP_SUPPORTED+=(true)
         MANAGER_QPKG_UPDATE_ON_RESTART+=(true)
@@ -2394,7 +2394,7 @@ IPKGs.Upgrade()
         if [[ $result_code -eq 0 ]]; then
             ShowAsDone "downloaded & upgraded $total_count IPKG$(Plural "$total_count")"
         else
-            ShowAsEror "download & upgrade $total_count IPKG$(Plural "$total_count") failed $(FormatAsExitcode $result_code)"
+            ShowAsFail "download & upgrade $total_count IPKG$(Plural "$total_count") failed $(FormatAsExitcode $result_code)"
         fi
     fi
 
@@ -2455,7 +2455,7 @@ IPKGs.Install()
         if [[ $result_code -eq 0 ]]; then
             ShowAsDone "downloaded & installed $total_count IPKG$(Plural "$total_count")"
         else
-            ShowAsEror "download & install $total_count IPKG$(Plural "$total_count") failed $(FormatAsExitcode $result_code)"
+            ShowAsFail "download & install $total_count IPKG$(Plural "$total_count") failed $(FormatAsExitcode $result_code)"
         fi
     fi
 
@@ -2494,7 +2494,7 @@ IPKGs.Uninstall()
         if [[ $result_code -eq 0 ]]; then
             ShowAsDone "uninstalled $total_count IPKG$(Plural "$total_count")"
         else
-            ShowAsEror "uninstall IPKG$(Plural "$total_count") failed $(FormatAsExitcode $result_code)"
+            ShowAsFail "uninstall IPKG$(Plural "$total_count") failed $(FormatAsExitcode $result_code)"
         fi
     fi
 
@@ -2557,7 +2557,7 @@ PIPs.Install()
         DebugAsDone "downloaded & installed $desc"
         ((pass_count++))
     else
-        ShowAsEror "download & install $desc failed $(FormatAsResult "$result_code")"
+        ShowAsFail "download & install $desc failed $(FormatAsResult "$result_code")"
         ((fail_count++))
     fi
 
@@ -2580,7 +2580,7 @@ PIPs.Install()
             QPKGs.OpToRestart.Add SABnzbd
             ((pass_count++))
         else
-            ShowAsEror "download & install $desc failed $(FormatAsResult "$result_code")"
+            ShowAsFail "download & install $desc failed $(FormatAsResult "$result_code")"
             ((fail_count++))
         fi
 
@@ -2599,7 +2599,7 @@ PIPs.Install()
             QPKGs.OpToRestart.Add SABnzbd
             ((pass_count++))
         else
-            ShowAsEror "download & install $desc failed $(FormatAsResult "$result_code")"
+            ShowAsFail "download & install $desc failed $(FormatAsResult "$result_code")"
             ((fail_count++))
         fi
     fi
@@ -3277,7 +3277,7 @@ Log.All.Paste()
             if [[ $? -eq 0 ]]; then
                 ShowAsDone "your $(FormatAsScriptTitle) log is now online at $(FormatAsURL "$link") and will be deleted in 1 month"
             else
-                ShowAsEror "a link could not be generated. Most likely a problem occurred when talking with $(FormatAsURL 'https://termbin.com')"
+                ShowAsFail "a link could not be generated. Most likely a problem occurred when talking with $(FormatAsURL 'https://termbin.com')"
             fi
         else
             DebugInfoMinorSeparator
@@ -3308,7 +3308,7 @@ Log.Last.Paste()
             if [[ $? -eq 0 ]]; then
                 ShowAsDone "your $(FormatAsScriptTitle) log is now online at $(FormatAsURL "$link") and will be deleted in 1 month"
             else
-                ShowAsEror "a link could not be generated. Most likely a problem occurred when talking with $(FormatAsURL 'https://termbin.com')"
+                ShowAsFail "a link could not be generated. Most likely a problem occurred when talking with $(FormatAsURL 'https://termbin.com')"
             fi
         else
             DebugInfoMinorSeparator
@@ -3339,7 +3339,7 @@ Log.Tail.Paste()
             if [[ $? -eq 0 ]]; then
                 ShowAsDone "your $(FormatAsScriptTitle) log is now online at $(FormatAsURL "$link") and will be deleted in 1 month"
             else
-                ShowAsEror "a link could not be generated. Most likely a problem occurred when talking with $(FormatAsURL 'https://termbin.com')"
+                ShowAsFail "a link could not be generated. Most likely a problem occurred when talking with $(FormatAsURL 'https://termbin.com')"
             fi
         else
             DebugInfoMinorSeparator
@@ -4296,7 +4296,7 @@ QPKG.Download()
                 result_code=1
             fi
         else
-            ShowAsEror "$operation failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
+            ShowAsFail "$operation failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
             QPKGs.OpErDownload.Add "$PACKAGE_NAME"
             result_code=1    # remap to 1 (last time I checked, 'curl' had 92 return codes)
         fi
@@ -4387,7 +4387,7 @@ QPKG.Install()
             ModPathToEntware
             PatchEntwareService
 
-            if QPKGs.OkInstall.Exist Entware; then
+            if QPKGs.OpOkInstall.Exist Entware; then
                 # copy all files from original [/opt] into new [/opt]
                 if [[ -L ${OPT_PATH:-} && -d ${OPT_BACKUP_PATH:-} ]]; then
                     ShowAsProc "restoring original /opt" >&2
@@ -4406,7 +4406,7 @@ QPKG.Install()
 
         result_code=0    # remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK)
     else
-        ShowAsEror "$operation failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
+        ShowAsFail "$operation failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
         MarkOperationAsError "$PACKAGE_NAME" "$operation"
         result_code=1    # remap to 1
     fi
@@ -4483,7 +4483,7 @@ QPKG.Reinstall()
 
         result_code=0    # remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK)
     else
-        ShowAsEror "$operation failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
+        ShowAsFail "$operation failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
         MarkOperationAsError "$PACKAGE_NAME" "$operation"
         result_code=1    # remap to 1
     fi
@@ -4577,7 +4577,7 @@ QPKG.Upgrade()
 
         result_code=0    # remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK)
     else
-        ShowAsEror "$operation failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
+        ShowAsFail "$operation failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
         MarkOperationAsError "$PACKAGE_NAME" "$operation"
         result_code=1    # remap to 1
     fi
@@ -4634,7 +4634,7 @@ QPKG.Uninstall()
             MarkStateAsNotInstalled "$PACKAGE_NAME"
             QPKGs.IsStarted.Remove "$PACKAGE_NAME"
         else
-            ShowAsEror "$operation failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
+            ShowAsFail "$operation failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
             MarkOperationAsError "$PACKAGE_NAME" "$operation"
             result_code=1    # remap to 1
         fi
@@ -4692,7 +4692,7 @@ QPKG.Restart()
         QPKG.StoreServiceStatus "$PACKAGE_NAME"
         MarkOperationAsDone "$PACKAGE_NAME" "$operation"
     else
-        ShowAsEror "$operation failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
+        ShowAsFail "$operation failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
         MarkOperationAsError "$PACKAGE_NAME" "$operation"
         result_code=1    # remap to 1
     fi
@@ -5009,7 +5009,7 @@ QPKG.StoreServiceStatus()
             DebugInfo "$(FormatAsPackageName "$PACKAGE_NAME") service operation completed OK"
             ;;
         failed)
-            ShowAsEror "$(FormatAsPackageName "$PACKAGE_NAME") service operation failed.$([[ -e /var/log/$PACKAGE_NAME.log ]] && echo " Check $(FormatAsFileName "/var/log/$PACKAGE_NAME.log") for more information")"
+            ShowAsFail "$(FormatAsPackageName "$PACKAGE_NAME") service operation failed.$([[ -e /var/log/$PACKAGE_NAME.log ]] && echo " Check $(FormatAsFileName "/var/log/$PACKAGE_NAME.log") for more information")"
             ;;
         *)
             DebugAsWarn "$(FormatAsPackageName "$PACKAGE_NAME") service status is incorrect"
