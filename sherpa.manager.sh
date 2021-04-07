@@ -835,7 +835,7 @@ Tiers.Processor()
     for operation in "${PACKAGE_OPERATIONS[@]}"; do
         for scope in "${PACKAGE_SCOPES[@]}"; do
             if Opts.Apps.Op${operation}.Sc${scope}.IsSet; then
-                # use sensible scope exceptions (for convenience) rather than follow scope literally
+                # use sensible scope exceptions (for convenience) rather than follow requested scope literally
                 case $operation in
                     Install)
                         case $scope in
@@ -994,7 +994,7 @@ Tiers.Processor()
 
     # if an standalone has been selected for reinstall, need to stop its dependents first, and start them again later
     for package in $(QPKGs.OpToReinstall.Array); do
-        if QPKGs.ScStandalone.Exist "$package" && QPKGs.IsInstalled.Exist "$package" && QPKGs.IsStarted.Exist "$package"; then
+        if QPKGs.ScStandalone.Exist "$package" && QPKGs.IsStarted.Exist "$package"; then
             for prospect in $(QPKG.GetDependents "$package"); do
                 if QPKGs.IsStarted.Exist "$prospect"; then
                     QPKGs.OpToStop.Add "$prospect"
@@ -1013,7 +1013,7 @@ Tiers.Processor()
 
     Tier.Processor Download false All QPKG OpToDownload 'update package cache with' 'updating package cache with' 'updated package cache with' ''
 
-    # package 'removal' phase begins here
+    # -> package 'removal' phase begins here <-
 
     for ((index=${#PACKAGE_TIERS[@]}-1; index>=0; index--)); do     # process tiered removal operations in-reverse
         tier=${PACKAGE_TIERS[$index]}
@@ -1030,6 +1030,8 @@ Tiers.Processor()
         esac
     done
 
+    # -> package 'installation' phase begins here <-
+
     # install standalones for started packages only
     for package in $(QPKGs.IsInstalled.Array); do
         if QPKGs.IsStarted.Exist "$package" || QPKGs.OpToStart.Exist "$package"; then
@@ -1041,13 +1043,20 @@ Tiers.Processor()
 
     if Opts.Apps.OpUpgrade.ScAll.IsSet; then
         QPKGs.OpToRestart.Add "$(QPKGs.IsSupportUpdateOnRestart.Array)"
-        QPKGs.OpToRestart.Remove "$(QPKGs.IsNtInstalled.Array) $(QPKGs.OpToUpgrade.Array) $(QPKGs.ScStandalone.Array)"
+        QPKGs.OpToRestart.Remove "$(QPKGs.IsNtInstalled.Array) $(QPKGs.OpToUpgrade.Array)"
+    fi
+
+    # check all items
+    if Opts.Dependencies.Check.IsSet; then
+        for package in $(QPKGs.ScDependent.Array); do
+            if ! QPKGs.ScUpgradable.Exist "$package" && QPKGs.IsStarted.Exist "$package"; then
+                QPKGs.OpToRestart.Add "$package"
+            fi
+        done
     fi
 
     # in-case 'python' has disappeared again ...
     [[ ! -L /opt/bin/python && -e /opt/bin/python3 ]] && ln -s /opt/bin/python3 /opt/bin/python
-
-    # package 'installation' phase begins here
 
     for tier in "${PACKAGE_TIERS[@]}"; do
         case $tier in
@@ -1077,18 +1086,6 @@ Tiers.Processor()
                     done
                 fi
 
-                # check all items
-                if Opts.Dependencies.Check.IsSet; then
-                    for package in $(QPKGs.ScDependent.Array); do
-                        if ! QPKGs.ScStandalone.Exist "$package" && ! QPKGs.ScUpgradable.Exist "$package" && QPKGs.IsInstalled.Exist "$package" && QPKGs.IsStarted.Exist "$package"; then
-                            QPKGs.OpToRestart.Add "$package"
-                        fi
-                    done
-                fi
-
-# Session.Debug.ToScreen.Set
-# QPKGs.Operations.List
-# exit
                 for operation in Install Reinstall Restart Restore Start Upgrade; do
                     QPKGs.OpToRestart.Remove "$(QPKGs.OpOk${operation}.Array)"
                 done
