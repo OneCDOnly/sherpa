@@ -4619,7 +4619,7 @@ QPKG.Uninstall()
     fi
 
     if [[ $PACKAGE_NAME = "$PROJECT_NAME" ]]; then
-        MarkOperationAsSkipped show "$PACKAGE_NAME" "$operation" "it's needed here"
+        MarkOperationAsSkipped show "$PACKAGE_NAME" "$operation" "it's needed here! 😉"
         DebugFuncExit 2; return
     fi
 
@@ -4680,7 +4680,7 @@ QPKG.Restart()
     fi
 
     if [[ $PACKAGE_NAME = "$PROJECT_NAME" ]]; then
-        MarkOperationAsSkipped show "$PACKAGE_NAME" "$operation" "it's needed here"
+        MarkOperationAsSkipped show "$PACKAGE_NAME" "$operation" "it's needed here! 😉"
         DebugFuncExit 2; return
     fi
 
@@ -4799,7 +4799,7 @@ QPKG.Stop()
     fi
 
     if [[ $PACKAGE_NAME = "$PROJECT_NAME" ]]; then
-        MarkOperationAsSkipped show "$PACKAGE_NAME" stop "it's needed here"
+        MarkOperationAsSkipped show "$PACKAGE_NAME" stop "it's needed here! 😉"
         DebugFuncExit 2; return
     fi
 
