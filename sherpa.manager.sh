@@ -831,8 +831,8 @@ Tiers.Processor()
     QPKGs.IsSupportBackup.Build
     QPKGs.IsSupportUpdateOnRestart.Build
 
-    # process scope-based user-options
     for operation in "${PACKAGE_OPERATIONS[@]}"; do
+        # process scope-based user-options
         for scope in "${PACKAGE_SCOPES[@]}"; do
             if Opts.Apps.Op${operation}.Sc${scope}.IsSet; then
                 # use sensible scope exceptions (for convenience) rather than follow requested scope literally
@@ -892,7 +892,6 @@ Tiers.Processor()
                                 for prospect in $(QPKGs.IsStarted.Array); do
                                     QPKGs.ScStandalone.Exist "$prospect" && QPKGs.OpTo${operation}.Add "$prospect"
                                 done
-                                ;;
                         esac
                         ;;
                     Uninstall)
@@ -939,12 +938,35 @@ Tiers.Processor()
                 [[ $found != true ]] && QPKGs.OpTo${operation}.Add "$(QPKGs.Sc${scope}.Array)" || found=false
             fi
         done
-    done
 
-    # process state-based user-options
-    for operation in "${PACKAGE_OPERATIONS[@]}"; do
+        # process state-based user-options
         for state in "${PACKAGE_STATES[@]}"; do
-            Opts.Apps.Op$operation.Is${state}.IsSet && QPKGs.OpTo${operation}.Add "$(QPKGs.Is${state}.Array)"
+            if Opts.Apps.Op${operation}.Is${state}.IsSet; then
+                # use sensible state exceptions (for convenience) rather than follow requested state literally
+                case $operation in
+                    Uninstall)
+                        case $state in
+                            Installed)
+                                found=true
+                                QPKGs.OpTo${operation}.Add "$(QPKGs.IsInstalled.Array)"
+                        esac
+                esac
+
+                [[ $found != true ]] && QPKGs.OpTo${operation}.Add "$(QPKGs.Is${scope}.Array)" || found=false
+
+            elif Opts.Apps.Op${operation}.IsNt${state}.IsSet; then
+                # use sensible state exceptions (for convenience) rather than follow requested state literally
+                case $operation in
+                    Install)
+                        case $state in
+                            Installed)
+                                found=true
+                                QPKGs.OpTo${operation}.Add "$(QPKGs.IsNtInstalled.Array)"
+                        esac
+                esac
+
+                [[ $found != true ]] && QPKGs.OpTo${operation}.Add "$(QPKGs.IsNt${scope}.Array)" || found=false
+            fi
         done
     done
 
@@ -1026,7 +1048,6 @@ Tiers.Processor()
                 ;;
             Addon)
                 Tier.Processor Uninstall false "$tier" IPKG OpToUninstall uninstall uninstalling uninstalled ''
-                ;;
         esac
     done
 
@@ -1116,7 +1137,6 @@ Tiers.Processor()
                     Tier.Processor Install false "$tier" IPKG '' install installing installed long
                     Tier.Processor Install false "$tier" PIP '' install installing installed long
                 fi
-                ;;
         esac
     done
 
@@ -1230,7 +1250,6 @@ Tier.Processor()
             ;;
         IPKG|PIP)
             $targets_function.$TARGET_OPERATION
-            ;;
     esac
 
     # execute with pass_count > total_count to trigger 100% message
