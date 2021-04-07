@@ -688,8 +688,8 @@ Session.Init()
     QPKGs.ScAll.Add "${MANAGER_QPKG_NAME[*]}"
 
     readonly MANAGER_BASE_QPKG_CONFLICTS='Optware Optware-NG TarMT Python QPython2 Python3 QPython3'
-    readonly MANAGER_BASE_IPKGS_ADD='findutils grep less sed'
-    readonly MANAGER_SHARED_IPKGS_ADD='ca-certificates gcc git git-http nano python3-dev python3-pip python3-setuptools'
+    readonly MANAGER_BASE_IPKGS_ADD='less sed'
+    readonly MANAGER_SHARED_IPKGS_ADD='ca-certificates gcc git git-http nano python3-dev python3-pip python3-setuptools findutils grep'
     readonly MANAGER_SHARED_PIPS_ADD='apprise apscheduler beautifulsoup4 cfscrape cheetah3 cheroot!=8.4.4 cherrypy configobj feedparser portend pygithub python-levenshtein python-magic random_user_agent sabyenc3 simplejson slugify'
 
     QPKGs.StandaloneDependent.Build
@@ -1013,7 +1013,7 @@ Tiers.Processor()
 
     Tier.Processor Download false All QPKG OpToDownload 'update package cache with' 'updating package cache with' 'updated package cache with' ''
 
-    # TASK: package 'removal' phase
+    # package 'removal' phase begins here
 
     for ((index=${#PACKAGE_TIERS[@]}-1; index>=0; index--)); do     # process tiered removal operations in-reverse
         tier=${PACKAGE_TIERS[$index]}
@@ -1030,8 +1030,6 @@ Tiers.Processor()
         esac
     done
 
-    ### pre-'install' fixes ###
-
     # install standalones for started packages only
     for package in $(QPKGs.IsInstalled.Array); do
         if QPKGs.IsStarted.Exist "$package" || QPKGs.OpToStart.Exist "$package"; then
@@ -1041,8 +1039,6 @@ Tiers.Processor()
         fi
     done
 
-    ### pre-'restart' fixes ###
-
     if Opts.Apps.OpUpgrade.ScAll.IsSet; then
         QPKGs.OpToRestart.Add "$(QPKGs.IsSupportUpdateOnRestart.Array)"
         QPKGs.OpToRestart.Remove "$(QPKGs.IsNtInstalled.Array) $(QPKGs.OpToUpgrade.Array) $(QPKGs.ScStandalone.Array)"
@@ -1051,27 +1047,15 @@ Tiers.Processor()
     # in-case 'python' has disappeared again ...
     [[ ! -L /opt/bin/python && -e /opt/bin/python3 ]] && ln -s /opt/bin/python3 /opt/bin/python
 
-    # TASK: package 'installation' phase
+    # package 'installation' phase begins here
+
     for tier in "${PACKAGE_TIERS[@]}"; do
         case $tier in
             Standalone|Dependent)
-                ### 'upgrade' operation ###
-
                 Tier.Processor Upgrade false "$tier" QPKG OpToUpgrade upgrade upgrading upgraded long
-
-                ### 'reinstall' operation ###
-
                 Tier.Processor Reinstall false "$tier" QPKG OpToReinstall reinstall reinstalling reinstalled long
-
-                ### 'install' operation ###
-
                 Tier.Processor Install false "$tier" QPKG OpToInstall install installing installed long
-
-                ### 'restore' operation ###
-
                 Tier.Processor Restore false "$tier" QPKG OpToRestore 'restore configuration for' 'restoring configuration for' 'configuration restored for' long
-
-                ### 'start' operation ###
 
                 if [[ $tier = Standalone ]]; then
                     # check for standalone packages that require starting due to dependents being reinstalled/installed/started/restarted
@@ -1084,7 +1068,14 @@ Tiers.Processor()
 
                 Tier.Processor Start false "$tier" QPKG OpToStart start starting started long
 
-                ### 'restart' operation ###
+                if [[ $tier = Dependent ]]; then
+                    # check for dependent packages to restart due to standalones being upgraded/reinstalled/installed/started/restarted
+                    for package in $(QPKGs.OpOkUpgrade.Array) $(QPKGs.OpOkReinstall.Array) $(QPKGs.OpOkInstall.Array) $(QPKGs.OpOkStart.Array) $(QPKGs.OpOkRestart.Array); do
+                        for prospect in $(QPKG.GetDependents "$package"); do
+                            QPKGs.IsInstalled.Exist "$prospect" && QPKGs.OpToRestart.Add "$prospect"
+                        done
+                    done
+                fi
 
                 # check all items
                 if Opts.Dependencies.Check.IsSet; then
@@ -1098,39 +1089,6 @@ Tiers.Processor()
 # Session.Debug.ToScreen.Set
 # QPKGs.Operations.List
 # exit
-                # adjust lists for restart
-#                 if Opts.Apps.OpRestart.ScAll.IsSet; then
-#                     QPKGs.OpToRestart.Add "$(QPKGs.IsInstalled.Array)"
-#                 else
-#                     # check for dependent packages to restart due to standalones being reinstalled
-#                     for package in $(QPKGs.OpOkReinstall.Array); do
-#                         for prospect in $(QPKG.GetDependents "$package"); do
-#                             QPKGs.IsInstalled.Exist "$prospect" && QPKGs.OpToRestart.Add "$prospect"
-#                         done
-#                     done
-#
-#                     # check for dependent packages to restart due to standalones being started
-#                     for package in $(QPKGs.OpOkStart.Array); do
-#                         for prospect in $(QPKG.GetDependents "$package"); do
-#                             QPKGs.IsStarted.Exist "$prospect" && QPKGs.OpToRestart.Add "$prospect"
-#                         done
-#                     done
-#
-#                     # check for dependent packages to restart due to standalones being restarted
-#                     for package in $(QPKGs.OpOkRestart.Array); do
-#                         for prospect in $(QPKG.GetDependents "$package"); do
-#                             QPKGs.IsInstalled.Exist "$prospect" && QPKGs.OpToRestart.Add "$prospect"
-#                         done
-#                     done
-#
-#                     # check for dependent packages to restart due to standalones being upgraded
-#                     for package in $(QPKGs.OpOkUpgrade.Array); do
-#                         for prospect in $(QPKG.GetDependents "$package"); do
-#                             QPKGs.IsInstalled.Exist "$prospect" && QPKGs.OpToRestart.Add "$prospect"
-#                         done
-#                     done
-#                 fi
-
                 for operation in Install Reinstall Restart Restore Start Upgrade; do
                     QPKGs.OpToRestart.Remove "$(QPKGs.OpOk${operation}.Array)"
                 done
@@ -1160,17 +1118,9 @@ Tiers.Processor()
                     Tier.Processor Upgrade false "$tier" IPKG '' upgrade upgrading upgraded long
                     Tier.Processor Install false "$tier" IPKG '' install installing installed long
                     Tier.Processor Install false "$tier" PIP '' install installing installed long
-
-                else
-                    : # TODO: test if other packages are to be installed here. If so, and Entware isn't enabled, then abort with error.
                 fi
                 ;;
         esac
-
-# QPKGs.Operations.List
-
-# exit
-
     done
 
     QPKGs.Operations.List
