@@ -6468,18 +6468,17 @@ AddListObj()
     local public_function_name=${1:?no object name supplied}
     local safe_function_name="$(tr 'A-Z' 'a-z' <<< "${public_function_name//[.-]/_}")"
 
-    _placeholder_size_=_obj_${safe_function_name}_size_
-    _placeholder_array_=_obj_${safe_function_name}_array_
-    _placeholder_array_index_=_obj_${safe_function_name}_array_index_
+    _placeholder_size_=_ob_${safe_function_name}_sz_
+    _placeholder_array_=_ob_${safe_function_name}_ar_
+    _placeholder_array_index_=_ob_${safe_function_name}_arin_
 
 echo $public_function_name'.Add()
     {
-    local array=(${1})
-    [[ ${#array[@]} -eq 0 ]] && return
-    local item='\'\''
-    for item in "${array[@]:-}"; do
-        if [[ " ${'$_placeholder_array_'[*]+"${'$_placeholder_array_'[@]}"} " != *"$item"* ]]; then
-            '$_placeholder_array_'+=("$item")
+    local ar=(${1}) it='\'\''
+    [[ ${#ar[@]} -eq 0 ]] && return
+    for it in "${ar[@]:-}"; do
+        if [[ " ${'$_placeholder_array_'[*]+"${'$_placeholder_array_'[@]}"} " != *"$it"* ]]; then
+            '$_placeholder_array_'+=("$it")
         fi
     done
     }
@@ -6519,21 +6518,17 @@ echo $public_function_name'.Add()
     }
 '$public_function_name'.Remove()
     {
-    local argument_array=(${1})
-    local temp_array=()
-    local argument='\'\''
-    local item='\'\''
-    local matched=false
-    for item in "${'$_placeholder_array_'[@]+"${'$_placeholder_array_'[@]}"}"; do
-        matched=false
-        for argument in "${argument_array[@]+"${argument_array[@]}"}"; do
-            if [[ $argument = $item ]]; then
-                matched=true; break
+    local agar=(${1}) tmar=() ag='\'\'' it='\'\'' m=false
+    for it in "${'$_placeholder_array_'[@]+"${'$_placeholder_array_'[@]}"}"; do
+        m=false
+        for ag in "${agar[@]+"${agar[@]}"}"; do
+            if [[ $ag = $it ]]; then
+                m=true; break
             fi
         done
-        [[ $matched = false ]] && temp_array+=("$item")
+        [[ $m = false ]] && tmar+=("$it")
     done
-    '$_placeholder_array_'=("${temp_array[@]+"${temp_array[@]}"}")
+    '$_placeholder_array_'=("${tmar[@]+"${tmar[@]}"}")
     [[ -z ${'$_placeholder_array_'[*]+"${'$_placeholder_array_'[@]}"} ]] && '$_placeholder_array_'=()
     }
 '$public_function_name'.Size()
@@ -6544,8 +6539,7 @@ echo $public_function_name'.Add()
         echo -n $'$_placeholder_size_'
     fi
     }
-'$public_function_name'.Init
-' >> "$COMPILED_OBJECTS_PATHFILE"
+'$public_function_name'.Init' >> "$COMPILED_OBJECTS_PATHFILE"
 
     return 0
 
@@ -6559,9 +6553,9 @@ AddFlagObj()
     local public_function_name=${1:?no object name supplied}
     local safe_function_name="$(tr 'A-Z' 'a-z' <<< "${public_function_name//[.-]/_}")"
 
-    _placeholder_text_=_obj_${safe_function_name}_text_
-    _placeholder_flag_=_obj_${safe_function_name}_flag_
-    _placeholder_log_changes_flag_=_obj_${safe_function_name}_changes_flag_
+    _placeholder_text_=_ob_${safe_function_name}_tx_
+    _placeholder_flag_=_ob_${safe_function_name}_fl_
+    _placeholder_log_changes_flag_=_ob_${safe_function_name}_chfl_
 
 echo $public_function_name'.Clear()
     {
@@ -6602,8 +6596,7 @@ echo $public_function_name'.Clear()
         echo -n "$'$_placeholder_text_'"
     fi
     }
-'$public_function_name'.Init
-' >> "$COMPILED_OBJECTS_PATHFILE"
+'$public_function_name'.Init' >> "$COMPILED_OBJECTS_PATHFILE"
 
     return 0
 
@@ -6642,7 +6635,7 @@ CompileObjects()
 
     # $1 = 'hash' (optional) return the internal checksum
 
-    local -r COMPILED_OBJECTS_HASH=fec7f3b9babd0795a1232c5369f316fd
+    local -r COMPILED_OBJECTS_HASH=f5b9d71d7b9849cd494a46e0226b3d4b
     local element=''
     local operation=''
     local state=''
