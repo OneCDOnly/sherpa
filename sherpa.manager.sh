@@ -54,7 +54,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=210407
+    local -r SCRIPT_VERSION=210408
     readonly PROJECT_BRANCH=develop
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -721,15 +721,19 @@ Session.Init()
 Session.Validate()
     {
 
+    # This function handles most of the high-level logic for package operations.
+    # If a package isn't being processed by the correct operation, odds-are it's due to a logic error in this function.
+
+    QPKGs.SkipProcessing.IsSet && return
     DebugFuncEntry
     ArgumentSuggestions
     local operation=''
+    local scope=''
     local state=''
+    local prospect=''
+    local package=''
     local something_to_do=false
-
-    if QPKGs.SkipProcessing.IsSet; then
-        DebugFuncExit 1; return
-    fi
+    local found=false
 
     ShowAsProc 'validating parameters' >&2
 
@@ -782,51 +786,6 @@ Session.Validate()
         IPKGs.Install.Set
         PIPs.Install.Set
     fi
-
-    DebugFuncExit
-
-    }
-
-# package processing priorities need to be:
-
-#   _. rebuild dependents           (meta-operation: 'install' QPKG and 'restore' config only if package has a backup file)
-
-#  17. backup all                   (highest: most-important)
-#  16. stop dependents
-#  15. stop standalones
-#  14. uninstall all
-
-#  13. upgrade standalones
-#  12. reinstall standalones
-#  11. install standalones
-#  10. restore standalones
-#   9. start standalones
-#   8. restart standalones
-
-#   7. upgrade dependents
-#   6. reinstall dependents
-#   5. install dependents
-#   4. restore dependents
-#   3. start dependents
-#   2. restart dependents
-
-#   1. status                       (lowest: least-important)
-
-Tiers.Processor()
-    {
-
-    # This function handles all the high-level logic for package operations.
-    # If a package isn't being processed by the correct operation, odds-are it's due to a logic error in this function.
-
-    QPKGs.SkipProcessing.IsSet && return
-    DebugFuncEntry
-    local operation=''
-    local state=''
-    local prospect=''
-    local tier=''
-    local package=''
-    local found=false
-    local -i index=0
 
     QPKGs.IsSupportBackup.Build
     QPKGs.IsSupportUpdateOnRestart.Build
@@ -936,6 +895,11 @@ Tiers.Processor()
                 esac
 
                 [[ $found != true ]] && QPKGs.OpTo${operation}.Add "$(QPKGs.Sc${scope}.Array)" || found=false
+            elif Opts.Apps.Op${operation}.ScNt${scope}.IsSet; then
+                # use sensible scope exceptions (for convenience) rather than follow requested scope literally
+                :
+
+                [[ $found != true ]] && QPKGs.OpTo${operation}.Add "$(QPKGs.ScNt${scope}.Array)" || found=false
             fi
         done
 
@@ -952,8 +916,7 @@ Tiers.Processor()
                         esac
                 esac
 
-                [[ $found != true ]] && QPKGs.OpTo${operation}.Add "$(QPKGs.Is${scope}.Array)" || found=false
-
+                [[ $found != true ]] && QPKGs.OpTo${operation}.Add "$(QPKGs.Is${state}.Array)" || found=false
             elif Opts.Apps.Op${operation}.IsNt${state}.IsSet; then
                 # use sensible state exceptions (for convenience) rather than follow requested state literally
                 case $operation in
@@ -965,7 +928,7 @@ Tiers.Processor()
                         esac
                 esac
 
-                [[ $found != true ]] && QPKGs.OpTo${operation}.Add "$(QPKGs.IsNt${scope}.Array)" || found=false
+                [[ $found != true ]] && QPKGs.OpTo${operation}.Add "$(QPKGs.IsNt${state}.Array)" || found=false
             fi
         done
     done
@@ -1002,8 +965,14 @@ Tiers.Processor()
         QPKGs.OpToInstall.Add Entware
     fi
 
-    # build list containing packages that will require installation QPKGs
-    QPKGs.OpToDownload.Add "$(QPKGs.OpToUpgrade.Array) $(QPKGs.OpToReinstall.Array) $(QPKGs.OpToInstall.Array)"
+    # install standalones for started packages only
+    for package in $(QPKGs.IsInstalled.Array); do
+        if QPKGs.IsStarted.Exist "$package" || QPKGs.OpToStart.Exist "$package"; then
+            for prospect in $(QPKG.GetStandalones "$package"); do
+                QPKGs.IsNtInstalled.Exist "$prospect" && QPKGs.OpToInstall.Add "$prospect"
+            done
+        fi
+    done
 
     # if an standalone has been selected for stop or uninstall, need to stop its dependents first
     for package in $(QPKGs.OpToStop.Array) $(QPKGs.OpToUninstall.Array); do
@@ -1014,8 +983,8 @@ Tiers.Processor()
         fi
     done
 
-    # if an standalone has been selected for reinstall, need to stop its dependents first, and start them again later
-    for package in $(QPKGs.OpToReinstall.Array); do
+    # if an standalone has been selected for reinstall or restart, need to stop its dependents first, and start them again later
+    for package in $(QPKGs.OpToReinstall.Array) $(QPKGs.OpToRestart.Array); do
         if QPKGs.ScStandalone.Exist "$package" && QPKGs.IsStarted.Exist "$package"; then
             for prospect in $(QPKG.GetDependents "$package"); do
                 if QPKGs.IsStarted.Exist "$prospect"; then
@@ -1032,6 +1001,58 @@ Tiers.Processor()
     else
         QPKGs.OpToStop.Remove "$(QPKGs.OpToUninstall.Array)"
     fi
+
+    # build list containing packages that will require installation QPKGs
+    QPKGs.OpToDownload.Add "$(QPKGs.OpToUpgrade.Array) $(QPKGs.OpToReinstall.Array) $(QPKGs.OpToInstall.Array)"
+
+    # check all items
+    if Opts.Dependencies.Check.IsSet; then
+        for package in $(QPKGs.ScDependent.Array); do
+            if ! QPKGs.ScUpgradable.Exist "$package" && QPKGs.IsStarted.Exist "$package"; then
+                QPKGs.OpToRestart.Add "$package"
+            fi
+        done
+    fi
+
+    DebugFuncExit
+
+    }
+
+# package processing priorities need to be:
+
+#   _. rebuild dependents           (meta-operation: 'install' QPKG and 'restore' config only if package has a backup file)
+
+#  17. backup all                   (highest: most-important)
+#  16. stop dependents
+#  15. stop standalones
+#  14. uninstall all
+
+#  13. upgrade standalones
+#  12. reinstall standalones
+#  11. install standalones
+#  10. restore standalones
+#   9. start standalones
+#   8. restart standalones
+
+#   7. upgrade dependents
+#   6. reinstall dependents
+#   5. install dependents
+#   4. restore dependents
+#   3. start dependents
+#   2. restart dependents
+
+#   1. status                       (lowest: least-important)
+
+Tiers.Processor()
+    {
+
+    QPKGs.SkipProcessing.IsSet && return
+    DebugFuncEntry
+    local tier=''
+    local operation=''
+    local prospect=''
+    local package=''
+    local -i index=0
 
     Tier.Processor Download false All QPKG OpToDownload 'update package cache with' 'updating package cache with' 'updated package cache with' ''
 
@@ -1052,29 +1073,6 @@ Tiers.Processor()
     done
 
     # -> package 'installation' phase begins here <-
-
-    # install standalones for started packages only
-    for package in $(QPKGs.IsInstalled.Array); do
-        if QPKGs.IsStarted.Exist "$package" || QPKGs.OpToStart.Exist "$package"; then
-            for prospect in $(QPKG.GetStandalones "$package"); do
-                QPKGs.IsNtInstalled.Exist "$prospect" && QPKGs.OpToInstall.Add "$prospect"
-            done
-        fi
-    done
-
-    if Opts.Apps.OpUpgrade.ScAll.IsSet; then
-        QPKGs.OpToRestart.Add "$(QPKGs.IsSupportUpdateOnRestart.Array)"
-        QPKGs.OpToRestart.Remove "$(QPKGs.IsNtInstalled.Array) $(QPKGs.OpToUpgrade.Array)"
-    fi
-
-    # check all items
-    if Opts.Dependencies.Check.IsSet; then
-        for package in $(QPKGs.ScDependent.Array); do
-            if ! QPKGs.ScUpgradable.Exist "$package" && QPKGs.IsStarted.Exist "$package"; then
-                QPKGs.OpToRestart.Add "$package"
-            fi
-        done
-    fi
 
     # in-case 'python' has disappeared again ...
     [[ ! -L /opt/bin/python && -e /opt/bin/python3 ]] && ln -s /opt/bin/python3 /opt/bin/python
@@ -1098,16 +1096,7 @@ Tiers.Processor()
 
                 Tier.Processor Start false "$tier" QPKG OpToStart start starting started long
 
-                if [[ $tier = Dependent ]]; then
-                    # check for dependent packages to restart due to standalones being upgraded/reinstalled/installed/started/restarted
-                    for package in $(QPKGs.OpOkUpgrade.Array) $(QPKGs.OpOkReinstall.Array) $(QPKGs.OpOkInstall.Array) $(QPKGs.OpOkStart.Array) $(QPKGs.OpOkRestart.Array); do
-                        for prospect in $(QPKG.GetDependents "$package"); do
-                            QPKGs.IsInstalled.Exist "$prospect" && QPKGs.OpToRestart.Add "$prospect"
-                        done
-                    done
-                fi
-
-                for operation in Install Reinstall Restart Restore Start Upgrade; do
+                for operation in Install Restart Start; do
                     QPKGs.OpToRestart.Remove "$(QPKGs.OpOk${operation}.Array)"
                 done
 
