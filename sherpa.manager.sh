@@ -3058,8 +3058,8 @@ Help.ActionsAll.Show()
 Help.Packages.Show()
     {
 
-    local package=''
     local tier=''
+    local package=''
 
     DisableDebugToArchiveAndFile
     Help.Basic.Show
@@ -3068,9 +3068,9 @@ Help.Packages.Show()
     Display
 
     for tier in Standalone Dependent; do
-        DisplayAsHelpTitlePackageNamePlusSomething "${tier} QPKGs" 'package description'
+        DisplayAsHelpTitlePackageNamePlusSomething "$tier QPKGs" 'package description'
 
-        for package in $(QPKGs.Is$tier.Array); do
+        for package in $(QPKGs.Sc${tier}.Array); do
             DisplayAsHelpPackageNamePlusSomething "$package" "$(QPKG.Desc "$package")"
         done
 
@@ -3164,8 +3164,8 @@ Help.Tips.Show()
 Help.PackageAbbreviations.Show()
     {
 
-    local package=''
     local tier=''
+    local package=''
     local abs=''
 
     DisableDebugToArchiveAndFile
@@ -3175,9 +3175,9 @@ Help.PackageAbbreviations.Show()
     Display
 
     for tier in Standalone Dependent; do
-        DisplayAsHelpTitlePackageNamePlusSomething "${tier} QPKGs" 'acceptable abreviations'
+        DisplayAsHelpTitlePackageNamePlusSomething "$tier QPKGs" 'acceptable abreviations'
 
-        for package in $(QPKGs.Is$tier.Array); do
+        for package in $(QPKGs.Sc${tier}.Array); do
             abs=$(QPKG.Abbrvs "$package")
             [[ -n $abs ]] && DisplayAsHelpPackageNamePlusSomething "$package" "${abs// /, }"
         done
