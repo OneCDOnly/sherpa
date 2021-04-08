@@ -17,7 +17,7 @@ Init()
     # specific environment
     readonly QPKG_NAME=ClamAV
     readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
-    readonly MIN_RAM_KB=1578040
+    readonly MIN_RAM_KB=1572864
 
     # for online-hosted applications only
     readonly SOURCE_GIT_URL=''
@@ -293,15 +293,9 @@ StatusQPKG()
 
     IsNotError || return
 
-    if IsNotDaemonActive; then
+    if IsNotPackageActive; then
         DisableThisQPKGIcon
-        return
     else
-        if [[ -n $DAEMON_PATHFILE || -n $SOURCE_GIT_URL ]]; then
-            LoadUIPorts qts
-            CheckPorts || SetError
-        fi
-
         EnableThisQPKGIcon
     fi
 
