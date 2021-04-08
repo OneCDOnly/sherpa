@@ -877,7 +877,7 @@ Session.Validate()
                             All)
                                 found=true
                                 QPKGs.OpTo${operation}.Add "$(QPKGs.ScUpgradable.Array)"
-                                QPKGs.OpToRestart.Add "$(QPKGs.IsSupportUpdateOnRestart.Array)"
+                                QPKGs.OpToRestart.Add "$(QPKGs.ScSupportUpdateOnRestart.Array)"
                                 QPKGs.OpToRestart.Remove "$(QPKGs.IsNtInstalled.Array) $(QPKGs.OpToUpgrade.Array) $(QPKGs.ScStandalone.Array)"
                                 ;;
                             Dependent)
