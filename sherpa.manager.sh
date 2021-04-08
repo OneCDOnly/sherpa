@@ -54,7 +54,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=210408
+    local -r SCRIPT_VERSION=210409
     readonly PROJECT_BRANCH=develop
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -231,10 +231,10 @@ Session.Init()
     DebugInfo '(==) done, (>>) f entry, (<<) f exit, (vv) variable name & value, ($1) positional argument value'
     DebugInfoMinorSeparator
 
-    Opts.IgnoreFreeSpace.Text = ' --force-space'
+    Opts.IgFreeSpace.Text = ' --force-space'
     Session.Summary.Set
-    Session.LineSpace.DontLogChanges
-    QPKGs.SkipProcessing.DontLogChanges
+    Session.LineSpace.NoLogMods
+    QPKGs.SkProc.NoLogMods
 
     readonly NAS_FIRMWARE=$(/sbin/getcfg System Version -f /etc/config/uLinux.conf)
     readonly NAS_BUILD=$(/sbin/getcfg System 'Build Number' -f /etc/config/uLinux.conf)
@@ -697,7 +697,7 @@ Session.Init()
     # speedup: don't build package lists if only showing basic help
     if [[ -z $USER_ARGS_RAW ]]; then
         Opts.Help.Basic.Set
-        QPKGs.SkipProcessing.Set
+        QPKGs.SkProc.Set
         DisableDebugToArchiveAndFile
     else
         ParseArguments
@@ -724,7 +724,7 @@ Session.Validate()
     # This function handles most of the high-level logic for package operations.
     # If a package isn't being processed by the correct operation, odds-are it's due to a logic error in this function.
 
-    QPKGs.SkipProcessing.IsSet && return
+    QPKGs.SkProc.IsSet && return
     DebugFuncEntry
     ArgumentSuggestions
     local operation=''
@@ -734,18 +734,91 @@ Session.Validate()
     local package=''
     local something_to_do=false
     local found=false
+    local -i max_width=70
+    local -i trimmed_width=$((max_width-3))
+    local version=''
 
     ShowAsProc 'validating parameters' >&2
 
-    ListEnvironment
+    DebugInfoMinorSeparator
+    DebugHardwareOK model "$(get_display_name)"
 
-    if QPKGs.SkipProcessing.IsSet; then
+    if [[ -e $GNU_GREP_CMD ]]; then
+        DebugHardwareOK CPU "$($GNU_GREP_CMD -m1 '^model name' /proc/cpuinfo | $SED_CMD 's|^.*: ||')"
+    else    # QTS 4.5.1 & BusyBox 1.01 don't support '-m' option for 'grep', so need to use a different method
+        DebugHardwareOK CPU "$($GREP_CMD '^model name' /proc/cpuinfo | $HEAD_CMD -n1 | $SED_CMD 's|^.*: ||')"
+    fi
+
+    DebugHardwareOK RAM "$(FormatAsThousands "$INSTALLED_RAM_KB")kB"
+
+    if [[ ${NAS_FIRMWARE//.} -ge 400 ]]; then
+        DebugFirmwareOK version "$NAS_FIRMWARE"
+    else
+        DebugFirmwareWarning version "$NAS_FIRMWARE"
+    fi
+
+    if [[ $NAS_BUILD -lt 20201015 || $NAS_BUILD -gt 20201020 ]]; then   # builds in between won't allow unsigned QPKGs to run at-all
+        DebugFirmwareOK build "$NAS_BUILD"
+    else
+        DebugFirmwareWarning build "$NAS_BUILD"
+    fi
+
+    DebugFirmwareOK kernel "$($UNAME_CMD -mr)"
+    DebugFirmwareOK platform "$(/sbin/getcfg '' Platform -d unknown -f /etc/platform.conf)"
+    DebugUserspaceOK 'OS uptime' "$($UPTIME_CMD | $SED_CMD 's|.*up.||;s|,.*load.*||;s|^\ *||')"
+    DebugUserspaceOK 'system load' "$($UPTIME_CMD | $SED_CMD 's|.*load average: ||' | $AWK_CMD -F', ' '{print "1m:"$1", 5m:"$2", 15m:"$3}')"
+
+    if [[ $USER = admin ]]; then
+        DebugUserspaceOK '$USER' "$USER"
+    else
+        DebugUserspaceWarning '$USER' "$USER"
+    fi
+
+    if [[ $EUID -eq 0 ]]; then
+        DebugUserspaceOK '$EUID' "$EUID"
+    else
+        DebugUserspaceWarning '$EUID' "$EUID"
+    fi
+
+    if [[ $EUID -ne 0 || $USER != admin ]]; then
+        ShowAsEror "this script must be run as the 'admin' user. Please login via SSH as 'admin' and try again"
+        QPKGs.SkProc.Set
+    fi
+
+    DebugUserspaceOK '$BASH_VERSION' "$BASH_VERSION"
+    DebugUserspaceOK 'default volume' "$(/sbin/getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info)"
+
+    if [[ -L /opt ]]; then
+        DebugUserspaceOK '/opt' "$($READLINK_CMD /opt || echo '<not present>')"
+    else
+        DebugUserspaceWarning '/opt' '<not present>'
+    fi
+
+    if [[ ${#PATH} -le $max_width ]]; then
+        DebugUserspaceOK '$PATH' "$PATH"
+    else
+        DebugUserspaceOK '$PATH' "${PATH:0:trimmed_width}..."
+    fi
+
+    CheckPythonPathAndVersion python3
+    CheckPythonPathAndVersion python
+
+    if QPKGs.IsInstalled.Exist Entware && ! QPKGs.OpToUninstall.Exist Entware; then
+        [[ -e /opt/bin/python3 ]] && version=$(/opt/bin/python3 -V 2>/dev/null | $SED_CMD 's|^Python ||') && [[ ${version//./} -lt $MIN_PYTHON_VER ]] && ShowAsReco "your Python 3 is out-of-date. Suggest reinstalling Entware: '$PROJECT_NAME reinstall ew'"
+    fi
+
+    DebugScript 'logs path' "$LOGS_PATH"
+    DebugScript 'work path' "$WORK_PATH"
+    DebugScript 'objects hash' "$(CompileObjects hash)"
+    DebugInfoMinorSeparator
+
+    if QPKGs.SkProc.IsSet; then
         DebugFuncExit 1; return
     fi
 
     if ! QPKGs.Conflicts.Check; then
         code_pointer=1
-        QPKGs.SkipProcessing.Set
+        QPKGs.SkProc.Set
         DebugFuncExit 1; return
     fi
 
@@ -770,21 +843,21 @@ Session.Validate()
         done
     done
 
-    if Opts.Dependencies.Check.IsSet || Opts.IgnoreFreeSpace.IsSet || Opts.Help.Status.IsSet; then
+    if Opts.Deps.Check.IsSet || Opts.IgFreeSpace.IsSet || Opts.Help.Status.IsSet; then
         something_to_do=true
     fi
 
     if [[ $something_to_do = false ]]; then
         ShowAsEror "I've nothing to do (this usually means the arguments couldn't be run as-specified)"
         Opts.Help.Basic.Set
-        QPKGs.SkipProcessing.Set
+        QPKGs.SkProc.Set
         DebugFuncExit 1; return
     fi
 
-    if Opts.Dependencies.Check.IsSet || QPKGs.OpToUpgrade.Exist Entware; then
-        IPKGs.Upgrade.Set
-        IPKGs.Install.Set
-        PIPs.Install.Set
+    if Opts.Deps.Check.IsSet || QPKGs.OpToUpgrade.Exist Entware; then
+        IPKGs.ToUpgrade.Set
+        IPKGs.ToInstall.Set
+        PIPs.ToInstall.Set
     fi
 
     QPKGs.IsSupportBackup.Build
@@ -1006,7 +1079,7 @@ Session.Validate()
     QPKGs.OpToDownload.Add "$(QPKGs.OpToUpgrade.Array) $(QPKGs.OpToReinstall.Array) $(QPKGs.OpToInstall.Array)"
 
     # check all items
-    if Opts.Dependencies.Check.IsSet; then
+    if Opts.Deps.Check.IsSet; then
         for package in $(QPKGs.ScDependent.Array); do
             if ! QPKGs.ScUpgradable.Exist "$package" && QPKGs.IsStarted.Exist "$package"; then
                 QPKGs.OpToRestart.Add "$package"
@@ -1046,7 +1119,7 @@ Session.Validate()
 Tiers.Processor()
     {
 
-    QPKGs.SkipProcessing.IsSet && return
+    QPKGs.SkProc.IsSet && return
     DebugFuncEntry
     local tier=''
     local operation=''
@@ -1074,7 +1147,8 @@ Tiers.Processor()
 
     # -> package 'installation' phase begins here <-
 
-    # in-case 'python' has disappeared again ...
+    # just in-case 'python' has disappeared again ... ¯\_(ツ)_/¯
+
     [[ ! -L /opt/bin/python && -e /opt/bin/python3 ]] && ln -s /opt/bin/python3 /opt/bin/python
 
     for tier in "${PACKAGE_TIERS[@]}"; do
@@ -1106,15 +1180,15 @@ Tiers.Processor()
             Addon)
                 for operation in Install Reinstall Upgrade Start; do
                     if QPKGs.OpTo${operation}.IsAny || QPKGs.OpOk${operation}.IsAny; then
-                        IPKGs.Upgrade.Set
-                        IPKGs.Install.Set
+                        IPKGs.ToUpgrade.Set
+                        IPKGs.ToInstall.Set
                         break
                     fi
                 done
 
                 for operation in Install Reinstall Upgrade; do
                     if QPKGs.OpTo${operation}.Exist SABnzbd; then
-                        PIPs.Install.Set   # must ensure 'sabyenc' and 'feedparser' modules are installed/updated
+                        PIPs.ToInstall.Set   # must ensure 'sabyenc' and 'feedparser' modules are installed/updated
                         break
                     fi
                 done
@@ -1160,7 +1234,6 @@ Tier.Processor()
     local message_prefix=''
     local target_function=''
     local targets_function=''
-    local -i index=0
     local -i result_code=0
     local -a target_packages=()
     local -i pass_count=0
@@ -1219,7 +1292,7 @@ Tier.Processor()
             for package in "${target_packages[@]}"; do
                 ShowAsOperationProgress "$TIER" "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
 
-                $target_function.$TARGET_OPERATION "$package" "$forced_operation"
+                $target_function.Do${TARGET_OPERATION} "$package" "$forced_operation"
                 result_code=$?
 
                 case $result_code in
@@ -1238,7 +1311,7 @@ Tier.Processor()
             done
             ;;
         IPKG|PIP)
-            $targets_function.$TARGET_OPERATION
+            $targets_function.Do${TARGET_OPERATION}
     esac
 
     # execute with pass_count > total_count to trigger 100% message
@@ -1251,8 +1324,6 @@ Tier.Processor()
 
 Session.Results()
     {
-
-#     Session.Debug.ToArchive.IsSet && ReleaseLockFile # release lock early if possible so other instances can run
 
     if Args.Unknown.IsNone; then
         if Opts.Help.Actions.IsSet; then
@@ -1313,7 +1384,7 @@ Session.Results()
         Help.Basic.Example.Show
     fi
 
-    Session.ShowBackupLocation.IsSet && Help.BackupLocation.Show
+    Session.ShowBackupLoc.IsSet && Help.BackupLocation.Show
     Session.Summary.IsSet && ShowSummary
     Session.SuggestIssue.IsSet && Help.Issue.Show
 
@@ -1361,7 +1432,7 @@ ParseArguments()
                 scope=''
                 scope_identified=false
                 Session.Display.Clean.Clear
-                QPKGs.SkipProcessing.Clear
+                QPKGs.SkProc.Clear
                 QPKGs.States.Build
                 ;;
             rm|remove|uninstall)
@@ -1370,7 +1441,7 @@ ParseArguments()
                 scope=''
                 scope_identified=false
                 Session.Display.Clean.Clear
-                QPKGs.SkipProcessing.Clear
+                QPKGs.SkProc.Clear
                 QPKGs.States.Build
                 ;;
             s|status|statuses)
@@ -1379,7 +1450,7 @@ ParseArguments()
                 scope=''
                 scope_identified=false
                 Session.Display.Clean.Clear
-                QPKGs.SkipProcessing.Set
+                QPKGs.SkProc.Set
                 QPKGs.States.Build
                 ;;
             paste)
@@ -1388,7 +1459,7 @@ ParseArguments()
                 scope=''
                 scope_identified=false
                 Session.Display.Clean.Clear
-                QPKGs.SkipProcessing.Set
+                QPKGs.SkProc.Set
                 ;;
             display|help|list|show|view)
                 operation=help_
@@ -1396,7 +1467,7 @@ ParseArguments()
                 scope=''
                 scope_identified=false
                 Session.Display.Clean.Clear
-                QPKGs.SkipProcessing.Set
+                QPKGs.SkProc.Set
                 ;;
         esac
 
@@ -1410,7 +1481,7 @@ ParseArguments()
                     arg_identified=true
                     scope=''
                     scope_identified=false
-                    QPKGs.SkipProcessing.Set
+                    QPKGs.SkProc.Set
                     ;;
             esac
 
@@ -1500,7 +1571,7 @@ ParseArguments()
                 arg_identified=true
                 ;;
             ignore-space)
-                Opts.IgnoreFreeSpace.Set
+                Opts.IgFreeSpace.Set
                 arg_identified=true
                 ;;
         esac
@@ -1542,7 +1613,7 @@ ParseArguments()
                 esac
                 ;;
             check_)
-                Opts.Dependencies.Check.Set
+                Opts.Deps.Check.Set
                 DebugFuncExit; return
                 ;;
             help_)
@@ -1631,7 +1702,7 @@ ParseArguments()
                         ;;
                 esac
 
-                QPKGs.SkipProcessing.Set
+                QPKGs.SkProc.Set
 
                 if [[ $scope_identified = true ]]; then
                     DebugFuncExit; return
@@ -1677,7 +1748,7 @@ ParseArguments()
                         ;;
                 esac
 
-                QPKGs.SkipProcessing.Set
+                QPKGs.SkProc.Set
 
                 if [[ $scope_identified = true ]]; then
                     DebugFuncExit; return
@@ -1784,7 +1855,7 @@ ParseArguments()
                 ;;
             status_)
                 Opts.Help.Status.Set
-                QPKGs.SkipProcessing.Set
+                QPKGs.SkProc.Set
                 DebugFuncExit; return
                 ;;
             stop_)
@@ -1919,7 +1990,7 @@ ParseArguments()
     if Args.Unknown.IsAny; then
         Opts.Help.Basic.Set
         Session.Display.Clean.Clear
-        QPKGs.SkipProcessing.Set
+        QPKGs.SkProc.Set
         DebugFuncExit; return   # ... and stop processing any further arguments
     fi
 
@@ -1991,92 +2062,6 @@ ArgumentSuggestions()
             esac
         done
     fi
-
-    DebugFuncExit
-
-    }
-
-ListEnvironment()
-    {
-
-    DebugFuncEntry
-
-    local -i max_width=70
-    local -i trimmed_width=$((max_width-3))
-    local version=''
-
-    DebugInfoMinorSeparator
-    DebugHardwareOK model "$(get_display_name)"
-
-    if [[ -e $GNU_GREP_CMD ]]; then
-        DebugHardwareOK CPU "$($GNU_GREP_CMD -m1 '^model name' /proc/cpuinfo | $SED_CMD 's|^.*: ||')"
-    else    # QTS 4.5.1 & BusyBox 1.01 don't support '-m' option for 'grep', so need to use a different method
-        DebugHardwareOK CPU "$($GREP_CMD '^model name' /proc/cpuinfo | $HEAD_CMD -n1 | $SED_CMD 's|^.*: ||')"
-    fi
-
-    DebugHardwareOK RAM "$(FormatAsThousands "$INSTALLED_RAM_KB")kB"
-
-    if [[ ${NAS_FIRMWARE//.} -ge 400 ]]; then
-        DebugFirmwareOK version "$NAS_FIRMWARE"
-    else
-        DebugFirmwareWarning version "$NAS_FIRMWARE"
-    fi
-
-    if [[ $NAS_BUILD -lt 20201015 || $NAS_BUILD -gt 20201020 ]]; then   # builds in between won't allow unsigned QPKGs to run at-all
-        DebugFirmwareOK build "$NAS_BUILD"
-    else
-        DebugFirmwareWarning build "$NAS_BUILD"
-    fi
-
-    DebugFirmwareOK kernel "$($UNAME_CMD -mr)"
-    DebugFirmwareOK platform "$(/sbin/getcfg '' Platform -d unknown -f /etc/platform.conf)"
-    DebugUserspaceOK 'OS uptime' "$($UPTIME_CMD | $SED_CMD 's|.*up.||;s|,.*load.*||;s|^\ *||')"
-    DebugUserspaceOK 'system load' "$($UPTIME_CMD | $SED_CMD 's|.*load average: ||' | $AWK_CMD -F', ' '{print "1m:"$1", 5m:"$2", 15m:"$3}')"
-
-    if [[ $USER = admin ]]; then
-        DebugUserspaceOK '$USER' "$USER"
-    else
-        DebugUserspaceWarning '$USER' "$USER"
-    fi
-
-    if [[ $EUID -eq 0 ]]; then
-        DebugUserspaceOK '$EUID' "$EUID"
-    else
-        DebugUserspaceWarning '$EUID' "$EUID"
-    fi
-
-    if [[ $EUID -ne 0 || $USER != admin ]]; then
-        ShowAsEror "this script must be run as the 'admin' user. Please login via SSH as 'admin' and try again"
-        QPKGs.SkipProcessing.Set
-        DebugFuncExit 1; return
-    fi
-
-    DebugUserspaceOK '$BASH_VERSION' "$BASH_VERSION"
-    DebugUserspaceOK 'default volume' "$(/sbin/getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info)"
-
-    if [[ -L /opt ]]; then
-        DebugUserspaceOK '/opt' "$($READLINK_CMD /opt || echo '<not present>')"
-    else
-        DebugUserspaceWarning '/opt' '<not present>'
-    fi
-
-    if [[ ${#PATH} -le $max_width ]]; then
-        DebugUserspaceOK '$PATH' "$PATH"
-    else
-        DebugUserspaceOK '$PATH' "${PATH:0:trimmed_width}..."
-    fi
-
-    CheckPythonPathAndVersion python3
-    CheckPythonPathAndVersion python
-
-    if QPKGs.IsInstalled.Exist Entware && ! QPKGs.OpToUninstall.Exist Entware; then
-        [[ -e /opt/bin/python3 ]] && version=$(/opt/bin/python3 -V 2>/dev/null | $SED_CMD 's|^Python ||') && [[ ${version//./} -lt $MIN_PYTHON_VER ]] && ShowAsReco "your Python 3 is out-of-date. Suggest reinstalling Entware: '$PROJECT_NAME reinstall ew'"
-    fi
-
-    DebugScript 'logs path' "$LOGS_PATH"
-    DebugScript 'work path' "$WORK_PATH"
-    DebugScript 'objects hash' "$(CompileObjects hash)"
-    DebugInfoMinorSeparator
 
     DebugFuncExit
 
@@ -2232,20 +2217,20 @@ CalcIPKGsDepsToInstall()
 
     DebugFuncEntry
     local -a this_list=()
-    local -a dependency_accumulator=()
+    local -a dep_acc=()
     local -i requested_count=0
     local -i pre_exclude_count=0
     local -i iterations=0
     local -r ITERATION_LIMIT=20
-    local requested_list=''
+    local req_list=''
     local pre_exclude_list=''
     local element=''
     local complete=false
 
     # remove duplicate entries
-    requested_list=$(DeDupeWords "$(IPKGs.OpToInstall.List)")
-    this_list=($requested_list)
-    requested_count=$($WC_CMD -w <<< "$requested_list")
+    req_list=$(DeDupeWords "$(IPKGs.OpToInstall.List)")
+    this_list=($req_list)
+    requested_count=$($WC_CMD -w <<< "$req_list")
 
     if [[ $requested_count -eq 0 ]]; then
         DebugAsWarn 'no IPKGs requested: aborting ...'
@@ -2253,7 +2238,7 @@ CalcIPKGsDepsToInstall()
     fi
 
     ShowAsProc 'calculating IPKG dependencies'
-    DebugInfo "$requested_count IPKG$(Plural "$requested_count") requested" "'$requested_list' "
+    DebugInfo "$requested_count IPKG$(Plural "$requested_count") requested" "'$req_list' "
 
     while [[ $iterations -lt $ITERATION_LIMIT ]]; do
         ((iterations++))
@@ -2267,7 +2252,7 @@ CalcIPKGsDepsToInstall()
             complete=true
             break
         else
-            dependency_accumulator+=(${this_list[*]})
+            dep_acc+=(${this_list[*]})
         fi
     done
 
@@ -2279,7 +2264,7 @@ CalcIPKGsDepsToInstall()
     fi
 
     # exclude already installed IPKGs
-    pre_exclude_list=$(DeDupeWords "$requested_list ${dependency_accumulator[*]}")
+    pre_exclude_list=$(DeDupeWords "$req_list ${dep_acc[*]}")
     pre_exclude_count=$($WC_CMD -w <<< "$pre_exclude_list")
 
     if [[ $pre_exclude_count -gt 0 ]]; then
@@ -2319,14 +2304,14 @@ CalcAllIPKGDepsToUninstall()
     fi
 
     DebugFuncEntry
-    local requested_list=''
+    local req_list=''
     local element=''
 
-    requested_list=$(DeDupeWords "$(IPKGs.OpToUninstall.List)")
-    DebugInfo "$($WC_CMD -w <<< "$requested_list") IPKG$(Plural "$($WC_CMD -w <<< "$requested_list")") requested" "'$requested_list' "
+    req_list=$(DeDupeWords "$(IPKGs.OpToUninstall.List)")
+    DebugInfo "$($WC_CMD -w <<< "$req_list") IPKG$(Plural "$($WC_CMD -w <<< "$req_list")") requested" "'$req_list' "
     DebugAsProc 'excluding IPKGs not installed'
 
-    for element in $requested_list; do
+    for element in $req_list; do
         ! /opt/bin/opkg status "$element" | $GREP_CMD -q "Status:.*installed" && IPKGs.OpToUninstall.Remove "$element"
     done
 
@@ -2365,13 +2350,13 @@ CalcIPKGsDownloadSize()
 
     }
 
-IPKGs.Upgrade()
+IPKGs.DoUpgrade()
     {
 
     # upgrade all installed IPKGs
 
-    QPKGs.SkipProcessing.IsSet && return
-    IPKGs.Upgrade.IsNt && return
+    QPKGs.SkProc.IsSet && return
+    IPKGs.ToUpgrade.IsNt && return
     QPKGs.IsNtInstalled.Exist Entware && return
     QPKGs.IsStopped.Exist Entware && return
     UpdateEntware
@@ -2394,7 +2379,7 @@ IPKGs.Upgrade()
             trap CTRL_C_Captured INT
                 _MonitorDirSize_ "$IPKG_DL_PATH" "$(IPKGs.OpToDownload.Size)" &
 
-                RunAndLog "/opt/bin/opkg upgrade$(Opts.IgnoreFreeSpace.IsSet && Opts.IgnoreFreeSpace.Text) --force-overwrite $(IPKGs.OpToDownload.List) --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$LOGS_PATH/ipkgs.$UPGRADE_LOG_FILE" log:failure-only
+                RunAndLog "/opt/bin/opkg upgrade$(Opts.IgFreeSpace.IsSet && Opts.IgFreeSpace.Text) --force-overwrite $(IPKGs.OpToDownload.List) --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$LOGS_PATH/ipkgs.$UPGRADE_LOG_FILE" log:failure-only
                 result_code=$?
             trap - INT
         RemoveDirSizeMonitorFlagFile
@@ -2410,13 +2395,13 @@ IPKGs.Upgrade()
 
     }
 
-IPKGs.Install()
+IPKGs.DoInstall()
     {
 
     # install IPKGs required to support QPKGs
 
-    QPKGs.SkipProcessing.IsSet && return
-    IPKGs.Install.IsNt && return
+    QPKGs.SkProc.IsSet && return
+    IPKGs.ToInstall.IsNt && return
     QPKGs.IsNtInstalled.Exist Entware && return
     QPKGs.IsStopped.Exist Entware && return
     UpdateEntware
@@ -2455,7 +2440,7 @@ IPKGs.Install()
             trap CTRL_C_Captured INT
                 _MonitorDirSize_ "$IPKG_DL_PATH" "$(IPKGs.OpToDownload.Size)" &
 
-                RunAndLog "/opt/bin/opkg install$(Opts.IgnoreFreeSpace.IsSet && Opts.IgnoreFreeSpace.Text) --force-overwrite $(IPKGs.OpToDownload.List) --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$LOGS_PATH/ipkgs.addons.$INSTALL_LOG_FILE" log:failure-only
+                RunAndLog "/opt/bin/opkg install$(Opts.IgFreeSpace.IsSet && Opts.IgFreeSpace.Text) --force-overwrite $(IPKGs.OpToDownload.List) --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$LOGS_PATH/ipkgs.addons.$INSTALL_LOG_FILE" log:failure-only
                 result_code=$?
             trap - INT
         RemoveDirSizeMonitorFlagFile
@@ -2471,10 +2456,10 @@ IPKGs.Install()
 
     }
 
-IPKGs.Uninstall()
+IPKGs.DoUninstall()
     {
 
-    QPKGs.SkipProcessing.IsSet && return
+    QPKGs.SkProc.IsSet && return
     QPKGs.IsNtInstalled.Exist Entware && return
     QPKGs.IsStopped.Exist Entware && return
     Session.Error.IsSet && return
@@ -2510,13 +2495,13 @@ IPKGs.Uninstall()
 
     }
 
-PIPs.Install()
+PIPs.DoInstall()
     {
 
-    QPKGs.SkipProcessing.IsSet && return
+    QPKGs.SkProc.IsSet && return
     QPKGs.IsNtInstalled.Exist Entware && return
     QPKGs.IsStopped.Exist Entware && return
-    PIPs.Install.IsNt && return
+    PIPs.ToInstall.IsNt && return
     Session.Error.IsSet && return
     DebugFuncEntry
     local exec_cmd=''
@@ -2569,7 +2554,7 @@ PIPs.Install()
         ((fail_count++))
     fi
 
-    if QPKGs.OpToInstall.Exist SABnzbd || QPKGs.OpToReinstall.Exist SABnzbd || (Opts.Dependencies.Check.IsSet && QPKGs.IsInstalled.Exist SABnzbd); then
+    if QPKGs.OpToInstall.Exist SABnzbd || QPKGs.OpToReinstall.Exist SABnzbd || (Opts.Deps.Check.IsSet && QPKGs.IsInstalled.Exist SABnzbd); then
         ((total_count+=2))
 
         # KLUDGE: force recompilation of 'sabyenc3' package so it's recognised by SABnzbd: https://forums.sabnzbd.org/viewtopic.php?p=121214#p121214
@@ -3532,7 +3517,7 @@ QPKGs.Conflicts.Check()
 QPKGs.Operations.List()
     {
 
-    QPKGs.SkipProcessing.IsSet && return
+    QPKGs.SkProc.IsSet && return
     DebugFuncEntry
     local operation=''
     local prefix=''
@@ -4064,17 +4049,6 @@ MarkStateAsStopped()
 
     }
 
-MarkStateAsRestarting()
-    {
-
-    QPKGs.IsStarting.Remove "$1"
-    QPKGs.IsStarted.Remove "$1"
-    QPKGs.IsStopping.Remove "$1"
-    QPKGs.IsStopped.Remove "$1"
-    QPKGs.IsRestarting.Add "$1"
-
-    }
-
 CalcQPKGArch()
     {
 
@@ -4169,7 +4143,7 @@ ModPathToEntware()
 Session.Error.Set()
     {
 
-    [[ $(type -t QPKGs.SkipProcessing.Init) = function ]] && QPKGs.SkipProcessing.Set
+    [[ $(type -t QPKGs.SkProc.Init) = function ]] && QPKGs.SkProc.Set
     Session.Error.IsSet && return
     _script_error_flag_=true
     DebugVar _script_error_flag_
@@ -4238,7 +4212,7 @@ DisableDebugToArchiveAndFile()
 
 # QPKG tasks
 
-QPKG.Download()
+QPKG.DoDownload()
     {
 
     # input:
@@ -4315,7 +4289,7 @@ QPKG.Download()
 
     }
 
-QPKG.Install()
+QPKG.DoInstall()
     {
 
     # input:
@@ -4327,7 +4301,7 @@ QPKG.Install()
     #   $? = 2  : skipped (not installed: already installed, or no package available for this NAS arch)
 
     Session.Error.IsSet && return
-    QPKGs.SkipProcessing.IsSet && return
+    QPKGs.SkProc.IsSet && return
     DebugFuncEntry
 
     local -r PACKAGE_NAME=${1:?no package name supplied}
@@ -4405,10 +4379,10 @@ QPKG.Install()
 
                 # add extra package(s) needed immediately
                 DebugAsProc 'installing standalone IPKGs'
-                RunAndLog "/opt/bin/opkg install$(Opts.IgnoreFreeSpace.IsSet && Opts.IgnoreFreeSpace.Text) --force-overwrite $MANAGER_BASE_IPKGS_ADD --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$LOGS_PATH/ipkgs.extra.$INSTALL_LOG_FILE" log:failure-only
+                RunAndLog "/opt/bin/opkg install$(Opts.IgFreeSpace.IsSet && Opts.IgFreeSpace.Text) --force-overwrite $MANAGER_BASE_IPKGS_ADD --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$LOGS_PATH/ipkgs.extra.$INSTALL_LOG_FILE" log:failure-only
                 DebugAsDone 'installed standalone IPKGs'
 
-                PIPs.Install.Set
+                PIPs.ToInstall.Set
             fi
         fi
 
@@ -4424,7 +4398,7 @@ QPKG.Install()
 
     }
 
-QPKG.Reinstall()
+QPKG.DoReinstall()
     {
 
     # input:
@@ -4436,7 +4410,7 @@ QPKG.Reinstall()
     #   $? = 2  : skipped (not reinstalled: not already installed, or no package available for this NAS arch)
 
     Session.Error.IsSet && return
-    QPKGs.SkipProcessing.IsSet && return
+    QPKGs.SkProc.IsSet && return
     DebugFuncEntry
 
     local -r PACKAGE_NAME=${1:?no package name supplied}
@@ -4501,7 +4475,7 @@ QPKG.Reinstall()
 
     }
 
-QPKG.Upgrade()
+QPKG.DoUpgrade()
     {
 
     # Upgrades the QPKG named in $1
@@ -4515,7 +4489,7 @@ QPKG.Upgrade()
     #   $? = 2  : skipped (not upgraded: not installed, or no package available for this NAS arch)
 
     Session.Error.IsSet && return
-    QPKGs.SkipProcessing.IsSet && return
+    QPKGs.SkProc.IsSet && return
     DebugFuncEntry
 
     local -r PACKAGE_NAME=${1:?no package name supplied}
@@ -4595,7 +4569,7 @@ QPKG.Upgrade()
 
     }
 
-QPKG.Uninstall()
+QPKG.DoUninstall()
     {
 
     # input:
@@ -4653,7 +4627,7 @@ QPKG.Uninstall()
 
     }
 
-QPKG.Restart()
+QPKG.DoRestart()
     {
 
     # Restarts the service script for the QPKG named in $1
@@ -4686,7 +4660,7 @@ QPKG.Restart()
 
     local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$RESTART_LOG_FILE
 
-    QPKG.Enable "$PACKAGE_NAME"
+    QPKG.DoEnable "$PACKAGE_NAME"
     result_code=$?
 
     if [[ $result_code -eq 0 ]]; then
@@ -4710,7 +4684,7 @@ QPKG.Restart()
 
     }
 
-QPKG.Start()
+QPKG.DoStart()
     {
 
     # Starts the service script for the QPKG named in $1
@@ -4742,7 +4716,7 @@ QPKG.Start()
 
     local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$START_LOG_FILE
 
-    QPKG.Enable "$PACKAGE_NAME"
+    QPKG.DoEnable "$PACKAGE_NAME"
     result_code=$?
 
     if [[ $result_code -eq 0 ]]; then
@@ -4768,7 +4742,7 @@ QPKG.Start()
 
     }
 
-QPKG.Stop()
+QPKG.DoStop()
     {
 
     # Stops the service script for the QPKG named in $1
@@ -4810,7 +4784,7 @@ QPKG.Stop()
     result_code=$?
 
     if [[ $result_code -eq 0 ]]; then
-        QPKG.Disable "$PACKAGE_NAME"
+        QPKG.DoDisable "$PACKAGE_NAME"
         result_code=$?
     fi
 
@@ -4830,7 +4804,7 @@ QPKG.Stop()
 
     }
 
-QPKG.Enable()
+QPKG.DoEnable()
     {
 
     # $1 = package name to enable
@@ -4850,7 +4824,7 @@ QPKG.Enable()
 
     }
 
-QPKG.Disable()
+QPKG.DoDisable()
     {
 
     # $1 = package name to disable
@@ -4870,7 +4844,7 @@ QPKG.Disable()
 
     }
 
-QPKG.Backup()
+QPKG.DoBackup()
     {
 
     # calls the service script for the QPKG named in $1 and runs a backup operation
@@ -4921,7 +4895,7 @@ QPKG.Backup()
 
     }
 
-QPKG.Restore()
+QPKG.DoRestore()
     {
 
     # calls the service script for the QPKG named in $1 and runs a restore operation
@@ -5109,11 +5083,11 @@ QPKG.IsSupportBackup()
     # output:
     #   $? = 0 if true, 1 if false
 
-    local package_index=0
+    local -i index=0
 
-    for package_index in "${!MANAGER_QPKG_NAME[@]}"; do
-        if [[ ${MANAGER_QPKG_NAME[$package_index]} = "${1:?no package name supplied}" ]]; then
-            if ${MANAGER_QPKG_BACKUP_SUPPORTED[$package_index]}; then
+    for index in "${!MANAGER_QPKG_NAME[@]}"; do
+        if [[ ${MANAGER_QPKG_NAME[$index]} = "${1:?no package name supplied}" ]]; then
+            if ${MANAGER_QPKG_BACKUP_SUPPORTED[$index]}; then
                 return 0
             else
                 return 1
@@ -5136,11 +5110,11 @@ QPKG.IsSupportUpdateOnRestart()
     # output:
     #   $? = 0 if true, 1 if false
 
-    local package_index=0
+    local -i index=0
 
-    for package_index in "${!MANAGER_QPKG_NAME[@]}"; do
-        if [[ ${MANAGER_QPKG_NAME[$package_index]} = "${1:?no package name supplied}" ]]; then
-            if ${MANAGER_QPKG_UPDATE_ON_RESTART[$package_index]}; then
+    for index in "${!MANAGER_QPKG_NAME[@]}"; do
+        if [[ ${MANAGER_QPKG_NAME[$index]} = "${1:?no package name supplied}" ]]; then
+            if ${MANAGER_QPKG_UPDATE_ON_RESTART[$index]}; then
                 return 0
             else
                 return 1
@@ -5186,15 +5160,15 @@ QPKG.MatchAbbrv()
     #   stdout = matched installable package name (empty if unmatched)
 
     local -a abbs=()
-    local package_index=0
-    local -i index=0
-    local result_code=1
+    local -i package_index=0
+    local -i abb_index=0
+    local -i result_code=1
 
     for package_index in "${!MANAGER_QPKG_NAME[@]}"; do
         abbs=(${MANAGER_QPKG_ABBRVS[$package_index]})
 
-        for index in "${!abbs[@]}"; do
-            if [[ ${abbs[$index]} = "$1" ]]; then
+        for abb_index in "${!abbs[@]}"; do
+            if [[ ${abbs[$abb_index]} = "$1" ]]; then
                 Display "${MANAGER_QPKG_NAME[$package_index]}"
                 result_code=0
                 break 2
@@ -5408,8 +5382,8 @@ QPKG.IsInstallable()
     [[ ${#MANAGER_QPKG_NAME[@]} -eq 0 || ${#MANAGER_QPKG_ABBRVS[@]} -eq 0 ]] && return 1
 
     local -r PACKAGE_NAME=${1:?no package name supplied}
-    local result_code=1
-    local index=0
+    local -i result_code=1
+    local -i index=0
 
     for index in "${!MANAGER_QPKG_NAME[@]}"; do
         [[ ${MANAGER_QPKG_NAME[$index]} = "$PACKAGE_NAME" ]] || continue
@@ -5812,13 +5786,6 @@ DebugHardwareOK()
 
     }
 
-DebugHardwareWarning()
-    {
-
-    DebugWarningTabulated "$(FormatAsHardware)" "${1:-}" "${2:-}"
-
-    }
-
 DebugFirmwareOK()
     {
 
@@ -6207,9 +6174,8 @@ ShowAsOperationProgress()
     local -i total_count=${5:-0}
     local -r ACTION_PRESENT=${6:?empty}
     local -r DURATION=${7:-}
-
-    local tweaked_passes=$((pass_count+1))              # never show zero (e.g. 0/8)
-    local tweaked_total=$((total_count-fail_count))     # auto-adjust upper limit to account for failures
+    local -i tweaked_passes=$((pass_count+1))              # never show zero (e.g. 0/8)
+    local -i tweaked_total=$((total_count-fail_count))     # auto-adjust upper limit to account for failures
 
     [[ $tweaked_total -eq 0 ]] && return 1              # no-point showing a fraction of zero
 
@@ -6313,8 +6279,8 @@ WriteToDisplayNew()
 
     local this_message=''
     local strbuffer=''
-    local this_length=0
-    local blanking_length=0
+    local -i this_length=0
+    local -i blanking_length=0
 
     [[ ${previous_msg:-_none_} = _none_ ]] && previous_msg=''
 
@@ -6563,7 +6529,7 @@ echo $public_function_name'.Clear()
     '$_placeholder_flag_'=false
     [[ $'$_placeholder_log_changes_flag_' = '\'true\'' ]] && DebugVar '$_placeholder_flag_'
     }
-'$public_function_name'.DontLogChanges()
+'$public_function_name'.NoLogMods()
     {
     [[ $'$_placeholder_log_changes_flag_' != '\'true\'' ]] && return
     '$_placeholder_log_changes_flag_'=false
@@ -6635,7 +6601,7 @@ CompileObjects()
 
     # $1 = 'hash' (optional) return the internal checksum
 
-    local -r COMPILED_OBJECTS_HASH=f5b9d71d7b9849cd494a46e0226b3d4b
+    local -r COMPILED_OBJECTS_HASH=c1c5696698b7191a87c746024d30c3fb
     local element=''
     local operation=''
     local state=''
@@ -6654,7 +6620,7 @@ CompileObjects()
         ShowAsProc 'compiling objects' >&2
 
         # session flags
-        for element in Display.Clean LineSpace ShowBackupLocation SuggestIssue Summary; do
+        for element in Display.Clean LineSpace ShowBackupLoc SuggestIssue Summary; do
             AddFlagObj Session.$element
         done
 
@@ -6663,13 +6629,13 @@ CompileObjects()
         done
 
         AddFlagObj QPKGs.States.Built
-        AddFlagObj QPKGs.SkipProcessing
-        AddFlagObj IPKGs.Upgrade
-        AddFlagObj IPKGs.Install
-        AddFlagObj PIPs.Install
+        AddFlagObj QPKGs.SkProc
+        AddFlagObj IPKGs.ToUpgrade
+        AddFlagObj IPKGs.ToInstall
+        AddFlagObj PIPs.ToInstall
 
         # user option flags
-        for element in Dependencies.Check IgnoreFreeSpace Versions.View; do
+        for element in Deps.Check IgFreeSpace Versions.View; do
             AddFlagObj Opts.$element
         done
 
