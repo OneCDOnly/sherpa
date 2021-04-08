@@ -55,7 +55,7 @@ Session.Init()
 
     readonly PROJECT_NAME=sherpa
     local -r SCRIPT_VERSION=210409
-    readonly PROJECT_BRANCH=develop
+    readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
 
