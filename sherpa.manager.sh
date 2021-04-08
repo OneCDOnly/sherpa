@@ -690,7 +690,7 @@ Session.Init()
     readonly MANAGER_BASE_QPKG_CONFLICTS='Optware Optware-NG TarMT Python QPython2 Python3 QPython3'
     readonly MANAGER_BASE_IPKGS_ADD='less sed'
     readonly MANAGER_SHARED_IPKGS_ADD='ca-certificates gcc git git-http nano python3-dev python3-pip python3-setuptools findutils grep'
-    readonly MANAGER_SHARED_PIPS_ADD='apprise apscheduler beautifulsoup4 cfscrape cheetah3 cheroot!=8.4.4 cherrypy configobj feedparser portend pygithub python-levenshtein python-magic random_user_agent sabyenc3 simplejson slugify'
+    readonly MANAGER_SHARED_PIPS_ADD='apprise apscheduler beautifulsoup4 cfscrape cheetah3 cheroot!=8.4.4 cherrypy configobj feedparser portend pygithub python-levenshtein python-magic random_user_agent sabyenc3 simplejson slugify wheel'
 
     QPKGs.StandaloneDependent.Build
 
@@ -959,26 +959,11 @@ Session.Validate()
         done
     done
 
-    if QPKGs.OpToReinstall.Exist Entware; then    # Entware is a special case: complete removal and fresh install (to clear all installed IPKGs)
-        QPKGs.OpToReinstall.Remove Entware
-        QPKGs.OpToUninstall.Add Entware
-        QPKGs.OpToInstall.Add Entware
-    fi
-
     # install standalones for started packages only
     for package in $(QPKGs.IsInstalled.Array); do
         if QPKGs.IsStarted.Exist "$package" || QPKGs.OpToStart.Exist "$package"; then
             for prospect in $(QPKG.GetStandalones "$package"); do
                 QPKGs.IsNtInstalled.Exist "$prospect" && QPKGs.OpToInstall.Add "$prospect"
-            done
-        fi
-    done
-
-    # if an standalone has been selected for stop or uninstall, need to stop its dependents first
-    for package in $(QPKGs.OpToStop.Array) $(QPKGs.OpToUninstall.Array); do
-        if QPKGs.ScStandalone.Exist "$package" && QPKGs.IsInstalled.Exist "$package"; then
-            for prospect in $(QPKG.GetDependents "$package"); do
-                QPKGs.IsStarted.Exist "$prospect" && QPKGs.OpToStop.Add "$prospect"
             done
         fi
     done
@@ -994,6 +979,21 @@ Session.Validate()
             done
         fi
     done
+
+    # if an standalone has been selected for stop or uninstall, need to stop its dependents first
+    for package in $(QPKGs.OpToStop.Array) $(QPKGs.OpToUninstall.Array); do
+        if QPKGs.ScStandalone.Exist "$package" && QPKGs.IsInstalled.Exist "$package"; then
+            for prospect in $(QPKG.GetDependents "$package"); do
+                QPKGs.IsStarted.Exist "$prospect" && QPKGs.OpToStop.Add "$prospect"
+            done
+        fi
+    done
+
+    if QPKGs.OpToReinstall.Exist Entware; then    # Entware is a special case: complete removal and fresh install (to clear all installed IPKGs)
+        QPKGs.OpToReinstall.Remove Entware
+        QPKGs.OpToUninstall.Add Entware
+        QPKGs.OpToInstall.Add Entware
+    fi
 
     # no-need to stop packages that are about to be uninstalled
     if Opts.Apps.OpUninstall.ScAll.IsSet; then
