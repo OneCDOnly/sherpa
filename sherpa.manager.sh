@@ -724,9 +724,9 @@ Session.Validate()
     # This function handles most of the high-level logic for package operations.
     # If a package isn't being processed by the correct operation, odds-are it's due to a logic error in this function.
 
+    ArgumentSuggestions
     QPKGs.SkProc.IsSet && return
     DebugFuncEntry
-    ArgumentSuggestions
     local operation=''
     local scope=''
     local state=''
