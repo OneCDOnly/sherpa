@@ -2061,7 +2061,7 @@ CleanManagementScript()
     {
 
     if [[ -n $WORK_PATH && -d $WORK_PATH ]]; then
-        rm "${WORK_PATH:?}"/$($BASENAME_CMD "$0") &>/dev/null
+        rm -f "${WORK_PATH:?}/$($BASENAME_CMD "$0")"
         ShowAsDone 'management script cleaned'
     fi
 
