@@ -705,13 +705,9 @@ Session.Init()
 
     SmartCR >&2
 
-    if Session.Display.Clean.IsNt; then
-        if Session.Debug.ToScreen.IsNt; then
-            Display "$(FormatAsScriptTitle) $MANAGER_SCRIPT_VERSION • a mini-package-manager for QNAP NAS"
-            DisplayLineSpaceIfNoneAlready
-        fi
-
-        Opts.Apps.OpUpgrade.ScAll.IsNt && Opts.Apps.OpUninstall.ScAll.IsNt && QPKGs.NewVersions.Show
+    if Session.Display.Clean.IsNt && Session.Debug.ToScreen.IsNt; then
+        Display "$(FormatAsScriptTitle) $MANAGER_SCRIPT_VERSION • a mini-package-manager for QNAP NAS"
+        DisplayLineSpaceIfNoneAlready
     fi
 
     DebugFuncExit
@@ -1081,7 +1077,7 @@ Session.Validate()
     # check all items
     if Opts.Deps.Check.IsSet; then
         for package in $(QPKGs.ScDependent.Array); do
-            if ! QPKGs.ScUpgradable.Exist "$package" && QPKGs.IsStarted.Exist "$package"; then
+            if ! QPKGs.ScUpgradable.Exist "$package" && QPKGs.IsStarted.Exist "$package" && QPKGs.ScSupportUpdateOnRestart.Exist "$package"; then
                 QPKGs.OpToRestart.Add "$package"
             fi
         done
@@ -1324,6 +1320,8 @@ Tier.Processor()
 
 Session.Results()
     {
+
+    Session.Display.Clean.IsNt && QPKGs.NewVersions.Show
 
     if Args.Unknown.IsNone; then
         if Opts.Help.Actions.IsSet; then
@@ -3460,25 +3458,21 @@ ShowVersions()
 QPKGs.NewVersions.Show()
     {
 
-    # Check installed QPKGs and compare versions against package arrays. If new versions are available, advise on-screen.
+    # Check installed QPKGs and compare versions against upgradable array. If new versions are available, advise on-screen.
 
     # $? = 0 if all packages are up-to-date
     # $? = 1 if one-or-more packages can be upgraded
 
-    local package=''
     local -a left_to_upgrade=()
     local -i index=0
     local names_formatted=''
     local msg=''
 
-    for package in $(QPKGs.ScUpgradable.Array); do
-        # only show upgradable packages if they haven't been selected for upgrade in active session
-        if ! QPKGs.OpToUpgrade.Exist "$package" && ! QPKGs.OpToReinstall.Exist "$package"; then
-            left_to_upgrade+=("$package")
-        fi
-    done
-
-    [[ ${#left_to_upgrade[@]} -eq 0 ]] && return 0
+    if [[ $(QPKGs.ScUpgradable.Count) -eq 0 ]]; then
+        return 0
+    else
+        left_to_upgrade+=($(QPKGs.ScUpgradable.Array))
+    fi
 
     for ((index=0;index<=((${#left_to_upgrade[@]}-1));index++)); do
         names_formatted+=$(ColourTextBrightOrange "${left_to_upgrade[$index]}")
@@ -3491,9 +3485,9 @@ QPKGs.NewVersions.Show()
     done
 
     if [[ ${#left_to_upgrade[@]} -eq 1 ]]; then
-        msg='an upgraded QPKG is'
+        msg='a new QPKG is'
     else
-        msg='upgraded QPKGs are'
+        msg='new QPKGs are'
     fi
 
     ShowAsInfo "$msg available for $names_formatted"
