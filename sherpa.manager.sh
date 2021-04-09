@@ -689,7 +689,7 @@ Session.Init()
 
     readonly MANAGER_BASE_QPKG_CONFLICTS='Optware Optware-NG TarMT Python QPython2 Python3 QPython3'
     readonly MANAGER_BASE_IPKGS_ADD='less sed'
-    readonly MANAGER_SHARED_IPKGS_ADD='ca-certificates gcc git git-http nano python3-dev python3-pip python3-setuptools findutils grep'
+    readonly MANAGER_SHARED_IPKGS_ADD='ca-certificates findutils gcc git git-http grep nano python3-dev python3-pip python3-setuptools'
     readonly MANAGER_SHARED_PIPS_ADD='apprise apscheduler beautifulsoup4 cfscrape cheetah3 cheroot!=8.4.4 cherrypy configobj feedparser portend pygithub python-levenshtein python-magic random_user_agent sabyenc3 simplejson slugify wheel'
 
     QPKGs.StandaloneDependent.Build
@@ -3465,10 +3465,11 @@ QPKGs.NewVersions.Show()
     # $? = 0 if all packages are up-to-date
     # $? = 1 if one-or-more packages can be upgraded
 
-    local msg=''
-    local -i index=0
+    local package=''
     local -a left_to_upgrade=()
+    local -i index=0
     local names_formatted=''
+    local msg=''
 
     for package in $(QPKGs.ScUpgradable.Array); do
         # only show upgradable packages if they haven't been selected for upgrade in active session
