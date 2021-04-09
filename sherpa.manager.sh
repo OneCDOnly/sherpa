@@ -202,11 +202,14 @@ Session.Init()
 
     ArchivePriorSessionLogs
 
-    if [[ $USER_ARGS_RAW == *"clean"* ]]; then
-        CleanArchivedLogs
-        CleanWorkPath
+    if [[ $USER_ARGS_RAW == *"reset"* ]]; then
+        ResetArchivedLogs
+        ResetWorkPath
         ArchiveActiveSessionLog
-        CleanActiveSessionLog
+        ResetActiveSessionLog
+        exit 0
+    elif [[ $USER_ARGS_RAW == *"clean"* ]]; then
+        CleanManagementScript
         exit 0
     fi
 
@@ -1391,7 +1394,7 @@ Session.Results()
     DebugScript 'elapsed time' "$(ConvertSecsToHoursMinutesSecs "$(($($DATE_CMD +%s)-$([[ -n $SCRIPT_STARTSECONDS ]] && echo "$SCRIPT_STARTSECONDS" || echo "1")))")"
     DebugInfoMajorSeparator
     Session.Debug.ToArchive.IsSet && ArchiveActiveSessionLog
-    CleanActiveSessionLog
+    ResetActiveSessionLog
     ReleaseLockFile
     DisplayLineSpaceIfNoneAlready   # final on-screen linespace
 
@@ -2030,24 +2033,36 @@ ArgumentSuggestions()
 
     }
 
-CleanArchivedLogs()
+ResetArchivedLogs()
     {
 
     if [[ -n $LOGS_PATH && -d $LOGS_PATH ]]; then
         rm -rf "${LOGS_PATH:?}"/*
-        ShowAsDone 'logs path cleaned'
+        ShowAsDone 'logs path reset'
     fi
 
     return 0
 
     }
 
-CleanWorkPath()
+ResetWorkPath()
     {
 
     if [[ -n $WORK_PATH && -d $WORK_PATH ]]; then
         rm -rf "${WORK_PATH:?}"/*
-        ShowAsDone 'work path cleaned'
+        ShowAsDone 'work path reset'
+    fi
+
+    return 0
+
+    }
+
+CleanManagementScript()
+    {
+
+    if [[ -n $WORK_PATH && -d $WORK_PATH ]]; then
+        rm "${WORK_PATH:?}"/$($BASENAME_CMD "$0") &>/dev/null
+        ShowAsDone 'management script cleaned'
     fi
 
     return 0
@@ -3057,7 +3072,8 @@ Help.Problems.Show()
     DisplayAsProjectSyntaxIndentedExample 'process one-or-more packages and show live debugging information' "$(FormatAsHelpAction) $(FormatAsHelpPackages) debug"
     DisplayAsProjectSyntaxIndentedExample 'ensure all application dependencies are installed' 'check'
     DisplayAsProjectSyntaxIndentedExample "don't check free-space on target filesystem when installing $(FormatAsPackageName Entware) packages" "$(FormatAsHelpAction) $(FormatAsHelpPackages) ignore-space"
-    DisplayAsProjectSyntaxIndentedExample "clean the $(FormatAsScriptTitle) cache" 'clean'
+    DisplayAsProjectSyntaxIndentedExample "clear the locally cached $(FormatAsScriptTitle) management script" 'clean'
+    DisplayAsProjectSyntaxIndentedExample 'clear all downloaded items in local cache and remove all logs' 'reset'
     DisplayAsProjectSyntaxIndentedExample 'restart all installed packages (upgrades the internal applications, not packages)' 'restart all'
     DisplayAsProjectSyntaxIndentedExample 'start these packages and enable package icons' "start $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample 'stop these packages and disable package icons' "stop $(FormatAsHelpPackages)"
@@ -3356,7 +3372,7 @@ ArchivePriorSessionLogs()
 
     }
 
-CleanActiveSessionLog()
+ResetActiveSessionLog()
     {
 
     [[ -e $SESSION_ACTIVE_PATHFILE ]] && rm -f "$SESSION_ACTIVE_PATHFILE"
