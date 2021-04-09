@@ -1466,7 +1466,6 @@ ParseArguments()
                 scope_identified=false
                 Session.Display.Clean.Clear
                 QPKGs.SkProc.Set
-                ;;
         esac
 
         # identify scope in two stages: first stage is when user didn't supply an operation. Second is after an operation has been defined.
@@ -1480,7 +1479,6 @@ ParseArguments()
                     scope=''
                     scope_identified=false
                     QPKGs.SkProc.Set
-                    ;;
             esac
 
             DebugVar operation
@@ -1553,7 +1551,6 @@ ParseArguments()
                     scope=versions_
                     scope_identified=true
                     arg_identified=true
-                    ;;
             esac
         fi
 
@@ -1571,7 +1568,6 @@ ParseArguments()
             ignore-space)
                 Opts.IgFreeSpace.Set
                 arg_identified=true
-                ;;
         esac
 
         # identify package
@@ -1582,9 +1578,7 @@ ParseArguments()
             arg_identified=true
         fi
 
-        if [[ $arg_identified = false ]]; then
-            Args.Unknown.Add "$arg"
-        fi
+        [[ $arg_identified = false ]] && Args.Unknown.Add "$arg"
 
         case $operation in
             backup_)
@@ -1607,12 +1601,10 @@ ParseArguments()
                         ;;
                     *)
                         QPKGs.OpToBackup.Add "$package"
-                        ;;
                 esac
                 ;;
             check_)
                 Opts.Deps.Check.Set
-                DebugFuncExit; return
                 ;;
             help_)
                 case $scope in
@@ -1697,14 +1689,9 @@ ParseArguments()
                     versions_)
                         Opts.Versions.View.Set
                         Session.Display.Clean.Set
-                        ;;
                 esac
 
                 QPKGs.SkProc.Set
-
-                if [[ $scope_identified = true ]]; then
-                    DebugFuncExit; return
-                fi
                 ;;
             install_)
                 case $scope in
@@ -1730,7 +1717,6 @@ ParseArguments()
                         ;;
                     *)
                         QPKGs.OpToInstall.Add "$package"
-                        ;;
                 esac
                 ;;
             paste_)
@@ -1743,7 +1729,6 @@ ParseArguments()
                         ;;
                     tail_)
                         Opts.Log.Tail.Paste.Set
-                        ;;
                 esac
 
                 QPKGs.SkProc.Set
@@ -1768,7 +1753,6 @@ ParseArguments()
                         ;;
                     *)
                         QPKGs.OpToRebuild.Add "$package"
-                        ;;
                 esac
                 ;;
             reinstall_)
@@ -1787,7 +1771,6 @@ ParseArguments()
                         ;;
                     *)
                         QPKGs.OpToReinstall.Add "$package"
-                        ;;
                 esac
                 ;;
             restart_)
@@ -1806,7 +1789,6 @@ ParseArguments()
                         ;;
                     *)
                         QPKGs.OpToRestart.Add "$package"
-                        ;;
                 esac
                 ;;
             restore_)
@@ -1825,7 +1807,6 @@ ParseArguments()
                         ;;
                     *)
                         QPKGs.OpToRestore.Add "$package"
-                        ;;
                 esac
                 ;;
             start_)
@@ -1848,13 +1829,11 @@ ParseArguments()
                         ;;
                     *)
                         QPKGs.OpToStart.Add "$package"
-                        ;;
                 esac
                 ;;
             status_)
                 Opts.Help.Status.Set
                 QPKGs.SkProc.Set
-                DebugFuncExit; return
                 ;;
             stop_)
                 case $scope in
@@ -1876,7 +1855,6 @@ ParseArguments()
                         ;;
                     *)
                         QPKGs.OpToStop.Add "$package"
-                        ;;
                 esac
                 ;;
             uninstall_)
@@ -1910,7 +1888,6 @@ ParseArguments()
                         ;;
                     *)
                         QPKGs.OpToUninstall.Add "$package"
-                        ;;
                 esac
                 ;;
             upgrade_)
@@ -1941,9 +1918,7 @@ ParseArguments()
                         ;;
                     *)
                         QPKGs.OpToUpgrade.Add "$package"
-                        ;;
                 esac
-                ;;
         esac
     done
 
@@ -1951,45 +1926,35 @@ ParseArguments()
         case $operation in
             abs_)
                 Opts.Help.Abbreviations.Set
-                DebugFuncExit; return
                 ;;
             backups_)
                 Opts.Help.Backups.Set
-                DebugFuncExit; return
                 ;;
             help_)
                 Opts.Help.Basic.Set
-                DebugFuncExit; return
                 ;;
             options_)
                 Opts.Help.Options.Set
-                DebugFuncExit; return
                 ;;
             packages_)
                 Opts.Help.Packages.Set
-                DebugFuncExit; return
                 ;;
             problems_)
                 Opts.Help.Problems.Set
-                DebugFuncExit; return
                 ;;
             tips_)
                 Opts.Help.Tips.Set
-                DebugFuncExit; return
                 ;;
             versions_)
                 Opts.Versions.View.Set
                 Session.Display.Clean.Set
-                DebugFuncExit; return
-                ;;
         esac
     fi
 
     if Args.Unknown.IsAny; then
         Opts.Help.Basic.Set
-        Session.Display.Clean.Clear
         QPKGs.SkProc.Set
-        DebugFuncExit; return   # ... and stop processing any further arguments
+        Session.Display.Clean.Clear
     fi
 
     DebugFuncExit
