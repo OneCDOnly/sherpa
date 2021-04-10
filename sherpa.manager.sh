@@ -54,7 +54,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=210410
+    local -r SCRIPT_VERSION=210411
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -316,7 +316,7 @@ Session.Init()
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/main/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_arm_64.qpkg)
         MANAGER_QPKG_MD5+=(03bdcee03ca1580c20edc012628965a7)
         MANAGER_QPKG_DESC+=('a nice CLI disk-usage/free-space utility from @muesli')
-        MANAGER_QPKG_ABBRVS+=('duf')
+        MANAGER_QPKG_ABBRVS+=(duf)
         MANAGER_QPKG_DEPENDS_ON+=('')
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
@@ -330,7 +330,7 @@ Session.Init()
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/main/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_arm-x41.qpkg)
         MANAGER_QPKG_MD5+=(a91c79d797545b67854443866549dd6d)
         MANAGER_QPKG_DESC+=('a nice CLI disk-usage/free-space utility from @muesli')
-        MANAGER_QPKG_ABBRVS+=('duf')
+        MANAGER_QPKG_ABBRVS+=(duf)
         MANAGER_QPKG_DEPENDS_ON+=('')
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
@@ -344,7 +344,7 @@ Session.Init()
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/main/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_x86.qpkg)
         MANAGER_QPKG_MD5+=(8fac3d3df25e7570a5fbcd51f2e0371d)
         MANAGER_QPKG_DESC+=('a nice CLI disk-usage/free-space utility from @muesli')
-        MANAGER_QPKG_ABBRVS+=('duf')
+        MANAGER_QPKG_ABBRVS+=(duf)
         MANAGER_QPKG_DEPENDS_ON+=('')
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
@@ -358,7 +358,7 @@ Session.Init()
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/main/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_x86_64.qpkg)
         MANAGER_QPKG_MD5+=(5d3b1c6eeeb7d5c0025a7f09c695fe9b)
         MANAGER_QPKG_DESC+=('a nice CLI disk-usage/free-space utility from @muesli')
-        MANAGER_QPKG_ABBRVS+=('duf')
+        MANAGER_QPKG_ABBRVS+=(duf)
         MANAGER_QPKG_DEPENDS_ON+=('')
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
@@ -570,7 +570,7 @@ Session.Init()
         MANAGER_QPKG_DESC+=('full-featured NZB download manager with a nice web UI')
         MANAGER_QPKG_ABBRVS+=('sb sb3 sab sab3 sabnzbd3 sabnzbd')
         MANAGER_QPKG_DEPENDS_ON+=('Entware Par2')
-        MANAGER_QPKG_IPKGS_ADD+=('python3-asn1crypto python3-chardet python3-cryptography unrar p7zip coreutils-nice ionice ffprobe')
+        MANAGER_QPKG_IPKGS_ADD+=('unrar p7zip coreutils-nice ionice ffprobe')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
         MANAGER_QPKG_RESTART_TO_UPDATE+=(true)
@@ -693,7 +693,9 @@ Session.Init()
     readonly MANAGER_BASE_QPKG_CONFLICTS='Optware Optware-NG TarMT Python QPython2 Python3 QPython3'
     readonly MANAGER_BASE_IPKGS_ADD='less sed'
     readonly MANAGER_SHARED_IPKGS_ADD='ca-certificates findutils gcc git git-http grep nano python3-dev python3-pip python3-setuptools'
-    readonly MANAGER_SHARED_PIPS_ADD='apprise apscheduler beautifulsoup4 cfscrape cheetah3 cheroot!=8.4.4 cherrypy configobj feedparser portend pygithub python-levenshtein python-magic random_user_agent sabyenc3 simplejson slugify wheel'
+
+    # the order these are specified is the difference between a successful and a failed installation!
+    readonly MANAGER_SHARED_PIPS_ADD='pip wheel pyopenssl cryptography apprise apscheduler beautifulsoup4 cfscrape cheetah3 cherrypy configobj feedparser pygithub python-levenshtein python-magic random_user_agent sabyenc3 simplejson slugify'
 
     QPKGs.StandaloneDependent.Build
 
@@ -1264,7 +1266,7 @@ Tier.Processor()
     local -r ACTION_PRESENT=${message_prefix}${7:?empty}
     local -r ACTION_PAST=${message_prefix}${8:?empty}
 
-    ShowAsProc "checking for$([[ $TIER = All ]] && echo '' || echo " $TIER" | tr '[:upper:]' '[:lower:]') packages to $ACTION_INTRANSITIVE" >&2
+    ShowAsProc "checking for$([[ $TIER = All ]] && echo '' || echo " $TIER" | tr 'A-Z' 'a-z') packages to $ACTION_INTRANSITIVE" >&2
 
     case $PACKAGE_TYPE in
         QPKG)
@@ -1977,7 +1979,7 @@ ArgumentSuggestions()
             case $arg in
                 all)
                     Display
-                    DisplayAsProjectSyntaxExample "please provide an $(FormatAsHelpAction) before 'all' like" 'start all'
+                    DisplayAsProjectSyntaxExample "please provide a valid $(FormatAsHelpAction) before 'all' like" 'start all'
                     Opts.Help.Basic.Clear
                     ;;
                 all-backup|backup-all)
@@ -1987,7 +1989,7 @@ ArgumentSuggestions()
                     ;;
                 dependent)
                     Display
-                    DisplayAsProjectSyntaxExample "please provide an $(FormatAsHelpAction) before 'dependent' like" 'start dependent'
+                    DisplayAsProjectSyntaxExample "please provide a valid $(FormatAsHelpAction) before 'dependent' like" 'start dependents'
                     Opts.Help.Basic.Clear
                     ;;
                 all-restart|restart-all)
@@ -2002,7 +2004,7 @@ ArgumentSuggestions()
                     ;;
                 standalone)
                     Display
-                    DisplayAsProjectSyntaxExample "please provide an $(FormatAsHelpAction) before 'standalone' like" 'start standalone'
+                    DisplayAsProjectSyntaxExample "please provide a valid $(FormatAsHelpAction) before 'standalone' like" 'start standalones'
                     Opts.Help.Basic.Clear
                     ;;
                 all-start|start-all)
@@ -2271,7 +2273,7 @@ CalcIPKGsDepsToInstall()
 
     }
 
-CalcAllIPKGDepsToUninstall()
+CalcAllIPKGsToUninstall()
     {
 
     # From a specified list of IPKG names, exclude those already installed, then generate a total qty to uninstall
@@ -2453,13 +2455,13 @@ IPKGs.DoUninstall()
         done
     fi
 
-    CalcAllIPKGDepsToUninstall
+    CalcAllIPKGsToUninstall
     local -i total_count=$(IPKGs.OpToUninstall.Count)
 
     if [[ $total_count -gt 0 ]]; then
         ShowAsProc "uninstalling $total_count IPKG$(Plural "$total_count")"
 
-        RunAndLog "/opt/bin/opkg remove $(IPKGs.OpToUninstall.List)" "$LOGS_PATH/ipkgs.$UNINSTALL_LOG_FILE" log:failure-only
+        RunAndLog "/opt/bin/opkg remove $(IPKGs.OpToUninstall.List) --force-depends" "$LOGS_PATH/ipkgs.$UNINSTALL_LOG_FILE" log:failure-only
         result_code=$?
 
         if [[ $result_code -eq 0 ]]; then
@@ -2512,7 +2514,7 @@ PIPs.DoInstall()
 
     ModPathToEntware
 
-    [[ -n ${MANAGER_SHARED_PIPS_ADD// /} ]] && exec_cmd="$pip3_cmd install $MANAGER_SHARED_PIPS_ADD --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
+    [[ -n ${MANAGER_SHARED_PIPS_ADD// /} ]] && exec_cmd="$pip3_cmd install $MANAGER_SHARED_PIPS_ADD --upgrade --cache-dir $PIP_CACHE_PATH"
     ((total_count++))
 
     ShowAsOperationProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
@@ -2533,32 +2535,32 @@ PIPs.DoInstall()
     fi
 
     if QPKGs.OpToInstall.Exist SABnzbd || QPKGs.OpToReinstall.Exist SABnzbd || (Opts.Deps.Check.IsSet && QPKGs.IsInstalled.Exist SABnzbd); then
-        ((total_count+=2))
+        ((total_count+=1))
 
-        # KLUDGE: force recompilation of 'sabyenc3' package so it's recognised by SABnzbd: https://forums.sabnzbd.org/viewtopic.php?p=121214#p121214
-        ShowAsOperationProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
-
-        exec_cmd="$pip3_cmd install --force-reinstall --ignore-installed --no-binary :all: sabyenc3 --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
-        desc="'Python3 sabyenc3' module"
-        log_pathfile=$LOGS_PATH/py3-modules.sabyenc3.$INSTALL_LOG_FILE
-        DebugAsProc "downloading & installing $desc"
-
-        RunAndLog "$exec_cmd" "$log_pathfile" log:failure-only
-        result_code=$?
-
-        if [[ $result_code -eq 0 ]]; then
-            DebugAsDone "downloaded & installed $desc"
-            QPKGs.OpToRestart.Add SABnzbd
-            ((pass_count++))
-        else
-            ShowAsFail "download & install $desc failed $(FormatAsResult "$result_code")"
-            ((fail_count++))
-        fi
+#         # KLUDGE: force recompilation of 'sabyenc3' package so it's recognised by SABnzbd: https://forums.sabnzbd.org/viewtopic.php?p=121214#p121214
+#         ShowAsOperationProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
+#
+#         exec_cmd="$pip3_cmd install --force-reinstall --ignore-installed --no-binary :all: sabyenc3 --cache-dir $PIP_CACHE_PATH"
+#         desc="'Python3 sabyenc3' module"
+#         log_pathfile=$LOGS_PATH/py3-modules.sabyenc3.$INSTALL_LOG_FILE
+#         DebugAsProc "downloading & installing $desc"
+#
+#         RunAndLog "$exec_cmd" "$log_pathfile" log:failure-only
+#         result_code=$?
+#
+#         if [[ $result_code -eq 0 ]]; then
+#             DebugAsDone "downloaded & installed $desc"
+#             QPKGs.OpToRestart.Add SABnzbd
+#             ((pass_count++))
+#         else
+#             ShowAsFail "download & install $desc failed $(FormatAsResult "$result_code")"
+#             ((fail_count++))
+#         fi
 
         # KLUDGE: ensure 'feedparser' is upgraded. This was version-held at 5.2.1 for Python 3.8.5 but from Python 3.9.0 onward there's no-need for version-hold anymore.
         ShowAsOperationProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
 
-        exec_cmd="$pip3_cmd install --upgrade feedparser --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
+        exec_cmd="$pip3_cmd install --upgrade feedparser --cache-dir $PIP_CACHE_PATH"
         desc="'Python3 feedparser' module"
         log_pathfile=$LOGS_PATH/py3-modules.feedparser.$INSTALL_LOG_FILE
         DebugAsProc "downloading & installing $desc"
@@ -6138,7 +6140,7 @@ ShowAsOperationProgress()
     # $7 = 'long' (optional)
 
     if [[ -n $1 && $1 != All ]]; then
-        local tier=" $(tr '[:upper:]' '[:lower:]' <<<$1)"
+        local tier=" $(tr 'A-Z' 'a-z' <<<$1)"
     else
         local tier=''
     fi
@@ -6185,7 +6187,7 @@ ShowAsOperationResult()
     # $7 = 'long' (optional)
 
     if [[ -n $1 && $1 != All ]]; then
-        local tier=" $(tr '[:upper:]' '[:lower:]' <<<$1)"
+        local tier=" $(tr 'A-Z' 'a-z' <<<$1)"
     else
         local tier=''
     fi
