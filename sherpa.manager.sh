@@ -1014,7 +1014,7 @@ Session.Validate()
         else
             for package in $(QPKGs.OpToRebuild.Array); do
                 if ! QPKGs.IsBackedUp.Exist "$package"; then
-                    MarkOperationAsSkipped show "$PACKAGE_NAME" rebuild "does not have a backup to rebuild from"
+                    MarkOperationAsSkipped show "$package" rebuild "does not have a backup to rebuild from"
                 else
                     (QPKGs.IsNtInstalled.Exist "$package" || QPKGs.OpToUninstall.Exist "$package") && QPKGs.OpToInstall.Add "$package"
                     QPKGs.OpToRestore.Add "$package"
