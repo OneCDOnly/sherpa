@@ -3718,7 +3718,7 @@ QPKGs.ScAll.Show()
 QPKGs.Backups.Show()
     {
 
-    local -i epochtime=0
+    local epochtime=0       # float as seconds have a fractional component
     local filename=''
     local highlight_older_than='2 weeks ago'
     local format=''
