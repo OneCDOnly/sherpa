@@ -3624,7 +3624,7 @@ QPKGs.States.Build()
                     MarkStateAsStarting "$package"
                     ;;
                 restarting)
-                    QPKGs.IsRestarting.Add "$package"
+                    MarkStateAsRestarting "$package"
                     ;;
                 stopping)
                     MarkStateAsStopping "$package"
@@ -3635,7 +3635,6 @@ QPKGs.States.Build()
                     elif QPKG.IsStopped "$package"; then
                         MarkStateAsStopped "$package"
                     fi
-                    ;;
             esac
 
             [[ ! -d $(QPKG.InstallPath "$package") ]] && QPKGs.IsMissing.Add "$package"
@@ -4025,6 +4024,17 @@ MarkStateAsStarted()
     QPKGs.IsStopping.Remove "$1"
     QPKGs.IsStopped.Remove "$1"
     QPKGs.IsRestarting.Remove "$1"
+
+    }
+
+MarkStateAsRestarting()
+    {
+
+    QPKGs.IsStarting.Remove "$1"
+    QPKGs.IsStarted.Remove "$1"
+    QPKGs.IsStopping.Remove "$1"
+    QPKGs.IsStopped.Remove "$1"
+    QPKGs.IsRestarting.Add "$1"
 
     }
 
@@ -5012,17 +5022,9 @@ QPKG.ServicePathFile()
 
     # output:
     #   stdout = service pathfile
-    #   $? = 0 if found, 1 if not
+    #   $? = 0 if found, !0 if not
 
-    local output=''
-
-    if output=$(/sbin/getcfg "${1:-}" Shell -f /etc/config/qpkg.conf); then
-        echo "$output"
-        return 0
-    fi
-
-    echo 'unknown'
-    return 1
+    /sbin/getcfg "${1:-}" Shell -d unknown -f /etc/config/qpkg.conf
 
     }
 
@@ -5036,17 +5038,9 @@ QPKG.Local.Version()
 
     # output:
     #   stdout = package version
-    #   $? = 0 if found, 1 if not
+    #   $? = 0 if found, !0 if not
 
-    local output=''
-
-    if output=$(/sbin/getcfg "${1:-}" Version -f /etc/config/qpkg.conf); then
-        echo "$output"
-        return 0
-    fi
-
-    echo 'unknown'
-    return 1
+    /sbin/getcfg "${1:-}" Version -d unknown -f /etc/config/qpkg.conf
 
     }
 
@@ -5058,17 +5052,9 @@ QPKG.InstallPath()
 
     # output:
     #   stdout = QPKG installed path
-    #   $? = 0 if found, 1 if not
+    #   $? = 0 if found, !0 if not
 
-    local output=''
-
-    if output=$(/sbin/getcfg "$1" Install_Path -f /etc/config/qpkg.conf); then
-        echo "$output"
-        return 0
-    fi
-
-    echo 'unknown'
-    return 1
+    /sbin/getcfg "$1" Install_Path -f /etc/config/qpkg.conf
 
     }
 
