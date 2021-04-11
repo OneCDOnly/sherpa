@@ -1945,6 +1945,25 @@ ApplySensibleExceptions()
                                 done
                         esac
                         ;;
+                    Rebuild)
+                        case $scope in
+                            All)
+                                found=true
+                                QPKGs.OpTo${operation}.Add "$(QPKGs.ScSupportBackup.Array)"
+                                ;;
+                            Dependent)
+                                found=true
+                                for prospect in $(QPKGs.ScSupportBackup.Array); do
+                                    QPKGs.ScDependent.Exist "$prospect" && QPKGs.OpTo${operation}.Add "$prospect"
+                                done
+                                ;;
+                            Standalone)
+                                found=true
+                                for prospect in $(QPKGs.ScSupportBackup.Array); do
+                                    QPKGs.ScStandalone.Exist "$prospect" && QPKGs.OpTo${operation}.Add "$prospect"
+                                done
+                        esac
+                        ;;
                     Restart)
                         case $scope in
                             All)
