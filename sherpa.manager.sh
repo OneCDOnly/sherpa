@@ -3606,34 +3606,29 @@ QPKGs.States.Build()
     ShowAsProc 'checking installed QPKGs' >&2
 
     local package=''
-    local installed_version=''
-    local remote_version=''
-
     for package in $(QPKGs.ScAll.Array); do
         QPKG.IsInstallable "$package" && QPKGs.ScInstallable.Add "$package"
 
         if QPKG.IsInstalled "$package"; then
             QPKGs.IsInstalled.Add "$package"
 
-            installed_version=$(QPKG.Local.Version "$package")
-            remote_version=$(QPKG.Remote.Version "$package")
-            [[ ${installed_version//./} != "${remote_version//./}" ]] && QPKGs.ScUpgradable.Add "$package"
+            [[ $(QPKG.Local.Version "$package") != "$(QPKG.Remote.Version "$package")" ]] && QPKGs.ScUpgradable.Add "$package"
 
             case $(QPKG.GetServiceStatus "$package") in
                 starting)
-                    MarkStateAsStarting "$package"
+                    QPKGs.IsStarting.Add "$package"
                     ;;
                 restarting)
-                    MarkStateAsRestarting "$package"
+                    QPKGs.IsRestarting.Add "$package"
                     ;;
                 stopping)
-                    MarkStateAsStopping "$package"
+                    QPKGs.IsStopping.Add "$package"
                     ;;
                 *)
                     if QPKG.IsStarted "$package"; then
-                        MarkStateAsStarted "$package"
+                        QPKGs.IsStarted.Add "$package"
                     elif QPKG.IsStopped "$package"; then
-                        MarkStateAsStopped "$package"
+                        QPKGs.IsStopped.Add "$package"
                     fi
             esac
 
@@ -4005,45 +4000,12 @@ MarkStateAsNotInstalled()
 
     }
 
-MarkStateAsStarting()
-    {
-
-    QPKGs.IsStarting.Add "$1"
-    QPKGs.IsStarted.Remove "$1"
-    QPKGs.IsStopping.Remove "$1"
-    QPKGs.IsStopped.Remove "$1"
-    QPKGs.IsRestarting.Remove "$1"
-
-    }
-
 MarkStateAsStarted()
     {
 
     QPKGs.IsStarting.Remove "$1"
     QPKGs.IsStarted.Add "$1"
     QPKGs.IsStopping.Remove "$1"
-    QPKGs.IsStopped.Remove "$1"
-    QPKGs.IsRestarting.Remove "$1"
-
-    }
-
-MarkStateAsRestarting()
-    {
-
-    QPKGs.IsStarting.Remove "$1"
-    QPKGs.IsStarted.Remove "$1"
-    QPKGs.IsStopping.Remove "$1"
-    QPKGs.IsStopped.Remove "$1"
-    QPKGs.IsRestarting.Add "$1"
-
-    }
-
-MarkStateAsStopping()
-    {
-
-    QPKGs.IsStarting.Remove "$1"
-    QPKGs.IsStarted.Remove "$1"
-    QPKGs.IsStopping.Add "$1"
     QPKGs.IsStopped.Remove "$1"
     QPKGs.IsRestarting.Remove "$1"
 
