@@ -889,6 +889,25 @@ Session.Validate()
                                 done
                         esac
                         ;;
+                    Restart)
+                        case $scope in
+                            All)
+                                found=true
+                                QPKGs.OpTo${operation}.Add "$(QPKGs.IsStarted.Array)"
+                                ;;
+                            Dependent)
+                                found=true
+                                for prospect in $(QPKGs.IsStarted.Array); do
+                                    QPKGs.ScDependent.Exist "$prospect" && QPKGs.OpTo${operation}.Add "$prospect"
+                                done
+                                ;;
+                            Standalone)
+                                found=true
+                                for prospect in $(QPKGs.IsStarted.Array); do
+                                    QPKGs.ScStandalone.Exist "$prospect" && QPKGs.OpTo${operation}.Add "$prospect"
+                                done
+                        esac
+                        ;;
                     Start)
                         case $scope in
                             All)
