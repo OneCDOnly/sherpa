@@ -3604,37 +3604,41 @@ QPKGs.States.Build()
 
     DebugFuncEntry
     ShowAsProc 'checking installed QPKGs' >&2
-
     local package=''
+    local previous=''
+
     for package in $(QPKGs.ScAll.Array); do
-        QPKG.IsInstallable "$package" && QPKGs.ScInstallable.Add "$package"
+        [[ $package = $previous ]] && continue || previous=$package
 
         if QPKG.IsInstalled "$package"; then
+            if [[ ! -d $(QPKG.InstallPath "$package") ]]; then
+                QPKGs.IsMissing.Add "$package"
+                continue
+            fi
+
             QPKGs.IsInstalled.Add "$package"
 
             [[ $(QPKG.Local.Version "$package") != "$(QPKG.Remote.Version "$package")" ]] && QPKGs.ScUpgradable.Add "$package"
 
-            case $(QPKG.GetServiceStatus "$package") in
-                starting)
-                    QPKGs.IsStarting.Add "$package"
-                    ;;
-                restarting)
-                    QPKGs.IsRestarting.Add "$package"
-                    ;;
-                stopping)
-                    QPKGs.IsStopping.Add "$package"
-                    ;;
-                *)
-                    if QPKG.IsStarted "$package"; then
-                        QPKGs.IsStarted.Add "$package"
-                    elif QPKG.IsStopped "$package"; then
-                        QPKGs.IsStopped.Add "$package"
-                    fi
-            esac
-
-            [[ ! -d $(QPKG.InstallPath "$package") ]] && QPKGs.IsMissing.Add "$package"
+            if QPKG.IsStarted "$package"; then
+                QPKGs.IsStarted.Add "$package"
+            elif QPKG.IsStopped "$package"; then
+                QPKGs.IsStopped.Add "$package"
+            else
+                case $(QPKG.GetServiceStatus "$package") in
+                    starting)
+                        QPKGs.IsStarting.Add "$package"
+                        ;;
+                    restarting)
+                        QPKGs.IsRestarting.Add "$package"
+                        ;;
+                    stopping)
+                        QPKGs.IsStopping.Add "$package"
+                esac
+            fi
         else
             QPKGs.IsNtInstalled.Add "$package"
+            QPKG.IsInstallable "$package" && QPKGs.ScInstallable.Add "$package"
         fi
 
         if QPKG.IsSupportBackup "$package"; then
