@@ -886,7 +886,6 @@ Session.Validate()
     if Opts.Deps.Check.IsSet || QPKGs.OpToUpgrade.Exist Entware; then
         IPKGs.ToUpgrade.Set
         IPKGs.ToInstall.Set
-        PIPs.ToInstall.Set
     fi
 
     QPKGs.IsSupportBackup.Build
@@ -1069,13 +1068,6 @@ Tiers.Processor()
                     if QPKGs.OpTo${operation}.IsAny || QPKGs.OpOk${operation}.IsAny; then
                         IPKGs.ToUpgrade.Set
                         IPKGs.ToInstall.Set
-                        break
-                    fi
-                done
-
-                for operation in Install Reinstall Upgrade; do
-                    if QPKGs.OpTo${operation}.Exist SABnzbd; then
-                        PIPs.ToInstall.Set   # must ensure 'feedparser' and 'cryptography' modules are installed/updated
                         break
                     fi
                 done
@@ -2539,7 +2531,6 @@ PIPs.DoInstall()
     QPKGs.SkProc.IsSet && return
     QPKGs.IsNtInstalled.Exist Entware && return
     QPKGs.IsStopped.Exist Entware && return
-    PIPs.ToInstall.IsNt && return
     Session.Error.IsSet && return
     DebugFuncEntry
     local exec_cmd=''
@@ -2572,27 +2563,51 @@ PIPs.DoInstall()
 
     ModPathToEntware
 
-    [[ -n ${MANAGER_SHARED_PIPS_ADD// /} ]] && exec_cmd="$pip3_cmd install --upgrade $MANAGER_SHARED_PIPS_ADD --cache-dir $PIP_CACHE_PATH"
-    ((total_count++))
+    if Opts.Deps.Check.IsSet || QPKGs.OpOkInstall.Exist Entware; then
+        ((total_count++))
+        ShowAsOperationProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
 
-    ShowAsOperationProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
+        exec_cmd="$pip3_cmd install --upgrade $MANAGER_SHARED_PIPS_ADD --cache-dir $PIP_CACHE_PATH"
+        local desc="'Python3' modules"
+        local log_pathfile=$LOGS_PATH/py3-modules.assorted.$INSTALL_LOG_FILE
+        DebugAsProc "downloading & installing $desc"
 
-    local desc="'Python3' modules"
-    local log_pathfile=$LOGS_PATH/py3-modules.assorted.$INSTALL_LOG_FILE
-    DebugAsProc "downloading & installing $desc"
+        RunAndLog "$exec_cmd" "$log_pathfile" log:failure-only
+        result_code=$?
 
-    RunAndLog "$exec_cmd" "$log_pathfile" log:failure-only
-    result_code=$?
-
-    if [[ $result_code -eq 0 ]]; then
-        DebugAsDone "downloaded & installed $desc"
-        ((pass_count++))
-    else
-        ShowAsFail "download & install $desc failed $(FormatAsResult "$result_code")"
-        ((fail_count++))
+        if [[ $result_code -eq 0 ]]; then
+            DebugAsDone "downloaded & installed $desc"
+            ((pass_count++))
+        else
+            ShowAsFail "download & install $desc failed $(FormatAsResult "$result_code")"
+            ((fail_count++))
+        fi
     fi
 
-    if Opts.Deps.Check.IsSet || IPKGs.OpToInstall.Exist python3-cryptography || QPKGs.OpToInstall.Exist SABnzbd || QPKGs.OpToReinstall.Exist SABnzbd || QPKGs.IsInstalled.Exist SABnzbd; then
+    if (Opts.Deps.Check.IsSet && QPKGs.IsInstalled.Exist SABnzbd) || QPKGs.OpToInstall.Exist SABnzbd || QPKGs.OpToReinstall.Exist SABnzbd; then
+        # KLUDGE: force recompilation of 'sabyenc3' package so it's recognised by SABnzbd: https://forums.sabnzbd.org/viewtopic.php?p=121214#p121214
+        ((total_count+=1))
+        ShowAsOperationProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
+
+        exec_cmd="$pip3_cmd install --force-reinstall --ignore-installed --no-binary :all: sabyenc3 --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
+        desc="'Python3 sabyenc3' module"
+        log_pathfile=$LOGS_PATH/py3-modules.sabyenc3.$INSTALL_LOG_FILE
+        DebugAsProc "downloading & installing $desc"
+
+        RunAndLog "$exec_cmd" "$log_pathfile" log:failure-only
+        result_code=$?
+
+        if [[ $result_code -eq 0 ]]; then
+            DebugAsDone "downloaded & installed $desc"
+            QPKGs.OpToRestart.Add SABnzbd
+            ((pass_count++))
+        else
+            ShowAsEror "download & install $desc failed $(FormatAsResult "$result_code")"
+            ((fail_count++))
+        fi
+    fi
+
+    if Opts.Deps.Check.IsSet || IPKGs.OpToInstall.Exist python3-cryptography || QPKGs.OpToInstall.Exist SABnzbd || QPKGs.OpToReinstall.Exist SABnzbd; then
         # KLUDGE: must ensure 'cryptography' PIP module is reinstalled if the 'python3-cryptography' IPKG is installed.
         # The 'deluge-ui-web' IPKG pulls-in 'python3-cryptography' IPKG as a dependency, but this then causes a launch-failure for 'deluge-web' due to there already being a later 'cryptography' installed via 'pip'. Prefer to use the 'pip' version, so need to reinstall it so it is seen first.
         # KLUDGE: ensure 'feedparser' is upgraded. This was version-held at 5.2.1 for Python 3.8.5 but from Python 3.9.0 onward there's no-need for version-hold anymore.
@@ -4389,8 +4404,6 @@ QPKG.DoInstall()
                 DebugAsProc 'installing standalone IPKGs'
                 RunAndLog "/opt/bin/opkg install$(Opts.IgFreeSpace.IsSet && Opts.IgFreeSpace.Text) --force-overwrite $MANAGER_BASE_IPKGS_ADD --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$LOGS_PATH/ipkgs.extra.$INSTALL_LOG_FILE" log:failure-only
                 DebugAsDone 'installed standalone IPKGs'
-
-                PIPs.ToInstall.Set
             fi
         fi
 
@@ -6451,7 +6464,7 @@ CompileObjects()
 
     # $1 = 'hash' (optional) return the internal checksum
 
-    local -r COMPILED_OBJECTS_HASH=5b0e3e68d29d96fae3373e0f88314aaa
+    local -r COMPILED_OBJECTS_HASH=70d4ac72dff7d7bce3e5bea6b3c24f4c
     local element=''
     local operation=''
     local scope=''
@@ -6483,7 +6496,6 @@ CompileObjects()
         AddFlagObj QPKGs.SkProc
         AddFlagObj IPKGs.ToUpgrade
         AddFlagObj IPKGs.ToInstall
-        AddFlagObj PIPs.ToInstall
 
         # user option flags
         for element in Deps.Check IgFreeSpace Versions.View; do

@@ -478,46 +478,6 @@ IPKGs.ToInstall.Text()
     fi
     }
 IPKGs.ToInstall.Init
-PIPs.ToInstall.Clear()
-    {
-    [[ $_ob_pips_toinstall_fl_ != 'true' ]] && return
-    _ob_pips_toinstall_fl_=false
-    [[ $_ob_pips_toinstall_chfl_ = 'true' ]] && DebugVar _ob_pips_toinstall_fl_
-    }
-PIPs.ToInstall.NoLogMods()
-    {
-    [[ $_ob_pips_toinstall_chfl_ != 'true' ]] && return
-    _ob_pips_toinstall_chfl_=false
-    }
-PIPs.ToInstall.Init()
-    {
-    _ob_pips_toinstall_tx_=''
-    _ob_pips_toinstall_fl_=false
-    _ob_pips_toinstall_chfl_=true
-    }
-PIPs.ToInstall.IsNt()
-    {
-    [[ $_ob_pips_toinstall_fl_ != 'true' ]]
-    }
-PIPs.ToInstall.IsSet()
-    {
-    [[ $_ob_pips_toinstall_fl_ = 'true' ]]
-    }
-PIPs.ToInstall.Set()
-    {
-    [[ $_ob_pips_toinstall_fl_ = 'true' ]] && return
-    _ob_pips_toinstall_fl_=true
-    [[ $_ob_pips_toinstall_chfl_ = 'true' ]] && DebugVar _ob_pips_toinstall_fl_
-    }
-PIPs.ToInstall.Text()
-    {
-    if [[ -n ${1:-} && $1 = "=" ]]; then
-        _ob_pips_toinstall_tx_=$2
-    else
-        echo -n "$_ob_pips_toinstall_tx_"
-    fi
-    }
-PIPs.ToInstall.Init
 Opts.Deps.Check.Clear()
     {
     [[ $_ob_opts_deps_check_fl_ != 'true' ]] && return
