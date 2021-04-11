@@ -54,7 +54,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=210411
+    local -r SCRIPT_VERSION=210412
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -156,7 +156,7 @@ Session.Init()
     readonly SESSION_TAIL_PATHFILE=$LOGS_PATH/session.tail.log
     readonly EXTERNAL_PACKAGE_LIST_PATHFILE=$WORK_PATH/Packages
 
-    PACKAGE_SCOPES=(All Dependent Installable Names Standalone SupportBackup SupportUpdateOnRestart Upgradable)
+    PACKAGE_SCOPES=(All Dependent HasDependents Installable Names Standalone SupportBackup SupportUpdateOnRestart Upgradable)
     PACKAGE_STATES=(BackedUp Downloaded Installed Missing Starting Started Stopping Stopped Restarting)
     PACKAGE_OPERATIONS=(Backup Download Install Rebuild Reinstall Restart Restore Start Stop Uninstall Upgrade)
     PACKAGE_TIERS=(Standalone Addon Dependent)
@@ -261,6 +261,7 @@ Session.Init()
         MANAGER_QPKG_DESC+=()               # QPKG description (applies to all packages with the same name)
         MANAGER_QPKG_ABBRVS=()              # if set, this package is user-installable, and these abbreviations may be used to specify app
         MANAGER_QPKG_DEPENDS_ON=()          # require these QPKGs to be installed first. Use '' if package is standalone
+        MANAGER_QPKG_DEPENDED_UPON=()       # true/false: this QPKG is depended-upon by other QPKGs
         MANAGER_QPKG_IPKGS_ADD=()           # require these IPKGs to be installed first
         MANAGER_QPKG_IPKGS_REMOVE=()        # require these IPKGs to be uninstalled first
         MANAGER_QPKG_SUPPORTS_BACKUP=()     # true/false: this QPKG supports configuration 'backup' and 'restore' operations
@@ -276,6 +277,7 @@ Session.Init()
         MANAGER_QPKG_DESC+=('replacement for the QTS built-in ClamAV (requires a minimum of 1.5GiB installed RAM)')
         MANAGER_QPKG_ABBRVS+=('av clam clamscan freshclam clamav')
         MANAGER_QPKG_DEPENDS_ON+=(Entware)
+        MANAGER_QPKG_DEPENDED_UPON+=(false)
         MANAGER_QPKG_IPKGS_ADD+=('clamav freshclam')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
@@ -290,6 +292,7 @@ Session.Init()
         MANAGER_QPKG_DESC+=('Deluge BitTorrent daemon')
         MANAGER_QPKG_ABBRVS+=('deluge del-server deluge-server')
         MANAGER_QPKG_DEPENDS_ON+=(Entware)
+        MANAGER_QPKG_DEPENDED_UPON+=(false)
         MANAGER_QPKG_IPKGS_ADD+=('deluge jq')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
@@ -304,6 +307,7 @@ Session.Init()
         MANAGER_QPKG_DESC+=('web UI to access multiple Deluge BitTorrent daemons')
         MANAGER_QPKG_ABBRVS+=('del-web deluge-web')
         MANAGER_QPKG_DEPENDS_ON+=(Entware)
+        MANAGER_QPKG_DEPENDED_UPON+=(false)
         MANAGER_QPKG_IPKGS_ADD+=('deluge-ui-web jq')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
@@ -318,6 +322,7 @@ Session.Init()
         MANAGER_QPKG_DESC+=('a nice CLI disk-usage/free-space utility from @muesli')
         MANAGER_QPKG_ABBRVS+=(duf)
         MANAGER_QPKG_DEPENDS_ON+=('')
+        MANAGER_QPKG_DEPENDED_UPON+=(false)
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
@@ -332,6 +337,7 @@ Session.Init()
         MANAGER_QPKG_DESC+=('a nice CLI disk-usage/free-space utility from @muesli')
         MANAGER_QPKG_ABBRVS+=(duf)
         MANAGER_QPKG_DEPENDS_ON+=('')
+        MANAGER_QPKG_DEPENDED_UPON+=(false)
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
@@ -346,6 +352,7 @@ Session.Init()
         MANAGER_QPKG_DESC+=('a nice CLI disk-usage/free-space utility from @muesli')
         MANAGER_QPKG_ABBRVS+=(duf)
         MANAGER_QPKG_DEPENDS_ON+=('')
+        MANAGER_QPKG_DEPENDED_UPON+=(false)
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
@@ -360,6 +367,7 @@ Session.Init()
         MANAGER_QPKG_DESC+=('a nice CLI disk-usage/free-space utility from @muesli')
         MANAGER_QPKG_ABBRVS+=(duf)
         MANAGER_QPKG_DEPENDS_ON+=('')
+        MANAGER_QPKG_DEPENDED_UPON+=(false)
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
@@ -374,6 +382,7 @@ Session.Init()
         MANAGER_QPKG_DESC+=("provides the 'opkg' command: the OpenWRT package manager")
         MANAGER_QPKG_ABBRVS+=('ew ent opkg entware')
         MANAGER_QPKG_DEPENDS_ON+=('')
+        MANAGER_QPKG_DEPENDED_UPON+=(true)
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
@@ -388,6 +397,7 @@ Session.Init()
         MANAGER_QPKG_DESC+=('hides the annoying rotating banner at the top of QTS App Center pages')
         MANAGER_QPKG_ABBRVS+=('htb hide hidebanner hidethatbanner')
         MANAGER_QPKG_DEPENDS_ON+=('')
+        MANAGER_QPKG_DEPENDED_UPON+=(false)
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
@@ -402,6 +412,7 @@ Session.Init()
         MANAGER_QPKG_DESC+=('follow authors and grab metadata for all your digital reading needs')
         MANAGER_QPKG_ABBRVS+=('ll lazy lazylibrarian')
         MANAGER_QPKG_DEPENDS_ON+=(Entware)
+        MANAGER_QPKG_DEPENDED_UPON+=(false)
         MANAGER_QPKG_IPKGS_ADD+=('python3-pyopenssl python3-requests')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
@@ -416,6 +427,7 @@ Session.Init()
         MANAGER_QPKG_DESC+=('another SickBeard fork: manage and search for TV shows')
         MANAGER_QPKG_ABBRVS+=('om med omed medusa omedusa')
         MANAGER_QPKG_DEPENDS_ON+=(Entware)
+        MANAGER_QPKG_DEPENDED_UPON+=(false)
         MANAGER_QPKG_IPKGS_ADD+=('mediainfo python3-pyopenssl')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
@@ -430,6 +442,7 @@ Session.Init()
         MANAGER_QPKG_DESC+=('automated Comic Book (cbr/cbz) downloader program for use with NZB and torrents written in Python')
         MANAGER_QPKG_ABBRVS+=('my omy myl mylar mylar3')
         MANAGER_QPKG_DEPENDS_ON+=(Entware)
+        MANAGER_QPKG_DEPENDED_UPON+=(false)
         MANAGER_QPKG_IPKGS_ADD+=('python3-mako python3-pillow python3-pytz python3-requests python3-six python3-urllib3')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
@@ -444,6 +457,7 @@ Session.Init()
         MANAGER_QPKG_DESC+=('lite-and-fast NZB download manager with a simple web UI')
         MANAGER_QPKG_ABBRVS+=('ng nzb nzbg nget nzbget')
         MANAGER_QPKG_DEPENDS_ON+=(Entware)
+        MANAGER_QPKG_DEPENDED_UPON+=(false)
         MANAGER_QPKG_IPKGS_ADD+=(nzbget)
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
@@ -458,6 +472,7 @@ Session.Init()
         MANAGER_QPKG_DESC+=('post-processing for NZBs to many services')
         MANAGER_QPKG_ABBRVS+=('nzb2 nzb2m nzbto nzbtom nzbtomedia')
         MANAGER_QPKG_DEPENDS_ON+=(Entware)
+        MANAGER_QPKG_DEPENDED_UPON+=(false)
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
@@ -472,6 +487,7 @@ Session.Init()
         MANAGER_QPKG_DESC+=('create and use PAR2 files to detect damage in data files and repair them if necessary')
         MANAGER_QPKG_ABBRVS+=('par par2')
         MANAGER_QPKG_DEPENDS_ON+=('')
+        MANAGER_QPKG_DEPENDED_UPON+=(true)
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
         MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
@@ -486,6 +502,7 @@ Session.Init()
         MANAGER_QPKG_DESC+=('')
         MANAGER_QPKG_ABBRVS+=('par par2')
         MANAGER_QPKG_DEPENDS_ON+=('')
+        MANAGER_QPKG_DEPENDED_UPON+=(true)
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
         MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
@@ -500,6 +517,7 @@ Session.Init()
         MANAGER_QPKG_DESC+=('')
         MANAGER_QPKG_ABBRVS+=('par par2')
         MANAGER_QPKG_DEPENDS_ON+=('')
+        MANAGER_QPKG_DEPENDED_UPON+=(true)
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
         MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
@@ -514,6 +532,7 @@ Session.Init()
         MANAGER_QPKG_DESC+=('')
         MANAGER_QPKG_ABBRVS+=('par par2')
         MANAGER_QPKG_DEPENDS_ON+=('')
+        MANAGER_QPKG_DEPENDED_UPON+=(true)
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
         MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
@@ -528,6 +547,7 @@ Session.Init()
         MANAGER_QPKG_DESC+=('')
         MANAGER_QPKG_ABBRVS+=('par par2')
         MANAGER_QPKG_DEPENDS_ON+=('')
+        MANAGER_QPKG_DEPENDED_UPON+=(true)
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
         MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
@@ -542,6 +562,7 @@ Session.Init()
         MANAGER_QPKG_DESC+=('')
         MANAGER_QPKG_ABBRVS+=('par par2')
         MANAGER_QPKG_DEPENDS_ON+=('')
+        MANAGER_QPKG_DEPENDED_UPON+=(true)
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
         MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
@@ -556,6 +577,7 @@ Session.Init()
         MANAGER_QPKG_DESC+=('run userscripts and commands after all QPKGs have completed startup reintegration into QTS')
         MANAGER_QPKG_ABBRVS+=('rl run runlast')
         MANAGER_QPKG_DEPENDS_ON+=('')
+        MANAGER_QPKG_DEPENDED_UPON+=(false)
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
@@ -570,6 +592,7 @@ Session.Init()
         MANAGER_QPKG_DESC+=('full-featured NZB download manager with a nice web UI')
         MANAGER_QPKG_ABBRVS+=('sb sb3 sab sab3 sabnzbd3 sabnzbd')
         MANAGER_QPKG_DEPENDS_ON+=('Entware Par2')
+        MANAGER_QPKG_DEPENDED_UPON+=(false)
         MANAGER_QPKG_IPKGS_ADD+=('unrar p7zip coreutils-nice ionice ffprobe')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
@@ -584,6 +607,7 @@ Session.Init()
         MANAGER_QPKG_DESC+=("the 'sha3sum' and keccak utilities from @maandree (for x86 & x86-64 NAS only)")
         MANAGER_QPKG_ABBRVS+=('sha sha3 sha3sum')
         MANAGER_QPKG_DEPENDS_ON+=('')
+        MANAGER_QPKG_DEPENDED_UPON+=(false)
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
@@ -598,6 +622,7 @@ Session.Init()
         MANAGER_QPKG_DESC+=('')
         MANAGER_QPKG_ABBRVS+=('sha sha3 sha3sum')
         MANAGER_QPKG_DEPENDS_ON+=('')
+        MANAGER_QPKG_DEPENDED_UPON+=(false)
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
@@ -612,6 +637,7 @@ Session.Init()
         MANAGER_QPKG_DESC+=("provides the '$PROJECT_NAME' command: the mini-package-manager")
         MANAGER_QPKG_ABBRVS+=($PROJECT_NAME)
         MANAGER_QPKG_DEPENDS_ON+=('')
+        MANAGER_QPKG_DEPENDED_UPON+=(false)
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
@@ -626,6 +652,7 @@ Session.Init()
         MANAGER_QPKG_DESC+=('another SickBeard fork: manage and search for TV shows and movies')
         MANAGER_QPKG_ABBRVS+=('sc sick sickc chill sickchill')
         MANAGER_QPKG_DEPENDS_ON+=(Entware)
+        MANAGER_QPKG_DEPENDED_UPON+=(false)
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
@@ -640,6 +667,7 @@ Session.Init()
         MANAGER_QPKG_DESC+=('another SickBeard fork: manage and search for TV shows')
         MANAGER_QPKG_ABBRVS+=('sg os osg sickg gear ogear osickg sickgear osickgear')
         MANAGER_QPKG_DEPENDS_ON+=(Entware)
+        MANAGER_QPKG_DEPENDED_UPON+=(false)
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
@@ -654,6 +682,7 @@ Session.Init()
         MANAGER_QPKG_DESC+=('ensure other installed QPKGs start in correct sequence during QTS bootup')
         MANAGER_QPKG_ABBRVS+=('smq smqs sort sortmy sortmine sortpackages sortmypackages sortmyqpkgs')
         MANAGER_QPKG_DEPENDS_ON+=('')
+        MANAGER_QPKG_DEPENDED_UPON+=(false)
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
@@ -668,6 +697,7 @@ Session.Init()
         MANAGER_QPKG_DESC+=('lite bitorrent download manager with a simple web UI')
         MANAGER_QPKG_ABBRVS+=('ot tm tr trans otrans tmission transmission otransmission')
         MANAGER_QPKG_DEPENDS_ON+=(Entware)
+        MANAGER_QPKG_DEPENDED_UPON+=(false)
         MANAGER_QPKG_IPKGS_ADD+=('transmission-web jq')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
@@ -683,6 +713,7 @@ Session.Init()
         readonly MANAGER_QPKG_DESC
         readonly MANAGER_QPKG_ABBRVS
         readonly MANAGER_QPKG_DEPENDS_ON
+        readonly MANAGER_QPKG_DEPENDED_UPON
         readonly MANAGER_QPKG_IPKGS_ADD
         readonly MANAGER_QPKG_IPKGS_REMOVE
         readonly MANAGER_QPKG_SUPPORTS_BACKUP
@@ -734,7 +765,6 @@ Session.Validate()
     local prospect=''
     local package=''
     local something_to_do=false
-    local found=false
     local -i max_width=70
     local -i trimmed_width=$((max_width-3))
     local version=''
@@ -863,168 +893,7 @@ Session.Validate()
 
     QPKGs.IsSupportBackup.Build
     QPKGs.IsSupportUpdateOnRestart.Build
-
-    for operation in "${PACKAGE_OPERATIONS[@]}"; do
-        # process scope-based user-options
-        for scope in "${PACKAGE_SCOPES[@]}"; do
-            if Opts.Apps.Op${operation}.Sc${scope}.IsSet; then
-                # use sensible scope exceptions (for convenience) rather than follow requested scope literally
-                case $operation in
-                    Install)
-                        case $scope in
-                            All)
-                                found=true
-                                QPKGs.OpTo${operation}.Add "$(QPKGs.IsNtInstalled.Array)"
-                                ;;
-                            Dependent)
-                                found=true
-                                for prospect in $(QPKGs.IsNtInstalled.Array); do
-                                    QPKGs.ScDependent.Exist "$prospect" && QPKGs.OpTo${operation}.Add "$prospect"
-                                done
-                                ;;
-                            Standalone)
-                                found=true
-                                for prospect in $(QPKGs.IsNtInstalled.Array); do
-                                    QPKGs.ScStandalone.Exist "$prospect" && QPKGs.OpTo${operation}.Add "$prospect"
-                                done
-                        esac
-                        ;;
-                    Restart)
-                        case $scope in
-                            All)
-                                found=true
-                                QPKGs.OpTo${operation}.Add "$(QPKGs.IsStarted.Array)"
-                                ;;
-                            Dependent)
-                                found=true
-                                for prospect in $(QPKGs.IsStarted.Array); do
-                                    QPKGs.ScDependent.Exist "$prospect" && QPKGs.OpTo${operation}.Add "$prospect"
-                                done
-                                ;;
-                            Standalone)
-                                found=true
-                                for prospect in $(QPKGs.IsStarted.Array); do
-                                    QPKGs.ScStandalone.Exist "$prospect" && QPKGs.OpTo${operation}.Add "$prospect"
-                                done
-                        esac
-                        ;;
-                    Start)
-                        case $scope in
-                            All)
-                                found=true
-                                QPKGs.OpTo${operation}.Add "$(QPKGs.IsStopped.Array)"
-                                ;;
-                            Dependent)
-                                found=true
-                                for prospect in $(QPKGs.IsStopped.Array); do
-                                    QPKGs.ScDependent.Exist "$prospect" && QPKGs.OpTo${operation}.Add "$prospect"
-                                done
-                                ;;
-                            Standalone)
-                                found=true
-                                for prospect in $(QPKGs.IsStopped.Array); do
-                                    QPKGs.ScStandalone.Exist "$prospect" && QPKGs.OpTo${operation}.Add "$prospect"
-                                done
-                        esac
-                        ;;
-                    Stop)
-                        case $scope in
-                            All)
-                                found=true
-                                QPKGs.OpTo${operation}.Add "$(QPKGs.IsStarted.Array)"
-                                ;;
-                            Dependent)
-                                found=true
-                                for prospect in $(QPKGs.IsStarted.Array); do
-                                    QPKGs.ScDependent.Exist "$prospect" && QPKGs.OpTo${operation}.Add "$prospect"
-                                done
-                                ;;
-                            Standalone)
-                                found=true
-                                for prospect in $(QPKGs.IsStarted.Array); do
-                                    QPKGs.ScStandalone.Exist "$prospect" && QPKGs.OpTo${operation}.Add "$prospect"
-                                done
-                        esac
-                        ;;
-                    Uninstall)
-                        case $scope in
-                            All)
-                                found=true
-                                QPKGs.OpTo${operation}.Add "$(QPKGs.IsInstalled.Array)"
-                                ;;
-                            Dependent)
-                                found=true
-                                for prospect in $(QPKGs.IsInstalled.Array); do
-                                    QPKGs.ScDependent.Exist "$prospect" && QPKGs.OpTo${operation}.Add "$prospect"
-                                done
-                                ;;
-                            Standalone)
-                                found=true
-                                for prospect in $(QPKGs.IsInstalled.Array); do
-                                    QPKGs.ScStandalone.Exist "$prospect" && QPKGs.OpTo${operation}.Add "$prospect"
-                                done
-                        esac
-                        ;;
-                    Upgrade)
-                        case $scope in
-                            All)
-                                found=true
-                                QPKGs.OpTo${operation}.Add "$(QPKGs.ScUpgradable.Array)"
-                                QPKGs.OpToRestart.Add "$(QPKGs.ScSupportUpdateOnRestart.Array)"
-                                QPKGs.OpToRestart.Remove "$(QPKGs.IsNtInstalled.Array) $(QPKGs.OpToUpgrade.Array) $(QPKGs.ScStandalone.Array)"
-                                ;;
-                            Dependent)
-                                found=true
-                                for prospect in $(QPKGs.IsInstalled.Array); do
-                                    QPKGs.ScDependent.Exist "$prospect" && QPKGs.OpTo${operation}.Add "$prospect"
-                                done
-                                ;;
-                            Standalone)
-                                found=true
-                                for prospect in $(QPKGs.IsInstalled.Array); do
-                                    QPKGs.ScStandalone.Exist "$prospect" && QPKGs.OpTo${operation}.Add "$prospect"
-                                done
-                        esac
-                esac
-
-                [[ $found != true ]] && QPKGs.OpTo${operation}.Add "$(QPKGs.Sc${scope}.Array)" || found=false
-            elif Opts.Apps.Op${operation}.ScNt${scope}.IsSet; then
-                # use sensible scope exceptions (for convenience) rather than follow requested scope literally
-                :
-
-                [[ $found != true ]] && QPKGs.OpTo${operation}.Add "$(QPKGs.ScNt${scope}.Array)" || found=false
-            fi
-        done
-
-        # process state-based user-options
-        for state in "${PACKAGE_STATES[@]}"; do
-            if Opts.Apps.Op${operation}.Is${state}.IsSet; then
-                # use sensible state exceptions (for convenience) rather than follow requested state literally
-                case $operation in
-                    Uninstall)
-                        case $state in
-                            Installed)
-                                found=true
-                                QPKGs.OpTo${operation}.Add "$(QPKGs.IsInstalled.Array)"
-                        esac
-                esac
-
-                [[ $found != true ]] && QPKGs.OpTo${operation}.Add "$(QPKGs.Is${state}.Array)" || found=false
-            elif Opts.Apps.Op${operation}.IsNt${state}.IsSet; then
-                # use sensible state exceptions (for convenience) rather than follow requested state literally
-                case $operation in
-                    Install)
-                        case $state in
-                            Installed)
-                                found=true
-                                QPKGs.OpTo${operation}.Add "$(QPKGs.IsNtInstalled.Array)"
-                        esac
-                esac
-
-                [[ $found != true ]] && QPKGs.OpTo${operation}.Add "$(QPKGs.IsNt${state}.Array)" || found=false
-            fi
-        done
-    done
+    ApplySensibleExceptions
 
     # meta-operation pre-processing
     if QPKGs.OpToRebuild.IsAny; then
@@ -1278,7 +1147,6 @@ Tier.Processor()
         *)
             DebugAsError "unknown \$PACKAGE_TYPE: '$PACKAGE_TYPE'"
             DebugFuncExit 1; return
-            ;;
     esac
 
     local -r ACTION_INTRANSITIVE=${message_prefix}${6:?empty}
@@ -1326,7 +1194,6 @@ Tier.Processor()
                         ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") (see log for more details)"
                         ((fail_count++))
                         continue
-                        ;;
                 esac
             done
             ;;
@@ -2045,10 +1912,185 @@ ArgumentSuggestions()
                     Display
                     DisplayAsProjectSyntaxExample 'to upgrade all packages, use' 'upgrade all'
                     Opts.Help.Basic.Clear
-                    ;;
             esac
         done
     fi
+
+    DebugFuncExit
+
+    }
+
+ApplySensibleExceptions()
+    {
+
+    DebugFuncEntry
+    local operation=''
+    local scope=''
+    local state=''
+    local prospect=''
+    local found=false
+
+    for operation in "${PACKAGE_OPERATIONS[@]}"; do
+        # process scope-based user-options
+        for scope in "${PACKAGE_SCOPES[@]}"; do
+            if Opts.Apps.Op${operation}.Sc${scope}.IsSet; then
+                # use sensible scope exceptions (for convenience) rather than follow requested scope literally
+                case $operation in
+                    Install)
+                        case $scope in
+                            All)
+                                found=true
+                                QPKGs.OpTo${operation}.Add "$(QPKGs.IsNtInstalled.Array)"
+                                ;;
+                            Dependent)
+                                found=true
+                                for prospect in $(QPKGs.IsNtInstalled.Array); do
+                                    QPKGs.ScDependent.Exist "$prospect" && QPKGs.OpTo${operation}.Add "$prospect"
+                                done
+                                ;;
+                            Standalone)
+                                found=true
+                                for prospect in $(QPKGs.IsNtInstalled.Array); do
+                                    QPKGs.ScStandalone.Exist "$prospect" && QPKGs.OpTo${operation}.Add "$prospect"
+                                done
+                        esac
+                        ;;
+                    Restart)
+                        case $scope in
+                            All)
+                                found=true
+                                QPKGs.OpTo${operation}.Add "$(QPKGs.IsStarted.Array)"
+                                ;;
+                            Dependent)
+                                found=true
+                                for prospect in $(QPKGs.IsStarted.Array); do
+                                    QPKGs.ScDependent.Exist "$prospect" && QPKGs.OpTo${operation}.Add "$prospect"
+                                done
+                                ;;
+                            Standalone)
+                                found=true
+                                for prospect in $(QPKGs.IsStarted.Array); do
+                                    QPKGs.ScStandalone.Exist "$prospect" && QPKGs.OpTo${operation}.Add "$prospect"
+                                done
+                        esac
+                        ;;
+                    Start)
+                        case $scope in
+                            All)
+                                found=true
+                                QPKGs.OpTo${operation}.Add "$(QPKGs.IsStopped.Array)"
+                                ;;
+                            Dependent)
+                                found=true
+                                for prospect in $(QPKGs.IsStopped.Array); do
+                                    QPKGs.ScDependent.Exist "$prospect" && QPKGs.OpTo${operation}.Add "$prospect"
+                                done
+                                ;;
+                            Standalone)
+                                found=true
+                                for prospect in $(QPKGs.IsStopped.Array); do
+                                    QPKGs.ScStandalone.Exist "$prospect" && QPKGs.OpTo${operation}.Add "$prospect"
+                                done
+                        esac
+                        ;;
+                    Stop)
+                        case $scope in
+                            All)
+                                found=true
+                                QPKGs.OpTo${operation}.Add "$(QPKGs.IsStarted.Array)"
+                                ;;
+                            Dependent)
+                                found=true
+                                for prospect in $(QPKGs.IsStarted.Array); do
+                                    QPKGs.ScDependent.Exist "$prospect" && QPKGs.OpTo${operation}.Add "$prospect"
+                                done
+                                ;;
+                            Standalone)
+                                found=true
+                                for prospect in $(QPKGs.IsStarted.Array); do
+                                    QPKGs.ScStandalone.Exist "$prospect" && QPKGs.OpTo${operation}.Add "$prospect"
+                                done
+                        esac
+                        ;;
+                    Uninstall)
+                        case $scope in
+                            All)
+                                found=true
+                                QPKGs.OpTo${operation}.Add "$(QPKGs.IsInstalled.Array)"
+                                ;;
+                            Dependent)
+                                found=true
+                                for prospect in $(QPKGs.IsInstalled.Array); do
+                                    QPKGs.ScDependent.Exist "$prospect" && QPKGs.OpTo${operation}.Add "$prospect"
+                                done
+                                ;;
+                            Standalone)
+                                found=true
+                                for prospect in $(QPKGs.IsInstalled.Array); do
+                                    QPKGs.ScStandalone.Exist "$prospect" && QPKGs.OpTo${operation}.Add "$prospect"
+                                done
+                        esac
+                        ;;
+                    Upgrade)
+                        case $scope in
+                            All)
+                                found=true
+                                QPKGs.OpTo${operation}.Add "$(QPKGs.ScUpgradable.Array)"
+                                QPKGs.OpToRestart.Add "$(QPKGs.ScSupportUpdateOnRestart.Array)"
+                                QPKGs.OpToRestart.Remove "$(QPKGs.IsNtInstalled.Array) $(QPKGs.OpToUpgrade.Array) $(QPKGs.ScStandalone.Array)"
+                                ;;
+                            Dependent)
+                                found=true
+                                for prospect in $(QPKGs.IsInstalled.Array); do
+                                    QPKGs.ScDependent.Exist "$prospect" && QPKGs.OpTo${operation}.Add "$prospect"
+                                done
+                                ;;
+                            Standalone)
+                                found=true
+                                for prospect in $(QPKGs.IsInstalled.Array); do
+                                    QPKGs.ScStandalone.Exist "$prospect" && QPKGs.OpTo${operation}.Add "$prospect"
+                                done
+                        esac
+                esac
+
+                [[ $found != true ]] && QPKGs.OpTo${operation}.Add "$(QPKGs.Sc${scope}.Array)" || found=false
+            elif Opts.Apps.Op${operation}.ScNt${scope}.IsSet; then
+                # use sensible scope exceptions (for convenience) rather than follow requested scope literally
+                :
+
+                [[ $found != true ]] && QPKGs.OpTo${operation}.Add "$(QPKGs.ScNt${scope}.Array)" || found=false
+            fi
+        done
+
+        # process state-based user-options
+        for state in "${PACKAGE_STATES[@]}"; do
+            if Opts.Apps.Op${operation}.Is${state}.IsSet; then
+                # use sensible state exceptions (for convenience) rather than follow requested state literally
+                case $operation in
+                    Uninstall)
+                        case $state in
+                            Installed)
+                                found=true
+                                QPKGs.OpTo${operation}.Add "$(QPKGs.IsInstalled.Array)"
+                        esac
+                esac
+
+                [[ $found != true ]] && QPKGs.OpTo${operation}.Add "$(QPKGs.Is${state}.Array)" || found=false
+            elif Opts.Apps.Op${operation}.IsNt${state}.IsSet; then
+                # use sensible state exceptions (for convenience) rather than follow requested state literally
+                case $operation in
+                    Install)
+                        case $state in
+                            Installed)
+                                found=true
+                                QPKGs.OpTo${operation}.Add "$(QPKGs.IsNtInstalled.Array)"
+                        esac
+                esac
+
+                [[ $found != true ]] && QPKGs.OpTo${operation}.Add "$(QPKGs.IsNt${state}.Array)" || found=false
+            fi
+        done
+    done
 
     DebugFuncExit
 
@@ -2112,7 +2154,6 @@ Quiz()
             ;;
         *)
             return 1
-            ;;
     esac
 
     }
@@ -4067,7 +4108,6 @@ CalcQPKGArch()
                     ;;
                 *)
                     NAS_QPKG_ARCH=none
-                    ;;
             esac
             ;;
         aarch64)
@@ -4075,7 +4115,6 @@ CalcQPKGArch()
             ;;
         *)
             NAS_QPKG_ARCH=none
-            ;;
     esac
 
     readonly NAS_QPKG_ARCH
@@ -4987,7 +5026,6 @@ QPKG.StoreServiceStatus()
             ;;
         *)
             DebugAsWarn "$(FormatAsPackageName "$PACKAGE_NAME") service status is incorrect"
-            ;;
     esac
 
     return 0
@@ -6436,9 +6474,10 @@ CompileObjects()
 
     # $1 = 'hash' (optional) return the internal checksum
 
-    local -r COMPILED_OBJECTS_HASH=c1c5696698b7191a87c746024d30c3fb
+    local -r COMPILED_OBJECTS_HASH=5b0e3e68d29d96fae3373e0f88314aaa
     local element=''
     local operation=''
+    local scope=''
     local state=''
 
     if [[ ${1:-} = hash ]]; then
@@ -6495,20 +6534,31 @@ CompileObjects()
 
         for scope in "${PACKAGE_SCOPES[@]}"; do
             for operation in "${PACKAGE_OPERATIONS[@]}"; do
-                AddFlagObj Opts.Apps.Op$operation.Sc${scope}
-                AddFlagObj Opts.Apps.Op$operation.ScNt${scope}
+                AddFlagObj Opts.Apps.Op${operation}.Sc${scope}
+                AddFlagObj Opts.Apps.Op${operation}.ScNt${scope}
             done
         done
 
         for state in "${PACKAGE_STATES[@]}"; do
             for operation in "${PACKAGE_OPERATIONS[@]}"; do
-                AddFlagObj Opts.Apps.Op$operation.Is${state}
-                AddFlagObj Opts.Apps.Op$operation.IsNt${state}
+                AddFlagObj Opts.Apps.Op${operation}.Is${state}
+                AddFlagObj Opts.Apps.Op${operation}.IsNt${state}
             done
         done
 
         # lists
         AddListObj Args.Unknown
+
+        for operation in "${PACKAGE_OPERATIONS[@]}"; do
+            AddListObj QPKGs.OpTo${operation}      # to operate on
+            AddListObj QPKGs.OpOk${operation}      # operation was tried and succeeded
+            AddListObj QPKGs.OpEr${operation}      # operation was tried but failed
+            AddListObj QPKGs.OpSk${operation}      # operation was skipped
+        done
+
+        for operation in Download Install Uninstall Upgrade; do     # only a subset of package operations are supported by IPKGS for-now
+            AddListObj IPKGs.OpTo${operation}
+        done
 
         for scope in "${PACKAGE_SCOPES[@]}"; do
             AddListObj QPKGs.Sc${scope}
@@ -6518,17 +6568,6 @@ CompileObjects()
         for state in "${PACKAGE_STATES[@]}"; do
             AddListObj QPKGs.Is${state}
             AddListObj QPKGs.IsNt${state}
-        done
-
-        for operation in "${PACKAGE_OPERATIONS[@]}"; do
-            AddListObj QPKGs.OpTo${operation}      # to operate on
-            AddListObj QPKGs.OpOk${operation}      # operation was tried and succeeded
-            AddListObj QPKGs.OpEr${operation}      # operation was tried but failed
-            AddListObj QPKGs.OpSk${operation}      # operation was skipped
-        done
-
-        for operation in Download Install Uninstall Upgrade; do     # only a subset of package operations are supported for now
-            AddListObj IPKGs.OpTo${operation}
         done
 
         /bin/tar --create --gzip --file="$COMPILED_OBJECTS_ARCHIVE_PATHFILE" --directory="$($DIRNAME_CMD "$COMPILED_OBJECTS_PATHFILE")" "$($BASENAME_CMD "$COMPILED_OBJECTS_PATHFILE")"
