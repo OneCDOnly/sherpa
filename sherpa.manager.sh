@@ -724,8 +724,6 @@ Session.Init()
     readonly MANAGER_BASE_QPKG_CONFLICTS='Optware Optware-NG TarMT Python QPython2 Python3 QPython3'
     readonly MANAGER_BASE_IPKGS_ADD='less sed'
     readonly MANAGER_SHARED_IPKGS_ADD='ca-certificates findutils gcc git git-http grep nano python3-dev python3-pip python3-setuptools'
-
-    # the order these are specified is the difference between a successful and a failed installation!
     readonly MANAGER_SHARED_PIPS_ADD='pip wheel pyopenssl cryptography apprise apscheduler beautifulsoup4 cfscrape cheetah3 cherrypy configobj feedparser pygithub python-levenshtein python-magic random_user_agent sabyenc3 simplejson slugify'
 
     QPKGs.StandaloneDependent.Build
@@ -2574,7 +2572,7 @@ PIPs.DoInstall()
 
     ModPathToEntware
 
-    [[ -n ${MANAGER_SHARED_PIPS_ADD// /} ]] && exec_cmd="$pip3_cmd install $MANAGER_SHARED_PIPS_ADD --upgrade --cache-dir $PIP_CACHE_PATH"
+    [[ -n ${MANAGER_SHARED_PIPS_ADD// /} ]] && exec_cmd="$pip3_cmd install --upgrade $MANAGER_SHARED_PIPS_ADD --cache-dir $PIP_CACHE_PATH"
     ((total_count++))
 
     ShowAsOperationProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
@@ -2594,37 +2592,16 @@ PIPs.DoInstall()
         ((fail_count++))
     fi
 
-    if QPKGs.OpToInstall.Exist SABnzbd || QPKGs.OpToReinstall.Exist SABnzbd || (Opts.Deps.Check.IsSet && QPKGs.IsInstalled.Exist SABnzbd); then
+    if Opts.Deps.Check.IsSet || IPKGs.OpToInstall.Exist python3-cryptography || QPKGs.OpToInstall.Exist SABnzbd || QPKGs.OpToReinstall.Exist SABnzbd || QPKGs.IsInstalled.Exist SABnzbd; then
+        # KLUDGE: must ensure 'cryptography' PIP module is reinstalled if the 'python3-cryptography' IPKG is installed.
+        # The 'deluge-ui-web' IPKG pulls-in 'python3-cryptography' IPKG as a dependency, but this then causes a launch-failure for 'deluge-web' due to there already being a later 'cryptography' installed via 'pip'. Prefer to use the 'pip' version, so need to reinstall it so it is seen first.
         # KLUDGE: ensure 'feedparser' is upgraded. This was version-held at 5.2.1 for Python 3.8.5 but from Python 3.9.0 onward there's no-need for version-hold anymore.
         ((total_count+=1))
         ShowAsOperationProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
 
-        exec_cmd="$pip3_cmd install --upgrade feedparser --cache-dir $PIP_CACHE_PATH"
-        desc="'Python3 feedparser' module"
-        log_pathfile=$LOGS_PATH/py3-modules.feedparser.$INSTALL_LOG_FILE
-        DebugAsProc "downloading & installing $desc"
-        RunAndLog "$exec_cmd" "$log_pathfile" log:failure-only
-        result_code=$?
-
-        if [[ $result_code -eq 0 ]]; then
-            DebugAsDone "downloaded & installed $desc"
-            QPKGs.OpToRestart.Add SABnzbd
-            ((pass_count++))
-        else
-            ShowAsFail "download & install $desc failed $(FormatAsResult "$result_code")"
-            ((fail_count++))
-        fi
-    fi
-
-    if IPKGs.OpToInstall.Exist python3-cryptography || Opts.Deps.Check.IsSet; then
-        # KLUDGE: must ensure 'cryptography' PIP module is reinstalled if the 'python3-cryptography' IPKG is installed.
-        # The 'deluge-ui-web' IPKG pulls-in 'python3-cryptography' IPKG as a dependency, but this then causes a launch-failure for 'deluge-web' due to there already being a later 'cryptography' installed via 'pip'. Prefer to use the 'pip' version, so need to reinstall it so it is seen first.
-        ((total_count+=1))
-        ShowAsOperationProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
-
-        exec_cmd="$pip3_cmd install --upgrade cryptography --force-reinstall --cache-dir $PIP_CACHE_PATH"
-        desc="'Python3 cryptography' module"
-        log_pathfile=$LOGS_PATH/py3-modules.cryptography.$REINSTALL_LOG_FILE
+        exec_cmd="$pip3_cmd install --upgrade --force-reinstall cryptography feedparser --cache-dir $PIP_CACHE_PATH"
+        desc="'Python3 cryptography & feedparser' modules"
+        log_pathfile=$LOGS_PATH/py3-modules.cryptography-feedparser.$REINSTALL_LOG_FILE
         DebugAsProc "reinstalling $desc"
         RunAndLog "$exec_cmd" "$log_pathfile" log:failure-only
         result_code=$?
