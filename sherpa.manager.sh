@@ -764,7 +764,7 @@ Session.Validate()
     local -i trimmed_width=$((max_width-3))
     local version=''
 
-    ShowAsProc 'validating parameters' >&2
+    ShowAsProc 'environment' >&2
 
     DebugInfoMinorSeparator
     DebugHardwareOK model "$(get_display_name)"
@@ -848,7 +848,9 @@ Session.Validate()
         DebugFuncExit 1; return
     fi
 
-    QPKGs.States.Build &>/dev/null
+    QPKGs.States.Build #&>/dev/null
+
+    ShowAsProc 'arguments' >&2
 
     for operation in "${PACKAGE_OPERATIONS[@]}"; do
         if QPKGs.OpTo${operation}.IsAny; then
@@ -1142,7 +1144,7 @@ Tier.Processor()
     local -r ACTION_PRESENT=${message_prefix}${7:?empty}
     local -r ACTION_PAST=${message_prefix}${8:?empty}
 
-    ShowAsProc "checking for$([[ $TIER = All ]] && echo '' || echo " $TIER" | tr 'A-Z' 'a-z') packages to $ACTION_INTRANSITIVE" >&2
+    ShowAsProc "$([[ $TIER = All ]] && echo '' || echo "$TIER " | tr 'A-Z' 'a-z')packages to $ACTION_INTRANSITIVE" >&2
 
     case $PACKAGE_TYPE in
         QPKG)
@@ -3654,7 +3656,7 @@ QPKGs.States.Build()
     local -i index=0
     local package=''
     local previous=''
-    ShowAsProc 'building lists' >&2
+    ShowAsProc 'stateful lists' >&2
 
     for index in "${!MANAGER_QPKG_NAME[@]}"; do
         package="${MANAGER_QPKG_NAME[$index]}"
@@ -6465,7 +6467,7 @@ CompileObjects()
     fi
 
     if [[ ! -e $COMPILED_OBJECTS_PATHFILE ]]; then
-        ShowAsProc 'compiling objects' >&2
+        ShowAsProc 'compiling' >&2
 
         # session flags
         for element in Display.Clean LineSpace ShowBackupLoc SuggestIssue Summary; do
@@ -6546,7 +6548,7 @@ CompileObjects()
         /bin/tar --create --gzip --file="$COMPILED_OBJECTS_ARCHIVE_PATHFILE" --directory="$($DIRNAME_CMD "$COMPILED_OBJECTS_PATHFILE")" "$($BASENAME_CMD "$COMPILED_OBJECTS_PATHFILE")"
     fi
 
-    ShowAsProc 'loading objects' >&2
+    ShowAsProc 'objects' >&2
     . "$COMPILED_OBJECTS_PATHFILE"
 #   SmartCR >&2
 
