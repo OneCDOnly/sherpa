@@ -166,8 +166,6 @@ Session.Init()
     readonly PACKAGE_OPERATIONS
     readonly PACKAGE_TIERS
 
-    ShowAsProc init >&2
-
     if ! MakePath "$WORK_PATH" work; then
         DebugFuncExit 1; return
     fi
@@ -735,9 +733,8 @@ Session.Init()
         DisableDebugToArchiveAndFile
     else
         ParseArguments
+        SmartCR >&2
     fi
-
-    SmartCR >&2
 
     if Session.Display.Clean.IsNt && Session.Debug.ToScreen.IsNt; then
         Display "$(FormatAsScriptTitle) $MANAGER_SCRIPT_VERSION • a mini-package-manager for QNAP NAS"
@@ -1202,14 +1199,13 @@ Tier.Processor()
 Session.Results()
     {
 
-    Session.Display.Clean.IsNt && QPKGs.NewVersions.Show
-
     if Args.Unknown.IsNone; then
         if Opts.Help.Actions.IsSet; then
             Help.Actions.Show
         elif Opts.Help.ActionsAll.IsSet; then
             Help.ActionsAll.Show
         elif Opts.Help.Packages.IsSet; then
+            Session.Display.Clean.IsNt && QPKGs.NewVersions.Show
             Help.Packages.Show
         elif Opts.Help.Options.IsSet; then
             Help.Options.Show
@@ -1236,24 +1232,34 @@ Session.Results()
         elif Opts.Apps.List.ScAll.IsSet; then
             QPKGs.ScAll.Show
         elif Opts.Apps.List.ScInstallable.IsSet; then
+            Session.Display.Clean.IsNt && QPKGs.NewVersions.Show
             QPKGs.ScInstallable.Show
         elif Opts.Apps.List.IsNtInstalled.IsSet; then
+            Session.Display.Clean.IsNt && QPKGs.NewVersions.Show
             QPKGs.IsNtInstalled.Show
         elif Opts.Apps.List.IsStarted.IsSet; then
+            Session.Display.Clean.IsNt && QPKGs.NewVersions.Show
             QPKGs.IsStarted.Show
         elif Opts.Apps.List.IsStopped.IsSet; then
+            Session.Display.Clean.IsNt && QPKGs.NewVersions.Show
             QPKGs.IsStopped.Show
         elif Opts.Apps.List.ScUpgradable.IsSet; then
+            Session.Display.Clean.IsNt && QPKGs.NewVersions.Show
             QPKGs.ScUpgradable.Show
         elif Opts.Apps.List.ScStandalone.IsSet; then
+            Session.Display.Clean.IsNt && QPKGs.NewVersions.Show
             QPKGs.ScStandalone.Show
         elif Opts.Apps.List.ScDependent.IsSet; then
+            Session.Display.Clean.IsNt && QPKGs.NewVersions.Show
             QPKGs.ScDependent.Show
         elif Opts.Help.Backups.IsSet; then
+            Session.Display.Clean.IsNt && QPKGs.NewVersions.Show
             QPKGs.Backups.Show
         elif Opts.Help.Status.IsSet; then
+            Session.Display.Clean.IsNt && QPKGs.NewVersions.Show
             QPKGs.Statuses.Show
         elif Opts.Apps.List.IsInstalled.IsSet; then
+            Session.Display.Clean.IsNt && QPKGs.NewVersions.Show
             QPKGs.IsInstalled.Show
         fi
     fi
@@ -1287,7 +1293,6 @@ ParseArguments()
     #   script [operation] [scope] [options]
 
     DebugFuncEntry
-
     DebugVar USER_ARGS_RAW
     local user_args_fixed=$(tr 'A-Z' 'a-z' <<< "${USER_ARGS_RAW//,/ }")
     local -a user_args=(${user_args_fixed/--/})
@@ -1312,7 +1317,6 @@ ParseArguments()
                 scope_identified=false
                 Session.Display.Clean.Clear
                 QPKGs.SkProc.Clear
-                QPKGs.States.Build
                 ;;
             rm|remove|uninstall)
                 operation=uninstall_
@@ -1321,7 +1325,6 @@ ParseArguments()
                 scope_identified=false
                 Session.Display.Clean.Clear
                 QPKGs.SkProc.Clear
-                QPKGs.States.Build
                 ;;
             s|status|statuses)
                 operation=status_
@@ -1330,7 +1333,6 @@ ParseArguments()
                 scope_identified=false
                 Session.Display.Clean.Clear
                 QPKGs.SkProc.Set
-                QPKGs.States.Build
                 ;;
             paste)
                 operation=paste_
@@ -1502,12 +1504,10 @@ ParseArguments()
                         Opts.Help.Backups.Set
                         ;;
                     installable_)
-                        QPKGs.States.Build
                         Opts.Apps.List.ScInstallable.Set
                         Session.Display.Clean.Set
                         ;;
                     installed_)
-                        QPKGs.States.Build
                         Opts.Apps.List.IsInstalled.Set
                         Session.Display.Clean.Set
                         ;;
@@ -1520,7 +1520,6 @@ ParseArguments()
                         Session.Display.Clean.Set
                         ;;
                     not-installed_)
-                        QPKGs.States.Build
                         Opts.Apps.List.IsNtInstalled.Set
                         Session.Display.Clean.Set
                         ;;
@@ -1542,16 +1541,13 @@ ParseArguments()
                         Session.Display.Clean.Set
                         ;;
                     started_)
-                        QPKGs.States.Build
                         Opts.Apps.List.IsStarted.Set
                         Session.Display.Clean.Set
                         ;;
                     status_)
-                        QPKGs.States.Build
                         Opts.Help.Status.Set
                         ;;
                     stopped_)
-                        QPKGs.States.Build
                         Opts.Apps.List.IsStopped.Set
                         Session.Display.Clean.Set
                         ;;
@@ -1563,7 +1559,6 @@ ParseArguments()
                         Opts.Help.Tips.Set
                         ;;
                     upgradable_)
-                        QPKGs.States.Build
                         Opts.Apps.List.ScUpgradable.Set
                         Session.Display.Clean.Set
                         ;;
@@ -3098,7 +3093,7 @@ Help.Packages.Show()
 
     local tier=''
     local package=''
-
+    QPKGs.States.Build
     DisableDebugToArchiveAndFile
     Help.Basic.Show
     Display
@@ -3524,6 +3519,8 @@ QPKGs.NewVersions.Show()
     local names_formatted=''
     local msg=''
 
+    QPKGs.States.Build
+
     if [[ $(QPKGs.ScUpgradable.Count) -eq 0 ]]; then
         return 0
     else
@@ -3598,9 +3595,9 @@ QPKGs.States.List()
     DebugFuncEntry
     local state=''
     local prefix=''
-    DebugInfoMinorSeparator
 
-    QPKGs.States.Built.IsNt && QPKGs.States.Build
+    DebugInfoMinorSeparator
+    QPKGs.States.Build
 
     for state in "${PACKAGE_STATES[@]}"; do
         # speedup: only log arrays with more than zero elements
@@ -3656,6 +3653,7 @@ QPKGs.States.Build()
     local -i index=0
     local package=''
     local previous=''
+    ShowAsProc 'building lists' >&2
 
     for index in "${!MANAGER_QPKG_NAME[@]}"; do
         package="${MANAGER_QPKG_NAME[$index]}"
@@ -3719,6 +3717,7 @@ QPKGs.States.Build()
     done
 
     QPKGs.States.Built.Set
+    SmartCR >&2
     DebugFuncExit
 
     }
@@ -3771,7 +3770,7 @@ QPKGs.ScAll.Show()
     {
 
     local package=''
-
+    QPKGs.States.Build
     DisableDebugToArchiveAndFile
 
     for package in $(QPKGs.ScAll.Array); do
@@ -3790,6 +3789,7 @@ QPKGs.Backups.Show()
     local highlight_older_than='2 weeks ago'
     local format=''
 
+    QPKGs.States.Build
     DisableDebugToArchiveAndFile
     SmartCR
     DisplayLineSpaceIfNoneAlready
@@ -3831,7 +3831,7 @@ QPKGs.Statuses.Show()
     local -a package_notes=()
     local tier=''
 
-    SmartCR
+    QPKGs.States.Build
     DisplayLineSpaceIfNoneAlready
 
     for tier in Standalone Dependent; do
@@ -3876,7 +3876,7 @@ QPKGs.IsInstalled.Show()
     {
 
     local package=''
-
+    QPKGs.States.Build
     DisableDebugToArchiveAndFile
 
     for package in $(QPKGs.IsInstalled.Array); do
@@ -3891,7 +3891,7 @@ QPKGs.ScInstallable.Show()
     {
 
     local package=''
-
+    QPKGs.States.Build
     DisableDebugToArchiveAndFile
 
     for package in $(QPKGs.ScInstallable.Array); do
@@ -3906,7 +3906,7 @@ QPKGs.IsNtInstalled.Show()
     {
 
     local package=''
-
+    QPKGs.States.Build
     DisableDebugToArchiveAndFile
 
     for package in $(QPKGs.IsNtInstalled.Array); do
@@ -3921,7 +3921,7 @@ QPKGs.IsStarted.Show()
     {
 
     local package=''
-
+    QPKGs.States.Build
     DisableDebugToArchiveAndFile
 
     for package in $(QPKGs.IsStarted.Array); do
@@ -3936,7 +3936,7 @@ QPKGs.IsStopped.Show()
     {
 
     local package=''
-
+    QPKGs.States.Build
     DisableDebugToArchiveAndFile
 
     for package in $(QPKGs.IsStopped.Array); do
@@ -3951,7 +3951,7 @@ QPKGs.ScUpgradable.Show()
     {
 
     local package=''
-
+    QPKGs.States.Build
     DisableDebugToArchiveAndFile
 
     for package in $(QPKGs.ScUpgradable.Array); do
@@ -3966,7 +3966,7 @@ QPKGs.ScStandalone.Show()
     {
 
     local package=''
-
+    QPKGs.States.Build
     DisableDebugToArchiveAndFile
 
     for package in $(QPKGs.ScStandalone.Array); do
@@ -3981,7 +3981,7 @@ QPKGs.ScDependent.Show()
     {
 
     local package=''
-
+    QPKGs.States.Build
     DisableDebugToArchiveAndFile
 
     for package in $(QPKGs.ScDependent.Array); do
@@ -6545,7 +6545,9 @@ CompileObjects()
         /bin/tar --create --gzip --file="$COMPILED_OBJECTS_ARCHIVE_PATHFILE" --directory="$($DIRNAME_CMD "$COMPILED_OBJECTS_PATHFILE")" "$($BASENAME_CMD "$COMPILED_OBJECTS_PATHFILE")"
     fi
 
+    ShowAsProc 'loading objects' >&2
     . "$COMPILED_OBJECTS_PATHFILE"
+#   SmartCR >&2
 
     return 0
 
