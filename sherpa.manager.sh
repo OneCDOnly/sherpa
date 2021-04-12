@@ -848,6 +848,8 @@ Session.Validate()
         DebugFuncExit 1; return
     fi
 
+    QPKGs.States.Build &>/dev/null
+
     for operation in "${PACKAGE_OPERATIONS[@]}"; do
         if QPKGs.OpTo${operation}.IsAny; then
             something_to_do=true
@@ -4213,7 +4215,7 @@ ShowSummary()
 
     for state in "${PACKAGE_STATES[@]}"; do
         for operation in "${PACKAGE_OPERATIONS[@]}"; do
-            Opts.Apps.Op${operation}.Is${state}.IsSet && QPKGs.OpOk${operation}.IsNone && ShowAsDone "no QPKGs were $state"
+            Opts.Apps.Op${operation}.Is${state}.IsSet && QPKGs.OpOk${operation}.IsNone && ShowAsDone "no QPKGs were $(tr 'A-Z' 'a-z' <<< $state)"
         done
     done
 
