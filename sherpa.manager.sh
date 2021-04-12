@@ -1205,7 +1205,6 @@ Session.Results()
         elif Opts.Help.ActionsAll.IsSet; then
             Help.ActionsAll.Show
         elif Opts.Help.Packages.IsSet; then
-            Session.Display.Clean.IsNt && QPKGs.NewVersions.Show
             Help.Packages.Show
         elif Opts.Help.Options.IsSet; then
             Help.Options.Show
@@ -3093,7 +3092,7 @@ Help.Packages.Show()
 
     local tier=''
     local package=''
-    QPKGs.States.Build
+
     DisableDebugToArchiveAndFile
     Help.Basic.Show
     Display
