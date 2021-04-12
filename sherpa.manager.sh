@@ -733,8 +733,9 @@ Session.Init()
         DisableDebugToArchiveAndFile
     else
         ParseArguments
-        SmartCR >&2
     fi
+
+    SmartCR >&2
 
     if Session.Display.Clean.IsNt && Session.Debug.ToScreen.IsNt; then
         Display "$(FormatAsScriptTitle) $MANAGER_SCRIPT_VERSION • a mini-package-manager for QNAP NAS"
