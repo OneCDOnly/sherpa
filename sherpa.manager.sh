@@ -54,7 +54,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=210412
+    local -r SCRIPT_VERSION=210413
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -849,7 +849,7 @@ Session.Validate()
         DebugFuncExit 1; return
     fi
 
-    QPKGs.States.Build #&>/dev/null
+    QPKGs.States.Build
 
     ShowAsProc 'arguments' >&2
 
@@ -6325,50 +6325,48 @@ AddListObj()
     _placeholder_array_index_=_ob_${safe_function_name}_arin_
 
 echo $public_function_name'.Add()
-    { local ar=(${1}) it='\'\''
-    [[ ${#ar[@]} -eq 0 ]] && return
-    for it in "${ar[@]:-}"; do
-        if [[ " ${'$_placeholder_array_'[*]+"${'$_placeholder_array_'[@]}"} " != *"$it"* ]]; then
-            '$_placeholder_array_'+=("$it")
-        fi
-    done ;}
+{ local ar=(${1}) it='\'\''
+[[ ${#ar[@]} -eq 0 ]] && return
+for it in "${ar[@]:-}"; do
+[[ " ${'$_placeholder_array_'[*]+"${'$_placeholder_array_'[@]}"} " != *"$it"* ]] && '$_placeholder_array_'+=("$it")
+done ;}
 '$public_function_name'.Array()
-    { echo -n "${'$_placeholder_array_'[@]+"${'$_placeholder_array_'[@]}"}" ;}
+{ echo -n "${'$_placeholder_array_'[@]+"${'$_placeholder_array_'[@]}"}" ;}
 '$public_function_name'.Count()
-    { echo "${#'$_placeholder_array_'[@]}" ;}
+{ echo "${#'$_placeholder_array_'[@]}" ;}
 '$public_function_name'.Exist()
-    { [[ ${'$_placeholder_array_'[*]:-} == *"$1"* ]] ;}
+{ [[ ${'$_placeholder_array_'[*]:-} == *"$1"* ]] ;}
 '$public_function_name'.Init()
-    { '$_placeholder_size_'=0
-    '$_placeholder_array_'=()
-    '$_placeholder_array_index_'=1 ;}
+{ '$_placeholder_size_'=0
+'$_placeholder_array_'=()
+'$_placeholder_array_index_'=1 ;}
 '$public_function_name'.IsAny()
-    { [[ ${#'$_placeholder_array_'[@]} -gt 0 ]] ;}
+{ [[ ${#'$_placeholder_array_'[@]} -gt 0 ]] ;}
 '$public_function_name'.IsNone()
-    { [[ ${#'$_placeholder_array_'[@]} -eq 0 ]] ;}
+{ [[ ${#'$_placeholder_array_'[@]} -eq 0 ]] ;}
 '$public_function_name'.List()
-    { echo -n "${'$_placeholder_array_'[*]+"${'$_placeholder_array_'[@]}"}" ;}
+{ echo -n "${'$_placeholder_array_'[*]+"${'$_placeholder_array_'[@]}"}" ;}
 '$public_function_name'.ListCSV()
-    { echo -n "${'$_placeholder_array_'[*]+"${'$_placeholder_array_'[@]}"}" | tr '\' \'' '\',\'' ;}
+{ echo -n "${'$_placeholder_array_'[*]+"${'$_placeholder_array_'[@]}"}" | tr '\' \'' '\',\'' ;}
 '$public_function_name'.Remove()
-    { local agar=(${1}) tmar=() ag='\'\'' it='\'\'' m=false
-    for it in "${'$_placeholder_array_'[@]+"${'$_placeholder_array_'[@]}"}"; do
-        m=false
-        for ag in "${agar[@]+"${agar[@]}"}"; do
-            if [[ $ag = $it ]]; then
-                m=true; break
-            fi
-        done
-        [[ $m = false ]] && tmar+=("$it")
-    done
-    '$_placeholder_array_'=("${tmar[@]+"${tmar[@]}"}")
-    [[ -z ${'$_placeholder_array_'[*]+"${'$_placeholder_array_'[@]}"} ]] && '$_placeholder_array_'=() ;}
+{ local agar=(${1}) tmar=() ag='\'\'' it='\'\'' m=false
+for it in "${'$_placeholder_array_'[@]+"${'$_placeholder_array_'[@]}"}"; do
+m=false
+for ag in "${agar[@]+"${agar[@]}"}"; do
+if [[ $ag = $it ]]; then
+m=true; break
+fi
+done
+[[ $m = false ]] && tmar+=("$it")
+done
+'$_placeholder_array_'=("${tmar[@]+"${tmar[@]}"}")
+[[ -z ${'$_placeholder_array_'[*]+"${'$_placeholder_array_'[@]}"} ]] && '$_placeholder_array_'=() ;}
 '$public_function_name'.Size()
-    { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
-        '$_placeholder_size_'=$2
-    else
-        echo -n $'$_placeholder_size_'
-    fi ;}
+{ if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+'$_placeholder_size_'=$2
+else
+echo -n $'$_placeholder_size_'
+fi ;}
 '$public_function_name'.Init' >> "$COMPILED_OBJECTS_PATHFILE"
 
     return 0
@@ -6388,30 +6386,30 @@ AddFlagObj()
     _placeholder_log_changes_flag_=_ob_${safe_function_name}_chfl_
 
 echo $public_function_name'.Clear()
-    { [[ $'$_placeholder_flag_' != '\'true\'' ]] && return
-    '$_placeholder_flag_'=false
-    [[ $'$_placeholder_log_changes_flag_' = '\'true\'' ]] && DebugVar '$_placeholder_flag_' ;}
+{ [[ $'$_placeholder_flag_' != '\'true\'' ]] && return
+'$_placeholder_flag_'=false
+[[ $'$_placeholder_log_changes_flag_' = '\'true\'' ]] && DebugVar '$_placeholder_flag_' ;}
 '$public_function_name'.NoLogMods()
-    { [[ $'$_placeholder_log_changes_flag_' != '\'true\'' ]] && return
-    '$_placeholder_log_changes_flag_'=false ;}
+{ [[ $'$_placeholder_log_changes_flag_' != '\'true\'' ]] && return
+'$_placeholder_log_changes_flag_'=false ;}
 '$public_function_name'.Init()
-    { '$_placeholder_text_'='\'\''
-    '$_placeholder_flag_'=false
-    '$_placeholder_log_changes_flag_'=true ;}
+{ '$_placeholder_text_'='\'\''
+'$_placeholder_flag_'=false
+'$_placeholder_log_changes_flag_'=true ;}
 '$public_function_name'.IsNt()
-    { [[ $'$_placeholder_flag_' != '\'true\'' ]] ;}
+{ [[ $'$_placeholder_flag_' != '\'true\'' ]] ;}
 '$public_function_name'.IsSet()
-    { [[ $'$_placeholder_flag_' = '\'true\'' ]] ;}
+{ [[ $'$_placeholder_flag_' = '\'true\'' ]] ;}
 '$public_function_name'.Set()
-    { [[ $'$_placeholder_flag_' = '\'true\'' ]] && return
-    '$_placeholder_flag_'=true
-    [[ $'$_placeholder_log_changes_flag_' = '\'true\'' ]] && DebugVar '$_placeholder_flag_' ;}
+{ [[ $'$_placeholder_flag_' = '\'true\'' ]] && return
+'$_placeholder_flag_'=true
+[[ $'$_placeholder_log_changes_flag_' = '\'true\'' ]] && DebugVar '$_placeholder_flag_' ;}
 '$public_function_name'.Text()
-    { if [[ -n ${1:-} && $1 = "=" ]]; then
-        '$_placeholder_text_'=$2
-    else
-        echo -n "$'$_placeholder_text_'"
-    fi ;}
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+'$_placeholder_text_'=$2
+else
+echo -n "$'$_placeholder_text_'"
+fi ;}
 '$public_function_name'.Init' >> "$COMPILED_OBJECTS_PATHFILE"
 
     return 0
@@ -6451,7 +6449,7 @@ CompileObjects()
 
     # $1 = 'hash' (optional) return the internal checksum
 
-    local -r COMPILED_OBJECTS_HASH=dd5d9cb3a0685c773d9f44455642a245
+    local -r COMPILED_OBJECTS_HASH=7a3bea4b7bc7fb45999c777e5c573f1d
     local element=''
     local operation=''
     local scope=''
@@ -6551,7 +6549,6 @@ CompileObjects()
 
     ShowAsProc 'objects' >&2
     . "$COMPILED_OBJECTS_PATHFILE"
-#   SmartCR >&2
 
     return 0
 
