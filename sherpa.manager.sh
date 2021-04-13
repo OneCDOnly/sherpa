@@ -1257,7 +1257,6 @@ Session.Results()
             Session.Display.Clean.IsNt && QPKGs.NewVersions.Show
             QPKGs.ScDependent.Show
         elif Opts.Help.Backups.IsSet; then
-            Session.Display.Clean.IsNt && QPKGs.NewVersions.Show
             QPKGs.Backups.Show
         elif Opts.Help.Status.IsSet; then
             Session.Display.Clean.IsNt && QPKGs.NewVersions.Show
@@ -3815,7 +3814,6 @@ QPKGs.Backups.Show()
     local highlight_older_than='2 weeks ago'
     local format=''
 
-    QPKGs.States.Build
     DisableDebugToArchiveAndFile
     SmartCR
     DisplayLineSpaceIfNoneAlready
