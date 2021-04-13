@@ -3209,11 +3209,11 @@ Help.PackageAbbreviations.Show()
     DisableDebugToArchiveAndFile
     Help.Basic.Show
     Display
-    DisplayAsHelpTitle "$(FormatAsScriptTitle) recognises various abbreviations as $(FormatAsHelpPackages)"
+    DisplayAsHelpTitle "$(FormatAsScriptTitle) can recognise various abbreviations as $(FormatAsHelpPackages)"
     Display
 
     for tier in Standalone Dependent; do
-        DisplayAsHelpTitlePackageNamePlusSomething "$tier QPKGs" 'acceptable abreviations'
+        DisplayAsHelpTitlePackageNamePlusSomething "$tier QPKGs" 'acceptable package name abreviations'
 
         for package in $(QPKGs.Sc${tier}.Array); do
             abs=$(QPKG.Abbrvs "$package")
