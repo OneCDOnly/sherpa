@@ -54,7 +54,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=210413
+    local -r SCRIPT_VERSION=210414
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -2554,7 +2554,7 @@ PIPs.DoInstall()
     local -i result_code=0
     local -i pass_count=0
     local -i fail_count=0
-    local -i total_count=0
+    local -i total_count=3
     local -r PACKAGE_TYPE='PIP group'
     local -r ACTION_PRESENT=installing
     local -r ACTION_PAST=installed
@@ -2581,7 +2581,6 @@ PIPs.DoInstall()
     ModPathToEntware
 
     if Opts.Deps.Check.IsSet || QPKGs.OpOkInstall.Exist Entware; then
-        ((total_count++))
         ShowAsOperationProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
 
         exec_cmd="$pip3_cmd install --upgrade $MANAGER_SHARED_PIPS_ADD --cache-dir $PIP_CACHE_PATH"
@@ -2599,11 +2598,12 @@ PIPs.DoInstall()
             ShowAsFail "download & install $desc failed $(FormatAsResult "$result_code")"
             ((fail_count++))
         fi
+    else
+        ((total_count--))
     fi
 
     if (Opts.Deps.Check.IsSet && QPKGs.IsInstalled.Exist SABnzbd) || QPKGs.OpToInstall.Exist SABnzbd || QPKGs.OpToReinstall.Exist SABnzbd; then
         # KLUDGE: force recompilation of 'sabyenc3' package so it's recognised by SABnzbd: https://forums.sabnzbd.org/viewtopic.php?p=121214#p121214
-        ((total_count+=1))
         ShowAsOperationProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
 
         exec_cmd="$pip3_cmd install --force-reinstall --ignore-installed --no-binary :all: sabyenc3 --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
@@ -2622,13 +2622,14 @@ PIPs.DoInstall()
             ShowAsEror "download & install $desc failed $(FormatAsResult "$result_code")"
             ((fail_count++))
         fi
+    else
+        ((total_count--))
     fi
 
     if Opts.Deps.Check.IsSet || IPKGs.OpToInstall.Exist python3-cryptography || QPKGs.OpToInstall.Exist SABnzbd || QPKGs.OpToReinstall.Exist SABnzbd; then
         # KLUDGE: must ensure 'cryptography' PIP module is reinstalled if the 'python3-cryptography' IPKG is installed.
         # The 'deluge-ui-web' IPKG pulls-in 'python3-cryptography' IPKG as a dependency, but this then causes a launch-failure for 'deluge-web' due to there already being a later 'cryptography' installed via 'pip'. Prefer to use the 'pip' version, so need to reinstall it so it is seen first.
         # KLUDGE: ensure 'feedparser' is upgraded. This was version-held at 5.2.1 for Python 3.8.5 but from Python 3.9.0 onward there's no-need for version-hold anymore.
-        ((total_count+=1))
         ShowAsOperationProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
 
         exec_cmd="$pip3_cmd install --upgrade --force-reinstall cryptography feedparser --cache-dir $PIP_CACHE_PATH"
@@ -2646,6 +2647,8 @@ PIPs.DoInstall()
             ShowAsFail "reinstallation of $desc failed $(FormatAsResult "$result_code")"
             ((fail_count++))
         fi
+    else
+        ((total_count--))
     fi
 
     # execute with pass_count > total_count to trigger 100% message
@@ -2880,7 +2883,7 @@ IsNtSysFileExist()
 readonly HELP_DESC_INDENT=3
 readonly HELP_SYNTAX_INDENT=6
 readonly HELP_PACKAGE_NAME_WIDTH=18
-readonly HELP_PACKAGE_VERSION_WIDTH=14
+readonly HELP_PACKAGE_VERSION_WIDTH=15
 readonly HELP_FILE_NAME_WIDTH=33
 
 DisplayAsProjectSyntaxExample()
