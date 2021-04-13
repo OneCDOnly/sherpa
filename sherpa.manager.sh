@@ -2881,6 +2881,7 @@ IsNtSysFileExist()
 readonly HELP_DESC_INDENT=3
 readonly HELP_SYNTAX_INDENT=6
 readonly HELP_PACKAGE_NAME_WIDTH=18
+readonly HELP_PACKAGE_VERSION_WIDTH=11
 readonly HELP_FILE_NAME_WIDTH=33
 
 DisplayAsProjectSyntaxExample()
@@ -2935,31 +2936,52 @@ DisplayAsSyntaxExample()
 
     }
 
+DisplayAsHelpTitlePackageNamePlusSomething()
+    {
+
+    # $1 = package name title
+    # $2 = second column title
+
+    printf "* %-${HELP_PACKAGE_NAME_WIDTH}s * %s\n" "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}:" "$(tr 'a-z' 'A-Z' <<< "${2:0:1}")${2:1}:"
+
+    }
+
 DisplayAsHelpPackageNamePlusSomething()
     {
 
     # $1 = package name
-    # $2 = additional text
+    # $2 = second column text
 
     printf "%${HELP_DESC_INDENT}s%-${HELP_PACKAGE_NAME_WIDTH}s - %s\n" '' "${1:-}" "${2:-}"
 
     }
 
-DisplayAsHelpTitlePackageNamePlusSomething()
+DisplayAsHelpTitlePackageNameVersionStatus()
+    {
+
+    # $1 = package name title
+    # $2 = package version title
+    # $3 = package status title
+
+    printf "* %-${HELP_PACKAGE_NAME_WIDTH}s * %-${HELP_PACKAGE_VERSION_WIDTH}s * %s\n" "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}:" "$(tr 'a-z' 'A-Z' <<< "${2:0:1}")${2:1}:" "$(tr 'a-z' 'A-Z' <<< "${3:0:1}")${3:1}:"
+    }
+
+DisplayAsHelpPackageNameVersionStatus()
     {
 
     # $1 = package name
-    # $2 = additional text
+    # $2 = package version number
+    # $3 = package status
 
-    printf "* %-${HELP_PACKAGE_NAME_WIDTH}s * %s\n" "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}:" "$(tr 'a-z' 'A-Z' <<< "${2:0:1}")${2:1}:"
+    printf "%${HELP_DESC_INDENT}s%-${HELP_PACKAGE_NAME_WIDTH}s - %-${HELP_PACKAGE_VERSION_WIDTH}s - %s\n" '' "${1:-}" "${2:-}" "${3:-}"
 
     }
 
 DisplayAsHelpTitleFileNamePlusSomething()
     {
 
-    # $1 = file name
-    # $2 = additional text
+    # $1 = file name title
+    # $2 = second column title
 
     printf "* %-${HELP_FILE_NAME_WIDTH}s * %s\n" "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}:" "$(tr 'a-z' 'A-Z' <<< "${2:0:1}")${2:1}:"
 
@@ -3832,37 +3854,52 @@ QPKGs.Backups.Show()
 QPKGs.Statuses.Show()
     {
 
-    local -a package_notes=()
     local tier=''
+    local package=''
+    local -i index=0
+    local -a package_notes=()
+    local package_display=''
+    local version_display=''
 
     QPKGs.States.Build
     DisplayLineSpaceIfNoneAlready
 
     for tier in Standalone Dependent; do
-        DisplayAsHelpTitlePackageNamePlusSomething "${tier} QPKGs" 'statuses'
+        DisplayAsHelpTitlePackageNameVersionStatus "$tier QPKGs" version status
 
         for package in $(QPKGs.Sc$tier.Array); do
             package_notes=()
-            package_note=''
+            package_display=''
+            version_display=''
 
             if ! QPKG.URL "$package" &>/dev/null; then
-                DisplayAsHelpPackageNamePlusSomething "$package" 'not installable on this NAS (unsupported arch)'
+                DisplayAsHelpPackageNameVersionStatus "$package" "$(QPKG.Available.Version "$package")" 'not installable on this NAS (unsupported arch)'
             elif ! QPKG.MinRAM "$package" &>/dev/null; then
-                DisplayAsHelpPackageNamePlusSomething "$package" 'not installable on this NAS (insufficient RAM)'
+                DisplayAsHelpPackageNameVersionStatus "$package" "$(QPKG.Available.Version "$package")" 'not installable on this NAS (insufficient RAM)'
             elif QPKGs.IsNtInstalled.Exist "$package"; then
-                DisplayAsHelpPackageNamePlusSomething "$package" 'not installed'
+                DisplayAsHelpPackageNameVersionStatus "$package" "$(QPKG.Available.Version "$package")" 'not installed'
             else
                 QPKGs.IsStarting.Exist "$package" && package_notes+=($(ColourTextBrightOrange starting))
                 QPKGs.IsStarted.Exist "$package" && package_notes+=($(ColourTextBrightGreen started))
                 QPKGs.IsStopping.Exist "$package" && package_notes+=($(ColourTextBrightOrange stopping))
                 QPKGs.IsStopped.Exist "$package" && package_notes+=($(ColourTextBrightRed stopped))
                 QPKGs.IsRestarting.Exist "$package" && package_notes+=($(ColourTextBrightOrange restarting))
-                QPKGs.ScUpgradable.Exist "$package" && package_notes+=($(ColourTextBrightOrange upgradable))
                 QPKGs.IsMissing.Exist "$package" && package_notes=($(ColourTextBrightRedBlink missing))
 
-                [[ ${#package_notes[@]} -gt 0 ]] && package_note="${package_notes[*]}"
+                if QPKGs.ScUpgradable.Exist "$package"; then
+                    package_notes+=("$(ColourTextBrightOrange "upgradable to $(QPKG.Available.Version "$package")")")
+                    version_display=$(QPKG.Local.Version "$package")
+                else
+                    version_display=$(QPKG.Available.Version "$package")
+                fi
 
-                DisplayAsHelpPackageNamePlusSomething "$package" "${package_note// /, }"
+                for ((index=0;index<=((${#package_notes[@]}-1));index++)); do
+                    package_display+=${package_notes[$index]}
+
+                    [[ $((index+2)) -le ${#package_notes[@]} ]] && package_display+=', '
+                done
+
+                DisplayAsHelpPackageNameVersionStatus "$package" "$version_display" "$package_display"
             fi
         done
 
@@ -5058,6 +5095,36 @@ QPKG.ServicePathFile()
     #   $? = 0 if found, !0 if not
 
     /sbin/getcfg "${1:-}" Shell -d unknown -f /etc/config/qpkg.conf
+
+    }
+
+QPKG.Available.Version()
+    {
+
+    # Returns the version number of an available QPKG.
+
+    # input:
+    #   $1 = QPKG name
+
+    # output:
+    #   stdout = package version
+    #   $? = 0 if found, !0 if not
+
+    local -i index=0
+    local package=''
+    local previous=''
+
+    for index in "${!MANAGER_QPKG_NAME[@]}"; do
+        package="${MANAGER_QPKG_NAME[$index]}"
+        [[ $package = "$previous" ]] && continue || previous=$package
+
+        if [[ $1 = "$package" ]]; then
+            echo "${MANAGER_QPKG_VERSION[$index]}"
+            return 0
+        fi
+    done
+
+    return 1
 
     }
 
