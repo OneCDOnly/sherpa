@@ -2626,7 +2626,7 @@ PIPs.DoInstall()
         ((total_count--))
     fi
 
-    if Opts.Deps.Check.IsSet || IPKGs.OpToInstall.Exist python3-cryptography || QPKGs.OpToInstall.Exist SABnzbd || QPKGs.OpToReinstall.Exist SABnzbd; then
+    if Opts.Deps.Check.IsSet || IPKGs.OpToDownload.Exist python3-cryptography || QPKGs.OpToInstall.Exist SABnzbd || QPKGs.OpToReinstall.Exist SABnzbd; then
         # KLUDGE: must ensure 'cryptography' PIP module is reinstalled if the 'python3-cryptography' IPKG is installed.
         # The 'deluge-ui-web' IPKG pulls-in 'python3-cryptography' IPKG as a dependency, but this then causes a launch-failure for 'deluge-web' due to there already being a later 'cryptography' installed via 'pip'. Prefer to use the 'pip' version, so need to reinstall it so it is seen first.
         # KLUDGE: ensure 'feedparser' is upgraded. This was version-held at 5.2.1 for Python 3.8.5 but from Python 3.9.0 onward there's no-need for version-hold anymore.
