@@ -2881,7 +2881,7 @@ IsNtSysFileExist()
 readonly HELP_DESC_INDENT=3
 readonly HELP_SYNTAX_INDENT=6
 readonly HELP_PACKAGE_NAME_WIDTH=18
-readonly HELP_PACKAGE_VERSION_WIDTH=11
+readonly HELP_PACKAGE_VERSION_WIDTH=14
 readonly HELP_FILE_NAME_WIDTH=33
 
 DisplayAsProjectSyntaxExample()
@@ -3865,7 +3865,7 @@ QPKGs.Statuses.Show()
     DisplayLineSpaceIfNoneAlready
 
     for tier in Standalone Dependent; do
-        DisplayAsHelpTitlePackageNameVersionStatus "$tier QPKGs" version status
+        DisplayAsHelpTitlePackageNameVersionStatus "$tier QPKGs" 'QPKG version' 'QPKG status'
 
         for package in $(QPKGs.Sc$tier.Array); do
             package_notes=()
