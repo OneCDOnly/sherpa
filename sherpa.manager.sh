@@ -968,6 +968,8 @@ Session.Validate()
 
     # check all items
     if Opts.Deps.Check.IsSet; then
+        QPKGs.NewVersions.Show
+
         for package in $(QPKGs.ScDependent.Array); do
             if ! QPKGs.ScUpgradable.Exist "$package" && QPKGs.IsStarted.Exist "$package" && QPKGs.ScSupportUpdateOnRestart.Exist "$package"; then
                 QPKGs.OpToRestart.Add "$package"
@@ -1233,37 +1235,27 @@ Session.Results()
             Log.Last.Paste
         elif Opts.Log.Tail.Paste.IsSet; then
             Log.Tail.Paste
-        elif Opts.Apps.List.ScAll.IsSet; then
-            QPKGs.ScAll.Show
+        elif Opts.Apps.List.IsInstalled.IsSet; then
+            QPKGs.IsInstalled.Show
         elif Opts.Apps.List.ScInstallable.IsSet; then
-            Session.Display.Clean.IsNt && QPKGs.NewVersions.Show
             QPKGs.ScInstallable.Show
         elif Opts.Apps.List.IsNtInstalled.IsSet; then
-            Session.Display.Clean.IsNt && QPKGs.NewVersions.Show
             QPKGs.IsNtInstalled.Show
         elif Opts.Apps.List.IsStarted.IsSet; then
-            Session.Display.Clean.IsNt && QPKGs.NewVersions.Show
             QPKGs.IsStarted.Show
         elif Opts.Apps.List.IsStopped.IsSet; then
-            Session.Display.Clean.IsNt && QPKGs.NewVersions.Show
             QPKGs.IsStopped.Show
         elif Opts.Apps.List.ScUpgradable.IsSet; then
-            Session.Display.Clean.IsNt && QPKGs.NewVersions.Show
             QPKGs.ScUpgradable.Show
         elif Opts.Apps.List.ScStandalone.IsSet; then
-            Session.Display.Clean.IsNt && QPKGs.NewVersions.Show
             QPKGs.ScStandalone.Show
         elif Opts.Apps.List.ScDependent.IsSet; then
-            Session.Display.Clean.IsNt && QPKGs.NewVersions.Show
             QPKGs.ScDependent.Show
         elif Opts.Help.Backups.IsSet; then
             QPKGs.Backups.Show
         elif Opts.Help.Status.IsSet; then
             Session.Display.Clean.IsNt && QPKGs.NewVersions.Show
             QPKGs.Statuses.Show
-        elif Opts.Apps.List.IsInstalled.IsSet; then
-            Session.Display.Clean.IsNt && QPKGs.NewVersions.Show
-            QPKGs.IsInstalled.Show
         fi
     fi
 
@@ -3791,21 +3783,6 @@ QPKGs.IsSupportUpdateOnRestart.Build()
     done
 
     DebugFuncExit
-
-    }
-
-QPKGs.ScAll.Show()
-    {
-
-    local package=''
-    QPKGs.States.Build
-    DisableDebugToArchiveAndFile
-
-    for package in $(QPKGs.ScAll.Array); do
-        Display "$package"
-    done
-
-    return 0
 
     }
 
