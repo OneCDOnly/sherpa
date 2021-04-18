@@ -54,7 +54,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=210414
+    local -r SCRIPT_VERSION=210418
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -143,13 +143,18 @@ Session.Init()
     readonly PIP_CACHE_PATH=$WORK_PATH/pips
     readonly BACKUP_PATH=$(/sbin/getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
 
-    readonly COMPILED_OBJECTS_URL=https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/compiled.objects.tar.gz
+    readonly OBJECTS_ARCHIVE_URL=https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/compiled.objects.tar.gz
+    readonly OBJECTS_ARCHIVE_PATHFILE=$WORK_PATH/compiled.objects.tar.gz
+    readonly OBJECTS_PATHFILE=$WORK_PATH/compiled.objects
+
+    readonly MANAGER_ARCHIVE_URL=https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/$PROJECT_NAME.manager.tar.gz
+    readonly MANAGER_ARCHIVE_PATHFILE=$WORK_PATH/$PROJECT_NAME.manager.tar.gz
+    readonly MANAGER_PATHFILE=$WORK_PATH/$PROJECT_NAME.manager.sh
+
     readonly EXTERNAL_PACKAGE_ARCHIVE_PATHFILE=/opt/var/opkg-lists/entware
     readonly PREVIOUS_OPKG_PACKAGE_LIST=$WORK_PATH/opkg.prev.installed.list
     readonly PREVIOUS_PIP_MODULE_LIST=$WORK_PATH/pip.prev.installed.list
 
-    readonly COMPILED_OBJECTS_ARCHIVE_PATHFILE=$WORK_PATH/compiled.objects.tar.gz
-    readonly COMPILED_OBJECTS_PATHFILE=$WORK_PATH/compiled.objects
     readonly SESSION_ARCHIVE_PATHFILE=$LOGS_PATH/session.archive.log
     readonly SESSION_ACTIVE_PATHFILE=$PROJECT_PATH/session.$$.active.log
     readonly SESSION_LAST_PATHFILE=$LOGS_PATH/session.last.log
@@ -629,9 +634,9 @@ Session.Init()
     MANAGER_QPKG_NAME+=($PROJECT_NAME)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MIN_RAM_KB+=(any)
-        MANAGER_QPKG_VERSION+=(210328)
+        MANAGER_QPKG_VERSION+=(210418)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/QPKGs/$PROJECT_NAME/build/${PROJECT_NAME}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
-        MANAGER_QPKG_MD5+=(dc3e0cef8c22fe43acc2ad94eadba5cf)
+        MANAGER_QPKG_MD5+=(cefd0323bbd5851dc49b8583b628309d)
         MANAGER_QPKG_DESC+=("provides the '$PROJECT_NAME' command: the mini-package-manager")
         MANAGER_QPKG_ABBRVS+=("sh $PROJECT_NAME")
         MANAGER_QPKG_DEPENDS_ON+=('')
@@ -2123,7 +2128,7 @@ CleanManagementScript()
     {
 
     if [[ -n $WORK_PATH && -d $WORK_PATH ]]; then
-        rm -f "${WORK_PATH:?}/$($BASENAME_CMD "$0")"
+        rm -f "$MANAGER_PATHFILE" "$MANAGER_ARCHIVE_PATHFILE"
         ShowAsDone 'management script cleaned'
     fi
 
@@ -6412,7 +6417,7 @@ done
 else
 echo -n $'$_placeholder_size_'
 fi ;}
-'$public_function_name'.Init' >> "$COMPILED_OBJECTS_PATHFILE"
+'$public_function_name'.Init' >> "$OBJECTS_PATHFILE"
 
     return 0
 
@@ -6455,7 +6460,7 @@ echo $public_function_name'.Clear()
 else
 echo -n "$'$_placeholder_text_'"
 fi ;}
-'$public_function_name'.Init' >> "$COMPILED_OBJECTS_PATHFILE"
+'$public_function_name'.Init' >> "$OBJECTS_PATHFILE"
 
     return 0
 
@@ -6464,8 +6469,8 @@ fi ;}
 CheckLocalObjects()
     {
 
-    [[ -e $COMPILED_OBJECTS_PATHFILE ]] && FileMatchesMD5 "$COMPILED_OBJECTS_PATHFILE" "$(CompileObjects hash)" && return 0
-    rm -f "$COMPILED_OBJECTS_PATHFILE"
+    [[ -e $OBJECTS_PATHFILE ]] && FileMatchesMD5 "$OBJECTS_PATHFILE" "$(CompileObjects hash)" && return 0
+    rm -f "$OBJECTS_PATHFILE"
 
     return 1
 
@@ -6474,14 +6479,14 @@ CheckLocalObjects()
 GetRemoteObjects()
     {
 
-    if [[ ! -e $COMPILED_OBJECTS_PATHFILE ]]; then
-        if $CURL_CMD${curl_insecure_arg:-} --silent --fail "$COMPILED_OBJECTS_URL" > "$COMPILED_OBJECTS_ARCHIVE_PATHFILE"; then
-            /bin/tar --extract --gzip --file="$COMPILED_OBJECTS_ARCHIVE_PATHFILE" --directory="$($DIRNAME_CMD "$COMPILED_OBJECTS_PATHFILE")"
-            [[ -s $COMPILED_OBJECTS_PATHFILE ]] && return 0
+    if [[ ! -e $OBJECTS_PATHFILE ]]; then
+        if $CURL_CMD${curl_insecure_arg:-} --silent --fail "$OBJECTS_ARCHIVE_URL" > "$OBJECTS_ARCHIVE_PATHFILE"; then
+            /bin/tar --extract --gzip --file="$OBJECTS_ARCHIVE_PATHFILE" --directory="$($DIRNAME_CMD "$OBJECTS_PATHFILE")"
+            [[ -s $OBJECTS_PATHFILE ]] && return 0
         fi
     fi
 
-    rm -f "$COMPILED_OBJECTS_PATHFILE"
+    rm -f "$OBJECTS_PATHFILE"
 
     return 1
 
@@ -6494,14 +6499,14 @@ CompileObjects()
 
     # $1 = 'hash' (optional) return the internal checksum
 
-    local -r COMPILED_OBJECTS_HASH=7a3bea4b7bc7fb45999c777e5c573f1d
+    local -r OBJECTS_HASH=7a3bea4b7bc7fb45999c777e5c573f1d
     local element=''
     local operation=''
     local scope=''
     local state=''
 
     if [[ ${1:-} = hash ]]; then
-        echo "$COMPILED_OBJECTS_HASH"
+        echo "$OBJECTS_HASH"
         return
     fi
 
@@ -6510,7 +6515,7 @@ CompileObjects()
         CheckLocalObjects
     fi
 
-    if [[ ! -e $COMPILED_OBJECTS_PATHFILE ]]; then
+    if [[ ! -e $OBJECTS_PATHFILE ]]; then
         ShowAsProc 'compiling' >&2
 
         # session flags
@@ -6589,11 +6594,15 @@ CompileObjects()
             AddListObj QPKGs.IsNt${state}
         done
 
-        /bin/tar --create --gzip --file="$COMPILED_OBJECTS_ARCHIVE_PATHFILE" --directory="$($DIRNAME_CMD "$COMPILED_OBJECTS_PATHFILE")" "$($BASENAME_CMD "$COMPILED_OBJECTS_PATHFILE")"
+        /bin/tar --create --gzip --file="$OBJECTS_ARCHIVE_PATHFILE" --directory="$($DIRNAME_CMD "$OBJECTS_PATHFILE")" "$($BASENAME_CMD "$OBJECTS_PATHFILE")"
+    fi
+
+    if [[ ! -e $MANAGER_ARCHIVE_PATHFILE ]]; then
+        /bin/tar --create --gzip --file="$($BASENAME_CMD "$MANAGER_ARCHIVE_PATHFILE")" --directory="$PWD" "$($BASENAME_CMD "$0")"
     fi
 
     ShowAsProc 'objects' >&2
-    . "$COMPILED_OBJECTS_PATHFILE"
+    . "$OBJECTS_PATHFILE"
 
     return 0
 

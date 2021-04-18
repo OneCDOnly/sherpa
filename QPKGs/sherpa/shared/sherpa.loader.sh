@@ -23,9 +23,9 @@
 Init()
     {
 
-    IsQNAP || return 1
+    IsQNAP || return
 
-    export LOADER_SCRIPT_VERSION=200923
+    export LOADER_SCRIPT_VERSION=210418
 
     local -r PROJECT_NAME=sherpa
     local -r NAS_FIRMWARE=$(/sbin/getcfg System Version -f /etc/config/uLinux.conf)
@@ -33,7 +33,9 @@ Init()
     [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg='--insecure' || curl_insecure_arg=''
     local -r MANAGER_SCRIPT_FILE=sherpa.manager.sh
     readonly REMOTE_MANAGER_SCRIPT=https://raw.githubusercontent.com/OneCDOnly/sherpa/main/$MANAGER_SCRIPT_FILE
+    readonly REMOTE_MANAGER_ARCHIVE=$REMOTE_MANAGER_SCRIPT.tar.gz
     readonly LOCAL_MANAGER_SCRIPT=$QPKG_PATH/cache/$MANAGER_SCRIPT_FILE
+    readonly LOCAL_MANAGER_ARCHIVE=$LOCAL_MANAGER_SCRIPT.tar.gz
     readonly GNU_FIND_CMD=/opt/bin/find
     previous_msg=''
 
@@ -61,7 +63,7 @@ ShowAsWarning()
     {
 
     local buffer="$1"
-    local capitalised="$(tr "[a-z]" "[A-Z]" <<< "${buffer:0:1}")${buffer:1}"
+    local capitalised="$(tr 'a-z' 'A-Z' <<< "${buffer:0:1}")${buffer:1}"
 
     WriteToDisplay.New "$(ColourTextBrightOrange warn)" "$capitalised"
 
@@ -71,7 +73,7 @@ ShowAsAbort()
     {
 
     local buffer="$1"
-    local capitalised="$(tr "[a-z]" "[A-Z]" <<< "${buffer:0:1}")${buffer:1}"
+    local capitalised="$(tr 'a-z' 'A-Z' <<< "${buffer:0:1}")${buffer:1}"
 
     WriteToDisplay.New "$(ColourTextBrightRed fail)" "$capitalised: aborting ..."
 
@@ -97,7 +99,7 @@ WriteToDisplay.New()
     local strbuffer=''
     local new_length=0
 
-    new_message=$(printf "%-10s: %s" "$1" "$2")
+    new_message=$(printf '%-10s: %s' "$1" "$2")
 
     if [[ $new_message != "$previous_msg" ]]; then
         previous_length=$((${#previous_msg}+1))
@@ -140,7 +142,7 @@ ColourReset()
 
     }
 
-Init || exit 1
+Init || exit
 
 package_minutes_threshold=1440
 
@@ -152,8 +154,10 @@ else
 fi
 
 if [[ -n $msgs ]]; then
-    if ! (/sbin/curl $curl_insecure_arg --silent --fail "$REMOTE_MANAGER_SCRIPT" > "$LOCAL_MANAGER_SCRIPT"); then
+    if ! (/sbin/curl $curl_insecure_arg --silent --fail "$REMOTE_MANAGER_ARCHIVE" > "$LOCAL_MANAGER_ARCHIVE"); then
         ShowAsWarning 'manager download failed'
+    else
+        /bin/tar --extract --gzip --file="$LOCAL_MANAGER_ARCHIVE" --directory="$(/usr/bin/dirname "$LOCAL_MANAGER_ARCHIVE")" 2>/dev/null
     fi
 fi
 
@@ -162,6 +166,6 @@ if [[ ! -e $LOCAL_MANAGER_SCRIPT ]]; then
     exit 1
 fi
 
-eval "/usr/bin/env bash" "$LOCAL_MANAGER_SCRIPT" "$*"
+eval '/usr/bin/env bash' "$LOCAL_MANAGER_SCRIPT" "$*"
 
 exit 0
