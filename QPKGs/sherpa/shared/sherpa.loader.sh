@@ -31,11 +31,9 @@ Init()
     local -r NAS_FIRMWARE=$(/sbin/getcfg System Version -f /etc/config/uLinux.conf)
     local -r QPKG_PATH=$(/sbin/getcfg $PROJECT_NAME Install_Path -f /etc/config/qpkg.conf)
     [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg='--insecure' || curl_insecure_arg=''
-    local -r MANAGER_SCRIPT_FILE=sherpa.manager.sh
-    readonly REMOTE_MANAGER_SCRIPT=https://raw.githubusercontent.com/OneCDOnly/sherpa/main/$MANAGER_SCRIPT_FILE
-    readonly REMOTE_MANAGER_ARCHIVE=$REMOTE_MANAGER_SCRIPT.tar.gz
-    readonly LOCAL_MANAGER_SCRIPT=$QPKG_PATH/cache/$MANAGER_SCRIPT_FILE
-    readonly LOCAL_MANAGER_ARCHIVE=$LOCAL_MANAGER_SCRIPT.tar.gz
+    readonly REMOTE_MANAGER_ARCHIVE=https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/sherpa.manager.tar.gz
+    readonly LOCAL_MANAGER_ARCHIVE=$QPKG_PATH/cache/sherpa.manager.tar.gz
+    readonly LOCAL_MANAGER_SCRIPT_PATHFILE=$QPKG_PATH/cache/sherpa.manager.sh
     readonly GNU_FIND_CMD=/opt/bin/find
     previous_msg=''
 
@@ -147,8 +145,8 @@ Init || exit
 package_minutes_threshold=1440
 
 # if management script was updated only recently, don't run another update. Examine 'change' time as this is updated even if script content isn't modified.
-if [[ -e $LOCAL_MANAGER_SCRIPT && -e $GNU_FIND_CMD ]]; then
-    msgs=$($GNU_FIND_CMD "$LOCAL_MANAGER_SCRIPT" -cmin +$package_minutes_threshold) # no-output if last update was less than $package_minutes_threshold minutes ago
+if [[ -e $LOCAL_MANAGER_SCRIPT_PATHFILE && -e $GNU_FIND_CMD ]]; then
+    msgs=$($GNU_FIND_CMD "$LOCAL_MANAGER_SCRIPT_PATHFILE" -cmin +$package_minutes_threshold) # no-output if last update was less than $package_minutes_threshold minutes ago
 else
     msgs="this is either a new installation, or GNU 'find' was not found"
 fi
@@ -161,11 +159,11 @@ if [[ -n $msgs ]]; then
     fi
 fi
 
-if [[ ! -e $LOCAL_MANAGER_SCRIPT ]]; then
+if [[ ! -e $LOCAL_MANAGER_SCRIPT_PATHFILE ]]; then
     ShowAsAbort 'unable to find management script'
     exit 1
 fi
 
-eval '/usr/bin/env bash' "$LOCAL_MANAGER_SCRIPT" "$*"
+eval '/usr/bin/env bash' "$LOCAL_MANAGER_SCRIPT_PATHFILE" "$*"
 
 exit 0
