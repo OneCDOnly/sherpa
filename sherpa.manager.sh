@@ -727,7 +727,8 @@ Session.Init()
     readonly MANAGER_BASE_QPKG_CONFLICTS='Optware Optware-NG TarMT Python QPython2 Python3 QPython3'
     readonly MANAGER_BASE_IPKGS_ADD='less sed'
     readonly MANAGER_SHARED_IPKGS_ADD='ca-certificates findutils gcc git git-http grep nano python3-dev python3-pip python3-setuptools'
-    readonly MANAGER_SHARED_PIPS_ADD='pip wheel pyopenssl cryptography apprise apscheduler beautifulsoup4 cfscrape cheetah3 cherrypy configobj feedparser pygithub python-levenshtein python-magic random_user_agent sabyenc3 simplejson slugify'
+    readonly MANAGER_BASE_PIPS_ADD='pip wheel'
+    readonly MANAGER_SHARED_PIPS_ADD='pyopenssl cryptography apprise apscheduler beautifulsoup4 cfscrape cheetah3 cherrypy configobj feedparser pygithub python-levenshtein python-magic random_user_agent sabyenc3 simplejson slugify'
 
     QPKGs.StandaloneDependent.Build
 
@@ -2551,7 +2552,7 @@ PIPs.DoInstall()
     local -i result_code=0
     local -i pass_count=0
     local -i fail_count=0
-    local -i total_count=3
+    local -i total_count=4
     local -r PACKAGE_TYPE='PIP group'
     local -r ACTION_PRESENT=installing
     local -r ACTION_PAST=installed
@@ -2580,11 +2581,31 @@ PIPs.DoInstall()
     if Opts.Deps.Check.IsSet || QPKGs.OpOkInstall.Exist Entware; then
         ShowAsOperationProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
 
-        exec_cmd="$pip3_cmd install --upgrade $MANAGER_SHARED_PIPS_ADD --cache-dir $PIP_CACHE_PATH"
-        local desc="'Python3' modules"
-        local log_pathfile=$LOGS_PATH/py3-modules.assorted.$INSTALL_LOG_FILE
+        exec_cmd="$pip3_cmd install --upgrade $MANAGER_BASE_PIPS_ADD --cache-dir $PIP_CACHE_PATH"
+        local desc="'Python3' base modules"
+        local log_pathfile=$LOGS_PATH/py3-modules.base.$INSTALL_LOG_FILE
         DebugAsProc "downloading & installing $desc"
+        RunAndLog "$exec_cmd" "$log_pathfile" log:failure-only
+        result_code=$?
 
+        if [[ $result_code -eq 0 ]]; then
+            DebugAsDone "downloaded & installed $desc"
+            ((pass_count++))
+        else
+            ShowAsFail "download & install $desc failed $(FormatAsResult "$result_code")"
+            ((fail_count++))
+        fi
+    else
+        ((total_count--))
+    fi
+
+    if Opts.Deps.Check.IsSet || QPKGs.OpOkInstall.Exist Entware; then
+        ShowAsOperationProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
+
+        exec_cmd="$pip3_cmd install --upgrade $MANAGER_SHARED_PIPS_ADD --cache-dir $PIP_CACHE_PATH"
+        local desc="'Python3' shared modules"
+        local log_pathfile=$LOGS_PATH/py3-modules.shared.$INSTALL_LOG_FILE
+        DebugAsProc "downloading & installing $desc"
         RunAndLog "$exec_cmd" "$log_pathfile" log:failure-only
         result_code=$?
 
@@ -2605,18 +2626,17 @@ PIPs.DoInstall()
 
         exec_cmd="$pip3_cmd install --force-reinstall --ignore-installed --no-binary :all: sabyenc3 --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
         desc="'Python3 sabyenc3' module"
-        log_pathfile=$LOGS_PATH/py3-modules.sabyenc3.$INSTALL_LOG_FILE
-        DebugAsProc "downloading & installing $desc"
-
+        log_pathfile=$LOGS_PATH/py3-modules.sabyenc3.$REINSTALL_LOG_FILE
+        DebugAsProc "reinstalling $desc"
         RunAndLog "$exec_cmd" "$log_pathfile" log:failure-only
         result_code=$?
 
         if [[ $result_code -eq 0 ]]; then
-            DebugAsDone "downloaded & installed $desc"
+            DebugAsDone "reinstalled $desc"
             QPKGs.OpToRestart.Add SABnzbd
             ((pass_count++))
         else
-            ShowAsEror "download & install $desc failed $(FormatAsResult "$result_code")"
+            ShowAsFail "reinstallation of $desc failed $(FormatAsResult "$result_code")"
             ((fail_count++))
         fi
     else
