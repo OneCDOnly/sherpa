@@ -54,7 +54,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=210420
+    local -r SCRIPT_VERSION=210421
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -596,7 +596,7 @@ Session.Init()
         MANAGER_QPKG_ABBRVS+=('sb sb3 sab sab3 sabnzbd3 sabnzbd')
         MANAGER_QPKG_DEPENDS_ON+=('Entware Par2')
         MANAGER_QPKG_DEPENDED_UPON+=(false)
-        MANAGER_QPKG_IPKGS_ADD+=('unrar p7zip coreutils-nice ionice ffprobe python3-cryptography')
+        MANAGER_QPKG_IPKGS_ADD+=('unrar p7zip coreutils-nice ionice ffprobe python3-cryptography python3-cffi')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
         MANAGER_QPKG_RESTART_TO_UPDATE+=(true)
@@ -725,8 +725,8 @@ Session.Init()
     QPKGs.ScAll.Add "${MANAGER_QPKG_NAME[*]}"
 
     readonly MANAGER_BASE_QPKG_CONFLICTS='Optware Optware-NG TarMT Python QPython2 Python3 QPython3'
-    readonly MANAGER_BASE_IPKGS_ADD='less sed'
-    readonly MANAGER_SHARED_IPKGS_ADD='ca-certificates findutils gcc git git-http grep nano python3-dev python3-pip python3-setuptools'
+    readonly MANAGER_BASE_IPKGS_ADD='ca-certificates findutils gcc git git-http grep less nano sed'
+    readonly MANAGER_SHARED_IPKGS_ADD='python3-dev python3-pip python3-setuptools'
     readonly MANAGER_BASE_PIPS_ADD='pip wheel'
     readonly MANAGER_SHARED_PIPS_ADD='pyopenssl apprise apscheduler beautifulsoup4 cfscrape cheetah3 cherrypy configobj feedparser pygithub python-levenshtein python-magic random_user_agent sabyenc3 simplejson slugify'
 
@@ -2255,7 +2255,10 @@ CalcIPKGsDepsToInstall()
 
     # From a specified list of IPKG names, find all dependent IPKGs, exclude those already installed, then generate a total qty to download
 
-    if IsNtSysFileExist /opt/bin/opkg || IsNtSysFileExist $GNU_GREP_CMD; then
+    QPKGs.IsNtInstalled.Exist Entware && return
+    QPKGs.IsStopped.Exist Entware && return
+
+    if IsNtSysFileExist $GNU_GREP_CMD; then
         code_pointer=3
         return 1
     fi
@@ -2343,7 +2346,10 @@ CalcAllIPKGsToUninstall()
 
     # From a specified list of IPKG names, exclude those already installed, then generate a total qty to uninstall
 
-    if IsNtSysFileExist /opt/bin/opkg || IsNtSysFileExist $GNU_GREP_CMD; then
+    QPKGs.IsNtInstalled.Exist Entware && return
+    QPKGs.IsStopped.Exist Entware && return
+
+    if IsNtSysFileExist $GNU_GREP_CMD; then
         code_pointer=4
         return 1
     fi
