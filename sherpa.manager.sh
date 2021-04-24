@@ -54,7 +54,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=210421
+    local -r SCRIPT_VERSION=210425
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -775,13 +775,7 @@ Session.Validate()
 
     DebugInfoMinorSeparator
     DebugHardwareOK model "$(get_display_name)"
-
-    if [[ -e $GNU_GREP_CMD ]]; then
-        DebugHardwareOK CPU "$($GNU_GREP_CMD -m1 '^model name' /proc/cpuinfo | $SED_CMD 's|^.*: ||')"
-    else    # QTS 4.5.1 & BusyBox 1.01 don't support '-m' option for 'grep', so need to use a different method
-        DebugHardwareOK CPU "$($GREP_CMD '^model name' /proc/cpuinfo | $HEAD_CMD -n1 | $SED_CMD 's|^.*: ||')"
-    fi
-
+    DebugHardwareOK CPU "$(GetCPUInfo)"
     DebugHardwareOK RAM "$(FormatAsThousands "$INSTALLED_RAM_KB")kB"
 
     if [[ ${NAS_FIRMWARE//.} -ge 400 ]]; then
@@ -4229,6 +4223,23 @@ ModPathToEntware()
     fi
 
     return 0
+
+    }
+
+GetCPUInfo()
+    {
+
+    # QTS 4.5.1 & BusyBox 1.01 don't support '-m' option for 'grep', so extract first mention the hard way with 'head'
+
+    if $GREP_CMD -q '^model name' /proc/cpuinfo; then
+        $GREP_CMD '^model name' /proc/cpuinfo | $HEAD_CMD -n1 | $SED_CMD 's|^.*: ||'
+        return
+    elif $GREP_CMD -q '^Processor name' /proc/cpuinfo; then
+        $GREP_CMD '^Processor name' /proc/cpuinfo | $HEAD_CMD -n1 | $SED_CMD 's|^.*: ||'
+        return
+    else
+        echo 'unknown'
+    fi
 
     }
 
