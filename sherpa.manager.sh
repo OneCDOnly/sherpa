@@ -134,14 +134,14 @@ Session.Init()
     readonly UPDATE_LOG_FILE=update.log
     readonly UPGRADE_LOG_FILE=upgrade.log
 
-    local -r PROJECT_PATH=$(/sbin/getcfg $PROJECT_NAME Install_Path -f /etc/config/qpkg.conf)
+    readonly PROJECT_PATH=$(QPKG.InstallationPath $PROJECT_NAME)
     readonly WORK_PATH=$PROJECT_PATH/cache
     readonly LOGS_PATH=$PROJECT_PATH/logs
     readonly QPKG_DL_PATH=$WORK_PATH/qpkgs
     readonly IPKG_DL_PATH=$WORK_PATH/ipkgs.downloads
     readonly IPKG_CACHE_PATH=$WORK_PATH/ipkgs
     readonly PIP_CACHE_PATH=$WORK_PATH/pips
-    readonly BACKUP_PATH=$(/sbin/getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
+    readonly BACKUP_PATH=$(GetDefaultVolume)/.qpkg_config_backup
 
     readonly OBJECTS_ARCHIVE_URL=https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/compiled.objects.tar.gz
     readonly OBJECTS_ARCHIVE_PATHFILE=$WORK_PATH/compiled.objects.tar.gz
@@ -242,9 +242,9 @@ Session.Init()
     Session.LineSpace.NoLogMods
     QPKGs.SkProc.NoLogMods
 
-    readonly NAS_FIRMWARE=$(/sbin/getcfg System Version -f /etc/config/uLinux.conf)
-    readonly NAS_BUILD=$(/sbin/getcfg System 'Build Number' -f /etc/config/uLinux.conf)
-    readonly INSTALLED_RAM_KB=$($GREP_CMD MemTotal /proc/meminfo | cut -f2 -d':' | $SED_CMD 's|kB||;s| ||g')
+    readonly NAS_FIRMWARE=$(GetFirmwareVersion)
+    readonly NAS_BUILD=$(GetFirmwareBuild)
+    readonly INSTALLED_RAM_KB=$(GetInstalledRAM)
     readonly LOG_TAIL_LINES=3000    # a full download and install of everything generates a session around 1600 lines, but include a bunch of opkg updates and it can get much longer
     readonly MIN_PYTHON_VER=392
     code_pointer=0
@@ -791,9 +791,9 @@ Session.Validate()
     fi
 
     DebugFirmwareOK kernel "$($UNAME_CMD -mr)"
-    DebugFirmwareOK platform "$(/sbin/getcfg '' Platform -d unknown -f /etc/platform.conf)"
-    DebugUserspaceOK 'OS uptime' "$($UPTIME_CMD | $SED_CMD 's|.*up.||;s|,.*load.*||;s|^\ *||')"
-    DebugUserspaceOK 'system load' "$($UPTIME_CMD | $SED_CMD 's|.*load average: ||' | $AWK_CMD -F', ' '{print "1m:"$1", 5m:"$2", 15m:"$3}')"
+    DebugFirmwareOK platform "$(GetPlatform)"
+    DebugUserspaceOK 'OS uptime' "$(GetOSUptime)"
+    DebugUserspaceOK 'system load' "$(GetSystemLoadAverages)"
 
     if [[ $USER = admin ]]; then
         DebugUserspaceOK '$USER' "$USER"
@@ -813,7 +813,7 @@ Session.Validate()
     fi
 
     DebugUserspaceOK '$BASH_VERSION' "$BASH_VERSION"
-    DebugUserspaceOK 'default volume' "$(/sbin/getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info)"
+    DebugUserspaceOK 'default volume' "$(GetDefaultVolume)"
 
     if [[ -L /opt ]]; then
         DebugUserspaceOK '/opt' "$($READLINK_CMD /opt || echo '<not present>')"
@@ -3705,7 +3705,7 @@ QPKGs.States.Build()
         [[ $package = "$previous" ]] && continue || previous=$package
 
         if $GREP_CMD -q "^\[$package\]" /etc/config/qpkg.conf; then
-            if [[ ! -d $(/sbin/getcfg "$package" Install_Path -f /etc/config/qpkg.conf) ]]; then
+            if [[ ! -d $(QPKG.InstallationPath "$package") ]]; then
                 QPKGs.IsMissing.Add "$package"
                 continue
             fi
@@ -4154,7 +4154,7 @@ CalcQPKGArch()
             NAS_QPKG_ARCH=x19
             ;;
         armv7l)
-            case $(/sbin/getcfg '' Platform -f /etc/platform.conf) in
+            case $(GetPlatform) in
                 ARM_MS)
                     NAS_QPKG_ARCH=x31
                     ;;
@@ -4233,13 +4233,63 @@ GetCPUInfo()
 
     if $GREP_CMD -q '^model name' /proc/cpuinfo; then
         $GREP_CMD '^model name' /proc/cpuinfo | $HEAD_CMD -n1 | $SED_CMD 's|^.*: ||'
-        return
     elif $GREP_CMD -q '^Processor name' /proc/cpuinfo; then
         $GREP_CMD '^Processor name' /proc/cpuinfo | $HEAD_CMD -n1 | $SED_CMD 's|^.*: ||'
-        return
     else
         echo 'unknown'
+        return 1
     fi
+
+    return 0
+
+    }
+
+GetPlatform()
+    {
+
+    /sbin/getcfg '' Platform -d unknown -f /etc/platform.conf
+
+    }
+
+GetDefaultVolume()
+    {
+
+    /sbin/getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info
+
+    }
+
+GetOSUptime()
+    {
+
+    $UPTIME_CMD | $SED_CMD 's|.*up.||;s|,.*load.*||;s|^\ *||'
+
+    }
+
+GetSystemLoadAverages()
+    {
+
+    $UPTIME_CMD | $SED_CMD 's|.*load average: ||' | $AWK_CMD -F', ' '{print "1m:"$1", 5m:"$2", 15m:"$3}'
+
+    }
+
+GetInstalledRAM()
+    {
+
+    $GREP_CMD MemTotal /proc/meminfo | cut -f2 -d':' | $SED_CMD 's|kB||;s| ||g'
+
+    }
+
+GetFirmwareVersion()
+    {
+
+    /sbin/getcfg System Version -f /etc/config/uLinux.conf
+
+    }
+
+GetFirmwareBuild()
+    {
+
+    /sbin/getcfg System 'Build Number' -f /etc/config/uLinux.conf
 
     }
 
@@ -4698,7 +4748,7 @@ QPKG.DoUninstall()
         DebugFuncExit 2; return
     fi
 
-    local -r QPKG_UNINSTALLER_PATHFILE=$(/sbin/getcfg "$PACKAGE_NAME" Install_Path -f /etc/config/qpkg.conf)/.uninstall.sh
+    local -r QPKG_UNINSTALLER_PATHFILE=$(QPKG.InstallationPath "$PACKAGE_NAME")/.uninstall.sh
     local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$UNINSTALL_LOG_FILE
 
     [[ $PACKAGE_NAME = Entware ]] && SavePackageLists
@@ -5067,7 +5117,7 @@ QPKG.ClearServiceStatus()
     # input:
     #   $1 = QPKG name
 
-    [[ -e /var/run/${1:-}.last.operation ]] && rm /var/run/"${1:-}".last.operation
+    [[ -e /var/run/${1:?no package name supplied}.last.operation ]] && rm /var/run/"${1:?no package name supplied}".last.operation
 
     }
 
@@ -5104,6 +5154,20 @@ QPKG.StoreServiceStatus()
 
 # QPKG capabilities
 
+QPKG.InstallationPath()
+    {
+
+    # input:
+    #   $1 = QPKG name
+
+    # output:
+    #   stdout = the installation path to this QPKG
+    #   $? = 0 if found, !0 if not
+
+    /sbin/getcfg "${1:?no package name supplied}" Install_Path -f /etc/config/qpkg.conf
+
+    }
+
 QPKG.ServicePathFile()
     {
 
@@ -5114,7 +5178,7 @@ QPKG.ServicePathFile()
     #   stdout = service pathfile
     #   $? = 0 if found, !0 if not
 
-    /sbin/getcfg "${1:-}" Shell -d unknown -f /etc/config/qpkg.conf
+    /sbin/getcfg "${1:?no package name supplied}" Shell -d unknown -f /etc/config/qpkg.conf
 
     }
 
@@ -5160,7 +5224,7 @@ QPKG.Local.Version()
     #   stdout = package version
     #   $? = 0 if found, !0 if not
 
-    /sbin/getcfg "${1:-}" Version -d unknown -f /etc/config/qpkg.conf
+    /sbin/getcfg "${1:?no package name supplied}" Version -d unknown -f /etc/config/qpkg.conf
 
     }
 
@@ -5231,7 +5295,7 @@ QPKG.Abbrvs()
     local -i index=0
 
     for index in "${!MANAGER_QPKG_NAME[@]}"; do
-        if [[ ${1:?no package name supplied} = "${MANAGER_QPKG_NAME[$index]}" ]]; then
+        if [[ ${MANAGER_QPKG_NAME[$index]} = "${1:?no package name supplied}" ]]; then
             echo "${MANAGER_QPKG_ABBRVS[$index]}"
             return 0
         fi
@@ -5282,7 +5346,7 @@ QPKG.PathFilename()
     #   stdout = QPKG local filename
     #   $? = 0 if successful, 1 if failed
 
-    local -r URL=$(QPKG.URL "${1:-}")
+    local -r URL=$(QPKG.URL "${1:?no package name supplied}")
 
     [[ -n ${URL:-} ]] || return
 
@@ -5305,7 +5369,7 @@ QPKG.URL()
     local -i index=0
 
     for index in "${!MANAGER_QPKG_NAME[@]}"; do
-        if [[ $1 = "${MANAGER_QPKG_NAME[$index]}" ]] && [[ ${MANAGER_QPKG_ARCH[$index]} = all || ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
+        if [[ ${MANAGER_QPKG_NAME[$index]} = "${1:?no package name supplied}" ]] && [[ ${MANAGER_QPKG_ARCH[$index]} = all || ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
             echo "${MANAGER_QPKG_URL[$index]}"
             return 0
         fi
@@ -5328,7 +5392,7 @@ QPKG.Desc()
     local -i index=0
 
     for index in "${!MANAGER_QPKG_NAME[@]}"; do
-        if [[ $1 = "${MANAGER_QPKG_NAME[$index]}" ]]; then
+        if [[ ${MANAGER_QPKG_NAME[$index]} = "${1:?no package name supplied}" ]]; then
             echo "${MANAGER_QPKG_DESC[$index]}"
             return 0
         fi
@@ -5351,7 +5415,7 @@ QPKG.MD5()
     local -i index=0
 
     for index in "${!MANAGER_QPKG_NAME[@]}"; do
-        if [[ $1 = "${MANAGER_QPKG_NAME[$index]}" ]] && [[ ${MANAGER_QPKG_ARCH[$index]} = all || ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
+        if [[ ${MANAGER_QPKG_NAME[$index]} = "${1:?no package name supplied}" ]] && [[ ${MANAGER_QPKG_ARCH[$index]} = all || ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
             echo "${MANAGER_QPKG_MD5[$index]}"
             return 0
         fi
@@ -5374,7 +5438,7 @@ QPKG.MinRAM()
     local -i index=0
 
     for index in "${!MANAGER_QPKG_NAME[@]}"; do
-        if [[ $1 = "${MANAGER_QPKG_NAME[$index]}" ]] && [[ ${MANAGER_QPKG_MIN_RAM_KB[$index]} = any || $INSTALLED_RAM_KB -ge ${MANAGER_QPKG_MIN_RAM_KB[$index]} ]]; then
+        if [[ ${MANAGER_QPKG_NAME[$index]} = "${1:?no package name supplied}" ]] && [[ ${MANAGER_QPKG_MIN_RAM_KB[$index]} = any || $INSTALLED_RAM_KB -ge ${MANAGER_QPKG_MIN_RAM_KB[$index]} ]]; then
             echo "${MANAGER_QPKG_MIN_RAM_KB[$index]}"
             return 0
         fi
@@ -5396,7 +5460,7 @@ QPKG.GetStandalones()
     local -i index=0
 
     for index in "${!MANAGER_QPKG_NAME[@]}"; do
-        if [[ $1 = "${MANAGER_QPKG_NAME[$index]}" ]] && [[ ${MANAGER_QPKG_ARCH[$index]} = all || ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
+        if [[ ${MANAGER_QPKG_NAME[$index]} = "${1:?no package name supplied}" ]] && [[ ${MANAGER_QPKG_ARCH[$index]} = all || ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
             if [[ ${MANAGER_QPKG_DEPENDS_ON[$index]} != none ]]; then
                 echo "${MANAGER_QPKG_DEPENDS_ON[$index]}"
                 return 0
@@ -5422,7 +5486,7 @@ QPKG.GetDependents()
 
     if QPKGs.ScStandalone.Exist "$1"; then
         for index in "${!MANAGER_QPKG_NAME[@]}"; do
-            if [[ ${MANAGER_QPKG_DEPENDS_ON[$index]} == *"$1"* ]]; then
+            if [[ ${MANAGER_QPKG_DEPENDS_ON[$index]} == *"${1:?no package name supplied} = "* ]]; then
                 [[ ${acc[*]:-} != "${MANAGER_QPKG_NAME[$index]}" ]] && acc+=(${MANAGER_QPKG_NAME[$index]})
             fi
         done
@@ -5907,42 +5971,42 @@ DebugFuncExit()
 DebugAsProc()
     {
 
-    DebugThis "(--) $1 ..."
+    DebugThis "(--) ${1:-} ..."
 
     }
 
 DebugAsDone()
     {
 
-    DebugThis "(==) $1"
+    DebugThis "(==) ${1:-}"
 
     }
 
 DebugAsDetected()
     {
 
-    DebugThis "(**) $1"
+    DebugThis "(**) ${1:-}"
 
     }
 
 DebugAsInfo()
     {
 
-    DebugThis "(II) $1"
+    DebugThis "(II) ${1:-}"
 
     }
 
 DebugAsWarn()
     {
 
-    DebugThis "(WW) $1"
+    DebugThis "(WW) ${1:-}"
 
     }
 
 DebugAsError()
     {
 
-    DebugThis "(EE) $1"
+    DebugThis "(EE) ${1:-}"
 
     }
 
@@ -5956,7 +6020,7 @@ DebugAsLog()
 DebugAsVar()
     {
 
-    DebugThis "(vv) $1"
+    DebugThis "(vv) ${1:-}"
 
     }
 
@@ -5964,7 +6028,7 @@ DebugThis()
     {
 
     [[ $(type -t Session.Debug.ToScreen.Init) = function ]] && Session.Debug.ToScreen.IsSet && ShowAsDebug "${1:-}"
-    WriteAsDebug "$1"
+    WriteAsDebug "${1:-}"
 
     }
 
