@@ -460,7 +460,7 @@ Session.Init()
         MANAGER_QPKG_DEPENDED_UPON+=(false)
         MANAGER_QPKG_IPKGS_ADD+=('python3-mako python3-pillow python3-pip python3-pytz python3-requests python3-six python3-urllib3')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
-        MANAGER_QPKG_PIPS_ADD+=('apscheduler beautifulsoup4 cfscrape cheroot cherrypy feedparser jaraco.classes jaraco.collections jaraco.functools jaraco.text more_itertools portend sgmllib3k simplejson tempora tzlocal zc.lockfile')
+        MANAGER_QPKG_PIPS_ADD+=('apscheduler beautifulsoup4 cfscrape cheroot cherrypy feedparser jaraco.classes jaraco.collections jaraco.functools jaraco.text more_itertools portend sgmllib3k simplejson soupsieve tempora tzlocal zc.lockfile')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
         MANAGER_QPKG_RESTART_TO_UPDATE+=(true)
 
