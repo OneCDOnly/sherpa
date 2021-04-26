@@ -310,6 +310,32 @@ else
 echo -n "$_ob_ipkgs_toinstall_tx_"
 fi ;}
 IPKGs.ToInstall.Init
+PIPs.ToInstall.Clear()
+{ [[ $_ob_pips_toinstall_fl_ != 'true' ]] && return
+_ob_pips_toinstall_fl_=false
+[[ $_ob_pips_toinstall_chfl_ = 'true' ]] && DebugVar _ob_pips_toinstall_fl_ ;}
+PIPs.ToInstall.NoLogMods()
+{ [[ $_ob_pips_toinstall_chfl_ != 'true' ]] && return
+_ob_pips_toinstall_chfl_=false ;}
+PIPs.ToInstall.Init()
+{ _ob_pips_toinstall_tx_=''
+_ob_pips_toinstall_fl_=false
+_ob_pips_toinstall_chfl_=true ;}
+PIPs.ToInstall.IsNt()
+{ [[ $_ob_pips_toinstall_fl_ != 'true' ]] ;}
+PIPs.ToInstall.IsSet()
+{ [[ $_ob_pips_toinstall_fl_ = 'true' ]] ;}
+PIPs.ToInstall.Set()
+{ [[ $_ob_pips_toinstall_fl_ = 'true' ]] && return
+_ob_pips_toinstall_fl_=true
+[[ $_ob_pips_toinstall_chfl_ = 'true' ]] && DebugVar _ob_pips_toinstall_fl_ ;}
+PIPs.ToInstall.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_pips_toinstall_tx_=$2
+else
+echo -n "$_ob_pips_toinstall_tx_"
+fi ;}
+PIPs.ToInstall.Init
 Opts.Deps.Check.Clear()
 { [[ $_ob_opts_deps_check_fl_ != 'true' ]] && return
 _ob_opts_deps_check_fl_=false
@@ -14060,6 +14086,50 @@ else
 echo -n $_ob_ipkgs_optodownload_sz_
 fi ;}
 IPKGs.OpToDownload.Init
+PIPs.OpToDownload.Add()
+{ local ar=(${1}) it=''
+[[ ${#ar[@]} -eq 0 ]] && return
+for it in "${ar[@]:-}"; do
+[[ " ${_ob_pips_optodownload_ar_[*]+"${_ob_pips_optodownload_ar_[@]}"} " != *"$it"* ]] && _ob_pips_optodownload_ar_+=("$it")
+done ;}
+PIPs.OpToDownload.Array()
+{ echo -n "${_ob_pips_optodownload_ar_[@]+"${_ob_pips_optodownload_ar_[@]}"}" ;}
+PIPs.OpToDownload.Count()
+{ echo "${#_ob_pips_optodownload_ar_[@]}" ;}
+PIPs.OpToDownload.Exist()
+{ [[ ${_ob_pips_optodownload_ar_[*]:-} == *"$1"* ]] ;}
+PIPs.OpToDownload.Init()
+{ _ob_pips_optodownload_sz_=0
+_ob_pips_optodownload_ar_=()
+_ob_pips_optodownload_arin_=1 ;}
+PIPs.OpToDownload.IsAny()
+{ [[ ${#_ob_pips_optodownload_ar_[@]} -gt 0 ]] ;}
+PIPs.OpToDownload.IsNone()
+{ [[ ${#_ob_pips_optodownload_ar_[@]} -eq 0 ]] ;}
+PIPs.OpToDownload.List()
+{ echo -n "${_ob_pips_optodownload_ar_[*]+"${_ob_pips_optodownload_ar_[@]}"}" ;}
+PIPs.OpToDownload.ListCSV()
+{ echo -n "${_ob_pips_optodownload_ar_[*]+"${_ob_pips_optodownload_ar_[@]}"}" | tr ' ' ',' ;}
+PIPs.OpToDownload.Remove()
+{ local agar=(${1}) tmar=() ag='' it='' m=false
+for it in "${_ob_pips_optodownload_ar_[@]+"${_ob_pips_optodownload_ar_[@]}"}"; do
+m=false
+for ag in "${agar[@]+"${agar[@]}"}"; do
+if [[ $ag = $it ]]; then
+m=true; break
+fi
+done
+[[ $m = false ]] && tmar+=("$it")
+done
+_ob_pips_optodownload_ar_=("${tmar[@]+"${tmar[@]}"}")
+[[ -z ${_ob_pips_optodownload_ar_[*]+"${_ob_pips_optodownload_ar_[@]}"} ]] && _ob_pips_optodownload_ar_=() ;}
+PIPs.OpToDownload.Size()
+{ if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+_ob_pips_optodownload_sz_=$2
+else
+echo -n $_ob_pips_optodownload_sz_
+fi ;}
+PIPs.OpToDownload.Init
 IPKGs.OpToInstall.Add()
 { local ar=(${1}) it=''
 [[ ${#ar[@]} -eq 0 ]] && return
@@ -14104,6 +14174,50 @@ else
 echo -n $_ob_ipkgs_optoinstall_sz_
 fi ;}
 IPKGs.OpToInstall.Init
+PIPs.OpToInstall.Add()
+{ local ar=(${1}) it=''
+[[ ${#ar[@]} -eq 0 ]] && return
+for it in "${ar[@]:-}"; do
+[[ " ${_ob_pips_optoinstall_ar_[*]+"${_ob_pips_optoinstall_ar_[@]}"} " != *"$it"* ]] && _ob_pips_optoinstall_ar_+=("$it")
+done ;}
+PIPs.OpToInstall.Array()
+{ echo -n "${_ob_pips_optoinstall_ar_[@]+"${_ob_pips_optoinstall_ar_[@]}"}" ;}
+PIPs.OpToInstall.Count()
+{ echo "${#_ob_pips_optoinstall_ar_[@]}" ;}
+PIPs.OpToInstall.Exist()
+{ [[ ${_ob_pips_optoinstall_ar_[*]:-} == *"$1"* ]] ;}
+PIPs.OpToInstall.Init()
+{ _ob_pips_optoinstall_sz_=0
+_ob_pips_optoinstall_ar_=()
+_ob_pips_optoinstall_arin_=1 ;}
+PIPs.OpToInstall.IsAny()
+{ [[ ${#_ob_pips_optoinstall_ar_[@]} -gt 0 ]] ;}
+PIPs.OpToInstall.IsNone()
+{ [[ ${#_ob_pips_optoinstall_ar_[@]} -eq 0 ]] ;}
+PIPs.OpToInstall.List()
+{ echo -n "${_ob_pips_optoinstall_ar_[*]+"${_ob_pips_optoinstall_ar_[@]}"}" ;}
+PIPs.OpToInstall.ListCSV()
+{ echo -n "${_ob_pips_optoinstall_ar_[*]+"${_ob_pips_optoinstall_ar_[@]}"}" | tr ' ' ',' ;}
+PIPs.OpToInstall.Remove()
+{ local agar=(${1}) tmar=() ag='' it='' m=false
+for it in "${_ob_pips_optoinstall_ar_[@]+"${_ob_pips_optoinstall_ar_[@]}"}"; do
+m=false
+for ag in "${agar[@]+"${agar[@]}"}"; do
+if [[ $ag = $it ]]; then
+m=true; break
+fi
+done
+[[ $m = false ]] && tmar+=("$it")
+done
+_ob_pips_optoinstall_ar_=("${tmar[@]+"${tmar[@]}"}")
+[[ -z ${_ob_pips_optoinstall_ar_[*]+"${_ob_pips_optoinstall_ar_[@]}"} ]] && _ob_pips_optoinstall_ar_=() ;}
+PIPs.OpToInstall.Size()
+{ if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+_ob_pips_optoinstall_sz_=$2
+else
+echo -n $_ob_pips_optoinstall_sz_
+fi ;}
+PIPs.OpToInstall.Init
 IPKGs.OpToUninstall.Add()
 { local ar=(${1}) it=''
 [[ ${#ar[@]} -eq 0 ]] && return
@@ -14148,6 +14262,50 @@ else
 echo -n $_ob_ipkgs_optouninstall_sz_
 fi ;}
 IPKGs.OpToUninstall.Init
+PIPs.OpToUninstall.Add()
+{ local ar=(${1}) it=''
+[[ ${#ar[@]} -eq 0 ]] && return
+for it in "${ar[@]:-}"; do
+[[ " ${_ob_pips_optouninstall_ar_[*]+"${_ob_pips_optouninstall_ar_[@]}"} " != *"$it"* ]] && _ob_pips_optouninstall_ar_+=("$it")
+done ;}
+PIPs.OpToUninstall.Array()
+{ echo -n "${_ob_pips_optouninstall_ar_[@]+"${_ob_pips_optouninstall_ar_[@]}"}" ;}
+PIPs.OpToUninstall.Count()
+{ echo "${#_ob_pips_optouninstall_ar_[@]}" ;}
+PIPs.OpToUninstall.Exist()
+{ [[ ${_ob_pips_optouninstall_ar_[*]:-} == *"$1"* ]] ;}
+PIPs.OpToUninstall.Init()
+{ _ob_pips_optouninstall_sz_=0
+_ob_pips_optouninstall_ar_=()
+_ob_pips_optouninstall_arin_=1 ;}
+PIPs.OpToUninstall.IsAny()
+{ [[ ${#_ob_pips_optouninstall_ar_[@]} -gt 0 ]] ;}
+PIPs.OpToUninstall.IsNone()
+{ [[ ${#_ob_pips_optouninstall_ar_[@]} -eq 0 ]] ;}
+PIPs.OpToUninstall.List()
+{ echo -n "${_ob_pips_optouninstall_ar_[*]+"${_ob_pips_optouninstall_ar_[@]}"}" ;}
+PIPs.OpToUninstall.ListCSV()
+{ echo -n "${_ob_pips_optouninstall_ar_[*]+"${_ob_pips_optouninstall_ar_[@]}"}" | tr ' ' ',' ;}
+PIPs.OpToUninstall.Remove()
+{ local agar=(${1}) tmar=() ag='' it='' m=false
+for it in "${_ob_pips_optouninstall_ar_[@]+"${_ob_pips_optouninstall_ar_[@]}"}"; do
+m=false
+for ag in "${agar[@]+"${agar[@]}"}"; do
+if [[ $ag = $it ]]; then
+m=true; break
+fi
+done
+[[ $m = false ]] && tmar+=("$it")
+done
+_ob_pips_optouninstall_ar_=("${tmar[@]+"${tmar[@]}"}")
+[[ -z ${_ob_pips_optouninstall_ar_[*]+"${_ob_pips_optouninstall_ar_[@]}"} ]] && _ob_pips_optouninstall_ar_=() ;}
+PIPs.OpToUninstall.Size()
+{ if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+_ob_pips_optouninstall_sz_=$2
+else
+echo -n $_ob_pips_optouninstall_sz_
+fi ;}
+PIPs.OpToUninstall.Init
 IPKGs.OpToUpgrade.Add()
 { local ar=(${1}) it=''
 [[ ${#ar[@]} -eq 0 ]] && return
@@ -14192,6 +14350,50 @@ else
 echo -n $_ob_ipkgs_optoupgrade_sz_
 fi ;}
 IPKGs.OpToUpgrade.Init
+PIPs.OpToUpgrade.Add()
+{ local ar=(${1}) it=''
+[[ ${#ar[@]} -eq 0 ]] && return
+for it in "${ar[@]:-}"; do
+[[ " ${_ob_pips_optoupgrade_ar_[*]+"${_ob_pips_optoupgrade_ar_[@]}"} " != *"$it"* ]] && _ob_pips_optoupgrade_ar_+=("$it")
+done ;}
+PIPs.OpToUpgrade.Array()
+{ echo -n "${_ob_pips_optoupgrade_ar_[@]+"${_ob_pips_optoupgrade_ar_[@]}"}" ;}
+PIPs.OpToUpgrade.Count()
+{ echo "${#_ob_pips_optoupgrade_ar_[@]}" ;}
+PIPs.OpToUpgrade.Exist()
+{ [[ ${_ob_pips_optoupgrade_ar_[*]:-} == *"$1"* ]] ;}
+PIPs.OpToUpgrade.Init()
+{ _ob_pips_optoupgrade_sz_=0
+_ob_pips_optoupgrade_ar_=()
+_ob_pips_optoupgrade_arin_=1 ;}
+PIPs.OpToUpgrade.IsAny()
+{ [[ ${#_ob_pips_optoupgrade_ar_[@]} -gt 0 ]] ;}
+PIPs.OpToUpgrade.IsNone()
+{ [[ ${#_ob_pips_optoupgrade_ar_[@]} -eq 0 ]] ;}
+PIPs.OpToUpgrade.List()
+{ echo -n "${_ob_pips_optoupgrade_ar_[*]+"${_ob_pips_optoupgrade_ar_[@]}"}" ;}
+PIPs.OpToUpgrade.ListCSV()
+{ echo -n "${_ob_pips_optoupgrade_ar_[*]+"${_ob_pips_optoupgrade_ar_[@]}"}" | tr ' ' ',' ;}
+PIPs.OpToUpgrade.Remove()
+{ local agar=(${1}) tmar=() ag='' it='' m=false
+for it in "${_ob_pips_optoupgrade_ar_[@]+"${_ob_pips_optoupgrade_ar_[@]}"}"; do
+m=false
+for ag in "${agar[@]+"${agar[@]}"}"; do
+if [[ $ag = $it ]]; then
+m=true; break
+fi
+done
+[[ $m = false ]] && tmar+=("$it")
+done
+_ob_pips_optoupgrade_ar_=("${tmar[@]+"${tmar[@]}"}")
+[[ -z ${_ob_pips_optoupgrade_ar_[*]+"${_ob_pips_optoupgrade_ar_[@]}"} ]] && _ob_pips_optoupgrade_ar_=() ;}
+PIPs.OpToUpgrade.Size()
+{ if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+_ob_pips_optoupgrade_sz_=$2
+else
+echo -n $_ob_pips_optoupgrade_sz_
+fi ;}
+PIPs.OpToUpgrade.Init
 QPKGs.ScAll.Add()
 { local ar=(${1}) it=''
 [[ ${#ar[@]} -eq 0 ]] && return

@@ -267,6 +267,7 @@ Session.Init()
         MANAGER_QPKG_DEPENDED_UPON=()       # true/false: this QPKG is depended-upon by other QPKGs
         MANAGER_QPKG_IPKGS_ADD=()           # require these IPKGs to be installed first
         MANAGER_QPKG_IPKGS_REMOVE=()        # require these IPKGs to be uninstalled first
+        MANAGER_QPKG_PIPS_ADD=()            # require these PIPs to be installed first
         MANAGER_QPKG_SUPPORTS_BACKUP=()     # true/false: this QPKG supports configuration 'backup' and 'restore' operations
         MANAGER_QPKG_RESTART_TO_UPDATE=()   # true/false: the internal appplication can be updated by restarting the QPKG
 
@@ -283,6 +284,7 @@ Session.Init()
         MANAGER_QPKG_DEPENDED_UPON+=(false)
         MANAGER_QPKG_IPKGS_ADD+=('clamav freshclam')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
+        MANAGER_QPKG_PIPS_ADD+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
         MANAGER_QPKG_RESTART_TO_UPDATE+=(false)
 
@@ -298,6 +300,7 @@ Session.Init()
         MANAGER_QPKG_DEPENDED_UPON+=(false)
         MANAGER_QPKG_IPKGS_ADD+=('deluge jq')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
+        MANAGER_QPKG_PIPS_ADD+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
         MANAGER_QPKG_RESTART_TO_UPDATE+=(false)
 
@@ -313,6 +316,7 @@ Session.Init()
         MANAGER_QPKG_DEPENDED_UPON+=(false)
         MANAGER_QPKG_IPKGS_ADD+=('deluge-ui-web jq')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
+        MANAGER_QPKG_PIPS_ADD+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
         MANAGER_QPKG_RESTART_TO_UPDATE+=(false)
 
@@ -328,6 +332,7 @@ Session.Init()
         MANAGER_QPKG_DEPENDED_UPON+=(false)
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
+        MANAGER_QPKG_PIPS_ADD+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
         MANAGER_QPKG_RESTART_TO_UPDATE+=(false)
 
@@ -343,6 +348,7 @@ Session.Init()
         MANAGER_QPKG_DEPENDED_UPON+=(false)
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
+        MANAGER_QPKG_PIPS_ADD+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
         MANAGER_QPKG_RESTART_TO_UPDATE+=(false)
 
@@ -358,6 +364,7 @@ Session.Init()
         MANAGER_QPKG_DEPENDED_UPON+=(false)
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
+        MANAGER_QPKG_PIPS_ADD+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
         MANAGER_QPKG_RESTART_TO_UPDATE+=(false)
 
@@ -373,6 +380,7 @@ Session.Init()
         MANAGER_QPKG_DEPENDED_UPON+=(false)
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
+        MANAGER_QPKG_PIPS_ADD+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
         MANAGER_QPKG_RESTART_TO_UPDATE+=(false)
 
@@ -388,6 +396,7 @@ Session.Init()
         MANAGER_QPKG_DEPENDED_UPON+=(true)
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
+        MANAGER_QPKG_PIPS_ADD+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
         MANAGER_QPKG_RESTART_TO_UPDATE+=(false)
 
@@ -403,6 +412,7 @@ Session.Init()
         MANAGER_QPKG_DEPENDED_UPON+=(false)
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
+        MANAGER_QPKG_PIPS_ADD+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
         MANAGER_QPKG_RESTART_TO_UPDATE+=(false)
 
@@ -416,8 +426,9 @@ Session.Init()
         MANAGER_QPKG_ABBRVS+=('ll lazy lazylibrarian')
         MANAGER_QPKG_DEPENDS_ON+=(Entware)
         MANAGER_QPKG_DEPENDED_UPON+=(false)
-        MANAGER_QPKG_IPKGS_ADD+=('python3-pillow python3-pyopenssl')
+        MANAGER_QPKG_IPKGS_ADD+=('python3-dev python3-pillow python3-pip python3-pyopenssl python3-requests python3-requests-oauthlib python3-yaml')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
+        MANAGER_QPKG_PIPS_ADD+=('apprise click markdown python-levenshtein python-magic')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
         MANAGER_QPKG_RESTART_TO_UPDATE+=(true)
 
@@ -431,8 +442,9 @@ Session.Init()
         MANAGER_QPKG_ABBRVS+=('om med omed medusa omedusa')
         MANAGER_QPKG_DEPENDS_ON+=(Entware)
         MANAGER_QPKG_DEPENDED_UPON+=(false)
-        MANAGER_QPKG_IPKGS_ADD+=('mediainfo python3-pyopenssl')
+        MANAGER_QPKG_IPKGS_ADD+=('mediainfo python3-pip python3-pyopenssl')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
+        MANAGER_QPKG_PIPS_ADD+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
         MANAGER_QPKG_RESTART_TO_UPDATE+=(true)
 
@@ -446,8 +458,9 @@ Session.Init()
         MANAGER_QPKG_ABBRVS+=('my omy myl mylar mylar3')
         MANAGER_QPKG_DEPENDS_ON+=(Entware)
         MANAGER_QPKG_DEPENDED_UPON+=(false)
-        MANAGER_QPKG_IPKGS_ADD+=('python3-mako python3-pillow python3-pytz python3-six python3-urllib3')
+        MANAGER_QPKG_IPKGS_ADD+=('python3-mako python3-pillow python3-pip python3-pytz python3-requests python3-six python3-urllib3')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
+        MANAGER_QPKG_PIPS_ADD+=('apscheduler beautifulsoup4 cfscrape cheroot cherrypy feedparser jaraco.classes jaraco.collections jaraco.functools jaraco.text more_itertools portend sgmllib3k simplejson tempora tzlocal zc.lockfile')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
         MANAGER_QPKG_RESTART_TO_UPDATE+=(true)
 
@@ -463,6 +476,7 @@ Session.Init()
         MANAGER_QPKG_DEPENDED_UPON+=(false)
         MANAGER_QPKG_IPKGS_ADD+=(nzbget)
         MANAGER_QPKG_IPKGS_REMOVE+=('')
+        MANAGER_QPKG_PIPS_ADD+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
         MANAGER_QPKG_RESTART_TO_UPDATE+=(false)
 
@@ -476,8 +490,9 @@ Session.Init()
         MANAGER_QPKG_ABBRVS+=('n2 nt nzb2 nzb2m nzbto nzbtom nzbtomedia')
         MANAGER_QPKG_DEPENDS_ON+=(Entware)
         MANAGER_QPKG_DEPENDED_UPON+=(false)
-        MANAGER_QPKG_IPKGS_ADD+=('')
+        MANAGER_QPKG_IPKGS_ADD+=('python3-pip')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
+        MANAGER_QPKG_PIPS_ADD+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
         MANAGER_QPKG_RESTART_TO_UPDATE+=(true)
 
@@ -493,6 +508,7 @@ Session.Init()
         MANAGER_QPKG_DEPENDED_UPON+=(true)
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
+        MANAGER_QPKG_PIPS_ADD+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
         MANAGER_QPKG_RESTART_TO_UPDATE+=(false)
 
@@ -508,6 +524,7 @@ Session.Init()
         MANAGER_QPKG_DEPENDED_UPON+=(true)
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
+        MANAGER_QPKG_PIPS_ADD+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
         MANAGER_QPKG_RESTART_TO_UPDATE+=(false)
 
@@ -523,6 +540,7 @@ Session.Init()
         MANAGER_QPKG_DEPENDED_UPON+=(true)
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
+        MANAGER_QPKG_PIPS_ADD+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
         MANAGER_QPKG_RESTART_TO_UPDATE+=(false)
 
@@ -538,6 +556,7 @@ Session.Init()
         MANAGER_QPKG_DEPENDED_UPON+=(true)
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
+        MANAGER_QPKG_PIPS_ADD+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
         MANAGER_QPKG_RESTART_TO_UPDATE+=(false)
 
@@ -553,6 +572,7 @@ Session.Init()
         MANAGER_QPKG_DEPENDED_UPON+=(true)
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
+        MANAGER_QPKG_PIPS_ADD+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
         MANAGER_QPKG_RESTART_TO_UPDATE+=(false)
 
@@ -568,6 +588,7 @@ Session.Init()
         MANAGER_QPKG_DEPENDED_UPON+=(true)
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
+        MANAGER_QPKG_PIPS_ADD+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
         MANAGER_QPKG_RESTART_TO_UPDATE+=(false)
 
@@ -583,6 +604,7 @@ Session.Init()
         MANAGER_QPKG_DEPENDED_UPON+=(false)
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
+        MANAGER_QPKG_PIPS_ADD+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
         MANAGER_QPKG_RESTART_TO_UPDATE+=(false)
 
@@ -596,8 +618,9 @@ Session.Init()
         MANAGER_QPKG_ABBRVS+=('sb sb3 sab sab3 sabnzbd3 sabnzbd')
         MANAGER_QPKG_DEPENDS_ON+=('Entware Par2')
         MANAGER_QPKG_DEPENDED_UPON+=(false)
-        MANAGER_QPKG_IPKGS_ADD+=('unrar p7zip coreutils-nice ionice ffprobe python3-cryptography python3-cffi')
+        MANAGER_QPKG_IPKGS_ADD+=('coreutils-nice ffprobe ionice python3-certifi python3-cffi python3-cryptography python3-dev python3-pip p7zip unrar')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
+        MANAGER_QPKG_PIPS_ADD+=('cheetah3 cheroot cherrypy configobj feedparser jaraco.classes jaraco.collections jaraco.functools jaraco.text more_itertools portend sabyenc3 sgmllib3k tempora zc.lockfile')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
         MANAGER_QPKG_RESTART_TO_UPDATE+=(true)
 
@@ -613,6 +636,7 @@ Session.Init()
         MANAGER_QPKG_DEPENDED_UPON+=(false)
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
+        MANAGER_QPKG_PIPS_ADD+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
         MANAGER_QPKG_RESTART_TO_UPDATE+=(false)
 
@@ -628,6 +652,7 @@ Session.Init()
         MANAGER_QPKG_DEPENDED_UPON+=(false)
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
+        MANAGER_QPKG_PIPS_ADD+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
         MANAGER_QPKG_RESTART_TO_UPDATE+=(false)
 
@@ -643,6 +668,7 @@ Session.Init()
         MANAGER_QPKG_DEPENDED_UPON+=(false)
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
+        MANAGER_QPKG_PIPS_ADD+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
         MANAGER_QPKG_RESTART_TO_UPDATE+=(false)
 
@@ -656,8 +682,9 @@ Session.Init()
         MANAGER_QPKG_ABBRVS+=('sc sick sickc chill sickchill')
         MANAGER_QPKG_DEPENDS_ON+=(Entware)
         MANAGER_QPKG_DEPENDED_UPON+=(false)
-        MANAGER_QPKG_IPKGS_ADD+=('')
+        MANAGER_QPKG_IPKGS_ADD+=('python3-dev python3-pip')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
+        MANAGER_QPKG_PIPS_ADD+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
         MANAGER_QPKG_RESTART_TO_UPDATE+=(true)
 
@@ -671,8 +698,9 @@ Session.Init()
         MANAGER_QPKG_ABBRVS+=('sg os osg sickg gear ogear osickg sickgear osickgear')
         MANAGER_QPKG_DEPENDS_ON+=(Entware)
         MANAGER_QPKG_DEPENDED_UPON+=(false)
-        MANAGER_QPKG_IPKGS_ADD+=('')
+        MANAGER_QPKG_IPKGS_ADD+=('python3-dev python3-pip')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
+        MANAGER_QPKG_PIPS_ADD+=('cheetah3')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
         MANAGER_QPKG_RESTART_TO_UPDATE+=(true)
 
@@ -688,6 +716,7 @@ Session.Init()
         MANAGER_QPKG_DEPENDED_UPON+=(false)
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
+        MANAGER_QPKG_PIPS_ADD+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
         MANAGER_QPKG_RESTART_TO_UPDATE+=(false)
 
@@ -704,6 +733,7 @@ Session.Init()
         MANAGER_QPKG_IPKGS_ADD+=('transmission-web jq')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
+        MANAGER_QPKG_PIPS_ADD+=('')
         MANAGER_QPKG_RESTART_TO_UPDATE+=(false)
 
     # package arrays are now full, so lock them
@@ -719,6 +749,7 @@ Session.Init()
         readonly MANAGER_QPKG_DEPENDED_UPON
         readonly MANAGER_QPKG_IPKGS_ADD
         readonly MANAGER_QPKG_IPKGS_REMOVE
+        readonly MANAGER_QPKG_PIPS_ADD
         readonly MANAGER_QPKG_SUPPORTS_BACKUP
         readonly MANAGER_QPKG_RESTART_TO_UPDATE
 
@@ -726,9 +757,8 @@ Session.Init()
 
     readonly MANAGER_BASE_QPKG_CONFLICTS='Optware Optware-NG TarMT Python QPython2 Python3 QPython3'
     readonly MANAGER_BASE_IPKGS_ADD='ca-certificates findutils gcc git git-http grep less nano sed'
-    readonly MANAGER_SHARED_IPKGS_ADD='python3-dev python3-pip python3-requests python3-requests-oauthlib python3-setuptools python3-yaml'
-    readonly MANAGER_BASE_PIPS_ADD='pip wheel'
-    readonly MANAGER_SHARED_PIPS_ADD='apprise apscheduler beautifulsoup4 cfscrape cheetah3 cheroot cherrypy click configobj feedparser jaraco.classes jaraco.collections jaraco.functools jaraco.text markdown more_itertools notify2 portend pygithub python-levenshtein python-magic pytz random_user_agent sabyenc3 sgmllib3k simplejson slugify tempora tzlocal zc.lockfile'
+    readonly MANAGER_BASE_PIPS_ADD='wheel pip'
+    # leftover unallocated pip modules 'notify2 pygithub random_user_agent slugify'
 
     QPKGs.StandaloneDependent.Build
 
@@ -888,6 +918,7 @@ Session.Validate()
     if Opts.Deps.Check.IsSet || QPKGs.OpToUpgrade.Exist Entware; then
         IPKGs.ToUpgrade.Set
         IPKGs.ToInstall.Set
+        PIPs.ToInstall.Set
     fi
 
     QPKGs.IsSupportBackup.Build
@@ -1072,6 +1103,7 @@ Tiers.Processor()
                     if QPKGs.OpTo${operation}.IsAny || QPKGs.OpOk${operation}.IsAny; then
                         IPKGs.ToUpgrade.Set
                         IPKGs.ToInstall.Set
+                        PIPs.ToInstall.Set
                         break
                     fi
                 done
@@ -2458,7 +2490,6 @@ IPKGs.DoInstall()
     IPKGs.OpToDownload.Init
 
     IPKGs.OpToInstall.Add "$MANAGER_BASE_IPKGS_ADD"
-    IPKGs.OpToInstall.Add "$MANAGER_SHARED_IPKGS_ADD"
 
     if Opts.Apps.OpInstall.ScAll.IsSet; then
         for index in "${!MANAGER_QPKG_NAME[@]}"; do
@@ -2544,6 +2575,7 @@ PIPs.DoInstall()
     {
 
     QPKGs.SkProc.IsSet && return
+    PIPs.ToInstall.IsNt && return
     QPKGs.IsNtInstalled.Exist Entware && return
     QPKGs.IsStopped.Exist Entware && return
     Session.Error.IsSet && return
@@ -2557,6 +2589,8 @@ PIPs.DoInstall()
     local -r ACTION_PRESENT=installing
     local -r ACTION_PAST=installed
     local -r RUNTIME=long
+    PIPs.OpToInstall.Init
+    PIPs.OpToDownload.Init
 
     # sometimes, 'pip3' goes missing from Entware. Don't know why.
     if [[ -e /opt/bin/pip3 ]]; then
@@ -2568,17 +2602,15 @@ PIPs.DoInstall()
     elif [[ -e /opt/bin/pip3.7 ]]; then
         pip3_cmd=/opt/bin/pip3.7
     else
-        if IsNtSysFileExist $pip3_cmd; then
-            Display "* Ugh! The usual fix for this is to let $(FormatAsScriptTitle) reinstall $(FormatAsPackageName Entware) at least once."
-            Display "\t$0 reinstall ew"
-            Display "If it happens again after reinstalling $(FormatAsPackageName Entware), please create a new issue for this on GitHub."
-            DebugFuncExit 1; return
+        if [[ ! -e $pip3_cmd ]]; then
+            DebugAsWarn 'pip3 not found ... aborting'
+            DebugFuncExit; return
         fi
     fi
 
     ModPathToEntware
 
-    if Opts.Deps.Check.IsSet || QPKGs.OpOkInstall.Exist Entware; then
+    if Opts.Deps.Check.IsSet || IPKGs.OpToInstall.Exist python3-pip; then
         ShowAsOperationProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
 
         exec_cmd="$pip3_cmd install --upgrade --no-deps $MANAGER_BASE_PIPS_ADD --cache-dir $PIP_CACHE_PATH"
@@ -2599,11 +2631,25 @@ PIPs.DoInstall()
         ((total_count--))
     fi
 
-    if Opts.Deps.Check.IsSet || QPKGs.OpOkInstall.Exist Entware; then
+    if Opts.Apps.OpInstall.ScAll.IsSet; then
+        for index in "${!MANAGER_QPKG_NAME[@]}"; do
+            [[ ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${MANAGER_QPKG_ARCH[$index]} = all ]] || continue
+            PIPs.OpToInstall.Add "${MANAGER_QPKG_PIPS_ADD[$index]}"
+        done
+    else
+        for index in "${!MANAGER_QPKG_NAME[@]}"; do
+            QPKGs.OpToInstall.Exist "${MANAGER_QPKG_NAME[$index]}" || (QPKGs.IsInstalled.Exist "${MANAGER_QPKG_NAME[$index]}" && QPKGs.IsStarted.Exist "${MANAGER_QPKG_NAME[$index]}") || QPKGs.OpToReinstall.Exist "${MANAGER_QPKG_NAME[$index]}" || QPKGs.OpToStart.Exist "${MANAGER_QPKG_NAME[$index]}" || continue
+            [[ ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${MANAGER_QPKG_ARCH[$index]} = all ]] || continue
+            QPKG.MinRAM "${MANAGER_QPKG_NAME[$index]}" &>/dev/null || continue
+            PIPs.OpToInstall.Add "${MANAGER_QPKG_PIPS_ADD[$index]}"
+        done
+    fi
+
+    if Opts.Deps.Check.IsSet || PIPs.OpToInstall.IsAny; then
         ShowAsOperationProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
 
-        exec_cmd="$pip3_cmd install --upgrade --no-deps $MANAGER_SHARED_PIPS_ADD --cache-dir $PIP_CACHE_PATH"
-        local desc="'Python3' shared modules"
+        exec_cmd="$pip3_cmd install --upgrade --no-deps $(PIPs.OpToInstall.List) --cache-dir $PIP_CACHE_PATH"
+        local desc="'Python3' specific modules"
         local log_pathfile=$LOGS_PATH/py3-modules.shared.$INSTALL_LOG_FILE
         DebugAsProc "downloading & installing $desc"
         RunAndLog "$exec_cmd" "$log_pathfile" log:failure-only
@@ -5461,7 +5507,7 @@ QPKG.GetDependents()
 
     if QPKGs.ScStandalone.Exist "$1"; then
         for index in "${!MANAGER_QPKG_NAME[@]}"; do
-            if [[ ${MANAGER_QPKG_DEPENDS_ON[$index]} == *"${1:?no package name supplied} = "* ]]; then
+            if [[ ${MANAGER_QPKG_DEPENDS_ON[$index]} == *"${1:?no package name supplied}"* ]]; then
                 [[ ${acc[*]:-} != "${MANAGER_QPKG_NAME[$index]}" ]] && acc+=(${MANAGER_QPKG_NAME[$index]})
             fi
         done
@@ -6575,7 +6621,7 @@ CompileObjects()
 
     # $1 = 'hash' (optional) only return the internal checksum
 
-    local -r OBJECTS_HASH=7a3bea4b7bc7fb45999c777e5c573f1d
+    local -r OBJECTS_HASH=8028448f0ba487c1b28ac165ee087a54
     local element=''
     local operation=''
     local scope=''
@@ -6607,6 +6653,7 @@ CompileObjects()
         AddFlagObj QPKGs.SkProc
         AddFlagObj IPKGs.ToUpgrade
         AddFlagObj IPKGs.ToInstall
+        AddFlagObj PIPs.ToInstall
 
         # user option flags
         for element in Deps.Check IgFreeSpace Versions.View; do
@@ -6656,8 +6703,9 @@ CompileObjects()
             AddListObj QPKGs.OpSk${operation}      # operation was skipped
         done
 
-        for operation in Download Install Uninstall Upgrade; do     # only a subset of package operations are supported by IPKGS for-now
+        for operation in Download Install Uninstall Upgrade; do     # only a subset of package operations are supported for-now
             AddListObj IPKGs.OpTo${operation}
+            AddListObj PIPs.OpTo${operation}
         done
 
         for scope in "${PACKAGE_SCOPES[@]}"; do
