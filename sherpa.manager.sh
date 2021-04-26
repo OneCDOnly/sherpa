@@ -54,7 +54,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=210425
+    local -r SCRIPT_VERSION=210426
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -416,7 +416,7 @@ Session.Init()
         MANAGER_QPKG_ABBRVS+=('ll lazy lazylibrarian')
         MANAGER_QPKG_DEPENDS_ON+=(Entware)
         MANAGER_QPKG_DEPENDED_UPON+=(false)
-        MANAGER_QPKG_IPKGS_ADD+=('python3-pyopenssl python3-requests')
+        MANAGER_QPKG_IPKGS_ADD+=('python3-pyopenssl')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
         MANAGER_QPKG_RESTART_TO_UPDATE+=(true)
@@ -446,7 +446,7 @@ Session.Init()
         MANAGER_QPKG_ABBRVS+=('my omy myl mylar mylar3')
         MANAGER_QPKG_DEPENDS_ON+=(Entware)
         MANAGER_QPKG_DEPENDED_UPON+=(false)
-        MANAGER_QPKG_IPKGS_ADD+=('python3-mako python3-pillow python3-pytz python3-requests python3-six python3-urllib3')
+        MANAGER_QPKG_IPKGS_ADD+=('python3-mako python3-pillow python3-pytz python3-six python3-urllib3')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
         MANAGER_QPKG_RESTART_TO_UPDATE+=(true)
@@ -726,9 +726,9 @@ Session.Init()
 
     readonly MANAGER_BASE_QPKG_CONFLICTS='Optware Optware-NG TarMT Python QPython2 Python3 QPython3'
     readonly MANAGER_BASE_IPKGS_ADD='ca-certificates findutils gcc git git-http grep less nano sed'
-    readonly MANAGER_SHARED_IPKGS_ADD='python3-dev python3-pip python3-setuptools'
+    readonly MANAGER_SHARED_IPKGS_ADD='python3-dev python3-pip python3-requests python3-requests-oauthlib python3-setuptools python3-yaml'
     readonly MANAGER_BASE_PIPS_ADD='pip wheel'
-    readonly MANAGER_SHARED_PIPS_ADD='pyopenssl apprise apscheduler beautifulsoup4 cfscrape cheetah3 cherrypy configobj feedparser pygithub python-levenshtein python-magic random_user_agent sabyenc3 simplejson slugify'
+    readonly MANAGER_SHARED_PIPS_ADD='apprise apscheduler beautifulsoup4 cfscrape cheetah3 cheroot cherrypy click configobj feedparser jaraco.classes jaraco.collections jaraco.functools jaraco.text markdown more_itertools notify2 portend pygithub python-levenshtein python-magic pytz random_user_agent sabyenc3 sgmllib3k simplejson slugify tempora tzlocal zc.lockfile'
 
     QPKGs.StandaloneDependent.Build
 
@@ -2581,7 +2581,7 @@ PIPs.DoInstall()
     if Opts.Deps.Check.IsSet || QPKGs.OpOkInstall.Exist Entware; then
         ShowAsOperationProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
 
-        exec_cmd="$pip3_cmd install --upgrade $MANAGER_BASE_PIPS_ADD --cache-dir $PIP_CACHE_PATH"
+        exec_cmd="$pip3_cmd install --upgrade --no-deps $MANAGER_BASE_PIPS_ADD --cache-dir $PIP_CACHE_PATH"
         local desc="'Python3' base modules"
         local log_pathfile=$LOGS_PATH/py3-modules.base.$INSTALL_LOG_FILE
         DebugAsProc "downloading & installing $desc"
@@ -2602,7 +2602,7 @@ PIPs.DoInstall()
     if Opts.Deps.Check.IsSet || QPKGs.OpOkInstall.Exist Entware; then
         ShowAsOperationProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
 
-        exec_cmd="$pip3_cmd install --upgrade $MANAGER_SHARED_PIPS_ADD --cache-dir $PIP_CACHE_PATH"
+        exec_cmd="$pip3_cmd install --upgrade --no-deps $MANAGER_SHARED_PIPS_ADD --cache-dir $PIP_CACHE_PATH"
         local desc="'Python3' shared modules"
         local log_pathfile=$LOGS_PATH/py3-modules.shared.$INSTALL_LOG_FILE
         DebugAsProc "downloading & installing $desc"
@@ -2624,7 +2624,7 @@ PIPs.DoInstall()
         # KLUDGE: force recompilation of 'sabyenc3' package so it's recognised by SABnzbd: https://forums.sabnzbd.org/viewtopic.php?p=121214#p121214
         ShowAsOperationProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
 
-        exec_cmd="$pip3_cmd install --force-reinstall --ignore-installed --no-binary :all: sabyenc3 --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
+        exec_cmd="$pip3_cmd install --no-deps --force-reinstall --no-binary :all: sabyenc3 --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
         desc="'Python3 sabyenc3' module"
         log_pathfile=$LOGS_PATH/py3-modules.sabyenc3.$REINSTALL_LOG_FILE
         DebugAsProc "reinstalling $desc"
@@ -2642,31 +2642,6 @@ PIPs.DoInstall()
     else
         ((total_count--))
     fi
-
-#     if Opts.Deps.Check.IsSet || IPKGs.OpToDownload.Exist python3-cryptography || QPKGs.OpToInstall.Exist SABnzbd || QPKGs.OpToReinstall.Exist SABnzbd; then
-#         # KLUDGE: must ensure 'cryptography' PIP module is reinstalled if the 'python3-cryptography' IPKG is installed.
-#         # The 'deluge-ui-web' IPKG pulls-in 'python3-cryptography' IPKG as a dependency, but this then causes a launch-failure for 'deluge-web' due to there already being a later 'cryptography' installed via 'pip'. Prefer to use the 'pip' version, so need to reinstall it so it is seen first.
-#         # KLUDGE: ensure 'feedparser' is upgraded. This was version-held at 5.2.1 for Python 3.8.5 but from Python 3.9.0 onward there's no-need for version-hold anymore.
-#         ShowAsOperationProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
-#
-#         exec_cmd="$pip3_cmd install --upgrade --force-reinstall cryptography feedparser --cache-dir $PIP_CACHE_PATH"
-#         desc="'Python3 cryptography & feedparser' modules"
-#         log_pathfile=$LOGS_PATH/py3-modules.cryptography-feedparser.$REINSTALL_LOG_FILE
-#         DebugAsProc "reinstalling $desc"
-#         RunAndLog "$exec_cmd" "$log_pathfile" log:failure-only
-#         result_code=$?
-#
-#         if [[ $result_code -eq 0 ]]; then
-#             DebugAsDone "reinstalled $desc"
-#             QPKGs.OpToRestart.Add SABnzbd
-#             ((pass_count++))
-#         else
-#             ShowAsFail "reinstallation of $desc failed $(FormatAsResult "$result_code")"
-#             ((fail_count++))
-#         fi
-#     else
-#         ((total_count--))
-#     fi
 
     # execute with pass_count > total_count to trigger 100% message
     ShowAsOperationProgress '' "$PACKAGE_TYPE" "$((total_count+1))" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
@@ -4494,7 +4469,7 @@ QPKG.DoInstall()
         local -r OPT_BACKUP_PATH=/opt.orig
 
         if [[ -d $OPT_PATH && ! -L $OPT_PATH && ! -e $OPT_BACKUP_PATH ]]; then
-            ShowAsProc "backup original /opt" >&2
+            DebugAsProc 'backup original /opt'
             mv "$OPT_PATH" "$OPT_BACKUP_PATH"
             DebugAsDone 'complete'
         fi
@@ -4525,8 +4500,8 @@ QPKG.DoInstall()
             if QPKGs.OpOkInstall.Exist Entware; then
                 # copy all files from original [/opt] into new [/opt]
                 if [[ -L ${OPT_PATH:-} && -d ${OPT_BACKUP_PATH:-} ]]; then
-                    ShowAsProc "restoring original /opt" >&2
-                    cp --recursive "$OPT_BACKUP_PATH"/* --target-directory "$OPT_PATH" && rm -rf "$OPT_BACKUP_PATH"
+                    DebugAsProc 'restoring original /opt'
+                    mv "$OPT_BACKUP_PATH"/* "$OPT_PATH" && rm -rf "$OPT_BACKUP_PATH"
                     DebugAsDone 'complete'
                 fi
 
