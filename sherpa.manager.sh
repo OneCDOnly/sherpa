@@ -247,14 +247,14 @@ Session.Init()
     readonly INSTALLED_RAM_KB=$(GetInstalledRAM)
     readonly NAS_QPKG_ARCH=$(GetQPKGArch)
     readonly ENTWARE_VER=$(GetEntwareType)
-    readonly LOG_TAIL_LINES=3000    # a full download and install of everything generates a session around 1600 lines, but include a bunch of opkg updates and it can get much longer
-    readonly MIN_PYTHON_VER=392
+    readonly LOG_TAIL_LINES=3000    # a full download and install of everything generates a session log of around 1600 lines, but include a bunch of opkg updates and it can get much longer
+    readonly MIN_PYTHON_VER=394     # keep this up-to-date with current Entware Python3 version so IPKG upgrade notifier works
     code_pointer=0
     pip3_cmd=/opt/bin/pip3
     previous_msg=' '
     [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg=' --insecure' || curl_insecure_arg=''
     DebugQPKGDetected arch "$NAS_QPKG_ARCH"
-    DebugQPKGDetected 'Entware installer' $ENTWARE_VER
+    DebugQPKGDetected 'Entware installer' "$ENTWARE_VER"
     QPKG.IsInstalled Entware && [[ $ENTWARE_VER = none ]] && DebugAsWarn "$(FormatAsPackageName Entware) appears to be installed but is not visible"
 
     # supported package details - parallel arrays
@@ -864,7 +864,7 @@ Session.Validate()
     CheckPythonPathAndVersion python
 
     if QPKGs.IsInstalled.Exist Entware && ! QPKGs.OpToUninstall.Exist Entware; then
-        [[ -e /opt/bin/python3 ]] && version=$(/opt/bin/python3 -V 2>/dev/null | $SED_CMD 's|^Python ||') && [[ ${version//./} -lt $MIN_PYTHON_VER ]] && ShowAsReco "your Python 3 is out-of-date. Suggest reinstalling Entware: '$PROJECT_NAME reinstall ew'"
+        [[ -e /opt/bin/python3 ]] && version=$(/opt/bin/python3 -V 2>/dev/null | $SED_CMD 's|^Python ||') && [[ ${version//./} -lt $MIN_PYTHON_VER ]] && ShowAsReco "your Python 3 is out-of-date. Suggest upgrading your IPKGs: '$PROJECT_NAME check'"
     fi
 
     DebugScript 'logs path' "$LOGS_PATH"
@@ -1686,7 +1686,7 @@ ParseArguments()
                         operation=''
                         ;;
                     dependent_)
-                        Opts.Apps.OpRestartScDependent.Set
+                        Opts.Apps.OpRestart.ScDependent.Set
                         operation=''
                         ;;
                     standalone_)
