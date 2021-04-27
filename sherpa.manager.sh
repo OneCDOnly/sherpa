@@ -245,14 +245,17 @@ Session.Init()
     readonly NAS_FIRMWARE=$(GetFirmwareVersion)
     readonly NAS_BUILD=$(GetFirmwareBuild)
     readonly INSTALLED_RAM_KB=$(GetInstalledRAM)
+    readonly NAS_QPKG_ARCH=$(GetQPKGArch)
+    readonly ENTWARE_VER=$(GetEntwareType)
     readonly LOG_TAIL_LINES=3000    # a full download and install of everything generates a session around 1600 lines, but include a bunch of opkg updates and it can get much longer
     readonly MIN_PYTHON_VER=392
     code_pointer=0
     pip3_cmd=/opt/bin/pip3
     previous_msg=' '
     [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg=' --insecure' || curl_insecure_arg=''
-    CalcEntwareType
-    CalcQPKGArch
+    DebugQPKGDetected arch "$NAS_QPKG_ARCH"
+    DebugQPKGDetected 'Entware installer' $ENTWARE_VER
+    QPKG.IsInstalled Entware && [[ $ENTWARE_VER = none ]] && DebugAsWarn "$(FormatAsPackageName Entware) appears to be installed but is not visible"
 
     # supported package details - parallel arrays
     MANAGER_QPKG_NAME=()                    # internal QPKG name
@@ -4159,70 +4162,6 @@ MarkStateAsStopped()
 
     }
 
-CalcQPKGArch()
-    {
-
-    # Decide which package arch is suitable for this NAS. Creates a global constant: $NAS_QPKG_ARCH
-
-    case $($UNAME_CMD -m) in
-        x86_64)
-            [[ ${NAS_FIRMWARE//.} -ge 430 ]] && NAS_QPKG_ARCH=x64 || NAS_QPKG_ARCH=x86
-            ;;
-        i686|x86)
-            NAS_QPKG_ARCH=x86
-            ;;
-        armv5tel)
-            NAS_QPKG_ARCH=x19
-            ;;
-        armv7l)
-            case $(GetPlatform) in
-                ARM_MS)
-                    NAS_QPKG_ARCH=x31
-                    ;;
-                ARM_AL)
-                    NAS_QPKG_ARCH=x41
-                    ;;
-                *)
-                    NAS_QPKG_ARCH=none
-            esac
-            ;;
-        aarch64)
-            NAS_QPKG_ARCH=a64
-            ;;
-        *)
-            NAS_QPKG_ARCH=none
-    esac
-
-    readonly NAS_QPKG_ARCH
-    DebugQPKGDetected arch "$NAS_QPKG_ARCH"
-
-    return 0
-
-    }
-
-CalcEntwareType()
-    {
-
-    if QPKG.IsInstalled Entware; then
-        if [[ -e /opt/etc/passwd ]]; then
-            if [[ -L /opt/etc/passwd ]]; then
-                ENTWARE_VER=std
-            else
-                ENTWARE_VER=alt
-            fi
-        else
-            ENTWARE_VER=none
-        fi
-
-        DebugQPKGDetected 'Entware installer' $ENTWARE_VER
-
-        [[ $ENTWARE_VER = none ]] && DebugAsWarn "$(FormatAsPackageName Entware) appears to be installed but is not visible"
-    fi
-
-    return 0
-
-    }
-
 ModPathToEntware()
     {
 
@@ -4311,6 +4250,59 @@ GetFirmwareBuild()
     {
 
     /sbin/getcfg System 'Build Number' -f /etc/config/uLinux.conf
+
+    }
+
+GetQPKGArch()
+    {
+
+    # Decide which package arch is suitable for this NAS
+
+    case $($UNAME_CMD -m) in
+        x86_64)
+            [[ ${NAS_FIRMWARE//.} -ge 430 ]] && echo x64 || echo x86
+            ;;
+        i686|x86)
+            echo x86
+            ;;
+        armv5tel)
+            echo x19
+            ;;
+        armv7l)
+            case $(GetPlatform) in
+                ARM_MS)
+                    echo x31
+                    ;;
+                ARM_AL)
+                    echo x41
+                    ;;
+                *)
+                    echo none
+            esac
+            ;;
+        aarch64)
+            echo a64
+            ;;
+        *)
+            echo none
+    esac
+
+    }
+
+GetEntwareType()
+    {
+
+    if QPKG.IsInstalled Entware; then
+        if [[ -e /opt/etc/passwd ]]; then
+            if [[ -L /opt/etc/passwd ]]; then
+                echo 'std'
+            else
+                echo 'alt'
+            fi
+        else
+            echo 'none'
+        fi
+    fi
 
     }
 
