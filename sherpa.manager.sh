@@ -2648,7 +2648,7 @@ PIPs.DoInstall()
         done
     fi
 
-    if Opts.Deps.Check.IsSet || PIPs.OpToInstall.IsAny; then
+    if (Opts.Deps.Check.IsSet && PIPs.OpToInstall.IsAny) || PIPs.OpToInstall.IsAny; then
         ShowAsOperationProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
 
         exec_cmd="$pip3_cmd install --upgrade --no-deps $(PIPs.OpToInstall.List) --cache-dir $PIP_CACHE_PATH"
@@ -6720,8 +6720,8 @@ CompileObjects()
     # helper: if not running management script directly (i.e. without a loader script), create new archive and make an easily accessible copy
     if [[ $(</proc/$PPID/cmdline) != *"/usr/sbin/sherpa"* ]]; then
         /bin/tar --create --gzip --file="$MANAGER_ARCHIVE_PATHFILE" --directory="$PWD" "$($BASENAME_CMD "$0")"
-		cp "$MANAGER_ARCHIVE_PATHFILE" "$PWD"
-	fi
+        cp "$MANAGER_ARCHIVE_PATHFILE" "$PWD"
+    fi
 
     ShowAsProc 'objects' >&2
     . "$OBJECTS_PATHFILE"
