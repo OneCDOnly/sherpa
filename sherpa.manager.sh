@@ -6713,10 +6713,15 @@ CompileObjects()
         /bin/tar --create --gzip --file="$OBJECTS_ARCHIVE_PATHFILE" --directory="$($DIRNAME_CMD "$OBJECTS_PATHFILE")" "$($BASENAME_CMD "$OBJECTS_PATHFILE")"
     fi
 
-    # dev helper: auto-create management archive if not running management script directly (i.e. without a loader script)
-    if [[ $(ps -o comm= $PPID) != *".loader.sh"* || ! -e $MANAGER_ARCHIVE_PATHFILE ]]; then
-        /bin/tar --create --gzip --file="$($BASENAME_CMD "$MANAGER_ARCHIVE_PATHFILE")" --directory="$PWD" "$($BASENAME_CMD "$0")"
+    if [[ ! -e $MANAGER_ARCHIVE_PATHFILE ]]; then
+        /bin/tar --create --gzip --file="$MANAGER_ARCHIVE_PATHFILE" --directory="$WORK_PATH" "$($BASENAME_CMD "$MANAGER_PATHFILE")"
     fi
+
+    # helper: if not running management script directly (i.e. without a loader script), create new archive and make an easily accessible copy
+    if [[ $(</proc/$PPID/cmdline) != *"/usr/sbin/sherpa"* ]]; then
+        /bin/tar --create --gzip --file="$MANAGER_ARCHIVE_PATHFILE" --directory="$PWD" "$($BASENAME_CMD "$0")"
+		cp "$MANAGER_ARCHIVE_PATHFILE" "$PWD"
+	fi
 
     ShowAsProc 'objects' >&2
     . "$OBJECTS_PATHFILE"
