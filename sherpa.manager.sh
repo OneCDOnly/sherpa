@@ -69,8 +69,6 @@ Session.Init()
     readonly SH_CMD=/bin/sh
     readonly SLEEP_CMD=/bin/sleep
     readonly TOUCH_CMD=/bin/touch
-    readonly UNAME_CMD=/bin/uname
-    readonly UNIQ_CMD=/bin/uniq
 
     readonly CURL_CMD=/sbin/curl
 
@@ -96,8 +94,6 @@ Session.Init()
     IsSysFileExist $SH_CMD || return
     IsSysFileExist $SLEEP_CMD || return
     IsSysFileExist $TOUCH_CMD || return
-    IsSysFileExist $UNAME_CMD || return
-    IsSysFileExist $UNIQ_CMD || return
 
     IsSysFileExist $CURL_CMD || return
 
@@ -823,10 +819,10 @@ Session.Validate()
         DebugFirmwareWarning build "$NAS_BUILD"
     fi
 
-    DebugFirmwareOK kernel "$($UNAME_CMD -mr)"
+    DebugFirmwareOK kernel "$(GetKernel)"
     DebugFirmwareOK platform "$(GetPlatform)"
-    DebugUserspaceOK 'OS uptime' "$(GetOSUptime)"
-    DebugUserspaceOK 'system load' "$(GetSystemLoadAverages)"
+    DebugUserspaceOK 'OS uptime' "$(GetUptime)"
+    DebugUserspaceOK 'system load' "$(GetSysLoadAverages)"
 
     if [[ $USER = admin ]]; then
         DebugUserspaceOK '$USER' "$USER"
@@ -2323,7 +2319,7 @@ CalcIPKGsDepsToInstall()
         local IPKG_titles=$(printf '^Package: %s$\|' "${this_list[@]}")
         IPKG_titles=${IPKG_titles%??}       # remove last 2 characters
 
-        this_list=($($GNU_GREP_CMD --word-regexp --after-context 1 --no-group-separator '^Package:\|^Depends:' "$EXTERNAL_PACKAGE_LIST_PATHFILE" | $GNU_GREP_CMD -vG '^Section:\|^Version:' | $GNU_GREP_CMD --word-regexp --after-context 1 --no-group-separator "$IPKG_titles" | $GNU_GREP_CMD -vG "$IPKG_titles" | $GNU_GREP_CMD -vG '^Package: ' | $SED_CMD 's|^Depends: ||;s|, |\n|g' | $SORT_CMD | $UNIQ_CMD))
+        this_list=($($GNU_GREP_CMD --word-regexp --after-context 1 --no-group-separator '^Package:\|^Depends:' "$EXTERNAL_PACKAGE_LIST_PATHFILE" | $GNU_GREP_CMD -vG '^Section:\|^Version:' | $GNU_GREP_CMD --word-regexp --after-context 1 --no-group-separator "$IPKG_titles" | $GNU_GREP_CMD -vG "$IPKG_titles" | $GNU_GREP_CMD -vG '^Package: ' | $SED_CMD 's|^Depends: ||;s|, |\n|g' | $SORT_CMD | /bin/uniq))
 
         if [[ ${#this_list[@]} -eq 0 ]]; then
             complete=true
@@ -4204,6 +4200,13 @@ GetCPUInfo()
 
     }
 
+GetKernel()
+    {
+
+    /bin/uname -mr
+
+    }
+
 GetPlatform()
     {
 
@@ -4218,14 +4221,14 @@ GetDefaultVolume()
 
     }
 
-GetOSUptime()
+GetUptime()
     {
 
     $UPTIME_CMD | $SED_CMD 's|.*up.||;s|,.*load.*||;s|^\ *||'
 
     }
 
-GetSystemLoadAverages()
+GetSysLoadAverages()
     {
 
     $UPTIME_CMD | $SED_CMD 's|.*load average: ||' | $AWK_CMD -F', ' '{print "1m:"$1", 5m:"$2", 15m:"$3}'
@@ -4258,7 +4261,7 @@ GetQPKGArch()
 
     # Decide which package arch is suitable for this NAS
 
-    case $($UNAME_CMD -m) in
+    case $(/bin/uname -m) in
         x86_64)
             [[ ${NAS_FIRMWARE//.} -ge 430 ]] && echo x64 || echo x86
             ;;
@@ -5626,7 +5629,7 @@ RunAndLog()
 DeDupeWords()
     {
 
-    tr ' ' '\n' <<< "${1:-}" | $SORT_CMD | $UNIQ_CMD | tr '\n' ' ' | $SED_CMD 's|^[[:blank:]]*||;s|[[:blank:]]*$||'
+    tr ' ' '\n' <<< "${1:-}" | $SORT_CMD | /bin/uniq | tr '\n' ' ' | $SED_CMD 's|^[[:blank:]]*||;s|[[:blank:]]*$||'
 
     }
 
