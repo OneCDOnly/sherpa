@@ -1492,8 +1492,12 @@ ParseArguments()
         case $operation in
             backup_)
                 case $scope in
-                    all_|installed_)
+                    all_)
                         Opts.Apps.OpBackup.ScAll.Set
+                        operation=''
+                        ;;
+                    installed_)
+                        Opts.Apps.OpBackup.IsInstalled.Set
                         operation=''
                         ;;
                     dependent_)
