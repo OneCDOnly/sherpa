@@ -1,3 +1,2 @@
-- backup of SortMyQPKGs is failing.
 - ensure qpkg_cli in clamav.sh is called twice: first before doing anything, then again just before exiting service script.
 - this app center notifier clearing behaviour should be duplicated into all other service scripts.
