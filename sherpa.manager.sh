@@ -54,7 +54,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=210605
+    local -r SCRIPT_VERSION=210708
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -706,9 +706,9 @@ Session.Init()
     MANAGER_QPKG_NAME+=(SortMyQPKGs)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MIN_RAM_KB+=(any)
-        MANAGER_QPKG_VERSION+=(210605)
+        MANAGER_QPKG_VERSION+=(210708)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/main/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
-        MANAGER_QPKG_MD5+=(b21854770b54d63d4d39942d502915c1)
+        MANAGER_QPKG_MD5+=(5ee3e3da119a65cc8a67a473f46df876)
         MANAGER_QPKG_DESC+=('ensure other installed QPKGs start in correct sequence during QTS bootup')
         MANAGER_QPKG_ABBRVS+=('sm smq smqs sort sortmy sortmine sortpackages sortmypackages sortmyqpkgs')
         MANAGER_QPKG_DEPENDS_ON+=('')
