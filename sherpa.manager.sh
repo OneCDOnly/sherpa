@@ -54,7 +54,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=210708
+    local -r SCRIPT_VERSION=210713
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -674,16 +674,16 @@ Session.Init()
     MANAGER_QPKG_NAME+=(SickChill)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MIN_RAM_KB+=(any)
-        MANAGER_QPKG_VERSION+=(210326)
+        MANAGER_QPKG_VERSION+=(210713)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
-        MANAGER_QPKG_MD5+=(fb488f7176bf5656575fa010a9599b63)
+        MANAGER_QPKG_MD5+=(ae16a5b1a74cf59e95fc8d96e3e2dfe2)
         MANAGER_QPKG_DESC+=('another SickBeard fork: manage and search for TV shows and movies')
         MANAGER_QPKG_ABBRVS+=('sc sick sickc chill sickchill')
         MANAGER_QPKG_DEPENDS_ON+=(Entware)
         MANAGER_QPKG_DEPENDED_UPON+=(false)
         MANAGER_QPKG_IPKGS_ADD+=('python3-dev python3-pip')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
-        MANAGER_QPKG_PIPS_ADD+=('')
+        MANAGER_QPKG_PIPS_ADD+=('pygithub')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
         MANAGER_QPKG_RESTART_TO_UPDATE+=(true)
 
@@ -757,7 +757,7 @@ Session.Init()
     readonly MANAGER_BASE_QPKG_CONFLICTS='Optware Optware-NG TarMT Python QPython2 Python3 QPython3'
     readonly MANAGER_BASE_IPKGS_ADD='ca-certificates findutils gcc git git-http grep less nano sed'
     readonly MANAGER_BASE_PIPS_ADD='wheel pip'
-    # leftover unallocated pip modules 'notify2 pygithub random_user_agent slugify'
+    # leftover unallocated pip modules 'notify2 random_user_agent slugify'
 
     QPKGs.StandaloneDependent.Build
 
