@@ -405,8 +405,8 @@ PullGitRepo()
     local -r GIT_HTTPS_URL=${GIT_HTTP_URL/http/git}
     local installed_branch=''
     local branch_switch=false
-#     [[ $4 = shallow ]] && local -r DEPTH=' --depth 1'
-#     [[ $4 = single-branch ]] && local -r DEPTH=' --single-branch'
+    [[ $4 = shallow ]] && local -r DEPTH=' --depth 1'
+    [[ $4 = single-branch ]] && local -r DEPTH=' --single-branch'
 
     if [[ -d $QPKG_GIT_PATH/.git ]]; then
         installed_branch=$(/opt/bin/git -C "$QPKG_GIT_PATH" branch | /bin/grep '^\*' | /bin/sed 's|^\* ||')
@@ -420,13 +420,14 @@ PullGitRepo()
     fi
 
     if [[ ! -d $QPKG_GIT_PATH/.git ]]; then
-        ExecuteAndLog "clone $(FormatAsPackageName "$1") from remote repository" "cd /tmp; /opt/bin/git clone --branch $3 $GIT_HTTPS_URL $QPKG_GIT_PATH || /opt/bin/git clone --branch $3 $DEPTH -c advice.detachedHead=false $GIT_HTTP_URL $QPKG_GIT_PATH"
-#     else
-#         ExecuteAndLog "update $(FormatAsPackageName "$1") from remote repository" "cd /tmp; /opt/bin/git -C $QPKG_GIT_PATH fetch; /opt/bin/git -C $QPKG_GIT_PATH reset --hard HEAD; /opt/bin/git -C $QPKG_GIT_PATH merge '@{u}'"
+        ExecuteAndLog "clone $(FormatAsPackageName "$1") from remote repository" "cd /tmp; /opt/bin/git clone --branch $3 $DEPTH $GIT_HTTPS_URL $QPKG_GIT_PATH || /opt/bin/git clone --branch $3 $DEPTH -c advice.detachedHead=false $GIT_HTTP_URL $QPKG_GIT_PATH"
+    else
+        ExecuteAndLog "update $(FormatAsPackageName "$1") from remote repository" "cd /tmp; /opt/bin/git -C $QPKG_GIT_PATH fetch; /opt/bin/git -C $QPKG_GIT_PATH reset --hard HEAD; /opt/bin/git -C $QPKG_GIT_PATH merge '@{u}'"
     fi
 
     if [[ -d $QPKG_GIT_PATH/.git ]]; then
-        ExecuteAndLog "workaround (https://github.com/SickChill/SickChill/issues/7249)" "cd $QPKG_GIT_PATH; /opt/bin/git reset --hard dec999c"
+        ExecuteAndLog "workaround (https://github.com/SickChill/SickChill/issues/7249)" "cd /tmp; /opt/bin/git -C $QPKG_GIT_PATH reset --hard v2021.04.10-1"
+        ExecuteAndLog "disable auto-update" "/sbin/setcfg General auto_update 0 -f $QPKG_INI_PATHFILE"
     fi
 
     installed_branch=$(/opt/bin/git -C "$QPKG_GIT_PATH" branch | /bin/grep '^\*' | /bin/sed 's|^\* ||')
