@@ -45,7 +45,7 @@ Init()
     readonly INSTALLED_RAM_KB=$(/bin/grep MemTotal /proc/meminfo | cut -f2 -d':' | /bin/sed 's|kB||;s| ||g')
     readonly QPKG_INI_PATHFILE=$QPKG_PATH/config/core.conf
     readonly QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.def
-    readonly LAUNCHER="$DAEMON_PATHFILE --logfile $(/usr/bin/dirname "$QPKG_INI_PATHFILE")/$QPKG_NAME.log --config $(/usr/bin/dirname "$QPKG_INI_PATHFILE")/ -u 0.0.0.0 --pidfile $DAEMON_PID_PATHFILE"
+    readonly LAUNCHER="$DAEMON_PATHFILE -L info --logfile $(/usr/bin/dirname "$QPKG_INI_PATHFILE")/$QPKG_NAME.log --config $(/usr/bin/dirname "$QPKG_INI_PATHFILE")/ -u 0.0.0.0 --pidfile $DAEMON_PID_PATHFILE"
     readonly QPKG_VERSION=$(/sbin/getcfg $QPKG_NAME Version -f /etc/config/qpkg.conf)
     readonly SERVICE_STATUS_PATHFILE=/var/run/$QPKG_NAME.last.operation
     readonly SERVICE_LOG_PATHFILE=/var/log/$QPKG_NAME.log
@@ -546,6 +546,9 @@ EnsureConfigFileExists()
     if IsNotConfigFound && IsDefaultConfigFound; then
         DisplayCommitToLog 'no configuration file found: using default'
         cp "$QPKG_INI_DEFAULT_PATHFILE" "$QPKG_INI_PATHFILE"
+
+        # update plugins path to match local environment
+        local buff=$(/opt/bin/jq ".plugins_location |= \"$QPKG_PATH/config/plugins\"" "$QPKG_INI_PATHFILE") && echo "$buff" > "$QPKG_INI_PATHFILE"
     fi
 
     # Deluge-server and Deluge-web need acccess to the same auth file or to duplicate copies of it

@@ -60,7 +60,7 @@
     "path_chooser_show_chooser_button_on_localhost": true,
     "path_chooser_show_hidden_files": false,
     "peer_tos": "0x00",
-    "plugins_location": "/share/MD0_DATA/.qpkg/Deluge-server/config/plugins",
+    "plugins_location": "/plugins",
     "pre_allocate_storage": false,
     "prioritize_first_last_pieces": false,
     "proxy": {

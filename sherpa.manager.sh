@@ -54,7 +54,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=210714
+    local -r SCRIPT_VERSION=210801
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -290,9 +290,9 @@ Session.Init()
     MANAGER_QPKG_NAME+=(Deluge-server)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MIN_RAM_KB+=(any)
-        MANAGER_QPKG_VERSION+=(210331)
+        MANAGER_QPKG_VERSION+=(210801)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
-        MANAGER_QPKG_MD5+=(d9b560217201171d188da06420344eb8)
+        MANAGER_QPKG_MD5+=(a9f6528e06a34df7184fa8017fe22e77)
         MANAGER_QPKG_DESC+=('Deluge BitTorrent daemon')
         MANAGER_QPKG_ABBRVS+=('dl deluge del-server deluge-server')
         MANAGER_QPKG_DEPENDS_ON+=(Entware)
