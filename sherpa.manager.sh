@@ -54,7 +54,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=210801
+    local -r SCRIPT_VERSION=210809
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -594,9 +594,9 @@ Session.Init()
     MANAGER_QPKG_NAME+=(RunLast)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MIN_RAM_KB+=(any)
-        MANAGER_QPKG_VERSION+=(210328)
+        MANAGER_QPKG_VERSION+=(210809)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/main/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
-        MANAGER_QPKG_MD5+=(8bc501c43a1041e966c63b4ff242ecb9)
+        MANAGER_QPKG_MD5+=(b6b535c5b875e540c5f5550c9131bbd3)
         MANAGER_QPKG_DESC+=('run userscripts and commands after all QPKGs have completed startup reintegration into QTS')
         MANAGER_QPKG_ABBRVS+=('rl run runlast')
         MANAGER_QPKG_DEPENDS_ON+=('')
