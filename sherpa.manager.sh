@@ -54,7 +54,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=210809
+    local -r SCRIPT_VERSION=210918
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -619,7 +619,7 @@ Session.Init()
         MANAGER_QPKG_DEPENDED_UPON+=(false)
         MANAGER_QPKG_IPKGS_ADD+=('coreutils-nice ffprobe ionice python3-certifi python3-cffi python3-cryptography python3-dev python3-pip p7zip unrar')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
-        MANAGER_QPKG_PIPS_ADD+=('chardet cheetah3 cheroot cherrypy configobj feedparser jaraco.classes jaraco.collections jaraco.functools jaraco.text more_itertools portend sabyenc3 sgmllib3k tempora zc.lockfile')
+        MANAGER_QPKG_PIPS_ADD+=('chardet cheetah3 cheroot cherrypy configobj feedparser guessit jaraco.classes jaraco.collections jaraco.functools jaraco.text more_itertools puremagic portend sabyenc3 sgmllib3k tempora zc.lockfile')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
         MANAGER_QPKG_RESTART_TO_UPDATE+=(true)
 
@@ -1068,7 +1068,6 @@ Tiers.Processor()
     # -> package 'installation' phase begins here <-
 
     # just in-case 'python' has disappeared again ... ¯\_(ツ)_/¯
-
     [[ ! -L /opt/bin/python && -e /opt/bin/python3 ]] && ln -s /opt/bin/python3 /opt/bin/python
 
     for tier in "${PACKAGE_TIERS[@]}"; do
@@ -1099,7 +1098,7 @@ Tiers.Processor()
                 ;;
             Addon)
                 for operation in Install Reinstall Upgrade Start; do
-                    if QPKGs.OpTo${operation}.IsAny || QPKGs.OpOk${operation}.IsAny; then
+                    if QPKGs.OpTo${operation}.IsAny || QPKGs.OpOk${operation}.IsAny || Opts.Apps.Op${operation}.ScAll.IsSet; then
                         IPKGs.ToUpgrade.Set
                         IPKGs.ToInstall.Set
                         PIPs.ToInstall.Set
