@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# sherpa.manager.sh - (C)opyright (C) 2017-2021 OneCD [one.cd.only@gmail.com]
+# sherpa.manager.sh - Copyright (C) 2017-2021 OneCD [one.cd.only@gmail.com]
 #
 # This is the management script for the sherpa mini-package-manager.
 # It's automatically downloaded via the 'sherpa.loader.sh' script in the 'sherpa' QPKG.
@@ -54,7 +54,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=210924
+    local -r SCRIPT_VERSION=210925
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -236,7 +236,6 @@ Session.Init()
     Opts.IgFreeSpace.Text = ' --force-space'
     Session.Summary.Set
     Session.LineSpace.NoLogMods
-    QPKGs.SkProc.NoLogMods
 
     readonly NAS_FIRMWARE=$(GetFirmwareVersion)
     readonly NAS_BUILD=$(GetFirmwareBuild)
@@ -1047,7 +1046,7 @@ Tiers.Processor()
     local package=''
     local -i index=0
 
-    Tier.Processor Download false All QPKG OpToDownload 'update package cache with' 'updating package cache with' 'updated package cache with' ''
+    Tier.Processor Download false All QPKG OpToDownload 'update package cache with' 'updating package cache with' 'updated package cache with' '' || return
 
     # -> package 'removal' phase begins here <-
 
@@ -1056,12 +1055,12 @@ Tiers.Processor()
 
         case $tier in
             Standalone|Dependent)
-                Tier.Processor Backup false "$tier" QPKG OpToBackup 'backup configuration for' 'backing-up configuration for' 'configuration backed-up for' ''
-                Tier.Processor Stop false "$tier" QPKG OpToStop stop stopping stopped ''
-                Tier.Processor Uninstall false "$tier" QPKG OpToUninstall uninstall uninstalling uninstalled ''
+                Tier.Processor Backup false "$tier" QPKG OpToBackup 'backup configuration for' 'backing-up configuration for' 'configuration backed-up for' '' || return
+                Tier.Processor Stop false "$tier" QPKG OpToStop stop stopping stopped '' || return
+                Tier.Processor Uninstall false "$tier" QPKG OpToUninstall uninstall uninstalling uninstalled '' || return
                 ;;
             Addon)
-                Tier.Processor Uninstall false "$tier" IPKG OpToUninstall uninstall uninstalling uninstalled ''
+                Tier.Processor Uninstall false "$tier" IPKG OpToUninstall uninstall uninstalling uninstalled '' || return
         esac
     done
 
@@ -1073,10 +1072,10 @@ Tiers.Processor()
     for tier in "${PACKAGE_TIERS[@]}"; do
         case $tier in
             Standalone|Dependent)
-                Tier.Processor Upgrade false "$tier" QPKG OpToUpgrade upgrade upgrading upgraded long
-                Tier.Processor Reinstall false "$tier" QPKG OpToReinstall reinstall reinstalling reinstalled long
-                Tier.Processor Install false "$tier" QPKG OpToInstall install installing installed long
-                Tier.Processor Restore false "$tier" QPKG OpToRestore 'restore configuration for' 'restoring configuration for' 'configuration restored for' long
+                Tier.Processor Upgrade false "$tier" QPKG OpToUpgrade upgrade upgrading upgraded long || return
+                Tier.Processor Reinstall false "$tier" QPKG OpToReinstall reinstall reinstalling reinstalled long || return
+                Tier.Processor Install false "$tier" QPKG OpToInstall install installing installed long || return
+                Tier.Processor Restore false "$tier" QPKG OpToRestore 'restore configuration for' 'restoring configuration for' 'configuration restored for' long || return
 
                 if [[ $tier = Standalone ]]; then
                     # check for standalone packages that require starting due to dependents being reinstalled/installed/started/restarted
@@ -1087,13 +1086,13 @@ Tiers.Processor()
                     done
                 fi
 
-                Tier.Processor Start false "$tier" QPKG OpToStart start starting started long
+                Tier.Processor Start false "$tier" QPKG OpToStart start starting started long || return
 
                 for operation in Install Restart Start; do
                     QPKGs.OpToRestart.Remove "$(QPKGs.OpOk${operation}.Array)"
                 done
 
-                Tier.Processor Restart false "$tier" QPKG OpToRestart restart restarting restarted long
+                Tier.Processor Restart false "$tier" QPKG OpToRestart restart restarting restarted long || return
 
                 ;;
             Addon)
@@ -1109,9 +1108,9 @@ Tiers.Processor()
                 if QPKGs.IsStarted.Exist Entware; then
                     ModPathToEntware
 
-                    Tier.Processor Upgrade false "$tier" IPKG '' upgrade upgrading upgraded long
-                    Tier.Processor Install false "$tier" IPKG '' install installing installed long
-                    Tier.Processor Install false "$tier" PIP '' install installing installed long
+                    Tier.Processor Upgrade false "$tier" IPKG '' upgrade upgrading upgraded long || return
+                    Tier.Processor Install false "$tier" IPKG '' install installing installed long || return
+                    Tier.Processor Install false "$tier" PIP '' install installing installed long || return
                 fi
         esac
     done
@@ -1140,6 +1139,7 @@ Tier.Processor()
     #   $8 = $ACTION_PAST                   e.g. 'started'...
     #   $9 = $RUNTIME (optional)            e.g. 'long'
 
+    QPKGs.SkProc.IsSet && return
     DebugFuncEntry
 
     local package=''
@@ -1229,7 +1229,7 @@ Tier.Processor()
     ShowAsOperationProgress "$TIER" "$PACKAGE_TYPE" "$((total_count+1))" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
     ShowAsOperationResult "$TIER" "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PAST" "$RUNTIME"
 
-    DebugFuncExit
+    Session.Error.IsSet && DebugFuncExit 1 || DebugFuncExit
 
     }
 
@@ -2554,6 +2554,7 @@ IPKGs.DoUninstall()
     fi
 
     CalcAllIPKGsToUninstall
+    Session.Error.IsSet && return
     local -i total_count=$(IPKGs.OpToUninstall.Count)
 
     if [[ $total_count -gt 0 ]]; then
