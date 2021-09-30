@@ -47,14 +47,14 @@ readonly USER_ARGS_RAW=$*
 Session.Init()
     {
 
-    IsQNAP || return
     DebugFuncEntry
+    IsQNAP || return
 
     readonly SCRIPT_STARTSECONDS=$(/bin/date +%s)
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=210926
+    local -r SCRIPT_VERSION=211001
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -167,37 +167,18 @@ Session.Init()
     readonly PACKAGE_OPERATIONS
     readonly PACKAGE_TIERS
 
-    if ! MakePath "$WORK_PATH" work; then
-        DebugFuncExit 1; return
-    fi
-
-    if ! MakePath "$LOGS_PATH" logs; then
-        DebugFuncExit 1; return
-    fi
+    MakePath "$WORK_PATH" work || return
+    MakePath "$LOGS_PATH" logs || return
 
     [[ -d $IPKG_DL_PATH ]] && rm -rf "$IPKG_DL_PATH"
     [[ -d $IPKG_CACHE_PATH ]] && rm -rf "$IPKG_CACHE_PATH"
     [[ -d $PIP_CACHE_PATH ]] && rm -rf "$PIP_CACHE_PATH"
 
-    if ! MakePath "$QPKG_DL_PATH" 'QPKG download'; then
-        DebugFuncExit 1; return
-    fi
-
-    if ! MakePath "$IPKG_DL_PATH" 'IPKG download'; then
-        DebugFuncExit 1; return
-    fi
-
-    if ! MakePath "$IPKG_CACHE_PATH" 'IPKG cache'; then
-        DebugFuncExit 1; return
-    fi
-
-    if ! MakePath "$PIP_CACHE_PATH" 'PIP cache'; then
-        DebugFuncExit 1; return
-    fi
-
-    if ! MakePath "$BACKUP_PATH" 'QPKG backup'; then
-        DebugFuncExit 1; return
-    fi
+    MakePath "$QPKG_DL_PATH" 'QPKG download' || return
+    MakePath "$IPKG_DL_PATH" 'IPKG download' || return
+    MakePath "$IPKG_CACHE_PATH" 'IPKG cache' || return
+    MakePath "$PIP_CACHE_PATH" 'PIP cache' || return
+    MakePath "$BACKUP_PATH" 'QPKG backup' || return
 
     ArchivePriorSessionLogs
 
@@ -756,7 +737,6 @@ Session.Init()
     readonly MANAGER_BASE_QPKG_CONFLICTS='Optware Optware-NG TarMT Python QPython2 Python3 QPython3'
     readonly MANAGER_BASE_IPKGS_ADD='ca-certificates findutils gcc git git-http grep less nano sed'
     readonly MANAGER_BASE_PIPS_ADD='wheel pip'
-    # leftover unallocated pip modules 'notify2 random_user_agent slugify'
 
     QPKGs.StandaloneDependent.Build
 
@@ -1229,7 +1209,8 @@ Tier.Processor()
     ShowAsOperationProgress "$TIER" "$PACKAGE_TYPE" "$((total_count+1))" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
     ShowAsOperationResult "$TIER" "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PAST" "$RUNTIME"
 
-    Session.Error.IsSet && DebugFuncExit 1 || DebugFuncExit
+    DebugFuncExit
+    Session.Error.IsSet
 
     }
 
