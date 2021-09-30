@@ -54,7 +54,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=211001
+    local -r SCRIPT_VERSION=211001b
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -1210,7 +1210,7 @@ Tier.Processor()
     ShowAsOperationResult "$TIER" "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PAST" "$RUNTIME"
 
     DebugFuncExit
-    Session.Error.IsSet
+    Session.Error.IsNt
 
     }
 
