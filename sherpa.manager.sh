@@ -54,7 +54,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=211001b
+    local -r SCRIPT_VERSION=211001c
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -2481,10 +2481,11 @@ IPKGs.DoInstall()
         done
     else
         for index in "${!MANAGER_QPKG_NAME[@]}"; do
-            QPKGs.OpToInstall.Exist "${MANAGER_QPKG_NAME[$index]}" || (QPKGs.IsInstalled.Exist "${MANAGER_QPKG_NAME[$index]}" && QPKGs.IsStarted.Exist "${MANAGER_QPKG_NAME[$index]}") || QPKGs.OpToReinstall.Exist "${MANAGER_QPKG_NAME[$index]}" || QPKGs.OpToStart.Exist "${MANAGER_QPKG_NAME[$index]}" || continue
-            [[ ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${MANAGER_QPKG_ARCH[$index]} = all ]] || continue
-            QPKG.MinRAM "${MANAGER_QPKG_NAME[$index]}" &>/dev/null || continue
-            IPKGs.OpToInstall.Add "${MANAGER_QPKG_IPKGS_ADD[$index]}"
+            if QPKGs.OpToInstall.Exist "${MANAGER_QPKG_NAME[$index]}" || QPKGs.IsInstalled.Exist "${MANAGER_QPKG_NAME[$index]}" || QPKGs.OpToReinstall.Exist "${MANAGER_QPKG_NAME[$index]}" || QPKGs.OpToStart.Exist "${MANAGER_QPKG_NAME[$index]}"; then
+                [[ ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${MANAGER_QPKG_ARCH[$index]} = all ]] || continue
+                QPKG.MinRAM "${MANAGER_QPKG_NAME[$index]}" &>/dev/null || continue
+                IPKGs.OpToInstall.Add "${MANAGER_QPKG_IPKGS_ADD[$index]}"
+            fi
         done
     fi
 
@@ -2622,10 +2623,11 @@ PIPs.DoInstall()
         done
     else
         for index in "${!MANAGER_QPKG_NAME[@]}"; do
-            QPKGs.OpToInstall.Exist "${MANAGER_QPKG_NAME[$index]}" || (QPKGs.IsInstalled.Exist "${MANAGER_QPKG_NAME[$index]}" && QPKGs.IsStarted.Exist "${MANAGER_QPKG_NAME[$index]}") || QPKGs.OpToReinstall.Exist "${MANAGER_QPKG_NAME[$index]}" || QPKGs.OpToStart.Exist "${MANAGER_QPKG_NAME[$index]}" || continue
-            [[ ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${MANAGER_QPKG_ARCH[$index]} = all ]] || continue
-            QPKG.MinRAM "${MANAGER_QPKG_NAME[$index]}" &>/dev/null || continue
-            PIPs.OpToInstall.Add "${MANAGER_QPKG_PIPS_ADD[$index]}"
+            if QPKGs.OpToInstall.Exist "${MANAGER_QPKG_NAME[$index]}" || QPKGs.IsInstalled.Exist "${MANAGER_QPKG_NAME[$index]}" || QPKGs.OpToReinstall.Exist "${MANAGER_QPKG_NAME[$index]}" || QPKGs.OpToStart.Exist "${MANAGER_QPKG_NAME[$index]}"; then
+                [[ ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${MANAGER_QPKG_ARCH[$index]} = all ]] || continue
+                QPKG.MinRAM "${MANAGER_QPKG_NAME[$index]}" &>/dev/null || continue
+                PIPs.OpToInstall.Add "${MANAGER_QPKG_PIPS_ADD[$index]}"
+            fi
         done
     fi
 
