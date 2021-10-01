@@ -54,7 +54,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=211001c
+    local -r SCRIPT_VERSION=211001d
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -226,7 +226,7 @@ Session.Init()
     readonly LOG_TAIL_LINES=3000    # a full download and install of everything generates a session log of around 1600 lines, but include a bunch of opkg updates and it can get much longer
     readonly MIN_PYTHON_VER=394     # keep this up-to-date with current Entware Python3 version so IPKG upgrade notifier works
     code_pointer=0
-    pip3_cmd=/opt/bin/pip3
+    pip3_cmd='/opt/bin/python3 -m pip'
     previous_msg=' '
     [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg=' --insecure' || curl_insecure_arg=''
     DebugQPKGDetected arch "$NAS_QPKG_ARCH"
@@ -840,6 +840,12 @@ Session.Validate()
 
     if QPKGs.IsInstalled.Exist Entware && ! QPKGs.OpToUninstall.Exist Entware; then
         [[ -e /opt/bin/python3 ]] && version=$(/opt/bin/python3 -V 2>/dev/null | $SED_CMD 's|^Python ||') && [[ ${version//./} -lt $MIN_PYTHON_VER ]] && ShowAsReco "your Python 3 is out-of-date. Suggest upgrading your IPKGs: '$PROJECT_NAME check'"
+    fi
+
+    if (command -v python3 &>/dev/null && /opt/bin/python3 -m pip -V &>/dev/null); then
+        DebugUserspaceOK "'pip' version" "$(/opt/bin/python3 -m pip -V)"
+    else
+        DebugUserspaceWarning "'pip' version" '<not present>'
     fi
 
     DebugScript 'logs path' "$LOGS_PATH"
@@ -2576,23 +2582,6 @@ PIPs.DoInstall()
     local -r RUNTIME=long
     PIPs.OpToInstall.Init
     PIPs.OpToDownload.Init
-
-    # sometimes, 'pip3' goes missing from Entware. Don't know why.
-    if [[ -e /opt/bin/pip3 ]]; then
-        pip3_cmd=/opt/bin/pip3
-    elif [[ -e /opt/bin/pip3.9 ]]; then
-        pip3_cmd=/opt/bin/pip3.9
-    elif [[ -e /opt/bin/pip3.8 ]]; then
-        pip3_cmd=/opt/bin/pip3.8
-    elif [[ -e /opt/bin/pip3.7 ]]; then
-        pip3_cmd=/opt/bin/pip3.7
-    else
-        if [[ ! -e $pip3_cmd ]]; then
-            DebugAsWarn 'pip3 not found ... aborting'
-            DebugFuncExit; return
-        fi
-    fi
-
     ModPathToEntware
 
     if Opts.Deps.Check.IsSet || IPKGs.OpToInstall.Exist python3-pip; then
