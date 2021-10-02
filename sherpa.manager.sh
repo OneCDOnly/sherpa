@@ -54,7 +54,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=211001d
+    local -r SCRIPT_VERSION=211002
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -224,9 +224,12 @@ Session.Init()
     readonly NAS_QPKG_ARCH=$(GetQPKGArch)
     readonly ENTWARE_VER=$(GetEntwareType)
     readonly LOG_TAIL_LINES=3000    # a full download and install of everything generates a session log of around 1600 lines, but include a bunch of opkg updates and it can get much longer
-    readonly MIN_PYTHON_VER=394     # keep this up-to-date with current Entware Python3 version so IPKG upgrade notifier works
+    readonly MIN_PYTHON_VER=396     # keep this up-to-date with current Entware Python3 version so IPKG upgrade notifier works
+    readonly PYTHON_CMD=/opt/bin/python
+    readonly PYTHON3_CMD=/opt/bin/python3
+    readonly PIP_CMD="$PYTHON3_CMD -m pip"
+    readonly OPKG_CMD=/opt/bin/opkg
     code_pointer=0
-    pip3_cmd='/opt/bin/python3 -m pip'
     previous_msg=' '
     [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg=' --insecure' || curl_insecure_arg=''
     DebugQPKGDetected arch "$NAS_QPKG_ARCH"
@@ -822,12 +825,7 @@ Session.Validate()
 
     DebugUserspaceOK '$BASH_VERSION' "$BASH_VERSION"
     DebugUserspaceOK 'default volume' "$(GetDefaultVolume)"
-
-    if [[ -L /opt ]]; then
-        DebugUserspaceOK '/opt' "$($READLINK_CMD /opt || echo '<not present>')"
-    else
-        DebugUserspaceWarning '/opt' '<not present>'
-    fi
+    DebugUserspaceOK '/opt' "$($READLINK_CMD /opt || echo '<not present>')"
 
     if [[ ${#PATH} -le $max_width ]]; then
         DebugUserspaceOK '$PATH' "$PATH"
@@ -839,15 +837,10 @@ Session.Validate()
     CheckPythonPathAndVersion python
 
     if QPKGs.IsInstalled.Exist Entware && ! QPKGs.OpToUninstall.Exist Entware; then
-        [[ -e /opt/bin/python3 ]] && version=$(/opt/bin/python3 -V 2>/dev/null | $SED_CMD 's|^Python ||') && [[ ${version//./} -lt $MIN_PYTHON_VER ]] && ShowAsReco "your Python 3 is out-of-date. Suggest upgrading your IPKGs: '$PROJECT_NAME check'"
+        [[ -e $PYTHON3_CMD ]] && version=$($PYTHON3_CMD -V 2>/dev/null | $SED_CMD 's|^Python ||') && [[ ${version//./} -lt $MIN_PYTHON_VER ]] && ShowAsReco "your Python 3 is out-of-date. Suggest upgrading your IPKGs: '$PROJECT_NAME check'"
     fi
 
-    if (command -v python3 &>/dev/null && /opt/bin/python3 -m pip -V &>/dev/null); then
-        DebugUserspaceOK "'pip' version" "$(/opt/bin/python3 -m pip -V)"
-    else
-        DebugUserspaceWarning "'pip' version" '<not present>'
-    fi
-
+    DebugUserspaceOK "'pip' version" "$($PIP_CMD -V 2>/dev/null || echo '<not present>')"
     DebugScript 'logs path' "$LOGS_PATH"
     DebugScript 'work path' "$WORK_PATH"
     DebugScript 'objects hash' "$(CompileObjects hash)"
@@ -1053,7 +1046,7 @@ Tiers.Processor()
     # -> package 'installation' phase begins here <-
 
     # just in-case 'python' has disappeared again ... ¯\_(ツ)_/¯
-    [[ ! -L /opt/bin/python && -e /opt/bin/python3 ]] && ln -s /opt/bin/python3 /opt/bin/python
+    [[ ! -L $PYTHON_CMD && -e $PYTHON3_CMD ]] && ln -s $PYTHON3_CMD $PYTHON_CMD
 
     for tier in "${PACKAGE_TIERS[@]}"; do
         case $tier in
@@ -2210,7 +2203,7 @@ PatchEntwareService()
 UpdateEntware()
     {
 
-    if IsNtSysFileExist /opt/bin/opkg; then
+    if IsNtSysFileExist $OPKG_CMD; then
         code_pointer=2
         return 1
     fi
@@ -2230,7 +2223,7 @@ UpdateEntware()
     if [[ -n $msgs ]]; then
         DebugAsProc "updating $(FormatAsPackageName Entware) package list"
 
-        RunAndLog "/opt/bin/opkg update" "$LOG_PATHFILE" log:failure-only
+        RunAndLog "$OPKG_CMD update" "$LOG_PATHFILE" log:failure-only
         result_code=$?
 
         if [[ $result_code -eq 0 ]]; then
@@ -2253,15 +2246,8 @@ UpdateEntware()
 SavePackageLists()
     {
 
-    if [[ -e $pip3_cmd ]]; then
-        $pip3_cmd freeze > "$PREVIOUS_PIP_MODULE_LIST"
-        DebugAsDone "saved current $(FormatAsPackageName pip3) module list to $(FormatAsFileName "$PREVIOUS_PIP_MODULE_LIST")"
-    fi
-
-    if [[ -e /opt/bin/opkg ]]; then
-        /opt/bin/opkg list-installed > "$PREVIOUS_OPKG_PACKAGE_LIST"
-        DebugAsDone "saved current $(FormatAsPackageName Entware) IPKG list to $(FormatAsFileName "$PREVIOUS_OPKG_PACKAGE_LIST")"
-    fi
+    $PIP_CMD freeze > "$PREVIOUS_PIP_MODULE_LIST" 2>/dev/null && DebugAsDone "saved current $(FormatAsPackageName pip3) module list to $(FormatAsFileName "$PREVIOUS_PIP_MODULE_LIST")"
+    $OPKG_CMD list-installed > "$PREVIOUS_OPKG_PACKAGE_LIST" 2>/dev/null && DebugAsDone "saved current $(FormatAsPackageName Entware) IPKG list to $(FormatAsFileName "$PREVIOUS_OPKG_PACKAGE_LIST")"
 
     }
 
@@ -2340,10 +2326,10 @@ CalcIPKGsDepsToInstall()
             if [[ $element != 'ca-certs' ]]; then
                 # KLUDGE: 'libjpeg' appears to have been replaced by 'libjpeg-turbo', but many packages still list 'libjpeg' as a dependency, so replace it with 'libjpeg-turbo'.
                 if [[ $element != 'libjpeg' ]]; then
-                    if ! /opt/bin/opkg status "$element" | $GREP_CMD -q "Status:.*installed"; then
+                    if ! $OPKG_CMD status "$element" | $GREP_CMD -q "Status:.*installed"; then
                         IPKGs.OpToDownload.Add "$element"
                     fi
-                elif ! /opt/bin/opkg status 'libjpeg-turbo' | $GREP_CMD -q "Status:.*installed"; then
+                elif ! $OPKG_CMD status 'libjpeg-turbo' | $GREP_CMD -q "Status:.*installed"; then
                     IPKGs.OpToDownload.Add 'libjpeg-turbo'
                 fi
             fi
@@ -2378,7 +2364,7 @@ CalcAllIPKGsToUninstall()
     DebugAsProc 'excluding IPKGs not installed'
 
     for element in $req_list; do
-        ! /opt/bin/opkg status "$element" | $GREP_CMD -q "Status:.*installed" && IPKGs.OpToUninstall.Remove "$element"
+        ! $OPKG_CMD status "$element" | $GREP_CMD -q "Status:.*installed" && IPKGs.OpToUninstall.Remove "$element"
     done
 
     if [[ $(IPKGs.OpToUninstall.Count) -gt 0 ]]; then
@@ -2432,7 +2418,7 @@ IPKGs.DoUpgrade()
     IPKGs.OpToUpgrade.Init
     IPKGs.OpToDownload.Init
 
-    IPKGs.OpToUpgrade.Add "$(/opt/bin/opkg list-upgradable | cut -f1 -d' ')"
+    IPKGs.OpToUpgrade.Add "$($OPKG_CMD list-upgradable | cut -f1 -d' ')"
     IPKGs.OpToDownload.Add "$(IPKGs.OpToUpgrade.Array)"
 
     CalcIPKGsDownloadSize
@@ -2445,7 +2431,7 @@ IPKGs.DoUpgrade()
             trap CTRL_C_Captured INT
                 _MonitorDirSize_ "$IPKG_DL_PATH" "$(IPKGs.OpToDownload.Size)" &
 
-                RunAndLog "/opt/bin/opkg upgrade$(Opts.IgFreeSpace.IsSet && Opts.IgFreeSpace.Text) --force-overwrite $(IPKGs.OpToDownload.List) --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$LOGS_PATH/ipkgs.$UPGRADE_LOG_FILE" log:failure-only
+                RunAndLog "$OPKG_CMD upgrade$(Opts.IgFreeSpace.IsSet && Opts.IgFreeSpace.Text) --force-overwrite $(IPKGs.OpToDownload.List) --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$LOGS_PATH/ipkgs.$UPGRADE_LOG_FILE" log:failure-only
                 result_code=$?
             trap - INT
         RemoveDirSizeMonitorFlagFile
@@ -2506,7 +2492,7 @@ IPKGs.DoInstall()
             trap CTRL_C_Captured INT
                 _MonitorDirSize_ "$IPKG_DL_PATH" "$(IPKGs.OpToDownload.Size)" &
 
-                RunAndLog "/opt/bin/opkg install$(Opts.IgFreeSpace.IsSet && Opts.IgFreeSpace.Text) --force-overwrite $(IPKGs.OpToDownload.List) --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$LOGS_PATH/ipkgs.addons.$INSTALL_LOG_FILE" log:failure-only
+                RunAndLog "$OPKG_CMD install$(Opts.IgFreeSpace.IsSet && Opts.IgFreeSpace.Text) --force-overwrite $(IPKGs.OpToDownload.List) --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$LOGS_PATH/ipkgs.addons.$INSTALL_LOG_FILE" log:failure-only
                 result_code=$?
             trap - INT
         RemoveDirSizeMonitorFlagFile
@@ -2548,7 +2534,7 @@ IPKGs.DoUninstall()
     if [[ $total_count -gt 0 ]]; then
         ShowAsProc "uninstalling $total_count IPKG$(Plural "$total_count")"
 
-        RunAndLog "/opt/bin/opkg remove $(IPKGs.OpToUninstall.List) --force-depends" "$LOGS_PATH/ipkgs.$UNINSTALL_LOG_FILE" log:failure-only
+        RunAndLog "$OPKG_CMD remove $(IPKGs.OpToUninstall.List) --force-depends" "$LOGS_PATH/ipkgs.$UNINSTALL_LOG_FILE" log:failure-only
         result_code=$?
 
         if [[ $result_code -eq 0 ]]; then
@@ -2587,7 +2573,7 @@ PIPs.DoInstall()
     if Opts.Deps.Check.IsSet || IPKGs.OpToInstall.Exist python3-pip; then
         ShowAsOperationProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
 
-        exec_cmd="$pip3_cmd install --upgrade --no-deps $MANAGER_BASE_PIPS_ADD --cache-dir $PIP_CACHE_PATH"
+        exec_cmd="$PIP_CMD install --upgrade --no-deps $MANAGER_BASE_PIPS_ADD --cache-dir $PIP_CACHE_PATH"
         local desc="'Python3' base modules"
         local log_pathfile=$LOGS_PATH/py3-modules.base.$INSTALL_LOG_FILE
         DebugAsProc "downloading & installing $desc"
@@ -2623,7 +2609,7 @@ PIPs.DoInstall()
     if (Opts.Deps.Check.IsSet && PIPs.OpToInstall.IsAny) || PIPs.OpToInstall.IsAny; then
         ShowAsOperationProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
 
-        exec_cmd="$pip3_cmd install --upgrade --no-deps $(PIPs.OpToInstall.List) --cache-dir $PIP_CACHE_PATH"
+        exec_cmd="$PIP_CMD install --upgrade --no-deps $(PIPs.OpToInstall.List) --cache-dir $PIP_CACHE_PATH"
         local desc="'Python3' specific modules"
         local log_pathfile=$LOGS_PATH/py3-modules.shared.$INSTALL_LOG_FILE
         DebugAsProc "downloading & installing $desc"
@@ -2645,7 +2631,7 @@ PIPs.DoInstall()
         # KLUDGE: force recompilation of 'sabyenc3' package so it's recognised by SABnzbd: https://forums.sabnzbd.org/viewtopic.php?p=121214#p121214
         ShowAsOperationProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
 
-        exec_cmd="$pip3_cmd install --no-deps --force-reinstall --no-binary :all: sabyenc3 --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
+        exec_cmd="$PIP_CMD install --no-deps --force-reinstall --no-binary :all: sabyenc3 --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
         desc="'Python3 sabyenc3' module"
         log_pathfile=$LOGS_PATH/py3-modules.sabyenc3.$REINSTALL_LOG_FILE
         DebugAsProc "reinstalling $desc"
@@ -4524,7 +4510,7 @@ QPKG.DoInstall()
 
                 # add extra package(s) needed immediately
                 DebugAsProc 'installing standalone IPKGs'
-                RunAndLog "/opt/bin/opkg install$(Opts.IgFreeSpace.IsSet && Opts.IgFreeSpace.Text) --force-overwrite $MANAGER_BASE_IPKGS_ADD --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$LOGS_PATH/ipkgs.extra.$INSTALL_LOG_FILE" log:failure-only
+                RunAndLog "$OPKG_CMD install$(Opts.IgFreeSpace.IsSet && Opts.IgFreeSpace.Text) --force-overwrite $MANAGER_BASE_IPKGS_ADD --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$LOGS_PATH/ipkgs.extra.$INSTALL_LOG_FILE" log:failure-only
                 DebugAsDone 'installed standalone IPKGs'
             fi
         fi
