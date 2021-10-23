@@ -54,7 +54,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=211002
+    local -r SCRIPT_VERSION=211024
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -224,7 +224,7 @@ Session.Init()
     readonly NAS_QPKG_ARCH=$(GetQPKGArch)
     readonly ENTWARE_VER=$(GetEntwareType)
     readonly LOG_TAIL_LINES=3000    # a full download and install of everything generates a session log of around 1600 lines, but include a bunch of opkg updates and it can get much longer
-    readonly MIN_PYTHON_VER=396     # keep this up-to-date with current Entware Python3 version so IPKG upgrade notifier works
+    readonly MIN_PYTHON_VER=396     # keep this up-to-date with current Entware Python3 version so IPKG upgrade notifier will work
     readonly PYTHON_CMD=/opt/bin/python
     readonly PYTHON3_CMD=/opt/bin/python3
     readonly PIP_CMD="$PYTHON3_CMD -m pip"
@@ -442,7 +442,7 @@ Session.Init()
         MANAGER_QPKG_DEPENDED_UPON+=(false)
         MANAGER_QPKG_IPKGS_ADD+=('python3-mako python3-pillow python3-pip python3-pytz python3-requests python3-six python3-urllib3')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
-        MANAGER_QPKG_PIPS_ADD+=('apscheduler beautifulsoup4 cfscrape cheroot cherrypy feedparser jaraco.classes jaraco.collections jaraco.functools jaraco.text more_itertools portend sgmllib3k simplejson soupsieve tempora tzlocal zc.lockfile')
+        MANAGER_QPKG_PIPS_ADD+=('apscheduler beautifulsoup4 cfscrape cheroot cherrypy feedparser jaraco.classes jaraco.collections jaraco.functools jaraco.text more_itertools portend pytz_deprecation_shim sgmllib3k simplejson soupsieve tempora tzlocal==2.0 zc.lockfile')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
         MANAGER_QPKG_RESTART_TO_UPDATE+=(true)
 
