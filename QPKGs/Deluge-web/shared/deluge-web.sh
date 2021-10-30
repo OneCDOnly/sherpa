@@ -559,7 +559,7 @@ EnsureConfigFileExists()
         cp "$QPKG_INI_DEFAULT_PATHFILE" "$QPKG_INI_PATHFILE"
     fi
 
-    # Deluge-server and Deluge-web need acccess to the same auth file or to duplicate copies of it
+    # Deluge-server and Deluge-web need access to the same auth file, or to duplicate copies of it
 
     if [[ $(/sbin/getcfg Deluge-server Enable -d FALSE -f /etc/config/qpkg.conf) = TRUE ]]; then
         web_auth_pathfile=$(/usr/bin/dirname "$QPKG_INI_PATHFILE")/auth

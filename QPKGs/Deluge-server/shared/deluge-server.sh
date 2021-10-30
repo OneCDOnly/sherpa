@@ -551,7 +551,7 @@ EnsureConfigFileExists()
         local buff=$(/opt/bin/jq ".plugins_location |= \"$QPKG_PATH/config/plugins\"" "$QPKG_INI_PATHFILE") && echo "$buff" > "$QPKG_INI_PATHFILE"
     fi
 
-    # Deluge-server and Deluge-web need acccess to the same auth file or to duplicate copies of it
+    # Deluge-server and Deluge-web need access to the same auth file, or to duplicate copies of it
 
     if [[ $(/sbin/getcfg Deluge-web Enable -d FALSE -f /etc/config/qpkg.conf) = TRUE ]]; then
         server_auth_pathfile=$(/usr/bin/dirname "$QPKG_INI_PATHFILE")/auth
