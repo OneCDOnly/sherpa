@@ -54,7 +54,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=211226
+    local -r SCRIPT_VERSION=211226b
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -2515,6 +2515,8 @@ IPKGs.DoUninstall()
 
     QPKGs.SkProc.IsSet && return
     QPKGs.IsNtInstalled.Exist Entware && return
+    QPKGs.OpToUninstall.Exist Entware && return
+    QPKGs.OpToReinstall.Exist Entware && return
     QPKGs.IsStopped.Exist Entware && return
     Session.Error.IsSet && return
     DebugFuncEntry
