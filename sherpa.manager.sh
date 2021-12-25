@@ -54,7 +54,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=211207
+    local -r SCRIPT_VERSION=211226
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -2322,8 +2322,10 @@ CalcIPKGsDepsToInstall()
         DebugAsProc 'excluding IPKGs already installed'
 
         for element in $pre_exclude_list; do
-            # KLUDGE: 'ca-certs' appears to be a bogus meta-package, so silently exclude it from attempted installation.
-            if [[ $element != 'ca-certs' ]]; then
+            # KLUDGE: silently exclude these from attempted installation:
+            # KLUDGE: 'ca-certs' appears to be a bogus meta-package.
+            # KLUDGE: 'python3-gdbm' is not available, but can be requested as per https://forum.qnap.com/viewtopic.php?p=806031#p806031 (don't know why).
+            if [[ $element != 'ca-certs' && $element != 'python3-gdbm' ]]; then
                 # KLUDGE: 'libjpeg' appears to have been replaced by 'libjpeg-turbo', but many packages still list 'libjpeg' as a dependency, so replace it with 'libjpeg-turbo'.
                 if [[ $element != 'libjpeg' ]]; then
                     if ! $OPKG_CMD status "$element" | $GREP_CMD -q "Status:.*installed"; then
