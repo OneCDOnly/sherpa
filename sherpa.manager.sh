@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# sherpa.manager.sh - Copyright (C) 2017-2021 OneCD [one.cd.only@gmail.com]
+# sherpa.manager.sh - Copyright (C) 2017-2022 OneCD [one.cd.only@gmail.com]
 #
 # This is the management script for the sherpa mini-package-manager.
 # It's automatically downloaded via the 'sherpa.loader.sh' script in the 'sherpa' QPKG.
@@ -54,7 +54,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=211226b
+    local -r SCRIPT_VERSION=220114
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -653,22 +653,6 @@ Session.Init()
         MANAGER_QPKG_PIPS_ADD+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
         MANAGER_QPKG_RESTART_TO_UPDATE+=(false)
-
-    MANAGER_QPKG_NAME+=(SickChill)
-        MANAGER_QPKG_ARCH+=(all)
-        MANAGER_QPKG_MIN_RAM_KB+=(any)
-        MANAGER_QPKG_VERSION+=(210714)
-        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
-        MANAGER_QPKG_MD5+=(be6023b763de897b046b2d97eccd486b)
-        MANAGER_QPKG_DESC+=('another SickBeard fork: manage and search for TV shows and movies')
-        MANAGER_QPKG_ABBRVS+=('sc sick sickc chill sickchill')
-        MANAGER_QPKG_DEPENDS_ON+=(Entware)
-        MANAGER_QPKG_DEPENDED_UPON+=(false)
-        MANAGER_QPKG_IPKGS_ADD+=('python3-dev python3-pip')
-        MANAGER_QPKG_IPKGS_REMOVE+=('')
-        MANAGER_QPKG_PIPS_ADD+=('pygithub')
-        MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
-        MANAGER_QPKG_RESTART_TO_UPDATE+=(true)
 
     MANAGER_QPKG_NAME+=(OSickGear)
         MANAGER_QPKG_ARCH+=(all)

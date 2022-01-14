@@ -101,6 +101,18 @@
 #
 ######################################################################
 # Define any package specific operations that shall be performed when
+# the package is installed.
+######################################################################
+pkg_post_install()
+    {
+    QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
+    conf_pathfile=$QPKG_PATH/config/core.conf
+    geoip_pathfile=$QPKG_PATH/config/GeoIP.dat
+
+    $CMD_SED -i "s|/opt/share/GeoIP/GeoIP.dat|$geoip_pathfile|" $conf_pathfile
+    }
+######################################################################
+# Define any package specific operations that shall be performed when
 # the package is removed.
 ######################################################################
 PKG_POST_REMOVE="{
