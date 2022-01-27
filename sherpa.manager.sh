@@ -49,12 +49,13 @@ Session.Init()
 
     DebugFuncEntry
     IsQNAP || return
+    IsSU || return
 
     readonly SCRIPT_STARTSECONDS=$(/bin/date +%s)
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220125
+    local -r SCRIPT_VERSION=220128
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -800,11 +801,6 @@ Session.Validate()
         DebugUserspaceOK '$EUID' "$EUID"
     else
         DebugUserspaceWarning '$EUID' "$EUID"
-    fi
-
-    if [[ $EUID -ne 0 || $USER != admin ]]; then
-        ShowAsEror "this script must be run as the 'admin' user. Please login via SSH as 'admin' and try again"
-        QPKGs.SkProc.Set
     fi
 
     DebugUserspaceOK '$BASH_VERSION' "$BASH_VERSION"
@@ -2806,6 +2802,25 @@ IsQNAP()
 
     if [[ ! -e /etc/init.d/functions ]]; then
         ShowAsAbort 'QTS functions missing (is this a QNAP NAS?)'
+        return 1
+    fi
+
+    return 0
+
+    }
+
+IsSU()
+    {
+
+    # running as superuser?
+
+    if [[ $EUID -ne 0 ]]; then
+        if [[ -e /usr/bin/sudo ]]; then
+            ShowAsEror "this script must be run with superuser privileges. Try again as:"
+            echo "sudo $0"
+        else
+            ShowAsEror "this script must be run as the 'admin' user. Please login via SSH as 'admin' and try again"
+        fi
         return 1
     fi
 

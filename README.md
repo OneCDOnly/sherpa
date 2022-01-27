@@ -30,15 +30,20 @@ Package management via **sherpa** provides extra features like easy application 
 
 1) Install the **sherpa** QPKG, available [here](https://github.com/OneCDOnly/sherpa/tree/main/QPKGs/sherpa/build).
 
-2) [SSH](https://www.qnap.com/en/how-to/knowledge-base/article/how-to-access-qnap-nas-by-ssh/) into your NAS as the 'admin' user,
+2) [SSH](https://www.qnap.com/en/how-to/knowledge-base/article/how-to-access-qnap-nas-by-ssh/) into your NAS,
 
 3) Then at the command prompt, run:
 
 ```
-sherpa
+sudo sherpa
 ```
 
 ... and follow the help from there.
+
+If `sudo` is unavailable in your version of QTS, please SSH into your NAS as the 'admin' user instead and run:
+```
+sherpa
+```
 
 ---
 Checkout the wiki for more information: [https://github.com/OneCDOnly/sherpa/wiki](https://github.com/OneCDOnly/sherpa/wiki)
