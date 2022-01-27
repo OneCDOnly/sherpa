@@ -55,7 +55,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220128
+    local -r SCRIPT_VERSION=220128b
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -2817,7 +2817,7 @@ IsSU()
     if [[ $EUID -ne 0 ]]; then
         if [[ -e /usr/bin/sudo ]]; then
             ShowAsEror "this script must be run with superuser privileges. Try again as:"
-            echo "sudo $0"
+            echo "$ sudo sherpa"
         else
             ShowAsEror "this script must be run as the 'admin' user. Please login via SSH as 'admin' and try again"
         fi
