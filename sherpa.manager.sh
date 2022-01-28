@@ -55,7 +55,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220128b
+    local -r SCRIPT_VERSION=220128c
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -790,12 +790,7 @@ Session.Validate()
     DebugFirmwareOK platform "$(GetPlatform)"
     DebugUserspaceOK 'OS uptime' "$(GetUptime)"
     DebugUserspaceOK 'system load' "$(GetSysLoadAverages)"
-
-    if [[ $USER = admin ]]; then
-        DebugUserspaceOK '$USER' "$USER"
-    else
-        DebugUserspaceWarning '$USER' "$USER"
-    fi
+    DebugUserspaceOK '$USER' "$USER"
 
     if [[ $EUID -eq 0 ]]; then
         DebugUserspaceOK '$EUID' "$EUID"
