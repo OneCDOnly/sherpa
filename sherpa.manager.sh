@@ -55,7 +55,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220128c
+    local -r SCRIPT_VERSION=220128d
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -603,7 +603,7 @@ Session.Init()
         MANAGER_QPKG_DEPENDED_UPON+=(false)
         MANAGER_QPKG_IPKGS_ADD+=('coreutils-nice ffprobe ionice python3-certifi python3-cffi python3-cryptography python3-dev python3-pip p7zip unrar')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
-        MANAGER_QPKG_PIPS_ADD+=('babelfish chardet cheetah3 cheroot cherrypy configobj feedparser guessit importlib-resources jaraco.classes jaraco.collections jaraco.context jaraco.functools jaraco.text more_itertools portend puremagic python-dateutil rebulk sabyenc3 sgmllib3k tempora zc.lockfile')
+        MANAGER_QPKG_PIPS_ADD+=('babelfish chardet cheetah3 cheroot cherrypy configobj feedparser guessit importlib-resources jaraco.classes jaraco.collections jaraco.context jaraco.functools jaraco.text more_itertools portend puremagic PySocks python-dateutil rebulk sabyenc3 sgmllib3k tempora zc.lockfile')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
         MANAGER_QPKG_RESTART_TO_UPDATE+=(true)
 
