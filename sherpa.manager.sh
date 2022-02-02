@@ -55,7 +55,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220128d
+    local -r SCRIPT_VERSION=220203
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -2534,6 +2534,7 @@ PIPs.DoInstall()
     PIPs.ToInstall.IsNt && return
     QPKGs.IsNtInstalled.Exist Entware && return
     QPKGs.IsStopped.Exist Entware && return
+    ! $OPKG_CMD status python3-pip | $GREP_CMD -q "Status:.*installed" && return
     Session.Error.IsSet && return
     DebugFuncEntry
     local exec_cmd=''
