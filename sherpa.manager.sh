@@ -61,7 +61,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220208g
+    local -r SCRIPT_VERSION=220208h
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -123,6 +123,7 @@ Session.Init()
     readonly GNU_SED_CMD=/opt/bin/sed
 
     readonly BACKUP_LOG_FILE=backup.log
+    readonly CHECK_LOG_FILE=check.log
     readonly DEBUG_LOG_FILE=debug.log
     readonly DISABLE_LOG_FILE=disable.log
     readonly DOWNLOAD_LOG_FILE=download.log
@@ -417,7 +418,7 @@ Session.Init()
         MANAGER_QPKG_DEPENDED_UPON+=(false)
         MANAGER_QPKG_IPKGS_ADD+=('python3-dev python3-pillow python3-pip python3-pyopenssl python3-requests python3-requests-oauthlib python3-yaml')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
-        MANAGER_QPKG_PIPS_ADD+=('apprise click markdown python-levenshtein python-magic')
+        MANAGER_QPKG_PIPS_ADD+=('apprise charset-normalizer click markdown python-levenshtein python-magic')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
         MANAGER_QPKG_RESTART_TO_UPDATE+=(true)
 
@@ -449,7 +450,7 @@ Session.Init()
         MANAGER_QPKG_DEPENDED_UPON+=(false)
         MANAGER_QPKG_IPKGS_ADD+=('python3-mako python3-pillow python3-pip python3-pytz python3-requests python3-six python3-urllib3')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
-        MANAGER_QPKG_PIPS_ADD+=('apscheduler beautifulsoup4 cfscrape cheroot cherrypy feedparser jaraco.classes jaraco.collections jaraco.functools jaraco.text more_itertools portend pytz_deprecation_shim sgmllib3k simplejson soupsieve tempora tzlocal==2.0 zc.lockfile')
+        MANAGER_QPKG_PIPS_ADD+=('apscheduler beautifulsoup4 cfscrape charset-normalizer cheroot cherrypy feedparser jaraco.classes jaraco.collections jaraco.functools jaraco.text more_itertools portend pytz_deprecation_shim sgmllib3k simplejson soupsieve tempora tzdata tzlocal==2.0 zc.lockfile')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
         MANAGER_QPKG_RESTART_TO_UPDATE+=(true)
 
@@ -2575,7 +2576,7 @@ PIPs.DoInstall()
     if Opts.Deps.Check.IsSet || IPKGs.OpToInstall.Exist python3-pip; then
         ShowAsOperationProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
 
-        exec_cmd="$PIP_CMD install --upgrade --no-deps $MANAGER_BASE_PIPS_ADD --cache-dir $PIP_CACHE_PATH"
+        exec_cmd="$PIP_CMD install --upgrade --no-deps --no-input $MANAGER_BASE_PIPS_ADD --cache-dir $PIP_CACHE_PATH"
         local desc="'Python3' base modules"
         local log_pathfile=$LOGS_PATH/py3-modules.base.$INSTALL_LOG_FILE
         DebugAsProc "downloading & installing $desc"
@@ -2611,7 +2612,7 @@ PIPs.DoInstall()
     if (Opts.Deps.Check.IsSet && PIPs.OpToInstall.IsAny) || PIPs.OpToInstall.IsAny; then
         ShowAsOperationProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
 
-        exec_cmd="$PIP_CMD install --upgrade --no-deps $(PIPs.OpToInstall.List) --cache-dir $PIP_CACHE_PATH"
+        exec_cmd="$PIP_CMD install --upgrade --no-deps --no-input $(PIPs.OpToInstall.List) --cache-dir $PIP_CACHE_PATH"
         local desc="'Python3' specific modules"
         local log_pathfile=$LOGS_PATH/py3-modules.shared.$INSTALL_LOG_FILE
         DebugAsProc "downloading & installing $desc"
@@ -2633,7 +2634,7 @@ PIPs.DoInstall()
 #         # KLUDGE: force recompilation of 'sabyenc3' package so it's recognised by SABnzbd: https://forums.sabnzbd.org/viewtopic.php?p=121214#p121214
 #         ShowAsOperationProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
 #
-#         exec_cmd="$PIP_CMD install --no-deps --force-reinstall --no-binary :all: sabyenc3 --disable-pip-version-check --cache-dir $PIP_CACHE_PATH"
+#         exec_cmd="$PIP_CMD install --no-deps --force-reinstall --no-binary :all: sabyenc3 --cache-dir $PIP_CACHE_PATH"
 #         desc="'Python3 sabyenc3' module"
 #         log_pathfile=$LOGS_PATH/py3-modules.sabyenc3.$REINSTALL_LOG_FILE
 #         DebugAsProc "reinstalling $desc"
@@ -2654,8 +2655,26 @@ PIPs.DoInstall()
 
     # execute with pass_count > total_count to trigger 100% message
     ShowAsOperationProgress '' "$PACKAGE_TYPE" "$((total_count+1))" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
-
     ShowAsOperationResult '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PAST" "$RUNTIME"
+
+    # check all PIP dependencies are OK while we're here
+    local ACTION_PRESENT=checking
+    local ACTION_PAST=checked
+
+    exec_cmd="$PIP_CMD check --no-input"
+    desc="'Python3' modules"
+    ShowAsProc "checking $desc"
+    log_pathfile=$LOGS_PATH/py3-modules.$CHECK_LOG_FILE
+    DebugAsProc "$ACTION_PRESENT $desc"
+    RunAndLog "$exec_cmd" "$log_pathfile" log:failure-only
+    result_code=$?
+
+    if [[ $result_code -eq 0 ]]; then
+        DebugAsDone "$ACTION_PAST $desc"
+    else
+        ShowAsFail "$desc check failed $(FormatAsResult "$result_code")"
+    fi
+
     DebugFuncExit $result_code
 
     }
