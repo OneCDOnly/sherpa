@@ -61,7 +61,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220208h
+    local -r SCRIPT_VERSION=220208i
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -195,6 +195,7 @@ Session.Init()
         ResetWorkPath
         ArchiveActiveSessionLog
         ResetActiveSessionLog
+        CleanManagementScript
         exit 0
     elif [[ $USER_ARGS_RAW == *"clean"* ]]; then
         CleanManagementScript
@@ -3227,8 +3228,8 @@ Help.Problems.Show()
     DisplayAsProjectSyntaxIndentedExample 'process one-or-more packages and show live debugging information' "$(FormatAsHelpAction) $(FormatAsHelpPackages) debug"
     DisplayAsProjectSyntaxIndentedExample 'ensure all application dependencies are installed' 'check'
     DisplayAsProjectSyntaxIndentedExample "don't check free-space on target filesystem when installing $(FormatAsPackageName Entware) packages" "$(FormatAsHelpAction) $(FormatAsHelpPackages) ignore-space"
-    DisplayAsProjectSyntaxIndentedExample "clear the locally cached $(FormatAsScriptTitle) management script" 'clean'
-    DisplayAsProjectSyntaxIndentedExample 'clear all downloaded items in local cache and remove all logs' 'reset'
+    DisplayAsProjectSyntaxIndentedExample "clear the cached $(FormatAsScriptTitle) management script" 'clean'
+    DisplayAsProjectSyntaxIndentedExample 'clear all cached items and remove all logs' 'reset'
     DisplayAsProjectSyntaxIndentedExample 'restart all installed packages (upgrades the internal applications, not packages)' 'restart all'
     DisplayAsProjectSyntaxIndentedExample 'start these packages and enable package icons' "start $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample 'stop these packages and disable package icons' "stop $(FormatAsHelpPackages)"
