@@ -61,7 +61,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220208f
+    local -r SCRIPT_VERSION=220208g
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -577,6 +577,22 @@ Session.Init()
         MANAGER_QPKG_DEPENDED_UPON+=(true)
         MANAGER_QPKG_IPKGS_ADD+=('')
         MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
+        MANAGER_QPKG_PIPS_ADD+=('')
+        MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
+        MANAGER_QPKG_RESTART_TO_UPDATE+=(false)
+
+    MANAGER_QPKG_NAME+=(QDK)
+        MANAGER_QPKG_ARCH+=(all)
+        MANAGER_QPKG_MIN_RAM_KB+=(any)
+        MANAGER_QPKG_VERSION+=(2.3.11)
+        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
+        MANAGER_QPKG_MD5+=(745e0f65004a242ad7872e970382de7e)
+        MANAGER_QPKG_DESC+=("provides the 'qbuild' command to compile QPKGs")
+        MANAGER_QPKG_ABBRVS+=('qd qbuild qdk')
+        MANAGER_QPKG_DEPENDS_ON+=('')
+        MANAGER_QPKG_DEPENDED_UPON+=(false)
+        MANAGER_QPKG_IPKGS_ADD+=('')
+        MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_PIPS_ADD+=('')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
         MANAGER_QPKG_RESTART_TO_UPDATE+=(false)
