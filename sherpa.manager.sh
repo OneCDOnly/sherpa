@@ -1,38 +1,44 @@
 #!/usr/bin/env bash
 #
-# sherpa.manager.sh - Copyright (C) 2017-2022 OneCD [one.cd.only@gmail.com]
+# sherpa.manager.sh
+#   Copyright (C) 2017-2022 OneCD [one.cd.only@gmail.com]
 #
-# This is the management script for the sherpa mini-package-manager.
-# It's automatically downloaded via the 'sherpa.loader.sh' script in the 'sherpa' QPKG.
+# Description:
+#   This is the management script for the sherpa mini-package-manager.
+#   It's automatically downloaded via the 'sherpa.loader.sh' script in the 'sherpa' QPKG no-more than once per 24 hours.
 #
-# So, blame OneCD if it all goes horribly wrong. ;)
+#   So, blame OneCD if it all goes horribly wrong. ;)
 #
-# project: https://git.io/sherpa
-# forum: https://forum.qnap.com/viewtopic.php?f=320&t=132373
+# Project:
+#   https://git.io/sherpa
+#
+# Forum:
+#   https://forum.qnap.com/viewtopic.php?f=320&t=132373
 #
 # Tested on:
-#  GNU bash, version 3.2.57(2)-release (i686-pc-linux-gnu)
-#  GNU bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)
-#  Copyright (C) 2007 Free Software Foundation, Inc.
+#   GNU bash, version 3.2.57(2)-release (i686-pc-linux-gnu)
+#   GNU bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)
+#   Copyright (C) 2007 Free Software Foundation, Inc.
 #
 # ... and periodically on:
-#  GNU bash, version 5.0.17(1)-release (aarch64-openwrt-linux-gnu)
-#  Copyright (C) 2019 Free Software Foundation, Inc.
+#   GNU bash, version 5.0.17(1)-release (aarch64-openwrt-linux-gnu)
+#   Copyright (C) 2019 Free Software Foundation, Inc.
 #
-# This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+# License:
+#   This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 #
-# This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+#   This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 #
-# You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
+#   You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
 #
 # Project variable and function naming style-guide:
-#             functions: CamelCase
-#  background functions: _CamelCaseWithLeadingAndTrailingUnderscores_
-#             variables: lowercase_with_inline_underscores
-#      "object" methods: Capitalised.CamelCase.With.Inline.Periods
-#   "object" properties: _lowercase_with_leading_and_inline_and_trailing_underscores_ (these should ONLY be managed via the object's methods)
-#             constants: UPPERCASE_WITH_INLINE_UNDERSCORES (also set as readonly)
-#               indents: 1 x tab (converted to 4 x spaces to suit GitHub web-display)
+#              functions: CamelCase
+#   background functions: _CamelCaseWithLeadingAndTrailingUnderscores_
+#              variables: lowercase_with_inline_underscores
+#       "object" methods: Capitalised.CamelCase.With.Inline.Periods
+#    "object" properties: _lowercase_with_leading_and_inline_and_trailing_underscores_ (these should ONLY be managed via the object's methods)
+#              constants: UPPERCASE_WITH_INLINE_UNDERSCORES (also set as readonly)
+#                indents: 1 x tab (converted to 4 x spaces to suit GitHub web-display)
 #
 # Notes:
 #   If on-screen line-spacing is required, this should only be done by the next function that outputs to display.
@@ -55,7 +61,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220208b
+    local -r SCRIPT_VERSION=220208c
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
