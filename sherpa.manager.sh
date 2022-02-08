@@ -61,7 +61,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220209
+    local -r SCRIPT_VERSION=220209b
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -451,7 +451,7 @@ Session.Init()
         MANAGER_QPKG_DEPENDED_UPON+=(false)
         MANAGER_QPKG_IPKGS_ADD+=('python3-mako python3-pillow python3-pip python3-pytz python3-requests python3-six python3-urllib3')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
-        MANAGER_QPKG_PIPS_ADD+=('apscheduler beautifulsoup4 cfscrape charset-normalizer cheroot cherrypy feedparser jaraco.classes jaraco.collections jaraco.functools jaraco.text more_itertools portend pytz_deprecation_shim sgmllib3k simplejson soupsieve tempora tzdata tzlocal==2.0 zc.lockfile')
+        MANAGER_QPKG_PIPS_ADD+=('apscheduler beautifulsoup4 cfscrape charset-normalizer cheroot cherrypy feedparser jaraco.classes jaraco.collections jaraco.functools jaraco.text more_itertools portend pytz pytz_deprecation_shim sgmllib3k simplejson soupsieve tempora tzdata tzlocal==2.0 zc.lockfile')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
         MANAGER_QPKG_RESTART_TO_UPDATE+=(true)
 
@@ -627,7 +627,7 @@ Session.Init()
         MANAGER_QPKG_DEPENDED_UPON+=(false)
         MANAGER_QPKG_IPKGS_ADD+=('coreutils-nice ffprobe ionice python3-certifi python3-cffi python3-cryptography python3-dev python3-pip python3-six p7zip unrar')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
-        MANAGER_QPKG_PIPS_ADD+=('babelfish chardet cheetah3 cheroot cherrypy configobj feedparser guessit importlib-resources jaraco.classes jaraco.collections jaraco.context jaraco.functools jaraco.text more_itertools portend puremagic PySocks python-dateutil rebulk sabyenc3 sgmllib3k tempora zc.lockfile')
+        MANAGER_QPKG_PIPS_ADD+=('babelfish chardet cheetah3 cheroot cherrypy configobj feedparser guessit importlib-resources jaraco.classes jaraco.collections jaraco.context jaraco.functools jaraco.text more_itertools portend puremagic PySocks python-dateutil pytz rebulk sabyenc3 sgmllib3k tempora zc.lockfile')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
         MANAGER_QPKG_RESTART_TO_UPDATE+=(true)
 
@@ -2565,7 +2565,7 @@ PIPs.DoInstall()
     local -i result_code=0
     local -i pass_count=0
     local -i fail_count=0
-    local -i total_count=2
+    local -i total_count=3
     local -r PACKAGE_TYPE='PIP group'
     local ACTION_PRESENT=installing
     local ACTION_PAST=installed
@@ -2631,28 +2631,28 @@ PIPs.DoInstall()
         ((total_count--))
     fi
 
-#     if (Opts.Deps.Check.IsSet && QPKGs.IsInstalled.Exist SABnzbd) || QPKGs.OpToInstall.Exist SABnzbd || QPKGs.OpToReinstall.Exist SABnzbd; then
-#         # KLUDGE: force recompilation of 'sabyenc3' package so it's recognised by SABnzbd: https://forums.sabnzbd.org/viewtopic.php?p=121214#p121214
-#         ShowAsOperationProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
-#
-#         exec_cmd="$PIP_CMD install --no-deps --force-reinstall --no-binary :all: sabyenc3 --cache-dir $PIP_CACHE_PATH"
-#         desc="'Python3 sabyenc3' module"
-#         log_pathfile=$LOGS_PATH/py3-modules.sabyenc3.$REINSTALL_LOG_FILE
-#         DebugAsProc "reinstalling $desc"
-#         RunAndLog "$exec_cmd" "$log_pathfile" log:failure-only
-#         result_code=$?
-#
-#         if [[ $result_code -eq 0 ]]; then
-#             DebugAsDone "reinstalled $desc"
-#             QPKGs.OpToRestart.Add SABnzbd
-#             ((pass_count++))
-#         else
-#             ShowAsFail "reinstallation of $desc failed $(FormatAsResult "$result_code")"
-#             ((fail_count++))
-#         fi
-#     else
-#         ((total_count--))
-#     fi
+    if (Opts.Deps.Check.IsSet && QPKGs.IsInstalled.Exist SABnzbd) || QPKGs.OpToInstall.Exist SABnzbd || QPKGs.OpToReinstall.Exist SABnzbd; then
+        # KLUDGE: force recompilation of 'sabyenc3' package so it's recognised by SABnzbd: https://forums.sabnzbd.org/viewtopic.php?p=121214#p121214
+        ShowAsOperationProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
+
+        exec_cmd="$PIP_CMD install --no-deps --no-input --force-reinstall --no-binary :all: sabyenc3 --cache-dir $PIP_CACHE_PATH"
+        desc="'Python3 sabyenc3' module"
+        log_pathfile=$LOGS_PATH/py3-modules.sabyenc3.$REINSTALL_LOG_FILE
+        DebugAsProc "reinstalling $desc"
+        RunAndLog "$exec_cmd" "$log_pathfile" log:failure-only
+        result_code=$?
+
+        if [[ $result_code -eq 0 ]]; then
+            DebugAsDone "reinstalled $desc"
+            QPKGs.OpToRestart.Add SABnzbd
+            ((pass_count++))
+        else
+            ShowAsFail "reinstallation of $desc failed $(FormatAsResult "$result_code")"
+            ((fail_count++))
+        fi
+    else
+        ((total_count--))
+    fi
 
     # execute with pass_count > total_count to trigger 100% message
     ShowAsOperationProgress '' "$PACKAGE_TYPE" "$((total_count+1))" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
