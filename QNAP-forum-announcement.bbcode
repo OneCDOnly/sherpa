@@ -10,7 +10,7 @@ A mini-package-manager for QNAP NAS.
 
 This is a [b]command-line[/b] package manager. If you're unfamiliar with SSH, then please look at some of the fine GUI-only packaged alternatives available from the [url=https://qnapclub.eu/en]Qnapclub Store[/url] instead. You'll have a much better user-experience.
 
-Package management via [b]sherpa[/b] provides extra features like easy application backup and upgrading, and can be automated via cron.
+Package management via [b]sherpa[/b] provides extra features like easy application backup and upgrading, and operations can be automated via cron.
 
 [b][u][size=120]Applications available[/size][/u][/b]
 
@@ -25,10 +25,11 @@ Package management via [b]sherpa[/b] provides extra features like easy applicati
 [*][url=https://github.com/mylar3/mylar3][b]Mylar3[/b][/url]
 [*][url=https://nzbget.net/][b]NZBGet[/b][/url]
 [*][url=https://github.com/clinton-hall/nzbToMedia][b]nzbToMedia[/b][/url]
+[*][b]Par2[/b]
+[*][b]QDK[/b]
 [*][url=https://github.com/OneCDOnly/RunLast][b]RunLast[/b][/url]
 [*][url=https://github.com/sabnzbd/sabnzbd][b]SABnzbd[/b][/url]
 [*][url=https://github.com/maandree/sha3sum][b]sha3sum[/b][/url]
-[*][url=https://github.com/SickChill/SickChill][b]SickChill[/b][/url]
 [*][url=https://github.com/SickGear/SickGear][b]SickGear[/b][/url]
 [*][url=https://github.com/OneCDOnly/SortMyQPKGs][b]SortMyQPKGs[/b][/url]
 [*][url=https://transmissionbt.com/][b]Transmission[/b][/url]
@@ -36,8 +37,7 @@ Package management via [b]sherpa[/b] provides extra features like easy applicati
 
 ... and the following apps will be automatically installed as required:
 [list][*][b]Entware[/b] (standard version)
-[*][b]Python[/b] v3.9.4
-[*][b]Par2[/b] v0.8.1.0
+[*][b]Python[/b] v3.10.0
 [/list]
 
 
@@ -49,14 +49,17 @@ Package management via [b]sherpa[/b] provides extra features like easy applicati
 
 [b][u][size=120]Usage[/size][/u][/b]
 
-[list=1][*]Install the [b]sherpa[/b] QPKG, available from [url=https://github.com/OneCDOnly/sherpa/raw/main/QPKGs/sherpa/build/][b]GitHub[/b][/url].
+[list=1][*]Install the [b]sherpa[/b] QPKG, available [url=https://github.com/OneCDOnly/sherpa/raw/main/QPKGs/sherpa/build/][b]here[/b][/url].
 
 
-[*][url=https://www.qnap.com/en/how-to/knowledge-base/article/how-to-access-qnap-nas-by-ssh/][b]SSH[/b][/url] into your NAS as the 'admin' user,
+[*][url=https://www.qnap.com/en/how-to/knowledge-base/article/how-to-access-qnap-nas-by-ssh/][b]SSH[/b][/url] into your NAS,
 
 [*]Then at the command prompt, run:
-[code]sherpa[/code]
+[code]sudo sherpa[/code]
+... and follow the help from there.
 
-... and follow the help from there. ;)
+If 'sudo' is unavailable in your version of QTS, please SSH into your NAS as the 'admin' user instead, and run:
+[code]sherpa[/code]
 [/list]
+
 Checkout the wiki for more information: https://github.com/OneCDOnly/sherpa/wiki
