@@ -61,7 +61,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220208c
+    local -r SCRIPT_VERSION=220208d
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -4604,7 +4604,7 @@ QPKG.DoReinstall()
     local -r LOG_PATHFILE=$LOGS_PATH/$TARGET_FILE.$REINSTALL_LOG_FILE
 
     DebugAsProc "reinstalling $(FormatAsPackageName "$PACKAGE_NAME")"
-    RunAndLog "QINSTALL_PATH=$($DIRNAME_CMD $(/sbin/getcfg $PACKAGE_NAME Install_Path -f /etc/config/qpkg.conf)) $SH_CMD $local_pathfile" "$LOG_PATHFILE" log:failure-only 10
+    RunAndLog "QINSTALL_PATH=$($DIRNAME_CMD "$(/sbin/getcfg $PACKAGE_NAME Install_Path -f /etc/config/qpkg.conf)") $SH_CMD $local_pathfile" "$LOG_PATHFILE" log:failure-only 10
     result_code=$?
 
     if [[ $result_code -eq 0 || $result_code -eq 10 ]]; then
