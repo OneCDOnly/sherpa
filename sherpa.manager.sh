@@ -2566,8 +2566,8 @@ PIPs.DoInstall()
     local -i fail_count=0
     local -i total_count=2
     local -r PACKAGE_TYPE='PIP group'
-    local -r ACTION_PRESENT=installing
-    local -r ACTION_PAST=installed
+    local ACTION_PRESENT=installing
+    local ACTION_PAST=installed
     local -r RUNTIME=long
     PIPs.OpToInstall.Init
     PIPs.OpToDownload.Init
