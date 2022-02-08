@@ -1380,6 +1380,8 @@ if IsNotError; then
     esac
 fi
 
+ClearAppCenterNotifier
+
 if IsError; then
     SetServiceOperationResultFailed
     exit 1

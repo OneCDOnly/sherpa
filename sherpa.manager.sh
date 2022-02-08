@@ -61,7 +61,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220208e
+    local -r SCRIPT_VERSION=220208f
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -264,9 +264,9 @@ Session.Init()
     MANAGER_QPKG_NAME+=(ClamAV)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MIN_RAM_KB+=(1572864)
-        MANAGER_QPKG_VERSION+=(220207)
+        MANAGER_QPKG_VERSION+=(220208)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
-        MANAGER_QPKG_MD5+=(116162fba5887f9d3d104a1cc424c98d)
+        MANAGER_QPKG_MD5+=(efaaac547b3e279a9e69a2b9e8897547)
         MANAGER_QPKG_DESC+=('replacement for the QTS built-in ClamAV (requires a minimum of 1.5GiB installed RAM)')
         MANAGER_QPKG_ABBRVS+=('av clam clamscan freshclam clamav')
         MANAGER_QPKG_DEPENDS_ON+=(Entware)
