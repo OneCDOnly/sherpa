@@ -2,7 +2,7 @@
 ####################################################################################
 # deluge-server.sh
 #
-# Copyright (C) 2020-2021 OneCD [one.cd.only@gmail.com]
+# Copyright (C) 2020-2022 OneCD [one.cd.only@gmail.com]
 #
 # so, blame OneCD if it all goes horribly wrong. ;)
 #
@@ -93,7 +93,7 @@ Init()
 ShowHelp()
     {
 
-    Display "$(ColourTextBrightWhite "$(/usr/bin/basename "$0")") ($QPKG_VERSION) a service control script for the $(FormatAsPackageName $QPKG_NAME) QPKG"
+    Display "$(ColourTextBrightWhite "$(/usr/bin/basename "$0")") $QPKG_VERSION • a service control script for the $(FormatAsPackageName $QPKG_NAME) QPKG"
     Display
     Display "Usage: $0 [OPTION]"
     Display
@@ -141,7 +141,6 @@ StartQPKG()
     ExecuteAndLog 'start daemon' "$LAUNCHER" log:everything || return
     WaitForPID || return
     IsDaemonActive || return
-    EnableThisQPKGIcon
 
     return 0
 
@@ -194,7 +193,6 @@ StopQPKG()
     done
 
     IsNotDaemonActive || return
-    DisableThisQPKGIcon
 
     return 0
 
@@ -310,7 +308,6 @@ StatusQPKG()
 
     if IsNotDaemonActive; then
         DisableThisQPKGIcon
-        return
     else
 #        if [[ -n $DAEMON_PATHFILE || -n $SOURCE_GIT_URL ]]; then
 #            LoadUIPorts qts
@@ -706,37 +703,6 @@ IsNotQPKGEnabled()
     #   $? = 0 (true) or 1 (false)
 
     ! IsQPKGEnabled "$1"
-
-    }
-
-EnableThisQPKGIcon()
-    {
-
-    EnableQPKG "$QPKG_NAME"
-
-    }
-
-DisableThisQPKGIcon()
-    {
-
-    DisableQPKG "$QPKG_NAME"
-
-    }
-
-EnableQPKG()
-    {
-
-    # $1 = package name to enable
-
-    IsNotQPKGEnabled "$1" && ExecuteAndLog 'enable QPKG icon' "qpkg_service enable $1"
-    /sbin/setcfg "$QPKG_NAME" Status complete -f "/etc/config/qpkg.conf"
-
-    }
-
-DisableQPKG()
-    {
-
-    IsQPKGEnabled "$QPKG_NAME" && ExecuteAndLog 'disable QPKG icon' "qpkg_service disable $1"
 
     }
 
@@ -1321,6 +1287,11 @@ Init
 if IsNotError; then
     case $1 in
         start|--start)
+            if [[ $(/sbin/getcfg $QPKG_NAME Enable -u -d FALSE -f /etc/config/qpkg.conf) != "TRUE" ]]; then
+                echo "$QPKG_NAME is disabled. You must first enable with: qpkg_service enable $QPKG_NAME"
+                SetError
+            fi
+
             SetServiceOperation starting
             # ensure those still on SickBeard.py are using the updated repo
             if [[ ! -e $DAEMON_PATHFILE && -e $(/usr/bin/dirname "$DAEMON_PATHFILE")/SickBeard.py ]]; then
@@ -1338,7 +1309,7 @@ if IsNotError; then
             { StopQPKG; StartQPKG ;} || SetError
             ;;
         s|-s|status|--status)
-            SetServiceOperation statusing
+            SetServiceOperation status
             StatusQPKG || SetError
             ;;
         b|-b|backup|--backup|backup-config|--backup-config)

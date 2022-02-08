@@ -2,7 +2,7 @@
 ####################################################################################
 # clamav.sh
 #
-# Copyright (C) 2021 OneCD [one.cd.only@gmail.com]
+# Copyright (C) 2021-2022 OneCD [one.cd.only@gmail.com]
 #
 # so, blame OneCD if it all goes horribly wrong. ;)
 #
@@ -81,7 +81,6 @@ Init()
     UnsetError
     UnsetRestartPending
     EnsureConfigFileExists
-    ClearAppCenterNotifier
     [[ -n $ORIG_DAEMON_SERVICE_SCRIPT ]] && DisableOpkgDaemonStart
     LoadAppVersion
 
@@ -94,7 +93,7 @@ Init()
 ShowHelp()
     {
 
-    Display "$(ColourTextBrightWhite "$(/usr/bin/basename "$0")") ($QPKG_VERSION) a service control script for the $(FormatAsPackageName $QPKG_NAME) QPKG"
+    Display "$(ColourTextBrightWhite "$(/usr/bin/basename "$0")") $QPKG_VERSION • a service control script for the $(FormatAsPackageName $QPKG_NAME) QPKG"
     Display
     Display "Usage: $0 [OPTION]"
     Display
@@ -208,16 +207,6 @@ ResetConfig()
     StopQPKG
     ExecuteAndLog 'reset configuration' "mv $QPKG_INI_DEFAULT_PATHFILE $QPKG_PATH; rm -rf $QPKG_PATH/config/*; mv $QPKG_PATH/$(/usr/bin/basename "$QPKG_INI_DEFAULT_PATHFILE") $QPKG_INI_DEFAULT_PATHFILE" log:everything
     StartQPKG
-
-    }
-
-ClearAppCenterNotifier()
-    {
-
-    # KLUDGE: 'clean' QTS 4.5.1 App Center notifier status as it's frequently incorrect
-    [[ -e /sbin/qpkg_cli ]] && /sbin/qpkg_cli --clean "$QPKG_NAME" &>/dev/null
-
-    return 0
 
     }
 
@@ -679,37 +668,6 @@ IsNotQPKGEnabled()
     #   $? = 0 (true) or 1 (false)
 
     ! IsQPKGEnabled "$1"
-
-    }
-
-EnableThisQPKGIcon()
-    {
-
-    EnableQPKG "$QPKG_NAME"
-
-    }
-
-DisableThisQPKGIcon()
-    {
-
-    DisableQPKG "$QPKG_NAME"
-
-    }
-
-EnableQPKG()
-    {
-
-    # $1 = package name to enable
-
-    IsNotQPKGEnabled "$1" && ExecuteAndLog 'enable QPKG icon' "qpkg_service enable $1"
-    /sbin/setcfg "$QPKG_NAME" Status complete -f /etc/config/qpkg.conf
-
-    }
-
-DisableQPKG()
-    {
-
-    IsQPKGEnabled "$QPKG_NAME" && ExecuteAndLog 'disable QPKG icon' "qpkg_service disable $1"
 
     }
 
@@ -1294,6 +1252,11 @@ Init
 if IsNotError; then
     case $1 in
         start|--start)
+            if [[ $(/sbin/getcfg $QPKG_NAME Enable -u -d FALSE -f /etc/config/qpkg.conf) != "TRUE" ]]; then
+                echo "$QPKG_NAME is disabled. You must first enable with: qpkg_service enable $QPKG_NAME"
+                SetError
+            fi
+
             SetServiceOperation starting
             # ensure those still on SickBeard.py are using the updated repo
             if [[ ! -e $DAEMON_PATHFILE && -e $(/usr/bin/dirname "$DAEMON_PATHFILE")/SickBeard.py ]]; then
@@ -1311,7 +1274,7 @@ if IsNotError; then
             { StopQPKG; StartQPKG ;} || SetError
             ;;
         s|-s|status|--status)
-            SetServiceOperation statusing
+            SetServiceOperation status
             StatusQPKG || SetError
             ;;
         b|-b|backup|--backup|backup-config|--backup-config)
@@ -1379,8 +1342,6 @@ if IsNotError; then
             ;;
     esac
 fi
-
-ClearAppCenterNotifier
 
 if IsError; then
     SetServiceOperationResultFailed

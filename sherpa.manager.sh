@@ -61,7 +61,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220208i
+    local -r SCRIPT_VERSION=220209
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -166,8 +166,8 @@ Session.Init()
     readonly EXTERNAL_PACKAGE_LIST_PATHFILE=$WORK_PATH/Packages
 
     PACKAGE_SCOPES=(All Dependent HasDependents Installable Names Standalone SupportBackup SupportUpdateOnRestart Upgradable)
-    PACKAGE_STATES=(BackedUp Downloaded Installed Missing Starting Started Stopping Stopped Restarting)
-    PACKAGE_OPERATIONS=(Backup Download Install Rebuild Reinstall Restart Restore Start Stop Uninstall Upgrade)
+    PACKAGE_STATES=(BackedUp Disabled Downloaded Enabled Installed Missing Starting Started Stopping Stopped Restarting)
+    PACKAGE_OPERATIONS=(Backup Disable Download Enable Install Rebuild Reinstall Restart Restore Start Stop Uninstall Upgrade)
     PACKAGE_TIERS=(Standalone Addon Dependent)
 
     readonly PACKAGE_SCOPES
@@ -266,9 +266,9 @@ Session.Init()
     MANAGER_QPKG_NAME+=(ClamAV)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MIN_RAM_KB+=(1572864)
-        MANAGER_QPKG_VERSION+=(220208)
+        MANAGER_QPKG_VERSION+=(220209)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
-        MANAGER_QPKG_MD5+=(efaaac547b3e279a9e69a2b9e8897547)
+        MANAGER_QPKG_MD5+=(c01af763d84b136a148b8bd73cc63682)
         MANAGER_QPKG_DESC+=('replacement for the QTS built-in ClamAV (requires a minimum of 1.5GiB installed RAM)')
         MANAGER_QPKG_ABBRVS+=('av clam clamscan freshclam clamav')
         MANAGER_QPKG_DEPENDS_ON+=(Entware)
@@ -282,9 +282,9 @@ Session.Init()
     MANAGER_QPKG_NAME+=(Deluge-server)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MIN_RAM_KB+=(any)
-        MANAGER_QPKG_VERSION+=(210801)
+        MANAGER_QPKG_VERSION+=(220209)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
-        MANAGER_QPKG_MD5+=(a9f6528e06a34df7184fa8017fe22e77)
+        MANAGER_QPKG_MD5+=(9c13c9df435144afd0f3613cb2ec9ed3)
         MANAGER_QPKG_DESC+=('Deluge BitTorrent daemon')
         MANAGER_QPKG_ABBRVS+=('dl deluge del-server deluge-server')
         MANAGER_QPKG_DEPENDS_ON+=(Entware)
@@ -298,9 +298,9 @@ Session.Init()
     MANAGER_QPKG_NAME+=(Deluge-web)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MIN_RAM_KB+=(any)
-        MANAGER_QPKG_VERSION+=(220207)
+        MANAGER_QPKG_VERSION+=(220209)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
-        MANAGER_QPKG_MD5+=(7a4fda2091d144367e00b4f12832d132)
+        MANAGER_QPKG_MD5+=(fa3e2a6c0df211a605126eba3eb58d3c)
         MANAGER_QPKG_DESC+=('web UI to access multiple Deluge BitTorrent daemons')
         MANAGER_QPKG_ABBRVS+=('dw del-web deluge-web')
         MANAGER_QPKG_DEPENDS_ON+=(Entware)
@@ -410,9 +410,9 @@ Session.Init()
     MANAGER_QPKG_NAME+=(LazyLibrarian)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MIN_RAM_KB+=(any)
-        MANAGER_QPKG_VERSION+=(220207)
+        MANAGER_QPKG_VERSION+=(220209)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
-        MANAGER_QPKG_MD5+=(bbb4bbdcc11e02a42d94a9ee3bb6e988)
+        MANAGER_QPKG_MD5+=(57aca46143bac6d0e99d1bf4090bf94a)
         MANAGER_QPKG_DESC+=('follow authors and grab metadata for all your digital reading needs')
         MANAGER_QPKG_ABBRVS+=('ll lazy lazylibrarian')
         MANAGER_QPKG_DEPENDS_ON+=(Entware)
@@ -426,9 +426,9 @@ Session.Init()
     MANAGER_QPKG_NAME+=(OMedusa)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MIN_RAM_KB+=(any)
-        MANAGER_QPKG_VERSION+=(220207)
+        MANAGER_QPKG_VERSION+=(220209)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
-        MANAGER_QPKG_MD5+=(b6fc6a18fe398df3901af95b1d69bd0d)
+        MANAGER_QPKG_MD5+=(4106573a261ce03042c283bda3052936)
         MANAGER_QPKG_DESC+=('another SickBeard fork: manage and search for TV shows')
         MANAGER_QPKG_ABBRVS+=('om med omed medusa omedusa')
         MANAGER_QPKG_DEPENDS_ON+=(Entware)
@@ -442,9 +442,9 @@ Session.Init()
     MANAGER_QPKG_NAME+=(Mylar3)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MIN_RAM_KB+=(any)
-        MANAGER_QPKG_VERSION+=(220207)
+        MANAGER_QPKG_VERSION+=(220209)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
-        MANAGER_QPKG_MD5+=(ac2fa24252702c762af4d0b54c7125bf)
+        MANAGER_QPKG_MD5+=(86a8e4e7d36d6e00c1fefda62f8a6e6f)
         MANAGER_QPKG_DESC+=('automated Comic Book (cbr/cbz) downloader program for use with NZB and torrents written in Python')
         MANAGER_QPKG_ABBRVS+=('my omy myl mylar mylar3')
         MANAGER_QPKG_DEPENDS_ON+=(Entware)
@@ -458,9 +458,9 @@ Session.Init()
     MANAGER_QPKG_NAME+=(NZBGet)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MIN_RAM_KB+=(any)
-        MANAGER_QPKG_VERSION+=(220207)
+        MANAGER_QPKG_VERSION+=(220209)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
-        MANAGER_QPKG_MD5+=(490b7b4c4a4fe3b29eb28472b72723b7)
+        MANAGER_QPKG_MD5+=(5588de591724fbd4ab28f2916a53f5e5)
         MANAGER_QPKG_DESC+=('lite-and-fast NZB download manager with a simple web UI')
         MANAGER_QPKG_ABBRVS+=('ng nzb nzbg nget nzbget')
         MANAGER_QPKG_DEPENDS_ON+=(Entware)
@@ -474,9 +474,9 @@ Session.Init()
     MANAGER_QPKG_NAME+=(nzbToMedia)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MIN_RAM_KB+=(any)
-        MANAGER_QPKG_VERSION+=(220207)
+        MANAGER_QPKG_VERSION+=(220209)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
-        MANAGER_QPKG_MD5+=(f45e42f47816ff722198bb7703d96f8e)
+        MANAGER_QPKG_MD5+=(980ab0fbae7407d3bda2c82b4a4b66a8)
         MANAGER_QPKG_DESC+=('post-processing for NZBs to many services')
         MANAGER_QPKG_ABBRVS+=('n2 nt nzb2 nzb2m nzbto nzbtom nzbtomedia')
         MANAGER_QPKG_DEPENDS_ON+=(Entware)
@@ -618,9 +618,9 @@ Session.Init()
     MANAGER_QPKG_NAME+=(SABnzbd)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MIN_RAM_KB+=(any)
-        MANAGER_QPKG_VERSION+=(220207)
+        MANAGER_QPKG_VERSION+=(220209)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
-        MANAGER_QPKG_MD5+=(3806fa305772830fc1660788fbc4c028)
+        MANAGER_QPKG_MD5+=(90e0e996930006d158f06ff0a96c6db0)
         MANAGER_QPKG_DESC+=('full-featured NZB download manager with a nice web UI')
         MANAGER_QPKG_ABBRVS+=('sb sb3 sab sab3 sabnzbd3 sabnzbd')
         MANAGER_QPKG_DEPENDS_ON+=('Entware Par2')
@@ -682,9 +682,9 @@ Session.Init()
     MANAGER_QPKG_NAME+=(OSickGear)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MIN_RAM_KB+=(any)
-        MANAGER_QPKG_VERSION+=(220207)
+        MANAGER_QPKG_VERSION+=(220209)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
-        MANAGER_QPKG_MD5+=(c669d9db0974b1ff05a8d5b86ce94054)
+        MANAGER_QPKG_MD5+=(68d92ac7bb9b04c15986a9857cfa41c4)
         MANAGER_QPKG_DESC+=('another SickBeard fork: manage and search for TV shows')
         MANAGER_QPKG_ABBRVS+=('sg os osg sickg gear ogear osickg sickgear osickgear')
         MANAGER_QPKG_DEPENDS_ON+=(Entware)
@@ -714,9 +714,9 @@ Session.Init()
     MANAGER_QPKG_NAME+=(OTransmission)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MIN_RAM_KB+=(any)
-        MANAGER_QPKG_VERSION+=(220207)
+        MANAGER_QPKG_VERSION+=(220209)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
-        MANAGER_QPKG_MD5+=(660108c88708b3ab5b5294d2d5adb920)
+        MANAGER_QPKG_MD5+=(fa7837063d107654c1a9ca0e0f030225)
         MANAGER_QPKG_DESC+=('lite bitorrent download manager with a simple web UI')
         MANAGER_QPKG_ABBRVS+=('tm tr ot trans otrans tmission transmission otransmission')
         MANAGER_QPKG_DEPENDS_ON+=(Entware)
@@ -2923,16 +2923,17 @@ IsNtSysFileExist()
 readonly HELP_DESC_INDENT=3
 readonly HELP_SYNTAX_INDENT=6
 readonly HELP_PACKAGE_NAME_WIDTH=18
-readonly HELP_PACKAGE_VERSION_WIDTH=15
-readonly HELP_PACKAGE_STATUS_WIDTH=30
+readonly HELP_PACKAGE_VERSION_WIDTH=26
+readonly HELP_PACKAGE_STATUS_WIDTH=20
 readonly HELP_FILE_NAME_WIDTH=33
 
 LenANSIDiff()
     {
 
     local stripped=$(StripANSI "$1")
+    echo $((${#1}-${#stripped}))
 
-    return $((${#1}-${#stripped}))
+    return 0
 
     }
 
@@ -3031,8 +3032,7 @@ DisplayAsHelpPackageNameVersionStatus()
     if [[ -z ${4:-} ]]; then
         printf "%${HELP_DESC_INDENT}s%-${HELP_PACKAGE_NAME_WIDTH}s - %-${HELP_PACKAGE_VERSION_WIDTH}s - %s\n" '' "${1:-}" "${2:-}" "${3:-}"
     else
-        LenANSIDiff "$3"
-        printf "%${HELP_DESC_INDENT}s%-${HELP_PACKAGE_NAME_WIDTH}s - %-${HELP_PACKAGE_VERSION_WIDTH}s - %-$((HELP_PACKAGE_STATUS_WIDTH+$?))s %s\n" '' "${1:-}" "${2:-}" "${3:-}" "${4:-}"
+        printf "%${HELP_DESC_INDENT}s%-${HELP_PACKAGE_NAME_WIDTH}s - %-$((HELP_PACKAGE_VERSION_WIDTH+$(LenANSIDiff "$2")))s - %-$((HELP_PACKAGE_STATUS_WIDTH+$(LenANSIDiff "$3")))s %s\n" '' "${1:-}" "${2:-}" "${3:-}" "${4:-}"
     fi
 
     }
@@ -3725,8 +3725,10 @@ QPKGs.States.Build()
 
     # Builds several lists of QPKGs:
     #   - can be installed or reinstalled by the user
+    #   - are installed or not
     #   - can be upgraded
-    #   - are installed and enabled or installed and disabled in [/etc/config/qpkg.conf]
+    #   - are enabled or disabled in [/etc/config/qpkg.conf]
+    #   - are started or stopped
     #   - have backup files in backup location
     #   - have config blocks in [/etc/config/qpkg.conf], but no files on-disk
     #   - those in the process of starting, stopping, or restarting
@@ -3756,8 +3758,10 @@ QPKGs.States.Build()
             [[ $(/sbin/getcfg "$package" Version -d unknown -f /etc/config/qpkg.conf) != "${MANAGER_QPKG_VERSION[$index]}" ]] && QPKGs.ScUpgradable.Add "$package"
 
             if [[ $(/sbin/getcfg "$package" Enable -u -f /etc/config/qpkg.conf) = 'TRUE' ]]; then
+                QPKGs.IsEnabled.Add "$package"
                 QPKGs.IsStarted.Add "$package"
             elif [[ $(/sbin/getcfg "$package" Enable -u -f /etc/config/qpkg.conf) = 'FALSE' ]]; then
+                QPKGs.IsDisabled.Add "$package"
                 QPKGs.IsStopped.Add "$package"
             fi
 
@@ -3899,7 +3903,7 @@ QPKGs.Statuses.Show()
     {
 
     local tier=''
-    local -a package_notes=()
+    local -a package_status_notes=()
     local -i index=0
     local package_name=''
     local package_version=''
@@ -3913,7 +3917,7 @@ QPKGs.Statuses.Show()
         DisplayAsHelpTitlePackageNameVersionStatus "$tier QPKGs" 'QPKG version' 'QPKG status' 'installed QPKG path'
 
         for package_name in $(QPKGs.Sc$tier.Array); do
-            package_notes=()
+            package_status_notes=()
             package_version=''
             package_status=''
             package_path=''
@@ -3925,24 +3929,36 @@ QPKGs.Statuses.Show()
             elif QPKGs.IsNtInstalled.Exist "$package_name"; then
                 DisplayAsHelpPackageNameVersionStatus "$package_name" "$(QPKG.Available.Version "$package_name")" 'not installed'
             else
-                QPKGs.IsStarting.Exist "$package_name" && package_notes+=($(ColourTextBrightOrange starting))
-                QPKGs.IsStarted.Exist "$package_name" && package_notes+=($(ColourTextBrightGreen started))
-                QPKGs.IsStopping.Exist "$package_name" && package_notes+=($(ColourTextBrightOrange stopping))
-                QPKGs.IsStopped.Exist "$package_name" && package_notes+=($(ColourTextBrightRed stopped))
-                QPKGs.IsRestarting.Exist "$package_name" && package_notes+=($(ColourTextBrightOrange restarting))
-                QPKGs.IsMissing.Exist "$package_name" && package_notes=($(ColourTextBrightRedBlink missing))
-
                 if QPKGs.ScUpgradable.Exist "$package_name"; then
-                    package_notes+=("$(ColourTextBrightOrange "upgradable to $(QPKG.Available.Version "$package_name")")")
-                    package_version=$(QPKG.Local.Version "$package_name")
+                    package_version="$(QPKG.Local.Version "$package_name") $(ColourTextBrightOrange "($(QPKG.Available.Version "$package_name") available)")"
                 else
                     package_version=$(QPKG.Available.Version "$package_name")
                 fi
 
-                for ((index=0;index<=((${#package_notes[@]}-1));index++)); do
-                    package_status+=${package_notes[$index]}
+                if QPKGs.IsMissing.Exist "$package_name"; then
+                    package_status_notes=($(ColourTextBrightRedBlink missing))
+                elif QPKGs.IsEnabled.Exist "$package_name"; then
+                    package_status_notes+=($(ColourTextBrightGreen enabled))
+                elif QPKGs.IsDisabled.Exist "$package_name"; then
+                    package_status_notes+=($(ColourTextBrightRed disabled))
+                fi
 
-                    [[ $((index+2)) -le ${#package_notes[@]} ]] && package_status+=', '
+                if QPKGs.IsStarting.Exist "$package_name"; then
+                    package_status_notes+=($(ColourTextBrightOrange starting))
+                elif QPKGs.IsStopping.Exist "$package_name"; then
+                    package_status_notes+=($(ColourTextBrightOrange stopping))
+                elif QPKGs.IsRestarting.Exist "$package_name"; then
+                    package_status_notes+=($(ColourTextBrightOrange restarting))
+                elif QPKGs.IsStarted.Exist "$package_name"; then
+                    package_status_notes+=($(ColourTextBrightGreen started))
+                elif QPKGs.IsStopped.Exist "$package_name"; then
+                    package_status_notes+=($(ColourTextBrightRed stopped))
+                fi
+
+                for ((index=0;index<=((${#package_status_notes[@]}-1));index++)); do
+                    package_status+=${package_status_notes[$index]}
+
+                    [[ $((index+2)) -le ${#package_status_notes[@]} ]] && package_status+=', '
                 done
 
                 package_path=$(QPKG.InstallationPath "$package_name")
@@ -6643,7 +6659,7 @@ CompileObjects()
 
     # $1 = 'hash' (optional) only return the internal checksum
 
-    local -r OBJECTS_HASH=8028448f0ba487c1b28ac165ee087a54
+    local -r OBJECTS_HASH=414e4bc43c6ddc872d6278461bd911dc
     local element=''
     local operation=''
     local scope=''
