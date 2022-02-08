@@ -61,7 +61,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220208d
+    local -r SCRIPT_VERSION=220208e
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -5924,7 +5924,10 @@ DebugWarningTabulated()
 DebugVar()
     {
 
-    DebugAsVar "\$${1:-} : '${!1:-}'"
+    # had to split this onto its own line so Kate editor won't choke when highlighting syntax
+    local temp=${!1}
+
+    DebugAsVar "\$$1 : '$temp'"
 
     }
 
@@ -5946,7 +5949,7 @@ DebugFuncEntry()
 
     local var_name=${FUNCNAME[1]}_STARTSECONDS
     local var_safe_name=${var_name//[.-]/_}
-    eval "$var_safe_name=$(/bin/date +%s%N)"    # hardcode 'date' here as this function is called before binaries are cherry-picked.
+    eval "$var_safe_name=$(/bin/date +%s%N)"    # hardcode 'date' here as this function is called before binaries are cherry-picked
 
     DebugThis "(>>) ${FUNCNAME[1]}"
 
@@ -6047,7 +6050,7 @@ AddFileToDebug()
     DebugExtLogMinorSeparator
     DebugAsLog 'adding external log to main log ...'
 
-    if Session.Debug.ToScreen.IsSet; then      # prevent external log contents appearing onscreen again - it's already been seen "live".
+    if Session.Debug.ToScreen.IsSet; then      # prevent external log contents appearing onscreen again - it's already been seen "live"
         screen_debug=true
         Session.Debug.ToScreen.Clear
     fi
