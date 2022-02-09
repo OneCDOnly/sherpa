@@ -61,7 +61,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220209b
+    local -r SCRIPT_VERSION=220209c
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -282,9 +282,9 @@ Session.Init()
     MANAGER_QPKG_NAME+=(Deluge-server)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MIN_RAM_KB+=(any)
-        MANAGER_QPKG_VERSION+=(220209)
+        MANAGER_QPKG_VERSION+=(220209b)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
-        MANAGER_QPKG_MD5+=(9c13c9df435144afd0f3613cb2ec9ed3)
+        MANAGER_QPKG_MD5+=(f6eaea58d4c7ff87e7a9c6ead9effa59)
         MANAGER_QPKG_DESC+=('Deluge BitTorrent daemon')
         MANAGER_QPKG_ABBRVS+=('dl deluge del-server deluge-server')
         MANAGER_QPKG_DEPENDS_ON+=(Entware)
@@ -474,9 +474,9 @@ Session.Init()
     MANAGER_QPKG_NAME+=(nzbToMedia)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MIN_RAM_KB+=(any)
-        MANAGER_QPKG_VERSION+=(220209)
+        MANAGER_QPKG_VERSION+=(220209b)
         MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
-        MANAGER_QPKG_MD5+=(980ab0fbae7407d3bda2c82b4a4b66a8)
+        MANAGER_QPKG_MD5+=(5e49408fc97f56645fbd986ff138ebe8)
         MANAGER_QPKG_DESC+=('post-processing for NZBs to many services')
         MANAGER_QPKG_ABBRVS+=('n2 nt nzb2 nzb2m nzbto nzbtom nzbtomedia')
         MANAGER_QPKG_DEPENDS_ON+=(Entware)
