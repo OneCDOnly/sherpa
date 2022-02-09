@@ -61,7 +61,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220209c
+    local -r SCRIPT_VERSION=220209d
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -3908,7 +3908,6 @@ QPKGs.Statuses.Show()
     local package_name=''
     local package_version=''
     local package_status=''
-    local package_path=''
 
     QPKGs.States.Build
     DisplayLineSpaceIfNoneAlready
@@ -3920,7 +3919,6 @@ QPKGs.Statuses.Show()
             package_status_notes=()
             package_version=''
             package_status=''
-            package_path=''
 
             if ! QPKG.URL "$package_name" &>/dev/null; then
                 DisplayAsHelpPackageNameVersionStatus "$package_name" "$(QPKG.Available.Version "$package_name")" 'not installable on this NAS (unsupported arch)'
@@ -3961,8 +3959,7 @@ QPKGs.Statuses.Show()
                     [[ $((index+2)) -le ${#package_status_notes[@]} ]] && package_status+=', '
                 done
 
-                package_path=$(QPKG.InstallationPath "$package_name")
-                DisplayAsHelpPackageNameVersionStatus "$package_name" "$package_version" "$package_status" "$package_path"
+                DisplayAsHelpPackageNameVersionStatus "$package_name" "$package_version" "$package_status" "$(QPKG.InstallationPath "$package_name")"
             fi
         done
 
