@@ -61,7 +61,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220209f
+    local -r SCRIPT_VERSION=220210
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -6096,8 +6096,8 @@ AddFileToDebug()
     local linebuff=''
     local screen_debug=false
 
-    DebugExtLogMinorSeparator
     DebugAsLog 'adding external log to main log ...'
+    DebugExtLogMinorSeparator
 
     if Session.Debug.ToScreen.IsSet; then      # prevent external log contents appearing onscreen again - it's already been seen "live"
         screen_debug=true
