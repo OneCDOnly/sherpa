@@ -311,14 +311,7 @@ StatusQPKG()
     IsNotError || return
 
     if IsNotPackageActive; then
-        DisableThisQPKGIcon
-    else
-#        if [[ -n $DAEMON_PATHFILE || -n $SOURCE_GIT_URL ]]; then
-#            LoadUIPorts qts
-#            CheckPorts || SetError
-#        fi
-
-        EnableThisQPKGIcon
+        SetError
     fi
 
     }
