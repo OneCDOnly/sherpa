@@ -61,7 +61,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220209e
+    local -r SCRIPT_VERSION=220209f
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -2922,8 +2922,8 @@ IsNtSysFileExist()
 
 readonly HELP_DESC_INDENT=3
 readonly HELP_SYNTAX_INDENT=6
-readonly HELP_PACKAGE_NAME_WIDTH=18
-readonly HELP_PACKAGE_VERSION_WIDTH=26
+readonly HELP_PACKAGE_NAME_WIDTH=20
+readonly HELP_PACKAGE_VERSION_WIDTH=27
 readonly HELP_PACKAGE_STATUS_WIDTH=20
 readonly HELP_FILE_NAME_WIDTH=33
 
