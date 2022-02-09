@@ -61,7 +61,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220210
+    local -r SCRIPT_VERSION=220210b
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -2658,7 +2658,7 @@ PIPs.DoInstall()
     ShowAsOperationProgress '' "$PACKAGE_TYPE" "$((total_count+1))" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
     ShowAsOperationResult '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PAST" "$RUNTIME"
 
-    # check all PIP dependencies are OK while we're here
+    # check all PIP dependencies while we're here
     local ACTION_PRESENT=checking
     local ACTION_PAST=checked
 
@@ -5195,7 +5195,12 @@ QPKG.StoreServiceStatus()
             DebugInfo "$(FormatAsPackageName "$PACKAGE_NAME") service operation completed OK"
             ;;
         failed)
-            ShowAsFail "$(FormatAsPackageName "$PACKAGE_NAME") service operation failed.$([[ -e /var/log/$PACKAGE_NAME.log ]] && echo " Check $(FormatAsFileName "/var/log/$PACKAGE_NAME.log") for more information")"
+            if [[ -e /var/log/$PACKAGE_NAME.log ]]; then
+                ShowAsFail "$(FormatAsPackageName "$PACKAGE_NAME") service operation failed. Check $(FormatAsFileName "/var/log/$PACKAGE_NAME.log") for more information."
+                AddFileToDebug /var/log/$PACKAGE_NAME.log
+            else
+                ShowAsFail "$(FormatAsPackageName "$PACKAGE_NAME") service operation failed"
+            fi
             ;;
         *)
             DebugAsWarn "$(FormatAsPackageName "$PACKAGE_NAME") service status is incorrect"
