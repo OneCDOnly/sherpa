@@ -61,7 +61,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220210b
+    local -r SCRIPT_VERSION=220210c
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -1074,7 +1074,7 @@ Tiers.Processor()
 
                 ;;
             Addon)
-                for operation in Install Reinstall Upgrade Start; do
+                for operation in Install Reinstall Upgrade; do
                     if QPKGs.OpTo${operation}.IsAny || QPKGs.OpOk${operation}.IsAny || Opts.Apps.Op${operation}.ScAll.IsSet; then
                         IPKGs.ToUpgrade.Set
                         IPKGs.ToInstall.Set
