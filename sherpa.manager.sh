@@ -61,7 +61,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220210d
+    local -r SCRIPT_VERSION=220213
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -451,7 +451,7 @@ Session.Init()
         MANAGER_QPKG_DEPENDED_UPON+=(false)
         MANAGER_QPKG_IPKGS_ADD+=('python3-mako python3-pillow python3-pip python3-pytz python3-requests python3-six python3-urllib3')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
-        MANAGER_QPKG_PIPS_ADD+=('apscheduler beautifulsoup4 cfscrape charset-normalizer cheroot cherrypy feedparser jaraco.classes jaraco.collections jaraco.functools jaraco.text more_itertools portend pytz pytz_deprecation_shim sgmllib3k simplejson soupsieve tempora tzdata tzlocal==2.0 zc.lockfile')
+        MANAGER_QPKG_PIPS_ADD+=('apscheduler beautifulsoup4 cfscrape charset-normalizer cheroot cherrypy feedparser jaraco.classes jaraco.collections jaraco.functools jaraco.text MarkupSafe more_itertools portend pytz pytz_deprecation_shim sgmllib3k simplejson soupsieve tempora tzdata tzlocal==2.0 zc.lockfile')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
         MANAGER_QPKG_RESTART_TO_UPDATE+=(true)
 
@@ -969,6 +969,12 @@ Session.Validate()
     else
         QPKGs.OpToStop.Remove "$(QPKGs.OpToUninstall.Array)"
     fi
+
+    # build list of original storage paths for packages to be 'uninstalled', just in-case they will be 'installed' again later this session. To ensure migrated packages end-up in the original location.
+
+
+
+
 
     # build list containing packages that will require installation QPKGs
     QPKGs.OpToDownload.Add "$(QPKGs.OpToUpgrade.Array) $(QPKGs.OpToReinstall.Array) $(QPKGs.OpToInstall.Array)"
