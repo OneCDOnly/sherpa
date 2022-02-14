@@ -61,7 +61,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220213
+    local -r SCRIPT_VERSION=220215
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -419,7 +419,7 @@ Session.Init()
         MANAGER_QPKG_DEPENDED_UPON+=(false)
         MANAGER_QPKG_IPKGS_ADD+=('python3-dev python3-pillow python3-pip python3-pyopenssl python3-requests python3-requests-oauthlib python3-yaml')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
-        MANAGER_QPKG_PIPS_ADD+=('apprise charset-normalizer click markdown python-levenshtein python-magic')
+        MANAGER_QPKG_PIPS_ADD+=('apprise charset-normalizer click markdown MarkupSafe pygments python-levenshtein python-magic pytz tzlocal')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
         MANAGER_QPKG_RESTART_TO_UPDATE+=(true)
 
@@ -435,7 +435,7 @@ Session.Init()
         MANAGER_QPKG_DEPENDED_UPON+=(false)
         MANAGER_QPKG_IPKGS_ADD+=('mediainfo python3-pip python3-pyopenssl')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
-        MANAGER_QPKG_PIPS_ADD+=('')
+        MANAGER_QPKG_PIPS_ADD+=('apprise certifi cfscrape idna oauthlib pyyaml requests requests-oauthlib urllib3')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
         MANAGER_QPKG_RESTART_TO_UPDATE+=(true)
 
@@ -6500,7 +6500,7 @@ StripANSI()
     if [[ -e ${GNU_SED_CMD:-} ]]; then
         $GNU_SED_CMD -r 's/\x1b\[[0-9;]*m//g' <<< "${1:-}"
     else
-        echo "${1:-}"
+        echo "${1:-}"           # can't strip, so pass thru original message unaltered
     fi
 
     }
