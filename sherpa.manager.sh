@@ -61,7 +61,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220215
+    local -r SCRIPT_VERSION=220215b
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -804,7 +804,7 @@ Session.Validate()
         DebugFirmwareWarning version "$NAS_FIRMWARE"
     fi
 
-    if [[ $NAS_BUILD -lt 20201015 || $NAS_BUILD -gt 20201020 ]]; then   # builds inbetween these won't allow unsigned QPKGs to run at-all
+    if [[ $NAS_BUILD -lt 20201015 || $NAS_BUILD -gt 20201020 ]]; then   # QTS builds between these dates don't allow unsigned QPKGs to run at-all
         DebugFirmwareOK build "$NAS_BUILD"
     else
         DebugFirmwareWarning build "$NAS_BUILD"
@@ -1040,7 +1040,7 @@ Tiers.Processor()
         case $tier in
             Standalone|Dependent)
                 Tier.Processor Backup false "$tier" QPKG OpToBackup 'backup configuration for' 'backing-up configuration for' 'configuration backed-up for' '' || return
-                Tier.Processor Stop false "$tier" QPKG OpToStop stop stopping stopped '' || return
+                Tier.Processor Stop false "$tier" QPKG OpToStop stop stopping stopped '' true || return
                 Tier.Processor Uninstall false "$tier" QPKG OpToUninstall uninstall uninstalling uninstalled '' || return
                 ;;
             Addon)
@@ -1113,15 +1113,16 @@ Tier.Processor()
     # run a single operation on a group of packages
 
     # input:
-    #   $1 = $TARGET_OPERATION              e.g. 'Start', 'Restart'...
-    #   $2 = forced operation?              e.g. 'true', 'false'
-    #   $3 = $TIER                          e.g. 'Standalone', 'Dependent', 'Addon', 'All'
-    #   $4 = $PACKAGE_TYPE                  e.g. 'QPKG', 'IPKG', 'PIP'
-    #   $5 = $TARGET_OBJECT_NAME (optional) e.g. 'OpToStart', 'OpToStop'...
-    #   $6 = $ACTION_INTRANSITIVE           e.g. 'start'...
-    #   $7 = $ACTION_PRESENT                e.g. 'starting'...
-    #   $8 = $ACTION_PAST                   e.g. 'started'...
-    #   $9 = $RUNTIME (optional)            e.g. 'long'
+    #   $1 = $TARGET_OPERATION                  e.g. 'Start', 'Restart'...
+    #   $2 = is this a forced operation?        e.g. 'true', 'false'
+    #   $3 = $TIER                              e.g. 'Standalone', 'Dependent', 'Addon', 'All'
+    #   $4 = $PACKAGE_TYPE                      e.g. 'QPKG', 'IPKG', 'PIP'
+    #   $5 = $TARGET_OBJECT_NAME (optional)     e.g. 'OpToStart', 'OpToStop'...
+    #   $6 = $ACTION_INTRANSITIVE               e.g. 'start'...
+    #   $7 = $ACTION_PRESENT                    e.g. 'starting'...
+    #   $8 = $ACTION_PAST                       e.g. 'started'...
+    #   $9 = $RUNTIME (optional)                e.g. 'long'
+    #  $10 = execute asynchronously? (optional) e.g. 'true', 'false'
 
     QPKGs.SkProc.IsSet && return
     DebugFuncEntry
@@ -1141,6 +1142,7 @@ Tier.Processor()
     local -r PACKAGE_TYPE=${4:?empty}
     local -r TARGET_OBJECT_NAME=${5:-}
     local -r RUNTIME=${9:-}
+    local -r ASYNC=${10:1}
 
     if [[ $2 = true ]]; then
         forced_operation='--forced'
@@ -1185,25 +1187,50 @@ Tier.Processor()
                 DebugFuncExit; return
             fi
 
-            for package in "${target_packages[@]}"; do
-                ShowAsOperationProgress "$TIER" "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
+            if [[ $ASYNC = false ]]; then
+                # launch operations consecutively
+                for package in "${target_packages[@]}"; do
+                    ShowAsOperationProgress "$TIER" "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
 
-                $target_function.Do${TARGET_OPERATION} "$package" "$forced_operation"
-                result_code=$?
+                    $target_function.Do${TARGET_OPERATION} "$package" "$forced_operation"
+                    result_code=$?
 
-                case $result_code in
-                    0)  # OK
-                        ((pass_count++))
-                        ;;
-                    2)  # skipped
-                        ((total_count--))
-                        ;;
-                    *)  # failed
-                        ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") (see log for more details)"
-                        ((fail_count++))
-                        continue
-                esac
-            done
+                    case $result_code in
+                        0)  # OK
+                            ((pass_count++))
+                            ;;
+                        2)  # skipped
+                            ((total_count--))
+                            ;;
+                        *)  # failed
+                            ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") (see log for more details)"
+                            ((fail_count++))
+                            continue
+                    esac
+                done
+            else
+                # launch operations concurrently
+                # NON-FUNCTIONAL: for now, use same code as above
+                for package in "${target_packages[@]}"; do
+                    ShowAsOperationProgress "$TIER" "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
+
+                    $target_function.Do${TARGET_OPERATION} "$package" "$forced_operation"
+                    result_code=$?
+
+                    case $result_code in
+                        0)  # OK
+                            ((pass_count++))
+                            ;;
+                        2)  # skipped
+                            ((total_count--))
+                            ;;
+                        *)  # failed
+                            ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") (see log for more details)"
+                            ((fail_count++))
+                            continue
+                    esac
+                done
+            fi
             ;;
         IPKG|PIP)
             $targets_function.Do${TARGET_OPERATION}
@@ -6771,7 +6798,7 @@ CompileObjects()
         /bin/tar --create --gzip --file="$MANAGER_ARCHIVE_PATHFILE" --directory="$WORK_PATH" "$($BASENAME_CMD "$MANAGER_PATHFILE")"
     fi
 
-    # helper: if not running management script directly (i.e. without a loader script), create new archive and make an easily accessible copy
+    # dev helper: if not running management script directly (i.e. without a loader script), create new archive and make an easily accessible copy
     if [[ $(</proc/$PPID/cmdline) != *"/usr/sbin/sherpa"* ]]; then
         /bin/tar --create --gzip --file="$MANAGER_ARCHIVE_PATHFILE" --directory="$PWD" "$($BASENAME_CMD "$0")"
         cp "$MANAGER_ARCHIVE_PATHFILE" "$PWD"
