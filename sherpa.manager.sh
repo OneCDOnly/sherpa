@@ -61,7 +61,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220218
+    local -r SCRIPT_VERSION=220219
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -420,7 +420,7 @@ Session.Init()
         MANAGER_QPKG_DEPENDED_UPON+=(false)
         MANAGER_QPKG_IPKGS_ADD+=('python3-dev python3-pillow python3-pip python3-pyopenssl python3-requests python3-requests-oauthlib python3-yaml')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
-        MANAGER_QPKG_PIPS_ADD+=('apprise charset-normalizer click markdown MarkupSafe pygments python-levenshtein python-magic pytz tzlocal')
+        MANAGER_QPKG_PIPS_ADD+=('apprise charset-normalizer click markdown MarkupSafe pygments python-levenshtein python-magic pytz pytz_deprecation_shim tzlocal')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
         MANAGER_QPKG_RESTART_TO_UPDATE+=(true)
 
@@ -434,9 +434,9 @@ Session.Init()
         MANAGER_QPKG_ABBRVS+=('om med omed medusa omedusa')
         MANAGER_QPKG_DEPENDS_ON+=(Entware)
         MANAGER_QPKG_DEPENDED_UPON+=(false)
-        MANAGER_QPKG_IPKGS_ADD+=('mediainfo python3-pip python3-pyopenssl')
+        MANAGER_QPKG_IPKGS_ADD+=('mediainfo python3-pip python3-pyopenssl python3-requests python3-requests-oauthlib')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
-        MANAGER_QPKG_PIPS_ADD+=('apprise certifi cfscrape idna oauthlib pyyaml requests requests-oauthlib urllib3')
+        MANAGER_QPKG_PIPS_ADD+=('apprise certifi cfscrape idna oauthlib pyyaml urllib3')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
         MANAGER_QPKG_RESTART_TO_UPDATE+=(true)
 
@@ -450,7 +450,7 @@ Session.Init()
         MANAGER_QPKG_ABBRVS+=('my omy myl mylar mylar3')
         MANAGER_QPKG_DEPENDS_ON+=(Entware)
         MANAGER_QPKG_DEPENDED_UPON+=(false)
-        MANAGER_QPKG_IPKGS_ADD+=('python3-mako python3-pillow python3-pip python3-pytz python3-requests python3-six python3-urllib3')
+        MANAGER_QPKG_IPKGS_ADD+=('python3-mako python3-pillow python3-pip python3-requests python3-six python3-urllib3')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
         MANAGER_QPKG_PIPS_ADD+=('apscheduler beautifulsoup4 cfscrape charset-normalizer cheroot cherrypy feedparser jaraco.classes jaraco.collections jaraco.functools jaraco.text MarkupSafe more_itertools portend pytz pytz_deprecation_shim sgmllib3k simplejson soupsieve tempora tzdata tzlocal==2.0 zc.lockfile')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
@@ -628,7 +628,7 @@ Session.Init()
         MANAGER_QPKG_DEPENDED_UPON+=(false)
         MANAGER_QPKG_IPKGS_ADD+=('coreutils-nice ffprobe ionice python3-certifi python3-cffi python3-cryptography python3-dev python3-pip python3-six p7zip unrar')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
-        MANAGER_QPKG_PIPS_ADD+=('babelfish chardet cheetah3 cheroot cherrypy configobj feedparser guessit importlib-resources jaraco.classes jaraco.collections jaraco.context jaraco.functools jaraco.text more_itertools portend puremagic PySocks python-dateutil pytz rebulk sabyenc3 sgmllib3k tempora zc.lockfile')
+        MANAGER_QPKG_PIPS_ADD+=('babelfish chardet cheetah3 cheroot cherrypy configobj feedparser guessit importlib-resources jaraco.classes jaraco.collections jaraco.context jaraco.functools jaraco.text more_itertools portend puremagic PySocks python-dateutil pytz pytz_deprecation_shim rebulk sabyenc3 sgmllib3k tempora tzdata zc.lockfile')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
         MANAGER_QPKG_RESTART_TO_UPDATE+=(true)
 
