@@ -6198,17 +6198,6 @@ ShowAsInfo()
 
     }
 
-ShowAsReco()
-    {
-
-    # recommendation
-
-    SmartCR
-    WriteToDisplayNew "$(ColourTextBrightOrange reco)" "$1"
-    WriteToLog note "$1"
-
-    }
-
 ShowAsQuiz()
     {
 
