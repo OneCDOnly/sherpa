@@ -61,7 +61,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220219
+    local -r SCRIPT_VERSION=220219b
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -2712,7 +2712,7 @@ PIPs.DoInstall()
     if [[ $result_code -eq 0 ]]; then
         DebugAsDone "$ACTION_PAST $desc"
     else
-        ShowAsFail "$desc check failed $(FormatAsResult "$result_code")"
+        ShowAsWarn "$desc check failed"
     fi
 
     DebugFuncExit $result_code
