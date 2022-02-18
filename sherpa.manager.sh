@@ -3,11 +3,11 @@
 # sherpa.manager.sh
 #   Copyright (C) 2017-2022 OneCD [one.cd.only@gmail.com]
 #
+#   So, blame OneCD if it all goes horribly wrong. ;)
+#
 # Description:
 #   This is the management script for the sherpa mini-package-manager.
 #   It's automatically downloaded via the 'sherpa.loader.sh' script in the 'sherpa' QPKG no-more than once per 24 hours.
-#
-#   So, blame OneCD if it all goes horribly wrong. ;)
 #
 # Project:
 #   https://git.io/sherpa
@@ -252,7 +252,7 @@ Session.Init()
         MANAGER_QPKG_VERSION=()             # QPKG version
         MANAGER_QPKG_URL=()                 # remote QPKG URL
         MANAGER_QPKG_MD5=()                 # remote QPKG MD5
-        MANAGER_QPKG_DESC+=()               # QPKG description (applies to all packages with the same name)
+        MANAGER_QPKG_DESC=()                # QPKG description (applies to all packages with the same name)
         MANAGER_QPKG_ABBRVS=()              # if set, this package is user-installable, and these abbreviations may be used to specify app
         MANAGER_QPKG_DEPENDS_ON=()          # require these QPKGs to be installed first. Use '' if package is standalone
         MANAGER_QPKG_DEPENDED_UPON=()       # true/false: this QPKG is depended-upon by other QPKGs
@@ -262,7 +262,8 @@ Session.Init()
         MANAGER_QPKG_SUPPORTS_BACKUP=()     # true/false: this QPKG supports configuration 'backup' and 'restore' operations
         MANAGER_QPKG_RESTART_TO_UPDATE=()   # true/false: the internal appplication can be updated by restarting the QPKG
 
-    # pseudo-alpha-sorted name order (i.e. disregard character-case and leading 'O')
+    # use pseudo-alpha-sorted name order (i.e. disregard character-case and leading 'O')
+
     MANAGER_QPKG_NAME+=(ClamAV)
         MANAGER_QPKG_ARCH+=(all)
         MANAGER_QPKG_MIN_RAM_KB+=(1572864)
@@ -804,7 +805,7 @@ Session.Validate()
         DebugFirmwareWarning version "$NAS_FIRMWARE"
     fi
 
-    if [[ $NAS_BUILD -lt 20201015 || $NAS_BUILD -gt 20201020 ]]; then   # QTS builds between these dates don't allow unsigned QPKGs to run at-all
+    if [[ $NAS_BUILD -lt 20201015 || $NAS_BUILD -gt 20201020 ]]; then   # QTS builds released over these 6 days don't allow unsigned QPKGs to run at-all
         DebugFirmwareOK build "$NAS_BUILD"
     else
         DebugFirmwareWarning build "$NAS_BUILD"
@@ -913,7 +914,7 @@ Session.Validate()
         else
             for package in $(QPKGs.OpToRebuild.Array); do
                 if ! QPKGs.IsBackedUp.Exist "$package"; then
-                    MarkOperationAsSkipped show "$package" rebuild "does not have a backup to rebuild from"
+                    MarkOperationAsSkipped show "$package" rebuild 'does not have a backup to rebuild from'
                 else
                     (QPKGs.IsNtInstalled.Exist "$package" || QPKGs.OpToUninstall.Exist "$package") && QPKGs.OpToInstall.Add "$package"
                     QPKGs.OpToRestore.Add "$package"
@@ -1035,7 +1036,7 @@ Tiers.Processor()
     local package=''
     local -i index=0
 
-    Tier.Processor Download false All QPKG OpToDownload 'update package cache with' 'updating package cache with' 'updated package cache with' '' || return
+    Tier.Processor Download false All QPKG OpToDownload 'update package cache with' 'updating package cache with' 'package cache updated with' '' || return
 
     # -> package 'removal' phase begins here <-
 
@@ -1332,7 +1333,7 @@ ParseArguments()
     {
 
     # basic argument syntax:
-    #   script [operation] [scope] [options]
+    #   scriptname [operation] [scope] [options]
 
     DebugFuncEntry
     DebugVar USER_ARGS_RAW
@@ -1350,7 +1351,7 @@ ParseArguments()
     for arg in "${user_args[@]}"; do
         arg_identified=false
 
-        # identify operation: everytime operation changes, must clear scope
+        # identify operation: every time operation changes, must clear scope too
         case $arg in
             backup|check|install|rebuild|reinstall|restart|restore|start|stop|upgrade)
                 operation=${arg}_
@@ -1393,7 +1394,7 @@ ParseArguments()
                 QPKGs.SkProc.Set
         esac
 
-        # identify scope in two stages: first stage is when user didn't supply an operation. Second is after an operation has been defined.
+        # identify scope in two stages: first stage for when user didn't supply an operation. Second is after an operation has been defined.
 
         # stage 1
         if [[ -z $operation ]]; then
