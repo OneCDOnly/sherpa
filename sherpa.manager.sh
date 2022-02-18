@@ -61,7 +61,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220215b
+    local -r SCRIPT_VERSION=220218
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -233,7 +233,7 @@ Session.Init()
     readonly NAS_QPKG_ARCH=$(GetQPKGArch)
     readonly ENTWARE_VER=$(GetEntwareType)
     readonly LOG_TAIL_LINES=3000    # a full download and install of everything generates a session log of around 1600 lines, but include a bunch of opkg updates and it can get much longer
-    readonly MIN_PYTHON_VER=396     # keep this up-to-date with current Entware Python3 version so IPKG upgrade notifier will work
+    readonly MIN_PYTHON_VER=3100    # keep this up-to-date with current Entware Python3 version so IPKG upgrade notifier will work
     readonly PYTHON_CMD=/opt/bin/python
     readonly PYTHON3_CMD=/opt/bin/python3
     readonly PIP_CMD="$PYTHON3_CMD -m pip"
@@ -835,11 +835,6 @@ Session.Validate()
     CheckPythonPathAndVersion python3
     CheckPythonPathAndVersion python
 
-    if QPKGs.IsInstalled.Exist Entware && ! QPKGs.OpToUninstall.Exist Entware; then
-        [[ -e $PYTHON3_CMD ]] && version=$($PYTHON3_CMD -V 2>/dev/null | $SED_CMD 's|^Python ||') && [[ ${version//./} -lt $MIN_PYTHON_VER ]] && ShowAsReco "your Python 3 is out-of-date. Suggest upgrading your IPKGs: '$PROJECT_NAME check'"
-    fi
-
-    DebugUserspaceOK "'pip' version" "$($PIP_CMD -V 2>/dev/null || echo '<not present>')"
     DebugScript 'logs path' "$LOGS_PATH"
     DebugScript 'work path' "$WORK_PATH"
     DebugScript 'objects hash' "$(CompileObjects hash)"
@@ -895,6 +890,16 @@ Session.Validate()
         IPKGs.ToUpgrade.Set
         IPKGs.ToInstall.Set
         PIPs.ToInstall.Set
+
+        if QPKG.IsInstalled Entware && QPKG.IsStarted Entware; then
+            if [[ -e $PYTHON3_CMD ]]; then
+                version=$($PYTHON3_CMD -V 2>/dev/null | $SED_CMD 's|^Python ||')
+                if [[ ${version//./} -lt $MIN_PYTHON_VER ]]; then
+                    ShowAsInfo 'installed Python environment will be upgraded' >&2
+                    IPKGs.OpToUninstall.Add 'python*'
+                fi
+            fi
+        fi
     fi
 
     QPKGs.IsSupportBackup.Build
@@ -2570,7 +2575,7 @@ IPKGs.DoUninstall()
     if [[ $total_count -gt 0 ]]; then
         ShowAsProc "uninstalling $total_count IPKG$(Plural "$total_count")"
 
-        RunAndLog "$OPKG_CMD remove $(IPKGs.OpToUninstall.List) --force-depends" "$LOGS_PATH/ipkgs.$UNINSTALL_LOG_FILE" log:failure-only
+        RunAndLog "$OPKG_CMD remove $(IPKGs.OpToUninstall.List) --force-remove --force-removal-of-dependent-packages" "$LOGS_PATH/ipkgs.$UNINSTALL_LOG_FILE" log:failure-only
         result_code=$?
 
         if [[ $result_code -eq 0 ]]; then
