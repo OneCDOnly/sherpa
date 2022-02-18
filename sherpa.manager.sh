@@ -61,7 +61,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220219b
+    local -r SCRIPT_VERSION=220219c
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -292,7 +292,7 @@ Session.Init()
         MANAGER_QPKG_DEPENDED_UPON+=(false)
         MANAGER_QPKG_IPKGS_ADD+=('deluge jq')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
-        MANAGER_QPKG_PIPS_ADD+=('')
+        MANAGER_QPKG_PIPS_ADD+=('rencode')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
         MANAGER_QPKG_RESTART_TO_UPDATE+=(false)
 
@@ -308,7 +308,7 @@ Session.Init()
         MANAGER_QPKG_DEPENDED_UPON+=(false)
         MANAGER_QPKG_IPKGS_ADD+=('deluge-ui-web jq')
         MANAGER_QPKG_IPKGS_REMOVE+=('')
-        MANAGER_QPKG_PIPS_ADD+=('')
+        MANAGER_QPKG_PIPS_ADD+=('rencode')
         MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
         MANAGER_QPKG_RESTART_TO_UPDATE+=(false)
 
@@ -2616,7 +2616,7 @@ PIPs.DoInstall()
     if Opts.Deps.Check.IsSet || IPKGs.OpToInstall.Exist python3-pip; then
         ShowAsOperationProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
 
-        exec_cmd="$PIP_CMD install --upgrade --no-deps --no-input $MANAGER_BASE_PIPS_ADD --cache-dir $PIP_CACHE_PATH"
+        exec_cmd="$PIP_CMD install --upgrade --no-input $MANAGER_BASE_PIPS_ADD --cache-dir $PIP_CACHE_PATH"
         local desc="'Python3' base modules"
         local log_pathfile=$LOGS_PATH/py3-modules.base.$INSTALL_LOG_FILE
         DebugAsProc "downloading & installing $desc"
@@ -2652,7 +2652,7 @@ PIPs.DoInstall()
     if (Opts.Deps.Check.IsSet && PIPs.OpToInstall.IsAny) || PIPs.OpToInstall.IsAny; then
         ShowAsOperationProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
 
-        exec_cmd="$PIP_CMD install --upgrade --no-deps --no-input $(PIPs.OpToInstall.List) --cache-dir $PIP_CACHE_PATH"
+        exec_cmd="$PIP_CMD install --upgrade --no-input $(PIPs.OpToInstall.List) --cache-dir $PIP_CACHE_PATH"
         local desc="'Python3' specific modules"
         local log_pathfile=$LOGS_PATH/py3-modules.shared.$INSTALL_LOG_FILE
         DebugAsProc "downloading & installing $desc"
@@ -2674,7 +2674,7 @@ PIPs.DoInstall()
         # KLUDGE: force recompilation of 'sabyenc3' package so it's recognised by SABnzbd: https://forums.sabnzbd.org/viewtopic.php?p=121214#p121214
         ShowAsOperationProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
 
-        exec_cmd="$PIP_CMD install --no-deps --no-input --force-reinstall --no-binary :all: sabyenc3 --cache-dir $PIP_CACHE_PATH"
+        exec_cmd="$PIP_CMD install --no-input --force-reinstall --no-binary :all: sabyenc3 --cache-dir $PIP_CACHE_PATH"
         desc="'Python3 sabyenc3' module"
         log_pathfile=$LOGS_PATH/py3-modules.sabyenc3.$REINSTALL_LOG_FILE
         DebugAsProc "reinstalling $desc"
