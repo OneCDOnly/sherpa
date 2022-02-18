@@ -6017,7 +6017,7 @@ DebugWarningTabulated()
 DebugVar()
     {
 
-    # had to split this onto its own line so Kate editor won't choke when highlighting syntax
+    # had to split this onto its own line so Kate editor wouldn't choke when highlighting syntax
     local temp=${!1}
 
     DebugAsVar "\$$1 : '$temp'"
@@ -6517,7 +6517,7 @@ ColourReset()
 StripANSI()
     {
 
-    # QTS 4.2.6 BusyBox 'sed' doesn't fully support extended regexes, so this only works with a real 'sed'.
+    # QTS 4.2.6 BusyBox 'sed' doesn't fully support extended regexes, so this only works with a real 'sed'
 
     if [[ -e ${GNU_SED_CMD:-} ]]; then
         $GNU_SED_CMD -r 's/\x1b\[[0-9;]*m//g' <<< "${1:-}"
@@ -6549,6 +6549,49 @@ CTRL_C_Captured()
     RemoveDirSizeMonitorFlagFile
 
     exit
+
+    }
+
+AddFlagObj()
+    {
+
+    # $1 = object name to create
+
+    local public_function_name=${1:?no object name supplied}
+    local safe_function_name="$(tr 'A-Z' 'a-z' <<< "${public_function_name//[.-]/_}")"
+
+    _placeholder_text_=_ob_${safe_function_name}_tx_
+    _placeholder_flag_=_ob_${safe_function_name}_fl_
+    _placeholder_log_changes_flag_=_ob_${safe_function_name}_chfl_
+
+echo $public_function_name'.Clear()
+{ [[ $'$_placeholder_flag_' != '\'true\'' ]] && return
+'$_placeholder_flag_'=false
+[[ $'$_placeholder_log_changes_flag_' = '\'true\'' ]] && DebugVar '$_placeholder_flag_' ;}
+'$public_function_name'.NoLogMods()
+{ [[ $'$_placeholder_log_changes_flag_' != '\'true\'' ]] && return
+'$_placeholder_log_changes_flag_'=false ;}
+'$public_function_name'.Init()
+{ '$_placeholder_text_'='\'\''
+'$_placeholder_flag_'=false
+'$_placeholder_log_changes_flag_'=true ;}
+'$public_function_name'.IsNt()
+{ [[ $'$_placeholder_flag_' != '\'true\'' ]] ;}
+'$public_function_name'.IsSet()
+{ [[ $'$_placeholder_flag_' = '\'true\'' ]] ;}
+'$public_function_name'.Set()
+{ [[ $'$_placeholder_flag_' = '\'true\'' ]] && return
+'$_placeholder_flag_'=true
+[[ $'$_placeholder_log_changes_flag_' = '\'true\'' ]] && DebugVar '$_placeholder_flag_' ;}
+'$public_function_name'.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+'$_placeholder_text_'=$2
+else
+echo -n "$'$_placeholder_text_'"
+fi ;}
+'$public_function_name'.Init' >> "$OBJECTS_PATHFILE"
+
+    return 0
 
     }
 
@@ -6606,49 +6649,6 @@ done
 '$_placeholder_size_'=$2
 else
 echo -n $'$_placeholder_size_'
-fi ;}
-'$public_function_name'.Init' >> "$OBJECTS_PATHFILE"
-
-    return 0
-
-    }
-
-AddFlagObj()
-    {
-
-    # $1 = object name to create
-
-    local public_function_name=${1:?no object name supplied}
-    local safe_function_name="$(tr 'A-Z' 'a-z' <<< "${public_function_name//[.-]/_}")"
-
-    _placeholder_text_=_ob_${safe_function_name}_tx_
-    _placeholder_flag_=_ob_${safe_function_name}_fl_
-    _placeholder_log_changes_flag_=_ob_${safe_function_name}_chfl_
-
-echo $public_function_name'.Clear()
-{ [[ $'$_placeholder_flag_' != '\'true\'' ]] && return
-'$_placeholder_flag_'=false
-[[ $'$_placeholder_log_changes_flag_' = '\'true\'' ]] && DebugVar '$_placeholder_flag_' ;}
-'$public_function_name'.NoLogMods()
-{ [[ $'$_placeholder_log_changes_flag_' != '\'true\'' ]] && return
-'$_placeholder_log_changes_flag_'=false ;}
-'$public_function_name'.Init()
-{ '$_placeholder_text_'='\'\''
-'$_placeholder_flag_'=false
-'$_placeholder_log_changes_flag_'=true ;}
-'$public_function_name'.IsNt()
-{ [[ $'$_placeholder_flag_' != '\'true\'' ]] ;}
-'$public_function_name'.IsSet()
-{ [[ $'$_placeholder_flag_' = '\'true\'' ]] ;}
-'$public_function_name'.Set()
-{ [[ $'$_placeholder_flag_' = '\'true\'' ]] && return
-'$_placeholder_flag_'=true
-[[ $'$_placeholder_log_changes_flag_' = '\'true\'' ]] && DebugVar '$_placeholder_flag_' ;}
-'$public_function_name'.Text()
-{ if [[ -n ${1:-} && $1 = "=" ]]; then
-'$_placeholder_text_'=$2
-else
-echo -n "$'$_placeholder_text_'"
 fi ;}
 '$public_function_name'.Init' >> "$OBJECTS_PATHFILE"
 
@@ -6771,7 +6771,7 @@ CompileObjects()
             AddListObj QPKGs.OpSk${operation}      # operation was skipped
         done
 
-        for operation in Download Install Uninstall Upgrade; do     # only a subset of package operations are supported for-now
+        for operation in Download Install Uninstall Upgrade; do     # only a subset of addon package operations are supported for-now
             AddListObj IPKGs.OpTo${operation}
             AddListObj PIPs.OpTo${operation}
         done
