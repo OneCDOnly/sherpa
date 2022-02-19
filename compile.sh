@@ -216,11 +216,9 @@ for state in "${PACKAGE_STATES[@]}"; do
     AddListObj QPKGs.IsNt${state}
 done
 
-tar --create --gzip --numeric-owner --file="$MANAGER_ARCHIVE_PATHFILE" --directory="$WORK_PATH" "$(basename "$MANAGER_PATHFILE")"
+tar --create --gzip --numeric-owner --file="$MANAGER_ARCHIVE_PATHFILE" --directory="$WORK_PATH" "$MANAGER_FILE"
+tar --create --gzip --numeric-owner --file="$OBJECTS_ARCHIVE_PATHFILE" --directory="$WORK_PATH" "$OBJECTS_FILE"
+tar --create --gzip --numeric-owner --file="$PACKAGES_ARCHIVE_PATHFILE" --directory="$WORK_PATH" "$PACKAGES_FILE"
 
-tar --create --gzip --numeric-owner --file="$OBJECTS_ARCHIVE_PATHFILE" --directory="$WORK_PATH" "$(basename "$OBJECTS_PATHFILE")"
-md5sum "$WORK_PATH/$OBJECTS_FILE"
-
-tar --create --gzip --numeric-owner --file="$PACKAGES_ARCHIVE_PATHFILE" --directory="$WORK_PATH" "$(basename "$PACKAGES_PATHFILE")"
-md5sum "$WORK_PATH/$PACKAGES_FILE"
-
+md5sum "$OBJECTS_PATHFILE"
+md5sum "$PACKAGES_PATHFILE"
