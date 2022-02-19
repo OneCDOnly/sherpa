@@ -1,45 +1,92 @@
 #!/usr/bin/env bash
 #
-# sherpa.loader.sh - (C)opyright (C) 2017-2021 OneCD [one.cd.only@gmail.com]
+# sherpa.loader.sh
+#   Copyright (C) 2017-2022 OneCD [one.cd.only@gmail.com]
 #
-# This is the loader script for the sherpa mini-package-manager and is part of the 'sherpa' QPKG.
+#   So, blame OneCD if it all goes horribly wrong. ;)
 #
-# So, blame OneCD if it all goes horribly wrong. ;)
+# Description:
+#   This is the loader script for the sherpa mini-package-manager and is part of the 'sherpa' QPKG.
 #
-# project: git.io/sherpa
-# forum: https://forum.qnap.com/viewtopic.php?f=320&t=132373
+# Project:
+#   https://git.io/sherpa
+#
+# Forum:
+#   https://forum.qnap.com/viewtopic.php?f=320&t=132373
 #
 # Tested on:
-#  GNU bash, version 3.2.57(2)-release (i686-pc-linux-gnu)
-#  GNU bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)
-#  Copyright (C) 2007 Free Software Foundation, Inc.
+#   GNU bash, version 3.2.57(2)-release (i686-pc-linux-gnu)
+#   GNU bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)
+#   Copyright (C) 2007 Free Software Foundation, Inc.
 #
-# This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+# ... and periodically on:
+#   GNU bash, version 5.0.17(1)-release (aarch64-openwrt-linux-gnu)
+#   Copyright (C) 2019 Free Software Foundation, Inc.
 #
-# This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+# License:
+#   This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 #
-# You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
+#   This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
 
 Init()
     {
 
     IsQNAP || return
 
-    export LOADER_SCRIPT_VERSION=210418
-
     local -r PROJECT_NAME=sherpa
+    export LOADER_SCRIPT_VERSION=220220
+    local -r PROJECT_BRANCH=main
+
+    local -r PROJECT_PATH=$(/sbin/getcfg $PROJECT_NAME Install_Path -f /etc/config/qpkg.conf)
+    local -r WORK_PATH=$PROJECT_PATH/cache
+
+    local -r MANAGER_FILE=$PROJECT_NAME.manager.sh
+    local -r MANAGER_ARCHIVE_FILE=$MANAGER_FILE.tar.gz
+    readonly MANAGER_ARCHIVE_URL=https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/$MANAGER_ARCHIVE_FILE
+    readonly MANAGER_ARCHIVE_PATHFILE=$WORK_PATH/$MANAGER_ARCHIVE_FILE
+    readonly MANAGER_PATHFILE=$WORK_PATH/$MANAGER_FILE
+
     local -r NAS_FIRMWARE=$(/sbin/getcfg System Version -f /etc/config/uLinux.conf)
-    local -r QPKG_PATH=$(/sbin/getcfg $PROJECT_NAME Install_Path -f /etc/config/qpkg.conf)
     [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg='--insecure' || curl_insecure_arg=''
-    readonly REMOTE_MANAGER_ARCHIVE=https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/main/sherpa.manager.tar.gz
-    readonly LOCAL_MANAGER_ARCHIVE=$QPKG_PATH/cache/sherpa.manager.tar.gz
-    readonly LOCAL_MANAGER_SCRIPT_PATHFILE=$QPKG_PATH/cache/sherpa.manager.sh
     readonly GNU_FIND_CMD=/opt/bin/find
     previous_msg=''
 
-    [[ ! -d $QPKG_PATH/cache ]] && mkdir -p $QPKG_PATH/cache
+    [[ ! -d $WORK_PATH ]] && mkdir -p "$WORK_PATH"
 
     return 0
+
+    }
+
+EnsureFileIsCurrent()
+    {
+
+    # $1 = local pathfilename to examine
+    # $2 = remote archive to pull updated file from
+    # $3 = local archive pathfilename to extract archive to
+
+    local PACKAGE_CHANGE_THRESHOLD_MINUTES=1440
+
+    # if file was updated only recently, don't run another update. Examine 'change' time as this is updated even if file content isn't modified.
+    if [[ -e $1 && -e $GNU_FIND_CMD ]]; then
+        msgs=$($GNU_FIND_CMD "$1" -cmin +$PACKAGE_CHANGE_THRESHOLD_MINUTES) # no-output if last update was less than $PACKAGE_CHANGE_THRESHOLD_MINUTES minutes ago
+    else
+        msgs="this is either a new installation, or GNU 'find' was not found"
+    fi
+
+    if [[ -n $msgs ]]; then
+        if ! (/sbin/curl $curl_insecure_arg --silent --fail "$2" > "$3"); then
+            ShowAsWarning 'remote file download failed'
+        else
+            /bin/tar --extract --gzip --file="$3" --directory="$(/usr/bin/dirname "$3")" 2>/dev/null
+        fi
+    fi
+
+    if [[ ! -e $1 ]]; then
+        ShowAsAbort 'unable to find target file'
+        exit 1
+    fi
 
     }
 
@@ -141,29 +188,7 @@ ColourReset()
     }
 
 Init || exit
-
-package_minutes_threshold=1440
-
-# if management script was updated only recently, don't run another update. Examine 'change' time as this is updated even if script content isn't modified.
-if [[ -e $LOCAL_MANAGER_SCRIPT_PATHFILE && -e $GNU_FIND_CMD ]]; then
-    msgs=$($GNU_FIND_CMD "$LOCAL_MANAGER_SCRIPT_PATHFILE" -cmin +$package_minutes_threshold) # no-output if last update was less than $package_minutes_threshold minutes ago
-else
-    msgs="this is either a new installation, or GNU 'find' was not found"
-fi
-
-if [[ -n $msgs ]]; then
-    if ! (/sbin/curl $curl_insecure_arg --silent --fail "$REMOTE_MANAGER_ARCHIVE" > "$LOCAL_MANAGER_ARCHIVE"); then
-        ShowAsWarning 'manager download failed'
-    else
-        /bin/tar --extract --gzip --file="$LOCAL_MANAGER_ARCHIVE" --directory="$(/usr/bin/dirname "$LOCAL_MANAGER_ARCHIVE")" 2>/dev/null
-    fi
-fi
-
-if [[ ! -e $LOCAL_MANAGER_SCRIPT_PATHFILE ]]; then
-    ShowAsAbort 'unable to find management script'
-    exit 1
-fi
-
-eval '/usr/bin/env bash' "$LOCAL_MANAGER_SCRIPT_PATHFILE" "$*"
+EnsureFileIsCurrent "$MANAGER_PATHFILE" "$MANAGER_ARCHIVE_URL" "$MANAGER_ARCHIVE_PATHFILE"
+eval '/usr/bin/env bash' "$MANAGER_PATHFILE" "$*"
 
 exit 0

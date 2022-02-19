@@ -61,7 +61,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220219c
+    local -r SCRIPT_VERSION=220220
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -147,23 +147,34 @@ Session.Init()
     readonly PIP_CACHE_PATH=$WORK_PATH/pips
     readonly BACKUP_PATH=$(GetDefaultVolume)/.qpkg_config_backup
 
-    readonly OBJECTS_ARCHIVE_URL=https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/compiled.objects.tar.gz
-    readonly OBJECTS_ARCHIVE_PATHFILE=$WORK_PATH/compiled.objects.tar.gz
-    readonly OBJECTS_PATHFILE=$WORK_PATH/compiled.objects
+    local -r MANAGER_FILE=$PROJECT_NAME.manager.sh
+    local -r MANAGER_ARCHIVE_FILE=$MANAGER_FILE.tar.gz
+    local -r MANAGER_ARCHIVE_URL=https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/$MANAGER_ARCHIVE_FILE
+    readonly MANAGER_ARCHIVE_PATHFILE=$WORK_PATH/$MANAGER_ARCHIVE_FILE
+    readonly MANAGER_PATHFILE=$WORK_PATH/$MANAGER_FILE
 
-    readonly MANAGER_ARCHIVE_URL=https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/$PROJECT_NAME.manager.tar.gz
-    readonly MANAGER_ARCHIVE_PATHFILE=$WORK_PATH/$PROJECT_NAME.manager.tar.gz
-    readonly MANAGER_PATHFILE=$WORK_PATH/$PROJECT_NAME.manager.sh
+    local -r OBJECTS_FILE=objects
+    local -r OBJECTS_ARCHIVE_FILE=$OBJECTS_FILE.tar.gz
+    readonly OBJECTS_ARCHIVE_URL=https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/$OBJECTS_ARCHIVE_FILE
+    readonly OBJECTS_ARCHIVE_PATHFILE=$WORK_PATH/$OBJECTS_ARCHIVE_FILE
+    readonly OBJECTS_PATHFILE=$WORK_PATH/$OBJECTS_FILE
 
-    readonly EXTERNAL_PACKAGE_ARCHIVE_PATHFILE=/opt/var/opkg-lists/entware
-    readonly PREVIOUS_OPKG_PACKAGE_LIST=$WORK_PATH/opkg.prev.installed.list
-    readonly PREVIOUS_PIP_MODULE_LIST=$WORK_PATH/pip.prev.installed.list
+    local -r PACKAGES_FILE=packages
+    local -r PACKAGES_ARCHIVE_FILE=$PACKAGES_FILE.tar.gz
+    local -r PACKAGES_ARCHIVE_URL=https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/$PACKAGES_ARCHIVE_FILE
+    readonly PACKAGES_ARCHIVE_PATHFILE=$WORK_PATH/$PACKAGES_ARCHIVE_FILE
+    readonly PACKAGES_PATHFILE=$WORK_PATH/$PACKAGES_FILE
+
+    readonly EXTERNAL_PACKAGES_ARCHIVE_PATHFILE=/opt/var/opkg-lists/entware
+    readonly EXTERNAL_PACKAGES_PATHFILE=$WORK_PATH/Packages
+
+    readonly PREVIOUS_OPKG_PACKAGES_LIST=$WORK_PATH/opkg.prev.installed.list
+    readonly PREVIOUS_PIP_MODULES_LIST=$WORK_PATH/pip.prev.installed.list
 
     readonly SESSION_ARCHIVE_PATHFILE=$LOGS_PATH/session.archive.log
     readonly SESSION_ACTIVE_PATHFILE=$PROJECT_PATH/session.$$.active.log
     readonly SESSION_LAST_PATHFILE=$LOGS_PATH/session.last.log
     readonly SESSION_TAIL_PATHFILE=$LOGS_PATH/session.tail.log
-    readonly EXTERNAL_PACKAGE_LIST_PATHFILE=$WORK_PATH/Packages
 
     PACKAGE_SCOPES=(All Dependent HasDependents Installable Names Standalone SupportBackup SupportUpdateOnRestart Upgradable)
     PACKAGE_STATES=(BackedUp Disabled Downloaded Enabled Installed Missing Starting Started Stopping Stopped Restarting)
@@ -195,14 +206,18 @@ Session.Init()
         ResetWorkPath
         ArchiveActiveSessionLog
         ResetActiveSessionLog
+
+        # don't actually need to run the next two, but it looks better for user progress display
         CleanManagementScript
+        CleanPackageList
         exit 0
     elif [[ $USER_ARGS_RAW == *"clean"* ]]; then
         CleanManagementScript
+        CleanPackageList
         exit 0
     fi
 
-    CompileObjects
+    LoadObjects
     Session.Debug.ToArchive.Set
     Session.Debug.ToFile.Set
 
@@ -244,489 +259,7 @@ Session.Init()
     DebugQPKGDetected arch "$NAS_QPKG_ARCH"
     DebugQPKGDetected 'Entware installer' "$ENTWARE_VER"
     QPKG.IsInstalled Entware && [[ $ENTWARE_VER = none ]] && DebugAsWarn "$(FormatAsPackageName Entware) appears to be installed but is not visible"
-
-    # supported package details - parallel arrays
-    MANAGER_QPKG_NAME=()                    # internal QPKG name
-        MANAGER_QPKG_ARCH=()                # QPKG supports this architecture. Use 'all' if every arch is supported
-        MANAGER_QPKG_MIN_RAM_KB=()          # QPKG requires at-least this much RAM installed in kB. Use 'any' if any amount is OK
-        MANAGER_QPKG_VERSION=()             # QPKG version
-        MANAGER_QPKG_URL=()                 # remote QPKG URL
-        MANAGER_QPKG_MD5=()                 # remote QPKG MD5
-        MANAGER_QPKG_DESC=()                # QPKG description (applies to all packages with the same name)
-        MANAGER_QPKG_ABBRVS=()              # if set, this package is user-installable, and these abbreviations may be used to specify app
-        MANAGER_QPKG_DEPENDS_ON=()          # require these QPKGs to be installed first. Use '' if package is standalone
-        MANAGER_QPKG_DEPENDED_UPON=()       # true/false: this QPKG is depended-upon by other QPKGs
-        MANAGER_QPKG_IPKGS_ADD=()           # require these IPKGs to be installed first
-        MANAGER_QPKG_IPKGS_REMOVE=()        # require these IPKGs to be uninstalled first
-        MANAGER_QPKG_PIPS_ADD=()            # require these PIPs to be installed first
-        MANAGER_QPKG_SUPPORTS_BACKUP=()     # true/false: this QPKG supports configuration 'backup' and 'restore' operations
-        MANAGER_QPKG_RESTART_TO_UPDATE=()   # true/false: the internal appplication can be updated by restarting the QPKG
-
-    # use pseudo-alpha-sorted name order (i.e. disregard character-case and leading 'O')
-
-    MANAGER_QPKG_NAME+=(ClamAV)
-        MANAGER_QPKG_ARCH+=(all)
-        MANAGER_QPKG_MIN_RAM_KB+=(1572864)
-        MANAGER_QPKG_VERSION+=(220209b)
-        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
-        MANAGER_QPKG_MD5+=(8896162d785aa72c4414aaaf051c4328)
-        MANAGER_QPKG_DESC+=('replacement for the QTS built-in ClamAV (requires a minimum of 1.5GiB installed RAM)')
-        MANAGER_QPKG_ABBRVS+=('av clam clamscan freshclam clamav')
-        MANAGER_QPKG_DEPENDS_ON+=(Entware)
-        MANAGER_QPKG_DEPENDED_UPON+=(false)
-        MANAGER_QPKG_IPKGS_ADD+=('clamav freshclam')
-        MANAGER_QPKG_IPKGS_REMOVE+=('')
-        MANAGER_QPKG_PIPS_ADD+=('')
-        MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
-        MANAGER_QPKG_RESTART_TO_UPDATE+=(false)
-
-    MANAGER_QPKG_NAME+=(Deluge-server)
-        MANAGER_QPKG_ARCH+=(all)
-        MANAGER_QPKG_MIN_RAM_KB+=(any)
-        MANAGER_QPKG_VERSION+=(220209c)
-        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
-        MANAGER_QPKG_MD5+=(eb424e51682af7580adc36042d30cd4b)
-        MANAGER_QPKG_DESC+=('Deluge BitTorrent daemon')
-        MANAGER_QPKG_ABBRVS+=('dl deluge del-server deluge-server')
-        MANAGER_QPKG_DEPENDS_ON+=(Entware)
-        MANAGER_QPKG_DEPENDED_UPON+=(false)
-        MANAGER_QPKG_IPKGS_ADD+=('deluge jq')
-        MANAGER_QPKG_IPKGS_REMOVE+=('')
-        MANAGER_QPKG_PIPS_ADD+=('rencode')
-        MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
-        MANAGER_QPKG_RESTART_TO_UPDATE+=(false)
-
-    MANAGER_QPKG_NAME+=(Deluge-web)
-        MANAGER_QPKG_ARCH+=(all)
-        MANAGER_QPKG_MIN_RAM_KB+=(any)
-        MANAGER_QPKG_VERSION+=(220209b)
-        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
-        MANAGER_QPKG_MD5+=(67724b5eaef406b5a44fc4bda074ba96)
-        MANAGER_QPKG_DESC+=('web UI to access multiple Deluge BitTorrent daemons')
-        MANAGER_QPKG_ABBRVS+=('dw del-web deluge-web')
-        MANAGER_QPKG_DEPENDS_ON+=(Entware)
-        MANAGER_QPKG_DEPENDED_UPON+=(false)
-        MANAGER_QPKG_IPKGS_ADD+=('deluge-ui-web jq')
-        MANAGER_QPKG_IPKGS_REMOVE+=('')
-        MANAGER_QPKG_PIPS_ADD+=('rencode')
-        MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
-        MANAGER_QPKG_RESTART_TO_UPDATE+=(false)
-
-    MANAGER_QPKG_NAME+=(duf)
-        MANAGER_QPKG_ARCH+=(a64)
-        MANAGER_QPKG_MIN_RAM_KB+=(any)
-        MANAGER_QPKG_VERSION+=(220207)
-        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/main/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_arm_64.qpkg)
-        MANAGER_QPKG_MD5+=(1c2d72498d4e4311f70f39b7a4c224e5)
-        MANAGER_QPKG_DESC+=('a nice CLI disk-usage/free-space utility from @muesli')
-        MANAGER_QPKG_ABBRVS+=('df duf')
-        MANAGER_QPKG_DEPENDS_ON+=('')
-        MANAGER_QPKG_DEPENDED_UPON+=(false)
-        MANAGER_QPKG_IPKGS_ADD+=('')
-        MANAGER_QPKG_IPKGS_REMOVE+=('')
-        MANAGER_QPKG_PIPS_ADD+=('')
-        MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
-        MANAGER_QPKG_RESTART_TO_UPDATE+=(false)
-
-    MANAGER_QPKG_NAME+=(duf)
-        MANAGER_QPKG_ARCH+=(x41)
-        MANAGER_QPKG_MIN_RAM_KB+=(any)
-        MANAGER_QPKG_VERSION+=(220207)
-        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/main/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_arm-x41.qpkg)
-        MANAGER_QPKG_MD5+=(c40f3c60d17fb2bd8d2227ed41f55179)
-        MANAGER_QPKG_DESC+=('a nice CLI disk-usage/free-space utility from @muesli')
-        MANAGER_QPKG_ABBRVS+=('df duf')
-        MANAGER_QPKG_DEPENDS_ON+=('')
-        MANAGER_QPKG_DEPENDED_UPON+=(false)
-        MANAGER_QPKG_IPKGS_ADD+=('')
-        MANAGER_QPKG_IPKGS_REMOVE+=('')
-        MANAGER_QPKG_PIPS_ADD+=('')
-        MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
-        MANAGER_QPKG_RESTART_TO_UPDATE+=(false)
-
-    MANAGER_QPKG_NAME+=(duf)
-        MANAGER_QPKG_ARCH+=(x86)
-        MANAGER_QPKG_MIN_RAM_KB+=(any)
-        MANAGER_QPKG_VERSION+=(220207)
-        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/main/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_x86.qpkg)
-        MANAGER_QPKG_MD5+=(4e839f31a0d63494ea2b015b3ec183d4)
-        MANAGER_QPKG_DESC+=('a nice CLI disk-usage/free-space utility from @muesli')
-        MANAGER_QPKG_ABBRVS+=('df duf')
-        MANAGER_QPKG_DEPENDS_ON+=('')
-        MANAGER_QPKG_DEPENDED_UPON+=(false)
-        MANAGER_QPKG_IPKGS_ADD+=('')
-        MANAGER_QPKG_IPKGS_REMOVE+=('')
-        MANAGER_QPKG_PIPS_ADD+=('')
-        MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
-        MANAGER_QPKG_RESTART_TO_UPDATE+=(false)
-
-    MANAGER_QPKG_NAME+=(duf)
-        MANAGER_QPKG_ARCH+=(x64)
-        MANAGER_QPKG_MIN_RAM_KB+=(any)
-        MANAGER_QPKG_VERSION+=(220207)
-        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/main/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_x86_64.qpkg)
-        MANAGER_QPKG_MD5+=(a892183d110159c50e0c839fe6f14156)
-        MANAGER_QPKG_DESC+=('a nice CLI disk-usage/free-space utility from @muesli')
-        MANAGER_QPKG_ABBRVS+=('df duf')
-        MANAGER_QPKG_DEPENDS_ON+=('')
-        MANAGER_QPKG_DEPENDED_UPON+=(false)
-        MANAGER_QPKG_IPKGS_ADD+=('')
-        MANAGER_QPKG_IPKGS_REMOVE+=('')
-        MANAGER_QPKG_PIPS_ADD+=('')
-        MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
-        MANAGER_QPKG_RESTART_TO_UPDATE+=(false)
-
-    MANAGER_QPKG_NAME+=(Entware)
-        MANAGER_QPKG_ARCH+=(all)
-        MANAGER_QPKG_MIN_RAM_KB+=(any)
-        MANAGER_QPKG_VERSION+=(1.03)
-        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}std.qpkg)
-        MANAGER_QPKG_MD5+=(da2d9f8d3442dd665ce04b9b932c9d8e)
-        MANAGER_QPKG_DESC+=("provides the 'opkg' command: the OpenWRT package manager")
-        MANAGER_QPKG_ABBRVS+=('ew ent opkg entware')
-        MANAGER_QPKG_DEPENDS_ON+=('')
-        MANAGER_QPKG_DEPENDED_UPON+=(true)
-        MANAGER_QPKG_IPKGS_ADD+=('')
-        MANAGER_QPKG_IPKGS_REMOVE+=('')
-        MANAGER_QPKG_PIPS_ADD+=('')
-        MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
-        MANAGER_QPKG_RESTART_TO_UPDATE+=(false)
-
-    MANAGER_QPKG_NAME+=(HideThatBanner)
-        MANAGER_QPKG_ARCH+=(all)
-        MANAGER_QPKG_MIN_RAM_KB+=(any)
-        MANAGER_QPKG_VERSION+=(220207)
-        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/main/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
-        MANAGER_QPKG_MD5+=(ebc003d544b72599db0076c0c1c7a52a)
-        MANAGER_QPKG_DESC+=('hides the annoying rotating banner at the top of QTS App Center pages')
-        MANAGER_QPKG_ABBRVS+=('hb htb hide hidebanner hidethatbanner')
-        MANAGER_QPKG_DEPENDS_ON+=('')
-        MANAGER_QPKG_DEPENDED_UPON+=(false)
-        MANAGER_QPKG_IPKGS_ADD+=('')
-        MANAGER_QPKG_IPKGS_REMOVE+=('')
-        MANAGER_QPKG_PIPS_ADD+=('')
-        MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
-        MANAGER_QPKG_RESTART_TO_UPDATE+=(false)
-
-    MANAGER_QPKG_NAME+=(LazyLibrarian)
-        MANAGER_QPKG_ARCH+=(all)
-        MANAGER_QPKG_MIN_RAM_KB+=(any)
-        MANAGER_QPKG_VERSION+=(220209b)
-        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
-        MANAGER_QPKG_MD5+=(0a76f6528cfd4eac1cc8d4e7419b2fc5)
-        MANAGER_QPKG_DESC+=('follow authors and grab metadata for all your digital reading needs')
-        MANAGER_QPKG_ABBRVS+=('ll lazy lazylibrarian')
-        MANAGER_QPKG_DEPENDS_ON+=(Entware)
-        MANAGER_QPKG_DEPENDED_UPON+=(false)
-        MANAGER_QPKG_IPKGS_ADD+=('python3-dev python3-pillow python3-pip python3-pyopenssl python3-requests python3-requests-oauthlib python3-yaml')
-        MANAGER_QPKG_IPKGS_REMOVE+=('')
-        MANAGER_QPKG_PIPS_ADD+=('apprise charset-normalizer click markdown MarkupSafe pygments python-levenshtein python-magic pytz pytz_deprecation_shim tzlocal')
-        MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
-        MANAGER_QPKG_RESTART_TO_UPDATE+=(true)
-
-    MANAGER_QPKG_NAME+=(OMedusa)
-        MANAGER_QPKG_ARCH+=(all)
-        MANAGER_QPKG_MIN_RAM_KB+=(any)
-        MANAGER_QPKG_VERSION+=(220209b)
-        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
-        MANAGER_QPKG_MD5+=(38c4bf7011e86d90e4096254dacfade4)
-        MANAGER_QPKG_DESC+=('another SickBeard fork: manage and search for TV shows')
-        MANAGER_QPKG_ABBRVS+=('om med omed medusa omedusa')
-        MANAGER_QPKG_DEPENDS_ON+=(Entware)
-        MANAGER_QPKG_DEPENDED_UPON+=(false)
-        MANAGER_QPKG_IPKGS_ADD+=('mediainfo python3-pip python3-pyopenssl python3-requests python3-requests-oauthlib')
-        MANAGER_QPKG_IPKGS_REMOVE+=('')
-        MANAGER_QPKG_PIPS_ADD+=('apprise certifi cfscrape idna oauthlib pyyaml urllib3')
-        MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
-        MANAGER_QPKG_RESTART_TO_UPDATE+=(true)
-
-    MANAGER_QPKG_NAME+=(Mylar3)
-        MANAGER_QPKG_ARCH+=(all)
-        MANAGER_QPKG_MIN_RAM_KB+=(any)
-        MANAGER_QPKG_VERSION+=(220209b)
-        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
-        MANAGER_QPKG_MD5+=(ebdcd239ee72fb193aa12a35b05949cf)
-        MANAGER_QPKG_DESC+=('automated Comic Book (cbr/cbz) downloader program for use with NZB and torrents written in Python')
-        MANAGER_QPKG_ABBRVS+=('my omy myl mylar mylar3')
-        MANAGER_QPKG_DEPENDS_ON+=(Entware)
-        MANAGER_QPKG_DEPENDED_UPON+=(false)
-        MANAGER_QPKG_IPKGS_ADD+=('python3-mako python3-pillow python3-pip python3-requests python3-six python3-urllib3')
-        MANAGER_QPKG_IPKGS_REMOVE+=('')
-        MANAGER_QPKG_PIPS_ADD+=('apscheduler beautifulsoup4 cfscrape charset-normalizer cheroot cherrypy feedparser jaraco.classes jaraco.collections jaraco.functools jaraco.text MarkupSafe more_itertools portend pytz pytz_deprecation_shim sgmllib3k simplejson soupsieve tempora tzdata tzlocal==2.0 zc.lockfile')
-        MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
-        MANAGER_QPKG_RESTART_TO_UPDATE+=(true)
-
-    MANAGER_QPKG_NAME+=(NZBGet)
-        MANAGER_QPKG_ARCH+=(all)
-        MANAGER_QPKG_MIN_RAM_KB+=(any)
-        MANAGER_QPKG_VERSION+=(220209b)
-        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
-        MANAGER_QPKG_MD5+=(0d14bded0f3d7d7cadf25506d939f949)
-        MANAGER_QPKG_DESC+=('lite-and-fast NZB download manager with a simple web UI')
-        MANAGER_QPKG_ABBRVS+=('ng nzb nzbg nget nzbget')
-        MANAGER_QPKG_DEPENDS_ON+=(Entware)
-        MANAGER_QPKG_DEPENDED_UPON+=(false)
-        MANAGER_QPKG_IPKGS_ADD+=(nzbget)
-        MANAGER_QPKG_IPKGS_REMOVE+=('')
-        MANAGER_QPKG_PIPS_ADD+=('')
-        MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
-        MANAGER_QPKG_RESTART_TO_UPDATE+=(false)
-
-    MANAGER_QPKG_NAME+=(nzbToMedia)
-        MANAGER_QPKG_ARCH+=(all)
-        MANAGER_QPKG_MIN_RAM_KB+=(any)
-        MANAGER_QPKG_VERSION+=(220209c)
-        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
-        MANAGER_QPKG_MD5+=(d05a2cbdd74b9e5e0e06a44b8183637c)
-        MANAGER_QPKG_DESC+=('post-processing for NZBs to many services')
-        MANAGER_QPKG_ABBRVS+=('n2 nt nzb2 nzb2m nzbto nzbtom nzbtomedia')
-        MANAGER_QPKG_DEPENDS_ON+=(Entware)
-        MANAGER_QPKG_DEPENDED_UPON+=(false)
-        MANAGER_QPKG_IPKGS_ADD+=('python3-pip')
-        MANAGER_QPKG_IPKGS_REMOVE+=('')
-        MANAGER_QPKG_PIPS_ADD+=('')
-        MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
-        MANAGER_QPKG_RESTART_TO_UPDATE+=(true)
-
-    MANAGER_QPKG_NAME+=(Par2)
-        MANAGER_QPKG_ARCH+=(x86)
-        MANAGER_QPKG_MIN_RAM_KB+=(any)
-        MANAGER_QPKG_VERSION+=(0.8.1.0)
-        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_x86.qpkg)
-        MANAGER_QPKG_MD5+=(996ffb92d774eb01968003debc171e91)
-        MANAGER_QPKG_DESC+=('create and use PAR2 files to detect damage in data files and repair them if necessary')
-        MANAGER_QPKG_ABBRVS+=('pr par par2')
-        MANAGER_QPKG_DEPENDS_ON+=('')
-        MANAGER_QPKG_DEPENDED_UPON+=(true)
-        MANAGER_QPKG_IPKGS_ADD+=('')
-        MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
-        MANAGER_QPKG_PIPS_ADD+=('')
-        MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
-        MANAGER_QPKG_RESTART_TO_UPDATE+=(false)
-
-    MANAGER_QPKG_NAME+=(Par2)
-        MANAGER_QPKG_ARCH+=(x64)
-        MANAGER_QPKG_MIN_RAM_KB+=(any)
-        MANAGER_QPKG_VERSION+=(0.8.1.0)
-        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_x86_64.qpkg)
-        MANAGER_QPKG_MD5+=(520472cc87d301704f975f6eb9948e38)
-        MANAGER_QPKG_DESC+=('')
-        MANAGER_QPKG_ABBRVS+=('pr par par2')
-        MANAGER_QPKG_DEPENDS_ON+=('')
-        MANAGER_QPKG_DEPENDED_UPON+=(true)
-        MANAGER_QPKG_IPKGS_ADD+=('')
-        MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
-        MANAGER_QPKG_PIPS_ADD+=('')
-        MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
-        MANAGER_QPKG_RESTART_TO_UPDATE+=(false)
-
-    MANAGER_QPKG_NAME+=(Par2)
-        MANAGER_QPKG_ARCH+=(x19)
-        MANAGER_QPKG_MIN_RAM_KB+=(any)
-        MANAGER_QPKG_VERSION+=(0.8.1.0)
-        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_arm-x19.qpkg)
-        MANAGER_QPKG_MD5+=(516e3f2849aa880c85ee736c2db833a8)
-        MANAGER_QPKG_DESC+=('')
-        MANAGER_QPKG_ABBRVS+=('pr par par2')
-        MANAGER_QPKG_DEPENDS_ON+=('')
-        MANAGER_QPKG_DEPENDED_UPON+=(true)
-        MANAGER_QPKG_IPKGS_ADD+=('')
-        MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
-        MANAGER_QPKG_PIPS_ADD+=('')
-        MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
-        MANAGER_QPKG_RESTART_TO_UPDATE+=(false)
-
-    MANAGER_QPKG_NAME+=(Par2)
-        MANAGER_QPKG_ARCH+=(x31)
-        MANAGER_QPKG_MIN_RAM_KB+=(any)
-        MANAGER_QPKG_VERSION+=(0.8.1.0)
-        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_arm-x31.qpkg)
-        MANAGER_QPKG_MD5+=(ce8af2e009eb87733c3b855e41a94f8e)
-        MANAGER_QPKG_DESC+=('')
-        MANAGER_QPKG_ABBRVS+=('pr par par2')
-        MANAGER_QPKG_DEPENDS_ON+=('')
-        MANAGER_QPKG_DEPENDED_UPON+=(true)
-        MANAGER_QPKG_IPKGS_ADD+=('')
-        MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
-        MANAGER_QPKG_PIPS_ADD+=('')
-        MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
-        MANAGER_QPKG_RESTART_TO_UPDATE+=(false)
-
-    MANAGER_QPKG_NAME+=(Par2)
-        MANAGER_QPKG_ARCH+=(x41)
-        MANAGER_QPKG_MIN_RAM_KB+=(any)
-        MANAGER_QPKG_VERSION+=(0.8.1.0)
-        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_arm-x41.qpkg)
-        MANAGER_QPKG_MD5+=(8516e45e704875cdd2cd2bb315c4e1e6)
-        MANAGER_QPKG_DESC+=('')
-        MANAGER_QPKG_ABBRVS+=('pr par par2')
-        MANAGER_QPKG_DEPENDS_ON+=('')
-        MANAGER_QPKG_DEPENDED_UPON+=(true)
-        MANAGER_QPKG_IPKGS_ADD+=('')
-        MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
-        MANAGER_QPKG_PIPS_ADD+=('')
-        MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
-        MANAGER_QPKG_RESTART_TO_UPDATE+=(false)
-
-    MANAGER_QPKG_NAME+=(Par2)
-        MANAGER_QPKG_ARCH+=(a64)
-        MANAGER_QPKG_MIN_RAM_KB+=(any)
-        MANAGER_QPKG_VERSION+=(0.8.1.0)
-        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_arm_64.qpkg)
-        MANAGER_QPKG_MD5+=(4d8e99f97936a163e411aa8765595f7a)
-        MANAGER_QPKG_DESC+=('')
-        MANAGER_QPKG_ABBRVS+=('pr par par2')
-        MANAGER_QPKG_DEPENDS_ON+=('')
-        MANAGER_QPKG_DEPENDED_UPON+=(true)
-        MANAGER_QPKG_IPKGS_ADD+=('')
-        MANAGER_QPKG_IPKGS_REMOVE+=(par2cmdline)
-        MANAGER_QPKG_PIPS_ADD+=('')
-        MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
-        MANAGER_QPKG_RESTART_TO_UPDATE+=(false)
-
-    MANAGER_QPKG_NAME+=(QDK)
-        MANAGER_QPKG_ARCH+=(all)
-        MANAGER_QPKG_MIN_RAM_KB+=(any)
-        MANAGER_QPKG_VERSION+=(2.3.11)
-        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
-        MANAGER_QPKG_MD5+=(745e0f65004a242ad7872e970382de7e)
-        MANAGER_QPKG_DESC+=("provides the 'qbuild' command to compile QPKGs")
-        MANAGER_QPKG_ABBRVS+=('qd qbuild qdk')
-        MANAGER_QPKG_DEPENDS_ON+=('')
-        MANAGER_QPKG_DEPENDED_UPON+=(false)
-        MANAGER_QPKG_IPKGS_ADD+=('')
-        MANAGER_QPKG_IPKGS_REMOVE+=('')
-        MANAGER_QPKG_PIPS_ADD+=('')
-        MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
-        MANAGER_QPKG_RESTART_TO_UPDATE+=(false)
-
-    MANAGER_QPKG_NAME+=(RunLast)
-        MANAGER_QPKG_ARCH+=(all)
-        MANAGER_QPKG_MIN_RAM_KB+=(any)
-        MANAGER_QPKG_VERSION+=(210809)
-        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/main/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
-        MANAGER_QPKG_MD5+=(b6b535c5b875e540c5f5550c9131bbd3)
-        MANAGER_QPKG_DESC+=('run userscripts and commands after all QPKGs have completed startup reintegration into QTS')
-        MANAGER_QPKG_ABBRVS+=('rl run runlast')
-        MANAGER_QPKG_DEPENDS_ON+=('')
-        MANAGER_QPKG_DEPENDED_UPON+=(false)
-        MANAGER_QPKG_IPKGS_ADD+=('')
-        MANAGER_QPKG_IPKGS_REMOVE+=('')
-        MANAGER_QPKG_PIPS_ADD+=('')
-        MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
-        MANAGER_QPKG_RESTART_TO_UPDATE+=(false)
-
-    MANAGER_QPKG_NAME+=(SABnzbd)
-        MANAGER_QPKG_ARCH+=(all)
-        MANAGER_QPKG_MIN_RAM_KB+=(any)
-        MANAGER_QPKG_VERSION+=(220209b)
-        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
-        MANAGER_QPKG_MD5+=(a28ad6c87e05f46d425fc29c2b1debb2)
-        MANAGER_QPKG_DESC+=('full-featured NZB download manager with a nice web UI')
-        MANAGER_QPKG_ABBRVS+=('sb sb3 sab sab3 sabnzbd3 sabnzbd')
-        MANAGER_QPKG_DEPENDS_ON+=('Entware Par2')
-        MANAGER_QPKG_DEPENDED_UPON+=(false)
-        MANAGER_QPKG_IPKGS_ADD+=('coreutils-nice ffprobe ionice python3-certifi python3-cffi python3-cryptography python3-dev python3-pip python3-six p7zip unrar')
-        MANAGER_QPKG_IPKGS_REMOVE+=('')
-        MANAGER_QPKG_PIPS_ADD+=('babelfish chardet cheetah3 cheroot cherrypy configobj feedparser guessit importlib-resources jaraco.classes jaraco.collections jaraco.context jaraco.functools jaraco.text more_itertools portend puremagic PySocks python-dateutil pytz pytz_deprecation_shim rebulk sabyenc3 sgmllib3k tempora tzdata zc.lockfile')
-        MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
-        MANAGER_QPKG_RESTART_TO_UPDATE+=(true)
-
-    MANAGER_QPKG_NAME+=(sha3sum)
-        MANAGER_QPKG_ARCH+=(x86)
-        MANAGER_QPKG_MIN_RAM_KB+=(any)
-        MANAGER_QPKG_VERSION+=(201114)
-        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/main/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_x86.qpkg)
-        MANAGER_QPKG_MD5+=(87c4ae02c7f95cd2706997047fc9e84d)
-        MANAGER_QPKG_DESC+=("the 'sha3sum' and keccak utilities from @maandree (for x86 & x86-64 NAS only)")
-        MANAGER_QPKG_ABBRVS+=('s3 sha sha3 sha3sum')
-        MANAGER_QPKG_DEPENDS_ON+=('')
-        MANAGER_QPKG_DEPENDED_UPON+=(false)
-        MANAGER_QPKG_IPKGS_ADD+=('')
-        MANAGER_QPKG_IPKGS_REMOVE+=('')
-        MANAGER_QPKG_PIPS_ADD+=('')
-        MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
-        MANAGER_QPKG_RESTART_TO_UPDATE+=(false)
-
-    MANAGER_QPKG_NAME+=(sha3sum)
-        MANAGER_QPKG_ARCH+=(x64)
-        MANAGER_QPKG_MIN_RAM_KB+=(any)
-        MANAGER_QPKG_VERSION+=(201114)
-        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/main/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}_x86_64.qpkg)
-        MANAGER_QPKG_MD5+=(eed8071c43665431d6444cb489636ae5)
-        MANAGER_QPKG_DESC+=('')
-        MANAGER_QPKG_ABBRVS+=('s3 sha sha3 sha3sum')
-        MANAGER_QPKG_DEPENDS_ON+=('')
-        MANAGER_QPKG_DEPENDED_UPON+=(false)
-        MANAGER_QPKG_IPKGS_ADD+=('')
-        MANAGER_QPKG_IPKGS_REMOVE+=('')
-        MANAGER_QPKG_PIPS_ADD+=('')
-        MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
-        MANAGER_QPKG_RESTART_TO_UPDATE+=(false)
-
-    MANAGER_QPKG_NAME+=($PROJECT_NAME)
-        MANAGER_QPKG_ARCH+=(all)
-        MANAGER_QPKG_MIN_RAM_KB+=(any)
-        MANAGER_QPKG_VERSION+=(220207)
-        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/QPKGs/$PROJECT_NAME/build/${PROJECT_NAME}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
-        MANAGER_QPKG_MD5+=(6163d94dbf50774aaaa842590b9c591f)
-        MANAGER_QPKG_DESC+=("provides the '$PROJECT_NAME' command: the mini-package-manager")
-        MANAGER_QPKG_ABBRVS+=("sh $PROJECT_NAME")
-        MANAGER_QPKG_DEPENDS_ON+=('')
-        MANAGER_QPKG_DEPENDED_UPON+=(false)
-        MANAGER_QPKG_IPKGS_ADD+=('')
-        MANAGER_QPKG_IPKGS_REMOVE+=('')
-        MANAGER_QPKG_PIPS_ADD+=('')
-        MANAGER_QPKG_SUPPORTS_BACKUP+=(false)
-        MANAGER_QPKG_RESTART_TO_UPDATE+=(false)
-
-    MANAGER_QPKG_NAME+=(OSickGear)
-        MANAGER_QPKG_ARCH+=(all)
-        MANAGER_QPKG_MIN_RAM_KB+=(any)
-        MANAGER_QPKG_VERSION+=(220209b)
-        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
-        MANAGER_QPKG_MD5+=(c77dbac9051436296a33e70e16665deb)
-        MANAGER_QPKG_DESC+=('another SickBeard fork: manage and search for TV shows')
-        MANAGER_QPKG_ABBRVS+=('sg os osg sickg gear ogear osickg sickgear osickgear')
-        MANAGER_QPKG_DEPENDS_ON+=(Entware)
-        MANAGER_QPKG_DEPENDED_UPON+=(false)
-        MANAGER_QPKG_IPKGS_ADD+=('python3-dev python3-pip')
-        MANAGER_QPKG_IPKGS_REMOVE+=('')
-        MANAGER_QPKG_PIPS_ADD+=('cheetah3')
-        MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
-        MANAGER_QPKG_RESTART_TO_UPDATE+=(true)
-
-    MANAGER_QPKG_NAME+=(SortMyQPKGs)
-        MANAGER_QPKG_ARCH+=(all)
-        MANAGER_QPKG_MIN_RAM_KB+=(any)
-        MANAGER_QPKG_VERSION+=(220219)
-        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/main/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
-        MANAGER_QPKG_MD5+=(699dd74f52356c5b36847db553e0d713)
-        MANAGER_QPKG_DESC+=('ensure other installed QPKGs start in correct sequence during QTS bootup')
-        MANAGER_QPKG_ABBRVS+=('sm smq smqs sort sortmy sortmine sortpackages sortmypackages sortmyqpkgs')
-        MANAGER_QPKG_DEPENDS_ON+=('')
-        MANAGER_QPKG_DEPENDED_UPON+=(false)
-        MANAGER_QPKG_IPKGS_ADD+=('')
-        MANAGER_QPKG_IPKGS_REMOVE+=('')
-        MANAGER_QPKG_PIPS_ADD+=('')
-        MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
-        MANAGER_QPKG_RESTART_TO_UPDATE+=(false)
-
-    MANAGER_QPKG_NAME+=(OTransmission)
-        MANAGER_QPKG_ARCH+=(all)
-        MANAGER_QPKG_MIN_RAM_KB+=(any)
-        MANAGER_QPKG_VERSION+=(220209b)
-        MANAGER_QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/QPKGs/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}/build/${MANAGER_QPKG_NAME[${#MANAGER_QPKG_NAME[@]}-1]}_${MANAGER_QPKG_VERSION[${#MANAGER_QPKG_VERSION[@]}-1]}.qpkg)
-        MANAGER_QPKG_MD5+=(4a7c2989365cb8d68216549ddce00911)
-        MANAGER_QPKG_DESC+=('lite bitorrent download manager with a simple web UI')
-        MANAGER_QPKG_ABBRVS+=('tm tr ot trans otrans tmission transmission otransmission')
-        MANAGER_QPKG_DEPENDS_ON+=(Entware)
-        MANAGER_QPKG_DEPENDED_UPON+=(false)
-        MANAGER_QPKG_IPKGS_ADD+=('transmission-web jq')
-        MANAGER_QPKG_IPKGS_REMOVE+=('')
-        MANAGER_QPKG_SUPPORTS_BACKUP+=(true)
-        MANAGER_QPKG_PIPS_ADD+=('')
-        MANAGER_QPKG_RESTART_TO_UPDATE+=(false)
+    LoadPackages
 
     # package arrays are now full, so lock them
     readonly MANAGER_QPKG_NAME
@@ -747,7 +280,7 @@ Session.Init()
 
     QPKGs.ScAll.Add "${MANAGER_QPKG_NAME[*]}"
 
-    readonly MANAGER_BASE_QPKG_CONFLICTS='Optware Optware-NG TarMT Python QPython2 Python3 QPython3'
+    readonly MANAGER_BASE_QPKG_CONFLICTS='Optware Optware-NG TarMT Python3 QPython3 QPython39 QPython310'
     readonly MANAGER_BASE_IPKGS_ADD='ca-certificates findutils gcc git git-http grep less nano sed'
     readonly MANAGER_BASE_PIPS_ADD='wheel pip'
 
@@ -838,7 +371,8 @@ Session.Validate()
 
     DebugScript 'logs path' "$LOGS_PATH"
     DebugScript 'work path' "$WORK_PATH"
-    DebugScript 'objects hash' "$(CompileObjects hash)"
+    DebugScript 'objects hash' "$(LoadObjects hash)"
+    DebugScript 'packages hash' "$(LoadPackages hash)"
     DebugInfoMinorSeparator
 
     if QPKGs.SkProc.IsSet; then
@@ -2183,6 +1717,18 @@ CleanManagementScript()
 
     }
 
+CleanPackageList()
+    {
+
+    if [[ -n $WORK_PATH && -d $WORK_PATH ]]; then
+        rm -f "$PACKAGES_PATHFILE"
+        ShowAsDone 'package list cleaned'
+    fi
+
+    return 0
+
+    }
+
 Quiz()
     {
 
@@ -2252,8 +1798,8 @@ UpdateEntware()
     local -i result_code=0
 
     # if Entware package list was recently updated, don't update again. Examine 'change' time as this is updated even if package list content isn't modified.
-    if [[ -e $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE && -e $GNU_FIND_CMD ]]; then
-        msgs=$($GNU_FIND_CMD "$EXTERNAL_PACKAGE_ARCHIVE_PATHFILE" -cmin +$CHANGE_THRESHOLD_MINUTES) # no-output if last update was less than $CHANGE_THRESHOLD_MINUTES minutes ago
+    if [[ -e $EXTERNAL_PACKAGES_ARCHIVE_PATHFILE && -e $GNU_FIND_CMD ]]; then
+        msgs=$($GNU_FIND_CMD "$EXTERNAL_PACKAGES_ARCHIVE_PATHFILE" -cmin +$CHANGE_THRESHOLD_MINUTES) # no-output if last update was less than $CHANGE_THRESHOLD_MINUTES minutes ago
     else
         msgs='new install'
     fi
@@ -2275,7 +1821,7 @@ UpdateEntware()
         DebugInfo "$(FormatAsPackageName Entware) package list updated less-than $CHANGE_THRESHOLD_MINUTES minutes ago: skipping update"
     fi
 
-    [[ ! -f $EXTERNAL_PACKAGE_LIST_PATHFILE ]] && OpenIPKGArchive
+    [[ ! -f $EXTERNAL_PACKAGES_PATHFILE ]] && OpenIPKGArchive
 
     return 0
 
@@ -2284,8 +1830,8 @@ UpdateEntware()
 SavePackageLists()
     {
 
-    $PIP_CMD freeze > "$PREVIOUS_PIP_MODULE_LIST" 2>/dev/null && DebugAsDone "saved current $(FormatAsPackageName pip3) module list to $(FormatAsFileName "$PREVIOUS_PIP_MODULE_LIST")"
-    $OPKG_CMD list-installed > "$PREVIOUS_OPKG_PACKAGE_LIST" 2>/dev/null && DebugAsDone "saved current $(FormatAsPackageName Entware) IPKG list to $(FormatAsFileName "$PREVIOUS_OPKG_PACKAGE_LIST")"
+    $PIP_CMD freeze > "$PREVIOUS_PIP_MODULES_LIST" 2>/dev/null && DebugAsDone "saved current $(FormatAsPackageName pip3) module list to $(FormatAsFileName "$PREVIOUS_PIP_MODULES_LIST")"
+    $OPKG_CMD list-installed > "$PREVIOUS_OPKG_PACKAGES_LIST" 2>/dev/null && DebugAsDone "saved current $(FormatAsPackageName Entware) IPKG list to $(FormatAsFileName "$PREVIOUS_OPKG_PACKAGES_LIST")"
 
     }
 
@@ -2333,7 +1879,7 @@ CalcIPKGsDepsToInstall()
         local IPKG_titles=$(printf '^Package: %s$\|' "${this_list[@]}")
         IPKG_titles=${IPKG_titles%??}       # remove last 2 characters
 
-        this_list=($($GNU_GREP_CMD --word-regexp --after-context 1 --no-group-separator '^Package:\|^Depends:' "$EXTERNAL_PACKAGE_LIST_PATHFILE" | $GNU_GREP_CMD -vG '^Section:\|^Version:' | $GNU_GREP_CMD --word-regexp --after-context 1 --no-group-separator "$IPKG_titles" | $GNU_GREP_CMD -vG "$IPKG_titles" | $GNU_GREP_CMD -vG '^Package: ' | $SED_CMD 's|^Depends: ||;s|, |\n|g' | $SORT_CMD | /bin/uniq))
+        this_list=($($GNU_GREP_CMD --word-regexp --after-context 1 --no-group-separator '^Package:\|^Depends:' "$EXTERNAL_PACKAGES_PATHFILE" | $GNU_GREP_CMD -vG '^Section:\|^Version:' | $GNU_GREP_CMD --word-regexp --after-context 1 --no-group-separator "$IPKG_titles" | $GNU_GREP_CMD -vG "$IPKG_titles" | $GNU_GREP_CMD -vG '^Package: ' | $SED_CMD 's|^Depends: ||;s|, |\n|g' | $SORT_CMD | /bin/uniq))
 
         if [[ ${#this_list[@]} -eq 0 ]]; then
             complete=true
@@ -2431,7 +1977,7 @@ CalcIPKGsDownloadSize()
     if [[ $size_count -gt 0 ]]; then
         DebugAsDone "$size_count IPKG$(Plural "$size_count") to download: '$(IPKGs.OpToDownload.List)'"
         DebugAsProc "calculating size of IPKG$(Plural "$size_count") to download"
-        size_array=($($GNU_GREP_CMD -w '^Package:\|^Size:' "$EXTERNAL_PACKAGE_LIST_PATHFILE" | $GNU_GREP_CMD --after-context 1 --no-group-separator ": $($SED_CMD 's/ /$ /g;s/\$ /\$\\\|: /g' <<< "$(IPKGs.OpToDownload.List)")$" | $GREP_CMD '^Size:' | $SED_CMD 's|^Size: ||'))
+        size_array=($($GNU_GREP_CMD -w '^Package:\|^Size:' "$EXTERNAL_PACKAGES_PATHFILE" | $GNU_GREP_CMD --after-context 1 --no-group-separator ": $($SED_CMD 's/ /$ /g;s/\$ /\$\\\|: /g' <<< "$(IPKGs.OpToDownload.List)")$" | $GREP_CMD '^Size:' | $SED_CMD 's|^Size: ||'))
         IPKGs.OpToDownload.Size = "$(IFS=+; echo "$((${size_array[*]}))")"   # a neat sizing shortcut found here https://stackoverflow.com/a/13635566/6182835
         DebugAsDone "$(FormatAsThousands "$(IPKGs.OpToDownload.Size)") bytes ($(FormatAsISOBytes "$(IPKGs.OpToDownload.Size)")) to download"
     else
@@ -2727,15 +2273,15 @@ OpenIPKGArchive()
     # output:
     #   $? = 0 if successful or 1 if failed
 
-    if [[ ! -e $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE ]]; then
+    if [[ ! -e $EXTERNAL_PACKAGES_ARCHIVE_PATHFILE ]]; then
         ShowAsEror 'unable to locate the IPKG list file'
         DebugFuncExit 1; return
     fi
 
-    RunAndLog "/usr/local/sbin/7z e -o$($DIRNAME_CMD "$EXTERNAL_PACKAGE_LIST_PATHFILE") $EXTERNAL_PACKAGE_ARCHIVE_PATHFILE" "$WORK_PATH/ipkg.list.archive.extract" log:failure-only
+    RunAndLog "/usr/local/sbin/7z e -o$($DIRNAME_CMD "$EXTERNAL_PACKAGES_PATHFILE") $EXTERNAL_PACKAGES_ARCHIVE_PATHFILE" "$WORK_PATH/ipkg.list.archive.extract" log:failure-only
     result_code=$?
 
-    if [[ ! -e $EXTERNAL_PACKAGE_LIST_PATHFILE ]]; then
+    if [[ ! -e $EXTERNAL_PACKAGES_PATHFILE ]]; then
         ShowAsEror 'unable to open the IPKG list file'
         DebugFuncExit 1; return
     fi
@@ -2747,7 +2293,7 @@ OpenIPKGArchive()
 CloseIPKGArchive()
     {
 
-    [[ -f $EXTERNAL_PACKAGE_LIST_PATHFILE ]] && rm -f "$EXTERNAL_PACKAGE_LIST_PATHFILE"
+    [[ -f $EXTERNAL_PACKAGES_PATHFILE ]] && rm -f "$EXTERNAL_PACKAGES_PATHFILE"
 
     }
 
@@ -3625,7 +3171,8 @@ ShowVersions()
     Display "manager: ${MANAGER_SCRIPT_VERSION:-unknown}"
     Display "loader: ${LOADER_SCRIPT_VERSION:-unknown}"
     Display "package: ${PACKAGE_VERSION:-unknown}"
-    Display "objects hash: $(CompileObjects hash)"
+    Display "objects hash: $(LoadObjects hash)"
+    Display "packages hash: $(LoadPackages hash)"
 
     return 0
 
@@ -6552,115 +6099,22 @@ CTRL_C_Captured()
 
     }
 
-AddFlagObj()
-    {
-
-    # $1 = object name to create
-
-    local public_function_name=${1:?no object name supplied}
-    local safe_function_name="$(tr 'A-Z' 'a-z' <<< "${public_function_name//[.-]/_}")"
-
-    _placeholder_text_=_ob_${safe_function_name}_tx_
-    _placeholder_flag_=_ob_${safe_function_name}_fl_
-    _placeholder_log_changes_flag_=_ob_${safe_function_name}_chfl_
-
-echo $public_function_name'.Clear()
-{ [[ $'$_placeholder_flag_' != '\'true\'' ]] && return
-'$_placeholder_flag_'=false
-[[ $'$_placeholder_log_changes_flag_' = '\'true\'' ]] && DebugVar '$_placeholder_flag_' ;}
-'$public_function_name'.NoLogMods()
-{ [[ $'$_placeholder_log_changes_flag_' != '\'true\'' ]] && return
-'$_placeholder_log_changes_flag_'=false ;}
-'$public_function_name'.Init()
-{ '$_placeholder_text_'='\'\''
-'$_placeholder_flag_'=false
-'$_placeholder_log_changes_flag_'=true ;}
-'$public_function_name'.IsNt()
-{ [[ $'$_placeholder_flag_' != '\'true\'' ]] ;}
-'$public_function_name'.IsSet()
-{ [[ $'$_placeholder_flag_' = '\'true\'' ]] ;}
-'$public_function_name'.Set()
-{ [[ $'$_placeholder_flag_' = '\'true\'' ]] && return
-'$_placeholder_flag_'=true
-[[ $'$_placeholder_log_changes_flag_' = '\'true\'' ]] && DebugVar '$_placeholder_flag_' ;}
-'$public_function_name'.Text()
-{ if [[ -n ${1:-} && $1 = "=" ]]; then
-'$_placeholder_text_'=$2
-else
-echo -n "$'$_placeholder_text_'"
-fi ;}
-'$public_function_name'.Init' >> "$OBJECTS_PATHFILE"
-
-    return 0
-
-    }
-
-AddListObj()
-    {
-
-    # $1 = object name to create
-
-    local public_function_name=${1:?no object name supplied}
-    local safe_function_name="$(tr 'A-Z' 'a-z' <<< "${public_function_name//[.-]/_}")"
-
-    _placeholder_size_=_ob_${safe_function_name}_sz_
-    _placeholder_array_=_ob_${safe_function_name}_ar_
-    _placeholder_array_index_=_ob_${safe_function_name}_arin_
-
-echo $public_function_name'.Add()
-{ local ar=(${1}) it='\'\''
-[[ ${#ar[@]} -eq 0 ]] && return
-for it in "${ar[@]:-}"; do
-[[ " ${'$_placeholder_array_'[*]+"${'$_placeholder_array_'[@]}"} " != *"$it"* ]] && '$_placeholder_array_'+=("$it")
-done ;}
-'$public_function_name'.Array()
-{ echo -n "${'$_placeholder_array_'[@]+"${'$_placeholder_array_'[@]}"}" ;}
-'$public_function_name'.Count()
-{ echo "${#'$_placeholder_array_'[@]}" ;}
-'$public_function_name'.Exist()
-{ [[ ${'$_placeholder_array_'[*]:-} == *"$1"* ]] ;}
-'$public_function_name'.Init()
-{ '$_placeholder_size_'=0
-'$_placeholder_array_'=()
-'$_placeholder_array_index_'=1 ;}
-'$public_function_name'.IsAny()
-{ [[ ${#'$_placeholder_array_'[@]} -gt 0 ]] ;}
-'$public_function_name'.IsNone()
-{ [[ ${#'$_placeholder_array_'[@]} -eq 0 ]] ;}
-'$public_function_name'.List()
-{ echo -n "${'$_placeholder_array_'[*]+"${'$_placeholder_array_'[@]}"}" ;}
-'$public_function_name'.ListCSV()
-{ echo -n "${'$_placeholder_array_'[*]+"${'$_placeholder_array_'[@]}"}" | tr '\' \'' '\',\'' ;}
-'$public_function_name'.Remove()
-{ local agar=(${1}) tmar=() ag='\'\'' it='\'\'' m=false
-for it in "${'$_placeholder_array_'[@]+"${'$_placeholder_array_'[@]}"}"; do
-m=false
-for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
-m=true; break
-fi
-done
-[[ $m = false ]] && tmar+=("$it")
-done
-'$_placeholder_array_'=("${tmar[@]+"${tmar[@]}"}")
-[[ -z ${'$_placeholder_array_'[*]+"${'$_placeholder_array_'[@]}"} ]] && '$_placeholder_array_'=() ;}
-'$public_function_name'.Size()
-{ if [[ -n ${1:-} && ${1:-} = "=" ]]; then
-'$_placeholder_size_'=$2
-else
-echo -n $'$_placeholder_size_'
-fi ;}
-'$public_function_name'.Init' >> "$OBJECTS_PATHFILE"
-
-    return 0
-
-    }
 
 CheckLocalObjects()
     {
 
-    [[ -e $OBJECTS_PATHFILE ]] && FileMatchesMD5 "$OBJECTS_PATHFILE" "$(CompileObjects hash)" && return 0
+    [[ -e $OBJECTS_PATHFILE ]] && FileMatchesMD5 "$OBJECTS_PATHFILE" "$(LoadObjects hash)" && return 0
     rm -f "$OBJECTS_PATHFILE"
+
+    return 1
+
+    }
+
+CheckLocalPackages()
+    {
+
+    [[ -e $PACKAGES_PATHFILE ]] && FileMatchesMD5 "$PACKAGES_PATHFILE" "$(LoadPackages hash)" && return 0
+    rm -f "$PACKAGES_PATHFILE"
 
     return 1
 
@@ -6682,10 +6136,26 @@ GetRemoteObjects()
 
     }
 
-CompileObjects()
+GetRemotePackages()
     {
 
-    # builds a new [compiled.objects] file in the local work path
+    if [[ ! -e $PACKAGES_PATHFILE ]]; then
+        if $CURL_CMD${curl_insecure_arg:-} --silent --fail "$PACKAGES_ARCHIVE_URL" > "$PACKAGES_ARCHIVE_PATHFILE"; then
+            /bin/tar --extract --gzip --file="$PACKAGES_ARCHIVE_PATHFILE" --directory="$($DIRNAME_CMD "$PACKAGES_PATHFILE")"
+            [[ -s $PACKAGES_PATHFILE ]] && return 0
+        fi
+    fi
+
+    rm -f "$PACKAGES_PATHFILE"
+
+    return 1
+
+    }
+
+LoadObjects()
+    {
+
+    # ensures 'objects' in the local work path is up-to-date, then sources it
 
     # $1 = 'hash' (optional) only return the internal checksum
 
@@ -6700,107 +6170,53 @@ CompileObjects()
         return
     fi
 
+    ShowAsProc 'objects' >&2
+
     if ! CheckLocalObjects; then
         GetRemoteObjects
         CheckLocalObjects
     fi
 
-    if [[ ! -e $OBJECTS_PATHFILE ]]; then
-        ShowAsProc 'compiling' >&2
+    if [[ -e $OBJECTS_PATHFILE ]]; then
+        . "$OBJECTS_PATHFILE"
+    else
+        ShowAsAbort 'objects missing'
+        exit 1
 
-        # session flags
-        for element in Display.Clean LineSpace ShowBackupLoc SuggestIssue Summary; do
-            AddFlagObj Session.$element
-        done
-
-        for element in ToArchive ToFile ToScreen; do
-            AddFlagObj Session.Debug.$element
-        done
-
-        AddFlagObj QPKGs.States.Built
-        AddFlagObj QPKGs.SkProc
-        AddFlagObj IPKGs.ToUpgrade
-        AddFlagObj IPKGs.ToInstall
-        AddFlagObj PIPs.ToInstall
-
-        # user option flags
-        for element in Deps.Check IgFreeSpace Versions.View; do
-            AddFlagObj Opts.$element
-        done
-
-        for element in Abbreviations Actions ActionsAll Backups Basic Options Packages Problems Status Tips; do
-            AddFlagObj Opts.Help.$element
-        done
-
-        for element in All Last Tail; do
-            AddFlagObj Opts.Log.$element.Paste
-            AddFlagObj Opts.Log.$element.View
-        done
-
-        for scope in "${PACKAGE_SCOPES[@]}"; do
-            AddFlagObj Opts.Apps.List.Sc${scope}
-            AddFlagObj Opts.Apps.List.ScNt${scope}
-        done
-
-        for state in "${PACKAGE_STATES[@]}"; do
-            AddFlagObj Opts.Apps.List.Is${state}
-            AddFlagObj Opts.Apps.List.IsNt${state}
-        done
-
-        for scope in "${PACKAGE_SCOPES[@]}"; do
-            for operation in "${PACKAGE_OPERATIONS[@]}"; do
-                AddFlagObj Opts.Apps.Op${operation}.Sc${scope}
-                AddFlagObj Opts.Apps.Op${operation}.ScNt${scope}
-            done
-        done
-
-        for state in "${PACKAGE_STATES[@]}"; do
-            for operation in "${PACKAGE_OPERATIONS[@]}"; do
-                AddFlagObj Opts.Apps.Op${operation}.Is${state}
-                AddFlagObj Opts.Apps.Op${operation}.IsNt${state}
-            done
-        done
-
-        # lists
-        AddListObj Args.Unknown
-
-        for operation in "${PACKAGE_OPERATIONS[@]}"; do
-            AddListObj QPKGs.OpTo${operation}      # to operate on
-            AddListObj QPKGs.OpOk${operation}      # operation was tried and succeeded
-            AddListObj QPKGs.OpEr${operation}      # operation was tried but failed
-            AddListObj QPKGs.OpSk${operation}      # operation was skipped
-        done
-
-        for operation in Download Install Uninstall Upgrade; do     # only a subset of addon package operations are supported for-now
-            AddListObj IPKGs.OpTo${operation}
-            AddListObj PIPs.OpTo${operation}
-        done
-
-        for scope in "${PACKAGE_SCOPES[@]}"; do
-            AddListObj QPKGs.Sc${scope}
-            AddListObj QPKGs.ScNt${scope}
-        done
-
-        for state in "${PACKAGE_STATES[@]}"; do
-            AddListObj QPKGs.Is${state}
-            AddListObj QPKGs.IsNt${state}
-        done
-
-        /bin/tar --create --gzip --file="$OBJECTS_ARCHIVE_PATHFILE" --directory="$($DIRNAME_CMD "$OBJECTS_PATHFILE")" "$($BASENAME_CMD "$OBJECTS_PATHFILE")"
     fi
 
-    if [[ ! -e $MANAGER_ARCHIVE_PATHFILE ]]; then
-        /bin/tar --create --gzip --file="$MANAGER_ARCHIVE_PATHFILE" --directory="$WORK_PATH" "$($BASENAME_CMD "$MANAGER_PATHFILE")"
+    return 0
+
+    }
+
+LoadPackages()
+    {
+
+    # ensures 'packages' in the local work path is up-to-date, then sources it
+
+    # $1 = 'hash' (optional) only return the internal checksum
+
+    local -r PACKAGES_HASH=24542c28335ec2e27b0985d29f33f280
+
+    if [[ ${1:-} = hash ]]; then
+        echo "$PACKAGES_HASH"
+        return
     fi
 
-    # dev helper: if not running management script directly (i.e. without a loader script), create new archive and make an easily accessible copy
-    if [[ $(</proc/$PPID/cmdline) != *"/usr/sbin/sherpa"* ]]; then
-        /bin/tar --create --gzip --file="$MANAGER_ARCHIVE_PATHFILE" --directory="$PWD" "$($BASENAME_CMD "$0")"
-        cp "$MANAGER_ARCHIVE_PATHFILE" "$PWD"
+    ShowAsProc 'packages' >&2
+
+    if ! CheckLocalPackages; then
+        GetRemotePackages
+        CheckLocalPackages
     fi
 
-    ShowAsProc 'objects' >&2
-    . "$OBJECTS_PATHFILE"
+    if [[ -e $PACKAGES_PATHFILE ]]; then
+        . "$PACKAGES_PATHFILE"
+    else
+        ShowAsAbort 'packages missing'
+        exit 1
+
+    fi
 
     return 0
 
