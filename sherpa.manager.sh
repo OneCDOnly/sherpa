@@ -6116,7 +6116,7 @@ LoadObjects()
 
     ShowAsProc 'objects' >&2
 
-    if [[ ! -e $OBJECTS_PATHFILE ]] || ! IsFileUpToDate "$OBJECTS_ARCHIVE_PATHFILE"; then
+    if [[ ! -e $OBJECTS_PATHFILE ]] || ! IsFileUpToDate "$OBJECTS_PATHFILE"; then
         if $CURL_CMD${curl_insecure_arg:-} --silent --fail "$OBJECTS_ARCHIVE_URL" > "$OBJECTS_ARCHIVE_PATHFILE"; then
             /bin/tar --extract --gzip --file="$OBJECTS_ARCHIVE_PATHFILE" --directory="$($DIRNAME_CMD "$OBJECTS_PATHFILE")"
         fi
@@ -6140,7 +6140,7 @@ LoadPackages()
 
     ShowAsProc 'packages' >&2
 
-    if [[ ! -e $PACKAGES_PATHFILE ]] || ! IsFileUpToDate "$PACKAGES_ARCHIVE_PATHFILE" 60; then
+    if [[ ! -e $PACKAGES_PATHFILE ]] || ! IsFileUpToDate "$PACKAGES_PATHFILE" 60; then
         if $CURL_CMD${curl_insecure_arg:-} --silent --fail "$PACKAGES_ARCHIVE_URL" > "$PACKAGES_ARCHIVE_PATHFILE"; then
             /bin/tar --extract --gzip --file="$PACKAGES_ARCHIVE_PATHFILE" --directory="$($DIRNAME_CMD "$PACKAGES_PATHFILE")"
         fi
