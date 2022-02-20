@@ -61,7 +61,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220221
+    local -r SCRIPT_VERSION=220221b
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -261,27 +261,27 @@ Session.Init()
     LoadPackages
 
     # package arrays are now full, so lock them
-    readonly MANAGER_QPKG_NAME
-        readonly MANAGER_QPKG_ARCH
-        readonly MANAGER_QPKG_MIN_RAM_KB
-        readonly MANAGER_QPKG_VERSION
-        readonly MANAGER_QPKG_URL
-        readonly MANAGER_QPKG_MD5
-        readonly MANAGER_QPKG_DESC
-        readonly MANAGER_QPKG_ABBRVS
-        readonly MANAGER_QPKG_DEPENDS_ON
-        readonly MANAGER_QPKG_DEPENDED_UPON
-        readonly MANAGER_QPKG_IPKGS_ADD
-        readonly MANAGER_QPKG_IPKGS_REMOVE
-        readonly MANAGER_QPKG_PIPS_ADD
-        readonly MANAGER_QPKG_SUPPORTS_BACKUP
-        readonly MANAGER_QPKG_RESTART_TO_UPDATE
+    readonly QPKG_NAME
+        readonly QPKG_ARCH
+        readonly QPKG_MIN_RAM_KB
+        readonly QPKG_VERSION
+        readonly QPKG_URL
+        readonly QPKG_MD5
+        readonly QPKG_DESC
+        readonly QPKG_ABBRVS
+        readonly QPKG_DEPENDS_ON
+        readonly QPKG_DEPENDED_UPON
+        readonly QPKG_IPKGS_ADD
+        readonly QPKG_IPKGS_REMOVE
+        readonly QPKG_PIPS_ADD
+        readonly QPKG_SUPPORTS_BACKUP
+        readonly QPKG_RESTART_TO_UPDATE
 
-    QPKGs.ScAll.Add "${MANAGER_QPKG_NAME[*]}"
+    QPKGs.ScAll.Add "${QPKG_NAME[*]}"
 
-    readonly MANAGER_BASE_QPKG_CONFLICTS='Optware Optware-NG TarMT Python3 QPython3 QPython39 QPython310'
-    readonly MANAGER_BASE_IPKGS_ADD='ca-certificates findutils gcc git git-http grep less nano sed'
-    readonly MANAGER_BASE_PIPS_ADD='wheel pip'
+    readonly BASE_QPKG_CONFLICTS='Optware Optware-NG TarMT Python3 QPython3 QPython39 QPython310'
+    readonly BASE_IPKGS_ADD='ca-certificates findutils gcc git git-http grep less nano sed'
+    readonly BASE_PIPS_ADD='wheel pip'
 
     QPKGs.StandaloneDependent.Build
 
@@ -2062,19 +2062,19 @@ IPKGs.DoInstall()
     IPKGs.OpToInstall.Init
     IPKGs.OpToDownload.Init
 
-    IPKGs.OpToInstall.Add "$MANAGER_BASE_IPKGS_ADD"
+    IPKGs.OpToInstall.Add "$BASE_IPKGS_ADD"
 
     if Opts.Apps.OpInstall.ScAll.IsSet; then
-        for index in "${!MANAGER_QPKG_NAME[@]}"; do
-            [[ ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${MANAGER_QPKG_ARCH[$index]} = all ]] || continue
-            IPKGs.OpToInstall.Add "${MANAGER_QPKG_IPKGS_ADD[$index]}"
+        for index in "${!QPKG_NAME[@]}"; do
+            [[ ${QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${QPKG_ARCH[$index]} = all ]] || continue
+            IPKGs.OpToInstall.Add "${QPKG_IPKGS_ADD[$index]}"
         done
     else
-        for index in "${!MANAGER_QPKG_NAME[@]}"; do
-            if QPKGs.OpToInstall.Exist "${MANAGER_QPKG_NAME[$index]}" || QPKGs.IsInstalled.Exist "${MANAGER_QPKG_NAME[$index]}" || QPKGs.OpToReinstall.Exist "${MANAGER_QPKG_NAME[$index]}" || QPKGs.OpToStart.Exist "${MANAGER_QPKG_NAME[$index]}"; then
-                [[ ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${MANAGER_QPKG_ARCH[$index]} = all ]] || continue
-                QPKG.MinRAM "${MANAGER_QPKG_NAME[$index]}" &>/dev/null || continue
-                IPKGs.OpToInstall.Add "${MANAGER_QPKG_IPKGS_ADD[$index]}"
+        for index in "${!QPKG_NAME[@]}"; do
+            if QPKGs.OpToInstall.Exist "${QPKG_NAME[$index]}" || QPKGs.IsInstalled.Exist "${QPKG_NAME[$index]}" || QPKGs.OpToReinstall.Exist "${QPKG_NAME[$index]}" || QPKGs.OpToStart.Exist "${QPKG_NAME[$index]}"; then
+                [[ ${QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${QPKG_ARCH[$index]} = all ]] || continue
+                QPKG.MinRAM "${QPKG_NAME[$index]}" &>/dev/null || continue
+                IPKGs.OpToInstall.Add "${QPKG_IPKGS_ADD[$index]}"
             fi
         done
     fi
@@ -2120,9 +2120,9 @@ IPKGs.DoUninstall()
     local -i result_code=0
 
     if Opts.Apps.OpUninstall.ScAll.IsNt; then
-        for index in "${!MANAGER_QPKG_NAME[@]}"; do
-            if QPKGs.OpToInstall.Exist "${MANAGER_QPKG_NAME[$index]}" || QPKGs.IsInstalled.Exist "${MANAGER_QPKG_NAME[$index]}" || QPKGs.OpToUpgrade.Exist "${MANAGER_QPKG_NAME[$index]}" || QPKGs.OpToUninstall.Exist "${MANAGER_QPKG_NAME[$index]}"; then
-                IPKGs.OpToUninstall.Add "${MANAGER_QPKG_IPKGS_REMOVE[$index]}"
+        for index in "${!QPKG_NAME[@]}"; do
+            if QPKGs.OpToInstall.Exist "${QPKG_NAME[$index]}" || QPKGs.IsInstalled.Exist "${QPKG_NAME[$index]}" || QPKGs.OpToUpgrade.Exist "${QPKG_NAME[$index]}" || QPKGs.OpToUninstall.Exist "${QPKG_NAME[$index]}"; then
+                IPKGs.OpToUninstall.Add "${QPKG_IPKGS_REMOVE[$index]}"
             fi
         done
     fi
@@ -2174,7 +2174,7 @@ PIPs.DoInstall()
     if Opts.Deps.Check.IsSet || IPKGs.OpToInstall.Exist python3-pip; then
         ShowAsOperationProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
 
-        exec_cmd="$PIP_CMD install --upgrade --no-input $MANAGER_BASE_PIPS_ADD --cache-dir $PIP_CACHE_PATH"
+        exec_cmd="$PIP_CMD install --upgrade --no-input $BASE_PIPS_ADD --cache-dir $PIP_CACHE_PATH"
         local desc="'Python3' base modules"
         local log_pathfile=$LOGS_PATH/py3-modules.base.$INSTALL_LOG_FILE
         DebugAsProc "downloading & installing $desc"
@@ -2193,16 +2193,16 @@ PIPs.DoInstall()
     fi
 
     if Opts.Apps.OpInstall.ScAll.IsSet; then
-        for index in "${!MANAGER_QPKG_NAME[@]}"; do
-            [[ ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${MANAGER_QPKG_ARCH[$index]} = all ]] || continue
-            PIPs.OpToInstall.Add "${MANAGER_QPKG_PIPS_ADD[$index]}"
+        for index in "${!QPKG_NAME[@]}"; do
+            [[ ${QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${QPKG_ARCH[$index]} = all ]] || continue
+            PIPs.OpToInstall.Add "${QPKG_PIPS_ADD[$index]}"
         done
     else
-        for index in "${!MANAGER_QPKG_NAME[@]}"; do
-            if QPKGs.OpToInstall.Exist "${MANAGER_QPKG_NAME[$index]}" || QPKGs.IsInstalled.Exist "${MANAGER_QPKG_NAME[$index]}" || QPKGs.OpToReinstall.Exist "${MANAGER_QPKG_NAME[$index]}" || QPKGs.OpToStart.Exist "${MANAGER_QPKG_NAME[$index]}"; then
-                [[ ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${MANAGER_QPKG_ARCH[$index]} = all ]] || continue
-                QPKG.MinRAM "${MANAGER_QPKG_NAME[$index]}" &>/dev/null || continue
-                PIPs.OpToInstall.Add "${MANAGER_QPKG_PIPS_ADD[$index]}"
+        for index in "${!QPKG_NAME[@]}"; do
+            if QPKGs.OpToInstall.Exist "${QPKG_NAME[$index]}" || QPKGs.IsInstalled.Exist "${QPKG_NAME[$index]}" || QPKGs.OpToReinstall.Exist "${QPKG_NAME[$index]}" || QPKGs.OpToStart.Exist "${QPKG_NAME[$index]}"; then
+                [[ ${QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${QPKG_ARCH[$index]} = all ]] || continue
+                QPKG.MinRAM "${QPKG_NAME[$index]}" &>/dev/null || continue
+                PIPs.OpToInstall.Add "${QPKG_PIPS_ADD[$index]}"
             fi
         done
     fi
@@ -3233,7 +3233,7 @@ QPKGs.NewVersions.Show()
 QPKGs.Conflicts.Check()
     {
 
-    for package in "${MANAGER_BASE_QPKG_CONFLICTS[@]}"; do
+    for package in "${BASE_QPKG_CONFLICTS[@]}"; do
         if QPKGs.IsStarted.Exist "$package"; then
             ShowAsEror "'$package' is installed and enabled. One-or-more $(FormatAsScriptTitle) applications are incompatible with this package"
             return 1
@@ -3304,11 +3304,11 @@ QPKGs.StandaloneDependent.Build()
 
     local -i index=0
 
-    for index in "${!MANAGER_QPKG_NAME[@]}"; do
-        if [[ -z ${MANAGER_QPKG_DEPENDS_ON[$index]} ]]; then
-            QPKGs.ScStandalone.Add "${MANAGER_QPKG_NAME[$index]}"
+    for index in "${!QPKG_NAME[@]}"; do
+        if [[ -z ${QPKG_DEPENDS_ON[$index]} ]]; then
+            QPKGs.ScStandalone.Add "${QPKG_NAME[$index]}"
         else
-            QPKGs.ScDependent.Add "${MANAGER_QPKG_NAME[$index]}"
+            QPKGs.ScDependent.Add "${QPKG_NAME[$index]}"
         fi
     done
 
@@ -3339,8 +3339,8 @@ QPKGs.States.Build()
     local previous=''
     ShowAsProc 'stateful lists' >&2
 
-    for index in "${!MANAGER_QPKG_NAME[@]}"; do
-        package="${MANAGER_QPKG_NAME[$index]}"
+    for index in "${!QPKG_NAME[@]}"; do
+        package="${QPKG_NAME[$index]}"
         [[ $package = "$previous" ]] && continue || previous=$package
 
         if $GREP_CMD -q "^\[$package\]" /etc/config/qpkg.conf; then
@@ -3351,7 +3351,7 @@ QPKGs.States.Build()
 
             QPKGs.IsInstalled.Add "$package"
 
-            [[ $(/sbin/getcfg "$package" Version -d unknown -f /etc/config/qpkg.conf) != "${MANAGER_QPKG_VERSION[$index]}" ]] && QPKGs.ScUpgradable.Add "$package"
+            [[ $(/sbin/getcfg "$package" Version -d unknown -f /etc/config/qpkg.conf) != "${QPKG_VERSION[$index]}" ]] && QPKGs.ScUpgradable.Add "$package"
 
             if [[ $(/sbin/getcfg "$package" Enable -u -f /etc/config/qpkg.conf) = 'TRUE' ]]; then
                 QPKGs.IsEnabled.Add "$package"
@@ -3376,7 +3376,7 @@ QPKGs.States.Build()
                 esac
             fi
 
-            if ${MANAGER_QPKG_SUPPORTS_BACKUP[$index]}; then
+            if ${QPKG_SUPPORTS_BACKUP[$index]}; then
                 if [[ -e $BACKUP_PATH/$package.config.tar.gz ]]; then
                     QPKGs.IsBackedUp.Add "$package"
                 else
@@ -3386,15 +3386,15 @@ QPKGs.States.Build()
         else
             QPKGs.IsNtInstalled.Add "$package"
 
-            if [[ -n ${MANAGER_QPKG_ABBRVS[$index]} ]]; then
-                if [[ ${MANAGER_QPKG_ARCH[$index]} = 'all' || ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
-                    if [[ ${MANAGER_QPKG_MIN_RAM_KB[$index]} = any || $INSTALLED_RAM_KB -ge ${MANAGER_QPKG_MIN_RAM_KB[$index]} ]]; then
+            if [[ -n ${QPKG_ABBRVS[$index]} ]]; then
+                if [[ ${QPKG_ARCH[$index]} = 'all' || ${QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
+                    if [[ ${QPKG_MIN_RAM_KB[$index]} = any || $INSTALLED_RAM_KB -ge ${QPKG_MIN_RAM_KB[$index]} ]]; then
                         QPKGs.ScInstallable.Add "$package"
                     fi
                 fi
             fi
 
-            if ${MANAGER_QPKG_SUPPORTS_BACKUP[$index]}; then
+            if ${QPKG_SUPPORTS_BACKUP[$index]}; then
                 if [[ -e $BACKUP_PATH/$package.config.tar.gz ]]; then
                     QPKGs.IsBackedUp.Add "$package"
                 fi
@@ -4181,7 +4181,7 @@ QPKG.DoInstall()
 
                 # add extra package(s) needed immediately
                 DebugAsProc 'installing standalone IPKGs'
-                RunAndLog "$OPKG_CMD install$(Opts.IgFreeSpace.IsSet && Opts.IgFreeSpace.Text) --force-overwrite $MANAGER_BASE_IPKGS_ADD --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$LOGS_PATH/ipkgs.extra.$INSTALL_LOG_FILE" log:failure-only
+                RunAndLog "$OPKG_CMD install$(Opts.IgFreeSpace.IsSet && Opts.IgFreeSpace.Text) --force-overwrite $BASE_IPKGS_ADD --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$LOGS_PATH/ipkgs.extra.$INSTALL_LOG_FILE" log:failure-only
                 DebugAsDone 'installed standalone IPKGs'
             fi
         fi
@@ -4852,12 +4852,12 @@ QPKG.Available.Version()
     local package=''
     local previous=''
 
-    for index in "${!MANAGER_QPKG_NAME[@]}"; do
-        package="${MANAGER_QPKG_NAME[$index]}"
+    for index in "${!QPKG_NAME[@]}"; do
+        package="${QPKG_NAME[$index]}"
         [[ $package = "$previous" ]] && continue || previous=$package
 
         if [[ $1 = "$package" ]]; then
-            echo "${MANAGER_QPKG_VERSION[$index]}"
+            echo "${QPKG_VERSION[$index]}"
             return 0
         fi
     done
@@ -4895,9 +4895,9 @@ QPKG.IsSupportBackup()
 
     local -i index=0
 
-    for index in "${!MANAGER_QPKG_NAME[@]}"; do
-        if [[ ${MANAGER_QPKG_NAME[$index]} = "${1:?no package name supplied}" ]]; then
-            if ${MANAGER_QPKG_SUPPORTS_BACKUP[$index]}; then
+    for index in "${!QPKG_NAME[@]}"; do
+        if [[ ${QPKG_NAME[$index]} = "${1:?no package name supplied}" ]]; then
+            if ${QPKG_SUPPORTS_BACKUP[$index]}; then
                 return 0
             else
                 return 1
@@ -4922,9 +4922,9 @@ QPKG.IsSupportUpdateOnRestart()
 
     local -i index=0
 
-    for index in "${!MANAGER_QPKG_NAME[@]}"; do
-        if [[ ${MANAGER_QPKG_NAME[$index]} = "${1:?no package name supplied}" ]]; then
-            if ${MANAGER_QPKG_RESTART_TO_UPDATE[$index]}; then
+    for index in "${!QPKG_NAME[@]}"; do
+        if [[ ${QPKG_NAME[$index]} = "${1:?no package name supplied}" ]]; then
+            if ${QPKG_RESTART_TO_UPDATE[$index]}; then
                 return 0
             else
                 return 1
@@ -4948,9 +4948,9 @@ QPKG.Abbrvs()
 
     local -i index=0
 
-    for index in "${!MANAGER_QPKG_NAME[@]}"; do
-        if [[ ${MANAGER_QPKG_NAME[$index]} = "${1:?no package name supplied}" ]]; then
-            echo "${MANAGER_QPKG_ABBRVS[$index]}"
+    for index in "${!QPKG_NAME[@]}"; do
+        if [[ ${QPKG_NAME[$index]} = "${1:?no package name supplied}" ]]; then
+            echo "${QPKG_ABBRVS[$index]}"
             return 0
         fi
     done
@@ -4974,12 +4974,12 @@ QPKG.MatchAbbrv()
     local -i abb_index=0
     local -i result_code=1
 
-    for package_index in "${!MANAGER_QPKG_NAME[@]}"; do
-        abbs=(${MANAGER_QPKG_ABBRVS[$package_index]})
+    for package_index in "${!QPKG_NAME[@]}"; do
+        abbs=(${QPKG_ABBRVS[$package_index]})
 
         for abb_index in "${!abbs[@]}"; do
             if [[ ${abbs[$abb_index]} = "$1" ]]; then
-                Display "${MANAGER_QPKG_NAME[$package_index]}"
+                Display "${QPKG_NAME[$package_index]}"
                 result_code=0
                 break 2
             fi
@@ -5022,9 +5022,9 @@ QPKG.URL()
 
     local -i index=0
 
-    for index in "${!MANAGER_QPKG_NAME[@]}"; do
-        if [[ ${MANAGER_QPKG_NAME[$index]} = "${1:?no package name supplied}" ]] && [[ ${MANAGER_QPKG_ARCH[$index]} = all || ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
-            echo "${MANAGER_QPKG_URL[$index]}"
+    for index in "${!QPKG_NAME[@]}"; do
+        if [[ ${QPKG_NAME[$index]} = "${1:?no package name supplied}" ]] && [[ ${QPKG_ARCH[$index]} = all || ${QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
+            echo "${QPKG_URL[$index]}"
             return 0
         fi
     done
@@ -5045,9 +5045,9 @@ QPKG.Desc()
 
     local -i index=0
 
-    for index in "${!MANAGER_QPKG_NAME[@]}"; do
-        if [[ ${MANAGER_QPKG_NAME[$index]} = "${1:?no package name supplied}" ]]; then
-            echo "${MANAGER_QPKG_DESC[$index]}"
+    for index in "${!QPKG_NAME[@]}"; do
+        if [[ ${QPKG_NAME[$index]} = "${1:?no package name supplied}" ]]; then
+            echo "${QPKG_DESC[$index]}"
             return 0
         fi
     done
@@ -5068,9 +5068,9 @@ QPKG.MD5()
 
     local -i index=0
 
-    for index in "${!MANAGER_QPKG_NAME[@]}"; do
-        if [[ ${MANAGER_QPKG_NAME[$index]} = "${1:?no package name supplied}" ]] && [[ ${MANAGER_QPKG_ARCH[$index]} = all || ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
-            echo "${MANAGER_QPKG_MD5[$index]}"
+    for index in "${!QPKG_NAME[@]}"; do
+        if [[ ${QPKG_NAME[$index]} = "${1:?no package name supplied}" ]] && [[ ${QPKG_ARCH[$index]} = all || ${QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
+            echo "${QPKG_MD5[$index]}"
             return 0
         fi
     done
@@ -5091,9 +5091,9 @@ QPKG.MinRAM()
 
     local -i index=0
 
-    for index in "${!MANAGER_QPKG_NAME[@]}"; do
-        if [[ ${MANAGER_QPKG_NAME[$index]} = "${1:?no package name supplied}" ]] && [[ ${MANAGER_QPKG_MIN_RAM_KB[$index]} = any || $INSTALLED_RAM_KB -ge ${MANAGER_QPKG_MIN_RAM_KB[$index]} ]]; then
-            echo "${MANAGER_QPKG_MIN_RAM_KB[$index]}"
+    for index in "${!QPKG_NAME[@]}"; do
+        if [[ ${QPKG_NAME[$index]} = "${1:?no package name supplied}" ]] && [[ ${QPKG_MIN_RAM_KB[$index]} = any || $INSTALLED_RAM_KB -ge ${QPKG_MIN_RAM_KB[$index]} ]]; then
+            echo "${QPKG_MIN_RAM_KB[$index]}"
             return 0
         fi
     done
@@ -5113,10 +5113,10 @@ QPKG.GetStandalones()
 
     local -i index=0
 
-    for index in "${!MANAGER_QPKG_NAME[@]}"; do
-        if [[ ${MANAGER_QPKG_NAME[$index]} = "${1:?no package name supplied}" ]] && [[ ${MANAGER_QPKG_ARCH[$index]} = all || ${MANAGER_QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
-            if [[ ${MANAGER_QPKG_DEPENDS_ON[$index]} != none ]]; then
-                echo "${MANAGER_QPKG_DEPENDS_ON[$index]}"
+    for index in "${!QPKG_NAME[@]}"; do
+        if [[ ${QPKG_NAME[$index]} = "${1:?no package name supplied}" ]] && [[ ${QPKG_ARCH[$index]} = all || ${QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
+            if [[ ${QPKG_DEPENDS_ON[$index]} != none ]]; then
+                echo "${QPKG_DEPENDS_ON[$index]}"
                 return 0
             fi
         fi
@@ -5139,9 +5139,9 @@ QPKG.GetDependents()
     local -a acc=()
 
     if QPKGs.ScStandalone.Exist "$1"; then
-        for index in "${!MANAGER_QPKG_NAME[@]}"; do
-            if [[ ${MANAGER_QPKG_DEPENDS_ON[$index]} == *"${1:?no package name supplied}"* ]]; then
-                [[ ${acc[*]:-} != "${MANAGER_QPKG_NAME[$index]}" ]] && acc+=(${MANAGER_QPKG_NAME[$index]})
+        for index in "${!QPKG_NAME[@]}"; do
+            if [[ ${QPKG_DEPENDS_ON[$index]} == *"${1:?no package name supplied}"* ]]; then
+                [[ ${acc[*]:-} != "${QPKG_NAME[$index]}" ]] && acc+=(${QPKG_NAME[$index]})
             fi
         done
     fi
