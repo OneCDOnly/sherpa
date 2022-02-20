@@ -216,7 +216,7 @@ Session.Init()
         exit 0
     fi
 
-    LoadObjects
+    LoadObjects || return
     Session.Debug.ToArchive.Set
     Session.Debug.ToFile.Set
 
@@ -258,7 +258,7 @@ Session.Init()
     DebugQPKGDetected arch "$NAS_QPKG_ARCH"
     DebugQPKGDetected 'Entware installer' "$ENTWARE_VER"
     QPKG.IsInstalled Entware && [[ $ENTWARE_VER = none ]] && DebugAsWarn "$(FormatAsPackageName Entware) appears to be installed but is not visible"
-    LoadPackages
+    LoadPackages || return
 
     # package arrays are now full, so lock them
     readonly QPKG_NAME
@@ -6118,7 +6118,7 @@ LoadObjects()
 
     if [[ ! -e $OBJECTS_PATHFILE ]] || ! IsFileUpToDate "$OBJECTS_PATHFILE"; then
         if $CURL_CMD${curl_insecure_arg:-} --silent --fail "$OBJECTS_ARCHIVE_URL" > "$OBJECTS_ARCHIVE_PATHFILE"; then
-            /bin/tar --extract --gzip --file="$OBJECTS_ARCHIVE_PATHFILE" --directory="$($DIRNAME_CMD "$OBJECTS_PATHFILE")"
+            /bin/tar --extract --gzip --file="$OBJECTS_ARCHIVE_PATHFILE" --directory="$WORK_PATH"
         fi
     fi
 
@@ -6126,7 +6126,7 @@ LoadObjects()
         . "$OBJECTS_PATHFILE"
     else
         ShowAsAbort 'objects missing'
-        exit 1
+        return 1
     fi
 
     return 0
@@ -6142,7 +6142,7 @@ LoadPackages()
 
     if [[ ! -e $PACKAGES_PATHFILE ]] || ! IsFileUpToDate "$PACKAGES_PATHFILE" 60; then
         if $CURL_CMD${curl_insecure_arg:-} --silent --fail "$PACKAGES_ARCHIVE_URL" > "$PACKAGES_ARCHIVE_PATHFILE"; then
-            /bin/tar --extract --gzip --file="$PACKAGES_ARCHIVE_PATHFILE" --directory="$($DIRNAME_CMD "$PACKAGES_PATHFILE")"
+            /bin/tar --extract --gzip --file="$PACKAGES_ARCHIVE_PATHFILE" --directory="$WORK_PATH"
         fi
     fi
 
@@ -6150,7 +6150,7 @@ LoadPackages()
         . "$PACKAGES_PATHFILE"
     else
         ShowAsAbort 'packages missing'
-        exit 1
+        return 1
     fi
 
     return 0
