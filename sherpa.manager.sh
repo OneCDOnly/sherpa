@@ -61,7 +61,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220220
+    local -r SCRIPT_VERSION=220221
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -148,8 +148,7 @@ Session.Init()
     readonly BACKUP_PATH=$(GetDefaultVolume)/.qpkg_config_backup
 
     local -r MANAGER_FILE=$PROJECT_NAME.manager.sh
-    local -r MANAGER_ARCHIVE_FILE=$MANAGER_FILE.tar.gz
-    local -r MANAGER_ARCHIVE_URL=https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/$MANAGER_ARCHIVE_FILE
+    local -r MANAGER_ARCHIVE_FILE=${MANAGER_FILE%.*}.tar.gz
     readonly MANAGER_ARCHIVE_PATHFILE=$WORK_PATH/$MANAGER_ARCHIVE_FILE
     readonly MANAGER_PATHFILE=$WORK_PATH/$MANAGER_FILE
 
@@ -371,8 +370,6 @@ Session.Validate()
 
     DebugScript 'logs path' "$LOGS_PATH"
     DebugScript 'work path' "$WORK_PATH"
-    DebugScript 'objects hash' "$(LoadObjects hash)"
-    DebugScript 'packages hash' "$(LoadPackages hash)"
     DebugInfoMinorSeparator
 
     if QPKGs.SkProc.IsSet; then
@@ -682,7 +679,7 @@ Tier.Processor()
     local -r PACKAGE_TYPE=${4:?empty}
     local -r TARGET_OBJECT_NAME=${5:-}
     local -r RUNTIME=${9:-}
-    local -r ASYNC=${10:1}
+    local -r ASYNC=${10:-1}
 
     if [[ $2 = true ]]; then
         forced_operation='--forced'
@@ -1784,8 +1781,10 @@ PatchEntwareService()
 
     }
 
-UpdateEntware()
+UpdateEntwarePackageList()
     {
+
+    # if Entware package list was recently updated, don't update again.
 
     if IsNtSysFileExist $OPKG_CMD; then
         code_pointer=2
@@ -1794,17 +1793,9 @@ UpdateEntware()
 
     local -r CHANGE_THRESHOLD_MINUTES=60
     local -r LOG_PATHFILE=$LOGS_PATH/entware.$UPDATE_LOG_FILE
-    local msgs=''
     local -i result_code=0
 
-    # if Entware package list was recently updated, don't update again. Examine 'change' time as this is updated even if package list content isn't modified.
-    if [[ -e $EXTERNAL_PACKAGES_ARCHIVE_PATHFILE && -e $GNU_FIND_CMD ]]; then
-        msgs=$($GNU_FIND_CMD "$EXTERNAL_PACKAGES_ARCHIVE_PATHFILE" -cmin +$CHANGE_THRESHOLD_MINUTES) # no-output if last update was less than $CHANGE_THRESHOLD_MINUTES minutes ago
-    else
-        msgs='new install'
-    fi
-
-    if [[ -n $msgs ]]; then
+    if IsFileUpToDate "$EXTERNAL_PACKAGES_ARCHIVE_PATHFILE" "$CHANGE_THRESHOLD_MINUTES"; then
         DebugAsProc "updating $(FormatAsPackageName Entware) package list"
 
         RunAndLog "$OPKG_CMD update" "$LOG_PATHFILE" log:failure-only
@@ -1824,6 +1815,27 @@ UpdateEntware()
     [[ ! -f $EXTERNAL_PACKAGES_PATHFILE ]] && OpenIPKGArchive
 
     return 0
+
+    }
+
+IsFileUpToDate()
+    {
+
+    # input:
+    #   $1 = pathfilename: file to examine change time of
+    #   $2 = integer (optional): threshold in minutes - default is '1440' = 1 day
+
+    # output:
+    #   $? = true/false
+
+    # examine 'change' time as this is updated even if file content isn't modified
+    if [[ -e $1 && -e $GNU_FIND_CMD ]]; then
+        if [[ -z $($GNU_FIND_CMD "$1" -cmin +${2:-1440}) ]]; then        # no-output if last 'change' was less than $2 minutes ago
+            return 0
+        fi
+    fi
+
+    return 1    # file not found, GNU 'find' unavailable or file 'change' time was more than $2 minutes ago
 
     }
 
@@ -1997,7 +2009,7 @@ IPKGs.DoUpgrade()
     IPKGs.ToUpgrade.IsNt && return
     QPKGs.IsNtInstalled.Exist Entware && return
     QPKGs.IsStopped.Exist Entware && return
-    UpdateEntware
+    UpdateEntwarePackageList
     Session.Error.IsSet && return
     DebugFuncEntry
     local -i result_code=0
@@ -2042,7 +2054,7 @@ IPKGs.DoInstall()
     IPKGs.ToInstall.IsNt && return
     QPKGs.IsNtInstalled.Exist Entware && return
     QPKGs.IsStopped.Exist Entware && return
-    UpdateEntware
+    UpdateEntwarePackageList
     Session.Error.IsSet && return
     DebugFuncEntry
     local -i index=0
@@ -3171,8 +3183,6 @@ ShowVersions()
     Display "manager: ${MANAGER_SCRIPT_VERSION:-unknown}"
     Display "loader: ${LOADER_SCRIPT_VERSION:-unknown}"
     Display "package: ${PACKAGE_VERSION:-unknown}"
-    Display "objects hash: $(LoadObjects hash)"
-    Display "packages hash: $(LoadPackages hash)"
 
     return 0
 
@@ -6099,82 +6109,17 @@ CTRL_C_Captured()
 
     }
 
-
-CheckLocalObjects()
-    {
-
-    [[ -e $OBJECTS_PATHFILE ]] && FileMatchesMD5 "$OBJECTS_PATHFILE" "$(LoadObjects hash)" && return 0
-    rm -f "$OBJECTS_PATHFILE"
-
-    return 1
-
-    }
-
-CheckLocalPackages()
-    {
-
-    [[ -e $PACKAGES_PATHFILE ]] && FileMatchesMD5 "$PACKAGES_PATHFILE" "$(LoadPackages hash)" && return 0
-    rm -f "$PACKAGES_PATHFILE"
-
-    return 1
-
-    }
-
-GetRemoteObjects()
-    {
-
-    if [[ ! -e $OBJECTS_PATHFILE ]]; then
-        if $CURL_CMD${curl_insecure_arg:-} --silent --fail "$OBJECTS_ARCHIVE_URL" > "$OBJECTS_ARCHIVE_PATHFILE"; then
-            /bin/tar --extract --gzip --file="$OBJECTS_ARCHIVE_PATHFILE" --directory="$($DIRNAME_CMD "$OBJECTS_PATHFILE")"
-            [[ -s $OBJECTS_PATHFILE ]] && return 0
-        fi
-    fi
-
-    rm -f "$OBJECTS_PATHFILE"
-
-    return 1
-
-    }
-
-GetRemotePackages()
-    {
-
-    if [[ ! -e $PACKAGES_PATHFILE ]]; then
-        if $CURL_CMD${curl_insecure_arg:-} --silent --fail "$PACKAGES_ARCHIVE_URL" > "$PACKAGES_ARCHIVE_PATHFILE"; then
-            /bin/tar --extract --gzip --file="$PACKAGES_ARCHIVE_PATHFILE" --directory="$($DIRNAME_CMD "$PACKAGES_PATHFILE")"
-            [[ -s $PACKAGES_PATHFILE ]] && return 0
-        fi
-    fi
-
-    rm -f "$PACKAGES_PATHFILE"
-
-    return 1
-
-    }
-
 LoadObjects()
     {
 
-    # ensures 'objects' in the local work path is up-to-date, then sources it
-
-    # $1 = 'hash' (optional) only return the internal checksum
-
-    local -r OBJECTS_HASH=414e4bc43c6ddc872d6278461bd911dc
-    local element=''
-    local operation=''
-    local scope=''
-    local state=''
-
-    if [[ ${1:-} = hash ]]; then
-        echo "$OBJECTS_HASH"
-        return
-    fi
+    # ensure 'objects' in the local work path is up-to-date, then source it
 
     ShowAsProc 'objects' >&2
 
-    if ! CheckLocalObjects; then
-        GetRemoteObjects
-        CheckLocalObjects
+    if [[ ! -e $OBJECTS_PATHFILE ]] || ! IsFileUpToDate "$OBJECTS_ARCHIVE_PATHFILE"; then
+        if $CURL_CMD${curl_insecure_arg:-} --silent --fail "$OBJECTS_ARCHIVE_URL" > "$OBJECTS_ARCHIVE_PATHFILE"; then
+            /bin/tar --extract --gzip --file="$OBJECTS_ARCHIVE_PATHFILE" --directory="$($DIRNAME_CMD "$OBJECTS_PATHFILE")"
+        fi
     fi
 
     if [[ -e $OBJECTS_PATHFILE ]]; then
@@ -6182,7 +6127,6 @@ LoadObjects()
     else
         ShowAsAbort 'objects missing'
         exit 1
-
     fi
 
     return 0
@@ -6192,22 +6136,14 @@ LoadObjects()
 LoadPackages()
     {
 
-    # ensures 'packages' in the local work path is up-to-date, then sources it
-
-    # $1 = 'hash' (optional) only return the internal checksum
-
-    local -r PACKAGES_HASH=24542c28335ec2e27b0985d29f33f280
-
-    if [[ ${1:-} = hash ]]; then
-        echo "$PACKAGES_HASH"
-        return
-    fi
+    # ensure 'packages' in the local work path is up-to-date, then source it
 
     ShowAsProc 'packages' >&2
 
-    if ! CheckLocalPackages; then
-        GetRemotePackages
-        CheckLocalPackages
+    if [[ ! -e $PACKAGES_PATHFILE ]] || ! IsFileUpToDate "$PACKAGES_ARCHIVE_PATHFILE" 60; then
+        if $CURL_CMD${curl_insecure_arg:-} --silent --fail "$PACKAGES_ARCHIVE_URL" > "$PACKAGES_ARCHIVE_PATHFILE"; then
+            /bin/tar --extract --gzip --file="$PACKAGES_ARCHIVE_PATHFILE" --directory="$($DIRNAME_CMD "$PACKAGES_PATHFILE")"
+        fi
     fi
 
     if [[ -e $PACKAGES_PATHFILE ]]; then
@@ -6215,7 +6151,6 @@ LoadPackages()
     else
         ShowAsAbort 'packages missing'
         exit 1
-
     fi
 
     return 0
