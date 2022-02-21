@@ -61,7 +61,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220221e
+    local -r SCRIPT_VERSION=220222
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -266,31 +266,6 @@ Session.Init()
         DisableDebugToArchiveAndFile
     else
         LoadPackages || return
-
-        # package arrays are now full, so lock them
-        readonly QPKG_NAME
-            readonly QPKG_ARCH
-            readonly QPKG_MIN_RAM_KB
-            readonly QPKG_VERSION
-            readonly QPKG_URL
-            readonly QPKG_MD5
-            readonly QPKG_DESC
-            readonly QPKG_ABBRVS
-            readonly QPKG_DEPENDS_ON
-            readonly QPKG_DEPENDED_UPON
-            readonly QPKG_IPKGS_ADD
-            readonly QPKG_IPKGS_REMOVE
-            readonly QPKG_PIPS_ADD
-            readonly QPKG_SUPPORTS_BACKUP
-            readonly QPKG_RESTART_TO_UPDATE
-
-        QPKGs.ScAll.Add "${QPKG_NAME[*]}"
-
-        readonly BASE_QPKG_CONFLICTS='Optware Optware-NG TarMT Python3 QPython3 QPython39 QPython310'
-        readonly BASE_IPKGS_ADD='ca-certificates findutils gcc git git-http grep less nano sed'
-        readonly BASE_PIPS_ADD='wheel pip'
-
-        QPKGs.StandaloneDependent.Build
         ParseArguments
     fi
 
@@ -6131,12 +6106,12 @@ LoadObjects()
         fi
     fi
 
-    if [[ -e $OBJECTS_PATHFILE ]]; then
-        . "$OBJECTS_PATHFILE"
-    else
+    if [[ ! -e $OBJECTS_PATHFILE ]]; then
         ShowAsAbort 'objects missing'
         return 1
     fi
+
+    . "$OBJECTS_PATHFILE"
 
     return 0
 
@@ -6155,12 +6130,36 @@ LoadPackages()
         fi
     fi
 
-    if [[ -e $PACKAGES_PATHFILE ]]; then
-        . "$PACKAGES_PATHFILE"
-    else
+    if [[ ! -e $PACKAGES_PATHFILE ]]; then
         ShowAsAbort 'packages missing'
         return 1
     fi
+
+    . "$PACKAGES_PATHFILE"
+
+    readonly BASE_QPKG_CONFLICTS
+    readonly BASE_IPKGS_ADD
+    readonly BASE_PIPS_ADD
+
+    # package arrays are now full, so lock them
+    readonly QPKG_NAME
+        readonly QPKG_ARCH
+        readonly QPKG_MIN_RAM_KB
+        readonly QPKG_VERSION
+        readonly QPKG_URL
+        readonly QPKG_MD5
+        readonly QPKG_DESC
+        readonly QPKG_ABBRVS
+        readonly QPKG_DEPENDS_ON
+        readonly QPKG_DEPENDED_UPON
+        readonly QPKG_IPKGS_ADD
+        readonly QPKG_IPKGS_REMOVE
+        readonly QPKG_PIPS_ADD
+        readonly QPKG_SUPPORTS_BACKUP
+        readonly QPKG_RESTART_TO_UPDATE
+
+    QPKGs.ScAll.Add "${QPKG_NAME[*]}"
+    QPKGs.StandaloneDependent.Build
 
     return 0
 
