@@ -61,7 +61,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220221b
+    local -r SCRIPT_VERSION=220221c
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -386,29 +386,29 @@ Session.Validate()
 
     ShowAsProc 'arguments' >&2
 
-    for operation in "${PACKAGE_OPERATIONS[@]}"; do
-        if QPKGs.OpTo${operation}.IsAny; then
-            something_to_do=true
-            break
-        fi
-
-        for scope in "${PACKAGE_SCOPES[@]}"; do
-            if Opts.Apps.Op${operation}.Sc${scope}.IsSet || Opts.Apps.Op${operation}.ScNt${scope}.IsSet; then
-                something_to_do=true
-                break 2
-            fi
-        done
-
-        for state in "${PACKAGE_STATES[@]}"; do
-            if Opts.Apps.Op${operation}.Is${state}.IsSet || Opts.Apps.Op${operation}.IsNt${state}.IsSet; then
-                something_to_do=true
-                break 2
-            fi
-        done
-    done
-
     if Opts.Deps.Check.IsSet || Opts.IgFreeSpace.IsSet || Opts.Help.Status.IsSet; then
         something_to_do=true
+    else
+        for operation in "${PACKAGE_OPERATIONS[@]}"; do
+            if QPKGs.OpTo${operation}.IsAny; then
+                something_to_do=true
+                break
+            fi
+
+            for scope in "${PACKAGE_SCOPES[@]}"; do
+                if Opts.Apps.Op${operation}.Sc${scope}.IsSet || Opts.Apps.Op${operation}.ScNt${scope}.IsSet; then
+                    something_to_do=true
+                    break 2
+                fi
+            done
+
+            for state in "${PACKAGE_STATES[@]}"; do
+                if Opts.Apps.Op${operation}.Is${state}.IsSet || Opts.Apps.Op${operation}.IsNt${state}.IsSet; then
+                    something_to_do=true
+                    break 2
+                fi
+            done
+        done
     fi
 
     if [[ $something_to_do = false ]]; then
@@ -473,7 +473,7 @@ Session.Validate()
         fi
     done
 
-    # if an standalone has been selected for reinstall or restart, need to stop its dependents first, and start them again later
+    # if a standalone has been selected for reinstall or restart, need to stop its dependents first, and start them again later
     for package in $(QPKGs.OpToReinstall.Array) $(QPKGs.OpToRestart.Array); do
         if QPKGs.ScStandalone.Exist "$package" && QPKGs.IsStarted.Exist "$package"; then
             for prospect in $(QPKG.GetDependents "$package"); do
@@ -485,7 +485,7 @@ Session.Validate()
         fi
     done
 
-    # if an standalone has been selected for stop or uninstall, need to stop its dependents first
+    # if a standalone has been selected for stop or uninstall, need to stop its dependents first
     for package in $(QPKGs.OpToStop.Array) $(QPKGs.OpToUninstall.Array); do
         if QPKGs.ScStandalone.Exist "$package" && QPKGs.IsInstalled.Exist "$package"; then
             for prospect in $(QPKG.GetDependents "$package"); do
