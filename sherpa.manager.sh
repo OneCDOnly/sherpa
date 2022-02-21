@@ -61,7 +61,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220221d
+    local -r SCRIPT_VERSION=220221e
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -258,32 +258,6 @@ Session.Init()
     DebugQPKGDetected arch "$NAS_QPKG_ARCH"
     DebugQPKGDetected 'Entware installer' "$ENTWARE_VER"
     QPKG.IsInstalled Entware && [[ $ENTWARE_VER = none ]] && DebugAsWarn "$(FormatAsPackageName Entware) appears to be installed but is not visible"
-    LoadPackages || return
-
-    # package arrays are now full, so lock them
-    readonly QPKG_NAME
-        readonly QPKG_ARCH
-        readonly QPKG_MIN_RAM_KB
-        readonly QPKG_VERSION
-        readonly QPKG_URL
-        readonly QPKG_MD5
-        readonly QPKG_DESC
-        readonly QPKG_ABBRVS
-        readonly QPKG_DEPENDS_ON
-        readonly QPKG_DEPENDED_UPON
-        readonly QPKG_IPKGS_ADD
-        readonly QPKG_IPKGS_REMOVE
-        readonly QPKG_PIPS_ADD
-        readonly QPKG_SUPPORTS_BACKUP
-        readonly QPKG_RESTART_TO_UPDATE
-
-    QPKGs.ScAll.Add "${QPKG_NAME[*]}"
-
-    readonly BASE_QPKG_CONFLICTS='Optware Optware-NG TarMT Python3 QPython3 QPython39 QPython310'
-    readonly BASE_IPKGS_ADD='ca-certificates findutils gcc git git-http grep less nano sed'
-    readonly BASE_PIPS_ADD='wheel pip'
-
-    QPKGs.StandaloneDependent.Build
 
     # speedup: don't build package lists if only showing basic help
     if [[ -z $USER_ARGS_RAW ]]; then
@@ -291,6 +265,32 @@ Session.Init()
         QPKGs.SkProc.Set
         DisableDebugToArchiveAndFile
     else
+        LoadPackages || return
+
+        # package arrays are now full, so lock them
+        readonly QPKG_NAME
+            readonly QPKG_ARCH
+            readonly QPKG_MIN_RAM_KB
+            readonly QPKG_VERSION
+            readonly QPKG_URL
+            readonly QPKG_MD5
+            readonly QPKG_DESC
+            readonly QPKG_ABBRVS
+            readonly QPKG_DEPENDS_ON
+            readonly QPKG_DEPENDED_UPON
+            readonly QPKG_IPKGS_ADD
+            readonly QPKG_IPKGS_REMOVE
+            readonly QPKG_PIPS_ADD
+            readonly QPKG_SUPPORTS_BACKUP
+            readonly QPKG_RESTART_TO_UPDATE
+
+        QPKGs.ScAll.Add "${QPKG_NAME[*]}"
+
+        readonly BASE_QPKG_CONFLICTS='Optware Optware-NG TarMT Python3 QPython3 QPython39 QPython310'
+        readonly BASE_IPKGS_ADD='ca-certificates findutils gcc git git-http grep less nano sed'
+        readonly BASE_PIPS_ADD='wheel pip'
+
+        QPKGs.StandaloneDependent.Build
         ParseArguments
     fi
 
@@ -510,10 +510,17 @@ Session.Validate()
     fi
 
     # build list of original storage paths for packages to be 'uninstalled', just in-case they will be 'installed' again later this session. To ensure migrated packages end-up in the original location.
+    if QPKGs.OpToUninstall.IsAny; then
+        complex_reinstall_packages=()
+        complex_reinstall_locations=()
 
-
-
-
+        for package in $(QPKGs.OpToUninstall.Array); do
+            if QPKGs.OpToInstall.Exist "$package"; then
+                complex_reinstall_packages+=("$package")
+                complex_reinstall_locations+=("$($DIRNAME_CMD "$(QPKG.InstallationPath $package)")")
+            fi
+        done
+    fi
 
     # build list containing packages that will require installation QPKGs
     QPKGs.OpToDownload.Add "$(QPKGs.OpToUpgrade.Array) $(QPKGs.OpToReinstall.Array) $(QPKGs.OpToInstall.Array)"
