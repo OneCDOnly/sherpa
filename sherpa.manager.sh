@@ -61,7 +61,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220222
+    local -r SCRIPT_VERSION=220222b
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -4300,8 +4300,6 @@ QPKG.DoUpgrade()
         DebugFuncExit 2; return
     fi
 
-    local previous_version=null
-    local current_version=null
     local local_pathfile=$(QPKG.PathFilename "$PACKAGE_NAME")
 
     if [[ ${local_pathfile##*.} = zip ]]; then
@@ -4317,13 +4315,15 @@ QPKG.DoUpgrade()
 
     local -r TARGET_FILE=$($BASENAME_CMD "$local_pathfile")
     local -r LOG_PATHFILE=$LOGS_PATH/$TARGET_FILE.$UPGRADE_LOG_FILE
-    previous_version=$(QPKG.Local.Version "$PACKAGE_NAME")
+    local previous_version=$(QPKG.Local.Version "$PACKAGE_NAME")
+    local specific_path_option=''
 
     DebugAsProc "upgrading $(FormatAsPackageName "$PACKAGE_NAME")"
-    RunAndLog "$SH_CMD $local_pathfile" "$LOG_PATHFILE" log:failure-only 10
+    QPKG.IsInstalled "$PACKAGE_NAME" && specific_path_option="QINSTALL_PATH=$($DIRNAME_CMD $(QPKG.InstallationPath $PACKAGE_NAME)) "
+    RunAndLog "${specific_path_option}$SH_CMD $local_pathfile" "$LOG_PATHFILE" log:failure-only 10
     result_code=$?
 
-    current_version=$(QPKG.Local.Version "$PACKAGE_NAME")
+    local current_version=$(QPKG.Local.Version "$PACKAGE_NAME")
 
     if [[ $result_code -eq 0 || $result_code -eq 10 ]]; then
         if [[ $current_version = "$previous_version" ]]; then
