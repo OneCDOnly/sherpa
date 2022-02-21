@@ -3,31 +3,24 @@
 # standalone compiler for all sherpa archives
 
 PROJECT_NAME=sherpa
-PROJECT_BRANCH=main
 WORK_PATH=$PWD
 
 PACKAGE_SCOPES=(All Dependent HasDependents Installable Names Standalone SupportBackup SupportUpdateOnRestart Upgradable)
 PACKAGE_STATES=(BackedUp Disabled Downloaded Enabled Installed Missing Starting Started Stopping Stopped Restarting)
 PACKAGE_OPERATIONS=(Backup Disable Download Enable Install Rebuild Reinstall Restart Restore Start Stop Uninstall Upgrade)
-PACKAGE_TIERS=(Standalone Addon Dependent)
 
 MANAGER_FILE=$PROJECT_NAME.manager.sh
 MANAGER_ARCHIVE_FILE=${MANAGER_FILE%.*}.tar.gz
-MANAGER_ARCHIVE_URL=https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/$MANAGER_ARCHIVE_FILE
 MANAGER_ARCHIVE_PATHFILE=$WORK_PATH/$MANAGER_ARCHIVE_FILE
-MANAGER_PATHFILE=$WORK_PATH/$MANAGER_FILE
 
 OBJECTS_FILE=objects
 OBJECTS_ARCHIVE_FILE=$OBJECTS_FILE.tar.gz
-OBJECTS_ARCHIVE_URL=https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/$OBJECTS_ARCHIVE_FILE
 OBJECTS_ARCHIVE_PATHFILE=$WORK_PATH/$OBJECTS_ARCHIVE_FILE
 OBJECTS_PATHFILE=$WORK_PATH/$OBJECTS_FILE
 
 PACKAGES_FILE=packages
 PACKAGES_ARCHIVE_FILE=$PACKAGES_FILE.tar.gz
-PACKAGES_ARCHIVE_URL=https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/$PACKAGES_ARCHIVE_FILE
 PACKAGES_ARCHIVE_PATHFILE=$WORK_PATH/$PACKAGES_ARCHIVE_FILE
-PACKAGES_PATHFILE=$WORK_PATH/$PACKAGES_FILE
 
 AddFlagObj()
     {
