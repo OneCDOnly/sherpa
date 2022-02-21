@@ -61,7 +61,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220221c
+    local -r SCRIPT_VERSION=220221d
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -459,7 +459,9 @@ Session.Validate()
     for operation in Upgrade Reinstall Install Start Restart; do
         for package in $(QPKGs.OpTo${operation}.Array); do
             for prospect in $(QPKG.GetStandalones "$package"); do
-                QPKGs.IsNtInstalled.Exist "$prospect" && ! QPKGs.OpToUninstall.Exist "$prospect" && QPKGs.OpToInstall.Add "$prospect"
+                if QPKGs.IsNtInstalled.Exist "$prospect" || (QPKGs.IsInstalled.Exist "$prospect" && QPKGs.OpToUninstall.Exist "$prospect"); then
+                    QPKGs.OpToInstall.Add "$prospect"
+                fi
             done
         done
     done
