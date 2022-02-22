@@ -61,7 +61,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220222b
+    local -r SCRIPT_VERSION=220222c
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -6101,6 +6101,7 @@ LoadObjects()
     ShowAsProc 'objects' >&2
 
     if [[ ! -e $OBJECTS_PATHFILE ]] || ! IsFileUpToDate "$OBJECTS_PATHFILE"; then
+        ShowAsProc 'updating objects' >&2
         if $CURL_CMD${curl_insecure_arg:-} --silent --fail "$OBJECTS_ARCHIVE_URL" > "$OBJECTS_ARCHIVE_PATHFILE"; then
             /bin/tar --extract --gzip --file="$OBJECTS_ARCHIVE_PATHFILE" --directory="$WORK_PATH"
         fi
@@ -6125,6 +6126,7 @@ LoadPackages()
     ShowAsProc 'packages' >&2
 
     if [[ ! -e $PACKAGES_PATHFILE ]] || ! IsFileUpToDate "$PACKAGES_PATHFILE" 60; then
+        ShowAsProc 'updating packages' >&2
         if $CURL_CMD${curl_insecure_arg:-} --silent --fail "$PACKAGES_ARCHIVE_URL" > "$PACKAGES_ARCHIVE_PATHFILE"; then
             /bin/tar --extract --gzip --file="$PACKAGES_ARCHIVE_PATHFILE" --directory="$WORK_PATH"
         fi
