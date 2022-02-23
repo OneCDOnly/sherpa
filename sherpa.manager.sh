@@ -61,7 +61,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220222c
+    local -r SCRIPT_VERSION=220223
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -450,7 +450,7 @@ Session.Validate()
         fi
     done
 
-    # if a standalone has been selected for reinstall or restart, need to stop its dependents first, and start them again later
+    # if a standalone has been selected for 'reinstall' or 'restart', need to 'stop' its dependents first, and 'start' them again later
     for package in $(QPKGs.OpToReinstall.Array) $(QPKGs.OpToRestart.Array); do
         if QPKGs.ScStandalone.Exist "$package" && QPKGs.IsStarted.Exist "$package"; then
             for prospect in $(QPKG.GetDependents "$package"); do
@@ -462,12 +462,28 @@ Session.Validate()
         fi
     done
 
-    # if a standalone has been selected for stop or uninstall, need to stop its dependents first
+    # if a standalone has been selected for 'stop' or 'uninstall', need to 'stop' its dependents first
     for package in $(QPKGs.OpToStop.Array) $(QPKGs.OpToUninstall.Array); do
         if QPKGs.ScStandalone.Exist "$package" && QPKGs.IsInstalled.Exist "$package"; then
             for prospect in $(QPKG.GetDependents "$package"); do
-                QPKGs.IsStarted.Exist "$prospect" && QPKGs.OpToStop.Add "$prospect"
+                if QPKGs.IsStarted.Exist "$prospect"; then
+                    QPKGs.OpToStop.Add "$prospect"
+                fi
             done
+        fi
+    done
+
+    # if a standalone has been selected for 'uninstall' then 'install', need to 'stop' its dependents first, and 'start' them again later
+    for package in $(QPKGs.OpToUninstall.Array); do
+        if QPKGs.ScStandalone.Exist "$package" && QPKGs.IsInstalled.Exist "$package"; then
+            if QPKGs.OpToInstall.Exist "$package"; then
+                for prospect in $(QPKG.GetDependents "$package"); do
+                    if QPKGs.IsStarted.Exist "$prospect"; then
+                        QPKGs.OpToStop.Add "$prospect"
+                        QPKGs.OpToStart.Add "$prospect"
+                    fi
+                done
+            fi
         fi
     done
 
@@ -477,22 +493,23 @@ Session.Validate()
         QPKGs.OpToInstall.Add Entware
     fi
 
-    # no-need to stop packages that are about to be uninstalled
+    # no-need to 'stop' packages that are about to be uninstalled
     if Opts.Apps.OpUninstall.ScAll.IsSet; then
         QPKGs.OpToStop.Init
     else
         QPKGs.OpToStop.Remove "$(QPKGs.OpToUninstall.Array)"
     fi
 
-    # build list of original storage paths for packages to be 'uninstalled', just in-case they will be 'installed' again later this session. To ensure migrated packages end-up in the original location.
-    if QPKGs.OpToUninstall.IsAny; then
-        complex_reinstall_packages=()
-        complex_reinstall_locations=()
+    # build a list of original storage paths for packages to be 'uninstalled', then 'installed' again later this session (a "complex reinstall")
+    # this will ensure migrated packages end-up in the original location
+    QPKGs_were_installed_name=()
+    QPKGs_were_installed_path=()
 
+    if QPKGs.OpToUninstall.IsAny; then
         for package in $(QPKGs.OpToUninstall.Array); do
             if QPKGs.OpToInstall.Exist "$package"; then
-                complex_reinstall_packages+=("$package")
-                complex_reinstall_locations+=("$($DIRNAME_CMD "$(QPKG.InstallationPath $package)")")
+                QPKGs_were_installed_name+=("$package")
+                QPKGs_were_installed_path+=("$($DIRNAME_CMD "$(QPKG.InstallationPath $package)")")
             fi
         done
     fi
@@ -4134,9 +4151,12 @@ QPKG.DoInstall()
     fi
 
     local -r TARGET_FILE=$($BASENAME_CMD "$local_pathfile")
+    local -r LOG_PATHFILE=$LOGS_PATH/$TARGET_FILE.$INSTALL_LOG_FILE
+    local target_path=''
 
     DebugAsProc "installing $(FormatAsPackageName "$PACKAGE_NAME")"
-    RunAndLog "$SH_CMD $local_pathfile" "$LOGS_PATH/$TARGET_FILE.$INSTALL_LOG_FILE" log:failure-only 10
+    [[ ${QPKGs_were_installed_name[*]:-} == *"$PACKAGE_NAME"* ]] && target_path="QINSTALL_PATH=$(QPKG.OriginalPath "$PACKAGE_NAME") "
+    RunAndLog "${target_path}$SH_CMD $local_pathfile" "$LOG_PATHFILE" log:failure-only 10
     result_code=$?
 
     if [[ $result_code -eq 0 || $result_code -eq 10 ]]; then
@@ -4231,9 +4251,11 @@ QPKG.DoReinstall()
 
     local -r TARGET_FILE=$($BASENAME_CMD "$local_pathfile")
     local -r LOG_PATHFILE=$LOGS_PATH/$TARGET_FILE.$REINSTALL_LOG_FILE
+    local target_path=''
 
     DebugAsProc "reinstalling $(FormatAsPackageName "$PACKAGE_NAME")"
-    RunAndLog "QINSTALL_PATH=$($DIRNAME_CMD "$(/sbin/getcfg $PACKAGE_NAME Install_Path -f /etc/config/qpkg.conf)") $SH_CMD $local_pathfile" "$LOG_PATHFILE" log:failure-only 10
+    QPKG.IsInstalled "$PACKAGE_NAME" && target_path="QINSTALL_PATH=$($DIRNAME_CMD "$(QPKG.InstallationPath $PACKAGE_NAME)") "
+    RunAndLog "${target_path}$SH_CMD $local_pathfile" "$LOG_PATHFILE" log:failure-only 10
     result_code=$?
 
     if [[ $result_code -eq 0 || $result_code -eq 10 ]]; then
@@ -4316,11 +4338,11 @@ QPKG.DoUpgrade()
     local -r TARGET_FILE=$($BASENAME_CMD "$local_pathfile")
     local -r LOG_PATHFILE=$LOGS_PATH/$TARGET_FILE.$UPGRADE_LOG_FILE
     local previous_version=$(QPKG.Local.Version "$PACKAGE_NAME")
-    local specific_path_option=''
+    local target_path=''
 
     DebugAsProc "upgrading $(FormatAsPackageName "$PACKAGE_NAME")"
-    QPKG.IsInstalled "$PACKAGE_NAME" && specific_path_option="QINSTALL_PATH=$($DIRNAME_CMD $(QPKG.InstallationPath $PACKAGE_NAME)) "
-    RunAndLog "${specific_path_option}$SH_CMD $local_pathfile" "$LOG_PATHFILE" log:failure-only 10
+    QPKG.IsInstalled "$PACKAGE_NAME" && target_path="QINSTALL_PATH=$($DIRNAME_CMD "$(QPKG.InstallationPath $PACKAGE_NAME)") "
+    RunAndLog "${target_path}$SH_CMD $local_pathfile" "$LOG_PATHFILE" log:failure-only 10
     result_code=$?
 
     local current_version=$(QPKG.Local.Version "$PACKAGE_NAME")
@@ -4915,6 +4937,31 @@ QPKG.IsSupportUpdateOnRestart()
             fi
         fi
     done
+
+    return 1
+
+    }
+
+QPKG.OriginalPath()
+    {
+
+    # input:
+    #   $1 = QPKG name
+
+    # output:
+    #   $? = 0 if successful, 1 if failed
+    #   stdout = the original installation path of this QPKG (even if it was migrated to another volume)
+
+    local -i index=0
+
+    if [[ ${#QPKGs_were_installed_name[@]} -gt 0 ]]; then
+        for index in "${!QPKGs_were_installed_name[@]}"; do
+            if [[ ${QPKGs_were_installed_name[$index]} = "${1:?no package name supplied}" ]]; then
+                echo "${QPKGs_were_installed_path[$index]}"
+                return 0
+            fi
+        done
+    fi
 
     return 1
 
