@@ -6151,7 +6151,6 @@ Objects.DoLoad()
     # ensure 'objects' in the local work path is up-to-date, then source it
 
     DebugFuncEntry
-    ShowAsProc 'objects' >&2
 
     if [[ ! -e $OBJECTS_PATHFILE ]] || ! IsFileUpToDate "$OBJECTS_PATHFILE" 60; then
         ShowAsProc 'updating objects' >&2
@@ -6165,6 +6164,7 @@ Objects.DoLoad()
         DebugFuncExit 1; return
     fi
 
+    ShowAsProc 'loading objects' >&2
     . "$OBJECTS_PATHFILE"
 
     DebugFuncExit
@@ -6174,12 +6174,10 @@ Objects.DoLoad()
 Packages.DoLoad()
     {
 
-    QPKGs.Loaded.IsSet && return
-    DebugFuncEntry
-
     # ensure 'packages' in the local work path is up-to-date, then source it
 
-    ShowAsProc 'packages' >&2
+    QPKGs.Loaded.IsSet && return
+    DebugFuncEntry
 
     if [[ ! -e $PACKAGES_PATHFILE ]] || ! IsFileUpToDate "$PACKAGES_PATHFILE" 60; then
         ShowAsProc 'updating packages' >&2
@@ -6193,6 +6191,7 @@ Packages.DoLoad()
         DebugFuncExit 1; exit
     fi
 
+    ShowAsProc 'loading packages' >&2
     . "$PACKAGES_PATHFILE"
 
     readonly BASE_QPKG_CONFLICTS
