@@ -207,6 +207,32 @@ else
 echo -n "$_ob_session_debug_toscreen_tx_"
 fi ;}
 Session.Debug.ToScreen.Init
+QPKGs.Loaded.Clear()
+{ [[ $_ob_qpkgs_loaded_fl_ != 'true' ]] && return
+_ob_qpkgs_loaded_fl_=false
+[[ $_ob_qpkgs_loaded_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_loaded_fl_ ;}
+QPKGs.Loaded.NoLogMods()
+{ [[ $_ob_qpkgs_loaded_chfl_ != 'true' ]] && return
+_ob_qpkgs_loaded_chfl_=false ;}
+QPKGs.Loaded.Init()
+{ _ob_qpkgs_loaded_tx_=''
+_ob_qpkgs_loaded_fl_=false
+_ob_qpkgs_loaded_chfl_=true ;}
+QPKGs.Loaded.IsNt()
+{ [[ $_ob_qpkgs_loaded_fl_ != 'true' ]] ;}
+QPKGs.Loaded.IsSet()
+{ [[ $_ob_qpkgs_loaded_fl_ = 'true' ]] ;}
+QPKGs.Loaded.Set()
+{ [[ $_ob_qpkgs_loaded_fl_ = 'true' ]] && return
+_ob_qpkgs_loaded_fl_=true
+[[ $_ob_qpkgs_loaded_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_loaded_fl_ ;}
+QPKGs.Loaded.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_qpkgs_loaded_tx_=$2
+else
+echo -n "$_ob_qpkgs_loaded_tx_"
+fi ;}
+QPKGs.Loaded.Init
 QPKGs.States.Built.Clear()
 { [[ $_ob_qpkgs_states_built_fl_ != 'true' ]] && return
 _ob_qpkgs_states_built_fl_=false
@@ -259,84 +285,84 @@ else
 echo -n "$_ob_qpkgs_skproc_tx_"
 fi ;}
 QPKGs.SkProc.Init
-IPKGs.ToUpgrade.Clear()
-{ [[ $_ob_ipkgs_toupgrade_fl_ != 'true' ]] && return
-_ob_ipkgs_toupgrade_fl_=false
-[[ $_ob_ipkgs_toupgrade_chfl_ = 'true' ]] && DebugVar _ob_ipkgs_toupgrade_fl_ ;}
-IPKGs.ToUpgrade.NoLogMods()
-{ [[ $_ob_ipkgs_toupgrade_chfl_ != 'true' ]] && return
-_ob_ipkgs_toupgrade_chfl_=false ;}
-IPKGs.ToUpgrade.Init()
-{ _ob_ipkgs_toupgrade_tx_=''
-_ob_ipkgs_toupgrade_fl_=false
-_ob_ipkgs_toupgrade_chfl_=true ;}
-IPKGs.ToUpgrade.IsNt()
-{ [[ $_ob_ipkgs_toupgrade_fl_ != 'true' ]] ;}
-IPKGs.ToUpgrade.IsSet()
-{ [[ $_ob_ipkgs_toupgrade_fl_ = 'true' ]] ;}
-IPKGs.ToUpgrade.Set()
-{ [[ $_ob_ipkgs_toupgrade_fl_ = 'true' ]] && return
-_ob_ipkgs_toupgrade_fl_=true
-[[ $_ob_ipkgs_toupgrade_chfl_ = 'true' ]] && DebugVar _ob_ipkgs_toupgrade_fl_ ;}
-IPKGs.ToUpgrade.Text()
+IPKGs.Upgrade.Clear()
+{ [[ $_ob_ipkgs_upgrade_fl_ != 'true' ]] && return
+_ob_ipkgs_upgrade_fl_=false
+[[ $_ob_ipkgs_upgrade_chfl_ = 'true' ]] && DebugVar _ob_ipkgs_upgrade_fl_ ;}
+IPKGs.Upgrade.NoLogMods()
+{ [[ $_ob_ipkgs_upgrade_chfl_ != 'true' ]] && return
+_ob_ipkgs_upgrade_chfl_=false ;}
+IPKGs.Upgrade.Init()
+{ _ob_ipkgs_upgrade_tx_=''
+_ob_ipkgs_upgrade_fl_=false
+_ob_ipkgs_upgrade_chfl_=true ;}
+IPKGs.Upgrade.IsNt()
+{ [[ $_ob_ipkgs_upgrade_fl_ != 'true' ]] ;}
+IPKGs.Upgrade.IsSet()
+{ [[ $_ob_ipkgs_upgrade_fl_ = 'true' ]] ;}
+IPKGs.Upgrade.Set()
+{ [[ $_ob_ipkgs_upgrade_fl_ = 'true' ]] && return
+_ob_ipkgs_upgrade_fl_=true
+[[ $_ob_ipkgs_upgrade_chfl_ = 'true' ]] && DebugVar _ob_ipkgs_upgrade_fl_ ;}
+IPKGs.Upgrade.Text()
 { if [[ -n ${1:-} && $1 = "=" ]]; then
-_ob_ipkgs_toupgrade_tx_=$2
+_ob_ipkgs_upgrade_tx_=$2
 else
-echo -n "$_ob_ipkgs_toupgrade_tx_"
+echo -n "$_ob_ipkgs_upgrade_tx_"
 fi ;}
-IPKGs.ToUpgrade.Init
-IPKGs.ToInstall.Clear()
-{ [[ $_ob_ipkgs_toinstall_fl_ != 'true' ]] && return
-_ob_ipkgs_toinstall_fl_=false
-[[ $_ob_ipkgs_toinstall_chfl_ = 'true' ]] && DebugVar _ob_ipkgs_toinstall_fl_ ;}
-IPKGs.ToInstall.NoLogMods()
-{ [[ $_ob_ipkgs_toinstall_chfl_ != 'true' ]] && return
-_ob_ipkgs_toinstall_chfl_=false ;}
-IPKGs.ToInstall.Init()
-{ _ob_ipkgs_toinstall_tx_=''
-_ob_ipkgs_toinstall_fl_=false
-_ob_ipkgs_toinstall_chfl_=true ;}
-IPKGs.ToInstall.IsNt()
-{ [[ $_ob_ipkgs_toinstall_fl_ != 'true' ]] ;}
-IPKGs.ToInstall.IsSet()
-{ [[ $_ob_ipkgs_toinstall_fl_ = 'true' ]] ;}
-IPKGs.ToInstall.Set()
-{ [[ $_ob_ipkgs_toinstall_fl_ = 'true' ]] && return
-_ob_ipkgs_toinstall_fl_=true
-[[ $_ob_ipkgs_toinstall_chfl_ = 'true' ]] && DebugVar _ob_ipkgs_toinstall_fl_ ;}
-IPKGs.ToInstall.Text()
+IPKGs.Upgrade.Init
+IPKGs.Install.Clear()
+{ [[ $_ob_ipkgs_install_fl_ != 'true' ]] && return
+_ob_ipkgs_install_fl_=false
+[[ $_ob_ipkgs_install_chfl_ = 'true' ]] && DebugVar _ob_ipkgs_install_fl_ ;}
+IPKGs.Install.NoLogMods()
+{ [[ $_ob_ipkgs_install_chfl_ != 'true' ]] && return
+_ob_ipkgs_install_chfl_=false ;}
+IPKGs.Install.Init()
+{ _ob_ipkgs_install_tx_=''
+_ob_ipkgs_install_fl_=false
+_ob_ipkgs_install_chfl_=true ;}
+IPKGs.Install.IsNt()
+{ [[ $_ob_ipkgs_install_fl_ != 'true' ]] ;}
+IPKGs.Install.IsSet()
+{ [[ $_ob_ipkgs_install_fl_ = 'true' ]] ;}
+IPKGs.Install.Set()
+{ [[ $_ob_ipkgs_install_fl_ = 'true' ]] && return
+_ob_ipkgs_install_fl_=true
+[[ $_ob_ipkgs_install_chfl_ = 'true' ]] && DebugVar _ob_ipkgs_install_fl_ ;}
+IPKGs.Install.Text()
 { if [[ -n ${1:-} && $1 = "=" ]]; then
-_ob_ipkgs_toinstall_tx_=$2
+_ob_ipkgs_install_tx_=$2
 else
-echo -n "$_ob_ipkgs_toinstall_tx_"
+echo -n "$_ob_ipkgs_install_tx_"
 fi ;}
-IPKGs.ToInstall.Init
-PIPs.ToInstall.Clear()
-{ [[ $_ob_pips_toinstall_fl_ != 'true' ]] && return
-_ob_pips_toinstall_fl_=false
-[[ $_ob_pips_toinstall_chfl_ = 'true' ]] && DebugVar _ob_pips_toinstall_fl_ ;}
-PIPs.ToInstall.NoLogMods()
-{ [[ $_ob_pips_toinstall_chfl_ != 'true' ]] && return
-_ob_pips_toinstall_chfl_=false ;}
-PIPs.ToInstall.Init()
-{ _ob_pips_toinstall_tx_=''
-_ob_pips_toinstall_fl_=false
-_ob_pips_toinstall_chfl_=true ;}
-PIPs.ToInstall.IsNt()
-{ [[ $_ob_pips_toinstall_fl_ != 'true' ]] ;}
-PIPs.ToInstall.IsSet()
-{ [[ $_ob_pips_toinstall_fl_ = 'true' ]] ;}
-PIPs.ToInstall.Set()
-{ [[ $_ob_pips_toinstall_fl_ = 'true' ]] && return
-_ob_pips_toinstall_fl_=true
-[[ $_ob_pips_toinstall_chfl_ = 'true' ]] && DebugVar _ob_pips_toinstall_fl_ ;}
-PIPs.ToInstall.Text()
+IPKGs.Install.Init
+PIPs.Install.Clear()
+{ [[ $_ob_pips_install_fl_ != 'true' ]] && return
+_ob_pips_install_fl_=false
+[[ $_ob_pips_install_chfl_ = 'true' ]] && DebugVar _ob_pips_install_fl_ ;}
+PIPs.Install.NoLogMods()
+{ [[ $_ob_pips_install_chfl_ != 'true' ]] && return
+_ob_pips_install_chfl_=false ;}
+PIPs.Install.Init()
+{ _ob_pips_install_tx_=''
+_ob_pips_install_fl_=false
+_ob_pips_install_chfl_=true ;}
+PIPs.Install.IsNt()
+{ [[ $_ob_pips_install_fl_ != 'true' ]] ;}
+PIPs.Install.IsSet()
+{ [[ $_ob_pips_install_fl_ = 'true' ]] ;}
+PIPs.Install.Set()
+{ [[ $_ob_pips_install_fl_ = 'true' ]] && return
+_ob_pips_install_fl_=true
+[[ $_ob_pips_install_chfl_ = 'true' ]] && DebugVar _ob_pips_install_fl_ ;}
+PIPs.Install.Text()
 { if [[ -n ${1:-} && $1 = "=" ]]; then
-_ob_pips_toinstall_tx_=$2
+_ob_pips_install_tx_=$2
 else
-echo -n "$_ob_pips_toinstall_tx_"
+echo -n "$_ob_pips_install_tx_"
 fi ;}
-PIPs.ToInstall.Init
+PIPs.Install.Init
 Opts.Deps.Check.Clear()
 { [[ $_ob_opts_deps_check_fl_ != 'true' ]] && return
 _ob_opts_deps_check_fl_=false

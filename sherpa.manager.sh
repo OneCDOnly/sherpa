@@ -61,7 +61,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220223b
+    local -r SCRIPT_VERSION=220226
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -216,7 +216,7 @@ Session.Init()
         exit 0
     fi
 
-    LoadObjects || return
+    Objects.DoLoad || return
     Session.Debug.ToArchive.Set
     Session.Debug.ToFile.Set
 
@@ -265,7 +265,7 @@ Session.Init()
         QPKGs.SkProc.Set
         DisableDebugToArchiveAndFile
     else
-        LoadPackages || return
+        Packages.DoLoad || return
         ParseArguments
     fi
 
@@ -394,9 +394,9 @@ Session.Validate()
     fi
 
     if Opts.Deps.Check.IsSet || QPKGs.OpToUpgrade.Exist Entware; then
-        IPKGs.ToUpgrade.Set
-        IPKGs.ToInstall.Set
-        PIPs.ToInstall.Set
+        IPKGs.Upgrade.Set
+        IPKGs.Install.Set
+        PIPs.Install.Set
 
         if QPKG.IsInstalled Entware && QPKG.IsStarted Entware; then
             if [[ -e $PYTHON3_CMD ]]; then
@@ -620,9 +620,9 @@ Tiers.Processor()
             Addon)
                 for operation in Install Reinstall Upgrade; do
                     if QPKGs.OpTo${operation}.IsAny || Opts.Apps.Op${operation}.ScAll.IsSet; then
-                        IPKGs.ToUpgrade.Set
-                        IPKGs.ToInstall.Set
-                        PIPs.ToInstall.Set
+                        IPKGs.Upgrade.Set
+                        IPKGs.Install.Set
+                        PIPs.Install.Set
                         break
                     fi
                 done
@@ -975,7 +975,12 @@ ParseArguments()
                     scope_identified=true
                     arg_identified=true
                     ;;
-                installable|installed|not-installed|problems|started|stopped|tail|tips|upgradable)
+                installable|installed|not-installed|started|stopped|upgradable)
+                    scope=${arg}_
+                    scope_identified=true
+                    arg_identified=true
+                    ;;
+                problems|tail|tips)
                     scope=${arg}_
                     scope_identified=true
                     arg_identified=true
@@ -2007,7 +2012,7 @@ IPKGs.DoUpgrade()
     # upgrade all installed IPKGs
 
     QPKGs.SkProc.IsSet && return
-    IPKGs.ToUpgrade.IsNt && return
+    IPKGs.Upgrade.IsNt && return
     QPKGs.IsNtInstalled.Exist Entware && return
     QPKGs.IsStopped.Exist Entware && return
     UpdateEntwarePackageList
@@ -2052,7 +2057,7 @@ IPKGs.DoInstall()
     # install IPKGs required to support QPKGs
 
     QPKGs.SkProc.IsSet && return
-    IPKGs.ToInstall.IsNt && return
+    IPKGs.Install.IsNt && return
     QPKGs.IsNtInstalled.Exist Entware && return
     QPKGs.IsStopped.Exist Entware && return
     UpdateEntwarePackageList
@@ -2153,7 +2158,7 @@ PIPs.DoInstall()
     {
 
     QPKGs.SkProc.IsSet && return
-    PIPs.ToInstall.IsNt && return
+    PIPs.Install.IsNt && return
     QPKGs.IsNtInstalled.Exist Entware && return
     QPKGs.IsStopped.Exist Entware && return
     ! $OPKG_CMD status python3-pip | $GREP_CMD -q "Status:.*installed" && return
@@ -5650,7 +5655,7 @@ DebugFuncExit()
         elapsed_time=$(ConvertSecsToHoursMinutesSecs "$((diff_milliseconds/1000))")
     fi
 
-    DebugThis "(<<) ${FUNCNAME[1]}|${1:-0}|$code_pointer|$elapsed_time"
+    DebugThis "(<<) ${FUNCNAME[1]}|${1:-0}|${code_pointer:-}|$elapsed_time"
 
     return ${1:-0}
 
@@ -6140,14 +6145,15 @@ CTRL_C_Captured()
 
     }
 
-LoadObjects()
+Objects.DoLoad()
     {
 
     # ensure 'objects' in the local work path is up-to-date, then source it
 
+    DebugFuncEntry
     ShowAsProc 'objects' >&2
 
-    if [[ ! -e $OBJECTS_PATHFILE ]] || ! IsFileUpToDate "$OBJECTS_PATHFILE"; then
+    if [[ ! -e $OBJECTS_PATHFILE ]] || ! IsFileUpToDate "$OBJECTS_PATHFILE" 60; then
         ShowAsProc 'updating objects' >&2
         if $CURL_CMD${curl_insecure_arg:-} --silent --fail "$OBJECTS_ARCHIVE_URL" > "$OBJECTS_ARCHIVE_PATHFILE"; then
             /bin/tar --extract --gzip --file="$OBJECTS_ARCHIVE_PATHFILE" --directory="$WORK_PATH"
@@ -6156,17 +6162,20 @@ LoadObjects()
 
     if [[ ! -e $OBJECTS_PATHFILE ]]; then
         ShowAsAbort 'objects missing'
-        return 1
+        DebugFuncExit 1; return
     fi
 
     . "$OBJECTS_PATHFILE"
 
-    return 0
+    DebugFuncExit
 
     }
 
-LoadPackages()
+Packages.DoLoad()
     {
+
+    QPKGs.Loaded.IsSet && return
+    DebugFuncEntry
 
     # ensure 'packages' in the local work path is up-to-date, then source it
 
@@ -6181,7 +6190,7 @@ LoadPackages()
 
     if [[ ! -e $PACKAGES_PATHFILE ]]; then
         ShowAsAbort 'packages missing'
-        return 1
+        DebugFuncExit 1; exit
     fi
 
     . "$PACKAGES_PATHFILE"
@@ -6209,8 +6218,8 @@ LoadPackages()
 
     QPKGs.ScAll.Add "${QPKG_NAME[*]}"
     QPKGs.StandaloneDependent.Build
-
-    return 0
+    QPKGs.Loaded.Set
+    DebugFuncExit
 
     }
 
