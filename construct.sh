@@ -140,11 +140,12 @@ for element in ToArchive ToFile ToScreen; do
     AddFlagObj Session.Debug.$element
 done
 
+AddFlagObj QPKGs.Loaded
 AddFlagObj QPKGs.States.Built
 AddFlagObj QPKGs.SkProc
-AddFlagObj IPKGs.ToUpgrade
-AddFlagObj IPKGs.ToInstall
-AddFlagObj PIPs.ToInstall
+AddFlagObj IPKGs.Upgrade
+AddFlagObj IPKGs.Install
+AddFlagObj PIPs.Install
 
 # user option flags
 for element in Deps.Check IgFreeSpace Versions.View; do
