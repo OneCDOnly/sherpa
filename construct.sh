@@ -140,9 +140,10 @@ for element in ToArchive ToFile ToScreen; do
     AddFlagObj Session.Debug.$element
 done
 
-AddFlagObj QPKGs.Loaded
-AddFlagObj QPKGs.States.Built
-AddFlagObj QPKGs.SkProc
+for element in Loaded States.Built SkProc; do
+    AddFlagObj QPKGs.$element
+done
+
 AddFlagObj IPKGs.Upgrade
 AddFlagObj IPKGs.Install
 AddFlagObj PIPs.Install
