@@ -61,7 +61,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220226
+    local -r SCRIPT_VERSION=220304
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -3343,7 +3343,7 @@ QPKGs.States.Build()
     local -i index=0
     local package=''
     local previous=''
-    ShowAsProc 'stateful lists' >&2
+    ShowAsProc 'package states' >&2
 
     for index in "${!QPKG_NAME[@]}"; do
         package="${QPKG_NAME[$index]}"
@@ -6152,7 +6152,7 @@ Objects.DoLoad()
 
     DebugFuncEntry
 
-    if [[ ! -e $OBJECTS_PATHFILE ]] || ! IsFileUpToDate "$OBJECTS_PATHFILE" 60; then
+    if [[ ! -e $OBJECTS_PATHFILE ]] || ! IsFileUpToDate "$OBJECTS_PATHFILE"; then
         ShowAsProc 'updating objects' >&2
         if $CURL_CMD${curl_insecure_arg:-} --silent --fail "$OBJECTS_ARCHIVE_URL" > "$OBJECTS_ARCHIVE_PATHFILE"; then
             /bin/tar --extract --gzip --file="$OBJECTS_ARCHIVE_PATHFILE" --directory="$WORK_PATH"
@@ -6180,18 +6180,18 @@ Packages.DoLoad()
     DebugFuncEntry
 
     if [[ ! -e $PACKAGES_PATHFILE ]] || ! IsFileUpToDate "$PACKAGES_PATHFILE" 60; then
-        ShowAsProc 'updating packages' >&2
+        ShowAsProc 'updating package list' >&2
         if $CURL_CMD${curl_insecure_arg:-} --silent --fail "$PACKAGES_ARCHIVE_URL" > "$PACKAGES_ARCHIVE_PATHFILE"; then
             /bin/tar --extract --gzip --file="$PACKAGES_ARCHIVE_PATHFILE" --directory="$WORK_PATH"
         fi
     fi
 
     if [[ ! -e $PACKAGES_PATHFILE ]]; then
-        ShowAsAbort 'packages missing'
+        ShowAsAbort 'package list missing'
         DebugFuncExit 1; exit
     fi
 
-    ShowAsProc 'loading packages' >&2
+    ShowAsProc 'loading package list' >&2
     . "$PACKAGES_PATHFILE"
 
     readonly BASE_QPKG_CONFLICTS
@@ -6215,9 +6215,9 @@ Packages.DoLoad()
         readonly QPKG_SUPPORTS_BACKUP
         readonly QPKG_RESTART_TO_UPDATE
 
+    QPKGs.Loaded.Set
     QPKGs.ScAll.Add "${QPKG_NAME[*]}"
     QPKGs.StandaloneDependent.Build
-    QPKGs.Loaded.Set
     DebugFuncExit
 
     }
