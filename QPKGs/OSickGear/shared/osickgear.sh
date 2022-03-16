@@ -19,8 +19,8 @@ Init()
     readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
     readonly MIN_RAM_KB=any
 
-    # for online-hosted applications only
-    readonly SOURCE_GIT_URL=http://github.com/SickGear/SickGear.git
+    # for online-sourced applications only
+    readonly SOURCE_GIT_URL=https://github.com/SickGear/SickGear.git
     readonly SOURCE_GIT_BRANCH=master
     # 'shallow' (depth 1) or 'single-branch' (note: 'shallow' implies a 'single-branch' too)
     readonly SOURCE_GIT_DEPTH=single-branch
