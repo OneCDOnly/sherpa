@@ -342,12 +342,11 @@ PullGitRepo()
     [[ -z $1 || -z $2 || -z $3 || -z $4 || -z $5 ]] && return 1
 
     local -r QPKG_GIT_PATH="$5/$1"
-    local -r GIT_HTTP_URL="$2"
-    local -r GIT_HTTPS_URL=${GIT_HTTP_URL/http/git}
+    local -r GIT_HTTPS_URL="$2"
     local installed_branch=''
     local branch_switch=false
-    [[ $4 = shallow ]] && local -r DEPTH=' --depth 1'
-    [[ $4 = single-branch ]] && local -r DEPTH=' --single-branch'
+    [[ $4 = shallow ]] && local -r DEPTH='--depth 1'
+    [[ $4 = single-branch ]] && local -r DEPTH='--single-branch'
 
     if [[ -d $QPKG_GIT_PATH/.git ]]; then
         installed_branch=$(/opt/bin/git -C "$QPKG_GIT_PATH" branch | /bin/grep '^\*' | /bin/sed 's|^\* ||')
@@ -361,7 +360,7 @@ PullGitRepo()
     fi
 
     if [[ ! -d $QPKG_GIT_PATH/.git ]]; then
-        ExecuteAndLog "clone $(FormatAsPackageName "$1") from remote repository" "cd /tmp; /opt/bin/git clone --branch $3 $DEPTH -c advice.detachedHead=false $GIT_HTTPS_URL $QPKG_GIT_PATH || /opt/bin/git clone --branch $3 $DEPTH -c advice.detachedHead=false $GIT_HTTP_URL $QPKG_GIT_PATH"
+        ExecuteAndLog "clone $(FormatAsPackageName "$1") from remote repository" "cd /tmp; /opt/bin/git clone --branch $3 $DEPTH -c advice.detachedHead=false $GIT_HTTPS_URL $QPKG_GIT_PATH"
     else
         ExecuteAndLog "update $(FormatAsPackageName "$1") from remote repository" "cd /tmp; /opt/bin/git -C $QPKG_GIT_PATH fetch; /opt/bin/git -C $QPKG_GIT_PATH reset --hard HEAD; /opt/bin/git -C $QPKG_GIT_PATH merge '@{u}'"
     fi

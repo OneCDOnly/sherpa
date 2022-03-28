@@ -82,6 +82,8 @@ Init()
     UnsetRestartPending
     EnsureConfigFileExists
     [[ -n $ORIG_DAEMON_SERVICE_SCRIPT ]] && DisableOpkgDaemonStart
+#    LoadAppVersion
+
     [[ ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
 
     return 0
@@ -118,6 +120,7 @@ StartQPKG()
     # this function is customised depending on the requirements of the packaged application
 
     IsError && return
+#    WaitForGit || return
 
     if IsNotRestart && IsNotRestore && IsNotClean && IsNotReset; then
         CommitOperationToLog
@@ -137,6 +140,7 @@ StartQPKG()
     WaitForGit || return
     PullGitRepo "$QPKG_NAME" "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_PATH"
     WaitForLaunchTarget || return
+#    UpdateLanguages
     EnsureConfigFileExists
     LoadUIPorts app || return
 
@@ -407,7 +411,7 @@ PullGitRepo()
     if [[ ! -d $QPKG_GIT_PATH/.git ]]; then
         ExecuteAndLog "clone $(FormatAsPackageName "$1") from remote repository" "cd /tmp; /opt/bin/git clone --branch $3 $DEPTH -c advice.detachedHead=false $GIT_HTTPS_URL $QPKG_GIT_PATH"
     else
-        ExecuteAndLog "update $(FormatAsPackageName "$1") from remote repository" "cd /tmp; /opt/bin/git -C $QPKG_GIT_PATH reset --hard; /opt/bin/git -C $QPKG_GIT_PATH pull"
+        ExecuteAndLog "update $(FormatAsPackageName "$1") from remote repository" "cd /tmp; /opt/bin/git -C $QPKG_GIT_PATH fetch; /opt/bin/git -C $QPKG_GIT_PATH reset --hard HEAD; /opt/bin/git -C $QPKG_GIT_PATH merge '@{u}'"
     fi
 
     installed_branch=$(/opt/bin/git -C "$QPKG_GIT_PATH" branch | /bin/grep '^\*' | /bin/sed 's|^\* ||')
