@@ -61,10 +61,10 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220328d
+    local -r SCRIPT_VERSION=220328e
     readonly PROJECT_BRANCH=main
 
-    ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
+    ClaimLockFile /var/run/$PROJECT_NAME.lock || return
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
