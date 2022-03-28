@@ -36,7 +36,7 @@ Init()
     IsQNAP || return
 
     local -r PROJECT_NAME=sherpa
-    export LOADER_SCRIPT_VERSION=220328
+    export LOADER_SCRIPT_VERSION=220328b
     export LOADER_SCRIPT_PPID=$PPID
     local -r PROJECT_BRANCH=main
 
@@ -44,7 +44,7 @@ Init()
     local -r WORK_PATH=$PROJECT_PATH/cache
 
     local -r MANAGER_FILE=$PROJECT_NAME.manager.sh
-    local -r MANAGER_ARCHIVE_FILE=$MANAGER_FILE.tar.gz
+    local -r MANAGER_ARCHIVE_FILE=${MANAGER_FILE%.*}.tar.gz
     readonly MANAGER_ARCHIVE_URL=https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/$MANAGER_ARCHIVE_FILE
     readonly MANAGER_ARCHIVE_PATHFILE=$WORK_PATH/$MANAGER_ARCHIVE_FILE
     readonly MANAGER_PATHFILE=$WORK_PATH/$MANAGER_FILE
