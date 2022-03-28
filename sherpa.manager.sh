@@ -61,7 +61,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220328e
+    local -r SCRIPT_VERSION=220328f
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -241,8 +241,9 @@ Session.Init()
     Session.Summary.Set
     Session.LineSpace.NoLogMods
 
-    readonly NAS_FIRMWARE=$(GetFirmwareVersion)
-    readonly NAS_BUILD=$(GetFirmwareBuild)
+    readonly NAS_FIRMWARE_VERSION=$(GetFirmwareVersion)
+    readonly NAS_FIRMWARE_BUILD=$(GetFirmwareBuild)
+    readonly NAS_FIRMWARE_DATE=$(GetFirmwareDate)
     readonly INSTALLED_RAM_KB=$(GetInstalledRAM)
     readonly NAS_QPKG_ARCH=$(GetQPKGArch)
     readonly ENTWARE_VER=$(GetEntwareType)
@@ -254,7 +255,7 @@ Session.Init()
     readonly OPKG_CMD=/opt/bin/opkg
     code_pointer=0
     previous_msg=' '
-    [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg=' --insecure' || curl_insecure_arg=''
+    [[ ${NAS_FIRMWARE_VERSION//.} -lt 426 ]] && curl_insecure_arg=' --insecure' || curl_insecure_arg=''
     DebugQPKGDetected arch "$NAS_QPKG_ARCH"
     DebugQPKGDetected 'Entware installer' "$ENTWARE_VER"
     QPKG.IsInstalled Entware && [[ $ENTWARE_VER = none ]] && DebugAsWarn "$(FormatAsPackageName Entware) appears to be installed but is not visible"
@@ -305,22 +306,22 @@ Session.Validate()
     DebugHardwareOK model "$(get_display_name)"
     DebugHardwareOK CPU "$(GetCPUInfo)"
     DebugHardwareOK RAM "$(FormatAsThousands "$INSTALLED_RAM_KB")kB"
+    DebugFirmwareOK 'OS' "Q$($GREP_CMD -q zfs /proc/filesystems && echo 'u')TS"
 
-    if [[ ${NAS_FIRMWARE//.} -ge 400 ]]; then
-        DebugFirmwareOK version "$NAS_FIRMWARE"
+    if [[ ${NAS_FIRMWARE_VERSION//.} -ge 400 ]]; then
+        DebugFirmwareOK version "$NAS_FIRMWARE_VERSION.$NAS_FIRMWARE_BUILD"
     else
-        DebugFirmwareWarning version "$NAS_FIRMWARE"
+        DebugFirmwareWarning version "$NAS_FIRMWARE_VERSION"
     fi
 
-    if [[ $NAS_BUILD -lt 20201015 || $NAS_BUILD -gt 20201020 ]]; then   # QTS builds released over these 6 days don't allow unsigned QPKGs to run at-all
-        DebugFirmwareOK build "$NAS_BUILD"
+    if [[ $NAS_FIRMWARE_DATE -lt 20201015 || $NAS_FIRMWARE_DATE -gt 20201020 ]]; then   # QTS builds released over these 6 days don't allow unsigned QPKGs to run at-all
+        DebugFirmwareOK 'build date' "$NAS_FIRMWARE_DATE"
     else
-        DebugFirmwareWarning build "$NAS_BUILD"
+        DebugFirmwareWarning 'build date' "$NAS_FIRMWARE_DATE"
     fi
 
     DebugFirmwareOK kernel "$(GetKernel)"
     DebugFirmwareOK platform "$(GetPlatform)"
-    DebugFirmwareOK 'OS' "Q$($GREP_CMD -q zfs /proc/filesystems && echo 'u')TS"
     DebugUserspaceOK 'OS uptime' "$(GetUptime)"
     DebugUserspaceOK 'system load' "$(GetSysLoadAverages)"
     DebugUserspaceOK '$USER' "$USER"
@@ -3906,6 +3907,13 @@ GetFirmwareVersion()
 GetFirmwareBuild()
     {
 
+    /sbin/getcfg System Number -f /etc/config/uLinux.conf
+
+    }
+
+GetFirmwareDate()
+    {
+
     /sbin/getcfg System 'Build Number' -f /etc/config/uLinux.conf
 
     }
@@ -3917,7 +3925,7 @@ GetQPKGArch()
 
     case $(/bin/uname -m) in
         x86_64)
-            [[ ${NAS_FIRMWARE//.} -ge 430 ]] && echo x64 || echo x86
+            [[ ${NAS_FIRMWARE_VERSION//.} -ge 430 ]] && echo x64 || echo x86
             ;;
         i686|x86)
             echo x86
