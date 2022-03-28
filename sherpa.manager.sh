@@ -61,7 +61,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220313
+    local -r SCRIPT_VERSION=220328
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -320,6 +320,7 @@ Session.Validate()
 
     DebugFirmwareOK kernel "$(GetKernel)"
     DebugFirmwareOK platform "$(GetPlatform)"
+    DebugFirmwareOK 'OS' "Q$($GREP_CMD -q zfs /proc/filesystems && echo 'u')TS"
     DebugUserspaceOK 'OS uptime' "$(GetUptime)"
     DebugUserspaceOK 'system load' "$(GetSysLoadAverages)"
     DebugUserspaceOK '$USER' "$USER"
