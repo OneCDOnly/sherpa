@@ -49,6 +49,7 @@ set -o pipefail
 #set -o errexit
 
 readonly USER_ARGS_RAW=$*
+readonly SHELL_PID=$PPID
 
 Session.Init()
     {
@@ -61,7 +62,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220328
+    local -r SCRIPT_VERSION=220328b
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -324,6 +325,7 @@ Session.Validate()
     DebugUserspaceOK 'OS uptime' "$(GetUptime)"
     DebugUserspaceOK 'system load' "$(GetSysLoadAverages)"
     DebugUserspaceOK '$USER' "$USER"
+    DebugUserspaceOK 'time in shell' "$(GetTimeInShell)"
 
     if [[ $EUID -eq 0 ]]; then
         DebugUserspaceOK '$EUID' "$EUID"
@@ -851,7 +853,7 @@ Session.Results()
 
     DebugInfoMinorSeparator
     DebugScript 'finished' "$($DATE_CMD)"
-    DebugScript 'elapsed time' "$(ConvertSecsToHoursMinutesSecs "$(($($DATE_CMD +%s)-$([[ -n $SCRIPT_STARTSECONDS ]] && echo "$SCRIPT_STARTSECONDS" || echo "1")))")"
+    DebugScript 'elapsed time' "$(FormatSecsToHoursMinutesSecs "$(($($DATE_CMD +%s)-$([[ -n $SCRIPT_STARTSECONDS ]] && echo "$SCRIPT_STARTSECONDS" || echo "1")))")"
     DebugInfoMajorSeparator
     Session.Debug.ToArchive.IsSet && ArchiveActiveSessionLog
     ResetActiveSessionLog
@@ -2365,7 +2367,7 @@ _MonitorDirSize_()
             if [[ $stall_seconds -lt 60 ]]; then
                 stall_message=" stalled for $stall_seconds seconds"
             else
-                stall_message=" stalled for $(ConvertSecsToHoursMinutesSecs $stall_seconds)"
+                stall_message=" stalled for $(FormatSecsToHoursMinutesSecs $stall_seconds)"
             fi
 
             # add a suggestion to cancel if download has stalled for too long
@@ -3864,7 +3866,17 @@ GetDefaultVolume()
 GetUptime()
     {
 
-    $UPTIME_CMD | $SED_CMD 's|.*up.||;s|,.*load.*||;s|^\ *||'
+    FormatLongMinutesSecs "$($UPTIME_CMD | $SED_CMD 's|.*up.||;s|,.*load.*||;s|^\ *||')"
+
+    }
+
+GetTimeInShell()
+    {
+
+    local duration=''
+
+    duration=$(ps -o pid,etime | $GREP_CMD $SHELL_PID)
+    FormatLongMinutesSecs "${duration:6}"
 
     }
 
@@ -5653,7 +5665,7 @@ DebugFuncExit()
     if [[ $diff_milliseconds -lt 30000 ]]; then
         elapsed_time="$(FormatAsThousands "$diff_milliseconds")ms"
     else
-        elapsed_time=$(ConvertSecsToHoursMinutesSecs "$((diff_milliseconds/1000))")
+        elapsed_time=$(FormatSecsToHoursMinutesSecs "$((diff_milliseconds/1000))")
     fi
 
     DebugThis "(<<) ${FUNCNAME[1]}|${1:-0}|${code_pointer:-}|$elapsed_time"
@@ -6121,19 +6133,37 @@ StripANSI()
 
     }
 
-ConvertSecsToHoursMinutesSecs()
+FormatSecsToHoursMinutesSecs()
     {
 
     # http://stackoverflow.com/questions/12199631/convert-seconds-to-hours-minutes-seconds
 
     # input:
-    #   $1 = a time in seconds to convert to 'hh:mm:ss'
+    #   $1 = a time in seconds to convert to 'HHh:MMm:SSs'
 
     ((h=${1:-0}/3600))
     ((m=(${1:-0}%3600)/60))
     ((s=${1:-0}%60))
 
     printf "%02dh:%02dm:%02ds\n" "$h" "$m" "$s"
+
+    }
+
+FormatLongMinutesSecs()
+    {
+
+    # input:
+    #   $1 = a time in long minutes and seconds to convert to 'MMMm:SSs'
+
+    # separate minutes from seconds
+    m=${1%%:*}
+    s=${1#*:}
+
+    # remove leading whitespace
+    m=${m##* }
+    s=${s##* }
+
+    printf "%01dm:%02ds\n" "$((10#$m))" "$((10#$s))"
 
     }
 
