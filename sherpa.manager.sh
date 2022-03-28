@@ -49,7 +49,6 @@ set -o pipefail
 #set -o errexit
 
 readonly USER_ARGS_RAW=$*
-readonly SHELL_PID=$PPID
 
 Session.Init()
     {
@@ -62,7 +61,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220328c
+    local -r SCRIPT_VERSION=220328d
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -3873,9 +3872,12 @@ GetUptime()
 GetTimeInShell()
     {
 
-    local duration=''
+    local duration=0
 
-    duration=$(ps -o pid,etime | $GREP_CMD $SHELL_PID)
+    if [[ -n ${LOADER_SCRIPT_PPID:-} ]]; then
+        duration=$(ps -o pid,etime | $GREP_CMD $LOADER_SCRIPT_PPID | $HEAD_CMD -n1)
+    fi
+
     FormatLongMinutesSecs "${duration:6}"
 
     }

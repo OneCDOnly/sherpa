@@ -36,7 +36,8 @@ Init()
     IsQNAP || return
 
     local -r PROJECT_NAME=sherpa
-    export LOADER_SCRIPT_VERSION=220220
+    export LOADER_SCRIPT_VERSION=220328
+    export LOADER_SCRIPT_PPID=$PPID
     local -r PROJECT_BRANCH=main
 
     local -r PROJECT_PATH=$(/sbin/getcfg $PROJECT_NAME Install_Path -f /etc/config/qpkg.conf)
