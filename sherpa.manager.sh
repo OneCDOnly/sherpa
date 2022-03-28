@@ -62,7 +62,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220328b
+    local -r SCRIPT_VERSION=220328c
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.loader.sh.pid || return
@@ -3866,7 +3866,7 @@ GetDefaultVolume()
 GetUptime()
     {
 
-    FormatLongMinutesSecs "$($UPTIME_CMD | $SED_CMD 's|.*up.||;s|,.*load.*||;s|^\ *||')"
+    $UPTIME_CMD | $SED_CMD 's|.*up.||;s|,.*load.*||;s|^\ *||'
 
     }
 
