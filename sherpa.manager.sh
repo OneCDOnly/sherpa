@@ -61,7 +61,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220328f
+    local -r SCRIPT_VERSION=220329
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -325,7 +325,6 @@ Session.Validate()
     DebugUserspaceOK 'OS uptime' "$(GetUptime)"
     DebugUserspaceOK 'system load' "$(GetSysLoadAverages)"
     DebugUserspaceOK '$USER' "$USER"
-    DebugUserspaceOK 'time in shell' "$(GetTimeInShell)"
 
     if [[ $EUID -eq 0 ]]; then
         DebugUserspaceOK '$EUID' "$EUID"
@@ -333,6 +332,7 @@ Session.Validate()
         DebugUserspaceWarning '$EUID' "$EUID"
     fi
 
+    DebugUserspaceOK 'time in shell' "$(GetTimeInShell)"
     DebugUserspaceOK '$BASH_VERSION' "$BASH_VERSION"
     DebugUserspaceOK 'default volume' "$(GetDefaultVolume)"
     DebugUserspaceOK '/opt' "$($READLINK_CMD /opt || echo '<not present>')"
@@ -3866,7 +3866,8 @@ GetDefaultVolume()
 GetUptime()
     {
 
-    $UPTIME_CMD | $SED_CMD 's|.*up.||;s|,.*load.*||;s|^\ *||'
+    raw=$(</proc/uptime)
+    FormatSecsToHoursMinutesSecs "${raw%%.*}"
 
     }
 
@@ -6155,7 +6156,7 @@ FormatSecsToHoursMinutesSecs()
     ((m=(${1:-0}%3600)/60))
     ((s=${1:-0}%60))
 
-    printf "%02dh:%02dm:%02ds\n" "$h" "$m" "$s"
+    printf "%01dh:%02dm:%02ds\n" "$h" "$m" "$s"
 
     }
 
