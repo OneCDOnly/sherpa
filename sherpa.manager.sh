@@ -44,10 +44,7 @@
 #   If on-screen line-spacing is required, this should only be done by the next function that outputs to display.
 #   Display functions should never finish by putting an empty line on-screen for spacing.
 
-set -o nounset
-set -o pipefail
-#set -o errexit
-
+set -o nounset -o pipefail
 readonly USER_ARGS_RAW=$*
 
 Session.Init()
@@ -61,7 +58,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220329
+    local -r SCRIPT_VERSION=220401
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -2619,11 +2616,11 @@ DisplayAsHelpTitlePackageNameVersionStatus()
     {
 
     # $1 = package name title
-    # $2 = package version title
-    # $3 = package status title
+    # $2 = package status title
+    # $3 = package version title
     # $4 = package installation location (only if installed)
 
-    printf "* %-${HELP_PACKAGE_NAME_WIDTH}s * %-${HELP_PACKAGE_VERSION_WIDTH}s * %-${HELP_PACKAGE_STATUS_WIDTH}s * %s\n" "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}:" "$(tr 'a-z' 'A-Z' <<< "${2:0:1}")${2:1}:" "$(tr 'a-z' 'A-Z' <<< "${3:0:1}")${3:1}:" "$(tr 'a-z' 'A-Z' <<< "${4:0:1}")${4:1}:"
+    printf "* %-${HELP_PACKAGE_NAME_WIDTH}s * %-${HELP_PACKAGE_STATUS_WIDTH}s * %-${HELP_PACKAGE_VERSION_WIDTH}s * %s\n" "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}:" "$(tr 'a-z' 'A-Z' <<< "${2:0:1}")${2:1}:" "$(tr 'a-z' 'A-Z' <<< "${3:0:1}")${3:1}:" "$(tr 'a-z' 'A-Z' <<< "${4:0:1}")${4:1}:"
 
     }
 
@@ -2631,14 +2628,16 @@ DisplayAsHelpPackageNameVersionStatus()
     {
 
     # $1 = package name
-    # $2 = package version number
-    # $3 = package status
+    # $2 = package status
+    # $3 = package version number (optional)
     # $4 = package installation location (optional) only if installed
 
-    if [[ -z ${4:-} ]]; then
-        printf "%${HELP_DESC_INDENT}s%-${HELP_PACKAGE_NAME_WIDTH}s - %-${HELP_PACKAGE_VERSION_WIDTH}s - %s\n" '' "${1:-}" "${2:-}" "${3:-}"
+    if [[ -z ${3:-} ]]; then
+        printf "%${HELP_DESC_INDENT}s%-${HELP_PACKAGE_NAME_WIDTH}s - %s\n" '' "${1:-}" "${2:-}"
+    elif [[ -z ${4:-} ]]; then
+        printf "%${HELP_DESC_INDENT}s%-${HELP_PACKAGE_NAME_WIDTH}s - %-${HELP_PACKAGE_STATUS_WIDTH}s - %s\n" '' "${1:-}" "${2:-}" "${3:-}"
     else
-        printf "%${HELP_DESC_INDENT}s%-${HELP_PACKAGE_NAME_WIDTH}s - %-$((HELP_PACKAGE_VERSION_WIDTH+$(LenANSIDiff "$2")))s - %-$((HELP_PACKAGE_STATUS_WIDTH+$(LenANSIDiff "$3")))s %s\n" '' "${1:-}" "${2:-}" "${3:-}" "${4:-}"
+        printf "%${HELP_DESC_INDENT}s%-${HELP_PACKAGE_NAME_WIDTH}s - %-$((HELP_PACKAGE_STATUS_WIDTH+$(LenANSIDiff "$2")))s - %-$((HELP_PACKAGE_VERSION_WIDTH+$(LenANSIDiff "$3")))s %s\n" '' "${1:-}" "${2:-}" "${3:-}" "${4:-}"
     fi
 
     }
@@ -3518,7 +3517,7 @@ QPKGs.Statuses.Show()
     DisplayLineSpaceIfNoneAlready
 
     for tier in Standalone Dependent; do
-        DisplayAsHelpTitlePackageNameVersionStatus "$tier QPKGs" 'QPKG version' 'QPKG status' 'installed QPKG path'
+        DisplayAsHelpTitlePackageNameVersionStatus "$tier QPKGs" 'QPKG status' 'QPKG version' 'installed QPKG path'
 
         for package_name in $(QPKGs.Sc$tier.Array); do
             package_status_notes=()
@@ -3526,11 +3525,11 @@ QPKGs.Statuses.Show()
             package_status=''
 
             if ! QPKG.URL "$package_name" &>/dev/null; then
-                DisplayAsHelpPackageNameVersionStatus "$package_name" "$(QPKG.Available.Version "$package_name")" 'not installable on this NAS (unsupported arch)'
+                DisplayAsHelpPackageNameVersionStatus "$package_name" 'not installable on this NAS (unsupported arch)'
             elif ! QPKG.MinRAM "$package_name" &>/dev/null; then
-                DisplayAsHelpPackageNameVersionStatus "$package_name" "$(QPKG.Available.Version "$package_name")" 'not installable on this NAS (insufficient RAM)'
+                DisplayAsHelpPackageNameVersionStatus "$package_name" 'not installable on this NAS (insufficient RAM)'
             elif QPKGs.IsNtInstalled.Exist "$package_name"; then
-                DisplayAsHelpPackageNameVersionStatus "$package_name" "$(QPKG.Available.Version "$package_name")" 'not installed'
+                DisplayAsHelpPackageNameVersionStatus "$package_name" 'not installed' "$(QPKG.Available.Version "$package_name")"
             else
                 if QPKGs.ScUpgradable.Exist "$package_name"; then
                     package_version="$(QPKG.Local.Version "$package_name") $(ColourTextBrightOrange "($(QPKG.Available.Version "$package_name") available)")"
@@ -3564,7 +3563,7 @@ QPKGs.Statuses.Show()
                     [[ $((index+2)) -le ${#package_status_notes[@]} ]] && package_status+=', '
                 done
 
-                DisplayAsHelpPackageNameVersionStatus "$package_name" "$package_version" "$package_status" "$(QPKG.InstallationPath "$package_name")"
+                DisplayAsHelpPackageNameVersionStatus "$package_name" "$package_status" "$package_version" "$(QPKG.InstallationPath "$package_name")"
             fi
         done
 
