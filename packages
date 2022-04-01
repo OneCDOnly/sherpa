@@ -1,7 +1,7 @@
 # use pseudo-alpha-sorted name order (i.e. disregard character-case and leading 'O')
 
 BASE_QPKG_CONFLICTS='Optware Optware-NG TarMT Python3 QPython3 QPython39 QPython310'
-BASE_IPKGS_ADD='ca-certificates findutils gcc git git-http grep less nano sed'
+BASE_IPKGS_ADD='ca-certificates coreutils-stty findutils gcc git git-http grep less nano sed'
 BASE_PIPS_ADD='wheel pip'
 
 # supported package details - parallel arrays

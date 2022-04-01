@@ -58,7 +58,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220401
+    local -r SCRIPT_VERSION=220401b
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -118,6 +118,7 @@ Session.Init()
     readonly GNU_FIND_CMD=/opt/bin/find
     readonly GNU_GREP_CMD=/opt/bin/grep
     readonly GNU_SED_CMD=/opt/bin/sed
+    readonly GNU_STTY_CMD=/opt/bin/stty
 
     readonly BACKUP_LOG_FILE=backup.log
     readonly CHECK_LOG_FILE=check.log
@@ -216,6 +217,12 @@ Session.Init()
     Objects.DoLoad || return
     Session.Debug.ToArchive.Set
     Session.Debug.ToFile.Set
+
+    if [[ -e $GNU_STTY_CMD ]]; then
+        local terminal_dimensions=$($GNU_STTY_CMD size)
+        readonly ROWS=${terminal_dimensions% *}
+        readonly COLUMNS=${terminal_dimensions#* }
+    fi
 
     if [[ $USER_ARGS_RAW == *"debug"* || $USER_ARGS_RAW == *"dbug"* || $USER_ARGS_RAW == *"verbose"* ]]; then
         Display >&2
@@ -2525,10 +2532,17 @@ IsNtSysFileExist()
 
 readonly HELP_DESC_INDENT=3
 readonly HELP_SYNTAX_INDENT=6
+
 readonly HELP_PACKAGE_NAME_WIDTH=20
 readonly HELP_PACKAGE_VERSION_WIDTH=27
 readonly HELP_PACKAGE_STATUS_WIDTH=20
 readonly HELP_FILE_NAME_WIDTH=33
+
+readonly HELP_COLUMN_SPACER=' '
+readonly HELP_COLUMN_MAIN_PREFIX='* '
+readonly HELP_COLUMN_OTHER_PREFIX='- '
+readonly HELP_COLUMN_BLANK_PREFIX='  '
+readonly HELP_SYNTAX_PREFIX='# '
 
 LenANSIDiff()
     {
@@ -2547,9 +2561,9 @@ DisplayAsProjectSyntaxExample()
     # $2 = example syntax
 
     if [[ ${1: -1} = '!' ]]; then
-        printf "* %s \n%${HELP_SYNTAX_INDENT}s# %s\n" "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}" '' "$PROJECT_NAME $2"
+        printf "${HELP_COLUMN_MAIN_PREFIX}%s\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREFIX}%s\n" "$(Capitalise "$1")" '' "$PROJECT_NAME $2"
     else
-        printf "* %s:\n%${HELP_SYNTAX_INDENT}s# %s\n" "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}" '' "$PROJECT_NAME $2"
+        printf "${HELP_COLUMN_MAIN_PREFIX}%s:\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREFIX}%s\n" "$(Capitalise "$1")" '' "$PROJECT_NAME $2"
     fi
 
     Session.LineSpace.Clear
@@ -2563,11 +2577,11 @@ DisplayAsProjectSyntaxIndentedExample()
     # $2 = example syntax
 
     if [[ -z ${1:-} ]]; then
-        printf "%${HELP_SYNTAX_INDENT}s# %s\n" '' "$PROJECT_NAME $2"
+        printf "%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREFIX}%s\n" '' "$PROJECT_NAME $2"
     elif [[ ${1: -1} = '!' ]]; then
-        printf "\n%${HELP_DESC_INDENT}s%s \n%${HELP_SYNTAX_INDENT}s# %s\n" '' "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}" '' "$PROJECT_NAME $2"
+        printf "\n%${HELP_DESC_INDENT}s%s\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREFIX}%s\n" '' "$(Capitalise "$1")" '' "$PROJECT_NAME $2"
     else
-        printf "\n%${HELP_DESC_INDENT}s%s:\n%${HELP_SYNTAX_INDENT}s# %s\n" '' "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}" '' "$PROJECT_NAME $2"
+        printf "\n%${HELP_DESC_INDENT}s%s:\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREFIX}%s\n" '' "$(Capitalise "$1")" '' "$PROJECT_NAME $2"
     fi
 
     Session.LineSpace.Clear
@@ -2581,11 +2595,11 @@ DisplayAsSyntaxExample()
     # $2 = example syntax
 
     if [[ -z $2 && ${1: -1} = ':' ]]; then
-        printf "\n* %s\n" "$1"
+        printf "\n${HELP_COLUMN_MAIN_PREFIX}%s\n" "$1"
     elif [[ ${1: -1} = '!' ]]; then
-        printf "\n* %s \n%${HELP_SYNTAX_INDENT}s# %s\n" "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}" '' "$2"
+        printf "\n${HELP_COLUMN_MAIN_PREFIX}%s\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREFIX}%s\n" "$(Capitalise "$1")" '' "$2"
     else
-        printf "\n* %s:\n%${HELP_SYNTAX_INDENT}s# %s\n" "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}" '' "$2"
+        printf "\n${HELP_COLUMN_MAIN_PREFIX}%s:\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREFIX}%s\n" "$(Capitalise "$1")" '' "$2"
     fi
 
     Session.LineSpace.Clear
@@ -2598,7 +2612,7 @@ DisplayAsHelpTitlePackageNamePlusSomething()
     # $1 = package name title
     # $2 = second column title
 
-    printf "* %-${HELP_PACKAGE_NAME_WIDTH}s * %s\n" "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}:" "$(tr 'a-z' 'A-Z' <<< "${2:0:1}")${2:1}:"
+    printf "${HELP_COLUMN_MAIN_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s${HELP_COLUMN_SPACER}${HELP_COLUMN_MAIN_PREFIX}%s\n" "$(Capitalise "$1"):" "$(Capitalise "$2"):"
 
     }
 
@@ -2608,7 +2622,7 @@ DisplayAsHelpPackageNamePlusSomething()
     # $1 = package name
     # $2 = second column text
 
-    printf "%${HELP_DESC_INDENT}s%-${HELP_PACKAGE_NAME_WIDTH}s - %s\n" '' "${1:-}" "${2:-}"
+    printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_BLANK_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s${HELP_COLUMN_SPACER}${HELP_COLUMN_OTHER_PREFIX}%s\n" "${1:-}" "${2:-}"
 
     }
 
@@ -2620,7 +2634,12 @@ DisplayAsHelpTitlePackageNameVersionStatus()
     # $3 = package version title
     # $4 = package installation location (only if installed)
 
-    printf "* %-${HELP_PACKAGE_NAME_WIDTH}s * %-${HELP_PACKAGE_STATUS_WIDTH}s * %-${HELP_PACKAGE_VERSION_WIDTH}s * %s\n" "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}:" "$(tr 'a-z' 'A-Z' <<< "${2:0:1}")${2:1}:" "$(tr 'a-z' 'A-Z' <<< "${3:0:1}")${3:1}:" "$(tr 'a-z' 'A-Z' <<< "${4:0:1}")${4:1}:"
+#     if [[ -n $COLUMNS ]]; then
+#
+#   fi
+
+
+    printf "${HELP_COLUMN_MAIN_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s${HELP_COLUMN_SPACER}${HELP_COLUMN_MAIN_PREFIX}%-${HELP_PACKAGE_STATUS_WIDTH}s${HELP_COLUMN_SPACER}${HELP_COLUMN_MAIN_PREFIX}%-${HELP_PACKAGE_VERSION_WIDTH}s${HELP_COLUMN_SPACER}${HELP_COLUMN_MAIN_PREFIX}%s\n" "$(Capitalise "$1"):" "$(Capitalise "$2"):" "$(Capitalise "$3"):" "$(Capitalise "$4"):"
 
     }
 
@@ -2633,11 +2652,11 @@ DisplayAsHelpPackageNameVersionStatus()
     # $4 = package installation location (optional) only if installed
 
     if [[ -z ${3:-} ]]; then
-        printf "%${HELP_DESC_INDENT}s%-${HELP_PACKAGE_NAME_WIDTH}s - %s\n" '' "${1:-}" "${2:-}"
+        printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_BLANK_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s${HELP_COLUMN_SPACER}${HELP_COLUMN_OTHER_PREFIX}%s\n" "${1:-}" "${2:-}"
     elif [[ -z ${4:-} ]]; then
-        printf "%${HELP_DESC_INDENT}s%-${HELP_PACKAGE_NAME_WIDTH}s - %-${HELP_PACKAGE_STATUS_WIDTH}s - %s\n" '' "${1:-}" "${2:-}" "${3:-}"
+        printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_BLANK_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s${HELP_COLUMN_SPACER}${HELP_COLUMN_OTHER_PREFIX}%-${HELP_PACKAGE_STATUS_WIDTH}s${HELP_COLUMN_SPACER}${HELP_COLUMN_OTHER_PREFIX}%s\n" "${1:-}" "${2:-}" "${3:-}"
     else
-        printf "%${HELP_DESC_INDENT}s%-${HELP_PACKAGE_NAME_WIDTH}s - %-$((HELP_PACKAGE_STATUS_WIDTH+$(LenANSIDiff "$2")))s - %-$((HELP_PACKAGE_VERSION_WIDTH+$(LenANSIDiff "$3")))s %s\n" '' "${1:-}" "${2:-}" "${3:-}" "${4:-}"
+        printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_BLANK_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s${HELP_COLUMN_SPACER}${HELP_COLUMN_OTHER_PREFIX}%-$((HELP_PACKAGE_STATUS_WIDTH+$(LenANSIDiff "$2")))s${HELP_COLUMN_SPACER}${HELP_COLUMN_OTHER_PREFIX}%-$((HELP_PACKAGE_VERSION_WIDTH+$(LenANSIDiff "$3")))s${HELP_COLUMN_SPACER}${HELP_COLUMN_BLANK_PREFIX}%s\n" "${1:-}" "${2:-}" "${3:-}" "${4:-}"
     fi
 
     }
@@ -2648,26 +2667,26 @@ DisplayAsHelpTitleFileNamePlusSomething()
     # $1 = file name title
     # $2 = second column title
 
-    printf "* %-${HELP_FILE_NAME_WIDTH}s * %s\n" "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}:" "$(tr 'a-z' 'A-Z' <<< "${2:0:1}")${2:1}:"
+    printf "${HELP_COLUMN_MAIN_PREFIX}%-${HELP_FILE_NAME_WIDTH}s ${HELP_COLUMN_MAIN_PREFIX}%s\n" "$(Capitalise "$1"):" "$(Capitalise "$2"):"
 
     }
 
 DisplayAsHelpTitle()
     {
 
-    # $1 = text (will be capitalised)
+    # $1 = text
 
-    printf "* %s\n" "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}"
+    printf "${HELP_COLUMN_MAIN_PREFIX}%s\n" "$(Capitalise "$1")"
 
     }
 
 DisplayAsHelpTitleHighlighted()
     {
 
-    # $1 = text (will be capitalised)
+    # $1 = text
 
     # shellcheck disable=2059
-    printf "$(ColourTextBrightOrange "* %s\n")" "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}"
+    printf "$(ColourTextBrightOrange "${HELP_COLUMN_MAIN_PREFIX}%s\n")" "$(Capitalise "$1")"
 
     }
 
@@ -2829,7 +2848,7 @@ Help.Problems.Show()
     DisableDebugToArchiveAndFile
     Help.Basic.Show
     DisplayLineSpaceIfNoneAlready
-    DisplayAsHelpTitle 'usage examples when dealing with problems:'
+    DisplayAsHelpTitle 'usage examples for dealing with problems:'
     DisplayAsProjectSyntaxIndentedExample 'process one-or-more packages and show live debugging information' "$(FormatAsHelpAction) $(FormatAsHelpPackages) debug"
     DisplayAsProjectSyntaxIndentedExample 'ensure all application dependencies are installed' 'check'
     DisplayAsProjectSyntaxIndentedExample "don't check free-space on target filesystem when installing $(FormatAsPackageName Entware) packages" "$(FormatAsHelpAction) $(FormatAsHelpPackages) ignore-space"
@@ -3706,8 +3725,9 @@ MarkOperationAsDone()
     #   $1 = package name
     #   $2 = action
 
-    QPKGs.OpTo"$(tr 'a-z' 'A-Z' <<< "${2:0:1}")${2:1}".Remove "$1"
-    QPKGs.OpOk"$(tr 'a-z' 'A-Z' <<< "${2:0:1}")${2:1}".Add "$1"
+    QPKGs.OpTo"$(Capitalise "$2")".Remove "$1"
+    QPKGs.OpOk"$(Capitalise "$2")".Add "$1"
+
 
     return 0
 
@@ -3727,8 +3747,8 @@ MarkOperationAsError()
 
     [[ -n ${3:-} ]] && message+=" as $3"
     DebugAsError "$message" >&2
-    QPKGs.OpTo"$(tr 'a-z' 'A-Z' <<< "${2:0:1}")${2:1}".Remove "$1"
-    QPKGs.OpEr"$(tr 'a-z' 'A-Z' <<< "${2:0:1}")${2:1}".Add "$1"
+    QPKGs.OpTo"$(Capitalise "$2")".Remove "$1"
+    QPKGs.OpEr"$(Capitalise "$2")".Add "$1"
 
     return 0
 
@@ -3754,8 +3774,8 @@ MarkOperationAsSkipped()
         DebugAsInfo "$message" >&2
     fi
 
-    QPKGs.OpTo"$(tr 'a-z' 'A-Z' <<< "${3:0:1}")${3:1}".Remove "$2"
-    QPKGs.OpSk"$(tr 'a-z' 'A-Z' <<< "${3:0:1}")${3:1}".Add "$2"
+    QPKGs.OpTo"$(Capitalise "$3")".Remove "$2"
+    QPKGs.OpSk"$(Capitalise "$3")".Add "$2"
 
     return 0
 
@@ -5348,6 +5368,13 @@ Plural()
 
     }
 
+Capitalise()
+    {
+
+    echo "$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}"
+
+    }
+
 FormatAsThousands()
     {
 
@@ -5854,7 +5881,7 @@ ShowAsWarn()
 ShowAsAbort()
     {
 
-    local capitalised="$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}"      # use any available 'tr'
+    local capitalised="$(Capitalise "$1")"
 
     WriteToDisplayNew "$(ColourTextBrightRed eror)" "$capitalised: aborting ..."
     WriteToLog eror "$capitalised: aborting"
@@ -5869,7 +5896,7 @@ ShowAsFail()
 
     SmartCR
 
-    local capitalised="$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}"      # use any available 'tr'
+    local capitalised="$(Capitalise "$1")"
 
     WriteToDisplayNew "$(ColourTextBrightRed fail)" "$capitalised"
     WriteToLog fail "$capitalised."
@@ -5883,7 +5910,7 @@ ShowAsEror()
 
     SmartCR
 
-    local capitalised="$(tr 'a-z' 'A-Z' <<< "${1:0:1}")${1:1}"      # use any available 'tr'
+    local capitalised="$(Capitalise "$1")"
 
     WriteToDisplayNew "$(ColourTextBrightRed eror)" "$capitalised"
     WriteToLog eror "$capitalised."
