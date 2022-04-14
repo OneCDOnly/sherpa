@@ -58,7 +58,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220415b
+    local -r SCRIPT_VERSION=220415c
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -2147,10 +2147,10 @@ IPKGs.DoUninstall()
     if [[ $total_count -gt 0 ]]; then
         ShowAsProc "uninstalling $total_count IPKG$(Plural "$total_count")"
 
-        RunAndLog "$OPKG_CMD remove $(IPKGs.OpToUninstall.List) --force-remove --force-removal-of-dependent-packages" "$LOGS_PATH/ipkgs.$UNINSTALL_LOG_FILE" log:failure-only
+        RunAndLog "$OPKG_CMD remove $(IPKGs.OpToUninstall.List) --force-remove --force-removal-of-dependent-packages" "$LOGS_PATH/ipkgs.$UNINSTALL_LOG_FILE" log:failure-only 255
         result_code=$?
 
-        if [[ $result_code -eq 0 ]]; then
+        if [[ $result_code -eq 0 || $result_code -eq 255 ]]; then
             ShowAsDone "uninstalled $total_count IPKG$(Plural "$total_count")"
         else
             ShowAsFail "uninstall IPKG$(Plural "$total_count") failed $(FormatAsExitcode $result_code)"
