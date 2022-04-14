@@ -58,7 +58,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220415
+    local -r SCRIPT_VERSION=220415b
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -252,7 +252,7 @@ Session.Init()
     readonly NAS_QPKG_ARCH=$(GetQPKGArch)
     readonly ENTWARE_VER=$(GetEntwareType)
     readonly LOG_TAIL_LINES=3000    # a full download and install of everything generates a session log of around 1600 lines, but include a bunch of opkg updates and it can get much longer
-    readonly MIN_PYTHON_VER=3100    # keep this up-to-date with current Entware Python3 version so IPKG upgrade notifier will work
+    readonly MIN_PYTHON_VER=3104    # keep this up-to-date with current Entware Python3 version so IPKG upgrade notifier will work
     readonly PYTHON_CMD=/opt/bin/python
     readonly PYTHON3_CMD=/opt/bin/python3
     readonly PIP_CMD="$PYTHON3_CMD -m pip"
