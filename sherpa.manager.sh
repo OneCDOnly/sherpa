@@ -58,7 +58,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220415c
+    local -r SCRIPT_VERSION=220415d
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -2655,18 +2655,25 @@ DisplayAsHelpTitlePackageNameVersionStatus()
     # $3 = package version title
     # $4 = package installation location (only if installed)
 
-    case $(CalculateMaximumStatusColumnsToDisplay) in
-        2)
-            printf "${HELP_COLUMN_MAIN_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s${HELP_COLUMN_SPACER}${HELP_COLUMN_MAIN_PREFIX}%-${HELP_PACKAGE_STATUS_WIDTH}s\n" "$(Capitalise "$1"):" "$(Capitalise "$2"):"
-            ;;
-        3)
-            printf "${HELP_COLUMN_MAIN_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s${HELP_COLUMN_SPACER}${HELP_COLUMN_MAIN_PREFIX}%-${HELP_PACKAGE_STATUS_WIDTH}s${HELP_COLUMN_SPACER}${HELP_COLUMN_MAIN_PREFIX}%-${HELP_PACKAGE_VERSION_WIDTH}s\n" "$(Capitalise "$1"):" "$(Capitalise "$2"):" "$(Capitalise "$3"):"
-            ;;
-        *)
-            printf "${HELP_COLUMN_MAIN_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s${HELP_COLUMN_SPACER}${HELP_COLUMN_MAIN_PREFIX}%-${HELP_PACKAGE_STATUS_WIDTH}s${HELP_COLUMN_SPACER}${HELP_COLUMN_MAIN_PREFIX}%-${HELP_PACKAGE_VERSION_WIDTH}s${HELP_COLUMN_SPACER}${HELP_COLUMN_MAIN_PREFIX}%s\n" "$(Capitalise "$1"):" "$(Capitalise "$2"):" "$(Capitalise "$3"):" "$(Capitalise "$4"):"
-    esac
+    local maxcols=$(CalculateMaximumStatusColumnsToDisplay)
 
-    #printf "${HELP_COLUMN_MAIN_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s${HELP_COLUMN_SPACER}${HELP_COLUMN_MAIN_PREFIX}%-${HELP_PACKAGE_STATUS_WIDTH}s${HELP_COLUMN_SPACER}${HELP_COLUMN_MAIN_PREFIX}%-${HELP_PACKAGE_VERSION_WIDTH}s${HELP_COLUMN_SPACER}${HELP_COLUMN_MAIN_PREFIX}%s\n" "$(Capitalise "$1"):" "$(Capitalise "$2"):" "$(Capitalise "$3"):" "$(Capitalise "$4"):"
+    if [[ -n ${1:-} && $maxcols -ge 1 ]]; then
+        printf "${HELP_COLUMN_MAIN_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s" "$(Capitalise "$1"):"
+    fi
+
+    if [[ -n ${2:-} && $maxcols -ge 2 ]]; then
+        printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_MAIN_PREFIX}%-${HELP_PACKAGE_STATUS_WIDTH}s" "$(Capitalise "$2"):"
+    fi
+
+    if [[ -n ${3:-} && $maxcols -ge 3 ]]; then
+        printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_MAIN_PREFIX}%-${HELP_PACKAGE_VERSION_WIDTH}s" "$(Capitalise "$3"):"
+    fi
+
+    if [[ -n ${4:-} && $maxcols -ge 4 ]]; then
+        printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_MAIN_PREFIX}%s" "$4"
+    fi
+
+    printf "\n"
 
     }
 
@@ -2676,26 +2683,27 @@ DisplayAsHelpPackageNameVersionStatus()
     # $1 = package name
     # $2 = package status
     # $3 = package version number (optional)
-    # $4 = package installation location (optional) only if installed
+    # $4 = package installation path (optional) only if installed
 
-    case $(CalculateMaximumStatusColumnsToDisplay) in
-        2)
-            printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_BLANK_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s${HELP_COLUMN_SPACER}${HELP_COLUMN_OTHER_PREFIX}%s\n" "${1:-}" "${2:-}"
-            ;;
-        3)
-            if [[ -z ${3:-} ]]; then
-                printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_BLANK_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s${HELP_COLUMN_SPACER}${HELP_COLUMN_OTHER_PREFIX}%s\n" "${1:-}" "${2:-}"
-            else
-                printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_BLANK_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s${HELP_COLUMN_SPACER}${HELP_COLUMN_OTHER_PREFIX}%-$((HELP_PACKAGE_STATUS_WIDTH+$(LenANSIDiff "$2")))s${HELP_COLUMN_SPACER}${HELP_COLUMN_OTHER_PREFIX}%s\n" "${1:-}" "${2:-}" "${3:-}"
-            fi
-            ;;
-        *)
-            if [[ -z ${4:-} ]]; then
-                printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_BLANK_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s${HELP_COLUMN_SPACER}${HELP_COLUMN_OTHER_PREFIX}%-${HELP_PACKAGE_STATUS_WIDTH}s${HELP_COLUMN_SPACER}${HELP_COLUMN_OTHER_PREFIX}%s\n" "${1:-}" "${2:-}" "${3:-}"
-            else
-                printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_BLANK_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s${HELP_COLUMN_SPACER}${HELP_COLUMN_OTHER_PREFIX}%-$((HELP_PACKAGE_STATUS_WIDTH+$(LenANSIDiff "$2")))s${HELP_COLUMN_SPACER}${HELP_COLUMN_OTHER_PREFIX}%-$((HELP_PACKAGE_VERSION_WIDTH+$(LenANSIDiff "$3")))s${HELP_COLUMN_SPACER}${HELP_COLUMN_BLANK_PREFIX}%s\n" "${1:-}" "${2:-}" "${3:-}" "${4:-}"
-            fi
-    esac
+    local maxcols=$(CalculateMaximumStatusColumnsToDisplay)
+
+    if [[ -n ${1:-} && $maxcols -ge 1 ]]; then
+        printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_BLANK_PREFIX}%-$(($HELP_PACKAGE_NAME_WIDTH+$(LenANSIDiff "$1")))s" "$1"
+    fi
+
+    if [[ -n ${2:-} && $maxcols -ge 2 ]]; then
+        printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_OTHER_PREFIX}%-$(($HELP_PACKAGE_STATUS_WIDTH+$(LenANSIDiff "$2")))s" "$2"
+    fi
+
+    if [[ -n ${3:-} && $maxcols -ge 3 ]]; then
+        printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_OTHER_PREFIX}%-$(($HELP_PACKAGE_VERSION_WIDTH+$(LenANSIDiff "$3")))s" "$3"
+    fi
+
+    if [[ -n ${4:-} && $maxcols -ge 4 ]]; then
+        printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_BLANK_PREFIX}%s" "$4"
+    fi
+
+    printf "\n"
 
     }
 
