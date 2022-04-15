@@ -58,7 +58,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220416e
+    local -r SCRIPT_VERSION=220416f
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -206,11 +206,11 @@ Session.Init()
 
         # don't actually need to run the next two, but it looks better for user progress display
         CleanManagementScript
-        CleanPackageList
+        CleanPackageLists
         exit 0
     elif [[ $USER_ARGS_RAW == *"clean"* ]]; then
         CleanManagementScript
-        CleanPackageList
+        CleanPackageLists
         exit 0
     fi
 
@@ -1731,12 +1731,14 @@ CleanManagementScript()
 
     }
 
-CleanPackageList()
+CleanPackageLists()
     {
 
     if [[ -n $WORK_PATH && -d $WORK_PATH ]]; then
         rm -f "$PACKAGES_PATHFILE"
-        ShowAsDone 'package list cleaned'
+        rm -f "$EXTERNAL_PACKAGES_PATHFILE"
+        rm -f "$EXTERNAL_PACKAGES_ARCHIVE_PATHFILE"
+        ShowAsDone 'package lists cleaned'
     fi
 
     return 0
