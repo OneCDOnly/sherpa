@@ -58,7 +58,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220415f
+    local -r SCRIPT_VERSION=220415g
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -2630,10 +2630,10 @@ DisplayAsHelpPackageNamePlusSomething()
 CalculateMaximumStatusColumnsToDisplay()
     {
 
-    column1_width=$((${#HELP_COLUMN_MAIN_PREFIX} + HELP_PACKAGE_NAME_WIDTH + ${#HELP_COLUMN_SPACER}))
-    column2_width=$((${#HELP_COLUMN_MAIN_PREFIX} + HELP_PACKAGE_STATUS_WIDTH + ${#HELP_COLUMN_SPACER}))
-    column3_width=$((${#HELP_COLUMN_MAIN_PREFIX} + HELP_PACKAGE_VERSION_WIDTH + ${#HELP_COLUMN_SPACER}))
-    column4_width=$((${#HELP_COLUMN_MAIN_PREFIX} + HELP_PACKAGE_PATH_WIDTH))
+    local column1_width=$((${#HELP_COLUMN_MAIN_PREFIX} + HELP_PACKAGE_NAME_WIDTH))
+    local column2_width=$((${#HELP_COLUMN_SPACER} + ${#HELP_COLUMN_MAIN_PREFIX} + HELP_PACKAGE_STATUS_WIDTH))
+    local column3_width=$((${#HELP_COLUMN_SPACER} + ${#HELP_COLUMN_MAIN_PREFIX} + HELP_PACKAGE_VERSION_WIDTH))
+    local column4_width=$((${#HELP_COLUMN_SPACER} + ${#HELP_COLUMN_MAIN_PREFIX} + HELP_PACKAGE_PATH_WIDTH))
 
     if [[ $((column1_width + column2_width)) -gt $COLUMNS ]]; then
         echo 1
@@ -3576,9 +3576,11 @@ QPKGs.Statuses.Show()
     local tier=''
     local -a package_status_notes=()
     local -i index=0
+    local current_package_name=''
     local package_name=''
-    local package_version=''
     local package_status=''
+    local package_version=''
+    local maxcols=$(CalculateMaximumStatusColumnsToDisplay)
 
     QPKGs.States.Build
     DisplayLineSpaceIfNoneAlready
@@ -3586,52 +3588,77 @@ QPKGs.Statuses.Show()
     for tier in Standalone Dependent; do
         DisplayAsHelpTitlePackageNameVersionStatus "$tier QPKGs" 'QPKG status' 'QPKG version' 'installed QPKG path'
 
-        for package_name in $(QPKGs.Sc$tier.Array); do
-            package_status_notes=()
-            package_version=''
+        for current_package_name in $(QPKGs.Sc$tier.Array); do
+            package_name=''
             package_status=''
+            package_version=''
+            package_status_notes=()
 
-            if ! QPKG.URL "$package_name" &>/dev/null; then
-                DisplayAsHelpPackageNameVersionStatus "$package_name" 'not installable on this NAS (unsupported arch)'
-            elif ! QPKG.MinRAM "$package_name" &>/dev/null; then
-                DisplayAsHelpPackageNameVersionStatus "$package_name" 'not installable on this NAS (insufficient RAM)'
-            elif QPKGs.IsNtInstalled.Exist "$package_name"; then
-                DisplayAsHelpPackageNameVersionStatus "$package_name" 'not installed' "$(QPKG.Available.Version "$package_name")"
+            if ! QPKG.URL "$current_package_name" &>/dev/null; then
+                DisplayAsHelpPackageNameVersionStatus "$current_package_name" 'not installable (unsupported arch)'
+            elif ! QPKG.MinRAM "$current_package_name" &>/dev/null; then
+                DisplayAsHelpPackageNameVersionStatus "$current_package_name" 'not installable (insufficient RAM)'
+            elif QPKGs.IsNtInstalled.Exist "$current_package_name"; then
+                DisplayAsHelpPackageNameVersionStatus "$current_package_name" 'not installed' "$(QPKG.Available.Version "$current_package_name")"
             else
-                if QPKGs.IsMissing.Exist "$package_name"; then
-                    package_status_notes=($(ColourTextBrightRedBlink missing))
-                elif QPKGs.IsEnabled.Exist "$package_name"; then
-                    package_status_notes+=($(ColourTextBrightGreen enabled))
-                elif QPKGs.IsDisabled.Exist "$package_name"; then
-                    package_status_notes+=($(ColourTextBrightRed disabled))
-                fi
+                if [[ $maxcols -eq 1 ]]; then
+                    if QPKGs.IsMissing.Exist "$current_package_name"; then
+                        package_name=$(ColourTextBrightRedBlink "$current_package_name")
+                    elif QPKGs.IsEnabled.Exist "$current_package_name"; then
+                        package_name=$(ColourTextBrightGreen "$current_package_name")
+                    elif QPKGs.IsDisabled.Exist "$current_package_name"; then
+                        package_name=$(ColourTextBrightRed "$current_package_name")
+                    fi
 
-                if QPKGs.IsStarting.Exist "$package_name"; then
-                    package_status_notes+=($(ColourTextBrightOrange starting))
-                elif QPKGs.IsStopping.Exist "$package_name"; then
-                    package_status_notes+=($(ColourTextBrightOrange stopping))
-                elif QPKGs.IsRestarting.Exist "$package_name"; then
-                    package_status_notes+=($(ColourTextBrightOrange restarting))
-                elif QPKGs.IsStarted.Exist "$package_name"; then
-                    package_status_notes+=($(ColourTextBrightGreen started))
-                elif QPKGs.IsStopped.Exist "$package_name"; then
-                    package_status_notes+=($(ColourTextBrightRed stopped))
-                fi
-
-                if QPKGs.ScUpgradable.Exist "$package_name"; then
-                    package_version="$(QPKG.Local.Version "$package_name") $(ColourTextBrightOrange "($(QPKG.Available.Version "$package_name") available)")"
-                    package_status_notes+=($(ColourTextBrightOrange upgradable))
+                    if QPKGs.IsStarting.Exist "$current_package_name"; then
+                        package_name=$(ColourTextBrightOrange "$current_package_name")
+                    elif QPKGs.IsStopping.Exist "$current_package_name"; then
+                        package_name=$(ColourTextBrightOrange "$current_package_name")
+                    elif QPKGs.IsRestarting.Exist "$current_package_name"; then
+                        package_name=$(ColourTextBrightOrange "$current_package_name")
+                    elif QPKGs.IsStarted.Exist "$current_package_name"; then
+                        package_name=$(ColourTextBrightGreen "$current_package_name")
+                    elif QPKGs.IsStopped.Exist "$current_package_name"; then
+                        package_name=$(ColourTextBrightRed "$current_package_name")
+                    fi
                 else
-                    package_version=$(QPKG.Available.Version "$package_name")
+                    if QPKGs.IsMissing.Exist "$current_package_name"; then
+                        package_status_notes=($(ColourTextBrightRedBlink missing))
+                    elif QPKGs.IsEnabled.Exist "$current_package_name"; then
+                        package_status_notes+=($(ColourTextBrightGreen enabled))
+                    elif QPKGs.IsDisabled.Exist "$current_package_name"; then
+                        package_status_notes+=($(ColourTextBrightRed disabled))
+                    fi
+
+                    if QPKGs.IsStarting.Exist "$current_package_name"; then
+                        package_status_notes+=($(ColourTextBrightOrange starting))
+                    elif QPKGs.IsStopping.Exist "$current_package_name"; then
+                        package_status_notes+=($(ColourTextBrightOrange stopping))
+                    elif QPKGs.IsRestarting.Exist "$current_package_name"; then
+                        package_status_notes+=($(ColourTextBrightOrange restarting))
+                    elif QPKGs.IsStarted.Exist "$current_package_name"; then
+                        package_status_notes+=($(ColourTextBrightGreen started))
+                    elif QPKGs.IsStopped.Exist "$current_package_name"; then
+                        package_status_notes+=($(ColourTextBrightRed stopped))
+                    fi
+
+                    if QPKGs.ScUpgradable.Exist "$current_package_name"; then
+                        package_version="$(QPKG.Local.Version "$current_package_name") $(ColourTextBrightOrange "($(QPKG.Available.Version "$current_package_name") available)")"
+                        package_status_notes+=($(ColourTextBrightOrange upgradable))
+                    else
+                        package_version=$(QPKG.Available.Version "$current_package_name")
+                    fi
+
+                    for ((index=0;index<=((${#package_status_notes[@]}-1));index++)); do
+                        package_status+=${package_status_notes[$index]}
+
+                        [[ $((index+2)) -le ${#package_status_notes[@]} ]] && package_status+=', '
+                    done
+
+                    package_name=$current_package_name
                 fi
 
-                for ((index=0;index<=((${#package_status_notes[@]}-1));index++)); do
-                    package_status+=${package_status_notes[$index]}
-
-                    [[ $((index+2)) -le ${#package_status_notes[@]} ]] && package_status+=', '
-                done
-
-                DisplayAsHelpPackageNameVersionStatus "$package_name" "$package_status" "$package_version" "$(QPKG.InstallationPath "$package_name")"
+                DisplayAsHelpPackageNameVersionStatus "$package_name" "$package_status" "$package_version" "$(QPKG.InstallationPath "$current_package_name")"
             fi
         done
 
