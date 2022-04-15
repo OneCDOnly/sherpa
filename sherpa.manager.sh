@@ -58,7 +58,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220416
+    local -r SCRIPT_VERSION=220416b
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -281,6 +281,13 @@ Session.Init()
         DisplayLineSpaceIfNoneAlready
     fi
 
+    if ! QPKGs.Conflicts.Check; then
+        code_pointer=1
+        QPKGs.SkProc.Set
+        DebugFuncExit 1; return
+    fi
+
+    QPKGs.Warnings.Check
     DebugFuncExit
 
     }
@@ -355,12 +362,6 @@ Session.Validate()
     DebugInfoMinorSeparator
 
     if QPKGs.SkProc.IsSet; then
-        DebugFuncExit 1; return
-    fi
-
-    if ! QPKGs.Conflicts.Check; then
-        code_pointer=1
-        QPKGs.SkProc.Set
         DebugFuncExit 1; return
     fi
 
@@ -3308,14 +3309,35 @@ QPKGs.NewVersions.Show()
 QPKGs.Conflicts.Check()
     {
 
-    for package in "${BASE_QPKG_CONFLICTS[@]}"; do
-        if QPKGs.IsStarted.Exist "$package"; then
+    DebugFuncEntry
+    local package=''
+
+    # shellcheck disable=2068
+    for package in ${BASE_QPKG_CONFLICTS[@]}; do
+        if [[ $(/sbin/getcfg "$package" Enable -u -f /etc/config/qpkg.conf) = 'TRUE' ]]; then
             ShowAsEror "'$package' is installed and enabled. One-or-more $(FormatAsScriptTitle) applications are incompatible with this package"
-            return 1
+            DebugFuncExit 1; return
         fi
     done
 
-    return 0
+    DebugFuncExit
+
+    }
+
+QPKGs.Warnings.Check()
+    {
+
+    DebugFuncEntry
+    local package=''
+
+    # shellcheck disable=2068
+    for package in ${BASE_QPKG_WARNINGS[@]}; do
+        if [[ $(/sbin/getcfg "$package" Enable -u -f /etc/config/qpkg.conf) = 'TRUE' ]]; then
+            ShowAsWarn "'$package' is installed and enabled. This package may cause problems with $(FormatAsScriptTitle) applications"
+        fi
+    done
+
+    DebugFuncExit
 
     }
 
@@ -6339,6 +6361,7 @@ Packages.DoLoad()
     . "$PACKAGES_PATHFILE"
 
     readonly BASE_QPKG_CONFLICTS
+    readonly BASE_QPKG_WARNINGS
     readonly BASE_IPKGS_ADD
     readonly BASE_PIPS_ADD
 
