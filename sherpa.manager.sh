@@ -58,7 +58,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220415e
+    local -r SCRIPT_VERSION=220415f
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -2534,7 +2534,7 @@ readonly HELP_DESC_INDENT=3
 readonly HELP_SYNTAX_INDENT=6
 
 readonly HELP_PACKAGE_NAME_WIDTH=20
-readonly HELP_PACKAGE_STATUS_WIDTH=20
+readonly HELP_PACKAGE_STATUS_WIDTH=28
 readonly HELP_PACKAGE_VERSION_WIDTH=27
 readonly HELP_PACKAGE_PATH_WIDTH=42
 readonly HELP_FILE_NAME_WIDTH=33
@@ -2630,12 +2630,14 @@ DisplayAsHelpPackageNamePlusSomething()
 CalculateMaximumStatusColumnsToDisplay()
     {
 
-    column1_width=$((${#HELP_COLUMN_MAIN_PREFIX}+HELP_PACKAGE_NAME_WIDTH+${#HELP_COLUMN_SPACER}))
-    column2_width=$((${#HELP_COLUMN_MAIN_PREFIX}+HELP_PACKAGE_STATUS_WIDTH+${#HELP_COLUMN_SPACER}))
-    column3_width=$((${#HELP_COLUMN_MAIN_PREFIX}+HELP_PACKAGE_VERSION_WIDTH+${#HELP_COLUMN_SPACER}))
-    column4_width=$((${#HELP_COLUMN_MAIN_PREFIX}+HELP_PACKAGE_PATH_WIDTH))
+    column1_width=$((${#HELP_COLUMN_MAIN_PREFIX} + HELP_PACKAGE_NAME_WIDTH + ${#HELP_COLUMN_SPACER}))
+    column2_width=$((${#HELP_COLUMN_MAIN_PREFIX} + HELP_PACKAGE_STATUS_WIDTH + ${#HELP_COLUMN_SPACER}))
+    column3_width=$((${#HELP_COLUMN_MAIN_PREFIX} + HELP_PACKAGE_VERSION_WIDTH + ${#HELP_COLUMN_SPACER}))
+    column4_width=$((${#HELP_COLUMN_MAIN_PREFIX} + HELP_PACKAGE_PATH_WIDTH))
 
-    if [[ $((column1_width + column2_width + column3_width)) -gt $COLUMNS ]]; then
+    if [[ $((column1_width + column2_width)) -gt $COLUMNS ]]; then
+        echo 1
+    elif [[ $((column1_width + column2_width + column3_width)) -gt $COLUMNS ]]; then
         echo 2
     elif [[ $((column1_width + column2_width + column3_width + column4_width)) -gt $COLUMNS ]]; then
         echo 3
@@ -2670,10 +2672,10 @@ DisplayAsHelpTitlePackageNameVersionStatus()
     fi
 
     if [[ -n ${4:-} && $maxcols -ge 4 ]]; then
-        printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_MAIN_PREFIX}%s" "$4"
+        printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_MAIN_PREFIX}%s" "$(Capitalise "$4"):"
     fi
 
-    printf "\n"
+    printf '\n'
 
     }
 
@@ -2681,29 +2683,29 @@ DisplayAsHelpPackageNameVersionStatus()
     {
 
     # $1 = package name
-    # $2 = package status
+    # $2 = package status (optional)
     # $3 = package version number (optional)
     # $4 = package installation path (optional) only if installed
 
     local maxcols=$(CalculateMaximumStatusColumnsToDisplay)
 
     if [[ -n ${1:-} && $maxcols -ge 1 ]]; then
-        printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_BLANK_PREFIX}%-$((HELP_PACKAGE_NAME_WIDTH+$(LenANSIDiff "$1")))s" "$1"
+        printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_BLANK_PREFIX}%-$((HELP_PACKAGE_NAME_WIDTH + $(LenANSIDiff "$1")))s" "$1"
     fi
 
     if [[ -n ${2:-} && $maxcols -ge 2 ]]; then
-        printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_OTHER_PREFIX}%-$((HELP_PACKAGE_STATUS_WIDTH+$(LenANSIDiff "$2")))s" "$2"
+        printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_OTHER_PREFIX}%-$((HELP_PACKAGE_STATUS_WIDTH + $(LenANSIDiff "$2")))s" "$2"
     fi
 
     if [[ -n ${3:-} && $maxcols -ge 3 ]]; then
-        printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_OTHER_PREFIX}%-$((HELP_PACKAGE_VERSION_WIDTH+$(LenANSIDiff "$3")))s" "$3"
+        printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_OTHER_PREFIX}%-$((HELP_PACKAGE_VERSION_WIDTH + $(LenANSIDiff "$3")))s" "$3"
     fi
 
     if [[ -n ${4:-} && $maxcols -ge 4 ]]; then
         printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_BLANK_PREFIX}%s" "$4"
     fi
 
-    printf "\n"
+    printf '\n'
 
     }
 
@@ -3596,12 +3598,6 @@ QPKGs.Statuses.Show()
             elif QPKGs.IsNtInstalled.Exist "$package_name"; then
                 DisplayAsHelpPackageNameVersionStatus "$package_name" 'not installed' "$(QPKG.Available.Version "$package_name")"
             else
-                if QPKGs.ScUpgradable.Exist "$package_name"; then
-                    package_version="$(QPKG.Local.Version "$package_name") $(ColourTextBrightOrange "($(QPKG.Available.Version "$package_name") available)")"
-                else
-                    package_version=$(QPKG.Available.Version "$package_name")
-                fi
-
                 if QPKGs.IsMissing.Exist "$package_name"; then
                     package_status_notes=($(ColourTextBrightRedBlink missing))
                 elif QPKGs.IsEnabled.Exist "$package_name"; then
@@ -3620,6 +3616,13 @@ QPKGs.Statuses.Show()
                     package_status_notes+=($(ColourTextBrightGreen started))
                 elif QPKGs.IsStopped.Exist "$package_name"; then
                     package_status_notes+=($(ColourTextBrightRed stopped))
+                fi
+
+                if QPKGs.ScUpgradable.Exist "$package_name"; then
+                    package_version="$(QPKG.Local.Version "$package_name") $(ColourTextBrightOrange "($(QPKG.Available.Version "$package_name") available)")"
+                    package_status_notes+=($(ColourTextBrightOrange upgradable))
+                else
+                    package_version=$(QPKG.Available.Version "$package_name")
                 fi
 
                 for ((index=0;index<=((${#package_status_notes[@]}-1));index++)); do
