@@ -58,7 +58,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220415d
+    local -r SCRIPT_VERSION=220415e
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -2630,10 +2630,10 @@ DisplayAsHelpPackageNamePlusSomething()
 CalculateMaximumStatusColumnsToDisplay()
     {
 
-    column1_width=$((${#HELP_COLUMN_MAIN_PREFIX}+${HELP_PACKAGE_NAME_WIDTH}+${#HELP_COLUMN_SPACER}))
-    column2_width=$((${#HELP_COLUMN_MAIN_PREFIX}+${HELP_PACKAGE_STATUS_WIDTH}+${#HELP_COLUMN_SPACER}))
-    column3_width=$((${#HELP_COLUMN_MAIN_PREFIX}+${HELP_PACKAGE_VERSION_WIDTH}+${#HELP_COLUMN_SPACER}))
-    column4_width=$((${#HELP_COLUMN_MAIN_PREFIX}+${HELP_PACKAGE_PATH_WIDTH}))
+    column1_width=$((${#HELP_COLUMN_MAIN_PREFIX}+HELP_PACKAGE_NAME_WIDTH+${#HELP_COLUMN_SPACER}))
+    column2_width=$((${#HELP_COLUMN_MAIN_PREFIX}+HELP_PACKAGE_STATUS_WIDTH+${#HELP_COLUMN_SPACER}))
+    column3_width=$((${#HELP_COLUMN_MAIN_PREFIX}+HELP_PACKAGE_VERSION_WIDTH+${#HELP_COLUMN_SPACER}))
+    column4_width=$((${#HELP_COLUMN_MAIN_PREFIX}+HELP_PACKAGE_PATH_WIDTH))
 
     if [[ $((column1_width + column2_width + column3_width)) -gt $COLUMNS ]]; then
         echo 2
@@ -2688,15 +2688,15 @@ DisplayAsHelpPackageNameVersionStatus()
     local maxcols=$(CalculateMaximumStatusColumnsToDisplay)
 
     if [[ -n ${1:-} && $maxcols -ge 1 ]]; then
-        printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_BLANK_PREFIX}%-$(($HELP_PACKAGE_NAME_WIDTH+$(LenANSIDiff "$1")))s" "$1"
+        printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_BLANK_PREFIX}%-$((HELP_PACKAGE_NAME_WIDTH+$(LenANSIDiff "$1")))s" "$1"
     fi
 
     if [[ -n ${2:-} && $maxcols -ge 2 ]]; then
-        printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_OTHER_PREFIX}%-$(($HELP_PACKAGE_STATUS_WIDTH+$(LenANSIDiff "$2")))s" "$2"
+        printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_OTHER_PREFIX}%-$((HELP_PACKAGE_STATUS_WIDTH+$(LenANSIDiff "$2")))s" "$2"
     fi
 
     if [[ -n ${3:-} && $maxcols -ge 3 ]]; then
-        printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_OTHER_PREFIX}%-$(($HELP_PACKAGE_VERSION_WIDTH+$(LenANSIDiff "$3")))s" "$3"
+        printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_OTHER_PREFIX}%-$((HELP_PACKAGE_VERSION_WIDTH+$(LenANSIDiff "$3")))s" "$3"
     fi
 
     if [[ -n ${4:-} && $maxcols -ge 4 ]]; then
