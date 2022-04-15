@@ -58,7 +58,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220416d
+    local -r SCRIPT_VERSION=220416e
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -6334,7 +6334,7 @@ Objects.DoLoad()
 
     if [[ ! -e $OBJECTS_PATHFILE ]]; then
         ShowAsAbort 'objects missing'
-        DebugFuncExit 1; return
+        DebugFuncExit 1; exit
     fi
 
     ShowAsProc 'loading objects' >&2
