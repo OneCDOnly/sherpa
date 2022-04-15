@@ -58,7 +58,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220416b
+    local -r SCRIPT_VERSION=220416c
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -222,6 +222,9 @@ Session.Init()
         local terminal_dimensions=$($GNU_STTY_CMD size)
         readonly ROWS=${terminal_dimensions% *}
         readonly COLUMNS=${terminal_dimensions#* }
+    else
+        readonly ROWS=40
+        readonly COLUMNS=156
     fi
 
     if [[ $USER_ARGS_RAW == *"debug"* || $USER_ARGS_RAW == *"dbug"* || $USER_ARGS_RAW == *"verbose"* ]]; then
