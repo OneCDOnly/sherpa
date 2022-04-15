@@ -58,7 +58,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220415h
+    local -r SCRIPT_VERSION=220416
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -301,7 +301,7 @@ Session.Validate()
     local package=''
     local something_to_do=false
     local -i max_width=70
-    local -i trimmed_width=$((max_width-3))
+    local -i trimmed_width=$((max_width - 3))
     local version=''
 
     ShowAsProc 'environment' >&2
@@ -782,7 +782,7 @@ Tier.Processor()
     esac
 
     # execute with pass_count > total_count to trigger 100% message
-    ShowAsOperationProgress "$TIER" "$PACKAGE_TYPE" "$((total_count+1))" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
+    ShowAsOperationProgress "$TIER" "$PACKAGE_TYPE" "$((total_count + 1))" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
     ShowAsOperationResult "$TIER" "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PAST" "$RUNTIME"
 
     DebugFuncExit
@@ -2265,7 +2265,7 @@ PIPs.DoInstall()
     fi
 
     # execute with pass_count > total_count to trigger 100% message
-    ShowAsOperationProgress '' "$PACKAGE_TYPE" "$((total_count+1))" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
+    ShowAsOperationProgress '' "$PACKAGE_TYPE" "$((total_count + 1))" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
     ShowAsOperationResult '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PAST" "$RUNTIME"
 
     # check all PIP dependencies while we're here
@@ -2408,10 +2408,10 @@ ProgressUpdater()
     this_clean_msg=$(StripANSI "${1:-}")
 
     if [[ $this_clean_msg != "$previous_clean_msg" ]]; then
-        this_length=$((${#this_clean_msg}+1))
+        this_length=$((${#this_clean_msg} + 1))
 
         if [[ $this_length -lt $previous_length ]]; then
-            blanking_length=$((this_length-previous_length))
+            blanking_length=$((this_length - previous_length))
             # backspace to start of previous msg, print new msg, add additional spaces, then backspace to end of msg
             printf "%${previous_length}s" | tr ' ' '\b'; DisplayWait "$1"; printf "%${blanking_length}s"; printf "%${blanking_length}s" | tr ' ' '\b'
         else
@@ -2549,7 +2549,7 @@ LenANSIDiff()
     {
 
     local stripped=$(StripANSI "$1")
-    echo $((${#1}-${#stripped}))
+    echo $((${#1} - ${#stripped}))
 
     return 0
 
@@ -3160,7 +3160,7 @@ GetLogSessionStartLine()
 
     # $1 = how many sessions back? (optional) default = 1
 
-    local -i linenum=$(($($GREP_CMD -n 'SCRIPT:.*started:' "$SESSION_TAIL_PATHFILE" | $TAIL_CMD -n${1:-1} | $HEAD_CMD -n1 | cut -d':' -f1)-1))
+    local -i linenum=$(($($GREP_CMD -n 'SCRIPT:.*started:' "$SESSION_TAIL_PATHFILE" | $TAIL_CMD -n${1:-1} | $HEAD_CMD -n1 | cut -d':' -f1) - 1))
     [[ $linenum -lt 1 ]] && linenum=1
     echo $linenum
 
@@ -3171,7 +3171,7 @@ GetLogSessionFinishLine()
 
     # $1 = how many sessions back? (optional) default = 1
 
-    local -i linenum=$(($($GREP_CMD -n 'SCRIPT:.*finished:' "$SESSION_TAIL_PATHFILE" | $TAIL_CMD -n${1:-1} | cut -d':' -f1)+2))
+    local -i linenum=$(($($GREP_CMD -n 'SCRIPT:.*finished:' "$SESSION_TAIL_PATHFILE" | $TAIL_CMD -n${1:-1} | cut -d':' -f1) + 2))
     [[ $linenum -eq 2 ]] && linenum=3
     echo $linenum
 
@@ -3219,7 +3219,7 @@ ExtractPreviousSessionFromTail()
 
     if [[ -e $SESSION_TAIL_PATHFILE ]]; then
         end_line=$(GetLogSessionFinishLine "$old_session")
-        start_line=$((end_line+1))      # ensure an invalid condition, to be solved by the loop
+        start_line=$((end_line + 1))      # ensure an invalid condition, to be solved by the loop
 
         while [[ $start_line -ge $end_line ]]; do
             start_line=$(GetLogSessionStartLine "$old_session")
@@ -3284,12 +3284,12 @@ QPKGs.NewVersions.Show()
         left_to_upgrade+=($(QPKGs.ScUpgradable.Array))
     fi
 
-    for ((index=0;index<=((${#left_to_upgrade[@]}-1));index++)); do
+    for ((index=0; index<=((${#left_to_upgrade[@]} - 1)); index++)); do
         names_formatted+=$(ColourTextBrightOrange "${left_to_upgrade[$index]}")
 
-        if [[ $((index+2)) -lt ${#left_to_upgrade[@]} ]]; then
+        if [[ $((index + 2)) -lt ${#left_to_upgrade[@]} ]]; then
             names_formatted+=', '
-        elif [[ $((index+2)) -eq ${#left_to_upgrade[@]} ]]; then
+        elif [[ $((index + 2)) -eq ${#left_to_upgrade[@]} ]]; then
             names_formatted+=' & '
         fi
     done
@@ -3649,10 +3649,10 @@ QPKGs.Statuses.Show()
                         package_version=$(QPKG.Available.Version "$current_package_name")
                     fi
 
-                    for ((index=0;index<=((${#package_status_notes[@]}-1));index++)); do
+                    for ((index=0; index<=((${#package_status_notes[@]} - 1)); index++)); do
                         package_status+=${package_status_notes[$index]}
 
-                        [[ $((index+2)) -le ${#package_status_notes[@]} ]] && package_status+=', '
+                        [[ $((index + 2)) -le ${#package_status_notes[@]} ]] && package_status+=', '
                     done
 
                     package_name=$current_package_name
@@ -5772,13 +5772,13 @@ DebugFuncExit()
 
     local var_name=${FUNCNAME[1]}_STARTSECONDS
     local var_safe_name=${var_name//[.-]/_}
-    local diff_milliseconds=$((($($DATE_CMD +%s%N) - ${!var_safe_name})/1000000))
+    local diff_milliseconds=$((($($DATE_CMD +%s%N) - ${!var_safe_name}) / 1000000))
     local elapsed_time=''
 
     if [[ $diff_milliseconds -lt 30000 ]]; then
         elapsed_time="$(FormatAsThousands "$diff_milliseconds")ms"
     else
-        elapsed_time=$(FormatSecsToHoursMinutesSecs "$((diff_milliseconds/1000))")
+        elapsed_time=$(FormatSecsToHoursMinutesSecs "$((diff_milliseconds / 1000))")
     fi
 
     DebugThis "(<<) ${FUNCNAME[1]}|${1:-0}|${code_pointer:-}|$elapsed_time"
@@ -6019,16 +6019,16 @@ ShowAsOperationProgress()
     local -i total_count=${5:-0}
     local -r ACTION_PRESENT=${6:?empty}
     local -r DURATION=${7:-}
-    local -i tweaked_passes=$((pass_count+1))              # never show zero (e.g. 0/8)
-    local -i tweaked_total=$((total_count-fail_count))     # auto-adjust upper limit to account for failures
+    local -i tweaked_passes=$((pass_count + 1))              # never show zero (e.g. 0/8)
+    local -i tweaked_total=$((total_count - fail_count))     # auto-adjust upper limit to account for failures
 
     [[ $tweaked_total -eq 0 ]] && return 1              # no-point showing a fraction of zero
 
     if [[ $tweaked_passes -gt $tweaked_total ]]; then
-        tweaked_passes=$((tweaked_total-fail_count))
+        tweaked_passes=$((tweaked_total - fail_count))
         percent='100%'
     else
-        percent="$((200*(tweaked_passes)/(tweaked_total+1) % 2 + 100*(tweaked_passes)/(tweaked_total+1)))%"
+        percent="$((200 * (tweaked_passes)/(tweaked_total + 1) % 2 + 100 * (tweaked_passes) / (tweaked_total + 1)))%"
     fi
 
     if [[ $DURATION = long ]]; then
@@ -6132,15 +6132,15 @@ WriteToDisplayNew()
     this_message=$(printf "%-10s: %s" "${1:-}" "${2:-}")
 
     if [[ $this_message != "${previous_msg}" ]]; then
-        previous_length=$((${#previous_msg}+1))
-        this_length=$((${#this_message}+1))
+        previous_length=$((${#previous_msg} + 1))
+        this_length=$((${#this_message} + 1))
 
         # jump to start of line, print new msg
         strbuffer=$(echo -en "\r$this_message ")
 
         # if new msg is shorter then add spaces to end to cover previous msg
         if [[ $this_length -lt $previous_length ]]; then
-            blanking_length=$((this_length-previous_length))
+            blanking_length=$((this_length - previous_length))
             strbuffer+=$(printf "%${blanking_length}s")
         fi
 
@@ -6254,9 +6254,9 @@ FormatSecsToHoursMinutesSecs()
     # input:
     #   $1 = a time in seconds to convert to 'HHh:MMm:SSs'
 
-    ((h=${1:-0}/3600))
-    ((m=(${1:-0}%3600)/60))
-    ((s=${1:-0}%60))
+    ((h=${1:-0} / 3600))
+    ((m=(${1:-0} % 3600) / 60))
+    ((s=${1:-0} % 60))
 
     printf "%01dh:%02dm:%02ds\n" "$h" "$m" "$s"
 
