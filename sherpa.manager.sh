@@ -58,7 +58,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220416c
+    local -r SCRIPT_VERSION=220416d
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -3315,13 +3315,15 @@ QPKGs.Conflicts.Check()
     DebugFuncEntry
     local package=''
 
-    # shellcheck disable=2068
-    for package in ${BASE_QPKG_CONFLICTS[@]}; do
-        if [[ $(/sbin/getcfg "$package" Enable -u -f /etc/config/qpkg.conf) = 'TRUE' ]]; then
-            ShowAsEror "'$package' is installed and enabled. One-or-more $(FormatAsScriptTitle) applications are incompatible with this package"
-            DebugFuncExit 1; return
-        fi
-    done
+    if [[ -n ${BASE_QPKG_CONFLICTS:-} ]]; then
+        # shellcheck disable=2068
+        for package in ${BASE_QPKG_CONFLICTS[@]}; do
+            if [[ $(/sbin/getcfg "$package" Enable -u -f /etc/config/qpkg.conf) = 'TRUE' ]]; then
+                ShowAsEror "'$package' is installed and enabled. One-or-more $(FormatAsScriptTitle) applications are incompatible with this package"
+                DebugFuncExit 1; return
+            fi
+        done
+    fi
 
     DebugFuncExit
 
@@ -3333,12 +3335,14 @@ QPKGs.Warnings.Check()
     DebugFuncEntry
     local package=''
 
-    # shellcheck disable=2068
-    for package in ${BASE_QPKG_WARNINGS[@]}; do
-        if [[ $(/sbin/getcfg "$package" Enable -u -f /etc/config/qpkg.conf) = 'TRUE' ]]; then
-            ShowAsWarn "'$package' is installed and enabled. This package may cause problems with $(FormatAsScriptTitle) applications"
-        fi
-    done
+    if [[ -n ${BASE_QPKG_WARNINGS:-} ]]; then
+        # shellcheck disable=2068
+        for package in ${BASE_QPKG_WARNINGS[@]}; do
+            if [[ $(/sbin/getcfg "$package" Enable -u -f /etc/config/qpkg.conf) = 'TRUE' ]]; then
+                ShowAsWarn "'$package' is installed and enabled. This package may cause problems with $(FormatAsScriptTitle) applications"
+            fi
+        done
+    fi
 
     DebugFuncExit
 
