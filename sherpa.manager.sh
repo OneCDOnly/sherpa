@@ -58,7 +58,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220415g
+    local -r SCRIPT_VERSION=220415h
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -2534,7 +2534,7 @@ readonly HELP_DESC_INDENT=3
 readonly HELP_SYNTAX_INDENT=6
 
 readonly HELP_PACKAGE_NAME_WIDTH=20
-readonly HELP_PACKAGE_STATUS_WIDTH=28
+readonly HELP_PACKAGE_STATUS_WIDTH=34
 readonly HELP_PACKAGE_VERSION_WIDTH=27
 readonly HELP_PACKAGE_PATH_WIDTH=42
 readonly HELP_FILE_NAME_WIDTH=33
@@ -2635,11 +2635,11 @@ CalculateMaximumStatusColumnsToDisplay()
     local column3_width=$((${#HELP_COLUMN_SPACER} + ${#HELP_COLUMN_MAIN_PREFIX} + HELP_PACKAGE_VERSION_WIDTH))
     local column4_width=$((${#HELP_COLUMN_SPACER} + ${#HELP_COLUMN_MAIN_PREFIX} + HELP_PACKAGE_PATH_WIDTH))
 
-    if [[ $((column1_width + column2_width)) -gt $COLUMNS ]]; then
+    if [[ $((column1_width + column2_width)) -ge $COLUMNS ]]; then
         echo 1
-    elif [[ $((column1_width + column2_width + column3_width)) -gt $COLUMNS ]]; then
+    elif [[ $((column1_width + column2_width + column3_width)) -ge $COLUMNS ]]; then
         echo 2
-    elif [[ $((column1_width + column2_width + column3_width + column4_width)) -gt $COLUMNS ]]; then
+    elif [[ $((column1_width + column2_width + column3_width + column4_width)) -ge $COLUMNS ]]; then
         echo 3
     else
         echo 4
