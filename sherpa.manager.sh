@@ -58,7 +58,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220417b
+    local -r SCRIPT_VERSION=220417c
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -1803,16 +1803,20 @@ PatchEntwareService()
 UpdateEntwarePackageList()
     {
 
-    # if Entware package list was recently updated, don't update again.
-
     if IsNtSysFileExist $OPKG_CMD; then
         code_pointer=2
         return 1
     fi
 
+    if [[ ${ENTWARE_PACKAGE_LIST_UPTODATE:-false} = true ]]; then
+        return 0
+    fi
+
     local -r CHANGE_THRESHOLD_MINUTES=60
     local -r LOG_PATHFILE=$LOGS_PATH/entware.$UPDATE_LOG_FILE
     local -i result_code=0
+
+    # if Entware package list was recently updated, don't update again.
 
     if ! IsThisFileRecent "$EXTERNAL_PACKAGES_ARCHIVE_PATHFILE" "$CHANGE_THRESHOLD_MINUTES" || [[ ! -f $EXTERNAL_PACKAGES_ARCHIVE_PATHFILE ]] || Opts.Deps.Check.IsSet; then
         DebugAsProc "updating $(FormatAsPackageName Entware) package list"
@@ -1832,6 +1836,7 @@ UpdateEntwarePackageList()
     fi
 
     [[ -f $EXTERNAL_PACKAGES_ARCHIVE_PATHFILE && ! -f $EXTERNAL_PACKAGES_PATHFILE ]] && OpenIPKGArchive
+    readonly ENTWARE_PACKAGE_LIST_UPTODATE=true
 
     return 0
 
