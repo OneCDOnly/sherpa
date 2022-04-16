@@ -398,7 +398,7 @@ Session.Validate()
     fi
 
     if [[ $something_to_do = false ]]; then
-        ShowAsEror "I've nothing to do (the supplied arguments didn't make sense)"
+        ShowAsEror "I've nothing to-do (the supplied arguments didn't make sense)"
         Opts.Help.Basic.Set
         QPKGs.SkProc.Set
         DebugFuncExit 1; return
