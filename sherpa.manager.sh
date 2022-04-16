@@ -58,7 +58,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220416i
+    local -r SCRIPT_VERSION=220417
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -314,13 +314,13 @@ Session.Validate()
     local -i trimmed_width=$((max_width - 3))
     local version=''
 
-    ShowAsProc 'environment' >&2
+    ShowAsProc environment >&2
 
     DebugInfoMinorSeparator
     DebugHardwareOK model "$(get_display_name)"
     DebugHardwareOK CPU "$(GetCPUInfo)"
     DebugHardwareOK RAM "$(FormatAsThousands "$INSTALLED_RAM_KB")kB"
-    DebugFirmwareOK 'OS' "Q$($GREP_CMD -q zfs /proc/filesystems && echo 'u')TS"
+    DebugFirmwareOK OS "Q$($GREP_CMD -q zfs /proc/filesystems && echo 'u')TS"
 
     if [[ ${NAS_FIRMWARE_VERSION//.} -ge 400 ]]; then
         DebugFirmwareOK version "$NAS_FIRMWARE_VERSION.$NAS_FIRMWARE_BUILD"
@@ -370,7 +370,7 @@ Session.Validate()
 
     QPKGs.States.Build
 
-    ShowAsProc 'arguments' >&2
+    ShowAsProc arguments >&2
 
     if Opts.Deps.Check.IsSet || Opts.IgFreeSpace.IsSet || Opts.Help.Status.IsSet; then
         something_to_do=true
@@ -860,7 +860,7 @@ Session.Results()
     Session.SuggestIssue.IsSet && Help.Issue.Show
 
     DebugInfoMinorSeparator
-    DebugScript 'finished' "$($DATE_CMD)"
+    DebugScript finished "$($DATE_CMD)"
     DebugScript 'elapsed time' "$(FormatSecsToHoursMinutesSecs "$(($($DATE_CMD +%s)-$([[ -n $SCRIPT_STARTSECONDS ]] && echo "$SCRIPT_STARTSECONDS" || echo "1")))")"
     DebugInfoMajorSeparator
     Session.Debug.ToArchive.IsSet && ArchiveActiveSessionLog
@@ -2368,7 +2368,7 @@ _MonitorDirSize_()
             ((stall_seconds++))
         fi
 
-        percent="$((200*(current_bytes)/(total_bytes) % 2 + 100*(current_bytes)/(total_bytes)))%"
+        percent="$((200 * (current_bytes) / (total_bytes) % 2 + 100 * (current_bytes) / (total_bytes)))%"
         [[ $current_bytes -lt $total_bytes && $percent = '100%' ]] && percent='99%' # ensure we don't hit 100% until the last byte is downloaded
         progress_message="$percent ($(FormatAsISOBytes "$current_bytes")/$(FormatAsISOBytes "$total_bytes"))"
 
@@ -2470,10 +2470,10 @@ IsSU()
 
     if [[ $EUID -ne 0 ]]; then
         if [[ -e /usr/bin/sudo ]]; then
-            ShowAsEror "this script must be run with superuser privileges. Try again as:"
-            echo "$ sudo sherpa"
+            ShowAsEror 'this utility must be run with superuser privileges. Try again as:'
+            echo "$ sudo $PROJECT_NAME"
         else
-            ShowAsEror "this script must be run as the 'admin' user. Please login via SSH as 'admin' and try again"
+            ShowAsEror "this utility must be run as the 'admin' user. Please login via SSH as 'admin' and try again"
         fi
         return 1
     fi
@@ -2541,7 +2541,7 @@ readonly HELP_SYNTAX_INDENT=6
 
 readonly HELP_PACKAGE_NAME_WIDTH=20
 readonly HELP_PACKAGE_STATUS_WIDTH=29
-readonly HELP_PACKAGE_VERSION_WIDTH=27
+readonly HELP_PACKAGE_VERSION_WIDTH=17
 readonly HELP_PACKAGE_PATH_WIDTH=42
 readonly HELP_FILE_NAME_WIDTH=33
 
@@ -3626,9 +3626,9 @@ QPKGs.Statuses.Show()
             package_status_notes=()
 
             if ! QPKG.URL "$current_package_name" &>/dev/null; then
-                DisplayAsHelpPackageNameVersionStatus "$current_package_name" 'not installable (arch)'
+                DisplayAsHelpPackageNameVersionStatus "$current_package_name" 'not installable (no arch)'
             elif ! QPKG.MinRAM "$current_package_name" &>/dev/null; then
-                DisplayAsHelpPackageNameVersionStatus "$current_package_name" 'not installable (RAM)'
+                DisplayAsHelpPackageNameVersionStatus "$current_package_name" 'not installable (low RAM)'
             elif QPKGs.IsNtInstalled.Exist "$current_package_name"; then
                 DisplayAsHelpPackageNameVersionStatus "$current_package_name" 'not installed' "$(QPKG.Available.Version "$current_package_name")"
             else
@@ -3674,7 +3674,7 @@ QPKGs.Statuses.Show()
                     fi
 
                     if QPKGs.ScUpgradable.Exist "$current_package_name"; then
-                        package_version="$(QPKG.Local.Version "$current_package_name") $(ColourTextBrightOrange "($(QPKG.Available.Version "$current_package_name") available)")"
+                        package_version="$(QPKG.Local.Version "$current_package_name") $(ColourTextBrightOrange "($(QPKG.Available.Version "$current_package_name"))")"
                         package_status_notes+=($(ColourTextBrightOrange upgradable))
                     else
                         package_version=$(QPKG.Available.Version "$current_package_name")
@@ -5701,21 +5701,21 @@ DebugUserspaceWarning()
 DebugQPKGDetected()
     {
 
-    DebugDetectedTabulated 'QPKG' "${1:-}" "${2:-}"
+    DebugDetectedTabulated QPKG "${1:-}" "${2:-}"
 
     }
 
 DebugQPKGInfo()
     {
 
-    DebugInfoTabulated 'QPKG' "${1:-}" "${2:-}"
+    DebugInfoTabulated QPKG "${1:-}" "${2:-}"
 
     }
 
 DebugQPKGWarning()
     {
 
-    DebugWarningTabulated 'QPKG' "${1:-}" "${2:-}"
+    DebugWarningTabulated QPKG "${1:-}" "${2:-}"
 
     }
 
@@ -6059,7 +6059,7 @@ ShowAsOperationProgress()
         tweaked_passes=$((tweaked_total - fail_count))
         percent='100%'
     else
-        percent="$((200 * (tweaked_passes)/(tweaked_total + 1) % 2 + 100 * (tweaked_passes) / (tweaked_total + 1)))%"
+        percent="$((200 * (tweaked_passes) / (tweaked_total + 1) % 2 + 100 * (tweaked_passes) / (tweaked_total + 1)))%"
     fi
 
     if [[ $DURATION = long ]]; then
