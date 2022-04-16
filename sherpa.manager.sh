@@ -58,7 +58,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220416f
+    local -r SCRIPT_VERSION=220416g
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -2540,7 +2540,7 @@ readonly HELP_DESC_INDENT=3
 readonly HELP_SYNTAX_INDENT=6
 
 readonly HELP_PACKAGE_NAME_WIDTH=20
-readonly HELP_PACKAGE_STATUS_WIDTH=34
+readonly HELP_PACKAGE_STATUS_WIDTH=29
 readonly HELP_PACKAGE_VERSION_WIDTH=27
 readonly HELP_PACKAGE_PATH_WIDTH=42
 readonly HELP_FILE_NAME_WIDTH=33
@@ -3626,9 +3626,9 @@ QPKGs.Statuses.Show()
             package_status_notes=()
 
             if ! QPKG.URL "$current_package_name" &>/dev/null; then
-                DisplayAsHelpPackageNameVersionStatus "$current_package_name" 'not installable (unsupported arch)'
+                DisplayAsHelpPackageNameVersionStatus "$current_package_name" 'not installable (arch)'
             elif ! QPKG.MinRAM "$current_package_name" &>/dev/null; then
-                DisplayAsHelpPackageNameVersionStatus "$current_package_name" 'not installable (insufficient RAM)'
+                DisplayAsHelpPackageNameVersionStatus "$current_package_name" 'not installable (RAM)'
             elif QPKGs.IsNtInstalled.Exist "$current_package_name"; then
                 DisplayAsHelpPackageNameVersionStatus "$current_package_name" 'not installed' "$(QPKG.Available.Version "$current_package_name")"
             else
