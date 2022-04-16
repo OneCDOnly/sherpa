@@ -58,7 +58,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220417e
+    local -r SCRIPT_VERSION=220417f
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -204,15 +204,7 @@ Session.Init()
         ResetWorkPath
         ArchiveActiveSessionLog
         ResetActiveSessionLog
-
-        # don't actually need to run the next two, but it looks better for user progress display
-        CleanManagementScript
-        CleanPackageLists
         exit 0
-#     elif [[ $USER_ARGS_RAW == *"clean"* ]]; then
-#         CleanManagementScript
-#         CleanPackageLists
-#         exit 0
     fi
 
     Objects.DoLoad || return
