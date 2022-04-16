@@ -58,7 +58,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220417
+    local -r SCRIPT_VERSION=220417b
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -398,7 +398,7 @@ Session.Validate()
     fi
 
     if [[ $something_to_do = false ]]; then
-        ShowAsEror "I've nothing to do (this usually means the arguments couldn't be run as-specified)"
+        ShowAsEror "I've nothing to do (the supplied arguments didn't make sense)"
         Opts.Help.Basic.Set
         QPKGs.SkProc.Set
         DebugFuncExit 1; return
@@ -3321,7 +3321,7 @@ QPKGs.Conflicts.Check()
         # shellcheck disable=2068
         for package in ${BASE_QPKG_CONFLICTS[@]}; do
             if [[ $(/sbin/getcfg "$package" Enable -u -f /etc/config/qpkg.conf) = 'TRUE' ]]; then
-                ShowAsEror "'$package' is installed and enabled. One-or-more $(FormatAsScriptTitle) applications are incompatible with this package"
+                ShowAsEror "'$package' is enabled. $(FormatAsScriptTitle) is incompatible with this package"
                 DebugFuncExit 1; return
             fi
         done
@@ -3341,7 +3341,7 @@ QPKGs.Warnings.Check()
         # shellcheck disable=2068
         for package in ${BASE_QPKG_WARNINGS[@]}; do
             if [[ $(/sbin/getcfg "$package" Enable -u -f /etc/config/qpkg.conf) = 'TRUE' ]]; then
-                ShowAsWarn "'$package' is installed and enabled. This package may cause problems with $(FormatAsScriptTitle) applications"
+                ShowAsWarn "'$package' is enabled. This may cause problems with $(FormatAsScriptTitle) applications"
             fi
         done
     fi
