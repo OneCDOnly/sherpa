@@ -58,7 +58,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220416g
+    local -r SCRIPT_VERSION=220416h
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -1814,7 +1814,7 @@ UpdateEntwarePackageList()
     local -r LOG_PATHFILE=$LOGS_PATH/entware.$UPDATE_LOG_FILE
     local -i result_code=0
 
-    if IsFileUpToDate "$EXTERNAL_PACKAGES_ARCHIVE_PATHFILE" "$CHANGE_THRESHOLD_MINUTES" || Opts.Deps.Check.IsSet; then
+    if ! IsThisFileRecent "$EXTERNAL_PACKAGES_ARCHIVE_PATHFILE" "$CHANGE_THRESHOLD_MINUTES" || [[ ! -f $EXTERNAL_PACKAGES_ARCHIVE_PATHFILE ]] || Opts.Deps.Check.IsSet; then
         DebugAsProc "updating $(FormatAsPackageName Entware) package list"
 
         RunAndLog "$OPKG_CMD update" "$LOG_PATHFILE" log:failure-only
@@ -1831,13 +1831,13 @@ UpdateEntwarePackageList()
         DebugInfo "$(FormatAsPackageName Entware) package list updated less-than $CHANGE_THRESHOLD_MINUTES minutes ago: skipping update"
     fi
 
-    [[ ! -f $EXTERNAL_PACKAGES_PATHFILE ]] && OpenIPKGArchive
+    [[ -f $EXTERNAL_PACKAGES_ARCHIVE_PATHFILE && ! -f $EXTERNAL_PACKAGES_PATHFILE ]] && OpenIPKGArchive
 
     return 0
 
     }
 
-IsFileUpToDate()
+IsThisFileRecent()
     {
 
     # input:
@@ -6327,7 +6327,7 @@ Objects.DoLoad()
 
     DebugFuncEntry
 
-    if [[ ! -e $OBJECTS_PATHFILE ]] || ! IsFileUpToDate "$OBJECTS_PATHFILE"; then
+    if [[ ! -e $OBJECTS_PATHFILE ]] || ! IsThisFileRecent "$OBJECTS_PATHFILE"; then
         ShowAsProc 'updating objects' >&2
         if $CURL_CMD${curl_insecure_arg:-} --silent --fail "$OBJECTS_ARCHIVE_URL" > "$OBJECTS_ARCHIVE_PATHFILE"; then
             /bin/tar --extract --gzip --file="$OBJECTS_ARCHIVE_PATHFILE" --directory="$WORK_PATH"
@@ -6354,7 +6354,7 @@ Packages.DoLoad()
     QPKGs.Loaded.IsSet && return
     DebugFuncEntry
 
-    if [[ ! -e $PACKAGES_PATHFILE ]] || ! IsFileUpToDate "$PACKAGES_PATHFILE" 60; then
+    if [[ ! -e $PACKAGES_PATHFILE ]] || ! IsThisFileRecent "$PACKAGES_PATHFILE" 60; then
         ShowAsProc 'updating package list' >&2
         if $CURL_CMD${curl_insecure_arg:-} --silent --fail "$PACKAGES_ARCHIVE_URL" > "$PACKAGES_ARCHIVE_PATHFILE"; then
             /bin/tar --extract --gzip --file="$PACKAGES_ARCHIVE_PATHFILE" --directory="$WORK_PATH"
