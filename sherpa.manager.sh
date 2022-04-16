@@ -58,7 +58,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220416h
+    local -r SCRIPT_VERSION=220416i
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -2081,7 +2081,7 @@ IPKGs.DoInstall()
     IPKGs.OpToInstall.Init
     IPKGs.OpToDownload.Init
 
-    IPKGs.OpToInstall.Add "$BASE_IPKGS_ADD"
+    IPKGs.OpToInstall.Add "$BASE_IPKGS_INSTALL"
 
     if Opts.Apps.OpInstall.ScAll.IsSet; then
         for index in "${!QPKG_NAME[@]}"; do
@@ -2193,7 +2193,7 @@ PIPs.DoInstall()
     if Opts.Deps.Check.IsSet || IPKGs.OpToInstall.Exist python3-pip; then
         ShowAsOperationProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
 
-        exec_cmd="$PIP_CMD install --upgrade --no-input $BASE_PIPS_ADD --cache-dir $PIP_CACHE_PATH"
+        exec_cmd="$PIP_CMD install --upgrade --no-input $BASE_PIPS_INSTALL --cache-dir $PIP_CACHE_PATH"
         local desc="'Python3' base modules"
         local log_pathfile=$LOGS_PATH/py3-modules.base.$INSTALL_LOG_FILE
         DebugAsProc "downloading & installing $desc"
@@ -4340,7 +4340,7 @@ QPKG.DoInstall()
 
                 # add extra package(s) needed immediately
                 DebugAsProc 'installing standalone IPKGs'
-                RunAndLog "$OPKG_CMD install$(Opts.IgFreeSpace.IsSet && Opts.IgFreeSpace.Text) --force-overwrite $BASE_IPKGS_ADD --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$LOGS_PATH/ipkgs.extra.$INSTALL_LOG_FILE" log:failure-only
+                RunAndLog "$OPKG_CMD install$(Opts.IgFreeSpace.IsSet && Opts.IgFreeSpace.Text) --force-overwrite $BASE_IPKGS_INSTALL --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$LOGS_PATH/ipkgs.extra.$INSTALL_LOG_FILE" log:failure-only
                 DebugAsDone 'installed standalone IPKGs'
             fi
         fi
@@ -6371,8 +6371,8 @@ Packages.DoLoad()
 
     readonly BASE_QPKG_CONFLICTS
     readonly BASE_QPKG_WARNINGS
-    readonly BASE_IPKGS_ADD
-    readonly BASE_PIPS_ADD
+    readonly BASE_IPKGS_INSTALL
+    readonly BASE_PIPS_INSTALL
 
     # package arrays are now full, so lock them
     readonly QPKG_NAME

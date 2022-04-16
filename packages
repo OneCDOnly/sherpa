@@ -2,8 +2,8 @@
 
 BASE_QPKG_CONFLICTS='Optware Optware-NG TarMT Python3 QPython3 QPython39 QPython310'
 BASE_QPKG_WARNINGS='Qboost MalwareRemover'
-BASE_IPKGS_ADD='ca-certificates coreutils-stty findutils gcc git git-http grep less nano sed'
-BASE_PIPS_ADD='wheel pip'
+BASE_IPKGS_INSTALL='ca-certificates coreutils-stty findutils gcc git git-http grep less nano sed'
+BASE_PIPS_INSTALL='wheel pip'
 
 # supported package details - parallel arrays
 QPKG_NAME=()                # internal QPKG name
