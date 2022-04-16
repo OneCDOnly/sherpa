@@ -6,8 +6,8 @@ PROJECT_NAME=sherpa
 WORK_PATH=$PWD
 
 PACKAGE_SCOPES=(All Dependent HasDependents Installable Names Standalone SupportBackup SupportUpdateOnRestart Upgradable)
-PACKAGE_STATES=(BackedUp Disabled Downloaded Enabled Installed Missing Starting Started Stopping Stopped Restarting)
-PACKAGE_OPERATIONS=(Backup Disable Download Enable Install Rebuild Reinstall Restart Restore Start Stop Uninstall Upgrade)
+PACKAGE_STATES=(BackedUp Cleaned Disabled Downloaded Enabled Installed Missing Starting Started Stopping Stopped Restarting)
+PACKAGE_OPERATIONS=(Backup Clean Disable Download Enable Install Rebuild Reinstall Restart Restore Start Stop Uninstall Upgrade)
 
 MANAGER_FILE=$PROJECT_NAME.manager.sh
 MANAGER_ARCHIVE_FILE=${MANAGER_FILE%.*}.tar.gz

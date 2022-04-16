@@ -1377,6 +1377,58 @@ else
 echo -n "$_ob_opts_apps_list_isntbackedup_tx_"
 fi ;}
 Opts.Apps.List.IsNtBackedUp.Init
+Opts.Apps.List.IsCleaned.Clear()
+{ [[ $_ob_opts_apps_list_iscleaned_fl_ != 'true' ]] && return
+_ob_opts_apps_list_iscleaned_fl_=false
+[[ $_ob_opts_apps_list_iscleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_list_iscleaned_fl_ ;}
+Opts.Apps.List.IsCleaned.NoLogMods()
+{ [[ $_ob_opts_apps_list_iscleaned_chfl_ != 'true' ]] && return
+_ob_opts_apps_list_iscleaned_chfl_=false ;}
+Opts.Apps.List.IsCleaned.Init()
+{ _ob_opts_apps_list_iscleaned_tx_=''
+_ob_opts_apps_list_iscleaned_fl_=false
+_ob_opts_apps_list_iscleaned_chfl_=true ;}
+Opts.Apps.List.IsCleaned.IsNt()
+{ [[ $_ob_opts_apps_list_iscleaned_fl_ != 'true' ]] ;}
+Opts.Apps.List.IsCleaned.IsSet()
+{ [[ $_ob_opts_apps_list_iscleaned_fl_ = 'true' ]] ;}
+Opts.Apps.List.IsCleaned.Set()
+{ [[ $_ob_opts_apps_list_iscleaned_fl_ = 'true' ]] && return
+_ob_opts_apps_list_iscleaned_fl_=true
+[[ $_ob_opts_apps_list_iscleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_list_iscleaned_fl_ ;}
+Opts.Apps.List.IsCleaned.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_list_iscleaned_tx_=$2
+else
+echo -n "$_ob_opts_apps_list_iscleaned_tx_"
+fi ;}
+Opts.Apps.List.IsCleaned.Init
+Opts.Apps.List.IsNtCleaned.Clear()
+{ [[ $_ob_opts_apps_list_isntcleaned_fl_ != 'true' ]] && return
+_ob_opts_apps_list_isntcleaned_fl_=false
+[[ $_ob_opts_apps_list_isntcleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_list_isntcleaned_fl_ ;}
+Opts.Apps.List.IsNtCleaned.NoLogMods()
+{ [[ $_ob_opts_apps_list_isntcleaned_chfl_ != 'true' ]] && return
+_ob_opts_apps_list_isntcleaned_chfl_=false ;}
+Opts.Apps.List.IsNtCleaned.Init()
+{ _ob_opts_apps_list_isntcleaned_tx_=''
+_ob_opts_apps_list_isntcleaned_fl_=false
+_ob_opts_apps_list_isntcleaned_chfl_=true ;}
+Opts.Apps.List.IsNtCleaned.IsNt()
+{ [[ $_ob_opts_apps_list_isntcleaned_fl_ != 'true' ]] ;}
+Opts.Apps.List.IsNtCleaned.IsSet()
+{ [[ $_ob_opts_apps_list_isntcleaned_fl_ = 'true' ]] ;}
+Opts.Apps.List.IsNtCleaned.Set()
+{ [[ $_ob_opts_apps_list_isntcleaned_fl_ = 'true' ]] && return
+_ob_opts_apps_list_isntcleaned_fl_=true
+[[ $_ob_opts_apps_list_isntcleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_list_isntcleaned_fl_ ;}
+Opts.Apps.List.IsNtCleaned.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_list_isntcleaned_tx_=$2
+else
+echo -n "$_ob_opts_apps_list_isntcleaned_tx_"
+fi ;}
+Opts.Apps.List.IsNtCleaned.Init
 Opts.Apps.List.IsDisabled.Clear()
 { [[ $_ob_opts_apps_list_isdisabled_fl_ != 'true' ]] && return
 _ob_opts_apps_list_isdisabled_fl_=false
@@ -1949,6 +2001,58 @@ else
 echo -n "$_ob_opts_apps_opbackup_scntall_tx_"
 fi ;}
 Opts.Apps.OpBackup.ScNtAll.Init
+Opts.Apps.OpClean.ScAll.Clear()
+{ [[ $_ob_opts_apps_opclean_scall_fl_ != 'true' ]] && return
+_ob_opts_apps_opclean_scall_fl_=false
+[[ $_ob_opts_apps_opclean_scall_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_scall_fl_ ;}
+Opts.Apps.OpClean.ScAll.NoLogMods()
+{ [[ $_ob_opts_apps_opclean_scall_chfl_ != 'true' ]] && return
+_ob_opts_apps_opclean_scall_chfl_=false ;}
+Opts.Apps.OpClean.ScAll.Init()
+{ _ob_opts_apps_opclean_scall_tx_=''
+_ob_opts_apps_opclean_scall_fl_=false
+_ob_opts_apps_opclean_scall_chfl_=true ;}
+Opts.Apps.OpClean.ScAll.IsNt()
+{ [[ $_ob_opts_apps_opclean_scall_fl_ != 'true' ]] ;}
+Opts.Apps.OpClean.ScAll.IsSet()
+{ [[ $_ob_opts_apps_opclean_scall_fl_ = 'true' ]] ;}
+Opts.Apps.OpClean.ScAll.Set()
+{ [[ $_ob_opts_apps_opclean_scall_fl_ = 'true' ]] && return
+_ob_opts_apps_opclean_scall_fl_=true
+[[ $_ob_opts_apps_opclean_scall_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_scall_fl_ ;}
+Opts.Apps.OpClean.ScAll.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opclean_scall_tx_=$2
+else
+echo -n "$_ob_opts_apps_opclean_scall_tx_"
+fi ;}
+Opts.Apps.OpClean.ScAll.Init
+Opts.Apps.OpClean.ScNtAll.Clear()
+{ [[ $_ob_opts_apps_opclean_scntall_fl_ != 'true' ]] && return
+_ob_opts_apps_opclean_scntall_fl_=false
+[[ $_ob_opts_apps_opclean_scntall_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_scntall_fl_ ;}
+Opts.Apps.OpClean.ScNtAll.NoLogMods()
+{ [[ $_ob_opts_apps_opclean_scntall_chfl_ != 'true' ]] && return
+_ob_opts_apps_opclean_scntall_chfl_=false ;}
+Opts.Apps.OpClean.ScNtAll.Init()
+{ _ob_opts_apps_opclean_scntall_tx_=''
+_ob_opts_apps_opclean_scntall_fl_=false
+_ob_opts_apps_opclean_scntall_chfl_=true ;}
+Opts.Apps.OpClean.ScNtAll.IsNt()
+{ [[ $_ob_opts_apps_opclean_scntall_fl_ != 'true' ]] ;}
+Opts.Apps.OpClean.ScNtAll.IsSet()
+{ [[ $_ob_opts_apps_opclean_scntall_fl_ = 'true' ]] ;}
+Opts.Apps.OpClean.ScNtAll.Set()
+{ [[ $_ob_opts_apps_opclean_scntall_fl_ = 'true' ]] && return
+_ob_opts_apps_opclean_scntall_fl_=true
+[[ $_ob_opts_apps_opclean_scntall_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_scntall_fl_ ;}
+Opts.Apps.OpClean.ScNtAll.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opclean_scntall_tx_=$2
+else
+echo -n "$_ob_opts_apps_opclean_scntall_tx_"
+fi ;}
+Opts.Apps.OpClean.ScNtAll.Init
 Opts.Apps.OpDisable.ScAll.Clear()
 { [[ $_ob_opts_apps_opdisable_scall_fl_ != 'true' ]] && return
 _ob_opts_apps_opdisable_scall_fl_=false
@@ -2625,6 +2729,58 @@ else
 echo -n "$_ob_opts_apps_opbackup_scntdependent_tx_"
 fi ;}
 Opts.Apps.OpBackup.ScNtDependent.Init
+Opts.Apps.OpClean.ScDependent.Clear()
+{ [[ $_ob_opts_apps_opclean_scdependent_fl_ != 'true' ]] && return
+_ob_opts_apps_opclean_scdependent_fl_=false
+[[ $_ob_opts_apps_opclean_scdependent_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_scdependent_fl_ ;}
+Opts.Apps.OpClean.ScDependent.NoLogMods()
+{ [[ $_ob_opts_apps_opclean_scdependent_chfl_ != 'true' ]] && return
+_ob_opts_apps_opclean_scdependent_chfl_=false ;}
+Opts.Apps.OpClean.ScDependent.Init()
+{ _ob_opts_apps_opclean_scdependent_tx_=''
+_ob_opts_apps_opclean_scdependent_fl_=false
+_ob_opts_apps_opclean_scdependent_chfl_=true ;}
+Opts.Apps.OpClean.ScDependent.IsNt()
+{ [[ $_ob_opts_apps_opclean_scdependent_fl_ != 'true' ]] ;}
+Opts.Apps.OpClean.ScDependent.IsSet()
+{ [[ $_ob_opts_apps_opclean_scdependent_fl_ = 'true' ]] ;}
+Opts.Apps.OpClean.ScDependent.Set()
+{ [[ $_ob_opts_apps_opclean_scdependent_fl_ = 'true' ]] && return
+_ob_opts_apps_opclean_scdependent_fl_=true
+[[ $_ob_opts_apps_opclean_scdependent_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_scdependent_fl_ ;}
+Opts.Apps.OpClean.ScDependent.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opclean_scdependent_tx_=$2
+else
+echo -n "$_ob_opts_apps_opclean_scdependent_tx_"
+fi ;}
+Opts.Apps.OpClean.ScDependent.Init
+Opts.Apps.OpClean.ScNtDependent.Clear()
+{ [[ $_ob_opts_apps_opclean_scntdependent_fl_ != 'true' ]] && return
+_ob_opts_apps_opclean_scntdependent_fl_=false
+[[ $_ob_opts_apps_opclean_scntdependent_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_scntdependent_fl_ ;}
+Opts.Apps.OpClean.ScNtDependent.NoLogMods()
+{ [[ $_ob_opts_apps_opclean_scntdependent_chfl_ != 'true' ]] && return
+_ob_opts_apps_opclean_scntdependent_chfl_=false ;}
+Opts.Apps.OpClean.ScNtDependent.Init()
+{ _ob_opts_apps_opclean_scntdependent_tx_=''
+_ob_opts_apps_opclean_scntdependent_fl_=false
+_ob_opts_apps_opclean_scntdependent_chfl_=true ;}
+Opts.Apps.OpClean.ScNtDependent.IsNt()
+{ [[ $_ob_opts_apps_opclean_scntdependent_fl_ != 'true' ]] ;}
+Opts.Apps.OpClean.ScNtDependent.IsSet()
+{ [[ $_ob_opts_apps_opclean_scntdependent_fl_ = 'true' ]] ;}
+Opts.Apps.OpClean.ScNtDependent.Set()
+{ [[ $_ob_opts_apps_opclean_scntdependent_fl_ = 'true' ]] && return
+_ob_opts_apps_opclean_scntdependent_fl_=true
+[[ $_ob_opts_apps_opclean_scntdependent_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_scntdependent_fl_ ;}
+Opts.Apps.OpClean.ScNtDependent.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opclean_scntdependent_tx_=$2
+else
+echo -n "$_ob_opts_apps_opclean_scntdependent_tx_"
+fi ;}
+Opts.Apps.OpClean.ScNtDependent.Init
 Opts.Apps.OpDisable.ScDependent.Clear()
 { [[ $_ob_opts_apps_opdisable_scdependent_fl_ != 'true' ]] && return
 _ob_opts_apps_opdisable_scdependent_fl_=false
@@ -3301,6 +3457,58 @@ else
 echo -n "$_ob_opts_apps_opbackup_scnthasdependents_tx_"
 fi ;}
 Opts.Apps.OpBackup.ScNtHasDependents.Init
+Opts.Apps.OpClean.ScHasDependents.Clear()
+{ [[ $_ob_opts_apps_opclean_schasdependents_fl_ != 'true' ]] && return
+_ob_opts_apps_opclean_schasdependents_fl_=false
+[[ $_ob_opts_apps_opclean_schasdependents_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_schasdependents_fl_ ;}
+Opts.Apps.OpClean.ScHasDependents.NoLogMods()
+{ [[ $_ob_opts_apps_opclean_schasdependents_chfl_ != 'true' ]] && return
+_ob_opts_apps_opclean_schasdependents_chfl_=false ;}
+Opts.Apps.OpClean.ScHasDependents.Init()
+{ _ob_opts_apps_opclean_schasdependents_tx_=''
+_ob_opts_apps_opclean_schasdependents_fl_=false
+_ob_opts_apps_opclean_schasdependents_chfl_=true ;}
+Opts.Apps.OpClean.ScHasDependents.IsNt()
+{ [[ $_ob_opts_apps_opclean_schasdependents_fl_ != 'true' ]] ;}
+Opts.Apps.OpClean.ScHasDependents.IsSet()
+{ [[ $_ob_opts_apps_opclean_schasdependents_fl_ = 'true' ]] ;}
+Opts.Apps.OpClean.ScHasDependents.Set()
+{ [[ $_ob_opts_apps_opclean_schasdependents_fl_ = 'true' ]] && return
+_ob_opts_apps_opclean_schasdependents_fl_=true
+[[ $_ob_opts_apps_opclean_schasdependents_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_schasdependents_fl_ ;}
+Opts.Apps.OpClean.ScHasDependents.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opclean_schasdependents_tx_=$2
+else
+echo -n "$_ob_opts_apps_opclean_schasdependents_tx_"
+fi ;}
+Opts.Apps.OpClean.ScHasDependents.Init
+Opts.Apps.OpClean.ScNtHasDependents.Clear()
+{ [[ $_ob_opts_apps_opclean_scnthasdependents_fl_ != 'true' ]] && return
+_ob_opts_apps_opclean_scnthasdependents_fl_=false
+[[ $_ob_opts_apps_opclean_scnthasdependents_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_scnthasdependents_fl_ ;}
+Opts.Apps.OpClean.ScNtHasDependents.NoLogMods()
+{ [[ $_ob_opts_apps_opclean_scnthasdependents_chfl_ != 'true' ]] && return
+_ob_opts_apps_opclean_scnthasdependents_chfl_=false ;}
+Opts.Apps.OpClean.ScNtHasDependents.Init()
+{ _ob_opts_apps_opclean_scnthasdependents_tx_=''
+_ob_opts_apps_opclean_scnthasdependents_fl_=false
+_ob_opts_apps_opclean_scnthasdependents_chfl_=true ;}
+Opts.Apps.OpClean.ScNtHasDependents.IsNt()
+{ [[ $_ob_opts_apps_opclean_scnthasdependents_fl_ != 'true' ]] ;}
+Opts.Apps.OpClean.ScNtHasDependents.IsSet()
+{ [[ $_ob_opts_apps_opclean_scnthasdependents_fl_ = 'true' ]] ;}
+Opts.Apps.OpClean.ScNtHasDependents.Set()
+{ [[ $_ob_opts_apps_opclean_scnthasdependents_fl_ = 'true' ]] && return
+_ob_opts_apps_opclean_scnthasdependents_fl_=true
+[[ $_ob_opts_apps_opclean_scnthasdependents_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_scnthasdependents_fl_ ;}
+Opts.Apps.OpClean.ScNtHasDependents.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opclean_scnthasdependents_tx_=$2
+else
+echo -n "$_ob_opts_apps_opclean_scnthasdependents_tx_"
+fi ;}
+Opts.Apps.OpClean.ScNtHasDependents.Init
 Opts.Apps.OpDisable.ScHasDependents.Clear()
 { [[ $_ob_opts_apps_opdisable_schasdependents_fl_ != 'true' ]] && return
 _ob_opts_apps_opdisable_schasdependents_fl_=false
@@ -3977,6 +4185,58 @@ else
 echo -n "$_ob_opts_apps_opbackup_scntinstallable_tx_"
 fi ;}
 Opts.Apps.OpBackup.ScNtInstallable.Init
+Opts.Apps.OpClean.ScInstallable.Clear()
+{ [[ $_ob_opts_apps_opclean_scinstallable_fl_ != 'true' ]] && return
+_ob_opts_apps_opclean_scinstallable_fl_=false
+[[ $_ob_opts_apps_opclean_scinstallable_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_scinstallable_fl_ ;}
+Opts.Apps.OpClean.ScInstallable.NoLogMods()
+{ [[ $_ob_opts_apps_opclean_scinstallable_chfl_ != 'true' ]] && return
+_ob_opts_apps_opclean_scinstallable_chfl_=false ;}
+Opts.Apps.OpClean.ScInstallable.Init()
+{ _ob_opts_apps_opclean_scinstallable_tx_=''
+_ob_opts_apps_opclean_scinstallable_fl_=false
+_ob_opts_apps_opclean_scinstallable_chfl_=true ;}
+Opts.Apps.OpClean.ScInstallable.IsNt()
+{ [[ $_ob_opts_apps_opclean_scinstallable_fl_ != 'true' ]] ;}
+Opts.Apps.OpClean.ScInstallable.IsSet()
+{ [[ $_ob_opts_apps_opclean_scinstallable_fl_ = 'true' ]] ;}
+Opts.Apps.OpClean.ScInstallable.Set()
+{ [[ $_ob_opts_apps_opclean_scinstallable_fl_ = 'true' ]] && return
+_ob_opts_apps_opclean_scinstallable_fl_=true
+[[ $_ob_opts_apps_opclean_scinstallable_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_scinstallable_fl_ ;}
+Opts.Apps.OpClean.ScInstallable.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opclean_scinstallable_tx_=$2
+else
+echo -n "$_ob_opts_apps_opclean_scinstallable_tx_"
+fi ;}
+Opts.Apps.OpClean.ScInstallable.Init
+Opts.Apps.OpClean.ScNtInstallable.Clear()
+{ [[ $_ob_opts_apps_opclean_scntinstallable_fl_ != 'true' ]] && return
+_ob_opts_apps_opclean_scntinstallable_fl_=false
+[[ $_ob_opts_apps_opclean_scntinstallable_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_scntinstallable_fl_ ;}
+Opts.Apps.OpClean.ScNtInstallable.NoLogMods()
+{ [[ $_ob_opts_apps_opclean_scntinstallable_chfl_ != 'true' ]] && return
+_ob_opts_apps_opclean_scntinstallable_chfl_=false ;}
+Opts.Apps.OpClean.ScNtInstallable.Init()
+{ _ob_opts_apps_opclean_scntinstallable_tx_=''
+_ob_opts_apps_opclean_scntinstallable_fl_=false
+_ob_opts_apps_opclean_scntinstallable_chfl_=true ;}
+Opts.Apps.OpClean.ScNtInstallable.IsNt()
+{ [[ $_ob_opts_apps_opclean_scntinstallable_fl_ != 'true' ]] ;}
+Opts.Apps.OpClean.ScNtInstallable.IsSet()
+{ [[ $_ob_opts_apps_opclean_scntinstallable_fl_ = 'true' ]] ;}
+Opts.Apps.OpClean.ScNtInstallable.Set()
+{ [[ $_ob_opts_apps_opclean_scntinstallable_fl_ = 'true' ]] && return
+_ob_opts_apps_opclean_scntinstallable_fl_=true
+[[ $_ob_opts_apps_opclean_scntinstallable_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_scntinstallable_fl_ ;}
+Opts.Apps.OpClean.ScNtInstallable.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opclean_scntinstallable_tx_=$2
+else
+echo -n "$_ob_opts_apps_opclean_scntinstallable_tx_"
+fi ;}
+Opts.Apps.OpClean.ScNtInstallable.Init
 Opts.Apps.OpDisable.ScInstallable.Clear()
 { [[ $_ob_opts_apps_opdisable_scinstallable_fl_ != 'true' ]] && return
 _ob_opts_apps_opdisable_scinstallable_fl_=false
@@ -4653,6 +4913,58 @@ else
 echo -n "$_ob_opts_apps_opbackup_scntnames_tx_"
 fi ;}
 Opts.Apps.OpBackup.ScNtNames.Init
+Opts.Apps.OpClean.ScNames.Clear()
+{ [[ $_ob_opts_apps_opclean_scnames_fl_ != 'true' ]] && return
+_ob_opts_apps_opclean_scnames_fl_=false
+[[ $_ob_opts_apps_opclean_scnames_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_scnames_fl_ ;}
+Opts.Apps.OpClean.ScNames.NoLogMods()
+{ [[ $_ob_opts_apps_opclean_scnames_chfl_ != 'true' ]] && return
+_ob_opts_apps_opclean_scnames_chfl_=false ;}
+Opts.Apps.OpClean.ScNames.Init()
+{ _ob_opts_apps_opclean_scnames_tx_=''
+_ob_opts_apps_opclean_scnames_fl_=false
+_ob_opts_apps_opclean_scnames_chfl_=true ;}
+Opts.Apps.OpClean.ScNames.IsNt()
+{ [[ $_ob_opts_apps_opclean_scnames_fl_ != 'true' ]] ;}
+Opts.Apps.OpClean.ScNames.IsSet()
+{ [[ $_ob_opts_apps_opclean_scnames_fl_ = 'true' ]] ;}
+Opts.Apps.OpClean.ScNames.Set()
+{ [[ $_ob_opts_apps_opclean_scnames_fl_ = 'true' ]] && return
+_ob_opts_apps_opclean_scnames_fl_=true
+[[ $_ob_opts_apps_opclean_scnames_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_scnames_fl_ ;}
+Opts.Apps.OpClean.ScNames.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opclean_scnames_tx_=$2
+else
+echo -n "$_ob_opts_apps_opclean_scnames_tx_"
+fi ;}
+Opts.Apps.OpClean.ScNames.Init
+Opts.Apps.OpClean.ScNtNames.Clear()
+{ [[ $_ob_opts_apps_opclean_scntnames_fl_ != 'true' ]] && return
+_ob_opts_apps_opclean_scntnames_fl_=false
+[[ $_ob_opts_apps_opclean_scntnames_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_scntnames_fl_ ;}
+Opts.Apps.OpClean.ScNtNames.NoLogMods()
+{ [[ $_ob_opts_apps_opclean_scntnames_chfl_ != 'true' ]] && return
+_ob_opts_apps_opclean_scntnames_chfl_=false ;}
+Opts.Apps.OpClean.ScNtNames.Init()
+{ _ob_opts_apps_opclean_scntnames_tx_=''
+_ob_opts_apps_opclean_scntnames_fl_=false
+_ob_opts_apps_opclean_scntnames_chfl_=true ;}
+Opts.Apps.OpClean.ScNtNames.IsNt()
+{ [[ $_ob_opts_apps_opclean_scntnames_fl_ != 'true' ]] ;}
+Opts.Apps.OpClean.ScNtNames.IsSet()
+{ [[ $_ob_opts_apps_opclean_scntnames_fl_ = 'true' ]] ;}
+Opts.Apps.OpClean.ScNtNames.Set()
+{ [[ $_ob_opts_apps_opclean_scntnames_fl_ = 'true' ]] && return
+_ob_opts_apps_opclean_scntnames_fl_=true
+[[ $_ob_opts_apps_opclean_scntnames_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_scntnames_fl_ ;}
+Opts.Apps.OpClean.ScNtNames.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opclean_scntnames_tx_=$2
+else
+echo -n "$_ob_opts_apps_opclean_scntnames_tx_"
+fi ;}
+Opts.Apps.OpClean.ScNtNames.Init
 Opts.Apps.OpDisable.ScNames.Clear()
 { [[ $_ob_opts_apps_opdisable_scnames_fl_ != 'true' ]] && return
 _ob_opts_apps_opdisable_scnames_fl_=false
@@ -5329,6 +5641,58 @@ else
 echo -n "$_ob_opts_apps_opbackup_scntstandalone_tx_"
 fi ;}
 Opts.Apps.OpBackup.ScNtStandalone.Init
+Opts.Apps.OpClean.ScStandalone.Clear()
+{ [[ $_ob_opts_apps_opclean_scstandalone_fl_ != 'true' ]] && return
+_ob_opts_apps_opclean_scstandalone_fl_=false
+[[ $_ob_opts_apps_opclean_scstandalone_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_scstandalone_fl_ ;}
+Opts.Apps.OpClean.ScStandalone.NoLogMods()
+{ [[ $_ob_opts_apps_opclean_scstandalone_chfl_ != 'true' ]] && return
+_ob_opts_apps_opclean_scstandalone_chfl_=false ;}
+Opts.Apps.OpClean.ScStandalone.Init()
+{ _ob_opts_apps_opclean_scstandalone_tx_=''
+_ob_opts_apps_opclean_scstandalone_fl_=false
+_ob_opts_apps_opclean_scstandalone_chfl_=true ;}
+Opts.Apps.OpClean.ScStandalone.IsNt()
+{ [[ $_ob_opts_apps_opclean_scstandalone_fl_ != 'true' ]] ;}
+Opts.Apps.OpClean.ScStandalone.IsSet()
+{ [[ $_ob_opts_apps_opclean_scstandalone_fl_ = 'true' ]] ;}
+Opts.Apps.OpClean.ScStandalone.Set()
+{ [[ $_ob_opts_apps_opclean_scstandalone_fl_ = 'true' ]] && return
+_ob_opts_apps_opclean_scstandalone_fl_=true
+[[ $_ob_opts_apps_opclean_scstandalone_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_scstandalone_fl_ ;}
+Opts.Apps.OpClean.ScStandalone.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opclean_scstandalone_tx_=$2
+else
+echo -n "$_ob_opts_apps_opclean_scstandalone_tx_"
+fi ;}
+Opts.Apps.OpClean.ScStandalone.Init
+Opts.Apps.OpClean.ScNtStandalone.Clear()
+{ [[ $_ob_opts_apps_opclean_scntstandalone_fl_ != 'true' ]] && return
+_ob_opts_apps_opclean_scntstandalone_fl_=false
+[[ $_ob_opts_apps_opclean_scntstandalone_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_scntstandalone_fl_ ;}
+Opts.Apps.OpClean.ScNtStandalone.NoLogMods()
+{ [[ $_ob_opts_apps_opclean_scntstandalone_chfl_ != 'true' ]] && return
+_ob_opts_apps_opclean_scntstandalone_chfl_=false ;}
+Opts.Apps.OpClean.ScNtStandalone.Init()
+{ _ob_opts_apps_opclean_scntstandalone_tx_=''
+_ob_opts_apps_opclean_scntstandalone_fl_=false
+_ob_opts_apps_opclean_scntstandalone_chfl_=true ;}
+Opts.Apps.OpClean.ScNtStandalone.IsNt()
+{ [[ $_ob_opts_apps_opclean_scntstandalone_fl_ != 'true' ]] ;}
+Opts.Apps.OpClean.ScNtStandalone.IsSet()
+{ [[ $_ob_opts_apps_opclean_scntstandalone_fl_ = 'true' ]] ;}
+Opts.Apps.OpClean.ScNtStandalone.Set()
+{ [[ $_ob_opts_apps_opclean_scntstandalone_fl_ = 'true' ]] && return
+_ob_opts_apps_opclean_scntstandalone_fl_=true
+[[ $_ob_opts_apps_opclean_scntstandalone_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_scntstandalone_fl_ ;}
+Opts.Apps.OpClean.ScNtStandalone.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opclean_scntstandalone_tx_=$2
+else
+echo -n "$_ob_opts_apps_opclean_scntstandalone_tx_"
+fi ;}
+Opts.Apps.OpClean.ScNtStandalone.Init
 Opts.Apps.OpDisable.ScStandalone.Clear()
 { [[ $_ob_opts_apps_opdisable_scstandalone_fl_ != 'true' ]] && return
 _ob_opts_apps_opdisable_scstandalone_fl_=false
@@ -6005,6 +6369,58 @@ else
 echo -n "$_ob_opts_apps_opbackup_scntsupportbackup_tx_"
 fi ;}
 Opts.Apps.OpBackup.ScNtSupportBackup.Init
+Opts.Apps.OpClean.ScSupportBackup.Clear()
+{ [[ $_ob_opts_apps_opclean_scsupportbackup_fl_ != 'true' ]] && return
+_ob_opts_apps_opclean_scsupportbackup_fl_=false
+[[ $_ob_opts_apps_opclean_scsupportbackup_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_scsupportbackup_fl_ ;}
+Opts.Apps.OpClean.ScSupportBackup.NoLogMods()
+{ [[ $_ob_opts_apps_opclean_scsupportbackup_chfl_ != 'true' ]] && return
+_ob_opts_apps_opclean_scsupportbackup_chfl_=false ;}
+Opts.Apps.OpClean.ScSupportBackup.Init()
+{ _ob_opts_apps_opclean_scsupportbackup_tx_=''
+_ob_opts_apps_opclean_scsupportbackup_fl_=false
+_ob_opts_apps_opclean_scsupportbackup_chfl_=true ;}
+Opts.Apps.OpClean.ScSupportBackup.IsNt()
+{ [[ $_ob_opts_apps_opclean_scsupportbackup_fl_ != 'true' ]] ;}
+Opts.Apps.OpClean.ScSupportBackup.IsSet()
+{ [[ $_ob_opts_apps_opclean_scsupportbackup_fl_ = 'true' ]] ;}
+Opts.Apps.OpClean.ScSupportBackup.Set()
+{ [[ $_ob_opts_apps_opclean_scsupportbackup_fl_ = 'true' ]] && return
+_ob_opts_apps_opclean_scsupportbackup_fl_=true
+[[ $_ob_opts_apps_opclean_scsupportbackup_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_scsupportbackup_fl_ ;}
+Opts.Apps.OpClean.ScSupportBackup.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opclean_scsupportbackup_tx_=$2
+else
+echo -n "$_ob_opts_apps_opclean_scsupportbackup_tx_"
+fi ;}
+Opts.Apps.OpClean.ScSupportBackup.Init
+Opts.Apps.OpClean.ScNtSupportBackup.Clear()
+{ [[ $_ob_opts_apps_opclean_scntsupportbackup_fl_ != 'true' ]] && return
+_ob_opts_apps_opclean_scntsupportbackup_fl_=false
+[[ $_ob_opts_apps_opclean_scntsupportbackup_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_scntsupportbackup_fl_ ;}
+Opts.Apps.OpClean.ScNtSupportBackup.NoLogMods()
+{ [[ $_ob_opts_apps_opclean_scntsupportbackup_chfl_ != 'true' ]] && return
+_ob_opts_apps_opclean_scntsupportbackup_chfl_=false ;}
+Opts.Apps.OpClean.ScNtSupportBackup.Init()
+{ _ob_opts_apps_opclean_scntsupportbackup_tx_=''
+_ob_opts_apps_opclean_scntsupportbackup_fl_=false
+_ob_opts_apps_opclean_scntsupportbackup_chfl_=true ;}
+Opts.Apps.OpClean.ScNtSupportBackup.IsNt()
+{ [[ $_ob_opts_apps_opclean_scntsupportbackup_fl_ != 'true' ]] ;}
+Opts.Apps.OpClean.ScNtSupportBackup.IsSet()
+{ [[ $_ob_opts_apps_opclean_scntsupportbackup_fl_ = 'true' ]] ;}
+Opts.Apps.OpClean.ScNtSupportBackup.Set()
+{ [[ $_ob_opts_apps_opclean_scntsupportbackup_fl_ = 'true' ]] && return
+_ob_opts_apps_opclean_scntsupportbackup_fl_=true
+[[ $_ob_opts_apps_opclean_scntsupportbackup_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_scntsupportbackup_fl_ ;}
+Opts.Apps.OpClean.ScNtSupportBackup.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opclean_scntsupportbackup_tx_=$2
+else
+echo -n "$_ob_opts_apps_opclean_scntsupportbackup_tx_"
+fi ;}
+Opts.Apps.OpClean.ScNtSupportBackup.Init
 Opts.Apps.OpDisable.ScSupportBackup.Clear()
 { [[ $_ob_opts_apps_opdisable_scsupportbackup_fl_ != 'true' ]] && return
 _ob_opts_apps_opdisable_scsupportbackup_fl_=false
@@ -6681,6 +7097,58 @@ else
 echo -n "$_ob_opts_apps_opbackup_scntsupportupdateonrestart_tx_"
 fi ;}
 Opts.Apps.OpBackup.ScNtSupportUpdateOnRestart.Init
+Opts.Apps.OpClean.ScSupportUpdateOnRestart.Clear()
+{ [[ $_ob_opts_apps_opclean_scsupportupdateonrestart_fl_ != 'true' ]] && return
+_ob_opts_apps_opclean_scsupportupdateonrestart_fl_=false
+[[ $_ob_opts_apps_opclean_scsupportupdateonrestart_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_scsupportupdateonrestart_fl_ ;}
+Opts.Apps.OpClean.ScSupportUpdateOnRestart.NoLogMods()
+{ [[ $_ob_opts_apps_opclean_scsupportupdateonrestart_chfl_ != 'true' ]] && return
+_ob_opts_apps_opclean_scsupportupdateonrestart_chfl_=false ;}
+Opts.Apps.OpClean.ScSupportUpdateOnRestart.Init()
+{ _ob_opts_apps_opclean_scsupportupdateonrestart_tx_=''
+_ob_opts_apps_opclean_scsupportupdateonrestart_fl_=false
+_ob_opts_apps_opclean_scsupportupdateonrestart_chfl_=true ;}
+Opts.Apps.OpClean.ScSupportUpdateOnRestart.IsNt()
+{ [[ $_ob_opts_apps_opclean_scsupportupdateonrestart_fl_ != 'true' ]] ;}
+Opts.Apps.OpClean.ScSupportUpdateOnRestart.IsSet()
+{ [[ $_ob_opts_apps_opclean_scsupportupdateonrestart_fl_ = 'true' ]] ;}
+Opts.Apps.OpClean.ScSupportUpdateOnRestart.Set()
+{ [[ $_ob_opts_apps_opclean_scsupportupdateonrestart_fl_ = 'true' ]] && return
+_ob_opts_apps_opclean_scsupportupdateonrestart_fl_=true
+[[ $_ob_opts_apps_opclean_scsupportupdateonrestart_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_scsupportupdateonrestart_fl_ ;}
+Opts.Apps.OpClean.ScSupportUpdateOnRestart.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opclean_scsupportupdateonrestart_tx_=$2
+else
+echo -n "$_ob_opts_apps_opclean_scsupportupdateonrestart_tx_"
+fi ;}
+Opts.Apps.OpClean.ScSupportUpdateOnRestart.Init
+Opts.Apps.OpClean.ScNtSupportUpdateOnRestart.Clear()
+{ [[ $_ob_opts_apps_opclean_scntsupportupdateonrestart_fl_ != 'true' ]] && return
+_ob_opts_apps_opclean_scntsupportupdateonrestart_fl_=false
+[[ $_ob_opts_apps_opclean_scntsupportupdateonrestart_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_scntsupportupdateonrestart_fl_ ;}
+Opts.Apps.OpClean.ScNtSupportUpdateOnRestart.NoLogMods()
+{ [[ $_ob_opts_apps_opclean_scntsupportupdateonrestart_chfl_ != 'true' ]] && return
+_ob_opts_apps_opclean_scntsupportupdateonrestart_chfl_=false ;}
+Opts.Apps.OpClean.ScNtSupportUpdateOnRestart.Init()
+{ _ob_opts_apps_opclean_scntsupportupdateonrestart_tx_=''
+_ob_opts_apps_opclean_scntsupportupdateonrestart_fl_=false
+_ob_opts_apps_opclean_scntsupportupdateonrestart_chfl_=true ;}
+Opts.Apps.OpClean.ScNtSupportUpdateOnRestart.IsNt()
+{ [[ $_ob_opts_apps_opclean_scntsupportupdateonrestart_fl_ != 'true' ]] ;}
+Opts.Apps.OpClean.ScNtSupportUpdateOnRestart.IsSet()
+{ [[ $_ob_opts_apps_opclean_scntsupportupdateonrestart_fl_ = 'true' ]] ;}
+Opts.Apps.OpClean.ScNtSupportUpdateOnRestart.Set()
+{ [[ $_ob_opts_apps_opclean_scntsupportupdateonrestart_fl_ = 'true' ]] && return
+_ob_opts_apps_opclean_scntsupportupdateonrestart_fl_=true
+[[ $_ob_opts_apps_opclean_scntsupportupdateonrestart_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_scntsupportupdateonrestart_fl_ ;}
+Opts.Apps.OpClean.ScNtSupportUpdateOnRestart.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opclean_scntsupportupdateonrestart_tx_=$2
+else
+echo -n "$_ob_opts_apps_opclean_scntsupportupdateonrestart_tx_"
+fi ;}
+Opts.Apps.OpClean.ScNtSupportUpdateOnRestart.Init
 Opts.Apps.OpDisable.ScSupportUpdateOnRestart.Clear()
 { [[ $_ob_opts_apps_opdisable_scsupportupdateonrestart_fl_ != 'true' ]] && return
 _ob_opts_apps_opdisable_scsupportupdateonrestart_fl_=false
@@ -7357,6 +7825,58 @@ else
 echo -n "$_ob_opts_apps_opbackup_scntupgradable_tx_"
 fi ;}
 Opts.Apps.OpBackup.ScNtUpgradable.Init
+Opts.Apps.OpClean.ScUpgradable.Clear()
+{ [[ $_ob_opts_apps_opclean_scupgradable_fl_ != 'true' ]] && return
+_ob_opts_apps_opclean_scupgradable_fl_=false
+[[ $_ob_opts_apps_opclean_scupgradable_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_scupgradable_fl_ ;}
+Opts.Apps.OpClean.ScUpgradable.NoLogMods()
+{ [[ $_ob_opts_apps_opclean_scupgradable_chfl_ != 'true' ]] && return
+_ob_opts_apps_opclean_scupgradable_chfl_=false ;}
+Opts.Apps.OpClean.ScUpgradable.Init()
+{ _ob_opts_apps_opclean_scupgradable_tx_=''
+_ob_opts_apps_opclean_scupgradable_fl_=false
+_ob_opts_apps_opclean_scupgradable_chfl_=true ;}
+Opts.Apps.OpClean.ScUpgradable.IsNt()
+{ [[ $_ob_opts_apps_opclean_scupgradable_fl_ != 'true' ]] ;}
+Opts.Apps.OpClean.ScUpgradable.IsSet()
+{ [[ $_ob_opts_apps_opclean_scupgradable_fl_ = 'true' ]] ;}
+Opts.Apps.OpClean.ScUpgradable.Set()
+{ [[ $_ob_opts_apps_opclean_scupgradable_fl_ = 'true' ]] && return
+_ob_opts_apps_opclean_scupgradable_fl_=true
+[[ $_ob_opts_apps_opclean_scupgradable_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_scupgradable_fl_ ;}
+Opts.Apps.OpClean.ScUpgradable.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opclean_scupgradable_tx_=$2
+else
+echo -n "$_ob_opts_apps_opclean_scupgradable_tx_"
+fi ;}
+Opts.Apps.OpClean.ScUpgradable.Init
+Opts.Apps.OpClean.ScNtUpgradable.Clear()
+{ [[ $_ob_opts_apps_opclean_scntupgradable_fl_ != 'true' ]] && return
+_ob_opts_apps_opclean_scntupgradable_fl_=false
+[[ $_ob_opts_apps_opclean_scntupgradable_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_scntupgradable_fl_ ;}
+Opts.Apps.OpClean.ScNtUpgradable.NoLogMods()
+{ [[ $_ob_opts_apps_opclean_scntupgradable_chfl_ != 'true' ]] && return
+_ob_opts_apps_opclean_scntupgradable_chfl_=false ;}
+Opts.Apps.OpClean.ScNtUpgradable.Init()
+{ _ob_opts_apps_opclean_scntupgradable_tx_=''
+_ob_opts_apps_opclean_scntupgradable_fl_=false
+_ob_opts_apps_opclean_scntupgradable_chfl_=true ;}
+Opts.Apps.OpClean.ScNtUpgradable.IsNt()
+{ [[ $_ob_opts_apps_opclean_scntupgradable_fl_ != 'true' ]] ;}
+Opts.Apps.OpClean.ScNtUpgradable.IsSet()
+{ [[ $_ob_opts_apps_opclean_scntupgradable_fl_ = 'true' ]] ;}
+Opts.Apps.OpClean.ScNtUpgradable.Set()
+{ [[ $_ob_opts_apps_opclean_scntupgradable_fl_ = 'true' ]] && return
+_ob_opts_apps_opclean_scntupgradable_fl_=true
+[[ $_ob_opts_apps_opclean_scntupgradable_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_scntupgradable_fl_ ;}
+Opts.Apps.OpClean.ScNtUpgradable.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opclean_scntupgradable_tx_=$2
+else
+echo -n "$_ob_opts_apps_opclean_scntupgradable_tx_"
+fi ;}
+Opts.Apps.OpClean.ScNtUpgradable.Init
 Opts.Apps.OpDisable.ScUpgradable.Clear()
 { [[ $_ob_opts_apps_opdisable_scupgradable_fl_ != 'true' ]] && return
 _ob_opts_apps_opdisable_scupgradable_fl_=false
@@ -8033,6 +8553,58 @@ else
 echo -n "$_ob_opts_apps_opbackup_isntbackedup_tx_"
 fi ;}
 Opts.Apps.OpBackup.IsNtBackedUp.Init
+Opts.Apps.OpClean.IsBackedUp.Clear()
+{ [[ $_ob_opts_apps_opclean_isbackedup_fl_ != 'true' ]] && return
+_ob_opts_apps_opclean_isbackedup_fl_=false
+[[ $_ob_opts_apps_opclean_isbackedup_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_isbackedup_fl_ ;}
+Opts.Apps.OpClean.IsBackedUp.NoLogMods()
+{ [[ $_ob_opts_apps_opclean_isbackedup_chfl_ != 'true' ]] && return
+_ob_opts_apps_opclean_isbackedup_chfl_=false ;}
+Opts.Apps.OpClean.IsBackedUp.Init()
+{ _ob_opts_apps_opclean_isbackedup_tx_=''
+_ob_opts_apps_opclean_isbackedup_fl_=false
+_ob_opts_apps_opclean_isbackedup_chfl_=true ;}
+Opts.Apps.OpClean.IsBackedUp.IsNt()
+{ [[ $_ob_opts_apps_opclean_isbackedup_fl_ != 'true' ]] ;}
+Opts.Apps.OpClean.IsBackedUp.IsSet()
+{ [[ $_ob_opts_apps_opclean_isbackedup_fl_ = 'true' ]] ;}
+Opts.Apps.OpClean.IsBackedUp.Set()
+{ [[ $_ob_opts_apps_opclean_isbackedup_fl_ = 'true' ]] && return
+_ob_opts_apps_opclean_isbackedup_fl_=true
+[[ $_ob_opts_apps_opclean_isbackedup_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_isbackedup_fl_ ;}
+Opts.Apps.OpClean.IsBackedUp.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opclean_isbackedup_tx_=$2
+else
+echo -n "$_ob_opts_apps_opclean_isbackedup_tx_"
+fi ;}
+Opts.Apps.OpClean.IsBackedUp.Init
+Opts.Apps.OpClean.IsNtBackedUp.Clear()
+{ [[ $_ob_opts_apps_opclean_isntbackedup_fl_ != 'true' ]] && return
+_ob_opts_apps_opclean_isntbackedup_fl_=false
+[[ $_ob_opts_apps_opclean_isntbackedup_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_isntbackedup_fl_ ;}
+Opts.Apps.OpClean.IsNtBackedUp.NoLogMods()
+{ [[ $_ob_opts_apps_opclean_isntbackedup_chfl_ != 'true' ]] && return
+_ob_opts_apps_opclean_isntbackedup_chfl_=false ;}
+Opts.Apps.OpClean.IsNtBackedUp.Init()
+{ _ob_opts_apps_opclean_isntbackedup_tx_=''
+_ob_opts_apps_opclean_isntbackedup_fl_=false
+_ob_opts_apps_opclean_isntbackedup_chfl_=true ;}
+Opts.Apps.OpClean.IsNtBackedUp.IsNt()
+{ [[ $_ob_opts_apps_opclean_isntbackedup_fl_ != 'true' ]] ;}
+Opts.Apps.OpClean.IsNtBackedUp.IsSet()
+{ [[ $_ob_opts_apps_opclean_isntbackedup_fl_ = 'true' ]] ;}
+Opts.Apps.OpClean.IsNtBackedUp.Set()
+{ [[ $_ob_opts_apps_opclean_isntbackedup_fl_ = 'true' ]] && return
+_ob_opts_apps_opclean_isntbackedup_fl_=true
+[[ $_ob_opts_apps_opclean_isntbackedup_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_isntbackedup_fl_ ;}
+Opts.Apps.OpClean.IsNtBackedUp.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opclean_isntbackedup_tx_=$2
+else
+echo -n "$_ob_opts_apps_opclean_isntbackedup_tx_"
+fi ;}
+Opts.Apps.OpClean.IsNtBackedUp.Init
 Opts.Apps.OpDisable.IsBackedUp.Clear()
 { [[ $_ob_opts_apps_opdisable_isbackedup_fl_ != 'true' ]] && return
 _ob_opts_apps_opdisable_isbackedup_fl_=false
@@ -8657,6 +9229,734 @@ else
 echo -n "$_ob_opts_apps_opupgrade_isntbackedup_tx_"
 fi ;}
 Opts.Apps.OpUpgrade.IsNtBackedUp.Init
+Opts.Apps.OpBackup.IsCleaned.Clear()
+{ [[ $_ob_opts_apps_opbackup_iscleaned_fl_ != 'true' ]] && return
+_ob_opts_apps_opbackup_iscleaned_fl_=false
+[[ $_ob_opts_apps_opbackup_iscleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opbackup_iscleaned_fl_ ;}
+Opts.Apps.OpBackup.IsCleaned.NoLogMods()
+{ [[ $_ob_opts_apps_opbackup_iscleaned_chfl_ != 'true' ]] && return
+_ob_opts_apps_opbackup_iscleaned_chfl_=false ;}
+Opts.Apps.OpBackup.IsCleaned.Init()
+{ _ob_opts_apps_opbackup_iscleaned_tx_=''
+_ob_opts_apps_opbackup_iscleaned_fl_=false
+_ob_opts_apps_opbackup_iscleaned_chfl_=true ;}
+Opts.Apps.OpBackup.IsCleaned.IsNt()
+{ [[ $_ob_opts_apps_opbackup_iscleaned_fl_ != 'true' ]] ;}
+Opts.Apps.OpBackup.IsCleaned.IsSet()
+{ [[ $_ob_opts_apps_opbackup_iscleaned_fl_ = 'true' ]] ;}
+Opts.Apps.OpBackup.IsCleaned.Set()
+{ [[ $_ob_opts_apps_opbackup_iscleaned_fl_ = 'true' ]] && return
+_ob_opts_apps_opbackup_iscleaned_fl_=true
+[[ $_ob_opts_apps_opbackup_iscleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opbackup_iscleaned_fl_ ;}
+Opts.Apps.OpBackup.IsCleaned.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opbackup_iscleaned_tx_=$2
+else
+echo -n "$_ob_opts_apps_opbackup_iscleaned_tx_"
+fi ;}
+Opts.Apps.OpBackup.IsCleaned.Init
+Opts.Apps.OpBackup.IsNtCleaned.Clear()
+{ [[ $_ob_opts_apps_opbackup_isntcleaned_fl_ != 'true' ]] && return
+_ob_opts_apps_opbackup_isntcleaned_fl_=false
+[[ $_ob_opts_apps_opbackup_isntcleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opbackup_isntcleaned_fl_ ;}
+Opts.Apps.OpBackup.IsNtCleaned.NoLogMods()
+{ [[ $_ob_opts_apps_opbackup_isntcleaned_chfl_ != 'true' ]] && return
+_ob_opts_apps_opbackup_isntcleaned_chfl_=false ;}
+Opts.Apps.OpBackup.IsNtCleaned.Init()
+{ _ob_opts_apps_opbackup_isntcleaned_tx_=''
+_ob_opts_apps_opbackup_isntcleaned_fl_=false
+_ob_opts_apps_opbackup_isntcleaned_chfl_=true ;}
+Opts.Apps.OpBackup.IsNtCleaned.IsNt()
+{ [[ $_ob_opts_apps_opbackup_isntcleaned_fl_ != 'true' ]] ;}
+Opts.Apps.OpBackup.IsNtCleaned.IsSet()
+{ [[ $_ob_opts_apps_opbackup_isntcleaned_fl_ = 'true' ]] ;}
+Opts.Apps.OpBackup.IsNtCleaned.Set()
+{ [[ $_ob_opts_apps_opbackup_isntcleaned_fl_ = 'true' ]] && return
+_ob_opts_apps_opbackup_isntcleaned_fl_=true
+[[ $_ob_opts_apps_opbackup_isntcleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opbackup_isntcleaned_fl_ ;}
+Opts.Apps.OpBackup.IsNtCleaned.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opbackup_isntcleaned_tx_=$2
+else
+echo -n "$_ob_opts_apps_opbackup_isntcleaned_tx_"
+fi ;}
+Opts.Apps.OpBackup.IsNtCleaned.Init
+Opts.Apps.OpClean.IsCleaned.Clear()
+{ [[ $_ob_opts_apps_opclean_iscleaned_fl_ != 'true' ]] && return
+_ob_opts_apps_opclean_iscleaned_fl_=false
+[[ $_ob_opts_apps_opclean_iscleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_iscleaned_fl_ ;}
+Opts.Apps.OpClean.IsCleaned.NoLogMods()
+{ [[ $_ob_opts_apps_opclean_iscleaned_chfl_ != 'true' ]] && return
+_ob_opts_apps_opclean_iscleaned_chfl_=false ;}
+Opts.Apps.OpClean.IsCleaned.Init()
+{ _ob_opts_apps_opclean_iscleaned_tx_=''
+_ob_opts_apps_opclean_iscleaned_fl_=false
+_ob_opts_apps_opclean_iscleaned_chfl_=true ;}
+Opts.Apps.OpClean.IsCleaned.IsNt()
+{ [[ $_ob_opts_apps_opclean_iscleaned_fl_ != 'true' ]] ;}
+Opts.Apps.OpClean.IsCleaned.IsSet()
+{ [[ $_ob_opts_apps_opclean_iscleaned_fl_ = 'true' ]] ;}
+Opts.Apps.OpClean.IsCleaned.Set()
+{ [[ $_ob_opts_apps_opclean_iscleaned_fl_ = 'true' ]] && return
+_ob_opts_apps_opclean_iscleaned_fl_=true
+[[ $_ob_opts_apps_opclean_iscleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_iscleaned_fl_ ;}
+Opts.Apps.OpClean.IsCleaned.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opclean_iscleaned_tx_=$2
+else
+echo -n "$_ob_opts_apps_opclean_iscleaned_tx_"
+fi ;}
+Opts.Apps.OpClean.IsCleaned.Init
+Opts.Apps.OpClean.IsNtCleaned.Clear()
+{ [[ $_ob_opts_apps_opclean_isntcleaned_fl_ != 'true' ]] && return
+_ob_opts_apps_opclean_isntcleaned_fl_=false
+[[ $_ob_opts_apps_opclean_isntcleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_isntcleaned_fl_ ;}
+Opts.Apps.OpClean.IsNtCleaned.NoLogMods()
+{ [[ $_ob_opts_apps_opclean_isntcleaned_chfl_ != 'true' ]] && return
+_ob_opts_apps_opclean_isntcleaned_chfl_=false ;}
+Opts.Apps.OpClean.IsNtCleaned.Init()
+{ _ob_opts_apps_opclean_isntcleaned_tx_=''
+_ob_opts_apps_opclean_isntcleaned_fl_=false
+_ob_opts_apps_opclean_isntcleaned_chfl_=true ;}
+Opts.Apps.OpClean.IsNtCleaned.IsNt()
+{ [[ $_ob_opts_apps_opclean_isntcleaned_fl_ != 'true' ]] ;}
+Opts.Apps.OpClean.IsNtCleaned.IsSet()
+{ [[ $_ob_opts_apps_opclean_isntcleaned_fl_ = 'true' ]] ;}
+Opts.Apps.OpClean.IsNtCleaned.Set()
+{ [[ $_ob_opts_apps_opclean_isntcleaned_fl_ = 'true' ]] && return
+_ob_opts_apps_opclean_isntcleaned_fl_=true
+[[ $_ob_opts_apps_opclean_isntcleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_isntcleaned_fl_ ;}
+Opts.Apps.OpClean.IsNtCleaned.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opclean_isntcleaned_tx_=$2
+else
+echo -n "$_ob_opts_apps_opclean_isntcleaned_tx_"
+fi ;}
+Opts.Apps.OpClean.IsNtCleaned.Init
+Opts.Apps.OpDisable.IsCleaned.Clear()
+{ [[ $_ob_opts_apps_opdisable_iscleaned_fl_ != 'true' ]] && return
+_ob_opts_apps_opdisable_iscleaned_fl_=false
+[[ $_ob_opts_apps_opdisable_iscleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opdisable_iscleaned_fl_ ;}
+Opts.Apps.OpDisable.IsCleaned.NoLogMods()
+{ [[ $_ob_opts_apps_opdisable_iscleaned_chfl_ != 'true' ]] && return
+_ob_opts_apps_opdisable_iscleaned_chfl_=false ;}
+Opts.Apps.OpDisable.IsCleaned.Init()
+{ _ob_opts_apps_opdisable_iscleaned_tx_=''
+_ob_opts_apps_opdisable_iscleaned_fl_=false
+_ob_opts_apps_opdisable_iscleaned_chfl_=true ;}
+Opts.Apps.OpDisable.IsCleaned.IsNt()
+{ [[ $_ob_opts_apps_opdisable_iscleaned_fl_ != 'true' ]] ;}
+Opts.Apps.OpDisable.IsCleaned.IsSet()
+{ [[ $_ob_opts_apps_opdisable_iscleaned_fl_ = 'true' ]] ;}
+Opts.Apps.OpDisable.IsCleaned.Set()
+{ [[ $_ob_opts_apps_opdisable_iscleaned_fl_ = 'true' ]] && return
+_ob_opts_apps_opdisable_iscleaned_fl_=true
+[[ $_ob_opts_apps_opdisable_iscleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opdisable_iscleaned_fl_ ;}
+Opts.Apps.OpDisable.IsCleaned.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opdisable_iscleaned_tx_=$2
+else
+echo -n "$_ob_opts_apps_opdisable_iscleaned_tx_"
+fi ;}
+Opts.Apps.OpDisable.IsCleaned.Init
+Opts.Apps.OpDisable.IsNtCleaned.Clear()
+{ [[ $_ob_opts_apps_opdisable_isntcleaned_fl_ != 'true' ]] && return
+_ob_opts_apps_opdisable_isntcleaned_fl_=false
+[[ $_ob_opts_apps_opdisable_isntcleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opdisable_isntcleaned_fl_ ;}
+Opts.Apps.OpDisable.IsNtCleaned.NoLogMods()
+{ [[ $_ob_opts_apps_opdisable_isntcleaned_chfl_ != 'true' ]] && return
+_ob_opts_apps_opdisable_isntcleaned_chfl_=false ;}
+Opts.Apps.OpDisable.IsNtCleaned.Init()
+{ _ob_opts_apps_opdisable_isntcleaned_tx_=''
+_ob_opts_apps_opdisable_isntcleaned_fl_=false
+_ob_opts_apps_opdisable_isntcleaned_chfl_=true ;}
+Opts.Apps.OpDisable.IsNtCleaned.IsNt()
+{ [[ $_ob_opts_apps_opdisable_isntcleaned_fl_ != 'true' ]] ;}
+Opts.Apps.OpDisable.IsNtCleaned.IsSet()
+{ [[ $_ob_opts_apps_opdisable_isntcleaned_fl_ = 'true' ]] ;}
+Opts.Apps.OpDisable.IsNtCleaned.Set()
+{ [[ $_ob_opts_apps_opdisable_isntcleaned_fl_ = 'true' ]] && return
+_ob_opts_apps_opdisable_isntcleaned_fl_=true
+[[ $_ob_opts_apps_opdisable_isntcleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opdisable_isntcleaned_fl_ ;}
+Opts.Apps.OpDisable.IsNtCleaned.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opdisable_isntcleaned_tx_=$2
+else
+echo -n "$_ob_opts_apps_opdisable_isntcleaned_tx_"
+fi ;}
+Opts.Apps.OpDisable.IsNtCleaned.Init
+Opts.Apps.OpDownload.IsCleaned.Clear()
+{ [[ $_ob_opts_apps_opdownload_iscleaned_fl_ != 'true' ]] && return
+_ob_opts_apps_opdownload_iscleaned_fl_=false
+[[ $_ob_opts_apps_opdownload_iscleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opdownload_iscleaned_fl_ ;}
+Opts.Apps.OpDownload.IsCleaned.NoLogMods()
+{ [[ $_ob_opts_apps_opdownload_iscleaned_chfl_ != 'true' ]] && return
+_ob_opts_apps_opdownload_iscleaned_chfl_=false ;}
+Opts.Apps.OpDownload.IsCleaned.Init()
+{ _ob_opts_apps_opdownload_iscleaned_tx_=''
+_ob_opts_apps_opdownload_iscleaned_fl_=false
+_ob_opts_apps_opdownload_iscleaned_chfl_=true ;}
+Opts.Apps.OpDownload.IsCleaned.IsNt()
+{ [[ $_ob_opts_apps_opdownload_iscleaned_fl_ != 'true' ]] ;}
+Opts.Apps.OpDownload.IsCleaned.IsSet()
+{ [[ $_ob_opts_apps_opdownload_iscleaned_fl_ = 'true' ]] ;}
+Opts.Apps.OpDownload.IsCleaned.Set()
+{ [[ $_ob_opts_apps_opdownload_iscleaned_fl_ = 'true' ]] && return
+_ob_opts_apps_opdownload_iscleaned_fl_=true
+[[ $_ob_opts_apps_opdownload_iscleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opdownload_iscleaned_fl_ ;}
+Opts.Apps.OpDownload.IsCleaned.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opdownload_iscleaned_tx_=$2
+else
+echo -n "$_ob_opts_apps_opdownload_iscleaned_tx_"
+fi ;}
+Opts.Apps.OpDownload.IsCleaned.Init
+Opts.Apps.OpDownload.IsNtCleaned.Clear()
+{ [[ $_ob_opts_apps_opdownload_isntcleaned_fl_ != 'true' ]] && return
+_ob_opts_apps_opdownload_isntcleaned_fl_=false
+[[ $_ob_opts_apps_opdownload_isntcleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opdownload_isntcleaned_fl_ ;}
+Opts.Apps.OpDownload.IsNtCleaned.NoLogMods()
+{ [[ $_ob_opts_apps_opdownload_isntcleaned_chfl_ != 'true' ]] && return
+_ob_opts_apps_opdownload_isntcleaned_chfl_=false ;}
+Opts.Apps.OpDownload.IsNtCleaned.Init()
+{ _ob_opts_apps_opdownload_isntcleaned_tx_=''
+_ob_opts_apps_opdownload_isntcleaned_fl_=false
+_ob_opts_apps_opdownload_isntcleaned_chfl_=true ;}
+Opts.Apps.OpDownload.IsNtCleaned.IsNt()
+{ [[ $_ob_opts_apps_opdownload_isntcleaned_fl_ != 'true' ]] ;}
+Opts.Apps.OpDownload.IsNtCleaned.IsSet()
+{ [[ $_ob_opts_apps_opdownload_isntcleaned_fl_ = 'true' ]] ;}
+Opts.Apps.OpDownload.IsNtCleaned.Set()
+{ [[ $_ob_opts_apps_opdownload_isntcleaned_fl_ = 'true' ]] && return
+_ob_opts_apps_opdownload_isntcleaned_fl_=true
+[[ $_ob_opts_apps_opdownload_isntcleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opdownload_isntcleaned_fl_ ;}
+Opts.Apps.OpDownload.IsNtCleaned.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opdownload_isntcleaned_tx_=$2
+else
+echo -n "$_ob_opts_apps_opdownload_isntcleaned_tx_"
+fi ;}
+Opts.Apps.OpDownload.IsNtCleaned.Init
+Opts.Apps.OpEnable.IsCleaned.Clear()
+{ [[ $_ob_opts_apps_openable_iscleaned_fl_ != 'true' ]] && return
+_ob_opts_apps_openable_iscleaned_fl_=false
+[[ $_ob_opts_apps_openable_iscleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_openable_iscleaned_fl_ ;}
+Opts.Apps.OpEnable.IsCleaned.NoLogMods()
+{ [[ $_ob_opts_apps_openable_iscleaned_chfl_ != 'true' ]] && return
+_ob_opts_apps_openable_iscleaned_chfl_=false ;}
+Opts.Apps.OpEnable.IsCleaned.Init()
+{ _ob_opts_apps_openable_iscleaned_tx_=''
+_ob_opts_apps_openable_iscleaned_fl_=false
+_ob_opts_apps_openable_iscleaned_chfl_=true ;}
+Opts.Apps.OpEnable.IsCleaned.IsNt()
+{ [[ $_ob_opts_apps_openable_iscleaned_fl_ != 'true' ]] ;}
+Opts.Apps.OpEnable.IsCleaned.IsSet()
+{ [[ $_ob_opts_apps_openable_iscleaned_fl_ = 'true' ]] ;}
+Opts.Apps.OpEnable.IsCleaned.Set()
+{ [[ $_ob_opts_apps_openable_iscleaned_fl_ = 'true' ]] && return
+_ob_opts_apps_openable_iscleaned_fl_=true
+[[ $_ob_opts_apps_openable_iscleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_openable_iscleaned_fl_ ;}
+Opts.Apps.OpEnable.IsCleaned.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_openable_iscleaned_tx_=$2
+else
+echo -n "$_ob_opts_apps_openable_iscleaned_tx_"
+fi ;}
+Opts.Apps.OpEnable.IsCleaned.Init
+Opts.Apps.OpEnable.IsNtCleaned.Clear()
+{ [[ $_ob_opts_apps_openable_isntcleaned_fl_ != 'true' ]] && return
+_ob_opts_apps_openable_isntcleaned_fl_=false
+[[ $_ob_opts_apps_openable_isntcleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_openable_isntcleaned_fl_ ;}
+Opts.Apps.OpEnable.IsNtCleaned.NoLogMods()
+{ [[ $_ob_opts_apps_openable_isntcleaned_chfl_ != 'true' ]] && return
+_ob_opts_apps_openable_isntcleaned_chfl_=false ;}
+Opts.Apps.OpEnable.IsNtCleaned.Init()
+{ _ob_opts_apps_openable_isntcleaned_tx_=''
+_ob_opts_apps_openable_isntcleaned_fl_=false
+_ob_opts_apps_openable_isntcleaned_chfl_=true ;}
+Opts.Apps.OpEnable.IsNtCleaned.IsNt()
+{ [[ $_ob_opts_apps_openable_isntcleaned_fl_ != 'true' ]] ;}
+Opts.Apps.OpEnable.IsNtCleaned.IsSet()
+{ [[ $_ob_opts_apps_openable_isntcleaned_fl_ = 'true' ]] ;}
+Opts.Apps.OpEnable.IsNtCleaned.Set()
+{ [[ $_ob_opts_apps_openable_isntcleaned_fl_ = 'true' ]] && return
+_ob_opts_apps_openable_isntcleaned_fl_=true
+[[ $_ob_opts_apps_openable_isntcleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_openable_isntcleaned_fl_ ;}
+Opts.Apps.OpEnable.IsNtCleaned.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_openable_isntcleaned_tx_=$2
+else
+echo -n "$_ob_opts_apps_openable_isntcleaned_tx_"
+fi ;}
+Opts.Apps.OpEnable.IsNtCleaned.Init
+Opts.Apps.OpInstall.IsCleaned.Clear()
+{ [[ $_ob_opts_apps_opinstall_iscleaned_fl_ != 'true' ]] && return
+_ob_opts_apps_opinstall_iscleaned_fl_=false
+[[ $_ob_opts_apps_opinstall_iscleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opinstall_iscleaned_fl_ ;}
+Opts.Apps.OpInstall.IsCleaned.NoLogMods()
+{ [[ $_ob_opts_apps_opinstall_iscleaned_chfl_ != 'true' ]] && return
+_ob_opts_apps_opinstall_iscleaned_chfl_=false ;}
+Opts.Apps.OpInstall.IsCleaned.Init()
+{ _ob_opts_apps_opinstall_iscleaned_tx_=''
+_ob_opts_apps_opinstall_iscleaned_fl_=false
+_ob_opts_apps_opinstall_iscleaned_chfl_=true ;}
+Opts.Apps.OpInstall.IsCleaned.IsNt()
+{ [[ $_ob_opts_apps_opinstall_iscleaned_fl_ != 'true' ]] ;}
+Opts.Apps.OpInstall.IsCleaned.IsSet()
+{ [[ $_ob_opts_apps_opinstall_iscleaned_fl_ = 'true' ]] ;}
+Opts.Apps.OpInstall.IsCleaned.Set()
+{ [[ $_ob_opts_apps_opinstall_iscleaned_fl_ = 'true' ]] && return
+_ob_opts_apps_opinstall_iscleaned_fl_=true
+[[ $_ob_opts_apps_opinstall_iscleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opinstall_iscleaned_fl_ ;}
+Opts.Apps.OpInstall.IsCleaned.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opinstall_iscleaned_tx_=$2
+else
+echo -n "$_ob_opts_apps_opinstall_iscleaned_tx_"
+fi ;}
+Opts.Apps.OpInstall.IsCleaned.Init
+Opts.Apps.OpInstall.IsNtCleaned.Clear()
+{ [[ $_ob_opts_apps_opinstall_isntcleaned_fl_ != 'true' ]] && return
+_ob_opts_apps_opinstall_isntcleaned_fl_=false
+[[ $_ob_opts_apps_opinstall_isntcleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opinstall_isntcleaned_fl_ ;}
+Opts.Apps.OpInstall.IsNtCleaned.NoLogMods()
+{ [[ $_ob_opts_apps_opinstall_isntcleaned_chfl_ != 'true' ]] && return
+_ob_opts_apps_opinstall_isntcleaned_chfl_=false ;}
+Opts.Apps.OpInstall.IsNtCleaned.Init()
+{ _ob_opts_apps_opinstall_isntcleaned_tx_=''
+_ob_opts_apps_opinstall_isntcleaned_fl_=false
+_ob_opts_apps_opinstall_isntcleaned_chfl_=true ;}
+Opts.Apps.OpInstall.IsNtCleaned.IsNt()
+{ [[ $_ob_opts_apps_opinstall_isntcleaned_fl_ != 'true' ]] ;}
+Opts.Apps.OpInstall.IsNtCleaned.IsSet()
+{ [[ $_ob_opts_apps_opinstall_isntcleaned_fl_ = 'true' ]] ;}
+Opts.Apps.OpInstall.IsNtCleaned.Set()
+{ [[ $_ob_opts_apps_opinstall_isntcleaned_fl_ = 'true' ]] && return
+_ob_opts_apps_opinstall_isntcleaned_fl_=true
+[[ $_ob_opts_apps_opinstall_isntcleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opinstall_isntcleaned_fl_ ;}
+Opts.Apps.OpInstall.IsNtCleaned.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opinstall_isntcleaned_tx_=$2
+else
+echo -n "$_ob_opts_apps_opinstall_isntcleaned_tx_"
+fi ;}
+Opts.Apps.OpInstall.IsNtCleaned.Init
+Opts.Apps.OpRebuild.IsCleaned.Clear()
+{ [[ $_ob_opts_apps_oprebuild_iscleaned_fl_ != 'true' ]] && return
+_ob_opts_apps_oprebuild_iscleaned_fl_=false
+[[ $_ob_opts_apps_oprebuild_iscleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_oprebuild_iscleaned_fl_ ;}
+Opts.Apps.OpRebuild.IsCleaned.NoLogMods()
+{ [[ $_ob_opts_apps_oprebuild_iscleaned_chfl_ != 'true' ]] && return
+_ob_opts_apps_oprebuild_iscleaned_chfl_=false ;}
+Opts.Apps.OpRebuild.IsCleaned.Init()
+{ _ob_opts_apps_oprebuild_iscleaned_tx_=''
+_ob_opts_apps_oprebuild_iscleaned_fl_=false
+_ob_opts_apps_oprebuild_iscleaned_chfl_=true ;}
+Opts.Apps.OpRebuild.IsCleaned.IsNt()
+{ [[ $_ob_opts_apps_oprebuild_iscleaned_fl_ != 'true' ]] ;}
+Opts.Apps.OpRebuild.IsCleaned.IsSet()
+{ [[ $_ob_opts_apps_oprebuild_iscleaned_fl_ = 'true' ]] ;}
+Opts.Apps.OpRebuild.IsCleaned.Set()
+{ [[ $_ob_opts_apps_oprebuild_iscleaned_fl_ = 'true' ]] && return
+_ob_opts_apps_oprebuild_iscleaned_fl_=true
+[[ $_ob_opts_apps_oprebuild_iscleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_oprebuild_iscleaned_fl_ ;}
+Opts.Apps.OpRebuild.IsCleaned.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_oprebuild_iscleaned_tx_=$2
+else
+echo -n "$_ob_opts_apps_oprebuild_iscleaned_tx_"
+fi ;}
+Opts.Apps.OpRebuild.IsCleaned.Init
+Opts.Apps.OpRebuild.IsNtCleaned.Clear()
+{ [[ $_ob_opts_apps_oprebuild_isntcleaned_fl_ != 'true' ]] && return
+_ob_opts_apps_oprebuild_isntcleaned_fl_=false
+[[ $_ob_opts_apps_oprebuild_isntcleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_oprebuild_isntcleaned_fl_ ;}
+Opts.Apps.OpRebuild.IsNtCleaned.NoLogMods()
+{ [[ $_ob_opts_apps_oprebuild_isntcleaned_chfl_ != 'true' ]] && return
+_ob_opts_apps_oprebuild_isntcleaned_chfl_=false ;}
+Opts.Apps.OpRebuild.IsNtCleaned.Init()
+{ _ob_opts_apps_oprebuild_isntcleaned_tx_=''
+_ob_opts_apps_oprebuild_isntcleaned_fl_=false
+_ob_opts_apps_oprebuild_isntcleaned_chfl_=true ;}
+Opts.Apps.OpRebuild.IsNtCleaned.IsNt()
+{ [[ $_ob_opts_apps_oprebuild_isntcleaned_fl_ != 'true' ]] ;}
+Opts.Apps.OpRebuild.IsNtCleaned.IsSet()
+{ [[ $_ob_opts_apps_oprebuild_isntcleaned_fl_ = 'true' ]] ;}
+Opts.Apps.OpRebuild.IsNtCleaned.Set()
+{ [[ $_ob_opts_apps_oprebuild_isntcleaned_fl_ = 'true' ]] && return
+_ob_opts_apps_oprebuild_isntcleaned_fl_=true
+[[ $_ob_opts_apps_oprebuild_isntcleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_oprebuild_isntcleaned_fl_ ;}
+Opts.Apps.OpRebuild.IsNtCleaned.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_oprebuild_isntcleaned_tx_=$2
+else
+echo -n "$_ob_opts_apps_oprebuild_isntcleaned_tx_"
+fi ;}
+Opts.Apps.OpRebuild.IsNtCleaned.Init
+Opts.Apps.OpReinstall.IsCleaned.Clear()
+{ [[ $_ob_opts_apps_opreinstall_iscleaned_fl_ != 'true' ]] && return
+_ob_opts_apps_opreinstall_iscleaned_fl_=false
+[[ $_ob_opts_apps_opreinstall_iscleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opreinstall_iscleaned_fl_ ;}
+Opts.Apps.OpReinstall.IsCleaned.NoLogMods()
+{ [[ $_ob_opts_apps_opreinstall_iscleaned_chfl_ != 'true' ]] && return
+_ob_opts_apps_opreinstall_iscleaned_chfl_=false ;}
+Opts.Apps.OpReinstall.IsCleaned.Init()
+{ _ob_opts_apps_opreinstall_iscleaned_tx_=''
+_ob_opts_apps_opreinstall_iscleaned_fl_=false
+_ob_opts_apps_opreinstall_iscleaned_chfl_=true ;}
+Opts.Apps.OpReinstall.IsCleaned.IsNt()
+{ [[ $_ob_opts_apps_opreinstall_iscleaned_fl_ != 'true' ]] ;}
+Opts.Apps.OpReinstall.IsCleaned.IsSet()
+{ [[ $_ob_opts_apps_opreinstall_iscleaned_fl_ = 'true' ]] ;}
+Opts.Apps.OpReinstall.IsCleaned.Set()
+{ [[ $_ob_opts_apps_opreinstall_iscleaned_fl_ = 'true' ]] && return
+_ob_opts_apps_opreinstall_iscleaned_fl_=true
+[[ $_ob_opts_apps_opreinstall_iscleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opreinstall_iscleaned_fl_ ;}
+Opts.Apps.OpReinstall.IsCleaned.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opreinstall_iscleaned_tx_=$2
+else
+echo -n "$_ob_opts_apps_opreinstall_iscleaned_tx_"
+fi ;}
+Opts.Apps.OpReinstall.IsCleaned.Init
+Opts.Apps.OpReinstall.IsNtCleaned.Clear()
+{ [[ $_ob_opts_apps_opreinstall_isntcleaned_fl_ != 'true' ]] && return
+_ob_opts_apps_opreinstall_isntcleaned_fl_=false
+[[ $_ob_opts_apps_opreinstall_isntcleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opreinstall_isntcleaned_fl_ ;}
+Opts.Apps.OpReinstall.IsNtCleaned.NoLogMods()
+{ [[ $_ob_opts_apps_opreinstall_isntcleaned_chfl_ != 'true' ]] && return
+_ob_opts_apps_opreinstall_isntcleaned_chfl_=false ;}
+Opts.Apps.OpReinstall.IsNtCleaned.Init()
+{ _ob_opts_apps_opreinstall_isntcleaned_tx_=''
+_ob_opts_apps_opreinstall_isntcleaned_fl_=false
+_ob_opts_apps_opreinstall_isntcleaned_chfl_=true ;}
+Opts.Apps.OpReinstall.IsNtCleaned.IsNt()
+{ [[ $_ob_opts_apps_opreinstall_isntcleaned_fl_ != 'true' ]] ;}
+Opts.Apps.OpReinstall.IsNtCleaned.IsSet()
+{ [[ $_ob_opts_apps_opreinstall_isntcleaned_fl_ = 'true' ]] ;}
+Opts.Apps.OpReinstall.IsNtCleaned.Set()
+{ [[ $_ob_opts_apps_opreinstall_isntcleaned_fl_ = 'true' ]] && return
+_ob_opts_apps_opreinstall_isntcleaned_fl_=true
+[[ $_ob_opts_apps_opreinstall_isntcleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opreinstall_isntcleaned_fl_ ;}
+Opts.Apps.OpReinstall.IsNtCleaned.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opreinstall_isntcleaned_tx_=$2
+else
+echo -n "$_ob_opts_apps_opreinstall_isntcleaned_tx_"
+fi ;}
+Opts.Apps.OpReinstall.IsNtCleaned.Init
+Opts.Apps.OpRestart.IsCleaned.Clear()
+{ [[ $_ob_opts_apps_oprestart_iscleaned_fl_ != 'true' ]] && return
+_ob_opts_apps_oprestart_iscleaned_fl_=false
+[[ $_ob_opts_apps_oprestart_iscleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_oprestart_iscleaned_fl_ ;}
+Opts.Apps.OpRestart.IsCleaned.NoLogMods()
+{ [[ $_ob_opts_apps_oprestart_iscleaned_chfl_ != 'true' ]] && return
+_ob_opts_apps_oprestart_iscleaned_chfl_=false ;}
+Opts.Apps.OpRestart.IsCleaned.Init()
+{ _ob_opts_apps_oprestart_iscleaned_tx_=''
+_ob_opts_apps_oprestart_iscleaned_fl_=false
+_ob_opts_apps_oprestart_iscleaned_chfl_=true ;}
+Opts.Apps.OpRestart.IsCleaned.IsNt()
+{ [[ $_ob_opts_apps_oprestart_iscleaned_fl_ != 'true' ]] ;}
+Opts.Apps.OpRestart.IsCleaned.IsSet()
+{ [[ $_ob_opts_apps_oprestart_iscleaned_fl_ = 'true' ]] ;}
+Opts.Apps.OpRestart.IsCleaned.Set()
+{ [[ $_ob_opts_apps_oprestart_iscleaned_fl_ = 'true' ]] && return
+_ob_opts_apps_oprestart_iscleaned_fl_=true
+[[ $_ob_opts_apps_oprestart_iscleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_oprestart_iscleaned_fl_ ;}
+Opts.Apps.OpRestart.IsCleaned.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_oprestart_iscleaned_tx_=$2
+else
+echo -n "$_ob_opts_apps_oprestart_iscleaned_tx_"
+fi ;}
+Opts.Apps.OpRestart.IsCleaned.Init
+Opts.Apps.OpRestart.IsNtCleaned.Clear()
+{ [[ $_ob_opts_apps_oprestart_isntcleaned_fl_ != 'true' ]] && return
+_ob_opts_apps_oprestart_isntcleaned_fl_=false
+[[ $_ob_opts_apps_oprestart_isntcleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_oprestart_isntcleaned_fl_ ;}
+Opts.Apps.OpRestart.IsNtCleaned.NoLogMods()
+{ [[ $_ob_opts_apps_oprestart_isntcleaned_chfl_ != 'true' ]] && return
+_ob_opts_apps_oprestart_isntcleaned_chfl_=false ;}
+Opts.Apps.OpRestart.IsNtCleaned.Init()
+{ _ob_opts_apps_oprestart_isntcleaned_tx_=''
+_ob_opts_apps_oprestart_isntcleaned_fl_=false
+_ob_opts_apps_oprestart_isntcleaned_chfl_=true ;}
+Opts.Apps.OpRestart.IsNtCleaned.IsNt()
+{ [[ $_ob_opts_apps_oprestart_isntcleaned_fl_ != 'true' ]] ;}
+Opts.Apps.OpRestart.IsNtCleaned.IsSet()
+{ [[ $_ob_opts_apps_oprestart_isntcleaned_fl_ = 'true' ]] ;}
+Opts.Apps.OpRestart.IsNtCleaned.Set()
+{ [[ $_ob_opts_apps_oprestart_isntcleaned_fl_ = 'true' ]] && return
+_ob_opts_apps_oprestart_isntcleaned_fl_=true
+[[ $_ob_opts_apps_oprestart_isntcleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_oprestart_isntcleaned_fl_ ;}
+Opts.Apps.OpRestart.IsNtCleaned.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_oprestart_isntcleaned_tx_=$2
+else
+echo -n "$_ob_opts_apps_oprestart_isntcleaned_tx_"
+fi ;}
+Opts.Apps.OpRestart.IsNtCleaned.Init
+Opts.Apps.OpRestore.IsCleaned.Clear()
+{ [[ $_ob_opts_apps_oprestore_iscleaned_fl_ != 'true' ]] && return
+_ob_opts_apps_oprestore_iscleaned_fl_=false
+[[ $_ob_opts_apps_oprestore_iscleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_oprestore_iscleaned_fl_ ;}
+Opts.Apps.OpRestore.IsCleaned.NoLogMods()
+{ [[ $_ob_opts_apps_oprestore_iscleaned_chfl_ != 'true' ]] && return
+_ob_opts_apps_oprestore_iscleaned_chfl_=false ;}
+Opts.Apps.OpRestore.IsCleaned.Init()
+{ _ob_opts_apps_oprestore_iscleaned_tx_=''
+_ob_opts_apps_oprestore_iscleaned_fl_=false
+_ob_opts_apps_oprestore_iscleaned_chfl_=true ;}
+Opts.Apps.OpRestore.IsCleaned.IsNt()
+{ [[ $_ob_opts_apps_oprestore_iscleaned_fl_ != 'true' ]] ;}
+Opts.Apps.OpRestore.IsCleaned.IsSet()
+{ [[ $_ob_opts_apps_oprestore_iscleaned_fl_ = 'true' ]] ;}
+Opts.Apps.OpRestore.IsCleaned.Set()
+{ [[ $_ob_opts_apps_oprestore_iscleaned_fl_ = 'true' ]] && return
+_ob_opts_apps_oprestore_iscleaned_fl_=true
+[[ $_ob_opts_apps_oprestore_iscleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_oprestore_iscleaned_fl_ ;}
+Opts.Apps.OpRestore.IsCleaned.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_oprestore_iscleaned_tx_=$2
+else
+echo -n "$_ob_opts_apps_oprestore_iscleaned_tx_"
+fi ;}
+Opts.Apps.OpRestore.IsCleaned.Init
+Opts.Apps.OpRestore.IsNtCleaned.Clear()
+{ [[ $_ob_opts_apps_oprestore_isntcleaned_fl_ != 'true' ]] && return
+_ob_opts_apps_oprestore_isntcleaned_fl_=false
+[[ $_ob_opts_apps_oprestore_isntcleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_oprestore_isntcleaned_fl_ ;}
+Opts.Apps.OpRestore.IsNtCleaned.NoLogMods()
+{ [[ $_ob_opts_apps_oprestore_isntcleaned_chfl_ != 'true' ]] && return
+_ob_opts_apps_oprestore_isntcleaned_chfl_=false ;}
+Opts.Apps.OpRestore.IsNtCleaned.Init()
+{ _ob_opts_apps_oprestore_isntcleaned_tx_=''
+_ob_opts_apps_oprestore_isntcleaned_fl_=false
+_ob_opts_apps_oprestore_isntcleaned_chfl_=true ;}
+Opts.Apps.OpRestore.IsNtCleaned.IsNt()
+{ [[ $_ob_opts_apps_oprestore_isntcleaned_fl_ != 'true' ]] ;}
+Opts.Apps.OpRestore.IsNtCleaned.IsSet()
+{ [[ $_ob_opts_apps_oprestore_isntcleaned_fl_ = 'true' ]] ;}
+Opts.Apps.OpRestore.IsNtCleaned.Set()
+{ [[ $_ob_opts_apps_oprestore_isntcleaned_fl_ = 'true' ]] && return
+_ob_opts_apps_oprestore_isntcleaned_fl_=true
+[[ $_ob_opts_apps_oprestore_isntcleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_oprestore_isntcleaned_fl_ ;}
+Opts.Apps.OpRestore.IsNtCleaned.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_oprestore_isntcleaned_tx_=$2
+else
+echo -n "$_ob_opts_apps_oprestore_isntcleaned_tx_"
+fi ;}
+Opts.Apps.OpRestore.IsNtCleaned.Init
+Opts.Apps.OpStart.IsCleaned.Clear()
+{ [[ $_ob_opts_apps_opstart_iscleaned_fl_ != 'true' ]] && return
+_ob_opts_apps_opstart_iscleaned_fl_=false
+[[ $_ob_opts_apps_opstart_iscleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opstart_iscleaned_fl_ ;}
+Opts.Apps.OpStart.IsCleaned.NoLogMods()
+{ [[ $_ob_opts_apps_opstart_iscleaned_chfl_ != 'true' ]] && return
+_ob_opts_apps_opstart_iscleaned_chfl_=false ;}
+Opts.Apps.OpStart.IsCleaned.Init()
+{ _ob_opts_apps_opstart_iscleaned_tx_=''
+_ob_opts_apps_opstart_iscleaned_fl_=false
+_ob_opts_apps_opstart_iscleaned_chfl_=true ;}
+Opts.Apps.OpStart.IsCleaned.IsNt()
+{ [[ $_ob_opts_apps_opstart_iscleaned_fl_ != 'true' ]] ;}
+Opts.Apps.OpStart.IsCleaned.IsSet()
+{ [[ $_ob_opts_apps_opstart_iscleaned_fl_ = 'true' ]] ;}
+Opts.Apps.OpStart.IsCleaned.Set()
+{ [[ $_ob_opts_apps_opstart_iscleaned_fl_ = 'true' ]] && return
+_ob_opts_apps_opstart_iscleaned_fl_=true
+[[ $_ob_opts_apps_opstart_iscleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opstart_iscleaned_fl_ ;}
+Opts.Apps.OpStart.IsCleaned.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opstart_iscleaned_tx_=$2
+else
+echo -n "$_ob_opts_apps_opstart_iscleaned_tx_"
+fi ;}
+Opts.Apps.OpStart.IsCleaned.Init
+Opts.Apps.OpStart.IsNtCleaned.Clear()
+{ [[ $_ob_opts_apps_opstart_isntcleaned_fl_ != 'true' ]] && return
+_ob_opts_apps_opstart_isntcleaned_fl_=false
+[[ $_ob_opts_apps_opstart_isntcleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opstart_isntcleaned_fl_ ;}
+Opts.Apps.OpStart.IsNtCleaned.NoLogMods()
+{ [[ $_ob_opts_apps_opstart_isntcleaned_chfl_ != 'true' ]] && return
+_ob_opts_apps_opstart_isntcleaned_chfl_=false ;}
+Opts.Apps.OpStart.IsNtCleaned.Init()
+{ _ob_opts_apps_opstart_isntcleaned_tx_=''
+_ob_opts_apps_opstart_isntcleaned_fl_=false
+_ob_opts_apps_opstart_isntcleaned_chfl_=true ;}
+Opts.Apps.OpStart.IsNtCleaned.IsNt()
+{ [[ $_ob_opts_apps_opstart_isntcleaned_fl_ != 'true' ]] ;}
+Opts.Apps.OpStart.IsNtCleaned.IsSet()
+{ [[ $_ob_opts_apps_opstart_isntcleaned_fl_ = 'true' ]] ;}
+Opts.Apps.OpStart.IsNtCleaned.Set()
+{ [[ $_ob_opts_apps_opstart_isntcleaned_fl_ = 'true' ]] && return
+_ob_opts_apps_opstart_isntcleaned_fl_=true
+[[ $_ob_opts_apps_opstart_isntcleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opstart_isntcleaned_fl_ ;}
+Opts.Apps.OpStart.IsNtCleaned.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opstart_isntcleaned_tx_=$2
+else
+echo -n "$_ob_opts_apps_opstart_isntcleaned_tx_"
+fi ;}
+Opts.Apps.OpStart.IsNtCleaned.Init
+Opts.Apps.OpStop.IsCleaned.Clear()
+{ [[ $_ob_opts_apps_opstop_iscleaned_fl_ != 'true' ]] && return
+_ob_opts_apps_opstop_iscleaned_fl_=false
+[[ $_ob_opts_apps_opstop_iscleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opstop_iscleaned_fl_ ;}
+Opts.Apps.OpStop.IsCleaned.NoLogMods()
+{ [[ $_ob_opts_apps_opstop_iscleaned_chfl_ != 'true' ]] && return
+_ob_opts_apps_opstop_iscleaned_chfl_=false ;}
+Opts.Apps.OpStop.IsCleaned.Init()
+{ _ob_opts_apps_opstop_iscleaned_tx_=''
+_ob_opts_apps_opstop_iscleaned_fl_=false
+_ob_opts_apps_opstop_iscleaned_chfl_=true ;}
+Opts.Apps.OpStop.IsCleaned.IsNt()
+{ [[ $_ob_opts_apps_opstop_iscleaned_fl_ != 'true' ]] ;}
+Opts.Apps.OpStop.IsCleaned.IsSet()
+{ [[ $_ob_opts_apps_opstop_iscleaned_fl_ = 'true' ]] ;}
+Opts.Apps.OpStop.IsCleaned.Set()
+{ [[ $_ob_opts_apps_opstop_iscleaned_fl_ = 'true' ]] && return
+_ob_opts_apps_opstop_iscleaned_fl_=true
+[[ $_ob_opts_apps_opstop_iscleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opstop_iscleaned_fl_ ;}
+Opts.Apps.OpStop.IsCleaned.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opstop_iscleaned_tx_=$2
+else
+echo -n "$_ob_opts_apps_opstop_iscleaned_tx_"
+fi ;}
+Opts.Apps.OpStop.IsCleaned.Init
+Opts.Apps.OpStop.IsNtCleaned.Clear()
+{ [[ $_ob_opts_apps_opstop_isntcleaned_fl_ != 'true' ]] && return
+_ob_opts_apps_opstop_isntcleaned_fl_=false
+[[ $_ob_opts_apps_opstop_isntcleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opstop_isntcleaned_fl_ ;}
+Opts.Apps.OpStop.IsNtCleaned.NoLogMods()
+{ [[ $_ob_opts_apps_opstop_isntcleaned_chfl_ != 'true' ]] && return
+_ob_opts_apps_opstop_isntcleaned_chfl_=false ;}
+Opts.Apps.OpStop.IsNtCleaned.Init()
+{ _ob_opts_apps_opstop_isntcleaned_tx_=''
+_ob_opts_apps_opstop_isntcleaned_fl_=false
+_ob_opts_apps_opstop_isntcleaned_chfl_=true ;}
+Opts.Apps.OpStop.IsNtCleaned.IsNt()
+{ [[ $_ob_opts_apps_opstop_isntcleaned_fl_ != 'true' ]] ;}
+Opts.Apps.OpStop.IsNtCleaned.IsSet()
+{ [[ $_ob_opts_apps_opstop_isntcleaned_fl_ = 'true' ]] ;}
+Opts.Apps.OpStop.IsNtCleaned.Set()
+{ [[ $_ob_opts_apps_opstop_isntcleaned_fl_ = 'true' ]] && return
+_ob_opts_apps_opstop_isntcleaned_fl_=true
+[[ $_ob_opts_apps_opstop_isntcleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opstop_isntcleaned_fl_ ;}
+Opts.Apps.OpStop.IsNtCleaned.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opstop_isntcleaned_tx_=$2
+else
+echo -n "$_ob_opts_apps_opstop_isntcleaned_tx_"
+fi ;}
+Opts.Apps.OpStop.IsNtCleaned.Init
+Opts.Apps.OpUninstall.IsCleaned.Clear()
+{ [[ $_ob_opts_apps_opuninstall_iscleaned_fl_ != 'true' ]] && return
+_ob_opts_apps_opuninstall_iscleaned_fl_=false
+[[ $_ob_opts_apps_opuninstall_iscleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opuninstall_iscleaned_fl_ ;}
+Opts.Apps.OpUninstall.IsCleaned.NoLogMods()
+{ [[ $_ob_opts_apps_opuninstall_iscleaned_chfl_ != 'true' ]] && return
+_ob_opts_apps_opuninstall_iscleaned_chfl_=false ;}
+Opts.Apps.OpUninstall.IsCleaned.Init()
+{ _ob_opts_apps_opuninstall_iscleaned_tx_=''
+_ob_opts_apps_opuninstall_iscleaned_fl_=false
+_ob_opts_apps_opuninstall_iscleaned_chfl_=true ;}
+Opts.Apps.OpUninstall.IsCleaned.IsNt()
+{ [[ $_ob_opts_apps_opuninstall_iscleaned_fl_ != 'true' ]] ;}
+Opts.Apps.OpUninstall.IsCleaned.IsSet()
+{ [[ $_ob_opts_apps_opuninstall_iscleaned_fl_ = 'true' ]] ;}
+Opts.Apps.OpUninstall.IsCleaned.Set()
+{ [[ $_ob_opts_apps_opuninstall_iscleaned_fl_ = 'true' ]] && return
+_ob_opts_apps_opuninstall_iscleaned_fl_=true
+[[ $_ob_opts_apps_opuninstall_iscleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opuninstall_iscleaned_fl_ ;}
+Opts.Apps.OpUninstall.IsCleaned.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opuninstall_iscleaned_tx_=$2
+else
+echo -n "$_ob_opts_apps_opuninstall_iscleaned_tx_"
+fi ;}
+Opts.Apps.OpUninstall.IsCleaned.Init
+Opts.Apps.OpUninstall.IsNtCleaned.Clear()
+{ [[ $_ob_opts_apps_opuninstall_isntcleaned_fl_ != 'true' ]] && return
+_ob_opts_apps_opuninstall_isntcleaned_fl_=false
+[[ $_ob_opts_apps_opuninstall_isntcleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opuninstall_isntcleaned_fl_ ;}
+Opts.Apps.OpUninstall.IsNtCleaned.NoLogMods()
+{ [[ $_ob_opts_apps_opuninstall_isntcleaned_chfl_ != 'true' ]] && return
+_ob_opts_apps_opuninstall_isntcleaned_chfl_=false ;}
+Opts.Apps.OpUninstall.IsNtCleaned.Init()
+{ _ob_opts_apps_opuninstall_isntcleaned_tx_=''
+_ob_opts_apps_opuninstall_isntcleaned_fl_=false
+_ob_opts_apps_opuninstall_isntcleaned_chfl_=true ;}
+Opts.Apps.OpUninstall.IsNtCleaned.IsNt()
+{ [[ $_ob_opts_apps_opuninstall_isntcleaned_fl_ != 'true' ]] ;}
+Opts.Apps.OpUninstall.IsNtCleaned.IsSet()
+{ [[ $_ob_opts_apps_opuninstall_isntcleaned_fl_ = 'true' ]] ;}
+Opts.Apps.OpUninstall.IsNtCleaned.Set()
+{ [[ $_ob_opts_apps_opuninstall_isntcleaned_fl_ = 'true' ]] && return
+_ob_opts_apps_opuninstall_isntcleaned_fl_=true
+[[ $_ob_opts_apps_opuninstall_isntcleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opuninstall_isntcleaned_fl_ ;}
+Opts.Apps.OpUninstall.IsNtCleaned.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opuninstall_isntcleaned_tx_=$2
+else
+echo -n "$_ob_opts_apps_opuninstall_isntcleaned_tx_"
+fi ;}
+Opts.Apps.OpUninstall.IsNtCleaned.Init
+Opts.Apps.OpUpgrade.IsCleaned.Clear()
+{ [[ $_ob_opts_apps_opupgrade_iscleaned_fl_ != 'true' ]] && return
+_ob_opts_apps_opupgrade_iscleaned_fl_=false
+[[ $_ob_opts_apps_opupgrade_iscleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opupgrade_iscleaned_fl_ ;}
+Opts.Apps.OpUpgrade.IsCleaned.NoLogMods()
+{ [[ $_ob_opts_apps_opupgrade_iscleaned_chfl_ != 'true' ]] && return
+_ob_opts_apps_opupgrade_iscleaned_chfl_=false ;}
+Opts.Apps.OpUpgrade.IsCleaned.Init()
+{ _ob_opts_apps_opupgrade_iscleaned_tx_=''
+_ob_opts_apps_opupgrade_iscleaned_fl_=false
+_ob_opts_apps_opupgrade_iscleaned_chfl_=true ;}
+Opts.Apps.OpUpgrade.IsCleaned.IsNt()
+{ [[ $_ob_opts_apps_opupgrade_iscleaned_fl_ != 'true' ]] ;}
+Opts.Apps.OpUpgrade.IsCleaned.IsSet()
+{ [[ $_ob_opts_apps_opupgrade_iscleaned_fl_ = 'true' ]] ;}
+Opts.Apps.OpUpgrade.IsCleaned.Set()
+{ [[ $_ob_opts_apps_opupgrade_iscleaned_fl_ = 'true' ]] && return
+_ob_opts_apps_opupgrade_iscleaned_fl_=true
+[[ $_ob_opts_apps_opupgrade_iscleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opupgrade_iscleaned_fl_ ;}
+Opts.Apps.OpUpgrade.IsCleaned.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opupgrade_iscleaned_tx_=$2
+else
+echo -n "$_ob_opts_apps_opupgrade_iscleaned_tx_"
+fi ;}
+Opts.Apps.OpUpgrade.IsCleaned.Init
+Opts.Apps.OpUpgrade.IsNtCleaned.Clear()
+{ [[ $_ob_opts_apps_opupgrade_isntcleaned_fl_ != 'true' ]] && return
+_ob_opts_apps_opupgrade_isntcleaned_fl_=false
+[[ $_ob_opts_apps_opupgrade_isntcleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opupgrade_isntcleaned_fl_ ;}
+Opts.Apps.OpUpgrade.IsNtCleaned.NoLogMods()
+{ [[ $_ob_opts_apps_opupgrade_isntcleaned_chfl_ != 'true' ]] && return
+_ob_opts_apps_opupgrade_isntcleaned_chfl_=false ;}
+Opts.Apps.OpUpgrade.IsNtCleaned.Init()
+{ _ob_opts_apps_opupgrade_isntcleaned_tx_=''
+_ob_opts_apps_opupgrade_isntcleaned_fl_=false
+_ob_opts_apps_opupgrade_isntcleaned_chfl_=true ;}
+Opts.Apps.OpUpgrade.IsNtCleaned.IsNt()
+{ [[ $_ob_opts_apps_opupgrade_isntcleaned_fl_ != 'true' ]] ;}
+Opts.Apps.OpUpgrade.IsNtCleaned.IsSet()
+{ [[ $_ob_opts_apps_opupgrade_isntcleaned_fl_ = 'true' ]] ;}
+Opts.Apps.OpUpgrade.IsNtCleaned.Set()
+{ [[ $_ob_opts_apps_opupgrade_isntcleaned_fl_ = 'true' ]] && return
+_ob_opts_apps_opupgrade_isntcleaned_fl_=true
+[[ $_ob_opts_apps_opupgrade_isntcleaned_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opupgrade_isntcleaned_fl_ ;}
+Opts.Apps.OpUpgrade.IsNtCleaned.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opupgrade_isntcleaned_tx_=$2
+else
+echo -n "$_ob_opts_apps_opupgrade_isntcleaned_tx_"
+fi ;}
+Opts.Apps.OpUpgrade.IsNtCleaned.Init
 Opts.Apps.OpBackup.IsDisabled.Clear()
 { [[ $_ob_opts_apps_opbackup_isdisabled_fl_ != 'true' ]] && return
 _ob_opts_apps_opbackup_isdisabled_fl_=false
@@ -8709,6 +10009,58 @@ else
 echo -n "$_ob_opts_apps_opbackup_isntdisabled_tx_"
 fi ;}
 Opts.Apps.OpBackup.IsNtDisabled.Init
+Opts.Apps.OpClean.IsDisabled.Clear()
+{ [[ $_ob_opts_apps_opclean_isdisabled_fl_ != 'true' ]] && return
+_ob_opts_apps_opclean_isdisabled_fl_=false
+[[ $_ob_opts_apps_opclean_isdisabled_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_isdisabled_fl_ ;}
+Opts.Apps.OpClean.IsDisabled.NoLogMods()
+{ [[ $_ob_opts_apps_opclean_isdisabled_chfl_ != 'true' ]] && return
+_ob_opts_apps_opclean_isdisabled_chfl_=false ;}
+Opts.Apps.OpClean.IsDisabled.Init()
+{ _ob_opts_apps_opclean_isdisabled_tx_=''
+_ob_opts_apps_opclean_isdisabled_fl_=false
+_ob_opts_apps_opclean_isdisabled_chfl_=true ;}
+Opts.Apps.OpClean.IsDisabled.IsNt()
+{ [[ $_ob_opts_apps_opclean_isdisabled_fl_ != 'true' ]] ;}
+Opts.Apps.OpClean.IsDisabled.IsSet()
+{ [[ $_ob_opts_apps_opclean_isdisabled_fl_ = 'true' ]] ;}
+Opts.Apps.OpClean.IsDisabled.Set()
+{ [[ $_ob_opts_apps_opclean_isdisabled_fl_ = 'true' ]] && return
+_ob_opts_apps_opclean_isdisabled_fl_=true
+[[ $_ob_opts_apps_opclean_isdisabled_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_isdisabled_fl_ ;}
+Opts.Apps.OpClean.IsDisabled.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opclean_isdisabled_tx_=$2
+else
+echo -n "$_ob_opts_apps_opclean_isdisabled_tx_"
+fi ;}
+Opts.Apps.OpClean.IsDisabled.Init
+Opts.Apps.OpClean.IsNtDisabled.Clear()
+{ [[ $_ob_opts_apps_opclean_isntdisabled_fl_ != 'true' ]] && return
+_ob_opts_apps_opclean_isntdisabled_fl_=false
+[[ $_ob_opts_apps_opclean_isntdisabled_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_isntdisabled_fl_ ;}
+Opts.Apps.OpClean.IsNtDisabled.NoLogMods()
+{ [[ $_ob_opts_apps_opclean_isntdisabled_chfl_ != 'true' ]] && return
+_ob_opts_apps_opclean_isntdisabled_chfl_=false ;}
+Opts.Apps.OpClean.IsNtDisabled.Init()
+{ _ob_opts_apps_opclean_isntdisabled_tx_=''
+_ob_opts_apps_opclean_isntdisabled_fl_=false
+_ob_opts_apps_opclean_isntdisabled_chfl_=true ;}
+Opts.Apps.OpClean.IsNtDisabled.IsNt()
+{ [[ $_ob_opts_apps_opclean_isntdisabled_fl_ != 'true' ]] ;}
+Opts.Apps.OpClean.IsNtDisabled.IsSet()
+{ [[ $_ob_opts_apps_opclean_isntdisabled_fl_ = 'true' ]] ;}
+Opts.Apps.OpClean.IsNtDisabled.Set()
+{ [[ $_ob_opts_apps_opclean_isntdisabled_fl_ = 'true' ]] && return
+_ob_opts_apps_opclean_isntdisabled_fl_=true
+[[ $_ob_opts_apps_opclean_isntdisabled_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_isntdisabled_fl_ ;}
+Opts.Apps.OpClean.IsNtDisabled.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opclean_isntdisabled_tx_=$2
+else
+echo -n "$_ob_opts_apps_opclean_isntdisabled_tx_"
+fi ;}
+Opts.Apps.OpClean.IsNtDisabled.Init
 Opts.Apps.OpDisable.IsDisabled.Clear()
 { [[ $_ob_opts_apps_opdisable_isdisabled_fl_ != 'true' ]] && return
 _ob_opts_apps_opdisable_isdisabled_fl_=false
@@ -9385,6 +10737,58 @@ else
 echo -n "$_ob_opts_apps_opbackup_isntdownloaded_tx_"
 fi ;}
 Opts.Apps.OpBackup.IsNtDownloaded.Init
+Opts.Apps.OpClean.IsDownloaded.Clear()
+{ [[ $_ob_opts_apps_opclean_isdownloaded_fl_ != 'true' ]] && return
+_ob_opts_apps_opclean_isdownloaded_fl_=false
+[[ $_ob_opts_apps_opclean_isdownloaded_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_isdownloaded_fl_ ;}
+Opts.Apps.OpClean.IsDownloaded.NoLogMods()
+{ [[ $_ob_opts_apps_opclean_isdownloaded_chfl_ != 'true' ]] && return
+_ob_opts_apps_opclean_isdownloaded_chfl_=false ;}
+Opts.Apps.OpClean.IsDownloaded.Init()
+{ _ob_opts_apps_opclean_isdownloaded_tx_=''
+_ob_opts_apps_opclean_isdownloaded_fl_=false
+_ob_opts_apps_opclean_isdownloaded_chfl_=true ;}
+Opts.Apps.OpClean.IsDownloaded.IsNt()
+{ [[ $_ob_opts_apps_opclean_isdownloaded_fl_ != 'true' ]] ;}
+Opts.Apps.OpClean.IsDownloaded.IsSet()
+{ [[ $_ob_opts_apps_opclean_isdownloaded_fl_ = 'true' ]] ;}
+Opts.Apps.OpClean.IsDownloaded.Set()
+{ [[ $_ob_opts_apps_opclean_isdownloaded_fl_ = 'true' ]] && return
+_ob_opts_apps_opclean_isdownloaded_fl_=true
+[[ $_ob_opts_apps_opclean_isdownloaded_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_isdownloaded_fl_ ;}
+Opts.Apps.OpClean.IsDownloaded.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opclean_isdownloaded_tx_=$2
+else
+echo -n "$_ob_opts_apps_opclean_isdownloaded_tx_"
+fi ;}
+Opts.Apps.OpClean.IsDownloaded.Init
+Opts.Apps.OpClean.IsNtDownloaded.Clear()
+{ [[ $_ob_opts_apps_opclean_isntdownloaded_fl_ != 'true' ]] && return
+_ob_opts_apps_opclean_isntdownloaded_fl_=false
+[[ $_ob_opts_apps_opclean_isntdownloaded_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_isntdownloaded_fl_ ;}
+Opts.Apps.OpClean.IsNtDownloaded.NoLogMods()
+{ [[ $_ob_opts_apps_opclean_isntdownloaded_chfl_ != 'true' ]] && return
+_ob_opts_apps_opclean_isntdownloaded_chfl_=false ;}
+Opts.Apps.OpClean.IsNtDownloaded.Init()
+{ _ob_opts_apps_opclean_isntdownloaded_tx_=''
+_ob_opts_apps_opclean_isntdownloaded_fl_=false
+_ob_opts_apps_opclean_isntdownloaded_chfl_=true ;}
+Opts.Apps.OpClean.IsNtDownloaded.IsNt()
+{ [[ $_ob_opts_apps_opclean_isntdownloaded_fl_ != 'true' ]] ;}
+Opts.Apps.OpClean.IsNtDownloaded.IsSet()
+{ [[ $_ob_opts_apps_opclean_isntdownloaded_fl_ = 'true' ]] ;}
+Opts.Apps.OpClean.IsNtDownloaded.Set()
+{ [[ $_ob_opts_apps_opclean_isntdownloaded_fl_ = 'true' ]] && return
+_ob_opts_apps_opclean_isntdownloaded_fl_=true
+[[ $_ob_opts_apps_opclean_isntdownloaded_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_isntdownloaded_fl_ ;}
+Opts.Apps.OpClean.IsNtDownloaded.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opclean_isntdownloaded_tx_=$2
+else
+echo -n "$_ob_opts_apps_opclean_isntdownloaded_tx_"
+fi ;}
+Opts.Apps.OpClean.IsNtDownloaded.Init
 Opts.Apps.OpDisable.IsDownloaded.Clear()
 { [[ $_ob_opts_apps_opdisable_isdownloaded_fl_ != 'true' ]] && return
 _ob_opts_apps_opdisable_isdownloaded_fl_=false
@@ -10061,6 +11465,58 @@ else
 echo -n "$_ob_opts_apps_opbackup_isntenabled_tx_"
 fi ;}
 Opts.Apps.OpBackup.IsNtEnabled.Init
+Opts.Apps.OpClean.IsEnabled.Clear()
+{ [[ $_ob_opts_apps_opclean_isenabled_fl_ != 'true' ]] && return
+_ob_opts_apps_opclean_isenabled_fl_=false
+[[ $_ob_opts_apps_opclean_isenabled_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_isenabled_fl_ ;}
+Opts.Apps.OpClean.IsEnabled.NoLogMods()
+{ [[ $_ob_opts_apps_opclean_isenabled_chfl_ != 'true' ]] && return
+_ob_opts_apps_opclean_isenabled_chfl_=false ;}
+Opts.Apps.OpClean.IsEnabled.Init()
+{ _ob_opts_apps_opclean_isenabled_tx_=''
+_ob_opts_apps_opclean_isenabled_fl_=false
+_ob_opts_apps_opclean_isenabled_chfl_=true ;}
+Opts.Apps.OpClean.IsEnabled.IsNt()
+{ [[ $_ob_opts_apps_opclean_isenabled_fl_ != 'true' ]] ;}
+Opts.Apps.OpClean.IsEnabled.IsSet()
+{ [[ $_ob_opts_apps_opclean_isenabled_fl_ = 'true' ]] ;}
+Opts.Apps.OpClean.IsEnabled.Set()
+{ [[ $_ob_opts_apps_opclean_isenabled_fl_ = 'true' ]] && return
+_ob_opts_apps_opclean_isenabled_fl_=true
+[[ $_ob_opts_apps_opclean_isenabled_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_isenabled_fl_ ;}
+Opts.Apps.OpClean.IsEnabled.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opclean_isenabled_tx_=$2
+else
+echo -n "$_ob_opts_apps_opclean_isenabled_tx_"
+fi ;}
+Opts.Apps.OpClean.IsEnabled.Init
+Opts.Apps.OpClean.IsNtEnabled.Clear()
+{ [[ $_ob_opts_apps_opclean_isntenabled_fl_ != 'true' ]] && return
+_ob_opts_apps_opclean_isntenabled_fl_=false
+[[ $_ob_opts_apps_opclean_isntenabled_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_isntenabled_fl_ ;}
+Opts.Apps.OpClean.IsNtEnabled.NoLogMods()
+{ [[ $_ob_opts_apps_opclean_isntenabled_chfl_ != 'true' ]] && return
+_ob_opts_apps_opclean_isntenabled_chfl_=false ;}
+Opts.Apps.OpClean.IsNtEnabled.Init()
+{ _ob_opts_apps_opclean_isntenabled_tx_=''
+_ob_opts_apps_opclean_isntenabled_fl_=false
+_ob_opts_apps_opclean_isntenabled_chfl_=true ;}
+Opts.Apps.OpClean.IsNtEnabled.IsNt()
+{ [[ $_ob_opts_apps_opclean_isntenabled_fl_ != 'true' ]] ;}
+Opts.Apps.OpClean.IsNtEnabled.IsSet()
+{ [[ $_ob_opts_apps_opclean_isntenabled_fl_ = 'true' ]] ;}
+Opts.Apps.OpClean.IsNtEnabled.Set()
+{ [[ $_ob_opts_apps_opclean_isntenabled_fl_ = 'true' ]] && return
+_ob_opts_apps_opclean_isntenabled_fl_=true
+[[ $_ob_opts_apps_opclean_isntenabled_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_isntenabled_fl_ ;}
+Opts.Apps.OpClean.IsNtEnabled.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opclean_isntenabled_tx_=$2
+else
+echo -n "$_ob_opts_apps_opclean_isntenabled_tx_"
+fi ;}
+Opts.Apps.OpClean.IsNtEnabled.Init
 Opts.Apps.OpDisable.IsEnabled.Clear()
 { [[ $_ob_opts_apps_opdisable_isenabled_fl_ != 'true' ]] && return
 _ob_opts_apps_opdisable_isenabled_fl_=false
@@ -10737,6 +12193,58 @@ else
 echo -n "$_ob_opts_apps_opbackup_isntinstalled_tx_"
 fi ;}
 Opts.Apps.OpBackup.IsNtInstalled.Init
+Opts.Apps.OpClean.IsInstalled.Clear()
+{ [[ $_ob_opts_apps_opclean_isinstalled_fl_ != 'true' ]] && return
+_ob_opts_apps_opclean_isinstalled_fl_=false
+[[ $_ob_opts_apps_opclean_isinstalled_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_isinstalled_fl_ ;}
+Opts.Apps.OpClean.IsInstalled.NoLogMods()
+{ [[ $_ob_opts_apps_opclean_isinstalled_chfl_ != 'true' ]] && return
+_ob_opts_apps_opclean_isinstalled_chfl_=false ;}
+Opts.Apps.OpClean.IsInstalled.Init()
+{ _ob_opts_apps_opclean_isinstalled_tx_=''
+_ob_opts_apps_opclean_isinstalled_fl_=false
+_ob_opts_apps_opclean_isinstalled_chfl_=true ;}
+Opts.Apps.OpClean.IsInstalled.IsNt()
+{ [[ $_ob_opts_apps_opclean_isinstalled_fl_ != 'true' ]] ;}
+Opts.Apps.OpClean.IsInstalled.IsSet()
+{ [[ $_ob_opts_apps_opclean_isinstalled_fl_ = 'true' ]] ;}
+Opts.Apps.OpClean.IsInstalled.Set()
+{ [[ $_ob_opts_apps_opclean_isinstalled_fl_ = 'true' ]] && return
+_ob_opts_apps_opclean_isinstalled_fl_=true
+[[ $_ob_opts_apps_opclean_isinstalled_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_isinstalled_fl_ ;}
+Opts.Apps.OpClean.IsInstalled.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opclean_isinstalled_tx_=$2
+else
+echo -n "$_ob_opts_apps_opclean_isinstalled_tx_"
+fi ;}
+Opts.Apps.OpClean.IsInstalled.Init
+Opts.Apps.OpClean.IsNtInstalled.Clear()
+{ [[ $_ob_opts_apps_opclean_isntinstalled_fl_ != 'true' ]] && return
+_ob_opts_apps_opclean_isntinstalled_fl_=false
+[[ $_ob_opts_apps_opclean_isntinstalled_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_isntinstalled_fl_ ;}
+Opts.Apps.OpClean.IsNtInstalled.NoLogMods()
+{ [[ $_ob_opts_apps_opclean_isntinstalled_chfl_ != 'true' ]] && return
+_ob_opts_apps_opclean_isntinstalled_chfl_=false ;}
+Opts.Apps.OpClean.IsNtInstalled.Init()
+{ _ob_opts_apps_opclean_isntinstalled_tx_=''
+_ob_opts_apps_opclean_isntinstalled_fl_=false
+_ob_opts_apps_opclean_isntinstalled_chfl_=true ;}
+Opts.Apps.OpClean.IsNtInstalled.IsNt()
+{ [[ $_ob_opts_apps_opclean_isntinstalled_fl_ != 'true' ]] ;}
+Opts.Apps.OpClean.IsNtInstalled.IsSet()
+{ [[ $_ob_opts_apps_opclean_isntinstalled_fl_ = 'true' ]] ;}
+Opts.Apps.OpClean.IsNtInstalled.Set()
+{ [[ $_ob_opts_apps_opclean_isntinstalled_fl_ = 'true' ]] && return
+_ob_opts_apps_opclean_isntinstalled_fl_=true
+[[ $_ob_opts_apps_opclean_isntinstalled_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_isntinstalled_fl_ ;}
+Opts.Apps.OpClean.IsNtInstalled.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opclean_isntinstalled_tx_=$2
+else
+echo -n "$_ob_opts_apps_opclean_isntinstalled_tx_"
+fi ;}
+Opts.Apps.OpClean.IsNtInstalled.Init
 Opts.Apps.OpDisable.IsInstalled.Clear()
 { [[ $_ob_opts_apps_opdisable_isinstalled_fl_ != 'true' ]] && return
 _ob_opts_apps_opdisable_isinstalled_fl_=false
@@ -11413,6 +12921,58 @@ else
 echo -n "$_ob_opts_apps_opbackup_isntmissing_tx_"
 fi ;}
 Opts.Apps.OpBackup.IsNtMissing.Init
+Opts.Apps.OpClean.IsMissing.Clear()
+{ [[ $_ob_opts_apps_opclean_ismissing_fl_ != 'true' ]] && return
+_ob_opts_apps_opclean_ismissing_fl_=false
+[[ $_ob_opts_apps_opclean_ismissing_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_ismissing_fl_ ;}
+Opts.Apps.OpClean.IsMissing.NoLogMods()
+{ [[ $_ob_opts_apps_opclean_ismissing_chfl_ != 'true' ]] && return
+_ob_opts_apps_opclean_ismissing_chfl_=false ;}
+Opts.Apps.OpClean.IsMissing.Init()
+{ _ob_opts_apps_opclean_ismissing_tx_=''
+_ob_opts_apps_opclean_ismissing_fl_=false
+_ob_opts_apps_opclean_ismissing_chfl_=true ;}
+Opts.Apps.OpClean.IsMissing.IsNt()
+{ [[ $_ob_opts_apps_opclean_ismissing_fl_ != 'true' ]] ;}
+Opts.Apps.OpClean.IsMissing.IsSet()
+{ [[ $_ob_opts_apps_opclean_ismissing_fl_ = 'true' ]] ;}
+Opts.Apps.OpClean.IsMissing.Set()
+{ [[ $_ob_opts_apps_opclean_ismissing_fl_ = 'true' ]] && return
+_ob_opts_apps_opclean_ismissing_fl_=true
+[[ $_ob_opts_apps_opclean_ismissing_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_ismissing_fl_ ;}
+Opts.Apps.OpClean.IsMissing.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opclean_ismissing_tx_=$2
+else
+echo -n "$_ob_opts_apps_opclean_ismissing_tx_"
+fi ;}
+Opts.Apps.OpClean.IsMissing.Init
+Opts.Apps.OpClean.IsNtMissing.Clear()
+{ [[ $_ob_opts_apps_opclean_isntmissing_fl_ != 'true' ]] && return
+_ob_opts_apps_opclean_isntmissing_fl_=false
+[[ $_ob_opts_apps_opclean_isntmissing_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_isntmissing_fl_ ;}
+Opts.Apps.OpClean.IsNtMissing.NoLogMods()
+{ [[ $_ob_opts_apps_opclean_isntmissing_chfl_ != 'true' ]] && return
+_ob_opts_apps_opclean_isntmissing_chfl_=false ;}
+Opts.Apps.OpClean.IsNtMissing.Init()
+{ _ob_opts_apps_opclean_isntmissing_tx_=''
+_ob_opts_apps_opclean_isntmissing_fl_=false
+_ob_opts_apps_opclean_isntmissing_chfl_=true ;}
+Opts.Apps.OpClean.IsNtMissing.IsNt()
+{ [[ $_ob_opts_apps_opclean_isntmissing_fl_ != 'true' ]] ;}
+Opts.Apps.OpClean.IsNtMissing.IsSet()
+{ [[ $_ob_opts_apps_opclean_isntmissing_fl_ = 'true' ]] ;}
+Opts.Apps.OpClean.IsNtMissing.Set()
+{ [[ $_ob_opts_apps_opclean_isntmissing_fl_ = 'true' ]] && return
+_ob_opts_apps_opclean_isntmissing_fl_=true
+[[ $_ob_opts_apps_opclean_isntmissing_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_isntmissing_fl_ ;}
+Opts.Apps.OpClean.IsNtMissing.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opclean_isntmissing_tx_=$2
+else
+echo -n "$_ob_opts_apps_opclean_isntmissing_tx_"
+fi ;}
+Opts.Apps.OpClean.IsNtMissing.Init
 Opts.Apps.OpDisable.IsMissing.Clear()
 { [[ $_ob_opts_apps_opdisable_ismissing_fl_ != 'true' ]] && return
 _ob_opts_apps_opdisable_ismissing_fl_=false
@@ -12089,6 +13649,58 @@ else
 echo -n "$_ob_opts_apps_opbackup_isntstarting_tx_"
 fi ;}
 Opts.Apps.OpBackup.IsNtStarting.Init
+Opts.Apps.OpClean.IsStarting.Clear()
+{ [[ $_ob_opts_apps_opclean_isstarting_fl_ != 'true' ]] && return
+_ob_opts_apps_opclean_isstarting_fl_=false
+[[ $_ob_opts_apps_opclean_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_isstarting_fl_ ;}
+Opts.Apps.OpClean.IsStarting.NoLogMods()
+{ [[ $_ob_opts_apps_opclean_isstarting_chfl_ != 'true' ]] && return
+_ob_opts_apps_opclean_isstarting_chfl_=false ;}
+Opts.Apps.OpClean.IsStarting.Init()
+{ _ob_opts_apps_opclean_isstarting_tx_=''
+_ob_opts_apps_opclean_isstarting_fl_=false
+_ob_opts_apps_opclean_isstarting_chfl_=true ;}
+Opts.Apps.OpClean.IsStarting.IsNt()
+{ [[ $_ob_opts_apps_opclean_isstarting_fl_ != 'true' ]] ;}
+Opts.Apps.OpClean.IsStarting.IsSet()
+{ [[ $_ob_opts_apps_opclean_isstarting_fl_ = 'true' ]] ;}
+Opts.Apps.OpClean.IsStarting.Set()
+{ [[ $_ob_opts_apps_opclean_isstarting_fl_ = 'true' ]] && return
+_ob_opts_apps_opclean_isstarting_fl_=true
+[[ $_ob_opts_apps_opclean_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_isstarting_fl_ ;}
+Opts.Apps.OpClean.IsStarting.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opclean_isstarting_tx_=$2
+else
+echo -n "$_ob_opts_apps_opclean_isstarting_tx_"
+fi ;}
+Opts.Apps.OpClean.IsStarting.Init
+Opts.Apps.OpClean.IsNtStarting.Clear()
+{ [[ $_ob_opts_apps_opclean_isntstarting_fl_ != 'true' ]] && return
+_ob_opts_apps_opclean_isntstarting_fl_=false
+[[ $_ob_opts_apps_opclean_isntstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_isntstarting_fl_ ;}
+Opts.Apps.OpClean.IsNtStarting.NoLogMods()
+{ [[ $_ob_opts_apps_opclean_isntstarting_chfl_ != 'true' ]] && return
+_ob_opts_apps_opclean_isntstarting_chfl_=false ;}
+Opts.Apps.OpClean.IsNtStarting.Init()
+{ _ob_opts_apps_opclean_isntstarting_tx_=''
+_ob_opts_apps_opclean_isntstarting_fl_=false
+_ob_opts_apps_opclean_isntstarting_chfl_=true ;}
+Opts.Apps.OpClean.IsNtStarting.IsNt()
+{ [[ $_ob_opts_apps_opclean_isntstarting_fl_ != 'true' ]] ;}
+Opts.Apps.OpClean.IsNtStarting.IsSet()
+{ [[ $_ob_opts_apps_opclean_isntstarting_fl_ = 'true' ]] ;}
+Opts.Apps.OpClean.IsNtStarting.Set()
+{ [[ $_ob_opts_apps_opclean_isntstarting_fl_ = 'true' ]] && return
+_ob_opts_apps_opclean_isntstarting_fl_=true
+[[ $_ob_opts_apps_opclean_isntstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_isntstarting_fl_ ;}
+Opts.Apps.OpClean.IsNtStarting.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opclean_isntstarting_tx_=$2
+else
+echo -n "$_ob_opts_apps_opclean_isntstarting_tx_"
+fi ;}
+Opts.Apps.OpClean.IsNtStarting.Init
 Opts.Apps.OpDisable.IsStarting.Clear()
 { [[ $_ob_opts_apps_opdisable_isstarting_fl_ != 'true' ]] && return
 _ob_opts_apps_opdisable_isstarting_fl_=false
@@ -12765,6 +14377,58 @@ else
 echo -n "$_ob_opts_apps_opbackup_isntstarted_tx_"
 fi ;}
 Opts.Apps.OpBackup.IsNtStarted.Init
+Opts.Apps.OpClean.IsStarted.Clear()
+{ [[ $_ob_opts_apps_opclean_isstarted_fl_ != 'true' ]] && return
+_ob_opts_apps_opclean_isstarted_fl_=false
+[[ $_ob_opts_apps_opclean_isstarted_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_isstarted_fl_ ;}
+Opts.Apps.OpClean.IsStarted.NoLogMods()
+{ [[ $_ob_opts_apps_opclean_isstarted_chfl_ != 'true' ]] && return
+_ob_opts_apps_opclean_isstarted_chfl_=false ;}
+Opts.Apps.OpClean.IsStarted.Init()
+{ _ob_opts_apps_opclean_isstarted_tx_=''
+_ob_opts_apps_opclean_isstarted_fl_=false
+_ob_opts_apps_opclean_isstarted_chfl_=true ;}
+Opts.Apps.OpClean.IsStarted.IsNt()
+{ [[ $_ob_opts_apps_opclean_isstarted_fl_ != 'true' ]] ;}
+Opts.Apps.OpClean.IsStarted.IsSet()
+{ [[ $_ob_opts_apps_opclean_isstarted_fl_ = 'true' ]] ;}
+Opts.Apps.OpClean.IsStarted.Set()
+{ [[ $_ob_opts_apps_opclean_isstarted_fl_ = 'true' ]] && return
+_ob_opts_apps_opclean_isstarted_fl_=true
+[[ $_ob_opts_apps_opclean_isstarted_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_isstarted_fl_ ;}
+Opts.Apps.OpClean.IsStarted.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opclean_isstarted_tx_=$2
+else
+echo -n "$_ob_opts_apps_opclean_isstarted_tx_"
+fi ;}
+Opts.Apps.OpClean.IsStarted.Init
+Opts.Apps.OpClean.IsNtStarted.Clear()
+{ [[ $_ob_opts_apps_opclean_isntstarted_fl_ != 'true' ]] && return
+_ob_opts_apps_opclean_isntstarted_fl_=false
+[[ $_ob_opts_apps_opclean_isntstarted_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_isntstarted_fl_ ;}
+Opts.Apps.OpClean.IsNtStarted.NoLogMods()
+{ [[ $_ob_opts_apps_opclean_isntstarted_chfl_ != 'true' ]] && return
+_ob_opts_apps_opclean_isntstarted_chfl_=false ;}
+Opts.Apps.OpClean.IsNtStarted.Init()
+{ _ob_opts_apps_opclean_isntstarted_tx_=''
+_ob_opts_apps_opclean_isntstarted_fl_=false
+_ob_opts_apps_opclean_isntstarted_chfl_=true ;}
+Opts.Apps.OpClean.IsNtStarted.IsNt()
+{ [[ $_ob_opts_apps_opclean_isntstarted_fl_ != 'true' ]] ;}
+Opts.Apps.OpClean.IsNtStarted.IsSet()
+{ [[ $_ob_opts_apps_opclean_isntstarted_fl_ = 'true' ]] ;}
+Opts.Apps.OpClean.IsNtStarted.Set()
+{ [[ $_ob_opts_apps_opclean_isntstarted_fl_ = 'true' ]] && return
+_ob_opts_apps_opclean_isntstarted_fl_=true
+[[ $_ob_opts_apps_opclean_isntstarted_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_isntstarted_fl_ ;}
+Opts.Apps.OpClean.IsNtStarted.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opclean_isntstarted_tx_=$2
+else
+echo -n "$_ob_opts_apps_opclean_isntstarted_tx_"
+fi ;}
+Opts.Apps.OpClean.IsNtStarted.Init
 Opts.Apps.OpDisable.IsStarted.Clear()
 { [[ $_ob_opts_apps_opdisable_isstarted_fl_ != 'true' ]] && return
 _ob_opts_apps_opdisable_isstarted_fl_=false
@@ -13441,6 +15105,58 @@ else
 echo -n "$_ob_opts_apps_opbackup_isntstopping_tx_"
 fi ;}
 Opts.Apps.OpBackup.IsNtStopping.Init
+Opts.Apps.OpClean.IsStopping.Clear()
+{ [[ $_ob_opts_apps_opclean_isstopping_fl_ != 'true' ]] && return
+_ob_opts_apps_opclean_isstopping_fl_=false
+[[ $_ob_opts_apps_opclean_isstopping_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_isstopping_fl_ ;}
+Opts.Apps.OpClean.IsStopping.NoLogMods()
+{ [[ $_ob_opts_apps_opclean_isstopping_chfl_ != 'true' ]] && return
+_ob_opts_apps_opclean_isstopping_chfl_=false ;}
+Opts.Apps.OpClean.IsStopping.Init()
+{ _ob_opts_apps_opclean_isstopping_tx_=''
+_ob_opts_apps_opclean_isstopping_fl_=false
+_ob_opts_apps_opclean_isstopping_chfl_=true ;}
+Opts.Apps.OpClean.IsStopping.IsNt()
+{ [[ $_ob_opts_apps_opclean_isstopping_fl_ != 'true' ]] ;}
+Opts.Apps.OpClean.IsStopping.IsSet()
+{ [[ $_ob_opts_apps_opclean_isstopping_fl_ = 'true' ]] ;}
+Opts.Apps.OpClean.IsStopping.Set()
+{ [[ $_ob_opts_apps_opclean_isstopping_fl_ = 'true' ]] && return
+_ob_opts_apps_opclean_isstopping_fl_=true
+[[ $_ob_opts_apps_opclean_isstopping_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_isstopping_fl_ ;}
+Opts.Apps.OpClean.IsStopping.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opclean_isstopping_tx_=$2
+else
+echo -n "$_ob_opts_apps_opclean_isstopping_tx_"
+fi ;}
+Opts.Apps.OpClean.IsStopping.Init
+Opts.Apps.OpClean.IsNtStopping.Clear()
+{ [[ $_ob_opts_apps_opclean_isntstopping_fl_ != 'true' ]] && return
+_ob_opts_apps_opclean_isntstopping_fl_=false
+[[ $_ob_opts_apps_opclean_isntstopping_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_isntstopping_fl_ ;}
+Opts.Apps.OpClean.IsNtStopping.NoLogMods()
+{ [[ $_ob_opts_apps_opclean_isntstopping_chfl_ != 'true' ]] && return
+_ob_opts_apps_opclean_isntstopping_chfl_=false ;}
+Opts.Apps.OpClean.IsNtStopping.Init()
+{ _ob_opts_apps_opclean_isntstopping_tx_=''
+_ob_opts_apps_opclean_isntstopping_fl_=false
+_ob_opts_apps_opclean_isntstopping_chfl_=true ;}
+Opts.Apps.OpClean.IsNtStopping.IsNt()
+{ [[ $_ob_opts_apps_opclean_isntstopping_fl_ != 'true' ]] ;}
+Opts.Apps.OpClean.IsNtStopping.IsSet()
+{ [[ $_ob_opts_apps_opclean_isntstopping_fl_ = 'true' ]] ;}
+Opts.Apps.OpClean.IsNtStopping.Set()
+{ [[ $_ob_opts_apps_opclean_isntstopping_fl_ = 'true' ]] && return
+_ob_opts_apps_opclean_isntstopping_fl_=true
+[[ $_ob_opts_apps_opclean_isntstopping_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_isntstopping_fl_ ;}
+Opts.Apps.OpClean.IsNtStopping.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opclean_isntstopping_tx_=$2
+else
+echo -n "$_ob_opts_apps_opclean_isntstopping_tx_"
+fi ;}
+Opts.Apps.OpClean.IsNtStopping.Init
 Opts.Apps.OpDisable.IsStopping.Clear()
 { [[ $_ob_opts_apps_opdisable_isstopping_fl_ != 'true' ]] && return
 _ob_opts_apps_opdisable_isstopping_fl_=false
@@ -14117,6 +15833,58 @@ else
 echo -n "$_ob_opts_apps_opbackup_isntstopped_tx_"
 fi ;}
 Opts.Apps.OpBackup.IsNtStopped.Init
+Opts.Apps.OpClean.IsStopped.Clear()
+{ [[ $_ob_opts_apps_opclean_isstopped_fl_ != 'true' ]] && return
+_ob_opts_apps_opclean_isstopped_fl_=false
+[[ $_ob_opts_apps_opclean_isstopped_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_isstopped_fl_ ;}
+Opts.Apps.OpClean.IsStopped.NoLogMods()
+{ [[ $_ob_opts_apps_opclean_isstopped_chfl_ != 'true' ]] && return
+_ob_opts_apps_opclean_isstopped_chfl_=false ;}
+Opts.Apps.OpClean.IsStopped.Init()
+{ _ob_opts_apps_opclean_isstopped_tx_=''
+_ob_opts_apps_opclean_isstopped_fl_=false
+_ob_opts_apps_opclean_isstopped_chfl_=true ;}
+Opts.Apps.OpClean.IsStopped.IsNt()
+{ [[ $_ob_opts_apps_opclean_isstopped_fl_ != 'true' ]] ;}
+Opts.Apps.OpClean.IsStopped.IsSet()
+{ [[ $_ob_opts_apps_opclean_isstopped_fl_ = 'true' ]] ;}
+Opts.Apps.OpClean.IsStopped.Set()
+{ [[ $_ob_opts_apps_opclean_isstopped_fl_ = 'true' ]] && return
+_ob_opts_apps_opclean_isstopped_fl_=true
+[[ $_ob_opts_apps_opclean_isstopped_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_isstopped_fl_ ;}
+Opts.Apps.OpClean.IsStopped.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opclean_isstopped_tx_=$2
+else
+echo -n "$_ob_opts_apps_opclean_isstopped_tx_"
+fi ;}
+Opts.Apps.OpClean.IsStopped.Init
+Opts.Apps.OpClean.IsNtStopped.Clear()
+{ [[ $_ob_opts_apps_opclean_isntstopped_fl_ != 'true' ]] && return
+_ob_opts_apps_opclean_isntstopped_fl_=false
+[[ $_ob_opts_apps_opclean_isntstopped_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_isntstopped_fl_ ;}
+Opts.Apps.OpClean.IsNtStopped.NoLogMods()
+{ [[ $_ob_opts_apps_opclean_isntstopped_chfl_ != 'true' ]] && return
+_ob_opts_apps_opclean_isntstopped_chfl_=false ;}
+Opts.Apps.OpClean.IsNtStopped.Init()
+{ _ob_opts_apps_opclean_isntstopped_tx_=''
+_ob_opts_apps_opclean_isntstopped_fl_=false
+_ob_opts_apps_opclean_isntstopped_chfl_=true ;}
+Opts.Apps.OpClean.IsNtStopped.IsNt()
+{ [[ $_ob_opts_apps_opclean_isntstopped_fl_ != 'true' ]] ;}
+Opts.Apps.OpClean.IsNtStopped.IsSet()
+{ [[ $_ob_opts_apps_opclean_isntstopped_fl_ = 'true' ]] ;}
+Opts.Apps.OpClean.IsNtStopped.Set()
+{ [[ $_ob_opts_apps_opclean_isntstopped_fl_ = 'true' ]] && return
+_ob_opts_apps_opclean_isntstopped_fl_=true
+[[ $_ob_opts_apps_opclean_isntstopped_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_isntstopped_fl_ ;}
+Opts.Apps.OpClean.IsNtStopped.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opclean_isntstopped_tx_=$2
+else
+echo -n "$_ob_opts_apps_opclean_isntstopped_tx_"
+fi ;}
+Opts.Apps.OpClean.IsNtStopped.Init
 Opts.Apps.OpDisable.IsStopped.Clear()
 { [[ $_ob_opts_apps_opdisable_isstopped_fl_ != 'true' ]] && return
 _ob_opts_apps_opdisable_isstopped_fl_=false
@@ -14793,6 +16561,58 @@ else
 echo -n "$_ob_opts_apps_opbackup_isntrestarting_tx_"
 fi ;}
 Opts.Apps.OpBackup.IsNtRestarting.Init
+Opts.Apps.OpClean.IsRestarting.Clear()
+{ [[ $_ob_opts_apps_opclean_isrestarting_fl_ != 'true' ]] && return
+_ob_opts_apps_opclean_isrestarting_fl_=false
+[[ $_ob_opts_apps_opclean_isrestarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_isrestarting_fl_ ;}
+Opts.Apps.OpClean.IsRestarting.NoLogMods()
+{ [[ $_ob_opts_apps_opclean_isrestarting_chfl_ != 'true' ]] && return
+_ob_opts_apps_opclean_isrestarting_chfl_=false ;}
+Opts.Apps.OpClean.IsRestarting.Init()
+{ _ob_opts_apps_opclean_isrestarting_tx_=''
+_ob_opts_apps_opclean_isrestarting_fl_=false
+_ob_opts_apps_opclean_isrestarting_chfl_=true ;}
+Opts.Apps.OpClean.IsRestarting.IsNt()
+{ [[ $_ob_opts_apps_opclean_isrestarting_fl_ != 'true' ]] ;}
+Opts.Apps.OpClean.IsRestarting.IsSet()
+{ [[ $_ob_opts_apps_opclean_isrestarting_fl_ = 'true' ]] ;}
+Opts.Apps.OpClean.IsRestarting.Set()
+{ [[ $_ob_opts_apps_opclean_isrestarting_fl_ = 'true' ]] && return
+_ob_opts_apps_opclean_isrestarting_fl_=true
+[[ $_ob_opts_apps_opclean_isrestarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_isrestarting_fl_ ;}
+Opts.Apps.OpClean.IsRestarting.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opclean_isrestarting_tx_=$2
+else
+echo -n "$_ob_opts_apps_opclean_isrestarting_tx_"
+fi ;}
+Opts.Apps.OpClean.IsRestarting.Init
+Opts.Apps.OpClean.IsNtRestarting.Clear()
+{ [[ $_ob_opts_apps_opclean_isntrestarting_fl_ != 'true' ]] && return
+_ob_opts_apps_opclean_isntrestarting_fl_=false
+[[ $_ob_opts_apps_opclean_isntrestarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_isntrestarting_fl_ ;}
+Opts.Apps.OpClean.IsNtRestarting.NoLogMods()
+{ [[ $_ob_opts_apps_opclean_isntrestarting_chfl_ != 'true' ]] && return
+_ob_opts_apps_opclean_isntrestarting_chfl_=false ;}
+Opts.Apps.OpClean.IsNtRestarting.Init()
+{ _ob_opts_apps_opclean_isntrestarting_tx_=''
+_ob_opts_apps_opclean_isntrestarting_fl_=false
+_ob_opts_apps_opclean_isntrestarting_chfl_=true ;}
+Opts.Apps.OpClean.IsNtRestarting.IsNt()
+{ [[ $_ob_opts_apps_opclean_isntrestarting_fl_ != 'true' ]] ;}
+Opts.Apps.OpClean.IsNtRestarting.IsSet()
+{ [[ $_ob_opts_apps_opclean_isntrestarting_fl_ = 'true' ]] ;}
+Opts.Apps.OpClean.IsNtRestarting.Set()
+{ [[ $_ob_opts_apps_opclean_isntrestarting_fl_ = 'true' ]] && return
+_ob_opts_apps_opclean_isntrestarting_fl_=true
+[[ $_ob_opts_apps_opclean_isntrestarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_opclean_isntrestarting_fl_ ;}
+Opts.Apps.OpClean.IsNtRestarting.Text()
+{ if [[ -n ${1:-} && $1 = "=" ]]; then
+_ob_opts_apps_opclean_isntrestarting_tx_=$2
+else
+echo -n "$_ob_opts_apps_opclean_isntrestarting_tx_"
+fi ;}
+Opts.Apps.OpClean.IsNtRestarting.Init
 Opts.Apps.OpDisable.IsRestarting.Clear()
 { [[ $_ob_opts_apps_opdisable_isrestarting_fl_ != 'true' ]] && return
 _ob_opts_apps_opdisable_isrestarting_fl_=false
@@ -15637,6 +17457,182 @@ else
 echo -n $_ob_qpkgs_opskbackup_sz_
 fi ;}
 QPKGs.OpSkBackup.Init
+QPKGs.OpToClean.Add()
+{ local ar=(${1}) it=''
+[[ ${#ar[@]} -eq 0 ]] && return
+for it in "${ar[@]:-}"; do
+[[ " ${_ob_qpkgs_optoclean_ar_[*]+"${_ob_qpkgs_optoclean_ar_[@]}"} " != *"$it"* ]] && _ob_qpkgs_optoclean_ar_+=("$it")
+done ;}
+QPKGs.OpToClean.Array()
+{ echo -n "${_ob_qpkgs_optoclean_ar_[@]+"${_ob_qpkgs_optoclean_ar_[@]}"}" ;}
+QPKGs.OpToClean.Count()
+{ echo "${#_ob_qpkgs_optoclean_ar_[@]}" ;}
+QPKGs.OpToClean.Exist()
+{ [[ ${_ob_qpkgs_optoclean_ar_[*]:-} == *"$1"* ]] ;}
+QPKGs.OpToClean.Init()
+{ _ob_qpkgs_optoclean_sz_=0
+_ob_qpkgs_optoclean_ar_=()
+_ob_qpkgs_optoclean_arin_=1 ;}
+QPKGs.OpToClean.IsAny()
+{ [[ ${#_ob_qpkgs_optoclean_ar_[@]} -gt 0 ]] ;}
+QPKGs.OpToClean.IsNone()
+{ [[ ${#_ob_qpkgs_optoclean_ar_[@]} -eq 0 ]] ;}
+QPKGs.OpToClean.List()
+{ echo -n "${_ob_qpkgs_optoclean_ar_[*]+"${_ob_qpkgs_optoclean_ar_[@]}"}" ;}
+QPKGs.OpToClean.ListCSV()
+{ echo -n "${_ob_qpkgs_optoclean_ar_[*]+"${_ob_qpkgs_optoclean_ar_[@]}"}" | tr ' ' ',' ;}
+QPKGs.OpToClean.Remove()
+{ local agar=(${1}) tmar=() ag='' it='' m=false
+for it in "${_ob_qpkgs_optoclean_ar_[@]+"${_ob_qpkgs_optoclean_ar_[@]}"}"; do
+m=false
+for ag in "${agar[@]+"${agar[@]}"}"; do
+if [[ $ag = $it ]]; then
+m=true; break
+fi
+done
+[[ $m = false ]] && tmar+=("$it")
+done
+_ob_qpkgs_optoclean_ar_=("${tmar[@]+"${tmar[@]}"}")
+[[ -z ${_ob_qpkgs_optoclean_ar_[*]+"${_ob_qpkgs_optoclean_ar_[@]}"} ]] && _ob_qpkgs_optoclean_ar_=() ;}
+QPKGs.OpToClean.Size()
+{ if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+_ob_qpkgs_optoclean_sz_=$2
+else
+echo -n $_ob_qpkgs_optoclean_sz_
+fi ;}
+QPKGs.OpToClean.Init
+QPKGs.OpOkClean.Add()
+{ local ar=(${1}) it=''
+[[ ${#ar[@]} -eq 0 ]] && return
+for it in "${ar[@]:-}"; do
+[[ " ${_ob_qpkgs_opokclean_ar_[*]+"${_ob_qpkgs_opokclean_ar_[@]}"} " != *"$it"* ]] && _ob_qpkgs_opokclean_ar_+=("$it")
+done ;}
+QPKGs.OpOkClean.Array()
+{ echo -n "${_ob_qpkgs_opokclean_ar_[@]+"${_ob_qpkgs_opokclean_ar_[@]}"}" ;}
+QPKGs.OpOkClean.Count()
+{ echo "${#_ob_qpkgs_opokclean_ar_[@]}" ;}
+QPKGs.OpOkClean.Exist()
+{ [[ ${_ob_qpkgs_opokclean_ar_[*]:-} == *"$1"* ]] ;}
+QPKGs.OpOkClean.Init()
+{ _ob_qpkgs_opokclean_sz_=0
+_ob_qpkgs_opokclean_ar_=()
+_ob_qpkgs_opokclean_arin_=1 ;}
+QPKGs.OpOkClean.IsAny()
+{ [[ ${#_ob_qpkgs_opokclean_ar_[@]} -gt 0 ]] ;}
+QPKGs.OpOkClean.IsNone()
+{ [[ ${#_ob_qpkgs_opokclean_ar_[@]} -eq 0 ]] ;}
+QPKGs.OpOkClean.List()
+{ echo -n "${_ob_qpkgs_opokclean_ar_[*]+"${_ob_qpkgs_opokclean_ar_[@]}"}" ;}
+QPKGs.OpOkClean.ListCSV()
+{ echo -n "${_ob_qpkgs_opokclean_ar_[*]+"${_ob_qpkgs_opokclean_ar_[@]}"}" | tr ' ' ',' ;}
+QPKGs.OpOkClean.Remove()
+{ local agar=(${1}) tmar=() ag='' it='' m=false
+for it in "${_ob_qpkgs_opokclean_ar_[@]+"${_ob_qpkgs_opokclean_ar_[@]}"}"; do
+m=false
+for ag in "${agar[@]+"${agar[@]}"}"; do
+if [[ $ag = $it ]]; then
+m=true; break
+fi
+done
+[[ $m = false ]] && tmar+=("$it")
+done
+_ob_qpkgs_opokclean_ar_=("${tmar[@]+"${tmar[@]}"}")
+[[ -z ${_ob_qpkgs_opokclean_ar_[*]+"${_ob_qpkgs_opokclean_ar_[@]}"} ]] && _ob_qpkgs_opokclean_ar_=() ;}
+QPKGs.OpOkClean.Size()
+{ if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+_ob_qpkgs_opokclean_sz_=$2
+else
+echo -n $_ob_qpkgs_opokclean_sz_
+fi ;}
+QPKGs.OpOkClean.Init
+QPKGs.OpErClean.Add()
+{ local ar=(${1}) it=''
+[[ ${#ar[@]} -eq 0 ]] && return
+for it in "${ar[@]:-}"; do
+[[ " ${_ob_qpkgs_operclean_ar_[*]+"${_ob_qpkgs_operclean_ar_[@]}"} " != *"$it"* ]] && _ob_qpkgs_operclean_ar_+=("$it")
+done ;}
+QPKGs.OpErClean.Array()
+{ echo -n "${_ob_qpkgs_operclean_ar_[@]+"${_ob_qpkgs_operclean_ar_[@]}"}" ;}
+QPKGs.OpErClean.Count()
+{ echo "${#_ob_qpkgs_operclean_ar_[@]}" ;}
+QPKGs.OpErClean.Exist()
+{ [[ ${_ob_qpkgs_operclean_ar_[*]:-} == *"$1"* ]] ;}
+QPKGs.OpErClean.Init()
+{ _ob_qpkgs_operclean_sz_=0
+_ob_qpkgs_operclean_ar_=()
+_ob_qpkgs_operclean_arin_=1 ;}
+QPKGs.OpErClean.IsAny()
+{ [[ ${#_ob_qpkgs_operclean_ar_[@]} -gt 0 ]] ;}
+QPKGs.OpErClean.IsNone()
+{ [[ ${#_ob_qpkgs_operclean_ar_[@]} -eq 0 ]] ;}
+QPKGs.OpErClean.List()
+{ echo -n "${_ob_qpkgs_operclean_ar_[*]+"${_ob_qpkgs_operclean_ar_[@]}"}" ;}
+QPKGs.OpErClean.ListCSV()
+{ echo -n "${_ob_qpkgs_operclean_ar_[*]+"${_ob_qpkgs_operclean_ar_[@]}"}" | tr ' ' ',' ;}
+QPKGs.OpErClean.Remove()
+{ local agar=(${1}) tmar=() ag='' it='' m=false
+for it in "${_ob_qpkgs_operclean_ar_[@]+"${_ob_qpkgs_operclean_ar_[@]}"}"; do
+m=false
+for ag in "${agar[@]+"${agar[@]}"}"; do
+if [[ $ag = $it ]]; then
+m=true; break
+fi
+done
+[[ $m = false ]] && tmar+=("$it")
+done
+_ob_qpkgs_operclean_ar_=("${tmar[@]+"${tmar[@]}"}")
+[[ -z ${_ob_qpkgs_operclean_ar_[*]+"${_ob_qpkgs_operclean_ar_[@]}"} ]] && _ob_qpkgs_operclean_ar_=() ;}
+QPKGs.OpErClean.Size()
+{ if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+_ob_qpkgs_operclean_sz_=$2
+else
+echo -n $_ob_qpkgs_operclean_sz_
+fi ;}
+QPKGs.OpErClean.Init
+QPKGs.OpSkClean.Add()
+{ local ar=(${1}) it=''
+[[ ${#ar[@]} -eq 0 ]] && return
+for it in "${ar[@]:-}"; do
+[[ " ${_ob_qpkgs_opskclean_ar_[*]+"${_ob_qpkgs_opskclean_ar_[@]}"} " != *"$it"* ]] && _ob_qpkgs_opskclean_ar_+=("$it")
+done ;}
+QPKGs.OpSkClean.Array()
+{ echo -n "${_ob_qpkgs_opskclean_ar_[@]+"${_ob_qpkgs_opskclean_ar_[@]}"}" ;}
+QPKGs.OpSkClean.Count()
+{ echo "${#_ob_qpkgs_opskclean_ar_[@]}" ;}
+QPKGs.OpSkClean.Exist()
+{ [[ ${_ob_qpkgs_opskclean_ar_[*]:-} == *"$1"* ]] ;}
+QPKGs.OpSkClean.Init()
+{ _ob_qpkgs_opskclean_sz_=0
+_ob_qpkgs_opskclean_ar_=()
+_ob_qpkgs_opskclean_arin_=1 ;}
+QPKGs.OpSkClean.IsAny()
+{ [[ ${#_ob_qpkgs_opskclean_ar_[@]} -gt 0 ]] ;}
+QPKGs.OpSkClean.IsNone()
+{ [[ ${#_ob_qpkgs_opskclean_ar_[@]} -eq 0 ]] ;}
+QPKGs.OpSkClean.List()
+{ echo -n "${_ob_qpkgs_opskclean_ar_[*]+"${_ob_qpkgs_opskclean_ar_[@]}"}" ;}
+QPKGs.OpSkClean.ListCSV()
+{ echo -n "${_ob_qpkgs_opskclean_ar_[*]+"${_ob_qpkgs_opskclean_ar_[@]}"}" | tr ' ' ',' ;}
+QPKGs.OpSkClean.Remove()
+{ local agar=(${1}) tmar=() ag='' it='' m=false
+for it in "${_ob_qpkgs_opskclean_ar_[@]+"${_ob_qpkgs_opskclean_ar_[@]}"}"; do
+m=false
+for ag in "${agar[@]+"${agar[@]}"}"; do
+if [[ $ag = $it ]]; then
+m=true; break
+fi
+done
+[[ $m = false ]] && tmar+=("$it")
+done
+_ob_qpkgs_opskclean_ar_=("${tmar[@]+"${tmar[@]}"}")
+[[ -z ${_ob_qpkgs_opskclean_ar_[*]+"${_ob_qpkgs_opskclean_ar_[@]}"} ]] && _ob_qpkgs_opskclean_ar_=() ;}
+QPKGs.OpSkClean.Size()
+{ if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+_ob_qpkgs_opskclean_sz_=$2
+else
+echo -n $_ob_qpkgs_opskclean_sz_
+fi ;}
+QPKGs.OpSkClean.Init
 QPKGs.OpToDisable.Add()
 { local ar=(${1}) it=''
 [[ ${#ar[@]} -eq 0 ]] && return
@@ -18981,6 +20977,94 @@ else
 echo -n $_ob_qpkgs_isntbackedup_sz_
 fi ;}
 QPKGs.IsNtBackedUp.Init
+QPKGs.IsCleaned.Add()
+{ local ar=(${1}) it=''
+[[ ${#ar[@]} -eq 0 ]] && return
+for it in "${ar[@]:-}"; do
+[[ " ${_ob_qpkgs_iscleaned_ar_[*]+"${_ob_qpkgs_iscleaned_ar_[@]}"} " != *"$it"* ]] && _ob_qpkgs_iscleaned_ar_+=("$it")
+done ;}
+QPKGs.IsCleaned.Array()
+{ echo -n "${_ob_qpkgs_iscleaned_ar_[@]+"${_ob_qpkgs_iscleaned_ar_[@]}"}" ;}
+QPKGs.IsCleaned.Count()
+{ echo "${#_ob_qpkgs_iscleaned_ar_[@]}" ;}
+QPKGs.IsCleaned.Exist()
+{ [[ ${_ob_qpkgs_iscleaned_ar_[*]:-} == *"$1"* ]] ;}
+QPKGs.IsCleaned.Init()
+{ _ob_qpkgs_iscleaned_sz_=0
+_ob_qpkgs_iscleaned_ar_=()
+_ob_qpkgs_iscleaned_arin_=1 ;}
+QPKGs.IsCleaned.IsAny()
+{ [[ ${#_ob_qpkgs_iscleaned_ar_[@]} -gt 0 ]] ;}
+QPKGs.IsCleaned.IsNone()
+{ [[ ${#_ob_qpkgs_iscleaned_ar_[@]} -eq 0 ]] ;}
+QPKGs.IsCleaned.List()
+{ echo -n "${_ob_qpkgs_iscleaned_ar_[*]+"${_ob_qpkgs_iscleaned_ar_[@]}"}" ;}
+QPKGs.IsCleaned.ListCSV()
+{ echo -n "${_ob_qpkgs_iscleaned_ar_[*]+"${_ob_qpkgs_iscleaned_ar_[@]}"}" | tr ' ' ',' ;}
+QPKGs.IsCleaned.Remove()
+{ local agar=(${1}) tmar=() ag='' it='' m=false
+for it in "${_ob_qpkgs_iscleaned_ar_[@]+"${_ob_qpkgs_iscleaned_ar_[@]}"}"; do
+m=false
+for ag in "${agar[@]+"${agar[@]}"}"; do
+if [[ $ag = $it ]]; then
+m=true; break
+fi
+done
+[[ $m = false ]] && tmar+=("$it")
+done
+_ob_qpkgs_iscleaned_ar_=("${tmar[@]+"${tmar[@]}"}")
+[[ -z ${_ob_qpkgs_iscleaned_ar_[*]+"${_ob_qpkgs_iscleaned_ar_[@]}"} ]] && _ob_qpkgs_iscleaned_ar_=() ;}
+QPKGs.IsCleaned.Size()
+{ if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+_ob_qpkgs_iscleaned_sz_=$2
+else
+echo -n $_ob_qpkgs_iscleaned_sz_
+fi ;}
+QPKGs.IsCleaned.Init
+QPKGs.IsNtCleaned.Add()
+{ local ar=(${1}) it=''
+[[ ${#ar[@]} -eq 0 ]] && return
+for it in "${ar[@]:-}"; do
+[[ " ${_ob_qpkgs_isntcleaned_ar_[*]+"${_ob_qpkgs_isntcleaned_ar_[@]}"} " != *"$it"* ]] && _ob_qpkgs_isntcleaned_ar_+=("$it")
+done ;}
+QPKGs.IsNtCleaned.Array()
+{ echo -n "${_ob_qpkgs_isntcleaned_ar_[@]+"${_ob_qpkgs_isntcleaned_ar_[@]}"}" ;}
+QPKGs.IsNtCleaned.Count()
+{ echo "${#_ob_qpkgs_isntcleaned_ar_[@]}" ;}
+QPKGs.IsNtCleaned.Exist()
+{ [[ ${_ob_qpkgs_isntcleaned_ar_[*]:-} == *"$1"* ]] ;}
+QPKGs.IsNtCleaned.Init()
+{ _ob_qpkgs_isntcleaned_sz_=0
+_ob_qpkgs_isntcleaned_ar_=()
+_ob_qpkgs_isntcleaned_arin_=1 ;}
+QPKGs.IsNtCleaned.IsAny()
+{ [[ ${#_ob_qpkgs_isntcleaned_ar_[@]} -gt 0 ]] ;}
+QPKGs.IsNtCleaned.IsNone()
+{ [[ ${#_ob_qpkgs_isntcleaned_ar_[@]} -eq 0 ]] ;}
+QPKGs.IsNtCleaned.List()
+{ echo -n "${_ob_qpkgs_isntcleaned_ar_[*]+"${_ob_qpkgs_isntcleaned_ar_[@]}"}" ;}
+QPKGs.IsNtCleaned.ListCSV()
+{ echo -n "${_ob_qpkgs_isntcleaned_ar_[*]+"${_ob_qpkgs_isntcleaned_ar_[@]}"}" | tr ' ' ',' ;}
+QPKGs.IsNtCleaned.Remove()
+{ local agar=(${1}) tmar=() ag='' it='' m=false
+for it in "${_ob_qpkgs_isntcleaned_ar_[@]+"${_ob_qpkgs_isntcleaned_ar_[@]}"}"; do
+m=false
+for ag in "${agar[@]+"${agar[@]}"}"; do
+if [[ $ag = $it ]]; then
+m=true; break
+fi
+done
+[[ $m = false ]] && tmar+=("$it")
+done
+_ob_qpkgs_isntcleaned_ar_=("${tmar[@]+"${tmar[@]}"}")
+[[ -z ${_ob_qpkgs_isntcleaned_ar_[*]+"${_ob_qpkgs_isntcleaned_ar_[@]}"} ]] && _ob_qpkgs_isntcleaned_ar_=() ;}
+QPKGs.IsNtCleaned.Size()
+{ if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+_ob_qpkgs_isntcleaned_sz_=$2
+else
+echo -n $_ob_qpkgs_isntcleaned_sz_
+fi ;}
+QPKGs.IsNtCleaned.Init
 QPKGs.IsDisabled.Add()
 { local ar=(${1}) it=''
 [[ ${#ar[@]} -eq 0 ]] && return

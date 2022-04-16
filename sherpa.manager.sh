@@ -58,7 +58,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220417d
+    local -r SCRIPT_VERSION=220417e
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -122,6 +122,7 @@ Session.Init()
 
     readonly BACKUP_LOG_FILE=backup.log
     readonly CHECK_LOG_FILE=check.log
+    readonly CLEAN_LOG_FILE=clean.log
     readonly DEBUG_LOG_FILE=debug.log
     readonly DISABLE_LOG_FILE=disable.log
     readonly DOWNLOAD_LOG_FILE=download.log
@@ -174,8 +175,8 @@ Session.Init()
     readonly SESSION_TAIL_PATHFILE=$LOGS_PATH/session.tail.log
 
     PACKAGE_SCOPES=(All Dependent HasDependents Installable Names Standalone SupportBackup SupportUpdateOnRestart Upgradable)
-    PACKAGE_STATES=(BackedUp Disabled Downloaded Enabled Installed Missing Starting Started Stopping Stopped Restarting)
-    PACKAGE_OPERATIONS=(Backup Disable Download Enable Install Rebuild Reinstall Restart Restore Start Stop Uninstall Upgrade)
+    PACKAGE_STATES=(BackedUp Cleaned Disabled Downloaded Enabled Installed Missing Starting Started Stopping Stopped Restarting)
+    PACKAGE_OPERATIONS=(Backup Clean Disable Download Enable Install Rebuild Reinstall Restart Restore Start Stop Uninstall Upgrade)
     PACKAGE_TIERS=(Standalone Addon Dependent)
 
     readonly PACKAGE_SCOPES
@@ -208,10 +209,10 @@ Session.Init()
         CleanManagementScript
         CleanPackageLists
         exit 0
-    elif [[ $USER_ARGS_RAW == *"clean"* ]]; then
-        CleanManagementScript
-        CleanPackageLists
-        exit 0
+#     elif [[ $USER_ARGS_RAW == *"clean"* ]]; then
+#         CleanManagementScript
+#         CleanPackageLists
+#         exit 0
     fi
 
     Objects.DoLoad || return
@@ -543,26 +544,28 @@ Session.Validate()
 
     }
 
-# package processing priorities need to be:
+# package processing priorities shall be:
 
 #   _. rebuild dependents           (meta-operation: 'install' QPKG and 'restore' config only if package has a backup file)
 
-#  17. backup all                   (highest: most-important)
-#  16. stop dependents
-#  15. stop standalones
-#  14. uninstall all
+#  19. backup all                   (highest: most-important)
+#  18. stop dependents
+#  17. stop standalones
+#  16. uninstall all
 
-#  13. upgrade standalones
-#  12. reinstall standalones
-#  11. install standalones
-#  10. restore standalones
-#   9. start standalones
-#   8. restart standalones
+#  15. upgrade standalones
+#  14. reinstall standalones
+#  13. install standalones
+#  12. restore standalones
+#  11. clean standalones            (presently unsupported by any standalone QPKGs)
+#  10. start standalones
+#   9. restart standalones
 
-#   7. upgrade dependents
-#   6. reinstall dependents
-#   5. install dependents
-#   4. restore dependents
+#   8. upgrade dependents
+#   7. reinstall dependents
+#   6. install dependents
+#   5. restore dependents
+#   4. clean dependents
 #   3. start dependents
 #   2. restart dependents
 
@@ -609,6 +612,7 @@ Tiers.Processor()
                 Tier.Processor Reinstall false "$tier" QPKG OpToReinstall reinstall reinstalling reinstalled long || return
                 Tier.Processor Install false "$tier" QPKG OpToInstall install installing installed long || return
                 Tier.Processor Restore false "$tier" QPKG OpToRestore 'restore configuration for' 'restoring configuration for' 'configuration restored for' long || return
+                Tier.Processor Clean false "$tier" QPKG OpToClean clean cleaning cleaned long || return
 
                 if [[ $tier = Standalone ]]; then
                     # check for standalone packages that require starting due to dependents being reinstalled/installed/started/restarted
@@ -896,7 +900,7 @@ ParseArguments()
 
         # identify operation: every time operation changes, must clear scope too
         case $arg in
-            backup|check|install|rebuild|reinstall|restart|restore|start|stop|upgrade)
+            backup|check|clean|install|rebuild|reinstall|restart|restore|start|stop|upgrade)
                 operation=${arg}_
                 arg_identified=true
                 scope=''
@@ -1083,6 +1087,32 @@ ParseArguments()
                 ;;
             check_)
                 Opts.Deps.Check.Set
+                ;;
+            clean_)
+                case $scope in
+                    all_)
+                        Opts.Apps.OpClean.ScAll.Set
+                        operation=''
+                        ;;
+                    installed_)
+                        Opts.Apps.OpClean.IsInstalled.Set
+                        operation=''
+                        ;;
+                    dependent_)
+                        Opts.Apps.OpClean.ScDependent.Set
+                        ;;
+                    standalone_)
+                        Opts.Apps.OpClean.ScStandalone.Set
+                        ;;
+                    started_)
+                        QPKGs.OpToClean.Add "$(QPKGs.IsStarted.Array)"
+                        ;;
+                    stopped_)
+                        QPKGs.OpToClean.Add "$(QPKGs.IsStopped.Array)"
+                        ;;
+                    *)
+                        QPKGs.OpToClean.Add "$package"
+                esac
                 ;;
             help_)
                 case $scope in
@@ -1516,6 +1546,27 @@ ApplySensibleExceptions()
             if Opts.Apps.Op${operation}.Sc${scope}.IsSet; then
                 # use sensible scope exceptions (for convenience) rather than follow requested scope literally
                 case $operation in
+                    Clean)
+                        case $scope in
+                            All)
+                                found=true
+                                for prospect in $(QPKGs.IsInstalled.Array); do
+                                    QPKGs.ScSupportUpdateOnRestart.Exist "$prospect" && QPKGs.OpTo${operation}.Add "$prospect"
+                                done
+                                ;;
+                            Dependent)
+                                found=true
+                                for prospect in $(QPKGs.IsInstalled.Array); do
+                                    QPKGs.ScDependent.Exist "$prospect" && QPKGs.OpTo${operation}.Add "$prospect"
+                                done
+                                ;;
+                            Standalone)
+                                found=true
+                                for prospect in $(QPKGs.IsInstalled.Array); do
+                                    QPKGs.ScStandalone.Exist "$prospect" && QPKGs.OpTo${operation}.Add "$prospect"
+                                done
+                        esac
+                        ;;
                     Install)
                         case $scope in
                             All)
@@ -2814,6 +2865,7 @@ Help.Actions.Show()
     DisplayAsProjectSyntaxIndentedExample 'start these packages' "start $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample 'stop these packages' "stop $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample 'restart these packages' "restart $(FormatAsHelpPackages)"
+    DisplayAsProjectSyntaxIndentedExample 'clear local repository files from these packages' "clean $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample 'backup these application configurations to the backup location' "backup $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample 'restore these application configurations from the backup location' "restore $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample 'show application backup files' 'list backups'
@@ -2845,6 +2897,7 @@ Help.ActionsAll.Show()
     DisplayAsProjectSyntaxIndentedExample 'start all installed packages (upgrade internal applications, not packages)' 'start all'
     DisplayAsProjectSyntaxIndentedExample 'stop all installed packages' 'stop all'
     DisplayAsProjectSyntaxIndentedExample 'restart packages that are able to upgrade their internal applications' 'restart all'
+    DisplayAsProjectSyntaxIndentedExample 'clear local repository files from all packages' 'clean all'
     DisplayAsProjectSyntaxIndentedExample 'list all available packages' 'list all'
     DisplayAsProjectSyntaxIndentedExample 'list only installed packages' 'list installed'
     DisplayAsProjectSyntaxIndentedExample 'list only packages that can be installed' 'list installable'
@@ -2911,8 +2964,9 @@ Help.Problems.Show()
     DisplayAsProjectSyntaxIndentedExample 'process one-or-more packages and show live debugging information' "$(FormatAsHelpAction) $(FormatAsHelpPackages) debug"
     DisplayAsProjectSyntaxIndentedExample 'ensure all application dependencies are installed' 'check'
     DisplayAsProjectSyntaxIndentedExample "don't check free-space on target filesystem when installing $(FormatAsPackageName Entware) packages" "$(FormatAsHelpAction) $(FormatAsHelpPackages) ignore-space"
-    DisplayAsProjectSyntaxIndentedExample "clear the cached $(FormatAsScriptTitle) management script" 'clean'
-    DisplayAsProjectSyntaxIndentedExample 'clear all cached items and remove all logs' 'reset'
+    #DisplayAsProjectSyntaxIndentedExample "clear the cached $(FormatAsScriptTitle) management script" 'clean'
+    DisplayAsProjectSyntaxIndentedExample 'clear local repository files from these packages' "clean $(FormatAsHelpPackages)"
+    DisplayAsProjectSyntaxIndentedExample 'remove all cached sherpa items and logs' 'reset'
     DisplayAsProjectSyntaxIndentedExample 'restart all installed packages (upgrades the internal applications, not packages)' 'restart all'
     DisplayAsProjectSyntaxIndentedExample 'start these packages and enable package icons' "start $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample 'stop these packages and disable package icons' "stop $(FormatAsHelpPackages)"
@@ -3440,7 +3494,7 @@ QPKGs.States.Build()
     #   - have config blocks in [/etc/config/qpkg.conf], but no files on-disk
     #   - those in the process of starting, stopping, or restarting
 
-    # NOTE: these lists cannot be rebuilt unless element removal methods are re-added
+    # NOTE: these lists cannot be rebuilt unless element removal methods are added
 
     QPKGs.States.Built.IsSet && return
 
@@ -3545,6 +3599,7 @@ QPKGs.IsSupportUpdateOnRestart.Build()
     {
 
     # Builds a list of QPKGs that do and don't support application updating on QPKG restart
+    # these packages also do and don't support 'clean' operations
 
     DebugFuncEntry
     local package=''
@@ -4901,6 +4956,57 @@ QPKG.DoRestore()
     else
         DebugAsWarn "unable to restore $(FormatAsPackageName "$PACKAGE_NAME") configuration $(FormatAsExitcode $result_code)"
         MarkOperationAsError "$PACKAGE_NAME" restore
+    fi
+
+    DebugFuncExit $result_code
+
+    }
+
+QPKG.DoClean()
+    {
+
+    # calls the service script for the QPKG named in $1 and runs a clean operation
+
+    # input:
+    #   $1 = QPKG name
+
+    # output:
+    #   $? = 0  : successful
+    #   $? = 1  : failed
+    #   $? = 2  : skipped (not already installed, does not support clean)
+
+    DebugFuncEntry
+
+    local -r PACKAGE_NAME=${1:?no package name supplied}
+    local -i result_code=0
+
+    if ! QPKG.IsSupportUpdateOnRestart "$PACKAGE_NAME"; then
+        MarkOperationAsSkipped show "$PACKAGE_NAME" clean "it does not support cleaning"
+        DebugFuncExit 2; return
+    fi
+
+    if QPKGs.IsNtInstalled.Exist "$PACKAGE_NAME"; then
+        MarkOperationAsSkipped show "$PACKAGE_NAME" clean "it's not installed"
+        DebugFuncExit 2; return
+    fi
+
+    local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile "$PACKAGE_NAME")
+    local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$CLEAN_LOG_FILE
+
+    DebugAsProc "cleaning $(FormatAsPackageName "$PACKAGE_NAME")"
+    RunAndLog "$SH_CMD $PACKAGE_INIT_PATHFILE clean" "$LOG_PATHFILE" log:failure-only
+    result_code=$?
+
+    if [[ $result_code -eq 0 ]]; then
+        DebugAsDone "cleaned $(FormatAsPackageName "$PACKAGE_NAME")"
+        MarkOperationAsDone "$PACKAGE_NAME" clean
+        QPKG.StoreServiceStatus "$PACKAGE_NAME"
+        QPKGs.IsNtCleaned.Remove "$PACKAGE_NAME"
+        QPKGs.IsCleaned.Add "$PACKAGE_NAME"
+    else
+        DebugAsWarn "unable to clean $(FormatAsPackageName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
+        MarkOperationAsError "$PACKAGE_NAME" clean
+        result_code=1    # remap to 1
     fi
 
     DebugFuncExit $result_code
