@@ -58,7 +58,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220417c
+    local -r SCRIPT_VERSION=220417d
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -2833,8 +2833,8 @@ Help.ActionsAll.Show()
     DisableDebugToArchiveAndFile
     Help.Basic.Show
     DisplayLineSpaceIfNoneAlready
-    Display "* These $(FormatAsHelpAction)s apply to all installed packages. If $(FormatAsHelpAction) is 'install all' then all available packages will be installed."
-    DisplayLineSpaceIfNoneAlready
+    DisplayAsHelpTitle "these $(FormatAsHelpAction)s apply to all installed packages. If $(FormatAsHelpAction) is 'install all' then all available packages will be installed."
+    Display
     DisplayAsHelpTitle "$(FormatAsHelpAction) usage examples:"
     DisplayAsProjectSyntaxIndentedExample 'show package statuses' 'status'
     DisplayAsProjectSyntaxIndentedExample 'install everything!' 'install all'
