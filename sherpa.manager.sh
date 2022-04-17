@@ -21,8 +21,8 @@
 #   Copyright (C) 2007 Free Software Foundation, Inc.
 #
 # ... and periodically on:
-#   GNU bash, version 5.0.17(1)-release (aarch64-openwrt-linux-gnu)
-#   Copyright (C) 2019 Free Software Foundation, Inc.
+#   GNU bash, version 5.1.16(1)-release (aarch64-openwrt-linux-gnu)
+#   Copyright (C) 2020 Free Software Foundation, Inc.
 #
 # License:
 #   This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
@@ -59,7 +59,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220418b
+    local -r SCRIPT_VERSION=220418c
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -214,11 +214,11 @@ Session.Init()
 
     if [[ -e $GNU_STTY_CMD ]]; then
         local terminal_dimensions=$($GNU_STTY_CMD size)
-        readonly ROWS=${terminal_dimensions% *}
-        readonly COLUMNS=${terminal_dimensions#* }
+        readonly SESSION_ROWS=${terminal_dimensions% *}
+        readonly SESSION_COLUMNS=${terminal_dimensions#* }
     else
-        readonly ROWS=40
-        readonly COLUMNS=156
+        readonly SESSION_ROWS=40
+        readonly SESSION_COLUMNS=156
     fi
 
     if [[ $USER_ARGS_RAW == *"debug"* || $USER_ARGS_RAW == *"dbug"* || $USER_ARGS_RAW == *"verbose"* ]]; then
@@ -2653,11 +2653,11 @@ CalculateMaximumStatusColumnsToDisplay()
     local column3_width=$((${#HELP_COLUMN_SPACER} + ${#HELP_COLUMN_MAIN_PREFIX} + HELP_PACKAGE_VERSION_WIDTH))
     local column4_width=$((${#HELP_COLUMN_SPACER} + ${#HELP_COLUMN_MAIN_PREFIX} + HELP_PACKAGE_PATH_WIDTH))
 
-    if [[ $((column1_width + column2_width)) -ge $COLUMNS ]]; then
+    if [[ $((column1_width + column2_width)) -ge $SESSION_COLUMNS ]]; then
         echo 1
-    elif [[ $((column1_width + column2_width + column3_width)) -ge $COLUMNS ]]; then
+    elif [[ $((column1_width + column2_width + column3_width)) -ge $SESSION_COLUMNS ]]; then
         echo 2
-    elif [[ $((column1_width + column2_width + column3_width + column4_width)) -ge $COLUMNS ]]; then
+    elif [[ $((column1_width + column2_width + column3_width + column4_width)) -ge $SESSION_COLUMNS ]]; then
         echo 3
     else
         echo 4
