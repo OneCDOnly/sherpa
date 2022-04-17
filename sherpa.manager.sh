@@ -58,7 +58,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220417f
+    local -r SCRIPT_VERSION=220417g
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -708,7 +708,7 @@ Tier.Processor()
     local -r ACTION_PRESENT=${message_prefix}${7:?empty}
     local -r ACTION_PAST=${message_prefix}${8:?empty}
 
-    ShowAsProc "$([[ $TIER = All ]] && echo '' || echo "$TIER " | tr 'A-Z' 'a-z')packages to $ACTION_INTRANSITIVE" >&2
+    ShowAsProc "$([[ $TIER != All ]] && tr 'A-Z' 'a-z' <<< "$TIER ")packages to $ACTION_INTRANSITIVE" >&2
 
     case $PACKAGE_TYPE in
         QPKG)
@@ -4182,7 +4182,7 @@ ShowSummary()
 
     for state in "${PACKAGE_STATES[@]}"; do
         for operation in "${PACKAGE_OPERATIONS[@]}"; do
-            Opts.Apps.Op${operation}.Is${state}.IsSet && QPKGs.OpOk${operation}.IsNone && ShowAsDone "no QPKGs were $(tr 'A-Z' 'a-z' <<< $state)"
+            Opts.Apps.Op${operation}.Is${state}.IsSet && QPKGs.OpOk${operation}.IsNone && ShowAsDone "no QPKGs were $(tr 'A-Z' 'a-z' <<< "$state")"
         done
     done
 
@@ -6142,7 +6142,7 @@ ShowAsOperationProgress()
     # $7 = 'long' (optional)
 
     if [[ -n $1 && $1 != All ]]; then
-        local tier=" $(tr 'A-Z' 'a-z' <<<$1)"
+        local tier=" $(tr 'A-Z' 'a-z' <<< "$1")"
     else
         local tier=''
     fi
@@ -6189,7 +6189,7 @@ ShowAsOperationResult()
     # $7 = 'long' (optional)
 
     if [[ -n $1 && $1 != All ]]; then
-        local tier=" $(tr 'A-Z' 'a-z' <<<$1)"
+        local tier=" $(tr 'A-Z' 'a-z' <<< "$1")"
     else
         local tier=''
     fi
