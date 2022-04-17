@@ -59,7 +59,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220417i
+    local -r SCRIPT_VERSION=220418
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -238,7 +238,6 @@ Session.Init()
     DebugInfo '(==) done, (>>) f entry, (<<) f exit, (vv) variable name & value, ($1) positional argument value'
     DebugInfoMinorSeparator
 
-    Opts.IgFreeSpace.Text = ' --force-space'
     Session.Summary.Set
     Session.LineSpace.NoLogMods
 
@@ -365,7 +364,7 @@ Session.Validate()
 
     ShowAsProc arguments >&2
 
-    if Opts.Deps.Check.IsSet || Opts.IgFreeSpace.IsSet || Opts.Help.Status.IsSet; then
+    if Opts.Deps.Check.IsSet || Opts.Help.Status.IsSet; then
         something_to_do=true
     else
         for operation in "${PACKAGE_OPERATIONS[@]}"; do
@@ -1037,9 +1036,6 @@ ParseArguments()
                 operation_force=true
                 arg_identified=true
                 ;;
-            ignore-space)
-                Opts.IgFreeSpace.Set
-                arg_identified=true
         esac
 
         # identify package
@@ -1766,32 +1762,6 @@ ResetWorkPath()
 
     }
 
-CleanManagementScript()
-    {
-
-    if [[ -n $WORK_PATH && -d $WORK_PATH ]]; then
-        rm -f "$MANAGER_PATHFILE" "$MANAGER_ARCHIVE_PATHFILE"
-        ShowAsDone 'management script cleaned'
-    fi
-
-    return 0
-
-    }
-
-CleanPackageLists()
-    {
-
-    if [[ -n $WORK_PATH && -d $WORK_PATH ]]; then
-        rm -f "$PACKAGES_PATHFILE"
-        rm -f "$EXTERNAL_PACKAGES_PATHFILE"
-        rm -f "$EXTERNAL_PACKAGES_ARCHIVE_PATHFILE"
-        ShowAsDone 'package lists cleaned'
-    fi
-
-    return 0
-
-    }
-
 Quiz()
     {
 
@@ -2087,7 +2057,7 @@ IPKGs.DoUpgrade()
             trap CTRL_C_Captured INT
                 _MonitorDirSize_ "$IPKG_DL_PATH" "$(IPKGs.OpToDownload.Size)" &
 
-                RunAndLog "$OPKG_CMD upgrade$(Opts.IgFreeSpace.IsSet && Opts.IgFreeSpace.Text) --force-overwrite $(IPKGs.OpToDownload.List) --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$LOGS_PATH/ipkgs.$UPGRADE_LOG_FILE" log:failure-only
+                RunAndLog "$OPKG_CMD upgrade --force-overwrite $(IPKGs.OpToDownload.List) --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$LOGS_PATH/ipkgs.$UPGRADE_LOG_FILE" log:failure-only
                 result_code=$?
             trap - INT
         RemoveDirSizeMonitorFlagFile
@@ -2149,7 +2119,7 @@ IPKGs.DoInstall()
             trap CTRL_C_Captured INT
                 _MonitorDirSize_ "$IPKG_DL_PATH" "$(IPKGs.OpToDownload.Size)" &
 
-                RunAndLog "$OPKG_CMD install$(Opts.IgFreeSpace.IsSet && Opts.IgFreeSpace.Text) --force-overwrite $(IPKGs.OpToDownload.List) --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$LOGS_PATH/ipkgs.addons.$INSTALL_LOG_FILE" log:failure-only
+                RunAndLog "$OPKG_CMD install --force-overwrite $(IPKGs.OpToDownload.List) --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$LOGS_PATH/ipkgs.addons.$INSTALL_LOG_FILE" log:failure-only
                 result_code=$?
             trap - INT
         RemoveDirSizeMonitorFlagFile
@@ -2932,7 +2902,6 @@ Help.Options.Show()
     DisplayLineSpaceIfNoneAlready
     DisplayAsHelpTitle "$(FormatAsHelpOptions) usage examples:"
     DisplayAsProjectSyntaxIndentedExample 'process one-or-more packages and show live debugging information' "$(FormatAsHelpAction) $(FormatAsHelpPackages) debug"
-    DisplayAsProjectSyntaxIndentedExample "don't check free-space on target filesystem when installing $(FormatAsPackageName Entware) packages" "$(FormatAsHelpAction) $(FormatAsHelpPackages) ignore-space"
     DisplayAsProjectSyntaxIndentedExample 'display helpful tips and shortcuts' 'tips'
     DisplayAsProjectSyntaxIndentedExample 'display troubleshooting options' 'problems'
 
@@ -2949,8 +2918,6 @@ Help.Problems.Show()
     DisplayAsHelpTitle 'usage examples for dealing with problems:'
     DisplayAsProjectSyntaxIndentedExample 'process one-or-more packages and show live debugging information' "$(FormatAsHelpAction) $(FormatAsHelpPackages) debug"
     DisplayAsProjectSyntaxIndentedExample 'ensure all application dependencies are installed' 'check'
-    DisplayAsProjectSyntaxIndentedExample "don't check free-space on target filesystem when installing $(FormatAsPackageName Entware) packages" "$(FormatAsHelpAction) $(FormatAsHelpPackages) ignore-space"
-    #DisplayAsProjectSyntaxIndentedExample "clear the cached $(FormatAsScriptTitle) management script" 'clean'
     DisplayAsProjectSyntaxIndentedExample 'clear local repository files from these packages' "clean $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample 'remove all cached sherpa items and logs' 'reset'
     DisplayAsProjectSyntaxIndentedExample 'restart all installed packages (upgrades the internal applications, not packages)' 'restart all'
@@ -4390,7 +4357,7 @@ QPKG.DoInstall()
 
                 # add extra package(s) needed immediately
                 DebugAsProc 'installing standalone IPKGs'
-                RunAndLog "$OPKG_CMD install$(Opts.IgFreeSpace.IsSet && Opts.IgFreeSpace.Text) --force-overwrite $BASE_IPKGS_INSTALL --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$LOGS_PATH/ipkgs.extra.$INSTALL_LOG_FILE" log:failure-only
+                RunAndLog "$OPKG_CMD install --force-overwrite $BASE_IPKGS_INSTALL --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$LOGS_PATH/ipkgs.extra.$INSTALL_LOG_FILE" log:failure-only
                 DebugAsDone 'installed standalone IPKGs'
             fi
         fi

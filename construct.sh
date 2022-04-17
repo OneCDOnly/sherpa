@@ -30,7 +30,6 @@ AddFlagObj()
     local public_function_name=${1:?no object name supplied}
     local safe_function_name="$(tr 'A-Z' 'a-z' <<< "${public_function_name//[.-]/_}")"
 
-    _placeholder_text_=_ob_${safe_function_name}_tx_
     _placeholder_flag_=_ob_${safe_function_name}_fl_
     _placeholder_log_changes_flag_=_ob_${safe_function_name}_chfl_
 
@@ -42,8 +41,7 @@ echo $public_function_name'.Clear()
 { [[ $'$_placeholder_log_changes_flag_' != '\'true\'' ]] && return
 '$_placeholder_log_changes_flag_'=false ;}
 '$public_function_name'.Init()
-{ '$_placeholder_text_'='\'\''
-'$_placeholder_flag_'=false
+{ '$_placeholder_flag_'=false
 '$_placeholder_log_changes_flag_'=true ;}
 '$public_function_name'.IsNt()
 { [[ $'$_placeholder_flag_' != '\'true\'' ]] ;}
@@ -53,12 +51,6 @@ echo $public_function_name'.Clear()
 { [[ $'$_placeholder_flag_' = '\'true\'' ]] && return
 '$_placeholder_flag_'=true
 [[ $'$_placeholder_log_changes_flag_' = '\'true\'' ]] && DebugVar '$_placeholder_flag_' ;}
-'$public_function_name'.Text()
-{ if [[ -n ${1:-} && $1 = "=" ]]; then
-'$_placeholder_text_'=$2
-else
-echo -n "$'$_placeholder_text_'"
-fi ;}
 '$public_function_name'.Init' >> "$OBJECTS_PATHFILE"
 
     return 0
@@ -149,7 +141,7 @@ AddFlagObj IPKGs.Install
 AddFlagObj PIPs.Install
 
 # user option flags
-for element in Deps.Check IgFreeSpace Versions.View; do
+for element in Deps.Check Versions.View; do
     AddFlagObj Opts.$element
 done
 
@@ -190,7 +182,7 @@ done
 AddListObj Args.Unknown
 
 for operation in "${PACKAGE_OPERATIONS[@]}"; do
-    AddListObj QPKGs.OpTo${operation}       # to operate on
+    AddListObj QPKGs.OpTo${operation}       # operation to be tried
     AddListObj QPKGs.OpOk${operation}       # operation was tried and succeeded
     AddListObj QPKGs.OpEr${operation}       # operation was tried but failed
     AddListObj QPKGs.OpSk${operation}       # operation was skipped
