@@ -51,6 +51,7 @@ Session.Init()
     {
 
     DebugFuncEntry
+
     IsQNAP || return
     IsSU || return
 
@@ -58,7 +59,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220417g
+    local -r SCRIPT_VERSION=220417h
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -253,7 +254,6 @@ Session.Init()
     readonly PYTHON3_CMD=/opt/bin/python3
     readonly PIP_CMD="$PYTHON3_CMD -m pip"
     readonly OPKG_CMD=/opt/bin/opkg
-    code_pointer=0
     previous_msg=' '
     [[ ${NAS_FIRMWARE_VERSION//.} -lt 426 ]] && curl_insecure_arg=' --insecure' || curl_insecure_arg=''
     DebugQPKGDetected arch "$NAS_QPKG_ARCH"
@@ -278,7 +278,6 @@ Session.Init()
     fi
 
     if ! QPKGs.Conflicts.Check; then
-        code_pointer=1
         QPKGs.SkProc.Set
         DebugFuncExit 1; return
     fi
@@ -297,6 +296,7 @@ Session.Validate()
     ArgumentSuggestions
     QPKGs.SkProc.IsSet && return
     DebugFuncEntry
+
     local operation=''
     local scope=''
     local state=''
@@ -568,6 +568,7 @@ Tiers.Processor()
 
     QPKGs.SkProc.IsSet && return
     DebugFuncEntry
+
     local tier=''
     local operation=''
     local prospect=''
@@ -876,6 +877,7 @@ ParseArguments()
 
     DebugFuncEntry
     DebugVar USER_ARGS_RAW
+
     local user_args_fixed=$(tr 'A-Z' 'a-z' <<< "${USER_ARGS_RAW//,/ }")
     local -a user_args=(${user_args_fixed/--/})
     local arg=''
@@ -1458,6 +1460,7 @@ ArgumentSuggestions()
     {
 
     DebugFuncEntry
+
     local arg=''
 
     if Args.Unknown.IsAny; then
@@ -1526,6 +1529,7 @@ ApplySensibleExceptions()
     {
 
     DebugFuncEntry
+
     local operation=''
     local scope=''
     local state=''
@@ -1846,14 +1850,8 @@ PatchEntwareService()
 UpdateEntwarePackageList()
     {
 
-    if IsNtSysFileExist $OPKG_CMD; then
-        code_pointer=2
-        return 1
-    fi
-
-    if [[ ${ENTWARE_PACKAGE_LIST_UPTODATE:-false} = true ]]; then
-        return 0
-    fi
+    IsNtSysFileExist $OPKG_CMD && return 1
+    [[ ${ENTWARE_PACKAGE_LIST_UPTODATE:-false} = true ]] && return 0
 
     local -r CHANGE_THRESHOLD_MINUTES=60
     local -r LOG_PATHFILE=$LOGS_PATH/entware.$UPDATE_LOG_FILE
@@ -1921,13 +1919,9 @@ CalcIPKGsDepsToInstall()
 
     QPKGs.IsNtInstalled.Exist Entware && return
     QPKGs.IsStopped.Exist Entware && return
-
-    if IsNtSysFileExist $GNU_GREP_CMD; then
-        code_pointer=3
-        return 1
-    fi
-
+    IsNtSysFileExist $GNU_GREP_CMD && return 1
     DebugFuncEntry
+
     local -a this_list=()
     local -a dep_acc=()
     local -i requested_count=0
@@ -2014,13 +2008,9 @@ CalcAllIPKGsToUninstall()
 
     QPKGs.IsNtInstalled.Exist Entware && return
     QPKGs.IsStopped.Exist Entware && return
-
-    if IsNtSysFileExist $GNU_GREP_CMD; then
-        code_pointer=4
-        return 1
-    fi
-
+    IsNtSysFileExist $GNU_GREP_CMD && return 1
     DebugFuncEntry
+
     local req_list=''
     local element=''
 
@@ -2079,6 +2069,7 @@ IPKGs.DoUpgrade()
     UpdateEntwarePackageList
     Session.Error.IsSet && return
     DebugFuncEntry
+
     local -i result_code=0
     IPKGs.OpToUpgrade.Init
     IPKGs.OpToDownload.Init
@@ -2124,6 +2115,7 @@ IPKGs.DoInstall()
     UpdateEntwarePackageList
     Session.Error.IsSet && return
     DebugFuncEntry
+
     local -i index=0
     local -i result_code=0
     IPKGs.OpToInstall.Init
@@ -2183,6 +2175,7 @@ IPKGs.DoUninstall()
     QPKGs.IsStopped.Exist Entware && return
     Session.Error.IsSet && return
     DebugFuncEntry
+
     local -i index=0
     local -i result_code=0
 
@@ -2225,6 +2218,7 @@ PIPs.DoInstall()
     ! $OPKG_CMD status python3-pip | $GREP_CMD -q "Status:.*installed" && return
     Session.Error.IsSet && return
     DebugFuncEntry
+
     local exec_cmd=''
     local -i result_code=0
     local -i pass_count=0
@@ -3366,6 +3360,7 @@ QPKGs.Conflicts.Check()
     {
 
     DebugFuncEntry
+
     local package=''
 
     if [[ -n ${BASE_QPKG_CONFLICTS:-} ]]; then
@@ -3386,6 +3381,7 @@ QPKGs.Warnings.Check()
     {
 
     DebugFuncEntry
+
     local package=''
 
     if [[ -n ${BASE_QPKG_WARNINGS:-} ]]; then
@@ -3406,6 +3402,7 @@ QPKGs.Operations.List()
 
     QPKGs.SkProc.IsSet && return
     DebugFuncEntry
+
     local operation=''
     local prefix=''
     DebugInfoMinorSeparator
@@ -3432,6 +3429,7 @@ QPKGs.States.List()
     {
 
     DebugFuncEntry
+
     local state=''
     local prefix=''
 
@@ -3489,8 +3487,8 @@ QPKGs.States.Build()
     # NOTE: these lists cannot be rebuilt unless element removal methods are added
 
     QPKGs.States.Built.IsSet && return
-
     DebugFuncEntry
+
     local -i index=0
     local package=''
     local previous=''
@@ -3571,6 +3569,7 @@ QPKGs.IsSupportBackup.Build()
     # Builds a list of QPKGs that do and don't support 'backup' and 'restore' operations
 
     DebugFuncEntry
+
     local package=''
 
     for package in $(QPKGs.ScAll.Array); do
@@ -3594,6 +3593,7 @@ QPKGs.IsSupportUpdateOnRestart.Build()
     # these packages also do and don't support 'clean' operations
 
     DebugFuncEntry
+
     local package=''
 
     for package in $(QPKGs.ScAll.Array); do
@@ -4342,7 +4342,6 @@ QPKG.DoInstall()
 
     if [[ -z $local_pathfile ]]; then
         MarkOperationAsSkipped show "$PACKAGE_NAME" "$operation" 'no local file found for processing: this error should be reported.'
-        code_pointer=5
         DebugFuncExit 2; return
     fi
 
@@ -4452,7 +4451,6 @@ QPKG.DoReinstall()
 
     if [[ -z $local_pathfile ]]; then
         MarkOperationAsSkipped show "$PACKAGE_NAME" "$operation" 'no local file found for processing: this error should be reported.'
-        code_pointer=6
         DebugFuncExit 2; return
     fi
 
@@ -4538,7 +4536,6 @@ QPKG.DoUpgrade()
 
     if [[ -z $local_pathfile ]]; then
         MarkOperationAsSkipped show "$PACKAGE_NAME" "$operation" 'no local file found for processing: this error should be reported.'
-        code_pointer=7
         DebugFuncExit 2; return
     fi
 
@@ -5595,7 +5592,7 @@ FormatAsThousands()
 FormatAsISOBytes()
     {
 
-    echo "$1" | $AWK_CMD 'BEGIN{ u[0]="B"; u[1]="kB"; u[2]="MB"; u[3]="GB"} { n = $1; i = 0; while(n > 1000) { i+=1; n= int((n/1000)+0.5) } print n u[i] } '
+    $AWK_CMD 'BEGIN{ u[0]="B"; u[1]="kB"; u[2]="MB"; u[3]="GB"} { n = $1; i = 0; while(n > 1000) { i+=1; n= int((n/1000)+0.5) } print n u[i] } ' <<< "$1"
 
     }
 
@@ -5915,7 +5912,7 @@ DebugFuncExit()
         elapsed_time=$(FormatSecsToHoursMinutesSecs "$((diff_milliseconds / 1000))")
     fi
 
-    DebugThis "(<<) ${FUNCNAME[1]}|${1:-0}|${code_pointer:-}|$elapsed_time"
+    DebugThis "(<<) ${FUNCNAME[1]}|${1:-0}|$elapsed_time"
 
     return ${1:-0}
 
