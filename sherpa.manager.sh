@@ -59,7 +59,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220417h
+    local -r SCRIPT_VERSION=220417i
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -313,7 +313,7 @@ Session.Validate()
     DebugHardwareOK model "$(get_display_name)"
     DebugHardwareOK CPU "$(GetCPUInfo)"
     DebugHardwareOK RAM "$(FormatAsThousands "$INSTALLED_RAM_KB")kB"
-    DebugFirmwareOK OS "Q$($GREP_CMD -q zfs /proc/filesystems && echo 'u')TS"
+    DebugFirmwareOK OS "Q$($GREP_CMD -q zfs /proc/filesystems && echo u)TS"
 
     if [[ ${NAS_FIRMWARE_VERSION//.} -ge 400 ]]; then
         DebugFirmwareOK version "$NAS_FIRMWARE_VERSION.$NAS_FIRMWARE_BUILD"
@@ -3887,7 +3887,6 @@ MarkOperationAsDone()
     QPKGs.OpTo"$(Capitalise "$2")".Remove "$1"
     QPKGs.OpOk"$(Capitalise "$2")".Add "$1"
 
-
     return 0
 
     }
@@ -4012,7 +4011,7 @@ GetCPUInfo()
     elif $GREP_CMD -q '^Processor name' /proc/cpuinfo; then
         $GREP_CMD '^Processor name' /proc/cpuinfo | $HEAD_CMD -n1 | $SED_CMD 's|^.*: ||'
     else
-        echo 'unknown'
+        echo unknown
         return 1
     fi
 
@@ -4139,12 +4138,12 @@ GetEntwareType()
     if QPKG.IsInstalled Entware; then
         if [[ -e /opt/etc/passwd ]]; then
             if [[ -L /opt/etc/passwd ]]; then
-                echo 'std'
+                echo std
             else
-                echo 'alt'
+                echo alt
             fi
         else
-            echo 'none'
+            echo none
         fi
     fi
 
@@ -5161,7 +5160,7 @@ QPKG.IsSupportBackup()
             if ${QPKG_SUPPORTS_BACKUP[$index]}; then
                 return 0
             else
-                return 1
+                break
             fi
         fi
     done
@@ -5188,7 +5187,7 @@ QPKG.IsSupportUpdateOnRestart()
             if ${QPKG_RESTART_TO_UPDATE[$index]}; then
                 return 0
             else
-                return 1
+                break
             fi
         fi
     done
