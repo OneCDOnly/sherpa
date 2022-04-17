@@ -106,7 +106,7 @@ done ;}
 for it in "${'$_placeholder_array_'[@]+"${'$_placeholder_array_'[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -118,7 +118,7 @@ done
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 '$_placeholder_size_'=$2
 else
-echo -n $'$_placeholder_size_'
+echo -n "$'$_placeholder_size_'"
 fi ;}
 '$public_function_name'.Init' >> "$OBJECTS_PATHFILE"
 

@@ -17266,7 +17266,7 @@ Args.Unknown.Remove()
 for it in "${_ob_args_unknown_ar_[@]+"${_ob_args_unknown_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -17278,7 +17278,7 @@ Args.Unknown.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_args_unknown_sz_=$2
 else
-echo -n $_ob_args_unknown_sz_
+echo -n "$_ob_args_unknown_sz_"
 fi ;}
 Args.Unknown.Init
 QPKGs.OpToBackup.Add()
@@ -17310,7 +17310,7 @@ QPKGs.OpToBackup.Remove()
 for it in "${_ob_qpkgs_optobackup_ar_[@]+"${_ob_qpkgs_optobackup_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -17322,7 +17322,7 @@ QPKGs.OpToBackup.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_optobackup_sz_=$2
 else
-echo -n $_ob_qpkgs_optobackup_sz_
+echo -n "$_ob_qpkgs_optobackup_sz_"
 fi ;}
 QPKGs.OpToBackup.Init
 QPKGs.OpOkBackup.Add()
@@ -17354,7 +17354,7 @@ QPKGs.OpOkBackup.Remove()
 for it in "${_ob_qpkgs_opokbackup_ar_[@]+"${_ob_qpkgs_opokbackup_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -17366,7 +17366,7 @@ QPKGs.OpOkBackup.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_opokbackup_sz_=$2
 else
-echo -n $_ob_qpkgs_opokbackup_sz_
+echo -n "$_ob_qpkgs_opokbackup_sz_"
 fi ;}
 QPKGs.OpOkBackup.Init
 QPKGs.OpErBackup.Add()
@@ -17398,7 +17398,7 @@ QPKGs.OpErBackup.Remove()
 for it in "${_ob_qpkgs_operbackup_ar_[@]+"${_ob_qpkgs_operbackup_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -17410,7 +17410,7 @@ QPKGs.OpErBackup.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_operbackup_sz_=$2
 else
-echo -n $_ob_qpkgs_operbackup_sz_
+echo -n "$_ob_qpkgs_operbackup_sz_"
 fi ;}
 QPKGs.OpErBackup.Init
 QPKGs.OpSkBackup.Add()
@@ -17442,7 +17442,7 @@ QPKGs.OpSkBackup.Remove()
 for it in "${_ob_qpkgs_opskbackup_ar_[@]+"${_ob_qpkgs_opskbackup_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -17454,7 +17454,7 @@ QPKGs.OpSkBackup.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_opskbackup_sz_=$2
 else
-echo -n $_ob_qpkgs_opskbackup_sz_
+echo -n "$_ob_qpkgs_opskbackup_sz_"
 fi ;}
 QPKGs.OpSkBackup.Init
 QPKGs.OpToClean.Add()
@@ -17486,7 +17486,7 @@ QPKGs.OpToClean.Remove()
 for it in "${_ob_qpkgs_optoclean_ar_[@]+"${_ob_qpkgs_optoclean_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -17498,7 +17498,7 @@ QPKGs.OpToClean.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_optoclean_sz_=$2
 else
-echo -n $_ob_qpkgs_optoclean_sz_
+echo -n "$_ob_qpkgs_optoclean_sz_"
 fi ;}
 QPKGs.OpToClean.Init
 QPKGs.OpOkClean.Add()
@@ -17530,7 +17530,7 @@ QPKGs.OpOkClean.Remove()
 for it in "${_ob_qpkgs_opokclean_ar_[@]+"${_ob_qpkgs_opokclean_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -17542,7 +17542,7 @@ QPKGs.OpOkClean.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_opokclean_sz_=$2
 else
-echo -n $_ob_qpkgs_opokclean_sz_
+echo -n "$_ob_qpkgs_opokclean_sz_"
 fi ;}
 QPKGs.OpOkClean.Init
 QPKGs.OpErClean.Add()
@@ -17574,7 +17574,7 @@ QPKGs.OpErClean.Remove()
 for it in "${_ob_qpkgs_operclean_ar_[@]+"${_ob_qpkgs_operclean_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -17586,7 +17586,7 @@ QPKGs.OpErClean.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_operclean_sz_=$2
 else
-echo -n $_ob_qpkgs_operclean_sz_
+echo -n "$_ob_qpkgs_operclean_sz_"
 fi ;}
 QPKGs.OpErClean.Init
 QPKGs.OpSkClean.Add()
@@ -17618,7 +17618,7 @@ QPKGs.OpSkClean.Remove()
 for it in "${_ob_qpkgs_opskclean_ar_[@]+"${_ob_qpkgs_opskclean_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -17630,7 +17630,7 @@ QPKGs.OpSkClean.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_opskclean_sz_=$2
 else
-echo -n $_ob_qpkgs_opskclean_sz_
+echo -n "$_ob_qpkgs_opskclean_sz_"
 fi ;}
 QPKGs.OpSkClean.Init
 QPKGs.OpToDisable.Add()
@@ -17662,7 +17662,7 @@ QPKGs.OpToDisable.Remove()
 for it in "${_ob_qpkgs_optodisable_ar_[@]+"${_ob_qpkgs_optodisable_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -17674,7 +17674,7 @@ QPKGs.OpToDisable.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_optodisable_sz_=$2
 else
-echo -n $_ob_qpkgs_optodisable_sz_
+echo -n "$_ob_qpkgs_optodisable_sz_"
 fi ;}
 QPKGs.OpToDisable.Init
 QPKGs.OpOkDisable.Add()
@@ -17706,7 +17706,7 @@ QPKGs.OpOkDisable.Remove()
 for it in "${_ob_qpkgs_opokdisable_ar_[@]+"${_ob_qpkgs_opokdisable_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -17718,7 +17718,7 @@ QPKGs.OpOkDisable.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_opokdisable_sz_=$2
 else
-echo -n $_ob_qpkgs_opokdisable_sz_
+echo -n "$_ob_qpkgs_opokdisable_sz_"
 fi ;}
 QPKGs.OpOkDisable.Init
 QPKGs.OpErDisable.Add()
@@ -17750,7 +17750,7 @@ QPKGs.OpErDisable.Remove()
 for it in "${_ob_qpkgs_operdisable_ar_[@]+"${_ob_qpkgs_operdisable_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -17762,7 +17762,7 @@ QPKGs.OpErDisable.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_operdisable_sz_=$2
 else
-echo -n $_ob_qpkgs_operdisable_sz_
+echo -n "$_ob_qpkgs_operdisable_sz_"
 fi ;}
 QPKGs.OpErDisable.Init
 QPKGs.OpSkDisable.Add()
@@ -17794,7 +17794,7 @@ QPKGs.OpSkDisable.Remove()
 for it in "${_ob_qpkgs_opskdisable_ar_[@]+"${_ob_qpkgs_opskdisable_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -17806,7 +17806,7 @@ QPKGs.OpSkDisable.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_opskdisable_sz_=$2
 else
-echo -n $_ob_qpkgs_opskdisable_sz_
+echo -n "$_ob_qpkgs_opskdisable_sz_"
 fi ;}
 QPKGs.OpSkDisable.Init
 QPKGs.OpToDownload.Add()
@@ -17838,7 +17838,7 @@ QPKGs.OpToDownload.Remove()
 for it in "${_ob_qpkgs_optodownload_ar_[@]+"${_ob_qpkgs_optodownload_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -17850,7 +17850,7 @@ QPKGs.OpToDownload.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_optodownload_sz_=$2
 else
-echo -n $_ob_qpkgs_optodownload_sz_
+echo -n "$_ob_qpkgs_optodownload_sz_"
 fi ;}
 QPKGs.OpToDownload.Init
 QPKGs.OpOkDownload.Add()
@@ -17882,7 +17882,7 @@ QPKGs.OpOkDownload.Remove()
 for it in "${_ob_qpkgs_opokdownload_ar_[@]+"${_ob_qpkgs_opokdownload_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -17894,7 +17894,7 @@ QPKGs.OpOkDownload.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_opokdownload_sz_=$2
 else
-echo -n $_ob_qpkgs_opokdownload_sz_
+echo -n "$_ob_qpkgs_opokdownload_sz_"
 fi ;}
 QPKGs.OpOkDownload.Init
 QPKGs.OpErDownload.Add()
@@ -17926,7 +17926,7 @@ QPKGs.OpErDownload.Remove()
 for it in "${_ob_qpkgs_operdownload_ar_[@]+"${_ob_qpkgs_operdownload_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -17938,7 +17938,7 @@ QPKGs.OpErDownload.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_operdownload_sz_=$2
 else
-echo -n $_ob_qpkgs_operdownload_sz_
+echo -n "$_ob_qpkgs_operdownload_sz_"
 fi ;}
 QPKGs.OpErDownload.Init
 QPKGs.OpSkDownload.Add()
@@ -17970,7 +17970,7 @@ QPKGs.OpSkDownload.Remove()
 for it in "${_ob_qpkgs_opskdownload_ar_[@]+"${_ob_qpkgs_opskdownload_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -17982,7 +17982,7 @@ QPKGs.OpSkDownload.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_opskdownload_sz_=$2
 else
-echo -n $_ob_qpkgs_opskdownload_sz_
+echo -n "$_ob_qpkgs_opskdownload_sz_"
 fi ;}
 QPKGs.OpSkDownload.Init
 QPKGs.OpToEnable.Add()
@@ -18014,7 +18014,7 @@ QPKGs.OpToEnable.Remove()
 for it in "${_ob_qpkgs_optoenable_ar_[@]+"${_ob_qpkgs_optoenable_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -18026,7 +18026,7 @@ QPKGs.OpToEnable.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_optoenable_sz_=$2
 else
-echo -n $_ob_qpkgs_optoenable_sz_
+echo -n "$_ob_qpkgs_optoenable_sz_"
 fi ;}
 QPKGs.OpToEnable.Init
 QPKGs.OpOkEnable.Add()
@@ -18058,7 +18058,7 @@ QPKGs.OpOkEnable.Remove()
 for it in "${_ob_qpkgs_opokenable_ar_[@]+"${_ob_qpkgs_opokenable_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -18070,7 +18070,7 @@ QPKGs.OpOkEnable.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_opokenable_sz_=$2
 else
-echo -n $_ob_qpkgs_opokenable_sz_
+echo -n "$_ob_qpkgs_opokenable_sz_"
 fi ;}
 QPKGs.OpOkEnable.Init
 QPKGs.OpErEnable.Add()
@@ -18102,7 +18102,7 @@ QPKGs.OpErEnable.Remove()
 for it in "${_ob_qpkgs_operenable_ar_[@]+"${_ob_qpkgs_operenable_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -18114,7 +18114,7 @@ QPKGs.OpErEnable.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_operenable_sz_=$2
 else
-echo -n $_ob_qpkgs_operenable_sz_
+echo -n "$_ob_qpkgs_operenable_sz_"
 fi ;}
 QPKGs.OpErEnable.Init
 QPKGs.OpSkEnable.Add()
@@ -18146,7 +18146,7 @@ QPKGs.OpSkEnable.Remove()
 for it in "${_ob_qpkgs_opskenable_ar_[@]+"${_ob_qpkgs_opskenable_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -18158,7 +18158,7 @@ QPKGs.OpSkEnable.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_opskenable_sz_=$2
 else
-echo -n $_ob_qpkgs_opskenable_sz_
+echo -n "$_ob_qpkgs_opskenable_sz_"
 fi ;}
 QPKGs.OpSkEnable.Init
 QPKGs.OpToInstall.Add()
@@ -18190,7 +18190,7 @@ QPKGs.OpToInstall.Remove()
 for it in "${_ob_qpkgs_optoinstall_ar_[@]+"${_ob_qpkgs_optoinstall_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -18202,7 +18202,7 @@ QPKGs.OpToInstall.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_optoinstall_sz_=$2
 else
-echo -n $_ob_qpkgs_optoinstall_sz_
+echo -n "$_ob_qpkgs_optoinstall_sz_"
 fi ;}
 QPKGs.OpToInstall.Init
 QPKGs.OpOkInstall.Add()
@@ -18234,7 +18234,7 @@ QPKGs.OpOkInstall.Remove()
 for it in "${_ob_qpkgs_opokinstall_ar_[@]+"${_ob_qpkgs_opokinstall_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -18246,7 +18246,7 @@ QPKGs.OpOkInstall.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_opokinstall_sz_=$2
 else
-echo -n $_ob_qpkgs_opokinstall_sz_
+echo -n "$_ob_qpkgs_opokinstall_sz_"
 fi ;}
 QPKGs.OpOkInstall.Init
 QPKGs.OpErInstall.Add()
@@ -18278,7 +18278,7 @@ QPKGs.OpErInstall.Remove()
 for it in "${_ob_qpkgs_operinstall_ar_[@]+"${_ob_qpkgs_operinstall_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -18290,7 +18290,7 @@ QPKGs.OpErInstall.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_operinstall_sz_=$2
 else
-echo -n $_ob_qpkgs_operinstall_sz_
+echo -n "$_ob_qpkgs_operinstall_sz_"
 fi ;}
 QPKGs.OpErInstall.Init
 QPKGs.OpSkInstall.Add()
@@ -18322,7 +18322,7 @@ QPKGs.OpSkInstall.Remove()
 for it in "${_ob_qpkgs_opskinstall_ar_[@]+"${_ob_qpkgs_opskinstall_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -18334,7 +18334,7 @@ QPKGs.OpSkInstall.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_opskinstall_sz_=$2
 else
-echo -n $_ob_qpkgs_opskinstall_sz_
+echo -n "$_ob_qpkgs_opskinstall_sz_"
 fi ;}
 QPKGs.OpSkInstall.Init
 QPKGs.OpToRebuild.Add()
@@ -18366,7 +18366,7 @@ QPKGs.OpToRebuild.Remove()
 for it in "${_ob_qpkgs_optorebuild_ar_[@]+"${_ob_qpkgs_optorebuild_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -18378,7 +18378,7 @@ QPKGs.OpToRebuild.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_optorebuild_sz_=$2
 else
-echo -n $_ob_qpkgs_optorebuild_sz_
+echo -n "$_ob_qpkgs_optorebuild_sz_"
 fi ;}
 QPKGs.OpToRebuild.Init
 QPKGs.OpOkRebuild.Add()
@@ -18410,7 +18410,7 @@ QPKGs.OpOkRebuild.Remove()
 for it in "${_ob_qpkgs_opokrebuild_ar_[@]+"${_ob_qpkgs_opokrebuild_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -18422,7 +18422,7 @@ QPKGs.OpOkRebuild.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_opokrebuild_sz_=$2
 else
-echo -n $_ob_qpkgs_opokrebuild_sz_
+echo -n "$_ob_qpkgs_opokrebuild_sz_"
 fi ;}
 QPKGs.OpOkRebuild.Init
 QPKGs.OpErRebuild.Add()
@@ -18454,7 +18454,7 @@ QPKGs.OpErRebuild.Remove()
 for it in "${_ob_qpkgs_operrebuild_ar_[@]+"${_ob_qpkgs_operrebuild_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -18466,7 +18466,7 @@ QPKGs.OpErRebuild.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_operrebuild_sz_=$2
 else
-echo -n $_ob_qpkgs_operrebuild_sz_
+echo -n "$_ob_qpkgs_operrebuild_sz_"
 fi ;}
 QPKGs.OpErRebuild.Init
 QPKGs.OpSkRebuild.Add()
@@ -18498,7 +18498,7 @@ QPKGs.OpSkRebuild.Remove()
 for it in "${_ob_qpkgs_opskrebuild_ar_[@]+"${_ob_qpkgs_opskrebuild_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -18510,7 +18510,7 @@ QPKGs.OpSkRebuild.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_opskrebuild_sz_=$2
 else
-echo -n $_ob_qpkgs_opskrebuild_sz_
+echo -n "$_ob_qpkgs_opskrebuild_sz_"
 fi ;}
 QPKGs.OpSkRebuild.Init
 QPKGs.OpToReinstall.Add()
@@ -18542,7 +18542,7 @@ QPKGs.OpToReinstall.Remove()
 for it in "${_ob_qpkgs_optoreinstall_ar_[@]+"${_ob_qpkgs_optoreinstall_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -18554,7 +18554,7 @@ QPKGs.OpToReinstall.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_optoreinstall_sz_=$2
 else
-echo -n $_ob_qpkgs_optoreinstall_sz_
+echo -n "$_ob_qpkgs_optoreinstall_sz_"
 fi ;}
 QPKGs.OpToReinstall.Init
 QPKGs.OpOkReinstall.Add()
@@ -18586,7 +18586,7 @@ QPKGs.OpOkReinstall.Remove()
 for it in "${_ob_qpkgs_opokreinstall_ar_[@]+"${_ob_qpkgs_opokreinstall_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -18598,7 +18598,7 @@ QPKGs.OpOkReinstall.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_opokreinstall_sz_=$2
 else
-echo -n $_ob_qpkgs_opokreinstall_sz_
+echo -n "$_ob_qpkgs_opokreinstall_sz_"
 fi ;}
 QPKGs.OpOkReinstall.Init
 QPKGs.OpErReinstall.Add()
@@ -18630,7 +18630,7 @@ QPKGs.OpErReinstall.Remove()
 for it in "${_ob_qpkgs_operreinstall_ar_[@]+"${_ob_qpkgs_operreinstall_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -18642,7 +18642,7 @@ QPKGs.OpErReinstall.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_operreinstall_sz_=$2
 else
-echo -n $_ob_qpkgs_operreinstall_sz_
+echo -n "$_ob_qpkgs_operreinstall_sz_"
 fi ;}
 QPKGs.OpErReinstall.Init
 QPKGs.OpSkReinstall.Add()
@@ -18674,7 +18674,7 @@ QPKGs.OpSkReinstall.Remove()
 for it in "${_ob_qpkgs_opskreinstall_ar_[@]+"${_ob_qpkgs_opskreinstall_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -18686,7 +18686,7 @@ QPKGs.OpSkReinstall.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_opskreinstall_sz_=$2
 else
-echo -n $_ob_qpkgs_opskreinstall_sz_
+echo -n "$_ob_qpkgs_opskreinstall_sz_"
 fi ;}
 QPKGs.OpSkReinstall.Init
 QPKGs.OpToRestart.Add()
@@ -18718,7 +18718,7 @@ QPKGs.OpToRestart.Remove()
 for it in "${_ob_qpkgs_optorestart_ar_[@]+"${_ob_qpkgs_optorestart_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -18730,7 +18730,7 @@ QPKGs.OpToRestart.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_optorestart_sz_=$2
 else
-echo -n $_ob_qpkgs_optorestart_sz_
+echo -n "$_ob_qpkgs_optorestart_sz_"
 fi ;}
 QPKGs.OpToRestart.Init
 QPKGs.OpOkRestart.Add()
@@ -18762,7 +18762,7 @@ QPKGs.OpOkRestart.Remove()
 for it in "${_ob_qpkgs_opokrestart_ar_[@]+"${_ob_qpkgs_opokrestart_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -18774,7 +18774,7 @@ QPKGs.OpOkRestart.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_opokrestart_sz_=$2
 else
-echo -n $_ob_qpkgs_opokrestart_sz_
+echo -n "$_ob_qpkgs_opokrestart_sz_"
 fi ;}
 QPKGs.OpOkRestart.Init
 QPKGs.OpErRestart.Add()
@@ -18806,7 +18806,7 @@ QPKGs.OpErRestart.Remove()
 for it in "${_ob_qpkgs_operrestart_ar_[@]+"${_ob_qpkgs_operrestart_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -18818,7 +18818,7 @@ QPKGs.OpErRestart.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_operrestart_sz_=$2
 else
-echo -n $_ob_qpkgs_operrestart_sz_
+echo -n "$_ob_qpkgs_operrestart_sz_"
 fi ;}
 QPKGs.OpErRestart.Init
 QPKGs.OpSkRestart.Add()
@@ -18850,7 +18850,7 @@ QPKGs.OpSkRestart.Remove()
 for it in "${_ob_qpkgs_opskrestart_ar_[@]+"${_ob_qpkgs_opskrestart_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -18862,7 +18862,7 @@ QPKGs.OpSkRestart.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_opskrestart_sz_=$2
 else
-echo -n $_ob_qpkgs_opskrestart_sz_
+echo -n "$_ob_qpkgs_opskrestart_sz_"
 fi ;}
 QPKGs.OpSkRestart.Init
 QPKGs.OpToRestore.Add()
@@ -18894,7 +18894,7 @@ QPKGs.OpToRestore.Remove()
 for it in "${_ob_qpkgs_optorestore_ar_[@]+"${_ob_qpkgs_optorestore_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -18906,7 +18906,7 @@ QPKGs.OpToRestore.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_optorestore_sz_=$2
 else
-echo -n $_ob_qpkgs_optorestore_sz_
+echo -n "$_ob_qpkgs_optorestore_sz_"
 fi ;}
 QPKGs.OpToRestore.Init
 QPKGs.OpOkRestore.Add()
@@ -18938,7 +18938,7 @@ QPKGs.OpOkRestore.Remove()
 for it in "${_ob_qpkgs_opokrestore_ar_[@]+"${_ob_qpkgs_opokrestore_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -18950,7 +18950,7 @@ QPKGs.OpOkRestore.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_opokrestore_sz_=$2
 else
-echo -n $_ob_qpkgs_opokrestore_sz_
+echo -n "$_ob_qpkgs_opokrestore_sz_"
 fi ;}
 QPKGs.OpOkRestore.Init
 QPKGs.OpErRestore.Add()
@@ -18982,7 +18982,7 @@ QPKGs.OpErRestore.Remove()
 for it in "${_ob_qpkgs_operrestore_ar_[@]+"${_ob_qpkgs_operrestore_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -18994,7 +18994,7 @@ QPKGs.OpErRestore.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_operrestore_sz_=$2
 else
-echo -n $_ob_qpkgs_operrestore_sz_
+echo -n "$_ob_qpkgs_operrestore_sz_"
 fi ;}
 QPKGs.OpErRestore.Init
 QPKGs.OpSkRestore.Add()
@@ -19026,7 +19026,7 @@ QPKGs.OpSkRestore.Remove()
 for it in "${_ob_qpkgs_opskrestore_ar_[@]+"${_ob_qpkgs_opskrestore_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -19038,7 +19038,7 @@ QPKGs.OpSkRestore.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_opskrestore_sz_=$2
 else
-echo -n $_ob_qpkgs_opskrestore_sz_
+echo -n "$_ob_qpkgs_opskrestore_sz_"
 fi ;}
 QPKGs.OpSkRestore.Init
 QPKGs.OpToStart.Add()
@@ -19070,7 +19070,7 @@ QPKGs.OpToStart.Remove()
 for it in "${_ob_qpkgs_optostart_ar_[@]+"${_ob_qpkgs_optostart_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -19082,7 +19082,7 @@ QPKGs.OpToStart.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_optostart_sz_=$2
 else
-echo -n $_ob_qpkgs_optostart_sz_
+echo -n "$_ob_qpkgs_optostart_sz_"
 fi ;}
 QPKGs.OpToStart.Init
 QPKGs.OpOkStart.Add()
@@ -19114,7 +19114,7 @@ QPKGs.OpOkStart.Remove()
 for it in "${_ob_qpkgs_opokstart_ar_[@]+"${_ob_qpkgs_opokstart_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -19126,7 +19126,7 @@ QPKGs.OpOkStart.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_opokstart_sz_=$2
 else
-echo -n $_ob_qpkgs_opokstart_sz_
+echo -n "$_ob_qpkgs_opokstart_sz_"
 fi ;}
 QPKGs.OpOkStart.Init
 QPKGs.OpErStart.Add()
@@ -19158,7 +19158,7 @@ QPKGs.OpErStart.Remove()
 for it in "${_ob_qpkgs_operstart_ar_[@]+"${_ob_qpkgs_operstart_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -19170,7 +19170,7 @@ QPKGs.OpErStart.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_operstart_sz_=$2
 else
-echo -n $_ob_qpkgs_operstart_sz_
+echo -n "$_ob_qpkgs_operstart_sz_"
 fi ;}
 QPKGs.OpErStart.Init
 QPKGs.OpSkStart.Add()
@@ -19202,7 +19202,7 @@ QPKGs.OpSkStart.Remove()
 for it in "${_ob_qpkgs_opskstart_ar_[@]+"${_ob_qpkgs_opskstart_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -19214,7 +19214,7 @@ QPKGs.OpSkStart.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_opskstart_sz_=$2
 else
-echo -n $_ob_qpkgs_opskstart_sz_
+echo -n "$_ob_qpkgs_opskstart_sz_"
 fi ;}
 QPKGs.OpSkStart.Init
 QPKGs.OpToStop.Add()
@@ -19246,7 +19246,7 @@ QPKGs.OpToStop.Remove()
 for it in "${_ob_qpkgs_optostop_ar_[@]+"${_ob_qpkgs_optostop_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -19258,7 +19258,7 @@ QPKGs.OpToStop.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_optostop_sz_=$2
 else
-echo -n $_ob_qpkgs_optostop_sz_
+echo -n "$_ob_qpkgs_optostop_sz_"
 fi ;}
 QPKGs.OpToStop.Init
 QPKGs.OpOkStop.Add()
@@ -19290,7 +19290,7 @@ QPKGs.OpOkStop.Remove()
 for it in "${_ob_qpkgs_opokstop_ar_[@]+"${_ob_qpkgs_opokstop_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -19302,7 +19302,7 @@ QPKGs.OpOkStop.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_opokstop_sz_=$2
 else
-echo -n $_ob_qpkgs_opokstop_sz_
+echo -n "$_ob_qpkgs_opokstop_sz_"
 fi ;}
 QPKGs.OpOkStop.Init
 QPKGs.OpErStop.Add()
@@ -19334,7 +19334,7 @@ QPKGs.OpErStop.Remove()
 for it in "${_ob_qpkgs_operstop_ar_[@]+"${_ob_qpkgs_operstop_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -19346,7 +19346,7 @@ QPKGs.OpErStop.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_operstop_sz_=$2
 else
-echo -n $_ob_qpkgs_operstop_sz_
+echo -n "$_ob_qpkgs_operstop_sz_"
 fi ;}
 QPKGs.OpErStop.Init
 QPKGs.OpSkStop.Add()
@@ -19378,7 +19378,7 @@ QPKGs.OpSkStop.Remove()
 for it in "${_ob_qpkgs_opskstop_ar_[@]+"${_ob_qpkgs_opskstop_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -19390,7 +19390,7 @@ QPKGs.OpSkStop.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_opskstop_sz_=$2
 else
-echo -n $_ob_qpkgs_opskstop_sz_
+echo -n "$_ob_qpkgs_opskstop_sz_"
 fi ;}
 QPKGs.OpSkStop.Init
 QPKGs.OpToUninstall.Add()
@@ -19422,7 +19422,7 @@ QPKGs.OpToUninstall.Remove()
 for it in "${_ob_qpkgs_optouninstall_ar_[@]+"${_ob_qpkgs_optouninstall_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -19434,7 +19434,7 @@ QPKGs.OpToUninstall.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_optouninstall_sz_=$2
 else
-echo -n $_ob_qpkgs_optouninstall_sz_
+echo -n "$_ob_qpkgs_optouninstall_sz_"
 fi ;}
 QPKGs.OpToUninstall.Init
 QPKGs.OpOkUninstall.Add()
@@ -19466,7 +19466,7 @@ QPKGs.OpOkUninstall.Remove()
 for it in "${_ob_qpkgs_opokuninstall_ar_[@]+"${_ob_qpkgs_opokuninstall_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -19478,7 +19478,7 @@ QPKGs.OpOkUninstall.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_opokuninstall_sz_=$2
 else
-echo -n $_ob_qpkgs_opokuninstall_sz_
+echo -n "$_ob_qpkgs_opokuninstall_sz_"
 fi ;}
 QPKGs.OpOkUninstall.Init
 QPKGs.OpErUninstall.Add()
@@ -19510,7 +19510,7 @@ QPKGs.OpErUninstall.Remove()
 for it in "${_ob_qpkgs_operuninstall_ar_[@]+"${_ob_qpkgs_operuninstall_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -19522,7 +19522,7 @@ QPKGs.OpErUninstall.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_operuninstall_sz_=$2
 else
-echo -n $_ob_qpkgs_operuninstall_sz_
+echo -n "$_ob_qpkgs_operuninstall_sz_"
 fi ;}
 QPKGs.OpErUninstall.Init
 QPKGs.OpSkUninstall.Add()
@@ -19554,7 +19554,7 @@ QPKGs.OpSkUninstall.Remove()
 for it in "${_ob_qpkgs_opskuninstall_ar_[@]+"${_ob_qpkgs_opskuninstall_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -19566,7 +19566,7 @@ QPKGs.OpSkUninstall.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_opskuninstall_sz_=$2
 else
-echo -n $_ob_qpkgs_opskuninstall_sz_
+echo -n "$_ob_qpkgs_opskuninstall_sz_"
 fi ;}
 QPKGs.OpSkUninstall.Init
 QPKGs.OpToUpgrade.Add()
@@ -19598,7 +19598,7 @@ QPKGs.OpToUpgrade.Remove()
 for it in "${_ob_qpkgs_optoupgrade_ar_[@]+"${_ob_qpkgs_optoupgrade_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -19610,7 +19610,7 @@ QPKGs.OpToUpgrade.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_optoupgrade_sz_=$2
 else
-echo -n $_ob_qpkgs_optoupgrade_sz_
+echo -n "$_ob_qpkgs_optoupgrade_sz_"
 fi ;}
 QPKGs.OpToUpgrade.Init
 QPKGs.OpOkUpgrade.Add()
@@ -19642,7 +19642,7 @@ QPKGs.OpOkUpgrade.Remove()
 for it in "${_ob_qpkgs_opokupgrade_ar_[@]+"${_ob_qpkgs_opokupgrade_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -19654,7 +19654,7 @@ QPKGs.OpOkUpgrade.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_opokupgrade_sz_=$2
 else
-echo -n $_ob_qpkgs_opokupgrade_sz_
+echo -n "$_ob_qpkgs_opokupgrade_sz_"
 fi ;}
 QPKGs.OpOkUpgrade.Init
 QPKGs.OpErUpgrade.Add()
@@ -19686,7 +19686,7 @@ QPKGs.OpErUpgrade.Remove()
 for it in "${_ob_qpkgs_operupgrade_ar_[@]+"${_ob_qpkgs_operupgrade_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -19698,7 +19698,7 @@ QPKGs.OpErUpgrade.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_operupgrade_sz_=$2
 else
-echo -n $_ob_qpkgs_operupgrade_sz_
+echo -n "$_ob_qpkgs_operupgrade_sz_"
 fi ;}
 QPKGs.OpErUpgrade.Init
 QPKGs.OpSkUpgrade.Add()
@@ -19730,7 +19730,7 @@ QPKGs.OpSkUpgrade.Remove()
 for it in "${_ob_qpkgs_opskupgrade_ar_[@]+"${_ob_qpkgs_opskupgrade_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -19742,7 +19742,7 @@ QPKGs.OpSkUpgrade.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_opskupgrade_sz_=$2
 else
-echo -n $_ob_qpkgs_opskupgrade_sz_
+echo -n "$_ob_qpkgs_opskupgrade_sz_"
 fi ;}
 QPKGs.OpSkUpgrade.Init
 IPKGs.OpToDownload.Add()
@@ -19774,7 +19774,7 @@ IPKGs.OpToDownload.Remove()
 for it in "${_ob_ipkgs_optodownload_ar_[@]+"${_ob_ipkgs_optodownload_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -19786,7 +19786,7 @@ IPKGs.OpToDownload.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_ipkgs_optodownload_sz_=$2
 else
-echo -n $_ob_ipkgs_optodownload_sz_
+echo -n "$_ob_ipkgs_optodownload_sz_"
 fi ;}
 IPKGs.OpToDownload.Init
 PIPs.OpToDownload.Add()
@@ -19818,7 +19818,7 @@ PIPs.OpToDownload.Remove()
 for it in "${_ob_pips_optodownload_ar_[@]+"${_ob_pips_optodownload_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -19830,7 +19830,7 @@ PIPs.OpToDownload.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_pips_optodownload_sz_=$2
 else
-echo -n $_ob_pips_optodownload_sz_
+echo -n "$_ob_pips_optodownload_sz_"
 fi ;}
 PIPs.OpToDownload.Init
 IPKGs.OpToInstall.Add()
@@ -19862,7 +19862,7 @@ IPKGs.OpToInstall.Remove()
 for it in "${_ob_ipkgs_optoinstall_ar_[@]+"${_ob_ipkgs_optoinstall_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -19874,7 +19874,7 @@ IPKGs.OpToInstall.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_ipkgs_optoinstall_sz_=$2
 else
-echo -n $_ob_ipkgs_optoinstall_sz_
+echo -n "$_ob_ipkgs_optoinstall_sz_"
 fi ;}
 IPKGs.OpToInstall.Init
 PIPs.OpToInstall.Add()
@@ -19906,7 +19906,7 @@ PIPs.OpToInstall.Remove()
 for it in "${_ob_pips_optoinstall_ar_[@]+"${_ob_pips_optoinstall_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -19918,7 +19918,7 @@ PIPs.OpToInstall.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_pips_optoinstall_sz_=$2
 else
-echo -n $_ob_pips_optoinstall_sz_
+echo -n "$_ob_pips_optoinstall_sz_"
 fi ;}
 PIPs.OpToInstall.Init
 IPKGs.OpToUninstall.Add()
@@ -19950,7 +19950,7 @@ IPKGs.OpToUninstall.Remove()
 for it in "${_ob_ipkgs_optouninstall_ar_[@]+"${_ob_ipkgs_optouninstall_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -19962,7 +19962,7 @@ IPKGs.OpToUninstall.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_ipkgs_optouninstall_sz_=$2
 else
-echo -n $_ob_ipkgs_optouninstall_sz_
+echo -n "$_ob_ipkgs_optouninstall_sz_"
 fi ;}
 IPKGs.OpToUninstall.Init
 PIPs.OpToUninstall.Add()
@@ -19994,7 +19994,7 @@ PIPs.OpToUninstall.Remove()
 for it in "${_ob_pips_optouninstall_ar_[@]+"${_ob_pips_optouninstall_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -20006,7 +20006,7 @@ PIPs.OpToUninstall.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_pips_optouninstall_sz_=$2
 else
-echo -n $_ob_pips_optouninstall_sz_
+echo -n "$_ob_pips_optouninstall_sz_"
 fi ;}
 PIPs.OpToUninstall.Init
 IPKGs.OpToUpgrade.Add()
@@ -20038,7 +20038,7 @@ IPKGs.OpToUpgrade.Remove()
 for it in "${_ob_ipkgs_optoupgrade_ar_[@]+"${_ob_ipkgs_optoupgrade_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -20050,7 +20050,7 @@ IPKGs.OpToUpgrade.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_ipkgs_optoupgrade_sz_=$2
 else
-echo -n $_ob_ipkgs_optoupgrade_sz_
+echo -n "$_ob_ipkgs_optoupgrade_sz_"
 fi ;}
 IPKGs.OpToUpgrade.Init
 PIPs.OpToUpgrade.Add()
@@ -20082,7 +20082,7 @@ PIPs.OpToUpgrade.Remove()
 for it in "${_ob_pips_optoupgrade_ar_[@]+"${_ob_pips_optoupgrade_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -20094,7 +20094,7 @@ PIPs.OpToUpgrade.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_pips_optoupgrade_sz_=$2
 else
-echo -n $_ob_pips_optoupgrade_sz_
+echo -n "$_ob_pips_optoupgrade_sz_"
 fi ;}
 PIPs.OpToUpgrade.Init
 QPKGs.ScAll.Add()
@@ -20126,7 +20126,7 @@ QPKGs.ScAll.Remove()
 for it in "${_ob_qpkgs_scall_ar_[@]+"${_ob_qpkgs_scall_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -20138,7 +20138,7 @@ QPKGs.ScAll.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_scall_sz_=$2
 else
-echo -n $_ob_qpkgs_scall_sz_
+echo -n "$_ob_qpkgs_scall_sz_"
 fi ;}
 QPKGs.ScAll.Init
 QPKGs.ScNtAll.Add()
@@ -20170,7 +20170,7 @@ QPKGs.ScNtAll.Remove()
 for it in "${_ob_qpkgs_scntall_ar_[@]+"${_ob_qpkgs_scntall_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -20182,7 +20182,7 @@ QPKGs.ScNtAll.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_scntall_sz_=$2
 else
-echo -n $_ob_qpkgs_scntall_sz_
+echo -n "$_ob_qpkgs_scntall_sz_"
 fi ;}
 QPKGs.ScNtAll.Init
 QPKGs.ScDependent.Add()
@@ -20214,7 +20214,7 @@ QPKGs.ScDependent.Remove()
 for it in "${_ob_qpkgs_scdependent_ar_[@]+"${_ob_qpkgs_scdependent_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -20226,7 +20226,7 @@ QPKGs.ScDependent.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_scdependent_sz_=$2
 else
-echo -n $_ob_qpkgs_scdependent_sz_
+echo -n "$_ob_qpkgs_scdependent_sz_"
 fi ;}
 QPKGs.ScDependent.Init
 QPKGs.ScNtDependent.Add()
@@ -20258,7 +20258,7 @@ QPKGs.ScNtDependent.Remove()
 for it in "${_ob_qpkgs_scntdependent_ar_[@]+"${_ob_qpkgs_scntdependent_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -20270,7 +20270,7 @@ QPKGs.ScNtDependent.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_scntdependent_sz_=$2
 else
-echo -n $_ob_qpkgs_scntdependent_sz_
+echo -n "$_ob_qpkgs_scntdependent_sz_"
 fi ;}
 QPKGs.ScNtDependent.Init
 QPKGs.ScHasDependents.Add()
@@ -20302,7 +20302,7 @@ QPKGs.ScHasDependents.Remove()
 for it in "${_ob_qpkgs_schasdependents_ar_[@]+"${_ob_qpkgs_schasdependents_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -20314,7 +20314,7 @@ QPKGs.ScHasDependents.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_schasdependents_sz_=$2
 else
-echo -n $_ob_qpkgs_schasdependents_sz_
+echo -n "$_ob_qpkgs_schasdependents_sz_"
 fi ;}
 QPKGs.ScHasDependents.Init
 QPKGs.ScNtHasDependents.Add()
@@ -20346,7 +20346,7 @@ QPKGs.ScNtHasDependents.Remove()
 for it in "${_ob_qpkgs_scnthasdependents_ar_[@]+"${_ob_qpkgs_scnthasdependents_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -20358,7 +20358,7 @@ QPKGs.ScNtHasDependents.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_scnthasdependents_sz_=$2
 else
-echo -n $_ob_qpkgs_scnthasdependents_sz_
+echo -n "$_ob_qpkgs_scnthasdependents_sz_"
 fi ;}
 QPKGs.ScNtHasDependents.Init
 QPKGs.ScInstallable.Add()
@@ -20390,7 +20390,7 @@ QPKGs.ScInstallable.Remove()
 for it in "${_ob_qpkgs_scinstallable_ar_[@]+"${_ob_qpkgs_scinstallable_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -20402,7 +20402,7 @@ QPKGs.ScInstallable.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_scinstallable_sz_=$2
 else
-echo -n $_ob_qpkgs_scinstallable_sz_
+echo -n "$_ob_qpkgs_scinstallable_sz_"
 fi ;}
 QPKGs.ScInstallable.Init
 QPKGs.ScNtInstallable.Add()
@@ -20434,7 +20434,7 @@ QPKGs.ScNtInstallable.Remove()
 for it in "${_ob_qpkgs_scntinstallable_ar_[@]+"${_ob_qpkgs_scntinstallable_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -20446,7 +20446,7 @@ QPKGs.ScNtInstallable.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_scntinstallable_sz_=$2
 else
-echo -n $_ob_qpkgs_scntinstallable_sz_
+echo -n "$_ob_qpkgs_scntinstallable_sz_"
 fi ;}
 QPKGs.ScNtInstallable.Init
 QPKGs.ScNames.Add()
@@ -20478,7 +20478,7 @@ QPKGs.ScNames.Remove()
 for it in "${_ob_qpkgs_scnames_ar_[@]+"${_ob_qpkgs_scnames_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -20490,7 +20490,7 @@ QPKGs.ScNames.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_scnames_sz_=$2
 else
-echo -n $_ob_qpkgs_scnames_sz_
+echo -n "$_ob_qpkgs_scnames_sz_"
 fi ;}
 QPKGs.ScNames.Init
 QPKGs.ScNtNames.Add()
@@ -20522,7 +20522,7 @@ QPKGs.ScNtNames.Remove()
 for it in "${_ob_qpkgs_scntnames_ar_[@]+"${_ob_qpkgs_scntnames_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -20534,7 +20534,7 @@ QPKGs.ScNtNames.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_scntnames_sz_=$2
 else
-echo -n $_ob_qpkgs_scntnames_sz_
+echo -n "$_ob_qpkgs_scntnames_sz_"
 fi ;}
 QPKGs.ScNtNames.Init
 QPKGs.ScStandalone.Add()
@@ -20566,7 +20566,7 @@ QPKGs.ScStandalone.Remove()
 for it in "${_ob_qpkgs_scstandalone_ar_[@]+"${_ob_qpkgs_scstandalone_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -20578,7 +20578,7 @@ QPKGs.ScStandalone.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_scstandalone_sz_=$2
 else
-echo -n $_ob_qpkgs_scstandalone_sz_
+echo -n "$_ob_qpkgs_scstandalone_sz_"
 fi ;}
 QPKGs.ScStandalone.Init
 QPKGs.ScNtStandalone.Add()
@@ -20610,7 +20610,7 @@ QPKGs.ScNtStandalone.Remove()
 for it in "${_ob_qpkgs_scntstandalone_ar_[@]+"${_ob_qpkgs_scntstandalone_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -20622,7 +20622,7 @@ QPKGs.ScNtStandalone.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_scntstandalone_sz_=$2
 else
-echo -n $_ob_qpkgs_scntstandalone_sz_
+echo -n "$_ob_qpkgs_scntstandalone_sz_"
 fi ;}
 QPKGs.ScNtStandalone.Init
 QPKGs.ScSupportBackup.Add()
@@ -20654,7 +20654,7 @@ QPKGs.ScSupportBackup.Remove()
 for it in "${_ob_qpkgs_scsupportbackup_ar_[@]+"${_ob_qpkgs_scsupportbackup_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -20666,7 +20666,7 @@ QPKGs.ScSupportBackup.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_scsupportbackup_sz_=$2
 else
-echo -n $_ob_qpkgs_scsupportbackup_sz_
+echo -n "$_ob_qpkgs_scsupportbackup_sz_"
 fi ;}
 QPKGs.ScSupportBackup.Init
 QPKGs.ScNtSupportBackup.Add()
@@ -20698,7 +20698,7 @@ QPKGs.ScNtSupportBackup.Remove()
 for it in "${_ob_qpkgs_scntsupportbackup_ar_[@]+"${_ob_qpkgs_scntsupportbackup_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -20710,7 +20710,7 @@ QPKGs.ScNtSupportBackup.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_scntsupportbackup_sz_=$2
 else
-echo -n $_ob_qpkgs_scntsupportbackup_sz_
+echo -n "$_ob_qpkgs_scntsupportbackup_sz_"
 fi ;}
 QPKGs.ScNtSupportBackup.Init
 QPKGs.ScSupportUpdateOnRestart.Add()
@@ -20742,7 +20742,7 @@ QPKGs.ScSupportUpdateOnRestart.Remove()
 for it in "${_ob_qpkgs_scsupportupdateonrestart_ar_[@]+"${_ob_qpkgs_scsupportupdateonrestart_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -20754,7 +20754,7 @@ QPKGs.ScSupportUpdateOnRestart.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_scsupportupdateonrestart_sz_=$2
 else
-echo -n $_ob_qpkgs_scsupportupdateonrestart_sz_
+echo -n "$_ob_qpkgs_scsupportupdateonrestart_sz_"
 fi ;}
 QPKGs.ScSupportUpdateOnRestart.Init
 QPKGs.ScNtSupportUpdateOnRestart.Add()
@@ -20786,7 +20786,7 @@ QPKGs.ScNtSupportUpdateOnRestart.Remove()
 for it in "${_ob_qpkgs_scntsupportupdateonrestart_ar_[@]+"${_ob_qpkgs_scntsupportupdateonrestart_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -20798,7 +20798,7 @@ QPKGs.ScNtSupportUpdateOnRestart.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_scntsupportupdateonrestart_sz_=$2
 else
-echo -n $_ob_qpkgs_scntsupportupdateonrestart_sz_
+echo -n "$_ob_qpkgs_scntsupportupdateonrestart_sz_"
 fi ;}
 QPKGs.ScNtSupportUpdateOnRestart.Init
 QPKGs.ScUpgradable.Add()
@@ -20830,7 +20830,7 @@ QPKGs.ScUpgradable.Remove()
 for it in "${_ob_qpkgs_scupgradable_ar_[@]+"${_ob_qpkgs_scupgradable_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -20842,7 +20842,7 @@ QPKGs.ScUpgradable.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_scupgradable_sz_=$2
 else
-echo -n $_ob_qpkgs_scupgradable_sz_
+echo -n "$_ob_qpkgs_scupgradable_sz_"
 fi ;}
 QPKGs.ScUpgradable.Init
 QPKGs.ScNtUpgradable.Add()
@@ -20874,7 +20874,7 @@ QPKGs.ScNtUpgradable.Remove()
 for it in "${_ob_qpkgs_scntupgradable_ar_[@]+"${_ob_qpkgs_scntupgradable_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -20886,7 +20886,7 @@ QPKGs.ScNtUpgradable.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_scntupgradable_sz_=$2
 else
-echo -n $_ob_qpkgs_scntupgradable_sz_
+echo -n "$_ob_qpkgs_scntupgradable_sz_"
 fi ;}
 QPKGs.ScNtUpgradable.Init
 QPKGs.IsBackedUp.Add()
@@ -20918,7 +20918,7 @@ QPKGs.IsBackedUp.Remove()
 for it in "${_ob_qpkgs_isbackedup_ar_[@]+"${_ob_qpkgs_isbackedup_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -20930,7 +20930,7 @@ QPKGs.IsBackedUp.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_isbackedup_sz_=$2
 else
-echo -n $_ob_qpkgs_isbackedup_sz_
+echo -n "$_ob_qpkgs_isbackedup_sz_"
 fi ;}
 QPKGs.IsBackedUp.Init
 QPKGs.IsNtBackedUp.Add()
@@ -20962,7 +20962,7 @@ QPKGs.IsNtBackedUp.Remove()
 for it in "${_ob_qpkgs_isntbackedup_ar_[@]+"${_ob_qpkgs_isntbackedup_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -20974,7 +20974,7 @@ QPKGs.IsNtBackedUp.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_isntbackedup_sz_=$2
 else
-echo -n $_ob_qpkgs_isntbackedup_sz_
+echo -n "$_ob_qpkgs_isntbackedup_sz_"
 fi ;}
 QPKGs.IsNtBackedUp.Init
 QPKGs.IsCleaned.Add()
@@ -21006,7 +21006,7 @@ QPKGs.IsCleaned.Remove()
 for it in "${_ob_qpkgs_iscleaned_ar_[@]+"${_ob_qpkgs_iscleaned_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -21018,7 +21018,7 @@ QPKGs.IsCleaned.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_iscleaned_sz_=$2
 else
-echo -n $_ob_qpkgs_iscleaned_sz_
+echo -n "$_ob_qpkgs_iscleaned_sz_"
 fi ;}
 QPKGs.IsCleaned.Init
 QPKGs.IsNtCleaned.Add()
@@ -21050,7 +21050,7 @@ QPKGs.IsNtCleaned.Remove()
 for it in "${_ob_qpkgs_isntcleaned_ar_[@]+"${_ob_qpkgs_isntcleaned_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -21062,7 +21062,7 @@ QPKGs.IsNtCleaned.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_isntcleaned_sz_=$2
 else
-echo -n $_ob_qpkgs_isntcleaned_sz_
+echo -n "$_ob_qpkgs_isntcleaned_sz_"
 fi ;}
 QPKGs.IsNtCleaned.Init
 QPKGs.IsDisabled.Add()
@@ -21094,7 +21094,7 @@ QPKGs.IsDisabled.Remove()
 for it in "${_ob_qpkgs_isdisabled_ar_[@]+"${_ob_qpkgs_isdisabled_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -21106,7 +21106,7 @@ QPKGs.IsDisabled.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_isdisabled_sz_=$2
 else
-echo -n $_ob_qpkgs_isdisabled_sz_
+echo -n "$_ob_qpkgs_isdisabled_sz_"
 fi ;}
 QPKGs.IsDisabled.Init
 QPKGs.IsNtDisabled.Add()
@@ -21138,7 +21138,7 @@ QPKGs.IsNtDisabled.Remove()
 for it in "${_ob_qpkgs_isntdisabled_ar_[@]+"${_ob_qpkgs_isntdisabled_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -21150,7 +21150,7 @@ QPKGs.IsNtDisabled.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_isntdisabled_sz_=$2
 else
-echo -n $_ob_qpkgs_isntdisabled_sz_
+echo -n "$_ob_qpkgs_isntdisabled_sz_"
 fi ;}
 QPKGs.IsNtDisabled.Init
 QPKGs.IsDownloaded.Add()
@@ -21182,7 +21182,7 @@ QPKGs.IsDownloaded.Remove()
 for it in "${_ob_qpkgs_isdownloaded_ar_[@]+"${_ob_qpkgs_isdownloaded_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -21194,7 +21194,7 @@ QPKGs.IsDownloaded.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_isdownloaded_sz_=$2
 else
-echo -n $_ob_qpkgs_isdownloaded_sz_
+echo -n "$_ob_qpkgs_isdownloaded_sz_"
 fi ;}
 QPKGs.IsDownloaded.Init
 QPKGs.IsNtDownloaded.Add()
@@ -21226,7 +21226,7 @@ QPKGs.IsNtDownloaded.Remove()
 for it in "${_ob_qpkgs_isntdownloaded_ar_[@]+"${_ob_qpkgs_isntdownloaded_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -21238,7 +21238,7 @@ QPKGs.IsNtDownloaded.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_isntdownloaded_sz_=$2
 else
-echo -n $_ob_qpkgs_isntdownloaded_sz_
+echo -n "$_ob_qpkgs_isntdownloaded_sz_"
 fi ;}
 QPKGs.IsNtDownloaded.Init
 QPKGs.IsEnabled.Add()
@@ -21270,7 +21270,7 @@ QPKGs.IsEnabled.Remove()
 for it in "${_ob_qpkgs_isenabled_ar_[@]+"${_ob_qpkgs_isenabled_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -21282,7 +21282,7 @@ QPKGs.IsEnabled.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_isenabled_sz_=$2
 else
-echo -n $_ob_qpkgs_isenabled_sz_
+echo -n "$_ob_qpkgs_isenabled_sz_"
 fi ;}
 QPKGs.IsEnabled.Init
 QPKGs.IsNtEnabled.Add()
@@ -21314,7 +21314,7 @@ QPKGs.IsNtEnabled.Remove()
 for it in "${_ob_qpkgs_isntenabled_ar_[@]+"${_ob_qpkgs_isntenabled_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -21326,7 +21326,7 @@ QPKGs.IsNtEnabled.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_isntenabled_sz_=$2
 else
-echo -n $_ob_qpkgs_isntenabled_sz_
+echo -n "$_ob_qpkgs_isntenabled_sz_"
 fi ;}
 QPKGs.IsNtEnabled.Init
 QPKGs.IsInstalled.Add()
@@ -21358,7 +21358,7 @@ QPKGs.IsInstalled.Remove()
 for it in "${_ob_qpkgs_isinstalled_ar_[@]+"${_ob_qpkgs_isinstalled_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -21370,7 +21370,7 @@ QPKGs.IsInstalled.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_isinstalled_sz_=$2
 else
-echo -n $_ob_qpkgs_isinstalled_sz_
+echo -n "$_ob_qpkgs_isinstalled_sz_"
 fi ;}
 QPKGs.IsInstalled.Init
 QPKGs.IsNtInstalled.Add()
@@ -21402,7 +21402,7 @@ QPKGs.IsNtInstalled.Remove()
 for it in "${_ob_qpkgs_isntinstalled_ar_[@]+"${_ob_qpkgs_isntinstalled_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -21414,7 +21414,7 @@ QPKGs.IsNtInstalled.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_isntinstalled_sz_=$2
 else
-echo -n $_ob_qpkgs_isntinstalled_sz_
+echo -n "$_ob_qpkgs_isntinstalled_sz_"
 fi ;}
 QPKGs.IsNtInstalled.Init
 QPKGs.IsMissing.Add()
@@ -21446,7 +21446,7 @@ QPKGs.IsMissing.Remove()
 for it in "${_ob_qpkgs_ismissing_ar_[@]+"${_ob_qpkgs_ismissing_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -21458,7 +21458,7 @@ QPKGs.IsMissing.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_ismissing_sz_=$2
 else
-echo -n $_ob_qpkgs_ismissing_sz_
+echo -n "$_ob_qpkgs_ismissing_sz_"
 fi ;}
 QPKGs.IsMissing.Init
 QPKGs.IsNtMissing.Add()
@@ -21490,7 +21490,7 @@ QPKGs.IsNtMissing.Remove()
 for it in "${_ob_qpkgs_isntmissing_ar_[@]+"${_ob_qpkgs_isntmissing_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -21502,7 +21502,7 @@ QPKGs.IsNtMissing.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_isntmissing_sz_=$2
 else
-echo -n $_ob_qpkgs_isntmissing_sz_
+echo -n "$_ob_qpkgs_isntmissing_sz_"
 fi ;}
 QPKGs.IsNtMissing.Init
 QPKGs.IsStarting.Add()
@@ -21534,7 +21534,7 @@ QPKGs.IsStarting.Remove()
 for it in "${_ob_qpkgs_isstarting_ar_[@]+"${_ob_qpkgs_isstarting_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -21546,7 +21546,7 @@ QPKGs.IsStarting.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_isstarting_sz_=$2
 else
-echo -n $_ob_qpkgs_isstarting_sz_
+echo -n "$_ob_qpkgs_isstarting_sz_"
 fi ;}
 QPKGs.IsStarting.Init
 QPKGs.IsNtStarting.Add()
@@ -21578,7 +21578,7 @@ QPKGs.IsNtStarting.Remove()
 for it in "${_ob_qpkgs_isntstarting_ar_[@]+"${_ob_qpkgs_isntstarting_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -21590,7 +21590,7 @@ QPKGs.IsNtStarting.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_isntstarting_sz_=$2
 else
-echo -n $_ob_qpkgs_isntstarting_sz_
+echo -n "$_ob_qpkgs_isntstarting_sz_"
 fi ;}
 QPKGs.IsNtStarting.Init
 QPKGs.IsStarted.Add()
@@ -21622,7 +21622,7 @@ QPKGs.IsStarted.Remove()
 for it in "${_ob_qpkgs_isstarted_ar_[@]+"${_ob_qpkgs_isstarted_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -21634,7 +21634,7 @@ QPKGs.IsStarted.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_isstarted_sz_=$2
 else
-echo -n $_ob_qpkgs_isstarted_sz_
+echo -n "$_ob_qpkgs_isstarted_sz_"
 fi ;}
 QPKGs.IsStarted.Init
 QPKGs.IsNtStarted.Add()
@@ -21666,7 +21666,7 @@ QPKGs.IsNtStarted.Remove()
 for it in "${_ob_qpkgs_isntstarted_ar_[@]+"${_ob_qpkgs_isntstarted_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -21678,7 +21678,7 @@ QPKGs.IsNtStarted.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_isntstarted_sz_=$2
 else
-echo -n $_ob_qpkgs_isntstarted_sz_
+echo -n "$_ob_qpkgs_isntstarted_sz_"
 fi ;}
 QPKGs.IsNtStarted.Init
 QPKGs.IsStopping.Add()
@@ -21710,7 +21710,7 @@ QPKGs.IsStopping.Remove()
 for it in "${_ob_qpkgs_isstopping_ar_[@]+"${_ob_qpkgs_isstopping_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -21722,7 +21722,7 @@ QPKGs.IsStopping.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_isstopping_sz_=$2
 else
-echo -n $_ob_qpkgs_isstopping_sz_
+echo -n "$_ob_qpkgs_isstopping_sz_"
 fi ;}
 QPKGs.IsStopping.Init
 QPKGs.IsNtStopping.Add()
@@ -21754,7 +21754,7 @@ QPKGs.IsNtStopping.Remove()
 for it in "${_ob_qpkgs_isntstopping_ar_[@]+"${_ob_qpkgs_isntstopping_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -21766,7 +21766,7 @@ QPKGs.IsNtStopping.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_isntstopping_sz_=$2
 else
-echo -n $_ob_qpkgs_isntstopping_sz_
+echo -n "$_ob_qpkgs_isntstopping_sz_"
 fi ;}
 QPKGs.IsNtStopping.Init
 QPKGs.IsStopped.Add()
@@ -21798,7 +21798,7 @@ QPKGs.IsStopped.Remove()
 for it in "${_ob_qpkgs_isstopped_ar_[@]+"${_ob_qpkgs_isstopped_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -21810,7 +21810,7 @@ QPKGs.IsStopped.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_isstopped_sz_=$2
 else
-echo -n $_ob_qpkgs_isstopped_sz_
+echo -n "$_ob_qpkgs_isstopped_sz_"
 fi ;}
 QPKGs.IsStopped.Init
 QPKGs.IsNtStopped.Add()
@@ -21842,7 +21842,7 @@ QPKGs.IsNtStopped.Remove()
 for it in "${_ob_qpkgs_isntstopped_ar_[@]+"${_ob_qpkgs_isntstopped_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -21854,7 +21854,7 @@ QPKGs.IsNtStopped.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_isntstopped_sz_=$2
 else
-echo -n $_ob_qpkgs_isntstopped_sz_
+echo -n "$_ob_qpkgs_isntstopped_sz_"
 fi ;}
 QPKGs.IsNtStopped.Init
 QPKGs.IsRestarting.Add()
@@ -21886,7 +21886,7 @@ QPKGs.IsRestarting.Remove()
 for it in "${_ob_qpkgs_isrestarting_ar_[@]+"${_ob_qpkgs_isrestarting_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -21898,7 +21898,7 @@ QPKGs.IsRestarting.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_isrestarting_sz_=$2
 else
-echo -n $_ob_qpkgs_isrestarting_sz_
+echo -n "$_ob_qpkgs_isrestarting_sz_"
 fi ;}
 QPKGs.IsRestarting.Init
 QPKGs.IsNtRestarting.Add()
@@ -21930,7 +21930,7 @@ QPKGs.IsNtRestarting.Remove()
 for it in "${_ob_qpkgs_isntrestarting_ar_[@]+"${_ob_qpkgs_isntrestarting_ar_[@]}"}"; do
 m=false
 for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = $it ]]; then
+if [[ $ag = "$it" ]]; then
 m=true; break
 fi
 done
@@ -21942,6 +21942,6 @@ QPKGs.IsNtRestarting.Size()
 { if [[ -n ${1:-} && ${1:-} = "=" ]]; then
 _ob_qpkgs_isntrestarting_sz_=$2
 else
-echo -n $_ob_qpkgs_isntrestarting_sz_
+echo -n "$_ob_qpkgs_isntrestarting_sz_"
 fi ;}
 QPKGs.IsNtRestarting.Init
