@@ -59,7 +59,7 @@ Session.Init()
     export LC_CTYPE=C
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220418
+    local -r SCRIPT_VERSION=220418b
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -2813,6 +2813,7 @@ Help.Actions.Show()
     DisplayLineSpaceIfNoneAlready
     DisplayAsHelpTitle "$(FormatAsHelpAction) usage examples:"
     DisplayAsProjectSyntaxIndentedExample 'show package statuses' 'status'
+    DisplayAsProjectSyntaxIndentedExample 'ensure all application dependencies are installed' 'check'
     DisplayAsProjectSyntaxIndentedExample 'install these packages' "install $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample 'uninstall these packages' "uninstall $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample 'reinstall these packages' "reinstall $(FormatAsHelpPackages)"
