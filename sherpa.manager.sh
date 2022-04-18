@@ -46,6 +46,7 @@
 
 set -o nounset -o pipefail
 readonly USER_ARGS_RAW=$*
+readonly SCRIPT_STARTSECONDS=$(/bin/date +%s)
 
 Session.Init()
     {
@@ -55,14 +56,25 @@ Session.Init()
     IsQNAP || return
     IsSU || return
 
-    readonly SCRIPT_STARTSECONDS=$(/bin/date +%s)
-    export LC_CTYPE=C
-
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220418c
+    local -r SCRIPT_VERSION=220418d
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
+
+    export LC_ALL=''    # need to disable ALL to enable setting of individual vars
+    export LC_CTYPE=C
+    export LC_NUMERIC=en_US.utf8
+    export LC_TIME=C
+    export LC_COLLATE=C
+    export LC_MONETARY=C
+    export LC_MESSAGES=C
+    export LC_PAPER=C
+    export LC_NAME=C
+    export LC_ADDRESS=C
+    export LC_TELEPHONE=C
+    export LC_MEASUREMENT=C
+    export LC_IDENTIFICATION=C
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -875,6 +887,7 @@ ParseArguments()
     #   scriptname [operation] [scope] [options]
 
     DebugFuncEntry
+
     DebugVar USER_ARGS_RAW
 
     local user_args_fixed=$(tr 'A-Z' 'a-z' <<< "${USER_ARGS_RAW//,/ }")
@@ -5552,7 +5565,7 @@ Capitalise()
 FormatAsThousands()
     {
 
-    LC_NUMERIC=en_US.utf8 printf "%'.f" "$1"
+    printf "%'.f" "$1"
 
     }
 
