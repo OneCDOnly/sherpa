@@ -149,7 +149,7 @@ for element in Abbreviations Actions ActionsAll Backups Basic Options Packages P
     AddFlagObj Opts.Help.$element
 done
 
-for element in All Last Tail; do
+for element in Last Tail; do
     AddFlagObj Opts.Log.$element.Paste
     AddFlagObj Opts.Log.$element.View
 done
