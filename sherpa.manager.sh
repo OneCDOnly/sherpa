@@ -57,7 +57,7 @@ Session.Init()
     IsSU || return
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220419c
+    local -r SCRIPT_VERSION=220419d
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -2815,6 +2815,7 @@ Help.Actions.Show()
     DisplayLineSpaceIfNoneAlready
     DisplayAsHelpTitle "$(FormatAsHelpAction) usage examples:"
     DisplayAsProjectSyntaxIndentedExample 'show package statuses' 'status'
+    DisplayAsProjectSyntaxIndentedExample '' 's'
     DisplayAsProjectSyntaxIndentedExample 'ensure all application dependencies are installed' 'check'
     DisplayAsProjectSyntaxIndentedExample 'install these packages' "install $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample 'uninstall these packages' "uninstall $(FormatAsHelpPackages)"
@@ -2848,6 +2849,7 @@ Help.ActionsAll.Show()
     Display
     DisplayAsHelpTitle "$(FormatAsHelpAction) usage examples:"
     DisplayAsProjectSyntaxIndentedExample 'show package statuses' 'status'
+    DisplayAsProjectSyntaxIndentedExample '' 's'
     DisplayAsProjectSyntaxIndentedExample 'install everything!' 'install all'
     DisplayAsProjectSyntaxIndentedExample 'uninstall everything!' 'force uninstall all'
     DisplayAsProjectSyntaxIndentedExample 'reinstall all installed packages' 'reinstall all'
@@ -2905,6 +2907,7 @@ Help.Options.Show()
     DisplayLineSpaceIfNoneAlready
     DisplayAsHelpTitle "$(FormatAsHelpOptions) usage examples:"
     DisplayAsProjectSyntaxIndentedExample 'process one-or-more packages and show live debugging information' "$(FormatAsHelpAction) $(FormatAsHelpPackages) debug"
+    DisplayAsProjectSyntaxIndentedExample '' "$(FormatAsHelpAction) $(FormatAsHelpPackages) verbose"
     DisplayAsProjectSyntaxIndentedExample 'display helpful tips and shortcuts' 'tips'
     DisplayAsProjectSyntaxIndentedExample 'display troubleshooting options' 'problems'
 
@@ -2919,14 +2922,18 @@ Help.Problems.Show()
     Help.Basic.Show
     DisplayLineSpaceIfNoneAlready
     DisplayAsHelpTitle 'usage examples for dealing with problems:'
+    DisplayAsProjectSyntaxIndentedExample 'show package statuses' 'status'
+    DisplayAsProjectSyntaxIndentedExample '' 's'
     DisplayAsProjectSyntaxIndentedExample 'process one-or-more packages and show live debugging information' "$(FormatAsHelpAction) $(FormatAsHelpPackages) debug"
+    DisplayAsProjectSyntaxIndentedExample '' "$(FormatAsHelpAction) $(FormatAsHelpPackages) verbose"
     DisplayAsProjectSyntaxIndentedExample 'ensure all application dependencies are installed' 'check'
     DisplayAsProjectSyntaxIndentedExample 'clear local repository files from these packages' "clean $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample 'remove all cached sherpa items and logs' 'reset'
     DisplayAsProjectSyntaxIndentedExample 'restart all installed packages (upgrades the internal applications, not packages)' 'restart all'
     DisplayAsProjectSyntaxIndentedExample 'start these packages and enable package icons' "start $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample 'stop these packages and disable package icons' "stop $(FormatAsHelpPackages)"
-    DisplayAsProjectSyntaxIndentedExample "view only the most recent $(FormatAsScriptTitle) session log" 'l'
+    DisplayAsProjectSyntaxIndentedExample "view only the most recent $(FormatAsScriptTitle) session log" 'last'
+    DisplayAsProjectSyntaxIndentedExample '' 'l'
     DisplayAsProjectSyntaxIndentedExample "view the entire $(FormatAsScriptTitle) session log" 'log'
     DisplayAsProjectSyntaxIndentedExample "upload the most-recent session in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste last'
     DisplayAsProjectSyntaxIndentedExample "upload the most-recent $(FormatAsThousands "$LOG_TAIL_LINES") entries in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste log'
@@ -2965,7 +2972,8 @@ Help.Tips.Show()
     DisplayAsProjectSyntaxIndentedExample 'package abbreviations also work. To see these' 'list abs'
     DisplayAsProjectSyntaxIndentedExample 'restart all packages (only upgrades the internal applications, not packages)' 'restart all'
     DisplayAsProjectSyntaxIndentedExample 'list only packages that can be installed' 'list installable'
-    DisplayAsProjectSyntaxIndentedExample "view only the most recent $(FormatAsScriptTitle) session log" 'l'
+    DisplayAsProjectSyntaxIndentedExample "view only the most recent $(FormatAsScriptTitle) session log" 'last'
+    DisplayAsProjectSyntaxIndentedExample '' 'l'
     DisplayAsProjectSyntaxIndentedExample 'start all stopped packages' 'start stopped'
     DisplayAsProjectSyntaxIndentedExample 'upgrade the internal applications only' "restart $(FormatAsHelpPackages)"
     Help.BackupLocation.Show
