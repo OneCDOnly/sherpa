@@ -493,44 +493,6 @@ Opts.Help.Tips.Set()
 _ob_opts_help_tips_fl_=true
 [[ $_ob_opts_help_tips_chfl_ = 'true' ]] && DebugVar _ob_opts_help_tips_fl_ ;}
 Opts.Help.Tips.Init
-Opts.Log.All.Paste.Clear()
-{ [[ $_ob_opts_log_all_paste_fl_ != 'true' ]] && return
-_ob_opts_log_all_paste_fl_=false
-[[ $_ob_opts_log_all_paste_chfl_ = 'true' ]] && DebugVar _ob_opts_log_all_paste_fl_ ;}
-Opts.Log.All.Paste.NoLogMods()
-{ [[ $_ob_opts_log_all_paste_chfl_ != 'true' ]] && return
-_ob_opts_log_all_paste_chfl_=false ;}
-Opts.Log.All.Paste.Init()
-{ _ob_opts_log_all_paste_fl_=false
-_ob_opts_log_all_paste_chfl_=true ;}
-Opts.Log.All.Paste.IsNt()
-{ [[ $_ob_opts_log_all_paste_fl_ != 'true' ]] ;}
-Opts.Log.All.Paste.IsSet()
-{ [[ $_ob_opts_log_all_paste_fl_ = 'true' ]] ;}
-Opts.Log.All.Paste.Set()
-{ [[ $_ob_opts_log_all_paste_fl_ = 'true' ]] && return
-_ob_opts_log_all_paste_fl_=true
-[[ $_ob_opts_log_all_paste_chfl_ = 'true' ]] && DebugVar _ob_opts_log_all_paste_fl_ ;}
-Opts.Log.All.Paste.Init
-Opts.Log.All.View.Clear()
-{ [[ $_ob_opts_log_all_view_fl_ != 'true' ]] && return
-_ob_opts_log_all_view_fl_=false
-[[ $_ob_opts_log_all_view_chfl_ = 'true' ]] && DebugVar _ob_opts_log_all_view_fl_ ;}
-Opts.Log.All.View.NoLogMods()
-{ [[ $_ob_opts_log_all_view_chfl_ != 'true' ]] && return
-_ob_opts_log_all_view_chfl_=false ;}
-Opts.Log.All.View.Init()
-{ _ob_opts_log_all_view_fl_=false
-_ob_opts_log_all_view_chfl_=true ;}
-Opts.Log.All.View.IsNt()
-{ [[ $_ob_opts_log_all_view_fl_ != 'true' ]] ;}
-Opts.Log.All.View.IsSet()
-{ [[ $_ob_opts_log_all_view_fl_ = 'true' ]] ;}
-Opts.Log.All.View.Set()
-{ [[ $_ob_opts_log_all_view_fl_ = 'true' ]] && return
-_ob_opts_log_all_view_fl_=true
-[[ $_ob_opts_log_all_view_chfl_ = 'true' ]] && DebugVar _ob_opts_log_all_view_fl_ ;}
-Opts.Log.All.View.Init
 Opts.Log.Last.Paste.Clear()
 { [[ $_ob_opts_log_last_paste_fl_ != 'true' ]] && return
 _ob_opts_log_last_paste_fl_=false

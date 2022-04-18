@@ -57,7 +57,7 @@ Session.Init()
     IsSU || return
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220419
+    local -r SCRIPT_VERSION=220419b
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -259,7 +259,7 @@ Session.Init()
     readonly INSTALLED_RAM_KB=$(GetInstalledRAM)
     readonly NAS_QPKG_ARCH=$(GetQPKGArch)
     readonly ENTWARE_VER=$(GetEntwareType)
-    readonly LOG_TAIL_LINES=3000    # a full download and install of everything generates a session log of around 1600 lines, but include a bunch of opkg updates and it can get much longer
+    readonly LOG_TAIL_LINES=5000    # note: a full download and install of everything generates a session log of around 1600 lines, but include a bunch of opkg updates and it can get much longer
     readonly MIN_PYTHON_VER=3104    # keep this up-to-date with current Entware Python3 version so IPKG upgrade notifier will work
     readonly PYTHON_CMD=/opt/bin/python
     readonly PYTHON3_CMD=/opt/bin/python3
@@ -822,14 +822,10 @@ Session.Results()
             Help.PackageAbbreviations.Show
         elif Opts.Versions.View.IsSet; then
             ShowVersions
-        elif Opts.Log.All.View.IsSet; then
-            Log.All.View
         elif Opts.Log.Last.View.IsSet; then
             Log.Last.View
         elif Opts.Log.Tail.View.IsSet; then
             Log.Tail.View
-        elif Opts.Log.All.Paste.IsSet; then
-            Log.All.Paste
         elif Opts.Log.Last.Paste.IsSet; then
             Log.Last.Paste
         elif Opts.Log.Tail.Paste.IsSet; then
@@ -1144,7 +1140,7 @@ ParseArguments()
                         Session.Display.Clean.Set
                         ;;
                     log_)
-                        Opts.Log.All.View.Set
+                        Opts.Log.Tail.View.Set
                         Session.Display.Clean.Set
                         ;;
                     not-installed_)
@@ -1177,10 +1173,6 @@ ParseArguments()
                         ;;
                     stopped_)
                         Opts.Apps.List.IsStopped.Set
-                        Session.Display.Clean.Set
-                        ;;
-                    tail_)
-                        Opts.Log.Tail.View.Set
                         Session.Display.Clean.Set
                         ;;
                     tips_)
@@ -1225,14 +1217,11 @@ ParseArguments()
                 ;;
             paste_)
                 case $scope in
-                    all_|log_)
-                        Opts.Log.All.Paste.Set
+                    all_|log_|tail_)
+                        Opts.Log.Tail.Paste.Set
                         ;;
                     last_)
                         Opts.Log.Last.Paste.Set
-                        ;;
-                    tail_)
-                        Opts.Log.Tail.Paste.Set
                 esac
 
                 QPKGs.SkProc.Set
@@ -1756,7 +1745,7 @@ ResetArchivedLogs()
 
     if [[ -n $LOGS_PATH && -d $LOGS_PATH ]]; then
         rm -rf "${LOGS_PATH:?}"/*
-        ShowAsDone 'logs path reset'
+        ShowAsDone 'all logs cleared'
     fi
 
     return 0
@@ -1768,7 +1757,7 @@ ResetWorkPath()
 
     if [[ -n $WORK_PATH && -d $WORK_PATH ]]; then
         rm -rf "${WORK_PATH:?}"/*
-        ShowAsDone 'work path reset'
+        ShowAsDone 'package cache cleared'
     fi
 
     return 0
@@ -2939,8 +2928,8 @@ Help.Problems.Show()
     DisplayAsProjectSyntaxIndentedExample 'stop these packages and disable package icons' "stop $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample "view only the most recent $(FormatAsScriptTitle) session log" 'l'
     DisplayAsProjectSyntaxIndentedExample "view the entire $(FormatAsScriptTitle) session log" 'log'
-    DisplayAsProjectSyntaxIndentedExample "upload the most-recent session in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'p'
-    DisplayAsProjectSyntaxIndentedExample "upload the most-recent $(FormatAsThousands "$LOG_TAIL_LINES") entries in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste'
+    DisplayAsProjectSyntaxIndentedExample "upload the most-recent session in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste last'
+    DisplayAsProjectSyntaxIndentedExample "upload the most-recent $(FormatAsThousands "$LOG_TAIL_LINES") entries in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste log'
     Display
     DisplayAsHelpTitleHighlighted "If you need help, please include a copy of your $(FormatAsScriptTitle) $(ColourTextBrightOrange "log for analysis!")"
 
@@ -2957,7 +2946,7 @@ Help.Issue.Show()
     DisplayAsHelpTitle "alternatively, post on the QNAP NAS Community Forum:\n\thttps://forum.qnap.com/viewtopic.php?f=320&t=132373"
     DisplayAsProjectSyntaxIndentedExample "view only the most recent $(FormatAsScriptTitle) session log" 'last'
     DisplayAsProjectSyntaxIndentedExample "view the entire $(FormatAsScriptTitle) session log" 'log'
-    DisplayAsProjectSyntaxIndentedExample "upload the most-recent $(FormatAsThousands "$LOG_TAIL_LINES") entries in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste'
+    DisplayAsProjectSyntaxIndentedExample "upload the most-recent $(FormatAsThousands "$LOG_TAIL_LINES") entries in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste log'
     Display
     DisplayAsHelpTitleHighlighted "If you need help, please include a copy of your $(FormatAsScriptTitle) $(ColourTextBrightOrange "log for analysis!")"
 
@@ -3024,29 +3013,6 @@ Help.BackupLocation.Show()
 
     }
 
-Log.All.View()
-    {
-
-    # view the entire archived sessions log
-
-    DisableDebugToArchiveAndFile
-
-    if [[ -e $SESSION_ARCHIVE_PATHFILE ]]; then
-        if [[ -e /opt/bin/less ]]; then
-            LESSSECURE=1 /opt/bin/less +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$SESSION_ARCHIVE_PATHFILE"
-        elif [[ -e /bin/less ]]; then
-            /bin/less -N~ "$SESSION_ARCHIVE_PATHFILE"
-        else
-            $CAT_CMD --number "$SESSION_ARCHIVE_PATHFILE"
-        fi
-    else
-        ShowAsEror 'no session log to display'
-    fi
-
-    return 0
-
-    }
-
 Log.Last.View()
     {
 
@@ -3089,36 +3055,6 @@ Log.Tail.View()
         fi
     else
         ShowAsEror 'no session log tail to display'
-    fi
-
-    return 0
-
-    }
-
-Log.All.Paste()
-    {
-
-    DisableDebugToArchiveAndFile
-
-    if [[ -e $SESSION_ARCHIVE_PATHFILE ]]; then
-        if Quiz "Press 'Y' to post your ENTIRE $(FormatAsScriptTitle) log to a public pastebin, or any other key to abort"; then
-            ShowAsProc "uploading $(FormatAsScriptTitle) log"
-            # with thanks to https://github.com/solusipse/fiche
-            link=$($CAT_CMD --number "$SESSION_ARCHIVE_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
-
-            if [[ $? -eq 0 ]]; then
-                ShowAsDone "your $(FormatAsScriptTitle) log is now online at $(FormatAsURL "$link") and will be deleted in 1 month"
-            else
-                ShowAsFail "a link could not be generated. Most likely a problem occurred when talking with $(FormatAsURL 'https://termbin.com')"
-            fi
-        else
-            DebugInfoMinorSeparator
-            DebugScript 'user abort'
-            Session.Summary.Clear
-            return 1
-        fi
-    else
-        ShowAsEror 'no session log found'
     fi
 
     return 0
