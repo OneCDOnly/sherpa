@@ -57,7 +57,7 @@ Session.Init()
     IsSU || return
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220418d
+    local -r SCRIPT_VERSION=220419
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -3348,7 +3348,7 @@ QPKGs.Conflicts.Check()
         # shellcheck disable=2068
         for package in ${BASE_QPKG_CONFLICTS[@]}; do
             if [[ $(/sbin/getcfg "$package" Enable -u -f /etc/config/qpkg.conf) = 'TRUE' ]]; then
-                ShowAsEror "'$package' is enabled. $(FormatAsScriptTitle) is incompatible with this package"
+                ShowAsEror "the '$package' QPKG is enabled. $(FormatAsScriptTitle) is incompatible with this package. Please consider 'stop'ing this QPKG in your App Center"
                 DebugFuncExit 1; return
             fi
         done
@@ -3369,7 +3369,7 @@ QPKGs.Warnings.Check()
         # shellcheck disable=2068
         for package in ${BASE_QPKG_WARNINGS[@]}; do
             if [[ $(/sbin/getcfg "$package" Enable -u -f /etc/config/qpkg.conf) = 'TRUE' ]]; then
-                ShowAsWarn "'$package' is enabled. This may cause problems with $(FormatAsScriptTitle) applications"
+                ShowAsWarn "the '$package' QPKG is enabled. This may cause problems with $(FormatAsScriptTitle) applications. Please consider 'stop'ing this QPKG in your App Center"
             fi
         done
     fi
@@ -6060,8 +6060,11 @@ ShowAsWarn()
     # warning only
 
     SmartCR
-    WriteToDisplayNew "$(ColourTextBrightOrange warn)" "$1"
-    WriteToLog warn "$1"
+
+    local capitalised="$(Capitalise "$1")"
+
+    WriteToDisplayNew "$(ColourTextBrightOrange warn)" "$capitalised."
+    WriteToLog warn "$capitalised."
 
     }
 
@@ -6085,7 +6088,7 @@ ShowAsFail()
 
     local capitalised="$(Capitalise "$1")"
 
-    WriteToDisplayNew "$(ColourTextBrightRed fail)" "$capitalised"
+    WriteToDisplayNew "$(ColourTextBrightRed fail)" "$capitalised."
     WriteToLog fail "$capitalised."
 
     }
@@ -6099,7 +6102,7 @@ ShowAsEror()
 
     local capitalised="$(Capitalise "$1")"
 
-    WriteToDisplayNew "$(ColourTextBrightRed eror)" "$capitalised"
+    WriteToDisplayNew "$(ColourTextBrightRed eror)" "$capitalised."
     WriteToLog eror "$capitalised."
     Session.Error.Set
 
