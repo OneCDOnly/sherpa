@@ -28,9 +28,13 @@ AddFlagObj()
     {
 
     # $1 = object name to create
+    # $2 = set flag state on init (optional) default is 'false'
+    # $3 = set NoLogMods state on init (optional) default is 'true'
 
     local public_function_name=${1:?no object name supplied}
     local safe_function_name="$(tr 'A-Z' 'a-z' <<< "${public_function_name//[.-]/_}")"
+    local state_default=${2:-false}
+    local state_nologmods=${3:-true}
 
     _placeholder_flag_=_ob_${safe_function_name}_fl_
     _placeholder_log_changes_flag_=_ob_${safe_function_name}_chfl_
@@ -43,8 +47,8 @@ echo $public_function_name'.Clear()
 { [[ $'$_placeholder_log_changes_flag_' != '\'true\'' ]] && return
 '$_placeholder_log_changes_flag_'=false ;}
 '$public_function_name'.Init()
-{ '$_placeholder_flag_'=false
-'$_placeholder_log_changes_flag_'=true ;}
+{ '$_placeholder_flag_'='$state_default'
+'$_placeholder_log_changes_flag_'='$state_nologmods' ;}
 '$public_function_name'.IsNt()
 { [[ $'$_placeholder_flag_' != '\'true\'' ]] ;}
 '$public_function_name'.IsSet()
@@ -130,9 +134,9 @@ for element in Display.Clean LineSpace ShowBackupLoc SuggestIssue Summary; do
     AddFlagObj Session.$element
 done
 
-for element in ToArchive ToFile ToScreen; do
-    AddFlagObj Session.Debug.$element
-done
+AddFlagObj Session.Debug.ToArchive
+AddFlagObj Session.Debug.ToScreen
+AddFlagObj Session.Debug.ToFile true        # set initial value to 'true' so debug info is recorded early-on
 
 for element in Loaded States.Built SkProc; do
     AddFlagObj QPKGs.$element

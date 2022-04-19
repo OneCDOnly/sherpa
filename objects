@@ -113,25 +113,6 @@ Session.Debug.ToArchive.Set()
 _ob_session_debug_toarchive_fl_=true
 [[ $_ob_session_debug_toarchive_chfl_ = 'true' ]] && DebugVar _ob_session_debug_toarchive_fl_ ;}
 Session.Debug.ToArchive.Init
-Session.Debug.ToFile.Clear()
-{ [[ $_ob_session_debug_tofile_fl_ != 'true' ]] && return
-_ob_session_debug_tofile_fl_=false
-[[ $_ob_session_debug_tofile_chfl_ = 'true' ]] && DebugVar _ob_session_debug_tofile_fl_ ;}
-Session.Debug.ToFile.NoLogMods()
-{ [[ $_ob_session_debug_tofile_chfl_ != 'true' ]] && return
-_ob_session_debug_tofile_chfl_=false ;}
-Session.Debug.ToFile.Init()
-{ _ob_session_debug_tofile_fl_=false
-_ob_session_debug_tofile_chfl_=true ;}
-Session.Debug.ToFile.IsNt()
-{ [[ $_ob_session_debug_tofile_fl_ != 'true' ]] ;}
-Session.Debug.ToFile.IsSet()
-{ [[ $_ob_session_debug_tofile_fl_ = 'true' ]] ;}
-Session.Debug.ToFile.Set()
-{ [[ $_ob_session_debug_tofile_fl_ = 'true' ]] && return
-_ob_session_debug_tofile_fl_=true
-[[ $_ob_session_debug_tofile_chfl_ = 'true' ]] && DebugVar _ob_session_debug_tofile_fl_ ;}
-Session.Debug.ToFile.Init
 Session.Debug.ToScreen.Clear()
 { [[ $_ob_session_debug_toscreen_fl_ != 'true' ]] && return
 _ob_session_debug_toscreen_fl_=false
@@ -151,6 +132,25 @@ Session.Debug.ToScreen.Set()
 _ob_session_debug_toscreen_fl_=true
 [[ $_ob_session_debug_toscreen_chfl_ = 'true' ]] && DebugVar _ob_session_debug_toscreen_fl_ ;}
 Session.Debug.ToScreen.Init
+Session.Debug.ToFile.Clear()
+{ [[ $_ob_session_debug_tofile_fl_ != 'true' ]] && return
+_ob_session_debug_tofile_fl_=false
+[[ $_ob_session_debug_tofile_chfl_ = 'true' ]] && DebugVar _ob_session_debug_tofile_fl_ ;}
+Session.Debug.ToFile.NoLogMods()
+{ [[ $_ob_session_debug_tofile_chfl_ != 'true' ]] && return
+_ob_session_debug_tofile_chfl_=false ;}
+Session.Debug.ToFile.Init()
+{ _ob_session_debug_tofile_fl_=true
+_ob_session_debug_tofile_chfl_=true ;}
+Session.Debug.ToFile.IsNt()
+{ [[ $_ob_session_debug_tofile_fl_ != 'true' ]] ;}
+Session.Debug.ToFile.IsSet()
+{ [[ $_ob_session_debug_tofile_fl_ = 'true' ]] ;}
+Session.Debug.ToFile.Set()
+{ [[ $_ob_session_debug_tofile_fl_ = 'true' ]] && return
+_ob_session_debug_tofile_fl_=true
+[[ $_ob_session_debug_tofile_chfl_ = 'true' ]] && DebugVar _ob_session_debug_tofile_fl_ ;}
+Session.Debug.ToFile.Init
 QPKGs.Loaded.Clear()
 { [[ $_ob_qpkgs_loaded_fl_ != 'true' ]] && return
 _ob_qpkgs_loaded_fl_=false

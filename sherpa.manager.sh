@@ -57,7 +57,7 @@ Session.Init()
     IsSU || return
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220419g
+    local -r SCRIPT_VERSION=220420
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -5822,7 +5822,7 @@ DebugFuncEntry()
 
     local var_name=${FUNCNAME[1]}_STARTSECONDS
     local var_safe_name=${var_name//[.-]/_}
-    eval "$var_safe_name=$(/bin/date +%s%N)"    # hardcode 'date' here as this function is called before binaries are cherry-picked
+    eval "$var_safe_name=$(/bin/date +%s%N)"
 
     DebugThis "(>>) ${FUNCNAME[1]}"
 
