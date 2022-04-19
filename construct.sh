@@ -5,9 +5,11 @@
 PROJECT_NAME=sherpa
 WORK_PATH=$PWD
 
+MANAGEMENT_ACTIONS=(Check List Paste Reset View)
+
 PACKAGE_SCOPES=(All Dependent HasDependents Installable Names Standalone SupportBackup SupportUpdateOnRestart Upgradable)
 PACKAGE_STATES=(BackedUp Cleaned Disabled Downloaded Enabled Installed Missing Starting Started Stopping Stopped Restarting)
-PACKAGE_OPERATIONS=(Backup Clean Disable Download Enable Install Rebuild Reinstall Restart Restore Start Stop Uninstall Upgrade)
+PACKAGE_ACTIONS=(Backup Clean Disable Download Enable Install Rebuild Reinstall Restart Restore Start Stop Uninstall Upgrade)
 
 MANAGER_FILE=$PROJECT_NAME.manager.sh
 MANAGER_ARCHIVE_FILE=${MANAGER_FILE%.*}.tar.gz
@@ -165,32 +167,39 @@ for state in "${PACKAGE_STATES[@]}"; do
 done
 
 for scope in "${PACKAGE_SCOPES[@]}"; do
-    for operation in "${PACKAGE_OPERATIONS[@]}"; do
-        AddFlagObj Opts.Apps.Op${operation}.Sc${scope}
-        AddFlagObj Opts.Apps.Op${operation}.ScNt${scope}
+    for action in "${PACKAGE_ACTIONS[@]}"; do
+        AddFlagObj Opts.Apps.Ac${action}.Sc${scope}
+        AddFlagObj Opts.Apps.Ac${action}.ScNt${scope}
     done
 done
 
 for state in "${PACKAGE_STATES[@]}"; do
-    for operation in "${PACKAGE_OPERATIONS[@]}"; do
-        AddFlagObj Opts.Apps.Op${operation}.Is${state}
-        AddFlagObj Opts.Apps.Op${operation}.IsNt${state}
+    for action in "${PACKAGE_ACTIONS[@]}"; do
+        AddFlagObj Opts.Apps.Ac${action}.Is${state}
+        AddFlagObj Opts.Apps.Ac${action}.IsNt${state}
     done
 done
 
 # lists
 AddListObj Args.Unknown
 
-for operation in "${PACKAGE_OPERATIONS[@]}"; do
-    AddListObj QPKGs.OpTo${operation}       # operation to be tried
-    AddListObj QPKGs.OpOk${operation}       # operation was tried and succeeded
-    AddListObj QPKGs.OpEr${operation}       # operation was tried but failed
-    AddListObj QPKGs.OpSk${operation}       # operation was skipped
+for action in "${MANAGEMENT_ACTIONS[@]}"; do
+    AddListObj Self.AcTo${action}       # action to be tried
+    AddListObj Self.AcOk${action}       # action was tried and succeeded
+    AddListObj Self.AcEr${action}       # action was tried but failed
+    AddListObj Self.AcSk${action}       # action was skipped
 done
 
-for operation in Download Install Uninstall Upgrade; do     # only a subset of addon package operations are supported for-now
-    AddListObj IPKGs.OpTo${operation}
-    AddListObj PIPs.OpTo${operation}
+for action in "${PACKAGE_ACTIONS[@]}"; do
+    AddListObj QPKGs.AcTo${action}       # action to be tried
+    AddListObj QPKGs.AcOk${action}       # action was tried and succeeded
+    AddListObj QPKGs.AcEr${action}       # action was tried but failed
+    AddListObj QPKGs.AcSk${action}       # action was skipped
+done
+
+for action in Download Install Uninstall Upgrade; do    # only a subset of addon package actions are supported for-now
+    AddListObj IPKGs.AcTo${action}
+    AddListObj PIPs.AcTo${action}
 done
 
 for scope in "${PACKAGE_SCOPES[@]}"; do
