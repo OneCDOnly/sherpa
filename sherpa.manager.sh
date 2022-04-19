@@ -57,7 +57,7 @@ Session.Init()
     IsSU || return
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220420c
+    local -r SCRIPT_VERSION=220420d
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -3289,8 +3289,6 @@ QPKGs.NewVersions.Show()
 QPKGs.Conflicts.Check()
     {
 
-    DebugFuncEntry
-
     local package=''
 
     if [[ -n ${BASE_QPKG_CONFLICTS:-} ]]; then
@@ -3303,14 +3301,12 @@ QPKGs.Conflicts.Check()
         done
     fi
 
-    DebugFuncExit
+    return 0
 
     }
 
 QPKGs.Warnings.Check()
     {
-
-    DebugFuncEntry
 
     local package=''
 
@@ -3323,7 +3319,7 @@ QPKGs.Warnings.Check()
         done
     fi
 
-    DebugFuncExit
+    return 0
 
     }
 
