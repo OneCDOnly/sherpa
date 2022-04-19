@@ -57,7 +57,7 @@ Session.Init()
     IsSU || return
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220419f
+    local -r SCRIPT_VERSION=220419g
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -950,7 +950,7 @@ ParseArguments()
         # stage 1
         if [[ -z $action ]]; then
             case $arg in
-                a|abs|action|actions|actions-all|all-actions|b|backups|dependent|dependents|installable|installed|l|last|log|not-installed|o|option|options|p|package|packages|problems|standalone|standalones|started|stopped|tail|tips|upgradable|v|version|versions|whole)
+                a|abs|action|actions|actions-all|all-actions|b|backups|dependent|dependents|installable|installed|l|last|log|not-installed|option|options|p|package|packages|problems|standalone|standalones|started|stopped|tail|tips|upgradable|v|version|versions|whole)
                     action=help_
                     arg_identified=true
                     scope=''
@@ -2831,6 +2831,9 @@ Help.Actions.Show()
     DisplayAsProjectSyntaxIndentedExample 'backup these application configurations to the backup location' "backup $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample 'restore these application configurations from the backup location' "restore $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample 'show application backup files' 'list backups'
+    DisplayAsProjectSyntaxIndentedExample '' 'b'
+    DisplayAsProjectSyntaxIndentedExample 'list sherpa object version numbers' 'list versions'
+    DisplayAsProjectSyntaxIndentedExample '' 'v'
     Display
     DisplayAsProjectSyntaxExample "$(FormatAsHelpAction)s to affect all packages can be seen with" 'all-actions'
     Display
@@ -2896,6 +2899,7 @@ Help.Packages.Show()
     done
 
     DisplayAsProjectSyntaxExample "abbreviations may also be used to specify $(FormatAsHelpPackages). To list these" 'list abs'
+    DisplayAsProjectSyntaxIndentedExample '' 'a'
 
     return 0
 
