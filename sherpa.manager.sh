@@ -57,7 +57,7 @@ Session.Init()
     IsSU || return
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220420
+    local -r SCRIPT_VERSION=220420b
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -1464,7 +1464,7 @@ ArgumentSuggestions()
     local arg=''
 
     if Args.Unknown.IsAny; then
-        ShowAsEror "unknown argument$(Plural "$(Args.Unknown.Count)"): \"$(Args.Unknown.List)\""
+        ShowAsEror "unknown argument$(Plural "$(Args.Unknown.Count)"): \"$(Args.Unknown.List)\". Please check the argument list again"
 
         for arg in $(Args.Unknown.Array); do
             case $arg in
