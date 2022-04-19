@@ -57,7 +57,7 @@ Session.Init()
     IsSU || return
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220420b
+    local -r SCRIPT_VERSION=220420c
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -253,7 +253,6 @@ Session.Init()
     DebugInfoMinorSeparator
 
     Session.Summary.Set
-    Session.LineSpace.NoLogMods
 
     readonly NAS_FIRMWARE_VERSION=$(GetFirmwareVersion)
     readonly NAS_FIRMWARE_BUILD=$(GetFirmwareBuild)
