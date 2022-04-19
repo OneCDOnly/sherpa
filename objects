@@ -13287,6 +13287,182 @@ else
 echo -n "$_ob_self_acskreset_sz_"
 fi ;}
 Self.AcSkReset.Init
+Self.AcToStatus.Add()
+{ local ar=(${1}) it=''
+[[ ${#ar[@]} -eq 0 ]] && return
+for it in "${ar[@]:-}"; do
+[[ " ${_ob_self_actostatus_ar_[*]+"${_ob_self_actostatus_ar_[@]}"} " != *"$it"* ]] && _ob_self_actostatus_ar_+=("$it")
+done ;}
+Self.AcToStatus.Array()
+{ echo -n "${_ob_self_actostatus_ar_[@]+"${_ob_self_actostatus_ar_[@]}"}" ;}
+Self.AcToStatus.Count()
+{ echo "${#_ob_self_actostatus_ar_[@]}" ;}
+Self.AcToStatus.Exist()
+{ [[ ${_ob_self_actostatus_ar_[*]:-} == *"$1"* ]] ;}
+Self.AcToStatus.Init()
+{ _ob_self_actostatus_sz_=0
+_ob_self_actostatus_ar_=()
+_ob_self_actostatus_arin_=1 ;}
+Self.AcToStatus.IsAny()
+{ [[ ${#_ob_self_actostatus_ar_[@]} -gt 0 ]] ;}
+Self.AcToStatus.IsNone()
+{ [[ ${#_ob_self_actostatus_ar_[@]} -eq 0 ]] ;}
+Self.AcToStatus.List()
+{ echo -n "${_ob_self_actostatus_ar_[*]+"${_ob_self_actostatus_ar_[@]}"}" ;}
+Self.AcToStatus.ListCSV()
+{ echo -n "${_ob_self_actostatus_ar_[*]+"${_ob_self_actostatus_ar_[@]}"}" | tr ' ' ',' ;}
+Self.AcToStatus.Remove()
+{ local agar=(${1}) tmar=() ag='' it='' m=false
+for it in "${_ob_self_actostatus_ar_[@]+"${_ob_self_actostatus_ar_[@]}"}"; do
+m=false
+for ag in "${agar[@]+"${agar[@]}"}"; do
+if [[ $ag = "$it" ]]; then
+m=true; break
+fi
+done
+[[ $m = false ]] && tmar+=("$it")
+done
+_ob_self_actostatus_ar_=("${tmar[@]+"${tmar[@]}"}")
+[[ -z ${_ob_self_actostatus_ar_[*]+"${_ob_self_actostatus_ar_[@]}"} ]] && _ob_self_actostatus_ar_=() ;}
+Self.AcToStatus.Size()
+{ if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+_ob_self_actostatus_sz_=$2
+else
+echo -n "$_ob_self_actostatus_sz_"
+fi ;}
+Self.AcToStatus.Init
+Self.AcOkStatus.Add()
+{ local ar=(${1}) it=''
+[[ ${#ar[@]} -eq 0 ]] && return
+for it in "${ar[@]:-}"; do
+[[ " ${_ob_self_acokstatus_ar_[*]+"${_ob_self_acokstatus_ar_[@]}"} " != *"$it"* ]] && _ob_self_acokstatus_ar_+=("$it")
+done ;}
+Self.AcOkStatus.Array()
+{ echo -n "${_ob_self_acokstatus_ar_[@]+"${_ob_self_acokstatus_ar_[@]}"}" ;}
+Self.AcOkStatus.Count()
+{ echo "${#_ob_self_acokstatus_ar_[@]}" ;}
+Self.AcOkStatus.Exist()
+{ [[ ${_ob_self_acokstatus_ar_[*]:-} == *"$1"* ]] ;}
+Self.AcOkStatus.Init()
+{ _ob_self_acokstatus_sz_=0
+_ob_self_acokstatus_ar_=()
+_ob_self_acokstatus_arin_=1 ;}
+Self.AcOkStatus.IsAny()
+{ [[ ${#_ob_self_acokstatus_ar_[@]} -gt 0 ]] ;}
+Self.AcOkStatus.IsNone()
+{ [[ ${#_ob_self_acokstatus_ar_[@]} -eq 0 ]] ;}
+Self.AcOkStatus.List()
+{ echo -n "${_ob_self_acokstatus_ar_[*]+"${_ob_self_acokstatus_ar_[@]}"}" ;}
+Self.AcOkStatus.ListCSV()
+{ echo -n "${_ob_self_acokstatus_ar_[*]+"${_ob_self_acokstatus_ar_[@]}"}" | tr ' ' ',' ;}
+Self.AcOkStatus.Remove()
+{ local agar=(${1}) tmar=() ag='' it='' m=false
+for it in "${_ob_self_acokstatus_ar_[@]+"${_ob_self_acokstatus_ar_[@]}"}"; do
+m=false
+for ag in "${agar[@]+"${agar[@]}"}"; do
+if [[ $ag = "$it" ]]; then
+m=true; break
+fi
+done
+[[ $m = false ]] && tmar+=("$it")
+done
+_ob_self_acokstatus_ar_=("${tmar[@]+"${tmar[@]}"}")
+[[ -z ${_ob_self_acokstatus_ar_[*]+"${_ob_self_acokstatus_ar_[@]}"} ]] && _ob_self_acokstatus_ar_=() ;}
+Self.AcOkStatus.Size()
+{ if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+_ob_self_acokstatus_sz_=$2
+else
+echo -n "$_ob_self_acokstatus_sz_"
+fi ;}
+Self.AcOkStatus.Init
+Self.AcErStatus.Add()
+{ local ar=(${1}) it=''
+[[ ${#ar[@]} -eq 0 ]] && return
+for it in "${ar[@]:-}"; do
+[[ " ${_ob_self_acerstatus_ar_[*]+"${_ob_self_acerstatus_ar_[@]}"} " != *"$it"* ]] && _ob_self_acerstatus_ar_+=("$it")
+done ;}
+Self.AcErStatus.Array()
+{ echo -n "${_ob_self_acerstatus_ar_[@]+"${_ob_self_acerstatus_ar_[@]}"}" ;}
+Self.AcErStatus.Count()
+{ echo "${#_ob_self_acerstatus_ar_[@]}" ;}
+Self.AcErStatus.Exist()
+{ [[ ${_ob_self_acerstatus_ar_[*]:-} == *"$1"* ]] ;}
+Self.AcErStatus.Init()
+{ _ob_self_acerstatus_sz_=0
+_ob_self_acerstatus_ar_=()
+_ob_self_acerstatus_arin_=1 ;}
+Self.AcErStatus.IsAny()
+{ [[ ${#_ob_self_acerstatus_ar_[@]} -gt 0 ]] ;}
+Self.AcErStatus.IsNone()
+{ [[ ${#_ob_self_acerstatus_ar_[@]} -eq 0 ]] ;}
+Self.AcErStatus.List()
+{ echo -n "${_ob_self_acerstatus_ar_[*]+"${_ob_self_acerstatus_ar_[@]}"}" ;}
+Self.AcErStatus.ListCSV()
+{ echo -n "${_ob_self_acerstatus_ar_[*]+"${_ob_self_acerstatus_ar_[@]}"}" | tr ' ' ',' ;}
+Self.AcErStatus.Remove()
+{ local agar=(${1}) tmar=() ag='' it='' m=false
+for it in "${_ob_self_acerstatus_ar_[@]+"${_ob_self_acerstatus_ar_[@]}"}"; do
+m=false
+for ag in "${agar[@]+"${agar[@]}"}"; do
+if [[ $ag = "$it" ]]; then
+m=true; break
+fi
+done
+[[ $m = false ]] && tmar+=("$it")
+done
+_ob_self_acerstatus_ar_=("${tmar[@]+"${tmar[@]}"}")
+[[ -z ${_ob_self_acerstatus_ar_[*]+"${_ob_self_acerstatus_ar_[@]}"} ]] && _ob_self_acerstatus_ar_=() ;}
+Self.AcErStatus.Size()
+{ if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+_ob_self_acerstatus_sz_=$2
+else
+echo -n "$_ob_self_acerstatus_sz_"
+fi ;}
+Self.AcErStatus.Init
+Self.AcSkStatus.Add()
+{ local ar=(${1}) it=''
+[[ ${#ar[@]} -eq 0 ]] && return
+for it in "${ar[@]:-}"; do
+[[ " ${_ob_self_acskstatus_ar_[*]+"${_ob_self_acskstatus_ar_[@]}"} " != *"$it"* ]] && _ob_self_acskstatus_ar_+=("$it")
+done ;}
+Self.AcSkStatus.Array()
+{ echo -n "${_ob_self_acskstatus_ar_[@]+"${_ob_self_acskstatus_ar_[@]}"}" ;}
+Self.AcSkStatus.Count()
+{ echo "${#_ob_self_acskstatus_ar_[@]}" ;}
+Self.AcSkStatus.Exist()
+{ [[ ${_ob_self_acskstatus_ar_[*]:-} == *"$1"* ]] ;}
+Self.AcSkStatus.Init()
+{ _ob_self_acskstatus_sz_=0
+_ob_self_acskstatus_ar_=()
+_ob_self_acskstatus_arin_=1 ;}
+Self.AcSkStatus.IsAny()
+{ [[ ${#_ob_self_acskstatus_ar_[@]} -gt 0 ]] ;}
+Self.AcSkStatus.IsNone()
+{ [[ ${#_ob_self_acskstatus_ar_[@]} -eq 0 ]] ;}
+Self.AcSkStatus.List()
+{ echo -n "${_ob_self_acskstatus_ar_[*]+"${_ob_self_acskstatus_ar_[@]}"}" ;}
+Self.AcSkStatus.ListCSV()
+{ echo -n "${_ob_self_acskstatus_ar_[*]+"${_ob_self_acskstatus_ar_[@]}"}" | tr ' ' ',' ;}
+Self.AcSkStatus.Remove()
+{ local agar=(${1}) tmar=() ag='' it='' m=false
+for it in "${_ob_self_acskstatus_ar_[@]+"${_ob_self_acskstatus_ar_[@]}"}"; do
+m=false
+for ag in "${agar[@]+"${agar[@]}"}"; do
+if [[ $ag = "$it" ]]; then
+m=true; break
+fi
+done
+[[ $m = false ]] && tmar+=("$it")
+done
+_ob_self_acskstatus_ar_=("${tmar[@]+"${tmar[@]}"}")
+[[ -z ${_ob_self_acskstatus_ar_[*]+"${_ob_self_acskstatus_ar_[@]}"} ]] && _ob_self_acskstatus_ar_=() ;}
+Self.AcSkStatus.Size()
+{ if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+_ob_self_acskstatus_sz_=$2
+else
+echo -n "$_ob_self_acskstatus_sz_"
+fi ;}
+Self.AcSkStatus.Init
 Self.AcToView.Add()
 { local ar=(${1}) it=''
 [[ ${#ar[@]} -eq 0 ]] && return
