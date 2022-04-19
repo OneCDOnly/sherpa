@@ -66,7 +66,7 @@ Init()
     readonly PORT_CHECK_TIMEOUT=60
     readonly GIT_APPEAR_TIMEOUT=300
     readonly LAUNCH_TARGET_APPEAR_TIMEOUT=30
-    readonly PID_APPEAR_TIMEOUT=5
+    readonly PID_APPEAR_TIMEOUT=60
 
     ui_port=0
     ui_port_secure=0
@@ -588,7 +588,6 @@ ExecuteAndLog()
 
     local exec_msgs=''
     local result=0
-    local returncode=0
 
     DisplayWaitCommitToLog "$1:"
     exec_msgs=$(eval "$2" 2>&1)
@@ -597,15 +596,15 @@ ExecuteAndLog()
     if [[ $result = 0 ]]; then
         DisplayCommitToLog 'OK'
         [[ $3 = log:everything ]] && CommitInfoToSysLog "$1: OK."
+        return 0
     else
         DisplayCommitToLog 'failed!'
         DisplayCommitToLog "$(FormatAsFuncMessages "$exec_msgs")"
         DisplayCommitToLog "$(FormatAsResult $result)"
         CommitWarnToSysLog "A problem occurred while $1. Check $(FormatAsFileName "$SERVICE_LOG_PATHFILE") for more details."
-        returncode=1
+        SetError
+        return 1
     fi
-
-    return $returncode
 
     }
 
