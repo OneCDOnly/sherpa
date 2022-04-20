@@ -8,7 +8,7 @@ WORK_PATH=$PWD
 MANAGEMENT_ACTIONS=(Check List Paste Reset Status View)
 
 PACKAGE_SCOPES=(All Dependent HasDependents Installable Names Standalone SupportBackup SupportUpdateOnRestart Upgradable)
-PACKAGE_STATES=(BackedUp Cleaned Disabled Downloaded Enabled Installed Missing Starting Started Stopping Stopped Restarting)
+PACKAGE_STATES=(BackedUp Cleaned Downloaded Enabled Installed Missing Starting Started Stopping Stopped Restarting)
 PACKAGE_ACTIONS=(Backup Clean Disable Download Enable Install Rebuild Reinstall Restart Restore Start Stop Uninstall Upgrade)
 
 MANAGER_FILE=$PROJECT_NAME.manager.sh
