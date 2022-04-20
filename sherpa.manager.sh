@@ -57,7 +57,7 @@ Session.Init()
     IsSU || return
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220420f
+    local -r SCRIPT_VERSION=220420g
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -189,7 +189,7 @@ Session.Init()
 
     MANAGEMENT_ACTIONS=(Check List Paste Reset Status View)
     PACKAGE_SCOPES=(All Dependent HasDependents Installable Names Standalone SupportBackup SupportUpdateOnRestart Upgradable)
-    PACKAGE_STATES=(BackedUp Cleaned Downloaded Enabled Installed Missing Starting Started Stopping Stopped Restarting)
+    PACKAGE_STATES=(BackedUp Cleaned Downloaded Enabled Installed Missing Starting Started Stopping Restarting)
     PACKAGE_ACTIONS=(Backup Clean Disable Download Enable Install Rebuild Reinstall Restart Restore Start Stop Uninstall Upgrade)
     PACKAGE_TIERS=(Standalone Addon Dependent)
 
@@ -623,7 +623,7 @@ Tiers.Processor()
                     # check for standalone packages that require starting due to dependents being reinstalled/installed/started/restarted
                     for package in $(QPKGs.AcToReinstall.Array) $(QPKGs.AcOkReinstall.Array) $(QPKGs.AcToInstall.Array) $(QPKGs.AcOkInstall.Array) $(QPKGs.AcToStart.Array) $(QPKGs.AcOkStart.Array) $(QPKGs.AcToRestart.Array) $(QPKGs.AcOkRestart.Array); do
                         for prospect in $(QPKG.GetStandalones "$package"); do
-                            QPKGs.IsStopped.Exist "$prospect" && QPKGs.AcToStart.Add "$prospect"
+                            QPKGs.IsNtStarted.Exist "$prospect" && QPKGs.AcToStart.Add "$prospect"
                         done
                     done
                 fi
@@ -839,8 +839,8 @@ Session.Results()
             QPKGs.IsNtInstalled.Show
         elif Opts.Apps.List.IsStarted.IsSet; then
             QPKGs.IsStarted.Show
-        elif Opts.Apps.List.IsStopped.IsSet; then
-            QPKGs.IsStopped.Show
+        elif Opts.Apps.List.IsNtStarted.IsSet; then
+            QPKGs.IsNtStarted.Show
         elif Opts.Apps.List.ScUpgradable.IsSet; then
             QPKGs.ScUpgradable.Show
         elif Opts.Apps.List.ScStandalone.IsSet; then
@@ -1079,7 +1079,7 @@ ParseArguments()
                         QPKGs.AcToBackup.Add "$(QPKGs.IsStarted.Array)"
                         ;;
                     stopped_)
-                        QPKGs.AcToBackup.Add "$(QPKGs.IsStopped.Array)"
+                        QPKGs.AcToBackup.Add "$(QPKGs.IsNtStarted.Array)"
                         ;;
                     *)
                         QPKGs.AcToBackup.Add "$package"
@@ -1108,7 +1108,7 @@ ParseArguments()
                         QPKGs.AcToClean.Add "$(QPKGs.IsStarted.Array)"
                         ;;
                     stopped_)
-                        QPKGs.AcToClean.Add "$(QPKGs.IsStopped.Array)"
+                        QPKGs.AcToClean.Add "$(QPKGs.IsNtStarted.Array)"
                         ;;
                     *)
                         QPKGs.AcToClean.Add "$package"
@@ -1173,7 +1173,7 @@ ParseArguments()
                         Opts.Help.Status.Set
                         ;;
                     stopped_)
-                        Opts.Apps.List.IsStopped.Set
+                        Opts.Apps.List.IsNtStarted.Set
                         Session.Display.Clean.Set
                         ;;
                     tips_)
@@ -1318,7 +1318,7 @@ ParseArguments()
                         action=''
                         ;;
                     stopped_)
-                        Opts.Apps.AcStart.IsStopped.Set
+                        Opts.Apps.AcStart.IsNtStarted.Set
                         action=''
                         ;;
                     *)
@@ -1376,7 +1376,7 @@ ParseArguments()
                         action_force=false
                         ;;
                     stopped_)
-                        Opts.Apps.AcUninstall.IsStopped.Set
+                        Opts.Apps.AcUninstall.IsNtStarted.Set
                         action=''
                         action_force=false
                         ;;
@@ -1403,7 +1403,7 @@ ParseArguments()
                         action=''
                         ;;
                     stopped_)
-                        Opts.Apps.AcUpgrade.IsStopped.Set
+                        Opts.Apps.AcUpgrade.IsNtStarted.Set
                         action=''
                         ;;
                     upgradable_)
@@ -1623,17 +1623,17 @@ ApplySensibleExceptions()
                         case $scope in
                             All)
                                 found=true
-                                QPKGs.AcTo${action}.Add "$(QPKGs.IsStopped.Array)"
+                                QPKGs.AcTo${action}.Add "$(QPKGs.IsNtStarted.Array)"
                                 ;;
                             Dependent)
                                 found=true
-                                for prospect in $(QPKGs.IsStopped.Array); do
+                                for prospect in $(QPKGs.IsNtStarted.Array); do
                                     QPKGs.ScDependent.Exist "$prospect" && QPKGs.AcTo${action}.Add "$prospect"
                                 done
                                 ;;
                             Standalone)
                                 found=true
-                                for prospect in $(QPKGs.IsStopped.Array); do
+                                for prospect in $(QPKGs.IsNtStarted.Array); do
                                     QPKGs.ScStandalone.Exist "$prospect" && QPKGs.AcTo${action}.Add "$prospect"
                                 done
                         esac
@@ -1891,7 +1891,7 @@ CalcIPKGsDepsToInstall()
     # From a specified list of IPKG names, find all dependent IPKGs, exclude those already installed, then generate a total qty to download
 
     QPKGs.IsNtInstalled.Exist Entware && return
-    QPKGs.IsStopped.Exist Entware && return
+    QPKGs.IsNtStarted.Exist Entware && return
     IsNtSysFileExist $GNU_GREP_CMD && return 1
     DebugFuncEntry
 
@@ -1980,7 +1980,7 @@ CalcAllIPKGsToUninstall()
     # From a specified list of IPKG names, exclude those already installed, then generate a total qty to uninstall
 
     QPKGs.IsNtInstalled.Exist Entware && return
-    QPKGs.IsStopped.Exist Entware && return
+    QPKGs.IsNtStarted.Exist Entware && return
     IsNtSysFileExist $GNU_GREP_CMD && return 1
     DebugFuncEntry
 
@@ -2038,7 +2038,7 @@ IPKGs.DoUpgrade()
     QPKGs.SkProc.IsSet && return
     IPKGs.Upgrade.IsNt && return
     QPKGs.IsNtInstalled.Exist Entware && return
-    QPKGs.IsStopped.Exist Entware && return
+    QPKGs.IsNtStarted.Exist Entware && return
     UpdateEntwarePackageList
     Session.Error.IsSet && return
     DebugFuncEntry
@@ -2084,7 +2084,7 @@ IPKGs.DoInstall()
     QPKGs.SkProc.IsSet && return
     IPKGs.Install.IsNt && return
     QPKGs.IsNtInstalled.Exist Entware && return
-    QPKGs.IsStopped.Exist Entware && return
+    QPKGs.IsNtStarted.Exist Entware && return
     UpdateEntwarePackageList
     Session.Error.IsSet && return
     DebugFuncEntry
@@ -2145,7 +2145,7 @@ IPKGs.DoUninstall()
     QPKGs.IsNtInstalled.Exist Entware && return
     QPKGs.AcToUninstall.Exist Entware && return
     QPKGs.AcToReinstall.Exist Entware && return
-    QPKGs.IsStopped.Exist Entware && return
+    QPKGs.IsNtStarted.Exist Entware && return
     Session.Error.IsSet && return
     DebugFuncEntry
 
@@ -2187,7 +2187,7 @@ PIPs.DoInstall()
     QPKGs.SkProc.IsSet && return
     PIPs.Install.IsNt && return
     QPKGs.IsNtInstalled.Exist Entware && return
-    QPKGs.IsStopped.Exist Entware && return
+    QPKGs.IsNtStarted.Exist Entware && return
     ! $OPKG_CMD status python3-pip | $GREP_CMD -q "Status:.*installed" && return
     Session.Error.IsSet && return
     DebugFuncEntry
@@ -3439,13 +3439,13 @@ QPKGs.States.Build()
                 QPKGs.IsStarted.Add "$package"
             elif [[ $(/sbin/getcfg "$package" Enable -u -f /etc/config/qpkg.conf) = 'FALSE' ]]; then
                 QPKGs.IsNtEnabled.Add "$package"
-                QPKGs.IsStopped.Add "$package"
+                QPKGs.IsNtStarted.Add "$package"
             fi
 
             if [[ -e /var/run/$package.last.operation ]]; then
                 case $(</var/run/$package.last.operation) in
                     starting)
-                        QPKGs.IsStopped.Remove "$package"
+                        QPKGs.IsNtStarted.Remove "$package"
                         QPKGs.IsStarting.Add "$package"
                         ;;
                     restarting)
@@ -3627,7 +3627,7 @@ QPKGs.Statuses.Show()
                         package_name=$(ColourTextBrightOrange "$current_package_name")
                     elif QPKGs.IsStarted.Exist "$current_package_name"; then
                         package_name=$(ColourTextBrightGreen "$current_package_name")
-                    elif QPKGs.IsStopped.Exist "$current_package_name"; then
+                    elif QPKGs.IsNtStarted.Exist "$current_package_name"; then
                         package_name=$(ColourTextBrightRed "$current_package_name")
                     fi
                 else
@@ -3647,7 +3647,7 @@ QPKGs.Statuses.Show()
                         package_status_notes+=($(ColourTextBrightOrange restarting))
                     elif QPKGs.IsStarted.Exist "$current_package_name"; then
                         package_status_notes+=($(ColourTextBrightGreen started))
-                    elif QPKGs.IsStopped.Exist "$current_package_name"; then
+                    elif QPKGs.IsNtStarted.Exist "$current_package_name"; then
                         package_status_notes+=($(ColourTextBrightRed stopped))
                     fi
 
@@ -3741,14 +3741,14 @@ QPKGs.IsStarted.Show()
 
     }
 
-QPKGs.IsStopped.Show()
+QPKGs.IsNtStarted.Show()
     {
 
     local package=''
     QPKGs.States.Build
     DisableDebugToArchiveAndFile
 
-    for package in $(QPKGs.IsStopped.Array); do
+    for package in $(QPKGs.IsNtStarted.Array); do
         Display "$package"
     done
 
@@ -3887,7 +3887,7 @@ MarkStateAsStarted()
     QPKGs.IsStarting.Remove "$1"
     QPKGs.IsStarted.Add "$1"
     QPKGs.IsStopping.Remove "$1"
-    QPKGs.IsStopped.Remove "$1"
+    QPKGs.IsNtStarted.Remove "$1"
     QPKGs.IsRestarting.Remove "$1"
 
     }
@@ -3898,7 +3898,7 @@ MarkStateAsStopped()
     QPKGs.IsStarting.Remove "$1"
     QPKGs.IsStarted.Remove "$1"
     QPKGs.IsStopping.Remove "$1"
-    QPKGs.IsStopped.Add "$1"
+    QPKGs.IsNtStarted.Add "$1"
     QPKGs.IsRestarting.Remove "$1"
 
     }
@@ -4702,7 +4702,7 @@ QPKG.DoStop()
         DebugFuncExit 2; return
     fi
 
-    if QPKGs.IsStopped.Exist "$PACKAGE_NAME"; then
+    if QPKGs.IsNtStarted.Exist "$PACKAGE_NAME"; then
         MarkActionAsSkipped show "$PACKAGE_NAME" stop "it's already stopped"
         DebugFuncExit 2; return
     fi
