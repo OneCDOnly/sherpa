@@ -57,7 +57,7 @@ Session.Init()
     IsSU || return
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220420h
+    local -r SCRIPT_VERSION=220420i
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -2833,7 +2833,7 @@ Help.Actions.Show()
     DisplayAsProjectSyntaxIndentedExample 'restore these application configurations from the backup location' "restore $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample 'show application backup files' 'list backups'
     DisplayAsProjectSyntaxIndentedExample '' 'b'
-    DisplayAsProjectSyntaxIndentedExample 'list sherpa object version numbers' 'list versions'
+    DisplayAsProjectSyntaxIndentedExample "list $(FormatAsScriptTitle) object version numbers" 'list versions'
     DisplayAsProjectSyntaxIndentedExample '' 'v'
     Display
     DisplayAsProjectSyntaxExample "$(FormatAsHelpAction)s to affect all packages can be seen with" 'all-actions'
@@ -2935,7 +2935,7 @@ Help.Problems.Show()
     DisplayAsProjectSyntaxIndentedExample '' "$(FormatAsHelpAction) $(FormatAsHelpPackages) verbose"
     DisplayAsProjectSyntaxIndentedExample 'ensure all application dependencies are installed' 'check'
     DisplayAsProjectSyntaxIndentedExample 'clear local repository files from these packages' "clean $(FormatAsHelpPackages)"
-    DisplayAsProjectSyntaxIndentedExample 'remove all cached sherpa items and logs' 'reset'
+    DisplayAsProjectSyntaxIndentedExample "remove all cached $(FormatAsScriptTitle) items and logs" 'reset'
     DisplayAsProjectSyntaxIndentedExample 'restart all installed packages (upgrades the internal applications, not packages)' 'restart all'
     DisplayAsProjectSyntaxIndentedExample 'start these packages and enable package icons' "start $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample 'stop these packages and disable package icons' "stop $(FormatAsHelpPackages)"
@@ -3373,6 +3373,7 @@ QPKGs.States.List()
 
     for state in "${PACKAGE_STATES_TEMPORARY[@]}"; do
         # speedup: only log arrays with more than zero elements
+        # shellcheck disable=2043
         for prefix in Is; do
             QPKGs.${prefix}${state}.IsAny && DebugQPKGInfo "${prefix}${state}" "($(QPKGs.${prefix}${state}.Count)) $(QPKGs.${prefix}${state}.ListCSV) "
         done
