@@ -57,7 +57,7 @@ Session.Init()
     IsSU || return
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220420d
+    local -r SCRIPT_VERSION=220420f
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -189,7 +189,7 @@ Session.Init()
 
     MANAGEMENT_ACTIONS=(Check List Paste Reset Status View)
     PACKAGE_SCOPES=(All Dependent HasDependents Installable Names Standalone SupportBackup SupportUpdateOnRestart Upgradable)
-    PACKAGE_STATES=(BackedUp Cleaned Disabled Downloaded Enabled Installed Missing Starting Started Stopping Stopped Restarting)
+    PACKAGE_STATES=(BackedUp Cleaned Downloaded Enabled Installed Missing Starting Started Stopping Stopped Restarting)
     PACKAGE_ACTIONS=(Backup Clean Disable Download Enable Install Rebuild Reinstall Restart Restore Start Stop Uninstall Upgrade)
     PACKAGE_TIERS=(Standalone Addon Dependent)
 
@@ -3438,7 +3438,7 @@ QPKGs.States.Build()
                 QPKGs.IsEnabled.Add "$package"
                 QPKGs.IsStarted.Add "$package"
             elif [[ $(/sbin/getcfg "$package" Enable -u -f /etc/config/qpkg.conf) = 'FALSE' ]]; then
-                QPKGs.IsDisabled.Add "$package"
+                QPKGs.IsNtEnabled.Add "$package"
                 QPKGs.IsStopped.Add "$package"
             fi
 
@@ -3615,7 +3615,7 @@ QPKGs.Statuses.Show()
                         package_name=$(ColourTextBrightRedBlink "$current_package_name")
                     elif QPKGs.IsEnabled.Exist "$current_package_name"; then
                         package_name=$(ColourTextBrightGreen "$current_package_name")
-                    elif QPKGs.IsDisabled.Exist "$current_package_name"; then
+                    elif QPKGs.IsNtEnabled.Exist "$current_package_name"; then
                         package_name=$(ColourTextBrightRed "$current_package_name")
                     fi
 
@@ -3635,7 +3635,7 @@ QPKGs.Statuses.Show()
                         package_status_notes=($(ColourTextBrightRedBlink missing))
                     elif QPKGs.IsEnabled.Exist "$current_package_name"; then
                         package_status_notes+=($(ColourTextBrightGreen enabled))
-                    elif QPKGs.IsDisabled.Exist "$current_package_name"; then
+                    elif QPKGs.IsNtEnabled.Exist "$current_package_name"; then
                         package_status_notes+=($(ColourTextBrightRed disabled))
                     fi
 
