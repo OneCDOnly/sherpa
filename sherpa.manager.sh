@@ -57,24 +57,15 @@ Session.Init()
     IsSU || return
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220420i
+    local -r SCRIPT_VERSION=220421
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
 
     export LC_ALL=''    # need to disable ALL to enable setting of individual vars
+    export LANG=en_US.utf8
     export LC_CTYPE=C
     export LC_NUMERIC=en_US.utf8
-    export LC_TIME=C
-    export LC_COLLATE=C
-    export LC_MONETARY=C
-    export LC_MESSAGES=C
-    export LC_PAPER=C
-    export LC_NAME=C
-    export LC_ADDRESS=C
-    export LC_TELEPHONE=C
-    export LC_MEASUREMENT=C
-    export LC_IDENTIFICATION=C
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
