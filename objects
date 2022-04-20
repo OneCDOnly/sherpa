@@ -1079,42 +1079,6 @@ Opts.Apps.List.IsNtMissing.Set()
 _ob_opts_apps_list_isntmissing_fl_=true
 [[ $_ob_opts_apps_list_isntmissing_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_list_isntmissing_fl_ ;}
 Opts.Apps.List.IsNtMissing.Init
-Opts.Apps.List.IsStarting.Clear()
-{ [[ $_ob_opts_apps_list_isstarting_fl_ != 'true' ]] && return
-_ob_opts_apps_list_isstarting_fl_=false
-[[ $_ob_opts_apps_list_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_list_isstarting_fl_ ;}
-Opts.Apps.List.IsStarting.NoLogMods()
-{ _ob_opts_apps_list_isstarting_chfl_=false ;}
-Opts.Apps.List.IsStarting.Init()
-{ _ob_opts_apps_list_isstarting_fl_=false
-_ob_opts_apps_list_isstarting_chfl_=true ;}
-Opts.Apps.List.IsStarting.IsNt()
-{ [[ $_ob_opts_apps_list_isstarting_fl_ != 'true' ]] ;}
-Opts.Apps.List.IsStarting.IsSet()
-{ [[ $_ob_opts_apps_list_isstarting_fl_ = 'true' ]] ;}
-Opts.Apps.List.IsStarting.Set()
-{ [[ $_ob_opts_apps_list_isstarting_fl_ = 'true' ]] && return
-_ob_opts_apps_list_isstarting_fl_=true
-[[ $_ob_opts_apps_list_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_list_isstarting_fl_ ;}
-Opts.Apps.List.IsStarting.Init
-Opts.Apps.List.IsNtStarting.Clear()
-{ [[ $_ob_opts_apps_list_isntstarting_fl_ != 'true' ]] && return
-_ob_opts_apps_list_isntstarting_fl_=false
-[[ $_ob_opts_apps_list_isntstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_list_isntstarting_fl_ ;}
-Opts.Apps.List.IsNtStarting.NoLogMods()
-{ _ob_opts_apps_list_isntstarting_chfl_=false ;}
-Opts.Apps.List.IsNtStarting.Init()
-{ _ob_opts_apps_list_isntstarting_fl_=false
-_ob_opts_apps_list_isntstarting_chfl_=true ;}
-Opts.Apps.List.IsNtStarting.IsNt()
-{ [[ $_ob_opts_apps_list_isntstarting_fl_ != 'true' ]] ;}
-Opts.Apps.List.IsNtStarting.IsSet()
-{ [[ $_ob_opts_apps_list_isntstarting_fl_ = 'true' ]] ;}
-Opts.Apps.List.IsNtStarting.Set()
-{ [[ $_ob_opts_apps_list_isntstarting_fl_ = 'true' ]] && return
-_ob_opts_apps_list_isntstarting_fl_=true
-[[ $_ob_opts_apps_list_isntstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_list_isntstarting_fl_ ;}
-Opts.Apps.List.IsNtStarting.Init
 Opts.Apps.List.IsStarted.Clear()
 { [[ $_ob_opts_apps_list_isstarted_fl_ != 'true' ]] && return
 _ob_opts_apps_list_isstarted_fl_=false
@@ -1151,6 +1115,24 @@ Opts.Apps.List.IsNtStarted.Set()
 _ob_opts_apps_list_isntstarted_fl_=true
 [[ $_ob_opts_apps_list_isntstarted_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_list_isntstarted_fl_ ;}
 Opts.Apps.List.IsNtStarted.Init
+Opts.Apps.List.IsStarting.Clear()
+{ [[ $_ob_opts_apps_list_isstarting_fl_ != 'true' ]] && return
+_ob_opts_apps_list_isstarting_fl_=false
+[[ $_ob_opts_apps_list_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_list_isstarting_fl_ ;}
+Opts.Apps.List.IsStarting.NoLogMods()
+{ _ob_opts_apps_list_isstarting_chfl_=false ;}
+Opts.Apps.List.IsStarting.Init()
+{ _ob_opts_apps_list_isstarting_fl_=false
+_ob_opts_apps_list_isstarting_chfl_=true ;}
+Opts.Apps.List.IsStarting.IsNt()
+{ [[ $_ob_opts_apps_list_isstarting_fl_ != 'true' ]] ;}
+Opts.Apps.List.IsStarting.IsSet()
+{ [[ $_ob_opts_apps_list_isstarting_fl_ = 'true' ]] ;}
+Opts.Apps.List.IsStarting.Set()
+{ [[ $_ob_opts_apps_list_isstarting_fl_ = 'true' ]] && return
+_ob_opts_apps_list_isstarting_fl_=true
+[[ $_ob_opts_apps_list_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_list_isstarting_fl_ ;}
+Opts.Apps.List.IsStarting.Init
 Opts.Apps.List.IsStopping.Clear()
 { [[ $_ob_opts_apps_list_isstopping_fl_ != 'true' ]] && return
 _ob_opts_apps_list_isstopping_fl_=false
@@ -1169,24 +1151,6 @@ Opts.Apps.List.IsStopping.Set()
 _ob_opts_apps_list_isstopping_fl_=true
 [[ $_ob_opts_apps_list_isstopping_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_list_isstopping_fl_ ;}
 Opts.Apps.List.IsStopping.Init
-Opts.Apps.List.IsNtStopping.Clear()
-{ [[ $_ob_opts_apps_list_isntstopping_fl_ != 'true' ]] && return
-_ob_opts_apps_list_isntstopping_fl_=false
-[[ $_ob_opts_apps_list_isntstopping_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_list_isntstopping_fl_ ;}
-Opts.Apps.List.IsNtStopping.NoLogMods()
-{ _ob_opts_apps_list_isntstopping_chfl_=false ;}
-Opts.Apps.List.IsNtStopping.Init()
-{ _ob_opts_apps_list_isntstopping_fl_=false
-_ob_opts_apps_list_isntstopping_chfl_=true ;}
-Opts.Apps.List.IsNtStopping.IsNt()
-{ [[ $_ob_opts_apps_list_isntstopping_fl_ != 'true' ]] ;}
-Opts.Apps.List.IsNtStopping.IsSet()
-{ [[ $_ob_opts_apps_list_isntstopping_fl_ = 'true' ]] ;}
-Opts.Apps.List.IsNtStopping.Set()
-{ [[ $_ob_opts_apps_list_isntstopping_fl_ = 'true' ]] && return
-_ob_opts_apps_list_isntstopping_fl_=true
-[[ $_ob_opts_apps_list_isntstopping_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_list_isntstopping_fl_ ;}
-Opts.Apps.List.IsNtStopping.Init
 Opts.Apps.List.IsRestarting.Clear()
 { [[ $_ob_opts_apps_list_isrestarting_fl_ != 'true' ]] && return
 _ob_opts_apps_list_isrestarting_fl_=false
@@ -1205,24 +1169,6 @@ Opts.Apps.List.IsRestarting.Set()
 _ob_opts_apps_list_isrestarting_fl_=true
 [[ $_ob_opts_apps_list_isrestarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_list_isrestarting_fl_ ;}
 Opts.Apps.List.IsRestarting.Init
-Opts.Apps.List.IsNtRestarting.Clear()
-{ [[ $_ob_opts_apps_list_isntrestarting_fl_ != 'true' ]] && return
-_ob_opts_apps_list_isntrestarting_fl_=false
-[[ $_ob_opts_apps_list_isntrestarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_list_isntrestarting_fl_ ;}
-Opts.Apps.List.IsNtRestarting.NoLogMods()
-{ _ob_opts_apps_list_isntrestarting_chfl_=false ;}
-Opts.Apps.List.IsNtRestarting.Init()
-{ _ob_opts_apps_list_isntrestarting_fl_=false
-_ob_opts_apps_list_isntrestarting_chfl_=true ;}
-Opts.Apps.List.IsNtRestarting.IsNt()
-{ [[ $_ob_opts_apps_list_isntrestarting_fl_ != 'true' ]] ;}
-Opts.Apps.List.IsNtRestarting.IsSet()
-{ [[ $_ob_opts_apps_list_isntrestarting_fl_ = 'true' ]] ;}
-Opts.Apps.List.IsNtRestarting.Set()
-{ [[ $_ob_opts_apps_list_isntrestarting_fl_ = 'true' ]] && return
-_ob_opts_apps_list_isntrestarting_fl_=true
-[[ $_ob_opts_apps_list_isntrestarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_list_isntrestarting_fl_ ;}
-Opts.Apps.List.IsNtRestarting.Init
 Opts.Apps.AcBackup.ScAll.Clear()
 { [[ $_ob_opts_apps_acbackup_scall_fl_ != 'true' ]] && return
 _ob_opts_apps_acbackup_scall_fl_=false
@@ -8783,510 +8729,6 @@ Opts.Apps.AcUpgrade.IsNtMissing.Set()
 _ob_opts_apps_acupgrade_isntmissing_fl_=true
 [[ $_ob_opts_apps_acupgrade_isntmissing_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acupgrade_isntmissing_fl_ ;}
 Opts.Apps.AcUpgrade.IsNtMissing.Init
-Opts.Apps.AcBackup.IsStarting.Clear()
-{ [[ $_ob_opts_apps_acbackup_isstarting_fl_ != 'true' ]] && return
-_ob_opts_apps_acbackup_isstarting_fl_=false
-[[ $_ob_opts_apps_acbackup_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acbackup_isstarting_fl_ ;}
-Opts.Apps.AcBackup.IsStarting.NoLogMods()
-{ _ob_opts_apps_acbackup_isstarting_chfl_=false ;}
-Opts.Apps.AcBackup.IsStarting.Init()
-{ _ob_opts_apps_acbackup_isstarting_fl_=false
-_ob_opts_apps_acbackup_isstarting_chfl_=true ;}
-Opts.Apps.AcBackup.IsStarting.IsNt()
-{ [[ $_ob_opts_apps_acbackup_isstarting_fl_ != 'true' ]] ;}
-Opts.Apps.AcBackup.IsStarting.IsSet()
-{ [[ $_ob_opts_apps_acbackup_isstarting_fl_ = 'true' ]] ;}
-Opts.Apps.AcBackup.IsStarting.Set()
-{ [[ $_ob_opts_apps_acbackup_isstarting_fl_ = 'true' ]] && return
-_ob_opts_apps_acbackup_isstarting_fl_=true
-[[ $_ob_opts_apps_acbackup_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acbackup_isstarting_fl_ ;}
-Opts.Apps.AcBackup.IsStarting.Init
-Opts.Apps.AcBackup.IsNtStarting.Clear()
-{ [[ $_ob_opts_apps_acbackup_isntstarting_fl_ != 'true' ]] && return
-_ob_opts_apps_acbackup_isntstarting_fl_=false
-[[ $_ob_opts_apps_acbackup_isntstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acbackup_isntstarting_fl_ ;}
-Opts.Apps.AcBackup.IsNtStarting.NoLogMods()
-{ _ob_opts_apps_acbackup_isntstarting_chfl_=false ;}
-Opts.Apps.AcBackup.IsNtStarting.Init()
-{ _ob_opts_apps_acbackup_isntstarting_fl_=false
-_ob_opts_apps_acbackup_isntstarting_chfl_=true ;}
-Opts.Apps.AcBackup.IsNtStarting.IsNt()
-{ [[ $_ob_opts_apps_acbackup_isntstarting_fl_ != 'true' ]] ;}
-Opts.Apps.AcBackup.IsNtStarting.IsSet()
-{ [[ $_ob_opts_apps_acbackup_isntstarting_fl_ = 'true' ]] ;}
-Opts.Apps.AcBackup.IsNtStarting.Set()
-{ [[ $_ob_opts_apps_acbackup_isntstarting_fl_ = 'true' ]] && return
-_ob_opts_apps_acbackup_isntstarting_fl_=true
-[[ $_ob_opts_apps_acbackup_isntstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acbackup_isntstarting_fl_ ;}
-Opts.Apps.AcBackup.IsNtStarting.Init
-Opts.Apps.AcClean.IsStarting.Clear()
-{ [[ $_ob_opts_apps_acclean_isstarting_fl_ != 'true' ]] && return
-_ob_opts_apps_acclean_isstarting_fl_=false
-[[ $_ob_opts_apps_acclean_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acclean_isstarting_fl_ ;}
-Opts.Apps.AcClean.IsStarting.NoLogMods()
-{ _ob_opts_apps_acclean_isstarting_chfl_=false ;}
-Opts.Apps.AcClean.IsStarting.Init()
-{ _ob_opts_apps_acclean_isstarting_fl_=false
-_ob_opts_apps_acclean_isstarting_chfl_=true ;}
-Opts.Apps.AcClean.IsStarting.IsNt()
-{ [[ $_ob_opts_apps_acclean_isstarting_fl_ != 'true' ]] ;}
-Opts.Apps.AcClean.IsStarting.IsSet()
-{ [[ $_ob_opts_apps_acclean_isstarting_fl_ = 'true' ]] ;}
-Opts.Apps.AcClean.IsStarting.Set()
-{ [[ $_ob_opts_apps_acclean_isstarting_fl_ = 'true' ]] && return
-_ob_opts_apps_acclean_isstarting_fl_=true
-[[ $_ob_opts_apps_acclean_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acclean_isstarting_fl_ ;}
-Opts.Apps.AcClean.IsStarting.Init
-Opts.Apps.AcClean.IsNtStarting.Clear()
-{ [[ $_ob_opts_apps_acclean_isntstarting_fl_ != 'true' ]] && return
-_ob_opts_apps_acclean_isntstarting_fl_=false
-[[ $_ob_opts_apps_acclean_isntstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acclean_isntstarting_fl_ ;}
-Opts.Apps.AcClean.IsNtStarting.NoLogMods()
-{ _ob_opts_apps_acclean_isntstarting_chfl_=false ;}
-Opts.Apps.AcClean.IsNtStarting.Init()
-{ _ob_opts_apps_acclean_isntstarting_fl_=false
-_ob_opts_apps_acclean_isntstarting_chfl_=true ;}
-Opts.Apps.AcClean.IsNtStarting.IsNt()
-{ [[ $_ob_opts_apps_acclean_isntstarting_fl_ != 'true' ]] ;}
-Opts.Apps.AcClean.IsNtStarting.IsSet()
-{ [[ $_ob_opts_apps_acclean_isntstarting_fl_ = 'true' ]] ;}
-Opts.Apps.AcClean.IsNtStarting.Set()
-{ [[ $_ob_opts_apps_acclean_isntstarting_fl_ = 'true' ]] && return
-_ob_opts_apps_acclean_isntstarting_fl_=true
-[[ $_ob_opts_apps_acclean_isntstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acclean_isntstarting_fl_ ;}
-Opts.Apps.AcClean.IsNtStarting.Init
-Opts.Apps.AcDisable.IsStarting.Clear()
-{ [[ $_ob_opts_apps_acdisable_isstarting_fl_ != 'true' ]] && return
-_ob_opts_apps_acdisable_isstarting_fl_=false
-[[ $_ob_opts_apps_acdisable_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acdisable_isstarting_fl_ ;}
-Opts.Apps.AcDisable.IsStarting.NoLogMods()
-{ _ob_opts_apps_acdisable_isstarting_chfl_=false ;}
-Opts.Apps.AcDisable.IsStarting.Init()
-{ _ob_opts_apps_acdisable_isstarting_fl_=false
-_ob_opts_apps_acdisable_isstarting_chfl_=true ;}
-Opts.Apps.AcDisable.IsStarting.IsNt()
-{ [[ $_ob_opts_apps_acdisable_isstarting_fl_ != 'true' ]] ;}
-Opts.Apps.AcDisable.IsStarting.IsSet()
-{ [[ $_ob_opts_apps_acdisable_isstarting_fl_ = 'true' ]] ;}
-Opts.Apps.AcDisable.IsStarting.Set()
-{ [[ $_ob_opts_apps_acdisable_isstarting_fl_ = 'true' ]] && return
-_ob_opts_apps_acdisable_isstarting_fl_=true
-[[ $_ob_opts_apps_acdisable_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acdisable_isstarting_fl_ ;}
-Opts.Apps.AcDisable.IsStarting.Init
-Opts.Apps.AcDisable.IsNtStarting.Clear()
-{ [[ $_ob_opts_apps_acdisable_isntstarting_fl_ != 'true' ]] && return
-_ob_opts_apps_acdisable_isntstarting_fl_=false
-[[ $_ob_opts_apps_acdisable_isntstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acdisable_isntstarting_fl_ ;}
-Opts.Apps.AcDisable.IsNtStarting.NoLogMods()
-{ _ob_opts_apps_acdisable_isntstarting_chfl_=false ;}
-Opts.Apps.AcDisable.IsNtStarting.Init()
-{ _ob_opts_apps_acdisable_isntstarting_fl_=false
-_ob_opts_apps_acdisable_isntstarting_chfl_=true ;}
-Opts.Apps.AcDisable.IsNtStarting.IsNt()
-{ [[ $_ob_opts_apps_acdisable_isntstarting_fl_ != 'true' ]] ;}
-Opts.Apps.AcDisable.IsNtStarting.IsSet()
-{ [[ $_ob_opts_apps_acdisable_isntstarting_fl_ = 'true' ]] ;}
-Opts.Apps.AcDisable.IsNtStarting.Set()
-{ [[ $_ob_opts_apps_acdisable_isntstarting_fl_ = 'true' ]] && return
-_ob_opts_apps_acdisable_isntstarting_fl_=true
-[[ $_ob_opts_apps_acdisable_isntstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acdisable_isntstarting_fl_ ;}
-Opts.Apps.AcDisable.IsNtStarting.Init
-Opts.Apps.AcDownload.IsStarting.Clear()
-{ [[ $_ob_opts_apps_acdownload_isstarting_fl_ != 'true' ]] && return
-_ob_opts_apps_acdownload_isstarting_fl_=false
-[[ $_ob_opts_apps_acdownload_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acdownload_isstarting_fl_ ;}
-Opts.Apps.AcDownload.IsStarting.NoLogMods()
-{ _ob_opts_apps_acdownload_isstarting_chfl_=false ;}
-Opts.Apps.AcDownload.IsStarting.Init()
-{ _ob_opts_apps_acdownload_isstarting_fl_=false
-_ob_opts_apps_acdownload_isstarting_chfl_=true ;}
-Opts.Apps.AcDownload.IsStarting.IsNt()
-{ [[ $_ob_opts_apps_acdownload_isstarting_fl_ != 'true' ]] ;}
-Opts.Apps.AcDownload.IsStarting.IsSet()
-{ [[ $_ob_opts_apps_acdownload_isstarting_fl_ = 'true' ]] ;}
-Opts.Apps.AcDownload.IsStarting.Set()
-{ [[ $_ob_opts_apps_acdownload_isstarting_fl_ = 'true' ]] && return
-_ob_opts_apps_acdownload_isstarting_fl_=true
-[[ $_ob_opts_apps_acdownload_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acdownload_isstarting_fl_ ;}
-Opts.Apps.AcDownload.IsStarting.Init
-Opts.Apps.AcDownload.IsNtStarting.Clear()
-{ [[ $_ob_opts_apps_acdownload_isntstarting_fl_ != 'true' ]] && return
-_ob_opts_apps_acdownload_isntstarting_fl_=false
-[[ $_ob_opts_apps_acdownload_isntstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acdownload_isntstarting_fl_ ;}
-Opts.Apps.AcDownload.IsNtStarting.NoLogMods()
-{ _ob_opts_apps_acdownload_isntstarting_chfl_=false ;}
-Opts.Apps.AcDownload.IsNtStarting.Init()
-{ _ob_opts_apps_acdownload_isntstarting_fl_=false
-_ob_opts_apps_acdownload_isntstarting_chfl_=true ;}
-Opts.Apps.AcDownload.IsNtStarting.IsNt()
-{ [[ $_ob_opts_apps_acdownload_isntstarting_fl_ != 'true' ]] ;}
-Opts.Apps.AcDownload.IsNtStarting.IsSet()
-{ [[ $_ob_opts_apps_acdownload_isntstarting_fl_ = 'true' ]] ;}
-Opts.Apps.AcDownload.IsNtStarting.Set()
-{ [[ $_ob_opts_apps_acdownload_isntstarting_fl_ = 'true' ]] && return
-_ob_opts_apps_acdownload_isntstarting_fl_=true
-[[ $_ob_opts_apps_acdownload_isntstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acdownload_isntstarting_fl_ ;}
-Opts.Apps.AcDownload.IsNtStarting.Init
-Opts.Apps.AcEnable.IsStarting.Clear()
-{ [[ $_ob_opts_apps_acenable_isstarting_fl_ != 'true' ]] && return
-_ob_opts_apps_acenable_isstarting_fl_=false
-[[ $_ob_opts_apps_acenable_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acenable_isstarting_fl_ ;}
-Opts.Apps.AcEnable.IsStarting.NoLogMods()
-{ _ob_opts_apps_acenable_isstarting_chfl_=false ;}
-Opts.Apps.AcEnable.IsStarting.Init()
-{ _ob_opts_apps_acenable_isstarting_fl_=false
-_ob_opts_apps_acenable_isstarting_chfl_=true ;}
-Opts.Apps.AcEnable.IsStarting.IsNt()
-{ [[ $_ob_opts_apps_acenable_isstarting_fl_ != 'true' ]] ;}
-Opts.Apps.AcEnable.IsStarting.IsSet()
-{ [[ $_ob_opts_apps_acenable_isstarting_fl_ = 'true' ]] ;}
-Opts.Apps.AcEnable.IsStarting.Set()
-{ [[ $_ob_opts_apps_acenable_isstarting_fl_ = 'true' ]] && return
-_ob_opts_apps_acenable_isstarting_fl_=true
-[[ $_ob_opts_apps_acenable_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acenable_isstarting_fl_ ;}
-Opts.Apps.AcEnable.IsStarting.Init
-Opts.Apps.AcEnable.IsNtStarting.Clear()
-{ [[ $_ob_opts_apps_acenable_isntstarting_fl_ != 'true' ]] && return
-_ob_opts_apps_acenable_isntstarting_fl_=false
-[[ $_ob_opts_apps_acenable_isntstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acenable_isntstarting_fl_ ;}
-Opts.Apps.AcEnable.IsNtStarting.NoLogMods()
-{ _ob_opts_apps_acenable_isntstarting_chfl_=false ;}
-Opts.Apps.AcEnable.IsNtStarting.Init()
-{ _ob_opts_apps_acenable_isntstarting_fl_=false
-_ob_opts_apps_acenable_isntstarting_chfl_=true ;}
-Opts.Apps.AcEnable.IsNtStarting.IsNt()
-{ [[ $_ob_opts_apps_acenable_isntstarting_fl_ != 'true' ]] ;}
-Opts.Apps.AcEnable.IsNtStarting.IsSet()
-{ [[ $_ob_opts_apps_acenable_isntstarting_fl_ = 'true' ]] ;}
-Opts.Apps.AcEnable.IsNtStarting.Set()
-{ [[ $_ob_opts_apps_acenable_isntstarting_fl_ = 'true' ]] && return
-_ob_opts_apps_acenable_isntstarting_fl_=true
-[[ $_ob_opts_apps_acenable_isntstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acenable_isntstarting_fl_ ;}
-Opts.Apps.AcEnable.IsNtStarting.Init
-Opts.Apps.AcInstall.IsStarting.Clear()
-{ [[ $_ob_opts_apps_acinstall_isstarting_fl_ != 'true' ]] && return
-_ob_opts_apps_acinstall_isstarting_fl_=false
-[[ $_ob_opts_apps_acinstall_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acinstall_isstarting_fl_ ;}
-Opts.Apps.AcInstall.IsStarting.NoLogMods()
-{ _ob_opts_apps_acinstall_isstarting_chfl_=false ;}
-Opts.Apps.AcInstall.IsStarting.Init()
-{ _ob_opts_apps_acinstall_isstarting_fl_=false
-_ob_opts_apps_acinstall_isstarting_chfl_=true ;}
-Opts.Apps.AcInstall.IsStarting.IsNt()
-{ [[ $_ob_opts_apps_acinstall_isstarting_fl_ != 'true' ]] ;}
-Opts.Apps.AcInstall.IsStarting.IsSet()
-{ [[ $_ob_opts_apps_acinstall_isstarting_fl_ = 'true' ]] ;}
-Opts.Apps.AcInstall.IsStarting.Set()
-{ [[ $_ob_opts_apps_acinstall_isstarting_fl_ = 'true' ]] && return
-_ob_opts_apps_acinstall_isstarting_fl_=true
-[[ $_ob_opts_apps_acinstall_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acinstall_isstarting_fl_ ;}
-Opts.Apps.AcInstall.IsStarting.Init
-Opts.Apps.AcInstall.IsNtStarting.Clear()
-{ [[ $_ob_opts_apps_acinstall_isntstarting_fl_ != 'true' ]] && return
-_ob_opts_apps_acinstall_isntstarting_fl_=false
-[[ $_ob_opts_apps_acinstall_isntstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acinstall_isntstarting_fl_ ;}
-Opts.Apps.AcInstall.IsNtStarting.NoLogMods()
-{ _ob_opts_apps_acinstall_isntstarting_chfl_=false ;}
-Opts.Apps.AcInstall.IsNtStarting.Init()
-{ _ob_opts_apps_acinstall_isntstarting_fl_=false
-_ob_opts_apps_acinstall_isntstarting_chfl_=true ;}
-Opts.Apps.AcInstall.IsNtStarting.IsNt()
-{ [[ $_ob_opts_apps_acinstall_isntstarting_fl_ != 'true' ]] ;}
-Opts.Apps.AcInstall.IsNtStarting.IsSet()
-{ [[ $_ob_opts_apps_acinstall_isntstarting_fl_ = 'true' ]] ;}
-Opts.Apps.AcInstall.IsNtStarting.Set()
-{ [[ $_ob_opts_apps_acinstall_isntstarting_fl_ = 'true' ]] && return
-_ob_opts_apps_acinstall_isntstarting_fl_=true
-[[ $_ob_opts_apps_acinstall_isntstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acinstall_isntstarting_fl_ ;}
-Opts.Apps.AcInstall.IsNtStarting.Init
-Opts.Apps.AcRebuild.IsStarting.Clear()
-{ [[ $_ob_opts_apps_acrebuild_isstarting_fl_ != 'true' ]] && return
-_ob_opts_apps_acrebuild_isstarting_fl_=false
-[[ $_ob_opts_apps_acrebuild_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acrebuild_isstarting_fl_ ;}
-Opts.Apps.AcRebuild.IsStarting.NoLogMods()
-{ _ob_opts_apps_acrebuild_isstarting_chfl_=false ;}
-Opts.Apps.AcRebuild.IsStarting.Init()
-{ _ob_opts_apps_acrebuild_isstarting_fl_=false
-_ob_opts_apps_acrebuild_isstarting_chfl_=true ;}
-Opts.Apps.AcRebuild.IsStarting.IsNt()
-{ [[ $_ob_opts_apps_acrebuild_isstarting_fl_ != 'true' ]] ;}
-Opts.Apps.AcRebuild.IsStarting.IsSet()
-{ [[ $_ob_opts_apps_acrebuild_isstarting_fl_ = 'true' ]] ;}
-Opts.Apps.AcRebuild.IsStarting.Set()
-{ [[ $_ob_opts_apps_acrebuild_isstarting_fl_ = 'true' ]] && return
-_ob_opts_apps_acrebuild_isstarting_fl_=true
-[[ $_ob_opts_apps_acrebuild_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acrebuild_isstarting_fl_ ;}
-Opts.Apps.AcRebuild.IsStarting.Init
-Opts.Apps.AcRebuild.IsNtStarting.Clear()
-{ [[ $_ob_opts_apps_acrebuild_isntstarting_fl_ != 'true' ]] && return
-_ob_opts_apps_acrebuild_isntstarting_fl_=false
-[[ $_ob_opts_apps_acrebuild_isntstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acrebuild_isntstarting_fl_ ;}
-Opts.Apps.AcRebuild.IsNtStarting.NoLogMods()
-{ _ob_opts_apps_acrebuild_isntstarting_chfl_=false ;}
-Opts.Apps.AcRebuild.IsNtStarting.Init()
-{ _ob_opts_apps_acrebuild_isntstarting_fl_=false
-_ob_opts_apps_acrebuild_isntstarting_chfl_=true ;}
-Opts.Apps.AcRebuild.IsNtStarting.IsNt()
-{ [[ $_ob_opts_apps_acrebuild_isntstarting_fl_ != 'true' ]] ;}
-Opts.Apps.AcRebuild.IsNtStarting.IsSet()
-{ [[ $_ob_opts_apps_acrebuild_isntstarting_fl_ = 'true' ]] ;}
-Opts.Apps.AcRebuild.IsNtStarting.Set()
-{ [[ $_ob_opts_apps_acrebuild_isntstarting_fl_ = 'true' ]] && return
-_ob_opts_apps_acrebuild_isntstarting_fl_=true
-[[ $_ob_opts_apps_acrebuild_isntstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acrebuild_isntstarting_fl_ ;}
-Opts.Apps.AcRebuild.IsNtStarting.Init
-Opts.Apps.AcReinstall.IsStarting.Clear()
-{ [[ $_ob_opts_apps_acreinstall_isstarting_fl_ != 'true' ]] && return
-_ob_opts_apps_acreinstall_isstarting_fl_=false
-[[ $_ob_opts_apps_acreinstall_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acreinstall_isstarting_fl_ ;}
-Opts.Apps.AcReinstall.IsStarting.NoLogMods()
-{ _ob_opts_apps_acreinstall_isstarting_chfl_=false ;}
-Opts.Apps.AcReinstall.IsStarting.Init()
-{ _ob_opts_apps_acreinstall_isstarting_fl_=false
-_ob_opts_apps_acreinstall_isstarting_chfl_=true ;}
-Opts.Apps.AcReinstall.IsStarting.IsNt()
-{ [[ $_ob_opts_apps_acreinstall_isstarting_fl_ != 'true' ]] ;}
-Opts.Apps.AcReinstall.IsStarting.IsSet()
-{ [[ $_ob_opts_apps_acreinstall_isstarting_fl_ = 'true' ]] ;}
-Opts.Apps.AcReinstall.IsStarting.Set()
-{ [[ $_ob_opts_apps_acreinstall_isstarting_fl_ = 'true' ]] && return
-_ob_opts_apps_acreinstall_isstarting_fl_=true
-[[ $_ob_opts_apps_acreinstall_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acreinstall_isstarting_fl_ ;}
-Opts.Apps.AcReinstall.IsStarting.Init
-Opts.Apps.AcReinstall.IsNtStarting.Clear()
-{ [[ $_ob_opts_apps_acreinstall_isntstarting_fl_ != 'true' ]] && return
-_ob_opts_apps_acreinstall_isntstarting_fl_=false
-[[ $_ob_opts_apps_acreinstall_isntstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acreinstall_isntstarting_fl_ ;}
-Opts.Apps.AcReinstall.IsNtStarting.NoLogMods()
-{ _ob_opts_apps_acreinstall_isntstarting_chfl_=false ;}
-Opts.Apps.AcReinstall.IsNtStarting.Init()
-{ _ob_opts_apps_acreinstall_isntstarting_fl_=false
-_ob_opts_apps_acreinstall_isntstarting_chfl_=true ;}
-Opts.Apps.AcReinstall.IsNtStarting.IsNt()
-{ [[ $_ob_opts_apps_acreinstall_isntstarting_fl_ != 'true' ]] ;}
-Opts.Apps.AcReinstall.IsNtStarting.IsSet()
-{ [[ $_ob_opts_apps_acreinstall_isntstarting_fl_ = 'true' ]] ;}
-Opts.Apps.AcReinstall.IsNtStarting.Set()
-{ [[ $_ob_opts_apps_acreinstall_isntstarting_fl_ = 'true' ]] && return
-_ob_opts_apps_acreinstall_isntstarting_fl_=true
-[[ $_ob_opts_apps_acreinstall_isntstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acreinstall_isntstarting_fl_ ;}
-Opts.Apps.AcReinstall.IsNtStarting.Init
-Opts.Apps.AcRestart.IsStarting.Clear()
-{ [[ $_ob_opts_apps_acrestart_isstarting_fl_ != 'true' ]] && return
-_ob_opts_apps_acrestart_isstarting_fl_=false
-[[ $_ob_opts_apps_acrestart_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acrestart_isstarting_fl_ ;}
-Opts.Apps.AcRestart.IsStarting.NoLogMods()
-{ _ob_opts_apps_acrestart_isstarting_chfl_=false ;}
-Opts.Apps.AcRestart.IsStarting.Init()
-{ _ob_opts_apps_acrestart_isstarting_fl_=false
-_ob_opts_apps_acrestart_isstarting_chfl_=true ;}
-Opts.Apps.AcRestart.IsStarting.IsNt()
-{ [[ $_ob_opts_apps_acrestart_isstarting_fl_ != 'true' ]] ;}
-Opts.Apps.AcRestart.IsStarting.IsSet()
-{ [[ $_ob_opts_apps_acrestart_isstarting_fl_ = 'true' ]] ;}
-Opts.Apps.AcRestart.IsStarting.Set()
-{ [[ $_ob_opts_apps_acrestart_isstarting_fl_ = 'true' ]] && return
-_ob_opts_apps_acrestart_isstarting_fl_=true
-[[ $_ob_opts_apps_acrestart_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acrestart_isstarting_fl_ ;}
-Opts.Apps.AcRestart.IsStarting.Init
-Opts.Apps.AcRestart.IsNtStarting.Clear()
-{ [[ $_ob_opts_apps_acrestart_isntstarting_fl_ != 'true' ]] && return
-_ob_opts_apps_acrestart_isntstarting_fl_=false
-[[ $_ob_opts_apps_acrestart_isntstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acrestart_isntstarting_fl_ ;}
-Opts.Apps.AcRestart.IsNtStarting.NoLogMods()
-{ _ob_opts_apps_acrestart_isntstarting_chfl_=false ;}
-Opts.Apps.AcRestart.IsNtStarting.Init()
-{ _ob_opts_apps_acrestart_isntstarting_fl_=false
-_ob_opts_apps_acrestart_isntstarting_chfl_=true ;}
-Opts.Apps.AcRestart.IsNtStarting.IsNt()
-{ [[ $_ob_opts_apps_acrestart_isntstarting_fl_ != 'true' ]] ;}
-Opts.Apps.AcRestart.IsNtStarting.IsSet()
-{ [[ $_ob_opts_apps_acrestart_isntstarting_fl_ = 'true' ]] ;}
-Opts.Apps.AcRestart.IsNtStarting.Set()
-{ [[ $_ob_opts_apps_acrestart_isntstarting_fl_ = 'true' ]] && return
-_ob_opts_apps_acrestart_isntstarting_fl_=true
-[[ $_ob_opts_apps_acrestart_isntstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acrestart_isntstarting_fl_ ;}
-Opts.Apps.AcRestart.IsNtStarting.Init
-Opts.Apps.AcRestore.IsStarting.Clear()
-{ [[ $_ob_opts_apps_acrestore_isstarting_fl_ != 'true' ]] && return
-_ob_opts_apps_acrestore_isstarting_fl_=false
-[[ $_ob_opts_apps_acrestore_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acrestore_isstarting_fl_ ;}
-Opts.Apps.AcRestore.IsStarting.NoLogMods()
-{ _ob_opts_apps_acrestore_isstarting_chfl_=false ;}
-Opts.Apps.AcRestore.IsStarting.Init()
-{ _ob_opts_apps_acrestore_isstarting_fl_=false
-_ob_opts_apps_acrestore_isstarting_chfl_=true ;}
-Opts.Apps.AcRestore.IsStarting.IsNt()
-{ [[ $_ob_opts_apps_acrestore_isstarting_fl_ != 'true' ]] ;}
-Opts.Apps.AcRestore.IsStarting.IsSet()
-{ [[ $_ob_opts_apps_acrestore_isstarting_fl_ = 'true' ]] ;}
-Opts.Apps.AcRestore.IsStarting.Set()
-{ [[ $_ob_opts_apps_acrestore_isstarting_fl_ = 'true' ]] && return
-_ob_opts_apps_acrestore_isstarting_fl_=true
-[[ $_ob_opts_apps_acrestore_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acrestore_isstarting_fl_ ;}
-Opts.Apps.AcRestore.IsStarting.Init
-Opts.Apps.AcRestore.IsNtStarting.Clear()
-{ [[ $_ob_opts_apps_acrestore_isntstarting_fl_ != 'true' ]] && return
-_ob_opts_apps_acrestore_isntstarting_fl_=false
-[[ $_ob_opts_apps_acrestore_isntstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acrestore_isntstarting_fl_ ;}
-Opts.Apps.AcRestore.IsNtStarting.NoLogMods()
-{ _ob_opts_apps_acrestore_isntstarting_chfl_=false ;}
-Opts.Apps.AcRestore.IsNtStarting.Init()
-{ _ob_opts_apps_acrestore_isntstarting_fl_=false
-_ob_opts_apps_acrestore_isntstarting_chfl_=true ;}
-Opts.Apps.AcRestore.IsNtStarting.IsNt()
-{ [[ $_ob_opts_apps_acrestore_isntstarting_fl_ != 'true' ]] ;}
-Opts.Apps.AcRestore.IsNtStarting.IsSet()
-{ [[ $_ob_opts_apps_acrestore_isntstarting_fl_ = 'true' ]] ;}
-Opts.Apps.AcRestore.IsNtStarting.Set()
-{ [[ $_ob_opts_apps_acrestore_isntstarting_fl_ = 'true' ]] && return
-_ob_opts_apps_acrestore_isntstarting_fl_=true
-[[ $_ob_opts_apps_acrestore_isntstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acrestore_isntstarting_fl_ ;}
-Opts.Apps.AcRestore.IsNtStarting.Init
-Opts.Apps.AcStart.IsStarting.Clear()
-{ [[ $_ob_opts_apps_acstart_isstarting_fl_ != 'true' ]] && return
-_ob_opts_apps_acstart_isstarting_fl_=false
-[[ $_ob_opts_apps_acstart_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acstart_isstarting_fl_ ;}
-Opts.Apps.AcStart.IsStarting.NoLogMods()
-{ _ob_opts_apps_acstart_isstarting_chfl_=false ;}
-Opts.Apps.AcStart.IsStarting.Init()
-{ _ob_opts_apps_acstart_isstarting_fl_=false
-_ob_opts_apps_acstart_isstarting_chfl_=true ;}
-Opts.Apps.AcStart.IsStarting.IsNt()
-{ [[ $_ob_opts_apps_acstart_isstarting_fl_ != 'true' ]] ;}
-Opts.Apps.AcStart.IsStarting.IsSet()
-{ [[ $_ob_opts_apps_acstart_isstarting_fl_ = 'true' ]] ;}
-Opts.Apps.AcStart.IsStarting.Set()
-{ [[ $_ob_opts_apps_acstart_isstarting_fl_ = 'true' ]] && return
-_ob_opts_apps_acstart_isstarting_fl_=true
-[[ $_ob_opts_apps_acstart_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acstart_isstarting_fl_ ;}
-Opts.Apps.AcStart.IsStarting.Init
-Opts.Apps.AcStart.IsNtStarting.Clear()
-{ [[ $_ob_opts_apps_acstart_isntstarting_fl_ != 'true' ]] && return
-_ob_opts_apps_acstart_isntstarting_fl_=false
-[[ $_ob_opts_apps_acstart_isntstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acstart_isntstarting_fl_ ;}
-Opts.Apps.AcStart.IsNtStarting.NoLogMods()
-{ _ob_opts_apps_acstart_isntstarting_chfl_=false ;}
-Opts.Apps.AcStart.IsNtStarting.Init()
-{ _ob_opts_apps_acstart_isntstarting_fl_=false
-_ob_opts_apps_acstart_isntstarting_chfl_=true ;}
-Opts.Apps.AcStart.IsNtStarting.IsNt()
-{ [[ $_ob_opts_apps_acstart_isntstarting_fl_ != 'true' ]] ;}
-Opts.Apps.AcStart.IsNtStarting.IsSet()
-{ [[ $_ob_opts_apps_acstart_isntstarting_fl_ = 'true' ]] ;}
-Opts.Apps.AcStart.IsNtStarting.Set()
-{ [[ $_ob_opts_apps_acstart_isntstarting_fl_ = 'true' ]] && return
-_ob_opts_apps_acstart_isntstarting_fl_=true
-[[ $_ob_opts_apps_acstart_isntstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acstart_isntstarting_fl_ ;}
-Opts.Apps.AcStart.IsNtStarting.Init
-Opts.Apps.AcStop.IsStarting.Clear()
-{ [[ $_ob_opts_apps_acstop_isstarting_fl_ != 'true' ]] && return
-_ob_opts_apps_acstop_isstarting_fl_=false
-[[ $_ob_opts_apps_acstop_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acstop_isstarting_fl_ ;}
-Opts.Apps.AcStop.IsStarting.NoLogMods()
-{ _ob_opts_apps_acstop_isstarting_chfl_=false ;}
-Opts.Apps.AcStop.IsStarting.Init()
-{ _ob_opts_apps_acstop_isstarting_fl_=false
-_ob_opts_apps_acstop_isstarting_chfl_=true ;}
-Opts.Apps.AcStop.IsStarting.IsNt()
-{ [[ $_ob_opts_apps_acstop_isstarting_fl_ != 'true' ]] ;}
-Opts.Apps.AcStop.IsStarting.IsSet()
-{ [[ $_ob_opts_apps_acstop_isstarting_fl_ = 'true' ]] ;}
-Opts.Apps.AcStop.IsStarting.Set()
-{ [[ $_ob_opts_apps_acstop_isstarting_fl_ = 'true' ]] && return
-_ob_opts_apps_acstop_isstarting_fl_=true
-[[ $_ob_opts_apps_acstop_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acstop_isstarting_fl_ ;}
-Opts.Apps.AcStop.IsStarting.Init
-Opts.Apps.AcStop.IsNtStarting.Clear()
-{ [[ $_ob_opts_apps_acstop_isntstarting_fl_ != 'true' ]] && return
-_ob_opts_apps_acstop_isntstarting_fl_=false
-[[ $_ob_opts_apps_acstop_isntstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acstop_isntstarting_fl_ ;}
-Opts.Apps.AcStop.IsNtStarting.NoLogMods()
-{ _ob_opts_apps_acstop_isntstarting_chfl_=false ;}
-Opts.Apps.AcStop.IsNtStarting.Init()
-{ _ob_opts_apps_acstop_isntstarting_fl_=false
-_ob_opts_apps_acstop_isntstarting_chfl_=true ;}
-Opts.Apps.AcStop.IsNtStarting.IsNt()
-{ [[ $_ob_opts_apps_acstop_isntstarting_fl_ != 'true' ]] ;}
-Opts.Apps.AcStop.IsNtStarting.IsSet()
-{ [[ $_ob_opts_apps_acstop_isntstarting_fl_ = 'true' ]] ;}
-Opts.Apps.AcStop.IsNtStarting.Set()
-{ [[ $_ob_opts_apps_acstop_isntstarting_fl_ = 'true' ]] && return
-_ob_opts_apps_acstop_isntstarting_fl_=true
-[[ $_ob_opts_apps_acstop_isntstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acstop_isntstarting_fl_ ;}
-Opts.Apps.AcStop.IsNtStarting.Init
-Opts.Apps.AcUninstall.IsStarting.Clear()
-{ [[ $_ob_opts_apps_acuninstall_isstarting_fl_ != 'true' ]] && return
-_ob_opts_apps_acuninstall_isstarting_fl_=false
-[[ $_ob_opts_apps_acuninstall_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acuninstall_isstarting_fl_ ;}
-Opts.Apps.AcUninstall.IsStarting.NoLogMods()
-{ _ob_opts_apps_acuninstall_isstarting_chfl_=false ;}
-Opts.Apps.AcUninstall.IsStarting.Init()
-{ _ob_opts_apps_acuninstall_isstarting_fl_=false
-_ob_opts_apps_acuninstall_isstarting_chfl_=true ;}
-Opts.Apps.AcUninstall.IsStarting.IsNt()
-{ [[ $_ob_opts_apps_acuninstall_isstarting_fl_ != 'true' ]] ;}
-Opts.Apps.AcUninstall.IsStarting.IsSet()
-{ [[ $_ob_opts_apps_acuninstall_isstarting_fl_ = 'true' ]] ;}
-Opts.Apps.AcUninstall.IsStarting.Set()
-{ [[ $_ob_opts_apps_acuninstall_isstarting_fl_ = 'true' ]] && return
-_ob_opts_apps_acuninstall_isstarting_fl_=true
-[[ $_ob_opts_apps_acuninstall_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acuninstall_isstarting_fl_ ;}
-Opts.Apps.AcUninstall.IsStarting.Init
-Opts.Apps.AcUninstall.IsNtStarting.Clear()
-{ [[ $_ob_opts_apps_acuninstall_isntstarting_fl_ != 'true' ]] && return
-_ob_opts_apps_acuninstall_isntstarting_fl_=false
-[[ $_ob_opts_apps_acuninstall_isntstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acuninstall_isntstarting_fl_ ;}
-Opts.Apps.AcUninstall.IsNtStarting.NoLogMods()
-{ _ob_opts_apps_acuninstall_isntstarting_chfl_=false ;}
-Opts.Apps.AcUninstall.IsNtStarting.Init()
-{ _ob_opts_apps_acuninstall_isntstarting_fl_=false
-_ob_opts_apps_acuninstall_isntstarting_chfl_=true ;}
-Opts.Apps.AcUninstall.IsNtStarting.IsNt()
-{ [[ $_ob_opts_apps_acuninstall_isntstarting_fl_ != 'true' ]] ;}
-Opts.Apps.AcUninstall.IsNtStarting.IsSet()
-{ [[ $_ob_opts_apps_acuninstall_isntstarting_fl_ = 'true' ]] ;}
-Opts.Apps.AcUninstall.IsNtStarting.Set()
-{ [[ $_ob_opts_apps_acuninstall_isntstarting_fl_ = 'true' ]] && return
-_ob_opts_apps_acuninstall_isntstarting_fl_=true
-[[ $_ob_opts_apps_acuninstall_isntstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acuninstall_isntstarting_fl_ ;}
-Opts.Apps.AcUninstall.IsNtStarting.Init
-Opts.Apps.AcUpgrade.IsStarting.Clear()
-{ [[ $_ob_opts_apps_acupgrade_isstarting_fl_ != 'true' ]] && return
-_ob_opts_apps_acupgrade_isstarting_fl_=false
-[[ $_ob_opts_apps_acupgrade_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acupgrade_isstarting_fl_ ;}
-Opts.Apps.AcUpgrade.IsStarting.NoLogMods()
-{ _ob_opts_apps_acupgrade_isstarting_chfl_=false ;}
-Opts.Apps.AcUpgrade.IsStarting.Init()
-{ _ob_opts_apps_acupgrade_isstarting_fl_=false
-_ob_opts_apps_acupgrade_isstarting_chfl_=true ;}
-Opts.Apps.AcUpgrade.IsStarting.IsNt()
-{ [[ $_ob_opts_apps_acupgrade_isstarting_fl_ != 'true' ]] ;}
-Opts.Apps.AcUpgrade.IsStarting.IsSet()
-{ [[ $_ob_opts_apps_acupgrade_isstarting_fl_ = 'true' ]] ;}
-Opts.Apps.AcUpgrade.IsStarting.Set()
-{ [[ $_ob_opts_apps_acupgrade_isstarting_fl_ = 'true' ]] && return
-_ob_opts_apps_acupgrade_isstarting_fl_=true
-[[ $_ob_opts_apps_acupgrade_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acupgrade_isstarting_fl_ ;}
-Opts.Apps.AcUpgrade.IsStarting.Init
-Opts.Apps.AcUpgrade.IsNtStarting.Clear()
-{ [[ $_ob_opts_apps_acupgrade_isntstarting_fl_ != 'true' ]] && return
-_ob_opts_apps_acupgrade_isntstarting_fl_=false
-[[ $_ob_opts_apps_acupgrade_isntstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acupgrade_isntstarting_fl_ ;}
-Opts.Apps.AcUpgrade.IsNtStarting.NoLogMods()
-{ _ob_opts_apps_acupgrade_isntstarting_chfl_=false ;}
-Opts.Apps.AcUpgrade.IsNtStarting.Init()
-{ _ob_opts_apps_acupgrade_isntstarting_fl_=false
-_ob_opts_apps_acupgrade_isntstarting_chfl_=true ;}
-Opts.Apps.AcUpgrade.IsNtStarting.IsNt()
-{ [[ $_ob_opts_apps_acupgrade_isntstarting_fl_ != 'true' ]] ;}
-Opts.Apps.AcUpgrade.IsNtStarting.IsSet()
-{ [[ $_ob_opts_apps_acupgrade_isntstarting_fl_ = 'true' ]] ;}
-Opts.Apps.AcUpgrade.IsNtStarting.Set()
-{ [[ $_ob_opts_apps_acupgrade_isntstarting_fl_ = 'true' ]] && return
-_ob_opts_apps_acupgrade_isntstarting_fl_=true
-[[ $_ob_opts_apps_acupgrade_isntstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acupgrade_isntstarting_fl_ ;}
-Opts.Apps.AcUpgrade.IsNtStarting.Init
 Opts.Apps.AcBackup.IsStarted.Clear()
 { [[ $_ob_opts_apps_acbackup_isstarted_fl_ != 'true' ]] && return
 _ob_opts_apps_acbackup_isstarted_fl_=false
@@ -9791,6 +9233,258 @@ Opts.Apps.AcUpgrade.IsNtStarted.Set()
 _ob_opts_apps_acupgrade_isntstarted_fl_=true
 [[ $_ob_opts_apps_acupgrade_isntstarted_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acupgrade_isntstarted_fl_ ;}
 Opts.Apps.AcUpgrade.IsNtStarted.Init
+Opts.Apps.AcBackup.IsStarting.Clear()
+{ [[ $_ob_opts_apps_acbackup_isstarting_fl_ != 'true' ]] && return
+_ob_opts_apps_acbackup_isstarting_fl_=false
+[[ $_ob_opts_apps_acbackup_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acbackup_isstarting_fl_ ;}
+Opts.Apps.AcBackup.IsStarting.NoLogMods()
+{ _ob_opts_apps_acbackup_isstarting_chfl_=false ;}
+Opts.Apps.AcBackup.IsStarting.Init()
+{ _ob_opts_apps_acbackup_isstarting_fl_=false
+_ob_opts_apps_acbackup_isstarting_chfl_=true ;}
+Opts.Apps.AcBackup.IsStarting.IsNt()
+{ [[ $_ob_opts_apps_acbackup_isstarting_fl_ != 'true' ]] ;}
+Opts.Apps.AcBackup.IsStarting.IsSet()
+{ [[ $_ob_opts_apps_acbackup_isstarting_fl_ = 'true' ]] ;}
+Opts.Apps.AcBackup.IsStarting.Set()
+{ [[ $_ob_opts_apps_acbackup_isstarting_fl_ = 'true' ]] && return
+_ob_opts_apps_acbackup_isstarting_fl_=true
+[[ $_ob_opts_apps_acbackup_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acbackup_isstarting_fl_ ;}
+Opts.Apps.AcBackup.IsStarting.Init
+Opts.Apps.AcClean.IsStarting.Clear()
+{ [[ $_ob_opts_apps_acclean_isstarting_fl_ != 'true' ]] && return
+_ob_opts_apps_acclean_isstarting_fl_=false
+[[ $_ob_opts_apps_acclean_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acclean_isstarting_fl_ ;}
+Opts.Apps.AcClean.IsStarting.NoLogMods()
+{ _ob_opts_apps_acclean_isstarting_chfl_=false ;}
+Opts.Apps.AcClean.IsStarting.Init()
+{ _ob_opts_apps_acclean_isstarting_fl_=false
+_ob_opts_apps_acclean_isstarting_chfl_=true ;}
+Opts.Apps.AcClean.IsStarting.IsNt()
+{ [[ $_ob_opts_apps_acclean_isstarting_fl_ != 'true' ]] ;}
+Opts.Apps.AcClean.IsStarting.IsSet()
+{ [[ $_ob_opts_apps_acclean_isstarting_fl_ = 'true' ]] ;}
+Opts.Apps.AcClean.IsStarting.Set()
+{ [[ $_ob_opts_apps_acclean_isstarting_fl_ = 'true' ]] && return
+_ob_opts_apps_acclean_isstarting_fl_=true
+[[ $_ob_opts_apps_acclean_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acclean_isstarting_fl_ ;}
+Opts.Apps.AcClean.IsStarting.Init
+Opts.Apps.AcDisable.IsStarting.Clear()
+{ [[ $_ob_opts_apps_acdisable_isstarting_fl_ != 'true' ]] && return
+_ob_opts_apps_acdisable_isstarting_fl_=false
+[[ $_ob_opts_apps_acdisable_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acdisable_isstarting_fl_ ;}
+Opts.Apps.AcDisable.IsStarting.NoLogMods()
+{ _ob_opts_apps_acdisable_isstarting_chfl_=false ;}
+Opts.Apps.AcDisable.IsStarting.Init()
+{ _ob_opts_apps_acdisable_isstarting_fl_=false
+_ob_opts_apps_acdisable_isstarting_chfl_=true ;}
+Opts.Apps.AcDisable.IsStarting.IsNt()
+{ [[ $_ob_opts_apps_acdisable_isstarting_fl_ != 'true' ]] ;}
+Opts.Apps.AcDisable.IsStarting.IsSet()
+{ [[ $_ob_opts_apps_acdisable_isstarting_fl_ = 'true' ]] ;}
+Opts.Apps.AcDisable.IsStarting.Set()
+{ [[ $_ob_opts_apps_acdisable_isstarting_fl_ = 'true' ]] && return
+_ob_opts_apps_acdisable_isstarting_fl_=true
+[[ $_ob_opts_apps_acdisable_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acdisable_isstarting_fl_ ;}
+Opts.Apps.AcDisable.IsStarting.Init
+Opts.Apps.AcDownload.IsStarting.Clear()
+{ [[ $_ob_opts_apps_acdownload_isstarting_fl_ != 'true' ]] && return
+_ob_opts_apps_acdownload_isstarting_fl_=false
+[[ $_ob_opts_apps_acdownload_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acdownload_isstarting_fl_ ;}
+Opts.Apps.AcDownload.IsStarting.NoLogMods()
+{ _ob_opts_apps_acdownload_isstarting_chfl_=false ;}
+Opts.Apps.AcDownload.IsStarting.Init()
+{ _ob_opts_apps_acdownload_isstarting_fl_=false
+_ob_opts_apps_acdownload_isstarting_chfl_=true ;}
+Opts.Apps.AcDownload.IsStarting.IsNt()
+{ [[ $_ob_opts_apps_acdownload_isstarting_fl_ != 'true' ]] ;}
+Opts.Apps.AcDownload.IsStarting.IsSet()
+{ [[ $_ob_opts_apps_acdownload_isstarting_fl_ = 'true' ]] ;}
+Opts.Apps.AcDownload.IsStarting.Set()
+{ [[ $_ob_opts_apps_acdownload_isstarting_fl_ = 'true' ]] && return
+_ob_opts_apps_acdownload_isstarting_fl_=true
+[[ $_ob_opts_apps_acdownload_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acdownload_isstarting_fl_ ;}
+Opts.Apps.AcDownload.IsStarting.Init
+Opts.Apps.AcEnable.IsStarting.Clear()
+{ [[ $_ob_opts_apps_acenable_isstarting_fl_ != 'true' ]] && return
+_ob_opts_apps_acenable_isstarting_fl_=false
+[[ $_ob_opts_apps_acenable_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acenable_isstarting_fl_ ;}
+Opts.Apps.AcEnable.IsStarting.NoLogMods()
+{ _ob_opts_apps_acenable_isstarting_chfl_=false ;}
+Opts.Apps.AcEnable.IsStarting.Init()
+{ _ob_opts_apps_acenable_isstarting_fl_=false
+_ob_opts_apps_acenable_isstarting_chfl_=true ;}
+Opts.Apps.AcEnable.IsStarting.IsNt()
+{ [[ $_ob_opts_apps_acenable_isstarting_fl_ != 'true' ]] ;}
+Opts.Apps.AcEnable.IsStarting.IsSet()
+{ [[ $_ob_opts_apps_acenable_isstarting_fl_ = 'true' ]] ;}
+Opts.Apps.AcEnable.IsStarting.Set()
+{ [[ $_ob_opts_apps_acenable_isstarting_fl_ = 'true' ]] && return
+_ob_opts_apps_acenable_isstarting_fl_=true
+[[ $_ob_opts_apps_acenable_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acenable_isstarting_fl_ ;}
+Opts.Apps.AcEnable.IsStarting.Init
+Opts.Apps.AcInstall.IsStarting.Clear()
+{ [[ $_ob_opts_apps_acinstall_isstarting_fl_ != 'true' ]] && return
+_ob_opts_apps_acinstall_isstarting_fl_=false
+[[ $_ob_opts_apps_acinstall_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acinstall_isstarting_fl_ ;}
+Opts.Apps.AcInstall.IsStarting.NoLogMods()
+{ _ob_opts_apps_acinstall_isstarting_chfl_=false ;}
+Opts.Apps.AcInstall.IsStarting.Init()
+{ _ob_opts_apps_acinstall_isstarting_fl_=false
+_ob_opts_apps_acinstall_isstarting_chfl_=true ;}
+Opts.Apps.AcInstall.IsStarting.IsNt()
+{ [[ $_ob_opts_apps_acinstall_isstarting_fl_ != 'true' ]] ;}
+Opts.Apps.AcInstall.IsStarting.IsSet()
+{ [[ $_ob_opts_apps_acinstall_isstarting_fl_ = 'true' ]] ;}
+Opts.Apps.AcInstall.IsStarting.Set()
+{ [[ $_ob_opts_apps_acinstall_isstarting_fl_ = 'true' ]] && return
+_ob_opts_apps_acinstall_isstarting_fl_=true
+[[ $_ob_opts_apps_acinstall_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acinstall_isstarting_fl_ ;}
+Opts.Apps.AcInstall.IsStarting.Init
+Opts.Apps.AcRebuild.IsStarting.Clear()
+{ [[ $_ob_opts_apps_acrebuild_isstarting_fl_ != 'true' ]] && return
+_ob_opts_apps_acrebuild_isstarting_fl_=false
+[[ $_ob_opts_apps_acrebuild_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acrebuild_isstarting_fl_ ;}
+Opts.Apps.AcRebuild.IsStarting.NoLogMods()
+{ _ob_opts_apps_acrebuild_isstarting_chfl_=false ;}
+Opts.Apps.AcRebuild.IsStarting.Init()
+{ _ob_opts_apps_acrebuild_isstarting_fl_=false
+_ob_opts_apps_acrebuild_isstarting_chfl_=true ;}
+Opts.Apps.AcRebuild.IsStarting.IsNt()
+{ [[ $_ob_opts_apps_acrebuild_isstarting_fl_ != 'true' ]] ;}
+Opts.Apps.AcRebuild.IsStarting.IsSet()
+{ [[ $_ob_opts_apps_acrebuild_isstarting_fl_ = 'true' ]] ;}
+Opts.Apps.AcRebuild.IsStarting.Set()
+{ [[ $_ob_opts_apps_acrebuild_isstarting_fl_ = 'true' ]] && return
+_ob_opts_apps_acrebuild_isstarting_fl_=true
+[[ $_ob_opts_apps_acrebuild_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acrebuild_isstarting_fl_ ;}
+Opts.Apps.AcRebuild.IsStarting.Init
+Opts.Apps.AcReinstall.IsStarting.Clear()
+{ [[ $_ob_opts_apps_acreinstall_isstarting_fl_ != 'true' ]] && return
+_ob_opts_apps_acreinstall_isstarting_fl_=false
+[[ $_ob_opts_apps_acreinstall_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acreinstall_isstarting_fl_ ;}
+Opts.Apps.AcReinstall.IsStarting.NoLogMods()
+{ _ob_opts_apps_acreinstall_isstarting_chfl_=false ;}
+Opts.Apps.AcReinstall.IsStarting.Init()
+{ _ob_opts_apps_acreinstall_isstarting_fl_=false
+_ob_opts_apps_acreinstall_isstarting_chfl_=true ;}
+Opts.Apps.AcReinstall.IsStarting.IsNt()
+{ [[ $_ob_opts_apps_acreinstall_isstarting_fl_ != 'true' ]] ;}
+Opts.Apps.AcReinstall.IsStarting.IsSet()
+{ [[ $_ob_opts_apps_acreinstall_isstarting_fl_ = 'true' ]] ;}
+Opts.Apps.AcReinstall.IsStarting.Set()
+{ [[ $_ob_opts_apps_acreinstall_isstarting_fl_ = 'true' ]] && return
+_ob_opts_apps_acreinstall_isstarting_fl_=true
+[[ $_ob_opts_apps_acreinstall_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acreinstall_isstarting_fl_ ;}
+Opts.Apps.AcReinstall.IsStarting.Init
+Opts.Apps.AcRestart.IsStarting.Clear()
+{ [[ $_ob_opts_apps_acrestart_isstarting_fl_ != 'true' ]] && return
+_ob_opts_apps_acrestart_isstarting_fl_=false
+[[ $_ob_opts_apps_acrestart_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acrestart_isstarting_fl_ ;}
+Opts.Apps.AcRestart.IsStarting.NoLogMods()
+{ _ob_opts_apps_acrestart_isstarting_chfl_=false ;}
+Opts.Apps.AcRestart.IsStarting.Init()
+{ _ob_opts_apps_acrestart_isstarting_fl_=false
+_ob_opts_apps_acrestart_isstarting_chfl_=true ;}
+Opts.Apps.AcRestart.IsStarting.IsNt()
+{ [[ $_ob_opts_apps_acrestart_isstarting_fl_ != 'true' ]] ;}
+Opts.Apps.AcRestart.IsStarting.IsSet()
+{ [[ $_ob_opts_apps_acrestart_isstarting_fl_ = 'true' ]] ;}
+Opts.Apps.AcRestart.IsStarting.Set()
+{ [[ $_ob_opts_apps_acrestart_isstarting_fl_ = 'true' ]] && return
+_ob_opts_apps_acrestart_isstarting_fl_=true
+[[ $_ob_opts_apps_acrestart_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acrestart_isstarting_fl_ ;}
+Opts.Apps.AcRestart.IsStarting.Init
+Opts.Apps.AcRestore.IsStarting.Clear()
+{ [[ $_ob_opts_apps_acrestore_isstarting_fl_ != 'true' ]] && return
+_ob_opts_apps_acrestore_isstarting_fl_=false
+[[ $_ob_opts_apps_acrestore_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acrestore_isstarting_fl_ ;}
+Opts.Apps.AcRestore.IsStarting.NoLogMods()
+{ _ob_opts_apps_acrestore_isstarting_chfl_=false ;}
+Opts.Apps.AcRestore.IsStarting.Init()
+{ _ob_opts_apps_acrestore_isstarting_fl_=false
+_ob_opts_apps_acrestore_isstarting_chfl_=true ;}
+Opts.Apps.AcRestore.IsStarting.IsNt()
+{ [[ $_ob_opts_apps_acrestore_isstarting_fl_ != 'true' ]] ;}
+Opts.Apps.AcRestore.IsStarting.IsSet()
+{ [[ $_ob_opts_apps_acrestore_isstarting_fl_ = 'true' ]] ;}
+Opts.Apps.AcRestore.IsStarting.Set()
+{ [[ $_ob_opts_apps_acrestore_isstarting_fl_ = 'true' ]] && return
+_ob_opts_apps_acrestore_isstarting_fl_=true
+[[ $_ob_opts_apps_acrestore_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acrestore_isstarting_fl_ ;}
+Opts.Apps.AcRestore.IsStarting.Init
+Opts.Apps.AcStart.IsStarting.Clear()
+{ [[ $_ob_opts_apps_acstart_isstarting_fl_ != 'true' ]] && return
+_ob_opts_apps_acstart_isstarting_fl_=false
+[[ $_ob_opts_apps_acstart_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acstart_isstarting_fl_ ;}
+Opts.Apps.AcStart.IsStarting.NoLogMods()
+{ _ob_opts_apps_acstart_isstarting_chfl_=false ;}
+Opts.Apps.AcStart.IsStarting.Init()
+{ _ob_opts_apps_acstart_isstarting_fl_=false
+_ob_opts_apps_acstart_isstarting_chfl_=true ;}
+Opts.Apps.AcStart.IsStarting.IsNt()
+{ [[ $_ob_opts_apps_acstart_isstarting_fl_ != 'true' ]] ;}
+Opts.Apps.AcStart.IsStarting.IsSet()
+{ [[ $_ob_opts_apps_acstart_isstarting_fl_ = 'true' ]] ;}
+Opts.Apps.AcStart.IsStarting.Set()
+{ [[ $_ob_opts_apps_acstart_isstarting_fl_ = 'true' ]] && return
+_ob_opts_apps_acstart_isstarting_fl_=true
+[[ $_ob_opts_apps_acstart_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acstart_isstarting_fl_ ;}
+Opts.Apps.AcStart.IsStarting.Init
+Opts.Apps.AcStop.IsStarting.Clear()
+{ [[ $_ob_opts_apps_acstop_isstarting_fl_ != 'true' ]] && return
+_ob_opts_apps_acstop_isstarting_fl_=false
+[[ $_ob_opts_apps_acstop_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acstop_isstarting_fl_ ;}
+Opts.Apps.AcStop.IsStarting.NoLogMods()
+{ _ob_opts_apps_acstop_isstarting_chfl_=false ;}
+Opts.Apps.AcStop.IsStarting.Init()
+{ _ob_opts_apps_acstop_isstarting_fl_=false
+_ob_opts_apps_acstop_isstarting_chfl_=true ;}
+Opts.Apps.AcStop.IsStarting.IsNt()
+{ [[ $_ob_opts_apps_acstop_isstarting_fl_ != 'true' ]] ;}
+Opts.Apps.AcStop.IsStarting.IsSet()
+{ [[ $_ob_opts_apps_acstop_isstarting_fl_ = 'true' ]] ;}
+Opts.Apps.AcStop.IsStarting.Set()
+{ [[ $_ob_opts_apps_acstop_isstarting_fl_ = 'true' ]] && return
+_ob_opts_apps_acstop_isstarting_fl_=true
+[[ $_ob_opts_apps_acstop_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acstop_isstarting_fl_ ;}
+Opts.Apps.AcStop.IsStarting.Init
+Opts.Apps.AcUninstall.IsStarting.Clear()
+{ [[ $_ob_opts_apps_acuninstall_isstarting_fl_ != 'true' ]] && return
+_ob_opts_apps_acuninstall_isstarting_fl_=false
+[[ $_ob_opts_apps_acuninstall_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acuninstall_isstarting_fl_ ;}
+Opts.Apps.AcUninstall.IsStarting.NoLogMods()
+{ _ob_opts_apps_acuninstall_isstarting_chfl_=false ;}
+Opts.Apps.AcUninstall.IsStarting.Init()
+{ _ob_opts_apps_acuninstall_isstarting_fl_=false
+_ob_opts_apps_acuninstall_isstarting_chfl_=true ;}
+Opts.Apps.AcUninstall.IsStarting.IsNt()
+{ [[ $_ob_opts_apps_acuninstall_isstarting_fl_ != 'true' ]] ;}
+Opts.Apps.AcUninstall.IsStarting.IsSet()
+{ [[ $_ob_opts_apps_acuninstall_isstarting_fl_ = 'true' ]] ;}
+Opts.Apps.AcUninstall.IsStarting.Set()
+{ [[ $_ob_opts_apps_acuninstall_isstarting_fl_ = 'true' ]] && return
+_ob_opts_apps_acuninstall_isstarting_fl_=true
+[[ $_ob_opts_apps_acuninstall_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acuninstall_isstarting_fl_ ;}
+Opts.Apps.AcUninstall.IsStarting.Init
+Opts.Apps.AcUpgrade.IsStarting.Clear()
+{ [[ $_ob_opts_apps_acupgrade_isstarting_fl_ != 'true' ]] && return
+_ob_opts_apps_acupgrade_isstarting_fl_=false
+[[ $_ob_opts_apps_acupgrade_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acupgrade_isstarting_fl_ ;}
+Opts.Apps.AcUpgrade.IsStarting.NoLogMods()
+{ _ob_opts_apps_acupgrade_isstarting_chfl_=false ;}
+Opts.Apps.AcUpgrade.IsStarting.Init()
+{ _ob_opts_apps_acupgrade_isstarting_fl_=false
+_ob_opts_apps_acupgrade_isstarting_chfl_=true ;}
+Opts.Apps.AcUpgrade.IsStarting.IsNt()
+{ [[ $_ob_opts_apps_acupgrade_isstarting_fl_ != 'true' ]] ;}
+Opts.Apps.AcUpgrade.IsStarting.IsSet()
+{ [[ $_ob_opts_apps_acupgrade_isstarting_fl_ = 'true' ]] ;}
+Opts.Apps.AcUpgrade.IsStarting.Set()
+{ [[ $_ob_opts_apps_acupgrade_isstarting_fl_ = 'true' ]] && return
+_ob_opts_apps_acupgrade_isstarting_fl_=true
+[[ $_ob_opts_apps_acupgrade_isstarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acupgrade_isstarting_fl_ ;}
+Opts.Apps.AcUpgrade.IsStarting.Init
 Opts.Apps.AcBackup.IsStopping.Clear()
 { [[ $_ob_opts_apps_acbackup_isstopping_fl_ != 'true' ]] && return
 _ob_opts_apps_acbackup_isstopping_fl_=false
@@ -9809,24 +9503,6 @@ Opts.Apps.AcBackup.IsStopping.Set()
 _ob_opts_apps_acbackup_isstopping_fl_=true
 [[ $_ob_opts_apps_acbackup_isstopping_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acbackup_isstopping_fl_ ;}
 Opts.Apps.AcBackup.IsStopping.Init
-Opts.Apps.AcBackup.IsNtStopping.Clear()
-{ [[ $_ob_opts_apps_acbackup_isntstopping_fl_ != 'true' ]] && return
-_ob_opts_apps_acbackup_isntstopping_fl_=false
-[[ $_ob_opts_apps_acbackup_isntstopping_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acbackup_isntstopping_fl_ ;}
-Opts.Apps.AcBackup.IsNtStopping.NoLogMods()
-{ _ob_opts_apps_acbackup_isntstopping_chfl_=false ;}
-Opts.Apps.AcBackup.IsNtStopping.Init()
-{ _ob_opts_apps_acbackup_isntstopping_fl_=false
-_ob_opts_apps_acbackup_isntstopping_chfl_=true ;}
-Opts.Apps.AcBackup.IsNtStopping.IsNt()
-{ [[ $_ob_opts_apps_acbackup_isntstopping_fl_ != 'true' ]] ;}
-Opts.Apps.AcBackup.IsNtStopping.IsSet()
-{ [[ $_ob_opts_apps_acbackup_isntstopping_fl_ = 'true' ]] ;}
-Opts.Apps.AcBackup.IsNtStopping.Set()
-{ [[ $_ob_opts_apps_acbackup_isntstopping_fl_ = 'true' ]] && return
-_ob_opts_apps_acbackup_isntstopping_fl_=true
-[[ $_ob_opts_apps_acbackup_isntstopping_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acbackup_isntstopping_fl_ ;}
-Opts.Apps.AcBackup.IsNtStopping.Init
 Opts.Apps.AcClean.IsStopping.Clear()
 { [[ $_ob_opts_apps_acclean_isstopping_fl_ != 'true' ]] && return
 _ob_opts_apps_acclean_isstopping_fl_=false
@@ -9845,24 +9521,6 @@ Opts.Apps.AcClean.IsStopping.Set()
 _ob_opts_apps_acclean_isstopping_fl_=true
 [[ $_ob_opts_apps_acclean_isstopping_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acclean_isstopping_fl_ ;}
 Opts.Apps.AcClean.IsStopping.Init
-Opts.Apps.AcClean.IsNtStopping.Clear()
-{ [[ $_ob_opts_apps_acclean_isntstopping_fl_ != 'true' ]] && return
-_ob_opts_apps_acclean_isntstopping_fl_=false
-[[ $_ob_opts_apps_acclean_isntstopping_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acclean_isntstopping_fl_ ;}
-Opts.Apps.AcClean.IsNtStopping.NoLogMods()
-{ _ob_opts_apps_acclean_isntstopping_chfl_=false ;}
-Opts.Apps.AcClean.IsNtStopping.Init()
-{ _ob_opts_apps_acclean_isntstopping_fl_=false
-_ob_opts_apps_acclean_isntstopping_chfl_=true ;}
-Opts.Apps.AcClean.IsNtStopping.IsNt()
-{ [[ $_ob_opts_apps_acclean_isntstopping_fl_ != 'true' ]] ;}
-Opts.Apps.AcClean.IsNtStopping.IsSet()
-{ [[ $_ob_opts_apps_acclean_isntstopping_fl_ = 'true' ]] ;}
-Opts.Apps.AcClean.IsNtStopping.Set()
-{ [[ $_ob_opts_apps_acclean_isntstopping_fl_ = 'true' ]] && return
-_ob_opts_apps_acclean_isntstopping_fl_=true
-[[ $_ob_opts_apps_acclean_isntstopping_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acclean_isntstopping_fl_ ;}
-Opts.Apps.AcClean.IsNtStopping.Init
 Opts.Apps.AcDisable.IsStopping.Clear()
 { [[ $_ob_opts_apps_acdisable_isstopping_fl_ != 'true' ]] && return
 _ob_opts_apps_acdisable_isstopping_fl_=false
@@ -9881,24 +9539,6 @@ Opts.Apps.AcDisable.IsStopping.Set()
 _ob_opts_apps_acdisable_isstopping_fl_=true
 [[ $_ob_opts_apps_acdisable_isstopping_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acdisable_isstopping_fl_ ;}
 Opts.Apps.AcDisable.IsStopping.Init
-Opts.Apps.AcDisable.IsNtStopping.Clear()
-{ [[ $_ob_opts_apps_acdisable_isntstopping_fl_ != 'true' ]] && return
-_ob_opts_apps_acdisable_isntstopping_fl_=false
-[[ $_ob_opts_apps_acdisable_isntstopping_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acdisable_isntstopping_fl_ ;}
-Opts.Apps.AcDisable.IsNtStopping.NoLogMods()
-{ _ob_opts_apps_acdisable_isntstopping_chfl_=false ;}
-Opts.Apps.AcDisable.IsNtStopping.Init()
-{ _ob_opts_apps_acdisable_isntstopping_fl_=false
-_ob_opts_apps_acdisable_isntstopping_chfl_=true ;}
-Opts.Apps.AcDisable.IsNtStopping.IsNt()
-{ [[ $_ob_opts_apps_acdisable_isntstopping_fl_ != 'true' ]] ;}
-Opts.Apps.AcDisable.IsNtStopping.IsSet()
-{ [[ $_ob_opts_apps_acdisable_isntstopping_fl_ = 'true' ]] ;}
-Opts.Apps.AcDisable.IsNtStopping.Set()
-{ [[ $_ob_opts_apps_acdisable_isntstopping_fl_ = 'true' ]] && return
-_ob_opts_apps_acdisable_isntstopping_fl_=true
-[[ $_ob_opts_apps_acdisable_isntstopping_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acdisable_isntstopping_fl_ ;}
-Opts.Apps.AcDisable.IsNtStopping.Init
 Opts.Apps.AcDownload.IsStopping.Clear()
 { [[ $_ob_opts_apps_acdownload_isstopping_fl_ != 'true' ]] && return
 _ob_opts_apps_acdownload_isstopping_fl_=false
@@ -9917,24 +9557,6 @@ Opts.Apps.AcDownload.IsStopping.Set()
 _ob_opts_apps_acdownload_isstopping_fl_=true
 [[ $_ob_opts_apps_acdownload_isstopping_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acdownload_isstopping_fl_ ;}
 Opts.Apps.AcDownload.IsStopping.Init
-Opts.Apps.AcDownload.IsNtStopping.Clear()
-{ [[ $_ob_opts_apps_acdownload_isntstopping_fl_ != 'true' ]] && return
-_ob_opts_apps_acdownload_isntstopping_fl_=false
-[[ $_ob_opts_apps_acdownload_isntstopping_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acdownload_isntstopping_fl_ ;}
-Opts.Apps.AcDownload.IsNtStopping.NoLogMods()
-{ _ob_opts_apps_acdownload_isntstopping_chfl_=false ;}
-Opts.Apps.AcDownload.IsNtStopping.Init()
-{ _ob_opts_apps_acdownload_isntstopping_fl_=false
-_ob_opts_apps_acdownload_isntstopping_chfl_=true ;}
-Opts.Apps.AcDownload.IsNtStopping.IsNt()
-{ [[ $_ob_opts_apps_acdownload_isntstopping_fl_ != 'true' ]] ;}
-Opts.Apps.AcDownload.IsNtStopping.IsSet()
-{ [[ $_ob_opts_apps_acdownload_isntstopping_fl_ = 'true' ]] ;}
-Opts.Apps.AcDownload.IsNtStopping.Set()
-{ [[ $_ob_opts_apps_acdownload_isntstopping_fl_ = 'true' ]] && return
-_ob_opts_apps_acdownload_isntstopping_fl_=true
-[[ $_ob_opts_apps_acdownload_isntstopping_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acdownload_isntstopping_fl_ ;}
-Opts.Apps.AcDownload.IsNtStopping.Init
 Opts.Apps.AcEnable.IsStopping.Clear()
 { [[ $_ob_opts_apps_acenable_isstopping_fl_ != 'true' ]] && return
 _ob_opts_apps_acenable_isstopping_fl_=false
@@ -9953,24 +9575,6 @@ Opts.Apps.AcEnable.IsStopping.Set()
 _ob_opts_apps_acenable_isstopping_fl_=true
 [[ $_ob_opts_apps_acenable_isstopping_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acenable_isstopping_fl_ ;}
 Opts.Apps.AcEnable.IsStopping.Init
-Opts.Apps.AcEnable.IsNtStopping.Clear()
-{ [[ $_ob_opts_apps_acenable_isntstopping_fl_ != 'true' ]] && return
-_ob_opts_apps_acenable_isntstopping_fl_=false
-[[ $_ob_opts_apps_acenable_isntstopping_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acenable_isntstopping_fl_ ;}
-Opts.Apps.AcEnable.IsNtStopping.NoLogMods()
-{ _ob_opts_apps_acenable_isntstopping_chfl_=false ;}
-Opts.Apps.AcEnable.IsNtStopping.Init()
-{ _ob_opts_apps_acenable_isntstopping_fl_=false
-_ob_opts_apps_acenable_isntstopping_chfl_=true ;}
-Opts.Apps.AcEnable.IsNtStopping.IsNt()
-{ [[ $_ob_opts_apps_acenable_isntstopping_fl_ != 'true' ]] ;}
-Opts.Apps.AcEnable.IsNtStopping.IsSet()
-{ [[ $_ob_opts_apps_acenable_isntstopping_fl_ = 'true' ]] ;}
-Opts.Apps.AcEnable.IsNtStopping.Set()
-{ [[ $_ob_opts_apps_acenable_isntstopping_fl_ = 'true' ]] && return
-_ob_opts_apps_acenable_isntstopping_fl_=true
-[[ $_ob_opts_apps_acenable_isntstopping_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acenable_isntstopping_fl_ ;}
-Opts.Apps.AcEnable.IsNtStopping.Init
 Opts.Apps.AcInstall.IsStopping.Clear()
 { [[ $_ob_opts_apps_acinstall_isstopping_fl_ != 'true' ]] && return
 _ob_opts_apps_acinstall_isstopping_fl_=false
@@ -9989,24 +9593,6 @@ Opts.Apps.AcInstall.IsStopping.Set()
 _ob_opts_apps_acinstall_isstopping_fl_=true
 [[ $_ob_opts_apps_acinstall_isstopping_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acinstall_isstopping_fl_ ;}
 Opts.Apps.AcInstall.IsStopping.Init
-Opts.Apps.AcInstall.IsNtStopping.Clear()
-{ [[ $_ob_opts_apps_acinstall_isntstopping_fl_ != 'true' ]] && return
-_ob_opts_apps_acinstall_isntstopping_fl_=false
-[[ $_ob_opts_apps_acinstall_isntstopping_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acinstall_isntstopping_fl_ ;}
-Opts.Apps.AcInstall.IsNtStopping.NoLogMods()
-{ _ob_opts_apps_acinstall_isntstopping_chfl_=false ;}
-Opts.Apps.AcInstall.IsNtStopping.Init()
-{ _ob_opts_apps_acinstall_isntstopping_fl_=false
-_ob_opts_apps_acinstall_isntstopping_chfl_=true ;}
-Opts.Apps.AcInstall.IsNtStopping.IsNt()
-{ [[ $_ob_opts_apps_acinstall_isntstopping_fl_ != 'true' ]] ;}
-Opts.Apps.AcInstall.IsNtStopping.IsSet()
-{ [[ $_ob_opts_apps_acinstall_isntstopping_fl_ = 'true' ]] ;}
-Opts.Apps.AcInstall.IsNtStopping.Set()
-{ [[ $_ob_opts_apps_acinstall_isntstopping_fl_ = 'true' ]] && return
-_ob_opts_apps_acinstall_isntstopping_fl_=true
-[[ $_ob_opts_apps_acinstall_isntstopping_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acinstall_isntstopping_fl_ ;}
-Opts.Apps.AcInstall.IsNtStopping.Init
 Opts.Apps.AcRebuild.IsStopping.Clear()
 { [[ $_ob_opts_apps_acrebuild_isstopping_fl_ != 'true' ]] && return
 _ob_opts_apps_acrebuild_isstopping_fl_=false
@@ -10025,24 +9611,6 @@ Opts.Apps.AcRebuild.IsStopping.Set()
 _ob_opts_apps_acrebuild_isstopping_fl_=true
 [[ $_ob_opts_apps_acrebuild_isstopping_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acrebuild_isstopping_fl_ ;}
 Opts.Apps.AcRebuild.IsStopping.Init
-Opts.Apps.AcRebuild.IsNtStopping.Clear()
-{ [[ $_ob_opts_apps_acrebuild_isntstopping_fl_ != 'true' ]] && return
-_ob_opts_apps_acrebuild_isntstopping_fl_=false
-[[ $_ob_opts_apps_acrebuild_isntstopping_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acrebuild_isntstopping_fl_ ;}
-Opts.Apps.AcRebuild.IsNtStopping.NoLogMods()
-{ _ob_opts_apps_acrebuild_isntstopping_chfl_=false ;}
-Opts.Apps.AcRebuild.IsNtStopping.Init()
-{ _ob_opts_apps_acrebuild_isntstopping_fl_=false
-_ob_opts_apps_acrebuild_isntstopping_chfl_=true ;}
-Opts.Apps.AcRebuild.IsNtStopping.IsNt()
-{ [[ $_ob_opts_apps_acrebuild_isntstopping_fl_ != 'true' ]] ;}
-Opts.Apps.AcRebuild.IsNtStopping.IsSet()
-{ [[ $_ob_opts_apps_acrebuild_isntstopping_fl_ = 'true' ]] ;}
-Opts.Apps.AcRebuild.IsNtStopping.Set()
-{ [[ $_ob_opts_apps_acrebuild_isntstopping_fl_ = 'true' ]] && return
-_ob_opts_apps_acrebuild_isntstopping_fl_=true
-[[ $_ob_opts_apps_acrebuild_isntstopping_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acrebuild_isntstopping_fl_ ;}
-Opts.Apps.AcRebuild.IsNtStopping.Init
 Opts.Apps.AcReinstall.IsStopping.Clear()
 { [[ $_ob_opts_apps_acreinstall_isstopping_fl_ != 'true' ]] && return
 _ob_opts_apps_acreinstall_isstopping_fl_=false
@@ -10061,24 +9629,6 @@ Opts.Apps.AcReinstall.IsStopping.Set()
 _ob_opts_apps_acreinstall_isstopping_fl_=true
 [[ $_ob_opts_apps_acreinstall_isstopping_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acreinstall_isstopping_fl_ ;}
 Opts.Apps.AcReinstall.IsStopping.Init
-Opts.Apps.AcReinstall.IsNtStopping.Clear()
-{ [[ $_ob_opts_apps_acreinstall_isntstopping_fl_ != 'true' ]] && return
-_ob_opts_apps_acreinstall_isntstopping_fl_=false
-[[ $_ob_opts_apps_acreinstall_isntstopping_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acreinstall_isntstopping_fl_ ;}
-Opts.Apps.AcReinstall.IsNtStopping.NoLogMods()
-{ _ob_opts_apps_acreinstall_isntstopping_chfl_=false ;}
-Opts.Apps.AcReinstall.IsNtStopping.Init()
-{ _ob_opts_apps_acreinstall_isntstopping_fl_=false
-_ob_opts_apps_acreinstall_isntstopping_chfl_=true ;}
-Opts.Apps.AcReinstall.IsNtStopping.IsNt()
-{ [[ $_ob_opts_apps_acreinstall_isntstopping_fl_ != 'true' ]] ;}
-Opts.Apps.AcReinstall.IsNtStopping.IsSet()
-{ [[ $_ob_opts_apps_acreinstall_isntstopping_fl_ = 'true' ]] ;}
-Opts.Apps.AcReinstall.IsNtStopping.Set()
-{ [[ $_ob_opts_apps_acreinstall_isntstopping_fl_ = 'true' ]] && return
-_ob_opts_apps_acreinstall_isntstopping_fl_=true
-[[ $_ob_opts_apps_acreinstall_isntstopping_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acreinstall_isntstopping_fl_ ;}
-Opts.Apps.AcReinstall.IsNtStopping.Init
 Opts.Apps.AcRestart.IsStopping.Clear()
 { [[ $_ob_opts_apps_acrestart_isstopping_fl_ != 'true' ]] && return
 _ob_opts_apps_acrestart_isstopping_fl_=false
@@ -10097,24 +9647,6 @@ Opts.Apps.AcRestart.IsStopping.Set()
 _ob_opts_apps_acrestart_isstopping_fl_=true
 [[ $_ob_opts_apps_acrestart_isstopping_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acrestart_isstopping_fl_ ;}
 Opts.Apps.AcRestart.IsStopping.Init
-Opts.Apps.AcRestart.IsNtStopping.Clear()
-{ [[ $_ob_opts_apps_acrestart_isntstopping_fl_ != 'true' ]] && return
-_ob_opts_apps_acrestart_isntstopping_fl_=false
-[[ $_ob_opts_apps_acrestart_isntstopping_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acrestart_isntstopping_fl_ ;}
-Opts.Apps.AcRestart.IsNtStopping.NoLogMods()
-{ _ob_opts_apps_acrestart_isntstopping_chfl_=false ;}
-Opts.Apps.AcRestart.IsNtStopping.Init()
-{ _ob_opts_apps_acrestart_isntstopping_fl_=false
-_ob_opts_apps_acrestart_isntstopping_chfl_=true ;}
-Opts.Apps.AcRestart.IsNtStopping.IsNt()
-{ [[ $_ob_opts_apps_acrestart_isntstopping_fl_ != 'true' ]] ;}
-Opts.Apps.AcRestart.IsNtStopping.IsSet()
-{ [[ $_ob_opts_apps_acrestart_isntstopping_fl_ = 'true' ]] ;}
-Opts.Apps.AcRestart.IsNtStopping.Set()
-{ [[ $_ob_opts_apps_acrestart_isntstopping_fl_ = 'true' ]] && return
-_ob_opts_apps_acrestart_isntstopping_fl_=true
-[[ $_ob_opts_apps_acrestart_isntstopping_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acrestart_isntstopping_fl_ ;}
-Opts.Apps.AcRestart.IsNtStopping.Init
 Opts.Apps.AcRestore.IsStopping.Clear()
 { [[ $_ob_opts_apps_acrestore_isstopping_fl_ != 'true' ]] && return
 _ob_opts_apps_acrestore_isstopping_fl_=false
@@ -10133,24 +9665,6 @@ Opts.Apps.AcRestore.IsStopping.Set()
 _ob_opts_apps_acrestore_isstopping_fl_=true
 [[ $_ob_opts_apps_acrestore_isstopping_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acrestore_isstopping_fl_ ;}
 Opts.Apps.AcRestore.IsStopping.Init
-Opts.Apps.AcRestore.IsNtStopping.Clear()
-{ [[ $_ob_opts_apps_acrestore_isntstopping_fl_ != 'true' ]] && return
-_ob_opts_apps_acrestore_isntstopping_fl_=false
-[[ $_ob_opts_apps_acrestore_isntstopping_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acrestore_isntstopping_fl_ ;}
-Opts.Apps.AcRestore.IsNtStopping.NoLogMods()
-{ _ob_opts_apps_acrestore_isntstopping_chfl_=false ;}
-Opts.Apps.AcRestore.IsNtStopping.Init()
-{ _ob_opts_apps_acrestore_isntstopping_fl_=false
-_ob_opts_apps_acrestore_isntstopping_chfl_=true ;}
-Opts.Apps.AcRestore.IsNtStopping.IsNt()
-{ [[ $_ob_opts_apps_acrestore_isntstopping_fl_ != 'true' ]] ;}
-Opts.Apps.AcRestore.IsNtStopping.IsSet()
-{ [[ $_ob_opts_apps_acrestore_isntstopping_fl_ = 'true' ]] ;}
-Opts.Apps.AcRestore.IsNtStopping.Set()
-{ [[ $_ob_opts_apps_acrestore_isntstopping_fl_ = 'true' ]] && return
-_ob_opts_apps_acrestore_isntstopping_fl_=true
-[[ $_ob_opts_apps_acrestore_isntstopping_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acrestore_isntstopping_fl_ ;}
-Opts.Apps.AcRestore.IsNtStopping.Init
 Opts.Apps.AcStart.IsStopping.Clear()
 { [[ $_ob_opts_apps_acstart_isstopping_fl_ != 'true' ]] && return
 _ob_opts_apps_acstart_isstopping_fl_=false
@@ -10169,24 +9683,6 @@ Opts.Apps.AcStart.IsStopping.Set()
 _ob_opts_apps_acstart_isstopping_fl_=true
 [[ $_ob_opts_apps_acstart_isstopping_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acstart_isstopping_fl_ ;}
 Opts.Apps.AcStart.IsStopping.Init
-Opts.Apps.AcStart.IsNtStopping.Clear()
-{ [[ $_ob_opts_apps_acstart_isntstopping_fl_ != 'true' ]] && return
-_ob_opts_apps_acstart_isntstopping_fl_=false
-[[ $_ob_opts_apps_acstart_isntstopping_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acstart_isntstopping_fl_ ;}
-Opts.Apps.AcStart.IsNtStopping.NoLogMods()
-{ _ob_opts_apps_acstart_isntstopping_chfl_=false ;}
-Opts.Apps.AcStart.IsNtStopping.Init()
-{ _ob_opts_apps_acstart_isntstopping_fl_=false
-_ob_opts_apps_acstart_isntstopping_chfl_=true ;}
-Opts.Apps.AcStart.IsNtStopping.IsNt()
-{ [[ $_ob_opts_apps_acstart_isntstopping_fl_ != 'true' ]] ;}
-Opts.Apps.AcStart.IsNtStopping.IsSet()
-{ [[ $_ob_opts_apps_acstart_isntstopping_fl_ = 'true' ]] ;}
-Opts.Apps.AcStart.IsNtStopping.Set()
-{ [[ $_ob_opts_apps_acstart_isntstopping_fl_ = 'true' ]] && return
-_ob_opts_apps_acstart_isntstopping_fl_=true
-[[ $_ob_opts_apps_acstart_isntstopping_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acstart_isntstopping_fl_ ;}
-Opts.Apps.AcStart.IsNtStopping.Init
 Opts.Apps.AcStop.IsStopping.Clear()
 { [[ $_ob_opts_apps_acstop_isstopping_fl_ != 'true' ]] && return
 _ob_opts_apps_acstop_isstopping_fl_=false
@@ -10205,24 +9701,6 @@ Opts.Apps.AcStop.IsStopping.Set()
 _ob_opts_apps_acstop_isstopping_fl_=true
 [[ $_ob_opts_apps_acstop_isstopping_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acstop_isstopping_fl_ ;}
 Opts.Apps.AcStop.IsStopping.Init
-Opts.Apps.AcStop.IsNtStopping.Clear()
-{ [[ $_ob_opts_apps_acstop_isntstopping_fl_ != 'true' ]] && return
-_ob_opts_apps_acstop_isntstopping_fl_=false
-[[ $_ob_opts_apps_acstop_isntstopping_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acstop_isntstopping_fl_ ;}
-Opts.Apps.AcStop.IsNtStopping.NoLogMods()
-{ _ob_opts_apps_acstop_isntstopping_chfl_=false ;}
-Opts.Apps.AcStop.IsNtStopping.Init()
-{ _ob_opts_apps_acstop_isntstopping_fl_=false
-_ob_opts_apps_acstop_isntstopping_chfl_=true ;}
-Opts.Apps.AcStop.IsNtStopping.IsNt()
-{ [[ $_ob_opts_apps_acstop_isntstopping_fl_ != 'true' ]] ;}
-Opts.Apps.AcStop.IsNtStopping.IsSet()
-{ [[ $_ob_opts_apps_acstop_isntstopping_fl_ = 'true' ]] ;}
-Opts.Apps.AcStop.IsNtStopping.Set()
-{ [[ $_ob_opts_apps_acstop_isntstopping_fl_ = 'true' ]] && return
-_ob_opts_apps_acstop_isntstopping_fl_=true
-[[ $_ob_opts_apps_acstop_isntstopping_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acstop_isntstopping_fl_ ;}
-Opts.Apps.AcStop.IsNtStopping.Init
 Opts.Apps.AcUninstall.IsStopping.Clear()
 { [[ $_ob_opts_apps_acuninstall_isstopping_fl_ != 'true' ]] && return
 _ob_opts_apps_acuninstall_isstopping_fl_=false
@@ -10241,24 +9719,6 @@ Opts.Apps.AcUninstall.IsStopping.Set()
 _ob_opts_apps_acuninstall_isstopping_fl_=true
 [[ $_ob_opts_apps_acuninstall_isstopping_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acuninstall_isstopping_fl_ ;}
 Opts.Apps.AcUninstall.IsStopping.Init
-Opts.Apps.AcUninstall.IsNtStopping.Clear()
-{ [[ $_ob_opts_apps_acuninstall_isntstopping_fl_ != 'true' ]] && return
-_ob_opts_apps_acuninstall_isntstopping_fl_=false
-[[ $_ob_opts_apps_acuninstall_isntstopping_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acuninstall_isntstopping_fl_ ;}
-Opts.Apps.AcUninstall.IsNtStopping.NoLogMods()
-{ _ob_opts_apps_acuninstall_isntstopping_chfl_=false ;}
-Opts.Apps.AcUninstall.IsNtStopping.Init()
-{ _ob_opts_apps_acuninstall_isntstopping_fl_=false
-_ob_opts_apps_acuninstall_isntstopping_chfl_=true ;}
-Opts.Apps.AcUninstall.IsNtStopping.IsNt()
-{ [[ $_ob_opts_apps_acuninstall_isntstopping_fl_ != 'true' ]] ;}
-Opts.Apps.AcUninstall.IsNtStopping.IsSet()
-{ [[ $_ob_opts_apps_acuninstall_isntstopping_fl_ = 'true' ]] ;}
-Opts.Apps.AcUninstall.IsNtStopping.Set()
-{ [[ $_ob_opts_apps_acuninstall_isntstopping_fl_ = 'true' ]] && return
-_ob_opts_apps_acuninstall_isntstopping_fl_=true
-[[ $_ob_opts_apps_acuninstall_isntstopping_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acuninstall_isntstopping_fl_ ;}
-Opts.Apps.AcUninstall.IsNtStopping.Init
 Opts.Apps.AcUpgrade.IsStopping.Clear()
 { [[ $_ob_opts_apps_acupgrade_isstopping_fl_ != 'true' ]] && return
 _ob_opts_apps_acupgrade_isstopping_fl_=false
@@ -10277,24 +9737,6 @@ Opts.Apps.AcUpgrade.IsStopping.Set()
 _ob_opts_apps_acupgrade_isstopping_fl_=true
 [[ $_ob_opts_apps_acupgrade_isstopping_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acupgrade_isstopping_fl_ ;}
 Opts.Apps.AcUpgrade.IsStopping.Init
-Opts.Apps.AcUpgrade.IsNtStopping.Clear()
-{ [[ $_ob_opts_apps_acupgrade_isntstopping_fl_ != 'true' ]] && return
-_ob_opts_apps_acupgrade_isntstopping_fl_=false
-[[ $_ob_opts_apps_acupgrade_isntstopping_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acupgrade_isntstopping_fl_ ;}
-Opts.Apps.AcUpgrade.IsNtStopping.NoLogMods()
-{ _ob_opts_apps_acupgrade_isntstopping_chfl_=false ;}
-Opts.Apps.AcUpgrade.IsNtStopping.Init()
-{ _ob_opts_apps_acupgrade_isntstopping_fl_=false
-_ob_opts_apps_acupgrade_isntstopping_chfl_=true ;}
-Opts.Apps.AcUpgrade.IsNtStopping.IsNt()
-{ [[ $_ob_opts_apps_acupgrade_isntstopping_fl_ != 'true' ]] ;}
-Opts.Apps.AcUpgrade.IsNtStopping.IsSet()
-{ [[ $_ob_opts_apps_acupgrade_isntstopping_fl_ = 'true' ]] ;}
-Opts.Apps.AcUpgrade.IsNtStopping.Set()
-{ [[ $_ob_opts_apps_acupgrade_isntstopping_fl_ = 'true' ]] && return
-_ob_opts_apps_acupgrade_isntstopping_fl_=true
-[[ $_ob_opts_apps_acupgrade_isntstopping_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acupgrade_isntstopping_fl_ ;}
-Opts.Apps.AcUpgrade.IsNtStopping.Init
 Opts.Apps.AcBackup.IsRestarting.Clear()
 { [[ $_ob_opts_apps_acbackup_isrestarting_fl_ != 'true' ]] && return
 _ob_opts_apps_acbackup_isrestarting_fl_=false
@@ -10313,24 +9755,6 @@ Opts.Apps.AcBackup.IsRestarting.Set()
 _ob_opts_apps_acbackup_isrestarting_fl_=true
 [[ $_ob_opts_apps_acbackup_isrestarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acbackup_isrestarting_fl_ ;}
 Opts.Apps.AcBackup.IsRestarting.Init
-Opts.Apps.AcBackup.IsNtRestarting.Clear()
-{ [[ $_ob_opts_apps_acbackup_isntrestarting_fl_ != 'true' ]] && return
-_ob_opts_apps_acbackup_isntrestarting_fl_=false
-[[ $_ob_opts_apps_acbackup_isntrestarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acbackup_isntrestarting_fl_ ;}
-Opts.Apps.AcBackup.IsNtRestarting.NoLogMods()
-{ _ob_opts_apps_acbackup_isntrestarting_chfl_=false ;}
-Opts.Apps.AcBackup.IsNtRestarting.Init()
-{ _ob_opts_apps_acbackup_isntrestarting_fl_=false
-_ob_opts_apps_acbackup_isntrestarting_chfl_=true ;}
-Opts.Apps.AcBackup.IsNtRestarting.IsNt()
-{ [[ $_ob_opts_apps_acbackup_isntrestarting_fl_ != 'true' ]] ;}
-Opts.Apps.AcBackup.IsNtRestarting.IsSet()
-{ [[ $_ob_opts_apps_acbackup_isntrestarting_fl_ = 'true' ]] ;}
-Opts.Apps.AcBackup.IsNtRestarting.Set()
-{ [[ $_ob_opts_apps_acbackup_isntrestarting_fl_ = 'true' ]] && return
-_ob_opts_apps_acbackup_isntrestarting_fl_=true
-[[ $_ob_opts_apps_acbackup_isntrestarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acbackup_isntrestarting_fl_ ;}
-Opts.Apps.AcBackup.IsNtRestarting.Init
 Opts.Apps.AcClean.IsRestarting.Clear()
 { [[ $_ob_opts_apps_acclean_isrestarting_fl_ != 'true' ]] && return
 _ob_opts_apps_acclean_isrestarting_fl_=false
@@ -10349,24 +9773,6 @@ Opts.Apps.AcClean.IsRestarting.Set()
 _ob_opts_apps_acclean_isrestarting_fl_=true
 [[ $_ob_opts_apps_acclean_isrestarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acclean_isrestarting_fl_ ;}
 Opts.Apps.AcClean.IsRestarting.Init
-Opts.Apps.AcClean.IsNtRestarting.Clear()
-{ [[ $_ob_opts_apps_acclean_isntrestarting_fl_ != 'true' ]] && return
-_ob_opts_apps_acclean_isntrestarting_fl_=false
-[[ $_ob_opts_apps_acclean_isntrestarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acclean_isntrestarting_fl_ ;}
-Opts.Apps.AcClean.IsNtRestarting.NoLogMods()
-{ _ob_opts_apps_acclean_isntrestarting_chfl_=false ;}
-Opts.Apps.AcClean.IsNtRestarting.Init()
-{ _ob_opts_apps_acclean_isntrestarting_fl_=false
-_ob_opts_apps_acclean_isntrestarting_chfl_=true ;}
-Opts.Apps.AcClean.IsNtRestarting.IsNt()
-{ [[ $_ob_opts_apps_acclean_isntrestarting_fl_ != 'true' ]] ;}
-Opts.Apps.AcClean.IsNtRestarting.IsSet()
-{ [[ $_ob_opts_apps_acclean_isntrestarting_fl_ = 'true' ]] ;}
-Opts.Apps.AcClean.IsNtRestarting.Set()
-{ [[ $_ob_opts_apps_acclean_isntrestarting_fl_ = 'true' ]] && return
-_ob_opts_apps_acclean_isntrestarting_fl_=true
-[[ $_ob_opts_apps_acclean_isntrestarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acclean_isntrestarting_fl_ ;}
-Opts.Apps.AcClean.IsNtRestarting.Init
 Opts.Apps.AcDisable.IsRestarting.Clear()
 { [[ $_ob_opts_apps_acdisable_isrestarting_fl_ != 'true' ]] && return
 _ob_opts_apps_acdisable_isrestarting_fl_=false
@@ -10385,24 +9791,6 @@ Opts.Apps.AcDisable.IsRestarting.Set()
 _ob_opts_apps_acdisable_isrestarting_fl_=true
 [[ $_ob_opts_apps_acdisable_isrestarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acdisable_isrestarting_fl_ ;}
 Opts.Apps.AcDisable.IsRestarting.Init
-Opts.Apps.AcDisable.IsNtRestarting.Clear()
-{ [[ $_ob_opts_apps_acdisable_isntrestarting_fl_ != 'true' ]] && return
-_ob_opts_apps_acdisable_isntrestarting_fl_=false
-[[ $_ob_opts_apps_acdisable_isntrestarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acdisable_isntrestarting_fl_ ;}
-Opts.Apps.AcDisable.IsNtRestarting.NoLogMods()
-{ _ob_opts_apps_acdisable_isntrestarting_chfl_=false ;}
-Opts.Apps.AcDisable.IsNtRestarting.Init()
-{ _ob_opts_apps_acdisable_isntrestarting_fl_=false
-_ob_opts_apps_acdisable_isntrestarting_chfl_=true ;}
-Opts.Apps.AcDisable.IsNtRestarting.IsNt()
-{ [[ $_ob_opts_apps_acdisable_isntrestarting_fl_ != 'true' ]] ;}
-Opts.Apps.AcDisable.IsNtRestarting.IsSet()
-{ [[ $_ob_opts_apps_acdisable_isntrestarting_fl_ = 'true' ]] ;}
-Opts.Apps.AcDisable.IsNtRestarting.Set()
-{ [[ $_ob_opts_apps_acdisable_isntrestarting_fl_ = 'true' ]] && return
-_ob_opts_apps_acdisable_isntrestarting_fl_=true
-[[ $_ob_opts_apps_acdisable_isntrestarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acdisable_isntrestarting_fl_ ;}
-Opts.Apps.AcDisable.IsNtRestarting.Init
 Opts.Apps.AcDownload.IsRestarting.Clear()
 { [[ $_ob_opts_apps_acdownload_isrestarting_fl_ != 'true' ]] && return
 _ob_opts_apps_acdownload_isrestarting_fl_=false
@@ -10421,24 +9809,6 @@ Opts.Apps.AcDownload.IsRestarting.Set()
 _ob_opts_apps_acdownload_isrestarting_fl_=true
 [[ $_ob_opts_apps_acdownload_isrestarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acdownload_isrestarting_fl_ ;}
 Opts.Apps.AcDownload.IsRestarting.Init
-Opts.Apps.AcDownload.IsNtRestarting.Clear()
-{ [[ $_ob_opts_apps_acdownload_isntrestarting_fl_ != 'true' ]] && return
-_ob_opts_apps_acdownload_isntrestarting_fl_=false
-[[ $_ob_opts_apps_acdownload_isntrestarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acdownload_isntrestarting_fl_ ;}
-Opts.Apps.AcDownload.IsNtRestarting.NoLogMods()
-{ _ob_opts_apps_acdownload_isntrestarting_chfl_=false ;}
-Opts.Apps.AcDownload.IsNtRestarting.Init()
-{ _ob_opts_apps_acdownload_isntrestarting_fl_=false
-_ob_opts_apps_acdownload_isntrestarting_chfl_=true ;}
-Opts.Apps.AcDownload.IsNtRestarting.IsNt()
-{ [[ $_ob_opts_apps_acdownload_isntrestarting_fl_ != 'true' ]] ;}
-Opts.Apps.AcDownload.IsNtRestarting.IsSet()
-{ [[ $_ob_opts_apps_acdownload_isntrestarting_fl_ = 'true' ]] ;}
-Opts.Apps.AcDownload.IsNtRestarting.Set()
-{ [[ $_ob_opts_apps_acdownload_isntrestarting_fl_ = 'true' ]] && return
-_ob_opts_apps_acdownload_isntrestarting_fl_=true
-[[ $_ob_opts_apps_acdownload_isntrestarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acdownload_isntrestarting_fl_ ;}
-Opts.Apps.AcDownload.IsNtRestarting.Init
 Opts.Apps.AcEnable.IsRestarting.Clear()
 { [[ $_ob_opts_apps_acenable_isrestarting_fl_ != 'true' ]] && return
 _ob_opts_apps_acenable_isrestarting_fl_=false
@@ -10457,24 +9827,6 @@ Opts.Apps.AcEnable.IsRestarting.Set()
 _ob_opts_apps_acenable_isrestarting_fl_=true
 [[ $_ob_opts_apps_acenable_isrestarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acenable_isrestarting_fl_ ;}
 Opts.Apps.AcEnable.IsRestarting.Init
-Opts.Apps.AcEnable.IsNtRestarting.Clear()
-{ [[ $_ob_opts_apps_acenable_isntrestarting_fl_ != 'true' ]] && return
-_ob_opts_apps_acenable_isntrestarting_fl_=false
-[[ $_ob_opts_apps_acenable_isntrestarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acenable_isntrestarting_fl_ ;}
-Opts.Apps.AcEnable.IsNtRestarting.NoLogMods()
-{ _ob_opts_apps_acenable_isntrestarting_chfl_=false ;}
-Opts.Apps.AcEnable.IsNtRestarting.Init()
-{ _ob_opts_apps_acenable_isntrestarting_fl_=false
-_ob_opts_apps_acenable_isntrestarting_chfl_=true ;}
-Opts.Apps.AcEnable.IsNtRestarting.IsNt()
-{ [[ $_ob_opts_apps_acenable_isntrestarting_fl_ != 'true' ]] ;}
-Opts.Apps.AcEnable.IsNtRestarting.IsSet()
-{ [[ $_ob_opts_apps_acenable_isntrestarting_fl_ = 'true' ]] ;}
-Opts.Apps.AcEnable.IsNtRestarting.Set()
-{ [[ $_ob_opts_apps_acenable_isntrestarting_fl_ = 'true' ]] && return
-_ob_opts_apps_acenable_isntrestarting_fl_=true
-[[ $_ob_opts_apps_acenable_isntrestarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acenable_isntrestarting_fl_ ;}
-Opts.Apps.AcEnable.IsNtRestarting.Init
 Opts.Apps.AcInstall.IsRestarting.Clear()
 { [[ $_ob_opts_apps_acinstall_isrestarting_fl_ != 'true' ]] && return
 _ob_opts_apps_acinstall_isrestarting_fl_=false
@@ -10493,24 +9845,6 @@ Opts.Apps.AcInstall.IsRestarting.Set()
 _ob_opts_apps_acinstall_isrestarting_fl_=true
 [[ $_ob_opts_apps_acinstall_isrestarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acinstall_isrestarting_fl_ ;}
 Opts.Apps.AcInstall.IsRestarting.Init
-Opts.Apps.AcInstall.IsNtRestarting.Clear()
-{ [[ $_ob_opts_apps_acinstall_isntrestarting_fl_ != 'true' ]] && return
-_ob_opts_apps_acinstall_isntrestarting_fl_=false
-[[ $_ob_opts_apps_acinstall_isntrestarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acinstall_isntrestarting_fl_ ;}
-Opts.Apps.AcInstall.IsNtRestarting.NoLogMods()
-{ _ob_opts_apps_acinstall_isntrestarting_chfl_=false ;}
-Opts.Apps.AcInstall.IsNtRestarting.Init()
-{ _ob_opts_apps_acinstall_isntrestarting_fl_=false
-_ob_opts_apps_acinstall_isntrestarting_chfl_=true ;}
-Opts.Apps.AcInstall.IsNtRestarting.IsNt()
-{ [[ $_ob_opts_apps_acinstall_isntrestarting_fl_ != 'true' ]] ;}
-Opts.Apps.AcInstall.IsNtRestarting.IsSet()
-{ [[ $_ob_opts_apps_acinstall_isntrestarting_fl_ = 'true' ]] ;}
-Opts.Apps.AcInstall.IsNtRestarting.Set()
-{ [[ $_ob_opts_apps_acinstall_isntrestarting_fl_ = 'true' ]] && return
-_ob_opts_apps_acinstall_isntrestarting_fl_=true
-[[ $_ob_opts_apps_acinstall_isntrestarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acinstall_isntrestarting_fl_ ;}
-Opts.Apps.AcInstall.IsNtRestarting.Init
 Opts.Apps.AcRebuild.IsRestarting.Clear()
 { [[ $_ob_opts_apps_acrebuild_isrestarting_fl_ != 'true' ]] && return
 _ob_opts_apps_acrebuild_isrestarting_fl_=false
@@ -10529,24 +9863,6 @@ Opts.Apps.AcRebuild.IsRestarting.Set()
 _ob_opts_apps_acrebuild_isrestarting_fl_=true
 [[ $_ob_opts_apps_acrebuild_isrestarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acrebuild_isrestarting_fl_ ;}
 Opts.Apps.AcRebuild.IsRestarting.Init
-Opts.Apps.AcRebuild.IsNtRestarting.Clear()
-{ [[ $_ob_opts_apps_acrebuild_isntrestarting_fl_ != 'true' ]] && return
-_ob_opts_apps_acrebuild_isntrestarting_fl_=false
-[[ $_ob_opts_apps_acrebuild_isntrestarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acrebuild_isntrestarting_fl_ ;}
-Opts.Apps.AcRebuild.IsNtRestarting.NoLogMods()
-{ _ob_opts_apps_acrebuild_isntrestarting_chfl_=false ;}
-Opts.Apps.AcRebuild.IsNtRestarting.Init()
-{ _ob_opts_apps_acrebuild_isntrestarting_fl_=false
-_ob_opts_apps_acrebuild_isntrestarting_chfl_=true ;}
-Opts.Apps.AcRebuild.IsNtRestarting.IsNt()
-{ [[ $_ob_opts_apps_acrebuild_isntrestarting_fl_ != 'true' ]] ;}
-Opts.Apps.AcRebuild.IsNtRestarting.IsSet()
-{ [[ $_ob_opts_apps_acrebuild_isntrestarting_fl_ = 'true' ]] ;}
-Opts.Apps.AcRebuild.IsNtRestarting.Set()
-{ [[ $_ob_opts_apps_acrebuild_isntrestarting_fl_ = 'true' ]] && return
-_ob_opts_apps_acrebuild_isntrestarting_fl_=true
-[[ $_ob_opts_apps_acrebuild_isntrestarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acrebuild_isntrestarting_fl_ ;}
-Opts.Apps.AcRebuild.IsNtRestarting.Init
 Opts.Apps.AcReinstall.IsRestarting.Clear()
 { [[ $_ob_opts_apps_acreinstall_isrestarting_fl_ != 'true' ]] && return
 _ob_opts_apps_acreinstall_isrestarting_fl_=false
@@ -10565,24 +9881,6 @@ Opts.Apps.AcReinstall.IsRestarting.Set()
 _ob_opts_apps_acreinstall_isrestarting_fl_=true
 [[ $_ob_opts_apps_acreinstall_isrestarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acreinstall_isrestarting_fl_ ;}
 Opts.Apps.AcReinstall.IsRestarting.Init
-Opts.Apps.AcReinstall.IsNtRestarting.Clear()
-{ [[ $_ob_opts_apps_acreinstall_isntrestarting_fl_ != 'true' ]] && return
-_ob_opts_apps_acreinstall_isntrestarting_fl_=false
-[[ $_ob_opts_apps_acreinstall_isntrestarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acreinstall_isntrestarting_fl_ ;}
-Opts.Apps.AcReinstall.IsNtRestarting.NoLogMods()
-{ _ob_opts_apps_acreinstall_isntrestarting_chfl_=false ;}
-Opts.Apps.AcReinstall.IsNtRestarting.Init()
-{ _ob_opts_apps_acreinstall_isntrestarting_fl_=false
-_ob_opts_apps_acreinstall_isntrestarting_chfl_=true ;}
-Opts.Apps.AcReinstall.IsNtRestarting.IsNt()
-{ [[ $_ob_opts_apps_acreinstall_isntrestarting_fl_ != 'true' ]] ;}
-Opts.Apps.AcReinstall.IsNtRestarting.IsSet()
-{ [[ $_ob_opts_apps_acreinstall_isntrestarting_fl_ = 'true' ]] ;}
-Opts.Apps.AcReinstall.IsNtRestarting.Set()
-{ [[ $_ob_opts_apps_acreinstall_isntrestarting_fl_ = 'true' ]] && return
-_ob_opts_apps_acreinstall_isntrestarting_fl_=true
-[[ $_ob_opts_apps_acreinstall_isntrestarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acreinstall_isntrestarting_fl_ ;}
-Opts.Apps.AcReinstall.IsNtRestarting.Init
 Opts.Apps.AcRestart.IsRestarting.Clear()
 { [[ $_ob_opts_apps_acrestart_isrestarting_fl_ != 'true' ]] && return
 _ob_opts_apps_acrestart_isrestarting_fl_=false
@@ -10601,24 +9899,6 @@ Opts.Apps.AcRestart.IsRestarting.Set()
 _ob_opts_apps_acrestart_isrestarting_fl_=true
 [[ $_ob_opts_apps_acrestart_isrestarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acrestart_isrestarting_fl_ ;}
 Opts.Apps.AcRestart.IsRestarting.Init
-Opts.Apps.AcRestart.IsNtRestarting.Clear()
-{ [[ $_ob_opts_apps_acrestart_isntrestarting_fl_ != 'true' ]] && return
-_ob_opts_apps_acrestart_isntrestarting_fl_=false
-[[ $_ob_opts_apps_acrestart_isntrestarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acrestart_isntrestarting_fl_ ;}
-Opts.Apps.AcRestart.IsNtRestarting.NoLogMods()
-{ _ob_opts_apps_acrestart_isntrestarting_chfl_=false ;}
-Opts.Apps.AcRestart.IsNtRestarting.Init()
-{ _ob_opts_apps_acrestart_isntrestarting_fl_=false
-_ob_opts_apps_acrestart_isntrestarting_chfl_=true ;}
-Opts.Apps.AcRestart.IsNtRestarting.IsNt()
-{ [[ $_ob_opts_apps_acrestart_isntrestarting_fl_ != 'true' ]] ;}
-Opts.Apps.AcRestart.IsNtRestarting.IsSet()
-{ [[ $_ob_opts_apps_acrestart_isntrestarting_fl_ = 'true' ]] ;}
-Opts.Apps.AcRestart.IsNtRestarting.Set()
-{ [[ $_ob_opts_apps_acrestart_isntrestarting_fl_ = 'true' ]] && return
-_ob_opts_apps_acrestart_isntrestarting_fl_=true
-[[ $_ob_opts_apps_acrestart_isntrestarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acrestart_isntrestarting_fl_ ;}
-Opts.Apps.AcRestart.IsNtRestarting.Init
 Opts.Apps.AcRestore.IsRestarting.Clear()
 { [[ $_ob_opts_apps_acrestore_isrestarting_fl_ != 'true' ]] && return
 _ob_opts_apps_acrestore_isrestarting_fl_=false
@@ -10637,24 +9917,6 @@ Opts.Apps.AcRestore.IsRestarting.Set()
 _ob_opts_apps_acrestore_isrestarting_fl_=true
 [[ $_ob_opts_apps_acrestore_isrestarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acrestore_isrestarting_fl_ ;}
 Opts.Apps.AcRestore.IsRestarting.Init
-Opts.Apps.AcRestore.IsNtRestarting.Clear()
-{ [[ $_ob_opts_apps_acrestore_isntrestarting_fl_ != 'true' ]] && return
-_ob_opts_apps_acrestore_isntrestarting_fl_=false
-[[ $_ob_opts_apps_acrestore_isntrestarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acrestore_isntrestarting_fl_ ;}
-Opts.Apps.AcRestore.IsNtRestarting.NoLogMods()
-{ _ob_opts_apps_acrestore_isntrestarting_chfl_=false ;}
-Opts.Apps.AcRestore.IsNtRestarting.Init()
-{ _ob_opts_apps_acrestore_isntrestarting_fl_=false
-_ob_opts_apps_acrestore_isntrestarting_chfl_=true ;}
-Opts.Apps.AcRestore.IsNtRestarting.IsNt()
-{ [[ $_ob_opts_apps_acrestore_isntrestarting_fl_ != 'true' ]] ;}
-Opts.Apps.AcRestore.IsNtRestarting.IsSet()
-{ [[ $_ob_opts_apps_acrestore_isntrestarting_fl_ = 'true' ]] ;}
-Opts.Apps.AcRestore.IsNtRestarting.Set()
-{ [[ $_ob_opts_apps_acrestore_isntrestarting_fl_ = 'true' ]] && return
-_ob_opts_apps_acrestore_isntrestarting_fl_=true
-[[ $_ob_opts_apps_acrestore_isntrestarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acrestore_isntrestarting_fl_ ;}
-Opts.Apps.AcRestore.IsNtRestarting.Init
 Opts.Apps.AcStart.IsRestarting.Clear()
 { [[ $_ob_opts_apps_acstart_isrestarting_fl_ != 'true' ]] && return
 _ob_opts_apps_acstart_isrestarting_fl_=false
@@ -10673,24 +9935,6 @@ Opts.Apps.AcStart.IsRestarting.Set()
 _ob_opts_apps_acstart_isrestarting_fl_=true
 [[ $_ob_opts_apps_acstart_isrestarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acstart_isrestarting_fl_ ;}
 Opts.Apps.AcStart.IsRestarting.Init
-Opts.Apps.AcStart.IsNtRestarting.Clear()
-{ [[ $_ob_opts_apps_acstart_isntrestarting_fl_ != 'true' ]] && return
-_ob_opts_apps_acstart_isntrestarting_fl_=false
-[[ $_ob_opts_apps_acstart_isntrestarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acstart_isntrestarting_fl_ ;}
-Opts.Apps.AcStart.IsNtRestarting.NoLogMods()
-{ _ob_opts_apps_acstart_isntrestarting_chfl_=false ;}
-Opts.Apps.AcStart.IsNtRestarting.Init()
-{ _ob_opts_apps_acstart_isntrestarting_fl_=false
-_ob_opts_apps_acstart_isntrestarting_chfl_=true ;}
-Opts.Apps.AcStart.IsNtRestarting.IsNt()
-{ [[ $_ob_opts_apps_acstart_isntrestarting_fl_ != 'true' ]] ;}
-Opts.Apps.AcStart.IsNtRestarting.IsSet()
-{ [[ $_ob_opts_apps_acstart_isntrestarting_fl_ = 'true' ]] ;}
-Opts.Apps.AcStart.IsNtRestarting.Set()
-{ [[ $_ob_opts_apps_acstart_isntrestarting_fl_ = 'true' ]] && return
-_ob_opts_apps_acstart_isntrestarting_fl_=true
-[[ $_ob_opts_apps_acstart_isntrestarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acstart_isntrestarting_fl_ ;}
-Opts.Apps.AcStart.IsNtRestarting.Init
 Opts.Apps.AcStop.IsRestarting.Clear()
 { [[ $_ob_opts_apps_acstop_isrestarting_fl_ != 'true' ]] && return
 _ob_opts_apps_acstop_isrestarting_fl_=false
@@ -10709,24 +9953,6 @@ Opts.Apps.AcStop.IsRestarting.Set()
 _ob_opts_apps_acstop_isrestarting_fl_=true
 [[ $_ob_opts_apps_acstop_isrestarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acstop_isrestarting_fl_ ;}
 Opts.Apps.AcStop.IsRestarting.Init
-Opts.Apps.AcStop.IsNtRestarting.Clear()
-{ [[ $_ob_opts_apps_acstop_isntrestarting_fl_ != 'true' ]] && return
-_ob_opts_apps_acstop_isntrestarting_fl_=false
-[[ $_ob_opts_apps_acstop_isntrestarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acstop_isntrestarting_fl_ ;}
-Opts.Apps.AcStop.IsNtRestarting.NoLogMods()
-{ _ob_opts_apps_acstop_isntrestarting_chfl_=false ;}
-Opts.Apps.AcStop.IsNtRestarting.Init()
-{ _ob_opts_apps_acstop_isntrestarting_fl_=false
-_ob_opts_apps_acstop_isntrestarting_chfl_=true ;}
-Opts.Apps.AcStop.IsNtRestarting.IsNt()
-{ [[ $_ob_opts_apps_acstop_isntrestarting_fl_ != 'true' ]] ;}
-Opts.Apps.AcStop.IsNtRestarting.IsSet()
-{ [[ $_ob_opts_apps_acstop_isntrestarting_fl_ = 'true' ]] ;}
-Opts.Apps.AcStop.IsNtRestarting.Set()
-{ [[ $_ob_opts_apps_acstop_isntrestarting_fl_ = 'true' ]] && return
-_ob_opts_apps_acstop_isntrestarting_fl_=true
-[[ $_ob_opts_apps_acstop_isntrestarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acstop_isntrestarting_fl_ ;}
-Opts.Apps.AcStop.IsNtRestarting.Init
 Opts.Apps.AcUninstall.IsRestarting.Clear()
 { [[ $_ob_opts_apps_acuninstall_isrestarting_fl_ != 'true' ]] && return
 _ob_opts_apps_acuninstall_isrestarting_fl_=false
@@ -10745,24 +9971,6 @@ Opts.Apps.AcUninstall.IsRestarting.Set()
 _ob_opts_apps_acuninstall_isrestarting_fl_=true
 [[ $_ob_opts_apps_acuninstall_isrestarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acuninstall_isrestarting_fl_ ;}
 Opts.Apps.AcUninstall.IsRestarting.Init
-Opts.Apps.AcUninstall.IsNtRestarting.Clear()
-{ [[ $_ob_opts_apps_acuninstall_isntrestarting_fl_ != 'true' ]] && return
-_ob_opts_apps_acuninstall_isntrestarting_fl_=false
-[[ $_ob_opts_apps_acuninstall_isntrestarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acuninstall_isntrestarting_fl_ ;}
-Opts.Apps.AcUninstall.IsNtRestarting.NoLogMods()
-{ _ob_opts_apps_acuninstall_isntrestarting_chfl_=false ;}
-Opts.Apps.AcUninstall.IsNtRestarting.Init()
-{ _ob_opts_apps_acuninstall_isntrestarting_fl_=false
-_ob_opts_apps_acuninstall_isntrestarting_chfl_=true ;}
-Opts.Apps.AcUninstall.IsNtRestarting.IsNt()
-{ [[ $_ob_opts_apps_acuninstall_isntrestarting_fl_ != 'true' ]] ;}
-Opts.Apps.AcUninstall.IsNtRestarting.IsSet()
-{ [[ $_ob_opts_apps_acuninstall_isntrestarting_fl_ = 'true' ]] ;}
-Opts.Apps.AcUninstall.IsNtRestarting.Set()
-{ [[ $_ob_opts_apps_acuninstall_isntrestarting_fl_ = 'true' ]] && return
-_ob_opts_apps_acuninstall_isntrestarting_fl_=true
-[[ $_ob_opts_apps_acuninstall_isntrestarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acuninstall_isntrestarting_fl_ ;}
-Opts.Apps.AcUninstall.IsNtRestarting.Init
 Opts.Apps.AcUpgrade.IsRestarting.Clear()
 { [[ $_ob_opts_apps_acupgrade_isrestarting_fl_ != 'true' ]] && return
 _ob_opts_apps_acupgrade_isrestarting_fl_=false
@@ -10781,24 +9989,6 @@ Opts.Apps.AcUpgrade.IsRestarting.Set()
 _ob_opts_apps_acupgrade_isrestarting_fl_=true
 [[ $_ob_opts_apps_acupgrade_isrestarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acupgrade_isrestarting_fl_ ;}
 Opts.Apps.AcUpgrade.IsRestarting.Init
-Opts.Apps.AcUpgrade.IsNtRestarting.Clear()
-{ [[ $_ob_opts_apps_acupgrade_isntrestarting_fl_ != 'true' ]] && return
-_ob_opts_apps_acupgrade_isntrestarting_fl_=false
-[[ $_ob_opts_apps_acupgrade_isntrestarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acupgrade_isntrestarting_fl_ ;}
-Opts.Apps.AcUpgrade.IsNtRestarting.NoLogMods()
-{ _ob_opts_apps_acupgrade_isntrestarting_chfl_=false ;}
-Opts.Apps.AcUpgrade.IsNtRestarting.Init()
-{ _ob_opts_apps_acupgrade_isntrestarting_fl_=false
-_ob_opts_apps_acupgrade_isntrestarting_chfl_=true ;}
-Opts.Apps.AcUpgrade.IsNtRestarting.IsNt()
-{ [[ $_ob_opts_apps_acupgrade_isntrestarting_fl_ != 'true' ]] ;}
-Opts.Apps.AcUpgrade.IsNtRestarting.IsSet()
-{ [[ $_ob_opts_apps_acupgrade_isntrestarting_fl_ = 'true' ]] ;}
-Opts.Apps.AcUpgrade.IsNtRestarting.Set()
-{ [[ $_ob_opts_apps_acupgrade_isntrestarting_fl_ = 'true' ]] && return
-_ob_opts_apps_acupgrade_isntrestarting_fl_=true
-[[ $_ob_opts_apps_acupgrade_isntrestarting_chfl_ = 'true' ]] && DebugVar _ob_opts_apps_acupgrade_isntrestarting_fl_ ;}
-Opts.Apps.AcUpgrade.IsNtRestarting.Init
 Args.Unknown.Add()
 { local ar=(${1}) it=''
 [[ ${#ar[@]} -eq 0 ]] && return
@@ -16035,94 +15225,6 @@ else
 echo -n "$_ob_qpkgs_isntmissing_sz_"
 fi ;}
 QPKGs.IsNtMissing.Init
-QPKGs.IsStarting.Add()
-{ local ar=(${1}) it=''
-[[ ${#ar[@]} -eq 0 ]] && return
-for it in "${ar[@]:-}"; do
-[[ " ${_ob_qpkgs_isstarting_ar_[*]+"${_ob_qpkgs_isstarting_ar_[@]}"} " != *"$it"* ]] && _ob_qpkgs_isstarting_ar_+=("$it")
-done ;}
-QPKGs.IsStarting.Array()
-{ echo -n "${_ob_qpkgs_isstarting_ar_[@]+"${_ob_qpkgs_isstarting_ar_[@]}"}" ;}
-QPKGs.IsStarting.Count()
-{ echo "${#_ob_qpkgs_isstarting_ar_[@]}" ;}
-QPKGs.IsStarting.Exist()
-{ [[ ${_ob_qpkgs_isstarting_ar_[*]:-} == *"$1"* ]] ;}
-QPKGs.IsStarting.Init()
-{ _ob_qpkgs_isstarting_sz_=0
-_ob_qpkgs_isstarting_ar_=()
-_ob_qpkgs_isstarting_arin_=1 ;}
-QPKGs.IsStarting.IsAny()
-{ [[ ${#_ob_qpkgs_isstarting_ar_[@]} -gt 0 ]] ;}
-QPKGs.IsStarting.IsNone()
-{ [[ ${#_ob_qpkgs_isstarting_ar_[@]} -eq 0 ]] ;}
-QPKGs.IsStarting.List()
-{ echo -n "${_ob_qpkgs_isstarting_ar_[*]+"${_ob_qpkgs_isstarting_ar_[@]}"}" ;}
-QPKGs.IsStarting.ListCSV()
-{ echo -n "${_ob_qpkgs_isstarting_ar_[*]+"${_ob_qpkgs_isstarting_ar_[@]}"}" | tr ' ' ',' ;}
-QPKGs.IsStarting.Remove()
-{ local agar=(${1}) tmar=() ag='' it='' m=false
-for it in "${_ob_qpkgs_isstarting_ar_[@]+"${_ob_qpkgs_isstarting_ar_[@]}"}"; do
-m=false
-for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = "$it" ]]; then
-m=true; break
-fi
-done
-[[ $m = false ]] && tmar+=("$it")
-done
-_ob_qpkgs_isstarting_ar_=("${tmar[@]+"${tmar[@]}"}")
-[[ -z ${_ob_qpkgs_isstarting_ar_[*]+"${_ob_qpkgs_isstarting_ar_[@]}"} ]] && _ob_qpkgs_isstarting_ar_=() ;}
-QPKGs.IsStarting.Size()
-{ if [[ -n ${1:-} && ${1:-} = "=" ]]; then
-_ob_qpkgs_isstarting_sz_=$2
-else
-echo -n "$_ob_qpkgs_isstarting_sz_"
-fi ;}
-QPKGs.IsStarting.Init
-QPKGs.IsNtStarting.Add()
-{ local ar=(${1}) it=''
-[[ ${#ar[@]} -eq 0 ]] && return
-for it in "${ar[@]:-}"; do
-[[ " ${_ob_qpkgs_isntstarting_ar_[*]+"${_ob_qpkgs_isntstarting_ar_[@]}"} " != *"$it"* ]] && _ob_qpkgs_isntstarting_ar_+=("$it")
-done ;}
-QPKGs.IsNtStarting.Array()
-{ echo -n "${_ob_qpkgs_isntstarting_ar_[@]+"${_ob_qpkgs_isntstarting_ar_[@]}"}" ;}
-QPKGs.IsNtStarting.Count()
-{ echo "${#_ob_qpkgs_isntstarting_ar_[@]}" ;}
-QPKGs.IsNtStarting.Exist()
-{ [[ ${_ob_qpkgs_isntstarting_ar_[*]:-} == *"$1"* ]] ;}
-QPKGs.IsNtStarting.Init()
-{ _ob_qpkgs_isntstarting_sz_=0
-_ob_qpkgs_isntstarting_ar_=()
-_ob_qpkgs_isntstarting_arin_=1 ;}
-QPKGs.IsNtStarting.IsAny()
-{ [[ ${#_ob_qpkgs_isntstarting_ar_[@]} -gt 0 ]] ;}
-QPKGs.IsNtStarting.IsNone()
-{ [[ ${#_ob_qpkgs_isntstarting_ar_[@]} -eq 0 ]] ;}
-QPKGs.IsNtStarting.List()
-{ echo -n "${_ob_qpkgs_isntstarting_ar_[*]+"${_ob_qpkgs_isntstarting_ar_[@]}"}" ;}
-QPKGs.IsNtStarting.ListCSV()
-{ echo -n "${_ob_qpkgs_isntstarting_ar_[*]+"${_ob_qpkgs_isntstarting_ar_[@]}"}" | tr ' ' ',' ;}
-QPKGs.IsNtStarting.Remove()
-{ local agar=(${1}) tmar=() ag='' it='' m=false
-for it in "${_ob_qpkgs_isntstarting_ar_[@]+"${_ob_qpkgs_isntstarting_ar_[@]}"}"; do
-m=false
-for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = "$it" ]]; then
-m=true; break
-fi
-done
-[[ $m = false ]] && tmar+=("$it")
-done
-_ob_qpkgs_isntstarting_ar_=("${tmar[@]+"${tmar[@]}"}")
-[[ -z ${_ob_qpkgs_isntstarting_ar_[*]+"${_ob_qpkgs_isntstarting_ar_[@]}"} ]] && _ob_qpkgs_isntstarting_ar_=() ;}
-QPKGs.IsNtStarting.Size()
-{ if [[ -n ${1:-} && ${1:-} = "=" ]]; then
-_ob_qpkgs_isntstarting_sz_=$2
-else
-echo -n "$_ob_qpkgs_isntstarting_sz_"
-fi ;}
-QPKGs.IsNtStarting.Init
 QPKGs.IsStarted.Add()
 { local ar=(${1}) it=''
 [[ ${#ar[@]} -eq 0 ]] && return
@@ -16211,6 +15313,50 @@ else
 echo -n "$_ob_qpkgs_isntstarted_sz_"
 fi ;}
 QPKGs.IsNtStarted.Init
+QPKGs.IsStarting.Add()
+{ local ar=(${1}) it=''
+[[ ${#ar[@]} -eq 0 ]] && return
+for it in "${ar[@]:-}"; do
+[[ " ${_ob_qpkgs_isstarting_ar_[*]+"${_ob_qpkgs_isstarting_ar_[@]}"} " != *"$it"* ]] && _ob_qpkgs_isstarting_ar_+=("$it")
+done ;}
+QPKGs.IsStarting.Array()
+{ echo -n "${_ob_qpkgs_isstarting_ar_[@]+"${_ob_qpkgs_isstarting_ar_[@]}"}" ;}
+QPKGs.IsStarting.Count()
+{ echo "${#_ob_qpkgs_isstarting_ar_[@]}" ;}
+QPKGs.IsStarting.Exist()
+{ [[ ${_ob_qpkgs_isstarting_ar_[*]:-} == *"$1"* ]] ;}
+QPKGs.IsStarting.Init()
+{ _ob_qpkgs_isstarting_sz_=0
+_ob_qpkgs_isstarting_ar_=()
+_ob_qpkgs_isstarting_arin_=1 ;}
+QPKGs.IsStarting.IsAny()
+{ [[ ${#_ob_qpkgs_isstarting_ar_[@]} -gt 0 ]] ;}
+QPKGs.IsStarting.IsNone()
+{ [[ ${#_ob_qpkgs_isstarting_ar_[@]} -eq 0 ]] ;}
+QPKGs.IsStarting.List()
+{ echo -n "${_ob_qpkgs_isstarting_ar_[*]+"${_ob_qpkgs_isstarting_ar_[@]}"}" ;}
+QPKGs.IsStarting.ListCSV()
+{ echo -n "${_ob_qpkgs_isstarting_ar_[*]+"${_ob_qpkgs_isstarting_ar_[@]}"}" | tr ' ' ',' ;}
+QPKGs.IsStarting.Remove()
+{ local agar=(${1}) tmar=() ag='' it='' m=false
+for it in "${_ob_qpkgs_isstarting_ar_[@]+"${_ob_qpkgs_isstarting_ar_[@]}"}"; do
+m=false
+for ag in "${agar[@]+"${agar[@]}"}"; do
+if [[ $ag = "$it" ]]; then
+m=true; break
+fi
+done
+[[ $m = false ]] && tmar+=("$it")
+done
+_ob_qpkgs_isstarting_ar_=("${tmar[@]+"${tmar[@]}"}")
+[[ -z ${_ob_qpkgs_isstarting_ar_[*]+"${_ob_qpkgs_isstarting_ar_[@]}"} ]] && _ob_qpkgs_isstarting_ar_=() ;}
+QPKGs.IsStarting.Size()
+{ if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+_ob_qpkgs_isstarting_sz_=$2
+else
+echo -n "$_ob_qpkgs_isstarting_sz_"
+fi ;}
+QPKGs.IsStarting.Init
 QPKGs.IsStopping.Add()
 { local ar=(${1}) it=''
 [[ ${#ar[@]} -eq 0 ]] && return
@@ -16255,50 +15401,6 @@ else
 echo -n "$_ob_qpkgs_isstopping_sz_"
 fi ;}
 QPKGs.IsStopping.Init
-QPKGs.IsNtStopping.Add()
-{ local ar=(${1}) it=''
-[[ ${#ar[@]} -eq 0 ]] && return
-for it in "${ar[@]:-}"; do
-[[ " ${_ob_qpkgs_isntstopping_ar_[*]+"${_ob_qpkgs_isntstopping_ar_[@]}"} " != *"$it"* ]] && _ob_qpkgs_isntstopping_ar_+=("$it")
-done ;}
-QPKGs.IsNtStopping.Array()
-{ echo -n "${_ob_qpkgs_isntstopping_ar_[@]+"${_ob_qpkgs_isntstopping_ar_[@]}"}" ;}
-QPKGs.IsNtStopping.Count()
-{ echo "${#_ob_qpkgs_isntstopping_ar_[@]}" ;}
-QPKGs.IsNtStopping.Exist()
-{ [[ ${_ob_qpkgs_isntstopping_ar_[*]:-} == *"$1"* ]] ;}
-QPKGs.IsNtStopping.Init()
-{ _ob_qpkgs_isntstopping_sz_=0
-_ob_qpkgs_isntstopping_ar_=()
-_ob_qpkgs_isntstopping_arin_=1 ;}
-QPKGs.IsNtStopping.IsAny()
-{ [[ ${#_ob_qpkgs_isntstopping_ar_[@]} -gt 0 ]] ;}
-QPKGs.IsNtStopping.IsNone()
-{ [[ ${#_ob_qpkgs_isntstopping_ar_[@]} -eq 0 ]] ;}
-QPKGs.IsNtStopping.List()
-{ echo -n "${_ob_qpkgs_isntstopping_ar_[*]+"${_ob_qpkgs_isntstopping_ar_[@]}"}" ;}
-QPKGs.IsNtStopping.ListCSV()
-{ echo -n "${_ob_qpkgs_isntstopping_ar_[*]+"${_ob_qpkgs_isntstopping_ar_[@]}"}" | tr ' ' ',' ;}
-QPKGs.IsNtStopping.Remove()
-{ local agar=(${1}) tmar=() ag='' it='' m=false
-for it in "${_ob_qpkgs_isntstopping_ar_[@]+"${_ob_qpkgs_isntstopping_ar_[@]}"}"; do
-m=false
-for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = "$it" ]]; then
-m=true; break
-fi
-done
-[[ $m = false ]] && tmar+=("$it")
-done
-_ob_qpkgs_isntstopping_ar_=("${tmar[@]+"${tmar[@]}"}")
-[[ -z ${_ob_qpkgs_isntstopping_ar_[*]+"${_ob_qpkgs_isntstopping_ar_[@]}"} ]] && _ob_qpkgs_isntstopping_ar_=() ;}
-QPKGs.IsNtStopping.Size()
-{ if [[ -n ${1:-} && ${1:-} = "=" ]]; then
-_ob_qpkgs_isntstopping_sz_=$2
-else
-echo -n "$_ob_qpkgs_isntstopping_sz_"
-fi ;}
-QPKGs.IsNtStopping.Init
 QPKGs.IsRestarting.Add()
 { local ar=(${1}) it=''
 [[ ${#ar[@]} -eq 0 ]] && return
@@ -16343,47 +15445,3 @@ else
 echo -n "$_ob_qpkgs_isrestarting_sz_"
 fi ;}
 QPKGs.IsRestarting.Init
-QPKGs.IsNtRestarting.Add()
-{ local ar=(${1}) it=''
-[[ ${#ar[@]} -eq 0 ]] && return
-for it in "${ar[@]:-}"; do
-[[ " ${_ob_qpkgs_isntrestarting_ar_[*]+"${_ob_qpkgs_isntrestarting_ar_[@]}"} " != *"$it"* ]] && _ob_qpkgs_isntrestarting_ar_+=("$it")
-done ;}
-QPKGs.IsNtRestarting.Array()
-{ echo -n "${_ob_qpkgs_isntrestarting_ar_[@]+"${_ob_qpkgs_isntrestarting_ar_[@]}"}" ;}
-QPKGs.IsNtRestarting.Count()
-{ echo "${#_ob_qpkgs_isntrestarting_ar_[@]}" ;}
-QPKGs.IsNtRestarting.Exist()
-{ [[ ${_ob_qpkgs_isntrestarting_ar_[*]:-} == *"$1"* ]] ;}
-QPKGs.IsNtRestarting.Init()
-{ _ob_qpkgs_isntrestarting_sz_=0
-_ob_qpkgs_isntrestarting_ar_=()
-_ob_qpkgs_isntrestarting_arin_=1 ;}
-QPKGs.IsNtRestarting.IsAny()
-{ [[ ${#_ob_qpkgs_isntrestarting_ar_[@]} -gt 0 ]] ;}
-QPKGs.IsNtRestarting.IsNone()
-{ [[ ${#_ob_qpkgs_isntrestarting_ar_[@]} -eq 0 ]] ;}
-QPKGs.IsNtRestarting.List()
-{ echo -n "${_ob_qpkgs_isntrestarting_ar_[*]+"${_ob_qpkgs_isntrestarting_ar_[@]}"}" ;}
-QPKGs.IsNtRestarting.ListCSV()
-{ echo -n "${_ob_qpkgs_isntrestarting_ar_[*]+"${_ob_qpkgs_isntrestarting_ar_[@]}"}" | tr ' ' ',' ;}
-QPKGs.IsNtRestarting.Remove()
-{ local agar=(${1}) tmar=() ag='' it='' m=false
-for it in "${_ob_qpkgs_isntrestarting_ar_[@]+"${_ob_qpkgs_isntrestarting_ar_[@]}"}"; do
-m=false
-for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = "$it" ]]; then
-m=true; break
-fi
-done
-[[ $m = false ]] && tmar+=("$it")
-done
-_ob_qpkgs_isntrestarting_ar_=("${tmar[@]+"${tmar[@]}"}")
-[[ -z ${_ob_qpkgs_isntrestarting_ar_[*]+"${_ob_qpkgs_isntrestarting_ar_[@]}"} ]] && _ob_qpkgs_isntrestarting_ar_=() ;}
-QPKGs.IsNtRestarting.Size()
-{ if [[ -n ${1:-} && ${1:-} = "=" ]]; then
-_ob_qpkgs_isntrestarting_sz_=$2
-else
-echo -n "$_ob_qpkgs_isntrestarting_sz_"
-fi ;}
-QPKGs.IsNtRestarting.Init

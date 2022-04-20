@@ -8,7 +8,8 @@ WORK_PATH=$PWD
 MANAGEMENT_ACTIONS=(Check List Paste Reset Status View)
 
 PACKAGE_SCOPES=(All Dependent HasDependents Installable Names Standalone SupportBackup SupportUpdateOnRestart Upgradable)
-PACKAGE_STATES=(BackedUp Cleaned Downloaded Enabled Installed Missing Starting Started Stopping Restarting)
+PACKAGE_STATES=(BackedUp Cleaned Downloaded Enabled Installed Missing Started)
+PACKAGE_STATES_TEMPORARY=(Starting Stopping Restarting)
 PACKAGE_ACTIONS=(Backup Clean Disable Download Enable Install Rebuild Reinstall Restart Restore Start Stop Uninstall Upgrade)
 
 MANAGER_FILE=$PROJECT_NAME.manager.sh
@@ -171,6 +172,10 @@ for state in "${PACKAGE_STATES[@]}"; do
     AddFlagObj Opts.Apps.List.IsNt${state}
 done
 
+for state in "${PACKAGE_STATES_TEMPORARY[@]}"; do
+    AddFlagObj Opts.Apps.List.Is${state}
+done
+
 for scope in "${PACKAGE_SCOPES[@]}"; do
     for action in "${PACKAGE_ACTIONS[@]}"; do
         AddFlagObj Opts.Apps.Ac${action}.Sc${scope}
@@ -182,6 +187,12 @@ for state in "${PACKAGE_STATES[@]}"; do
     for action in "${PACKAGE_ACTIONS[@]}"; do
         AddFlagObj Opts.Apps.Ac${action}.Is${state}
         AddFlagObj Opts.Apps.Ac${action}.IsNt${state}
+    done
+done
+
+for state in "${PACKAGE_STATES_TEMPORARY[@]}"; do
+    for action in "${PACKAGE_ACTIONS[@]}"; do
+        AddFlagObj Opts.Apps.Ac${action}.Is${state}
     done
 done
 
@@ -215,6 +226,10 @@ done
 for state in "${PACKAGE_STATES[@]}"; do
     AddListObj QPKGs.Is${state}
     AddListObj QPKGs.IsNt${state}
+done
+
+for state in "${PACKAGE_STATES_TEMPORARY[@]}"; do
+    AddListObj QPKGs.Is${state}
 done
 
 tar --create --gzip --numeric-owner --file="$MANAGER_ARCHIVE_PATHFILE" --directory="$WORK_PATH" "$MANAGER_FILE"

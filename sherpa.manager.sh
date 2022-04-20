@@ -57,7 +57,7 @@ Session.Init()
     IsSU || return
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220420g
+    local -r SCRIPT_VERSION=220420h
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -189,13 +189,15 @@ Session.Init()
 
     MANAGEMENT_ACTIONS=(Check List Paste Reset Status View)
     PACKAGE_SCOPES=(All Dependent HasDependents Installable Names Standalone SupportBackup SupportUpdateOnRestart Upgradable)
-    PACKAGE_STATES=(BackedUp Cleaned Downloaded Enabled Installed Missing Starting Started Stopping Restarting)
+    PACKAGE_STATES=(BackedUp Cleaned Downloaded Enabled Installed Missing Started)
+    PACKAGE_STATES_TEMPORARY=(Starting Stopping Restarting)
     PACKAGE_ACTIONS=(Backup Clean Disable Download Enable Install Rebuild Reinstall Restart Restore Start Stop Uninstall Upgrade)
     PACKAGE_TIERS=(Standalone Addon Dependent)
 
     readonly MANAGEMENT_ACTIONS
     readonly PACKAGE_SCOPES
     readonly PACKAGE_STATES
+    readonly PACKAGE_STATES_TEMPORARY
     readonly PACKAGE_ACTIONS
     readonly PACKAGE_TIERS
 
@@ -3369,6 +3371,13 @@ QPKGs.States.List()
         done
     done
 
+    for state in "${PACKAGE_STATES_TEMPORARY[@]}"; do
+        # speedup: only log arrays with more than zero elements
+        for prefix in Is; do
+            QPKGs.${prefix}${state}.IsAny && DebugQPKGInfo "${prefix}${state}" "($(QPKGs.${prefix}${state}.Count)) $(QPKGs.${prefix}${state}.ListCSV) "
+        done
+    done
+
     DebugInfoMinorSeparator
     DebugFuncExit
 
@@ -3445,14 +3454,18 @@ QPKGs.States.Build()
             if [[ -e /var/run/$package.last.operation ]]; then
                 case $(</var/run/$package.last.operation) in
                     starting)
+                        QPKGs.IsStarted.Remove "$package"
                         QPKGs.IsNtStarted.Remove "$package"
                         QPKGs.IsStarting.Add "$package"
                         ;;
                     restarting)
+                        QPKGs.IsStarted.Remove "$package"
+                        QPKGs.IsNtStarted.Remove "$package"
                         QPKGs.IsRestarting.Add "$package"
                         ;;
                     stopping)
                         QPKGs.IsStarted.Remove "$package"
+                        QPKGs.IsNtStarted.Remove "$package"
                         QPKGs.IsStopping.Add "$package"
                 esac
             fi
