@@ -134,7 +134,7 @@ for element in Display.Clean ShowBackupLoc SuggestIssue Summary; do
     AddFlagObj Session.$element
 done
 
-AddFlagObj Session.LineSpace false false
+AddFlagObj Session.LineSpace false
 
 AddFlagObj Session.Debug.ToArchive
 AddFlagObj Session.Debug.ToScreen

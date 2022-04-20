@@ -84,7 +84,7 @@ Session.LineSpace.NoLogMods()
 _ob_session_linespace_chfl_=false ;}
 Session.LineSpace.Init()
 { _ob_session_linespace_fl_=false
-_ob_session_linespace_chfl_=false ;}
+_ob_session_linespace_chfl_=true ;}
 Session.LineSpace.IsNt()
 { [[ $_ob_session_linespace_fl_ != 'true' ]] ;}
 Session.LineSpace.IsSet()
