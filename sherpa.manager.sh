@@ -57,7 +57,7 @@ Session.Init()
     IsSU || return
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220421
+    local -r SCRIPT_VERSION=220423
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -2255,7 +2255,7 @@ PIPs.DoInstall()
         ((total_count--))
     fi
 
-    if (Opts.Deps.Check.IsSet && QPKGs.IsInstalled.Exist SABnzbd) || QPKGs.AcToInstall.Exist SABnzbd || QPKGs.AcToReinstall.Exist SABnzbd || QPKGs.AcOkInstall.Exist Entware; then
+    if QPKGs.IsInstalled.Exist SABnzbd || QPKGs.AcToInstall.Exist SABnzbd || QPKGs.AcToReinstall.Exist SABnzbd; then
         # KLUDGE: force recompilation of 'sabyenc3' package so it's recognised by SABnzbd: https://forums.sabnzbd.org/viewtopic.php?p=121214#p121214
         ShowAsActionProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
 
