@@ -135,6 +135,7 @@ for element in Display.Clean ShowBackupLoc SuggestIssue Summary; do
 done
 
 AddFlagObj Session.LineSpace false false    # disable change logging for this object (low importance)
+AddFlagObj Session.Boring false false       # disable change logging for this object (low importance)
 
 AddFlagObj Session.Debug.ToArchive
 AddFlagObj Session.Debug.ToScreen

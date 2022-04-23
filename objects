@@ -89,6 +89,24 @@ Session.LineSpace.Set()
 _ob_session_linespace_fl_=true
 [[ $_ob_session_linespace_chfl_ = 'true' ]] && DebugVar _ob_session_linespace_fl_ ;}
 Session.LineSpace.Init
+Session.Boring.Clear()
+{ [[ $_ob_session_boring_fl_ != 'true' ]] && return
+_ob_session_boring_fl_=false
+[[ $_ob_session_boring_chfl_ = 'true' ]] && DebugVar _ob_session_boring_fl_ ;}
+Session.Boring.NoLogMods()
+{ _ob_session_boring_chfl_=false ;}
+Session.Boring.Init()
+{ _ob_session_boring_fl_=false
+_ob_session_boring_chfl_=false ;}
+Session.Boring.IsNt()
+{ [[ $_ob_session_boring_fl_ != 'true' ]] ;}
+Session.Boring.IsSet()
+{ [[ $_ob_session_boring_fl_ = 'true' ]] ;}
+Session.Boring.Set()
+{ [[ $_ob_session_boring_fl_ = 'true' ]] && return
+_ob_session_boring_fl_=true
+[[ $_ob_session_boring_chfl_ = 'true' ]] && DebugVar _ob_session_boring_fl_ ;}
+Session.Boring.Init
 Session.Debug.ToArchive.Clear()
 { [[ $_ob_session_debug_toarchive_fl_ != 'true' ]] && return
 _ob_session_debug_toarchive_fl_=false

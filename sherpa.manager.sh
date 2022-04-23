@@ -57,7 +57,7 @@ Session.Init()
     IsSU || return
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220423
+    local -r SCRIPT_VERSION=220423b
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -3636,6 +3636,8 @@ QPKGs.Statuses.Show()
                         package_name=$(ColourTextBrightRed "$current_package_name")
                     fi
                 else
+                    [[ ! -e ${GNU_SED_CMD:-} ]] && Session.Boring.Set
+
                     if QPKGs.IsMissing.Exist "$current_package_name"; then
                         package_status_notes=($(ColourTextBrightRedBlink missing))
                     elif QPKGs.IsEnabled.Exist "$current_package_name"; then
@@ -3662,6 +3664,8 @@ QPKGs.Statuses.Show()
                     else
                         package_version=$(QPKG.Available.Version "$current_package_name")
                     fi
+
+                    [[ ! -e ${GNU_SED_CMD:-} ]] && Session.Boring.Clear
 
                     for ((index=0; index<=((${#package_status_notes[@]} - 1)); index++)); do
                         package_status+=${package_status_notes[$index]}
@@ -6230,63 +6234,99 @@ WriteToLog()
 ColourTextBrightGreen()
     {
 
-    echo -en '\033[1;32m'"$(ColourReset "$1")"
+    if [[ $(type -t Session.Boring.Init) = function ]] && Session.Boring.IsSet; then
+        echo -n "$1"
+    else
+        echo -en '\033[1;32m'"$(ColourReset "$1")"
+    fi
 
     }
 
 ColourTextBrightYellow()
     {
 
-    echo -en '\033[1;33m'"$(ColourReset "$1")"
+    if [[ $(type -t Session.Boring.Init) = function ]] && Session.Boring.IsSet; then
+        echo -n "$1"
+    else
+        echo -en '\033[1;33m'"$(ColourReset "$1")"
+    fi
 
     }
 
 ColourTextBrightOrange()
     {
 
-    echo -en '\033[1;38;5;214m'"$(ColourReset "$1")"
+    if [[ $(type -t Session.Boring.Init) = function ]] && Session.Boring.IsSet; then
+        echo -n "$1"
+    else
+        echo -en '\033[1;38;5;214m'"$(ColourReset "$1")"
+    fi
 
     }
 
 ColourTextBrightOrangeBlink()
     {
 
-    echo -en '\033[1;5;38;5;214m'"$(ColourReset "$1")"
+    if [[ $(type -t Session.Boring.Init) = function ]] && Session.Boring.IsSet; then
+        echo -n "$1"
+    else
+        echo -en '\033[1;5;38;5;214m'"$(ColourReset "$1")"
+    fi
 
     }
 
 ColourTextBrightRed()
     {
 
-    echo -en '\033[1;31m'"$(ColourReset "$1")"
+    if [[ $(type -t Session.Boring.Init) = function ]] && Session.Boring.IsSet; then
+        echo -n "$1"
+    else
+        echo -en '\033[1;31m'"$(ColourReset "$1")"
+    fi
 
     }
 
 ColourTextBrightRedBlink()
     {
 
-    echo -en '\033[1;5;31m'"$(ColourReset "$1")"
+    if [[ $(type -t Session.Boring.Init) = function ]] && Session.Boring.IsSet; then
+        echo -n "$1"
+    else
+        echo -en '\033[1;5;31m'"$(ColourReset "$1")"
+    fi
 
     }
 
 ColourTextUnderlinedCyan()
     {
 
-    echo -en '\033[4;36m'"$(ColourReset "$1")"
+    if [[ $(type -t Session.Boring.Init) = function ]] && Session.Boring.IsSet; then
+        echo -n "$1"
+    else
+        echo -en '\033[4;36m'"$(ColourReset "$1")"
+    fi
 
     }
 
 ColourTextBlackOnCyan()
     {
 
-    echo -en '\033[30;46m'"$(ColourReset "$1")"
+    if [[ $(type -t Session.Boring.Init) = function ]] && Session.Boring.IsSet; then
+        echo -n "$1"
+    else
+        echo -en '\033[30;46m'"$(ColourReset "$1")"
+    fi
 
     }
 
 ColourTextBrightWhite()
     {
 
-    echo -en '\033[1;97m'"$(ColourReset "$1")"
+    if [[ $(type -t Session.Boring.Init) = function ]] && Session.Boring.IsSet; then
+        echo -n "$1"
+    else
+        echo -en '\033[1;97m'"$(ColourReset "$1")"
+    fi
 
     }
 
