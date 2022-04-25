@@ -178,7 +178,7 @@ Session.Init()
     readonly SESSION_LAST_PATHFILE=$LOGS_PATH/session.last.log
     readonly SESSION_TAIL_PATHFILE=$LOGS_PATH/session.tail.log
 
-    MANAGEMENT_ACTIONS=(Check List Paste Reset Status View)
+    MANAGEMENT_ACTIONS=(Check List Paste Reset Status)
     PACKAGE_SCOPES=(All Dependent HasDependents Installable Names Standalone SupportBackup SupportUpdateOnRestart Upgradable)
     PACKAGE_STATES=(BackedUp Cleaned Downloaded Enabled Installed Missing Started)
     PACKAGE_STATES_TEMPORARY=(Starting Stopping Restarting)

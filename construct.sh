@@ -5,7 +5,7 @@
 PROJECT_NAME=sherpa
 WORK_PATH=$PWD
 
-MANAGEMENT_ACTIONS=(Check List Paste Reset Status View)
+MANAGEMENT_ACTIONS=(Check List Paste Reset Status)
 
 PACKAGE_SCOPES=(All Dependent HasDependents Installable Names Standalone SupportBackup SupportUpdateOnRestart Upgradable)
 PACKAGE_STATES=(BackedUp Cleaned Downloaded Enabled Installed Missing Started)
