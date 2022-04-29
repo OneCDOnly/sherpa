@@ -40,13 +40,7 @@ AddFlagObj()
     _placeholder_flag_=_ob_${safe_function_name}_fl_
     _placeholder_log_changes_flag_=_ob_${safe_function_name}_chfl_
 
-echo $public_function_name'.Clear()
-{ [[ $'$_placeholder_flag_' != '\'true\'' ]] && return
-'$_placeholder_flag_'=false
-[[ $'$_placeholder_log_changes_flag_' = '\'true\'' ]] && DebugVar '$_placeholder_flag_' ;}
-'$public_function_name'.NoLogMods()
-{ '$_placeholder_log_changes_flag_'=false ;}
-'$public_function_name'.Init()
+echo $public_function_name'.Init()
 { '$_placeholder_flag_'='$state_default'
 '$_placeholder_log_changes_flag_'='$state_logmods' ;}
 '$public_function_name'.IsNt()
@@ -57,6 +51,12 @@ echo $public_function_name'.Clear()
 { [[ $'$_placeholder_flag_' = '\'true\'' ]] && return
 '$_placeholder_flag_'=true
 [[ $'$_placeholder_log_changes_flag_' = '\'true\'' ]] && DebugVar '$_placeholder_flag_' ;}
+'$public_function_name'.UnSet()
+{ [[ $'$_placeholder_flag_' != '\'true\'' ]] && return
+'$_placeholder_flag_'=false
+[[ $'$_placeholder_log_changes_flag_' = '\'true\'' ]] && DebugVar '$_placeholder_flag_' ;}
+'$public_function_name'.NoLogMods()
+{ '$_placeholder_log_changes_flag_'=false ;}
 '$public_function_name'.Init' >> "$OBJECTS_PATHFILE"
 
     return 0
