@@ -57,7 +57,7 @@ Session.Init()
     IsSU || return
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220430
+    local -r SCRIPT_VERSION=220430b
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -901,23 +901,23 @@ ParseArguments()
                 arg_identified=true
                 scope=''
                 scope_identified=false
-                Session.Display.Clean.Clear
-                QPKGs.SkProc.Clear
+                Session.Display.Clean.UnSet
+                QPKGs.SkProc.UnSet
                 ;;
             rm|remove|uninstall)
                 action=uninstall_
                 arg_identified=true
                 scope=''
                 scope_identified=false
-                Session.Display.Clean.Clear
-                QPKGs.SkProc.Clear
+                Session.Display.Clean.UnSet
+                QPKGs.SkProc.UnSet
                 ;;
             s|status|statuses)
                 action=status_
                 arg_identified=true
                 scope=''
                 scope_identified=false
-                Session.Display.Clean.Clear
+                Session.Display.Clean.UnSet
                 QPKGs.SkProc.Set
                 ;;
             paste)
@@ -925,7 +925,7 @@ ParseArguments()
                 arg_identified=true
                 scope=''
                 scope_identified=false
-                Session.Display.Clean.Clear
+                Session.Display.Clean.UnSet
                 QPKGs.SkProc.Set
                 ;;
             display|help|list|show|view)
@@ -933,7 +933,7 @@ ParseArguments()
                 arg_identified=true
                 scope=''
                 scope_identified=false
-                Session.Display.Clean.Clear
+                Session.Display.Clean.UnSet
                 QPKGs.SkProc.Set
         esac
 
@@ -1441,7 +1441,7 @@ ParseArguments()
     if Args.Unknown.IsAny; then
         Opts.Help.Basic.Set
         QPKGs.SkProc.Set
-        Session.Display.Clean.Clear
+        Session.Display.Clean.UnSet
     fi
 
     DebugFuncExit
@@ -1463,52 +1463,52 @@ ArgumentSuggestions()
                 all)
                     Display
                     DisplayAsProjectSyntaxExample "please provide a valid $(FormatAsHelpAction) before 'all' like" 'start all'
-                    Opts.Help.Basic.Clear
+                    Opts.Help.Basic.UnSet
                     ;;
                 all-backup|backup-all)
                     Display
                     DisplayAsProjectSyntaxExample 'to backup all installed package configurations, use' 'backup all'
-                    Opts.Help.Basic.Clear
+                    Opts.Help.Basic.UnSet
                     ;;
                 dependent)
                     Display
                     DisplayAsProjectSyntaxExample "please provide a valid $(FormatAsHelpAction) before 'dependent' like" 'start dependents'
-                    Opts.Help.Basic.Clear
+                    Opts.Help.Basic.UnSet
                     ;;
                 all-restart|restart-all)
                     Display
                     DisplayAsProjectSyntaxExample 'to restart all packages, use' 'restart all'
-                    Opts.Help.Basic.Clear
+                    Opts.Help.Basic.UnSet
                     ;;
                 all-restore|restore-all)
                     Display
                     DisplayAsProjectSyntaxExample 'to restore all installed package configurations, use' 'restore all'
-                    Opts.Help.Basic.Clear
+                    Opts.Help.Basic.UnSet
                     ;;
                 standalone)
                     Display
                     DisplayAsProjectSyntaxExample "please provide a valid $(FormatAsHelpAction) before 'standalone' like" 'start standalones'
-                    Opts.Help.Basic.Clear
+                    Opts.Help.Basic.UnSet
                     ;;
                 all-start|start-all)
                     Display
                     DisplayAsProjectSyntaxExample 'to start all packages, use' 'start all'
-                    Opts.Help.Basic.Clear
+                    Opts.Help.Basic.UnSet
                     ;;
                 all-stop|stop-all)
                     Display
                     DisplayAsProjectSyntaxExample 'to stop all packages, use' 'stop all'
-                    Opts.Help.Basic.Clear
+                    Opts.Help.Basic.UnSet
                     ;;
                 all-uninstall|all-remove|uninstall-all|remove-all)
                     Display
                     DisplayAsProjectSyntaxExample 'to uninstall all packages, use' 'force uninstall all'
-                    Opts.Help.Basic.Clear
+                    Opts.Help.Basic.UnSet
                     ;;
                 all-upgrade|upgrade-all)
                     Display
                     DisplayAsProjectSyntaxExample 'to upgrade all packages, use' 'upgrade all'
-                    Opts.Help.Basic.Clear
+                    Opts.Help.Basic.UnSet
             esac
         done
     fi
@@ -2581,7 +2581,7 @@ DisplayAsProjectSyntaxExample()
         printf "${HELP_COLUMN_MAIN_PREFIX}%s:\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREFIX}%s\n" "$(Capitalise "$1")" '' "$PROJECT_NAME $2"
     fi
 
-    Session.LineSpace.Clear
+    Session.LineSpace.UnSet
 
     }
 
@@ -2599,7 +2599,7 @@ DisplayAsProjectSyntaxIndentedExample()
         printf "\n%${HELP_DESC_INDENT}s%s:\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREFIX}%s\n" '' "$(Capitalise "$1")" '' "$PROJECT_NAME $2"
     fi
 
-    Session.LineSpace.Clear
+    Session.LineSpace.UnSet
 
     }
 
@@ -2617,7 +2617,7 @@ DisplayAsSyntaxExample()
         printf "\n${HELP_COLUMN_MAIN_PREFIX}%s:\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREFIX}%s\n" "$(Capitalise "$1")" '' "$2"
     fi
 
-    Session.LineSpace.Clear
+    Session.LineSpace.UnSet
 
     }
 
@@ -2767,7 +2767,7 @@ Display()
     {
 
     echo -e "${1:-}"
-    [[ $(type -t Session.LineSpace.Init) = function ]] && Session.LineSpace.Clear
+    [[ $(type -t Session.LineSpace.Init) = function ]] && Session.LineSpace.UnSet
 
     }
 
@@ -3087,7 +3087,7 @@ Log.Last.Paste()
         else
             DebugInfoMinorSeparator
             DebugScript 'user abort'
-            Session.Summary.Clear
+            Session.Summary.UnSet
             return 1
         fi
     else
@@ -3118,7 +3118,7 @@ Log.Tail.Paste()
         else
             DebugInfoMinorSeparator
             DebugScript 'user abort'
-            Session.Summary.Clear
+            Session.Summary.UnSet
             return 1
         fi
     else
@@ -3665,7 +3665,7 @@ QPKGs.Statuses.Show()
                         package_version=$(QPKG.Available.Version "$current_package_name")
                     fi
 
-                    [[ ! -e ${GNU_SED_CMD:-} ]] && Session.Boring.Clear
+                    [[ ! -e ${GNU_SED_CMD:-} ]] && Session.Boring.UnSet
 
                     for ((index=0; index<=((${#package_status_notes[@]} - 1)); index++)); do
                         package_status+=${package_status_notes[$index]}
@@ -4149,8 +4149,8 @@ ReleaseLockFile()
 DisableDebugToArchiveAndFile()
     {
 
-    Session.Debug.ToArchive.Clear
-    Session.Debug.ToFile.Clear
+    Session.Debug.ToArchive.UnSet
+    Session.Debug.ToFile.UnSet
 
     }
 
@@ -5663,7 +5663,7 @@ DisplayLineSpaceIfNoneAlready()
         echo
         Session.LineSpace.Set
     else
-        Session.LineSpace.Clear
+        Session.LineSpace.UnSet
     fi
 
     }
@@ -5932,7 +5932,7 @@ AddFileToDebug()
 
     if Session.Debug.ToScreen.IsSet; then      # prevent external log contents appearing onscreen again - it's already been seen "live"
         screen_debug=true
-        Session.Debug.ToScreen.Clear
+        Session.Debug.ToScreen.UnSet
     fi
 
     DebugAsLog "$(FormatAsLogFilename "${1:?no filename supplied}")"
