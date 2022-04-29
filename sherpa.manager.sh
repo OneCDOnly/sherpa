@@ -57,7 +57,7 @@ Session.Init()
     IsSU || return
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220423b
+    local -r SCRIPT_VERSION=220430
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -4602,6 +4602,7 @@ QPKG.DoRestart()
         DebugFuncExit 2; return
     fi
 
+    local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile "$PACKAGE_NAME")
     local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$RESTART_LOG_FILE
 
     QPKG.DoEnable "$PACKAGE_NAME"
@@ -4609,7 +4610,7 @@ QPKG.DoRestart()
 
     if [[ $result_code -eq 0 ]]; then
         DebugAsProc "restarting $(FormatAsPackageName "$PACKAGE_NAME")"
-        RunAndLog "/sbin/qpkg_service restart $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
+        RunAndLog "$SH_CMD $PACKAGE_INIT_PATHFILE restart" "$LOG_PATHFILE" log:failure-only
         result_code=$?
     fi
 
@@ -4658,6 +4659,7 @@ QPKG.DoStart()
         DebugFuncExit 2; return
     fi
 
+    local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile "$PACKAGE_NAME")
     local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$START_LOG_FILE
 
     QPKG.DoEnable "$PACKAGE_NAME"
@@ -4665,7 +4667,7 @@ QPKG.DoStart()
 
     if [[ $result_code -eq 0 ]]; then
         DebugAsProc "starting $(FormatAsPackageName "$PACKAGE_NAME")"
-        RunAndLog "/sbin/qpkg_service start $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
+        RunAndLog "$SH_CMD $PACKAGE_INIT_PATHFILE start" "$LOG_PATHFILE" log:failure-only
         result_code=$?
     fi
 
@@ -4721,10 +4723,11 @@ QPKG.DoStop()
         DebugFuncExit 2; return
     fi
 
+    local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile "$PACKAGE_NAME")
     local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$STOP_LOG_FILE
 
     DebugAsProc "stopping $(FormatAsPackageName "$PACKAGE_NAME")"
-    RunAndLog "/sbin/qpkg_service stop $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
+    RunAndLog "$SH_CMD $PACKAGE_INIT_PATHFILE stop" "$LOG_PATHFILE" log:failure-only
     result_code=$?
 
     if [[ $result_code -eq 0 ]]; then
@@ -5024,7 +5027,7 @@ QPKG.ServicePathFile()
     #   $1 = QPKG name
 
     # output:
-    #   stdout = service pathfile
+    #   stdout = service script pathfile
     #   $? = 0 if found, !0 if not
 
     /sbin/getcfg "${1:?no package name supplied}" Shell -d unknown -f /etc/config/qpkg.conf
