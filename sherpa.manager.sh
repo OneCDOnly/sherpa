@@ -48,7 +48,7 @@ set -o nounset -o pipefail
 readonly USER_ARGS_RAW=$*
 readonly SCRIPT_STARTSECONDS=$(/bin/date +%s)
 
-Session.Init()
+Self.Init()
     {
 
     DebugFuncEntry
@@ -57,7 +57,7 @@ Session.Init()
     IsSU || return
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220430c
+    local -r SCRIPT_VERSION=220430d
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -183,6 +183,8 @@ Session.Init()
     readonly SESSION_TAIL_PATHFILE=$LOGS_PATH/session.tail.log
 
     MANAGEMENT_ACTIONS=(Check List Paste Reset Status)
+    MANAGEMENT_OPTIONS=(Debug)
+
     PACKAGE_SCOPES=(All Dependent HasDependents Installable Names Standalone SupportBackup SupportUpdateOnRestart Upgradable)
     PACKAGE_STATES=(BackedUp Cleaned Downloaded Enabled Installed Missing Started)
     PACKAGE_STATES_TEMPORARY=(Starting Stopping Restarting)
@@ -190,6 +192,8 @@ Session.Init()
     PACKAGE_TIERS=(Standalone Addon Dependent)
 
     readonly MANAGEMENT_ACTIONS
+    readonly MANAGEMENT_OPTIONS
+
     readonly PACKAGE_SCOPES
     readonly PACKAGE_STATES
     readonly PACKAGE_STATES_TEMPORARY
@@ -220,8 +224,8 @@ Session.Init()
     fi
 
     Objects.DoLoad || return
-    Session.Debug.ToArchive.Set
-    Session.Debug.ToFile.Set
+    Self.Debug.ToArchive.Set
+    Self.Debug.ToFile.Set
 
     if [[ -e $GNU_STTY_CMD ]]; then
         local terminal_dimensions=$($GNU_STTY_CMD size)
@@ -234,7 +238,7 @@ Session.Init()
 
     if [[ $USER_ARGS_RAW == *"debug"* || $USER_ARGS_RAW == *"dbug"* || $USER_ARGS_RAW == *"verbose"* ]]; then
         Display >&2
-        Session.Debug.ToScreen.Set
+        Self.Debug.ToScreen.Set
     fi
 
     readonly PACKAGE_VERSION=$(QPKG.Local.Version "$PROJECT_NAME")
@@ -249,7 +253,7 @@ Session.Init()
     DebugInfo '(==) done, (>>) f entry, (<<) f exit, (vv) variable name & value, ($1) positional argument value'
     DebugInfoMinorSeparator
 
-    Session.Summary.Set
+    Self.Summary.Set
 
     readonly NAS_FIRMWARE_VERSION=$(GetFirmwareVersion)
     readonly NAS_FIRMWARE_BUILD=$(GetFirmwareBuild)
@@ -277,7 +281,7 @@ Session.Init()
 
     SmartCR >&2
 
-    if Session.Display.Clean.IsNt && Session.Debug.ToScreen.IsNt; then
+    if Self.Display.Clean.IsNt && Self.Debug.ToScreen.IsNt; then
         Display "$(FormatAsScriptTitle) $MANAGER_SCRIPT_VERSION • a mini-package-manager for QNAP NAS"
         DisplayLineSpaceIfNoneAlready
     fi
@@ -292,7 +296,7 @@ Session.Init()
 
     }
 
-Session.Validate()
+Self.Validate()
     {
 
     # This function handles most of the high-level logic for package actions.
@@ -380,14 +384,14 @@ Session.Validate()
             fi
 
             for scope in "${PACKAGE_SCOPES[@]}"; do
-                if Opts.Apps.Ac${action}.Sc${scope}.IsSet || Opts.Apps.Ac${action}.ScNt${scope}.IsSet; then
+                if QPKGs.Ac${action}.Sc${scope}.IsSet || QPKGs.Ac${action}.ScNt${scope}.IsSet; then
                     something_to_do=true
                     break 2
                 fi
             done
 
             for state in "${PACKAGE_STATES[@]}"; do
-                if Opts.Apps.Ac${action}.Is${state}.IsSet || Opts.Apps.Ac${action}.IsNt${state}.IsSet; then
+                if QPKGs.Ac${action}.Is${state}.IsSet || QPKGs.Ac${action}.IsNt${state}.IsSet; then
                     something_to_do=true
                     break 2
                 fi
@@ -503,7 +507,7 @@ Session.Validate()
     fi
 
     # no-need to 'stop' packages that are about to be uninstalled
-    if Opts.Apps.AcUninstall.ScAll.IsSet; then
+    if QPKGs.AcUninstall.ScAll.IsSet; then
         QPKGs.AcToStop.Init
     else
         QPKGs.AcToStop.Remove "$(QPKGs.AcToUninstall.Array)"
@@ -632,7 +636,7 @@ Tiers.Processor()
                 ;;
             Addon)
                 for action in Install Reinstall Upgrade; do
-                    if QPKGs.AcTo${action}.IsAny || QPKGs.AcOk${action}.IsAny || Opts.Apps.Ac${action}.ScAll.IsSet; then
+                    if QPKGs.AcTo${action}.IsAny || QPKGs.AcOk${action}.IsAny || QPKGs.Ac${action}.ScAll.IsSet; then
                         IPKGs.Upgrade.Set
                         IPKGs.Install.Set
                         PIPs.Install.Set
@@ -792,11 +796,11 @@ Tier.Processor()
     ShowAsActionResult "$TIER" "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PAST" "$RUNTIME"
 
     DebugFuncExit
-    Session.Error.IsNt
+    Self.Error.IsNt
 
     }
 
-Session.Results()
+Self.Results()
     {
 
     if Args.Unknown.IsNone; then
@@ -824,26 +828,26 @@ Session.Results()
             Log.Last.Paste
         elif Opts.Log.Tail.Paste.IsSet; then
             Log.Tail.Paste
-        elif Opts.Apps.List.IsInstalled.IsSet; then
+        elif QPKGs.List.IsInstalled.IsSet; then
             QPKGs.IsInstalled.Show
-        elif Opts.Apps.List.ScInstallable.IsSet; then
+        elif QPKGs.List.ScInstallable.IsSet; then
             QPKGs.ScInstallable.Show
-        elif Opts.Apps.List.IsNtInstalled.IsSet; then
+        elif QPKGs.List.IsNtInstalled.IsSet; then
             QPKGs.IsNtInstalled.Show
-        elif Opts.Apps.List.IsStarted.IsSet; then
+        elif QPKGs.List.IsStarted.IsSet; then
             QPKGs.IsStarted.Show
-        elif Opts.Apps.List.IsNtStarted.IsSet; then
+        elif QPKGs.List.IsNtStarted.IsSet; then
             QPKGs.IsNtStarted.Show
-        elif Opts.Apps.List.ScUpgradable.IsSet; then
+        elif QPKGs.List.ScUpgradable.IsSet; then
             QPKGs.ScUpgradable.Show
-        elif Opts.Apps.List.ScStandalone.IsSet; then
+        elif QPKGs.List.ScStandalone.IsSet; then
             QPKGs.ScStandalone.Show
-        elif Opts.Apps.List.ScDependent.IsSet; then
+        elif QPKGs.List.ScDependent.IsSet; then
             QPKGs.ScDependent.Show
         elif Opts.Help.Backups.IsSet; then
             QPKGs.Backups.Show
         elif Opts.Help.Status.IsSet; then
-            Session.Display.Clean.IsNt && QPKGs.NewVersions.Show
+            Self.Display.Clean.IsNt && QPKGs.NewVersions.Show
             QPKGs.Statuses.Show
         fi
     fi
@@ -853,15 +857,15 @@ Session.Results()
         Help.Basic.Example.Show
     fi
 
-    Session.ShowBackupLoc.IsSet && Help.BackupLocation.Show
-    Session.Summary.IsSet && ShowSummary
-    Session.SuggestIssue.IsSet && Help.Issue.Show
+    Self.ShowBackupLoc.IsSet && Help.BackupLocation.Show
+    Self.Summary.IsSet && ShowSummary
+    Self.SuggestIssue.IsSet && Help.Issue.Show
 
     DebugInfoMinorSeparator
     DebugScript finished "$($DATE_CMD)"
     DebugScript 'elapsed time' "$(FormatSecsToHoursMinutesSecs "$(($($DATE_CMD +%s)-$([[ -n $SCRIPT_STARTSECONDS ]] && echo "$SCRIPT_STARTSECONDS" || echo "1")))")"
     DebugInfoMajorSeparator
-    Session.Debug.ToArchive.IsSet && ArchiveActiveSessionLog
+    Self.Debug.ToArchive.IsSet && ArchiveActiveSessionLog
     ResetActiveSessionLog
     ReleaseLockFile
     DisplayLineSpaceIfNoneAlready   # final on-screen linespace
@@ -901,7 +905,7 @@ ParseArguments()
                 arg_identified=true
                 scope=''
                 scope_identified=false
-                Session.Display.Clean.UnSet
+                Self.Display.Clean.UnSet
                 QPKGs.SkProc.UnSet
                 ;;
             rm|remove|uninstall)
@@ -909,7 +913,7 @@ ParseArguments()
                 arg_identified=true
                 scope=''
                 scope_identified=false
-                Session.Display.Clean.UnSet
+                Self.Display.Clean.UnSet
                 QPKGs.SkProc.UnSet
                 ;;
             s|status|statuses)
@@ -917,7 +921,7 @@ ParseArguments()
                 arg_identified=true
                 scope=''
                 scope_identified=false
-                Session.Display.Clean.UnSet
+                Self.Display.Clean.UnSet
                 QPKGs.SkProc.Set
                 ;;
             paste)
@@ -925,7 +929,7 @@ ParseArguments()
                 arg_identified=true
                 scope=''
                 scope_identified=false
-                Session.Display.Clean.UnSet
+                Self.Display.Clean.UnSet
                 QPKGs.SkProc.Set
                 ;;
             display|help|list|show|view)
@@ -933,7 +937,7 @@ ParseArguments()
                 arg_identified=true
                 scope=''
                 scope_identified=false
-                Session.Display.Clean.UnSet
+                Self.Display.Clean.UnSet
                 QPKGs.SkProc.Set
         esac
 
@@ -1031,7 +1035,7 @@ ParseArguments()
         # identify options
         case $arg in
             debug|verbose)
-                Session.Debug.ToScreen.Set
+                Self.Debug.ToScreen.Set
                 arg_identified=true
                 scope_identified=true
                 ;;
@@ -1055,18 +1059,18 @@ ParseArguments()
             backup_)
                 case $scope in
                     all_)
-                        Opts.Apps.AcBackup.ScAll.Set
+                        QPKGs.AcBackup.ScAll.Set
                         action=''
                         ;;
                     installed_)
-                        Opts.Apps.AcBackup.IsInstalled.Set
+                        QPKGs.AcBackup.IsInstalled.Set
                         action=''
                         ;;
                     dependent_)
-                        Opts.Apps.AcBackup.ScDependent.Set
+                        QPKGs.AcBackup.ScDependent.Set
                         ;;
                     standalone_)
-                        Opts.Apps.AcBackup.ScStandalone.Set
+                        QPKGs.AcBackup.ScStandalone.Set
                         ;;
                     started_)
                         QPKGs.AcToBackup.Add "$(QPKGs.IsStarted.Array)"
@@ -1084,18 +1088,18 @@ ParseArguments()
             clean_)
                 case $scope in
                     all_)
-                        Opts.Apps.AcClean.ScAll.Set
+                        QPKGs.AcClean.ScAll.Set
                         action=''
                         ;;
                     installed_)
-                        Opts.Apps.AcClean.IsInstalled.Set
+                        QPKGs.AcClean.IsInstalled.Set
                         action=''
                         ;;
                     dependent_)
-                        Opts.Apps.AcClean.ScDependent.Set
+                        QPKGs.AcClean.ScDependent.Set
                         ;;
                     standalone_)
-                        Opts.Apps.AcClean.ScStandalone.Set
+                        QPKGs.AcClean.ScStandalone.Set
                         ;;
                     started_)
                         QPKGs.AcToClean.Add "$(QPKGs.IsStarted.Array)"
@@ -1122,28 +1126,28 @@ ParseArguments()
                         Opts.Help.Backups.Set
                         ;;
                     installable_)
-                        Opts.Apps.List.ScInstallable.Set
-                        Session.Display.Clean.Set
+                        QPKGs.List.ScInstallable.Set
+                        Self.Display.Clean.Set
                         ;;
                     installed_)
-                        Opts.Apps.List.IsInstalled.Set
-                        Session.Display.Clean.Set
+                        QPKGs.List.IsInstalled.Set
+                        Self.Display.Clean.Set
                         ;;
                     last_)
                         Opts.Log.Last.View.Set
-                        Session.Display.Clean.Set
+                        Self.Display.Clean.Set
                         ;;
                     log_)
                         Opts.Log.Tail.View.Set
-                        Session.Display.Clean.Set
+                        Self.Display.Clean.Set
                         ;;
                     not-installed_)
-                        Opts.Apps.List.IsNtInstalled.Set
-                        Session.Display.Clean.Set
+                        QPKGs.List.IsNtInstalled.Set
+                        Self.Display.Clean.Set
                         ;;
                     dependent_)
-                        Opts.Apps.List.ScDependent.Set
-                        Session.Display.Clean.Set
+                        QPKGs.List.ScDependent.Set
+                        Self.Display.Clean.Set
                         ;;
                     options_)
                         Opts.Help.Options.Set
@@ -1155,30 +1159,30 @@ ParseArguments()
                         Opts.Help.Problems.Set
                         ;;
                     standalone_)
-                        Opts.Apps.List.ScStandalone.Set
-                        Session.Display.Clean.Set
+                        QPKGs.List.ScStandalone.Set
+                        Self.Display.Clean.Set
                         ;;
                     started_)
-                        Opts.Apps.List.IsStarted.Set
-                        Session.Display.Clean.Set
+                        QPKGs.List.IsStarted.Set
+                        Self.Display.Clean.Set
                         ;;
                     status_)
                         Opts.Help.Status.Set
                         ;;
                     stopped_)
-                        Opts.Apps.List.IsNtStarted.Set
-                        Session.Display.Clean.Set
+                        QPKGs.List.IsNtStarted.Set
+                        Self.Display.Clean.Set
                         ;;
                     tips_)
                         Opts.Help.Tips.Set
                         ;;
                     upgradable_)
-                        Opts.Apps.List.ScUpgradable.Set
-                        Session.Display.Clean.Set
+                        QPKGs.List.ScUpgradable.Set
+                        Self.Display.Clean.Set
                         ;;
                     versions_)
                         Opts.Versions.View.Set
-                        Session.Display.Clean.Set
+                        Self.Display.Clean.Set
                 esac
 
                 QPKGs.SkProc.Set
@@ -1186,23 +1190,23 @@ ParseArguments()
             install_)
                 case $scope in
                     all_)
-                        Opts.Apps.AcInstall.ScAll.Set
+                        QPKGs.AcInstall.ScAll.Set
                         action=''
                         ;;
                     dependent_)
-                        Opts.Apps.AcInstall.ScDependent.Set
+                        QPKGs.AcInstall.ScDependent.Set
                         action=''
                         ;;
                     installable_)
-                        Opts.Apps.AcInstall.ScInstallable.Set
+                        QPKGs.AcInstall.ScInstallable.Set
                         action=''
                         ;;
                     not-installed_)
-                        Opts.Apps.AcInstall.IsNtInstalled.Set
+                        QPKGs.AcInstall.IsNtInstalled.Set
                         action=''
                         ;;
                     standalone_)
-                        Opts.Apps.AcInstall.ScStandalone.Set
+                        QPKGs.AcInstall.ScStandalone.Set
                         action=''
                         ;;
                     *)
@@ -1227,15 +1231,15 @@ ParseArguments()
             rebuild_)
                 case $scope in
                     all_|installed_)
-                        Opts.Apps.AcRebuild.ScAll.Set
+                        QPKGs.AcRebuild.ScAll.Set
                         action=''
                         ;;
                     dependent_)
-                        Opts.Apps.AcRebuild.ScDependent.Set
+                        QPKGs.AcRebuild.ScDependent.Set
                         action=''
                         ;;
                     standalone_)
-                        Opts.Apps.AcRebuild.ScStandalone.Set
+                        QPKGs.AcRebuild.ScStandalone.Set
                         action=''
                         ;;
                     *)
@@ -1245,15 +1249,15 @@ ParseArguments()
             reinstall_)
                 case $scope in
                     all_|installed_)
-                        Opts.Apps.AcReinstall.ScAll.Set
+                        QPKGs.AcReinstall.ScAll.Set
                         action=''
                         ;;
                     dependent_)
-                        Opts.Apps.AcReinstall.ScDependent.Set
+                        QPKGs.AcReinstall.ScDependent.Set
                         action=''
                         ;;
                     standalone_)
-                        Opts.Apps.AcReinstall.ScStandalone.Set
+                        QPKGs.AcReinstall.ScStandalone.Set
                         action=''
                         ;;
                     *)
@@ -1263,15 +1267,15 @@ ParseArguments()
             restart_)
                 case $scope in
                     all_|installed_)
-                        Opts.Apps.AcRestart.ScAll.Set
+                        QPKGs.AcRestart.ScAll.Set
                         action=''
                         ;;
                     dependent_)
-                        Opts.Apps.AcRestart.ScDependent.Set
+                        QPKGs.AcRestart.ScDependent.Set
                         action=''
                         ;;
                     standalone_)
-                        Opts.Apps.AcRestart.ScStandalone.Set
+                        QPKGs.AcRestart.ScStandalone.Set
                         action=''
                         ;;
                     *)
@@ -1281,15 +1285,15 @@ ParseArguments()
             restore_)
                 case $scope in
                     all_|installed_)
-                        Opts.Apps.AcRestore.ScAll.Set
+                        QPKGs.AcRestore.ScAll.Set
                         action=''
                         ;;
                     dependent_)
-                        Opts.Apps.AcRestore.ScDependent.Set
+                        QPKGs.AcRestore.ScDependent.Set
                         action=''
                         ;;
                     standalone_)
-                        Opts.Apps.AcRestore.ScStandalone.Set
+                        QPKGs.AcRestore.ScStandalone.Set
                         action=''
                         ;;
                     *)
@@ -1299,19 +1303,19 @@ ParseArguments()
             start_)
                 case $scope in
                     all_|installed_)
-                        Opts.Apps.AcStart.ScAll.Set
+                        QPKGs.AcStart.ScAll.Set
                         action=''
                         ;;
                     dependent_)
-                        Opts.Apps.AcStart.ScDependent.Set
+                        QPKGs.AcStart.ScDependent.Set
                         action=''
                         ;;
                     standalone_)
-                        Opts.Apps.AcStart.ScStandalone.Set
+                        QPKGs.AcStart.ScStandalone.Set
                         action=''
                         ;;
                     stopped_)
-                        Opts.Apps.AcStart.IsNtStarted.Set
+                        QPKGs.AcStart.IsNtStarted.Set
                         action=''
                         ;;
                     *)
@@ -1325,19 +1329,19 @@ ParseArguments()
             stop_)
                 case $scope in
                     all_|installed_)
-                        Opts.Apps.AcStop.ScAll.Set
+                        QPKGs.AcStop.ScAll.Set
                         action=''
                         ;;
                     dependent_)
-                        Opts.Apps.AcStop.ScDependent.Set
+                        QPKGs.AcStop.ScDependent.Set
                         action=''
                         ;;
                     standalone_)
-                        Opts.Apps.AcStop.ScStandalone.Set
+                        QPKGs.AcStop.ScStandalone.Set
                         action=''
                         ;;
                     started_)
-                        Opts.Apps.AcStop.IsStarted.Set
+                        QPKGs.AcStop.IsStarted.Set
                         action=''
                         ;;
                     *)
@@ -1348,28 +1352,28 @@ ParseArguments()
                 case $scope in
                     all_|installed_)   # this scope is dangerous, so make 'force' a requirement
                         if [[ $action_force = true ]]; then
-                            Opts.Apps.AcUninstall.ScAll.Set
+                            QPKGs.AcUninstall.ScAll.Set
                             action=''
                             action_force=false
                         fi
                         ;;
                     dependent_)
-                        Opts.Apps.AcUninstall.ScDependent.Set
+                        QPKGs.AcUninstall.ScDependent.Set
                         action=''
                         action_force=false
                         ;;
                     standalone_)
-                        Opts.Apps.AcUninstall.ScStandalone.Set
+                        QPKGs.AcUninstall.ScStandalone.Set
                         action=''
                         action_force=false
                         ;;
                     started_)
-                        Opts.Apps.AcUninstall.IsStarted.Set
+                        QPKGs.AcUninstall.IsStarted.Set
                         action=''
                         action_force=false
                         ;;
                     stopped_)
-                        Opts.Apps.AcUninstall.IsNtStarted.Set
+                        QPKGs.AcUninstall.IsNtStarted.Set
                         action=''
                         action_force=false
                         ;;
@@ -1380,27 +1384,27 @@ ParseArguments()
             upgrade_)
                 case $scope in
                     all_)
-                        Opts.Apps.AcUpgrade.ScAll.Set
+                        QPKGs.AcUpgrade.ScAll.Set
                         action=''
                         ;;
                     dependent_)
-                        Opts.Apps.AcUpgrade.ScDependent.Set
+                        QPKGs.AcUpgrade.ScDependent.Set
                         action=''
                         ;;
                     standalone_)
-                        Opts.Apps.AcUpgrade.ScStandalone.Set
+                        QPKGs.AcUpgrade.ScStandalone.Set
                         action=''
                         ;;
                     started_)
-                        Opts.Apps.AcUpgrade.IsStarted.Set
+                        QPKGs.AcUpgrade.IsStarted.Set
                         action=''
                         ;;
                     stopped_)
-                        Opts.Apps.AcUpgrade.IsNtStarted.Set
+                        QPKGs.AcUpgrade.IsNtStarted.Set
                         action=''
                         ;;
                     upgradable_)
-                        Opts.Apps.AcUpgrade.ScUpgradable.Set
+                        QPKGs.AcUpgrade.ScUpgradable.Set
                         action=''
                         ;;
                     *)
@@ -1434,14 +1438,14 @@ ParseArguments()
                 ;;
             versions_)
                 Opts.Versions.View.Set
-                Session.Display.Clean.Set
+                Self.Display.Clean.Set
         esac
     fi
 
     if Args.Unknown.IsAny; then
         Opts.Help.Basic.Set
         QPKGs.SkProc.Set
-        Session.Display.Clean.UnSet
+        Self.Display.Clean.UnSet
     fi
 
     DebugFuncExit
@@ -1531,7 +1535,7 @@ ApplySensibleExceptions()
     for action in "${PACKAGE_ACTIONS[@]}"; do
         # process scope-based user-options
         for scope in "${PACKAGE_SCOPES[@]}"; do
-            if Opts.Apps.Ac${action}.Sc${scope}.IsSet; then
+            if QPKGs.Ac${action}.Sc${scope}.IsSet; then
                 # use sensible scope exceptions (for convenience) rather than follow requested scope literally
                 case $action in
                     Clean)
@@ -1692,7 +1696,7 @@ ApplySensibleExceptions()
                 esac
 
                 [[ $found != true ]] && QPKGs.AcTo${action}.Add "$(QPKGs.Sc${scope}.Array)" || found=false
-            elif Opts.Apps.Ac${action}.ScNt${scope}.IsSet; then
+            elif QPKGs.Ac${action}.ScNt${scope}.IsSet; then
                 # use sensible scope exceptions (for convenience) rather than follow requested scope literally
                 :
 
@@ -1702,7 +1706,7 @@ ApplySensibleExceptions()
 
         # process state-based user-options
         for state in "${PACKAGE_STATES[@]}"; do
-            if Opts.Apps.Ac${action}.Is${state}.IsSet; then
+            if QPKGs.Ac${action}.Is${state}.IsSet; then
                 # use sensible state exceptions (for convenience) rather than follow requested state literally
                 case $action in
                     Uninstall)
@@ -1714,7 +1718,7 @@ ApplySensibleExceptions()
                 esac
 
                 [[ $found != true ]] && QPKGs.AcTo${action}.Add "$(QPKGs.Is${state}.Array)" || found=false
-            elif Opts.Apps.Ac${action}.IsNt${state}.IsSet; then
+            elif QPKGs.Ac${action}.IsNt${state}.IsSet; then
                 # use sensible state exceptions (for convenience) rather than follow requested state literally
                 case $action in
                     Install)
@@ -1932,7 +1936,7 @@ CalcIPKGsDepsToInstall()
         DebugAsDone "complete in $iterations iteration$(Plural $iterations)"
     else
         DebugAsError "incomplete in $iterations iteration$(Plural $iterations), consider raising \$ITERATION_LIMIT [$ITERATION_LIMIT]"
-        Session.SuggestIssue.Set
+        Self.SuggestIssue.Set
     fi
 
     # exclude already installed IPKGs
@@ -2033,7 +2037,7 @@ IPKGs.DoUpgrade()
     QPKGs.IsNtInstalled.Exist Entware && return
     QPKGs.IsNtStarted.Exist Entware && return
     UpdateEntwarePackageList
-    Session.Error.IsSet && return
+    Self.Error.IsSet && return
     DebugFuncEntry
 
     local -i result_code=0
@@ -2079,7 +2083,7 @@ IPKGs.DoInstall()
     QPKGs.IsNtInstalled.Exist Entware && return
     QPKGs.IsNtStarted.Exist Entware && return
     UpdateEntwarePackageList
-    Session.Error.IsSet && return
+    Self.Error.IsSet && return
     DebugFuncEntry
 
     local -i index=0
@@ -2089,7 +2093,7 @@ IPKGs.DoInstall()
 
     IPKGs.AcToInstall.Add "$BASE_IPKGS_INSTALL"
 
-    if Opts.Apps.AcInstall.ScAll.IsSet; then
+    if QPKGs.AcInstall.ScAll.IsSet; then
         for index in "${!QPKG_NAME[@]}"; do
             [[ ${QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${QPKG_ARCH[$index]} = all ]] || continue
             IPKGs.AcToInstall.Add "${QPKG_IPKGS_ADD[$index]}"
@@ -2139,13 +2143,13 @@ IPKGs.DoUninstall()
     QPKGs.AcToUninstall.Exist Entware && return
     QPKGs.AcToReinstall.Exist Entware && return
     QPKGs.IsNtStarted.Exist Entware && return
-    Session.Error.IsSet && return
+    Self.Error.IsSet && return
     DebugFuncEntry
 
     local -i index=0
     local -i result_code=0
 
-    if Opts.Apps.AcUninstall.ScAll.IsNt; then
+    if QPKGs.AcUninstall.ScAll.IsNt; then
         for index in "${!QPKG_NAME[@]}"; do
             if QPKGs.AcToInstall.Exist "${QPKG_NAME[$index]}" || QPKGs.IsInstalled.Exist "${QPKG_NAME[$index]}" || QPKGs.AcToUpgrade.Exist "${QPKG_NAME[$index]}" || QPKGs.AcToUninstall.Exist "${QPKG_NAME[$index]}"; then
                 IPKGs.AcToUninstall.Add "${QPKG_IPKGS_REMOVE[$index]}"
@@ -2154,7 +2158,7 @@ IPKGs.DoUninstall()
     fi
 
     CalcAllIPKGsToUninstall
-    Session.Error.IsSet && return
+    Self.Error.IsSet && return
     local -i total_count=$(IPKGs.AcToUninstall.Count)
 
     if [[ $total_count -gt 0 ]]; then
@@ -2182,7 +2186,7 @@ PIPs.DoInstall()
     QPKGs.IsNtInstalled.Exist Entware && return
     QPKGs.IsNtStarted.Exist Entware && return
     ! $OPKG_CMD status python3-pip | $GREP_CMD -q "Status:.*installed" && return
-    Session.Error.IsSet && return
+    Self.Error.IsSet && return
     DebugFuncEntry
 
     local exec_cmd=''
@@ -2219,7 +2223,7 @@ PIPs.DoInstall()
         ((total_count--))
     fi
 
-    if Opts.Apps.AcInstall.ScAll.IsSet; then
+    if QPKGs.AcInstall.ScAll.IsSet; then
         for index in "${!QPKG_NAME[@]}"; do
             [[ ${QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${QPKG_ARCH[$index]} = all ]] || continue
             PIPs.AcToInstall.Add "${QPKG_PIPS_ADD[$index]}"
@@ -2581,7 +2585,7 @@ DisplayAsProjectSyntaxExample()
         printf "${HELP_COLUMN_MAIN_PREFIX}%s:\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREFIX}%s\n" "$(Capitalise "$1")" '' "$PROJECT_NAME $2"
     fi
 
-    Session.LineSpace.UnSet
+    Self.LineSpace.UnSet
 
     }
 
@@ -2599,7 +2603,7 @@ DisplayAsProjectSyntaxIndentedExample()
         printf "\n%${HELP_DESC_INDENT}s%s:\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREFIX}%s\n" '' "$(Capitalise "$1")" '' "$PROJECT_NAME $2"
     fi
 
-    Session.LineSpace.UnSet
+    Self.LineSpace.UnSet
 
     }
 
@@ -2617,7 +2621,7 @@ DisplayAsSyntaxExample()
         printf "\n${HELP_COLUMN_MAIN_PREFIX}%s:\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREFIX}%s\n" "$(Capitalise "$1")" '' "$2"
     fi
 
-    Session.LineSpace.UnSet
+    Self.LineSpace.UnSet
 
     }
 
@@ -2757,7 +2761,7 @@ SmartCR()
 
     # reset cursor to start-of-line, erasing previous characters
 
-    [[ $(type -t Session.Debug.ToScreen.Init) = function ]] && Session.Debug.ToScreen.IsSet && return
+    [[ $(type -t Self.Debug.ToScreen.Init) = function ]] && Self.Debug.ToScreen.IsSet && return
 
     echo -en "\033[1K\r"
 
@@ -2767,7 +2771,7 @@ Display()
     {
 
     echo -e "${1:-}"
-    [[ $(type -t Session.LineSpace.Init) = function ]] && Session.LineSpace.UnSet
+    [[ $(type -t Self.LineSpace.Init) = function ]] && Self.LineSpace.UnSet
 
     }
 
@@ -2906,8 +2910,6 @@ Help.Options.Show()
     DisplayAsHelpTitle "$(FormatAsHelpOptions) usage examples:"
     DisplayAsProjectSyntaxIndentedExample 'process one-or-more packages and show live debugging information' "$(FormatAsHelpAction) $(FormatAsHelpPackages) debug"
     DisplayAsProjectSyntaxIndentedExample '' "$(FormatAsHelpAction) $(FormatAsHelpPackages) verbose"
-    DisplayAsProjectSyntaxIndentedExample 'display helpful tips and shortcuts' 'tips'
-    DisplayAsProjectSyntaxIndentedExample 'display troubleshooting options' 'problems'
 
     return 0
 
@@ -3087,7 +3089,7 @@ Log.Last.Paste()
         else
             DebugInfoMinorSeparator
             DebugScript 'user abort'
-            Session.Summary.UnSet
+            Self.Summary.UnSet
             return 1
         fi
     else
@@ -3118,7 +3120,7 @@ Log.Tail.Paste()
         else
             DebugInfoMinorSeparator
             DebugScript 'user abort'
-            Session.Summary.UnSet
+            Self.Summary.UnSet
             return 1
         fi
     else
@@ -3636,7 +3638,7 @@ QPKGs.Statuses.Show()
                         package_name=$(ColourTextBrightRed "$current_package_name")
                     fi
                 else
-                    [[ ! -e ${GNU_SED_CMD:-} ]] && Session.Boring.Set
+                    [[ ! -e ${GNU_SED_CMD:-} ]] && Self.Boring.Set
 
                     if QPKGs.IsMissing.Exist "$current_package_name"; then
                         package_status_notes=($(ColourTextBrightRedBlink missing))
@@ -3665,7 +3667,7 @@ QPKGs.Statuses.Show()
                         package_version=$(QPKG.Available.Version "$current_package_name")
                     fi
 
-                    [[ ! -e ${GNU_SED_CMD:-} ]] && Session.Boring.UnSet
+                    [[ ! -e ${GNU_SED_CMD:-} ]] && Self.Boring.UnSet
 
                     for ((index=0; index<=((${#package_status_notes[@]} - 1)); index++)); do
                         package_status+=${package_status_notes[$index]}
@@ -3680,7 +3682,7 @@ QPKGs.Statuses.Show()
             fi
         done
 
-        Display; Session.LineSpace.Set
+        Display; Self.LineSpace.Set
     done
 
     QPKGs.Actions.List
@@ -4084,24 +4086,24 @@ GetEntwareType()
 
     }
 
-Session.Error.Set()
+Self.Error.Set()
     {
 
     [[ $(type -t QPKGs.SkProc.Init) = function ]] && QPKGs.SkProc.Set
-    Session.Error.IsSet && return
+    Self.Error.IsSet && return
     _script_error_flag_=true
     DebugVar _script_error_flag_
 
     }
 
-Session.Error.IsSet()
+Self.Error.IsSet()
     {
 
     [[ ${_script_error_flag_:-} = true ]]
 
     }
 
-Session.Error.IsNt()
+Self.Error.IsNt()
     {
 
     [[ ${_script_error_flag_:-} != true ]]
@@ -4116,7 +4118,7 @@ ShowSummary()
 
     for state in "${PACKAGE_STATES[@]}"; do
         for action in "${PACKAGE_ACTIONS[@]}"; do
-            Opts.Apps.Ac${action}.Is${state}.IsSet && QPKGs.AcOk${action}.IsNone && ShowAsDone "no QPKGs were $(tr 'A-Z' 'a-z' <<< "$state")"
+            QPKGs.Ac${action}.Is${state}.IsSet && QPKGs.AcOk${action}.IsNone && ShowAsDone "no QPKGs were $(tr 'A-Z' 'a-z' <<< "$state")"
         done
     done
 
@@ -4149,8 +4151,8 @@ ReleaseLockFile()
 DisableDebugToArchiveAndFile()
     {
 
-    Session.Debug.ToArchive.UnSet
-    Session.Debug.ToFile.UnSet
+    Self.Debug.ToArchive.UnSet
+    Self.Debug.ToFile.UnSet
 
     }
 
@@ -4167,7 +4169,7 @@ QPKG.DoDownload()
     #   $? = 1  : failed
     #   $? = 2  : skipped (not downloaded: already downloaded)
 
-    Session.Error.IsSet && return
+    Self.Error.IsSet && return
     DebugFuncEntry
 
     local -r PACKAGE_NAME=${1:?no package name supplied}
@@ -4244,7 +4246,7 @@ QPKG.DoInstall()
     #   $? = 1  : failed
     #   $? = 2  : skipped (not installed: already installed, or no package available for this NAS arch)
 
-    Session.Error.IsSet && return
+    Self.Error.IsSet && return
     QPKGs.SkProc.IsSet && return
     DebugFuncEntry
 
@@ -4353,7 +4355,7 @@ QPKG.DoReinstall()
     #   $? = 1  : failed
     #   $? = 2  : skipped (not reinstalled: not already installed, or no package available for this NAS arch)
 
-    Session.Error.IsSet && return
+    Self.Error.IsSet && return
     QPKGs.SkProc.IsSet && return
     DebugFuncEntry
 
@@ -4433,7 +4435,7 @@ QPKG.DoUpgrade()
     #   $? = 1  : failed
     #   $? = 2  : skipped (not upgraded: not installed, or no package available for this NAS arch)
 
-    Session.Error.IsSet && return
+    Self.Error.IsSet && return
     QPKGs.SkProc.IsSet && return
     DebugFuncEntry
 
@@ -4524,7 +4526,7 @@ QPKG.DoUninstall()
     #   $? = 1  : failed
     #   $? = 2  : skipped (not uninstalled: not already installed)
 
-    Session.Error.IsSet && return
+    Self.Error.IsSet && return
     DebugFuncEntry
 
     local -r PACKAGE_NAME=${1:?no package name supplied}
@@ -5429,7 +5431,7 @@ MakePath()
 
     if [[ $result_code -ne 0 ]]; then
         ShowAsEror "unable to create ${2:?empty} path $(FormatAsFileName "$1") $(FormatAsExitcode $result_code)"
-        [[ $(type -t Session.SuggestIssue.Init) = function ]] && Session.SuggestIssue.Set
+        [[ $(type -t Self.SuggestIssue.Init) = function ]] && Self.SuggestIssue.Set
         return 1
     fi
 
@@ -5462,7 +5464,7 @@ RunAndLog()
     FormatAsCommand "${1:?empty}" > "${2:?empty}"
     DebugAsProc "exec: '$1'"
 
-    if Session.Debug.ToScreen.IsSet; then
+    if Self.Debug.ToScreen.IsSet; then
         eval $1 > >($TEE_CMD "$msgs") 2>&1   # NOTE: 'tee' buffers stdout here
         result_code=$?
     else
@@ -5659,11 +5661,11 @@ FormatAsResultAndStdout()
 DisplayLineSpaceIfNoneAlready()
     {
 
-    if Session.LineSpace.IsNt && Session.Display.Clean.IsNt; then
+    if Self.LineSpace.IsNt && Self.Display.Clean.IsNt; then
         echo
-        Session.LineSpace.Set
+        Self.LineSpace.Set
     else
-        Session.LineSpace.UnSet
+        Self.LineSpace.UnSet
     fi
 
     }
@@ -5914,7 +5916,7 @@ DebugAsVar()
 DebugThis()
     {
 
-    [[ $(type -t Session.Debug.ToScreen.Init) = function ]] && Session.Debug.ToScreen.IsSet && ShowAsDebug "${1:-}"
+    [[ $(type -t Self.Debug.ToScreen.Init) = function ]] && Self.Debug.ToScreen.IsSet && ShowAsDebug "${1:-}"
     WriteAsDebug "${1:-}"
 
     }
@@ -5930,9 +5932,9 @@ AddFileToDebug()
     DebugAsLog 'adding external log to main log ...'
     DebugExtLogMinorSeparator
 
-    if Session.Debug.ToScreen.IsSet; then      # prevent external log contents appearing onscreen again - it's already been seen "live"
+    if Self.Debug.ToScreen.IsSet; then      # prevent external log contents appearing onscreen again - it's already been seen "live"
         screen_debug=true
-        Session.Debug.ToScreen.UnSet
+        Self.Debug.ToScreen.UnSet
     fi
 
     DebugAsLog "$(FormatAsLogFilename "${1:?no filename supplied}")"
@@ -5941,7 +5943,7 @@ AddFileToDebug()
         DebugAsLog "$linebuff"
     done < "$1"
 
-    [[ $screen_debug = true ]] && Session.Debug.ToScreen.Set
+    [[ $screen_debug = true ]] && Self.Debug.ToScreen.Set
     DebugExtLogMinorSeparator
 
     }
@@ -5963,7 +5965,7 @@ ShowAsProc()
     SmartCR
     WriteToDisplayWait "$(ColourTextBrightOrange proc)" "$1 ...$suffix"
     WriteToLog proc "$1 ...$suffix"
-    [[ $(type -t Session.Debug.ToScreen.Init) = function ]] && Session.Debug.ToScreen.IsSet && Display
+    [[ $(type -t Self.Debug.ToScreen.Init) = function ]] && Self.Debug.ToScreen.IsSet && Display
 
     }
 
@@ -6032,7 +6034,7 @@ ShowAsAbort()
 
     WriteToDisplayNew "$(ColourTextBrightRed eror)" "$capitalised: aborting ..."
     WriteToLog eror "$capitalised: aborting"
-    Session.Error.Set
+    Self.Error.Set
 
     }
 
@@ -6061,7 +6063,7 @@ ShowAsEror()
 
     WriteToDisplayNew "$(ColourTextBrightRed eror)" "$capitalised."
     WriteToLog eror "$capitalised."
-    Session.Error.Set
+    Self.Error.Set
 
     }
 
@@ -6229,7 +6231,7 @@ WriteToLog()
     #   $1 = pass/fail
     #   $2 = message
 
-    [[ $(type -t Session.Debug.ToFile.Init) = function ]] && Session.Debug.ToFile.IsNt && return
+    [[ $(type -t Self.Debug.ToFile.Init) = function ]] && Self.Debug.ToFile.IsNt && return
     [[ -n ${SESSION_ACTIVE_PATHFILE:-} ]] && printf "%-4s: %s\n" "$(StripANSI "${1:-}")" "$(StripANSI "${2:-}")" >> "$SESSION_ACTIVE_PATHFILE"
 
     }
@@ -6237,7 +6239,7 @@ WriteToLog()
 ColourTextBrightGreen()
     {
 
-    if [[ $(type -t Session.Boring.Init) = function ]] && Session.Boring.IsSet; then
+    if [[ $(type -t Self.Boring.Init) = function ]] && Self.Boring.IsSet; then
         echo -n "$1"
     else
         echo -en '\033[1;32m'"$(ColourReset "$1")"
@@ -6248,7 +6250,7 @@ ColourTextBrightGreen()
 ColourTextBrightYellow()
     {
 
-    if [[ $(type -t Session.Boring.Init) = function ]] && Session.Boring.IsSet; then
+    if [[ $(type -t Self.Boring.Init) = function ]] && Self.Boring.IsSet; then
         echo -n "$1"
     else
         echo -en '\033[1;33m'"$(ColourReset "$1")"
@@ -6259,7 +6261,7 @@ ColourTextBrightYellow()
 ColourTextBrightOrange()
     {
 
-    if [[ $(type -t Session.Boring.Init) = function ]] && Session.Boring.IsSet; then
+    if [[ $(type -t Self.Boring.Init) = function ]] && Self.Boring.IsSet; then
         echo -n "$1"
     else
         echo -en '\033[1;38;5;214m'"$(ColourReset "$1")"
@@ -6270,7 +6272,7 @@ ColourTextBrightOrange()
 ColourTextBrightOrangeBlink()
     {
 
-    if [[ $(type -t Session.Boring.Init) = function ]] && Session.Boring.IsSet; then
+    if [[ $(type -t Self.Boring.Init) = function ]] && Self.Boring.IsSet; then
         echo -n "$1"
     else
         echo -en '\033[1;5;38;5;214m'"$(ColourReset "$1")"
@@ -6281,7 +6283,7 @@ ColourTextBrightOrangeBlink()
 ColourTextBrightRed()
     {
 
-    if [[ $(type -t Session.Boring.Init) = function ]] && Session.Boring.IsSet; then
+    if [[ $(type -t Self.Boring.Init) = function ]] && Self.Boring.IsSet; then
         echo -n "$1"
     else
         echo -en '\033[1;31m'"$(ColourReset "$1")"
@@ -6292,7 +6294,7 @@ ColourTextBrightRed()
 ColourTextBrightRedBlink()
     {
 
-    if [[ $(type -t Session.Boring.Init) = function ]] && Session.Boring.IsSet; then
+    if [[ $(type -t Self.Boring.Init) = function ]] && Self.Boring.IsSet; then
         echo -n "$1"
     else
         echo -en '\033[1;5;31m'"$(ColourReset "$1")"
@@ -6303,7 +6305,7 @@ ColourTextBrightRedBlink()
 ColourTextUnderlinedCyan()
     {
 
-    if [[ $(type -t Session.Boring.Init) = function ]] && Session.Boring.IsSet; then
+    if [[ $(type -t Self.Boring.Init) = function ]] && Self.Boring.IsSet; then
         echo -n "$1"
     else
         echo -en '\033[4;36m'"$(ColourReset "$1")"
@@ -6314,7 +6316,7 @@ ColourTextUnderlinedCyan()
 ColourTextBlackOnCyan()
     {
 
-    if [[ $(type -t Session.Boring.Init) = function ]] && Session.Boring.IsSet; then
+    if [[ $(type -t Self.Boring.Init) = function ]] && Self.Boring.IsSet; then
         echo -n "$1"
     else
         echo -en '\033[30;46m'"$(ColourReset "$1")"
@@ -6325,7 +6327,7 @@ ColourTextBlackOnCyan()
 ColourTextBrightWhite()
     {
 
-    if [[ $(type -t Session.Boring.Init) = function ]] && Session.Boring.IsSet; then
+    if [[ $(type -t Self.Boring.Init) = function ]] && Self.Boring.IsSet; then
         echo -n "$1"
     else
         echo -en '\033[1;97m'"$(ColourReset "$1")"
@@ -6474,8 +6476,8 @@ Packages.DoLoad()
 
     }
 
-Session.Init || exit
-Session.Validate
+Self.Init || exit
+Self.Validate
 Tiers.Processor
-Session.Results
-Session.Error.IsNt
+Self.Results
+Self.Error.IsNt
