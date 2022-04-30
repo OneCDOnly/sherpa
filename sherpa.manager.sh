@@ -57,7 +57,7 @@ Session.Init()
     IsSU || return
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220430b
+    local -r SCRIPT_VERSION=220430c
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -119,10 +119,14 @@ Session.Init()
     IsSysFileExist $UPTIME_CMD || return
     IsSysFileExist $WC_CMD || return
 
+    readonly OPKG_CMD=/opt/bin/opkg
     readonly GNU_FIND_CMD=/opt/bin/find
     readonly GNU_GREP_CMD=/opt/bin/grep
     readonly GNU_SED_CMD=/opt/bin/sed
     readonly GNU_STTY_CMD=/opt/bin/stty
+    readonly PYTHON_CMD=/opt/bin/python
+    readonly PYTHON3_CMD=/opt/bin/python3
+    readonly PIP_CMD="$PYTHON3_CMD -m pip"
 
     readonly BACKUP_LOG_FILE=backup.log
     readonly CHECK_LOG_FILE=check.log
@@ -144,7 +148,7 @@ Session.Init()
     readonly PROJECT_PATH=$(QPKG.InstallationPath $PROJECT_NAME)
     readonly WORK_PATH=$PROJECT_PATH/cache
     readonly LOGS_PATH=$PROJECT_PATH/logs
-    readonly QPKG_DL_PATH=$WORK_PATH/qpkgs
+    readonly QPKG_DL_PATH=$WORK_PATH/qpkgs.downloads
     readonly IPKG_DL_PATH=$WORK_PATH/ipkgs.downloads
     readonly IPKG_CACHE_PATH=$WORK_PATH/ipkgs
     readonly PIP_CACHE_PATH=$WORK_PATH/pips
@@ -255,10 +259,6 @@ Session.Init()
     readonly ENTWARE_VER=$(GetEntwareType)
     readonly LOG_TAIL_LINES=5000    # note: a full download and install of everything generates a session log of around 1600 lines, but include a bunch of opkg updates and it can get much longer
     readonly MIN_PYTHON_VER=3104    # keep this up-to-date with current Entware Python3 version so IPKG upgrade notifier will work
-    readonly PYTHON_CMD=/opt/bin/python
-    readonly PYTHON3_CMD=/opt/bin/python3
-    readonly PIP_CMD="$PYTHON3_CMD -m pip"
-    readonly OPKG_CMD=/opt/bin/opkg
     previous_msg=' '
     [[ ${NAS_FIRMWARE_VERSION//.} -lt 426 ]] && curl_insecure_arg=' --insecure' || curl_insecure_arg=''
     DebugQPKGDetected arch "$NAS_QPKG_ARCH"
@@ -5651,7 +5651,7 @@ FormatAsResultAndStdout()
         echo "! result_code: $(FormatAsExitcode "$1") ***** stdout/stderr begins below *****"
     fi
 
-    echo "${2:-stdout}"
+    echo "${2:-null}"
     echo '= ***** stdout/stderr is complete *****'
 
     }
@@ -5675,21 +5675,21 @@ readonly DEBUG_LOG_SECOND_COL_WIDTH=17
 DebugInfoMajorSeparator()
     {
 
-    DebugInfo "$(eval printf '%0.s=' "{1..$DEBUG_LOG_DATAWIDTH}")"    # 'seq' is unavailable in QTS, so must resort to 'eval' trickery instead
+    DebugInfo "$(eval printf '%0.s=' "{1..$DEBUG_LOG_DATAWIDTH}")"  # 'seq' is unavailable in QTS, so must resort to 'eval' trickery instead
 
     }
 
 DebugInfoMinorSeparator()
     {
 
-    DebugInfo "$(eval printf '%0.s-' "{1..$DEBUG_LOG_DATAWIDTH}")"    # 'seq' is unavailable in QTS, so must resort to 'eval' trickery instead
+    DebugInfo "$(eval printf '%0.s-' "{1..$DEBUG_LOG_DATAWIDTH}")"  # 'seq' is unavailable in QTS, so must resort to 'eval' trickery instead
 
     }
 
 DebugExtLogMinorSeparator()
     {
 
-    DebugAsLog "$(eval printf '%0.s-' "{1..$DEBUG_LOG_DATAWIDTH}")"     # 'seq' is unavailable in QTS, so must resort to 'eval' trickery instead
+    DebugAsLog "$(eval printf '%0.s-' "{1..$DEBUG_LOG_DATAWIDTH}")" # 'seq' is unavailable in QTS, so must resort to 'eval' trickery instead
 
     }
 
