@@ -135,12 +135,12 @@ for element in Display.Clean ShowBackupLoc SuggestIssue Summary; do
     AddFlagObj Self.$element
 done
 
-AddFlagObj Self.LineSpace false false    # disable change logging for this object (low importance)
-AddFlagObj Self.Boring false false       # disable change logging for this object (low importance)
+AddFlagObj Self.LineSpace false false   # disable change logging for this object (low importance)
+AddFlagObj Self.Boring false false      # disable change logging for this object (low importance)
 
 AddFlagObj Self.Debug.ToArchive
 AddFlagObj Self.Debug.ToScreen
-AddFlagObj Self.Debug.ToFile true        # set initial value to 'true' so debug info is recorded early-on
+AddFlagObj Self.Debug.ToFile true       # set initial value to 'true' so debug info is recorded early-on
 
 for element in Loaded States.Built SkProc; do
     AddFlagObj QPKGs.$element
@@ -213,10 +213,10 @@ for action in "${MANAGEMENT_ACTIONS[@]}"; do
 done
 
 for action in "${PACKAGE_ACTIONS[@]}"; do
-    AddListObj QPKGs.AcTo${action}       # action to be tried
-    AddListObj QPKGs.AcOk${action}       # action was tried and succeeded
-    AddListObj QPKGs.AcEr${action}       # action was tried but failed
-    AddListObj QPKGs.AcSk${action}       # action was skipped
+    AddListObj QPKGs.AcTo${action}      # action to be tried
+    AddListObj QPKGs.AcOk${action}      # action was tried and succeeded
+    AddListObj QPKGs.AcEr${action}      # action was tried but failed
+    AddListObj QPKGs.AcSk${action}      # action was skipped
 done
 
 for action in Download Install Uninstall Upgrade; do    # only a subset of addon package actions are supported for-now
