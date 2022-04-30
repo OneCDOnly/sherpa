@@ -6,7 +6,6 @@ PROJECT_NAME=sherpa
 WORK_PATH=$PWD
 
 MANAGEMENT_ACTIONS=(Check List Paste Reset Status)
-MANAGEMENT_OPTIONS=(Debug)
 
 PACKAGE_SCOPES=(All Dependent HasDependents Installable Names Standalone SupportBackup SupportUpdateOnRestart Upgradable)
 PACKAGE_STATES=(BackedUp Cleaned Downloaded Enabled Installed Missing Started)
@@ -162,10 +161,6 @@ done
 for element in Last Tail; do
     AddFlagObj Opts.Log.$element.Paste
     AddFlagObj Opts.Log.$element.View
-done
-
-for option in "${MANAGEMENT_OPTIONS[@]}"; do
-    AddFlagObj Self.Op${option}
 done
 
 for scope in "${PACKAGE_SCOPES[@]}"; do
