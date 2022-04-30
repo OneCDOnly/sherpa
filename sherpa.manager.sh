@@ -57,7 +57,7 @@ Self.Init()
     IsSU || return
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220501b
+    local -r SCRIPT_VERSION=220501c
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -575,7 +575,7 @@ Self.Validate()
 
 #   1. status                       (lowest: least-important)
 
-Tiers.Processor()
+Tiers.Process()
     {
 
     QPKGs.SkProc.IsSet && return
@@ -587,7 +587,7 @@ Tiers.Processor()
     local package=''
     local -i index=0
 
-    Tier.Processor Download false All QPKG AcToDownload 'update package cache with' 'updating package cache with' 'package cache updated with' '' || return
+    Tier.Process Download false All QPKG AcToDownload 'update package cache with' 'updating package cache with' 'package cache updated with' '' || return
 
     # -> package 'removal' phase begins here <-
 
@@ -596,12 +596,12 @@ Tiers.Processor()
 
         case $tier in
             Standalone|Dependent)
-                Tier.Processor Backup false "$tier" QPKG AcToBackup 'backup configuration for' 'backing-up configuration for' 'configuration backed-up for' '' || return
-                Tier.Processor Stop false "$tier" QPKG AcToStop stop stopping stopped '' true || return
-                Tier.Processor Uninstall false "$tier" QPKG AcToUninstall uninstall uninstalling uninstalled '' || return
+                Tier.Process Backup false "$tier" QPKG AcToBackup 'backup configuration for' 'backing-up configuration for' 'configuration backed-up for' '' || return
+                Tier.Process Stop false "$tier" QPKG AcToStop stop stopping stopped '' true || return
+                Tier.Process Uninstall false "$tier" QPKG AcToUninstall uninstall uninstalling uninstalled '' || return
                 ;;
             Addon)
-                Tier.Processor Uninstall false "$tier" IPKG AcToUninstall uninstall uninstalling uninstalled '' || return
+                Tier.Process Uninstall false "$tier" IPKG AcToUninstall uninstall uninstalling uninstalled '' || return
         esac
     done
 
@@ -613,11 +613,11 @@ Tiers.Processor()
     for tier in "${PACKAGE_TIERS[@]}"; do
         case $tier in
             Standalone|Dependent)
-                Tier.Processor Upgrade false "$tier" QPKG AcToUpgrade upgrade upgrading upgraded long || return
-                Tier.Processor Reinstall false "$tier" QPKG AcToReinstall reinstall reinstalling reinstalled long || return
-                Tier.Processor Install false "$tier" QPKG AcToInstall install installing installed long || return
-                Tier.Processor Restore false "$tier" QPKG AcToRestore 'restore configuration for' 'restoring configuration for' 'configuration restored for' long || return
-                Tier.Processor Clean false "$tier" QPKG AcToClean clean cleaning cleaned long || return
+                Tier.Process Upgrade false "$tier" QPKG AcToUpgrade upgrade upgrading upgraded long || return
+                Tier.Process Reinstall false "$tier" QPKG AcToReinstall reinstall reinstalling reinstalled long || return
+                Tier.Process Install false "$tier" QPKG AcToInstall install installing installed long || return
+                Tier.Process Restore false "$tier" QPKG AcToRestore 'restore configuration for' 'restoring configuration for' 'configuration restored for' long || return
+                Tier.Process Clean false "$tier" QPKG AcToClean clean cleaning cleaned long || return
 
                 if [[ $tier = Standalone ]]; then
                     # check for standalone packages that require starting due to dependents being reinstalled/installed/started/restarted
@@ -628,13 +628,13 @@ Tiers.Processor()
                     done
                 fi
 
-                Tier.Processor Start false "$tier" QPKG AcToStart start starting started long || return
+                Tier.Process Start false "$tier" QPKG AcToStart start starting started long || return
 
                 for action in Install Restart Start; do
                     QPKGs.AcToRestart.Remove "$(QPKGs.AcOk${action}.Array)"
                 done
 
-                Tier.Processor Restart false "$tier" QPKG AcToRestart restart restarting restarted long || return
+                Tier.Process Restart false "$tier" QPKG AcToRestart restart restarting restarted long || return
 
                 ;;
             Addon)
@@ -650,9 +650,9 @@ Tiers.Processor()
                 if QPKGs.IsStarted.Exist Entware; then
                     ModPathToEntware
 
-                    Tier.Processor Upgrade false "$tier" IPKG '' upgrade upgrading upgraded long || return
-                    Tier.Processor Install false "$tier" IPKG '' install installing installed long || return
-                    Tier.Processor Install false "$tier" PIP '' install installing installed long || return
+                    Tier.Process Upgrade false "$tier" IPKG '' upgrade upgrading upgraded long || return
+                    Tier.Process Install false "$tier" IPKG '' install installing installed long || return
+                    Tier.Process Install false "$tier" PIP '' install installing installed long || return
                 fi
         esac
     done
@@ -665,7 +665,7 @@ Tiers.Processor()
 
     }
 
-Tier.Processor()
+Tier.Process()
     {
 
     # run a single action on a group of packages
@@ -6481,6 +6481,6 @@ Packages.DoLoad()
 
 Self.Init || exit
 Self.Validate
-Tiers.Processor
+Tiers.Process
 Self.Results
 Self.Error.IsNt
