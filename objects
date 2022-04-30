@@ -1403,42 +1403,6 @@ _ob_qpkgs_acinstall_scntall_fl_=false
 QPKGs.AcInstall.ScNtAll.NoLogMods()
 { _ob_qpkgs_acinstall_scntall_chfl_=false ;}
 QPKGs.AcInstall.ScNtAll.Init
-QPKGs.AcList.ScAll.Init()
-{ _ob_qpkgs_aclist_scall_fl_=false
-_ob_qpkgs_aclist_scall_chfl_=true ;}
-QPKGs.AcList.ScAll.IsNt()
-{ [[ $_ob_qpkgs_aclist_scall_fl_ != 'true' ]] ;}
-QPKGs.AcList.ScAll.IsSet()
-{ [[ $_ob_qpkgs_aclist_scall_fl_ = 'true' ]] ;}
-QPKGs.AcList.ScAll.Set()
-{ [[ $_ob_qpkgs_aclist_scall_fl_ = 'true' ]] && return
-_ob_qpkgs_aclist_scall_fl_=true
-[[ $_ob_qpkgs_aclist_scall_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_scall_fl_ ;}
-QPKGs.AcList.ScAll.UnSet()
-{ [[ $_ob_qpkgs_aclist_scall_fl_ != 'true' ]] && return
-_ob_qpkgs_aclist_scall_fl_=false
-[[ $_ob_qpkgs_aclist_scall_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_scall_fl_ ;}
-QPKGs.AcList.ScAll.NoLogMods()
-{ _ob_qpkgs_aclist_scall_chfl_=false ;}
-QPKGs.AcList.ScAll.Init
-QPKGs.AcList.ScNtAll.Init()
-{ _ob_qpkgs_aclist_scntall_fl_=false
-_ob_qpkgs_aclist_scntall_chfl_=true ;}
-QPKGs.AcList.ScNtAll.IsNt()
-{ [[ $_ob_qpkgs_aclist_scntall_fl_ != 'true' ]] ;}
-QPKGs.AcList.ScNtAll.IsSet()
-{ [[ $_ob_qpkgs_aclist_scntall_fl_ = 'true' ]] ;}
-QPKGs.AcList.ScNtAll.Set()
-{ [[ $_ob_qpkgs_aclist_scntall_fl_ = 'true' ]] && return
-_ob_qpkgs_aclist_scntall_fl_=true
-[[ $_ob_qpkgs_aclist_scntall_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_scntall_fl_ ;}
-QPKGs.AcList.ScNtAll.UnSet()
-{ [[ $_ob_qpkgs_aclist_scntall_fl_ != 'true' ]] && return
-_ob_qpkgs_aclist_scntall_fl_=false
-[[ $_ob_qpkgs_aclist_scntall_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_scntall_fl_ ;}
-QPKGs.AcList.ScNtAll.NoLogMods()
-{ _ob_qpkgs_aclist_scntall_chfl_=false ;}
-QPKGs.AcList.ScNtAll.Init
 QPKGs.AcRebuild.ScAll.Init()
 { _ob_qpkgs_acrebuild_scall_fl_=false
 _ob_qpkgs_acrebuild_scall_chfl_=true ;}
@@ -1943,42 +1907,6 @@ _ob_qpkgs_acinstall_scntdependent_fl_=false
 QPKGs.AcInstall.ScNtDependent.NoLogMods()
 { _ob_qpkgs_acinstall_scntdependent_chfl_=false ;}
 QPKGs.AcInstall.ScNtDependent.Init
-QPKGs.AcList.ScDependent.Init()
-{ _ob_qpkgs_aclist_scdependent_fl_=false
-_ob_qpkgs_aclist_scdependent_chfl_=true ;}
-QPKGs.AcList.ScDependent.IsNt()
-{ [[ $_ob_qpkgs_aclist_scdependent_fl_ != 'true' ]] ;}
-QPKGs.AcList.ScDependent.IsSet()
-{ [[ $_ob_qpkgs_aclist_scdependent_fl_ = 'true' ]] ;}
-QPKGs.AcList.ScDependent.Set()
-{ [[ $_ob_qpkgs_aclist_scdependent_fl_ = 'true' ]] && return
-_ob_qpkgs_aclist_scdependent_fl_=true
-[[ $_ob_qpkgs_aclist_scdependent_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_scdependent_fl_ ;}
-QPKGs.AcList.ScDependent.UnSet()
-{ [[ $_ob_qpkgs_aclist_scdependent_fl_ != 'true' ]] && return
-_ob_qpkgs_aclist_scdependent_fl_=false
-[[ $_ob_qpkgs_aclist_scdependent_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_scdependent_fl_ ;}
-QPKGs.AcList.ScDependent.NoLogMods()
-{ _ob_qpkgs_aclist_scdependent_chfl_=false ;}
-QPKGs.AcList.ScDependent.Init
-QPKGs.AcList.ScNtDependent.Init()
-{ _ob_qpkgs_aclist_scntdependent_fl_=false
-_ob_qpkgs_aclist_scntdependent_chfl_=true ;}
-QPKGs.AcList.ScNtDependent.IsNt()
-{ [[ $_ob_qpkgs_aclist_scntdependent_fl_ != 'true' ]] ;}
-QPKGs.AcList.ScNtDependent.IsSet()
-{ [[ $_ob_qpkgs_aclist_scntdependent_fl_ = 'true' ]] ;}
-QPKGs.AcList.ScNtDependent.Set()
-{ [[ $_ob_qpkgs_aclist_scntdependent_fl_ = 'true' ]] && return
-_ob_qpkgs_aclist_scntdependent_fl_=true
-[[ $_ob_qpkgs_aclist_scntdependent_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_scntdependent_fl_ ;}
-QPKGs.AcList.ScNtDependent.UnSet()
-{ [[ $_ob_qpkgs_aclist_scntdependent_fl_ != 'true' ]] && return
-_ob_qpkgs_aclist_scntdependent_fl_=false
-[[ $_ob_qpkgs_aclist_scntdependent_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_scntdependent_fl_ ;}
-QPKGs.AcList.ScNtDependent.NoLogMods()
-{ _ob_qpkgs_aclist_scntdependent_chfl_=false ;}
-QPKGs.AcList.ScNtDependent.Init
 QPKGs.AcRebuild.ScDependent.Init()
 { _ob_qpkgs_acrebuild_scdependent_fl_=false
 _ob_qpkgs_acrebuild_scdependent_chfl_=true ;}
@@ -2483,42 +2411,6 @@ _ob_qpkgs_acinstall_scnthasdependents_fl_=false
 QPKGs.AcInstall.ScNtHasDependents.NoLogMods()
 { _ob_qpkgs_acinstall_scnthasdependents_chfl_=false ;}
 QPKGs.AcInstall.ScNtHasDependents.Init
-QPKGs.AcList.ScHasDependents.Init()
-{ _ob_qpkgs_aclist_schasdependents_fl_=false
-_ob_qpkgs_aclist_schasdependents_chfl_=true ;}
-QPKGs.AcList.ScHasDependents.IsNt()
-{ [[ $_ob_qpkgs_aclist_schasdependents_fl_ != 'true' ]] ;}
-QPKGs.AcList.ScHasDependents.IsSet()
-{ [[ $_ob_qpkgs_aclist_schasdependents_fl_ = 'true' ]] ;}
-QPKGs.AcList.ScHasDependents.Set()
-{ [[ $_ob_qpkgs_aclist_schasdependents_fl_ = 'true' ]] && return
-_ob_qpkgs_aclist_schasdependents_fl_=true
-[[ $_ob_qpkgs_aclist_schasdependents_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_schasdependents_fl_ ;}
-QPKGs.AcList.ScHasDependents.UnSet()
-{ [[ $_ob_qpkgs_aclist_schasdependents_fl_ != 'true' ]] && return
-_ob_qpkgs_aclist_schasdependents_fl_=false
-[[ $_ob_qpkgs_aclist_schasdependents_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_schasdependents_fl_ ;}
-QPKGs.AcList.ScHasDependents.NoLogMods()
-{ _ob_qpkgs_aclist_schasdependents_chfl_=false ;}
-QPKGs.AcList.ScHasDependents.Init
-QPKGs.AcList.ScNtHasDependents.Init()
-{ _ob_qpkgs_aclist_scnthasdependents_fl_=false
-_ob_qpkgs_aclist_scnthasdependents_chfl_=true ;}
-QPKGs.AcList.ScNtHasDependents.IsNt()
-{ [[ $_ob_qpkgs_aclist_scnthasdependents_fl_ != 'true' ]] ;}
-QPKGs.AcList.ScNtHasDependents.IsSet()
-{ [[ $_ob_qpkgs_aclist_scnthasdependents_fl_ = 'true' ]] ;}
-QPKGs.AcList.ScNtHasDependents.Set()
-{ [[ $_ob_qpkgs_aclist_scnthasdependents_fl_ = 'true' ]] && return
-_ob_qpkgs_aclist_scnthasdependents_fl_=true
-[[ $_ob_qpkgs_aclist_scnthasdependents_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_scnthasdependents_fl_ ;}
-QPKGs.AcList.ScNtHasDependents.UnSet()
-{ [[ $_ob_qpkgs_aclist_scnthasdependents_fl_ != 'true' ]] && return
-_ob_qpkgs_aclist_scnthasdependents_fl_=false
-[[ $_ob_qpkgs_aclist_scnthasdependents_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_scnthasdependents_fl_ ;}
-QPKGs.AcList.ScNtHasDependents.NoLogMods()
-{ _ob_qpkgs_aclist_scnthasdependents_chfl_=false ;}
-QPKGs.AcList.ScNtHasDependents.Init
 QPKGs.AcRebuild.ScHasDependents.Init()
 { _ob_qpkgs_acrebuild_schasdependents_fl_=false
 _ob_qpkgs_acrebuild_schasdependents_chfl_=true ;}
@@ -3023,42 +2915,6 @@ _ob_qpkgs_acinstall_scntinstallable_fl_=false
 QPKGs.AcInstall.ScNtInstallable.NoLogMods()
 { _ob_qpkgs_acinstall_scntinstallable_chfl_=false ;}
 QPKGs.AcInstall.ScNtInstallable.Init
-QPKGs.AcList.ScInstallable.Init()
-{ _ob_qpkgs_aclist_scinstallable_fl_=false
-_ob_qpkgs_aclist_scinstallable_chfl_=true ;}
-QPKGs.AcList.ScInstallable.IsNt()
-{ [[ $_ob_qpkgs_aclist_scinstallable_fl_ != 'true' ]] ;}
-QPKGs.AcList.ScInstallable.IsSet()
-{ [[ $_ob_qpkgs_aclist_scinstallable_fl_ = 'true' ]] ;}
-QPKGs.AcList.ScInstallable.Set()
-{ [[ $_ob_qpkgs_aclist_scinstallable_fl_ = 'true' ]] && return
-_ob_qpkgs_aclist_scinstallable_fl_=true
-[[ $_ob_qpkgs_aclist_scinstallable_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_scinstallable_fl_ ;}
-QPKGs.AcList.ScInstallable.UnSet()
-{ [[ $_ob_qpkgs_aclist_scinstallable_fl_ != 'true' ]] && return
-_ob_qpkgs_aclist_scinstallable_fl_=false
-[[ $_ob_qpkgs_aclist_scinstallable_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_scinstallable_fl_ ;}
-QPKGs.AcList.ScInstallable.NoLogMods()
-{ _ob_qpkgs_aclist_scinstallable_chfl_=false ;}
-QPKGs.AcList.ScInstallable.Init
-QPKGs.AcList.ScNtInstallable.Init()
-{ _ob_qpkgs_aclist_scntinstallable_fl_=false
-_ob_qpkgs_aclist_scntinstallable_chfl_=true ;}
-QPKGs.AcList.ScNtInstallable.IsNt()
-{ [[ $_ob_qpkgs_aclist_scntinstallable_fl_ != 'true' ]] ;}
-QPKGs.AcList.ScNtInstallable.IsSet()
-{ [[ $_ob_qpkgs_aclist_scntinstallable_fl_ = 'true' ]] ;}
-QPKGs.AcList.ScNtInstallable.Set()
-{ [[ $_ob_qpkgs_aclist_scntinstallable_fl_ = 'true' ]] && return
-_ob_qpkgs_aclist_scntinstallable_fl_=true
-[[ $_ob_qpkgs_aclist_scntinstallable_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_scntinstallable_fl_ ;}
-QPKGs.AcList.ScNtInstallable.UnSet()
-{ [[ $_ob_qpkgs_aclist_scntinstallable_fl_ != 'true' ]] && return
-_ob_qpkgs_aclist_scntinstallable_fl_=false
-[[ $_ob_qpkgs_aclist_scntinstallable_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_scntinstallable_fl_ ;}
-QPKGs.AcList.ScNtInstallable.NoLogMods()
-{ _ob_qpkgs_aclist_scntinstallable_chfl_=false ;}
-QPKGs.AcList.ScNtInstallable.Init
 QPKGs.AcRebuild.ScInstallable.Init()
 { _ob_qpkgs_acrebuild_scinstallable_fl_=false
 _ob_qpkgs_acrebuild_scinstallable_chfl_=true ;}
@@ -3563,42 +3419,6 @@ _ob_qpkgs_acinstall_scntnames_fl_=false
 QPKGs.AcInstall.ScNtNames.NoLogMods()
 { _ob_qpkgs_acinstall_scntnames_chfl_=false ;}
 QPKGs.AcInstall.ScNtNames.Init
-QPKGs.AcList.ScNames.Init()
-{ _ob_qpkgs_aclist_scnames_fl_=false
-_ob_qpkgs_aclist_scnames_chfl_=true ;}
-QPKGs.AcList.ScNames.IsNt()
-{ [[ $_ob_qpkgs_aclist_scnames_fl_ != 'true' ]] ;}
-QPKGs.AcList.ScNames.IsSet()
-{ [[ $_ob_qpkgs_aclist_scnames_fl_ = 'true' ]] ;}
-QPKGs.AcList.ScNames.Set()
-{ [[ $_ob_qpkgs_aclist_scnames_fl_ = 'true' ]] && return
-_ob_qpkgs_aclist_scnames_fl_=true
-[[ $_ob_qpkgs_aclist_scnames_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_scnames_fl_ ;}
-QPKGs.AcList.ScNames.UnSet()
-{ [[ $_ob_qpkgs_aclist_scnames_fl_ != 'true' ]] && return
-_ob_qpkgs_aclist_scnames_fl_=false
-[[ $_ob_qpkgs_aclist_scnames_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_scnames_fl_ ;}
-QPKGs.AcList.ScNames.NoLogMods()
-{ _ob_qpkgs_aclist_scnames_chfl_=false ;}
-QPKGs.AcList.ScNames.Init
-QPKGs.AcList.ScNtNames.Init()
-{ _ob_qpkgs_aclist_scntnames_fl_=false
-_ob_qpkgs_aclist_scntnames_chfl_=true ;}
-QPKGs.AcList.ScNtNames.IsNt()
-{ [[ $_ob_qpkgs_aclist_scntnames_fl_ != 'true' ]] ;}
-QPKGs.AcList.ScNtNames.IsSet()
-{ [[ $_ob_qpkgs_aclist_scntnames_fl_ = 'true' ]] ;}
-QPKGs.AcList.ScNtNames.Set()
-{ [[ $_ob_qpkgs_aclist_scntnames_fl_ = 'true' ]] && return
-_ob_qpkgs_aclist_scntnames_fl_=true
-[[ $_ob_qpkgs_aclist_scntnames_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_scntnames_fl_ ;}
-QPKGs.AcList.ScNtNames.UnSet()
-{ [[ $_ob_qpkgs_aclist_scntnames_fl_ != 'true' ]] && return
-_ob_qpkgs_aclist_scntnames_fl_=false
-[[ $_ob_qpkgs_aclist_scntnames_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_scntnames_fl_ ;}
-QPKGs.AcList.ScNtNames.NoLogMods()
-{ _ob_qpkgs_aclist_scntnames_chfl_=false ;}
-QPKGs.AcList.ScNtNames.Init
 QPKGs.AcRebuild.ScNames.Init()
 { _ob_qpkgs_acrebuild_scnames_fl_=false
 _ob_qpkgs_acrebuild_scnames_chfl_=true ;}
@@ -4103,42 +3923,6 @@ _ob_qpkgs_acinstall_scntstandalone_fl_=false
 QPKGs.AcInstall.ScNtStandalone.NoLogMods()
 { _ob_qpkgs_acinstall_scntstandalone_chfl_=false ;}
 QPKGs.AcInstall.ScNtStandalone.Init
-QPKGs.AcList.ScStandalone.Init()
-{ _ob_qpkgs_aclist_scstandalone_fl_=false
-_ob_qpkgs_aclist_scstandalone_chfl_=true ;}
-QPKGs.AcList.ScStandalone.IsNt()
-{ [[ $_ob_qpkgs_aclist_scstandalone_fl_ != 'true' ]] ;}
-QPKGs.AcList.ScStandalone.IsSet()
-{ [[ $_ob_qpkgs_aclist_scstandalone_fl_ = 'true' ]] ;}
-QPKGs.AcList.ScStandalone.Set()
-{ [[ $_ob_qpkgs_aclist_scstandalone_fl_ = 'true' ]] && return
-_ob_qpkgs_aclist_scstandalone_fl_=true
-[[ $_ob_qpkgs_aclist_scstandalone_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_scstandalone_fl_ ;}
-QPKGs.AcList.ScStandalone.UnSet()
-{ [[ $_ob_qpkgs_aclist_scstandalone_fl_ != 'true' ]] && return
-_ob_qpkgs_aclist_scstandalone_fl_=false
-[[ $_ob_qpkgs_aclist_scstandalone_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_scstandalone_fl_ ;}
-QPKGs.AcList.ScStandalone.NoLogMods()
-{ _ob_qpkgs_aclist_scstandalone_chfl_=false ;}
-QPKGs.AcList.ScStandalone.Init
-QPKGs.AcList.ScNtStandalone.Init()
-{ _ob_qpkgs_aclist_scntstandalone_fl_=false
-_ob_qpkgs_aclist_scntstandalone_chfl_=true ;}
-QPKGs.AcList.ScNtStandalone.IsNt()
-{ [[ $_ob_qpkgs_aclist_scntstandalone_fl_ != 'true' ]] ;}
-QPKGs.AcList.ScNtStandalone.IsSet()
-{ [[ $_ob_qpkgs_aclist_scntstandalone_fl_ = 'true' ]] ;}
-QPKGs.AcList.ScNtStandalone.Set()
-{ [[ $_ob_qpkgs_aclist_scntstandalone_fl_ = 'true' ]] && return
-_ob_qpkgs_aclist_scntstandalone_fl_=true
-[[ $_ob_qpkgs_aclist_scntstandalone_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_scntstandalone_fl_ ;}
-QPKGs.AcList.ScNtStandalone.UnSet()
-{ [[ $_ob_qpkgs_aclist_scntstandalone_fl_ != 'true' ]] && return
-_ob_qpkgs_aclist_scntstandalone_fl_=false
-[[ $_ob_qpkgs_aclist_scntstandalone_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_scntstandalone_fl_ ;}
-QPKGs.AcList.ScNtStandalone.NoLogMods()
-{ _ob_qpkgs_aclist_scntstandalone_chfl_=false ;}
-QPKGs.AcList.ScNtStandalone.Init
 QPKGs.AcRebuild.ScStandalone.Init()
 { _ob_qpkgs_acrebuild_scstandalone_fl_=false
 _ob_qpkgs_acrebuild_scstandalone_chfl_=true ;}
@@ -4643,42 +4427,6 @@ _ob_qpkgs_acinstall_scntsupportbackup_fl_=false
 QPKGs.AcInstall.ScNtSupportBackup.NoLogMods()
 { _ob_qpkgs_acinstall_scntsupportbackup_chfl_=false ;}
 QPKGs.AcInstall.ScNtSupportBackup.Init
-QPKGs.AcList.ScSupportBackup.Init()
-{ _ob_qpkgs_aclist_scsupportbackup_fl_=false
-_ob_qpkgs_aclist_scsupportbackup_chfl_=true ;}
-QPKGs.AcList.ScSupportBackup.IsNt()
-{ [[ $_ob_qpkgs_aclist_scsupportbackup_fl_ != 'true' ]] ;}
-QPKGs.AcList.ScSupportBackup.IsSet()
-{ [[ $_ob_qpkgs_aclist_scsupportbackup_fl_ = 'true' ]] ;}
-QPKGs.AcList.ScSupportBackup.Set()
-{ [[ $_ob_qpkgs_aclist_scsupportbackup_fl_ = 'true' ]] && return
-_ob_qpkgs_aclist_scsupportbackup_fl_=true
-[[ $_ob_qpkgs_aclist_scsupportbackup_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_scsupportbackup_fl_ ;}
-QPKGs.AcList.ScSupportBackup.UnSet()
-{ [[ $_ob_qpkgs_aclist_scsupportbackup_fl_ != 'true' ]] && return
-_ob_qpkgs_aclist_scsupportbackup_fl_=false
-[[ $_ob_qpkgs_aclist_scsupportbackup_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_scsupportbackup_fl_ ;}
-QPKGs.AcList.ScSupportBackup.NoLogMods()
-{ _ob_qpkgs_aclist_scsupportbackup_chfl_=false ;}
-QPKGs.AcList.ScSupportBackup.Init
-QPKGs.AcList.ScNtSupportBackup.Init()
-{ _ob_qpkgs_aclist_scntsupportbackup_fl_=false
-_ob_qpkgs_aclist_scntsupportbackup_chfl_=true ;}
-QPKGs.AcList.ScNtSupportBackup.IsNt()
-{ [[ $_ob_qpkgs_aclist_scntsupportbackup_fl_ != 'true' ]] ;}
-QPKGs.AcList.ScNtSupportBackup.IsSet()
-{ [[ $_ob_qpkgs_aclist_scntsupportbackup_fl_ = 'true' ]] ;}
-QPKGs.AcList.ScNtSupportBackup.Set()
-{ [[ $_ob_qpkgs_aclist_scntsupportbackup_fl_ = 'true' ]] && return
-_ob_qpkgs_aclist_scntsupportbackup_fl_=true
-[[ $_ob_qpkgs_aclist_scntsupportbackup_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_scntsupportbackup_fl_ ;}
-QPKGs.AcList.ScNtSupportBackup.UnSet()
-{ [[ $_ob_qpkgs_aclist_scntsupportbackup_fl_ != 'true' ]] && return
-_ob_qpkgs_aclist_scntsupportbackup_fl_=false
-[[ $_ob_qpkgs_aclist_scntsupportbackup_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_scntsupportbackup_fl_ ;}
-QPKGs.AcList.ScNtSupportBackup.NoLogMods()
-{ _ob_qpkgs_aclist_scntsupportbackup_chfl_=false ;}
-QPKGs.AcList.ScNtSupportBackup.Init
 QPKGs.AcRebuild.ScSupportBackup.Init()
 { _ob_qpkgs_acrebuild_scsupportbackup_fl_=false
 _ob_qpkgs_acrebuild_scsupportbackup_chfl_=true ;}
@@ -5183,42 +4931,6 @@ _ob_qpkgs_acinstall_scntsupportupdateonrestart_fl_=false
 QPKGs.AcInstall.ScNtSupportUpdateOnRestart.NoLogMods()
 { _ob_qpkgs_acinstall_scntsupportupdateonrestart_chfl_=false ;}
 QPKGs.AcInstall.ScNtSupportUpdateOnRestart.Init
-QPKGs.AcList.ScSupportUpdateOnRestart.Init()
-{ _ob_qpkgs_aclist_scsupportupdateonrestart_fl_=false
-_ob_qpkgs_aclist_scsupportupdateonrestart_chfl_=true ;}
-QPKGs.AcList.ScSupportUpdateOnRestart.IsNt()
-{ [[ $_ob_qpkgs_aclist_scsupportupdateonrestart_fl_ != 'true' ]] ;}
-QPKGs.AcList.ScSupportUpdateOnRestart.IsSet()
-{ [[ $_ob_qpkgs_aclist_scsupportupdateonrestart_fl_ = 'true' ]] ;}
-QPKGs.AcList.ScSupportUpdateOnRestart.Set()
-{ [[ $_ob_qpkgs_aclist_scsupportupdateonrestart_fl_ = 'true' ]] && return
-_ob_qpkgs_aclist_scsupportupdateonrestart_fl_=true
-[[ $_ob_qpkgs_aclist_scsupportupdateonrestart_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_scsupportupdateonrestart_fl_ ;}
-QPKGs.AcList.ScSupportUpdateOnRestart.UnSet()
-{ [[ $_ob_qpkgs_aclist_scsupportupdateonrestart_fl_ != 'true' ]] && return
-_ob_qpkgs_aclist_scsupportupdateonrestart_fl_=false
-[[ $_ob_qpkgs_aclist_scsupportupdateonrestart_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_scsupportupdateonrestart_fl_ ;}
-QPKGs.AcList.ScSupportUpdateOnRestart.NoLogMods()
-{ _ob_qpkgs_aclist_scsupportupdateonrestart_chfl_=false ;}
-QPKGs.AcList.ScSupportUpdateOnRestart.Init
-QPKGs.AcList.ScNtSupportUpdateOnRestart.Init()
-{ _ob_qpkgs_aclist_scntsupportupdateonrestart_fl_=false
-_ob_qpkgs_aclist_scntsupportupdateonrestart_chfl_=true ;}
-QPKGs.AcList.ScNtSupportUpdateOnRestart.IsNt()
-{ [[ $_ob_qpkgs_aclist_scntsupportupdateonrestart_fl_ != 'true' ]] ;}
-QPKGs.AcList.ScNtSupportUpdateOnRestart.IsSet()
-{ [[ $_ob_qpkgs_aclist_scntsupportupdateonrestart_fl_ = 'true' ]] ;}
-QPKGs.AcList.ScNtSupportUpdateOnRestart.Set()
-{ [[ $_ob_qpkgs_aclist_scntsupportupdateonrestart_fl_ = 'true' ]] && return
-_ob_qpkgs_aclist_scntsupportupdateonrestart_fl_=true
-[[ $_ob_qpkgs_aclist_scntsupportupdateonrestart_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_scntsupportupdateonrestart_fl_ ;}
-QPKGs.AcList.ScNtSupportUpdateOnRestart.UnSet()
-{ [[ $_ob_qpkgs_aclist_scntsupportupdateonrestart_fl_ != 'true' ]] && return
-_ob_qpkgs_aclist_scntsupportupdateonrestart_fl_=false
-[[ $_ob_qpkgs_aclist_scntsupportupdateonrestart_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_scntsupportupdateonrestart_fl_ ;}
-QPKGs.AcList.ScNtSupportUpdateOnRestart.NoLogMods()
-{ _ob_qpkgs_aclist_scntsupportupdateonrestart_chfl_=false ;}
-QPKGs.AcList.ScNtSupportUpdateOnRestart.Init
 QPKGs.AcRebuild.ScSupportUpdateOnRestart.Init()
 { _ob_qpkgs_acrebuild_scsupportupdateonrestart_fl_=false
 _ob_qpkgs_acrebuild_scsupportupdateonrestart_chfl_=true ;}
@@ -5723,42 +5435,6 @@ _ob_qpkgs_acinstall_scntupgradable_fl_=false
 QPKGs.AcInstall.ScNtUpgradable.NoLogMods()
 { _ob_qpkgs_acinstall_scntupgradable_chfl_=false ;}
 QPKGs.AcInstall.ScNtUpgradable.Init
-QPKGs.AcList.ScUpgradable.Init()
-{ _ob_qpkgs_aclist_scupgradable_fl_=false
-_ob_qpkgs_aclist_scupgradable_chfl_=true ;}
-QPKGs.AcList.ScUpgradable.IsNt()
-{ [[ $_ob_qpkgs_aclist_scupgradable_fl_ != 'true' ]] ;}
-QPKGs.AcList.ScUpgradable.IsSet()
-{ [[ $_ob_qpkgs_aclist_scupgradable_fl_ = 'true' ]] ;}
-QPKGs.AcList.ScUpgradable.Set()
-{ [[ $_ob_qpkgs_aclist_scupgradable_fl_ = 'true' ]] && return
-_ob_qpkgs_aclist_scupgradable_fl_=true
-[[ $_ob_qpkgs_aclist_scupgradable_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_scupgradable_fl_ ;}
-QPKGs.AcList.ScUpgradable.UnSet()
-{ [[ $_ob_qpkgs_aclist_scupgradable_fl_ != 'true' ]] && return
-_ob_qpkgs_aclist_scupgradable_fl_=false
-[[ $_ob_qpkgs_aclist_scupgradable_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_scupgradable_fl_ ;}
-QPKGs.AcList.ScUpgradable.NoLogMods()
-{ _ob_qpkgs_aclist_scupgradable_chfl_=false ;}
-QPKGs.AcList.ScUpgradable.Init
-QPKGs.AcList.ScNtUpgradable.Init()
-{ _ob_qpkgs_aclist_scntupgradable_fl_=false
-_ob_qpkgs_aclist_scntupgradable_chfl_=true ;}
-QPKGs.AcList.ScNtUpgradable.IsNt()
-{ [[ $_ob_qpkgs_aclist_scntupgradable_fl_ != 'true' ]] ;}
-QPKGs.AcList.ScNtUpgradable.IsSet()
-{ [[ $_ob_qpkgs_aclist_scntupgradable_fl_ = 'true' ]] ;}
-QPKGs.AcList.ScNtUpgradable.Set()
-{ [[ $_ob_qpkgs_aclist_scntupgradable_fl_ = 'true' ]] && return
-_ob_qpkgs_aclist_scntupgradable_fl_=true
-[[ $_ob_qpkgs_aclist_scntupgradable_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_scntupgradable_fl_ ;}
-QPKGs.AcList.ScNtUpgradable.UnSet()
-{ [[ $_ob_qpkgs_aclist_scntupgradable_fl_ != 'true' ]] && return
-_ob_qpkgs_aclist_scntupgradable_fl_=false
-[[ $_ob_qpkgs_aclist_scntupgradable_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_scntupgradable_fl_ ;}
-QPKGs.AcList.ScNtUpgradable.NoLogMods()
-{ _ob_qpkgs_aclist_scntupgradable_chfl_=false ;}
-QPKGs.AcList.ScNtUpgradable.Init
 QPKGs.AcRebuild.ScUpgradable.Init()
 { _ob_qpkgs_acrebuild_scupgradable_fl_=false
 _ob_qpkgs_acrebuild_scupgradable_chfl_=true ;}
@@ -6263,42 +5939,6 @@ _ob_qpkgs_acinstall_isntbackedup_fl_=false
 QPKGs.AcInstall.IsNtBackedUp.NoLogMods()
 { _ob_qpkgs_acinstall_isntbackedup_chfl_=false ;}
 QPKGs.AcInstall.IsNtBackedUp.Init
-QPKGs.AcList.IsBackedUp.Init()
-{ _ob_qpkgs_aclist_isbackedup_fl_=false
-_ob_qpkgs_aclist_isbackedup_chfl_=true ;}
-QPKGs.AcList.IsBackedUp.IsNt()
-{ [[ $_ob_qpkgs_aclist_isbackedup_fl_ != 'true' ]] ;}
-QPKGs.AcList.IsBackedUp.IsSet()
-{ [[ $_ob_qpkgs_aclist_isbackedup_fl_ = 'true' ]] ;}
-QPKGs.AcList.IsBackedUp.Set()
-{ [[ $_ob_qpkgs_aclist_isbackedup_fl_ = 'true' ]] && return
-_ob_qpkgs_aclist_isbackedup_fl_=true
-[[ $_ob_qpkgs_aclist_isbackedup_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_isbackedup_fl_ ;}
-QPKGs.AcList.IsBackedUp.UnSet()
-{ [[ $_ob_qpkgs_aclist_isbackedup_fl_ != 'true' ]] && return
-_ob_qpkgs_aclist_isbackedup_fl_=false
-[[ $_ob_qpkgs_aclist_isbackedup_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_isbackedup_fl_ ;}
-QPKGs.AcList.IsBackedUp.NoLogMods()
-{ _ob_qpkgs_aclist_isbackedup_chfl_=false ;}
-QPKGs.AcList.IsBackedUp.Init
-QPKGs.AcList.IsNtBackedUp.Init()
-{ _ob_qpkgs_aclist_isntbackedup_fl_=false
-_ob_qpkgs_aclist_isntbackedup_chfl_=true ;}
-QPKGs.AcList.IsNtBackedUp.IsNt()
-{ [[ $_ob_qpkgs_aclist_isntbackedup_fl_ != 'true' ]] ;}
-QPKGs.AcList.IsNtBackedUp.IsSet()
-{ [[ $_ob_qpkgs_aclist_isntbackedup_fl_ = 'true' ]] ;}
-QPKGs.AcList.IsNtBackedUp.Set()
-{ [[ $_ob_qpkgs_aclist_isntbackedup_fl_ = 'true' ]] && return
-_ob_qpkgs_aclist_isntbackedup_fl_=true
-[[ $_ob_qpkgs_aclist_isntbackedup_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_isntbackedup_fl_ ;}
-QPKGs.AcList.IsNtBackedUp.UnSet()
-{ [[ $_ob_qpkgs_aclist_isntbackedup_fl_ != 'true' ]] && return
-_ob_qpkgs_aclist_isntbackedup_fl_=false
-[[ $_ob_qpkgs_aclist_isntbackedup_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_isntbackedup_fl_ ;}
-QPKGs.AcList.IsNtBackedUp.NoLogMods()
-{ _ob_qpkgs_aclist_isntbackedup_chfl_=false ;}
-QPKGs.AcList.IsNtBackedUp.Init
 QPKGs.AcRebuild.IsBackedUp.Init()
 { _ob_qpkgs_acrebuild_isbackedup_fl_=false
 _ob_qpkgs_acrebuild_isbackedup_chfl_=true ;}
@@ -6803,42 +6443,6 @@ _ob_qpkgs_acinstall_isntcleaned_fl_=false
 QPKGs.AcInstall.IsNtCleaned.NoLogMods()
 { _ob_qpkgs_acinstall_isntcleaned_chfl_=false ;}
 QPKGs.AcInstall.IsNtCleaned.Init
-QPKGs.AcList.IsCleaned.Init()
-{ _ob_qpkgs_aclist_iscleaned_fl_=false
-_ob_qpkgs_aclist_iscleaned_chfl_=true ;}
-QPKGs.AcList.IsCleaned.IsNt()
-{ [[ $_ob_qpkgs_aclist_iscleaned_fl_ != 'true' ]] ;}
-QPKGs.AcList.IsCleaned.IsSet()
-{ [[ $_ob_qpkgs_aclist_iscleaned_fl_ = 'true' ]] ;}
-QPKGs.AcList.IsCleaned.Set()
-{ [[ $_ob_qpkgs_aclist_iscleaned_fl_ = 'true' ]] && return
-_ob_qpkgs_aclist_iscleaned_fl_=true
-[[ $_ob_qpkgs_aclist_iscleaned_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_iscleaned_fl_ ;}
-QPKGs.AcList.IsCleaned.UnSet()
-{ [[ $_ob_qpkgs_aclist_iscleaned_fl_ != 'true' ]] && return
-_ob_qpkgs_aclist_iscleaned_fl_=false
-[[ $_ob_qpkgs_aclist_iscleaned_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_iscleaned_fl_ ;}
-QPKGs.AcList.IsCleaned.NoLogMods()
-{ _ob_qpkgs_aclist_iscleaned_chfl_=false ;}
-QPKGs.AcList.IsCleaned.Init
-QPKGs.AcList.IsNtCleaned.Init()
-{ _ob_qpkgs_aclist_isntcleaned_fl_=false
-_ob_qpkgs_aclist_isntcleaned_chfl_=true ;}
-QPKGs.AcList.IsNtCleaned.IsNt()
-{ [[ $_ob_qpkgs_aclist_isntcleaned_fl_ != 'true' ]] ;}
-QPKGs.AcList.IsNtCleaned.IsSet()
-{ [[ $_ob_qpkgs_aclist_isntcleaned_fl_ = 'true' ]] ;}
-QPKGs.AcList.IsNtCleaned.Set()
-{ [[ $_ob_qpkgs_aclist_isntcleaned_fl_ = 'true' ]] && return
-_ob_qpkgs_aclist_isntcleaned_fl_=true
-[[ $_ob_qpkgs_aclist_isntcleaned_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_isntcleaned_fl_ ;}
-QPKGs.AcList.IsNtCleaned.UnSet()
-{ [[ $_ob_qpkgs_aclist_isntcleaned_fl_ != 'true' ]] && return
-_ob_qpkgs_aclist_isntcleaned_fl_=false
-[[ $_ob_qpkgs_aclist_isntcleaned_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_isntcleaned_fl_ ;}
-QPKGs.AcList.IsNtCleaned.NoLogMods()
-{ _ob_qpkgs_aclist_isntcleaned_chfl_=false ;}
-QPKGs.AcList.IsNtCleaned.Init
 QPKGs.AcRebuild.IsCleaned.Init()
 { _ob_qpkgs_acrebuild_iscleaned_fl_=false
 _ob_qpkgs_acrebuild_iscleaned_chfl_=true ;}
@@ -7343,42 +6947,6 @@ _ob_qpkgs_acinstall_isntdownloaded_fl_=false
 QPKGs.AcInstall.IsNtDownloaded.NoLogMods()
 { _ob_qpkgs_acinstall_isntdownloaded_chfl_=false ;}
 QPKGs.AcInstall.IsNtDownloaded.Init
-QPKGs.AcList.IsDownloaded.Init()
-{ _ob_qpkgs_aclist_isdownloaded_fl_=false
-_ob_qpkgs_aclist_isdownloaded_chfl_=true ;}
-QPKGs.AcList.IsDownloaded.IsNt()
-{ [[ $_ob_qpkgs_aclist_isdownloaded_fl_ != 'true' ]] ;}
-QPKGs.AcList.IsDownloaded.IsSet()
-{ [[ $_ob_qpkgs_aclist_isdownloaded_fl_ = 'true' ]] ;}
-QPKGs.AcList.IsDownloaded.Set()
-{ [[ $_ob_qpkgs_aclist_isdownloaded_fl_ = 'true' ]] && return
-_ob_qpkgs_aclist_isdownloaded_fl_=true
-[[ $_ob_qpkgs_aclist_isdownloaded_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_isdownloaded_fl_ ;}
-QPKGs.AcList.IsDownloaded.UnSet()
-{ [[ $_ob_qpkgs_aclist_isdownloaded_fl_ != 'true' ]] && return
-_ob_qpkgs_aclist_isdownloaded_fl_=false
-[[ $_ob_qpkgs_aclist_isdownloaded_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_isdownloaded_fl_ ;}
-QPKGs.AcList.IsDownloaded.NoLogMods()
-{ _ob_qpkgs_aclist_isdownloaded_chfl_=false ;}
-QPKGs.AcList.IsDownloaded.Init
-QPKGs.AcList.IsNtDownloaded.Init()
-{ _ob_qpkgs_aclist_isntdownloaded_fl_=false
-_ob_qpkgs_aclist_isntdownloaded_chfl_=true ;}
-QPKGs.AcList.IsNtDownloaded.IsNt()
-{ [[ $_ob_qpkgs_aclist_isntdownloaded_fl_ != 'true' ]] ;}
-QPKGs.AcList.IsNtDownloaded.IsSet()
-{ [[ $_ob_qpkgs_aclist_isntdownloaded_fl_ = 'true' ]] ;}
-QPKGs.AcList.IsNtDownloaded.Set()
-{ [[ $_ob_qpkgs_aclist_isntdownloaded_fl_ = 'true' ]] && return
-_ob_qpkgs_aclist_isntdownloaded_fl_=true
-[[ $_ob_qpkgs_aclist_isntdownloaded_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_isntdownloaded_fl_ ;}
-QPKGs.AcList.IsNtDownloaded.UnSet()
-{ [[ $_ob_qpkgs_aclist_isntdownloaded_fl_ != 'true' ]] && return
-_ob_qpkgs_aclist_isntdownloaded_fl_=false
-[[ $_ob_qpkgs_aclist_isntdownloaded_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_isntdownloaded_fl_ ;}
-QPKGs.AcList.IsNtDownloaded.NoLogMods()
-{ _ob_qpkgs_aclist_isntdownloaded_chfl_=false ;}
-QPKGs.AcList.IsNtDownloaded.Init
 QPKGs.AcRebuild.IsDownloaded.Init()
 { _ob_qpkgs_acrebuild_isdownloaded_fl_=false
 _ob_qpkgs_acrebuild_isdownloaded_chfl_=true ;}
@@ -7883,42 +7451,6 @@ _ob_qpkgs_acinstall_isntenabled_fl_=false
 QPKGs.AcInstall.IsNtEnabled.NoLogMods()
 { _ob_qpkgs_acinstall_isntenabled_chfl_=false ;}
 QPKGs.AcInstall.IsNtEnabled.Init
-QPKGs.AcList.IsEnabled.Init()
-{ _ob_qpkgs_aclist_isenabled_fl_=false
-_ob_qpkgs_aclist_isenabled_chfl_=true ;}
-QPKGs.AcList.IsEnabled.IsNt()
-{ [[ $_ob_qpkgs_aclist_isenabled_fl_ != 'true' ]] ;}
-QPKGs.AcList.IsEnabled.IsSet()
-{ [[ $_ob_qpkgs_aclist_isenabled_fl_ = 'true' ]] ;}
-QPKGs.AcList.IsEnabled.Set()
-{ [[ $_ob_qpkgs_aclist_isenabled_fl_ = 'true' ]] && return
-_ob_qpkgs_aclist_isenabled_fl_=true
-[[ $_ob_qpkgs_aclist_isenabled_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_isenabled_fl_ ;}
-QPKGs.AcList.IsEnabled.UnSet()
-{ [[ $_ob_qpkgs_aclist_isenabled_fl_ != 'true' ]] && return
-_ob_qpkgs_aclist_isenabled_fl_=false
-[[ $_ob_qpkgs_aclist_isenabled_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_isenabled_fl_ ;}
-QPKGs.AcList.IsEnabled.NoLogMods()
-{ _ob_qpkgs_aclist_isenabled_chfl_=false ;}
-QPKGs.AcList.IsEnabled.Init
-QPKGs.AcList.IsNtEnabled.Init()
-{ _ob_qpkgs_aclist_isntenabled_fl_=false
-_ob_qpkgs_aclist_isntenabled_chfl_=true ;}
-QPKGs.AcList.IsNtEnabled.IsNt()
-{ [[ $_ob_qpkgs_aclist_isntenabled_fl_ != 'true' ]] ;}
-QPKGs.AcList.IsNtEnabled.IsSet()
-{ [[ $_ob_qpkgs_aclist_isntenabled_fl_ = 'true' ]] ;}
-QPKGs.AcList.IsNtEnabled.Set()
-{ [[ $_ob_qpkgs_aclist_isntenabled_fl_ = 'true' ]] && return
-_ob_qpkgs_aclist_isntenabled_fl_=true
-[[ $_ob_qpkgs_aclist_isntenabled_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_isntenabled_fl_ ;}
-QPKGs.AcList.IsNtEnabled.UnSet()
-{ [[ $_ob_qpkgs_aclist_isntenabled_fl_ != 'true' ]] && return
-_ob_qpkgs_aclist_isntenabled_fl_=false
-[[ $_ob_qpkgs_aclist_isntenabled_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_isntenabled_fl_ ;}
-QPKGs.AcList.IsNtEnabled.NoLogMods()
-{ _ob_qpkgs_aclist_isntenabled_chfl_=false ;}
-QPKGs.AcList.IsNtEnabled.Init
 QPKGs.AcRebuild.IsEnabled.Init()
 { _ob_qpkgs_acrebuild_isenabled_fl_=false
 _ob_qpkgs_acrebuild_isenabled_chfl_=true ;}
@@ -8423,42 +7955,6 @@ _ob_qpkgs_acinstall_isntinstalled_fl_=false
 QPKGs.AcInstall.IsNtInstalled.NoLogMods()
 { _ob_qpkgs_acinstall_isntinstalled_chfl_=false ;}
 QPKGs.AcInstall.IsNtInstalled.Init
-QPKGs.AcList.IsInstalled.Init()
-{ _ob_qpkgs_aclist_isinstalled_fl_=false
-_ob_qpkgs_aclist_isinstalled_chfl_=true ;}
-QPKGs.AcList.IsInstalled.IsNt()
-{ [[ $_ob_qpkgs_aclist_isinstalled_fl_ != 'true' ]] ;}
-QPKGs.AcList.IsInstalled.IsSet()
-{ [[ $_ob_qpkgs_aclist_isinstalled_fl_ = 'true' ]] ;}
-QPKGs.AcList.IsInstalled.Set()
-{ [[ $_ob_qpkgs_aclist_isinstalled_fl_ = 'true' ]] && return
-_ob_qpkgs_aclist_isinstalled_fl_=true
-[[ $_ob_qpkgs_aclist_isinstalled_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_isinstalled_fl_ ;}
-QPKGs.AcList.IsInstalled.UnSet()
-{ [[ $_ob_qpkgs_aclist_isinstalled_fl_ != 'true' ]] && return
-_ob_qpkgs_aclist_isinstalled_fl_=false
-[[ $_ob_qpkgs_aclist_isinstalled_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_isinstalled_fl_ ;}
-QPKGs.AcList.IsInstalled.NoLogMods()
-{ _ob_qpkgs_aclist_isinstalled_chfl_=false ;}
-QPKGs.AcList.IsInstalled.Init
-QPKGs.AcList.IsNtInstalled.Init()
-{ _ob_qpkgs_aclist_isntinstalled_fl_=false
-_ob_qpkgs_aclist_isntinstalled_chfl_=true ;}
-QPKGs.AcList.IsNtInstalled.IsNt()
-{ [[ $_ob_qpkgs_aclist_isntinstalled_fl_ != 'true' ]] ;}
-QPKGs.AcList.IsNtInstalled.IsSet()
-{ [[ $_ob_qpkgs_aclist_isntinstalled_fl_ = 'true' ]] ;}
-QPKGs.AcList.IsNtInstalled.Set()
-{ [[ $_ob_qpkgs_aclist_isntinstalled_fl_ = 'true' ]] && return
-_ob_qpkgs_aclist_isntinstalled_fl_=true
-[[ $_ob_qpkgs_aclist_isntinstalled_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_isntinstalled_fl_ ;}
-QPKGs.AcList.IsNtInstalled.UnSet()
-{ [[ $_ob_qpkgs_aclist_isntinstalled_fl_ != 'true' ]] && return
-_ob_qpkgs_aclist_isntinstalled_fl_=false
-[[ $_ob_qpkgs_aclist_isntinstalled_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_isntinstalled_fl_ ;}
-QPKGs.AcList.IsNtInstalled.NoLogMods()
-{ _ob_qpkgs_aclist_isntinstalled_chfl_=false ;}
-QPKGs.AcList.IsNtInstalled.Init
 QPKGs.AcRebuild.IsInstalled.Init()
 { _ob_qpkgs_acrebuild_isinstalled_fl_=false
 _ob_qpkgs_acrebuild_isinstalled_chfl_=true ;}
@@ -8963,42 +8459,6 @@ _ob_qpkgs_acinstall_isntmissing_fl_=false
 QPKGs.AcInstall.IsNtMissing.NoLogMods()
 { _ob_qpkgs_acinstall_isntmissing_chfl_=false ;}
 QPKGs.AcInstall.IsNtMissing.Init
-QPKGs.AcList.IsMissing.Init()
-{ _ob_qpkgs_aclist_ismissing_fl_=false
-_ob_qpkgs_aclist_ismissing_chfl_=true ;}
-QPKGs.AcList.IsMissing.IsNt()
-{ [[ $_ob_qpkgs_aclist_ismissing_fl_ != 'true' ]] ;}
-QPKGs.AcList.IsMissing.IsSet()
-{ [[ $_ob_qpkgs_aclist_ismissing_fl_ = 'true' ]] ;}
-QPKGs.AcList.IsMissing.Set()
-{ [[ $_ob_qpkgs_aclist_ismissing_fl_ = 'true' ]] && return
-_ob_qpkgs_aclist_ismissing_fl_=true
-[[ $_ob_qpkgs_aclist_ismissing_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_ismissing_fl_ ;}
-QPKGs.AcList.IsMissing.UnSet()
-{ [[ $_ob_qpkgs_aclist_ismissing_fl_ != 'true' ]] && return
-_ob_qpkgs_aclist_ismissing_fl_=false
-[[ $_ob_qpkgs_aclist_ismissing_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_ismissing_fl_ ;}
-QPKGs.AcList.IsMissing.NoLogMods()
-{ _ob_qpkgs_aclist_ismissing_chfl_=false ;}
-QPKGs.AcList.IsMissing.Init
-QPKGs.AcList.IsNtMissing.Init()
-{ _ob_qpkgs_aclist_isntmissing_fl_=false
-_ob_qpkgs_aclist_isntmissing_chfl_=true ;}
-QPKGs.AcList.IsNtMissing.IsNt()
-{ [[ $_ob_qpkgs_aclist_isntmissing_fl_ != 'true' ]] ;}
-QPKGs.AcList.IsNtMissing.IsSet()
-{ [[ $_ob_qpkgs_aclist_isntmissing_fl_ = 'true' ]] ;}
-QPKGs.AcList.IsNtMissing.Set()
-{ [[ $_ob_qpkgs_aclist_isntmissing_fl_ = 'true' ]] && return
-_ob_qpkgs_aclist_isntmissing_fl_=true
-[[ $_ob_qpkgs_aclist_isntmissing_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_isntmissing_fl_ ;}
-QPKGs.AcList.IsNtMissing.UnSet()
-{ [[ $_ob_qpkgs_aclist_isntmissing_fl_ != 'true' ]] && return
-_ob_qpkgs_aclist_isntmissing_fl_=false
-[[ $_ob_qpkgs_aclist_isntmissing_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_isntmissing_fl_ ;}
-QPKGs.AcList.IsNtMissing.NoLogMods()
-{ _ob_qpkgs_aclist_isntmissing_chfl_=false ;}
-QPKGs.AcList.IsNtMissing.Init
 QPKGs.AcRebuild.IsMissing.Init()
 { _ob_qpkgs_acrebuild_ismissing_fl_=false
 _ob_qpkgs_acrebuild_ismissing_chfl_=true ;}
@@ -9503,42 +8963,6 @@ _ob_qpkgs_acinstall_isntstarted_fl_=false
 QPKGs.AcInstall.IsNtStarted.NoLogMods()
 { _ob_qpkgs_acinstall_isntstarted_chfl_=false ;}
 QPKGs.AcInstall.IsNtStarted.Init
-QPKGs.AcList.IsStarted.Init()
-{ _ob_qpkgs_aclist_isstarted_fl_=false
-_ob_qpkgs_aclist_isstarted_chfl_=true ;}
-QPKGs.AcList.IsStarted.IsNt()
-{ [[ $_ob_qpkgs_aclist_isstarted_fl_ != 'true' ]] ;}
-QPKGs.AcList.IsStarted.IsSet()
-{ [[ $_ob_qpkgs_aclist_isstarted_fl_ = 'true' ]] ;}
-QPKGs.AcList.IsStarted.Set()
-{ [[ $_ob_qpkgs_aclist_isstarted_fl_ = 'true' ]] && return
-_ob_qpkgs_aclist_isstarted_fl_=true
-[[ $_ob_qpkgs_aclist_isstarted_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_isstarted_fl_ ;}
-QPKGs.AcList.IsStarted.UnSet()
-{ [[ $_ob_qpkgs_aclist_isstarted_fl_ != 'true' ]] && return
-_ob_qpkgs_aclist_isstarted_fl_=false
-[[ $_ob_qpkgs_aclist_isstarted_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_isstarted_fl_ ;}
-QPKGs.AcList.IsStarted.NoLogMods()
-{ _ob_qpkgs_aclist_isstarted_chfl_=false ;}
-QPKGs.AcList.IsStarted.Init
-QPKGs.AcList.IsNtStarted.Init()
-{ _ob_qpkgs_aclist_isntstarted_fl_=false
-_ob_qpkgs_aclist_isntstarted_chfl_=true ;}
-QPKGs.AcList.IsNtStarted.IsNt()
-{ [[ $_ob_qpkgs_aclist_isntstarted_fl_ != 'true' ]] ;}
-QPKGs.AcList.IsNtStarted.IsSet()
-{ [[ $_ob_qpkgs_aclist_isntstarted_fl_ = 'true' ]] ;}
-QPKGs.AcList.IsNtStarted.Set()
-{ [[ $_ob_qpkgs_aclist_isntstarted_fl_ = 'true' ]] && return
-_ob_qpkgs_aclist_isntstarted_fl_=true
-[[ $_ob_qpkgs_aclist_isntstarted_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_isntstarted_fl_ ;}
-QPKGs.AcList.IsNtStarted.UnSet()
-{ [[ $_ob_qpkgs_aclist_isntstarted_fl_ != 'true' ]] && return
-_ob_qpkgs_aclist_isntstarted_fl_=false
-[[ $_ob_qpkgs_aclist_isntstarted_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_isntstarted_fl_ ;}
-QPKGs.AcList.IsNtStarted.NoLogMods()
-{ _ob_qpkgs_aclist_isntstarted_chfl_=false ;}
-QPKGs.AcList.IsNtStarted.Init
 QPKGs.AcRebuild.IsStarted.Init()
 { _ob_qpkgs_acrebuild_isstarted_fl_=false
 _ob_qpkgs_acrebuild_isstarted_chfl_=true ;}
@@ -9935,24 +9359,6 @@ _ob_qpkgs_acinstall_isstarting_fl_=false
 QPKGs.AcInstall.IsStarting.NoLogMods()
 { _ob_qpkgs_acinstall_isstarting_chfl_=false ;}
 QPKGs.AcInstall.IsStarting.Init
-QPKGs.AcList.IsStarting.Init()
-{ _ob_qpkgs_aclist_isstarting_fl_=false
-_ob_qpkgs_aclist_isstarting_chfl_=true ;}
-QPKGs.AcList.IsStarting.IsNt()
-{ [[ $_ob_qpkgs_aclist_isstarting_fl_ != 'true' ]] ;}
-QPKGs.AcList.IsStarting.IsSet()
-{ [[ $_ob_qpkgs_aclist_isstarting_fl_ = 'true' ]] ;}
-QPKGs.AcList.IsStarting.Set()
-{ [[ $_ob_qpkgs_aclist_isstarting_fl_ = 'true' ]] && return
-_ob_qpkgs_aclist_isstarting_fl_=true
-[[ $_ob_qpkgs_aclist_isstarting_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_isstarting_fl_ ;}
-QPKGs.AcList.IsStarting.UnSet()
-{ [[ $_ob_qpkgs_aclist_isstarting_fl_ != 'true' ]] && return
-_ob_qpkgs_aclist_isstarting_fl_=false
-[[ $_ob_qpkgs_aclist_isstarting_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_isstarting_fl_ ;}
-QPKGs.AcList.IsStarting.NoLogMods()
-{ _ob_qpkgs_aclist_isstarting_chfl_=false ;}
-QPKGs.AcList.IsStarting.Init
 QPKGs.AcRebuild.IsStarting.Init()
 { _ob_qpkgs_acrebuild_isstarting_fl_=false
 _ob_qpkgs_acrebuild_isstarting_chfl_=true ;}
@@ -10205,24 +9611,6 @@ _ob_qpkgs_acinstall_isstopping_fl_=false
 QPKGs.AcInstall.IsStopping.NoLogMods()
 { _ob_qpkgs_acinstall_isstopping_chfl_=false ;}
 QPKGs.AcInstall.IsStopping.Init
-QPKGs.AcList.IsStopping.Init()
-{ _ob_qpkgs_aclist_isstopping_fl_=false
-_ob_qpkgs_aclist_isstopping_chfl_=true ;}
-QPKGs.AcList.IsStopping.IsNt()
-{ [[ $_ob_qpkgs_aclist_isstopping_fl_ != 'true' ]] ;}
-QPKGs.AcList.IsStopping.IsSet()
-{ [[ $_ob_qpkgs_aclist_isstopping_fl_ = 'true' ]] ;}
-QPKGs.AcList.IsStopping.Set()
-{ [[ $_ob_qpkgs_aclist_isstopping_fl_ = 'true' ]] && return
-_ob_qpkgs_aclist_isstopping_fl_=true
-[[ $_ob_qpkgs_aclist_isstopping_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_isstopping_fl_ ;}
-QPKGs.AcList.IsStopping.UnSet()
-{ [[ $_ob_qpkgs_aclist_isstopping_fl_ != 'true' ]] && return
-_ob_qpkgs_aclist_isstopping_fl_=false
-[[ $_ob_qpkgs_aclist_isstopping_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_isstopping_fl_ ;}
-QPKGs.AcList.IsStopping.NoLogMods()
-{ _ob_qpkgs_aclist_isstopping_chfl_=false ;}
-QPKGs.AcList.IsStopping.Init
 QPKGs.AcRebuild.IsStopping.Init()
 { _ob_qpkgs_acrebuild_isstopping_fl_=false
 _ob_qpkgs_acrebuild_isstopping_chfl_=true ;}
@@ -10475,24 +9863,6 @@ _ob_qpkgs_acinstall_isrestarting_fl_=false
 QPKGs.AcInstall.IsRestarting.NoLogMods()
 { _ob_qpkgs_acinstall_isrestarting_chfl_=false ;}
 QPKGs.AcInstall.IsRestarting.Init
-QPKGs.AcList.IsRestarting.Init()
-{ _ob_qpkgs_aclist_isrestarting_fl_=false
-_ob_qpkgs_aclist_isrestarting_chfl_=true ;}
-QPKGs.AcList.IsRestarting.IsNt()
-{ [[ $_ob_qpkgs_aclist_isrestarting_fl_ != 'true' ]] ;}
-QPKGs.AcList.IsRestarting.IsSet()
-{ [[ $_ob_qpkgs_aclist_isrestarting_fl_ = 'true' ]] ;}
-QPKGs.AcList.IsRestarting.Set()
-{ [[ $_ob_qpkgs_aclist_isrestarting_fl_ = 'true' ]] && return
-_ob_qpkgs_aclist_isrestarting_fl_=true
-[[ $_ob_qpkgs_aclist_isrestarting_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_isrestarting_fl_ ;}
-QPKGs.AcList.IsRestarting.UnSet()
-{ [[ $_ob_qpkgs_aclist_isrestarting_fl_ != 'true' ]] && return
-_ob_qpkgs_aclist_isrestarting_fl_=false
-[[ $_ob_qpkgs_aclist_isrestarting_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_aclist_isrestarting_fl_ ;}
-QPKGs.AcList.IsRestarting.NoLogMods()
-{ _ob_qpkgs_aclist_isrestarting_chfl_=false ;}
-QPKGs.AcList.IsRestarting.Init
 QPKGs.AcRebuild.IsRestarting.Init()
 { _ob_qpkgs_acrebuild_isrestarting_fl_=false
 _ob_qpkgs_acrebuild_isrestarting_chfl_=true ;}
@@ -12617,182 +11987,6 @@ else
 echo -n "$_ob_qpkgs_acskinstall_sz_"
 fi ;}
 QPKGs.AcSkInstall.Init
-QPKGs.AcToList.Add()
-{ local ar=(${1}) it=''
-[[ ${#ar[@]} -eq 0 ]] && return
-for it in "${ar[@]:-}"; do
-[[ " ${_ob_qpkgs_actolist_ar_[*]+"${_ob_qpkgs_actolist_ar_[@]}"} " != *"$it"* ]] && _ob_qpkgs_actolist_ar_+=("$it")
-done ;}
-QPKGs.AcToList.Array()
-{ echo -n "${_ob_qpkgs_actolist_ar_[@]+"${_ob_qpkgs_actolist_ar_[@]}"}" ;}
-QPKGs.AcToList.Count()
-{ echo "${#_ob_qpkgs_actolist_ar_[@]}" ;}
-QPKGs.AcToList.Exist()
-{ [[ ${_ob_qpkgs_actolist_ar_[*]:-} == *"$1"* ]] ;}
-QPKGs.AcToList.Init()
-{ _ob_qpkgs_actolist_sz_=0
-_ob_qpkgs_actolist_ar_=()
-_ob_qpkgs_actolist_arin_=1 ;}
-QPKGs.AcToList.IsAny()
-{ [[ ${#_ob_qpkgs_actolist_ar_[@]} -gt 0 ]] ;}
-QPKGs.AcToList.IsNone()
-{ [[ ${#_ob_qpkgs_actolist_ar_[@]} -eq 0 ]] ;}
-QPKGs.AcToList.List()
-{ echo -n "${_ob_qpkgs_actolist_ar_[*]+"${_ob_qpkgs_actolist_ar_[@]}"}" ;}
-QPKGs.AcToList.ListCSV()
-{ echo -n "${_ob_qpkgs_actolist_ar_[*]+"${_ob_qpkgs_actolist_ar_[@]}"}" | tr ' ' ',' ;}
-QPKGs.AcToList.Remove()
-{ local agar=(${1}) tmar=() ag='' it='' m=false
-for it in "${_ob_qpkgs_actolist_ar_[@]+"${_ob_qpkgs_actolist_ar_[@]}"}"; do
-m=false
-for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = "$it" ]]; then
-m=true; break
-fi
-done
-[[ $m = false ]] && tmar+=("$it")
-done
-_ob_qpkgs_actolist_ar_=("${tmar[@]+"${tmar[@]}"}")
-[[ -z ${_ob_qpkgs_actolist_ar_[*]+"${_ob_qpkgs_actolist_ar_[@]}"} ]] && _ob_qpkgs_actolist_ar_=() ;}
-QPKGs.AcToList.Size()
-{ if [[ -n ${1:-} && ${1:-} = "=" ]]; then
-_ob_qpkgs_actolist_sz_=$2
-else
-echo -n "$_ob_qpkgs_actolist_sz_"
-fi ;}
-QPKGs.AcToList.Init
-QPKGs.AcOkList.Add()
-{ local ar=(${1}) it=''
-[[ ${#ar[@]} -eq 0 ]] && return
-for it in "${ar[@]:-}"; do
-[[ " ${_ob_qpkgs_acoklist_ar_[*]+"${_ob_qpkgs_acoklist_ar_[@]}"} " != *"$it"* ]] && _ob_qpkgs_acoklist_ar_+=("$it")
-done ;}
-QPKGs.AcOkList.Array()
-{ echo -n "${_ob_qpkgs_acoklist_ar_[@]+"${_ob_qpkgs_acoklist_ar_[@]}"}" ;}
-QPKGs.AcOkList.Count()
-{ echo "${#_ob_qpkgs_acoklist_ar_[@]}" ;}
-QPKGs.AcOkList.Exist()
-{ [[ ${_ob_qpkgs_acoklist_ar_[*]:-} == *"$1"* ]] ;}
-QPKGs.AcOkList.Init()
-{ _ob_qpkgs_acoklist_sz_=0
-_ob_qpkgs_acoklist_ar_=()
-_ob_qpkgs_acoklist_arin_=1 ;}
-QPKGs.AcOkList.IsAny()
-{ [[ ${#_ob_qpkgs_acoklist_ar_[@]} -gt 0 ]] ;}
-QPKGs.AcOkList.IsNone()
-{ [[ ${#_ob_qpkgs_acoklist_ar_[@]} -eq 0 ]] ;}
-QPKGs.AcOkList.List()
-{ echo -n "${_ob_qpkgs_acoklist_ar_[*]+"${_ob_qpkgs_acoklist_ar_[@]}"}" ;}
-QPKGs.AcOkList.ListCSV()
-{ echo -n "${_ob_qpkgs_acoklist_ar_[*]+"${_ob_qpkgs_acoklist_ar_[@]}"}" | tr ' ' ',' ;}
-QPKGs.AcOkList.Remove()
-{ local agar=(${1}) tmar=() ag='' it='' m=false
-for it in "${_ob_qpkgs_acoklist_ar_[@]+"${_ob_qpkgs_acoklist_ar_[@]}"}"; do
-m=false
-for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = "$it" ]]; then
-m=true; break
-fi
-done
-[[ $m = false ]] && tmar+=("$it")
-done
-_ob_qpkgs_acoklist_ar_=("${tmar[@]+"${tmar[@]}"}")
-[[ -z ${_ob_qpkgs_acoklist_ar_[*]+"${_ob_qpkgs_acoklist_ar_[@]}"} ]] && _ob_qpkgs_acoklist_ar_=() ;}
-QPKGs.AcOkList.Size()
-{ if [[ -n ${1:-} && ${1:-} = "=" ]]; then
-_ob_qpkgs_acoklist_sz_=$2
-else
-echo -n "$_ob_qpkgs_acoklist_sz_"
-fi ;}
-QPKGs.AcOkList.Init
-QPKGs.AcErList.Add()
-{ local ar=(${1}) it=''
-[[ ${#ar[@]} -eq 0 ]] && return
-for it in "${ar[@]:-}"; do
-[[ " ${_ob_qpkgs_acerlist_ar_[*]+"${_ob_qpkgs_acerlist_ar_[@]}"} " != *"$it"* ]] && _ob_qpkgs_acerlist_ar_+=("$it")
-done ;}
-QPKGs.AcErList.Array()
-{ echo -n "${_ob_qpkgs_acerlist_ar_[@]+"${_ob_qpkgs_acerlist_ar_[@]}"}" ;}
-QPKGs.AcErList.Count()
-{ echo "${#_ob_qpkgs_acerlist_ar_[@]}" ;}
-QPKGs.AcErList.Exist()
-{ [[ ${_ob_qpkgs_acerlist_ar_[*]:-} == *"$1"* ]] ;}
-QPKGs.AcErList.Init()
-{ _ob_qpkgs_acerlist_sz_=0
-_ob_qpkgs_acerlist_ar_=()
-_ob_qpkgs_acerlist_arin_=1 ;}
-QPKGs.AcErList.IsAny()
-{ [[ ${#_ob_qpkgs_acerlist_ar_[@]} -gt 0 ]] ;}
-QPKGs.AcErList.IsNone()
-{ [[ ${#_ob_qpkgs_acerlist_ar_[@]} -eq 0 ]] ;}
-QPKGs.AcErList.List()
-{ echo -n "${_ob_qpkgs_acerlist_ar_[*]+"${_ob_qpkgs_acerlist_ar_[@]}"}" ;}
-QPKGs.AcErList.ListCSV()
-{ echo -n "${_ob_qpkgs_acerlist_ar_[*]+"${_ob_qpkgs_acerlist_ar_[@]}"}" | tr ' ' ',' ;}
-QPKGs.AcErList.Remove()
-{ local agar=(${1}) tmar=() ag='' it='' m=false
-for it in "${_ob_qpkgs_acerlist_ar_[@]+"${_ob_qpkgs_acerlist_ar_[@]}"}"; do
-m=false
-for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = "$it" ]]; then
-m=true; break
-fi
-done
-[[ $m = false ]] && tmar+=("$it")
-done
-_ob_qpkgs_acerlist_ar_=("${tmar[@]+"${tmar[@]}"}")
-[[ -z ${_ob_qpkgs_acerlist_ar_[*]+"${_ob_qpkgs_acerlist_ar_[@]}"} ]] && _ob_qpkgs_acerlist_ar_=() ;}
-QPKGs.AcErList.Size()
-{ if [[ -n ${1:-} && ${1:-} = "=" ]]; then
-_ob_qpkgs_acerlist_sz_=$2
-else
-echo -n "$_ob_qpkgs_acerlist_sz_"
-fi ;}
-QPKGs.AcErList.Init
-QPKGs.AcSkList.Add()
-{ local ar=(${1}) it=''
-[[ ${#ar[@]} -eq 0 ]] && return
-for it in "${ar[@]:-}"; do
-[[ " ${_ob_qpkgs_acsklist_ar_[*]+"${_ob_qpkgs_acsklist_ar_[@]}"} " != *"$it"* ]] && _ob_qpkgs_acsklist_ar_+=("$it")
-done ;}
-QPKGs.AcSkList.Array()
-{ echo -n "${_ob_qpkgs_acsklist_ar_[@]+"${_ob_qpkgs_acsklist_ar_[@]}"}" ;}
-QPKGs.AcSkList.Count()
-{ echo "${#_ob_qpkgs_acsklist_ar_[@]}" ;}
-QPKGs.AcSkList.Exist()
-{ [[ ${_ob_qpkgs_acsklist_ar_[*]:-} == *"$1"* ]] ;}
-QPKGs.AcSkList.Init()
-{ _ob_qpkgs_acsklist_sz_=0
-_ob_qpkgs_acsklist_ar_=()
-_ob_qpkgs_acsklist_arin_=1 ;}
-QPKGs.AcSkList.IsAny()
-{ [[ ${#_ob_qpkgs_acsklist_ar_[@]} -gt 0 ]] ;}
-QPKGs.AcSkList.IsNone()
-{ [[ ${#_ob_qpkgs_acsklist_ar_[@]} -eq 0 ]] ;}
-QPKGs.AcSkList.List()
-{ echo -n "${_ob_qpkgs_acsklist_ar_[*]+"${_ob_qpkgs_acsklist_ar_[@]}"}" ;}
-QPKGs.AcSkList.ListCSV()
-{ echo -n "${_ob_qpkgs_acsklist_ar_[*]+"${_ob_qpkgs_acsklist_ar_[@]}"}" | tr ' ' ',' ;}
-QPKGs.AcSkList.Remove()
-{ local agar=(${1}) tmar=() ag='' it='' m=false
-for it in "${_ob_qpkgs_acsklist_ar_[@]+"${_ob_qpkgs_acsklist_ar_[@]}"}"; do
-m=false
-for ag in "${agar[@]+"${agar[@]}"}"; do
-if [[ $ag = "$it" ]]; then
-m=true; break
-fi
-done
-[[ $m = false ]] && tmar+=("$it")
-done
-_ob_qpkgs_acsklist_ar_=("${tmar[@]+"${tmar[@]}"}")
-[[ -z ${_ob_qpkgs_acsklist_ar_[*]+"${_ob_qpkgs_acsklist_ar_[@]}"} ]] && _ob_qpkgs_acsklist_ar_=() ;}
-QPKGs.AcSkList.Size()
-{ if [[ -n ${1:-} && ${1:-} = "=" ]]; then
-_ob_qpkgs_acsklist_sz_=$2
-else
-echo -n "$_ob_qpkgs_acsklist_sz_"
-fi ;}
-QPKGs.AcSkList.Init
 QPKGs.AcToRebuild.Add()
 { local ar=(${1}) it=''
 [[ ${#ar[@]} -eq 0 ]] && return
