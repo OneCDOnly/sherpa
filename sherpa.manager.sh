@@ -57,7 +57,7 @@ Self.Init()
     IsSU || return
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220501c
+    local -r SCRIPT_VERSION=220501d
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -223,7 +223,7 @@ Self.Init()
         exit 0
     fi
 
-    Objects.DoLoad || return
+    Objects.Load || return
     Self.Debug.ToArchive.Set
     Self.Debug.ToFile.Set
 
@@ -278,7 +278,7 @@ Self.Init()
         QPKGs.SkProc.Set
         DisableDebugToArchiveAndFile
     else
-        Packages.DoLoad || return
+        Packages.Load || return
         ParseArguments
     fi
 
@@ -750,7 +750,7 @@ Tier.Process()
                 for package in "${target_packages[@]}"; do
                     ShowAsActionProgress "$TIER" "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
 
-                    $target_function.Do${TARGET_ACTION} "$package" "$forced_action"
+                    $target_function.${TARGET_ACTION} "$package" "$forced_action"
                     result_code=$?
 
                     case $result_code in
@@ -772,7 +772,7 @@ Tier.Process()
                 for package in "${target_packages[@]}"; do
                     ShowAsActionProgress "$TIER" "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
 
-                    $target_function.Do${TARGET_ACTION} "$package" "$forced_action"
+                    $target_function.${TARGET_ACTION} "$package" "$forced_action"
                     result_code=$?
 
                     case $result_code in
@@ -791,7 +791,7 @@ Tier.Process()
             fi
             ;;
         IPKG|PIP)
-            $targets_function.Do${TARGET_ACTION}
+            $targets_function.${TARGET_ACTION}
     esac
 
     # execute with pass_count > total_count to trigger 100% message
@@ -2019,7 +2019,10 @@ CalcIPKGsDownloadSize()
     if [[ $size_count -gt 0 ]]; then
         DebugAsDone "$size_count IPKG$(Plural "$size_count") to download: '$(IPKGs.AcToDownload.List)'"
         DebugAsProc "calculating size of IPKG$(Plural "$size_count") to download"
+
+        # FIXME: the following line is messing with Kate's function recognition... might need to restructure it
         size_array=($($GNU_GREP_CMD -w '^Package:\|^Size:' "$EXTERNAL_PACKAGES_PATHFILE" | $GNU_GREP_CMD --after-context 1 --no-group-separator ": $($SED_CMD 's/ /$ /g;s/\$ /\$\\\|: /g' <<< "$(IPKGs.AcToDownload.List)")$" | $GREP_CMD '^Size:' | $SED_CMD 's|^Size: ||'))
+
         IPKGs.AcToDownload.Size = "$(IFS=+; echo "$((${size_array[*]}))")"   # a neat sizing shortcut found here https://stackoverflow.com/a/13635566/6182835
         DebugAsDone "$(FormatAsThousands "$(IPKGs.AcToDownload.Size)") bytes ($(FormatAsISOBytes "$(IPKGs.AcToDownload.Size)")) to download"
     else
@@ -2030,7 +2033,7 @@ CalcIPKGsDownloadSize()
 
     }
 
-IPKGs.DoUpgrade()
+IPKGs.Upgrade()
     {
 
     # upgrade all installed IPKGs
@@ -2076,7 +2079,7 @@ IPKGs.DoUpgrade()
 
     }
 
-IPKGs.DoInstall()
+IPKGs.Install()
     {
 
     # install IPKGs required to support QPKGs
@@ -2138,7 +2141,7 @@ IPKGs.DoInstall()
 
     }
 
-IPKGs.DoUninstall()
+IPKGs.Uninstall()
     {
 
     QPKGs.SkProc.IsSet && return
@@ -2181,7 +2184,7 @@ IPKGs.DoUninstall()
 
     }
 
-PIPs.DoInstall()
+PIPs.Install()
     {
 
     QPKGs.SkProc.IsSet && return
@@ -4161,7 +4164,7 @@ DisableDebugToArchiveAndFile()
 
 # QPKG tasks
 
-QPKG.DoDownload()
+QPKG.Download()
     {
 
     # input:
@@ -4238,7 +4241,7 @@ QPKG.DoDownload()
 
     }
 
-QPKG.DoInstall()
+QPKG.Install()
     {
 
     # input:
@@ -4347,7 +4350,7 @@ QPKG.DoInstall()
 
     }
 
-QPKG.DoReinstall()
+QPKG.Reinstall()
     {
 
     # input:
@@ -4425,7 +4428,7 @@ QPKG.DoReinstall()
 
     }
 
-QPKG.DoUpgrade()
+QPKG.Upgrade()
     {
 
     # Upgrades the QPKG named in $1
@@ -4518,7 +4521,7 @@ QPKG.DoUpgrade()
 
     }
 
-QPKG.DoUninstall()
+QPKG.Uninstall()
     {
 
     # input:
@@ -4576,7 +4579,7 @@ QPKG.DoUninstall()
 
     }
 
-QPKG.DoRestart()
+QPKG.Restart()
     {
 
     # Restarts the service script for the QPKG named in $1
@@ -4610,7 +4613,7 @@ QPKG.DoRestart()
     local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile "$PACKAGE_NAME")
     local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$RESTART_LOG_FILE
 
-    QPKG.DoEnable "$PACKAGE_NAME"
+    QPKG.Enable "$PACKAGE_NAME"
     result_code=$?
 
     if [[ $result_code -eq 0 ]]; then
@@ -4634,7 +4637,7 @@ QPKG.DoRestart()
 
     }
 
-QPKG.DoStart()
+QPKG.Start()
     {
 
     # Starts the service script for the QPKG named in $1
@@ -4667,7 +4670,7 @@ QPKG.DoStart()
     local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile "$PACKAGE_NAME")
     local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$START_LOG_FILE
 
-    QPKG.DoEnable "$PACKAGE_NAME"
+    QPKG.Enable "$PACKAGE_NAME"
     result_code=$?
 
     if [[ $result_code -eq 0 ]]; then
@@ -4693,7 +4696,7 @@ QPKG.DoStart()
 
     }
 
-QPKG.DoStop()
+QPKG.Stop()
     {
 
     # Stops the service script for the QPKG named in $1
@@ -4736,7 +4739,7 @@ QPKG.DoStop()
     result_code=$?
 
     if [[ $result_code -eq 0 ]]; then
-        QPKG.DoDisable "$PACKAGE_NAME"
+        QPKG.Disable "$PACKAGE_NAME"
         result_code=$?
     fi
 
@@ -4756,7 +4759,7 @@ QPKG.DoStop()
 
     }
 
-QPKG.DoEnable()
+QPKG.Enable()
     {
 
     # $1 = package name to enable
@@ -4776,7 +4779,7 @@ QPKG.DoEnable()
 
     }
 
-QPKG.DoDisable()
+QPKG.Disable()
     {
 
     # $1 = package name to disable
@@ -4796,7 +4799,7 @@ QPKG.DoDisable()
 
     }
 
-QPKG.DoBackup()
+QPKG.Backup()
     {
 
     # calls the service script for the QPKG named in $1 and runs a backup action
@@ -4847,7 +4850,7 @@ QPKG.DoBackup()
 
     }
 
-QPKG.DoRestore()
+QPKG.Restore()
     {
 
     # calls the service script for the QPKG named in $1 and runs a restore action
@@ -4893,7 +4896,7 @@ QPKG.DoRestore()
 
     }
 
-QPKG.DoClean()
+QPKG.Clean()
     {
 
     # calls the service script for the QPKG named in $1 and runs a clean action
@@ -6401,7 +6404,7 @@ CTRL_C_Captured()
 
     }
 
-Objects.DoLoad()
+Objects.Load()
     {
 
     # ensure 'objects' in the local work path is up-to-date, then source it
@@ -6427,7 +6430,7 @@ Objects.DoLoad()
 
     }
 
-Packages.DoLoad()
+Packages.Load()
     {
 
     # ensure 'packages' in the local work path is up-to-date, then source it
