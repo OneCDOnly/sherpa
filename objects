@@ -557,24 +557,6 @@ _ob_opts_log_tail_view_fl_=false
 Opts.Log.Tail.View.NoLogMods()
 { _ob_opts_log_tail_view_chfl_=false ;}
 Opts.Log.Tail.View.Init
-Self.OpDebug.Init()
-{ _ob_self_opdebug_fl_=false
-_ob_self_opdebug_chfl_=true ;}
-Self.OpDebug.IsNt()
-{ [[ $_ob_self_opdebug_fl_ != 'true' ]] ;}
-Self.OpDebug.IsSet()
-{ [[ $_ob_self_opdebug_fl_ = 'true' ]] ;}
-Self.OpDebug.Set()
-{ [[ $_ob_self_opdebug_fl_ = 'true' ]] && return
-_ob_self_opdebug_fl_=true
-[[ $_ob_self_opdebug_chfl_ = 'true' ]] && DebugVar _ob_self_opdebug_fl_ ;}
-Self.OpDebug.UnSet()
-{ [[ $_ob_self_opdebug_fl_ != 'true' ]] && return
-_ob_self_opdebug_fl_=false
-[[ $_ob_self_opdebug_chfl_ = 'true' ]] && DebugVar _ob_self_opdebug_fl_ ;}
-Self.OpDebug.NoLogMods()
-{ _ob_self_opdebug_chfl_=false ;}
-Self.OpDebug.Init
 QPKGs.List.ScAll.Init()
 { _ob_qpkgs_list_scall_fl_=false
 _ob_qpkgs_list_scall_chfl_=true ;}

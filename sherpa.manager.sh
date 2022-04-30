@@ -57,7 +57,7 @@ Self.Init()
     IsSU || return
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220430d
+    local -r SCRIPT_VERSION=220501
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -183,7 +183,6 @@ Self.Init()
     readonly SESSION_TAIL_PATHFILE=$LOGS_PATH/session.tail.log
 
     MANAGEMENT_ACTIONS=(Check List Paste Reset Status)
-    MANAGEMENT_OPTIONS=(Debug)
 
     PACKAGE_SCOPES=(All Dependent HasDependents Installable Names Standalone SupportBackup SupportUpdateOnRestart Upgradable)
     PACKAGE_STATES=(BackedUp Cleaned Downloaded Enabled Installed Missing Started)
@@ -192,7 +191,6 @@ Self.Init()
     PACKAGE_TIERS=(Standalone Addon Dependent)
 
     readonly MANAGEMENT_ACTIONS
-    readonly MANAGEMENT_OPTIONS
 
     readonly PACKAGE_SCOPES
     readonly PACKAGE_STATES
@@ -215,7 +213,9 @@ Self.Init()
 
     ArchivePriorSessionLogs
 
-    if [[ $USER_ARGS_RAW == *"reset"* ]]; then
+    local re=\\breset\\b        # create BASH 3.2 compatible regex with word boundaries. https://stackoverflow.com/a/9793094
+
+    if [[ $USER_ARGS_RAW =~ $re ]]; then
         ResetArchivedLogs
         ResetWorkPath
         ArchiveActiveSessionLog
@@ -236,10 +236,13 @@ Self.Init()
         readonly SESSION_COLUMNS=156
     fi
 
-    if [[ $USER_ARGS_RAW == *"debug"* || $USER_ARGS_RAW == *"dbug"* || $USER_ARGS_RAW == *"verbose"* ]]; then
-        Display >&2
-        Self.Debug.ToScreen.Set
-    fi
+    for re in \\bdebug\\b \\bdbug\\b \\bverbose\\b; do
+        if [[ $USER_ARGS_RAW =~ $re ]]; then
+            Display >&2
+            Self.Debug.ToScreen.Set
+            break
+        fi
+    done
 
     readonly PACKAGE_VERSION=$(QPKG.Local.Version "$PROJECT_NAME")
     readonly MANAGER_SCRIPT_VERSION="$SCRIPT_VERSION$([[ $PROJECT_BRANCH = develop ]] && echo '(d)')"
