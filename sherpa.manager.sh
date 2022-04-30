@@ -2278,7 +2278,7 @@ PIPs.Install()
 
         if [[ $result_code -eq 0 ]]; then
             DebugAsDone "reinstalled $desc"
-            QPKGs.AcToRestart.Add SABnzbd
+            QPKG.IsStarted SABnzbd && QPKGs.AcToRestart.Add SABnzbd
             ((pass_count++))
         else
             ShowAsFail "reinstallation of $desc failed $(FormatAsResult "$result_code")"
