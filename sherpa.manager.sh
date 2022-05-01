@@ -57,7 +57,7 @@ Self.Init()
     IsSU || return
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220501d
+    local -r SCRIPT_VERSION=220501e
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -2019,10 +2019,7 @@ CalcIPKGsDownloadSize()
     if [[ $size_count -gt 0 ]]; then
         DebugAsDone "$size_count IPKG$(Plural "$size_count") to download: '$(IPKGs.AcToDownload.List)'"
         DebugAsProc "calculating size of IPKG$(Plural "$size_count") to download"
-
-        # FIXME: the following line is messing with Kate's function recognition... might need to restructure it
-        size_array=($($GNU_GREP_CMD -w '^Package:\|^Size:' "$EXTERNAL_PACKAGES_PATHFILE" | $GNU_GREP_CMD --after-context 1 --no-group-separator ": $($SED_CMD 's/ /$ /g;s/\$ /\$\\\|: /g' <<< "$(IPKGs.AcToDownload.List)")$" | $GREP_CMD '^Size:' | $SED_CMD 's|^Size: ||'))
-
+        size_array=($($GNU_GREP_CMD -w '^Package:\|^Size:' "$EXTERNAL_PACKAGES_PATHFILE" | $GNU_GREP_CMD --after-context 1 --no-group-separator ": $($SED_CMD 's/ /$ /g;s/\$ /\$\\\|: /g' <<< "$(IPKGs.AcToDownload.List)")" | $GREP_CMD '^Size:' | $SED_CMD 's|^Size: ||'))
         IPKGs.AcToDownload.Size = "$(IFS=+; echo "$((${size_array[*]}))")"   # a neat sizing shortcut found here https://stackoverflow.com/a/13635566/6182835
         DebugAsDone "$(FormatAsThousands "$(IPKGs.AcToDownload.Size)") bytes ($(FormatAsISOBytes "$(IPKGs.AcToDownload.Size)")) to download"
     else
