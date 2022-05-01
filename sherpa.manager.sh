@@ -57,7 +57,7 @@ Self.Init()
     IsSU || return
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220501e
+    local -r SCRIPT_VERSION=220501f
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -403,7 +403,7 @@ Self.Validate()
     fi
 
     if [[ $something_to_do = false ]]; then
-        ShowAsEror "I've nothing to-do (the supplied arguments were incomplete or didn't make sense)"
+        ShowAsError "I've nothing to-do (the supplied arguments were incomplete or didn't make sense)"
         Opts.Help.Basic.Set
         QPKGs.SkProc.Set
         DebugFuncExit 1; return
@@ -1463,7 +1463,7 @@ ArgumentSuggestions()
     local arg=''
 
     if Args.Unknown.IsAny; then
-        ShowAsEror "unknown argument$(Plural "$(Args.Unknown.Count)"): \"$(Args.Unknown.List)\". Please check the argument list again"
+        ShowAsError "unknown argument$(Plural "$(Args.Unknown.Count)"): \"$(Args.Unknown.List)\". Please check the argument list again"
 
         for arg in $(Args.Unknown.Array); do
             case $arg in
@@ -2320,7 +2320,7 @@ OpenIPKGArchive()
     #   $? = 0 if successful or 1 if failed
 
     if [[ ! -e $EXTERNAL_PACKAGES_ARCHIVE_PATHFILE ]]; then
-        ShowAsEror 'unable to locate the IPKG list file'
+        ShowAsError 'unable to locate the IPKG list file'
         DebugFuncExit 1; return
     fi
 
@@ -2328,7 +2328,7 @@ OpenIPKGArchive()
     result_code=$?
 
     if [[ ! -e $EXTERNAL_PACKAGES_PATHFILE ]]; then
-        ShowAsEror 'unable to open the IPKG list file'
+        ShowAsError 'unable to open the IPKG list file'
         DebugFuncExit 1; return
     fi
 
@@ -2485,10 +2485,10 @@ IsSU()
 
     if [[ $EUID -ne 0 ]]; then
         if [[ -e /usr/bin/sudo ]]; then
-            ShowAsEror 'this utility must be run with superuser privileges. Try again as:'
+            ShowAsError 'this utility must be run with superuser privileges. Try again as:'
             echo "$ sudo $PROJECT_NAME"
         else
-            ShowAsEror "this utility must be run as the 'admin' user. Please login via SSH as 'admin' and try again"
+            ShowAsError "this utility must be run as the 'admin' user. Please login via SSH as 'admin' and try again"
         fi
         return 1
     fi
@@ -3041,7 +3041,7 @@ Log.Last.View()
             $CAT_CMD --number "$SESSION_LAST_PATHFILE"
         fi
     else
-        ShowAsEror 'no last session log to display'
+        ShowAsError 'no last session log to display'
     fi
 
     return 0
@@ -3065,7 +3065,7 @@ Log.Tail.View()
             $CAT_CMD --number "$SESSION_TAIL_PATHFILE"
         fi
     else
-        ShowAsEror 'no session log tail to display'
+        ShowAsError 'no session log tail to display'
     fi
 
     return 0
@@ -3096,7 +3096,7 @@ Log.Last.Paste()
             return 1
         fi
     else
-        ShowAsEror 'no last session log found'
+        ShowAsError 'no last session log found'
     fi
 
     return 0
@@ -3127,7 +3127,7 @@ Log.Tail.Paste()
             return 1
         fi
     else
-        ShowAsEror 'no session log tail found'
+        ShowAsError 'no session log tail found'
     fi
 
     return 0
@@ -3293,7 +3293,7 @@ QPKGs.Conflicts.Check()
         # shellcheck disable=2068
         for package in ${BASE_QPKG_CONFLICTS[@]}; do
             if [[ $(/sbin/getcfg "$package" Enable -u -f /etc/config/qpkg.conf) = 'TRUE' ]]; then
-                ShowAsEror "the '$package' QPKG is enabled. $(FormatAsScriptTitle) is incompatible with this package. Please consider 'stop'ing this QPKG in your App Center"
+                ShowAsError "the '$package' QPKG is enabled. $(FormatAsScriptTitle) is incompatible with this package. Please consider 'stop'ing this QPKG in your App Center"
                 DebugFuncExit 1; return
             fi
         done
@@ -5433,7 +5433,7 @@ MakePath()
     mkdir -p "${1:?empty}" 2>/dev/null; result_code=$?
 
     if [[ $result_code -ne 0 ]]; then
-        ShowAsEror "unable to create ${2:?empty} path $(FormatAsFileName "$1") $(FormatAsExitcode $result_code)"
+        ShowAsError "unable to create ${2:?empty} path $(FormatAsFileName "$1") $(FormatAsExitcode $result_code)"
         [[ $(type -t Self.SuggestIssue.Init) = function ]] && Self.SuggestIssue.Set
         return 1
     fi
@@ -5954,7 +5954,7 @@ AddFileToDebug()
 ShowAsProcLong()
     {
 
-    ShowAsProc "$1 (might take a while)" "${2:-}"
+    ShowAsProc "${1:-} (might take a while)" "${2:-}"
 
     }
 
@@ -5966,8 +5966,8 @@ ShowAsProc()
     [[ -n ${2:-} ]] && suffix=" $2"
 
     SmartCR
-    WriteToDisplayWait "$(ColourTextBrightOrange proc)" "$1 ...$suffix"
-    WriteToLog proc "$1 ...$suffix"
+    WriteToDisplayWait "$(ColourTextBrightOrange proc)" "${1:-} ...$suffix"
+    WriteToLog proc "${1:-} ...$suffix"
     [[ $(type -t Self.Debug.ToScreen.Init) = function ]] && Self.Debug.ToScreen.IsSet && Display
 
     }
@@ -5975,7 +5975,7 @@ ShowAsProc()
 ShowAsDebug()
     {
 
-    WriteToDisplayNew "$(ColourTextBlackOnCyan dbug)" "$1"
+    WriteToDisplayNew "$(ColourTextBlackOnCyan dbug)" "${1:-}"
 
     }
 
@@ -5985,23 +5985,23 @@ ShowAsInfo()
     # note to user
 
     SmartCR
-    WriteToDisplayNew "$(ColourTextBrightYellow note)" "$1"
-    WriteToLog note "$1"
+    WriteToDisplayNew "$(ColourTextBrightYellow note)" "${1:-}"
+    WriteToLog note "${1:-}"
 
     }
 
 ShowAsQuiz()
     {
 
-    WriteToDisplayWait "$(ColourTextBrightOrangeBlink quiz)" "$1: "
-    WriteToLog quiz "$1:"
+    WriteToDisplayWait "$(ColourTextBrightOrangeBlink quiz)" "${1:-}: "
+    WriteToLog quiz "${1:-}:"
 
     }
 
 ShowAsQuizDone()
     {
 
-    WriteToDisplayNew "$(ColourTextBrightOrange quiz)" "$1"
+    WriteToDisplayNew "$(ColourTextBrightOrange quiz)" "${1:-}"
 
     }
 
@@ -6011,7 +6011,7 @@ ShowAsDone()
     # process completed OK
 
     SmartCR
-    WriteToDisplayNew "$(ColourTextBrightGreen 'done')" "$1"
+    WriteToDisplayNew "$(ColourTextBrightGreen 'done')" "${1:-}"
     WriteToLog 'done' "$1"
 
     }
@@ -6023,7 +6023,7 @@ ShowAsWarn()
 
     SmartCR
 
-    local capitalised="$(Capitalise "$1")"
+    local capitalised="$(Capitalise "${1:-}")"
 
     WriteToDisplayNew "$(ColourTextBrightOrange warn)" "$capitalised."
     WriteToLog warn "$capitalised."
@@ -6033,10 +6033,10 @@ ShowAsWarn()
 ShowAsAbort()
     {
 
-    local capitalised="$(Capitalise "$1")"
+    local capitalised="$(Capitalise "${1:-}")"
 
-    WriteToDisplayNew "$(ColourTextBrightRed eror)" "$capitalised: aborting ..."
-    WriteToLog eror "$capitalised: aborting"
+    WriteToDisplayNew "$(ColourTextBrightRed bort)" "$capitalised: aborting ..."
+    WriteToLog bort "$capitalised: aborting"
     Self.Error.Set
 
     }
@@ -6048,24 +6048,24 @@ ShowAsFail()
 
     SmartCR
 
-    local capitalised="$(Capitalise "$1")"
+    local capitalised="$(Capitalise "${1:-}")"
 
     WriteToDisplayNew "$(ColourTextBrightRed fail)" "$capitalised."
     WriteToLog fail "$capitalised."
 
     }
 
-ShowAsEror()
+ShowAsError()
     {
 
     # fatal error
 
     SmartCR
 
-    local capitalised="$(Capitalise "$1")"
+    local capitalised="$(Capitalise "${1:-}")"
 
-    WriteToDisplayNew "$(ColourTextBrightRed eror)" "$capitalised."
-    WriteToLog eror "$capitalised."
+    WriteToDisplayNew "$(ColourTextBrightRed derp)" "$capitalised."
+    WriteToLog derp "$capitalised."
     Self.Error.Set
 
     }
@@ -6083,8 +6083,8 @@ ShowAsActionProgress()
     # $6 = verb (present)
     # $7 = 'long' (optional)
 
-    if [[ -n $1 && $1 != All ]]; then
-        local tier=" $(tr 'A-Z' 'a-z' <<< "$1")"
+    if [[ ${1:-} != All ]]; then
+        local tier=" $(tr 'A-Z' 'a-z' <<< "${1:-}")"
     else
         local tier=''
     fi
@@ -6130,8 +6130,8 @@ ShowAsActionResult()
     # $6 = verb (past)
     # $7 = 'long' (optional)
 
-    if [[ -n $1 && $1 != All ]]; then
-        local tier=" $(tr 'A-Z' 'a-z' <<< "$1")"
+    if [[ ${1:-} != All ]]; then
+        local tier=" $(tr 'A-Z' 'a-z' <<< "${1:-}")"
     else
         local tier=''
     fi
@@ -6162,7 +6162,7 @@ ShowAsActionResult()
 WriteAsDebug()
     {
 
-    WriteToLog dbug "$1"
+    WriteToLog dbug "${1:-}"
 
     }
 
@@ -6243,9 +6243,9 @@ ColourTextBrightGreen()
     {
 
     if [[ $(type -t Self.Boring.Init) = function ]] && Self.Boring.IsSet; then
-        echo -n "$1"
+        echo -n "${1:-}"
     else
-        echo -en '\033[1;32m'"$(ColourReset "$1")"
+        echo -en '\033[1;32m'"$(ColourReset "${1:-}")"
     fi
 
     }
@@ -6254,9 +6254,9 @@ ColourTextBrightYellow()
     {
 
     if [[ $(type -t Self.Boring.Init) = function ]] && Self.Boring.IsSet; then
-        echo -n "$1"
+        echo -n "${1:-}"
     else
-        echo -en '\033[1;33m'"$(ColourReset "$1")"
+        echo -en '\033[1;33m'"$(ColourReset "${1:-}")"
     fi
 
     }
@@ -6265,9 +6265,9 @@ ColourTextBrightOrange()
     {
 
     if [[ $(type -t Self.Boring.Init) = function ]] && Self.Boring.IsSet; then
-        echo -n "$1"
+        echo -n "${1:-}"
     else
-        echo -en '\033[1;38;5;214m'"$(ColourReset "$1")"
+        echo -en '\033[1;38;5;214m'"$(ColourReset "${1:-}")"
     fi
 
     }
@@ -6276,9 +6276,9 @@ ColourTextBrightOrangeBlink()
     {
 
     if [[ $(type -t Self.Boring.Init) = function ]] && Self.Boring.IsSet; then
-        echo -n "$1"
+        echo -n "${1:-}"
     else
-        echo -en '\033[1;5;38;5;214m'"$(ColourReset "$1")"
+        echo -en '\033[1;5;38;5;214m'"$(ColourReset "${1:-}")"
     fi
 
     }
@@ -6287,9 +6287,9 @@ ColourTextBrightRed()
     {
 
     if [[ $(type -t Self.Boring.Init) = function ]] && Self.Boring.IsSet; then
-        echo -n "$1"
+        echo -n "${1:-}"
     else
-        echo -en '\033[1;31m'"$(ColourReset "$1")"
+        echo -en '\033[1;31m'"$(ColourReset "${1:-}")"
     fi
 
     }
@@ -6298,9 +6298,9 @@ ColourTextBrightRedBlink()
     {
 
     if [[ $(type -t Self.Boring.Init) = function ]] && Self.Boring.IsSet; then
-        echo -n "$1"
+        echo -n "${1:-}"
     else
-        echo -en '\033[1;5;31m'"$(ColourReset "$1")"
+        echo -en '\033[1;5;31m'"$(ColourReset "${1:-}")"
     fi
 
     }
@@ -6309,9 +6309,9 @@ ColourTextUnderlinedCyan()
     {
 
     if [[ $(type -t Self.Boring.Init) = function ]] && Self.Boring.IsSet; then
-        echo -n "$1"
+        echo -n "${1:-}"
     else
-        echo -en '\033[4;36m'"$(ColourReset "$1")"
+        echo -en '\033[4;36m'"$(ColourReset "${1:-}")"
     fi
 
     }
@@ -6320,9 +6320,9 @@ ColourTextBlackOnCyan()
     {
 
     if [[ $(type -t Self.Boring.Init) = function ]] && Self.Boring.IsSet; then
-        echo -n "$1"
+        echo -n "${1:-}"
     else
-        echo -en '\033[30;46m'"$(ColourReset "$1")"
+        echo -en '\033[30;46m'"$(ColourReset "${1:-}")"
     fi
 
     }
@@ -6331,9 +6331,9 @@ ColourTextBrightWhite()
     {
 
     if [[ $(type -t Self.Boring.Init) = function ]] && Self.Boring.IsSet; then
-        echo -n "$1"
+        echo -n "${1:-}"
     else
-        echo -en '\033[1;97m'"$(ColourReset "$1")"
+        echo -en '\033[1;97m'"$(ColourReset "${1:-}")"
     fi
 
     }
