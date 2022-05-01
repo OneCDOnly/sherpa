@@ -182,7 +182,7 @@ Self.Init()
     readonly SESSION_LAST_PATHFILE=$LOGS_PATH/session.last.log
     readonly SESSION_TAIL_PATHFILE=$LOGS_PATH/session.tail.log
 
-    MANAGEMENT_ACTIONS=(Check List Paste Reset Status)
+    MANAGEMENT_ACTIONS=(Check List Paste Status)
 
     PACKAGE_SCOPES=(All Dependent HasDependents Installable Standalone SupportBackup SupportUpdateOnRestart Upgradable)
     PACKAGE_STATES=(BackedUp Cleaned Downloaded Enabled Installed Missing Started)
