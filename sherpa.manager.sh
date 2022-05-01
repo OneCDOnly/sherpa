@@ -57,7 +57,7 @@ Self.Init()
     IsSU || return
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220501f
+    local -r SCRIPT_VERSION=220501g
     readonly PROJECT_BRANCH=main
 
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
@@ -6083,8 +6083,8 @@ ShowAsActionProgress()
     # $6 = verb (present)
     # $7 = 'long' (optional)
 
-    if [[ ${1:-} != All ]]; then
-        local tier=" $(tr 'A-Z' 'a-z' <<< "${1:-}")"
+    if [[ -n $1 && $1 != All ]]; then
+        local tier=" $(tr 'A-Z' 'a-z' <<< "$1")"
     else
         local tier=''
     fi
@@ -6130,8 +6130,8 @@ ShowAsActionResult()
     # $6 = verb (past)
     # $7 = 'long' (optional)
 
-    if [[ ${1:-} != All ]]; then
-        local tier=" $(tr 'A-Z' 'a-z' <<< "${1:-}")"
+    if [[ -n $1 && $1 != All ]]; then
+        local tier=" $(tr 'A-Z' 'a-z' <<< "$1")"
     else
         local tier=''
     fi
