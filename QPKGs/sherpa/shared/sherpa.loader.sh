@@ -36,7 +36,7 @@ Init()
     IsQNAP || return
 
     local -r PROJECT_NAME=sherpa
-    export LOADER_SCRIPT_VERSION=220328b
+    export LOADER_SCRIPT_VERSION=220501
     export LOADER_SCRIPT_PPID=$PPID
     local -r PROJECT_BRANCH=main
 
@@ -191,5 +191,3 @@ ColourReset()
 Init || exit
 EnsureFileIsCurrent "$MANAGER_PATHFILE" "$MANAGER_ARCHIVE_URL" "$MANAGER_ARCHIVE_PATHFILE"
 eval '/usr/bin/env bash' "$MANAGER_PATHFILE" "$*"
-
-exit 0

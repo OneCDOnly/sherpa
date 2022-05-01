@@ -73,7 +73,6 @@ case $1 in
         ;;
     *)
         echo -e "\n Usage: $0 {start|stop|restart}\n"
-        ;;
 esac
 
 SetServiceOperationResult ok
