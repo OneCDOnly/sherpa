@@ -53,13 +53,12 @@ Self.Init()
 
     DebugFuncEntry
 
-    IsQNAP || return
-    IsSU || return
-
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220501g
+    local -r SCRIPT_VERSION=220523
     readonly PROJECT_BRANCH=main
 
+    IsQNAP || return
+    IsSU || return
     ClaimLockFile /var/run/$PROJECT_NAME.lock || return
 
     export LC_ALL=''    # need to disable ALL to enable setting of individual vars
@@ -6063,9 +6062,10 @@ ShowAsError()
     SmartCR
 
     local capitalised="$(Capitalise "${1:-}")"
+    [[ ${1: -1} != ':' ]] && capitalised+='.'
 
-    WriteToDisplayNew "$(ColourTextBrightRed derp)" "$capitalised."
-    WriteToLog derp "$capitalised."
+    WriteToDisplayNew "$(ColourTextBrightRed derp)" "$capitalised"
+    WriteToLog derp "$capitalised"
     Self.Error.Set
 
     }
