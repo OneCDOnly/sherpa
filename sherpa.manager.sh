@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220523
+    local -r SCRIPT_VERSION=220608
     readonly PROJECT_BRANCH=main
 
     IsQNAP || return
@@ -2265,7 +2265,7 @@ PIPs.Install()
         # KLUDGE: force recompilation of 'sabyenc3' package so it's recognised by SABnzbd: https://forums.sabnzbd.org/viewtopic.php?p=121214#p121214
         ShowAsActionProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
 
-        exec_cmd="$PIP_CMD install --no-input --force-reinstall --no-binary :all: sabyenc3==4.0.2 --cache-dir $PIP_CACHE_PATH"
+        exec_cmd="$PIP_CMD install --no-input --force-reinstall --no-binary :all: sabyenc3==5.4.2 --cache-dir $PIP_CACHE_PATH"
         desc="'Python3 sabyenc3' module"
         log_pathfile=$LOGS_PATH/py3-modules.sabyenc3.$REINSTALL_LOG_FILE
         DebugAsProc "reinstalling $desc"
