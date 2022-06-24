@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220608
+    local -r SCRIPT_VERSION=220625
     readonly PROJECT_BRANCH=main
 
     IsQNAP || return
@@ -3293,7 +3293,7 @@ QPKGs.Conflicts.Check()
         for package in ${BASE_QPKG_CONFLICTS[@]}; do
             if [[ $(/sbin/getcfg "$package" Enable -u -f /etc/config/qpkg.conf) = 'TRUE' ]]; then
                 ShowAsError "the '$package' QPKG is enabled. $(FormatAsScriptTitle) is incompatible with this package. Please consider 'stop'ing this QPKG in your App Center"
-                DebugFuncExit 1; return
+                return 1
             fi
         done
     fi
