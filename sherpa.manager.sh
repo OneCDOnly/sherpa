@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220625
+    local -r SCRIPT_VERSION=220629
     readonly PROJECT_BRANCH=main
 
     IsQNAP || return
@@ -2320,7 +2320,7 @@ OpenIPKGArchive()
 
     if [[ ! -e $EXTERNAL_PACKAGES_ARCHIVE_PATHFILE ]]; then
         ShowAsError 'unable to locate the IPKG list file'
-        DebugFuncExit 1; return
+        return 1
     fi
 
     RunAndLog "/usr/local/sbin/7z e -o$($DIRNAME_CMD "$EXTERNAL_PACKAGES_PATHFILE") $EXTERNAL_PACKAGES_ARCHIVE_PATHFILE" "$WORK_PATH/ipkg.list.archive.extract" log:failure-only
@@ -2328,7 +2328,7 @@ OpenIPKGArchive()
 
     if [[ ! -e $EXTERNAL_PACKAGES_PATHFILE ]]; then
         ShowAsError 'unable to open the IPKG list file'
-        DebugFuncExit 1; return
+        return 1
     fi
 
     return 0
