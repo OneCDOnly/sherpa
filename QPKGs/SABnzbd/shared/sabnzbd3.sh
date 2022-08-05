@@ -420,7 +420,8 @@ PullGitRepo()
     if [[ ! -d $QPKG_GIT_PATH/.git ]]; then
         ExecuteAndLog "clone $(FormatAsPackageName "$1") from remote repository" "cd /tmp; /opt/bin/git clone --branch $3 $DEPTH -c advice.detachedHead=false $GIT_HTTPS_URL $QPKG_GIT_PATH"
     else
-        ExecuteAndLog "update $(FormatAsPackageName "$1") from remote repository" "cd /tmp; /opt/bin/git -C $QPKG_GIT_PATH fetch; /opt/bin/git -C $QPKG_GIT_PATH reset --hard HEAD; /opt/bin/git -C $QPKG_GIT_PATH merge '@{u}'"
+        # latest effort at resolving local corruption, source: https://stackoverflow.com/a/10170195
+        ExecuteAndLog "update $(FormatAsPackageName "$1") from remote repository" "cd /tmp; /opt/bin/git -C $QPKG_GIT_PATH clean -f; /opt/bin/git -C $QPKG_GIT_PATH reset --hard origin/$3"
     fi
 
     installed_branch=$(/opt/bin/git -C "$QPKG_GIT_PATH" branch | /bin/grep '^\*' | /bin/sed 's|^\* ||')
