@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220629
+    local -r SCRIPT_VERSION=220805
     readonly PROJECT_BRANCH=main
 
     IsQNAP || return
@@ -638,7 +638,7 @@ Tiers.Process()
                 ;;
             Addon)
                 for action in Install Reinstall Upgrade; do
-                    if QPKGs.AcTo${action}.IsAny || QPKGs.AcOk${action}.IsAny || QPKGs.Ac${action}.ScAll.IsSet; then
+                    if QPKGs.AcTo${action}.IsAny || QPKGs.Ac${action}.ScAll.IsSet; then
                         IPKGs.Upgrade.Set
                         IPKGs.Install.Set
                         PIPs.Install.Set
