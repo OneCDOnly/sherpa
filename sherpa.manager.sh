@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220805
+    local -r SCRIPT_VERSION=220805b
     readonly PROJECT_BRANCH=main
 
     IsQNAP || return
@@ -186,7 +186,7 @@ Self.Init()
     PACKAGE_SCOPES=(All Dependent HasDependents Installable Standalone SupportBackup SupportUpdateOnRestart Upgradable)
     PACKAGE_STATES=(BackedUp Cleaned Downloaded Enabled Installed Missing Started)
     PACKAGE_STATES_TEMPORARY=(Starting Stopping Restarting)
-    PACKAGE_ACTIONS=(Backup Clean Disable Download Enable Install Rebuild Reinstall Restart Restore Start Stop Uninstall Upgrade)
+    PACKAGE_ACTIONS=(Download Rebuild Backup Stop Disable Uninstall Upgrade Reinstall Install Restore Clean Enable Start Restart)
     PACKAGE_TIERS=(Standalone Addon Dependent)
 
     readonly MANAGEMENT_ACTIONS
@@ -549,7 +549,7 @@ Self.Validate()
 
 # package processing priorities shall be:
 
-#   _. rebuild dependents           (meta-action: 'install' QPKG and 'restore' config only if package has a backup file)
+#   _. rebuild dependents           (meta-action: 'install' QPKG and 'restore' config, but only if package has a backup file)
 
 #  19. backup all                   (highest: most-important)
 #  18. stop dependents

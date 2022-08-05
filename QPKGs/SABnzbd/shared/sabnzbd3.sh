@@ -41,9 +41,9 @@ Init()
 
     # remaining environment
     readonly DAEMON_PID_PATHFILE=/var/run/$QPKG_NAME.pid
+    readonly APP_VERSION_STORE_PATHFILE=$QPKG_PATH/config/version.stored
     readonly INSTALLED_RAM_KB=$(/bin/grep MemTotal /proc/meminfo | cut -f2 -d':' | /bin/sed 's|kB||;s| ||g')
     readonly QPKG_INI_PATHFILE=$QPKG_PATH/config/config.ini
-    readonly APP_VERSION_STORE_PATHFILE=$QPKG_PATH/config/version.stored
     readonly QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.def
     readonly LAUNCHER="cd $QPKG_REPO_PATH; $PYTHON $DAEMON_PATHFILE --daemon --browser 0 --config-file $QPKG_INI_PATHFILE --pidfile $DAEMON_PID_PATHFILE"
     readonly QPKG_VERSION=$(/sbin/getcfg $QPKG_NAME Version -f /etc/config/qpkg.conf)
