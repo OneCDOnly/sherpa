@@ -150,6 +150,13 @@ StartQPKG()
         return 1
     elif IsNotPortAvailable $ui_port || IsNotPortAvailable $ui_port_secure; then
         DisplayErrCommitAllLogs "unable to start daemon: ports $ui_port or $ui_port_secure are already in use!"
+
+        portpid=$(/usr/sbin/lsof -i :$ui_port -Fp)
+        DisplayErrCommitAllLogs "process details for port $ui_port: \"$([[ -n $portpid ]] && /bin/tr '\000' ' ' </proc/${portpid/p/}/cmdline)\""
+
+        portpid=$(/usr/sbin/lsof -i :$ui_port_secure -Fp)
+        DisplayErrCommitAllLogs "process details for secure port $ui_port_secure: \"$([[ -n $portpid ]] && /bin/tr '\000' ' ' </proc/${portpid/p/}/cmdline)\""
+
         SetError
         return 1
     fi
