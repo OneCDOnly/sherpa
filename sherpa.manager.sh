@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220805b
+    local -r SCRIPT_VERSION=220807
     readonly PROJECT_BRANCH=main
 
     IsQNAP || return
@@ -4682,7 +4682,6 @@ QPKG.Start()
         MarkStateAsStarted "$PACKAGE_NAME"
         [[ $PACKAGE_NAME = Entware ]] && ModPathToEntware
     else
-        ShowAsWarn "unable to start $(FormatAsPackageName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
         MarkActionAsError "$PACKAGE_NAME" start
         result_code=1    # remap to 1
     fi
@@ -4745,7 +4744,6 @@ QPKG.Stop()
         MarkActionAsDone "$PACKAGE_NAME" stop
         MarkStateAsStopped "$PACKAGE_NAME"
     else
-        ShowAsWarn "unable to stop $(FormatAsPackageName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
         MarkActionAsError "$PACKAGE_NAME" stop
         result_code=1    # remap to 1
     fi
@@ -4767,7 +4765,6 @@ QPKG.Enable()
     result_code=$?
 
     if [[ $result_code -ne 0 ]]; then
-        ShowAsWarn "unable to enable $(FormatAsPackageName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
         result_code=1    # remap to 1
     fi
 
@@ -4787,7 +4784,6 @@ QPKG.Disable()
     result_code=$?
 
     if [[ $result_code -ne 0 ]]; then
-        ShowAsWarn "unable to disable $(FormatAsPackageName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
         result_code=1    # remap to 1
     fi
 
@@ -4837,7 +4833,6 @@ QPKG.Backup()
         QPKGs.IsNtBackedUp.Remove "$PACKAGE_NAME"
         QPKGs.IsBackedUp.Add "$PACKAGE_NAME"
     else
-        DebugAsWarn "unable to backup $(FormatAsPackageName "$PACKAGE_NAME") configuration $(FormatAsExitcode $result_code)"
         MarkActionAsError "$PACKAGE_NAME" backup
         result_code=1    # remap to 1
     fi
@@ -4884,7 +4879,6 @@ QPKG.Restore()
         MarkActionAsDone "$PACKAGE_NAME" restore
         QPKG.StoreServiceStatus "$PACKAGE_NAME"
     else
-        DebugAsWarn "unable to restore $(FormatAsPackageName "$PACKAGE_NAME") configuration $(FormatAsExitcode $result_code)"
         MarkActionAsError "$PACKAGE_NAME" restore
     fi
 
@@ -4934,7 +4928,6 @@ QPKG.Clean()
         QPKGs.IsNtCleaned.Remove "$PACKAGE_NAME"
         QPKGs.IsCleaned.Add "$PACKAGE_NAME"
     else
-        DebugAsWarn "unable to clean $(FormatAsPackageName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
         MarkActionAsError "$PACKAGE_NAME" clean
         result_code=1    # remap to 1
     fi
