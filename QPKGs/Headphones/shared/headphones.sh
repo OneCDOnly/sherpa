@@ -41,7 +41,7 @@ Init()
 
     # remaining environment
     readonly DAEMON_PID_PATHFILE=/var/run/$QPKG_NAME.pid
-    readonly APP_VERSION_STORE_PATHFILE=$(/usr/bin/dirname "$APP_VERSION_PATHFILE")/version.stored
+    readonly APP_VERSION_STORE_PATHFILE=$QPKG_PATH/config/version.stored
     readonly INSTALLED_RAM_KB=$(/bin/grep MemTotal /proc/meminfo | cut -f2 -d':' | /bin/sed 's|kB||;s| ||g')
     readonly QPKG_INI_PATHFILE=$QPKG_PATH/config/config.ini
     readonly QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.def
@@ -150,6 +150,13 @@ StartQPKG()
         return 1
     elif IsNotPortAvailable $ui_port || IsNotPortAvailable $ui_port_secure; then
         DisplayErrCommitAllLogs "unable to start daemon: ports $ui_port or $ui_port_secure are already in use!"
+
+        portpid=$(/usr/sbin/lsof -i :$ui_port -Fp)
+        DisplayErrCommitAllLogs "process details for port $ui_port: \"$([[ -n $portpid ]] && /bin/tr '\000' ' ' </proc/${portpid/p/}/cmdline)\""
+
+        portpid=$(/usr/sbin/lsof -i :$ui_port_secure -Fp)
+        DisplayErrCommitAllLogs "process details for secure port $ui_port_secure: \"$([[ -n $portpid ]] && /bin/tr '\000' ' ' </proc/${portpid/p/}/cmdline)\""
+
         SetError
         return 1
     fi
@@ -353,6 +360,41 @@ DisableOpkgDaemonStart()
 
     }
 
+UpdateLanguages()
+    {
+
+    # run [tools/make_mo.py] if SABnzbd version number has changed since last run
+
+    LoadAppVersion
+
+    [[ -e $APP_VERSION_STORE_PATHFILE && $(<"$APP_VERSION_STORE_PATHFILE") = "$app_version" && -d $QPKG_REPO_PATH/locale ]] && return 0
+
+    ExecuteAndLog "update $(FormatAsPackageName $QPKG_NAME) language translations" "cd $QPKG_REPO_PATH; $PYTHON $QPKG_REPO_PATH/tools/make_mo.py" && SaveAppVersion
+
+    }
+
+ImportFromSAB2()
+    {
+
+    CommitOperationToLog
+
+    if [[ -e /etc/init.d/sabnzbd.sh ]]; then
+        /etc/init.d/sabnzbd.sh stop
+    elif [[ -e /etc/init.d/sabnzbd2.sh ]]; then
+        /etc/init.d/sabnzbd2.sh stop
+    else
+        DisplayCommitToLog "can't find a compatible version of $(FormatAsPackageName SABnzbdplus) to import from"
+        SetError
+        return 1
+    fi
+
+    ExecuteAndLog 'update SABnzbd2 configuration backup for SABnzbd3' "/bin/tar --create --gzip --file=$BACKUP_PATHFILE --directory=$(getcfg SABnzbdplus Install_Path -f /etc/config/qpkg.conf)/config ." log:everything
+    eval "$0" restore
+
+    return 0
+
+    }
+
 PullGitRepo()
     {
 
@@ -385,7 +427,8 @@ PullGitRepo()
     if [[ ! -d $QPKG_GIT_PATH/.git ]]; then
         ExecuteAndLog "clone $(FormatAsPackageName "$1") from remote repository" "cd /tmp; /opt/bin/git clone --branch $3 $DEPTH -c advice.detachedHead=false $GIT_HTTPS_URL $QPKG_GIT_PATH"
     else
-        ExecuteAndLog "update $(FormatAsPackageName "$1") from remote repository" "cd /tmp; /opt/bin/git -C $QPKG_GIT_PATH fetch; /opt/bin/git -C $QPKG_GIT_PATH reset --hard HEAD; /opt/bin/git -C $QPKG_GIT_PATH merge '@{u}'"
+        # latest effort at resolving local corruption, source: https://stackoverflow.com/a/10170195
+        ExecuteAndLog "update $(FormatAsPackageName "$1") from remote repository" "cd /tmp; /opt/bin/git -C $QPKG_GIT_PATH clean -f; /opt/bin/git -C $QPKG_GIT_PATH reset --hard origin/$3"
     fi
 
     installed_branch=$(/opt/bin/git -C "$QPKG_GIT_PATH" branch | /bin/grep '^\*' | /bin/sed 's|^\* ||')
@@ -1260,7 +1303,6 @@ FormatAsPlural()
 
     }
 
-#set -x
 Init
 
 if IsNotError; then
@@ -1356,7 +1398,7 @@ if IsNotError; then
             ShowHelp
     esac
 fi
-#set +x
+
 if IsError; then
     SetServiceOperationResultFailed
     exit 1

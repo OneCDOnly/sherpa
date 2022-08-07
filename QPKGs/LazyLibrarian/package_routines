@@ -92,9 +92,19 @@
 #SYS_WEB_SHARE=""
 #SYS_WEB_PATH=""
 ## Path to ipkg or opkg package tool if installed.
-#CMD_PKG_TOOL="/opt/bin/ipkg"
+#CMD_PKG_TOOL=
 #
 ######################################################################
 # All package specific functions shall call 'err_log MSG' if an error
 # is detected that shall terminate the installation.
 ######################################################################
+#
+######################################################################
+# Define any package specific operations that shall be performed when
+# the package is removed.
+######################################################################
+PKG_PRE_REMOVE="{
+
+[[ -e /var/log/$QPKG_NAME.log ]] && rm /var/log/$QPKG_NAME.log
+
+}"

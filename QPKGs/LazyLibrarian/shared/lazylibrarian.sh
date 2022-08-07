@@ -41,7 +41,7 @@ Init()
 
     # remaining environment
     readonly DAEMON_PID_PATHFILE=/var/run/$QPKG_NAME.pid
-    readonly APP_VERSION_STORE_PATHFILE=$(/usr/bin/dirname "$APP_VERSION_PATHFILE")/version.stored
+    readonly APP_VERSION_STORE_PATHFILE=$QPKG_PATH/config/version.stored
     readonly INSTALLED_RAM_KB=$(/bin/grep MemTotal /proc/meminfo | cut -f2 -d':' | /bin/sed 's|kB||;s| ||g')
     readonly QPKG_INI_PATHFILE=$QPKG_PATH/config/config.ini
     readonly QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.def
@@ -146,9 +146,18 @@ StartQPKG()
 
     if [[ $ui_port -le 0 && $ui_port_secure -le 0 ]]; then
         DisplayErrCommitAllLogs 'unable to start daemon: no UI port was specified!'
+        SetError
         return 1
     elif IsNotPortAvailable $ui_port || IsNotPortAvailable $ui_port_secure; then
         DisplayErrCommitAllLogs "unable to start daemon: ports $ui_port or $ui_port_secure are already in use!"
+
+        portpid=$(/usr/sbin/lsof -i :$ui_port -Fp)
+        DisplayErrCommitAllLogs "process details for port $ui_port: \"$([[ -n $portpid ]] && /bin/tr '\000' ' ' </proc/${portpid/p/}/cmdline)\""
+
+        portpid=$(/usr/sbin/lsof -i :$ui_port_secure -Fp)
+        DisplayErrCommitAllLogs "process details for secure port $ui_port_secure: \"$([[ -n $portpid ]] && /bin/tr '\000' ' ' </proc/${portpid/p/}/cmdline)\""
+
+        SetError
         return 1
     fi
 
@@ -172,45 +181,45 @@ StopQPKG()
         CommitOperationToLog
     fi
 
-    IsNotDaemonActive && return
+    if IsDaemonActive; then
+        if IsRestart || IsRestore || IsClean || IsReset; then
+            SetRestartPending
+        fi
 
-    if IsRestart || IsRestore || IsClean || IsReset; then
+        local acc=0
+        local pid=0
         SetRestartPending
-    fi
 
-    local acc=0
-    local pid=0
-    SetRestartPending
+        pid=$(<$DAEMON_PID_PATHFILE)
+        kill "$pid"
+        DisplayWaitCommitToLog 'stop daemon with SIGTERM:'
+        DisplayWait "(no-more than $DAEMON_STOP_TIMEOUT seconds):"
 
-    pid=$(<$DAEMON_PID_PATHFILE)
-    kill "$pid"
-    DisplayWaitCommitToLog 'stop daemon with SIGTERM:'
-    DisplayWait "(no-more than $DAEMON_STOP_TIMEOUT seconds):"
+        while true; do
+            while [[ -d /proc/$pid ]]; do
+                sleep 1
+                ((acc++))
+                DisplayWait "$acc,"
 
-    while true; do
-        while [[ -d /proc/$pid ]]; do
-            sleep 1
-            ((acc++))
-            DisplayWait "$acc,"
+                if [[ $acc -ge $DAEMON_STOP_TIMEOUT ]]; then
+                    DisplayCommitToLog 'failed!'
+                    DisplayCommitToLog 'stop daemon with SIGKILL'
+                    kill -9 "$pid" 2> /dev/null
+                    [[ -f $DAEMON_PID_PATHFILE ]] && rm -f $DAEMON_PID_PATHFILE
+                    break 2
+                fi
+            done
 
-            if [[ $acc -ge $DAEMON_STOP_TIMEOUT ]]; then
-                DisplayCommitToLog 'failed!'
-                DisplayCommitToLog 'stop daemon with SIGKILL'
-                kill -9 "$pid" 2> /dev/null
-                [[ -f $DAEMON_PID_PATHFILE ]] && rm -f $DAEMON_PID_PATHFILE
-                break 2
-            fi
+            [[ -f $DAEMON_PID_PATHFILE ]] && rm -f $DAEMON_PID_PATHFILE
+            Display 'OK'
+            CommitLog "stopped OK in $acc seconds"
+
+            CommitInfoToSysLog "stop daemon: OK."
+            break
         done
 
-        [[ -f $DAEMON_PID_PATHFILE ]] && rm -f $DAEMON_PID_PATHFILE
-        Display 'OK'
-        CommitLog "stopped OK in $acc seconds"
-
-        CommitInfoToSysLog "stop daemon: OK."
-        break
-    done
-
-    IsNotDaemonActive || return
+        IsNotDaemonActive || return
+    fi
 
     return 0
 
@@ -220,7 +229,7 @@ BackupConfig()
     {
 
     CommitOperationToLog
-    ExecuteAndLog 'update configuration backup' "/bin/tar --create --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config ." log:everything
+    ExecuteAndLog 'update configuration backup' "/bin/tar --create --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config ." log:everything || SetError
 
     }
 
@@ -236,7 +245,7 @@ RestoreConfig()
     fi
 
     StopQPKG
-    ExecuteAndLog 'restore configuration backup' "/bin/tar --extract --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config" log:everything
+    ExecuteAndLog 'restore configuration backup' "/bin/tar --extract --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config" log:everything || SetError
     StartQPKG
 
     }
@@ -247,7 +256,7 @@ ResetConfig()
     CommitOperationToLog
 
     StopQPKG
-    ExecuteAndLog 'reset configuration' "mv $QPKG_INI_DEFAULT_PATHFILE $QPKG_PATH; rm -rf $QPKG_PATH/config/*; mv $QPKG_PATH/$(/usr/bin/basename "$QPKG_INI_DEFAULT_PATHFILE") $QPKG_INI_DEFAULT_PATHFILE" log:everything
+    ExecuteAndLog 'reset configuration' "mv $QPKG_INI_DEFAULT_PATHFILE $QPKG_PATH; rm -rf $QPKG_PATH/config/*; mv $QPKG_PATH/$(/usr/bin/basename "$QPKG_INI_DEFAULT_PATHFILE") $QPKG_INI_DEFAULT_PATHFILE" log:everything || SetError
     StartQPKG
 
     }
@@ -327,11 +336,17 @@ StatusQPKG()
     if IsDaemonActive; then
         if [[ -n $DAEMON_PATHFILE || -n $SOURCE_GIT_URL ]]; then
             LoadUIPorts qts
-            CheckPorts || SetError
+            if ! CheckPorts; then
+                SetError
+                return 1
+            fi
         fi
     else
         SetError
+        return 1
     fi
+
+    return 0
 
     }
 
@@ -340,7 +355,7 @@ DisableOpkgDaemonStart()
 
     if [[ -n $ORIG_DAEMON_SERVICE_SCRIPT && -x $ORIG_DAEMON_SERVICE_SCRIPT ]]; then
         $ORIG_DAEMON_SERVICE_SCRIPT stop        # stop default daemon
-        chmod -x $ORIG_DAEMON_SERVICE_SCRIPT    # ... and ensure Entware doesn't re-launch it on startup
+        chmod -x "$ORIG_DAEMON_SERVICE_SCRIPT"  # ... and ensure Entware doesn't re-launch it on startup
     fi
 
     }
@@ -369,10 +384,11 @@ ImportFromSAB2()
         /etc/init.d/sabnzbd2.sh stop
     else
         DisplayCommitToLog "can't find a compatible version of $(FormatAsPackageName SABnzbdplus) to import from"
+        SetError
         return 1
     fi
 
-    ExecuteAndLog "update SABnzbd2 configuration backup for SABnzbd3" "/bin/tar --create --gzip --file=$BACKUP_PATHFILE --directory=$(getcfg SABnzbdplus Install_Path -f /etc/config/qpkg.conf)/config ." log:everything
+    ExecuteAndLog 'update SABnzbd2 configuration backup for SABnzbd3' "/bin/tar --create --gzip --file=$BACKUP_PATHFILE --directory=$(getcfg SABnzbdplus Install_Path -f /etc/config/qpkg.conf)/config ." log:everything
     eval "$0" restore
 
     return 0
@@ -411,7 +427,8 @@ PullGitRepo()
     if [[ ! -d $QPKG_GIT_PATH/.git ]]; then
         ExecuteAndLog "clone $(FormatAsPackageName "$1") from remote repository" "cd /tmp; /opt/bin/git clone --branch $3 $DEPTH -c advice.detachedHead=false $GIT_HTTPS_URL $QPKG_GIT_PATH"
     else
-        ExecuteAndLog "update $(FormatAsPackageName "$1") from remote repository" "cd /tmp; /opt/bin/git -C $QPKG_GIT_PATH fetch; /opt/bin/git -C $QPKG_GIT_PATH reset --hard HEAD; /opt/bin/git -C $QPKG_GIT_PATH merge '@{u}'"
+        # latest effort at resolving local corruption, source: https://stackoverflow.com/a/10170195
+        ExecuteAndLog "update $(FormatAsPackageName "$1") from remote repository" "cd /tmp; /opt/bin/git -C $QPKG_GIT_PATH clean -f; /opt/bin/git -C $QPKG_GIT_PATH reset --hard origin/$3"
     fi
 
     installed_branch=$(/opt/bin/git -C "$QPKG_GIT_PATH" branch | /bin/grep '^\*' | /bin/sed 's|^\* ||')
@@ -459,7 +476,7 @@ IsQNAP()
 WaitForGit()
     {
 
-    if WaitForFileToAppear "/opt/bin/git" "$GIT_APPEAR_TIMEOUT"; then
+    if WaitForFileToAppear '/opt/bin/git' "$GIT_APPEAR_TIMEOUT"; then
         export PATH="$OPKG_PATH:$(/bin/sed "s|$OPKG_PATH||" <<< "$PATH")"
         return 0
     else
@@ -728,7 +745,7 @@ IsPackageActive()
     # $? = 1 : package is 'stopped'
 
     if [[ -e $BACKUP_SERVICE_PATHFILE ]]; then
-        DisplayCommitToLog "package: IS active"
+        DisplayCommitToLog 'package: IS active'
         return
     fi
 
@@ -971,7 +988,6 @@ SetRestartPending()
     {
 
     IsRestartPending && return
-
     _restart_pending_flag=true
 
     }
@@ -980,7 +996,6 @@ UnsetRestartPending()
     {
 
     IsNotRestartPending && return
-
     _restart_pending_flag=false
 
     }
@@ -1003,7 +1018,6 @@ SetError()
     {
 
     IsError && return
-
     _error_flag=true
 
     }
@@ -1012,7 +1026,6 @@ UnsetError()
     {
 
     IsNotError && return
-
     _error_flag=false
 
     }
@@ -1199,7 +1212,7 @@ DisplayWait()
 CommitOperationToLog()
     {
 
-    CommitLog "$(SessionSeparator "datetime:'$(date)',request:'$service_operation',QPKG:'$QPKG_VERSION',app:'$app_version'")"
+    CommitLog "$(SessionSeparator "datetime:'$(date)', request:'$service_operation', QPKG:'$QPKG_VERSION', app:'$app_version'")"
 
     }
 
@@ -1286,7 +1299,7 @@ ColourReset()
 FormatAsPlural()
     {
 
-    [[ $1 -ne 1 ]] && echo 's'
+    [[ $1 -ne 1 ]] && echo s
 
     }
 
@@ -1295,8 +1308,8 @@ Init
 if IsNotError; then
     case $1 in
         start|--start)
-            if [[ $(/sbin/getcfg $QPKG_NAME Enable -u -d FALSE -f /etc/config/qpkg.conf) != "TRUE" ]]; then
-                echo "$QPKG_NAME is disabled. You must first enable with: qpkg_service enable $QPKG_NAME"
+            if [[ $(/sbin/getcfg $QPKG_NAME Enable -u -d FALSE -f /etc/config/qpkg.conf) != 'TRUE' ]]; then
+                echo "The $(FormatAsPackageName $QPKG_NAME) QPKG is disabled. Please enable it first with: qpkg_service enable $QPKG_NAME"
                 SetError
             fi
 
@@ -1305,25 +1318,26 @@ if IsNotError; then
             if [[ ! -e $DAEMON_PATHFILE && -e $(/usr/bin/dirname "$DAEMON_PATHFILE")/SickBeard.py ]]; then
                 CleanLocalClone
             else
-                StartQPKG || SetError
+                StartQPKG
             fi
             ;;
         stop|--stop)
             SetServiceOperation stopping
-            StopQPKG || SetError
+            StopQPKG
             ;;
         r|-r|restart|--restart)
             SetServiceOperation restarting
-            { StopQPKG; StartQPKG ;} || SetError
+            StopQPKG
+            StartQPKG
             ;;
         s|-s|status|--status)
             SetServiceOperation status
-            StatusQPKG || SetError
+            StatusQPKG
             ;;
         b|-b|backup|--backup|backup-config|--backup-config)
             if [[ -n $BACKUP_PATHFILE ]]; then
                 SetServiceOperation backing-up
-                BackupConfig || SetError
+                BackupConfig
             else
                 SetServiceOperation none
                 ShowHelp
@@ -1332,7 +1346,7 @@ if IsNotError; then
         reset-config|--reset-config)
             if [[ -n $QPKG_INI_PATHFILE ]]; then
                 SetServiceOperation resetting-config
-                ResetConfig || SetError
+                ResetConfig
             else
                 SetServiceOperation none
                 ShowHelp
@@ -1341,7 +1355,7 @@ if IsNotError; then
         restore|--restore|restore-config|--restore-config)
             if [[ -n $BACKUP_PATHFILE ]]; then
                 SetServiceOperation restoring
-                RestoreConfig || SetError
+                RestoreConfig
             else
                 SetServiceOperation none
                 ShowHelp
@@ -1353,9 +1367,9 @@ if IsNotError; then
 
                 if [[ $QPKG_NAME = nzbToMedia ]]; then
                     # nzbToMedia stores the config file in the repo location, so save it and restore again after new clone is complete
-                    { BackupConfig; CleanLocalClone; RestoreConfig ;} || SetError
+                    BackupConfig && CleanLocalClone && RestoreConfig
                 else
-                    CleanLocalClone || SetError
+                    CleanLocalClone
                 fi
             else
                 SetServiceOperation none
@@ -1373,7 +1387,7 @@ if IsNotError; then
         import|--import)
             if [[ $QPKG_NAME = SABnzbd ]]; then
                 SetServiceOperation importing
-                ImportFromSAB2 || SetError
+                ImportFromSAB2
             else
                 SetServiceOperation none
                 ShowHelp
@@ -1382,7 +1396,6 @@ if IsNotError; then
         *)
             SetServiceOperation none
             ShowHelp
-            ;;
     esac
 fi
 
