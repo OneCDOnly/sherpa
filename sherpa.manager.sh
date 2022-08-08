@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220809b
+    local -r SCRIPT_VERSION=220809c
     readonly PROJECT_BRANCH=main
 
     IsQNAP || return
@@ -356,6 +356,22 @@ Self.Validate()
     DebugUserspaceOK '$BASH_VERSION' "$BASH_VERSION"
     DebugUserspaceOK 'default volume' "$(GetDefaultVolume)"
     DebugUserspaceOK '/opt' "$($READLINK_CMD /opt || echo '<not present>')"
+
+    local public_share=$(/sbin/getcfg SHARE_DEF defPublic -d Qpublic -f /etc/config/def_share.info)
+
+    if [[ -L /share/$public_share ]]; then
+        DebugUserspaceOK "'$public_share' share" "/share/$public_share"
+    else
+        DebugUserspaceWarning "'$public_share' share" '<not present>'
+    fi
+
+    local download_share=$(/sbin/getcfg SHARE_DEF defDownload -d Qdownload -f /etc/config/def_share.info)
+
+    if [[ -L /share/$download_share ]]; then
+        DebugUserspaceOK "'$download_share' share" "/share/$download_share"
+    else
+        DebugUserspaceWarning "'$download_share' share" '<not present>'
+    fi
 
     if [[ ${#PATH} -le $max_width ]]; then
         DebugUserspaceOK '$PATH' "$PATH"
