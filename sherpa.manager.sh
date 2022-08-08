@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220808
+    local -r SCRIPT_VERSION=220808b
     readonly PROJECT_BRANCH=main
 
     IsQNAP || return
@@ -184,7 +184,7 @@ Self.Init()
     MANAGEMENT_ACTIONS=(Check List Paste Status)
 
     PACKAGE_SCOPES=(All Dependent HasDependents Installable Standalone SupportBackup SupportUpdateOnRestart Upgradable)
-    PACKAGE_STATES=(BackedUp Cleaned Downloaded Enabled Installed Missing Started)
+    PACKAGE_STATES=(BackedUp Cleaned Downloaded Enabled Installed Missing Started Ok Failed Unknown)
     PACKAGE_STATES_TEMPORARY=(Starting Stopping Restarting)
     PACKAGE_ACTIONS=(Download Rebuild Backup Stop Disable Uninstall Upgrade Reinstall Install Restore Clean Enable Start Restart)
     PACKAGE_TIERS=(Standalone Addon Dependent)
@@ -2554,7 +2554,7 @@ readonly HELP_DESC_INDENT=3
 readonly HELP_SYNTAX_INDENT=6
 
 readonly HELP_PACKAGE_NAME_WIDTH=20
-readonly HELP_PACKAGE_STATUS_WIDTH=29
+readonly HELP_PACKAGE_STATUS_WIDTH=38
 readonly HELP_PACKAGE_VERSION_WIDTH=17
 readonly HELP_PACKAGE_PATH_WIDTH=42
 readonly HELP_FILE_NAME_WIDTH=33
@@ -3463,7 +3463,17 @@ QPKGs.States.Build()
                         QPKGs.IsStarted.Remove "$package"
                         QPKGs.IsNtStarted.Remove "$package"
                         QPKGs.IsStopping.Add "$package"
+                        ;;
+                    failed)
+                        QPKGs.IsOk.Remove "$package"
+                        QPKGs.IsFailed.Add "$package"
+                        ;;
+                    ok)
+                        QPKGs.IsFailed.Remove "$package"
+                        QPKGs.IsOk.Add "$package"
                 esac
+            else
+                QPKGs.IsUnknown.Add "$package"
             fi
 
             if ${QPKG_SUPPORTS_BACKUP[$index]}; then
@@ -3660,6 +3670,14 @@ QPKGs.Statuses.Show()
                         package_status_notes+=($(ColourTextBrightGreen started))
                     elif QPKGs.IsNtStarted.Exist "$current_package_name"; then
                         package_status_notes+=($(ColourTextBrightRed stopped))
+                    fi
+
+                    if QPKGs.IsFailed.Exist "$current_package_name"; then
+                        package_status_notes+=($(ColourTextBrightRed failed))
+                    elif QPKGs.IsOk.Exist "$current_package_name"; then
+                        package_status_notes+=($(ColourTextBrightGreen ok))
+                    elif QPKGs.IsUnknown.Exist "$current_package_name"; then
+                        package_status_notes+=($(ColourTextBrightOrange unknown))
                     fi
 
                     if QPKGs.ScUpgradable.Exist "$current_package_name"; then
