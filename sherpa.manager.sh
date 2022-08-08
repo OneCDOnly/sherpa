@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220807
+    local -r SCRIPT_VERSION=220808
     readonly PROJECT_BRANCH=main
 
     IsQNAP || return
@@ -4226,7 +4226,7 @@ QPKG.Download()
                 result_code=1
             fi
         else
-            ShowAsFail "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
+            DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
             QPKGs.AcErDownload.Add "$PACKAGE_NAME"
             result_code=1    # remap to 1 (last time I checked, 'curl' had 92 return codes)
         fi
@@ -4336,7 +4336,7 @@ QPKG.Install()
 
         result_code=0    # remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK)
     else
-        ShowAsFail "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
+        DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
         MarkActionAsError "$PACKAGE_NAME" "$action"
         result_code=1    # remap to 1
     fi
@@ -4414,7 +4414,7 @@ QPKG.Reinstall()
 
         result_code=0    # remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK)
     else
-        ShowAsFail "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
+        DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
         MarkActionAsError "$PACKAGE_NAME" "$action"
         result_code=1    # remap to 1
     fi
@@ -4507,7 +4507,7 @@ QPKG.Upgrade()
 
         result_code=0    # remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK)
     else
-        ShowAsFail "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
+        DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
         MarkActionAsError "$PACKAGE_NAME" "$action"
         result_code=1    # remap to 1
     fi
@@ -4564,7 +4564,7 @@ QPKG.Uninstall()
             MarkStateAsNotInstalled "$PACKAGE_NAME"
             QPKGs.IsStarted.Remove "$PACKAGE_NAME"
         else
-            ShowAsFail "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
+            DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
             MarkActionAsError "$PACKAGE_NAME" "$action"
             result_code=1    # remap to 1
         fi
@@ -4614,7 +4614,7 @@ QPKG.Restart()
 
     if [[ $result_code -eq 0 ]]; then
         DebugAsProc "restarting $(FormatAsPackageName "$PACKAGE_NAME")"
-        RunAndLog "$SH_CMD $PACKAGE_INIT_PATHFILE restart" "$LOG_PATHFILE" log:failure-only
+        RunAndLog "$SH_CMD $PACKAGE_INIT_PATHFILE $action" "$LOG_PATHFILE" log:failure-only
         result_code=$?
     fi
 
@@ -4623,7 +4623,7 @@ QPKG.Restart()
         QPKG.StoreServiceStatus "$PACKAGE_NAME"
         MarkActionAsDone "$PACKAGE_NAME" "$action"
     else
-        ShowAsFail "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
+        DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
         MarkActionAsError "$PACKAGE_NAME" "$action"
         result_code=1    # remap to 1
     fi
@@ -4650,16 +4650,17 @@ QPKG.Start()
 
     local -r PACKAGE_NAME=${1:?no package name supplied}
     local -i result_code=0
+    local action=start
 
     QPKG.ClearServiceStatus "$PACKAGE_NAME"
 
     if QPKGs.IsNtInstalled.Exist "$PACKAGE_NAME"; then
-        MarkActionAsSkipped show "$PACKAGE_NAME" start "it's not installed"
+        MarkActionAsSkipped show "$PACKAGE_NAME" "$action" "it's not installed"
         DebugFuncExit 2; return
     fi
 
     if QPKGs.IsStarted.Exist "$PACKAGE_NAME"; then
-        MarkActionAsSkipped show "$PACKAGE_NAME" start "it's already started"
+        MarkActionAsSkipped show "$PACKAGE_NAME" "$action" "it's already started"
         DebugFuncExit 2; return
     fi
 
@@ -4671,18 +4672,19 @@ QPKG.Start()
 
     if [[ $result_code -eq 0 ]]; then
         DebugAsProc "starting $(FormatAsPackageName "$PACKAGE_NAME")"
-        RunAndLog "$SH_CMD $PACKAGE_INIT_PATHFILE start" "$LOG_PATHFILE" log:failure-only
+        RunAndLog "$SH_CMD $PACKAGE_INIT_PATHFILE $action" "$LOG_PATHFILE" log:failure-only
         result_code=$?
     fi
 
     if [[ $result_code -eq 0 ]]; then
         DebugAsDone "started $(FormatAsPackageName "$PACKAGE_NAME")"
         QPKG.StoreServiceStatus "$PACKAGE_NAME"
-        MarkActionAsDone "$PACKAGE_NAME" start
+        MarkActionAsDone "$PACKAGE_NAME" "$action"
         MarkStateAsStarted "$PACKAGE_NAME"
         [[ $PACKAGE_NAME = Entware ]] && ModPathToEntware
     else
-        MarkActionAsError "$PACKAGE_NAME" start
+        DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
+        MarkActionAsError "$PACKAGE_NAME" "$action"
         result_code=1    # remap to 1
     fi
 
@@ -4708,21 +4710,22 @@ QPKG.Stop()
 
     local -r PACKAGE_NAME=${1:?no package name supplied}
     local -i result_code=0
+    local action=stop
 
     QPKG.ClearServiceStatus "$PACKAGE_NAME"
 
     if QPKGs.IsNtInstalled.Exist "$PACKAGE_NAME"; then
-        MarkActionAsSkipped show "$PACKAGE_NAME" stop "it's not installed"
+        MarkActionAsSkipped show "$PACKAGE_NAME" "$action" "it's not installed"
         DebugFuncExit 2; return
     fi
 
     if QPKGs.IsNtStarted.Exist "$PACKAGE_NAME"; then
-        MarkActionAsSkipped show "$PACKAGE_NAME" stop "it's already stopped"
+        MarkActionAsSkipped show "$PACKAGE_NAME" "$action" "it's already stopped"
         DebugFuncExit 2; return
     fi
 
     if [[ $PACKAGE_NAME = "$PROJECT_NAME" ]]; then
-        MarkActionAsSkipped show "$PACKAGE_NAME" stop "it's needed here! 😉"
+        MarkActionAsSkipped show "$PACKAGE_NAME" "$action" "it's needed here! 😉"
         DebugFuncExit 2; return
     fi
 
@@ -4730,7 +4733,7 @@ QPKG.Stop()
     local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$STOP_LOG_FILE
 
     DebugAsProc "stopping $(FormatAsPackageName "$PACKAGE_NAME")"
-    RunAndLog "$SH_CMD $PACKAGE_INIT_PATHFILE stop" "$LOG_PATHFILE" log:failure-only
+    RunAndLog "$SH_CMD $PACKAGE_INIT_PATHFILE $action" "$LOG_PATHFILE" log:failure-only
     result_code=$?
 
     if [[ $result_code -eq 0 ]]; then
@@ -4741,10 +4744,11 @@ QPKG.Stop()
     if [[ $result_code -eq 0 ]]; then
         DebugAsDone "stopped $(FormatAsPackageName "$PACKAGE_NAME")"
         QPKG.StoreServiceStatus "$PACKAGE_NAME"
-        MarkActionAsDone "$PACKAGE_NAME" stop
+        MarkActionAsDone "$PACKAGE_NAME" "$action"
         MarkStateAsStopped "$PACKAGE_NAME"
     else
-        MarkActionAsError "$PACKAGE_NAME" stop
+        DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
+        MarkActionAsError "$PACKAGE_NAME" "$action"
         result_code=1    # remap to 1
     fi
 
@@ -4760,8 +4764,9 @@ QPKG.Enable()
 
     local -r PACKAGE_NAME=${1:?no package name supplied}
     local -i result_code=0
+    local action=enable
 
-    RunAndLog "/sbin/qpkg_service enable $PACKAGE_NAME" "$LOGS_PATH/$PACKAGE_NAME.$ENABLE_LOG_FILE" log:failure-only
+    RunAndLog "/sbin/qpkg_service $action $PACKAGE_NAME" "$LOGS_PATH/$PACKAGE_NAME.$ENABLE_LOG_FILE" log:failure-only
     result_code=$?
 
     if [[ $result_code -ne 0 ]]; then
@@ -4779,8 +4784,9 @@ QPKG.Disable()
 
     local -r PACKAGE_NAME=${1:?no package name supplied}
     local -i result_code=0
+    local action=disable
 
-    RunAndLog "/sbin/qpkg_service disable $PACKAGE_NAME" "$LOGS_PATH/$PACKAGE_NAME.$DISABLE_LOG_FILE" log:failure-only
+    RunAndLog "/sbin/qpkg_service $action $PACKAGE_NAME" "$LOGS_PATH/$PACKAGE_NAME.$DISABLE_LOG_FILE" log:failure-only
     result_code=$?
 
     if [[ $result_code -ne 0 ]]; then
@@ -4808,14 +4814,15 @@ QPKG.Backup()
 
     local -r PACKAGE_NAME=${1:?no package name supplied}
     local -i result_code=0
+    local action=backup
 
     if ! QPKG.IsSupportBackup "$PACKAGE_NAME"; then
-        MarkActionAsSkipped show "$PACKAGE_NAME" backup "it does not support backup"
+        MarkActionAsSkipped show "$PACKAGE_NAME" "$action" "it does not support backup"
         DebugFuncExit 2; return
     fi
 
     if QPKGs.IsNtInstalled.Exist "$PACKAGE_NAME"; then
-        MarkActionAsSkipped show "$PACKAGE_NAME" backup "it's not installed"
+        MarkActionAsSkipped show "$PACKAGE_NAME" "$action" "it's not installed"
         DebugFuncExit 2; return
     fi
 
@@ -4823,17 +4830,18 @@ QPKG.Backup()
     local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$BACKUP_LOG_FILE
 
     DebugAsProc "backing-up $(FormatAsPackageName "$PACKAGE_NAME") configuration"
-    RunAndLog "$SH_CMD $PACKAGE_INIT_PATHFILE backup" "$LOG_PATHFILE" log:failure-only
+    RunAndLog "$SH_CMD $PACKAGE_INIT_PATHFILE $action" "$LOG_PATHFILE" log:failure-only
     result_code=$?
 
     if [[ $result_code -eq 0 ]]; then
         DebugAsDone "backed-up $(FormatAsPackageName "$PACKAGE_NAME") configuration"
-        MarkActionAsDone "$PACKAGE_NAME" backup
+        MarkActionAsDone "$PACKAGE_NAME" "$action"
         QPKG.StoreServiceStatus "$PACKAGE_NAME"
         QPKGs.IsNtBackedUp.Remove "$PACKAGE_NAME"
         QPKGs.IsBackedUp.Add "$PACKAGE_NAME"
     else
-        MarkActionAsError "$PACKAGE_NAME" backup
+        DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
+        MarkActionAsError "$PACKAGE_NAME" "$action"
         result_code=1    # remap to 1
     fi
 
@@ -4856,14 +4864,15 @@ QPKG.Restore()
 
     local -r PACKAGE_NAME=${1:?no package name supplied}
     local -i result_code=0
+    local action=restore
 
     if ! QPKG.IsSupportBackup "$PACKAGE_NAME"; then
-        MarkActionAsSkipped show "$PACKAGE_NAME" restore "it does not support backup"
+        MarkActionAsSkipped show "$PACKAGE_NAME" "$action" "it does not support backup"
         DebugFuncExit 2; return
     fi
 
     if QPKGs.IsNtInstalled.Exist "$PACKAGE_NAME"; then
-        MarkActionAsSkipped show "$PACKAGE_NAME" restore "it's not installed"
+        MarkActionAsSkipped show "$PACKAGE_NAME" "$action" "it's not installed"
         DebugFuncExit 2; return
     fi
 
@@ -4871,15 +4880,16 @@ QPKG.Restore()
     local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$RESTORE_LOG_FILE
 
     DebugAsProc "restoring $(FormatAsPackageName "$PACKAGE_NAME") configuration"
-    RunAndLog "$SH_CMD $PACKAGE_INIT_PATHFILE restore" "$LOG_PATHFILE" log:failure-only
+    RunAndLog "$SH_CMD $PACKAGE_INIT_PATHFILE $action" "$LOG_PATHFILE" log:failure-only
     result_code=$?
 
     if [[ $result_code -eq 0 ]]; then
         DebugAsDone "restored $(FormatAsPackageName "$PACKAGE_NAME") configuration"
-        MarkActionAsDone "$PACKAGE_NAME" restore
+        MarkActionAsDone "$PACKAGE_NAME" "$action"
         QPKG.StoreServiceStatus "$PACKAGE_NAME"
     else
-        MarkActionAsError "$PACKAGE_NAME" restore
+        DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
+        MarkActionAsError "$PACKAGE_NAME" "$action"
     fi
 
     DebugFuncExit $result_code
@@ -4903,14 +4913,15 @@ QPKG.Clean()
 
     local -r PACKAGE_NAME=${1:?no package name supplied}
     local -i result_code=0
+    local action=clean
 
     if ! QPKG.IsSupportUpdateOnRestart "$PACKAGE_NAME"; then
-        MarkActionAsSkipped show "$PACKAGE_NAME" clean "it does not support cleaning"
+        MarkActionAsSkipped show "$PACKAGE_NAME" "$action" "it does not support cleaning"
         DebugFuncExit 2; return
     fi
 
     if QPKGs.IsNtInstalled.Exist "$PACKAGE_NAME"; then
-        MarkActionAsSkipped show "$PACKAGE_NAME" clean "it's not installed"
+        MarkActionAsSkipped show "$PACKAGE_NAME" "$action" "it's not installed"
         DebugFuncExit 2; return
     fi
 
@@ -4918,17 +4929,18 @@ QPKG.Clean()
     local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$CLEAN_LOG_FILE
 
     DebugAsProc "cleaning $(FormatAsPackageName "$PACKAGE_NAME")"
-    RunAndLog "$SH_CMD $PACKAGE_INIT_PATHFILE clean" "$LOG_PATHFILE" log:failure-only
+    RunAndLog "$SH_CMD $PACKAGE_INIT_PATHFILE $action" "$LOG_PATHFILE" log:failure-only
     result_code=$?
 
     if [[ $result_code -eq 0 ]]; then
         DebugAsDone "cleaned $(FormatAsPackageName "$PACKAGE_NAME")"
-        MarkActionAsDone "$PACKAGE_NAME" clean
+        MarkActionAsDone "$PACKAGE_NAME" "$action"
         QPKG.StoreServiceStatus "$PACKAGE_NAME"
         QPKGs.IsNtCleaned.Remove "$PACKAGE_NAME"
         QPKGs.IsCleaned.Add "$PACKAGE_NAME"
     else
-        MarkActionAsError "$PACKAGE_NAME" clean
+        DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
+        MarkActionAsError "$PACKAGE_NAME" "$action"
         result_code=1    # remap to 1
     fi
 
