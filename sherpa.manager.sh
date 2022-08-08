@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220808c
+    local -r SCRIPT_VERSION=220809
     readonly PROJECT_BRANCH=main
 
     IsQNAP || return
@@ -2554,7 +2554,7 @@ readonly HELP_DESC_INDENT=3
 readonly HELP_SYNTAX_INDENT=6
 
 readonly HELP_PACKAGE_NAME_WIDTH=20
-readonly HELP_PACKAGE_STATUS_WIDTH=38
+readonly HELP_PACKAGE_STATUS_WIDTH=40
 readonly HELP_PACKAGE_VERSION_WIDTH=17
 readonly HELP_PACKAGE_PATH_WIDTH=42
 readonly HELP_FILE_NAME_WIDTH=33
@@ -3614,7 +3614,7 @@ QPKGs.Statuses.Show()
     DisplayLineSpaceIfNoneAlready
 
     for tier in Standalone Dependent; do
-        DisplayAsHelpTitlePackageNameVersionStatus "$tier QPKGs" 'QPKG statuses and last operation' 'QPKG version' 'installed QPKG path'
+        DisplayAsHelpTitlePackageNameVersionStatus "$tier packages" 'package statuses (last result)' 'QPKG version' 'installation path'
 
         for current_package_name in $(QPKGs.Sc$tier.Array); do
             package_name=''
@@ -3623,9 +3623,9 @@ QPKGs.Statuses.Show()
             package_status_notes=()
 
             if ! QPKG.URL "$current_package_name" &>/dev/null; then
-                DisplayAsHelpPackageNameVersionStatus "$current_package_name" 'not installable (no arch)'
+                DisplayAsHelpPackageNameVersionStatus "$current_package_name" 'not installable: no arch'
             elif ! QPKG.MinRAM "$current_package_name" &>/dev/null; then
-                DisplayAsHelpPackageNameVersionStatus "$current_package_name" 'not installable (low RAM)'
+                DisplayAsHelpPackageNameVersionStatus "$current_package_name" 'not installable: low RAM'
             elif QPKGs.IsNtInstalled.Exist "$current_package_name"; then
                 DisplayAsHelpPackageNameVersionStatus "$current_package_name" 'not installed' "$(QPKG.Available.Version "$current_package_name")"
             else
@@ -3673,11 +3673,11 @@ QPKGs.Statuses.Show()
                     fi
 
                     if QPKGs.IsFailed.Exist "$current_package_name"; then
-                        package_status_notes+=($(ColourTextBrightRed failed))
+                        package_status_notes+=("($(ColourTextBrightRed failed))")
                     elif QPKGs.IsOk.Exist "$current_package_name"; then
-                        package_status_notes+=($(ColourTextBrightGreen ok))
+                        package_status_notes+=("($(ColourTextBrightGreen ok))")
                     elif QPKGs.IsUnknown.Exist "$current_package_name"; then
-                        package_status_notes+=($(ColourTextBrightOrange unknown))
+                        package_status_notes+=("($(ColourTextBrightOrange unknown))")
                     fi
 
                     if QPKGs.ScUpgradable.Exist "$current_package_name"; then
