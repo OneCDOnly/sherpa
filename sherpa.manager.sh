@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220809
+    local -r SCRIPT_VERSION=220809b
     readonly PROJECT_BRANCH=main
 
     IsQNAP || return
@@ -70,6 +70,7 @@ Self.Init()
     readonly AWK_CMD=/bin/awk
     readonly CAT_CMD=/bin/cat
     readonly DATE_CMD=/bin/date
+    readonly DF_CMD=/bin/df
     readonly GREP_CMD=/bin/grep
     readonly MD5SUM_CMD=/bin/md5sum
     readonly SED_CMD=/bin/sed
@@ -95,6 +96,7 @@ Self.Init()
     IsSysFileExist $AWK_CMD || return
     IsSysFileExist $CAT_CMD || return
     IsSysFileExist $DATE_CMD || return
+    IsSysFileExist $DF_CMD || return
     IsSysFileExist $GREP_CMD || return
     IsSysFileExist $MD5SUM_CMD || return
     IsSysFileExist $SED_CMD || return
@@ -363,6 +365,10 @@ Self.Validate()
 
     CheckPythonPathAndVersion python3
     CheckPythonPathAndVersion python
+
+    DebugUserspaceOK 'RAM disks' "<see below>"
+    $DF_CMD -h | $GREP_CMD '^Filesystem\|^none\|^tmpfs' > /var/log/ramdisks.state
+    AddFileToDebug /var/log/ramdisks.state
 
     DebugScript 'logs path' "$LOGS_PATH"
     DebugScript 'work path' "$WORK_PATH"
