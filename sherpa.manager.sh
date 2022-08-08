@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220809c
+    local -r SCRIPT_VERSION=220809d
     readonly PROJECT_BRANCH=main
 
     IsQNAP || return
@@ -389,10 +389,6 @@ Self.Validate()
     DebugScript 'logs path' "$LOGS_PATH"
     DebugScript 'work path' "$WORK_PATH"
     DebugInfoMinorSeparator
-
-    if QPKGs.SkProc.IsSet; then
-        DebugFuncExit 1; return
-    fi
 
     QPKGs.States.Build
 
@@ -746,11 +742,6 @@ Tier.Process()
 
     case $PACKAGE_TYPE in
         QPKG)
-            if $targets_function.$TARGET_OBJECT_NAME.IsNone; then
-                DebugInfo "no $targets_function to process"
-                DebugFuncExit; return
-            fi
-
             if [[ $TIER = All ]]; then  # process all tiers
                 target_packages=($($targets_function.$TARGET_OBJECT_NAME.Array))
             else                        # only process packages in specified tier, ignoring all others
@@ -762,7 +753,7 @@ Tier.Process()
             total_count=${#target_packages[@]}
 
             if [[ $total_count -eq 0 ]]; then
-                DebugInfo "no$([[ $TIER = All ]] && echo '' || echo " $TIER") $targets_function to process"
+                DebugInfo "nothing to process"
                 DebugFuncExit; return
             fi
 
