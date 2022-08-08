@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220808b
+    local -r SCRIPT_VERSION=220808c
     readonly PROJECT_BRANCH=main
 
     IsQNAP || return
@@ -3614,7 +3614,7 @@ QPKGs.Statuses.Show()
     DisplayLineSpaceIfNoneAlready
 
     for tier in Standalone Dependent; do
-        DisplayAsHelpTitlePackageNameVersionStatus "$tier QPKGs" 'QPKG status' 'QPKG version' 'installed QPKG path'
+        DisplayAsHelpTitlePackageNameVersionStatus "$tier QPKGs" 'QPKG statuses and last operation' 'QPKG version' 'installed QPKG path'
 
         for current_package_name in $(QPKGs.Sc$tier.Array); do
             package_name=''
