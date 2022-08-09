@@ -163,6 +163,7 @@ StartQPKG()
 
     ExecuteAndLog 'start daemon' "$LAUNCHER" log:everything || return
     WaitForPID || return
+    sleep 7     # for some reason, Mylar creates a pidfile with a PID, deletes it, then 5 seconds later, it writes a new one with a different PID. So, need to wait for the new one to appear.
     IsDaemonActive || return
     CheckPorts || return
 
