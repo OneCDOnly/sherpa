@@ -27,7 +27,7 @@ Init()
     readonly TARGET_SCRIPT=Mylar.py
     readonly PYTHON=/opt/bin/python3
     readonly QPKG_REPO_PATH=$QPKG_PATH/$QPKG_NAME
-    readonly APP_VERSION_PATHFILE=$QPKG_REPO_PATH/mylar3/version.py
+    readonly APP_VERSION_PATHFILE=''
 
     # for Entware binaries only
     readonly ORIG_DAEMON_SERVICE_SCRIPT=''
@@ -82,7 +82,7 @@ Init()
     UnsetRestartPending
     EnsureConfigFileExists
     [[ -n $ORIG_DAEMON_SERVICE_SCRIPT ]] && DisableOpkgDaemonStart
-    LoadAppVersion
+#    LoadAppVersion
 
     [[ ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
 
