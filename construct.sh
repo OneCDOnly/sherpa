@@ -8,8 +8,9 @@ WORK_PATH=$PWD
 MANAGEMENT_ACTIONS=(Check List Paste Status)
 
 PACKAGE_SCOPES=(All Dependent HasDependents Installable Standalone SupportBackup SupportUpdateOnRestart Upgradable)
-PACKAGE_STATES=(BackedUp Cleaned Downloaded Enabled Installed Missing Started Ok Failed Unknown)
+PACKAGE_STATES=(BackedUp Cleaned Downloaded Enabled Installed Missing Started)
 PACKAGE_STATES_TEMPORARY=(Starting Stopping Restarting)
+PACKAGE_RESULTS=(Ok Unknown)
 PACKAGE_ACTIONS=(Backup Clean Disable Download Enable Install Rebuild Reinstall Restart Restore Start Stop Uninstall Upgrade)
 
 MANAGER_FILE=$PROJECT_NAME.manager.sh
@@ -224,13 +225,13 @@ for scope in "${PACKAGE_SCOPES[@]}"; do
     AddListObj QPKGs.ScNt${scope}
 done
 
-for state in "${PACKAGE_STATES[@]}"; do
-    AddListObj QPKGs.Is${state}
-    AddListObj QPKGs.IsNt${state}
-done
-
 for state in "${PACKAGE_STATES_TEMPORARY[@]}"; do
     AddListObj QPKGs.Is${state}
+done
+
+for state in "${PACKAGE_STATES[@]}" "${PACKAGE_RESULTS[@]}"; do
+    AddListObj QPKGs.Is${state}
+    AddListObj QPKGs.IsNt${state}
 done
 
 tar --create --gzip --numeric-owner --file="$MANAGER_ARCHIVE_PATHFILE" --directory="$WORK_PATH" "$MANAGER_FILE"

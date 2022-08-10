@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220809d
+    local -r SCRIPT_VERSION=220810
     readonly PROJECT_BRANCH=main
 
     IsQNAP || return
@@ -186,8 +186,9 @@ Self.Init()
     MANAGEMENT_ACTIONS=(Check List Paste Status)
 
     PACKAGE_SCOPES=(All Dependent HasDependents Installable Standalone SupportBackup SupportUpdateOnRestart Upgradable)
-    PACKAGE_STATES=(BackedUp Cleaned Downloaded Enabled Installed Missing Started Ok Failed Unknown)
+    PACKAGE_STATES=(BackedUp Cleaned Downloaded Enabled Installed Missing Started)
     PACKAGE_STATES_TEMPORARY=(Starting Stopping Restarting)
+    PACKAGE_RESULTS=(Ok Unknown)
     PACKAGE_ACTIONS=(Download Rebuild Backup Stop Disable Uninstall Upgrade Reinstall Install Restore Clean Enable Start Restart)
     PACKAGE_TIERS=(Standalone Addon Dependent)
 
@@ -196,6 +197,7 @@ Self.Init()
     readonly PACKAGE_SCOPES
     readonly PACKAGE_STATES
     readonly PACKAGE_STATES_TEMPORARY
+    readonly PACKAGE_RESULTS
     readonly PACKAGE_ACTIONS
     readonly PACKAGE_TIERS
 
@@ -3372,7 +3374,7 @@ QPKGs.States.List()
     DebugInfoMinorSeparator
     QPKGs.States.Build
 
-    for state in "${PACKAGE_STATES[@]}"; do
+    for state in "${PACKAGE_STATES[@]}" "${PACKAGE_RESULTS[@]}"; do
         # speedup: only log arrays with more than zero elements
         for prefix in Is IsNt; do
             QPKGs.${prefix}${state}.IsAny && DebugQPKGInfo "${prefix}${state}" "($(QPKGs.${prefix}${state}.Count)) $(QPKGs.${prefix}${state}.ListCSV) "
@@ -3479,10 +3481,10 @@ QPKGs.States.Build()
                         ;;
                     failed)
                         QPKGs.IsOk.Remove "$package"
-                        QPKGs.IsFailed.Add "$package"
+                        QPKGs.IsNtOk.Add "$package"
                         ;;
                     ok)
-                        QPKGs.IsFailed.Remove "$package"
+                        QPKGs.IsNtOk.Remove "$package"
                         QPKGs.IsOk.Add "$package"
                 esac
             else
@@ -3685,7 +3687,7 @@ QPKGs.Statuses.Show()
                         package_status_notes+=($(ColourTextBrightRed stopped))
                     fi
 
-                    if QPKGs.IsFailed.Exist "$current_package_name"; then
+                    if QPKGs.IsNtOk.Exist "$current_package_name"; then
                         package_status_notes+=("($(ColourTextBrightRed failed))")
                     elif QPKGs.IsOk.Exist "$current_package_name"; then
                         package_status_notes+=("($(ColourTextBrightGreen ok))")
