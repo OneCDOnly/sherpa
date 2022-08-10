@@ -185,12 +185,12 @@ Self.Init()
 
     MANAGEMENT_ACTIONS=(Check List Paste Status)
 
+    PACKAGE_TIERS=(Standalone Addon Dependent)
     PACKAGE_SCOPES=(All Dependent HasDependents Installable Standalone SupportBackup SupportUpdateOnRestart Upgradable)
     PACKAGE_STATES=(BackedUp Cleaned Downloaded Enabled Installed Missing Started)
     PACKAGE_STATES_TEMPORARY=(Starting Stopping Restarting)
-    PACKAGE_RESULTS=(Ok Unknown)
     PACKAGE_ACTIONS=(Download Rebuild Backup Stop Disable Uninstall Upgrade Reinstall Install Restore Clean Enable Start Restart)
-    PACKAGE_TIERS=(Standalone Addon Dependent)
+    PACKAGE_RESULTS=(Ok Unknown)
 
     readonly MANAGEMENT_ACTIONS
 
