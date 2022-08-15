@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220810
+    local -r SCRIPT_VERSION=220815
     readonly PROJECT_BRANCH=main
 
     IsQNAP || return
@@ -128,6 +128,7 @@ Self.Init()
     readonly PYTHON_CMD=/opt/bin/python
     readonly PYTHON3_CMD=/opt/bin/python3
     readonly PIP_CMD="$PYTHON3_CMD -m pip"
+    readonly PERL_CMD=/opt/bin/perl
 
     readonly BACKUP_LOG_FILE=backup.log
     readonly CHECK_LOG_FILE=check.log
@@ -268,7 +269,8 @@ Self.Init()
     readonly NAS_QPKG_ARCH=$(GetQPKGArch)
     readonly ENTWARE_VER=$(GetEntwareType)
     readonly LOG_TAIL_LINES=5000    # note: a full download and install of everything generates a session log of around 1600 lines, but include a bunch of opkg updates and it can get much longer
-    readonly MIN_PYTHON_VER=3104    # keep this up-to-date with current Entware Python3 version so IPKG upgrade notifier will work
+    readonly MIN_PYTHON_VER=3105    # current Entware Python3 version so IPKG upgrade notifier will work
+    readonly MIN_PERL_VER=5281      # current Entware Perl version so IPKG upgrade notifier will work
     previous_msg=' '
     [[ ${NAS_FIRMWARE_VERSION//.} -lt 426 ]] && curl_insecure_arg=' --insecure' || curl_insecure_arg=''
     DebugQPKGDetected arch "$NAS_QPKG_ARCH"
@@ -383,6 +385,7 @@ Self.Validate()
 
     CheckPythonPathAndVersion python3
     CheckPythonPathAndVersion python
+    CheckPerlPathAndVersion perl
 
     DebugUserspaceOK 'RAM disks' "<see below>"
     $DF_CMD -h | $GREP_CMD '^Filesystem\|^none\|^tmpfs' > /var/log/ramdisks.state
@@ -439,6 +442,14 @@ Self.Validate()
                 if [[ ${version//./} -lt $MIN_PYTHON_VER ]]; then
                     ShowAsInfo 'installed Python environment will be upgraded' >&2
                     IPKGs.AcToUninstall.Add 'python*'
+                fi
+            fi
+
+            if [[ -e $PERL_CMD ]]; then
+                version=$($PERL_CMD -e 'print "$^V\n"' 2>/dev/null | $SED_CMD 's|v||')
+                if [[ ${version//./} -lt $MIN_PERL_VER ]]; then
+                    ShowAsInfo 'installed Perl environment will be upgraded' >&2
+                    IPKGs.AcToUninstall.Add 'perl*'
                 fi
             fi
         fi
@@ -2519,6 +2530,29 @@ CheckPythonPathAndVersion()
 
         if version=$($1 -V 2>&1 | $SED_CMD 's|^Python ||'); then
             if [[ ${version//./} -ge $MIN_PYTHON_VER ]]; then
+                DebugUserspaceOK "'$1' version" "$version"
+            else
+                DebugUserspaceWarning "'$1' version" "$version"
+            fi
+        else
+            DebugUserspaceWarning "default '$1' version" ' '
+        fi
+    else
+        DebugUserspaceWarning "'$1' path" ' '
+    fi
+
+    return 0
+
+    }
+
+CheckPerlPathAndVersion()
+    {
+
+    if location=$(command -v "${1:?empty}" 2>&1); then
+        DebugUserspaceOK "'$1' path" "$location"
+
+        if version=$($1 -e 'print "$^V\n"' 2>/dev/null | $SED_CMD 's|v||'); then
+            if [[ ${version//./} -ge $MIN_PERL_VER ]]; then
                 DebugUserspaceOK "'$1' version" "$version"
             else
                 DebugUserspaceWarning "'$1' version" "$version"
@@ -6502,6 +6536,7 @@ Packages.Load()
         readonly QPKG_MD5
         readonly QPKG_DESC
         readonly QPKG_ABBRVS
+        readonly QPKG_CONFLICTS
         readonly QPKG_DEPENDS_ON
         readonly QPKG_DEPENDED_UPON
         readonly QPKG_IPKGS_ADD
