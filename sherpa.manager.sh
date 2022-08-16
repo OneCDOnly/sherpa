@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220815
+    local -r SCRIPT_VERSION=220817
     readonly PROJECT_BRANCH=main
 
     IsQNAP || return
@@ -383,9 +383,9 @@ Self.Validate()
         DebugUserspaceOK '$PATH' "${PATH:0:trimmed_width}..."
     fi
 
-    CheckPythonPathAndVersion python3
-    CheckPythonPathAndVersion python
-    CheckPerlPathAndVersion perl
+    LogBinaryPathAndVersion python "$(GetDefaultPythonVersion)" "$MIN_PYTHON_VER"
+    LogBinaryPathAndVersion python3 "$(GetDefaultPython3Version)" "$MIN_PYTHON_VER"
+    LogBinaryPathAndVersion perl "$(GetDefaultPerlVersion)" "$MIN_PERL_VER"
 
     DebugUserspaceOK 'RAM disks' "<see below>"
     $DF_CMD -h | $GREP_CMD '^Filesystem\|^none\|^tmpfs' > /var/log/ramdisks.state
@@ -2522,46 +2522,59 @@ IsSU()
 
     }
 
-CheckPythonPathAndVersion()
+GetDefaultPythonVersion()
     {
 
-    if location=$(command -v "${1:?empty}" 2>&1); then
-        DebugUserspaceOK "'$1' path" "$location"
-
-        if version=$($1 -V 2>&1 | $SED_CMD 's|^Python ||'); then
-            if [[ ${version//./} -ge $MIN_PYTHON_VER ]]; then
-                DebugUserspaceOK "'$1' version" "$version"
-            else
-                DebugUserspaceWarning "'$1' version" "$version"
-            fi
-        else
-            DebugUserspaceWarning "default '$1' version" ' '
-        fi
-    else
-        DebugUserspaceWarning "'$1' path" ' '
-    fi
-
-    return 0
+    GetThisBinaryPath python &>/dev/null && python -V 2>&1 | $SED_CMD 's|^Python ||'
 
     }
 
-CheckPerlPathAndVersion()
+GetDefaultPython3Version()
     {
 
-    if location=$(command -v "${1:?empty}" 2>&1); then
-        DebugUserspaceOK "'$1' path" "$location"
+    GetThisBinaryPath python3 &>/dev/null && python3 -V 2>&1 | $SED_CMD 's|^Python ||'
 
-        if version=$($1 -e 'print "$^V\n"' 2>/dev/null | $SED_CMD 's|v||'); then
-            if [[ ${version//./} -ge $MIN_PERL_VER ]]; then
-                DebugUserspaceOK "'$1' version" "$version"
-            else
-                DebugUserspaceWarning "'$1' version" "$version"
-            fi
+    }
+
+GetDefaultPerlVersion()
+    {
+
+    GetThisBinaryPath perl &>/dev/null && perl -e 'print "$^V\n"' 2>/dev/null | $SED_CMD 's|v||'
+
+    }
+
+GetThisBinaryPath()
+    {
+
+    [[ -n ${1:?empty} ]] && command -v "$1" 2>&1
+
+    }
+
+LogBinaryPathAndVersion()
+    {
+
+    # $1 = binary filename
+    # $2 = current version found
+    # $3 = minimum version required
+
+    [[ -z $1 ]] && return 1
+
+    local binarypath=$(GetThisBinaryPath "$1")
+
+    if [[ -n $binarypath ]]; then
+        DebugUserspaceOK "'$1' path" "$binarypath"
+    else
+        DebugUserspaceWarning "'$1' path" '<not present>'
+    fi
+
+    if [[ -n $2 ]]; then
+        if [[ ${2//./} -ge ${3//./} ]]; then
+            DebugUserspaceOK "'$1' version" "$2"
         else
-            DebugUserspaceWarning "default '$1' version" ' '
+            DebugUserspaceWarning "'$1' version" "$2"
         fi
     else
-        DebugUserspaceWarning "'$1' path" ' '
+        DebugUserspaceWarning "'$1' version" '<unknown>'
     fi
 
     return 0
