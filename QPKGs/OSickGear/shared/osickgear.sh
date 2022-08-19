@@ -25,7 +25,7 @@ Init()
     # 'shallow' (depth 1) or 'single-branch' (note: 'shallow' implies a 'single-branch' too)
     readonly SOURCE_GIT_DEPTH=single-branch
     readonly TARGET_SCRIPT=sickgear.py
-    readonly PYTHON=/opt/bin/python3
+    readonly INTERPRETER=/opt/bin/python3
     readonly QPKG_REPO_PATH=$QPKG_PATH/$QPKG_NAME
     readonly APP_VERSION_PATHFILE=''
 
@@ -45,7 +45,7 @@ Init()
     readonly INSTALLED_RAM_KB=$(/bin/grep MemTotal /proc/meminfo | cut -f2 -d':' | /bin/sed 's|kB||;s| ||g')
     readonly QPKG_INI_PATHFILE=$QPKG_PATH/config/config.ini
     readonly QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.def
-    readonly LAUNCHER="cd $QPKG_REPO_PATH; $PYTHON $DAEMON_PATHFILE --daemon --nolaunch --datadir $(/usr/bin/dirname "$QPKG_INI_PATHFILE") --pidfile $DAEMON_PID_PATHFILE"
+    readonly LAUNCHER="cd $QPKG_REPO_PATH; $INTERPRETER $DAEMON_PATHFILE --daemon --nolaunch --datadir $(/usr/bin/dirname "$QPKG_INI_PATHFILE") --pidfile $DAEMON_PID_PATHFILE"
     readonly QPKG_VERSION=$(/sbin/getcfg $QPKG_NAME Version -f /etc/config/qpkg.conf)
     readonly SERVICE_STATUS_PATHFILE=/var/run/$QPKG_NAME.last.operation
     readonly SERVICE_LOG_PATHFILE=/var/log/$QPKG_NAME.log
@@ -54,7 +54,7 @@ Init()
     readonly BACKUP_PATHFILE=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
     readonly APPARENT_PATH=/share/$(/sbin/getcfg SHARE_DEF defDownload -d Qdownload -f /etc/config/def_share.info)/$QPKG_NAME
     export PATH="$OPKG_PATH:$(/bin/sed "s|$OPKG_PATH||" <<< "$PATH")"
-    [[ -n $PYTHON ]] && export PYTHONPATH=$PYTHON
+    [[ -n $INTERPRETER ]] && export PYTHONPATH=$INTERPRETER
 
     if [[ $MIN_RAM_KB != any && $INSTALLED_RAM_KB -lt $MIN_RAM_KB ]]; then
         DisplayErrCommitAllLogs "$(FormatAsPackageName $QPKG_NAME) won't run on this NAS. Not enough RAM. :("
@@ -369,7 +369,7 @@ UpdateLanguages()
 
     [[ -e $APP_VERSION_STORE_PATHFILE && $(<"$APP_VERSION_STORE_PATHFILE") = "$app_version" && -d $QPKG_REPO_PATH/locale ]] && return 0
 
-    ExecuteAndLog "update $(FormatAsPackageName $QPKG_NAME) language translations" "cd $QPKG_REPO_PATH; $PYTHON $QPKG_REPO_PATH/tools/make_mo.py" && SaveAppVersion
+    ExecuteAndLog "update $(FormatAsPackageName $QPKG_NAME) language translations" "cd $QPKG_REPO_PATH; $INTERPRETER $QPKG_REPO_PATH/tools/make_mo.py" && SaveAppVersion
 
     }
 
@@ -428,7 +428,7 @@ PullGitRepo()
         ExecuteAndLog "clone $(FormatAsPackageName "$1") from remote repository" "cd /tmp; /opt/bin/git clone --branch $3 $DEPTH -c advice.detachedHead=false $GIT_HTTPS_URL $QPKG_GIT_PATH"
     else
         # latest effort at resolving local corruption, source: https://stackoverflow.com/a/10170195
-        ExecuteAndLog "update $(FormatAsPackageName "$1") from remote repository" "cd /tmp; /opt/bin/git -C $QPKG_GIT_PATH clean -f; /opt/bin/git -C $QPKG_GIT_PATH reset --hard origin/$3"
+        ExecuteAndLog "update $(FormatAsPackageName "$1") from remote repository" "cd /tmp; /opt/bin/git -C $QPKG_GIT_PATH clean -f; /opt/bin/git -C $QPKG_GIT_PATH reset --hard origin/$3; /opt/bin/git -C $QPKG_GIT_PATH pull"
     fi
 
     installed_branch=$(/opt/bin/git -C "$QPKG_GIT_PATH" branch | /bin/grep '^\*' | /bin/sed 's|^\* ||')
@@ -490,8 +490,8 @@ WaitForLaunchTarget()
 
     local launch_target=''
 
-    if [[ -n $PYTHON ]]; then
-        launch_target=$PYTHON
+    if [[ -n $INTERPRETER ]]; then
+        launch_target=$INTERPRETER
     elif [[ -n $DAEMON_PATHFILE ]]; then
         launch_target=$DAEMON_PATHFILE
     else
