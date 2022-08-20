@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220819
+    local -r SCRIPT_VERSION=220821
     readonly PROJECT_BRANCH=main
 
     IsQNAP || return
@@ -253,7 +253,7 @@ Self.Init()
 
     DebugInfoMajorSeparator
     DebugScript started "$($DATE_CMD -d @"$SCRIPT_STARTSECONDS" | tr -s ' ')"
-    DebugScript version "package: ${PACKAGE_VERSION:-unknown}, manager: ${MANAGER_SCRIPT_VERSION:-unknown}, loader: ${LOADER_SCRIPT_VERSION:-unknown}"
+    DebugScript version "package: ${PACKAGE_VERSION:-unknown}, manager: ${MANAGER_SCRIPT_VERSION:-unknown}, loader: ${LOADER_SCRIPT_VERSION:-unknown}, objects: ${OBJECTS_VERSION:-unknown}"
     DebugScript PID "$$"
     DebugInfoMinorSeparator
     DebugInfo 'Markers: (**) detected, (II) information, (WW) warning, (EE) error, (LL) log file, (--) processing,'
@@ -3295,9 +3295,11 @@ ShowVersions()
 
     DisableDebugToArchiveAndFile
 
+    Display "package: ${PACKAGE_VERSION:-unknown}"
     Display "manager: ${MANAGER_SCRIPT_VERSION:-unknown}"
     Display "loader: ${LOADER_SCRIPT_VERSION:-unknown}"
-    Display "package: ${PACKAGE_VERSION:-unknown}"
+    Display "objects: ${OBJECTS_VERSION:-unknown}"
+    Display "packages: ${PACKAGES_VERSION:-unknown}"
 
     return 0
 
@@ -6508,6 +6510,8 @@ Objects.Load()
     ShowAsProc 'loading objects' >&2
     . "$OBJECTS_PATHFILE"
 
+    readonly OBJECTS_VERSION
+
     DebugFuncExit
 
     }
@@ -6535,6 +6539,7 @@ Packages.Load()
     ShowAsProc 'loading package list' >&2
     . "$PACKAGES_PATHFILE"
 
+    readonly PACKAGES_VERSION
     readonly BASE_QPKG_CONFLICTS
     readonly BASE_QPKG_WARNINGS
     readonly BASE_IPKGS_INSTALL
@@ -6559,6 +6564,7 @@ Packages.Load()
         readonly QPKG_RESTART_TO_UPDATE
 
     QPKGs.Loaded.Set
+    DebugScript version "packages: ${PACKAGES_VERSION:-unknown}"
     QPKGs.ScAll.Add "${QPKG_NAME[*]}"
     QPKGs.StandaloneDependent.Build
     DebugFuncExit
