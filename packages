@@ -1,4 +1,4 @@
-PACKAGES_VERSION=220820
+PACKAGES_VERSION=220824
 BASE_QPKG_CONFLICTS='Optware Optware-NG TarMT QPython3 QPython39 QPython310'
 BASE_QPKG_WARNINGS='Qboost Python3'
 BASE_IPKGS_INSTALL='ca-certificates coreutils-stty findutils gcc git git-http grep less nano sed'
@@ -445,7 +445,7 @@ QPKG_DEPENDS_ON+=('Entware Par2')
 QPKG_DEPENDED_UPON+=(false)
 QPKG_IPKGS_ADD+=('coreutils-nice ffprobe ionice python3-cryptography python3-dev python3-pip python3-pyopenssl p7zip unrar')
 QPKG_IPKGS_REMOVE+=('')
-QPKG_PIPS_ADD+=('babelfish==0.6.0 certifi cffi==1.15.1 chardet==5.0.0 cheetah3==3.2.6 cheroot==8.6.0 cherrypy==18.8.0 configobj==5.0.6 feedparser==6.0.10 guessit==3.4.3 importlib-resources jaraco.classes==3.2.2 jaraco.collections==3.5.2 jaraco.context==4.1.2 jaraco.functools==3.5.1 jaraco.text==3.7.0 more-itertools==8.14.0 orjson portend==3.1.0 puremagic==1.14 pycparser==2.21 PySocks==1.7.1 python-dateutil==2.8.2 pytz==2022.2.1 pytz_deprecation_shim rebulk==3.1.0 sabyenc3==5.4.3 sgmllib3k==1.0.0 six==1.16.0 socks tempora==5.0.2 tzdata zc.lockfile==2.0')
+QPKG_PIPS_ADD+=('babelfish==0.6.0 certifi cffi==1.15.1 chardet==5.0.0 cheetah3==3.2.6 cheroot==8.6.0 cherrypy==18.8.0 configobj==5.0.6 feedparser==6.0.10 guessit==3.4.3 importlib-resources jaraco.classes==3.2.2 jaraco.collections==3.5.2 jaraco.context==4.1.2 jaraco.functools==3.5.1 jaraco.text==3.7.0 more-itertools==8.14.0 portend==3.1.0 puremagic==1.14 pycparser==2.21 PySocks==1.7.1 python-dateutil==2.8.2 pytz==2022.2.1 pytz_deprecation_shim rebulk==3.1.0 sabyenc3==5.4.3 sgmllib3k==1.0.0 six==1.16.0 socks tempora==5.0.2 tzdata zc.lockfile==2.0')
 QPKG_SUPPORTS_BACKUP+=(true)
 QPKG_RESTART_TO_UPDATE+=(true)
 
