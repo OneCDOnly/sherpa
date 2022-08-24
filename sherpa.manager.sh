@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220824b
+    local -r SCRIPT_VERSION=220824c
     readonly PROJECT_BRANCH=main
 
     IsQNAP || return
@@ -3978,6 +3978,22 @@ MarkStateAsNotInstalled()
 
     }
 
+MarkStateAsEnabled()
+    {
+
+    QPKGs.IsNtEnabled.Remove "$1"
+    QPKGs.IsEnabled.Add "$1"
+
+    }
+
+MarkStateAsDisabled()
+    {
+
+    QPKGs.IsEnabled.Remove "$1"
+    QPKGs.IsNtEnabled.Add "$1"
+
+    }
+
 MarkStateAsStarted()
     {
 
@@ -4860,7 +4876,9 @@ QPKG.Enable()
     RunAndLog "/sbin/qpkg_service $action $PACKAGE_NAME" "$LOGS_PATH/$PACKAGE_NAME.$ENABLE_LOG_FILE" log:failure-only
     result_code=$?
 
-    if [[ $result_code -ne 0 ]]; then
+    if [[ $result_code -eq 0 ]]; then
+        MarkStateAsEnabled "$PACKAGE_NAME"
+    else
         result_code=1    # remap to 1
     fi
 
@@ -4880,7 +4898,9 @@ QPKG.Disable()
     RunAndLog "/sbin/qpkg_service $action $PACKAGE_NAME" "$LOGS_PATH/$PACKAGE_NAME.$DISABLE_LOG_FILE" log:failure-only
     result_code=$?
 
-    if [[ $result_code -ne 0 ]]; then
+    if [[ $result_code -eq 0 ]]; then
+        MarkStateAsDisabled "$PACKAGE_NAME"
+    else
         result_code=1    # remap to 1
     fi
 
