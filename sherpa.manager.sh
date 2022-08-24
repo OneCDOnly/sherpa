@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220824
+    local -r SCRIPT_VERSION=220824b
     readonly PROJECT_BRANCH=main
 
     IsQNAP || return
@@ -393,14 +393,9 @@ Self.Validate()
     LogBinaryPathAndVersion python "$(GetDefaultPythonVersion)" "$MIN_PYTHON_VER"
     LogBinaryPathAndVersion python3 "$(GetDefaultPython3Version)" "$MIN_PYTHON_VER"
     LogBinaryPathAndVersion perl "$(GetDefaultPerlVersion)" "$MIN_PERL_VER"
-
-    DebugUserspaceOK 'RAM disks' "<see below>"
-    $DF_CMD -h | $GREP_CMD '^Filesystem\|^none\|^tmpfs' > /var/log/ramdisks.state
-    AddFileToDebug /var/log/ramdisks.state
-
     DebugScript 'logs path' "$LOGS_PATH"
     DebugScript 'work path' "$WORK_PATH"
-    DebugInfoMinorSeparator
+    RunAndLog "$DF_CMD -h | $GREP_CMD '^Filesystem\|^none\|^tmpfs'" /var/log/ramdisks.state
 
     QPKGs.States.Build
 
