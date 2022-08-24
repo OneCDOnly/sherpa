@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220824c
+    local -r SCRIPT_VERSION=220825
     readonly PROJECT_BRANCH=main
 
     IsQNAP || return
@@ -363,7 +363,11 @@ Self.Validate()
     if IsAllowUnsignedPackages; then
         DebugUserspaceOK 'allow unsigned' yes
     else
-        DebugUserspaceWarning 'allow unsigned' no
+        if [[ ${NAS_FIRMWARE_VERSION//.} -lt 435 ]]; then
+            DebugUserspaceOK 'allow unsigned' no
+        else
+            DebugUserspaceWarning 'allow unsigned' no
+        fi
     fi
 
     DebugUserspaceOK '/opt' "$($READLINK_CMD /opt || echo '<not present>')"
