@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220821
+    local -r SCRIPT_VERSION=220824
     readonly PROJECT_BRANCH=main
 
     IsQNAP || return
@@ -359,6 +359,13 @@ Self.Validate()
     DebugUserspaceOK 'time in shell' "$(GetTimeInShell)"
     DebugUserspaceOK '$BASH_VERSION' "$BASH_VERSION"
     DebugUserspaceOK 'default volume' "$(GetDefaultVolume)"
+
+    if IsAllowUnsignedPackages; then
+        DebugUserspaceOK 'allow unsigned' yes
+    else
+        DebugUserspaceWarning 'allow unsigned' no
+    fi
+
     DebugUserspaceOK '/opt' "$($READLINK_CMD /opt || echo '<not present>')"
 
     local public_share=$(/sbin/getcfg SHARE_DEF defPublic -d Qpublic -f /etc/config/def_share.info)
@@ -4058,6 +4065,13 @@ GetDefaultVolume()
     {
 
     /sbin/getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info
+
+    }
+
+IsAllowUnsignedPackages()
+    {
+
+    [[ $(/sbin/getcfg 'QPKG Management' Ignore_Cert) = TRUE ]]
 
     }
 
