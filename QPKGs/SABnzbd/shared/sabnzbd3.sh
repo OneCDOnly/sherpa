@@ -63,7 +63,7 @@ Init()
 
     # all timeouts are in seconds
     readonly DAEMON_STOP_TIMEOUT=60
-    readonly PORT_CHECK_TIMEOUT=60
+    readonly PORT_CHECK_TIMEOUT=120
     readonly GIT_APPEAR_TIMEOUT=300
     readonly LAUNCH_TARGET_APPEAR_TIMEOUT=30
     readonly PID_APPEAR_TIMEOUT=60
