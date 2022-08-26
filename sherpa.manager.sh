@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220825
+    local -r SCRIPT_VERSION=220827
     readonly PROJECT_BRANCH=main
 
     IsQNAP || return
@@ -437,7 +437,7 @@ Self.Validate()
         DebugFuncExit 1; return
     fi
 
-    if Opts.Deps.Check.IsSet || QPKGs.AcToUpgrade.Exist Entware; then
+    if Opts.Deps.Check.IsSet || QPKGs.AcToUpgrade.Exist Entware || QPKGs.AcToInstall.Exist Entware || QPKGs.AcToReinstall.Exist Entware; then
         IPKGs.Upgrade.Set
         IPKGs.Install.Set
         PIPs.Install.Set
