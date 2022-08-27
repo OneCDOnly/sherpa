@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220827d
+    local -r SCRIPT_VERSION=220827e
     readonly PROJECT_BRANCH=main
 
     IsQNAP || return
@@ -77,8 +77,11 @@ Self.Init()
     readonly SH_CMD=/bin/sh
     readonly SLEEP_CMD=/bin/sleep
     readonly TOUCH_CMD=/bin/touch
+    readonly UNAME_CMD=/bin/uname
 
     readonly CURL_CMD=/sbin/curl
+    readonly GETCFG_CMD=/sbin/getcfg
+    readonly SETCFG_CMD=/sbin/setcfg
 
     readonly BASENAME_CMD=/usr/bin/basename
     readonly DIRNAME_CMD=/usr/bin/dirname
@@ -103,8 +106,11 @@ Self.Init()
     IsSysFileExist $SH_CMD || return
     IsSysFileExist $SLEEP_CMD || return
     IsSysFileExist $TOUCH_CMD || return
+    IsSysFileExist $UNAME_CMD || return
 
     IsSysFileExist $CURL_CMD || return
+    IsSysFileExist $GETCFG_CMD || return
+    IsSysFileExist $SETCFG_CMD || return
 
     [[ ! -e $SORT_CMD ]] && ln -s /bin/busybox "$SORT_CMD"  # sometimes, 'sort' goes missing from QTS. Don't know why.
     [[ ! -e /dev/fd ]] && ln -s /proc/self/fd /dev/fd       # sometimes, '/dev/fd' isn't created by QTS. Don't know why.
@@ -329,6 +335,7 @@ Self.Validate()
     DebugInfoMinorSeparator
     DebugHardwareOK model "$(get_display_name)"
     DebugHardwareOK CPU "$(GetCPUInfo)"
+    DebugHardwareOK architecture "$(GetArch)"
     DebugHardwareOK RAM "$(FormatAsThousands "$INSTALLED_RAM_KB")kB"
     DebugFirmwareOK OS "Q$($GREP_CMD -q zfs /proc/filesystems && echo u)TS"
 
@@ -372,7 +379,7 @@ Self.Validate()
 
     DebugUserspaceOK '/opt' "$($READLINK_CMD /opt || echo '<not present>')"
 
-    local public_share=$(/sbin/getcfg SHARE_DEF defPublic -d Qpublic -f /etc/config/def_share.info)
+    local public_share=$($GETCFG_CMD SHARE_DEF defPublic -d Qpublic -f /etc/config/def_share.info)
 
     if [[ -L /share/$public_share ]]; then
         DebugUserspaceOK "'$public_share' share" "/share/$public_share"
@@ -380,7 +387,7 @@ Self.Validate()
         DebugUserspaceWarning "'$public_share' share" '<not present>'
     fi
 
-    local download_share=$(/sbin/getcfg SHARE_DEF defDownload -d Qdownload -f /etc/config/def_share.info)
+    local download_share=$($GETCFG_CMD SHARE_DEF defDownload -d Qdownload -f /etc/config/def_share.info)
 
     if [[ -L /share/$download_share ]]; then
         DebugUserspaceOK "'$download_share' share" "/share/$download_share"
@@ -2224,7 +2231,7 @@ PIPs.Install()
     DebugFuncEntry
 
     local recompile_sabyenc3=false
-    [[ $(/bin/uname -m) = x86_64 ]] && recompile_sabyenc3=true
+    [[ $(GetArch) = x86_64 ]] && recompile_sabyenc3=true
     local exec_cmd=''
     local -i result_code=0
     local -i pass_count=0
@@ -3366,7 +3373,7 @@ QPKGs.Conflicts.Check()
     if [[ -n ${BASE_QPKG_CONFLICTS:-} ]]; then
         # shellcheck disable=2068
         for package in ${BASE_QPKG_CONFLICTS[@]}; do
-            if [[ $(/sbin/getcfg "$package" Enable -u -f /etc/config/qpkg.conf) = 'TRUE' ]]; then
+            if [[ $($GETCFG_CMD "$package" Enable -u -f /etc/config/qpkg.conf) = 'TRUE' ]]; then
                 ShowAsError "the '$package' QPKG is enabled. $(FormatAsScriptTitle) is incompatible with this package. Please consider 'stop'ing this QPKG in your App Center"
                 return 1
             fi
@@ -3385,7 +3392,7 @@ QPKGs.Warnings.Check()
     if [[ -n ${BASE_QPKG_WARNINGS:-} ]]; then
         # shellcheck disable=2068
         for package in ${BASE_QPKG_WARNINGS[@]}; do
-            if [[ $(/sbin/getcfg "$package" Enable -u -f /etc/config/qpkg.conf) = 'TRUE' ]]; then
+            if [[ $($GETCFG_CMD "$package" Enable -u -f /etc/config/qpkg.conf) = 'TRUE' ]]; then
                 ShowAsWarn "the '$package' QPKG is enabled. This may cause problems with $(FormatAsScriptTitle) applications. Please consider 'stop'ing this QPKG in your App Center"
             fi
         done
@@ -3512,12 +3519,12 @@ QPKGs.States.Build()
 
             QPKGs.IsInstalled.Add "$package"
 
-            [[ $(/sbin/getcfg "$package" Version -d unknown -f /etc/config/qpkg.conf) != "${QPKG_VERSION[$index]}" ]] && QPKGs.ScUpgradable.Add "$package"
+            [[ $($GETCFG_CMD "$package" Version -d unknown -f /etc/config/qpkg.conf) != "${QPKG_VERSION[$index]}" ]] && QPKGs.ScUpgradable.Add "$package"
 
-            if [[ $(/sbin/getcfg "$package" Enable -u -f /etc/config/qpkg.conf) = 'TRUE' ]]; then
+            if [[ $($GETCFG_CMD "$package" Enable -u -f /etc/config/qpkg.conf) = 'TRUE' ]]; then
                 QPKGs.IsEnabled.Add "$package"
                 QPKGs.IsStarted.Add "$package"
-            elif [[ $(/sbin/getcfg "$package" Enable -u -f /etc/config/qpkg.conf) = 'FALSE' ]]; then
+            elif [[ $($GETCFG_CMD "$package" Enable -u -f /etc/config/qpkg.conf) = 'FALSE' ]]; then
                 QPKGs.IsNtEnabled.Add "$package"
                 QPKGs.IsNtStarted.Add "$package"
             fi
@@ -4067,31 +4074,38 @@ GetCPUInfo()
 
     }
 
+GetArch()
+    {
+
+    $UNAME_CMD -m
+
+    }
+
 GetKernel()
     {
 
-    /bin/uname -mr
+    $UNAME_CMD -r
 
     }
 
 GetPlatform()
     {
 
-    /sbin/getcfg '' Platform -d unknown -f /etc/platform.conf
+    $GETCFG_CMD '' Platform -d unknown -f /etc/platform.conf
 
     }
 
 GetDefaultVolume()
     {
 
-    /sbin/getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info
+    $GETCFG_CMD SHARE_DEF defVolMP -f /etc/config/def_share.info
 
     }
 
 IsAllowUnsignedPackages()
     {
 
-    [[ $(/sbin/getcfg 'QPKG Management' Ignore_Cert) = TRUE ]]
+    [[ $($GETCFG_CMD 'QPKG Management' Ignore_Cert) = TRUE ]]
 
     }
 
@@ -4133,21 +4147,21 @@ GetInstalledRAM()
 GetFirmwareVersion()
     {
 
-    /sbin/getcfg System Version -f /etc/config/uLinux.conf
+    $GETCFG_CMD System Version -f /etc/config/uLinux.conf
 
     }
 
 GetFirmwareBuild()
     {
 
-    /sbin/getcfg System Number -f /etc/config/uLinux.conf
+    $GETCFG_CMD System Number -f /etc/config/uLinux.conf
 
     }
 
 GetFirmwareDate()
     {
 
-    /sbin/getcfg System 'Build Number' -f /etc/config/uLinux.conf
+    $GETCFG_CMD System 'Build Number' -f /etc/config/uLinux.conf
 
     }
 
@@ -4156,7 +4170,7 @@ GetQPKGArch()
 
     # Decide which package arch is suitable for this NAS
 
-    case $(/bin/uname -m) in
+    case $(GetArch) in
         x86_64)
             [[ ${NAS_FIRMWARE_VERSION//.} -ge 430 ]] && echo x64 || echo x86
             ;;
@@ -5081,7 +5095,7 @@ QPKG.ClearAppCenterNotifier()
     QPKGs.IsNtInstalled.Exist "$PACKAGE_NAME" && return 0
 
     # KLUDGE: need this for 'Entware' and 'Par2' packages as they don't add a status line to qpkg.conf
-    /sbin/setcfg "$PACKAGE_NAME" Status complete -f /etc/config/qpkg.conf
+    $SETCFG_CMD "$PACKAGE_NAME" Status complete -f /etc/config/qpkg.conf
 
     return 0
 
@@ -5145,7 +5159,7 @@ QPKG.InstallationPath()
     #   stdout = the installation path to this QPKG
     #   $? = 0 if found, !0 if not
 
-    /sbin/getcfg "${1:?no package name supplied}" Install_Path -f /etc/config/qpkg.conf
+    $GETCFG_CMD "${1:?no package name supplied}" Install_Path -f /etc/config/qpkg.conf
 
     }
 
@@ -5159,7 +5173,7 @@ QPKG.ServicePathFile()
     #   stdout = service script pathfile
     #   $? = 0 if found, !0 if not
 
-    /sbin/getcfg "${1:?no package name supplied}" Shell -d unknown -f /etc/config/qpkg.conf
+    $GETCFG_CMD "${1:?no package name supplied}" Shell -d unknown -f /etc/config/qpkg.conf
 
     }
 
@@ -5205,7 +5219,7 @@ QPKG.Local.Version()
     #   stdout = package version
     #   $? = 0 if found, !0 if not
 
-    /sbin/getcfg "${1:?no package name supplied}" Version -d unknown -f /etc/config/qpkg.conf
+    $GETCFG_CMD "${1:?no package name supplied}" Version -d unknown -f /etc/config/qpkg.conf
 
     }
 
@@ -5531,7 +5545,7 @@ QPKG.IsStarted()
     # output:
     #   $? = 0 (true) or 1 (false)
 
-    [[ $(/sbin/getcfg "${1:?no package name supplied}" Enable -u -f /etc/config/qpkg.conf) = 'TRUE' ]]
+    [[ $($GETCFG_CMD "${1:?no package name supplied}" Enable -u -f /etc/config/qpkg.conf) = 'TRUE' ]]
 
     }
 
