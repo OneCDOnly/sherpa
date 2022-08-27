@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220827c
+    local -r SCRIPT_VERSION=220827d
     readonly PROJECT_BRANCH=main
 
     IsQNAP || return
@@ -2223,11 +2223,14 @@ PIPs.Install()
     Self.Error.IsSet && return
     DebugFuncEntry
 
+    local recompile_sabyenc3=false
+    [[ $(/bin/uname -m) = x86_64 ]] && recompile_sabyenc3=true
     local exec_cmd=''
     local -i result_code=0
     local -i pass_count=0
     local -i fail_count=0
-    local -i total_count=3
+    local -i total_count=2
+    [[ $recompile_sabyenc3 = true ]] && ((total_count++))
     local -r PACKAGE_TYPE='PIP group'
     local ACTION_PRESENT=installing
     local ACTION_PAST=installed
@@ -2293,27 +2296,29 @@ PIPs.Install()
         ((total_count--))
     fi
 
-    if QPKGs.IsInstalled.Exist SABnzbd || QPKGs.AcToInstall.Exist SABnzbd || QPKGs.AcToReinstall.Exist SABnzbd; then
-        # KLUDGE: force recompilation of 'sabyenc3' package so it's recognised by SABnzbd: https://forums.sabnzbd.org/viewtopic.php?p=121214#p121214
-        ShowAsActionProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
+    if [[ $recompile_sabyenc3 = true ]]; then
+        if QPKGs.IsInstalled.Exist SABnzbd || QPKGs.AcToInstall.Exist SABnzbd || QPKGs.AcToReinstall.Exist SABnzbd; then
+            # KLUDGE: force recompilation of 'sabyenc3' package so it's recognised by SABnzbd: https://forums.sabnzbd.org/viewtopic.php?p=121214#p121214
+            ShowAsActionProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
 
-        exec_cmd="$PIP_CMD install --no-input --force-reinstall --no-binary :all: sabyenc3==5.4.3 --cache-dir $PIP_CACHE_PATH"
-        desc="'Python3 sabyenc3' module"
-        log_pathfile=$LOGS_PATH/py3-modules.sabyenc3.$REINSTALL_LOG_FILE
-        DebugAsProc "reinstalling $desc"
-        RunAndLog "$exec_cmd" "$log_pathfile" log:failure-only
-        result_code=$?
+            exec_cmd="$PIP_CMD install --no-input --force-reinstall --no-binary :all: sabyenc3==5.4.3 --cache-dir $PIP_CACHE_PATH"
+            desc="'Python3 sabyenc3' module"
+            log_pathfile=$LOGS_PATH/py3-modules.sabyenc3.$REINSTALL_LOG_FILE
+            DebugAsProc "reinstalling $desc"
+            RunAndLog "$exec_cmd" "$log_pathfile" log:failure-only
+            result_code=$?
 
-        if [[ $result_code -eq 0 ]]; then
-            DebugAsDone "reinstalled $desc"
-            QPKG.IsStarted SABnzbd && QPKGs.AcToRestart.Add SABnzbd
-            ((pass_count++))
+            if [[ $result_code -eq 0 ]]; then
+                DebugAsDone "reinstalled $desc"
+                QPKG.IsStarted SABnzbd && QPKGs.AcToRestart.Add SABnzbd
+                ((pass_count++))
+            else
+                ShowAsFail "reinstallation of $desc failed $(FormatAsResult "$result_code")"
+                ((fail_count++))
+            fi
         else
-            ShowAsFail "reinstallation of $desc failed $(FormatAsResult "$result_code")"
-            ((fail_count++))
+            ((total_count--))
         fi
-    else
-        ((total_count--))
     fi
 
     # execute with pass_count > total_count to trigger 100% message
