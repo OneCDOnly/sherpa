@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220827e
+    local -r SCRIPT_VERSION=220829
     readonly PROJECT_BRANCH=main
 
     IsQNAP || return
@@ -272,6 +272,8 @@ Self.Init()
     readonly NAS_FIRMWARE_BUILD=$(GetFirmwareBuild)
     readonly NAS_FIRMWARE_DATE=$(GetFirmwareDate)
     readonly INSTALLED_RAM_KB=$(GetInstalledRAM)
+    readonly NAS_ARCH=$(GetArch)
+    readonly NAS_PLATFORM=$(GetPlatform)
     readonly NAS_QPKG_ARCH=$(GetQPKGArch)
     readonly ENTWARE_VER=$(GetEntwareType)
     readonly LOG_TAIL_LINES=5000    # note: a full download and install of everything generates a session log of around 1600 lines, but include a bunch of opkg updates and it can get much longer
@@ -335,7 +337,7 @@ Self.Validate()
     DebugInfoMinorSeparator
     DebugHardwareOK model "$(get_display_name)"
     DebugHardwareOK CPU "$(GetCPUInfo)"
-    DebugHardwareOK architecture "$(GetArch)"
+    DebugHardwareOK architecture "$NAS_ARCH"
     DebugHardwareOK RAM "$(FormatAsThousands "$INSTALLED_RAM_KB")kB"
     DebugFirmwareOK OS "Q$($GREP_CMD -q zfs /proc/filesystems && echo u)TS"
 
@@ -352,7 +354,7 @@ Self.Validate()
     fi
 
     DebugFirmwareOK kernel "$(GetKernel)"
-    DebugFirmwareOK platform "$(GetPlatform)"
+    DebugFirmwareOK platform "$NAS_PLATFORM"
     DebugUserspaceOK 'OS uptime' "$(GetUptime)"
     DebugUserspaceOK 'system load' "$(GetSysLoadAverages)"
     DebugUserspaceOK '$USER' "$USER"
@@ -663,7 +665,7 @@ Tiers.Process()
                 Tier.Process Clean false "$tier" QPKG AcToClean clean cleaning cleaned long || return
 
                 if [[ $tier = Standalone ]]; then
-                    # check for standalone packages that require starting due to dependents being reinstalled/installed/started/restarted
+                    # check for standalone packages that must be started because dependents are being reinstalled/installed/started/restarted
                     for package in $(QPKGs.AcToReinstall.Array) $(QPKGs.AcOkReinstall.Array) $(QPKGs.AcToInstall.Array) $(QPKGs.AcOkInstall.Array) $(QPKGs.AcToStart.Array) $(QPKGs.AcOkStart.Array) $(QPKGs.AcToRestart.Array) $(QPKGs.AcOkRestart.Array); do
                         for prospect in $(QPKG.GetStandalones "$package"); do
                             QPKGs.IsNtStarted.Exist "$prospect" && QPKGs.AcToStart.Add "$prospect"
@@ -2230,8 +2232,14 @@ PIPs.Install()
     Self.Error.IsSet && return
     DebugFuncEntry
 
-    local recompile_sabyenc3=false
-    [[ $(GetArch) = x86_64 ]] && recompile_sabyenc3=true
+    case $NAS_ARCH in
+        x86_64|i686)
+            local recompile_sabyenc3=true
+            ;;
+        *)
+            local recompile_sabyenc3=false
+    esac
+
     local exec_cmd=''
     local -i result_code=0
     local -i pass_count=0
@@ -4170,7 +4178,7 @@ GetQPKGArch()
 
     # Decide which package arch is suitable for this NAS
 
-    case $(GetArch) in
+    case $NAS_ARCH in
         x86_64)
             [[ ${NAS_FIRMWARE_VERSION//.} -ge 430 ]] && echo x64 || echo x86
             ;;
@@ -4181,7 +4189,7 @@ GetQPKGArch()
             echo x19
             ;;
         armv7l)
-            case $(GetPlatform) in
+            case $NAS_PLATFORM in
                 ARM_MS)
                     echo x31
                     ;;
