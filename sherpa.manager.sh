@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VER=220830
+    local -r SCRIPT_VER=220830b
     readonly PROJECT_BRANCH=main
 
     IsQNAP || return
@@ -281,8 +281,6 @@ Self.Init()
     readonly MIN_PERL_VER=5281      # current Entware Perl version so IPKG upgrade notifier will work
     previous_msg=' '
     [[ ${NAS_FIRMWARE_VER//.} -lt 426 ]] && curl_insecure_arg=' --insecure' || curl_insecure_arg=''
-    DebugQPKGDetected arch "$NAS_QPKG_ARCH"
-    DebugQPKGDetected 'Entware installer' "$ENTWARE_VER"
     QPKG.IsInstalled Entware && [[ $ENTWARE_VER = none ]] && DebugAsWarn "$(FormatAsPackageName Entware) appears to be installed but is not visible"
 
     # speedup: don't build package lists if only showing basic help
@@ -408,6 +406,9 @@ Self.Validate()
     LogBinaryPathAndVersion perl "$(GetDefaultPerlVersion)" "$MIN_PERL_VER"
     DebugScript 'logs path' "$LOGS_PATH"
     DebugScript 'work path' "$WORK_PATH"
+    DebugQPKG architecture "$NAS_QPKG_ARCH"
+    DebugQPKG 'Entware installer' "$ENTWARE_VER"
+
     RunAndLog "$DF_CMD -h | $GREP_CMD '^Filesystem\|^none\|^tmpfs'" /var/log/ramdisks.state
 
     QPKGs.States.Build
@@ -2139,14 +2140,14 @@ IPKGs.Install()
     if QPKGs.AcInstall.ScAll.IsSet; then
         for index in "${!QPKG_NAME[@]}"; do
             [[ ${QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${QPKG_ARCH[$index]} = all ]] || continue
-            IPKGs.AcToInstall.Add "${QPKG_IPKGS_ADD[$index]}"
+            IPKGs.AcToInstall.Add "${QPKG_IPKGS_INSTALL[$index]}"
         done
     else
         for index in "${!QPKG_NAME[@]}"; do
             if QPKGs.AcToInstall.Exist "${QPKG_NAME[$index]}" || QPKGs.IsInstalled.Exist "${QPKG_NAME[$index]}" || QPKGs.AcToReinstall.Exist "${QPKG_NAME[$index]}" || QPKGs.AcToStart.Exist "${QPKG_NAME[$index]}"; then
                 [[ ${QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${QPKG_ARCH[$index]} = all ]] || continue
                 QPKG.MinRAM "${QPKG_NAME[$index]}" &>/dev/null || continue
-                IPKGs.AcToInstall.Add "${QPKG_IPKGS_ADD[$index]}"
+                IPKGs.AcToInstall.Add "${QPKG_IPKGS_INSTALL[$index]}"
             fi
         done
     fi
@@ -2278,14 +2279,14 @@ PIPs.Install()
     if QPKGs.AcInstall.ScAll.IsSet; then
         for index in "${!QPKG_NAME[@]}"; do
             [[ ${QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${QPKG_ARCH[$index]} = all ]] || continue
-            PIPs.AcToInstall.Add "${QPKG_PIPS_ADD[$index]}"
+            PIPs.AcToInstall.Add "${QPKG_PIPS_INSTALL[$index]}"
         done
     else
         for index in "${!QPKG_NAME[@]}"; do
             if QPKGs.AcToInstall.Exist "${QPKG_NAME[$index]}" || QPKGs.IsInstalled.Exist "${QPKG_NAME[$index]}" || QPKGs.AcToReinstall.Exist "${QPKG_NAME[$index]}" || QPKGs.AcToStart.Exist "${QPKG_NAME[$index]}"; then
                 [[ ${QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${QPKG_ARCH[$index]} = all ]] || continue
                 QPKG.MinRAM "${QPKG_NAME[$index]}" &>/dev/null || continue
-                PIPs.AcToInstall.Add "${QPKG_PIPS_ADD[$index]}"
+                PIPs.AcToInstall.Add "${QPKG_PIPS_INSTALL[$index]}"
             fi
         done
     fi
@@ -3378,9 +3379,9 @@ QPKGs.Conflicts.Check()
 
     local package=''
 
-    if [[ -n ${BASE_QPKG_CONFLICTS:-} ]]; then
+    if [[ -n ${BASE_QPKG_CONFLICTS_WITH:-} ]]; then
         # shellcheck disable=2068
-        for package in ${BASE_QPKG_CONFLICTS[@]}; do
+        for package in ${BASE_QPKG_CONFLICTS_WITH[@]}; do
             if [[ $($GETCFG_CMD "$package" Enable -u -f /etc/config/qpkg.conf) = 'TRUE' ]]; then
                 ShowAsError "the '$package' QPKG is enabled. $(FormatAsScriptTitle) is incompatible with this package. Please consider 'stop'ing this QPKG in your App Center"
                 return 1
@@ -5886,7 +5887,7 @@ DebugUserspaceWarning()
 
     }
 
-DebugQPKGDetected()
+DebugQPKG()
     {
 
     DebugDetectedTabulated QPKG "${1:-}" "${2:-}"
@@ -6600,7 +6601,7 @@ Packages.Load()
     . "$PACKAGES_PATHFILE"
 
     readonly PACKAGES_VER
-    readonly BASE_QPKG_CONFLICTS
+    readonly BASE_QPKG_CONFLICTS_WITH
     readonly BASE_QPKG_WARNINGS
     readonly BASE_IPKGS_INSTALL
     readonly BASE_PIPS_INSTALL
@@ -6614,12 +6615,12 @@ Packages.Load()
         readonly QPKG_MD5
         readonly QPKG_DESC
         readonly QPKG_ABBRVS
-        readonly QPKG_CONFLICTS
+        readonly QPKG_CONFLICTS_WITH
         readonly QPKG_DEPENDS_ON
         readonly QPKG_DEPENDED_UPON
-        readonly QPKG_IPKGS_ADD
+        readonly QPKG_IPKGS_INSTALL
         readonly QPKG_IPKGS_REMOVE
-        readonly QPKG_PIPS_ADD
+        readonly QPKG_PIPS_INSTALL
         readonly QPKG_SUPPORTS_BACKUP
         readonly QPKG_RESTART_TO_UPDATE
 
