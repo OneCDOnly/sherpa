@@ -1,4 +1,4 @@
-PACKAGES_VERSION=220827
+PACKAGES_VER=220830
 BASE_QPKG_CONFLICTS='Optware Optware-NG TarMT QPython3 QPython39 QPython310'
 BASE_QPKG_WARNINGS='Qboost Python3'
 BASE_IPKGS_INSTALL='ca-certificates coreutils-stty findutils gcc git git-http grep less nano sed'
@@ -486,9 +486,9 @@ QPKG_RESTART_TO_UPDATE+=(false)
 QPKG_NAME+=($PROJECT_NAME)
 QPKG_ARCH+=(all)
 QPKG_MIN_RAM_KB+=(any)
-QPKG_VERSION+=(220501)
+QPKG_VERSION+=(220830)
 QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/QPKGs/$PROJECT_NAME/build/${PROJECT_NAME}_${QPKG_VERSION[${#QPKG_VERSION[@]}-1]}.qpkg)
-QPKG_MD5+=(56708c4b497e4b81350c0674c1393c23)
+QPKG_MD5+=(d2546e76e42af686dd7d60df3b3188b4)
 QPKG_DESC+=("provides the '$PROJECT_NAME' command: the mini-package-manager")
 QPKG_ABBRVS+=("sh self $PROJECT_NAME")
 QPKG_CONFLICTS+=('')

@@ -36,7 +36,7 @@ Init()
     IsQNAP || return
 
     local -r PROJECT_NAME=sherpa
-    export LOADER_SCRIPT_VERSION=220501
+    export LOADER_SCRIPT_VER=220830
     export LOADER_SCRIPT_PPID=$PPID
     local -r PROJECT_BRANCH=main
 

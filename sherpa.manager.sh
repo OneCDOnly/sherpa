@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VERSION=220829
+    local -r SCRIPT_VER=220830
     readonly PROJECT_BRANCH=main
 
     IsQNAP || return
@@ -254,12 +254,12 @@ Self.Init()
         fi
     done
 
-    readonly PACKAGE_VERSION=$(QPKG.Local.Version "$PROJECT_NAME")
-    readonly MANAGER_SCRIPT_VERSION="$SCRIPT_VERSION$([[ $PROJECT_BRANCH = develop ]] && echo '(d)')"
+    readonly THIS_PACKAGE_VER=$(QPKG.Local.Version "$PROJECT_NAME")
+    readonly MANAGER_SCRIPT_VER="$SCRIPT_VER$([[ $PROJECT_BRANCH = develop ]] && echo '(d)')"
 
     DebugInfoMajorSeparator
     DebugScript started "$($DATE_CMD -d @"$SCRIPT_STARTSECONDS" | tr -s ' ')"
-    DebugScript version "package: ${PACKAGE_VERSION:-unknown}, manager: ${MANAGER_SCRIPT_VERSION:-unknown}, loader: ${LOADER_SCRIPT_VERSION:-unknown}, objects: ${OBJECTS_VERSION:-unknown}"
+    DebugScript version "package: ${THIS_PACKAGE_VER:-unknown}, manager: ${MANAGER_SCRIPT_VER:-unknown}, loader: ${LOADER_SCRIPT_VER:-unknown}, objects: ${OBJECTS_VER:-unknown}"
     DebugScript PID "$$"
     DebugInfoMinorSeparator
     DebugInfo 'Markers: (**) detected, (II) information, (WW) warning, (EE) error, (LL) log file, (--) processing,'
@@ -268,10 +268,10 @@ Self.Init()
 
     Self.Summary.Set
 
-    readonly NAS_FIRMWARE_VERSION=$(GetFirmwareVersion)
+    readonly NAS_FIRMWARE_VER=$(GetFirmwareVersion)
     readonly NAS_FIRMWARE_BUILD=$(GetFirmwareBuild)
     readonly NAS_FIRMWARE_DATE=$(GetFirmwareDate)
-    readonly INSTALLED_RAM_KB=$(GetInstalledRAM)
+    readonly NAS_RAM_KB=$(GetInstalledRAM)
     readonly NAS_ARCH=$(GetArch)
     readonly NAS_PLATFORM=$(GetPlatform)
     readonly NAS_QPKG_ARCH=$(GetQPKGArch)
@@ -280,7 +280,7 @@ Self.Init()
     readonly MIN_PYTHON_VER=3105    # current Entware Python3 version so IPKG upgrade notifier will work
     readonly MIN_PERL_VER=5281      # current Entware Perl version so IPKG upgrade notifier will work
     previous_msg=' '
-    [[ ${NAS_FIRMWARE_VERSION//.} -lt 426 ]] && curl_insecure_arg=' --insecure' || curl_insecure_arg=''
+    [[ ${NAS_FIRMWARE_VER//.} -lt 426 ]] && curl_insecure_arg=' --insecure' || curl_insecure_arg=''
     DebugQPKGDetected arch "$NAS_QPKG_ARCH"
     DebugQPKGDetected 'Entware installer' "$ENTWARE_VER"
     QPKG.IsInstalled Entware && [[ $ENTWARE_VER = none ]] && DebugAsWarn "$(FormatAsPackageName Entware) appears to be installed but is not visible"
@@ -298,7 +298,7 @@ Self.Init()
     SmartCR >&2
 
     if Self.Display.Clean.IsNt && Self.Debug.ToScreen.IsNt; then
-        Display "$(FormatAsScriptTitle) $MANAGER_SCRIPT_VERSION • a mini-package-manager for QNAP NAS"
+        Display "$(FormatAsScriptTitle) $MANAGER_SCRIPT_VER • a mini-package-manager for QNAP NAS"
         DisplayLineSpaceIfNoneAlready
     fi
 
@@ -330,7 +330,7 @@ Self.Validate()
     local something_to_do=false
     local -i max_width=70
     local -i trimmed_width=$((max_width - 3))
-    local version=''
+    local available_ver=''
 
     ShowAsProc environment >&2
 
@@ -338,13 +338,13 @@ Self.Validate()
     DebugHardwareOK model "$(get_display_name)"
     DebugHardwareOK CPU "$(GetCPUInfo)"
     DebugHardwareOK architecture "$NAS_ARCH"
-    DebugHardwareOK RAM "$(FormatAsThousands "$INSTALLED_RAM_KB")kB"
+    DebugHardwareOK RAM "$(FormatAsThousands "$NAS_RAM_KB")kB"
     DebugFirmwareOK OS "Q$($GREP_CMD -q zfs /proc/filesystems && echo u)TS"
 
-    if [[ ${NAS_FIRMWARE_VERSION//.} -ge 400 ]]; then
-        DebugFirmwareOK version "$NAS_FIRMWARE_VERSION.$NAS_FIRMWARE_BUILD"
+    if [[ ${NAS_FIRMWARE_VER//.} -ge 400 ]]; then
+        DebugFirmwareOK version "$NAS_FIRMWARE_VER.$NAS_FIRMWARE_BUILD"
     else
-        DebugFirmwareWarning version "$NAS_FIRMWARE_VERSION"
+        DebugFirmwareWarning version "$NAS_FIRMWARE_VER"
     fi
 
     if [[ $NAS_FIRMWARE_DATE -lt 20201015 || $NAS_FIRMWARE_DATE -gt 20201020 ]]; then   # QTS builds released over these 6 days don't allow unsigned QPKGs to run at-all
@@ -372,7 +372,7 @@ Self.Validate()
     if IsAllowUnsignedPackages; then
         DebugUserspaceOK 'allow unsigned' yes
     else
-        if [[ ${NAS_FIRMWARE_VERSION//.} -lt 435 ]]; then
+        if [[ ${NAS_FIRMWARE_VER//.} -lt 435 ]]; then
             DebugUserspaceOK 'allow unsigned' no
         else
             DebugUserspaceWarning 'allow unsigned' no
@@ -453,16 +453,16 @@ Self.Validate()
 
         if QPKG.IsInstalled Entware && QPKG.IsStarted Entware; then
             if [[ -e $PYTHON3_CMD ]]; then
-                version=$($PYTHON3_CMD -V 2>/dev/null | $SED_CMD 's|^Python ||')
-                if [[ ${version//./} -lt $MIN_PYTHON_VER ]]; then
+                available_ver=$($PYTHON3_CMD -V 2>/dev/null | $SED_CMD 's|^Python ||')
+                if [[ ${available_ver//./} -lt $MIN_PYTHON_VER ]]; then
                     ShowAsInfo 'installed Python environment will be upgraded' >&2
                     IPKGs.AcToUninstall.Add 'python*'
                 fi
             fi
 
             if [[ -e $PERL_CMD ]]; then
-                version=$($PERL_CMD -e 'print "$^V\n"' 2>/dev/null | $SED_CMD 's|v||')
-                if [[ ${version//./} -lt $MIN_PERL_VER ]]; then
+                available_ver=$($PERL_CMD -e 'print "$^V\n"' 2>/dev/null | $SED_CMD 's|v||')
+                if [[ ${available_ver//./} -lt $MIN_PERL_VER ]]; then
                     ShowAsInfo 'installed Perl environment will be upgraded' >&2
                     IPKGs.AcToUninstall.Add 'perl*'
                 fi
@@ -3321,11 +3321,11 @@ ShowVersions()
 
     DisableDebugToArchiveAndFile
 
-    Display "package: ${PACKAGE_VERSION:-unknown}"
-    Display "manager: ${MANAGER_SCRIPT_VERSION:-unknown}"
-    Display "loader: ${LOADER_SCRIPT_VERSION:-unknown}"
-    Display "objects: ${OBJECTS_VERSION:-unknown}"
-    Display "packages: ${PACKAGES_VERSION:-unknown}"
+    Display "package: ${THIS_PACKAGE_VER:-unknown}"
+    Display "manager: ${MANAGER_SCRIPT_VER:-unknown}"
+    Display "loader: ${LOADER_SCRIPT_VER:-unknown}"
+    Display "objects: ${OBJECTS_VER:-unknown}"
+    Display "packages: ${PACKAGES_VER:-unknown}"
 
     return 0
 
@@ -3578,7 +3578,7 @@ QPKGs.States.Build()
 
             if [[ -n ${QPKG_ABBRVS[$index]} ]]; then
                 if [[ ${QPKG_ARCH[$index]} = 'all' || ${QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
-                    if [[ ${QPKG_MIN_RAM_KB[$index]} = any || $INSTALLED_RAM_KB -ge ${QPKG_MIN_RAM_KB[$index]} ]]; then
+                    if [[ ${QPKG_MIN_RAM_KB[$index]} = any || $NAS_RAM_KB -ge ${QPKG_MIN_RAM_KB[$index]} ]]; then
                         QPKGs.ScInstallable.Add "$package"
                     fi
                 fi
@@ -4180,7 +4180,7 @@ GetQPKGArch()
 
     case $NAS_ARCH in
         x86_64)
-            [[ ${NAS_FIRMWARE_VERSION//.} -ge 430 ]] && echo x64 || echo x86
+            [[ ${NAS_FIRMWARE_VER//.} -ge 430 ]] && echo x64 || echo x86
             ;;
         i686|x86)
             echo x86
@@ -5466,7 +5466,7 @@ QPKG.MinRAM()
     local -i index=0
 
     for index in "${!QPKG_NAME[@]}"; do
-        if [[ ${QPKG_NAME[$index]} = "${1:?no package name supplied}" ]] && [[ ${QPKG_MIN_RAM_KB[$index]} = any || $INSTALLED_RAM_KB -ge ${QPKG_MIN_RAM_KB[$index]} ]]; then
+        if [[ ${QPKG_NAME[$index]} = "${1:?no package name supplied}" ]] && [[ ${QPKG_MIN_RAM_KB[$index]} = any || $NAS_RAM_KB -ge ${QPKG_MIN_RAM_KB[$index]} ]]; then
             echo "${QPKG_MIN_RAM_KB[$index]}"
             return 0
         fi
@@ -6570,7 +6570,7 @@ Objects.Load()
     ShowAsProc 'loading objects' >&2
     . "$OBJECTS_PATHFILE"
 
-    readonly OBJECTS_VERSION
+    readonly OBJECTS_VER
 
     DebugFuncExit
 
@@ -6599,7 +6599,7 @@ Packages.Load()
     ShowAsProc 'loading package list' >&2
     . "$PACKAGES_PATHFILE"
 
-    readonly PACKAGES_VERSION
+    readonly PACKAGES_VER
     readonly BASE_QPKG_CONFLICTS
     readonly BASE_QPKG_WARNINGS
     readonly BASE_IPKGS_INSTALL
@@ -6624,7 +6624,7 @@ Packages.Load()
         readonly QPKG_RESTART_TO_UPDATE
 
     QPKGs.Loaded.Set
-    DebugScript version "packages: ${PACKAGES_VERSION:-unknown}"
+    DebugScript version "packages: ${PACKAGES_VER:-unknown}"
     QPKGs.ScAll.Add "${QPKG_NAME[*]}"
     QPKGs.StandaloneDependent.Build
     DebugFuncExit
