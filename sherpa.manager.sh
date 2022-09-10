@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VER=220830b
+    local -r SCRIPT_VER=220911
     readonly PROJECT_BRANCH=main
 
     IsQNAP || return
@@ -2234,7 +2234,7 @@ PIPs.Install()
     DebugFuncEntry
 
     case $NAS_ARCH in
-        x86_64|i686)
+        x86_64|i686|aarch64)
             local recompile_sabyenc3=true
             ;;
         *)
