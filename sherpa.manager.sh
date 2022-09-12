@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VER=220911
+    local -r SCRIPT_VER=220913
     readonly PROJECT_BRANCH=main
 
     IsQNAP || return
@@ -2232,13 +2232,11 @@ PIPs.Install()
     ! $OPKG_CMD status python3-pip | $GREP_CMD -q "Status:.*installed" && return
     Self.Error.IsSet && return
     DebugFuncEntry
+    local recompile_sabyenc3=false
 
     case $NAS_ARCH in
         x86_64|i686|aarch64)
-            local recompile_sabyenc3=true
-            ;;
-        *)
-            local recompile_sabyenc3=false
+            recompile_sabyenc3=true
     esac
 
     local exec_cmd=''
