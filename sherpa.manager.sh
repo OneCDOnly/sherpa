@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VER=220913
+    local -r SCRIPT_VER=220922
     readonly PROJECT_BRANCH=main
 
     IsQNAP || return
@@ -306,6 +306,14 @@ Self.Init()
     fi
 
     QPKGs.Warnings.Check
+
+    # KLUDGE: remove all max QTS versions from qpkg.conf (these are not removed automatically when installing updated QPKGs without max version set)
+    # retain this kludge for 12 months to give everyone time to update their installed sherpa QPKGs. Remove after 2023-09-22
+    if [[ $($GETCFG_CMD sherpa max_versions_cleared -d FALSE -f /etc/config/qpkg.conf) = 'FALSE' ]]; then
+        $SED_CMD -i '/^FW_Ver_Max/d' /etc/config/qpkg.conf
+        $SETCFG_CMD sherpa max_versions_cleared TRUE -f /etc/config/qpkg.conf
+    fi
+
     DebugFuncExit
 
     }
@@ -782,7 +790,7 @@ Tier.Process()
             total_count=${#target_packages[@]}
 
             if [[ $total_count -eq 0 ]]; then
-                DebugInfo "nothing to process"
+                DebugInfo 'nothing to process'
                 DebugFuncExit; return
             fi
 
