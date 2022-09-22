@@ -1,6 +1,6 @@
 PACKAGES_VER=220830
-BASE_QPKG_CONFLICTS_WITH='Optware Optware-NG TarMT QPython3 QPython39 QPython310'
-BASE_QPKG_WARNINGS='Qboost Python3'
+BASE_QPKG_CONFLICTS_WITH='Optware Optware-NG TarMT QPython3 QPython39 QPython310 Python Python3 QPerl Perl'
+BASE_QPKG_WARNINGS='Qboost'
 BASE_IPKGS_INSTALL='ca-certificates coreutils-stty findutils gcc git git-http grep less nano sed'
 BASE_PIPS_INSTALL='wheel pip'
 
