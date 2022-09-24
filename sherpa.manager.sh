@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VER=220925
+    local -r SCRIPT_VER=220925b
     readonly PROJECT_BRANCH=main
 
     IsQNAP || return
@@ -3457,7 +3457,11 @@ QPKGs.States.List()
     for state in "${PACKAGE_STATES[@]}" "${PACKAGE_RESULTS[@]}"; do
         # speedup: only log arrays with more than zero elements
         for prefix in Is IsNt; do
-            QPKGs.${prefix}${state}.IsAny && DebugQPKGInfo "${prefix}${state}" "($(QPKGs.${prefix}${state}.Count)) $(QPKGs.${prefix}${state}.ListCSV) "
+            if [[ $prefix = IsNt && $state = Ok ]]; then
+                QPKGs.${prefix}${state}.IsAny && DebugQPKGWarning "${prefix}${state}" "($(QPKGs.${prefix}${state}.Count)) $(QPKGs.${prefix}${state}.ListCSV) "
+            else
+                QPKGs.${prefix}${state}.IsAny && DebugQPKGInfo "${prefix}${state}" "($(QPKGs.${prefix}${state}.Count)) $(QPKGs.${prefix}${state}.ListCSV) "
+            fi
         done
     done
 
