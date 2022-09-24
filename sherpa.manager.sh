@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VER=220922
+    local -r SCRIPT_VER=220925
     readonly PROJECT_BRANCH=main
 
     IsQNAP || return
@@ -277,8 +277,6 @@ Self.Init()
     readonly NAS_QPKG_ARCH=$(GetQPKGArch)
     readonly ENTWARE_VER=$(GetEntwareType)
     readonly LOG_TAIL_LINES=5000    # note: a full download and install of everything generates a session log of around 1600 lines, but include a bunch of opkg updates and it can get much longer
-    readonly MIN_PYTHON_VER=3105    # current Entware Python3 version so IPKG upgrade notifier will work
-    readonly MIN_PERL_VER=5281      # current Entware Perl version so IPKG upgrade notifier will work
     previous_msg=' '
     [[ ${NAS_FIRMWARE_VER//.} -lt 426 ]] && curl_insecure_arg=' --insecure' || curl_insecure_arg=''
     QPKG.IsInstalled Entware && [[ $ENTWARE_VER = none ]] && DebugAsWarn "$(FormatAsPackageName Entware) appears to be installed but is not visible"
@@ -6611,6 +6609,8 @@ Packages.Load()
     readonly BASE_QPKG_WARNINGS
     readonly BASE_IPKGS_INSTALL
     readonly BASE_PIPS_INSTALL
+    readonly MIN_PYTHON_VER
+    readonly MIN_PERL_VER
 
     # package arrays are now full, so lock them
     readonly QPKG_NAME
