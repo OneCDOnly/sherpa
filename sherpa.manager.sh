@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VER=220925c
+    local -r SCRIPT_VER=220927
     readonly PROJECT_BRANCH=main
 
     IsQNAP || return
@@ -372,17 +372,6 @@ Self.Validate()
     DebugUserspaceOK 'time in shell' "$(GetTimeInShell)"
     DebugUserspaceOK '$BASH_VERSION' "$BASH_VERSION"
     DebugUserspaceOK 'default volume' "$(GetDefaultVolume)"
-
-    if IsAllowUnsignedPackages; then
-        DebugUserspaceOK 'allow unsigned' yes
-    else
-        if [[ ${NAS_FIRMWARE_VER//.} -lt 435 ]]; then
-            DebugUserspaceOK 'allow unsigned' no
-        else
-            DebugUserspaceWarning 'allow unsigned' no
-        fi
-    fi
-
     DebugUserspaceOK '/opt' "$($READLINK_CMD /opt || echo '<not present>')"
 
     local public_share=$($GETCFG_CMD SHARE_DEF defPublic -d Qpublic -f /etc/config/def_share.info)
@@ -412,6 +401,17 @@ Self.Validate()
     LogBinaryPathAndVersion perl "$(GetDefaultPerlVersion)" "$MIN_PERL_VER"
     DebugScript 'logs path' "$LOGS_PATH"
     DebugScript 'work path' "$WORK_PATH"
+
+    if IsAllowUnsignedPackages; then
+        DebugQPKG 'allow unsigned' yes
+    else
+        if [[ ${NAS_FIRMWARE_VER//.} -lt 435 ]]; then
+            DebugQPKG 'allow unsigned' no
+        else
+            DebugQPKGWarning 'allow unsigned' no
+        fi
+    fi
+
     DebugQPKG architecture "$NAS_QPKG_ARCH"
     DebugQPKG 'Entware installer' "$ENTWARE_VER"
 
