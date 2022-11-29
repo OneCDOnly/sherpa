@@ -1,4 +1,4 @@
-PACKAGES_VER=220925
+PACKAGES_VER=221129
 BASE_QPKG_CONFLICTS_WITH='Optware Optware-NG TarMT QPython3 QPython39 QPython310 Python3 QPerl Perl'
 BASE_QPKG_WARNINGS='Qboost'
 BASE_IPKGS_INSTALL='ca-certificates coreutils-stty findutils gcc git git-http grep less nano sed'
@@ -226,7 +226,7 @@ QPKG_DEPENDS_ON+=(Entware)
 QPKG_DEPENDED_UPON+=(false)
 QPKG_IPKGS_INSTALL+=('python3-dev python3-pillow python3-pip python3-pyopenssl')
 QPKG_IPKGS_REMOVE+=('')
-QPKG_PIPS_INSTALL+=('apprise charset-normalizer click markdown markupsafe pygments python-levenshtein python-magic pytz pytz_deprecation_shim pyyaml requests requests-oauthlib tzlocal')
+QPKG_PIPS_INSTALL+=('apprise charset-normalizer click markdown markupsafe pygments levenshtein python-magic pytz pytz_deprecation_shim pyyaml requests requests-oauthlib tzlocal')
 QPKG_SUPPORTS_BACKUP+=(true)
 QPKG_RESTART_TO_UPDATE+=(true)
 
@@ -515,7 +515,7 @@ QPKG_DEPENDS_ON+=(Entware)
 QPKG_DEPENDED_UPON+=(false)
 QPKG_IPKGS_INSTALL+=('python3-dev python3-pip')
 QPKG_IPKGS_REMOVE+=('')
-QPKG_PIPS_INSTALL+=('cheetah3')
+QPKG_PIPS_INSTALL+=('cheetah3 ct3 levenshtein')
 QPKG_SUPPORTS_BACKUP+=(true)
 QPKG_RESTART_TO_UPDATE+=(true)
 
