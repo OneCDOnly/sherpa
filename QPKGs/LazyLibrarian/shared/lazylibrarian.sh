@@ -256,30 +256,22 @@ InstallAddons()
         return 1
     fi
 
-    if [[ ! -e $requirements_pathfile ]]; then
-        if [[ -e $DEFAULT_REQUIREMENTS_PATHFILE ]]; then
-            requirements_pathfile=$DEFAULT_REQUIREMENTS_PATHFILE
-        fi
-    fi
+    [[ ! -e $requirements_pathfile && -e $DEFAULT_REQUIREMENTS_PATHFILE ]] && requirements_pathfile=$DEFAULT_REQUIREMENTS_PATHFILE
 
     if [[ -e $requirements_pathfile ]]; then
         ExecuteAndLog 'install required modules' ". $VENV_PATH/bin/activate && pip install --no-input -r $requirements_pathfile --cache-dir $PIP_CACHE_PATH" log:everything || SetError
     fi
 
-    if [[ ! -e $recommended_pathfile ]]; then
-        if [[ -e $DEFAULT_RECOMMENDED_PATHFILE ]]; then
-            recommended_pathfile=$DEFAULT_RECOMMENDED_PATHFILE
-        fi
-    fi
+    [[ ! -e $recommended_pathfile && -e $DEFAULT_RECOMMENDED_PATHFILE ]] && recommended_pathfile=$DEFAULT_RECOMMENDED_PATHFILE
 
     if [[ -e $recommended_pathfile ]]; then
         ExecuteAndLog 'install recommended modules' ". $VENV_PATH/bin/activate && pip install --no-input -r $recommended_pathfile --cache-dir $PIP_CACHE_PATH" log:everything || SetError
     fi
 
-#     if [[ $new_env = true ]]; then
-#         ExecuteAndLog "reinstall 'sabyenc3' module" ". $VENV_PATH/bin/activate && pip install --no-input --force-reinstall --no-binary :all: sabyenc3 --cache-dir $PIP_CACHE_PATH" log:everything || SetError
-#         UpdateLanguages
-#     fi
+    if [[ $QPKG_NAME = SABnzbd && $new_env = true ]]; then
+        ExecuteAndLog "KLUDGE: reinstall 'sabyenc3' module" ". $VENV_PATH/bin/activate && pip install --no-input --force-reinstall --no-binary :all: sabyenc3 --cache-dir $PIP_CACHE_PATH" log:everything || SetError
+        UpdateLanguages
+    fi
 
     }
 

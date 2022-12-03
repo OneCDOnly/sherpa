@@ -31,6 +31,8 @@ Init()
     readonly INTERPRETER=/opt/bin/python3
     readonly VENV_INTERPRETER=$VENV_PATH/bin/python3
     readonly APP_VERSION_PATHFILE=$QPKG_REPO_PATH/sabnzbd/version.py
+    readonly DEFAULT_REQUIREMENTS_PATHFILE=$QPKG_PATH/config/requirements.txt
+    readonly DEFAULT_RECOMMENDED_PATHFILE=$QPKG_PATH/config/recommended.txt
 
     # for Entware binaries only
     readonly ORIG_DAEMON_SERVICE_SCRIPT=''
@@ -240,6 +242,8 @@ InstallAddons()
     {
 
     local new_env=false
+    local requirements_pathfile=$QPKG_REPO_PATH/requirements.txt
+    local recommended_pathfile=$QPKG_REPO_PATH/recommended.txt
 
     if IsNotVirtualEnvironmentExist; then
         ExecuteAndLog 'create new virtual environment' "$INTERPRETER -m virtualenv $VENV_PATH" log:everything || SetError
@@ -252,16 +256,20 @@ InstallAddons()
         return 1
     fi
 
-    if [[ -e $QPKG_REPO_PATH/requirements.txt ]]; then
-        ExecuteAndLog 'install required modules' ". $VENV_PATH/bin/activate && pip install --no-input -r $QPKG_REPO_PATH/requirements.txt --cache-dir $PIP_CACHE_PATH" log:everything || SetError
+    [[ ! -e $requirements_pathfile && -e $DEFAULT_REQUIREMENTS_PATHFILE ]] && requirements_pathfile=$DEFAULT_REQUIREMENTS_PATHFILE
+
+    if [[ -e $requirements_pathfile ]]; then
+        ExecuteAndLog 'install required modules' ". $VENV_PATH/bin/activate && pip install --no-input -r $requirements_pathfile --cache-dir $PIP_CACHE_PATH" log:everything || SetError
     fi
 
-    if [[ -e $QPKG_REPO_PATH/recommended.txt ]]; then
-        ExecuteAndLog 'install recommended modules' ". $VENV_PATH/bin/activate && pip install --no-input -r $QPKG_REPO_PATH/recommended.txt --cache-dir $PIP_CACHE_PATH" log:everything || SetError
+    [[ ! -e $recommended_pathfile && -e $DEFAULT_RECOMMENDED_PATHFILE ]] && recommended_pathfile=$DEFAULT_RECOMMENDED_PATHFILE
+
+    if [[ -e $recommended_pathfile ]]; then
+        ExecuteAndLog 'install recommended modules' ". $VENV_PATH/bin/activate && pip install --no-input -r $recommended_pathfile --cache-dir $PIP_CACHE_PATH" log:everything || SetError
     fi
 
-    if [[ $new_env = true ]]; then
-        ExecuteAndLog "reinstall 'sabyenc3' module" ". $VENV_PATH/bin/activate && pip install --no-input --force-reinstall --no-binary :all: sabyenc3 --cache-dir $PIP_CACHE_PATH" log:everything || SetError
+    if [[ $QPKG_NAME = SABnzbd && $new_env = true ]]; then
+        ExecuteAndLog "KLUDGE: reinstall 'sabyenc3' module" ". $VENV_PATH/bin/activate && pip install --no-input --force-reinstall --no-binary :all: sabyenc3 --cache-dir $PIP_CACHE_PATH" log:everything || SetError
         UpdateLanguages
     fi
 
