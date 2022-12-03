@@ -20,13 +20,16 @@ Init()
     readonly MIN_RAM_KB=any
 
     # for online-sourced applications only
+    readonly QPKG_REPO_PATH=$QPKG_PATH/$QPKG_NAME
+    readonly VENV_PATH=$QPKG_PATH/venv
+    readonly PIP_CACHE_PATH=$QPKG_PATH/pip-cache
     readonly SOURCE_GIT_URL=https://github.com/sabnzbd/sabnzbd.git
     readonly SOURCE_GIT_BRANCH=master
     # 'shallow' (depth 1) or 'single-branch' (note: 'shallow' implies a 'single-branch' too)
     readonly SOURCE_GIT_DEPTH=shallow
     readonly TARGET_SCRIPT=SABnzbd.py
     readonly INTERPRETER=/opt/bin/python3
-    readonly QPKG_REPO_PATH=$QPKG_PATH/$QPKG_NAME
+    readonly VENV_INTERPRETER=$VENV_PATH/bin/python3
     readonly APP_VERSION_PATHFILE=$QPKG_REPO_PATH/sabnzbd/version.py
 
     # for Entware binaries only
@@ -45,7 +48,7 @@ Init()
     readonly INSTALLED_RAM_KB=$(/bin/grep MemTotal /proc/meminfo | cut -f2 -d':' | /bin/sed 's|kB||;s| ||g')
     readonly QPKG_INI_PATHFILE=$QPKG_PATH/config/config.ini
     readonly QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.def
-    readonly LAUNCHER="cd $QPKG_REPO_PATH; $INTERPRETER $DAEMON_PATHFILE --daemon --browser 0 --config-file $QPKG_INI_PATHFILE --pidfile $DAEMON_PID_PATHFILE"
+    readonly LAUNCHER="$DAEMON_PATHFILE --daemon --browser 0 --config-file $QPKG_INI_PATHFILE --pidfile $DAEMON_PID_PATHFILE"
     readonly QPKG_VERSION=$(/sbin/getcfg $QPKG_NAME Version -f /etc/config/qpkg.conf)
     readonly SERVICE_STATUS_PATHFILE=/var/run/$QPKG_NAME.last.operation
     readonly SERVICE_LOG_PATHFILE=/var/log/$QPKG_NAME.log
@@ -54,7 +57,6 @@ Init()
     readonly BACKUP_PATHFILE=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
     readonly APPARENT_PATH=/share/$(/sbin/getcfg SHARE_DEF defDownload -d Qdownload -f /etc/config/def_share.info)/$QPKG_NAME
     export PATH="$OPKG_PATH:$(/bin/sed "s|$OPKG_PATH||" <<< "$PATH")"
-    [[ -n $INTERPRETER ]] && export PYTHONPATH=$INTERPRETER
 
     if [[ $MIN_RAM_KB != any && $INSTALLED_RAM_KB -lt $MIN_RAM_KB ]]; then
         DisplayErrCommitAllLogs "$(FormatAsPackageName $QPKG_NAME) won't run on this NAS. Not enough RAM. :("
@@ -85,6 +87,8 @@ Init()
     LoadAppVersion
 
     [[ ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
+    [[ ! -d $VENV_PATH ]] && mkdir "$VENV_PATH"
+    [[ ! -d $PIP_CACHE_PATH ]] && mkdir "$PIP_CACHE_PATH"
 
     return 0
 
@@ -108,7 +112,7 @@ ShowHelp()
     [[ -n $QPKG_INI_PATHFILE ]] && DisplayAsHelp 'reset-config' "delete the application configuration, databases and history. $(FormatAsPackageName $QPKG_NAME) will be stopped, then restarted."
     [[ $QPKG_NAME = SABnzbd ]] && DisplayAsHelp 'import' "create a backup of an installed $(FormatAsPackageName SABnzbdplus) config and restore it into $(FormatAsPackageName $QPKG_NAME)."
     [[ -n $SOURCE_GIT_URL ]] && DisplayAsHelp 'clean' "wipe the current local copy of $(FormatAsPackageName $QPKG_NAME), and download it again from remote source. Configuration will be retained."
-    DisplayAsHelp 'log' 'display this service script runtime log.'
+    DisplayAsHelp 'log' 'display the service script runtime log.'
     DisplayAsHelp 'version' 'display the package version number.'
     Display
 
@@ -140,7 +144,6 @@ StartQPKG()
     WaitForGit || return
     PullGitRepo "$QPKG_NAME" "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_PATH"
     WaitForLaunchTarget || return
-    UpdateLanguages
     EnsureConfigFileExists
     LoadUIPorts app || return
 
@@ -161,7 +164,15 @@ StartQPKG()
         return 1
     fi
 
-    ExecuteAndLog 'start daemon' "$LAUNCHER" log:everything || return
+    InstallAddons || return
+
+    if IsNotVirtualEnvironmentExist; then
+        DisplayErrCommitAllLogs 'unable to start daemon: virtual environment does not exist!'
+        SetError
+        return 1
+    fi
+
+    ExecuteAndLog 'start daemon' ". $VENV_PATH/bin/activate && cd $QPKG_REPO_PATH && $VENV_INTERPRETER $LAUNCHER" log:everything || return
     WaitForPID || return
     IsDaemonActive || return
     CheckPorts || return
@@ -222,6 +233,37 @@ StopQPKG()
     fi
 
     return 0
+
+    }
+
+InstallAddons()
+    {
+
+    local new_env=false
+
+    if IsNotVirtualEnvironmentExist; then
+        ExecuteAndLog 'create new virtual environment' "$INTERPRETER -m virtualenv $VENV_PATH" log:everything || SetError
+        new_env=true
+    fi
+
+    if IsNotVirtualEnvironmentExist; then
+        DisplayErrCommitAllLogs 'unable to install addons: virtual environment does not exist!'
+        SetError
+        return 1
+    fi
+
+    if [[ -e $QPKG_REPO_PATH/requirements.txt ]]; then
+        ExecuteAndLog 'install required modules' ". $VENV_PATH/bin/activate && pip install --no-input -r $QPKG_REPO_PATH/requirements.txt --cache-dir $PIP_CACHE_PATH" log:everything || SetError
+    fi
+
+    if [[ -e $QPKG_REPO_PATH/recommended.txt ]]; then
+        ExecuteAndLog 'install recommended modules' ". $VENV_PATH/bin/activate && pip install --no-input -r $QPKG_REPO_PATH/recommended.txt --cache-dir $PIP_CACHE_PATH" log:everything || SetError
+    fi
+
+    if [[ $new_env = true ]]; then
+        ExecuteAndLog "reinstall 'sabyenc3' module" ". $VENV_PATH/bin/activate && pip install --no-input --force-reinstall --no-binary :all: sabyenc3 --cache-dir $PIP_CACHE_PATH" log:everything || SetError
+        UpdateLanguages
+    fi
 
     }
 
@@ -366,10 +408,12 @@ UpdateLanguages()
     # run [tools/make_mo.py] if SABnzbd version number has changed since last run
 
     LoadAppVersion
-
     [[ -e $APP_VERSION_STORE_PATHFILE && $(<"$APP_VERSION_STORE_PATHFILE") = "$app_version" && -d $QPKG_REPO_PATH/locale ]] && return 0
 
-    ExecuteAndLog "update $(FormatAsPackageName $QPKG_NAME) language translations" "cd $QPKG_REPO_PATH; $INTERPRETER $QPKG_REPO_PATH/tools/make_mo.py" && SaveAppVersion
+    ExecuteAndLog "update $(FormatAsPackageName $QPKG_NAME) language translations" ". $VENV_PATH/bin/activate && cd $QPKG_REPO_PATH; $VENV_INTERPRETER $QPKG_REPO_PATH/tools/make_mo.py"
+    [[ ! -e $APP_VERSION_STORE_PATHFILE ]] && return 0
+
+    SaveAppVersion
 
     }
 
@@ -420,7 +464,7 @@ PullGitRepo()
             branch_switch=true
             DisplayCommitToLog "current git branch: $installed_branch, new git branch: $3"
             [[ $QPKG_NAME = nzbToMedia ]] && BackupConfig
-            ExecuteAndLog 'new git branch was specified so clean local repository' "cd /tmp; rm -r $QPKG_GIT_PATH"
+            ExecuteAndLog 'new git branch has been specified, so clean local repository' "cd /tmp; rm -r $QPKG_GIT_PATH"
         fi
     fi
 
@@ -454,6 +498,8 @@ CleanLocalClone()
 
     StopQPKG
     ExecuteAndLog 'clean local repository' "rm -r $QPKG_REPO_PATH"
+    ExecuteAndLog 'clean virtual environment' "rm -rf $VENV_PATH"
+    ExecuteAndLog 'clean module cache' "rm -rf $PIP_CACHE_PATH"
     StartQPKG
 
     }
@@ -610,8 +656,8 @@ ExecuteAndLog()
 
     # $1 processing message
     # $2 command(s) to run
-    # $3 'log:everything' (optional) - if specified, the result of the command is recorded in the QTS system log.
-    #                                - if unspecified, only warnings are logged in the QTS system log.
+    # $3 'log:everything' (optional) - if specified, the processing message and successful results are recorded in the QTS system log.
+    #                                - if unspecified, only warnings/ errors are recorded in the QTS system log.
 
     if [[ -z $1 || -z $2 ]]; then
         SetError
@@ -950,6 +996,22 @@ IsNotDefaultConfigFound()
     {
 
     ! IsDefaultConfigFound
+
+    }
+
+IsVirtualEnvironmentExist()
+    {
+
+    # Is there a virtual environment to run the application in?
+
+    [[ -e $VENV_PATH/bin/activate ]]
+
+    }
+
+IsNotVirtualEnvironmentExist()
+    {
+
+    ! IsVirtualEnvironmentExist
 
     }
 

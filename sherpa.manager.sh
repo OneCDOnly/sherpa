@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VER=220927
+    local -r SCRIPT_VER=221204-beta
     readonly PROJECT_BRANCH=main
 
     IsQNAP || return
@@ -640,6 +640,8 @@ Tiers.Process()
     local -i index=0
 
     Tier.Process Download false All QPKG AcToDownload 'update package cache with' 'updating package cache with' 'package cache updated with' '' || return
+    Tier.Process Backup false Dependent QPKG AcToBackup 'backup configuration for' 'backing-up configuration for' 'configuration backed-up for' '' || return
+    Tier.Process Backup false Standalone QPKG AcToBackup 'backup configuration for' 'backing-up configuration for' 'configuration backed-up for' '' || return
 
     # -> package 'removal' phase begins here <-
 
@@ -648,12 +650,8 @@ Tiers.Process()
 
         case $tier in
             Standalone|Dependent)
-                Tier.Process Backup false "$tier" QPKG AcToBackup 'backup configuration for' 'backing-up configuration for' 'configuration backed-up for' '' || return
                 Tier.Process Stop false "$tier" QPKG AcToStop stop stopping stopped '' true || return
                 Tier.Process Uninstall false "$tier" QPKG AcToUninstall uninstall uninstalling uninstalled '' || return
-                ;;
-            Addon)
-                Tier.Process Uninstall false "$tier" IPKG AcToUninstall uninstall uninstalling uninstalled '' || return
         esac
     done
 
@@ -793,7 +791,7 @@ Tier.Process()
             fi
 
             if [[ $ASYNC = false ]]; then
-                # launch actions consecutively
+                # execute actions consecutively
                 for package in "${target_packages[@]}"; do
                     ShowAsActionProgress "$TIER" "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
 
@@ -814,7 +812,7 @@ Tier.Process()
                     esac
                 done
             else
-                # launch actions concurrently
+                # execute actions concurrently
                 # NON-FUNCTIONAL: for now, use same code as above
                 for package in "${target_packages[@]}"; do
                     ShowAsActionProgress "$TIER" "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
@@ -2021,37 +2019,6 @@ CalcIPKGsDepsToInstall()
 
     }
 
-CalcAllIPKGsToUninstall()
-    {
-
-    # From a specified list of IPKG names, exclude those already installed, then generate a total qty to uninstall
-
-    QPKGs.IsNtInstalled.Exist Entware && return
-    QPKGs.IsNtStarted.Exist Entware && return
-    IsNtSysFileExist $GNU_GREP_CMD && return 1
-    DebugFuncEntry
-
-    local req_list=''
-    local element=''
-
-    req_list=$(DeDupeWords "$(IPKGs.AcToUninstall.List)")
-    DebugInfo "$($WC_CMD -w <<< "$req_list") IPKG$(Plural "$($WC_CMD -w <<< "$req_list")") requested" "'$req_list' "
-    DebugAsProc 'excluding IPKGs not installed'
-
-    for element in $req_list; do
-        ! $OPKG_CMD status "$element" | $GREP_CMD -q "Status:.*installed" && IPKGs.AcToUninstall.Remove "$element"
-    done
-
-    if [[ $(IPKGs.AcToUninstall.Count) -gt 0 ]]; then
-        DebugAsDone "$(IPKGs.AcToUninstall.Count) IPKG$(Plural "$(IPKGs.AcToUninstall.Count)") to uninstall: '$(IPKGs.AcToUninstall.List)'"
-    else
-        DebugAsDone 'no IPKGs to uninstall'
-    fi
-
-    DebugFuncExit
-
-    }
-
 CalcIPKGsDownloadSize()
     {
 
@@ -2185,49 +2152,6 @@ IPKGs.Install()
 
     }
 
-IPKGs.Uninstall()
-    {
-
-    QPKGs.SkProc.IsSet && return
-    QPKGs.IsNtInstalled.Exist Entware && return
-    QPKGs.AcToUninstall.Exist Entware && return
-    QPKGs.AcToReinstall.Exist Entware && return
-    QPKGs.IsNtStarted.Exist Entware && return
-    Self.Error.IsSet && return
-    DebugFuncEntry
-
-    local -i index=0
-    local -i result_code=0
-
-    if QPKGs.AcUninstall.ScAll.IsNt; then
-        for index in "${!QPKG_NAME[@]}"; do
-            if QPKGs.AcToInstall.Exist "${QPKG_NAME[$index]}" || QPKGs.IsInstalled.Exist "${QPKG_NAME[$index]}" || QPKGs.AcToUpgrade.Exist "${QPKG_NAME[$index]}" || QPKGs.AcToUninstall.Exist "${QPKG_NAME[$index]}"; then
-                IPKGs.AcToUninstall.Add "${QPKG_IPKGS_REMOVE[$index]}"
-            fi
-        done
-    fi
-
-    CalcAllIPKGsToUninstall
-    Self.Error.IsSet && return
-    local -i total_count=$(IPKGs.AcToUninstall.Count)
-
-    if [[ $total_count -gt 0 ]]; then
-        ShowAsProc "uninstalling $total_count IPKG$(Plural "$total_count")"
-
-        RunAndLog "$OPKG_CMD remove $(IPKGs.AcToUninstall.List) --force-remove --force-removal-of-dependent-packages" "$LOGS_PATH/ipkgs.$UNINSTALL_LOG_FILE" log:failure-only 255
-        result_code=$?
-
-        if [[ $result_code -eq 0 || $result_code -eq 255 ]]; then
-            ShowAsDone "uninstalled $total_count IPKG$(Plural "$total_count")"
-        else
-            ShowAsFail "uninstall IPKG$(Plural "$total_count") failed $(FormatAsExitcode $result_code)"
-        fi
-    fi
-
-    DebugFuncExit
-
-    }
-
 PIPs.Install()
     {
 
@@ -2238,25 +2162,17 @@ PIPs.Install()
     ! $OPKG_CMD status python3-pip | $GREP_CMD -q "Status:.*installed" && return
     Self.Error.IsSet && return
     DebugFuncEntry
-    local recompile_sabyenc3=false
-
-    case $NAS_ARCH in
-        x86_64|i686|aarch64)
-            recompile_sabyenc3=true
-    esac
 
     local exec_cmd=''
     local -i result_code=0
     local -i pass_count=0
     local -i fail_count=0
-    local -i total_count=2
-    [[ $recompile_sabyenc3 = true ]] && ((total_count++))
+    local -i total_count=1
+    local -i index=0
     local -r PACKAGE_TYPE='PIP group'
     local ACTION_PRESENT=installing
     local ACTION_PAST=installed
     local -r RUNTIME=long
-    PIPs.AcToInstall.Init
-    PIPs.AcToDownload.Init
     ModPathToEntware
 
     if Opts.Deps.Check.IsSet || IPKGs.AcToInstall.Exist python3-pip; then
@@ -2265,104 +2181,24 @@ PIPs.Install()
         exec_cmd="$PIP_CMD install --upgrade --no-input $BASE_PIPS_INSTALL --cache-dir $PIP_CACHE_PATH"
         local desc="'Python3' base modules"
         local log_pathfile=$LOGS_PATH/py3-modules.base.$INSTALL_LOG_FILE
-        DebugAsProc "downloading & installing $desc"
+        DebugAsProc "$ACTION_PRESENT $desc"
         RunAndLog "$exec_cmd" "$log_pathfile" log:failure-only
         result_code=$?
 
         if [[ $result_code -eq 0 ]]; then
-            DebugAsDone "downloaded & installed $desc"
+            DebugAsDone "$ACTION_PAST $desc"
             ((pass_count++))
         else
-            ShowAsFail "download & install $desc failed $(FormatAsResult "$result_code")"
+            ShowAsFail "$ACTION_PAST $desc failed $(FormatAsResult "$result_code")"
             ((fail_count++))
         fi
     else
         ((total_count--))
-    fi
-
-    if QPKGs.AcInstall.ScAll.IsSet; then
-        for index in "${!QPKG_NAME[@]}"; do
-            [[ ${QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${QPKG_ARCH[$index]} = all ]] || continue
-            PIPs.AcToInstall.Add "${QPKG_PIPS_INSTALL[$index]}"
-        done
-    else
-        for index in "${!QPKG_NAME[@]}"; do
-            if QPKGs.AcToInstall.Exist "${QPKG_NAME[$index]}" || QPKGs.IsInstalled.Exist "${QPKG_NAME[$index]}" || QPKGs.AcToReinstall.Exist "${QPKG_NAME[$index]}" || QPKGs.AcToStart.Exist "${QPKG_NAME[$index]}"; then
-                [[ ${QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${QPKG_ARCH[$index]} = all ]] || continue
-                QPKG.MinRAM "${QPKG_NAME[$index]}" &>/dev/null || continue
-                PIPs.AcToInstall.Add "${QPKG_PIPS_INSTALL[$index]}"
-            fi
-        done
-    fi
-
-    if (Opts.Deps.Check.IsSet && PIPs.AcToInstall.IsAny) || PIPs.AcToInstall.IsAny; then
-        ShowAsActionProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
-
-        exec_cmd="$PIP_CMD install --upgrade --no-input $(PIPs.AcToInstall.List) --cache-dir $PIP_CACHE_PATH"
-        local desc="'Python3' specific modules"
-        local log_pathfile=$LOGS_PATH/py3-modules.shared.$INSTALL_LOG_FILE
-        DebugAsProc "downloading & installing $desc"
-        RunAndLog "$exec_cmd" "$log_pathfile" log:failure-only
-        result_code=$?
-
-        if [[ $result_code -eq 0 ]]; then
-            DebugAsDone "downloaded & installed $desc"
-            ((pass_count++))
-        else
-            ShowAsFail "download & install $desc failed $(FormatAsResult "$result_code")"
-            ((fail_count++))
-        fi
-    else
-        ((total_count--))
-    fi
-
-    if [[ $recompile_sabyenc3 = true ]]; then
-        if QPKGs.IsInstalled.Exist SABnzbd || QPKGs.AcToInstall.Exist SABnzbd || QPKGs.AcToReinstall.Exist SABnzbd; then
-            # KLUDGE: force recompilation of 'sabyenc3' package so it's recognised by SABnzbd: https://forums.sabnzbd.org/viewtopic.php?p=121214#p121214
-            ShowAsActionProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
-
-            exec_cmd="$PIP_CMD install --no-input --force-reinstall --no-binary :all: sabyenc3==5.4.3 --cache-dir $PIP_CACHE_PATH"
-            desc="'Python3 sabyenc3' module"
-            log_pathfile=$LOGS_PATH/py3-modules.sabyenc3.$REINSTALL_LOG_FILE
-            DebugAsProc "reinstalling $desc"
-            RunAndLog "$exec_cmd" "$log_pathfile" log:failure-only
-            result_code=$?
-
-            if [[ $result_code -eq 0 ]]; then
-                DebugAsDone "reinstalled $desc"
-                QPKG.IsStarted SABnzbd && QPKGs.AcToRestart.Add SABnzbd
-                ((pass_count++))
-            else
-                ShowAsFail "reinstallation of $desc failed $(FormatAsResult "$result_code")"
-                ((fail_count++))
-            fi
-        else
-            ((total_count--))
-        fi
     fi
 
     # execute with pass_count > total_count to trigger 100% message
     ShowAsActionProgress '' "$PACKAGE_TYPE" "$((total_count + 1))" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
     ShowAsActionResult '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PAST" "$RUNTIME"
-
-    # check all PIP dependencies while we're here
-    local ACTION_PRESENT=checking
-    local ACTION_PAST=checked
-
-    exec_cmd="$PIP_CMD check --no-input"
-    desc="'Python3' modules"
-    ShowAsProc "checking $desc"
-    log_pathfile=$LOGS_PATH/py3-modules.$CHECK_LOG_FILE
-    DebugAsProc "$ACTION_PRESENT $desc"
-    RunAndLog "$exec_cmd" "$log_pathfile" log:failure-only
-    result_code=$?
-
-    if [[ $result_code -eq 0 ]]; then
-        DebugAsDone "$ACTION_PAST $desc"
-    else
-        ShowAsWarn "$desc check failed"
-    fi
-
     DebugFuncExit $result_code
 
     }
@@ -6591,10 +6427,12 @@ Objects.Load()
 
     DebugFuncEntry
 
-    if [[ ! -e $OBJECTS_PATHFILE ]] || ! IsThisFileRecent "$OBJECTS_PATHFILE"; then
-        ShowAsProc 'updating objects' >&2
-        if $CURL_CMD${curl_insecure_arg:-} --silent --fail "$OBJECTS_ARCHIVE_URL" > "$OBJECTS_ARCHIVE_PATHFILE"; then
-            /bin/tar --extract --gzip --file="$OBJECTS_ARCHIVE_PATHFILE" --directory="$WORK_PATH"
+    if [[ ! -e $PWD/dont.refresh.objects.flag ]]; then
+        if [[ ! -e $OBJECTS_PATHFILE ]] || ! IsThisFileRecent "$OBJECTS_PATHFILE"; then
+            ShowAsProc 'updating objects' >&2
+            if $CURL_CMD${curl_insecure_arg:-} --silent --fail "$OBJECTS_ARCHIVE_URL" > "$OBJECTS_ARCHIVE_PATHFILE"; then
+                /bin/tar --extract --gzip --file="$OBJECTS_ARCHIVE_PATHFILE" --directory="$WORK_PATH"
+            fi
         fi
     fi
 
@@ -6620,10 +6458,12 @@ Packages.Load()
     QPKGs.Loaded.IsSet && return
     DebugFuncEntry
 
-    if [[ ! -e $PACKAGES_PATHFILE ]] || ! IsThisFileRecent "$PACKAGES_PATHFILE" 60; then
-        ShowAsProc 'updating package list' >&2
-        if $CURL_CMD${curl_insecure_arg:-} --silent --fail "$PACKAGES_ARCHIVE_URL" > "$PACKAGES_ARCHIVE_PATHFILE"; then
-            /bin/tar --extract --gzip --file="$PACKAGES_ARCHIVE_PATHFILE" --directory="$WORK_PATH"
+    if [[ ! -e $PWD/dont.refresh.packages.flag ]]; then
+        if [[ ! -e $PACKAGES_PATHFILE ]] || ! IsThisFileRecent "$PACKAGES_PATHFILE" 60; then
+            ShowAsProc 'updating package list' >&2
+            if $CURL_CMD${curl_insecure_arg:-} --silent --fail "$PACKAGES_ARCHIVE_URL" > "$PACKAGES_ARCHIVE_PATHFILE"; then
+                /bin/tar --extract --gzip --file="$PACKAGES_ARCHIVE_PATHFILE" --directory="$WORK_PATH"
+            fi
         fi
     fi
 
@@ -6656,8 +6496,6 @@ Packages.Load()
         readonly QPKG_DEPENDS_ON
         readonly QPKG_DEPENDED_UPON
         readonly QPKG_IPKGS_INSTALL
-        readonly QPKG_IPKGS_REMOVE
-        readonly QPKG_PIPS_INSTALL
         readonly QPKG_SUPPORTS_BACKUP
         readonly QPKG_RESTART_TO_UPDATE
 
