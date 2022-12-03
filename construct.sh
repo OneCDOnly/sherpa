@@ -218,7 +218,7 @@ done
 
 for action in Download Install Uninstall Upgrade; do    # only a subset of addon package actions are supported for-now
     AddListObj IPKGs.AcTo${action}
-    AddListObj PIPs.AcTo${action}
+    AddListObj IPKGs.AcOk${action}
 done
 
 for scope in "${PACKAGE_SCOPES[@]}"; do
