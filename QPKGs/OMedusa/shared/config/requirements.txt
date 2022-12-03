@@ -1,0 +1,9 @@
+apprise
+certifi
+cfscrape
+idna
+oauthlib
+pyyaml
+requests
+requests-oauthlib
+urllib3
