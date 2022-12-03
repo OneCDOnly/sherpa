@@ -247,7 +247,7 @@ InstallAddons()
     local recommended_pathfile=$QPKG_REPO_PATH/recommended.txt
 
     if IsNotVirtualEnvironmentExist; then
-        ExecuteAndLog 'create new virtual environment' "$INTERPRETER -m virtualenv $VENV_PATH" log:everything || SetError
+        ExecuteAndLog 'create new virtual environment' "$INTERPRETER -m virtualenv --system-site-packages $VENV_PATH" log:everything || SetError
         new_env=true
     fi
 
