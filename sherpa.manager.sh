@@ -4270,7 +4270,7 @@ QPKG.Install()
     fi
 
     if [[ -z $local_pathfile ]]; then
-        MarkActionAsSkipped show "$PACKAGE_NAME" "$action" 'no local file found for processing: this error should be reported.'
+        MarkActionAsSkipped show "$PACKAGE_NAME" "$action" 'no local file found for processing: this error should be reported'
         DebugFuncExit 2; return
     fi
 
@@ -4379,7 +4379,7 @@ QPKG.Reinstall()
     fi
 
     if [[ -z $local_pathfile ]]; then
-        MarkActionAsSkipped show "$PACKAGE_NAME" "$action" 'no local file found for processing: this error should be reported.'
+        MarkActionAsSkipped show "$PACKAGE_NAME" "$action" 'no local file found for processing: this error should be reported'
         DebugFuncExit 2; return
     fi
 
@@ -4464,7 +4464,7 @@ QPKG.Upgrade()
     fi
 
     if [[ -z $local_pathfile ]]; then
-        MarkActionAsSkipped show "$PACKAGE_NAME" "$action" 'no local file found for processing: this error should be reported.'
+        MarkActionAsSkipped show "$PACKAGE_NAME" "$action" 'no local file found for processing: this error should be reported'
         DebugFuncExit 2; return
     fi
 
@@ -4994,7 +4994,7 @@ QPKG.StoreServiceStatus()
             ;;
         failed)
             if [[ -e /var/log/$PACKAGE_NAME.log ]]; then
-                ShowAsFail "$(FormatAsPackageName "$PACKAGE_NAME") service action failed. Check $(FormatAsFileName "/var/log/$PACKAGE_NAME.log") for more information."
+                ShowAsFail "$(FormatAsPackageName "$PACKAGE_NAME") service action failed. Check $(FormatAsFileName "/var/log/$PACKAGE_NAME.log") for more information"
                 AddFileToDebug /var/log/$PACKAGE_NAME.log
             else
                 ShowAsFail "$(FormatAsPackageName "$PACKAGE_NAME") service action failed"
