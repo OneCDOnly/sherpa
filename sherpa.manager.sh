@@ -6430,7 +6430,7 @@ Objects.Load()
 
     DebugFuncEntry
 
-    if [[ ! -e $PWD/dont.refresh.objects.flag ]]; then
+    if [[ ! -e $PWD/dont.refresh.sherpa.objects ]]; then
         if [[ ! -e $OBJECTS_PATHFILE ]] || ! IsThisFileRecent "$OBJECTS_PATHFILE"; then
             ShowAsProc 'updating objects' >&2
             if $CURL_CMD${curl_insecure_arg:-} --silent --fail "$OBJECTS_ARCHIVE_URL" > "$OBJECTS_ARCHIVE_PATHFILE"; then
@@ -6461,7 +6461,7 @@ Packages.Load()
     QPKGs.Loaded.IsSet && return
     DebugFuncEntry
 
-    if [[ ! -e $PWD/dont.refresh.packages.flag ]]; then
+    if [[ ! -e $PWD/dont.refresh.sherpa.packages ]]; then
         if [[ ! -e $PACKAGES_PATHFILE ]] || ! IsThisFileRecent "$PACKAGES_PATHFILE" 60; then
             ShowAsProc 'updating package list' >&2
             if $CURL_CMD${curl_insecure_arg:-} --silent --fail "$PACKAGES_ARCHIVE_URL" > "$PACKAGES_ARCHIVE_PATHFILE"; then
