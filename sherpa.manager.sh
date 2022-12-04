@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VER=221204-beta
+    local -r SCRIPT_VER=221205-beta
     readonly PROJECT_BRANCH=main
 
     IsQNAP || return
@@ -688,20 +688,22 @@ Tiers.Process()
 
                 ;;
             Addon)
-                for action in Install Reinstall Upgrade; do
-                    if QPKGs.AcTo${action}.IsAny || QPKGs.Ac${action}.ScAll.IsSet; then
+                for action in Install Reinstall Upgrade Start; do
+                    if QPKGs.IsStarted.Exist Entware; then
                         IPKGs.Upgrade.Set
+                    fi
+
+                    if QPKGs.AcTo${action}.IsAny; then
                         IPKGs.Install.Set
-                        PIPs.Install.Set
-                        break
                     fi
                 done
 
                 if QPKGs.IsStarted.Exist Entware; then
                     ModPathToEntware
-
                     Tier.Process Upgrade false "$tier" IPKG '' upgrade upgrading upgraded long || return
                     Tier.Process Install false "$tier" IPKG '' install installing installed long || return
+
+                    PIPs.Install.Set
                     Tier.Process Install false "$tier" PIP '' install installing installed long || return
                 fi
         esac
@@ -2143,6 +2145,7 @@ IPKGs.Install()
 
         if [[ $result_code -eq 0 ]]; then
             ShowAsDone "downloaded & installed $total_count IPKG$(Plural "$total_count")"
+            IPKGs.AcOkInstall.Add "$(IPKGs.AcToDownload.Array)"
         else
             ShowAsFail "download & install $total_count IPKG$(Plural "$total_count") failed $(FormatAsExitcode $result_code)"
         fi
@@ -2175,7 +2178,7 @@ PIPs.Install()
     local -r RUNTIME=long
     ModPathToEntware
 
-    if Opts.Deps.Check.IsSet || IPKGs.AcToInstall.Exist python3-pip; then
+    if Opts.Deps.Check.IsSet || IPKGs.AcOkInstall.Exist python3-pip; then
         ShowAsActionProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
 
         exec_cmd="$PIP_CMD install --upgrade --no-input $BASE_PIPS_INSTALL --cache-dir $PIP_CACHE_PATH"
