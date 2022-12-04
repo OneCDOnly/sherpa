@@ -4,7 +4,7 @@
 
 ./check.sh
 
-echo -n 'constructing ... '
+echo -n 'constructing archives ... '
 
 PROJECT_NAME=sherpa
 WORK_PATH=$PWD

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-echo -n 'checking ... '
+echo -n 'checking syntax ... '
 
 fail=false
 
