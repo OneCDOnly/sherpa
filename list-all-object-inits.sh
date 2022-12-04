@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-grep '.Init()' objects
+grep '.Init()' objects | sort
