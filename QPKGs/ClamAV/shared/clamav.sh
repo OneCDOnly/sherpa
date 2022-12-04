@@ -20,14 +20,21 @@ Init()
     readonly MIN_RAM_KB=1572864
 
     # for online-sourced applications only
+    readonly QPKG_REPO_PATH=''
+    readonly VENV_PATH=''
+    readonly PIP_CACHE_PATH=''
     readonly SOURCE_GIT_URL=''
     readonly SOURCE_GIT_BRANCH=''
     # 'shallow' (depth 1) or 'single-branch' (note: 'shallow' implies a 'single-branch' too)
     readonly SOURCE_GIT_DEPTH=''
     readonly TARGET_SCRIPT=''
-    readonly PYTHON=''
-    readonly QPKG_REPO_PATH=$QPKG_PATH/$QPKG_NAME
+    readonly INTERPRETER=''
+    readonly VENV_INTERPRETER=''
     readonly APP_VERSION_PATHFILE=''
+    readonly DEFAULT_REQUIREMENTS_PATHFILE=''
+    readonly DEFAULT_RECOMMENDED_PATHFILE=''
+    readonly LAUNCHER_PATHFILE=''
+    readonly USERLINK_PATHFILE=''
 
     # for Entware binaries only
     readonly ORIG_DAEMON_SERVICE_SCRIPT=''
@@ -40,6 +47,7 @@ Init()
     readonly BACKUP_SERVICE_PATHFILE=$TARGET_SERVICE_PATHFILE.bak
 
     # remaining environment
+    readonly TRANSMISSION_WEB_HOME=''
     readonly DAEMON_PID_PATHFILE=/var/run/$QPKG_NAME.pid
     readonly APP_VERSION_STORE_PATHFILE=$QPKG_PATH/config/version.stored
     readonly INSTALLED_RAM_KB=$(/bin/grep MemTotal /proc/meminfo | cut -f2 -d':' | /bin/sed 's|kB||;s| ||g')
@@ -54,7 +62,6 @@ Init()
     readonly BACKUP_PATHFILE=''
     readonly APPARENT_PATH=/share/$(/sbin/getcfg SHARE_DEF defDownload -d Qdownload -f /etc/config/def_share.info)/$QPKG_NAME
     export PATH="$OPKG_PATH:$(/bin/sed "s|$OPKG_PATH||" <<< "$PATH")"
-    [[ -n $PYTHON ]] && export PYTHONPATH=$PYTHON
 
     if [[ $MIN_RAM_KB != any && $INSTALLED_RAM_KB -lt $MIN_RAM_KB ]]; then
         DisplayErrCommitAllLogs "$(FormatAsPackageName $QPKG_NAME) won't run on this NAS. Not enough RAM. :("
@@ -66,7 +73,7 @@ Init()
     readonly PORT_CHECK_TIMEOUT=60
     readonly GIT_APPEAR_TIMEOUT=300
     readonly LAUNCH_TARGET_APPEAR_TIMEOUT=30
-    readonly PID_APPEAR_TIMEOUT=5
+    readonly PID_APPEAR_TIMEOUT=60
 
     ui_port=0
     ui_port_secure=0
@@ -99,16 +106,16 @@ ShowHelp()
     Display
     Display '[OPTION] may be any one of the following:'
     Display
-    DisplayAsHelp 'start' "launch $(FormatAsPackageName $QPKG_NAME) if not already running."
-    DisplayAsHelp 'stop' "shutdown $(FormatAsPackageName $QPKG_NAME) if running."
+    DisplayAsHelp 'start' "activate $(FormatAsPackageName $QPKG_NAME) QPKG if stopped."
+    DisplayAsHelp 'stop' "deactivate $(FormatAsPackageName $QPKG_NAME) QPKG if started."
     DisplayAsHelp 'restart' "stop, then start $(FormatAsPackageName $QPKG_NAME)."
-    DisplayAsHelp 'status' "check if $(FormatAsPackageName $QPKG_NAME) is still running. Returns \$? = 0 if running, 1 if not."
+    DisplayAsHelp 'status' "check if $(FormatAsPackageName $QPKG_NAME) is active. Returns \$? = 0 if started, 1 if not."
     [[ -n $BACKUP_PATHFILE ]] && DisplayAsHelp 'backup' "backup the current $(FormatAsPackageName $QPKG_NAME) configuration to persistent storage."
     [[ -n $BACKUP_PATHFILE ]] && DisplayAsHelp 'restore' "restore a previously saved configuration from persistent storage. $(FormatAsPackageName $QPKG_NAME) will be stopped, then restarted."
     [[ -n $QPKG_INI_PATHFILE ]] && DisplayAsHelp 'reset-config' "delete the application configuration, databases and history. $(FormatAsPackageName $QPKG_NAME) will be stopped, then restarted."
     [[ $QPKG_NAME = SABnzbd ]] && DisplayAsHelp 'import' "create a backup of an installed $(FormatAsPackageName SABnzbdplus) config and restore it into $(FormatAsPackageName $QPKG_NAME)."
     [[ -n $SOURCE_GIT_URL ]] && DisplayAsHelp 'clean' "wipe the current local copy of $(FormatAsPackageName $QPKG_NAME), and download it again from remote source. Configuration will be retained."
-    DisplayAsHelp 'log' 'display this service script runtime log.'
+    DisplayAsHelp 'log' 'display the service script runtime log.'
     DisplayAsHelp 'version' 'display the package version number.'
     Display
 
@@ -140,12 +147,12 @@ StartQPKG()
         # mod 'freshclam' runtime options
         /bin/sed -i 's|$FRESHCLAM -u admin -l /tmp/.freshclam.log|$FRESHCLAM -u admin --config-file=$FRESHCLAM_CONFIG --datadir=$ANTIVIRUS_CLAMAV -l /tmp/.freshclam.log|' "$TARGET_SERVICE_PATHFILE"
 
-        "$TARGET_SERVICE_PATHFILE" restart
+        "$TARGET_SERVICE_PATHFILE" restart 2>/dev/null
     fi
 
     /bin/grep -q freshclam /etc/profile || echo "alias freshclam='/opt/sbin/freshclam -u admin --config-file=/etc/config/freshclam.conf --datadir=/share/$(/sbin/getcfg Public path -f /etc/config/smb.conf | cut -d '/' -f 3)/.antivirus/usr/share/clamav -l /tmp/.freshclam.log'" >> /etc/profile
 
-    DisplayCommitToLog 'start package: OK'
+    DisplayCommitToLog 'start: OK'
 
     return 0
 
@@ -161,13 +168,12 @@ StopQPKG()
     if [[ -e $BACKUP_SERVICE_PATHFILE ]]; then
         mv "$BACKUP_SERVICE_PATHFILE" "$TARGET_SERVICE_PATHFILE"
 
-        "$TARGET_SERVICE_PATHFILE" restart
+        "$TARGET_SERVICE_PATHFILE" restart 2>/dev/null
     fi
 
     /bin/sed -i '/freshclam/d' /etc/profile
 
-    DisplayCommitToLog 'stop package: OK'
-
+    DisplayCommitToLog 'stop: OK'
     return 0
 
     }
@@ -305,10 +311,12 @@ UpdateLanguages()
     # run [tools/make_mo.py] if SABnzbd version number has changed since last run
 
     LoadAppVersion
-
     [[ -e $APP_VERSION_STORE_PATHFILE && $(<"$APP_VERSION_STORE_PATHFILE") = "$app_version" && -d $QPKG_REPO_PATH/locale ]] && return 0
 
-    ExecuteAndLog "update $(FormatAsPackageName $QPKG_NAME) language translations" "cd $QPKG_REPO_PATH; $PYTHON $QPKG_REPO_PATH/tools/make_mo.py" && SaveAppVersion
+    ExecuteAndLog "update $(FormatAsPackageName $QPKG_NAME) language translations" ". $VENV_PATH/bin/activate && cd $QPKG_REPO_PATH; $VENV_INTERPRETER $QPKG_REPO_PATH/tools/make_mo.py"
+    [[ ! -e $APP_VERSION_STORE_PATHFILE ]] && return 0
+
+    SaveAppVersion
 
     }
 
@@ -359,7 +367,7 @@ PullGitRepo()
             branch_switch=true
             DisplayCommitToLog "current git branch: $installed_branch, new git branch: $3"
             [[ $QPKG_NAME = nzbToMedia ]] && BackupConfig
-            ExecuteAndLog 'new git branch was specified so clean local repository' "cd /tmp; rm -r $QPKG_GIT_PATH"
+            ExecuteAndLog 'new git branch has been specified, so clean local repository' "cd /tmp; rm -r $QPKG_GIT_PATH"
         fi
     fi
 
@@ -367,7 +375,7 @@ PullGitRepo()
         ExecuteAndLog "clone $(FormatAsPackageName "$1") from remote repository" "cd /tmp; /opt/bin/git clone --branch $3 $DEPTH -c advice.detachedHead=false $GIT_HTTPS_URL $QPKG_GIT_PATH"
     else
         # latest effort at resolving local corruption, source: https://stackoverflow.com/a/10170195
-        ExecuteAndLog "update $(FormatAsPackageName "$1") from remote repository" "cd /tmp; /opt/bin/git -C $QPKG_GIT_PATH clean -f; /opt/bin/git -C $QPKG_GIT_PATH reset --hard origin/$3"
+        ExecuteAndLog "update $(FormatAsPackageName "$1") from remote repository" "cd /tmp; /opt/bin/git -C $QPKG_GIT_PATH clean -f; /opt/bin/git -C $QPKG_GIT_PATH reset --hard origin/$3; /opt/bin/git -C $QPKG_GIT_PATH pull"
     fi
 
     installed_branch=$(/opt/bin/git -C "$QPKG_GIT_PATH" branch | /bin/grep '^\*' | /bin/sed 's|^\* ||')
@@ -393,6 +401,8 @@ CleanLocalClone()
 
     StopQPKG
     ExecuteAndLog 'clean local repository' "rm -r $QPKG_REPO_PATH"
+    ExecuteAndLog 'clean virtual environment' "rm -rf $VENV_PATH"
+    ExecuteAndLog 'clean module cache' "rm -rf $PIP_CACHE_PATH"
     StartQPKG
 
     }
@@ -429,8 +439,8 @@ WaitForLaunchTarget()
 
     local launch_target=''
 
-    if [[ -n $PYTHON ]]; then
-        launch_target=$PYTHON
+    if [[ -n $INTERPRETER ]]; then
+        launch_target=$INTERPRETER
     elif [[ -n $DAEMON_PATHFILE ]]; then
         launch_target=$DAEMON_PATHFILE
     else
@@ -549,8 +559,8 @@ ExecuteAndLog()
 
     # $1 processing message
     # $2 command(s) to run
-    # $3 'log:everything' (optional) - if specified, the result of the command is recorded in the QTS system log.
-    #                                - if unspecified, only warnings are logged in the QTS system log.
+    # $3 'log:everything' (optional) - if specified, the processing message and successful results are recorded in the QTS system log.
+    #                                - if unspecified, only warnings/ errors are recorded in the QTS system log.
 
     if [[ -z $1 || -z $2 ]]; then
         SetError
@@ -889,6 +899,22 @@ IsNotDefaultConfigFound()
     {
 
     ! IsDefaultConfigFound
+
+    }
+
+IsVirtualEnvironmentExist()
+    {
+
+    # Is there a virtual environment to run the application in?
+
+    [[ -e $VENV_PATH/bin/activate ]]
+
+    }
+
+IsNotVirtualEnvironmentExist()
+    {
+
+    ! IsVirtualEnvironmentExist
 
     }
 
