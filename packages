@@ -1,5 +1,5 @@
 PACKAGES_VER=221204
-BASE_QPKG_CONFLICTS_WITH='Optware Optware-NG TarMT'
+BASE_QPKG_CONFLICTS_WITH='TarMT'
 BASE_QPKG_WARNINGS='Qboost'
 BASE_IPKGS_INSTALL='ca-certificates coreutils-stty findutils gcc git git-http grep less nano sed'
 BASE_PIPS_INSTALL='wheel pip virtualenv'
@@ -137,7 +137,7 @@ QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BR
 QPKG_MD5+=(deb88a170716d39309d124ad77875b4d)
 QPKG_DESC+=("provides the 'opkg' command: the OpenWRT package manager")
 QPKG_ABBRVS+=('ew ent opkg entware')
-QPKG_CONFLICTS_WITH+=('')
+QPKG_CONFLICTS_WITH+=('Optware Optware-NG')
 QPKG_DEPENDS_ON+=('')
 QPKG_DEPENDED_UPON+=(true)
 QPKG_IPKGS_INSTALL+=('')
