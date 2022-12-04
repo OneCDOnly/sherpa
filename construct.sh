@@ -2,6 +2,10 @@
 
 # standalone compiler for all sherpa archives
 
+./check.sh
+
+echo -n 'constructing ... '
+
 PROJECT_NAME=sherpa
 WORK_PATH=$PWD
 
@@ -238,3 +242,5 @@ done
 tar --create --gzip --numeric-owner --file="$MANAGER_ARCHIVE_PATHFILE" --directory="$WORK_PATH" "$MANAGER_FILE"
 tar --create --gzip --numeric-owner --file="$OBJECTS_ARCHIVE_PATHFILE" --directory="$WORK_PATH" "$OBJECTS_FILE"
 tar --create --gzip --numeric-owner --file="$PACKAGES_ARCHIVE_PATHFILE" --directory="$WORK_PATH" "$PACKAGES_FILE"
+
+echo 'done!'
