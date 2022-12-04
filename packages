@@ -1,4 +1,4 @@
-PACKAGES_VER=221204
+PACKAGES_VER=221205
 BASE_QPKG_CONFLICTS_WITH='TarMT'
 BASE_QPKG_WARNINGS='Qboost'
 BASE_IPKGS_INSTALL='ca-certificates coreutils-stty findutils gcc git git-http grep less nano sed'
@@ -237,9 +237,9 @@ QPKG_RESTART_TO_UPDATE+=(true)
 QPKG_NAME+=(NZBGet)
 QPKG_ARCH+=(all)
 QPKG_MIN_RAM_KB+=(any)
-QPKG_VERSION+=(220809)
+QPKG_VERSION+=(221205)
 QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/QPKGs/${QPKG_NAME[${#QPKG_NAME[@]}-1]}/build/${QPKG_NAME[${#QPKG_NAME[@]}-1]}_${QPKG_VERSION[${#QPKG_VERSION[@]}-1]}.qpkg)
-QPKG_MD5+=(479e73a8472c98b4be24b5469dc6f165)
+QPKG_MD5+=(9784bc4bd9152e3f16d219c07ab8a3ad)
 QPKG_DESC+=('lite-and-fast NZB download manager with a simple web UI')
 QPKG_ABBRVS+=('ng nzb nzbg nget nzbget')
 QPKG_CONFLICTS_WITH+=('')
