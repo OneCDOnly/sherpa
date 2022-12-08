@@ -11,4 +11,5 @@ pytz_deprecation_shim
 pyyaml
 requests
 requests-oauthlib
+soupsieve
 tzlocal
