@@ -217,7 +217,7 @@ Self.Init()
 
     # KLUDGE: service scripts prior to 22/12/08 would use these paths (by-default) to build/cache Python packages. This has been fixed, but still need to free-up this space to prevent out-of-space issues.
     [[ -d /root/.cache ]] && rm -rf /root/.cache
-    [[ -d /root/.local ]] && rm -rf /root/.local
+    [[ -d /root/.local/share/virtualenv ]] && rm -rf /root/.local/share/virtualenv
 
     MakePath "$QPKG_DL_PATH" 'QPKG download' || return
     MakePath "$IPKG_DL_PATH" 'IPKG download' || return
