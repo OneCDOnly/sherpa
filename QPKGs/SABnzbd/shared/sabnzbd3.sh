@@ -273,7 +273,7 @@ InstallAddons()
     fi
 
     if [[ $QPKG_NAME = SABnzbd && $new_env = true ]]; then
-        ExecuteAndLog "KLUDGE: reinstall 'sabyenc3' PyPI module" ". $VENV_PATH/bin/activate && pip install --no-input --force-reinstall --no-binary :all: sabyenc3" log:everything || SetError
+        ExecuteAndLog "KLUDGE: reinstall 'sabyenc3' PyPI module (https://forums.sabnzbd.org/viewtopic.php?p=128567#p128567)" ". $VENV_PATH/bin/activate && pip install --no-input --force-reinstall --no-binary :all: sabyenc3" log:everything || SetError
         UpdateLanguages
     fi
 
@@ -510,9 +510,9 @@ CleanLocalClone()
 
     StopQPKG
     ExecuteAndLog 'clean local repository' "rm -rf $QPKG_REPO_PATH"
-    [[ -d $(dirname $QPKG_REPO_PATH)/$QPKG_NAME ]] && ExecuteAndLog 'KLUDGE: remove clean previous local repository' "rm -r $(dirname $QPKG_REPO_PATH)/$QPKG_NAME"
+    [[ -d $(dirname $QPKG_REPO_PATH)/$QPKG_NAME ]] && ExecuteAndLog 'KLUDGE: remove previous local repository' "rm -r $(dirname $QPKG_REPO_PATH)/$QPKG_NAME"
     ExecuteAndLog 'clean virtual environment' "rm -rf $VENV_PATH"
-    ExecuteAndLog 'clean module cache' "rm -rf $PIP_CACHE_PATH"
+    ExecuteAndLog 'clean PyPI cache' "rm -rf $PIP_CACHE_PATH"
     StartQPKG
 
     }
