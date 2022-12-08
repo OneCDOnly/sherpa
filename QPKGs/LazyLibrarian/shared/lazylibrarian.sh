@@ -257,23 +257,23 @@ InstallAddons()
     fi
 
     if [[ ! -e $pip_conf_pathfile ]]; then
-        ExecuteAndLog 'create global pip config' "echo -e \"[global]\ncache-dir = $PIP_CACHE_PATH\" > $pip_conf_pathfile" log:everything || SetError
+        ExecuteAndLog "create global 'pip' config" "echo -e \"[global]\ncache-dir = $PIP_CACHE_PATH\" > $pip_conf_pathfile" log:everything || SetError
     fi
 
     [[ ! -e $requirements_pathfile && -e $DEFAULT_REQUIREMENTS_PATHFILE ]] && requirements_pathfile=$DEFAULT_REQUIREMENTS_PATHFILE
 
     if [[ -e $requirements_pathfile ]]; then
-        ExecuteAndLog 'install required modules' ". $VENV_PATH/bin/activate && pip install --no-input -r $requirements_pathfile" log:everything || SetError
+        ExecuteAndLog 'install required PyPI modules' ". $VENV_PATH/bin/activate && pip install --no-input -r $requirements_pathfile" log:everything || SetError
     fi
 
     [[ ! -e $recommended_pathfile && -e $DEFAULT_RECOMMENDED_PATHFILE ]] && recommended_pathfile=$DEFAULT_RECOMMENDED_PATHFILE
 
     if [[ -e $recommended_pathfile ]]; then
-        ExecuteAndLog 'install recommended modules' ". $VENV_PATH/bin/activate && pip install --no-input -r $recommended_pathfile" log:everything || SetError
+        ExecuteAndLog 'install recommended PyPI modules' ". $VENV_PATH/bin/activate && pip install --no-input -r $recommended_pathfile" log:everything || SetError
     fi
 
     if [[ $QPKG_NAME = SABnzbd && $new_env = true ]]; then
-        ExecuteAndLog "KLUDGE: reinstall 'sabyenc3' module" ". $VENV_PATH/bin/activate && pip install --no-input --force-reinstall --no-binary :all: sabyenc3" log:everything || SetError
+        ExecuteAndLog "KLUDGE: reinstall 'sabyenc3' PyPI module (https://forums.sabnzbd.org/viewtopic.php?p=128567#p128567)" ". $VENV_PATH/bin/activate && pip install --no-input --force-reinstall --no-binary :all: sabyenc3" log:everything || SetError
         UpdateLanguages
     fi
 
@@ -509,9 +509,10 @@ CleanLocalClone()
     fi
 
     StopQPKG
-    ExecuteAndLog 'clean local repository' "rm -r $QPKG_REPO_PATH"
+    ExecuteAndLog 'clean local repository' "rm -rf $QPKG_REPO_PATH"
+    [[ -d $(dirname $QPKG_REPO_PATH)/$QPKG_NAME ]] && ExecuteAndLog 'KLUDGE: remove previous local repository' "rm -r $(dirname $QPKG_REPO_PATH)/$QPKG_NAME"
     ExecuteAndLog 'clean virtual environment' "rm -rf $VENV_PATH"
-    ExecuteAndLog 'clean module cache' "rm -rf $PIP_CACHE_PATH"
+    ExecuteAndLog 'clean PyPI cache' "rm -rf $PIP_CACHE_PATH"
     StartQPKG
 
     }
