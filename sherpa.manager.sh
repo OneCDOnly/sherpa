@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VER=221205-beta
+    local -r SCRIPT_VER=221208-beta
     readonly PROJECT_BRANCH=main
 
     IsQNAP || return
@@ -112,8 +112,8 @@ Self.Init()
     IsSysFileExist $GETCFG_CMD || return
     IsSysFileExist $SETCFG_CMD || return
 
-    [[ ! -e $SORT_CMD ]] && ln -s /bin/busybox "$SORT_CMD"  # sometimes, 'sort' goes missing from QTS. Don't know why.
-    [[ ! -e /dev/fd ]] && ln -s /proc/self/fd /dev/fd       # sometimes, '/dev/fd' isn't created by QTS. Don't know why.
+    [[ ! -e $SORT_CMD ]] && ln -s /bin/busybox "$SORT_CMD"  # KLUDGE: 'sort' randomly goes missing from QTS
+    [[ ! -e /dev/fd ]] && ln -s /proc/self/fd /dev/fd       # KLUDGE: '/dev/fd' isn't always created by QTS during startup
 
     IsSysFileExist $BASENAME_CMD || return
     IsSysFileExist $DIRNAME_CMD || return
@@ -214,6 +214,10 @@ Self.Init()
     [[ -d $IPKG_DL_PATH ]] && rm -rf "$IPKG_DL_PATH"
     [[ -d $IPKG_CACHE_PATH ]] && rm -rf "$IPKG_CACHE_PATH"
     [[ -d $PIP_CACHE_PATH ]] && rm -rf "$PIP_CACHE_PATH"
+
+    # KLUDGE: service scripts prior to 22/12/08 would use these paths (by-default) to build/cache Python packages. This has been fixed, but still need to free-up this space to prevent out-of-space issues.
+    [[ -d /root/.cache ]] && rm -rf /root/.cache
+    [[ -d /root/.local ]] && rm -rf /root/.local
 
     MakePath "$QPKG_DL_PATH" 'QPKG download' || return
     MakePath "$IPKG_DL_PATH" 'IPKG download' || return

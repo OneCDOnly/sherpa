@@ -246,7 +246,7 @@ InstallAddons()
     local pip_conf_pathfile=$VENV_PATH/pip.conf
 
     if IsNotVirtualEnvironmentExist; then
-        ExecuteAndLog 'create new virtual Python environment' "export PIP_CACHE_DIR=$PIP_CACHE_PATH; $INTERPRETER -m virtualenv $VENV_PATH" log:everything || SetError
+        ExecuteAndLog 'create new virtual Python environment' "export PIP_CACHE_DIR=$PIP_CACHE_PATH VIRTUALENV_OVERRIDE_APP_DATA=$PIP_CACHE_PATH; $INTERPRETER -m virtualenv $VENV_PATH" log:everything || SetError
         new_env=true
     fi
 
