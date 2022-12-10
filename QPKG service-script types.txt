@@ -1,0 +1,9 @@
+An attempt to define the different types of sherpa service-script required to support different types of application.
+
+type 1: Application is pulled/updated from an online repository before every start. Application contains a daemon that much be launched with a language interpreter. Example: SABnzbd, Medusa, LazyLibrarian
+
+type 2: Application is pulled/updated from an online repository before every start. Application does not contain a demon. Application offers online scripts to be run locally via an interpreter. Example: NzbToMedia
+
+type 3: Application is pre-installed via Entware. Application contains a daemon. Service-script only provides enhancements to permit application to be stopped/started via QTS App Center. Example: NZBGet, Transmission, Deluge-server
+
+type 4: Application is bundled within QPKG. Application does not contain a daemon. Application is made available to QTS via syminks. Example: inxi, sha3sum
