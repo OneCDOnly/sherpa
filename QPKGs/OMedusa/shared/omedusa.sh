@@ -30,7 +30,7 @@ Init()
     readonly SOURCE_GIT_DEPTH=single-branch     # 'shallow' (depth 1) or 'single-branch' - note: 'shallow' implies a 'single-branch' too
     readonly TARGET_SCRIPT=start.py
 
-    # general online sourced applications only
+    # general online-sourced applications only
     readonly QPKG_REPO_PATH=$QPKG_PATH/repo-cache
     readonly PIP_CACHE_PATH=$QPKG_PATH/pip-cache
     readonly INTERPRETER=/opt/bin/python3

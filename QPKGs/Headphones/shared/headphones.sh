@@ -16,42 +16,48 @@ Init()
 
     # specific environment
     readonly QPKG_NAME=Headphones
-    readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
-    readonly MIN_RAM_KB=any
+    local -r MIN_RAM_KB=any
 
-    # for online-sourced applications only
-    readonly QPKG_REPO_PATH=$QPKG_PATH/repo-cache
-    readonly PIP_CACHE_PATH=$QPKG_PATH/pip-cache
-    readonly VENV_PATH=$QPKG_PATH/venv
+    # general environment
+    readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
+    readonly DAEMON_PID_PATHFILE=/var/run/$QPKG_NAME.pid
+    readonly QPKG_INI_PATHFILE=$QPKG_PATH/config/config.ini
+    readonly QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.def
+
+    # specific to online-sourced applications only
     readonly SOURCE_GIT_URL=https://github.com/rembo10/headphones.git
     readonly SOURCE_GIT_BRANCH=master
-    # 'shallow' (depth 1) or 'single-branch' (note: 'shallow' implies a 'single-branch' too)
-    readonly SOURCE_GIT_DEPTH=shallow
+    readonly SOURCE_GIT_DEPTH=shallow     # 'shallow' (depth 1) or 'single-branch' - note: 'shallow' implies a 'single-branch' too
     readonly TARGET_SCRIPT=Headphones.py
-    readonly INTERPRETER=/opt/bin/python3
-    readonly VENV_INTERPRETER=$VENV_PATH/bin/python3
-    readonly APP_VERSION_PATHFILE=''
-    readonly DEFAULT_REQUIREMENTS_PATHFILE=$QPKG_PATH/config/requirements.txt
-    readonly DEFAULT_RECOMMENDED_PATHFILE=$QPKG_PATH/config/recommended.txt
 
-    # for Entware binaries only
+    # general online-sourced applications only
+    readonly QPKG_REPO_PATH=$QPKG_PATH/repo-cache
+    readonly PIP_CACHE_PATH=$QPKG_PATH/pip-cache
+    readonly INTERPRETER=/opt/bin/python3
+    readonly VENV_PATH=$QPKG_PATH/venv
+    readonly VENV_INTERPRETER=$VENV_PATH/bin/python3
+    readonly ALLOW_ACCESS_TO_SYS_PACKAGES=true
+    readonly APP_VERSION_PATHFILE=''
+    readonly DAEMON_PATHFILE=$QPKG_REPO_PATH/$TARGET_SCRIPT
+    readonly GIT_APPEAR_TIMEOUT=300
+
+    # daemonised applications only
+    readonly LAUNCHER="$DAEMON_PATHFILE --daemon --nolaunch --datadir $(/usr/bin/dirname "$QPKG_INI_PATHFILE") --config $QPKG_INI_PATHFILE --pidfile $DAEMON_PID_PATHFILE"
+    readonly PID_APPEAR_TIMEOUT=60
+    readonly DAEMON_STOP_TIMEOUT=60
+    readonly PORT_CHECK_TIMEOUT=120
+
+    # Entware binaries only
     readonly ORIG_DAEMON_SERVICE_SCRIPT=''
 
-    # name of file to launch
-    readonly DAEMON_PATHFILE=$QPKG_REPO_PATH/$TARGET_SCRIPT
-
-    # for local mods only
+    # local mods only
     readonly TARGET_SERVICE_PATHFILE=''
     readonly BACKUP_SERVICE_PATHFILE=$TARGET_SERVICE_PATHFILE.bak
 
     # remaining environment
-    readonly DAEMON_PID_PATHFILE=/var/run/$QPKG_NAME.pid
-    readonly APP_VERSION_STORE_PATHFILE=$QPKG_PATH/config/version.stored
     readonly INSTALLED_RAM_KB=$(/bin/grep MemTotal /proc/meminfo | cut -f2 -d':' | /bin/sed 's|kB||;s| ||g')
-    readonly QPKG_INI_PATHFILE=$QPKG_PATH/config/config.ini
-    readonly QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.def
-    readonly LAUNCHER="$DAEMON_PATHFILE --daemon --nolaunch --datadir $(/usr/bin/dirname $QPKG_INI_PATHFILE) --config $QPKG_INI_PATHFILE --pidfile $DAEMON_PID_PATHFILE"
     readonly QPKG_VERSION=$(/sbin/getcfg $QPKG_NAME Version -f /etc/config/qpkg.conf)
+    readonly APP_VERSION_STORE_PATHFILE=$QPKG_PATH/config/version.stored
     readonly SERVICE_STATUS_PATHFILE=/var/run/$QPKG_NAME.last.operation
     readonly SERVICE_LOG_PATHFILE=/var/log/$QPKG_NAME.log
     readonly OPKG_PATH=/opt/bin:/opt/sbin
@@ -59,18 +65,12 @@ Init()
     readonly BACKUP_PATHFILE=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
     readonly APPARENT_PATH=/share/$(/sbin/getcfg SHARE_DEF defDownload -d Qdownload -f /etc/config/def_share.info)/$QPKG_NAME
     export PATH="$OPKG_PATH:$(/bin/sed "s|$OPKG_PATH||" <<< "$PATH")"
+    readonly LAUNCH_TARGET_APPEAR_TIMEOUT=30
 
     if [[ $MIN_RAM_KB != any && $INSTALLED_RAM_KB -lt $MIN_RAM_KB ]]; then
         DisplayErrCommitAllLogs "$(FormatAsPackageName $QPKG_NAME) won't run on this NAS. Not enough RAM. :("
         exit 1
     fi
-
-    # all timeouts are in seconds
-    readonly DAEMON_STOP_TIMEOUT=60
-    readonly PORT_CHECK_TIMEOUT=60
-    readonly GIT_APPEAR_TIMEOUT=300
-    readonly LAUNCH_TARGET_APPEAR_TIMEOUT=30
-    readonly PID_APPEAR_TIMEOUT=60
 
     ui_port=0
     ui_port_secure=0
@@ -86,11 +86,11 @@ Init()
     UnsetRestartPending
     EnsureConfigFileExists
     [[ -n $ORIG_DAEMON_SERVICE_SCRIPT ]] && DisableOpkgDaemonStart
-    #LoadAppVersion
+    LoadAppVersion
 
-    [[ ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
-    [[ ! -d $VENV_PATH ]] && mkdir "$VENV_PATH"
-    [[ ! -d $PIP_CACHE_PATH ]] && mkdir "$PIP_CACHE_PATH"
+    [[ -n $BACKUP_PATH && ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
+    [[ -n $VENV_PATH && ! -d $VENV_PATH ]] && mkdir -p "$VENV_PATH"
+    [[ -n $PIP_CACHE_PATH && ! -d $PIP_CACHE_PATH ]] && mkdir -p "$PIP_CACHE_PATH"
 
     return 0
 
@@ -112,7 +112,6 @@ ShowHelp()
     [[ -n $BACKUP_PATHFILE ]] && DisplayAsHelp 'backup' "backup the current $(FormatAsPackageName $QPKG_NAME) configuration to persistent storage."
     [[ -n $BACKUP_PATHFILE ]] && DisplayAsHelp 'restore' "restore a previously saved configuration from persistent storage. $(FormatAsPackageName $QPKG_NAME) will be stopped, then restarted."
     [[ -n $QPKG_INI_PATHFILE ]] && DisplayAsHelp 'reset-config' "delete the application configuration, databases and history. $(FormatAsPackageName $QPKG_NAME) will be stopped, then restarted."
-    [[ $QPKG_NAME = SABnzbd ]] && DisplayAsHelp 'import' "create a backup of an installed $(FormatAsPackageName SABnzbdplus) config and restore it into $(FormatAsPackageName $QPKG_NAME)."
     [[ -n $SOURCE_GIT_URL ]] && DisplayAsHelp 'clean' "wipe the current local copy of $(FormatAsPackageName $QPKG_NAME), and download it again from remote source. Configuration will be retained."
     DisplayAsHelp 'log' 'display the service script runtime log.'
     DisplayAsHelp 'version' 'display the package version number.'
@@ -240,13 +239,18 @@ StopQPKG()
 InstallAddons()
     {
 
-    local new_env=false
+    local default_requirements_pathfile=$QPKG_PATH/config/requirements.txt
+    local default_recommended_pathfile=$QPKG_PATH/config/recommended.txt
     local requirements_pathfile=$QPKG_REPO_PATH/requirements.txt
     local recommended_pathfile=$QPKG_REPO_PATH/recommended.txt
     local pip_conf_pathfile=$VENV_PATH/pip.conf
+    local new_env=false
+    local sys_packages=' --system-site-packages'
+
+    [[ $ALLOW_ACCESS_TO_SYS_PACKAGES != true ]] && sys_packages=''
 
     if IsNotVirtualEnvironmentExist; then
-        ExecuteAndLog 'create new virtual Python environment' "export PIP_CACHE_DIR=$PIP_CACHE_PATH VIRTUALENV_OVERRIDE_APP_DATA=$PIP_CACHE_PATH; $INTERPRETER -m virtualenv $VENV_PATH" log:everything || SetError
+        ExecuteAndLog 'create new virtual Python environment' "export PIP_CACHE_DIR=$PIP_CACHE_PATH VIRTUALENV_OVERRIDE_APP_DATA=$PIP_CACHE_PATH; $INTERPRETER -m virtualenv $VENV_PATH $sys_packages" log:everything || SetError
         new_env=true
     fi
 
@@ -260,13 +264,13 @@ InstallAddons()
         ExecuteAndLog "create global 'pip' config" "echo -e \"[global]\ncache-dir = $PIP_CACHE_PATH\" > $pip_conf_pathfile" log:everything || SetError
     fi
 
-    [[ ! -e $requirements_pathfile && -e $DEFAULT_REQUIREMENTS_PATHFILE ]] && requirements_pathfile=$DEFAULT_REQUIREMENTS_PATHFILE
+    [[ ! -e $requirements_pathfile && -e $default_requirements_pathfile ]] && requirements_pathfile=$default_requirements_pathfile
 
     if [[ -e $requirements_pathfile ]]; then
         ExecuteAndLog 'install required PyPI modules' ". $VENV_PATH/bin/activate && pip install --no-input -r $requirements_pathfile" log:everything || SetError
     fi
 
-    [[ ! -e $recommended_pathfile && -e $DEFAULT_RECOMMENDED_PATHFILE ]] && recommended_pathfile=$DEFAULT_RECOMMENDED_PATHFILE
+    [[ ! -e $recommended_pathfile && -e $default_recommended_pathfile ]] && recommended_pathfile=$default_recommended_pathfile
 
     if [[ -e $recommended_pathfile ]]; then
         ExecuteAndLog 'install recommended PyPI modules' ". $VENV_PATH/bin/activate && pip install --no-input -r $recommended_pathfile" log:everything || SetError
@@ -323,7 +327,7 @@ LoadUIPorts()
     case $1 in
         app)
             # Read the current application UI ports from application configuration
-            DisplayWaitCommitToLog 'load UI ports from application:'
+            DisplayWaitCommitToLog 'load UI ports from application config:'
             ui_port=$(/sbin/getcfg general web_port -d 0 -f "$QPKG_INI_PATHFILE")
             ui_port_secure=$(/sbin/getcfg general web_port -d 0 -f "$QPKG_INI_PATHFILE")
             DisplayCommitToLog 'OK'
@@ -336,7 +340,7 @@ LoadUIPorts()
             DisplayCommitToLog 'OK'
             ;;
         *)
-            DisplayErrCommitAllLogs "unable to load UI ports: action '$1' unrecognised"
+            DisplayErrCommitAllLogs "unable to load UI ports: action '$1' is unrecognised"
             SetError
             return 1
             ;;
@@ -426,28 +430,6 @@ UpdateLanguages()
     [[ ! -e $APP_VERSION_STORE_PATHFILE ]] && return 0
 
     SaveAppVersion
-
-    }
-
-ImportFromSAB2()
-    {
-
-    CommitOperationToLog
-
-    if [[ -e /etc/init.d/sabnzbd.sh ]]; then
-        /etc/init.d/sabnzbd.sh stop
-    elif [[ -e /etc/init.d/sabnzbd2.sh ]]; then
-        /etc/init.d/sabnzbd2.sh stop
-    else
-        DisplayCommitToLog "can't find a compatible version of $(FormatAsPackageName SABnzbdplus) to import from"
-        SetError
-        return 1
-    fi
-
-    ExecuteAndLog 'update SABnzbd2 configuration backup for SABnzbd3' "/bin/tar --create --gzip --file=$BACKUP_PATHFILE --directory=$(getcfg SABnzbdplus Install_Path -f /etc/config/qpkg.conf)/config ." log:everything
-    eval "$0" restore
-
-    return 0
 
     }
 
@@ -640,6 +622,8 @@ EnsureConfigFileExists()
 
 SaveAppVersion()
     {
+
+    [[ -z $APP_VERSION_STORE_PATHFILE ]] && return
 
     echo "$app_version" > "$APP_VERSION_STORE_PATHFILE"
 
@@ -1458,15 +1442,6 @@ if IsNotError; then
         v|-v|version|--version)
             SetServiceOperation versioning
             Display "$QPKG_VERSION"
-            ;;
-        import|--import)
-            if [[ $QPKG_NAME = SABnzbd ]]; then
-                SetServiceOperation importing
-                ImportFromSAB2
-            else
-                SetServiceOperation none
-                ShowHelp
-            fi
             ;;
         *)
             SetServiceOperation none
