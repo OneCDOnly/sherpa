@@ -6,7 +6,7 @@
 #
 # so, blame OneCD if it all goes horribly wrong. ;)
 #
-# This is a type 1 service-script: https://github.com/OneCDOnly/sherpa/blob/main/QPKG%20service-script%20types.txt
+# This is a type 1 service-script: https://github.com/OneCDOnly/sherpa/blob/main/QPKG-service-script-types.txt
 #
 # For more info: https://forum.qnap.com/viewtopic.php?f=320&t=132373
 ####################################################################################
@@ -23,7 +23,6 @@ Init()
     # general environment
     readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
     readonly QPKG_VERSION=$(/sbin/getcfg $QPKG_NAME Version -f /etc/config/qpkg.conf)
-    auto_update=$(/sbin/getcfg $QPKG_NAME Auto_Update -u -f /etc/config/qpkg.conf)
     readonly QPKG_INI_PATHFILE=$QPKG_PATH/config/config.ini
     readonly QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.def
     readonly APP_VERSION_STORE_PATHFILE=$QPKG_PATH/config/version.stored
@@ -89,7 +88,7 @@ Init()
     [[ -n $BACKUP_PATH && ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
     [[ -n $VENV_PATH && ! -d $VENV_PATH ]] && mkdir -p "$VENV_PATH"
     [[ -n $PIP_CACHE_PATH && ! -d $PIP_CACHE_PATH ]] && mkdir -p "$PIP_CACHE_PATH"
-    [[ -z $auto_update ]] && EnableAutoUpdate
+    IsAutoUpdateMissing && EnableAutoUpdate
 
     return 0
 
@@ -108,13 +107,13 @@ ShowHelp()
     DisplayAsHelp 'stop' "shutdown $(FormatAsPackageName $QPKG_NAME) if running."
     DisplayAsHelp 'restart' "stop, then start $(FormatAsPackageName $QPKG_NAME)."
     DisplayAsHelp 'status' "check if $(FormatAsPackageName $QPKG_NAME) is still running. Returns \$? = 0 if running, 1 if not."
-    [[ -n $BACKUP_PATHFILE ]] && DisplayAsHelp 'backup' "backup the current $(FormatAsPackageName $QPKG_NAME) configuration to persistent storage."
-    [[ -n $BACKUP_PATHFILE ]] && DisplayAsHelp 'restore' "restore a previously saved configuration from persistent storage. $(FormatAsPackageName $QPKG_NAME) will be stopped, then restarted."
+    IsSupportsBackup && DisplayAsHelp 'backup' "backup the current $(FormatAsPackageName $QPKG_NAME) configuration to persistent storage."
+    IsSupportsBackup && DisplayAsHelp 'restore' "restore a previously saved configuration from persistent storage. $(FormatAsPackageName $QPKG_NAME) will be stopped, then restarted."
     [[ -n $QPKG_INI_PATHFILE ]] && DisplayAsHelp 'reset-config' "delete the application configuration, databases and history. $(FormatAsPackageName $QPKG_NAME) will be stopped, then restarted."
-    [[ -n $SOURCE_GIT_URL ]] && DisplayAsHelp 'clean' "wipe the current local copy of $(FormatAsPackageName $QPKG_NAME), and download it again from remote source. Configuration will be retained."
+    IsSourcedOnline && DisplayAsHelp 'clean' "wipe the current local copy of $(FormatAsPackageName $QPKG_NAME), and download it again from remote source. Configuration will be retained."
     DisplayAsHelp 'log' 'display the service script runtime log.'
-    [[ -n $SOURCE_GIT_URL ]] && DisplayAsHelp 'disable-auto-update' "don't auto-update $(FormatAsPackageName $QPKG_NAME) when starting."
-    [[ -n $SOURCE_GIT_URL ]] && DisplayAsHelp 'enable-auto-update' "auto-update $(FormatAsPackageName $QPKG_NAME) when starting (default)."
+    IsSourcedOnline && DisplayAsHelp 'disable-auto-update' "don't auto-update $(FormatAsPackageName $QPKG_NAME) when starting."
+    IsSourcedOnline && DisplayAsHelp 'enable-auto-update' "auto-update $(FormatAsPackageName $QPKG_NAME) when starting (default)."
     DisplayAsHelp 'version' 'display the package version number.'
     Display
 
@@ -132,7 +131,7 @@ StartQPKG()
         IsDaemonActive && return
     fi
 
-    if [[ -z $DAEMON_PID_PATHFILE ]]; then  # nzbToMedia: when cleaning, ignore restart and start anyway to create repo and restore config
+    if IsNotDaemon; then        # nzbToMedia: when cleaning, ignore restart and start anyway to create repo and restore config
         if IsRestore || IsReset; then
             IsNotRestartPending && return
         fi
@@ -142,11 +141,11 @@ StartQPKG()
         fi
     fi
 
-    DisplayCommitToLog "auto-update: $auto_update"
+    DisplayCommitToLog "auto-update: $(IsAutoUpdate && echo 'TRUE' || echo 'FALSE')"
     PullGitRepo "$QPKG_NAME" "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_REPO_PATH" || return
     InstallAddons || return
 
-    [[ -z $DAEMON_PID_PATHFILE ]] && return
+    IsNotDaemon && return
 
     WaitForLaunchTarget || return
     EnsureConfigFileExists
@@ -267,7 +266,7 @@ InstallAddons()
         ExecuteAndLog "create global 'pip' config" "echo -e \"[global]\ncache-dir = $PIP_CACHE_PATH\" > $pip_conf_pathfile" log:everything || SetError
     fi
 
-    [[ $auto_update = FALSE && $new_env = false ]] && return 0
+    IsNotAutoUpdate && [[ $new_env = false ]] && return 0
 
     [[ ! -e $requirements_pathfile && -e $default_requirements_pathfile ]] && requirements_pathfile=$default_requirements_pathfile
 
@@ -397,7 +396,7 @@ StatusQPKG()
     IsNotError || return
 
     if IsDaemonActive; then
-        if [[ -n $DAEMON_PATHFILE || -n $SOURCE_GIT_URL ]]; then
+        if IsDaemon || IsSourcedOnline; then
             LoadUIPorts qts
             if ! CheckPorts; then
                 SetError
@@ -472,7 +471,7 @@ PullGitRepo()
     if [[ ! -d $QPKG_GIT_PATH/.git ]]; then
         ExecuteAndLog "clone $(FormatAsPackageName "$1") from remote repository" "cd /tmp; /opt/bin/git clone --branch $3 $DEPTH -c advice.detachedHead=false $GIT_HTTPS_URL $QPKG_GIT_PATH"
     else
-        if [[ $auto_update = TRUE ]]; then
+        if IsAutoUpdate; then
             # latest effort at resolving local corruption, source: https://stackoverflow.com/a/10170195
             ExecuteAndLog "update $(FormatAsPackageName "$1") from remote repository" "cd /tmp; /opt/bin/git -C $QPKG_GIT_PATH clean -f; /opt/bin/git -C $QPKG_GIT_PATH reset --hard origin/$3; /opt/bin/git -C $QPKG_GIT_PATH pull"
         fi
@@ -496,7 +495,7 @@ CleanLocalClone()
 
     CommitOperationToLog
 
-    if [[ -z $QPKG_PATH || -z $QPKG_NAME || -z $SOURCE_GIT_URL ]]; then
+    if [[ -z $QPKG_PATH || -z $QPKG_NAME || IsNotSourcedOnline ]]; then
         SetError
         return 1
     fi
@@ -785,6 +784,46 @@ IsNotQPKGEnabled()
 
     }
 
+IsSupportsBackup()
+    {
+
+    # $? = 0 : application supports configuration backup
+    # $? = 1 : application does not support config backup
+
+    [[ -n $BACKUP_PATHFILE ]]
+
+    }
+
+IsNotSupportsBackup()
+    {
+
+    # $? = 0 : application does not support config backup
+    # $? = 1 : application supports configuration backup
+
+    ! IsSupportsBackup
+
+    }
+
+IsSourcedOnline()
+    {
+
+    # $? = 0 : application is cloned from an online repository
+    # $? = 1 : application is sourced locally
+
+    [[ -n $SOURCE_GIT_URL ]]
+
+    }
+
+IsNotSourcedOnline()
+    {
+
+    # $? = 0 : application is sourced locally
+    # $? = 1 : application is cloned from an online repository
+
+    ! IsSourcedOnline
+
+    }
+
 IsNotSSLEnabled()
     {
 
@@ -815,6 +854,26 @@ IsNotPackageActive()
     # $? = 0 if $QPKG_NAME is not active
 
     ! IsPackageActive
+
+    }
+
+IsDaemon()
+    {
+
+    # $? = 0 : this service script manages a daemon
+    # $? = 1 : this service script does NOT manage a daemon
+
+    [[ -n $DAEMON_PID_PATHFILE ]]
+
+    }
+
+IsNotDaemon()
+    {
+
+    # $? = 0 : this service script does NOT manage a daemon
+    # $? = 1 : this service script manages a daemon
+
+    ! IsDaemon
 
     }
 
@@ -1373,6 +1432,27 @@ FormatAsPlural()
 
     }
 
+IsAutoUpdateMissing()
+    {
+
+    [[ $(/sbin/getcfg $QPKG_NAME Auto_Update -u -f /etc/config/qpkg.conf) = '' ]]
+
+    }
+
+IsAutoUpdate()
+    {
+
+    [[ $(/sbin/getcfg $QPKG_NAME Auto_Update -u -f /etc/config/qpkg.conf) = TRUE ]]
+
+    }
+
+IsNotAutoUpdate()
+    {
+
+    ! IsAutoUpdate
+
+    }
+
 EnableAutoUpdate()
     {
 
@@ -1423,7 +1503,7 @@ if IsNotError; then
             StatusQPKG
             ;;
         b|-b|backup|--backup|backup-config|--backup-config)
-            if [[ -n $BACKUP_PATHFILE ]]; then
+            if IsSupportsBackup; then
                 SetServiceOperation backing-up
                 BackupConfig
             else
@@ -1441,7 +1521,7 @@ if IsNotError; then
             fi
             ;;
         restore|--restore|restore-config|--restore-config)
-            if [[ -n $BACKUP_PATHFILE ]]; then
+            if IsSupportsBackup; then
                 SetServiceOperation restoring
                 RestoreConfig
             else
@@ -1450,7 +1530,7 @@ if IsNotError; then
             fi
             ;;
         c|-c|clean|--clean)
-            if [[ -n $SOURCE_GIT_URL ]]; then
+            if IsSourcedOnline; then
                 SetServiceOperation cleaning
 
                 if [[ $QPKG_NAME = nzbToMedia ]]; then
