@@ -90,7 +90,7 @@ Init()
     [[ -n $VENV_PATH && ! -d $VENV_PATH ]] && mkdir -p "$VENV_PATH"
     [[ -n $PIP_CACHE_PATH && ! -d $PIP_CACHE_PATH ]] && mkdir -p "$PIP_CACHE_PATH"
 
-    IsAutoUpdateMissing && EnableAutoUpdate
+    IsAutoUpdateMissing && EnableAutoUpdate >/dev/null
 
     return 0
 
@@ -108,12 +108,12 @@ ShowHelp()
     DisplayAsHelp start "launch $(FormatAsPackageName $QPKG_NAME) if not already running."
     DisplayAsHelp stop "shutdown $(FormatAsPackageName $QPKG_NAME) if running."
     DisplayAsHelp restart "stop, then start $(FormatAsPackageName $QPKG_NAME)."
-    DisplayAsHelp status "check if $(FormatAsPackageName $QPKG_NAME) is still running. Returns \$? = 0 if running, 1 if not."
+    DisplayAsHelp status "check if $(FormatAsPackageName $QPKG_NAME) daemon is running. Returns \$? = 0 if running, 1 if not."
     IsSupportBackup && DisplayAsHelp backup "backup the current $(FormatAsPackageName $QPKG_NAME) configuration to persistent storage."
     IsSupportBackup && DisplayAsHelp restore "restore a previously saved configuration from persistent storage. $(FormatAsPackageName $QPKG_NAME) will be stopped, then restarted."
     IsSupportReset && DisplayAsHelp reset-config "delete the application configuration, databases and history. $(FormatAsPackageName $QPKG_NAME) will be stopped, then restarted."
-    IsSourcedOnline && DisplayAsHelp clean "wipe the current local copy of $(FormatAsPackageName $QPKG_NAME), and download it again from remote source. Configuration will be retained."
-    DisplayAsHelp log 'display the service script runtime log.'
+    IsSourcedOnline && DisplayAsHelp clean "delete the local copy of $(FormatAsPackageName $QPKG_NAME), and download it again from remote source. Configuration will be retained."
+    DisplayAsHelp log 'display the service-script log.'
     IsSourcedOnline && DisplayAsHelp enable-auto-update "auto-update $(FormatAsPackageName $QPKG_NAME) before starting (default)."
     IsSourcedOnline && DisplayAsHelp disable-auto-update "don't auto-update $(FormatAsPackageName $QPKG_NAME) before starting."
     DisplayAsHelp version 'display the package version numbers.'
