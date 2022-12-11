@@ -18,11 +18,12 @@ Init()
 
     # specific environment
     readonly QPKG_NAME=SABnzbd
+    readonly SCRIPT_VERSION=221212
     local -r MIN_RAM_KB=any
 
     # general environment
     readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
-    readonly QPKG_VERSION=$(/sbin/getcfg $QPKG_NAME Version -f /etc/config/qpkg.conf)
+    readonly QPKG_VERSION=$(/sbin/getcfg $QPKG_NAME Version -d unknown -f /etc/config/qpkg.conf)
     readonly QPKG_INI_PATHFILE=$QPKG_PATH/config/config.ini
     readonly QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.def
     readonly APP_VERSION_STORE_PATHFILE=$QPKG_PATH/config/version.stored
@@ -30,7 +31,7 @@ Init()
     readonly SERVICE_LOG_PATHFILE=/var/log/$QPKG_NAME.log
     local -r BACKUP_PATH=$(/sbin/getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
     readonly BACKUP_PATHFILE=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
-    readonly INSTALLED_RAM_KB=$(/bin/grep MemTotal /proc/meminfo | cut -f2 -d':' | /bin/sed 's|kB||;s| ||g')
+    local -r INSTALLED_RAM_KB=$(/bin/grep MemTotal /proc/meminfo | cut -f2 -d':' | /bin/sed 's|kB||;s| ||g')
     readonly OPKG_PATH=/opt/bin:/opt/sbin
     export PATH="$OPKG_PATH:$(/bin/sed "s|$OPKG_PATH||" <<< "$PATH")"
     readonly APPARENT_PATH=/share/$(/sbin/getcfg SHARE_DEF defDownload -d Qdownload -f /etc/config/def_share.info)/$QPKG_NAME
@@ -61,7 +62,7 @@ Init()
     readonly ORIG_DAEMON_SERVICE_SCRIPT=''
 
     # local mods only
-    readonly TARGET_SERVICE_PATHFILE=''
+    local -r TARGET_SERVICE_PATHFILE=''
     readonly BACKUP_SERVICE_PATHFILE=$TARGET_SERVICE_PATHFILE.bak
 
     if [[ $MIN_RAM_KB != any && $INSTALLED_RAM_KB -lt $MIN_RAM_KB ]]; then
@@ -82,12 +83,13 @@ Init()
     UnsetError
     UnsetRestartPending
     EnsureConfigFileExists
-    [[ -n $ORIG_DAEMON_SERVICE_SCRIPT ]] && DisableOpkgDaemonStart
+    DisableOpkgDaemonStart
     LoadAppVersion
 
-    [[ -n $BACKUP_PATH && ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
+    IsSupportBackup && [[ -n $BACKUP_PATH && ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
     [[ -n $VENV_PATH && ! -d $VENV_PATH ]] && mkdir -p "$VENV_PATH"
     [[ -n $PIP_CACHE_PATH && ! -d $PIP_CACHE_PATH ]] && mkdir -p "$PIP_CACHE_PATH"
+
     IsAutoUpdateMissing && EnableAutoUpdate
 
     return 0
@@ -97,24 +99,24 @@ Init()
 ShowHelp()
     {
 
-    Display "$(ColourTextBrightWhite "$(/usr/bin/basename "$0")") $QPKG_VERSION • a service control script for the $(FormatAsPackageName $QPKG_NAME) QPKG"
+    Display "$(ColourTextBrightWhite "$(/usr/bin/basename "$0")") $SCRIPT_VERSION • a service control script for the $(FormatAsPackageName $QPKG_NAME) QPKG"
     Display
     Display "Usage: $0 [OPTION]"
     Display
     Display '[OPTION] may be any one of the following:'
     Display
-    DisplayAsHelp 'start' "launch $(FormatAsPackageName $QPKG_NAME) if not already running."
-    DisplayAsHelp 'stop' "shutdown $(FormatAsPackageName $QPKG_NAME) if running."
-    DisplayAsHelp 'restart' "stop, then start $(FormatAsPackageName $QPKG_NAME)."
-    DisplayAsHelp 'status' "check if $(FormatAsPackageName $QPKG_NAME) is still running. Returns \$? = 0 if running, 1 if not."
-    IsSupportsBackup && DisplayAsHelp 'backup' "backup the current $(FormatAsPackageName $QPKG_NAME) configuration to persistent storage."
-    IsSupportsBackup && DisplayAsHelp 'restore' "restore a previously saved configuration from persistent storage. $(FormatAsPackageName $QPKG_NAME) will be stopped, then restarted."
-    [[ -n $QPKG_INI_PATHFILE ]] && DisplayAsHelp 'reset-config' "delete the application configuration, databases and history. $(FormatAsPackageName $QPKG_NAME) will be stopped, then restarted."
-    IsSourcedOnline && DisplayAsHelp 'clean' "wipe the current local copy of $(FormatAsPackageName $QPKG_NAME), and download it again from remote source. Configuration will be retained."
-    DisplayAsHelp 'log' 'display the service script runtime log.'
-    IsSourcedOnline && DisplayAsHelp 'disable-auto-update' "don't auto-update $(FormatAsPackageName $QPKG_NAME) when starting."
-    IsSourcedOnline && DisplayAsHelp 'enable-auto-update' "auto-update $(FormatAsPackageName $QPKG_NAME) when starting (default)."
-    DisplayAsHelp 'version' 'display the package version number.'
+    DisplayAsHelp start "launch $(FormatAsPackageName $QPKG_NAME) if not already running."
+    DisplayAsHelp stop "shutdown $(FormatAsPackageName $QPKG_NAME) if running."
+    DisplayAsHelp restart "stop, then start $(FormatAsPackageName $QPKG_NAME)."
+    DisplayAsHelp status "check if $(FormatAsPackageName $QPKG_NAME) is still running. Returns \$? = 0 if running, 1 if not."
+    IsSupportBackup && DisplayAsHelp backup "backup the current $(FormatAsPackageName $QPKG_NAME) configuration to persistent storage."
+    IsSupportBackup && DisplayAsHelp restore "restore a previously saved configuration from persistent storage. $(FormatAsPackageName $QPKG_NAME) will be stopped, then restarted."
+    IsSupportReset && DisplayAsHelp reset-config "delete the application configuration, databases and history. $(FormatAsPackageName $QPKG_NAME) will be stopped, then restarted."
+    IsSourcedOnline && DisplayAsHelp clean "wipe the current local copy of $(FormatAsPackageName $QPKG_NAME), and download it again from remote source. Configuration will be retained."
+    DisplayAsHelp log 'display the service script runtime log.'
+    IsSourcedOnline && DisplayAsHelp enable-auto-update "auto-update $(FormatAsPackageName $QPKG_NAME) before starting (default)."
+    IsSourcedOnline && DisplayAsHelp disable-auto-update "don't auto-update $(FormatAsPackageName $QPKG_NAME) before starting."
+    DisplayAsHelp version 'display the package version numbers.'
     Display
 
     }
@@ -141,7 +143,7 @@ StartQPKG()
         fi
     fi
 
-    DisplayCommitToLog "auto-update: $(IsAutoUpdate && echo 'TRUE' || echo 'FALSE')"
+    DisplayCommitToLog "auto-update: $(IsAutoUpdate && echo TRUE || echo FALSE)"
     PullGitRepo "$QPKG_NAME" "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_REPO_PATH" || return
     InstallAddons || return
 
@@ -224,7 +226,7 @@ StopQPKG()
             done
 
             [[ -f $DAEMON_PID_PATHFILE ]] && rm -f $DAEMON_PID_PATHFILE
-            Display 'OK'
+            Display OK
             CommitLog "stopped OK in $acc seconds"
 
             CommitInfoToSysLog "stop daemon: OK."
@@ -334,14 +336,14 @@ LoadUIPorts()
             DisplayWaitCommitToLog 'load UI ports from application config:'
             ui_port=$(/sbin/getcfg misc port -d 0 -f "$QPKG_INI_PATHFILE")
             ui_port_secure=$(/sbin/getcfg misc https_port -d 0 -f "$QPKG_INI_PATHFILE")
-            DisplayCommitToLog 'OK'
+            DisplayCommitToLog OK
             ;;
         qts)
             # Read the current application UI ports from QTS App Center
             DisplayWaitCommitToLog 'load UI ports from QPKG icon:'
-            ui_port=$(/sbin/getcfg $QPKG_NAME Web_Port -d 0 -f "/etc/config/qpkg.conf")
-            ui_port_secure=$(/sbin/getcfg $QPKG_NAME Web_SSL_Port -d 0 -f "/etc/config/qpkg.conf")
-            DisplayCommitToLog 'OK'
+            ui_port=$(/sbin/getcfg $QPKG_NAME Web_Port -d 0 -f /etc/config/qpkg.conf)
+            ui_port_secure=$(/sbin/getcfg $QPKG_NAME Web_SSL_Port -d 0 -f /etc/config/qpkg.conf)
+            DisplayCommitToLog OK
             ;;
         *)
             DisplayErrCommitAllLogs "unable to load UI ports: action '$1' is unrecognised"
@@ -477,7 +479,7 @@ PullGitRepo()
         fi
     fi
 
-    if [[ $auto_update = TRUE ]]; then
+    if IsAutoUpdate; then
         installed_branch=$(/opt/bin/git -C "$QPKG_GIT_PATH" branch | /bin/grep '^\*' | /bin/sed 's|^\* ||')
         DisplayCommitToLog "current git branch: $installed_branch"
     fi
@@ -512,7 +514,7 @@ CleanLocalClone()
 IsQNAP()
     {
 
-    # is this a QNAP NAS?
+    # returns 0 if this is a QNAP NAS
 
     if [[ ! -e /etc/init.d/functions ]]; then
         Display 'QTS functions missing (is this a QNAP NAS?)'
@@ -596,7 +598,7 @@ WaitForFileToAppear()
                 sleep 1
                 DisplayWait "$count,"
                 if [[ -e $1 ]]; then
-                    Display 'OK'
+                    Display OK
                     CommitLog "visible in $count second$(FormatAsPlural "$count")"
                     true
                     exit    # only this sub-shell
@@ -621,7 +623,7 @@ WaitForFileToAppear()
 EnsureConfigFileExists()
     {
 
-    [[ -z $QPKG_INI_PATHFILE ]] && return
+    IsNotSupportReset && return
 
     if IsNotConfigFound && IsDefaultConfigFound; then
         DisplayCommitToLog 'no configuration file found: using default'
@@ -679,7 +681,7 @@ ExecuteAndLog()
     result=$?
 
     if [[ $result = 0 ]]; then
-        DisplayCommitToLog 'OK'
+        DisplayCommitToLog OK
         [[ $3 = log:everything ]] && CommitInfoToSysLog "$1: OK."
         return 0
     else
@@ -719,7 +721,7 @@ ReWriteUIPorts()
         /sbin/setcfg $QPKG_NAME Web_SSL_Port '-2' -f /etc/config/qpkg.conf
     fi
 
-    DisplayCommitToLog 'OK'
+    DisplayCommitToLog OK
 
     }
 
@@ -761,54 +763,47 @@ CheckPorts()
 IsQPKGEnabled()
     {
 
-    # input:
-    #   $1 = package name to check
-
-    # output:
-    #   $? = 0 (true) or 1 (false)
-
-    [[ $(/sbin/getcfg "$1" Enable -u -f /etc/config/qpkg.conf) = 'TRUE' ]]
+    [[ $(/sbin/getcfg $QPKG_NAME Enable -u -d FALSE -f /etc/config/qpkg.conf) = TRUE ]]
 
     }
 
 IsNotQPKGEnabled()
     {
 
-    # input:
-    #   $1 = package name to check
-
-    # output:
-    #   $? = 0 (true) or 1 (false)
-
-    ! IsQPKGEnabled "$1"
+    ! IsQPKGEnabled
 
     }
 
-IsSupportsBackup()
+IsSupportBackup()
     {
-
-    # $? = 0 : application supports configuration backup
-    # $? = 1 : application does not support config backup
 
     [[ -n $BACKUP_PATHFILE ]]
 
     }
 
-IsNotSupportsBackup()
+IsNotSupportBackup()
     {
 
-    # $? = 0 : application does not support config backup
-    # $? = 1 : application supports configuration backup
+    ! IsSupportBackup
 
-    ! IsSupportsBackup
+    }
+
+IsSupportReset()
+    {
+
+    [[ -n $QPKG_INI_PATHFILE ]]
+
+    }
+
+IsNotSupportReset()
+    {
+
+    ! IsSupportReset
 
     }
 
 IsSourcedOnline()
     {
-
-    # $? = 0 : application is cloned from an online repository
-    # $? = 1 : application is sourced locally
 
     [[ -n $SOURCE_GIT_URL ]]
 
@@ -816,9 +811,6 @@ IsSourcedOnline()
 
 IsNotSourcedOnline()
     {
-
-    # $? = 0 : application is sourced locally
-    # $? = 1 : application is cloned from an online repository
 
     ! IsSourcedOnline
 
@@ -834,9 +826,6 @@ IsNotSSLEnabled()
 IsPackageActive()
     {
 
-    # $? = 0 : package is 'started'
-    # $? = 1 : package is 'stopped'
-
     if [[ -e $BACKUP_SERVICE_PATHFILE ]]; then
         DisplayCommitToLog 'package: IS active'
         return
@@ -850,9 +839,6 @@ IsPackageActive()
 IsNotPackageActive()
     {
 
-    # $? = 1 if $QPKG_NAME is active
-    # $? = 0 if $QPKG_NAME is not active
-
     ! IsPackageActive
 
     }
@@ -860,18 +846,12 @@ IsNotPackageActive()
 IsDaemon()
     {
 
-    # $? = 0 : this service script manages a daemon
-    # $? = 1 : this service script does NOT manage a daemon
-
     [[ -n $DAEMON_PID_PATHFILE ]]
 
     }
 
 IsNotDaemon()
     {
-
-    # $? = 0 : this service script does NOT manage a daemon
-    # $? = 1 : this service script manages a daemon
 
     ! IsDaemon
 
@@ -897,9 +877,6 @@ IsDaemonActive()
 
 IsNotDaemonActive()
     {
-
-    # $? = 1 if $QPKG_NAME is active
-    # $? = 0 if $QPKG_NAME is not active
 
     ! IsDaemonActive
 
@@ -991,7 +968,7 @@ IsPortResponds()
         fi
     done
 
-    Display 'OK'
+    Display OK
     CommitLog "UI port responded after $acc seconds"
 
     return 0
@@ -1027,7 +1004,7 @@ IsPortSecureResponds()
         fi
     done
 
-    Display 'OK'
+    Display OK
     CommitLog "secure UI port responded after $acc seconds"
 
     return 0
@@ -1341,7 +1318,7 @@ DisplayWait()
 CommitOperationToLog()
     {
 
-    CommitLog "$(SessionSeparator "datetime:'$(date)', request:'$service_operation', QPKG:'$QPKG_VERSION', app:'$app_version'")"
+    CommitLog "$(SessionSeparator "datetime:'$(date)', request:'$service_operation', package:'$QPKG_VERSION', service:'$SCRIPT_VERSION', app:'$app_version'")"
 
     }
 
@@ -1456,18 +1433,22 @@ IsNotAutoUpdate()
 EnableAutoUpdate()
     {
 
-    auto_update=TRUE
-    /sbin/setcfg "$QPKG_NAME" Auto_Update "$auto_update" -f /etc/config/qpkg.conf
-    DisplayCommitToLog "auto-update: $auto_update"
+    StoreAutoUpdateSelection TRUE
 
     }
 
 DisableAutoUpdate()
     {
 
-    auto_update=FALSE
-    /sbin/setcfg "$QPKG_NAME" Auto_Update "$auto_update" -f /etc/config/qpkg.conf
-    DisplayCommitToLog "auto-update: $auto_update"
+    StoreAutoUpdateSelection FALSE
+
+    }
+
+StoreAutoUpdateSelection()
+    {
+
+    /sbin/setcfg "$QPKG_NAME" Auto_Update "$1" -f /etc/config/qpkg.conf
+    DisplayCommitToLog "auto-update: $1"
 
     }
 
@@ -1476,24 +1457,29 @@ Init
 if IsNotError; then
     case $1 in
         start|--start)
-            if [[ $(/sbin/getcfg $QPKG_NAME Enable -u -d FALSE -f /etc/config/qpkg.conf) != 'TRUE' ]]; then
+            if IsNotQPKGEnabled; then
                 echo "The $(FormatAsPackageName $QPKG_NAME) QPKG is disabled. Please enable it first with: qpkg_service enable $QPKG_NAME"
                 SetError
             fi
 
             SetServiceOperation starting
-            # ensure those still on SickBeard.py are using the updated repo
-            if [[ ! -e $DAEMON_PATHFILE && -e $(/usr/bin/dirname "$DAEMON_PATHFILE")/SickBeard.py ]]; then
-                CleanLocalClone
-            else
-                StartQPKG
-            fi
+            StartQPKG
             ;;
         stop|--stop)
+            if IsNotQPKGEnabled; then
+                echo "The $(FormatAsPackageName $QPKG_NAME) QPKG is disabled. Please enable it first with: qpkg_service enable $QPKG_NAME"
+                SetError
+            fi
+
             SetServiceOperation stopping
             StopQPKG
             ;;
         r|-r|restart|--restart)
+            if IsNotQPKGEnabled; then
+                echo "The $(FormatAsPackageName $QPKG_NAME) QPKG is disabled. Please enable it first with: qpkg_service enable $QPKG_NAME"
+                SetError
+            fi
+
             SetServiceOperation restarting
             StopQPKG
             StartQPKG
@@ -1503,7 +1489,7 @@ if IsNotError; then
             StatusQPKG
             ;;
         b|-b|backup|--backup|backup-config|--backup-config)
-            if IsSupportsBackup; then
+            if IsSupportBackup; then
                 SetServiceOperation backing-up
                 BackupConfig
             else
@@ -1512,7 +1498,7 @@ if IsNotError; then
             fi
             ;;
         reset-config|--reset-config)
-            if [[ -n $QPKG_INI_PATHFILE ]]; then
+            if IsSupportReset; then
                 SetServiceOperation resetting-config
                 ResetConfig
             else
@@ -1521,7 +1507,7 @@ if IsNotError; then
             fi
             ;;
         restore|--restore|restore-config|--restore-config)
-            if IsSupportsBackup; then
+            if IsSupportBackup; then
                 SetServiceOperation restoring
                 RestoreConfig
             else
@@ -1558,7 +1544,8 @@ if IsNotError; then
             ;;
         v|-v|version|--version)
             SetServiceOperation versioning
-            Display "$QPKG_VERSION"
+            Display "package: $QPKG_VERSION"
+            Display "service: $SCRIPT_VERSION"
             ;;
         *)
             SetServiceOperation none
