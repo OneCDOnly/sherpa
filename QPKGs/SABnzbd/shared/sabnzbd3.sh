@@ -495,7 +495,7 @@ CleanLocalClone()
 
     CommitOperationToLog
 
-    if [[ -z $QPKG_PATH || -z $QPKG_NAME || IsNotSourcedOnline ]]; then
+    if [[ -z $QPKG_PATH || -z $QPKG_NAME ]] || IsNotSourcedOnline; then
         SetError
         return 1
     fi
