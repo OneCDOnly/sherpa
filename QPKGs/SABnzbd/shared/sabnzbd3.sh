@@ -6,6 +6,8 @@
 #
 # so, blame OneCD if it all goes horribly wrong. ;)
 #
+# This is a type 1 service-script: https://github.com/OneCDOnly/sherpa/blob/main/QPKG%20service-script%20types.txt
+#
 # For more info: https://forum.qnap.com/viewtopic.php?f=320&t=132373
 ####################################################################################
 
@@ -20,9 +22,19 @@ Init()
 
     # general environment
     readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
-    readonly DAEMON_PID_PATHFILE=/var/run/$QPKG_NAME.pid
+    readonly QPKG_VERSION=$(/sbin/getcfg $QPKG_NAME Version -f /etc/config/qpkg.conf)
+    auto_update=$(/sbin/getcfg $QPKG_NAME Auto_Update -u -f /etc/config/qpkg.conf)
     readonly QPKG_INI_PATHFILE=$QPKG_PATH/config/config.ini
     readonly QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.def
+    readonly APP_VERSION_STORE_PATHFILE=$QPKG_PATH/config/version.stored
+    readonly SERVICE_STATUS_PATHFILE=/var/run/$QPKG_NAME.last.operation
+    readonly SERVICE_LOG_PATHFILE=/var/log/$QPKG_NAME.log
+    local -r BACKUP_PATH=$(/sbin/getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
+    readonly BACKUP_PATHFILE=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
+    readonly INSTALLED_RAM_KB=$(/bin/grep MemTotal /proc/meminfo | cut -f2 -d':' | /bin/sed 's|kB||;s| ||g')
+    readonly OPKG_PATH=/opt/bin:/opt/sbin
+    export PATH="$OPKG_PATH:$(/bin/sed "s|$OPKG_PATH||" <<< "$PATH")"
+    readonly APPARENT_PATH=/share/$(/sbin/getcfg SHARE_DEF defDownload -d Qdownload -f /etc/config/def_share.info)/$QPKG_NAME
 
     # specific to online-sourced applications only
     readonly SOURCE_GIT_URL=https://github.com/sabnzbd/sabnzbd.git
@@ -39,13 +51,12 @@ Init()
     readonly ALLOW_ACCESS_TO_SYS_PACKAGES=false
     readonly APP_VERSION_PATHFILE=$QPKG_REPO_PATH/sabnzbd/version.py
     readonly DAEMON_PATHFILE=$QPKG_REPO_PATH/$TARGET_SCRIPT
-    readonly GIT_APPEAR_TIMEOUT=300
 
     # daemonised applications only
+    readonly DAEMON_PID_PATHFILE=/var/run/$QPKG_NAME.pid
     readonly LAUNCHER="$DAEMON_PATHFILE --daemon --browser 0 --config-file $QPKG_INI_PATHFILE --pidfile $DAEMON_PID_PATHFILE"
-    readonly PID_APPEAR_TIMEOUT=60
-    readonly DAEMON_STOP_TIMEOUT=60
     readonly PORT_CHECK_TIMEOUT=120
+    readonly DAEMON_STOP_TIMEOUT=60
 
     # Entware binaries only
     readonly ORIG_DAEMON_SERVICE_SCRIPT=''
@@ -53,19 +64,6 @@ Init()
     # local mods only
     readonly TARGET_SERVICE_PATHFILE=''
     readonly BACKUP_SERVICE_PATHFILE=$TARGET_SERVICE_PATHFILE.bak
-
-    # remaining environment
-    readonly INSTALLED_RAM_KB=$(/bin/grep MemTotal /proc/meminfo | cut -f2 -d':' | /bin/sed 's|kB||;s| ||g')
-    readonly QPKG_VERSION=$(/sbin/getcfg $QPKG_NAME Version -f /etc/config/qpkg.conf)
-    readonly APP_VERSION_STORE_PATHFILE=$QPKG_PATH/config/version.stored
-    readonly SERVICE_STATUS_PATHFILE=/var/run/$QPKG_NAME.last.operation
-    readonly SERVICE_LOG_PATHFILE=/var/log/$QPKG_NAME.log
-    readonly OPKG_PATH=/opt/bin:/opt/sbin
-    local -r BACKUP_PATH=$(/sbin/getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
-    readonly BACKUP_PATHFILE=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
-    readonly APPARENT_PATH=/share/$(/sbin/getcfg SHARE_DEF defDownload -d Qdownload -f /etc/config/def_share.info)/$QPKG_NAME
-    export PATH="$OPKG_PATH:$(/bin/sed "s|$OPKG_PATH||" <<< "$PATH")"
-    readonly LAUNCH_TARGET_APPEAR_TIMEOUT=30
 
     if [[ $MIN_RAM_KB != any && $INSTALLED_RAM_KB -lt $MIN_RAM_KB ]]; then
         DisplayErrCommitAllLogs "$(FormatAsPackageName $QPKG_NAME) won't run on this NAS. Not enough RAM. :("
@@ -91,6 +89,7 @@ Init()
     [[ -n $BACKUP_PATH && ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
     [[ -n $VENV_PATH && ! -d $VENV_PATH ]] && mkdir -p "$VENV_PATH"
     [[ -n $PIP_CACHE_PATH && ! -d $PIP_CACHE_PATH ]] && mkdir -p "$PIP_CACHE_PATH"
+    [[ -z $auto_update ]] && EnableAutoUpdate
 
     return 0
 
@@ -114,6 +113,8 @@ ShowHelp()
     [[ -n $QPKG_INI_PATHFILE ]] && DisplayAsHelp 'reset-config' "delete the application configuration, databases and history. $(FormatAsPackageName $QPKG_NAME) will be stopped, then restarted."
     [[ -n $SOURCE_GIT_URL ]] && DisplayAsHelp 'clean' "wipe the current local copy of $(FormatAsPackageName $QPKG_NAME), and download it again from remote source. Configuration will be retained."
     DisplayAsHelp 'log' 'display the service script runtime log.'
+    [[ -n $SOURCE_GIT_URL ]] && DisplayAsHelp 'disable-auto-update' "don't auto-update $(FormatAsPackageName $QPKG_NAME) when starting."
+    [[ -n $SOURCE_GIT_URL ]] && DisplayAsHelp 'enable-auto-update' "auto-update $(FormatAsPackageName $QPKG_NAME) when starting (default)."
     DisplayAsHelp 'version' 'display the package version number.'
     Display
 
@@ -141,8 +142,12 @@ StartQPKG()
         fi
     fi
 
-    WaitForGit || return
-    PullGitRepo "$QPKG_NAME" "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_REPO_PATH"
+    DisplayCommitToLog "auto-update: $auto_update"
+    PullGitRepo "$QPKG_NAME" "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_REPO_PATH" || return
+    InstallAddons || return
+
+    [[ -z $DAEMON_PID_PATHFILE ]] && return
+
     WaitForLaunchTarget || return
     EnsureConfigFileExists
     LoadUIPorts app || return
@@ -163,8 +168,6 @@ StartQPKG()
         SetError
         return 1
     fi
-
-    InstallAddons || return
 
     if IsNotVirtualEnvironmentExist; then
         DisplayErrCommitAllLogs 'unable to start daemon: virtual environment does not exist!'
@@ -263,6 +266,8 @@ InstallAddons()
     if [[ ! -e $pip_conf_pathfile ]]; then
         ExecuteAndLog "create global 'pip' config" "echo -e \"[global]\ncache-dir = $PIP_CACHE_PATH\" > $pip_conf_pathfile" log:everything || SetError
     fi
+
+    [[ $auto_update = FALSE && $new_env = false ]] && return 0
 
     [[ ! -e $requirements_pathfile && -e $default_requirements_pathfile ]] && requirements_pathfile=$default_requirements_pathfile
 
@@ -451,6 +456,8 @@ PullGitRepo()
     [[ $4 = shallow ]] && local -r DEPTH='--depth 1'
     [[ $4 = single-branch ]] && local -r DEPTH='--single-branch'
 
+    WaitForGit || return 1
+
     if [[ -d $QPKG_GIT_PATH/.git ]]; then
         installed_branch=$(/opt/bin/git -C "$QPKG_GIT_PATH" branch | /bin/grep '^\*' | /bin/sed 's|^\* ||')
 
@@ -465,12 +472,16 @@ PullGitRepo()
     if [[ ! -d $QPKG_GIT_PATH/.git ]]; then
         ExecuteAndLog "clone $(FormatAsPackageName "$1") from remote repository" "cd /tmp; /opt/bin/git clone --branch $3 $DEPTH -c advice.detachedHead=false $GIT_HTTPS_URL $QPKG_GIT_PATH"
     else
-        # latest effort at resolving local corruption, source: https://stackoverflow.com/a/10170195
-        ExecuteAndLog "update $(FormatAsPackageName "$1") from remote repository" "cd /tmp; /opt/bin/git -C $QPKG_GIT_PATH clean -f; /opt/bin/git -C $QPKG_GIT_PATH reset --hard origin/$3; /opt/bin/git -C $QPKG_GIT_PATH pull"
+        if [[ $auto_update = TRUE ]]; then
+            # latest effort at resolving local corruption, source: https://stackoverflow.com/a/10170195
+            ExecuteAndLog "update $(FormatAsPackageName "$1") from remote repository" "cd /tmp; /opt/bin/git -C $QPKG_GIT_PATH clean -f; /opt/bin/git -C $QPKG_GIT_PATH reset --hard origin/$3; /opt/bin/git -C $QPKG_GIT_PATH pull"
+        fi
     fi
 
-    installed_branch=$(/opt/bin/git -C "$QPKG_GIT_PATH" branch | /bin/grep '^\*' | /bin/sed 's|^\* ||')
-    DisplayCommitToLog "current git branch: $installed_branch"
+    if [[ $auto_update = TRUE ]]; then
+        installed_branch=$(/opt/bin/git -C "$QPKG_GIT_PATH" branch | /bin/grep '^\*' | /bin/sed 's|^\* ||')
+        DisplayCommitToLog "current git branch: $installed_branch"
+    fi
 
     [[ $branch_switch = true && $QPKG_NAME = nzbToMedia ]] && RestoreConfig
 
@@ -517,7 +528,7 @@ IsQNAP()
 WaitForGit()
     {
 
-    if WaitForFileToAppear '/opt/bin/git' "$GIT_APPEAR_TIMEOUT"; then
+    if WaitForFileToAppear '/opt/bin/git' 300; then
         export PATH="$OPKG_PATH:$(/bin/sed "s|$OPKG_PATH||" <<< "$PATH")"
         return 0
     else
@@ -539,7 +550,7 @@ WaitForLaunchTarget()
         return 0
     fi
 
-    if WaitForFileToAppear "$launch_target" "$LAUNCH_TARGET_APPEAR_TIMEOUT"; then
+    if WaitForFileToAppear "$launch_target" 30; then
         return 0
     else
         return 1
@@ -550,7 +561,7 @@ WaitForLaunchTarget()
 WaitForPID()
     {
 
-    if WaitForFileToAppear "$DAEMON_PID_PATHFILE" "$PID_APPEAR_TIMEOUT"; then
+    if WaitForFileToAppear "$DAEMON_PID_PATHFILE" 60; then
         sleep 1       # wait one more second to allow file to have PID written into it
         return 0
     else
@@ -1250,7 +1261,7 @@ FormatAsFileName()
 DisplayAsHelp()
     {
 
-    printf "  --%-12s  %s\n" "$1" "$2"
+    printf "  --%-19s  %s\n" "$1" "$2"
 
     }
 
@@ -1362,6 +1373,24 @@ FormatAsPlural()
 
     }
 
+EnableAutoUpdate()
+    {
+
+    auto_update=TRUE
+    /sbin/setcfg "$QPKG_NAME" Auto_Update "$auto_update" -f /etc/config/qpkg.conf
+    DisplayCommitToLog "auto-update: $auto_update"
+
+    }
+
+DisableAutoUpdate()
+    {
+
+    auto_update=FALSE
+    /sbin/setcfg "$QPKG_NAME" Auto_Update "$auto_update" -f /etc/config/qpkg.conf
+    DisplayCommitToLog "auto-update: $auto_update"
+
+    }
+
 Init
 
 if IsNotError; then
@@ -1438,6 +1467,14 @@ if IsNotError; then
         l|-l|log|--log)
             SetServiceOperation logging
             ViewLog
+            ;;
+        disable-auto-update|--disable-auto-update)
+            SetServiceOperation disable-auto-update
+            DisableAutoUpdate
+            ;;
+        enable-auto-update|--enable-auto-update)
+            SetServiceOperation enable-auto-update
+            EnableAutoUpdate
             ;;
         v|-v|version|--version)
             SetServiceOperation versioning
