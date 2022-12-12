@@ -133,14 +133,8 @@ StartQPKG()
         IsDaemonActive && return
     fi
 
-    if IsNotDaemon; then        # nzbToMedia: when cleaning, ignore restart and start anyway to create repo and restore config
-        if IsRestore || IsReset; then
-            IsNotRestartPending && return
-        fi
-    else
-        if IsRestore || IsClean || IsReset; then
-            IsNotRestartPending && return
-        fi
+    if IsRestore || IsClean || IsReset; then
+        IsNotRestartPending && return
     fi
 
     DisplayCommitToLog "auto-update: $(IsAutoUpdate && echo TRUE || echo FALSE)"
