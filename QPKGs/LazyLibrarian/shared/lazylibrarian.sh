@@ -334,8 +334,8 @@ LoadUIPorts()
         app)
             # Read the current application UI ports from application configuration
             DisplayWaitCommitToLog 'load UI ports from application config:'
-            ui_port=5299            # 5299 is the default value for LazyLibrarian, so it won't be found in config file. LL only stores non-default values.
-            ui_port_secure=0
+            ui_port=$(/sbin/getcfg general http_port -d 5299 -f "$QPKG_INI_PATHFILE")   # 5299 is the default value for LazyLibrarian, so it won't be found in config file. LL only stores non-default values.
+            ui_port_secure=$(/sbin/getcfg general http_port -d 5299 -f "$QPKG_INI_PATHFILE")
             DisplayCommitToLog OK
             ;;
         qts)
