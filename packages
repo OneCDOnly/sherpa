@@ -1,4 +1,4 @@
-PACKAGES_VER=221212
+PACKAGES_VER=221213
 BASE_QPKG_CONFLICTS_WITH='TarMT'
 BASE_QPKG_WARNINGS='Qboost'
 BASE_IPKGS_INSTALL='ca-certificates coreutils-stty findutils gcc git git-http grep less nano sed'
@@ -192,9 +192,9 @@ QPKG_RESTART_TO_UPDATE+=(false)
 QPKG_NAME+=(LazyLibrarian)
 QPKG_ARCH+=(all)
 QPKG_MIN_RAM_KB+=(any)
-QPKG_VERSION+=(221212)
+QPKG_VERSION+=(221213)
 QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/QPKGs/${QPKG_NAME[${#QPKG_NAME[@]}-1]}/build/${QPKG_NAME[${#QPKG_NAME[@]}-1]}_${QPKG_VERSION[${#QPKG_VERSION[@]}-1]}.qpkg)
-QPKG_MD5+=(b48a659a04a8ae58390f6fd52ccd25e4)
+QPKG_MD5+=(dce276ba6793f6d8985e329fc0dd8864)
 QPKG_DESC+=('follow authors and grab metadata for all your digital reading needs')
 QPKG_ABBRVS+=('ll lazy lazylibrarian')
 QPKG_CONFLICTS_WITH+=('Python3 QPython3 QPython39 QPython310')
