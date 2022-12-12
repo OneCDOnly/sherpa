@@ -244,3 +244,6 @@ tar --create --gzip --numeric-owner --file="$OBJECTS_ARCHIVE_PATHFILE" --directo
 tar --create --gzip --numeric-owner --file="$PACKAGES_ARCHIVE_PATHFILE" --directory="$WORK_PATH" "$PACKAGES_FILE"
 
 echo 'done!'
+
+echo "these files have changed since the last commit:"
+git diff --name-only
