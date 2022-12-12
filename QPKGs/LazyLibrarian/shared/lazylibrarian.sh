@@ -250,6 +250,7 @@ InstallAddons()
     local pip_conf_pathfile=$VENV_PATH/pip.conf
     local new_env=false
     local sys_packages=' --system-site-packages'
+    local no_pips_installed=true
 
     [[ $ALLOW_ACCESS_TO_SYS_PACKAGES != true ]] && sys_packages=''
 
@@ -274,12 +275,19 @@ InstallAddons()
 
     if [[ -e $requirements_pathfile ]]; then
         ExecuteAndLog 'install required PyPI modules' ". $VENV_PATH/bin/activate && pip install --no-input -r $requirements_pathfile" log:everything || SetError
+        no_pips_installed=false
     fi
 
     [[ ! -e $recommended_pathfile && -e $default_recommended_pathfile ]] && recommended_pathfile=$default_recommended_pathfile
 
     if [[ -e $recommended_pathfile ]]; then
         ExecuteAndLog 'install recommended PyPI modules' ". $VENV_PATH/bin/activate && pip install --no-input -r $recommended_pathfile" log:everything || SetError
+        no_pips_installed=false
+    fi
+
+    if [[ $no_pips_installed = true ]]; then        # fallback to general installation method
+        ExecuteAndLog 'install default PyPI modules' ". $VENV_PATH/bin/activate && pip install --no-input $QPKG_REPO_PATH" log:everything || SetError
+        no_pips_installed=false
     fi
 
     if [[ $QPKG_NAME = SABnzbd && $new_env = true ]]; then
