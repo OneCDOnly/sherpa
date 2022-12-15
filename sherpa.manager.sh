@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VER=221208-beta
+    local -r SCRIPT_VER=221215-beta
     readonly PROJECT_BRANCH=main
 
     IsQNAP || return
@@ -900,6 +900,8 @@ Self.Results()
             QPKGs.ScDependent.Show
         elif Opts.Help.Backups.IsSet; then
             QPKGs.Backups.Show
+        elif Opts.Help.Repos.IsSet; then
+            QPKGs.Repos.Show
         elif Opts.Help.Status.IsSet; then
             Self.Display.Clean.IsNt && QPKGs.NewVersions.Show
             QPKGs.Statuses.Show
@@ -1000,7 +1002,7 @@ ParseArguments()
         # stage 1
         if [[ -z $action ]]; then
             case $arg in
-                a|abs|action|actions|actions-all|all-actions|b|backups|dependent|dependents|installable|installed|l|last|log|not-installed|option|options|p|package|packages|problems|standalone|standalones|started|stopped|tail|tips|upgradable|v|version|versions|whole)
+                a|abs|action|actions|actions-all|all-actions|b|backups|dependent|dependents|installable|installed|l|last|log|not-installed|option|options|p|package|packages|problems|repo|repos|standalone|standalones|started|stopped|tail|tips|upgradable|v|version|versions|whole)
                     action=help_
                     arg_identified=true
                     scope=''
@@ -1071,6 +1073,11 @@ ParseArguments()
                     ;;
                 p|package|packages)
                     scope=packages_
+                    scope_identified=true
+                    arg_identified=true
+                    ;;
+                repo|repos)
+                    scope=repos_
                     scope_identified=true
                     arg_identified=true
                     ;;
@@ -1211,6 +1218,9 @@ ParseArguments()
                         ;;
                     problems_)
                         Opts.Help.Problems.Set
+                        ;;
+                    repos_)
+                        Opts.Help.Repos.Set
                         ;;
                     standalone_)
                         QPKGs.List.ScStandalone.Set
@@ -1486,6 +1496,9 @@ ParseArguments()
                 ;;
             problems_)
                 Opts.Help.Problems.Set
+                ;;
+            repos_)
+                Opts.Help.Repos.Set
                 ;;
             tips_)
                 Opts.Help.Tips.Set
@@ -2493,6 +2506,7 @@ readonly HELP_PACKAGE_NAME_WIDTH=20
 readonly HELP_PACKAGE_STATUS_WIDTH=40
 readonly HELP_PACKAGE_VERSION_WIDTH=17
 readonly HELP_PACKAGE_PATH_WIDTH=42
+readonly HELP_PACKAGE_REPO_WIDTH=40
 readonly HELP_FILE_NAME_WIDTH=33
 
 readonly HELP_COLUMN_SPACER=' '
@@ -2605,6 +2619,22 @@ CalculateMaximumStatusColumnsToDisplay()
 
     }
 
+CalculateMaximumRepoColumnsToDisplay()
+    {
+
+    local column1_width=$((${#HELP_COLUMN_MAIN_PREFIX} + HELP_PACKAGE_NAME_WIDTH))
+    local column2_width=$((${#HELP_COLUMN_SPACER} + ${#HELP_COLUMN_MAIN_PREFIX} + HELP_PACKAGE_REPO_WIDTH))
+
+    if [[ $((column1_width + column2_width)) -ge $SESSION_COLUMNS ]]; then
+        echo 1
+    else
+        echo 2
+    fi
+
+    return 0
+
+    }
+
 DisplayAsHelpTitlePackageNameVersionStatus()
     {
 
@@ -2659,6 +2689,46 @@ DisplayAsHelpPackageNameVersionStatus()
 
     if [[ -n ${4:-} && $maxcols -ge 4 ]]; then
         printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_BLANK_PREFIX}%s" "$4"
+    fi
+
+    printf '\n'
+
+    }
+
+DisplayAsHelpTitlePackageNameRepo()
+    {
+
+    # $1 = package name title
+    # $2 = assigned repository title
+
+    local maxcols=$(CalculateMaximumStatusColumnsToDisplay)
+
+    if [[ -n ${1:-} && $maxcols -ge 1 ]]; then
+        printf "${HELP_COLUMN_MAIN_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s" "$(Capitalise "$1"):"
+    fi
+
+    if [[ -n ${2:-} && $maxcols -ge 2 ]]; then
+        printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_MAIN_PREFIX}%-${HELP_PACKAGE_REPO_WIDTH}s" "$(Capitalise "$2"):"
+    fi
+
+    printf '\n'
+
+    }
+
+DisplayAsHelpPackageNameRepo()
+    {
+
+    # $1 = package name
+    # $2 = assigned repository
+
+    local maxcols=$(CalculateMaximumRepoColumnsToDisplay)
+
+    if [[ -n ${1:-} && $maxcols -ge 1 ]]; then
+        printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_BLANK_PREFIX}%-$((HELP_PACKAGE_NAME_WIDTH + $(LenANSIDiff "$1")))s" "$1"
+    fi
+
+    if [[ -n ${2:-} && $maxcols -ge 2 ]]; then
+        printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_OTHER_PREFIX}%-$((HELP_PACKAGE_REPO_WIDTH + $(LenANSIDiff "$2")))s" "$2"
     fi
 
     printf '\n'
@@ -3540,6 +3610,45 @@ QPKGs.Backups.Show()
 
         (cd "$BACKUP_PATH" && ls -1 ./*.config.tar.gz 2>/dev/null)
     fi
+
+    return 0
+
+    }
+
+QPKGs.Repos.Show()
+    {
+
+    local tier=''
+    local -i index=0
+    local current_package_name=''
+    local package_name=''
+    local package_repo=''
+    local maxcols=$(CalculateMaximumRepoColumnsToDisplay)
+
+    QPKGs.States.Build
+    DisplayLineSpaceIfNoneAlready
+
+    for tier in Standalone Dependent; do
+        DisplayAsHelpTitlePackageNameRepo "$tier packages" 'assigned repository'
+
+        for current_package_name in $(QPKGs.Sc$tier.Array); do
+            package_name=''
+            package_repo=''
+
+            if ! QPKG.URL "$current_package_name" &>/dev/null; then
+                DisplayAsHelpPackageNameRepo "$current_package_name" 'not installable: no arch'
+            elif ! QPKG.MinRAM "$current_package_name" &>/dev/null; then
+                DisplayAsHelpPackageNameRepo "$current_package_name" 'not installable: low RAM'
+            else
+                DisplayAsHelpPackageNameRepo "$current_package_name" "$(QPKG.Repo "$current_package_name")"
+            fi
+        done
+
+        Display; Self.LineSpace.Set
+    done
+
+    QPKGs.Actions.List
+    QPKGs.States.List
 
     return 0
 
@@ -5085,6 +5194,22 @@ QPKG.Local.Version()
     #   $? = 0 if found, !0 if not
 
     $GETCFG_CMD "${1:?no package name supplied}" Version -d unknown -f /etc/config/qpkg.conf
+
+    }
+
+QPKG.Repo()
+    {
+
+    # Returns the presently assigned repository ID of an installed QPKG.
+
+    # input:
+    #   $1 = QPKG name
+
+    # output:
+    #   stdout = package store ID
+    #   $? = 0 if found, !0 if not
+
+    $GETCFG_CMD "${1:?no package name supplied}" store -d none -f /etc/config/qpkg.conf
 
     }
 
