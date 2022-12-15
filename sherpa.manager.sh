@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VER=221215-beta
+    local -r SCRIPT_VER=221216-beta
     readonly PROJECT_BRANCH=main
 
     IsQNAP || return
@@ -1002,7 +1002,7 @@ ParseArguments()
         # stage 1
         if [[ -z $action ]]; then
             case $arg in
-                a|abs|action|actions|actions-all|all-actions|b|backups|dependent|dependents|installable|installed|l|last|log|not-installed|option|options|p|package|packages|problems|repo|repos|standalone|standalones|started|stopped|tail|tips|upgradable|v|version|versions|whole)
+                a|abs|action|actions|actions-all|all-actions|b|backups|dependent|dependents|installable|installed|l|last|log|not-installed|option|options|p|package|packages|problems|r|repo|repos|standalone|standalones|started|stopped|tail|tips|upgradable|v|version|versions|whole)
                     action=help_
                     arg_identified=true
                     scope=''
@@ -1076,7 +1076,7 @@ ParseArguments()
                     scope_identified=true
                     arg_identified=true
                     ;;
-                repo|repos)
+                r|repo|repos)
                     scope=repos_
                     scope_identified=true
                     arg_identified=true
@@ -3621,26 +3621,35 @@ QPKGs.Repos.Show()
     local tier=''
     local -i index=0
     local current_package_name=''
-    local package_name=''
     local package_repo=''
+    local package_repo_formatted=''
     local maxcols=$(CalculateMaximumRepoColumnsToDisplay)
 
     QPKGs.States.Build
     DisplayLineSpaceIfNoneAlready
 
     for tier in Standalone Dependent; do
-        DisplayAsHelpTitlePackageNameRepo "$tier packages" 'assigned repository'
+        DisplayAsHelpTitlePackageNameRepo "$tier packages" 'repository'
 
         for current_package_name in $(QPKGs.Sc$tier.Array); do
-            package_name=''
             package_repo=''
 
             if ! QPKG.URL "$current_package_name" &>/dev/null; then
                 DisplayAsHelpPackageNameRepo "$current_package_name" 'not installable: no arch'
             elif ! QPKG.MinRAM "$current_package_name" &>/dev/null; then
                 DisplayAsHelpPackageNameRepo "$current_package_name" 'not installable: low RAM'
+            elif QPKGs.IsNtInstalled.Exist "$current_package_name"; then
+                DisplayAsHelpPackageNameRepo "$current_package_name" 'not installed'
             else
-                DisplayAsHelpPackageNameRepo "$current_package_name" "$(QPKG.Repo "$current_package_name")"
+                package_repo=$(QPKG.Repo "$current_package_name")
+
+                if [[ $package_repo = "$PROJECT_NAME" ]]; then
+                    package_repo_formatted=$(ColourTextBrightGreen "$package_repo")
+                else
+                    package_repo_formatted=$(ColourTextBrightOrange "$package_repo")
+                fi
+
+                DisplayAsHelpPackageNameRepo "$current_package_name" "$package_repo_formatted"
             fi
         done
 
@@ -5209,7 +5218,7 @@ QPKG.Repo()
     #   stdout = package store ID
     #   $? = 0 if found, !0 if not
 
-    $GETCFG_CMD "${1:?no package name supplied}" store -d none -f /etc/config/qpkg.conf
+    $GETCFG_CMD "${1:?no package name supplied}" store -d "$PROJECT_NAME" -f /etc/config/qpkg.conf
 
     }
 
