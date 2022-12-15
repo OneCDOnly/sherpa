@@ -2822,6 +2822,8 @@ Help.Actions.Show()
     DisplayAsHelpTitle "$(FormatAsHelpAction) usage examples:"
     DisplayAsProjectSyntaxIndentedExample 'show package statuses' 'status'
     DisplayAsProjectSyntaxIndentedExample '' 's'
+    DisplayAsProjectSyntaxIndentedExample 'show package repositories' 'repos'
+    DisplayAsProjectSyntaxIndentedExample '' 'r'
     DisplayAsProjectSyntaxIndentedExample 'ensure all application dependencies are installed' 'check'
     DisplayAsProjectSyntaxIndentedExample 'install these packages' "install $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample 'uninstall these packages' "uninstall $(FormatAsHelpPackages)"
@@ -2859,6 +2861,8 @@ Help.ActionsAll.Show()
     DisplayAsHelpTitle "$(FormatAsHelpAction) usage examples:"
     DisplayAsProjectSyntaxIndentedExample 'show package statuses' 'status'
     DisplayAsProjectSyntaxIndentedExample '' 's'
+    DisplayAsProjectSyntaxIndentedExample 'show package repositories' 'repos'
+    DisplayAsProjectSyntaxIndentedExample '' 'r'
     DisplayAsProjectSyntaxIndentedExample 'install everything!' 'install all'
     DisplayAsProjectSyntaxIndentedExample 'uninstall everything!' 'force uninstall all'
     DisplayAsProjectSyntaxIndentedExample 'reinstall all installed packages' 'reinstall all'
