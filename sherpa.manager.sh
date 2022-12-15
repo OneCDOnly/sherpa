@@ -3625,7 +3625,7 @@ QPKGs.Repos.Show()
     local tier=''
     local -i index=0
     local current_package_name=''
-    local package_repo=''
+    local package_repo_id=''
     local package_repo_formatted=''
     local maxcols=$(CalculateMaximumRepoColumnsToDisplay)
 
@@ -3636,7 +3636,8 @@ QPKGs.Repos.Show()
         DisplayAsHelpTitlePackageNameRepo "$tier packages" 'repository'
 
         for current_package_name in $(QPKGs.Sc$tier.Array); do
-            package_repo=''
+            package_repo_id=''
+            package_repo_formatted=''
 
             if ! QPKG.URL "$current_package_name" &>/dev/null; then
                 DisplayAsHelpPackageNameRepo "$current_package_name" 'not installable: no arch'
@@ -3645,12 +3646,12 @@ QPKGs.Repos.Show()
             elif QPKGs.IsNtInstalled.Exist "$current_package_name"; then
                 DisplayAsHelpPackageNameRepo "$current_package_name" 'not installed'
             else
-                package_repo=$(QPKG.Repo "$current_package_name")
+                package_repo_id=$(QPKG.RepoID "$current_package_name")
 
-                if [[ $package_repo = "$PROJECT_NAME" ]]; then
-                    package_repo_formatted=$(ColourTextBrightGreen "$package_repo")
+                if [[ $package_repo_id = "$PROJECT_NAME" ]]; then
+                    package_repo_formatted=$(ColourTextBrightGreen "$package_repo_id")
                 else
-                    package_repo_formatted=$(ColourTextBrightOrange "$package_repo")
+                    package_repo_formatted=$(ColourTextBrightOrange "$(GetRepoURLFromStoreID "$package_repo_id")")
                 fi
 
                 DisplayAsHelpPackageNameRepo "$current_package_name" "$package_repo_formatted"
@@ -4093,6 +4094,17 @@ IsAllowUnsignedPackages()
     {
 
     [[ $($GETCFG_CMD 'QPKG Management' Ignore_Cert) = TRUE ]]
+
+    }
+
+GetRepoURLFromStoreID()
+    {
+
+    # $1 = store ID to lookup repo URL for
+
+    [[ -z $1 ]] && return 1
+
+    $GETCFG_CMD "$1" u -d unknown -f /etc/config/3rd_pkg_v2.conf
 
     }
 
@@ -5210,7 +5222,7 @@ QPKG.Local.Version()
 
     }
 
-QPKG.Repo()
+QPKG.RepoID()
     {
 
     # Returns the presently assigned repository ID of an installed QPKG.
