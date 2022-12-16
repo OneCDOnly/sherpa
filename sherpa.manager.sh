@@ -904,9 +904,10 @@ Self.Results()
         elif Opts.Help.Backups.IsSet; then
             QPKGs.Backups.Show
         elif Opts.Help.Repos.IsSet; then
+            QPKGs.NewVersions.Show
             QPKGs.Repos.Show
         elif Opts.Help.Status.IsSet; then
-            Self.Display.Clean.IsNt && QPKGs.NewVersions.Show
+            QPKGs.NewVersions.Show
             QPKGs.Statuses.Show
         fi
     fi
@@ -3287,6 +3288,7 @@ QPKGs.NewVersions.Show()
     local names_formatted=''
     local msg=''
 
+    Self.Display.Clean.IsNt || return
     QPKGs.States.Build
 
     if [[ $(QPKGs.ScUpgradable.Count) -eq 0 ]]; then
