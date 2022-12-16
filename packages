@@ -1,10 +1,10 @@
-PACKAGES_VER=221213
+PACKAGES_VER=221217
 BASE_QPKG_CONFLICTS_WITH='TarMT'
 BASE_QPKG_WARNINGS='Qboost'
 BASE_IPKGS_INSTALL='ca-certificates coreutils-stty findutils gcc git git-http grep less nano sed'
 BASE_PIPS_INSTALL='wheel pip virtualenv'
-MIN_PYTHON_VER=3105         # current Entware Python3 version so IPKG upgrade notifier will work
-MIN_PERL_VER=5281           # current Entware Perl version so IPKG upgrade notifier will work
+MIN_PYTHON_VER=3107         # keep this up-to-date with Entware Python3 version, so IPKG upgrade notifier will work
+MIN_PERL_VER=5281           # keep this up-to-date with Entware Perl version, so IPKG upgrade notifier will work
 
 # use pseudo-alpha-sorted name order (i.e. disregard character-case and leading 'O')
 
