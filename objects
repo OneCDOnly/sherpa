@@ -1386,6 +1386,42 @@ _ob_qpkgs_acinstall_scntall_fl_=false
 QPKGs.AcInstall.ScNtAll.NoLogMods()
 { _ob_qpkgs_acinstall_scntall_chfl_=false ;}
 QPKGs.AcInstall.ScNtAll.Init
+QPKGs.AcReassign.ScAll.Init()
+{ _ob_qpkgs_acreassign_scall_fl_=false
+_ob_qpkgs_acreassign_scall_chfl_=true ;}
+QPKGs.AcReassign.ScAll.IsNt()
+{ [[ $_ob_qpkgs_acreassign_scall_fl_ != 'true' ]] ;}
+QPKGs.AcReassign.ScAll.IsSet()
+{ [[ $_ob_qpkgs_acreassign_scall_fl_ = 'true' ]] ;}
+QPKGs.AcReassign.ScAll.Set()
+{ [[ $_ob_qpkgs_acreassign_scall_fl_ = 'true' ]] && return
+_ob_qpkgs_acreassign_scall_fl_=true
+[[ $_ob_qpkgs_acreassign_scall_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_scall_fl_ ;}
+QPKGs.AcReassign.ScAll.UnSet()
+{ [[ $_ob_qpkgs_acreassign_scall_fl_ != 'true' ]] && return
+_ob_qpkgs_acreassign_scall_fl_=false
+[[ $_ob_qpkgs_acreassign_scall_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_scall_fl_ ;}
+QPKGs.AcReassign.ScAll.NoLogMods()
+{ _ob_qpkgs_acreassign_scall_chfl_=false ;}
+QPKGs.AcReassign.ScAll.Init
+QPKGs.AcReassign.ScNtAll.Init()
+{ _ob_qpkgs_acreassign_scntall_fl_=false
+_ob_qpkgs_acreassign_scntall_chfl_=true ;}
+QPKGs.AcReassign.ScNtAll.IsNt()
+{ [[ $_ob_qpkgs_acreassign_scntall_fl_ != 'true' ]] ;}
+QPKGs.AcReassign.ScNtAll.IsSet()
+{ [[ $_ob_qpkgs_acreassign_scntall_fl_ = 'true' ]] ;}
+QPKGs.AcReassign.ScNtAll.Set()
+{ [[ $_ob_qpkgs_acreassign_scntall_fl_ = 'true' ]] && return
+_ob_qpkgs_acreassign_scntall_fl_=true
+[[ $_ob_qpkgs_acreassign_scntall_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_scntall_fl_ ;}
+QPKGs.AcReassign.ScNtAll.UnSet()
+{ [[ $_ob_qpkgs_acreassign_scntall_fl_ != 'true' ]] && return
+_ob_qpkgs_acreassign_scntall_fl_=false
+[[ $_ob_qpkgs_acreassign_scntall_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_scntall_fl_ ;}
+QPKGs.AcReassign.ScNtAll.NoLogMods()
+{ _ob_qpkgs_acreassign_scntall_chfl_=false ;}
+QPKGs.AcReassign.ScNtAll.Init
 QPKGs.AcRebuild.ScAll.Init()
 { _ob_qpkgs_acrebuild_scall_fl_=false
 _ob_qpkgs_acrebuild_scall_chfl_=true ;}
@@ -1890,6 +1926,42 @@ _ob_qpkgs_acinstall_scntdependent_fl_=false
 QPKGs.AcInstall.ScNtDependent.NoLogMods()
 { _ob_qpkgs_acinstall_scntdependent_chfl_=false ;}
 QPKGs.AcInstall.ScNtDependent.Init
+QPKGs.AcReassign.ScDependent.Init()
+{ _ob_qpkgs_acreassign_scdependent_fl_=false
+_ob_qpkgs_acreassign_scdependent_chfl_=true ;}
+QPKGs.AcReassign.ScDependent.IsNt()
+{ [[ $_ob_qpkgs_acreassign_scdependent_fl_ != 'true' ]] ;}
+QPKGs.AcReassign.ScDependent.IsSet()
+{ [[ $_ob_qpkgs_acreassign_scdependent_fl_ = 'true' ]] ;}
+QPKGs.AcReassign.ScDependent.Set()
+{ [[ $_ob_qpkgs_acreassign_scdependent_fl_ = 'true' ]] && return
+_ob_qpkgs_acreassign_scdependent_fl_=true
+[[ $_ob_qpkgs_acreassign_scdependent_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_scdependent_fl_ ;}
+QPKGs.AcReassign.ScDependent.UnSet()
+{ [[ $_ob_qpkgs_acreassign_scdependent_fl_ != 'true' ]] && return
+_ob_qpkgs_acreassign_scdependent_fl_=false
+[[ $_ob_qpkgs_acreassign_scdependent_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_scdependent_fl_ ;}
+QPKGs.AcReassign.ScDependent.NoLogMods()
+{ _ob_qpkgs_acreassign_scdependent_chfl_=false ;}
+QPKGs.AcReassign.ScDependent.Init
+QPKGs.AcReassign.ScNtDependent.Init()
+{ _ob_qpkgs_acreassign_scntdependent_fl_=false
+_ob_qpkgs_acreassign_scntdependent_chfl_=true ;}
+QPKGs.AcReassign.ScNtDependent.IsNt()
+{ [[ $_ob_qpkgs_acreassign_scntdependent_fl_ != 'true' ]] ;}
+QPKGs.AcReassign.ScNtDependent.IsSet()
+{ [[ $_ob_qpkgs_acreassign_scntdependent_fl_ = 'true' ]] ;}
+QPKGs.AcReassign.ScNtDependent.Set()
+{ [[ $_ob_qpkgs_acreassign_scntdependent_fl_ = 'true' ]] && return
+_ob_qpkgs_acreassign_scntdependent_fl_=true
+[[ $_ob_qpkgs_acreassign_scntdependent_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_scntdependent_fl_ ;}
+QPKGs.AcReassign.ScNtDependent.UnSet()
+{ [[ $_ob_qpkgs_acreassign_scntdependent_fl_ != 'true' ]] && return
+_ob_qpkgs_acreassign_scntdependent_fl_=false
+[[ $_ob_qpkgs_acreassign_scntdependent_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_scntdependent_fl_ ;}
+QPKGs.AcReassign.ScNtDependent.NoLogMods()
+{ _ob_qpkgs_acreassign_scntdependent_chfl_=false ;}
+QPKGs.AcReassign.ScNtDependent.Init
 QPKGs.AcRebuild.ScDependent.Init()
 { _ob_qpkgs_acrebuild_scdependent_fl_=false
 _ob_qpkgs_acrebuild_scdependent_chfl_=true ;}
@@ -2394,6 +2466,42 @@ _ob_qpkgs_acinstall_scnthasdependents_fl_=false
 QPKGs.AcInstall.ScNtHasDependents.NoLogMods()
 { _ob_qpkgs_acinstall_scnthasdependents_chfl_=false ;}
 QPKGs.AcInstall.ScNtHasDependents.Init
+QPKGs.AcReassign.ScHasDependents.Init()
+{ _ob_qpkgs_acreassign_schasdependents_fl_=false
+_ob_qpkgs_acreassign_schasdependents_chfl_=true ;}
+QPKGs.AcReassign.ScHasDependents.IsNt()
+{ [[ $_ob_qpkgs_acreassign_schasdependents_fl_ != 'true' ]] ;}
+QPKGs.AcReassign.ScHasDependents.IsSet()
+{ [[ $_ob_qpkgs_acreassign_schasdependents_fl_ = 'true' ]] ;}
+QPKGs.AcReassign.ScHasDependents.Set()
+{ [[ $_ob_qpkgs_acreassign_schasdependents_fl_ = 'true' ]] && return
+_ob_qpkgs_acreassign_schasdependents_fl_=true
+[[ $_ob_qpkgs_acreassign_schasdependents_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_schasdependents_fl_ ;}
+QPKGs.AcReassign.ScHasDependents.UnSet()
+{ [[ $_ob_qpkgs_acreassign_schasdependents_fl_ != 'true' ]] && return
+_ob_qpkgs_acreassign_schasdependents_fl_=false
+[[ $_ob_qpkgs_acreassign_schasdependents_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_schasdependents_fl_ ;}
+QPKGs.AcReassign.ScHasDependents.NoLogMods()
+{ _ob_qpkgs_acreassign_schasdependents_chfl_=false ;}
+QPKGs.AcReassign.ScHasDependents.Init
+QPKGs.AcReassign.ScNtHasDependents.Init()
+{ _ob_qpkgs_acreassign_scnthasdependents_fl_=false
+_ob_qpkgs_acreassign_scnthasdependents_chfl_=true ;}
+QPKGs.AcReassign.ScNtHasDependents.IsNt()
+{ [[ $_ob_qpkgs_acreassign_scnthasdependents_fl_ != 'true' ]] ;}
+QPKGs.AcReassign.ScNtHasDependents.IsSet()
+{ [[ $_ob_qpkgs_acreassign_scnthasdependents_fl_ = 'true' ]] ;}
+QPKGs.AcReassign.ScNtHasDependents.Set()
+{ [[ $_ob_qpkgs_acreassign_scnthasdependents_fl_ = 'true' ]] && return
+_ob_qpkgs_acreassign_scnthasdependents_fl_=true
+[[ $_ob_qpkgs_acreassign_scnthasdependents_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_scnthasdependents_fl_ ;}
+QPKGs.AcReassign.ScNtHasDependents.UnSet()
+{ [[ $_ob_qpkgs_acreassign_scnthasdependents_fl_ != 'true' ]] && return
+_ob_qpkgs_acreassign_scnthasdependents_fl_=false
+[[ $_ob_qpkgs_acreassign_scnthasdependents_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_scnthasdependents_fl_ ;}
+QPKGs.AcReassign.ScNtHasDependents.NoLogMods()
+{ _ob_qpkgs_acreassign_scnthasdependents_chfl_=false ;}
+QPKGs.AcReassign.ScNtHasDependents.Init
 QPKGs.AcRebuild.ScHasDependents.Init()
 { _ob_qpkgs_acrebuild_schasdependents_fl_=false
 _ob_qpkgs_acrebuild_schasdependents_chfl_=true ;}
@@ -2898,6 +3006,42 @@ _ob_qpkgs_acinstall_scntinstallable_fl_=false
 QPKGs.AcInstall.ScNtInstallable.NoLogMods()
 { _ob_qpkgs_acinstall_scntinstallable_chfl_=false ;}
 QPKGs.AcInstall.ScNtInstallable.Init
+QPKGs.AcReassign.ScInstallable.Init()
+{ _ob_qpkgs_acreassign_scinstallable_fl_=false
+_ob_qpkgs_acreassign_scinstallable_chfl_=true ;}
+QPKGs.AcReassign.ScInstallable.IsNt()
+{ [[ $_ob_qpkgs_acreassign_scinstallable_fl_ != 'true' ]] ;}
+QPKGs.AcReassign.ScInstallable.IsSet()
+{ [[ $_ob_qpkgs_acreassign_scinstallable_fl_ = 'true' ]] ;}
+QPKGs.AcReassign.ScInstallable.Set()
+{ [[ $_ob_qpkgs_acreassign_scinstallable_fl_ = 'true' ]] && return
+_ob_qpkgs_acreassign_scinstallable_fl_=true
+[[ $_ob_qpkgs_acreassign_scinstallable_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_scinstallable_fl_ ;}
+QPKGs.AcReassign.ScInstallable.UnSet()
+{ [[ $_ob_qpkgs_acreassign_scinstallable_fl_ != 'true' ]] && return
+_ob_qpkgs_acreassign_scinstallable_fl_=false
+[[ $_ob_qpkgs_acreassign_scinstallable_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_scinstallable_fl_ ;}
+QPKGs.AcReassign.ScInstallable.NoLogMods()
+{ _ob_qpkgs_acreassign_scinstallable_chfl_=false ;}
+QPKGs.AcReassign.ScInstallable.Init
+QPKGs.AcReassign.ScNtInstallable.Init()
+{ _ob_qpkgs_acreassign_scntinstallable_fl_=false
+_ob_qpkgs_acreassign_scntinstallable_chfl_=true ;}
+QPKGs.AcReassign.ScNtInstallable.IsNt()
+{ [[ $_ob_qpkgs_acreassign_scntinstallable_fl_ != 'true' ]] ;}
+QPKGs.AcReassign.ScNtInstallable.IsSet()
+{ [[ $_ob_qpkgs_acreassign_scntinstallable_fl_ = 'true' ]] ;}
+QPKGs.AcReassign.ScNtInstallable.Set()
+{ [[ $_ob_qpkgs_acreassign_scntinstallable_fl_ = 'true' ]] && return
+_ob_qpkgs_acreassign_scntinstallable_fl_=true
+[[ $_ob_qpkgs_acreassign_scntinstallable_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_scntinstallable_fl_ ;}
+QPKGs.AcReassign.ScNtInstallable.UnSet()
+{ [[ $_ob_qpkgs_acreassign_scntinstallable_fl_ != 'true' ]] && return
+_ob_qpkgs_acreassign_scntinstallable_fl_=false
+[[ $_ob_qpkgs_acreassign_scntinstallable_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_scntinstallable_fl_ ;}
+QPKGs.AcReassign.ScNtInstallable.NoLogMods()
+{ _ob_qpkgs_acreassign_scntinstallable_chfl_=false ;}
+QPKGs.AcReassign.ScNtInstallable.Init
 QPKGs.AcRebuild.ScInstallable.Init()
 { _ob_qpkgs_acrebuild_scinstallable_fl_=false
 _ob_qpkgs_acrebuild_scinstallable_chfl_=true ;}
@@ -3402,6 +3546,42 @@ _ob_qpkgs_acinstall_scntstandalone_fl_=false
 QPKGs.AcInstall.ScNtStandalone.NoLogMods()
 { _ob_qpkgs_acinstall_scntstandalone_chfl_=false ;}
 QPKGs.AcInstall.ScNtStandalone.Init
+QPKGs.AcReassign.ScStandalone.Init()
+{ _ob_qpkgs_acreassign_scstandalone_fl_=false
+_ob_qpkgs_acreassign_scstandalone_chfl_=true ;}
+QPKGs.AcReassign.ScStandalone.IsNt()
+{ [[ $_ob_qpkgs_acreassign_scstandalone_fl_ != 'true' ]] ;}
+QPKGs.AcReassign.ScStandalone.IsSet()
+{ [[ $_ob_qpkgs_acreassign_scstandalone_fl_ = 'true' ]] ;}
+QPKGs.AcReassign.ScStandalone.Set()
+{ [[ $_ob_qpkgs_acreassign_scstandalone_fl_ = 'true' ]] && return
+_ob_qpkgs_acreassign_scstandalone_fl_=true
+[[ $_ob_qpkgs_acreassign_scstandalone_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_scstandalone_fl_ ;}
+QPKGs.AcReassign.ScStandalone.UnSet()
+{ [[ $_ob_qpkgs_acreassign_scstandalone_fl_ != 'true' ]] && return
+_ob_qpkgs_acreassign_scstandalone_fl_=false
+[[ $_ob_qpkgs_acreassign_scstandalone_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_scstandalone_fl_ ;}
+QPKGs.AcReassign.ScStandalone.NoLogMods()
+{ _ob_qpkgs_acreassign_scstandalone_chfl_=false ;}
+QPKGs.AcReassign.ScStandalone.Init
+QPKGs.AcReassign.ScNtStandalone.Init()
+{ _ob_qpkgs_acreassign_scntstandalone_fl_=false
+_ob_qpkgs_acreassign_scntstandalone_chfl_=true ;}
+QPKGs.AcReassign.ScNtStandalone.IsNt()
+{ [[ $_ob_qpkgs_acreassign_scntstandalone_fl_ != 'true' ]] ;}
+QPKGs.AcReassign.ScNtStandalone.IsSet()
+{ [[ $_ob_qpkgs_acreassign_scntstandalone_fl_ = 'true' ]] ;}
+QPKGs.AcReassign.ScNtStandalone.Set()
+{ [[ $_ob_qpkgs_acreassign_scntstandalone_fl_ = 'true' ]] && return
+_ob_qpkgs_acreassign_scntstandalone_fl_=true
+[[ $_ob_qpkgs_acreassign_scntstandalone_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_scntstandalone_fl_ ;}
+QPKGs.AcReassign.ScNtStandalone.UnSet()
+{ [[ $_ob_qpkgs_acreassign_scntstandalone_fl_ != 'true' ]] && return
+_ob_qpkgs_acreassign_scntstandalone_fl_=false
+[[ $_ob_qpkgs_acreassign_scntstandalone_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_scntstandalone_fl_ ;}
+QPKGs.AcReassign.ScNtStandalone.NoLogMods()
+{ _ob_qpkgs_acreassign_scntstandalone_chfl_=false ;}
+QPKGs.AcReassign.ScNtStandalone.Init
 QPKGs.AcRebuild.ScStandalone.Init()
 { _ob_qpkgs_acrebuild_scstandalone_fl_=false
 _ob_qpkgs_acrebuild_scstandalone_chfl_=true ;}
@@ -3906,6 +4086,42 @@ _ob_qpkgs_acinstall_scntsupportbackup_fl_=false
 QPKGs.AcInstall.ScNtSupportBackup.NoLogMods()
 { _ob_qpkgs_acinstall_scntsupportbackup_chfl_=false ;}
 QPKGs.AcInstall.ScNtSupportBackup.Init
+QPKGs.AcReassign.ScSupportBackup.Init()
+{ _ob_qpkgs_acreassign_scsupportbackup_fl_=false
+_ob_qpkgs_acreassign_scsupportbackup_chfl_=true ;}
+QPKGs.AcReassign.ScSupportBackup.IsNt()
+{ [[ $_ob_qpkgs_acreassign_scsupportbackup_fl_ != 'true' ]] ;}
+QPKGs.AcReassign.ScSupportBackup.IsSet()
+{ [[ $_ob_qpkgs_acreassign_scsupportbackup_fl_ = 'true' ]] ;}
+QPKGs.AcReassign.ScSupportBackup.Set()
+{ [[ $_ob_qpkgs_acreassign_scsupportbackup_fl_ = 'true' ]] && return
+_ob_qpkgs_acreassign_scsupportbackup_fl_=true
+[[ $_ob_qpkgs_acreassign_scsupportbackup_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_scsupportbackup_fl_ ;}
+QPKGs.AcReassign.ScSupportBackup.UnSet()
+{ [[ $_ob_qpkgs_acreassign_scsupportbackup_fl_ != 'true' ]] && return
+_ob_qpkgs_acreassign_scsupportbackup_fl_=false
+[[ $_ob_qpkgs_acreassign_scsupportbackup_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_scsupportbackup_fl_ ;}
+QPKGs.AcReassign.ScSupportBackup.NoLogMods()
+{ _ob_qpkgs_acreassign_scsupportbackup_chfl_=false ;}
+QPKGs.AcReassign.ScSupportBackup.Init
+QPKGs.AcReassign.ScNtSupportBackup.Init()
+{ _ob_qpkgs_acreassign_scntsupportbackup_fl_=false
+_ob_qpkgs_acreassign_scntsupportbackup_chfl_=true ;}
+QPKGs.AcReassign.ScNtSupportBackup.IsNt()
+{ [[ $_ob_qpkgs_acreassign_scntsupportbackup_fl_ != 'true' ]] ;}
+QPKGs.AcReassign.ScNtSupportBackup.IsSet()
+{ [[ $_ob_qpkgs_acreassign_scntsupportbackup_fl_ = 'true' ]] ;}
+QPKGs.AcReassign.ScNtSupportBackup.Set()
+{ [[ $_ob_qpkgs_acreassign_scntsupportbackup_fl_ = 'true' ]] && return
+_ob_qpkgs_acreassign_scntsupportbackup_fl_=true
+[[ $_ob_qpkgs_acreassign_scntsupportbackup_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_scntsupportbackup_fl_ ;}
+QPKGs.AcReassign.ScNtSupportBackup.UnSet()
+{ [[ $_ob_qpkgs_acreassign_scntsupportbackup_fl_ != 'true' ]] && return
+_ob_qpkgs_acreassign_scntsupportbackup_fl_=false
+[[ $_ob_qpkgs_acreassign_scntsupportbackup_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_scntsupportbackup_fl_ ;}
+QPKGs.AcReassign.ScNtSupportBackup.NoLogMods()
+{ _ob_qpkgs_acreassign_scntsupportbackup_chfl_=false ;}
+QPKGs.AcReassign.ScNtSupportBackup.Init
 QPKGs.AcRebuild.ScSupportBackup.Init()
 { _ob_qpkgs_acrebuild_scsupportbackup_fl_=false
 _ob_qpkgs_acrebuild_scsupportbackup_chfl_=true ;}
@@ -4410,6 +4626,42 @@ _ob_qpkgs_acinstall_scntsupportupdateonrestart_fl_=false
 QPKGs.AcInstall.ScNtSupportUpdateOnRestart.NoLogMods()
 { _ob_qpkgs_acinstall_scntsupportupdateonrestart_chfl_=false ;}
 QPKGs.AcInstall.ScNtSupportUpdateOnRestart.Init
+QPKGs.AcReassign.ScSupportUpdateOnRestart.Init()
+{ _ob_qpkgs_acreassign_scsupportupdateonrestart_fl_=false
+_ob_qpkgs_acreassign_scsupportupdateonrestart_chfl_=true ;}
+QPKGs.AcReassign.ScSupportUpdateOnRestart.IsNt()
+{ [[ $_ob_qpkgs_acreassign_scsupportupdateonrestart_fl_ != 'true' ]] ;}
+QPKGs.AcReassign.ScSupportUpdateOnRestart.IsSet()
+{ [[ $_ob_qpkgs_acreassign_scsupportupdateonrestart_fl_ = 'true' ]] ;}
+QPKGs.AcReassign.ScSupportUpdateOnRestart.Set()
+{ [[ $_ob_qpkgs_acreassign_scsupportupdateonrestart_fl_ = 'true' ]] && return
+_ob_qpkgs_acreassign_scsupportupdateonrestart_fl_=true
+[[ $_ob_qpkgs_acreassign_scsupportupdateonrestart_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_scsupportupdateonrestart_fl_ ;}
+QPKGs.AcReassign.ScSupportUpdateOnRestart.UnSet()
+{ [[ $_ob_qpkgs_acreassign_scsupportupdateonrestart_fl_ != 'true' ]] && return
+_ob_qpkgs_acreassign_scsupportupdateonrestart_fl_=false
+[[ $_ob_qpkgs_acreassign_scsupportupdateonrestart_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_scsupportupdateonrestart_fl_ ;}
+QPKGs.AcReassign.ScSupportUpdateOnRestart.NoLogMods()
+{ _ob_qpkgs_acreassign_scsupportupdateonrestart_chfl_=false ;}
+QPKGs.AcReassign.ScSupportUpdateOnRestart.Init
+QPKGs.AcReassign.ScNtSupportUpdateOnRestart.Init()
+{ _ob_qpkgs_acreassign_scntsupportupdateonrestart_fl_=false
+_ob_qpkgs_acreassign_scntsupportupdateonrestart_chfl_=true ;}
+QPKGs.AcReassign.ScNtSupportUpdateOnRestart.IsNt()
+{ [[ $_ob_qpkgs_acreassign_scntsupportupdateonrestart_fl_ != 'true' ]] ;}
+QPKGs.AcReassign.ScNtSupportUpdateOnRestart.IsSet()
+{ [[ $_ob_qpkgs_acreassign_scntsupportupdateonrestart_fl_ = 'true' ]] ;}
+QPKGs.AcReassign.ScNtSupportUpdateOnRestart.Set()
+{ [[ $_ob_qpkgs_acreassign_scntsupportupdateonrestart_fl_ = 'true' ]] && return
+_ob_qpkgs_acreassign_scntsupportupdateonrestart_fl_=true
+[[ $_ob_qpkgs_acreassign_scntsupportupdateonrestart_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_scntsupportupdateonrestart_fl_ ;}
+QPKGs.AcReassign.ScNtSupportUpdateOnRestart.UnSet()
+{ [[ $_ob_qpkgs_acreassign_scntsupportupdateonrestart_fl_ != 'true' ]] && return
+_ob_qpkgs_acreassign_scntsupportupdateonrestart_fl_=false
+[[ $_ob_qpkgs_acreassign_scntsupportupdateonrestart_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_scntsupportupdateonrestart_fl_ ;}
+QPKGs.AcReassign.ScNtSupportUpdateOnRestart.NoLogMods()
+{ _ob_qpkgs_acreassign_scntsupportupdateonrestart_chfl_=false ;}
+QPKGs.AcReassign.ScNtSupportUpdateOnRestart.Init
 QPKGs.AcRebuild.ScSupportUpdateOnRestart.Init()
 { _ob_qpkgs_acrebuild_scsupportupdateonrestart_fl_=false
 _ob_qpkgs_acrebuild_scsupportupdateonrestart_chfl_=true ;}
@@ -4914,6 +5166,42 @@ _ob_qpkgs_acinstall_scntupgradable_fl_=false
 QPKGs.AcInstall.ScNtUpgradable.NoLogMods()
 { _ob_qpkgs_acinstall_scntupgradable_chfl_=false ;}
 QPKGs.AcInstall.ScNtUpgradable.Init
+QPKGs.AcReassign.ScUpgradable.Init()
+{ _ob_qpkgs_acreassign_scupgradable_fl_=false
+_ob_qpkgs_acreassign_scupgradable_chfl_=true ;}
+QPKGs.AcReassign.ScUpgradable.IsNt()
+{ [[ $_ob_qpkgs_acreassign_scupgradable_fl_ != 'true' ]] ;}
+QPKGs.AcReassign.ScUpgradable.IsSet()
+{ [[ $_ob_qpkgs_acreassign_scupgradable_fl_ = 'true' ]] ;}
+QPKGs.AcReassign.ScUpgradable.Set()
+{ [[ $_ob_qpkgs_acreassign_scupgradable_fl_ = 'true' ]] && return
+_ob_qpkgs_acreassign_scupgradable_fl_=true
+[[ $_ob_qpkgs_acreassign_scupgradable_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_scupgradable_fl_ ;}
+QPKGs.AcReassign.ScUpgradable.UnSet()
+{ [[ $_ob_qpkgs_acreassign_scupgradable_fl_ != 'true' ]] && return
+_ob_qpkgs_acreassign_scupgradable_fl_=false
+[[ $_ob_qpkgs_acreassign_scupgradable_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_scupgradable_fl_ ;}
+QPKGs.AcReassign.ScUpgradable.NoLogMods()
+{ _ob_qpkgs_acreassign_scupgradable_chfl_=false ;}
+QPKGs.AcReassign.ScUpgradable.Init
+QPKGs.AcReassign.ScNtUpgradable.Init()
+{ _ob_qpkgs_acreassign_scntupgradable_fl_=false
+_ob_qpkgs_acreassign_scntupgradable_chfl_=true ;}
+QPKGs.AcReassign.ScNtUpgradable.IsNt()
+{ [[ $_ob_qpkgs_acreassign_scntupgradable_fl_ != 'true' ]] ;}
+QPKGs.AcReassign.ScNtUpgradable.IsSet()
+{ [[ $_ob_qpkgs_acreassign_scntupgradable_fl_ = 'true' ]] ;}
+QPKGs.AcReassign.ScNtUpgradable.Set()
+{ [[ $_ob_qpkgs_acreassign_scntupgradable_fl_ = 'true' ]] && return
+_ob_qpkgs_acreassign_scntupgradable_fl_=true
+[[ $_ob_qpkgs_acreassign_scntupgradable_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_scntupgradable_fl_ ;}
+QPKGs.AcReassign.ScNtUpgradable.UnSet()
+{ [[ $_ob_qpkgs_acreassign_scntupgradable_fl_ != 'true' ]] && return
+_ob_qpkgs_acreassign_scntupgradable_fl_=false
+[[ $_ob_qpkgs_acreassign_scntupgradable_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_scntupgradable_fl_ ;}
+QPKGs.AcReassign.ScNtUpgradable.NoLogMods()
+{ _ob_qpkgs_acreassign_scntupgradable_chfl_=false ;}
+QPKGs.AcReassign.ScNtUpgradable.Init
 QPKGs.AcRebuild.ScUpgradable.Init()
 { _ob_qpkgs_acrebuild_scupgradable_fl_=false
 _ob_qpkgs_acrebuild_scupgradable_chfl_=true ;}
@@ -5418,6 +5706,42 @@ _ob_qpkgs_acinstall_isntbackedup_fl_=false
 QPKGs.AcInstall.IsNtBackedUp.NoLogMods()
 { _ob_qpkgs_acinstall_isntbackedup_chfl_=false ;}
 QPKGs.AcInstall.IsNtBackedUp.Init
+QPKGs.AcReassign.IsBackedUp.Init()
+{ _ob_qpkgs_acreassign_isbackedup_fl_=false
+_ob_qpkgs_acreassign_isbackedup_chfl_=true ;}
+QPKGs.AcReassign.IsBackedUp.IsNt()
+{ [[ $_ob_qpkgs_acreassign_isbackedup_fl_ != 'true' ]] ;}
+QPKGs.AcReassign.IsBackedUp.IsSet()
+{ [[ $_ob_qpkgs_acreassign_isbackedup_fl_ = 'true' ]] ;}
+QPKGs.AcReassign.IsBackedUp.Set()
+{ [[ $_ob_qpkgs_acreassign_isbackedup_fl_ = 'true' ]] && return
+_ob_qpkgs_acreassign_isbackedup_fl_=true
+[[ $_ob_qpkgs_acreassign_isbackedup_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_isbackedup_fl_ ;}
+QPKGs.AcReassign.IsBackedUp.UnSet()
+{ [[ $_ob_qpkgs_acreassign_isbackedup_fl_ != 'true' ]] && return
+_ob_qpkgs_acreassign_isbackedup_fl_=false
+[[ $_ob_qpkgs_acreassign_isbackedup_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_isbackedup_fl_ ;}
+QPKGs.AcReassign.IsBackedUp.NoLogMods()
+{ _ob_qpkgs_acreassign_isbackedup_chfl_=false ;}
+QPKGs.AcReassign.IsBackedUp.Init
+QPKGs.AcReassign.IsNtBackedUp.Init()
+{ _ob_qpkgs_acreassign_isntbackedup_fl_=false
+_ob_qpkgs_acreassign_isntbackedup_chfl_=true ;}
+QPKGs.AcReassign.IsNtBackedUp.IsNt()
+{ [[ $_ob_qpkgs_acreassign_isntbackedup_fl_ != 'true' ]] ;}
+QPKGs.AcReassign.IsNtBackedUp.IsSet()
+{ [[ $_ob_qpkgs_acreassign_isntbackedup_fl_ = 'true' ]] ;}
+QPKGs.AcReassign.IsNtBackedUp.Set()
+{ [[ $_ob_qpkgs_acreassign_isntbackedup_fl_ = 'true' ]] && return
+_ob_qpkgs_acreassign_isntbackedup_fl_=true
+[[ $_ob_qpkgs_acreassign_isntbackedup_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_isntbackedup_fl_ ;}
+QPKGs.AcReassign.IsNtBackedUp.UnSet()
+{ [[ $_ob_qpkgs_acreassign_isntbackedup_fl_ != 'true' ]] && return
+_ob_qpkgs_acreassign_isntbackedup_fl_=false
+[[ $_ob_qpkgs_acreassign_isntbackedup_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_isntbackedup_fl_ ;}
+QPKGs.AcReassign.IsNtBackedUp.NoLogMods()
+{ _ob_qpkgs_acreassign_isntbackedup_chfl_=false ;}
+QPKGs.AcReassign.IsNtBackedUp.Init
 QPKGs.AcRebuild.IsBackedUp.Init()
 { _ob_qpkgs_acrebuild_isbackedup_fl_=false
 _ob_qpkgs_acrebuild_isbackedup_chfl_=true ;}
@@ -5922,6 +6246,42 @@ _ob_qpkgs_acinstall_isntcleaned_fl_=false
 QPKGs.AcInstall.IsNtCleaned.NoLogMods()
 { _ob_qpkgs_acinstall_isntcleaned_chfl_=false ;}
 QPKGs.AcInstall.IsNtCleaned.Init
+QPKGs.AcReassign.IsCleaned.Init()
+{ _ob_qpkgs_acreassign_iscleaned_fl_=false
+_ob_qpkgs_acreassign_iscleaned_chfl_=true ;}
+QPKGs.AcReassign.IsCleaned.IsNt()
+{ [[ $_ob_qpkgs_acreassign_iscleaned_fl_ != 'true' ]] ;}
+QPKGs.AcReassign.IsCleaned.IsSet()
+{ [[ $_ob_qpkgs_acreassign_iscleaned_fl_ = 'true' ]] ;}
+QPKGs.AcReassign.IsCleaned.Set()
+{ [[ $_ob_qpkgs_acreassign_iscleaned_fl_ = 'true' ]] && return
+_ob_qpkgs_acreassign_iscleaned_fl_=true
+[[ $_ob_qpkgs_acreassign_iscleaned_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_iscleaned_fl_ ;}
+QPKGs.AcReassign.IsCleaned.UnSet()
+{ [[ $_ob_qpkgs_acreassign_iscleaned_fl_ != 'true' ]] && return
+_ob_qpkgs_acreassign_iscleaned_fl_=false
+[[ $_ob_qpkgs_acreassign_iscleaned_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_iscleaned_fl_ ;}
+QPKGs.AcReassign.IsCleaned.NoLogMods()
+{ _ob_qpkgs_acreassign_iscleaned_chfl_=false ;}
+QPKGs.AcReassign.IsCleaned.Init
+QPKGs.AcReassign.IsNtCleaned.Init()
+{ _ob_qpkgs_acreassign_isntcleaned_fl_=false
+_ob_qpkgs_acreassign_isntcleaned_chfl_=true ;}
+QPKGs.AcReassign.IsNtCleaned.IsNt()
+{ [[ $_ob_qpkgs_acreassign_isntcleaned_fl_ != 'true' ]] ;}
+QPKGs.AcReassign.IsNtCleaned.IsSet()
+{ [[ $_ob_qpkgs_acreassign_isntcleaned_fl_ = 'true' ]] ;}
+QPKGs.AcReassign.IsNtCleaned.Set()
+{ [[ $_ob_qpkgs_acreassign_isntcleaned_fl_ = 'true' ]] && return
+_ob_qpkgs_acreassign_isntcleaned_fl_=true
+[[ $_ob_qpkgs_acreassign_isntcleaned_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_isntcleaned_fl_ ;}
+QPKGs.AcReassign.IsNtCleaned.UnSet()
+{ [[ $_ob_qpkgs_acreassign_isntcleaned_fl_ != 'true' ]] && return
+_ob_qpkgs_acreassign_isntcleaned_fl_=false
+[[ $_ob_qpkgs_acreassign_isntcleaned_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_isntcleaned_fl_ ;}
+QPKGs.AcReassign.IsNtCleaned.NoLogMods()
+{ _ob_qpkgs_acreassign_isntcleaned_chfl_=false ;}
+QPKGs.AcReassign.IsNtCleaned.Init
 QPKGs.AcRebuild.IsCleaned.Init()
 { _ob_qpkgs_acrebuild_iscleaned_fl_=false
 _ob_qpkgs_acrebuild_iscleaned_chfl_=true ;}
@@ -6426,6 +6786,42 @@ _ob_qpkgs_acinstall_isntdownloaded_fl_=false
 QPKGs.AcInstall.IsNtDownloaded.NoLogMods()
 { _ob_qpkgs_acinstall_isntdownloaded_chfl_=false ;}
 QPKGs.AcInstall.IsNtDownloaded.Init
+QPKGs.AcReassign.IsDownloaded.Init()
+{ _ob_qpkgs_acreassign_isdownloaded_fl_=false
+_ob_qpkgs_acreassign_isdownloaded_chfl_=true ;}
+QPKGs.AcReassign.IsDownloaded.IsNt()
+{ [[ $_ob_qpkgs_acreassign_isdownloaded_fl_ != 'true' ]] ;}
+QPKGs.AcReassign.IsDownloaded.IsSet()
+{ [[ $_ob_qpkgs_acreassign_isdownloaded_fl_ = 'true' ]] ;}
+QPKGs.AcReassign.IsDownloaded.Set()
+{ [[ $_ob_qpkgs_acreassign_isdownloaded_fl_ = 'true' ]] && return
+_ob_qpkgs_acreassign_isdownloaded_fl_=true
+[[ $_ob_qpkgs_acreassign_isdownloaded_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_isdownloaded_fl_ ;}
+QPKGs.AcReassign.IsDownloaded.UnSet()
+{ [[ $_ob_qpkgs_acreassign_isdownloaded_fl_ != 'true' ]] && return
+_ob_qpkgs_acreassign_isdownloaded_fl_=false
+[[ $_ob_qpkgs_acreassign_isdownloaded_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_isdownloaded_fl_ ;}
+QPKGs.AcReassign.IsDownloaded.NoLogMods()
+{ _ob_qpkgs_acreassign_isdownloaded_chfl_=false ;}
+QPKGs.AcReassign.IsDownloaded.Init
+QPKGs.AcReassign.IsNtDownloaded.Init()
+{ _ob_qpkgs_acreassign_isntdownloaded_fl_=false
+_ob_qpkgs_acreassign_isntdownloaded_chfl_=true ;}
+QPKGs.AcReassign.IsNtDownloaded.IsNt()
+{ [[ $_ob_qpkgs_acreassign_isntdownloaded_fl_ != 'true' ]] ;}
+QPKGs.AcReassign.IsNtDownloaded.IsSet()
+{ [[ $_ob_qpkgs_acreassign_isntdownloaded_fl_ = 'true' ]] ;}
+QPKGs.AcReassign.IsNtDownloaded.Set()
+{ [[ $_ob_qpkgs_acreassign_isntdownloaded_fl_ = 'true' ]] && return
+_ob_qpkgs_acreassign_isntdownloaded_fl_=true
+[[ $_ob_qpkgs_acreassign_isntdownloaded_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_isntdownloaded_fl_ ;}
+QPKGs.AcReassign.IsNtDownloaded.UnSet()
+{ [[ $_ob_qpkgs_acreassign_isntdownloaded_fl_ != 'true' ]] && return
+_ob_qpkgs_acreassign_isntdownloaded_fl_=false
+[[ $_ob_qpkgs_acreassign_isntdownloaded_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_isntdownloaded_fl_ ;}
+QPKGs.AcReassign.IsNtDownloaded.NoLogMods()
+{ _ob_qpkgs_acreassign_isntdownloaded_chfl_=false ;}
+QPKGs.AcReassign.IsNtDownloaded.Init
 QPKGs.AcRebuild.IsDownloaded.Init()
 { _ob_qpkgs_acrebuild_isdownloaded_fl_=false
 _ob_qpkgs_acrebuild_isdownloaded_chfl_=true ;}
@@ -6930,6 +7326,42 @@ _ob_qpkgs_acinstall_isntenabled_fl_=false
 QPKGs.AcInstall.IsNtEnabled.NoLogMods()
 { _ob_qpkgs_acinstall_isntenabled_chfl_=false ;}
 QPKGs.AcInstall.IsNtEnabled.Init
+QPKGs.AcReassign.IsEnabled.Init()
+{ _ob_qpkgs_acreassign_isenabled_fl_=false
+_ob_qpkgs_acreassign_isenabled_chfl_=true ;}
+QPKGs.AcReassign.IsEnabled.IsNt()
+{ [[ $_ob_qpkgs_acreassign_isenabled_fl_ != 'true' ]] ;}
+QPKGs.AcReassign.IsEnabled.IsSet()
+{ [[ $_ob_qpkgs_acreassign_isenabled_fl_ = 'true' ]] ;}
+QPKGs.AcReassign.IsEnabled.Set()
+{ [[ $_ob_qpkgs_acreassign_isenabled_fl_ = 'true' ]] && return
+_ob_qpkgs_acreassign_isenabled_fl_=true
+[[ $_ob_qpkgs_acreassign_isenabled_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_isenabled_fl_ ;}
+QPKGs.AcReassign.IsEnabled.UnSet()
+{ [[ $_ob_qpkgs_acreassign_isenabled_fl_ != 'true' ]] && return
+_ob_qpkgs_acreassign_isenabled_fl_=false
+[[ $_ob_qpkgs_acreassign_isenabled_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_isenabled_fl_ ;}
+QPKGs.AcReassign.IsEnabled.NoLogMods()
+{ _ob_qpkgs_acreassign_isenabled_chfl_=false ;}
+QPKGs.AcReassign.IsEnabled.Init
+QPKGs.AcReassign.IsNtEnabled.Init()
+{ _ob_qpkgs_acreassign_isntenabled_fl_=false
+_ob_qpkgs_acreassign_isntenabled_chfl_=true ;}
+QPKGs.AcReassign.IsNtEnabled.IsNt()
+{ [[ $_ob_qpkgs_acreassign_isntenabled_fl_ != 'true' ]] ;}
+QPKGs.AcReassign.IsNtEnabled.IsSet()
+{ [[ $_ob_qpkgs_acreassign_isntenabled_fl_ = 'true' ]] ;}
+QPKGs.AcReassign.IsNtEnabled.Set()
+{ [[ $_ob_qpkgs_acreassign_isntenabled_fl_ = 'true' ]] && return
+_ob_qpkgs_acreassign_isntenabled_fl_=true
+[[ $_ob_qpkgs_acreassign_isntenabled_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_isntenabled_fl_ ;}
+QPKGs.AcReassign.IsNtEnabled.UnSet()
+{ [[ $_ob_qpkgs_acreassign_isntenabled_fl_ != 'true' ]] && return
+_ob_qpkgs_acreassign_isntenabled_fl_=false
+[[ $_ob_qpkgs_acreassign_isntenabled_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_isntenabled_fl_ ;}
+QPKGs.AcReassign.IsNtEnabled.NoLogMods()
+{ _ob_qpkgs_acreassign_isntenabled_chfl_=false ;}
+QPKGs.AcReassign.IsNtEnabled.Init
 QPKGs.AcRebuild.IsEnabled.Init()
 { _ob_qpkgs_acrebuild_isenabled_fl_=false
 _ob_qpkgs_acrebuild_isenabled_chfl_=true ;}
@@ -7434,6 +7866,42 @@ _ob_qpkgs_acinstall_isntinstalled_fl_=false
 QPKGs.AcInstall.IsNtInstalled.NoLogMods()
 { _ob_qpkgs_acinstall_isntinstalled_chfl_=false ;}
 QPKGs.AcInstall.IsNtInstalled.Init
+QPKGs.AcReassign.IsInstalled.Init()
+{ _ob_qpkgs_acreassign_isinstalled_fl_=false
+_ob_qpkgs_acreassign_isinstalled_chfl_=true ;}
+QPKGs.AcReassign.IsInstalled.IsNt()
+{ [[ $_ob_qpkgs_acreassign_isinstalled_fl_ != 'true' ]] ;}
+QPKGs.AcReassign.IsInstalled.IsSet()
+{ [[ $_ob_qpkgs_acreassign_isinstalled_fl_ = 'true' ]] ;}
+QPKGs.AcReassign.IsInstalled.Set()
+{ [[ $_ob_qpkgs_acreassign_isinstalled_fl_ = 'true' ]] && return
+_ob_qpkgs_acreassign_isinstalled_fl_=true
+[[ $_ob_qpkgs_acreassign_isinstalled_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_isinstalled_fl_ ;}
+QPKGs.AcReassign.IsInstalled.UnSet()
+{ [[ $_ob_qpkgs_acreassign_isinstalled_fl_ != 'true' ]] && return
+_ob_qpkgs_acreassign_isinstalled_fl_=false
+[[ $_ob_qpkgs_acreassign_isinstalled_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_isinstalled_fl_ ;}
+QPKGs.AcReassign.IsInstalled.NoLogMods()
+{ _ob_qpkgs_acreassign_isinstalled_chfl_=false ;}
+QPKGs.AcReassign.IsInstalled.Init
+QPKGs.AcReassign.IsNtInstalled.Init()
+{ _ob_qpkgs_acreassign_isntinstalled_fl_=false
+_ob_qpkgs_acreassign_isntinstalled_chfl_=true ;}
+QPKGs.AcReassign.IsNtInstalled.IsNt()
+{ [[ $_ob_qpkgs_acreassign_isntinstalled_fl_ != 'true' ]] ;}
+QPKGs.AcReassign.IsNtInstalled.IsSet()
+{ [[ $_ob_qpkgs_acreassign_isntinstalled_fl_ = 'true' ]] ;}
+QPKGs.AcReassign.IsNtInstalled.Set()
+{ [[ $_ob_qpkgs_acreassign_isntinstalled_fl_ = 'true' ]] && return
+_ob_qpkgs_acreassign_isntinstalled_fl_=true
+[[ $_ob_qpkgs_acreassign_isntinstalled_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_isntinstalled_fl_ ;}
+QPKGs.AcReassign.IsNtInstalled.UnSet()
+{ [[ $_ob_qpkgs_acreassign_isntinstalled_fl_ != 'true' ]] && return
+_ob_qpkgs_acreassign_isntinstalled_fl_=false
+[[ $_ob_qpkgs_acreassign_isntinstalled_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_isntinstalled_fl_ ;}
+QPKGs.AcReassign.IsNtInstalled.NoLogMods()
+{ _ob_qpkgs_acreassign_isntinstalled_chfl_=false ;}
+QPKGs.AcReassign.IsNtInstalled.Init
 QPKGs.AcRebuild.IsInstalled.Init()
 { _ob_qpkgs_acrebuild_isinstalled_fl_=false
 _ob_qpkgs_acrebuild_isinstalled_chfl_=true ;}
@@ -7938,6 +8406,42 @@ _ob_qpkgs_acinstall_isntmissing_fl_=false
 QPKGs.AcInstall.IsNtMissing.NoLogMods()
 { _ob_qpkgs_acinstall_isntmissing_chfl_=false ;}
 QPKGs.AcInstall.IsNtMissing.Init
+QPKGs.AcReassign.IsMissing.Init()
+{ _ob_qpkgs_acreassign_ismissing_fl_=false
+_ob_qpkgs_acreassign_ismissing_chfl_=true ;}
+QPKGs.AcReassign.IsMissing.IsNt()
+{ [[ $_ob_qpkgs_acreassign_ismissing_fl_ != 'true' ]] ;}
+QPKGs.AcReassign.IsMissing.IsSet()
+{ [[ $_ob_qpkgs_acreassign_ismissing_fl_ = 'true' ]] ;}
+QPKGs.AcReassign.IsMissing.Set()
+{ [[ $_ob_qpkgs_acreassign_ismissing_fl_ = 'true' ]] && return
+_ob_qpkgs_acreassign_ismissing_fl_=true
+[[ $_ob_qpkgs_acreassign_ismissing_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_ismissing_fl_ ;}
+QPKGs.AcReassign.IsMissing.UnSet()
+{ [[ $_ob_qpkgs_acreassign_ismissing_fl_ != 'true' ]] && return
+_ob_qpkgs_acreassign_ismissing_fl_=false
+[[ $_ob_qpkgs_acreassign_ismissing_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_ismissing_fl_ ;}
+QPKGs.AcReassign.IsMissing.NoLogMods()
+{ _ob_qpkgs_acreassign_ismissing_chfl_=false ;}
+QPKGs.AcReassign.IsMissing.Init
+QPKGs.AcReassign.IsNtMissing.Init()
+{ _ob_qpkgs_acreassign_isntmissing_fl_=false
+_ob_qpkgs_acreassign_isntmissing_chfl_=true ;}
+QPKGs.AcReassign.IsNtMissing.IsNt()
+{ [[ $_ob_qpkgs_acreassign_isntmissing_fl_ != 'true' ]] ;}
+QPKGs.AcReassign.IsNtMissing.IsSet()
+{ [[ $_ob_qpkgs_acreassign_isntmissing_fl_ = 'true' ]] ;}
+QPKGs.AcReassign.IsNtMissing.Set()
+{ [[ $_ob_qpkgs_acreassign_isntmissing_fl_ = 'true' ]] && return
+_ob_qpkgs_acreassign_isntmissing_fl_=true
+[[ $_ob_qpkgs_acreassign_isntmissing_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_isntmissing_fl_ ;}
+QPKGs.AcReassign.IsNtMissing.UnSet()
+{ [[ $_ob_qpkgs_acreassign_isntmissing_fl_ != 'true' ]] && return
+_ob_qpkgs_acreassign_isntmissing_fl_=false
+[[ $_ob_qpkgs_acreassign_isntmissing_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_isntmissing_fl_ ;}
+QPKGs.AcReassign.IsNtMissing.NoLogMods()
+{ _ob_qpkgs_acreassign_isntmissing_chfl_=false ;}
+QPKGs.AcReassign.IsNtMissing.Init
 QPKGs.AcRebuild.IsMissing.Init()
 { _ob_qpkgs_acrebuild_ismissing_fl_=false
 _ob_qpkgs_acrebuild_ismissing_chfl_=true ;}
@@ -8442,6 +8946,42 @@ _ob_qpkgs_acinstall_isntstarted_fl_=false
 QPKGs.AcInstall.IsNtStarted.NoLogMods()
 { _ob_qpkgs_acinstall_isntstarted_chfl_=false ;}
 QPKGs.AcInstall.IsNtStarted.Init
+QPKGs.AcReassign.IsStarted.Init()
+{ _ob_qpkgs_acreassign_isstarted_fl_=false
+_ob_qpkgs_acreassign_isstarted_chfl_=true ;}
+QPKGs.AcReassign.IsStarted.IsNt()
+{ [[ $_ob_qpkgs_acreassign_isstarted_fl_ != 'true' ]] ;}
+QPKGs.AcReassign.IsStarted.IsSet()
+{ [[ $_ob_qpkgs_acreassign_isstarted_fl_ = 'true' ]] ;}
+QPKGs.AcReassign.IsStarted.Set()
+{ [[ $_ob_qpkgs_acreassign_isstarted_fl_ = 'true' ]] && return
+_ob_qpkgs_acreassign_isstarted_fl_=true
+[[ $_ob_qpkgs_acreassign_isstarted_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_isstarted_fl_ ;}
+QPKGs.AcReassign.IsStarted.UnSet()
+{ [[ $_ob_qpkgs_acreassign_isstarted_fl_ != 'true' ]] && return
+_ob_qpkgs_acreassign_isstarted_fl_=false
+[[ $_ob_qpkgs_acreassign_isstarted_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_isstarted_fl_ ;}
+QPKGs.AcReassign.IsStarted.NoLogMods()
+{ _ob_qpkgs_acreassign_isstarted_chfl_=false ;}
+QPKGs.AcReassign.IsStarted.Init
+QPKGs.AcReassign.IsNtStarted.Init()
+{ _ob_qpkgs_acreassign_isntstarted_fl_=false
+_ob_qpkgs_acreassign_isntstarted_chfl_=true ;}
+QPKGs.AcReassign.IsNtStarted.IsNt()
+{ [[ $_ob_qpkgs_acreassign_isntstarted_fl_ != 'true' ]] ;}
+QPKGs.AcReassign.IsNtStarted.IsSet()
+{ [[ $_ob_qpkgs_acreassign_isntstarted_fl_ = 'true' ]] ;}
+QPKGs.AcReassign.IsNtStarted.Set()
+{ [[ $_ob_qpkgs_acreassign_isntstarted_fl_ = 'true' ]] && return
+_ob_qpkgs_acreassign_isntstarted_fl_=true
+[[ $_ob_qpkgs_acreassign_isntstarted_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_isntstarted_fl_ ;}
+QPKGs.AcReassign.IsNtStarted.UnSet()
+{ [[ $_ob_qpkgs_acreassign_isntstarted_fl_ != 'true' ]] && return
+_ob_qpkgs_acreassign_isntstarted_fl_=false
+[[ $_ob_qpkgs_acreassign_isntstarted_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_isntstarted_fl_ ;}
+QPKGs.AcReassign.IsNtStarted.NoLogMods()
+{ _ob_qpkgs_acreassign_isntstarted_chfl_=false ;}
+QPKGs.AcReassign.IsNtStarted.Init
 QPKGs.AcRebuild.IsStarted.Init()
 { _ob_qpkgs_acrebuild_isstarted_fl_=false
 _ob_qpkgs_acrebuild_isstarted_chfl_=true ;}
@@ -8838,6 +9378,24 @@ _ob_qpkgs_acinstall_isstarting_fl_=false
 QPKGs.AcInstall.IsStarting.NoLogMods()
 { _ob_qpkgs_acinstall_isstarting_chfl_=false ;}
 QPKGs.AcInstall.IsStarting.Init
+QPKGs.AcReassign.IsStarting.Init()
+{ _ob_qpkgs_acreassign_isstarting_fl_=false
+_ob_qpkgs_acreassign_isstarting_chfl_=true ;}
+QPKGs.AcReassign.IsStarting.IsNt()
+{ [[ $_ob_qpkgs_acreassign_isstarting_fl_ != 'true' ]] ;}
+QPKGs.AcReassign.IsStarting.IsSet()
+{ [[ $_ob_qpkgs_acreassign_isstarting_fl_ = 'true' ]] ;}
+QPKGs.AcReassign.IsStarting.Set()
+{ [[ $_ob_qpkgs_acreassign_isstarting_fl_ = 'true' ]] && return
+_ob_qpkgs_acreassign_isstarting_fl_=true
+[[ $_ob_qpkgs_acreassign_isstarting_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_isstarting_fl_ ;}
+QPKGs.AcReassign.IsStarting.UnSet()
+{ [[ $_ob_qpkgs_acreassign_isstarting_fl_ != 'true' ]] && return
+_ob_qpkgs_acreassign_isstarting_fl_=false
+[[ $_ob_qpkgs_acreassign_isstarting_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_isstarting_fl_ ;}
+QPKGs.AcReassign.IsStarting.NoLogMods()
+{ _ob_qpkgs_acreassign_isstarting_chfl_=false ;}
+QPKGs.AcReassign.IsStarting.Init
 QPKGs.AcRebuild.IsStarting.Init()
 { _ob_qpkgs_acrebuild_isstarting_fl_=false
 _ob_qpkgs_acrebuild_isstarting_chfl_=true ;}
@@ -9090,6 +9648,24 @@ _ob_qpkgs_acinstall_isstopping_fl_=false
 QPKGs.AcInstall.IsStopping.NoLogMods()
 { _ob_qpkgs_acinstall_isstopping_chfl_=false ;}
 QPKGs.AcInstall.IsStopping.Init
+QPKGs.AcReassign.IsStopping.Init()
+{ _ob_qpkgs_acreassign_isstopping_fl_=false
+_ob_qpkgs_acreassign_isstopping_chfl_=true ;}
+QPKGs.AcReassign.IsStopping.IsNt()
+{ [[ $_ob_qpkgs_acreassign_isstopping_fl_ != 'true' ]] ;}
+QPKGs.AcReassign.IsStopping.IsSet()
+{ [[ $_ob_qpkgs_acreassign_isstopping_fl_ = 'true' ]] ;}
+QPKGs.AcReassign.IsStopping.Set()
+{ [[ $_ob_qpkgs_acreassign_isstopping_fl_ = 'true' ]] && return
+_ob_qpkgs_acreassign_isstopping_fl_=true
+[[ $_ob_qpkgs_acreassign_isstopping_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_isstopping_fl_ ;}
+QPKGs.AcReassign.IsStopping.UnSet()
+{ [[ $_ob_qpkgs_acreassign_isstopping_fl_ != 'true' ]] && return
+_ob_qpkgs_acreassign_isstopping_fl_=false
+[[ $_ob_qpkgs_acreassign_isstopping_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_isstopping_fl_ ;}
+QPKGs.AcReassign.IsStopping.NoLogMods()
+{ _ob_qpkgs_acreassign_isstopping_chfl_=false ;}
+QPKGs.AcReassign.IsStopping.Init
 QPKGs.AcRebuild.IsStopping.Init()
 { _ob_qpkgs_acrebuild_isstopping_fl_=false
 _ob_qpkgs_acrebuild_isstopping_chfl_=true ;}
@@ -9342,6 +9918,24 @@ _ob_qpkgs_acinstall_isrestarting_fl_=false
 QPKGs.AcInstall.IsRestarting.NoLogMods()
 { _ob_qpkgs_acinstall_isrestarting_chfl_=false ;}
 QPKGs.AcInstall.IsRestarting.Init
+QPKGs.AcReassign.IsRestarting.Init()
+{ _ob_qpkgs_acreassign_isrestarting_fl_=false
+_ob_qpkgs_acreassign_isrestarting_chfl_=true ;}
+QPKGs.AcReassign.IsRestarting.IsNt()
+{ [[ $_ob_qpkgs_acreassign_isrestarting_fl_ != 'true' ]] ;}
+QPKGs.AcReassign.IsRestarting.IsSet()
+{ [[ $_ob_qpkgs_acreassign_isrestarting_fl_ = 'true' ]] ;}
+QPKGs.AcReassign.IsRestarting.Set()
+{ [[ $_ob_qpkgs_acreassign_isrestarting_fl_ = 'true' ]] && return
+_ob_qpkgs_acreassign_isrestarting_fl_=true
+[[ $_ob_qpkgs_acreassign_isrestarting_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_isrestarting_fl_ ;}
+QPKGs.AcReassign.IsRestarting.UnSet()
+{ [[ $_ob_qpkgs_acreassign_isrestarting_fl_ != 'true' ]] && return
+_ob_qpkgs_acreassign_isrestarting_fl_=false
+[[ $_ob_qpkgs_acreassign_isrestarting_chfl_ = 'true' ]] && DebugVar _ob_qpkgs_acreassign_isrestarting_fl_ ;}
+QPKGs.AcReassign.IsRestarting.NoLogMods()
+{ _ob_qpkgs_acreassign_isrestarting_chfl_=false ;}
+QPKGs.AcReassign.IsRestarting.Init
 QPKGs.AcRebuild.IsRestarting.Init()
 { _ob_qpkgs_acrebuild_isrestarting_fl_=false
 _ob_qpkgs_acrebuild_isrestarting_chfl_=true ;}
@@ -11290,6 +11884,182 @@ else
 echo -n "$_ob_qpkgs_acskinstall_sz_"
 fi ;}
 QPKGs.AcSkInstall.Init
+QPKGs.AcToReassign.Add()
+{ local ar=(${1}) it=''
+[[ ${#ar[@]} -eq 0 ]] && return
+for it in "${ar[@]:-}"; do
+[[ " ${_ob_qpkgs_actoreassign_ar_[*]+"${_ob_qpkgs_actoreassign_ar_[@]}"} " != *"$it"* ]] && _ob_qpkgs_actoreassign_ar_+=("$it")
+done ;}
+QPKGs.AcToReassign.Array()
+{ echo -n "${_ob_qpkgs_actoreassign_ar_[@]+"${_ob_qpkgs_actoreassign_ar_[@]}"}" ;}
+QPKGs.AcToReassign.Count()
+{ echo "${#_ob_qpkgs_actoreassign_ar_[@]}" ;}
+QPKGs.AcToReassign.Exist()
+{ [[ ${_ob_qpkgs_actoreassign_ar_[*]:-} == *"$1"* ]] ;}
+QPKGs.AcToReassign.Init()
+{ _ob_qpkgs_actoreassign_sz_=0
+_ob_qpkgs_actoreassign_ar_=()
+_ob_qpkgs_actoreassign_arin_=1 ;}
+QPKGs.AcToReassign.IsAny()
+{ [[ ${#_ob_qpkgs_actoreassign_ar_[@]} -gt 0 ]] ;}
+QPKGs.AcToReassign.IsNone()
+{ [[ ${#_ob_qpkgs_actoreassign_ar_[@]} -eq 0 ]] ;}
+QPKGs.AcToReassign.List()
+{ echo -n "${_ob_qpkgs_actoreassign_ar_[*]+"${_ob_qpkgs_actoreassign_ar_[@]}"}" ;}
+QPKGs.AcToReassign.ListCSV()
+{ echo -n "${_ob_qpkgs_actoreassign_ar_[*]+"${_ob_qpkgs_actoreassign_ar_[@]}"}" | tr ' ' ',' ;}
+QPKGs.AcToReassign.Remove()
+{ local agar=(${1}) tmar=() ag='' it='' m=false
+for it in "${_ob_qpkgs_actoreassign_ar_[@]+"${_ob_qpkgs_actoreassign_ar_[@]}"}"; do
+m=false
+for ag in "${agar[@]+"${agar[@]}"}"; do
+if [[ $ag = "$it" ]]; then
+m=true; break
+fi
+done
+[[ $m = false ]] && tmar+=("$it")
+done
+_ob_qpkgs_actoreassign_ar_=("${tmar[@]+"${tmar[@]}"}")
+[[ -z ${_ob_qpkgs_actoreassign_ar_[*]+"${_ob_qpkgs_actoreassign_ar_[@]}"} ]] && _ob_qpkgs_actoreassign_ar_=() ;}
+QPKGs.AcToReassign.Size()
+{ if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+_ob_qpkgs_actoreassign_sz_=$2
+else
+echo -n "$_ob_qpkgs_actoreassign_sz_"
+fi ;}
+QPKGs.AcToReassign.Init
+QPKGs.AcOkReassign.Add()
+{ local ar=(${1}) it=''
+[[ ${#ar[@]} -eq 0 ]] && return
+for it in "${ar[@]:-}"; do
+[[ " ${_ob_qpkgs_acokreassign_ar_[*]+"${_ob_qpkgs_acokreassign_ar_[@]}"} " != *"$it"* ]] && _ob_qpkgs_acokreassign_ar_+=("$it")
+done ;}
+QPKGs.AcOkReassign.Array()
+{ echo -n "${_ob_qpkgs_acokreassign_ar_[@]+"${_ob_qpkgs_acokreassign_ar_[@]}"}" ;}
+QPKGs.AcOkReassign.Count()
+{ echo "${#_ob_qpkgs_acokreassign_ar_[@]}" ;}
+QPKGs.AcOkReassign.Exist()
+{ [[ ${_ob_qpkgs_acokreassign_ar_[*]:-} == *"$1"* ]] ;}
+QPKGs.AcOkReassign.Init()
+{ _ob_qpkgs_acokreassign_sz_=0
+_ob_qpkgs_acokreassign_ar_=()
+_ob_qpkgs_acokreassign_arin_=1 ;}
+QPKGs.AcOkReassign.IsAny()
+{ [[ ${#_ob_qpkgs_acokreassign_ar_[@]} -gt 0 ]] ;}
+QPKGs.AcOkReassign.IsNone()
+{ [[ ${#_ob_qpkgs_acokreassign_ar_[@]} -eq 0 ]] ;}
+QPKGs.AcOkReassign.List()
+{ echo -n "${_ob_qpkgs_acokreassign_ar_[*]+"${_ob_qpkgs_acokreassign_ar_[@]}"}" ;}
+QPKGs.AcOkReassign.ListCSV()
+{ echo -n "${_ob_qpkgs_acokreassign_ar_[*]+"${_ob_qpkgs_acokreassign_ar_[@]}"}" | tr ' ' ',' ;}
+QPKGs.AcOkReassign.Remove()
+{ local agar=(${1}) tmar=() ag='' it='' m=false
+for it in "${_ob_qpkgs_acokreassign_ar_[@]+"${_ob_qpkgs_acokreassign_ar_[@]}"}"; do
+m=false
+for ag in "${agar[@]+"${agar[@]}"}"; do
+if [[ $ag = "$it" ]]; then
+m=true; break
+fi
+done
+[[ $m = false ]] && tmar+=("$it")
+done
+_ob_qpkgs_acokreassign_ar_=("${tmar[@]+"${tmar[@]}"}")
+[[ -z ${_ob_qpkgs_acokreassign_ar_[*]+"${_ob_qpkgs_acokreassign_ar_[@]}"} ]] && _ob_qpkgs_acokreassign_ar_=() ;}
+QPKGs.AcOkReassign.Size()
+{ if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+_ob_qpkgs_acokreassign_sz_=$2
+else
+echo -n "$_ob_qpkgs_acokreassign_sz_"
+fi ;}
+QPKGs.AcOkReassign.Init
+QPKGs.AcErReassign.Add()
+{ local ar=(${1}) it=''
+[[ ${#ar[@]} -eq 0 ]] && return
+for it in "${ar[@]:-}"; do
+[[ " ${_ob_qpkgs_acerreassign_ar_[*]+"${_ob_qpkgs_acerreassign_ar_[@]}"} " != *"$it"* ]] && _ob_qpkgs_acerreassign_ar_+=("$it")
+done ;}
+QPKGs.AcErReassign.Array()
+{ echo -n "${_ob_qpkgs_acerreassign_ar_[@]+"${_ob_qpkgs_acerreassign_ar_[@]}"}" ;}
+QPKGs.AcErReassign.Count()
+{ echo "${#_ob_qpkgs_acerreassign_ar_[@]}" ;}
+QPKGs.AcErReassign.Exist()
+{ [[ ${_ob_qpkgs_acerreassign_ar_[*]:-} == *"$1"* ]] ;}
+QPKGs.AcErReassign.Init()
+{ _ob_qpkgs_acerreassign_sz_=0
+_ob_qpkgs_acerreassign_ar_=()
+_ob_qpkgs_acerreassign_arin_=1 ;}
+QPKGs.AcErReassign.IsAny()
+{ [[ ${#_ob_qpkgs_acerreassign_ar_[@]} -gt 0 ]] ;}
+QPKGs.AcErReassign.IsNone()
+{ [[ ${#_ob_qpkgs_acerreassign_ar_[@]} -eq 0 ]] ;}
+QPKGs.AcErReassign.List()
+{ echo -n "${_ob_qpkgs_acerreassign_ar_[*]+"${_ob_qpkgs_acerreassign_ar_[@]}"}" ;}
+QPKGs.AcErReassign.ListCSV()
+{ echo -n "${_ob_qpkgs_acerreassign_ar_[*]+"${_ob_qpkgs_acerreassign_ar_[@]}"}" | tr ' ' ',' ;}
+QPKGs.AcErReassign.Remove()
+{ local agar=(${1}) tmar=() ag='' it='' m=false
+for it in "${_ob_qpkgs_acerreassign_ar_[@]+"${_ob_qpkgs_acerreassign_ar_[@]}"}"; do
+m=false
+for ag in "${agar[@]+"${agar[@]}"}"; do
+if [[ $ag = "$it" ]]; then
+m=true; break
+fi
+done
+[[ $m = false ]] && tmar+=("$it")
+done
+_ob_qpkgs_acerreassign_ar_=("${tmar[@]+"${tmar[@]}"}")
+[[ -z ${_ob_qpkgs_acerreassign_ar_[*]+"${_ob_qpkgs_acerreassign_ar_[@]}"} ]] && _ob_qpkgs_acerreassign_ar_=() ;}
+QPKGs.AcErReassign.Size()
+{ if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+_ob_qpkgs_acerreassign_sz_=$2
+else
+echo -n "$_ob_qpkgs_acerreassign_sz_"
+fi ;}
+QPKGs.AcErReassign.Init
+QPKGs.AcSkReassign.Add()
+{ local ar=(${1}) it=''
+[[ ${#ar[@]} -eq 0 ]] && return
+for it in "${ar[@]:-}"; do
+[[ " ${_ob_qpkgs_acskreassign_ar_[*]+"${_ob_qpkgs_acskreassign_ar_[@]}"} " != *"$it"* ]] && _ob_qpkgs_acskreassign_ar_+=("$it")
+done ;}
+QPKGs.AcSkReassign.Array()
+{ echo -n "${_ob_qpkgs_acskreassign_ar_[@]+"${_ob_qpkgs_acskreassign_ar_[@]}"}" ;}
+QPKGs.AcSkReassign.Count()
+{ echo "${#_ob_qpkgs_acskreassign_ar_[@]}" ;}
+QPKGs.AcSkReassign.Exist()
+{ [[ ${_ob_qpkgs_acskreassign_ar_[*]:-} == *"$1"* ]] ;}
+QPKGs.AcSkReassign.Init()
+{ _ob_qpkgs_acskreassign_sz_=0
+_ob_qpkgs_acskreassign_ar_=()
+_ob_qpkgs_acskreassign_arin_=1 ;}
+QPKGs.AcSkReassign.IsAny()
+{ [[ ${#_ob_qpkgs_acskreassign_ar_[@]} -gt 0 ]] ;}
+QPKGs.AcSkReassign.IsNone()
+{ [[ ${#_ob_qpkgs_acskreassign_ar_[@]} -eq 0 ]] ;}
+QPKGs.AcSkReassign.List()
+{ echo -n "${_ob_qpkgs_acskreassign_ar_[*]+"${_ob_qpkgs_acskreassign_ar_[@]}"}" ;}
+QPKGs.AcSkReassign.ListCSV()
+{ echo -n "${_ob_qpkgs_acskreassign_ar_[*]+"${_ob_qpkgs_acskreassign_ar_[@]}"}" | tr ' ' ',' ;}
+QPKGs.AcSkReassign.Remove()
+{ local agar=(${1}) tmar=() ag='' it='' m=false
+for it in "${_ob_qpkgs_acskreassign_ar_[@]+"${_ob_qpkgs_acskreassign_ar_[@]}"}"; do
+m=false
+for ag in "${agar[@]+"${agar[@]}"}"; do
+if [[ $ag = "$it" ]]; then
+m=true; break
+fi
+done
+[[ $m = false ]] && tmar+=("$it")
+done
+_ob_qpkgs_acskreassign_ar_=("${tmar[@]+"${tmar[@]}"}")
+[[ -z ${_ob_qpkgs_acskreassign_ar_[*]+"${_ob_qpkgs_acskreassign_ar_[@]}"} ]] && _ob_qpkgs_acskreassign_ar_=() ;}
+QPKGs.AcSkReassign.Size()
+{ if [[ -n ${1:-} && ${1:-} = "=" ]]; then
+_ob_qpkgs_acskreassign_sz_=$2
+else
+echo -n "$_ob_qpkgs_acskreassign_sz_"
+fi ;}
+QPKGs.AcSkReassign.Init
 QPKGs.AcToRebuild.Add()
 { local ar=(${1}) it=''
 [[ ${#ar[@]} -eq 0 ]] && return

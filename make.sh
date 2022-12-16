@@ -2,7 +2,7 @@
 
 # standalone compiler for all sherpa archives
 
-./check.sh
+./check.sh || exit
 
 echo -n 'building archives ... '
 
@@ -14,7 +14,7 @@ MANAGEMENT_ACTIONS=(Check List Paste Status)
 PACKAGE_SCOPES=(All Dependent HasDependents Installable Standalone SupportBackup SupportUpdateOnRestart Upgradable)
 PACKAGE_STATES=(BackedUp Cleaned Downloaded Enabled Installed Missing Started)
 PACKAGE_STATES_TEMPORARY=(Starting Stopping Restarting)
-PACKAGE_ACTIONS=(Backup Clean Disable Download Enable Install Rebuild Reinstall Restart Restore Start Stop Uninstall Upgrade)
+PACKAGE_ACTIONS=(Backup Clean Disable Download Enable Install Reassign Rebuild Reinstall Restart Restore Start Stop Uninstall Upgrade)
 PACKAGE_RESULTS=(Ok Unknown)
 
 MANAGER_FILE=$PROJECT_NAME.manager.sh

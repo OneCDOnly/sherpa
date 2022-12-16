@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VER=221216-beta
+    local -r SCRIPT_VER=221217-beta
     readonly PROJECT_BRANCH=main
 
     IsQNAP || return
@@ -144,6 +144,7 @@ Self.Init()
     readonly DOWNLOAD_LOG_FILE=download.log
     readonly ENABLE_LOG_FILE=enable.log
     readonly INSTALL_LOG_FILE=install.log
+    readonly REASSIGN_LOG_FILE=reassign.log
     readonly REINSTALL_LOG_FILE=reinstall.log
     readonly RESTART_LOG_FILE=restart.log
     readonly RESTORE_LOG_FILE=restore.log
@@ -196,7 +197,7 @@ Self.Init()
     PACKAGE_SCOPES=(All Dependent HasDependents Installable Standalone SupportBackup SupportUpdateOnRestart Upgradable)
     PACKAGE_STATES=(BackedUp Cleaned Downloaded Enabled Installed Missing Started)
     PACKAGE_STATES_TEMPORARY=(Starting Stopping Restarting)
-    PACKAGE_ACTIONS=(Download Rebuild Backup Stop Disable Uninstall Upgrade Reinstall Install Restore Clean Enable Start Restart)
+    PACKAGE_ACTIONS=(Download Rebuild Backup Stop Disable Uninstall Upgrade Reassign Reinstall Install Restore Clean Enable Start Restart)
     PACKAGE_RESULTS=(Ok Unknown)
 
     readonly MANAGEMENT_ACTIONS
@@ -608,7 +609,8 @@ Self.Validate()
 
 #   _. rebuild dependents           (meta-action: 'install' QPKG and 'restore' config, but only if package has a backup file)
 
-#  19. backup all                   (highest: most-important)
+#  20. reassign all                 (highest: most-important)
+#  19. backup all
 #  18. stop dependents
 #  17. stop standalones
 #  16. uninstall all
@@ -643,9 +645,10 @@ Tiers.Process()
     local package=''
     local -i index=0
 
-    Tier.Process Download false All QPKG AcToDownload 'update package cache with' 'updating package cache with' 'package cache updated with' '' || return
-    Tier.Process Backup false Dependent QPKG AcToBackup 'backup configuration for' 'backing-up configuration for' 'configuration backed-up for' '' || return
-    Tier.Process Backup false Standalone QPKG AcToBackup 'backup configuration for' 'backing-up configuration for' 'configuration backed-up for' '' || return
+    Tier.Process Reassign false All QPKG AcToReassign reassign reassigning reassigned '' false || return
+    Tier.Process Download false All QPKG AcToDownload 'update package cache with' 'updating package cache with' 'package cache updated with' '' false || return
+    Tier.Process Backup false Dependent QPKG AcToBackup 'backup configuration for' 'backing-up configuration for' 'configuration backed-up for' '' false || return
+    Tier.Process Backup false Standalone QPKG AcToBackup 'backup configuration for' 'backing-up configuration for' 'configuration backed-up for' '' false || return
 
     # -> package 'removal' phase begins here <-
 
@@ -654,8 +657,8 @@ Tiers.Process()
 
         case $tier in
             Standalone|Dependent)
-                Tier.Process Stop false "$tier" QPKG AcToStop stop stopping stopped '' true || return
-                Tier.Process Uninstall false "$tier" QPKG AcToUninstall uninstall uninstalling uninstalled '' || return
+                Tier.Process Stop false "$tier" QPKG AcToStop stop stopping stopped '' false || return
+                Tier.Process Uninstall false "$tier" QPKG AcToUninstall uninstall uninstalling uninstalled '' false || return
         esac
     done
 
@@ -667,11 +670,11 @@ Tiers.Process()
     for tier in "${PACKAGE_TIERS[@]}"; do
         case $tier in
             Standalone|Dependent)
-                Tier.Process Upgrade false "$tier" QPKG AcToUpgrade upgrade upgrading upgraded long || return
-                Tier.Process Reinstall false "$tier" QPKG AcToReinstall reinstall reinstalling reinstalled long || return
-                Tier.Process Install false "$tier" QPKG AcToInstall install installing installed long || return
-                Tier.Process Restore false "$tier" QPKG AcToRestore 'restore configuration for' 'restoring configuration for' 'configuration restored for' long || return
-                Tier.Process Clean false "$tier" QPKG AcToClean clean cleaning cleaned long || return
+                Tier.Process Upgrade false "$tier" QPKG AcToUpgrade upgrade upgrading upgraded long false || return
+                Tier.Process Reinstall false "$tier" QPKG AcToReinstall reinstall reinstalling reinstalled long false || return
+                Tier.Process Install false "$tier" QPKG AcToInstall install installing installed long false || return
+                Tier.Process Restore false "$tier" QPKG AcToRestore 'restore configuration for' 'restoring configuration for' 'configuration restored for' long false || return
+                Tier.Process Clean false "$tier" QPKG AcToClean clean cleaning cleaned long false || return
 
                 if [[ $tier = Standalone ]]; then
                     # check for standalone packages that must be started because dependents are being reinstalled/installed/started/restarted
@@ -682,13 +685,13 @@ Tiers.Process()
                     done
                 fi
 
-                Tier.Process Start false "$tier" QPKG AcToStart start starting started long || return
+                Tier.Process Start false "$tier" QPKG AcToStart start starting started long false || return
 
                 for action in Install Restart Start; do
                     QPKGs.AcToRestart.Remove "$(QPKGs.AcOk${action}.Array)"
                 done
 
-                Tier.Process Restart false "$tier" QPKG AcToRestart restart restarting restarted long || return
+                Tier.Process Restart false "$tier" QPKG AcToRestart restart restarting restarted long false || return
 
                 ;;
             Addon)
@@ -704,11 +707,11 @@ Tiers.Process()
 
                 if QPKGs.IsStarted.Exist Entware; then
                     ModPathToEntware
-                    Tier.Process Upgrade false "$tier" IPKG '' upgrade upgrading upgraded long || return
-                    Tier.Process Install false "$tier" IPKG '' install installing installed long || return
+                    Tier.Process Upgrade false "$tier" IPKG '' upgrade upgrading upgraded long false || return
+                    Tier.Process Install false "$tier" IPKG '' install installing installed long false || return
 
                     PIPs.Install.Set
-                    Tier.Process Install false "$tier" PIP '' install installing installed long || return
+                    Tier.Process Install false "$tier" PIP '' install installing installed long false || return
                 fi
         esac
     done
@@ -956,7 +959,7 @@ ParseArguments()
 
         # identify action: every time action changes, must clear scope too
         case $arg in
-            backup|check|clean|install|rebuild|reinstall|restart|restore|start|stop|upgrade)
+            backup|check|clean|install|reassign|rebuild|reinstall|restart|restore|start|stop|upgrade)
                 action=${arg}_
                 arg_identified=true
                 scope=''
@@ -1103,7 +1106,6 @@ ParseArguments()
             force)
                 action_force=true
                 arg_identified=true
-                ;;
         esac
 
         # identify package
@@ -1291,6 +1293,24 @@ ParseArguments()
                 if [[ $scope_identified = true ]]; then
                     DebugFuncExit; return
                 fi
+                ;;
+            reassign_)
+                case $scope in
+                    all_|installed_)
+                        QPKGs.AcReassign.ScAll.Set
+                        action=''
+                        ;;
+                    dependent_)
+                        QPKGs.AcReassign.ScDependent.Set
+                        action=''
+                        ;;
+                    standalone_)
+                        QPKGs.AcReassign.ScStandalone.Set
+                        action=''
+                        ;;
+                    *)
+                        QPKGs.AcToReassign.Add "$package"
+                esac
                 ;;
             rebuild_)
                 case $scope in
@@ -2833,6 +2853,7 @@ Help.Actions.Show()
     DisplayAsProjectSyntaxIndentedExample 'start these packages' "start $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample 'stop these packages' "stop $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample 'restart these packages' "restart $(FormatAsHelpPackages)"
+    DisplayAsProjectSyntaxIndentedExample "reassign these packages to the $(FormatAsScriptTitle) repository" "reassign $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample 'clear local repository files from these packages' "clean $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample 'backup these application configurations to the backup location' "backup $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample 'restore these application configurations from the backup location' "restore $(FormatAsHelpPackages)"
@@ -4289,6 +4310,55 @@ DisableDebugToArchiveAndFile()
 
 # QPKG tasks
 
+QPKG.Reassign()
+    {
+
+    # input:
+    #   $1 = QPKG name
+
+    # output:
+    #   $? = 0  : successful
+    #   $? = 1  : failed
+    #   $? = 2  : skipped (not reassigned: not already installed, or already assigned)
+
+    Self.Error.IsSet && return
+    QPKGs.SkProc.IsSet && return
+    DebugFuncEntry
+
+    local -r PACKAGE_NAME=${1:?no package name supplied}
+    local -i result_code=0
+    local package_repo_id=''
+    local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$REASSIGN_LOG_FILE
+    local action=reassign
+
+    if ! QPKGs.IsInstalled.Exist "$PACKAGE_NAME"; then
+        MarkActionAsSkipped show "$PACKAGE_NAME" "$action" "it's not installed - use 'install' instead"
+        DebugFuncExit 2; return
+    fi
+
+    package_repo_id=$(QPKG.RepoID "$PACKAGE_NAME")
+
+    if [[ $package_repo_id = "$PROJECT_NAME" ]]; then
+        MarkActionAsSkipped show "$PACKAGE_NAME" "$action" "it's already assigned to $(FormatAsScriptTitle)"
+        DebugFuncExit 2; return
+    fi
+
+    DebugAsProc "reassigning $(FormatAsPackageName "$PACKAGE_NAME")"
+    RunAndLog "/sbin/setcfg $PACKAGE_NAME store '' -f /etc/config/qpkg.conf" "$LOG_PATHFILE" log:failure-only
+    result_code=$?
+
+    if [[ $result_code -eq 0 ]]; then
+        MarkActionAsDone "$PACKAGE_NAME" "$action"
+    else
+        DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
+        MarkActionAsError "$PACKAGE_NAME" "$action"
+        result_code=1    # remap to 1
+    fi
+
+    DebugFuncExit $result_code
+
+    }
+
 QPKG.Download()
     {
 
@@ -5232,9 +5302,18 @@ QPKG.RepoID()
 
     # output:
     #   stdout = package store ID
-    #   $? = 0 if found, !0 if not
 
-    $GETCFG_CMD "${1:?no package name supplied}" store -d "$PROJECT_NAME" -f /etc/config/qpkg.conf
+    local store=''
+
+    store=$($GETCFG_CMD "${1:?no package name supplied}" store -d "$PROJECT_NAME" -f /etc/config/qpkg.conf)
+
+    # 'getcfg' does not return a default value when specified key exists without a value assignment. :(
+    # so, need to manually assign a default value
+    [[ -z $store ]] && store=$PROJECT_NAME
+
+    echo "$store"
+
+    return 0
 
     }
 

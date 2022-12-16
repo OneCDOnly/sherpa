@@ -9,4 +9,10 @@ if ! shellcheck --shell=bash --exclude=1090,1117,2015,2016,2018,2019,2034,2086,2
     echo
 fi
 
-[[ $fail = true ]] && echo 'failed!' || echo 'passed!'
+if [[ $fail = true ]]; then
+	echo 'failed!'
+	exit 1
+else
+	echo 'passed!'
+	exit 0
+fi
