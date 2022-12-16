@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VER=221217-beta
+    local -r SCRIPT_VER=221217b-beta
     readonly PROJECT_BRANCH=main
 
     IsQNAP || return
@@ -4327,7 +4327,6 @@ QPKG.Reassign()
 
     local -r PACKAGE_NAME=${1:?no package name supplied}
     local -i result_code=0
-    local package_repo_id=''
     local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$REASSIGN_LOG_FILE
     local action=reassign
 
@@ -4336,7 +4335,7 @@ QPKG.Reassign()
         DebugFuncExit 2; return
     fi
 
-    package_repo_id=$(QPKG.RepoID "$PACKAGE_NAME")
+    local package_repo_id=$(QPKG.RepoID "$PACKAGE_NAME")
 
     if [[ $package_repo_id = "$PROJECT_NAME" ]]; then
         MarkActionAsSkipped show "$PACKAGE_NAME" "$action" "it's already assigned to $(FormatAsScriptTitle)"
@@ -4569,16 +4568,6 @@ QPKG.Reinstall()
         DebugFuncExit 2; return
     fi
 
-    if ! QPKG.URL "$PACKAGE_NAME" &>/dev/null; then
-        MarkActionAsSkipped show "$PACKAGE_NAME" "$action" 'this NAS has an unsupported arch'
-        DebugFuncExit 2; return
-    fi
-
-    if ! QPKG.MinRAM "$PACKAGE_NAME" &>/dev/null; then
-        MarkActionAsSkipped show "$PACKAGE_NAME" "$action" 'this NAS has insufficient RAM'
-        DebugFuncExit 2; return
-    fi
-
     local local_pathfile=$(QPKG.PathFilename "$PACKAGE_NAME")
 
     if [[ ${local_pathfile##*.} = zip ]]; then
@@ -4649,18 +4638,15 @@ QPKG.Upgrade()
         DebugFuncExit 2; return
     fi
 
-    if ! QPKG.URL "$PACKAGE_NAME" &>/dev/null; then
-        MarkActionAsSkipped show "$PACKAGE_NAME" "$action" 'this NAS has an unsupported arch'
-        DebugFuncExit 2; return
-    fi
-
-    if ! QPKG.MinRAM "$PACKAGE_NAME" &>/dev/null; then
-        MarkActionAsSkipped show "$PACKAGE_NAME" "$action" 'this NAS has insufficient RAM'
-        DebugFuncExit 2; return
-    fi
-
     if ! QPKGs.ScUpgradable.Exist "$PACKAGE_NAME"; then
         MarkActionAsSkipped show "$PACKAGE_NAME" "$action" 'no new package is available'
+        DebugFuncExit 2; return
+    fi
+
+    local package_repo_id=$(QPKG.RepoID "$PACKAGE_NAME")
+
+    if [[ $package_repo_id != "$PROJECT_NAME" ]]; then
+        MarkActionAsSkipped show "$PACKAGE_NAME" "$action" "it's assigned to another repository - use 'reassign' first"
         DebugFuncExit 2; return
     fi
 
