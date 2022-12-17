@@ -387,14 +387,6 @@ Self.Validate()
         DebugUserspaceWarning "'$public_share' share" '<not present>'
     fi
 
-    local download_share=$($GETCFG_CMD SHARE_DEF defDownload -d Qdownload -f /etc/config/def_share.info)
-
-    if [[ -L /share/$download_share ]]; then
-        DebugUserspaceOK "'$download_share' share" "/share/$download_share"
-    else
-        DebugUserspaceWarning "'$download_share' share" '<not present>'
-    fi
-
     if [[ ${#PATH} -le $max_width ]]; then
         DebugUserspaceOK '$PATH' "$PATH"
     else
@@ -692,7 +684,6 @@ Tiers.Process()
                 done
 
                 Tier.Process Restart false "$tier" QPKG AcToRestart restart restarting restarted long false || return
-
                 ;;
             Addon)
                 for action in Install Reinstall Upgrade Start; do
