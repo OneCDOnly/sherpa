@@ -8,7 +8,7 @@
 #
 # On POSIX you can use "~" as alias for home directory (e.g. "~/downloads").
 # On Windows use absolute paths (e.g. "C:\Downloads").
-MainDir=/share/Download
+MainDir=/share/Public/Downloads
 
 # Destination directory for downloaded files.
 #
