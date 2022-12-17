@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VER=221218b-beta
+    local -r SCRIPT_VER=221218c-beta
     readonly PROJECT_BRANCH=main
 
     IsQNAP || return
@@ -136,24 +136,6 @@ Self.Init()
     readonly PIP_CMD="$PYTHON3_CMD -m pip"
     readonly PERL_CMD=/opt/bin/perl
 
-    readonly BACKUP_LOG_FILE=backup.log
-    readonly CHECK_LOG_FILE=check.log
-    readonly CLEAN_LOG_FILE=clean.log
-    readonly DEBUG_LOG_FILE=debug.log
-    readonly DISABLE_LOG_FILE=disable.log
-    readonly DOWNLOAD_LOG_FILE=download.log
-    readonly ENABLE_LOG_FILE=enable.log
-    readonly INSTALL_LOG_FILE=install.log
-    readonly REASSIGN_LOG_FILE=reassign.log
-    readonly REINSTALL_LOG_FILE=reinstall.log
-    readonly RESTART_LOG_FILE=restart.log
-    readonly RESTORE_LOG_FILE=restore.log
-    readonly START_LOG_FILE=start.log
-    readonly STOP_LOG_FILE=stop.log
-    readonly UNINSTALL_LOG_FILE=uninstall.log
-    readonly UPDATE_LOG_FILE=update.log
-    readonly UPGRADE_LOG_FILE=upgrade.log
-
     readonly PROJECT_PATH=$(QPKG.InstallationPath $PROJECT_NAME)
     readonly WORK_PATH=$PROJECT_PATH/cache
     readonly LOGS_PATH=$PROJECT_PATH/logs
@@ -199,6 +181,12 @@ Self.Init()
     PACKAGE_STATES_TEMPORARY=(Starting Stopping Restarting)
     PACKAGE_ACTIONS=(Download Rebuild Backup Stop Disable Uninstall Upgrade Reassign Reinstall Install Restore Clean Enable Start Restart)
     PACKAGE_RESULTS=(Ok Unknown)
+
+    local action=''
+
+    for action in "${PACKAGE_ACTIONS[@]}" check debug update; do
+        readonly "$(echo $action | tr '[:lower:]' '[:upper:]')"_LOG_FILE="$(echo $action | tr '[:upper:]' '[:lower:]')".log
+    done
 
     readonly MANAGEMENT_ACTIONS
 
@@ -452,7 +440,7 @@ Self.Validate()
     fi
 
     if [[ $something_to_do = false ]]; then
-        ShowAsError "I've nothing to-do (the supplied arguments were incomplete or didn't make sense)"
+        ShowAsError "I've nothing to-do (the supplied arguments were incomplete, or didn't make sense)"
         Opts.Help.Basic.Set
         QPKGs.SkProc.Set
         DebugFuncExit 1; return
