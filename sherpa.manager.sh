@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VER=221217b-beta
+    local -r SCRIPT_VER=221218b-beta
     readonly PROJECT_BRANCH=main
 
     IsQNAP || return
@@ -259,7 +259,7 @@ Self.Init()
         fi
     done
 
-    readonly THIS_PACKAGE_VER=$(QPKG.Local.Version "$PROJECT_NAME")
+    readonly THIS_PACKAGE_VER=$(QPKG.Local.Version $PROJECT_NAME)
     readonly MANAGER_SCRIPT_VER="$SCRIPT_VER$([[ $PROJECT_BRANCH = develop ]] && echo '(d)')"
 
     DebugInfoMajorSeparator
@@ -321,27 +321,16 @@ Self.Init()
 
     }
 
-Self.Validate()
+Environment.Log()
     {
-
-    # This function handles most of the high-level logic for package actions.
-    # If a package isn't being processed by the correct action, odds-are it's due to a logic error in this function.
 
     ArgumentSuggestions
     QPKGs.SkProc.IsSet && return
     DebugFuncEntry
-
-    local action=''
-    local scope=''
-    local state=''
-    local prospect=''
-    local package=''
-    local something_to_do=false
-    local -i max_width=70
-    local -i trimmed_width=$((max_width - 3))
-    local available_ver=''
-
     ShowAsProc environment >&2
+
+    local -i max_width=70
+    local -i trimmed_width=$((max_width-3))
 
     DebugInfoMinorSeparator
     DebugHardwareOK model "$(get_display_name)"
@@ -415,8 +404,27 @@ Self.Validate()
     RunAndLog "$DF_CMD -h | $GREP_CMD '^Filesystem\|^none\|^tmpfs'" /var/log/ramdisks.state
 
     QPKGs.States.Build
+    DebugFuncExit
 
+    }
+
+Self.Validate()
+    {
+
+    # This function handles most of the high-level logic for package actions.
+    # If a package isn't being processed by the correct action, odds-are it's due to a logic error in this function.
+
+    QPKGs.SkProc.IsSet && return
+    DebugFuncEntry
     ShowAsProc arguments >&2
+
+    local action=''
+    local scope=''
+    local state=''
+    local prospect=''
+    local package=''
+    local something_to_do=false
+    local available_ver=''
 
     if Opts.Deps.Check.IsSet || Opts.Help.Status.IsSet; then
         something_to_do=true
@@ -649,8 +657,8 @@ Tiers.Process()
 
         case $tier in
             Standalone|Dependent)
-                Tier.Process Stop false "$tier" QPKG AcToStop stop stopping stopped '' false || return
-                Tier.Process Uninstall false "$tier" QPKG AcToUninstall uninstall uninstalling uninstalled '' false || return
+                Tier.Process Stop false $tier QPKG AcToStop stop stopping stopped '' false || return
+                Tier.Process Uninstall false $tier QPKG AcToUninstall uninstall uninstalling uninstalled '' false || return
         esac
     done
 
@@ -662,11 +670,11 @@ Tiers.Process()
     for tier in "${PACKAGE_TIERS[@]}"; do
         case $tier in
             Standalone|Dependent)
-                Tier.Process Upgrade false "$tier" QPKG AcToUpgrade upgrade upgrading upgraded long false || return
-                Tier.Process Reinstall false "$tier" QPKG AcToReinstall reinstall reinstalling reinstalled long false || return
-                Tier.Process Install false "$tier" QPKG AcToInstall install installing installed long false || return
-                Tier.Process Restore false "$tier" QPKG AcToRestore 'restore configuration for' 'restoring configuration for' 'configuration restored for' long false || return
-                Tier.Process Clean false "$tier" QPKG AcToClean clean cleaning cleaned long false || return
+                Tier.Process Upgrade false $tier QPKG AcToUpgrade upgrade upgrading upgraded long false || return
+                Tier.Process Reinstall false $tier QPKG AcToReinstall reinstall reinstalling reinstalled long false || return
+                Tier.Process Install false $tier QPKG AcToInstall install installing installed long false || return
+                Tier.Process Restore false $tier QPKG AcToRestore 'restore configuration for' 'restoring configuration for' 'configuration restored for' long false || return
+                Tier.Process Clean false $tier QPKG AcToClean clean cleaning cleaned long false || return
 
                 if [[ $tier = Standalone ]]; then
                     # check for standalone packages that must be started because dependents are being reinstalled/installed/started/restarted
@@ -677,13 +685,13 @@ Tiers.Process()
                     done
                 fi
 
-                Tier.Process Start false "$tier" QPKG AcToStart start starting started long false || return
+                Tier.Process Start false $tier QPKG AcToStart start starting started long false || return
 
                 for action in Install Restart Start; do
                     QPKGs.AcToRestart.Remove "$(QPKGs.AcOk${action}.Array)"
                 done
 
-                Tier.Process Restart false "$tier" QPKG AcToRestart restart restarting restarted long false || return
+                Tier.Process Restart false $tier QPKG AcToRestart restart restarting restarted long false || return
                 ;;
             Addon)
                 for action in Install Reinstall Upgrade Start; do
@@ -698,11 +706,11 @@ Tiers.Process()
 
                 if QPKGs.IsStarted.Exist Entware; then
                     ModPathToEntware
-                    Tier.Process Upgrade false "$tier" IPKG '' upgrade upgrading upgraded long false || return
-                    Tier.Process Install false "$tier" IPKG '' install installing installed long false || return
+                    Tier.Process Upgrade false $tier IPKG '' upgrade upgrading upgraded long false || return
+                    Tier.Process Install false $tier IPKG '' install installing installed long false || return
 
                     PIPs.Install.Set
-                    Tier.Process Install false "$tier" PIP '' install installing installed long false || return
+                    Tier.Process Install false $tier PIP '' install installing installed long false || return
                 fi
         esac
     done
@@ -793,7 +801,7 @@ Tier.Process()
             if [[ $ASYNC = false ]]; then
                 # execute actions consecutively
                 for package in "${target_packages[@]}"; do
-                    ShowAsActionProgress "$TIER" "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
+                    ShowAsActionProgress $TIER $PACKAGE_TYPE $pass_count $fail_count $total_count "$ACTION_PRESENT" $RUNTIME
 
                     $target_function.${TARGET_ACTION} "$package" "$forced_action"
                     result_code=$?
@@ -806,7 +814,7 @@ Tier.Process()
                             ((total_count--))
                             ;;
                         *)  # failed
-                            ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") (see log for more details)"
+                            ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName $package) (see log for more details)"
                             ((fail_count++))
                             continue
                     esac
@@ -815,9 +823,9 @@ Tier.Process()
                 # execute actions concurrently
                 # NON-FUNCTIONAL: for now, use same code as above
                 for package in "${target_packages[@]}"; do
-                    ShowAsActionProgress "$TIER" "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
+                    ShowAsActionProgress $TIER $PACKAGE_TYPE $pass_count $fail_count $total_count "$ACTION_PRESENT" $RUNTIME
 
-                    $target_function.${TARGET_ACTION} "$package" "$forced_action"
+                    $target_function.${TARGET_ACTION} $package "$forced_action"
                     result_code=$?
 
                     case $result_code in
@@ -828,7 +836,7 @@ Tier.Process()
                             ((total_count--))
                             ;;
                         *)  # failed
-                            ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") (see log for more details)"
+                            ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName $package) (see log for more details)"
                             ((fail_count++))
                             continue
                     esac
@@ -840,8 +848,8 @@ Tier.Process()
     esac
 
     # execute with pass_count > total_count to trigger 100% message
-    ShowAsActionProgress "$TIER" "$PACKAGE_TYPE" "$((total_count + 1))" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
-    ShowAsActionResult "$TIER" "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PAST" "$RUNTIME"
+    ShowAsActionProgress $TIER $PACKAGE_TYPE $((total_count+1)) $fail_count $total_count "$ACTION_PRESENT" $RUNTIME
+    ShowAsActionResult $TIER $PACKAGE_TYPE $pass_count $fail_count $total_count "$ACTION_PAST" $RUNTIME
 
     DebugFuncExit
     Self.Error.IsNt
@@ -914,7 +922,7 @@ Self.Results()
 
     DebugInfoMinorSeparator
     DebugScript finished "$($DATE_CMD)"
-    DebugScript 'elapsed time' "$(FormatSecsToHoursMinutesSecs "$(($($DATE_CMD +%s)-$([[ -n $SCRIPT_STARTSECONDS ]] && echo "$SCRIPT_STARTSECONDS" || echo "1")))")"
+    DebugScript 'elapsed time' "$(FormatSecsToHoursMinutesSecs "$(($($DATE_CMD +%s)-$([[ -n $SCRIPT_STARTSECONDS ]] && echo $SCRIPT_STARTSECONDS || echo 1)))")"
     DebugInfoMajorSeparator
     Self.Debug.ToArchive.IsSet && ArchiveActiveSessionLog
     ResetActiveSessionLog
@@ -2233,7 +2241,7 @@ PIPs.Install()
     fi
 
     # execute with pass_count > total_count to trigger 100% message
-    ShowAsActionProgress '' "$PACKAGE_TYPE" "$((total_count + 1))" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
+    ShowAsActionProgress '' "$PACKAGE_TYPE" "$((total_count+1))" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
     ShowAsActionResult '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PAST" "$RUNTIME"
     DebugFuncExit $result_code
 
@@ -2311,7 +2319,7 @@ _MonitorDirSize_()
             ((stall_seconds++))
         fi
 
-        percent="$((200 * (current_bytes) / (total_bytes) % 2 + 100 * (current_bytes) / (total_bytes)))%"
+        percent="$((200*(current_bytes)/(total_bytes)%2+100*(current_bytes)/(total_bytes)))%"
         [[ $current_bytes -lt $total_bytes && $percent = '100%' ]] && percent='99%' # ensure we don't hit 100% until the last byte is downloaded
         progress_message="$percent ($(FormatAsISOBytes "$current_bytes")/$(FormatAsISOBytes "$total_bytes"))"
 
@@ -2357,10 +2365,10 @@ ProgressUpdater()
     this_clean_msg=$(StripANSI "${1:-}")
 
     if [[ $this_clean_msg != "$previous_clean_msg" ]]; then
-        this_length=$((${#this_clean_msg} + 1))
+        this_length=$((${#this_clean_msg}+1))
 
         if [[ $this_length -lt $previous_length ]]; then
-            blanking_length=$((this_length - previous_length))
+            blanking_length=$((this_length-previous_length))
             # backspace to start of previous msg, print new msg, add additional spaces, then backspace to end of msg
             printf "%${previous_length}s" | tr ' ' '\b'; DisplayWait "$1"; printf "%${blanking_length}s"; printf "%${blanking_length}s" | tr ' ' '\b'
         else
@@ -2616,16 +2624,16 @@ DisplayAsHelpPackageNamePlusSomething()
 CalculateMaximumStatusColumnsToDisplay()
     {
 
-    local column1_width=$((${#HELP_COLUMN_MAIN_PREFIX} + HELP_PACKAGE_NAME_WIDTH))
-    local column2_width=$((${#HELP_COLUMN_SPACER} + ${#HELP_COLUMN_MAIN_PREFIX} + HELP_PACKAGE_STATUS_WIDTH))
-    local column3_width=$((${#HELP_COLUMN_SPACER} + ${#HELP_COLUMN_MAIN_PREFIX} + HELP_PACKAGE_VERSION_WIDTH))
-    local column4_width=$((${#HELP_COLUMN_SPACER} + ${#HELP_COLUMN_MAIN_PREFIX} + HELP_PACKAGE_PATH_WIDTH))
+    local column1_width=$((${#HELP_COLUMN_MAIN_PREFIX}+HELP_PACKAGE_NAME_WIDTH))
+    local column2_width=$((${#HELP_COLUMN_SPACER}+${#HELP_COLUMN_MAIN_PREFIX}+HELP_PACKAGE_STATUS_WIDTH))
+    local column3_width=$((${#HELP_COLUMN_SPACER}+${#HELP_COLUMN_MAIN_PREFIX}+HELP_PACKAGE_VERSION_WIDTH))
+    local column4_width=$((${#HELP_COLUMN_SPACER}+${#HELP_COLUMN_MAIN_PREFIX}+HELP_PACKAGE_PATH_WIDTH))
 
-    if [[ $((column1_width + column2_width)) -ge $SESSION_COLUMNS ]]; then
+    if [[ $((column1_width+column2_width)) -ge $SESSION_COLUMNS ]]; then
         echo 1
-    elif [[ $((column1_width + column2_width + column3_width)) -ge $SESSION_COLUMNS ]]; then
+    elif [[ $((column1_width+column2_width+column3_width)) -ge $SESSION_COLUMNS ]]; then
         echo 2
-    elif [[ $((column1_width + column2_width + column3_width + column4_width)) -ge $SESSION_COLUMNS ]]; then
+    elif [[ $((column1_width+column2_width+column3_width+column4_width)) -ge $SESSION_COLUMNS ]]; then
         echo 3
     else
         echo 4
@@ -2638,10 +2646,10 @@ CalculateMaximumStatusColumnsToDisplay()
 CalculateMaximumRepoColumnsToDisplay()
     {
 
-    local column1_width=$((${#HELP_COLUMN_MAIN_PREFIX} + HELP_PACKAGE_NAME_WIDTH))
-    local column2_width=$((${#HELP_COLUMN_SPACER} + ${#HELP_COLUMN_MAIN_PREFIX} + HELP_PACKAGE_REPO_WIDTH))
+    local column1_width=$((${#HELP_COLUMN_MAIN_PREFIX}+HELP_PACKAGE_NAME_WIDTH))
+    local column2_width=$((${#HELP_COLUMN_SPACER}+${#HELP_COLUMN_MAIN_PREFIX}+HELP_PACKAGE_REPO_WIDTH))
 
-    if [[ $((column1_width + column2_width)) -ge $SESSION_COLUMNS ]]; then
+    if [[ $((column1_width+column2_width)) -ge $SESSION_COLUMNS ]]; then
         echo 1
     else
         echo 2
@@ -2692,15 +2700,15 @@ DisplayAsHelpPackageNameVersionStatus()
     local maxcols=$(CalculateMaximumStatusColumnsToDisplay)
 
     if [[ -n ${1:-} && $maxcols -ge 1 ]]; then
-        printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_BLANK_PREFIX}%-$((HELP_PACKAGE_NAME_WIDTH + $(LenANSIDiff "$1")))s" "$1"
+        printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_BLANK_PREFIX}%-$((HELP_PACKAGE_NAME_WIDTH+$(LenANSIDiff "$1")))s" "$1"
     fi
 
     if [[ -n ${2:-} && $maxcols -ge 2 ]]; then
-        printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_OTHER_PREFIX}%-$((HELP_PACKAGE_STATUS_WIDTH + $(LenANSIDiff "$2")))s" "$2"
+        printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_OTHER_PREFIX}%-$((HELP_PACKAGE_STATUS_WIDTH+$(LenANSIDiff "$2")))s" "$2"
     fi
 
     if [[ -n ${3:-} && $maxcols -ge 3 ]]; then
-        printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_OTHER_PREFIX}%-$((HELP_PACKAGE_VERSION_WIDTH + $(LenANSIDiff "$3")))s" "$3"
+        printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_OTHER_PREFIX}%-$((HELP_PACKAGE_VERSION_WIDTH+$(LenANSIDiff "$3")))s" "$3"
     fi
 
     if [[ -n ${4:-} && $maxcols -ge 4 ]]; then
@@ -2740,11 +2748,11 @@ DisplayAsHelpPackageNameRepo()
     local maxcols=$(CalculateMaximumRepoColumnsToDisplay)
 
     if [[ -n ${1:-} && $maxcols -ge 1 ]]; then
-        printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_BLANK_PREFIX}%-$((HELP_PACKAGE_NAME_WIDTH + $(LenANSIDiff "$1")))s" "$1"
+        printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_BLANK_PREFIX}%-$((HELP_PACKAGE_NAME_WIDTH+$(LenANSIDiff "$1")))s" "$1"
     fi
 
     if [[ -n ${2:-} && $maxcols -ge 2 ]]; then
-        printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_OTHER_PREFIX}%-$((HELP_PACKAGE_REPO_WIDTH + $(LenANSIDiff "$2")))s" "$2"
+        printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_OTHER_PREFIX}%-$((HELP_PACKAGE_REPO_WIDTH+$(LenANSIDiff "$2")))s" "$2"
     fi
 
     printf '\n'
@@ -3165,7 +3173,7 @@ GetLogSessionStartLine()
 
     # $1 = how many sessions back? (optional) default = 1
 
-    local -i linenum=$(($($GREP_CMD -n 'SCRIPT:.*started:' "$SESSION_TAIL_PATHFILE" | $TAIL_CMD -n${1:-1} | $HEAD_CMD -n1 | cut -d':' -f1) - 1))
+    local -i linenum=$(($($GREP_CMD -n 'SCRIPT:.*started:' "$SESSION_TAIL_PATHFILE" | $TAIL_CMD -n${1:-1} | $HEAD_CMD -n1 | cut -d':' -f1)-1))
     [[ $linenum -lt 1 ]] && linenum=1
     echo $linenum
 
@@ -3176,7 +3184,7 @@ GetLogSessionFinishLine()
 
     # $1 = how many sessions back? (optional) default = 1
 
-    local -i linenum=$(($($GREP_CMD -n 'SCRIPT:.*finished:' "$SESSION_TAIL_PATHFILE" | $TAIL_CMD -n${1:-1} | cut -d':' -f1) + 2))
+    local -i linenum=$(($($GREP_CMD -n 'SCRIPT:.*finished:' "$SESSION_TAIL_PATHFILE" | $TAIL_CMD -n${1:-1} | cut -d':' -f1)+2))
     [[ $linenum -eq 2 ]] && linenum=3
     echo $linenum
 
@@ -3224,7 +3232,7 @@ ExtractPreviousSessionFromTail()
 
     if [[ -e $SESSION_TAIL_PATHFILE ]]; then
         end_line=$(GetLogSessionFinishLine "$old_session")
-        start_line=$((end_line + 1))      # ensure an invalid condition, to be solved by the loop
+        start_line=$((end_line+1))      # ensure an invalid condition, to be solved by the loop
 
         while [[ $start_line -ge $end_line ]]; do
             start_line=$(GetLogSessionStartLine "$old_session")
@@ -3292,12 +3300,12 @@ QPKGs.NewVersions.Show()
         left_to_upgrade+=($(QPKGs.ScUpgradable.Array))
     fi
 
-    for ((index=0; index<=((${#left_to_upgrade[@]} - 1)); index++)); do
+    for ((index=0; index<=((${#left_to_upgrade[@]}-1)); index++)); do
         names_formatted+=$(ColourTextBrightOrange "${left_to_upgrade[$index]}")
 
-        if [[ $((index + 2)) -lt ${#left_to_upgrade[@]} ]]; then
+        if [[ $((index+2)) -lt ${#left_to_upgrade[@]} ]]; then
             names_formatted+=', '
-        elif [[ $((index + 2)) -eq ${#left_to_upgrade[@]} ]]; then
+        elif [[ $((index+2)) -eq ${#left_to_upgrade[@]} ]]; then
             names_formatted+=' & '
         fi
     done
@@ -3777,10 +3785,10 @@ QPKGs.Statuses.Show()
 
                     [[ ! -e ${GNU_SED_CMD:-} ]] && Self.Boring.UnSet
 
-                    for ((index=0; index<=((${#package_status_notes[@]} - 1)); index++)); do
+                    for ((index=0; index<=((${#package_status_notes[@]}-1)); index++)); do
                         package_status+=${package_status_notes[$index]}
 
-                        [[ $((index + 2)) -le ${#package_status_notes[@]} ]] && package_status+=', '
+                        [[ $((index+2)) -le ${#package_status_notes[@]} ]] && package_status+=', '
                     done
 
                     package_name_formatted=$package_name
@@ -6082,13 +6090,13 @@ DebugFuncExit()
 
     local var_name=${FUNCNAME[1]}_STARTSECONDS
     local var_safe_name=${var_name//[.-]/_}
-    local diff_milliseconds=$((($($DATE_CMD +%s%N) - ${!var_safe_name}) / 1000000))
+    local diff_milliseconds=$((($($DATE_CMD +%s%N)-${!var_safe_name})/1000000))
     local elapsed_time=''
 
     if [[ $diff_milliseconds -lt 30000 ]]; then
         elapsed_time="$(FormatAsThousands "$diff_milliseconds")ms"
     else
-        elapsed_time=$(FormatSecsToHoursMinutesSecs "$((diff_milliseconds / 1000))")
+        elapsed_time=$(FormatSecsToHoursMinutesSecs "$((diff_milliseconds/1000))")
     fi
 
     DebugThis "(<<) ${FUNCNAME[1]}|${1:-0}|$elapsed_time"
@@ -6333,16 +6341,16 @@ ShowAsActionProgress()
     local -i total_count=${5:-0}
     local -r ACTION_PRESENT=${6:?empty}
     local -r DURATION=${7:-}
-    local -i tweaked_passes=$((pass_count + 1))              # never show zero (e.g. 0/8)
-    local -i tweaked_total=$((total_count - fail_count))     # auto-adjust upper limit to account for failures
+    local -i tweaked_passes=$((pass_count+1))              # never show zero (e.g. 0/8)
+    local -i tweaked_total=$((total_count-fail_count))     # auto-adjust upper limit to account for failures
 
     [[ $tweaked_total -eq 0 ]] && return 1              # no-point showing a fraction of zero
 
     if [[ $tweaked_passes -gt $tweaked_total ]]; then
-        tweaked_passes=$((tweaked_total - fail_count))
+        tweaked_passes=$((tweaked_total-fail_count))
         percent='100%'
     else
-        percent="$((200 * (tweaked_passes) / (tweaked_total + 1) % 2 + 100 * (tweaked_passes) / (tweaked_total + 1)))%"
+        percent="$((200*(tweaked_passes)/(tweaked_total+1)%2+100*(tweaked_passes)/(tweaked_total+1)))%"
     fi
 
     if [[ $DURATION = long ]]; then
@@ -6446,15 +6454,15 @@ WriteToDisplayNew()
     this_message=$(printf "%-10s: %s" "${1:-}" "${2:-}")
 
     if [[ $this_message != "${previous_msg}" ]]; then
-        previous_length=$((${#previous_msg} + 1))
-        this_length=$((${#this_message} + 1))
+        previous_length=$((${#previous_msg}+1))
+        this_length=$((${#this_message}+1))
 
         # jump to start of line, print new msg
         strbuffer=$(echo -en "\r$this_message ")
 
         # if new msg is shorter then add spaces to end to cover previous msg
         if [[ $this_length -lt $previous_length ]]; then
-            blanking_length=$((this_length - previous_length))
+            blanking_length=$((this_length-previous_length))
             strbuffer+=$(printf "%${blanking_length}s")
         fi
 
@@ -6727,6 +6735,7 @@ Packages.Load()
     }
 
 Self.Init || exit
+Environment.Log
 Self.Validate
 Tiers.Process
 Self.Results
