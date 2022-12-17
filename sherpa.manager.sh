@@ -1908,7 +1908,11 @@ PatchEntwareService()
 UpdateEntwarePackageList()
     {
 
-    IsNtSysFileExist $OPKG_CMD && return 1
+    if IsNtSysFileExist $OPKG_CMD; then
+        DisplayAsProjectSyntaxIndentedExample 'try restarting Entware' 'restart ew'
+        return 1
+    fi
+
     [[ ${ENTWARE_PACKAGE_LIST_UPTODATE:-false} = true ]] && return 0
 
     local -r CHANGE_THRESHOLD_MINUTES=60
