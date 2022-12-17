@@ -185,7 +185,7 @@ Self.Init()
     local action=''
 
     for action in "${PACKAGE_ACTIONS[@]}" check debug update; do
-        readonly "$(echo $action | tr 'a-z' 'A-Z')"_LOG_FILE="$(echo $action | tr 'A-Z' 'a-z')".log
+        readonly "$(Uppercase "$action")"_LOG_FILE="$(Lowercase "$action")".log
     done
 
     readonly MANAGEMENT_ACTIONS
@@ -767,7 +767,7 @@ Tier.Process()
     local -r ACTION_PRESENT=${message_prefix}${7:?empty}
     local -r ACTION_PAST=${message_prefix}${8:?empty}
 
-    ShowAsProc "$([[ $TIER != All ]] && tr 'A-Z' 'a-z' <<< "$TIER ")packages to $ACTION_INTRANSITIVE" >&2
+    ShowAsProc "$([[ $TIER != All ]] && Lowercase "$TIER ")packages to $ACTION_INTRANSITIVE" >&2
 
     case $PACKAGE_TYPE in
         QPKG)
@@ -931,7 +931,7 @@ ParseArguments()
 
     DebugVar USER_ARGS_RAW
 
-    local user_args_fixed=$(tr 'A-Z' 'a-z' <<< "${USER_ARGS_RAW//,/ }")
+    local user_args_fixed=$(Lowercase "${USER_ARGS_RAW//,/ }")
     local -a user_args=(${user_args_fixed/--/})
     local arg=''
     local arg_identified=false
@@ -4263,7 +4263,7 @@ ShowSummary()
 
     for state in "${PACKAGE_STATES[@]}"; do
         for action in "${PACKAGE_ACTIONS[@]}"; do
-            QPKGs.Ac${action}.Is${state}.IsSet && QPKGs.AcOk${action}.IsNone && ShowAsDone "no QPKGs were $(tr 'A-Z' 'a-z' <<< "$state")"
+            QPKGs.Ac${action}.Is${state}.IsSet && QPKGs.AcOk${action}.IsNone && ShowAsDone "no QPKGs were $(Lowercase "$state")"
         done
     done
 
@@ -5735,6 +5735,20 @@ Capitalise()
 
     }
 
+Uppercase()
+    {
+
+    tr 'a-z' 'A-Z' <<< "$1"
+
+    }
+
+Lowercase()
+    {
+
+    tr 'A-Z' 'a-z' <<< "$1"
+
+    }
+
 FormatAsThousands()
     {
 
@@ -6318,7 +6332,7 @@ ShowAsActionProgress()
     # $7 = 'long' (optional)
 
     if [[ -n $1 && $1 != All ]]; then
-        local tier=" $(tr 'A-Z' 'a-z' <<< "$1")"
+        local tier=" $(Lowercase "$1")"
     else
         local tier=''
     fi
@@ -6365,7 +6379,7 @@ ShowAsActionResult()
     # $7 = 'long' (optional)
 
     if [[ -n $1 && $1 != All ]]; then
-        local tier=" $(tr 'A-Z' 'a-z' <<< "$1")"
+        local tier=" $(Lowercase "$1")"
     else
         local tier=''
     fi
