@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VER=221218c-beta
+    local -r SCRIPT_VER=221218-beta
     readonly PROJECT_BRANCH=main
 
     IsQNAP || return
@@ -185,7 +185,7 @@ Self.Init()
     local action=''
 
     for action in "${PACKAGE_ACTIONS[@]}" check debug update; do
-        readonly "$(echo $action | tr '[:lower:]' '[:upper:]')"_LOG_FILE="$(echo $action | tr '[:upper:]' '[:lower:]')".log
+        readonly "$(echo $action | tr 'a-z' 'A-Z')"_LOG_FILE="$(echo $action | tr 'A-Z' 'a-z')".log
     done
 
     readonly MANAGEMENT_ACTIONS
