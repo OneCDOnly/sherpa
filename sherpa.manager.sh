@@ -3647,9 +3647,9 @@ QPKGs.Repos.Show()
 
     local tier=''
     local -i index=0
-    local current_package_name=''
-    local package_repo_id=''
-    local package_repo_formatted=''
+    local package_name=''
+    local package_store_id=''
+    local package_repo_URL_formatted=''
     local maxcols=$(CalculateMaximumRepoColumnsToDisplay)
 
     QPKGs.States.Build
@@ -3658,26 +3658,26 @@ QPKGs.Repos.Show()
     for tier in Standalone Dependent; do
         DisplayAsHelpTitlePackageNameRepo "$tier packages" 'repository'
 
-        for current_package_name in $(QPKGs.Sc$tier.Array); do
-            package_repo_id=''
-            package_repo_formatted=''
+        for package_name in $(QPKGs.Sc$tier.Array); do
+            package_store_id=''
+            package_repo_URL_formatted=''
 
-            if ! QPKG.URL "$current_package_name" &>/dev/null; then
-                DisplayAsHelpPackageNameRepo "$current_package_name" 'not installable: no arch'
-            elif ! QPKG.MinRAM "$current_package_name" &>/dev/null; then
-                DisplayAsHelpPackageNameRepo "$current_package_name" 'not installable: low RAM'
-            elif QPKGs.IsNtInstalled.Exist "$current_package_name"; then
-                DisplayAsHelpPackageNameRepo "$current_package_name" 'not installed'
+            if ! QPKG.URL "$package_name" &>/dev/null; then
+                DisplayAsHelpPackageNameRepo "$package_name" 'not installable: no arch'
+            elif ! QPKG.MinRAM "$package_name" &>/dev/null; then
+                DisplayAsHelpPackageNameRepo "$package_name" 'not installable: low RAM'
+            elif QPKGs.IsNtInstalled.Exist "$package_name"; then
+                DisplayAsHelpPackageNameRepo "$package_name" 'not installed'
             else
-                package_repo_id=$(QPKG.RepoID "$current_package_name")
+                package_store_id=$(QPKG.StoreID "$package_name")
 
-                if [[ $package_repo_id = "$PROJECT_NAME" ]]; then
-                    package_repo_formatted=$(ColourTextBrightGreen "$package_repo_id")
+                if [[ $package_store_id = "$PROJECT_NAME" ]]; then
+                    package_repo_URL_formatted=$(ColourTextBrightGreen "$package_store_id")
                 else
-                    package_repo_formatted=$(ColourTextBrightOrange "$(GetRepoURLFromStoreID "$package_repo_id")")
+                    package_repo_URL_formatted=$(ColourTextBrightOrange "$(GetRepoURLFromStoreID "$package_store_id")")
                 fi
 
-                DisplayAsHelpPackageNameRepo "$current_package_name" "$package_repo_formatted"
+                DisplayAsHelpPackageNameRepo "$package_name" "$package_repo_URL_formatted"
             fi
         done
 
@@ -3697,8 +3697,8 @@ QPKGs.Statuses.Show()
     local tier=''
     local -a package_status_notes=()
     local -i index=0
-    local current_package_name=''
     local package_name=''
+    local package_name_formatted=''
     local package_status=''
     local package_version=''
     local maxcols=$(CalculateMaximumStatusColumnsToDisplay)
@@ -3709,75 +3709,75 @@ QPKGs.Statuses.Show()
     for tier in Standalone Dependent; do
         DisplayAsHelpTitlePackageNameVersionStatus "$tier packages" 'package statuses (last result)' 'QPKG version' 'installation path'
 
-        for current_package_name in $(QPKGs.Sc$tier.Array); do
-            package_name=''
+        for package_name in $(QPKGs.Sc$tier.Array); do
+            package_name_formatted=''
             package_status=''
             package_version=''
             package_status_notes=()
 
-            if ! QPKG.URL "$current_package_name" &>/dev/null; then
-                DisplayAsHelpPackageNameVersionStatus "$current_package_name" 'not installable: no arch'
-            elif ! QPKG.MinRAM "$current_package_name" &>/dev/null; then
-                DisplayAsHelpPackageNameVersionStatus "$current_package_name" 'not installable: low RAM'
-            elif QPKGs.IsNtInstalled.Exist "$current_package_name"; then
-                DisplayAsHelpPackageNameVersionStatus "$current_package_name" 'not installed' "$(QPKG.Available.Version "$current_package_name")"
+            if ! QPKG.URL "$package_name" &>/dev/null; then
+                DisplayAsHelpPackageNameVersionStatus "$package_name" 'not installable: no arch'
+            elif ! QPKG.MinRAM "$package_name" &>/dev/null; then
+                DisplayAsHelpPackageNameVersionStatus "$package_name" 'not installable: low RAM'
+            elif QPKGs.IsNtInstalled.Exist "$package_name"; then
+                DisplayAsHelpPackageNameVersionStatus "$package_name" 'not installed' "$(QPKG.Available.Version "$package_name")"
             else
                 if [[ $maxcols -eq 1 ]]; then
-                    if QPKGs.IsMissing.Exist "$current_package_name"; then
-                        package_name=$(ColourTextBrightRedBlink "$current_package_name")
-                    elif QPKGs.IsEnabled.Exist "$current_package_name"; then
-                        package_name=$(ColourTextBrightGreen "$current_package_name")
-                    elif QPKGs.IsNtEnabled.Exist "$current_package_name"; then
-                        package_name=$(ColourTextBrightRed "$current_package_name")
+                    if QPKGs.IsMissing.Exist "$package_name"; then
+                        package_name_formatted=$(ColourTextBrightRedBlink "$package_name")
+                    elif QPKGs.IsEnabled.Exist "$package_name"; then
+                        package_name_formatted=$(ColourTextBrightGreen "$package_name")
+                    elif QPKGs.IsNtEnabled.Exist "$package_name"; then
+                        package_name_formatted=$(ColourTextBrightRed "$package_name")
                     fi
 
-                    if QPKGs.IsStarting.Exist "$current_package_name"; then
-                        package_name=$(ColourTextBrightOrange "$current_package_name")
-                    elif QPKGs.IsStopping.Exist "$current_package_name"; then
-                        package_name=$(ColourTextBrightOrange "$current_package_name")
-                    elif QPKGs.IsRestarting.Exist "$current_package_name"; then
-                        package_name=$(ColourTextBrightOrange "$current_package_name")
-                    elif QPKGs.IsStarted.Exist "$current_package_name"; then
-                        package_name=$(ColourTextBrightGreen "$current_package_name")
-                    elif QPKGs.IsNtStarted.Exist "$current_package_name"; then
-                        package_name=$(ColourTextBrightRed "$current_package_name")
+                    if QPKGs.IsStarting.Exist "$package_name"; then
+                        package_name_formatted=$(ColourTextBrightOrange "$package_name")
+                    elif QPKGs.IsStopping.Exist "$package_name"; then
+                        package_name_formatted=$(ColourTextBrightOrange "$package_name")
+                    elif QPKGs.IsRestarting.Exist "$package_name"; then
+                        package_name_formatted=$(ColourTextBrightOrange "$package_name")
+                    elif QPKGs.IsStarted.Exist "$package_name"; then
+                        package_name_formatted=$(ColourTextBrightGreen "$package_name")
+                    elif QPKGs.IsNtStarted.Exist "$package_name"; then
+                        package_name_formatted=$(ColourTextBrightRed "$package_name")
                     fi
                 else
                     [[ ! -e ${GNU_SED_CMD:-} ]] && Self.Boring.Set
 
-                    if QPKGs.IsMissing.Exist "$current_package_name"; then
+                    if QPKGs.IsMissing.Exist "$package_name"; then
                         package_status_notes=($(ColourTextBrightRedBlink missing))
-                    elif QPKGs.IsEnabled.Exist "$current_package_name"; then
+                    elif QPKGs.IsEnabled.Exist "$package_name"; then
                         package_status_notes+=($(ColourTextBrightGreen enabled))
-                    elif QPKGs.IsNtEnabled.Exist "$current_package_name"; then
+                    elif QPKGs.IsNtEnabled.Exist "$package_name"; then
                         package_status_notes+=($(ColourTextBrightRed disabled))
                     fi
 
-                    if QPKGs.IsStarting.Exist "$current_package_name"; then
+                    if QPKGs.IsStarting.Exist "$package_name"; then
                         package_status_notes+=($(ColourTextBrightOrange starting))
-                    elif QPKGs.IsStopping.Exist "$current_package_name"; then
+                    elif QPKGs.IsStopping.Exist "$package_name"; then
                         package_status_notes+=($(ColourTextBrightOrange stopping))
-                    elif QPKGs.IsRestarting.Exist "$current_package_name"; then
+                    elif QPKGs.IsRestarting.Exist "$package_name"; then
                         package_status_notes+=($(ColourTextBrightOrange restarting))
-                    elif QPKGs.IsStarted.Exist "$current_package_name"; then
+                    elif QPKGs.IsStarted.Exist "$package_name"; then
                         package_status_notes+=($(ColourTextBrightGreen started))
-                    elif QPKGs.IsNtStarted.Exist "$current_package_name"; then
+                    elif QPKGs.IsNtStarted.Exist "$package_name"; then
                         package_status_notes+=($(ColourTextBrightRed stopped))
                     fi
 
-                    if QPKGs.IsNtOk.Exist "$current_package_name"; then
+                    if QPKGs.IsNtOk.Exist "$package_name"; then
                         package_status_notes+=("($(ColourTextBrightRed failed))")
-                    elif QPKGs.IsOk.Exist "$current_package_name"; then
+                    elif QPKGs.IsOk.Exist "$package_name"; then
                         package_status_notes+=("($(ColourTextBrightGreen ok))")
-                    elif QPKGs.IsUnknown.Exist "$current_package_name"; then
+                    elif QPKGs.IsUnknown.Exist "$package_name"; then
                         package_status_notes+=("($(ColourTextBrightOrange unknown))")
                     fi
 
-                    if QPKGs.ScUpgradable.Exist "$current_package_name"; then
-                        package_version="$(QPKG.Local.Version "$current_package_name") $(ColourTextBrightOrange "($(QPKG.Available.Version "$current_package_name"))")"
+                    if QPKGs.ScUpgradable.Exist "$package_name"; then
+                        package_version="$(QPKG.Local.Version "$package_name") $(ColourTextBrightOrange "($(QPKG.Available.Version "$package_name"))")"
                         package_status_notes+=($(ColourTextBrightOrange upgradable))
                     else
-                        package_version=$(QPKG.Available.Version "$current_package_name")
+                        package_version=$(QPKG.Available.Version "$package_name")
                     fi
 
                     [[ ! -e ${GNU_SED_CMD:-} ]] && Self.Boring.UnSet
@@ -3788,10 +3788,10 @@ QPKGs.Statuses.Show()
                         [[ $((index + 2)) -le ${#package_status_notes[@]} ]] && package_status+=', '
                     done
 
-                    package_name=$current_package_name
+                    package_name_formatted=$package_name
                 fi
 
-                DisplayAsHelpPackageNameVersionStatus "$package_name" "$package_status" "$package_version" "$(QPKG.InstallationPath "$current_package_name")"
+                DisplayAsHelpPackageNameVersionStatus "$package_name_formatted" "$package_status" "$package_version" "$(QPKG.InstallationPath "$package_name")"
             fi
         done
 
@@ -4337,9 +4337,9 @@ QPKG.Reassign()
         DebugFuncExit 2; return
     fi
 
-    local package_repo_id=$(QPKG.RepoID "$PACKAGE_NAME")
+    local package_store_id=$(QPKG.StoreID "$PACKAGE_NAME")
 
-    if [[ $package_repo_id = "$PROJECT_NAME" ]]; then
+    if [[ $package_store_id = "$PROJECT_NAME" ]]; then
         MarkActionAsSkipped show "$PACKAGE_NAME" "$action" "it's already assigned to $(FormatAsScriptTitle)"
         DebugFuncExit 2; return
     fi
@@ -4645,9 +4645,9 @@ QPKG.Upgrade()
         DebugFuncExit 2; return
     fi
 
-    local package_repo_id=$(QPKG.RepoID "$PACKAGE_NAME")
+    local package_store_id=$(QPKG.StoreID "$PACKAGE_NAME")
 
-    if [[ $package_repo_id != "$PROJECT_NAME" ]]; then
+    if [[ $package_store_id != "$PROJECT_NAME" ]]; then
         MarkActionAsSkipped show "$PACKAGE_NAME" "$action" "it's assigned to another repository - use 'reassign' first"
         DebugFuncExit 2; return
     fi
@@ -5280,10 +5280,10 @@ QPKG.Local.Version()
 
     }
 
-QPKG.RepoID()
+QPKG.StoreID()
     {
 
-    # Returns the presently assigned repository ID of an installed QPKG.
+    # Returns the presently assigned repository store ID of an installed QPKG.
 
     # input:
     #   $1 = QPKG name
@@ -5296,7 +5296,7 @@ QPKG.RepoID()
     store=$($GETCFG_CMD "${1:?no package name supplied}" store -d "$PROJECT_NAME" -f /etc/config/qpkg.conf)
 
     # 'getcfg' does not return a default value when specified key exists without a value assignment. :(
-    # so, need to manually assign a default value
+    # so, need to manually assign a default value.
     [[ -z $store ]] && store=$PROJECT_NAME
 
     echo "$store"
