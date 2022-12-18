@@ -1,4 +1,4 @@
-PACKAGES_VER=221217
+PACKAGES_VER=221219
 BASE_QPKG_CONFLICTS_WITH='TarMT'
 BASE_QPKG_WARNINGS='Qboost'
 BASE_IPKGS_INSTALL='ca-certificates coreutils-stty findutils gcc git git-http grep less nano sed'
@@ -387,9 +387,9 @@ QPKG_RESTART_TO_UPDATE+=(false)
 QPKG_NAME+=(SABnzbd)
 QPKG_ARCH+=(all)
 QPKG_MIN_RAM_KB+=(any)
-QPKG_VERSION+=(221217)
+QPKG_VERSION+=(221219)
 QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/QPKGs/${QPKG_NAME[${#QPKG_NAME[@]}-1]}/build/${QPKG_NAME[${#QPKG_NAME[@]}-1]}_${QPKG_VERSION[${#QPKG_VERSION[@]}-1]}.qpkg)
-QPKG_MD5+=(ea8a576ee35345eb78c2e122a7423fd4)
+QPKG_MD5+=(9881d0ada5ab5f4a7f50ba5289bb433d)
 QPKG_DESC+=('full-featured NZB download manager with a nice web UI')
 QPKG_ABBRVS+=('sb sb3 sab sab3 sabnzbd3 sabnzbd')
 QPKG_CONFLICTS_WITH+=('Python3 QPython3 QPython39 QPython310')
