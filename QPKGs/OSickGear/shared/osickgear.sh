@@ -20,7 +20,7 @@ Init()
 
     # specific environment
     readonly QPKG_NAME=OSickGear
-    readonly SCRIPT_VERSION=221219
+    readonly SCRIPT_VERSION=221219b
 
     # general environment
     readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -291,8 +291,10 @@ InstallAddons()
     fi
 
     if [[ $no_pips_installed = true ]]; then        # fallback to general installation method
-        DisplayRunAndLog 'install default PyPI modules' ". $VENV_PATH/bin/activate && pip install --no-input $QPKG_REPO_PATH" log:everything || SetError
-        no_pips_installed=false
+        if [[ -e $QPKG_REPO_PATH/setup.py || -e $QPKG_REPO_PATH/pyproject.toml ]]; then
+            DisplayRunAndLog 'install default PyPI modules' ". $VENV_PATH/bin/activate && pip install --no-input $QPKG_REPO_PATH" log:everything || SetError
+            no_pips_installed=false
+        fi
     fi
 
     if [[ $QPKG_NAME = SABnzbd && $new_env = true ]]; then
