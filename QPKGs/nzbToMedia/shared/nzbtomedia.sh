@@ -11,6 +11,8 @@
 # For more info: https://forum.qnap.com/viewtopic.php?f=320&t=132373
 ####################################################################################
 
+readonly USER_ARGS_RAW=$*
+
 Init()
     {
 
@@ -18,8 +20,7 @@ Init()
 
     # specific environment
     readonly QPKG_NAME=nzbToMedia
-    readonly SCRIPT_VERSION=221213
-    local -r MIN_RAM_KB=any
+    readonly SCRIPT_VERSION=221219
 
     # general environment
     readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -29,10 +30,21 @@ Init()
     readonly SERVICE_LOG_PATHFILE=/var/log/$QPKG_NAME.log
     local -r BACKUP_PATH=$(/sbin/getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
     readonly BACKUP_PATHFILE=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
-    local -r INSTALLED_RAM_KB=$(/bin/grep MemTotal /proc/meminfo | cut -f2 -d':' | /bin/sed 's|kB||;s| ||g')
     readonly OPKG_PATH=/opt/bin:/opt/sbin
     export PATH="$OPKG_PATH:$(/bin/sed "s|$OPKG_PATH||" <<< "$PATH")"
-    readonly APPARENT_PATH=/share/$(/sbin/getcfg SHARE_DEF defDownload -d Qdownload -f /etc/config/def_share.info)/$QPKG_NAME
+    local -r DEFAULT_DOWNLOAD_SHARE=$(/sbin/getcfg SHARE_DEF defDownload -d unspecified -f /etc/config/def_share.info)
+    readonly DEBUG_LOG_DATAWIDTH=100
+    local re=''
+
+    if IsQPKGInstalled SABnzbd; then
+        readonly APPARENT_PATH=$(/sbin/getcfg misc download_dir -d /share/Public/Downloads -f $(/sbin/getcfg SABnzbd Install_Path -f /etc/config/qpkg.conf)/config/config.ini)/$QPKG_NAME
+    elif IsQPKGInstalled NZBGet; then
+        readonly APPARENT_PATH=$(/sbin/getcfg '' MainDir -d /share/Public/Downloads -f $(/sbin/getcfg NZBGet Install_Path -f /etc/config/qpkg.conf)/config/config.ini)/$QPKG_NAME
+    elif [[ $DEFAULT_DOWNLOAD_SHARE != unspecified ]]; then
+        readonly APPARENT_PATH=$DEFAULT_DOWNLOAD_SHARE/$QPKG_NAME
+    else
+        readonly APPARENT_PATH=/share/Public/Downloads/$QPKG_NAME
+    fi
 
     # specific to online-sourced applications only
     readonly SOURCE_GIT_URL=https://github.com/clinton-hall/nzbToMedia.git
@@ -48,18 +60,11 @@ Init()
     readonly VENV_INTERPRETER=$VENV_PATH/bin/python3
     readonly ALLOW_ACCESS_TO_SYS_PACKAGES=false
     readonly APP_VERSION_PATHFILE=$QPKG_REPO_PATH/.bumpversion.cfg
-    readonly DAEMON_PATHFILE=''
     readonly QPKG_INI_PATHFILE=$QPKG_REPO_PATH/autoProcessMedia.cfg
     readonly QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.spec
 
-    if [[ $MIN_RAM_KB != any && $INSTALLED_RAM_KB -lt $MIN_RAM_KB ]]; then
-        DisplayErrCommitAllLogs "$(FormatAsPackageName $QPKG_NAME) won't run on this NAS. Not enough RAM. :("
-        exit 1
-    fi
-
-    ui_port=0
-    ui_port_secure=0
-    ui_listening_address=''
+    # general environment
+    readonly APP_VERSION_CMD="/sbin/getcfg bumpversion current_version -d 0 -f $APP_VERSION_PATHFILE"
 
     if [[ -z $LANG ]]; then
         export LANG=en_US.UTF-8
@@ -67,9 +72,18 @@ Init()
         export LC_CTYPE=en_US.UTF-8
     fi
 
+    UnsetDebug
     UnsetError
     UnsetRestartPending
+    EnsureConfigFileExists
     LoadAppVersion
+
+    for re in \\bd\\b \\bdebug\\b \\bdbug\\b \\bverbose\\b; do
+        if [[ $USER_ARGS_RAW =~ $re ]]; then
+            SetDebug
+            break
+        fi
+    done
 
     IsSupportBackup && [[ -n $BACKUP_PATH && ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
     [[ -n $VENV_PATH && ! -d $VENV_PATH ]] && mkdir -p "$VENV_PATH"
@@ -170,20 +184,81 @@ StopQPKG()
 
     IsError && return
 
-    if IsNotRestart && IsNotRestore && IsNotClean && IsNotReset; then
+    if IsNotRestore && IsNotClean && IsNotReset; then
         CommitOperationToLog
-        IsNotPackageActive && return
     fi
 
-    if IsRestart || IsRestore || IsClean || IsReset; then
-        SetRestartPending
-    fi
+    if IsPackageActive; then
+        if IsRestart || IsRestore || IsClean || IsReset; then
+            SetRestartPending
+        fi
 
-    [[ -L $APPARENT_PATH ]] && rm "$APPARENT_PATH"
-    DisplayCommitToLog 'stop package: OK'
-    IsNotPackageActive || return
+        [[ -L $APPARENT_PATH ]] && rm "$APPARENT_PATH"
+        DisplayCommitToLog 'stop package: OK.'
+
+        IsNotPackageActive || return
+    fi
 
     return 0
+
+    }
+
+InstallAddons()
+    {
+
+    local default_requirements_pathfile=$QPKG_PATH/config/requirements.txt
+    local default_recommended_pathfile=$QPKG_PATH/config/recommended.txt
+    local requirements_pathfile=$QPKG_REPO_PATH/requirements.txt
+    local recommended_pathfile=$QPKG_REPO_PATH/recommended.txt
+    local pip_conf_pathfile=$VENV_PATH/pip.conf
+    local new_env=false
+    local sys_packages=' --system-site-packages'
+    local no_pips_installed=true
+
+    [[ $ALLOW_ACCESS_TO_SYS_PACKAGES != true ]] && sys_packages=''
+
+    if IsNotVirtualEnvironmentExist; then
+        DisplayRunAndLog 'create new virtual Python environment' "export PIP_CACHE_DIR=$PIP_CACHE_PATH VIRTUALENV_OVERRIDE_APP_DATA=$PIP_CACHE_PATH; $INTERPRETER -m virtualenv $VENV_PATH $sys_packages" log:everything || SetError
+        new_env=true
+    fi
+
+    if IsNotVirtualEnvironmentExist; then
+        DisplayErrCommitAllLogs 'unable to install addons: virtual environment does not exist!'
+        SetError
+        return 1
+    fi
+
+    if [[ ! -e $pip_conf_pathfile ]]; then
+        DisplayRunAndLog "create global 'pip' config" "echo -e \"[global]\ncache-dir = $PIP_CACHE_PATH\" > $pip_conf_pathfile" log:everything || SetError
+    fi
+
+    IsNotAutoUpdate && [[ $new_env = false ]] && return 0
+
+    [[ ! -e $requirements_pathfile && -e $default_requirements_pathfile ]] && requirements_pathfile=$default_requirements_pathfile
+
+    if [[ -e $requirements_pathfile ]]; then
+        DisplayRunAndLog 'install required PyPI modules' ". $VENV_PATH/bin/activate && pip install --no-input -r $requirements_pathfile" log:everything || SetError
+        no_pips_installed=false
+    fi
+
+    [[ ! -e $recommended_pathfile && -e $default_recommended_pathfile ]] && recommended_pathfile=$default_recommended_pathfile
+
+    if [[ -e $recommended_pathfile ]]; then
+        DisplayRunAndLog 'install recommended PyPI modules' ". $VENV_PATH/bin/activate && pip install --no-input -r $recommended_pathfile" log:everything || SetError
+        no_pips_installed=false
+    fi
+
+    if [[ $no_pips_installed = true ]]; then        # fallback to general installation method
+        if [[ -e $QPKG_REPO_PATH/setup.py || -e $QPKG_REPO_PATH/pyproject.toml ]]; then
+            DisplayRunAndLog 'install default PyPI modules' ". $VENV_PATH/bin/activate && pip install --no-input $QPKG_REPO_PATH" log:everything || SetError
+            no_pips_installed=false
+        fi
+    fi
+
+    if [[ $QPKG_NAME = SABnzbd && $new_env = true ]]; then
+        DisplayRunAndLog "KLUDGE: reinstall 'sabyenc3' PyPI module (https://forums.sabnzbd.org/viewtopic.php?p=128567#p128567)" ". $VENV_PATH/bin/activate && pip install --no-input --force-reinstall --no-binary :all: sabyenc3" log:everything || SetError
+        UpdateLanguages
+    fi
 
     }
 
@@ -191,7 +266,7 @@ BackupConfig()
     {
 
     CommitOperationToLog
-    ExecuteAndLog 'update configuration backup' "/bin/tar --create --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_REPO_PATH autoProcessMedia.cfg" log:everything
+    DisplayRunAndLog 'update configuration backup' "/bin/tar --create --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_REPO_PATH autoProcessMedia.cfg" log:everything || SetError
 
     }
 
@@ -207,7 +282,7 @@ RestoreConfig()
     fi
 
     StopQPKG
-    ExecuteAndLog 'restore configuration backup' "/bin/tar --extract --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_REPO_PATH" log:everything
+    DisplayRunAndLog 'restore configuration backup' "/bin/tar --extract --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_REPO_PATH" log:everything || SetError
     StartQPKG
 
     }
@@ -216,9 +291,8 @@ ResetConfig()
     {
 
     CommitOperationToLog
-
     StopQPKG
-    ExecuteAndLog 'reset configuration' "rm $QPKG_INI_PATHFILE" log:everything
+    DisplayRunAndLog 'reset configuration' "rm $QPKG_INI_PATHFILE" log:everything || SetError
     StartQPKG
 
     }
@@ -230,17 +304,13 @@ LoadAppVersion()
     # creates a global var: $app_version
     # this is the installed application version (not the QPKG version)
 
-    app_version=''
-
     if [[ -n $APP_VERSION_PATHFILE && -e $APP_VERSION_PATHFILE ]]; then
-        app_version=$(/sbin/getcfg bumpversion current_version -d 0 -f "$APP_VERSION_PATHFILE")
-        return
-    elif [[ -n $DAEMON_PATHFILE && -e $DAEMON_PATHFILE ]]; then
-        app_version=$($DAEMON_PATHFILE --version 2>&1 | /bin/sed 's|nzbget version: ||')
-        return
+        app_version=$(eval "$APP_VERSION_CMD")
+        return 0
+    else
+        app_version='unknown'
+        return 1
     fi
-
-    return 1
 
     }
 
@@ -285,16 +355,16 @@ PullGitRepo()
             branch_switch=true
             DisplayCommitToLog "current git branch: $installed_branch, new git branch: $3"
             [[ $QPKG_NAME = nzbToMedia ]] && BackupConfig
-            ExecuteAndLog 'new git branch has been specified, so clean local repository' "cd /tmp; rm -r $QPKG_GIT_PATH"
+            DisplayRunAndLog 'new git branch has been specified, so clean local repository' "cd /tmp; rm -r $QPKG_GIT_PATH"
         fi
     fi
 
     if [[ ! -d $QPKG_GIT_PATH/.git ]]; then
-        ExecuteAndLog "clone $(FormatAsPackageName "$1") from remote repository" "cd /tmp; /opt/bin/git clone --branch $3 $DEPTH -c advice.detachedHead=false $GIT_HTTPS_URL $QPKG_GIT_PATH"
+        DisplayRunAndLog "clone $(FormatAsPackageName "$1") from remote repository" "cd /tmp; /opt/bin/git clone --branch $3 $DEPTH -c advice.detachedHead=false $GIT_HTTPS_URL $QPKG_GIT_PATH"
     else
         if IsAutoUpdate; then
             # latest effort at resolving local corruption, source: https://stackoverflow.com/a/10170195
-            ExecuteAndLog "update $(FormatAsPackageName "$1") from remote repository" "cd /tmp; /opt/bin/git -C $QPKG_GIT_PATH clean -f; /opt/bin/git -C $QPKG_GIT_PATH reset --hard origin/$3; /opt/bin/git -C $QPKG_GIT_PATH pull"
+            DisplayRunAndLog "update $(FormatAsPackageName "$1") from remote repository" "cd /tmp; /opt/bin/git -C $QPKG_GIT_PATH clean -f; /opt/bin/git -C $QPKG_GIT_PATH reset --hard origin/$3; /opt/bin/git -C $QPKG_GIT_PATH pull"
         fi
     fi
 
@@ -314,6 +384,8 @@ CleanLocalClone()
 
     # for occasions where the local repo needs to be deleted and cloned again from source.
 
+    [[ $QPKG_NAME = nzbToMedia ]] && BackupConfig
+
     CommitOperationToLog
 
     if [[ -z $QPKG_PATH || -z $QPKG_NAME ]] || IsNotSourcedOnline; then
@@ -322,26 +394,13 @@ CleanLocalClone()
     fi
 
     StopQPKG
-    ExecuteAndLog 'clean local repository' "rm -rf $QPKG_REPO_PATH"
-    [[ -d $(dirname $QPKG_REPO_PATH)/$QPKG_NAME ]] && ExecuteAndLog 'KLUDGE: remove previous local repository' "rm -r $(dirname $QPKG_REPO_PATH)/$QPKG_NAME"
-    ExecuteAndLog 'clean virtual environment' "rm -rf $VENV_PATH"
-    ExecuteAndLog 'clean PyPI cache' "rm -rf $PIP_CACHE_PATH"
+    DisplayRunAndLog 'clean local repository' "rm -rf $QPKG_REPO_PATH"
+    [[ -d $(/usr/bin/dirname $QPKG_REPO_PATH)/$QPKG_NAME ]] && DisplayRunAndLog 'KLUDGE: remove previous local repository' "rm -r $(/usr/bin/dirname $QPKG_REPO_PATH)/$QPKG_NAME"
+    DisplayRunAndLog 'clean virtual environment' "rm -rf $VENV_PATH"
+    DisplayRunAndLog 'clean PyPI cache' "rm -rf $PIP_CACHE_PATH"
     StartQPKG
 
-    }
-
-IsQNAP()
-    {
-
-    # returns 0 if this is a QNAP NAS
-
-    if [[ ! -e /etc/init.d/functions ]]; then
-        Display 'QTS functions missing (is this a QNAP NAS?)'
-        SetError
-        return 1
-    fi
-
-    return 0
+    [[ $QPKG_NAME = nzbToMedia ]] && RestoreConfig
 
     }
 
@@ -362,9 +421,9 @@ WaitForLaunchTarget()
 
     local launch_target=''
 
-    if [[ -n $INTERPRETER ]]; then
+    if [[ -n ${INTERPRETER:-} ]]; then
         launch_target=$INTERPRETER
-    elif [[ -n $DAEMON_PATHFILE ]]; then
+    elif [[ -n ${DAEMON_PATHFILE:-} ]]; then
         launch_target=$DAEMON_PATHFILE
     else
         return 0
@@ -443,7 +502,6 @@ SaveAppVersion()
     {
 
     [[ -z $APP_VERSION_STORE_PATHFILE ]] && return
-
     echo "$app_version" > "$APP_VERSION_STORE_PATHFILE"
 
     }
@@ -467,38 +525,194 @@ ViewLog()
 
     }
 
-ExecuteAndLog()
+DisplayRunAndLog()
     {
 
-    # $1 processing message
-    # $2 command(s) to run
-    # $3 'log:everything' (optional) - if specified, the processing message and successful results are recorded in the QTS system log.
-    #                                - if unspecified, only warnings/ errors are recorded in the QTS system log.
+    # Run a commandstring, log the results, and show onscreen if required
 
-    if [[ -z $1 || -z $2 ]]; then
-        SetError
-        return 1
-    fi
+    # input:
+    #   $1 = processing message
+    #   $2 = commandstring to execute
+    #   $3 = 'log:failure-only' (optional) - if specified, stdout & stderr are only recorded in the specified log if the command failed
+    #                                      - if unspecified, stdout & stderr is always recorded
 
-    local exec_msgs=''
-    local result=0
+    local -r LOG_PATHFILE=$(/bin/mktemp -p /var/log ${FUNCNAME[0]}_XXXXXX)
+    local -i result_code=0
 
     DisplayWaitCommitToLog "$1:"
-    exec_msgs=$(eval "$2" 2>&1)
-    result=$?
 
-    if [[ $result = 0 ]]; then
+    RunAndLog "$2" "$LOG_PATHFILE" "$3"
+    result_code=$?
+
+    if [[ -e $LOG_PATHFILE ]]; then
+        rm -f "$LOG_PATHFILE"
+    fi
+
+    if [[ $result_code -eq 0 ]]; then
         DisplayCommitToLog OK
         [[ $3 = log:everything ]] && CommitInfoToSysLog "$1: OK."
         return 0
     else
         DisplayCommitToLog 'failed!'
-        DisplayCommitToLog "$(FormatAsFuncMessages "$exec_msgs")"
-        DisplayCommitToLog "$(FormatAsResult $result)"
-        CommitWarnToSysLog "A problem occurred while $1. Check $(FormatAsFileName "$SERVICE_LOG_PATHFILE") for more details."
+        return 1
+    fi
+
+    }
+
+RunAndLog()
+    {
+
+    # Run a commandstring, log the results, and show onscreen if required
+
+    # input:
+    #   $1 = commandstring to execute
+    #   $2 = pathfile to record stdout and stderr for commandstring
+    #   $3 = 'log:failure-only' (optional) - if specified, stdout & stderr are only recorded in the specified log if the command failed
+    #                                      - if unspecified, stdout & stderr is always recorded
+    #   $4 = e.g. '10' (optional) - an additional acceptable result code. Any other result from command (other than zero) will be considered a failure
+
+    # output:
+    #   stdout = commandstring stdout and stderr if script is in 'debug' mode
+    #   pathfile ($2) = commandstring ($1) stdout and stderr
+    #   $? = result_code of commandstring
+
+    local -r LOG_PATHFILE=$(/bin/mktemp -p /var/log ${FUNCNAME[0]}_XXXXXX)
+    local -i result_code=0
+
+    FormatAsCommand "${1:?empty}" > "${2:?empty}"
+
+    if IsDebug; then
+        Display
+        Display "exec: '$1'"
+        eval "$1" > >(/usr/bin/tee "$LOG_PATHFILE") 2>&1   # NOTE: 'tee' buffers stdout here
+        result_code=$?
+    else
+        eval "$1" > "$LOG_PATHFILE" 2>&1
+        result_code=$?
+    fi
+
+    if [[ -e $LOG_PATHFILE ]]; then
+        FormatAsResultAndStdout "$result_code" "$(<"$LOG_PATHFILE")" >> "$2"
+        rm -f "$LOG_PATHFILE"
+    else
+        FormatAsResultAndStdout "$result_code" '<null>' >> "$2"
+    fi
+
+    if [[ $result_code -eq 0 ]]; then
+        [[ ${3:-} != log:failure-only ]] && AddFileToDebug "$2"
+    else
+        [[ $result_code -ne ${4:-} ]] && AddFileToDebug "$2"
+    fi
+
+    return $result_code
+
+    }
+
+AddFileToDebug()
+    {
+
+    # Add the contents of specified pathfile $1 to the runtime log
+
+    local debug_was_set=false
+    local linebuff=''
+
+    if IsDebug; then      # prevent external log contents appearing onscreen again, as they have already been seen "live"
+        debug_was_set=true
+        UnsetDebug
+    fi
+
+    DebugAsLog ''
+    DebugAsLog 'adding external log to main log ...'
+    DebugExtLogMinorSeparator
+    DebugAsLog "$(FormatAsLogFilename "${1:?no filename supplied}")"
+
+    while read -r linebuff; do
+        DebugAsLog "$linebuff"
+    done < "$1"
+
+    DebugExtLogMinorSeparator
+    [[ $debug_was_set = true ]] && SetDebug
+
+    }
+
+DebugExtLogMinorSeparator()
+    {
+
+    DebugAsLog "$(eval printf '%0.s-' "{1..$DEBUG_LOG_DATAWIDTH}")" # 'seq' is unavailable in QTS, so must resort to 'eval' trickery instead
+
+    }
+
+DebugAsLog()
+    {
+
+    DebugThis "(LL) ${1:-}"
+
+    }
+
+DebugThis()
+    {
+
+    IsDebug && Display "${1:-}"
+    WriteAsDebug "${1:-}"
+
+    }
+
+WriteAsDebug()
+    {
+
+    WriteToLog dbug "${1:-}"
+
+    }
+
+WriteToLog()
+    {
+
+    # input:
+    #   $1 = pass/fail
+    #   $2 = message
+
+    printf "%-4s: %s\n" "$(StripANSI "${1:-}")" "$(StripANSI "${2:-}")" >> "$SERVICE_LOG_PATHFILE"
+
+    }
+
+StripANSI()
+    {
+
+    # QTS 4.2.6 BusyBox 'sed' doesn't fully support extended regexes, so this only works with a real 'sed'
+
+    if [[ -e /opt/bin/sed ]]; then
+        /opt/bin/sed -r 's/\x1b\[[0-9;]*m//g' <<< "${1:-}"
+    else
+        echo "${1:-}"           # can't strip, so pass thru original message unaltered
+    fi
+
+    }
+
+IsQNAP()
+    {
+
+    # returns 0 if this is a QNAP NAS
+
+    if [[ ! -e /etc/init.d/functions ]]; then
+        Display 'QTS functions missing (is this a QNAP NAS?)'
         SetError
         return 1
     fi
+
+    return 0
+
+    }
+
+IsQPKGInstalled()
+    {
+
+    # input:
+    #   $1 = package name to check
+
+    # output:
+    #   $? = 0 (true) or 1 (false)
+
+    /bin/grep -q "^\[${1:?no package name supplied}\]" /etc/config/qpkg.conf
 
     }
 
@@ -604,106 +818,6 @@ IsNotSysFilePresent()
     # $1 = pathfile to check
 
     ! IsSysFilePresent "$1"
-
-    }
-
-IsPortAvailable()
-    {
-
-    # $1 = port to check
-    # $? = 0 if available
-    # $? = 1 if already used
-
-    [[ -z $1 || $1 -eq 0 ]] && return
-
-    if (/usr/sbin/lsof -i :"$1" -sTCP:LISTEN >/dev/null 2>&1); then
-        return 1
-    else
-        return 0
-    fi
-
-    }
-
-IsNotPortAvailable()
-    {
-
-    # $1 = port to check
-    # $? = 1 if available
-    # $? = 0 if already used
-
-    ! IsPortAvailable "$1"
-
-    }
-
-IsPortResponds()
-    {
-
-    # $1 = port to check
-    # $? = 0 if response received
-    # $? = 1 if not OK
-
-    if [[ -z $1 || $1 -eq 0 ]]; then
-        SetError
-        return 1
-    fi
-
-    local acc=0
-
-    DisplayWaitCommitToLog "check for UI port $1 response:"
-    DisplayWait "(no-more than $PORT_CHECK_TIMEOUT seconds):"
-
-    while ! /sbin/curl --silent --fail --max-time 1 http://localhost:"$1" >/dev/null; do
-        sleep 1
-        ((acc+=2))
-        DisplayWait "$acc,"
-
-        if [[ $acc -ge $PORT_CHECK_TIMEOUT ]]; then
-            DisplayCommitToLog 'failed!'
-            CommitErrToSysLog "UI port $1 failed to respond after $acc seconds"
-            return 1
-        fi
-    done
-
-    Display OK
-    CommitLog "UI port responded after $acc seconds"
-
-    return 0
-
-    }
-
-IsPortSecureResponds()
-    {
-
-    # $1 = port to check
-    # $? = 0 if response received
-    # $? = 1 if not OK or port unspecified
-
-    if [[ -z $1 || $1 -eq 0 ]]; then
-        SetError
-        return 1
-    fi
-
-    local acc=0
-
-    DisplayWaitCommitToLog "check for secure UI port $1 response:"
-    DisplayWait "(no-more than $PORT_CHECK_TIMEOUT seconds):"
-
-    while ! /sbin/curl --silent --insecure --fail --max-time 1 https://localhost:"$1" >/dev/null; do
-        sleep 1
-        ((acc+=2))
-        DisplayWait "$acc,"
-
-        if [[ $acc -ge $PORT_CHECK_TIMEOUT ]]; then
-            DisplayCommitToLog 'failed!'
-            CommitErrToSysLog "secure UI port $1 failed to respond after $acc seconds"
-            return 1
-        fi
-    done
-
-    Display OK
-    CommitLog "secure UI port responded after $acc seconds"
-
-    return 0
 
     }
 
@@ -813,6 +927,34 @@ IsNotRestartPending()
     {
 
     [[ $_restart_pending_flag = false ]]
+
+    }
+
+SetDebug()
+    {
+
+    debug=true
+
+    }
+
+UnsetDebug()
+    {
+
+    debug=false
+
+    }
+
+IsDebug()
+    {
+
+    [[ $debug = 'true' ]]
+
+    }
+
+IsNotDebug()
+    {
+
+    ! IsDebug
 
     }
 
@@ -947,6 +1089,20 @@ DisplayWaitCommitToLog()
 
     }
 
+FormatAsLogFilename()
+    {
+
+    echo "= log file: '$1'"
+
+    }
+
+FormatAsCommand()
+    {
+
+    Display "command: '$1'"
+
+    }
+
 FormatAsStdout()
     {
 
@@ -961,11 +1117,26 @@ FormatAsResult()
 
     }
 
+FormatAsResultAndStdout()
+    {
+
+    if [[ ${1:-0} -eq 0 ]]; then
+        echo "= result_code: $(FormatAsExitcode "$1") ***** stdout/stderr begins below *****"
+    else
+        echo "! result_code: $(FormatAsExitcode "$1") ***** stdout/stderr begins below *****"
+    fi
+
+    echo "${2:-null}"
+    echo '= ***** stdout/stderr is complete *****'
+
+    }
+
 FormatAsFuncMessages()
     {
 
     echo "= ${FUNCNAME[1]}()"
-    FormatAsStdout "$1"
+    FormatAsCommand "$1"
+    FormatAsStdout "$2"
 
     }
 
@@ -1211,16 +1382,10 @@ if IsNotError; then
                 ShowHelp
             fi
             ;;
-        c|-c|clean|--clean)
+        clean|--clean)
             if IsSourcedOnline; then
                 SetServiceOperation cleaning
-
-                if [[ $QPKG_NAME = nzbToMedia ]]; then
-                    # nzbToMedia stores the config file in the repo location, so save it and restore again after new clone is complete
-                    BackupConfig && CleanLocalClone && RestoreConfig
-                else
-                    CleanLocalClone
-                fi
+                CleanLocalClone
             else
                 SetServiceOperation none
                 ShowHelp
