@@ -20,7 +20,7 @@ Init()
 
     # specific environment
     readonly QPKG_NAME=SABnzbd
-    readonly SCRIPT_VERSION=221219
+    readonly SCRIPT_VERSION=221219b
 
     # general environment
     readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -64,9 +64,11 @@ Init()
     readonly SECURE_PORT_ENABLED_CMD="/sbin/getcfg misc enable_https -d 0 -f $QPKG_INI_PATHFILE"
     readonly UI_LISTENING_ADDRESS_CMD="/sbin/getcfg misc host -d '0.0.0.0' -f $QPKG_INI_PATHFILE"
 
+    # general environment
     ui_port=0
     ui_port_secure=0
     ui_listening_address=''
+    readonly APP_VERSION_CMD="/bin/grep '__version__ =' $APP_VERSION_PATHFILE | /bin/sed 's|^.*\"\(.*\)\"|\1|'"
 
     # Entware binaries only
     readonly ORIG_DAEMON_SERVICE_SCRIPT=''
@@ -253,6 +255,7 @@ InstallAddons()
     local pip_conf_pathfile=$VENV_PATH/pip.conf
     local new_env=false
     local sys_packages=' --system-site-packages'
+    local no_pips_installed=true
 
     [[ $ALLOW_ACCESS_TO_SYS_PACKAGES != true ]] && sys_packages=''
 
@@ -277,12 +280,19 @@ InstallAddons()
 
     if [[ -e $requirements_pathfile ]]; then
         DisplayRunAndLog 'install required PyPI modules' ". $VENV_PATH/bin/activate && pip install --no-input -r $requirements_pathfile" log:everything || SetError
+        no_pips_installed=false
     fi
 
     [[ ! -e $recommended_pathfile && -e $default_recommended_pathfile ]] && recommended_pathfile=$default_recommended_pathfile
 
     if [[ -e $recommended_pathfile ]]; then
         DisplayRunAndLog 'install recommended PyPI modules' ". $VENV_PATH/bin/activate && pip install --no-input -r $recommended_pathfile" log:everything || SetError
+        no_pips_installed=false
+    fi
+
+    if [[ $no_pips_installed = true ]]; then        # fallback to general installation method
+        DisplayRunAndLog 'install default PyPI modules' ". $VENV_PATH/bin/activate && pip install --no-input $QPKG_REPO_PATH" log:everything || SetError
+        no_pips_installed=false
     fi
 
     if [[ $QPKG_NAME = SABnzbd && $new_env = true ]]; then
@@ -380,17 +390,13 @@ LoadAppVersion()
     # creates a global var: $app_version
     # this is the installed application version (not the QPKG version)
 
-    app_version=''
-
     if [[ -n $APP_VERSION_PATHFILE && -e $APP_VERSION_PATHFILE ]]; then
-        app_version=$(/bin/grep '__version__ =' "$APP_VERSION_PATHFILE" | /bin/sed 's|^.*"\(.*\)"|\1|')
-        return
-    elif [[ -n $DAEMON_PATHFILE && -e $DAEMON_PATHFILE ]]; then
-        app_version=$($DAEMON_PATHFILE --version 2>&1 | /bin/sed 's|nzbget version: ||')
-        return
+        app_version=$(eval "$APP_VERSION_CMD")
+        return 0
+    else
+        app_version='unknown'
+        return 1
     fi
-
-    return 1
 
     }
 
@@ -497,8 +503,6 @@ CleanLocalClone()
 
     # for occasions where the local repo needs to be deleted and cloned again from source.
 
-    [[ $QPKG_NAME = nzbToMedia ]] && BackupConfig
-
     CommitOperationToLog
 
     if [[ -z $QPKG_PATH || -z $QPKG_NAME ]] || IsNotSourcedOnline; then
@@ -512,8 +516,6 @@ CleanLocalClone()
     DisplayRunAndLog 'clean virtual environment' "rm -rf $VENV_PATH"
     DisplayRunAndLog 'clean PyPI cache' "rm -rf $PIP_CACHE_PATH"
     StartQPKG
-
-    [[ $QPKG_NAME = nzbToMedia ]] && RestoreConfig
 
     }
 
