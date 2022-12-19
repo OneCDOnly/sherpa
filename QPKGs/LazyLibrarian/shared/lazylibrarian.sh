@@ -18,9 +18,9 @@ Init()
 
     IsQNAP || return
 
-    # specific environment
+    # service-script environment
     readonly QPKG_NAME=LazyLibrarian
-    readonly SCRIPT_VERSION=221219b
+    readonly SCRIPT_VERSION=221220
 
     # general environment
     readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -34,27 +34,23 @@ Init()
     readonly BACKUP_PATHFILE=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
     readonly OPKG_PATH=/opt/bin:/opt/sbin
     export PATH="$OPKG_PATH:$(/bin/sed "s|$OPKG_PATH||" <<< "$PATH")"
-    readonly APPARENT_PATH=/share/$(/sbin/getcfg SHARE_DEF defDownload -d Qdownload -f /etc/config/def_share.info)/$QPKG_NAME
     readonly DEBUG_LOG_DATAWIDTH=100
     local re=''
 
     # specific to online-sourced applications only
     readonly SOURCE_GIT_URL=https://gitlab.com/LazyLibrarian/LazyLibrarian.git
     readonly SOURCE_GIT_BRANCH=master
-    readonly SOURCE_GIT_DEPTH=shallow     # 'shallow' (depth 1) or 'single-branch' - note: 'shallow' implies a 'single-branch' too
-    readonly TARGET_SCRIPT=LazyLibrarian.py
-
-    # general online-sourced applications only
+    # 'shallow' (depth 1) or 'single-branch' ... 'shallow' implies 'single-branch'
+    readonly SOURCE_GIT_DEPTH=shallow
     readonly QPKG_REPO_PATH=$QPKG_PATH/repo-cache
     readonly PIP_CACHE_PATH=$QPKG_PATH/pip-cache
     readonly INTERPRETER=/opt/bin/python3
     readonly VENV_PATH=$QPKG_PATH/venv
     readonly VENV_INTERPRETER=$VENV_PATH/bin/python3
     readonly ALLOW_ACCESS_TO_SYS_PACKAGES=true
-    readonly APP_VERSION_PATHFILE=$QPKG_REPO_PATH/lazylibrarian/version.py
-    readonly DAEMON_PATHFILE=$QPKG_REPO_PATH/$TARGET_SCRIPT
 
-    # daemonised applications only
+    # specific to daemonised applications only
+    readonly DAEMON_PATHFILE=$QPKG_REPO_PATH/LazyLibrarian.py
     readonly DAEMON_PID_PATHFILE=/var/run/$QPKG_NAME.pid
     readonly LAUNCHER="$DAEMON_PATHFILE --daemon --nolaunch --datadir $(/usr/bin/dirname "$QPKG_INI_PATHFILE") --config $QPKG_INI_PATHFILE --pidfile $DAEMON_PID_PATHFILE"
     readonly PORT_CHECK_TIMEOUT=120
@@ -63,19 +59,13 @@ Init()
     readonly UI_PORT_SECURE_CMD="/sbin/getcfg general http_port -d 5299 -f $QPKG_INI_PATHFILE"
     readonly SECURE_PORT_ENABLED_CMD="/sbin/getcfg general https_enabled -d 0 -f $QPKG_INI_PATHFILE"
     readonly UI_LISTENING_ADDRESS_CMD="/sbin/getcfg general http_host -d '0.0.0.0' -f $QPKG_INI_PATHFILE"
-
-    # general environment
     ui_port=0
     ui_port_secure=0
     ui_listening_address=''
+
+    # specific to applications supporting version lookup only
+    readonly APP_VERSION_PATHFILE=$QPKG_REPO_PATH/lazylibrarian/version.py
     readonly APP_VERSION_CMD="/bin/grep '__version__ =' $APP_VERSION_PATHFILE | /bin/sed 's|^.*\"\(.*\)\"|\1|'"
-
-    # Entware binaries only
-    readonly ORIG_DAEMON_SERVICE_SCRIPT=''
-
-    # local mods only
-    local -r TARGET_SERVICE_PATHFILE=''
-    readonly BACKUP_SERVICE_PATHFILE=$TARGET_SERVICE_PATHFILE.bak
 
     if [[ -z $LANG ]]; then
         export LANG=en_US.UTF-8
@@ -87,7 +77,6 @@ Init()
     UnsetError
     UnsetRestartPending
     EnsureConfigFileExists
-    DisableOpkgDaemonStart
     LoadAppVersion
 
     for re in \\bd\\b \\bdebug\\b \\bdbug\\b \\bverbose\\b; do
@@ -153,7 +142,6 @@ StartQPKG()
     InstallAddons || return
 
     IsNotDaemon && return
-
     WaitForLaunchTarget || return
     EnsureConfigFileExists
     LoadUIPorts app || return
@@ -421,16 +409,6 @@ StatusQPKG()
     fi
 
     return 0
-
-    }
-
-DisableOpkgDaemonStart()
-    {
-
-    if [[ -n $ORIG_DAEMON_SERVICE_SCRIPT && -x $ORIG_DAEMON_SERVICE_SCRIPT ]]; then
-        $ORIG_DAEMON_SERVICE_SCRIPT stop        # stop default daemon
-        chmod -x "$ORIG_DAEMON_SERVICE_SCRIPT"  # ... and ensure Entware doesn't re-launch it on startup
-    fi
 
     }
 
@@ -913,7 +891,7 @@ IsNotQPKGEnabled()
 IsSupportBackup()
     {
 
-    [[ -n $BACKUP_PATHFILE ]]
+    [[ -n ${BACKUP_PATHFILE:-} ]]
 
     }
 
@@ -927,7 +905,7 @@ IsNotSupportBackup()
 IsSupportReset()
     {
 
-    [[ -n $QPKG_INI_PATHFILE ]]
+    [[ -n ${QPKG_INI_PATHFILE:-} ]]
 
     }
 
@@ -941,7 +919,7 @@ IsNotSupportReset()
 IsSourcedOnline()
     {
 
-    [[ -n $SOURCE_GIT_URL ]]
+    [[ -n ${SOURCE_GIT_URL:-} ]]
 
     }
 
@@ -959,30 +937,10 @@ IsNotSSLEnabled()
 
     }
 
-IsPackageActive()
-    {
-
-    if [[ -e $BACKUP_SERVICE_PATHFILE ]]; then
-        DisplayCommitToLog 'package: IS active'
-        return
-    fi
-
-    DisplayCommitToLog 'package: NOT active'
-    return 1
-
-    }
-
-IsNotPackageActive()
-    {
-
-    ! IsPackageActive
-
-    }
-
 IsDaemon()
     {
 
-    [[ -n $DAEMON_PID_PATHFILE ]]
+    [[ -n ${DAEMON_PID_PATHFILE:-} ]]
 
     }
 
