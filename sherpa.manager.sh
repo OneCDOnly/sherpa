@@ -7,7 +7,7 @@
 #
 # Description:
 #   This is the management script for the sherpa mini-package-manager.
-#   It's automatically downloaded via the 'sherpa.loader.sh' script in the 'sherpa' QPKG no-more than once per 24 hours.
+#   Its automatically downloaded via the 'sherpa.loader.sh' script in the 'sherpa' QPKG no-more than once per 24 hours.
 #
 # Project:
 #   https://git.io/sherpa
@@ -36,7 +36,7 @@
 #   background functions: _CamelCaseWithLeadingAndTrailingUnderscores_
 #              variables: lowercase_with_inline_underscores
 #       "object" methods: Capitalised.CamelCase.With.Inline.Periods
-#    "object" properties: _lowercase_with_leading_and_inline_and_trailing_underscores_ (these should ONLY be managed via the object's methods)
+#    "object" properties: _lowercase_with_leading_and_inline_and_trailing_underscores_ (these should ONLY be managed via the objects methods)
 #              constants: UPPERCASE_WITH_INLINE_UNDERSCORES (also set as readonly)
 #                indents: 1 x tab (converted to 4 x spaces to suit GitHub web-display)
 #
@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VER=221218-beta
+    local -r SCRIPT_VER=221220-beta
     readonly PROJECT_BRANCH=main
 
     IsQNAP || return
@@ -113,7 +113,7 @@ Self.Init()
     IsSysFileExist $SETCFG_CMD || return
 
     [[ ! -e $SORT_CMD ]] && ln -s /bin/busybox "$SORT_CMD"  # KLUDGE: 'sort' randomly goes missing from QTS
-    [[ ! -e /dev/fd ]] && ln -s /proc/self/fd /dev/fd       # KLUDGE: '/dev/fd' isn't always created by QTS during startup
+    [[ ! -e /dev/fd ]] && ln -s /proc/self/fd /dev/fd       # KLUDGE: '/dev/fd' isnt always created by QTS during startup
 
     IsSysFileExist $BASENAME_CMD || return
     IsSysFileExist $DIRNAME_CMD || return
@@ -274,7 +274,7 @@ Self.Init()
     [[ ${NAS_FIRMWARE_VER//.} -lt 426 ]] && curl_insecure_arg=' --insecure' || curl_insecure_arg=''
     QPKG.IsInstalled Entware && [[ $ENTWARE_VER = none ]] && DebugAsWarn "$(FormatAsPackageName Entware) appears to be installed but is not visible"
 
-    # speedup: don't build package lists if only showing basic help
+    # speedup: dont build package lists if only showing basic help
     if [[ -z $USER_ARGS_RAW ]]; then
         Opts.Help.Basic.Set
         QPKGs.SkProc.Set
@@ -333,7 +333,7 @@ Environment.Log()
         DebugFirmwareWarning version "$NAS_FIRMWARE_VER"
     fi
 
-    if [[ $NAS_FIRMWARE_DATE -lt 20201015 || $NAS_FIRMWARE_DATE -gt 20201020 ]]; then   # QTS builds released over these 6 days don't allow unsigned QPKGs to run at-all
+    if [[ $NAS_FIRMWARE_DATE -lt 20201015 || $NAS_FIRMWARE_DATE -gt 20201020 ]]; then   # QTS builds released over these 6 days dont allow unsigned QPKGs to run at-all
         DebugFirmwareOK 'build date' "$NAS_FIRMWARE_DATE"
     else
         DebugFirmwareWarning 'build date' "$NAS_FIRMWARE_DATE"
@@ -400,7 +400,7 @@ Self.Validate()
     {
 
     # This function handles most of the high-level logic for package actions.
-    # If a package isn't being processed by the correct action, odds-are it's due to a logic error in this function.
+    # If a package isnt being processed by the correct action, odds-are its due to a logic error in this function.
 
     QPKGs.SkProc.IsSet && return
     DebugFuncEntry
@@ -470,6 +470,7 @@ Self.Validate()
         fi
     fi
 
+    QPKGs.IsSupportDebug.Build
     QPKGs.IsSupportBackup.Build
     QPKGs.IsSupportUpdateOnRestart.Build
     ApplySensibleExceptions
@@ -988,7 +989,7 @@ ParseArguments()
                 QPKGs.SkProc.Set
         esac
 
-        # identify scope in two stages: first stage for when user didn't supply an action. Second is after an action has been defined.
+        # identify scope in two stages: first stage for when user didnt supply an action. Second is after an action has been defined.
 
         # stage 1
         if [[ -z $action ]]; then
@@ -1906,7 +1907,7 @@ UpdateEntwarePackageList()
     local -r LOG_PATHFILE=$LOGS_PATH/entware.$UPDATE_LOG_FILE
     local -i result_code=0
 
-    # if Entware package list was recently updated, don't update again.
+    # if Entware package list was recently updated, dont update again.
 
     if ! IsThisFileRecent "$EXTERNAL_PACKAGES_ARCHIVE_PATHFILE" "$CHANGE_THRESHOLD_MINUTES" || [[ ! -f $EXTERNAL_PACKAGES_ARCHIVE_PATHFILE ]] || Opts.Deps.Check.IsSet; then
         DebugAsProc "updating $(FormatAsPackageName Entware) package list"
@@ -1942,7 +1943,7 @@ IsThisFileRecent()
     # output:
     #   $? = true/false
 
-    # examine 'change' time as this is updated even if file content isn't modified
+    # examine 'change' time as this is updated even if file content isnt modified
     if [[ -e $1 && -e $GNU_FIND_CMD ]]; then
         if [[ -z $($GNU_FIND_CMD "$1" -cmin +${2:-1440}) ]]; then        # no-output if last 'change' was less than $2 minutes ago
             return 0
@@ -2030,7 +2031,7 @@ CalcIPKGsDepsToInstall()
         for element in $pre_exclude_list; do
             # KLUDGE: silently exclude these from attempted installation:
             # KLUDGE: 'ca-certs' appears to be a bogus meta-package.
-            # KLUDGE: 'python3-gdbm' is not available, but can be requested as per https://forum.qnap.com/viewtopic.php?p=806031#p806031 (don't know why).
+            # KLUDGE: 'python3-gdbm' is not available, but can be requested as per https://forum.qnap.com/viewtopic.php?p=806031#p806031 (dont know why).
             if [[ $element != 'ca-certs' && $element != 'python3-gdbm' ]]; then
                 # KLUDGE: 'libjpeg' appears to have been replaced by 'libjpeg-turbo', but many packages still list 'libjpeg' as a dependency, so replace it with 'libjpeg-turbo'.
                 if [[ $element != 'libjpeg' ]]; then
@@ -2308,7 +2309,7 @@ _MonitorDirSize_()
         fi
 
         percent="$((200*(current_bytes)/(total_bytes)%2+100*(current_bytes)/(total_bytes)))%"
-        [[ $current_bytes -lt $total_bytes && $percent = '100%' ]] && percent='99%' # ensure we don't hit 100% until the last byte is downloaded
+        [[ $current_bytes -lt $total_bytes && $percent = '100%' ]] && percent='99%' # ensure we dont hit 100% until the last byte is downloaded
         progress_message="$percent ($(FormatAsISOBytes "$current_bytes")/$(FormatAsISOBytes "$total_bytes"))"
 
         if [[ $stall_seconds -ge $stall_seconds_threshold ]]; then
@@ -3214,7 +3215,7 @@ ExtractPreviousSessionFromTail()
     local -i start_line=0
     local -i end_line=0
     local -i old_session=1
-    local -i old_session_limit=12   # don't try to find 'started:' any further back than this many sessions
+    local -i old_session_limit=12   # dont try to find 'started:' any further back than this many sessions
 
     ExtractTailFromLog
 
@@ -3393,7 +3394,7 @@ QPKGs.States.List()
             elif [[ $prefix = IsNt && $state = BackedUp ]]; then
                 QPKGs.${prefix}${state}.IsAny && DebugQPKGWarning "${prefix}${state}" "($(QPKGs.${prefix}${state}.Count)) $(QPKGs.${prefix}${state}.ListCSV) "
             elif [[ $prefix = IsNt && $state = Installed ]]; then
-                # don't log packages that haven't been installed - it pollutes the runtime log
+                # dont log packages that havent been installed - it pollutes the runtime log
                 :
             else
                 QPKGs.${prefix}${state}.IsAny && DebugQPKGInfo "${prefix}${state}" "($(QPKGs.${prefix}${state}.Count)) $(QPKGs.${prefix}${state}.ListCSV) "
@@ -3420,7 +3421,7 @@ QPKGs.StandaloneDependent.Build()
     # there are three tiers of package: 'standalone', 'addon' and 'dependent'
     # ... but only two tiers of QPKG: 'standalone' and 'dependent'
 
-    # 'standalone' QPKGs don't depend on other QPKGs, but may be required for other QPKGs. They should be installed/started before any 'dependent' QPKGs.
+    # 'standalone' QPKGs dont depend on other QPKGs, but may be required for other QPKGs. They should be installed/started before any 'dependent' QPKGs.
     # 'dependent' QPKGs depend on other QPKGs. They should be installed/started after all 'standalone' QPKGs.
 
     local -i index=0
@@ -3543,10 +3544,33 @@ QPKGs.States.Build()
 
     }
 
+QPKGs.IsSupportDebug.Build()
+    {
+
+    # Build a list of QPKGs that do and dont support 'debug' as an argument
+
+    DebugFuncEntry
+
+    local package=''
+
+    for package in $(QPKGs.ScAll.Array); do
+        if QPKG.IsSupportDebug "$package"; then
+            QPKGs.ScSupportDebug.Add "$package"
+            QPKGs.ScNtSupportDebug.Remove "$package"
+        else
+            QPKGs.ScNtSupportDebug.Add "$package"
+            QPKGs.ScSupportDebug.Remove "$package"
+        fi
+    done
+
+    DebugFuncExit
+
+    }
+
 QPKGs.IsSupportBackup.Build()
     {
 
-    # Builds a list of QPKGs that do and don't support 'backup' and 'restore' actions
+    # Build a list of QPKGs that do and dont support 'backup' and 'restore' actions
 
     DebugFuncEntry
 
@@ -3569,8 +3593,8 @@ QPKGs.IsSupportBackup.Build()
 QPKGs.IsSupportUpdateOnRestart.Build()
     {
 
-    # Builds a list of QPKGs that do and don't support application updating on QPKG restart
-    # these packages also do and don't support 'clean' actions
+    # Build a list of QPKGs that do and dont support application updating on QPKG restart
+    # these packages also do and dont support 'clean' actions
 
     DebugFuncEntry
 
@@ -4061,7 +4085,7 @@ ModPathToEntware()
 GetCPUInfo()
     {
 
-    # QTS 4.5.1 & BusyBox 1.01 don't support '-m' option for 'grep', so extract first mention the hard way with 'head'
+    # QTS 4.5.1 & BusyBox 1.01 dont support '-m' option for 'grep', so extract first mention the hard way with 'head'
 
     if $GREP_CMD -q '^model name' /proc/cpuinfo; then
         $GREP_CMD '^model name' /proc/cpuinfo | $HEAD_CMD -n1 | $SED_CMD 's|^.*: ||'
@@ -5142,7 +5166,7 @@ QPKG.ClearAppCenterNotifier()
 
     QPKGs.IsNtInstalled.Exist "$PACKAGE_NAME" && return 0
 
-    # KLUDGE: need this for 'Entware' and 'Par2' packages as they don't add a status line to qpkg.conf
+    # KLUDGE: need this for 'Entware' and 'Par2' packages as they dont add a status line to qpkg.conf
     $SETCFG_CMD "$PACKAGE_NAME" Status complete -f /etc/config/qpkg.conf
 
     return 0
@@ -5296,10 +5320,37 @@ QPKG.StoreID()
 
     }
 
+QPKG.IsSupportDebug()
+    {
+
+    # does this QPKG service-script support 'debug' as an argument?
+
+    # input:
+    #   $1 = QPKG name
+
+    # output:
+    #   $? = 0 if true, 1 if false
+
+    local -i index=0
+
+    for index in "${!QPKG_NAME[@]}"; do
+        if [[ ${QPKG_NAME[$index]} = "${1:?no package name supplied}" ]]; then
+            if ${QPKG_SUPPORTS_DEBUG[$index]}; then
+                return 0
+            else
+                break
+            fi
+        fi
+    done
+
+    return 1
+
+    }
+
 QPKG.IsSupportBackup()
     {
 
-    # does this QPKG support 'backup' and 'restore' actions?
+    # does this QPKG service-script support 'backup' and 'restore' actions?
 
     # input:
     #   $1 = QPKG name
@@ -5326,7 +5377,7 @@ QPKG.IsSupportBackup()
 QPKG.IsSupportUpdateOnRestart()
     {
 
-    # does this QPKG support updating the internal application when the QPKG is restarted?
+    # does this QPKG service-script support updating the internal application when the QPKG is restarted?
 
     # input:
     #   $1 = QPKG name
@@ -6056,7 +6107,7 @@ DebugErrorTabulated()
 DebugVar()
     {
 
-    # had to split this onto its own line so Kate editor wouldn't choke when highlighting syntax
+    # had to split this onto its own line so Kate editor wouldnt choke when highlighting syntax
     local temp=${!1}
 
     DebugAsVar "\$$1 : '$temp'"
@@ -6182,7 +6233,7 @@ AddFileToDebug()
     DebugAsLog 'adding external log to main log ...'
     DebugExtLogMinorSeparator
 
-    if Self.Debug.ToScreen.IsSet; then      # prevent external log contents appearing onscreen again - it's already been seen "live"
+    if Self.Debug.ToScreen.IsSet; then      # prevent external log contents appearing onscreen again - its already been seen "live"
         screen_debug=true
         Self.Debug.ToScreen.UnSet
     fi
@@ -6596,12 +6647,12 @@ ColourReset()
 StripANSI()
     {
 
-    # QTS 4.2.6 BusyBox 'sed' doesn't fully support extended regexes, so this only works with a real 'sed'
+    # QTS 4.2.6 BusyBox 'sed' doesnt fully support extended regexes, so this only works with a real 'sed'
 
     if [[ -e ${GNU_SED_CMD:-} ]]; then
         $GNU_SED_CMD -r 's/\x1b\[[0-9;]*m//g' <<< "${1:-}"
     else
-        echo "${1:-}"           # can't strip, so pass thru original message unaltered
+        echo "${1:-}"           # cant strip, so pass thru original message unaltered
     fi
 
     }
@@ -6727,6 +6778,7 @@ Packages.Load()
         readonly QPKG_IPKGS_INSTALL
         readonly QPKG_SUPPORTS_BACKUP
         readonly QPKG_RESTART_TO_UPDATE
+        readonly QPKG_SUPPORTS_DEBUG
 
     QPKGs.Loaded.Set
     DebugScript version "packages: ${PACKAGES_VER:-unknown}"
