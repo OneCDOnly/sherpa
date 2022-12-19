@@ -234,7 +234,7 @@ StopQPKG()
             Display OK
             CommitLog "stopped OK in $acc seconds"
 
-            CommitInfoToSysLog "stop daemon: OK."
+            CommitInfoToSysLog 'stop daemon: OK.'
             break
         done
 
@@ -538,9 +538,9 @@ WaitForLaunchTarget()
 
     local launch_target=''
 
-    if [[ -n $INTERPRETER ]]; then
+    if [[ -n ${INTERPRETER:-} ]]; then
         launch_target=$INTERPRETER
-    elif [[ -n $DAEMON_PATHFILE ]]; then
+    elif [[ -n ${DAEMON_PATHFILE:-} ]]; then
         launch_target=$DAEMON_PATHFILE
     else
         return 0
