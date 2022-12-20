@@ -79,17 +79,17 @@ Init()
         UnsetDebug
     fi
 
-    UnsetError
-    UnsetRestartPending
-    EnsureConfigFileExists
-    LoadAppVersion
-
     for re in \\bd\\b \\bdebug\\b \\bdbug\\b \\bverbose\\b; do
         if [[ $USER_ARGS_RAW =~ $re ]]; then
             SetDebug
             break
         fi
     done
+
+    UnsetError
+    UnsetRestartPending
+    EnsureConfigFileExists
+    LoadAppVersion
 
     IsSupportBackup && [[ -n $BACKUP_PATH && ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
     [[ -n $VENV_PATH && ! -d $VENV_PATH ]] && mkdir -p "$VENV_PATH"

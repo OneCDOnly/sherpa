@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VER=221220a-beta
+    local -r SCRIPT_VER=221221-beta
     readonly PROJECT_BRANCH=main
 
     IsQNAP || return
@@ -4470,6 +4470,7 @@ QPKG.Install()
     local -r PACKAGE_NAME=${1:?no package name supplied}
     local -i result_code=0
     local action=install
+    local debug_cmd=''
 
     if QPKGs.IsInstalled.Exist "$PACKAGE_NAME"; then
         MarkActionAsSkipped show "$PACKAGE_NAME" "$action" "it's already installed - use 'reinstall' instead"
@@ -4514,8 +4515,9 @@ QPKG.Install()
     local target_path=''
 
     DebugAsProc "installing $(FormatAsPackageName "$PACKAGE_NAME")"
+    Self.Debug.ToScreen.IsSet && QPKG.IsSupportDebug "$PACKAGE_NAME" && debug_cmd='DEBUG_QPKG=true '
     [[ ${QPKGs_were_installed_name[*]:-} == *"$PACKAGE_NAME"* ]] && target_path="QINSTALL_PATH=$(QPKG.OriginalPath "$PACKAGE_NAME") "
-    RunAndLog "${target_path}$SH_CMD $local_pathfile" "$LOG_PATHFILE" log:failure-only 10
+    RunAndLog "${debug_cmd}${target_path}${SH_CMD} $local_pathfile" "$LOG_PATHFILE" log:failure-only 10
     result_code=$?
 
     if [[ $result_code -eq 0 || $result_code -eq 10 ]]; then
@@ -4651,6 +4653,7 @@ QPKG.Upgrade()
     local -r PACKAGE_NAME=${1:?no package name supplied}
     local -i result_code=0
     local action=upgrade
+    local debug_cmd=''
 
     if ! QPKGs.IsInstalled.Exist "$PACKAGE_NAME"; then
         MarkActionAsSkipped show "$PACKAGE_NAME" "$action" "it's not installed - use 'install' instead"
@@ -4687,8 +4690,9 @@ QPKG.Upgrade()
     local target_path=''
 
     DebugAsProc "upgrading $(FormatAsPackageName "$PACKAGE_NAME")"
+    Self.Debug.ToScreen.IsSet && QPKG.IsSupportDebug "$PACKAGE_NAME" && debug_cmd='DEBUG_QPKG=true '
     QPKG.IsInstalled "$PACKAGE_NAME" && target_path="QINSTALL_PATH=$($DIRNAME_CMD "$(QPKG.InstallationPath $PACKAGE_NAME)") "
-    RunAndLog "${target_path}$SH_CMD $local_pathfile" "$LOG_PATHFILE" log:failure-only 10
+    RunAndLog "${debug_cmd}${target_path}${SH_CMD} $local_pathfile" "$LOG_PATHFILE" log:failure-only 10
     result_code=$?
 
     local current_version=$(QPKG.Local.Version "$PACKAGE_NAME")
@@ -4738,6 +4742,7 @@ QPKG.Uninstall()
     local -r PACKAGE_NAME=${1:?no package name supplied}
     local -i result_code=0
     local action=uninstall
+    local debug_cmd=''
 
     if QPKGs.IsNtInstalled.Exist "$PACKAGE_NAME"; then
         MarkActionAsSkipped show "$PACKAGE_NAME" "$action" "it's not installed"
@@ -4756,7 +4761,8 @@ QPKG.Uninstall()
 
     if [[ -e $QPKG_UNINSTALLER_PATHFILE ]]; then
         DebugAsProc "uninstalling $(FormatAsPackageName "$PACKAGE_NAME")"
-        RunAndLog "$SH_CMD $QPKG_UNINSTALLER_PATHFILE" "$LOG_PATHFILE" log:failure-only
+        Self.Debug.ToScreen.IsSet && QPKG.IsSupportDebug "$PACKAGE_NAME" && debug_cmd='DEBUG_QPKG=true '
+        RunAndLog "${debug_cmd}${SH_CMD} $QPKG_UNINSTALLER_PATHFILE" "$LOG_PATHFILE" log:failure-only
         result_code=$?
 
         if [[ $result_code -eq 0 ]]; then
