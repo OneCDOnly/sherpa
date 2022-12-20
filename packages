@@ -1,4 +1,4 @@
-PACKAGES_VER=221220a
+PACKAGES_VER=221220b
 BASE_QPKG_CONFLICTS_WITH='TarMT'
 BASE_QPKG_WARNINGS='Qboost'
 BASE_IPKGS_INSTALL='ca-certificates coreutils-stty findutils gcc git git-http grep less nano sed'
@@ -508,9 +508,9 @@ QPKG_SUPPORTS_DEBUG+=(false)
 QPKG_NAME+=(OTransmission)
 QPKG_ARCH+=(all)
 QPKG_MIN_RAM_KB+=(any)
-QPKG_VERSION+=(221217)
+QPKG_VERSION+=(221220)
 QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/QPKGs/${QPKG_NAME[${#QPKG_NAME[@]}-1]}/build/${QPKG_NAME[${#QPKG_NAME[@]}-1]}_${QPKG_VERSION[${#QPKG_VERSION[@]}-1]}.qpkg)
-QPKG_MD5+=(c2e4f2c1374666e96654870e9b877d21)
+QPKG_MD5+=(2cc72863860010303961abd6526bfbd6)
 QPKG_DESC+=('lite bitorrent download manager with a simple web UI')
 QPKG_ABBRVS+=('tm tr ot trans otrans tmission transmission otransmission')
 QPKG_CONFLICTS_WITH+=('')
