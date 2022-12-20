@@ -1,4 +1,4 @@
-PACKAGES_VER=221220c
+PACKAGES_VER=221221
 BASE_QPKG_CONFLICTS_WITH='TarMT'
 BASE_QPKG_WARNINGS='Qboost'
 BASE_IPKGS_INSTALL='ca-certificates coreutils-stty findutils gcc git git-http grep less nano sed'
@@ -28,9 +28,9 @@ QPKG_SUPPORTS_DEBUG=()      # true/false: this QPKG service-script supports 'deb
 QPKG_NAME+=(ClamAV)
 QPKG_ARCH+=(all)
 QPKG_MIN_RAM_KB+=(1572864)
-QPKG_VERSION+=(221205)
+QPKG_VERSION+=(221221)
 QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/QPKGs/${QPKG_NAME[${#QPKG_NAME[@]}-1]}/build/${QPKG_NAME[${#QPKG_NAME[@]}-1]}_${QPKG_VERSION[${#QPKG_VERSION[@]}-1]}.qpkg)
-QPKG_MD5+=(fa57b765d4cc78473a94fefa065b7e57)
+QPKG_MD5+=(6dd2fde864755ad42f08366342188f26)
 QPKG_DESC+=('replacement for the QTS built-in ClamAV (requires a minimum of 1.5GiB installed RAM)')
 QPKG_ABBRVS+=('av clam clamscan freshclam clamav')
 QPKG_CONFLICTS_WITH+=('')

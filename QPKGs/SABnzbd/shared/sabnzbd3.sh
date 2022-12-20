@@ -380,7 +380,7 @@ LoadAppVersion()
     # creates a global var: $app_version
     # this is the installed application version (not the QPKG version)
 
-    if [[ -n $APP_VERSION_PATHFILE && -e $APP_VERSION_PATHFILE ]]; then
+    if [[ -n ${APP_VERSION_PATHFILE:-} && -e $APP_VERSION_PATHFILE ]]; then
         app_version=$(eval "$APP_VERSION_CMD")
         return 0
     else
