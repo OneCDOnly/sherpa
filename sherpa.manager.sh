@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VER=221220-beta
+    local -r SCRIPT_VER=221220a-beta
     readonly PROJECT_BRANCH=main
 
     IsQNAP || return
@@ -4795,6 +4795,7 @@ QPKG.Restart()
     local -r PACKAGE_NAME=${1:?no package name supplied}
     local -i result_code=0
     local action=restart
+    local debug_cmd=''
 
     QPKG.ClearServiceStatus "$PACKAGE_NAME"
 
@@ -4815,8 +4816,9 @@ QPKG.Restart()
     result_code=$?
 
     if [[ $result_code -eq 0 ]]; then
+        Self.Debug.ToScreen.IsSet && QPKG.IsSupportDebug "$PACKAGE_NAME" && debug_cmd='debug'
         DebugAsProc "restarting $(FormatAsPackageName "$PACKAGE_NAME")"
-        RunAndLog "$SH_CMD $PACKAGE_INIT_PATHFILE $action" "$LOG_PATHFILE" log:failure-only
+        RunAndLog "$PACKAGE_INIT_PATHFILE $action $debug_cmd" "$LOG_PATHFILE" log:failure-only
         result_code=$?
     fi
 
@@ -4853,6 +4855,7 @@ QPKG.Start()
     local -r PACKAGE_NAME=${1:?no package name supplied}
     local -i result_code=0
     local action=start
+    local debug_cmd=''
 
     QPKG.ClearServiceStatus "$PACKAGE_NAME"
 
@@ -4873,8 +4876,9 @@ QPKG.Start()
     result_code=$?
 
     if [[ $result_code -eq 0 ]]; then
+        Self.Debug.ToScreen.IsSet && QPKG.IsSupportDebug "$PACKAGE_NAME" && debug_cmd='debug'
         DebugAsProc "starting $(FormatAsPackageName "$PACKAGE_NAME")"
-        RunAndLog "$SH_CMD $PACKAGE_INIT_PATHFILE $action" "$LOG_PATHFILE" log:failure-only
+        RunAndLog "$PACKAGE_INIT_PATHFILE $action $debug_cmd" "$LOG_PATHFILE" log:failure-only
         result_code=$?
     fi
 
@@ -4913,6 +4917,7 @@ QPKG.Stop()
     local -r PACKAGE_NAME=${1:?no package name supplied}
     local -i result_code=0
     local action=stop
+    local debug_cmd=''
 
     QPKG.ClearServiceStatus "$PACKAGE_NAME"
 
@@ -4934,8 +4939,9 @@ QPKG.Stop()
     local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile "$PACKAGE_NAME")
     local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$STOP_LOG_FILE
 
+    Self.Debug.ToScreen.IsSet && QPKG.IsSupportDebug "$PACKAGE_NAME" && debug_cmd='debug'
     DebugAsProc "stopping $(FormatAsPackageName "$PACKAGE_NAME")"
-    RunAndLog "$SH_CMD $PACKAGE_INIT_PATHFILE $action" "$LOG_PATHFILE" log:failure-only
+    RunAndLog "$PACKAGE_INIT_PATHFILE $action $debug_cmd" "$LOG_PATHFILE" log:failure-only
     result_code=$?
 
     if [[ $result_code -eq 0 ]]; then
@@ -5021,6 +5027,7 @@ QPKG.Backup()
     local -r PACKAGE_NAME=${1:?no package name supplied}
     local -i result_code=0
     local action=backup
+    local debug_cmd=''
 
     if ! QPKG.IsSupportBackup "$PACKAGE_NAME"; then
         MarkActionAsSkipped show "$PACKAGE_NAME" "$action" "it does not support backup"
@@ -5035,8 +5042,9 @@ QPKG.Backup()
     local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile "$PACKAGE_NAME")
     local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$BACKUP_LOG_FILE
 
+    Self.Debug.ToScreen.IsSet && QPKG.IsSupportDebug "$PACKAGE_NAME" && debug_cmd='debug'
     DebugAsProc "backing-up $(FormatAsPackageName "$PACKAGE_NAME") configuration"
-    RunAndLog "$SH_CMD $PACKAGE_INIT_PATHFILE $action" "$LOG_PATHFILE" log:failure-only
+    RunAndLog "$PACKAGE_INIT_PATHFILE $action $debug_cmd" "$LOG_PATHFILE" log:failure-only
     result_code=$?
 
     if [[ $result_code -eq 0 ]]; then
@@ -5071,6 +5079,7 @@ QPKG.Restore()
     local -r PACKAGE_NAME=${1:?no package name supplied}
     local -i result_code=0
     local action=restore
+    local debug_cmd=''
 
     if ! QPKG.IsSupportBackup "$PACKAGE_NAME"; then
         MarkActionAsSkipped show "$PACKAGE_NAME" "$action" "it does not support backup"
@@ -5085,8 +5094,9 @@ QPKG.Restore()
     local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile "$PACKAGE_NAME")
     local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$RESTORE_LOG_FILE
 
+    Self.Debug.ToScreen.IsSet && QPKG.IsSupportDebug "$PACKAGE_NAME" && debug_cmd='debug'
     DebugAsProc "restoring $(FormatAsPackageName "$PACKAGE_NAME") configuration"
-    RunAndLog "$SH_CMD $PACKAGE_INIT_PATHFILE $action" "$LOG_PATHFILE" log:failure-only
+    RunAndLog "$PACKAGE_INIT_PATHFILE $action $debug_cmd" "$LOG_PATHFILE" log:failure-only
     result_code=$?
 
     if [[ $result_code -eq 0 ]]; then
@@ -5120,6 +5130,7 @@ QPKG.Clean()
     local -r PACKAGE_NAME=${1:?no package name supplied}
     local -i result_code=0
     local action=clean
+    local debug_cmd=''
 
     if ! QPKG.IsSupportUpdateOnRestart "$PACKAGE_NAME"; then
         MarkActionAsSkipped show "$PACKAGE_NAME" "$action" "it does not support cleaning"
@@ -5134,8 +5145,9 @@ QPKG.Clean()
     local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile "$PACKAGE_NAME")
     local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$CLEAN_LOG_FILE
 
+    Self.Debug.ToScreen.IsSet && QPKG.IsSupportDebug "$PACKAGE_NAME" && debug_cmd='debug'
     DebugAsProc "cleaning $(FormatAsPackageName "$PACKAGE_NAME")"
-    RunAndLog "$SH_CMD $PACKAGE_INIT_PATHFILE $action" "$LOG_PATHFILE" log:failure-only
+    RunAndLog "$PACKAGE_INIT_PATHFILE $action $debug_cmd" "$LOG_PATHFILE" log:failure-only
     result_code=$?
 
     if [[ $result_code -eq 0 ]]; then
@@ -5723,23 +5735,23 @@ RunAndLog()
 
     DebugFuncEntry
 
-    local msgs=/var/log/execd.log
+    local -r LOG_PATHFILE=$(/bin/mktemp -p /var/log ${FUNCNAME[0]}_XXXXXX)
     local -i result_code=0
 
     FormatAsCommand "${1:?empty}" > "${2:?empty}"
     DebugAsProc "exec: '$1'"
 
     if Self.Debug.ToScreen.IsSet; then
-        eval $1 > >($TEE_CMD "$msgs") 2>&1   # NOTE: 'tee' buffers stdout here
+        eval "$1 > >($TEE_CMD $LOG_PATHFILE) 2>&1"   # NOTE: 'tee' buffers stdout here
         result_code=$?
     else
-        eval $1 > "$msgs" 2>&1
+        eval "$1" > "$LOG_PATHFILE" 2>&1
         result_code=$?
     fi
 
-    if [[ -e $msgs ]]; then
-        FormatAsResultAndStdout "$result_code" "$(<"$msgs")" >> "$2"
-        rm -f "$msgs"
+    if [[ -e $LOG_PATHFILE ]]; then
+        FormatAsResultAndStdout "$result_code" "$(<"$LOG_PATHFILE")" >> "$2"
+        rm -f "$LOG_PATHFILE"
     else
         FormatAsResultAndStdout "$result_code" '<null>' >> "$2"
     fi
