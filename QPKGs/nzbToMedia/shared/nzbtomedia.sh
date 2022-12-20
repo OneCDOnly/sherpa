@@ -18,7 +18,7 @@ Init()
 
     IsQNAP || return
 
-    # specific environment
+    # service-script environment
     readonly QPKG_NAME=nzbToMedia
     readonly SCRIPT_VERSION=221220a
 
@@ -49,21 +49,19 @@ Init()
     # specific to online-sourced applications only
     readonly SOURCE_GIT_URL=https://github.com/clinton-hall/nzbToMedia.git
     readonly SOURCE_GIT_BRANCH=master
-    readonly SOURCE_GIT_DEPTH=shallow     # 'shallow' (depth 1) or 'single-branch' - note: 'shallow' implies a 'single-branch' too
-    readonly TARGET_SCRIPT=''
-
-    # general online-sourced applications only
+    # 'shallow' (depth 1) or 'single-branch' ... 'shallow' implies 'single-branch'
+    readonly SOURCE_GIT_DEPTH=shallow
     readonly QPKG_REPO_PATH=$QPKG_PATH/repo-cache
     readonly PIP_CACHE_PATH=$QPKG_PATH/pip-cache
     readonly INTERPRETER=/opt/bin/python3
     readonly VENV_PATH=$QPKG_PATH/venv
     readonly VENV_INTERPRETER=$VENV_PATH/bin/python3
     readonly ALLOW_ACCESS_TO_SYS_PACKAGES=false
-    readonly APP_VERSION_PATHFILE=$QPKG_REPO_PATH/.bumpversion.cfg
     readonly QPKG_INI_PATHFILE=$QPKG_REPO_PATH/autoProcessMedia.cfg
     readonly QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.spec
 
-    # general environment
+    # specific to applications supporting version lookup only
+    readonly APP_VERSION_PATHFILE=$QPKG_REPO_PATH/.bumpversion.cfg
     readonly APP_VERSION_CMD="/sbin/getcfg bumpversion current_version -d 0 -f $APP_VERSION_PATHFILE"
 
     if [[ -z $LANG ]]; then
