@@ -20,7 +20,7 @@ Init()
 
     # specific environment
     readonly QPKG_NAME=nzbToMedia
-    readonly SCRIPT_VERSION=221219
+    readonly SCRIPT_VERSION=221220a
 
     # general environment
     readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -584,7 +584,7 @@ RunAndLog()
     if IsDebug; then
         Display
         Display "exec: '$1'"
-        eval "$1" > >(/usr/bin/tee "$LOG_PATHFILE") 2>&1   # NOTE: 'tee' buffers stdout here
+        eval "$1 > >(/usr/bin/tee $LOG_PATHFILE) 2>&1"   # NOTE: 'tee' buffers stdout here
         result_code=$?
     else
         eval "$1" > "$LOG_PATHFILE" 2>&1
@@ -733,7 +733,7 @@ IsNotQPKGEnabled()
 IsSupportBackup()
     {
 
-    [[ -n $BACKUP_PATHFILE ]]
+    [[ -n ${BACKUP_PATHFILE:-} ]]
 
     }
 
@@ -747,7 +747,7 @@ IsNotSupportBackup()
 IsSupportReset()
     {
 
-    [[ -n $QPKG_INI_PATHFILE ]]
+    [[ -n ${QPKG_INI_PATHFILE:-} ]]
 
     }
 
@@ -761,7 +761,7 @@ IsNotSupportReset()
 IsSourcedOnline()
     {
 
-    [[ -n $SOURCE_GIT_URL ]]
+    [[ -n ${SOURCE_GIT_URL:-} ]]
 
     }
 
