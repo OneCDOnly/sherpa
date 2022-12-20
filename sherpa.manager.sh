@@ -4579,6 +4579,7 @@ QPKG.Reinstall()
     local -r PACKAGE_NAME=${1:?no package name supplied}
     local -i result_code=0
     local action=reinstall
+    local debug_cmd=''
 
     if ! QPKGs.IsInstalled.Exist "$PACKAGE_NAME"; then
         MarkActionAsSkipped show "$PACKAGE_NAME" "$action" "it's not installed - use 'install' instead"
@@ -4602,8 +4603,9 @@ QPKG.Reinstall()
     local target_path=''
 
     DebugAsProc "reinstalling $(FormatAsPackageName "$PACKAGE_NAME")"
+    Self.Debug.ToScreen.IsSet && QPKG.IsSupportDebug "$PACKAGE_NAME" && debug_cmd='DEBUG_QPKG=true '
     QPKG.IsInstalled "$PACKAGE_NAME" && target_path="QINSTALL_PATH=$($DIRNAME_CMD "$(QPKG.InstallationPath $PACKAGE_NAME)") "
-    RunAndLog "${target_path}$SH_CMD $local_pathfile" "$LOG_PATHFILE" log:failure-only 10
+    RunAndLog "${debug_cmd}${target_path}${SH_CMD} $local_pathfile" "$LOG_PATHFILE" log:failure-only 10
     result_code=$?
 
     if [[ $result_code -eq 0 || $result_code -eq 10 ]]; then

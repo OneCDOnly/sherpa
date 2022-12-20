@@ -20,7 +20,7 @@ Init()
 
     # service-script environment
     readonly QPKG_NAME=SABnzbd
-    readonly SCRIPT_VERSION=221220a
+    readonly SCRIPT_VERSION=221221
 
     # general environment
     readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -73,7 +73,12 @@ Init()
         export LC_CTYPE=en_US.UTF-8
     fi
 
-    UnsetDebug
+    if [[ ${DEBUG_QPKG:-} = true ]]; then
+        SetDebug
+    else
+        UnsetDebug
+    fi
+
     UnsetError
     UnsetRestartPending
     EnsureConfigFileExists
