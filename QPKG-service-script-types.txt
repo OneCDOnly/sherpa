@@ -1,11 +1,11 @@
 An attempt to define the different types of sherpa service-script required to support different types of application.
 
+type 0 (or unspecified): Application is bundled within QPKG. Called as-required. No TCP ports. Backup unsupported. Is made available to QTS via syminks. Example: inxi, sha3sum
+
 type 1: Application is pulled/updated from an online repository before every start. Contains a daemon that much be launched with a language interpreter. Has TCP ports that can be queried. Backup is supported. Example: SABnzbd, Medusa, LazyLibrarian
 
 type 2: Application is pulled/updated from an online repository before every start. Called as-required. No TCP ports. Offers online scripts to be run locally via an interpreter. Backup is supported. Example: NzbToMedia
 
 type 3: Application is pre-installed via Entware. Contains a daemon. Has TCP ports that can be queried. Backup is supported. Service-script provides enhancements to permit application to be stopped/started via QTS App Center. Example: NZBGet, Transmission, Deluge-server
 
-type 4: Application is bundled within QPKG. Called as-required. No TCP ports. Backup unsupported. Is made available to QTS via syminks. Example: inxi, sha3sum
-
-type 5: Application is pre-installed via Entware. Called as-required. No TCP ports. Backup unsupported. Service-script provides enhancements to permit application to be stopped/started via QTS App Center. Example: ClamAV
+type 4: Application is pre-installed via Entware. Called as-required. No TCP ports. Backup unsupported. Service-script provides enhancements to permit application to be stopped/started via QTS App Center. Example: ClamAV

@@ -6,7 +6,7 @@
 #
 # so, blame OneCD if it all goes horribly wrong. ;)
 #
-# This is a type 5 service-script: https://github.com/OneCDOnly/sherpa/blob/main/QPKG-service-script-types.txt
+# This is a type 4 service-script: https://github.com/OneCDOnly/sherpa/blob/main/QPKG-service-script-types.txt
 #
 # For more info: https://forum.qnap.com/viewtopic.php?f=320&t=132373
 ####################################################################################
