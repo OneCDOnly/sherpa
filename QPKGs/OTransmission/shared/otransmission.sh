@@ -20,7 +20,7 @@ Init()
 
     # service-script environment
     readonly QPKG_NAME=OTransmission
-    readonly SCRIPT_VERSION=221220
+    readonly SCRIPT_VERSION=221221
     readonly TRANSMISSION_WEB_HOME=/opt/share/transmission/web
 
     # general environment
@@ -61,12 +61,11 @@ Init()
         export LC_CTYPE=en_US.UTF-8
     fi
 
-    UnsetDebug
-    UnsetError
-    UnsetRestartPending
-    EnsureConfigFileExists
-    LoadAppVersion
-    DisableOpkgDaemonStart
+    if [[ ${DEBUG_QPKG:-} = true ]]; then
+        SetDebug
+    else
+        UnsetDebug
+    fi
 
     for re in \\bd\\b \\bdebug\\b \\bdbug\\b \\bverbose\\b; do
         if [[ $USER_ARGS_RAW =~ $re ]]; then
@@ -75,7 +74,13 @@ Init()
         fi
     done
 
-    IsSupportBackup && [[ -n $BACKUP_PATH && ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
+    UnsetError
+    UnsetRestartPending
+    EnsureConfigFileExists
+    LoadAppVersion
+    DisableOpkgDaemonStart
+
+    IsSupportBackup && [[ -n ${BACKUP_PATH:-} && ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
 
     return 0
 
@@ -135,10 +140,10 @@ StartQPKG()
         DisplayErrCommitAllLogs "unable to start daemon: ports $ui_port or $ui_port_secure are already in use!"
 
         portpid=$(/usr/sbin/lsof -i :$ui_port -Fp)
-        DisplayErrCommitAllLogs "process details for port $ui_port: \"$([[ -n $portpid ]] && /bin/tr '\000' ' ' </proc/${portpid/p/}/cmdline)\""
+        DisplayErrCommitAllLogs "process details for port $ui_port: \"$([[ -n ${portpid:-} ]] && /bin/tr '\000' ' ' </proc/${portpid/p/}/cmdline)\""
 
         portpid=$(/usr/sbin/lsof -i :$ui_port_secure -Fp)
-        DisplayErrCommitAllLogs "process details for secure port $ui_port_secure: \"$([[ -n $portpid ]] && /bin/tr '\000' ' ' </proc/${portpid/p/}/cmdline)\""
+        DisplayErrCommitAllLogs "process details for secure port $ui_port_secure: \"$([[ -n ${portpid:-} ]] && /bin/tr '\000' ' ' </proc/${portpid/p/}/cmdline)\""
 
         SetError
         return 1
@@ -295,7 +300,7 @@ LoadAppVersion()
     # creates a global var: $app_version
     # this is the installed application version (not the QPKG version)
 
-    if [[ -n $APP_VERSION_PATHFILE && -e $APP_VERSION_PATHFILE ]]; then
+    if [[ -n ${APP_VERSION_PATHFILE:-} && -e $APP_VERSION_PATHFILE ]]; then
         app_version=$(eval "$APP_VERSION_CMD")
         return 0
     else
@@ -775,7 +780,7 @@ IsDaemonActive()
     # $? = 0 : $DAEMON_PATHFILE is in memory
     # $? = 1 : $DAEMON_PATHFILE is not in memory
 
-    if [[ -e $DAEMON_PID_PATHFILE && -d /proc/$(<$DAEMON_PID_PATHFILE) && -n $DAEMON_PATHFILE && $(</proc/"$(<$DAEMON_PID_PATHFILE)"/cmdline) =~ $DAEMON_PATHFILE ]]; then
+    if [[ -e $DAEMON_PID_PATHFILE && -d /proc/$(<$DAEMON_PID_PATHFILE) && -n ${DAEMON_PATHFILE:-} && $(</proc/"$(<$DAEMON_PID_PATHFILE)"/cmdline) =~ $DAEMON_PATHFILE ]]; then
         DisplayCommitToLog 'daemon: IS active'
         DisplayCommitToLog "daemon PID: $(<$DAEMON_PID_PATHFILE)"
         return
@@ -1001,7 +1006,7 @@ SetServiceOperationResult()
 
     # $1 = result of operation to recorded
 
-    [[ -n $1 && -n $SERVICE_STATUS_PATHFILE ]] && echo "$1" > "$SERVICE_STATUS_PATHFILE"
+    [[ -n $1 && -n ${SERVICE_STATUS_PATHFILE:-} ]] && echo "$1" > "$SERVICE_STATUS_PATHFILE"
 
     }
 
@@ -1452,6 +1457,9 @@ if IsNotError; then
             SetServiceOperation versioning
             Display "package: $QPKG_VERSION"
             Display "service: $SCRIPT_VERSION"
+            ;;
+        remove)     # only called by the standard QDK .uninstall.sh script
+            SetServiceOperation removing
             ;;
         *)
             SetServiceOperation none

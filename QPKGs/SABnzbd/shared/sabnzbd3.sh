@@ -20,7 +20,7 @@ Init()
 
     # service-script environment
     readonly QPKG_NAME=SABnzbd
-    readonly SCRIPT_VERSION=221221
+    readonly SCRIPT_VERSION=221221a
 
     # general environment
     readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -91,9 +91,9 @@ Init()
     EnsureConfigFileExists
     LoadAppVersion
 
-    IsSupportBackup && [[ -n $BACKUP_PATH && ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
-    [[ -n $VENV_PATH && ! -d $VENV_PATH ]] && mkdir -p "$VENV_PATH"
-    [[ -n $PIP_CACHE_PATH && ! -d $PIP_CACHE_PATH ]] && mkdir -p "$PIP_CACHE_PATH"
+    IsSupportBackup && [[ -n ${BACKUP_PATH:-} && ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
+    [[ -n ${VENV_PATH:-} && ! -d $VENV_PATH ]] && mkdir -p "$VENV_PATH"
+    [[ -n ${PIP_CACHE_PATH:-} && ! -d $PIP_CACHE_PATH ]] && mkdir -p "$PIP_CACHE_PATH"
 
     IsAutoUpdateMissing && EnableAutoUpdate >/dev/null
 
@@ -159,10 +159,10 @@ StartQPKG()
         DisplayErrCommitAllLogs "unable to start daemon: ports $ui_port or $ui_port_secure are already in use!"
 
         portpid=$(/usr/sbin/lsof -i :$ui_port -Fp)
-        DisplayErrCommitAllLogs "process details for port $ui_port: \"$([[ -n $portpid ]] && /bin/tr '\000' ' ' </proc/${portpid/p/}/cmdline)\""
+        DisplayErrCommitAllLogs "process details for port $ui_port: \"$([[ -n ${portpid:-} ]] && /bin/tr '\000' ' ' </proc/${portpid/p/}/cmdline)\""
 
         portpid=$(/usr/sbin/lsof -i :$ui_port_secure -Fp)
-        DisplayErrCommitAllLogs "process details for secure port $ui_port_secure: \"$([[ -n $portpid ]] && /bin/tr '\000' ' ' </proc/${portpid/p/}/cmdline)\""
+        DisplayErrCommitAllLogs "process details for secure port $ui_port_secure: \"$([[ -n ${portpid:-} ]] && /bin/tr '\000' ' ' </proc/${portpid/p/}/cmdline)\""
 
         SetError
         return 1
@@ -962,7 +962,7 @@ IsDaemonActive()
     # $? = 0 : $DAEMON_PATHFILE is in memory
     # $? = 1 : $DAEMON_PATHFILE is not in memory
 
-    if [[ -e $DAEMON_PID_PATHFILE && -d /proc/$(<$DAEMON_PID_PATHFILE) && -n $DAEMON_PATHFILE && $(</proc/"$(<$DAEMON_PID_PATHFILE)"/cmdline) =~ $DAEMON_PATHFILE ]]; then
+    if [[ -e $DAEMON_PID_PATHFILE && -d /proc/$(<$DAEMON_PID_PATHFILE) && -n ${DAEMON_PATHFILE:-} && $(</proc/"$(<$DAEMON_PID_PATHFILE)"/cmdline) =~ $DAEMON_PATHFILE ]]; then
         DisplayCommitToLog 'daemon: IS active'
         DisplayCommitToLog "daemon PID: $(<$DAEMON_PID_PATHFILE)"
         return
@@ -1055,7 +1055,10 @@ IsPortResponds()
     DisplayWaitCommitToLog "check for UI port $1 response:"
     DisplayWait "(no-more than $PORT_CHECK_TIMEOUT seconds):"
 
-    while ! /sbin/curl --silent --fail --max-time 1 http://localhost:"$1" >/dev/null; do
+    while true; do
+        /sbin/curl --silent --fail --max-time 1 http://localhost:"$1" >/dev/null
+        [[ $? -eq 0 || $? -eq 22 ]] && break
+
         sleep 1
         ((acc+=2))
         DisplayWait "$acc,"
@@ -1185,7 +1188,7 @@ SetServiceOperationResult()
 
     # $1 = result of operation to recorded
 
-    [[ -n $1 && -n $SERVICE_STATUS_PATHFILE ]] && echo "$1" > "$SERVICE_STATUS_PATHFILE"
+    [[ -n $1 && -n ${SERVICE_STATUS_PATHFILE:-} ]] && echo "$1" > "$SERVICE_STATUS_PATHFILE"
 
     }
 
@@ -1696,6 +1699,9 @@ if IsNotError; then
             SetServiceOperation versioning
             Display "package: $QPKG_VERSION"
             Display "service: $SCRIPT_VERSION"
+            ;;
+        remove)     # only called by the standard QDK .uninstall.sh script
+            SetServiceOperation removing
             ;;
         *)
             SetServiceOperation none

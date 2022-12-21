@@ -20,7 +20,7 @@ Init()
 
     # service-script environment
     readonly QPKG_NAME=nzbToMedia
-    readonly SCRIPT_VERSION=221220a
+    readonly SCRIPT_VERSION=221221
 
     # general environment
     readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -36,9 +36,9 @@ Init()
     readonly DEBUG_LOG_DATAWIDTH=100
     local re=''
 
-    if IsQPKGInstalled SABnzbd; then
+    if IsThisQPKGInstalled SABnzbd; then
         readonly APPARENT_PATH=$(/sbin/getcfg misc download_dir -d /share/Public/Downloads -f $(/sbin/getcfg SABnzbd Install_Path -f /etc/config/qpkg.conf)/config/config.ini)/$QPKG_NAME
-    elif IsQPKGInstalled NZBGet; then
+    elif IsThisQPKGInstalled NZBGet; then
         readonly APPARENT_PATH=$(/sbin/getcfg '' MainDir -d /share/Public/Downloads -f $(/sbin/getcfg NZBGet Install_Path -f /etc/config/qpkg.conf)/config/config.ini)/$QPKG_NAME
     elif [[ $DEFAULT_DOWNLOAD_SHARE != unspecified ]]; then
         readonly APPARENT_PATH=$DEFAULT_DOWNLOAD_SHARE/$QPKG_NAME
@@ -70,11 +70,11 @@ Init()
         export LC_CTYPE=en_US.UTF-8
     fi
 
-    UnsetDebug
-    UnsetError
-    UnsetRestartPending
-    EnsureConfigFileExists
-    LoadAppVersion
+    if [[ ${DEBUG_QPKG:-} = true ]]; then
+        SetDebug
+    else
+        UnsetDebug
+    fi
 
     for re in \\bd\\b \\bdebug\\b \\bdbug\\b \\bverbose\\b; do
         if [[ $USER_ARGS_RAW =~ $re ]]; then
@@ -83,9 +83,14 @@ Init()
         fi
     done
 
-    IsSupportBackup && [[ -n $BACKUP_PATH && ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
-    [[ -n $VENV_PATH && ! -d $VENV_PATH ]] && mkdir -p "$VENV_PATH"
-    [[ -n $PIP_CACHE_PATH && ! -d $PIP_CACHE_PATH ]] && mkdir -p "$PIP_CACHE_PATH"
+    UnsetError
+    UnsetRestartPending
+    EnsureConfigFileExists
+    LoadAppVersion
+
+    IsSupportBackup && [[ -n ${BACKUP_PATH:-} && ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
+    [[ -n ${VENV_PATH:-} && ! -d $VENV_PATH ]] && mkdir -p "$VENV_PATH"
+    [[ -n ${PIP_CACHE_PATH:-} && ! -d $PIP_CACHE_PATH ]] && mkdir -p "$PIP_CACHE_PATH"
 
     IsAutoUpdateMissing && EnableAutoUpdate >/dev/null
 
@@ -302,7 +307,7 @@ LoadAppVersion()
     # creates a global var: $app_version
     # this is the installed application version (not the QPKG version)
 
-    if [[ -n $APP_VERSION_PATHFILE && -e $APP_VERSION_PATHFILE ]]; then
+    if [[ -n ${APP_VERSION_PATHFILE:-} && -e $APP_VERSION_PATHFILE ]]; then
         app_version=$(eval "$APP_VERSION_CMD")
         return 0
     else
@@ -686,6 +691,19 @@ StripANSI()
 
     }
 
+IsThisQPKGInstalled()
+    {
+
+    # input:
+    #   $1 = package name to check
+
+    # output:
+    #   $? = 0 (true) or 1 (false)
+
+    /bin/grep -q "^\[${1:?no package name supplied}\]" /etc/config/qpkg.conf
+
+    }
+
 IsQNAP()
     {
 
@@ -698,19 +716,6 @@ IsQNAP()
     fi
 
     return 0
-
-    }
-
-IsQPKGInstalled()
-    {
-
-    # input:
-    #   $1 = package name to check
-
-    # output:
-    #   $? = 0 (true) or 1 (false)
-
-    /bin/grep -q "^\[${1:?no package name supplied}\]" /etc/config/qpkg.conf
 
     }
 
@@ -894,7 +899,7 @@ SetServiceOperationResult()
 
     # $1 = result of operation to recorded
 
-    [[ -n $1 && -n $SERVICE_STATUS_PATHFILE ]] && echo "$1" > "$SERVICE_STATUS_PATHFILE"
+    [[ -n $1 && -n ${SERVICE_STATUS_PATHFILE:-} ]] && echo "$1" > "$SERVICE_STATUS_PATHFILE"
 
     }
 
@@ -1405,6 +1410,9 @@ if IsNotError; then
             SetServiceOperation versioning
             Display "package: $QPKG_VERSION"
             Display "service: $SCRIPT_VERSION"
+            ;;
+        remove)     # only called by the standard QDK .uninstall.sh script
+            SetServiceOperation removing
             ;;
         *)
             SetServiceOperation none
