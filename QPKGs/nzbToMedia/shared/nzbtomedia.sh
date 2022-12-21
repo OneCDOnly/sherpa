@@ -20,7 +20,7 @@ Init()
 
     # service-script environment
     readonly QPKG_NAME=nzbToMedia
-    readonly SCRIPT_VERSION=221221d
+    readonly SCRIPT_VERSION=221222
 
     # general environment
     readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -36,9 +36,9 @@ Init()
     readonly DEBUG_LOG_DATAWIDTH=100
     local re=''
 
-    if IsThisQPKGInstalled SABnzbd; then
+    if IsQPKGInstalled SABnzbd; then
         link_path=$(/sbin/getcfg misc script_dir -d /share/Public/Downloads -f "$(/sbin/getcfg SABnzbd Install_Path -f /etc/config/qpkg.conf)"/config/config.ini)
-    elif IsThisQPKGInstalled NZBGet; then
+    elif IsQPKGInstalled NZBGet; then
         link_path=$(/sbin/getcfg '' MainDir -d /share/Public/Downloads -f "$(/sbin/getcfg NZBGet Install_Path -f /etc/config/qpkg.conf)"/config/config.ini)
     elif [[ $DEFAULT_DOWNLOAD_SHARE != unspecified ]]; then
         link_path=$DEFAULT_DOWNLOAD_SHARE
@@ -47,7 +47,6 @@ Init()
     fi
 
     [[ $(/usr/bin/basename "$link_path") != "$QPKG_NAME" ]] && link_path+=/$QPKG_NAME
-    Display "link_path: $link_path"
 
     # specific to online-sourced applications only
     readonly SOURCE_GIT_URL=https://github.com/clinton-hall/nzbToMedia.git
@@ -147,7 +146,7 @@ StartQPKG()
     PullGitRepo "$QPKG_NAME" "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_REPO_PATH" || return
     WaitForLaunchTarget || return
 
-    if IsThisQPKGEnabled SABnzbdplus; then
+    if IsQPKGEnabled SABnzbdplus; then
         DisplayErrCommitAllLogs "unable to link from package to target: installed $(FormatAsPackageName SABnzbdplus) QPKG must be replaced with $(FormatAsPackageName SABnzbd) $SAB_MIN_VERSION or later"
         return 1
     fi
@@ -688,57 +687,55 @@ IsQNAP()
 
     }
 
-IsThisQPKGInstalled()
+IsQPKGInstalled()
     {
 
     # input:
-    #   $1 = package name to check
+    #   $1 = (optional) package name to check. If unspecified, default is $QPKG_NAME
 
     # output:
     #   $? = 0 (true) or 1 (false)
 
-    /bin/grep -q "^\[${1:?no package name supplied}\]" /etc/config/qpkg.conf
+    if [[ -z ${1:-} ]]; then
+        local name=$QPKG_NAME
+    else
+        local name=$1
+    fi
+
+    /bin/grep -q "^\[$name\]" /etc/config/qpkg.conf
 
     }
 
-IsNotThisQPKGInstalled()
+IsNotQPKGInstalled()
     {
 
-    ! IsThisQPKGInstalled "${1:?no package name supplied}"
-
-    }
-
-IsThisQPKGEnabled()
-    {
-
-    # input:
-    #   $1 = package name to check
-
-    # output:
-    #   $? = 0 (true) or 1 (false)
-
-    [[ $(/sbin/getcfg "${1:?no package name supplied}" Enable -u -d FALSE -f /etc/config/qpkg.conf) = TRUE ]]
-
-    }
-
-IsNotThisQPKGEnabled()
-    {
-
-    ! IsThisQPKGEnabled
+    ! IsQPKGInstalled "${1:-}"
 
     }
 
 IsQPKGEnabled()
     {
 
-    [[ $(/sbin/getcfg $QPKG_NAME Enable -u -d FALSE -f /etc/config/qpkg.conf) = TRUE ]]
+    # input:
+    #   $1 = (optional) package name to check. If unspecified, default is $QPKG_NAME
+
+    # output:
+    #   $? = 0 (true) or 1 (false)
+
+    if [[ -z ${1:-} ]]; then
+        local name=$QPKG_NAME
+    else
+        local name=$1
+    fi
+
+    [[ $(/sbin/getcfg "$name" Enable -u -d FALSE -f /etc/config/qpkg.conf) = TRUE ]]
 
     }
 
 IsNotQPKGEnabled()
     {
 
-    ! IsQPKGEnabled
+    ! IsQPKGEnabled "${1:-}"
 
     }
 
@@ -786,6 +783,8 @@ IsNotSourcedOnline()
 
 IsPackageActive()
     {
+
+    DisplayCommitToLog "link_path: $link_path"
 
     if [[ -L $link_path ]]; then
         DisplayCommitToLog 'package: IS active'
