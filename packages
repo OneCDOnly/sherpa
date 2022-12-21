@@ -1,4 +1,4 @@
-PACKAGES_VER=221221d
+PACKAGES_VER=221221e
 BASE_QPKG_CONFLICTS_WITH='TarMT'
 BASE_QPKG_WARNINGS='Qboost'
 BASE_IPKGS_INSTALL='ca-certificates coreutils-stty findutils gcc git git-http grep less nano sed'
@@ -268,9 +268,9 @@ QPKG_SUPPORTS_DEBUG+=(true)
 QPKG_NAME+=(nzbToMedia)
 QPKG_ARCH+=(all)
 QPKG_MIN_RAM_KB+=(any)
-QPKG_VERSION+=(221221c)
+QPKG_VERSION+=(221221d)
 QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/QPKGs/${QPKG_NAME[${#QPKG_NAME[@]}-1]}/build/${QPKG_NAME[${#QPKG_NAME[@]}-1]}_${QPKG_VERSION[${#QPKG_VERSION[@]}-1]}.qpkg)
-QPKG_MD5+=(b85d0ad67eb233272733dfb0019b7feb)
+QPKG_MD5+=(717a49bc880738b0e0da0c790fe58f5b)
 QPKG_DESC+=('post-processing for NZBs to many services')
 QPKG_ABBRVS+=('n2 nt nzb2 nzb2m nzbto nzbtom nzbtomedia')
 QPKG_CONFLICTS_WITH+=('Python3 QPython3 QPython39 QPython310')

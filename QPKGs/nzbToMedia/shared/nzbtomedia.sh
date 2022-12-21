@@ -20,7 +20,7 @@ Init()
 
     # service-script environment
     readonly QPKG_NAME=nzbToMedia
-    readonly SCRIPT_VERSION=221221c
+    readonly SCRIPT_VERSION=221221d
 
     # general environment
     readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -37,16 +37,16 @@ Init()
     local re=''
 
     if IsThisQPKGInstalled SABnzbd; then
-        link_path=$(/sbin/getcfg misc script_dir -d /share/Public/Downloads -f $(/sbin/getcfg SABnzbd Install_Path -f /etc/config/qpkg.conf)/config/config.ini)
+        link_path=$(/sbin/getcfg misc script_dir -d /share/Public/Downloads -f "$(/sbin/getcfg SABnzbd Install_Path -f /etc/config/qpkg.conf)"/config/config.ini)
     elif IsThisQPKGInstalled NZBGet; then
-        link_path=$(/sbin/getcfg '' MainDir -d /share/Public/Downloads -f $(/sbin/getcfg NZBGet Install_Path -f /etc/config/qpkg.conf)/config/config.ini)/$QPKG_NAME
+        link_path=$(/sbin/getcfg '' MainDir -d /share/Public/Downloads -f "$(/sbin/getcfg NZBGet Install_Path -f /etc/config/qpkg.conf)"/config/config.ini)
     elif [[ $DEFAULT_DOWNLOAD_SHARE != unspecified ]]; then
-        link_path=$DEFAULT_DOWNLOAD_SHARE/$QPKG_NAME
+        link_path=$DEFAULT_DOWNLOAD_SHARE
     else
-        link_path=/share/Public/Downloads/$QPKG_NAME
+        link_path=/share/Public/Downloads
     fi
 
-    [[ $(basename $link_path) != $QPKG_NAME ]] && link_path+=/$QPKG_NAME
+    [[ $(/usr/bin/basename "$link_path") != "$QPKG_NAME" ]] && link_path+=/$QPKG_NAME
     Display "link_path: $link_path"
 
     # specific to online-sourced applications only
@@ -94,7 +94,7 @@ Init()
     IsSupportBackup && [[ -n ${BACKUP_PATH:-} && ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
     [[ -n ${VENV_PATH:-} && ! -d $VENV_PATH ]] && mkdir -p "$VENV_PATH"
     [[ -n ${PIP_CACHE_PATH:-} && ! -d $PIP_CACHE_PATH ]] && mkdir -p "$PIP_CACHE_PATH"
-    [[ ! -e $(/usr/bin/dirname $link_path) ]] && mkdir -p $(/usr/bin/dirname $link_path)
+    [[ ! -e $(/usr/bin/dirname $link_path) ]] && mkdir -p "$(/usr/bin/dirname $link_path)"
 
     IsAutoUpdateMissing && EnableAutoUpdate >/dev/null
 
@@ -152,6 +152,7 @@ StartQPKG()
         return 1
     fi
 
+    [[ -d $link_path ]] && DisplayRunAndLog 'a local path is in the way of the target, moving it aside' "mv $link_path $link_path.bak"
     ln -s "$QPKG_REPO_PATH" "$link_path"
 
     DisplayCommitToLog 'start package: OK'
@@ -380,7 +381,6 @@ CleanLocalClone()
 
     StopQPKG
     DisplayRunAndLog 'clean local repository' "rm -rf $QPKG_REPO_PATH"
-    [[ -d $(/usr/bin/dirname $QPKG_REPO_PATH)/$QPKG_NAME ]] && DisplayRunAndLog 'KLUDGE: remove previous local repository' "rm -r $(/usr/bin/dirname $QPKG_REPO_PATH)/$QPKG_NAME"
     DisplayRunAndLog 'clean virtual environment' "rm -rf $VENV_PATH"
     DisplayRunAndLog 'clean PyPI cache' "rm -rf $PIP_CACHE_PATH"
     StartQPKG
@@ -521,7 +521,7 @@ DisplayRunAndLog()
     #   $3 = 'log:failure-only' (optional) - if specified, stdout & stderr are only recorded in the specified log if the command failed
     #                                      - if unspecified, stdout & stderr is always recorded
 
-    local -r LOG_PATHFILE=$(/bin/mktemp -p /var/log ${FUNCNAME[0]}_XXXXXX)
+    local -r LOG_PATHFILE=$(/bin/mktemp -p /var/log "${FUNCNAME[0]}"_XXXXXX)
     local -i result_code=0
 
     DisplayWaitCommitToLog "$1:"
@@ -561,7 +561,7 @@ RunAndLog()
     #   pathfile ($2) = commandstring ($1) stdout and stderr
     #   $? = result_code of commandstring
 
-    local -r LOG_PATHFILE=$(/bin/mktemp -p /var/log ${FUNCNAME[0]}_XXXXXX)
+    local -r LOG_PATHFILE=$(/bin/mktemp -p /var/log "${FUNCNAME[0]}"_XXXXXX)
     local -i result_code=0
 
     FormatAsCommand "${1:?empty}" > "${2:?empty}"
@@ -717,7 +717,7 @@ IsThisQPKGEnabled()
     # output:
     #   $? = 0 (true) or 1 (false)
 
-    [[ $(/sbin/getcfg ${1:?no package name supplied} Enable -u -d FALSE -f /etc/config/qpkg.conf) = TRUE ]]
+    [[ $(/sbin/getcfg "${1:?no package name supplied}" Enable -u -d FALSE -f /etc/config/qpkg.conf) = TRUE ]]
 
     }
 
