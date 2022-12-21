@@ -20,7 +20,7 @@ Init()
 
     # service-script environment
     readonly QPKG_NAME=nzbToMedia
-    readonly SCRIPT_VERSION=221221a
+    readonly SCRIPT_VERSION=221221b
 
     # general environment
     readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -91,6 +91,7 @@ Init()
     IsSupportBackup && [[ -n ${BACKUP_PATH:-} && ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
     [[ -n ${VENV_PATH:-} && ! -d $VENV_PATH ]] && mkdir -p "$VENV_PATH"
     [[ -n ${PIP_CACHE_PATH:-} && ! -d $PIP_CACHE_PATH ]] && mkdir -p "$PIP_CACHE_PATH"
+    [[ ! -e $(/usr/bin/dirname $APPARENT_PATH) ]] && mkdir -p $(/usr/bin/dirname $APPARENT_PATH)
 
     IsAutoUpdateMissing && EnableAutoUpdate >/dev/null
 
@@ -139,8 +140,6 @@ StartQPKG()
         IsNotRestartPending && return
     fi
 
-    local -r SAB_MIN_VERSION=200809
-
     DisplayCommitToLog "auto-update: $(IsAutoUpdate && echo TRUE || echo FALSE)"
     PullGitRepo "$QPKG_NAME" "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_REPO_PATH" || return
     WaitForLaunchTarget || return
@@ -149,26 +148,6 @@ StartQPKG()
         DisplayErrCommitAllLogs "unable to link from package to target: installed $(FormatAsPackageName SABnzbdplus) QPKG must be replaced with $(FormatAsPackageName SABnzbd) $SAB_MIN_VERSION or later"
         return 1
     fi
-
-    if IsThisQPKGEnabled SABnzbd; then
-        local current_version=$(/sbin/getcfg SABnzbd Version -f /etc/config/qpkg.conf)
-
-        if [[ ${current_version//[!0-9]/} -lt $SAB_MIN_VERSION ]]; then
-            DisplayErrCommitAllLogs "unable to link from package to target: installed $(FormatAsPackageName SABnzbd) QPKG must first be upgraded to $SAB_MIN_VERSION or later"
-            return 1
-        fi
-    fi
-
-    # save config from original nzbToMedia install (created by sherpa SABnzbd QPKGs earlier than $SAB_MIN_VERSION)
-    if [[ -d $APPARENT_PATH && ! -L $APPARENT_PATH && -e "$APPARENT_PATH/$(/usr/bin/basename "$QPKG_INI_PATHFILE")" ]]; then
-        cp "$APPARENT_PATH/$(/usr/bin/basename "$QPKG_INI_PATHFILE")" "$QPKG_INI_PATHFILE"
-    fi
-
-    # destroy original installation
-    [[ -d $APPARENT_PATH ]] && rm -r "$APPARENT_PATH"
-
-    # need this if [Download] isn't a share on this NAS
-    [[ ! -e $(/usr/bin/dirname $APPARENT_PATH) ]] && mkdir -p $(/usr/bin/dirname $APPARENT_PATH)
 
     ln -s "$QPKG_REPO_PATH" "$APPARENT_PATH"
 
