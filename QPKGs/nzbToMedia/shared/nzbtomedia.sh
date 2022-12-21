@@ -20,7 +20,7 @@ Init()
 
     # service-script environment
     readonly QPKG_NAME=nzbToMedia
-    readonly SCRIPT_VERSION=221221
+    readonly SCRIPT_VERSION=221221a
 
     # general environment
     readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -145,12 +145,12 @@ StartQPKG()
     PullGitRepo "$QPKG_NAME" "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_REPO_PATH" || return
     WaitForLaunchTarget || return
 
-    if [[ $(/sbin/getcfg SABnzbdplus Enable -f /etc/config/qpkg.conf) = TRUE ]]; then
+    if IsThisQPKGEnabled SABnzbdplus; then
         DisplayErrCommitAllLogs "unable to link from package to target: installed $(FormatAsPackageName SABnzbdplus) QPKG must be replaced with $(FormatAsPackageName SABnzbd) $SAB_MIN_VERSION or later"
         return 1
     fi
 
-    if [[ $(/sbin/getcfg SABnzbd Enable -f /etc/config/qpkg.conf) = TRUE ]]; then
+    if IsThisQPKGEnabled SABnzbd; then
         local current_version=$(/sbin/getcfg SABnzbd Version -f /etc/config/qpkg.conf)
 
         if [[ ${current_version//[!0-9]/} -lt $SAB_MIN_VERSION ]]; then
@@ -691,6 +691,21 @@ StripANSI()
 
     }
 
+IsQNAP()
+    {
+
+    # returns 0 if this is a QNAP NAS
+
+    if [[ ! -e /etc/init.d/functions ]]; then
+        Display 'QTS functions missing (is this a QNAP NAS?)'
+        SetError
+        return 1
+    fi
+
+    return 0
+
+    }
+
 IsThisQPKGInstalled()
     {
 
@@ -704,18 +719,30 @@ IsThisQPKGInstalled()
 
     }
 
-IsQNAP()
+IsNotThisQPKGInstalled()
     {
 
-    # returns 0 if this is a QNAP NAS
+    ! IsThisQPKGInstalled "${1:?no package name supplied}"
 
-    if [[ ! -e /etc/init.d/functions ]]; then
-        Display 'QTS functions missing (is this a QNAP NAS?)'
-        SetError
-        return 1
-    fi
+    }
 
-    return 0
+IsThisQPKGEnabled()
+    {
+
+    # input:
+    #   $1 = package name to check
+
+    # output:
+    #   $? = 0 (true) or 1 (false)
+
+    [[ $(/sbin/getcfg ${1:?no package name supplied} Enable -u -d FALSE -f /etc/config/qpkg.conf) = TRUE ]]
+
+    }
+
+IsNotThisQPKGEnabled()
+    {
+
+    ! IsThisQPKGEnabled
 
     }
 
