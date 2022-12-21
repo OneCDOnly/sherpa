@@ -6,7 +6,6 @@
 
 echo -n 'building archives ... '
 
-PROJECT_NAME=sherpa
 WORK_PATH=$PWD
 
 MANAGEMENT_ACTIONS=(Check List Paste Status)
@@ -17,7 +16,7 @@ PACKAGE_STATES_TEMPORARY=(Starting Stopping Restarting)
 PACKAGE_ACTIONS=(Backup Clean Disable Download Enable Install Reassign Rebuild Reinstall Restart Restore Start Stop Uninstall Upgrade)
 PACKAGE_RESULTS=(Ok Unknown)
 
-MANAGER_FILE=$PROJECT_NAME.manager.sh
+MANAGER_FILE=sherpa.manager.sh
 MANAGER_ARCHIVE_FILE=${MANAGER_FILE%.*}.tar.gz
 MANAGER_ARCHIVE_PATHFILE=$WORK_PATH/$MANAGER_ARCHIVE_FILE
 
