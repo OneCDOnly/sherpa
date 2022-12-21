@@ -53,13 +53,12 @@ Self.Init()
 
     DebugFuncEntry
 
-    readonly PROJECT_NAME=sherpa
-    local -r SCRIPT_VER=221221-beta
-    readonly PROJECT_BRANCH=main
+    readonly MANAGER_FILE=sherpa.manager.sh
+    local -r SCRIPT_VER=221222-beta
 
     IsQNAP || return
     IsSU || return
-    ClaimLockFile /var/run/$PROJECT_NAME.lock || return
+    ClaimLockFile /var/run/sherpa.lock || return
 
     export LC_ALL=''    # need to disable ALL to enable setting of individual vars
     export LANG=en_US.utf8
@@ -136,7 +135,8 @@ Self.Init()
     readonly PIP_CMD="$PYTHON3_CMD -m pip"
     readonly PERL_CMD=/opt/bin/perl
 
-    readonly PROJECT_PATH=$(QPKG.InstallationPath $PROJECT_NAME)
+    local -r PROJECT_BRANCH=main
+    readonly PROJECT_PATH=$(QPKG.InstallationPath sherpa)
     readonly WORK_PATH=$PROJECT_PATH/cache
     readonly LOGS_PATH=$PROJECT_PATH/logs
     readonly QPKG_DL_PATH=$WORK_PATH/qpkgs.downloads
@@ -145,28 +145,27 @@ Self.Init()
     readonly PIP_CACHE_PATH=$WORK_PATH/pips
     readonly BACKUP_PATH=$(GetDefaultVolume)/.qpkg_config_backup
 
-    local -r MANAGER_FILE=$PROJECT_NAME.manager.sh
     local -r MANAGER_ARCHIVE_FILE=${MANAGER_FILE%.*}.tar.gz
     readonly MANAGER_ARCHIVE_PATHFILE=$WORK_PATH/$MANAGER_ARCHIVE_FILE
     readonly MANAGER_PATHFILE=$WORK_PATH/$MANAGER_FILE
 
     local -r OBJECTS_FILE=objects
     local -r OBJECTS_ARCHIVE_FILE=$OBJECTS_FILE.tar.gz
-    readonly OBJECTS_ARCHIVE_URL=https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/$OBJECTS_ARCHIVE_FILE
+    readonly OBJECTS_ARCHIVE_URL=https://raw.githubusercontent.com/OneCDOnly/sherpa/$PROJECT_BRANCH/$OBJECTS_ARCHIVE_FILE
     readonly OBJECTS_ARCHIVE_PATHFILE=$WORK_PATH/$OBJECTS_ARCHIVE_FILE
     readonly OBJECTS_PATHFILE=$WORK_PATH/$OBJECTS_FILE
 
     local -r PACKAGES_FILE=packages
     local -r PACKAGES_ARCHIVE_FILE=$PACKAGES_FILE.tar.gz
-    local -r PACKAGES_ARCHIVE_URL=https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/$PACKAGES_ARCHIVE_FILE
+    local -r PACKAGES_ARCHIVE_URL=https://raw.githubusercontent.com/OneCDOnly/sherpa/$PROJECT_BRANCH/$PACKAGES_ARCHIVE_FILE
     readonly PACKAGES_ARCHIVE_PATHFILE=$WORK_PATH/$PACKAGES_ARCHIVE_FILE
     readonly PACKAGES_PATHFILE=$WORK_PATH/$PACKAGES_FILE
 
     readonly EXTERNAL_PACKAGES_ARCHIVE_PATHFILE=/opt/var/opkg-lists/entware
     readonly EXTERNAL_PACKAGES_PATHFILE=$WORK_PATH/Packages
 
-    readonly PREVIOUS_OPKG_PACKAGES_LIST=$WORK_PATH/opkg.prev.installed.list
-    readonly PREVIOUS_PIP_MODULES_LIST=$WORK_PATH/pip.prev.installed.list
+    readonly PREVIOUS_IPKG_LIST=$WORK_PATH/ipkg.prev.installed.list
+    readonly PREVIOUS_PYPI_LIST=$WORK_PATH/pypi.prev.installed.list
 
     readonly SESSION_ARCHIVE_PATHFILE=$LOGS_PATH/session.archive.log
     readonly SESSION_ACTIVE_PATHFILE=$PROJECT_PATH/session.$$.active.log
@@ -182,20 +181,20 @@ Self.Init()
     PACKAGE_ACTIONS=(Download Rebuild Backup Stop Disable Uninstall Upgrade Reassign Reinstall Install Restore Clean Enable Start Restart)
     PACKAGE_RESULTS=(Ok Unknown)
 
+    readonly MANAGEMENT_ACTIONS
+
+    readonly PACKAGE_TIERS
+    readonly PACKAGE_SCOPES
+    readonly PACKAGE_STATES
+    readonly PACKAGE_STATES_TEMPORARY
+    readonly PACKAGE_ACTIONS
+    readonly PACKAGE_RESULTS
+
     local action=''
 
     for action in "${PACKAGE_ACTIONS[@]}" check debug update; do
         readonly "$(Uppercase "$action")"_LOG_FILE="$(Lowercase "$action")".log
     done
-
-    readonly MANAGEMENT_ACTIONS
-
-    readonly PACKAGE_SCOPES
-    readonly PACKAGE_STATES
-    readonly PACKAGE_STATES_TEMPORARY
-    readonly PACKAGE_RESULTS
-    readonly PACKAGE_ACTIONS
-    readonly PACKAGE_TIERS
 
     MakePath "$WORK_PATH" work || return
     MakePath "$LOGS_PATH" logs || return
@@ -247,7 +246,7 @@ Self.Init()
         fi
     done
 
-    readonly THIS_PACKAGE_VER=$(QPKG.Local.Version $PROJECT_NAME)
+    readonly THIS_PACKAGE_VER=$(QPKG.Local.Version sherpa)
     readonly MANAGER_SCRIPT_VER="$SCRIPT_VER$([[ $PROJECT_BRANCH = develop ]] && echo '(d)')"
 
     DebugInfoMajorSeparator
@@ -1849,10 +1848,10 @@ Quiz()
 
     local response=''
 
-    ShowAsQuiz "${1:-}"
+    ShowAsQuiz "${1:?empty}"
     read -rn1 response
     DebugVar response
-    ShowAsQuizDone "${1:-}: $response"
+    ShowAsQuizDone "${1:?empty}: $response"
 
     case ${response:0:1} in
         y|Y)
@@ -1868,7 +1867,7 @@ PatchEntwareService()
     {
 
     local tab=$'\t'
-    local prefix="# the following line was inserted by $PROJECT_NAME: https://git.io/$PROJECT_NAME"
+    local prefix="# the following line was inserted by sherpa: https://git.io/sherpa"
     local find=''
     local insert=''
     local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile Entware)
@@ -1957,8 +1956,8 @@ IsThisFileRecent()
 SavePackageLists()
     {
 
-    $PIP_CMD freeze > "$PREVIOUS_PIP_MODULES_LIST" 2>/dev/null && DebugAsDone "saved current $(FormatAsPackageName pip3) module list to $(FormatAsFileName "$PREVIOUS_PIP_MODULES_LIST")"
-    $OPKG_CMD list-installed > "$PREVIOUS_OPKG_PACKAGES_LIST" 2>/dev/null && DebugAsDone "saved current $(FormatAsPackageName Entware) IPKG list to $(FormatAsFileName "$PREVIOUS_OPKG_PACKAGES_LIST")"
+    $PIP_CMD freeze > "$PREVIOUS_PYPI_LIST" 2>/dev/null && DebugAsDone "saved current $(FormatAsPackageName pip3) module list to $(FormatAsFileName "$PREVIOUS_PYPI_LIST")"
+    $OPKG_CMD list-installed > "$PREVIOUS_IPKG_LIST" 2>/dev/null && DebugAsDone "saved current $(FormatAsPackageName Entware) IPKG list to $(FormatAsFileName "$PREVIOUS_IPKG_LIST")"
 
     }
 
@@ -2374,7 +2373,7 @@ ProgressUpdater()
 CreateDirSizeMonitorFlagFile()
     {
 
-    [[ -z ${MONITOR_FLAG_PATHFILE:-} ]] && readonly MONITOR_FLAG_PATHFILE=${1:?empty}
+    [[ -z ${MONITOR_FLAG_PATHFILE:?empty} ]] && readonly MONITOR_FLAG_PATHFILE=${1:?empty}
     $TOUCH_CMD "$MONITOR_FLAG_PATHFILE"
 
     }
@@ -2411,7 +2410,7 @@ IsSU()
     if [[ $EUID -ne 0 ]]; then
         if [[ -e /usr/bin/sudo ]]; then
             ShowAsError 'this utility must be run with superuser privileges. Try again as:'
-            echo "$ sudo $PROJECT_NAME"
+            echo "$ sudo sherpa"
         else
             ShowAsError "this utility must be run as the 'admin' user. Please login via SSH as 'admin' and try again"
         fi
@@ -2545,9 +2544,9 @@ DisplayAsProjectSyntaxExample()
     # $2 = example syntax
 
     if [[ ${1: -1} = '!' ]]; then
-        printf "${HELP_COLUMN_MAIN_PREFIX}%s\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREFIX}%s\n" "$(Capitalise "$1")" '' "$PROJECT_NAME $2"
+        printf "${HELP_COLUMN_MAIN_PREFIX}%s\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREFIX}%s\n" "$(Capitalise "$1")" '' "sherpa $2"
     else
-        printf "${HELP_COLUMN_MAIN_PREFIX}%s:\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREFIX}%s\n" "$(Capitalise "$1")" '' "$PROJECT_NAME $2"
+        printf "${HELP_COLUMN_MAIN_PREFIX}%s:\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREFIX}%s\n" "$(Capitalise "$1")" '' "sherpa $2"
     fi
 
     Self.LineSpace.UnSet
@@ -2561,11 +2560,11 @@ DisplayAsProjectSyntaxIndentedExample()
     # $2 = example syntax
 
     if [[ -z ${1:-} ]]; then
-        printf "%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREFIX}%s\n" '' "$PROJECT_NAME $2"
+        printf "%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREFIX}%s\n" '' "sherpa $2"
     elif [[ ${1: -1} = '!' ]]; then
-        printf "\n%${HELP_DESC_INDENT}s%s\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREFIX}%s\n" '' "$(Capitalise "$1")" '' "$PROJECT_NAME $2"
+        printf "\n%${HELP_DESC_INDENT}s%s\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREFIX}%s\n" '' "$(Capitalise "$1")" '' "sherpa $2"
     else
-        printf "\n%${HELP_DESC_INDENT}s%s:\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREFIX}%s\n" '' "$(Capitalise "$1")" '' "$PROJECT_NAME $2"
+        printf "\n%${HELP_DESC_INDENT}s%s:\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREFIX}%s\n" '' "$(Capitalise "$1")" '' "sherpa $2"
     fi
 
     Self.LineSpace.UnSet
@@ -2808,7 +2807,7 @@ Help.Basic.Show()
 
     SmartCR
     DisplayLineSpaceIfNoneAlready
-    Display "Usage: $PROJECT_NAME $(FormatAsHelpAction) $(FormatAsHelpPackages) $(FormatAsHelpAction) $(FormatAsHelpPackages) ... $(FormatAsHelpOptions)"
+    Display "Usage: sherpa $(FormatAsHelpAction) $(FormatAsHelpPackages) $(FormatAsHelpAction) $(FormatAsHelpPackages) ... $(FormatAsHelpOptions)"
 
     return 0
 
@@ -2820,7 +2819,7 @@ Help.Basic.Example.Show()
     DisplayAsProjectSyntaxIndentedExample "to list available $(FormatAsHelpAction)s, type" 'list actions'
     DisplayAsProjectSyntaxIndentedExample "to list available $(FormatAsHelpPackages), type" 'list packages'
     DisplayAsProjectSyntaxIndentedExample "or, for more $(FormatAsHelpOptions), type" 'list options'
-    Display "\nThere's also the wiki: $(FormatAsURL "https://github.com/OneCDOnly/$PROJECT_NAME/wiki")"
+    Display "\nThere's also the wiki: $(FormatAsURL "https://github.com/OneCDOnly/sherpa/wiki")"
 
     return 0
 
@@ -2974,7 +2973,7 @@ Help.Issue.Show()
     {
 
     DisplayLineSpaceIfNoneAlready
-    DisplayAsHelpTitle "please consider creating a new issue for this on GitHub:\n\thttps://github.com/OneCDOnly/$PROJECT_NAME/issues"
+    DisplayAsHelpTitle "please consider creating a new issue for this on GitHub:\n\thttps://github.com/OneCDOnly/sherpa/issues"
     Display
     DisplayAsHelpTitle "alternatively, post on the QNAP NAS Community Forum:\n\thttps://forum.qnap.com/viewtopic.php?f=320&t=132373"
     DisplayAsProjectSyntaxIndentedExample "view only the most recent $(FormatAsScriptTitle) session log" 'last'
@@ -3686,7 +3685,7 @@ QPKGs.Repos.Show()
             else
                 package_store_id=$(QPKG.StoreID "$package_name")
 
-                if [[ $package_store_id = "$PROJECT_NAME" ]]; then
+                if [[ $package_store_id = sherpa ]]; then
                     package_repo_URL_formatted=$(ColourTextBrightGreen "$package_store_id")
                 else
                     package_repo_URL_formatted=$(ColourTextBrightOrange "$(GetRepoURLFromStoreID "$package_store_id")")
@@ -3758,7 +3757,7 @@ QPKGs.Statuses.Show()
                         package_name_formatted=$(ColourTextBrightRed "$package_name")
                     fi
                 else
-                    [[ ! -e ${GNU_SED_CMD:-} ]] && Self.Boring.Set
+                    [[ ! -e $GNU_SED_CMD ]] && Self.Boring.Set
 
                     if QPKGs.IsMissing.Exist "$package_name"; then
                         package_status_notes=($(ColourTextBrightRedBlink missing))
@@ -3795,7 +3794,7 @@ QPKGs.Statuses.Show()
                         package_version=$(QPKG.Available.Version "$package_name")
                     fi
 
-                    [[ ! -e ${GNU_SED_CMD:-} ]] && Self.Boring.UnSet
+                    [[ ! -e $GNU_SED_CMD ]] && Self.Boring.UnSet
 
                     for ((index=0; index<=((${#package_status_notes[@]}-1)); index++)); do
                         package_status+=${package_status_notes[$index]}
@@ -4300,7 +4299,7 @@ ClaimLockFile()
 
     readonly RUNTIME_LOCK_PATHFILE=${1:?empty}
 
-    if [[ -e $RUNTIME_LOCK_PATHFILE && -d /proc/$(<"$RUNTIME_LOCK_PATHFILE") && $(</proc/"$(<"$RUNTIME_LOCK_PATHFILE")"/cmdline) =~ $PROJECT_NAME.manager.sh ]]; then
+    if [[ -e $RUNTIME_LOCK_PATHFILE && -d /proc/$(<"$RUNTIME_LOCK_PATHFILE") && $(</proc/"$(<"$RUNTIME_LOCK_PATHFILE")"/cmdline) =~ $MANAGER_FILE ]]; then
         ShowAsAbort 'another instance is running'
         return 1
     fi
@@ -4354,13 +4353,13 @@ QPKG.Reassign()
 
     local package_store_id=$(QPKG.StoreID "$PACKAGE_NAME")
 
-    if [[ $package_store_id = "$PROJECT_NAME" ]]; then
+    if [[ $package_store_id = sherpa ]]; then
         MarkActionAsSkipped show "$PACKAGE_NAME" "$action" "it's already assigned to $(FormatAsScriptTitle)"
         DebugFuncExit 2; return
     fi
 
     DebugAsProc "reassigning $(FormatAsPackageName "$PACKAGE_NAME")"
-    RunAndLog "/sbin/setcfg $PACKAGE_NAME store '' -f /etc/config/qpkg.conf" "$LOG_PATHFILE" log:failure-only
+    RunAndLog "$SETCFG_CMD $PACKAGE_NAME store '' -f /etc/config/qpkg.conf" "$LOG_PATHFILE" log:failure-only
     result_code=$?
 
     if [[ $result_code -eq 0 ]]; then
@@ -4667,7 +4666,7 @@ QPKG.Upgrade()
 
     local package_store_id=$(QPKG.StoreID "$PACKAGE_NAME")
 
-    if [[ $package_store_id != "$PROJECT_NAME" ]]; then
+    if [[ $package_store_id != sherpa ]]; then
         MarkActionAsSkipped show "$PACKAGE_NAME" "$action" "it's assigned to another repository - use 'reassign' first"
         DebugFuncExit 2; return
     fi
@@ -4749,7 +4748,7 @@ QPKG.Uninstall()
         DebugFuncExit 2; return
     fi
 
-    if [[ $PACKAGE_NAME = "$PROJECT_NAME" ]]; then
+    if [[ $PACKAGE_NAME = sherpa ]]; then
         MarkActionAsSkipped show "$PACKAGE_NAME" "$action" "it's needed here! 😉"
         DebugFuncExit 2; return
     fi
@@ -4812,7 +4811,7 @@ QPKG.Restart()
         DebugFuncExit 2; return
     fi
 
-    if [[ $PACKAGE_NAME = "$PROJECT_NAME" ]]; then
+    if [[ $PACKAGE_NAME = sherpa ]]; then
         MarkActionAsSkipped show "$PACKAGE_NAME" "$action" "it's needed here! 😉"
         DebugFuncExit 2; return
     fi
@@ -4939,7 +4938,7 @@ QPKG.Stop()
         DebugFuncExit 2; return
     fi
 
-    if [[ $PACKAGE_NAME = "$PROJECT_NAME" ]]; then
+    if [[ $PACKAGE_NAME = sherpa ]]; then
         MarkActionAsSkipped show "$PACKAGE_NAME" "$action" "it's needed here! 😉"
         DebugFuncExit 2; return
     fi
@@ -5212,7 +5211,7 @@ QPKG.StoreServiceStatus()
     local -r PACKAGE_NAME=${1:?no package name supplied}
 
     if ! local status=$(QPKG.GetServiceStatus "$PACKAGE_NAME"); then
-        DebugAsWarn "unable to get status of $(FormatAsPackageName "$PACKAGE_NAME") service. It may be a non-$PROJECT_NAME package, or a package earlier than 200816c that doesn't support service results."
+        DebugAsWarn "unable to get status of $(FormatAsPackageName "$PACKAGE_NAME") service. It may be a non-sherpa package, or a package earlier than 200816c that doesn't support service results."
         return 1
     fi
 
@@ -5328,11 +5327,11 @@ QPKG.StoreID()
 
     local store=''
 
-    store=$($GETCFG_CMD "${1:?no package name supplied}" store -d "$PROJECT_NAME" -f /etc/config/qpkg.conf)
+    store=$($GETCFG_CMD "${1:?no package name supplied}" store -d sherpa -f /etc/config/qpkg.conf)
 
     # 'getcfg' does not return a default value when specified key exists without a value assignment. :(
     # so, need to manually assign a default value.
-    [[ -z $store ]] && store=$PROJECT_NAME
+    [[ -z $store ]] && store=sherpa
 
     echo "$store"
 
@@ -5837,7 +5836,7 @@ FormatAsISOBytes()
 FormatAsScriptTitle()
     {
 
-    ColourTextBrightWhite "${PROJECT_NAME:-default project name}"
+    ColourTextBrightWhite sherpa
 
     }
 
@@ -6152,7 +6151,7 @@ DebugFuncEntry()
 
     local var_name=${FUNCNAME[1]}_STARTSECONDS
     local var_safe_name=${var_name//[.-]/_}
-    eval "$var_safe_name=$(/bin/date +%s%N)"
+    eval "$var_safe_name=$(/bin/date +%s%N)"    # $DATE_CMD hasnt been defined when this function is first called in Self.Init()
 
     DebugThis "(>>) ${FUNCNAME[1]}"
 
@@ -6669,7 +6668,7 @@ StripANSI()
 
     # QTS 4.2.6 BusyBox 'sed' doesnt fully support extended regexes, so this only works with a real 'sed'
 
-    if [[ -e ${GNU_SED_CMD:-} ]]; then
+    if [[ -e $GNU_SED_CMD ]]; then
         $GNU_SED_CMD -r 's/\x1b\[[0-9;]*m//g' <<< "${1:-}"
     else
         echo "${1:-}"           # cant strip, so pass thru original message unaltered
