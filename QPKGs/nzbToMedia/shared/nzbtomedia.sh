@@ -20,7 +20,7 @@ Init()
 
     # service-script environment
     readonly QPKG_NAME=nzbToMedia
-    readonly SCRIPT_VERSION=221221b
+    readonly SCRIPT_VERSION=221221c
 
     # general environment
     readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -37,14 +37,17 @@ Init()
     local re=''
 
     if IsThisQPKGInstalled SABnzbd; then
-        readonly APPARENT_PATH=$(/sbin/getcfg misc download_dir -d /share/Public/Downloads -f $(/sbin/getcfg SABnzbd Install_Path -f /etc/config/qpkg.conf)/config/config.ini)/$QPKG_NAME
+        link_path=$(/sbin/getcfg misc script_dir -d /share/Public/Downloads -f $(/sbin/getcfg SABnzbd Install_Path -f /etc/config/qpkg.conf)/config/config.ini)
     elif IsThisQPKGInstalled NZBGet; then
-        readonly APPARENT_PATH=$(/sbin/getcfg '' MainDir -d /share/Public/Downloads -f $(/sbin/getcfg NZBGet Install_Path -f /etc/config/qpkg.conf)/config/config.ini)/$QPKG_NAME
+        link_path=$(/sbin/getcfg '' MainDir -d /share/Public/Downloads -f $(/sbin/getcfg NZBGet Install_Path -f /etc/config/qpkg.conf)/config/config.ini)/$QPKG_NAME
     elif [[ $DEFAULT_DOWNLOAD_SHARE != unspecified ]]; then
-        readonly APPARENT_PATH=$DEFAULT_DOWNLOAD_SHARE/$QPKG_NAME
+        link_path=$DEFAULT_DOWNLOAD_SHARE/$QPKG_NAME
     else
-        readonly APPARENT_PATH=/share/Public/Downloads/$QPKG_NAME
+        link_path=/share/Public/Downloads/$QPKG_NAME
     fi
+
+    [[ $(basename $link_path) != $QPKG_NAME ]] && link_path+=/$QPKG_NAME
+    Display "link_path: $link_path"
 
     # specific to online-sourced applications only
     readonly SOURCE_GIT_URL=https://github.com/clinton-hall/nzbToMedia.git
@@ -91,7 +94,7 @@ Init()
     IsSupportBackup && [[ -n ${BACKUP_PATH:-} && ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
     [[ -n ${VENV_PATH:-} && ! -d $VENV_PATH ]] && mkdir -p "$VENV_PATH"
     [[ -n ${PIP_CACHE_PATH:-} && ! -d $PIP_CACHE_PATH ]] && mkdir -p "$PIP_CACHE_PATH"
-    [[ ! -e $(/usr/bin/dirname $APPARENT_PATH) ]] && mkdir -p $(/usr/bin/dirname $APPARENT_PATH)
+    [[ ! -e $(/usr/bin/dirname $link_path) ]] && mkdir -p $(/usr/bin/dirname $link_path)
 
     IsAutoUpdateMissing && EnableAutoUpdate >/dev/null
 
@@ -149,7 +152,7 @@ StartQPKG()
         return 1
     fi
 
-    ln -s "$QPKG_REPO_PATH" "$APPARENT_PATH"
+    ln -s "$QPKG_REPO_PATH" "$link_path"
 
     DisplayCommitToLog 'start package: OK'
     EnsureConfigFileExists
@@ -175,7 +178,7 @@ StopQPKG()
             SetRestartPending
         fi
 
-        [[ -L $APPARENT_PATH ]] && rm "$APPARENT_PATH"
+        [[ -L $link_path ]] && rm "$link_path"
         DisplayCommitToLog 'stop package: OK.'
 
         IsNotPackageActive || return
@@ -784,7 +787,7 @@ IsNotSourcedOnline()
 IsPackageActive()
     {
 
-    if [[ -L $APPARENT_PATH ]]; then
+    if [[ -L $link_path ]]; then
         DisplayCommitToLog 'package: IS active'
         return
     fi
