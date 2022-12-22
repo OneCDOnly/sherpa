@@ -293,7 +293,7 @@ LoadAppVersion()
         app_version=$(eval "$APP_VERSION_CMD")
         return 0
     else
-        app_version='unknown'
+        app_version=unknown
         return 1
     fi
 
