@@ -20,7 +20,7 @@ Init()
 
     # service-script environment
     readonly QPKG_NAME=SABnzbd
-    readonly SCRIPT_VERSION=221221a
+    readonly SCRIPT_VERSION=221223
 
     # general environment
     readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -55,13 +55,16 @@ Init()
     readonly LAUNCHER="$DAEMON_PATHFILE --daemon --browser 0 --config-file $QPKG_INI_PATHFILE --pidfile $DAEMON_PID_PATHFILE"
     readonly PORT_CHECK_TIMEOUT=120
     readonly DAEMON_STOP_TIMEOUT=60
+    readonly DAEMON_PORT_CMD=""
     readonly UI_PORT_CMD="/sbin/getcfg misc port -d 0 -f $QPKG_INI_PATHFILE"
     readonly UI_PORT_SECURE_CMD="/sbin/getcfg misc https_port -d 0 -f $QPKG_INI_PATHFILE"
-    readonly SECURE_PORT_ENABLED_CMD="/sbin/getcfg misc enable_https -d 0 -f $QPKG_INI_PATHFILE"
-    readonly UI_LISTENING_ADDRESS_CMD="/sbin/getcfg misc host -d '0.0.0.0' -f $QPKG_INI_PATHFILE"
+    readonly UI_PORT_SECURE_ENABLED_CMD='[[ $(/sbin/getcfg misc enable_https -d 0 -f '$QPKG_INI_PATHFILE') = 1 ]] && echo true'
+    readonly UI_LISTENING_ADDRESS_CMD="/sbin/getcfg misc host -d undefined -f $QPKG_INI_PATHFILE"
+    daemon_port=0
     ui_port=0
     ui_port_secure=0
-    ui_listening_address=''
+    ui_port_secure_enabled=false
+    ui_listening_address=undefined
 
     # specific to applications supporting version lookup only
     readonly APP_VERSION_PATHFILE=$QPKG_REPO_PATH/sabnzbd/version.py
@@ -149,10 +152,10 @@ StartQPKG()
     IsNotDaemon && return
     WaitForLaunchTarget || return
     EnsureConfigFileExists
-    LoadUIPorts app || return
+    LoadPorts app || return
 
-    if [[ $ui_port -le 0 && $ui_port_secure -le 0 ]]; then
-        DisplayErrCommitAllLogs 'unable to start daemon: no UI port was specified!'
+    if [[ $daemon_port -le 0 && $ui_port -le 0 && $ui_port_secure -le 0 ]]; then
+        DisplayErrCommitAllLogs 'unable to start daemon: no port specified!'
         SetError
         return 1
     elif IsNotPortAvailable $ui_port || IsNotPortAvailable $ui_port_secure; then
@@ -174,7 +177,7 @@ StartQPKG()
         return 1
     fi
 
-    DisplayRunAndLog 'start daemon' ". $VENV_PATH/bin/activate && cd $QPKG_REPO_PATH && $VENV_INTERPRETER $LAUNCHER" log:everything || return
+    DisplayRunAndLog 'start daemon' ". $VENV_PATH/bin/activate && cd $QPKG_REPO_PATH && $VENV_INTERPRETER $LAUNCHER" || return
     WaitForPID || return
     IsDaemonActive || return
     CheckPorts || return
@@ -227,7 +230,7 @@ StopQPKG()
             Display OK
             CommitLog "stopped OK in $acc seconds"
 
-            CommitInfoToSysLog 'stop daemon: OK.'
+            CommitInfoToSysLog 'stop daemon: OK'
             break
         done
 
@@ -253,7 +256,7 @@ InstallAddons()
     [[ $ALLOW_ACCESS_TO_SYS_PACKAGES != true ]] && sys_packages=''
 
     if IsNotVirtualEnvironmentExist; then
-        DisplayRunAndLog 'create new virtual Python environment' "export PIP_CACHE_DIR=$PIP_CACHE_PATH VIRTUALENV_OVERRIDE_APP_DATA=$PIP_CACHE_PATH; $INTERPRETER -m virtualenv $VENV_PATH $sys_packages" log:everything || SetError
+        DisplayRunAndLog 'create new virtual Python environment' "export PIP_CACHE_DIR=$PIP_CACHE_PATH VIRTUALENV_OVERRIDE_APP_DATA=$PIP_CACHE_PATH; $INTERPRETER -m virtualenv $VENV_PATH $sys_packages" log:failure-only || SetError
         new_env=true
     fi
 
@@ -264,7 +267,7 @@ InstallAddons()
     fi
 
     if [[ ! -e $pip_conf_pathfile ]]; then
-        DisplayRunAndLog "create global 'pip' config" "echo -e \"[global]\ncache-dir = $PIP_CACHE_PATH\" > $pip_conf_pathfile" log:everything || SetError
+        DisplayRunAndLog "create global 'pip' config" "echo -e \"[global]\ncache-dir = $PIP_CACHE_PATH\" > $pip_conf_pathfile" log:failure-only || SetError
     fi
 
     IsNotAutoUpdate && [[ $new_env = false ]] && return 0
@@ -272,26 +275,26 @@ InstallAddons()
     [[ ! -e $requirements_pathfile && -e $default_requirements_pathfile ]] && requirements_pathfile=$default_requirements_pathfile
 
     if [[ -e $requirements_pathfile ]]; then
-        DisplayRunAndLog 'install required PyPI modules' ". $VENV_PATH/bin/activate && pip install --no-input -r $requirements_pathfile" log:everything || SetError
+        DisplayRunAndLog 'install required PyPI modules' ". $VENV_PATH/bin/activate && pip install --no-input -r $requirements_pathfile" log:failure-only || SetError
         no_pips_installed=false
     fi
 
     [[ ! -e $recommended_pathfile && -e $default_recommended_pathfile ]] && recommended_pathfile=$default_recommended_pathfile
 
     if [[ -e $recommended_pathfile ]]; then
-        DisplayRunAndLog 'install recommended PyPI modules' ". $VENV_PATH/bin/activate && pip install --no-input -r $recommended_pathfile" log:everything || SetError
+        DisplayRunAndLog 'install recommended PyPI modules' ". $VENV_PATH/bin/activate && pip install --no-input -r $recommended_pathfile" log:failure-only || SetError
         no_pips_installed=false
     fi
 
     if [[ $no_pips_installed = true ]]; then        # fallback to general installation method
         if [[ -e $QPKG_REPO_PATH/setup.py || -e $QPKG_REPO_PATH/pyproject.toml ]]; then
-            DisplayRunAndLog 'install default PyPI modules' ". $VENV_PATH/bin/activate && pip install --no-input $QPKG_REPO_PATH" log:everything || SetError
+            DisplayRunAndLog 'install default PyPI modules' ". $VENV_PATH/bin/activate && pip install --no-input $QPKG_REPO_PATH" log:failure-only || SetError
             no_pips_installed=false
         fi
     fi
 
     if [[ $QPKG_NAME = SABnzbd && $new_env = true ]]; then
-        DisplayRunAndLog "KLUDGE: reinstall 'sabyenc3' PyPI module (https://forums.sabnzbd.org/viewtopic.php?p=128567#p128567)" ". $VENV_PATH/bin/activate && pip install --no-input --force-reinstall --no-binary :all: sabyenc3" log:everything || SetError
+        DisplayRunAndLog "KLUDGE: reinstall 'sabyenc3' PyPI module (https://forums.sabnzbd.org/viewtopic.php?p=128567#p128567)" ". $VENV_PATH/bin/activate && pip install --no-input --force-reinstall --no-binary :all: sabyenc3" log:failure-only || SetError
         UpdateLanguages
     fi
 
@@ -301,7 +304,7 @@ BackupConfig()
     {
 
     CommitOperationToLog
-    DisplayRunAndLog 'update configuration backup' "/bin/tar --create --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config ." log:everything || SetError
+    DisplayRunAndLog 'update configuration backup' "/bin/tar --create --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config ." || SetError
 
     }
 
@@ -317,7 +320,7 @@ RestoreConfig()
     fi
 
     StopQPKG
-    DisplayRunAndLog 'restore configuration backup' "/bin/tar --extract --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config" log:everything || SetError
+    DisplayRunAndLog 'restore configuration backup' "/bin/tar --extract --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config" || SetError
     StartQPKG
 
     }
@@ -327,12 +330,12 @@ ResetConfig()
 
     CommitOperationToLog
     StopQPKG
-    DisplayRunAndLog 'reset configuration' "mv $QPKG_INI_DEFAULT_PATHFILE $QPKG_PATH; rm -rf $QPKG_PATH/config/*; mv $QPKG_PATH/$(/usr/bin/basename "$QPKG_INI_DEFAULT_PATHFILE") $QPKG_INI_DEFAULT_PATHFILE" log:everything || SetError
+    DisplayRunAndLog 'reset configuration' "mv $QPKG_INI_DEFAULT_PATHFILE $QPKG_PATH; rm -rf $QPKG_PATH/config/*; mv $QPKG_PATH/$(/usr/bin/basename "$QPKG_INI_DEFAULT_PATHFILE") $QPKG_INI_DEFAULT_PATHFILE" || SetError
     StartQPKG
 
     }
 
-LoadUIPorts()
+LoadPorts()
     {
 
     # If user changes ports via app UI, must first 'stop' application on old ports, then 'start' on new ports
@@ -340,9 +343,9 @@ LoadUIPorts()
     case $1 in
         app)
             # Read the current application UI ports from application configuration
-            DisplayWaitCommitToLog 'load UI ports from application config:'
-            ui_port=$(eval "$UI_PORT_CMD")
-            ui_port_secure=$(eval "$UI_PORT_SECURE_CMD")
+            DisplayWaitCommitToLog 'load ports from configuration file:'
+            [[ -n ${UI_PORT_CMD:-} ]] && ui_port=$(eval "$UI_PORT_CMD")
+            [[ -n ${UI_PORT_SECURE_CMD:-} ]] && ui_port_secure=$(eval "$UI_PORT_SECURE_CMD")
             DisplayCommitToLog OK
             ;;
         qts)
@@ -353,28 +356,24 @@ LoadUIPorts()
             DisplayCommitToLog OK
             ;;
         *)
-            DisplayErrCommitAllLogs "unable to load UI ports: action '$1' is unrecognised"
+            DisplayErrCommitAllLogs "unable to load ports: action '$1' is unrecognised"
             SetError
             return 1
             ;;
     esac
 
-    if [[ $ui_port -eq 0 ]] && IsNotDefaultConfigFound; then
-        ui_port=0
-        ui_port_secure=0
-    fi
+    # Always read these from the application configuration
+    [[ -n ${UI_PORT_SECURE_ENABLED_CMD:-} ]] && ui_port_secure_enabled=$(eval "$UI_PORT_SECURE_ENABLED_CMD")
+    [[ -n ${UI_LISTENING_ADDRESS_CMD:-} ]] && ui_listening_address=$(eval "$UI_LISTENING_ADDRESS_CMD")
+    [[ -n ${DAEMON_PORT_CMD:-} ]] && daemon_port=$(eval "$DAEMON_PORT_CMD")
 
-    # Always read this from the application configuration
-    ui_listening_address=$(eval "$UI_LISTENING_ADDRESS_CMD")
+    [[ -z $ui_port ]] && ui_port=0
+    [[ -z $ui_port_secure ]] && ui_port_secure=0
+    [[ -z $ui_port_secure_enabled ]] && ui_port_secure_enabled=false
+    [[ -z $ui_listening_address ]] && ui_listening_address=undefined
+    [[ -z $daemon_port ]] && daemon_port=0
 
     return 0
-
-    }
-
-IsSSLEnabled()
-    {
-
-    [[ $(eval "$SECURE_PORT_ENABLED_CMD") -eq 1 ]]
 
     }
 
@@ -389,7 +388,7 @@ LoadAppVersion()
         app_version=$(eval "$APP_VERSION_CMD")
         return 0
     else
-        app_version='unknown'
+        app_version=unknown
         return 1
     fi
 
@@ -402,7 +401,8 @@ StatusQPKG()
 
     if IsDaemonActive; then
         if IsDaemon || IsSourcedOnline; then
-            LoadUIPorts qts
+            LoadPorts app
+
             if ! CheckPorts; then
                 SetError
                 return 1
@@ -425,7 +425,7 @@ UpdateLanguages()
     LoadAppVersion
     [[ -e $APP_VERSION_STORE_PATHFILE && $(<"$APP_VERSION_STORE_PATHFILE") = "$app_version" && -d $QPKG_REPO_PATH/locale ]] && return 0
 
-    DisplayRunAndLog "update $(FormatAsPackageName $QPKG_NAME) language translations" ". $VENV_PATH/bin/activate && cd $QPKG_REPO_PATH; $VENV_INTERPRETER $QPKG_REPO_PATH/tools/make_mo.py"
+    DisplayRunAndLog "update $(FormatAsPackageName $QPKG_NAME) language translations" ". $VENV_PATH/bin/activate && cd $QPKG_REPO_PATH; $VENV_INTERPRETER $QPKG_REPO_PATH/tools/make_mo.py" log:failure-only
     [[ ! -e $APP_VERSION_STORE_PATHFILE ]] && return 0
 
     SaveAppVersion
@@ -459,16 +459,16 @@ PullGitRepo()
             branch_switch=true
             DisplayCommitToLog "current git branch: $installed_branch, new git branch: $3"
             [[ $QPKG_NAME = nzbToMedia ]] && BackupConfig
-            DisplayRunAndLog 'new git branch has been specified, so clean local repository' "cd /tmp; rm -r $QPKG_GIT_PATH"
+            DisplayRunAndLog 'new git branch has been specified, so clean local repository' "cd /tmp; rm -r $QPKG_GIT_PATH" log:failure-only
         fi
     fi
 
     if [[ ! -d $QPKG_GIT_PATH/.git ]]; then
-        DisplayRunAndLog "clone $(FormatAsPackageName "$1") from remote repository" "cd /tmp; /opt/bin/git clone --branch $3 $DEPTH -c advice.detachedHead=false $GIT_HTTPS_URL $QPKG_GIT_PATH"
+        DisplayRunAndLog "clone $(FormatAsPackageName "$1") from remote repository" "cd /tmp; /opt/bin/git clone --branch $3 $DEPTH -c advice.detachedHead=false $GIT_HTTPS_URL $QPKG_GIT_PATH" log:failure-only
     else
         if IsAutoUpdate; then
             # latest effort at resolving local corruption, source: https://stackoverflow.com/a/10170195
-            DisplayRunAndLog "update $(FormatAsPackageName "$1") from remote repository" "cd /tmp; /opt/bin/git -C $QPKG_GIT_PATH clean -f; /opt/bin/git -C $QPKG_GIT_PATH reset --hard origin/$3; /opt/bin/git -C $QPKG_GIT_PATH pull"
+            DisplayRunAndLog "update $(FormatAsPackageName "$1") from remote repository" "cd /tmp; /opt/bin/git -C $QPKG_GIT_PATH clean -f; /opt/bin/git -C $QPKG_GIT_PATH reset --hard origin/$3; /opt/bin/git -C $QPKG_GIT_PATH pull" log:failure-only
         fi
     fi
 
@@ -496,10 +496,10 @@ CleanLocalClone()
     fi
 
     StopQPKG
-    DisplayRunAndLog 'clean local repository' "rm -rf $QPKG_REPO_PATH"
-    [[ -d $(/usr/bin/dirname $QPKG_REPO_PATH)/$QPKG_NAME ]] && DisplayRunAndLog 'KLUDGE: remove previous local repository' "rm -r $(/usr/bin/dirname $QPKG_REPO_PATH)/$QPKG_NAME"
-    DisplayRunAndLog 'clean virtual environment' "rm -rf $VENV_PATH"
-    DisplayRunAndLog 'clean PyPI cache' "rm -rf $PIP_CACHE_PATH"
+    DisplayRunAndLog 'clean local repository' "rm -rf $QPKG_REPO_PATH" log:failure-only
+    [[ -d $(/usr/bin/dirname $QPKG_REPO_PATH)/$QPKG_NAME ]] && DisplayRunAndLog 'KLUDGE: remove previous local repository' "rm -r $(/usr/bin/dirname $QPKG_REPO_PATH)/$QPKG_NAME" log:failure-only
+    DisplayRunAndLog 'clean virtual environment' "rm -rf $VENV_PATH" log:failure-only
+    DisplayRunAndLog 'clean PyPI cache' "rm -rf $PIP_CACHE_PATH" log:failure-only
     StartQPKG
 
     }
@@ -645,15 +645,14 @@ DisplayRunAndLog()
     # input:
     #   $1 = processing message
     #   $2 = commandstring to execute
-    #   $3 = 'log:failure-only' (optional) - if specified, stdout & stderr are only recorded in the specified log if the command failed
-    #                                      - if unspecified, stdout & stderr is always recorded
+    #   $3 = 'log:failure-only' (optional) - if specified, stdout & stderr are only recorded in the specified log if the command failed. default is to always record stdout & stderr.
 
-    local -r LOG_PATHFILE=$(/bin/mktemp -p /var/log ${FUNCNAME[0]}_XXXXXX)
+    local -r LOG_PATHFILE=$(/bin/mktemp -p /var/log "${FUNCNAME[0]}"_XXXXXX)
     local -i result_code=0
 
     DisplayWaitCommitToLog "$1:"
 
-    RunAndLog "$2" "$LOG_PATHFILE" "$3"
+    RunAndLog "${2:?empty}" "$LOG_PATHFILE" "${3:-}"
     result_code=$?
 
     if [[ -e $LOG_PATHFILE ]]; then
@@ -662,10 +661,10 @@ DisplayRunAndLog()
 
     if [[ $result_code -eq 0 ]]; then
         DisplayCommitToLog OK
-        [[ $3 = log:everything ]] && CommitInfoToSysLog "$1: OK."
+        [[ ${3:-} != log:failure-only ]] && CommitInfoToSysLog "${1:?empty}: OK"
         return 0
     else
-        DisplayCommitToLog 'failed!'
+        DisplayErrCommitAllLogs 'failed!'
         return 1
     fi
 
@@ -679,8 +678,7 @@ RunAndLog()
     # input:
     #   $1 = commandstring to execute
     #   $2 = pathfile to record stdout and stderr for commandstring
-    #   $3 = 'log:failure-only' (optional) - if specified, stdout & stderr are only recorded in the specified log if the command failed
-    #                                      - if unspecified, stdout & stderr is always recorded
+    #   $3 = 'log:failure-only' (optional) - if specified, stdout & stderr are only recorded in the specified log if the command failed. default is to always record stdout & stderr.
     #   $4 = e.g. '10' (optional) - an additional acceptable result code. Any other result from command (other than zero) will be considered a failure
 
     # output:
@@ -688,7 +686,7 @@ RunAndLog()
     #   pathfile ($2) = commandstring ($1) stdout and stderr
     #   $? = result_code of commandstring
 
-    local -r LOG_PATHFILE=$(/bin/mktemp -p /var/log ${FUNCNAME[0]}_XXXXXX)
+    local -r LOG_PATHFILE=$(/bin/mktemp -p /var/log "${FUNCNAME[0]}"_XXXXXX)
     local -i result_code=0
 
     FormatAsCommand "${1:?empty}" > "${2:?empty}"
@@ -816,6 +814,8 @@ ReWriteUIPorts()
 
     # If SSL is enabled, attempting to access with non-SSL via 'Web_Port' results in "connection was reset"
 
+    [[ -n ${DAEMON_PORT_CMD:-} ]] && return     # dont need to rewrite QTS UI ports if this app has a daemon port, as UI ports are unused
+
     DisplayWaitCommitToLog 'update QPKG icon with UI ports:'
     /sbin/setcfg $QPKG_NAME Web_Port "$ui_port" -f /etc/config/qpkg.conf
 
@@ -836,17 +836,29 @@ CheckPorts()
 
     DisplayCommitToLog "daemon listening address: $ui_listening_address"
 
-    if IsSSLEnabled && IsPortSecureResponds $ui_port_secure; then
-        msg="HTTPS port $ui_port_secure"
-    fi
+    if [[ $daemon_port != 0 ]]; then
+        DisplayCommitToLog "daemon port: $daemon_port"
 
-    if IsNotSSLEnabled || [[ $ui_port -ne $ui_port_secure ]]; then
-        # assume $ui_port should be checked too
-        if IsPortResponds $ui_port; then
-            if [[ -n $msg ]]; then
-                msg+=" and HTTP port $ui_port"
-            else
-                msg="HTTP port $ui_port"
+        if IsPortResponds $daemon_port; then
+            msg="daemon port ($daemon_port)"
+        fi
+    else
+        DisplayCommitToLog "secure port enabled: $ui_port_secure_enabled"
+
+        if IsSSLEnabled; then
+            DisplayCommitToLog "HTTPS port: $ui_port_secure"
+
+            if IsPortSecureResponds $ui_port_secure; then
+                msg="HTTPS port ($ui_port_secure)"
+            fi
+        fi
+
+        if [[ $ui_port_secure -ne $ui_port ]]; then
+            DisplayCommitToLog "HTTP port: $ui_port"
+
+            if IsPortResponds $ui_port; then
+                [[ -n $msg ]] && msg+=" and "
+                msg+="HTTP port ($ui_port)"
             fi
         fi
     fi
@@ -879,17 +891,55 @@ IsQNAP()
 
     }
 
+IsQPKGInstalled()
+    {
+
+    # input:
+    #   $1 = (optional) package name to check. If unspecified, default is $QPKG_NAME
+
+    # output:
+    #   $? = 0 (true) or 1 (false)
+
+    if [[ -z ${1:-} ]]; then
+        local name=$QPKG_NAME
+    else
+        local name=$1
+    fi
+
+    /bin/grep -q "^\[$name\]" /etc/config/qpkg.conf
+
+    }
+
+IsNotQPKGInstalled()
+    {
+
+    ! IsQPKGInstalled "${1:-}"
+
+    }
+
 IsQPKGEnabled()
     {
 
-    [[ $(/sbin/getcfg $QPKG_NAME Enable -u -d FALSE -f /etc/config/qpkg.conf) = TRUE ]]
+    # input:
+    #   $1 = (optional) package name to check. If unspecified, default is $QPKG_NAME
+
+    # output:
+    #   $? = 0 (true) or 1 (false)
+
+    if [[ -z ${1:-} ]]; then
+        local name=$QPKG_NAME
+    else
+        local name=$1
+    fi
+
+    [[ $(/sbin/getcfg "$name" Enable -u -d FALSE -f /etc/config/qpkg.conf) = TRUE ]]
 
     }
 
 IsNotQPKGEnabled()
     {
 
-    ! IsQPKGEnabled
+    ! IsQPKGEnabled "${1:-}"
 
     }
 
@@ -932,6 +982,13 @@ IsNotSourcedOnline()
     {
 
     ! IsSourcedOnline
+
+    }
+
+IsSSLEnabled()
+    {
+
+    [[ $ui_port_secure_enabled = true ]]
 
     }
 
@@ -1046,18 +1103,21 @@ IsPortResponds()
     # $? = 1 if not OK
 
     if [[ -z $1 || $1 -eq 0 ]]; then
-        SetError
+        Display 'check for port 0 response: ignored'
         return 1
     fi
 
     local acc=0
 
-    DisplayWaitCommitToLog "check for UI port $1 response:"
+    DisplayWaitCommitToLog "check for port $1 response:"
     DisplayWait "(no-more than $PORT_CHECK_TIMEOUT seconds):"
 
     while true; do
         /sbin/curl --silent --fail --max-time 1 http://localhost:"$1" >/dev/null
-        [[ $? -eq 0 || $? -eq 22 ]] && break
+        case $? in
+            0|22|52)    # accept these curl exitcodes as being valid
+                break
+        esac
 
         sleep 1
         ((acc+=2))
@@ -1065,13 +1125,13 @@ IsPortResponds()
 
         if [[ $acc -ge $PORT_CHECK_TIMEOUT ]]; then
             DisplayCommitToLog 'failed!'
-            CommitErrToSysLog "UI port $1 failed to respond after $acc seconds"
+            CommitErrToSysLog "port $1 failed to respond after $acc seconds"
             return 1
         fi
     done
 
     Display OK
-    CommitLog "UI port responded after $acc seconds"
+    CommitLog "port responded after $acc seconds"
 
     return 0
 
@@ -1080,34 +1140,40 @@ IsPortResponds()
 IsPortSecureResponds()
     {
 
-    # $1 = port to check
+    # $1 = secure port to check
     # $? = 0 if response received
-    # $? = 1 if not OK or port unspecified
+    # $? = 1 if not OK or secure port unspecified
 
     if [[ -z $1 || $1 -eq 0 ]]; then
-        SetError
+        Display 'check for port 0 response: ignored'
         return 1
     fi
 
     local acc=0
 
-    DisplayWaitCommitToLog "check for secure UI port $1 response:"
+    DisplayWaitCommitToLog "check for secure port $1 response:"
     DisplayWait "(no-more than $PORT_CHECK_TIMEOUT seconds):"
 
-    while ! /sbin/curl --silent --insecure --fail --max-time 1 https://localhost:"$1" >/dev/null; do
+    while true; do
+        /sbin/curl --silent --insecure --fail --max-time 1 https://localhost:"$1" >/dev/null
+        case $? in
+            0|22|52)    # accept these curl exitcodes as being valid
+                break
+        esac
+
         sleep 1
         ((acc+=2))
         DisplayWait "$acc,"
 
         if [[ $acc -ge $PORT_CHECK_TIMEOUT ]]; then
             DisplayCommitToLog 'failed!'
-            CommitErrToSysLog "secure UI port $1 failed to respond after $acc seconds"
+            CommitErrToSysLog "secure port $1 failed to respond after $acc seconds"
             return 1
         fi
     done
 
     Display OK
-    CommitLog "secure UI port responded after $acc seconds"
+    CommitLog "secure port responded after $acc seconds"
 
     return 0
 
