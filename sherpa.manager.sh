@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly MANAGER_FILE=sherpa.manager.sh
-    local -r SCRIPT_VER=221222d-beta
+    local -r SCRIPT_VER=221222e-beta
 
     IsQNAP || return
     IsSU || return
@@ -472,7 +472,6 @@ Self.Validate()
         fi
     fi
 
-    QPKGs.IsSupportDebug.Build
     QPKGs.IsSupportBackup.Build
     QPKGs.IsSupportUpdateOnRestart.Build
     ApplySensibleExceptions
@@ -3554,29 +3553,6 @@ QPKGs.States.Build()
 
     }
 
-QPKGs.IsSupportDebug.Build()
-    {
-
-    # Build a list of QPKGs that do and dont support 'debug' as an argument
-
-    DebugFuncEntry
-
-    local package=''
-
-    for package in $(QPKGs.ScAll.Array); do
-        if QPKG.IsSupportDebug "$package"; then
-            QPKGs.ScSupportDebug.Add "$package"
-            QPKGs.ScNtSupportDebug.Remove "$package"
-        else
-            QPKGs.ScNtSupportDebug.Add "$package"
-            QPKGs.ScSupportDebug.Remove "$package"
-        fi
-    done
-
-    DebugFuncExit
-
-    }
-
 QPKGs.IsSupportBackup.Build()
     {
 
@@ -4525,7 +4501,7 @@ QPKG.Install()
     local target_path=''
 
     DebugAsProc "installing $(FormatAsPackageName "$PACKAGE_NAME")"
-    Self.Debug.ToScreen.IsSet && QPKG.IsSupportDebug "$PACKAGE_NAME" && debug_cmd='DEBUG_QPKG=true '
+    Self.Debug.ToScreen.IsSet && debug_cmd='DEBUG_QPKG=true '
     [[ ${QPKGs_were_installed_name[*]:-} == *"$PACKAGE_NAME"* ]] && target_path="QINSTALL_PATH=$(QPKG.OriginalPath "$PACKAGE_NAME") "
     RunAndLog "${debug_cmd}${target_path}${SH_CMD} $local_pathfile" "$LOG_PATHFILE" log:failure-only 10
     result_code=$?
@@ -4615,7 +4591,7 @@ QPKG.Reinstall()
     local target_path=''
 
     DebugAsProc "reinstalling $(FormatAsPackageName "$PACKAGE_NAME")"
-    Self.Debug.ToScreen.IsSet && QPKG.IsSupportDebug "$PACKAGE_NAME" && debug_cmd='DEBUG_QPKG=true '
+    Self.Debug.ToScreen.IsSet && debug_cmd='DEBUG_QPKG=true '
     QPKG.IsInstalled "$PACKAGE_NAME" && target_path="QINSTALL_PATH=$($DIRNAME_CMD "$(QPKG.InstallationPath $PACKAGE_NAME)") "
     RunAndLog "${debug_cmd}${target_path}${SH_CMD} $local_pathfile" "$LOG_PATHFILE" log:failure-only 10
     result_code=$?
@@ -4700,7 +4676,7 @@ QPKG.Upgrade()
     local target_path=''
 
     DebugAsProc "upgrading $(FormatAsPackageName "$PACKAGE_NAME")"
-    Self.Debug.ToScreen.IsSet && QPKG.IsSupportDebug "$PACKAGE_NAME" && debug_cmd='DEBUG_QPKG=true '
+    Self.Debug.ToScreen.IsSet && debug_cmd='DEBUG_QPKG=true '
     QPKG.IsInstalled "$PACKAGE_NAME" && target_path="QINSTALL_PATH=$($DIRNAME_CMD "$(QPKG.InstallationPath $PACKAGE_NAME)") "
     RunAndLog "${debug_cmd}${target_path}${SH_CMD} $local_pathfile" "$LOG_PATHFILE" log:failure-only 10
     result_code=$?
@@ -4771,7 +4747,7 @@ QPKG.Uninstall()
 
     if [[ -e $QPKG_UNINSTALLER_PATHFILE ]]; then
         DebugAsProc "uninstalling $(FormatAsPackageName "$PACKAGE_NAME")"
-        Self.Debug.ToScreen.IsSet && QPKG.IsSupportDebug "$PACKAGE_NAME" && debug_cmd='DEBUG_QPKG=true '
+        Self.Debug.ToScreen.IsSet && debug_cmd='DEBUG_QPKG=true '
         RunAndLog "${debug_cmd}${SH_CMD} $QPKG_UNINSTALLER_PATHFILE" "$LOG_PATHFILE" log:failure-only
         result_code=$?
 
@@ -4834,9 +4810,9 @@ QPKG.Restart()
     result_code=$?
 
     if [[ $result_code -eq 0 ]]; then
-        Self.Debug.ToScreen.IsSet && QPKG.IsSupportDebug "$PACKAGE_NAME" && debug_cmd='debug'
         DebugAsProc "restarting $(FormatAsPackageName "$PACKAGE_NAME")"
-        RunAndLog "$PACKAGE_INIT_PATHFILE $action $debug_cmd" "$LOG_PATHFILE" log:failure-only
+        Self.Debug.ToScreen.IsSet && debug_cmd='DEBUG_QPKG=true '
+        RunAndLog "${debug_cmd}${PACKAGE_INIT_PATHFILE} $action" "$LOG_PATHFILE" log:failure-only
         result_code=$?
     fi
 
@@ -4894,9 +4870,9 @@ QPKG.Start()
     result_code=$?
 
     if [[ $result_code -eq 0 ]]; then
-        Self.Debug.ToScreen.IsSet && QPKG.IsSupportDebug "$PACKAGE_NAME" && debug_cmd='debug'
         DebugAsProc "starting $(FormatAsPackageName "$PACKAGE_NAME")"
-        RunAndLog "$PACKAGE_INIT_PATHFILE $action $debug_cmd" "$LOG_PATHFILE" log:failure-only
+        Self.Debug.ToScreen.IsSet && debug_cmd='DEBUG_QPKG=true '
+        RunAndLog "${debug_cmd}${PACKAGE_INIT_PATHFILE} $action" "$LOG_PATHFILE" log:failure-only
         result_code=$?
     fi
 
@@ -4957,9 +4933,9 @@ QPKG.Stop()
     local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile "$PACKAGE_NAME")
     local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$STOP_LOG_FILE
 
-    Self.Debug.ToScreen.IsSet && QPKG.IsSupportDebug "$PACKAGE_NAME" && debug_cmd='debug'
     DebugAsProc "stopping $(FormatAsPackageName "$PACKAGE_NAME")"
-    RunAndLog "$PACKAGE_INIT_PATHFILE $action $debug_cmd" "$LOG_PATHFILE" log:failure-only
+	Self.Debug.ToScreen.IsSet && debug_cmd='DEBUG_QPKG=true '
+    RunAndLog "${debug_cmd}${PACKAGE_INIT_PATHFILE} $action" "$LOG_PATHFILE" log:failure-only
     result_code=$?
 
     if [[ $result_code -eq 0 ]]; then
@@ -5060,9 +5036,9 @@ QPKG.Backup()
     local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile "$PACKAGE_NAME")
     local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$BACKUP_LOG_FILE
 
-    Self.Debug.ToScreen.IsSet && QPKG.IsSupportDebug "$PACKAGE_NAME" && debug_cmd='debug'
     DebugAsProc "backing-up $(FormatAsPackageName "$PACKAGE_NAME") configuration"
-    RunAndLog "$PACKAGE_INIT_PATHFILE $action $debug_cmd" "$LOG_PATHFILE" log:failure-only
+	Self.Debug.ToScreen.IsSet && debug_cmd='DEBUG_QPKG=true '
+    RunAndLog "${debug_cmd}${PACKAGE_INIT_PATHFILE} $action" "$LOG_PATHFILE" log:failure-only
     result_code=$?
 
     if [[ $result_code -eq 0 ]]; then
@@ -5112,9 +5088,9 @@ QPKG.Restore()
     local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile "$PACKAGE_NAME")
     local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$RESTORE_LOG_FILE
 
-    Self.Debug.ToScreen.IsSet && QPKG.IsSupportDebug "$PACKAGE_NAME" && debug_cmd='debug'
     DebugAsProc "restoring $(FormatAsPackageName "$PACKAGE_NAME") configuration"
-    RunAndLog "$PACKAGE_INIT_PATHFILE $action $debug_cmd" "$LOG_PATHFILE" log:failure-only
+	Self.Debug.ToScreen.IsSet && debug_cmd='DEBUG_QPKG=true '
+    RunAndLog "${debug_cmd}${PACKAGE_INIT_PATHFILE} $action" "$LOG_PATHFILE" log:failure-only
     result_code=$?
 
     if [[ $result_code -eq 0 ]]; then
@@ -5163,9 +5139,9 @@ QPKG.Clean()
     local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile "$PACKAGE_NAME")
     local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$CLEAN_LOG_FILE
 
-    Self.Debug.ToScreen.IsSet && QPKG.IsSupportDebug "$PACKAGE_NAME" && debug_cmd='debug'
     DebugAsProc "cleaning $(FormatAsPackageName "$PACKAGE_NAME")"
-    RunAndLog "$PACKAGE_INIT_PATHFILE $action $debug_cmd" "$LOG_PATHFILE" log:failure-only
+	Self.Debug.ToScreen.IsSet && debug_cmd='DEBUG_QPKG=true '
+    RunAndLog "${debug_cmd}${PACKAGE_INIT_PATHFILE} $action" "$LOG_PATHFILE" log:failure-only
     result_code=$?
 
     if [[ $result_code -eq 0 ]]; then
@@ -5347,33 +5323,6 @@ QPKG.StoreID()
     echo "$store"
 
     return 0
-
-    }
-
-QPKG.IsSupportDebug()
-    {
-
-    # does this QPKG service-script support 'debug' as an argument?
-
-    # input:
-    #   $1 = QPKG name
-
-    # output:
-    #   $? = 0 if true, 1 if false
-
-    local -i index=0
-
-    for index in "${!QPKG_NAME[@]}"; do
-        if [[ ${QPKG_NAME[$index]} = "${1:?no package name supplied}" ]]; then
-            if ${QPKG_SUPPORTS_DEBUG[$index]}; then
-                return 0
-            else
-                break
-            fi
-        fi
-    done
-
-    return 1
 
     }
 
@@ -6808,7 +6757,6 @@ Packages.Load()
         readonly QPKG_IPKGS_INSTALL
         readonly QPKG_SUPPORTS_BACKUP
         readonly QPKG_RESTART_TO_UPDATE
-        readonly QPKG_SUPPORTS_DEBUG
 
     QPKGs.Loaded.Set
     DebugScript version "packages: ${PACKAGES_VER:-unknown}"
