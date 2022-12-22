@@ -20,7 +20,7 @@ Init()
 
     # service-script environment
     readonly QPKG_NAME=nzbToMedia
-    readonly SCRIPT_VERSION=221222
+    readonly SCRIPT_VERSION=221223
 
     # general environment
     readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -37,12 +37,16 @@ Init()
     local re=''
 
     if IsQPKGInstalled SABnzbd; then
+        link_path_source="SABnzbd 'script_dir'"
         link_path=$(/sbin/getcfg misc script_dir -d /share/Public/Downloads -f "$(/sbin/getcfg SABnzbd Install_Path -f /etc/config/qpkg.conf)"/config/config.ini)
     elif IsQPKGInstalled NZBGet; then
+        link_path_source="NZBGet 'MainDir'"
         link_path=$(/sbin/getcfg '' MainDir -d /share/Public/Downloads -f "$(/sbin/getcfg NZBGet Install_Path -f /etc/config/qpkg.conf)"/config/config.ini)
     elif [[ $DEFAULT_DOWNLOAD_SHARE != unspecified ]]; then
+        link_path_source="QTS 'Download' share"
         link_path=$DEFAULT_DOWNLOAD_SHARE
     else
+        link_path_source='default'
         link_path=/share/Public/Downloads
     fi
 
@@ -179,7 +183,7 @@ StopQPKG()
         fi
 
         [[ -L $link_path ]] && rm "$link_path"
-        DisplayCommitToLog 'stop package: OK.'
+        DisplayCommitToLog 'stop package: OK'
 
         IsNotPackageActive || return
     fi
@@ -534,7 +538,7 @@ DisplayRunAndLog()
 
     if [[ $result_code -eq 0 ]]; then
         DisplayCommitToLog OK
-        [[ $3 = log:everything ]] && CommitInfoToSysLog "$1: OK."
+        [[ $3 = log:everything ]] && CommitInfoToSysLog "$1: OK"
         return 0
     else
         DisplayCommitToLog 'failed!'
@@ -784,8 +788,6 @@ IsNotSourcedOnline()
 IsPackageActive()
     {
 
-    DisplayCommitToLog "link_path: $link_path"
-
     if [[ -L $link_path ]]; then
         DisplayCommitToLog 'package: IS active'
         return
@@ -882,6 +884,15 @@ IsNotVirtualEnvironmentExist()
 
 SetServiceOperation()
     {
+
+    case $1 in
+        none|removing|versioning|logging)
+            : # dont display when running the above actions
+            ;;
+        *)
+            DisplayCommitToLog "link_path source: $link_path_source"
+            DisplayCommitToLog "link_path: $link_path"
+    esac
 
     service_operation="$1"
     SetServiceOperationResult "$1"
