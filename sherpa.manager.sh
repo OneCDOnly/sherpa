@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly MANAGER_FILE=sherpa.manager.sh
-    local -r SCRIPT_VER=221222e-beta
+    local -r SCRIPT_VER=221223-beta
 
     IsQNAP || return
     IsSU || return
@@ -2381,7 +2381,7 @@ ProgressUpdater()
 CreateDirSizeMonitorFlagFile()
     {
 
-    [[ -z ${MONITOR_FLAG_PATHFILE:?empty} ]] && readonly MONITOR_FLAG_PATHFILE=${1:?empty}
+    [[ -z ${MONITOR_FLAG_PATHFILE:-} ]] && readonly MONITOR_FLAG_PATHFILE=${1:?empty}
     $TOUCH_CMD "$MONITOR_FLAG_PATHFILE"
 
     }
@@ -4934,7 +4934,7 @@ QPKG.Stop()
     local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$STOP_LOG_FILE
 
     DebugAsProc "stopping $(FormatAsPackageName "$PACKAGE_NAME")"
-	Self.Debug.ToScreen.IsSet && debug_cmd='DEBUG_QPKG=true '
+    Self.Debug.ToScreen.IsSet && debug_cmd='DEBUG_QPKG=true '
     RunAndLog "${debug_cmd}${PACKAGE_INIT_PATHFILE} $action" "$LOG_PATHFILE" log:failure-only
     result_code=$?
 
@@ -5037,7 +5037,7 @@ QPKG.Backup()
     local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$BACKUP_LOG_FILE
 
     DebugAsProc "backing-up $(FormatAsPackageName "$PACKAGE_NAME") configuration"
-	Self.Debug.ToScreen.IsSet && debug_cmd='DEBUG_QPKG=true '
+    Self.Debug.ToScreen.IsSet && debug_cmd='DEBUG_QPKG=true '
     RunAndLog "${debug_cmd}${PACKAGE_INIT_PATHFILE} $action" "$LOG_PATHFILE" log:failure-only
     result_code=$?
 
@@ -5089,7 +5089,7 @@ QPKG.Restore()
     local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$RESTORE_LOG_FILE
 
     DebugAsProc "restoring $(FormatAsPackageName "$PACKAGE_NAME") configuration"
-	Self.Debug.ToScreen.IsSet && debug_cmd='DEBUG_QPKG=true '
+    Self.Debug.ToScreen.IsSet && debug_cmd='DEBUG_QPKG=true '
     RunAndLog "${debug_cmd}${PACKAGE_INIT_PATHFILE} $action" "$LOG_PATHFILE" log:failure-only
     result_code=$?
 
@@ -5140,7 +5140,7 @@ QPKG.Clean()
     local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$CLEAN_LOG_FILE
 
     DebugAsProc "cleaning $(FormatAsPackageName "$PACKAGE_NAME")"
-	Self.Debug.ToScreen.IsSet && debug_cmd='DEBUG_QPKG=true '
+    Self.Debug.ToScreen.IsSet && debug_cmd='DEBUG_QPKG=true '
     RunAndLog "${debug_cmd}${PACKAGE_INIT_PATHFILE} $action" "$LOG_PATHFILE" log:failure-only
     result_code=$?
 
