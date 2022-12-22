@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly MANAGER_FILE=sherpa.manager.sh
-    local -r SCRIPT_VER=221222-beta
+    local -r SCRIPT_VER=221222a-beta
 
     IsQNAP || return
     IsSU || return
@@ -947,7 +947,15 @@ ParseArguments()
 
         # identify action: every time action changes, must clear scope too
         case $arg in
-            backup|check|clean|install|reassign|rebuild|reinstall|restart|restore|start|stop|upgrade)
+            check)
+                action=check_
+                arg_identified=true
+                scope=''
+                scope_identified=false
+                Self.Display.Clean.UnSet
+                QPKGs.SkProc.UnSet
+                ;;
+            backup|clean|install|reassign|rebuild|reinstall|restart|restore|start|stop|upgrade)
                 action=${arg}_
                 arg_identified=true
                 scope=''
@@ -988,7 +996,7 @@ ParseArguments()
                 QPKGs.SkProc.Set
         esac
 
-        # identify scope in two stages: first stage for when user didnt supply an action. Second is after an action has been defined.
+        # identify scope in two stages: stage 1 for when user didnt supply an action before scope, stage 2 is after an action has been defined.
 
         # stage 1
         if [[ -z $action ]]; then
@@ -1007,6 +1015,13 @@ ParseArguments()
         # stage 2
         if [[ -n $action ]]; then
             case $arg in
+            # these cases use only a single word or char to specify a single action
+                check|installable|installed|not-installed|problems|started|stopped|tail|tips|upgradable)
+                    scope=${arg}_
+                    scope_identified=true
+                    arg_identified=true
+                    ;;
+            # all cases below use more than a single word or char to specify a single action
                 a|abs)
                     scope=abs_
                     scope_identified=true
@@ -1034,16 +1049,6 @@ ParseArguments()
                     ;;
                 dependent|dependents)
                     scope=dependent_
-                    scope_identified=true
-                    arg_identified=true
-                    ;;
-                installable|installed|not-installed|started|stopped|upgradable)
-                    scope=${arg}_
-                    scope_identified=true
-                    arg_identified=true
-                    ;;
-                problems|tail|tips)
-                    scope=${arg}_
                     scope_identified=true
                     arg_identified=true
                     ;;
@@ -1176,6 +1181,10 @@ ParseArguments()
                     backups_)
                         Opts.Help.Backups.Set
                         ;;
+                    dependent_)
+                        QPKGs.List.ScDependent.Set
+                        Self.Display.Clean.Set
+                        ;;
                     installable_)
                         QPKGs.List.ScInstallable.Set
                         Self.Display.Clean.Set
@@ -1194,10 +1203,6 @@ ParseArguments()
                         ;;
                     not-installed_)
                         QPKGs.List.IsNtInstalled.Set
-                        Self.Display.Clean.Set
-                        ;;
-                    dependent_)
-                        QPKGs.List.ScDependent.Set
                         Self.Display.Clean.Set
                         ;;
                     options_)
@@ -1277,10 +1282,6 @@ ParseArguments()
                 esac
 
                 QPKGs.SkProc.Set
-
-                if [[ $scope_identified = true ]]; then
-                    DebugFuncExit; return
-                fi
                 ;;
             reassign_)
                 case $scope in
@@ -1485,6 +1486,7 @@ ParseArguments()
         esac
     done
 
+    # when an action has been determined, but no scope was found, then show default information. This will usually be the help screen.
     if [[ -n $action && $scope_identified = false ]]; then
         case $action in
             abs_)
@@ -1493,7 +1495,7 @@ ParseArguments()
             backups_)
                 Opts.Help.Backups.Set
                 ;;
-            help_)
+            help_|paste_)
                 Opts.Help.Basic.Set
                 ;;
             options_)
@@ -2961,7 +2963,7 @@ Help.Problems.Show()
     DisplayAsProjectSyntaxIndentedExample '' 'l'
     DisplayAsProjectSyntaxIndentedExample "view the entire $(FormatAsScriptTitle) session log" 'log'
     DisplayAsProjectSyntaxIndentedExample "upload the most-recent session in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste last'
-    DisplayAsProjectSyntaxIndentedExample "upload the most-recent $(FormatAsThousands "$LOG_TAIL_LINES") entries in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste log'
+    DisplayAsProjectSyntaxIndentedExample "upload the most-recent $(FormatAsThousands "$LOG_TAIL_LINES") lines in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste log'
     Display
     DisplayAsHelpTitleHighlighted "If you need help, please include a copy of your $(FormatAsScriptTitle) $(ColourTextBrightOrange "log for analysis!")"
 
@@ -2978,7 +2980,7 @@ Help.Issue.Show()
     DisplayAsHelpTitle "alternatively, post on the QNAP NAS Community Forum:\n\thttps://forum.qnap.com/viewtopic.php?f=320&t=132373"
     DisplayAsProjectSyntaxIndentedExample "view only the most recent $(FormatAsScriptTitle) session log" 'last'
     DisplayAsProjectSyntaxIndentedExample "view the entire $(FormatAsScriptTitle) session log" 'log'
-    DisplayAsProjectSyntaxIndentedExample "upload the most-recent $(FormatAsThousands "$LOG_TAIL_LINES") entries in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste log'
+    DisplayAsProjectSyntaxIndentedExample "upload the most-recent $(FormatAsThousands "$LOG_TAIL_LINES") lines in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste log'
     Display
     DisplayAsHelpTitleHighlighted "If you need help, please include a copy of your $(FormatAsScriptTitle) $(ColourTextBrightOrange "log for analysis!")"
 
@@ -3132,7 +3134,7 @@ Log.Tail.Paste()
     ExtractTailFromLog
 
     if [[ -e $SESSION_TAIL_PATHFILE ]]; then
-        if Quiz "Press 'Y' to post the most-recent $(FormatAsThousands "$LOG_TAIL_LINES") entries in your $(FormatAsScriptTitle) log to a public pastebin, or any other key to abort"; then
+        if Quiz "Press 'Y' to post the most-recent $(FormatAsThousands "$LOG_TAIL_LINES") lines in your $(FormatAsScriptTitle) log to a public pastebin, or any other key to abort"; then
             ShowAsProc "uploading $(FormatAsScriptTitle) log"
             # with thanks to https://github.com/solusipse/fiche
             link=$($CAT_CMD --number "$SESSION_TAIL_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
