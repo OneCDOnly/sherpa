@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly MANAGER_FILE=sherpa.manager.sh
-    local -r SCRIPT_VER=221222a-beta
+    local -r SCRIPT_VER=221222b-beta
 
     IsQNAP || return
     IsSU || return
@@ -1848,12 +1848,16 @@ Quiz()
     # output:
     #   $? = 0 if "y", 1 if anything else
 
+    local prompt=${1:?empty}
     local response=''
 
-    ShowAsQuiz "${1:?empty}"
+    ShowAsQuiz "$prompt"
+    [[ -e $GNU_STTY_CMD ]] && $GNU_STTY_CMD igncr       # ignore CR to prevent an onscreen linefeed (which disrupts same-line rewrite used later, and looks bad)
     read -rn1 response
+    [[ -e $GNU_STTY_CMD ]] && $GNU_STTY_CMD -igncr      # re-allow CR
     DebugVar response
-    ShowAsQuizDone "${1:?empty}: $response"
+
+    ShowAsQuizDone "$prompt: $response"
 
     case ${response:0:1} in
         y|Y)
@@ -6312,7 +6316,7 @@ ShowAsInfo()
 ShowAsQuiz()
     {
 
-    WriteToDisplayWait "$(ColourTextBrightOrangeBlink quiz)" "${1:-}: "
+    WriteToDisplayWait "$(ColourTextBrightOrangeBlink quiz)" "${1:-}:"
     WriteToLog quiz "${1:-}:"
 
     }
