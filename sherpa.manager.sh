@@ -54,13 +54,13 @@ Self.Init()
     DebugFuncEntry
 
     readonly MANAGER_FILE=sherpa.manager.sh
-    local -r SCRIPT_VER=221222c-beta
+    local -r SCRIPT_VER=221222d-beta
 
     IsQNAP || return
     IsSU || return
     ClaimLockFile /var/run/sherpa.lock || return
 
-    export LC_ALL=''    # need to disable ALL to enable setting of individual vars
+    export LC_ALL=''        # must disable ALL to enable setting of individual vars
     export LANG=en_US.utf8
     export LC_CTYPE=C
     export LC_NUMERIC=en_US.utf8
@@ -71,6 +71,7 @@ Self.Init()
     readonly DATE_CMD=/bin/date
     readonly DF_CMD=/bin/df
     readonly GREP_CMD=/bin/grep
+    readonly LESS_CMD=/bin/less
     readonly MD5SUM_CMD=/bin/md5sum
     readonly SED_CMD=/bin/sed
     readonly SH_CMD=/bin/sh
@@ -100,6 +101,7 @@ Self.Init()
     IsSysFileExist $DATE_CMD || return
     IsSysFileExist $DF_CMD || return
     IsSysFileExist $GREP_CMD || return
+    IsSysFileExist $LESS_CMD || return
     IsSysFileExist $MD5SUM_CMD || return
     IsSysFileExist $SED_CMD || return
     IsSysFileExist $SH_CMD || return
@@ -128,6 +130,7 @@ Self.Init()
     readonly OPKG_CMD=/opt/bin/opkg
     readonly GNU_FIND_CMD=/opt/bin/find
     readonly GNU_GREP_CMD=/opt/bin/grep
+    readonly GNU_LESS_CMD=/opt/bin/less
     readonly GNU_SED_CMD=/opt/bin/sed
     readonly GNU_STTY_CMD=/opt/bin/stty
     readonly PYTHON_CMD=/opt/bin/python
@@ -3061,10 +3064,10 @@ Log.Last.View()
     ExtractPreviousSessionFromTail
 
     if [[ -e $SESSION_LAST_PATHFILE ]]; then
-        if [[ -e /opt/bin/less ]]; then
-            LESSSECURE=1 /opt/bin/less +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$SESSION_LAST_PATHFILE"
-        elif [[ -e /bin/less ]]; then
-            /bin/less -N~ "$SESSION_LAST_PATHFILE"
+        if [[ -e $GNU_LESS_CMD ]]; then
+            LESSSECURE=1 $GNU_LESS_CMD +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$SESSION_LAST_PATHFILE"
+        elif [[ -e $LESS_CMD ]]; then
+            $LESS_CMD -N~ "$SESSION_LAST_PATHFILE"
         else
             $CAT_CMD --number "$SESSION_LAST_PATHFILE"
         fi
@@ -3085,10 +3088,10 @@ Log.Tail.View()
     ExtractTailFromLog
 
     if [[ -e $SESSION_TAIL_PATHFILE ]]; then
-        if [[ -e /opt/bin/less ]]; then
-            LESSSECURE=1 /opt/bin/less +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$SESSION_TAIL_PATHFILE"
-        elif [[ -e /bin/less ]]; then
-            /bin/less -N~ "$SESSION_TAIL_PATHFILE"
+        if [[ -e $GNU_LESS_CMD ]]; then
+            LESSSECURE=1 $GNU_LESS_CMD +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$SESSION_TAIL_PATHFILE"
+        elif [[ -e $LESS_CMD ]]; then
+            $LESS_CMD -N~ "$SESSION_TAIL_PATHFILE"
         else
             $CAT_CMD --number "$SESSION_TAIL_PATHFILE"
         fi
@@ -3103,6 +3106,7 @@ Log.Tail.View()
 Log.Last.Paste()
     {
 
+    local link=''
     DisableDebugToArchiveAndFile
     ExtractPreviousSessionFromTail
 
@@ -3134,6 +3138,7 @@ Log.Last.Paste()
 Log.Tail.Paste()
     {
 
+    local link=''
     DisableDebugToArchiveAndFile
     ExtractTailFromLog
 
@@ -3248,7 +3253,7 @@ ExtractTailFromLog()
     {
 
     if [[ -e $SESSION_ARCHIVE_PATHFILE ]]; then
-        $TAIL_CMD -n${LOG_TAIL_LINES} "$SESSION_ARCHIVE_PATHFILE" > "$SESSION_TAIL_PATHFILE"   # trim main log first so there's less to 'grep'
+        $TAIL_CMD -n${LOG_TAIL_LINES} "$SESSION_ARCHIVE_PATHFILE" > "$SESSION_TAIL_PATHFILE"   # trim main log first so theres less to 'grep'
     else
         [[ -e $SESSION_TAIL_PATHFILE ]] && rm -f "$SESSION_TAIL_PATHFILE"
     fi
@@ -3262,7 +3267,7 @@ ShowVersions()
 
     DisableDebugToArchiveAndFile
 
-    Display "package: ${THIS_PACKAGE_VER:-unknown}"
+    Display "QPKG: ${THIS_PACKAGE_VER:-unknown}"
     Display "manager: ${MANAGER_SCRIPT_VER:-unknown}"
     Display "loader: ${LOADER_SCRIPT_VER:-unknown}"
     Display "objects: ${OBJECTS_VER:-unknown}"
@@ -3280,7 +3285,7 @@ QPKGs.NewVersions.Show()
     # $? = 0 if all packages are up-to-date
     # $? = 1 if one-or-more packages can be upgraded
 
-    local -a left_to_upgrade=()
+    local -a upgradable_packages=()
     local -i index=0
     local names_formatted=''
     local msg=''
@@ -3291,20 +3296,20 @@ QPKGs.NewVersions.Show()
     if [[ $(QPKGs.ScUpgradable.Count) -eq 0 ]]; then
         return 0
     else
-        left_to_upgrade+=($(QPKGs.ScUpgradable.Array))
+        upgradable_packages+=($(QPKGs.ScUpgradable.Array))
     fi
 
-    for ((index=0; index<=((${#left_to_upgrade[@]}-1)); index++)); do
-        names_formatted+=$(ColourTextBrightOrange "${left_to_upgrade[$index]}")
+    for ((index=0; index<=((${#upgradable_packages[@]}-1)); index++)); do
+        names_formatted+=$(ColourTextBrightOrange "${upgradable_packages[$index]}")
 
-        if [[ $((index+2)) -lt ${#left_to_upgrade[@]} ]]; then
+        if [[ $((index+2)) -lt ${#upgradable_packages[@]} ]]; then
             names_formatted+=', '
-        elif [[ $((index+2)) -eq ${#left_to_upgrade[@]} ]]; then
+        elif [[ $((index+2)) -eq ${#upgradable_packages[@]} ]]; then
             names_formatted+=' & '
         fi
     done
 
-    if [[ ${#left_to_upgrade[@]} -eq 1 ]]; then
+    if [[ ${#upgradable_packages[@]} -eq 1 ]]; then
         msg='a new QPKG is'
     else
         msg='new QPKGs are'
@@ -3392,14 +3397,14 @@ QPKGs.States.List()
     QPKGs.States.Build
 
     for state in "${PACKAGE_STATES[@]}" "${PACKAGE_RESULTS[@]}"; do
-        # speedup: only log arrays with more than zero elements
         for prefix in Is IsNt; do
             if [[ $prefix = IsNt && $state = Ok ]]; then
+                # speedup: only log arrays with more than zero elements
                 QPKGs.${prefix}${state}.IsAny && DebugQPKGError "${prefix}${state}" "($(QPKGs.${prefix}${state}.Count)) $(QPKGs.${prefix}${state}.ListCSV) "
             elif [[ $prefix = IsNt && $state = BackedUp ]]; then
                 QPKGs.${prefix}${state}.IsAny && DebugQPKGWarning "${prefix}${state}" "($(QPKGs.${prefix}${state}.Count)) $(QPKGs.${prefix}${state}.ListCSV) "
             elif [[ $prefix = IsNt && $state = Installed ]]; then
-                # dont log packages that havent been installed - it pollutes the runtime log
+                # dont log packages that havent been installed, it pollutes the log
                 :
             else
                 QPKGs.${prefix}${state}.IsAny && DebugQPKGInfo "${prefix}${state}" "($(QPKGs.${prefix}${state}.Count)) $(QPKGs.${prefix}${state}.ListCSV) "
@@ -3408,9 +3413,9 @@ QPKGs.States.List()
     done
 
     for state in "${PACKAGE_STATES_TEMPORARY[@]}"; do
-        # speedup: only log arrays with more than zero elements
         # shellcheck disable=2043
         for prefix in Is; do
+            # speedup: only log arrays with more than zero elements
             QPKGs.${prefix}${state}.IsAny && DebugQPKGInfo "${prefix}${state}" "($(QPKGs.${prefix}${state}.Count)) $(QPKGs.${prefix}${state}.ListCSV) "
         done
     done
