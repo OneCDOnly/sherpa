@@ -22,7 +22,7 @@
     "geoip_db_location": "/opt/share/GeoIP/GeoIP.dat",
     "ignore_limits_on_local_network": true,
     "info_sent": 0.0,
-    "listen_interface": "",
+    "listen_interface": "0.0.0.0",
     "listen_ports": [
         6881,
         6891

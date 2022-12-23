@@ -20,7 +20,7 @@ Init()
 
     # service-script environment
     readonly QPKG_NAME=SABnzbd
-    readonly SCRIPT_VERSION=221223
+    readonly SCRIPT_VERSION=221224
 
     # general environment
     readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -55,15 +55,14 @@ Init()
     readonly LAUNCHER="$DAEMON_PATHFILE --daemon --browser 0 --config-file $QPKG_INI_PATHFILE --pidfile $DAEMON_PID_PATHFILE"
     readonly PORT_CHECK_TIMEOUT=120
     readonly DAEMON_STOP_TIMEOUT=60
-    readonly DAEMON_PORT_CMD=""
+    readonly DAEMON_PORT_CMD=''
     readonly UI_PORT_CMD="/sbin/getcfg misc port -d 0 -f $QPKG_INI_PATHFILE"
     readonly UI_PORT_SECURE_CMD="/sbin/getcfg misc https_port -d 0 -f $QPKG_INI_PATHFILE"
-    readonly UI_PORT_SECURE_ENABLED_CMD='[[ $(/sbin/getcfg misc enable_https -d 0 -f '$QPKG_INI_PATHFILE') = 1 ]] && echo true'
+    readonly UI_PORT_SECURE_ENABLED_TEST_CMD='[[ $(/sbin/getcfg misc enable_https -d 0 -f '$QPKG_INI_PATHFILE') = 1 ]]'
     readonly UI_LISTENING_ADDRESS_CMD="/sbin/getcfg misc host -d undefined -f $QPKG_INI_PATHFILE"
     daemon_port=0
     ui_port=0
     ui_port_secure=0
-    ui_port_secure_enabled=false
     ui_listening_address=undefined
 
     # specific to applications supporting version lookup only
@@ -145,7 +144,14 @@ StartQPKG()
         IsNotRestartPending && return
     fi
 
-    DisplayCommitToLog "auto-update: $(IsAutoUpdate && echo TRUE || echo FALSE)"
+    DisplayWaitCommitToLog "auto-update:"
+
+    if IsAutoUpdate; then
+        DisplayCommitToLog true
+    else
+        DisplayCommitToLog false
+    fi
+
     PullGitRepo "$QPKG_NAME" "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_REPO_PATH" || return
     InstallAddons || return
 
@@ -295,7 +301,16 @@ InstallAddons()
 
     if [[ $QPKG_NAME = SABnzbd && $new_env = true ]]; then
         DisplayRunAndLog "KLUDGE: reinstall 'sabyenc3' PyPI module (https://forums.sabnzbd.org/viewtopic.php?p=128567#p128567)" ". $VENV_PATH/bin/activate && pip install --no-input --force-reinstall --no-binary :all: sabyenc3" log:failure-only || SetError
-        UpdateLanguages
+
+        # run [tools/make_mo.py] if SABnzbd version number has changed since last run
+
+        LoadAppVersion
+        [[ -e $APP_VERSION_STORE_PATHFILE && $(<"$APP_VERSION_STORE_PATHFILE") = "$app_version" && -d $QPKG_REPO_PATH/locale ]] && return 0
+
+        DisplayRunAndLog "update $(FormatAsPackageName $QPKG_NAME) language translations" ". $VENV_PATH/bin/activate && cd $QPKG_REPO_PATH; $VENV_INTERPRETER $QPKG_REPO_PATH/tools/make_mo.py" log:failure-only
+        [[ ! -e $APP_VERSION_STORE_PATHFILE ]] && return 0
+
+        SaveAppVersion
     fi
 
     }
@@ -363,13 +378,11 @@ LoadPorts()
     esac
 
     # Always read these from the application configuration
-    [[ -n ${UI_PORT_SECURE_ENABLED_CMD:-} ]] && ui_port_secure_enabled=$(eval "$UI_PORT_SECURE_ENABLED_CMD")
     [[ -n ${UI_LISTENING_ADDRESS_CMD:-} ]] && ui_listening_address=$(eval "$UI_LISTENING_ADDRESS_CMD")
     [[ -n ${DAEMON_PORT_CMD:-} ]] && daemon_port=$(eval "$DAEMON_PORT_CMD")
 
     [[ -z $ui_port ]] && ui_port=0
     [[ -z $ui_port_secure ]] && ui_port_secure=0
-    [[ -z $ui_port_secure_enabled ]] && ui_port_secure_enabled=false
     [[ -z $ui_listening_address ]] && ui_listening_address=undefined
     [[ -z $daemon_port ]] && daemon_port=0
 
@@ -417,18 +430,13 @@ StatusQPKG()
 
     }
 
-UpdateLanguages()
+DisableOpkgDaemonStart()
     {
 
-    # run [tools/make_mo.py] if SABnzbd version number has changed since last run
-
-    LoadAppVersion
-    [[ -e $APP_VERSION_STORE_PATHFILE && $(<"$APP_VERSION_STORE_PATHFILE") = "$app_version" && -d $QPKG_REPO_PATH/locale ]] && return 0
-
-    DisplayRunAndLog "update $(FormatAsPackageName $QPKG_NAME) language translations" ". $VENV_PATH/bin/activate && cd $QPKG_REPO_PATH; $VENV_INTERPRETER $QPKG_REPO_PATH/tools/make_mo.py" log:failure-only
-    [[ ! -e $APP_VERSION_STORE_PATHFILE ]] && return 0
-
-    SaveAppVersion
+    if [[ -n $ORIG_DAEMON_SERVICE_SCRIPT && -x $ORIG_DAEMON_SERVICE_SCRIPT ]]; then
+        $ORIG_DAEMON_SERVICE_SCRIPT stop        # stop default daemon
+        chmod -x "$ORIG_DAEMON_SERVICE_SCRIPT"  # ... and ensure Entware doesn't re-launch it on startup
+    fi
 
     }
 
@@ -568,7 +576,7 @@ WaitForFileToAppear()
     fi
 
     if [[ ! -e $1 ]]; then
-        DisplayWaitCommitToLog "wait for $(FormatAsFileName "$1") to appear:"
+        DisplayWaitCommitToLog "wait for $1 to appear:"
         DisplayWait "(no-more than $MAX_SECONDS seconds):"
 
         (
@@ -587,12 +595,31 @@ WaitForFileToAppear()
 
         if [[ $? -ne 0 ]]; then
             DisplayCommitToLog 'failed!'
-            DisplayErrCommitAllLogs "$(FormatAsFileName "$1") not found! (exceeded timeout: $MAX_SECONDS seconds)"
+            DisplayErrCommitAllLogs "$1 not found! (exceeded timeout: $MAX_SECONDS seconds)"
             return 1
         fi
     fi
 
-    DisplayCommitToLog "file $(FormatAsFileName "$1"): exists"
+    DisplayCommitToLog "file $1: exists"
+
+    return 0
+
+    }
+
+ViewLog()
+    {
+
+    if [[ -e $SERVICE_LOG_PATHFILE ]]; then
+        if [[ -e /opt/bin/less ]]; then
+            LESSSECURE=1 /opt/bin/less +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$SERVICE_LOG_PATHFILE"
+        else
+            cat --number "$SERVICE_LOG_PATHFILE"
+        fi
+    else
+        Display "service log not found: $SERVICE_LOG_PATHFILE"
+        SetError
+        return 1
+    fi
 
     return 0
 
@@ -628,7 +655,7 @@ ViewLog()
             cat --number "$SERVICE_LOG_PATHFILE"
         fi
     else
-        Display "service log not found: $(FormatAsFileName "$SERVICE_LOG_PATHFILE")"
+        Display "service log not found: $SERVICE_LOG_PATHFILE"
         SetError
         return 1
     fi
@@ -798,6 +825,20 @@ StripANSI()
 
     }
 
+Uppercase()
+    {
+
+    tr 'a-z' 'A-Z' <<< "$1"
+
+    }
+
+Lowercase()
+    {
+
+    tr 'A-Z' 'a-z' <<< "$1"
+
+    }
+
 ReWriteUIPorts()
     {
 
@@ -840,26 +881,26 @@ CheckPorts()
         DisplayCommitToLog "daemon port: $daemon_port"
 
         if IsPortResponds $daemon_port; then
-            msg="daemon port ($daemon_port)"
+            msg="daemon port $daemon_port"
         fi
     else
-        DisplayCommitToLog "secure port enabled: $ui_port_secure_enabled"
-
+        DisplayWaitCommitToLog 'HTTPS port enabled:'
         if IsSSLEnabled; then
+            DisplayCommitToLog true
             DisplayCommitToLog "HTTPS port: $ui_port_secure"
 
             if IsPortSecureResponds $ui_port_secure; then
-                msg="HTTPS port ($ui_port_secure)"
+                msg="HTTPS port $ui_port_secure"
             fi
+        else
+            DisplayCommitToLog false
         fi
 
-        if [[ $ui_port_secure -ne $ui_port ]]; then
-            DisplayCommitToLog "HTTP port: $ui_port"
+        DisplayCommitToLog "HTTP port: $ui_port"
 
-            if IsPortResponds $ui_port; then
-                [[ -n $msg ]] && msg+=" and "
-                msg+="HTTP port ($ui_port)"
-            fi
+        if IsPortResponds $ui_port; then
+            [[ -n $msg ]] && msg+=' and '
+            msg+="HTTP port $ui_port"
         fi
     fi
 
@@ -867,12 +908,11 @@ CheckPorts()
         DisplayErrCommitAllLogs 'no response on configured port(s)!'
         SetError
         return 1
+    else
+        DisplayCommitToLog "$msg test: OK"
+        ReWriteUIPorts
+        return 0
     fi
-
-    DisplayCommitToLog "$msg: OK"
-    ReWriteUIPorts
-
-    return 0
 
     }
 
@@ -932,7 +972,7 @@ IsQPKGEnabled()
         local name=$1
     fi
 
-    [[ $(/sbin/getcfg "$name" Enable -u -d FALSE -f /etc/config/qpkg.conf) = TRUE ]]
+    [[ $(Lowercase $(/sbin/getcfg "$name" Enable -d false -f /etc/config/qpkg.conf)) = true ]]
 
     }
 
@@ -988,7 +1028,7 @@ IsNotSourcedOnline()
 IsSSLEnabled()
     {
 
-    [[ $ui_port_secure_enabled = true ]]
+    eval "$UI_PORT_SECURE_ENABLED_TEST_CMD"
 
     }
 
@@ -1019,13 +1059,15 @@ IsDaemonActive()
     # $? = 0 : $DAEMON_PATHFILE is in memory
     # $? = 1 : $DAEMON_PATHFILE is not in memory
 
+    DisplayWaitCommitToLog 'daemon active:'
+
     if [[ -e $DAEMON_PID_PATHFILE && -d /proc/$(<$DAEMON_PID_PATHFILE) && -n ${DAEMON_PATHFILE:-} && $(</proc/"$(<$DAEMON_PID_PATHFILE)"/cmdline) =~ $DAEMON_PATHFILE ]]; then
-        DisplayCommitToLog 'daemon: IS active'
+        DisplayCommitToLog true
         DisplayCommitToLog "daemon PID: $(<$DAEMON_PID_PATHFILE)"
         return
     fi
 
-    DisplayCommitToLog 'daemon: NOT active'
+    DisplayCommitToLog false
     [[ -f $DAEMON_PID_PATHFILE ]] && rm "$DAEMON_PID_PATHFILE"
     return 1
 
@@ -1035,6 +1077,34 @@ IsNotDaemonActive()
     {
 
     ! IsDaemonActive
+
+    }
+
+IsPackageActive()
+    {
+
+    # $? = 0 : package is 'started'
+    # $? = 1 : package is 'stopped'
+
+    DisplayWaitCommitToLog 'package active:'
+
+    if [[ -e $BACKUP_SERVICE_PATHFILE ]]; then
+        DisplayCommitToLog true
+        return
+    fi
+
+    DisplayCommitToLog false
+    return 1
+
+    }
+
+IsNotPackageActive()
+    {
+
+    # $? = 1 if $QPKG_NAME is active
+    # $? = 0 if $QPKG_NAME is not active
+
+    ! IsPackageActive
 
     }
 
@@ -1049,7 +1119,7 @@ IsSysFilePresent()
     fi
 
     if [[ ! -e $1 ]]; then
-        Display "A required NAS system file is missing: $(FormatAsFileName "$1")"
+        Display "A required NAS system file is missing: $1"
         SetError
         return 1
     else
@@ -1103,13 +1173,13 @@ IsPortResponds()
     # $? = 1 if not OK
 
     if [[ -z $1 || $1 -eq 0 ]]; then
-        Display 'check for port 0 response: ignored'
+        Display 'test for port 0 response: ignored'
         return 1
     fi
 
     local acc=0
 
-    DisplayWaitCommitToLog "check for port $1 response:"
+    DisplayWaitCommitToLog "test for port $1 response:"
     DisplayWait "(no-more than $PORT_CHECK_TIMEOUT seconds):"
 
     while true; do
@@ -1305,7 +1375,7 @@ UnsetDebug()
 IsDebug()
     {
 
-    [[ $debug = 'true' ]]
+    [[ $debug = true ]]
 
     }
 
@@ -1512,13 +1582,6 @@ FormatAsPackageName()
 
     }
 
-FormatAsFileName()
-    {
-
-    echo "($1)"
-
-    }
-
 DisplayAsHelp()
     {
 
@@ -1637,14 +1700,14 @@ FormatAsPlural()
 IsAutoUpdateMissing()
     {
 
-    [[ $(/sbin/getcfg $QPKG_NAME Auto_Update -u -f /etc/config/qpkg.conf) = '' ]]
+    [[ $(/sbin/getcfg $QPKG_NAME Auto_Update -f /etc/config/qpkg.conf) = '' ]]
 
     }
 
 IsAutoUpdate()
     {
 
-    [[ $(/sbin/getcfg $QPKG_NAME Auto_Update -u -f /etc/config/qpkg.conf) = TRUE ]]
+    [[ $(Lowercase $(/sbin/getcfg $QPKG_NAME Auto_Update -f /etc/config/qpkg.conf)) = true ]]
 
     }
 
@@ -1658,21 +1721,21 @@ IsNotAutoUpdate()
 EnableAutoUpdate()
     {
 
-    StoreAutoUpdateSelection TRUE
+    StoreAutoUpdateSelection true
 
     }
 
 DisableAutoUpdate()
     {
 
-    StoreAutoUpdateSelection FALSE
+    StoreAutoUpdateSelection false
 
     }
 
 StoreAutoUpdateSelection()
     {
 
-    /sbin/setcfg "$QPKG_NAME" Auto_Update "$1" -f /etc/config/qpkg.conf
+    /sbin/setcfg "$QPKG_NAME" Auto_Update "$(Uppercase $1)" -f /etc/config/qpkg.conf
     DisplayCommitToLog "auto-update: $1"
 
     }

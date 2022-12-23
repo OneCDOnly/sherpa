@@ -20,7 +20,7 @@ Init()
 
     # service-script environment
     readonly QPKG_NAME=nzbToMedia
-    readonly SCRIPT_VERSION=221223
+    readonly SCRIPT_VERSION=221224
 
     # general environment
     readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -150,11 +150,6 @@ StartQPKG()
     PullGitRepo "$QPKG_NAME" "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_REPO_PATH" || return
     WaitForLaunchTarget || return
 
-    if IsQPKGEnabled SABnzbdplus; then
-        DisplayErrCommitAllLogs "unable to link from package to target: installed $(FormatAsPackageName SABnzbdplus) QPKG must be replaced with $(FormatAsPackageName SABnzbd) $SAB_MIN_VERSION or later"
-        return 1
-    fi
-
     [[ -d $link_path ]] && DisplayRunAndLog 'a local path is in the way of the target, moving it aside' "mv $link_path $link_path.bak"
     ln -s "$QPKG_REPO_PATH" "$link_path"
 
@@ -207,7 +202,7 @@ InstallAddons()
     [[ $ALLOW_ACCESS_TO_SYS_PACKAGES != true ]] && sys_packages=''
 
     if IsNotVirtualEnvironmentExist; then
-        DisplayRunAndLog 'create new virtual Python environment' "export PIP_CACHE_DIR=$PIP_CACHE_PATH VIRTUALENV_OVERRIDE_APP_DATA=$PIP_CACHE_PATH; $INTERPRETER -m virtualenv $VENV_PATH $sys_packages" log:everything || SetError
+        DisplayRunAndLog 'create new virtual Python environment' "export PIP_CACHE_DIR=$PIP_CACHE_PATH VIRTUALENV_OVERRIDE_APP_DATA=$PIP_CACHE_PATH; $INTERPRETER -m virtualenv $VENV_PATH $sys_packages" log:failure-only || SetError
         new_env=true
     fi
 
@@ -218,7 +213,7 @@ InstallAddons()
     fi
 
     if [[ ! -e $pip_conf_pathfile ]]; then
-        DisplayRunAndLog "create global 'pip' config" "echo -e \"[global]\ncache-dir = $PIP_CACHE_PATH\" > $pip_conf_pathfile" log:everything || SetError
+        DisplayRunAndLog "create global 'pip' config" "echo -e \"[global]\ncache-dir = $PIP_CACHE_PATH\" > $pip_conf_pathfile" log:failure-only || SetError
     fi
 
     IsNotAutoUpdate && [[ $new_env = false ]] && return 0
@@ -226,27 +221,22 @@ InstallAddons()
     [[ ! -e $requirements_pathfile && -e $default_requirements_pathfile ]] && requirements_pathfile=$default_requirements_pathfile
 
     if [[ -e $requirements_pathfile ]]; then
-        DisplayRunAndLog 'install required PyPI modules' ". $VENV_PATH/bin/activate && pip install --no-input -r $requirements_pathfile" log:everything || SetError
+        DisplayRunAndLog 'install required PyPI modules' ". $VENV_PATH/bin/activate && pip install --no-input -r $requirements_pathfile" log:failure-only || SetError
         no_pips_installed=false
     fi
 
     [[ ! -e $recommended_pathfile && -e $default_recommended_pathfile ]] && recommended_pathfile=$default_recommended_pathfile
 
     if [[ -e $recommended_pathfile ]]; then
-        DisplayRunAndLog 'install recommended PyPI modules' ". $VENV_PATH/bin/activate && pip install --no-input -r $recommended_pathfile" log:everything || SetError
+        DisplayRunAndLog 'install recommended PyPI modules' ". $VENV_PATH/bin/activate && pip install --no-input -r $recommended_pathfile" log:failure-only || SetError
         no_pips_installed=false
     fi
 
     if [[ $no_pips_installed = true ]]; then        # fallback to general installation method
         if [[ -e $QPKG_REPO_PATH/setup.py || -e $QPKG_REPO_PATH/pyproject.toml ]]; then
-            DisplayRunAndLog 'install default PyPI modules' ". $VENV_PATH/bin/activate && pip install --no-input $QPKG_REPO_PATH" log:everything || SetError
+            DisplayRunAndLog 'install default PyPI modules' ". $VENV_PATH/bin/activate && pip install --no-input $QPKG_REPO_PATH" log:failure-only || SetError
             no_pips_installed=false
         fi
-    fi
-
-    if [[ $QPKG_NAME = SABnzbd && $new_env = true ]]; then
-        DisplayRunAndLog "KLUDGE: reinstall 'sabyenc3' PyPI module (https://forums.sabnzbd.org/viewtopic.php?p=128567#p128567)" ". $VENV_PATH/bin/activate && pip install --no-input --force-reinstall --no-binary :all: sabyenc3" log:everything || SetError
-        UpdateLanguages
     fi
 
     }
@@ -255,7 +245,7 @@ BackupConfig()
     {
 
     CommitOperationToLog
-    DisplayRunAndLog 'update configuration backup' "/bin/tar --create --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_REPO_PATH autoProcessMedia.cfg" log:everything || SetError
+    DisplayRunAndLog 'update configuration backup' "/bin/tar --create --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_REPO_PATH autoProcessMedia.cfg" || SetError
 
     }
 
@@ -271,7 +261,7 @@ RestoreConfig()
     fi
 
     StopQPKG
-    DisplayRunAndLog 'restore configuration backup' "/bin/tar --extract --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_REPO_PATH" log:everything || SetError
+    DisplayRunAndLog 'restore configuration backup' "/bin/tar --extract --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_REPO_PATH" || SetError
     StartQPKG
 
     }
@@ -281,7 +271,7 @@ ResetConfig()
 
     CommitOperationToLog
     StopQPKG
-    DisplayRunAndLog 'reset configuration' "rm $QPKG_INI_PATHFILE" log:everything || SetError
+    DisplayRunAndLog 'reset configuration' "rm $QPKG_INI_PATHFILE" || SetError
     StartQPKG
 
     }
@@ -317,6 +307,16 @@ StatusQPKG()
 
     }
 
+DisableOpkgDaemonStart()
+    {
+
+    if [[ -n $ORIG_DAEMON_SERVICE_SCRIPT && -x $ORIG_DAEMON_SERVICE_SCRIPT ]]; then
+        $ORIG_DAEMON_SERVICE_SCRIPT stop        # stop default daemon
+        chmod -x "$ORIG_DAEMON_SERVICE_SCRIPT"  # ... and ensure Entware doesn't re-launch it on startup
+    fi
+
+    }
+
 PullGitRepo()
     {
 
@@ -344,16 +344,16 @@ PullGitRepo()
             branch_switch=true
             DisplayCommitToLog "current git branch: $installed_branch, new git branch: $3"
             [[ $QPKG_NAME = nzbToMedia ]] && BackupConfig
-            DisplayRunAndLog 'new git branch has been specified, so clean local repository' "cd /tmp; rm -r $QPKG_GIT_PATH"
+            DisplayRunAndLog 'new git branch has been specified, so clean local repository' "cd /tmp; rm -r $QPKG_GIT_PATH" log:failure-only
         fi
     fi
 
     if [[ ! -d $QPKG_GIT_PATH/.git ]]; then
-        DisplayRunAndLog "clone $(FormatAsPackageName "$1") from remote repository" "cd /tmp; /opt/bin/git clone --branch $3 $DEPTH -c advice.detachedHead=false $GIT_HTTPS_URL $QPKG_GIT_PATH"
+        DisplayRunAndLog "clone $(FormatAsPackageName "$1") from remote repository" "cd /tmp; /opt/bin/git clone --branch $3 $DEPTH -c advice.detachedHead=false $GIT_HTTPS_URL $QPKG_GIT_PATH" log:failure-only
     else
         if IsAutoUpdate; then
             # latest effort at resolving local corruption, source: https://stackoverflow.com/a/10170195
-            DisplayRunAndLog "update $(FormatAsPackageName "$1") from remote repository" "cd /tmp; /opt/bin/git -C $QPKG_GIT_PATH clean -f; /opt/bin/git -C $QPKG_GIT_PATH reset --hard origin/$3; /opt/bin/git -C $QPKG_GIT_PATH pull"
+            DisplayRunAndLog "update $(FormatAsPackageName "$1") from remote repository" "cd /tmp; /opt/bin/git -C $QPKG_GIT_PATH clean -f; /opt/bin/git -C $QPKG_GIT_PATH reset --hard origin/$3; /opt/bin/git -C $QPKG_GIT_PATH pull" log:failure-only
         fi
     fi
 
@@ -383,9 +383,9 @@ CleanLocalClone()
     fi
 
     StopQPKG
-    DisplayRunAndLog 'clean local repository' "rm -rf $QPKG_REPO_PATH"
-    DisplayRunAndLog 'clean virtual environment' "rm -rf $VENV_PATH"
-    DisplayRunAndLog 'clean PyPI cache' "rm -rf $PIP_CACHE_PATH"
+    DisplayRunAndLog 'clean local repository' "rm -rf $QPKG_REPO_PATH" log:failure-only
+    DisplayRunAndLog 'clean virtual environment' "rm -rf $VENV_PATH" log:failure-only
+    DisplayRunAndLog 'clean PyPI cache' "rm -rf $PIP_CACHE_PATH" log:failure-only
     StartQPKG
 
     [[ $QPKG_NAME = nzbToMedia ]] && RestoreConfig
@@ -425,6 +425,18 @@ WaitForLaunchTarget()
 
     }
 
+WaitForPID()
+    {
+
+    if WaitForFileToAppear "$DAEMON_PID_PATHFILE" 60; then
+        sleep 1       # wait one more second to allow file to have PID written into it
+        return 0
+    else
+        return 1
+    fi
+
+    }
+
 WaitForFileToAppear()
     {
 
@@ -444,7 +456,7 @@ WaitForFileToAppear()
     fi
 
     if [[ ! -e $1 ]]; then
-        DisplayWaitCommitToLog "wait for $(FormatAsFileName "$1") to appear:"
+        DisplayWaitCommitToLog "wait for $1 to appear:"
         DisplayWait "(no-more than $MAX_SECONDS seconds):"
 
         (
@@ -463,12 +475,31 @@ WaitForFileToAppear()
 
         if [[ $? -ne 0 ]]; then
             DisplayCommitToLog 'failed!'
-            DisplayErrCommitAllLogs "$(FormatAsFileName "$1") not found! (exceeded timeout: $MAX_SECONDS seconds)"
+            DisplayErrCommitAllLogs "$1 not found! (exceeded timeout: $MAX_SECONDS seconds)"
             return 1
         fi
     fi
 
-    DisplayCommitToLog "file $(FormatAsFileName "$1"): exists"
+    DisplayCommitToLog "file $1: exists"
+
+    return 0
+
+    }
+
+ViewLog()
+    {
+
+    if [[ -e $SERVICE_LOG_PATHFILE ]]; then
+        if [[ -e /opt/bin/less ]]; then
+            LESSSECURE=1 /opt/bin/less +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$SERVICE_LOG_PATHFILE"
+        else
+            cat --number "$SERVICE_LOG_PATHFILE"
+        fi
+    else
+        Display "service log not found: $SERVICE_LOG_PATHFILE"
+        SetError
+        return 1
+    fi
 
     return 0
 
@@ -504,7 +535,7 @@ ViewLog()
             cat --number "$SERVICE_LOG_PATHFILE"
         fi
     else
-        Display "service log not found: $(FormatAsFileName "$SERVICE_LOG_PATHFILE")"
+        Display "service log not found: $SERVICE_LOG_PATHFILE"
         SetError
         return 1
     fi
@@ -521,15 +552,14 @@ DisplayRunAndLog()
     # input:
     #   $1 = processing message
     #   $2 = commandstring to execute
-    #   $3 = 'log:failure-only' (optional) - if specified, stdout & stderr are only recorded in the specified log if the command failed
-    #                                      - if unspecified, stdout & stderr is always recorded
+    #   $3 = 'log:failure-only' (optional) - if specified, stdout & stderr are only recorded in the specified log if the command failed. default is to always record stdout & stderr.
 
     local -r LOG_PATHFILE=$(/bin/mktemp -p /var/log "${FUNCNAME[0]}"_XXXXXX)
     local -i result_code=0
 
     DisplayWaitCommitToLog "$1:"
 
-    RunAndLog "$2" "$LOG_PATHFILE" "$3"
+    RunAndLog "${2:?empty}" "$LOG_PATHFILE" "${3:-}"
     result_code=$?
 
     if [[ -e $LOG_PATHFILE ]]; then
@@ -538,10 +568,10 @@ DisplayRunAndLog()
 
     if [[ $result_code -eq 0 ]]; then
         DisplayCommitToLog OK
-        [[ $3 = log:everything ]] && CommitInfoToSysLog "$1: OK"
+        [[ ${3:-} != log:failure-only ]] && CommitInfoToSysLog "${1:?empty}: OK"
         return 0
     else
-        DisplayCommitToLog 'failed!'
+        DisplayErrCommitAllLogs 'failed!'
         return 1
     fi
 
@@ -555,8 +585,7 @@ RunAndLog()
     # input:
     #   $1 = commandstring to execute
     #   $2 = pathfile to record stdout and stderr for commandstring
-    #   $3 = 'log:failure-only' (optional) - if specified, stdout & stderr are only recorded in the specified log if the command failed
-    #                                      - if unspecified, stdout & stderr is always recorded
+    #   $3 = 'log:failure-only' (optional) - if specified, stdout & stderr are only recorded in the specified log if the command failed. default is to always record stdout & stderr.
     #   $4 = e.g. '10' (optional) - an additional acceptable result code. Any other result from command (other than zero) will be considered a failure
 
     # output:
@@ -676,6 +705,20 @@ StripANSI()
 
     }
 
+Uppercase()
+    {
+
+    tr 'a-z' 'A-Z' <<< "$1"
+
+    }
+
+Lowercase()
+    {
+
+    tr 'A-Z' 'a-z' <<< "$1"
+
+    }
+
 IsQNAP()
     {
 
@@ -732,7 +775,7 @@ IsQPKGEnabled()
         local name=$1
     fi
 
-    [[ $(/sbin/getcfg "$name" Enable -u -d FALSE -f /etc/config/qpkg.conf) = TRUE ]]
+    [[ $(Lowercase $(/sbin/getcfg "$name" Enable -d false -f /etc/config/qpkg.conf)) = true ]]
 
     }
 
@@ -785,21 +828,84 @@ IsNotSourcedOnline()
 
     }
 
-IsPackageActive()
+IsSSLEnabled()
     {
 
-    if [[ -L $link_path ]]; then
-        DisplayCommitToLog 'package: IS active'
+    eval "$UI_PORT_SECURE_ENABLED_TEST_CMD"
+
+    }
+
+IsNotSSLEnabled()
+    {
+
+    ! IsSSLEnabled
+
+    }
+
+IsDaemon()
+    {
+
+    [[ -n ${DAEMON_PID_PATHFILE:-} ]]
+
+    }
+
+IsNotDaemon()
+    {
+
+    ! IsDaemon
+
+    }
+
+IsDaemonActive()
+    {
+
+    # $? = 0 : $DAEMON_PATHFILE is in memory
+    # $? = 1 : $DAEMON_PATHFILE is not in memory
+
+    DisplayWaitCommitToLog 'daemon active:'
+
+    if [[ -e $DAEMON_PID_PATHFILE && -d /proc/$(<$DAEMON_PID_PATHFILE) && -n ${DAEMON_PATHFILE:-} && $(</proc/"$(<$DAEMON_PID_PATHFILE)"/cmdline) =~ $DAEMON_PATHFILE ]]; then
+        DisplayCommitToLog true
+        DisplayCommitToLog "daemon PID: $(<$DAEMON_PID_PATHFILE)"
         return
     fi
 
-    DisplayCommitToLog 'package: NOT active'
+    DisplayCommitToLog false
+    [[ -f $DAEMON_PID_PATHFILE ]] && rm "$DAEMON_PID_PATHFILE"
+    return 1
+
+    }
+
+IsNotDaemonActive()
+    {
+
+    ! IsDaemonActive
+
+    }
+
+IsPackageActive()
+    {
+
+    # $? = 0 : package is 'started'
+    # $? = 1 : package is 'stopped'
+
+    DisplayWaitCommitToLog 'package active:'
+
+    if [[ -L $link_path ]]; then
+        DisplayCommitToLog true
+        return
+    fi
+
+    DisplayCommitToLog false
     return 1
 
     }
 
 IsNotPackageActive()
     {
+
+    # $? = 1 if $QPKG_NAME is active
+    # $? = 0 if $QPKG_NAME is not active
 
     ! IsPackageActive
 
@@ -816,7 +922,7 @@ IsSysFilePresent()
     fi
 
     if [[ ! -e $1 ]]; then
-        Display "A required NAS system file is missing: $(FormatAsFileName "$1")"
+        Display "A required NAS system file is missing: $1"
         SetError
         return 1
     else
@@ -831,6 +937,118 @@ IsNotSysFilePresent()
     # $1 = pathfile to check
 
     ! IsSysFilePresent "$1"
+
+    }
+
+IsPortAvailable()
+    {
+
+    # $1 = port to check
+    # $? = 0 if available
+    # $? = 1 if already used
+
+    [[ -z $1 || $1 -eq 0 ]] && return
+
+    if (/usr/sbin/lsof -i :"$1" -sTCP:LISTEN >/dev/null 2>&1); then
+        return 1
+    else
+        return 0
+    fi
+
+    }
+
+IsNotPortAvailable()
+    {
+
+    # $1 = port to check
+    # $? = 1 if available
+    # $? = 0 if already used
+
+    ! IsPortAvailable "$1"
+
+    }
+
+IsPortResponds()
+    {
+
+    # $1 = port to check
+    # $? = 0 if response received
+    # $? = 1 if not OK
+
+    if [[ -z $1 || $1 -eq 0 ]]; then
+        Display 'test for port 0 response: ignored'
+        return 1
+    fi
+
+    local acc=0
+
+    DisplayWaitCommitToLog "test for port $1 response:"
+    DisplayWait "(no-more than $PORT_CHECK_TIMEOUT seconds):"
+
+    while true; do
+        /sbin/curl --silent --fail --max-time 1 http://localhost:"$1" >/dev/null
+        case $? in
+            0|22|52)    # accept these curl exitcodes as being valid
+                break
+        esac
+
+        sleep 1
+        ((acc+=2))
+        DisplayWait "$acc,"
+
+        if [[ $acc -ge $PORT_CHECK_TIMEOUT ]]; then
+            DisplayCommitToLog 'failed!'
+            CommitErrToSysLog "port $1 failed to respond after $acc seconds"
+            return 1
+        fi
+    done
+
+    Display OK
+    CommitLog "port responded after $acc seconds"
+
+    return 0
+
+    }
+
+IsPortSecureResponds()
+    {
+
+    # $1 = secure port to check
+    # $? = 0 if response received
+    # $? = 1 if not OK or secure port unspecified
+
+    if [[ -z $1 || $1 -eq 0 ]]; then
+        Display 'check for port 0 response: ignored'
+        return 1
+    fi
+
+    local acc=0
+
+    DisplayWaitCommitToLog "check for secure port $1 response:"
+    DisplayWait "(no-more than $PORT_CHECK_TIMEOUT seconds):"
+
+    while true; do
+        /sbin/curl --silent --insecure --fail --max-time 1 https://localhost:"$1" >/dev/null
+        case $? in
+            0|22|52)    # accept these curl exitcodes as being valid
+                break
+        esac
+
+        sleep 1
+        ((acc+=2))
+        DisplayWait "$acc,"
+
+        if [[ $acc -ge $PORT_CHECK_TIMEOUT ]]; then
+            DisplayCommitToLog 'failed!'
+            CommitErrToSysLog "secure port $1 failed to respond after $acc seconds"
+            return 1
+        fi
+    done
+
+    Display OK
+    CommitLog "secure port responded after $acc seconds"
+
+    return 0
 
     }
 
@@ -969,7 +1187,7 @@ UnsetDebug()
 IsDebug()
     {
 
-    [[ $debug = 'true' ]]
+    [[ $debug = true ]]
 
     }
 
@@ -1176,13 +1394,6 @@ FormatAsPackageName()
 
     }
 
-FormatAsFileName()
-    {
-
-    echo "($1)"
-
-    }
-
 DisplayAsHelp()
     {
 
@@ -1301,14 +1512,14 @@ FormatAsPlural()
 IsAutoUpdateMissing()
     {
 
-    [[ $(/sbin/getcfg $QPKG_NAME Auto_Update -u -f /etc/config/qpkg.conf) = '' ]]
+    [[ $(/sbin/getcfg $QPKG_NAME Auto_Update -f /etc/config/qpkg.conf) = '' ]]
 
     }
 
 IsAutoUpdate()
     {
 
-    [[ $(/sbin/getcfg $QPKG_NAME Auto_Update -u -f /etc/config/qpkg.conf) = TRUE ]]
+    [[ $(Lowercase $(/sbin/getcfg $QPKG_NAME Auto_Update -f /etc/config/qpkg.conf)) = true ]]
 
     }
 
@@ -1322,21 +1533,21 @@ IsNotAutoUpdate()
 EnableAutoUpdate()
     {
 
-    StoreAutoUpdateSelection TRUE
+    StoreAutoUpdateSelection true
 
     }
 
 DisableAutoUpdate()
     {
 
-    StoreAutoUpdateSelection FALSE
+    StoreAutoUpdateSelection false
 
     }
 
 StoreAutoUpdateSelection()
     {
 
-    /sbin/setcfg "$QPKG_NAME" Auto_Update "$1" -f /etc/config/qpkg.conf
+    /sbin/setcfg "$QPKG_NAME" Auto_Update "$(Uppercase $1)" -f /etc/config/qpkg.conf
     DisplayCommitToLog "auto-update: $1"
 
     }

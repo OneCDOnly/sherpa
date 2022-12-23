@@ -20,7 +20,7 @@ Init()
 
     # service-script environment
     readonly QPKG_NAME=Deluge-web
-    readonly SCRIPT_VERSION=221222
+    readonly SCRIPT_VERSION=221224
 
     # general environment
     readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -46,15 +46,14 @@ Init()
     readonly LAUNCHER="$DAEMON_PATHFILE --logfile $(/usr/bin/dirname "$QPKG_INI_PATHFILE")/$QPKG_NAME.log --config $(/usr/bin/dirname "$QPKG_INI_PATHFILE")/ --pidfile $DAEMON_PID_PATHFILE"
     readonly PORT_CHECK_TIMEOUT=60
     readonly DAEMON_STOP_TIMEOUT=60
-    readonly DAEMON_PORT_CMD=""
+    readonly DAEMON_PORT_CMD=''
     readonly UI_PORT_CMD="/opt/bin/jq -r .port < $QPKG_INI_PATHFILE | /usr/bin/tail -n1"
-    readonly UI_PORT_SECURE_CMD=""
-    readonly UI_PORT_SECURE_ENABLED_CMD="/opt/bin/jq -r .https < $QPKG_INI_PATHFILE | /usr/bin/tail -n1"
+    readonly UI_PORT_SECURE_CMD=''
+    readonly UI_PORT_SECURE_ENABLED_TEST_CMD='[[ $(/opt/bin/jq -r .https < '$QPKG_INI_PATHFILE' | /usr/bin/tail -n1) = true ]]'
     readonly UI_LISTENING_ADDRESS_CMD="/opt/bin/jq -r .interface < $QPKG_INI_PATHFILE | /usr/bin/tail -n1"
     daemon_port=0
     ui_port=0
     ui_port_secure=0
-    ui_port_secure_enabled=false
     ui_listening_address=undefined
 
     if [[ -z $LANG ]]; then
@@ -79,10 +78,10 @@ Init()
     UnsetError
     UnsetRestartPending
     EnsureConfigFileExists
-    DisableOpkgDaemonStart
     LoadAppVersion
+    DisableOpkgDaemonStart
 
-    IsSupportBackup && [[ ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
+    IsSupportBackup && [[ -n ${BACKUP_PATH:-} && ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
 
     return 0
 
@@ -151,7 +150,7 @@ StartQPKG()
         return 1
     fi
 
-    DisplayRunAndLog 'start daemon' "$LAUNCHER" log:everything || return
+    DisplayRunAndLog 'start daemon' "$LAUNCHER" || return
     WaitForPID || return
     IsDaemonActive || return
     CheckPorts || return
@@ -177,6 +176,7 @@ StopQPKG()
         fi
 
         local acc=0
+        local pid=0
         SetRestartPending
 
         killall "$(/usr/bin/basename "$DAEMON_PATHFILE")"
@@ -202,7 +202,7 @@ StopQPKG()
             Display OK
             CommitLog "stopped OK in $acc seconds"
 
-            CommitInfoToSysLog 'stop daemon: OK.'
+            CommitInfoToSysLog 'stop daemon: OK'
             break
         done
 
@@ -217,7 +217,7 @@ BackupConfig()
     {
 
     CommitOperationToLog
-    DisplayRunAndLog 'update configuration backup' "/bin/tar --create --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config ." log:everything || SetError
+    DisplayRunAndLog 'update configuration backup' "/bin/tar --create --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config ." || SetError
 
     }
 
@@ -233,7 +233,7 @@ RestoreConfig()
     fi
 
     StopQPKG
-    DisplayRunAndLog 'restore configuration backup' "/bin/tar --extract --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config" log:everything || SetError
+    DisplayRunAndLog 'restore configuration backup' "/bin/tar --extract --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config" || SetError
     StartQPKG
 
     }
@@ -243,7 +243,7 @@ ResetConfig()
 
     CommitOperationToLog
     StopQPKG
-    DisplayRunAndLog 'reset configuration' "mv $QPKG_INI_DEFAULT_PATHFILE $QPKG_PATH; rm -rf $QPKG_PATH/config/*; mv $QPKG_PATH/$(/usr/bin/basename "$QPKG_INI_DEFAULT_PATHFILE") $QPKG_INI_DEFAULT_PATHFILE" log:everything || SetError
+    DisplayRunAndLog 'reset configuration' "mv $QPKG_INI_DEFAULT_PATHFILE $QPKG_PATH; rm -rf $QPKG_PATH/config/*; mv $QPKG_PATH/$(/usr/bin/basename "$QPKG_INI_DEFAULT_PATHFILE") $QPKG_INI_DEFAULT_PATHFILE" || SetError
     StartQPKG
 
     }
@@ -276,13 +276,11 @@ LoadPorts()
     esac
 
     # Always read these from the application configuration
-    [[ -n ${UI_PORT_SECURE_ENABLED_CMD:-} ]] && ui_port_secure_enabled=$(eval "$UI_PORT_SECURE_ENABLED_CMD")
     [[ -n ${UI_LISTENING_ADDRESS_CMD:-} ]] && ui_listening_address=$(eval "$UI_LISTENING_ADDRESS_CMD")
     [[ -n ${DAEMON_PORT_CMD:-} ]] && daemon_port=$(eval "$DAEMON_PORT_CMD")
 
     [[ -z $ui_port ]] && ui_port=0
     [[ -z $ui_port_secure ]] && ui_port_secure=0
-    [[ -z $ui_port_secure_enabled ]] && ui_port_secure_enabled=false
     [[ -z $ui_listening_address ]] && ui_listening_address=undefined
     [[ -z $daemon_port ]] && daemon_port=0
 
@@ -340,6 +338,90 @@ DisableOpkgDaemonStart()
 
     }
 
+PullGitRepo()
+    {
+
+    # $1 = package name
+    # $2 = URL to pull/clone from
+    # $3 = remote branch or tag
+    # $4 = remote depth: 'shallow' or 'single-branch'
+    # $5 = local path to clone into
+
+    [[ -z $1 || -z $2 || -z $3 || -z $4 || -z $5 ]] && return 1
+
+    local -r QPKG_GIT_PATH="$5"
+    local -r GIT_HTTPS_URL="$2"
+    local installed_branch=''
+    local branch_switch=false
+    [[ $4 = shallow ]] && local -r DEPTH='--depth 1'
+    [[ $4 = single-branch ]] && local -r DEPTH='--single-branch'
+
+    WaitForGit || return 1
+
+    if [[ -d $QPKG_GIT_PATH/.git ]]; then
+        installed_branch=$(/opt/bin/git -C "$QPKG_GIT_PATH" branch | /bin/grep '^\*' | /bin/sed 's|^\* ||')
+
+        if [[ $installed_branch != "$3" ]]; then
+            branch_switch=true
+            DisplayCommitToLog "current git branch: $installed_branch, new git branch: $3"
+            [[ $QPKG_NAME = nzbToMedia ]] && BackupConfig
+            DisplayRunAndLog 'new git branch has been specified, so clean local repository' "cd /tmp; rm -r $QPKG_GIT_PATH" log:failure-only
+        fi
+    fi
+
+    if [[ ! -d $QPKG_GIT_PATH/.git ]]; then
+        DisplayRunAndLog "clone $(FormatAsPackageName "$1") from remote repository" "cd /tmp; /opt/bin/git clone --branch $3 $DEPTH -c advice.detachedHead=false $GIT_HTTPS_URL $QPKG_GIT_PATH" log:failure-only
+    else
+        if IsAutoUpdate; then
+            # latest effort at resolving local corruption, source: https://stackoverflow.com/a/10170195
+            DisplayRunAndLog "update $(FormatAsPackageName "$1") from remote repository" "cd /tmp; /opt/bin/git -C $QPKG_GIT_PATH clean -f; /opt/bin/git -C $QPKG_GIT_PATH reset --hard origin/$3; /opt/bin/git -C $QPKG_GIT_PATH pull" log:failure-only
+        fi
+    fi
+
+    if IsAutoUpdate; then
+        installed_branch=$(/opt/bin/git -C "$QPKG_GIT_PATH" branch | /bin/grep '^\*' | /bin/sed 's|^\* ||')
+        DisplayCommitToLog "current git branch: $installed_branch"
+    fi
+
+    [[ $branch_switch = true && $QPKG_NAME = nzbToMedia ]] && RestoreConfig
+
+    return 0
+
+    }
+
+CleanLocalClone()
+    {
+
+    # for occasions where the local repo needs to be deleted and cloned again from source.
+
+    CommitOperationToLog
+
+    if [[ -z $QPKG_PATH || -z $QPKG_NAME ]] || IsNotSourcedOnline; then
+        SetError
+        return 1
+    fi
+
+    StopQPKG
+    DisplayRunAndLog 'clean local repository' "rm -rf $QPKG_REPO_PATH" log:failure-only
+    [[ -d $(/usr/bin/dirname $QPKG_REPO_PATH)/$QPKG_NAME ]] && DisplayRunAndLog 'KLUDGE: remove previous local repository' "rm -r $(/usr/bin/dirname $QPKG_REPO_PATH)/$QPKG_NAME" log:failure-only
+    DisplayRunAndLog 'clean virtual environment' "rm -rf $VENV_PATH" log:failure-only
+    DisplayRunAndLog 'clean PyPI cache' "rm -rf $PIP_CACHE_PATH" log:failure-only
+    StartQPKG
+
+    }
+
+WaitForGit()
+    {
+
+    if WaitForFileToAppear '/opt/bin/git' 300; then
+        export PATH="$OPKG_PATH:$(/bin/sed "s|$OPKG_PATH||" <<< "$PATH")"
+        return 0
+    else
+        return 1
+    fi
+
+    }
+
 WaitForLaunchTarget()
     {
 
@@ -392,7 +474,7 @@ WaitForFileToAppear()
     fi
 
     if [[ ! -e $1 ]]; then
-        DisplayWaitCommitToLog "wait for $(FormatAsFileName "$1") to appear:"
+        DisplayWaitCommitToLog "wait for $1 to appear:"
         DisplayWait "(no-more than $MAX_SECONDS seconds):"
 
         (
@@ -411,12 +493,31 @@ WaitForFileToAppear()
 
         if [[ $? -ne 0 ]]; then
             DisplayCommitToLog 'failed!'
-            DisplayErrCommitAllLogs "$(FormatAsFileName "$1") not found! (exceeded timeout: $MAX_SECONDS seconds)"
+            DisplayErrCommitAllLogs "$1 not found! (exceeded timeout: $MAX_SECONDS seconds)"
             return 1
         fi
     fi
 
-    DisplayCommitToLog "file $(FormatAsFileName "$1"): exists"
+    DisplayCommitToLog "file $1: exists"
+
+    return 0
+
+    }
+
+ViewLog()
+    {
+
+    if [[ -e $SERVICE_LOG_PATHFILE ]]; then
+        if [[ -e /opt/bin/less ]]; then
+            LESSSECURE=1 /opt/bin/less +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$SERVICE_LOG_PATHFILE"
+        else
+            cat --number "$SERVICE_LOG_PATHFILE"
+        fi
+    else
+        Display "service log not found: $SERVICE_LOG_PATHFILE"
+        SetError
+        return 1
+    fi
 
     return 0
 
@@ -448,6 +549,14 @@ EnsureConfigFileExists()
 
     }
 
+SaveAppVersion()
+    {
+
+    [[ -z $APP_VERSION_STORE_PATHFILE ]] && return
+    echo "$app_version" > "$APP_VERSION_STORE_PATHFILE"
+
+    }
+
 ViewLog()
     {
 
@@ -458,7 +567,7 @@ ViewLog()
             cat --number "$SERVICE_LOG_PATHFILE"
         fi
     else
-        Display "service log not found: $(FormatAsFileName "$SERVICE_LOG_PATHFILE")"
+        Display "service log not found: $SERVICE_LOG_PATHFILE"
         SetError
         return 1
     fi
@@ -475,15 +584,14 @@ DisplayRunAndLog()
     # input:
     #   $1 = processing message
     #   $2 = commandstring to execute
-    #   $3 = 'log:failure-only' (optional) - if specified, stdout & stderr are only recorded in the specified log if the command failed
-    #                                      - if unspecified, stdout & stderr is always recorded
+    #   $3 = 'log:failure-only' (optional) - if specified, stdout & stderr are only recorded in the specified log if the command failed. default is to always record stdout & stderr.
 
     local -r LOG_PATHFILE=$(/bin/mktemp -p /var/log "${FUNCNAME[0]}"_XXXXXX)
     local -i result_code=0
 
     DisplayWaitCommitToLog "$1:"
 
-    RunAndLog "$2" "$LOG_PATHFILE" "$3"
+    RunAndLog "${2:?empty}" "$LOG_PATHFILE" "${3:-}"
     result_code=$?
 
     if [[ -e $LOG_PATHFILE ]]; then
@@ -492,10 +600,10 @@ DisplayRunAndLog()
 
     if [[ $result_code -eq 0 ]]; then
         DisplayCommitToLog OK
-        [[ $3 = log:everything ]] && CommitInfoToSysLog "$1: OK."
+        [[ ${3:-} != log:failure-only ]] && CommitInfoToSysLog "${1:?empty}: OK"
         return 0
     else
-        DisplayCommitToLog 'failed!'
+        DisplayErrCommitAllLogs 'failed!'
         return 1
     fi
 
@@ -509,8 +617,7 @@ RunAndLog()
     # input:
     #   $1 = commandstring to execute
     #   $2 = pathfile to record stdout and stderr for commandstring
-    #   $3 = 'log:failure-only' (optional) - if specified, stdout & stderr are only recorded in the specified log if the command failed
-    #                                      - if unspecified, stdout & stderr is always recorded
+    #   $3 = 'log:failure-only' (optional) - if specified, stdout & stderr are only recorded in the specified log if the command failed. default is to always record stdout & stderr.
     #   $4 = e.g. '10' (optional) - an additional acceptable result code. Any other result from command (other than zero) will be considered a failure
 
     # output:
@@ -630,6 +737,20 @@ StripANSI()
 
     }
 
+Uppercase()
+    {
+
+    tr 'a-z' 'A-Z' <<< "$1"
+
+    }
+
+Lowercase()
+    {
+
+    tr 'A-Z' 'a-z' <<< "$1"
+
+    }
+
 ReWriteUIPorts()
     {
 
@@ -646,7 +767,7 @@ ReWriteUIPorts()
 
     # If SSL is enabled, attempting to access with non-SSL via 'Web_Port' results in "connection was reset"
 
-    [[ -n ${DAEMON_PORT_CMD:-} ]] && return
+    [[ -n ${DAEMON_PORT_CMD:-} ]] && return     # dont need to rewrite QTS UI ports if this app has a daemon port, as UI ports are unused
 
     DisplayWaitCommitToLog 'update QPKG icon with UI ports:'
     /sbin/setcfg $QPKG_NAME Web_Port "$ui_port" -f /etc/config/qpkg.conf
@@ -672,26 +793,26 @@ CheckPorts()
         DisplayCommitToLog "daemon port: $daemon_port"
 
         if IsPortResponds $daemon_port; then
-            msg="daemon port ($daemon_port)"
+            msg="daemon port $daemon_port"
         fi
     else
-        DisplayCommitToLog "secure port enabled: $ui_port_secure_enabled"
-
+        DisplayWaitCommitToLog 'HTTPS port enabled:'
         if IsSSLEnabled; then
+            DisplayCommitToLog true
             DisplayCommitToLog "HTTPS port: $ui_port_secure"
 
             if IsPortSecureResponds $ui_port_secure; then
-                msg="HTTPS port ($ui_port_secure)"
+                msg="HTTPS port $ui_port_secure"
             fi
+        else
+            DisplayCommitToLog false
         fi
 
-        if [[ $ui_port_secure -ne $ui_port ]]; then
-            DisplayCommitToLog "HTTP port: $ui_port"
+        DisplayCommitToLog "HTTP port: $ui_port"
 
-            if IsPortResponds $ui_port; then
-                [[ -n $msg ]] && msg+=" and "
-                msg+="HTTP port ($ui_port)"
-            fi
+        if IsPortResponds $ui_port; then
+            [[ -n $msg ]] && msg+=' and '
+            msg+="HTTP port $ui_port"
         fi
     fi
 
@@ -699,12 +820,11 @@ CheckPorts()
         DisplayErrCommitAllLogs 'no response on configured port(s)!'
         SetError
         return 1
+    else
+        DisplayCommitToLog "$msg test: OK"
+        ReWriteUIPorts
+        return 0
     fi
-
-    DisplayCommitToLog "$msg: OK"
-    ReWriteUIPorts
-
-    return 0
 
     }
 
@@ -764,7 +884,7 @@ IsQPKGEnabled()
         local name=$1
     fi
 
-    [[ $(/sbin/getcfg "$name" Enable -u -d FALSE -f /etc/config/qpkg.conf) = TRUE ]]
+    [[ $(Lowercase $(/sbin/getcfg "$name" Enable -d false -f /etc/config/qpkg.conf)) = true ]]
 
     }
 
@@ -820,7 +940,7 @@ IsNotSourcedOnline()
 IsSSLEnabled()
     {
 
-    [[ $ui_port_secure_enabled = true ]]
+    eval "$UI_PORT_SECURE_ENABLED_TEST_CMD"
 
     }
 
@@ -851,14 +971,16 @@ IsDaemonActive()
     # $? = 0 : $DAEMON_PATHFILE is in memory
     # $? = 1 : $DAEMON_PATHFILE is not in memory
 
+    DisplayWaitCommitToLog 'daemon active:'
+
     # deluge-web: only check for basename of $DAEMON_PATHFILE as only the basename is shown in the process list
     if [[ -e $DAEMON_PID_PATHFILE && -d /proc/$(<$DAEMON_PID_PATHFILE) && -n $DAEMON_PATHFILE && $(</proc/"$(<$DAEMON_PID_PATHFILE)"/cmdline) =~ $(/usr/bin/basename "$DAEMON_PATHFILE") ]]; then
-        DisplayCommitToLog 'daemon: IS active'
+        DisplayCommitToLog true
         DisplayCommitToLog "daemon PID: $(<$DAEMON_PID_PATHFILE)"
         return
     fi
 
-    DisplayCommitToLog 'daemon: NOT active'
+    DisplayCommitToLog false
     [[ -f $DAEMON_PID_PATHFILE ]] && rm "$DAEMON_PID_PATHFILE"
     return 1
 
@@ -868,6 +990,34 @@ IsNotDaemonActive()
     {
 
     ! IsDaemonActive
+
+    }
+
+IsPackageActive()
+    {
+
+    # $? = 0 : package is 'started'
+    # $? = 1 : package is 'stopped'
+
+    DisplayWaitCommitToLog 'package active:'
+
+    if [[ -e $BACKUP_SERVICE_PATHFILE ]]; then
+        DisplayCommitToLog true
+        return
+    fi
+
+    DisplayCommitToLog false
+    return 1
+
+    }
+
+IsNotPackageActive()
+    {
+
+    # $? = 1 if $QPKG_NAME is active
+    # $? = 0 if $QPKG_NAME is not active
+
+    ! IsPackageActive
 
     }
 
@@ -882,7 +1032,7 @@ IsSysFilePresent()
     fi
 
     if [[ ! -e $1 ]]; then
-        Display "A required NAS system file is missing: $(FormatAsFileName "$1")"
+        Display "A required NAS system file is missing: $1"
         SetError
         return 1
     else
@@ -936,13 +1086,13 @@ IsPortResponds()
     # $? = 1 if not OK
 
     if [[ -z $1 || $1 -eq 0 ]]; then
-        Display 'check for port 0 response: ignored'
+        Display 'test for port 0 response: ignored'
         return 1
     fi
 
     local acc=0
 
-    DisplayWaitCommitToLog "check for port $1 response:"
+    DisplayWaitCommitToLog "test for port $1 response:"
     DisplayWait "(no-more than $PORT_CHECK_TIMEOUT seconds):"
 
     while true; do
@@ -1044,6 +1194,22 @@ IsNotDefaultConfigFound()
 
     }
 
+IsVirtualEnvironmentExist()
+    {
+
+    # Is there a virtual environment to run the application in?
+
+    [[ -e $VENV_PATH/bin/activate ]]
+
+    }
+
+IsNotVirtualEnvironmentExist()
+    {
+
+    ! IsVirtualEnvironmentExist
+
+    }
+
 SetServiceOperation()
     {
 
@@ -1122,7 +1288,7 @@ UnsetDebug()
 IsDebug()
     {
 
-    [[ $debug = 'true' ]]
+    [[ $debug = true ]]
 
     }
 
@@ -1329,13 +1495,6 @@ FormatAsPackageName()
 
     }
 
-FormatAsFileName()
-    {
-
-    echo "($1)"
-
-    }
-
 DisplayAsHelp()
     {
 
@@ -1448,6 +1607,49 @@ FormatAsPlural()
     {
 
     [[ $1 -ne 1 ]] && echo s
+
+    }
+
+IsAutoUpdateMissing()
+    {
+
+    [[ $(/sbin/getcfg $QPKG_NAME Auto_Update -f /etc/config/qpkg.conf) = '' ]]
+
+    }
+
+IsAutoUpdate()
+    {
+
+    [[ $(Lowercase $(/sbin/getcfg $QPKG_NAME Auto_Update -f /etc/config/qpkg.conf)) = true ]]
+
+    }
+
+IsNotAutoUpdate()
+    {
+
+    ! IsAutoUpdate
+
+    }
+
+EnableAutoUpdate()
+    {
+
+    StoreAutoUpdateSelection true
+
+    }
+
+DisableAutoUpdate()
+    {
+
+    StoreAutoUpdateSelection false
+
+    }
+
+StoreAutoUpdateSelection()
+    {
+
+    /sbin/setcfg "$QPKG_NAME" Auto_Update "$(Uppercase $1)" -f /etc/config/qpkg.conf
+    DisplayCommitToLog "auto-update: $1"
 
     }
 
