@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly MANAGER_FILE=sherpa.manager.sh
-    local -r SCRIPT_VER=221223-beta
+    local -r SCRIPT_VER=221224-beta
 
     IsQNAP || return
     IsSU || return
@@ -2147,7 +2147,7 @@ IPKGs.Install()
     IPKGs.AcToInstall.Init
     IPKGs.AcToDownload.Init
 
-    IPKGs.AcToInstall.Add "$BASE_IPKGS_INSTALL"
+    IPKGs.AcToInstall.Add "$ESSENTIAL_IPKGS_INSTALL"
 
     if QPKGs.AcInstall.ScAll.IsSet; then
         for index in "${!QPKG_NAME[@]}"; do
@@ -2218,9 +2218,9 @@ PIPs.Install()
     if Opts.Deps.Check.IsSet || IPKGs.AcOkInstall.Exist python3-pip; then
         ShowAsActionProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
 
-        exec_cmd="$PIP_CMD install --upgrade --no-input $BASE_PIPS_INSTALL --cache-dir $PIP_CACHE_PATH"
-        local desc="'Python3' base modules"
-        local log_pathfile=$LOGS_PATH/py3-modules.base.$INSTALL_LOG_FILE
+        exec_cmd="$PIP_CMD install --upgrade --no-input $ESSENTIAL_PIPS_INSTALL --cache-dir $PIP_CACHE_PATH"
+        local desc="'Python3' essential modules"
+        local log_pathfile=$LOGS_PATH/py3-modules.essential.$INSTALL_LOG_FILE
         DebugAsProc "$ACTION_PRESENT $desc"
         RunAndLog "$exec_cmd" "$log_pathfile" log:failure-only
         result_code=$?
@@ -4530,10 +4530,10 @@ QPKG.Install()
                     DebugAsDone 'complete'
                 fi
 
-                # add extra package(s) needed immediately
-                DebugAsProc 'installing standalone IPKGs'
-                RunAndLog "$OPKG_CMD install --force-overwrite $BASE_IPKGS_INSTALL --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$LOGS_PATH/ipkgs.extra.$INSTALL_LOG_FILE" log:failure-only
-                DebugAsDone 'installed standalone IPKGs'
+                # add essential package(s) needed immediately
+                DebugAsProc 'installing essential IPKGs'
+                RunAndLog "$OPKG_CMD install --force-overwrite $ESSENTIAL_IPKGS_INSTALL --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$LOGS_PATH/ipkgs.essential.$INSTALL_LOG_FILE" log:failure-only
+                DebugAsDone 'installed essential IPKGs'
             fi
         fi
 
@@ -6737,8 +6737,8 @@ Packages.Load()
     readonly PACKAGES_VER
     readonly BASE_QPKG_CONFLICTS_WITH
     readonly BASE_QPKG_WARNINGS
-    readonly BASE_IPKGS_INSTALL
-    readonly BASE_PIPS_INSTALL
+    readonly ESSENTIAL_IPKGS_INSTALL
+    readonly ESSENTIAL_PIPS_INSTALL
     readonly MIN_PYTHON_VER
     readonly MIN_PERL_VER
 
