@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly MANAGER_FILE=sherpa.manager.sh
-    local -r SCRIPT_VER=221225a-beta
+    local -r SCRIPT_VER=221225b-beta
 
     IsQNAP || return
     IsSU || return
@@ -3559,6 +3559,8 @@ QPKGs.States.Build()
                     fi
                 fi
             fi
+
+            QPKG.IsSupportBackup "$package" && QPKG.IsBackupExist "$package" && QPKGs.IsBackedUp.Add "$package"
         fi
     done
 
