@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly MANAGER_FILE=sherpa.manager.sh
-    local -r SCRIPT_VER=221224a-beta
+    local -r SCRIPT_VER=221224b-beta
 
     IsQNAP || return
     IsSU || return
@@ -416,6 +416,7 @@ Self.Validate()
     local something_to_do=false
     local available_ver=''
 
+    # establish whether there's something to-do
     if Opts.Deps.Check.IsSet || Opts.Help.Status.IsSet; then
         something_to_do=true
     else
@@ -448,6 +449,7 @@ Self.Validate()
         DebugFuncExit 1; return
     fi
 
+    # decide if IPKGs and PIPs should be installed/upgraded
     if Opts.Deps.Check.IsSet || QPKGs.AcToUpgrade.Exist Entware || QPKGs.AcToInstall.Exist Entware || QPKGs.AcToReinstall.Exist Entware; then
         IPKGs.Upgrade.Set
         IPKGs.Install.Set
@@ -519,7 +521,10 @@ Self.Validate()
             for prospect in $(QPKG.GetDependents "$package"); do
                 if QPKGs.IsStarted.Exist "$prospect"; then
                     QPKGs.AcToStop.Add "$prospect"
-                    QPKGs.AcToStart.Add "$prospect"
+
+                    if ! QPKGs.AcToUninstall.Exist "$prospect" && ! QPKGs.AcToInstall.Exist "$prospect"; then
+                        QPKGs.AcToStart.Add "$prospect"
+                    fi
                 fi
             done
         fi
@@ -536,14 +541,17 @@ Self.Validate()
         fi
     done
 
-    # if a standalone has been selected for 'uninstall' then 'install', need to 'stop' its dependents first, and 'start' them again later
+    # if a standalone has been selected for 'uninstall', then 'install', need to 'stop' its dependents first, and 'start' them again later
     for package in $(QPKGs.AcToUninstall.Array); do
         if QPKGs.ScStandalone.Exist "$package" && QPKGs.IsInstalled.Exist "$package"; then
             if QPKGs.AcToInstall.Exist "$package"; then
                 for prospect in $(QPKG.GetDependents "$package"); do
                     if QPKGs.IsStarted.Exist "$prospect"; then
                         QPKGs.AcToStop.Add "$prospect"
-                        QPKGs.AcToStart.Add "$prospect"
+
+                        if ! QPKGs.AcToUninstall.Exist "$prospect" && ! QPKGs.AcToInstall.Exist "$prospect"; then
+                            QPKGs.AcToStart.Add "$prospect"
+                        fi
                     fi
                 done
             fi
@@ -577,7 +585,7 @@ Self.Validate()
         done
     fi
 
-    # build list containing packages that will require installation QPKGs
+    # build list of required installation QPKGs
     QPKGs.AcToDownload.Add "$(QPKGs.AcToUpgrade.Array) $(QPKGs.AcToReinstall.Array) $(QPKGs.AcToInstall.Array)"
 
     # check all items
@@ -595,7 +603,7 @@ Self.Validate()
 
     }
 
-# package processing priorities shall be:
+# QPKG processing priorities shall be:
 
 #   _. rebuild dependents           (meta-action: 'install' QPKG and 'restore' config, but only if package has a backup file)
 
@@ -609,7 +617,7 @@ Self.Validate()
 #  14. reinstall standalones
 #  13. install standalones
 #  12. restore standalones
-#  11. clean standalones            (presently unsupported by any standalone QPKGs)
+#  11. clean standalones            (presently unsupported by all standalone QPKGs)
 #  10. start standalones
 #   9. restart standalones
 
@@ -621,7 +629,7 @@ Self.Validate()
 #   3. start dependents
 #   2. restart dependents
 
-#   1. status                       (lowest: least-important)
+#   1. status                       (lowest: least-important, currently supported by sherpa QPKGs, but no processing code yet exists)
 
 Tiers.Process()
     {
@@ -667,7 +675,7 @@ Tiers.Process()
                 Tier.Process Clean false $tier QPKG AcToClean clean cleaning cleaned long false || return
 
                 if [[ $tier = Standalone ]]; then
-                    # check for standalone packages that must be started because dependents are being reinstalled/installed/started/restarted
+                    # check for standalone packages that must be started first, because dependents are being reinstalled/installed/started/restarted
                     for package in $(QPKGs.AcToReinstall.Array) $(QPKGs.AcOkReinstall.Array) $(QPKGs.AcToInstall.Array) $(QPKGs.AcOkInstall.Array) $(QPKGs.AcToStart.Array) $(QPKGs.AcOkStart.Array) $(QPKGs.AcToRestart.Array) $(QPKGs.AcOkRestart.Array); do
                         for prospect in $(QPKG.GetStandalones "$package"); do
                             QPKGs.IsNtStarted.Exist "$prospect" && QPKGs.AcToStart.Add "$prospect"
@@ -1615,7 +1623,7 @@ ApplySensibleExceptions()
         # process scope-based user-options
         for scope in "${PACKAGE_SCOPES[@]}"; do
             if QPKGs.Ac${action}.Sc${scope}.IsSet; then
-                # use sensible scope exceptions (for convenience) rather than follow requested scope literally
+                # use sensible scope exceptions for convenience, rather than follow requested scope literally
                 case $action in
                     Clean)
                         case $scope in
@@ -1776,9 +1784,8 @@ ApplySensibleExceptions()
 
                 [[ $found != true ]] && QPKGs.AcTo${action}.Add "$(QPKGs.Sc${scope}.Array)" || found=false
             elif QPKGs.Ac${action}.ScNt${scope}.IsSet; then
-                # use sensible scope exceptions (for convenience) rather than follow requested scope literally
+                # use sensible scope exceptions for convenience, rather than follow requested scope literally
                 :
-
                 [[ $found != true ]] && QPKGs.AcTo${action}.Add "$(QPKGs.ScNt${scope}.Array)" || found=false
             fi
         done
@@ -1786,7 +1793,7 @@ ApplySensibleExceptions()
         # process state-based user-options
         for state in "${PACKAGE_STATES[@]}"; do
             if QPKGs.Ac${action}.Is${state}.IsSet; then
-                # use sensible state exceptions (for convenience) rather than follow requested state literally
+                # use sensible state exceptions for convenience, rather than follow requested state literally
                 case $action in
                     Uninstall)
                         case $state in
@@ -1798,7 +1805,7 @@ ApplySensibleExceptions()
 
                 [[ $found != true ]] && QPKGs.AcTo${action}.Add "$(QPKGs.Is${state}.Array)" || found=false
             elif QPKGs.Ac${action}.IsNt${state}.IsSet; then
-                # use sensible state exceptions (for convenience) rather than follow requested state literally
+                # use sensible state exceptions for convenience, rather than follow requested state literally
                 case $action in
                     Install)
                         case $state in
@@ -1881,7 +1888,7 @@ PatchEntwareService()
     local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile Entware)
 
     if $GREP_CMD -q 'opt.orig' "$PACKAGE_INIT_PATHFILE"; then
-        DebugInfo 'patch: do the "opt shuffle" - already done'
+        DebugInfo 'patch: do the "/opt shuffle" - already done'
     else
         # ensure existing files are moved out of the way before creating /opt symlink
         find='# sym-link $QPKG_DIR to /opt'
@@ -2036,7 +2043,7 @@ CalcIPKGsDepsToInstall()
         DebugAsProc 'excluding IPKGs already installed'
 
         for element in $pre_exclude_list; do
-            # KLUDGE: silently exclude these from attempted installation:
+            # KLUDGE: silently exclude these packages from being installed:
             # KLUDGE: 'ca-certs' appears to be a bogus meta-package.
             # KLUDGE: 'python3-gdbm' is not available, but can be requested as per https://forum.qnap.com/viewtopic.php?p=806031#p806031 (dont know why).
             if [[ $element != 'ca-certs' && $element != 'python3-gdbm' ]]; then
@@ -4759,6 +4766,7 @@ QPKG.Uninstall()
             MarkActionAsDone "$PACKAGE_NAME" "$action"
             MarkStateAsNotInstalled "$PACKAGE_NAME"
             QPKGs.IsStarted.Remove "$PACKAGE_NAME"
+            QPKGs.IsNtStarted.Remove "$PACKAGE_NAME"
         else
             DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
             MarkActionAsError "$PACKAGE_NAME" "$action"
