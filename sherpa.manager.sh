@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly MANAGER_FILE=sherpa.manager.sh
-    local -r SCRIPT_VER=221225b-beta
+    local -r SCRIPT_VER=221225c-beta
 
     IsQNAP || return
     IsSU || return
@@ -314,7 +314,7 @@ Self.Init()
 Environment.Log()
     {
 
-    ArgumentSuggestions
+    Self.ArgumentSuggestions.Show
     QPKGs.SkProc.IsSet && return
     DebugFuncEntry
     ShowAsProc environment >&2
@@ -873,7 +873,7 @@ Self.Results()
         elif Opts.Help.Abbreviations.IsSet; then
             Help.PackageAbbreviations.Show
         elif Opts.Versions.View.IsSet; then
-            ShowVersions
+            Self.Versions.Show
         elif Opts.Log.Last.View.IsSet; then
             Log.Last.View
         elif Opts.Log.Tail.View.IsSet; then
@@ -1539,7 +1539,7 @@ ParseArguments()
 
     }
 
-ArgumentSuggestions()
+Self.ArgumentSuggestions.Show()
     {
 
     DebugFuncEntry
@@ -1911,7 +1911,8 @@ UpdateEntwarePackageList()
     {
 
     if IsNtSysFileExist $OPKG_CMD; then
-        DisplayAsProjectSyntaxIndentedExample 'try restarting Entware' 'restart ew'
+        Display
+        DisplayAsProjectSyntaxExample 'try restarting Entware' 'restart ew'
         return 1
     fi
 
@@ -3270,7 +3271,7 @@ ExtractTailFromLog()
 
     }
 
-ShowVersions()
+Self.Versions.Show()
     {
 
     DisableDebugToArchiveAndFile
