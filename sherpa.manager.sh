@@ -7,7 +7,7 @@
 #
 # Description:
 #   This is the management script for the sherpa mini-package-manager.
-#   Its automatically downloaded via the 'sherpa.loader.sh' script in the 'sherpa' QPKG no-more than once per 24 hours.
+#   It's automatically downloaded via the `sherpa.loader.sh` script in the `sherpa` QPKG no-more than once per 24 hours.
 #
 # Project:
 #   https://git.io/sherpa
@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly MANAGER_FILE=sherpa.manager.sh
-    local -r SCRIPT_VER=221224b-beta
+    local -r SCRIPT_VER=221225-beta
 
     IsQNAP || return
     IsSU || return
@@ -101,7 +101,7 @@ Self.Init()
     IsSysFileExist $DATE_CMD || return
     IsSysFileExist $DF_CMD || return
     IsSysFileExist $GREP_CMD || return
-    IsSysFileExist $LESS_CMD || return
+    # KLUDGE: don't perform a check for `less`, it isn't always there
     IsSysFileExist $MD5SUM_CMD || return
     IsSysFileExist $SED_CMD || return
     IsSysFileExist $SH_CMD || return
@@ -113,8 +113,8 @@ Self.Init()
     IsSysFileExist $GETCFG_CMD || return
     IsSysFileExist $SETCFG_CMD || return
 
-    [[ ! -e $SORT_CMD ]] && ln -s /bin/busybox "$SORT_CMD"  # KLUDGE: 'sort' randomly goes missing from QTS
-    [[ ! -e /dev/fd ]] && ln -s /proc/self/fd /dev/fd       # KLUDGE: '/dev/fd' isnt always created by QTS during startup
+    [[ ! -e $SORT_CMD ]] && ln -s /bin/busybox "$SORT_CMD"  # KLUDGE: `sort` randomly goes missing from QTS
+    [[ ! -e /dev/fd ]] && ln -s /proc/self/fd /dev/fd       # KLUDGE: `/dev/fd` isnt always created by QTS during startup
 
     IsSysFileExist $BASENAME_CMD || return
     IsSysFileExist $DIRNAME_CMD || return
@@ -276,7 +276,7 @@ Self.Init()
     [[ ${NAS_FIRMWARE_VER//.} -lt 426 ]] && curl_insecure_arg=' --insecure' || curl_insecure_arg=''
     QPKG.IsInstalled Entware && [[ $ENTWARE_VER = none ]] && DebugAsWarn "$(FormatAsPackageName Entware) appears to be installed but is not visible"
 
-    # speedup: dont build package lists if only showing basic help
+    # speedup: don't build package lists if only showing basic help
     if [[ -z $USER_ARGS_RAW ]]; then
         Opts.Help.Basic.Set
         QPKGs.SkProc.Set
@@ -302,7 +302,7 @@ Self.Init()
 
     # KLUDGE: remove all max QTS versions from qpkg.conf (these are not removed automatically when installing updated QPKGs without max version set)
     # retain this kludge for 12 months to give everyone time to update their installed sherpa QPKGs. Remove after 2023-09-22
-    if [[ $($GETCFG_CMD sherpa max_versions_cleared -d FALSE -f /etc/config/qpkg.conf) = 'FALSE' ]]; then
+    if [[ $($GETCFG_CMD sherpa max_versions_cleared -d FALSE -f /etc/config/qpkg.conf) = FALSE ]]; then
         $SED_CMD -i '/^FW_Ver_Max/d' /etc/config/qpkg.conf
         $SETCFG_CMD sherpa max_versions_cleared TRUE -f /etc/config/qpkg.conf
     fi
@@ -335,7 +335,7 @@ Environment.Log()
         DebugFirmwareWarning version "$NAS_FIRMWARE_VER"
     fi
 
-    if [[ $NAS_FIRMWARE_DATE -lt 20201015 || $NAS_FIRMWARE_DATE -gt 20201020 ]]; then   # QTS builds released over these 6 days dont allow unsigned QPKGs to run at-all
+    if [[ $NAS_FIRMWARE_DATE -lt 20201015 || $NAS_FIRMWARE_DATE -gt 20201020 ]]; then   # QTS builds released over these 6 days don't allow unsigned QPKGs to run at-all
         DebugFirmwareOK 'build date' "$NAS_FIRMWARE_DATE"
     else
         DebugFirmwareWarning 'build date' "$NAS_FIRMWARE_DATE"
@@ -402,7 +402,7 @@ Self.Validate()
     {
 
     # This function handles most of the high-level logic for package actions.
-    # If a package isnt being processed by the correct action, odds-are its due to a logic error in this function.
+    # If a package isnt being processed by the correct action, odds-are it's due to a logic error in this function.
 
     QPKGs.SkProc.IsSet && return
     DebugFuncEntry
@@ -455,7 +455,7 @@ Self.Validate()
         IPKGs.Install.Set
         PIPs.Install.Set
 
-        if QPKG.IsInstalled Entware && QPKG.IsStarted Entware; then
+        if QPKG.IsInstalled Entware && QPKG.IsEnabled Entware; then
             if [[ -e $PYTHON3_CMD ]]; then
                 available_ver=$($PYTHON3_CMD -V 2>/dev/null | $SED_CMD 's|^Python ||')
                 if [[ ${available_ver//./} -lt $MIN_PYTHON_VER ]]; then
@@ -515,7 +515,7 @@ Self.Validate()
         fi
     done
 
-    # if a standalone has been selected for 'reinstall' or 'restart', need to 'stop' its dependents first, and 'start' them again later
+    # if a standalone has been selected for `reinstall` or `restart`, need to `stop` its dependents first, and `start` them again later
     for package in $(QPKGs.AcToReinstall.Array) $(QPKGs.AcToRestart.Array); do
         if QPKGs.ScStandalone.Exist "$package" && QPKGs.IsStarted.Exist "$package"; then
             for prospect in $(QPKG.GetDependents "$package"); do
@@ -530,7 +530,7 @@ Self.Validate()
         fi
     done
 
-    # if a standalone has been selected for 'stop' or 'uninstall', need to 'stop' its dependents first
+    # if a standalone has been selected for `stop` or `uninstall`, need to `stop` its dependents first
     for package in $(QPKGs.AcToStop.Array) $(QPKGs.AcToUninstall.Array); do
         if QPKGs.ScStandalone.Exist "$package" && QPKGs.IsInstalled.Exist "$package"; then
             for prospect in $(QPKG.GetDependents "$package"); do
@@ -541,7 +541,7 @@ Self.Validate()
         fi
     done
 
-    # if a standalone has been selected for 'uninstall', then 'install', need to 'stop' its dependents first, and 'start' them again later
+    # if a standalone has been selected for `uninstall`, then `install`, need to `stop` its dependents first, and `start` them again later
     for package in $(QPKGs.AcToUninstall.Array); do
         if QPKGs.ScStandalone.Exist "$package" && QPKGs.IsInstalled.Exist "$package"; then
             if QPKGs.AcToInstall.Exist "$package"; then
@@ -564,14 +564,14 @@ Self.Validate()
         QPKGs.AcToInstall.Add Entware
     fi
 
-    # no-need to 'stop' packages that are about to be uninstalled
+    # no-need to `stop` packages that are about to be uninstalled
     if QPKGs.AcUninstall.ScAll.IsSet; then
         QPKGs.AcToStop.Init
     else
         QPKGs.AcToStop.Remove "$(QPKGs.AcToUninstall.Array)"
     fi
 
-    # build a list of original storage paths for packages to be 'uninstalled', then 'installed' again later this session (a "complex reinstall")
+    # build a list of original storage paths for packages to be `uninstalled`, then `installed` again later this session (a "complex reinstall")
     # this will ensure migrated packages end-up in the original location
     QPKGs_were_installed_name=()
     QPKGs_were_installed_path=()
@@ -605,7 +605,7 @@ Self.Validate()
 
 # QPKG processing priorities shall be:
 
-#   _. rebuild dependents           (meta-action: 'install' QPKG and 'restore' config, but only if package has a backup file)
+#   _. rebuild dependents           (meta-action: `install` QPKG and `restore` config, but only if package has a backup file)
 
 #  20. reassign all                 (highest: most-important)
 #  19. backup all
@@ -648,7 +648,7 @@ Tiers.Process()
     Tier.Process Backup false Dependent QPKG AcToBackup 'backup configuration for' 'backing-up configuration for' 'configuration backed-up for' '' false || return
     Tier.Process Backup false Standalone QPKG AcToBackup 'backup configuration for' 'backing-up configuration for' 'configuration backed-up for' '' false || return
 
-    # -> package 'removal' phase begins here <-
+    # -> package removal phase begins here <-
 
     for ((index=${#PACKAGE_TIERS[@]}-1; index>=0; index--)); do     # process tiered removal actions in-reverse
         tier=${PACKAGE_TIERS[$index]}
@@ -660,9 +660,9 @@ Tiers.Process()
         esac
     done
 
-    # -> package 'installation' phase begins here <-
+    # -> package installation phase begins here <-
 
-    # just in-case 'python' has disappeared again ... ¯\_(ツ)_/¯
+    # just in-case `python` has disappeared again ... ¯\_(ツ)_/¯
     [[ ! -L $PYTHON_CMD && -e $PYTHON3_CMD ]] && ln -s $PYTHON3_CMD $PYTHON_CMD
 
     for tier in "${PACKAGE_TIERS[@]}"; do
@@ -727,16 +727,16 @@ Tier.Process()
     # run a single action on a group of packages
 
     # input:
-    #   $1 = $TARGET_ACTION                     e.g. 'Start', 'Restart'...
-    #   $2 = is this a forced action?           e.g. 'true', 'false'
-    #   $3 = $TIER                              e.g. 'Standalone', 'Dependent', 'Addon', 'All'
-    #   $4 = $PACKAGE_TYPE                      e.g. 'QPKG', 'IPKG', 'PIP'
-    #   $5 = $TARGET_OBJECT_NAME (optional)     e.g. 'AcToStart', 'AcToStop'...
-    #   $6 = $ACTION_INTRANSITIVE               e.g. 'start'...
-    #   $7 = $ACTION_PRESENT                    e.g. 'starting'...
-    #   $8 = $ACTION_PAST                       e.g. 'started'...
-    #   $9 = $RUNTIME (optional)                e.g. 'long'
-    #  $10 = execute asynchronously? (optional) e.g. 'true', 'false'
+    #   $1 = $TARGET_ACTION                     e.g. `Start`, `Restart`...
+    #   $2 = is this a forced action?           e.g. `true`, `false`
+    #   $3 = $TIER                              e.g. `Standalone`, `Dependent`, `Addon`, `All`
+    #   $4 = $PACKAGE_TYPE                      e.g. `QPKG`, `IPKG`, `PIP`
+    #   $5 = $TARGET_OBJECT_NAME (optional)     e.g. `AcToStart`, `AcToStop`...
+    #   $6 = $ACTION_INTRANSITIVE               e.g. `start`...
+    #   $7 = $ACTION_PRESENT                    e.g. `starting`...
+    #   $8 = $ACTION_PAST                       e.g. `started`...
+    #   $9 = $RUNTIME (optional)                e.g. `long`
+    #  $10 = execute asynchronously? (optional) e.g. `true`, `false`
 
     QPKGs.SkProc.IsSet && return
     DebugFuncEntry
@@ -1433,7 +1433,7 @@ ParseArguments()
                 ;;
             uninstall_)
                 case $scope in
-                    all_|installed_)   # this scope is dangerous, so make 'force' a requirement
+                    all_|installed_)   # this scope is dangerous, so make `force` a requirement
                         if [[ $action_force = true ]]; then
                             QPKGs.AcUninstall.ScAll.Set
                             action=''
@@ -1496,7 +1496,7 @@ ParseArguments()
         esac
     done
 
-    # when an action has been determined, but no scope was found, then show default information. This will usually be the help screen.
+    # when an action has been determined, but no scope has been found, then show default information. This will usually be the help screen.
     if [[ -n $action && $scope_identified = false ]]; then
         case $action in
             abs_)
@@ -1921,7 +1921,7 @@ UpdateEntwarePackageList()
     local -r LOG_PATHFILE=$LOGS_PATH/entware.$UPDATE_LOG_FILE
     local -i result_code=0
 
-    # if Entware package list was recently updated, dont update again.
+    # if Entware package list was recently updated, don't update again.
 
     if ! IsThisFileRecent "$EXTERNAL_PACKAGES_ARCHIVE_PATHFILE" "$CHANGE_THRESHOLD_MINUTES" || [[ ! -f $EXTERNAL_PACKAGES_ARCHIVE_PATHFILE ]] || Opts.Deps.Check.IsSet; then
         DebugAsProc "updating $(FormatAsPackageName Entware) package list"
@@ -1952,19 +1952,19 @@ IsThisFileRecent()
 
     # input:
     #   $1 = pathfilename: file to examine change time of
-    #   $2 = integer (optional): threshold in minutes - default is '1440' = 1 day
+    #   $2 = integer (optional): threshold in minutes - default is `1440` = 1 day
 
     # output:
     #   $? = true/false
 
-    # examine 'change' time as this is updated even if file content isnt modified
+    # examine `change` time as this is updated even if file content isnt modified
     if [[ -e $1 && -e $GNU_FIND_CMD ]]; then
         if [[ -z $($GNU_FIND_CMD "$1" -cmin +${2:-1440}) ]]; then        # no-output if last 'change' was less than $2 minutes ago
             return 0
         fi
     fi
 
-    return 1    # file not found, GNU 'find' unavailable or file 'change' time was more than $2 minutes ago
+    return 1    # file not found, GNU `find` unavailable or file `change` time was more than $2 minutes ago
 
     }
 
@@ -2044,10 +2044,10 @@ CalcIPKGsDepsToInstall()
 
         for element in $pre_exclude_list; do
             # KLUDGE: silently exclude these packages from being installed:
-            # KLUDGE: 'ca-certs' appears to be a bogus meta-package.
-            # KLUDGE: 'python3-gdbm' is not available, but can be requested as per https://forum.qnap.com/viewtopic.php?p=806031#p806031 (dont know why).
+            # KLUDGE: `ca-certs` appears to be a bogus meta-package.
+            # KLUDGE: `python3-gdbm` is not available, but can be requested as per https://forum.qnap.com/viewtopic.php?p=806031#p806031 (don't know why).
             if [[ $element != 'ca-certs' && $element != 'python3-gdbm' ]]; then
-                # KLUDGE: 'libjpeg' appears to have been replaced by 'libjpeg-turbo', but many packages still list 'libjpeg' as a dependency, so replace it with 'libjpeg-turbo'.
+                # KLUDGE: `libjpeg` appears to have been replaced by `libjpeg-turbo`, but many packages still list `libjpeg` as a dependency, so replace it with `libjpeg-turbo`.
                 if [[ $element != 'libjpeg' ]]; then
                     if ! $OPKG_CMD status "$element" | $GREP_CMD -q "Status:.*installed"; then
                         IPKGs.AcToDownload.Add "$element"
@@ -2080,7 +2080,7 @@ CalcIPKGsDownloadSize()
         DebugAsDone "$size_count IPKG$(Plural "$size_count") to download: '$(IPKGs.AcToDownload.List)'"
         DebugAsProc "calculating size of IPKG$(Plural "$size_count") to download"
         size_array=($($GNU_GREP_CMD -w '^Package:\|^Size:' "$EXTERNAL_PACKAGES_PATHFILE" | $GNU_GREP_CMD --after-context 1 --no-group-separator ": $($SED_CMD 's/ /$ /g;s/\$ /\$\\\|: /g' <<< "$(IPKGs.AcToDownload.List)")" | $GREP_CMD '^Size:' | $SED_CMD 's|^Size: ||'))
-        IPKGs.AcToDownload.Size = "$(IFS=+; echo "$((${size_array[*]}))")"   # a neat sizing shortcut found here https://stackoverflow.com/a/13635566/6182835
+        IPKGs.AcToDownload.Size = "$(IFS=+; echo "$((${size_array[*]}))")"   # a nifty sizing shortcut found here https://stackoverflow.com/a/13635566/6182835
         DebugAsDone "$(FormatAsThousands "$(IPKGs.AcToDownload.Size)") bytes ($(FormatAsISOBytes "$(IPKGs.AcToDownload.Size)")) to download"
     else
         DebugAsDone 'no IPKGs to size'
@@ -2154,19 +2154,19 @@ IPKGs.Install()
     IPKGs.AcToInstall.Init
     IPKGs.AcToDownload.Init
 
-    ! QPKGs.AcOkInstall.Exist Entware && IPKGs.AcToInstall.Add "$ESSENTIAL_IPKGS_INSTALL"
+    ! QPKGs.AcOkInstall.Exist Entware && IPKGs.AcToInstall.Add "$ESSENTIAL_IPKGS"
 
     if QPKGs.AcInstall.ScAll.IsSet; then
         for index in "${!QPKG_NAME[@]}"; do
             [[ ${QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${QPKG_ARCH[$index]} = all ]] || continue
-            IPKGs.AcToInstall.Add "${QPKG_IPKGS_INSTALL[$index]}"
+            IPKGs.AcToInstall.Add "${QPKG_REQUIRES_IPKGS[$index]}"
         done
     else
         for index in "${!QPKG_NAME[@]}"; do
             if QPKGs.AcToInstall.Exist "${QPKG_NAME[$index]}" || QPKGs.IsInstalled.Exist "${QPKG_NAME[$index]}" || QPKGs.AcToReinstall.Exist "${QPKG_NAME[$index]}" || QPKGs.AcToStart.Exist "${QPKG_NAME[$index]}"; then
                 [[ ${QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${QPKG_ARCH[$index]} = all ]] || continue
                 QPKG.MinRAM "${QPKG_NAME[$index]}" &>/dev/null || continue
-                IPKGs.AcToInstall.Add "${QPKG_IPKGS_INSTALL[$index]}"
+                IPKGs.AcToInstall.Add "${QPKG_REQUIRES_IPKGS[$index]}"
             fi
         done
     fi
@@ -2225,7 +2225,7 @@ PIPs.Install()
     if Opts.Deps.Check.IsSet || IPKGs.AcOkInstall.Exist python3-pip; then
         ShowAsActionProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
 
-        exec_cmd="$PIP_CMD install --upgrade --no-input $ESSENTIAL_PIPS_INSTALL --cache-dir $PIP_CACHE_PATH"
+        exec_cmd="$PIP_CMD install --upgrade --no-input $ESSENTIAL_PIPS --cache-dir $PIP_CACHE_PATH"
         local desc="'Python3' essential modules"
         local log_pathfile=$LOGS_PATH/py3-modules.essential.$INSTALL_LOG_FILE
         DebugAsProc "$ACTION_PRESENT $desc"
@@ -2253,7 +2253,7 @@ PIPs.Install()
 OpenIPKGArchive()
     {
 
-    # extract the 'opkg' package list file
+    # extract the `opkg` package list file
 
     # output:
     #   $? = 0 if successful or 1 if failed
@@ -2323,7 +2323,7 @@ _MonitorDirSize_()
         fi
 
         percent="$((200*(current_bytes)/(total_bytes)%2+100*(current_bytes)/(total_bytes)))%"
-        [[ $current_bytes -lt $total_bytes && $percent = '100%' ]] && percent='99%' # ensure we dont hit 100% until the last byte is downloaded
+        [[ $current_bytes -lt $total_bytes && $percent = '100%' ]] && percent='99%' # ensure we don't hit 100% until the last byte is downloaded
         progress_message="$percent ($(FormatAsISOBytes "$current_bytes")/$(FormatAsISOBytes "$total_bytes"))"
 
         if [[ $stall_seconds -ge $stall_seconds_threshold ]]; then
@@ -3231,7 +3231,9 @@ ExtractPreviousSessionFromTail()
     local -i start_line=0
     local -i end_line=0
     local -i old_session=1
-    local -i old_session_limit=12   # dont try to find 'started:' any further back than this many sessions
+
+    # don't try to find `started:` any further back than this many sessions
+    local -i old_session_limit=12
 
     ExtractTailFromLog
 
@@ -3259,7 +3261,7 @@ ExtractTailFromLog()
     {
 
     if [[ -e $SESSION_ARCHIVE_PATHFILE ]]; then
-        $TAIL_CMD -n${LOG_TAIL_LINES} "$SESSION_ARCHIVE_PATHFILE" > "$SESSION_TAIL_PATHFILE"   # trim main log first so theres less to 'grep'
+        $TAIL_CMD -n${LOG_TAIL_LINES} "$SESSION_ARCHIVE_PATHFILE" > "$SESSION_TAIL_PATHFILE"   # trim main log first so theres less to `grep`
     else
         [[ -e $SESSION_TAIL_PATHFILE ]] && rm -f "$SESSION_TAIL_PATHFILE"
     fi
@@ -3334,7 +3336,7 @@ QPKGs.Conflicts.Check()
     if [[ -n ${BASE_QPKG_CONFLICTS_WITH:-} ]]; then
         # shellcheck disable=2068
         for package in ${BASE_QPKG_CONFLICTS_WITH[@]}; do
-            if [[ $($GETCFG_CMD "$package" Enable -u -f /etc/config/qpkg.conf) = 'TRUE' ]]; then
+            if QPKG.IsEnabled "$package"; then
                 ShowAsError "the '$package' QPKG is enabled. $(FormatAsScriptTitle) is incompatible with this package. Please consider 'stop'ing this QPKG in your App Center"
                 return 1
             fi
@@ -3353,7 +3355,7 @@ QPKGs.Warnings.Check()
     if [[ -n ${BASE_QPKG_WARNINGS:-} ]]; then
         # shellcheck disable=2068
         for package in ${BASE_QPKG_WARNINGS[@]}; do
-            if [[ $($GETCFG_CMD "$package" Enable -u -f /etc/config/qpkg.conf) = 'TRUE' ]]; then
+            if QPKG.IsEnabled "$package"; then
                 ShowAsWarn "the '$package' QPKG is enabled. This may cause problems with $(FormatAsScriptTitle) applications. Please consider 'stop'ing this QPKG in your App Center"
             fi
         done
@@ -3410,7 +3412,7 @@ QPKGs.States.List()
             elif [[ $prefix = IsNt && $state = BackedUp ]]; then
                 QPKGs.${prefix}${state}.IsAny && DebugQPKGWarning "${prefix}${state}" "($(QPKGs.${prefix}${state}.Count)) $(QPKGs.${prefix}${state}.ListCSV) "
             elif [[ $prefix = IsNt && $state = Installed ]]; then
-                # dont log packages that havent been installed, it pollutes the log
+                # don't log packages that havent been installed, it pollutes the log
                 :
             else
                 QPKGs.${prefix}${state}.IsAny && DebugQPKGInfo "${prefix}${state}" "($(QPKGs.${prefix}${state}.Count)) $(QPKGs.${prefix}${state}.ListCSV) "
@@ -3434,19 +3436,19 @@ QPKGs.States.List()
 QPKGs.StandaloneDependent.Build()
     {
 
-    # there are three tiers of package: 'standalone', 'addon' and 'dependent'
-    # ... but only two tiers of QPKG: 'standalone' and 'dependent'
+    # there are three tiers of package: `standalone`, `addon` and `dependent`
+    # ... but only two tiers of QPKG: `standalone` and `dependent`
 
-    # 'standalone' QPKGs dont depend on other QPKGs, but may be required for other QPKGs. They should be installed/started before any 'dependent' QPKGs.
-    # 'dependent' QPKGs depend on other QPKGs. They should be installed/started after all 'standalone' QPKGs.
+    # `standalone` QPKGs don't depend on other QPKGs, but may be required for other QPKGs. They should be installed/started before any `dependent` QPKGs.
+    # `dependent` QPKGs depend on other QPKGs. They should be installed/started after all `standalone` QPKGs.
 
-    local -i index=0
+    local package=''
 
-    for index in "${!QPKG_NAME[@]}"; do
-        if [[ -z ${QPKG_DEPENDS_ON[$index]} ]]; then
-            QPKGs.ScStandalone.Add "${QPKG_NAME[$index]}"
+    for package in "${QPKG_NAME[@]}"; do
+        if QPKG.IsDependent "$package"; then
+            QPKGs.ScDependent.Add "$package"
         else
-            QPKGs.ScDependent.Add "${QPKG_NAME[$index]}"
+            QPKGs.ScStandalone.Add "$package"
         fi
     done
 
@@ -3481,7 +3483,7 @@ QPKGs.States.Build()
         package="${QPKG_NAME[$index]}"
         [[ $package = "$previous" ]] && continue || previous=$package
 
-        if $GREP_CMD -q "^\[$package\]" /etc/config/qpkg.conf; then
+        if QPKG.IsInstalled "$package"; then
             if [[ ! -d $(QPKG.InstallationPath "$package") ]]; then
                 QPKGs.IsMissing.Add "$package"
                 continue
@@ -3489,12 +3491,12 @@ QPKGs.States.Build()
 
             QPKGs.IsInstalled.Add "$package"
 
-            [[ $($GETCFG_CMD "$package" Version -d unknown -f /etc/config/qpkg.conf) != "${QPKG_VERSION[$index]}" ]] && QPKGs.ScUpgradable.Add "$package"
+            [[ $(QPKG.Local.Version "$package") != "${QPKG_VERSION[$index]}" ]] && QPKGs.ScUpgradable.Add "$package"
 
-            if [[ $($GETCFG_CMD "$package" Enable -u -f /etc/config/qpkg.conf) = 'TRUE' ]]; then
+            if QPKG.IsEnabled "$package"; then
                 QPKGs.IsEnabled.Add "$package"
                 QPKGs.IsStarted.Add "$package"
-            elif [[ $($GETCFG_CMD "$package" Enable -u -f /etc/config/qpkg.conf) = 'FALSE' ]]; then
+            else
                 QPKGs.IsNtEnabled.Add "$package"
                 QPKGs.IsNtStarted.Add "$package"
             fi
@@ -3528,8 +3530,8 @@ QPKGs.States.Build()
                 QPKGs.IsUnknown.Add "$package"
             fi
 
-            if ${QPKG_SUPPORTS_BACKUP[$index]}; then
-                if [[ -e $BACKUP_PATH/$package.config.tar.gz ]]; then
+            if QPKG.IsSupportBackup "$package"; then
+                if QPKG.IsBackupExist "$package"; then
                     QPKGs.IsBackedUp.Add "$package"
                 else
                     QPKGs.IsNtBackedUp.Add "$package"
@@ -3539,15 +3541,15 @@ QPKGs.States.Build()
             QPKGs.IsNtInstalled.Add "$package"
 
             if [[ -n ${QPKG_ABBRVS[$index]} ]]; then
-                if [[ ${QPKG_ARCH[$index]} = 'all' || ${QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
-                    if [[ ${QPKG_MIN_RAM_KB[$index]} = any || $NAS_RAM_KB -ge ${QPKG_MIN_RAM_KB[$index]} ]]; then
+                if [[ ${QPKG_ARCH[$index]} = all || ${QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
+                    if [[ ${QPKG_MIN_RAM_KB[$index]} = none || $NAS_RAM_KB -ge ${QPKG_MIN_RAM_KB[$index]} ]]; then
                         QPKGs.ScInstallable.Add "$package"
                     fi
                 fi
             fi
 
-            if ${QPKG_SUPPORTS_BACKUP[$index]}; then
-                if [[ -e $BACKUP_PATH/$package.config.tar.gz ]]; then
+            if QPKG.IsSupportBackup "$package"; then
+                if QPKG.IsBackupExist "$package"; then
                     QPKGs.IsBackedUp.Add "$package"
                 fi
             fi
@@ -3563,7 +3565,7 @@ QPKGs.States.Build()
 QPKGs.IsSupportBackup.Build()
     {
 
-    # Build a list of QPKGs that do and dont support 'backup' and 'restore' actions
+    # Build a list of QPKGs that do and don't support `backup` and `restore` actions
 
     DebugFuncEntry
 
@@ -3586,8 +3588,8 @@ QPKGs.IsSupportBackup.Build()
 QPKGs.IsSupportUpdateOnRestart.Build()
     {
 
-    # Build a list of QPKGs that do and dont support application updating on QPKG restart
-    # these packages also do and dont support 'clean' actions
+    # Build a list of QPKGs that do and don't support application updating on QPKG restart
+    # these packages also do and don't support `clean` actions
 
     DebugFuncEntry
 
@@ -3936,7 +3938,7 @@ QPKGs.ScDependent.Show()
 MarkActionAsDone()
     {
 
-    # move specified package name from 'To' action array into associated 'Ok' array
+    # move specified package name from `To` action array into associated `Ok` array
 
     # input:
     #   $1 = package name
@@ -3952,7 +3954,7 @@ MarkActionAsDone()
 MarkActionAsError()
     {
 
-    # move specified package name from 'To' action array into associated 'Er' array
+    # move specified package name from `To` action array into associated `Er` array
 
     # input:
     #   $1 = package name
@@ -3973,10 +3975,10 @@ MarkActionAsError()
 MarkActionAsSkipped()
     {
 
-    # move specified package name from 'To' action array into associated 'Sk' array
+    # move specified package name from `To` action array into associated `Sk` array
 
     # input:
-    #   $1 = show this onscreen: 'show'/'hide'
+    #   $1 = show this onscreen: `show`/`hide`
     #   $2 = package name
     #   $3 = action
     #   $4 = reason (optional)
@@ -4000,6 +4002,8 @@ MarkActionAsSkipped()
 MarkStateAsInstalled()
     {
 
+    [[ -z ${1:-} ]] && return 1
+
     QPKGs.IsInstalled.Add "$1"
     QPKGs.IsNtInstalled.Remove "$1"
 
@@ -4008,13 +4012,23 @@ MarkStateAsInstalled()
 MarkStateAsNotInstalled()
     {
 
+    [[ -z ${1:-} ]] && return 1
+
     QPKGs.IsInstalled.Remove "$1"
     QPKGs.IsNtInstalled.Add "$1"
+    QPKGs.IsEnabled.Remove "$1"
+    QPKGs.IsNtEnabled.Remove "$1"
+    QPKGs.IsStarted.Remove "$1"
+    QPKGs.IsNtStarted.Remove "$1"
+    QPKGs.IsOk.Remove "$1"
+    QPKGs.IsNtOk.Remove "$1"
 
     }
 
 MarkStateAsEnabled()
     {
+
+    [[ -z ${1:-} ]] && return 1
 
     QPKGs.IsNtEnabled.Remove "$1"
     QPKGs.IsEnabled.Add "$1"
@@ -4024,6 +4038,8 @@ MarkStateAsEnabled()
 MarkStateAsDisabled()
     {
 
+    [[ -z ${1:-} ]] && return 1
+
     QPKGs.IsEnabled.Remove "$1"
     QPKGs.IsNtEnabled.Add "$1"
 
@@ -4031,6 +4047,8 @@ MarkStateAsDisabled()
 
 MarkStateAsStarted()
     {
+
+    [[ -z ${1:-} ]] && return 1
 
     QPKGs.IsStarting.Remove "$1"
     QPKGs.IsStarted.Add "$1"
@@ -4042,6 +4060,8 @@ MarkStateAsStarted()
 
 MarkStateAsStopped()
     {
+
+    [[ -z ${1:-} ]] && return 1
 
     QPKGs.IsStarting.Remove "$1"
     QPKGs.IsStarted.Remove "$1"
@@ -4078,7 +4098,7 @@ ModPathToEntware()
 GetCPUInfo()
     {
 
-    # QTS 4.5.1 & BusyBox 1.01 dont support '-m' option for 'grep', so extract first mention the hard way with 'head'
+    # QTS 4.5.1 & BusyBox 1.01 don't support `-m` option for `grep`, so extract first mention the hard way with `head`
 
     if $GREP_CMD -q '^model name' /proc/cpuinfo; then
         $GREP_CMD '^model name' /proc/cpuinfo | $HEAD_CMD -n1 | $SED_CMD 's|^.*: ||'
@@ -4519,7 +4539,7 @@ QPKG.Install()
         MarkActionAsDone "$PACKAGE_NAME" "$action"
         MarkStateAsInstalled "$PACKAGE_NAME"
 
-        if QPKG.IsStarted "$PACKAGE_NAME"; then
+        if QPKG.IsEnabled "$PACKAGE_NAME"; then
             MarkStateAsStarted "$PACKAGE_NAME"
         else
             MarkStateAsStopped "$PACKAGE_NAME"
@@ -4539,7 +4559,7 @@ QPKG.Install()
 
                 # add essential package(s) needed immediately
                 DebugAsProc 'installing essential IPKGs'
-                RunAndLog "$OPKG_CMD install --force-overwrite $ESSENTIAL_IPKGS_INSTALL --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$LOGS_PATH/ipkgs.essential.$INSTALL_LOG_FILE" log:failure-only
+                RunAndLog "$OPKG_CMD install --force-overwrite $ESSENTIAL_IPKGS --cache $IPKG_CACHE_PATH --tmp-dir $IPKG_DL_PATH" "$LOGS_PATH/ipkgs.essential.$INSTALL_LOG_FILE" log:failure-only
                 DebugAsDone 'installed essential IPKGs'
             fi
         fi
@@ -4608,7 +4628,7 @@ QPKG.Reinstall()
         MarkActionAsDone "$PACKAGE_NAME" "$action"
         QPKG.StoreServiceStatus "$PACKAGE_NAME"
 
-        if QPKG.IsStarted "$PACKAGE_NAME"; then
+        if QPKG.IsEnabled "$PACKAGE_NAME"; then
             MarkStateAsStarted "$PACKAGE_NAME"
         else
             MarkStateAsStopped "$PACKAGE_NAME"
@@ -4700,7 +4720,7 @@ QPKG.Upgrade()
         QPKGs.ScUpgradable.Remove "$PACKAGE_NAME"
         MarkActionAsDone "$PACKAGE_NAME" "$action"
 
-        if QPKG.IsStarted "$PACKAGE_NAME"; then
+        if QPKG.IsEnabled "$PACKAGE_NAME"; then
             MarkStateAsStarted "$PACKAGE_NAME"
         else
             MarkStateAsStopped "$PACKAGE_NAME"
@@ -4765,8 +4785,6 @@ QPKG.Uninstall()
             [[ $PACKAGE_NAME = Entware ]] && ModPathToEntware
             MarkActionAsDone "$PACKAGE_NAME" "$action"
             MarkStateAsNotInstalled "$PACKAGE_NAME"
-            QPKGs.IsStarted.Remove "$PACKAGE_NAME"
-            QPKGs.IsNtStarted.Remove "$PACKAGE_NAME"
         else
             DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
             MarkActionAsError "$PACKAGE_NAME" "$action"
@@ -5175,12 +5193,12 @@ QPKG.ClearAppCenterNotifier()
 
     local -r PACKAGE_NAME=${1:?no package name supplied}
 
-    # KLUDGE: 'clean' QTS 4.5.1 App Center notifier status
+    # KLUDGE: `clean` QTS 4.5.1 App Center notifier status
     [[ -e /sbin/qpkg_cli ]] && /sbin/qpkg_cli --clean "$PACKAGE_NAME" &>/dev/null
 
     QPKGs.IsNtInstalled.Exist "$PACKAGE_NAME" && return 0
 
-    # KLUDGE: need this for 'Entware' and 'Par2' packages as they dont add a status line to qpkg.conf
+    # KLUDGE: need this for `Entware` and `Par2` packages as they don't add a status line to qpkg.conf
     $SETCFG_CMD "$PACKAGE_NAME" Status complete -f /etc/config/qpkg.conf
 
     return 0
@@ -5324,7 +5342,7 @@ QPKG.StoreID()
 
     store=$($GETCFG_CMD "${1:?no package name supplied}" store -d sherpa -f /etc/config/qpkg.conf)
 
-    # 'getcfg' does not return a default value when specified key exists without a value assignment. :(
+    # `getcfg` does not return a default value when specified key exists, but without a value assignment. :(
     # so, need to manually assign a default value.
     [[ -z $store ]] && store=sherpa
 
@@ -5334,10 +5352,25 @@ QPKG.StoreID()
 
     }
 
+QPKG.IsBackupExist()
+    {
+
+    # does this QPKG have an existing `backup` file?
+
+    # input:
+    #   $1 = QPKG name
+
+    # output:
+    #   $? = 0 if true, 1 if false
+
+    [[ -e $BACKUP_PATH/${1:?no package name supplied}.config.tar.gz ]]
+
+    }
+
 QPKG.IsSupportBackup()
     {
 
-    # does this QPKG service-script support 'backup' and 'restore' actions?
+    # does this QPKG service-script support `backup` and `restore` actions?
 
     # input:
     #   $1 = QPKG name
@@ -5376,7 +5409,61 @@ QPKG.IsSupportUpdateOnRestart()
 
     for index in "${!QPKG_NAME[@]}"; do
         if [[ ${QPKG_NAME[$index]} = "${1:?no package name supplied}" ]]; then
-            if ${QPKG_RESTART_TO_UPDATE[$index]}; then
+            if ${QPKG_UPDATE_ON_RESTART[$index]}; then
+                return 0
+            else
+                break
+            fi
+        fi
+    done
+
+    return 1
+
+    }
+
+QPKG.IsDependent()
+    {
+
+    # does this QPKG depend on any other QPKGs?
+
+    # input:
+    #   $1 = QPKG name
+
+    # output:
+    #   $? = 0 if true, 1 if false
+
+    local -i index=0
+
+    for index in "${!QPKG_NAME[@]}"; do
+        if [[ ${QPKG_NAME[$index]} = "${1:?no package name supplied}" ]]; then
+            if [[ -n ${QPKG_DEPENDS_ON[$index]} ]]; then
+                return 0
+            else
+                break
+            fi
+        fi
+    done
+
+    return 1
+
+    }
+
+QPKG.HasDependents()
+    {
+
+    # does this QPKG have other QPKGs depending on it?
+
+    # input:
+    #   $1 = QPKG name
+
+    # output:
+    #   $? = 0 if true, 1 if false
+
+    local -i index=0
+
+    for index in "${!QPKG_NAME[@]}"; do
+        if [[ ${QPKG_NAME[$index]} = "${1:?no package name supplied}" ]]; then
+            if [[ ${QPKG_DEPENDED_UPON[$index]} = true ]]; then
                 return 0
             else
                 break
@@ -5569,7 +5656,7 @@ QPKG.MinRAM()
     local -i index=0
 
     for index in "${!QPKG_NAME[@]}"; do
-        if [[ ${QPKG_NAME[$index]} = "${1:?no package name supplied}" ]] && [[ ${QPKG_MIN_RAM_KB[$index]} = any || $NAS_RAM_KB -ge ${QPKG_MIN_RAM_KB[$index]} ]]; then
+        if [[ ${QPKG_NAME[$index]} = "${1:?no package name supplied}" ]] && [[ ${QPKG_MIN_RAM_KB[$index]} = none || $NAS_RAM_KB -ge ${QPKG_MIN_RAM_KB[$index]} ]]; then
             echo "${QPKG_MIN_RAM_KB[$index]}"
             return 0
         fi
@@ -5647,7 +5734,7 @@ QPKG.IsInstalled()
 
     }
 
-QPKG.IsStarted()
+QPKG.IsEnabled()
     {
 
     # input:
@@ -5656,7 +5743,7 @@ QPKG.IsStarted()
     # output:
     #   $? = 0 (true) or 1 (false)
 
-    [[ $($GETCFG_CMD "${1:?no package name supplied}" Enable -u -f /etc/config/qpkg.conf) = 'TRUE' ]]
+    [[ $($GETCFG_CMD "${1:?no package name supplied}" Enable -u -f /etc/config/qpkg.conf) = TRUE ]]
 
     }
 
@@ -5699,12 +5786,11 @@ RunAndLog()
     # input:
     #   $1 = commandstring to execute
     #   $2 = pathfile to record stdout and stderr for commandstring
-    #   $3 = 'log:failure-only' (optional) - if specified, stdout & stderr are only recorded in the specified log if the command failed
-    #                                      - if unspecified, stdout & stderr is always recorded
-    #   $4 = e.g. '10' (optional) - an additional acceptable result code. Any other result from command (other than zero) will be considered a failure
+    #   $3 = `log:failure-only` (optional) - if specified, stdout & stderr are only recorded in the specified log if the command failed. default is to always record stdout & stderr.
+    #   $4 = e.g. `10` (optional) - an additional acceptable result code. Any other result from command (other than zero) will be considered a failure
 
     # output:
-    #   stdout = commandstring stdout and stderr if script is in 'debug' mode
+    #   stdout = commandstring stdout and stderr if script is in `debug` mode
     #   pathfile ($2) = commandstring ($1) stdout and stderr
     #   $? = result_code of commandstring
 
@@ -6362,12 +6448,12 @@ ShowAsActionProgress()
     # show QPKG actions progress as percent-complete and a fraction of the total
 
     # $1 = tier (optional)
-    # $2 = package type: 'QPKG', 'IPKG', 'PIP', etc ...
+    # $2 = package type: `QPKG`, `IPKG`, `PIP`, etc ...
     # $3 = pass count
     # $4 = fail count
     # $5 = total count
     # $6 = verb (present)
-    # $7 = 'long' (optional)
+    # $7 = `long` (optional)
 
     if [[ -n $1 && $1 != All ]]; then
         local tier=" $(Lowercase "$1")"
@@ -6409,12 +6495,12 @@ ShowAsActionResult()
     {
 
     # $1 = tier (optional)
-    # $2 = package type: 'QPKG', 'IPKG', 'PIP', etc ...
+    # $2 = package type: `QPKG`, `IPKG`, `PIP`, etc ...
     # $3 = pass count
     # $4 = fail count
     # $5 = total count
     # $6 = verb (past)
-    # $7 = 'long' (optional)
+    # $7 = `long` (optional)
 
     if [[ -n $1 && $1 != All ]]; then
         local tier=" $(Lowercase "$1")"
@@ -6634,7 +6720,7 @@ ColourReset()
 StripANSI()
     {
 
-    # QTS 4.2.6 BusyBox 'sed' doesnt fully support extended regexes, so this only works with a real 'sed'
+    # QTS 4.2.6 BusyBox `sed` doesn't fully support extended regexes, so this only works with a real `sed`
 
     if [[ -e $GNU_SED_CMD ]]; then
         $GNU_SED_CMD -r 's/\x1b\[[0-9;]*m//g' <<< "${1:-}"
@@ -6650,7 +6736,7 @@ FormatSecsToHoursMinutesSecs()
     # http://stackoverflow.com/questions/12199631/convert-seconds-to-hours-minutes-seconds
 
     # input:
-    #   $1 = a time in seconds to convert to 'HHh:MMm:SSs'
+    #   $1 = a time in seconds to convert to `HHh:MMm:SSs`
 
     ((h=${1:-0} / 3600))
     ((m=(${1:-0} % 3600) / 60))
@@ -6664,7 +6750,7 @@ FormatLongMinutesSecs()
     {
 
     # input:
-    #   $1 = a time in long minutes and seconds to convert to 'MMMm:SSs'
+    #   $1 = a time in long minutes and seconds to convert to `MMMm:SSs`
 
     # separate minutes from seconds
     m=${1%%:*}
@@ -6690,7 +6776,7 @@ CTRL_C_Captured()
 Objects.Load()
     {
 
-    # ensure 'objects' in the local work path is up-to-date, then source it
+    # ensure `objects` in the local work path is up-to-date, then source it
 
     DebugFuncEntry
 
@@ -6720,7 +6806,7 @@ Objects.Load()
 Packages.Load()
     {
 
-    # ensure 'packages' in the local work path is up-to-date, then source it
+    # ensure `packages` in the local work path is up-to-date, then source it
 
     QPKGs.Loaded.IsSet && return
     DebugFuncEntry
@@ -6745,8 +6831,8 @@ Packages.Load()
     readonly PACKAGES_VER
     readonly BASE_QPKG_CONFLICTS_WITH
     readonly BASE_QPKG_WARNINGS
-    readonly ESSENTIAL_IPKGS_INSTALL
-    readonly ESSENTIAL_PIPS_INSTALL
+    readonly ESSENTIAL_IPKGS
+    readonly ESSENTIAL_PIPS
     readonly MIN_PYTHON_VER
     readonly MIN_PERL_VER
 
@@ -6762,9 +6848,9 @@ Packages.Load()
         readonly QPKG_CONFLICTS_WITH
         readonly QPKG_DEPENDS_ON
         readonly QPKG_DEPENDED_UPON
-        readonly QPKG_IPKGS_INSTALL
+        readonly QPKG_REQUIRES_IPKGS
         readonly QPKG_SUPPORTS_BACKUP
-        readonly QPKG_RESTART_TO_UPDATE
+        readonly QPKG_UPDATE_ON_RESTART
 
     QPKGs.Loaded.Set
     DebugScript version "packages: ${PACKAGES_VER:-unknown}"
