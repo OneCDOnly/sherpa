@@ -20,7 +20,7 @@ Init()
 
     # service-script environment
     readonly QPKG_NAME=nzbToMedia
-    readonly SCRIPT_VERSION=221224
+    readonly SCRIPT_VERSION=221224b
 
     # general environment
     readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -32,9 +32,11 @@ Init()
     readonly BACKUP_PATHFILE=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
     readonly OPKG_PATH=/opt/bin:/opt/sbin
     export PATH="$OPKG_PATH:$(/bin/sed "s|$OPKG_PATH||" <<< "$PATH")"
-    local -r DEFAULT_DOWNLOAD_SHARE=$(/sbin/getcfg SHARE_DEF defDownload -d unspecified -f /etc/config/def_share.info)
+    local default_download_share=$(/sbin/getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info)/$(/sbin/getcfg SHARE_DEF defDownload -d unspecified -f /etc/config/def_share.info)
     readonly DEBUG_LOG_DATAWIDTH=100
     local re=''
+
+    [[ ! -L $default_download_share ]] && default_download_share=unspecified
 
     if IsQPKGInstalled SABnzbd; then
         link_path_source="SABnzbd 'script_dir'"
@@ -42,9 +44,9 @@ Init()
     elif IsQPKGInstalled NZBGet; then
         link_path_source="NZBGet 'MainDir'"
         link_path=$(/sbin/getcfg '' MainDir -d /share/Public/Downloads -f "$(/sbin/getcfg NZBGet Install_Path -f /etc/config/qpkg.conf)"/config/config.ini)
-    elif [[ $DEFAULT_DOWNLOAD_SHARE != unspecified ]]; then
+    elif [[ $default_download_share != unspecified ]]; then
         link_path_source="QTS 'Download' share"
-        link_path=$DEFAULT_DOWNLOAD_SHARE
+        link_path=$default_download_share
     else
         link_path_source='default'
         link_path=/share/Public/Downloads
