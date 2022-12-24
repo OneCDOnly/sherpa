@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly MANAGER_FILE=sherpa.manager.sh
-    local -r SCRIPT_VER=221224-beta
+    local -r SCRIPT_VER=221224a-beta
 
     IsQNAP || return
     IsSU || return
@@ -2147,7 +2147,7 @@ IPKGs.Install()
     IPKGs.AcToInstall.Init
     IPKGs.AcToDownload.Init
 
-    IPKGs.AcToInstall.Add "$ESSENTIAL_IPKGS_INSTALL"
+    ! QPKGs.AcOkInstall.Exist Entware && IPKGs.AcToInstall.Add "$ESSENTIAL_IPKGS_INSTALL"
 
     if QPKGs.AcInstall.ScAll.IsSet; then
         for index in "${!QPKG_NAME[@]}"; do
@@ -5218,7 +5218,7 @@ QPKG.StoreServiceStatus()
             fi
             ;;
         *)
-            DebugAsWarn "$(FormatAsPackageName "$PACKAGE_NAME") service status is incorrect"
+            DebugAsWarn "$(FormatAsPackageName "$PACKAGE_NAME") service status is unrecognised or unsupported by this QPKG"
     esac
 
     return 0
