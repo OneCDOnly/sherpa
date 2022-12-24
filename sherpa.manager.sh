@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly MANAGER_FILE=sherpa.manager.sh
-    local -r SCRIPT_VER=221225-beta
+    local -r SCRIPT_VER=221225a-beta
 
     IsQNAP || return
     IsSU || return
@@ -714,7 +714,7 @@ Tiers.Process()
     done
 
     QPKGs.Actions.List
-    QPKGs.States.List
+    QPKGs.States.List rebuild       # rebuild these after processing QPKGs to get current states
     SmartCR >&2
 
     DebugFuncExit
@@ -3232,7 +3232,7 @@ ExtractPreviousSessionFromTail()
     local -i end_line=0
     local -i old_session=1
 
-    # don't try to find `started:` any further back than this many sessions
+    # don't try to find `started:` further back than this many sessions
     local -i old_session_limit=12
 
     ExtractTailFromLog
@@ -3261,7 +3261,7 @@ ExtractTailFromLog()
     {
 
     if [[ -e $SESSION_ARCHIVE_PATHFILE ]]; then
-        $TAIL_CMD -n${LOG_TAIL_LINES} "$SESSION_ARCHIVE_PATHFILE" > "$SESSION_TAIL_PATHFILE"   # trim main log first so theres less to `grep`
+        $TAIL_CMD -n${LOG_TAIL_LINES} "$SESSION_ARCHIVE_PATHFILE" > "$SESSION_TAIL_PATHFILE"   # trim main log first so there's less to `grep`
     else
         [[ -e $SESSION_TAIL_PATHFILE ]] && rm -f "$SESSION_TAIL_PATHFILE"
     fi
@@ -3396,13 +3396,15 @@ QPKGs.Actions.List()
 QPKGs.States.List()
     {
 
+    # $1 (optional) = `rebuild` - clear existing lists and rebuild them from scratch
+
     DebugFuncEntry
 
     local state=''
     local prefix=''
 
+    QPKGs.States.Build "${1:-}"
     DebugInfoMinorSeparator
-    QPKGs.States.Build
 
     for state in "${PACKAGE_STATES[@]}" "${PACKAGE_RESULTS[@]}"; do
         for prefix in Is IsNt; do
@@ -3412,8 +3414,7 @@ QPKGs.States.List()
             elif [[ $prefix = IsNt && $state = BackedUp ]]; then
                 QPKGs.${prefix}${state}.IsAny && DebugQPKGWarning "${prefix}${state}" "($(QPKGs.${prefix}${state}.Count)) $(QPKGs.${prefix}${state}.ListCSV) "
             elif [[ $prefix = IsNt && $state = Installed ]]; then
-                # don't log packages that havent been installed, it pollutes the log
-                :
+                : # don't log packages that haven't been installed, it pollutes the log
             else
                 QPKGs.${prefix}${state}.IsAny && DebugQPKGInfo "${prefix}${state}" "($(QPKGs.${prefix}${state}.Count)) $(QPKGs.${prefix}${state}.ListCSV) "
             fi
@@ -3469,7 +3470,17 @@ QPKGs.States.Build()
     #   - have config blocks in [/etc/config/qpkg.conf], but no files on-disk
     #   - those in the process of starting, stopping, or restarting
 
-    # NOTE: these lists cannot be rebuilt unless element removal methods are added
+    # $1 (optional) = `rebuild` - clear existing lists and rebuild them from scratch
+
+    if [[ ${1:-} = rebuild ]]; then
+        DebugAsProc 'clearing existing state lists'
+
+        for state in "${PACKAGE_STATES[@]}" "${PACKAGE_STATES_TEMPORARY[@]}"; do
+            QPKGs.Is${state}.Init
+        done
+
+        QPKGs.States.Built.UnSet
+    fi
 
     QPKGs.States.Built.IsSet && return
     DebugFuncEntry
@@ -3477,6 +3488,7 @@ QPKGs.States.Build()
     local -i index=0
     local package=''
     local previous=''
+    local state=''
     ShowAsProc 'package states' >&2
 
     for index in "${!QPKG_NAME[@]}"; do
@@ -3545,12 +3557,6 @@ QPKGs.States.Build()
                     if [[ ${QPKG_MIN_RAM_KB[$index]} = none || $NAS_RAM_KB -ge ${QPKG_MIN_RAM_KB[$index]} ]]; then
                         QPKGs.ScInstallable.Add "$package"
                     fi
-                fi
-            fi
-
-            if QPKG.IsSupportBackup "$package"; then
-                if QPKG.IsBackupExist "$package"; then
-                    QPKGs.IsBackedUp.Add "$package"
                 fi
             fi
         fi
