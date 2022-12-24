@@ -148,11 +148,18 @@ StartQPKG()
         IsNotRestartPending && return
     fi
 
-    DisplayCommitToLog "auto-update: $(IsAutoUpdate && echo TRUE || echo FALSE)"
+    DisplayWaitCommitToLog "auto-update:"
+
+    if IsAutoUpdate; then
+        DisplayCommitToLog true
+    else
+        DisplayCommitToLog false
+    fi
+
     PullGitRepo "$QPKG_NAME" "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_REPO_PATH" || return
     WaitForLaunchTarget || return
 
-    [[ -d $link_path ]] && DisplayRunAndLog 'a local path is in the way of the target, moving it aside' "mv $link_path $link_path.bak"
+    [[ -d $link_path ]] && DisplayRunAndLog 'a local path is in the way of the target, moving it aside' "mv $link_path $link_path.prev"
     ln -s "$QPKG_REPO_PATH" "$link_path"
 
     DisplayCommitToLog 'start package: OK'
