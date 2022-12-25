@@ -20,7 +20,7 @@ Init()
 
     # service-script environment
     readonly QPKG_NAME=SABnzbd
-    readonly SCRIPT_VERSION=221225
+    readonly SCRIPT_VERSION=221226
 
     # general environment
     readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -47,7 +47,7 @@ Init()
     readonly INTERPRETER=/opt/bin/python3
     readonly VENV_PATH=$QPKG_PATH/venv
     readonly VENV_INTERPRETER=$VENV_PATH/bin/python3
-    readonly ALLOW_ACCESS_TO_SYS_PACKAGES=false
+    readonly ALLOW_ACCESS_TO_SYS_PACKAGES=true
 
     # specific to daemonised applications only
     readonly DAEMON_PATHFILE=$QPKG_REPO_PATH/SABnzbd.py
@@ -280,6 +280,17 @@ InstallAddons()
 
     [[ ! -e $requirements_pathfile && -e $default_requirements_pathfile ]] && requirements_pathfile=$default_requirements_pathfile
 
+    if [[ $QPKG_NAME = SABnzbd && -e $requirements_pathfile ]]; then
+        case $(/bin/uname -m) in
+            x86_64|i686|aarch64)
+                : # `pip` compilation on these arches works fine
+                ;;
+            *)
+                # need to remove `cffi` and `cryptography` modules from downloaded `requirements.txt`, as we must use the ones installed via `opkg` instead. If not, `pip` will attempt to compile these, which fails on armv5 NAS.
+                DisplayRunAndLog "KLUDGE: don't attempt to compile 'cffi' and 'cryptography' PyPI modules" "/bin/sed -i '/^cffi\|^cryptography/d' $requirements_pathfile" log:failure-only || SetError
+        esac
+    fi
+
     if [[ -e $requirements_pathfile ]]; then
         DisplayRunAndLog 'install required PyPI modules' ". $VENV_PATH/bin/activate && pip install --no-input -r $requirements_pathfile" log:failure-only || SetError
         no_pips_installed=false
@@ -303,7 +314,6 @@ InstallAddons()
         DisplayRunAndLog "KLUDGE: reinstall 'sabyenc3' PyPI module (https://forums.sabnzbd.org/viewtopic.php?p=128567#p128567)" ". $VENV_PATH/bin/activate && pip install --no-input --force-reinstall --no-binary :all: sabyenc3" log:failure-only || SetError
 
         # run [tools/make_mo.py] if SABnzbd version number has changed since last run
-
         LoadAppVersion
         [[ -e $APP_VERSION_STORE_PATHFILE && $(<"$APP_VERSION_STORE_PATHFILE") = "$app_version" && -d $QPKG_REPO_PATH/locale ]] && return 0
 

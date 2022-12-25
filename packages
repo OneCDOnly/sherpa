@@ -1,4 +1,4 @@
-PACKAGES_VER=221225
+PACKAGES_VER=221226
 BASE_QPKG_CONFLICTS_WITH='TarMT'
 BASE_QPKG_WARNINGS='Qboost'
 ESSENTIAL_IPKGS='ca-certificates coreutils-stty findutils gcc git git-http grep less nano sed'
@@ -387,15 +387,15 @@ QPKG_UPDATE_ON_RESTART+=(false)
 QPKG_NAME+=(SABnzbd)
 QPKG_ARCH+=(all)
 QPKG_MIN_RAM_KB+=(none)
-QPKG_VERSION+=(221225)
+QPKG_VERSION+=(221226)
 QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/$PROJECT_BRANCH/QPKGs/${QPKG_NAME[${#QPKG_NAME[@]}-1]}/build/${QPKG_NAME[${#QPKG_NAME[@]}-1]}_${QPKG_VERSION[${#QPKG_VERSION[@]}-1]}.qpkg)
-QPKG_MD5+=(0d6aa82cd831fd81a9a24b889896055e)
+QPKG_MD5+=(c3ab909c72f55b73446668a9d2e00001)
 QPKG_DESC+=('full-featured NZB download manager with a nice web UI')
 QPKG_ABBRVS+=('sb sb3 sab sab3 sabnzbd3 sabnzbd')
 QPKG_CONFLICTS_WITH+=('Python3 QPython3 QPython39 QPython310')
 QPKG_DEPENDS_ON+=('Entware Par2')
 QPKG_DEPENDED_UPON+=(false)
-QPKG_REQUIRES_IPKGS+=('coreutils-nice ffprobe ionice python3-dev python3-pip p7zip unrar')
+QPKG_REQUIRES_IPKGS+=('coreutils-nice ffprobe ionice python3-cffi python3-cryptography python3-dev python3-pip python3-pyopenssl p7zip unrar')
 QPKG_SUPPORTS_BACKUP+=(true)
 QPKG_UPDATE_ON_RESTART+=(true)
 
