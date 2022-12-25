@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly MANAGER_FILE=sherpa.manager.sh
-    local -r SCRIPT_VER=221225h-beta
+    local -r SCRIPT_VER=221225i-beta
 
     IsQNAP || return
     IsSU || return
@@ -4609,7 +4609,6 @@ QPKG.Install()
     result_code=$?
 
     if [[ $result_code -eq 0 || $result_code -eq 10 ]]; then
-        DebugAsDone "installed $(FormatAsPackageName "$PACKAGE_NAME")"
         QPKG.StoreServiceStatus "$PACKAGE_NAME"
         MarkActionAsDone "$PACKAGE_NAME" "$action"
         MarkStateAsInstalled "$PACKAGE_NAME"
@@ -4619,6 +4618,9 @@ QPKG.Install()
         else
             MarkStateAsStopped "$PACKAGE_NAME"
         fi
+
+        local current_version=$(QPKG.Local.Version "$PACKAGE_NAME")
+        DebugAsDone "installed $(FormatAsPackageName "$PACKAGE_NAME") $current_version"
 
         if [[ $PACKAGE_NAME = Entware ]]; then
             ModPathToEntware
@@ -4699,9 +4701,8 @@ QPKG.Reinstall()
     result_code=$?
 
     if [[ $result_code -eq 0 || $result_code -eq 10 ]]; then
-        DebugAsDone "reinstalled $(FormatAsPackageName "$PACKAGE_NAME")"
-        MarkActionAsDone "$PACKAGE_NAME" "$action"
         QPKG.StoreServiceStatus "$PACKAGE_NAME"
+        MarkActionAsDone "$PACKAGE_NAME" "$action"
 
         if QPKG.IsEnabled "$PACKAGE_NAME"; then
             MarkStateAsStarted "$PACKAGE_NAME"
@@ -4709,6 +4710,8 @@ QPKG.Reinstall()
             MarkStateAsStopped "$PACKAGE_NAME"
         fi
 
+        local current_version=$(QPKG.Local.Version "$PACKAGE_NAME")
+        DebugAsDone "reinstalled $(FormatAsPackageName "$PACKAGE_NAME") $current_version"
         result_code=0    # remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK)
     else
         DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
@@ -4783,22 +4786,23 @@ QPKG.Upgrade()
     RunAndLog "${debug_cmd}${target_path}${SH_CMD} $local_pathfile" "$LOG_PATHFILE" log:failure-only 10
     result_code=$?
 
-    local current_version=$(QPKG.Local.Version "$PACKAGE_NAME")
-
     if [[ $result_code -eq 0 || $result_code -eq 10 ]]; then
-        if [[ $current_version = "$previous_version" ]]; then
-            DebugAsDone "upgraded $(FormatAsPackageName "$PACKAGE_NAME") and installed version is $current_version"
-        else
-            DebugAsDone "upgraded $(FormatAsPackageName "$PACKAGE_NAME") from $previous_version to $current_version"
-        fi
         QPKG.StoreServiceStatus "$PACKAGE_NAME"
-        QPKGs.ScUpgradable.Remove "$PACKAGE_NAME"
         MarkActionAsDone "$PACKAGE_NAME" "$action"
+        QPKGs.ScUpgradable.Remove "$PACKAGE_NAME"
 
         if QPKG.IsEnabled "$PACKAGE_NAME"; then
             MarkStateAsStarted "$PACKAGE_NAME"
         else
             MarkStateAsStopped "$PACKAGE_NAME"
+        fi
+
+        local current_version=$(QPKG.Local.Version "$PACKAGE_NAME")
+
+        if [[ $current_version = "$previous_version" ]]; then
+            DebugAsDone "upgraded $(FormatAsPackageName "$PACKAGE_NAME") and installed version is $current_version"
+        else
+            DebugAsDone "upgraded $(FormatAsPackageName "$PACKAGE_NAME") from $previous_version to $current_version"
         fi
 
         result_code=0    # remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK)
