@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly MANAGER_FILE=sherpa.manager.sh
-    local -r SCRIPT_VER=221225i-beta
+    local -r SCRIPT_VER=221225j-beta
 
     IsQNAP || return
     IsSU || return
@@ -392,7 +392,7 @@ Environment.Log()
     DebugQPKG architecture "$NAS_QPKG_ARCH"
     DebugQPKG 'Entware installer' "$ENTWARE_VER"
 
-    RunAndLog "$DF_CMD -h | $GREP_CMD '^Filesystem\|^none\|^tmpfs'" /var/log/ramdisks.state
+    RunAndLog "$DF_CMD -h | $GREP_CMD '^Filesystem\|^none\|^tmpfs\|ramdisk'" /var/log/ramdisks.state
 
     QPKGs.States.Build
     DebugFuncExit
