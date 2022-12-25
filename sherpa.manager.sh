@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly MANAGER_FILE=sherpa.manager.sh
-    local -r SCRIPT_VER=221225f-beta
+    local -r SCRIPT_VER=221225g-beta
 
     IsQNAP || return
     IsSU || return
@@ -1815,7 +1815,7 @@ ApplySensibleExceptions()
 
                 if [[ $found = true ]]; then
                     if QPKGs.AcTo${action}.IsAny; then
-                        DebugAsWarn "action: '$action', scope: '$scope': found $(QPKGs.AcTo${action}.Count) packages to process"
+                        DebugAsDone "action: '$action', scope: '$scope': found $(QPKGs.AcTo${action}.Count) packages to process"
                     else
                         DebugAsWarn "action: '$action', scope: '$scope': found no packages to process"
                     fi
@@ -1840,11 +1840,20 @@ ApplySensibleExceptions()
                         case $state in
                             Installed)
                                 found=true
+                                DebugAsProc "action: '$action', state: '$state': adding 'IsInstalled' packages"
                                 QPKGs.AcTo${action}.Add "$(QPKGs.IsInstalled.Array)"
                         esac
                 esac
 
-                [[ $found != true ]] && QPKGs.AcTo${action}.Add "$(QPKGs.Is${state}.Array)"
+                if [[ $found = true ]]; then
+                    if QPKGs.AcTo${action}.IsAny; then
+                        DebugAsDone "action: '$action', state: '$state': found $(QPKGs.AcTo${action}.Count) packages to process"
+                    else
+                        DebugAsWarn "action: '$action', state: '$state': found no packages to process"
+                    fi
+                else
+                    QPKGs.AcTo${action}.Add "$(QPKGs.Is${state}.Array)"
+                fi
             elif QPKGs.Ac${action}.IsNt${state}.IsSet; then
                 # use sensible state exceptions for convenience, rather than follow requested state literally
                 case $action in
@@ -1852,11 +1861,20 @@ ApplySensibleExceptions()
                         case $state in
                             Installed)
                                 found=true
+                                DebugAsProc "action: '$action', state: '$state': adding 'IsNtInstalled' packages"
                                 QPKGs.AcTo${action}.Add "$(QPKGs.IsNtInstalled.Array)"
                         esac
                 esac
 
-                [[ $found != true ]] && QPKGs.AcTo${action}.Add "$(QPKGs.IsNt${state}.Array)"
+                if [[ $found = true ]]; then
+                    if QPKGs.AcTo${action}.IsAny; then
+                        DebugAsDone "action: '$action', state: '$state': found $(QPKGs.AcTo${action}.Count) packages to process"
+                    else
+                        DebugAsWarn "action: '$action', state: '$state': found no packages to process"
+                    fi
+                else
+                    QPKGs.AcTo${action}.Add "$(QPKGs.IsNt${state}.Array)"
+                fi
             fi
         done
     done
