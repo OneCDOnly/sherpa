@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly MANAGER_FILE=sherpa.manager.sh
-    local -r SCRIPT_VER=221225d-beta
+    local -r SCRIPT_VER=221225e-beta
 
     IsQNAP || return
     IsSU || return
@@ -2506,8 +2506,8 @@ IsSysFileExist()
     # output:
     #   $? = 0 (true) or 1 (false)
 
-    if ! [[ -f $1 || -L $1 ]]; then
-        ShowAsAbort "a required NAS system file is missing $(FormatAsFileName "$1")"
+    if ! [[ -f ${1:-} || -L ${1:-} ]]; then
+        ShowAsAbort "a required NAS system file is missing $(FormatAsFileName "${1:-}")"
         return 1
     fi
 
@@ -2547,7 +2547,7 @@ readonly HELP_SYNTAX_PREFIX='# '
 LenANSIDiff()
     {
 
-    local stripped=$(StripANSI "$1")
+    local stripped=$(StripANSI "${1:-}")
     echo $((${#1} - ${#stripped}))
 
     return 0
@@ -2561,9 +2561,9 @@ DisplayAsProjectSyntaxExample()
     # $2 = example syntax
 
     if [[ ${1: -1} = '!' ]]; then
-        printf "${HELP_COLUMN_MAIN_PREFIX}%s\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREFIX}%s\n" "$(Capitalise "$1")" '' "sherpa $2"
+        printf "${HELP_COLUMN_MAIN_PREFIX}%s\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREFIX}%s\n" "$(Capitalise "${1:-}")" '' "sherpa ${2:-}"
     else
-        printf "${HELP_COLUMN_MAIN_PREFIX}%s:\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREFIX}%s\n" "$(Capitalise "$1")" '' "sherpa $2"
+        printf "${HELP_COLUMN_MAIN_PREFIX}%s:\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREFIX}%s\n" "$(Capitalise "${1:-}")" '' "sherpa ${2:-}"
     fi
 
     Self.LineSpace.UnSet
@@ -2577,11 +2577,11 @@ DisplayAsProjectSyntaxIndentedExample()
     # $2 = example syntax
 
     if [[ -z ${1:-} ]]; then
-        printf "%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREFIX}%s\n" '' "sherpa $2"
+        printf "%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREFIX}%s\n" '' "sherpa ${2:-}"
     elif [[ ${1: -1} = '!' ]]; then
-        printf "\n%${HELP_DESC_INDENT}s%s\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREFIX}%s\n" '' "$(Capitalise "$1")" '' "sherpa $2"
+        printf "\n%${HELP_DESC_INDENT}s%s\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREFIX}%s\n" '' "$(Capitalise "${1:-}")" '' "sherpa ${2:-}"
     else
-        printf "\n%${HELP_DESC_INDENT}s%s:\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREFIX}%s\n" '' "$(Capitalise "$1")" '' "sherpa $2"
+        printf "\n%${HELP_DESC_INDENT}s%s:\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREFIX}%s\n" '' "$(Capitalise "${1:-}")" '' "sherpa ${2:-}"
     fi
 
     Self.LineSpace.UnSet
@@ -2594,12 +2594,12 @@ DisplayAsSyntaxExample()
     # $1 = description
     # $2 = example syntax
 
-    if [[ -z $2 && ${1: -1} = ':' ]]; then
+    if [[ -z ${2:-} && ${1: -1} = ':' ]]; then
         printf "\n${HELP_COLUMN_MAIN_PREFIX}%s\n" "$1"
     elif [[ ${1: -1} = '!' ]]; then
-        printf "\n${HELP_COLUMN_MAIN_PREFIX}%s\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREFIX}%s\n" "$(Capitalise "$1")" '' "$2"
+        printf "\n${HELP_COLUMN_MAIN_PREFIX}%s\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREFIX}%s\n" "$(Capitalise "${1:-}")" '' "${2:-}"
     else
-        printf "\n${HELP_COLUMN_MAIN_PREFIX}%s:\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREFIX}%s\n" "$(Capitalise "$1")" '' "$2"
+        printf "\n${HELP_COLUMN_MAIN_PREFIX}%s:\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREFIX}%s\n" "$(Capitalise "${1:-}")" '' "${2:-}"
     fi
 
     Self.LineSpace.UnSet
@@ -2612,7 +2612,7 @@ DisplayAsHelpTitlePackageNamePlusSomething()
     # $1 = package name title
     # $2 = second column title
 
-    printf "${HELP_COLUMN_MAIN_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s${HELP_COLUMN_SPACER}${HELP_COLUMN_MAIN_PREFIX}%s\n" "$(Capitalise "$1"):" "$(Capitalise "$2"):"
+    printf "${HELP_COLUMN_MAIN_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s${HELP_COLUMN_SPACER}${HELP_COLUMN_MAIN_PREFIX}%s\n" "$(Capitalise "${1:-}"):" "$(Capitalise "${2:-}"):"
 
     }
 
@@ -2770,7 +2770,7 @@ DisplayAsHelpTitleFileNamePlusSomething()
     # $1 = file name title
     # $2 = second column title
 
-    printf "${HELP_COLUMN_MAIN_PREFIX}%-${HELP_FILE_NAME_WIDTH}s ${HELP_COLUMN_MAIN_PREFIX}%s\n" "$(Capitalise "$1"):" "$(Capitalise "$2"):"
+    printf "${HELP_COLUMN_MAIN_PREFIX}%-${HELP_FILE_NAME_WIDTH}s ${HELP_COLUMN_MAIN_PREFIX}%s\n" "$(Capitalise "${1:-}"):" "$(Capitalise "${2:-}"):"
 
     }
 
@@ -2779,7 +2779,7 @@ DisplayAsHelpTitle()
 
     # $1 = text
 
-    printf "${HELP_COLUMN_MAIN_PREFIX}%s\n" "$(Capitalise "$1")"
+    printf "${HELP_COLUMN_MAIN_PREFIX}%s\n" "$(Capitalise "${1:-}")"
 
     }
 
@@ -2789,7 +2789,7 @@ DisplayAsHelpTitleHighlighted()
     # $1 = text
 
     # shellcheck disable=2059
-    printf "$(ColourTextBrightOrange "${HELP_COLUMN_MAIN_PREFIX}%s\n")" "$(Capitalise "$1")"
+    printf "$(ColourTextBrightOrange "${HELP_COLUMN_MAIN_PREFIX}%s\n")" "$(Capitalise "${1:-}")"
 
     }
 
@@ -3415,8 +3415,8 @@ QPKGs.States.List()
                 QPKGs.${prefix}${state}.IsAny && DebugQPKGError "${prefix}${state}" "($(QPKGs.${prefix}${state}.Count)) $(QPKGs.${prefix}${state}.ListCSV) "
             elif [[ $prefix = IsNt && $state = BackedUp ]]; then
                 QPKGs.${prefix}${state}.IsAny && DebugQPKGWarning "${prefix}${state}" "($(QPKGs.${prefix}${state}.Count)) $(QPKGs.${prefix}${state}.ListCSV) "
-            elif [[ $prefix = IsNt && $state = Installed ]]; then
-                : # don't log packages that haven't been installed, it pollutes the log
+            elif [[ $state = Installed ]]; then
+                : # don't log installation states - they pollute the log, and package name can be seen in other states anyway
             else
                 QPKGs.${prefix}${state}.IsAny && DebugQPKGInfo "${prefix}${state}" "($(QPKGs.${prefix}${state}.Count)) $(QPKGs.${prefix}${state}.ListCSV) "
             fi
