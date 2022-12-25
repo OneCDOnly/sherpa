@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly MANAGER_FILE=sherpa.manager.sh
-    local -r SCRIPT_VER=221225j-beta
+    local -r SCRIPT_VER=221226-beta
 
     IsQNAP || return
     IsSU || return
@@ -4258,7 +4258,7 @@ GetSysLoadAverages()
 GetCPUCores()
     {
 
-    $GREP_CMD -c '^processor' /proc/cpuinfo
+    $GREP_CMD -ic '^processor' /proc/cpuinfo
 
     }
 
