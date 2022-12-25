@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly MANAGER_FILE=sherpa.manager.sh
-    local -r SCRIPT_VER=221225c-beta
+    local -r SCRIPT_VER=221225d-beta
 
     IsQNAP || return
     IsSU || return
@@ -325,7 +325,8 @@ Environment.Log()
     DebugInfoMinorSeparator
     DebugHardwareOK model "$(get_display_name)"
     DebugHardwareOK CPU "$(GetCPUInfo)"
-    DebugHardwareOK architecture "$NAS_ARCH"
+    DebugHardwareOK 'CPU cores' "$(GetCPUCores)"
+    DebugHardwareOK 'CPU architecture' "$NAS_ARCH"
     DebugHardwareOK RAM "$(FormatAsThousands "$NAS_RAM_KB")kB"
     DebugFirmwareOK OS "Q$($GREP_CMD -q zfs /proc/filesystems && echo u)TS"
 
@@ -4193,6 +4194,13 @@ GetSysLoadAverages()
     {
 
     $UPTIME_CMD | $SED_CMD 's|.*load average: ||' | $AWK_CMD -F', ' '{print "1m:"$1", 5m:"$2", 15m:"$3}'
+
+    }
+
+GetCPUCores()
+    {
+
+    $GREP_CMD -c '^processor' /proc/cpuinfo
 
     }
 
