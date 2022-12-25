@@ -20,7 +20,7 @@ Init()
 
     # service-script environment
     readonly QPKG_NAME=OTransmission
-    readonly SCRIPT_VERSION=221224
+    readonly SCRIPT_VERSION=221225
     readonly TRANSMISSION_WEB_HOME=/opt/share/transmission/web
 
     # general environment
@@ -573,7 +573,7 @@ DisplayRunAndLog()
     #   $2 = commandstring to execute
     #   $3 = 'log:failure-only' (optional) - if specified, stdout & stderr are only recorded in the specified log if the command failed. default is to always record stdout & stderr.
 
-    local -r LOG_PATHFILE=$(/bin/mktemp -p /var/log "${FUNCNAME[0]}"_XXXXXX)
+    local -r LOG_PATHFILE=$(/bin/mktemp /var/log/"${FUNCNAME[0]}"_XXXXXX)
     local -i result_code=0
 
     DisplayWaitCommitToLog "$1:"
@@ -612,7 +612,7 @@ RunAndLog()
     #   pathfile ($2) = commandstring ($1) stdout and stderr
     #   $? = result_code of commandstring
 
-    local -r LOG_PATHFILE=$(/bin/mktemp -p /var/log "${FUNCNAME[0]}"_XXXXXX)
+    local -r LOG_PATHFILE=$(/bin/mktemp /var/log/"${FUNCNAME[0]}"_XXXXXX)
     local -i result_code=0
 
     FormatAsCommand "${1:?empty}" > "${2:?empty}"

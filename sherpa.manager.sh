@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly MANAGER_FILE=sherpa.manager.sh
-    local -r SCRIPT_VER=221225g-beta
+    local -r SCRIPT_VER=221225h-beta
 
     IsQNAP || return
     IsSU || return
@@ -5871,7 +5871,7 @@ RunAndLog()
 
     DebugFuncEntry
 
-    local -r LOG_PATHFILE=$(/bin/mktemp -p /var/log ${FUNCNAME[0]}_XXXXXX)
+    local -r LOG_PATHFILE=$(/bin/mktemp /var/log/"${FUNCNAME[0]}"_XXXXXX)
     local -i result_code=0
 
     FormatAsCommand "${1:?empty}" > "${2:?empty}"
