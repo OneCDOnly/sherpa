@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly MANAGER_FILE=sherpa.manager.sh
-    local -r SCRIPT_VER=221225e-beta
+    local -r SCRIPT_VER=221225f-beta
 
     IsQNAP || return
     IsSU || return
@@ -1618,11 +1618,13 @@ ApplySensibleExceptions()
     local scope=''
     local state=''
     local prospect=''
-    local found=false
+    local found=false       # scope or state has been found
 
     for action in "${PACKAGE_ACTIONS[@]}"; do
         # process scope-based user-options
         for scope in "${PACKAGE_SCOPES[@]}"; do
+            found=false
+
             if QPKGs.Ac${action}.Sc${scope}.IsSet; then
                 # use sensible scope exceptions for convenience, rather than follow requested scope literally
                 case $action in
@@ -1630,18 +1632,21 @@ ApplySensibleExceptions()
                         case $scope in
                             All)
                                 found=true
+                                DebugAsProc "action: '$action', scope: '$scope': adding 'IsInstalled' packages"
                                 for prospect in $(QPKGs.IsInstalled.Array); do
                                     QPKGs.ScSupportUpdateOnRestart.Exist "$prospect" && QPKGs.AcTo${action}.Add "$prospect"
                                 done
                                 ;;
                             Dependent)
                                 found=true
+                                DebugAsProc "action: '$action', scope: '$scope': adding 'IsInstalled' packages"
                                 for prospect in $(QPKGs.IsInstalled.Array); do
                                     QPKGs.ScDependent.Exist "$prospect" && QPKGs.AcTo${action}.Add "$prospect"
                                 done
                                 ;;
                             Standalone)
                                 found=true
+                                DebugAsProc "action: '$action', scope: '$scope': adding 'IsInstalled' packages"
                                 for prospect in $(QPKGs.IsInstalled.Array); do
                                     QPKGs.ScStandalone.Exist "$prospect" && QPKGs.AcTo${action}.Add "$prospect"
                                 done
@@ -1651,16 +1656,19 @@ ApplySensibleExceptions()
                         case $scope in
                             All)
                                 found=true
+                                DebugAsProc "action: '$action', scope: '$scope': adding 'IsNtInstalled' packages"
                                 QPKGs.AcTo${action}.Add "$(QPKGs.IsNtInstalled.Array)"
                                 ;;
                             Dependent)
                                 found=true
+                                DebugAsProc "action: '$action', scope: '$scope': adding 'IsNtInstalled' packages"
                                 for prospect in $(QPKGs.IsNtInstalled.Array); do
                                     QPKGs.ScDependent.Exist "$prospect" && QPKGs.AcTo${action}.Add "$prospect"
                                 done
                                 ;;
                             Standalone)
                                 found=true
+                                DebugAsProc "action: '$action', scope: '$scope': adding 'IsNtInstalled' packages"
                                 for prospect in $(QPKGs.IsNtInstalled.Array); do
                                     QPKGs.ScStandalone.Exist "$prospect" && QPKGs.AcTo${action}.Add "$prospect"
                                 done
@@ -1670,16 +1678,19 @@ ApplySensibleExceptions()
                         case $scope in
                             All)
                                 found=true
+                                DebugAsProc "action: '$action', scope: '$scope': adding 'ScSupportBackup' packages"
                                 QPKGs.AcTo${action}.Add "$(QPKGs.ScSupportBackup.Array)"
                                 ;;
                             Dependent)
                                 found=true
+                                DebugAsProc "action: '$action', scope: '$scope': adding 'ScSupportBackup' packages"
                                 for prospect in $(QPKGs.ScSupportBackup.Array); do
                                     QPKGs.ScDependent.Exist "$prospect" && QPKGs.AcTo${action}.Add "$prospect"
                                 done
                                 ;;
                             Standalone)
                                 found=true
+                                DebugAsProc "action: '$action', scope: '$scope': adding 'ScSupportBackup' packages"
                                 for prospect in $(QPKGs.ScSupportBackup.Array); do
                                     QPKGs.ScStandalone.Exist "$prospect" && QPKGs.AcTo${action}.Add "$prospect"
                                 done
@@ -1689,16 +1700,19 @@ ApplySensibleExceptions()
                         case $scope in
                             All)
                                 found=true
+                                DebugAsProc "action: '$action', scope: '$scope': adding 'IsStarted' packages"
                                 QPKGs.AcTo${action}.Add "$(QPKGs.IsStarted.Array)"
                                 ;;
                             Dependent)
                                 found=true
+                                DebugAsProc "action: '$action', scope: '$scope': adding 'IsStarted' packages"
                                 for prospect in $(QPKGs.IsStarted.Array); do
                                     QPKGs.ScDependent.Exist "$prospect" && QPKGs.AcTo${action}.Add "$prospect"
                                 done
                                 ;;
                             Standalone)
                                 found=true
+                                DebugAsProc "action: '$action', scope: '$scope': adding 'IsStarted' packages"
                                 for prospect in $(QPKGs.IsStarted.Array); do
                                     QPKGs.ScStandalone.Exist "$prospect" && QPKGs.AcTo${action}.Add "$prospect"
                                 done
@@ -1708,16 +1722,19 @@ ApplySensibleExceptions()
                         case $scope in
                             All)
                                 found=true
+                                DebugAsProc "action: '$action', scope: '$scope': adding 'IsNtStarted' packages"
                                 QPKGs.AcTo${action}.Add "$(QPKGs.IsNtStarted.Array)"
                                 ;;
                             Dependent)
                                 found=true
+                                DebugAsProc "action: '$action', scope: '$scope': adding 'IsNtStarted' packages"
                                 for prospect in $(QPKGs.IsNtStarted.Array); do
                                     QPKGs.ScDependent.Exist "$prospect" && QPKGs.AcTo${action}.Add "$prospect"
                                 done
                                 ;;
                             Standalone)
                                 found=true
+                                DebugAsProc "action: '$action', scope: '$scope': adding 'IsNtStarted' packages"
                                 for prospect in $(QPKGs.IsNtStarted.Array); do
                                     QPKGs.ScStandalone.Exist "$prospect" && QPKGs.AcTo${action}.Add "$prospect"
                                 done
@@ -1727,16 +1744,19 @@ ApplySensibleExceptions()
                         case $scope in
                             All)
                                 found=true
+                                DebugAsProc "action: '$action', scope: '$scope': adding 'IsStarted' packages"
                                 QPKGs.AcTo${action}.Add "$(QPKGs.IsStarted.Array)"
                                 ;;
                             Dependent)
                                 found=true
+                                DebugAsProc "action: '$action', scope: '$scope': adding 'IsStarted' packages"
                                 for prospect in $(QPKGs.IsStarted.Array); do
                                     QPKGs.ScDependent.Exist "$prospect" && QPKGs.AcTo${action}.Add "$prospect"
                                 done
                                 ;;
                             Standalone)
                                 found=true
+                                DebugAsProc "action: '$action', scope: '$scope': adding 'IsStarted' packages"
                                 for prospect in $(QPKGs.IsStarted.Array); do
                                     QPKGs.ScStandalone.Exist "$prospect" && QPKGs.AcTo${action}.Add "$prospect"
                                 done
@@ -1746,16 +1766,19 @@ ApplySensibleExceptions()
                         case $scope in
                             All)
                                 found=true
+                                DebugAsProc "action: '$action', scope: '$scope': adding 'IsInstalled' packages"
                                 QPKGs.AcTo${action}.Add "$(QPKGs.IsInstalled.Array)"
                                 ;;
                             Dependent)
                                 found=true
+                                DebugAsProc "action: '$action', scope: '$scope': adding 'IsInstalled' packages"
                                 for prospect in $(QPKGs.IsInstalled.Array); do
                                     QPKGs.ScDependent.Exist "$prospect" && QPKGs.AcTo${action}.Add "$prospect"
                                 done
                                 ;;
                             Standalone)
                                 found=true
+                                DebugAsProc "action: '$action', scope: '$scope': adding 'IsInstalled' packages"
                                 for prospect in $(QPKGs.IsInstalled.Array); do
                                     QPKGs.ScStandalone.Exist "$prospect" && QPKGs.AcTo${action}.Add "$prospect"
                                 done
@@ -1765,34 +1788,51 @@ ApplySensibleExceptions()
                         case $scope in
                             All)
                                 found=true
+                                DebugAsProc "action: '$action', scope: '$scope': adding 'ScUpgradable' packages"
                                 QPKGs.AcTo${action}.Add "$(QPKGs.ScUpgradable.Array)"
+                                DebugAsProc "action: '$action', scope: '$scope': adding 'ScSupportUpdateOnRestart' packages"
                                 QPKGs.AcToRestart.Add "$(QPKGs.ScSupportUpdateOnRestart.Array)"
+                                DebugAsProc "action: '$action', scope: '$scope': removing 'IsNtInstalled' packages"
+                                DebugAsProc "action: '$action', scope: '$scope': removing 'AcToUpgrade' packages"
+                                DebugAsProc "action: '$action', scope: '$scope': removing 'ScStandalone' packages"
                                 QPKGs.AcToRestart.Remove "$(QPKGs.IsNtInstalled.Array) $(QPKGs.AcToUpgrade.Array) $(QPKGs.ScStandalone.Array)"
                                 ;;
                             Dependent)
                                 found=true
+                                DebugAsProc "action: '$action', scope: '$scope': adding 'IsInstalled' packages"
                                 for prospect in $(QPKGs.IsInstalled.Array); do
                                     QPKGs.ScDependent.Exist "$prospect" && QPKGs.AcTo${action}.Add "$prospect"
                                 done
                                 ;;
                             Standalone)
                                 found=true
+                                DebugAsProc "action: '$action', scope: '$scope': adding 'IsInstalled' packages"
                                 for prospect in $(QPKGs.IsInstalled.Array); do
                                     QPKGs.ScStandalone.Exist "$prospect" && QPKGs.AcTo${action}.Add "$prospect"
                                 done
                         esac
                 esac
 
-                [[ $found != true ]] && QPKGs.AcTo${action}.Add "$(QPKGs.Sc${scope}.Array)" || found=false
+                if [[ $found = true ]]; then
+                    if QPKGs.AcTo${action}.IsAny; then
+                        DebugAsWarn "action: '$action', scope: '$scope': found $(QPKGs.AcTo${action}.Count) packages to process"
+                    else
+                        DebugAsWarn "action: '$action', scope: '$scope': found no packages to process"
+                    fi
+                else
+                    QPKGs.AcTo${action}.Add "$(QPKGs.Sc${scope}.Array)"
+                fi
             elif QPKGs.Ac${action}.ScNt${scope}.IsSet; then
                 # use sensible scope exceptions for convenience, rather than follow requested scope literally
                 :
-                [[ $found != true ]] && QPKGs.AcTo${action}.Add "$(QPKGs.ScNt${scope}.Array)" || found=false
+                [[ $found != true ]] && QPKGs.AcTo${action}.Add "$(QPKGs.ScNt${scope}.Array)"
             fi
         done
 
         # process state-based user-options
         for state in "${PACKAGE_STATES[@]}"; do
+            found=false
+
             if QPKGs.Ac${action}.Is${state}.IsSet; then
                 # use sensible state exceptions for convenience, rather than follow requested state literally
                 case $action in
@@ -1804,7 +1844,7 @@ ApplySensibleExceptions()
                         esac
                 esac
 
-                [[ $found != true ]] && QPKGs.AcTo${action}.Add "$(QPKGs.Is${state}.Array)" || found=false
+                [[ $found != true ]] && QPKGs.AcTo${action}.Add "$(QPKGs.Is${state}.Array)"
             elif QPKGs.Ac${action}.IsNt${state}.IsSet; then
                 # use sensible state exceptions for convenience, rather than follow requested state literally
                 case $action in
@@ -1816,7 +1856,7 @@ ApplySensibleExceptions()
                         esac
                 esac
 
-                [[ $found != true ]] && QPKGs.AcTo${action}.Add "$(QPKGs.IsNt${state}.Array)" || found=false
+                [[ $found != true ]] && QPKGs.AcTo${action}.Add "$(QPKGs.IsNt${state}.Array)"
             fi
         done
     done
