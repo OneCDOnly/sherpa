@@ -54,18 +54,13 @@ Self.Init()
     DebugFuncEntry
 
     readonly MANAGER_FILE=sherpa.manager.sh
-    local -r SCRIPT_VER=221226b-beta
+    local -r SCRIPT_VER=221226c-beta
 
     IsQNAP || return
     IsSU || return
     ClaimLockFile /var/run/sherpa.lock || return
 
     [[ ! -e /dev/fd ]] && ln -s /proc/self/fd /dev/fd       # KLUDGE: `/dev/fd` isnt always created by QTS during startup
-
-    export LC_ALL=''        # must disable ALL to enable setting of individual vars
-    export LANG=en_US.utf8
-    export LC_CTYPE=C
-    export LC_NUMERIC=en_US.utf8
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -5955,7 +5950,35 @@ Lowercase()
 FormatAsThousands()
     {
 
-    printf "%'.f" "$1"
+    # a string-based thousands-group formatter totally unreliant on locale
+    # why? because builtin 'printf' in 32b ARM QTS versions doesn't follow locale ¯\_(ツ)_/¯
+
+    # $1 = integer value
+
+    local rightside_group=''
+    local foutput=''
+
+    # strip-out everything not a numeric character
+    local remainder=$($SED_CMD 's/[^0-9]*//g' <<< "${1:-}")
+
+    while [[ ${#remainder} -gt 0 ]]; do
+        rightside_group=${remainder:${#remainder}<3?0:-3}
+
+        if [[ -z $foutput ]]; then
+            foutput=$rightside_group
+        else
+            foutput=$rightside_group,$foutput
+        fi
+
+        if [[ ${#rightside_group} -eq 3 ]]; then
+            remainder=${remainder%???}
+        else
+            break
+        fi
+    done
+
+    echo "$foutput"
+    return 0
 
     }
 
