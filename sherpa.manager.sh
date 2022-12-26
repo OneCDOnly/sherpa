@@ -1309,6 +1309,18 @@ ParseArguments()
                         QPKGs.AcReassign.ScStandalone.Set
                         action=''
                         ;;
+                    started_)
+                        QPKGs.AcReassign.IsStarted.Set
+                        action=''
+                        ;;
+                    stopped_)
+                        QPKGs.AcReassign.IsNtStarted.Set
+                        action=''
+                        ;;
+                    upgradable_)
+                        QPKGs.AcReassign.ScUpgradable.Set
+                        action=''
+                        ;;
                     *)
                         QPKGs.AcToReassign.Add "$package"
                 esac
