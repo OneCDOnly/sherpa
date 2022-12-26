@@ -1,45 +1,45 @@
 #!/usr/bin/env bash
-#
+
 # sherpa.manager.sh
 #   Copyright (C) 2017-2022 OneCD [one.cd.only@gmail.com]
-#
+
 #   So, blame OneCD if it all goes horribly wrong. ;)
-#
+
 # Description:
 #   This is the management script for the sherpa mini-package-manager.
 #   It's automatically downloaded via the `sherpa.loader.sh` script in the `sherpa` QPKG no-more than once per 24 hours.
-#
+
 # Project:
 #   https://git.io/sherpa
-#
+
 # Forum:
 #   https://forum.qnap.com/viewtopic.php?f=320&t=132373
-#
+
 # Tested on:
 #   GNU bash, version 3.2.57(2)-release (i686-pc-linux-gnu)
 #   GNU bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)
 #   Copyright (C) 2007 Free Software Foundation, Inc.
-#
+
 # ... and periodically on:
 #   GNU bash, version 5.1.16(1)-release (aarch64-openwrt-linux-gnu)
 #   Copyright (C) 2020 Free Software Foundation, Inc.
-#
+
 # License:
 #   This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
-#
+
 #   This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-#
+
 #   You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
-#
+
 # Project variable and function naming style-guide:
 #              functions: CamelCase
 #   background functions: _CamelCaseWithLeadingAndTrailingUnderscores_
 #              variables: lowercase_with_inline_underscores
 #       "object" methods: Capitalised.CamelCase.With.Inline.Periods
-#    "object" properties: _lowercase_with_leading_and_inline_and_trailing_underscores_ (these should ONLY be managed via the objects methods)
+#    "object" properties: _lowercase_with_leading_and_inline_and_trailing_underscores_ (these should ONLY be managed via the object's methods)
 #              constants: UPPERCASE_WITH_INLINE_UNDERSCORES (also set as readonly)
 #                indents: 1 x tab (converted to 4 x spaces to suit GitHub web-display)
-#
+
 # Notes:
 #   If on-screen line-spacing is required, this should only be done by the next function that outputs to display.
 #   Display functions should never finish by putting an empty line on-screen for spacing.
@@ -60,7 +60,7 @@ Self.Init()
     IsSU || return
     ClaimLockFile /var/run/sherpa.lock || return
 
-    [[ ! -e /dev/fd ]] && ln -s /proc/self/fd /dev/fd       # KLUDGE: `/dev/fd` isnt always created by QTS during startup
+    [[ ! -e /dev/fd ]] && ln -s /proc/self/fd /dev/fd       # KLUDGE: `/dev/fd` isn't always created by QTS during startup
 
     # cherry-pick required binaries
     readonly AWK_CMD=/bin/awk
@@ -92,7 +92,7 @@ Self.Init()
     readonly UPTIME_CMD=/usr/bin/uptime
     readonly WC_CMD=/usr/bin/wc
 
-    # check required binaries are present
+    # confirm required binaries are present
     IsSysFileExist $AWK_CMD || return
     IsSysFileExist $CAT_CMD || return
     IsSysFileExist $DATE_CMD || return
@@ -387,7 +387,7 @@ Environment.Log()
     DebugQPKG architecture "$NAS_QPKG_ARCH"
     DebugQPKG 'Entware installer' "$ENTWARE_VER"
 
-    RunAndLog "$DF_CMD -h | $GREP_CMD '^Filesystem\|^none\|^tmpfs\|ram'" /var/log/ramdisks.state
+    RunAndLog "$DF_CMD -h | $GREP_CMD '^Filesystem\|^none\|^tmpfs\|ram'" /var/log/ramdisks.freespace
 
     QPKGs.States.Build
     DebugFuncExit
@@ -398,7 +398,7 @@ Self.Validate()
     {
 
     # This function handles most of the high-level logic for package actions.
-    # If a package isnt being processed by the correct action, odds-are it's due to a logic error in this function.
+    # If a package isn't being processed by the correct action, odds-are it's due to a logic error in this function.
 
     QPKGs.SkProc.IsSet && return
     DebugFuncEntry
@@ -454,6 +454,7 @@ Self.Validate()
         if QPKG.IsInstalled Entware && QPKG.IsEnabled Entware; then
             if [[ -e $PYTHON3_CMD ]]; then
                 available_ver=$($PYTHON3_CMD -V 2>/dev/null | $SED_CMD 's|^Python ||')
+
                 if [[ ${available_ver//./} -lt $MIN_PYTHON_VER ]]; then
                     ShowAsInfo 'installed Python environment will be upgraded' >&2
                     IPKGs.AcToUninstall.Add 'python*'
@@ -462,6 +463,7 @@ Self.Validate()
 
             if [[ -e $PERL_CMD ]]; then
                 available_ver=$($PERL_CMD -e 'print "$^V\n"' 2>/dev/null | $SED_CMD 's|v||')
+
                 if [[ ${available_ver//./} -lt $MIN_PERL_VER ]]; then
                     ShowAsInfo 'installed Perl environment will be upgraded' >&2
                     IPKGs.AcToUninstall.Add 'perl*'
@@ -601,7 +603,7 @@ Self.Validate()
 
 # QPKG processing priorities shall be:
 
-#   _. rebuild dependents           (meta-action: `install` QPKG and `restore` config, but only if package has a backup file)
+#   _. rebuild dependents           (meta-action: `install` QPKG and `restore` config, but only if package has an existing backup file)
 
 #  20. reassign all                 (highest: most-important)
 #  19. backup all
@@ -658,7 +660,7 @@ Tiers.Process()
 
     # -> package installation phase begins here <-
 
-    # just in-case `python` has disappeared again ... ¯\_(ツ)_/¯
+    # KLUDGE: just in-case `python` has disappeared again ... ¯\_(ツ)_/¯
     [[ ! -L $PYTHON_CMD && -e $PYTHON3_CMD ]] && ln -s $PYTHON3_CMD $PYTHON_CMD
 
     for tier in "${PACKAGE_TIERS[@]}"; do
@@ -1002,7 +1004,7 @@ ParseArguments()
                 QPKGs.SkProc.Set
         esac
 
-        # identify scope in two stages: stage 1 for when user didnt supply an action before scope, stage 2 is after an action has been defined.
+        # identify scope in two stages: stage 1 for when user didn't supply an action before scope, stage 2 is after an action has been defined.
 
         # stage 1
         if [[ -z $action ]]; then
@@ -1027,7 +1029,7 @@ ParseArguments()
                     scope_identified=true
                     arg_identified=true
                     ;;
-            # all cases below use more than a single word or char to specify a single action
+            # all cases below can use multiple words or chars to specify a single action
                 a|abs)
                     scope=abs_
                     scope_identified=true
@@ -2012,9 +2014,9 @@ IsThisFileRecent()
     # output:
     #   $? = true/false
 
-    # examine `change` time as this is updated even if file content isnt modified
+    # examine `change` time as this is updated even if file content isn't modified
     if [[ -e $1 && -e $GNU_FIND_CMD ]]; then
-        if [[ -z $($GNU_FIND_CMD "$1" -cmin +${2:-1440}) ]]; then        # no-output if last 'change' was less than $2 minutes ago
+        if [[ -z $($GNU_FIND_CMD "$1" -cmin +${2:-1440}) ]]; then        # no-output if last `change` was less than $2 minutes ago
             return 0
         fi
     fi
@@ -2484,6 +2486,7 @@ IsSU()
         else
             ShowAsError "this utility must be run as the 'admin' user. Please login via SSH as 'admin' and try again"
         fi
+
         return 1
     fi
 
