@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly MANAGER_FILE=sherpa.manager.sh
-    local -r SCRIPT_VER=221226c-beta
+    local -r SCRIPT_VER=221227-beta
 
     IsQNAP || return
     IsSU || return
@@ -474,7 +474,7 @@ Self.Validate()
 
     QPKGs.IsSupportBackup.Build
     QPKGs.IsSupportUpdateOnRestart.Build
-    ApplySensibleExceptions
+    AllocatePackagesToActions
 
     # meta-action pre-processing
     if QPKGs.AcToRebuild.IsAny; then
@@ -1137,10 +1137,10 @@ ParseArguments()
                         QPKGs.AcBackup.ScStandalone.Set
                         ;;
                     started_)
-                        QPKGs.AcToBackup.Add "$(QPKGs.IsStarted.Array)"
+                        QPKGs.AcBackup.IsStarted.Set
                         ;;
                     stopped_)
-                        QPKGs.AcToBackup.Add "$(QPKGs.IsNtStarted.Array)"
+                        QPKGs.AcBackup.IsNtStarted.Set
                         ;;
                     *)
                         QPKGs.AcToBackup.Add "$package"
@@ -1166,10 +1166,10 @@ ParseArguments()
                         QPKGs.AcClean.ScStandalone.Set
                         ;;
                     started_)
-                        QPKGs.AcToClean.Add "$(QPKGs.IsStarted.Array)"
+                        QPKGs.AcClean.IsStarted.Set
                         ;;
                     stopped_)
-                        QPKGs.AcToClean.Add "$(QPKGs.IsNtStarted.Array)"
+                        QPKGs.AcClean.IsNtStarted.Set
                         ;;
                     *)
                         QPKGs.AcToClean.Add "$package"
@@ -1274,6 +1274,10 @@ ParseArguments()
                         ;;
                     standalone_)
                         QPKGs.AcInstall.ScStandalone.Set
+                        action=''
+                        ;;
+                    started_)
+                        QPKGs.AcInstall.IsStarted.Set
                         action=''
                         ;;
                     *)
@@ -1606,10 +1610,11 @@ Self.ArgumentSuggestions.Show()
 
     }
 
-ApplySensibleExceptions()
+AllocatePackagesToActions()
     {
 
     DebugFuncEntry
+    ShowAsProc 'allocating packages' >&2
 
     local action=''
     local scope=''
@@ -1619,11 +1624,11 @@ ApplySensibleExceptions()
 
     for action in "${PACKAGE_ACTIONS[@]}"; do
         # process scope-based user-options
+        # use sensible scope exceptions for convenience, rather than follow requested scope literally
         for scope in "${PACKAGE_SCOPES[@]}"; do
             found=false
 
             if QPKGs.Ac${action}.Sc${scope}.IsSet; then
-                # use sensible scope exceptions for convenience, rather than follow requested scope literally
                 case $action in
                     Clean)
                         case $scope in
@@ -1790,9 +1795,11 @@ ApplySensibleExceptions()
                                 DebugAsProc "action: '$action', scope: '$scope': adding 'ScSupportUpdateOnRestart' packages"
                                 QPKGs.AcToRestart.Add "$(QPKGs.ScSupportUpdateOnRestart.Array)"
                                 DebugAsProc "action: '$action', scope: '$scope': removing 'IsNtInstalled' packages"
+                                QPKGs.AcToRestart.Remove "$(QPKGs.IsNtInstalled.Array)"
                                 DebugAsProc "action: '$action', scope: '$scope': removing 'AcToUpgrade' packages"
+                                QPKGs.AcToRestart.Remove "$(QPKGs.AcToUpgrade.Array)"
                                 DebugAsProc "action: '$action', scope: '$scope': removing 'ScStandalone' packages"
-                                QPKGs.AcToRestart.Remove "$(QPKGs.IsNtInstalled.Array) $(QPKGs.AcToUpgrade.Array) $(QPKGs.ScStandalone.Array)"
+                                QPKGs.AcToRestart.Remove "$(QPKGs.ScStandalone.Array)"
                                 ;;
                             Dependent)
                                 found=true
@@ -1810,68 +1817,75 @@ ApplySensibleExceptions()
                         esac
                 esac
 
-                if [[ $found = true ]]; then
-                    if QPKGs.AcTo${action}.IsAny; then
-                        DebugAsDone "action: '$action', scope: '$scope': found $(QPKGs.AcTo${action}.Count) packages to process"
-                    else
-                        DebugAsWarn "action: '$action', scope: '$scope': found no packages to process"
-                    fi
-                else
-                    QPKGs.AcTo${action}.Add "$(QPKGs.Sc${scope}.Array)"
-                fi
+                [[ $found = false ]] && QPKGs.AcTo${action}.Add "$(QPKGs.Sc${scope}.Array)"
             elif QPKGs.Ac${action}.ScNt${scope}.IsSet; then
-                # use sensible scope exceptions for convenience, rather than follow requested scope literally
-                :
-                [[ $found != true ]] && QPKGs.AcTo${action}.Add "$(QPKGs.ScNt${scope}.Array)"
+                [[ $found = false ]] && QPKGs.AcTo${action}.Add "$(QPKGs.ScNt${scope}.Array)"
+            fi
+
+            if QPKGs.AcTo${action}.IsAny; then
+                DebugAsDone "action: '$action', scope: '$scope': found $(QPKGs.AcTo${action}.Count) packages to process"
+            else
+                DebugAsWarn "action: '$action', scope: '$scope': found no packages to process"
             fi
         done
 
         # process state-based user-options
+        # use sensible state exceptions for convenience, rather than follow requested state literally
         for state in "${PACKAGE_STATES[@]}"; do
             found=false
 
             if QPKGs.Ac${action}.Is${state}.IsSet; then
-                # use sensible state exceptions for convenience, rather than follow requested state literally
                 case $action in
-                    Uninstall)
+                    Backup|Clean|Uninstall)
                         case $state in
-                            Installed)
+                            BackedUp|Cleaned|Downloaded|Enabled|Installed|Started)
                                 found=true
-                                DebugAsProc "action: '$action', state: '$state': adding 'IsInstalled' packages"
-                                QPKGs.AcTo${action}.Add "$(QPKGs.IsInstalled.Array)"
+                                DebugAsProc "action: '$action', state: '$state': adding 'Is${state}' packages"
+                                QPKGs.AcTo${action}.Add "$(QPKGs.Is${state}.Array)"
+                                ;;
+                            Stopped)
+                                found=true
+                                DebugAsProc "action: '$action', state: '$state': adding 'IsNtStarted' packages"
+                                QPKGs.AcTo${action}.Add "$(QPKGs.IsNtStarted.Array)"
                         esac
-                esac
-
-                if [[ $found = true ]]; then
-                    if QPKGs.AcTo${action}.IsAny; then
-                        DebugAsDone "action: '$action', state: '$state': found $(QPKGs.AcTo${action}.Count) packages to process"
-                    else
-                        DebugAsWarn "action: '$action', state: '$state': found no packages to process"
-                    fi
-                else
-                    QPKGs.AcTo${action}.Add "$(QPKGs.Is${state}.Array)"
-                fi
-            elif QPKGs.Ac${action}.IsNt${state}.IsSet; then
-                # use sensible state exceptions for convenience, rather than follow requested state literally
-                case $action in
+                        ;;
                     Install)
                         case $state in
-                            Installed)
+                            Enabled|Installed|Started)
                                 found=true
-                                DebugAsProc "action: '$action', state: '$state': adding 'IsNtInstalled' packages"
-                                QPKGs.AcTo${action}.Add "$(QPKGs.IsNtInstalled.Array)"
+                                DebugAsProc "action: '$action', state: '$state': not adding 'Is${state}' packages"
+                                ;;
+                            Stopped)
+                                found=true
+                                DebugAsProc "action: '$action', state: '$state': adding 'IsNtStarted' packages"
+                                QPKGs.AcTo${action}.Add "$(QPKGs.IsNtStarted.Array)"
                         esac
                 esac
 
-                if [[ $found = true ]]; then
-                    if QPKGs.AcTo${action}.IsAny; then
-                        DebugAsDone "action: '$action', state: '$state': found $(QPKGs.AcTo${action}.Count) packages to process"
-                    else
-                        DebugAsWarn "action: '$action', state: '$state': found no packages to process"
-                    fi
-                else
-                    QPKGs.AcTo${action}.Add "$(QPKGs.IsNt${state}.Array)"
-                fi
+                [[ $found = false ]] && QPKGs.AcTo${action}.Add "$(QPKGs.Is${state}.Array)"
+            elif QPKGs.Ac${action}.IsNt${state}.IsSet; then
+                case $action in
+                    Backup|Clean|Install|Uninstall)
+                        case $state in
+                            Installed|Started)
+                                found=true
+                                DebugAsProc "action: '$action', state: '$state': adding 'IsNt${state}' packages"
+                                QPKGs.AcTo${action}.Add "$(QPKGs.IsNt${state}.Array)"
+                                ;;
+                            Stopped)
+                                found=true
+                                DebugAsProc "action: '$action', state: '$state': adding 'IsStarted' packages"
+                                QPKGs.AcTo${action}.Add "$(QPKGs.IsStarted.Array)"
+                        esac
+                esac
+
+                [[ $found = false ]] && QPKGs.AcTo${action}.Add "$(QPKGs.IsNt${state}.Array)"
+            fi
+
+            if QPKGs.AcTo${action}.IsAny; then
+                DebugAsDone "action: '$action', state: '$state': found $(QPKGs.AcTo${action}.Count) packages to process"
+            else
+                DebugAsWarn "action: '$action', state: '$state': found no packages to process"
             fi
         done
     done
@@ -4373,7 +4387,7 @@ ShowSummary()
 
     for state in "${PACKAGE_STATES[@]}"; do
         for action in "${PACKAGE_ACTIONS[@]}"; do
-            QPKGs.Ac${action}.Is${state}.IsSet && QPKGs.AcOk${action}.IsNone && ShowAsDone "no QPKGs were $(Lowercase "$state")"
+            QPKGs.Ac${action}.Is${state}.IsSet && QPKGs.AcOk${action}.IsNone && ShowAsWarn "no QPKGs were able to $(Lowercase "$action")"
         done
     done
 
@@ -6506,6 +6520,8 @@ ShowAsWarn()
 
 ShowAsAbort()
     {
+
+    # fatal abort
 
     local capitalised="$(Capitalise "${1:-}")"
 
