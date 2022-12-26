@@ -54,11 +54,13 @@ Self.Init()
     DebugFuncEntry
 
     readonly MANAGER_FILE=sherpa.manager.sh
-    local -r SCRIPT_VER=221226-beta
+    local -r SCRIPT_VER=221226a-beta
 
     IsQNAP || return
     IsSU || return
     ClaimLockFile /var/run/sherpa.lock || return
+
+    [[ ! -e /dev/fd ]] && ln -s /proc/self/fd /dev/fd       # KLUDGE: `/dev/fd` isnt always created by QTS during startup
 
     export LC_ALL=''        # must disable ALL to enable setting of individual vars
     export LANG=en_US.utf8
@@ -113,14 +115,12 @@ Self.Init()
     IsSysFileExist $GETCFG_CMD || return
     IsSysFileExist $SETCFG_CMD || return
 
-    [[ ! -e $SORT_CMD ]] && ln -s /bin/busybox "$SORT_CMD"  # KLUDGE: `sort` randomly goes missing from QTS
-    [[ ! -e /dev/fd ]] && ln -s /proc/self/fd /dev/fd       # KLUDGE: `/dev/fd` isnt always created by QTS during startup
-
     IsSysFileExist $BASENAME_CMD || return
     IsSysFileExist $DIRNAME_CMD || return
     IsSysFileExist $DU_CMD || return
     IsSysFileExist $HEAD_CMD || return
     IsSysFileExist $READLINK_CMD || return
+    [[ ! -e $SORT_CMD ]] && ln -s /bin/busybox "$SORT_CMD"  # KLUDGE: `sort` randomly goes missing from QTS
     IsSysFileExist $TAIL_CMD || return
     IsSysFileExist $TEE_CMD || return
     IsSysFileExist $UNZIP_CMD || return
