@@ -5962,7 +5962,7 @@ FormatAsThousands()
     local remainder=$($SED_CMD 's/[^0-9]*//g' <<< "${1:-}")
 
     while [[ ${#remainder} -gt 0 ]]; do
-        rightside_group=${remainder:${#remainder}<3?0:-3}
+        rightside_group=${remainder:${#remainder}<3?0:-3}       # a nifty trick found here: https://stackoverflow.com/a/19858692
 
         if [[ -z $foutput ]]; then
             foutput=$rightside_group
