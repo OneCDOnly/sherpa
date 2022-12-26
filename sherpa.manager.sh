@@ -5957,9 +5957,7 @@ FormatAsThousands()
 
     local rightside_group=''
     local foutput=''
-
-    # strip-out everything not a numeric character
-    local remainder=$($SED_CMD 's/[^0-9]*//g' <<< "${1:-}")
+    local remainder=$($SED_CMD 's/[^0-9]*//g' <<< "${1:-}")     # strip everything not a numeric character
 
     while [[ ${#remainder} -gt 0 ]]; do
         rightside_group=${remainder:${#remainder}<3?0:-3}       # a nifty trick found here: https://stackoverflow.com/a/19858692
@@ -5971,7 +5969,7 @@ FormatAsThousands()
         fi
 
         if [[ ${#rightside_group} -eq 3 ]]; then
-            remainder=${remainder%???}
+            remainder=${remainder%???}                          # trim rightside 3 characters
         else
             break
         fi
