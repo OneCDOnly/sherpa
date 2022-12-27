@@ -1,33 +1,33 @@
 #!/usr/bin/env bash
-#
+
 # sherpa.loader.sh
 #   Copyright (C) 2017-2022 OneCD [one.cd.only@gmail.com]
-#
+
 #   So, blame OneCD if it all goes horribly wrong. ;)
-#
+
 # Description:
 #   This is the loader script for the sherpa mini-package-manager and is part of the 'sherpa' QPKG.
-#
+
 # Project:
 #   https://git.io/sherpa
-#
+
 # Forum:
 #   https://forum.qnap.com/viewtopic.php?f=320&t=132373
-#
+
 # Tested on:
 #   GNU bash, version 3.2.57(2)-release (i686-pc-linux-gnu)
 #   GNU bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)
 #   Copyright (C) 2007 Free Software Foundation, Inc.
-#
+
 # ... and periodically on:
 #   GNU bash, version 5.0.17(1)-release (aarch64-openwrt-linux-gnu)
 #   Copyright (C) 2019 Free Software Foundation, Inc.
-#
+
 # License:
 #   This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
-#
+
 #   This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-#
+
 #   You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
 
 Init()
@@ -35,17 +35,15 @@ Init()
 
     IsQNAP || return
 
-    local -r PROJECT_NAME=sherpa
-    export LOADER_SCRIPT_VER=220830
+    export LOADER_SCRIPT_VER=221228
     export LOADER_SCRIPT_PPID=$PPID
-    local -r PROJECT_BRANCH=main
 
-    local -r PROJECT_PATH=$(/sbin/getcfg $PROJECT_NAME Install_Path -f /etc/config/qpkg.conf)
+    local -r PROJECT_PATH=$(/sbin/getcfg sherpa Install_Path -f /etc/config/qpkg.conf)
     local -r WORK_PATH=$PROJECT_PATH/cache
 
-    local -r MANAGER_FILE=$PROJECT_NAME.manager.sh
+    local -r MANAGER_FILE=sherpa.manager.sh
     local -r MANAGER_ARCHIVE_FILE=${MANAGER_FILE%.*}.tar.gz
-    readonly MANAGER_ARCHIVE_URL=https://raw.githubusercontent.com/OneCDOnly/$PROJECT_NAME/$PROJECT_BRANCH/$MANAGER_ARCHIVE_FILE
+    readonly MANAGER_ARCHIVE_URL=https://raw.githubusercontent.com/OneCDOnly/sherpa/main/$MANAGER_ARCHIVE_FILE
     readonly MANAGER_ARCHIVE_PATHFILE=$WORK_PATH/$MANAGER_ARCHIVE_FILE
     readonly MANAGER_PATHFILE=$WORK_PATH/$MANAGER_FILE
 

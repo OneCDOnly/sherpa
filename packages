@@ -1,4 +1,4 @@
-PACKAGES_VER=221226
+PACKAGES_VER=221228
 BASE_QPKG_CONFLICTS_WITH='TarMT'
 BASE_QPKG_WARNINGS='Qboost'
 ESSENTIAL_IPKS='ca-certificates coreutils-stty findutils gcc git git-http grep less nano sed'
@@ -432,9 +432,9 @@ QPKG_UPDATE_ON_RESTART+=(false)
 QPKG_NAME+=(sherpa)
 QPKG_ARCH+=(all)
 QPKG_MIN_RAM_KB+=(none)
-QPKG_VERSION+=(220830)
+QPKG_VERSION+=(221228)
 QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/$PROJECT_BRANCH/QPKGs/sherpa/build/sherpa_${QPKG_VERSION[${#QPKG_VERSION[@]}-1]}.qpkg)
-QPKG_MD5+=(d2546e76e42af686dd7d60df3b3188b4)
+QPKG_MD5+=(c90f445bb75d3a2bc65e8ea49b6c768b)
 QPKG_DESC+=("provides the 'sherpa' command: the mini-package-manager")
 QPKG_ABBRVS+=("sh self sherpa")
 QPKG_CONFLICTS_WITH+=('')
