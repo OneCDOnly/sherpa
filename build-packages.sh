@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 
 # construct a list of all QPKG checksum files
+echo 'locating checksum files ...'
 find ~/scripts/nas -name '*.qpkg.md5' > /tmp/raw.md5s
 
 # sort this list, grouped by package names, most-recent package name version at the bottom of each group.
+echo 'sorting file list ...'
 sort -V < /tmp/raw.md5s > /tmp/sorted.md5s
 rm -r /tmp/raw.md5s
 
@@ -13,6 +15,9 @@ previous_package_filename=''
 previous_package_pathfilename=''
 package_version=''
 previous_package_version=''
+
+echo '---------- results -----------'
+echo 'highest package pathfilenames (version):'
 
 while read -r checksum_pathfilename; do
     # need just filename
@@ -28,9 +33,9 @@ while read -r checksum_pathfilename; do
 
     # and package arch here
 
-    if [[ $package_name != $previous_package_name ]]; then
+    if [[ $package_name != "$previous_package_name" ]]; then
         if [[ -n $previous_package_filename ]]; then
-            echo "current: $previous_package_pathfilename ($previous_package_version)"
+            echo "$previous_package_pathfilename ($previous_package_version)"
             displayed=true
         fi
     fi
@@ -42,4 +47,4 @@ while read -r checksum_pathfilename; do
     displayed=false
 done < /tmp/sorted.md5s
 
-[[ $displayed = false ]] && echo "current: $previous_package_pathfilename ($previous_package_version)"
+[[ $displayed = false ]] && echo "$previous_package_pathfilename ($previous_package_version)"
