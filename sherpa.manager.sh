@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly MANAGER_FILE=sherpa.manager.sh
-    local -r SCRIPT_VER=221227a-beta
+    local -r SCRIPT_VER=221227b-beta
 
     IsQNAP || return
     IsSU || return
@@ -320,7 +320,7 @@ Environment.Log()
     DebugInfoMinorSeparator
     DebugHardwareOK model "$(get_display_name)"
     DebugHardwareOK CPU "$(GetCPUInfo)"
-    DebugHardwareOK 'CPU cores' "$(GetCPUCores)"
+    DebugHardwareOK 'CPU cores' "$(GetCPUCores)"        # this will become important when running actions concurrently
     DebugHardwareOK 'CPU architecture' "$NAS_ARCH"
     DebugHardwareOK RAM "$(FormatAsThousands "$NAS_RAM_KB")kB"
     DebugFirmwareOK OS "Q$($GREP_CMD -q zfs /proc/filesystems && echo u)TS"
