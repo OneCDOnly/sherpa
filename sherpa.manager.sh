@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly MANAGER_FILE=sherpa.manager.sh
-    local -r SCRIPT_VER=221227-beta
+    local -r SCRIPT_VER=221227a-beta
 
     IsQNAP || return
     IsSU || return
@@ -1830,14 +1830,20 @@ AllocatePackagesToActions()
                 esac
 
                 [[ $found = false ]] && QPKGs.AcTo${action}.Add "$(QPKGs.Sc${scope}.Array)"
+
+                if QPKGs.AcTo${action}.IsAny; then
+                    DebugAsDone "action: '$action', scope: '$scope': found $(QPKGs.AcTo${action}.Count) packages to process"
+                else
+                    DebugAsWarn "action: '$action', scope: '$scope': found no packages to process"
+                fi
             elif QPKGs.Ac${action}.ScNt${scope}.IsSet; then
                 [[ $found = false ]] && QPKGs.AcTo${action}.Add "$(QPKGs.ScNt${scope}.Array)"
-            fi
 
-            if QPKGs.AcTo${action}.IsAny; then
-                DebugAsDone "action: '$action', scope: '$scope': found $(QPKGs.AcTo${action}.Count) packages to process"
-            else
-                DebugAsWarn "action: '$action', scope: '$scope': found no packages to process"
+                if QPKGs.AcTo${action}.IsAny; then
+                    DebugAsDone "action: '$action', scope: '$scope': found $(QPKGs.AcTo${action}.Count) packages to process"
+                else
+                    DebugAsWarn "action: '$action', scope: '$scope': found no packages to process"
+                fi
             fi
         done
 
@@ -1875,6 +1881,12 @@ AllocatePackagesToActions()
                 esac
 
                 [[ $found = false ]] && QPKGs.AcTo${action}.Add "$(QPKGs.Is${state}.Array)"
+
+                if QPKGs.AcTo${action}.IsAny; then
+                    DebugAsDone "action: '$action', state: '$state': found $(QPKGs.AcTo${action}.Count) packages to process"
+                else
+                    DebugAsWarn "action: '$action', state: '$state': found no packages to process"
+                fi
             elif QPKGs.Ac${action}.IsNt${state}.IsSet; then
                 case $action in
                     Backup|Clean|Install|Uninstall)
@@ -1892,12 +1904,12 @@ AllocatePackagesToActions()
                 esac
 
                 [[ $found = false ]] && QPKGs.AcTo${action}.Add "$(QPKGs.IsNt${state}.Array)"
-            fi
 
-            if QPKGs.AcTo${action}.IsAny; then
-                DebugAsDone "action: '$action', state: '$state': found $(QPKGs.AcTo${action}.Count) packages to process"
-            else
-                DebugAsWarn "action: '$action', state: '$state': found no packages to process"
+                if QPKGs.AcTo${action}.IsAny; then
+                    DebugAsDone "action: '$action', state: '$state': found $(QPKGs.AcTo${action}.Count) packages to process"
+                else
+                    DebugAsWarn "action: '$action', state: '$state': found no packages to process"
+                fi
             fi
         done
     done
