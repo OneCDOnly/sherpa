@@ -150,8 +150,8 @@ for element in Loaded States.Built SkProc; do
     AddFlagObj QPKGs.$element
 done
 
-AddFlagObj IPKGs.Upgrade
-AddFlagObj IPKGs.Install
+AddFlagObj IPKs.Upgrade
+AddFlagObj IPKs.Install
 AddFlagObj PIPs.Install
 
 # user option flags
@@ -220,8 +220,8 @@ for action in "${PACKAGE_ACTIONS[@]}"; do
 done
 
 for action in Download Install Uninstall Upgrade; do    # only a subset of addon package actions are supported for-now
-    AddListObj IPKGs.AcTo${action}
-    AddListObj IPKGs.AcOk${action}
+    AddListObj IPKs.AcTo${action}
+    AddListObj IPKs.AcOk${action}
 done
 
 for scope in "${PACKAGE_SCOPES[@]}"; do
@@ -244,5 +244,5 @@ tar --create --gzip --numeric-owner --file="$PACKAGES_ARCHIVE_PATHFILE" --direct
 
 echo 'done!'
 
-echo "these files have changed since the last commit:"
+echo 'these files have changed since the last commit:'
 git diff --name-only
