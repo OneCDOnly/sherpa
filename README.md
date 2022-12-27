@@ -23,7 +23,7 @@ Package management via **sherpa** provides extra features like easy application 
 ---
 ## Usage
 
-1) Install the **sherpa** QPKG, available [here](https://github.com/OneCDOnly/sherpa/releases/download/v220830/sherpa_220830.qpkg).
+1) Install the **sherpa** QPKG, available [here](https://github.com/OneCDOnly/sherpa/releases/download/v221228/sherpa_221228.qpkg).
 
 2) [SSH](https://www.qnap.com/en/how-to/knowledge-base/article/how-to-access-qnap-nas-by-ssh/) into your NAS,
 
