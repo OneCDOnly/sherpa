@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly MANAGER_FILE=sherpa.manager.sh
-    local -r SCRIPT_VER=221228-beta
+    local -r SCRIPT_VER=221228a-beta
 
     IsQNAP || return
     IsSU || return
@@ -2036,7 +2036,7 @@ SavePackageLists()
 CalcIPKsDepsToInstall()
     {
 
-    # From a specified list of IPK names, find all dependent IPKs, exclude those already installed, then generate a total qty to download
+    # From a specified list of IPK names, find all dependent IPKs, exclude those already installed, then generate a list to download
 
     QPKGs.IsNtInstalled.Exist Entware && return
     QPKGs.IsNtStarted.Exist Entware && return
@@ -2104,13 +2104,11 @@ CalcIPKsDepsToInstall()
             # KLUDGE: `ca-certs` appears to be a bogus meta-package.
             # KLUDGE: `python3-gdbm` is not available, but can be requested as per https://forum.qnap.com/viewtopic.php?p=806031#p806031 (don't know why).
             if [[ $element != 'ca-certs' && $element != 'python3-gdbm' ]]; then
-                # KLUDGE: `libjpeg` appears to have been replaced by `libjpeg-turbo`, but many packages still list `libjpeg` as a dependency, so replace it with `libjpeg-turbo`.
-                if [[ $element != 'libjpeg' ]]; then
-                    if ! $OPKG_CMD status "$element" | $GREP_CMD -q "Status:.*installed"; then
-                        IPKs.AcToDownload.Add "$element"
-                    fi
-                elif ! $OPKG_CMD status 'libjpeg-turbo' | $GREP_CMD -q "Status:.*installed"; then
+                # KLUDGE: `libjpeg` appears to have been replaced by `libjpeg-turbo`, but many packages still have `libjpeg` as a dependency, so replace it with `libjpeg-turbo`.
+                if [[ $element = 'libjpeg' ]] && ! $OPKG_CMD status 'libjpeg-turbo' | $GREP_CMD -q "Status:.*installed"; then
                     IPKs.AcToDownload.Add 'libjpeg-turbo'
+                elif ! $OPKG_CMD status "$element" | $GREP_CMD -q "Status:.*installed"; then
+                    IPKs.AcToDownload.Add "$element"
                 fi
             fi
         done
