@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly MANAGER_FILE=sherpa.manager.sh
-    local -r SCRIPT_VER=221228a-beta
+    local -r SCRIPT_VER=221228b-beta
 
     IsQNAP || return
     IsSU || return
@@ -531,10 +531,7 @@ Self.Validate()
             for prospect in $(QPKG.GetDependents "$package"); do
                 if QPKGs.IsStarted.Exist "$prospect"; then
                     QPKGs.AcToStop.Add "$prospect"
-
-                    if ! QPKGs.AcToUninstall.Exist "$prospect" && ! QPKGs.AcToInstall.Exist "$prospect"; then
-                        QPKGs.AcToStart.Add "$prospect"
-                    fi
+                    ! QPKGs.AcToUninstall.Exist "$prospect" && ! QPKGs.AcToInstall.Exist "$prospect" && QPKGs.AcToStart.Add "$prospect"
                 fi
             done
         fi
@@ -544,9 +541,7 @@ Self.Validate()
     for package in $(QPKGs.AcToStop.Array) $(QPKGs.AcToUninstall.Array); do
         if QPKGs.ScStandalone.Exist "$package" && QPKGs.IsInstalled.Exist "$package"; then
             for prospect in $(QPKG.GetDependents "$package"); do
-                if QPKGs.IsStarted.Exist "$prospect"; then
-                    QPKGs.AcToStop.Add "$prospect"
-                fi
+                QPKGs.IsStarted.Exist "$prospect" && QPKGs.AcToStop.Add "$prospect"
             done
         fi
     done
@@ -558,10 +553,7 @@ Self.Validate()
                 for prospect in $(QPKG.GetDependents "$package"); do
                     if QPKGs.IsStarted.Exist "$prospect"; then
                         QPKGs.AcToStop.Add "$prospect"
-
-                        if ! QPKGs.AcToUninstall.Exist "$prospect" && ! QPKGs.AcToInstall.Exist "$prospect"; then
-                            QPKGs.AcToStart.Add "$prospect"
-                        fi
+                        ! QPKGs.AcToUninstall.Exist "$prospect" && ! QPKGs.AcToInstall.Exist "$prospect" && QPKGs.AcToStart.Add "$prospect"
                     fi
                 done
             fi
@@ -603,9 +595,7 @@ Self.Validate()
         QPKGs.NewVersions.Show
 
         for package in $(QPKGs.ScDependent.Array); do
-            if ! QPKGs.ScUpgradable.Exist "$package" && QPKGs.IsStarted.Exist "$package" && QPKGs.ScSupportUpdateOnRestart.Exist "$package"; then
-                QPKGs.AcToRestart.Add "$package"
-            fi
+            ! QPKGs.ScUpgradable.Exist "$package" && QPKGs.IsStarted.Exist "$package" && QPKGs.ScSupportUpdateOnRestart.Exist "$package" && QPKGs.AcToRestart.Add "$package"
         done
     fi
 
@@ -703,13 +693,8 @@ Tiers.Process()
                 ;;
             Addon)
                 for action in Install Reinstall Upgrade Start; do
-                    if QPKGs.IsStarted.Exist Entware; then
-                        IPKs.Upgrade.Set
-                    fi
-
-                    if QPKGs.AcTo${action}.IsAny; then
-                        IPKs.Install.Set
-                    fi
+                    QPKGs.IsStarted.Exist Entware && IPKs.Upgrade.Set
+                    QPKGs.AcTo${action}.IsAny && IPKs.Install.Set
                 done
 
                 if QPKGs.IsStarted.Exist Entware; then
