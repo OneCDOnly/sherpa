@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly MANAGER_FILE=sherpa.manager.sh
-    local -r SCRIPT_VER=221228c-beta
+    local -r SCRIPT_VER=221228d-beta
 
     IsQNAP || return
     IsSU || return
@@ -2091,10 +2091,12 @@ CalcIPKsDepsToInstall()
             # KLUDGE: `python3-gdbm` is not available, but can be requested as per https://forum.qnap.com/viewtopic.php?p=806031#p806031 (don't know why).
             if [[ $element != 'ca-certs' && $element != 'python3-gdbm' ]]; then
                 # KLUDGE: `libjpeg` appears to have been replaced by `libjpeg-turbo`, but many packages still have `libjpeg` as a dependency, so replace it with `libjpeg-turbo`.
-                if [[ $element = 'libjpeg' ]] && ! $OPKG_CMD status 'libjpeg-turbo' | $GREP_CMD -q "Status:.*installed"; then
-                    IPKs.AcToDownload.Add 'libjpeg-turbo'
-                elif ! $OPKG_CMD status "$element" | $GREP_CMD -q "Status:.*installed"; then
-                    IPKs.AcToDownload.Add "$element"
+               if [[ $element != 'libjpeg' ]]; then
+                    if ! $OPKG_CMD status "$element" | $GREP_CMD -q "Status:.*installed"; then
+                        IPKGs.AcToDownload.Add "$element"
+                    fi
+                elif ! $OPKG_CMD status 'libjpeg-turbo' | $GREP_CMD -q "Status:.*installed"; then
+                    IPKGs.AcToDownload.Add 'libjpeg-turbo'
                 fi
             fi
         done
