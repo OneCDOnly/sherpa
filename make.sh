@@ -186,21 +186,18 @@ for state in "${PACKAGE_STATES[@]}"; do
     done
 done
 
-for state in "${PACKAGE_STATES_TEMPORARY[@]}"; do
-    for action in "${PACKAGE_ACTIONS[@]}"; do
-        AddFlagObj QPKGs.Ac${action}.Is${state}
-    done
-done
+# actions on QPKGs with temporary states are unsupported, so don't create flags for them
 
-# lists
+# session lists
 AddListObj Args.Unknown
 
-for action in "${MANAGEMENT_ACTIONS[@]}"; do
-    AddListObj Self.AcTo${action}       # action to be tried
-    AddListObj Self.AcOk${action}       # action was tried and succeeded
-    AddListObj Self.AcEr${action}       # action was tried but failed
-    AddListObj Self.AcSk${action}       # action was skipped
-done
+# $MANAGEMENT_ACTIONS haven't been coded yet, so don't create objects for it
+# for action in "${MANAGEMENT_ACTIONS[@]}"; do
+#     AddListObj Self.AcTo${action}       # action to be tried
+#     AddListObj Self.AcOk${action}       # action was tried and succeeded
+#     AddListObj Self.AcEr${action}       # action was tried but failed
+#     AddListObj Self.AcSk${action}       # action was skipped
+# done
 
 for action in "${PACKAGE_ACTIONS[@]}"; do
     for prefix in To Ok Er Sk; do
@@ -214,13 +211,13 @@ for scope in "${PACKAGE_SCOPES[@]}"; do
     AddListObj QPKGs.ScNt${scope}
 done
 
-for state in "${PACKAGE_STATES_TEMPORARY[@]}"; do
-    AddListObj QPKGs.Is${state}
-done
-
 for state in "${PACKAGE_STATES[@]}" "${PACKAGE_RESULTS[@]}"; do
     AddListObj QPKGs.Is${state}
     AddListObj QPKGs.IsNt${state}
+done
+
+for state in "${PACKAGE_STATES_TEMPORARY[@]}"; do
+    AddListObj QPKGs.Is${state}
 done
 
 tar --create --gzip --numeric-owner --file="$MANAGER_ARCHIVE_PATHFILE" --directory="$WORK_PATH" "$MANAGER_FILE"
