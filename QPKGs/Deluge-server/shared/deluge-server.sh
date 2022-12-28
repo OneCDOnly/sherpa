@@ -20,7 +20,7 @@ Init()
 
     # service-script environment
     readonly QPKG_NAME=Deluge-server
-    readonly SCRIPT_VERSION=221225
+    readonly SCRIPT_VERSION=221229
 
     # general environment
     readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -532,12 +532,15 @@ EnsureConfigFileExists()
         DisplayCommitToLog 'no configuration file found: using default'
         cp "$QPKG_INI_DEFAULT_PATHFILE" "$QPKG_INI_PATHFILE"
 
-        # update plugins path to match local environment
+        # update to match installed environment
         local buff=$(/opt/bin/jq ".plugins_location |= \"$QPKG_PATH/config/plugins\"" "$QPKG_INI_PATHFILE") && echo "$buff" > "$QPKG_INI_PATHFILE"
     fi
 
-    # Deluge-server and Deluge-web need access to the same auth file, or to duplicate copies of it
+    # update to match installed environment
+    local geoip_pathfile=$(/usr/bin/dirname "$QPKG_INI_PATHFILE")/GeoIP.dat
+    /bin/sed -i "s|/opt/share/GeoIP/GeoIP.dat|$geoip_pathfile|" "$QPKG_INI_PATHFILE"
 
+    # Deluge-server and Deluge-web need access to the same auth file, or to duplicate copies of it
     if [[ $(/sbin/getcfg Deluge-web Enable -d FALSE -f /etc/config/qpkg.conf) = TRUE ]]; then
         server_auth_pathfile=$(/usr/bin/dirname "$QPKG_INI_PATHFILE")/auth
         web_auth_pathfile=$(/sbin/getcfg Deluge-web Install_Path -f "/etc/config/qpkg.conf")/config/auth
