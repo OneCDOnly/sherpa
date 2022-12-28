@@ -103,9 +103,6 @@
 # Define any package specific operations that shall be performed when
 # the package is installed.
 ######################################################################
-pkg_post_install()
-    {
-    }
 ######################################################################
 # Define any package specific operations that shall be performed when
 # the package is removed.
