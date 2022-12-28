@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly MANAGER_FILE=sherpa.manager.sh
-    local -r SCRIPT_VER=221229-beta
+    local -r SCRIPT_VER=221229a-beta
 
     IsQNAP || return
     IsSU || return
@@ -2093,10 +2093,10 @@ CalcIpkDepsToInstall()
                 # KLUDGE: `libjpeg` appears to have been replaced by `libjpeg-turbo`, but many packages still have `libjpeg` as a dependency, so replace it with `libjpeg-turbo`.
                if [[ $element != 'libjpeg' ]]; then
                     if ! $OPKG_CMD status "$element" | $GREP_CMD -q "Status:.*installed"; then
-                        IPKGs.AcToDownload.Add "$element"
+                        IPKs.AcToDownload.Add "$element"
                     fi
                 elif ! $OPKG_CMD status 'libjpeg-turbo' | $GREP_CMD -q "Status:.*installed"; then
-                    IPKGs.AcToDownload.Add 'libjpeg-turbo'
+                    IPKs.AcToDownload.Add 'libjpeg-turbo'
                 fi
             fi
         done
