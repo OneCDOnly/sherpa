@@ -203,15 +203,10 @@ for action in "${MANAGEMENT_ACTIONS[@]}"; do
 done
 
 for action in "${PACKAGE_ACTIONS[@]}"; do
-    AddListObj QPKGs.AcTo${action}      # action to be tried
-    AddListObj QPKGs.AcOk${action}      # action was tried and succeeded
-    AddListObj QPKGs.AcEr${action}      # action was tried but failed
-    AddListObj QPKGs.AcSk${action}      # action was skipped
-done
-
-for action in Download Install Uninstall Upgrade; do    # only a subset of addon package actions are supported for-now
-    AddListObj IPKs.AcTo${action}
-    AddListObj IPKs.AcOk${action}
+    for prefix in To Ok Er Sk; do
+        AddListObj QPKGs.Ac${prefix}${action}
+        AddListObj IPKs.Ac${prefix}${action}
+    done
 done
 
 for scope in "${PACKAGE_SCOPES[@]}"; do

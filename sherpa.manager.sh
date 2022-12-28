@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly MANAGER_FILE=sherpa.manager.sh
-    local -r SCRIPT_VER=221228b-beta
+    local -r SCRIPT_VER=221228c-beta
 
     IsQNAP || return
     IsSU || return
@@ -495,7 +495,7 @@ Self.Validate()
         else
             for package in $(QPKGs.AcToRebuild.Array); do
                 if ! QPKGs.IsBackedUp.Exist "$package"; then
-                    MarkActionAsSkipped show "$package" rebuild 'does not have a backup to rebuild from'
+                    MarkQPKGActionAsSkipped show "$package" rebuild 'does not have a backup to rebuild from'
                 else
                     (QPKGs.IsNtInstalled.Exist "$package" || QPKGs.AcToUninstall.Exist "$package") && QPKGs.AcToInstall.Add "$package"
                     QPKGs.AcToRestore.Add "$package"
@@ -708,6 +708,7 @@ Tiers.Process()
         esac
     done
 
+    IPKs.Actions.List
     QPKGs.Actions.List
     QPKGs.States.List rebuild       # rebuild these after processing QPKGs to get current states
     SmartCR >&2
@@ -2142,7 +2143,7 @@ IPKs.Upgrade()
     UpdateEntwarePackageList
     Self.Error.IsSet && return
     DebugFuncEntry
-
+    local action=upgrade
     local -i result_code=0
     IPKs.AcToUpgrade.Init
     IPKs.AcToDownload.Init
@@ -2167,8 +2168,10 @@ IPKs.Upgrade()
 
         if [[ $result_code -eq 0 ]]; then
             ShowAsDone "downloaded & upgraded $total_count IPK$(Plural "$total_count")"
+            MarkIPKActionAsDone "$(IPKs.AcToUpgrade.Array)" "$action"
         else
             ShowAsFail "download & upgrade $total_count IPK$(Plural "$total_count") failed $(FormatAsExitcode $result_code)"
+            MarkIPKActionAsError "$(IPKs.AcToUpgrade.Array)" "$action"
         fi
     fi
 
@@ -2188,7 +2191,7 @@ IPKs.Install()
     UpdateEntwarePackageList
     Self.Error.IsSet && return
     DebugFuncEntry
-
+    local action=install
     local -i index=0
     local -i result_code=0
     IPKs.AcToInstall.Init
@@ -2203,7 +2206,7 @@ IPKs.Install()
         done
     else
         for index in "${!QPKG_NAME[@]}"; do
-            if QPKGs.AcToInstall.Exist "${QPKG_NAME[$index]}" || QPKGs.IsInstalled.Exist "${QPKG_NAME[$index]}" || QPKGs.AcToReinstall.Exist "${QPKG_NAME[$index]}" || QPKGs.AcToStart.Exist "${QPKG_NAME[$index]}"; then
+            if QPKGs.AcToInstall.Exist "${QPKG_NAME[$index]}" || QPKGs.IsInstalled.Exist "${QPKG_NAME[$index]}" || QPKGs.AcToReinstall.Exist "${QPKG_NAME[$index]}" || (QPKGs.AcToStart.Exist "${QPKG_NAME[$index]}" && (QPKGs.AcToInstall.Exist "${QPKG_NAME[$index]}" || QPKGs.IsInstalled.Exist "${QPKG_NAME[$index]}" || QPKGs.AcToReinstall.Exist "${QPKG_NAME[$index]}")); then
                 [[ ${QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${QPKG_ARCH[$index]} = all ]] || continue
                 QPKG.MinRAM "${QPKG_NAME[$index]}" &>/dev/null || continue
                 IPKs.AcToInstall.Add "${QPKG_REQUIRES_IPKS[$index]}"
@@ -2229,9 +2232,10 @@ IPKs.Install()
 
         if [[ $result_code -eq 0 ]]; then
             ShowAsDone "downloaded & installed $total_count IPK$(Plural "$total_count")"
-            IPKs.AcOkInstall.Add "$(IPKs.AcToDownload.Array)"
+            MarkIPKActionAsDone "$(IPKs.AcToDownload.Array)" "$action"
         else
             ShowAsFail "download & install $total_count IPK$(Plural "$total_count") failed $(FormatAsExitcode $result_code)"
+            MarkIPKActionAsError "$(IPKs.AcToDownload.Array)" "$action"
         fi
     fi
 
@@ -3406,6 +3410,38 @@ QPKGs.Warnings.Check()
 
     }
 
+IPKs.Actions.List()
+    {
+
+    QPKGs.SkProc.IsSet && return
+    DebugFuncEntry
+
+    local action=''
+    local prefix=''
+    DebugInfoMinorSeparator
+
+    for action in "${PACKAGE_ACTIONS[@]}"; do
+        for prefix in To Ok Er Sk; do
+            if IPKs.Ac${prefix}${action}.IsAny; then
+                case $prefix in
+                    Ok)
+                        DebugIPKInfo "Ac${prefix}${action}" "($(IPKs.Ac${prefix}${action}.Count)) $(IPKs.Ac${prefix}${action}.ListCSV) "
+                        ;;
+                    Sk)
+                        DebugIPKWarning "Ac${prefix}${action}" "($(IPKs.Ac${prefix}${action}.Count)) $(IPKs.Ac${prefix}${action}.ListCSV) "
+                        ;;
+                    Er)
+                        DebugIPKError "Ac${prefix}${action}" "($(IPKs.Ac${prefix}${action}.Count)) $(IPKs.Ac${prefix}${action}.ListCSV) "
+                esac
+            fi
+        done
+    done
+
+    DebugInfoMinorSeparator
+    DebugFuncExit
+
+    }
+
 QPKGs.Actions.List()
     {
 
@@ -3417,14 +3453,19 @@ QPKGs.Actions.List()
     DebugInfoMinorSeparator
 
     for action in "${PACKAGE_ACTIONS[@]}"; do
-        # SPEEDUP: only log arrays with more than zero elements
         for prefix in To Ok Er Sk; do
             if QPKGs.Ac${prefix}${action}.IsAny; then
-                if [[ $prefix != To ]]; then
-                    DebugQPKGInfo "Ac${prefix}${action}" "($(QPKGs.Ac${prefix}${action}.Count)) $(QPKGs.Ac${prefix}${action}.ListCSV) "
-                else
-                    DebugQPKGWarning "Ac${prefix}${action}" "($(QPKGs.Ac${prefix}${action}.Count)) $(QPKGs.Ac${prefix}${action}.ListCSV) "
-                fi
+                case $prefix in
+                    Ok)
+                        DebugQPKGInfo "Ac${prefix}${action}" "($(QPKGs.Ac${prefix}${action}.Count)) $(QPKGs.Ac${prefix}${action}.ListCSV) "
+                        ;;
+                    Sk)
+                        DebugQPKGWarning "Ac${prefix}${action}" "($(QPKGs.Ac${prefix}${action}.Count)) $(QPKGs.Ac${prefix}${action}.ListCSV) "
+                        ;;
+                    Er)
+                        DebugQPKGError "Ac${prefix}${action}" "($(QPKGs.Ac${prefix}${action}.Count)) $(QPKGs.Ac${prefix}${action}.ListCSV) "
+                        ;;
+                esac
             fi
         done
     done
@@ -3450,7 +3491,6 @@ QPKGs.States.List()
     for state in "${PACKAGE_STATES[@]}" "${PACKAGE_RESULTS[@]}"; do
         for prefix in Is IsNt; do
             if [[ $prefix = IsNt && $state = Ok ]]; then
-                # SPEEDUP: only log arrays with more than zero elements
                 QPKGs.${prefix}${state}.IsAny && DebugQPKGError "${prefix}${state}" "($(QPKGs.${prefix}${state}.Count)) $(QPKGs.${prefix}${state}.ListCSV) "
             elif [[ $prefix = IsNt && $state = BackedUp ]]; then
                 QPKGs.${prefix}${state}.IsAny && DebugQPKGWarning "${prefix}${state}" "($(QPKGs.${prefix}${state}.Count)) $(QPKGs.${prefix}${state}.ListCSV) "
@@ -3465,7 +3505,6 @@ QPKGs.States.List()
     for state in "${PACKAGE_STATES_TEMPORARY[@]}"; do
         # shellcheck disable=2043
         for prefix in Is; do
-            # SPEEDUP: only log arrays with more than zero elements
             QPKGs.${prefix}${state}.IsAny && DebugQPKGInfo "${prefix}${state}" "($(QPKGs.${prefix}${state}.Count)) $(QPKGs.${prefix}${state}.ListCSV) "
         done
     done
@@ -3984,7 +4023,7 @@ QPKGs.ScDependent.Show()
 
     }
 
-MarkActionAsDone()
+MarkQPKGActionAsDone()
     {
 
     # move specified package name from `To` action array into associated `Ok` array
@@ -4000,7 +4039,7 @@ MarkActionAsDone()
 
     }
 
-MarkActionAsError()
+MarkQPKGActionAsError()
     {
 
     # move specified package name from `To` action array into associated `Er` array
@@ -4021,7 +4060,7 @@ MarkActionAsError()
 
     }
 
-MarkActionAsSkipped()
+MarkQPKGActionAsSkipped()
     {
 
     # move specified package name from `To` action array into associated `Sk` array
@@ -4048,7 +4087,71 @@ MarkActionAsSkipped()
 
     }
 
-MarkStateAsInstalled()
+MarkIPKActionAsDone()
+    {
+
+    # move specified package name from `To` action array into associated `Ok` array
+
+    # input:
+    #   $1 = package name
+    #   $2 = action
+
+    IPKs.AcTo"$(Capitalise "$2")".Remove "$1"
+    IPKs.AcOk"$(Capitalise "$2")".Add "$1"
+
+    return 0
+
+    }
+
+MarkIPKActionAsError()
+    {
+
+    # move specified package name from `To` action array into associated `Er` array
+
+    # input:
+    #   $1 = package name
+    #   $2 = action
+    #   $3 = reason (optional)
+
+    local message="failing request to $2 $(FormatAsPackageName "$1")"
+
+    [[ -n ${3:-} ]] && message+=" as $3"
+    DebugAsError "$message" >&2
+    IPKs.AcTo"$(Capitalise "$2")".Remove "$1"
+    IPKs.AcEr"$(Capitalise "$2")".Add "$1"
+
+    return 0
+
+    }
+
+MarkIPKActionAsSkipped()
+    {
+
+    # move specified package name from `To` action array into associated `Sk` array
+
+    # input:
+    #   $1 = show this onscreen: `show`/`hide`
+    #   $2 = package name
+    #   $3 = action
+    #   $4 = reason (optional)
+
+    local message="ignoring request to $3 $(FormatAsPackageName "$2")"
+    [[ -n ${4:-} ]] && message+=" as $4"
+
+    if [[ ${1:-hide} = show ]]; then
+        ShowAsInfo "$message" >&2
+    else
+        DebugAsInfo "$message" >&2
+    fi
+
+    IPKs.AcTo"$(Capitalise "$3")".Remove "$2"
+    IPKs.AcSk"$(Capitalise "$3")".Add "$2"
+
+    return 0
+
+    }
+
+MarkQPKGStateAsInstalled()
     {
 
     [[ -z ${1:-} ]] && return 1
@@ -4058,7 +4161,7 @@ MarkStateAsInstalled()
 
     }
 
-MarkStateAsNotInstalled()
+MarkQPKGStateAsNotInstalled()
     {
 
     [[ -z ${1:-} ]] && return 1
@@ -4074,7 +4177,7 @@ MarkStateAsNotInstalled()
 
     }
 
-MarkStateAsEnabled()
+MarkQPKGStateAsEnabled()
     {
 
     [[ -z ${1:-} ]] && return 1
@@ -4084,7 +4187,7 @@ MarkStateAsEnabled()
 
     }
 
-MarkStateAsDisabled()
+MarkQPKGStateAsDisabled()
     {
 
     [[ -z ${1:-} ]] && return 1
@@ -4094,7 +4197,7 @@ MarkStateAsDisabled()
 
     }
 
-MarkStateAsStarted()
+MarkQPKGStateAsStarted()
     {
 
     [[ -z ${1:-} ]] && return 1
@@ -4107,7 +4210,7 @@ MarkStateAsStarted()
 
     }
 
-MarkStateAsStopped()
+MarkQPKGStateAsStopped()
     {
 
     [[ -z ${1:-} ]] && return 1
@@ -4428,14 +4531,14 @@ QPKG.Reassign()
     local action=reassign
 
     if ! QPKGs.IsInstalled.Exist "$PACKAGE_NAME"; then
-        MarkActionAsSkipped show "$PACKAGE_NAME" "$action" "it's not installed - use 'install' instead"
+        MarkQPKGActionAsSkipped show "$PACKAGE_NAME" "$action" "it's not installed - use 'install' instead"
         DebugFuncExit 2; return
     fi
 
     local package_store_id=$(QPKG.StoreID "$PACKAGE_NAME")
 
     if [[ $package_store_id = sherpa ]]; then
-        MarkActionAsSkipped show "$PACKAGE_NAME" "$action" "it's already assigned to $(FormatAsScriptTitle)"
+        MarkQPKGActionAsSkipped show "$PACKAGE_NAME" "$action" "it's already assigned to $(FormatAsScriptTitle)"
         DebugFuncExit 2; return
     fi
 
@@ -4444,10 +4547,10 @@ QPKG.Reassign()
     result_code=$?
 
     if [[ $result_code -eq 0 ]]; then
-        MarkActionAsDone "$PACKAGE_NAME" "$action"
+        MarkQPKGActionAsDone "$PACKAGE_NAME" "$action"
     else
         DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
-        MarkActionAsError "$PACKAGE_NAME" "$action"
+        MarkQPKGActionAsError "$PACKAGE_NAME" "$action"
         result_code=1    # remap to 1
     fi
 
@@ -4499,7 +4602,7 @@ QPKG.Download()
     fi
 
     if [[ $result_code -eq 2 ]]; then
-        MarkActionAsSkipped hide "$PACKAGE_NAME" "$action"
+        MarkQPKGActionAsSkipped hide "$PACKAGE_NAME" "$action"
         DebugFuncExit $result_code; return
     fi
 
@@ -4553,17 +4656,17 @@ QPKG.Install()
     local debug_cmd=''
 
     if QPKGs.IsInstalled.Exist "$PACKAGE_NAME"; then
-        MarkActionAsSkipped show "$PACKAGE_NAME" "$action" "it's already installed - use 'reinstall' instead"
+        MarkQPKGActionAsSkipped show "$PACKAGE_NAME" "$action" "it's already installed - use 'reinstall' instead"
         DebugFuncExit 2; return
     fi
 
     if ! QPKG.URL "$PACKAGE_NAME" &>/dev/null; then
-        MarkActionAsSkipped show "$PACKAGE_NAME" "$action" 'this NAS has an unsupported arch'
+        MarkQPKGActionAsSkipped show "$PACKAGE_NAME" "$action" 'this NAS has an unsupported arch'
         DebugFuncExit 2; return
     fi
 
     if ! QPKG.MinRAM "$PACKAGE_NAME" &>/dev/null; then
-        MarkActionAsSkipped show "$PACKAGE_NAME" "$action" 'this NAS has insufficient RAM'
+        MarkQPKGActionAsSkipped show "$PACKAGE_NAME" "$action" 'this NAS has insufficient RAM'
         DebugFuncExit 2; return
     fi
 
@@ -4575,7 +4678,7 @@ QPKG.Install()
     fi
 
     if [[ -z $local_pathfile ]]; then
-        MarkActionAsSkipped show "$PACKAGE_NAME" "$action" 'no local file found for processing: this error should be reported'
+        MarkQPKGActionAsSkipped show "$PACKAGE_NAME" "$action" 'no local file found for processing: this error should be reported'
         DebugFuncExit 2; return
     fi
 
@@ -4602,13 +4705,13 @@ QPKG.Install()
 
     if [[ $result_code -eq 0 || $result_code -eq 10 ]]; then
         QPKG.StoreServiceStatus "$PACKAGE_NAME"
-        MarkActionAsDone "$PACKAGE_NAME" "$action"
-        MarkStateAsInstalled "$PACKAGE_NAME"
+        MarkQPKGActionAsDone "$PACKAGE_NAME" "$action"
+        MarkQPKGStateAsInstalled "$PACKAGE_NAME"
 
         if QPKG.IsEnabled "$PACKAGE_NAME"; then
-            MarkStateAsStarted "$PACKAGE_NAME"
+            MarkQPKGStateAsStarted "$PACKAGE_NAME"
         else
-            MarkStateAsStopped "$PACKAGE_NAME"
+            MarkQPKGStateAsStopped "$PACKAGE_NAME"
         fi
 
         local current_version=$(QPKG.Local.Version "$PACKAGE_NAME")
@@ -4636,7 +4739,7 @@ QPKG.Install()
         result_code=0    # remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK)
     else
         DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
-        MarkActionAsError "$PACKAGE_NAME" "$action"
+        MarkQPKGActionAsError "$PACKAGE_NAME" "$action"
         result_code=1    # remap to 1
     fi
 
@@ -4666,7 +4769,7 @@ QPKG.Reinstall()
     local debug_cmd=''
 
     if ! QPKGs.IsInstalled.Exist "$PACKAGE_NAME"; then
-        MarkActionAsSkipped show "$PACKAGE_NAME" "$action" "it's not installed - use 'install' instead"
+        MarkQPKGActionAsSkipped show "$PACKAGE_NAME" "$action" "it's not installed - use 'install' instead"
         DebugFuncExit 2; return
     fi
 
@@ -4678,7 +4781,7 @@ QPKG.Reinstall()
     fi
 
     if [[ -z $local_pathfile ]]; then
-        MarkActionAsSkipped show "$PACKAGE_NAME" "$action" 'no local file found for processing: this error should be reported'
+        MarkQPKGActionAsSkipped show "$PACKAGE_NAME" "$action" 'no local file found for processing: this error should be reported'
         DebugFuncExit 2; return
     fi
 
@@ -4694,12 +4797,12 @@ QPKG.Reinstall()
 
     if [[ $result_code -eq 0 || $result_code -eq 10 ]]; then
         QPKG.StoreServiceStatus "$PACKAGE_NAME"
-        MarkActionAsDone "$PACKAGE_NAME" "$action"
+        MarkQPKGActionAsDone "$PACKAGE_NAME" "$action"
 
         if QPKG.IsEnabled "$PACKAGE_NAME"; then
-            MarkStateAsStarted "$PACKAGE_NAME"
+            MarkQPKGStateAsStarted "$PACKAGE_NAME"
         else
-            MarkStateAsStopped "$PACKAGE_NAME"
+            MarkQPKGStateAsStopped "$PACKAGE_NAME"
         fi
 
         local current_version=$(QPKG.Local.Version "$PACKAGE_NAME")
@@ -4707,7 +4810,7 @@ QPKG.Reinstall()
         result_code=0    # remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK)
     else
         DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
-        MarkActionAsError "$PACKAGE_NAME" "$action"
+        MarkQPKGActionAsError "$PACKAGE_NAME" "$action"
         result_code=1    # remap to 1
     fi
 
@@ -4739,19 +4842,19 @@ QPKG.Upgrade()
     local debug_cmd=''
 
     if ! QPKGs.IsInstalled.Exist "$PACKAGE_NAME"; then
-        MarkActionAsSkipped show "$PACKAGE_NAME" "$action" "it's not installed - use 'install' instead"
+        MarkQPKGActionAsSkipped show "$PACKAGE_NAME" "$action" "it's not installed - use 'install' instead"
         DebugFuncExit 2; return
     fi
 
     if ! QPKGs.ScUpgradable.Exist "$PACKAGE_NAME"; then
-        MarkActionAsSkipped show "$PACKAGE_NAME" "$action" 'no new package is available'
+        MarkQPKGActionAsSkipped show "$PACKAGE_NAME" "$action" 'no new package is available'
         DebugFuncExit 2; return
     fi
 
     local package_store_id=$(QPKG.StoreID "$PACKAGE_NAME")
 
     if [[ $package_store_id != sherpa ]]; then
-        MarkActionAsSkipped show "$PACKAGE_NAME" "$action" "it's assigned to another repository - use 'reassign' first"
+        MarkQPKGActionAsSkipped show "$PACKAGE_NAME" "$action" "it's assigned to another repository - use 'reassign' first"
         DebugFuncExit 2; return
     fi
 
@@ -4763,7 +4866,7 @@ QPKG.Upgrade()
     fi
 
     if [[ -z $local_pathfile ]]; then
-        MarkActionAsSkipped show "$PACKAGE_NAME" "$action" 'no local file found for processing: this error should be reported'
+        MarkQPKGActionAsSkipped show "$PACKAGE_NAME" "$action" 'no local file found for processing: this error should be reported'
         DebugFuncExit 2; return
     fi
 
@@ -4780,13 +4883,13 @@ QPKG.Upgrade()
 
     if [[ $result_code -eq 0 || $result_code -eq 10 ]]; then
         QPKG.StoreServiceStatus "$PACKAGE_NAME"
-        MarkActionAsDone "$PACKAGE_NAME" "$action"
+        MarkQPKGActionAsDone "$PACKAGE_NAME" "$action"
         QPKGs.ScUpgradable.Remove "$PACKAGE_NAME"
 
         if QPKG.IsEnabled "$PACKAGE_NAME"; then
-            MarkStateAsStarted "$PACKAGE_NAME"
+            MarkQPKGStateAsStarted "$PACKAGE_NAME"
         else
-            MarkStateAsStopped "$PACKAGE_NAME"
+            MarkQPKGStateAsStopped "$PACKAGE_NAME"
         fi
 
         local current_version=$(QPKG.Local.Version "$PACKAGE_NAME")
@@ -4800,7 +4903,7 @@ QPKG.Upgrade()
         result_code=0    # remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK)
     else
         DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
-        MarkActionAsError "$PACKAGE_NAME" "$action"
+        MarkQPKGActionAsError "$PACKAGE_NAME" "$action"
         result_code=1    # remap to 1
     fi
 
@@ -4829,12 +4932,12 @@ QPKG.Uninstall()
     local debug_cmd=''
 
     if QPKGs.IsNtInstalled.Exist "$PACKAGE_NAME"; then
-        MarkActionAsSkipped show "$PACKAGE_NAME" "$action" "it's not installed"
+        MarkQPKGActionAsSkipped show "$PACKAGE_NAME" "$action" "it's not installed"
         DebugFuncExit 2; return
     fi
 
     if [[ $PACKAGE_NAME = sherpa ]]; then
-        MarkActionAsSkipped show "$PACKAGE_NAME" "$action" "it's needed here! 😉"
+        MarkQPKGActionAsSkipped show "$PACKAGE_NAME" "$action" "it's needed here! 😉"
         DebugFuncExit 2; return
     fi
 
@@ -4854,11 +4957,11 @@ QPKG.Uninstall()
             /sbin/rmcfg "$PACKAGE_NAME" -f /etc/config/qpkg.conf
             DebugAsDone 'removed icon information from App Center'
             [[ $PACKAGE_NAME = Entware ]] && ModPathToEntware
-            MarkActionAsDone "$PACKAGE_NAME" "$action"
-            MarkStateAsNotInstalled "$PACKAGE_NAME"
+            MarkQPKGActionAsDone "$PACKAGE_NAME" "$action"
+            MarkQPKGStateAsNotInstalled "$PACKAGE_NAME"
         else
             DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
-            MarkActionAsError "$PACKAGE_NAME" "$action"
+            MarkQPKGActionAsError "$PACKAGE_NAME" "$action"
             result_code=1    # remap to 1
         fi
     fi
@@ -4891,12 +4994,12 @@ QPKG.Restart()
     QPKG.ClearServiceStatus "$PACKAGE_NAME"
 
     if QPKGs.IsNtInstalled.Exist "$PACKAGE_NAME"; then
-        MarkActionAsSkipped show "$PACKAGE_NAME" "$action" "it's not installed"
+        MarkQPKGActionAsSkipped show "$PACKAGE_NAME" "$action" "it's not installed"
         DebugFuncExit 2; return
     fi
 
     if [[ $PACKAGE_NAME = sherpa ]]; then
-        MarkActionAsSkipped show "$PACKAGE_NAME" "$action" "it's needed here! 😉"
+        MarkQPKGActionAsSkipped show "$PACKAGE_NAME" "$action" "it's needed here! 😉"
         DebugFuncExit 2; return
     fi
 
@@ -4916,10 +5019,10 @@ QPKG.Restart()
     if [[ $result_code -eq 0 ]]; then
         DebugAsDone "restarted $(FormatAsPackageName "$PACKAGE_NAME")"
         QPKG.StoreServiceStatus "$PACKAGE_NAME"
-        MarkActionAsDone "$PACKAGE_NAME" "$action"
+        MarkQPKGActionAsDone "$PACKAGE_NAME" "$action"
     else
         DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
-        MarkActionAsError "$PACKAGE_NAME" "$action"
+        MarkQPKGActionAsError "$PACKAGE_NAME" "$action"
         result_code=1    # remap to 1
     fi
 
@@ -4951,12 +5054,12 @@ QPKG.Start()
     QPKG.ClearServiceStatus "$PACKAGE_NAME"
 
     if QPKGs.IsNtInstalled.Exist "$PACKAGE_NAME"; then
-        MarkActionAsSkipped show "$PACKAGE_NAME" "$action" "it's not installed"
+        MarkQPKGActionAsSkipped show "$PACKAGE_NAME" "$action" "it's not installed"
         DebugFuncExit 2; return
     fi
 
     if QPKGs.IsStarted.Exist "$PACKAGE_NAME"; then
-        MarkActionAsSkipped show "$PACKAGE_NAME" "$action" "it's already started"
+        MarkQPKGActionAsSkipped show "$PACKAGE_NAME" "$action" "it's already started"
         DebugFuncExit 2; return
     fi
 
@@ -4976,12 +5079,12 @@ QPKG.Start()
     if [[ $result_code -eq 0 ]]; then
         DebugAsDone "started $(FormatAsPackageName "$PACKAGE_NAME")"
         QPKG.StoreServiceStatus "$PACKAGE_NAME"
-        MarkActionAsDone "$PACKAGE_NAME" "$action"
-        MarkStateAsStarted "$PACKAGE_NAME"
+        MarkQPKGActionAsDone "$PACKAGE_NAME" "$action"
+        MarkQPKGStateAsStarted "$PACKAGE_NAME"
         [[ $PACKAGE_NAME = Entware ]] && ModPathToEntware
     else
         DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
-        MarkActionAsError "$PACKAGE_NAME" "$action"
+        MarkQPKGActionAsError "$PACKAGE_NAME" "$action"
         result_code=1    # remap to 1
     fi
 
@@ -5013,17 +5116,17 @@ QPKG.Stop()
     QPKG.ClearServiceStatus "$PACKAGE_NAME"
 
     if QPKGs.IsNtInstalled.Exist "$PACKAGE_NAME"; then
-        MarkActionAsSkipped show "$PACKAGE_NAME" "$action" "it's not installed"
+        MarkQPKGActionAsSkipped show "$PACKAGE_NAME" "$action" "it's not installed"
         DebugFuncExit 2; return
     fi
 
     if QPKGs.IsNtStarted.Exist "$PACKAGE_NAME"; then
-        MarkActionAsSkipped show "$PACKAGE_NAME" "$action" "it's already stopped"
+        MarkQPKGActionAsSkipped show "$PACKAGE_NAME" "$action" "it's already stopped"
         DebugFuncExit 2; return
     fi
 
     if [[ $PACKAGE_NAME = sherpa ]]; then
-        MarkActionAsSkipped show "$PACKAGE_NAME" "$action" "it's needed here! 😉"
+        MarkQPKGActionAsSkipped show "$PACKAGE_NAME" "$action" "it's needed here! 😉"
         DebugFuncExit 2; return
     fi
 
@@ -5043,11 +5146,11 @@ QPKG.Stop()
     if [[ $result_code -eq 0 ]]; then
         DebugAsDone "stopped $(FormatAsPackageName "$PACKAGE_NAME")"
         QPKG.StoreServiceStatus "$PACKAGE_NAME"
-        MarkActionAsDone "$PACKAGE_NAME" "$action"
-        MarkStateAsStopped "$PACKAGE_NAME"
+        MarkQPKGActionAsDone "$PACKAGE_NAME" "$action"
+        MarkQPKGStateAsStopped "$PACKAGE_NAME"
     else
         DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
-        MarkActionAsError "$PACKAGE_NAME" "$action"
+        MarkQPKGActionAsError "$PACKAGE_NAME" "$action"
         result_code=1    # remap to 1
     fi
 
@@ -5069,7 +5172,7 @@ QPKG.Enable()
     result_code=$?
 
     if [[ $result_code -eq 0 ]]; then
-        MarkStateAsEnabled "$PACKAGE_NAME"
+        MarkQPKGStateAsEnabled "$PACKAGE_NAME"
     else
         result_code=1    # remap to 1
     fi
@@ -5091,7 +5194,7 @@ QPKG.Disable()
     result_code=$?
 
     if [[ $result_code -eq 0 ]]; then
-        MarkStateAsDisabled "$PACKAGE_NAME"
+        MarkQPKGStateAsDisabled "$PACKAGE_NAME"
     else
         result_code=1    # remap to 1
     fi
@@ -5121,12 +5224,12 @@ QPKG.Backup()
     local debug_cmd=''
 
     if ! QPKG.IsSupportBackup "$PACKAGE_NAME"; then
-        MarkActionAsSkipped show "$PACKAGE_NAME" "$action" "it does not support backup"
+        MarkQPKGActionAsSkipped show "$PACKAGE_NAME" "$action" "it does not support backup"
         DebugFuncExit 2; return
     fi
 
     if QPKGs.IsNtInstalled.Exist "$PACKAGE_NAME"; then
-        MarkActionAsSkipped show "$PACKAGE_NAME" "$action" "it's not installed"
+        MarkQPKGActionAsSkipped show "$PACKAGE_NAME" "$action" "it's not installed"
         DebugFuncExit 2; return
     fi
 
@@ -5140,13 +5243,13 @@ QPKG.Backup()
 
     if [[ $result_code -eq 0 ]]; then
         DebugAsDone "backed-up $(FormatAsPackageName "$PACKAGE_NAME") configuration"
-        MarkActionAsDone "$PACKAGE_NAME" "$action"
+        MarkQPKGActionAsDone "$PACKAGE_NAME" "$action"
         QPKG.StoreServiceStatus "$PACKAGE_NAME"
         QPKGs.IsNtBackedUp.Remove "$PACKAGE_NAME"
         QPKGs.IsBackedUp.Add "$PACKAGE_NAME"
     else
         DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
-        MarkActionAsError "$PACKAGE_NAME" "$action"
+        MarkQPKGActionAsError "$PACKAGE_NAME" "$action"
         result_code=1    # remap to 1
     fi
 
@@ -5173,12 +5276,12 @@ QPKG.Restore()
     local debug_cmd=''
 
     if ! QPKG.IsSupportBackup "$PACKAGE_NAME"; then
-        MarkActionAsSkipped show "$PACKAGE_NAME" "$action" "it does not support backup"
+        MarkQPKGActionAsSkipped show "$PACKAGE_NAME" "$action" "it does not support backup"
         DebugFuncExit 2; return
     fi
 
     if QPKGs.IsNtInstalled.Exist "$PACKAGE_NAME"; then
-        MarkActionAsSkipped show "$PACKAGE_NAME" "$action" "it's not installed"
+        MarkQPKGActionAsSkipped show "$PACKAGE_NAME" "$action" "it's not installed"
         DebugFuncExit 2; return
     fi
 
@@ -5192,11 +5295,11 @@ QPKG.Restore()
 
     if [[ $result_code -eq 0 ]]; then
         DebugAsDone "restored $(FormatAsPackageName "$PACKAGE_NAME") configuration"
-        MarkActionAsDone "$PACKAGE_NAME" "$action"
+        MarkQPKGActionAsDone "$PACKAGE_NAME" "$action"
         QPKG.StoreServiceStatus "$PACKAGE_NAME"
     else
         DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
-        MarkActionAsError "$PACKAGE_NAME" "$action"
+        MarkQPKGActionAsError "$PACKAGE_NAME" "$action"
     fi
 
     DebugFuncExit $result_code
@@ -5224,12 +5327,12 @@ QPKG.Clean()
     local debug_cmd=''
 
     if ! QPKG.IsSupportUpdateOnRestart "$PACKAGE_NAME"; then
-        MarkActionAsSkipped show "$PACKAGE_NAME" "$action" "it does not support cleaning"
+        MarkQPKGActionAsSkipped show "$PACKAGE_NAME" "$action" "it does not support cleaning"
         DebugFuncExit 2; return
     fi
 
     if QPKGs.IsNtInstalled.Exist "$PACKAGE_NAME"; then
-        MarkActionAsSkipped show "$PACKAGE_NAME" "$action" "it's not installed"
+        MarkQPKGActionAsSkipped show "$PACKAGE_NAME" "$action" "it's not installed"
         DebugFuncExit 2; return
     fi
 
@@ -5243,13 +5346,13 @@ QPKG.Clean()
 
     if [[ $result_code -eq 0 ]]; then
         DebugAsDone "cleaned $(FormatAsPackageName "$PACKAGE_NAME")"
-        MarkActionAsDone "$PACKAGE_NAME" "$action"
+        MarkQPKGActionAsDone "$PACKAGE_NAME" "$action"
         QPKG.StoreServiceStatus "$PACKAGE_NAME"
         QPKGs.IsNtCleaned.Remove "$PACKAGE_NAME"
         QPKGs.IsCleaned.Add "$PACKAGE_NAME"
     else
         DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
-        MarkActionAsError "$PACKAGE_NAME" "$action"
+        MarkQPKGActionAsError "$PACKAGE_NAME" "$action"
         result_code=1    # remap to 1
     fi
 
@@ -6156,6 +6259,34 @@ DebugUserspaceWarning()
     {
 
     DebugWarningTabulated "$(FormatAsUserspace)" "${1:-}" "${2:-}"
+
+    }
+
+DebugIPK()
+    {
+
+    DebugDetectedTabulated IPK "${1:-}" "${2:-}"
+
+    }
+
+DebugIPKInfo()
+    {
+
+    DebugInfoTabulated IPK "${1:-}" "${2:-}"
+
+    }
+
+DebugIPKWarning()
+    {
+
+    DebugWarningTabulated IPK "${1:-}" "${2:-}"
+
+    }
+
+DebugIPKError()
+    {
+
+    DebugErrorTabulated IPK "${1:-}" "${2:-}"
 
     }
 
