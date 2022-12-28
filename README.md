@@ -30,14 +30,14 @@ Package management via **sherpa** provides extra features like easy application 
 3) Then at the command prompt, run:
 
 ```
-sudo sherpa
+$ sudo sherpa
 ```
 
 ... and follow the help from there.
 
 If `sudo` is unavailable in your version of QTS, please SSH into your NAS as the 'admin' user instead, and run:
 ```
-sherpa
+# sherpa
 ```
 
 ---
