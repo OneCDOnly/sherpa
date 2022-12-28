@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly MANAGER_FILE=sherpa.manager.sh
-    local -r SCRIPT_VER=221228e-beta
+    local -r SCRIPT_VER=221229-beta
 
     IsQNAP || return
     IsSU || return
@@ -141,7 +141,7 @@ Self.Init()
     readonly IPK_DL_PATH=$WORK_PATH/ipks.downloads
     readonly IPK_CACHE_PATH=$WORK_PATH/ipks
     readonly PIP_CACHE_PATH=$WORK_PATH/pips
-    readonly BACKUP_PATH=$(GetDefaultVolume)/.qpkg_config_backup
+    readonly BACKUP_PATH=$(GetDefVol)/.qpkg_config_backup
 
     local -r MANAGER_ARCHIVE_FILE=${MANAGER_FILE%.*}.tar.gz
     readonly MANAGER_ARCHIVE_PATHFILE=$WORK_PATH/$MANAGER_ARCHIVE_FILE
@@ -173,7 +173,7 @@ Self.Init()
     MANAGEMENT_ACTIONS=(Check List Paste Status)
 
     PACKAGE_TIERS=(Standalone Addon Dependent)
-    PACKAGE_SCOPES=(All Dependent HasDependents Installable Standalone SupportBackup SupportUpdateOnRestart Upgradable)
+    PACKAGE_SCOPES=(All Dependent HasDependents Installable Standalone CanBackup CanRestartToUpdate Upgradable)
     PACKAGE_STATES=(BackedUp Cleaned Downloaded Enabled Installed Missing Started)
     PACKAGE_STATES_TEMPORARY=(Starting Stopping Restarting)
     PACKAGE_ACTIONS=(Download Rebuild Backup Stop Disable Uninstall Upgrade Reassign Reinstall Install Restore Clean Enable Start Restart)
@@ -211,15 +211,15 @@ Self.Init()
     MakePath "$PIP_CACHE_PATH" 'PIP cache' || return
     MakePath "$BACKUP_PATH" 'QPKG backup' || return
 
-    ArchivePriorSessionLogs
+    ArchivePriorSessLogs
 
     local re=\\breset\\b        # create BASH 3.2 compatible regex with word boundaries. https://stackoverflow.com/a/9793094
 
     if [[ $USER_ARGS_RAW =~ $re ]]; then
         ResetArchivedLogs
         ResetWorkPath
-        ArchiveActiveSessionLog
-        ResetActiveSessionLog
+        ArchiveActiveSessLog
+        ResetActiveSessLog
         exit 0
     fi
 
@@ -278,7 +278,7 @@ Self.Init()
         DisableDebugToArchiveAndFile
     else
         Packages.Load || return
-        ParseArguments
+        ParseArgs
     fi
 
     SmartCR >&2
@@ -306,10 +306,10 @@ Self.Init()
 
     }
 
-Environment.Log()
+Self.LogEnv()
     {
 
-    Self.ArgumentSuggestions.Show
+    Self.ArgSuggests.Show
     QPKGs.SkProc.IsSet && return
     DebugFuncEntry
     ShowAsProc environment >&2
@@ -351,7 +351,7 @@ Environment.Log()
 
     DebugUserspaceOK 'time in shell' "$(GetTimeInShell)"
     DebugUserspaceOK '$BASH_VERSION' "$BASH_VERSION"
-    DebugUserspaceOK 'default volume' "$(GetDefaultVolume)"
+    DebugUserspaceOK 'default volume' "$(GetDefVol)"
     DebugUserspaceOK '/opt' "$($READLINK_CMD /opt || echo '<not present>')"
 
     local public_share=$($GETCFG_CMD SHARE_DEF defPublic -d Qpublic -f /etc/config/def_share.info)
@@ -368,9 +368,9 @@ Environment.Log()
         DebugUserspaceOK '$PATH' "${PATH:0:trimmed_width}..."
     fi
 
-    LogBinaryPathAndVersion python "$(GetDefaultPythonVersion)" "$MIN_PYTHON_VER"
-    LogBinaryPathAndVersion python3 "$(GetDefaultPython3Version)" "$MIN_PYTHON_VER"
-    LogBinaryPathAndVersion perl "$(GetDefaultPerlVersion)" "$MIN_PERL_VER"
+    LogBinPathAndVersion python "$(GetDefPythonVersion)" "$MIN_PYTHON_VER"
+    LogBinPathAndVersion python3 "$(GetDefPython3Version)" "$MIN_PYTHON_VER"
+    LogBinPathAndVersion perl "$(GetDefPerlVersion)" "$MIN_PERL_VER"
     DebugScript 'logs path' "$LOGS_PATH"
     DebugScript 'work path' "$WORK_PATH"
 
@@ -484,9 +484,9 @@ Self.Validate()
         fi
     fi
 
-    QPKGs.IsSupportBackup.Build
-    QPKGs.IsSupportUpdateOnRestart.Build
-    AllocatePackagesToActions
+    QPKGs.IsCanBackup.Build
+    QPKGs.IsCanRestartToUpdate.Build
+    AllocPacksToAc
 
     # Meta-action pre-processing
     if QPKGs.AcToRebuild.IsAny; then
@@ -595,7 +595,7 @@ Self.Validate()
         QPKGs.NewVersions.Show
 
         for package in $(QPKGs.ScDependent.Array); do
-            ! QPKGs.ScUpgradable.Exist "$package" && QPKGs.IsStarted.Exist "$package" && QPKGs.ScSupportUpdateOnRestart.Exist "$package" && QPKGs.AcToRestart.Add "$package"
+            ! QPKGs.ScUpgradable.Exist "$package" && QPKGs.IsStarted.Exist "$package" && QPKGs.ScCanRestartToUpdate.Exist "$package" && QPKGs.AcToRestart.Add "$package"
         done
     fi
 
@@ -631,7 +631,7 @@ Self.Validate()
 
 #   1. status                       (lowest: least-important, currently supported by sherpa QPKGs, but no processing code yet exists)
 
-Tiers.Process()
+Tiers.Proc()
     {
 
     QPKGs.SkProc.IsSet && return
@@ -643,10 +643,10 @@ Tiers.Process()
     local package=''
     local -i index=0
 
-    Tier.Process Reassign false All QPKG AcToReassign reassign reassigning reassigned '' false || return
-    Tier.Process Download false All QPKG AcToDownload 'update package cache with' 'updating package cache with' 'package cache updated with' '' false || return
-    Tier.Process Backup false Dependent QPKG AcToBackup 'backup configuration for' 'backing-up configuration for' 'configuration backed-up for' '' false || return
-    Tier.Process Backup false Standalone QPKG AcToBackup 'backup configuration for' 'backing-up configuration for' 'configuration backed-up for' '' false || return
+    Tier.Proc Reassign false All QPKG AcToReassign reassign reassigning reassigned '' false || return
+    Tier.Proc Download false All QPKG AcToDownload 'update package cache with' 'updating package cache with' 'package cache updated with' '' false || return
+    Tier.Proc Backup false Dependent QPKG AcToBackup 'backup configuration for' 'backing-up configuration for' 'configuration backed-up for' '' false || return
+    Tier.Proc Backup false Standalone QPKG AcToBackup 'backup configuration for' 'backing-up configuration for' 'configuration backed-up for' '' false || return
 
     # -> package removal phase begins here <-
 
@@ -655,8 +655,8 @@ Tiers.Process()
 
         case $tier in
             Standalone|Dependent)
-                Tier.Process Stop false $tier QPKG AcToStop stop stopping stopped '' false || return
-                Tier.Process Uninstall false $tier QPKG AcToUninstall uninstall uninstalling uninstalled '' false || return
+                Tier.Proc Stop false $tier QPKG AcToStop stop stopping stopped '' false || return
+                Tier.Proc Uninstall false $tier QPKG AcToUninstall uninstall uninstalling uninstalled '' false || return
         esac
     done
 
@@ -668,11 +668,11 @@ Tiers.Process()
     for tier in "${PACKAGE_TIERS[@]}"; do
         case $tier in
             Standalone|Dependent)
-                Tier.Process Upgrade false $tier QPKG AcToUpgrade upgrade upgrading upgraded long false || return
-                Tier.Process Reinstall false $tier QPKG AcToReinstall reinstall reinstalling reinstalled long false || return
-                Tier.Process Install false $tier QPKG AcToInstall install installing installed long false || return
-                Tier.Process Restore false $tier QPKG AcToRestore 'restore configuration for' 'restoring configuration for' 'configuration restored for' long false || return
-                Tier.Process Clean false $tier QPKG AcToClean clean cleaning cleaned long false || return
+                Tier.Proc Upgrade false $tier QPKG AcToUpgrade upgrade upgrading upgraded long false || return
+                Tier.Proc Reinstall false $tier QPKG AcToReinstall reinstall reinstalling reinstalled long false || return
+                Tier.Proc Install false $tier QPKG AcToInstall install installing installed long false || return
+                Tier.Proc Restore false $tier QPKG AcToRestore 'restore configuration for' 'restoring configuration for' 'configuration restored for' long false || return
+                Tier.Proc Clean false $tier QPKG AcToClean clean cleaning cleaned long false || return
 
                 if [[ $tier = Standalone ]]; then
                     # check for standalone packages that must be started first, because dependents are being reinstalled/installed/started/restarted
@@ -683,13 +683,13 @@ Tiers.Process()
                     done
                 fi
 
-                Tier.Process Start false $tier QPKG AcToStart start starting started long false || return
+                Tier.Proc Start false $tier QPKG AcToStart start starting started long false || return
 
                 for action in Install Restart Start; do
                     QPKGs.AcToRestart.Remove "$(QPKGs.AcOk${action}.Array)"
                 done
 
-                Tier.Process Restart false $tier QPKG AcToRestart restart restarting restarted long false || return
+                Tier.Proc Restart false $tier QPKG AcToRestart restart restarting restarted long false || return
                 ;;
             Addon)
                 for action in Install Reinstall Upgrade Start; do
@@ -699,11 +699,11 @@ Tiers.Process()
 
                 if QPKGs.IsStarted.Exist Entware; then
                     ModPathToEntware
-                    Tier.Process Upgrade false $tier IPK '' upgrade upgrading upgraded long false || return
-                    Tier.Process Install false $tier IPK '' install installing installed long false || return
+                    Tier.Proc Upgrade false $tier IPK '' upgrade upgrading upgraded long false || return
+                    Tier.Proc Install false $tier IPK '' install installing installed long false || return
 
                     PIPs.Install.Set
-                    Tier.Process Install false $tier PIP '' install installing installed long false || return
+                    Tier.Proc Install false $tier PIP '' install installing installed long false || return
                 fi
         esac
     done
@@ -717,7 +717,7 @@ Tiers.Process()
 
     }
 
-Tier.Process()
+Tier.Proc()
     {
 
     # run a single action on a group of packages
@@ -918,8 +918,8 @@ Self.Results()
     DebugScript finished "$($DATE_CMD)"
     DebugScript 'elapsed time' "$(FormatSecsToHoursMinutesSecs "$(($($DATE_CMD +%s)-$([[ -n $SCRIPT_STARTSECONDS ]] && echo $SCRIPT_STARTSECONDS || echo 1)))")"
     DebugInfoMajorSeparator
-    Self.Debug.ToArchive.IsSet && ArchiveActiveSessionLog
-    ResetActiveSessionLog
+    Self.Debug.ToArchive.IsSet && ArchiveActiveSessLog
+    ResetActiveSessLog
     ReleaseLockFile
     DisplayLineSpaceIfNoneAlready   # final on-screen linespace
 
@@ -927,7 +927,7 @@ Self.Results()
 
     }
 
-ParseArguments()
+ParseArgs()
     {
 
     # basic argument syntax:
@@ -1561,7 +1561,7 @@ ParseArguments()
 
     }
 
-Self.ArgumentSuggestions.Show()
+Self.ArgSuggests.Show()
     {
 
     DebugFuncEntry
@@ -1630,7 +1630,7 @@ Self.ArgumentSuggestions.Show()
 
     }
 
-AllocatePackagesToActions()
+AllocPacksToAc()
     {
 
     DebugFuncEntry
@@ -1655,7 +1655,7 @@ AllocatePackagesToActions()
                                 found=true
                                 DebugAsProc "action: '$action', scope: '$scope': adding 'IsInstalled' packages"
                                 for prospect in $(QPKGs.IsInstalled.Array); do
-                                    QPKGs.ScSupportUpdateOnRestart.Exist "$prospect" && QPKGs.AcTo${action}.Add "$prospect"
+                                    QPKGs.ScCanRestartToUpdate.Exist "$prospect" && QPKGs.AcTo${action}.Add "$prospect"
                                 done
                                 ;;
                             Dependent|Standalone)
@@ -1685,13 +1685,13 @@ AllocatePackagesToActions()
                         case $scope in
                             All)
                                 found=true
-                                DebugAsProc "action: '$action', scope: '$scope': adding 'ScSupportBackup' packages"
-                                QPKGs.AcTo${action}.Add "$(QPKGs.ScSupportBackup.Array)"
+                                DebugAsProc "action: '$action', scope: '$scope': adding 'ScCanBackup' packages"
+                                QPKGs.AcTo${action}.Add "$(QPKGs.ScCanBackup.Array)"
                                 ;;
                             Dependent|Standalone)
                                 found=true
-                                DebugAsProc "action: '$action', scope: '$scope': adding 'ScSupportBackup' packages"
-                                for prospect in $(QPKGs.ScSupportBackup.Array); do
+                                DebugAsProc "action: '$action', scope: '$scope': adding 'ScCanBackup' packages"
+                                for prospect in $(QPKGs.ScCanBackup.Array); do
                                     QPKGs.Sc${scope}.Exist "$prospect" && QPKGs.AcTo${action}.Add "$prospect"
                                 done
                         esac
@@ -1747,8 +1747,8 @@ AllocatePackagesToActions()
                                 found=true
                                 DebugAsProc "action: '$action', scope: '$scope': adding 'ScUpgradable' packages"
                                 QPKGs.AcTo${action}.Add "$(QPKGs.ScUpgradable.Array)"
-                                DebugAsProc "action: '$action', scope: '$scope': adding 'ScSupportUpdateOnRestart' packages"
-                                QPKGs.AcToRestart.Add "$(QPKGs.ScSupportUpdateOnRestart.Array)"
+                                DebugAsProc "action: '$action', scope: '$scope': adding 'ScCanRestartToUpdate' packages"
+                                QPKGs.AcToRestart.Add "$(QPKGs.ScCanRestartToUpdate.Array)"
                                 DebugAsProc "action: '$action', scope: '$scope': removing 'IsNtInstalled' packages"
                                 QPKGs.AcToRestart.Remove "$(QPKGs.IsNtInstalled.Array)"
                                 DebugAsProc "action: '$action', scope: '$scope': removing 'AcToUpgrade' packages"
@@ -2019,7 +2019,7 @@ SavePackageLists()
 
     }
 
-CalcIPKsDepsToInstall()
+CalcIpkDepsToInstall()
     {
 
     # From a specified list of IPK names, find all dependent IPKs, exclude those already installed, then generate a list to download
@@ -2108,7 +2108,7 @@ CalcIPKsDepsToInstall()
 
     }
 
-CalcIPKsDownloadSize()
+CalcIpkDownloadSize()
     {
 
     # calculate size of required IPKs
@@ -2153,7 +2153,7 @@ IPKs.Upgrade()
     IPKs.AcToUpgrade.Add "$($OPKG_CMD list-upgradable | cut -f1 -d' ')"
     IPKs.AcToDownload.Add "$(IPKs.AcToUpgrade.Array)"
 
-    CalcIPKsDownloadSize
+    CalcIpkDownloadSize
     local -i total_count=$(IPKs.AcToDownload.Count)
 
     if [[ $total_count -gt 0 ]]; then
@@ -2216,8 +2216,8 @@ IPKs.Install()
         done
     fi
 
-    CalcIPKsDepsToInstall
-    CalcIPKsDownloadSize
+    CalcIpkDepsToInstall
+    CalcIpkDownloadSize
     local -i total_count=$(IPKs.AcToDownload.Count)
 
     if [[ $total_count -gt 0 ]]; then
@@ -2483,21 +2483,21 @@ IsSU()
 
     }
 
-GetDefaultPythonVersion()
+GetDefPythonVersion()
     {
 
     GetThisBinaryPath python &>/dev/null && python -V 2>&1 | $SED_CMD 's|^Python ||'
 
     }
 
-GetDefaultPython3Version()
+GetDefPython3Version()
     {
 
     GetThisBinaryPath python3 &>/dev/null && python3 -V 2>&1 | $SED_CMD 's|^Python ||'
 
     }
 
-GetDefaultPerlVersion()
+GetDefPerlVersion()
     {
 
     GetThisBinaryPath perl &>/dev/null && perl -e 'print "$^V\n"' 2>/dev/null | $SED_CMD 's|v||'
@@ -2511,7 +2511,7 @@ GetThisBinaryPath()
 
     }
 
-LogBinaryPathAndVersion()
+LogBinPathAndVersion()
     {
 
     # $1 = binary filename
@@ -2671,7 +2671,7 @@ DisplayAsHelpPackageNamePlusSomething()
 
     }
 
-CalculateMaximumStatusColumnsToDisplay()
+CalcMaxStatusColsToDisplay()
     {
 
     local column1_width=$((${#HELP_COLUMN_MAIN_PREFIX}+HELP_PACKAGE_NAME_WIDTH))
@@ -2693,7 +2693,7 @@ CalculateMaximumStatusColumnsToDisplay()
 
     }
 
-CalculateMaximumRepoColumnsToDisplay()
+CalcMaxRepoColsToDisplay()
     {
 
     local column1_width=$((${#HELP_COLUMN_MAIN_PREFIX}+HELP_PACKAGE_NAME_WIDTH))
@@ -2717,7 +2717,7 @@ DisplayAsHelpTitlePackageNameVersionStatus()
     # $3 = package version title
     # $4 = package installation location (only if installed)
 
-    local maxcols=$(CalculateMaximumStatusColumnsToDisplay)
+    local maxcols=$(CalcMaxStatusColsToDisplay)
 
     if [[ -n ${1:-} && $maxcols -ge 1 ]]; then
         printf "${HELP_COLUMN_MAIN_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s" "$(Capitalise "$1"):"
@@ -2747,7 +2747,7 @@ DisplayAsHelpPackageNameVersionStatus()
     # $3 = package version number (optional)
     # $4 = package installation path (optional) only if installed
 
-    local maxcols=$(CalculateMaximumStatusColumnsToDisplay)
+    local maxcols=$(CalcMaxStatusColsToDisplay)
 
     if [[ -n ${1:-} && $maxcols -ge 1 ]]; then
         printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_BLANK_PREFIX}%-$((HELP_PACKAGE_NAME_WIDTH+$(LenANSIDiff "$1")))s" "$1"
@@ -2775,7 +2775,7 @@ DisplayAsHelpTitlePackageNameRepo()
     # $1 = package name title
     # $2 = assigned repository title
 
-    local maxcols=$(CalculateMaximumStatusColumnsToDisplay)
+    local maxcols=$(CalcMaxStatusColsToDisplay)
 
     if [[ -n ${1:-} && $maxcols -ge 1 ]]; then
         printf "${HELP_COLUMN_MAIN_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s" "$(Capitalise "$1"):"
@@ -2795,7 +2795,7 @@ DisplayAsHelpPackageNameRepo()
     # $1 = package name
     # $2 = assigned repository
 
-    local maxcols=$(CalculateMaximumRepoColumnsToDisplay)
+    local maxcols=$(CalcMaxRepoColsToDisplay)
 
     if [[ -n ${1:-} && $maxcols -ge 1 ]]; then
         printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_BLANK_PREFIX}%-$((HELP_PACKAGE_NAME_WIDTH+$(LenANSIDiff "$1")))s" "$1"
@@ -3114,7 +3114,7 @@ Log.Last.View()
     # view only the last session log
 
     DisableDebugToArchiveAndFile
-    ExtractPreviousSessionFromTail
+    ExtractPrevSessFromTail
 
     if [[ -e $SESSION_LAST_PATHFILE ]]; then
         if [[ -e $GNU_LESS_CMD ]]; then
@@ -3161,7 +3161,7 @@ Log.Last.Paste()
 
     local link=''
     DisableDebugToArchiveAndFile
-    ExtractPreviousSessionFromTail
+    ExtractPrevSessFromTail
 
     if [[ -e $SESSION_LAST_PATHFILE ]]; then
         if Quiz "Press 'Y' to post the most-recent session in your $(FormatAsScriptTitle) log to a public pastebin, or any other key to abort"; then
@@ -3220,7 +3220,7 @@ Log.Tail.Paste()
 
     }
 
-GetLogSessionStartLine()
+GetLogSessStartLine()
     {
 
     # $1 = how many sessions back? (optional) default = 1
@@ -3231,7 +3231,7 @@ GetLogSessionStartLine()
 
     }
 
-GetLogSessionFinishLine()
+GetLogSessFinishLine()
     {
 
     # $1 = how many sessions back? (optional) default = 1
@@ -3242,14 +3242,14 @@ GetLogSessionFinishLine()
 
     }
 
-ArchiveActiveSessionLog()
+ArchiveActiveSessLog()
     {
 
     [[ -e $SESSION_ACTIVE_PATHFILE ]] && $CAT_CMD "$SESSION_ACTIVE_PATHFILE" >> "$SESSION_ARCHIVE_PATHFILE"
 
     }
 
-ArchivePriorSessionLogs()
+ArchivePriorSessLogs()
     {
 
     # check for incomplete previous session logs (crashed, interrupted?) and save to archive
@@ -3265,14 +3265,14 @@ ArchivePriorSessionLogs()
 
     }
 
-ResetActiveSessionLog()
+ResetActiveSessLog()
     {
 
     [[ -e $SESSION_ACTIVE_PATHFILE ]] && rm -f "$SESSION_ACTIVE_PATHFILE"
 
     }
 
-ExtractPreviousSessionFromTail()
+ExtractPrevSessFromTail()
     {
 
     local -i start_line=0
@@ -3285,11 +3285,11 @@ ExtractPreviousSessionFromTail()
     ExtractTailFromLog
 
     if [[ -e $SESSION_TAIL_PATHFILE ]]; then
-        end_line=$(GetLogSessionFinishLine "$old_session")
+        end_line=$(GetLogSessFinishLine "$old_session")
         start_line=$((end_line+1))      # ensure an invalid condition, to be solved by the loop
 
         while [[ $start_line -ge $end_line ]]; do
-            start_line=$(GetLogSessionStartLine "$old_session")
+            start_line=$(GetLogSessStartLine "$old_session")
 
             ((old_session++))
             [[ $old_session -gt $old_session_limit ]] && break
@@ -3624,7 +3624,7 @@ QPKGs.States.Build()
                 QPKGs.IsUnknown.Add "$package"
             fi
 
-            if QPKG.IsSupportBackup "$package"; then
+            if QPKG.IsCanBackup "$package"; then
                 if QPKG.IsBackupExist "$package"; then
                     QPKGs.IsBackedUp.Add "$package"
                 else
@@ -3642,7 +3642,7 @@ QPKGs.States.Build()
                 fi
             fi
 
-            QPKG.IsSupportBackup "$package" && QPKG.IsBackupExist "$package" && QPKGs.IsBackedUp.Add "$package"
+            QPKG.IsCanBackup "$package" && QPKG.IsBackupExist "$package" && QPKGs.IsBackedUp.Add "$package"
         fi
     done
 
@@ -3652,7 +3652,7 @@ QPKGs.States.Build()
 
     }
 
-QPKGs.IsSupportBackup.Build()
+QPKGs.IsCanBackup.Build()
     {
 
     # Build a list of QPKGs that do and don't support `backup` and `restore` actions
@@ -3662,12 +3662,12 @@ QPKGs.IsSupportBackup.Build()
     local package=''
 
     for package in $(QPKGs.ScAll.Array); do
-        if QPKG.IsSupportBackup "$package"; then
-            QPKGs.ScSupportBackup.Add "$package"
-            QPKGs.ScNtSupportBackup.Remove "$package"
+        if QPKG.IsCanBackup "$package"; then
+            QPKGs.ScCanBackup.Add "$package"
+            QPKGs.ScNtCanBackup.Remove "$package"
         else
-            QPKGs.ScNtSupportBackup.Add "$package"
-            QPKGs.ScSupportBackup.Remove "$package"
+            QPKGs.ScNtCanBackup.Add "$package"
+            QPKGs.ScCanBackup.Remove "$package"
         fi
     done
 
@@ -3675,7 +3675,7 @@ QPKGs.IsSupportBackup.Build()
 
     }
 
-QPKGs.IsSupportUpdateOnRestart.Build()
+QPKGs.IsCanRestartToUpdate.Build()
     {
 
     # Build a list of QPKGs that do and don't support application updating on QPKG restart
@@ -3686,12 +3686,12 @@ QPKGs.IsSupportUpdateOnRestart.Build()
     local package=''
 
     for package in $(QPKGs.ScAll.Array); do
-        if QPKG.IsSupportUpdateOnRestart "$package"; then
-            QPKGs.ScSupportUpdateOnRestart.Add "$package"
-            QPKGs.ScNtSupportUpdateOnRestart.Remove "$package"
+        if QPKG.IsCanRestartToUpdate "$package"; then
+            QPKGs.ScCanRestartToUpdate.Add "$package"
+            QPKGs.ScNtCanRestartToUpdate.Remove "$package"
         else
-            QPKGs.ScNtSupportUpdateOnRestart.Add "$package"
-            QPKGs.ScSupportUpdateOnRestart.Remove "$package"
+            QPKGs.ScNtCanRestartToUpdate.Add "$package"
+            QPKGs.ScCanRestartToUpdate.Remove "$package"
         fi
     done
 
@@ -3750,7 +3750,7 @@ QPKGs.Repos.Show()
     local package_name=''
     local package_store_id=''
     local package_repo_URL_formatted=''
-    local maxcols=$(CalculateMaximumRepoColumnsToDisplay)
+    local maxcols=$(CalcMaxRepoColsToDisplay)
 
     QPKGs.States.Build
     DisplayLineSpaceIfNoneAlready
@@ -3801,7 +3801,7 @@ QPKGs.Statuses.Show()
     local package_name_formatted=''
     local package_status=''
     local package_version=''
-    local maxcols=$(CalculateMaximumStatusColumnsToDisplay)
+    local maxcols=$(CalcMaxStatusColsToDisplay)
 
     QPKGs.States.Build
     DisplayLineSpaceIfNoneAlready
@@ -4261,7 +4261,7 @@ GetPlatform()
 
     }
 
-GetDefaultVolume()
+GetDefVol()
     {
 
     $GETCFG_CMD SHARE_DEF defVolMP -f /etc/config/def_share.info
@@ -5198,7 +5198,7 @@ QPKG.Backup()
     local action=backup
     local debug_cmd=''
 
-    if ! QPKG.IsSupportBackup "$PACKAGE_NAME"; then
+    if ! QPKG.IsCanBackup "$PACKAGE_NAME"; then
         MarkQpkgAcAsSk show "$PACKAGE_NAME" "$action" "it does not support backup"
         DebugFuncExit 2; return
     fi
@@ -5250,7 +5250,7 @@ QPKG.Restore()
     local action=restore
     local debug_cmd=''
 
-    if ! QPKG.IsSupportBackup "$PACKAGE_NAME"; then
+    if ! QPKG.IsCanBackup "$PACKAGE_NAME"; then
         MarkQpkgAcAsSk show "$PACKAGE_NAME" "$action" "it does not support backup"
         DebugFuncExit 2; return
     fi
@@ -5301,7 +5301,7 @@ QPKG.Clean()
     local action=clean
     local debug_cmd=''
 
-    if ! QPKG.IsSupportUpdateOnRestart "$PACKAGE_NAME"; then
+    if ! QPKG.IsCanRestartToUpdate "$PACKAGE_NAME"; then
         MarkQpkgAcAsSk show "$PACKAGE_NAME" "$action" "it does not support cleaning"
         DebugFuncExit 2; return
     fi
@@ -5516,7 +5516,7 @@ QPKG.IsBackupExist()
 
     }
 
-QPKG.IsSupportBackup()
+QPKG.IsCanBackup()
     {
 
     # does this QPKG service-script support `backup` and `restore` actions?
@@ -5531,7 +5531,7 @@ QPKG.IsSupportBackup()
 
     for index in "${!QPKG_NAME[@]}"; do
         if [[ ${QPKG_NAME[$index]} = "${1:?no package name supplied}" ]]; then
-            if ${QPKG_SUPPORTS_BACKUP[$index]}; then
+            if ${QPKG_CAN_BACKUP[$index]}; then
                 return 0
             else
                 break
@@ -5543,7 +5543,7 @@ QPKG.IsSupportBackup()
 
     }
 
-QPKG.IsSupportUpdateOnRestart()
+QPKG.IsCanRestartToUpdate()
     {
 
     # does this QPKG service-script support updating the internal application when the QPKG is restarted?
@@ -5558,7 +5558,7 @@ QPKG.IsSupportUpdateOnRestart()
 
     for index in "${!QPKG_NAME[@]}"; do
         if [[ ${QPKG_NAME[$index]} = "${1:?no package name supplied}" ]]; then
-            if ${QPKG_UPDATE_ON_RESTART[$index]}; then
+            if ${QPKG_CAN_RESTART_TO_UPDATE[$index]}; then
                 return 0
             else
                 break
@@ -6951,7 +6951,7 @@ Objects.Load()
 
     DebugFuncEntry
 
-    if [[ ! -e $PWD/dont.refresh.sherpa.objects ]]; then
+    if [[ ! -e $PWD/dont.refresh.objects ]]; then
         if [[ ! -e $OBJECTS_PATHFILE ]] || ! IsThisFileRecent "$OBJECTS_PATHFILE"; then
             ShowAsProc 'updating objects' >&2
             if $CURL_CMD${curl_insecure_arg:-} --silent --fail "$OBJECTS_ARCHIVE_URL" > "$OBJECTS_ARCHIVE_PATHFILE"; then
@@ -6982,7 +6982,7 @@ Packages.Load()
     QPKGs.Loaded.IsSet && return
     DebugFuncEntry
 
-    if [[ ! -e $PWD/dont.refresh.sherpa.packages ]]; then
+    if [[ ! -e $PWD/dont.refresh.packages ]]; then
         if [[ ! -e $PACKAGES_PATHFILE ]] || ! IsThisFileRecent "$PACKAGES_PATHFILE" 60; then
             ShowAsProc 'updating package list' >&2
             if $CURL_CMD${curl_insecure_arg:-} --silent --fail "$PACKAGES_ARCHIVE_URL" > "$PACKAGES_ARCHIVE_PATHFILE"; then
@@ -7020,8 +7020,8 @@ Packages.Load()
         readonly QPKG_DEPENDS_ON
         readonly QPKG_DEPENDED_UPON
         readonly QPKG_REQUIRES_IPKS
-        readonly QPKG_SUPPORTS_BACKUP
-        readonly QPKG_UPDATE_ON_RESTART
+        readonly QPKG_CAN_BACKUP
+        readonly QPKG_CAN_RESTART_TO_UPDATE
 
     QPKGs.Loaded.Set
     DebugScript version "packages: ${PACKAGES_VER:-unknown}"
@@ -7032,9 +7032,9 @@ Packages.Load()
     }
 
 Self.Init || exit
-Environment.Log
+Self.LogEnv
 Self.IsAnythingToDo
 Self.Validate
-Tiers.Process
+Tiers.Proc
 Self.Results
 Self.Error.IsNt
