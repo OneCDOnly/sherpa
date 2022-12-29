@@ -2909,26 +2909,26 @@ Help.Actions.Show()
     DisplayLineSpaceIfNoneAlready
     DisplayAsHelpTitle "$(FormatAsHelpAction) usage examples:"
     DisplayAsProjectSyntaxIndentedExample 'show package statuses' 'status'
-    DisplayAsProjectSyntaxIndentedExample '' 's'
+    DisplayAsProjectSyntaxIndentedExample '' s
     DisplayAsProjectSyntaxIndentedExample 'show package repositories' 'repos'
-    DisplayAsProjectSyntaxIndentedExample '' 'r'
+    DisplayAsProjectSyntaxIndentedExample '' r
     DisplayAsProjectSyntaxIndentedExample 'ensure all application dependencies are installed' 'check'
     DisplayAsProjectSyntaxIndentedExample 'install these packages' "install $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample 'uninstall these packages' "uninstall $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample 'reinstall these packages' "reinstall $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample "rebuild these packages ('install' packages, then 'restore' configuration backups)" "rebuild $(FormatAsHelpPackages)"
-    DisplayAsProjectSyntaxIndentedExample 'upgrade these packages (and internal applications)' "upgrade $(FormatAsHelpPackages)"
-    DisplayAsProjectSyntaxIndentedExample 'start these packages' "start $(FormatAsHelpPackages)"
-    DisplayAsProjectSyntaxIndentedExample 'stop these packages' "stop $(FormatAsHelpPackages)"
-    DisplayAsProjectSyntaxIndentedExample 'restart these packages' "restart $(FormatAsHelpPackages)"
+    DisplayAsProjectSyntaxIndentedExample 'upgrade these packages (and internal applications where supported)' "upgrade $(FormatAsHelpPackages)"
+    DisplayAsProjectSyntaxIndentedExample 'enable then start these packages' "start $(FormatAsHelpPackages)"
+    DisplayAsProjectSyntaxIndentedExample 'stop then disable these packages (disabling will prevent them starting on reboot)' "stop $(FormatAsHelpPackages)"
+    DisplayAsProjectSyntaxIndentedExample 'restart these packages (this will upgrade internal applications where supported)' "restart $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample "reassign these packages to the $(FormatAsScriptTitle) repository" "reassign $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample 'clear local repository files from these packages' "clean $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample 'backup these application configurations to the backup location' "backup $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample 'restore these application configurations from the backup location' "restore $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample 'show application backup files' 'list backups'
-    DisplayAsProjectSyntaxIndentedExample '' 'b'
+    DisplayAsProjectSyntaxIndentedExample '' b
     DisplayAsProjectSyntaxIndentedExample "list $(FormatAsScriptTitle) object version numbers" 'list versions'
-    DisplayAsProjectSyntaxIndentedExample '' 'v'
+    DisplayAsProjectSyntaxIndentedExample '' v
     Display
     DisplayAsProjectSyntaxExample "$(FormatAsHelpAction)s to affect all packages can be seen with" 'all-actions'
     Display
@@ -2949,17 +2949,17 @@ Help.ActionsAll.Show()
     Display
     DisplayAsHelpTitle "$(FormatAsHelpAction) usage examples:"
     DisplayAsProjectSyntaxIndentedExample 'show package statuses' 'status'
-    DisplayAsProjectSyntaxIndentedExample '' 's'
+    DisplayAsProjectSyntaxIndentedExample '' s
     DisplayAsProjectSyntaxIndentedExample 'show package repositories' 'repos'
-    DisplayAsProjectSyntaxIndentedExample '' 'r'
+    DisplayAsProjectSyntaxIndentedExample '' r
     DisplayAsProjectSyntaxIndentedExample 'install everything!' 'install all'
     DisplayAsProjectSyntaxIndentedExample 'uninstall everything!' 'force uninstall all'
     DisplayAsProjectSyntaxIndentedExample 'reinstall all installed packages' 'reinstall all'
     DisplayAsProjectSyntaxIndentedExample "rebuild all packages with backups ('install' packages and 'restore' backups)" 'rebuild all'
-    DisplayAsProjectSyntaxIndentedExample 'upgrade all installed packages (and internal applications)' 'upgrade all'
-    DisplayAsProjectSyntaxIndentedExample 'start all installed packages (upgrade internal applications, not packages)' 'start all'
-    DisplayAsProjectSyntaxIndentedExample 'stop all installed packages' 'stop all'
-    DisplayAsProjectSyntaxIndentedExample 'restart packages that are able to upgrade their internal applications' 'restart all'
+    DisplayAsProjectSyntaxIndentedExample 'upgrade all installed packages (and internal applications where supported)' 'upgrade all'
+    DisplayAsProjectSyntaxIndentedExample 'enable then start all installed packages (upgrade internal applications, not packages)' 'start all'
+    DisplayAsProjectSyntaxIndentedExample 'stop then disable all installed packages (disabling will prevent them starting on reboot)' 'stop all'
+    DisplayAsProjectSyntaxIndentedExample 'restart packages (this will upgrade internal applications where supported)' 'restart all'
     DisplayAsProjectSyntaxIndentedExample 'clear local repository files from all packages' 'clean all'
     DisplayAsProjectSyntaxIndentedExample 'list all available packages' 'list all'
     DisplayAsProjectSyntaxIndentedExample 'list only installed packages' 'list installed'
@@ -2996,7 +2996,7 @@ Help.Packages.Show()
     done
 
     DisplayAsProjectSyntaxExample "abbreviations may also be used to specify $(FormatAsHelpPackages). To list these" 'list abs'
-    DisplayAsProjectSyntaxIndentedExample '' 'a'
+    DisplayAsProjectSyntaxIndentedExample '' a
 
     return 0
 
@@ -3024,17 +3024,17 @@ Help.Problems.Show()
     DisplayLineSpaceIfNoneAlready
     DisplayAsHelpTitle 'usage examples for dealing with problems:'
     DisplayAsProjectSyntaxIndentedExample 'show package statuses' 'status'
-    DisplayAsProjectSyntaxIndentedExample '' 's'
+    DisplayAsProjectSyntaxIndentedExample '' s
     DisplayAsProjectSyntaxIndentedExample 'process one-or-more packages and show live debugging information' "$(FormatAsHelpAction) $(FormatAsHelpPackages) debug"
     DisplayAsProjectSyntaxIndentedExample '' "$(FormatAsHelpAction) $(FormatAsHelpPackages) verbose"
-    DisplayAsProjectSyntaxIndentedExample 'ensure all application dependencies are installed' 'check'
+    DisplayAsProjectSyntaxIndentedExample 'ensure all dependencies exist for installed packages' 'check'
     DisplayAsProjectSyntaxIndentedExample 'clear local repository files from these packages' "clean $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample "remove all cached $(FormatAsScriptTitle) items and logs" 'reset'
-    DisplayAsProjectSyntaxIndentedExample 'restart all installed packages (upgrades the internal applications, not packages)' 'restart all'
-    DisplayAsProjectSyntaxIndentedExample 'start these packages and enable package icons' "start $(FormatAsHelpPackages)"
-    DisplayAsProjectSyntaxIndentedExample 'stop these packages and disable package icons' "stop $(FormatAsHelpPackages)"
+    DisplayAsProjectSyntaxIndentedExample 'restart all installed packages (upgrades internal applications where supported)' 'restart all'
+    DisplayAsProjectSyntaxIndentedExample 'enable then start these packages' "start $(FormatAsHelpPackages)"
+    DisplayAsProjectSyntaxIndentedExample 'stop then disable these packages (disabling will prevent them starting on reboot)' "stop $(FormatAsHelpPackages)"
     DisplayAsProjectSyntaxIndentedExample "view only the most recent $(FormatAsScriptTitle) session log" 'last'
-    DisplayAsProjectSyntaxIndentedExample '' 'l'
+    DisplayAsProjectSyntaxIndentedExample '' l
     DisplayAsProjectSyntaxIndentedExample "view the entire $(FormatAsScriptTitle) session log" 'log'
     DisplayAsProjectSyntaxIndentedExample "upload the most-recent session in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste last'
     DisplayAsProjectSyntaxIndentedExample "upload the most-recent $(FormatAsThousands "$LOG_TAIL_LINES") lines in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste log'
@@ -3071,10 +3071,10 @@ Help.Tips.Show()
     DisplayAsHelpTitle 'helpful tips and shortcuts:'
     DisplayAsProjectSyntaxIndentedExample "install all available $(FormatAsScriptTitle) packages" 'install all'
     DisplayAsProjectSyntaxIndentedExample 'package abbreviations also work. To see these' 'list abs'
-    DisplayAsProjectSyntaxIndentedExample 'restart all packages (only upgrades the internal applications, not packages)' 'restart all'
+    DisplayAsProjectSyntaxIndentedExample 'restart all installed packages (upgrades internal applications where supported)' 'restart all'
     DisplayAsProjectSyntaxIndentedExample 'list only packages that can be installed' 'list installable'
     DisplayAsProjectSyntaxIndentedExample "view only the most recent $(FormatAsScriptTitle) session log" 'last'
-    DisplayAsProjectSyntaxIndentedExample '' 'l'
+    DisplayAsProjectSyntaxIndentedExample '' l
     DisplayAsProjectSyntaxIndentedExample 'start all stopped packages' 'start stopped'
     DisplayAsProjectSyntaxIndentedExample 'upgrade the internal applications only' "restart $(FormatAsHelpPackages)"
     Help.BackupLocation.Show
