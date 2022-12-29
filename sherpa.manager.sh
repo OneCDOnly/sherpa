@@ -807,7 +807,7 @@ Tier.Proc()
                             ((total_count--))
                             ;;
                         *)  # failed
-                            ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName $package) (see log for more details)"
+                            ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") (see log for more details)"
                             ((fail_count++))
                             continue
                     esac
@@ -829,7 +829,7 @@ Tier.Proc()
                             ((total_count--))
                             ;;
                         *)  # failed
-                            ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName $package) (see log for more details)"
+                            ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") (see log for more details)"
                             ((fail_count++))
                             continue
                     esac
@@ -1787,9 +1787,9 @@ AllocPacksToAc()
                 [[ $found = false ]] && QPKGs.AcTo${action}.Add "$(QPKGs.ScNt${scope}.Array)"
 
                 if QPKGs.AcTo${action}.IsAny; then
-                    DebugAsDone "action: '$action', scope: '$scope': found $(QPKGs.AcTo${action}.Count) packages to process"
+                    DebugAsDone "action: '$action', scope: 'Nt${scope}': found $(QPKGs.AcTo${action}.Count) packages to process"
                 else
-                    ShowAsWarn "unable to find any Nt$scope packages to $(Lowercase "$action")"
+                    ShowAsWarn "unable to find any Nt${scope} packages to $(Lowercase "$action")"
                 fi
             fi
         done
@@ -1840,12 +1840,12 @@ AllocPacksToAc()
                         case $state in
                             Installed|Started)
                                 found=true
-                                DebugAsProc "action: '$action', state: '$state': adding 'IsNt${state}' packages"
+                                DebugAsProc "action: '$action', state: 'Nt${state}': adding 'IsNt${state}' packages"
                                 QPKGs.AcTo${action}.Add "$(QPKGs.IsNt${state}.Array)"
                                 ;;
                             Stopped)
                                 found=true
-                                DebugAsProc "action: '$action', state: '$state': adding 'IsStarted' packages"
+                                DebugAsProc "action: '$action', state: 'Nt${state}': adding 'IsStarted' packages"
                                 QPKGs.AcTo${action}.Add "$(QPKGs.IsStarted.Array)"
                         esac
                 esac
@@ -1853,9 +1853,9 @@ AllocPacksToAc()
                 [[ $found = false ]] && QPKGs.AcTo${action}.Add "$(QPKGs.IsNt${state}.Array)"
 
                 if QPKGs.AcTo${action}.IsAny; then
-                    DebugAsDone "action: '$action', state: '$state': found $(QPKGs.AcTo${action}.Count) packages to process"
+                    DebugAsDone "action: '$action', state: 'Nt${state}': found $(QPKGs.AcTo${action}.Count) packages to process"
                 else
-                    ShowAsWarn "unable to find any Nt$state packages to $(Lowercase "$action")"
+                    ShowAsWarn "unable to find any Nt${state} packages to $(Lowercase "$action")"
                 fi
             fi
         done
@@ -1975,7 +1975,7 @@ UpdateEntwarePackageList()
             DebugAsDone "updated $(FormatAsPackageName Entware) package list"
             CloseIPKArchive
         else
-            DebugAsWarn "Unable to update $(FormatAsPackageName Entware) package list $(FormatAsExitcode $result_code)"
+            DebugAsWarn "Unable to update $(FormatAsPackageName Entware) package list $(FormatAsExitcode "$result_code")"
             # no-big-deal
         fi
     else
@@ -2069,9 +2069,9 @@ CalcIpkDepsToInstall()
     done
 
     if [[ $complete = true ]]; then
-        DebugAsDone "completed in $iterations loop iteration$(Plural $iterations)"
+        DebugAsDone "completed in $iterations loop iteration$(Plural "$iterations")"
     else
-        DebugAsError "incomplete with $iterations loop iteration$(Plural $iterations), consider raising \$ITERATION_LIMIT [$ITERATION_LIMIT]"
+        DebugAsError "incomplete with $iterations loop iteration$(Plural "$iterations"), consider raising \$ITERATION_LIMIT [$ITERATION_LIMIT]"
         Self.SuggestIssue.Set
     fi
 
@@ -2171,7 +2171,7 @@ IPKs.Upgrade()
             ShowAsDone "downloaded & upgraded $total_count IPK$(Plural "$total_count")"
             MarkIpkAcAsOk "$(IPKs.AcToUpgrade.Array)" "$action"
         else
-            ShowAsFail "download & upgrade $total_count IPK$(Plural "$total_count") failed $(FormatAsExitcode $result_code)"
+            ShowAsFail "download & upgrade $total_count IPK$(Plural "$total_count") failed $(FormatAsExitcode "$result_code")"
             MarkIpkAcAsEr "$(IPKs.AcToUpgrade.Array)" "$action"
         fi
     fi
@@ -2235,7 +2235,7 @@ IPKs.Install()
             ShowAsDone "downloaded & installed $total_count IPK$(Plural "$total_count")"
             MarkIpkAcAsOk "$(IPKs.AcToDownload.Array)" "$action"
         else
-            ShowAsFail "download & install $total_count IPK$(Plural "$total_count") failed $(FormatAsExitcode $result_code)"
+            ShowAsFail "download & install $total_count IPK$(Plural "$total_count") failed $(FormatAsExitcode "$result_code")"
             MarkIpkAcAsEr "$(IPKs.AcToDownload.Array)" "$action"
         fi
     fi
@@ -3436,7 +3436,7 @@ IPKs.Actions.List()
     DebugInfoMinorSeparator
 
     for action in "${PACKAGE_ACTIONS[@]}"; do
-        for prefix in To Ok Er Sk; do
+        for prefix in Ok Er Sk; do
             if IPKs.Ac${prefix}${action}.IsAny; then
                 case $prefix in
                     Ok)
@@ -3468,7 +3468,7 @@ QPKGs.Actions.List()
     DebugInfoMinorSeparator
 
     for action in "${PACKAGE_ACTIONS[@]}"; do
-        for prefix in To Ok Er Sk; do
+        for prefix in Ok Er Sk; do
             if QPKGs.Ac${prefix}${action}.IsAny; then
                 case $prefix in
                     Ok)
@@ -3479,7 +3479,6 @@ QPKGs.Actions.List()
                         ;;
                     Er)
                         DebugQPKGError "Ac${prefix}${action}" "($(QPKGs.Ac${prefix}${action}.Count)) $(QPKGs.Ac${prefix}${action}.ListCSV) "
-                        ;;
                 esac
             fi
         done
@@ -4539,7 +4538,7 @@ QPKG.Reassign()
         DebugAsDone "reassigned $(FormatAsPackageName "$PACKAGE_NAME") to sherpa"
     else
         MarkQpkgAcAsEr "$PACKAGE_NAME" "$action"
-        DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
+        DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode "$result_code")"
         result_code=1    # remap to 1
     fi
 
@@ -4613,7 +4612,7 @@ QPKG.Download()
                 result_code=1
             fi
         else
-            DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
+            DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode "$result_code")"
             QPKGs.AcErDownload.Add "$PACKAGE_NAME"
             result_code=1    # remap to 1 (last time I checked, 'curl' had 92 return codes)
         fi
@@ -4727,7 +4726,7 @@ QPKG.Install()
 
         result_code=0    # remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK)
     else
-        DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
+        DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode "$result_code")"
         MarkQpkgAcAsEr "$PACKAGE_NAME" "$action"
         result_code=1    # remap to 1
     fi
@@ -4798,7 +4797,7 @@ QPKG.Reinstall()
         DebugAsDone "reinstalled $(FormatAsPackageName "$PACKAGE_NAME") $current_ver"
         result_code=0    # remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK)
     else
-        DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
+        DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode "$result_code")"
         MarkQpkgAcAsEr "$PACKAGE_NAME" "$action"
         result_code=1    # remap to 1
     fi
@@ -4891,7 +4890,7 @@ QPKG.Upgrade()
 
         result_code=0    # remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK)
     else
-        DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
+        DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode "$result_code")"
         MarkQpkgAcAsEr "$PACKAGE_NAME" "$action"
         result_code=1    # remap to 1
     fi
@@ -4949,7 +4948,7 @@ QPKG.Uninstall()
             MarkQpkgAcAsOk "$PACKAGE_NAME" "$action"
             MarkQpkgAsNtInstalled "$PACKAGE_NAME"
         else
-            DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
+            DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode "$result_code")"
             MarkQpkgAcAsEr "$PACKAGE_NAME" "$action"
             result_code=1    # remap to 1
         fi
@@ -5010,7 +5009,7 @@ QPKG.Restart()
         QPKG.StoreServiceStatus "$PACKAGE_NAME"
         MarkQpkgAcAsOk "$PACKAGE_NAME" "$action"
     else
-        DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
+        DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode "$result_code")"
         MarkQpkgAcAsEr "$PACKAGE_NAME" "$action"
         result_code=1    # remap to 1
     fi
@@ -5072,7 +5071,7 @@ QPKG.Start()
         MarkQpkgAsIsStarted "$PACKAGE_NAME"
         [[ $PACKAGE_NAME = Entware ]] && ModPathToEntware
     else
-        DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
+        DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode "$result_code")"
         MarkQpkgAcAsEr "$PACKAGE_NAME" "$action"
         result_code=1    # remap to 1
     fi
@@ -5138,7 +5137,7 @@ QPKG.Stop()
         MarkQpkgAcAsOk "$PACKAGE_NAME" "$action"
         MarkQpkgAsNtStarted "$PACKAGE_NAME"
     else
-        DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
+        DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode "$result_code")"
         MarkQpkgAcAsEr "$PACKAGE_NAME" "$action"
         result_code=1    # remap to 1
     fi
@@ -5237,7 +5236,7 @@ QPKG.Backup()
         QPKGs.IsNtBackedUp.Remove "$PACKAGE_NAME"
         QPKGs.IsBackedUp.Add "$PACKAGE_NAME"
     else
-        DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
+        DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode "$result_code")"
         MarkQpkgAcAsEr "$PACKAGE_NAME" "$action"
         result_code=1    # remap to 1
     fi
@@ -5287,7 +5286,7 @@ QPKG.Restore()
         MarkQpkgAcAsOk "$PACKAGE_NAME" "$action"
         QPKG.StoreServiceStatus "$PACKAGE_NAME"
     else
-        DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
+        DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode "$result_code")"
         MarkQpkgAcAsEr "$PACKAGE_NAME" "$action"
     fi
 
@@ -5340,7 +5339,7 @@ QPKG.Clean()
         QPKGs.IsNtCleaned.Remove "$PACKAGE_NAME"
         QPKGs.IsCleaned.Add "$PACKAGE_NAME"
     else
-        DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
+        DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode "$result_code")"
         MarkQpkgAcAsEr "$PACKAGE_NAME" "$action"
         result_code=1    # remap to 1
     fi
@@ -5905,7 +5904,7 @@ MakePath()
     mkdir -p "${1:?empty}" 2>/dev/null; result_code=$?
 
     if [[ $result_code -ne 0 ]]; then
-        ShowAsError "unable to create ${2:?empty} path $(FormatAsFileName "$1") $(FormatAsExitcode $result_code)"
+        ShowAsError "unable to create ${2:?empty} path $(FormatAsFileName "$1") $(FormatAsExitcode "$result_code")"
         [[ $(type -t Self.SuggestIssue.Init) = function ]] && Self.SuggestIssue.Set
         return 1
     fi
