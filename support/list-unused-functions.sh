@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-target_pathfile=sherpa.manager.sh
+target_pathfile=../sherpa.manager.sh
 target_func=''
 
 # shellcheck disable=SC2013
