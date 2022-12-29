@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly MANAGER_FILE=sherpa.manager.sh
-    local -r SCRIPT_VER=221229c-beta
+    local -r SCRIPT_VER=221229d-beta
 
     IsQNAP || return
     IsSU || return
@@ -1769,7 +1769,7 @@ AllocPacksToAc()
                 if QPKGs.AcTo${action}.IsAny; then
                     DebugAsDone "action: '$action', scope: '$scope': found $(QPKGs.AcTo${action}.Count) packages to process"
                 else
-                    DebugAsWarn "action: '$action', scope: '$scope': found no packages to process"
+                    ShowAsWarn "unable to find any $scope packages to $(Lowercase "$action")"
                 fi
             elif QPKGs.Ac${action}.ScNt${scope}.IsSet; then
 #                 case $action in
@@ -1789,7 +1789,7 @@ AllocPacksToAc()
                 if QPKGs.AcTo${action}.IsAny; then
                     DebugAsDone "action: '$action', scope: '$scope': found $(QPKGs.AcTo${action}.Count) packages to process"
                 else
-                    DebugAsWarn "action: '$action', scope: '$scope': found no packages to process"
+                    ShowAsWarn "unable to find any Nt$scope packages to $(Lowercase "$action")"
                 fi
             fi
         done
@@ -1832,7 +1832,7 @@ AllocPacksToAc()
                 if QPKGs.AcTo${action}.IsAny; then
                     DebugAsDone "action: '$action', state: '$state': found $(QPKGs.AcTo${action}.Count) packages to process"
                 else
-                    DebugAsWarn "action: '$action', state: '$state': found no packages to process"
+                    ShowAsWarn "unable to find any $state packages to $(Lowercase "$action")"
                 fi
             elif QPKGs.Ac${action}.IsNt${state}.IsSet; then
                 case $action in
@@ -1855,7 +1855,7 @@ AllocPacksToAc()
                 if QPKGs.AcTo${action}.IsAny; then
                     DebugAsDone "action: '$action', state: '$state': found $(QPKGs.AcTo${action}.Count) packages to process"
                 else
-                    DebugAsWarn "action: '$action', state: '$state': found no packages to process"
+                    ShowAsWarn "unable to find any Nt$state packages to $(Lowercase "$action")"
                 fi
             fi
         done
@@ -2069,9 +2069,9 @@ CalcIpkDepsToInstall()
     done
 
     if [[ $complete = true ]]; then
-        DebugAsDone "complete in $iterations iteration$(Plural $iterations)"
+        DebugAsDone "completed in $iterations loop iteration$(Plural $iterations)"
     else
-        DebugAsError "incomplete in $iterations iteration$(Plural $iterations), consider raising \$ITERATION_LIMIT [$ITERATION_LIMIT]"
+        DebugAsError "incomplete with $iterations loop iteration$(Plural $iterations), consider raising \$ITERATION_LIMIT [$ITERATION_LIMIT]"
         Self.SuggestIssue.Set
     fi
 
@@ -4536,9 +4536,10 @@ QPKG.Reassign()
 
     if [[ $result_code -eq 0 ]]; then
         MarkQpkgAcAsOk "$PACKAGE_NAME" "$action"
+        DebugAsDone "reassigned $(FormatAsPackageName "$PACKAGE_NAME") to sherpa"
     else
-        DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
         MarkQpkgAcAsEr "$PACKAGE_NAME" "$action"
+        DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
         result_code=1    # remap to 1
     fi
 
