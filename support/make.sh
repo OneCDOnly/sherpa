@@ -11,11 +11,11 @@ WORK_PATH=$PWD/..
 # $MANAGEMENT_ACTIONS haven't been coded yet, so don't create objects for it
 #MANAGEMENT_ACTIONS=(Check List Paste Status)
 
-PACKAGE_SCOPES=(All Dependent HasDependents Installable Standalone CanBackup CanRestartToUpdate Upgradable)
-PACKAGE_STATES=(BackedUp Cleaned Downloaded Enabled Installed Missing Started)
-PACKAGE_STATES_TEMPORARY=(Starting Stopping Restarting)
-PACKAGE_ACTIONS=(Download Rebuild Reassign Backup Stop Disable Uninstall Upgrade Reinstall Install Restore Clean Enable Start Restart)
-PACKAGE_RESULTS=(Ok Unknown)
+PACKAGE_SCOPES=(All CanBackup CanRestartToUpdate Dependent HasDependents Installable Standalone)	# sorted
+PACKAGE_STATES=(BackedUp Cleaned Downloaded Enabled Installed Missing Started Upgradable)   # sorted
+PACKAGE_STATES_TRANSIENT=(Starting Stopping Restarting) # unsorted
+PACKAGE_ACTIONS=(Download Rebuild Reassign Backup Stop Disable Uninstall Upgrade Reinstall Install Restore Clean Enable Start Restart)  # ordered
+PACKAGE_RESULTS=(Ok Unknown)    # unsorted
 
 MANAGER_FILE=sherpa.manager.sh
 MANAGER_ARCHIVE_FILE=${MANAGER_FILE%.*}.tar.gz
@@ -169,7 +169,7 @@ for state in "${PACKAGE_STATES[@]}"; do
     AddFlagObj QPKGs.List.IsNt${state}
 done
 
-for state in "${PACKAGE_STATES_TEMPORARY[@]}"; do
+for state in "${PACKAGE_STATES_TRANSIENT[@]}"; do
     AddFlagObj QPKGs.List.Is${state}
 done
 
@@ -217,7 +217,7 @@ for state in "${PACKAGE_STATES[@]}" "${PACKAGE_RESULTS[@]}"; do
     AddListObj QPKGs.IsNt${state}
 done
 
-for state in "${PACKAGE_STATES_TEMPORARY[@]}"; do
+for state in "${PACKAGE_STATES_TRANSIENT[@]}"; do
     AddListObj QPKGs.Is${state}
 done
 
