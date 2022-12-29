@@ -288,24 +288,24 @@ _ob_opts_deps_check_fl_=false
 Opts.Deps.Check.NoLogMods()
 { _ob_opts_deps_check_chfl_=false ;}
 Opts.Deps.Check.Init
-Opts.Versions.View.Init()
-{ _ob_opts_versions_view_fl_=false
-_ob_opts_versions_view_chfl_=true ;}
-Opts.Versions.View.IsNt()
-{ [[ $_ob_opts_versions_view_fl_ != 'true' ]] ;}
-Opts.Versions.View.IsSet()
-{ [[ $_ob_opts_versions_view_fl_ = 'true' ]] ;}
-Opts.Versions.View.Set()
-{ [[ $_ob_opts_versions_view_fl_ = 'true' ]] && return
-_ob_opts_versions_view_fl_=true
-[[ $_ob_opts_versions_view_chfl_ = 'true' ]] && DebugVar _ob_opts_versions_view_fl_ ;}
-Opts.Versions.View.UnSet()
-{ [[ $_ob_opts_versions_view_fl_ != 'true' ]] && return
-_ob_opts_versions_view_fl_=false
-[[ $_ob_opts_versions_view_chfl_ = 'true' ]] && DebugVar _ob_opts_versions_view_fl_ ;}
-Opts.Versions.View.NoLogMods()
-{ _ob_opts_versions_view_chfl_=false ;}
-Opts.Versions.View.Init
+Opts.Vers.View.Init()
+{ _ob_opts_vers_view_fl_=false
+_ob_opts_vers_view_chfl_=true ;}
+Opts.Vers.View.IsNt()
+{ [[ $_ob_opts_vers_view_fl_ != 'true' ]] ;}
+Opts.Vers.View.IsSet()
+{ [[ $_ob_opts_vers_view_fl_ = 'true' ]] ;}
+Opts.Vers.View.Set()
+{ [[ $_ob_opts_vers_view_fl_ = 'true' ]] && return
+_ob_opts_vers_view_fl_=true
+[[ $_ob_opts_vers_view_chfl_ = 'true' ]] && DebugVar _ob_opts_vers_view_fl_ ;}
+Opts.Vers.View.UnSet()
+{ [[ $_ob_opts_vers_view_fl_ != 'true' ]] && return
+_ob_opts_vers_view_fl_=false
+[[ $_ob_opts_vers_view_chfl_ = 'true' ]] && DebugVar _ob_opts_vers_view_fl_ ;}
+Opts.Vers.View.NoLogMods()
+{ _ob_opts_vers_view_chfl_=false ;}
+Opts.Vers.View.Init
 Opts.Help.Abbreviations.Init()
 { _ob_opts_help_abbreviations_fl_=false
 _ob_opts_help_abbreviations_chfl_=true ;}

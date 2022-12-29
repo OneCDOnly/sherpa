@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly MANAGER_FILE=sherpa.manager.sh
-    local -r SCRIPT_VER=221229a-beta
+    local -r SCRIPT_VER=221229b-beta
 
     IsQNAP || return
     IsSU || return
@@ -244,7 +244,7 @@ Self.Init()
         fi
     done
 
-    readonly THIS_PACKAGE_VER=$(QPKG.Local.Version)
+    readonly THIS_PACKAGE_VER=$(QPKG.Local.Ver)
     readonly MANAGER_SCRIPT_VER="$SCRIPT_VER$([[ $PROJECT_BRANCH = develop ]] && echo '(d)')"
 
     DebugInfoMajorSeparator
@@ -258,7 +258,7 @@ Self.Init()
 
     Self.Summary.Set
 
-    readonly NAS_FIRMWARE_VER=$(GetFirmwareVersion)
+    readonly NAS_FIRMWARE_VER=$(GetFirmwareVer)
     readonly NAS_FIRMWARE_BUILD=$(GetFirmwareBuild)
     readonly NAS_FIRMWARE_DATE=$(GetFirmwareDate)
     readonly NAS_RAM_KB=$(GetInstalledRAM)
@@ -368,13 +368,13 @@ Self.LogEnv()
         DebugUserspaceOK '$PATH' "${PATH:0:trimmed_width}..."
     fi
 
-    LogBinPathAndVersion python "$(GetDefPythonVersion)" "$MIN_PYTHON_VER"
-    LogBinPathAndVersion python3 "$(GetDefPython3Version)" "$MIN_PYTHON_VER"
-    LogBinPathAndVersion perl "$(GetDefPerlVersion)" "$MIN_PERL_VER"
+    DebugBinPathVerAndMinVer python "$(GetDefPythonVer)" "$MIN_PYTHON_VER"
+    DebugBinPathVerAndMinVer python3 "$(GetDefPython3Ver)" "$MIN_PYTHON_VER"
+    DebugBinPathVerAndMinVer perl "$(GetDefPerlVer)" "$MIN_PERL_VER"
     DebugScript 'logs path' "$LOGS_PATH"
     DebugScript 'work path' "$WORK_PATH"
 
-    if IsAllowUnsignedPackages; then
+    if OS.IsAllowUnsignedPackages; then
         DebugQPKG 'allow unsigned' yes
     else
         if [[ ${NAS_FIRMWARE_VER//.} -lt 435 ]]; then
@@ -452,7 +452,7 @@ Self.Validate()
     DebugFuncEntry
     ShowAsProc arguments >&2
 
-    local available_ver=''
+    local avail_ver=''
     local package=''
     local action=''
     local prospect=''
@@ -465,18 +465,17 @@ Self.Validate()
 
         if QPKG.IsInstalled Entware && QPKG.IsEnabled Entware; then
             if [[ -e $PYTHON3_CMD ]]; then
-                available_ver=$($PYTHON3_CMD -V 2>/dev/null | $SED_CMD 's|^Python ||')
-
-                if [[ ${available_ver//./} -lt $MIN_PYTHON_VER ]]; then
+                avail_ver=$(GetDefPython3Ver "$PYTHON3_CMD")
+                if [[ ${avail_ver//./} -lt $MIN_PYTHON_VER ]]; then
                     ShowAsInfo 'installed Python environment will be upgraded' >&2
                     IPKs.AcToUninstall.Add 'python*'
                 fi
             fi
 
             if [[ -e $PERL_CMD ]]; then
-                available_ver=$($PERL_CMD -e 'print "$^V\n"' 2>/dev/null | $SED_CMD 's|v||')
+                avail_ver=$(GetDefPerlVer "$PERL_CMD")
 
-                if [[ ${available_ver//./} -lt $MIN_PERL_VER ]]; then
+                if [[ ${avail_ver//./} -lt $MIN_PERL_VER ]]; then
                     ShowAsInfo 'installed Perl environment will be upgraded' >&2
                     IPKs.AcToUninstall.Add 'perl*'
                 fi
@@ -592,7 +591,7 @@ Self.Validate()
 
     # Check all items
     if Opts.Deps.Check.IsSet; then
-        QPKGs.NewVersions.Show
+        QPKGs.NewVers.Show
 
         for package in $(QPKGs.ScDependent.Array); do
             ! QPKGs.ScUpgradable.Exist "$package" && QPKGs.IsStarted.Exist "$package" && QPKGs.ScCanRestartToUpdate.Exist "$package" && QPKGs.AcToRestart.Add "$package"
@@ -868,8 +867,8 @@ Self.Results()
             Help.Tips.Show
         elif Opts.Help.Abbreviations.IsSet; then
             Help.PackageAbbreviations.Show
-        elif Opts.Versions.View.IsSet; then
-            Self.Versions.Show
+        elif Opts.Vers.View.IsSet; then
+            Self.Vers.Show
         elif Opts.Log.Last.View.IsSet; then
             Log.Last.View
         elif Opts.Log.Tail.View.IsSet; then
@@ -897,10 +896,10 @@ Self.Results()
         elif Opts.Help.Backups.IsSet; then
             QPKGs.Backups.Show
         elif Opts.Help.Repos.IsSet; then
-            QPKGs.NewVersions.Show
+            QPKGs.NewVers.Show
             QPKGs.Repos.Show
         elif Opts.Help.Status.IsSet; then
-            QPKGs.NewVersions.Show
+            QPKGs.NewVers.Show
             QPKGs.Statuses.Show
         fi
     fi
@@ -1254,7 +1253,7 @@ ParseArgs()
                         Self.Display.Clean.Set
                         ;;
                     versions_)
-                        Opts.Versions.View.Set
+                        Opts.Vers.View.Set
                         Self.Display.Clean.Set
                 esac
 
@@ -1546,7 +1545,7 @@ ParseArgs()
                 Opts.Help.Tips.Set
                 ;;
             versions_)
-                Opts.Versions.View.Set
+                Opts.Vers.View.Set
                 Self.Display.Clean.Set
         esac
     fi
@@ -2483,35 +2482,49 @@ IsSU()
 
     }
 
-GetDefPythonVersion()
+GetDefPythonVer()
     {
 
-    GetThisBinaryPath python &>/dev/null && python -V 2>&1 | $SED_CMD 's|^Python ||'
+    GetPythonVer "${1:-}"
 
     }
 
-GetDefPython3Version()
+GetDefPython3Ver()
     {
 
-    GetThisBinaryPath python3 &>/dev/null && python3 -V 2>&1 | $SED_CMD 's|^Python ||'
+    GetPythonVer "${1:-python3}"
 
     }
 
-GetDefPerlVersion()
+GetDefPerlVer()
     {
 
-    GetThisBinaryPath perl &>/dev/null && perl -e 'print "$^V\n"' 2>/dev/null | $SED_CMD 's|v||'
+    GetPerlVer
 
     }
 
-GetThisBinaryPath()
+GetPythonVer()
+    {
+
+    GetThisBinPath ${1:-python} &>/dev/null && ${1:-python} -V 2>&1 | $SED_CMD 's|^Python ||'
+
+    }
+
+GetPerlVer()
+    {
+
+    GetThisBinPath ${1:-perl} &>/dev/null && ${1:-perl} -e 'print "$^V\n"' 2>/dev/null | $SED_CMD 's|v||'
+
+    }
+
+GetThisBinPath()
     {
 
     [[ -n ${1:?empty} ]] && command -v "$1" 2>&1
 
     }
 
-LogBinPathAndVersion()
+DebugBinPathVerAndMinVer()
     {
 
     # $1 = binary filename
@@ -2520,10 +2533,10 @@ LogBinPathAndVersion()
 
     [[ -z $1 ]] && return 1
 
-    local binarypath=$(GetThisBinaryPath "$1")
+    local bin_path=$(GetThisBinPath "$1")
 
-    if [[ -n $binarypath ]]; then
-        DebugUserspaceOK "'$1' path" "$binarypath"
+    if [[ -n $bin_path ]]; then
+        DebugUserspaceOK "'$1' path" "$bin_path"
     else
         DebugUserspaceWarning "'$1' path" '<not present>'
     fi
@@ -2578,7 +2591,7 @@ readonly HELP_SYNTAX_INDENT=6
 
 readonly HELP_PACKAGE_NAME_WIDTH=20
 readonly HELP_PACKAGE_STATUS_WIDTH=40
-readonly HELP_PACKAGE_VERSION_WIDTH=17
+readonly HELP_PACKAGE_VER_WIDTH=17
 readonly HELP_PACKAGE_PATH_WIDTH=42
 readonly HELP_PACKAGE_REPO_WIDTH=40
 readonly HELP_FILE_NAME_WIDTH=33
@@ -2676,7 +2689,7 @@ CalcMaxStatusColsToDisplay()
 
     local column1_width=$((${#HELP_COLUMN_MAIN_PREFIX}+HELP_PACKAGE_NAME_WIDTH))
     local column2_width=$((${#HELP_COLUMN_SPACER}+${#HELP_COLUMN_MAIN_PREFIX}+HELP_PACKAGE_STATUS_WIDTH))
-    local column3_width=$((${#HELP_COLUMN_SPACER}+${#HELP_COLUMN_MAIN_PREFIX}+HELP_PACKAGE_VERSION_WIDTH))
+    local column3_width=$((${#HELP_COLUMN_SPACER}+${#HELP_COLUMN_MAIN_PREFIX}+HELP_PACKAGE_VER_WIDTH))
     local column4_width=$((${#HELP_COLUMN_SPACER}+${#HELP_COLUMN_MAIN_PREFIX}+HELP_PACKAGE_PATH_WIDTH))
 
     if [[ $((column1_width+column2_width)) -ge $SESSION_COLUMNS ]]; then
@@ -2709,7 +2722,7 @@ CalcMaxRepoColsToDisplay()
 
     }
 
-DisplayAsHelpTitlePackageNameVersionStatus()
+DisplayAsHelpTitlePackageNameVerStatus()
     {
 
     # $1 = package name title
@@ -2728,7 +2741,7 @@ DisplayAsHelpTitlePackageNameVersionStatus()
     fi
 
     if [[ -n ${3:-} && $maxcols -ge 3 ]]; then
-        printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_MAIN_PREFIX}%-${HELP_PACKAGE_VERSION_WIDTH}s" "$(Capitalise "$3"):"
+        printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_MAIN_PREFIX}%-${HELP_PACKAGE_VER_WIDTH}s" "$(Capitalise "$3"):"
     fi
 
     if [[ -n ${4:-} && $maxcols -ge 4 ]]; then
@@ -2739,7 +2752,7 @@ DisplayAsHelpTitlePackageNameVersionStatus()
 
     }
 
-DisplayAsHelpPackageNameVersionStatus()
+DisplayAsHelpPackageNameVerStatus()
     {
 
     # $1 = package name
@@ -2758,7 +2771,7 @@ DisplayAsHelpPackageNameVersionStatus()
     fi
 
     if [[ -n ${3:-} && $maxcols -ge 3 ]]; then
-        printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_OTHER_PREFIX}%-$((HELP_PACKAGE_VERSION_WIDTH+$(LenANSIDiff "$3")))s" "$3"
+        printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_OTHER_PREFIX}%-$((HELP_PACKAGE_VER_WIDTH+$(LenANSIDiff "$3")))s" "$3"
     fi
 
     if [[ -n ${4:-} && $maxcols -ge 4 ]]; then
@@ -3317,7 +3330,7 @@ ExtractTailFromLog()
 
     }
 
-Self.Versions.Show()
+Self.Vers.Show()
     {
 
     DisableDebugToArchiveAndFile
@@ -3332,7 +3345,7 @@ Self.Versions.Show()
 
     }
 
-QPKGs.NewVersions.Show()
+QPKGs.NewVers.Show()
     {
 
     # Check installed QPKGs and compare versions against upgradable array. If new versions are available, advise on-screen.
@@ -3585,7 +3598,7 @@ QPKGs.States.Build()
 
             QPKGs.IsInstalled.Add "$package"
 
-            [[ $(QPKG.Local.Version "$package") != "${QPKG_VERSION[$index]}" ]] && QPKGs.ScUpgradable.Add "$package"
+            [[ $(QPKG.Local.Ver "$package") != "${QPKG_VERSION[$index]}" ]] && QPKGs.ScUpgradable.Add "$package"
 
             if QPKG.IsEnabled "$package"; then
                 QPKGs.IsEnabled.Add "$package"
@@ -3800,27 +3813,27 @@ QPKGs.Statuses.Show()
     local package_name=''
     local package_name_formatted=''
     local package_status=''
-    local package_version=''
+    local package_ver=''
     local maxcols=$(CalcMaxStatusColsToDisplay)
 
     QPKGs.States.Build
     DisplayLineSpaceIfNoneAlready
 
     for tier in Standalone Dependent; do
-        DisplayAsHelpTitlePackageNameVersionStatus "$tier packages" 'package statuses (last result)' 'QPKG version' 'installation path'
+        DisplayAsHelpTitlePackageNameVerStatus "$tier packages" 'package statuses (last result)' 'QPKG version' 'installation path'
 
         for package_name in $(QPKGs.Sc$tier.Array); do
             package_name_formatted=''
             package_status=''
-            package_version=''
+            package_ver=''
             package_status_notes=()
 
             if ! QPKG.URL "$package_name" &>/dev/null; then
-                DisplayAsHelpPackageNameVersionStatus "$package_name" 'not installable: no arch'
+                DisplayAsHelpPackageNameVerStatus "$package_name" 'not installable: no arch'
             elif ! QPKG.MinRAM "$package_name" &>/dev/null; then
-                DisplayAsHelpPackageNameVersionStatus "$package_name" 'not installable: low RAM'
+                DisplayAsHelpPackageNameVerStatus "$package_name" 'not installable: low RAM'
             elif QPKGs.IsNtInstalled.Exist "$package_name"; then
-                DisplayAsHelpPackageNameVersionStatus "$package_name" 'not installed' "$(QPKG.Available.Version "$package_name")"
+                DisplayAsHelpPackageNameVerStatus "$package_name" 'not installed' "$(QPKG.Avail.Ver "$package_name")"
             else
                 if [[ $maxcols -eq 1 ]]; then
                     if QPKGs.IsMissing.Exist "$package_name"; then
@@ -3874,10 +3887,10 @@ QPKGs.Statuses.Show()
                     fi
 
                     if QPKGs.ScUpgradable.Exist "$package_name"; then
-                        package_version="$(QPKG.Local.Version "$package_name") $(ColourTextBrightOrange "($(QPKG.Available.Version "$package_name"))")"
+                        package_ver="$(QPKG.Local.Ver "$package_name") $(ColourTextBrightOrange "($(QPKG.Avail.Ver "$package_name"))")"
                         package_status_notes+=($(ColourTextBrightOrange upgradable))
                     else
-                        package_version=$(QPKG.Available.Version "$package_name")
+                        package_ver=$(QPKG.Avail.Ver "$package_name")
                     fi
 
                     [[ ! -e $GNU_SED_CMD ]] && Self.Boring.UnSet
@@ -3891,7 +3904,7 @@ QPKGs.Statuses.Show()
                     package_name_formatted=$package_name
                 fi
 
-                DisplayAsHelpPackageNameVersionStatus "$package_name_formatted" "$package_status" "$package_version" "$(QPKG.InstallationPath "$package_name")"
+                DisplayAsHelpPackageNameVerStatus "$package_name_formatted" "$package_status" "$package_ver" "$(QPKG.InstallationPath "$package_name")"
             fi
         done
 
@@ -4268,7 +4281,7 @@ GetDefVol()
 
     }
 
-IsAllowUnsignedPackages()
+OS.IsAllowUnsignedPackages()
     {
 
     [[ $($GETCFG_CMD 'QPKG Management' Ignore_Cert) = TRUE ]]
@@ -4328,7 +4341,7 @@ GetInstalledRAM()
 
     }
 
-GetFirmwareVersion()
+GetFirmwareVer()
     {
 
     $GETCFG_CMD System Version -f /etc/config/uLinux.conf
@@ -4689,8 +4702,8 @@ QPKG.Install()
             MarkQpkgAsNtStarted "$PACKAGE_NAME"
         fi
 
-        local current_version=$(QPKG.Local.Version "$PACKAGE_NAME")
-        DebugAsDone "installed $(FormatAsPackageName "$PACKAGE_NAME") $current_version"
+        local current_ver=$(QPKG.Local.Ver "$PACKAGE_NAME")
+        DebugAsDone "installed $(FormatAsPackageName "$PACKAGE_NAME") $current_ver"
 
         if [[ $PACKAGE_NAME = Entware ]]; then
             ModPathToEntware
@@ -4780,8 +4793,8 @@ QPKG.Reinstall()
             MarkQpkgAsNtStarted "$PACKAGE_NAME"
         fi
 
-        local current_version=$(QPKG.Local.Version "$PACKAGE_NAME")
-        DebugAsDone "reinstalled $(FormatAsPackageName "$PACKAGE_NAME") $current_version"
+        local current_ver=$(QPKG.Local.Ver "$PACKAGE_NAME")
+        DebugAsDone "reinstalled $(FormatAsPackageName "$PACKAGE_NAME") $current_ver"
         result_code=0    # remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK)
     else
         DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode $result_code)"
@@ -4847,7 +4860,7 @@ QPKG.Upgrade()
 
     local -r TARGET_FILE=$($BASENAME_CMD "$local_pathfile")
     local -r LOG_PATHFILE=$LOGS_PATH/$TARGET_FILE.$UPGRADE_LOG_FILE
-    local previous_version=$(QPKG.Local.Version "$PACKAGE_NAME")
+    local previous_ver=$(QPKG.Local.Ver "$PACKAGE_NAME")
     local target_path=''
 
     DebugAsProc "upgrading $(FormatAsPackageName "$PACKAGE_NAME")"
@@ -4867,12 +4880,12 @@ QPKG.Upgrade()
             MarkQpkgAsNtStarted "$PACKAGE_NAME"
         fi
 
-        local current_version=$(QPKG.Local.Version "$PACKAGE_NAME")
+        local current_ver=$(QPKG.Local.Ver "$PACKAGE_NAME")
 
-        if [[ $current_version = "$previous_version" ]]; then
-            DebugAsDone "upgraded $(FormatAsPackageName "$PACKAGE_NAME") and installed version is $current_version"
+        if [[ $current_ver = "$previous_ver" ]]; then
+            DebugAsDone "upgraded $(FormatAsPackageName "$PACKAGE_NAME") and installed version is $current_ver"
         else
-            DebugAsDone "upgraded $(FormatAsPackageName "$PACKAGE_NAME") from $previous_version to $current_version"
+            DebugAsDone "upgraded $(FormatAsPackageName "$PACKAGE_NAME") from $previous_ver to $current_ver"
         fi
 
         result_code=0    # remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK)
@@ -5430,7 +5443,7 @@ QPKG.ServicePathFile()
 
     }
 
-QPKG.Available.Version()
+QPKG.Avail.Ver()
     {
 
     # Returns the version number of an available QPKG.
@@ -5460,7 +5473,7 @@ QPKG.Available.Version()
 
     }
 
-QPKG.Local.Version()
+QPKG.Local.Ver()
     {
 
     # Returns the version number of an installed QPKG.
