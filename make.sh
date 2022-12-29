@@ -8,7 +8,8 @@ echo -n 'building archives ... '
 
 WORK_PATH=$PWD
 
-MANAGEMENT_ACTIONS=(Check List Paste Status)
+# $MANAGEMENT_ACTIONS haven't been coded yet, so don't create objects for it
+#MANAGEMENT_ACTIONS=(Check List Paste Status)
 
 PACKAGE_SCOPES=(All Dependent HasDependents Installable Standalone CanBackup CanRestartToUpdate Upgradable)
 PACKAGE_STATES=(BackedUp Cleaned Downloaded Enabled Installed Missing Started)
@@ -145,7 +146,7 @@ AddFlagObj IPKs.Install
 AddFlagObj PIPs.Install
 
 # user option flags
-for element in Deps.Check Versions.View; do
+for element in Deps.Check Vers.View; do
     AddFlagObj Opts.$element
 done
 
