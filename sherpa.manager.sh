@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly MANAGER_FILE=sherpa.manager.sh
-    local -r SCRIPT_VER=221229b-beta
+    local -r SCRIPT_VER=221229c-beta
 
     IsQNAP || return
     IsSU || return
@@ -2261,7 +2261,7 @@ PIPs.Install()
     local -i fail_count=0
     local -i total_count=1
     local -i index=0
-    local -r PACKAGE_TYPE='PIP group'
+    local -r PACKAGE_TYPE='PyPI group'
     local ACTION_PRESENT=installing
     local ACTION_PAST=installed
     local -r RUNTIME=long
@@ -2270,7 +2270,7 @@ PIPs.Install()
     if Opts.Deps.Check.IsSet || IPKs.AcOkInstall.Exist python3-pip; then
         ShowAsActionProgress '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
 
-        exec_cmd="$PIP_CMD install --upgrade --no-input $ESSENTIAL_PIPS --cache-dir $PIP_CACHE_PATH"
+        exec_cmd="$PIP_CMD install --upgrade --no-input $ESSENTIAL_PIPS --cache-dir $PIP_CACHE_PATH 2> >(grep -v \"Running pip as the 'root' user\") >&2"
         local desc="'Python3' essential modules"
         local log_pathfile=$LOGS_PATH/py3-modules.essential.$INSTALL_LOG_FILE
         DebugAsProc "$ACTION_PRESENT $desc"
