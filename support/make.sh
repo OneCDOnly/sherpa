@@ -175,15 +175,17 @@ done
 
 for scope in "${PACKAGE_SCOPES[@]}"; do
     for action in "${PACKAGE_ACTIONS[@]}"; do
-        AddFlagObj QPKGs.Ac${action}.Sc${scope}
-        AddFlagObj QPKGs.Ac${action}.ScNt${scope}
+		[[ $action = Enable || $action = Disable ]] && continue	# don't need objects for these as `start` and `stop` do the same jobs
+		AddFlagObj QPKGs.Ac${action}.Sc${scope}
+		AddFlagObj QPKGs.Ac${action}.ScNt${scope}
     done
 done
 
 for state in "${PACKAGE_STATES[@]}"; do
     for action in "${PACKAGE_ACTIONS[@]}"; do
-        AddFlagObj QPKGs.Ac${action}.Is${state}
-        AddFlagObj QPKGs.Ac${action}.IsNt${state}
+		[[ $action = Enable || $action = Disable ]] && continue	# don't need objects for these as `start` and `stop` do the same jobs
+		AddFlagObj QPKGs.Ac${action}.Is${state}
+		AddFlagObj QPKGs.Ac${action}.IsNt${state}
     done
 done
 
@@ -201,6 +203,8 @@ AddListObj Args.Unknown
 # done
 
 for action in "${PACKAGE_ACTIONS[@]}"; do
+	[[ $action = Enable || $action = Disable ]] && continue	# don't need objects for these as `start` and `stop` do the same jobs
+
     for prefix in To Ok Er Sk; do
         AddListObj QPKGs.Ac${prefix}${action}
         AddListObj IPKs.Ac${prefix}${action}
@@ -213,8 +217,8 @@ for scope in "${PACKAGE_SCOPES[@]}"; do
 done
 
 for state in "${PACKAGE_STATES[@]}" "${PACKAGE_RESULTS[@]}"; do
-    AddListObj QPKGs.Is${state}
-    AddListObj QPKGs.IsNt${state}
+	AddListObj QPKGs.Is${state}
+	AddListObj QPKGs.IsNt${state}
 done
 
 for state in "${PACKAGE_STATES_TRANSIENT[@]}"; do

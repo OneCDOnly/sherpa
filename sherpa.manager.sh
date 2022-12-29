@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly MANAGER_FILE=sherpa.manager.sh
-    local -r SCRIPT_VER=221230a-beta
+    local -r SCRIPT_VER=221230b-beta
 
     IsQNAP || return
     IsSU || return
@@ -410,6 +410,8 @@ Self.IsAnythingToDo()
         something_to_do=true
     else
         for action in "${PACKAGE_ACTIONS[@]}"; do
+            [[ $action = Enable || $action = Disable ]] && continue     # no objects for these as `start` and `stop` do the same jobs
+
             if QPKGs.AcTo${action}.IsAny; then
                 something_to_do=true
                 break
@@ -485,7 +487,7 @@ Self.Validate()
 
     QPKGs.IsCanBackup.Build
     QPKGs.IsCanRestartToUpdate.Build
-    AllocPacksToAc
+    AllocPacksToAcs
 
     # Meta-action pre-processing
     if QPKGs.AcToRebuild.IsAny; then
@@ -1630,7 +1632,7 @@ Self.ArgSuggests.Show()
 
     }
 
-AllocPacksToAc()
+AllocPacksToAcs()
     {
 
     DebugFuncEntry
@@ -1642,6 +1644,8 @@ AllocPacksToAc()
     local found=false       # scope or state has been found
 
     for action in "${PACKAGE_ACTIONS[@]}"; do
+        [[ $action = Enable || $action = Disable ]] && continue     # no objects for these as `start` and `stop` do the same jobs
+
         # process scope-based user-options
         # use sensible scope exceptions for convenience, rather than follow requested scope literally
         for scope in "${PACKAGE_SCOPES[@]}"; do
@@ -1765,7 +1769,10 @@ AllocPacksToAc()
                         esac
                 esac
 
-                [[ $found = false ]] && QPKGs.AcTo${action}.Add "$(QPKGs.Sc${scope}.Array)"
+                if [[ $found = false ]]; then
+                    DebugAsProc "action: '$action', scope: '$scope': adding 'Sc${scope}' packages"
+                    QPKGs.AcTo${action}.Add "$(QPKGs.Sc${scope}.Array)"
+                fi
 
                 if QPKGs.AcTo${action}.IsAny; then
                     DebugAsDone "action: '$action', scope: '$scope': found $(QPKGs.AcTo${action}.Count) packages to process"
@@ -1785,7 +1792,10 @@ AllocPacksToAc()
 #                         esac
 #               esac
 
-                [[ $found = false ]] && QPKGs.AcTo${action}.Add "$(QPKGs.ScNt${scope}.Array)"
+                if [[ $found = false ]]; then
+                    DebugAsProc "action: '$action', scope: '$scope': adding 'ScNt${scope}' packages"
+                    QPKGs.AcTo${action}.Add "$(QPKGs.ScNt${scope}.Array)"
+                fi
 
                 if QPKGs.AcTo${action}.IsAny; then
                     DebugAsDone "action: '$action', scope: 'Nt${scope}': found $(QPKGs.AcTo${action}.Count) packages to process"
@@ -1817,18 +1827,16 @@ AllocPacksToAc()
                         ;;
                     Install)
                         case $state in
-                            Enabled|Installed|Started)
+                            Enabled|Installed|Started|Stopped)
                                 found=true
                                 DebugAsProc "action: '$action', state: '$state': not adding 'Is${state}' packages"
-                                ;;
-                            Stopped)
-                                found=true
-                                DebugAsProc "action: '$action', state: '$state': adding 'IsNtStarted' packages"
-                                QPKGs.AcTo${action}.Add "$(QPKGs.IsNtStarted.Array)"
                         esac
                 esac
 
-                [[ $found = false ]] && QPKGs.AcTo${action}.Add "$(QPKGs.Is${state}.Array)"
+                if [[ $found = false ]]; then
+                    DebugAsProc "action: '$action', state: '$state': adding 'Is${state}' packages"
+                    QPKGs.AcTo${action}.Add "$(QPKGs.Is${state}.Array)"
+                fi
 
                 if QPKGs.AcTo${action}.IsAny; then
                     DebugAsDone "action: '$action', state: '$state': found $(QPKGs.AcTo${action}.Count) packages to process"
@@ -1837,7 +1845,7 @@ AllocPacksToAc()
                 fi
             elif QPKGs.Ac${action}.IsNt${state}.IsSet; then
                 case $action in
-                    Backup|Clean|Install|Uninstall)
+                    Backup|Clean|Install|Start|Uninstall)
                         case $state in
                             Installed|Started)
                                 found=true
@@ -1851,7 +1859,10 @@ AllocPacksToAc()
                         esac
                 esac
 
-                [[ $found = false ]] && QPKGs.AcTo${action}.Add "$(QPKGs.IsNt${state}.Array)"
+                if [[ $found = false ]]; then
+                    DebugAsProc "action: '$action', state: '$state': adding 'IsNt${state}' packages"
+                    QPKGs.AcTo${action}.Add "$(QPKGs.IsNt${state}.Array)"
+                fi
 
                 if QPKGs.AcTo${action}.IsAny; then
                     DebugAsDone "action: '$action', state: 'Nt${state}': found $(QPKGs.AcTo${action}.Count) packages to process"
@@ -3437,6 +3448,8 @@ IPKs.Actions.List()
     DebugInfoMinorSeparator
 
     for action in "${PACKAGE_ACTIONS[@]}"; do
+        [[ $action = Enable || $action = Disable ]] && continue     # no objects for these as `start` and `stop` do the same jobs
+
         for prefix in Ok Er Sk; do
             if IPKs.Ac${prefix}${action}.IsAny; then
                 case $prefix in
@@ -3469,6 +3482,8 @@ QPKGs.Actions.List()
     DebugInfoMinorSeparator
 
     for action in "${PACKAGE_ACTIONS[@]}"; do
+        [[ $action = Enable || $action = Disable ]] && continue     # no objects for these as `start` and `stop` do the same jobs
+
         for prefix in Ok Er Sk; do
             if QPKGs.Ac${prefix}${action}.IsAny; then
                 case $prefix in
@@ -4460,6 +4475,7 @@ ShowSummary()
 
     for state in "${PACKAGE_STATES[@]}"; do
         for action in "${PACKAGE_ACTIONS[@]}"; do
+            [[ $action = Enable || $action = Disable ]] && continue     # no objects for these as `start` and `stop` do the same jobs
             QPKGs.Ac${action}.Is${state}.IsSet && QPKGs.AcOk${action}.IsNone && ShowAsWarn "no QPKGs were able to $(Lowercase "$action")"
         done
     done
