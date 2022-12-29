@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly MANAGER_FILE=sherpa.manager.sh
-    local -r SCRIPT_VER=221229e-beta
+    local -r SCRIPT_VER=221230-beta
 
     IsQNAP || return
     IsSU || return
@@ -176,7 +176,7 @@ Self.Init()
     PACKAGE_SCOPES=(All Dependent HasDependents Installable Standalone CanBackup CanRestartToUpdate Upgradable)
     PACKAGE_STATES=(BackedUp Cleaned Downloaded Enabled Installed Missing Started)
     PACKAGE_STATES_TEMPORARY=(Starting Stopping Restarting)
-    PACKAGE_ACTIONS=(Download Rebuild Backup Stop Disable Uninstall Upgrade Reassign Reinstall Install Restore Clean Enable Start Restart)
+    PACKAGE_ACTIONS=(Download Rebuild Reassign Backup Stop Disable Uninstall Upgrade Reinstall Install Restore Clean Enable Start Restart)
     PACKAGE_RESULTS=(Ok Unknown)
 
     readonly MANAGEMENT_ACTIONS
@@ -608,27 +608,28 @@ Self.Validate()
 
 #  20. reassign all                 (highest: most-important)
 #  19. backup all
-#  18. stop dependents
-#  17. stop standalones
+#  18. stop/disable dependents
+#  17. stop/disable standalones
 #  16. uninstall all
 
 #  15. upgrade standalones
 #  14. reinstall standalones
 #  13. install standalones
 #  12. restore standalones
-#  11. clean standalones            (presently unsupported by all standalone QPKGs)
-#  10. start standalones
+#  11. clean standalones            (unsupported by all standalone QPKGs)
+#  10. enable/start standalones
 #   9. restart standalones
 
 #   8. upgrade dependents
 #   7. reinstall dependents
 #   6. install dependents
 #   5. restore dependents
-#   4. clean dependents
-#   3. start dependents
+#   4. clean dependents             (supported by most dependent packages, but not all)
+
+#   3. enable/start dependents
 #   2. restart dependents
 
-#   1. status                       (lowest: least-important, currently supported by sherpa QPKGs, but no processing code yet exists)
+#   1. "live" status                (lowest: least-important, currently supported by most sherpa QPKGs, but no processing code yet exists in management script)
 
 Tiers.Proc()
     {

@@ -14,7 +14,7 @@ WORK_PATH=$PWD/..
 PACKAGE_SCOPES=(All Dependent HasDependents Installable Standalone CanBackup CanRestartToUpdate Upgradable)
 PACKAGE_STATES=(BackedUp Cleaned Downloaded Enabled Installed Missing Started)
 PACKAGE_STATES_TEMPORARY=(Starting Stopping Restarting)
-PACKAGE_ACTIONS=(Backup Clean Disable Download Enable Install Reassign Rebuild Reinstall Restart Restore Start Stop Uninstall Upgrade)
+PACKAGE_ACTIONS=(Download Rebuild Reassign Backup Stop Disable Uninstall Upgrade Reinstall Install Restore Clean Enable Start Restart)
 PACKAGE_RESULTS=(Ok Unknown)
 
 MANAGER_FILE=sherpa.manager.sh
