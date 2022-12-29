@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly MANAGER_FILE=sherpa.manager.sh
-    local -r SCRIPT_VER=221230b-beta
+    local -r SCRIPT_VER=221230c-beta
 
     IsQNAP || return
     IsSU || return
@@ -3524,8 +3524,8 @@ QPKGs.States.List()
                 QPKGs.${prefix}${state}.IsAny && DebugQPKGError "${prefix}${state}" "($(QPKGs.${prefix}${state}.Count)) $(QPKGs.${prefix}${state}.ListCSV) "
             elif [[ $prefix = IsNt && $state = BackedUp ]]; then
                 QPKGs.${prefix}${state}.IsAny && DebugQPKGWarning "${prefix}${state}" "($(QPKGs.${prefix}${state}.Count)) $(QPKGs.${prefix}${state}.ListCSV) "
-            elif [[ $state = Installed ]]; then
-                : # don't log installation states - they pollute the log, and package name can be seen in other states anyway
+            elif [[ $prefix = IsNt ]] && [[ $state = Installed || $state = Upgradable ]]; then
+                : # don't log packages with these states - they pollute the log, and are easily determined from other states anyway
             else
                 QPKGs.${prefix}${state}.IsAny && DebugQPKGInfo "${prefix}${state}" "($(QPKGs.${prefix}${state}.Count)) $(QPKGs.${prefix}${state}.ListCSV) "
             fi
@@ -3611,34 +3611,36 @@ QPKGs.States.Build()
                 continue
             fi
 
-            QPKGs.IsInstalled.Add "$package"
+            MarkQpkgAsIsInstalled "$package"
 
-            [[ $(QPKG.Local.Ver "$package") != "${QPKG_VERSION[$index]}" ]] && QPKGs.IsUpgradable.Add "$package"
+            if [[ $(QPKG.Local.Ver "$package") != "${QPKG_VERSION[$index]}" ]]; then
+                MarkQpkgAsIsUpgradable "$package"
+            else
+                MarkQpkgAsNtUpgradable "$package"
+            fi
 
             if QPKG.IsEnabled "$package"; then
-                QPKGs.IsEnabled.Add "$package"
-                QPKGs.IsStarted.Add "$package"
+                MarkQpkgAsIsEnabled "$package"
             else
-                QPKGs.IsNtEnabled.Add "$package"
-                QPKGs.IsNtStarted.Add "$package"
+                MarkQpkgAsNtEnabled "$package"
+            fi
+
+            if QPKG.IsStarted "$package"; then
+                MarkQpkgAsIsStarted "$package"
+            else
+                MarkQpkgAsNtStarted "$package"
             fi
 
             if [[ -e /var/run/$package.last.operation ]]; then
                 case $(</var/run/$package.last.operation) in
                     starting)
-                        QPKGs.IsStarted.Remove "$package"
-                        QPKGs.IsNtStarted.Remove "$package"
-                        QPKGs.IsStarting.Add "$package"
+                        MarkQpkgAsIsStarting "$package"
                         ;;
                     restarting)
-                        QPKGs.IsStarted.Remove "$package"
-                        QPKGs.IsNtStarted.Remove "$package"
-                        QPKGs.IsRestarting.Add "$package"
+                        MarkQpkgAsIsRestarting "$package"
                         ;;
                     stopping)
-                        QPKGs.IsStarted.Remove "$package"
-                        QPKGs.IsNtStarted.Remove "$package"
-                        QPKGs.IsStopping.Add "$package"
+                        MarkQpkgAsIsStopping "$package"
                         ;;
                     failed)
                         QPKGs.IsOk.Remove "$package"
@@ -3652,15 +3654,9 @@ QPKGs.States.Build()
                 QPKGs.IsUnknown.Add "$package"
             fi
 
-            if QPKG.IsCanBackup "$package"; then
-                if QPKG.IsBackupExist "$package"; then
-                    QPKGs.IsBackedUp.Add "$package"
-                else
-                    QPKGs.IsNtBackedUp.Add "$package"
-                fi
-            fi
+            QPKG.IsCanBackup "$package" && MarkQpkgAsIsBackedUp "$package"
         else
-            QPKGs.IsNtInstalled.Add "$package"
+            MarkQpkgAsNtInstalled "$package"
 
             if [[ -n ${QPKG_ABBRVS[$index]} ]]; then
                 if [[ ${QPKG_ARCH[$index]} = all || ${QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
@@ -4200,6 +4196,50 @@ MarkQpkgAsNtEnabled()
 
     }
 
+MarkQpkgAsIsStarting()
+    {
+
+    [[ -z ${1:-} ]] && return 1
+
+    QPKGs.IsStarting.Add "$1"
+    QPKGs.IsStarted.Remove "$1"
+    QPKGs.IsStopping.Remove "$1"
+    QPKGs.IsNtStarted.Remove "$1"
+    QPKGs.IsRestarting.Remove "$1"
+
+    }
+
+MarkQpkgAsNtStarting()
+    {
+
+    [[ -z ${1:-} ]] && return 1
+
+    QPKGs.IsStarting.Remove "$1"
+
+    }
+
+MarkQpkgAsIsRestarting()
+    {
+
+    [[ -z ${1:-} ]] && return 1
+
+    QPKGs.IsStarting.Remove "$1"
+    QPKGs.IsStarted.Remove "$1"
+    QPKGs.IsStopping.Remove "$1"
+    QPKGs.IsNtStarted.Remove "$1"
+    QPKGs.IsRestarting.Add "$1"
+
+    }
+
+MarkQpkgAsNtRestarting()
+    {
+
+    [[ -z ${1:-} ]] && return 1
+
+    QPKGs.IsRestarting.Remove "$1"
+
+    }
+
 MarkQpkgAsIsStarted()
     {
 
@@ -4223,6 +4263,68 @@ MarkQpkgAsNtStarted()
     QPKGs.IsStopping.Remove "$1"
     QPKGs.IsNtStarted.Add "$1"
     QPKGs.IsRestarting.Remove "$1"
+
+    }
+
+MarkQpkgAsIsStopping()
+    {
+
+    [[ -z ${1:-} ]] && return 1
+
+    QPKGs.IsStarting.Remove "$1"
+    QPKGs.IsStarted.Remove "$1"
+    QPKGs.IsStopping.Add "$1"
+    QPKGs.IsNtStarted.Remove "$1"
+    QPKGs.IsRestarting.Remove "$1"
+
+    }
+
+MarkQpkgAsNtStopping()
+    {
+
+    [[ -z ${1:-} ]] && return 1
+
+    QPKGs.IsStopping.Remove "$1"
+
+    }
+
+MarkQpkgAsIsUpgradable()
+    {
+
+    [[ -z ${1:-} ]] && return 1
+
+    QPKGs.IsNtUpgradable.Remove "$1"
+    QPKGs.IsUpgradable.Add "$1"
+
+    }
+
+MarkQpkgAsNtUpgradable()
+    {
+
+    [[ -z ${1:-} ]] && return 1
+
+    QPKGs.IsUpgradable.Remove "$1"
+    QPKGs.IsNtUpgradable.Add "$1"
+
+    }
+
+MarkQpkgAsIsBackedUp()
+    {
+
+    [[ -z ${1:-} ]] && return 1
+
+    QPKGs.IsBackedUp.Add "$1"
+    QPKGs.IsNtBackedUp.Remove "$1"
+
+    }
+
+MarkQpkgAsNtBackedUp()
+    {
+
+    [[ -z ${1:-} ]] && return 1
+
+    QPKGs.IsNtBackedUp.Add "$1"
+    QPKGs.IsBackedUp.Remove "$1"
 
     }
 
@@ -4716,6 +4818,12 @@ QPKG.Install()
         MarkQpkgAsIsInstalled "$PACKAGE_NAME"
 
         if QPKG.IsEnabled "$PACKAGE_NAME"; then
+            MarkQpkgAsIsEnabled "$PACKAGE_NAME"
+        else
+            MarkQpkgAsNtEnabled "$PACKAGE_NAME"
+        fi
+
+        if QPKG.IsStarted "$PACKAGE_NAME"; then
             MarkQpkgAsIsStarted "$PACKAGE_NAME"
         else
             MarkQpkgAsNtStarted "$PACKAGE_NAME"
@@ -4807,6 +4915,12 @@ QPKG.Reinstall()
         MarkQpkgAcAsOk "$PACKAGE_NAME" "$action"
 
         if QPKG.IsEnabled "$PACKAGE_NAME"; then
+            MarkQpkgAsIsEnabled "$PACKAGE_NAME"
+        else
+            MarkQpkgAsNtEnabled "$PACKAGE_NAME"
+        fi
+
+        if QPKG.IsStarted "$PACKAGE_NAME"; then
             MarkQpkgAsIsStarted "$PACKAGE_NAME"
         else
             MarkQpkgAsNtStarted "$PACKAGE_NAME"
@@ -4894,6 +5008,12 @@ QPKG.Upgrade()
         QPKGs.IsUpgradable.Remove "$PACKAGE_NAME"
 
         if QPKG.IsEnabled "$PACKAGE_NAME"; then
+            MarkQpkgAsIsEnabled "$PACKAGE_NAME"
+        else
+            MarkQpkgAsNtEnabled "$PACKAGE_NAME"
+        fi
+
+        if QPKG.IsStarted "$PACKAGE_NAME"; then
             MarkQpkgAsIsStarted "$PACKAGE_NAME"
         else
             MarkQpkgAsNtStarted "$PACKAGE_NAME"
@@ -5024,8 +5144,8 @@ QPKG.Restart()
     fi
 
     if [[ $result_code -eq 0 ]]; then
-        DebugAsDone "restarted $(FormatAsPackageName "$PACKAGE_NAME")"
         QPKG.StoreServiceStatus "$PACKAGE_NAME"
+        DebugAsDone "restarted $(FormatAsPackageName "$PACKAGE_NAME")"
         MarkQpkgAcAsOk "$PACKAGE_NAME" "$action"
     else
         DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode "$result_code")"
@@ -5084,10 +5204,10 @@ QPKG.Start()
     fi
 
     if [[ $result_code -eq 0 ]]; then
-        DebugAsDone "started $(FormatAsPackageName "$PACKAGE_NAME")"
         QPKG.StoreServiceStatus "$PACKAGE_NAME"
-        MarkQpkgAcAsOk "$PACKAGE_NAME" "$action"
+        DebugAsDone "started $(FormatAsPackageName "$PACKAGE_NAME")"
         MarkQpkgAsIsStarted "$PACKAGE_NAME"
+        MarkQpkgAcAsOk "$PACKAGE_NAME" "$action"
         [[ $PACKAGE_NAME = Entware ]] && ModPathToEntware
     else
         DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode "$result_code")"
@@ -5151,10 +5271,10 @@ QPKG.Stop()
     fi
 
     if [[ $result_code -eq 0 ]]; then
-        DebugAsDone "stopped $(FormatAsPackageName "$PACKAGE_NAME")"
         QPKG.StoreServiceStatus "$PACKAGE_NAME"
-        MarkQpkgAcAsOk "$PACKAGE_NAME" "$action"
+        DebugAsDone "stopped $(FormatAsPackageName "$PACKAGE_NAME")"
         MarkQpkgAsNtStarted "$PACKAGE_NAME"
+        MarkQpkgAcAsOk "$PACKAGE_NAME" "$action"
     else
         DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode "$result_code")"
         MarkQpkgAcAsEr "$PACKAGE_NAME" "$action"
@@ -5249,11 +5369,10 @@ QPKG.Backup()
     result_code=$?
 
     if [[ $result_code -eq 0 ]]; then
+        QPKG.StoreServiceStatus "$PACKAGE_NAME"
         DebugAsDone "backed-up $(FormatAsPackageName "$PACKAGE_NAME") configuration"
         MarkQpkgAcAsOk "$PACKAGE_NAME" "$action"
-        QPKG.StoreServiceStatus "$PACKAGE_NAME"
-        QPKGs.IsNtBackedUp.Remove "$PACKAGE_NAME"
-        QPKGs.IsBackedUp.Add "$PACKAGE_NAME"
+        MarkQpkgAsIsBackedUp
     else
         DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode "$result_code")"
         MarkQpkgAcAsEr "$PACKAGE_NAME" "$action"
@@ -5301,9 +5420,9 @@ QPKG.Restore()
     result_code=$?
 
     if [[ $result_code -eq 0 ]]; then
+        QPKG.StoreServiceStatus "$PACKAGE_NAME"
         DebugAsDone "restored $(FormatAsPackageName "$PACKAGE_NAME") configuration"
         MarkQpkgAcAsOk "$PACKAGE_NAME" "$action"
-        QPKG.StoreServiceStatus "$PACKAGE_NAME"
     else
         DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode "$result_code")"
         MarkQpkgAcAsEr "$PACKAGE_NAME" "$action"
@@ -5352,9 +5471,9 @@ QPKG.Clean()
     result_code=$?
 
     if [[ $result_code -eq 0 ]]; then
+        QPKG.StoreServiceStatus "$PACKAGE_NAME"
         DebugAsDone "cleaned $(FormatAsPackageName "$PACKAGE_NAME")"
         MarkQpkgAcAsOk "$PACKAGE_NAME" "$action"
-        QPKG.StoreServiceStatus "$PACKAGE_NAME"
         QPKGs.IsNtCleaned.Remove "$PACKAGE_NAME"
         QPKGs.IsCleaned.Add "$PACKAGE_NAME"
     else
@@ -5898,6 +6017,22 @@ QPKG.IsEnabled()
     #   $? = 0 (true) or 1 (false)
 
     [[ $($GETCFG_CMD "${1:?no package name supplied}" Enable -u -f /etc/config/qpkg.conf) = TRUE ]]
+
+    }
+
+QPKG.IsStarted()
+    {
+
+    # Assume that if package is enabled, it's also started. Hey, it's true most of the time. ;)
+    # But, really should revisit this to make result match reality.
+
+    # input:
+    #   $1 = package name to check
+
+    # output:
+    #   $? = 0 (true) or 1 (false)
+
+    QPKG.IsEnabled "${1:?no package name supplied}"
 
     }
 
