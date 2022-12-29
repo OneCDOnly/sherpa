@@ -6,7 +6,7 @@
 
 echo -n 'building archives ... '
 
-WORK_PATH=$PWD
+WORK_PATH=$PWD/..
 
 # $MANAGEMENT_ACTIONS haven't been coded yet, so don't create objects for it
 #MANAGEMENT_ACTIONS=(Check List Paste Status)
