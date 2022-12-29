@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly MANAGER_FILE=sherpa.manager.sh
-    local -r SCRIPT_VER=221230c-beta
+    local -r SCRIPT_VER=221230d-beta
 
     IsQNAP || return
     IsSU || return
@@ -3525,6 +3525,8 @@ QPKGs.States.List()
             elif [[ $prefix = IsNt && $state = BackedUp ]]; then
                 QPKGs.${prefix}${state}.IsAny && DebugQPKGWarning "${prefix}${state}" "($(QPKGs.${prefix}${state}.Count)) $(QPKGs.${prefix}${state}.ListCSV) "
             elif [[ $prefix = IsNt ]] && [[ $state = Installed || $state = Upgradable ]]; then
+                : # don't log packages with these states - they pollute the log, and are easily determined from other states anyway
+            elif [[ $prefix = Is ]] && [[ $state = Enabled ]]; then
                 : # don't log packages with these states - they pollute the log, and are easily determined from other states anyway
             else
                 QPKGs.${prefix}${state}.IsAny && DebugQPKGInfo "${prefix}${state}" "($(QPKGs.${prefix}${state}.Count)) $(QPKGs.${prefix}${state}.ListCSV) "
