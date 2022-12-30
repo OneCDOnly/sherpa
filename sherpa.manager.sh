@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEntry
 
     readonly MANAGER_FILE=sherpa.manager.sh
-    local -r SCRIPT_VER=221230d-beta
+    local -r SCRIPT_VER=221230e-beta
 
     IsQNAP || return
     IsSU || return
@@ -3535,7 +3535,7 @@ QPKGs.Actions.ListAll()
 QPKGs.States.List()
     {
 
-    # $1 (optional) = `rebuild` - clear existing lists and rebuild them from scratch
+    # $1 (optional passthrough) = `rebuild` - clear existing lists and rebuild them from scratch
 
     DebugFuncEntry
 
@@ -3547,14 +3547,16 @@ QPKGs.States.List()
 
     for state in "${PACKAGE_STATES[@]}" "${PACKAGE_RESULTS[@]}"; do
         for prefix in Is IsNt; do
-            if [[ $prefix = IsNt && $state = Ok ]]; then
+            if [[ $state = Installed ]]; then
+                continue
+            elif [[ $prefix = Is && $state = Enabled ]]; then
+                continue
+            elif [[ $prefix = IsNt && $state = Upgradable ]]; then
+                continue
+            elif [[ $prefix = IsNt && $state = Ok ]]; then
                 QPKGs.${prefix}${state}.IsAny && DebugQPKGError "${prefix}${state}" "($(QPKGs.${prefix}${state}.Count)) $(QPKGs.${prefix}${state}.ListCSV) "
             elif [[ $prefix = IsNt && $state = BackedUp ]]; then
                 QPKGs.${prefix}${state}.IsAny && DebugQPKGWarning "${prefix}${state}" "($(QPKGs.${prefix}${state}.Count)) $(QPKGs.${prefix}${state}.ListCSV) "
-            elif [[ $prefix = IsNt ]] && [[ $state = Installed || $state = Upgradable ]]; then
-                : # don't log packages with these states - they pollute the log, and are easily determined from other states anyway
-            elif [[ $prefix = Is ]] && [[ $state = Enabled ]]; then
-                : # don't log packages with these states - they pollute the log, and are easily determined from other states anyway
             else
                 QPKGs.${prefix}${state}.IsAny && DebugQPKGInfo "${prefix}${state}" "($(QPKGs.${prefix}${state}.Count)) $(QPKGs.${prefix}${state}.ListCSV) "
             fi
