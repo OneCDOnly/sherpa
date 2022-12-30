@@ -51,10 +51,10 @@ readonly SCRIPT_STARTSECONDS=$(/bin/date +%s)
 Self.Init()
     {
 
-    DebugFuncEntry
+    DebugFuncEn
 
     readonly MANAGER_FILE=sherpa.manager.sh
-    local -r SCRIPT_VER=221230e-beta
+    local -r SCRIPT_VER=221231-beta
 
     IsQNAP || return
     IsSU || return
@@ -165,10 +165,10 @@ Self.Init()
     readonly PREVIOUS_IPK_LIST=$WORK_PATH/ipk.prev.list
     readonly PREVIOUS_PIP_LIST=$WORK_PATH/pip.prev.list
 
-    readonly SESSION_ARCHIVE_PATHFILE=$LOGS_PATH/session.archive.log
-    readonly SESSION_ACTIVE_PATHFILE=$PROJECT_PATH/session.$$.active.log
-    readonly SESSION_LAST_PATHFILE=$LOGS_PATH/session.last.log
-    readonly SESSION_TAIL_PATHFILE=$LOGS_PATH/session.tail.log
+    readonly SESS_ARCHIVE_PATHFILE=$LOGS_PATH/session.archive.log
+    readonly SESS_ACTIVE_PATHFILE=$PROJECT_PATH/session.$$.active.log
+    readonly SESS_LAST_PATHFILE=$LOGS_PATH/session.last.log
+    readonly SESS_TAIL_PATHFILE=$LOGS_PATH/session.tail.log
 
     MANAGEMENT_ACTIONS=(Check List Paste Status)
 
@@ -229,11 +229,11 @@ Self.Init()
 
     if [[ -e $GNU_STTY_CMD ]]; then
         local terminal_dimensions=$($GNU_STTY_CMD size)
-        readonly SESSION_ROWS=${terminal_dimensions% *}
-        readonly SESSION_COLUMNS=${terminal_dimensions#* }
+        readonly SESS_ROWS=${terminal_dimensions% *}
+        readonly SESS_COLS=${terminal_dimensions#* }
     else
-        readonly SESSION_ROWS=40
-        readonly SESSION_COLUMNS=156
+        readonly SESS_ROWS=40
+        readonly SESS_COLS=156
     fi
 
     for re in \\bdebug\\b \\bdbug\\b \\bverbose\\b; do
@@ -247,14 +247,14 @@ Self.Init()
     readonly THIS_PACKAGE_VER=$(QPKG.Local.Ver)
     readonly MANAGER_SCRIPT_VER="$SCRIPT_VER$([[ $PROJECT_BRANCH = develop ]] && echo '(d)')"
 
-    DebugInfoMajorSeparator
+    DebugInfoMajSep
     DebugScript started "$($DATE_CMD -d @"$SCRIPT_STARTSECONDS" | tr -s ' ')"
     DebugScript versions "QPKG: ${THIS_PACKAGE_VER:-unknown}, manager: ${MANAGER_SCRIPT_VER:-unknown}, loader: ${LOADER_SCRIPT_VER:-unknown}, objects: ${OBJECTS_VER:-unknown}"
     DebugScript PID "$$"
-    DebugInfoMinorSeparator
+    DebugInfoMinSep
     DebugInfo 'Markers: (**) detected, (II) information, (WW) warning, (EE) error, (LL) log file, (--) processing,'
     DebugInfo '(==) done, (>>) f entry, (<<) f exit, (vv) variable name & value, ($1) positional argument value'
-    DebugInfoMinorSeparator
+    DebugInfoMinSep
 
     Self.Summary.Set
 
@@ -269,7 +269,7 @@ Self.Init()
     readonly LOG_TAIL_LINES=5000    # note: a full download and install of everything generates a session log of around 1600 lines, but include a bunch of opkg updates and it can get much longer
     previous_msg=' '
     [[ ${NAS_FIRMWARE_VER//.} -lt 426 ]] && curl_insecure_arg=' --insecure' || curl_insecure_arg=''
-    QPKG.IsInstalled Entware && [[ $ENTWARE_VER = none ]] && DebugAsWarn "$(FormatAsPackageName Entware) appears to be installed but is not visible"
+    QPKG.IsInstalled Entware && [[ $ENTWARE_VER = none ]] && DebugAsWarn "$(FormatAsPackName Entware) appears to be installed but is not visible"
 
     # SPEEDUP: don't build package lists if only showing basic help
     if [[ -z $USER_ARGS_RAW ]]; then
@@ -284,13 +284,13 @@ Self.Init()
     SmartCR >&2
 
     if Self.Display.Clean.IsNt && Self.Debug.ToScreen.IsNt; then
-        Display "$(FormatAsScriptTitle) $MANAGER_SCRIPT_VER • a mini-package-manager for QNAP NAS"
+        Display "$(FormatAsTitle) $MANAGER_SCRIPT_VER • a mini-package-manager for QNAP NAS"
         DisplayLineSpaceIfNoneAlready
     fi
 
     if ! QPKGs.Conflicts.Check; then
         QPKGs.SkProc.Set
-        DebugFuncExit 1; return
+        DebugFuncEx 1; return
     fi
 
     QPKGs.Warnings.Check
@@ -302,7 +302,7 @@ Self.Init()
         $SETCFG_CMD sherpa max_versions_cleared TRUE -f /etc/config/qpkg.conf
     fi
 
-    DebugFuncExit
+    DebugFuncEx
 
     }
 
@@ -311,18 +311,18 @@ Self.LogEnv()
 
     Self.ArgSuggests.Show
     QPKGs.SkProc.IsSet && return
-    DebugFuncEntry
+    DebugFuncEn
     ShowAsProc environment >&2
 
     local -i max_width=70
     local -i trimmed_width=$((max_width-3))
 
-    DebugInfoMinorSeparator
+    DebugInfoMinSep
     DebugHardwareOK model "$(get_display_name)"
     DebugHardwareOK CPU "$(GetCPUInfo)"
     DebugHardwareOK 'CPU cores' "$(GetCPUCores)"        # this will become important when running actions concurrently
     DebugHardwareOK 'CPU architecture' "$NAS_ARCH"
-    DebugHardwareOK RAM "$(FormatAsThousands "$NAS_RAM_KB")kB"
+    DebugHardwareOK RAM "$(FormatAsThous "$NAS_RAM_KB")kiB"
     DebugFirmwareOK OS "$(GetQnapOS)"
 
     if [[ ${NAS_FIRMWARE_VER//.} -ge 400 ]]; then
@@ -387,10 +387,10 @@ Self.LogEnv()
     DebugQPKG architecture "$NAS_QPKG_ARCH"
     DebugQPKG 'Entware installer' "$ENTWARE_VER"
 
-    RunAndLog "$DF_CMD -h | $GREP_CMD '^Filesystem\|^none\|^tmpfs\|ram'" /var/log/ramdisks.freespace
+    RunAndLog "$DF_CMD -h | $GREP_CMD '^Filesystem\|^none\|^tmpfs\|ram'" /var/log/ramdisks.freespace.log
 
     QPKGs.States.Build
-    DebugFuncExit
+    DebugFuncEx
 
     }
 
@@ -451,7 +451,7 @@ Self.Validate()
     # If a package isn't being processed by the correct action, odds-are it's due to a logic error in this function.
 
     QPKGs.SkProc.IsSet && return
-    DebugFuncEntry
+    DebugFuncEn
     ShowAsProc arguments >&2
 
     local avail_ver=''
@@ -468,6 +468,7 @@ Self.Validate()
         if QPKG.IsInstalled Entware && QPKG.IsEnabled Entware; then
             if [[ -e $PYTHON3_CMD ]]; then
                 avail_ver=$(GetDefPython3Ver "$PYTHON3_CMD")
+
                 if [[ ${avail_ver//./} -lt $MIN_PYTHON_VER ]]; then
                     ShowAsInfo 'installed Python environment will be upgraded' >&2
                     IPKs.AcToUninstall.Add 'python*'
@@ -487,7 +488,7 @@ Self.Validate()
 
     QPKGs.IsCanBackup.Build
     QPKGs.IsCanRestartToUpdate.Build
-    AllocPacksToAcs
+    AllocGroupPacksToAcs
 
     # Meta-action pre-processing
     if QPKGs.AcToRebuild.IsAny; then
@@ -567,6 +568,15 @@ Self.Validate()
         QPKGs.AcToInstall.Add Entware
     fi
 
+    # check for standalone packages that must be started first, because dependents are being reinstalled/installed/started/restarted
+    for action in Reinstall Install Start Restart; do
+        for package in $(QPKGs.AcTo${action}.Array); do
+            for prospect in $(QPKG.GetStandalones "$package"); do
+                QPKGs.IsNtStarted.Exist "$prospect" && QPKGs.AcToStart.Add "$prospect"
+            done
+        done
+    done
+
     # No-need to `stop` packages that are about to be uninstalled
     if QPKGs.AcUninstall.ScAll.IsSet; then
         QPKGs.AcToStop.Init
@@ -574,8 +584,13 @@ Self.Validate()
         QPKGs.AcToStop.Remove "$(QPKGs.AcToUninstall.Array)"
     fi
 
-    # Build a list of original storage paths for packages to be `uninstalled`, then `installed` again later this session (a "complex reinstall")
-    # This will ensure migrated packages end-up in the original location
+    # No-need to `restart` packages that are about to be upgraded/reinstalled/installed/started
+    for action in Upgrade Reinstall Install Start; do
+        QPKGs.AcToRestart.Remove "$(QPKGs.AcTo${action}.Array)"
+    done
+
+    # Build a list of original storage paths for packages to be uninstalled, then installed again later this session (a "complex reinstall")
+    # This will ensure migrated packages end-up in their original locations
     QPKGs_were_installed_name=()
     QPKGs_were_installed_path=()
 
@@ -600,7 +615,10 @@ Self.Validate()
         done
     fi
 
-    DebugFuncExit
+    # KLUDGE: just in-case `python` has disappeared again ... ¯\_(ツ)_/¯
+    [[ ! -L $PYTHON_CMD && -e $PYTHON3_CMD ]] && ln -s $PYTHON3_CMD $PYTHON_CMD
+
+    DebugFuncEx
 
     }
 
@@ -608,7 +626,8 @@ Self.Validate()
 
 #   _. rebuild dependents           (meta-action: `install` QPKG and `restore` config, but only if package has an existing backup file)
 
-#  20. reassign all                 (highest: most-important)
+#  21. reassign all                 (highest: most-important)
+#  20. download all
 #  19. backup all
 #  18. stop/disable dependents
 #  17. stop/disable standalones
@@ -637,7 +656,7 @@ Tiers.Proc()
     {
 
     QPKGs.SkProc.IsSet && return
-    DebugFuncEntry
+    DebugFuncEn
 
     local tier=''
     local action=''
@@ -647,12 +666,11 @@ Tiers.Proc()
 
     Tier.Proc Reassign false All QPKG AcToReassign reassign reassigning reassigned '' false || return
     Tier.Proc Download false All QPKG AcToDownload 'update package cache with' 'updating package cache with' 'package cache updated with' '' false || return
-    Tier.Proc Backup false Dependent QPKG AcToBackup 'backup configuration for' 'backing-up configuration for' 'configuration backed-up for' '' false || return
-    Tier.Proc Backup false Standalone QPKG AcToBackup 'backup configuration for' 'backing-up configuration for' 'configuration backed-up for' '' false || return
+    Tier.Proc Backup false All QPKG AcToBackup 'backup configuration for' 'backing-up configuration for' 'configuration backed-up for' '' false || return
 
     # -> package removal phase begins here <-
 
-    for ((index=${#PACKAGE_TIERS[@]}-1; index>=0; index--)); do     # process tiered removal actions in-reverse
+    for ((index=${#PACKAGE_TIERS[@]}-1; index>=0; index--)); do     # process tiers in-reverse
         tier=${PACKAGE_TIERS[$index]}
 
         case $tier in
@@ -664,9 +682,6 @@ Tiers.Proc()
 
     # -> package installation phase begins here <-
 
-    # KLUDGE: just in-case `python` has disappeared again ... ¯\_(ツ)_/¯
-    [[ ! -L $PYTHON_CMD && -e $PYTHON3_CMD ]] && ln -s $PYTHON3_CMD $PYTHON_CMD
-
     for tier in "${PACKAGE_TIERS[@]}"; do
         case $tier in
             Standalone|Dependent)
@@ -675,22 +690,7 @@ Tiers.Proc()
                 Tier.Proc Install false $tier QPKG AcToInstall install installing installed long false || return
                 Tier.Proc Restore false $tier QPKG AcToRestore 'restore configuration for' 'restoring configuration for' 'configuration restored for' long false || return
                 Tier.Proc Clean false $tier QPKG AcToClean clean cleaning cleaned long false || return
-
-                if [[ $tier = Standalone ]]; then
-                    # check for standalone packages that must be started first, because dependents are being reinstalled/installed/started/restarted
-                    for package in $(QPKGs.AcToReinstall.Array) $(QPKGs.AcOkReinstall.Array) $(QPKGs.AcToInstall.Array) $(QPKGs.AcOkInstall.Array) $(QPKGs.AcToStart.Array) $(QPKGs.AcOkStart.Array) $(QPKGs.AcToRestart.Array) $(QPKGs.AcOkRestart.Array); do
-                        for prospect in $(QPKG.GetStandalones "$package"); do
-                            QPKGs.IsNtStarted.Exist "$prospect" && QPKGs.AcToStart.Add "$prospect"
-                        done
-                    done
-                fi
-
                 Tier.Proc Start false $tier QPKG AcToStart start starting started long false || return
-
-                for action in Install Restart Start; do
-                    QPKGs.AcToRestart.Remove "$(QPKGs.AcOk${action}.Array)"
-                done
-
                 Tier.Proc Restart false $tier QPKG AcToRestart restart restarting restarted long false || return
                 ;;
             Addon)
@@ -715,7 +715,7 @@ Tiers.Proc()
     QPKGs.States.List rebuild       # rebuild these after processing QPKGs to get current states
     SmartCR >&2
 
-    DebugFuncExit
+    DebugFuncEx
 
     }
 
@@ -737,7 +737,7 @@ Tier.Proc()
     #  $10 = execute asynchronously? (optional) e.g. `true`, `false`
 
     QPKGs.SkProc.IsSet && return
-    DebugFuncEntry
+    DebugFuncEn
 
     local package=''
     local forced_action=''
@@ -768,7 +768,7 @@ Tier.Proc()
             ;;
         *)
             DebugAsError "unknown \$PACKAGE_TYPE: '$PACKAGE_TYPE'"
-            DebugFuncExit 1; return
+            DebugFuncEx 1; return
     esac
 
     local -r ACTION_INTRANSITIVE=${message_prefix}${6:?empty}
@@ -791,7 +791,7 @@ Tier.Proc()
 
             if [[ $total_count -eq 0 ]]; then
                 DebugInfo 'nothing to process'
-                DebugFuncExit; return
+                DebugFuncEx; return
             fi
 
             if [[ $ASYNC = false ]]; then
@@ -810,9 +810,8 @@ Tier.Proc()
                             ((total_count--))
                             ;;
                         *)  # failed
-                            ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") (see log for more details)"
+                            ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackName "$package") (see log for more details)"
                             ((fail_count++))
-                            continue
                     esac
                 done
             else
@@ -821,7 +820,7 @@ Tier.Proc()
                 for package in "${target_packages[@]}"; do
                     ShowAsActionProgress $TIER $PACKAGE_TYPE $pass_count $fail_count $total_count "$ACTION_PRESENT" $RUNTIME
 
-                    $target_function.${TARGET_ACTION} $package "$forced_action"
+                    $target_function.${TARGET_ACTION} "$package" "$forced_action"
                     result_code=$?
 
                     case $result_code in
@@ -832,9 +831,8 @@ Tier.Proc()
                             ((total_count--))
                             ;;
                         *)  # failed
-                            ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackageName "$package") (see log for more details)"
+                            ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackName "$package") (see log for more details)"
                             ((fail_count++))
-                            continue
                     esac
                 done
             fi
@@ -847,7 +845,7 @@ Tier.Proc()
     ShowAsActionProgress $TIER $PACKAGE_TYPE $((total_count+1)) $fail_count $total_count "$ACTION_PRESENT" $RUNTIME
     ShowAsActionResult $TIER $PACKAGE_TYPE $pass_count $fail_count $total_count "$ACTION_PAST" $RUNTIME
 
-    DebugFuncExit
+    DebugFuncEx
     Self.Error.IsNt
 
     }
@@ -916,10 +914,10 @@ Self.Results()
     Self.Summary.IsSet && ShowSummary
     Self.SuggestIssue.IsSet && Help.Issue.Show
 
-    DebugInfoMinorSeparator
+    DebugInfoMinSep
     DebugScript finished "$($DATE_CMD)"
     DebugScript 'elapsed time' "$(FormatSecsToHoursMinutesSecs "$(($($DATE_CMD +%s)-$([[ -n $SCRIPT_STARTSECONDS ]] && echo $SCRIPT_STARTSECONDS || echo 1)))")"
-    DebugInfoMajorSeparator
+    DebugInfoMajSep
     Self.Debug.ToArchive.IsSet && ArchiveActiveSessLog
     ResetActiveSessLog
     ReleaseLockFile
@@ -935,7 +933,7 @@ ParseArgs()
     # basic argument syntax:
     #   scriptname [action] [scope] [options]
 
-    DebugFuncEntry
+    DebugFuncEn
 
     DebugVar USER_ARGS_RAW
 
@@ -1559,14 +1557,14 @@ ParseArgs()
         Self.Display.Clean.UnSet
     fi
 
-    DebugFuncExit
+    DebugFuncEx
 
     }
 
 Self.ArgSuggests.Show()
     {
 
-    DebugFuncEntry
+    DebugFuncEn
 
     local arg=''
 
@@ -1577,65 +1575,65 @@ Self.ArgSuggests.Show()
             case $arg in
                 all)
                     Display
-                    DisplayAsProjectSyntaxExample "please provide a valid $(FormatAsHelpAction) before 'all' like" 'start all'
+                    DisplayAsProjSynExam "please provide a valid $(FormatAsHelpAc) before 'all' like" 'start all'
                     Opts.Help.Basic.UnSet
                     ;;
                 all-backup|backup-all)
                     Display
-                    DisplayAsProjectSyntaxExample 'to backup all installed package configurations, use' 'backup all'
+                    DisplayAsProjSynExam 'to backup all installed package configurations, use' 'backup all'
                     Opts.Help.Basic.UnSet
                     ;;
                 dependent)
                     Display
-                    DisplayAsProjectSyntaxExample "please provide a valid $(FormatAsHelpAction) before 'dependent' like" 'start dependents'
+                    DisplayAsProjSynExam "please provide a valid $(FormatAsHelpAc) before 'dependent' like" 'start dependents'
                     Opts.Help.Basic.UnSet
                     ;;
                 all-restart|restart-all)
                     Display
-                    DisplayAsProjectSyntaxExample 'to restart all packages, use' 'restart all'
+                    DisplayAsProjSynExam 'to restart all packages, use' 'restart all'
                     Opts.Help.Basic.UnSet
                     ;;
                 all-restore|restore-all)
                     Display
-                    DisplayAsProjectSyntaxExample 'to restore all installed package configurations, use' 'restore all'
+                    DisplayAsProjSynExam 'to restore all installed package configurations, use' 'restore all'
                     Opts.Help.Basic.UnSet
                     ;;
                 standalone)
                     Display
-                    DisplayAsProjectSyntaxExample "please provide a valid $(FormatAsHelpAction) before 'standalone' like" 'start standalones'
+                    DisplayAsProjSynExam "please provide a valid $(FormatAsHelpAc) before 'standalone' like" 'start standalones'
                     Opts.Help.Basic.UnSet
                     ;;
                 all-start|start-all)
                     Display
-                    DisplayAsProjectSyntaxExample 'to start all packages, use' 'start all'
+                    DisplayAsProjSynExam 'to start all packages, use' 'start all'
                     Opts.Help.Basic.UnSet
                     ;;
                 all-stop|stop-all)
                     Display
-                    DisplayAsProjectSyntaxExample 'to stop all packages, use' 'stop all'
+                    DisplayAsProjSynExam 'to stop all packages, use' 'stop all'
                     Opts.Help.Basic.UnSet
                     ;;
                 all-uninstall|all-remove|uninstall-all|remove-all)
                     Display
-                    DisplayAsProjectSyntaxExample 'to uninstall all packages, use' 'force uninstall all'
+                    DisplayAsProjSynExam 'to uninstall all packages, use' 'force uninstall all'
                     Opts.Help.Basic.UnSet
                     ;;
                 all-upgrade|upgrade-all)
                     Display
-                    DisplayAsProjectSyntaxExample 'to upgrade all packages, use' 'upgrade all'
+                    DisplayAsProjSynExam 'to upgrade all packages, use' 'upgrade all'
                     Opts.Help.Basic.UnSet
             esac
         done
     fi
 
-    DebugFuncExit
+    DebugFuncEx
 
     }
 
-AllocPacksToAcs()
+AllocGroupPacksToAcs()
     {
 
-    DebugFuncEntry
+    DebugFuncEn
 
     local action=''
     local scope=''
@@ -1873,7 +1871,7 @@ AllocPacksToAcs()
         done
     done
 
-    DebugFuncExit
+    DebugFuncEx
 
     }
 
@@ -1935,7 +1933,7 @@ PatchEntwareService()
     {
 
     local tab=$'\t'
-    local prefix="# the following line was inserted by sherpa: https://git.io/sherpa"
+    local prefix='# the following line was inserted by sherpa: https://git.io/sherpa'
     local find=''
     local insert=''
     local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile Entware)
@@ -1965,7 +1963,7 @@ UpdateEntwarePackageList()
 
     if IsNtSysFileExist $OPKG_CMD; then
         Display
-        DisplayAsProjectSyntaxExample 'try restarting Entware' 'restart ew'
+        DisplayAsProjSynExam 'try restarting Entware' 'restart ew'
         return 1
     fi
 
@@ -1976,22 +1974,21 @@ UpdateEntwarePackageList()
     local -i result_code=0
 
     # if Entware package list was recently updated, don't update again.
-
     if ! IsThisFileRecent "$EXTERNAL_PACKAGES_ARCHIVE_PATHFILE" "$CHANGE_THRESHOLD_MINUTES" || [[ ! -f $EXTERNAL_PACKAGES_ARCHIVE_PATHFILE ]] || Opts.Deps.Check.IsSet; then
-        DebugAsProc "updating $(FormatAsPackageName Entware) package list"
+        DebugAsProc "updating $(FormatAsPackName Entware) package list"
 
         RunAndLog "$OPKG_CMD update" "$LOG_PATHFILE" log:failure-only
         result_code=$?
 
         if [[ $result_code -eq 0 ]]; then
-            DebugAsDone "updated $(FormatAsPackageName Entware) package list"
+            DebugAsDone "updated $(FormatAsPackName Entware) package list"
             CloseIPKArchive
         else
-            DebugAsWarn "Unable to update $(FormatAsPackageName Entware) package list $(FormatAsExitcode "$result_code")"
+            DebugAsWarn "Unable to update $(FormatAsPackName Entware) package list $(FormatAsExitcode "$result_code")"
             # no-big-deal
         fi
     else
-        DebugInfo "$(FormatAsPackageName Entware) package list updated less-than $CHANGE_THRESHOLD_MINUTES minutes ago: skipping update"
+        DebugInfo "$(FormatAsPackName Entware) package list updated less-than $CHANGE_THRESHOLD_MINUTES minutes ago: skipping update"
     fi
 
     [[ -f $EXTERNAL_PACKAGES_ARCHIVE_PATHFILE && ! -f $EXTERNAL_PACKAGES_PATHFILE ]] && OpenIPKArchive
@@ -2025,8 +2022,8 @@ IsThisFileRecent()
 SavePackageLists()
     {
 
-    $PIP_CMD freeze > "$PREVIOUS_PIP_LIST" 2>/dev/null && DebugAsDone "saved current $(FormatAsPackageName pip3) module list to $(FormatAsFileName "$PREVIOUS_PIP_LIST")"
-    $OPKG_CMD list-installed > "$PREVIOUS_IPK_LIST" 2>/dev/null && DebugAsDone "saved current $(FormatAsPackageName Entware) IPK list to $(FormatAsFileName "$PREVIOUS_IPK_LIST")"
+    $PIP_CMD freeze > "$PREVIOUS_PIP_LIST" 2>/dev/null && DebugAsDone "saved current $(FormatAsPackName pip3) module list to $(FormatAsFileName "$PREVIOUS_PIP_LIST")"
+    $OPKG_CMD list-installed > "$PREVIOUS_IPK_LIST" 2>/dev/null && DebugAsDone "saved current $(FormatAsPackName Entware) IPK list to $(FormatAsFileName "$PREVIOUS_IPK_LIST")"
 
     }
 
@@ -2035,10 +2032,8 @@ CalcIpkDepsToInstall()
 
     # From a specified list of IPK names, find all dependent IPKs, exclude those already installed, then generate a list to download
 
-    QPKGs.IsNtInstalled.Exist Entware && return
-    QPKGs.IsNtStarted.Exist Entware && return
     IsNtSysFileExist $GNU_GREP_CMD && return 1
-    DebugFuncEntry
+    DebugFuncEn
 
     local -a this_list=()
     local -a dep_acc=()
@@ -2058,7 +2053,7 @@ CalcIpkDepsToInstall()
 
     if [[ $requested_count -eq 0 ]]; then
         DebugAsWarn 'no IPKs requested: aborting ...'
-        DebugFuncExit 1; return
+        DebugFuncEx 1; return
     fi
 
     ShowAsProc 'calculating IPK dependencies'
@@ -2102,7 +2097,7 @@ CalcIpkDepsToInstall()
             # KLUDGE: `python3-gdbm` is not available, but can be requested as per https://forum.qnap.com/viewtopic.php?p=806031#p806031 (don't know why).
             if [[ $element != 'ca-certs' && $element != 'python3-gdbm' ]]; then
                 # KLUDGE: `libjpeg` appears to have been replaced by `libjpeg-turbo`, but many packages still have `libjpeg` as a dependency, so replace it with `libjpeg-turbo`.
-               if [[ $element != 'libjpeg' ]]; then
+                if [[ $element != 'libjpeg' ]]; then
                     if ! $OPKG_CMD status "$element" | $GREP_CMD -q "Status:.*installed"; then
                         IPKs.AcToDownload.Add "$element"
                     fi
@@ -2115,7 +2110,7 @@ CalcIpkDepsToInstall()
         DebugAsDone 'no IPKs to exclude'
     fi
 
-    DebugFuncExit
+    DebugFuncEx
 
     }
 
@@ -2124,7 +2119,7 @@ CalcIpkDownloadSize()
 
     # calculate size of required IPKs
 
-    DebugFuncEntry
+    DebugFuncEn
 
     local -a size_array=()
     local -i size_count=0
@@ -2135,12 +2130,12 @@ CalcIpkDownloadSize()
         DebugAsProc "calculating size of IPK$(Plural "$size_count") to download"
         size_array=($($GNU_GREP_CMD -w '^Package:\|^Size:' "$EXTERNAL_PACKAGES_PATHFILE" | $GNU_GREP_CMD --after-context 1 --no-group-separator ": $($SED_CMD 's/ /$ /g;s/\$ /\$\\\|: /g' <<< "$(IPKs.AcToDownload.List)")" | $GREP_CMD '^Size:' | $SED_CMD 's|^Size: ||'))
         IPKs.AcToDownload.Size = "$(IFS=+; echo "$((${size_array[*]}))")"   # a nifty sizing shortcut found here https://stackoverflow.com/a/13635566/6182835
-        DebugAsDone "$(FormatAsThousands "$(IPKs.AcToDownload.Size)") bytes ($(FormatAsISOBytes "$(IPKs.AcToDownload.Size)")) to download"
+        DebugAsDone "$(FormatAsThous "$(IPKs.AcToDownload.Size)") bytes ($(FormatAsISOBytes "$(IPKs.AcToDownload.Size)")) to download"
     else
         DebugAsDone 'no IPKs to size'
     fi
 
-    DebugFuncExit
+    DebugFuncEx
 
     }
 
@@ -2155,7 +2150,7 @@ IPKs.Upgrade()
     QPKGs.IsNtStarted.Exist Entware && return
     UpdateEntwarePackageList
     Self.Error.IsSet && return
-    DebugFuncEntry
+    DebugFuncEn
     local action=upgrade
     local -i result_code=0
     IPKs.AcToUpgrade.Init
@@ -2188,7 +2183,7 @@ IPKs.Upgrade()
         fi
     fi
 
-    DebugFuncExit
+    DebugFuncEx
 
     }
 
@@ -2203,13 +2198,14 @@ IPKs.Install()
     QPKGs.IsNtStarted.Exist Entware && return
     UpdateEntwarePackageList
     Self.Error.IsSet && return
-    DebugFuncEntry
+    DebugFuncEn
     local action=install
     local -i index=0
     local -i result_code=0
     IPKs.AcToInstall.Init
     IPKs.AcToDownload.Init
 
+    # only install essential IPKs once. This should be done immediately after Entware is installled. But, if it wasn't, then ...
     ! QPKGs.AcOkInstall.Exist Entware && IPKs.AcToInstall.Add "$ESSENTIAL_IPKS"
 
     if QPKGs.AcInstall.ScAll.IsSet; then
@@ -2252,7 +2248,7 @@ IPKs.Install()
         fi
     fi
 
-    DebugFuncExit
+    DebugFuncEx
 
     }
 
@@ -2265,7 +2261,7 @@ PIPs.Install()
     QPKGs.IsNtStarted.Exist Entware && return
     ! $OPKG_CMD status python3-pip | $GREP_CMD -q "Status:.*installed" && return
     Self.Error.IsSet && return
-    DebugFuncEntry
+    DebugFuncEn
 
     local exec_cmd=''
     local -i result_code=0
@@ -2303,14 +2299,14 @@ PIPs.Install()
     # execute with pass_count > total_count to trigger 100% message
     ShowAsActionProgress '' "$PACKAGE_TYPE" "$((total_count+1))" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
     ShowAsActionResult '' "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PAST" "$RUNTIME"
-    DebugFuncExit $result_code
+    DebugFuncEx $result_code
 
     }
 
 OpenIPKArchive()
     {
 
-    # extract the `opkg` package list file
+    # unpack the package list file used by `opkg`
 
     # output:
     #   $? = 0 if successful or 1 if failed
@@ -2543,7 +2539,7 @@ DebugBinPathVerAndMinVer()
     # $2 = current version found
     # $3 = minimum version required
 
-    [[ -z $1 ]] && return 1
+    [[ -z ${1:-} ]] && return 1
 
     local bin_path=$(GetThisBinPath "$1")
 
@@ -2553,7 +2549,7 @@ DebugBinPathVerAndMinVer()
         DebugUserspaceWarning "'$1' path" '<not present>'
     fi
 
-    if [[ -n $2 ]]; then
+    if [[ -n ${2:-} ]]; then
         if [[ ${2//./} -ge ${3//./} ]]; then
             DebugUserspaceOK "'$1' version" "$2"
         else
@@ -2608,11 +2604,11 @@ readonly HELP_PACKAGE_PATH_WIDTH=42
 readonly HELP_PACKAGE_REPO_WIDTH=40
 readonly HELP_FILE_NAME_WIDTH=33
 
-readonly HELP_COLUMN_SPACER=' '
-readonly HELP_COLUMN_MAIN_PREFIX='* '
-readonly HELP_COLUMN_OTHER_PREFIX='- '
-readonly HELP_COLUMN_BLANK_PREFIX='  '
-readonly HELP_SYNTAX_PREFIX='# '
+readonly HELP_COL_SPACER=' '
+readonly HELP_COL_MAIN_PREF='* '
+readonly HELP_COL_OTHER_PREF='- '
+readonly HELP_COL_BLANK_PREF='  '
+readonly HELP_SYNTAX_PREF='# '
 
 LenANSIDiff()
     {
@@ -2624,52 +2620,58 @@ LenANSIDiff()
 
     }
 
-DisplayAsProjectSyntaxExample()
+DisplayAsProjSynExam()
     {
+
+    # display as project syntax example
 
     # $1 = description
     # $2 = example syntax
 
     if [[ ${1: -1} = '!' ]]; then
-        printf "${HELP_COLUMN_MAIN_PREFIX}%s\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREFIX}%s\n" "$(Capitalise "${1:-}")" '' "sherpa ${2:-}"
+        printf "${HELP_COL_MAIN_PREF}%s\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREF}%s\n" "$(Capitalise "${1:-}")" '' "sherpa ${2:-}"
     else
-        printf "${HELP_COLUMN_MAIN_PREFIX}%s:\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREFIX}%s\n" "$(Capitalise "${1:-}")" '' "sherpa ${2:-}"
+        printf "${HELP_COL_MAIN_PREF}%s:\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREF}%s\n" "$(Capitalise "${1:-}")" '' "sherpa ${2:-}"
     fi
 
     Self.LineSpace.UnSet
 
     }
 
-DisplayAsProjectSyntaxIndentedExample()
+DisplayAsProjSynIndentExam()
     {
+
+    # display as project syntax indented example
 
     # $1 = description
     # $2 = example syntax
 
     if [[ -z ${1:-} ]]; then
-        printf "%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREFIX}%s\n" '' "sherpa ${2:-}"
+        printf "%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREF}%s\n" '' "sherpa ${2:-}"
     elif [[ ${1: -1} = '!' ]]; then
-        printf "\n%${HELP_DESC_INDENT}s%s\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREFIX}%s\n" '' "$(Capitalise "${1:-}")" '' "sherpa ${2:-}"
+        printf "\n%${HELP_DESC_INDENT}s%s\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREF}%s\n" '' "$(Capitalise "${1:-}")" '' "sherpa ${2:-}"
     else
-        printf "\n%${HELP_DESC_INDENT}s%s:\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREFIX}%s\n" '' "$(Capitalise "${1:-}")" '' "sherpa ${2:-}"
+        printf "\n%${HELP_DESC_INDENT}s%s:\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREF}%s\n" '' "$(Capitalise "${1:-}")" '' "sherpa ${2:-}"
     fi
 
     Self.LineSpace.UnSet
 
     }
 
-DisplayAsSyntaxExample()
+DisplayAsSynExam()
     {
+
+    # display as syntax example
 
     # $1 = description
     # $2 = example syntax
 
     if [[ -z ${2:-} && ${1: -1} = ':' ]]; then
-        printf "\n${HELP_COLUMN_MAIN_PREFIX}%s\n" "$1"
+        printf "\n${HELP_COL_MAIN_PREF}%s\n" "$1"
     elif [[ ${1: -1} = '!' ]]; then
-        printf "\n${HELP_COLUMN_MAIN_PREFIX}%s\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREFIX}%s\n" "$(Capitalise "${1:-}")" '' "${2:-}"
+        printf "\n${HELP_COL_MAIN_PREF}%s\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREF}%s\n" "$(Capitalise "${1:-}")" '' "${2:-}"
     else
-        printf "\n${HELP_COLUMN_MAIN_PREFIX}%s:\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREFIX}%s\n" "$(Capitalise "${1:-}")" '' "${2:-}"
+        printf "\n${HELP_COL_MAIN_PREF}%s:\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREF}%s\n" "$(Capitalise "${1:-}")" '' "${2:-}"
     fi
 
     Self.LineSpace.UnSet
@@ -2682,7 +2684,7 @@ DisplayAsHelpTitlePackageNamePlusSomething()
     # $1 = package name title
     # $2 = second column title
 
-    printf "${HELP_COLUMN_MAIN_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s${HELP_COLUMN_SPACER}${HELP_COLUMN_MAIN_PREFIX}%s\n" "$(Capitalise "${1:-}"):" "$(Capitalise "${2:-}"):"
+    printf "${HELP_COL_MAIN_PREF}%-${HELP_PACKAGE_NAME_WIDTH}s${HELP_COL_SPACER}${HELP_COL_MAIN_PREF}%s\n" "$(Capitalise "${1:-}"):" "$(Capitalise "${2:-}"):"
 
     }
 
@@ -2692,23 +2694,23 @@ DisplayAsHelpPackageNamePlusSomething()
     # $1 = package name
     # $2 = second column text
 
-    printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_BLANK_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s${HELP_COLUMN_SPACER}${HELP_COLUMN_OTHER_PREFIX}%s\n" "${1:-}" "${2:-}"
+    printf "${HELP_COL_SPACER}${HELP_COL_BLANK_PREF}%-${HELP_PACKAGE_NAME_WIDTH}s${HELP_COL_SPACER}${HELP_COL_OTHER_PREF}%s\n" "${1:-}" "${2:-}"
 
     }
 
 CalcMaxStatusColsToDisplay()
     {
 
-    local column1_width=$((${#HELP_COLUMN_MAIN_PREFIX}+HELP_PACKAGE_NAME_WIDTH))
-    local column2_width=$((${#HELP_COLUMN_SPACER}+${#HELP_COLUMN_MAIN_PREFIX}+HELP_PACKAGE_STATUS_WIDTH))
-    local column3_width=$((${#HELP_COLUMN_SPACER}+${#HELP_COLUMN_MAIN_PREFIX}+HELP_PACKAGE_VER_WIDTH))
-    local column4_width=$((${#HELP_COLUMN_SPACER}+${#HELP_COLUMN_MAIN_PREFIX}+HELP_PACKAGE_PATH_WIDTH))
+    local col1_width=$((${#HELP_COL_MAIN_PREF}+HELP_PACKAGE_NAME_WIDTH))
+    local col2_width=$((${#HELP_COL_SPACER}+${#HELP_COL_MAIN_PREF}+HELP_PACKAGE_STATUS_WIDTH))
+    local col3_width=$((${#HELP_COL_SPACER}+${#HELP_COL_MAIN_PREF}+HELP_PACKAGE_VER_WIDTH))
+    local col4_width=$((${#HELP_COL_SPACER}+${#HELP_COL_MAIN_PREF}+HELP_PACKAGE_PATH_WIDTH))
 
-    if [[ $((column1_width+column2_width)) -ge $SESSION_COLUMNS ]]; then
+    if [[ $((col1_width+col2_width)) -ge $SESS_COLS ]]; then
         echo 1
-    elif [[ $((column1_width+column2_width+column3_width)) -ge $SESSION_COLUMNS ]]; then
+    elif [[ $((col1_width+col2_width+col3_width)) -ge $SESS_COLS ]]; then
         echo 2
-    elif [[ $((column1_width+column2_width+column3_width+column4_width)) -ge $SESSION_COLUMNS ]]; then
+    elif [[ $((col1_width+col2_width+col3_width+col4_width)) -ge $SESS_COLS ]]; then
         echo 3
     else
         echo 4
@@ -2721,10 +2723,10 @@ CalcMaxStatusColsToDisplay()
 CalcMaxRepoColsToDisplay()
     {
 
-    local column1_width=$((${#HELP_COLUMN_MAIN_PREFIX}+HELP_PACKAGE_NAME_WIDTH))
-    local column2_width=$((${#HELP_COLUMN_SPACER}+${#HELP_COLUMN_MAIN_PREFIX}+HELP_PACKAGE_REPO_WIDTH))
+    local col1_width=$((${#HELP_COL_MAIN_PREF}+HELP_PACKAGE_NAME_WIDTH))
+    local col2_width=$((${#HELP_COL_SPACER}+${#HELP_COL_MAIN_PREF}+HELP_PACKAGE_REPO_WIDTH))
 
-    if [[ $((column1_width+column2_width)) -ge $SESSION_COLUMNS ]]; then
+    if [[ $((col1_width+col2_width)) -ge $SESS_COLS ]]; then
         echo 1
     else
         echo 2
@@ -2745,19 +2747,19 @@ DisplayAsHelpTitlePackageNameVerStatus()
     local maxcols=$(CalcMaxStatusColsToDisplay)
 
     if [[ -n ${1:-} && $maxcols -ge 1 ]]; then
-        printf "${HELP_COLUMN_MAIN_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s" "$(Capitalise "$1"):"
+        printf "${HELP_COL_MAIN_PREF}%-${HELP_PACKAGE_NAME_WIDTH}s" "$(Capitalise "$1"):"
     fi
 
     if [[ -n ${2:-} && $maxcols -ge 2 ]]; then
-        printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_MAIN_PREFIX}%-${HELP_PACKAGE_STATUS_WIDTH}s" "$(Capitalise "$2"):"
+        printf "${HELP_COL_SPACER}${HELP_COL_MAIN_PREF}%-${HELP_PACKAGE_STATUS_WIDTH}s" "$(Capitalise "$2"):"
     fi
 
     if [[ -n ${3:-} && $maxcols -ge 3 ]]; then
-        printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_MAIN_PREFIX}%-${HELP_PACKAGE_VER_WIDTH}s" "$(Capitalise "$3"):"
+        printf "${HELP_COL_SPACER}${HELP_COL_MAIN_PREF}%-${HELP_PACKAGE_VER_WIDTH}s" "$(Capitalise "$3"):"
     fi
 
     if [[ -n ${4:-} && $maxcols -ge 4 ]]; then
-        printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_MAIN_PREFIX}%s" "$(Capitalise "$4"):"
+        printf "${HELP_COL_SPACER}${HELP_COL_MAIN_PREF}%s" "$(Capitalise "$4"):"
     fi
 
     printf '\n'
@@ -2775,19 +2777,19 @@ DisplayAsHelpPackageNameVerStatus()
     local maxcols=$(CalcMaxStatusColsToDisplay)
 
     if [[ -n ${1:-} && $maxcols -ge 1 ]]; then
-        printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_BLANK_PREFIX}%-$((HELP_PACKAGE_NAME_WIDTH+$(LenANSIDiff "$1")))s" "$1"
+        printf "${HELP_COL_SPACER}${HELP_COL_BLANK_PREF}%-$((HELP_PACKAGE_NAME_WIDTH+$(LenANSIDiff "$1")))s" "$1"
     fi
 
     if [[ -n ${2:-} && $maxcols -ge 2 ]]; then
-        printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_OTHER_PREFIX}%-$((HELP_PACKAGE_STATUS_WIDTH+$(LenANSIDiff "$2")))s" "$2"
+        printf "${HELP_COL_SPACER}${HELP_COL_OTHER_PREF}%-$((HELP_PACKAGE_STATUS_WIDTH+$(LenANSIDiff "$2")))s" "$2"
     fi
 
     if [[ -n ${3:-} && $maxcols -ge 3 ]]; then
-        printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_OTHER_PREFIX}%-$((HELP_PACKAGE_VER_WIDTH+$(LenANSIDiff "$3")))s" "$3"
+        printf "${HELP_COL_SPACER}${HELP_COL_OTHER_PREF}%-$((HELP_PACKAGE_VER_WIDTH+$(LenANSIDiff "$3")))s" "$3"
     fi
 
     if [[ -n ${4:-} && $maxcols -ge 4 ]]; then
-        printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_BLANK_PREFIX}%s" "$4"
+        printf "${HELP_COL_SPACER}${HELP_COL_BLANK_PREF}%s" "$4"
     fi
 
     printf '\n'
@@ -2803,11 +2805,11 @@ DisplayAsHelpTitlePackageNameRepo()
     local maxcols=$(CalcMaxStatusColsToDisplay)
 
     if [[ -n ${1:-} && $maxcols -ge 1 ]]; then
-        printf "${HELP_COLUMN_MAIN_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s" "$(Capitalise "$1"):"
+        printf "${HELP_COL_MAIN_PREF}%-${HELP_PACKAGE_NAME_WIDTH}s" "$(Capitalise "$1"):"
     fi
 
     if [[ -n ${2:-} && $maxcols -ge 2 ]]; then
-        printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_MAIN_PREFIX}%-${HELP_PACKAGE_REPO_WIDTH}s" "$(Capitalise "$2"):"
+        printf "${HELP_COL_SPACER}${HELP_COL_MAIN_PREF}%-${HELP_PACKAGE_REPO_WIDTH}s" "$(Capitalise "$2"):"
     fi
 
     printf '\n'
@@ -2823,11 +2825,11 @@ DisplayAsHelpPackageNameRepo()
     local maxcols=$(CalcMaxRepoColsToDisplay)
 
     if [[ -n ${1:-} && $maxcols -ge 1 ]]; then
-        printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_BLANK_PREFIX}%-$((HELP_PACKAGE_NAME_WIDTH+$(LenANSIDiff "$1")))s" "$1"
+        printf "${HELP_COL_SPACER}${HELP_COL_BLANK_PREF}%-$((HELP_PACKAGE_NAME_WIDTH+$(LenANSIDiff "$1")))s" "$1"
     fi
 
     if [[ -n ${2:-} && $maxcols -ge 2 ]]; then
-        printf "${HELP_COLUMN_SPACER}${HELP_COLUMN_OTHER_PREFIX}%-$((HELP_PACKAGE_REPO_WIDTH+$(LenANSIDiff "$2")))s" "$2"
+        printf "${HELP_COL_SPACER}${HELP_COL_OTHER_PREF}%-$((HELP_PACKAGE_REPO_WIDTH+$(LenANSIDiff "$2")))s" "$2"
     fi
 
     printf '\n'
@@ -2840,7 +2842,7 @@ DisplayAsHelpTitleFileNamePlusSomething()
     # $1 = file name title
     # $2 = second column title
 
-    printf "${HELP_COLUMN_MAIN_PREFIX}%-${HELP_FILE_NAME_WIDTH}s ${HELP_COLUMN_MAIN_PREFIX}%s\n" "$(Capitalise "${1:-}"):" "$(Capitalise "${2:-}"):"
+    printf "${HELP_COL_MAIN_PREF}%-${HELP_FILE_NAME_WIDTH}s ${HELP_COL_MAIN_PREF}%s\n" "$(Capitalise "${1:-}"):" "$(Capitalise "${2:-}"):"
 
     }
 
@@ -2849,7 +2851,7 @@ DisplayAsHelpTitle()
 
     # $1 = text
 
-    printf "${HELP_COLUMN_MAIN_PREFIX}%s\n" "$(Capitalise "${1:-}")"
+    printf "${HELP_COL_MAIN_PREF}%s\n" "$(Capitalise "${1:-}")"
 
     }
 
@@ -2859,7 +2861,7 @@ DisplayAsHelpTitleHighlighted()
     # $1 = text
 
     # shellcheck disable=2059
-    printf "$(ColourTextBrightOrange "${HELP_COLUMN_MAIN_PREFIX}%s\n")" "$(Capitalise "${1:-}")"
+    printf "$(ColourTextBrightOrange "${HELP_COL_MAIN_PREF}%s\n")" "$(Capitalise "${1:-}")"
 
     }
 
@@ -2894,7 +2896,7 @@ Help.Basic.Show()
 
     SmartCR
     DisplayLineSpaceIfNoneAlready
-    Display "Usage: sherpa $(FormatAsHelpAction) $(FormatAsHelpPackages) $(FormatAsHelpAction) $(FormatAsHelpPackages) ... $(FormatAsHelpOptions)"
+    Display "Usage: sherpa $(FormatAsHelpAc) $(FormatAsHelpPacks) $(FormatAsHelpAc) $(FormatAsHelpPacks) ... $(FormatAsHelpOpts)"
 
     return 0
 
@@ -2903,9 +2905,9 @@ Help.Basic.Show()
 Help.Basic.Example.Show()
     {
 
-    DisplayAsProjectSyntaxIndentedExample "to list available $(FormatAsHelpAction)s, type" 'list actions'
-    DisplayAsProjectSyntaxIndentedExample "to list available $(FormatAsHelpPackages), type" 'list packages'
-    DisplayAsProjectSyntaxIndentedExample "or, for more $(FormatAsHelpOptions), type" 'list options'
+    DisplayAsProjSynIndentExam "to list available $(FormatAsHelpAc)s, type" 'list actions'
+    DisplayAsProjSynIndentExam "to list available $(FormatAsHelpPacks), type" 'list packages'
+    DisplayAsProjSynIndentExam "or, for more $(FormatAsHelpOpts), type" 'list options'
     Display "\nThere's also the wiki: $(FormatAsURL "https://github.com/OneCDOnly/sherpa/wiki")"
 
     return 0
@@ -2918,33 +2920,33 @@ Help.Actions.Show()
     DisableDebugToArchiveAndFile
     Help.Basic.Show
     DisplayLineSpaceIfNoneAlready
-    DisplayAsHelpTitle "$(FormatAsHelpAction) usage examples:"
-    DisplayAsProjectSyntaxIndentedExample 'show package statuses' 'status'
-    DisplayAsProjectSyntaxIndentedExample '' s
-    DisplayAsProjectSyntaxIndentedExample 'show package repositories' 'repos'
-    DisplayAsProjectSyntaxIndentedExample '' r
-    DisplayAsProjectSyntaxIndentedExample 'ensure all application dependencies are installed' 'check'
-    DisplayAsProjectSyntaxIndentedExample 'install these packages' "install $(FormatAsHelpPackages)"
-    DisplayAsProjectSyntaxIndentedExample 'uninstall these packages' "uninstall $(FormatAsHelpPackages)"
-    DisplayAsProjectSyntaxIndentedExample 'reinstall these packages' "reinstall $(FormatAsHelpPackages)"
-    DisplayAsProjectSyntaxIndentedExample "rebuild these packages ('install' packages, then 'restore' configuration backups)" "rebuild $(FormatAsHelpPackages)"
-    DisplayAsProjectSyntaxIndentedExample 'upgrade these packages (and internal applications where supported)' "upgrade $(FormatAsHelpPackages)"
-    DisplayAsProjectSyntaxIndentedExample 'enable then start these packages' "start $(FormatAsHelpPackages)"
-    DisplayAsProjectSyntaxIndentedExample 'stop then disable these packages (disabling will prevent them starting on reboot)' "stop $(FormatAsHelpPackages)"
-    DisplayAsProjectSyntaxIndentedExample 'restart these packages (this will upgrade internal applications where supported)' "restart $(FormatAsHelpPackages)"
-    DisplayAsProjectSyntaxIndentedExample "reassign these packages to the $(FormatAsScriptTitle) repository" "reassign $(FormatAsHelpPackages)"
-    DisplayAsProjectSyntaxIndentedExample 'clear local repository files from these packages' "clean $(FormatAsHelpPackages)"
-    DisplayAsProjectSyntaxIndentedExample 'backup these application configurations to the backup location' "backup $(FormatAsHelpPackages)"
-    DisplayAsProjectSyntaxIndentedExample 'restore these application configurations from the backup location' "restore $(FormatAsHelpPackages)"
-    DisplayAsProjectSyntaxIndentedExample 'show application backup files' 'list backups'
-    DisplayAsProjectSyntaxIndentedExample '' b
-    DisplayAsProjectSyntaxIndentedExample "list $(FormatAsScriptTitle) object version numbers" 'list versions'
-    DisplayAsProjectSyntaxIndentedExample '' v
+    DisplayAsHelpTitle "$(FormatAsHelpAc) usage examples:"
+    DisplayAsProjSynIndentExam 'show package statuses' 'status'
+    DisplayAsProjSynIndentExam '' s
+    DisplayAsProjSynIndentExam 'show package repositories' 'repos'
+    DisplayAsProjSynIndentExam '' r
+    DisplayAsProjSynIndentExam 'ensure all application dependencies are installed' 'check'
+    DisplayAsProjSynIndentExam 'install these packages' "install $(FormatAsHelpPacks)"
+    DisplayAsProjSynIndentExam 'uninstall these packages' "uninstall $(FormatAsHelpPacks)"
+    DisplayAsProjSynIndentExam 'reinstall these packages' "reinstall $(FormatAsHelpPacks)"
+    DisplayAsProjSynIndentExam "rebuild these packages ('install' packages, then 'restore' configuration backups)" "rebuild $(FormatAsHelpPacks)"
+    DisplayAsProjSynIndentExam 'upgrade these packages (and internal applications where supported)' "upgrade $(FormatAsHelpPacks)"
+    DisplayAsProjSynIndentExam 'enable then start these packages' "start $(FormatAsHelpPacks)"
+    DisplayAsProjSynIndentExam 'stop then disable these packages (disabling will prevent them starting on reboot)' "stop $(FormatAsHelpPacks)"
+    DisplayAsProjSynIndentExam 'restart these packages (this will upgrade internal applications where supported)' "restart $(FormatAsHelpPacks)"
+    DisplayAsProjSynIndentExam "reassign these packages to the $(FormatAsTitle) repository" "reassign $(FormatAsHelpPacks)"
+    DisplayAsProjSynIndentExam 'clear local repository files from these packages' "clean $(FormatAsHelpPacks)"
+    DisplayAsProjSynIndentExam 'backup these application configurations to the backup location' "backup $(FormatAsHelpPacks)"
+    DisplayAsProjSynIndentExam 'restore these application configurations from the backup location' "restore $(FormatAsHelpPacks)"
+    DisplayAsProjSynIndentExam 'show application backup files' 'list backups'
+    DisplayAsProjSynIndentExam '' b
+    DisplayAsProjSynIndentExam "list $(FormatAsTitle) object version numbers" 'list versions'
+    DisplayAsProjSynIndentExam '' v
     Display
-    DisplayAsProjectSyntaxExample "$(FormatAsHelpAction)s to affect all packages can be seen with" 'all-actions'
+    DisplayAsProjSynExam "$(FormatAsHelpAc)s to affect all packages can be seen with" 'all-actions'
     Display
-    DisplayAsProjectSyntaxExample "multiple $(FormatAsHelpAction)s are supported like this" "$(FormatAsHelpAction) $(FormatAsHelpPackages) $(FormatAsHelpAction) $(FormatAsHelpPackages)"
-    DisplayAsProjectSyntaxIndentedExample '' 'install sabnzbd sickgear restart transmission uninstall lazy nzbget upgrade nzbtomedia'
+    DisplayAsProjSynExam "multiple $(FormatAsHelpAc)s are supported like this" "$(FormatAsHelpAc) $(FormatAsHelpPacks) $(FormatAsHelpAc) $(FormatAsHelpPacks)"
+    DisplayAsProjSynIndentExam '' 'install sabnzbd sickgear restart transmission uninstall lazy nzbget upgrade nzbtomedia'
 
     return 0
 
@@ -2956,29 +2958,29 @@ Help.ActionsAll.Show()
     DisableDebugToArchiveAndFile
     Help.Basic.Show
     DisplayLineSpaceIfNoneAlready
-    DisplayAsHelpTitle "these $(FormatAsHelpAction)s apply to all installed packages. If $(FormatAsHelpAction) is 'install all' then all available packages will be installed."
+    DisplayAsHelpTitle "these $(FormatAsHelpAc)s apply to all installed packages. If $(FormatAsHelpAc) is 'install all' then all available packages will be installed."
     Display
-    DisplayAsHelpTitle "$(FormatAsHelpAction) usage examples:"
-    DisplayAsProjectSyntaxIndentedExample 'show package statuses' 'status'
-    DisplayAsProjectSyntaxIndentedExample '' s
-    DisplayAsProjectSyntaxIndentedExample 'show package repositories' 'repos'
-    DisplayAsProjectSyntaxIndentedExample '' r
-    DisplayAsProjectSyntaxIndentedExample 'install everything!' 'install all'
-    DisplayAsProjectSyntaxIndentedExample 'uninstall everything!' 'force uninstall all'
-    DisplayAsProjectSyntaxIndentedExample 'reinstall all installed packages' 'reinstall all'
-    DisplayAsProjectSyntaxIndentedExample "rebuild all packages with backups ('install' packages and 'restore' backups)" 'rebuild all'
-    DisplayAsProjectSyntaxIndentedExample 'upgrade all installed packages (and internal applications where supported)' 'upgrade all'
-    DisplayAsProjectSyntaxIndentedExample 'enable then start all installed packages (upgrade internal applications, not packages)' 'start all'
-    DisplayAsProjectSyntaxIndentedExample 'stop then disable all installed packages (disabling will prevent them starting on reboot)' 'stop all'
-    DisplayAsProjectSyntaxIndentedExample 'restart packages (this will upgrade internal applications where supported)' 'restart all'
-    DisplayAsProjectSyntaxIndentedExample 'clear local repository files from all packages' 'clean all'
-    DisplayAsProjectSyntaxIndentedExample 'list all available packages' 'list all'
-    DisplayAsProjectSyntaxIndentedExample 'list only installed packages' 'list installed'
-    DisplayAsProjectSyntaxIndentedExample 'list only packages that can be installed' 'list installable'
-    DisplayAsProjectSyntaxIndentedExample 'list only packages that are not installed' 'list not-installed'
-    DisplayAsProjectSyntaxIndentedExample 'list only upgradable packages' 'list upgradable'
-    DisplayAsProjectSyntaxIndentedExample 'backup all application configurations to the backup location' 'backup all'
-    DisplayAsProjectSyntaxIndentedExample 'restore all application configurations from the backup location' 'restore all'
+    DisplayAsHelpTitle "$(FormatAsHelpAc) usage examples:"
+    DisplayAsProjSynIndentExam 'show package statuses' 'status'
+    DisplayAsProjSynIndentExam '' s
+    DisplayAsProjSynIndentExam 'show package repositories' 'repos'
+    DisplayAsProjSynIndentExam '' r
+    DisplayAsProjSynIndentExam 'install everything!' 'install all'
+    DisplayAsProjSynIndentExam 'uninstall everything!' 'force uninstall all'
+    DisplayAsProjSynIndentExam 'reinstall all installed packages' 'reinstall all'
+    DisplayAsProjSynIndentExam "rebuild all packages with backups ('install' packages and 'restore' backups)" 'rebuild all'
+    DisplayAsProjSynIndentExam 'upgrade all installed packages (and internal applications where supported)' 'upgrade all'
+    DisplayAsProjSynIndentExam 'enable then start all installed packages (upgrade internal applications, not packages)' 'start all'
+    DisplayAsProjSynIndentExam 'stop then disable all installed packages (disabling will prevent them starting on reboot)' 'stop all'
+    DisplayAsProjSynIndentExam 'restart packages (this will upgrade internal applications where supported)' 'restart all'
+    DisplayAsProjSynIndentExam 'clear local repository files from all packages' 'clean all'
+    DisplayAsProjSynIndentExam 'list all available packages' 'list all'
+    DisplayAsProjSynIndentExam 'list only installed packages' 'list installed'
+    DisplayAsProjSynIndentExam 'list only packages that can be installed' 'list installable'
+    DisplayAsProjSynIndentExam 'list only packages that are not installed' 'list not-installed'
+    DisplayAsProjSynIndentExam 'list only upgradable packages' 'list upgradable'
+    DisplayAsProjSynIndentExam 'backup all application configurations to the backup location' 'backup all'
+    DisplayAsProjSynIndentExam 'restore all application configurations from the backup location' 'restore all'
 
     return 0
 
@@ -2993,7 +2995,7 @@ Help.Packages.Show()
     DisableDebugToArchiveAndFile
     Help.Basic.Show
     Display
-    DisplayAsHelpTitle "One-or-more $(FormatAsHelpPackages) may be specified at-once"
+    DisplayAsHelpTitle "One-or-more $(FormatAsHelpPacks) may be specified at-once"
     Display
 
     for tier in Standalone Dependent; do
@@ -3006,8 +3008,8 @@ Help.Packages.Show()
         Display
     done
 
-    DisplayAsProjectSyntaxExample "abbreviations may also be used to specify $(FormatAsHelpPackages). To list these" 'list abs'
-    DisplayAsProjectSyntaxIndentedExample '' a
+    DisplayAsProjSynExam "abbreviations may also be used to specify $(FormatAsHelpPacks). To list these" 'list abs'
+    DisplayAsProjSynIndentExam '' a
 
     return 0
 
@@ -3019,9 +3021,9 @@ Help.Options.Show()
     DisableDebugToArchiveAndFile
     Help.Basic.Show
     DisplayLineSpaceIfNoneAlready
-    DisplayAsHelpTitle "$(FormatAsHelpOptions) usage examples:"
-    DisplayAsProjectSyntaxIndentedExample 'process one-or-more packages and show live debugging information' "$(FormatAsHelpAction) $(FormatAsHelpPackages) debug"
-    DisplayAsProjectSyntaxIndentedExample '' "$(FormatAsHelpAction) $(FormatAsHelpPackages) verbose"
+    DisplayAsHelpTitle "$(FormatAsHelpOpts) usage examples:"
+    DisplayAsProjSynIndentExam 'process one-or-more packages and show live debugging information' "$(FormatAsHelpAc) $(FormatAsHelpPacks) debug"
+    DisplayAsProjSynIndentExam '' "$(FormatAsHelpAc) $(FormatAsHelpPacks) verbose"
 
     return 0
 
@@ -3034,23 +3036,23 @@ Help.Problems.Show()
     Help.Basic.Show
     DisplayLineSpaceIfNoneAlready
     DisplayAsHelpTitle 'usage examples for dealing with problems:'
-    DisplayAsProjectSyntaxIndentedExample 'show package statuses' 'status'
-    DisplayAsProjectSyntaxIndentedExample '' s
-    DisplayAsProjectSyntaxIndentedExample 'process one-or-more packages and show live debugging information' "$(FormatAsHelpAction) $(FormatAsHelpPackages) debug"
-    DisplayAsProjectSyntaxIndentedExample '' "$(FormatAsHelpAction) $(FormatAsHelpPackages) verbose"
-    DisplayAsProjectSyntaxIndentedExample 'ensure all dependencies exist for installed packages' 'check'
-    DisplayAsProjectSyntaxIndentedExample 'clear local repository files from these packages' "clean $(FormatAsHelpPackages)"
-    DisplayAsProjectSyntaxIndentedExample "remove all cached $(FormatAsScriptTitle) items and logs" 'reset'
-    DisplayAsProjectSyntaxIndentedExample 'restart all installed packages (upgrades internal applications where supported)' 'restart all'
-    DisplayAsProjectSyntaxIndentedExample 'enable then start these packages' "start $(FormatAsHelpPackages)"
-    DisplayAsProjectSyntaxIndentedExample 'stop then disable these packages (disabling will prevent them starting on reboot)' "stop $(FormatAsHelpPackages)"
-    DisplayAsProjectSyntaxIndentedExample "view only the most recent $(FormatAsScriptTitle) session log" 'last'
-    DisplayAsProjectSyntaxIndentedExample '' l
-    DisplayAsProjectSyntaxIndentedExample "view the entire $(FormatAsScriptTitle) session log" 'log'
-    DisplayAsProjectSyntaxIndentedExample "upload the most-recent session in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste last'
-    DisplayAsProjectSyntaxIndentedExample "upload the most-recent $(FormatAsThousands "$LOG_TAIL_LINES") lines in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste log'
+    DisplayAsProjSynIndentExam 'show package statuses' 'status'
+    DisplayAsProjSynIndentExam '' s
+    DisplayAsProjSynIndentExam 'process one-or-more packages and show live debugging information' "$(FormatAsHelpAc) $(FormatAsHelpPacks) debug"
+    DisplayAsProjSynIndentExam '' "$(FormatAsHelpAc) $(FormatAsHelpPacks) verbose"
+    DisplayAsProjSynIndentExam 'ensure all dependencies exist for installed packages' 'check'
+    DisplayAsProjSynIndentExam 'clear local repository files from these packages' "clean $(FormatAsHelpPacks)"
+    DisplayAsProjSynIndentExam "remove all cached $(FormatAsTitle) items and logs" 'reset'
+    DisplayAsProjSynIndentExam 'restart all installed packages (upgrades internal applications where supported)' 'restart all'
+    DisplayAsProjSynIndentExam 'enable then start these packages' "start $(FormatAsHelpPacks)"
+    DisplayAsProjSynIndentExam 'stop then disable these packages (disabling will prevent them starting on reboot)' "stop $(FormatAsHelpPacks)"
+    DisplayAsProjSynIndentExam "view only the most recent $(FormatAsTitle) session log" 'last'
+    DisplayAsProjSynIndentExam '' l
+    DisplayAsProjSynIndentExam "view the entire $(FormatAsTitle) session log" 'log'
+    DisplayAsProjSynIndentExam "upload the most-recent session in your $(FormatAsTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste last'
+    DisplayAsProjSynIndentExam "upload the most-recent $(FormatAsThous "$LOG_TAIL_LINES") lines in your $(FormatAsTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste log'
     Display
-    DisplayAsHelpTitleHighlighted "If you need help, please include a copy of your $(FormatAsScriptTitle) $(ColourTextBrightOrange "log for analysis!")"
+    DisplayAsHelpTitleHighlighted "If you need help, please include a copy of your $(FormatAsTitle) $(ColourTextBrightOrange "log for analysis!")"
 
     return 0
 
@@ -3063,11 +3065,11 @@ Help.Issue.Show()
     DisplayAsHelpTitle "please consider creating a new issue for this on GitHub:\n\thttps://github.com/OneCDOnly/sherpa/issues"
     Display
     DisplayAsHelpTitle "alternatively, post on the QNAP NAS Community Forum:\n\thttps://forum.qnap.com/viewtopic.php?f=320&t=132373"
-    DisplayAsProjectSyntaxIndentedExample "view only the most recent $(FormatAsScriptTitle) session log" 'last'
-    DisplayAsProjectSyntaxIndentedExample "view the entire $(FormatAsScriptTitle) session log" 'log'
-    DisplayAsProjectSyntaxIndentedExample "upload the most-recent $(FormatAsThousands "$LOG_TAIL_LINES") lines in your $(FormatAsScriptTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste log'
+    DisplayAsProjSynIndentExam "view only the most recent $(FormatAsTitle) session log" 'last'
+    DisplayAsProjSynIndentExam "view the entire $(FormatAsTitle) session log" 'log'
+    DisplayAsProjSynIndentExam "upload the most-recent $(FormatAsThous "$LOG_TAIL_LINES") lines in your $(FormatAsTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste log'
     Display
-    DisplayAsHelpTitleHighlighted "If you need help, please include a copy of your $(FormatAsScriptTitle) $(ColourTextBrightOrange "log for analysis!")"
+    DisplayAsHelpTitleHighlighted "If you need help, please include a copy of your $(FormatAsTitle) $(ColourTextBrightOrange "log for analysis!")"
 
     return 0
 
@@ -3080,14 +3082,14 @@ Help.Tips.Show()
     Help.Basic.Show
     DisplayLineSpaceIfNoneAlready
     DisplayAsHelpTitle 'helpful tips and shortcuts:'
-    DisplayAsProjectSyntaxIndentedExample "install all available $(FormatAsScriptTitle) packages" 'install all'
-    DisplayAsProjectSyntaxIndentedExample 'package abbreviations also work. To see these' 'list abs'
-    DisplayAsProjectSyntaxIndentedExample 'restart all installed packages (upgrades internal applications where supported)' 'restart all'
-    DisplayAsProjectSyntaxIndentedExample 'list only packages that can be installed' 'list installable'
-    DisplayAsProjectSyntaxIndentedExample "view only the most recent $(FormatAsScriptTitle) session log" 'last'
-    DisplayAsProjectSyntaxIndentedExample '' l
-    DisplayAsProjectSyntaxIndentedExample 'start all stopped packages' 'start stopped'
-    DisplayAsProjectSyntaxIndentedExample 'upgrade the internal applications only' "restart $(FormatAsHelpPackages)"
+    DisplayAsProjSynIndentExam "install all available $(FormatAsTitle) packages" 'install all'
+    DisplayAsProjSynIndentExam 'package abbreviations also work. To see these' 'list abs'
+    DisplayAsProjSynIndentExam 'restart all installed packages (upgrades internal applications where supported)' 'restart all'
+    DisplayAsProjSynIndentExam 'list only packages that can be installed' 'list installable'
+    DisplayAsProjSynIndentExam "view only the most recent $(FormatAsTitle) session log" 'last'
+    DisplayAsProjSynIndentExam '' l
+    DisplayAsProjSynIndentExam 'start all stopped packages' 'start stopped'
+    DisplayAsProjSynIndentExam 'upgrade the internal applications only' "restart $(FormatAsHelpPacks)"
     Help.BackupLocation.Show
 
     return 0
@@ -3104,7 +3106,7 @@ Help.PackageAbbreviations.Show()
     DisableDebugToArchiveAndFile
     Help.Basic.Show
     Display
-    DisplayAsHelpTitle "$(FormatAsScriptTitle) can recognise various abbreviations as $(FormatAsHelpPackages)"
+    DisplayAsHelpTitle "$(FormatAsTitle) can recognise various abbreviations as $(FormatAsHelpPacks)"
     Display
 
     for tier in Standalone Dependent; do
@@ -3118,7 +3120,7 @@ Help.PackageAbbreviations.Show()
         Display
     done
 
-    DisplayAsProjectSyntaxExample "example: to install $(FormatAsPackageName SABnzbd), $(FormatAsPackageName Mylar3) and $(FormatAsPackageName nzbToMedia) all-at-once" 'install sab my nzb2'
+    DisplayAsProjSynExam "example: to install $(FormatAsPackName SABnzbd), $(FormatAsPackName Mylar3) and $(FormatAsPackName nzbToMedia) all-at-once" 'install sab my nzb2'
 
     return 0
 
@@ -3127,7 +3129,7 @@ Help.PackageAbbreviations.Show()
 Help.BackupLocation.Show()
     {
 
-    DisplayAsSyntaxExample 'the backup location can be accessed by running' "cd $BACKUP_PATH"
+    DisplayAsSynExam 'the backup location can be accessed by running' "cd $BACKUP_PATH"
 
     return 0
 
@@ -3141,13 +3143,13 @@ Log.Last.View()
     DisableDebugToArchiveAndFile
     ExtractPrevSessFromTail
 
-    if [[ -e $SESSION_LAST_PATHFILE ]]; then
+    if [[ -e $SESS_LAST_PATHFILE ]]; then
         if [[ -e $GNU_LESS_CMD ]]; then
-            LESSSECURE=1 $GNU_LESS_CMD +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$SESSION_LAST_PATHFILE"
+            LESSSECURE=1 $GNU_LESS_CMD +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$SESS_LAST_PATHFILE"
         elif [[ -e $LESS_CMD ]]; then
-            $LESS_CMD -N~ "$SESSION_LAST_PATHFILE"
+            $LESS_CMD -N~ "$SESS_LAST_PATHFILE"
         else
-            $CAT_CMD --number "$SESSION_LAST_PATHFILE"
+            $CAT_CMD --number "$SESS_LAST_PATHFILE"
         fi
     else
         ShowAsError 'no last session log to display'
@@ -3165,13 +3167,13 @@ Log.Tail.View()
     DisableDebugToArchiveAndFile
     ExtractTailFromLog
 
-    if [[ -e $SESSION_TAIL_PATHFILE ]]; then
+    if [[ -e $SESS_TAIL_PATHFILE ]]; then
         if [[ -e $GNU_LESS_CMD ]]; then
-            LESSSECURE=1 $GNU_LESS_CMD +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$SESSION_TAIL_PATHFILE"
+            LESSSECURE=1 $GNU_LESS_CMD +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$SESS_TAIL_PATHFILE"
         elif [[ -e $LESS_CMD ]]; then
-            $LESS_CMD -N~ "$SESSION_TAIL_PATHFILE"
+            $LESS_CMD -N~ "$SESS_TAIL_PATHFILE"
         else
-            $CAT_CMD --number "$SESSION_TAIL_PATHFILE"
+            $CAT_CMD --number "$SESS_TAIL_PATHFILE"
         fi
     else
         ShowAsError 'no session log tail to display'
@@ -3188,19 +3190,19 @@ Log.Last.Paste()
     DisableDebugToArchiveAndFile
     ExtractPrevSessFromTail
 
-    if [[ -e $SESSION_LAST_PATHFILE ]]; then
-        if Quiz "Press 'Y' to post the most-recent session in your $(FormatAsScriptTitle) log to a public pastebin, or any other key to abort"; then
-            ShowAsProc "uploading $(FormatAsScriptTitle) log"
+    if [[ -e $SESS_LAST_PATHFILE ]]; then
+        if Quiz "Press 'Y' to post the most-recent session in your $(FormatAsTitle) log to a public pastebin, or any other key to abort"; then
+            ShowAsProc "uploading $(FormatAsTitle) log"
             # with thanks to https://github.com/solusipse/fiche
-            link=$($CAT_CMD --number "$SESSION_LAST_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
+            link=$($CAT_CMD --number "$SESS_LAST_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
 
             if [[ $? -eq 0 ]]; then
-                ShowAsDone "your $(FormatAsScriptTitle) log is now online at $(FormatAsURL "$link") and will be deleted in 1 month"
+                ShowAsDone "your $(FormatAsTitle) log is now online at $(FormatAsURL "$link") and will be deleted in 1 month"
             else
                 ShowAsFail "a link could not be generated. Most likely a problem occurred when talking with $(FormatAsURL 'https://termbin.com')"
             fi
         else
-            DebugInfoMinorSeparator
+            DebugInfoMinSep
             DebugScript 'user abort'
             Self.Summary.UnSet
             return 1
@@ -3220,19 +3222,19 @@ Log.Tail.Paste()
     DisableDebugToArchiveAndFile
     ExtractTailFromLog
 
-    if [[ -e $SESSION_TAIL_PATHFILE ]]; then
-        if Quiz "Press 'Y' to post the most-recent $(FormatAsThousands "$LOG_TAIL_LINES") lines in your $(FormatAsScriptTitle) log to a public pastebin, or any other key to abort"; then
-            ShowAsProc "uploading $(FormatAsScriptTitle) log"
+    if [[ -e $SESS_TAIL_PATHFILE ]]; then
+        if Quiz "Press 'Y' to post the most-recent $(FormatAsThous "$LOG_TAIL_LINES") lines in your $(FormatAsTitle) log to a public pastebin, or any other key to abort"; then
+            ShowAsProc "uploading $(FormatAsTitle) log"
             # with thanks to https://github.com/solusipse/fiche
-            link=$($CAT_CMD --number "$SESSION_TAIL_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
+            link=$($CAT_CMD --number "$SESS_TAIL_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
 
             if [[ $? -eq 0 ]]; then
-                ShowAsDone "your $(FormatAsScriptTitle) log is now online at $(FormatAsURL "$link") and will be deleted in 1 month"
+                ShowAsDone "your $(FormatAsTitle) log is now online at $(FormatAsURL "$link") and will be deleted in 1 month"
             else
                 ShowAsFail "a link could not be generated. Most likely a problem occurred when talking with $(FormatAsURL 'https://termbin.com')"
             fi
         else
-            DebugInfoMinorSeparator
+            DebugInfoMinSep
             DebugScript 'user abort'
             Self.Summary.UnSet
             return 1
@@ -3250,7 +3252,7 @@ GetLogSessStartLine()
 
     # $1 = how many sessions back? (optional) default = 1
 
-    local -i linenum=$(($($GREP_CMD -n 'SCRIPT:.*started:' "$SESSION_TAIL_PATHFILE" | $TAIL_CMD -n${1:-1} | $HEAD_CMD -n1 | cut -d':' -f1)-1))
+    local -i linenum=$(($($GREP_CMD -n 'SCRIPT:.*started:' "$SESS_TAIL_PATHFILE" | $TAIL_CMD -n${1:-1} | $HEAD_CMD -n1 | cut -d':' -f1)-1))
     [[ $linenum -lt 1 ]] && linenum=1
     echo $linenum
 
@@ -3261,7 +3263,7 @@ GetLogSessFinishLine()
 
     # $1 = how many sessions back? (optional) default = 1
 
-    local -i linenum=$(($($GREP_CMD -n 'SCRIPT:.*finished:' "$SESSION_TAIL_PATHFILE" | $TAIL_CMD -n${1:-1} | cut -d':' -f1)+2))
+    local -i linenum=$(($($GREP_CMD -n 'SCRIPT:.*finished:' "$SESS_TAIL_PATHFILE" | $TAIL_CMD -n${1:-1} | cut -d':' -f1)+2))
     [[ $linenum -eq 2 ]] && linenum=3
     echo $linenum
 
@@ -3270,7 +3272,7 @@ GetLogSessFinishLine()
 ArchiveActiveSessLog()
     {
 
-    [[ -e $SESSION_ACTIVE_PATHFILE ]] && $CAT_CMD "$SESSION_ACTIVE_PATHFILE" >> "$SESSION_ARCHIVE_PATHFILE"
+    [[ -e $SESS_ACTIVE_PATHFILE ]] && $CAT_CMD "$SESS_ACTIVE_PATHFILE" >> "$SESS_ARCHIVE_PATHFILE"
 
     }
 
@@ -3282,8 +3284,8 @@ ArchivePriorSessLogs()
     local log_pathfile=''
 
     for log_pathfile in "$PROJECT_PATH/session."*".active.log"; do
-        if [[ -f $log_pathfile && $log_pathfile != "$SESSION_ACTIVE_PATHFILE" ]]; then
-            $CAT_CMD "$log_pathfile" >> "$SESSION_ARCHIVE_PATHFILE"
+        if [[ -f $log_pathfile && $log_pathfile != "$SESS_ACTIVE_PATHFILE" ]]; then
+            $CAT_CMD "$log_pathfile" >> "$SESS_ARCHIVE_PATHFILE"
             rm -f "$log_pathfile"
         fi
     done
@@ -3293,7 +3295,7 @@ ArchivePriorSessLogs()
 ResetActiveSessLog()
     {
 
-    [[ -e $SESSION_ACTIVE_PATHFILE ]] && rm -f "$SESSION_ACTIVE_PATHFILE"
+    [[ -e $SESS_ACTIVE_PATHFILE ]] && rm -f "$SESS_ACTIVE_PATHFILE"
 
     }
 
@@ -3309,7 +3311,7 @@ ExtractPrevSessFromTail()
 
     ExtractTailFromLog
 
-    if [[ -e $SESSION_TAIL_PATHFILE ]]; then
+    if [[ -e $SESS_TAIL_PATHFILE ]]; then
         end_line=$(GetLogSessFinishLine "$old_session")
         start_line=$((end_line+1))      # ensure an invalid condition, to be solved by the loop
 
@@ -3320,9 +3322,9 @@ ExtractPrevSessFromTail()
             [[ $old_session -gt $old_session_limit ]] && break
         done
 
-        $SED_CMD "$start_line,$end_line!d" "$SESSION_TAIL_PATHFILE" > "$SESSION_LAST_PATHFILE"
+        $SED_CMD "$start_line,$end_line!d" "$SESS_TAIL_PATHFILE" > "$SESS_LAST_PATHFILE"
     else
-        [[ -e $SESSION_LAST_PATHFILE ]] && rm -f "$SESSION_LAST_PATHFILE"
+        [[ -e $SESS_LAST_PATHFILE ]] && rm -f "$SESS_LAST_PATHFILE"
     fi
 
     return 0
@@ -3332,10 +3334,10 @@ ExtractPrevSessFromTail()
 ExtractTailFromLog()
     {
 
-    if [[ -e $SESSION_ARCHIVE_PATHFILE ]]; then
-        $TAIL_CMD -n${LOG_TAIL_LINES} "$SESSION_ARCHIVE_PATHFILE" > "$SESSION_TAIL_PATHFILE"   # trim main log first so there's less to `grep`
+    if [[ -e $SESS_ARCHIVE_PATHFILE ]]; then
+        $TAIL_CMD -n${LOG_TAIL_LINES} "$SESS_ARCHIVE_PATHFILE" > "$SESS_TAIL_PATHFILE"   # trim main log first so there's less to `grep`
     else
-        [[ -e $SESSION_TAIL_PATHFILE ]] && rm -f "$SESSION_TAIL_PATHFILE"
+        [[ -e $SESS_TAIL_PATHFILE ]] && rm -f "$SESS_TAIL_PATHFILE"
     fi
 
     return 0
@@ -3409,7 +3411,7 @@ QPKGs.Conflicts.Check()
         # shellcheck disable=2068
         for package in ${BASE_QPKG_CONFLICTS_WITH[@]}; do
             if QPKG.IsEnabled "$package"; then
-                ShowAsError "the '$package' QPKG is enabled. $(FormatAsScriptTitle) is incompatible with this package. Please consider 'stop'ing this QPKG in your App Center"
+                ShowAsError "the '$package' QPKG is enabled. $(FormatAsTitle) is incompatible with this package. Please consider 'stop'ing this QPKG in your App Center"
                 return 1
             fi
         done
@@ -3428,7 +3430,7 @@ QPKGs.Warnings.Check()
         # shellcheck disable=2068
         for package in ${BASE_QPKG_WARNINGS[@]}; do
             if QPKG.IsEnabled "$package"; then
-                ShowAsWarn "the '$package' QPKG is enabled. This may cause problems with $(FormatAsScriptTitle) applications. Please consider 'stop'ing this QPKG in your App Center"
+                ShowAsWarn "the '$package' QPKG is enabled. This may cause problems with $(FormatAsTitle) applications. Please consider 'stop'ing this QPKG in your App Center"
             fi
         done
     fi
@@ -3441,11 +3443,11 @@ IPKs.Actions.List()
     {
 
     QPKGs.SkProc.IsSet && return
-    DebugFuncEntry
+    DebugFuncEn
 
     local action=''
     local prefix=''
-    DebugInfoMinorSeparator
+    DebugInfoMinSep
 
     for action in "${PACKAGE_ACTIONS[@]}"; do
         [[ $action = Enable || $action = Disable ]] && continue     # no objects for these as `start` and `stop` do the same jobs
@@ -3466,8 +3468,8 @@ IPKs.Actions.List()
         done
     done
 
-    DebugInfoMinorSeparator
-    DebugFuncExit
+    DebugInfoMinSep
+    DebugFuncEx
 
     }
 
@@ -3475,11 +3477,11 @@ QPKGs.Actions.List()
     {
 
     QPKGs.SkProc.IsSet && return
-    DebugFuncEntry
+    DebugFuncEn
 
     local action=''
     local prefix=''
-    DebugInfoMinorSeparator
+    DebugInfoMinSep
 
     for action in "${PACKAGE_ACTIONS[@]}"; do
         [[ $action = Enable || $action = Disable ]] && continue     # no objects for these as `start` and `stop` do the same jobs
@@ -3500,8 +3502,8 @@ QPKGs.Actions.List()
         done
     done
 
-    DebugInfoMinorSeparator
-    DebugFuncExit
+    DebugInfoMinSep
+    DebugFuncEx
 
     }
 
@@ -3511,11 +3513,11 @@ QPKGs.Actions.ListAll()
     # only used when debugging
 
     QPKGs.SkProc.IsSet && return
-    DebugFuncEntry
+    DebugFuncEn
 
     local action=''
     local prefix=''
-    DebugInfoMinorSeparator
+    DebugInfoMinSep
 
     for action in "${PACKAGE_ACTIONS[@]}"; do
         [[ $action = Enable || $action = Disable ]] && continue     # no objects for these as `start` and `stop` do the same jobs
@@ -3527,8 +3529,8 @@ QPKGs.Actions.ListAll()
         done
     done
 
-    DebugInfoMinorSeparator
-    DebugFuncExit
+    DebugInfoMinSep
+    DebugFuncEx
 
     }
 
@@ -3537,13 +3539,13 @@ QPKGs.States.List()
 
     # $1 (optional passthrough) = `rebuild` - clear existing lists and rebuild them from scratch
 
-    DebugFuncEntry
+    DebugFuncEn
 
     local state=''
     local prefix=''
 
     QPKGs.States.Build "${1:-}"
-    DebugInfoMinorSeparator
+    DebugInfoMinSep
 
     for state in "${PACKAGE_STATES[@]}" "${PACKAGE_RESULTS[@]}"; do
         for prefix in Is IsNt; do
@@ -3570,8 +3572,8 @@ QPKGs.States.List()
         done
     done
 
-    DebugInfoMinorSeparator
-    DebugFuncExit
+    DebugInfoMinSep
+    DebugFuncEx
 
     }
 
@@ -3624,7 +3626,7 @@ QPKGs.States.Build()
     fi
 
     QPKGs.States.Built.IsSet && return
-    DebugFuncEntry
+    DebugFuncEn
 
     local -i index=0
     local package=''
@@ -3703,7 +3705,7 @@ QPKGs.States.Build()
 
     QPKGs.States.Built.Set
     SmartCR >&2
-    DebugFuncExit
+    DebugFuncEx
 
     }
 
@@ -3712,7 +3714,7 @@ QPKGs.IsCanBackup.Build()
 
     # Build a list of QPKGs that do and don't support `backup` and `restore` actions
 
-    DebugFuncEntry
+    DebugFuncEn
 
     local package=''
 
@@ -3726,7 +3728,7 @@ QPKGs.IsCanBackup.Build()
         fi
     done
 
-    DebugFuncExit
+    DebugFuncEx
 
     }
 
@@ -3736,7 +3738,7 @@ QPKGs.IsCanRestartToUpdate.Build()
     # Build a list of QPKGs that do and don't support application updating on QPKG restart
     # these packages also do and don't support `clean` actions
 
-    DebugFuncEntry
+    DebugFuncEn
 
     local package=''
 
@@ -3750,7 +3752,7 @@ QPKGs.IsCanRestartToUpdate.Build()
         fi
     done
 
-    DebugFuncExit
+    DebugFuncEx
 
     }
 
@@ -3765,7 +3767,7 @@ QPKGs.Backups.Show()
     DisableDebugToArchiveAndFile
     SmartCR
     DisplayLineSpaceIfNoneAlready
-    DisplayAsHelpTitle "the location for $(FormatAsScriptTitle) backups is: $BACKUP_PATH"
+    DisplayAsHelpTitle "the location for $(FormatAsTitle) backups is: $BACKUP_PATH"
     Display
 
     if [[ -e $GNU_FIND_CMD ]]; then
@@ -4106,7 +4108,7 @@ MarkQpkgAcAsEr()
     #   $2 = action
     #   $3 = reason (optional)
 
-    local message="failing request to $2 $(FormatAsPackageName "$1")"
+    local message="failing request to $2 $(FormatAsPackName "$1")"
 
     [[ -n ${3:-} ]] && message+=" as $3"
     DebugAsError "$message" >&2
@@ -4128,7 +4130,7 @@ MarkQpkgAcAsSk()
     #   $3 = action
     #   $4 = reason (optional)
 
-    local message="ignoring request to $3 $(FormatAsPackageName "$2")"
+    local message="ignoring request to $3 $(FormatAsPackName "$2")"
     [[ -n ${4:-} ]] && message+=" as $4"
 
     if [[ ${1:-hide} = show ]]; then
@@ -4170,7 +4172,7 @@ MarkIpkAcAsEr()
     #   $2 = action
     #   $3 = reason (optional)
 
-    local message="failing request to $2 $(FormatAsPackageName "$1")"
+    local message="failing request to $2 $(FormatAsPackName "$1")"
 
     [[ -n ${3:-} ]] && message+=" as $3"
     DebugAsError "$message" >&2
@@ -4662,7 +4664,7 @@ QPKG.Reassign()
 
     Self.Error.IsSet && return
     QPKGs.SkProc.IsSet && return
-    DebugFuncEntry
+    DebugFuncEn
 
     local -r PACKAGE_NAME=${1:?no package name supplied}
     local -i result_code=0
@@ -4671,30 +4673,30 @@ QPKG.Reassign()
 
     if ! QPKGs.IsInstalled.Exist "$PACKAGE_NAME"; then
         MarkQpkgAcAsSk show "$PACKAGE_NAME" "$action" "it's not installed - use 'install' instead"
-        DebugFuncExit 2; return
+        DebugFuncEx 2; return
     fi
 
     local package_store_id=$(QPKG.StoreID "$PACKAGE_NAME")
 
     if [[ $package_store_id = sherpa ]]; then
-        MarkQpkgAcAsSk show "$PACKAGE_NAME" "$action" "it's already assigned to $(FormatAsScriptTitle)"
-        DebugFuncExit 2; return
+        MarkQpkgAcAsSk show "$PACKAGE_NAME" "$action" "it's already assigned to $(FormatAsTitle)"
+        DebugFuncEx 2; return
     fi
 
-    DebugAsProc "reassigning $(FormatAsPackageName "$PACKAGE_NAME")"
+    DebugAsProc "reassigning $(FormatAsPackName "$PACKAGE_NAME")"
     RunAndLog "$SETCFG_CMD $PACKAGE_NAME store '' -f /etc/config/qpkg.conf" "$LOG_PATHFILE" log:failure-only
     result_code=$?
 
     if [[ $result_code -eq 0 ]]; then
         MarkQpkgAcAsOk "$PACKAGE_NAME" "$action"
-        DebugAsDone "reassigned $(FormatAsPackageName "$PACKAGE_NAME") to sherpa"
+        DebugAsDone "reassigned $(FormatAsPackName "$PACKAGE_NAME") to sherpa"
     else
         MarkQpkgAcAsEr "$PACKAGE_NAME" "$action"
         DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode "$result_code")"
         result_code=1    # remap to 1
     fi
 
-    DebugFuncExit $result_code
+    DebugFuncEx $result_code
 
     }
 
@@ -4710,7 +4712,7 @@ QPKG.Download()
     #   $? = 2  : skipped (not downloaded: already downloaded)
 
     Self.Error.IsSet && return
-    DebugFuncEntry
+    DebugFuncEn
 
     local -r PACKAGE_NAME=${1:?no package name supplied}
     local -i result_code=0
@@ -4723,7 +4725,7 @@ QPKG.Download()
     local action=download
 
     if [[ -z $REMOTE_URL || -z $REMOTE_MD5 ]]; then
-        DebugAsWarn "no URL or MD5 found for this package $(FormatAsPackageName "$PACKAGE_NAME") (unsupported arch?)"
+        DebugAsWarn "no URL or MD5 found for this package $(FormatAsPackName "$PACKAGE_NAME") (unsupported arch?)"
         result_code=2
     fi
 
@@ -4743,7 +4745,7 @@ QPKG.Download()
 
     if [[ $result_code -eq 2 ]]; then
         MarkQpkgAcAsSk hide "$PACKAGE_NAME" "$action"
-        DebugFuncExit $result_code; return
+        DebugFuncEx $result_code; return
     fi
 
     if [[ ! -f $LOCAL_PATHFILE ]]; then
@@ -4771,7 +4773,7 @@ QPKG.Download()
     fi
 
     QPKGs.AcToDownload.Remove "$PACKAGE_NAME"
-    DebugFuncExit $result_code
+    DebugFuncEx $result_code
 
     }
 
@@ -4788,7 +4790,7 @@ QPKG.Install()
 
     Self.Error.IsSet && return
     QPKGs.SkProc.IsSet && return
-    DebugFuncEntry
+    DebugFuncEn
 
     local -r PACKAGE_NAME=${1:?no package name supplied}
     local -i result_code=0
@@ -4797,17 +4799,17 @@ QPKG.Install()
 
     if QPKGs.IsInstalled.Exist "$PACKAGE_NAME"; then
         MarkQpkgAcAsSk show "$PACKAGE_NAME" "$action" "it's already installed - use 'reinstall' instead"
-        DebugFuncExit 2; return
+        DebugFuncEx 2; return
     fi
 
     if ! QPKG.URL "$PACKAGE_NAME" &>/dev/null; then
         MarkQpkgAcAsSk show "$PACKAGE_NAME" "$action" 'this NAS has an unsupported arch'
-        DebugFuncExit 2; return
+        DebugFuncEx 2; return
     fi
 
     if ! QPKG.MinRAM "$PACKAGE_NAME" &>/dev/null; then
         MarkQpkgAcAsSk show "$PACKAGE_NAME" "$action" 'this NAS has insufficient RAM'
-        DebugFuncExit 2; return
+        DebugFuncEx 2; return
     fi
 
     local local_pathfile=$(QPKG.PathFilename "$PACKAGE_NAME")
@@ -4819,7 +4821,7 @@ QPKG.Install()
 
     if [[ -z $local_pathfile ]]; then
         MarkQpkgAcAsSk show "$PACKAGE_NAME" "$action" 'no local file found for processing: this error should be reported'
-        DebugFuncExit 2; return
+        DebugFuncEx 2; return
     fi
 
     if [[ $PACKAGE_NAME = Entware ]] && ! QPKGs.IsInstalled.Exist Entware && QPKGs.AcToInstall.Exist Entware; then
@@ -4837,7 +4839,7 @@ QPKG.Install()
     local -r LOG_PATHFILE=$LOGS_PATH/$TARGET_FILE.$INSTALL_LOG_FILE
     local target_path=''
 
-    DebugAsProc "installing $(FormatAsPackageName "$PACKAGE_NAME")"
+    DebugAsProc "installing $(FormatAsPackName "$PACKAGE_NAME")"
     Self.Debug.ToScreen.IsSet && debug_cmd='DEBUG_QPKG=true '
     [[ ${QPKGs_were_installed_name[*]:-} == *"$PACKAGE_NAME"* ]] && target_path="QINSTALL_PATH=$(QPKG.OriginalPath "$PACKAGE_NAME") "
     RunAndLog "${debug_cmd}${target_path}${SH_CMD} $local_pathfile" "$LOG_PATHFILE" log:failure-only 10
@@ -4861,7 +4863,7 @@ QPKG.Install()
         fi
 
         local current_ver=$(QPKG.Local.Ver "$PACKAGE_NAME")
-        DebugAsDone "installed $(FormatAsPackageName "$PACKAGE_NAME") $current_ver"
+        DebugAsDone "installed $(FormatAsPackName "$PACKAGE_NAME") $current_ver"
 
         if [[ $PACKAGE_NAME = Entware ]]; then
             ModPathToEntware
@@ -4890,7 +4892,7 @@ QPKG.Install()
     fi
 
     QPKG.ClearAppCenterNotifier "$PACKAGE_NAME"
-    DebugFuncExit $result_code
+    DebugFuncEx $result_code
 
     }
 
@@ -4907,7 +4909,7 @@ QPKG.Reinstall()
 
     Self.Error.IsSet && return
     QPKGs.SkProc.IsSet && return
-    DebugFuncEntry
+    DebugFuncEn
 
     local -r PACKAGE_NAME=${1:?no package name supplied}
     local -i result_code=0
@@ -4916,7 +4918,7 @@ QPKG.Reinstall()
 
     if ! QPKGs.IsInstalled.Exist "$PACKAGE_NAME"; then
         MarkQpkgAcAsSk show "$PACKAGE_NAME" "$action" "it's not installed - use 'install' instead"
-        DebugFuncExit 2; return
+        DebugFuncEx 2; return
     fi
 
     local local_pathfile=$(QPKG.PathFilename "$PACKAGE_NAME")
@@ -4928,14 +4930,14 @@ QPKG.Reinstall()
 
     if [[ -z $local_pathfile ]]; then
         MarkQpkgAcAsSk show "$PACKAGE_NAME" "$action" 'no local file found for processing: this error should be reported'
-        DebugFuncExit 2; return
+        DebugFuncEx 2; return
     fi
 
     local -r TARGET_FILE=$($BASENAME_CMD "$local_pathfile")
     local -r LOG_PATHFILE=$LOGS_PATH/$TARGET_FILE.$REINSTALL_LOG_FILE
     local target_path=''
 
-    DebugAsProc "reinstalling $(FormatAsPackageName "$PACKAGE_NAME")"
+    DebugAsProc "reinstalling $(FormatAsPackName "$PACKAGE_NAME")"
     Self.Debug.ToScreen.IsSet && debug_cmd='DEBUG_QPKG=true '
     QPKG.IsInstalled "$PACKAGE_NAME" && target_path="QINSTALL_PATH=$($DIRNAME_CMD "$(QPKG.InstallationPath $PACKAGE_NAME)") "
     RunAndLog "${debug_cmd}${target_path}${SH_CMD} $local_pathfile" "$LOG_PATHFILE" log:failure-only 10
@@ -4958,7 +4960,7 @@ QPKG.Reinstall()
         fi
 
         local current_ver=$(QPKG.Local.Ver "$PACKAGE_NAME")
-        DebugAsDone "reinstalled $(FormatAsPackageName "$PACKAGE_NAME") $current_ver"
+        DebugAsDone "reinstalled $(FormatAsPackName "$PACKAGE_NAME") $current_ver"
         result_code=0    # remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK)
     else
         DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode "$result_code")"
@@ -4967,7 +4969,7 @@ QPKG.Reinstall()
     fi
 
     QPKG.ClearAppCenterNotifier "$PACKAGE_NAME"
-    DebugFuncExit $result_code
+    DebugFuncEx $result_code
 
     }
 
@@ -4986,7 +4988,7 @@ QPKG.Upgrade()
 
     Self.Error.IsSet && return
     QPKGs.SkProc.IsSet && return
-    DebugFuncEntry
+    DebugFuncEn
 
     local -r PACKAGE_NAME=${1:?no package name supplied}
     local -i result_code=0
@@ -4995,19 +4997,19 @@ QPKG.Upgrade()
 
     if ! QPKGs.IsInstalled.Exist "$PACKAGE_NAME"; then
         MarkQpkgAcAsSk show "$PACKAGE_NAME" "$action" "it's not installed - use 'install' instead"
-        DebugFuncExit 2; return
+        DebugFuncEx 2; return
     fi
 
     if ! QPKGs.IsUpgradable.Exist "$PACKAGE_NAME"; then
         MarkQpkgAcAsSk show "$PACKAGE_NAME" "$action" 'no new package is available'
-        DebugFuncExit 2; return
+        DebugFuncEx 2; return
     fi
 
     local package_store_id=$(QPKG.StoreID "$PACKAGE_NAME")
 
     if [[ $package_store_id != sherpa ]]; then
         MarkQpkgAcAsSk show "$PACKAGE_NAME" "$action" "it's assigned to another repository - use 'reassign' first"
-        DebugFuncExit 2; return
+        DebugFuncEx 2; return
     fi
 
     local local_pathfile=$(QPKG.PathFilename "$PACKAGE_NAME")
@@ -5019,7 +5021,7 @@ QPKG.Upgrade()
 
     if [[ -z $local_pathfile ]]; then
         MarkQpkgAcAsSk show "$PACKAGE_NAME" "$action" 'no local file found for processing: this error should be reported'
-        DebugFuncExit 2; return
+        DebugFuncEx 2; return
     fi
 
     local -r TARGET_FILE=$($BASENAME_CMD "$local_pathfile")
@@ -5027,7 +5029,7 @@ QPKG.Upgrade()
     local previous_ver=$(QPKG.Local.Ver "$PACKAGE_NAME")
     local target_path=''
 
-    DebugAsProc "upgrading $(FormatAsPackageName "$PACKAGE_NAME")"
+    DebugAsProc "upgrading $(FormatAsPackName "$PACKAGE_NAME")"
     Self.Debug.ToScreen.IsSet && debug_cmd='DEBUG_QPKG=true '
     QPKG.IsInstalled "$PACKAGE_NAME" && target_path="QINSTALL_PATH=$($DIRNAME_CMD "$(QPKG.InstallationPath $PACKAGE_NAME)") "
     RunAndLog "${debug_cmd}${target_path}${SH_CMD} $local_pathfile" "$LOG_PATHFILE" log:failure-only 10
@@ -5053,9 +5055,9 @@ QPKG.Upgrade()
         local current_ver=$(QPKG.Local.Ver "$PACKAGE_NAME")
 
         if [[ $current_ver = "$previous_ver" ]]; then
-            DebugAsDone "upgraded $(FormatAsPackageName "$PACKAGE_NAME") and installed version is $current_ver"
+            DebugAsDone "upgraded $(FormatAsPackName "$PACKAGE_NAME") and installed version is $current_ver"
         else
-            DebugAsDone "upgraded $(FormatAsPackageName "$PACKAGE_NAME") from $previous_ver to $current_ver"
+            DebugAsDone "upgraded $(FormatAsPackName "$PACKAGE_NAME") from $previous_ver to $current_ver"
         fi
 
         result_code=0    # remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK)
@@ -5066,7 +5068,7 @@ QPKG.Upgrade()
     fi
 
     QPKG.ClearAppCenterNotifier "$PACKAGE_NAME"
-    DebugFuncExit $result_code
+    DebugFuncEx $result_code
 
     }
 
@@ -5082,7 +5084,7 @@ QPKG.Uninstall()
     #   $? = 2  : skipped (not uninstalled: not already installed)
 
     Self.Error.IsSet && return
-    DebugFuncEntry
+    DebugFuncEn
 
     local -r PACKAGE_NAME=${1:?no package name supplied}
     local -i result_code=0
@@ -5091,12 +5093,12 @@ QPKG.Uninstall()
 
     if QPKGs.IsNtInstalled.Exist "$PACKAGE_NAME"; then
         MarkQpkgAcAsSk show "$PACKAGE_NAME" "$action" "it's not installed"
-        DebugFuncExit 2; return
+        DebugFuncEx 2; return
     fi
 
     if [[ $PACKAGE_NAME = sherpa ]]; then
         MarkQpkgAcAsSk show "$PACKAGE_NAME" "$action" "it's needed here! 😉"
-        DebugFuncExit 2; return
+        DebugFuncEx 2; return
     fi
 
     local -r QPKG_UNINSTALLER_PATHFILE=$(QPKG.InstallationPath "$PACKAGE_NAME")/.uninstall.sh
@@ -5105,13 +5107,13 @@ QPKG.Uninstall()
     [[ $PACKAGE_NAME = Entware ]] && SavePackageLists
 
     if [[ -e $QPKG_UNINSTALLER_PATHFILE ]]; then
-        DebugAsProc "uninstalling $(FormatAsPackageName "$PACKAGE_NAME")"
+        DebugAsProc "uninstalling $(FormatAsPackName "$PACKAGE_NAME")"
         Self.Debug.ToScreen.IsSet && debug_cmd='DEBUG_QPKG=true '
         RunAndLog "${debug_cmd}${SH_CMD} $QPKG_UNINSTALLER_PATHFILE" "$LOG_PATHFILE" log:failure-only
         result_code=$?
 
         if [[ $result_code -eq 0 ]]; then
-            DebugAsDone "uninstalled $(FormatAsPackageName "$PACKAGE_NAME")"
+            DebugAsDone "uninstalled $(FormatAsPackName "$PACKAGE_NAME")"
             /sbin/rmcfg "$PACKAGE_NAME" -f /etc/config/qpkg.conf
             DebugAsDone 'removed icon information from App Center'
             [[ $PACKAGE_NAME = Entware ]] && ModPathToEntware
@@ -5125,7 +5127,7 @@ QPKG.Uninstall()
     fi
 
     QPKG.ClearAppCenterNotifier "$PACKAGE_NAME"
-    DebugFuncExit $result_code
+    DebugFuncEx $result_code
 
     }
 
@@ -5142,7 +5144,7 @@ QPKG.Restart()
     #   $? = 1  : failed
     #   $? = 2  : skipped (not restarted: not already installed)
 
-    DebugFuncEntry
+    DebugFuncEn
 
     local -r PACKAGE_NAME=${1:?no package name supplied}
     local -i result_code=0
@@ -5153,12 +5155,12 @@ QPKG.Restart()
 
     if QPKGs.IsNtInstalled.Exist "$PACKAGE_NAME"; then
         MarkQpkgAcAsSk show "$PACKAGE_NAME" "$action" "it's not installed"
-        DebugFuncExit 2; return
+        DebugFuncEx 2; return
     fi
 
     if [[ $PACKAGE_NAME = sherpa ]]; then
         MarkQpkgAcAsSk show "$PACKAGE_NAME" "$action" "it's needed here! 😉"
-        DebugFuncExit 2; return
+        DebugFuncEx 2; return
     fi
 
     local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile "$PACKAGE_NAME")
@@ -5168,7 +5170,7 @@ QPKG.Restart()
     result_code=$?
 
     if [[ $result_code -eq 0 ]]; then
-        DebugAsProc "restarting $(FormatAsPackageName "$PACKAGE_NAME")"
+        DebugAsProc "restarting $(FormatAsPackName "$PACKAGE_NAME")"
         Self.Debug.ToScreen.IsSet && debug_cmd='DEBUG_QPKG=true '
         RunAndLog "${debug_cmd}${PACKAGE_INIT_PATHFILE} $action" "$LOG_PATHFILE" log:failure-only
         result_code=$?
@@ -5176,7 +5178,7 @@ QPKG.Restart()
 
     if [[ $result_code -eq 0 ]]; then
         QPKG.StoreServiceStatus "$PACKAGE_NAME"
-        DebugAsDone "restarted $(FormatAsPackageName "$PACKAGE_NAME")"
+        DebugAsDone "restarted $(FormatAsPackName "$PACKAGE_NAME")"
         MarkQpkgAcAsOk "$PACKAGE_NAME" "$action"
     else
         DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode "$result_code")"
@@ -5185,7 +5187,7 @@ QPKG.Restart()
     fi
 
     QPKG.ClearAppCenterNotifier "$PACKAGE_NAME"
-    DebugFuncExit $result_code
+    DebugFuncEx $result_code
 
     }
 
@@ -5202,7 +5204,7 @@ QPKG.Start()
     #   $? = 1  : failed
     #   $? = 2  : skipped (not started: not installed or already started)
 
-    DebugFuncEntry
+    DebugFuncEn
 
     local -r PACKAGE_NAME=${1:?no package name supplied}
     local -i result_code=0
@@ -5213,12 +5215,12 @@ QPKG.Start()
 
     if QPKGs.IsNtInstalled.Exist "$PACKAGE_NAME"; then
         MarkQpkgAcAsSk show "$PACKAGE_NAME" "$action" "it's not installed"
-        DebugFuncExit 2; return
+        DebugFuncEx 2; return
     fi
 
     if QPKGs.IsStarted.Exist "$PACKAGE_NAME"; then
         MarkQpkgAcAsSk show "$PACKAGE_NAME" "$action" "it's already started"
-        DebugFuncExit 2; return
+        DebugFuncEx 2; return
     fi
 
     local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile "$PACKAGE_NAME")
@@ -5228,7 +5230,7 @@ QPKG.Start()
     result_code=$?
 
     if [[ $result_code -eq 0 ]]; then
-        DebugAsProc "starting $(FormatAsPackageName "$PACKAGE_NAME")"
+        DebugAsProc "starting $(FormatAsPackName "$PACKAGE_NAME")"
         Self.Debug.ToScreen.IsSet && debug_cmd='DEBUG_QPKG=true '
         RunAndLog "${debug_cmd}${PACKAGE_INIT_PATHFILE} $action" "$LOG_PATHFILE" log:failure-only
         result_code=$?
@@ -5236,7 +5238,7 @@ QPKG.Start()
 
     if [[ $result_code -eq 0 ]]; then
         QPKG.StoreServiceStatus "$PACKAGE_NAME"
-        DebugAsDone "started $(FormatAsPackageName "$PACKAGE_NAME")"
+        DebugAsDone "started $(FormatAsPackName "$PACKAGE_NAME")"
         MarkQpkgAsIsStarted "$PACKAGE_NAME"
         MarkQpkgAcAsOk "$PACKAGE_NAME" "$action"
         [[ $PACKAGE_NAME = Entware ]] && ModPathToEntware
@@ -5247,7 +5249,7 @@ QPKG.Start()
     fi
 
     QPKG.ClearAppCenterNotifier "$PACKAGE_NAME"
-    DebugFuncExit $result_code
+    DebugFuncEx $result_code
 
     }
 
@@ -5264,7 +5266,7 @@ QPKG.Stop()
     #   $? = 1  : failed
     #   $? = 2  : skipped (not stopped: not installed or already stopped)
 
-    DebugFuncEntry
+    DebugFuncEn
 
     local -r PACKAGE_NAME=${1:?no package name supplied}
     local -i result_code=0
@@ -5275,23 +5277,23 @@ QPKG.Stop()
 
     if QPKGs.IsNtInstalled.Exist "$PACKAGE_NAME"; then
         MarkQpkgAcAsSk show "$PACKAGE_NAME" "$action" "it's not installed"
-        DebugFuncExit 2; return
+        DebugFuncEx 2; return
     fi
 
     if QPKGs.IsNtStarted.Exist "$PACKAGE_NAME"; then
         MarkQpkgAcAsSk show "$PACKAGE_NAME" "$action" "it's already stopped"
-        DebugFuncExit 2; return
+        DebugFuncEx 2; return
     fi
 
     if [[ $PACKAGE_NAME = sherpa ]]; then
         MarkQpkgAcAsSk show "$PACKAGE_NAME" "$action" "it's needed here! 😉"
-        DebugFuncExit 2; return
+        DebugFuncEx 2; return
     fi
 
     local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile "$PACKAGE_NAME")
     local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$STOP_LOG_FILE
 
-    DebugAsProc "stopping $(FormatAsPackageName "$PACKAGE_NAME")"
+    DebugAsProc "stopping $(FormatAsPackName "$PACKAGE_NAME")"
     Self.Debug.ToScreen.IsSet && debug_cmd='DEBUG_QPKG=true '
     RunAndLog "${debug_cmd}${PACKAGE_INIT_PATHFILE} $action" "$LOG_PATHFILE" log:failure-only
     result_code=$?
@@ -5303,7 +5305,7 @@ QPKG.Stop()
 
     if [[ $result_code -eq 0 ]]; then
         QPKG.StoreServiceStatus "$PACKAGE_NAME"
-        DebugAsDone "stopped $(FormatAsPackageName "$PACKAGE_NAME")"
+        DebugAsDone "stopped $(FormatAsPackName "$PACKAGE_NAME")"
         MarkQpkgAsNtStarted "$PACKAGE_NAME"
         MarkQpkgAcAsOk "$PACKAGE_NAME" "$action"
     else
@@ -5313,7 +5315,7 @@ QPKG.Stop()
     fi
 
     QPKG.ClearAppCenterNotifier "$PACKAGE_NAME"
-    DebugFuncExit $result_code
+    DebugFuncEx $result_code
 
     }
 
@@ -5374,7 +5376,7 @@ QPKG.Backup()
     #   $? = 1  : failed
     #   $? = 2  : skipped (not backed-up: not already installed)
 
-    DebugFuncEntry
+    DebugFuncEn
 
     local -r PACKAGE_NAME=${1:?no package name supplied}
     local -i result_code=0
@@ -5383,25 +5385,25 @@ QPKG.Backup()
 
     if ! QPKG.IsCanBackup "$PACKAGE_NAME"; then
         MarkQpkgAcAsSk show "$PACKAGE_NAME" "$action" "it does not support backup"
-        DebugFuncExit 2; return
+        DebugFuncEx 2; return
     fi
 
     if QPKGs.IsNtInstalled.Exist "$PACKAGE_NAME"; then
         MarkQpkgAcAsSk show "$PACKAGE_NAME" "$action" "it's not installed"
-        DebugFuncExit 2; return
+        DebugFuncEx 2; return
     fi
 
     local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile "$PACKAGE_NAME")
     local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$BACKUP_LOG_FILE
 
-    DebugAsProc "backing-up $(FormatAsPackageName "$PACKAGE_NAME") configuration"
+    DebugAsProc "backing-up $(FormatAsPackName "$PACKAGE_NAME") configuration"
     Self.Debug.ToScreen.IsSet && debug_cmd='DEBUG_QPKG=true '
     RunAndLog "${debug_cmd}${PACKAGE_INIT_PATHFILE} $action" "$LOG_PATHFILE" log:failure-only
     result_code=$?
 
     if [[ $result_code -eq 0 ]]; then
         QPKG.StoreServiceStatus "$PACKAGE_NAME"
-        DebugAsDone "backed-up $(FormatAsPackageName "$PACKAGE_NAME") configuration"
+        DebugAsDone "backed-up $(FormatAsPackName "$PACKAGE_NAME") configuration"
         MarkQpkgAcAsOk "$PACKAGE_NAME" "$action"
         MarkQpkgAsIsBackedUp
     else
@@ -5410,7 +5412,7 @@ QPKG.Backup()
         result_code=1    # remap to 1
     fi
 
-    DebugFuncExit $result_code
+    DebugFuncEx $result_code
 
     }
 
@@ -5425,7 +5427,7 @@ QPKG.Restore()
     # output:
     #   $? = 0 if successful, 1 if failed
 
-    DebugFuncEntry
+    DebugFuncEn
 
     local -r PACKAGE_NAME=${1:?no package name supplied}
     local -i result_code=0
@@ -5434,32 +5436,32 @@ QPKG.Restore()
 
     if ! QPKG.IsCanBackup "$PACKAGE_NAME"; then
         MarkQpkgAcAsSk show "$PACKAGE_NAME" "$action" "it does not support backup"
-        DebugFuncExit 2; return
+        DebugFuncEx 2; return
     fi
 
     if QPKGs.IsNtInstalled.Exist "$PACKAGE_NAME"; then
         MarkQpkgAcAsSk show "$PACKAGE_NAME" "$action" "it's not installed"
-        DebugFuncExit 2; return
+        DebugFuncEx 2; return
     fi
 
     local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile "$PACKAGE_NAME")
     local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$RESTORE_LOG_FILE
 
-    DebugAsProc "restoring $(FormatAsPackageName "$PACKAGE_NAME") configuration"
+    DebugAsProc "restoring $(FormatAsPackName "$PACKAGE_NAME") configuration"
     Self.Debug.ToScreen.IsSet && debug_cmd='DEBUG_QPKG=true '
     RunAndLog "${debug_cmd}${PACKAGE_INIT_PATHFILE} $action" "$LOG_PATHFILE" log:failure-only
     result_code=$?
 
     if [[ $result_code -eq 0 ]]; then
         QPKG.StoreServiceStatus "$PACKAGE_NAME"
-        DebugAsDone "restored $(FormatAsPackageName "$PACKAGE_NAME") configuration"
+        DebugAsDone "restored $(FormatAsPackName "$PACKAGE_NAME") configuration"
         MarkQpkgAcAsOk "$PACKAGE_NAME" "$action"
     else
         DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode "$result_code")"
         MarkQpkgAcAsEr "$PACKAGE_NAME" "$action"
     fi
 
-    DebugFuncExit $result_code
+    DebugFuncEx $result_code
 
     }
 
@@ -5476,7 +5478,7 @@ QPKG.Clean()
     #   $? = 1  : failed
     #   $? = 2  : skipped (not already installed, does not support clean)
 
-    DebugFuncEntry
+    DebugFuncEn
 
     local -r PACKAGE_NAME=${1:?no package name supplied}
     local -i result_code=0
@@ -5485,25 +5487,25 @@ QPKG.Clean()
 
     if ! QPKG.IsCanRestartToUpdate "$PACKAGE_NAME"; then
         MarkQpkgAcAsSk show "$PACKAGE_NAME" "$action" "it does not support cleaning"
-        DebugFuncExit 2; return
+        DebugFuncEx 2; return
     fi
 
     if QPKGs.IsNtInstalled.Exist "$PACKAGE_NAME"; then
         MarkQpkgAcAsSk show "$PACKAGE_NAME" "$action" "it's not installed"
-        DebugFuncExit 2; return
+        DebugFuncEx 2; return
     fi
 
     local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile "$PACKAGE_NAME")
     local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$CLEAN_LOG_FILE
 
-    DebugAsProc "cleaning $(FormatAsPackageName "$PACKAGE_NAME")"
+    DebugAsProc "cleaning $(FormatAsPackName "$PACKAGE_NAME")"
     Self.Debug.ToScreen.IsSet && debug_cmd='DEBUG_QPKG=true '
     RunAndLog "${debug_cmd}${PACKAGE_INIT_PATHFILE} $action" "$LOG_PATHFILE" log:failure-only
     result_code=$?
 
     if [[ $result_code -eq 0 ]]; then
         QPKG.StoreServiceStatus "$PACKAGE_NAME"
-        DebugAsDone "cleaned $(FormatAsPackageName "$PACKAGE_NAME")"
+        DebugAsDone "cleaned $(FormatAsPackName "$PACKAGE_NAME")"
         MarkQpkgAcAsOk "$PACKAGE_NAME" "$action"
         QPKGs.IsNtCleaned.Remove "$PACKAGE_NAME"
         QPKGs.IsCleaned.Add "$PACKAGE_NAME"
@@ -5513,7 +5515,7 @@ QPKG.Clean()
         result_code=1    # remap to 1
     fi
 
-    DebugFuncExit $result_code
+    DebugFuncEx $result_code
 
     }
 
@@ -5555,27 +5557,27 @@ QPKG.StoreServiceStatus()
     local -r PACKAGE_NAME=${1:?no package name supplied}
 
     if ! local status=$(QPKG.GetServiceStatus "$PACKAGE_NAME"); then
-        DebugAsWarn "unable to get status of $(FormatAsPackageName "$PACKAGE_NAME") service. It may be a non-sherpa package, or a package earlier than 200816c that doesn't support service results."
+        DebugAsWarn "unable to get status of $(FormatAsPackName "$PACKAGE_NAME") service. It may be a non-sherpa package, or a package earlier than 200816c that doesn't support service results."
         return 1
     fi
 
     case $status in
         starting|stopping|restarting)
-            DebugInfo "$(FormatAsPackageName "$PACKAGE_NAME") service is $status"
+            DebugInfo "$(FormatAsPackName "$PACKAGE_NAME") service is $status"
             ;;
         ok)
-            DebugInfo "$(FormatAsPackageName "$PACKAGE_NAME") service action completed OK"
+            DebugInfo "$(FormatAsPackName "$PACKAGE_NAME") service action completed OK"
             ;;
         failed)
             if [[ -e /var/log/$PACKAGE_NAME.log ]]; then
-                ShowAsFail "$(FormatAsPackageName "$PACKAGE_NAME") service action failed. Check $(FormatAsFileName "/var/log/$PACKAGE_NAME.log") for more information"
+                ShowAsFail "$(FormatAsPackName "$PACKAGE_NAME") service action failed. Check $(FormatAsFileName "/var/log/$PACKAGE_NAME.log") for more information"
                 AddFileToDebug /var/log/$PACKAGE_NAME.log
             else
-                ShowAsFail "$(FormatAsPackageName "$PACKAGE_NAME") service action failed"
+                ShowAsFail "$(FormatAsPackName "$PACKAGE_NAME") service action failed"
             fi
             ;;
         *)
-            DebugAsWarn "$(FormatAsPackageName "$PACKAGE_NAME") service status is unrecognised or unsupported by this QPKG"
+            DebugAsWarn "$(FormatAsPackName "$PACKAGE_NAME") service status is unrecognised or unsupported by this QPKG"
     esac
 
     return 0
@@ -6114,7 +6116,7 @@ RunAndLog()
     #   pathfile ($2) = commandstring ($1) stdout and stderr
     #   $? = result_code of commandstring
 
-    DebugFuncEntry
+    DebugFuncEn
 
     local -r LOG_PATHFILE=$(/bin/mktemp /var/log/"${FUNCNAME[0]}"_XXXXXX)
     local -i result_code=0
@@ -6143,7 +6145,7 @@ RunAndLog()
         [[ $result_code -ne ${4:-} ]] && AddFileToDebug "$2"
     fi
 
-    DebugFuncExit $result_code
+    DebugFuncEx $result_code
 
     }
 
@@ -6193,8 +6195,10 @@ Lowercase()
 
     }
 
-FormatAsThousands()
+FormatAsThous()
     {
+
+    # format as thousands
 
     # a string-based thousands-group formatter totally unreliant on locale
     # why? because builtin 'printf' in 32b ARM QTS versions doesn't follow locale ¯\_(ツ)_/¯
@@ -6233,45 +6237,53 @@ FormatAsISOBytes()
 
     }
 
-FormatAsScriptTitle()
+FormatAsTitle()
     {
 
     ColourTextBrightWhite sherpa
 
     }
 
-FormatAsHelpAction()
+FormatAsHelpAc()
     {
+
+    # format as help action
 
     ColourTextBrightYellow '[action]'
 
     }
 
-FormatAsHelpPackages()
+FormatAsHelpPacks()
     {
+
+    # format as help packages
 
     ColourTextBrightOrange '[packages...]'
 
     }
 
-FormatAsHelpOptions()
+FormatAsHelpOpts()
     {
+
+    # format as help options
 
     ColourTextBrightRed '[options...]'
 
     }
 
-FormatAsPackageName()
+FormatAsPackName()
     {
 
-    echo "'${1:-}'"
+    # format as package name
+
+    echo "'${1:?no package name supplied}'"
 
     }
 
 FormatAsFileName()
     {
 
-    echo "(${1:-})"
+    echo "(${1:?no filename supplied})"
 
     }
 
@@ -6285,7 +6297,7 @@ FormatAsURL()
 FormatAsExitcode()
     {
 
-    echo "[${1:-}]"
+    echo "[${1:?no exitcode supplied}]"
 
     }
 
@@ -6372,135 +6384,145 @@ readonly DEBUG_LOG_DATAWIDTH=100
 readonly DEBUG_LOG_FIRST_COL_WIDTH=9
 readonly DEBUG_LOG_SECOND_COL_WIDTH=17
 
-DebugInfoMajorSeparator()
+DebugInfoMajSep()
     {
 
-    DebugInfo "$(eval printf '%0.s=' "{1..$DEBUG_LOG_DATAWIDTH}")"  # 'seq' is unavailable in QTS, so must resort to 'eval' trickery instead
+    # debug info major separator
+
+    DebugInfo "$(eval printf '%0.s=' "{1..$DEBUG_LOG_DATAWIDTH}")"  # `seq` is unavailable in QTS, so must resort to `eval` trickery instead
 
     }
 
-DebugInfoMinorSeparator()
+DebugInfoMinSep()
     {
 
-    DebugInfo "$(eval printf '%0.s-' "{1..$DEBUG_LOG_DATAWIDTH}")"  # 'seq' is unavailable in QTS, so must resort to 'eval' trickery instead
+    # debug info minor separator
+
+    DebugInfo "$(eval printf '%0.s-' "{1..$DEBUG_LOG_DATAWIDTH}")"  # `seq` is unavailable in QTS, so must resort to `eval` trickery instead
 
     }
 
-DebugExtLogMinorSeparator()
+DebugExtLogMinSep()
     {
 
-    DebugAsLog "$(eval printf '%0.s-' "{1..$DEBUG_LOG_DATAWIDTH}")" # 'seq' is unavailable in QTS, so must resort to 'eval' trickery instead
+    # debug external log minor separator
+
+    DebugAsLog "$(eval printf '%0.s-' "{1..$DEBUG_LOG_DATAWIDTH}")" # `seq` is unavailable in QTS, so must resort to `eval` trickery instead
 
     }
 
 DebugScript()
     {
 
-    DebugDetectedTabulated "$(FormatAsScript)" "${1:-}" "${2:-}"
+    DebugDetectTabld "$(FormatAsScript)" "${1:-}" "${2:-}"
 
     }
 
 DebugHardwareOK()
     {
 
-    DebugDetectedTabulated "$(FormatAsHardware)" "${1:-}" "${2:-}"
+    DebugDetectTabld "$(FormatAsHardware)" "${1:-}" "${2:-}"
 
     }
 
 DebugFirmwareOK()
     {
 
-    DebugDetectedTabulated "$(FormatAsFirmware)" "${1:-}" "${2:-}"
+    DebugDetectTabld "$(FormatAsFirmware)" "${1:-}" "${2:-}"
 
     }
 
 DebugFirmwareWarning()
     {
 
-    DebugWarningTabulated "$(FormatAsFirmware)" "${1:-}" "${2:-}"
+    DebugWarningTabld "$(FormatAsFirmware)" "${1:-}" "${2:-}"
 
     }
 
 DebugUserspaceOK()
     {
 
-    DebugDetectedTabulated "$(FormatAsUserspace)" "${1:-}" "${2:-}"
+    DebugDetectTabld "$(FormatAsUserspace)" "${1:-}" "${2:-}"
 
     }
 
 DebugUserspaceWarning()
     {
 
-    DebugWarningTabulated "$(FormatAsUserspace)" "${1:-}" "${2:-}"
+    DebugWarningTabld "$(FormatAsUserspace)" "${1:-}" "${2:-}"
 
     }
 
 DebugIPKInfo()
     {
 
-    DebugInfoTabulated IPK "${1:-}" "${2:-}"
+    DebugInfoTabld IPK "${1:-}" "${2:-}"
 
     }
 
 DebugIPKWarning()
     {
 
-    DebugWarningTabulated IPK "${1:-}" "${2:-}"
+    DebugWarningTabld IPK "${1:-}" "${2:-}"
 
     }
 
 DebugIPKError()
     {
 
-    DebugErrorTabulated IPK "${1:-}" "${2:-}"
+    DebugErrorTabld IPK "${1:-}" "${2:-}"
 
     }
 
 DebugQPKG()
     {
 
-    DebugDetectedTabulated QPKG "${1:-}" "${2:-}"
+    DebugDetectTabld QPKG "${1:-}" "${2:-}"
 
     }
 
 DebugQPKGInfo()
     {
 
-    DebugInfoTabulated QPKG "${1:-}" "${2:-}"
+    DebugInfoTabld QPKG "${1:-}" "${2:-}"
 
     }
 
 DebugQPKGWarning()
     {
 
-    DebugWarningTabulated QPKG "${1:-}" "${2:-}"
+    DebugWarningTabld QPKG "${1:-}" "${2:-}"
 
     }
 
 DebugQPKGError()
     {
 
-    DebugErrorTabulated QPKG "${1:-}" "${2:-}"
+    DebugErrorTabld QPKG "${1:-}" "${2:-}"
 
     }
 
-DebugDetectedTabulated()
+DebugDetectTabld()
     {
 
+    # debug detected tabulated
+
     if [[ -z ${3:-} ]]; then                # if $3 is nothing, then assume only 2 fields are required
-        DebugAsDetected "$(printf "%${DEBUG_LOG_FIRST_COL_WIDTH}s: %${DEBUG_LOG_SECOND_COL_WIDTH}s\n" "${1:-}" "${2:-}")"
+        DebugAsDetect "$(printf "%${DEBUG_LOG_FIRST_COL_WIDTH}s: %${DEBUG_LOG_SECOND_COL_WIDTH}s\n" "${1:-}" "${2:-}")"
     elif [[ ${3:-} = ' ' ]]; then           # if $3 is only a whitespace then print $2 with trailing colon and 'none' as third field
-        DebugAsDetected "$(printf "%${DEBUG_LOG_FIRST_COL_WIDTH}s: %${DEBUG_LOG_SECOND_COL_WIDTH}s: none\n" "${1:-}" "${2:-}")"
+        DebugAsDetect "$(printf "%${DEBUG_LOG_FIRST_COL_WIDTH}s: %${DEBUG_LOG_SECOND_COL_WIDTH}s: none\n" "${1:-}" "${2:-}")"
     elif [[ ${3: -1} = ' ' ]]; then     # if $3 has a trailing whitespace then print $3 without the trailing whitespace
-        DebugAsDetected "$(printf "%${DEBUG_LOG_FIRST_COL_WIDTH}s: %${DEBUG_LOG_SECOND_COL_WIDTH}s: %-s\n" "${1:-}" "${2:-}" "$($SED_CMD 's| *$||' <<< "${3:-}")")"
+        DebugAsDetect "$(printf "%${DEBUG_LOG_FIRST_COL_WIDTH}s: %${DEBUG_LOG_SECOND_COL_WIDTH}s: %-s\n" "${1:-}" "${2:-}" "$($SED_CMD 's| *$||' <<< "${3:-}")")"
     else
-        DebugAsDetected "$(printf "%${DEBUG_LOG_FIRST_COL_WIDTH}s: %${DEBUG_LOG_SECOND_COL_WIDTH}s: %-s\n" "${1:-}" "${2:-}" "${3:-}")"
+        DebugAsDetect "$(printf "%${DEBUG_LOG_FIRST_COL_WIDTH}s: %${DEBUG_LOG_SECOND_COL_WIDTH}s: %-s\n" "${1:-}" "${2:-}" "${3:-}")"
     fi
 
     }
 
-DebugInfoTabulated()
+DebugInfoTabld()
     {
+
+    # debug info tabulated
 
     if [[ -z ${3:-} ]]; then                # if $3 is nothing, then assume only 2 fields are required
         DebugAsInfo "$(printf "%${DEBUG_LOG_FIRST_COL_WIDTH}s: %${DEBUG_LOG_SECOND_COL_WIDTH}s\n" "${1:-}" "${2:-}")"
@@ -6514,8 +6536,10 @@ DebugInfoTabulated()
 
     }
 
-DebugWarningTabulated()
+DebugWarningTabld()
     {
+
+    # debug warning tabulated
 
     if [[ -z ${3:-} ]]; then                # if $3 is nothing, then assume only 2 fields are required
         DebugAsWarn "$(printf "%${DEBUG_LOG_FIRST_COL_WIDTH}s: %${DEBUG_LOG_SECOND_COL_WIDTH}s\n" "${1:-}" "${2:-}")"
@@ -6529,8 +6553,10 @@ DebugWarningTabulated()
 
     }
 
-DebugErrorTabulated()
+DebugErrorTabld()
     {
+
+    # debug error tabulated
 
     if [[ -z ${3:-} ]]; then                # if $3 is nothing, then assume only 2 fields are required
         DebugAsError "$(printf "%${DEBUG_LOG_FIRST_COL_WIDTH}s: %${DEBUG_LOG_SECOND_COL_WIDTH}s\n" "${1:-}" "${2:-}")"
@@ -6567,8 +6593,10 @@ DebugInfo()
 
     }
 
-DebugFuncEntry()
+DebugFuncEn()
     {
+
+    # debug function entry
 
     local var_name=${FUNCNAME[1]}_STARTSECONDS
     local var_safe_name=${var_name//[.-]/_}
@@ -6578,8 +6606,10 @@ DebugFuncEntry()
 
     }
 
-DebugFuncExit()
+DebugFuncEx()
     {
+
+    # debug function exit
 
     local var_name=${FUNCNAME[1]}_STARTSECONDS
     local var_safe_name=${var_name//[.-]/_}
@@ -6587,7 +6617,7 @@ DebugFuncExit()
     local elapsed_time=''
 
     if [[ $diff_milliseconds -lt 30000 ]]; then
-        elapsed_time="$(FormatAsThousands "$diff_milliseconds")ms"
+        elapsed_time="$(FormatAsThous "$diff_milliseconds")ms"
     else
         elapsed_time=$(FormatSecsToHoursMinutesSecs "$((diff_milliseconds/1000))")
     fi
@@ -6601,6 +6631,8 @@ DebugFuncExit()
 DebugAsProc()
     {
 
+    # debug as processing
+
     DebugThis "(--) ${1:-} ..."
 
     }
@@ -6612,7 +6644,7 @@ DebugAsDone()
 
     }
 
-DebugAsDetected()
+DebugAsDetect()
     {
 
     DebugThis "(**) ${1:-}"
@@ -6671,7 +6703,7 @@ AddFileToDebug()
     local screen_debug=false
 
     DebugAsLog 'adding external log to main log ...'
-    DebugExtLogMinorSeparator
+    DebugExtLogMinSep
 
     if Self.Debug.ToScreen.IsSet; then      # prevent external log contents appearing onscreen again - its already been seen "live"
         screen_debug=true
@@ -6685,7 +6717,7 @@ AddFileToDebug()
     done < "${1:?no filename supplied}"
 
     [[ $screen_debug = true ]] && Self.Debug.ToScreen.Set
-    DebugExtLogMinorSeparator
+    DebugExtLogMinSep
 
     }
 
@@ -6976,7 +7008,7 @@ WriteToLog()
     #   $2 = message
 
     [[ $(type -t Self.Debug.ToFile.Init) = function ]] && Self.Debug.ToFile.IsNt && return
-    [[ -n ${SESSION_ACTIVE_PATHFILE:-} ]] && printf "%-4s: %s\n" "$(StripANSI "${1:-}")" "$(StripANSI "${2:-}")" >> "$SESSION_ACTIVE_PATHFILE"
+    [[ -n ${SESS_ACTIVE_PATHFILE:-} ]] && printf "%-4s: %s\n" "$(StripANSI "${1:-}")" "$(StripANSI "${2:-}")" >> "$SESS_ACTIVE_PATHFILE"
 
     }
 
@@ -7147,7 +7179,7 @@ Objects.Load()
 
     # ensure `objects` in the local work path is up-to-date, then source it
 
-    DebugFuncEntry
+    DebugFuncEn
 
     if [[ ! -e $PWD/dont.refresh.objects ]]; then
         if [[ ! -e $OBJECTS_PATHFILE ]] || ! IsThisFileRecent "$OBJECTS_PATHFILE"; then
@@ -7160,7 +7192,7 @@ Objects.Load()
 
     if [[ ! -e $OBJECTS_PATHFILE ]]; then
         ShowAsAbort 'objects missing'
-        DebugFuncExit 1; exit
+        DebugFuncEx 1; exit
     fi
 
     ShowAsProc 'loading objects' >&2
@@ -7168,7 +7200,7 @@ Objects.Load()
 
     readonly OBJECTS_VER
 
-    DebugFuncExit
+    DebugFuncEx
 
     }
 
@@ -7178,7 +7210,7 @@ Packages.Load()
     # ensure `packages` in the local work path is up-to-date, then source it
 
     QPKGs.Loaded.IsSet && return
-    DebugFuncEntry
+    DebugFuncEn
 
     if [[ ! -e $PWD/dont.refresh.packages ]]; then
         if [[ ! -e $PACKAGES_PATHFILE ]] || ! IsThisFileRecent "$PACKAGES_PATHFILE" 60; then
@@ -7191,7 +7223,7 @@ Packages.Load()
 
     if [[ ! -e $PACKAGES_PATHFILE ]]; then
         ShowAsAbort 'package list missing'
-        DebugFuncExit 1; exit
+        DebugFuncEx 1; exit
     fi
 
     ShowAsProc 'loading package list' >&2
@@ -7225,7 +7257,7 @@ Packages.Load()
     DebugScript version "packages: ${PACKAGES_VER:-unknown}"
     QPKGs.ScAll.Add "${QPKG_NAME[*]}"
     QPKGs.StandaloneDependent.Build
-    DebugFuncExit
+    DebugFuncEx
 
     }
 

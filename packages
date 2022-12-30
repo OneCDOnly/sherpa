@@ -11,7 +11,7 @@ MIN_PERL_VER=5281               # keep this up-to-date with Entware Perl version
 # supported package details - parallel arrays
 QPKG_NAME=()                    # internal QPKG name
 QPKG_ARCH=()                    # QPKG supports this architecture. Use 'all' if every arch is supported
-QPKG_MIN_RAM_KB=()              # QPKG requires at-least this much RAM installed in kB. Use 'none' if there is no minimum
+QPKG_MIN_RAM_KB=()              # QPKG requires at-least this much RAM installed in kiB. Use 'none' if there is no minimum
 QPKG_VERSION=()                 # QPKG version
 QPKG_URL=()                     # remote QPKG URL
 QPKG_MD5=()                     # remote QPKG MD5
@@ -135,7 +135,7 @@ QPKG_MIN_RAM_KB+=(none)
 QPKG_VERSION+=(1.03a)
 QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/$PROJECT_BRANCH/QPKGs/${QPKG_NAME[${#QPKG_NAME[@]}-1]}/${QPKG_NAME[${#QPKG_NAME[@]}-1]}_${QPKG_VERSION[${#QPKG_VERSION[@]}-1]}_std.qpkg)
 QPKG_MD5+=(deb88a170716d39309d124ad77875b4d)
-QPKG_DESC+=("provides the 'opkg' command: the OpenWRT package manager")
+QPKG_DESC+=("provides 'opkg': the OpenWRT package manager")
 QPKG_ABBRVS+=('ew ent opkg entware')
 QPKG_CONFLICTS_WITH+=('Optware Optware-NG')
 QPKG_DEPENDS_ON+=('')
