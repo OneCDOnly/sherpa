@@ -3505,6 +3505,33 @@ QPKGs.Actions.List()
 
     }
 
+QPKGs.Actions.ListAll()
+    {
+
+    # only used when debugging
+
+    QPKGs.SkProc.IsSet && return
+    DebugFuncEntry
+
+    local action=''
+    local prefix=''
+    DebugInfoMinorSeparator
+
+    for action in "${PACKAGE_ACTIONS[@]}"; do
+        [[ $action = Enable || $action = Disable ]] && continue     # no objects for these as `start` and `stop` do the same jobs
+
+        for prefix in To Ok Er Sk; do
+            if QPKGs.Ac${prefix}${action}.IsAny; then
+                DebugQPKGInfo "Ac${prefix}${action}" "($(QPKGs.Ac${prefix}${action}.Count)) $(QPKGs.Ac${prefix}${action}.ListCSV) "
+            fi
+        done
+    done
+
+    DebugInfoMinorSeparator
+    DebugFuncExit
+
+    }
+
 QPKGs.States.List()
     {
 
