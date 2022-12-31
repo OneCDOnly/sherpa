@@ -20,7 +20,7 @@ Init()
 
     # service-script environment
     readonly QPKG_NAME=NZBGet
-    readonly SCRIPT_VERSION=230101
+    readonly SCRIPT_VERSION=230101a
 
     # general environment
     readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -1048,7 +1048,7 @@ IsPortAvailable()
     # $? = 0 if available
     # $? = 1 if already used
 
-    [[ -n ${1:-} && ${1:-0} -gt 0 ]] || return
+    [[ -n ${1:-} && ${1:-0} -gt 0 ]] || return 0     # don't indicate this port is used
 
     if (/usr/sbin/lsof -i :"$1" -sTCP:LISTEN >/dev/null 2>&1); then
         return 1
