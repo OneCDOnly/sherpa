@@ -1,4 +1,4 @@
-PACKAGES_VER=221231
+PACKAGES_VER=230101
 BASE_QPKG_CONFLICTS_WITH='TarMT'
 BASE_QPKG_WARNINGS='Qboost'
 ESSENTIAL_IPKS='ca-certificates coreutils-stty findutils gcc git git-http grep less nano sed'
@@ -387,9 +387,9 @@ QPKG_CAN_RESTART_TO_UPDATE+=(false)
 QPKG_NAME+=(SABnzbd)
 QPKG_ARCH+=(all)
 QPKG_MIN_RAM_KB+=(none)
-QPKG_VERSION+=(221231)
+QPKG_VERSION+=(230101)
 QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/$PROJECT_BRANCH/QPKGs/${QPKG_NAME[${#QPKG_NAME[@]}-1]}/build/${QPKG_NAME[${#QPKG_NAME[@]}-1]}_${QPKG_VERSION[${#QPKG_VERSION[@]}-1]}.qpkg)
-QPKG_MD5+=(b473859716e640e56050bd32ed647658)
+QPKG_MD5+=(740c7143039ec9181b3e77e937b88f94)
 QPKG_DESC+=('full-featured NZB download manager with a nice web UI')
 QPKG_ABBRVS+=('sb sb3 sab sab3 sabnzbd3 sabnzbd')
 QPKG_CONFLICTS_WITH+=('Python3 QPython3 QPython39 QPython310')
