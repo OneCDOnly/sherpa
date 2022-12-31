@@ -20,7 +20,7 @@ Init()
 
     # service-script environment
     readonly QPKG_NAME=NZBGet
-    readonly SCRIPT_VERSION=221231
+    readonly SCRIPT_VERSION=221231a
 
     # general environment
     readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -157,7 +157,7 @@ StartQPKG()
     DisplayRunAndLog 'start daemon' "$LAUNCHER" || { SetError; return 1 ;}
     WaitForPID || { SetError; return 1 ;}
     IsDaemonActive || { SetError; return 1 ;}
-    CheckPorts || SetError
+    CheckPorts || { SetError; return 1 ;}
 
     return 0
 

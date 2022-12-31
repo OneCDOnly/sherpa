@@ -20,7 +20,7 @@ Init()
 
     # service-script environment
     readonly QPKG_NAME=Deluge-web
-    readonly SCRIPT_VERSION=221225
+    readonly SCRIPT_VERSION=221231
 
     # general environment
     readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -129,9 +129,9 @@ StartQPKG()
     fi
 
     IsNotDaemon && return
-    WaitForLaunchTarget || return
+    WaitForLaunchTarget || { SetError; return 1 ;}
     EnsureConfigFileExists
-    LoadPorts app || return
+    LoadPorts app || { SetError; return 1 ;}
 
     if [[ $daemon_port -le 0 && $ui_port -le 0 && $ui_port_secure -le 0 ]]; then
         DisplayErrCommitAllLogs 'unable to start daemon: no port specified!'
@@ -150,10 +150,10 @@ StartQPKG()
         return 1
     fi
 
-    DisplayRunAndLog 'start daemon' "$LAUNCHER" || return
-    WaitForPID || return
-    IsDaemonActive || return
-    CheckPorts || return
+    DisplayRunAndLog 'start daemon' "$LAUNCHER" || { SetError; return 1 ;}
+    WaitForPID || { SetError; return 1 ;}
+    IsDaemonActive || { SetError; return 1 ;}
+    CheckPorts || { SetError; return 1 ;}
 
     return 0
 
@@ -206,7 +206,7 @@ StopQPKG()
             break
         done
 
-        IsNotDaemonActive || return
+        IsNotDaemonActive || { SetError; return 1 ;}
     fi
 
     return 0
@@ -218,6 +218,8 @@ BackupConfig()
 
     CommitOperationToLog
     DisplayRunAndLog 'update configuration backup' "/bin/tar --create --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config ." || SetError
+
+    return 0
 
     }
 
@@ -232,9 +234,11 @@ RestoreConfig()
         return 1
     fi
 
-    StopQPKG
+    StopQPKG || return 1
     DisplayRunAndLog 'restore configuration backup' "/bin/tar --extract --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config" || SetError
-    StartQPKG
+    StartQPKG || return 1
+
+    return 0
 
     }
 
@@ -242,9 +246,11 @@ ResetConfig()
     {
 
     CommitOperationToLog
-    StopQPKG
+    StopQPKG || return 1
     DisplayRunAndLog 'reset configuration' "mv $QPKG_INI_DEFAULT_PATHFILE $QPKG_PATH; rm -rf $QPKG_PATH/config/*; mv $QPKG_PATH/$(/usr/bin/basename "$QPKG_INI_DEFAULT_PATHFILE") $QPKG_INI_DEFAULT_PATHFILE" || SetError
-    StartQPKG
+    StartQPKG || return 1
+
+    return 0
 
     }
 
@@ -532,7 +538,7 @@ EnsureConfigFileExists()
         DisplayCommitToLog 'no configuration file found: using default'
         cp "$QPKG_INI_DEFAULT_PATHFILE" "$QPKG_INI_PATHFILE"
 
-        # update plugins path to match local environment
+        # update to match installed environment
         local buff=$(/opt/bin/jq ".plugins_location |= \"$QPKG_PATH/config/plugins\"" "$QPKG_INI_PATHFILE") && echo "$buff" > "$QPKG_INI_PATHFILE"
     fi
 
@@ -1682,8 +1688,7 @@ if IsNotError; then
             fi
 
             SetServiceOperation restarting
-            StopQPKG
-            StartQPKG
+            StopQPKG && StartQPKG
             ;;
         s|-s|status|--status)
             SetServiceOperation status

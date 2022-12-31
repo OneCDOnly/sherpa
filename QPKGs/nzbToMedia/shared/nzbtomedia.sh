@@ -20,7 +20,7 @@ Init()
 
     # service-script environment
     readonly QPKG_NAME=nzbToMedia
-    readonly SCRIPT_VERSION=221225
+    readonly SCRIPT_VERSION=221231
 
     # general environment
     readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -156,15 +156,18 @@ StartQPKG()
         DisplayCommitToLog false
     fi
 
-    PullGitRepo "$QPKG_NAME" "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_REPO_PATH" || return
-    WaitForLaunchTarget || return
+    PullGitRepo "$QPKG_NAME" "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_REPO_PATH" || { SetError; return 1 ;}
+
+    WaitForLaunchTarget || { SetError; return 1 ;}
+
 
     [[ -d $link_path ]] && DisplayRunAndLog 'a local path is in the way of the target, moving it aside' "mv $link_path $link_path.prev"
     ln -s "$QPKG_REPO_PATH" "$link_path"
 
     DisplayCommitToLog 'start package: OK'
     EnsureConfigFileExists
-    IsPackageActive || return
+    IsPackageActive || { SetError; return 1 ;}
+
 
     return 0
 
@@ -189,7 +192,8 @@ StopQPKG()
         [[ -L $link_path ]] && rm "$link_path"
         DisplayCommitToLog 'stop package: OK'
 
-        IsNotPackageActive || return
+        IsNotPackageActive || { SetError; return 1 ;}
+
     fi
 
     return 0
@@ -269,9 +273,11 @@ RestoreConfig()
         return 1
     fi
 
-    StopQPKG
+    StopQPKG || return 1
     DisplayRunAndLog 'restore configuration backup' "/bin/tar --extract --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_REPO_PATH" || SetError
-    StartQPKG
+    StartQPKG || return 1
+
+    return 0
 
     }
 
@@ -279,9 +285,11 @@ ResetConfig()
     {
 
     CommitOperationToLog
-    StopQPKG
+    StopQPKG || return 1
     DisplayRunAndLog 'reset configuration' "rm $QPKG_INI_PATHFILE" || SetError
-    StartQPKG
+    StartQPKG || return 1
+
+    return 0
 
     }
 
@@ -1590,8 +1598,7 @@ if IsNotError; then
             fi
 
             SetServiceOperation restarting
-            StopQPKG
-            StartQPKG
+            StopQPKG && StartQPKG
             ;;
         s|-s|status|--status)
             SetServiceOperation status

@@ -20,7 +20,7 @@ Init()
 
     # service-script environment
     readonly QPKG_NAME=ClamAV
-    readonly SCRIPT_VERSION=221225
+    readonly SCRIPT_VERSION=221231
 
     # general environment
     readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -96,7 +96,7 @@ StartQPKG()
     # this function is customised depending on the requirements of the packaged application
 
     IsError && return
-    WaitForGit || return
+    WaitForGit || { SetError; return 1 ;}
 
     if [[ ! -e $BACKUP_SERVICE_PATHFILE ]]; then
         cp "$TARGET_SERVICE_PATHFILE" "$BACKUP_SERVICE_PATHFILE"
@@ -165,9 +165,11 @@ RestoreConfig()
         return 1
     fi
 
-    StopQPKG
+    StopQPKG || return 1
     DisplayRunAndLog 'restore configuration backup' "/bin/tar --extract --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config" || SetError
-    StartQPKG
+    StartQPKG || return 1
+
+    return 0
 
     }
 
@@ -175,9 +177,11 @@ ResetConfig()
     {
 
     CommitOperationToLog
-    StopQPKG
+    StopQPKG || return 1
     DisplayRunAndLog 'reset configuration' "mv $QPKG_INI_DEFAULT_PATHFILE $QPKG_PATH; rm -rf $QPKG_PATH/config/*; mv $QPKG_PATH/$(/usr/bin/basename "$QPKG_INI_DEFAULT_PATHFILE") $QPKG_INI_DEFAULT_PATHFILE" || SetError
-    StartQPKG
+    StartQPKG || return 1
+
+    return 0
 
     }
 
@@ -1591,8 +1595,7 @@ if IsNotError; then
             fi
 
             SetServiceOperation restarting
-            StopQPKG
-            StartQPKG
+            StopQPKG && StartQPKG
             ;;
         s|-s|status|--status)
             SetServiceOperation status
