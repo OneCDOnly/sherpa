@@ -2,11 +2,11 @@
 ####################################################################################
 # omedusa.sh
 #
-# Copyright (C) 2018-2022 OneCD [one.cd.only@gmail.com]
+# Copyright (C) 2018-2023 OneCD [one.cd.only@gmail.com]
 #
 # so, blame OneCD if it all goes horribly wrong. ;)
 #
-# This is a type 1 service-script: https://github.com/OneCDOnly/sherpa/blob/main/QPKG-service-script-types.txt
+# This is a type 1 service-script: https://github.com/OneCDOnly/sherpa/wiki/Service-Script-Types
 #
 # For more info: https://forum.qnap.com/viewtopic.php?f=320&t=132373
 ####################################################################################
@@ -20,7 +20,7 @@ Init()
 
     # service-script environment
     readonly QPKG_NAME=OMedusa
-    readonly SCRIPT_VERSION=221231
+    readonly SCRIPT_VERSION=230101
 
     # general environment
     readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -154,7 +154,6 @@ StartQPKG()
 
     PullGitRepo "$QPKG_NAME" "$SOURCE_GIT_URL" "$SOURCE_GIT_BRANCH" "$SOURCE_GIT_DEPTH" "$QPKG_REPO_PATH" || { SetError; return 1 ;}
     InstallAddons || { SetError; return 1 ;}
-
     IsNotDaemon && return
     WaitForLaunchTarget || { SetError; return 1 ;}
     EnsureConfigFileExists
@@ -168,10 +167,10 @@ StartQPKG()
         DisplayErrCommitAllLogs "unable to start daemon: ports $ui_port or $ui_port_secure are already in use!"
 
         portpid=$(/usr/sbin/lsof -i :$ui_port -Fp)
-        DisplayErrCommitAllLogs "process details for port $ui_port: \"$([[ -n ${portpid:-} ]] && /bin/tr '\000' ' ' </proc/${portpid/p/}/cmdline)\""
+        DisplayErrCommitAllLogs "process details for port $ui_port: \"$([[ -n ${portpid:-} ]] && /bin/tr '\000' ' ' </proc/"${portpid/p/}"/cmdline)\""
 
         portpid=$(/usr/sbin/lsof -i :$ui_port_secure -Fp)
-        DisplayErrCommitAllLogs "process details for secure port $ui_port_secure: \"$([[ -n ${portpid:-} ]] && /bin/tr '\000' ' ' </proc/${portpid/p/}/cmdline)\""
+        DisplayErrCommitAllLogs "process details for secure port $ui_port_secure: \"$([[ -n ${portpid:-} ]] && /bin/tr '\000' ' ' </proc/"${portpid/p/}"/cmdline)\""
 
         SetError
         return 1
@@ -306,6 +305,8 @@ BackupConfig()
 
     CommitOperationToLog
     DisplayRunAndLog 'update configuration backup' "/bin/tar --create --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config ." || SetError
+
+    return 0
 
     }
 
@@ -448,7 +449,7 @@ PullGitRepo()
     [[ $4 = shallow ]] && local -r DEPTH='--depth 1'
     [[ $4 = single-branch ]] && local -r DEPTH='--single-branch'
 
-    WaitForGit || return 1
+    WaitForGit || return
 
     if [[ -d $QPKG_GIT_PATH/.git ]]; then
         installed_branch=$(/opt/bin/git -C "$QPKG_GIT_PATH" branch | /bin/grep '^\*' | /bin/sed 's|^\* ||')
@@ -495,7 +496,7 @@ CleanLocalClone()
 
     StopQPKG
     DisplayRunAndLog 'clean local repository' "rm -rf $QPKG_REPO_PATH" log:failure-only
-    [[ -d $(/usr/bin/dirname $QPKG_REPO_PATH)/$QPKG_NAME ]] && DisplayRunAndLog 'KLUDGE: remove previous local repository' "rm -r $(/usr/bin/dirname $QPKG_REPO_PATH)/$QPKG_NAME" log:failure-only
+    [[ -d $(/usr/bin/dirname "$QPKG_REPO_PATH")/$QPKG_NAME ]] && DisplayRunAndLog 'KLUDGE: remove previous local repository' "rm -r $(/usr/bin/dirname "$QPKG_REPO_PATH")/$QPKG_NAME" log:failure-only
     DisplayRunAndLog 'clean virtual environment' "rm -rf $VENV_PATH" log:failure-only
     DisplayRunAndLog 'clean PyPI cache' "rm -rf $PIP_CACHE_PATH" log:failure-only
     StartQPKG
@@ -527,11 +528,7 @@ WaitForLaunchTarget()
         return 0
     fi
 
-    if WaitForFileToAppear "$launch_target" 30; then
-        return 0
-    else
-        return 1
-    fi
+    WaitForFileToAppear "$launch_target" 30 || return
 
     }
 
@@ -962,7 +959,7 @@ IsQPKGEnabled()
         local name=$1
     fi
 
-    [[ $(Lowercase $(/sbin/getcfg "$name" Enable -d false -f /etc/config/qpkg.conf)) = true ]]
+    [[ $(Lowercase "$(/sbin/getcfg "$name" Enable -d false -f /etc/config/qpkg.conf)") = true ]]
 
     }
 
@@ -1103,7 +1100,7 @@ IsSysFilePresent()
 
     # $1 = pathfile to check
 
-    if [[ -z $1 ]]; then
+    if [[ -z ${1:?pathfilename null} ]]; then
         SetError
         return 1
     fi
@@ -1123,7 +1120,7 @@ IsNotSysFilePresent()
 
     # $1 = pathfile to check
 
-    ! IsSysFilePresent "$1"
+    ! IsSysFilePresent "${1:?pathfilename null}"
 
     }
 
@@ -1134,7 +1131,7 @@ IsPortAvailable()
     # $? = 0 if available
     # $? = 1 if already used
 
-    [[ -z $1 || $1 -eq 0 ]] && return
+    [[ -n ${1:-} && ${1:-0} -gt 0 ]] || return
 
     if (/usr/sbin/lsof -i :"$1" -sTCP:LISTEN >/dev/null 2>&1); then
         return 1
@@ -1151,7 +1148,7 @@ IsNotPortAvailable()
     # $? = 1 if available
     # $? = 0 if already used
 
-    ! IsPortAvailable "$1"
+    ! IsPortAvailable "${1:-0}"
 
     }
 
@@ -1162,7 +1159,7 @@ IsPortResponds()
     # $? = 0 if response received
     # $? = 1 if not OK
 
-    if [[ -z $1 || $1 -eq 0 ]]; then
+    if [[ -z ${1:-} || ${1:-0} -eq 0 ]]; then
         Display 'test for port 0 response: ignored'
         return 1
     fi
@@ -1204,14 +1201,14 @@ IsPortSecureResponds()
     # $? = 0 if response received
     # $? = 1 if not OK or secure port unspecified
 
-    if [[ -z $1 || $1 -eq 0 ]]; then
-        Display 'check for port 0 response: ignored'
+    if [[ -z ${1:-} || ${1:-0} -eq 0 ]]; then
+        Display 'test for port 0 response: ignored'
         return 1
     fi
 
     local acc=0
 
-    DisplayWaitCommitToLog "check for secure port $1 response:"
+    DisplayWaitCommitToLog "test for secure port $1 response:"
     DisplayWait "(no-more than $PORT_CHECK_TIMEOUT seconds):"
 
     while true; do
@@ -1290,8 +1287,8 @@ IsNotVirtualEnvironmentExist()
 SetServiceOperation()
     {
 
-    service_operation="$1"
-    SetServiceOperationResult "$1"
+    service_operation="${1:-}"
+    SetServiceOperationResult "${1:-}"
 
     }
 
@@ -1314,7 +1311,7 @@ SetServiceOperationResult()
 
     # $1 = result of operation to recorded
 
-    [[ -n $1 && -n ${SERVICE_STATUS_PATHFILE:-} ]] && echo "$1" > "$SERVICE_STATUS_PATHFILE"
+    [[ -n ${1:-} && -n ${SERVICE_STATUS_PATHFILE:-} ]] && echo "${1:-}" > "$SERVICE_STATUS_PATHFILE"
 
     }
 
@@ -1486,52 +1483,52 @@ IsNotStatus()
 DisplayErrCommitAllLogs()
     {
 
-    DisplayCommitToLog "$1"
-    CommitErrToSysLog "$1"
+    DisplayCommitToLog "${1:-}"
+    CommitErrToSysLog "${1:-}"
 
     }
 
 DisplayCommitToLog()
     {
 
-    Display "$1"
-    CommitLog "$1"
+    Display "${1:-}"
+    CommitLog "${1:-}"
 
     }
 
 DisplayWaitCommitToLog()
     {
 
-    DisplayWait "$1"
-    CommitLogWait "$1"
+    DisplayWait "${1:-}"
+    CommitLogWait "${1:-}"
 
     }
 
 FormatAsLogFilename()
     {
 
-    echo "= log file: '$1'"
+    echo "= log file: '${1:-}'"
 
     }
 
 FormatAsCommand()
     {
 
-    Display "command: '$1'"
+    Display "command: '${1:-}'"
 
     }
 
 FormatAsStdout()
     {
 
-    Display "output: \"$1\""
+    Display "output: \"${1:-}\""
 
     }
 
 FormatAsResult()
     {
 
-    Display "result: $(FormatAsExitcode "$1")"
+    Display "result: $(FormatAsExitcode "${1:-}")"
 
     }
 
@@ -1544,7 +1541,7 @@ FormatAsResultAndStdout()
         echo "! result_code: $(FormatAsExitcode "$1") ***** stdout/stderr begins below *****"
     fi
 
-    echo "${2:-null}"
+    echo "${2:-}"
     echo '= ***** stdout/stderr is complete *****'
 
     }
@@ -1553,43 +1550,43 @@ FormatAsFuncMessages()
     {
 
     echo "= ${FUNCNAME[1]}()"
-    FormatAsCommand "$1"
-    FormatAsStdout "$2"
+    FormatAsCommand "${1:?command null}"
+    FormatAsStdout "${2:-}"
 
     }
 
 FormatAsExitcode()
     {
 
-    echo "[$1]"
+    echo "[${1:-}]"
 
     }
 
 FormatAsPackageName()
     {
 
-    echo "'$1'"
+    echo "'${1:-}'"
 
     }
 
 DisplayAsHelp()
     {
 
-    printf "  --%-19s  %s\n" "$1" "$2"
+    printf "  --%-19s  %s\n" "${1:-}" "${2:-}"
 
     }
 
 Display()
     {
 
-    echo "$1"
+    echo "${1:-}"
 
     }
 
 DisplayWait()
     {
 
-    echo -n "$1 "
+    echo -n "${1:-} "
 
     }
 
@@ -1603,21 +1600,21 @@ CommitOperationToLog()
 CommitInfoToSysLog()
     {
 
-    CommitSysLog "$1" 4
+    CommitSysLog "${1:-}" 4
 
     }
 
 CommitWarnToSysLog()
     {
 
-    CommitSysLog "$1" 2
+    CommitSysLog "${1:-}" 2
 
     }
 
 CommitErrToSysLog()
     {
 
-    CommitSysLog "$1" 1
+    CommitSysLog "${1:-}" 1
 
     }
 
@@ -1625,7 +1622,7 @@ CommitLog()
     {
 
     if IsNotStatus && IsNotLog; then
-        echo "$1" >> "$SERVICE_LOG_PATHFILE"
+        echo "${1:-}" >> "$SERVICE_LOG_PATHFILE"
     fi
 
     }
@@ -1634,7 +1631,7 @@ CommitLogWait()
     {
 
     if IsNotStatus && IsNotLog; then
-        echo -n "$1 " >> "$SERVICE_LOG_PATHFILE"
+        echo -n "${1:-} " >> "$SERVICE_LOG_PATHFILE"
     fi
 
     }
@@ -1648,7 +1645,7 @@ CommitSysLog()
     #    2 : Warning
     #    4 : Information
 
-    if [[ -z $1 || -z $2 ]]; then
+    if [[ -z ${1:-} || -z ${2:-} ]]; then
         SetError
         return 1
     fi
@@ -1697,7 +1694,7 @@ IsAutoUpdateMissing()
 IsAutoUpdate()
     {
 
-    [[ $(Lowercase $(/sbin/getcfg $QPKG_NAME Auto_Update -f /etc/config/qpkg.conf)) = true ]]
+    [[ $(Lowercase "$(/sbin/getcfg $QPKG_NAME Auto_Update -f /etc/config/qpkg.conf)") = true ]]
 
     }
 
@@ -1725,7 +1722,7 @@ DisableAutoUpdate()
 StoreAutoUpdateSelection()
     {
 
-    /sbin/setcfg "$QPKG_NAME" Auto_Update "$(Uppercase $1)" -f /etc/config/qpkg.conf
+    /sbin/setcfg "$QPKG_NAME" Auto_Update "$(Uppercase "$1")" -f /etc/config/qpkg.conf
     DisplayCommitToLog "auto-update: $1"
 
     }

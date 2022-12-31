@@ -20,7 +20,7 @@ Init()
 
     # service-script environment
     readonly QPKG_NAME=SABnzbd
-    readonly SCRIPT_VERSION=230101
+    readonly SCRIPT_VERSION=230101a
 
     # general environment
     readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -329,6 +329,8 @@ BackupConfig()
 
     CommitOperationToLog
     DisplayRunAndLog 'update configuration backup' "/bin/tar --create --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config ." || SetError
+
+    return 0
 
     }
 
