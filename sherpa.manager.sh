@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEn
 
     readonly MANAGER_FILE=sherpa.manager.sh
-    local -r SCRIPT_VER=230101b
+    local -r SCRIPT_VER=230101c
 
     IsQNAP || return
     IsSU || return
@@ -935,7 +935,6 @@ ParseArgs()
     local scope=''
     local scope_identified=false
     local package=''
-    local prospect=''
 
     for arg in "${user_args[@]}"; do
         arg_identified=false
@@ -3644,6 +3643,8 @@ QPKGs.States.List()
                 QPKGs.${prefix}${state}.IsAny && DebugQPKGError "${prefix}${state}" "($(QPKGs.${prefix}${state}.Count)) $(QPKGs.${prefix}${state}.ListCSV) "
             elif [[ $prefix = IsNt && $state = BackedUp ]]; then
                 QPKGs.${prefix}${state}.IsAny && DebugQPKGWarning "${prefix}${state}" "($(QPKGs.${prefix}${state}.Count)) $(QPKGs.${prefix}${state}.ListCSV) "
+            elif [[ $prefix = Is && $state = Unknown ]]; then
+                QPKGs.${prefix}${state}.IsAny && DebugQPKGWarning "${prefix}${state}" "($(QPKGs.${prefix}${state}.Count)) $(QPKGs.${prefix}${state}.ListCSV) "
             else
                 QPKGs.${prefix}${state}.IsAny && DebugQPKGInfo "${prefix}${state}" "($(QPKGs.${prefix}${state}.Count)) $(QPKGs.${prefix}${state}.ListCSV) "
             fi
@@ -3707,6 +3708,7 @@ QPKGs.States.Build()
             QPKGs.Is${state}.Init
         done
 
+        DebugAsDone 'cleared existing state lists'
         QPKGs.States.Built.UnSet
     fi
 
@@ -6228,8 +6230,10 @@ RunAndLog()
 
     if [[ $result_code -eq 0 ]]; then
         [[ ${3:-} != log:failure-only ]] && AddFileToDebug "$2"
+        DebugAsDone 'exec complete'
     else
         [[ $result_code -ne ${4:-} ]] && AddFileToDebug "$2"
+        DebugAsWarn 'exec complete'
     fi
 
     DebugFuncEx $result_code
