@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEn
 
     readonly MANAGER_FILE=sherpa.manager.sh
-    local -r SCRIPT_VER=230101
+    local -r SCRIPT_VER=230101a
 
     IsQNAP || return
     IsSU || return
@@ -1105,33 +1105,32 @@ ParseArgs()
         fi
 
         [[ $arg_identified = false ]] && Args.Unknown.Add "$arg"
-
         case $action in
             backup_)
                 case $scope in
                     all_)
                         QPKGs.AcBackup.ScAll.Set
-                        action=''
+                        scope=''
                         ;;
                     dependent_)
                         QPKGs.AcBackup.ScDependent.Set
-                        action=''
+                        scope=''
                         ;;
                     installed_)
                         QPKGs.AcBackup.IsInstalled.Set
-                        action=''
+                        scope=''
                         ;;
                     standalone_)
                         QPKGs.AcBackup.ScStandalone.Set
-                        action=''
+                        scope=''
                         ;;
                     started_)
                         QPKGs.AcBackup.IsStarted.Set
-                        action=''
+                        scope=''
                         ;;
                     stopped_)
                         QPKGs.AcBackup.IsNtStarted.Set
-                        action=''
+                        scope=''
                         ;;
                     *)
                         QPKGs.AcToBackup.Add "$package"
@@ -1144,27 +1143,27 @@ ParseArgs()
                 case $scope in
                     all_)
                         QPKGs.AcClean.ScAll.Set
-                        action=''
+                        scope=''
                         ;;
                     dependent_)
                         QPKGs.AcClean.ScDependent.Set
-                        action=''
+                        scope=''
                         ;;
                     installed_)
                         QPKGs.AcClean.IsInstalled.Set
-                        action=''
+                        scope=''
                         ;;
                     standalone_)
                         QPKGs.AcClean.ScStandalone.Set
-                        action=''
+                        scope=''
                         ;;
                     started_)
                         QPKGs.AcClean.IsStarted.Set
-                        action=''
+                        scope=''
                         ;;
                     stopped_)
                         QPKGs.AcClean.IsNtStarted.Set
-                        action=''
+                        scope=''
                         ;;
                     *)
                         QPKGs.AcToClean.Add "$package"
@@ -1253,27 +1252,27 @@ ParseArgs()
                 case $scope in
                     all_)
                         QPKGs.AcInstall.ScAll.Set
-                        action=''
+                        scope=''
                         ;;
                     dependent_)
                         QPKGs.AcInstall.ScDependent.Set
-                        action=''
+                        scope=''
                         ;;
                     installable_)
                         QPKGs.AcInstall.ScInstallable.Set
-                        action=''
+                        scope=''
                         ;;
                     not-installed_)
                         QPKGs.AcInstall.IsNtInstalled.Set
-                        action=''
+                        scope=''
                         ;;
                     standalone_)
                         QPKGs.AcInstall.ScStandalone.Set
-                        action=''
+                        scope=''
                         ;;
                     started_)
                         QPKGs.AcInstall.IsStarted.Set
-                        action=''
+                        scope=''
                         ;;
                     *)
                         QPKGs.AcToInstall.Add "$package"
@@ -1296,27 +1295,27 @@ ParseArgs()
                 case $scope in
                     all_|installed_)
                         QPKGs.AcReassign.ScAll.Set
-                        action=''
+                        scope=''
                         ;;
                     dependent_)
                         QPKGs.AcReassign.ScDependent.Set
-                        action=''
+                        scope=''
                         ;;
                     standalone_)
                         QPKGs.AcReassign.ScStandalone.Set
-                        action=''
+                        scope=''
                         ;;
                     started_)
                         QPKGs.AcReassign.IsStarted.Set
-                        action=''
+                        scope=''
                         ;;
                     stopped_)
                         QPKGs.AcReassign.IsNtStarted.Set
-                        action=''
+                        scope=''
                         ;;
                     upgradable_)
                         QPKGs.AcReassign.IsUpgradable.Set
-                        action=''
+                        scope=''
                         ;;
                     *)
                         QPKGs.AcToReassign.Add "$package"
@@ -1326,15 +1325,15 @@ ParseArgs()
                 case $scope in
                     all_|installed_)
                         QPKGs.AcRebuild.ScAll.Set
-                        action=''
+                        scope=''
                         ;;
                     dependent_)
                         QPKGs.AcRebuild.ScDependent.Set
-                        action=''
+                        scope=''
                         ;;
                     standalone_)
                         QPKGs.AcRebuild.ScStandalone.Set
-                        action=''
+                        scope=''
                         ;;
                     *)
                         QPKGs.AcToRebuild.Add "$package"
@@ -1344,15 +1343,15 @@ ParseArgs()
                 case $scope in
                     all_|installed_)
                         QPKGs.AcReinstall.ScAll.Set
-                        action=''
+                        scope=''
                         ;;
                     dependent_)
                         QPKGs.AcReinstall.ScDependent.Set
-                        action=''
+                        scope=''
                         ;;
                     standalone_)
                         QPKGs.AcReinstall.ScStandalone.Set
-                        action=''
+                        scope=''
                         ;;
                     *)
                         QPKGs.AcToReinstall.Add "$package"
@@ -1362,15 +1361,15 @@ ParseArgs()
                 case $scope in
                     all_|installed_)
                         QPKGs.AcRestart.ScAll.Set
-                        action=''
+                        scope=''
                         ;;
                     dependent_)
                         QPKGs.AcRestart.ScDependent.Set
-                        action=''
+                        scope=''
                         ;;
                     standalone_)
                         QPKGs.AcRestart.ScStandalone.Set
-                        action=''
+                        scope=''
                         ;;
                     *)
                         QPKGs.AcToRestart.Add "$package"
@@ -1380,15 +1379,15 @@ ParseArgs()
                 case $scope in
                     all_|installed_)
                         QPKGs.AcRestore.ScAll.Set
-                        action=''
+                        scope=''
                         ;;
                     dependent_)
                         QPKGs.AcRestore.ScDependent.Set
-                        action=''
+                        scope=''
                         ;;
                     standalone_)
                         QPKGs.AcRestore.ScStandalone.Set
-                        action=''
+                        scope=''
                         ;;
                     *)
                         QPKGs.AcToRestore.Add "$package"
@@ -1398,19 +1397,19 @@ ParseArgs()
                 case $scope in
                     all_|installed_)
                         QPKGs.AcStart.ScAll.Set
-                        action=''
+                        scope=''
                         ;;
                     dependent_)
                         QPKGs.AcStart.ScDependent.Set
-                        action=''
+                        scope=''
                         ;;
                     standalone_)
                         QPKGs.AcStart.ScStandalone.Set
-                        action=''
+                        scope=''
                         ;;
                     stopped_)
                         QPKGs.AcStart.IsNtStarted.Set
-                        action=''
+                        scope=''
                         ;;
                     *)
                         QPKGs.AcToStart.Add "$package"
@@ -1424,19 +1423,19 @@ ParseArgs()
                 case $scope in
                     all_|installed_)
                         QPKGs.AcStop.ScAll.Set
-                        action=''
+                        scope=''
                         ;;
                     dependent_)
                         QPKGs.AcStop.ScDependent.Set
-                        action=''
+                        scope=''
                         ;;
                     standalone_)
                         QPKGs.AcStop.ScStandalone.Set
-                        action=''
+                        scope=''
                         ;;
                     started_)
                         QPKGs.AcStop.IsStarted.Set
-                        action=''
+                        scope=''
                         ;;
                     *)
                         QPKGs.AcToStop.Add "$package"
@@ -1447,28 +1446,28 @@ ParseArgs()
                     all_|installed_)   # this scope is dangerous, so make `force` a requirement
                         if [[ $action_force = true ]]; then
                             QPKGs.AcUninstall.ScAll.Set
-                            action=''
+                            scope=''
                             action_force=false
                         fi
                         ;;
                     dependent_)
                         QPKGs.AcUninstall.ScDependent.Set
-                        action=''
+                        scope=''
                         action_force=false
                         ;;
                     standalone_)
                         QPKGs.AcUninstall.ScStandalone.Set
-                        action=''
+                        scope=''
                         action_force=false
                         ;;
                     started_)
                         QPKGs.AcUninstall.IsStarted.Set
-                        action=''
+                        scope=''
                         action_force=false
                         ;;
                     stopped_)
                         QPKGs.AcUninstall.IsNtStarted.Set
-                        action=''
+                        scope=''
                         action_force=false
                         ;;
                     *)
@@ -1479,27 +1478,27 @@ ParseArgs()
                 case $scope in
                     all_)
                         QPKGs.AcUpgrade.ScAll.Set
-                        action=''
+                        scope=''
                         ;;
                     dependent_)
                         QPKGs.AcUpgrade.ScDependent.Set
-                        action=''
+                        scope=''
                         ;;
                     standalone_)
                         QPKGs.AcUpgrade.ScStandalone.Set
-                        action=''
+                        scope=''
                         ;;
                     started_)
                         QPKGs.AcUpgrade.IsStarted.Set
-                        action=''
+                        scope=''
                         ;;
                     stopped_)
                         QPKGs.AcUpgrade.IsNtStarted.Set
-                        action=''
+                        scope=''
                         ;;
                     upgradable_)
                         QPKGs.AcUpgrade.IsUpgradable.Set
-                        action=''
+                        scope=''
                         ;;
                     *)
                         QPKGs.AcToUpgrade.Add "$package"
