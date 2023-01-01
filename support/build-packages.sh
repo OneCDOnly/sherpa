@@ -48,3 +48,5 @@ while read -r checksum_pathfilename; do
 done < /tmp/sorted.md5s
 
 [[ $displayed = false ]] && echo "$previous_package_pathfilename ($previous_package_version)"
+
+# sed 's|<?version?>|230101|;s|<?md5?>|bc156789|' package.info
