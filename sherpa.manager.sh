@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEn
 
     readonly MANAGER_FILE=sherpa.manager.sh
-    local -r SCRIPT_VER=230101c
+    local -r SCRIPT_VER=230102
 
     IsQNAP || return
     IsSU || return
@@ -266,7 +266,9 @@ Self.Init()
     readonly NAS_PLATFORM=$(GetPlatform)
     readonly NAS_QPKG_ARCH=$(GetQPKGArch)
     readonly ENTWARE_VER=$(GetEntwareType)
-    readonly LOG_TAIL_LINES=5000    # note: a full download and install of everything generates a session log of around 1600 lines, but include a bunch of opkg updates and it can get much longer
+    readonly CPU_CORES=$(GetCPUCores)
+    readonly CONCURRENCY=$CPU_CORES     # maximum concurrent package actions to run. Should probably make this account for CPU speed too.
+    readonly LOG_TAIL_LINES=5000        # note: a full download and install of everything generates a session log of around 1600 lines, but include a bunch of opkg updates and it can get much longer
     previous_msg=' '
     [[ ${NAS_FIRMWARE_VER//.} -lt 426 ]] && curl_insecure_arg=' --insecure' || curl_insecure_arg=''
     QPKG.IsInstalled Entware && [[ $ENTWARE_VER = none ]] && DebugAsWarn "$(FormatAsPackName Entware) appears to be installed but is not visible"
@@ -320,7 +322,7 @@ Self.LogEnv()
     DebugInfoMinSep
     DebugHardwareOK model "$(get_display_name)"
     DebugHardwareOK CPU "$(GetCPUInfo)"
-    DebugHardwareOK 'CPU cores' "$(GetCPUCores)"        # this will become important when running actions concurrently
+    DebugHardwareOK 'CPU cores' "$CPU_CORES"
     DebugHardwareOK 'CPU architecture' "$NAS_ARCH"
     DebugHardwareOK RAM "$(FormatAsThous "$NAS_RAM_KB")kiB"
     DebugFirmwareOK OS "$(GetQnapOS)"
@@ -373,6 +375,7 @@ Self.LogEnv()
     DebugBinPathVerAndMinVer perl "$(GetDefPerlVer)" "$MIN_PERL_VER"
     DebugScript 'logs path' "$LOGS_PATH"
     DebugScript 'work path' "$WORK_PATH"
+    DebugQPKG concurrency "$CONCURRENCY"
 
     if OS.IsAllowUnsignedPackages; then
         DebugQPKG 'allow unsigned' yes
@@ -806,25 +809,33 @@ Tier.Proc()
                 done
             else
                 # execute actions concurrently
-                # NON-FUNCTIONAL: for now, use same code as above
-                for package in "${target_packages[@]}"; do
-                    ShowAsActionProgress $TIER $PACKAGE_TYPE $pass_count $fail_count $total_count "$ACTION_PRESENT" $RUNTIME
 
-                    $target_function.${TARGET_ACTION} "$package"
-                    result_code=$?
+                    # loop while number of packages left to process is more than zero
+                        # if current processing queue is less than $CONCURRENCY, launch another process
 
-                    case $result_code in
-                        0)  # OK
-                            ((pass_count++))
-                            ;;
-                        2)  # skipped
-                            ((total_count--))
-                            ;;
-                        *)  # failed
-                            ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackName "$package") (see log for more details)"
-                            ((fail_count++))
-                    esac
-                done
+                    for package in "${target_packages[@]}"; do
+                        ShowAsActionProgress $TIER $PACKAGE_TYPE $pass_count $fail_count $total_count "$ACTION_PRESENT" $RUNTIME
+
+                                $target_function.${TARGET_ACTION} "$package"
+                                # save PID to current processing queue
+                            # if not, then wait here for 1 second, then reloop.
+                    done
+
+                    # wait here until all background jobs have exited.
+
+                    # read results of each process from finished queue. any jobs in failed queue?
+
+#                     case $result_code in
+#                         0)  # OK
+#                             ((pass_count++))
+#                             ;;
+#                         2)  # skipped
+#                             ((total_count--))
+#                             ;;
+#                         *)  # failed
+#                             ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackName "$package") (see log for more details)"
+#                             ((fail_count++))
+#                     esac
             fi
             ;;
         IPK|PIP)
