@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEn
 
     readonly MANAGER_FILE=sherpa.manager.sh
-    local -r SCRIPT_VER=230103
+    local -r SCRIPT_VER=230103a
 
     IsQNAP || return
     IsSU || return
@@ -736,7 +736,6 @@ Tier.Proc()
     #   $8 = $RUNTIME (optional)                e.g. `long`
     #   $9 = execute asynchronously? (optional) e.g. `true`, `false`
 
-    QPKGs.SkProc.IsSet && return
     DebugFuncEn
 
     local package=''
@@ -814,7 +813,7 @@ Tier.Proc()
                 PROC_COUNTS_PATH=$(/bin/mktemp -d /var/run/"${FUNCNAME[0]}"_XXXXXX)
                 CreateProcCounts
 
-				# shellcheck disable=2162
+                # shellcheck disable=2162
                 while read package; do
                     while true; do
                         RefreshProcCounts #; ShowRunProgress "$TARGET_ACTION" "$total_count" "$CONCURRENCY"
@@ -907,7 +906,7 @@ RefreshProcCounts()
     local state=''
 
     for state in proc pass skip fail; do
-		${state}_count="$(ls -1 "${state}_count_path" | $WC_CMD -l)"
+        ${state}_count="$(ls -1 "${state}_count_path" | $WC_CMD -l)"
     done
 
     }
@@ -2297,7 +2296,6 @@ IPKs.Upgrade()
 
     # upgrade all installed IPKs
 
-    QPKGs.SkProc.IsSet && return
     IPKs.Upgrade.IsNt && return
     QPKGs.IsNtInstalled.Exist Entware && return
     QPKGs.IsNtStarted.Exist Entware && return
@@ -2345,7 +2343,6 @@ IPKs.Install()
 
     # install IPKs required to support QPKGs
 
-    QPKGs.SkProc.IsSet && return
     IPKs.Install.IsNt && return
     QPKGs.IsNtInstalled.Exist Entware && return
     QPKGs.IsNtStarted.Exist Entware && return
@@ -2409,7 +2406,6 @@ IPKs.Install()
 PIPs.Install()
     {
 
-    QPKGs.SkProc.IsSet && return
     PIPs.Install.IsNt && return
     QPKGs.IsNtInstalled.Exist Entware && return
     QPKGs.IsNtStarted.Exist Entware && return
@@ -3598,7 +3594,6 @@ QPKGs.Warnings.Check()
 IPKs.Actions.List()
     {
 
-    QPKGs.SkProc.IsSet && return
     DebugFuncEn
 
     local action=''
@@ -3632,7 +3627,6 @@ IPKs.Actions.List()
 QPKGs.Actions.List()
     {
 
-    QPKGs.SkProc.IsSet && return
     DebugFuncEn
 
     local action=''
@@ -3668,7 +3662,6 @@ QPKGs.Actions.ListAll()
 
     # only used when debugging
 
-    QPKGs.SkProc.IsSet && return
     DebugFuncEn
 
     local action=''
@@ -4822,7 +4815,6 @@ QPKG.Reassign()
     #   $? = 2  : skipped (not reassigned: not already installed, or already assigned)
 
     Self.Error.IsSet && return
-    QPKGs.SkProc.IsSet && return
     DebugFuncEn
 
     local -r PACKAGE_NAME=${1:?package name null}
@@ -4948,7 +4940,6 @@ QPKG.Install()
     #   $? = 2  : skipped (not installed: already installed, or no package available for this NAS arch)
 
     Self.Error.IsSet && return
-    QPKGs.SkProc.IsSet && return
     DebugFuncEn
 
     local -r PACKAGE_NAME=${1:?package name null}
@@ -5067,7 +5058,6 @@ QPKG.Reinstall()
     #   $? = 2  : skipped (not reinstalled: not already installed, or no package available for this NAS arch)
 
     Self.Error.IsSet && return
-    QPKGs.SkProc.IsSet && return
     DebugFuncEn
 
     local -r PACKAGE_NAME=${1:?package name null}
@@ -5146,7 +5136,6 @@ QPKG.Upgrade()
     #   $? = 2  : skipped (not upgraded: not installed, or no package available for this NAS arch)
 
     Self.Error.IsSet && return
-    QPKGs.SkProc.IsSet && return
     DebugFuncEn
 
     local -r PACKAGE_NAME=${1:?package name null}
