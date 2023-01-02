@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEn
 
     readonly MANAGER_FILE=sherpa.manager.sh
-    local -r SCRIPT_VER=230102
+    local -r SCRIPT_VER=230103
 
     IsQNAP || return
     IsSU || return
@@ -790,7 +790,7 @@ Tier.Proc()
             if [[ $ASYNC = false ]]; then
                 # execute actions consecutively
                 for package in "${target_packages[@]}"; do
-                    ShowAsActionProgress $TIER $PACKAGE_TYPE $pass_count $fail_count $total_count "$ACTION_PRESENT" $RUNTIME
+                    ShowAsActionProgress "$TIER" "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
 
                     $target_function.${TARGET_ACTION} "$package"
                     result_code=$?
@@ -808,20 +808,39 @@ Tier.Proc()
                     esac
                 done
             else
-                # execute actions concurrently
+                # execute actions concurrently, but only as many as $CONCURRENCY will allow
+                local -i proc_count=0
+                local -i run_index=0
+                PROC_COUNTS_PATH=$(/bin/mktemp -d /var/run/"${FUNCNAME[0]}"_XXXXXX)
+                CreateProcCounts
 
-                    # loop while number of packages left to process is more than zero
-                        # if current processing queue is less than $CONCURRENCY, launch another process
+				# shellcheck disable=2162
+                while read package; do
+                    while true; do
+                        RefreshProcCounts #; ShowRunProgress "$TARGET_ACTION" "$total_count" "$CONCURRENCY"
 
-                    for package in "${target_packages[@]}"; do
-                        ShowAsActionProgress $TIER $PACKAGE_TYPE $pass_count $fail_count $total_count "$ACTION_PRESENT" $RUNTIME
+                        [[ $pass_count -ge $total_count ]] && break 2
 
-                                $target_function.${TARGET_ACTION} "$package"
-                                # save PID to current processing queue
-                            # if not, then wait here for 1 second, then reloop.
+                        # don't proceed until a spot becomes available
+                        [[ $proc_count -eq $CONCURRENCY ]] && continue
+
+                        if [[ $((pass_count+proc_count)) -lt $total_count || $pass_count -lt $total_count ]]; then
+                            # fork a new action handler
+                            ((run_index++))
+                            local proc_index=$(printf "%02d" "$run_index")
+
+                            # create fork runfile here, as it takes too long to happen in background function
+                            touch "$PROC_COUNTS_PATH/$proc_index"
+                            { $target_function.${TARGET_ACTION} "$package" "$proc_index" & } 2>/dev/null
+
+                            break
+                        fi
                     done
+                done < "${target_packages[@]}"
 
-                    # wait here until all background jobs have exited.
+                wait 2>/dev/null;                   # wait here until all forked jobs have exited
+
+                [[ -d $PROC_COUNTS_PATH ]] && rm -r "$PROC_COUNTS_PATH"
 
                     # read results of each process from finished queue. any jobs in failed queue?
 
@@ -843,11 +862,53 @@ Tier.Proc()
     esac
 
     # execute with pass_count > total_count to trigger 100% message
-    ShowAsActionProgress $TIER $PACKAGE_TYPE $((total_count+1)) $fail_count $total_count "$ACTION_PRESENT" $RUNTIME
-    ShowAsActionResult $TIER $PACKAGE_TYPE $pass_count $fail_count $total_count "$ACTION_PAST" $RUNTIME
+    ShowAsActionProgress "$TIER" "$PACKAGE_TYPE" "$((total_count+1))" "$fail_count" "$total_count" "$ACTION_PRESENT" "$RUNTIME"
+    ShowAsActionResult "$TIER" "$PACKAGE_TYPE" "$pass_count" "$fail_count" "$total_count" "$ACTION_PAST" "$RUNTIME"
 
     DebugFuncEx
     Self.Error.IsNt
+
+    }
+
+CreateProcCounts()
+    {
+
+    # create directories so background processes can be monitored
+
+    local state=''
+
+    for state in proc ok skip fail; do
+        ${state}_count_path="${PROC_COUNTS_PATH}/${state}.count"
+        mkdir -p "${state}_count_path"
+    done
+
+    RefreshProcCounts
+
+    }
+
+ResetProcCounts()
+    {
+
+    # reset background processing paths and counts
+
+    local state=''
+
+    for state in proc ok skip fail; do
+        [[ -d ${state}_count_path ]] && rm -f "${state}_count_path"/*
+    done
+
+    RefreshProcCounts
+
+    }
+
+RefreshProcCounts()
+    {
+
+    local state=''
+
+    for state in proc pass skip fail; do
+		${state}_count="$(ls -1 "${state}_count_path" | $WC_CMD -l)"
+    done
 
     }
 
