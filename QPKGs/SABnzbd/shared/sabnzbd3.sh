@@ -20,7 +20,7 @@ Init()
 
     # service-script environment
     readonly QPKG_NAME=SABnzbd
-    readonly SCRIPT_VERSION=230105
+    readonly SCRIPT_VERSION=230105a
 
     # general environment
     readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -397,14 +397,14 @@ LoadPorts()
     [[ -n ${UI_LISTENING_ADDRESS_CMD:-} ]] && ui_listening_address=$(eval "$UI_LISTENING_ADDRESS_CMD")
 
     # validate port numbers
-    ui_port=$(/bin/sed 's/[^0-9]*//g' <<< "${ui_port:-}")                   # strip everything not a numeral
-    [[ -z $ui_port || $ui_port -le 0 || $ui_port -ge 65535 ]] && ui_port=0
+    ui_port=${ui_port//[!0-9]/}                     # strip everything not a numeral
+    [[ -z $ui_port || $ui_port -lt 0 || $ui_port -gt 65535 ]] && ui_port=0
 
-    ui_port_secure=$(/bin/sed 's/[^0-9]*//g' <<< "${ui_port_secure:-}")     # strip everything not a numeral
-    [[ -z $ui_port_secure || $ui_port_secure -le 0 || $ui_port_secure -ge 65535 ]] && ui_port_secure=0
+    ui_port_secure=${ui_port_secure//[!0-9]/}       # strip everything not a numeral
+    [[ -z $ui_port_secure || $ui_port_secure -lt 0 || $ui_port_secure -gt 65535 ]] && ui_port_secure=0
 
-    daemon_port=$(/bin/sed 's/[^0-9]*//g' <<< "${daemon_port:-}")           # strip everything not a numeral
-    [[ -z $daemon_port || $daemon_port -le 0 || $daemon_port -ge 65535 ]] && daemon_port=0
+    daemon_port=${daemon_port//[!0-9]/}             # strip everything not a numeral
+    [[ -z $daemon_port || $daemon_port -lt 0 || $daemon_port -gt 65535 ]] && daemon_port=0
 
     [[ -z $ui_listening_address ]] && ui_listening_address=undefined
 
@@ -895,7 +895,7 @@ CheckPorts()
 
     DisplayCommitToLog "daemon listening address: $ui_listening_address"
 
-    if [[ $daemon_port != 0 ]]; then
+    if [[ $daemon_port -ne 0 ]]; then
         DisplayCommitToLog "daemon port: $daemon_port"
 
         if IsPortResponds $daemon_port; then
@@ -1162,8 +1162,7 @@ IsPortAvailable()
     # $? = 0 if available
     # $? = 1 if already used
 
-    local port=$(/bin/sed 's/[^0-9]*//g' <<< "${1:-}")     # strip everything not a numeral
-
+    local port=${1//[!0-9]/}        # strip everything not a numeral
     [[ -n $port && $port -gt 0 ]] || return 0
 
     if (/usr/sbin/lsof -i :"$port" -sTCP:LISTEN >/dev/null 2>&1); then
@@ -1192,13 +1191,13 @@ IsPortResponds()
     # $? = 0 if response received
     # $? = 1 if not OK
 
-    local port=$(/bin/sed 's/[^0-9]*//g' <<< "${1:-}")     # strip everything not a numeral
+    local port=${1//[!0-9]/}        # strip everything not a numeral
 
     if [[ -z $port ]]; then
-        Display 'test for empty port response: ignored'
+        Display 'empty port: not testing for response'
         return 1
     elif [[ $port -eq 0 ]]; then
-        Display 'test for port 0 response: ignored'
+        Display 'port 0: not testing for response'
         return 1
     fi
 
@@ -1239,13 +1238,13 @@ IsPortSecureResponds()
     # $? = 0 if response received
     # $? = 1 if not OK or secure port unspecified
 
-    local port=$(/bin/sed 's/[^0-9]*//g' <<< "${1:-}")     # strip everything not a numeral
+    local port=${1//[!0-9]/}        # strip everything not a numeral
 
     if [[ -z $port ]]; then
-        Display 'test for empty port response: ignored'
+        Display 'empty port: not testing for response'
         return 1
     elif [[ $port -eq 0 ]]; then
-        Display 'test for port 0 response: ignored'
+        Display 'port 0: not testing for response'
         return 1
     fi
 
