@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEn
 
     readonly MANAGER_FILE=sherpa.manager.sh
-    local -r SCRIPT_VER=230103a
+    local -r SCRIPT_VER=230104
 
     IsQNAP || return
     IsSU || return
@@ -174,10 +174,10 @@ Self.Init()
 
     PACKAGE_TIERS=(Standalone Addon Dependent)  # ordered
     PACKAGE_SCOPES=(All CanBackup CanRestartToUpdate Dependent HasDependents Installable Standalone)    # sorted
-    PACKAGE_STATES=(BackedUp Cleaned Downloaded Enabled Installed Missing Started Upgradable)   # sorted
-    PACKAGE_STATES_TRANSIENT=(Starting Stopping Restarting) # unsorted
+    PACKAGE_STATES=(BackedUp Cleaned Downloaded Enabled Installed Missing Started Upgradable)           # sorted
+    PACKAGE_STATES_TRANSIENT=(Starting Stopping Restarting)                                             # unsorted
     PACKAGE_ACTIONS=(Download Rebuild Reassign Backup Stop Disable Uninstall Upgrade Reinstall Install Restore Clean Enable Start Restart)  # ordered
-    PACKAGE_RESULTS=(Ok Unknown)    # unsorted
+    PACKAGE_RESULTS=(Ok Unknown)                # unsorted
 
     readonly MANAGEMENT_ACTIONS
 
@@ -201,7 +201,7 @@ Self.Init()
     [[ -d $IPK_CACHE_PATH ]] && rm -rf "$IPK_CACHE_PATH"
     [[ -d $PIP_CACHE_PATH ]] && rm -rf "$PIP_CACHE_PATH"
 
-    # KLUDGE: service scripts prior to 22/12/08 would use these paths (by-default) to build/cache Python packages. This has been fixed, but still need to free-up this space to prevent out-of-space issues.
+    # KLUDGE: service scripts prior to 2022-12-08 would use these paths (by-default) to build/cache Python packages. This has been fixed, but still need to free-up this space to prevent out-of-space issues.
     [[ -d /root/.cache ]] && rm -rf /root/.cache
     [[ -d /root/.local/share/virtualenv ]] && rm -rf /root/.local/share/virtualenv
 
@@ -743,8 +743,10 @@ Tier.Proc()
     local targets_function=''
     local -i result_code=0
     local -a target_packages=()
-    local -i pass_count=0
-    local -i fail_count=0
+    run_count=0
+    pass_count=0
+    skip_count=0
+    fail_count=0
     local -i total_count=0
     local -r TARGET_ACTION=${1:?null}
     local -r TIER=${2:?null}
@@ -808,38 +810,32 @@ Tier.Proc()
                 done
             else
                 # execute actions concurrently, but only as many as $CONCURRENCY will allow
-                local -i proc_count=0
-                local -i run_index=0
-                PROC_COUNTS_PATH=$(/bin/mktemp -d /var/run/"${FUNCNAME[0]}"_XXXXXX)
-                CreateProcCounts
+                local -i proc_index=0
+                CreateProcCountPaths
 
-                # shellcheck disable=2162
-                while read package; do
+                for package in "${target_packages[@]}"; do
                     while true; do
                         RefreshProcCounts #; ShowRunProgress "$TARGET_ACTION" "$total_count" "$CONCURRENCY"
 
-                        [[ $pass_count -ge $total_count ]] && break 2
-
                         # don't proceed until a spot becomes available
-                        [[ $proc_count -eq $CONCURRENCY ]] && continue
+                        [[ $run_count -eq $CONCURRENCY ]] && continue
 
-                        if [[ $((pass_count+proc_count)) -lt $total_count || $pass_count -lt $total_count ]]; then
-                            # fork a new action handler
-                            ((run_index++))
-                            local proc_index=$(printf "%02d" "$run_index")
+                        # fork a new action handler
+                        ((proc_index++))
 
-                            # create fork runfile here, as it takes too long to happen in background function
-                            touch "$PROC_COUNTS_PATH/$proc_index"
-                            { $target_function.${TARGET_ACTION} "$package" "$proc_index" & } 2>/dev/null
+                        proc_run_pathfile="${proc_run_count_path}/$(printf "%02d" "$proc_index")"
+                        proc_pass_pathfile="${proc_pass_count_path}/$(printf "%02d" "$proc_index")"
+                        proc_skip_pathfile="${proc_skip_count_path}/$(printf "%02d" "$proc_index")"
+                        proc_fail_pathfile="${proc_fail_count_path}/$(printf "%02d" "$proc_index")"
 
-                            break
-                        fi
+                        MarkProcAsRunning       # create runfile here, as it takes too long to happen in background function
+                        { $target_function.${TARGET_ACTION} "$package" & } 2>/dev/null
+
+                        break
                     done
-                done < "${target_packages[@]}"
+                done
 
                 wait 2>/dev/null;                   # wait here until all forked jobs have exited
-
-                [[ -d $PROC_COUNTS_PATH ]] && rm -r "$PROC_COUNTS_PATH"
 
                     # read results of each process from finished queue. any jobs in failed queue?
 
@@ -854,6 +850,8 @@ Tier.Proc()
 #                             ShowAsFail "unable to $ACTION_INTRANSITIVE $(FormatAsPackName "$package") (see log for more details)"
 #                             ((fail_count++))
 #                     esac
+
+                EraseProcCountPaths
             fi
             ;;
         IPK|PIP)
@@ -866,48 +864,6 @@ Tier.Proc()
 
     DebugFuncEx
     Self.Error.IsNt
-
-    }
-
-CreateProcCounts()
-    {
-
-    # create directories so background processes can be monitored
-
-    local state=''
-
-    for state in proc ok skip fail; do
-        ${state}_count_path="${PROC_COUNTS_PATH}/${state}.count"
-        mkdir -p "${state}_count_path"
-    done
-
-    RefreshProcCounts
-
-    }
-
-ResetProcCounts()
-    {
-
-    # reset background processing paths and counts
-
-    local state=''
-
-    for state in proc ok skip fail; do
-        [[ -d ${state}_count_path ]] && rm -f "${state}_count_path"/*
-    done
-
-    RefreshProcCounts
-
-    }
-
-RefreshProcCounts()
-    {
-
-    local state=''
-
-    for state in proc pass skip fail; do
-        ${state}_count="$(ls -1 "${state}_count_path" | $WC_CMD -l)"
-    done
 
     }
 
@@ -3511,6 +3467,59 @@ Self.Vers.Show()
 
     }
 
+CreateProcCountPaths()
+    {
+
+    # create directories so background processes can be monitored
+
+    PROC_COUNTS_PATH=$(/bin/mktemp -d /var/run/"${FUNCNAME[1]}"_XXXXXX)
+    [[ -n ${PROC_COUNTS_PATH:?no proc counts path} ]] || return
+
+    proc_run_count_path=${PROC_COUNTS_PATH}/run.count
+    proc_pass_count_path=${PROC_COUNTS_PATH}/pass.count
+    proc_skip_count_path=${PROC_COUNTS_PATH}/skip.count
+    proc_fail_count_path=${PROC_COUNTS_PATH}/fail.count
+
+    mkdir -p "$proc_run_count_path"
+    mkdir -p "$proc_pass_count_path"
+    mkdir -p "$proc_skip_count_path"
+    mkdir -p "$proc_fail_count_path"
+
+    RefreshProcCounts
+
+    }
+
+ResetProcCounts()
+    {
+
+    # reset background processing paths and counts
+
+    [[ -d $proc_run_count_path ]] && rm -f "$proc_run_count_path"/*
+    [[ -d $proc_pass_count_path ]] && rm -f "$proc_pass_count_path"/*
+    [[ -d $proc_skip_count_path ]] && rm -f "$proc_skip_count_path"/*
+    [[ -d $proc_fail_count_path ]] && rm -f "$proc_fail_count_path"/*
+
+    RefreshProcCounts
+
+    }
+
+RefreshProcCounts()
+    {
+
+    run_count="$(ls -A -1 "$proc_run_count_path" | $WC_CMD -l)"
+    pass_count="$(ls -A -1 "$proc_pass_count_path" | $WC_CMD -l)"
+    skip_count="$(ls -A -1 "$proc_skip_count_path" | $WC_CMD -l)"
+    fail_count="$(ls -A -1 "$proc_fail_count_path" | $WC_CMD -l)"
+
+    }
+
+EraseProcCountPaths()
+    {
+
+    [[ -d ${PROC_COUNTS_PATH:?no proc counts path} ]] && rm -r "$PROC_COUNTS_PATH"
+
+    }
+
 QPKGs.NewVers.Show()
     {
 
@@ -3561,7 +3570,7 @@ QPKGs.Conflicts.Check()
 
     if [[ -n ${BASE_QPKG_CONFLICTS_WITH:-} ]]; then
         # shellcheck disable=2068
-        for package in ${BASE_QPKG_CONFLICTS_WITH[@]}; do
+        for package in "${BASE_QPKG_CONFLICTS_WITH[@]}"; do
             if QPKG.IsEnabled "$package"; then
                 ShowAsError "the '$package' QPKG is enabled. $(FormatAsTitle) is incompatible with this package. Please consider 'stop'ing this QPKG in your App Center"
                 return 1
@@ -3580,7 +3589,7 @@ QPKGs.Warnings.Check()
 
     if [[ -n ${BASE_QPKG_WARNINGS:-} ]]; then
         # shellcheck disable=2068
-        for package in ${BASE_QPKG_WARNINGS[@]}; do
+        for package in "${BASE_QPKG_WARNINGS[@]}"; do
             if QPKG.IsEnabled "$package"; then
                 ShowAsWarn "the '$package' QPKG is enabled. This may cause problems with $(FormatAsTitle) applications. Please consider 'stop'ing this QPKG in your App Center"
             fi
@@ -4231,6 +4240,34 @@ QPKGs.ScDependent.Show()
     done
 
     return 0
+
+    }
+
+MarkProcAsRunning()
+    {
+
+    [[ -n ${proc_run_pathfile:-} ]] && touch "$proc_run_pathfile"
+
+    }
+
+MarkProcAsOk()
+    {
+
+    [[ -n ${proc_run_pathfile:-} && -e $proc_run_pathfile ]] && mv "$proc_run_pathfile" "$proc_pass_pathfile"
+
+    }
+
+MarkProcAsSkipped()
+    {
+
+    [[ -n ${proc_run_pathfile:-} && -e $proc_run_pathfile ]] && mv "$proc_run_pathfile" "$proc_skip_pathfile"
+
+    }
+
+MarkProcAsFailed()
+    {
+
+    [[ -n ${proc_run_pathfile:-} && -e $proc_run_pathfile ]] && mv "$proc_run_pathfile" "$proc_fail_pathfile"
 
     }
 
@@ -4895,6 +4932,7 @@ QPKG.Download()
     fi
 
     if [[ $result_code -eq 2 ]]; then
+        MarkProcAsSkipped
         MarkQpkgAcAsSk hide "$PACKAGE_NAME" "$action"
         DebugFuncEx $result_code; return
     fi
@@ -4911,14 +4949,17 @@ QPKG.Download()
             if FileMatchesMD5 "$LOCAL_PATHFILE" "$REMOTE_MD5"; then
                 DebugAsDone "downloaded $(FormatAsFileName "$REMOTE_FILENAME")"
                 QPKGs.AcOkDownload.Add "$PACKAGE_NAME"
+                MarkProcAsOk
             else
                 DebugAsError "downloaded package $(FormatAsFileName "$LOCAL_PATHFILE") checksum incorrect"
                 QPKGs.AcErDownload.Add "$PACKAGE_NAME"
+                MarkProcAsFailed
                 result_code=1
             fi
         else
             DebugAsError "$action failed $(FormatAsFileName "$PACKAGE_NAME") $(FormatAsExitcode "$result_code")"
             QPKGs.AcErDownload.Add "$PACKAGE_NAME"
+            MarkProcAsFailed
             result_code=1    # remap to 1 (last time I checked, 'curl' had 92 return codes)
         fi
     fi
