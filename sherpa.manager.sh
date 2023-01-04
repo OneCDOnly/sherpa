@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEn
 
     readonly MANAGER_FILE=sherpa.manager.sh
-    local -r SCRIPT_VER=230104
+    local -r SCRIPT_VER=230105
 
     IsQNAP || return
     IsSU || return
@@ -753,7 +753,12 @@ Tier.Proc()
     local -r PACKAGE_TYPE=${3:?null}
     local -r TARGET_OBJECT_NAME=${4:-}
     local -r RUNTIME=${8:-}
-    local -r ASYNC=${9:-1}
+
+    if Self.Debug.ToScreen.IsSet; then      # no-point running actions concurrently in debug mode: their stdout will make a confused mess of the screen
+        local -r ASYNC=false
+    else
+        local -r ASYNC=${9:-1}
+    fi
 
     case $PACKAGE_TYPE in
         QPKG|IPK|PIP)
@@ -836,8 +841,6 @@ Tier.Proc()
                 done
 
                 wait 2>/dev/null;                   # wait here until all forked jobs have exited
-
-                    # read results of each process from finished queue. any jobs in failed queue?
 
 #                     case $result_code in
 #                         0)  # OK
