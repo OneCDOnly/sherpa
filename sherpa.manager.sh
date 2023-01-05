@@ -754,7 +754,7 @@ Tier.Proc()
     local -r TARGET_OBJECT_NAME=${4:-}
     local -r RUNTIME=${8:-}
 
-    if Self.Debug.ToScreen.IsSet; then      # no-point running actions concurrently in debug mode: their stdout will make a confused mess of the screen
+    if Self.Debug.ToScreen.IsSet || [[ $CONCURRENCY -eq 1 ]]; then  # no-point running actions concurrently in debug mode: their stdout will make a confused mess of the screen
         local -r ASYNC=false
     else
         local -r ASYNC=${9:-1}
