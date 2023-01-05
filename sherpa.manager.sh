@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEn
 
     readonly MANAGER_FILE=sherpa.manager.sh
-    local -r SCRIPT_VER=230105
+    local -r SCRIPT_VER=230105a
 
     IsQNAP || return
     IsSU || return
@@ -584,11 +584,13 @@ Self.Validate()
     if QPKGs.AcUninstall.ScAll.IsSet; then
         QPKGs.AcToStop.Init
     else
+        DebugAsProc "action: 'Stop': removing 'AcToUninstall' packages"
         QPKGs.AcToStop.Remove "$(QPKGs.AcToUninstall.Array)"
     fi
 
     # No-need to `restart` packages that are about to be upgraded/reinstalled/installed/started
     for action in Upgrade Reinstall Install Start; do
+        DebugAsProc "action: 'Restart': removing 'AcTo${action}' packages"
         QPKGs.AcToRestart.Remove "$(QPKGs.AcTo${action}.Array)"
     done
 
@@ -1860,13 +1862,13 @@ AllocGroupPacksToAcs()
                                 found=true
                                 DebugAsProc "action: '$action', scope: '$scope': adding 'IsUpgradable' packages"
                                 QPKGs.AcTo${action}.Add "$(QPKGs.IsUpgradable.Array)"
-                                DebugAsProc "action: '$action', scope: '$scope': adding 'ScCanRestartToUpdate' packages"
+                                DebugAsProc "action: 'Restart': adding 'ScCanRestartToUpdate' packages"
                                 QPKGs.AcToRestart.Add "$(QPKGs.ScCanRestartToUpdate.Array)"
-                                DebugAsProc "action: '$action', scope: '$scope': removing 'IsNtInstalled' packages"
+                                DebugAsProc "action: 'Restart': removing 'IsNtInstalled' packages"
                                 QPKGs.AcToRestart.Remove "$(QPKGs.IsNtInstalled.Array)"
-                                DebugAsProc "action: '$action', scope: '$scope': removing 'AcToUpgrade' packages"
+                                DebugAsProc "action: 'Restart': removing 'AcToUpgrade' packages"
                                 QPKGs.AcToRestart.Remove "$(QPKGs.AcToUpgrade.Array)"
-                                DebugAsProc "action: '$action', scope: '$scope': removing 'ScStandalone' packages"
+                                DebugAsProc "action: 'Restart': removing 'ScStandalone' packages"
                                 QPKGs.AcToRestart.Remove "$(QPKGs.ScStandalone.Array)"
                                 ;;
                             Dependent|Standalone)
