@@ -54,7 +54,7 @@ Self.Init()
     DebugFuncEn
 
     readonly MANAGER_FILE=sherpa.manager.sh
-    local -r SCRIPT_VER=230105a
+    local -r SCRIPT_VER=230105b
 
     IsQNAP || return
     IsSU || return
@@ -6335,13 +6335,15 @@ RunAndLog()
         FormatAsResultAndStdout "$result_code" '<null>' >> "$2"
     fi
 
-    if [[ $result_code -eq 0 ]]; then
-        [[ ${3:-} != log:failure-only ]] && AddFileToDebug "$2"
-        DebugAsDone 'exec complete'
-    else
-        [[ $result_code -ne ${4:-} ]] && AddFileToDebug "$2"
-        DebugAsWarn 'exec complete'
-    fi
+    case $result_code in
+        0|"${4:-}")
+            [[ ${3:-} != log:failure-only ]] && AddFileToDebug "$2"
+            DebugAsDone 'exec complete'
+            ;;
+        *)
+            AddFileToDebug "$2"
+            DebugAsError 'exec complete, but with errors'
+    esac
 
     DebugFuncEx $result_code
 
