@@ -20,7 +20,7 @@ Init()
 
     # service-script environment
     readonly QPKG_NAME=nzbToMedia
-    readonly SCRIPT_VERSION=230105
+    readonly SCRIPT_VERSION=230109
 
     # general environment
     readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -32,27 +32,8 @@ Init()
     readonly BACKUP_PATHFILE=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
     readonly OPKG_PATH=/opt/bin:/opt/sbin
     export PATH="$OPKG_PATH:$(/bin/sed "s|$OPKG_PATH||" <<< "$PATH")"
-    local default_download_share=$(/sbin/getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info)/$(/sbin/getcfg SHARE_DEF defDownload -d unspecified -f /etc/config/def_share.info)
     readonly DEBUG_LOG_DATAWIDTH=100
     local re=''
-
-    [[ ! -L $default_download_share ]] && default_download_share=unspecified
-
-    if IsQPKGInstalled SABnzbd; then
-        link_path_source="SABnzbd 'script_dir'"
-        link_path=$(/sbin/getcfg misc script_dir -d /share/Public/Downloads -f "$(/sbin/getcfg SABnzbd Install_Path -f /etc/config/qpkg.conf)"/config/config.ini)
-    elif IsQPKGInstalled NZBGet; then
-        link_path_source="NZBGet 'MainDir'"
-        link_path=$(/sbin/getcfg '' MainDir -d /share/Public/Downloads -f "$(/sbin/getcfg NZBGet Install_Path -f /etc/config/qpkg.conf)"/config/config.ini)
-    elif [[ $default_download_share != unspecified ]]; then
-        link_path_source="QTS 'Download' share"
-        link_path=$default_download_share
-    else
-        link_path_source='default'
-        link_path=/share/Public/Downloads
-    fi
-
-    [[ $(/usr/bin/basename "$link_path") != "$QPKG_NAME" ]] && link_path+=/$QPKG_NAME
 
     # specific to online-sourced applications only
     readonly SOURCE_GIT_URL=https://github.com/clinton-hall/nzbToMedia.git
@@ -67,6 +48,33 @@ Init()
     readonly ALLOW_ACCESS_TO_SYS_PACKAGES=false
     readonly QPKG_INI_PATHFILE=$QPKG_REPO_PATH/autoProcessMedia.cfg
     readonly QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.spec
+
+    # specific to nzbToMedia
+    local default_scripts_path=$(/sbin/getcfg $QPKG_NAME Scripts_Path -d '' -f /etc/config/qpkg.conf)
+    local default_download_share=$(/sbin/getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info)/$(/sbin/getcfg SHARE_DEF defDownload -d unspecified -f /etc/config/def_share.info)
+
+    if [[ -z $default_download_share ]] || [[ -n $default_download_share && ! -L $default_download_share ]]; then
+        default_download_share=unspecified
+    fi
+
+    if [[ -n $default_scripts_path ]]; then
+        scripts_path_source="$QPKG_NAME 'Scripts_Path'"
+        scripts_path=$default_scripts_path
+    elif IsQPKGInstalled SABnzbd; then
+        scripts_path_source="SABnzbd 'script_dir'"
+        scripts_path=$(/sbin/getcfg misc script_dir -d /share/Public/Downloads -f "$(/sbin/getcfg SABnzbd Install_Path -f /etc/config/qpkg.conf)"/config/config.ini)
+    elif IsQPKGInstalled NZBGet; then
+        scripts_path_source="NZBGet 'MainDir'"
+        scripts_path=$(/sbin/getcfg '' MainDir -d /share/Public/Downloads -f "$(/sbin/getcfg NZBGet Install_Path -f /etc/config/qpkg.conf)"/config/config.ini)
+    elif [[ $default_download_share != unspecified ]]; then
+        scripts_path_source="QTS 'Download' share"
+        scripts_path=$default_download_share
+    else
+        scripts_path_source='default'
+        scripts_path=/share/Public/Downloads
+    fi
+
+    [[ $scripts_path != "$QPKG_REPO_PATH" && $(/usr/bin/basename "$scripts_path") != "$QPKG_NAME" ]] && scripts_path+=/$QPKG_NAME
 
     # specific to applications supporting version lookup only
     readonly APP_VERSION_PATHFILE=$QPKG_REPO_PATH/.bumpversion.cfg
@@ -99,7 +107,7 @@ Init()
     IsSupportBackup && [[ -n ${BACKUP_PATH:-} && ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
     [[ -n ${VENV_PATH:-} && ! -d $VENV_PATH ]] && mkdir -p "$VENV_PATH"
     [[ -n ${PIP_CACHE_PATH:-} && ! -d $PIP_CACHE_PATH ]] && mkdir -p "$PIP_CACHE_PATH"
-    [[ ! -e $(/usr/bin/dirname $link_path) ]] && mkdir -p "$(/usr/bin/dirname $link_path)"
+    [[ ! -e $(/usr/bin/dirname "$scripts_path") ]] && mkdir -p "$(/usr/bin/dirname "$scripts_path")"
 
     IsAutoUpdateMissing && EnableAutoUpdate >/dev/null
 
@@ -135,13 +143,10 @@ ShowHelp()
 StartQPKG()
     {
 
-    # this function is customised depending on the requirements of the packaged application
-
     IsError && return
 
     if IsNotRestart && IsNotRestore && IsNotClean && IsNotReset; then
         CommitOperationToLog
-        IsPackageActive && return
     fi
 
     if IsRestore || IsClean || IsReset; then
@@ -160,14 +165,17 @@ StartQPKG()
 
     WaitForLaunchTarget || { SetError; return 1 ;}
 
-
-    [[ -d $link_path ]] && DisplayRunAndLog 'a local path is in the way of the target, moving it aside' "mv $link_path $link_path.prev"
-    ln -s "$QPKG_REPO_PATH" "$link_path"
+    if [[ $scripts_path = "$QPKG_REPO_PATH" ]]; then
+        DisplayCommitToLog "direct path matches scripts_path, so don't create a symlink"
+    elif [[ ! -L $scripts_path ]]; then
+        [[ -d $scripts_path ]] && DisplayRunAndLog 'a local path is in the way of the target, moving it aside' "mv $scripts_path $scripts_path.prev"
+        ln -s "$QPKG_REPO_PATH" "$scripts_path"
+        DisplayCommitToLog "symlink created from: $scripts_path to: $QPKG_REPO_PATH"
+    fi
 
     DisplayCommitToLog 'start package: OK'
     EnsureConfigFileExists
     IsPackageActive || { SetError; return 1 ;}
-
 
     return 0
 
@@ -176,26 +184,19 @@ StartQPKG()
 StopQPKG()
     {
 
-    # this function is customised depending on the requirements of the packaged application
-
     IsError && return
 
     if IsNotRestore && IsNotClean && IsNotReset; then
         CommitOperationToLog
     fi
 
-    if IsPackageActive; then
-        if IsRestart || IsRestore || IsClean || IsReset; then
-            SetRestartPending
-        fi
-
-        [[ -L $link_path ]] && rm "$link_path"
-        DisplayCommitToLog 'stop package: OK'
-
-        IsNotPackageActive || { SetError; return 1 ;}
-
+    if IsRestart || IsRestore || IsClean || IsReset; then
+        SetRestartPending
     fi
 
+    [[ -L $scripts_path ]] && rm "$scripts_path"
+    DisplayCommitToLog 'stop package: OK'
+    IsNotPackageActive      # if scripts_path = repo_path then package will always appear to be started
     return 0
 
     }
@@ -901,12 +902,12 @@ IsNotDaemonActive()
 IsPackageActive()
     {
 
-    # $? = 0 : package is 'started'
-    # $? = 1 : package is 'stopped'
+    # $? = 0 : package is `started`
+    # $? = 1 : package is `stopped`
 
     DisplayWaitCommitToLog 'package active:'
 
-    if [[ -L $link_path ]]; then
+    if [[ -L $scripts_path || $scripts_path = "$QPKG_REPO_PATH" ]] && [[ -e $scripts_path/autoProcessMedia.cfg ]]; then
         DisplayCommitToLog true
         return
     fi
@@ -1131,11 +1132,11 @@ SetServiceOperation()
 
     case $1 in
         none|removing|versioning|logging)
-            : # dont display when running the above actions
+            : # don't display when running the above actions
             ;;
         *)
-            DisplayCommitToLog "link_path source: $link_path_source"
-            DisplayCommitToLog "link_path: $link_path"
+            DisplayCommitToLog "scripts_path_source: $scripts_path_source"
+            DisplayCommitToLog "scripts_path: $scripts_path"
     esac
 
     service_operation="${1:-}"
