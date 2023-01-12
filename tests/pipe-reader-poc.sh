@@ -68,9 +68,7 @@ sleep 3
 
 echo 'begin parsing pipe stream'
 
-length=${#ids[@]}
-
-while [[ $length -gt 0 ]]; do
+while [[ ${#ids[@]} -gt 0 ]]; do
     read input
 
     if [[ $input =~ "status:[done]" ]]; then
@@ -80,7 +78,6 @@ while [[ $length -gt 0 ]]; do
             if [[ $input = "id:[${ids[index]}],status:[done]" ]]; then
                 echo "id:[${ids[index]}] is complete"
                 unset 'ids[index]'
-                ((length--))
             fi
         done
     else
