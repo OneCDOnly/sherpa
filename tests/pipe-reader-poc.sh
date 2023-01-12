@@ -31,33 +31,42 @@ stream_pipe=test.pipe
 [[ -p $stream_pipe ]] && rm "$stream_pipe"
 [[ ! -p $stream_pipe ]] && mknod "$stream_pipe" p
 
+# find next available FD: https://stackoverflow.com/a/41603891
+declare -i prospect=0
+declare -i fd=0
+for fd in {10..20} ; do
+    [[ ! -e /proc/$$/fd/$fd ]] && break
+done
+
+[[ $fd -eq 0 ]] && echo 'unable to locate next available file descriptor' && exit
+
 # open a 2-way channel to this pipe, so it will receive data without blocking the sender
-exec {FD}<> "$stream_pipe"  # get BASH to assign next available FD: https://stackoverflow.com/a/28300838
+eval "exec $fd<>$stream_pipe"
 
 # launch forks with delays in-between to simulate QPKG actions
 echo 'launch forks'
 ids+=(ae35)
-output ${ids[-1]} >&${FD} &
+output ${ids[${#ids[@]}-1]} >&$fd &
 
 sleep 2
 
 ids+=(ae42)
-output ${ids[-1]} >&${FD} &
+output ${ids[${#ids[@]}-1]} >&$fd &
 
 sleep 4
 
 ids+=(ae56)
-output ${ids[-1]} >&${FD} &
+output ${ids[${#ids[@]}-1]} >&$fd &
 
 sleep 1
 
 ids+=(ae64)
-output ${ids[-1]} >&${FD} &
+output ${ids[${#ids[@]}-1]} >&$fd &
 
 echo 'sleep for a bit'
 sleep 3
 
-echo 'read pipe stream'
+echo 'begin parsing pipe stream'
 
 length=${#ids[@]}
 
@@ -77,9 +86,9 @@ while [[ $length -gt 0 ]]; do
     else
         echo "read:$input"
     fi
-done <&${FD}
+done <&$fd
 
-exec {FD}<&-
+eval "exec $fd<&-"
 [[ -p $stream_pipe ]] && rm "$stream_pipe"
 
 echo "finished: $(date)"
