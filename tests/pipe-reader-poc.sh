@@ -1,31 +1,52 @@
 #!/usr/bin/env bash
 
-# OneCD's async FIFO pipe reader proof-of-concept. 2023-01-12
+# OneCD's async FIFO pipe reader proof-of-concept. 2023-01-13
 
 # Have multiple background procs all send data to a single named pipe.
-# Then, read from this pipe, and update the state of specific QPKG arrays according to details in data.
+# Then read from this pipe, and update the state of specific QPKG arrays according to details in data.
 
 echo "started: $(date)"
 
-output()
+_Output_()
     {
+
+    # * this function runs as a background process *
 
     # $1 = package name
 
+    [[ -z ${1:?package name null} ]] && exit
+    export package_name=$1
     local -i x=0
 
     for x in {1..8}; do
-        echo "package:[$1],request:[$(date)]"
+        SendRequest "$(date)"
         sleep 1
     done
 
-    echo "package:[$1],status:[done]"
+    SendStatus 'done'
+
+    } >&$fd
+
+SendRequest()
+    {
+
+    # $1 = action request
+
+    echo "package:[$package_name],request:[$1]"
+
+    }
+
+SendStatus()
+    {
+
+    # $1 = status update
+
+    echo "package:[$package_name],status:[$1]"
 
     }
 
 declare -i index=0
 declare -a packages=()
-empty=false
 stream_pipe=test.pipe
 
 [[ -p $stream_pipe ]] && rm "$stream_pipe"
@@ -46,22 +67,22 @@ eval "exec $fd<>$stream_pipe"
 # launch forks with delays in-between to simulate QPKG actions
 echo 'launch forks'
 packages+=(SABnzbd)
-output ${packages[${#packages[@]}-1]} >&$fd &
+_Output_ ${packages[${#packages[@]}-1]} &
 
 sleep 2
 
 packages+=(NZBGet)
-output ${packages[${#packages[@]}-1]} >&$fd &
+_Output_ ${packages[${#packages[@]}-1]} &
 
 sleep 4
 
 packages+=(HideThatBanner)
-output ${packages[${#packages[@]}-1]} >&$fd &
+_Output_ ${packages[${#packages[@]}-1]} &
 
 sleep 1
 
 packages+=(SortMyQPKGs)
-output ${packages[${#packages[@]}-1]} >&$fd &
+_Output_ ${packages[${#packages[@]}-1]} &
 
 echo 'sleep for a bit'
 sleep 3
@@ -73,10 +94,8 @@ while [[ ${#packages[@]} -gt 0 ]]; do
 
     if [[ $input =~ "status:[done]" ]]; then
         for index in "${!packages[@]}"; do
-            [[ -z ${packages[index]} ]] && continue      # ignore empty or emptied elements
-
             if [[ $input = "package:[${packages[index]}],status:[done]" ]]; then
-                echo "package:[${packages[index]}] is complete"
+                echo "${packages[index]} is complete"
                 unset 'packages[index]'
             fi
         done
