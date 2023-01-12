@@ -10,21 +10,21 @@ echo "started: $(date)"
 output()
     {
 
-    # $1 = id
+    # $1 = package name
 
     local -i x=0
 
     for x in {1..8}; do
-        echo "id:[$1],data:[$(date)]"
+        echo "package:[$1],request:[$(date)]"
         sleep 1
     done
 
-    echo "id:[$1],status:[done]"
+    echo "package:[$1],status:[done]"
 
     }
 
 declare -i index=0
-declare -a ids=()
+declare -a packages=()
 empty=false
 stream_pipe=test.pipe
 
@@ -34,7 +34,7 @@ stream_pipe=test.pipe
 # find next available FD: https://stackoverflow.com/a/41603891
 declare -i prospect=0
 declare -i fd=0
-for fd in {10..20} ; do
+for fd in {10..100} ; do
     [[ ! -e /proc/$$/fd/$fd ]] && break
 done
 
@@ -45,39 +45,39 @@ eval "exec $fd<>$stream_pipe"
 
 # launch forks with delays in-between to simulate QPKG actions
 echo 'launch forks'
-ids+=(ae35)
-output ${ids[${#ids[@]}-1]} >&$fd &
+packages+=(SABnzbd)
+output ${packages[${#packages[@]}-1]} >&$fd &
 
 sleep 2
 
-ids+=(ae42)
-output ${ids[${#ids[@]}-1]} >&$fd &
+packages+=(NZBGet)
+output ${packages[${#packages[@]}-1]} >&$fd &
 
 sleep 4
 
-ids+=(ae56)
-output ${ids[${#ids[@]}-1]} >&$fd &
+packages+=(HideThatBanner)
+output ${packages[${#packages[@]}-1]} >&$fd &
 
 sleep 1
 
-ids+=(ae64)
-output ${ids[${#ids[@]}-1]} >&$fd &
+packages+=(SortMyQPKGs)
+output ${packages[${#packages[@]}-1]} >&$fd &
 
 echo 'sleep for a bit'
 sleep 3
 
 echo 'begin parsing pipe stream'
 
-while [[ ${#ids[@]} -gt 0 ]]; do
+while [[ ${#packages[@]} -gt 0 ]]; do
     read input
 
     if [[ $input =~ "status:[done]" ]]; then
-        for index in "${!ids[@]}"; do
-            [[ -z ${ids[index]} ]] && continue      # ignore empty or emptied elements
+        for index in "${!packages[@]}"; do
+            [[ -z ${packages[index]} ]] && continue      # ignore empty or emptied elements
 
-            if [[ $input = "id:[${ids[index]}],status:[done]" ]]; then
-                echo "id:[${ids[index]}] is complete"
-                unset 'ids[index]'
+            if [[ $input = "package:[${packages[index]}],status:[done]" ]]; then
+                echo "package:[${packages[index]}] is complete"
+                unset 'packages[index]'
             fi
         done
     else
